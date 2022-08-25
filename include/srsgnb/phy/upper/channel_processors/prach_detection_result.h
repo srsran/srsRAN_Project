@@ -36,6 +36,11 @@ struct prach_detection_result {
   ///
   /// This is equal to the PRACH subcarrier spacing divided by the DFT size of the detector.
   phy_time_unit time_resolution;
+  /// \brief Detector maximum time in advance.
+  ///
+  /// This is equal to the minimum value among \f$N_{CP}^{RA}\f$ and \f$N_{CS}\f$ if \f$N_{CS}\f$ is not zero.
+  /// Otherwise, it is equal to \f$N_{CP}^{RA}\f$.
+  phy_time_unit time_advance_max;
   /// List of detected preambles.
   static_vector<preamble_indication, prach_constants::MAX_NUM_PREAMBLES> preambles;
 };

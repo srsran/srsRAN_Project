@@ -150,7 +150,7 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(const upp
   report_fatal_error_if_not(prach_gen_factory, "Invalid PRACH generator factory.");
 
   std::shared_ptr<prach_detector_factory> prach_detector_factory =
-      create_prach_detector_factory_simple(dft_factory, prach_gen_factory);
+      create_prach_detector_factory_simple(dft_factory, prach_gen_factory, 1536U);
   report_fatal_error_if_not(prach_detector_factory, "Invalid PRACH detector factory.");
 
   uplink_processor_single_executor_factory factory(prach_detector_factory, *config.ul_executor, notifier);

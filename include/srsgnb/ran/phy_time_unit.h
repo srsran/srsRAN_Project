@@ -71,7 +71,7 @@ public:
   {
     static_assert(std::is_convertible<U, value_type>::value, "Invalid type.");
     value_type sampling_rate_Hz = static_cast<value_type>(sampling_rate_Hz_);
-    return ((value * sampling_rate_Hz) % (SCS_REF_HZ * N_F_REF * KAPPA)) == 0;
+    return ((std::abs(value) * sampling_rate_Hz) % (SCS_REF_HZ * N_F_REF * KAPPA)) == 0;
   }
 
   /// \brief Gets the time expressed as a number of samples for the given sampling rate.
@@ -133,6 +133,18 @@ public:
     return *this;
   }
 
+  /// Overload equal to operator.
+  constexpr bool operator==(phy_time_unit other) const { return value == other.value; }
+
+  /// Overload not equal to operator.
+  constexpr bool operator!=(phy_time_unit other) const { return value != other.value; }
+
+  /// Overload greater than operator.
+  constexpr bool operator>(phy_time_unit other) const { return value > other.value; }
+
+  /// Overload lower than operator.
+  constexpr bool operator<(phy_time_unit other) const { return value < other.value; }
+
   /// Creates a physical layer time from units of \f$\kappa\f$.
   static constexpr inline phy_time_unit from_units_of_kappa(unsigned units_of_kappa)
   {
@@ -148,7 +160,7 @@ public:
   /// Creates a physical layer time from seconds.
   static constexpr inline phy_time_unit from_seconds(double seconds)
   {
-    return phy_time_unit(static_cast<value_type>(seconds / T_C));
+    return phy_time_unit(static_cast<value_type>(std::round(seconds / T_C)));
   }
 };
 

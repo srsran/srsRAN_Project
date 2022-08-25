@@ -12,6 +12,7 @@
 #include "../../support/prach_buffer_test_doubles.h"
 #include "prach_generator_test_doubles.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsgnb/ran/prach/prach_cyclic_shifts.h"
 #include "srsgnb/srslog/bundled/fmt/ostream.h"
 #include "srsgnb/srsvec/add.h"
 #include "srsgnb/srsvec/prod.h"
@@ -40,9 +41,10 @@ std::ostream& operator<<(std::ostream& os, restricted_set_config config)
 }
 } // namespace srsgnb
 
-using prach_detector_params = std::tuple<unsigned, preamble_format, restricted_set_config>;
+// Parameters in order dft_size, format, restricted set and extra iterations.
+using prach_detector_params = std::tuple<unsigned, preamble_format, restricted_set_config, unsigned>;
 
-class prach_detector_test : public ::testing::TestWithParam<prach_detector_params>
+class PrachDetectorFixture : public ::testing::TestWithParam<prach_detector_params>
 {
 protected:
   std::shared_ptr<dft_processor_factory_spy>   dft_factory_spy       = std::make_shared<dft_processor_factory_spy>();
@@ -53,8 +55,10 @@ protected:
 
   void SetUp() override
   {
+    unsigned dft_size = std::get<0>(GetParam());
+
     std::shared_ptr<prach_detector_factory> prach_detector_factory =
-        create_prach_detector_factory_simple(dft_factory_spy, generator_factory_spy);
+        create_prach_detector_factory_simple(dft_factory_spy, generator_factory_spy, dft_size);
     ASSERT_TRUE(prach_detector_factory);
 
     detector = prach_detector_factory->create();
@@ -68,14 +72,46 @@ protected:
     dft_spy       = (dft_factory_spy->get_entries().back().dft);
     generator_spy = (generator_factory_spy->get_entries().back());
   }
+
+  phy_time_unit GetExpectedTimeAdvancedResolution() const
+  {
+    unsigned prach_scs_Hz = get_prach_preamble_long_info(std::get<1>(GetParam())).scs.to_Hz();
+    unsigned dft_size     = std::get<0>(GetParam());
+
+    return phy_time_unit::from_seconds(1 / static_cast<double>(dft_size * prach_scs_Hz));
+  }
+
+  phy_time_unit GetExpectedTimeAdvancedMaximum(unsigned zero_correlation_zone) const
+  {
+    unsigned                   prach_scs_Hz     = get_prach_preamble_long_info(std::get<1>(GetParam())).scs.to_Hz();
+    unsigned                   dft_size         = std::get<0>(GetParam());
+    unsigned                   sampling_rate_Hz = prach_scs_Hz * dft_size;
+    prach_preamble_information preamble_info    = get_prach_preamble_long_info(std::get<1>(GetParam()));
+    restricted_set_config      restricted_set   = std::get<2>(GetParam());
+    unsigned                   N_cs = prach_cyclic_shifts_get(preamble_info.scs, restricted_set, zero_correlation_zone);
+
+    // Calculate maximum delay.
+    phy_time_unit time_advance_max = preamble_info.cp_length;
+
+    // If the cyclic shift is not zero...
+    if (N_cs != 0) {
+      // Calculate the maximum time in advance limited by the number of cyclic shifts.
+      phy_time_unit N_cs_time =
+          phy_time_unit::from_seconds(static_cast<double>((N_cs * preamble_info.sequence_length) / dft_size) /
+                                      static_cast<double>(sampling_rate_Hz));
+      // Select the most limiting value.
+      time_advance_max = std::min(time_advance_max, N_cs_time);
+    }
+
+    return time_advance_max;
+  }
 };
 
-TEST_P(prach_detector_test, processing)
+TEST_P(PrachDetectorFixture, Flow)
 {
   // Prepare derived parameters.
   unsigned sequence_length = get_prach_preamble_long_info(std::get<1>(GetParam())).sequence_length;
-  unsigned prach_scs_Hz    = get_prach_preamble_long_info(std::get<1>(GetParam())).scs.to_Hz();
-  unsigned dft_size        = dft_spy->get_size();
+  unsigned dft_size        = std::get<0>(GetParam());
 
   // Generate frequency domain buffer data. A complex exponential with an average power of 1 (0.0 dB).
   std::vector<cf_t> buffer_data(sequence_length);
@@ -149,17 +185,16 @@ TEST_P(prach_detector_test, processing)
   }
 
   // Verify the detection results. As the IDFT output is random, no preamble is expected to be detected.
-  ASSERT_NEAR(detection_result.time_resolution.to_seconds(), 1 / static_cast<double>(dft_size * prach_scs_Hz), 1e-8);
+  ASSERT_EQ(detection_result.time_resolution, GetExpectedTimeAdvancedResolution());
+  ASSERT_EQ(detection_result.time_advance_max, GetExpectedTimeAdvancedMaximum(detector_config.zero_correlation_zone));
   ASSERT_NEAR(0.0F, detection_result.rssi_dB, 1e-3F);
   ASSERT_EQ(0, detection_result.preambles.size());
 }
 
-TEST_P(prach_detector_test, rssi_zero)
+TEST_P(PrachDetectorFixture, RssiZero)
 {
   // Prepare derived parameters.
   unsigned sequence_length = get_prach_preamble_long_info(std::get<1>(GetParam())).sequence_length;
-  unsigned prach_scs_Hz    = get_prach_preamble_long_info(std::get<1>(GetParam())).scs.to_Hz();
-  unsigned dft_size        = dft_spy->get_size();
 
   // Generate frequency domain buffer data. All zeros to trigger a zero RSSI.
   std::vector<cf_t> buffer_data(sequence_length);
@@ -189,17 +224,20 @@ TEST_P(prach_detector_test, rssi_zero)
   ASSERT_EQ(0, dft_spy->get_entries().size());
 
   // Verify the detection results. As the IDFT output is random, no preamble is expected to be detected.
-  ASSERT_NEAR(detection_result.time_resolution.to_seconds(), 1 / static_cast<double>(dft_size * prach_scs_Hz), 1e-8);
+  ASSERT_EQ(detection_result.time_resolution, GetExpectedTimeAdvancedResolution());
+  ASSERT_EQ(detection_result.time_advance_max, GetExpectedTimeAdvancedMaximum(detector_config.zero_correlation_zone));
   ASSERT_EQ(-INFINITY, detection_result.rssi_dB);
   ASSERT_EQ(0, detection_result.preambles.size());
 }
 
-TEST_P(prach_detector_test, threshold_test)
+TEST_P(PrachDetectorFixture, ThresholdTest)
 {
   // Prepare derived parameters.
-  unsigned sequence_length = get_prach_preamble_long_info(std::get<1>(GetParam())).sequence_length;
-  unsigned prach_scs_Hz    = get_prach_preamble_long_info(std::get<1>(GetParam())).scs.to_Hz();
-  unsigned dft_size        = dft_spy->get_size();
+  unsigned sequence_length       = get_prach_preamble_long_info(std::get<1>(GetParam())).sequence_length;
+  unsigned prach_scs_Hz          = get_prach_preamble_long_info(std::get<1>(GetParam())).scs.to_Hz();
+  unsigned dft_size              = dft_spy->get_size();
+  unsigned sampling_rate_Hz      = prach_scs_Hz * dft_size;
+  unsigned zero_correlation_zone = zero_correlation_zone_dist(rgen);
 
   // Generate frequency domain buffer data. All ones with a RSSI equal to one.
   std::vector<cf_t> buffer_data(sequence_length);
@@ -210,7 +248,7 @@ TEST_P(prach_detector_test, threshold_test)
   std::fill(correlation.begin(), correlation.end(), 0.0);
 
   // Select peak position and set a large enough peak.
-  unsigned peak_pos     = rgen() % dft_size;
+  unsigned peak_pos     = rgen() % GetExpectedTimeAdvancedMaximum(zero_correlation_zone).to_samples(sampling_rate_Hz);
   float    peak_value   = static_cast<float>(sequence_length);
   correlation[peak_pos] = peak_value;
 
@@ -229,7 +267,7 @@ TEST_P(prach_detector_test, threshold_test)
   detector_config.root_sequence_index   = root_sequence_index_dist(rgen);
   detector_config.format                = std::get<1>(GetParam());
   detector_config.restricted_set        = std::get<2>(GetParam());
-  detector_config.zero_correlation_zone = zero_correlation_zone_dist(rgen);
+  detector_config.zero_correlation_zone = zero_correlation_zone;
   detector_config.start_preamble_index  = start_preamble_index_dist(rgen);
   detector_config.nof_preamble_indices  = 1;
 
@@ -244,7 +282,8 @@ TEST_P(prach_detector_test, threshold_test)
   ASSERT_EQ(1, dft_spy->get_entries().size());
 
   // Verify the detection results. As the IDFT output is random, no preamble is expected to be detected.
-  ASSERT_NEAR(detection_result.time_resolution.to_seconds(), 1 / static_cast<double>(dft_size * prach_scs_Hz), 1e-8);
+  ASSERT_EQ(detection_result.time_resolution, GetExpectedTimeAdvancedResolution());
+  ASSERT_EQ(detection_result.time_advance_max, GetExpectedTimeAdvancedMaximum(detector_config.zero_correlation_zone));
   ASSERT_NEAR(0.0, detection_result.rssi_dB, 1e-6);
   ASSERT_EQ(1, detection_result.preambles.size());
   ASSERT_EQ(detector_config.start_preamble_index, detection_result.preambles[0].preamble_index);
@@ -256,13 +295,12 @@ TEST_P(prach_detector_test, threshold_test)
 }
 
 // Creates test suite that combines all possible parameters.
-INSTANTIATE_TEST_SUITE_P(prach_detector_long,
-                         prach_detector_test,
-                         ::testing::Combine(::testing::Range(0U, 64U),
+INSTANTIATE_TEST_SUITE_P(PrachDetectorSimple,
+                         PrachDetectorFixture,
+                         ::testing::Combine(::testing::Values(1536U),
                                             ::testing::Values(preamble_format::FORMAT0,
                                                               preamble_format::FORMAT1,
                                                               preamble_format::FORMAT2,
                                                               preamble_format::FORMAT3),
-                                            ::testing::Values(restricted_set_config::UNRESTRICTED,
-                                                              restricted_set_config::TYPE_A,
-                                                              restricted_set_config::TYPE_B)));
+                                            ::testing::Values(restricted_set_config::UNRESTRICTED),
+                                            ::testing::Range(0U, 10U)));

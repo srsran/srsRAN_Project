@@ -139,7 +139,8 @@ public:
 
 std::shared_ptr<prach_detector_factory>
 create_prach_detector_factory_simple(std::shared_ptr<dft_processor_factory>   dft_factory,
-                                     std::shared_ptr<prach_generator_factory> prach_gen_factory);
+                                     std::shared_ptr<prach_generator_factory> prach_gen_factory,
+                                     unsigned                                 dft_size_detector);
 
 class prach_generator_factory
 {

@@ -41,11 +41,29 @@ prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& in
   // Derive time domain sampling rate in Hz.
   unsigned sampling_rate_Hz = preamble_info.scs.to_Hz() * idft->get_size();
 
+  // Get cyclic shift.
+  unsigned N_cs = prach_cyclic_shifts_get(preamble_info.scs, config.restricted_set, config.zero_correlation_zone);
+  srsgnb_assert(N_cs != PRACH_CYCLIC_SHIFTS_RESERVED, "Reserved cyclic shift.");
+
+  // Calculate maximum delay.
+  phy_time_unit time_advance_max = preamble_info.cp_length;
+
+  // If the cyclic shift is not zero...
+  if (N_cs != 0) {
+    // Calculate the maximum time in advance limited by the number of cyclic shifts.
+    phy_time_unit N_cs_time =
+        phy_time_unit::from_seconds(static_cast<double>((N_cs * preamble_info.sequence_length) / idft->get_size()) /
+                                    static_cast<double>(sampling_rate_Hz));
+    // Select the most limiting value.
+    time_advance_max = std::min(time_advance_max, N_cs_time);
+  }
+  unsigned delay_n_maximum = time_advance_max.to_samples(sampling_rate_Hz);
+
   // Segment the IDFT input into lower grid, upper grid and guard.
   span<cf_t> idft_lower_grid = idft->get_input().last(sequence_length_lower);
   span<cf_t> idft_upper_grid = idft->get_input().first(sequence_length_upper);
-  span<cf_t> idft_guard      = idft->get_input().subspan(divide_ceil(sequence_length_upper, 2),
-                                                    idft->get_size() - preamble_info.sequence_length);
+  span<cf_t> idft_guard =
+      idft->get_input().subspan(sequence_length_upper, idft->get_size() - preamble_info.sequence_length);
 
   // Set the IDFT guard to zero.
   srsvec::zero(idft_guard);
@@ -55,22 +73,14 @@ prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& in
 
   // Prepare results.
   prach_detection_result result;
-  result.rssi_dB         = convert_power_to_dB(rssi);
-  result.time_resolution = phy_time_unit::from_seconds(1.0 / static_cast<double>(sampling_rate_Hz));
+  result.rssi_dB          = convert_power_to_dB(rssi);
+  result.time_resolution  = phy_time_unit::from_seconds(1.0 / static_cast<double>(sampling_rate_Hz));
+  result.time_advance_max = time_advance_max;
   result.preambles.clear();
 
   // Early stop if the RSSI is zero.
   if (!std::isnormal(rssi)) {
     return result;
-  }
-
-  // Get cyclic shift.
-  unsigned N_cs = prach_cyclic_shifts_get(preamble_info.scs, config.restricted_set, config.zero_correlation_zone);
-
-  // Calculate maximum delay.
-  unsigned delay_n_maximum = idft->get_size();
-  if (N_cs != 0) {
-    delay_n_maximum = (N_cs * preamble_info.sequence_length) / idft->get_size();
   }
 
   // For each preamble to detect...
@@ -114,6 +124,13 @@ prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& in
       continue;
     }
 
+    // Detect delay sign.
+    float sign = 1.0f;
+    if (delay_n > idft->get_size() / 2) {
+      sign    = -1.0f;
+      delay_n = idft->get_size() - delay_n;
+    }
+
     // Skip if the delay could be due to the cyclic shift.
     if (delay_n >= delay_n_maximum) {
       continue;
@@ -123,7 +140,7 @@ prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& in
     prach_detection_result::preamble_indication& info = result.preambles.back();
     info.preamble_index                               = preamble_index;
     info.time_advance =
-        phy_time_unit::from_seconds(static_cast<double>(delay_n) / static_cast<double>(sampling_rate_Hz));
+        phy_time_unit::from_seconds(sign * static_cast<double>(delay_n) / static_cast<double>(sampling_rate_Hz));
     info.power_dB = convert_power_to_dB(max_power);
     info.snr_dB   = 0.0F;
   }
