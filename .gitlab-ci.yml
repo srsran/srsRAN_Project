@@ -1,28 +1,10 @@
 include:
-  # General
   - project: softwareradiosystems/testing-tools
-    ref: "16"
-    file: .gitlab/ci-shared/default.yml
+    ref: "18"
+    file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/testing-tools
-    ref: "16"
-    file: .gitlab/ci-shared/workflow.yml
-  - project: softwareradiosystems/testing-tools
-    ref: "16"
-    file: .gitlab/ci-shared/versions.yml
-  # Add features to the ci stage
-  - project: softwareradiosystems/testing-tools
-    ref: "16"
-    file: .gitlab/ci-shared/autorebaser.yml
-  - project: softwareradiosystems/testing-tools
-    ref: "16"
-    file: .gitlab/ci-shared/ci_checks.yml
-  - project: softwareradiosystems/testing-tools
-    ref: "16"
-    file: .gitlab/ci-shared/notify_status.yml
-  - project: softwareradiosystems/testing-tools
-    ref: "16"
-    file: .gitlab/ci-shared/scheduler.yml
-  # Local
+    ref: "18"
+    file: .gitlab/ci-shared/features/all.yml
   - local: .gitlab/ci/build.yml
 
 stages:

@@ -1,13 +1,7 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "16"
-    file: .gitlab/ci-shared/default.yml
-  - project: softwareradiosystems/testing-tools
-    ref: "16"
-    file: .gitlab/ci-shared/workflow.yml
-  - project: softwareradiosystems/testing-tools
-    ref: "16"
-    file: .gitlab/ci-shared/versions.yml
+    ref: "18"
+    file: .gitlab/ci-shared/setup/all.yml
 
 variables:
   # Input variables
