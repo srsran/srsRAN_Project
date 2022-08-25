@@ -24,6 +24,7 @@ bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, uint32_t count)
   if (is_drb()) {
     hdr_writer.append(0x80); // 1 bit D/C field
   }
+  /*
   uint32_t sn = SN(count);
   // Add SN
   switch (cfg.sn_size) {
@@ -40,4 +41,6 @@ bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, uint32_t count)
     default:
       logger.error("Invalid SN length configuration: %d bits", cfg.sn_len);
   }
+  */
+  return true;
 }

@@ -39,7 +39,7 @@ public:
    * Header helpers
    */
   const uint32_t hdr_len_bytes;
-  void           write_data_pdu_header(byte_buffer& buf, uint32_t count);
+  bool           write_data_pdu_header(byte_buffer& buf, uint32_t count);
 
 private:
   bearer_logger               logger;
