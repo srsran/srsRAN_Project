@@ -16,7 +16,6 @@
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
-#include "srsgnb/ngap/ngap.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/executors/task_worker.h"
@@ -39,6 +38,8 @@ public:
   f1c_message_handler& get_f1c_message_handler(du_index_t du_index) override;
 
   f1c_statistics_handler& get_f1c_statistics_handler(du_index_t du_index) override;
+
+  ng_message_handler& get_ng_message_handler() override;
 
   void on_new_connection() override;
   void handle_du_remove_request(const du_index_t du_index) override;

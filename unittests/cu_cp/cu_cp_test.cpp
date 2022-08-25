@@ -180,7 +180,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
     test_logger.info("Injecting Initial UL RRC message");
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 
-    // Inject ULL RRC message containing RRC Setup Complete
+    // Inject UL RRC message containing RRC Setup Complete
     f1c_message ul_rrc_msg = generate_valid_rrc_setup_complete_msg(first_ue_cu_ue_id, first_ue_c_rnti);
     test_logger.info("Injecting UL RRC message (RRC Setup Complete)");
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(ul_rrc_msg);

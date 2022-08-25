@@ -12,6 +12,7 @@
 
 #include "cu_cp_types.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
+#include "srsgnb/ngap/ngap.h"
 #include <string>
 
 namespace srsgnb {
@@ -75,11 +76,21 @@ public:
   virtual f1c_statistics_handler& get_f1c_statistics_handler(du_index_t du_index) = 0;
 };
 
+class cu_cp_ng_interface
+{
+public:
+  virtual ~cu_cp_ng_interface() = default;
+
+  /// \brief Get the NG message handler interface.
+  /// \return The NG message handler interface.
+  virtual ng_message_handler& get_ng_message_handler() = 0;
+};
+
 class cu_cp_interface : public cu_cp_du_connection_notifier,
                         public cu_cp_du_handler,
                         public cu_cp_du_interface,
+                        public cu_cp_ng_interface,
                         public cu_cp_ngap_connection_notifier
-
 {
 public:
   virtual ~cu_cp_interface() = default;

@@ -61,6 +61,11 @@ f1c_statistics_handler& cu_cp::get_f1c_statistics_handler(du_index_t du_index)
   return du_it.get_f1c_statistics_handler();
 }
 
+ng_message_handler& cu_cp::get_ng_message_handler()
+{
+  return *ngap_entity;
+};
+
 void cu_cp::on_new_connection()
 {
   logger.info("New DU connection - adding DU");
