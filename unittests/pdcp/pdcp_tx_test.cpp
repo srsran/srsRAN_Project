@@ -40,6 +40,27 @@ TEST_P(pdcp_tx_test, sn_pack)
   byte_buffer buf_count131072_snlen18{pdu1_count131072_snlen18}; // [HFN | SN] 0000 0000 0000 00|10 0000 0000 0000 0000
   byte_buffer buf_count262144_snlen18{pdu1_count262144_snlen18}; // [HFN | SN] 0000 0000 0000 01|00 0000 0000 0000 0000
   byte_buffer buf_count4294967295_snlen18{pdu1_count4294967295_snlen18}; // All 1's
+
+  auto test_writer = [this](uint32_t sn, byte_buffer_view expected_hdr) {
+    byte_buffer buf = {};
+    pdcp_tx->write_data_pdu_header(buf, sn);
+    ASSERT_EQ(buf.length(), expected_hdr.length());
+    ASSERT_EQ(buf, expected_hdr);
+  };
+
+  if (config.sn_size == pdcp_sn_size::size12bits) {
+    test_writer(0, byte_buffer_view(buf_count0_snlen12, 0, 2));
+    test_writer(2048, byte_buffer_view(buf_count2048_snlen12, 0, 2));
+    test_writer(4096, byte_buffer_view(buf_count4096_snlen12, 0, 2));
+    test_writer(4294967295, byte_buffer_view(buf_count4294967295_snlen12, 0, 2));
+  } else if (config.sn_size == pdcp_sn_size::size18bits) {
+    test_writer(0, byte_buffer_view(buf_count0_snlen18, 0, 3));
+    test_writer(131072, byte_buffer_view(buf_count131072_snlen18, 0, 3));
+    test_writer(262144, byte_buffer_view(buf_count262144_snlen18, 0, 3));
+    test_writer(4294967295, byte_buffer_view(buf_count4294967295_snlen18, 0, 3));
+  } else {
+    FAIL();
+  }
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -56,3 +77,9 @@ INSTANTIATE_TEST_SUITE_P(pdcp_tx_test_all_sn_sizes,
                          pdcp_tx_test,
                          ::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
                          test_param_info_to_string);
+
+int main(int argc, char** argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

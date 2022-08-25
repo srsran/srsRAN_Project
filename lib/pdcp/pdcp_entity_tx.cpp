@@ -22,25 +22,26 @@ bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, uint32_t count)
 
   // Set D/C if required
   if (is_drb()) {
-    hdr_writer.append(0x80); // 1 bit D/C field
+    hdr_writer.append(0x80); // D/C bit field (1).
+  } else {
+    hdr_writer.append(0x00); // No D/C bit field.
   }
-  /*
+
+  // Set SN
   uint32_t sn = SN(count);
   // Add SN
   switch (cfg.sn_size) {
     case pdcp_sn_size::size12bits:
-      srsran::uint16_to_uint8(SN(count), sdu->msg);
-      if (is_drb()) {
-        sdu->msg[0] |= 0x80; // On Data PDUs for DRBs we must set the D flag.
-      }
+      hdr_writer.back() |= (sn & 0x00000f00U) >> 8U;
+      hdr_writer.append((sn & 0x000000ffU));
       break;
     case pdcp_sn_size::size18bits:
-      srsran::uint24_to_uint8(SN(count), sdu->msg);
-      sdu->msg[0] |= 0x80; // Data PDU and SN LEN 18 implies DRB, D flag must be present
+      hdr_writer.back() |= (sn & 0x00030000U) >> 16U;
+      hdr_writer.append((sn & 0x0000ff00U) >> 8U);
+      hdr_writer.append((sn & 0x000000ffU));
       break;
     default:
-      logger.error("Invalid SN length configuration: %d bits", cfg.sn_len);
+      logger.log_error("Invalid SN length configuration: {} bits", cfg.sn_size);
   }
-  */
   return true;
 }

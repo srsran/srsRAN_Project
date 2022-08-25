@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "pdcp_entity_tx_rx_base.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/pdcp/pdcp_config.h"
@@ -19,7 +20,9 @@
 namespace srsgnb {
 /// Base class used for transmitting PDCP bearers.
 /// It provides interfaces for the PDCP bearers, for the higher and lower layers
-class pdcp_entity_tx : public pdcp_tx_upper_data_interface, public pdcp_tx_lower_interface
+class pdcp_entity_tx : public pdcp_entity_tx_rx_base,
+                       public pdcp_tx_upper_data_interface,
+                       public pdcp_tx_lower_interface
 {
 public:
   pdcp_entity_tx(uint32_t                        ue_index,
@@ -27,7 +30,7 @@ public:
                  pdcp_config::pdcp_tx_config     cfg_,
                  pdcp_tx_lower_notifier&         lower_dn,
                  pdcp_tx_upper_control_notifier& upper_cn) :
-    hdr_len_bytes(to_number(cfg_.sn_size) % 8),
+    pdcp_entity_tx_rx_base(cfg_.sn_size),
     logger("PDCP", ue_index, lcid),
     cfg(cfg_),
     lower_dn(lower_dn),
@@ -38,8 +41,7 @@ public:
   /*
    * Header helpers
    */
-  const uint32_t hdr_len_bytes;
-  bool           write_data_pdu_header(byte_buffer& buf, uint32_t count);
+  bool write_data_pdu_header(byte_buffer& buf, uint32_t count);
 
 private:
   bearer_logger               logger;
