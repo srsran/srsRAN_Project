@@ -378,23 +378,39 @@ TEST_P(rlc_rx_am_test, read_initial_status)
   EXPECT_EQ(rlc->get_status_pdu_length(), 3);
 }
 
-TEST_P(rlc_rx_am_test, window_checker)
+TEST_P(rlc_rx_am_test, window_checker_lower_edge)
 {
   init(GetParam());
   // RX_NEXT == 0
-  uint32_t sn_inside_below  = 0;
-  uint32_t sn_inside_above  = cardinality(to_number(sn_size)) / 2 - 1;
-  uint32_t sn_outside_below = cardinality(to_number(sn_size)) - 1;
-  uint32_t sn_outside_above = cardinality(to_number(sn_size)) / 2;
-  EXPECT_TRUE(rlc->inside_rx_window(sn_inside_below));
-  EXPECT_TRUE(rlc->inside_rx_window(sn_inside_above));
-  EXPECT_FALSE(rlc->inside_rx_window(sn_outside_below));
-  EXPECT_FALSE(rlc->inside_rx_window(sn_outside_above));
+  uint32_t sn_inside_lower  = 0;
+  uint32_t sn_inside_upper  = window_size(to_number(sn_size)) - 1;
+  uint32_t sn_outside_lower = cardinality(to_number(sn_size)) - 1;
+  uint32_t sn_outside_upper = window_size(to_number(sn_size));
+  EXPECT_TRUE(rlc->inside_rx_window(sn_inside_lower));
+  EXPECT_TRUE(rlc->inside_rx_window(sn_inside_upper));
+  EXPECT_FALSE(rlc->inside_rx_window(sn_outside_lower));
+  EXPECT_FALSE(rlc->inside_rx_window(sn_outside_upper));
 }
 
-//
-// TODO: As above, just with further advanced RX_NEXT
-//
+TEST_P(rlc_rx_am_test, window_checker_upper_edge)
+{
+  init(GetParam());
+
+  // Configure state to upper edge
+  rlc_rx_am_state st = {};
+  st.rx_next         = cardinality(to_number(sn_size)) - 1;
+  rlc->set_state(st);
+
+  // RX_NEXT == 4095 (12-bit SN)
+  uint32_t sn_inside_lower  = cardinality(to_number(sn_size)) - 1;
+  uint32_t sn_inside_upper  = window_size(to_number(sn_size)) - 2;
+  uint32_t sn_outside_lower = cardinality(to_number(sn_size)) - 2;
+  uint32_t sn_outside_upper = window_size(to_number(sn_size)) - 1;
+  EXPECT_TRUE(rlc->inside_rx_window(sn_inside_lower));
+  EXPECT_TRUE(rlc->inside_rx_window(sn_inside_upper));
+  EXPECT_FALSE(rlc->inside_rx_window(sn_outside_lower));
+  EXPECT_FALSE(rlc->inside_rx_window(sn_outside_upper));
+}
 
 TEST_P(rlc_rx_am_test, rx_without_segmentation)
 {
