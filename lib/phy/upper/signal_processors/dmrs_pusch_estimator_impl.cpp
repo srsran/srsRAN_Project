@@ -162,7 +162,6 @@ void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&    dmrs_symbol_buffer
         if (params.w_t[0] != params.w_t[1] && symbol % 2 == 1) {
           // Apply the weight.
           srsvec::sc_prod(dmrs_layer0, params.w_t[1], dmrs);
-          fmt::print("w_t {}\n", tx_layer);
         } else {
           // otherwise, copy symbols from layer 0 to the current layer.
           srsvec::copy(dmrs, dmrs_layer0);
@@ -170,7 +169,6 @@ void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&    dmrs_symbol_buffer
 
         // If a frequency weight is required.
         if (params.w_f[0] != params.w_f[1]) {
-          fmt::print("w_f {}\n", tx_layer);
           // Apply frequency domain mask.
           for (unsigned subc = 1, subc_end = 2 * (dmrs.size() / 2) + 1; subc != subc_end; subc += 2) {
             dmrs[subc] *= params.w_f[1];

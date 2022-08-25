@@ -48,7 +48,7 @@ public:
     float scaling;
     /// Cyclic prefix.
     cyclic_prefix c_prefix = cyclic_prefix::NORMAL;
-    /// DMRS symbol position indexes.
+    /// DM-RS position mask. Indicates the OFDM symbols carrying DM-RS within the slot.
     std::array<bool, MAX_NSYMB_PER_SLOT> symbols_mask;
     /// Allocation RB list: the entries set to true are used for transmission.
     bounded_bitset<MAX_RB> rb_mask;

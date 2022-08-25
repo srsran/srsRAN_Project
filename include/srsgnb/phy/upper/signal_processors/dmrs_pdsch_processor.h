@@ -36,7 +36,7 @@ public:
     bool n_scid;
     /// Indicates the generated signal linear amplitude.
     float amplitude;
-    /// DMRS symbol position indexes.
+    /// DM-RS position mask. Indicates the OFDM symbols carrying DM-RS within the slot.
     std::array<bool, MAX_NSYMB_PER_SLOT> symbols_mask;
     /// Allocation RB list, the entries set to true are used for transmission.
     bounded_bitset<MAX_RB> rb_mask;
