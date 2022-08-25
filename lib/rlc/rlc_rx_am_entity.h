@@ -157,6 +157,22 @@ public:
     return (0 < rx_mod_base(sn)) && (rx_mod_base(sn) <= am_window_size);
   }
 
+  /*
+   * Testing helpers
+   */
+
+  /// Set the internal state variables
+  /// Note: This function should only be used for testing
+  ///
+  /// \param st The state variables to be set
+  void set_state(const rlc_rx_am_state& st) { this->st = st; }
+
+  /// Get the internal state variables
+  /// Note: This function should only be used for testing
+  ///
+  /// \return A copy of the internal state variables
+  rlc_rx_am_state get_state() { return st; }
+
 private:
   /// Handles a received control PDU. The PDU is unpacked and forwarded to the RX entity
   /// \param buf The control PDU to be handled (including header and payload)
