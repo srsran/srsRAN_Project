@@ -39,7 +39,7 @@ private:
                               span<const dmrs_pattern>    pattern,
                               const configuration&        cfg);
 
-  /// \brief
+  /// \brief Interpolates the least-square estimates in frequency and time domain.
   /// \param[out] estimate     Channel estimates.
   /// \param[in] lse           Least-square estimates.
   /// \param[in] port          Port index to interpolate.

@@ -7,6 +7,8 @@
  * the distribution.
  *
  */
+///\file
+///\brief pusch_constants - namespace containing constants related to PUSCH transmissions.
 
 #pragma once
 
