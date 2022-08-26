@@ -599,7 +599,7 @@ TEST_P(rlc_rx_am_test, rx_duplicate_segments)
   EXPECT_EQ(status_report.get_packed_size(), 3);
   EXPECT_EQ(rlc->get_status_pdu_length(), 3);
 
-  // Create SDU and PDUs with full SDU segments
+  // Create SDU and PDUs with SDU segments
   std::list<byte_buffer> pdu_list = {};
   byte_buffer            sdu;
   ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
