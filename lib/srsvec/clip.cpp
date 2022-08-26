@@ -9,7 +9,6 @@
  */
 
 #include "srsgnb/srsvec/clip.h"
-#include "srsgnb/srsvec/copy.h"
 #include "srsgnb/support/math_utils.h"
 
 using namespace srsgnb;
@@ -51,16 +50,15 @@ unsigned srsvec::clip_magnitude(span<const cf_t> x, const float threshold, span<
   unsigned nof_clipped_samples = 0;
   unsigned len                 = x.size();
 
-  // Copy the input samples at the output.
-  srsvec::copy(y, x);
-
   // Clip the output signal.
   for (unsigned i = 0; i != len; ++i) {
-    float x_abs = std::sqrt(abs_sq(x[i]));
+    cf_t  val   = x[i];
+    float x_abs = std::sqrt(abs_sq(val));
     if (x_abs > threshold) {
-      y[i] *= threshold / x_abs;
+      val *= threshold / x_abs;
       ++nof_clipped_samples;
     }
+    y[i] = val;
   }
 
   return nof_clipped_samples;
