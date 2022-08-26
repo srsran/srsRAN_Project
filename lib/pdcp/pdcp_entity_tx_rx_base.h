@@ -24,7 +24,7 @@ class pdcp_entity_tx_rx_base
 {
 protected:
   explicit pdcp_entity_tx_rx_base(pdcp_sn_size sn_size) :
-    hdr_len_bytes(to_number(sn_size) % 8), sn_size(to_number(sn_size))
+    hdr_len_bytes((to_number(sn_size) + 8 - 1) / 8), sn_size(to_number(sn_size))
   {
   }
 

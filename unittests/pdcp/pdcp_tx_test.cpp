@@ -18,6 +18,7 @@
 
 using namespace srsgnb;
 
+/// \brief Test correct creation of PDCP TX  entity
 TEST_P(pdcp_tx_test, create_new_entity)
 {
   init(GetParam());
@@ -25,39 +26,77 @@ TEST_P(pdcp_tx_test, create_new_entity)
   ASSERT_NE(pdcp_tx, nullptr);
 }
 
+/// \brief Test correct packing of PDCP data PDU headers
 TEST_P(pdcp_tx_test, sn_pack)
 {
   init(GetParam());
 
-  // 12 bit PDUs
-  byte_buffer buf_count0_snlen12{pdu1_count0_snlen12};       // [HFN | SN] 0000 0000 0000 0000 0000 | 0000 0000 0000
-  byte_buffer buf_count2048_snlen12{pdu1_count2048_snlen12}; // [HFN | SN] 0000 0000 0000 0000 0000 | 0001 0000 0000
-  byte_buffer buf_count4096_snlen12{pdu1_count4096_snlen12}; // [HFN | SN] 0000 0000 0000 0000 0001 | 0000 0000 0000
-  byte_buffer buf_count4294967295_snlen12{pdu1_count4294967295_snlen12}; // All 1's
-
-  // 18 bit PDUs
-  byte_buffer buf_count0_snlen18{pdu1_count0_snlen18};           // [HFN | SN] 0000 0000 0000 00|00 0000 0000 0000 0000
-  byte_buffer buf_count131072_snlen18{pdu1_count131072_snlen18}; // [HFN | SN] 0000 0000 0000 00|10 0000 0000 0000 0000
-  byte_buffer buf_count262144_snlen18{pdu1_count262144_snlen18}; // [HFN | SN] 0000 0000 0000 01|00 0000 0000 0000 0000
-  byte_buffer buf_count4294967295_snlen18{pdu1_count4294967295_snlen18}; // All 1's
-
-  auto test_writer = [this](uint32_t sn, byte_buffer_view expected_hdr) {
+  auto test_hdr_writer = [this](uint32_t sn) {
+    // Generate PDU header
     byte_buffer buf = {};
     pdcp_tx->write_data_pdu_header(buf, sn);
+    // Get expected PDU header
+    byte_buffer exp_pdu;
+    get_expected_pdu(sn, exp_pdu);
+    byte_buffer_view expected_hdr = {exp_pdu, 0, pdu_hdr_len};
     ASSERT_EQ(buf.length(), expected_hdr.length());
     ASSERT_EQ(buf, expected_hdr);
   };
 
   if (config.sn_size == pdcp_sn_size::size12bits) {
-    test_writer(0, byte_buffer_view(buf_count0_snlen12, 0, 2));
-    test_writer(2048, byte_buffer_view(buf_count2048_snlen12, 0, 2));
-    test_writer(4096, byte_buffer_view(buf_count4096_snlen12, 0, 2));
-    test_writer(4294967295, byte_buffer_view(buf_count4294967295_snlen12, 0, 2));
+    test_hdr_writer(0);
+    test_hdr_writer(2048);
+    test_hdr_writer(4096);
+    test_hdr_writer(4294967295);
   } else if (config.sn_size == pdcp_sn_size::size18bits) {
-    test_writer(0, byte_buffer_view(buf_count0_snlen18, 0, 3));
-    test_writer(131072, byte_buffer_view(buf_count131072_snlen18, 0, 3));
-    test_writer(262144, byte_buffer_view(buf_count262144_snlen18, 0, 3));
-    test_writer(4294967295, byte_buffer_view(buf_count4294967295_snlen18, 0, 3));
+    test_hdr_writer(0);
+    test_hdr_writer(131072);
+    test_hdr_writer(262144);
+    test_hdr_writer(4294967295);
+  } else {
+    FAIL();
+  }
+}
+
+/// \brief Test correct generation of PDCP PDUs
+TEST_P(pdcp_tx_test, pdu_gen)
+{
+  init(GetParam());
+
+  auto test_pdu_gen = [this](uint32_t tx_next) {
+    // Write SDU
+    byte_buffer sdu = {sdu1};
+    pdcp_tx->handle_sdu(std::move(sdu));
+
+    // Get generated PDU
+    ASSERT_EQ(test_frame.pdu_queue.size(), 1);
+    byte_buffer pdu = std::move(test_frame.pdu_queue.front());
+    test_frame.pdu_queue.pop();
+
+    // Get expected PDU
+    byte_buffer exp_pdu;
+    get_expected_pdu(tx_next, exp_pdu);
+
+    // FIXME for now, the PDCP only passes the SDU as it was
+    // Later this check will be changed to use the expected PDU
+    // rather than original SDU.
+    byte_buffer tmp = {sdu1};
+    ASSERT_EQ(tmp.length(), tmp.length());
+    ASSERT_EQ(pdu, tmp);
+    // ASSERT_EQ(pdu.length(), exp_pdu.length());
+    // ASSERT_EQ(pdu, exp_pdu);
+  };
+
+  if (config.sn_size == pdcp_sn_size::size12bits) {
+    test_pdu_gen(0);
+    test_pdu_gen(2048);
+    test_pdu_gen(4096);
+    test_pdu_gen(4294967295);
+  } else if (config.sn_size == pdcp_sn_size::size18bits) {
+    test_pdu_gen(0);
+    test_pdu_gen(131072);
+    test_pdu_gen(262144);
+    test_pdu_gen(4294967295);
   } else {
     FAIL();
   }

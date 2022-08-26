@@ -13,6 +13,23 @@
 
 using namespace srsgnb;
 
+/// \breif Receive an SDU from the upper layers, apply encription
+/// and integrity protection and pass the resulting PDU
+/// to the lower layers.
+///
+/// \param buf Buffer that hold the SDU from higher layers.
+void pdcp_entity_tx::handle_sdu(byte_buffer buf)
+{
+  bool max_hfn_reached = false; // FIXME actually check HFN
+  if (max_hfn_reached) {
+    upper_cn.on_max_hfn_reached();
+  }
+  lower_dn.on_new_pdu(std::move(buf));
+}
+
+/*
+ * PDU Helpers
+ */
 bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, uint32_t count)
 {
   // Sanity check: 18bit SRB not allowed

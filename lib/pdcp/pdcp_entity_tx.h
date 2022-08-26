@@ -39,6 +39,11 @@ public:
   }
 
   /*
+   * SDU/PDU handlers
+   */
+  void handle_sdu(byte_buffer buf) final;
+
+  /*
    * Header helpers
    */
   bool write_data_pdu_header(byte_buffer& buf, uint32_t count);
@@ -50,14 +55,6 @@ private:
   pdcp_tx_lower_notifier&         lower_dn;
   pdcp_tx_upper_control_notifier& upper_cn;
 
-  void handle_sdu(byte_buffer buf) final
-  {
-    bool max_hfn_reached = false; // FIXME actually check HFN
-    if (max_hfn_reached) {
-      upper_cn.on_max_hfn_reached();
-    }
-    lower_dn.on_new_pdu(std::move(buf));
-  }
   void stop_discard_timer(uint32_t count) final {}
 
   /*
