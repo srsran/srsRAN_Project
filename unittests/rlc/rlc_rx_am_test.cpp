@@ -689,6 +689,63 @@ TEST_P(rlc_rx_am_test, status_prohibit_timer)
   EXPECT_FALSE(rlc->status_report_required());
 }
 
+TEST_P(rlc_rx_am_test, reassembly_timer)
+{
+  init(GetParam());
+
+  uint32_t sn_state     = 0;
+  uint32_t sdu_size     = 10;
+  uint32_t segment_size = 1;
+
+  // check status report
+  rlc_am_status_pdu status_report = rlc->get_status_pdu();
+  EXPECT_EQ(status_report.ack_sn, sn_state);
+  EXPECT_EQ(status_report.get_nacks().size(), 0);
+  EXPECT_EQ(status_report.get_packed_size(), 3);
+  EXPECT_EQ(rlc->get_status_pdu_length(), 3);
+
+  // Create SDU and PDUs with SDU segments
+  std::list<byte_buffer> pdu_list = {};
+  byte_buffer            sdu;
+  ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
+  sn_state++;
+
+  // Push PDUs except for 5th into RLC
+  int i = 0;
+  for (const byte_buffer& pdu_buf : pdu_list) {
+    if (i != 5) {
+      byte_buffer_slice pdu = {pdu_buf.deep_copy()};
+      rlc->handle_pdu(pdu);
+    }
+    i++;
+  }
+
+  // Check that nothing was forwarded to upper layer
+  EXPECT_EQ(tester->sdu_queue.size(), 0);
+
+  // Let the reassembly timer expire
+  for (int i = 0; i < config.t_reassembly; i++) {
+    EXPECT_FALSE(rlc->status_report_required());
+    timers.tick_all();
+  }
+
+  EXPECT_TRUE(rlc->status_report_required());
+
+  // check status report
+  uint32_t nack_size = sn_size == rlc_am_sn_size::size12bits ? rlc_am_nr_status_pdu_sizeof_nack_sn_ext_12bit_sn
+                                                             : rlc_am_nr_status_pdu_sizeof_nack_sn_ext_18bit_sn;
+  status_report      = rlc->get_status_pdu();
+  EXPECT_EQ(status_report.ack_sn, sn_state);
+  EXPECT_EQ(status_report.get_packed_size(),
+            rlc_am_nr_status_pdu_sizeof_header_ack_sn + nack_size + rlc_am_nr_status_pdu_sizeof_nack_so);
+  EXPECT_EQ(rlc->get_status_pdu_length(),
+            rlc_am_nr_status_pdu_sizeof_header_ack_sn + nack_size + rlc_am_nr_status_pdu_sizeof_nack_so);
+  ASSERT_EQ(status_report.get_nacks().size(), 1);
+  EXPECT_TRUE(status_report.get_nacks().front().has_so);
+  EXPECT_EQ(status_report.get_nacks().front().so_start, 5);
+  EXPECT_EQ(status_report.get_nacks().front().so_end, 5);
+}
+
 TEST_P(rlc_rx_am_test, rx_without_segmentation)
 {
   init(GetParam());
