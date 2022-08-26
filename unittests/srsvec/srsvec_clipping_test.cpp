@@ -53,7 +53,7 @@ static void test_clip_magnitude_function(float clip_threshold)
   }
 
   // Clip with the tested function.
-  unsigned nof_clipped_sps = srsvec::clip_magnitude(input, clip_threshold, output);
+  unsigned nof_clipped_sps = srsvec::clip_magnitude(output, input, clip_threshold);
 
   // Determine the amount of error.
   for (std::size_t i = 0; i != nof_samples; ++i) {
@@ -94,7 +94,7 @@ static void test_clip_iq_function(float clip_threshold)
   }
 
   // Clip with the tested function.
-  unsigned nof_clipped_sps = srsvec::clip_iq(input, clip_threshold, output);
+  unsigned nof_clipped_sps = srsvec::clip_iq(output, input, clip_threshold);
 
   // Determine the amount of error.
   for (std::size_t i = 0; i != nof_samples; ++i) {
@@ -130,7 +130,7 @@ static void test_clip_function(float clip_threshold)
   }
 
   // Clip with the tested function.
-  unsigned nof_clipped_sps = srsvec::clip(input_fp, clip_threshold, output_fp);
+  unsigned nof_clipped_sps = srsvec::clip(output_fp, input_fp, clip_threshold);
 
   // Determine the amount of error.
   for (std::size_t i = 0; i != nof_fp_samples; ++i) {

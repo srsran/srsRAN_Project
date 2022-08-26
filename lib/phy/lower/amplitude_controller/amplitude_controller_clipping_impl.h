@@ -34,7 +34,7 @@ private:
   amplitude_controller_metrics metrics = {};
 
 public:
-  /// Constructs an amplitude controller.
+  /// \brief Constructs an amplitude controller.
   /// \param[in] enable_clipping Enables or disables the clipping process.
   /// \param[in] input_gain_dB  Sets the gain factor in dB applied to the input signal.
   /// \param[in] full_scale_lin Sets the full scale amplitude reference used to determine the amplitude ceiling.
