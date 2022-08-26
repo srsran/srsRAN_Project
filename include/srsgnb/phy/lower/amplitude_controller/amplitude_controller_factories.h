@@ -17,8 +17,8 @@
 
 namespace srsgnb {
 
-/// Describes an amplitude controller configuration.
-struct amplitude_controller_configuration {
+/// Describes an amplitude controller configuration for the clipping implementation.
+struct amplitude_controller_clipping_config {
   /// Enables or disables the clipping process.
   bool enable_clipping;
   /// Gain to be applied before the clipping process.
@@ -37,13 +37,12 @@ public:
   virtual ~amplitude_controller_factory() = default;
 
   /// \brief Creates an amplitude controller.
-  /// \param[in] config Amplitude controller configuration parameters.
   /// \return A unique pointer to an amplitude controller instance.
-  virtual std::unique_ptr<amplitude_controller>
-  create_amplitude_controller(const amplitude_controller_configuration& config) = 0;
+  virtual std::unique_ptr<amplitude_controller> create_amplitude_controller() = 0;
 };
 
-/// Creates an amplitude controller factory.
-std::shared_ptr<amplitude_controller_factory> create_amplitude_controller_factory();
+/// Creates a clipping amplitude controller factory.
+std::shared_ptr<amplitude_controller_factory>
+create_amplitude_controller_clipping_factory(const amplitude_controller_clipping_config& config);
 
 } // namespace srsgnb

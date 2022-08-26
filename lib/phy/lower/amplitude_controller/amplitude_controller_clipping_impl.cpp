@@ -8,7 +8,7 @@
  *
  */
 
-#include "amplitude_controller_impl.h"
+#include "amplitude_controller_clipping_impl.h"
 #include "srsgnb/srsvec/clip.h"
 #include "srsgnb/srsvec/compare.h"
 #include "srsgnb/srsvec/dot_prod.h"
@@ -16,7 +16,7 @@
 
 using namespace srsgnb;
 
-amplitude_controller_metrics amplitude_controller_impl::process(span<cf_t> output, span<const cf_t> input)
+amplitude_controller_metrics amplitude_controller_clipping_impl::process(span<cf_t> output, span<const cf_t> input)
 {
   srsgnb_srsvec_assert_size(output, input);
 
@@ -41,10 +41,10 @@ amplitude_controller_metrics amplitude_controller_impl::process(span<cf_t> outpu
   if (clipping_enabled) {
     metrics.nof_processed_samples += input.size();
     if (peak_amplitude * gain_lin > ceiling_lin) {
-      metrics.nof_clipped_samples += srsvec::clip(output, ceiling_lin, output);
+      metrics.nof_clipped_samples += srsvec::clip_iq(output, ceiling_lin, output);
     }
     metrics.clipping_probability =
-        (long double)metrics.nof_clipped_samples / (long double)metrics.nof_processed_samples;
+        static_cast<double>(metrics.nof_clipped_samples) / static_cast<double>(metrics.nof_processed_samples);
   } else {
     metrics.clipping_probability = 0.0F;
   }

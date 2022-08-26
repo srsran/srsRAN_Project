@@ -184,7 +184,7 @@ static std::string                               device_arguments;
 static std::atomic<bool>                         is_running = {true};
 
 // Amplitude control args.
-static float baseband_gain_dB       = -3.0F;
+static float baseband_gain_dB       = -2.5F;
 static bool  enable_clipping        = false;
 static float full_scale_amplitude   = 1.0F;
 static float amplitude_ceiling_dBFS = -0.1F;
@@ -303,12 +303,6 @@ static lower_phy_configuration create_lower_phy_config(baseband_gateway&        
   phy_config.error_notifier             = &error_notifier;
   phy_config.prach_async_executor       = &prach_executor;
 
-  // Amplitude controller configuration.
-  phy_config.amplitude_config.full_scale_lin  = full_scale_amplitude;
-  phy_config.amplitude_config.ceiling_dBFS    = amplitude_ceiling_dBFS;
-  phy_config.amplitude_config.enable_clipping = enable_clipping;
-  phy_config.amplitude_config.input_gain_dB   = baseband_gain_dB;
-
   for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
     lower_phy_sector_description sector_config;
     sector_config.bandwidth_rb = bw_rb;
@@ -382,8 +376,16 @@ static std::unique_ptr<lower_phy> build_lower_phy(baseband_gateway&             
     return nullptr;
   }
 
+  // Amplitude controller configuration.
+  amplitude_controller_clipping_config amplitude_config = {};
+  amplitude_config.full_scale_lin                       = full_scale_amplitude;
+  amplitude_config.ceiling_dBFS                         = amplitude_ceiling_dBFS;
+  amplitude_config.enable_clipping                      = enable_clipping;
+  amplitude_config.input_gain_dB                        = baseband_gain_dB;
+
   // Create amplitude control factory.
-  std::shared_ptr<amplitude_controller_factory> amplitude_control_factory = create_amplitude_controller_factory();
+  std::shared_ptr<amplitude_controller_factory> amplitude_control_factory =
+      create_amplitude_controller_clipping_factory(amplitude_config);
   if (!amplitude_control_factory) {
     srslog::fetch_basic_logger("TEST").error("Failed to create amplitude controller factory");
     return nullptr;

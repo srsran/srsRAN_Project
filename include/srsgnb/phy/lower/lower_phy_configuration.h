@@ -106,7 +106,7 @@ struct lower_phy_configuration {
   /// Indicates the log level.
   std::string log_level;
   /// Amplitude control parameters, including baseband gain and clipping.
-  amplitude_controller_configuration amplitude_config;
+  amplitude_controller_clipping_config amplitude_config;
 };
 
 } // namespace srsgnb

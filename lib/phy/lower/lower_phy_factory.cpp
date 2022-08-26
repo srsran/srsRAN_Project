@@ -82,8 +82,7 @@ public:
     // For each sector, create an amplitude controller.
     for (unsigned i = 0; i != config.sectors.size(); ++i) {
       // Prepare sector amplitude controller.
-      common_config.amplitude_controllers.emplace_back(
-          amplitude_control_factory->create_amplitude_controller(config.amplitude_config));
+      common_config.amplitude_controllers.emplace_back(amplitude_control_factory->create_amplitude_controller());
 
       // Make sure the amplitude controller creation is successful.
       srsgnb_assert(common_config.amplitude_controllers.back() != nullptr,

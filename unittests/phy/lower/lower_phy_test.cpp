@@ -67,9 +67,6 @@ static lower_phy_configuration create_phy_config(baseband_gateway_spy&         b
   config.nof_channels_per_stream                       = {1};
   config.log_level                                     = log_level;
 
-  // Keep the amplitude control clipping disabled throughout the test.
-  config.amplitude_config = {false, 0.0F, 1.0F, 0.0F};
-
   return config;
 }
 
@@ -248,7 +245,10 @@ int main()
   TESTASSERT(demodulator_factory);
   prach_factory = std::make_shared<prach_processor_factory_spy>();
   TESTASSERT(demodulator_factory);
-  amplitude_control_factory = create_amplitude_controller_factory();
+
+  // Keep the amplitude control clipping disabled throughout the test.
+  amplitude_controller_clipping_config amplitude_config = {false, 0.0F, 1.0F, 0.0F};
+  amplitude_control_factory = create_amplitude_controller_clipping_factory(amplitude_config);
   TESTASSERT(amplitude_control_factory);
 
   phy_factory =

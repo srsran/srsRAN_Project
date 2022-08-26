@@ -51,10 +51,6 @@ public:
   /// \return Amplitude controller metrics, including power measurements and clipping statistics.
   /// \note The output size and the input size must be equal.
   virtual amplitude_controller_metrics process(span<cf_t> output, span<const cf_t> input) = 0;
-
-  /// \brief Gets the amplitude controller metrics.
-  /// \return Amplitude controller metrics, including power measurements and clipping statistics.
-  virtual amplitude_controller_metrics get_metrics() const = 0;
 };
 
 } // namespace srsgnb

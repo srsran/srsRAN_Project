@@ -14,20 +14,49 @@
 
 using namespace srsgnb;
 
-unsigned srsvec::clip(span<const cf_t> x, float threshold, span<cf_t> y)
+unsigned srsvec::clip(span<const float> x, const float threshold, span<float> y)
 {
   srsgnb_srsvec_assert_size(x, y);
 
-  uint  nof_clipped_samples = 0;
-  uint  len                 = x.size();
-  float x_abs               = 0.0F;
+  unsigned nof_clipped_samples = 0;
+  unsigned len                 = x.size();
+
+  // Clip the output signal.
+  for (unsigned i = 0; i != len; ++i) {
+    float val = x[i];
+    if (val > threshold) {
+      val = threshold;
+      ++nof_clipped_samples;
+    } else if (val < -threshold) {
+      val = -threshold;
+      ++nof_clipped_samples;
+    }
+    y[i] = val;
+  }
+
+  return nof_clipped_samples;
+}
+
+unsigned srsvec::clip_iq(span<const cf_t> x, const float threshold, span<cf_t> y)
+{
+  span<const float> x_fp = span<const float>(reinterpret_cast<const float*>(x.data()), 2 * x.size());
+  span<float>       y_fp = span<float>(reinterpret_cast<float*>(y.data()), 2 * x.size());
+  return srsvec::clip(x_fp, threshold, y_fp);
+}
+
+unsigned srsvec::clip_magnitude(span<const cf_t> x, const float threshold, span<cf_t> y)
+{
+  srsgnb_srsvec_assert_size(x, y);
+
+  unsigned nof_clipped_samples = 0;
+  unsigned len                 = x.size();
 
   // Copy the input samples at the output.
   srsvec::copy(y, x);
 
   // Clip the output signal.
   for (unsigned i = 0; i != len; ++i) {
-    x_abs = std::sqrt(abs_sq(x[i]));
+    float x_abs = std::sqrt(abs_sq(x[i]));
     if (x_abs > threshold) {
       y[i] *= threshold / x_abs;
       ++nof_clipped_samples;

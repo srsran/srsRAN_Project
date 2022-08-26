@@ -44,7 +44,8 @@ std::unique_ptr<lower_phy> srsgnb::create_lower_phy(lower_phy_configuration& con
   report_fatal_error_if_not(prach_processor_factory, "Failed to create PRACH processor factory.");
 
   // Create amplitude control factory.
-  std::shared_ptr<amplitude_controller_factory> amplitude_control_factory = create_amplitude_controller_factory();
+  std::shared_ptr<amplitude_controller_factory> amplitude_control_factory =
+      create_amplitude_controller_clipping_factory(config.amplitude_config);
   report_fatal_error_if_not(amplitude_control_factory, "Failed to create amplitude controller factory.");
 
   // Create Lower PHY factory.

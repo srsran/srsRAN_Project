@@ -69,7 +69,7 @@ static bool                                      zmq_loopback   = true;
 static ssb_pattern_case                          ssb_pattern    = ssb_pattern_case::A;
 
 // Amplitude control args.
-static float baseband_gain_dB       = -3.0F;
+static float baseband_gain_dB       = -2.5F;
 static bool  enable_clipping        = false;
 static float full_scale_amplitude   = 1.0F;
 static float amplitude_ceiling_dBFS = -0.1F;
