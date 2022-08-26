@@ -172,8 +172,9 @@ inline bool
 rlc_am_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_am_sn_size sn_size, rlc_am_pdu_header* header)
 {
   byte_buffer_reader pdu_reader = pdu;
-  if (pdu_reader.empty()) {
-    srslog::fetch_basic_logger("RLC").warning("Unpacking header of empty RLC PDU");
+  if (pdu_reader.length() <= rlc_am_pdu_header_min_size(sn_size)) {
+    srslog::fetch_basic_logger("RLC").warning("AMD PDU too short for minimum header and payload: length={}",
+                                              pdu.length());
     return false;
   }
 
