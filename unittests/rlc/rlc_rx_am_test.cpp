@@ -637,6 +637,58 @@ TEST_P(rlc_rx_am_test, rx_duplicate_segments)
   }
 }
 
+TEST_P(rlc_rx_am_test, status_prohibit_timer)
+{
+  init(GetParam());
+
+  EXPECT_FALSE(rlc->status_report_required());
+
+  uint32_t sn_state = 0;
+  uint32_t sdu_size = 1;
+
+  // check status report, reset status_prohibit_timer
+  rlc_am_status_pdu status_report = rlc->get_status_pdu();
+  EXPECT_EQ(status_report.ack_sn, sn_state);
+  EXPECT_EQ(status_report.get_nacks().size(), 0);
+  EXPECT_EQ(status_report.get_packed_size(), 3);
+  EXPECT_EQ(rlc->get_status_pdu_length(), 3);
+
+  // Create SDU and PDU with full SDU
+  std::list<byte_buffer> pdu_list = {};
+  byte_buffer            sdu;
+  ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, sdu_size, sn_state));
+  sn_state++;
+
+  // Change polling bit in first byte of PDU (header)
+  *(pdu_list.front().begin()) |= 0b01000000; // set P = 1;
+
+  // Push into RLC
+  byte_buffer_slice pdu = {std::move(pdu_list.front())};
+  rlc->handle_pdu(pdu);
+
+  // Status report must not be required as long as status_prohibit_timer is running
+  EXPECT_FALSE(rlc->status_report_required());
+
+  for (int i = 0; i < config.t_status_prohibit; i++) {
+    EXPECT_FALSE(rlc->status_report_required());
+    timers.tick_all();
+  }
+  EXPECT_TRUE(rlc->status_report_required());
+
+  // reading the size of the status PDU must not change anything on the required status
+  EXPECT_EQ(rlc->get_status_pdu_length(), 3);
+  EXPECT_TRUE(rlc->status_report_required());
+
+  // check status report, reset status_prohibit_timer
+  status_report = rlc->get_status_pdu();
+  EXPECT_EQ(status_report.ack_sn, sn_state);
+  EXPECT_EQ(status_report.get_nacks().size(), 0);
+  EXPECT_EQ(status_report.get_packed_size(), 3);
+  EXPECT_EQ(rlc->get_status_pdu_length(), 3);
+
+  EXPECT_FALSE(rlc->status_report_required());
+}
+
 TEST_P(rlc_rx_am_test, rx_without_segmentation)
 {
   init(GetParam());
