@@ -412,6 +412,231 @@ TEST_P(rlc_rx_am_test, window_checker_upper_edge)
   EXPECT_FALSE(rlc->inside_rx_window(sn_outside_upper));
 }
 
+TEST_P(rlc_rx_am_test, rx_valid_control_pdu)
+{
+  init(GetParam());
+
+  EXPECT_EQ(tester->status.ack_sn, INVALID_RLC_SN);
+  EXPECT_EQ(tester->status.get_nacks().size(), 0);
+
+  // Create status PDU with one NACK
+  rlc_am_status_pdu status = {sn_size};
+  status.ack_sn            = 1234;
+  rlc_am_status_nack nack  = {};
+  nack.nack_sn             = 1230;
+  status.push_nack(nack);
+  byte_buffer pdu_buf = {};
+  EXPECT_TRUE(status.pack(pdu_buf));
+
+  // Pass through RLC
+  byte_buffer_slice pdu = {std::move(pdu_buf)};
+  rlc->handle_pdu(pdu);
+
+  // Pick and verify the received status PDU on the other end
+  EXPECT_EQ(tester->status.ack_sn, status.ack_sn);
+  ASSERT_EQ(tester->status.get_nacks().size(), status.get_nacks().size());
+  EXPECT_EQ(tester->status.get_nacks().front().nack_sn, nack.nack_sn);
+}
+
+TEST_P(rlc_rx_am_test, rx_invalid_control_pdu)
+{
+  init(GetParam());
+
+  EXPECT_EQ(tester->status.ack_sn, INVALID_RLC_SN);
+  EXPECT_EQ(tester->status.get_nacks().size(), 0);
+
+  // Create status PDU
+  rlc_am_status_pdu status = {sn_size};
+  status.ack_sn            = 1234;
+  byte_buffer pdu_buf      = {};
+  EXPECT_TRUE(status.pack(pdu_buf));
+
+  // set reserved bits in CPT field
+  *(pdu_buf.begin()) |= 0x70;
+
+  // Push into RLC
+  byte_buffer_slice pdu = {std::move(pdu_buf)};
+  rlc->handle_pdu(pdu);
+
+  // Pick and verify the received status PDU on the other end
+  EXPECT_EQ(tester->status.ack_sn, INVALID_RLC_SN);
+  EXPECT_EQ(tester->status.get_nacks().size(), 0);
+}
+
+TEST_P(rlc_rx_am_test, rx_short_data_pdu)
+{
+  init(GetParam());
+
+  EXPECT_FALSE(rlc->status_report_required());
+
+  // Create too short data PDU with polling bit set
+  byte_buffer pdu_buf = {};
+  pdu_buf.append(0b11000000); // D/C = 1; P = 1
+
+  // Push into RLC
+  byte_buffer_slice pdu = {std::move(pdu_buf)};
+  rlc->handle_pdu(pdu);
+
+  // Check if polling bit of malformed PDU was properly ignored
+  EXPECT_FALSE(rlc->status_report_required());
+}
+
+TEST_P(rlc_rx_am_test, rx_polling_bit_sn_inside_rx_window)
+{
+  init(GetParam());
+
+  EXPECT_FALSE(rlc->status_report_required());
+
+  uint32_t sn_state = 0;
+  uint32_t sdu_size = 1;
+
+  // Create SDU and PDU with full SDU
+  std::list<byte_buffer> pdu_list = {};
+  byte_buffer            sdu;
+  ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, sdu_size, sn_state));
+  sn_state++;
+
+  // Change polling bit in first byte of PDU (header)
+  *(pdu_list.front().begin()) |= 0b01000000; // set P = 1;
+
+  // Push into RLC
+  byte_buffer_slice pdu = {std::move(pdu_list.front())};
+  rlc->handle_pdu(pdu);
+
+  // Check if polling bit of malformed PDU was properly ignored
+  EXPECT_TRUE(rlc->status_report_required());
+
+  // Check if SDU was properly unpacked and forwarded
+  ASSERT_EQ(tester->sdu_queue.size(), 1);
+  EXPECT_EQ(tester->sdu_queue.front().length(), sdu_size);
+  EXPECT_TRUE(std::equal(tester->sdu_queue.front().begin(), tester->sdu_queue.front().end(), sdu.begin(), sdu.end()));
+  tester->sdu_queue.pop();
+}
+
+TEST_P(rlc_rx_am_test, rx_polling_bit_sn_outside_rx_window)
+{
+  init(GetParam());
+
+  EXPECT_FALSE(rlc->status_report_required());
+
+  uint32_t sn_state = window_size(to_number(sn_size)); // out-of-window SN
+  uint32_t sdu_size = 1;
+
+  // Create SDU and PDU with full SDU
+  std::list<byte_buffer> pdu_list = {};
+  byte_buffer            sdu;
+  ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, sdu_size, sn_state));
+  sn_state++;
+
+  // Change polling bit in first byte of PDU (header)
+  *(pdu_list.front().begin()) |= 0b01000000; // set P = 1;
+
+  // Push into RLC
+  byte_buffer_slice pdu = {std::move(pdu_list.front())};
+  rlc->handle_pdu(pdu);
+
+  // Check if polling bit was considered, despite out-of-window SN
+  EXPECT_TRUE(rlc->status_report_required());
+
+  // Check if SDU was properly ignored
+  ASSERT_EQ(tester->sdu_queue.size(), 0);
+}
+
+TEST_P(rlc_rx_am_test, rx_polling_bit_SDU_duplicate)
+{
+  init(GetParam());
+
+  EXPECT_FALSE(rlc->status_report_required());
+
+  uint32_t sn_state = 1; // further incremented SN to prevent that reception will advance rx_window
+  uint32_t sdu_size = 1;
+
+  // Create SDU and PDU with full SDU
+  std::list<byte_buffer> pdu_list = {};
+  byte_buffer            sdu;
+  ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, sdu_size, sn_state));
+  sn_state++;
+
+  // Push into RLC
+  byte_buffer_slice pdu = {pdu_list.front().deep_copy()};
+  rlc->handle_pdu(pdu);
+
+  // Check if polling bit has not changed
+  EXPECT_FALSE(rlc->status_report_required());
+
+  // Check if SDU was properly unpacked and forwarded
+  ASSERT_EQ(tester->sdu_queue.size(), 1);
+  EXPECT_EQ(tester->sdu_queue.front().length(), sdu_size);
+  EXPECT_TRUE(std::equal(tester->sdu_queue.front().begin(), tester->sdu_queue.front().end(), sdu.begin(), sdu.end()));
+  tester->sdu_queue.pop();
+
+  // Change polling bit in first byte of PDU (header)
+  *(pdu_list.front().begin()) |= 0b01000000; // set P = 1;
+
+  // Push into RLC
+  pdu = {pdu_list.front().deep_copy()};
+  rlc->handle_pdu(pdu);
+
+  // Check if polling bit was considered, despite duplicate SN
+  EXPECT_TRUE(rlc->status_report_required());
+
+  // Check if duplicate SDU was properly ignored
+  ASSERT_EQ(tester->sdu_queue.size(), 0);
+}
+
+TEST_P(rlc_rx_am_test, rx_duplicate_segments)
+{
+  init(GetParam());
+
+  uint32_t sn_state     = 0;
+  uint32_t sdu_size     = 10;
+  uint32_t segment_size = 1;
+
+  // check status report
+  rlc_am_status_pdu status_report = rlc->get_status_pdu();
+  EXPECT_EQ(status_report.ack_sn, sn_state);
+  EXPECT_EQ(status_report.get_nacks().size(), 0);
+  EXPECT_EQ(status_report.get_packed_size(), 3);
+  EXPECT_EQ(rlc->get_status_pdu_length(), 3);
+
+  // Create SDU and PDUs with full SDU segments
+  std::list<byte_buffer> pdu_list = {};
+  byte_buffer            sdu;
+  ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
+  sn_state++;
+
+  // Push PDUs except for 5th into RLC
+  int i = 0;
+  for (const byte_buffer& pdu_buf : pdu_list) {
+    if (i != 5) {
+      byte_buffer_slice pdu = {pdu_buf.deep_copy()};
+      rlc->handle_pdu(pdu);
+    }
+    i++;
+  }
+
+  // Check that nothing was forwarded to upper layer
+  EXPECT_EQ(tester->sdu_queue.size(), 0);
+
+  // Push all PDUs again; check that nothing is forwarded to upper layer before except after Rx of 5th segment
+  i = 0;
+  for (const byte_buffer& pdu_buf : pdu_list) {
+    byte_buffer_slice pdu = {pdu_buf.deep_copy()};
+    rlc->handle_pdu(pdu);
+    if (i == 5) {
+      // check if SDU has been assembled correctly
+      ASSERT_EQ(tester->sdu_queue.size(), 1);
+      EXPECT_EQ(tester->sdu_queue.front().length(), sdu_size);
+      EXPECT_TRUE(
+          std::equal(tester->sdu_queue.front().begin(), tester->sdu_queue.front().end(), sdu.begin(), sdu.end()));
+      tester->sdu_queue.pop();
+    } else {
+      EXPECT_EQ(tester->sdu_queue.size(), 0);
+    }
+    i++;
+  }
+}
+
 TEST_P(rlc_rx_am_test, rx_without_segmentation)
 {
   init(GetParam());
