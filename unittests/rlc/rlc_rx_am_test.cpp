@@ -503,7 +503,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sn_inside_rx_window)
   byte_buffer_slice pdu = {std::move(pdu_list.front())};
   rlc->handle_pdu(pdu);
 
-  // Check if polling bit of malformed PDU was properly ignored
+  // Check if polling bit of PDU was properly considered
   EXPECT_TRUE(rlc->status_report_required());
 
   // Check if SDU was properly unpacked and forwarded
