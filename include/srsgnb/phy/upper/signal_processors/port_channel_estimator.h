@@ -14,14 +14,19 @@
 #pragma once
 
 #include "srsgnb/adt/bounded_bitset.h"
-#include "srsgnb/adt/span.h"
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/upper/channel_estimation.h"
 #include "srsgnb/phy/upper/dmrs_mapping.h"
-#include "srsgnb/ran/cyclic_prefix.h"
+#include "srsgnb/phy/upper/re_measurement.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
 namespace srsgnb {
+
+/// Container for DM-RS symbols.
+using dmrs_symbol_list = static_re_measurement<cf_t,
+                                               pusch_constants::MAX_NOF_DMRS_SUBC,
+                                               pusch_constants::MAX_NOF_DMRS_SYMBOLS,
+                                               pusch_constants::MAX_NOF_LAYERS>;
 
 /// DM-RS-based channel estimator for one receive antenna port.
 class port_channel_estimator

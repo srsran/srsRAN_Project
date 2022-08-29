@@ -56,14 +56,14 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
   // Select the DM-RS pattern for this PUSCH transmission.
   span<dmrs_pattern> coordinates = span<dmrs_pattern>(temp_coordinates).first(nof_tx_layers);
 
-  // Number of OFDM symbols carrying DM-RS.
-  unsigned nof_dmrs_symbols = std::count(config.symbols_mask.begin(), config.symbols_mask.end(), true);
+  // Prepare symbol buffer dimensions.
+  re_measurement_dimensions dims;
+  dims.nof_subc    = config.rb_mask.count() * config.type.nof_dmrs_per_rb();
+  dims.nof_symbols = std::count(config.symbols_mask.begin(), config.symbols_mask.end(), true);
+  dims.nof_slices  = nof_tx_layers;
 
-  // Number of DM-RS symbols per OFDM symbol.
-  unsigned nof_dmrs_per_symbol = config.rb_mask.count() * config.type.nof_dmrs_per_rb();
-
-  // Prepare symbol buffer.
-  temp_symbols.resize(nof_dmrs_per_symbol, nof_dmrs_symbols, config.nof_tx_layers);
+  // Resize symbol buffer.
+  temp_symbols.resize(dims);
 
   // Generate symbols and allocation patterns.
   generate(temp_symbols, coordinates, config);
@@ -134,7 +134,7 @@ void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&    dmrs_symbol_buffer
     prg->init(c_init);
 
     // Select a view to the DM-RS symbols for this OFDM symbol and layer 0.
-    span<cf_t> dmrs_symbols = dmrs_symbol_buffer.get_subc(dmrs_symbol_index, 0);
+    span<cf_t> dmrs_symbols = dmrs_symbol_buffer.get_symbol(dmrs_symbol_index, 0);
 
     // Generate DM-RS for PUSCH.
     sequence_generation(dmrs_symbols, ofdm_symbol_index, cfg);
@@ -144,22 +144,23 @@ void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&    dmrs_symbol_buffer
   }
 
   // For each layer...
-  for (unsigned tx_layer = 0; tx_layer != cfg.nof_tx_layers; ++tx_layer) {
+  for (unsigned i_layer = 0; i_layer != cfg.nof_tx_layers; ++i_layer) {
     // Select layer parameters.
-    const parameters& params = (cfg.type == dmrs_type::TYPE1) ? params_type1[tx_layer] : params_type2[tx_layer];
+    const parameters& params = (cfg.type == dmrs_type::TYPE1) ? params_type1[i_layer] : params_type2[i_layer];
 
     // Skip copy for layer 0.
-    if (tx_layer != 0) {
+    if (i_layer != 0) {
       // For each symbol containing DMRS...
-      for (unsigned symbol = 0, symbol_end = dmrs_symbol_buffer.get_nof_symbols(); symbol != symbol_end; ++symbol) {
+      for (unsigned i_symbol = 0, i_symbol_end = dmrs_symbol_buffer.size().nof_symbols; i_symbol != i_symbol_end;
+           ++i_symbol) {
         // Get a view of the symbols for the current layer.
-        span<cf_t> dmrs = dmrs_symbol_buffer.get_subc(symbol, tx_layer);
+        span<cf_t> dmrs = dmrs_symbol_buffer.get_symbol(i_symbol, i_layer);
 
         // Get a view of the symbols for layer 0.
-        span<const cf_t> dmrs_layer0 = dmrs_symbol_buffer.get_subc(symbol, 0);
+        span<const cf_t> dmrs_layer0 = dmrs_symbol_buffer.get_symbol(i_symbol, 0);
 
         // If a time weight is required...
-        if (params.w_t[0] != params.w_t[1] && symbol % 2 == 1) {
+        if (params.w_t[0] != params.w_t[1] && i_symbol % 2 == 1) {
           // Apply the weight.
           srsvec::sc_prod(dmrs_layer0, params.w_t[1], dmrs);
         } else {
@@ -177,8 +178,8 @@ void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&    dmrs_symbol_buffer
       }
     }
 
-    mask[tx_layer].symbols    = cfg.symbols_mask;
-    mask[tx_layer].rb_mask    = cfg.rb_mask;
-    mask[tx_layer].re_pattern = params.re_pattern;
+    mask[i_layer].symbols    = cfg.symbols_mask;
+    mask[i_layer].rb_mask    = cfg.rb_mask;
+    mask[i_layer].re_pattern = params.re_pattern;
   }
 }

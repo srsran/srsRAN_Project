@@ -31,9 +31,9 @@ public:
     re_measurement_dimensions                     noise_vars_size   = noise_vars.size();
     re_measurement_dimensions                     ch_symbols_size   = ch_symbols.size();
     channel_estimate::channel_estimate_dimensions ch_estimates_size = ch_estimates.size();
-    TESTASSERT((mod_symbols_size.nof_prb == noise_vars_size.nof_prb) &&
-                   (mod_symbols_size.nof_prb == ch_symbols_size.nof_prb) &&
-                   (mod_symbols_size.nof_prb == ch_estimates_size.nof_prb),
+    TESTASSERT((mod_symbols_size.nof_subc == noise_vars_size.nof_subc) &&
+                   (mod_symbols_size.nof_subc == ch_symbols_size.nof_subc) &&
+                   (mod_symbols_size.nof_subc == ch_estimates_size.nof_prb * NRE),
                "Number of PRBs does not match.");
     TESTASSERT((mod_symbols_size.nof_symbols == noise_vars_size.nof_symbols) &&
                    (mod_symbols_size.nof_symbols == ch_symbols_size.nof_symbols) &&
@@ -56,13 +56,13 @@ std::unique_ptr<channel_equalizer> create_ch_equalizer()
 void read_symbols(re_measurement<cf_t>& symbols, const re_measurement_exploded& syms_expl)
 {
   re_measurement_dimensions re_dims;
-  re_dims.nof_prb     = syms_expl.nof_prb;
+  re_dims.nof_subc    = syms_expl.nof_prb * NRE;
   re_dims.nof_symbols = syms_expl.nof_symbols;
   re_dims.nof_slices  = syms_expl.nof_slices;
 
   symbols.resize(re_dims);
   const std::vector<cf_t> all_syms     = syms_expl.measurements.read();
-  unsigned                slice_length = re_dims.nof_symbols * re_dims.nof_prb * NRE;
+  unsigned                slice_length = re_dims.nof_symbols * re_dims.nof_subc;
   TESTASSERT_EQ(slice_length * re_dims.nof_slices, all_syms.size(), "Wrong number of symbols.");
 
   span<const cf_t> all_syms_span(all_syms);
@@ -102,11 +102,12 @@ void read_ch_estimates(channel_estimate& ch_est, const ch_estimates_exploded& ch
 int main()
 {
   std::unique_ptr<channel_equalizer> test_equalizer = create_ch_equalizer();
-  re_measurement<cf_t>               test_rx_symbols;
-  re_measurement<cf_t>               test_eq_symbols_expected;
-  re_measurement<cf_t>               test_eq_symbols_actual;
-  re_measurement<float>              test_noise_vars;
-  channel_estimate                   test_ch_estimate;
+  dynamic_re_measurement<cf_t>       test_rx_symbols({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_PORTS});
+  dynamic_re_measurement<cf_t>       test_eq_symbols_expected({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_PORTS});
+  dynamic_re_measurement<cf_t>       test_eq_symbols_actual(
+      {MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS});
+  dynamic_re_measurement<float> test_noise_vars({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS});
+  channel_estimate              test_ch_estimate;
   for (const auto& t_case : channel_equalizer_test_data) {
     read_symbols(test_rx_symbols, t_case.received_symbols);
     read_symbols(test_eq_symbols_expected, t_case.equalized_symbols);

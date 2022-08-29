@@ -12,6 +12,7 @@
 #pragma once
 
 #include "srsgnb/adt/span.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <array>
 #include <numeric>
 #include <vector>
@@ -100,7 +101,7 @@ private:
                     "Dimension {} index {} exceeds the maximum index {}.",
                     dimension_index + N,
                     indices[dimension_index],
-                    dimensions_size[dimension_index + N] - 1);
+                    dimensions_size[dimension_index + N]);
       offset += stride * indices[dimension_index];
       stride *= dimensions_size[dimension_index + N];
     }

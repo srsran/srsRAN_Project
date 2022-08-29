@@ -306,66 +306,6 @@ private:
   }
 };
 
-/// DM-RS symbols.
-class dmrs_symbol_list
-{
-public:
-  /// \brief Resizes the DM-RS symbol list.
-  /// \param[in] nof_subc    Number of resource elements per symbol.
-  /// \param[in] nof_symbols Number of OFDM symbols.
-  /// \param[in] nof_layers  Number of transmission layers.
-  void resize(unsigned nof_subc, unsigned nof_symbols, unsigned nof_layers)
-  {
-    srsgnb_assert(nof_subc <= pusch_constants::MAX_NOF_DMRS_SUBC,
-                  "The number of subcarriers {} exceeds the maximum {}.",
-                  nof_symbols,
-                  pusch_constants::MAX_NOF_DMRS_SUBC);
-    srsgnb_assert(nof_symbols <= pusch_constants::MAX_NOF_DMRS_SYMBOLS,
-                  "The number of OFDM symbols {} exceeds the maximum {}.",
-                  nof_symbols,
-                  pusch_constants::MAX_NOF_DMRS_SYMBOLS);
-    srsgnb_assert(nof_layers <= pusch_constants::MAX_NOF_LAYERS,
-                  "The number of layers {} exceeds the maximum {}.",
-                  nof_layers,
-                  pusch_constants::MAX_NOF_LAYERS);
-    // Resize data.
-    data.resize({nof_subc, nof_symbols, nof_layers});
-  }
-
-  /// Gets the current number of subcarriers.
-  unsigned get_nof_subc() const { return data.get_dimensions_size()[0]; }
-
-  /// Gets the current number of symbols.
-  unsigned get_nof_symbols() const { return data.get_dimensions_size()[1]; }
-
-  /// Gets the current number of layers.
-  unsigned get_nof_layers() const { return data.get_dimensions_size()[2]; }
-
-  /// Gets a read-only view of the subcarriers for a certain symbol and layer.
-  span<const cf_t> get_subc(unsigned symbol, unsigned layer) const { return data.get_view<1>({symbol, layer}); }
-
-  /// Gets a view of the subcarriers for a certain symbol and layer.
-  span<cf_t> get_subc(unsigned symbol, unsigned layer) { return data.get_view<1>({symbol, layer}); }
-
-  /// Gets a read-only view of the symbols for a certain layer.
-  span<const cf_t> get_symbols(unsigned layer) const { return data.get_view<2>({layer}); }
-
-  /// Gets a view of the symbols for a certain layer.
-  span<cf_t> get_symbols(unsigned layer) { return data.get_view<2>({layer}); }
-
-private:
-  /// Maximum number of DM-RS symbols per slot.
-  static constexpr unsigned MAX_NOF_DMRS_PER_SLOT =
-      pusch_constants::MAX_NOF_DMRS_SUBC * pusch_constants::MAX_NOF_DMRS_SYMBOLS * pusch_constants::MAX_NOF_LAYERS;
-
-  /// \brief Container for symbols.
-  ///
-  /// The symbols should be thought as three-dimensional tensor with dimensions representing, in order,
-  /// subcarriers, OFDM symbols, and, finally, transmit layers. However, it is represented as a single
-  /// vector, indexed in the same order: i) subcarriers, ii) OFDM symbols, iii) Tx layers.
-  static_tensor<3, cf_t, MAX_NOF_DMRS_PER_SLOT> data;
-};
-
 /// \brief DM-RS pattern to specify the position of DM-RS symbols in the resource grid.
 ///
 /// DM-RS symbols are transmitted with a specific subcarrier pattern that repeats at specific OFDM symbols within the

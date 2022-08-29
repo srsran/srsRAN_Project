@@ -28,7 +28,12 @@ public:
   pusch_demodulator_impl(std::unique_ptr<channel_equalizer>       eq,
                          std::unique_ptr<demodulation_mapper>     demap,
                          std::unique_ptr<pseudo_random_generator> dscr) :
-    equalizer(std::move(eq)), demapper(std::move(demap)), descrambler(std::move(dscr))
+    equalizer(std::move(eq)),
+    demapper(std::move(demap)),
+    descrambler(std::move(dscr)),
+    ch_symbols({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_PORTS}),
+    mod_symbols_eq({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS}),
+    noise_vars_eq({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS})
   {
     srsgnb_assert(equalizer, "Invalid pointer to channel_equalizer object.");
     srsgnb_assert(demapper, "Invalid pointer to demodulation_mapper object.");
@@ -50,7 +55,7 @@ private:
   /// \param[out] symbols PUSCH channel symbols, organized by receive antenna port.
   /// \param[in]  grid    Resource grid for the current slot.
   /// \param[in]  config  Configuration parameters.
-  void get_ch_symbols(re_measurement<cf_t>& symbols, const resource_grid_reader& grid, const configuration& config)
+  void get_ch_symbols(equalizer_ch_symbol_list& symbols, const resource_grid_reader& grid, const configuration& config)
   {
     // For now, do nothing.
   }
@@ -65,11 +70,11 @@ private:
   /// \param[in]  symbols_in      Equalized modulation and DM-RS symbols, grouped by layer.
   /// \param[in]  noise_vars_in   Equivalent symbol noise variances, grouped by layer.
   /// \param[in]  config          Configuration parameters.
-  void remove_dmrs(static_vector<cf_t, MAX_NOF_DATA_LLR>&  symbols_out,
-                   static_vector<float, MAX_NOF_DATA_LLR>& noise_vars_out,
-                   const re_measurement<cf_t>&             symbols_in,
-                   const re_measurement<float>&            noise_vars_in,
-                   const configuration&                    config)
+  void remove_dmrs(span<cf_t>                      symbols_out,
+                   span<float>                     noise_vars_out,
+                   const equalizer_symbol_list&    symbols_in,
+                   const equalizer_noise_var_list& noise_vars_in,
+                   const configuration&            config)
   {
     // For now, do nothing.
   }
@@ -125,11 +130,11 @@ private:
   std::unique_ptr<pseudo_random_generator> descrambler;
 
   /// Buffer used to transfer channel modulation symbols from the resource grid to the equalizer.
-  re_measurement<cf_t> ch_symbols;
+  dynamic_re_measurement<cf_t> ch_symbols;
   /// Buffer used to store channel modulation symbols at the equalizer output.
-  re_measurement<cf_t> mod_symbols_eq;
+  dynamic_re_measurement<cf_t> mod_symbols_eq;
   /// Buffer used to transfer symbol noise variances at the equalizer output.
-  re_measurement<float> noise_vars_eq;
+  dynamic_re_measurement<float> noise_vars_eq;
   /// Buffer used to transfer channel modulation symbols to the demodulator.
   static_vector<cf_t, MAX_NOF_DATA_LLR> mod_symbols_data;
   /// Buffer used to transfer symbol noise variances to the demodulator.

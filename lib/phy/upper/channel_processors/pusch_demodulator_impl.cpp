@@ -25,7 +25,7 @@ void pusch_demodulator_impl::demodulate(span<log_likelihood_ratio>  data,
                                         const configuration&        config)
 {
   re_measurement_dimensions re_dims = {};
-  re_dims.nof_prb                   = config.rb_mask.count();
+  re_dims.nof_subc                  = config.rb_mask.count() * NRE;
   re_dims.nof_symbols               = config.nof_symbols;
   re_dims.nof_slices                = config.rx_ports.size();
 
