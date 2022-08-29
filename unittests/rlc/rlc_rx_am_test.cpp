@@ -746,6 +746,150 @@ TEST_P(rlc_rx_am_test, reassembly_timer)
   EXPECT_EQ(status_report.get_nacks().front().so_end, 5);
 }
 
+TEST_P(rlc_rx_am_test, status_report)
+{
+  init(GetParam());
+
+  uint32_t sn_state     = 0;
+  uint32_t sdu_size     = 10;
+  uint32_t segment_size = 1;
+
+  // check status report
+  rlc_am_status_pdu status_report = rlc->get_status_pdu();
+  EXPECT_EQ(status_report.ack_sn, sn_state);
+  EXPECT_EQ(status_report.get_nacks().size(), 0);
+  EXPECT_EQ(status_report.get_packed_size(), 3);
+  EXPECT_EQ(rlc->get_status_pdu_length(), 3);
+
+  // Create SDU and PDUs with SDU segments
+  std::list<byte_buffer> pdu_list = {};
+  byte_buffer            sdu;
+  ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
+  sn_state++;
+
+  // Keep missing PDUs for later
+  std::list<byte_buffer> missing_pdus = {};
+
+  // Push PDUs except for 4th, 6th and 7th into RLC
+  uint32_t i = 0;
+  for (byte_buffer& pdu_buf : pdu_list) {
+    if (i != 4 && i != 6 && i != 7) {
+      byte_buffer_slice pdu = {std::move(pdu_buf)};
+      rlc->handle_pdu(pdu);
+    } else {
+      missing_pdus.push_back(std::move(pdu_buf));
+    }
+    i++;
+  }
+
+  // Check that nothing was forwarded to upper layer
+  EXPECT_EQ(tester->sdu_queue.size(), 0);
+
+  // Create further SDUs and PDUs with full SDUs
+  uint32_t n_full_sdus = 10;
+  for (i = 0; i < n_full_sdus; i++) {
+    pdu_list.clear();
+    ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, sdu_size, sn_state));
+
+    // Push PDUs except for 4th, 6th and 7th into RLC
+    if (sn_state != 4 && sn_state != 6 && sn_state != 7) {
+      byte_buffer_slice pdu = {std::move(pdu_list.front())};
+      rlc->handle_pdu(pdu);
+    } else {
+      missing_pdus.push_back(std::move(pdu_list.front()));
+    }
+    sn_state++;
+  }
+
+  // Check complete SDUs were forwarded to upper layer
+  EXPECT_EQ(tester->sdu_queue.size(), 7);
+
+  // Let the reassembly timer expire (advance rx_highest_status to 4 and rx_next_status_trigger to 11)
+  for (int t = 0; t < config.t_reassembly; t++) {
+    EXPECT_FALSE(rlc->status_report_required());
+    timers.tick_all();
+  }
+
+  EXPECT_TRUE(rlc->status_report_required());
+
+  // Check status report
+  uint32_t nack_size = sn_size == rlc_am_sn_size::size12bits ? rlc_am_nr_status_pdu_sizeof_nack_sn_ext_12bit_sn
+                                                             : rlc_am_nr_status_pdu_sizeof_nack_sn_ext_18bit_sn;
+  status_report      = rlc->get_status_pdu();
+  EXPECT_EQ(status_report.ack_sn, 4);
+  EXPECT_EQ(status_report.get_packed_size(),
+            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 2 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so));
+  EXPECT_EQ(rlc->get_status_pdu_length(),
+            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 2 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so));
+  ASSERT_EQ(status_report.get_nacks().size(), 2);
+  EXPECT_TRUE(status_report.get_nacks().front().has_so);
+  EXPECT_EQ(status_report.get_nacks().at(0).so_start, 4);
+  EXPECT_EQ(status_report.get_nacks().at(0).so_end, 4);
+  EXPECT_EQ(status_report.get_nacks().at(1).so_start, 6);
+  EXPECT_EQ(status_report.get_nacks().at(1).so_end, 7);
+
+  // Create SDU and PDU with full SDU (set poll bit)
+  pdu_list.clear();
+  ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, sdu_size, sn_state));
+  sn_state++;
+
+  // Change polling bit in first byte of PDU (header)
+  *(pdu_list.front().begin()) |= 0b01000000; // set P = 1;
+
+  // Push into RLC
+  byte_buffer_slice pdu = {std::move(pdu_list.front())};
+  rlc->handle_pdu(pdu);
+
+  EXPECT_FALSE(rlc->status_report_required()); // status prohibit timer is not yet expired, regardless we read status
+
+  // Check status report
+  status_report = rlc->get_status_pdu();
+  EXPECT_EQ(status_report.ack_sn, 4);
+  EXPECT_EQ(status_report.get_packed_size(),
+            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 2 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so));
+  EXPECT_EQ(rlc->get_status_pdu_length(),
+            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 2 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so));
+  ASSERT_EQ(status_report.get_nacks().size(), 2);
+  EXPECT_TRUE(status_report.get_nacks().front().has_so);
+  EXPECT_EQ(status_report.get_nacks().at(0).so_start, 4);
+  EXPECT_EQ(status_report.get_nacks().at(0).so_end, 4);
+  EXPECT_EQ(status_report.get_nacks().at(1).so_start, 6);
+  EXPECT_EQ(status_report.get_nacks().at(1).so_end, 7);
+
+  // Let the reassembly timer expire (advance rx_highest_status to 12)
+  for (int t = 0; t < config.t_reassembly; t++) {
+    timers.tick_all();
+  }
+
+  // Check status report
+  status_report = rlc->get_status_pdu();
+  EXPECT_EQ(status_report.ack_sn, 12);
+  EXPECT_EQ(status_report.get_packed_size(),
+            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 2 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so) +
+                2 * nack_size + rlc_am_nr_status_pdu_sizeof_nack_range);
+  EXPECT_EQ(rlc->get_status_pdu_length(),
+            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 2 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so) +
+                2 * nack_size + rlc_am_nr_status_pdu_sizeof_nack_range);
+  ASSERT_EQ(status_report.get_nacks().size(), 4);
+  EXPECT_EQ(status_report.get_nacks().at(0).nack_sn, 0);
+  EXPECT_TRUE(status_report.get_nacks().at(0).has_so);
+  EXPECT_EQ(status_report.get_nacks().at(0).so_start, 4);
+  EXPECT_EQ(status_report.get_nacks().at(0).so_end, 4);
+
+  EXPECT_EQ(status_report.get_nacks().at(1).nack_sn, 0);
+  EXPECT_TRUE(status_report.get_nacks().at(0).has_so);
+  EXPECT_EQ(status_report.get_nacks().at(1).so_start, 6);
+  EXPECT_EQ(status_report.get_nacks().at(1).so_end, 7);
+
+  EXPECT_EQ(status_report.get_nacks().at(2).nack_sn, 4);
+  EXPECT_FALSE(status_report.get_nacks().at(2).has_so);
+
+  EXPECT_EQ(status_report.get_nacks().at(3).nack_sn, 6);
+  EXPECT_FALSE(status_report.get_nacks().at(3).has_so);
+  EXPECT_TRUE(status_report.get_nacks().at(3).has_nack_range);
+  EXPECT_EQ(status_report.get_nacks().at(3).nack_range, 2);
+}
+
 TEST_P(rlc_rx_am_test, rx_without_segmentation)
 {
   init(GetParam());
