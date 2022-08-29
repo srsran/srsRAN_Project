@@ -70,9 +70,9 @@ ng_setup_request_message generate_ng_setup_request_message()
   return request_msg;
 }
 
-ngap_msg generate_ng_setup_response_message()
+ngap_message generate_ng_setup_response_message()
 {
-  ngap_msg ng_setup_response = {};
+  ngap_message ng_setup_response = {};
 
   ng_setup_response.pdu.set_successful_outcome();
   ng_setup_response.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_NG_SETUP);
@@ -101,9 +101,9 @@ ngap_msg generate_ng_setup_response_message()
   return ng_setup_response;
 }
 
-ngap_msg generate_ng_setup_failure_message()
+ngap_message generate_ng_setup_failure_message()
 {
-  ngap_msg ng_setup_failure = {};
+  ngap_message ng_setup_failure = {};
 
   ng_setup_failure.pdu.set_unsuccessful_outcome();
   ng_setup_failure.pdu.unsuccessful_outcome().load_info_obj(ASN1_NGAP_ID_NG_SETUP);
@@ -118,9 +118,9 @@ ngap_msg generate_ng_setup_failure_message()
   return ng_setup_failure;
 }
 
-ngap_msg generate_ng_setup_failure_message_with_time_to_wait(asn1::ngap::time_to_wait_e time_to_wait)
+ngap_message generate_ng_setup_failure_message_with_time_to_wait(asn1::ngap::time_to_wait_e time_to_wait)
 {
-  ngap_msg ng_setup_failure = generate_ng_setup_failure_message();
+  ngap_message ng_setup_failure = generate_ng_setup_failure_message();
 
   auto& setup_fail                 = ng_setup_failure.pdu.unsuccessful_outcome().value.ng_setup_fail();
   setup_fail->time_to_wait_present = true;

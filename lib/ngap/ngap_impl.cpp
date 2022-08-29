@@ -36,7 +36,7 @@ async_task<ng_setup_response_message> ngap_impl::handle_ngap_setup_request(const
   return launch_async<ngap_setup_procedure>(request, ng_notifier, *events, logger);
 }
 
-void ngap_impl::handle_message(const ngap_msg& msg)
+void ngap_impl::handle_message(const ngap_message& msg)
 {
   logger.info("Handling NGAP PDU of type \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
 

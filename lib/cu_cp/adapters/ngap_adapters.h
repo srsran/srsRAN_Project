@@ -21,7 +21,7 @@ namespace srs_cu_cp {
 class ngap_amf_adapter : public ng_message_notifier
 {
 public:
-  void on_new_message(const ngap_msg& msg) override{
+  void on_new_message(const ngap_message& msg) override{
       // TODO: Add network socket transmit messages to AMF
   };
 };

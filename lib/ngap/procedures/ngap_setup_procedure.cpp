@@ -52,7 +52,7 @@ void ngap_setup_procedure::operator()(coro_context<async_task<ng_setup_response_
 
 void ngap_setup_procedure::send_ng_setup_request()
 {
-  ngap_msg msg = {};
+  ngap_message msg = {};
   // set NGAP PDU contents
   msg.pdu.set_init_msg();
   msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_NG_SETUP);

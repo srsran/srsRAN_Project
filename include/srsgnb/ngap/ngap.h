@@ -17,7 +17,7 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
-struct ngap_msg {
+struct ngap_message {
   asn1::ngap::ngap_pdu_c pdu;
 };
 
@@ -28,7 +28,7 @@ public:
   virtual ~ng_message_handler() = default;
 
   /// Handle the incoming NGAP message.
-  virtual void handle_message(const ngap_msg& msg) = 0;
+  virtual void handle_message(const ngap_message& msg) = 0;
 };
 
 /// Interface used by NG to inform about events.
@@ -46,7 +46,7 @@ public:
   virtual ~ng_message_notifier() = default;
 
   /// This callback is invoked on each received NGAP message.
-  virtual void on_new_message(const ngap_msg& msg) = 0;
+  virtual void on_new_message(const ngap_message& msg) = 0;
 };
 
 struct ng_setup_request_message {

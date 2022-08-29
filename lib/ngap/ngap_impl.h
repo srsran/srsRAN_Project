@@ -31,7 +31,7 @@ public:
   async_task<ng_setup_response_message> handle_ngap_setup_request(const ng_setup_request_message& request) override;
 
   // ng message handler functions
-  void handle_message(const ngap_msg& msg) override;
+  void handle_message(const ngap_message& msg) override;
   void handle_connection_loss() override {}
 
 private:

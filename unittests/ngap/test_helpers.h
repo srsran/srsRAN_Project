@@ -26,13 +26,13 @@ public:
   // FIXME: Add handler when ngap exists
   dummy_ngap_amf_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
 
-  void on_new_message(const ngap_msg& msg) override
+  void on_new_message(const ngap_message& msg) override
   {
     logger.info("Received NGAP message");
     last_ngap_msg = msg;
   };
 
-  ngap_msg last_ngap_msg;
+  ngap_message last_ngap_msg;
 
 private:
   srslog::basic_logger& logger;
