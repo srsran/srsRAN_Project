@@ -38,6 +38,7 @@ class rlc_test_frame : public rlc_rx_upper_layer_data_notifier,
 public:
   std::queue<byte_buffer_slice> sdu_queue;
   uint32_t                      sdu_counter = 0;
+  std::list<uint32_t>           transmitted_pdcp_count_list;
 
   // rlc_rx_upper_layer_data_notifier interface
   void on_new_sdu(byte_buffer_slice sdu) override
@@ -47,7 +48,11 @@ public:
   }
 
   // rlc_tx_upper_layer_data_notifier interface
-  void on_delivered_sdu(uint32_t pdcp_count) override {}
+  void on_delivered_sdu(uint32_t pdcp_count) override
+  {
+    // store in list
+    transmitted_pdcp_count_list.push_back(pdcp_count);
+  }
 
   // rlc_tx_upper_layer_control_notifier interface
   void on_protocol_failure() override {}
@@ -90,7 +95,7 @@ void test_full_sdus(rlc_um_sn_size sn_size)
     }
 
     // write SDU into upper end
-    rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+    rlc_sdu sdu = {i + 13, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   buffer_state = rlc1_tx_lower->get_buffer_state();
@@ -103,6 +108,11 @@ void test_full_sdus(rlc_um_sn_size sn_size)
     pdu_bufs[i] = rlc1_tx_lower->pull_pdu(payload_len);
     TESTASSERT_EQ(payload_len, pdu_bufs[i].length());
     TESTASSERT_EQ(i, pdu_bufs[i][payload_len - 1]); // check if last payload item corresponds with index
+
+    // Verify transmit notification
+    TESTASSERT_EQ(1, tester1.transmitted_pdcp_count_list.size());
+    TESTASSERT_EQ(i + 13, tester1.transmitted_pdcp_count_list.front());
+    tester1.transmitted_pdcp_count_list.pop_front();
 
     // TODO: write PCAP
   }
@@ -164,7 +174,7 @@ void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
     }
 
     // write SDU into upper end
-    rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+    rlc_sdu sdu = {i, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   buffer_state = rlc1_tx_lower->get_buffer_state();
@@ -180,6 +190,13 @@ void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
   while (buffer_state > 0 && num_pdus < max_num_pdus) {
     pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
 
+    if (num_pdus % ((sdu_size / payload_len) + 1) == 0) {
+      // Verify transmit notification
+      TESTASSERT_EQ(1, tester1.transmitted_pdcp_count_list.size());
+      TESTASSERT_EQ(num_pdus, tester1.transmitted_pdcp_count_list.front());
+      tester1.transmitted_pdcp_count_list.pop_front();
+    }
+
     if (pdu_bufs[num_pdus].empty()) {
       break;
     }
@@ -188,6 +205,9 @@ void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
     buffer_state = rlc1_tx_lower->get_buffer_state();
   }
   TESTASSERT_EQ(0, buffer_state);
+
+  // Verify there are no multiple transmit notifications
+  TESTASSERT_EQ(0, tester1.transmitted_pdcp_count_list.size());
 
   // Write PDUs into RLC2
   if (reverse_rx) {

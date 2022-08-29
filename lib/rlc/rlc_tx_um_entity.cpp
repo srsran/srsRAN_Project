@@ -71,6 +71,9 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
       return {};
     }
     srsgnb_sanity_check(next_so == 0, "New Tx SDU, but next_so is not 0 (next_so = {})", next_so);
+
+    // Notify the upper layer about the beginning of the transfer of the current SDU
+    upper_dn.on_delivered_sdu(sdu.pdcp_count);
   }
 
   rlc_um_pdu_header header = {};
