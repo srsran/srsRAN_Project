@@ -610,8 +610,6 @@ void rlc_tx_am_entity::check_sn_reached_max_retx(uint32_t sn)
   if ((*tx_window)[sn].retx_count == cfg.max_retx_thresh) {
     logger.log_warning("Signaling max number of reTx={} for SN={}", (*tx_window)[sn].retx_count, sn);
     upper_cn.on_max_retx();
-    // TODO: notify upper layer data plane of SDU failure
-    // upper_dn.on_failed_sdu((*tx_window)[sn].pdcp_count);
   }
 }
 
