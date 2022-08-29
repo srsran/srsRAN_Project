@@ -361,12 +361,14 @@ protected:
   std::unique_ptr<rlc_rx_am_entity>     rlc;
 };
 
+/// Test the instantiation of a new entity
 TEST_P(rlc_rx_am_test, create_new_entity)
 {
   init(GetParam());
   EXPECT_NE(rlc, nullptr);
 }
 
+/// Verify the status report from a freshly created instance
 TEST_P(rlc_rx_am_test, read_initial_status)
 {
   init(GetParam());
@@ -378,6 +380,7 @@ TEST_P(rlc_rx_am_test, read_initial_status)
   EXPECT_EQ(rlc->get_status_pdu_length(), 3);
 }
 
+/// Verify Rx window boundary checks if Rx window is currently at the lower edge, i.e. at smallest SN value
 TEST_P(rlc_rx_am_test, window_checker_lower_edge)
 {
   init(GetParam());
@@ -392,6 +395,7 @@ TEST_P(rlc_rx_am_test, window_checker_lower_edge)
   EXPECT_FALSE(rlc->inside_rx_window(sn_outside_upper));
 }
 
+/// Verify Rx window boundary checks if Rx window is currently at the upper edge, i.e. at maximum SN value
 TEST_P(rlc_rx_am_test, window_checker_upper_edge)
 {
   init(GetParam());
@@ -412,6 +416,7 @@ TEST_P(rlc_rx_am_test, window_checker_upper_edge)
   EXPECT_FALSE(rlc->inside_rx_window(sn_outside_upper));
 }
 
+/// Verify proper forwarding of received status PDUs to the Tx entity (via interface)
 TEST_P(rlc_rx_am_test, rx_valid_control_pdu)
 {
   init(GetParam());
@@ -438,6 +443,7 @@ TEST_P(rlc_rx_am_test, rx_valid_control_pdu)
   EXPECT_EQ(tester->status.get_nacks().front().nack_sn, nack.nack_sn);
 }
 
+/// Verify that malformed status PDUs are not forwarded to the Tx entity (via interface)
 TEST_P(rlc_rx_am_test, rx_invalid_control_pdu)
 {
   init(GetParam());
@@ -463,6 +469,8 @@ TEST_P(rlc_rx_am_test, rx_invalid_control_pdu)
   EXPECT_EQ(tester->status.get_nacks().size(), 0);
 }
 
+/// Verify malformed (too short) data PDUs are discarded. Testing here with polling bit set in the malformed PDU which
+/// shall not have any effect on the status-required state of the testee.
 TEST_P(rlc_rx_am_test, rx_short_data_pdu)
 {
   init(GetParam());
@@ -481,6 +489,8 @@ TEST_P(rlc_rx_am_test, rx_short_data_pdu)
   EXPECT_FALSE(rlc->status_report_required());
 }
 
+/// Verify proper handling of polling bit for valid PDUs inside the Rx window: The status-required state shall change
+/// and the included SDU shall be forwarded to upper layer
 TEST_P(rlc_rx_am_test, rx_polling_bit_sn_inside_rx_window)
 {
   init(GetParam());
@@ -513,6 +523,8 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sn_inside_rx_window)
   tester->sdu_queue.pop();
 }
 
+/// Verify proper handling of polling bit for PDUs outside the Rx window: The status-required state shall still change
+/// but the included SDU shall be discarded
 TEST_P(rlc_rx_am_test, rx_polling_bit_sn_outside_rx_window)
 {
   init(GetParam());
@@ -542,6 +554,8 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sn_outside_rx_window)
   ASSERT_EQ(tester->sdu_queue.size(), 0);
 }
 
+/// Verify proper handling of polling bit for PDU duplicates inside the Rx window: The status-required state shall still
+/// change but the duplicated SDU shall be discarded
 TEST_P(rlc_rx_am_test, rx_polling_bit_sdu_duplicate)
 {
   init(GetParam());
@@ -584,6 +598,12 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sdu_duplicate)
   ASSERT_EQ(tester->sdu_queue.size(), 0);
 }
 
+/// Verify handling of PDUs with SDU segment duplicates:
+/// - Receive SDU in segments, but loose one segment.
+/// - Receive all segments again, without any further loss:
+///   - Duplicates shall be discarded
+///   - SDU shall be properly reassembled and forwarded to upper layer as the missing segment is received
+///   - Subsequent duplicates shall be discarded
 TEST_P(rlc_rx_am_test, rx_duplicate_segments)
 {
   init(GetParam());
@@ -637,6 +657,10 @@ TEST_P(rlc_rx_am_test, rx_duplicate_segments)
   }
 }
 
+/// Verify status prohibit timer:
+/// - Read status report which resets status prohibit timer
+/// - Rx a PDU with polling bit set
+/// - Status required state shall remain false until status prohibit timer expires
 TEST_P(rlc_rx_am_test, status_prohibit_timer)
 {
   init(GetParam());
@@ -689,6 +713,11 @@ TEST_P(rlc_rx_am_test, status_prohibit_timer)
   EXPECT_FALSE(rlc->status_report_required());
 }
 
+/// Verify reassembly timer:
+/// - Receive SDU in segments, but loose one segment
+/// - Let reassembly timer expire
+/// - Check that status report is required
+/// - Verify the status report NACK's the missing segment
 TEST_P(rlc_rx_am_test, reassembly_timer)
 {
   init(GetParam());
@@ -746,6 +775,15 @@ TEST_P(rlc_rx_am_test, reassembly_timer)
   EXPECT_EQ(status_report.get_nacks().front().so_end, 5);
 }
 
+/// Verify complex status report (SDU segments (single, sequence, last segment), full SDUs and SDU ranges)
+/// - Receive SDU in segments, but loose one segment; two consecutive segments and the final segment
+/// - Receive full SDUs, but loose one SDU and a sequence of two consecutive SDUs
+/// - Expire reassembly timer
+/// - Check status report that for NACK'ed segments (the full SDUs are not yet late)
+/// - Receive a new SDU with polling bit set
+/// - Check status report has not changed (the full SDUs are still not late)
+/// - Expire reassembly timer again - now the full SDUs become late
+/// - Check status report for NACK'ed segments, NACK'ed SDU and NACK'ed SDU range
 TEST_P(rlc_rx_am_test, status_report)
 {
   init(GetParam());
@@ -909,6 +947,8 @@ TEST_P(rlc_rx_am_test, status_report)
   EXPECT_EQ(status_report.get_nacks().at(4).nack_range, 2);
 }
 
+/// Verify in-order Rx of full SDUs
+/// Example: [0][1][2][3][4]
 TEST_P(rlc_rx_am_test, rx_without_segmentation)
 {
   init(GetParam());
@@ -919,6 +959,8 @@ TEST_P(rlc_rx_am_test, rx_without_segmentation)
   rx_full_sdus(sn, n_sdus, 5, /* reverse_sdus = */ false);
 }
 
+/// Verify reverse-order Rx of full SDUs
+/// Example: [4][3][2][1][0]
 TEST_P(rlc_rx_am_test, rx_reverse_without_segmentation)
 {
   init(GetParam());
@@ -929,6 +971,8 @@ TEST_P(rlc_rx_am_test, rx_reverse_without_segmentation)
   rx_full_sdus(sn, n_sdus, 5, /* reverse_sdus = */ true);
 }
 
+/// Verify in-order Rx of SDU segments
+/// Example: [0 0:0][0 1:1][1 0:0][1 1:1][2 0:0][2 1:1][3 0:0][3 1:1][4 0:0][4 1:1]
 TEST_P(rlc_rx_am_test, rx_with_segmentation)
 {
   init(GetParam());
@@ -939,6 +983,8 @@ TEST_P(rlc_rx_am_test, rx_with_segmentation)
   rx_sdu_segments(sn, n_sdus, 8, 3, /* reverse_sdus = */ false, /* reverse_segments = */ false);
 }
 
+/// Verify reverse-order Rx of SDU segments but the segments of each SDU are transmitted in order
+/// Example: [4 0:0][4 1:1][3 0:0][3 1:1][2 0:0][2 1:1][1 0:0][1 1:1][0 0:0][0 1:1]
 TEST_P(rlc_rx_am_test, rx_reverse_with_segmentation)
 {
   init(GetParam());
@@ -949,6 +995,8 @@ TEST_P(rlc_rx_am_test, rx_reverse_with_segmentation)
   rx_sdu_segments(sn, n_sdus, 8, 3, /* reverse_sdus = */ true, /* reverse_segments = */ false);
 }
 
+/// Verify in-order Rx of SDU segments but the segments of each SDU are transmitted in reverse order
+/// Example: [0 1:1][0 0:0][1 1:1][1 0:0][2 1:1][2 0:0][3 0:0][3 1:1][3 0:0][4 1:1][4 0:0]
 TEST_P(rlc_rx_am_test, rx_with_reversed_segmentation)
 {
   init(GetParam());
@@ -959,6 +1007,8 @@ TEST_P(rlc_rx_am_test, rx_with_reversed_segmentation)
   rx_sdu_segments(sn, n_sdus, 8, 3, /* reverse_sdus = */ false, /* reverse_segments = */ true);
 }
 
+/// Verify reverse-order Rx of SDU segments and the segments of each SDU are transmitted in reverse order
+/// Example: [4 1:1][4 0:0][3 0:0][3 1:1][3 0:0][2 1:1][2 0:0][1 1:1][1 0:0][0 1:1][0 0:0]
 TEST_P(rlc_rx_am_test, rx_reverse_with_reversed_segmentation)
 {
   init(GetParam());
