@@ -84,6 +84,10 @@ public:
   /// \brief Get the NG message handler interface.
   /// \return The NG message handler interface.
   virtual ng_message_handler& get_ng_message_handler() = 0;
+
+  /// \brief Get the state of the AMF connection.
+  /// \return True if AMF is connected, false otherwise.
+  virtual bool amf_is_connected() = 0;
 };
 
 class cu_cp_interface : public cu_cp_du_connection_notifier,

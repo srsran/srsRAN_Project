@@ -41,6 +41,8 @@ public:
 
   ng_message_handler& get_ng_message_handler() override;
 
+  bool amf_is_connected() override { return amf_connected; };
+
   void on_new_connection() override;
   void handle_du_remove_request(const du_index_t du_index) override;
 
@@ -54,7 +56,8 @@ public:
 
 private:
   /// \brief Adds a DU processor object to the CU-CP.
-  void add_du();
+  /// \return The DU index of the added DU processor object.
+  du_index_t add_du();
 
   /// \brief Removes the specified DU processor object from the CU-CP.
   /// \param[in] du_index The index of the DU processor to delete.
@@ -94,6 +97,8 @@ private:
 
   // NGAP to AMF adapter
   ngap_amf_adapter ngap_amf_ev_notifier;
+
+  std::atomic<bool> amf_connected = {false};
 };
 
 } // namespace srs_cu_cp

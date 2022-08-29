@@ -9,6 +9,7 @@
  */
 
 #include "cu_cp.h"
+#include "procedures/initial_cu_cp_setup_procedure.h"
 #include "srsgnb/cu_cp/du_processor_factory.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu_factory.h"
 #include "srsgnb/ngap/ngap_factory.h"
@@ -43,7 +44,11 @@ cu_cp::~cu_cp()
   stop();
 }
 
-void cu_cp::start() {}
+void cu_cp::start()
+{
+  // start NG setup procedure.
+  main_ctrl_loop.schedule<initial_cu_cp_setup_procedure>(*ngap_entity, *this);
+}
 
 void cu_cp::stop() {}
 
@@ -69,7 +74,10 @@ ng_message_handler& cu_cp::get_ng_message_handler()
 void cu_cp::on_new_connection()
 {
   logger.info("New DU connection - adding DU");
-  add_du();
+  du_index_t du_index = add_du();
+  if (du_index != INVALID_DU_INDEX && amf_connected) {
+    du_db[du_index]->get_rrc_amf_connection_handler().handle_amf_connection();
+  }
 }
 
 void cu_cp::handle_du_remove_request(const du_index_t du_index)
@@ -94,6 +102,8 @@ size_t cu_cp::get_nof_ues() const
 
 void cu_cp::on_amf_connection()
 {
+  amf_connected = true;
+
   // inform all connected DU objects about the new connection
   for (auto& du : du_db) {
     du->get_rrc_amf_connection_handler().handle_amf_connection();
@@ -102,6 +112,8 @@ void cu_cp::on_amf_connection()
 
 void cu_cp::on_amf_connection_drop()
 {
+  amf_connected = false;
+
   // inform all DU objects about the AMF connection drop
   for (auto& du : du_db) {
     du->get_rrc_amf_connection_handler().handle_amf_connection_drop();
@@ -111,7 +123,7 @@ void cu_cp::on_amf_connection_drop()
 // private
 
 /// Create DU object with valid index
-void cu_cp::add_du()
+du_index_t cu_cp::add_du()
 {
   du_processor_config_t du_cfg = {};
 
@@ -121,7 +133,7 @@ void cu_cp::add_du()
   du_index_t du_index = get_next_du_index();
   if (du_index == INVALID_DU_INDEX) {
     logger.error("DU connection failed - maximum number of DUs connected ({})", MAX_NOF_DUS);
-    return;
+    return INVALID_DU_INDEX;
   }
 
   du->get_context().du_index = du_index;
@@ -131,7 +143,7 @@ void cu_cp::add_du()
   // Create DU object
   du_db.emplace(du_index, std::move(du));
 
-  return;
+  return du_index;
 }
 
 void cu_cp::remove_du(du_index_t du_index)

@@ -13,6 +13,7 @@
 #include "srsgnb/support/test_utils.h"
 #include "unittests/f1_interface/common/f1_cu_test_helpers.h"
 #include "unittests/f1_interface/common/test_helpers.h"
+#include "unittests/ngap/ngap_test_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
@@ -107,13 +108,25 @@ TEST_F(cu_cp_test, when_max_nof_dus_connected_then_reject_new_connection)
 /* AMF connection handling                                                          */
 //////////////////////////////////////////////////////////////////////////////////////
 
+TEST_F(cu_cp_test, when_ng_setup_response_received_then_amf_connected)
+{
+  // Connect AMF by injecting a ng_setup_response
+  ngap_message ngap_msg = generate_ng_setup_response_message();
+  cu_cp_obj->get_ng_message_handler().handle_message(ngap_msg);
+
+  ASSERT_TRUE(cu_cp_obj->amf_is_connected());
+}
+
 TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
 {
+  // Connect AMF by injecting a ng_setup_response
+  ngap_message ngap_msg = generate_ng_setup_response_message();
+  cu_cp_obj->get_ng_message_handler().handle_message(ngap_msg);
+
+  ASSERT_TRUE(cu_cp_obj->amf_is_connected());
+
   // Connect DU
   cu_cp_obj->on_new_connection();
-
-  // Connect AMF
-  cu_cp_obj->on_amf_connection();
 
   // Generate F1SetupRequest
   f1c_message f1setup_msg = generate_valid_f1_setup_request();
@@ -158,11 +171,14 @@ TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
 /// Test the f1 initial UL RRC message transfer procedure
 TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
 {
+  // Connect AMF by injecting a ng_setup_response
+  ngap_message ngap_msg = generate_ng_setup_response_message();
+  cu_cp_obj->get_ng_message_handler().handle_message(ngap_msg);
+
+  ASSERT_TRUE(cu_cp_obj->amf_is_connected());
+
   // Connect DU
   cu_cp_obj->on_new_connection();
-
-  // Connect AMF
-  cu_cp_obj->on_amf_connection();
 
   // Generate F1SetupRequest
   f1c_message f1setup_msg = generate_valid_f1_setup_request();
@@ -191,6 +207,8 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
 
   // Disconnect AMF
   cu_cp_obj->on_amf_connection_drop();
+
+  ASSERT_FALSE(cu_cp_obj->amf_is_connected());
 
   // Attach second UE (failure)
   {
