@@ -773,7 +773,7 @@ TEST_P(rlc_rx_am_test, status_report)
   // Push PDUs except for 4th, 6th and 7th into RLC
   uint32_t i = 0;
   for (byte_buffer& pdu_buf : pdu_list) {
-    if (i != 4 && i != 6 && i != 7) {
+    if (i != 4 && i != 6 && i != 7 && i != 9) {
       byte_buffer_slice pdu = {std::move(pdu_buf)};
       rlc->handle_pdu(pdu);
     } else {
@@ -818,15 +818,22 @@ TEST_P(rlc_rx_am_test, status_report)
   status_report      = rlc->get_status_pdu();
   EXPECT_EQ(status_report.ack_sn, 4);
   EXPECT_EQ(status_report.get_packed_size(),
-            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 2 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so));
+            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 3 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so));
   EXPECT_EQ(rlc->get_status_pdu_length(),
-            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 2 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so));
-  ASSERT_EQ(status_report.get_nacks().size(), 2);
-  EXPECT_TRUE(status_report.get_nacks().front().has_so);
+            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 3 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so));
+  ASSERT_EQ(status_report.get_nacks().size(), 3);
+
+  EXPECT_TRUE(status_report.get_nacks().at(0).has_so);
   EXPECT_EQ(status_report.get_nacks().at(0).so_start, 4);
   EXPECT_EQ(status_report.get_nacks().at(0).so_end, 4);
+
+  EXPECT_TRUE(status_report.get_nacks().at(1).has_so);
   EXPECT_EQ(status_report.get_nacks().at(1).so_start, 6);
   EXPECT_EQ(status_report.get_nacks().at(1).so_end, 7);
+
+  EXPECT_TRUE(status_report.get_nacks().at(2).has_so);
+  EXPECT_EQ(status_report.get_nacks().at(2).so_start, 9);
+  EXPECT_EQ(status_report.get_nacks().at(2).so_end, rlc_am_status_nack::so_end_of_sdu);
 
   // Create SDU and PDU with full SDU (set poll bit)
   pdu_list.clear();
@@ -846,15 +853,22 @@ TEST_P(rlc_rx_am_test, status_report)
   status_report = rlc->get_status_pdu();
   EXPECT_EQ(status_report.ack_sn, 4);
   EXPECT_EQ(status_report.get_packed_size(),
-            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 2 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so));
+            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 3 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so));
   EXPECT_EQ(rlc->get_status_pdu_length(),
-            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 2 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so));
-  ASSERT_EQ(status_report.get_nacks().size(), 2);
-  EXPECT_TRUE(status_report.get_nacks().front().has_so);
+            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 3 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so));
+  ASSERT_EQ(status_report.get_nacks().size(), 3);
+
+  EXPECT_TRUE(status_report.get_nacks().at(0).has_so);
   EXPECT_EQ(status_report.get_nacks().at(0).so_start, 4);
   EXPECT_EQ(status_report.get_nacks().at(0).so_end, 4);
+
+  EXPECT_TRUE(status_report.get_nacks().at(1).has_so);
   EXPECT_EQ(status_report.get_nacks().at(1).so_start, 6);
   EXPECT_EQ(status_report.get_nacks().at(1).so_end, 7);
+
+  EXPECT_TRUE(status_report.get_nacks().at(2).has_so);
+  EXPECT_EQ(status_report.get_nacks().at(2).so_start, 9);
+  EXPECT_EQ(status_report.get_nacks().at(2).so_end, rlc_am_status_nack::so_end_of_sdu);
 
   // Let the reassembly timer expire (advance rx_highest_status to 12)
   for (int t = 0; t < config.t_reassembly; t++) {
@@ -865,12 +879,12 @@ TEST_P(rlc_rx_am_test, status_report)
   status_report = rlc->get_status_pdu();
   EXPECT_EQ(status_report.ack_sn, 12);
   EXPECT_EQ(status_report.get_packed_size(),
-            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 2 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so) +
+            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 3 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so) +
                 2 * nack_size + rlc_am_nr_status_pdu_sizeof_nack_range);
   EXPECT_EQ(rlc->get_status_pdu_length(),
-            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 2 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so) +
+            rlc_am_nr_status_pdu_sizeof_header_ack_sn + 3 * (nack_size + rlc_am_nr_status_pdu_sizeof_nack_so) +
                 2 * nack_size + rlc_am_nr_status_pdu_sizeof_nack_range);
-  ASSERT_EQ(status_report.get_nacks().size(), 4);
+  ASSERT_EQ(status_report.get_nacks().size(), 5);
   EXPECT_EQ(status_report.get_nacks().at(0).nack_sn, 0);
   EXPECT_TRUE(status_report.get_nacks().at(0).has_so);
   EXPECT_EQ(status_report.get_nacks().at(0).so_start, 4);
@@ -881,13 +895,18 @@ TEST_P(rlc_rx_am_test, status_report)
   EXPECT_EQ(status_report.get_nacks().at(1).so_start, 6);
   EXPECT_EQ(status_report.get_nacks().at(1).so_end, 7);
 
-  EXPECT_EQ(status_report.get_nacks().at(2).nack_sn, 4);
-  EXPECT_FALSE(status_report.get_nacks().at(2).has_so);
+  EXPECT_EQ(status_report.get_nacks().at(2).nack_sn, 0);
+  EXPECT_TRUE(status_report.get_nacks().at(2).has_so);
+  EXPECT_EQ(status_report.get_nacks().at(2).so_start, 9);
+  EXPECT_EQ(status_report.get_nacks().at(2).so_end, rlc_am_status_nack::so_end_of_sdu);
 
-  EXPECT_EQ(status_report.get_nacks().at(3).nack_sn, 6);
+  EXPECT_EQ(status_report.get_nacks().at(3).nack_sn, 4);
   EXPECT_FALSE(status_report.get_nacks().at(3).has_so);
-  EXPECT_TRUE(status_report.get_nacks().at(3).has_nack_range);
-  EXPECT_EQ(status_report.get_nacks().at(3).nack_range, 2);
+
+  EXPECT_EQ(status_report.get_nacks().at(4).nack_sn, 6);
+  EXPECT_FALSE(status_report.get_nacks().at(4).has_so);
+  EXPECT_TRUE(status_report.get_nacks().at(4).has_nack_range);
+  EXPECT_EQ(status_report.get_nacks().at(4).nack_range, 2);
 }
 
 TEST_P(rlc_rx_am_test, rx_without_segmentation)

@@ -390,8 +390,8 @@ void rlc_rx_am_entity::refresh_status_report()
       } else if (not(*rx_window)[i].fully_received) {
         // Some segments were received, but not all.
         // NACK non consecutive missing bytes
-        uint32_t last_so         = 0;
-        bool     last_segment_rx = false;
+        uint32_t last_so           = 0;
+        bool     have_last_segment = false;
         for (auto segm = (*rx_window)[i].segments.begin(); segm != (*rx_window)[i].segments.end(); segm++) {
           if (segm->header.so != last_so) {
             // Some bytes were not received
@@ -418,13 +418,13 @@ void rlc_rx_am_entity::refresh_status_report()
             }
           }
           if (segm->header.si == rlc_si_field::last_segment) {
-            last_segment_rx = true;
+            have_last_segment = true;
           }
           last_so = segm->header.so + segm->payload.length();
         } // Segment loop
 
         // Check for last segment
-        if (not last_segment_rx) {
+        if (not have_last_segment) {
           rlc_am_status_nack nack;
           nack.nack_sn  = i;
           nack.has_so   = true;
