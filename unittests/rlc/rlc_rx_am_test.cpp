@@ -542,7 +542,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sn_outside_rx_window)
   ASSERT_EQ(tester->sdu_queue.size(), 0);
 }
 
-TEST_P(rlc_rx_am_test, rx_polling_bit_SDU_duplicate)
+TEST_P(rlc_rx_am_test, rx_polling_bit_sdu_duplicate)
 {
   init(GetParam());
 
