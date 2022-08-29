@@ -33,31 +33,36 @@ stages:
   stage: build
   extends: .build_and_unit
   needs: []
+  before_script:
+    - |
+      build_srsgnb() {
+        case $mode in
+          coverage)
+            build_extra="-DENABLE_GCOV=True"
+            ;;
+          tsan)
+            build_extra="-DCMAKE_BUILD_TYPE=Debug -DENABLE_TSAN=True"
+            ;;
+          asan)
+            build_extra="-DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=True"
+            ;;
+          valgrind)
+            build_extra="-DCMAKE_BUILD_TYPE=Debug -DAUTO_DETECT_ISA=False"
+            ;;
+        esac      
+
+        BUILD_CMD="builder.sh -c $compiler -u $uhd_version -DASSERT_LEVEL=PARANOID $build_extra ."
+        echo "${BUILD_CMD}"
+        echo "============================================================================================="
+        $BUILD_CMD
+      }
   script:
-    - |
-      case $mode in
-        coverage)
-          build_extra="-DENABLE_GCOV=True"
-          ;;
-        tsan)
-          build_extra="-DCMAKE_BUILD_TYPE=Debug -DENABLE_TSAN=True"
-          ;;
-        asan)
-          build_extra="-DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=True"
-          ;;
-        valgrind)
-          build_extra="-DCMAKE_BUILD_TYPE=Debug -DAUTO_DETECT_ISA=False"
-          ;;
-      esac
-    - |
-      BUILD_CMD="builder.sh -c $compiler -u $uhd_version -DASSERT_LEVEL=PARANOID $build_extra ."
-      echo "${BUILD_CMD}"
-      echo "============================================================================================="
-      $BUILD_CMD
+    - build_srsgnb
   cache: &build_cache
     key: ${os_type}-${os_version}-${docker_version}-${compiler}-${mode}
     paths:
       - ccache
+    policy: pull
   artifacts:
     paths:
       # Binaries

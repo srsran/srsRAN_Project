@@ -47,7 +47,7 @@ full-code-format:
     - FILE_EXTENSION_REGEX='.*\.(cpp|cc|c\+\+|cxx|c|cl|h|hh|hpp)$'
     - files=$(find . | grep -E "${FILE_EXTENSION_REGEX}" | tr '\n' ' ')
     - clang-format -style=file -i ${files}
-    - is-pristine-repo.sh  
+    - is-pristine-repo.sh
 
 include-guards:
   extends: .static
@@ -83,6 +83,26 @@ cmake flag check:
       - flag:
           [-DSTOP_ON_WARNING=True, -DENABLE_EXPORT=True, -DBUILD_TESTS=False]
   needs: []
+
+intermediate commits:
+  extends: .build
+  rules:
+    - if: $ON_MR
+  script:
+    - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git
+    - git config advice.detachedHead false
+    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+    - |
+      for rev in $(git rev-list --reverse origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME..origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME^1)
+      do
+        echo "##################################################"
+        echo "#### $rev ####"
+        echo "##################################################"
+        git checkout $rev
+        build_srsgnb
+      done
+  after_script:
+    - rm -Rf build
 
 .trigger build:
   stage: build
