@@ -60,6 +60,7 @@ target_link_libraries(srsgnb_channel_processors
         srsgnb_pdsch_processor
         srsgnb_prach_detector
         srsgnb_pusch_decoder
+        srsgnb_pusch_demodulator
         srsgnb_pusch_processor
         srsgnb_ssb_processor)
 
@@ -74,6 +75,7 @@ install(TARGETS srsgnb_channel_processors
                 srsgnb_pdsch_processor
                 srsgnb_prach_detector
                 srsgnb_pusch_decoder
+                srsgnb_pusch_demodulator
                 srsgnb_pusch_processor
                 srsgnb_ssb_processor
         EXPORT srsgnb_export)

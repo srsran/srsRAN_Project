@@ -25,12 +25,12 @@ class pusch_demodulator_impl : public pusch_demodulator
 {
 public:
   /// Constructor: sets up internal components and acquires their ownership.
-  pusch_demodulator_impl(std::unique_ptr<channel_equalizer>       eq,
-                         std::unique_ptr<demodulation_mapper>     demap,
-                         std::unique_ptr<pseudo_random_generator> dscr) :
-    equalizer(std::move(eq)),
-    demapper(std::move(demap)),
-    descrambler(std::move(dscr)),
+  pusch_demodulator_impl(std::unique_ptr<channel_equalizer>       equalizer_,
+                         std::unique_ptr<demodulation_mapper>     demapper_,
+                         std::unique_ptr<pseudo_random_generator> descrambler_) :
+    equalizer(std::move(equalizer_)),
+    demapper(std::move(demapper_)),
+    descrambler(std::move(descrambler_)),
     ch_symbols({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_PORTS}),
     mod_symbols_eq({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS}),
     noise_vars_eq({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS})
@@ -57,7 +57,22 @@ private:
   /// \param[in]  config  Configuration parameters.
   void get_ch_symbols(equalizer_ch_symbol_list& symbols, const resource_grid_reader& grid, const configuration& config)
   {
-    // For now, do nothing.
+    // Prepare RE mask.
+    std::array<bool, MAX_RB* NRE> tmp_re_mask = {};
+    span<bool>                    re_mask     = span<bool>(tmp_re_mask).first(config.rb_mask.size() * NRE);
+    config.rb_mask.for_each(0, config.rb_mask.size(), [&](unsigned i_prb) {
+      span<bool> re_view = re_mask.subspan(i_prb * NRE, NRE);
+      std::fill(re_view.begin(), re_view.end(), true);
+    });
+
+    // Extract RE for each port and symbol.
+    for (unsigned i_port = 0, i_port_end = config.rx_ports.size(); i_port != i_port_end; ++i_port) {
+      for (unsigned i_symbol = 0; i_symbol != config.nof_symbols; ++i_symbol) {
+        span<cf_t> symbol_buffer = symbols.get_symbol(i_symbol, i_port);
+        symbol_buffer            = grid.get(symbol_buffer, i_port, i_symbol + config.start_symbol_index, 0, re_mask);
+        srsgnb_assert(symbol_buffer.empty(), "Invalid number of RE read from the grid.");
+      }
+    }
   }
 
   /// \brief Removes elements corresponding to DM-RS symbols and reserved positions.
@@ -76,7 +91,27 @@ private:
                    const equalizer_noise_var_list& noise_vars_in,
                    const configuration&            config)
   {
-    // For now, do nothing.
+    srsgnb_assert(config.dmrs_config_type == dmrs_type::TYPE1 && config.nof_cdm_groups_without_data == 2,
+                  "Only DM-RS type 1 with a number of CDM groups equal to 2 is implemented.");
+
+    unsigned nof_subcarriers = symbols_in.size().nof_subc;
+
+    for (unsigned i_layer = 0; i_layer != config.nof_tx_layers; ++i_layer) {
+      for (unsigned i_symbol = 0; i_symbol != config.nof_symbols; ++i_symbol) {
+        // Skip symbols carrying DM-RS.
+        if (config.dmrs_symb_pos[i_symbol + config.start_symbol_index]) {
+          continue;
+        }
+
+        // Copy data without DM-RS.
+        srsvec::copy(symbols_out.first(nof_subcarriers), symbols_in.get_symbol(i_symbol, i_layer));
+        srsvec::copy(noise_vars_out.first(nof_subcarriers), noise_vars_in.get_symbol(i_symbol, i_layer));
+
+        // Advance buffers.
+        symbols_out    = symbols_out.subspan(nof_subcarriers, symbols_out.size() - nof_subcarriers);
+        noise_vars_out = noise_vars_out.subspan(nof_subcarriers, noise_vars_out.size() - nof_subcarriers);
+      }
+    }
   }
 
   /// \brief Extracts HARQ-ACK soft bits from the sequence of multiplexed data and control bits.
@@ -136,9 +171,9 @@ private:
   /// Buffer used to transfer symbol noise variances at the equalizer output.
   dynamic_re_measurement<float> noise_vars_eq;
   /// Buffer used to transfer channel modulation symbols to the demodulator.
-  static_vector<cf_t, MAX_NOF_DATA_LLR> mod_symbols_data;
+  std::array<cf_t, MAX_NOF_DATA_LLR> temp_mod_symbols_data;
   /// Buffer used to transfer symbol noise variances to the demodulator.
-  static_vector<float, MAX_NOF_DATA_LLR> noise_vars_data;
+  std::array<float, MAX_NOF_DATA_LLR> temp_noise_vars_data;
 };
 
 } // namespace srsgnb

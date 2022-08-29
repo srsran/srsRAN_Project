@@ -20,6 +20,7 @@
 #include "prach_detector_simple_impl.h"
 #include "prach_generator_impl.h"
 #include "pusch_decoder_impl.h"
+#include "pusch_demodulator_impl.h"
 #include "pusch_processor_impl.h"
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "ssb_processor_impl.h"
@@ -309,6 +310,33 @@ public:
   }
 };
 
+class pusch_demodulator_factory_sw : public pusch_demodulator_factory
+{
+public:
+  std::unique_ptr<pusch_demodulator> create() override
+  {
+    return std::make_unique<pusch_demodulator_impl>(
+        equalizer_factory->create(), demodulation_factory->create_demodulation_mapper(), prg_factory->create());
+  }
+
+  pusch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory_,
+                               std::shared_ptr<channel_modulation_factory>      demodulation_factory_,
+                               std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
+    equalizer_factory(std::move(equalizer_factory_)),
+    demodulation_factory(std::move(demodulation_factory_)),
+    prg_factory(std::move(prg_factory_))
+  {
+    srsgnb_assert(equalizer_factory, "Invalid factory.");
+    srsgnb_assert(demodulation_factory, "Invalid factory.");
+    srsgnb_assert(prg_factory, "Invalid factory.");
+  }
+
+private:
+  std::shared_ptr<channel_equalizer_factory>       equalizer_factory;
+  std::shared_ptr<channel_modulation_factory>      demodulation_factory;
+  std::shared_ptr<pseudo_random_generator_factory> prg_factory;
+};
+
 class pusch_processor_factory_sw : public pusch_processor_factory
 {
 public:
@@ -457,6 +485,15 @@ std::shared_ptr<pusch_decoder_factory>
 srsgnb::create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_configuration& config)
 {
   return std::make_shared<pusch_decoder_factory_sw>(config);
+}
+
+std::shared_ptr<pusch_demodulator_factory>
+srsgnb::create_pusch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
+                                            std::shared_ptr<channel_modulation_factory>      demodulation_factory,
+                                            std::shared_ptr<pseudo_random_generator_factory> prg_factory)
+{
+  return std::make_shared<pusch_demodulator_factory_sw>(
+      std::move(equalizer_factory), std::move(demodulation_factory), std::move(prg_factory));
 }
 
 std::shared_ptr<pusch_processor_factory>

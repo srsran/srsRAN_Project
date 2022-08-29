@@ -27,6 +27,7 @@
 #include "srsgnb/phy/upper/channel_processors/pusch_demodulator.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
+#include "srsgnb/phy/upper/equalization/equalization_factories.h"
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 #include <memory>
 
@@ -172,6 +173,11 @@ public:
   virtual ~pusch_demodulator_factory()                = default;
   virtual std::unique_ptr<pusch_demodulator> create() = 0;
 };
+
+std::shared_ptr<pusch_demodulator_factory>
+create_pusch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
+                                    std::shared_ptr<channel_modulation_factory>      demodulation_factory,
+                                    std::shared_ptr<pseudo_random_generator_factory> prg_factory);
 
 class pusch_processor_factory
 {

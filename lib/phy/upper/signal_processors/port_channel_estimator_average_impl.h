@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/phy/upper/re_measurement.h"
 #include "srsgnb/phy/upper/signal_processors/port_channel_estimator.h"
 
 namespace srsgnb {

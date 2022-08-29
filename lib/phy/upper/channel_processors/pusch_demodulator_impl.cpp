@@ -44,6 +44,10 @@ void pusch_demodulator_impl::demodulate(span<log_likelihood_ratio>  data,
   // Equalize channels and, for each Tx layer, combine contribution from all Rx antenna ports.
   equalizer->equalize(mod_symbols_eq, noise_vars_eq, ch_symbols, estimates, scaling);
 
+  unsigned    nof_symbols      = data.size() / get_bits_per_symbol(config.modulation);
+  span<cf_t>  mod_symbols_data = span<cf_t>(temp_mod_symbols_data).first(nof_symbols);
+  span<float> noise_vars_data  = span<float>(temp_noise_vars_data).first(nof_symbols);
+
   // Remove REs that were assigned to DM-RS symbols or reserved.
   remove_dmrs(mod_symbols_data, noise_vars_data, mod_symbols_eq, noise_vars_eq, config);
 

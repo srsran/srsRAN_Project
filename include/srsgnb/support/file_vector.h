@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/support/error_handling.h"
 #include <fstream>
 #include <vector>
 
@@ -32,8 +33,8 @@ public:
   std::vector<T> read() const
   {
     std::ifstream binary_file(file_name, std::ios::in | std::ios::binary);
-    if (!binary_file.is_open())
-      return {};
+
+    report_fatal_error_if_not(binary_file.is_open(), "Error opening file '{}'. {}.", file_name, strerror(errno));
     std::vector<T> read_data;
 
     T read_value;
