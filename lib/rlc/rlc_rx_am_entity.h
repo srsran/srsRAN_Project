@@ -148,9 +148,9 @@ public:
   /// This function is used to check if the Rx_Highest_Status is valid when t-Reasseambly expires.
   ///
   /// ACK_SN may be equal to RX_NEXT + AM_Window_Size if the PDU with SN=RX_NEXT+AM_Window_Size has been received by the
-  /// RX. An ACK_SN == Rx_Next should not update Rx_Highest_Status,it should be updated when Rx_Next is updated.
+  /// RX. An ACK_SN == Rx_Next should not update Rx_Highest_Status, it should be updated when Rx_Next is updated.
   /// \param sn The sequence number to be checked
-  /// \return True if sn is inside the Rx window, false otherwise
+  /// \return True if sn is a valid ACK_SN, false otherwise
   bool valid_ack_sn(uint32_t sn) const
   {
     // RX_Next < SN <= RX_Next + AM_Window_Size
