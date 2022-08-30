@@ -12,8 +12,7 @@
 
 #include "adapters/f1ap_adapters.h"
 #include "adapters/ngap_adapters.h"
-#include "du_processor.h"
-#include "du_processor_config.h"
+#include "du_processor_impl.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
@@ -63,7 +62,7 @@ private:
   /// \brief Find a DU object.
   /// \param[in] du_index The index of the DU processor object.
   /// \return The DU processor object.
-  du_processor& find_du(du_index_t du_index);
+  du_processor_interface& find_du(du_index_t du_index);
 
   /// \brief Get the next available index from the DU processor database.
   /// \return The DU index.
@@ -78,7 +77,7 @@ private:
   // Components
   std::unique_ptr<ngap_interface> ngap_entity;
 
-  slot_array<std::unique_ptr<du_processor>, MAX_NOF_DUS> du_db;
+  slot_array<std::unique_ptr<du_processor_interface>, MAX_NOF_DUS> du_db;
 
   // task event loops indexed by du_index
   slot_array<async_task_sequencer, MAX_NOF_DUS> du_ctrl_loop;

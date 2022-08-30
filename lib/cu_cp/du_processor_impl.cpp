@@ -8,7 +8,7 @@
  *
  */
 
-#include "du_processor.h"
+#include "du_processor_impl.h"
 #include "../lib/f1_interface/common/asn1_helpers.h"
 #include "adapters/pdcp_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
@@ -19,7 +19,15 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-du_processor::du_processor(const du_processor_config_t& cfg_) : cfg(cfg_), ue_mng(cfg_.logger)
+du_processor_impl::du_processor_impl(const du_processor_config_t cfg_,
+                                     f1c_du_management_notifier& f1c_du_mgmt_notifier_,
+                                     f1c_message_notifier&       f1c_notifier_,
+                                     rrc_ue_nas_notifier&        rrc_ue_ngap_ev_notifier_) :
+  cfg(cfg_),
+  f1c_du_mgmt_notifier(f1c_du_mgmt_notifier_),
+  f1c_notifier(f1c_notifier_),
+  rrc_ue_ngap_ev_notifier(rrc_ue_ngap_ev_notifier_),
+  ue_mng(cfg_.logger)
 {
   const size_t number_of_pending_procedures = 16;
   for (size_t i = 0; i < MAX_NOF_UES; ++i) {
@@ -27,16 +35,17 @@ du_processor::du_processor(const du_processor_config_t& cfg_) : cfg(cfg_), ue_mn
   }
 
   // create f1ap
-  f1ap = create_f1ap(*cfg.f1c_notifier, f1ap_ev_notifier, *cfg.f1c_du_mgmt_notifier);
+  f1ap = create_f1ap(f1c_notifier, f1ap_ev_notifier, f1c_du_mgmt_notifier);
   f1ap_ev_notifier.connect_du_processor(*this);
 
   // create RRC
-  rrc_du_creation_message rrc_creation_msg(cfg.rrc_cfg, rrc_ue_ev_notifier, *cfg.rrc_ue_ngap_ev_notifier);
+  rrc_du_creation_message rrc_creation_msg(cfg.rrc_cfg, rrc_ue_ev_notifier, rrc_ue_ngap_ev_notifier);
   rrc = create_rrc_du(rrc_creation_msg);
+
   rrc_ue_ev_notifier.connect_du_processor(*this);
 }
 
-void du_processor::handle_f1_setup_request(const f1_setup_request_message& msg)
+void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& msg)
 {
   logger.debug("Received F1 setup request");
 
@@ -90,12 +99,12 @@ void du_processor::handle_f1_setup_request(const f1_setup_request_message& msg)
   send_f1_setup_response(context);
 }
 
-rrc_amf_connection_handler& du_processor::get_amf_connection_handler()
+rrc_amf_connection_handler& du_processor_impl::get_rrc_amf_connection_handler()
 {
   return *rrc;
 }
 
-du_cell_index_t du_processor::find_cell(uint64_t packed_nr_cell_id)
+du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
 {
   for (auto& cell : cell_db) {
     if (cell.cgi.nci.packed == packed_nr_cell_id) {
@@ -105,13 +114,13 @@ du_cell_index_t du_processor::find_cell(uint64_t packed_nr_cell_id)
   return INVALID_DU_CELL_INDEX;
 }
 
-du_index_t du_processor::get_du_index()
+du_index_t du_processor_impl::get_du_index()
 {
   return context.du_index;
 };
 
 /// Sender for F1AP messages
-void du_processor::send_f1_setup_response(const du_context& du_ctxt)
+void du_processor_impl::send_f1_setup_response(const du_processor_context& du_ctxt)
 {
   f1_setup_response_message response;
   response.success = true;
@@ -119,7 +128,7 @@ void du_processor::send_f1_setup_response(const du_context& du_ctxt)
   f1ap->handle_f1ap_setup_response(response);
 }
 
-void du_processor::send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause)
+void du_processor_impl::send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause)
 {
   f1_setup_response_message response;
   response.success = false;
@@ -127,7 +136,7 @@ void du_processor::send_f1_setup_failure(asn1::f1ap::cause_c::types::options cau
   f1ap->handle_f1ap_setup_response(response);
 }
 
-du_cell_index_t du_processor::get_next_du_cell_index()
+du_cell_index_t du_processor_impl::get_next_du_cell_index()
 {
   for (int du_cell_idx_int = MIN_DU_CELL_INDEX; du_cell_idx_int < MAX_NOF_DU_CELLS; du_cell_idx_int++) {
     du_cell_index_t cell_idx = int_to_du_cell_index(du_cell_idx_int);
@@ -139,7 +148,7 @@ du_cell_index_t du_processor::get_next_du_cell_index()
   return INVALID_DU_CELL_INDEX;
 }
 
-ue_creation_complete_message du_processor::handle_ue_creation_request(const ue_creation_message& msg)
+ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const ue_creation_message& msg)
 {
   ue_creation_complete_message ue_creation_complete_msg = {};
   ue_creation_complete_msg.ue_index                     = INVALID_UE_INDEX;
@@ -192,7 +201,7 @@ ue_creation_complete_message du_processor::handle_ue_creation_request(const ue_c
   return ue_creation_complete_msg;
 }
 
-void du_processor::create_srb(const srb_creation_message& msg)
+void du_processor_impl::create_srb(const srb_creation_message& msg)
 {
   ue_context* ue_ctxt = ue_mng.find_ue(msg.ue_index);
   srsgnb_assert(ue_ctxt != nullptr, "Could not find UE context");
@@ -247,7 +256,7 @@ void du_processor::create_srb(const srb_creation_message& msg)
   }
 }
 
-void du_processor::handle_ue_context_release_command(const ue_context_release_command_message& msg)
+void du_processor_impl::handle_ue_context_release_command(const ue_context_release_command_message& msg)
 {
   f1ap_ue_context_release_command_message f1ap_msg = {};
   f1ap_msg.ue_index                                = msg.ue_index;

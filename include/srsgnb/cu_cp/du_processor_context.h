@@ -41,10 +41,10 @@ struct du_cell_context {
   du_sys_info             sys_info;   /// System information provided by DU
 };
 
-struct du_context {
-  du_index_t                                    du_index;      /// Index assisgned by CU-CP
-  uint64_t                                      id;            /// the gNB-DU-ID
-  std::string                                   name = "none"; /// gNB-DU-Name
+struct du_processor_context {
+  du_index_t  du_index;      /// Index assisgned by CU-CP
+  uint64_t    id;            /// the gNB-DU-ID
+  std::string name = "none"; /// gNB-DU-Name
 };
 
 } // namespace srs_cu_cp

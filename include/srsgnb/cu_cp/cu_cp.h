@@ -17,9 +17,6 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Forward declared messages.
-class du_processor;
-
 /// Interface to notify about NGAP connections to the CU-CP
 class cu_cp_ngap_connection_notifier
 {

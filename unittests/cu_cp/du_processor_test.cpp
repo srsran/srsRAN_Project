@@ -11,6 +11,7 @@
 #include "../../lib/cu_cp/cu_cp.h"
 #include "du_processor_test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsgnb/cu_cp/du_processor_factory.h"
 #include "srsgnb/support/test_utils.h"
 #include "unittests/f1_interface/common/test_helpers.h"
 #include "unittests/rrc/test_helpers.h"
@@ -34,12 +35,10 @@ protected:
     rrc_ue_ngap_ev_notifier = std::make_unique<dummy_rrc_ue_nas_notifier>();
 
     // create and start DU processor
-    du_processor_config_t du_cfg   = {};
-    du_cfg.f1c_du_mgmt_notifier    = f1c_du_mgmt_notifier.get();
-    du_cfg.f1c_notifier            = f1c_pdu_notifier.get();
-    du_cfg.rrc_ue_ngap_ev_notifier = rrc_ue_ngap_ev_notifier.get();
+    du_processor_config_t du_cfg = {};
 
-    du_processor_obj = std::make_unique<du_processor>(std::move(du_cfg));
+    du_processor_obj =
+        create_du_processor(std::move(du_cfg), *f1c_du_mgmt_notifier, *f1c_pdu_notifier, *rrc_ue_ngap_ev_notifier);
   }
 
   void TearDown() override
@@ -48,7 +47,7 @@ protected:
     srslog::flush();
   }
 
-  std::unique_ptr<du_processor>                     du_processor_obj;
+  std::unique_ptr<du_processor_interface>           du_processor_obj;
   std::unique_ptr<dummy_f1c_pdu_notifier>           f1c_pdu_notifier;
   std::unique_ptr<dummy_f1c_du_management_notifier> f1c_du_mgmt_notifier;
   std::unique_ptr<dummy_rrc_ue_nas_notifier>        rrc_ue_ngap_ev_notifier;

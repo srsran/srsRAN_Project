@@ -8,7 +8,8 @@
 
 set(SOURCES
       cu_cp.cpp
-      du_processor.cpp
+      du_processor_impl.cpp
+      du_processor_factory.cpp
       ue_manager.cpp
 )
 

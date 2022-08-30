@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "du_context.h"
 #include "srsgnb/cu_cp/ue_context.h"
 
 namespace srsgnb {
@@ -18,7 +17,7 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 // Forward declared class
-class du_processor;
+class du_processor_impl;
 
 class ue_manager_ctrl_configurer
 {

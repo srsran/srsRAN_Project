@@ -9,6 +9,7 @@
  */
 
 #include "cu_cp.h"
+#include "srsgnb/cu_cp/du_processor_factory.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu_factory.h"
 #include "srsgnb/ngap/ngap_factory.h"
 
@@ -90,7 +91,7 @@ void cu_cp::on_amf_connection()
 {
   // inform all connected DU objects about the new connection
   for (auto& du : du_db) {
-    du->get_amf_connection_handler().handle_amf_connection();
+    du->get_rrc_amf_connection_handler().handle_amf_connection();
   }
 }
 
@@ -98,7 +99,7 @@ void cu_cp::on_amf_connection_drop()
 {
   // inform all DU objects about the AMF connection drop
   for (auto& du : du_db) {
-    du->get_amf_connection_handler().handle_amf_connection_drop();
+    du->get_rrc_amf_connection_handler().handle_amf_connection_drop();
   }
 }
 
@@ -107,12 +108,10 @@ void cu_cp::on_amf_connection_drop()
 /// Create DU object with valid index
 void cu_cp::add_du()
 {
-  du_processor_config_t du_cfg   = {};
-  du_cfg.f1c_du_mgmt_notifier    = &f1ap_ev_notifier;
-  du_cfg.f1c_notifier            = cfg.f1c_notifier;
-  du_cfg.rrc_ue_ngap_ev_notifier = &rrc_ue_ngap_ev_notifier;
+  du_processor_config_t du_cfg = {};
 
-  std::unique_ptr<du_processor> du = std::make_unique<du_processor>(std::move(du_cfg));
+  std::unique_ptr<du_processor_interface> du =
+      create_du_processor(std::move(du_cfg), f1ap_ev_notifier, *cfg.f1c_notifier, rrc_ue_ngap_ev_notifier);
 
   du_index_t du_index = get_next_du_index();
   if (du_index == INVALID_DU_INDEX) {
@@ -148,7 +147,7 @@ void cu_cp::remove_du(du_index_t du_index)
   });
 }
 
-du_processor& cu_cp::find_du(du_index_t du_index)
+du_processor_interface& cu_cp::find_du(du_index_t du_index)
 {
   srsgnb_assert(du_index < MAX_NOF_DUS, "Invalid du_index={}", du_index);
   srsgnb_assert(du_db.contains(du_index), "DU not found du_index={}", du_index);

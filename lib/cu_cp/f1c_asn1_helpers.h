@@ -11,7 +11,6 @@
 #pragma once
 
 #include "../ran/bcd_helpers.h"
-#include "du_context.h"
 #include "srsgnb/asn1/f1ap.h"
 
 namespace srsgnb {

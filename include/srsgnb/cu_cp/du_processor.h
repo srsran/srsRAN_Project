@@ -11,6 +11,7 @@
 #pragma once
 
 #include "cu_cp_types.h"
+#include "du_processor_context.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/ran/nr_cgi.h"
@@ -60,6 +61,10 @@ public:
   /// \return The DU index.
   virtual du_index_t get_du_index() = 0;
 
+  /// \brief Get the DU processor context.
+  /// \return The DU processor context.
+  virtual du_processor_context& get_context() = 0;
+
   /// \brief Handle the reception of a F1 Setup Request message and transmit the F1 Setup Response or F1 Setup Failure.
   /// \param[in] msg The received F1 Setup Request message.
   virtual void handle_f1_setup_request(const f1_setup_request_message& msg) = 0;
@@ -68,6 +73,25 @@ public:
   /// \param[in] msg The UE creation message.
   /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
   virtual ue_creation_complete_message handle_ue_creation_request(const ue_creation_message& msg) = 0;
+
+  /// \brief Get the F1C message handler interface of the DU processor object.
+  /// \return The F1C message handler interface of the DU processor object.
+  virtual f1c_message_handler& get_f1c_message_handler() = 0;
+
+  /// \brief Get the F1C statistics handler interface of the DU processor object.
+  /// \return The F1C statistics handler interface of the DU processor object.
+  virtual f1c_statistics_handler& get_f1c_statistics_handler() = 0;
+};
+
+/// Interface for an RRC entity to communicate with the DU processor.
+class du_processor_rrc_interface
+{
+public:
+  virtual ~du_processor_rrc_interface() = default;
+
+  /// \brief Get the RRC AMF connection handler interface of the DU processor object.
+  /// \return The RRC AMF connection handler interface of the DU processor object.
+  virtual rrc_amf_connection_handler& get_rrc_amf_connection_handler() = 0;
 };
 
 /// Interface for an RRC UE entity to communicate with the DU processor.
@@ -89,6 +113,28 @@ public:
   virtual void           handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) = 0;
   virtual unique_timer   make_unique_timer()                                                = 0;
   virtual timer_manager& get_timer_manager()                                                = 0;
+};
+
+/// Methods to get statistics of the DU processor.
+class du_processor_statistics_handler
+{
+public:
+  virtual ~du_processor_statistics_handler() = default;
+
+  /// \brief Returns the number of connected UEs at the DU processor
+  /// \return The number of connected UEs.
+  virtual size_t get_nof_ues() = 0;
+};
+
+class du_processor_interface : public du_processor_f1c_interface,
+                               public du_processor_rrc_interface,
+                               public du_processor_rrc_ue_interface,
+                               public du_processor_ue_task_scheduler,
+                               public du_processor_statistics_handler
+
+{
+public:
+  virtual ~du_processor_interface() = default;
 };
 
 } // namespace srs_cu_cp
