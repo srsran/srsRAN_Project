@@ -14,22 +14,6 @@
 
 using namespace srsgnb;
 
-template <std::size_t N>
-byte_buffer make_byte_buffer_and_log(const std::array<uint8_t, N>& tv)
-{
-  byte_buffer sdu = {tv};
-  return sdu;
-}
-
-template <std::size_t N>
-byte_buffer_slice_chain make_rlc_byte_buffer_and_log(const std::array<uint8_t, N>& tv)
-{
-  byte_buffer             buf = {tv};
-  byte_buffer_slice_chain pdu;
-  pdu.push_back(std::move(buf));
-  return pdu;
-}
-
 /// Mocking class of the surrounding layers invoked by the RLC.
 class rlc_test_frame : public rlc_rx_upper_layer_data_notifier,
                        public rlc_tx_upper_layer_data_notifier,
