@@ -146,6 +146,22 @@ static asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::options rach_msg1_fdm_co
   return asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::one;
 }
 
+static asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::options
+pucch_group_hop_convert_to_asn1(pucch_config_common::pucch_group_hop_opt group_hop_value)
+{
+  switch (group_hop_value) {
+    case pucch_config_common::pucch_group_hop_opt::disabled:
+      return asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::disable;
+    case pucch_config_common::pucch_group_hop_opt::enable:
+      return asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::enable;
+    case pucch_config_common::pucch_group_hop_opt::neither:
+      return asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::neither;
+    default:
+      report_fatal_error("Invalid msg1-fdm field. Return default value 1");
+  }
+  return asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::disable;
+}
+
 static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul_config_common& cfg)
 {
   using namespace asn1::rrc_nr;
@@ -227,13 +243,21 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   pusch.p0_nominal_with_grant_present = true;
   pusch.p0_nominal_with_grant         = -76;
 
+  // PUCCH-ConfigCommon.
+  const pucch_config_common& pucch_cfg     = cfg.init_ul_bwp.pucch_cfg_common.value();
   out.init_ul_bwp.pucch_cfg_common_present = true;
   pucch_cfg_common_s& pucch                = out.init_ul_bwp.pucch_cfg_common.set_setup();
   pucch.pucch_res_common_present           = true;
-  pucch.pucch_res_common                   = 11;
-  pucch.pucch_group_hop.value              = asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::neither;
+  pucch.pucch_res_common                   = pucch_cfg.pucch_resource_common;
+  pucch.pucch_group_hop.value              = pucch_group_hop_convert_to_asn1(pucch_cfg.pucch_group_hopping);
   pucch.p0_nominal_present                 = true;
   pucch.p0_nominal                         = -90;
+  if (pucch_cfg.hopping_id.has_value()) {
+    pucch.hop_id_present = true;
+    pucch.hop_id         = static_cast<uint16_t>(pucch_cfg.hopping_id.value());
+  } else {
+    pucch.hop_id_present = false;
+  }
 
   out.time_align_timer_common.value = asn1::rrc_nr::time_align_timer_opts::infinity;
   return out;

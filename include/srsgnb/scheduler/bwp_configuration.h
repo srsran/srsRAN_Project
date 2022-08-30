@@ -212,6 +212,7 @@ struct pusch_config_common {
 /// \remark See TS 38.331, "PUCCH-ConfigCommon".
 struct pucch_config_common {
   enum class pucch_group_hop_opt { neither, disabled, enable };
+
   /// Values: {0,...,15}.
   uint8_t             pucch_resource_common;
   pucch_group_hop_opt pucch_group_hopping;
