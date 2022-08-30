@@ -72,17 +72,6 @@ struct rlc_am_pdu_header {
   }
 };
 
-/// AM SDU segment container
-struct rlc_am_sdu_segment {
-  rlc_am_pdu_header header;  ///< PDU header
-  byte_buffer_slice payload; ///< PDU payload
-};
-
-/// AM SDU segment compare object
-struct rlc_am_sdu_segment_cmp {
-  bool operator()(const rlc_am_sdu_segment& a, const rlc_am_sdu_segment& b) const { return a.header.so < b.header.so; }
-};
-
 /// Status PDU NACK
 struct rlc_am_status_nack {
   const static uint16_t so_end_of_sdu;

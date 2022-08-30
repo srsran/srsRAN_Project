@@ -115,7 +115,7 @@ bool rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
 
   // Section 5.2.3.2.2, discard segments with overlapping bytes
   if (rx_window->has_sn(header.sn) && header.si != rlc_si_field::full_sdu) {
-    for (const rlc_am_sdu_segment& segm : (*rx_window)[header.sn].segments) {
+    for (const rlc_rx_am_sdu_segment& segm : (*rx_window)[header.sn].segments) {
       uint32_t segm_last_byte = segm.header.so + segm.payload.length() - 1;
       uint32_t pdu_last_byte  = header.so + payload.length() - 1;
       if ((header.so >= segm.header.so && header.so <= segm_last_byte) ||
@@ -163,7 +163,7 @@ bool rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
      * - reassemble the RLC SDU from AMD PDU(s) with SN = x, remove RLC headers when doing so and deliver
      *   the reassembled RLC SDU to upper layer;
      */
-    sdu_info& rx_sdu = (*rx_window)[header.sn];
+    rlc_rx_am_sdu_info& rx_sdu = (*rx_window)[header.sn];
     logger.log_info("Rx SDU ({} B)", rx_sdu.sdu.length());
     metrics_add_sdus(1, rx_sdu.sdu.length());
     //
@@ -282,7 +282,7 @@ bool rlc_rx_am_entity::handle_full_data_sdu(const rlc_am_pdu_header& header, byt
   }
 
   // Full SDU received. Add to Rx window and use full payload as SDU.
-  sdu_info& rx_sdu = rx_window->add_pdu(header.sn);
+  rlc_rx_am_sdu_info& rx_sdu = rx_window->add_pdu(header.sn);
   rx_sdu.segments.clear();
   //
   // TODO: avoid copy
@@ -305,12 +305,12 @@ bool rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
   logger.log_debug("PDU SI: {}", header.sn);
 
   // Add a new SDU segment to the RX window if necessary
-  sdu_info& rx_sdu = rx_window->has_sn(header.sn) ? (*rx_window)[header.sn] : rx_window->add_pdu(header.sn);
+  rlc_rx_am_sdu_info& rx_sdu = rx_window->has_sn(header.sn) ? (*rx_window)[header.sn] : rx_window->add_pdu(header.sn);
 
   // Create SDU segment, to be stored later
-  rlc_am_sdu_segment segment = {};
-  segment.header             = header;
-  segment.payload            = std::move(payload);
+  rlc_rx_am_sdu_segment segment = {};
+  segment.header                = header;
+  segment.payload               = std::move(payload);
 
   // Store SDU segment. Sort by SO and check for duplicate bytes.
   rx_sdu.segments.insert(std::move(segment));
@@ -324,7 +324,7 @@ bool rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
     //
     // TODO: avoid copy
     //
-    for (const rlc_am_sdu_segment& segm : rx_sdu.segments) {
+    for (const rlc_rx_am_sdu_segment& segm : rx_sdu.segments) {
       if (segm.header.so + segm.payload.length() > rx_sdu.sdu.length()) {
         uint32_t piece_length = segm.header.so + segm.payload.length() - rx_sdu.sdu.length();
         rx_sdu.sdu.append(segm.payload.view().view(segm.payload.length() - piece_length, piece_length));
@@ -335,7 +335,7 @@ bool rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
   return rx_window_changed;
 }
 
-void rlc_rx_am_entity::update_segment_inventory(sdu_info& rx_sdu) const
+void rlc_rx_am_entity::update_segment_inventory(rlc_rx_am_sdu_info& rx_sdu) const
 {
   if (rx_sdu.segments.empty()) {
     rx_sdu.fully_received = false;
@@ -345,7 +345,7 @@ void rlc_rx_am_entity::update_segment_inventory(sdu_info& rx_sdu) const
 
   // Check for gaps and if all segments have been received
   uint32_t next_byte = 0;
-  for (const rlc_am_sdu_segment& segm : rx_sdu.segments) {
+  for (const rlc_rx_am_sdu_segment& segm : rx_sdu.segments) {
     if (segm.header.so != next_byte) {
       // Found gap: set flags and return
       rx_sdu.has_gap        = true;
@@ -468,16 +468,17 @@ bool rlc_rx_am_entity::status_report_required()
   return do_status.load(std::memory_order_relaxed) && not status_prohibit_timer.is_running();
 }
 
-std::unique_ptr<rlc_pdu_window_base<rlc_rx_am_entity::sdu_info>>
-rlc_rx_am_entity::create_rx_window(rlc_am_sn_size sn_size)
+std::unique_ptr<rlc_pdu_window_base<rlc_rx_am_sdu_info>> rlc_rx_am_entity::create_rx_window(rlc_am_sn_size sn_size)
 {
-  std::unique_ptr<rlc_pdu_window_base<sdu_info>> rx_window;
+  std::unique_ptr<rlc_pdu_window_base<rlc_rx_am_sdu_info>> rx_window;
   switch (sn_size) {
     case rlc_am_sn_size::size12bits:
-      rx_window = std::make_unique<rlc_pdu_window<sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>();
+      rx_window =
+          std::make_unique<rlc_pdu_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>();
       break;
     case rlc_am_sn_size::size18bits:
-      rx_window = std::make_unique<rlc_pdu_window<sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>();
+      rx_window =
+          std::make_unique<rlc_pdu_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>();
       break;
     default:
       srsgnb_assertion_failure("Cannot create rx_window: unsupported SN field length");
