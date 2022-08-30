@@ -632,6 +632,25 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
   }
 }
 
+TEST_P(rlc_tx_am_test, buffer_state_considers_status_report)
+{
+  init(GetParam());
+  EXPECT_EQ(rlc->get_buffer_state(), 0);
+  EXPECT_EQ(tester->transmitted_pdcp_count_list.size(), 0);
+
+  tester->status_required = true;
+  EXPECT_EQ(rlc->get_buffer_state(), tester->status.get_packed_size());
+
+  rlc_am_status_nack nack = {};
+  nack.has_nack_range     = true;
+  nack.has_so             = true;
+  tester->status.push_nack(nack);
+  EXPECT_EQ(rlc->get_buffer_state(), tester->status.get_packed_size());
+
+  tester->status_required = false;
+  EXPECT_EQ(rlc->get_buffer_state(), 0);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size
 ///////////////////////////////////////////////////////////////////////////////

@@ -650,6 +650,9 @@ uint32_t rlc_tx_am_entity::get_buffer_state_nolock()
 
   // TODO: status report size
   uint32_t status_bytes = 0;
+  if (status_provider->status_report_required()) {
+    status_bytes = status_provider->get_status_pdu_length();
+  }
 
   return queue_bytes + segment_bytes + retx_bytes + status_bytes;
 }
