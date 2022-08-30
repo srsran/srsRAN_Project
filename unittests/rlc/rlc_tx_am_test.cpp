@@ -23,6 +23,7 @@ class rlc_test_frame : public rlc_rx_upper_layer_data_notifier,
 public:
   std::queue<byte_buffer_slice> sdu_queue;
   uint32_t                      sdu_counter = 0;
+  std::list<uint32_t>           transmitted_pdcp_count_list;
 
   // rlc_rx_upper_layer_data_notifier interface
   void on_new_sdu(byte_buffer_slice sdu) override
@@ -32,7 +33,11 @@ public:
   }
 
   // rlc_tx_upper_layer_data_notifier interface
-  void on_delivered_sdu(uint32_t pdcp_count) override {}
+  void on_delivered_sdu(uint32_t pdcp_count) override
+  {
+    // store in list
+    transmitted_pdcp_count_list.push_back(pdcp_count);
+  }
 
   // rlc_tx_upper_layer_control_notifier interface
   void on_protocol_failure() override {}
@@ -143,7 +148,8 @@ protected:
       sdu_bufs[i] = create_sdu(sdu_size, i);
 
       // write SDU into upper end
-      rlc_sdu sdu = {i, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+      rlc_sdu sdu = {/* pdcp_count = */ i,
+                     sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
       rlc1_tx_upper->handle_sdu(std::move(sdu));
     }
 
@@ -186,7 +192,8 @@ protected:
       sdu_bufs[i] = create_sdu(sdu_size, i);
 
       // write SDU into upper end
-      rlc_sdu sdu = {i, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+      rlc_sdu sdu = {/* pdcp_count = */ i,
+                     sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
       rlc1_tx_upper->handle_sdu(std::move(sdu));
     }
 
@@ -252,6 +259,9 @@ TEST_P(rlc_tx_am_test, create_new_entity)
 
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
   EXPECT_EQ(rlc2_tx_lower->get_buffer_state(), 0);
+
+  EXPECT_EQ(tester1.transmitted_pdcp_count_list.size(), 0);
+  EXPECT_EQ(tester2.transmitted_pdcp_count_list.size(), 0);
 }
 
 TEST_P(rlc_tx_am_test, tx_without_segmentation)
@@ -380,6 +390,15 @@ TEST_P(rlc_tx_am_test, retx_pdu_without_segmentation)
   logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
   EXPECT_TRUE(std::equal(retx_pdu.begin(), retx_pdu.end(), pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end()));
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+
+  // Verify transmit notification for fully ACK'ed SDUs
+  ASSERT_EQ(tester1.transmitted_pdcp_count_list.size(), 3);
+  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
+    if (pdcp_count < 3) {
+      EXPECT_EQ(tester1.transmitted_pdcp_count_list.front(), pdcp_count);
+      tester1.transmitted_pdcp_count_list.pop_front();
+    }
+  }
 }
 
 TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
@@ -417,6 +436,15 @@ TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
         std::equal(retx_pdu.begin() + header_size, retx_pdu.end(), pdus[nack.nack_sn].begin() + header_min_size + i));
   }
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+
+  // Verify transmit notification for fully ACK'ed SDUs
+  ASSERT_EQ(tester1.transmitted_pdcp_count_list.size(), 3);
+  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
+    if (pdcp_count < 3) {
+      EXPECT_EQ(tester1.transmitted_pdcp_count_list.front(), pdcp_count);
+      tester1.transmitted_pdcp_count_list.pop_front();
+    }
+  }
 }
 
 TEST_P(rlc_tx_am_test, retx_pdu_first_segment_without_segmentation)
@@ -452,6 +480,15 @@ TEST_P(rlc_tx_am_test, retx_pdu_first_segment_without_segmentation)
   EXPECT_TRUE(
       std::equal(retx_pdu.begin() + header_min_size, retx_pdu.end(), pdus[nack.nack_sn].begin() + header_min_size));
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+
+  // Verify transmit notification for fully ACK'ed SDUs
+  ASSERT_EQ(tester1.transmitted_pdcp_count_list.size(), 3);
+  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
+    if (pdcp_count < 3) {
+      EXPECT_EQ(tester1.transmitted_pdcp_count_list.front(), pdcp_count);
+      tester1.transmitted_pdcp_count_list.pop_front();
+    }
+  }
 }
 
 TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
@@ -490,6 +527,15 @@ TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
                          retx_pdu.end(),
                          pdus[nack.nack_sn].begin() + header_min_size + nack.so_start));
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+
+  // Verify transmit notification for fully ACK'ed SDUs
+  ASSERT_EQ(tester1.transmitted_pdcp_count_list.size(), 3);
+  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
+    if (pdcp_count < 3) {
+      EXPECT_EQ(tester1.transmitted_pdcp_count_list.front(), pdcp_count);
+      tester1.transmitted_pdcp_count_list.pop_front();
+    }
+  }
 }
 
 TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
@@ -528,6 +574,15 @@ TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
                          retx_pdu.end(),
                          pdus[nack.nack_sn].begin() + header_min_size + nack.so_start));
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+
+  // Verify transmit notification for fully ACK'ed SDUs
+  ASSERT_EQ(tester1.transmitted_pdcp_count_list.size(), 3);
+  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
+    if (pdcp_count < 3) {
+      EXPECT_EQ(tester1.transmitted_pdcp_count_list.front(), pdcp_count);
+      tester1.transmitted_pdcp_count_list.pop_front();
+    }
+  }
 }
 
 TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
@@ -563,6 +618,15 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
   EXPECT_TRUE(
       std::equal(retx_pdu.begin() + header_min_size, retx_pdu.end(), pdus[nack.nack_sn].begin() + header_min_size));
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+
+  // Verify transmit notification for fully ACK'ed SDUs
+  ASSERT_EQ(tester1.transmitted_pdcp_count_list.size(), 3);
+  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
+    if (pdcp_count < 3) {
+      EXPECT_EQ(tester1.transmitted_pdcp_count_list.front(), pdcp_count);
+      tester1.transmitted_pdcp_count_list.pop_front();
+    }
+  }
 }
 
 TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
@@ -598,6 +662,15 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
   EXPECT_TRUE(
       std::equal(retx_pdu.begin() + header_min_size, retx_pdu.end(), pdus[nack.nack_sn].begin() + header_min_size));
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+
+  // Verify transmit notification for fully ACK'ed SDUs
+  ASSERT_EQ(tester1.transmitted_pdcp_count_list.size(), 3);
+  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
+    if (pdcp_count < 3) {
+      EXPECT_EQ(tester1.transmitted_pdcp_count_list.front(), pdcp_count);
+      tester1.transmitted_pdcp_count_list.pop_front();
+    }
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
