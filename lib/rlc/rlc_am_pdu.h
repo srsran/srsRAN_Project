@@ -302,7 +302,7 @@ struct formatter<srsgnb::rlc_am_status_pdu> {
     if (status.get_nacks().size() > 0) {
       format_to(buffer, ", NACK=");
       for (auto nack : status.get_nacks()) {
-        format_to(buffer, "[{}]", nack);
+        format_to(buffer, "{}", nack);
       }
     }
 
