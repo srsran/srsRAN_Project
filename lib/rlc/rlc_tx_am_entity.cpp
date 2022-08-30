@@ -128,7 +128,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
 
   // insert newly assigned SN into window and use reference for in-place operations
   // NOTE: from now on, we can't return from this function anymore before increasing tx_next
-  rlc_tx_amd_pdu_box& tx_pdu = tx_window->add_pdu(st.tx_next);
+  rlc_tx_am_sdu_info& tx_pdu = tx_window->add_pdu(st.tx_next);
   tx_pdu.pdcp_count          = sdu.pdcp_count;
   tx_pdu.sdu                 = std::move(sdu.buf); // Move SDU into TX window SDU box
 
@@ -167,7 +167,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
   return pdu_buf;
 }
 
-byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes)
+byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_info& tx_pdu, uint32_t nof_bytes)
 {
   logger.log_info("Creating new SDU segment. Tx SDU ({} B), nof_bytes={} B ", tx_pdu.sdu.length(), nof_bytes);
 
@@ -227,7 +227,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_amd_pdu
   return pdu_buf;
 }
 
-byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes)
+byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_sdu_info& tx_pdu, uint32_t nof_bytes)
 {
   logger.log_info("Creating continued SDU segment. Tx SDU ({} B), nof_bytes={} B ", tx_pdu.sdu.length(), nof_bytes);
 
@@ -341,7 +341,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
   logger.log_debug("RETX: {}", retx);
 
   // Get tx_pdu info from tx_window
-  rlc_tx_amd_pdu_box& tx_pdu = (*tx_window)[retx.sn];
+  rlc_tx_am_sdu_info& tx_pdu = (*tx_window)[retx.sn];
 
   // Check ReTx boundaries
   if (retx.so + retx.length > tx_pdu.sdu.length()) {
@@ -636,7 +636,7 @@ uint32_t rlc_tx_am_entity::get_buffer_state_nolock()
   uint32_t segment_bytes = 0;
   if (sn_under_segmentation != INVALID_RLC_SN) {
     if (tx_window->has_sn(sn_under_segmentation)) {
-      rlc_tx_amd_pdu_box& tx_pdu = (*tx_window)[sn_under_segmentation];
+      rlc_tx_am_sdu_info& tx_pdu = (*tx_window)[sn_under_segmentation];
       segment_bytes              = tx_pdu.sdu.length() - tx_pdu.next_so + head_max_size;
     } else {
       logger.log_info("Buffer state: ignore SN under segmentation: SN={} not in tx_window", sn_under_segmentation);
@@ -779,17 +779,17 @@ void rlc_tx_am_entity::timer_expired(uint32_t timeout_id)
   }
 }
 
-std::unique_ptr<rlc_pdu_window_base<rlc_tx_amd_pdu_box>> rlc_tx_am_entity::create_tx_window(rlc_am_sn_size sn_size)
+std::unique_ptr<rlc_pdu_window_base<rlc_tx_am_sdu_info>> rlc_tx_am_entity::create_tx_window(rlc_am_sn_size sn_size)
 {
-  std::unique_ptr<rlc_pdu_window_base<rlc_tx_amd_pdu_box>> tx_window;
+  std::unique_ptr<rlc_pdu_window_base<rlc_tx_am_sdu_info>> tx_window;
   switch (sn_size) {
     case rlc_am_sn_size::size12bits:
       tx_window =
-          std::make_unique<rlc_pdu_window<rlc_tx_amd_pdu_box, window_size(to_number(rlc_am_sn_size::size12bits))>>();
+          std::make_unique<rlc_pdu_window<rlc_tx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>();
       break;
     case rlc_am_sn_size::size18bits:
       tx_window =
-          std::make_unique<rlc_pdu_window<rlc_tx_amd_pdu_box, window_size(to_number(rlc_am_sn_size::size18bits))>>();
+          std::make_unique<rlc_pdu_window<rlc_tx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>();
       break;
     default:
       srsgnb_assertion_failure("Cannot create tx_window: unsupported SN field length");
