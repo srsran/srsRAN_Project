@@ -89,7 +89,8 @@ intermediate commits:
   rules:
     - if: $ON_MR
   script:
-    - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git
+    - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git git-lfs
+    - git lfs install
     - git config advice.detachedHead false
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
     - |
