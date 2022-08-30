@@ -19,6 +19,20 @@
 
 namespace srsgnb {
 
+/// UM SDU segment container
+struct rlc_rx_um_sdu_segment {
+  rlc_um_pdu_header header;  ///< PDU header
+  byte_buffer_slice payload; ///< Payload (SDU segment)
+};
+
+/// Container to collect received SDU segments and to assemble the SDU upon completion
+struct rlc_rx_um_sdu_info {
+  std::map<uint32_t, rlc_rx_um_sdu_segment> segments; // Map of segments with SO as key
+  byte_buffer                               sdu;
+  uint32_t                                  next_expected_so;
+  uint32_t                                  total_sdu_length;
+};
+
 ///
 /// \brief Rx state variables
 /// Ref: 3GPP TS 38.322 version 16.2.0 Section 7.1
@@ -56,16 +70,10 @@ private:
   const uint32_t mod;
   const uint32_t um_window_size;
 
-  // Rx window
-  struct rlc_umd_pdu_segments {
-    std::map<uint32_t, rlc_um_pdu> segments; // Map of segments with SO as key
-    byte_buffer                    sdu;
-    uint32_t                       next_expected_so;
-    uint32_t                       total_sdu_length;
-  };
-  std::map<uint32_t, rlc_umd_pdu_segments> rx_window;
+  /// Rx window
+  std::map<uint32_t, rlc_rx_um_sdu_info> rx_window;
 
-  void update_total_sdu_length(rlc_umd_pdu_segments& pdu_segments, const rlc_um_pdu& rx_pdu);
+  void update_total_sdu_length(rlc_rx_um_sdu_info& sdu_info, const rlc_rx_um_sdu_segment& segment);
 
   /// \brief t-Reassembly
   /// This timer is used by [...] the receiving side of an UM RLC entity in order to detect loss of RLC PDUs at lower

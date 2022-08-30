@@ -61,38 +61,38 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
     // Nothing else to do here ..
   } else {
     // place PDU in receive buffer
-    rlc_um_pdu rx_pdu = {};
-    rx_pdu.header     = header;
-    rx_pdu.payload    = std::move(payload);
+    rlc_rx_um_sdu_segment segment = {};
+    segment.header                = header;
+    segment.payload               = std::move(payload);
 
     // check if this SN is already present in rx buffer
     if (rx_window.find(header.sn) == rx_window.end()) {
       // first received segment of this SN, add to rx buffer
-      logger.log_debug(rx_pdu.payload.begin(),
-                       rx_pdu.payload.end(),
+      logger.log_debug(segment.payload.begin(),
+                       segment.payload.end(),
                        "placing {} segment of SN={} ({} B) in Rx buffer",
                        header.si,
                        header.sn,
-                       rx_pdu.payload.length());
-      rlc_umd_pdu_segments pdu_segments = {};
-      update_total_sdu_length(pdu_segments, rx_pdu);
-      pdu_segments.segments.emplace(header.so, std::move(rx_pdu));
-      rx_window[header.sn] = std::move(pdu_segments);
+                       segment.payload.length());
+      rlc_rx_um_sdu_info sdu_info = {};
+      update_total_sdu_length(sdu_info, segment);
+      sdu_info.segments.emplace(header.so, std::move(segment));
+      rx_window[header.sn] = std::move(sdu_info);
     } else {
       // other segment for this SN already present, update received data
-      logger.log_debug(rx_pdu.payload.begin(),
-                       rx_pdu.payload.end(),
+      logger.log_debug(segment.payload.begin(),
+                       segment.payload.end(),
                        "updating SN={} at SO={} with {} B",
-                       rx_pdu.header.sn,
-                       rx_pdu.header.so,
-                       rx_pdu.payload.length());
-      auto& pdu_segments = rx_window.at(header.sn);
+                       segment.header.sn,
+                       segment.header.so,
+                       segment.payload.length());
+      rlc_rx_um_sdu_info& sdu_info = rx_window.at(header.sn);
 
       // calculate total SDU length
-      update_total_sdu_length(pdu_segments, rx_pdu);
+      update_total_sdu_length(sdu_info, segment);
 
       // append to list of segments
-      pdu_segments.segments.emplace(header.so, std::move(rx_pdu));
+      sdu_info.segments.emplace(header.so, std::move(segment));
     }
 
     // handle received segments
@@ -109,22 +109,22 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
     bool sdu_complete = false;
 
     // iterate over received segments and try to assemble full SDU
-    auto& pdu = rx_window.at(sn);
-    for (auto it = pdu.segments.begin(); it != pdu.segments.end();) {
+    rlc_rx_um_sdu_info& sdu_info = rx_window.at(sn);
+    for (auto it = sdu_info.segments.begin(); it != sdu_info.segments.end();) {
       logger.log_debug(
           "Have {} segment with SO={} for SN={}", it->second.header.si, it->second.header.so, it->second.header.sn);
-      if (it->second.header.so == pdu.next_expected_so) {
-        if (pdu.next_expected_so == 0) {
-          if (pdu.sdu.empty()) {
+      if (it->second.header.so == sdu_info.next_expected_so) {
+        if (sdu_info.next_expected_so == 0) {
+          if (sdu_info.sdu.empty()) {
             // reuse buffer of first segment for final SDU
             // TODO: optimize copy - e.g. change upstream SDU type to a list-like aggregate of shared_byte_buffer
-            pdu.sdu              = byte_buffer(it->second.payload.begin(), it->second.payload.end());
-            pdu.next_expected_so = pdu.sdu.length();
+            sdu_info.sdu              = byte_buffer(it->second.payload.begin(), it->second.payload.end());
+            sdu_info.next_expected_so = sdu_info.sdu.length();
             logger.log_debug("Reusing first segment of SN={} for final SDU", it->second.header.sn);
-            it = pdu.segments.erase(it);
+            it = sdu_info.segments.erase(it);
           } else {
             logger.log_debug("SDU buffer already allocated. Possible retransmission of first segment.");
-            if (it->second.header.so != pdu.next_expected_so) {
+            if (it->second.header.so != sdu_info.next_expected_so) {
               logger.log_error("Invalid PDU. SO doesn't match. Discarding all segments of SN={}.", sn);
               rx_window.erase(sn);
               return;
@@ -133,12 +133,12 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
         } else {
           // add this segment to the end of the SDU buffer
           // TODO: optimize copy - e.g. change upstream SDU type to a list-like aggregate of shared_byte_buffer
-          pdu.sdu.append(it->second.payload);
-          pdu.next_expected_so += it->second.payload.length();
+          sdu_info.sdu.append(it->second.payload);
+          sdu_info.next_expected_so += it->second.payload.length();
           logger.log_debug("Appended SO={} of SN={}", it->second.header.so, it->second.header.sn);
-          it = pdu.segments.erase(it);
+          it = sdu_info.segments.erase(it);
 
-          if (pdu.next_expected_so == pdu.total_sdu_length) {
+          if (sdu_info.next_expected_so == sdu_info.total_sdu_length) {
             // entire SDU has been received, it will be passed up the stack outside the loop
             sdu_complete = true;
             break;
@@ -152,9 +152,9 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
 
     if (sdu_complete) {
       // deliver full SDU to upper layers
-      logger.log_info("Rx SDU ({} B)", pdu.sdu.length());
-      metrics_add_sdus(1, pdu.sdu.length());
-      upper_dn.on_new_sdu(std::move(pdu.sdu));
+      logger.log_info("Rx SDU ({} B)", sdu_info.sdu.length());
+      metrics_add_sdus(1, sdu_info.sdu.length());
+      upper_dn.on_new_sdu(std::move(sdu_info.sdu));
 
       // delete PDU from rx_window
       rx_window.erase(sn);
@@ -196,9 +196,9 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
 
       if (not sn_in_reassembly_window(st.rx_next_reassembly)) {
         // update RX_Next_Reassembly to first SN that has not been reassembled and delivered
-        for (const auto& rx_pdu : rx_window) {
-          if (rx_pdu.first >= rx_mod_base(st.rx_next_highest - um_window_size)) {
-            st.rx_next_reassembly = rx_pdu.first;
+        for (const auto& sdu_info_pair : rx_window) {
+          if (sdu_info_pair.first >= rx_mod_base(st.rx_next_highest - um_window_size)) {
+            st.rx_next_reassembly = sdu_info_pair.first;
             logger.log_debug("Updating rx_next_reassembly={}", st.rx_next_reassembly);
             break;
           }
@@ -229,11 +229,11 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
   }
 }
 
-void rlc_rx_um_entity::update_total_sdu_length(rlc_umd_pdu_segments& pdu_segments, const rlc_um_pdu& rx_pdu)
+void rlc_rx_um_entity::update_total_sdu_length(rlc_rx_um_sdu_info& sdu_info, const rlc_rx_um_sdu_segment& segment)
 {
-  if (rx_pdu.header.si == rlc_si_field::last_segment) {
-    pdu_segments.total_sdu_length = rx_pdu.header.so + rx_pdu.payload.length();
-    logger.log_debug("updating total SDU length for SN={} to {} B", rx_pdu.header.sn, pdu_segments.total_sdu_length);
+  if (segment.header.si == rlc_si_field::last_segment) {
+    sdu_info.total_sdu_length = segment.header.so + segment.payload.length();
+    logger.log_debug("updating total SDU length for SN={} to {} B", segment.header.sn, sdu_info.total_sdu_length);
   }
 };
 
