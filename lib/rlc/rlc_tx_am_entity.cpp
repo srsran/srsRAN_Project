@@ -71,6 +71,14 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t nof_bytes)
   if (status_provider->status_report_required()) {
     rlc_am_status_pdu status_pdu = status_provider->get_status_pdu();
     byte_buffer       pdu;
+    if (status_pdu.get_packed_size() > nof_bytes) {
+      if (not status_pdu.trim(nof_bytes)) {
+        logger.log_warning("Could not trim status PDU down to {} bytes", nof_bytes);
+        return {};
+      }
+      logger.log_info("Trimmed status PDU to fit into {} bytes", nof_bytes);
+      logger.log_debug("Trimmed status PDU: {}", status_pdu);
+    }
     status_pdu.pack(pdu);
     logger.log_debug("Status PDU built - {} bytes", pdu.length());
     return byte_buffer_slice_chain(std::move(pdu));

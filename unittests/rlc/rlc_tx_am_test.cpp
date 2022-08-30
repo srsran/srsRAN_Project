@@ -651,6 +651,87 @@ TEST_P(rlc_tx_am_test, buffer_state_considers_status_report)
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 }
 
+TEST_P(rlc_tx_am_test, status_report_priority)
+{
+  init(GetParam());
+
+  // First push one SDU into RLC to also check precedence of status report
+  const uint32_t sdu_size        = 1;
+  const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t pdu_size        = header_min_size + sdu_size;
+
+  EXPECT_EQ(rlc->get_buffer_state(), 0);
+  rlc->handle_sdu(create_rlc_sdu(0, sdu_size));
+  EXPECT_EQ(rlc->get_buffer_state(), pdu_size);
+
+  // Set status report required
+  tester->status_required = true;
+  EXPECT_EQ(rlc->get_buffer_state(), tester->status.get_packed_size() + pdu_size);
+
+  tester->status.ack_sn   = 20;
+  rlc_am_status_nack nack = {};
+
+  nack.nack_sn = 5;
+  tester->status.push_nack(nack);
+  nack.nack_sn = 10;
+  tester->status.push_nack(nack);
+  nack.nack_sn = 15;
+  tester->status.push_nack(nack);
+  EXPECT_EQ(rlc->get_buffer_state(), tester->status.get_packed_size() + pdu_size);
+
+  byte_buffer_slice_chain pdu;
+
+  // Read PDU, expect to be the status PDU
+  pdu = rlc->pull_pdu(tester->status.get_packed_size());
+  EXPECT_EQ(pdu.length(), tester->status.get_packed_size());
+
+  // Disable status PDU requirement and check there is only the SDU waiting for Tx
+  tester->status_required = false;
+  EXPECT_EQ(rlc->get_buffer_state(), pdu_size);
+}
+
+TEST_P(rlc_tx_am_test, status_report_trim)
+{
+  init(GetParam());
+
+  EXPECT_EQ(rlc->get_buffer_state(), 0);
+
+  // Set status report required
+  tester->status_required = true;
+  EXPECT_EQ(rlc->get_buffer_state(), tester->status.get_packed_size());
+
+  // Create a dummy status PDU with a few NACKs
+  tester->status.ack_sn   = 20;
+  rlc_am_status_nack nack = {};
+
+  nack.nack_sn = 5;
+  tester->status.push_nack(nack);
+  nack.nack_sn = 10;
+  tester->status.push_nack(nack);
+
+  // Store current size so far
+  uint32_t trimmed_size = tester->status.get_packed_size();
+
+  // Append further NACKs that will be trimmed
+  nack.nack_sn = 15;
+  tester->status.push_nack(nack);
+  EXPECT_EQ(rlc->get_buffer_state(), tester->status.get_packed_size());
+
+  byte_buffer_slice_chain pdu;
+
+  // Fail to read status PDU due to insufficient grant size to fit a totally trimmed status PDU
+  pdu = rlc->pull_pdu(rlc_am_nr_status_pdu_sizeof_header_ack_sn - 1);
+  EXPECT_EQ(pdu.length(), 0);
+
+  // Read trimmed status PDU (short by 1 byte, i.e. last NACK will be trimmed)
+  pdu = rlc->pull_pdu(tester->status.get_packed_size() - 1);
+  EXPECT_EQ(pdu.length(), trimmed_size);
+
+  // Read untrimmed status PDU
+  pdu = rlc->pull_pdu(tester->status.get_packed_size());
+  EXPECT_EQ(pdu.length(), tester->status.get_packed_size());
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size
 ///////////////////////////////////////////////////////////////////////////////
