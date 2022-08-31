@@ -55,6 +55,13 @@ public:
   virtual void release_ues() = 0;
 };
 
+/// Combined entry point for the RRC DU handling.
+class rrc_du_interface : public rrc_du_ue_connection_manager, public rrc_du_ue_manager
+{
+public:
+  virtual ~rrc_du_interface() = default;
+};
+
 } // namespace srs_cu_cp
 
 } // namespace srsgnb

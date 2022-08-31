@@ -19,7 +19,7 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Main RRC representation with the DU
-class rrc_entity : public rrc_du_ue_manager, public rrc_du_ue_connection_manager
+class rrc_entity : public rrc_du_interface
 {
 public:
   rrc_entity(const rrc_cfg_t&              cfg_,
