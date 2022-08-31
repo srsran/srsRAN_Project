@@ -8,21 +8,21 @@
  *
  */
 
-#include "rrc_entity.h"
 #include "../ran/gnb_format.h"
+#include "rrc_du_impl.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_entity::rrc_entity(const rrc_cfg_t&              cfg_,
-                       rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_,
-                       rrc_ue_nas_notifier&          nas_notif_) :
+rrc_du_impl::rrc_du_impl(const rrc_cfg_t&              cfg_,
+                         rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_,
+                         rrc_ue_nas_notifier&          nas_notif_) :
   cfg(cfg_), rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_), nas_notifier(nas_notif_)
 {
 }
 
-rrc_ue_interface* rrc_entity::add_user(rrc_ue_creation_message msg)
+rrc_ue_interface* rrc_du_impl::add_user(rrc_ue_creation_message msg)
 {
   if (ue_db.contains(msg.ue_index)) {
     // UE already exists with same ue_index
@@ -47,33 +47,33 @@ rrc_ue_interface* rrc_entity::add_user(rrc_ue_creation_message msg)
   return u.get();
 }
 
-void rrc_entity::remove_ue(ue_index_t ue_index)
+void rrc_du_impl::remove_ue(ue_index_t ue_index)
 {
   ue_db.erase(ue_index);
 }
 
-void rrc_entity::release_ues()
+void rrc_du_impl::release_ues()
 {
   // release all UEs connected to this RRC entity
 }
 
-int rrc_entity::get_pucch_resources()
+int rrc_du_impl::get_pucch_resources()
 {
   // TODO: add proper allocation, return success for now
   return 1;
 }
 
-bool rrc_entity::is_rrc_connect_allowed()
+bool rrc_du_impl::is_rrc_connect_allowed()
 {
   return !reject_users;
 }
 
-void rrc_entity::handle_amf_connection()
+void rrc_du_impl::handle_amf_connection()
 {
   reject_users = false;
 }
 
-void rrc_entity::handle_amf_connection_drop()
+void rrc_du_impl::handle_amf_connection_drop()
 {
   reject_users = true;
 }

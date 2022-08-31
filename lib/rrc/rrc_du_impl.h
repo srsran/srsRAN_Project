@@ -19,13 +19,13 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Main RRC representation with the DU
-class rrc_entity : public rrc_du_interface
+class rrc_du_impl : public rrc_du_interface
 {
 public:
-  rrc_entity(const rrc_cfg_t&              cfg_,
-             rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_,
-             rrc_ue_nas_notifier&          nas_notif_);
-  ~rrc_entity() = default;
+  rrc_du_impl(const rrc_cfg_t&              cfg_,
+              rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_,
+              rrc_ue_nas_notifier&          nas_notif_);
+  ~rrc_du_impl() = default;
 
   // rrc_du_ue_manager
   rrc_ue_interface* add_user(rrc_ue_creation_message msg) override;
