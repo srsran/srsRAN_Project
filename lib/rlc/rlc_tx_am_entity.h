@@ -12,7 +12,7 @@
 
 #include "rlc_am_interconnect.h"
 #include "rlc_am_pdu.h"
-#include "rlc_pdu_window.h"
+#include "rlc_am_window.h"
 #include "rlc_retx_queue.h"
 #include "rlc_sdu_queue.h"
 #include "rlc_tx_entity.h"
