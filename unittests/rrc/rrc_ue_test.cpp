@@ -119,8 +119,8 @@ protected:
     // create RRC entity
     du_proc_rrc_ue = std::make_unique<dummy_du_processor_rrc_ue_interface>(ue_ctxt);
 
-    rrc_entity_creation_message msg(cfg, rrc_ue_ev_notifier, rrc_ue_ngap_ev_notifier);
-    rrc = srsgnb::srs_cu_cp::create_rrc_entity(msg);
+    rrc_du_creation_message msg(cfg, rrc_ue_ev_notifier, rrc_ue_ngap_ev_notifier);
+    rrc = srsgnb::srs_cu_cp::create_rrc_du(msg);
     rrc_ue_ev_notifier.connect(*du_proc_rrc_ue);
 
     // create single UE context and add RRC user

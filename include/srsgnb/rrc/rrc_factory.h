@@ -26,10 +26,10 @@ namespace srs_cu_cp {
 
 struct ue_context;
 
-struct rrc_entity_creation_message {
-  rrc_entity_creation_message(const rrc_cfg_t&              cfg_,
-                              rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_,
-                              rrc_ue_nas_notifier&          nas_notif_) :
+struct rrc_du_creation_message {
+  rrc_du_creation_message(const rrc_cfg_t&              cfg_,
+                          rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_,
+                          rrc_ue_nas_notifier&          nas_notif_) :
     cfg(cfg_), rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_), nas_notifier(nas_notif_)
   {
   }
@@ -39,7 +39,7 @@ struct rrc_entity_creation_message {
 };
 
 /// Create an instance of an RRC entity
-std::unique_ptr<rrc_du_ue_manager> create_rrc_entity(const rrc_entity_creation_message& msg);
+std::unique_ptr<rrc_du_ue_manager> create_rrc_du(const rrc_du_creation_message& msg);
 
 } // namespace srs_cu_cp
 
