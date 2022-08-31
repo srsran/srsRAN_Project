@@ -8,8 +8,8 @@
  *
  */
 
-#include "../ran/gnb_format.h"
 #include "rrc_du_impl.h"
+#include "../ran/gnb_format.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
@@ -34,15 +34,15 @@ rrc_ue_interface* rrc_du_impl::add_user(rrc_ue_creation_message msg)
   // create UE object
   ue_index_t ue_index = msg.ue_index;
   ue_db.emplace(ue_index,
-                std::make_unique<rrc_ue_entity>(*this,
-                                                rrc_ue_du_proc_notifier,
-                                                nas_notifier,
-                                                msg.ue_index,
-                                                msg.c_rnti,
-                                                cfg.ue_default_cfg,
-                                                msg.srbs,
-                                                msg.du_to_cu_container,
-                                                *msg.ue_task_sched));
+                std::make_unique<rrc_ue_impl>(*this,
+                                              rrc_ue_du_proc_notifier,
+                                              nas_notifier,
+                                              msg.ue_index,
+                                              msg.c_rnti,
+                                              cfg.ue_default_cfg,
+                                              msg.srbs,
+                                              msg.du_to_cu_container,
+                                              *msg.ue_task_sched));
   auto& u = ue_db[ue_index];
   return u.get();
 }

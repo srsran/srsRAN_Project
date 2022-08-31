@@ -22,19 +22,19 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Main UE representation in RRC
-class rrc_ue_entity : public rrc_ue_interface
+class rrc_ue_impl : public rrc_ue_interface
 {
 public:
-  rrc_ue_entity(rrc_du_ue_connection_manager&          parent_,
-                rrc_ue_du_processor_notifier&          du_proc_notif_,
-                rrc_ue_nas_notifier&                   nas_notif_,
-                const ue_index_t                       ue_index_,
-                const rnti_t                           c_rnti_,
-                const rrc_ue_cfg_t&                    cfg_,
-                const srb_notifiers&                   srbs_,
-                const asn1::unbounded_octstring<true>& du_to_cu_container,
-                rrc_ue_task_scheduler&                 task_sched);
-  ~rrc_ue_entity() = default;
+  rrc_ue_impl(rrc_du_ue_connection_manager&          parent_,
+              rrc_ue_du_processor_notifier&          du_proc_notif_,
+              rrc_ue_nas_notifier&                   nas_notif_,
+              const ue_index_t                       ue_index_,
+              const rnti_t                           c_rnti_,
+              const rrc_ue_cfg_t&                    cfg_,
+              const srb_notifiers&                   srbs_,
+              const asn1::unbounded_octstring<true>& du_to_cu_container,
+              rrc_ue_task_scheduler&                 task_sched);
+  ~rrc_ue_impl() = default;
 
   // rrc_ul_ccch_pdu_handler
   void handle_ul_ccch_pdu(byte_buffer_slice pdu) override;

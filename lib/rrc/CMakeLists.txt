@@ -9,7 +9,7 @@
 set(SOURCES
   rrc_du_factory.cpp
   rrc_du_impl.cpp
-  ue/rrc_ue_entity.cpp
+  ue/rrc_ue_impl.cpp
   ue/rrc_ue_message_handlers.cpp
   ue/rrc_ue_message_senders.cpp
   ue/rrc_ue_helpers.cpp

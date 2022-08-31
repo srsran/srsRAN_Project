@@ -11,13 +11,13 @@
 #include "../../ran/gnb_format.h"
 #include "procedures/rrc_setup_procedure.h"
 #include "rrc_asn1_helpers.h"
-#include "rrc_ue_entity.h"
+#include "rrc_ue_impl.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-void rrc_ue_entity::handle_ul_ccch_pdu(byte_buffer_slice pdu)
+void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer_slice pdu)
 {
   // Parse UL-CCCH
   ul_ccch_msg_s ul_ccch_msg;
@@ -50,7 +50,7 @@ void rrc_ue_entity::handle_ul_ccch_pdu(byte_buffer_slice pdu)
   }
 }
 
-void rrc_ue_entity::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& request_msg)
+void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& request_msg)
 {
   // 1. Perform various checks to make sure we can serve the RRC Setup Request
   if (not rrc_du.is_rrc_connect_allowed()) {
@@ -91,12 +91,12 @@ void rrc_ue_entity::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_reque
       context, request_msg, du_to_cu_container, *this, du_processor_notifier, *event_mng, logger));
 }
 
-void rrc_ue_entity::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
+void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
 {
   // TODO: handle RRC reestablishment request
 }
 
-void rrc_ue_entity::handle_ul_dcch_pdu(byte_buffer_slice pdu)
+void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
 {
   // Parse UL-CCCH
   ul_dcch_msg_s ul_dcch_msg;
@@ -129,7 +129,7 @@ void rrc_ue_entity::handle_ul_dcch_pdu(byte_buffer_slice pdu)
   // TODO: Handle message
 }
 
-void rrc_ue_entity::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_transfer)
+void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_transfer)
 {
   ul_nas_transport_message ul_nas_msg = {};
   ul_nas_msg.ded_nas_msg.resize(ul_info_transfer.ded_nas_msg.size());
@@ -139,7 +139,7 @@ void rrc_ue_entity::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_inf
   nas_notifier.on_ul_nas_transport_message(ul_nas_msg);
 }
 
-void rrc_ue_entity::handle_dl_nas_transport_message(const dl_nas_transport_message& msg)
+void rrc_ue_impl::handle_dl_nas_transport_message(const dl_nas_transport_message& msg)
 {
   logger.info("Received DL NAS Transport message");
 
@@ -152,7 +152,7 @@ void rrc_ue_entity::handle_dl_nas_transport_message(const dl_nas_transport_messa
   send_dl_dcch(dl_dcch_msg);
 }
 
-void rrc_ue_entity::handle_rrc_setup_complete(const rrc_setup_complete_s& msg)
+void rrc_ue_impl::handle_rrc_setup_complete(const rrc_setup_complete_s& msg)
 {
   expected<uint8_t> transaction_id = msg.rrc_transaction_id;
 

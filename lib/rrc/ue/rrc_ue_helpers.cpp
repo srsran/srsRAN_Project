@@ -9,18 +9,18 @@
  */
 
 #include "../../ran/gnb_format.h"
-#include "rrc_ue_entity.h"
+#include "rrc_ue_impl.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-bool rrc_ue_entity::init_pucch()
+bool rrc_ue_impl::init_pucch()
 {
   // TODO: add PUCCH allocation
   return true;
 }
 
-void rrc_ue_entity::on_ue_delete_request()
+void rrc_ue_impl::on_ue_delete_request()
 {
   // FIXME: this enqueues a new CORO on top of an existing one.
   ue_context_release_command_message msg = {};

@@ -10,7 +10,7 @@
 
 #include "srsgnb/rrc/rrc_du_factory.h"
 #include "rrc_du_impl.h"
-#include "ue/rrc_ue_entity.h"
+#include "ue/rrc_ue_impl.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;

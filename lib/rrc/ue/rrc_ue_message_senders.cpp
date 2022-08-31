@@ -9,13 +9,13 @@
  */
 
 #include "../../ran/gnb_format.h"
-#include "rrc_ue_entity.h"
+#include "rrc_ue_impl.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-void rrc_ue_entity::send_dl_ccch(const dl_ccch_msg_s& dl_ccch_msg)
+void rrc_ue_impl::send_dl_ccch(const dl_ccch_msg_s& dl_ccch_msg)
 {
   // pack DL CCCH msg
   byte_buffer pdu = pack_into_pdu(dl_ccch_msg);
@@ -29,7 +29,7 @@ void rrc_ue_entity::send_dl_ccch(const dl_ccch_msg_s& dl_ccch_msg)
   send_srb_pdu(srb_id_t::srb0, std::move(pdu));
 }
 
-void rrc_ue_entity::send_dl_dcch(const dl_dcch_msg_s& dl_dcch_msg)
+void rrc_ue_impl::send_dl_dcch(const dl_dcch_msg_s& dl_dcch_msg)
 {
   // pack DL CCCH msg
   byte_buffer pdu = pack_into_pdu(dl_dcch_msg);
@@ -43,7 +43,7 @@ void rrc_ue_entity::send_dl_dcch(const dl_dcch_msg_s& dl_dcch_msg)
   send_srb_pdu(srb_id_t::srb1, std::move(pdu));
 }
 
-void rrc_ue_entity::send_rrc_reject(uint8_t reject_wait_time_secs)
+void rrc_ue_impl::send_rrc_reject(uint8_t reject_wait_time_secs)
 {
   dl_ccch_msg_s     dl_ccch_msg;
   rrc_reject_ies_s& reject = dl_ccch_msg.msg.set_c1().set_rrc_reject().crit_exts.set_rrc_reject();
@@ -57,7 +57,7 @@ void rrc_ue_entity::send_rrc_reject(uint8_t reject_wait_time_secs)
   send_dl_ccch(dl_ccch_msg);
 }
 
-void rrc_ue_entity::send_srb_pdu(srb_id_t srb_id, byte_buffer pdu)
+void rrc_ue_impl::send_srb_pdu(srb_id_t srb_id, byte_buffer pdu)
 {
   srbs[srb_id_to_uint(srb_id)]->on_new_pdu({std::move(pdu)});
 }

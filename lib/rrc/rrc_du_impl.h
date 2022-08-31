@@ -12,7 +12,7 @@
 
 #include "srsgnb/rrc/rrc_config.h"
 #include "srsgnb/rrc/rrc_du.h"
-#include "ue/rrc_ue_entity.h"
+#include "ue/rrc_ue_impl.h"
 
 namespace srsgnb {
 
@@ -49,7 +49,7 @@ private:
   rrc_ue_nas_notifier&          nas_notifier;            // notifier to the NGAP
 
   // RRC-internal user database indexed by ue_index
-  slot_array<std::unique_ptr<rrc_ue_entity>, MAX_NOF_UES> ue_db;
+  slot_array<std::unique_ptr<rrc_ue_impl>, MAX_NOF_UES> ue_db;
 };
 
 } // namespace srs_cu_cp
