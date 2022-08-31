@@ -22,11 +22,7 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Main UE representation in RRC
-class rrc_ue_entity : public rrc_ue_entity_interface,
-                      public rrc_ul_ccch_pdu_handler,
-                      public rrc_ul_dcch_pdu_handler,
-                      public rrc_ue_dl_nas_message_handler,
-                      public rrc_ue_setup_proc_notifier
+class rrc_ue_entity : public rrc_ue_interface
 {
 public:
   rrc_ue_entity(rrc_du_ue_connection_manager&          parent_,
@@ -44,7 +40,7 @@ public:
   void handle_ul_ccch_pdu(byte_buffer_slice pdu) override;
   void handle_ul_dcch_pdu(byte_buffer_slice pdu) override;
 
-  // rrc_ue_entity_interface
+  // rrc_ue_interface
   rrc_ul_ccch_pdu_handler& get_ul_ccch_pdu_handler() override;
   rrc_ul_dcch_pdu_handler& get_ul_dcch_pdu_handler() override;
   void                     connect_srb_notifier(srb_id_t srb_id, rrc_pdu_notifier& notifier) override;

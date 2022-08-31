@@ -21,18 +21,6 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Interface between RRC Setup procedure and RRC UE entity.
-class rrc_ue_setup_proc_notifier
-{
-public:
-  rrc_ue_setup_proc_notifier()                                                = default;
-  virtual ~rrc_ue_setup_proc_notifier()                                       = default;
-  virtual void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) = 0;
-
-  /// Informs the DU processor that the UE shall be released
-  virtual void on_ue_delete_request() = 0;
-};
-
 /// \brief Handles the creation of SRBs in the RRC UE.
 ///  \startuml
 ///    queue DU

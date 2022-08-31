@@ -52,17 +52,16 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("RRC");
 };
 
-/// Interface class for an RRC UE object.
-/// It will contain getters for the interfaces for the various logical channels handled by RRC.
-class rrc_ue_entity_interface
+/// Interface between RRC Setup procedure and RRC UE entity.
+class rrc_ue_setup_proc_notifier
 {
 public:
-  rrc_ue_entity_interface()          = default;
-  virtual ~rrc_ue_entity_interface() = default;
+  rrc_ue_setup_proc_notifier()                                                = default;
+  virtual ~rrc_ue_setup_proc_notifier()                                       = default;
+  virtual void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) = 0;
 
-  virtual rrc_ul_ccch_pdu_handler& get_ul_ccch_pdu_handler()                                         = 0;
-  virtual rrc_ul_dcch_pdu_handler& get_ul_dcch_pdu_handler()                                         = 0;
-  virtual void                     connect_srb_notifier(srb_id_t srb_id, rrc_pdu_notifier& notifier) = 0;
+  /// Informs the DU processor that the UE shall be released
+  virtual void on_ue_delete_request() = 0;
 };
 
 /// Interface to notify about RRC UE Context messages.
@@ -129,6 +128,22 @@ public:
   /// \brief Handle the received Downlink NAS Transport message.
   /// \param[in] msg The Downlink NAS Transport message.
   virtual void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) = 0;
+};
+
+/// Combined entry point for the RRC UE handling.
+/// It will contain getters for the interfaces for the various logical channels handled by RRC.
+class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
+                         public rrc_ul_dcch_pdu_handler,
+                         public rrc_ue_dl_nas_message_handler,
+                         public rrc_ue_setup_proc_notifier
+{
+public:
+  rrc_ue_interface()          = default;
+  virtual ~rrc_ue_interface() = default;
+
+  virtual rrc_ul_ccch_pdu_handler& get_ul_ccch_pdu_handler()                                         = 0;
+  virtual rrc_ul_dcch_pdu_handler& get_ul_dcch_pdu_handler()                                         = 0;
+  virtual void                     connect_srb_notifier(srb_id_t srb_id, rrc_pdu_notifier& notifier) = 0;
 };
 
 } // namespace srs_cu_cp

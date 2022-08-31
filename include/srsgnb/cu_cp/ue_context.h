@@ -46,7 +46,7 @@ struct ue_context {
   du_cell_index_t pcell_index;
   rnti_t          c_rnti;
 
-  rrc_ue_entity_interface*                 rrc = nullptr;
+  rrc_ue_interface*                        rrc = nullptr;
   std::array<cu_srb_context, MAX_NOF_SRBS> srbs;
   slot_vector<cu_drb_context>              drbs;
 
