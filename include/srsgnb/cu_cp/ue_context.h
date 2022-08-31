@@ -16,7 +16,7 @@
 #include "srsgnb/pdcp/pdcp_entity.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
-#include "srsgnb/rrc/rrc_ue_entity_interface.h"
+#include "srsgnb/rrc/rrc_ue.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {

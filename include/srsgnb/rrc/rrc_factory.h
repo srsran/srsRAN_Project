@@ -16,7 +16,7 @@
 #include "srsgnb/ngap/ngap.h"
 #include "srsgnb/rrc/rrc.h"
 #include "srsgnb/rrc/rrc_du.h"
-#include "srsgnb/rrc/rrc_ue_entity_interface.h"
+#include "srsgnb/rrc/rrc_ue.h"
 #include <map>
 #include <memory>
 

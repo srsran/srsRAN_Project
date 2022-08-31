@@ -13,7 +13,7 @@
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/ue_context.h"
-#include "srsgnb/rrc/rrc_ue_entity_interface.h"
+#include "srsgnb/rrc/rrc_ue.h"
 
 namespace srsgnb {
 

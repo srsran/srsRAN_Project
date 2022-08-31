@@ -15,7 +15,7 @@
 #include "rrc_ue_context.h"
 #include "srsgnb/cu_cp/ue_context.h"
 #include "srsgnb/rrc/rrc_factory.h"
-#include "srsgnb/rrc/rrc_ue_entity_interface.h"
+#include "srsgnb/rrc/rrc_ue.h"
 
 namespace srsgnb {
 
