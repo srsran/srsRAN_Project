@@ -36,7 +36,7 @@ protected:
     // create single UE context and add RRC user
     ue_ctxt.ue_index   = ALLOCATED_UE_INDEX;
     ue_ctxt.c_rnti     = to_rnti(0x1234);
-    ue_ctxt.task_sched = std::make_unique<dummy_ue_task_scheduler>();
+    ue_ctxt.task_sched = std::make_unique<dummy_ue_task_scheduler>(timers);
     rrc_ue_creation_message rrc_ue_create_msg{};
     rrc_ue_create_msg.ue_index = ue_ctxt.ue_index;
     rrc_ue_create_msg.c_rnti   = ue_ctxt.c_rnti;
@@ -51,6 +51,12 @@ protected:
                                       *ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb0)].rrc_tx_notifier.get());
 
     task_sched_handle = static_cast<dummy_ue_task_scheduler*>(ue_ctxt.task_sched.get());
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
   }
 
   asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::options get_pdu_type()
@@ -109,6 +115,7 @@ private:
   std::unique_ptr<dummy_du_processor_rrc_ue_interface> du_proc_rrc_ue;
   dummy_rrc_ue_du_processor_adapter                    rrc_ue_ev_notifier;
   dummy_rrc_ue_ngap_adapter                            rrc_ue_ngap_ev_notifier;
+  timer_manager                                        timers;
   dummy_ue_task_scheduler*                             task_sched_handle = nullptr;
   std::unique_ptr<rrc_du_ue_manager>                   rrc;
 

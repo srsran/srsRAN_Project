@@ -97,6 +97,7 @@ private:
 
 struct dummy_ue_task_scheduler : public rrc_ue_task_scheduler {
 public:
+  dummy_ue_task_scheduler(timer_manager& timers_) : timer_db(timers_) {}
   void           schedule_async_task(async_task<void>&& task) override { ctrl_loop.schedule(std::move(task)); }
   unique_timer   make_unique_timer() override { return timer_db.create_unique_timer(); }
   timer_manager& get_timer_manager() override { return timer_db; }
@@ -105,7 +106,7 @@ public:
 
 private:
   async_task_sequencer ctrl_loop{16};
-  timer_manager        timer_db;
+  timer_manager&       timer_db;
 };
 
 /// Reusable notifier class that a) stores the received msg for test inspection and b)
