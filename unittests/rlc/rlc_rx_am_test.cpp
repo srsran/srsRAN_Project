@@ -9,6 +9,7 @@
  */
 
 #include "../../lib/rlc/rlc_rx_am_entity.h"
+#include "rlc_test_helpers.h"
 #include <gtest/gtest.h>
 #include <list>
 #include <queue>
@@ -40,7 +41,7 @@ public:
 
 /// Fixture class for RLC AM Rx tests.
 /// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size
-class rlc_rx_am_test : public ::testing::Test, public ::testing::WithParamInterface<rlc_am_sn_size>
+class rlc_rx_am_test : public ::testing::Test, public ::testing::WithParamInterface<rlc_am_sn_size>, public rlc_trx_test
 {
 protected:
   void SetUp() override
@@ -82,22 +83,6 @@ protected:
 
     // Bind AM Tx/Rx interconnect
     rlc->set_status_handler(tester.get());
-  }
-
-  /// \brief Creates a byte_buffer serving as SDU for RLC
-  ///
-  /// The produced SDU contains an incremental sequence of bytes starting with the value given by first_byte,
-  /// i.e. if first_byte = 0xfc, the SDU will be 0xfc 0xfe 0xff 0x00 0x01 ...
-  /// \param sdu_size Size of the SDU
-  /// \param first_byte Value of the first byte
-  /// \return the produced SDU as a byte_buffer
-  byte_buffer create_sdu(uint32_t sdu_size, uint8_t first_byte = 0) const
-  {
-    byte_buffer sdu_buf;
-    for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_buf.append(first_byte + k);
-    }
-    return sdu_buf;
   }
 
   /// \brief Creates a list of RLC AMD PDU(s) containing either one RLC SDU or multiple RLC SDU segments

@@ -9,6 +9,7 @@
  */
 
 #include "../../lib/rlc/rlc_rx_tm_entity.h"
+#include "rlc_test_helpers.h"
 #include <gtest/gtest.h>
 #include <queue>
 
@@ -30,7 +31,7 @@ public:
 };
 
 /// Fixture class for RLC TM Rx tests
-class rlc_rx_am_test : public ::testing::Test
+class rlc_rx_am_test : public ::testing::Test, public rlc_trx_test
 {
 protected:
   void SetUp() override
@@ -62,22 +63,6 @@ protected:
 
     // Create RLC AM TX entity
     rlc = std::make_unique<rlc_rx_tm_entity>(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, *tester);
-  }
-
-  /// \brief Creates a byte_buffer serving as SDU for RLC
-  ///
-  /// The produced SDU contains an incremental sequence of bytes starting with the value given by first_byte,
-  /// i.e. if first_byte = 0xfc, the SDU will be 0xfc 0xfe 0xff 0x00 0x01 ...
-  /// \param sdu_size Size of the SDU
-  /// \param first_byte Value of the first byte
-  /// \return the produced SDU as a byte_buffer
-  byte_buffer create_sdu(uint32_t sdu_size, uint8_t first_byte = 0) const
-  {
-    byte_buffer sdu_buf;
-    for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_buf.append(first_byte + k);
-    }
-    return sdu_buf;
   }
 
   srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST", false);
