@@ -325,44 +325,22 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
 
 dl_csi_rs_pdu unittest::build_valid_dl_csi_pdu()
 {
-  dl_csi_rs_pdu         pdu;
-  dl_csi_rs_pdu_builder builder(pdu);
+  dl_csi_rs_pdu pdu;
 
-  std::uniform_int_distribution<unsigned> nof_rb_dist(24, 276);
-  std::uniform_int_distribution<unsigned> start_rb_dist(0, 274);
-  std::uniform_int_distribution<unsigned> csi_type_dist(0, 2);
-  std::uniform_int_distribution<unsigned> row_dist(1, 18);
-  std::uniform_int_distribution<unsigned> symb_l0_dist(0, 13);
-  std::uniform_int_distribution<unsigned> symb_l1_dist(2, 12);
-  std::uniform_int_distribution<unsigned> cdm_type_dist(0, 3);
-  std::uniform_int_distribution<unsigned> freq_density_dist(0, 3);
-  std::uniform_int_distribution<unsigned> scram_id_dist(0, 1023);
-  std::uniform_int_distribution<unsigned> binary_dist(0, 1);
-  std::uniform_int_distribution<int>      power_dist(-8, 8);
-  std::uniform_int_distribution<unsigned> ss_power_dist(0, 10);
-
-  builder.set_basic_parameters(start_rb_dist(gen),
-                               nof_rb_dist(gen),
-                               static_cast<csi_type>(csi_type_dist(gen)),
-                               row_dist(gen),
-                               freq_density_dist(gen),
-                               symb_l0_dist(gen),
-                               symb_l1_dist(gen),
-                               static_cast<csi_cdm_type>(cdm_type_dist(gen)),
-                               static_cast<csi_freq_density_type>(freq_density_dist(gen)),
-                               scram_id_dist(gen));
-
-  // Always work with the biggest numerology.
-  builder.set_bwp_parameters(subcarrier_spacing::kHz240, static_cast<cyclic_prefix_type>(binary_dist(gen)));
-
-  optional<float> profile_nr;
-  profile_nr.emplace(power_dist(gen));
-  unsigned ss_power = ss_power_dist(gen);
-  ss_power          = (ss_power > 3) ? 255 : ss_power;
-  builder.set_tx_power_info_parameters(profile_nr, static_cast<nzp_csi_rs_epre_to_ssb>(ss_power));
-
-  optional<float> profile_sss;
-  builder.set_maintenance_v3_tx_power_info_parameters(profile_sss);
+  pdu.scs                                                   = subcarrier_spacing::kHz15;
+  pdu.cyclic_prefix                                         = cyclic_prefix_type::normal;
+  pdu.start_rb                                              = 23;
+  pdu.num_rbs                                               = 25;
+  pdu.type                                                  = csi_type::CSI_RS_NZP;
+  pdu.row                                                   = 3;
+  pdu.symb_L0                                               = 8;
+  pdu.symb_L1                                               = 7;
+  pdu.cdm_type                                              = csi_cdm_type::no_CDM;
+  pdu.freq_density                                          = csi_freq_density_type::one;
+  pdu.scramb_id                                             = 123;
+  pdu.power_control_offset_profile_nr                       = 0;
+  pdu.power_control_offset_ss_profile_nr                    = nzp_csi_rs_epre_to_ssb::dB0;
+  pdu.csi_rs_maintenance_v3.csi_rs_power_offset_profile_sss = -32768;
 
   return pdu;
 }

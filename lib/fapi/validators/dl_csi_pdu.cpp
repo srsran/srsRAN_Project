@@ -168,7 +168,7 @@ bool srsgnb::fapi::validate_dl_csi_pdu(const dl_csi_rs_pdu& pdu, validator_repor
   result &= validate_scs(static_cast<unsigned>(pdu.scs), report);
   result &= validate_cp(static_cast<unsigned>(pdu.cyclic_prefix), report);
   result &= validate_start_rb(pdu.start_rb, report);
-  result &= validate_nof_rb(pdu.start_rb, report);
+  result &= validate_nof_rb(pdu.num_rbs, report);
   result &= validate_csi_type(static_cast<unsigned>(pdu.type), report);
   result &= validate_row(pdu.row, report);
   // NOTE: Freq domain bitmap roperty will not be validated.

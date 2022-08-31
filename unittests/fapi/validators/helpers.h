@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/fapi/messages.h"
+#include "srsgnb/fapi/validator_report.h"
+#include <gtest/gtest.h>
 
 namespace unittest {
 
@@ -148,5 +149,138 @@ srsgnb::fapi::ul_pusch_pdu build_valid_ul_pusch_pdu();
 /// Builds and returns a valid UL_TTI.request. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.3.
 srsgnb::fapi::ul_tti_request_message build_valid_ul_tti_request();
+
+/// Google test helpers.
+template <typename T>
+struct pdu_field_data {
+  std::string                            property;
+  std::function<void(T& pdu, int value)> fun;
+};
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const pdu_field_data<T>& arg)
+{
+  os << arg.property;
+  return os;
+};
+
+struct test_case_data {
+  unsigned value;
+  bool     result;
+};
+
+inline std::ostream& operator<<(std::ostream& os, const test_case_data& arg)
+{
+  os << "Value = " << std::to_string(arg.value) << ", Result = " << std::to_string(arg.result);
+  return os;
+};
+
+template <typename T, typename U>
+class ValidateFAPIPDUField
+{
+  using validator_report = srsgnb::fapi::validator_report;
+  using message_type_id  = srsgnb::fapi::message_type_id;
+
+protected:
+  void execute_test(pdu_field_data<T>                                     property,
+                    test_case_data                                        params,
+                    std::function<T()>                                    builder,
+                    std::function<bool(T& pdu, validator_report& report)> validator,
+                    message_type_id                                       msg_type_id,
+                    U                                                     pdu_type)
+  {
+    T                                         pdu    = given_the_pdu(property, params, builder);
+    const std::tuple<bool, validator_report>& result = when_executing_the_validation(pdu, validator);
+    then_check_the_report(
+        std::get<0>(result), std::get<1>(result), property.property, params.result, msg_type_id, pdu_type);
+  }
+
+private:
+  T given_the_pdu(pdu_field_data<T> property, test_case_data params, std::function<T()> builder)
+  {
+    T pdu = builder();
+    property.fun(pdu, params.value);
+    return pdu;
+  };
+
+  std::tuple<bool, validator_report>
+  when_executing_the_validation(T pdu, std::function<bool(T& pdu, validator_report& report)> validator)
+  {
+    validator_report report(0, 0);
+    bool             result = validator(pdu, report);
+    return {result, report};
+  };
+
+  void then_check_the_report(bool                    result,
+                             const validator_report& report,
+                             const std::string&      property,
+                             bool                    expected_result,
+                             message_type_id         msg_type_id,
+                             U                       pdu_type)
+  {
+    ASSERT_EQ(result, expected_result);
+    if (!result) {
+      ASSERT_EQ(1U, report.reports.size());
+      const auto& rep = report.reports.back();
+      ASSERT_EQ(property, rep.property_name);
+      ASSERT_EQ(static_cast<unsigned>(msg_type_id), static_cast<unsigned>(rep.message_type));
+      ASSERT_EQ(static_cast<unsigned>(pdu_type), static_cast<unsigned>(rep.pdu_type.value()));
+    } else {
+      EXPECT_TRUE(report.reports.empty());
+    }
+  };
+};
+
+template <typename T>
+class ValidateFAPIMessageField
+{
+  using validator_report = srsgnb::fapi::validator_report;
+  using message_type_id  = srsgnb::fapi::message_type_id;
+
+protected:
+  void execute_test(pdu_field_data<T>                                     property,
+                    test_case_data                                        params,
+                    std::function<T()>                                    builder,
+                    std::function<bool(T& pdu, validator_report& report)> validator,
+                    message_type_id                                       msg_type_id)
+  {
+    T                                         pdu    = given_the_pdu(property, params, builder);
+    const std::tuple<bool, validator_report>& result = when_executing_the_validation(pdu, validator);
+    then_check_the_report(std::get<0>(result), std::get<1>(result), property.property, params.result, msg_type_id);
+  }
+
+private:
+  T given_the_pdu(pdu_field_data<T> property, test_case_data params, std::function<T()> builder)
+  {
+    T pdu = builder();
+    property.fun(pdu, params.value);
+    return pdu;
+  };
+
+  std::tuple<bool, validator_report>
+  when_executing_the_validation(T pdu, std::function<bool(T& pdu, validator_report& report)> validator)
+  {
+    validator_report report(0, 0);
+    bool             result = validator(pdu, report);
+    return {result, report};
+  };
+
+  void then_check_the_report(bool                    result,
+                             const validator_report& report,
+                             const std::string&      property,
+                             bool                    expected_result,
+                             message_type_id         msg_type_id)
+  {
+    ASSERT_EQ(result, expected_result);
+    if (!result) {
+      ASSERT_EQ(1U, report.reports.size());
+      const auto& rep = report.reports.back();
+      ASSERT_EQ(property, rep.property_name);
+      ASSERT_EQ(msg_type_id, rep.message_type);
+    } else {
+      EXPECT_TRUE(report.reports.empty());
+    }
+  };
+};
 
 } // namespace unittest
