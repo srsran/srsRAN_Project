@@ -474,11 +474,13 @@ std::unique_ptr<rlc_am_window_base<rlc_rx_am_sdu_info>> rlc_rx_am_entity::create
   switch (sn_size) {
     case rlc_am_sn_size::size12bits:
       rx_window =
-          std::make_unique<rlc_am_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>();
+          std::make_unique<rlc_am_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>(
+              logger);
       break;
     case rlc_am_sn_size::size18bits:
       rx_window =
-          std::make_unique<rlc_am_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>();
+          std::make_unique<rlc_am_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>(
+              logger);
       break;
     default:
       srsgnb_assertion_failure("Cannot create rx_window: unsupported SN field length");

@@ -229,7 +229,7 @@ private:
   /// Creates the tx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
   /// \return unique pointer to tx_window instance
-  static std::unique_ptr<rlc_am_window_base<rlc_tx_am_sdu_info>> create_tx_window(rlc_am_sn_size sn_size);
+  std::unique_ptr<rlc_am_window_base<rlc_tx_am_sdu_info>> create_tx_window(rlc_am_sn_size sn_size);
 
   void log_state(srslog::basic_levels level)
   {

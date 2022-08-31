@@ -11,13 +11,16 @@
 #pragma once
 
 #include "srsgnb/adt/circular_map.h"
+#include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/support/srsgnb_assert.h"
 #include <cstdint>
 
 namespace srsgnb {
 
 template <class T>
-struct rlc_am_window_base {
+class rlc_am_window_base
+{
+public:
   virtual ~rlc_am_window_base()            = default;
   virtual T&     add_sn(size_t sn)         = 0;
   virtual void   remove_sn(size_t sn)      = 0;
@@ -34,18 +37,31 @@ struct rlc_am_window_base {
 /// @tparam T storage type
 /// @tparam WINDOW_SIZE size of the RLC AM window
 template <class T, std::size_t WINDOW_SIZE>
-struct rlc_am_window final : public rlc_am_window_base<T> {
+class rlc_am_window final : public rlc_am_window_base<T>
+{
+public:
+  rlc_am_window(bearer_logger& logger) : logger(logger) {}
   ~rlc_am_window() = default;
 
   T& add_sn(size_t sn) override
   {
-    srsgnb_assert(not has_sn(sn), "The same SN={} should not be added twice", sn);
+    if (has_sn(sn)) {
+      logger.log_error("SN={} already present in window, overwriting.", sn);
+      srsgnb_assertion_failure("SN={} already present in window.", sn);
+    } else {
+      logger.log_debug("Adding SN={} to window", sn);
+    }
     window.overwrite(sn, T());
     return window[sn];
   }
   void remove_sn(size_t sn) override
   {
-    srsgnb_assert(has_sn(sn), "The removed SN={} is not in the window", sn);
+    if (not has_sn(sn)) {
+      logger.log_error("Cannot remove SN={} because not contained in the window.", sn);
+      srsgnb_assertion_failure("Cannot remove SN={} because not contained in the window.", sn);
+      return;
+    }
+    logger.log_debug("Removing SN={} from window", sn);
     window.erase(sn);
   }
   T&     operator[](size_t sn) override { return window[sn]; }
@@ -57,6 +73,7 @@ struct rlc_am_window final : public rlc_am_window_base<T> {
   bool has_sn(uint32_t sn) const override { return window.contains(sn); }
 
 private:
+  bearer_logger&                                 logger;
   srsgnb::circular_map<uint32_t, T, WINDOW_SIZE> window;
 };
 
