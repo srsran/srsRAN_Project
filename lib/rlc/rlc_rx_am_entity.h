@@ -91,7 +91,7 @@ private:
   const uint32_t am_window_size;
 
   /// Rx window
-  std::unique_ptr<rlc_pdu_window_base<rlc_rx_am_sdu_info>> rx_window;
+  std::unique_ptr<rlc_am_window_base<rlc_rx_am_sdu_info>> rx_window;
   /// Indicates the rx_window has not been changed, i.e. no need to rebuild status report.
   static const bool rx_window_not_changed = false;
   /// Indicates the rx_window has been changed, i.e. need to rebuild status report.
@@ -229,7 +229,7 @@ private:
   /// Creates the rx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
   /// \return unique pointer to rx_window instance
-  static std::unique_ptr<rlc_pdu_window_base<rlc_rx_am_sdu_info>> create_rx_window(rlc_am_sn_size sn_size);
+  static std::unique_ptr<rlc_am_window_base<rlc_rx_am_sdu_info>> create_rx_window(rlc_am_sn_size sn_size);
 };
 
 } // namespace srsgnb

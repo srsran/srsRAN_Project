@@ -136,16 +136,16 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
 
   // insert newly assigned SN into window and use reference for in-place operations
   // NOTE: from now on, we can't return from this function anymore before increasing tx_next
-  rlc_tx_am_sdu_info& tx_pdu = tx_window->add_pdu(st.tx_next);
-  tx_pdu.pdcp_count          = sdu.pdcp_count;
-  tx_pdu.sdu                 = std::move(sdu.buf); // Move SDU into TX window SDU box
+  rlc_tx_am_sdu_info& sdu_info = tx_window->add_sn(st.tx_next);
+  sdu_info.pdcp_count          = sdu.pdcp_count;
+  sdu_info.sdu                 = std::move(sdu.buf); // Move SDU into TX window SDU info
 
   // Segment new SDU if necessary
-  if (tx_pdu.sdu.length() + head_min_size > nof_bytes) {
+  if (sdu_info.sdu.length() + head_min_size > nof_bytes) {
     logger.log_info("Trying to build PDU from SDU segment.");
-    return build_first_sdu_segment(tx_pdu, nof_bytes);
+    return build_first_sdu_segment(sdu_info, nof_bytes);
   }
-  logger.log_info("Creating PDU. Tx SDU ({} B), nof_bytes={} B ", tx_pdu.sdu.length(), nof_bytes);
+  logger.log_info("Creating PDU. Tx SDU ({} B), nof_bytes={} B ", sdu_info.sdu.length(), nof_bytes);
 
   // Prepare header
   rlc_am_pdu_header hdr = {};
@@ -166,7 +166,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
   // Assemble PDU
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
-  pdu_buf.push_back(byte_buffer_slice{tx_pdu.sdu});
+  pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu});
   logger.log_debug("Created RLC PDU (full SDU) - {} bytes", pdu_buf.length());
 
   // Update TX Next
@@ -175,16 +175,16 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
   return pdu_buf;
 }
 
-byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_info& tx_pdu, uint32_t nof_bytes)
+byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t nof_bytes)
 {
-  logger.log_info("Creating new SDU segment. Tx SDU ({} B), nof_bytes={} B ", tx_pdu.sdu.length(), nof_bytes);
+  logger.log_info("Creating new SDU segment. Tx SDU ({} B), nof_bytes={} B ", sdu_info.sdu.length(), nof_bytes);
 
   // Sanity check: can this SDU be sent this in a single PDU?
-  if ((tx_pdu.sdu.length() + head_min_size) <= nof_bytes) {
+  if ((sdu_info.sdu.length() + head_min_size) <= nof_bytes) {
     logger.log_error(
         "Calling build_new_sdu_segment(), but there are enough bytes to tx in a single PDU. Tx SDU ({} B), "
         "nof_bytes={} B",
-        tx_pdu.sdu.length(),
+        sdu_info.sdu.length(),
         nof_bytes);
     return {};
   }
@@ -213,7 +213,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_
   hdr.si                = rlc_si_field::first_segment;
   hdr.sn_size           = cfg.sn_field_length;
   hdr.sn                = st.tx_next;
-  hdr.so                = tx_pdu.next_so;
+  hdr.so                = sdu_info.next_so;
   logger.log_debug("AMD PDU header: {}", hdr);
 
   // Pack header
@@ -226,36 +226,37 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_
   // Assemble PDU
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
-  pdu_buf.push_back(byte_buffer_slice{tx_pdu.sdu, hdr.so, segment_payload_len});
+  pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu, hdr.so, segment_payload_len});
   logger.log_debug("Created RLC PDU (SDU segment) - {} bytes", pdu_buf.length());
 
   // Store segmentation progress
-  tx_pdu.next_so += segment_payload_len;
+  sdu_info.next_so += segment_payload_len;
 
   return pdu_buf;
 }
 
-byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_sdu_info& tx_pdu, uint32_t nof_bytes)
+byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t nof_bytes)
 {
-  logger.log_info("Creating continued SDU segment. Tx SDU ({} B), nof_bytes={} B ", tx_pdu.sdu.length(), nof_bytes);
+  logger.log_info("Creating continued SDU segment. Tx SDU ({} B), nof_bytes={} B ", sdu_info.sdu.length(), nof_bytes);
 
   // Sanity check: is there an initial SDU segment?
-  if (tx_pdu.next_so == 0) {
+  if (sdu_info.next_so == 0) {
     logger.log_error("build_continued_sdu_segment was called, but there was no initial segment. SN={}, Tx SDU ({} B), "
                      "nof_bytes={} B ",
                      sn_under_segmentation,
-                     tx_pdu.sdu.length(),
+                     sdu_info.sdu.length(),
                      nof_bytes);
     sn_under_segmentation = INVALID_RLC_SN;
     return {};
   }
 
-  logger.log_debug("Continuing SDU segment. SN={}, next_so={}", sn_under_segmentation, tx_pdu.next_so);
+  logger.log_debug("Continuing SDU segment. SN={}, next_so={}", sn_under_segmentation, sdu_info.next_so);
 
   // Sanity check: last byte must be smaller than SDU size
-  if (tx_pdu.next_so >= tx_pdu.sdu.length()) {
-    logger.log_error(
-        "Segmentation progress exceeds SDU length. SDU len={} B, next_so={} B", tx_pdu.sdu.length(), tx_pdu.next_so);
+  if (sdu_info.next_so >= sdu_info.sdu.length()) {
+    logger.log_error("Segmentation progress exceeds SDU length. SDU len={} B, next_so={} B",
+                     sdu_info.sdu.length(),
+                     sdu_info.next_so);
     sn_under_segmentation = INVALID_RLC_SN;
     return {};
   }
@@ -270,7 +271,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_
     return {};
   }
 
-  uint32_t     segment_payload_len = tx_pdu.sdu.length() - tx_pdu.next_so;
+  uint32_t     segment_payload_len = sdu_info.sdu.length() - sdu_info.next_so;
   rlc_si_field si                  = {};
 
   if (segment_payload_len + head_max_size > nof_bytes) {
@@ -299,7 +300,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_
   hdr.si                = si;
   hdr.sn_size           = cfg.sn_field_length;
   hdr.sn                = st.tx_next;
-  hdr.so                = tx_pdu.next_so;
+  hdr.so                = sdu_info.next_so;
   logger.log_debug("AMD PDU header: {}", hdr);
 
   // Pack header
@@ -312,11 +313,11 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_
   // Assemble PDU
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
-  pdu_buf.push_back(byte_buffer_slice{tx_pdu.sdu, hdr.so, segment_payload_len});
+  pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu, hdr.so, segment_payload_len});
   logger.log_debug("Created RLC PDU (SDU segment) - {} bytes", pdu_buf.length());
 
   // Store segmentation progress
-  tx_pdu.next_so += segment_payload_len;
+  sdu_info.next_so += segment_payload_len;
 
   // Update TX Next (when segmentation has finished)
   if (si == rlc_si_field::last_segment) {
@@ -348,13 +349,13 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
   const rlc_tx_amd_retx retx = retx_queue.front(); // local copy, since front may change below
   logger.log_debug("RETX: {}", retx);
 
-  // Get tx_pdu info from tx_window
-  rlc_tx_am_sdu_info& tx_pdu = (*tx_window)[retx.sn];
+  // Get sdu_info info from tx_window
+  rlc_tx_am_sdu_info& sdu_info = (*tx_window)[retx.sn];
 
   // Check ReTx boundaries
-  if (retx.so + retx.length > tx_pdu.sdu.length()) {
+  if (retx.so + retx.length > sdu_info.sdu.length()) {
     logger.log_error(
-        "Skipping invalid ReTx that exceeds SDU boundaries. SDU length={}, ReTx: {}", tx_pdu.sdu.length(), retx);
+        "Skipping invalid ReTx that exceeds SDU boundaries. SDU length={}, ReTx: {}", sdu_info.sdu.length(), retx);
     retx_queue.pop();
     return {};
   }
@@ -427,7 +428,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
   // Assemble PDU
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
-  pdu_buf.push_back(byte_buffer_slice{tx_pdu.sdu, hdr.so, retx_payload_len});
+  pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu, hdr.so, retx_payload_len});
   logger.log_debug("Created RLC ReTx PDU ({}) - {} bytes", si, pdu_buf.length());
 
   // Log state
@@ -492,7 +493,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
     if (tx_window->has_sn(sn)) {
       upper_dn.on_delivered_sdu((*tx_window)[sn].pdcp_count); // notify upper layer
       retx_queue.remove_sn(sn);                               // remove any pending retx for that SN
-      tx_window->remove_pdu(sn);
+      tx_window->remove_sn(sn);
       st.tx_next_ack = (sn + 1) % mod;
     } else {
       logger.log_error("Missing ACKed SN from TX window");
@@ -644,8 +645,8 @@ uint32_t rlc_tx_am_entity::get_buffer_state_nolock()
   uint32_t segment_bytes = 0;
   if (sn_under_segmentation != INVALID_RLC_SN) {
     if (tx_window->has_sn(sn_under_segmentation)) {
-      rlc_tx_am_sdu_info& tx_pdu = (*tx_window)[sn_under_segmentation];
-      segment_bytes              = tx_pdu.sdu.length() - tx_pdu.next_so + head_max_size;
+      rlc_tx_am_sdu_info& sdu_info = (*tx_window)[sn_under_segmentation];
+      segment_bytes                = sdu_info.sdu.length() - sdu_info.next_so + head_max_size;
     } else {
       logger.log_info("Buffer state: ignore SN under segmentation: SN={} not in tx_window", sn_under_segmentation);
     }
@@ -790,17 +791,17 @@ void rlc_tx_am_entity::timer_expired(uint32_t timeout_id)
   }
 }
 
-std::unique_ptr<rlc_pdu_window_base<rlc_tx_am_sdu_info>> rlc_tx_am_entity::create_tx_window(rlc_am_sn_size sn_size)
+std::unique_ptr<rlc_am_window_base<rlc_tx_am_sdu_info>> rlc_tx_am_entity::create_tx_window(rlc_am_sn_size sn_size)
 {
-  std::unique_ptr<rlc_pdu_window_base<rlc_tx_am_sdu_info>> tx_window;
+  std::unique_ptr<rlc_am_window_base<rlc_tx_am_sdu_info>> tx_window;
   switch (sn_size) {
     case rlc_am_sn_size::size12bits:
       tx_window =
-          std::make_unique<rlc_pdu_window<rlc_tx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>();
+          std::make_unique<rlc_am_window<rlc_tx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>();
       break;
     case rlc_am_sn_size::size18bits:
       tx_window =
-          std::make_unique<rlc_pdu_window<rlc_tx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>();
+          std::make_unique<rlc_am_window<rlc_tx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>();
       break;
     default:
       srsgnb_assertion_failure("Cannot create tx_window: unsupported SN field length");

@@ -17,10 +17,10 @@
 namespace srsgnb {
 
 template <class T>
-struct rlc_pdu_window_base {
-  virtual ~rlc_pdu_window_base()           = default;
-  virtual T&     add_pdu(size_t sn)        = 0;
-  virtual void   remove_pdu(size_t sn)     = 0;
+struct rlc_am_window_base {
+  virtual ~rlc_am_window_base()            = default;
+  virtual T&     add_sn(size_t sn)         = 0;
+  virtual void   remove_sn(size_t sn)      = 0;
   virtual T&     operator[](size_t sn)     = 0;
   virtual size_t size() const              = 0;
   virtual bool   empty() const             = 0;
@@ -29,20 +29,21 @@ struct rlc_pdu_window_base {
   virtual bool   has_sn(uint32_t sn) const = 0;
 };
 
-/// \brief This class provides a container for the Tx/Rx windows holding RLC PDUs, indexed by Sequence Numbers (SN)
+/// \brief This class provides a container for the Tx/Rx windows holding RLC SDU info objects that are indexed by
+/// Sequence Numbers (SN)
 /// @tparam T storage type
 /// @tparam WINDOW_SIZE size of the RLC AM window
 template <class T, std::size_t WINDOW_SIZE>
-struct rlc_pdu_window final : public rlc_pdu_window_base<T> {
-  ~rlc_pdu_window() = default;
+struct rlc_am_window final : public rlc_am_window_base<T> {
+  ~rlc_am_window() = default;
 
-  T& add_pdu(size_t sn) override
+  T& add_sn(size_t sn) override
   {
     srsgnb_assert(not has_sn(sn), "The same SN={} should not be added twice", sn);
     window.overwrite(sn, T());
     return window[sn];
   }
-  void remove_pdu(size_t sn) override
+  void remove_sn(size_t sn) override
   {
     srsgnb_assert(has_sn(sn), "The removed SN={} is not in the window", sn);
     window.erase(sn);

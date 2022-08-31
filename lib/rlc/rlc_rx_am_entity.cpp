@@ -209,7 +209,7 @@ bool rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
           }
           // RX_Next serves as the lower edge of the receiving window
           // As such, we remove any SDU from the window if we update this value
-          rx_window->remove_pdu(sn_upd);
+          rx_window->remove_sn(sn_upd);
         } else {
           break; // first SDU not fully received
         }
@@ -282,7 +282,7 @@ bool rlc_rx_am_entity::handle_full_data_sdu(const rlc_am_pdu_header& header, byt
   }
 
   // Full SDU received. Add to Rx window and use full payload as SDU.
-  rlc_rx_am_sdu_info& rx_sdu = rx_window->add_pdu(header.sn);
+  rlc_rx_am_sdu_info& rx_sdu = rx_window->add_sn(header.sn);
   rx_sdu.segments.clear();
   //
   // TODO: avoid copy
@@ -305,7 +305,7 @@ bool rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
   logger.log_debug("PDU SI: {}", header.sn);
 
   // Add a new SDU segment to the RX window if necessary
-  rlc_rx_am_sdu_info& rx_sdu = rx_window->has_sn(header.sn) ? (*rx_window)[header.sn] : rx_window->add_pdu(header.sn);
+  rlc_rx_am_sdu_info& rx_sdu = rx_window->has_sn(header.sn) ? (*rx_window)[header.sn] : rx_window->add_sn(header.sn);
 
   // Create SDU segment, to be stored later
   rlc_rx_am_sdu_segment segment = {};
@@ -468,17 +468,17 @@ bool rlc_rx_am_entity::status_report_required()
   return do_status.load(std::memory_order_relaxed) && not status_prohibit_timer.is_running();
 }
 
-std::unique_ptr<rlc_pdu_window_base<rlc_rx_am_sdu_info>> rlc_rx_am_entity::create_rx_window(rlc_am_sn_size sn_size)
+std::unique_ptr<rlc_am_window_base<rlc_rx_am_sdu_info>> rlc_rx_am_entity::create_rx_window(rlc_am_sn_size sn_size)
 {
-  std::unique_ptr<rlc_pdu_window_base<rlc_rx_am_sdu_info>> rx_window;
+  std::unique_ptr<rlc_am_window_base<rlc_rx_am_sdu_info>> rx_window;
   switch (sn_size) {
     case rlc_am_sn_size::size12bits:
       rx_window =
-          std::make_unique<rlc_pdu_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>();
+          std::make_unique<rlc_am_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>();
       break;
     case rlc_am_sn_size::size18bits:
       rx_window =
-          std::make_unique<rlc_pdu_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>();
+          std::make_unique<rlc_am_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>();
       break;
     default:
       srsgnb_assertion_failure("Cannot create rx_window: unsupported SN field length");

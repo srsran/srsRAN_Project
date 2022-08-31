@@ -91,7 +91,7 @@ private:
   const uint32_t am_window_size;
 
   /// Tx window
-  std::unique_ptr<rlc_pdu_window_base<rlc_tx_am_sdu_info>> tx_window;
+  std::unique_ptr<rlc_am_window_base<rlc_tx_am_sdu_info>> tx_window;
 
   // Header sizes are computed upon construction based on SN length
   const uint32_t head_min_size;
@@ -173,7 +173,7 @@ private:
   /// \param tx_pdu the tx_pdu info contained in the tx_window.
   /// \param nof_bytes Limits the maximum size of the requested PDU.
   /// \return One PDU
-  byte_buffer_slice_chain build_first_sdu_segment(rlc_tx_am_sdu_info& tx_pdu, uint32_t nof_bytes);
+  byte_buffer_slice_chain build_first_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t nof_bytes);
 
   /// \brief Builds a RLC PDU containing an SDU segment for an SDU that is undergoing segmentation.
   ///
@@ -183,7 +183,7 @@ private:
   /// \param tx_pdu The tx_pdu info contained in the tx_window.
   /// \param nof_bytes Limits the maximum size of the requested PDU.
   /// \return One PDU
-  byte_buffer_slice_chain build_continued_sdu_segment(rlc_tx_am_sdu_info& tx_pdu, uint32_t nof_bytes);
+  byte_buffer_slice_chain build_continued_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t nof_bytes);
 
   /// \brief Builds a retx RLC PDU.
   ///
@@ -229,7 +229,7 @@ private:
   /// Creates the tx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
   /// \return unique pointer to tx_window instance
-  static std::unique_ptr<rlc_pdu_window_base<rlc_tx_am_sdu_info>> create_tx_window(rlc_am_sn_size sn_size);
+  static std::unique_ptr<rlc_am_window_base<rlc_tx_am_sdu_info>> create_tx_window(rlc_am_sn_size sn_size);
 
   void log_state(srslog::basic_levels level)
   {
