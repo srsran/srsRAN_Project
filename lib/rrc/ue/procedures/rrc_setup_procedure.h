@@ -13,7 +13,7 @@
 #include "../rrc_ue_context.h"
 #include "rrc_ue_event_manager.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
-#include "srsgnb/rrc/rrc_entity_interface.h"
+#include "srsgnb/rrc/rrc_du.h"
 #include "srsgnb/rrc/rrc_ue_entity_interface.h"
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/eager_async_task.h"

@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/rrc/rrc_config.h"
-#include "srsgnb/rrc/rrc_entity_interface.h"
+#include "srsgnb/rrc/rrc_du.h"
 #include "ue/rrc_ue_entity.h"
 
 namespace srsgnb {
