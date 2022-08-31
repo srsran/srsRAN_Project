@@ -316,10 +316,12 @@ struct prach_occasion_info {
   uint8_t nof_preamble_indexes;
 };
 
+/// Info about PUCCH used resource.
 struct ul_pucch_info {
   rnti_t                   crnti;
   const bwp_configuration* bwp_cfg;
   pucch_format             format;
+  /// PRBs and symbols for this PUCCH resource.
   pucch_resources          resources;
   union {
     pucch_format_0 format_0;
