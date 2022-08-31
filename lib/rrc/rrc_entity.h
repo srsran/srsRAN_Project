@@ -19,7 +19,7 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Main RRC representation with the DU
-class rrc_entity : public rrc_entity_du_interface, public rrc_entity_ue_interface
+class rrc_entity : public rrc_entity_du_interface, public rrc_du_ue_connection_manager
 {
 public:
   rrc_entity(const rrc_cfg_t&              cfg_,
@@ -34,7 +34,7 @@ public:
   void                     handle_amf_connection() override;
   void                     handle_amf_connection_drop() override;
 
-  // rrc_entity_ue_interface
+  // rrc_du_ue_connection_manager
   int  get_pucch_resources() override;
   bool is_rrc_connect_allowed() override;
 

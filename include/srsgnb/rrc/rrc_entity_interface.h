@@ -24,12 +24,12 @@ struct rrc_ue_creation_message {
   rrc_ue_task_scheduler*          ue_task_sched;
 };
 
-/// Interface class for the main RRC object of the DU used by the RRC UE objects.
-class rrc_entity_ue_interface
+/// Interface class for the main RRC DU object used by the RRC UE objects.
+class rrc_du_ue_connection_manager
 {
 public:
-  rrc_entity_ue_interface()          = default;
-  virtual ~rrc_entity_ue_interface() = default;
+  rrc_du_ue_connection_manager()          = default;
+  virtual ~rrc_du_ue_connection_manager() = default;
 
   /// Request the allocation of PUCCH resources for the UE.
   virtual int get_pucch_resources() = 0;
