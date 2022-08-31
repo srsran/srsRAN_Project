@@ -10,7 +10,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/cu_cp/ue_context.h"
-#include "srsgnb/rrc/rrc_factory.h"
+#include "srsgnb/rrc/rrc_du_factory.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>

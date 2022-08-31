@@ -14,7 +14,7 @@
 #include "procedures/rrc_ue_event_manager.h"
 #include "rrc_ue_context.h"
 #include "srsgnb/cu_cp/ue_context.h"
-#include "srsgnb/rrc/rrc_factory.h"
+#include "srsgnb/rrc/rrc_du_factory.h"
 #include "srsgnb/rrc/rrc_ue.h"
 
 namespace srsgnb {

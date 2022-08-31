@@ -7,7 +7,7 @@
 #
 
 set(SOURCES
-  rrc_factory.cpp
+  rrc_du_factory.cpp
   rrc_entity.cpp
   ue/rrc_ue_entity.cpp
   ue/rrc_ue_message_handlers.cpp

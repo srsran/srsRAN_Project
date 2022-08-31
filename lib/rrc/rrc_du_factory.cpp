@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/rrc/rrc_factory.h"
 #include "rrc_entity.h"
+#include "srsgnb/rrc/rrc_du_factory.h"
 #include "ue/rrc_ue_entity.h"
 
 using namespace srsgnb;

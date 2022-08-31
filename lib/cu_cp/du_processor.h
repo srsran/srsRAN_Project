@@ -19,7 +19,7 @@
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/ran/nr_cgi.h"
-#include "srsgnb/rrc/rrc_factory.h"
+#include "srsgnb/rrc/rrc_du_factory.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "ue_manager.h"
 #include <string>
