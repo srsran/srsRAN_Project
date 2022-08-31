@@ -37,12 +37,12 @@ public:
   virtual bool is_rrc_connect_allowed() = 0;
 };
 
-/// Interface class to the main RRC object of the DU used by the DU itself.
-class rrc_entity_du_interface : public rrc_amf_connection_handler
+/// Interface class to the main RRC DU object to manage RRC UEs.
+class rrc_du_ue_manager : public rrc_amf_connection_handler
 {
 public:
-  rrc_entity_du_interface()          = default;
-  virtual ~rrc_entity_du_interface() = default;
+  rrc_du_ue_manager()          = default;
+  virtual ~rrc_du_ue_manager() = default;
 
   /// Creates a new RRC UE object and returns a handle to it.
   virtual rrc_ue_entity_interface* add_user(rrc_ue_creation_message msg) = 0;

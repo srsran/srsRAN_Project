@@ -92,8 +92,8 @@ private:
   timer_manager timer_db;
 
   // Components
-  std::unique_ptr<f1_interface>            f1ap;
-  std::unique_ptr<rrc_entity_du_interface> rrc;
+  std::unique_ptr<f1_interface>      f1ap;
+  std::unique_ptr<rrc_du_ue_manager> rrc;
 
   ue_manager ue_mng;
 

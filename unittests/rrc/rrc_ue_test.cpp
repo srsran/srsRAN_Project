@@ -200,7 +200,7 @@ private:
   dummy_rrc_ue_du_processor_adapter                    rrc_ue_ev_notifier;
   dummy_rrc_ue_ngap_adapter                            rrc_ue_ngap_ev_notifier;
   dummy_ue_task_scheduler*                             task_sched_handle = nullptr;
-  std::unique_ptr<rrc_entity_du_interface>             rrc;
+  std::unique_ptr<rrc_du_ue_manager>                   rrc;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 

@@ -19,7 +19,7 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Main RRC representation with the DU
-class rrc_entity : public rrc_entity_du_interface, public rrc_du_ue_connection_manager
+class rrc_entity : public rrc_du_ue_manager, public rrc_du_ue_connection_manager
 {
 public:
   rrc_entity(const rrc_cfg_t&              cfg_,
@@ -27,7 +27,7 @@ public:
              rrc_ue_nas_notifier&          nas_notif_);
   ~rrc_entity() = default;
 
-  // rrc_entity_du_interface
+  // rrc_du_ue_manager
   rrc_ue_entity_interface* add_user(rrc_ue_creation_message msg) override;
   void                     remove_ue(ue_index_t ue_index) override;
   void                     release_ues() override;
