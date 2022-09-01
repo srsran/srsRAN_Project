@@ -175,62 +175,6 @@ inline std::ostream& operator<<(std::ostream& os, const test_case_data& arg)
   return os;
 };
 
-template <typename T, typename U>
-class ValidateFAPIPDUField
-{
-  using validator_report = srsgnb::fapi::validator_report;
-  using message_type_id  = srsgnb::fapi::message_type_id;
-
-protected:
-  void execute_test(pdu_field_data<T>                                     property,
-                    test_case_data                                        params,
-                    std::function<T()>                                    builder,
-                    std::function<bool(T& pdu, validator_report& report)> validator,
-                    message_type_id                                       msg_type_id,
-                    U                                                     pdu_type)
-  {
-    T                                         pdu    = given_the_pdu(property, params, builder);
-    const std::tuple<bool, validator_report>& result = when_executing_the_validation(pdu, validator);
-    then_check_the_report(
-        std::get<0>(result), std::get<1>(result), property.property, params.result, msg_type_id, pdu_type);
-  }
-
-private:
-  T given_the_pdu(pdu_field_data<T> property, test_case_data params, std::function<T()> builder)
-  {
-    T pdu = builder();
-    property.fun(pdu, params.value);
-    return pdu;
-  };
-
-  std::tuple<bool, validator_report>
-  when_executing_the_validation(T pdu, std::function<bool(T& pdu, validator_report& report)> validator)
-  {
-    validator_report report(0, 0);
-    bool             result = validator(pdu, report);
-    return {result, report};
-  };
-
-  void then_check_the_report(bool                    result,
-                             const validator_report& report,
-                             const std::string&      property,
-                             bool                    expected_result,
-                             message_type_id         msg_type_id,
-                             U                       pdu_type)
-  {
-    ASSERT_EQ(result, expected_result);
-    if (!result) {
-      ASSERT_EQ(1U, report.reports.size());
-      const auto& rep = report.reports.back();
-      ASSERT_EQ(property, rep.property_name);
-      ASSERT_EQ(static_cast<unsigned>(msg_type_id), static_cast<unsigned>(rep.message_type));
-      ASSERT_EQ(static_cast<unsigned>(pdu_type), static_cast<unsigned>(rep.pdu_type.value()));
-    } else {
-      EXPECT_TRUE(report.reports.empty());
-    }
-  };
-};
-
 template <typename T>
 class ValidateFAPIMessageField
 {
@@ -244,9 +188,9 @@ protected:
                     std::function<bool(T& pdu, validator_report& report)> validator,
                     message_type_id                                       msg_type_id)
   {
-    T                                         pdu    = given_the_pdu(property, params, builder);
-    const std::tuple<bool, validator_report>& result = when_executing_the_validation(pdu, validator);
-    then_check_the_report(std::get<0>(result), std::get<1>(result), property.property, params.result, msg_type_id);
+    T    pdu    = given_the_pdu(property, params, builder);
+    bool result = when_executing_the_validation(pdu, validator);
+    then_check_the_report(result, property.property, params.result, msg_type_id);
   }
 
 private:
@@ -257,30 +201,53 @@ private:
     return pdu;
   };
 
-  std::tuple<bool, validator_report>
-  when_executing_the_validation(T pdu, std::function<bool(T& pdu, validator_report& report)> validator)
+  bool when_executing_the_validation(T pdu, std::function<bool(T& pdu, validator_report& report)> validator)
   {
-    validator_report report(0, 0);
-    bool             result = validator(pdu, report);
-    return {result, report};
+    return validator(pdu, report);
   };
 
-  void then_check_the_report(bool                    result,
-                             const validator_report& report,
-                             const std::string&      property,
-                             bool                    expected_result,
-                             message_type_id         msg_type_id)
+  void
+  then_check_the_report(bool result, const std::string& property, bool expected_result, message_type_id msg_type_id)
   {
-    ASSERT_EQ(result, expected_result);
+    EXPECT_EQ(result, expected_result);
     if (!result) {
-      ASSERT_EQ(1U, report.reports.size());
+      EXPECT_EQ(1U, report.reports.size());
       const auto& rep = report.reports.back();
-      ASSERT_EQ(property, rep.property_name);
-      ASSERT_EQ(msg_type_id, rep.message_type);
+      EXPECT_EQ(property, rep.property_name);
+      EXPECT_EQ(static_cast<unsigned>(msg_type_id), static_cast<unsigned>(rep.message_type));
     } else {
       EXPECT_TRUE(report.reports.empty());
     }
   };
+
+protected:
+  validator_report report = {0, 0};
+};
+
+template <typename T, typename U>
+class ValidateFAPIPDUField : public ValidateFAPIMessageField<T>
+{
+  using validator_report = srsgnb::fapi::validator_report;
+  using message_type_id  = srsgnb::fapi::message_type_id;
+
+protected:
+  void execute_test(pdu_field_data<T>                                     property,
+                    test_case_data                                        params,
+                    std::function<T()>                                    builder,
+                    std::function<bool(T& pdu, validator_report& report)> validator,
+                    message_type_id                                       msg_type_id,
+                    U                                                     pdu_type)
+  {
+    ValidateFAPIMessageField<T>::execute_test(property, params, builder, validator, msg_type_id);
+
+    // In case of error, check the PDU type.
+    if (!params.result) {
+      // Base class checks all the parameters but pdu_type, so it gets checked here. Base also checks that only one
+      // error report exists, so the last (or the first) of them can be used for the check.
+      const auto& rep = ValidateFAPIMessageField<T>::report.reports.back();
+      EXPECT_EQ(static_cast<unsigned>(pdu_type), static_cast<unsigned>(rep.pdu_type.value()));
+    }
+  }
 };
 
 } // namespace unittest
