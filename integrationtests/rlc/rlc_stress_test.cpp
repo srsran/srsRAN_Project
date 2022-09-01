@@ -18,33 +18,38 @@ using namespace srsgnb;
 
 void stress_test(stress_test_args args)
 {
-  auto log_sink =
+  srslog::sink* log_sink =
       (args.log_filename == "stdout") ? srslog::create_stdout_sink() : srslog::create_file_sink(args.log_filename);
-  if (!log_sink) {
+  if (log_sink == nullptr) {
     return;
   }
   srslog::log_channel* chan = srslog::create_log_channel("main_channel", *log_sink);
-  if (!chan) {
+  if (chan == nullptr) {
     return;
   }
   srslog::set_default_sink(*log_sink);
 
-  //  rlc_config cnfg = {};
-  //  if (args.mode == "TM") {
-  //    cnfg.mode = srsgnb::rlc_mode::tm;
-  //  } else if (args.mode == "UM") {
-  //    cnfg.mode = srsgnb::rlc_mode::um_bidir;
-  //  } else if (args.mode == "AM") {
-  //    cnfg.mode = srsgnb::rlc_mode::am;
-  //  } else {
-  //    fprintf(stderr, "Unsupported RLC mode %s, exiting.\n", args.mode.c_str());
-  //    exit(-1);
-  //  }
+  rlc_config cnfg = {};
+  if (args.mode == "TM") {
+    cnfg.mode = srsgnb::rlc_mode::tm;
+  } else if (args.mode == "UM") {
+    cnfg.mode = srsgnb::rlc_mode::um_bidir;
+  } else if (args.mode == "AM") {
+    cnfg.mode = srsgnb::rlc_mode::am;
+  } else {
+    fprintf(stderr, "Unsupported RLC mode %s, exiting.\n", args.mode.c_str());
+    exit(-1);
+  }
 
-  // RLC 1
-  // rlc_entity_creation_message msg;
-  // msg.config                      = cnfg;
-  // std::unique_ptr<rlc_entity> rlc = create_rlc_entity(msg);
+  // RLC gNB
+  std::unique_ptr<rlc_rx_upper_layer_data_notifier> pdcp_rx = std::make_unique<pdcp_rx_dummy>();
+  rlc_entity_creation_message                       msg;
+  msg.rx_upper_dn                 = pdcp_rx.get();
+  msg.config                      = std::move(cnfg);
+  std::unique_ptr<rlc_entity> rlc = create_rlc_entity(msg);
+
+  // RLC UE
+
   //  Print and analyse metrics
   //  TODO
 }

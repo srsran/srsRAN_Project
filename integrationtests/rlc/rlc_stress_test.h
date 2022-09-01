@@ -10,9 +10,11 @@
 
 #pragma once
 
+#include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/srslog/srslog.h"
 #include <getopt.h>
 
+namespace srsgnb {
 struct stress_test_args {
   std::string mode         = "UM";
   std::string sn_size      = "12";
@@ -66,3 +68,9 @@ bool parse_args(stress_test_args& args, int argc, char* argv[])
   return true;
 }
 
+class pdcp_rx_dummy : public rlc_rx_upper_layer_data_notifier
+{
+  void on_new_sdu(byte_buffer_slice_chain pdu) final {}
+};
+
+} // namespace srsgnb
