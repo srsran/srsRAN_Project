@@ -17,7 +17,7 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-class ValidateCSIPDUField : public ValidateFAPIPDUField<dl_csi_rs_pdu, dl_pdu_type>,
+class ValidateCSIPDUField : public ValidateFAPIPDU<dl_csi_rs_pdu, dl_pdu_type>,
                             public testing::TestWithParam<std::tuple<pdu_field_data<dl_csi_rs_pdu>, test_case_data>>
 {};
 
@@ -203,9 +203,9 @@ TEST(ValidateCSIPDU, ValidPDUPasses)
   dl_csi_rs_pdu pdu = build_valid_dl_csi_pdu();
 
   validator_report report(0, 0);
-  TESTASSERT(validate_dl_csi_pdu(pdu, report));
+  EXPECT_TRUE(validate_dl_csi_pdu(pdu, report));
   // Assert no reports were generated.
-  TESTASSERT(report.reports.empty());
+  EXPECT_TRUE(report.reports.empty());
 }
 
 /// Add 3 errors and check that validation fails with 3 errors.
@@ -219,7 +219,7 @@ TEST(ValidateCSIPDU, InvalidPDUFails)
   pdu.row     = 128;
 
   validator_report report(0, 0);
-  TESTASSERT(!validate_dl_csi_pdu(pdu, report));
+  EXPECT_FALSE(validate_dl_csi_pdu(pdu, report));
   // Assert 3 reports were generated.
-  TESTASSERT_EQ(report.reports.size(), 3u);
+  EXPECT_EQ(report.reports.size(), 3u);
 }

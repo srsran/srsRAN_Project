@@ -445,6 +445,8 @@ rx_data_indication_message unittest::build_valid_rx_data_indication()
   pdu.rnti    = generate_rnti();
   pdu.rapid   = generate_rapid();
   pdu.harq_id = generate_harq();
+  pdu.pdu_tag = rx_data_indication_pdu::pdu_tag_type::custom;
+  pdu.data    = reinterpret_cast<uint8_t*>(&pdu.data);
 
   return msg;
 }

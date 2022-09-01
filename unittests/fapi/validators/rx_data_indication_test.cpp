@@ -16,24 +16,105 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-static void test_validate_rx_data_indication_ok()
+class ValidateRXDataIndicationField
+  : public ValidateFAPIMessage<rx_data_indication_message>,
+    public testing::TestWithParam<std::tuple<pdu_field_data<rx_data_indication_message>, test_case_data>>
+{};
+
+TEST_P(ValidateRXDataIndicationField, WithValue)
+{
+  auto params = GetParam();
+
+  execute_test(std::get<0>(params),
+               std::get<1>(params),
+               build_valid_rx_data_indication,
+               validate_rx_data_indication,
+               srsgnb::fapi::message_type_id::rx_data_indication);
+};
+
+INSTANTIATE_TEST_SUITE_P(sfn,
+                         ValidateRXDataIndicationField,
+                         testing::Combine(testing::Values(pdu_field_data<rx_data_indication_message>{
+                                              "sfn",
+                                              [](rx_data_indication_message& pdu, int value) { pdu.sfn = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{512, true},
+                                                          test_case_data{1023, true},
+                                                          test_case_data{1024, false})));
+
+INSTANTIATE_TEST_SUITE_P(slot,
+                         ValidateRXDataIndicationField,
+                         testing::Combine(testing::Values(pdu_field_data<rx_data_indication_message>{
+                                              "slot",
+                                              [](rx_data_indication_message& pdu, int value) { pdu.slot = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{80, true},
+                                                          test_case_data{159, true},
+                                                          test_case_data{160, false})));
+
+INSTANTIATE_TEST_SUITE_P(RNTI,
+                         ValidateRXDataIndicationField,
+                         testing::Combine(testing::Values(pdu_field_data<rx_data_indication_message>{
+                                              "RNTI",
+                                              [](rx_data_indication_message& pdu, int value) {
+                                                pdu.pdus.back().rnti = to_rnti(value);
+                                              }}),
+                                          testing::Values(test_case_data{0, false},
+                                                          test_case_data{1, true},
+                                                          test_case_data{32767, true},
+                                                          test_case_data{65535, true})));
+
+INSTANTIATE_TEST_SUITE_P(RAPID,
+                         ValidateRXDataIndicationField,
+                         testing::Combine(testing::Values(pdu_field_data<rx_data_indication_message>{
+                                              "RAPID",
+                                              [](rx_data_indication_message& pdu, int value) {
+                                                pdu.pdus.back().rapid = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{31, true},
+                                                          test_case_data{63, true},
+                                                          test_case_data{64, false},
+                                                          test_case_data{254, false},
+                                                          test_case_data{255, true})));
+
+INSTANTIATE_TEST_SUITE_P(HarqID,
+                         ValidateRXDataIndicationField,
+                         testing::Combine(testing::Values(pdu_field_data<rx_data_indication_message>{
+                                              "HARQ ID",
+                                              [](rx_data_indication_message& pdu, int value) {
+                                                pdu.pdus.back().harq_id = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{8, true},
+                                                          test_case_data{15, true},
+                                                          test_case_data{16, false})));
+
+INSTANTIATE_TEST_SUITE_P(PDUTag,
+                         ValidateRXDataIndicationField,
+                         testing::Combine(testing::Values(pdu_field_data<rx_data_indication_message>{
+                                              "PDU tag",
+                                              [](rx_data_indication_message& pdu, int value) {
+                                                pdu.pdus.back().pdu_tag =
+                                                    static_cast<rx_data_indication_pdu::pdu_tag_type>(value);
+                                              }}),
+                                          testing::Values(test_case_data{0, false},
+                                                          test_case_data{99, false},
+                                                          test_case_data{100, true},
+                                                          test_case_data{101, false})));
+
+/// Valid Message should pass.
+TEST(ValidateRxDataIndication, ValidIndicationPasses)
 {
   auto msg = build_valid_rx_data_indication();
 
-  // Append the payload here to avoid dangling pointers.
-  auto& pdu = msg.pdus.back();
-
-  static_vector<uint8_t, 18> data = {1, 2, 3, 4, 5};
-  pdu.pdu_tag                     = rx_data_indication_pdu::pdu_tag_type::custom;
-  pdu.pdu_length                  = data.size();
-  pdu.data                        = data.data();
-
   const auto& result = validate_rx_data_indication(msg);
 
-  TESTASSERT(result);
+  EXPECT_TRUE(result);
 }
 
-static void test_validate_rx_data_indication_error()
+/// Add 3 errors and check that validation fails with 3 errors.
+TEST(ValidateRxDataIndication, InvalidIndicationPasses)
 {
   auto msg = build_valid_rx_data_indication();
 
@@ -44,15 +125,8 @@ static void test_validate_rx_data_indication_error()
 
   const auto& result = validate_rx_data_indication(msg);
 
-  TESTASSERT(!result);
-
+  EXPECT_FALSE(result);
   const auto& report = result.error();
   // Check that the 4 errors are reported.
-  TESTASSERT_EQ(report.reports.size(), 4U);
-}
-
-int main()
-{
-  test_validate_rx_data_indication_ok();
-  test_validate_rx_data_indication_error();
+  EXPECT_EQ(report.reports.size(), 4U);
 }

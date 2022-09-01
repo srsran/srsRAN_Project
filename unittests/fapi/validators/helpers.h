@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/adt/expected.h"
 #include "srsgnb/fapi/validator_report.h"
 #include <gtest/gtest.h>
 
@@ -169,28 +170,28 @@ struct test_case_data {
   bool     result;
 };
 
+using validator_report = srsgnb::fapi::validator_report;
+using message_type_id  = srsgnb::fapi::message_type_id;
+using error_report     = srsgnb::fapi::validator_report::error_report;
+
 inline std::ostream& operator<<(std::ostream& os, const test_case_data& arg)
 {
   os << "Value = " << std::to_string(arg.value) << ", Result = " << std::to_string(arg.result);
   return os;
 };
 
-template <typename T>
-class ValidateFAPIMessageField
+template <typename T, typename F>
+class ValidateFAPIField
 {
-  using validator_report = srsgnb::fapi::validator_report;
-  using message_type_id  = srsgnb::fapi::message_type_id;
+public:
+  virtual ~ValidateFAPIField() = default;
 
 protected:
-  void execute_test(pdu_field_data<T>                                     property,
-                    test_case_data                                        params,
-                    std::function<T()>                                    builder,
-                    std::function<bool(T& pdu, validator_report& report)> validator,
-                    message_type_id                                       msg_type_id)
+  void execute_test(pdu_field_data<T> property, test_case_data params, std::function<T()> builder, F validator)
   {
     T    pdu    = given_the_pdu(property, params, builder);
     bool result = when_executing_the_validation(pdu, validator);
-    then_check_the_report(result, property.property, params.result, msg_type_id);
+    then_check_the_report(result, property.property, params.result);
   }
 
 private:
@@ -201,20 +202,15 @@ private:
     return pdu;
   };
 
-  bool when_executing_the_validation(T pdu, std::function<bool(T& pdu, validator_report& report)> validator)
-  {
-    return validator(pdu, report);
-  };
+  virtual bool when_executing_the_validation(T pdu, F validator) { return true; };
 
-  void
-  then_check_the_report(bool result, const std::string& property, bool expected_result, message_type_id msg_type_id)
+  void then_check_the_report(bool result, const std::string& property, bool expected_result)
   {
     EXPECT_EQ(result, expected_result);
     if (!result) {
       EXPECT_EQ(1U, report.reports.size());
       const auto& rep = report.reports.back();
       EXPECT_EQ(property, rep.property_name);
-      EXPECT_EQ(static_cast<unsigned>(msg_type_id), static_cast<unsigned>(rep.message_type));
     } else {
       EXPECT_TRUE(report.reports.empty());
     }
@@ -224,30 +220,73 @@ protected:
   validator_report report = {0, 0};
 };
 
-template <typename T, typename U>
-class ValidateFAPIPDUField : public ValidateFAPIMessageField<T>
-{
-  using validator_report = srsgnb::fapi::validator_report;
-  using message_type_id  = srsgnb::fapi::message_type_id;
+using fapi_error = srsgnb::error_type<validator_report>;
 
-protected:
-  void execute_test(pdu_field_data<T>                                     property,
-                    test_case_data                                        params,
-                    std::function<T()>                                    builder,
-                    std::function<bool(T& pdu, validator_report& report)> validator,
-                    message_type_id                                       msg_type_id,
-                    U                                                     pdu_type)
+template <typename T>
+class ValidateFAPIMessage : public ValidateFAPIField<T, std::function<fapi_error(T& pdu)>>
+{
+  using base = ValidateFAPIField<T, std::function<fapi_error(T& pdu)>>;
+
+public:
+  void execute_test(pdu_field_data<T>                 property,
+                    test_case_data                    params,
+                    std::function<T()>                builder,
+                    std::function<fapi_error(T& pdu)> validator,
+                    message_type_id                   msg_type_id)
   {
-    ValidateFAPIMessageField<T>::execute_test(property, params, builder, validator, msg_type_id);
+    base::execute_test(property, params, builder, validator);
 
     // In case of error, check the PDU type.
     if (!params.result) {
       // Base class checks all the parameters but pdu_type, so it gets checked here. Base also checks that only one
       // error report exists, so the last (or the first) of them can be used for the check.
-      const auto& rep = ValidateFAPIMessageField<T>::report.reports.back();
-      EXPECT_EQ(static_cast<unsigned>(pdu_type), static_cast<unsigned>(rep.pdu_type.value()));
+      const error_report& rep = base::report.reports.back();
+      EXPECT_EQ(static_cast<unsigned>(msg_type_id), static_cast<unsigned>(rep.message_type));
     }
   }
+
+private:
+  bool when_executing_the_validation(T pdu, std::function<fapi_error(T& pdu)> validator) override
+  {
+    fapi_error error = validator(pdu);
+    if (error.is_error()) {
+      base::report = error.error();
+    }
+
+    return !error.is_error();
+  };
+};
+
+template <typename T, typename U>
+class ValidateFAPIPDU : public ValidateFAPIField<T, std::function<bool(T& pdu, srsgnb::fapi::validator_report& report)>>
+{
+  using base = ValidateFAPIField<T, std::function<bool(T& pdu, srsgnb::fapi::validator_report& report)>>;
+
+public:
+  void execute_test(pdu_field_data<T>                                                   property,
+                    test_case_data                                                      params,
+                    std::function<T()>                                                  builder,
+                    std::function<bool(T& pdu, srsgnb::fapi::validator_report& report)> validator,
+                    message_type_id                                                     msg_type_id,
+                    U                                                                   pdu_type)
+  {
+    base::execute_test(property, params, builder, validator);
+
+    // In case of error, check the PDU type.
+    if (!params.result) {
+      // Base class checks all the parameters but pdu_type, so it gets checked here. Base also checks that only one
+      // error report exists, so the last (or the first) of them can be used for the check.
+      const auto& rep = base::report.reports.back();
+      EXPECT_EQ(static_cast<unsigned>(pdu_type), static_cast<unsigned>(rep.pdu_type.value()));
+      EXPECT_EQ(static_cast<unsigned>(msg_type_id), static_cast<unsigned>(rep.message_type));
+    }
+  }
+
+private:
+  bool when_executing_the_validation(T pdu, std::function<bool(T& pdu, validator_report& report)> validator) override
+  {
+    return validator(pdu, base::report);
+  };
 };
 
 } // namespace unittest
