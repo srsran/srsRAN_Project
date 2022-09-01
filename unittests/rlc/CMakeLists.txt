@@ -25,8 +25,8 @@ target_link_libraries(rlc_tx_tm_test srsgnb_rlc srsgnb_support srslog gtest gtes
 gtest_discover_tests(rlc_tx_tm_test)
 
 add_executable(rlc_um_test rlc_um_test.cpp)
-target_link_libraries(rlc_um_test srsgnb_rlc srsgnb_support srslog)
-add_test(rlc_um_test rlc_um_test)
+target_link_libraries(rlc_um_test srsgnb_rlc srsgnb_support srslog gtest gtest_main)
+gtest_discover_tests(rlc_um_test)
 
 add_executable(rlc_um_pdu_test rlc_um_pdu_test.cpp)
 target_link_libraries(rlc_um_pdu_test srsgnb_support srslog)

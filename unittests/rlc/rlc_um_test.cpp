@@ -9,27 +9,12 @@
  */
 
 #include "../../lib/rlc/rlc_um_entity.h"
-#include "srsgnb/support/test_utils.h"
+#include <gtest/gtest.h>
 #include <queue>
 
-namespace srsgnb {
+using namespace srsgnb;
 
-template <std::size_t N>
-byte_buffer make_byte_buffer_and_log(const std::array<uint8_t, N>& tv)
-{
-  byte_buffer sdu = {tv};
-  return sdu;
-}
-
-template <std::size_t N>
-byte_buffer_slice_chain make_rlc_byte_buffer_and_log(const std::array<uint8_t, N>& tv)
-{
-  byte_buffer             buf = {tv};
-  byte_buffer_slice_chain pdu;
-  pdu.push_back(std::move(buf));
-  return pdu;
-}
-
+/// Mocking class of the surrounding layers invoked by the RLC.
 class rlc_test_frame : public rlc_rx_upper_layer_data_notifier,
                        public rlc_tx_upper_layer_data_notifier,
                        public rlc_tx_upper_layer_control_notifier,
@@ -62,23 +47,168 @@ public:
   void on_buffer_state_update(unsigned bsr) override {}
 };
 
-void test_full_sdus(rlc_um_sn_size sn_size)
+/// Fixture class for RLC UM tests
+/// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size
+class rlc_um_test : public ::testing::Test, public ::testing::WithParamInterface<rlc_um_sn_size>
 {
-  test_delimit_logger delimiter{"RLC UM ({}) - Full SDUs, no Segmentation", sn_size};
-  rlc_um_config       config;
-  config.rx = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{sn_size, 5});
-  config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
-  timer_manager  timers;
-  rlc_test_frame tester1, tester2;
-  rlc_um_entity  rlc1(
-      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
-  rlc_um_entity rlc2(
-      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
+protected:
+  void SetUp() override
+  {
+    // init test's logger
+    srslog::init();
+    logger.set_level(srslog::basic_levels::debug);
 
-  rlc_tx_upper_layer_data_interface* rlc1_tx_upper = rlc1.get_tx_upper_layer_data_interface();
-  rlc_tx_lower_layer_interface*      rlc1_tx_lower = rlc1.get_tx_lower_layer_interface();
-  rlc_rx_lower_layer_interface*      rlc2_rx_lower = rlc2.get_rx_lower_layer_interface();
-  rlc_tx_lower_layer_interface*      rlc2_tx_lower = rlc2.get_tx_lower_layer_interface();
+    // init RLC logger
+    srslog::fetch_basic_logger("RLC", false).set_level(srslog::basic_levels::debug);
+    srslog::fetch_basic_logger("RLC", false).set_hex_dump_max_size(100);
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
+
+  /// \brief Initializes fixture according to size sequence number size
+  /// \param sn_size_ size of the sequence number
+  void init(rlc_um_sn_size sn_size_)
+  {
+    logger.info("Creating RLC UM ({} bit)", to_number(sn_size));
+
+    sn_size = sn_size_;
+
+    // Set Rx config
+    config.rx                  = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{});
+    config.rx->sn_field_length = sn_size;
+    config.rx->t_reassembly_ms = 5;
+
+    // Set Tx config
+    config.tx                  = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{});
+    config.tx->sn_field_length = sn_size;
+
+    // Create RLC entities
+    rlc1 = std::make_unique<rlc_um_entity>(
+        du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
+    rlc2 = std::make_unique<rlc_um_entity>(
+        du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
+
+    // Bind interfaces
+    rlc1_rx_lower = rlc1->get_rx_lower_layer_interface();
+    rlc1_tx_upper = rlc1->get_tx_upper_layer_data_interface();
+    rlc1_tx_lower = rlc1->get_tx_lower_layer_interface();
+    rlc2_rx_lower = rlc2->get_rx_lower_layer_interface();
+    rlc2_tx_upper = rlc2->get_tx_upper_layer_data_interface();
+    rlc2_tx_lower = rlc2->get_tx_lower_layer_interface();
+  }
+
+  void tx_with_pdu_duplicates(uint32_t hold_back_pdu)
+  {
+    uint32_t buffer_state = 0;
+
+    const uint32_t num_sdus = 1;
+    const uint32_t sdu_size = 100;
+
+    // Push SDUs into RLC1
+    byte_buffer sdu_bufs[num_sdus];
+    for (uint32_t i = 0; i < num_sdus; i++) {
+      sdu_bufs[i] = byte_buffer();
+      // Write the index into the buffer
+      for (uint32_t k = 0; k < sdu_size; ++k) {
+        sdu_bufs[i].append(i + k);
+      }
+
+      // write SDU into upper end
+      rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+      rlc1_tx_upper->handle_sdu(std::move(sdu));
+    }
+    buffer_state = rlc1_tx_lower->get_buffer_state();
+    EXPECT_EQ(num_sdus * (sdu_size + 1), buffer_state);
+
+    // Read PDUs from RLC1 with grant of 25 Bytes each
+    const uint32_t          payload_len  = 25;
+    const uint32_t          max_num_pdus = 10;
+    uint32_t                num_pdus     = 0;
+    byte_buffer_slice_chain pdu_bufs[max_num_pdus];
+
+    buffer_state = rlc1_tx_lower->get_buffer_state();
+    while (buffer_state > 0 && num_pdus < max_num_pdus) {
+      pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
+
+      if (pdu_bufs[num_pdus].empty()) {
+        break;
+      }
+      // TODO: write PCAP
+      num_pdus++;
+      buffer_state = rlc1_tx_lower->get_buffer_state();
+    }
+    EXPECT_EQ(0, buffer_state);
+
+    // Write all PDUs twice into RLC2 (except for hold_back_pdu)
+    for (uint32_t k = 0; k < 2; k++) {
+      for (uint32_t i = 0; i < num_pdus; i++) {
+        if (i != hold_back_pdu) {
+          byte_buffer pdu;
+          for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
+            pdu.append(slice);
+          }
+          rlc2_rx_lower->handle_pdu(std::move(pdu));
+        }
+      }
+    }
+    buffer_state = rlc2_tx_lower->get_buffer_state();
+    EXPECT_EQ(0, buffer_state);
+
+    // Write the skipped PDU into RLC2
+    {
+      byte_buffer pdu;
+      for (const byte_buffer_slice& slice : pdu_bufs[hold_back_pdu].slices()) {
+        pdu.append(slice);
+      }
+      rlc2_rx_lower->handle_pdu(std::move(pdu));
+    }
+
+    // Read SDUs from RLC2's upper layer
+    EXPECT_EQ(num_sdus, tester2.sdu_counter);
+    for (uint32_t i = 0; i < num_sdus; i++) {
+      EXPECT_TRUE(tester2.sdu_queue.empty() == false);
+      byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+      EXPECT_EQ(sdu_size, rx_sdu.length());
+      EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
+      tester2.sdu_queue.pop();
+    }
+  }
+
+  srslog::basic_logger&              logger = srslog::fetch_basic_logger("TEST", false);
+  rlc_um_sn_size                     sn_size;
+  rlc_um_config                      config;
+  timer_manager                      timers;
+  rlc_test_frame                     tester1, tester2;
+  std::unique_ptr<rlc_um_entity>     rlc1, rlc2;
+  rlc_rx_lower_layer_interface*      rlc1_rx_lower = nullptr;
+  rlc_tx_upper_layer_data_interface* rlc1_tx_upper = nullptr;
+  rlc_tx_lower_layer_interface*      rlc1_tx_lower = nullptr;
+  rlc_rx_lower_layer_interface*      rlc2_rx_lower = nullptr;
+  rlc_tx_upper_layer_data_interface* rlc2_tx_upper = nullptr;
+  rlc_tx_lower_layer_interface*      rlc2_tx_lower = nullptr;
+};
+
+TEST_P(rlc_um_test, create_new_entity)
+{
+  init(GetParam());
+  EXPECT_NE(rlc1_rx_lower, nullptr);
+  EXPECT_NE(rlc1_tx_upper, nullptr);
+  ASSERT_NE(rlc1_tx_lower, nullptr);
+  EXPECT_NE(rlc2_rx_lower, nullptr);
+  EXPECT_NE(rlc2_tx_upper, nullptr);
+  ASSERT_NE(rlc2_tx_lower, nullptr);
+
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+  EXPECT_EQ(rlc2_tx_lower->get_buffer_state(), 0);
+}
+
+TEST_P(rlc_um_test, tx_without_segmentation)
+{
+  init(GetParam());
 
   uint32_t buffer_state = 0;
 
@@ -99,25 +229,25 @@ void test_full_sdus(rlc_um_sn_size sn_size)
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   buffer_state = rlc1_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
+  EXPECT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1
   byte_buffer_slice_chain pdu_bufs[num_pdus];
   const int               payload_len = 1 + sdu_size; // 1 bytes for header + payload
   for (uint32_t i = 0; i < num_pdus; i++) {
     pdu_bufs[i] = rlc1_tx_lower->pull_pdu(payload_len);
-    TESTASSERT_EQ(payload_len, pdu_bufs[i].length());
-    TESTASSERT_EQ(i, pdu_bufs[i][payload_len - 1]); // check if last payload item corresponds with index
+    EXPECT_EQ(payload_len, pdu_bufs[i].length());
+    EXPECT_EQ(i, pdu_bufs[i][payload_len - 1]); // check if last payload item corresponds with index
 
     // Verify transmit notification
-    TESTASSERT_EQ(1, tester1.transmitted_pdcp_count_list.size());
-    TESTASSERT_EQ(i + 13, tester1.transmitted_pdcp_count_list.front());
+    EXPECT_EQ(1, tester1.transmitted_pdcp_count_list.size());
+    EXPECT_EQ(i + 13, tester1.transmitted_pdcp_count_list.front());
     tester1.transmitted_pdcp_count_list.pop_front();
 
     // TODO: write PCAP
   }
   buffer_state = rlc1_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(0, buffer_state);
+  EXPECT_EQ(0, buffer_state);
 
   // Write PDUs into RLC2
   for (uint32_t i = 0; i < num_pdus; i++) {
@@ -128,36 +258,22 @@ void test_full_sdus(rlc_um_sn_size sn_size)
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
   buffer_state = rlc2_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(0, buffer_state);
+  EXPECT_EQ(0, buffer_state);
 
   // Read SDUs from RLC2's upper layer
-  TESTASSERT_EQ(num_sdus, tester2.sdu_counter);
+  EXPECT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
-    TESTASSERT(tester2.sdu_queue.empty() == false);
+    EXPECT_TRUE(tester2.sdu_queue.empty() == false);
     byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
-    TESTASSERT_EQ(sdu_size, rx_sdu.length());
-    TESTASSERT(sdu_bufs[i] == rx_sdu);
+    EXPECT_EQ(sdu_size, rx_sdu.length());
+    EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
     tester2.sdu_queue.pop();
   }
 }
 
-void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
+TEST_P(rlc_um_test, tx_with_segmentation)
 {
-  test_delimit_logger delimiter{"RLC UM ({}) - Segmented SDU{}", sn_size, reverse_rx ? ", reverse rx" : ""};
-  rlc_um_config       config;
-  config.rx = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{sn_size, 5});
-  config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
-  timer_manager  timers;
-  rlc_test_frame tester1, tester2;
-  rlc_um_entity  rlc1(
-      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
-  rlc_um_entity rlc2(
-      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
-
-  rlc_tx_upper_layer_data_interface* rlc1_tx_upper = rlc1.get_tx_upper_layer_data_interface();
-  rlc_tx_lower_layer_interface*      rlc1_tx_lower = rlc1.get_tx_lower_layer_interface();
-  rlc_rx_lower_layer_interface*      rlc2_rx_lower = rlc2.get_rx_lower_layer_interface();
-  rlc_tx_lower_layer_interface*      rlc2_tx_lower = rlc2.get_tx_lower_layer_interface();
+  init(GetParam());
 
   uint32_t buffer_state = 0;
 
@@ -178,7 +294,7 @@ void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   buffer_state = rlc1_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
+  EXPECT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant of 25 Bytes each
   const uint32_t          payload_len  = 25;
@@ -192,8 +308,8 @@ void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
 
     if (num_pdus % ((sdu_size / payload_len) + 1) == 0) {
       // Verify transmit notification
-      TESTASSERT_EQ(1, tester1.transmitted_pdcp_count_list.size());
-      TESTASSERT_EQ(num_pdus, tester1.transmitted_pdcp_count_list.front());
+      EXPECT_EQ(1, tester1.transmitted_pdcp_count_list.size());
+      EXPECT_EQ(num_pdus, tester1.transmitted_pdcp_count_list.front());
       tester1.transmitted_pdcp_count_list.pop_front();
     }
 
@@ -204,62 +320,115 @@ void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
     num_pdus++;
     buffer_state = rlc1_tx_lower->get_buffer_state();
   }
-  TESTASSERT_EQ(0, buffer_state);
+  EXPECT_EQ(0, buffer_state);
 
   // Verify there are no multiple transmit notifications
-  TESTASSERT_EQ(0, tester1.transmitted_pdcp_count_list.size());
+  EXPECT_EQ(0, tester1.transmitted_pdcp_count_list.size());
 
   // Write PDUs into RLC2
-  if (reverse_rx) {
-    // receive PDUs in reverse order
-    for (uint32_t i = num_pdus; i > 0; i--) {
-      byte_buffer pdu;
-      for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
-        pdu.append(slice);
-      }
-      rlc2_rx_lower->handle_pdu(std::move(pdu));
+  // receive PDUs in order
+  for (uint32_t i = 0; i < num_pdus; i++) {
+    byte_buffer pdu;
+    for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
+      pdu.append(slice);
     }
-  } else {
-    // receive PDUs in order
-    for (uint32_t i = 0; i < num_pdus; i++) {
-      byte_buffer pdu;
-      for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
-        pdu.append(slice);
-      }
-      rlc2_rx_lower->handle_pdu(std::move(pdu));
-    }
+    rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
   buffer_state = rlc2_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(0, buffer_state);
+  EXPECT_EQ(0, buffer_state);
 
   // Read SDUs from RLC2's upper layer
-  TESTASSERT_EQ(num_sdus, tester2.sdu_counter);
+  EXPECT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
-    TESTASSERT(tester2.sdu_queue.empty() == false);
+    EXPECT_TRUE(tester2.sdu_queue.empty() == false);
     byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
-    TESTASSERT_EQ(sdu_size, rx_sdu.length());
-    TESTASSERT(sdu_bufs[i] == rx_sdu);
+    EXPECT_EQ(sdu_size, rx_sdu.length());
+    EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
     tester2.sdu_queue.pop();
   }
 }
 
-void test_multiple_segmented_sdus(rlc_um_sn_size sn_size)
+TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
 {
-  test_delimit_logger delimiter{"RLC UM ({}) - Multiple segmented SDUs", sn_size};
-  rlc_um_config       config;
-  config.rx = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{sn_size, 5});
-  config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
-  timer_manager  timers;
-  rlc_test_frame tester1, tester2;
-  rlc_um_entity  rlc1(
-      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
-  rlc_um_entity rlc2(
-      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
+  init(GetParam());
 
-  rlc_tx_upper_layer_data_interface* rlc1_tx_upper = rlc1.get_tx_upper_layer_data_interface();
-  rlc_tx_lower_layer_interface*      rlc1_tx_lower = rlc1.get_tx_lower_layer_interface();
-  rlc_rx_lower_layer_interface*      rlc2_rx_lower = rlc2.get_rx_lower_layer_interface();
-  rlc_tx_lower_layer_interface*      rlc2_tx_lower = rlc2.get_tx_lower_layer_interface();
+  uint32_t buffer_state = 0;
+
+  const uint32_t num_sdus = 1;
+  const uint32_t sdu_size = 100;
+
+  // Push SDUs into RLC1
+  byte_buffer sdu_bufs[num_sdus];
+  for (uint32_t i = 0; i < num_sdus; i++) {
+    sdu_bufs[i] = byte_buffer();
+    // Write the index into the buffer
+    for (uint32_t k = 0; k < sdu_size; ++k) {
+      sdu_bufs[i].append(i + k);
+    }
+
+    // write SDU into upper end
+    rlc_sdu sdu = {i, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+    rlc1_tx_upper->handle_sdu(std::move(sdu));
+  }
+  buffer_state = rlc1_tx_lower->get_buffer_state();
+  EXPECT_EQ(num_sdus * (sdu_size + 1), buffer_state);
+
+  // Read PDUs from RLC1 with grant of 25 Bytes each
+  const uint32_t          payload_len  = 25;
+  const uint32_t          max_num_pdus = 10;
+  uint32_t                num_pdus     = 0;
+  byte_buffer_slice_chain pdu_bufs[max_num_pdus];
+
+  buffer_state = rlc1_tx_lower->get_buffer_state();
+  while (buffer_state > 0 && num_pdus < max_num_pdus) {
+    pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
+
+    if (num_pdus % ((sdu_size / payload_len) + 1) == 0) {
+      // Verify transmit notification
+      EXPECT_EQ(1, tester1.transmitted_pdcp_count_list.size());
+      EXPECT_EQ(num_pdus, tester1.transmitted_pdcp_count_list.front());
+      tester1.transmitted_pdcp_count_list.pop_front();
+    }
+
+    if (pdu_bufs[num_pdus].empty()) {
+      break;
+    }
+    // TODO: write PCAP
+    num_pdus++;
+    buffer_state = rlc1_tx_lower->get_buffer_state();
+  }
+  EXPECT_EQ(0, buffer_state);
+
+  // Verify there are no multiple transmit notifications
+  EXPECT_EQ(0, tester1.transmitted_pdcp_count_list.size());
+
+  // Write PDUs into RLC2
+  // receive PDUs in reverse order
+  for (uint32_t i = 0; i < num_pdus; i++) {
+    byte_buffer pdu;
+    for (const byte_buffer_slice& slice : pdu_bufs[num_pdus - i - 1].slices()) {
+      pdu.append(slice);
+    }
+    rlc2_rx_lower->handle_pdu(std::move(pdu));
+  }
+
+  buffer_state = rlc2_tx_lower->get_buffer_state();
+  EXPECT_EQ(0, buffer_state);
+
+  // Read SDUs from RLC2's upper layer
+  ASSERT_EQ(num_sdus, tester2.sdu_counter);
+  for (uint32_t i = 0; i < num_sdus; i++) {
+    EXPECT_TRUE(tester2.sdu_queue.empty() == false);
+    byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+    EXPECT_EQ(sdu_size, rx_sdu.length());
+    EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
+    tester2.sdu_queue.pop();
+  }
+}
+
+TEST_P(rlc_um_test, tx_multiple_SDUs_with_segmentation)
+{
+  init(GetParam());
 
   uint32_t buffer_state = 0;
 
@@ -280,7 +449,7 @@ void test_multiple_segmented_sdus(rlc_um_sn_size sn_size)
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   buffer_state = rlc1_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
+  EXPECT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant of 25 Bytes each
   const uint32_t          payload_len  = 25;
@@ -299,7 +468,7 @@ void test_multiple_segmented_sdus(rlc_um_sn_size sn_size)
     num_pdus++;
     buffer_state = rlc1_tx_lower->get_buffer_state();
   }
-  TESTASSERT_EQ(0, buffer_state);
+  EXPECT_EQ(0, buffer_state);
 
   // Write PDUs into RLC2 (except 1 and 6)
   for (uint32_t i = 0; i < num_pdus; i++) {
@@ -329,131 +498,54 @@ void test_multiple_segmented_sdus(rlc_um_sn_size sn_size)
   }
 
   buffer_state = rlc2_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(0, buffer_state);
+  EXPECT_EQ(0, buffer_state);
 
   // Read SDUs from RLC2's upper layer
   // Upper layer receives SDUs in order of completion (i.e. here in reverse order)
   // Therefore compare with initial testvectors in reverse order
-  TESTASSERT_EQ(num_sdus, tester2.sdu_counter);
+  ASSERT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
-    TESTASSERT(tester2.sdu_queue.empty() == false);
+    EXPECT_TRUE(tester2.sdu_queue.empty() == false);
     byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
-    TESTASSERT_EQ(sdu_size, rx_sdu.length());
-    TESTASSERT(sdu_bufs[num_sdus - 1 - i] == rx_sdu);
+    EXPECT_EQ(sdu_size, rx_sdu.length());
+    EXPECT_TRUE(sdu_bufs[num_sdus - 1 - i] == rx_sdu);
     tester2.sdu_queue.pop();
   }
 }
 
-void test_segmented_sdu_with_pdu_duplicates(rlc_um_sn_size sn_size, const uint32_t last_sn)
+TEST_P(rlc_um_test, tx_with_PDU_duplicates_hold_0)
 {
-  test_delimit_logger delimiter{"RLC UM ({}) - Segmented SDU with PDU duplicates (last_sn={})", sn_size, last_sn};
-  rlc_um_config       config;
-  config.rx = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{sn_size, 5});
-  config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
-  timer_manager  timers;
-  rlc_test_frame tester1, tester2;
-  rlc_um_entity  rlc1(
-      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
-  rlc_um_entity rlc2(
-      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
-
-  rlc_tx_upper_layer_data_interface* rlc1_tx_upper = rlc1.get_tx_upper_layer_data_interface();
-  rlc_tx_lower_layer_interface*      rlc1_tx_lower = rlc1.get_tx_lower_layer_interface();
-  rlc_rx_lower_layer_interface*      rlc2_rx_lower = rlc2.get_rx_lower_layer_interface();
-  rlc_tx_lower_layer_interface*      rlc2_tx_lower = rlc2.get_tx_lower_layer_interface();
-
-  uint32_t buffer_state = 0;
-
-  const uint32_t num_sdus = 1;
-  const uint32_t sdu_size = 100;
-
-  // Push SDUs into RLC1
-  byte_buffer sdu_bufs[num_sdus];
-  for (uint32_t i = 0; i < num_sdus; i++) {
-    sdu_bufs[i] = byte_buffer();
-    // Write the index into the buffer
-    for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i + k);
-    }
-
-    // write SDU into upper end
-    rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
-    rlc1_tx_upper->handle_sdu(std::move(sdu));
-  }
-  buffer_state = rlc1_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
-
-  // Read PDUs from RLC1 with grant of 25 Bytes each
-  const uint32_t          payload_len  = 25;
-  const uint32_t          max_num_pdus = 10;
-  uint32_t                num_pdus     = 0;
-  byte_buffer_slice_chain pdu_bufs[max_num_pdus];
-
-  buffer_state = rlc1_tx_lower->get_buffer_state();
-  while (buffer_state > 0 && num_pdus < max_num_pdus) {
-    pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
-
-    if (pdu_bufs[num_pdus].empty()) {
-      break;
-    }
-    // TODO: write PCAP
-    num_pdus++;
-    buffer_state = rlc1_tx_lower->get_buffer_state();
-  }
-  TESTASSERT_EQ(0, buffer_state);
-
-  // Write all PDUs twice into RLC2 (except for last_sn)
-  for (uint32_t k = 0; k < 2; k++) {
-    for (uint32_t i = 0; i < num_pdus; i++) {
-      if (i != last_sn) {
-        byte_buffer pdu;
-        for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
-          pdu.append(slice);
-        }
-        rlc2_rx_lower->handle_pdu(std::move(pdu));
-      }
-    }
-  }
-  buffer_state = rlc2_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(0, buffer_state);
-
-  // Write the skipped PDU into RLC2
-  {
-    byte_buffer pdu;
-    for (const byte_buffer_slice& slice : pdu_bufs[last_sn].slices()) {
-      pdu.append(slice);
-    }
-    rlc2_rx_lower->handle_pdu(std::move(pdu));
-  }
-
-  // Read SDUs from RLC2's upper layer
-  TESTASSERT_EQ(num_sdus, tester2.sdu_counter);
-  for (uint32_t i = 0; i < num_sdus; i++) {
-    TESTASSERT(tester2.sdu_queue.empty() == false);
-    byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
-    TESTASSERT_EQ(sdu_size, rx_sdu.length());
-    TESTASSERT(sdu_bufs[i] == rx_sdu);
-    tester2.sdu_queue.pop();
-  }
+  init(GetParam());
+  tx_with_pdu_duplicates(0);
 }
 
-void test_reassembly_window_wrap_around(rlc_um_sn_size sn_size)
+TEST_P(rlc_um_test, tx_with_PDU_duplicates_hold_1)
 {
-  test_delimit_logger delimiter{"RLC UM ({}) - reassembly window wrap-around", sn_size};
-  rlc_um_config       config;
-  config.rx = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{sn_size, 5});
-  config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
-  timer_manager  timers;
-  rlc_test_frame tester1, tester2;
-  rlc_um_entity  rlc1(
-      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
-  rlc_um_entity rlc2(
-      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
+  init(GetParam());
+  tx_with_pdu_duplicates(1);
+}
 
-  rlc_tx_upper_layer_data_interface* rlc1_tx_upper = rlc1.get_tx_upper_layer_data_interface();
-  rlc_tx_lower_layer_interface*      rlc1_tx_lower = rlc1.get_tx_lower_layer_interface();
-  rlc_rx_lower_layer_interface*      rlc2_rx_lower = rlc2.get_rx_lower_layer_interface();
-  rlc_tx_lower_layer_interface*      rlc2_tx_lower = rlc2.get_tx_lower_layer_interface();
+TEST_P(rlc_um_test, tx_with_PDU_duplicates_hold_2)
+{
+  init(GetParam());
+  tx_with_pdu_duplicates(2);
+}
+
+TEST_P(rlc_um_test, tx_with_PDU_duplicates_hold_3)
+{
+  init(GetParam());
+  tx_with_pdu_duplicates(3);
+}
+
+TEST_P(rlc_um_test, tx_with_PDU_duplicates_hold_4)
+{
+  init(GetParam());
+  tx_with_pdu_duplicates(4);
+}
+
+TEST_P(rlc_um_test, reassembly_window_wrap_around)
+{
+  init(GetParam());
 
   uint32_t buffer_state = 0;
 
@@ -480,7 +572,7 @@ void test_reassembly_window_wrap_around(rlc_um_sn_size sn_size)
 
     // check buffer state
     buffer_state = rlc1_tx_lower->get_buffer_state();
-    TESTASSERT_EQ(sdu_size + 1, buffer_state);
+    EXPECT_EQ(sdu_size + 1, buffer_state);
 
     // read PDUs from lower end
     while (buffer_state > 0 && num_pdus < max_num_pdus) {
@@ -496,7 +588,7 @@ void test_reassembly_window_wrap_around(rlc_um_sn_size sn_size)
   }
 
   buffer_state = rlc1_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(0, buffer_state);
+  EXPECT_EQ(0, buffer_state);
 
   // Write PDUs into RLC2 and read SDUs from RLC2's upper layer
   uint32_t rx_sdu_idx = 0;
@@ -511,37 +603,23 @@ void test_reassembly_window_wrap_around(rlc_um_sn_size sn_size)
     // Read SDU and check content
     while (!tester2.sdu_queue.empty() && rx_sdu_idx < num_sdus) {
       byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
-      TESTASSERT_EQ(sdu_size, rx_sdu.length());
-      TESTASSERT(sdu_bufs[rx_sdu_idx] == rx_sdu);
+      EXPECT_EQ(sdu_size, rx_sdu.length());
+      EXPECT_TRUE(sdu_bufs[rx_sdu_idx] == rx_sdu);
       tester2.sdu_queue.pop();
       rx_sdu_idx++;
     }
   }
 
   // Check number of received SDUs
-  TESTASSERT_EQ(num_sdus, tester2.sdu_counter);
+  EXPECT_EQ(num_sdus, tester2.sdu_counter);
 
   buffer_state = rlc2_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(0, buffer_state);
+  EXPECT_EQ(0, buffer_state);
 }
 
-void test_lost_pdu_outside_reassembly_window(rlc_um_sn_size sn_size)
+TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
 {
-  test_delimit_logger delimiter{"RLC UM ({}) - lost PDU outside reassembly window", sn_size};
-  rlc_um_config       config;
-  config.rx = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{sn_size, 5});
-  config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
-  timer_manager  timers;
-  rlc_test_frame tester1, tester2;
-  rlc_um_entity  rlc1(
-      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
-  rlc_um_entity rlc2(
-      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
-
-  rlc_tx_upper_layer_data_interface* rlc1_tx_upper = rlc1.get_tx_upper_layer_data_interface();
-  rlc_tx_lower_layer_interface*      rlc1_tx_lower = rlc1.get_tx_lower_layer_interface();
-  rlc_rx_lower_layer_interface*      rlc2_rx_lower = rlc2.get_rx_lower_layer_interface();
-  rlc_tx_lower_layer_interface*      rlc2_tx_lower = rlc2.get_tx_lower_layer_interface();
+  init(GetParam());
 
   uint32_t buffer_state = 0;
 
@@ -568,7 +646,7 @@ void test_lost_pdu_outside_reassembly_window(rlc_um_sn_size sn_size)
 
     // check buffer state
     buffer_state = rlc1_tx_lower->get_buffer_state();
-    TESTASSERT_EQ(sdu_size + 1, buffer_state);
+    EXPECT_EQ(sdu_size + 1, buffer_state);
 
     // read PDUs from lower end
     while (buffer_state > 0 && num_pdus < max_num_pdus) {
@@ -584,7 +662,7 @@ void test_lost_pdu_outside_reassembly_window(rlc_um_sn_size sn_size)
   }
 
   buffer_state = rlc1_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(0, buffer_state);
+  EXPECT_EQ(0, buffer_state);
 
   // Write PDUs into RLC2 (except 11th) and read SDUs from RLC2's upper layer
   uint32_t rx_sdu_idx = 0;
@@ -604,45 +682,31 @@ void test_lost_pdu_outside_reassembly_window(rlc_um_sn_size sn_size)
     // Read SDU and check content
     while (!tester2.sdu_queue.empty() && rx_sdu_idx < num_sdus) {
       byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
-      TESTASSERT_EQ(sdu_size, rx_sdu.length());
-      TESTASSERT(sdu_bufs[rx_sdu_idx] == rx_sdu);
+      EXPECT_EQ(sdu_size, rx_sdu.length());
+      EXPECT_TRUE(sdu_bufs[rx_sdu_idx] == rx_sdu);
       tester2.sdu_queue.pop();
       rx_sdu_idx++;
     }
   }
 
   // Check number of received SDUs
-  TESTASSERT_EQ(num_sdus - 1, tester2.sdu_counter);
+  EXPECT_EQ(num_sdus - 1, tester2.sdu_counter);
 
   buffer_state = rlc2_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(0, buffer_state);
+  EXPECT_EQ(0, buffer_state);
 
   // let t-reassembly expire
   while (timers.nof_running_timers() != 0) {
     timers.tick_all();
   }
 
-  rlc_bearer_metrics_container rlc2_metrics = rlc2.get_metrics();
-  TESTASSERT(rlc2_metrics.rx.num_lost_pdus == 1);
+  rlc_bearer_metrics_container rlc2_metrics = rlc2->get_metrics();
+  EXPECT_TRUE(rlc2_metrics.rx.num_lost_pdus == 1);
 }
 
-void test_lost_segment_outside_reassembly_window(rlc_um_sn_size sn_size)
+TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
 {
-  test_delimit_logger delimiter{"RLC UM ({}) - lost segment outside reassembly window", sn_size};
-  rlc_um_config       config;
-  config.rx = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{sn_size, 5});
-  config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
-  timer_manager  timers;
-  rlc_test_frame tester1, tester2;
-  rlc_um_entity  rlc1(
-      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
-  rlc_um_entity rlc2(
-      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
-
-  rlc_tx_upper_layer_data_interface* rlc1_tx_upper = rlc1.get_tx_upper_layer_data_interface();
-  rlc_tx_lower_layer_interface*      rlc1_tx_lower = rlc1.get_tx_lower_layer_interface();
-  rlc_rx_lower_layer_interface*      rlc2_rx_lower = rlc2.get_rx_lower_layer_interface();
-  rlc_tx_lower_layer_interface*      rlc2_tx_lower = rlc2.get_tx_lower_layer_interface();
+  init(GetParam());
 
   uint32_t buffer_state = 0;
 
@@ -663,7 +727,7 @@ void test_lost_segment_outside_reassembly_window(rlc_um_sn_size sn_size)
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   buffer_state = rlc1_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
+  EXPECT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant of 8 Bytes each
   const uint32_t          payload_len  = 8;
@@ -682,7 +746,7 @@ void test_lost_segment_outside_reassembly_window(rlc_um_sn_size sn_size)
     num_pdus++;
     buffer_state = rlc1_tx_lower->get_buffer_state();
   }
-  TESTASSERT_EQ(0, buffer_state);
+  EXPECT_EQ(0, buffer_state);
 
   // Write PDUs into RLC2 (except 2nd)
   for (uint32_t i = 0; i < num_pdus; i++) {
@@ -696,7 +760,7 @@ void test_lost_segment_outside_reassembly_window(rlc_um_sn_size sn_size)
   }
 
   buffer_state = rlc2_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(0, buffer_state);
+  EXPECT_EQ(0, buffer_state);
 
   // let t-reassembly expire
   while (timers.nof_running_timers() != 0) {
@@ -704,38 +768,24 @@ void test_lost_segment_outside_reassembly_window(rlc_um_sn_size sn_size)
   }
 
   // Read SDUs from RLC2's upper layer
-  TESTASSERT_EQ(num_sdus - 1, tester2.sdu_counter);
+  EXPECT_EQ(num_sdus - 1, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
     if (i != 1) {
-      TESTASSERT(tester2.sdu_queue.empty() == false);
+      EXPECT_TRUE(tester2.sdu_queue.empty() == false);
       byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
-      TESTASSERT_EQ(sdu_size, rx_sdu.length());
-      TESTASSERT(sdu_bufs[i] == rx_sdu);
+      EXPECT_EQ(sdu_size, rx_sdu.length());
+      EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
       tester2.sdu_queue.pop();
     }
   }
 
-  rlc_bearer_metrics_container rlc2_metrics = rlc2.get_metrics();
-  TESTASSERT(rlc2_metrics.rx.num_lost_pdus == 1);
+  rlc_bearer_metrics_container rlc2_metrics = rlc2->get_metrics();
+  EXPECT_TRUE(rlc2_metrics.rx.num_lost_pdus == 1);
 }
 
-void test_out_of_order_segments_across_sdus(rlc_um_sn_size sn_size)
+TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
 {
-  test_delimit_logger delimiter{"RLC UM ({}) - out-of-order segments across different SDUs", sn_size};
-  rlc_um_config       config;
-  config.rx = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{sn_size, 5});
-  config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
-  timer_manager  timers;
-  rlc_test_frame tester1, tester2;
-  rlc_um_entity  rlc1(
-      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
-  rlc_um_entity rlc2(
-      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
-
-  rlc_tx_upper_layer_data_interface* rlc1_tx_upper = rlc1.get_tx_upper_layer_data_interface();
-  rlc_tx_lower_layer_interface*      rlc1_tx_lower = rlc1.get_tx_lower_layer_interface();
-  rlc_rx_lower_layer_interface*      rlc2_rx_lower = rlc2.get_rx_lower_layer_interface();
-  rlc_tx_lower_layer_interface*      rlc2_tx_lower = rlc2.get_tx_lower_layer_interface();
+  init(GetParam());
 
   uint32_t buffer_state = 0;
 
@@ -756,7 +806,7 @@ void test_out_of_order_segments_across_sdus(rlc_um_sn_size sn_size)
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   buffer_state = rlc1_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
+  EXPECT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant smaller than SDU size
   const uint32_t          payload_len  = 10;
@@ -775,8 +825,8 @@ void test_out_of_order_segments_across_sdus(rlc_um_sn_size sn_size)
     num_pdus++;
     buffer_state = rlc1_tx_lower->get_buffer_state();
   }
-  TESTASSERT_EQ(6, num_pdus);
-  TESTASSERT_EQ(0, buffer_state);
+  EXPECT_EQ(6, num_pdus);
+  EXPECT_EQ(0, buffer_state);
 
   // Write all PDUs such that the middle section of SN=0 is received after the start section of SN=1
   //                    +------------------- skip 2nd PDU which is the middle section of SN=0
@@ -794,45 +844,36 @@ void test_out_of_order_segments_across_sdus(rlc_um_sn_size sn_size)
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
   buffer_state = rlc2_tx_lower->get_buffer_state();
-  TESTASSERT_EQ(0, buffer_state);
+  EXPECT_EQ(0, buffer_state);
 
   // Read SDUs from RLC2's upper layer
-  TESTASSERT_EQ(num_sdus, tester2.sdu_counter);
+  EXPECT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
-    TESTASSERT(tester2.sdu_queue.empty() == false);
+    EXPECT_TRUE(tester2.sdu_queue.empty() == false);
     byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
-    TESTASSERT_EQ(sdu_size, rx_sdu.length());
-    TESTASSERT(sdu_bufs[i] == rx_sdu);
+    EXPECT_EQ(sdu_size, rx_sdu.length());
+    EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
     tester2.sdu_queue.pop();
   }
 
-  rlc_bearer_metrics_container rlc2_metrics = rlc2.get_metrics();
-  TESTASSERT(rlc2_metrics.rx.num_lost_pdus == 0);
+  rlc_bearer_metrics_container rlc2_metrics = rlc2->get_metrics();
+  EXPECT_TRUE(rlc2_metrics.rx.num_lost_pdus == 0);
 
-  TESTASSERT_EQ(0, timers.nof_running_timers());
+  EXPECT_EQ(0, timers.nof_running_timers());
 }
 
-} // namespace srsgnb
+///////////////////////////////////////////////////////////////////////////////
+// Finally, instantiate all testcases for each supported SN size
+///////////////////////////////////////////////////////////////////////////////
 
-int main()
+std::string test_param_info_to_string(const ::testing::TestParamInfo<rlc_um_sn_size>& info)
 {
-  srslog::init();
-  srslog::fetch_basic_logger("TEST", false).set_level(srslog::basic_levels::debug);
-  srslog::fetch_basic_logger("RLC", false).set_level(srslog::basic_levels::debug);
-  srslog::fetch_basic_logger("RLC", false).set_hex_dump_max_size(-1);
-  fprintf(stdout, "Testing RLC UM\n");
-  std::initializer_list<srsgnb::rlc_um_sn_size> sn_sizes = {srsgnb::rlc_um_sn_size::size6bits,
-                                                            srsgnb::rlc_um_sn_size::size12bits};
-  for (auto sn_size : sn_sizes) {
-    srsgnb::test_full_sdus(sn_size);
-    srsgnb::test_segmented_sdu(sn_size, /* reverse_rx = */ false);
-    srsgnb::test_multiple_segmented_sdus(sn_size);
-    for (uint32_t last_sn = 0; last_sn < 5; last_sn++) {
-      srsgnb::test_segmented_sdu_with_pdu_duplicates(sn_size, last_sn);
-    }
-    srsgnb::test_reassembly_window_wrap_around(sn_size);
-    srsgnb::test_lost_pdu_outside_reassembly_window(sn_size);
-    srsgnb::test_lost_segment_outside_reassembly_window(sn_size);
-    srsgnb::test_out_of_order_segments_across_sdus(sn_size);
-  }
+  fmt::memory_buffer buffer;
+  fmt::format_to(buffer, "{}bit", to_number(info.param));
+  return fmt::to_string(buffer);
 }
+
+INSTANTIATE_TEST_SUITE_P(rlc_um_test_each_sn_size,
+                         rlc_um_test,
+                         ::testing::Values(rlc_um_sn_size::size6bits, rlc_um_sn_size::size12bits),
+                         test_param_info_to_string);
