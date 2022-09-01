@@ -1,9 +1,9 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "18"
+    ref: "20"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/testing-tools
-    ref: "18"
+    ref: "20"
     file: .gitlab/ci-shared/features/all.yml
   - local: .gitlab/ci/build.yml
 
@@ -17,53 +17,14 @@ stages:
 ################################################################################
 ## Static
 ################################################################################
-.static:
-  image: registry.gitlab.com/softwareradiosystems/testing-tools/static_validator:$DOCKER_STATIC_VERSION
-  stage: static
-  rules:
-    - if: $ON_MR
-  needs: []
-  variables:
-    GIT_DEPTH: 0
-  artifacts:
-    paths:
-      - ci.patch
-    when: on_failure
-
-code-format:
-  extends: .static
-  script:
-    - run-clang-format-diff.sh $CI_MERGE_REQUEST_DIFF_BASE_SHA
-    - hex2lowercase.sh
-    - is-pristine-repo.sh
-
-full-code-format:
-  extends: .static
-  rules:
-    - if: $ON_MR
-      changes:
-        - .clang-tidy
-  script:
-    - FILE_EXTENSION_REGEX='.*\.(cpp|cc|c\+\+|cxx|c|cl|h|hh|hpp)$'
-    - files=$(find . | grep -E "${FILE_EXTENSION_REGEX}" | tr '\n' ' ')
-    - clang-format -style=file -i ${files}
-    - is-pristine-repo.sh
-
 include-guards:
-  extends: .static
-  script:
-    - |
-      EXIT_CODE=0
-      AUTOCORRECTION=1 PRAGMA=1 TARGET_BRANCH=origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME INPUT_PATH="include/srsgnb" INPUT_IGNORE="/bundled/" include-guards-check.sh || EXIT_CODE=$?
-      AUTOCORRECTION=1 PRAGMA=1 TARGET_BRANCH=origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME INPUT_PATH="." INPUT_IGNORE="^\(include\|docs\)/.*" include-guards-check.sh || EXIT_CODE=$?
-      is-pristine-repo.sh || EXIT_CODE=$?
-      exit $EXIT_CODE
-
-no-binaries-added:
-  extends: .static
-  script:
-    - check-for-added-binaries.sh $CI_MERGE_REQUEST_DIFF_BASE_SHA
-  allow_failure: true
+  extends: .include-guards
+  parallel:
+    matrix:
+      - INPUT_PATH: "include/srsgnb"
+        INPUT_IGNORE: "/bundled/"
+      - INPUT_PATH: "."
+        INPUT_IGNORE: "^\\(include\\|docs\\)/.*"
 
 ################################################################################
 ## Build + Unit Tests + Integration tests
