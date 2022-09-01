@@ -64,6 +64,10 @@ TEST_P(pdcp_tx_test, pdu_gen)
   init(GetParam());
 
   auto test_pdu_gen = [this](uint32_t tx_next) {
+    // Set state of PDCP entiy
+    pdcp_tx_state st = {tx_next};
+    pdcp_tx->set_state(st);
+
     // Write SDU
     byte_buffer sdu = {sdu1};
     pdcp_tx->handle_sdu(std::move(sdu));
@@ -77,12 +81,13 @@ TEST_P(pdcp_tx_test, pdu_gen)
     byte_buffer exp_pdu;
     get_expected_pdu(tx_next, exp_pdu);
 
-    // FIXME for now, the PDCP only passes the SDU as it was
+    // FIXME for now, the PDCP only writes the header to the SDU.
     // Later this check will be changed to use the expected PDU
-    // rather than original SDU.
-    byte_buffer tmp = {sdu1};
-    ASSERT_EQ(tmp.length(), tmp.length());
-    ASSERT_EQ(pdu, tmp);
+    // rather than original SDU + header.
+    byte_buffer_view hdr     = {pdu, 0, pdu_hdr_len};
+    byte_buffer_view hdr_exp = {exp_pdu, 0, pdu_hdr_len};
+    ASSERT_EQ(hdr.length(), hdr_exp.length());
+    ASSERT_EQ(hdr, hdr_exp);
     // ASSERT_EQ(pdu.length(), exp_pdu.length());
     // ASSERT_EQ(pdu, exp_pdu);
   };

@@ -30,6 +30,10 @@ constexpr uint16_t to_number(pdcp_sn_size sn_size)
   return static_cast<uint16_t>(sn_size);
 }
 
+/// PDCP NR direction
+enum class pdcp_tx_direction { none, tx };
+enum class pdcp_rx_direction { none, rx };
+
 /// PDCP NR t-Reordering timer values.
 /// This timer is used to detect loss of PDCP Data PDUs.
 /// See TS 38.322 for timer description and TS 38.331 for valid timer durations.

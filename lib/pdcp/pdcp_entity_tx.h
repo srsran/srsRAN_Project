@@ -18,6 +18,15 @@
 #include "srsgnb/ran/bearer_logger.h"
 
 namespace srsgnb {
+
+/// PDCP TX state variables,
+/// TS 38.323, section 7.1
+struct pdcp_tx_state {
+  /// This state variable indicates the COUNT value of the next PDCP SDU to be transmitted. The initial value is 0,
+  /// except for SRBs configured with state variables continuation.
+  uint32_t tx_next;
+};
+
 /// Base class used for transmitting PDCP bearers.
 /// It provides interfaces for the PDCP bearers, for the higher and lower layers
 class pdcp_entity_tx : public pdcp_entity_tx_rx_base,
@@ -48,6 +57,11 @@ public:
    */
   bool write_data_pdu_header(byte_buffer& buf, uint32_t count);
 
+  /*
+   * Testing helpers
+   */
+  void set_state(pdcp_tx_state st_) { st = st_; };
+
 private:
   bearer_logger               logger;
   pdcp_config::pdcp_tx_config cfg;
@@ -56,6 +70,14 @@ private:
   pdcp_tx_upper_control_notifier& upper_cn;
 
   void stop_discard_timer(uint32_t count) final {}
+
+  pdcp_tx_state st = {};
+
+  pdcp_tx_direction integrity_direction = pdcp_tx_direction::none;
+  pdcp_tx_direction ciphering_direction = pdcp_tx_direction::none;
+
+  /// Apply ciphering and integrity protection to the payload
+  void apply_ciphering_and_integrity_protection(byte_buffer& buf, uint32_t count);
 
   /*
    * RB helpers
