@@ -18,13 +18,27 @@
 
 namespace srsgnb {
 
+constexpr size_t pdcp_data_pdu_header_size_12bit = 2;
+constexpr size_t pdcp_data_pdu_header_size_18bit = 3;
+constexpr size_t pdcp_data_pdu_header_size(pdcp_sn_size sn_size)
+{
+  switch (sn_size) {
+    case pdcp_sn_size::size12bits:
+      return pdcp_data_pdu_header_size_12bit;
+    case pdcp_sn_size::size18bits:
+      return pdcp_data_pdu_header_size_18bit;
+  }
+  srsgnb_assertion_failure("Cannot determine PDCP data PDU header size: unsupported sn_size {}", to_number(sn_size));
+  return pdcp_data_pdu_header_size_12bit;
+}
+
 /// Base class used for both TX and RX PDCP entities.
 /// Stores common header and SN/HFN helpers
 class pdcp_entity_tx_rx_base
 {
 protected:
   explicit pdcp_entity_tx_rx_base(pdcp_sn_size sn_size) :
-    hdr_len_bytes((to_number(sn_size) + 8 - 1) / 8), sn_size(to_number(sn_size))
+    hdr_len_bytes((pdcp_data_pdu_header_size(sn_size))), sn_size(to_number(sn_size))
   {
   }
 

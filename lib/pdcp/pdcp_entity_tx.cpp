@@ -13,7 +13,7 @@
 
 using namespace srsgnb;
 
-/// \breif Receive an SDU from the upper layers, apply encription
+/// \brief Receive an SDU from the upper layers, apply encription
 /// and integrity protection and pass the resulting PDU
 /// to the lower layers.
 ///

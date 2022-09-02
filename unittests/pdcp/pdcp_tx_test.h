@@ -64,7 +64,7 @@ protected:
     logger.info("Creating PDCP TX ({} bit)", to_number(sn_size_));
 
     sn_size     = sn_size_;
-    pdu_hdr_len = (to_number(sn_size) + 8 - 1) / 8; // Round up division
+    pdu_hdr_len = pdcp_data_pdu_header_size(sn_size); // Round up division
 
     // Set TX config
     config.rb_type       = pdcp_rb_type::drb;
