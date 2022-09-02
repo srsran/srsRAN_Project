@@ -131,7 +131,7 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
           }
         } else {
           // add this segment to the end of the SDU buffer
-          sdu_info.sdu.push_back(it->second.payload);
+          sdu_info.sdu.push_back(std::move(it->second.payload));
           sdu_info.next_expected_so += it->second.payload.length();
           logger.log_debug("Appended SO={} of SN={}", it->second.header.so, it->second.header.sn);
           it = sdu_info.segments.erase(it);

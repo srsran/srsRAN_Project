@@ -414,7 +414,7 @@ TEST_P(rlc_rx_am_test, rx_valid_control_pdu)
 
   // Pass through RLC
   byte_buffer_slice pdu = {std::move(pdu_buf)};
-  rlc->handle_pdu(pdu);
+  rlc->handle_pdu(std::move(pdu));
 
   // Pick and verify the received status PDU on the other end
   EXPECT_EQ(tester->status.ack_sn, status.ack_sn);
@@ -441,7 +441,7 @@ TEST_P(rlc_rx_am_test, rx_invalid_control_pdu)
 
   // Push into RLC
   byte_buffer_slice pdu = {std::move(pdu_buf)};
-  rlc->handle_pdu(pdu);
+  rlc->handle_pdu(std::move(pdu));
 
   // Pick and verify the received status PDU on the other end
   EXPECT_EQ(tester->status.ack_sn, INVALID_RLC_SN);
@@ -462,7 +462,7 @@ TEST_P(rlc_rx_am_test, rx_short_data_pdu)
 
   // Push into RLC
   byte_buffer_slice pdu = {std::move(pdu_buf)};
-  rlc->handle_pdu(pdu);
+  rlc->handle_pdu(std::move(pdu));
 
   // Check if polling bit of malformed PDU was properly ignored
   EXPECT_FALSE(rlc->status_report_required());
@@ -490,7 +490,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sn_inside_rx_window)
 
   // Push into RLC
   byte_buffer_slice pdu = {std::move(pdu_list.front())};
-  rlc->handle_pdu(pdu);
+  rlc->handle_pdu(std::move(pdu));
 
   // Check if polling bit of PDU was properly considered
   EXPECT_TRUE(rlc->status_report_required());
@@ -524,7 +524,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sn_outside_rx_window)
 
   // Push into RLC
   byte_buffer_slice pdu = {std::move(pdu_list.front())};
-  rlc->handle_pdu(pdu);
+  rlc->handle_pdu(std::move(pdu));
 
   // Check if polling bit was considered, despite out-of-window SN
   EXPECT_TRUE(rlc->status_report_required());
@@ -552,7 +552,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sdu_duplicate)
 
   // Push into RLC
   byte_buffer_slice pdu = {pdu_list.front().deep_copy()};
-  rlc->handle_pdu(pdu);
+  rlc->handle_pdu(std::move(pdu));
 
   // Check if polling bit has not changed
   EXPECT_FALSE(rlc->status_report_required());
@@ -568,7 +568,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sdu_duplicate)
 
   // Push into RLC
   pdu = {pdu_list.front().deep_copy()};
-  rlc->handle_pdu(pdu);
+  rlc->handle_pdu(std::move(pdu));
 
   // Check if polling bit was considered, despite duplicate SN
   EXPECT_TRUE(rlc->status_report_required());
@@ -609,7 +609,7 @@ TEST_P(rlc_rx_am_test, rx_duplicate_segments)
   for (const byte_buffer& pdu_buf : pdu_list) {
     if (i != 5) {
       byte_buffer_slice pdu = {pdu_buf.deep_copy()};
-      rlc->handle_pdu(pdu);
+      rlc->handle_pdu(std::move(pdu));
     }
     i++;
   }
@@ -621,7 +621,7 @@ TEST_P(rlc_rx_am_test, rx_duplicate_segments)
   i = 0;
   for (const byte_buffer& pdu_buf : pdu_list) {
     byte_buffer_slice pdu = {pdu_buf.deep_copy()};
-    rlc->handle_pdu(pdu);
+    rlc->handle_pdu(std::move(pdu));
     if (i == 5) {
       // check if SDU has been assembled correctly
       ASSERT_EQ(tester->sdu_queue.size(), 1);
@@ -666,7 +666,7 @@ TEST_P(rlc_rx_am_test, status_prohibit_timer)
 
   // Push into RLC
   byte_buffer_slice pdu = {std::move(pdu_list.front())};
-  rlc->handle_pdu(pdu);
+  rlc->handle_pdu(std::move(pdu));
 
   // Status report must not be required as long as status_prohibit_timer is running
   EXPECT_FALSE(rlc->status_report_required());
@@ -722,7 +722,7 @@ TEST_P(rlc_rx_am_test, reassembly_timer)
   for (const byte_buffer& pdu_buf : pdu_list) {
     if (i != 5) {
       byte_buffer_slice pdu = {pdu_buf.deep_copy()};
-      rlc->handle_pdu(pdu);
+      rlc->handle_pdu(std::move(pdu));
     }
     i++;
   }
@@ -791,7 +791,7 @@ TEST_P(rlc_rx_am_test, status_report)
   for (byte_buffer& pdu_buf : pdu_list) {
     if (i != 4 && i != 6 && i != 7 && i != 9) {
       byte_buffer_slice pdu = {std::move(pdu_buf)};
-      rlc->handle_pdu(pdu);
+      rlc->handle_pdu(std::move(pdu));
     } else {
       missing_pdus.push_back(std::move(pdu_buf));
     }
@@ -810,7 +810,7 @@ TEST_P(rlc_rx_am_test, status_report)
     // Push PDUs except for 4th, 6th and 7th into RLC
     if (sn_state != 4 && sn_state != 6 && sn_state != 7) {
       byte_buffer_slice pdu = {std::move(pdu_list.front())};
-      rlc->handle_pdu(pdu);
+      rlc->handle_pdu(std::move(pdu));
     } else {
       missing_pdus.push_back(std::move(pdu_list.front()));
     }
@@ -861,7 +861,7 @@ TEST_P(rlc_rx_am_test, status_report)
 
   // Push into RLC
   byte_buffer_slice pdu = {std::move(pdu_list.front())};
-  rlc->handle_pdu(pdu);
+  rlc->handle_pdu(std::move(pdu));
 
   EXPECT_FALSE(rlc->status_report_required()); // status prohibit timer is not yet expired, regardless we read status
 
