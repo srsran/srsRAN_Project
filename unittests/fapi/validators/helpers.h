@@ -236,13 +236,7 @@ public:
   {
     base::execute_test(property, params, builder, validator);
 
-    // In case of error, check the PDU type.
-    if (!params.result) {
-      // Base class checks all the parameters but pdu_type, so it gets checked here. Base also checks that only one
-      // error report exists, so the last (or the first) of them can be used for the check.
-      const error_report& rep = base::report.reports.back();
-      EXPECT_EQ(static_cast<unsigned>(msg_type_id), static_cast<unsigned>(rep.message_type));
-    }
+    check_message_params(params.result, msg_type_id);
   }
 
 private:
@@ -255,6 +249,17 @@ private:
 
     return !error.is_error();
   };
+
+  void check_message_params(bool result, message_type_id msg_type_id) const
+  {
+    // In case of error, check the message type.
+    if (!result) {
+      // Base class checks all the parameters but pdu_type, so it gets checked here. Base also checks that only one
+      // error report exists, so the last (or the first) of them can be used for the check.
+      const error_report& rep = base::report.reports.back();
+      EXPECT_EQ(static_cast<unsigned>(msg_type_id), static_cast<unsigned>(rep.message_type));
+    }
+  }
 };
 
 template <typename T, typename U>
@@ -272,14 +277,7 @@ public:
   {
     base::execute_test(property, params, builder, validator);
 
-    // In case of error, check the PDU type.
-    if (!params.result) {
-      // Base class checks all the parameters but pdu_type, so it gets checked here. Base also checks that only one
-      // error report exists, so the last (or the first) of them can be used for the check.
-      const auto& rep = base::report.reports.back();
-      EXPECT_EQ(static_cast<unsigned>(pdu_type), static_cast<unsigned>(rep.pdu_type.value()));
-      EXPECT_EQ(static_cast<unsigned>(msg_type_id), static_cast<unsigned>(rep.message_type));
-    }
+    check_pdu_params(params.result, msg_type_id, pdu_type);
   }
 
 private:
@@ -287,6 +285,18 @@ private:
   {
     return validator(pdu, base::report);
   };
+
+  void check_pdu_params(bool result, message_type_id msg_type_id, U pdu_type) const
+  {
+    // In case of error, check the PDU type.
+    if (!result) {
+      // Base class checks all the parameters but pdu_type, so it gets checked here. Base also checks that only one
+      // error report exists, so the last (or the first) of them can be used for the check.
+      const auto& rep = base::report.reports.back();
+      EXPECT_EQ(static_cast<unsigned>(pdu_type), static_cast<unsigned>(rep.pdu_type.value()));
+      EXPECT_EQ(static_cast<unsigned>(msg_type_id), static_cast<unsigned>(rep.message_type));
+    }
+  }
 };
 
 } // namespace unittest
