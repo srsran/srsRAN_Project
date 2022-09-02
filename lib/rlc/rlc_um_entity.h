@@ -29,18 +29,11 @@ public:
                 timer_manager&                       timers) :
     rlc_base_entity(du_index, lcid)
   {
-    if (config.tx != nullptr) {
-      tx = std::make_unique<rlc_tx_um_entity>(du_index, lcid, *config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn);
-      logger.log_info("RLC TX UM configured: sn_field_length={}", *config.tx);
-    } else {
-      logger.log_info("Configured RLC UM without TX entity");
-    }
-    if (config.rx != nullptr) {
-      rx = std::unique_ptr<rlc_rx_entity>(new rlc_rx_um_entity(du_index, lcid, *config.rx, rx_upper_dn, timers));
-      logger.log_info("RLC RX UM configured: {}", *config.rx);
-    } else {
-      logger.log_info("Configured RLC UM without RX entity");
-    }
+    tx = std::make_unique<rlc_tx_um_entity>(du_index, lcid, config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn);
+    logger.log_info("RLC TX UM configured: sn_field_length={}", config.tx);
+
+    rx = std::make_unique<rlc_rx_um_entity>(du_index, lcid, config.rx, rx_upper_dn, timers);
+    logger.log_info("RLC RX UM configured: {}", config.rx);
   }
 };
 

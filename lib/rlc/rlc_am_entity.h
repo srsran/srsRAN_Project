@@ -29,19 +29,14 @@ public:
                 timer_manager&                       timers) :
     rlc_base_entity(du_index, lcid)
   {
-    srsgnb_assert(config.tx != nullptr && config.rx != nullptr,
-                  "Failed to create RLC AM. Config missing:{}{}",
-                  config.tx == nullptr ? " TX" : "",
-                  config.rx == nullptr ? " RX" : "");
-
     // Create AM entities
     std::unique_ptr<rlc_tx_am_entity> tx_am =
-        std::make_unique<rlc_tx_am_entity>(du_index, lcid, *config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn, timers);
-    logger.log_info("RLC TX AM configured: {}", *config.tx);
+        std::make_unique<rlc_tx_am_entity>(du_index, lcid, config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn, timers);
+    logger.log_info("RLC TX AM configured: {}", config.tx);
 
     std::unique_ptr<rlc_rx_am_entity> rx_am =
-        std::make_unique<rlc_rx_am_entity>(du_index, lcid, *config.rx, rx_upper_dn, timers);
-    logger.log_info("RLC RX AM configured: {}", *config.rx);
+        std::make_unique<rlc_rx_am_entity>(du_index, lcid, config.rx, rx_upper_dn, timers);
+    logger.log_info("RLC RX AM configured: {}", config.rx);
 
     // Tx/Rx interconnect
     tx_am->set_status_provider(rx_am.get());

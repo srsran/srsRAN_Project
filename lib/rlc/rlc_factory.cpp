@@ -24,10 +24,9 @@ std::unique_ptr<rlc_entity> srsgnb::create_rlc_entity(const rlc_entity_creation_
     case rlc_mode::um_unidir_dl:
     case rlc_mode::um_unidir_ul:
     case rlc_mode::um_bidir:
-      srsgnb_assert(msg.config.um != nullptr, "RLC UM selected, but msg.config.um is nullptr");
       return std::make_unique<rlc_um_entity>(msg.ue_index,
                                              msg.lcid,
-                                             *msg.config.um,
+                                             msg.config.um,
                                              *msg.rx_upper_dn,
                                              *msg.tx_upper_dn,
                                              *msg.tx_upper_cn,
@@ -36,7 +35,7 @@ std::unique_ptr<rlc_entity> srsgnb::create_rlc_entity(const rlc_entity_creation_
     case rlc_mode::am:
       return std::make_unique<rlc_am_entity>(msg.ue_index,
                                              msg.lcid,
-                                             *msg.config.am,
+                                             msg.config.am,
                                              *msg.rx_upper_dn,
                                              *msg.tx_upper_dn,
                                              *msg.tx_upper_cn,

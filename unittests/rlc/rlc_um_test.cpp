@@ -78,13 +78,11 @@ protected:
     sn_size = sn_size_;
 
     // Set Rx config
-    config.rx                  = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{});
-    config.rx->sn_field_length = sn_size;
-    config.rx->t_reassembly_ms = 5;
+    config.rx.sn_field_length = sn_size;
+    config.rx.t_reassembly_ms = 5;
 
     // Set Tx config
-    config.tx                  = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{});
-    config.tx->sn_field_length = sn_size;
+    config.tx.sn_field_length = sn_size;
 
     // Create RLC entities
     rlc1 = std::make_unique<rlc_um_entity>(

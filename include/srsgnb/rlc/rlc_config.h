@@ -109,8 +109,8 @@ struct rlc_tx_am_config {
 /// \brief Configurable parameters for RLC AM
 /// Ref: 3GPP TS 38.322 Section 7
 struct rlc_am_config {
-  std::unique_ptr<rlc_rx_am_config> rx; ///< Rx configuration
-  std::unique_ptr<rlc_tx_am_config> tx; ///< Tx configuration
+  rlc_rx_am_config rx; ///< Rx configuration
+  rlc_tx_am_config tx; ///< Tx configuration
 };
 
 /// \brief Configurable Rx parameters for RLC UM
@@ -129,15 +129,15 @@ struct rlc_tx_um_config {
 /// \brief Configurable parameters for RLC UM
 /// Ref: 3GPP TS 38.322 v15.3.0 Section 7
 struct rlc_um_config {
-  std::unique_ptr<rlc_rx_um_config> rx; ///< Rx configuration
-  std::unique_ptr<rlc_tx_um_config> tx; ///< Tx configuration
+  rlc_rx_um_config rx; ///< Rx configuration
+  rlc_tx_um_config tx; ///< Tx configuration
 };
 
 /// Configuration of RLC bearer.
 struct rlc_config {
-  rlc_mode                       mode;
-  std::unique_ptr<rlc_am_config> am;
-  std::unique_ptr<rlc_um_config> um;
+  rlc_mode      mode;
+  rlc_um_config um;
+  rlc_am_config am;
 };
 
 } // namespace srsgnb
