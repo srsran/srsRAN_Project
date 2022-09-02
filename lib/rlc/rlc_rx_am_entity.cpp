@@ -139,9 +139,9 @@ bool rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
   // Write to rx window either full SDU or SDU segment
   bool rx_window_change_state = rx_window_not_changed;
   if (header.si == rlc_si_field::full_sdu) {
-    rx_window_change_state = handle_full_data_sdu(header, payload);
+    rx_window_change_state = handle_full_data_sdu(header, std::move(payload));
   } else {
-    rx_window_change_state = handle_segment_data_sdu(header, payload);
+    rx_window_change_state = handle_segment_data_sdu(header, std::move(payload));
   }
 
   logger.log_debug("State: {}", st);
@@ -270,7 +270,7 @@ bool rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
   return rx_window_change_state;
 }
 
-bool rlc_rx_am_entity::handle_full_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice& payload)
+bool rlc_rx_am_entity::handle_full_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload)
 {
   if (header.si != rlc_si_field::full_sdu) {
     logger.log_error("called {} with SDU segment. Header: {}", __FUNCTION__, header);
@@ -280,14 +280,14 @@ bool rlc_rx_am_entity::handle_full_data_sdu(const rlc_am_pdu_header& header, byt
   // Full SDU received. Add to Rx window and use full payload as SDU.
   rlc_rx_am_sdu_info& rx_sdu = rx_window->add_sn(header.sn);
   rx_sdu.segments.clear();
-  rx_sdu.sdu            = byte_buffer_slice_chain(payload);
+  rx_sdu.sdu            = std::move(payload);
   rx_sdu.fully_received = true;
   rx_sdu.has_gap        = false;
 
   return rx_window_changed;
 }
 
-bool rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice& payload)
+bool rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload)
 {
   if (header.si == rlc_si_field::full_sdu) {
     logger.log_error("called {} with full SDU. Header: {}", __FUNCTION__, header);

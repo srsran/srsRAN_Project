@@ -27,7 +27,7 @@ public:
     metrics_add_pdus(1, buf.length());
     logger.log_info("Rx PDU ({} B)", buf.length());
     metrics_add_sdus(1, buf.length());
-    upper_dn.on_new_sdu(byte_buffer_slice_chain(buf));
+    upper_dn.on_new_sdu(std::move(buf));
   }
 };
 
