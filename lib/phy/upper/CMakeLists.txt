@@ -11,6 +11,7 @@ add_subdirectory(channel_modulation)
 add_subdirectory(channel_processors)
 add_subdirectory(sequence_generators)
 add_subdirectory(signal_processors)
+add_subdirectory(equalization)
 
 add_library(srsgnb_downlink_processor downlink_processor_single_executor_impl.cpp downlink_processor_pool_impl.cpp)
 target_link_libraries(srsgnb_downlink_processor srsgnb_channel_processors)

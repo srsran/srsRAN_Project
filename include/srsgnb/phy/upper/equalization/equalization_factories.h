@@ -1,3 +1,4 @@
+
 /*
  *
  * Copyright 2013-2022 Software Radio Systems Limited
@@ -19,7 +20,11 @@ class channel_equalizer_factory
 public:
   virtual ~channel_equalizer_factory() = default;
 
+  /// \brief Creates a channel equalizer.
+  /// \return A unique pointer to a channel equalizer instance.
   virtual std::unique_ptr<channel_equalizer> create() = 0;
 };
+
+std::shared_ptr<channel_equalizer_factory> create_channel_equalizer_factory();
 
 } // namespace srsgnb

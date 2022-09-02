@@ -49,7 +49,7 @@ public:
                         equalizer_noise_var_list&       noise_vars,
                         const equalizer_ch_symbol_list& ch_symbols,
                         const channel_estimate&         ch_estimates,
-                        float                           scaling) = 0;
+                        float                           tx_scaling) = 0;
 };
 
 } // namespace srsgnb

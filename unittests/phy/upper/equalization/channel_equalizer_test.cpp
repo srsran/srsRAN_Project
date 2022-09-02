@@ -9,12 +9,15 @@
  */
 
 #include "channel_equalizer_test_data.h"
-#include "srsgnb/phy/upper/equalization/channel_equalizer.h"
+#include "srsgnb/phy/upper/equalization/equalization_factories.h"
 #include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;
 
 namespace {
+
+const float MAX_SQ_ERROR_EQ = 1e-6;
+
 // Temporary - to be removed when a real channel_equalizer implementation is provided.
 class channel_equalizer_dummy : public channel_equalizer
 {
@@ -46,11 +49,6 @@ public:
                "Number of Rx antenna ports does not match.");
   }
 };
-
-std::unique_ptr<channel_equalizer> create_ch_equalizer()
-{
-  return std::make_unique<channel_equalizer_dummy>();
-}
 } // namespace
 
 void read_symbols(re_measurement<cf_t>& symbols, const re_measurement_exploded& syms_expl)
@@ -101,21 +99,54 @@ void read_ch_estimates(channel_estimate& ch_est, const ch_estimates_exploded& ch
 
 int main()
 {
-  std::unique_ptr<channel_equalizer> test_equalizer = create_ch_equalizer();
-  dynamic_re_measurement<cf_t>       test_rx_symbols({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_PORTS});
-  dynamic_re_measurement<cf_t>       test_eq_symbols_expected({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_PORTS});
-  dynamic_re_measurement<cf_t>       test_eq_symbols_actual(
+  std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_factory();
+  std::unique_ptr<channel_equalizer>         test_equalizer    = equalizer_factory->create();
+
+  dynamic_re_measurement<cf_t> test_rx_symbols({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_PORTS});
+  dynamic_re_measurement<cf_t> test_eq_symbols_expected({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_PORTS});
+  dynamic_re_measurement<cf_t> test_eq_symbols_actual(
       {MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS});
   dynamic_re_measurement<float> test_noise_vars({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS});
   channel_estimate              test_ch_estimate;
-  for (const auto& t_case : channel_equalizer_test_data) {
-    read_symbols(test_rx_symbols, t_case.received_symbols);
-    read_symbols(test_eq_symbols_expected, t_case.equalized_symbols);
-    read_ch_estimates(test_ch_estimate, t_case.ch_estimates);
-    test_noise_vars.resize(test_eq_symbols_expected.size());
-    test_eq_symbols_actual.resize(test_eq_symbols_expected.size());
 
-    test_equalizer->equalize(
-        test_eq_symbols_actual, test_noise_vars, test_rx_symbols, test_ch_estimate, t_case.scaling);
+  dynamic_re_measurement<float> eq_symbols_sq_error(
+      {MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS});
+
+  for (const auto& t_case : channel_equalizer_test_data) {
+    // For now, only check SISO ZF test cases.
+    if (t_case.ch_estimates.nof_tx_layers == 1 && t_case.ch_estimates.nof_rx_ports == 1 &&
+        t_case.equalizer_type == "ZF") {
+      read_symbols(test_rx_symbols, t_case.received_symbols);
+      read_symbols(test_eq_symbols_expected, t_case.equalized_symbols);
+      read_ch_estimates(test_ch_estimate, t_case.ch_estimates);
+      test_noise_vars.resize(test_eq_symbols_expected.size());
+      test_eq_symbols_actual.resize(test_eq_symbols_expected.size());
+      eq_symbols_sq_error.resize(test_eq_symbols_expected.size());
+
+      test_equalizer->equalize(
+          test_eq_symbols_actual, test_noise_vars, test_rx_symbols, test_ch_estimate, t_case.scaling);
+
+      // Compute Error.
+      for (unsigned i_layer = 0; i_layer != t_case.ch_estimates.nof_tx_layers; ++i_layer) {
+        for (unsigned i_symbol = 0; i_symbol != t_case.ch_estimates.nof_symbols; ++i_symbol) {
+          span<const cf_t> eq_subcs_actual   = test_eq_symbols_actual.get_symbol(i_symbol, i_layer);
+          span<const cf_t> eq_subcs_expected = test_eq_symbols_expected.get_symbol(i_symbol, i_layer);
+          span<float>      eq_subcs_sq_error = eq_symbols_sq_error.get_symbol(i_symbol, i_layer);
+          for (unsigned i_subc = 0; i_subc != t_case.ch_estimates.nof_prb * NRE; ++i_subc) {
+            eq_subcs_sq_error[i_subc] = abs_sq(eq_subcs_expected[i_subc] - eq_subcs_actual[i_subc]);
+          }
+        }
+      }
+
+      // Assert Error.
+      for (unsigned i_layer = 0; i_layer != t_case.ch_estimates.nof_tx_layers; ++i_layer) {
+        for (unsigned i_symbol = 0; i_symbol != t_case.ch_estimates.nof_symbols; ++i_symbol) {
+          span<const float> eq_subcs_sq_error = eq_symbols_sq_error.get_symbol(i_symbol, i_layer);
+          for (unsigned i_subc = 0; i_subc != t_case.ch_estimates.nof_prb * NRE; ++i_subc) {
+            TESTASSERT(eq_subcs_sq_error[i_subc] <= MAX_SQ_ERROR_EQ, "Equalizer square error too large!");
+          }
+        }
+      }
+    }
   }
 }
