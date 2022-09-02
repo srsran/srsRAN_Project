@@ -104,7 +104,7 @@ enum class pdcp_discard_timer {
 struct pdcp_config_common {
   pdcp_rb_type  rb_type;
   pdcp_rlc_mode rlc_mode;
-  pdcp_sn_size  sn_size;
+  pdcp_sn_size  sn_size = pdcp_sn_size::size12bits; // TODO remove default initialization and force parameter selection
   bool          integrity_protection_required;
   bool          ciphering_required;
 };
