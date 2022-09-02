@@ -28,7 +28,7 @@ struct rlc_rx_um_sdu_segment {
 /// Container to collect received SDU segments and to assemble the SDU upon completion
 struct rlc_rx_um_sdu_info {
   std::map<uint32_t, rlc_rx_um_sdu_segment> segments; // Map of segments with SO as key
-  byte_buffer                               sdu;
+  byte_buffer_slice_chain                   sdu;
   uint32_t                                  next_expected_so;
   uint32_t                                  total_sdu_length;
 };

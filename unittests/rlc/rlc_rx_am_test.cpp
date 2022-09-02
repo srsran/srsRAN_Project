@@ -21,15 +21,15 @@ using namespace srsgnb;
 class rlc_rx_am_test_frame : public rlc_rx_upper_layer_data_notifier, public rlc_tx_am_status_handler
 {
 public:
-  std::queue<byte_buffer_slice> sdu_queue;
-  uint32_t                      sdu_counter = 0;
-  rlc_am_sn_size                sn_size;
-  rlc_am_status_pdu             status;
+  std::queue<byte_buffer_slice_chain> sdu_queue;
+  uint32_t                            sdu_counter = 0;
+  rlc_am_sn_size                      sn_size;
+  rlc_am_status_pdu                   status;
 
   rlc_rx_am_test_frame(rlc_am_sn_size sn_size) : sn_size(sn_size), status(sn_size) {}
 
   // rlc_rx_upper_layer_data_notifier interface
-  void on_new_sdu(byte_buffer_slice sdu) override
+  void on_new_sdu(byte_buffer_slice_chain sdu) override
   {
     sdu_queue.push(std::move(sdu));
     sdu_counter++;
@@ -231,10 +231,7 @@ protected:
     ASSERT_EQ(tester->sdu_queue.size(), n_sdus);
     for (uint32_t i = 0; i < n_sdus; i++) {
       EXPECT_EQ(tester->sdu_queue.front().length(), sdu_size);
-      EXPECT_TRUE(std::equal(tester->sdu_queue.front().begin(),
-                             tester->sdu_queue.front().end(),
-                             sdu_originals.front().begin(),
-                             sdu_originals.front().end()));
+      EXPECT_EQ(tester->sdu_queue.front(), sdu_originals.front());
       tester->sdu_queue.pop();
       sdu_originals.pop_front();
     }
@@ -328,10 +325,7 @@ protected:
     ASSERT_EQ(tester->sdu_queue.size(), n_sdus);
     for (uint32_t i = 0; i < n_sdus; i++) {
       EXPECT_EQ(tester->sdu_queue.front().length(), sdu_size);
-      EXPECT_TRUE(std::equal(tester->sdu_queue.front().begin(),
-                             tester->sdu_queue.front().end(),
-                             sdu_originals.front().begin(),
-                             sdu_originals.front().end()));
+      EXPECT_EQ(tester->sdu_queue.front(), sdu_originals.front());
       tester->sdu_queue.pop();
       sdu_originals.pop_front();
     }
@@ -504,7 +498,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sn_inside_rx_window)
   // Check if SDU was properly unpacked and forwarded
   ASSERT_EQ(tester->sdu_queue.size(), 1);
   EXPECT_EQ(tester->sdu_queue.front().length(), sdu_size);
-  EXPECT_TRUE(std::equal(tester->sdu_queue.front().begin(), tester->sdu_queue.front().end(), sdu.begin(), sdu.end()));
+  EXPECT_EQ(tester->sdu_queue.front(), sdu);
   tester->sdu_queue.pop();
 }
 
@@ -566,7 +560,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sdu_duplicate)
   // Check if SDU was properly unpacked and forwarded
   ASSERT_EQ(tester->sdu_queue.size(), 1);
   EXPECT_EQ(tester->sdu_queue.front().length(), sdu_size);
-  EXPECT_TRUE(std::equal(tester->sdu_queue.front().begin(), tester->sdu_queue.front().end(), sdu.begin(), sdu.end()));
+  EXPECT_EQ(tester->sdu_queue.front(), sdu);
   tester->sdu_queue.pop();
 
   // Change polling bit in first byte of PDU (header)
@@ -632,8 +626,7 @@ TEST_P(rlc_rx_am_test, rx_duplicate_segments)
       // check if SDU has been assembled correctly
       ASSERT_EQ(tester->sdu_queue.size(), 1);
       EXPECT_EQ(tester->sdu_queue.front().length(), sdu_size);
-      EXPECT_TRUE(
-          std::equal(tester->sdu_queue.front().begin(), tester->sdu_queue.front().end(), sdu.begin(), sdu.end()));
+      EXPECT_EQ(tester->sdu_queue.front(), sdu);
       tester->sdu_queue.pop();
     } else {
       EXPECT_EQ(tester->sdu_queue.size(), 0);

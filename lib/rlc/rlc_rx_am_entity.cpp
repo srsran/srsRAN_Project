@@ -166,11 +166,7 @@ bool rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
     rlc_rx_am_sdu_info& rx_sdu = (*rx_window)[header.sn];
     logger.log_info("Rx SDU ({} B)", rx_sdu.sdu.length());
     metrics_add_sdus(1, rx_sdu.sdu.length());
-    //
-    // TODO: avoid copy, pass byte_buffer_slice_chain upwards
-    //
-    byte_buffer sdu = {rx_sdu.sdu.begin(), rx_sdu.sdu.end()};
-    upper_dn.on_new_sdu(std::move(sdu));
+    upper_dn.on_new_sdu(std::move(rx_sdu.sdu));
 
     /*
      * - if x = RX_Highest_Status,
@@ -284,10 +280,7 @@ bool rlc_rx_am_entity::handle_full_data_sdu(const rlc_am_pdu_header& header, byt
   // Full SDU received. Add to Rx window and use full payload as SDU.
   rlc_rx_am_sdu_info& rx_sdu = rx_window->add_sn(header.sn);
   rx_sdu.segments.clear();
-  //
-  // TODO: avoid copy
-  //
-  rx_sdu.sdu            = byte_buffer{payload.begin(), payload.end()};
+  rx_sdu.sdu            = byte_buffer_slice_chain(payload);
   rx_sdu.fully_received = true;
   rx_sdu.has_gap        = false;
 
@@ -321,13 +314,10 @@ bool rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
     logger.log_info("Segmented SDU completed. SN={}.", header.sn);
 
     // Assemble SDU from segments
-    //
-    // TODO: avoid copy
-    //
     for (const rlc_rx_am_sdu_segment& segm : rx_sdu.segments) {
       if (segm.header.so + segm.payload.length() > rx_sdu.sdu.length()) {
         uint32_t piece_length = segm.header.so + segm.payload.length() - rx_sdu.sdu.length();
-        rx_sdu.sdu.append(segm.payload.view().view(segm.payload.length() - piece_length, piece_length));
+        rx_sdu.sdu.push_back(segm.payload.make_slice(segm.payload.length() - piece_length, piece_length));
       }
     }
   }

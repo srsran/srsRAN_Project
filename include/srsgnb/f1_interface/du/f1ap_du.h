@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/common/f1c_common.h"
@@ -31,9 +31,9 @@ struct f1ap_ue_create_response {
 };
 
 struct f1_rx_pdu {
-  du_ue_index_t     ue_index;
-  lcid_t            lcid;
-  byte_buffer_slice pdu;
+  du_ue_index_t           ue_index;
+  lcid_t                  lcid;
+  byte_buffer_slice_chain pdu;
 };
 
 struct f1ap_initial_ul_rrc_msg {

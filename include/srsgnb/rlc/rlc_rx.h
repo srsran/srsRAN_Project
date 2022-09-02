@@ -72,7 +72,7 @@ public:
   rlc_rx_upper_layer_data_notifier& operator=(const rlc_rx_upper_layer_data_notifier&&) = delete;
 
   /// This method is called to pass the SDU to the upper layers
-  virtual void on_new_sdu(byte_buffer_slice pdu) = 0;
+  virtual void on_new_sdu(byte_buffer_slice_chain pdu) = 0;
 };
 
 } // namespace srsgnb

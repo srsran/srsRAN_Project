@@ -100,7 +100,7 @@ TEST_F(rlc_tx_am_test, test_tx)
   // read PDU from lower end
   pdu = rlc->pull_pdu(sdu_size);
   EXPECT_EQ(pdu.length(), sdu_size);
-  EXPECT_TRUE(std::equal(pdu.begin(), pdu.end(), sdu_buf.begin(), sdu_buf.end()));
+  EXPECT_EQ(pdu, sdu_buf);
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
   // read another PDU from lower end but there is nothing to read
@@ -132,13 +132,13 @@ TEST_F(rlc_tx_am_test, test_tx)
   // read first PDU from lower end with oversized space
   pdu = rlc->pull_pdu(3 * sdu_size);
   EXPECT_EQ(pdu.length(), sdu_size);
-  EXPECT_TRUE(std::equal(pdu.begin(), pdu.end(), sdu_buf.begin(), sdu_buf.end()));
+  EXPECT_EQ(pdu, sdu_buf);
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
 
   // read second PDU from lower end with oversized space
   pdu = rlc->pull_pdu(3 * sdu_size);
   EXPECT_EQ(pdu.length(), sdu_size);
-  EXPECT_TRUE(std::equal(pdu.begin(), pdu.end(), sdu_buf2.begin(), sdu_buf2.end()));
+  EXPECT_EQ(pdu, sdu_buf2);
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 }
 

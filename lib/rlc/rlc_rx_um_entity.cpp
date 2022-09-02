@@ -55,7 +55,7 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
     // deliver to upper layer
     logger.log_info("Rx SDU ({} B)", payload.length());
     metrics_add_sdus(1, payload.length());
-    upper_dn.on_new_sdu(std::move(payload));
+    upper_dn.on_new_sdu(byte_buffer_slice_chain(payload));
   } else if (sn_invalid_for_rx_buffer(header.sn)) {
     logger.log_info("Discarding SN={}", header.sn);
     // Nothing else to do here ..
@@ -117,8 +117,7 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
         if (sdu_info.next_expected_so == 0) {
           if (sdu_info.sdu.empty()) {
             // reuse buffer of first segment for final SDU
-            // TODO: optimize copy - e.g. change upstream SDU type to a list-like aggregate of shared_byte_buffer
-            sdu_info.sdu              = byte_buffer(it->second.payload.begin(), it->second.payload.end());
+            sdu_info.sdu              = byte_buffer_slice_chain(it->second.payload);
             sdu_info.next_expected_so = sdu_info.sdu.length();
             logger.log_debug("Reusing first segment of SN={} for final SDU", it->second.header.sn);
             it = sdu_info.segments.erase(it);
@@ -132,8 +131,7 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
           }
         } else {
           // add this segment to the end of the SDU buffer
-          // TODO: optimize copy - e.g. change upstream SDU type to a list-like aggregate of shared_byte_buffer
-          sdu_info.sdu.append(it->second.payload);
+          sdu_info.sdu.push_back(it->second.payload);
           sdu_info.next_expected_so += it->second.payload.length();
           logger.log_debug("Appended SO={} of SN={}", it->second.header.so, it->second.header.sn);
           it = sdu_info.segments.erase(it);

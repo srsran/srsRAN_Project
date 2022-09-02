@@ -21,12 +21,12 @@ class rlc_test_frame : public rlc_rx_upper_layer_data_notifier,
                        public rlc_tx_lower_layer_notifier
 {
 public:
-  std::queue<byte_buffer_slice> sdu_queue;
-  uint32_t                      sdu_counter = 0;
-  std::list<uint32_t>           transmitted_pdcp_count_list;
+  std::queue<byte_buffer_slice_chain> sdu_queue;
+  uint32_t                            sdu_counter = 0;
+  std::list<uint32_t>                 transmitted_pdcp_count_list;
 
   // rlc_rx_upper_layer_data_notifier interface
-  void on_new_sdu(byte_buffer_slice sdu) override
+  void on_new_sdu(byte_buffer_slice_chain sdu) override
   {
     sdu_queue.push(std::move(sdu));
     sdu_counter++;
@@ -171,7 +171,7 @@ protected:
     EXPECT_EQ(num_sdus, tester2.sdu_counter);
     for (uint32_t i = 0; i < num_sdus; i++) {
       EXPECT_TRUE(tester2.sdu_queue.empty() == false);
-      byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+      byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
       EXPECT_EQ(sdu_size, rx_sdu.length());
       EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
       tester2.sdu_queue.pop();
@@ -264,7 +264,7 @@ TEST_P(rlc_um_test, tx_without_segmentation)
   EXPECT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
     EXPECT_TRUE(tester2.sdu_queue.empty() == false);
-    byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+    byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
     EXPECT_EQ(sdu_size, rx_sdu.length());
     EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
     tester2.sdu_queue.pop();
@@ -341,7 +341,7 @@ TEST_P(rlc_um_test, tx_with_segmentation)
   EXPECT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
     EXPECT_TRUE(tester2.sdu_queue.empty() == false);
-    byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+    byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
     EXPECT_EQ(sdu_size, rx_sdu.length());
     EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
     tester2.sdu_queue.pop();
@@ -419,7 +419,7 @@ TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
   ASSERT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
     EXPECT_TRUE(tester2.sdu_queue.empty() == false);
-    byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+    byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
     EXPECT_EQ(sdu_size, rx_sdu.length());
     EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
     tester2.sdu_queue.pop();
@@ -506,7 +506,7 @@ TEST_P(rlc_um_test, tx_multiple_SDUs_with_segmentation)
   ASSERT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
     EXPECT_TRUE(tester2.sdu_queue.empty() == false);
-    byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+    byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
     EXPECT_EQ(sdu_size, rx_sdu.length());
     EXPECT_TRUE(sdu_bufs[num_sdus - 1 - i] == rx_sdu);
     tester2.sdu_queue.pop();
@@ -602,7 +602,7 @@ TEST_P(rlc_um_test, reassembly_window_wrap_around)
 
     // Read SDU and check content
     while (!tester2.sdu_queue.empty() && rx_sdu_idx < num_sdus) {
-      byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+      byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
       EXPECT_EQ(sdu_size, rx_sdu.length());
       EXPECT_TRUE(sdu_bufs[rx_sdu_idx] == rx_sdu);
       tester2.sdu_queue.pop();
@@ -681,7 +681,7 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
 
     // Read SDU and check content
     while (!tester2.sdu_queue.empty() && rx_sdu_idx < num_sdus) {
-      byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+      byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
       EXPECT_EQ(sdu_size, rx_sdu.length());
       EXPECT_TRUE(sdu_bufs[rx_sdu_idx] == rx_sdu);
       tester2.sdu_queue.pop();
@@ -772,7 +772,7 @@ TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
   for (uint32_t i = 0; i < num_sdus; i++) {
     if (i != 1) {
       EXPECT_TRUE(tester2.sdu_queue.empty() == false);
-      byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+      byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
       EXPECT_EQ(sdu_size, rx_sdu.length());
       EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
       tester2.sdu_queue.pop();
@@ -850,7 +850,7 @@ TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
   EXPECT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
     EXPECT_TRUE(tester2.sdu_queue.empty() == false);
-    byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+    byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
     EXPECT_EQ(sdu_size, rx_sdu.length());
     EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
     tester2.sdu_queue.pop();

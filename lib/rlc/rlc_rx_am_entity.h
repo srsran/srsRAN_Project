@@ -42,7 +42,7 @@ struct rlc_rx_am_sdu_info {
   bool                                                       fully_received = false;
   bool                                                       has_gap        = false;
   std::set<rlc_rx_am_sdu_segment, rlc_rx_am_sdu_segment_cmp> segments; // Set of segments with SO as key
-  byte_buffer                                                sdu              = {};
+  byte_buffer_slice_chain                                    sdu              = {};
   uint32_t                                                   next_expected_so = 0;
   uint32_t                                                   total_sdu_length = 0;
 };

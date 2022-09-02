@@ -750,7 +750,7 @@ public:
   explicit         operator byte_buffer_view() const { return sliced_view; }
 
   /// Returns another owning sub-view with dimensions specified in arguments.
-  byte_buffer_slice make_slice(size_t offset, size_t size)
+  byte_buffer_slice make_slice(size_t offset, size_t size) const
   {
     srsgnb_sanity_check(offset + size <= length(), "Invalid view dimensions.");
     return {buf, sliced_view.view(offset, size)};

@@ -117,6 +117,7 @@ public:
 
   byte_buffer_slice_chain() = default;
   explicit byte_buffer_slice_chain(byte_buffer buf_) { push_back(std::move(buf_)); }
+  explicit byte_buffer_slice_chain(byte_buffer_slice buf_) { push_back(std::move(buf_)); }
   byte_buffer_slice_chain(byte_buffer_slice_chain&&) = default;
   byte_buffer_slice_chain(byte_buffer buf_, size_t start, size_t sz) { push_back(std::move(buf_), start, sz); }
   byte_buffer_slice_chain& operator=(byte_buffer_slice_chain&&) = default;

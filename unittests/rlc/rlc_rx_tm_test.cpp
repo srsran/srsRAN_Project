@@ -19,11 +19,11 @@ using namespace srsgnb;
 class rlc_rx_tm_test_frame : public rlc_rx_upper_layer_data_notifier
 {
 public:
-  std::queue<byte_buffer_slice> sdu_queue;
-  uint32_t                      sdu_counter = 0;
+  std::queue<byte_buffer_slice_chain> sdu_queue;
+  uint32_t                            sdu_counter = 0;
 
   // rlc_rx_upper_layer_data_notifier interface
-  void on_new_sdu(byte_buffer_slice sdu) override
+  void on_new_sdu(byte_buffer_slice_chain sdu) override
   {
     sdu_queue.push(std::move(sdu));
     sdu_counter++;
@@ -94,13 +94,13 @@ TEST_F(rlc_rx_am_test, test_rx)
 
   // read first SDU from tester
   EXPECT_EQ(tester->sdu_counter, 2);
-  byte_buffer_slice sdu = tester->sdu_queue.front();
-  EXPECT_TRUE(std::equal(sdu.begin(), sdu.end(), pdu_buf.begin(), pdu_buf.end()));
+  byte_buffer_slice_chain& sdu = tester->sdu_queue.front();
+  EXPECT_EQ(sdu, pdu_buf);
   tester->sdu_queue.pop();
 
   // read second SDU from tester
-  byte_buffer_slice sdu2 = tester->sdu_queue.front();
-  EXPECT_TRUE(std::equal(sdu2.begin(), sdu2.end(), pdu_buf2.begin(), pdu_buf2.end()));
+  byte_buffer_slice_chain& sdu2 = tester->sdu_queue.front();
+  EXPECT_EQ(sdu2, pdu_buf2);
   tester->sdu_queue.pop();
 }
 

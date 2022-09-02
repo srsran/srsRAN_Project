@@ -344,7 +344,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_without_segmentation)
   retx_pdu = rlc->pull_pdu(sdu_size + header_min_size);
   logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
   logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
-  EXPECT_TRUE(std::equal(retx_pdu.begin(), retx_pdu.end(), pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end()));
+  EXPECT_EQ(retx_pdu, pdus[nack.nack_sn]);
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
   // Verify transmit notification for fully ACK'ed SDUs
