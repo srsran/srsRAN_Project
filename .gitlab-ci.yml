@@ -169,7 +169,7 @@ unit coverage:
   stage: documentation
   extends: .dependes on unit test jobs
   image:
-    name: jorturfer/report-generator
+    name: registry.gitlab.com/softwareradiosystems/testing-tools/report_generator:$DOCKER_REPORT_GEN_VERSION
     entrypoint: ["/bin/sh", "-c"]
   rules:
     - if: $ON_MR
@@ -211,7 +211,7 @@ unit coverage:
         HISTORY=
       fi
     - |
-      /app/ReportGenerator -reports:*coverage.xml -targetdir:coverage_html ${HISTORY} \
+      ReportGenerator -reports:*coverage.xml -targetdir:coverage_html ${HISTORY} \
         -title:${CI_PROJECT_NAME} -tag:${CI_COMMIT_SHA} \
         -reporttypes:"${HTML_TYPE};TextSummary"
     - cat coverage_html/Summary.txt
