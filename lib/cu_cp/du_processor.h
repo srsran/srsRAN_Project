@@ -88,6 +88,9 @@ private:
   slot_array<du_cell_context, MAX_NOF_DU_CELLS> cell_db; /// flattened version of served cells list provided by DU/F1AP
   std::atomic<uint16_t>                         next_du_cell_index{0};
 
+  // timers associated with a given DU.
+  timer_manager timer_db;
+
   // Components
   std::unique_ptr<f1_interface>            f1ap;
   std::unique_ptr<rrc_entity_du_interface> rrc;
@@ -102,9 +105,6 @@ private:
 
   // task event loops indexed by ue_index
   slot_array<async_task_sequencer, MAX_NOF_UES> ue_ctrl_loop;
-
-  // timers associated with a given DU.
-  timer_manager timer_db;
 };
 
 } // namespace srs_cu_cp
