@@ -135,9 +135,9 @@ polar_decoder_impl::polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint
   llr1.resize(nMax + 1);
 
   // For each n, n = 0 to n = nMax, we need an LLR buffer of size 2^n. Thus,
-  // the total memory needed is 2^(nMax+1)-1.
+  // the total memory needed is 2^(nMax+1).
   uint8_t  n_llr_all_stages = nMax + 1;
-  uint16_t llr_all_stages   = (1U << n_llr_all_stages) - 1;
+  uint16_t llr_all_stages   = (1U << n_llr_all_stages);
 
   llr_alloc.resize(llr_all_stages);
 
