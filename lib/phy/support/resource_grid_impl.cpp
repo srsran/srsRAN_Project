@@ -15,6 +15,10 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include <cassert>
 
+#ifdef HAVE_AVX2
+#include <immintrin.h>
+#endif // HAVE_AVX2
+
 using namespace srsgnb;
 
 resource_grid_impl::resource_grid_impl(unsigned nof_ports_, unsigned nof_symb_, unsigned nof_subc_) :
@@ -66,18 +70,115 @@ span<const cf_t> resource_grid_impl::put(unsigned         port,
   // Select destination symbol in buffer
   span<cf_t> symb = buffer.subspan(l * nof_subc, nof_subc);
 
-  // Iterate mask
-  unsigned count = 0;
-  for (unsigned k = 0; k != mask.size(); ++k) {
-    if (mask[k]) {
-      symb[k + k_init] = symbol_buffer[count];
-      count++;
+  // Iterate mask using AVX2 intrinsics and preset groups of 4 subcarriers.
+  unsigned i_subc = 0;
+#if HAVE_AVX2
+  for (unsigned i_subc_end = 32 * (mask.size() / 32); i_subc < i_subc_end; i_subc += 32) {
+    // Load 32 consecutive subcarrier mask values in an AVX register.
+    __m256i avx_mask = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(mask.data() + i_subc));
+
+    // Get the subcarrier mask packed in an integer
+    unsigned mask32 = _mm256_movemask_epi8(_mm256_cmpgt_epi8(avx_mask, _mm256_setzero_si256()));
+
+    // Process presets of 4 bits.
+    for (; mask32 != 0; mask32 = mask32 >> 4) {
+      switch (mask32 & 0xF) {
+        case 0B0000:
+          // No subcarrier is active, skip.
+          break;
+        case 0B0001:
+          symb[i_subc + k_init + 0] = symbol_buffer[0];
+          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 1);
+          break;
+        case 0B0010:
+          symb[i_subc + k_init + 1] = symbol_buffer[0];
+          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 1);
+          break;
+        case 0B0011:
+          symb[i_subc + k_init + 0] = symbol_buffer[0];
+          symb[i_subc + k_init + 1] = symbol_buffer[1];
+          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 2);
+          break;
+        case 0B0100:
+          symb[i_subc + k_init + 2] = symbol_buffer[0];
+          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 1);
+          break;
+        case 0B0101:
+          symb[i_subc + k_init + 0] = symbol_buffer[0];
+          symb[i_subc + k_init + 2] = symbol_buffer[1];
+          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 2);
+          break;
+        case 0B0110:
+          symb[i_subc + k_init + 1] = symbol_buffer[0];
+          symb[i_subc + k_init + 2] = symbol_buffer[1];
+          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 2);
+          break;
+        case 0B0111:
+          symb[i_subc + k_init + 0] = symbol_buffer[0];
+          symb[i_subc + k_init + 1] = symbol_buffer[1];
+          symb[i_subc + k_init + 2] = symbol_buffer[2];
+          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 3);
+          break;
+        case 0B1000:
+          symb[i_subc + k_init + 3] = symbol_buffer[0];
+          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 1);
+          break;
+        case 0B1001:
+          symb[i_subc + k_init + 0] = symbol_buffer[0];
+          symb[i_subc + k_init + 3] = symbol_buffer[1];
+          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 2);
+          break;
+        case 0B1010:
+          symb[i_subc + k_init + 1] = symbol_buffer[0];
+          symb[i_subc + k_init + 3] = symbol_buffer[1];
+          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 2);
+          break;
+        case 0B1011:
+          symb[i_subc + k_init + 0] = symbol_buffer[0];
+          symb[i_subc + k_init + 1] = symbol_buffer[1];
+          symb[i_subc + k_init + 3] = symbol_buffer[2];
+          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 3);
+          break;
+        case 0B1100:
+          symb[i_subc + k_init + 2] = symbol_buffer[0];
+          symb[i_subc + k_init + 3] = symbol_buffer[1];
+          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 2);
+          break;
+        case 0B1101:
+          symb[i_subc + k_init + 0] = symbol_buffer[0];
+          symb[i_subc + k_init + 2] = symbol_buffer[1];
+          symb[i_subc + k_init + 3] = symbol_buffer[2];
+          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 3);
+          break;
+        case 0B1110:
+          symb[i_subc + k_init + 1] = symbol_buffer[0];
+          symb[i_subc + k_init + 2] = symbol_buffer[1];
+          symb[i_subc + k_init + 3] = symbol_buffer[2];
+          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 3);
+          break;
+        case 0B1111:
+        default:
+          symb[i_subc + k_init + 0] = symbol_buffer[0];
+          symb[i_subc + k_init + 1] = symbol_buffer[1];
+          symb[i_subc + k_init + 2] = symbol_buffer[2];
+          symb[i_subc + k_init + 3] = symbol_buffer[3];
+          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 4);
+          break;
+      }
+    }
+  }
+#endif // HAVE_AVX2
+
+  for (unsigned i_subc_end = mask.size(); i_subc < i_subc_end; ++i_subc) {
+    if (mask[i_subc]) {
+      symb[i_subc + k_init] = symbol_buffer.front();
+      symbol_buffer         = symbol_buffer.last(symbol_buffer.size() - 1);
     }
   }
   empty[port] = false;
 
   // Update symbol buffer
-  return symbol_buffer.last(symbol_buffer.size() - count);
+  return symbol_buffer;
 }
 void resource_grid_impl::put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols)
 {
