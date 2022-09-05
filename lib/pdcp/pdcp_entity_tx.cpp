@@ -64,14 +64,14 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 /*
  * Ciphering and Integrity Protection Helpers
  */
-void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer&, uint32_t count)
+void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer& buf, uint32_t count)
 {
   // TS 38.323, section 5.9: Integrity protection
   // The data unit that is integrity protected is the PDU header
   // and the data part of the PDU before ciphering.
-  // uint8_t mac[4] = {};
+  sec_mac mac = {};
   if (is_srb() || (is_drb() && (integrity_direction == pdcp_tx_direction::tx))) {
-    // integrity_generate(sdu->msg, sdu->N_bytes, count, mac);
+    integrity_generate(buf, count, mac);
   }
   // Append MAC-I
   if (is_srb() || (is_drb() && (integrity_direction == pdcp_tx_direction::tx))) {
@@ -87,7 +87,7 @@ void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer&, uint
   }
 }
 
-void pdcp_entity_tx::integrity_generate(uint8_t* msg, uint32_t msg_len, uint32_t count, sec_mac& mac)
+void pdcp_entity_tx::integrity_generate(byte_buffer& buf, uint32_t count, sec_mac& mac)
 {
   // If control plane use RRC integrity key. If data use user plane key
   const sec_128_as_key& k_int = is_srb() ? sec_cfg.k_rrc_int : sec_cfg.k_up_int;
@@ -95,7 +95,7 @@ void pdcp_entity_tx::integrity_generate(uint8_t* msg, uint32_t msg_len, uint32_t
     case integrity_algorithm::nia0:
       break;
     case integrity_algorithm::nia1:
-      security_nia1(k_int, count, 0, 0, msg, msg_len, mac);
+      security_nia1(k_int, count, 0, 0, buf, mac);
       break;
     case integrity_algorithm::nia2:
       // security_nia2(&k128, count, 0, cfg.tx_direction, msg, msg_len, mac);

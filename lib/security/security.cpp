@@ -30,16 +30,23 @@ void srsgnb::security_nia1(const sec_128_as_key& key,
                            uint32_t              count,
                            uint32_t              bearer,
                            uint8_t               direction,
-                           uint8_t*              msg,
-                           uint32_t              msg_len,
+                           const byte_buffer&    buf,
                            sec_mac&              mac)
 {
   uint32_t msg_len_bits = 0;
   uint32_t i            = 0;
-  uint8_t* m_ptr;
 
-  msg_len_bits = msg_len * 8;
-  m_ptr        = s3g_f9(key.data(), count, bearer << 27, direction, msg, msg_len_bits);
+  // FIXME for now we copy the byte buffer to a contiguous piece of memory.
+  // This will be fixed later.
+  std::vector<uint8_t> continuous_buf;
+  continuous_buf.reserve(buf.length());
+
+  for (uint32_t i = 0; i < buf.length(); i++) {
+    continuous_buf[i] = buf[i];
+  }
+
+  msg_len_bits   = buf.length() * 8;
+  uint8_t* m_ptr = s3g_f9(key.data(), count, bearer << 27, direction, continuous_buf.data(), msg_len_bits);
   for (i = 0; i < 4; i++) {
     mac[i] = m_ptr[i];
   }

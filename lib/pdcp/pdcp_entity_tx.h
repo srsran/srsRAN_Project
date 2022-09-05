@@ -80,7 +80,7 @@ private:
 
   /// Apply ciphering and integrity protection to the payload
   void apply_ciphering_and_integrity_protection(byte_buffer& buf, uint32_t count);
-  void integrity_generate(uint8_t* msg, uint32_t msg_len, uint32_t count, sec_mac& mac);
+  void integrity_generate(byte_buffer& buf, uint32_t count, sec_mac& mac);
 
   /*
    * RB helpers

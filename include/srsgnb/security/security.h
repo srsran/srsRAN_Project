@@ -16,6 +16,7 @@
  * Common security header - wraps ciphering/integrity check algorithms.
  *****************************************************************************/
 
+#include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/srslog/srslog.h"
 
 #include <array>
@@ -71,8 +72,7 @@ void security_nia1(const sec_128_as_key& key,
                    uint32_t              count,
                    uint32_t              bearer,
                    uint8_t               direction,
-                   uint8_t*              msg,
-                   uint32_t              msg_len,
+                   const byte_buffer&    buf,
                    sec_mac&              mac);
 
 /******************************************************************************
