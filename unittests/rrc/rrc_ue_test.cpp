@@ -192,13 +192,13 @@ protected:
 private:
   const ue_index_t                                     ALLOCATED_UE_INDEX = int_to_ue_index(23);
   rrc_cfg_t                                            cfg{}; // empty config
-  std::unique_ptr<rrc_entity_du_interface>             rrc;
   ue_context                                           ue_ctxt{};
   dummy_tx_pdu_handler                                 tx_pdu_handler; // Object to handle the generated RRC message
   std::unique_ptr<dummy_du_processor_rrc_ue_interface> du_proc_rrc_ue;
   dummy_rrc_ue_du_processor_adapter                    rrc_ue_ev_notifier;
   dummy_rrc_ue_ngap_adapter                            rrc_ue_ngap_ev_notifier;
   dummy_ue_task_scheduler*                             task_sched_handle = nullptr;
+  std::unique_ptr<rrc_entity_du_interface>             rrc;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 
