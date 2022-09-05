@@ -33,9 +33,9 @@ protected:
     ngap = create_ngap(timers, *msg_notifier);
   }
 
-  std::unique_ptr<ngap_interface>          ngap;
-  std::unique_ptr<dummy_ngap_amf_notifier> msg_notifier;
   timer_manager                            timers;
+  std::unique_ptr<dummy_ngap_amf_notifier> msg_notifier;
+  std::unique_ptr<ngap_interface>          ngap;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
