@@ -726,7 +726,9 @@ public:
   using iterator       = byte_buffer_view::iterator;
   using const_iterator = byte_buffer_view::const_iterator;
 
-  byte_buffer_slice() = default;
+  byte_buffer_slice()                                           = default;
+  explicit byte_buffer_slice(const byte_buffer_slice&) noexcept = default;
+  byte_buffer_slice(byte_buffer_slice&&) noexcept               = default;
   byte_buffer_slice(byte_buffer&& buf_) : sliced_view(buf_.begin(), buf_.end()), buf(std::move(buf_)) {}
   explicit byte_buffer_slice(const byte_buffer& buf_) : sliced_view(buf_.begin(), buf_.end()), buf(buf_.copy()) {}
   byte_buffer_slice(const byte_buffer& buf_, size_t offset, size_t length) :
@@ -738,6 +740,15 @@ public:
     srsgnb_sanity_check(view.begin() - byte_buffer_view{buf}.begin() < (int)buf.length(),
                         "byte_buffer_view is not part of the owned byte_buffer");
   }
+
+  /// Copy assignment is disabled. Use std::move or .copy() instead
+  byte_buffer_slice& operator=(const byte_buffer_slice&) noexcept = delete;
+
+  /// Move assignment of byte_buffer_slice. It avoids unnecessary reference counting increment.
+  byte_buffer_slice& operator=(byte_buffer_slice&& other) noexcept = default;
+
+  /// Performs a shallow copy. Nested segment reference counter is incremented.
+  byte_buffer_slice copy() const { return byte_buffer_slice{*this}; }
 
   void clear()
   {
