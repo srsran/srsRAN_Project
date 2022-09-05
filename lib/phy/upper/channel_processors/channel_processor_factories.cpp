@@ -326,9 +326,9 @@ public:
     demodulation_factory(std::move(demodulation_factory_)),
     prg_factory(std::move(prg_factory_))
   {
-    srsgnb_assert(equalizer_factory, "Invalid factory.");
-    srsgnb_assert(demodulation_factory, "Invalid factory.");
-    srsgnb_assert(prg_factory, "Invalid factory.");
+    srsgnb_assert(equalizer_factory, "Invalid equalizer factory.");
+    srsgnb_assert(demodulation_factory, "Invalid demodulation factory.");
+    srsgnb_assert(prg_factory, "Invalid PRG factory.");
   }
 
 private:

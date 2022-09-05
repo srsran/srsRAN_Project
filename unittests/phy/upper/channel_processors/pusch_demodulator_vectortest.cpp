@@ -140,7 +140,7 @@ protected:
     sch_expected = test_case.sch_data.read();
 
     // Prepare SCH data.
-    // harq_ack_expected = test_case.sch_data.read();
+    // harq_ack_expected = test_case.harq_ack.read();
 
     // Prepare CSI part 1 data.
     // csi_part1_expected = test_case.csi_part1.read();
