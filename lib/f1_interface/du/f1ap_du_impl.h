@@ -79,8 +79,6 @@ private:
 
   std::unique_ptr<f1c_task_scheduler> task_sched;
 
-  unique_timer f1c_setup_timer;
-
   f1ap_du_ue_manager ues;
 
   f1ap_du_context ctxt;

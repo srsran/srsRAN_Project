@@ -31,10 +31,6 @@ f1ap_du_impl::f1ap_du_impl(f1c_message_notifier&       message_notifier_,
   task_sched(std::make_unique<f1c_task_scheduler_impl>(task_sched_, ctrl_exec_, ue_exec_mapper_)),
   events(std::make_unique<f1ap_event_manager>(task_sched->get_timer_manager()))
 {
-  f1c_setup_timer = task_sched->get_timer_manager().create_unique_timer();
-  f1c_setup_timer.set(1000, [](uint32_t tid) {
-    // TODO
-  });
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
@@ -42,7 +38,7 @@ f1ap_du_impl::~f1ap_du_impl() {}
 
 async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& request)
 {
-  return launch_async<f1ap_du_setup_procedure>(request, f1c_notifier, *events, logger);
+  return launch_async<f1ap_du_setup_procedure>(request, f1c_notifier, *events, task_sched->get_timer_manager());
 }
 
 async_task<f1ap_ue_create_response> f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_create_request& msg)

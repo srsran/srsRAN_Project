@@ -18,7 +18,7 @@
 #include "srsgnb/f1_interface/du/f1ap_du_factory.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
-#include "test_helpers.h"
+#include "unittests/f1_interface/common/test_helpers.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {

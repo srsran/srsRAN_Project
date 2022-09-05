@@ -9,6 +9,7 @@
  */
 
 #include "f1ap_du_setup_procedure.h"
+#include "srsgnb/support/async/async_timer.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_du;
@@ -17,8 +18,12 @@ using namespace asn1::f1ap;
 f1ap_du_setup_procedure::f1ap_du_setup_procedure(const f1_setup_request_message& request_,
                                                  f1c_message_notifier&           cu_notif_,
                                                  f1ap_event_manager&             ev_mng_,
-                                                 srslog::basic_logger&           logger_) :
-  request(request_), cu_notifier(cu_notif_), ev_mng(ev_mng_), logger(logger_)
+                                                 timer_manager&                  timers) :
+  request(request_),
+  cu_notifier(cu_notif_),
+  ev_mng(ev_mng_),
+  logger(srslog::fetch_basic_logger("F1AP-DU")),
+  f1_setup_wait_timer(timers.create_unique_timer())
 {
 }
 
@@ -45,7 +50,7 @@ void f1ap_du_setup_procedure::operator()(coro_context<async_task<f1_setup_respon
                 time_to_wait,
                 f1_setup_retry_no,
                 request.max_setup_retries);
-    // TODO: CORO_AWAIT(timer.wait(time_to_wait));
+    CORO_AWAIT(async_wait_for(f1_setup_wait_timer, time_to_wait * 1000));
   }
 
   // Forward procedure result to DU manager.

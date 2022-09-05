@@ -8,8 +8,8 @@
  *
  */
 
-#include "../common/f1_du_test_helpers.h"
 #include "srsgnb/support/async/async_test_utils.h"
+#include "unittests/f1_interface/common/f1_du_test_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
@@ -25,12 +25,12 @@ TEST_F(f1ap_du_test, when_f1_setup_response_received_then_du_connected)
   lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 
   // Status: CU received F1 Setup Request.
-  EXPECT_EQ(msg_notifier.last_f1c_msg.pdu.type().value, asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
-  EXPECT_EQ(msg_notifier.last_f1c_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.type().value, asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.init_msg().value.type().value,
             asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
 
   // Status: Procedure not yet ready.
-  EXPECT_FALSE(t.ready());
+  ASSERT_FALSE(t.ready());
 
   // Action 2: F1 setup response received.
   unsigned    transaction_id    = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
@@ -38,9 +38,9 @@ TEST_F(f1ap_du_test, when_f1_setup_response_received_then_du_connected)
   test_logger.info("Injecting F1SetupResponse");
   f1ap->handle_message(f1_setup_response);
 
-  EXPECT_TRUE(t.ready());
-  EXPECT_TRUE(t.get().success);
-  EXPECT_EQ(t.get().msg->gnb_cu_rrc_version.value.latest_rrc_version.to_number(), 2U);
+  ASSERT_TRUE(t.ready());
+  ASSERT_TRUE(t.get().success);
+  ASSERT_EQ(t.get().msg->gnb_cu_rrc_version.value.latest_rrc_version.to_number(), 2U);
 }
 
 /// Test unsuccessful f1 setup procedure with time to wait and successful retry
@@ -53,23 +53,32 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
   lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 
   // Status: CU received F1 Setup Request.
-  EXPECT_EQ(msg_notifier.last_f1c_msg.pdu.type().value, asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
-  EXPECT_EQ(msg_notifier.last_f1c_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.type().value, asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.init_msg().value.type().value,
             asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
 
   // Status: Procedure not yet ready.
-  EXPECT_FALSE(t.ready());
+  ASSERT_FALSE(t.ready());
 
   // Action 2: F1 setup failure with time to wait received.
   unsigned    transaction_id = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
   f1c_message f1_setup_failure =
       generate_f1_setup_failure_message_with_time_to_wait(transaction_id, asn1::f1ap::time_to_wait_opts::v10s);
   test_logger.info("Injecting F1SetupFailure with time to wait");
+  msg_notifier.last_f1c_msg = {};
   f1ap->handle_message(f1_setup_failure);
 
+  // Status: CU does not receive new F1 Setup Request until time-to-wait has ended.
+  for (unsigned msec_elapsed = 0; msec_elapsed < 10000; ++msec_elapsed) {
+    ASSERT_FALSE(t.ready());
+    ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.type().value, asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype);
+
+    this->timers.tick_all();
+  }
+
   // Status: CU received F1 Setup Request again.
-  EXPECT_EQ(msg_notifier.last_f1c_msg.pdu.type().value, asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
-  EXPECT_EQ(msg_notifier.last_f1c_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.type().value, asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.init_msg().value.type().value,
             asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
 
   unsigned transaction_id2 = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
@@ -80,9 +89,9 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
   test_logger.info("Injecting F1SetupResponse");
   f1ap->handle_message(f1_setup_response);
 
-  EXPECT_TRUE(t.ready());
-  EXPECT_TRUE(t.get().success);
-  EXPECT_EQ(t.get().msg->gnb_cu_rrc_version.value.latest_rrc_version.to_number(), 2U);
+  ASSERT_TRUE(t.ready());
+  ASSERT_TRUE(t.get().success);
+  ASSERT_EQ(t.get().msg->gnb_cu_rrc_version.value.latest_rrc_version.to_number(), 2U);
 }
 
 /// Test unsuccessful f1 setup procedure with time to wait and unsuccessful retry
@@ -95,8 +104,8 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
   lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 
   // Status: CU received F1 Setup Request.
-  EXPECT_EQ(msg_notifier.last_f1c_msg.pdu.type().value, asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
-  EXPECT_EQ(msg_notifier.last_f1c_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.type().value, asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.init_msg().value.type().value,
             asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
 
   // Status: Procedure not yet ready.
@@ -107,11 +116,20 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
   f1c_message f1_setup_failure =
       generate_f1_setup_failure_message_with_time_to_wait(transaction_id, asn1::f1ap::time_to_wait_opts::v10s);
   test_logger.info("Injecting F1SetupFailure with time to wait");
+  msg_notifier.last_f1c_msg = {};
   f1ap->handle_message(f1_setup_failure);
 
+  // Status: CU does not receive new F1 Setup Request until time-to-wait has ended.
+  for (unsigned msec_elapsed = 0; msec_elapsed < 10000; ++msec_elapsed) {
+    ASSERT_FALSE(t.ready());
+    ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.type().value, asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype);
+
+    this->timers.tick_all();
+  }
+
   // Status: CU received F1 Setup Request again.
-  EXPECT_EQ(msg_notifier.last_f1c_msg.pdu.type().value, asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
-  EXPECT_EQ(msg_notifier.last_f1c_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.type().value, asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.init_msg().value.type().value,
             asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
 
   unsigned transaction_id2 = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
@@ -122,7 +140,7 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
   test_logger.info("Injecting F1SetupFailure");
   f1ap->handle_message(f1_setup_failure);
 
-  EXPECT_TRUE(t.ready());
+  ASSERT_TRUE(t.ready());
   EXPECT_FALSE(t.get().success);
 }
 
@@ -136,26 +154,38 @@ TEST_F(f1ap_du_test, when_retry_limit_reached_then_du_not_connected)
   lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 
   // Status: CU received F1 Setup Request.
-  EXPECT_EQ(msg_notifier.last_f1c_msg.pdu.type().value, asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
-  EXPECT_EQ(msg_notifier.last_f1c_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.type().value, asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.init_msg().value.type().value,
             asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
 
   // Status: Procedure not yet ready.
-  EXPECT_FALSE(t.ready());
+  ASSERT_FALSE(t.ready());
 
-  // Action 2: F1 setup failure received.
+  for (unsigned i = 0; i < request_msg.max_setup_retries; i++) {
+    // Status: F1 setup failure received.
+    unsigned    transaction_id = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
+    f1c_message f1_setup_response_msg =
+        generate_f1_setup_failure_message_with_time_to_wait(transaction_id, asn1::f1ap::time_to_wait_opts::v10s);
+    msg_notifier.last_f1c_msg = {};
+    f1ap->handle_message(f1_setup_response_msg);
+
+    // Status: CU does not receive new F1 Setup Request until time-to-wait has ended.
+    for (unsigned msec_elapsed = 0; msec_elapsed < 10000; ++msec_elapsed) {
+      ASSERT_FALSE(t.ready());
+      ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.type().value, asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype);
+
+      this->timers.tick_all();
+    }
+  }
+
+  // Status: F1 setup failure received.
   unsigned    transaction_id = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
   f1c_message f1_setup_response_msg =
       generate_f1_setup_failure_message_with_time_to_wait(transaction_id, asn1::f1ap::time_to_wait_opts::v10s);
+  msg_notifier.last_f1c_msg = {};
+  f1ap->handle_message(f1_setup_response_msg);
 
-  for (unsigned i = 0; i < request_msg.max_setup_retries + 1; i++) {
-    f1ap->handle_message(f1_setup_response_msg);
-
-    // Update transaction id.
-    transaction_id = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
-    f1_setup_response_msg.pdu.unsuccessful_outcome().value.f1_setup_fail()->transaction_id.value = transaction_id;
-  }
-
-  EXPECT_TRUE(t.ready());
-  EXPECT_FALSE(t.get().success);
+  ASSERT_TRUE(t.ready());
+  ASSERT_FALSE(t.get().success);
+  ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.type().value, asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype);
 }
