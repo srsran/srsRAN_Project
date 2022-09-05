@@ -9,15 +9,20 @@
  *
  */
 
+/// \file
+/// \brief Channel equalization factories.
+
 #pragma once
 
 #include "srsgnb/phy/upper/equalization/channel_equalizer.h"
 
 namespace srsgnb {
 
+/// Describes a channel equalizer factory.
 class channel_equalizer_factory
 {
 public:
+  /// Default destructor.
   virtual ~channel_equalizer_factory() = default;
 
   /// \brief Creates a channel equalizer.
@@ -25,6 +30,7 @@ public:
   virtual std::unique_ptr<channel_equalizer> create() = 0;
 };
 
-std::shared_ptr<channel_equalizer_factory> create_channel_equalizer_factory();
+/// Creates a Zero Forcing channel equalizer factory.
+std::shared_ptr<channel_equalizer_factory> create_channel_equalizer_zf_impl_factory();
 
 } // namespace srsgnb

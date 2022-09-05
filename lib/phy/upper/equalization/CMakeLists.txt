@@ -7,8 +7,8 @@
 #
 
 add_library(srsgnb_channel_equalizer STATIC
-        channel_equalizer_impl.cpp
-        channel_equalizer_factories.cpp)
+        channel_equalizer_zf_impl.cpp
+        equalization_factories.cpp)
 
 target_link_libraries(srsgnb_channel_equalizer srsvec)
 
