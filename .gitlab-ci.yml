@@ -144,7 +144,7 @@ alt uhd:
 ################################################################################
 # Doc generation
 ################################################################################
-.dependes on unit test jobs:
+.depends on unit test jobs:
   # Here we handled how jobs in .gitlab-ci.yml depends on jobs inside build.yml
   # If unit tests related jobs change in build.yml, we'll need to change this one too
   needs:
@@ -167,7 +167,7 @@ unit requirements:
 
 unit coverage:
   stage: documentation
-  extends: .dependes on unit test jobs
+  extends: .depends on unit test jobs
   image:
     name: registry.gitlab.com/softwareradiosystems/testing-tools/report_generator:$DOCKER_REPORT_GEN_VERSION
     entrypoint: ["/bin/sh", "-c"]
@@ -227,7 +227,7 @@ unit coverage:
 
 unit tests web:
   stage: documentation
-  extends: .dependes on unit test jobs
+  extends: .depends on unit test jobs
   rules:
     - if: $ON_SCHEDULE
       when: always # Even if previous stages/required jobs fail
