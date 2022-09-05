@@ -24,7 +24,8 @@ struct rrc_ue_creation_message {
   rrc_ue_task_scheduler*          ue_task_sched;
 };
 
-/// Interface class for the main RRC DU object used by the RRC UE objects.
+/// \brief Interface class for the main RRC DU object used by the RRC UE objects.
+/// This interface provides PUCCH resources and the RRC connection permission.
 class rrc_du_ue_manager
 {
 public:
@@ -38,7 +39,8 @@ public:
   virtual bool is_rrc_connect_allowed() = 0;
 };
 
-/// Interface class to the main RRC DU object to manage RRC UEs.
+/// \brief Interface class to the main RRC DU object to manage RRC UEs.
+/// This interface provides functions to add, remove and release UEs.
 class rrc_du_ue_repository : public rrc_amf_connection_handler
 {
 public:

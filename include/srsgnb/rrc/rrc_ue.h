@@ -52,15 +52,18 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("RRC");
 };
 
-/// Interface between RRC Setup procedure and RRC UE entity.
+/// Interface used by the RRC Setup procedure to notifiy the RRC UE.
 class rrc_ue_setup_proc_notifier
 {
 public:
-  rrc_ue_setup_proc_notifier()                                                = default;
-  virtual ~rrc_ue_setup_proc_notifier()                                       = default;
+  rrc_ue_setup_proc_notifier()          = default;
+  virtual ~rrc_ue_setup_proc_notifier() = default;
+
+  /// \brief Notify about a DL CCCH message.
+  /// \param[in] dl_ccch_msg The DL CCCH message.
   virtual void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) = 0;
 
-  /// Informs the DU processor that the UE shall be released
+  /// \brief Notify about the need to delete a UE.
   virtual void on_ue_delete_request() = 0;
 };
 
@@ -70,12 +73,12 @@ class rrc_ue_du_processor_notifier
 public:
   virtual ~rrc_ue_du_processor_notifier() = default;
 
-  /// \brief Notify about the need to create an SRB
-  /// \param[in] msg The SRB creation message
+  /// \brief Notify about the need to create an SRB.
+  /// \param[in] msg The SRB creation message.
   virtual void on_create_srb(const srb_creation_message& msg) = 0;
 
-  /// \brief Notify about a UE Context Release Command
-  /// \param[in] msg The UE Context Release Command message
+  /// \brief Notify about a UE Context Release Command.
+  /// \param[in] msg The UE Context Release Command message.
   virtual void on_ue_context_release_command(const ue_context_release_command_message& msg) = 0;
 };
 
