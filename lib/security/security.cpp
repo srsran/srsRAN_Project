@@ -20,47 +20,19 @@
 #include "polarssl/md5.h"
 #endif
 
-#define FC_EPS_K_ASME_DERIVATION 0x10
-#define FC_EPS_K_ENB_DERIVATION 0x11
-#define FC_EPS_NH_DERIVATION 0x12
-#define FC_EPS_K_ENB_STAR_DERIVATION 0x13
-#define FC_EPS_ALGORITHM_KEY_DERIVATION 0x15
-
-#define ALGO_EPS_DISTINGUISHER_NAS_ENC_ALG 0x01
-#define ALGO_EPS_DISTINGUISHER_NAS_INT_ALG 0x02
-#define ALGO_EPS_DISTINGUISHER_RRC_ENC_ALG 0x03
-#define ALGO_EPS_DISTINGUISHER_RRC_INT_ALG 0x04
-#define ALGO_EPS_DISTINGUISHER_UP_ENC_ALG 0x05
-#define ALGO_EPS_DISTINGUISHER_UP_INT_ALG 0x06
-
-#define FC_5G_K_GNB_STAR_DERIVATION 0x70
-#define FC_5G_ALGORITHM_KEY_DERIVATION 0x69
-#define FC_5G_KAUSF_DERIVATION 0x6A
-#define FC_5G_RES_STAR_DERIVATION 0x6B
-#define FC_5G_KSEAF_DERIVATION 0x6C
-#define FC_5G_KAMF_DERIVATION 0x6D
-#define FC_5G_KGNB_KN3IWF_DERIVATION 0x6E
-#define FC_5G_NH_GNB_DERIVATION 0x6F
-
-#define ALGO_5G_DISTINGUISHER_NAS_ENC_ALG 0x01
-#define ALGO_5G_DISTINGUISHER_NAS_INT_ALG 0x02
-#define ALGO_5G_DISTINGUISHER_RRC_ENC_ALG 0x03
-#define ALGO_5G_DISTINGUISHER_RRC_INT_ALG 0x04
-#define ALGO_5G_DISTINGUISHER_UP_ENC_ALG 0x05
-#define ALGO_5G_DISTINGUISHER_UP_INT_ALG 0x06
-namespace srsgnb {
+using namespace srsgnb;
 
 /******************************************************************************
  * Integrity Protection
  *****************************************************************************/
 
-void security_128_eia1(const as_key_t key,
-                       uint32_t       count,
-                       uint32_t       bearer,
-                       uint8_t        direction,
-                       uint8_t*       msg,
-                       uint32_t       msg_len,
-                       mac_t&         mac)
+void srsgnb::security_nia1(const sec_128_as_key& key,
+                           uint32_t              count,
+                           uint32_t              bearer,
+                           uint8_t               direction,
+                           uint8_t*              msg,
+                           uint32_t              msg_len,
+                           sec_mac&              mac)
 {
   uint32_t msg_len_bits = 0;
   uint32_t i            = 0;
@@ -73,53 +45,17 @@ void security_128_eia1(const as_key_t key,
   }
 }
 
-/*
-uint8_t security_128_eia2(const uint8_t* key,
-                          uint32_t       count,
-                          uint32_t       bearer,
-                          uint8_t        direction,
-                          uint8_t*       msg,
-                          uint32_t       msg_len,
-                          uint8_t*       mac)
-{
-  return liblte_security_128_eia2(key, count, bearer, direction, msg, msg_len, mac);
-}
-
-uint8_t security_128_eia3(const uint8_t* key,
-                          uint32_t       count,
-                          uint32_t       bearer,
-                          uint8_t        direction,
-                          uint8_t*       msg,
-                          uint32_t       msg_len,
-                          uint8_t*       mac)
-{
-  return liblte_security_128_eia3(key, count, bearer, direction, msg, msg_len * 8, mac);
-}
-*/
-/*
-uint8_t security_md5(const uint8_t* input, size_t len, uint8_t* output)
-{
-  memset(output, 0x00, 16);
-#ifdef HAVE_MBEDTLS
-  mbedtls_md5(input, len, output);
-#endif // HAVE_MBEDTLS
-#ifdef HAVE_POLARSSL
-  md5(input, len, output);
-#endif
-  return SRSRAN_SUCCESS;
-}
-*/
 /******************************************************************************
  * Encryption / Decryption
  *****************************************************************************/
 
-void security_128_eea1(uint8_t* key,
-                       uint32_t count,
-                       uint8_t  bearer,
-                       uint8_t  direction,
-                       uint8_t* msg,
-                       uint32_t msg_len,
-                       uint8_t* msg_out)
+void srsgnb::security_nea1(const sec_as_key& key,
+                           uint32_t          count,
+                           uint8_t           bearer,
+                           uint8_t           direction,
+                           uint8_t*          msg,
+                           uint32_t          msg_len,
+                           uint8_t*          msg_out)
 {
   S3G_STATE state, *state_ptr;
   uint32_t  k[]  = {0, 0, 0, 0};
@@ -128,7 +64,7 @@ void security_128_eea1(uint8_t* key,
   int32_t   i;
   uint32_t  msg_len_block_8, msg_len_block_32;
 
-  if (key != NULL && msg != NULL && msg_out != NULL) {
+  if (msg != nullptr && msg_out != nullptr) {
     state_ptr        = &state;
     msg_len_block_8  = (msg_len + 7) / 8;
     msg_len_block_32 = (msg_len + 31) / 32;
@@ -175,27 +111,3 @@ void security_128_eea1(uint8_t* key,
   }
 }
 
-/*
-uint8_t security_128_eea2(uint8_t* key,
-                          uint32_t count,
-                          uint8_t  bearer,
-                          uint8_t  direction,
-                          uint8_t* msg,
-                          uint32_t msg_len,
-                          uint8_t* msg_out)
-{
-  return liblte_security_encryption_eea2(key, count, bearer, direction, msg, msg_len * 8, msg_out);
-}
-
-uint8_t security_128_eea3(uint8_t* key,
-                          uint32_t count,
-                          uint8_t  bearer,
-                          uint8_t  direction,
-                          uint8_t* msg,
-                          uint32_t msg_len,
-                          uint8_t* msg_out)
-{
-  return liblte_security_encryption_eea3(key, count, bearer, direction, msg, msg_len * 8, msg_out);
-}
-*/
-} // namespace srsgnb

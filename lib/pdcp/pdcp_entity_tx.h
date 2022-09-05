@@ -16,6 +16,7 @@
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/pdcp/pdcp_tx.h"
 #include "srsgnb/ran/bearer_logger.h"
+#include "srsgnb/security/security.h"
 
 namespace srsgnb {
 
@@ -71,13 +72,15 @@ private:
 
   void stop_discard_timer(uint32_t count) final {}
 
-  pdcp_tx_state st = {};
+  pdcp_tx_state     st      = {};
+  sec_128_as_config sec_cfg = {};
 
   pdcp_tx_direction integrity_direction = pdcp_tx_direction::none;
   pdcp_tx_direction ciphering_direction = pdcp_tx_direction::none;
 
   /// Apply ciphering and integrity protection to the payload
   void apply_ciphering_and_integrity_protection(byte_buffer& buf, uint32_t count);
+  void integrity_generate(uint8_t* msg, uint32_t msg_len, uint32_t count, sec_mac& mac);
 
   /*
    * RB helpers

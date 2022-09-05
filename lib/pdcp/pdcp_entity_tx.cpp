@@ -87,6 +87,32 @@ void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer&, uint
   }
 }
 
+void pdcp_entity_tx::integrity_generate(uint8_t* msg, uint32_t msg_len, uint32_t count, sec_mac& mac)
+{
+  // If control plane use RRC integrity key. If data use user plane key
+  const sec_128_as_key& k_int = is_srb() ? sec_cfg.k_rrc_int : sec_cfg.k_up_int;
+  switch (sec_cfg.integ_algo) {
+    case integrity_algorithm::nia0:
+      break;
+    case integrity_algorithm::nia1:
+      security_nia1(k_int, count, 0, 0, msg, msg_len, mac);
+      break;
+    case integrity_algorithm::nia2:
+      // security_nia2(&k128, count, 0, cfg.tx_direction, msg, msg_len, mac);
+      break;
+    case integrity_algorithm::nia3:
+      // security_nia3(&k128, count, 0, cfg.tx_direction, msg, msg_len, mac);
+      break;
+    default:
+      break;
+  }
+
+  // logger.log_debug("Integrity gen input: COUNT {}, Bearer ID {}, Direction {}", count, 0, "Downlink");
+  // logger.log_debug(k_int.begin(), k_int.end(), "Integrity gen key:");
+  //  logger.log_debug(msg, msg_len, "Integrity gen input msg:");
+  //  logger.log_debug(mac, 4, "MAC (generated)");
+}
+
 /*
  * PDU Helpers
  */

@@ -9,4 +9,4 @@
 set(SOURCES pdcp_factory.cpp pdcp_entity_tx.cpp pdcp_entity_rx.cpp)
 
 add_library(srsgnb_pdcp STATIC ${SOURCES})
-target_link_libraries(srsgnb_pdcp)
+target_link_libraries(srsgnb_pdcp srsgnb_security)
