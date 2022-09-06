@@ -15,7 +15,7 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_ue_impl::rrc_ue_impl(rrc_du_ue_connection_manager&          rrc_du_,
+rrc_ue_impl::rrc_ue_impl(rrc_du_ue_manager&                     rrc_du_,
                          rrc_ue_du_processor_notifier&          du_proc_notif_,
                          rrc_ue_nas_notifier&                   nas_notif_,
                          const ue_index_t                       ue_index_,

@@ -25,7 +25,7 @@ namespace srs_cu_cp {
 class rrc_ue_impl : public rrc_ue_interface
 {
 public:
-  rrc_ue_impl(rrc_du_ue_connection_manager&          parent_,
+  rrc_ue_impl(rrc_du_ue_manager&                     parent_,
               rrc_ue_du_processor_notifier&          du_proc_notif_,
               rrc_ue_nas_notifier&                   nas_notif_,
               const ue_index_t                       ue_index_,
@@ -93,7 +93,7 @@ private:
   log_rx_pdu_fail(uint16_t rnti, const char* source, byte_buffer_view pdu, const char* cause_str, bool log_hex = true);
 
   rrc_ue_context_t              context;
-  rrc_du_ue_connection_manager& rrc_du;                // reference to the parant RRC object
+  rrc_du_ue_manager&            rrc_du;                // reference to the parant RRC object
   rrc_ue_du_processor_notifier& du_processor_notifier; // notifier to the DU processor
   rrc_ue_nas_notifier&          nas_notifier;          // notifier to the NGAP
   srb_notifiers                 srbs;                  // set notifiers for all SRBs

@@ -117,7 +117,7 @@ private:
   dummy_rrc_ue_ngap_adapter                            rrc_ue_ngap_ev_notifier;
   timer_manager                                        timers;
   dummy_ue_task_scheduler*                             task_sched_handle = nullptr;
-  std::unique_ptr<rrc_du_ue_manager>                   rrc;
+  std::unique_ptr<rrc_du_ue_repository>                rrc;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 

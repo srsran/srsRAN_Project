@@ -34,7 +34,7 @@ public:
   void              handle_amf_connection() override;
   void              handle_amf_connection_drop() override;
 
-  // rrc_du_ue_connection_manager
+  // rrc_du_ue_manager
   int  get_pucch_resources() override;
   bool is_rrc_connect_allowed() override;
 

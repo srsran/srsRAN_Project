@@ -25,24 +25,25 @@ struct rrc_ue_creation_message {
 };
 
 /// Interface class for the main RRC DU object used by the RRC UE objects.
-class rrc_du_ue_connection_manager
+class rrc_du_ue_manager
 {
 public:
-  rrc_du_ue_connection_manager()          = default;
-  virtual ~rrc_du_ue_connection_manager() = default;
+  rrc_du_ue_manager()          = default;
+  virtual ~rrc_du_ue_manager() = default;
 
   /// Request the allocation of PUCCH resources for the UE.
   virtual int get_pucch_resources() = 0;
+
   /// Check if the parent allows RRC connections.
   virtual bool is_rrc_connect_allowed() = 0;
 };
 
 /// Interface class to the main RRC DU object to manage RRC UEs.
-class rrc_du_ue_manager : public rrc_amf_connection_handler
+class rrc_du_ue_repository : public rrc_amf_connection_handler
 {
 public:
-  rrc_du_ue_manager()          = default;
-  virtual ~rrc_du_ue_manager() = default;
+  rrc_du_ue_repository()          = default;
+  virtual ~rrc_du_ue_repository() = default;
 
   /// Creates a new RRC UE object and returns a handle to it.
   virtual rrc_ue_interface* add_user(rrc_ue_creation_message msg) = 0;
@@ -56,7 +57,7 @@ public:
 };
 
 /// Combined entry point for the RRC DU handling.
-class rrc_du_interface : public rrc_du_ue_connection_manager, public rrc_du_ue_manager
+class rrc_du_interface : public rrc_du_ue_manager, public rrc_du_ue_repository
 {
 public:
   virtual ~rrc_du_interface() = default;
