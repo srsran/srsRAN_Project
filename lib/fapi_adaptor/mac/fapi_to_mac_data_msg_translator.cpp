@@ -18,7 +18,6 @@ using namespace fapi_adaptor;
 
 namespace {
 
-/// \brief Dummy implementation of the MAC cell RACH handler.
 class mac_cell_rach_handler_dummy : public mac_cell_rach_handler
 {
 public:
@@ -27,6 +26,8 @@ public:
 
 } // namespace
 
+/// This dummy object is passed to the constructor of the FAPI-to-MAC message translator as a placeholder for the
+/// actual, cell-specific MAC RACH handler, which will be later set up through the \ref set_cell_rach_handler() method.
 static mac_cell_rach_handler_dummy dummy_mac_rach_handler;
 
 fapi_to_mac_data_msg_translator::fapi_to_mac_data_msg_translator(subcarrier_spacing scs) :
@@ -44,29 +45,47 @@ void fapi_to_mac_data_msg_translator::on_uci_indication(const uci_indication_mes
 
 void fapi_to_mac_data_msg_translator::on_srs_indication(const srs_indication_message& msg) {}
 
+/// Converts the given FAPI RACH occasion RSSI to dBs as per SCF-222 v4.0 section 3.4.11.
+static float to_rssi_dB(unsigned fapi_rssi)
+{
+  return (fapi_rssi - 140000) * 0.001F;
+}
+
+/// Converts the given FAPI RACH preamble power to dBs as per SCF-222 v4.0 section 3.4.11.
+static float to_power_dB(unsigned fapi_power)
+{
+  return (fapi_power - 140000) * 0.001F;
+}
+
+/// Converts the given FAPI RACH preamble SNR to dBs as per SCF-222 v4.0 section 3.4.11.
+static float to_snr_dB(unsigned fapi_snr)
+{
+  return (fapi_snr - 128) * 0.5F;
+}
+
 void fapi_to_mac_data_msg_translator::on_rach_indication(const rach_indication_message& msg)
 {
   mac_rach_indication indication;
   indication.slot_rx = slot_point(to_numerology_value(scs), msg.sfn, msg.slot);
   for (const auto& pdu : msg.pdus) {
-    srsgnb_assert(pdu.avg_rssi == std::numeric_limits<uint16_t>::max(), "RSSI invalid value");
+    srsgnb_assert(pdu.avg_rssi != std::numeric_limits<uint16_t>::max(), "RSSI invalid value");
 
     indication.occasions.emplace_back();
     mac_rach_indication::rach_occasion& occas = indication.occasions.back();
     occas.frequency_index                     = pdu.ra_index;
     occas.slot_index                          = pdu.slot_index;
     occas.start_symbol                        = pdu.symbol_index;
-    occas.rssi_dB                             = pdu.avg_rssi;
+    occas.rssi_dB                             = to_rssi_dB(pdu.avg_rssi);
     for (const auto& preamble : pdu.preambles) {
-      srsgnb_assert(preamble.preamble_pwr == std::numeric_limits<uint32_t>::max(), "Preamble power invalid value");
-      srsgnb_assert(preamble.preamble_snr == std::numeric_limits<uint8_t>::max(), "Preamble SNR invalid value");
+      srsgnb_assert(preamble.preamble_pwr != std::numeric_limits<uint32_t>::max(), "Preamble power invalid value");
+      srsgnb_assert(preamble.preamble_snr != std::numeric_limits<uint8_t>::max(), "Preamble SNR invalid value");
 
       occas.preambles.emplace_back();
       mac_rach_indication::rach_preamble& mac_pream = occas.preambles.back();
       mac_pream.index                               = preamble.preamble_index;
       mac_pream.time_advance = phy_time_unit::from_seconds(preamble.timing_advance_offset_ns * 1e-9);
-      mac_pream.power_dB     = preamble.preamble_pwr;
-      mac_pream.snr_dB       = preamble.preamble_snr;
+      mac_pream.power_dB     = to_power_dB(preamble.preamble_pwr);
+      mac_pream.snr_dB       = to_snr_dB(preamble.preamble_snr);
     }
   }
 

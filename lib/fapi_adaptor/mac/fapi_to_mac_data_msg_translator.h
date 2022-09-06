@@ -43,7 +43,7 @@ public:
   // See interface for documentation.
   void on_rach_indication(const fapi::rach_indication_message& msg) override;
 
-  /// \brief Configures the MAC cell RACH handler to the given one.
+  /// Sets the given cell-specific MAC RACH handler. This handler will be used to receive new RACH notifications.
   void set_cell_rach_handler(mac_cell_rach_handler& mac_rach_handler);
 
 private:
