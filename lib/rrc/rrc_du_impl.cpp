@@ -22,7 +22,7 @@ rrc_du_impl::rrc_du_impl(const rrc_cfg_t&              cfg_,
 {
 }
 
-rrc_ue_interface* rrc_du_impl::add_user(rrc_ue_creation_message msg)
+rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
 {
   if (ue_db.contains(msg.ue_index)) {
     // UE already exists with same ue_index

@@ -42,7 +42,7 @@ protected:
     rrc_ue_create_msg.c_rnti   = ue_ctxt.c_rnti;
     rrc_ue_create_msg.du_to_cu_container.resize(1);
     rrc_ue_create_msg.ue_task_sched = ue_ctxt.task_sched.get();
-    ue_ctxt.rrc                     = rrc->add_user(std::move(rrc_ue_create_msg));
+    ue_ctxt.rrc                     = rrc->add_ue(std::move(rrc_ue_create_msg));
 
     // connect SRB0 with RRC to "F1" adapter
     ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb0)].rrc_tx_notifier =

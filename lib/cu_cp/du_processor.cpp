@@ -174,7 +174,7 @@ ue_creation_complete_message du_processor::handle_ue_creation_request(const ue_c
   }
   rrc_ue_create_msg.du_to_cu_container = std::move(msg.du_to_cu_rrc_container);
   rrc_ue_create_msg.ue_task_sched      = ue_ctxt->task_sched.get();
-  ue_ctxt->rrc                         = rrc->add_user(std::move(rrc_ue_create_msg));
+  ue_ctxt->rrc                         = rrc->add_ue(std::move(rrc_ue_create_msg));
 
   // 6. Create SRB0 bearer and notifier
   srb_creation_message srb0_msg{};

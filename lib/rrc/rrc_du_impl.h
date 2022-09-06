@@ -28,7 +28,7 @@ public:
   ~rrc_du_impl() = default;
 
   // rrc_du_ue_manager
-  rrc_ue_interface* add_user(rrc_ue_creation_message msg) override;
+  rrc_ue_interface* add_ue(rrc_ue_creation_message msg) override;
   void              remove_ue(ue_index_t ue_index) override;
   void              release_ues() override;
   void              handle_amf_connection() override;
