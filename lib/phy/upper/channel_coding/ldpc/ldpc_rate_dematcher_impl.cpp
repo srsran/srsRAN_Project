@@ -35,9 +35,15 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       out
 
   unsigned block_length = output.size();
 
-  srsgnb_assert(block_length >= cfg.tb_common.Nref, "N_ref should be smaller than the output length.");
+  // Make sure N_ref is valid.
+  srsgnb_assert(cfg.tb_common.Nref <= MAX_CODEBLOCK_SIZE,
+                "N_ref {} must be smaller or equal to {}.",
+                cfg.tb_common.Nref,
+                MAX_CODEBLOCK_SIZE);
+
+  // If N_ref is given, limit the buffer size. Otherwise, use default.
   if (cfg.tb_common.Nref > 0) {
-    buffer_length = cfg.tb_common.Nref;
+    buffer_length = std::min(cfg.tb_common.Nref, block_length);
   } else {
     buffer_length = block_length;
   }

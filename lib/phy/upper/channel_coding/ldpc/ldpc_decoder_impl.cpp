@@ -52,13 +52,19 @@ optional<unsigned> ldpc_decoder_impl::decode(span<uint8_t>                    ou
 
   uint16_t message_length   = bg_K * lifting_size;
   uint16_t max_input_length = bg_N_short * lifting_size;
-  assert(output.size() == message_length);
-  assert(input.size() <= max_input_length);
+  srsgnb_assert(output.size() == message_length,
+                "The output size {} is not equal to the message length {}.",
+                output.size(),
+                message_length);
+  srsgnb_assert(input.size() <= max_input_length,
+                "The input size {} exceeds the maximum message length {}.",
+                output.size(),
+                message_length);
 
   // The minimum input length is message_length + two times the lifting size.
   uint16_t min_input_length = message_length + 2 * lifting_size;
   srsgnb_assert(input.size() >= min_input_length,
-                "The input length (%d) does not reach miminum (%d)",
+                "The input length {} does not reach minimum {}",
                 input.size(),
                 max_input_length);
 

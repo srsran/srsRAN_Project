@@ -31,9 +31,18 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
 {
   pusch_processor_result result;
 
+  // Calculate the total number of DM-RS per PRB.
+  unsigned nof_dmrs_per_prb = pdu.dmrs.nof_dmrs_per_rb() * pdu.nof_cdm_groups_without_data *
+                              std::count(pdu.dmrs_symbol_mask.begin(), pdu.dmrs_symbol_mask.end(), true);
+
+  // Calculate the mnumber of data RE per PRB.
+  unsigned nof_re_per_prb = NRE * pdu.nof_symbols - nof_dmrs_per_prb;
+
+  // Calculate the number of PUSCH symbols.
+  unsigned nof_pusch_symbols = pdu.freq_alloc.get_nof_rb() * nof_re_per_prb * pdu.nof_tx_layers;
+
   // Calculate number of LLR.
-  unsigned nof_codeword_llr =
-      pdu.freq_alloc.get_nof_rb() * pdu.nof_symbols * pdu.nof_tx_layers * get_bits_per_symbol(pdu.modulation);
+  unsigned nof_codeword_llr  = nof_pusch_symbols * get_bits_per_symbol(pdu.modulation);
   unsigned nof_harq_ack_llr  = 0;
   unsigned nof_csi_part1_llr = 0;
   unsigned nof_csi_part2_llr = 0;
@@ -49,6 +58,7 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   ch_est_config.n_scid        = pdu.n_scid;
   ch_est_config.scaling       = convert_dB_to_amplitude(-get_sch_to_dmrs_ratio_dB(pdu.nof_cdm_groups_without_data));
   ch_est_config.c_prefix      = pdu.cp;
+  ch_est_config.symbols_mask  = pdu.dmrs_symbol_mask;
   ch_est_config.rb_mask       = rb_mask;
   ch_est_config.first_symbol  = pdu.start_symbol_index;
   ch_est_config.nof_symbols   = pdu.nof_symbols;
@@ -87,7 +97,15 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
 
     // Prepare decoder configuration.
     pusch_decoder::configuration decoder_config;
-    decoder_config.new_data = pdu.codeword->new_data;
+    decoder_config.segmenter_cfg.base_graph     = pdu.codeword.value().ldpc_base_graph;
+    decoder_config.segmenter_cfg.rv             = pdu.codeword.value().rv;
+    decoder_config.segmenter_cfg.mod            = pdu.modulation;
+    decoder_config.segmenter_cfg.Nref           = pdu.tbs_lbrm_bytes * 8;
+    decoder_config.segmenter_cfg.nof_layers     = pdu.nof_tx_layers;
+    decoder_config.segmenter_cfg.nof_ch_symbols = nof_pusch_symbols;
+    decoder_config.nof_ldpc_iterations          = 10;
+    decoder_config.use_early_stop               = true;
+    decoder_config.new_data                     = pdu.codeword.value().new_data;
 
     // Decode.
     decoder->decode(data, result.data.value(), &softbuffer, codeword_llr, decoder_config);

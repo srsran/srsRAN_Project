@@ -100,7 +100,7 @@ struct segmenter_config {
   unsigned rv = 0;
   /// Modulation scheme.
   modulation_scheme mod = modulation_scheme::BPSK;
-  /// \brief Limited buffer rate matching length, as per TS38.212 Section 5.4.2.
+  /// \brief Limited buffer rate matching length in bits, as per TS38.212 Section 5.4.2.
   /// \note Set to zero for unlimited buffer length.
   unsigned Nref = 0;
   /// Number of transmission layers the transport block is mapped onto.

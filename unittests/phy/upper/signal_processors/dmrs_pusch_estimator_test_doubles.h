@@ -18,10 +18,27 @@ namespace srsgnb {
 class dmrs_pusch_estimator_spy : public dmrs_pusch_estimator
 {
 public:
+  struct entry_t {
+    channel_estimate*           estimate;
+    const resource_grid_reader* grid;
+    configuration               config;
+  };
+
   void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const configuration& config) override
   {
-    // TBD.
+    entries.emplace_back();
+    entry_t& entry = entries.back();
+    entry.estimate = &estimate;
+    entry.grid     = &grid;
+    entry.config   = config;
   }
+
+  const std::vector<entry_t>& get_entries() const { return entries; }
+
+  void clear() { entries.clear(); }
+
+private:
+  std::vector<entry_t> entries;
 };
 
 PHY_SPY_FACTORY_TEMPLATE(dmrs_pusch_estimator);

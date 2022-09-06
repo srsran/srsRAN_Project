@@ -137,6 +137,24 @@ add_custom_command(
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pusch_demodulator_test_data.tar.gz
         VERBATIM)
 
+add_executable(pusch_processor_vectortest pusch_processor_vectortest.cpp)
+target_link_libraries(pusch_processor_vectortest
+        srsgnb_channel_processors
+        srsgnb_phy_support
+        srslog
+        srsgnb_upper_phy_support
+        gtest
+        gtest_main)
+add_test(pusch_processor_vectortest pusch_processor_vectortest)
+
+add_custom_command(
+        TARGET pusch_processor_vectortest
+        POST_BUILD
+        WORKING_DIRECTORY ${TEST_DATA_DIR}
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pusch_processor_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pusch_processor_test_data.tar.gz
+        VERBATIM)
+
 add_executable(pusch_processor_unittest pusch_processor_unittest.cpp)
 target_link_libraries(pusch_processor_unittest srsgnb_channel_processors srslog gtest gtest_main)
 add_test(pusch_processor_unittest pusch_processor_unittest)

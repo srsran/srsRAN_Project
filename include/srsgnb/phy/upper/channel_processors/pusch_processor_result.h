@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/adt/optional.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_decoder_result.h"
 #include "srsgnb/phy/upper/channel_state_information.h"
 

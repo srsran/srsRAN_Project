@@ -11,6 +11,7 @@
 #include "pusch_decoder_impl.h"
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/srsvec/bit.h"
+#include "srsgnb/srsvec/zero.h"
 
 using namespace srsgnb;
 
@@ -128,7 +129,10 @@ void pusch_decoder_impl::decode(span<uint8_t>                    transport_block
   segmenter->segment(codeblock_llrs, llrs, tb_size, cfg.segmenter_cfg);
 
   unsigned nof_cbs = codeblock_llrs.size();
-  srsgnb_assert(nof_cbs == soft_codeword->get_nof_codeblocks(), "Wrong number of codeblocks.");
+  srsgnb_assert(nof_cbs == soft_codeword->get_nof_codeblocks(),
+                "Wrong number of codeblocks {} (expected {}).",
+                soft_codeword->get_nof_codeblocks(),
+                nof_cbs);
 
   unsigned tb_and_crc_size = get_tb_and_crc_size(tb_size, nof_cbs);
 
@@ -138,8 +142,13 @@ void pusch_decoder_impl::decode(span<uint8_t>                    transport_block
   // Select CRC calculator for inner codeblock checks.
   crc_calculator* block_crc = select_crc(crc_set, tb_size, nof_cbs);
 
-  span<bool> cb_crcs         = soft_codeword->get_codeblocks_crc();
-  unsigned   tb_offset       = 0;
+  // Reset CRCs of new data is flagged.
+  span<bool> cb_crcs = soft_codeword->get_codeblocks_crc();
+  if (cfg.new_data) {
+    srsvec::zero(cb_crcs);
+  }
+
+  unsigned tb_offset         = 0;
   stats.nof_codeblocks_total = nof_cbs;
   stats.ldpc_decoder_stats.reset();
   for (unsigned cb_id = 0; cb_id != nof_cbs; ++cb_id) {

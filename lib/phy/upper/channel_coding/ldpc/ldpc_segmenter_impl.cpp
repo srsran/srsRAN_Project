@@ -217,7 +217,10 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
 static void check_inputs_rx(span<const log_likelihood_ratio> codeword_llrs, const segmenter_config& cfg)
 {
   srsgnb_assert(!codeword_llrs.empty(), "Argument transport_block should not be empty.");
-  srsgnb_assert(codeword_llrs.size() == cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod), "Wrong number of LLRs.");
+  srsgnb_assert(codeword_llrs.size() == cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod),
+                "Wrong number of LLRs {} (expected {}).",
+                codeword_llrs.size(),
+                cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod));
 
   srsgnb_assert((cfg.rv >= 0) && (cfg.rv <= 3), "Invalid redundancy version.");
 

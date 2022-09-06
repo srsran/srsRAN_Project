@@ -14,6 +14,7 @@
 #include "pusch_decoder_test_doubles.h"
 #include "pusch_demodulator_test_doubles.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsgnb/ran/sch_dmrs_power.h"
 #include "gtest/gtest.h"
 #include <random>
 
@@ -118,15 +119,36 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   pdu.nof_tx_layers = nof_tx_layers_dist(rgen);
   pdu.rx_ports.resize(nof_rx_ports_dist(rgen));
   std::iota(pdu.rx_ports.begin(), pdu.rx_ports.end(), 0);
-  std::generate(pdu.dmrs_symbol_mask.begin(), pdu.dmrs_symbol_mask.end(), [&]() { return bool_dist(rgen) == 0; });
   pdu.dmrs                        = static_cast<dmrs_type::options>(dmrs_type_dist(rgen));
   pdu.scrambling_id               = scrambling_id_dist(rgen);
-  pdu.n_scid                      = n_scid_dist(rgen);
+  pdu.n_scid                      = n_scid_dist(rgen) == 0;
   pdu.nof_cdm_groups_without_data = nof_cdm_groups_without_data_dist(rgen);
   pdu.freq_alloc                  = rb_allocation::make_type1(rb_alloc_start, rb_alloc_count);
   pdu.start_symbol_index          = start_symbol_index_dist(rgen);
   pdu.nof_symbols                 = std::min(MAX_NSYMB_PER_SLOT - pdu.start_symbol_index, nof_symbols_dist(rgen));
   pdu.tbs_lbrm_bytes              = tbs_lbrm_bytes_dist(rgen);
+  std::generate_n(pdu.dmrs_symbol_mask.begin(), pdu.nof_symbols, [&]() { return bool_dist(rgen) == 0; });
+
+  // Calculate number of symbols carrying DM-RS.
+  unsigned nof_dmrs_symbols = std::count(pdu.dmrs_symbol_mask.begin(), pdu.dmrs_symbol_mask.end(), true);
+
+  // Calculate the total number of DM-RS per PRB.
+  unsigned nof_dmrs_per_prb = pdu.dmrs.nof_dmrs_per_rb() * pdu.nof_cdm_groups_without_data * nof_dmrs_symbols;
+
+  // Calculate the mnumber of data RE per PRB.
+  unsigned nof_re_per_prb = NRE * pdu.nof_symbols - nof_dmrs_per_prb;
+
+  // Calculate the number of PUSCH symbols.
+  unsigned nof_pusch_symbols = pdu.freq_alloc.get_nof_rb() * nof_re_per_prb * pdu.nof_tx_layers;
+
+  // Calculate number of LLR.
+  unsigned nof_codeword_llr  = nof_pusch_symbols * get_bits_per_symbol(pdu.modulation);
+  unsigned nof_harq_ack_llr  = 0;
+  unsigned nof_csi_part1_llr = 0;
+  unsigned nof_csi_part2_llr = 0;
+
+  // Generate resource block mask.
+  bounded_bitset<MAX_RB> rb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
   // Generate transport block.
   std::vector<uint8_t> transport_block(tbs_dist(rgen));
@@ -146,10 +168,64 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_EQ(0, softbuffer_spy.get_total_count());
 
   // Assert channel estimator inputs.
-  // ...
+  ASSERT_EQ(1, estimator_spy->get_entries().size());
+  const dmrs_pusch_estimator_spy::entry_t& estimator_entry = estimator_spy->get_entries().front();
+  ASSERT_EQ(&rg_spy, estimator_entry.grid);
+  ASSERT_EQ(pdu.slot, estimator_entry.config.slot);
+  ASSERT_EQ(pdu.dmrs, estimator_entry.config.type);
+  ASSERT_EQ(pdu.scrambling_id, estimator_entry.config.scrambling_id);
+  ASSERT_EQ(pdu.n_scid, estimator_entry.config.n_scid);
+  ASSERT_EQ(convert_dB_to_amplitude(-get_sch_to_dmrs_ratio_dB(pdu.nof_cdm_groups_without_data)),
+            estimator_entry.config.scaling);
+  ASSERT_EQ(pdu.cp, estimator_entry.config.c_prefix);
+  ASSERT_EQ(pdu.dmrs_symbol_mask, estimator_entry.config.symbols_mask);
+  ASSERT_EQ(rb_mask, estimator_entry.config.rb_mask);
+  ASSERT_EQ(pdu.start_symbol_index, estimator_entry.config.first_symbol);
+  ASSERT_EQ(pdu.nof_symbols, estimator_entry.config.nof_symbols);
+  ASSERT_EQ(pdu.nof_tx_layers, estimator_entry.config.nof_tx_layers);
+  ASSERT_EQ(span<const uint8_t>(pdu.rx_ports), span<const uint8_t>(estimator_entry.config.rx_ports));
 
   // Assert demodulator inputs.
-  // ...
+  ASSERT_EQ(1, demodulator_spy->get_entries().size());
+  const pusch_demodulator_spy::entry_t& demodulator_entry = demodulator_spy->get_entries().front();
+  ASSERT_EQ(nof_codeword_llr, demodulator_entry.data.size());
+  ASSERT_EQ(nof_harq_ack_llr, demodulator_entry.harq_ack.size());
+  ASSERT_EQ(nof_csi_part1_llr, demodulator_entry.csi_part1.size());
+  ASSERT_EQ(nof_csi_part2_llr, demodulator_entry.csi_part2.size());
+  ASSERT_EQ(&rg_spy, demodulator_entry.grid);
+  ASSERT_EQ(estimator_entry.estimate, demodulator_entry.estimates);
+  ASSERT_EQ(pdu.rnti, demodulator_entry.config.rnti);
+  ASSERT_EQ(rb_mask, demodulator_entry.config.rb_mask);
+  ASSERT_EQ(pdu.modulation, demodulator_entry.config.modulation);
+  ASSERT_EQ(pdu.start_symbol_index, demodulator_entry.config.start_symbol_index);
+  ASSERT_EQ(pdu.nof_symbols, demodulator_entry.config.nof_symbols);
+  ASSERT_EQ(pdu.dmrs_symbol_mask, demodulator_entry.config.dmrs_symb_pos);
+  ASSERT_EQ(pdu.dmrs, demodulator_entry.config.dmrs_config_type);
+  ASSERT_EQ(pdu.nof_cdm_groups_without_data, demodulator_entry.config.nof_cdm_groups_without_data);
+  ASSERT_EQ(pdu.n_id, demodulator_entry.config.n_id);
+  ASSERT_EQ(pdu.nof_tx_layers, demodulator_entry.config.nof_tx_layers);
+  ASSERT_EQ(span<const uint8_t>(pdu.rx_ports), span<const uint8_t>(demodulator_entry.config.rx_ports));
+
+  // Assert decoder inputs only if the codeword is present.
+  if (pdu.codeword.has_value()) {
+    ASSERT_EQ(1, decoder_spy->get_entries().size());
+    const pusch_decoder_spy::entry_t& decoder_entry = decoder_spy->get_entries().front();
+    ASSERT_EQ(decoder_entry.transport_block.data(), transport_block.data());
+    ASSERT_EQ(decoder_entry.transport_block.size(), transport_block.size());
+    ASSERT_EQ(&softbuffer_spy, decoder_entry.soft_codeword);
+    ASSERT_EQ(demodulator_entry.data.data(), decoder_entry.llrs.data());
+    ASSERT_EQ(demodulator_entry.data.size(), decoder_entry.llrs.size());
+    ASSERT_EQ(pdu.codeword.value().ldpc_base_graph, decoder_entry.config.segmenter_cfg.base_graph);
+    ASSERT_EQ(pdu.modulation, decoder_entry.config.segmenter_cfg.mod);
+    ASSERT_EQ(pdu.tbs_lbrm_bytes * 8, decoder_entry.config.segmenter_cfg.Nref);
+    ASSERT_EQ(pdu.nof_tx_layers, decoder_entry.config.segmenter_cfg.nof_layers);
+    ASSERT_EQ(nof_pusch_symbols, decoder_entry.config.segmenter_cfg.nof_ch_symbols);
+    ASSERT_EQ(10, decoder_entry.config.nof_ldpc_iterations);
+    ASSERT_EQ(true, decoder_entry.config.use_early_stop);
+    ASSERT_EQ(pdu.codeword.value().new_data, decoder_entry.config.new_data);
+  } else {
+    ASSERT_EQ(0, decoder_spy->get_entries().size());
+  }
 
   // Assert data decoder inputs if enabled.
   if (codeword_present) {
