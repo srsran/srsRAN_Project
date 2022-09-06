@@ -17,18 +17,21 @@
 
 namespace srsgnb {
 
-/// PDCP NR SRB or DRB info
+/// PDCP NR SRB or DRB information.
 enum class pdcp_rb_type { srb, drb };
 
-/// PDCP NR RLC mode info
+/// PDCP NR RLC mode information.
 enum class pdcp_rlc_mode { um, am };
 
-/// PDCP NR sequence number field
+/// PDCP NR sequence number field.
 enum class pdcp_sn_size : uint16_t { size12bits = 12, size18bits = 18 };
 constexpr uint16_t to_number(pdcp_sn_size sn_size)
 {
   return static_cast<uint16_t>(sn_size);
 }
+
+/// Maximum supported PDCP SDU size, see TS 38.323, section 4.3.1.
+constexpr uint16_t pdcp_max_sdu_size = 9000;
 
 /// PDCP NR direction
 enum class pdcp_integrity_enabled { no, enabled };

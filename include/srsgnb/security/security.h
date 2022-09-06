@@ -33,7 +33,7 @@ constexpr uint32_t sec_key_len = 32;
 /// Security Key length in bytes (for 128 bit algorithms)
 constexpr uint32_t sec_128_key_len = 16;
 
-enum class ciphering_algorithim {
+enum class ciphering_algorithm {
   nea0 = 0,
   nea1,
   nea2,
@@ -58,12 +58,12 @@ using sec_as_key     = std::array<uint8_t, sec_key_len>;
 using sec_128_as_key = std::array<uint8_t, sec_128_key_len>;
 
 struct sec_128_as_config {
-  sec_128_as_key       k_128_rrc_int;
-  sec_128_as_key       k_128_rrc_enc;
-  sec_128_as_key       k_128_up_int;
-  sec_128_as_key       k_128_up_enc;
-  integrity_algorithm  integ_algo;
-  ciphering_algorithim cipher_algo;
+  sec_128_as_key      k_128_rrc_int;
+  sec_128_as_key      k_128_rrc_enc;
+  sec_128_as_key      k_128_up_int;
+  sec_128_as_key      k_128_up_enc;
+  integrity_algorithm integ_algo;
+  ciphering_algorithm cipher_algo;
 };
 
 /******************************************************************************
@@ -71,7 +71,7 @@ struct sec_128_as_config {
  *****************************************************************************/
 void security_nia1(const sec_128_as_key& key,
                    uint32_t              count,
-                   lcid_t                bearer,
+                   uint8_t               bearer,
                    security_direction    direction,
                    const byte_buffer&    buf,
                    sec_mac&              mac);
@@ -79,13 +79,12 @@ void security_nia1(const sec_128_as_key& key,
 /******************************************************************************
  * Encryption / Decryption
  *****************************************************************************/
-void security_nea1(const sec_as_key& key,
-                   uint32_t          count,
-                   uint8_t           bearer,
-                   uint8_t           direction,
-                   uint8_t*          msg,
-                   uint32_t          msg_len,
-                   uint8_t*          msg_out);
+void security_nea1(const sec_128_as_key& key,
+                   uint32_t              count,
+                   uint8_t               bearer,
+                   security_direction    direction,
+                   const byte_buffer&    buf,
+                   uint8_t*              msg_out);
 
 /*********************************************************************
     Name: zero_tailing_bits

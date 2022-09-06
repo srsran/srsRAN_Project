@@ -38,7 +38,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   pdu_buf.append(buf);
 
   // Apply ciphering and integrity protection
-  apply_ciphering_and_integrity_protection(pdu_buf, st.tx_next);
+  byte_buffer protected_buf = {};
+  apply_ciphering_and_integrity_protection(pdu_buf, st.tx_next, protected_buf);
 
   // Set meta-data for RLC (TODO)
   // sdu->md.pdcp_sn = tx_next;
@@ -64,7 +65,9 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 /*
  * Ciphering and Integrity Protection Helpers
  */
-void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer& buf, uint32_t count)
+void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer& buf,
+                                                              uint32_t     count,
+                                                              byte_buffer& protected_buf)
 {
   // TS 38.323, section 5.9: Integrity protection
   // The data unit that is integrity protected is the PDU header
@@ -75,7 +78,7 @@ void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer& buf, 
   }
   // Append MAC-I
   if (is_srb() || (is_drb() && (integrity_enabled == pdcp_integrity_enabled::enabled))) {
-    buf.append(mac);
+    protected_buf.append(mac);
   }
 
   // TS 38.323, section 5.8: Ciphering
@@ -83,7 +86,7 @@ void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer& buf, 
   // data part of the PDCP Data PDU except the
   // SDAP header and the SDAP Control PDU if included in the PDCP SDU.
   if (ciphering_enabled == pdcp_ciphering_enabled::enabled) {
-    // cipher_encrypt(&sdu->msg[cfg.hdr_len_bytes], sdu->N_bytes - cfg.hdr_len_bytes, count, &sdu->msg[hdr_len_bytes]);
+    cipher_encrypt(buf, count, protected_buf);
   }
 }
 
@@ -95,7 +98,7 @@ void pdcp_entity_tx::integrity_generate(byte_buffer& buf, uint32_t count, sec_ma
     case integrity_algorithm::nia0:
       break;
     case integrity_algorithm::nia1:
-      security_nia1(k_int, count, lcid, direction, buf, mac);
+      security_nia1(k_int, count, lcid - 1, direction, buf, mac);
       break;
     case integrity_algorithm::nia2:
       // security_nia2(&k128, count, 0, cfg.tx_direction, msg, msg_len, mac);
@@ -107,10 +110,42 @@ void pdcp_entity_tx::integrity_generate(byte_buffer& buf, uint32_t count, sec_ma
       break;
   }
 
-  // logger.log_debug("Integrity gen input: COUNT {}, Bearer ID {}, Direction {}", count, 0, "Downlink");
+  logger.log_debug("Integrity gen input: COUNT {}, Bearer ID {}, Direction {}", count, lcid, direction);
   // logger.log_debug(k_int.begin(), k_int.end(), "Integrity gen key:");
-  //  logger.log_debug(msg, msg_len, "Integrity gen input msg:");
-  //  logger.log_debug(mac, 4, "MAC (generated)");
+  // logger.log_debug(buf.begin(), buf.end(), "Integrity gen input msg:");
+  // logger.log_debug(mac.begin(), mac.end(), "MAC (generated)");
+}
+
+void pdcp_entity_tx::cipher_encrypt(const byte_buffer& msg, uint32_t count, byte_buffer& ct)
+{
+  std::array<uint8_t, pdcp_max_sdu_size> ct_tmp = {};
+
+  // If control plane use RRC integrity key. If data use user plane key
+  const sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
+
+  // logger.log_debug("Cipher encrypt input: COUNT: {}, Bearer ID: {}, Direction {}", count, lcid, "Uplink");
+  // logger.log_debug(k_enc.begin(), k_enc.end(), "Cipher encrypt key:");
+  // logger.log_debug(msg.begin(), msg.end(), "Cipher encrypt input msg");
+
+  switch (sec_cfg.cipher_algo) {
+    case ciphering_algorithm::nea0:
+      break;
+    case ciphering_algorithm::nea1:
+      security_nea1(k_enc, count, lcid - 1, direction, msg, ct_tmp.data());
+      // memcpy(ct, ct_tmp, msg.length());
+      break;
+    case ciphering_algorithm::nea2:
+      // security_128_eea2(&(k_enc[16]), count, cfg.bearer_id - 1, cfg.tx_direction, msg, msg_len, ct_tmp);
+      // memcpy(ct, ct_tmp, msg_len);
+      break;
+    case ciphering_algorithm::nea3:
+      // security_128_eea3(&(k_enc[16]), count, cfg.bearer_id - 1, cfg.tx_direction, msg, msg_len, ct_tmp);
+      // memcpy(ct, ct_tmp, msg_len);
+      break;
+    default:
+      break;
+  }
+  // logger.log_debug(ct.begin(), ct.end(), "Cipher encrypt output msg");
 }
 
 /*

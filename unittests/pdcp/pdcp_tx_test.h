@@ -80,7 +80,7 @@ protected:
 
     // Set encription/integrity algorithms
     sec_cfg.integ_algo  = integrity_algorithm::nia1;
-    sec_cfg.cipher_algo = ciphering_algorithim::nea1;
+    sec_cfg.cipher_algo = ciphering_algorithm::nea1;
 
     // Create RLC entities
     pdcp_tx = std::make_unique<pdcp_entity_tx>(0, LCID_SRB1, config, test_frame, test_frame);

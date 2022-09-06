@@ -28,7 +28,7 @@ using namespace srsgnb;
 
 void srsgnb::security_nia1(const sec_128_as_key& key,
                            uint32_t              count,
-                           lcid_t                bearer,
+                           uint8_t               bearer,
                            security_direction    direction,
                            const byte_buffer&    buf,
                            sec_mac&              mac)
@@ -57,14 +57,24 @@ void srsgnb::security_nia1(const sec_128_as_key& key,
  * Encryption / Decryption
  *****************************************************************************/
 
-void srsgnb::security_nea1(const sec_as_key& key,
-                           uint32_t          count,
-                           uint8_t           bearer,
-                           uint8_t           direction,
-                           uint8_t*          msg,
-                           uint32_t          msg_len,
-                           uint8_t*          msg_out)
+void srsgnb::security_nea1(const sec_128_as_key& key,
+                           uint32_t              count,
+                           uint8_t               bearer,
+                           security_direction    direction,
+                           const byte_buffer&    buf,
+                           uint8_t*              msg_out)
 {
+  // FIXME for now we copy the byte buffer to a contiguous piece of memory.
+  // This will be fixed later.
+  std::vector<uint8_t> continuous_buf;
+  continuous_buf.reserve(buf.length());
+
+  for (uint32_t i = 0; i < buf.length(); i++) {
+    continuous_buf[i] = buf[i];
+  }
+  uint8_t* msg     = continuous_buf.data();
+  uint32_t msg_len = continuous_buf.size();
+
   S3G_STATE state, *state_ptr;
   uint32_t  k[]  = {0, 0, 0, 0};
   uint32_t  iv[] = {0, 0, 0, 0};
@@ -85,7 +95,7 @@ void srsgnb::security_nea1(const sec_as_key& key,
 
     // Construct iv
     iv[3] = count;
-    iv[2] = ((bearer & 0x1F) << 27) | ((direction & 0x01) << 26);
+    iv[2] = ((bearer & 0x1F) << 27) | ((static_cast<uint8_t>(direction) & 0x01) << 26);
     iv[1] = iv[3];
     iv[0] = iv[2];
 
