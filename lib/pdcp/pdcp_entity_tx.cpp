@@ -33,21 +33,20 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   // TODO
 
   // Write PDCP header info
-  byte_buffer pdu_buf = {};
-  write_data_pdu_header(pdu_buf, st.tx_next);
-  pdu_buf.append(buf);
+  byte_buffer hdr = {};
+  write_data_pdu_header(hdr, st.tx_next);
 
   // Apply ciphering and integrity protection
   byte_buffer protected_buf = {};
-  apply_ciphering_and_integrity_protection(pdu_buf, st.tx_next, protected_buf);
+  apply_ciphering_and_integrity_protection(hdr, buf, st.tx_next, protected_buf);
 
   // Set meta-data for RLC (TODO)
   // sdu->md.pdcp_sn = tx_next;
 
-  logger.log_info(pdu_buf.begin(),
-                  pdu_buf.end(),
+  logger.log_info(protected_buf.begin(),
+                  protected_buf.end(),
                   "TX PDU ({}B), COUNT={}, HFN={}, SN={}, integrity={}, encryption={}",
-                  buf.length(),
+                  protected_buf.length(),
                   st.tx_next,
                   HFN(st.tx_next),
                   SN(st.tx_next),
@@ -56,7 +55,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 
   // Check if PDCP is associated with more than on RLC entity TODO
   // Write to lower layers
-  lower_dn.on_new_pdu(std::move(pdu_buf));
+  lower_dn.on_new_pdu(std::move(protected_buf));
 
   // Increment TX_NEXT
   st.tx_next++;
@@ -65,7 +64,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 /*
  * Ciphering and Integrity Protection Helpers
  */
-void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer& buf,
+void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer& hdr,
+                                                              byte_buffer& sdu,
                                                               uint32_t     count,
                                                               byte_buffer& protected_buf)
 {
@@ -74,20 +74,36 @@ void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer& buf,
   // and the data part of the PDU before ciphering.
   sec_mac mac = {};
   if (integrity_enabled == pdcp_integrity_enabled::enabled) {
+    byte_buffer buf = {};
+    buf.append(hdr);
+    buf.append(sdu);
     integrity_generate(buf, count, mac);
-  }
-  // Append MAC-I
-  if (is_srb() || (is_drb() && (integrity_enabled == pdcp_integrity_enabled::enabled))) {
-    protected_buf.append(mac);
   }
 
   // TS 38.323, section 5.8: Ciphering
   // The data unit that is ciphered is the MAC-I and the
   // data part of the PDCP Data PDU except the
   // SDAP header and the SDAP Control PDU if included in the PDCP SDU.
+  byte_buffer ct;
   if (ciphering_enabled == pdcp_ciphering_enabled::enabled) {
-    cipher_encrypt(buf, count, protected_buf);
+    byte_buffer buf = {};
+    buf.append(sdu);
+    // Append MAC-I
+    if (is_srb() || (is_drb() && (integrity_enabled == pdcp_integrity_enabled::enabled))) {
+      buf.append(mac);
+    }
+    cipher_encrypt(buf, count, ct);
+  } else {
+    ct.append(sdu);
+    // Append MAC-I
+    if (is_srb() || (is_drb() && (integrity_enabled == pdcp_integrity_enabled::enabled))) {
+      ct.append(mac);
+    }
   }
+
+  // Construct the protected buffer
+  protected_buf.append(hdr);
+  protected_buf.append(ct);
 }
 
 void pdcp_entity_tx::integrity_generate(byte_buffer& buf, uint32_t count, sec_mac& mac)
@@ -116,7 +132,7 @@ void pdcp_entity_tx::integrity_generate(byte_buffer& buf, uint32_t count, sec_ma
   // logger.log_debug(mac.begin(), mac.end(), "MAC (generated)");
 }
 
-void pdcp_entity_tx::cipher_encrypt(const byte_buffer& msg, uint32_t count, byte_buffer& ct)
+void pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count, byte_buffer& ct)
 {
   std::array<uint8_t, pdcp_max_sdu_size> ct_tmp = {};
 
@@ -132,6 +148,9 @@ void pdcp_entity_tx::cipher_encrypt(const byte_buffer& msg, uint32_t count, byte
       break;
     case ciphering_algorithm::nea1:
       security_nea1(k_enc, count, lcid - 1, direction, msg, ct_tmp.data());
+      for (unsigned i = 0; i < msg.length(); i++) {
+        ct.append(ct_tmp[i]);
+      }
       // memcpy(ct, ct_tmp, msg.length());
       break;
     case ciphering_algorithm::nea2:

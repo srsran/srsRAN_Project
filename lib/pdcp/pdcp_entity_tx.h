@@ -91,9 +91,12 @@ private:
   pdcp_ciphering_enabled ciphering_enabled = pdcp_ciphering_enabled::no;
 
   /// Apply ciphering and integrity protection to the payload
-  void apply_ciphering_and_integrity_protection(byte_buffer& buf, uint32_t count, byte_buffer& protected_buf);
+  void apply_ciphering_and_integrity_protection(byte_buffer& hdr,
+                                                byte_buffer& buf,
+                                                uint32_t     count,
+                                                byte_buffer& protected_buf);
   void integrity_generate(byte_buffer& buf, uint32_t count, sec_mac& mac);
-  void cipher_encrypt(const byte_buffer& buf, uint32_t count, byte_buffer& ct);
+  void cipher_encrypt(byte_buffer_view buf, uint32_t count, byte_buffer& ct);
 
   /*
    * RB helpers

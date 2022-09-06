@@ -42,7 +42,7 @@ void srsgnb::security_nia1(const sec_128_as_key& key,
   continuous_buf.reserve(buf.length());
 
   for (uint32_t i = 0; i < buf.length(); i++) {
-    continuous_buf[i] = buf[i];
+    continuous_buf.push_back(buf[i]);
   }
 
   msg_len_bits = buf.length() * 8;
@@ -61,7 +61,7 @@ void srsgnb::security_nea1(const sec_128_as_key& key,
                            uint32_t              count,
                            uint8_t               bearer,
                            security_direction    direction,
-                           const byte_buffer&    buf,
+                           byte_buffer_view      buf,
                            uint8_t*              msg_out)
 {
   // FIXME for now we copy the byte buffer to a contiguous piece of memory.
@@ -70,10 +70,10 @@ void srsgnb::security_nea1(const sec_128_as_key& key,
   continuous_buf.reserve(buf.length());
 
   for (uint32_t i = 0; i < buf.length(); i++) {
-    continuous_buf[i] = buf[i];
+    continuous_buf.push_back(buf[i]);
   }
   uint8_t* msg     = continuous_buf.data();
-  uint32_t msg_len = continuous_buf.size();
+  uint32_t msg_len = continuous_buf.size() * 8;
 
   S3G_STATE state, *state_ptr;
   uint32_t  k[]  = {0, 0, 0, 0};

@@ -83,7 +83,7 @@ void security_nea1(const sec_128_as_key& key,
                    uint32_t              count,
                    uint8_t               bearer,
                    security_direction    direction,
-                   const byte_buffer&    buf,
+                   byte_buffer_view      buf,
                    uint8_t*              msg_out);
 
 /*********************************************************************
