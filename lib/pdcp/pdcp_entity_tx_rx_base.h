@@ -37,10 +37,12 @@ constexpr size_t pdcp_data_pdu_header_size(pdcp_sn_size sn_size)
 class pdcp_entity_tx_rx_base
 {
 protected:
-  explicit pdcp_entity_tx_rx_base(pdcp_sn_size sn_size) :
-    hdr_len_bytes((pdcp_data_pdu_header_size(sn_size))), sn_size(to_number(sn_size))
+  explicit pdcp_entity_tx_rx_base(lcid_t lcid, pdcp_sn_size sn_size) :
+    lcid(lcid), hdr_len_bytes((pdcp_data_pdu_header_size(sn_size))), sn_size(to_number(sn_size))
   {
   }
+
+  lcid_t lcid = {};
 
   /*
    * Header helpers

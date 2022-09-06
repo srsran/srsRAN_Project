@@ -31,8 +31,8 @@ constexpr uint16_t to_number(pdcp_sn_size sn_size)
 }
 
 /// PDCP NR direction
-enum class pdcp_tx_direction { none, tx };
-enum class pdcp_rx_direction { none, rx };
+enum class pdcp_integrity_enabled { no, enabled };
+enum class pdcp_ciphering_enabled { no, enabled };
 
 /// PDCP NR t-Reordering timer values.
 /// This timer is used to detect loss of PDCP Data PDUs.

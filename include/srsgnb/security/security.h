@@ -17,6 +17,7 @@
  *****************************************************************************/
 
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/ran/lcid.h"
 #include "srsgnb/srslog/srslog.h"
 
 #include <array>
@@ -57,10 +58,10 @@ using sec_as_key     = std::array<uint8_t, sec_key_len>;
 using sec_128_as_key = std::array<uint8_t, sec_128_key_len>;
 
 struct sec_128_as_config {
-  sec_128_as_key       k_rrc_int;
-  sec_128_as_key       k_rrc_enc;
-  sec_128_as_key       k_up_int;
-  sec_128_as_key       k_up_enc;
+  sec_128_as_key       k_128_rrc_int;
+  sec_128_as_key       k_128_rrc_enc;
+  sec_128_as_key       k_128_up_int;
+  sec_128_as_key       k_128_up_enc;
   integrity_algorithm  integ_algo;
   ciphering_algorithim cipher_algo;
 };
@@ -70,7 +71,7 @@ struct sec_128_as_config {
  *****************************************************************************/
 void security_nia1(const sec_128_as_key& key,
                    uint32_t              count,
-                   uint32_t              bearer,
+                   lcid_t                bearer,
                    uint8_t               direction,
                    const byte_buffer&    buf,
                    sec_mac&              mac);

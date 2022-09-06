@@ -50,8 +50,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
                   st.tx_next,
                   HFN(st.tx_next),
                   SN(st.tx_next),
-                  integrity_direction,
-                  ciphering_direction);
+                  integrity_enabled,
+                  ciphering_enabled);
 
   // Check if PDCP is associated with more than on RLC entity TODO
   // Write to lower layers
@@ -70,19 +70,19 @@ void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer& buf, 
   // The data unit that is integrity protected is the PDU header
   // and the data part of the PDU before ciphering.
   sec_mac mac = {};
-  if (is_srb() || (is_drb() && (integrity_direction == pdcp_tx_direction::tx))) {
+  if (integrity_enabled == pdcp_integrity_enabled::enabled) {
     integrity_generate(buf, count, mac);
   }
   // Append MAC-I
-  if (is_srb() || (is_drb() && (integrity_direction == pdcp_tx_direction::tx))) {
-    // append_mac(sdu, mac);
+  if (is_srb() || (is_drb() && (integrity_enabled == pdcp_integrity_enabled::enabled))) {
+    buf.append(mac);
   }
 
   // TS 38.323, section 5.8: Ciphering
   // The data unit that is ciphered is the MAC-I and the
   // data part of the PDCP Data PDU except the
   // SDAP header and the SDAP Control PDU if included in the PDCP SDU.
-  if (ciphering_direction == pdcp_tx_direction::tx) {
+  if (ciphering_enabled == pdcp_ciphering_enabled::enabled) {
     // cipher_encrypt(&sdu->msg[cfg.hdr_len_bytes], sdu->N_bytes - cfg.hdr_len_bytes, count, &sdu->msg[hdr_len_bytes]);
   }
 }
@@ -90,12 +90,12 @@ void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer& buf, 
 void pdcp_entity_tx::integrity_generate(byte_buffer& buf, uint32_t count, sec_mac& mac)
 {
   // If control plane use RRC integrity key. If data use user plane key
-  const sec_128_as_key& k_int = is_srb() ? sec_cfg.k_rrc_int : sec_cfg.k_up_int;
+  const sec_128_as_key& k_int = is_srb() ? sec_cfg.k_128_rrc_int : sec_cfg.k_128_up_int;
   switch (sec_cfg.integ_algo) {
     case integrity_algorithm::nia0:
       break;
     case integrity_algorithm::nia1:
-      security_nia1(k_int, count, 0, 0, buf, mac);
+      security_nia1(k_int, count, lcid, 0, buf, mac);
       break;
     case integrity_algorithm::nia2:
       // security_nia2(&k128, count, 0, cfg.tx_direction, msg, msg_len, mac);

@@ -28,7 +28,7 @@ using namespace srsgnb;
 
 void srsgnb::security_nia1(const sec_128_as_key& key,
                            uint32_t              count,
-                           uint32_t              bearer,
+                           lcid_t                bearer,
                            uint8_t               direction,
                            const byte_buffer&    buf,
                            sec_mac&              mac)

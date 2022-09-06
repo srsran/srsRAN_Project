@@ -72,6 +72,16 @@ protected:
     config.sn_size       = sn_size;
     config.discard_timer = pdcp_discard_timer::ms10;
 
+    // Set security keys
+    sec_cfg.k_128_rrc_int = k_128_int;
+    sec_cfg.k_128_up_int  = k_128_int;
+    sec_cfg.k_128_rrc_enc = k_128_enc;
+    sec_cfg.k_128_up_enc  = k_128_enc;
+
+    // Set encription/integrity algorithms
+    sec_cfg.integ_algo  = integrity_algorithm::nia1;
+    sec_cfg.cipher_algo = ciphering_algorithim::nea1;
+
     // Create RLC entities
     pdcp_tx = std::make_unique<pdcp_entity_tx>(0, LCID_SRB1, config, test_frame, test_frame);
   }
@@ -141,6 +151,9 @@ protected:
   byte_buffer buf_count131072_snlen18{pdu1_count131072_snlen18}; // [HFN | SN] 0000 0000 0000 00|10 0000 0000 0000 0000
   byte_buffer buf_count262144_snlen18{pdu1_count262144_snlen18}; // [HFN | SN] 0000 0000 0000 01|00 0000 0000 0000 0000
   byte_buffer buf_count4294967295_snlen18{pdu1_count4294967295_snlen18}; // All 1's
+
+  // Security configuration
+  sec_128_as_config sec_cfg = {};
 
   std::unique_ptr<pdcp_entity_tx> pdcp_tx;
 };

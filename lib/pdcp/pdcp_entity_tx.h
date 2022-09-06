@@ -32,6 +32,7 @@ struct pdcp_tx_state {
 /// It provides interfaces for the PDCP bearers, for the higher and lower layers
 class pdcp_entity_tx : public pdcp_entity_tx_rx_base,
                        public pdcp_tx_upper_data_interface,
+                       public pdcp_tx_upper_control_interface,
                        public pdcp_tx_lower_interface
 {
 public:
@@ -40,7 +41,7 @@ public:
                  pdcp_config::pdcp_tx_config     cfg_,
                  pdcp_tx_lower_notifier&         lower_dn,
                  pdcp_tx_upper_control_notifier& upper_cn) :
-    pdcp_entity_tx_rx_base(cfg_.sn_size),
+    pdcp_entity_tx_rx_base(lcid, cfg_.sn_size),
     logger("PDCP", ue_index, lcid),
     cfg(cfg_),
     lower_dn(lower_dn),
@@ -52,6 +53,16 @@ public:
    * SDU/PDU handlers
    */
   void handle_sdu(byte_buffer buf) final;
+
+  /*
+   * Security configuration
+   */
+  void set_as_security_config(sec_128_as_config sec_cfg_) final { sec_cfg = sec_cfg_; }
+  void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) final
+  {
+    integrity_enabled = integ;
+    ciphering_enabled = cipher;
+  }
 
   /*
    * Header helpers
@@ -72,11 +83,12 @@ private:
 
   void stop_discard_timer(uint32_t count) final {}
 
-  pdcp_tx_state     st      = {};
-  sec_128_as_config sec_cfg = {};
+  pdcp_tx_state      st        = {};
+  sec_128_as_config  sec_cfg   = {};
+  security_direction direction = security_direction::downlink;
 
-  pdcp_tx_direction integrity_direction = pdcp_tx_direction::none;
-  pdcp_tx_direction ciphering_direction = pdcp_tx_direction::none;
+  pdcp_integrity_enabled integrity_enabled = pdcp_integrity_enabled::no;
+  pdcp_ciphering_enabled ciphering_enabled = pdcp_ciphering_enabled::no;
 
   /// Apply ciphering and integrity protection to the payload
   void apply_ciphering_and_integrity_protection(byte_buffer& buf, uint32_t count);
