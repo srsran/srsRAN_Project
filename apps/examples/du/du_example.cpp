@@ -178,6 +178,8 @@ static unsigned                                  offset_to_pointA            = 4
 static unsigned                                  K_ssb                       = 6;
 static unsigned                                  coreset0_index              = 6;
 static unsigned                                  max_nof_concurrent_requests = 1;
+static const unsigned                            zero_correlation_zone       = 0;
+static const unsigned                            prach_config_index          = 16;
 static radio_configuration::clock_sources        clock_src                   = {};
 static std::string                               log_level                   = "info";
 static radio_configuration::over_the_wire_format otw_format = radio_configuration::over_the_wire_format::DEFAULT;
@@ -458,7 +460,7 @@ static fapi::prach_config generate_prach_config_tlv()
   config.prach_ul_bwp_pusch_scs = scs;
   config.restricted_set         = restricted_set_config::UNRESTRICTED;
   config.num_prach_fd_occasions = 1;
-  config.prach_config_index     = 16;
+  config.prach_config_index     = prach_config_index;
   config.prach_format           = fapi::prach_format_type::zero;
   config.num_prach_td_occasions = 1;
   config.num_preambles          = 1;
@@ -469,7 +471,7 @@ static fapi::prach_config generate_prach_config_tlv()
   // NOTE: place a value here. It doesn't matter with this config.
   fd_occasion.prach_root_sequence_index = 1;
   fd_occasion.prach_freq_offset         = 1;
-  fd_occasion.prach_zero_corr_conf      = 0;
+  fd_occasion.prach_zero_corr_conf      = zero_correlation_zone;
 
   return config;
 }
@@ -746,8 +748,9 @@ int main(int argc, char** argv)
   cell_cfg.ssb_cfg.k_ssb   = K_ssb;
 
   // PRACH configuration.
-  cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.zero_correlation_zone_config = 0;
-  cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.prach_config_index           = 16;
+  cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.zero_correlation_zone_config =
+      zero_correlation_zone;
+  cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.prach_config_index = prach_config_index;
 
   test_logger.info("Creating DU high object...");
   du_high du_obj(cfg);

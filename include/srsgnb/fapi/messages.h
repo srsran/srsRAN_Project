@@ -1647,7 +1647,7 @@ struct prach_config {
 
   uint16_t                                                            prach_res_config_index;
   prach_sequence_length_type                                          prach_sequence_length;
-  prach_subcarrier_spacing::values                                    prach_scs;
+  prach_subcarrier_spacing                                            prach_scs;
   subcarrier_spacing                                                  prach_ul_bwp_pusch_scs;
   restricted_set_config                                               restricted_set;
   uint8_t                                                             num_prach_fd_occasions;
