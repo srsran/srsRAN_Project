@@ -119,3 +119,28 @@ dci_payload srsgnb::dci_1_0_ra_rnti_pack(const dci_1_0_ra_rnti_configuration& co
 
   return payload;
 }
+
+dci_payload srsgnb::dci_rar_pack(const dci_rar_configuration& config)
+{
+  dci_payload payload;
+
+  // Frequency hopping flag - 1 bit.
+  payload.push_back(config.frequency_hopping_flag, 1);
+
+  // PUSCH frequency resource allocation - 14 bits.
+  payload.push_back(config.frequency_resource, 14);
+
+  // PUSCH time resource allocation - 4 bits.
+  payload.push_back(config.time_resource, 4);
+
+  // Modulation and coding scheme - 4 bits.
+  payload.push_back(config.modulation_coding_scheme, 4);
+
+  // TPC command for PUSCH - 3 bits.
+  payload.push_back(config.tpc, 3);
+
+  // CSI request - 1 bit.
+  payload.push_back(config.csi_request, 1);
+
+  return payload;
+}

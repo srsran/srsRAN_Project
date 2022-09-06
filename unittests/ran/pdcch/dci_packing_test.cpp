@@ -252,11 +252,79 @@ static void test_dci_1_0_ra_rnti_packing()
   }
 }
 
+static void test_dci_rar_packing()
+{
+  std::uniform_int_distribution<unsigned> frequency_hopping_flag_dist(0, pow2(1) - 1);
+  std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(14) - 1);
+  std::uniform_int_distribution<unsigned> time_resource_dist(0, pow2(4) - 1);
+  std::uniform_int_distribution<unsigned> modulation_coding_scheme_dist(0, pow2(4) - 1);
+  std::uniform_int_distribution<unsigned> tpc_dist(0, pow2(3) - 1);
+  std::uniform_int_distribution<unsigned> csi_request_dist(0, pow2(3) - 1);
+
+  for (unsigned rep = 0; rep != nof_repetitions; ++rep) {
+    dci_rar_configuration config    = {};
+    config.frequency_hopping_flag   = frequency_hopping_flag_dist(rgen);
+    config.frequency_resource       = frequency_resource_dist(rgen);
+    config.time_resource            = time_resource_dist(rgen);
+    config.modulation_coding_scheme = modulation_coding_scheme_dist(rgen);
+    config.tpc                      = tpc_dist(rgen);
+    config.csi_request              = csi_request_dist(rgen);
+
+    dci_payload payload = dci_rar_pack(config);
+
+    // Generate expected payload.
+    static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> expected;
+
+    // Frequency hopping flag - 1 bit.
+    expected.push_back((config.frequency_hopping_flag >> 0U) & 1U);
+
+    // PUSCH frequency resource allocation - 14 bits.
+    expected.push_back((config.frequency_resource >> 13U) & 1U);
+    expected.push_back((config.frequency_resource >> 12U) & 1U);
+    expected.push_back((config.frequency_resource >> 11U) & 1U);
+    expected.push_back((config.frequency_resource >> 10U) & 1U);
+    expected.push_back((config.frequency_resource >> 9U) & 1U);
+    expected.push_back((config.frequency_resource >> 8U) & 1U);
+    expected.push_back((config.frequency_resource >> 7U) & 1U);
+    expected.push_back((config.frequency_resource >> 6U) & 1U);
+    expected.push_back((config.frequency_resource >> 5U) & 1U);
+    expected.push_back((config.frequency_resource >> 4U) & 1U);
+    expected.push_back((config.frequency_resource >> 3U) & 1U);
+    expected.push_back((config.frequency_resource >> 2U) & 1U);
+    expected.push_back((config.frequency_resource >> 1U) & 1U);
+    expected.push_back((config.frequency_resource >> 0U) & 1U);
+
+    // Time domain resource assignment - 4 bits.
+    expected.push_back((config.time_resource >> 3U) & 1U);
+    expected.push_back((config.time_resource >> 2U) & 1U);
+    expected.push_back((config.time_resource >> 1U) & 1U);
+    expected.push_back((config.time_resource >> 0U) & 1U);
+
+    // Time domain resource assignment - 4 bits.
+    expected.push_back((config.modulation_coding_scheme >> 3U) & 1U);
+    expected.push_back((config.modulation_coding_scheme >> 2U) & 1U);
+    expected.push_back((config.modulation_coding_scheme >> 1U) & 1U);
+    expected.push_back((config.modulation_coding_scheme >> 0U) & 1U);
+
+    // Transmission power control for PUSCH - 3 bits.
+    expected.push_back((config.tpc >> 2U) & 1U);
+    expected.push_back((config.tpc >> 1U) & 1U);
+    expected.push_back((config.tpc >> 0U) & 1U);
+
+    // CSI request - 1 bit.
+    expected.push_back((config.csi_request >> 0U) & 1U);
+
+    // Assert expected payload.
+    TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
+  }
+}
+
 int main()
 {
   test_dci_1_0_p_rnti_packing();
   test_dci_1_0_si_rnti_packing();
   test_dci_1_0_ra_rnti_packing();
+  test_dci_rar_packing();
 
   return 0;
 }

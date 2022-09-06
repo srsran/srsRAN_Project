@@ -112,4 +112,23 @@ struct dci_1_0_ra_rnti_configuration {
 /// Packs a DCI format 1_0 scrambled by RA-RNTI.
 dci_payload dci_1_0_ra_rnti_pack(const dci_1_0_ra_rnti_configuration& config);
 
+/// Collects the Random Access Response grant content fields described by TS38.213 Table 8.2-1.
+struct dci_rar_configuration {
+  /// Frequency hopping flag - 1 bit.
+  unsigned frequency_hopping_flag;
+  /// PUSCH frequency resource allocation - 14 bits.
+  unsigned frequency_resource;
+  /// PUSCH time resource allocation - 4 bits.
+  unsigned time_resource;
+  /// Modulation and coding scheme - 4 bits.
+  unsigned modulation_coding_scheme;
+  /// Transmission power control for PUSCH - 3 bits.
+  unsigned tpc;
+  /// CSI request - 1 bit.
+  unsigned csi_request;
+};
+
+/// Packs a DCI transmitted in a Random Access Response.
+dci_payload dci_rar_pack(const dci_rar_configuration& config);
+
 } // namespace srsgnb
