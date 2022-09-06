@@ -29,7 +29,7 @@ using namespace srsgnb;
 void srsgnb::security_nia1(const sec_128_as_key& key,
                            uint32_t              count,
                            lcid_t                bearer,
-                           uint8_t               direction,
+                           security_direction    direction,
                            const byte_buffer&    buf,
                            sec_mac&              mac)
 {
@@ -45,8 +45,9 @@ void srsgnb::security_nia1(const sec_128_as_key& key,
     continuous_buf[i] = buf[i];
   }
 
-  msg_len_bits   = buf.length() * 8;
-  uint8_t* m_ptr = s3g_f9(key.data(), count, bearer << 27, direction, continuous_buf.data(), msg_len_bits);
+  msg_len_bits = buf.length() * 8;
+  uint8_t* m_ptr =
+      s3g_f9(key.data(), count, bearer << 27, static_cast<uint8_t>(direction), continuous_buf.data(), msg_len_bits);
   for (i = 0; i < 4; i++) {
     mac[i] = m_ptr[i];
   }

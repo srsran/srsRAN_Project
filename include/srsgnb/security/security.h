@@ -72,7 +72,7 @@ struct sec_128_as_config {
 void security_nia1(const sec_128_as_key& key,
                    uint32_t              count,
                    lcid_t                bearer,
-                   uint8_t               direction,
+                   security_direction    direction,
                    const byte_buffer&    buf,
                    sec_mac&              mac);
 
