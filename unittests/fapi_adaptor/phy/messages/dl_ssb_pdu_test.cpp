@@ -16,7 +16,6 @@
 #include <random>
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 
 static std::mt19937 gen(0);
@@ -47,9 +46,9 @@ static void ssb_conversion_test()
                                               subcarrier_spacing::kHz30,
                                               subcarrier_spacing::kHz60,
                                               subcarrier_spacing::kHz120}) {
-          for (beta_pss_profile_type beta_pss : {beta_pss_profile_type::dB_0,
-                                                 beta_pss_profile_type::dB_3,
-                                                 beta_pss_profile_type::beta_pss_profile_sss}) {
+          for (fapi::beta_pss_profile_type beta_pss : {fapi::beta_pss_profile_type::dB_0,
+                                                       fapi::beta_pss_profile_type::dB_3,
+                                                       fapi::beta_pss_profile_type::beta_pss_profile_sss}) {
             for (ssb_pattern_case pattern_case : {ssb_pattern_case::A,
                                                   ssb_pattern_case::B,
                                                   ssb_pattern_case::C,
@@ -67,8 +66,8 @@ static void ssb_conversion_test()
               bool     intra_freq_reselection = binary_dist(gen);
 
               // :TODO: Begin with the MAC structure when it is defined.
-              dl_tti_request_message         msg = {};
-              dl_tti_request_message_builder builder(msg);
+              fapi::dl_tti_request_message         msg = {};
+              fapi::dl_tti_request_message_builder builder(msg);
               // :TODO: when the groups are available, add them.
               builder.set_basic_parameters(slot.sfn(), slot.slot_index(), 0);
               auto ssb_builder = builder.add_ssb_pdu(pci, beta_pss, ssb_idx, ssb_subcarrier_offset, offset_pointA);
@@ -92,13 +91,13 @@ static void ssb_conversion_test()
               TESTASSERT_EQ(pdu.slot.slot_index(), slot.slot_index());
               TESTASSERT_EQ(pdu.phys_cell_id, pci);
               switch (beta_pss) {
-                case beta_pss_profile_type::dB_0:
+                case fapi::beta_pss_profile_type::dB_0:
                   TESTASSERT_EQ(pdu.beta_pss, 0.0);
                   break;
-                case beta_pss_profile_type::dB_3:
+                case fapi::beta_pss_profile_type::dB_3:
                   TESTASSERT_EQ(pdu.beta_pss, 3.0);
                   break;
-                case beta_pss_profile_type::beta_pss_profile_sss:
+                case fapi::beta_pss_profile_type::beta_pss_profile_sss:
                   TESTASSERT(std::abs(pdu.beta_pss - pss_to_sss_ratio_dB) < 0.01,
                              "Beta PSS is {} but expected {}.",
                              pdu.beta_pss,

@@ -19,7 +19,6 @@
 #include "srsgnb/phy/upper/uplink_request_processor.h"
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 
 namespace {
@@ -82,7 +81,7 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::~slot_based_upper_phy_c
   dl_processor.get().finish_processing_pdus();
 }
 
-void fapi_to_phy_translator::dl_tti_request(const dl_tti_request_message& msg)
+void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& msg)
 {
   // :TODO: check the current slot matches the DL_TTI.request slot. Do this in a different class.
   // :TODO: check the messages order. Do this in a different class.
@@ -91,20 +90,20 @@ void fapi_to_phy_translator::dl_tti_request(const dl_tti_request_message& msg)
 
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
-      case dl_pdu_type::CSI_RS:
+      case fapi::dl_pdu_type::CSI_RS:
         break;
-      case dl_pdu_type::PDCCH: {
+      case fapi::dl_pdu_type::PDCCH: {
         pdcch_processor::pdu_t pdcch_pdu;
         convert_pdcch_fapi_to_phy(pdcch_pdu, pdu.pdcch_pdu, msg.sfn, msg.slot);
         current_slot_controller->process_pdcch(pdcch_pdu);
         break;
       }
-      case dl_pdu_type::PDSCH: {
+      case fapi::dl_pdu_type::PDSCH: {
         pdsch_pdu_repository.emplace_back();
         convert_pdsch_fapi_to_phy(pdsch_pdu_repository.back(), pdu.pdsch_pdu, msg.sfn, msg.slot);
         break;
       }
-      case dl_pdu_type::SSB: {
+      case fapi::dl_pdu_type::SSB: {
         ssb_processor::pdu_t ssb_pdu;
         convert_ssb_fapi_to_phy(ssb_pdu, pdu.ssb_pdu, msg.sfn, msg.slot, scs_common);
         current_slot_controller->process_ssb(ssb_pdu);
@@ -116,7 +115,7 @@ void fapi_to_phy_translator::dl_tti_request(const dl_tti_request_message& msg)
   }
 }
 
-void fapi_to_phy_translator::ul_tti_request(const ul_tti_request_message& msg)
+void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& msg)
 {
   // :TODO: check the messages order. Do this in a different class.
 
@@ -124,25 +123,25 @@ void fapi_to_phy_translator::ul_tti_request(const ul_tti_request_message& msg)
 
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
-      case ul_pdu_type::PRACH: {
+      case fapi::ul_pdu_type::PRACH: {
         prach_buffer_context context;
         convert_prach_fapi_to_phy(context, pdu.prach_pdu, prach_cfg, carrier_cfg, msg.sfn, msg.slot, sector_id);
         ul_request_processor.process_prach_request(context);
         break;
       }
-      case ul_pdu_type::PUCCH:
-      case ul_pdu_type::PUSCH:
-      case ul_pdu_type::SRS:
-      case ul_pdu_type::msg_a_PUSCH:
+      case fapi::ul_pdu_type::PUCCH:
+      case fapi::ul_pdu_type::PUSCH:
+      case fapi::ul_pdu_type::SRS:
+      case fapi::ul_pdu_type::msg_a_PUSCH:
       default:
         srsgnb_assert(0, "UL_TTI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
     }
   }
 }
 
-void fapi_to_phy_translator::ul_dci_request(const ul_dci_request_message& msg) {}
+void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& msg) {}
 
-void fapi_to_phy_translator::tx_data_request(const tx_data_request_message& msg)
+void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message& msg)
 {
   std::lock_guard<std::mutex> lock(mutex);
 
@@ -153,7 +152,7 @@ void fapi_to_phy_translator::tx_data_request(const tx_data_request_message& msg)
 
   for (unsigned i = 0, e = msg.pdus.size(); i != e; ++i) {
     static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data;
-    const tx_data_req_pdu&                                                        pdu = msg.pdus[i];
+    const fapi::tx_data_req_pdu&                                                  pdu = msg.pdus[i];
     data.emplace_back(pdu.tlv_custom.payload, pdu.tlv_custom.length);
 
     current_slot_controller->process_pdsch(data, pdsch_pdu_repository[i]);

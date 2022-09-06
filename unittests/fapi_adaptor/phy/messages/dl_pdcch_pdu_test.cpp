@@ -17,7 +17,6 @@
 #include <random>
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 
 static std::mt19937 gen(0);
@@ -39,11 +38,12 @@ static void pdcch_conversion_test()
   std::uniform_int_distribution<unsigned> nid_data_dist(0, 65535);
   std::uniform_real_distribution<float>   power_dmrs_dist(-32.767, 32.767);
 
-  for (auto cyclic_p : {cyclic_prefix_type::normal, cyclic_prefix_type::extended}) {
-    for (auto cce_reg_mapping : {cce_to_reg_mapping_type::non_interleaved, cce_to_reg_mapping_type::interleaved}) {
+  for (auto cyclic_p : {fapi::cyclic_prefix_type::normal, fapi::cyclic_prefix_type::extended}) {
+    for (auto cce_reg_mapping :
+         {fapi::cce_to_reg_mapping_type::non_interleaved, fapi::cce_to_reg_mapping_type::interleaved}) {
       for (auto reg_bundle : {2U, 3U, 6U}) {
         for (auto interleaver_size : {2U, 3U, 6U}) {
-          for (auto type : {pdcch_coreset_type::pbch_or_sib1, pdcch_coreset_type::other}) {
+          for (auto type : {fapi::pdcch_coreset_type::pbch_or_sib1, fapi::pdcch_coreset_type::other}) {
             for (auto precoder : {coreset_configuration::precoder_granularity_type::same_as_reg_bundle,
                                   coreset_configuration::precoder_granularity_type::all_contiguous_rbs}) {
               for (int power_nr = -9; power_nr != -7; ++power_nr) {
@@ -62,8 +62,8 @@ static void pdcch_conversion_test()
                   unsigned nid_data           = nid_data_dist(gen);
                   float    power_dmrs         = power_dmrs_dist(gen);
 
-                  dl_pdcch_pdu         pdu;
-                  dl_pdcch_pdu_builder builder(pdu);
+                  fapi::dl_pdcch_pdu         pdu;
+                  fapi::dl_pdcch_pdu_builder builder(pdu);
 
                   freq_resource_bitmap freq_domain = {1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0,
                                                       0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
@@ -121,14 +121,14 @@ static void pdcch_conversion_test()
                   TESTASSERT_EQ(start_symbol_index, proc_pdu.coreset.start_symbol_index);
                   TESTASSERT_EQ(duration_symbol, proc_pdu.coreset.duration);
 
-                  if (type == pdcch_coreset_type::pbch_or_sib1) {
+                  if (type == fapi::pdcch_coreset_type::pbch_or_sib1) {
                     TESTASSERT(proc_pdu.coreset.cce_to_reg_mapping ==
                                pdcch_processor::cce_to_reg_mapping_type::CORESET0);
                     TESTASSERT_EQ(0, proc_pdu.coreset.reg_bundle_size);
                     TESTASSERT_EQ(0, proc_pdu.coreset.interleaver_size);
                     TESTASSERT_EQ(shift_index, proc_pdu.coreset.shift_index);
                   } else {
-                    if (cce_reg_mapping == cce_to_reg_mapping_type::non_interleaved) {
+                    if (cce_reg_mapping == fapi::cce_to_reg_mapping_type::non_interleaved) {
                       TESTASSERT(proc_pdu.coreset.cce_to_reg_mapping ==
                                  pdcch_processor::cce_to_reg_mapping_type::NON_INTERLEAVED);
                       TESTASSERT_EQ(0, proc_pdu.coreset.reg_bundle_size);

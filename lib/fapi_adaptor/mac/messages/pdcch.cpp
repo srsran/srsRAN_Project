@@ -11,12 +11,11 @@
 #include "srsgnb/fapi_adaptor/mac/messages/pdcch.h"
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 
 void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu& fapi_pdu, const mac_pdcch_pdu& mac_pdu)
 {
-  dl_pdcch_pdu_builder builder(fapi_pdu);
+  fapi::dl_pdcch_pdu_builder builder(fapi_pdu);
   convert_pdcch_mac_to_fapi(builder, mac_pdu);
 }
 
@@ -35,7 +34,8 @@ void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
   builder.set_bwp_parameters(crbs.length(),
                              crbs.start(),
                              bwp_cfg.scs,
-                             (bwp_cfg.cp_extended) ? cyclic_prefix_type::extended : cyclic_prefix_type::normal);
+                             (bwp_cfg.cp_extended) ? fapi::cyclic_prefix_type::extended
+                                                   : fapi::cyclic_prefix_type::normal);
 
   // Fill Coreset parameters.
   // :TODO: change the start symbol index in the future.
@@ -44,18 +44,18 @@ void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
       start_symbol_index,
       coreset_cfg.duration,
       (coreset_cfg.id == to_coreset_id(0)) ? freq_resource_bitmap() : coreset_cfg.freq_domain_resources(),
-      coreset_cfg.interleaved.has_value() ? cce_to_reg_mapping_type::interleaved
-                                          : cce_to_reg_mapping_type::non_interleaved,
+      coreset_cfg.interleaved.has_value() ? fapi::cce_to_reg_mapping_type::interleaved
+                                          : fapi::cce_to_reg_mapping_type::non_interleaved,
       coreset_cfg.interleaved.has_value() ? coreset_cfg.interleaved.value().reg_bundle_sz : 6U,
       coreset_cfg.interleaved.has_value() ? coreset_cfg.interleaved.value().interleaver_sz : 0U,
-      (dcis.front().parameters->dci.type == dci_dl_rnti_config_type::si_f1_0) ? pdcch_coreset_type::pbch_or_sib1
-                                                                              : pdcch_coreset_type::other,
+      (dcis.front().parameters->dci.type == dci_dl_rnti_config_type::si_f1_0) ? fapi::pdcch_coreset_type::pbch_or_sib1
+                                                                              : fapi::pdcch_coreset_type::other,
       coreset_cfg.interleaved.has_value() ? coreset_cfg.interleaved.value().shift_index : 0U,
       coreset_cfg.precoder_granurality);
 
   // Fill the DCIs.
   for (const auto& dci : dcis) {
-    dl_dci_pdu_builder dci_builder = builder.add_dl_dci();
+    fapi::dl_dci_pdu_builder dci_builder = builder.add_dl_dci();
 
     dci_builder.set_basic_parameters(dci.parameters->ctx.rnti,
                                      dci.parameters->ctx.n_id_pdcch_data,

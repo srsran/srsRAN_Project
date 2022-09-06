@@ -13,10 +13,9 @@
 
 using namespace srsgnb;
 using namespace fapi_adaptor;
-using namespace fapi;
 
 /// Fills the DL DCI parameters of the PDCCH processor PDU.
-static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const dl_pdcch_pdu& fapi_pdu)
+static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const fapi::dl_pdcch_pdu& fapi_pdu)
 {
   for (unsigned i = 0, e = fapi_pdu.dl_dci.size(); i != e; ++i) {
     proc_pdu.dci_list.emplace_back();
@@ -44,8 +43,8 @@ static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const dl_pdcch_pdu& fapi_
     dci.payload.resize(fapi_dci.payload_size_in_bits);
     // According to FAPI, bit order is "bit0-bit7 are mapped to first byte of MSB - LSB", so the bit 0 in
     // fapi_dci.payload[0] is the MSB.
-    for (unsigned i = 0, e = fapi_dci.payload_size_in_bits; i != e; ++i) {
-      dci.payload[i] = ((fapi_dci.payload[i / 8] >> i % 8) & 1U);
+    for (unsigned j = 0, je = fapi_dci.payload_size_in_bits; j != je; ++j) {
+      dci.payload[j] = ((fapi_dci.payload[j / 8] >> j % 8) & 1U);
     }
     // :TODO: Fill this in the future.
     dci.ports = {0};
@@ -53,7 +52,7 @@ static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const dl_pdcch_pdu& fapi_
 }
 
 /// Fills the coreset parameters of the PDCCH processor PDU.
-static void fill_coreset(pdcch_processor::coreset_description& coreset, const dl_pdcch_pdu& fapi_pdu)
+static void fill_coreset(pdcch_processor::coreset_description& coreset, const fapi::dl_pdcch_pdu& fapi_pdu)
 {
   coreset.bwp_size_rb        = fapi_pdu.coreset_bwp_size;
   coreset.bwp_start_rb       = fapi_pdu.coreset_bwp_start;
@@ -61,7 +60,7 @@ static void fill_coreset(pdcch_processor::coreset_description& coreset, const dl
   coreset.duration           = fapi_pdu.duration_symbols;
 
   // Configure CCE-to-REG mapping depending on PDCCH CORESET.
-  if (fapi_pdu.coreset_type == pdcch_coreset_type::pbch_or_sib1) {
+  if (fapi_pdu.coreset_type == fapi::pdcch_coreset_type::pbch_or_sib1) {
     // The PDCCH is located in CORESET0.
     coreset.cce_to_reg_mapping = pdcch_processor::cce_to_reg_mapping_type::CORESET0;
 
@@ -71,7 +70,7 @@ static void fill_coreset(pdcch_processor::coreset_description& coreset, const dl
     coreset.shift_index      = fapi_pdu.shift_index;
   } else {
     // The PDCCH is NOt located in CORESET0.
-    if (fapi_pdu.cce_reg_mapping_type == cce_to_reg_mapping_type::non_interleaved) {
+    if (fapi_pdu.cce_reg_mapping_type == fapi::cce_to_reg_mapping_type::non_interleaved) {
       // Non-interleaved case.
       coreset.cce_to_reg_mapping = pdcch_processor::cce_to_reg_mapping_type::NON_INTERLEAVED;
 
@@ -100,15 +99,15 @@ static void fill_coreset(pdcch_processor::coreset_description& coreset, const dl
   }
 }
 
-void srsgnb::fapi_adaptor::convert_pdcch_fapi_to_phy(pdcch_processor::pdu_t& proc_pdu,
-                                                     const dl_pdcch_pdu&     fapi_pdu,
-                                                     uint16_t                sfn,
-                                                     uint16_t                slot)
+void srsgnb::fapi_adaptor::convert_pdcch_fapi_to_phy(pdcch_processor::pdu_t&   proc_pdu,
+                                                     const fapi::dl_pdcch_pdu& fapi_pdu,
+                                                     uint16_t                  sfn,
+                                                     uint16_t                  slot)
 {
   proc_pdu.slot = slot_point(static_cast<uint32_t>(fapi_pdu.scs), sfn, slot);
   proc_pdu.cp =
-      cyclic_prefix((fapi_pdu.cyclic_prefix == cyclic_prefix_type::normal) ? cyclic_prefix::options::NORMAL
-                                                                           : cyclic_prefix::options::EXTENDED);
+      cyclic_prefix((fapi_pdu.cyclic_prefix == fapi::cyclic_prefix_type::normal) ? cyclic_prefix::options::NORMAL
+                                                                                 : cyclic_prefix::options::EXTENDED);
 
   fill_coreset(proc_pdu.coreset, fapi_pdu);
 

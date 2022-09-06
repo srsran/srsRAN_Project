@@ -14,7 +14,6 @@
 #include "srsgnb/mac/mac_cell_slot_handler.h"
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 
 namespace {
@@ -37,7 +36,7 @@ fapi_to_mac_time_msg_translator::fapi_to_mac_time_msg_translator(mac_to_fapi_tra
 {
 }
 
-void fapi_to_mac_time_msg_translator::on_slot_indication(const slot_indication_message& msg)
+void fapi_to_mac_time_msg_translator::on_slot_indication(const fapi::slot_indication_message& msg)
 {
   translator.handle_new_slot();
 

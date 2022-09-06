@@ -12,12 +12,11 @@
 #include "srsgnb/srsvec/bit.h"
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 
 /// \brief Adds the PHY timing information to the BCH payload for the given \c fapi_pdu.
 /// \return A packed BCH payload with the timing information, as per TS38.212 Section 7.1.1.
-static uint32_t fill_phy_timing_info_in_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, bool hrf)
+static uint32_t fill_phy_timing_info_in_bch_payload(const fapi::dl_ssb_pdu& fapi_pdu, uint32_t sfn, bool hrf)
 {
   // Move the BCH payload to the MSB.
   uint32_t payload = fapi_pdu.bch_payload.bch_payload << 8U;
@@ -41,10 +40,11 @@ static uint32_t fill_phy_timing_info_in_bch_payload(const dl_ssb_pdu& fapi_pdu, 
 
 /// \brief Encodes the full BCH payload for the given \c fapi_pdu.
 /// \return A packed BCH payload, as per TS38.212 Section 7.1.1.
-static uint32_t generate_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, bool hrf, subcarrier_spacing scs_common)
+static uint32_t
+generate_bch_payload(const fapi::dl_ssb_pdu& fapi_pdu, uint32_t sfn, bool hrf, subcarrier_spacing scs_common)
 {
-  const dl_ssb_phy_mib_pdu& mib     = fapi_pdu.bch_payload.phy_mib_pdu;
-  uint32_t                  payload = 0;
+  const fapi::dl_ssb_phy_mib_pdu& mib     = fapi_pdu.bch_payload.phy_mib_pdu;
+  uint32_t                        payload = 0;
 
   // CHOICE in BCCH-BCH-MessageType - 1 bit.
   // Set to zero.
@@ -97,18 +97,21 @@ static uint32_t generate_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, b
 ///
 /// The BCH packing procedure is selected based on the field \c bch_payload_type of \c fapi_pdu, as per TS38.212
 /// Section 7.1.1 and references therein.
-static void
-fill_bch_payload(span<uint8_t> dest, const dl_ssb_pdu& fapi_pdu, uint16_t sfn, bool hrf, subcarrier_spacing scs_common)
+static void fill_bch_payload(span<uint8_t>           dest,
+                             const fapi::dl_ssb_pdu& fapi_pdu,
+                             uint16_t                sfn,
+                             bool                    hrf,
+                             subcarrier_spacing      scs_common)
 {
   uint32_t payload = 0;
   switch (fapi_pdu.bch_payload_flag) {
-    case bch_payload_type::mac_full:
+    case fapi::bch_payload_type::mac_full:
       payload = fapi_pdu.bch_payload.bch_payload;
       break;
-    case bch_payload_type::phy_timing_info:
+    case fapi::bch_payload_type::phy_timing_info:
       payload = fill_phy_timing_info_in_bch_payload(fapi_pdu, sfn, hrf);
       break;
-    case bch_payload_type::phy_full:
+    case fapi::bch_payload_type::phy_full:
       payload = generate_bch_payload(fapi_pdu, sfn, hrf, scs_common);
       break;
     default:
@@ -119,14 +122,14 @@ fill_bch_payload(span<uint8_t> dest, const dl_ssb_pdu& fapi_pdu, uint16_t sfn, b
 }
 
 /// Returns the coefficient \f$\beta_{PSS}\f$ from the given SSB PDU (see TS38.213, Section 4.1).
-static float convert_to_beta_pss(const dl_ssb_pdu& fapi_pdu)
+static float convert_to_beta_pss(const fapi::dl_ssb_pdu& fapi_pdu)
 {
   switch (fapi_pdu.beta_pss_profile_nr) {
-    case beta_pss_profile_type::dB_0:
+    case fapi::beta_pss_profile_type::dB_0:
       return 0.F;
-    case beta_pss_profile_type::dB_3:
+    case fapi::beta_pss_profile_type::dB_3:
       return 3.F;
-    case beta_pss_profile_type::beta_pss_profile_sss:
+    case fapi::beta_pss_profile_type::beta_pss_profile_sss:
       return fapi_pdu.ssb_maintenance_v3.beta_pss_profile_sss * 0.001F;
     default:
       // NOTE: Unreachable code as the FAPI message should have been validated.
@@ -135,11 +138,11 @@ static float convert_to_beta_pss(const dl_ssb_pdu& fapi_pdu)
   }
 }
 
-void srsgnb::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t& proc_pdu,
-                                                   const dl_ssb_pdu&     fapi_pdu,
-                                                   uint16_t              sfn,
-                                                   uint16_t              slot,
-                                                   subcarrier_spacing    scs_common)
+void srsgnb::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t&   proc_pdu,
+                                                   const fapi::dl_ssb_pdu& fapi_pdu,
+                                                   uint16_t                sfn,
+                                                   uint16_t                slot,
+                                                   subcarrier_spacing      scs_common)
 {
   srsgnb_assert(scs_common != subcarrier_spacing::kHz240, "Invalid value for common subcarrier spacing");
   srsgnb_assert(fapi_pdu.ssb_maintenance_v3.scs != subcarrier_spacing::kHz60,

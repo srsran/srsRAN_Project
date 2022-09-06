@@ -13,12 +13,11 @@
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 
 void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pdu, const sib_information& mac_pdu)
 {
-  dl_pdsch_pdu_builder builder(fapi_pdu);
+  fapi::dl_pdsch_pdu_builder builder(fapi_pdu);
 
   convert_pdsch_mac_to_fapi(builder, mac_pdu);
 }
@@ -51,14 +50,14 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   builder.set_bwp_parameters(mac_pdu.pdcch_cfg->ctx.coreset_cfg->coreset0_crbs().length(),
                              mac_pdu.pdcch_cfg->ctx.coreset_cfg->coreset0_crbs().start(),
                              mac_pdu.pdsch_cfg.bwp_cfg->scs,
-                             mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? cyclic_prefix_type::extended
-                                                                    : cyclic_prefix_type::normal);
+                             mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? fapi::cyclic_prefix_type::extended
+                                                                    : fapi::cyclic_prefix_type::normal);
 
   // Codewords.
   srsgnb_assert(mac_pdu.pdsch_cfg.codewords.size() == 1,
                 "Current FAPI implementation only supports 1 transport block per PDU");
   for (const auto& cw : mac_pdu.pdsch_cfg.codewords) {
-    dl_pdsch_codeword_builder cw_builder = builder.add_codeword();
+    fapi::dl_pdsch_codeword_builder cw_builder = builder.add_codeword();
     cw_builder.set_basic_parameters(cw.target_code_rate,
                                     get_bits_per_symbol(cw.qam_mod),
                                     cw.mcs_index.to_uint(),
@@ -72,7 +71,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   // Set nid_pdsch to pci.
   unsigned nid_pdsch = mac_pdu.pdsch_cfg.n_id;
   builder.set_codeword_information_parameters(
-      nid_pdsch, num_layers, transmision_scheme, pdsch_ref_point_type::subcarrier_0);
+      nid_pdsch, num_layers, transmision_scheme, fapi::pdsch_ref_point_type::subcarrier_0);
 
   // DMRS.
   const dmrs_information& dmrs_cfg = mac_pdu.pdsch_cfg.dmrs;
@@ -80,34 +79,34 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
                               convert_dmrs_type_mac_to_fapi(dmrs_cfg.config_type),
                               dmrs_cfg.dmrs_scrambling_id,
                               dmrs_cfg.dmrs_scrambling_id_complement,
-                              dmrs_cfg.low_papr_dmrs ? low_papr_dmrs_type::dependent_cdm_group
-                                                     : low_papr_dmrs_type::independent_cdm_group,
+                              dmrs_cfg.low_papr_dmrs ? fapi::low_papr_dmrs_type::dependent_cdm_group
+                                                     : fapi::low_papr_dmrs_type::independent_cdm_group,
                               dmrs_cfg.n_scid,
                               dmrs_cfg.num_dmrs_cdm_grps_no_data,
                               dmrs_cfg.dmrs_ports.to_uint64());
 
   if (mac_pdu.pdsch_cfg.prbs.is_alloc_type0()) {
-    static_vector<uint8_t, dl_pdsch_pdu::MAX_SIZE_RB_BITMAP> rb_map;
-    rb_map.resize(dl_pdsch_pdu::MAX_SIZE_RB_BITMAP, 0U);
+    static_vector<uint8_t, fapi::dl_pdsch_pdu::MAX_SIZE_RB_BITMAP> rb_map;
+    rb_map.resize(fapi::dl_pdsch_pdu::MAX_SIZE_RB_BITMAP, 0U);
     const rbg_bitmap& mac_rbg_map = mac_pdu.pdsch_cfg.prbs.rbgs();
     for (unsigned i = 0, e = mac_rbg_map.size(); i != e; ++i) {
       rb_map[i / 8] |= uint8_t(mac_rbg_map.test(i) ? 1U : 0U) << i % 8;
     }
-    builder.set_pdsch_allocation_in_frequency_type_0({rb_map}, vrb_to_prb_mapping_type::non_interleaved);
+    builder.set_pdsch_allocation_in_frequency_type_0({rb_map}, fapi::vrb_to_prb_mapping_type::non_interleaved);
   } else {
     const prb_interval& prb_int = mac_pdu.pdsch_cfg.prbs.prbs();
     builder.set_pdsch_allocation_in_frequency_type_1(
-        prb_int.start(), prb_int.length(), vrb_to_prb_mapping_type::non_interleaved);
+        prb_int.start(), prb_int.length(), fapi::vrb_to_prb_mapping_type::non_interleaved);
   }
 
   builder.set_pdsch_allocation_in_time_parameters(mac_pdu.pdsch_cfg.symbols.start(),
                                                   mac_pdu.pdsch_cfg.symbols.length());
 
   // Power values.
-  builder.set_tx_power_info_parameters({0}, nzp_csi_rs_epre_to_ssb::dB0);
+  builder.set_tx_power_info_parameters({0}, fapi::nzp_csi_rs_epre_to_ssb::dB0);
 
   const coreset_configuration& coreset_cfg = *mac_pdu.pdcch_cfg->ctx.coreset_cfg;
-  builder.set_maintenance_v3_bwp_parameters(pdsch_trans_type::non_interleaved_common_ss,
+  builder.set_maintenance_v3_bwp_parameters(fapi::pdsch_trans_type::non_interleaved_common_ss,
                                             coreset_cfg.coreset0_crbs().start(),
                                             coreset_cfg.coreset0_crbs().length());
 

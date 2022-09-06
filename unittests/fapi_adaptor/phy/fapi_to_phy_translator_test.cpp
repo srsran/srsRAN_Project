@@ -18,7 +18,6 @@
 #include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 using namespace unittest;
 
@@ -134,7 +133,7 @@ static void test_dl_ssb_pdu_is_processed()
   TESTASSERT(grid.has_set_all_zero_method_been_called());
 
   // Process SSB PDU.
-  const dl_tti_request_message& msg = build_valid_dl_tti_request();
+  const fapi::dl_tti_request_message& msg = build_valid_dl_tti_request();
   translator.dl_tti_request(msg);
 
   // Assert that the SSB PDU has been processed.
@@ -165,7 +164,7 @@ static void test_calling_dl_tti_request_without_handling_slot_does_nothing()
   TESTASSERT(!grid.has_set_all_zero_method_been_called());
 
   // Process SSB PDU.
-  const dl_tti_request_message& msg = build_valid_dl_tti_request();
+  const fapi::dl_tti_request_message& msg = build_valid_dl_tti_request();
   translator.dl_tti_request(msg);
   TESTASSERT(!dl_processor_pool.processor(slot).has_process_ssb_method_been_called());
 }

@@ -18,7 +18,6 @@
 #include "srsgnb/srslog/logger.h"
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 
 namespace {
@@ -52,7 +51,7 @@ find_same_bwp_and_coreset_for_first_element(const static_vector<pdcch_group, MAX
   return result;
 }
 
-static void add_pdcch_pdus_to_request(dl_tti_request_message_builder& builder, const mac_dl_sched_result& dl_res)
+static void add_pdcch_pdus_to_request(fapi::dl_tti_request_message_builder& builder, const mac_dl_sched_result& dl_res)
 {
   // Group the PDU's.
   static_vector<mac_pdcch_pdu, MAX_DL_PDUS_PER_SLOT> pdus;
@@ -93,25 +92,25 @@ static void add_pdcch_pdus_to_request(dl_tti_request_message_builder& builder, c
 
   // Convert the MAC PDUs into FAPI PDUs.
   for (const auto& pdu : pdus) {
-    dl_pdcch_pdu_builder pdcch_builder = builder.add_pdcch_pdu(pdu.dcis.size());
+    fapi::dl_pdcch_pdu_builder pdcch_builder = builder.add_pdcch_pdu(pdu.dcis.size());
     convert_pdcch_mac_to_fapi(pdcch_builder, pdu);
   }
 }
 
-static void add_ssb_pdus_to_request(dl_tti_request_message_builder& builder, const mac_dl_sched_result& dl_res)
+static void add_ssb_pdus_to_request(fapi::dl_tti_request_message_builder& builder, const mac_dl_sched_result& dl_res)
 {
   for (const auto& pdu : dl_res.ssb_pdu) {
-    dl_ssb_pdu_builder ssb_builder = builder.add_ssb_pdu();
+    fapi::dl_ssb_pdu_builder ssb_builder = builder.add_ssb_pdu();
     convert_ssb_mac_to_fapi(ssb_builder, pdu);
   }
 }
 
-static void add_pdsch_pdus_to_request(dl_tti_request_message_builder& builder,
-                                      pdsch_pdu_registry&             pdsch_registry,
-                                      const mac_dl_sched_result&      dl_res)
+static void add_pdsch_pdus_to_request(fapi::dl_tti_request_message_builder& builder,
+                                      pdsch_pdu_registry&                   pdsch_registry,
+                                      const mac_dl_sched_result&            dl_res)
 {
   for (const auto& pdu : dl_res.dl_res->bc.sibs) {
-    dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
+    fapi::dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
     convert_pdsch_mac_to_fapi(pdsch_builder, pdu);
     pdsch_registry.register_pdu(pdsch_builder.get_pdu_id(), pdsch_pdu_registry::sib);
   }
@@ -120,8 +119,8 @@ static void add_pdsch_pdus_to_request(dl_tti_request_message_builder& builder,
 void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res)
 {
   // :TODO: should we manage here 2 different numerologies in the same dl_res?
-  dl_tti_request_message         msg;
-  dl_tti_request_message_builder builder(msg);
+  fapi::dl_tti_request_message         msg;
+  fapi::dl_tti_request_message_builder builder(msg);
 
   // FAPI implementation doesn't support groups at the moment.
   static const unsigned num_groups = 0;
@@ -140,7 +139,7 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   }
 
   // Validate that the DL_TTI.request message is correct.
-  error_type<validator_report> result = validate_dl_tti_request(msg);
+  error_type<fapi::validator_report> result = validate_dl_tti_request(msg);
 
   if (!result) {
     log_validator_report(result.error());
@@ -171,8 +170,8 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
                 pdsch_registry.get_nof_pdus(pdsch_pdu_registry::ue),
                 dl_data.ue_pdus.size());
 
-  tx_data_request_message msg;
-  tx_data_request_builder builder(msg);
+  fapi::tx_data_request_message msg;
+  fapi::tx_data_request_builder builder(msg);
 
   builder.set_basic_parameters(dl_data.slot.sfn(), dl_data.slot.slot_index());
 
@@ -189,19 +188,19 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
 
 void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res)
 {
-  ul_tti_request_message         msg;
-  ul_tti_request_message_builder builder(msg);
+  fapi::ul_tti_request_message         msg;
+  fapi::ul_tti_request_message_builder builder(msg);
 
   // :TODO: Should we check here the numerology matches incoming slot and configured numerology for cell?
   builder.set_basic_parameters(ul_res.slot.sfn(), ul_res.slot.slot_index());
 
   for (const auto& pdu : ul_res.ul_res->prachs) {
-    ul_prach_pdu_builder pdu_builder = builder.add_prach_pdu();
+    fapi::ul_prach_pdu_builder pdu_builder = builder.add_prach_pdu();
     convert_prach_mac_to_fapi(pdu_builder, pdu);
   }
 
   // Validate that the UL_TTI.request message is correct.
-  error_type<validator_report> result = validate_ul_tti_request(msg);
+  error_type<fapi::validator_report> result = validate_ul_tti_request(msg);
 
   if (!result) {
     log_validator_report(result.error());

@@ -11,7 +11,6 @@
 #include "phy_fapi_adaptor_impl.h"
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 
 phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(unsigned                    sector_id,
@@ -31,12 +30,12 @@ upper_phy_timing_notifier& phy_fapi_adaptor_impl::get_timing_notifier()
   return time_translator;
 }
 
-void phy_fapi_adaptor_impl::set_slot_time_message_notifier(slot_time_message_notifier& fapi_time_slot_notifier)
+void phy_fapi_adaptor_impl::set_slot_time_message_notifier(fapi::slot_time_message_notifier& fapi_time_slot_notifier)
 {
   time_translator.set_slot_time_message_notifier(fapi_time_slot_notifier);
 }
 
-void phy_fapi_adaptor_impl::set_slot_data_message_notifier(slot_data_message_notifier& fapi_data_notifier)
+void phy_fapi_adaptor_impl::set_slot_data_message_notifier(fapi::slot_data_message_notifier& fapi_data_notifier)
 {
   results_translator.set_slot_data_message_notifier(fapi_data_notifier);
 }

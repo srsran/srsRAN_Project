@@ -32,7 +32,6 @@
 #include <getopt.h>
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 using namespace srs_du;
 
@@ -473,7 +472,7 @@ static std::unique_ptr<phy_fapi_adaptor> build_phy_fapi_adaptor(downlink_process
   return phy_factory->create(phy_fapi_config);
 }
 
-static std::unique_ptr<mac_fapi_adaptor> build_mac_fapi_adaptor(slot_message_gateway& gateway)
+static std::unique_ptr<mac_fapi_adaptor> build_mac_fapi_adaptor(fapi::slot_message_gateway& gateway)
 {
   std::unique_ptr<mac_fapi_adaptor_factory> mac_factory = create_mac_fapi_adaptor_factory();
   mac_fapi_adaptor_factory_config           mac_fapi_config(sector_id, scs, gateway);

@@ -11,29 +11,28 @@
 #include "srsgnb/fapi_adaptor/mac/messages/ssb.h"
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 
 /// \brief Converts the given \c ssb_pss_to_sss_epre value into a \c beta_pss_profile_type value.
 ///
 /// This value corresponds to the \e betaPssProfileNR parameter as defined by FAPI in SCF-222 v4.0 Section 3.4.2.4.
 /// \remark The MAC/Scheduler uses \c ssb_pss_to_sss_epre to prevent misusing 3GPP terminology.
-static beta_pss_profile_type convert_to_beta_pss_profile_nr(ssb_pss_to_sss_epre value)
+static fapi::beta_pss_profile_type convert_to_beta_pss_profile_nr(ssb_pss_to_sss_epre value)
 {
   switch (value) {
     case ssb_pss_to_sss_epre::dB_0:
-      return beta_pss_profile_type::dB_0;
+      return fapi::beta_pss_profile_type::dB_0;
     case ssb_pss_to_sss_epre::dB_3:
-      return beta_pss_profile_type::dB_3;
+      return fapi::beta_pss_profile_type::dB_3;
     default:
       break;
   }
-  return beta_pss_profile_type::dB_0;
+  return fapi::beta_pss_profile_type::dB_0;
 }
 
 void srsgnb::fapi_adaptor::convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu& fapi_pdu, const srsgnb::dl_ssb_pdu& mac_pdu)
 {
-  dl_ssb_pdu_builder builder(fapi_pdu);
+  fapi::dl_ssb_pdu_builder builder(fapi_pdu);
 
   convert_ssb_mac_to_fapi(builder, mac_pdu);
 }

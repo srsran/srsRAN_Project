@@ -14,7 +14,6 @@
 #include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 using namespace unittests;
 
@@ -25,11 +24,11 @@ static void test_conversion_ok()
                                         result.dl_res->dl_pdcchs.front().ctx.coreset_cfg,
                                         {{&result.dl_res->dl_pdcchs.front(), &result.pdcch_pdus.front()}}};
 
-  dl_pdcch_pdu fapi_pdu;
+  fapi::dl_pdcch_pdu fapi_pdu;
   convert_pdcch_mac_to_fapi(fapi_pdu, mac_pdu);
 
   // BWP.
-  TESTASSERT_EQ(mac_pdu.bwp_cfg->cp_extended ? cyclic_prefix_type::extended : cyclic_prefix_type::normal,
+  TESTASSERT_EQ(mac_pdu.bwp_cfg->cp_extended ? fapi::cyclic_prefix_type::extended : fapi::cyclic_prefix_type::normal,
                 fapi_pdu.cyclic_prefix);
   TESTASSERT_EQ(mac_pdu.bwp_cfg->scs, fapi_pdu.scs);
   TESTASSERT_EQ(mac_pdu.coreset_cfg->coreset0_crbs().start(), fapi_pdu.coreset_bwp_start);
@@ -38,8 +37,8 @@ static void test_conversion_ok()
   // CORESET.
   TESTASSERT_EQ(0U, fapi_pdu.start_symbol_index);
   TESTASSERT_EQ(mac_pdu.coreset_cfg->duration, fapi_pdu.duration_symbols);
-  TESTASSERT_EQ(mac_pdu.coreset_cfg->interleaved.has_value() ? cce_to_reg_mapping_type::interleaved
-                                                             : cce_to_reg_mapping_type::non_interleaved,
+  TESTASSERT_EQ(mac_pdu.coreset_cfg->interleaved.has_value() ? fapi::cce_to_reg_mapping_type::interleaved
+                                                             : fapi::cce_to_reg_mapping_type::non_interleaved,
                 fapi_pdu.cce_reg_mapping_type);
   TESTASSERT_EQ(mac_pdu.coreset_cfg->interleaved.has_value() ? mac_pdu.coreset_cfg->interleaved.value().reg_bundle_sz
                                                              : 6U,
@@ -52,8 +51,8 @@ static void test_conversion_ok()
                 fapi_pdu.shift_index);
   TESTASSERT_EQ(mac_pdu.coreset_cfg->precoder_granurality, fapi_pdu.precoder_granularity);
   TESTASSERT_EQ((mac_pdu.dcis.front().parameters->dci.type == dci_dl_rnti_config_type::si_f1_0)
-                    ? pdcch_coreset_type::pbch_or_sib1
-                    : pdcch_coreset_type::other,
+                    ? fapi::pdcch_coreset_type::pbch_or_sib1
+                    : fapi::pdcch_coreset_type::other,
                 fapi_pdu.coreset_type);
 
   if (mac_pdu.coreset_cfg->id != to_coreset_id(0)) {

@@ -13,7 +13,6 @@
 #include "srsgnb/mac/mac_cell_rach_handler.h"
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 
 namespace {
@@ -32,18 +31,17 @@ static mac_cell_rach_handler_dummy dummy_mac_rach_handler;
 
 fapi_to_mac_data_msg_translator::fapi_to_mac_data_msg_translator(subcarrier_spacing scs) :
   rach_handler(dummy_mac_rach_handler), scs(scs)
-{
-}
+{}
 
-void fapi_to_mac_data_msg_translator::on_dl_tti_response(const dl_tti_response_message& msg) {}
+void fapi_to_mac_data_msg_translator::on_dl_tti_response(const fapi::dl_tti_response_message& msg) {}
 
-void fapi_to_mac_data_msg_translator::on_rx_data_indication(const rx_data_indication_message& msg) {}
+void fapi_to_mac_data_msg_translator::on_rx_data_indication(const fapi::rx_data_indication_message& msg) {}
 
-void fapi_to_mac_data_msg_translator::on_crc_indication(const crc_indication_message& msg) {}
+void fapi_to_mac_data_msg_translator::on_crc_indication(const fapi::crc_indication_message& msg) {}
 
-void fapi_to_mac_data_msg_translator::on_uci_indication(const uci_indication_message& msg) {}
+void fapi_to_mac_data_msg_translator::on_uci_indication(const fapi::uci_indication_message& msg) {}
 
-void fapi_to_mac_data_msg_translator::on_srs_indication(const srs_indication_message& msg) {}
+void fapi_to_mac_data_msg_translator::on_srs_indication(const fapi::srs_indication_message& msg) {}
 
 /// Converts the given FAPI RACH occasion RSSI to dBs as per SCF-222 v4.0 section 3.4.11.
 static float to_rssi_dB(int fapi_rssi)
@@ -63,7 +61,7 @@ static float to_snr_dB(int fapi_snr)
   return (fapi_snr - 128) * 0.5F;
 }
 
-void fapi_to_mac_data_msg_translator::on_rach_indication(const rach_indication_message& msg)
+void fapi_to_mac_data_msg_translator::on_rach_indication(const fapi::rach_indication_message& msg)
 {
   mac_rach_indication indication;
   indication.slot_rx = slot_point(to_numerology_value(scs), msg.sfn, msg.slot);

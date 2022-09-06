@@ -15,33 +15,32 @@
 #include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 using namespace unittests;
 
 namespace {
 
 /// Spy implementation of a slot message gateway.
-class slot_message_gateway_spy : public slot_message_gateway
+class slot_message_gateway_spy : public fapi::slot_message_gateway
 {
-  bool                   has_dl_tti_request_method_been_called = false;
-  dl_tti_request_message dl_tti_msg;
+  bool                         has_dl_tti_request_method_been_called = false;
+  fapi::dl_tti_request_message dl_tti_msg;
 
 public:
   bool has_dl_tti_request_method_called() const { return has_dl_tti_request_method_been_called; }
-  const dl_tti_request_message& dl_tti_request_msg() const { return dl_tti_msg; }
+  const fapi::dl_tti_request_message& dl_tti_request_msg() const { return dl_tti_msg; }
 
-  void dl_tti_request(const dl_tti_request_message& msg) override
+  void dl_tti_request(const fapi::dl_tti_request_message& msg) override
   {
     has_dl_tti_request_method_been_called = true;
     dl_tti_msg                            = msg;
   }
 
-  void ul_tti_request(const ul_tti_request_message& msg) override {}
+  void ul_tti_request(const fapi::ul_tti_request_message& msg) override {}
 
-  void ul_dci_request(const ul_dci_request_message& msg) override {}
+  void ul_dci_request(const fapi::ul_dci_request_message& msg) override {}
 
-  void tx_data_request(const tx_data_request_message& msg) override {}
+  void tx_data_request(const fapi::tx_data_request_message& msg) override {}
 };
 
 } // namespace
@@ -57,15 +56,15 @@ static void test_valid_dl_sched_results_generate_correct_dl_tti_request()
   translator.on_new_downlink_scheduler_results(result);
 
   TESTASSERT(gateway_spy.has_dl_tti_request_method_called());
-  const dl_tti_request_message& msg = gateway_spy.dl_tti_request_msg();
+  const fapi::dl_tti_request_message& msg = gateway_spy.dl_tti_request_msg();
   TESTASSERT_EQ(msg.pdus.size(), 5U);
-  TESTASSERT_EQ((msg.pdus.begin() + 1)->pdu_type, dl_pdu_type::PDCCH);
-  TESTASSERT_EQ(msg.pdus.back().pdu_type, dl_pdu_type::PDSCH);
-  TESTASSERT_EQ(msg.pdus.front().pdu_type, dl_pdu_type::PDCCH);
+  TESTASSERT_EQ((msg.pdus.begin() + 1)->pdu_type, fapi::dl_pdu_type::PDCCH);
+  TESTASSERT_EQ(msg.pdus.back().pdu_type, fapi::dl_pdu_type::PDSCH);
+  TESTASSERT_EQ(msg.pdus.front().pdu_type, fapi::dl_pdu_type::PDCCH);
   TESTASSERT_EQ(msg.pdus.front().pdcch_pdu.dl_dci.size(), 3U);
   TESTASSERT_EQ((msg.pdus.begin() + 1)->pdcch_pdu.dl_dci.size(), 1U);
-  TESTASSERT_EQ((msg.pdus.end() - 2)->pdu_type, dl_pdu_type::SSB);
-  TESTASSERT_EQ((msg.pdus.end() - 3)->pdu_type, dl_pdu_type::SSB);
+  TESTASSERT_EQ((msg.pdus.end() - 2)->pdu_type, fapi::dl_pdu_type::SSB);
+  TESTASSERT_EQ((msg.pdus.end() - 3)->pdu_type, fapi::dl_pdu_type::SSB);
 
   const srsgnb::dl_ssb_pdu& pdu      = result.ssb_pdu.front();
   const fapi::dl_ssb_pdu&   fapi_pdu = (msg.pdus.end() - 3)->ssb_pdu;
@@ -83,7 +82,7 @@ static void test_valid_dl_sched_results_generate_correct_dl_tti_request()
   TESTASSERT_EQ(-32768, fapi_pdu.ssb_maintenance_v3.ss_pbch_block_power_scaling);
 
   // MIB.
-  TESTASSERT_EQ(bch_payload_type::phy_full, fapi_pdu.bch_payload_flag);
+  TESTASSERT_EQ(fapi::bch_payload_type::phy_full, fapi_pdu.bch_payload_flag);
   TESTASSERT_EQ(pdu.mib_data.pdcch_config_sib1, fapi_pdu.bch_payload.phy_mib_pdu.pdcch_config_sib1);
   uint8_t dmrs_typeA_pos = pdu.mib_data.dmrs_typeA_pos == dmrs_typeA_position::pos2 ? 0 : 1;
   TESTASSERT_EQ(dmrs_typeA_pos, fapi_pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position);

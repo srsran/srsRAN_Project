@@ -14,7 +14,6 @@
 #include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 using namespace unittests;
 
@@ -39,7 +38,7 @@ static void test_conversion_ok()
   TESTASSERT_EQ(-32768, fapi_pdu.ssb_maintenance_v3.ss_pbch_block_power_scaling);
 
   // MIB.
-  TESTASSERT_EQ(bch_payload_type::phy_full, fapi_pdu.bch_payload_flag);
+  TESTASSERT_EQ(fapi::bch_payload_type::phy_full, fapi_pdu.bch_payload_flag);
   TESTASSERT_EQ(pdu.mib_data.pdcch_config_sib1, fapi_pdu.bch_payload.phy_mib_pdu.pdcch_config_sib1);
   uint8_t dmrs_typeA_pos = pdu.mib_data.dmrs_typeA_pos == dmrs_typeA_position::pos2 ? 0 : 1;
   TESTASSERT_EQ(dmrs_typeA_pos, fapi_pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position);

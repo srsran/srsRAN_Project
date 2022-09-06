@@ -12,7 +12,6 @@
 #include "mac_fapi_adaptor_impl.h"
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 
 std::unique_ptr<mac_fapi_adaptor> mac_fapi_adaptor_factory_impl::create(const mac_fapi_adaptor_factory_config& config)

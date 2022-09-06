@@ -18,7 +18,6 @@
 #include <random>
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 
 static std::mt19937 gen(0);
@@ -109,12 +108,12 @@ static void pdcch_conversion_benchmark()
 
   for (unsigned i = 0; i != iterations; ++i) {
     // :TODO: Begin with the MAC structure when it is defined.
-    dl_tti_request_message         msg;
-    dl_tti_request_message_builder builder(msg);
+    fapi::dl_tti_request_message         msg;
+    fapi::dl_tti_request_message_builder builder(msg);
     // :TODO: when the groups are available, add them.
     builder.set_basic_parameters(sfn_dist(gen), slot_dist(gen), 0);
 
-    dl_pdcch_pdu_builder builder_pdcch = builder.add_pdcch_pdu(10);
+    fapi::dl_pdcch_pdu_builder builder_pdcch = builder.add_pdcch_pdu(10);
 
     freq_resource_bitmap freq_domain = {1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1,
                                         1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1};
@@ -123,16 +122,16 @@ static void pdcch_conversion_benchmark()
     builder_pdcch.set_bwp_parameters(bwp_size_dist(gen),
                                      bwp_start_dist(gen),
                                      subcarrier_spacing::kHz240,
-                                     static_cast<cyclic_prefix_type>(binary_dist(gen)));
+                                     static_cast<fapi::cyclic_prefix_type>(binary_dist(gen)));
 
     builder_pdcch.set_coreset_parameters(
         start_symbol_index_dist(gen),
         duration_symbol_dist(gen),
         freq_domain,
-        static_cast<cce_to_reg_mapping_type>(binary_dist(gen)),
+        static_cast<fapi::cce_to_reg_mapping_type>(binary_dist(gen)),
         custom_dist(gen),
         custom_dist(gen),
-        static_cast<pdcch_coreset_type>(binary_dist(gen)),
+        static_cast<fapi::pdcch_coreset_type>(binary_dist(gen)),
         shift_index_dist(gen),
         static_cast<coreset_configuration::precoder_granularity_type>(binary_dist(gen)));
 

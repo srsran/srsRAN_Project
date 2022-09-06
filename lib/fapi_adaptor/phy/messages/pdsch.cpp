@@ -13,16 +13,15 @@
 
 using namespace srsgnb;
 using namespace fapi_adaptor;
-using namespace fapi;
 
 /// Fills the RE patterns parameter of the PDSCH PDU.
-static void fill_reserved_re_pattern(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_pdu& fapi_pdu)
+static void fill_reserved_re_pattern(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_pdsch_pdu& fapi_pdu)
 {
   // :TODO: Implement me!
 }
 
 /// Fills the codewords.
-static void fill_codewords(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_pdu& fapi_pdu)
+static void fill_codewords(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_pdsch_pdu& fapi_pdu)
 {
   for (const auto& cw : fapi_pdu.cws) {
     proc_pdu.codewords.push_back(
@@ -30,16 +29,16 @@ static void fill_codewords(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_pdu&
   }
 }
 
-static float get_power_control_offset_ss_dB(nzp_csi_rs_epre_to_ssb power_control_offset_ss_profile_nr)
+static float get_power_control_offset_ss_dB(fapi::nzp_csi_rs_epre_to_ssb power_control_offset_ss_profile_nr)
 {
   switch (power_control_offset_ss_profile_nr) {
-    case nzp_csi_rs_epre_to_ssb::dB_minus_3:
+    case fapi::nzp_csi_rs_epre_to_ssb::dB_minus_3:
       return -3.0F;
-    case nzp_csi_rs_epre_to_ssb::dB0:
+    case fapi::nzp_csi_rs_epre_to_ssb::dB0:
       return +0.0F;
-    case nzp_csi_rs_epre_to_ssb::dB3:
+    case fapi::nzp_csi_rs_epre_to_ssb::dB3:
       return +3.0F;
-    case nzp_csi_rs_epre_to_ssb::dB6:
+    case fapi::nzp_csi_rs_epre_to_ssb::dB6:
     default:
       break;
   }
@@ -47,10 +46,11 @@ static float get_power_control_offset_ss_dB(nzp_csi_rs_epre_to_ssb power_control
 }
 
 /// Fills the power related parameters in the PDSCH PDU.
-static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_pdu& fapi_pdu)
+static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_pdsch_pdu& fapi_pdu)
 {
   // Determine if ProfileNR is enabled.
-  bool use_profileNR = (fapi_pdu.power_control_offset_ss_profile_nr != nzp_csi_rs_epre_to_ssb::L1_use_profile_sss);
+  bool use_profileNR =
+      (fapi_pdu.power_control_offset_ss_profile_nr != fapi::nzp_csi_rs_epre_to_ssb::L1_use_profile_sss);
 
   // Depending on the profile to use.
   if (use_profileNR) {
@@ -69,7 +69,7 @@ static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_p
     // Load Data to SSS ratio from SSS profile.
     srsgnb_assert(fapi_pdu.power_control_offset_profile_nr == std::numeric_limits<uint8_t>::max(),
                   "Expected SSS profile.");
-    srsgnb_assert(fapi_pdu.power_control_offset_ss_profile_nr == nzp_csi_rs_epre_to_ssb::L1_use_profile_sss,
+    srsgnb_assert(fapi_pdu.power_control_offset_ss_profile_nr == fapi::nzp_csi_rs_epre_to_ssb::L1_use_profile_sss,
                   "Expected SSS profile.");
     srsgnb_assert(fapi_pdu.pdsch_maintenance_v3.pdsch_data_power_offset_profile_sss !=
                       std::numeric_limits<int16_t>::min(),
@@ -89,21 +89,21 @@ static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_p
   }
 }
 
-static unsigned get_interleaver_size(vrb_to_prb_mapping_type vrb_to_prb_mapping)
+static unsigned get_interleaver_size(fapi::vrb_to_prb_mapping_type vrb_to_prb_mapping)
 {
   switch (vrb_to_prb_mapping) {
-    case vrb_to_prb_mapping_type::interleaved_rb_size2:
+    case fapi::vrb_to_prb_mapping_type::interleaved_rb_size2:
       return 2;
-    case vrb_to_prb_mapping_type::interleaved_rb_size4:
+    case fapi::vrb_to_prb_mapping_type::interleaved_rb_size4:
       return 4;
-    case vrb_to_prb_mapping_type::non_interleaved:
+    case fapi::vrb_to_prb_mapping_type::non_interleaved:
       break;
   }
   return 0;
 }
 
 /// Constructs the VRB-to-PRB mapper in function of the transmission type parameter of the PDSCH PDU.
-static vrb_to_prb_mapper make_vrb_to_prb_mapper(const dl_pdsch_pdu& fapi_pdu)
+static vrb_to_prb_mapper make_vrb_to_prb_mapper(const fapi::dl_pdsch_pdu& fapi_pdu)
 {
   // BWP i start.
   unsigned N_bwp_i_start = fapi_pdu.bwp_start;
@@ -117,29 +117,29 @@ static vrb_to_prb_mapper make_vrb_to_prb_mapper(const dl_pdsch_pdu& fapi_pdu)
   unsigned L_i = get_interleaver_size(fapi_pdu.vrb_to_prb_mapping);
 
   switch (fapi_pdu.pdsch_maintenance_v3.trans_type) {
-    case pdsch_trans_type::non_interleaved_common_ss:
+    case fapi::pdsch_trans_type::non_interleaved_common_ss:
       return vrb_to_prb_mapper::create_non_interleaved_common_ss(N_start_coreset);
-    case pdsch_trans_type::interleaved_common_type0_coreset0:
+    case fapi::pdsch_trans_type::interleaved_common_type0_coreset0:
       return vrb_to_prb_mapper::create_interleaved_coreset0(N_start_coreset, N_bwp_init_size);
-    case pdsch_trans_type::interleaved_common_any_coreset0_present:
+    case fapi::pdsch_trans_type::interleaved_common_any_coreset0_present:
       return vrb_to_prb_mapper::create_interleaved_common(N_start_coreset, N_bwp_i_start, N_bwp_init_size);
-    case pdsch_trans_type::interleaved_common_any_coreset0_not_present:
+    case fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present:
       return vrb_to_prb_mapper::create_interleaved_common(N_start_coreset, N_bwp_i_start, N_bwp_i_size);
-    case pdsch_trans_type::interleaved_other:
+    case fapi::pdsch_trans_type::interleaved_other:
       return vrb_to_prb_mapper::create_interleaved_other(N_bwp_i_start, N_bwp_i_size, L_i);
     default:
-    case pdsch_trans_type::non_interleaved_other:
+    case fapi::pdsch_trans_type::non_interleaved_other:
       break;
   }
   return vrb_to_prb_mapper::create_non_interleaved_other();
 }
 
 /// Fills the rb_allocation parameter of the PDSCH PDU.
-static void fill_rb_allocation(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_pdu& fapi_pdu)
+static void fill_rb_allocation(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_pdsch_pdu& fapi_pdu)
 {
   vrb_to_prb_mapper mapper = make_vrb_to_prb_mapper(fapi_pdu);
 
-  if (fapi_pdu.resource_alloc == resource_allocation_type::type_1) {
+  if (fapi_pdu.resource_alloc == fapi::resource_allocation_type::type_1) {
     proc_pdu.freq_alloc = rb_allocation::make_type1(fapi_pdu.rb_start, fapi_pdu.rb_size, mapper);
     return;
   }
@@ -157,18 +157,18 @@ static void fill_rb_allocation(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_
   proc_pdu.freq_alloc = rb_allocation::make_type0(vrb_bitmap, mapper);
 }
 
-void srsgnb::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t& proc_pdu,
-                                                     const dl_pdsch_pdu&     fapi_pdu,
-                                                     uint16_t                sfn,
-                                                     uint16_t                slot)
+void srsgnb::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&   proc_pdu,
+                                                     const fapi::dl_pdsch_pdu& fapi_pdu,
+                                                     uint16_t                  sfn,
+                                                     uint16_t                  slot)
 {
   proc_pdu.slot         = slot_point(static_cast<uint32_t>(fapi_pdu.scs), sfn, slot);
   proc_pdu.rnti         = fapi_pdu.rnti;
   proc_pdu.bwp_size_rb  = fapi_pdu.bwp_size;
   proc_pdu.bwp_start_rb = fapi_pdu.bwp_start;
   proc_pdu.cp =
-      cyclic_prefix((fapi_pdu.cyclic_prefix == cyclic_prefix_type::normal) ? cyclic_prefix::options::NORMAL
-                                                                           : cyclic_prefix::options::EXTENDED);
+      cyclic_prefix((fapi_pdu.cyclic_prefix == fapi::cyclic_prefix_type::normal) ? cyclic_prefix::options::NORMAL
+                                                                                 : cyclic_prefix::options::EXTENDED);
 
   fill_codewords(proc_pdu, fapi_pdu);
 
@@ -181,11 +181,11 @@ void srsgnb::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t& pro
     proc_pdu.dmrs_symbol_mask[i] = ((static_cast<unsigned>(fapi_pdu.dl_dmrs_symb_pos >> i) & 1U) == 1U);
   }
 
-  proc_pdu.ref_point = (fapi_pdu.ref_point == pdsch_ref_point_type::point_a) ? pdsch_processor::pdu_t::CRB0
-                                                                             : pdsch_processor::pdu_t::PRB0;
+  proc_pdu.ref_point = (fapi_pdu.ref_point == fapi::pdsch_ref_point_type::point_a) ? pdsch_processor::pdu_t::CRB0
+                                                                                   : pdsch_processor::pdu_t::PRB0;
 
   proc_pdu.dmrs =
-      fapi_pdu.dmrs_type == dmrs_config_type::type_1 ? dmrs_type::options::TYPE1 : dmrs_type::options::TYPE2;
+      fapi_pdu.dmrs_type == fapi::dmrs_config_type::type_1 ? dmrs_type::options::TYPE1 : dmrs_type::options::TYPE2;
   proc_pdu.scrambling_id               = fapi_pdu.pdsch_dmrs_scrambling_id;
   proc_pdu.n_scid                      = fapi_pdu.nscid == 1U;
   proc_pdu.nof_cdm_groups_without_data = fapi_pdu.num_dmrs_cdm_grps_no_data;
