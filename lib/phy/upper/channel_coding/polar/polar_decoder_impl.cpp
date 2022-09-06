@@ -135,19 +135,19 @@ polar_decoder_impl::polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint
   llr1.resize(nMax + 1);
 
   // For each n, n = 0 to n = nMax, we need an LLR buffer of size 2^n. Thus,
-  // the total memory needed is 2^(nMax+1).
+  // the total memory needed is 2^(nMax+1)-1.
   uint8_t  n_llr_all_stages = nMax + 1;
-  uint16_t llr_all_stages   = (1U << n_llr_all_stages);
+  uint16_t llr_all_stages   = (1U << n_llr_all_stages) - 1;
 
   llr_alloc.resize(llr_all_stages);
 
-  llr0[0] = llr_alloc.data();
+  llr0[0] = llr_alloc.first(1);
 
   // Initialize all LLR pointers.
-  llr1[0] = llr0[0] + 1;
+  llr1[0] = llr_alloc.subspan(1, 1);
   for (uint8_t s = 1; s != n_llr_all_stages; ++s) {
-    llr0[s] = llr0[0] + param.code_stage_size[s];
-    llr1[s] = llr0[0] + param.code_stage_size[s] + param.code_stage_size[s - 1];
+    llr0[s] = llr_alloc.subspan(param.code_stage_size[s] - 1, param.code_stage_size[s]);
+    llr1[s] = llr0[s].last(param.code_stage_size[s - 1]);
   }
 
   param.node_type_alloc.resize(llr_all_stages);
@@ -217,10 +217,10 @@ void polar_decoder_impl::rate_1_node(span<uint8_t> message)
   uint16_t code_size       = param.code_stage_size[param.code_size_log];
   uint16_t code_stage_size = param.code_stage_size[stage];
 
-  span<uint8_t>              codeword = est_bit.subspan(bit_pos, code_stage_size);
-  span<log_likelihood_ratio> LLR      = span<log_likelihood_ratio>(llr0[stage], code_stage_size);
+  span<uint8_t> codeword = est_bit.subspan(bit_pos, code_stage_size);
+  srsgnb_assert(llr0[stage].size() == code_stage_size, "Invalid size ({} != {})", llr0[stage].size(), code_stage_size);
 
-  vec_hard_bit(LLR, codeword);
+  vec_hard_bit(llr0[stage], codeword);
 
   if (stage != 0) {
     span<uint8_t> message_stage = message.subspan(bit_pos, code_stage_size);
@@ -251,7 +251,8 @@ void polar_decoder_impl::rate_r_node(span<uint8_t> message)
   uint16_t stage_size      = param.code_stage_size[stage];
   uint16_t stage_half_size = param.code_stage_size[stage - 1];
 
-  vec_function_f({llr0[stage - 1], stage_half_size}, {llr0[stage], stage_half_size}, {llr1[stage], stage_half_size});
+  vec_function_f(
+      llr0[stage - 1].first(stage_half_size), llr0[stage].first(stage_half_size), llr1[stage].first(stage_half_size));
 
   // Move to the child node to the left (up) of the tree.
   simplified_node(message);
@@ -264,9 +265,9 @@ void polar_decoder_impl::rate_r_node(span<uint8_t> message)
   offset0  = bit_pos - stage_half_size;
   estbits0 = est_bit.data() + offset0;
 
-  vec_function_g({llr0[stage - 1], stage_half_size},
-                 {llr0[stage], stage_half_size},
-                 {llr1[stage], stage_half_size},
+  vec_function_g(llr0[stage - 1].first(stage_half_size),
+                 llr0[stage].first(stage_half_size),
+                 llr1[stage].first(stage_half_size),
                  {estbits0, stage_half_size});
 
   // Move to the child node to the right (down) of the tree.

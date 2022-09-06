@@ -84,9 +84,9 @@ private:
   /// LLR values for stage 0 (i.e., received LLRs).
   srsvec::aligned_vec<log_likelihood_ratio> llr_alloc;
   /// Pointers to the upper half of the LLR values for all stages.
-  std::vector<log_likelihood_ratio*> llr0;
+  std::vector<span<log_likelihood_ratio>> llr0;
   /// Pointers to the lower half of LLR values for all stages.
-  std::vector<log_likelihood_ratio*> llr1;
+  std::vector<span<log_likelihood_ratio>> llr1;
   /// Temporary estimated bits.
   srsvec::aligned_vec<uint8_t> est_bit;
   /// Decoder inner parameters.
