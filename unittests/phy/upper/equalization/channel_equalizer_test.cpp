@@ -14,42 +14,7 @@
 
 using namespace srsgnb;
 
-namespace {
-
-const float MAX_ERROR_EQ = 1e-6;
-
-// Temporary - to be removed when a real channel_equalizer implementation is provided.
-class channel_equalizer_dummy : public channel_equalizer
-{
-public:
-  // See interface for the documentation.
-  void equalize(re_measurement<cf_t>&       mod_symbols,
-                re_measurement<float>&      noise_vars,
-                const re_measurement<cf_t>& ch_symbols,
-                const channel_estimate&     ch_estimates,
-                float /**/) override
-  {
-    // Only check that the dimensions of all inputs match.
-    re_measurement_dimensions                     mod_symbols_size  = mod_symbols.size();
-    re_measurement_dimensions                     noise_vars_size   = noise_vars.size();
-    re_measurement_dimensions                     ch_symbols_size   = ch_symbols.size();
-    channel_estimate::channel_estimate_dimensions ch_estimates_size = ch_estimates.size();
-    TESTASSERT((mod_symbols_size.nof_subc == noise_vars_size.nof_subc) &&
-                   (mod_symbols_size.nof_subc == ch_symbols_size.nof_subc) &&
-                   (mod_symbols_size.nof_subc == ch_estimates_size.nof_prb * NRE),
-               "Number of PRBs does not match.");
-    TESTASSERT((mod_symbols_size.nof_symbols == noise_vars_size.nof_symbols) &&
-                   (mod_symbols_size.nof_symbols == ch_symbols_size.nof_symbols) &&
-                   (mod_symbols_size.nof_symbols == ch_estimates_size.nof_symbols),
-               "Number of OFDM symbols does not match.");
-    TESTASSERT((mod_symbols_size.nof_slices == noise_vars_size.nof_slices) &&
-                   (mod_symbols_size.nof_slices == ch_estimates_size.nof_tx_layers),
-               "Number of Tx layers does not match.");
-    TESTASSERT(ch_symbols_size.nof_slices == ch_estimates_size.nof_rx_ports,
-               "Number of Rx antenna ports does not match.");
-  }
-};
-} // namespace
+static constexpr float MAX_ERROR_EQ = 1e-6;
 
 void read_symbols(re_measurement<cf_t>& symbols, const re_measurement_exploded& syms_expl)
 {
@@ -99,10 +64,6 @@ void read_ch_estimates(channel_estimate& ch_est, const ch_estimates_exploded& ch
 
 int main()
 {
-  // Create channel equalizer.
-  std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_zf_impl_factory();
-  std::unique_ptr<channel_equalizer>         test_equalizer    = equalizer_factory->create();
-
   dynamic_re_measurement<cf_t> test_rx_symbols({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_PORTS});
   dynamic_re_measurement<cf_t> test_eq_symbols_expected(
       {MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS});
@@ -111,13 +72,15 @@ int main()
   dynamic_re_measurement<float> test_noise_vars({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS});
   channel_estimate              test_ch_estimate;
 
-  dynamic_re_measurement<float> eq_symbols_error(
-      {MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS});
+  dynamic_re_measurement<float> eq_symbols_error({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS});
+
+  // Create channel equalizer.
+  std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_zf_impl_factory();
+  std::unique_ptr<channel_equalizer>         test_equalizer    = equalizer_factory->create();
 
   for (const auto& t_case : channel_equalizer_test_data) {
-    // Check up to 2 X 2 MIMO channel configurations with Zero Forcing.
-    if (t_case.ch_estimates.nof_tx_layers <= 2 && t_case.ch_estimates.nof_rx_ports <= 2 &&
-        t_case.equalizer_type == "ZF") {
+    // For now, check only Zero Forcing equalizer.
+    if (t_case.equalizer_type == "ZF") {
       read_symbols(test_rx_symbols, t_case.received_symbols);
       read_symbols(test_eq_symbols_expected, t_case.equalized_symbols);
       read_ch_estimates(test_ch_estimate, t_case.ch_estimates);
@@ -149,8 +112,6 @@ int main()
           }
         }
       }
-
-      // TODO(joaquim): Assert error with respect to the transmitted symbols.
     }
   }
 }

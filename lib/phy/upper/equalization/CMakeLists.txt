@@ -6,10 +6,15 @@
 # the distribution.
 #
 
-add_library(srsgnb_channel_equalizer STATIC
+set(SOURCES
         channel_equalizer_zf_impl.cpp
-        equalization_factories.cpp)
+        equalization_factories.cpp
+        equalize_zf_1x1.cpp
+        equalize_zf_1x2.cpp
+        equalize_zf_2x2.cpp
+        )
 
+add_library(srsgnb_channel_equalizer STATIC ${SOURCES})
 target_link_libraries(srsgnb_channel_equalizer srsvec)
 
 install(TARGETS srsgnb_channel_equalizer EXPORT srsgnb_export)
