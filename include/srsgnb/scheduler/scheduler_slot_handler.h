@@ -22,6 +22,7 @@
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/pdsch/pdsch_mcs.h"
 #include "srsgnb/ran/prach/prach_preamble_format.h"
+#include "srsgnb/ran/pusch/pusch_mcs.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
@@ -167,6 +168,17 @@ struct pusch_information {
   const bwp_configuration* bwp_cfg;
   prb_grant                prbs;
   ofdm_symbol_range        symbols;
+  /// Target code rate, normalized to 1024 (see TS38.214 Table 6.1.4.1).
+  float target_code_rate;
+  /// Subcarrier modulation scheme, as per TS38.211 Section 6.1.
+  modulation_scheme qam_mod;
+  /// \brief MCS index, range {0, ..., 31} (See TS38.214 Section 5.1.4.1).
+  /// \note Should match value sent in DCI.
+  sch_mcs_index mcs_index;
+  /// MCS table (See TS38.214 Section 6.1.4.1).
+  pusch_mcs_table mcs_table;
+  /// DMRS configuration as per TS38.211 Section 6.4.1.1.
+  dmrs_information dmrs;
 };
 
 /// \brief RAR grant composed of subheader as per TS38.321 6.2.2, payload as per TS38.321 6.2.3,
@@ -180,12 +192,12 @@ struct rar_ul_grant {
   rnti_t   temp_crnti;
 
   // UL Grant Payload.
-  bool     freq_hop_flag;
-  uint8_t  time_resource_assignment;
-  uint16_t freq_resource_assignment;
-  int8_t   mcs;
-  int8_t   tpc;
-  bool     csi_req;
+  bool          freq_hop_flag;
+  uint8_t       time_resource_assignment;
+  uint16_t      freq_resource_assignment;
+  sch_mcs_index mcs;
+  int8_t        tpc;
+  bool          csi_req;
 };
 
 /// Stores the information associated with a RAR.

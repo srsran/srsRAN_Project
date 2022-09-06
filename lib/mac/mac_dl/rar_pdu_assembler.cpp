@@ -89,7 +89,7 @@ void rar_pdu_encoder::encode_rar_grant_payload(const rar_ul_grant& grant)
   *ptr |= (grant.time_resource_assignment & 0xfU);
   ++ptr;
   // encode MCS (4 bits).
-  *ptr = (grant.mcs & 0xfU) << 4U;
+  *ptr = (grant.mcs.to_uint() & 0xfU) << 4U;
   // encode TPC command for PUSCH (3 bits).
   *ptr |= (grant.tpc & 0x7U) << 1U;
   // encode CSI request (1 bit).

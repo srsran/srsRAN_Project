@@ -451,11 +451,17 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     msg3_alloc.result.ul.puschs.emplace_back();
 
     // Fill PUSCH for Msg3.
-    ul_sched_info& pusch    = msg3_alloc.result.ul.puschs.back();
-    pusch.pusch_cfg.bwp_cfg = &get_ul_bwp_cfg();
-    pusch.pusch_cfg.prbs    = prbs;
-    pusch.pusch_cfg.symbols = symbols;
-    pusch.pusch_cfg.rnti    = pending_msg3.preamble.tc_rnti;
+    ul_sched_info& pusch      = msg3_alloc.result.ul.puschs.back();
+    pusch.pusch_cfg.bwp_cfg   = &get_ul_bwp_cfg();
+    pusch.pusch_cfg.prbs      = prbs;
+    pusch.pusch_cfg.symbols   = symbols;
+    pusch.pusch_cfg.rnti      = pending_msg3.preamble.tc_rnti;
+    pusch.pusch_cfg.mcs_table = pusch_mcs_table::qam64;
+    pusch.pusch_cfg.mcs_index = msg3_info.mcs;
+    sch_mcs_description msg3_mcs_config =
+        pusch_mcs_get_config(pusch.pusch_cfg.mcs_table, pusch.pusch_cfg.mcs_index, false);
+    pusch.pusch_cfg.qam_mod          = msg3_mcs_config.modulation;
+    pusch.pusch_cfg.target_code_rate = msg3_mcs_config.target_code_rate;
     // TODO
 
     // Allocate Msg3 UL HARQ

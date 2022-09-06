@@ -86,7 +86,9 @@ rar_ul_grant decode_ul_grant(span<const uint8_t> rar_subpdu)
   dec.unpack(ret.freq_hop_flag, 1);
   dec.unpack(ret.freq_resource_assignment, 14);
   dec.unpack(ret.time_resource_assignment, 4);
-  dec.unpack(ret.mcs, 4);
+  uint8_t mcs;
+  dec.unpack(mcs, 4);
+  ret.mcs = mcs;
   dec.unpack(ret.tpc, 3);
   dec.unpack(ret.csi_req, 1);
   uint16_t rnti;
