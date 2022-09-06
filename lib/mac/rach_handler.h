@@ -120,7 +120,11 @@ public:
     cells.erase(cell_index);
   }
 
-  mac_cell_rach_handler& get_cell(du_cell_index_t cell_index) { return cells[cell_index]; }
+  mac_cell_rach_handler& get_cell(du_cell_index_t cell_index)
+  {
+    srsgnb_assert(cells.contains(cell_index), "Cell index does not exist.");
+    return cells[cell_index];
+  }
 
 private:
   scheduler_configurator&                         sched;

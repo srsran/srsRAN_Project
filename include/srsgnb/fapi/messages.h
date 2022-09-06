@@ -14,6 +14,7 @@
 #include "srsgnb/ran/ldpc_base_graph.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/pdcch/coreset.h"
+#include "srsgnb/ran/prach/prach_subcarrier_spacing.h"
 #include "srsgnb/ran/prach/restricted_set_config.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/ssb_properties.h"
@@ -1637,16 +1638,19 @@ struct prach_fd_occasion_config {
   static_vector<uint16_t, MAX_NUM_UNUSED_ROOT_SEQ> unused_root_sequences;
 };
 
+enum class prach_sequence_length_type : uint8_t { long_sequence, short_sequence };
+
 /// Encodes the PRACH configuration.
 struct prach_config {
   /// Maximum number of PRACH Fd occasions allowed.
   static constexpr unsigned MAX_NUM_PRACH_FD_OCCASIONS = 64;
 
   uint16_t                                                            prach_res_config_index;
-  uint8_t                                                             prach_sequence_length;
-  uint8_t                                                             prach_subcarrier_spacing;
+  prach_sequence_length_type                                          prach_sequence_length;
+  prach_subcarrier_spacing::values                                    prach_scs;
   subcarrier_spacing                                                  prach_ul_bwp_pusch_scs;
   restricted_set_config                                               restricted_set;
+  uint8_t                                                             num_prach_fd_occasions;
   uint8_t                                                             prach_config_index;
   prach_format_type                                                   prach_format;
   uint8_t                                                             num_prach_td_occasions;

@@ -28,17 +28,18 @@ TEST(FapiPhyUlPrachPduAdaptorTest, valid_pdu_pass)
   // Creation of the multi-PRACH config TLV. Used random values from the range of the document SCF-222 v4.0
   // section 3.3.2.4 in table PRACH configuration table.
   fapi::prach_config prach;
-  prach.prach_res_config_index   = 0;
-  prach.prach_sequence_length    = 1;
-  prach.prach_subcarrier_spacing = 2;
-  prach.prach_ul_bwp_pusch_scs   = subcarrier_spacing::kHz15;
-  prach.restricted_set           = restricted_set_config::UNRESTRICTED;
-  prach.prach_config_index       = 1;
-  prach.prach_format             = fapi::prach_format_type::zero;
-  prach.num_prach_td_occasions   = 1;
-  prach.num_preambles            = 1;
-  prach.ssb_per_rach             = 1;
-  prach.start_preamble_index     = 1;
+  prach.prach_res_config_index = 0;
+  prach.prach_sequence_length  = fapi::prach_sequence_length_type::long_sequence;
+  prach.prach_scs              = prach_subcarrier_spacing::values::kHz15;
+  prach.prach_ul_bwp_pusch_scs = subcarrier_spacing::kHz15;
+  prach.restricted_set         = restricted_set_config::UNRESTRICTED;
+  prach.prach_config_index     = 1;
+  prach.prach_format           = fapi::prach_format_type::zero;
+  prach.num_prach_td_occasions = 1;
+  prach.num_preambles          = 1;
+  prach.ssb_per_rach           = 1;
+  prach.start_preamble_index   = 1;
+
   prach.fd_occasions.emplace_back();
   fapi::prach_fd_occasion_config& ocass = prach.fd_occasions.back();
   ocass.prach_root_sequence_index       = 430;

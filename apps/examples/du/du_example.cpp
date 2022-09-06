@@ -151,27 +151,29 @@ struct configuration_profile {
 } // namespace
 
 /// Program parameters.
-static pci_t                                     pci                        = 1;
-static const unsigned                            sector_id                  = 0;
-static subcarrier_spacing                        scs                        = subcarrier_spacing::kHz15;
-static subcarrier_spacing                        scs_common                 = subcarrier_spacing::kHz15;
-static const double                              tx_gain                    = 60.0;
-static const unsigned                            max_processing_delay_slots = 4;
-static const unsigned                            ul_to_dl_subframe_offset   = 1;
-static const phy_time_unit                       time_advance_calibration   = phy_time_unit::from_seconds(0.0);
-static const lower_phy_ta_offset                 ta_offset                  = lower_phy_ta_offset::n0;
-static const cyclic_prefix                       cp                         = cyclic_prefix::NORMAL;
-static double                                    dl_center_freq             = 2680.1e6;
-static unsigned                                  dl_arfcn                   = 536020;
-static const double                              rx_freq                    = 3.5e9;
-static const double                              rx_gain                    = 60.0;
-static const unsigned                            nof_ports                  = 1;
-static const unsigned                            nof_sectors                = 1;
-static std::string                               driver_name                = "zmq";
-static std::vector<std::string>                  tx_channel_args;
-static std::vector<std::string>                  rx_channel_args;
-static sampling_rate                             srate                       = sampling_rate::from_MHz(61.44);
-static unsigned                                  bw_rb                       = 106;
+static pci_t                     pci                        = 1;
+static const unsigned            sector_id                  = 0;
+static subcarrier_spacing        scs                        = subcarrier_spacing::kHz15;
+static subcarrier_spacing        scs_common                 = subcarrier_spacing::kHz15;
+static const double              tx_gain                    = 60.0;
+static const unsigned            max_processing_delay_slots = 4;
+static const unsigned            ul_to_dl_subframe_offset   = 1;
+static const phy_time_unit       time_advance_calibration   = phy_time_unit::from_seconds(0.0);
+static const lower_phy_ta_offset ta_offset                  = lower_phy_ta_offset::n0;
+static const cyclic_prefix       cp                         = cyclic_prefix::NORMAL;
+static double                    dl_center_freq             = 2680.1e6;
+static unsigned                  dl_arfcn                   = 536020;
+static const double              rx_freq                    = 3.5e9;
+static const double              rx_gain                    = 60.0;
+static const unsigned            nof_ports                  = 1;
+static const unsigned            nof_sectors                = 1;
+static std::string               driver_name                = "zmq";
+static std::vector<std::string>  tx_channel_args;
+static std::vector<std::string>  rx_channel_args;
+static sampling_rate             srate = sampling_rate::from_MHz(61.44);
+// From TS38.104 Section 5.3.2 Table 5.3.2-1. Default 20MHz FR1.
+static std::array<uint16_t, NOF_NUMEROLOGIES>    nof_prb_dl_grid             = {106, 51, 24, 0, 0};
+static std::array<uint16_t, NOF_NUMEROLOGIES>    nof_prb_ul_grid             = {106, 51, 24, 0, 0};
 static unsigned                                  offset_to_pointA            = 40;
 static unsigned                                  K_ssb                       = 6;
 static unsigned                                  coreset0_index              = 6;
@@ -201,7 +203,8 @@ static const std::vector<configuration_profile> profiles = {
        dl_arfcn         = 536020;
        K_ssb            = 6;
        offset_to_pointA = 40;
-       bw_rb            = 106;
+       nof_prb_dl_grid  = {106, 51, 24, 0, 0};
+       nof_prb_ul_grid  = {106, 51, 24, 0, 0};
        pci              = 69;
        coreset0_index   = 9;
        otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
@@ -226,7 +229,8 @@ static const std::vector<configuration_profile> profiles = {
        dl_arfcn         = 536020;
        K_ssb            = 6;
        offset_to_pointA = 40;
-       bw_rb            = 106;
+       nof_prb_dl_grid  = {106, 51, 24, 0, 0};
+       nof_prb_ul_grid  = {106, 51, 24, 0, 0};
        pci              = 1;
        otw_format       = radio_configuration::over_the_wire_format::SC12;
        dl_center_freq   = 2680.1e6;
@@ -239,7 +243,8 @@ static const std::vector<configuration_profile> profiles = {
        scs              = subcarrier_spacing::kHz15;
        scs_common       = subcarrier_spacing::kHz15;
        srate            = sampling_rate::from_MHz(61.44);
-       bw_rb            = 106;
+       nof_prb_dl_grid  = {106, 51, 24, 0, 0};
+       nof_prb_ul_grid  = {106, 51, 24, 0, 0};
        dl_arfcn         = 520000;
        coreset0_index   = 8;
        K_ssb            = 7;
@@ -264,7 +269,8 @@ static std::unique_ptr<resource_grid_pool> build_ul_resource_grid_pool()
 
   for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
     for (unsigned slot_id = 0; slot_id != nof_slots; ++slot_id) {
-      std::unique_ptr<resource_grid> grid = create_resource_grid(1, get_nsymb_per_slot(cp), bw_rb * NRE);
+      std::unique_ptr<resource_grid> grid =
+          create_resource_grid(1, get_nsymb_per_slot(cp), nof_prb_dl_grid[to_numerology_value(scs)] * NRE);
       if (!grid) {
         srslog::fetch_basic_logger("TEST").error("Failed to create UL resource grid");
         return nullptr;
@@ -285,7 +291,7 @@ static lower_phy_configuration create_lower_phy_config(baseband_gateway&        
                                                        task_executor&                prach_executor)
 {
   // Derived parameters.
-  float tx_scale = 1.0F / std::sqrt(NRE * bw_rb);
+  float tx_scale = 1.0F / std::sqrt(NRE * nof_prb_dl_grid[to_numerology_value(scs)]);
 
   lower_phy_configuration phy_config;
   phy_config.srate                      = srate;
@@ -304,7 +310,7 @@ static lower_phy_configuration create_lower_phy_config(baseband_gateway&        
 
   for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
     lower_phy_sector_description sector_config;
-    sector_config.bandwidth_rb = bw_rb;
+    sector_config.bandwidth_rb = nof_prb_dl_grid[to_numerology_value(scs)];
     sector_config.dl_freq_hz   = dl_center_freq;
     sector_config.ul_freq_hz   = rx_freq;
     for (unsigned port_id = 0; port_id < nof_ports; ++port_id) {
@@ -442,6 +448,42 @@ static radio_configuration::radio create_radio_configuration()
   return radio_config;
 }
 
+static fapi::prach_config generate_prach_config_tlv()
+{
+  fapi::prach_config config;
+
+  config.prach_res_config_index = 0;
+  config.prach_sequence_length  = fapi::prach_sequence_length_type::long_sequence;
+  config.prach_scs              = prach_subcarrier_spacing::values::kHz1_25;
+  config.prach_ul_bwp_pusch_scs = scs;
+  config.restricted_set         = restricted_set_config::UNRESTRICTED;
+  config.num_prach_fd_occasions = 1;
+  config.prach_config_index     = 16;
+  config.prach_format           = fapi::prach_format_type::zero;
+  config.num_prach_td_occasions = 1;
+  config.num_preambles          = 1;
+  config.start_preamble_index   = 0;
+  // Add FD occasion info.
+  config.fd_occasions.emplace_back();
+  fapi::prach_fd_occasion_config& fd_occasion = config.fd_occasions.back();
+  // NOTE: place a value here. It doesn't matter with this config.
+  fd_occasion.prach_root_sequence_index = 1;
+  fd_occasion.prach_freq_offset         = 1;
+  fd_occasion.prach_zero_corr_conf      = 0;
+
+  return config;
+}
+
+static fapi::carrier_config generate_carrier_config_tlv()
+{
+  fapi::carrier_config config;
+
+  // NOTE; for now we only need to fill the nof_prb_ul_grid.
+  config.ul_grid_size = nof_prb_ul_grid;
+
+  return config;
+}
+
 static std::unique_ptr<radio_session>
 create_radio(const std::string& radio_driver, task_executor& executor, radio_notification_handler& radio_handler)
 {
@@ -466,8 +508,10 @@ static std::unique_ptr<phy_fapi_adaptor> build_phy_fapi_adaptor(downlink_process
       create_phy_fapi_adaptor_factory(dl_processor_pool, dl_rg_pool, ul_request_processor);
 
   phy_fapi_adaptor_factory_config phy_fapi_config;
-  phy_fapi_config.sector_id  = sector_id;
-  phy_fapi_config.scs_common = scs_common;
+  phy_fapi_config.sector_id   = sector_id;
+  phy_fapi_config.scs_common  = scs_common;
+  phy_fapi_config.prach_cfg   = generate_prach_config_tlv();
+  phy_fapi_config.carrier_cfg = generate_carrier_config_tlv();
 
   return phy_factory->create(phy_fapi_config);
 }
@@ -499,7 +543,7 @@ static std::unique_ptr<upper_phy> build_upper(upper_phy_rg_gateway&             
   upper_config.nof_ports               = 1;
   upper_config.nof_slots_dl_rg         = 40;
   upper_config.nof_dl_processors       = 10;
-  upper_config.dl_bw_rb                = bw_rb;
+  upper_config.dl_bw_rb                = nof_prb_dl_grid[to_numerology_value(scs)];
   upper_config.gateway                 = &gateway;
   upper_config.dl_executor             = &dl_executor;
   upper_config.nof_ul_processors       = 60;
@@ -682,7 +726,7 @@ int main(int argc, char** argv)
   struct du_cell_config_default_params default_config;
   default_config.pci               = pci;
   default_config.scs_common        = scs_common;
-  default_config.nof_crbs          = bw_rb;
+  default_config.nof_crbs          = nof_prb_dl_grid[to_numerology_value(scs)];
   default_config.dl_arfcn          = dl_arfcn;
   default_config.offset_to_point_a = offset_to_pointA;
   default_config.coreset0_index    = coreset0_index;
@@ -701,14 +745,14 @@ int main(int argc, char** argv)
   du_cell_config& cell_cfg = cfg.cells.back();
   cell_cfg.ssb_cfg.k_ssb   = K_ssb;
 
+  // PRACH configuration.
+  cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.zero_correlation_zone_config = 0;
+  cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.prach_config_index           = 16;
+
   test_logger.info("Creating DU high object...");
   du_high du_obj(cfg);
   notifier.attach_handler(&du_obj.get_f1c_message_handler());
   test_logger.info("DU high created successfully");
-
-  // Configure the DU slot handler.
-  mac_adaptor->set_cell_slot_handler(du_obj.get_slot_handler(to_du_cell_index(0)));
-  mac_adaptor->set_cell_rach_handler(du_obj.get_rach_handler(to_du_cell_index(0)));
 
   // Set signal handler.
   signal(SIGINT, signal_handler);
@@ -724,6 +768,10 @@ int main(int argc, char** argv)
 
   // Give some time to the MAC to start.
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  // Configure the DU slot handler.
+  mac_adaptor->set_cell_slot_handler(du_obj.get_slot_handler(to_du_cell_index(0)));
+  mac_adaptor->set_cell_rach_handler(du_obj.get_rach_handler(to_du_cell_index(0)));
 
   // Start processing.
   test_logger.info("Starting lower PHY...");
