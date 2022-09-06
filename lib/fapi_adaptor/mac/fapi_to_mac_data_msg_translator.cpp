@@ -46,19 +46,19 @@ void fapi_to_mac_data_msg_translator::on_uci_indication(const uci_indication_mes
 void fapi_to_mac_data_msg_translator::on_srs_indication(const srs_indication_message& msg) {}
 
 /// Converts the given FAPI RACH occasion RSSI to dBs as per SCF-222 v4.0 section 3.4.11.
-static float to_rssi_dB(unsigned fapi_rssi)
+static float to_rssi_dB(int fapi_rssi)
 {
   return (fapi_rssi - 140000) * 0.001F;
 }
 
 /// Converts the given FAPI RACH preamble power to dBs as per SCF-222 v4.0 section 3.4.11.
-static float to_power_dB(unsigned fapi_power)
+static float to_power_dB(int fapi_power)
 {
   return (fapi_power - 140000) * 0.001F;
 }
 
 /// Converts the given FAPI RACH preamble SNR to dBs as per SCF-222 v4.0 section 3.4.11.
-static float to_snr_dB(unsigned fapi_snr)
+static float to_snr_dB(int fapi_snr)
 {
   return (fapi_snr - 128) * 0.5F;
 }
@@ -68,7 +68,7 @@ void fapi_to_mac_data_msg_translator::on_rach_indication(const rach_indication_m
   mac_rach_indication indication;
   indication.slot_rx = slot_point(to_numerology_value(scs), msg.sfn, msg.slot);
   for (const auto& pdu : msg.pdus) {
-    srsgnb_assert(pdu.avg_rssi != std::numeric_limits<uint16_t>::max(), "RSSI invalid value");
+    srsgnb_assert(pdu.avg_rssi != std::numeric_limits<uint16_t>::max(), "Average RSSI field not set");
 
     indication.occasions.emplace_back();
     mac_rach_indication::rach_occasion& occas = indication.occasions.back();
@@ -77,8 +77,8 @@ void fapi_to_mac_data_msg_translator::on_rach_indication(const rach_indication_m
     occas.start_symbol                        = pdu.symbol_index;
     occas.rssi_dB                             = to_rssi_dB(pdu.avg_rssi);
     for (const auto& preamble : pdu.preambles) {
-      srsgnb_assert(preamble.preamble_pwr != std::numeric_limits<uint32_t>::max(), "Preamble power invalid value");
-      srsgnb_assert(preamble.preamble_snr != std::numeric_limits<uint8_t>::max(), "Preamble SNR invalid value");
+      srsgnb_assert(preamble.preamble_pwr != std::numeric_limits<uint32_t>::max(), "Preamble power field not set");
+      srsgnb_assert(preamble.preamble_snr != std::numeric_limits<uint8_t>::max(), "Preamble SNR field not set");
 
       occas.preambles.emplace_back();
       mac_rach_indication::rach_preamble& mac_pream = occas.preambles.back();
