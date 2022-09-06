@@ -31,7 +31,8 @@ static mac_cell_rach_handler_dummy dummy_mac_rach_handler;
 
 fapi_to_mac_data_msg_translator::fapi_to_mac_data_msg_translator(subcarrier_spacing scs) :
   rach_handler(dummy_mac_rach_handler), scs(scs)
-{}
+{
+}
 
 void fapi_to_mac_data_msg_translator::on_dl_tti_response(const fapi::dl_tti_response_message& msg) {}
 

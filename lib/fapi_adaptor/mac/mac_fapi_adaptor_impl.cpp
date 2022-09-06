@@ -14,9 +14,9 @@ using namespace srsgnb;
 using namespace fapi_adaptor;
 
 mac_fapi_adaptor_impl::mac_fapi_adaptor_impl(fapi::slot_message_gateway& msg_gw,
-                                             unsigned                    sector_id,
+                                             unsigned                    sector_id_,
                                              subcarrier_spacing          scs) :
-  sector_id(sector_id), mac_translator(msg_gw), fapi_data_translator(scs), fapi_time_translator(mac_translator, scs)
+  sector_id(sector_id_), mac_translator(msg_gw), fapi_data_translator(scs), fapi_time_translator(mac_translator, scs)
 {
   // :TODO: remove this when sector id is used (in logging)
   (void)(sector_id);

@@ -14,7 +14,6 @@
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
-using namespace fapi;
 using namespace fapi_adaptor;
 
 namespace {
@@ -70,16 +69,16 @@ private:
     fapi_msg.slot = slot;
 
     fapi_msg.pdus.emplace_back();
-    rach_indication_pdu& pdu = fapi_msg.pdus.back();
-    pdu.avg_rssi             = (rssi + 140) * 1000;
-    pdu.symbol_index         = start_symbol;
-    pdu.slot_index           = slot_index;
-    pdu.ra_index             = freq_index;
+    fapi::rach_indication_pdu& pdu = fapi_msg.pdus.back();
+    pdu.avg_rssi                   = (rssi + 140) * 1000;
+    pdu.symbol_index               = start_symbol;
+    pdu.slot_index                 = slot_index;
+    pdu.ra_index                   = freq_index;
     pdu.preambles.emplace_back();
-    rach_indication_pdu_preamble& preamble = pdu.preambles.back();
-    preamble.preamble_snr                  = (snr + 64) * 2;
-    preamble.preamble_pwr                  = (power + 140) * 1000;
-    preamble.timing_advance_offset_ns      = time_advance_ns;
+    fapi::rach_indication_pdu_preamble& preamble = pdu.preambles.back();
+    preamble.preamble_snr                        = (snr + 64) * 2;
+    preamble.preamble_pwr                        = (power + 140) * 1000;
+    preamble.timing_advance_offset_ns            = time_advance_ns;
 
     return fapi_msg;
   }
