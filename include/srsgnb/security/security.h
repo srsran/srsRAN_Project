@@ -86,6 +86,14 @@ void security_nea1(const sec_128_as_key& key,
                    byte_buffer_view      buf,
                    uint8_t*              msg_out);
 
+void security_nea1(const sec_128_as_key& key,
+                   uint32_t              count,
+                   uint8_t               bearer,
+                   security_direction    direction,
+                   byte_buffer_view      buf,
+                   uint32_t              length,
+                   uint8_t*              msg_out);
+
 /*********************************************************************
     Name: zero_tailing_bits
 

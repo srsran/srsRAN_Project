@@ -64,6 +64,17 @@ void srsgnb::security_nea1(const sec_128_as_key& key,
                            byte_buffer_view      buf,
                            uint8_t*              msg_out)
 {
+  security_nea1(key, count, bearer, direction, buf, buf.length() * 8, msg_out);
+}
+
+void srsgnb::security_nea1(const sec_128_as_key& key,
+                           uint32_t              count,
+                           uint8_t               bearer,
+                           security_direction    direction,
+                           byte_buffer_view      buf,
+                           uint32_t              msg_len,
+                           uint8_t*              msg_out)
+{
   // FIXME for now we copy the byte buffer to a contiguous piece of memory.
   // This will be fixed later.
   std::vector<uint8_t> continuous_buf;
@@ -73,7 +84,6 @@ void srsgnb::security_nea1(const sec_128_as_key& key,
     continuous_buf.push_back(buf[i]);
   }
   uint8_t* msg     = continuous_buf.data();
-  uint32_t msg_len = continuous_buf.size() * 8;
 
   S3G_STATE state, *state_ptr;
   uint32_t  k[]  = {0, 0, 0, 0};
