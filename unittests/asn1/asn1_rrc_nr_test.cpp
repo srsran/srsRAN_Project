@@ -140,7 +140,7 @@ TEST_F(asn1_rrc_nr_test, when_eutra_nr_capabilities_correct_then_packing_success
   asn1::bit_ref       bref(buffer);
   mrdc_cap.pack(bref);
 
-  EXPECT_EQ(test_pack_unpack_consistency(mrdc_cap), SRSASN_SUCCESS);
+  ASSERT_EQ(test_pack_unpack_consistency(mrdc_cap), SRSASN_SUCCESS);
 
   //  srslog::fetch_basic_logger("RRC").info(
   //      buffer, bref.distance_bytes(), "Packed cap struct ({} bytes):", bref.distance_bytes());
@@ -156,9 +156,9 @@ TEST_F(asn1_rrc_nr_test, when_ue_mrdc_capabilities_correct_then_unpacking_succes
   asn1::cbit_ref bref{pdu};
   ue_mrdc_cap_s  mrdc_cap;
 
-  EXPECT_EQ(mrdc_cap.unpack(bref), SRSASN_SUCCESS);
+  ASSERT_EQ(mrdc_cap.unpack(bref), SRSASN_SUCCESS);
 
-  EXPECT_EQ(test_pack_unpack_consistency(mrdc_cap), SRSASN_SUCCESS);
+  ASSERT_EQ(test_pack_unpack_consistency(mrdc_cap), SRSASN_SUCCESS);
 }
 
 TEST_F(asn1_rrc_nr_test, when_ue_rrc_reconfiguration_correct_then_unpacking_successful)
@@ -192,8 +192,8 @@ TEST_F(asn1_rrc_nr_test, when_ue_rrc_reconfiguration_correct_then_unpacking_succ
   cbit_ref    bref(pdu);
   rrc_recfg_s rrc_recfg;
 
-  EXPECT_EQ(rrc_recfg.unpack(bref), SRSASN_SUCCESS);
-  EXPECT_EQ(rrc_recfg.rrc_transaction_id, 0);
+  ASSERT_EQ(rrc_recfg.unpack(bref), SRSASN_SUCCESS);
+  ASSERT_EQ(rrc_recfg.rrc_transaction_id, 0);
 
 #if JSON_OUTPUT
   json_writer jw;
@@ -201,25 +201,25 @@ TEST_F(asn1_rrc_nr_test, when_ue_rrc_reconfiguration_correct_then_unpacking_succ
   test_logger.info("RRC Reconfig: \n {}", jw.to_string().c_str());
 #endif
 
-  EXPECT_EQ(rrc_recfg.crit_exts.type(), asn1::rrc_nr::rrc_recfg_s::crit_exts_c_::types::rrc_recfg);
-  EXPECT_TRUE(rrc_recfg.crit_exts.rrc_recfg().secondary_cell_group.size() > 0);
+  ASSERT_EQ(rrc_recfg.crit_exts.type(), asn1::rrc_nr::rrc_recfg_s::crit_exts_c_::types::rrc_recfg);
+  ASSERT_TRUE(rrc_recfg.crit_exts.rrc_recfg().secondary_cell_group.size() > 0);
 
   cell_group_cfg_s    cell_group_cfg;
   srsgnb::byte_buffer pdu2{srsgnb::span<const uint8_t>{rrc_recfg.crit_exts.rrc_recfg().secondary_cell_group.data(),
                                                        rrc_recfg.crit_exts.rrc_recfg().secondary_cell_group.size()}};
   cbit_ref            bref0(pdu2);
-  EXPECT_EQ(cell_group_cfg.unpack(bref0), SRSASN_SUCCESS);
+  ASSERT_EQ(cell_group_cfg.unpack(bref0), SRSASN_SUCCESS);
 
 #if JSON_OUTPUT
   json_writer jw1;
   cell_group_cfg.to_json(jw1);
   test_logger.info("RRC Secondary Cell Group: \n {}", jw1.to_string().c_str());
 #endif
-  EXPECT_EQ(cell_group_cfg.cell_group_id, 1);
-  EXPECT_EQ(cell_group_cfg.rlc_bearer_to_add_mod_list.size(), 1);
-  EXPECT_TRUE(cell_group_cfg.mac_cell_group_cfg_present);
-  EXPECT_TRUE(cell_group_cfg.phys_cell_group_cfg_present);
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg_present);
+  ASSERT_EQ(cell_group_cfg.cell_group_id, 1);
+  ASSERT_EQ(cell_group_cfg.rlc_bearer_to_add_mod_list.size(), 1);
+  ASSERT_TRUE(cell_group_cfg.mac_cell_group_cfg_present);
+  ASSERT_TRUE(cell_group_cfg.phys_cell_group_cfg_present);
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg_present);
 }
 
 TEST_F(asn1_rrc_nr_test, when_radio_bearer_config_correct_then_unpacking_successful)
@@ -229,17 +229,17 @@ TEST_F(asn1_rrc_nr_test, when_radio_bearer_config_correct_then_unpacking_success
 
   cbit_ref           bref(pdu);
   radio_bearer_cfg_s radio_bearer_cfg;
-  EXPECT_EQ(radio_bearer_cfg.unpack(bref), SRSASN_SUCCESS);
+  ASSERT_EQ(radio_bearer_cfg.unpack(bref), SRSASN_SUCCESS);
 
 #if JSON_OUTPUT
   json_writer jw;
   radio_bearer_cfg.to_json(jw);
   test_logger.info("RRC Bearer CFG Message: \n {}", jw.to_string().c_str());
 #endif
-  EXPECT_EQ(radio_bearer_cfg.drb_to_add_mod_list.size(), 1);
-  EXPECT_TRUE(radio_bearer_cfg.security_cfg_present);
-  EXPECT_TRUE(radio_bearer_cfg.security_cfg.security_algorithm_cfg_present);
-  EXPECT_TRUE(radio_bearer_cfg.security_cfg.key_to_use_present);
+  ASSERT_EQ(radio_bearer_cfg.drb_to_add_mod_list.size(), 1);
+  ASSERT_TRUE(radio_bearer_cfg.security_cfg_present);
+  ASSERT_TRUE(radio_bearer_cfg.security_cfg.security_algorithm_cfg_present);
+  ASSERT_TRUE(radio_bearer_cfg.security_cfg.key_to_use_present);
 }
 
 TEST_F(asn1_rrc_nr_test, when_cell_group_config_correct_then_unpacking_successful)
@@ -274,47 +274,47 @@ TEST_F(asn1_rrc_nr_test, when_cell_group_config_correct_then_unpacking_successfu
   cbit_ref         bref(pdu);
   cell_group_cfg_s cell_group_cfg;
 
-  EXPECT_EQ(cell_group_cfg.unpack(bref), SRSASN_SUCCESS);
+  ASSERT_EQ(cell_group_cfg.unpack(bref), SRSASN_SUCCESS);
 
-  EXPECT_EQ(test_pack_unpack_consistency(cell_group_cfg), SRSASN_SUCCESS);
+  ASSERT_EQ(test_pack_unpack_consistency(cell_group_cfg), SRSASN_SUCCESS);
 
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg_present);
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg.serv_cell_idx_present);
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg.sp_cell_cfg_ded_present);
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg.sp_cell_cfg_ded.init_dl_bwp_present);
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg.sp_cell_cfg_ded.first_active_dl_bwp_id_present);
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg_present);
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg.sp_cell_cfg_ded.pdcch_serving_cell_cfg_present);
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg.sp_cell_cfg_ded.pdsch_serving_cell_cfg_present);
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg.sp_cell_cfg_ded.csi_meas_cfg_present);
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg.recfg_with_sync_present);
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common_present);
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common.pci_present);
-  EXPECT_EQ(cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common.pci, 500);
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common.dl_cfg_common_present);
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common.ul_cfg_common_present);
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common.ul_cfg_common.init_ul_bwp_present);
-  EXPECT_TRUE(
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg_present);
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg.serv_cell_idx_present);
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg.sp_cell_cfg_ded_present);
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg.sp_cell_cfg_ded.init_dl_bwp_present);
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg.sp_cell_cfg_ded.first_active_dl_bwp_id_present);
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg_present);
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg.sp_cell_cfg_ded.pdcch_serving_cell_cfg_present);
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg.sp_cell_cfg_ded.pdsch_serving_cell_cfg_present);
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg.sp_cell_cfg_ded.csi_meas_cfg_present);
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg.recfg_with_sync_present);
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common_present);
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common.pci_present);
+  ASSERT_EQ(cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common.pci, 500);
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common.dl_cfg_common_present);
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common.ul_cfg_common_present);
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common.ul_cfg_common.init_ul_bwp_present);
+  ASSERT_TRUE(
       cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common.ul_cfg_common.init_ul_bwp.rach_cfg_common_present);
 
-  EXPECT_EQ(
+  ASSERT_EQ(
       cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common.ul_cfg_common.init_ul_bwp.rach_cfg_common.type(),
       asn1::setup_release_opts::setup);
-  EXPECT_TRUE(cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common.ul_cfg_common.init_ul_bwp.rach_cfg_common
+  ASSERT_TRUE(cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common.ul_cfg_common.init_ul_bwp.rach_cfg_common
                   .is_setup());
 
   asn1::rrc_nr::rach_cfg_common_s& rach_cfg_common =
       cell_group_cfg.sp_cell_cfg.recfg_with_sync.sp_cell_cfg_common.ul_cfg_common.init_ul_bwp.rach_cfg_common.setup();
 
-  EXPECT_EQ(rach_cfg_common.rach_cfg_generic.prach_cfg_idx, 16);
-  EXPECT_EQ(rach_cfg_common.rach_cfg_generic.msg1_fdm, asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::one);
-  EXPECT_EQ(rach_cfg_common.rach_cfg_generic.zero_correlation_zone_cfg, 0);
-  EXPECT_EQ(rach_cfg_common.rach_cfg_generic.preamb_rx_target_pwr, -110);
-  EXPECT_EQ(rach_cfg_common.rach_cfg_generic.preamb_trans_max,
+  ASSERT_EQ(rach_cfg_common.rach_cfg_generic.prach_cfg_idx, 16);
+  ASSERT_EQ(rach_cfg_common.rach_cfg_generic.msg1_fdm, asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::one);
+  ASSERT_EQ(rach_cfg_common.rach_cfg_generic.zero_correlation_zone_cfg, 0);
+  ASSERT_EQ(rach_cfg_common.rach_cfg_generic.preamb_rx_target_pwr, -110);
+  ASSERT_EQ(rach_cfg_common.rach_cfg_generic.preamb_trans_max,
             asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n7);
-  EXPECT_EQ(rach_cfg_common.rach_cfg_generic.pwr_ramp_step, asn1::rrc_nr::rach_cfg_generic_s::pwr_ramp_step_opts::db4);
-  EXPECT_EQ(rach_cfg_common.rach_cfg_generic.ra_resp_win, asn1::rrc_nr::rach_cfg_generic_s::ra_resp_win_opts::sl10);
-  EXPECT_TRUE(rach_cfg_common.ssb_per_rach_occasion_and_cb_preambs_per_ssb_present);
+  ASSERT_EQ(rach_cfg_common.rach_cfg_generic.pwr_ramp_step, asn1::rrc_nr::rach_cfg_generic_s::pwr_ramp_step_opts::db4);
+  ASSERT_EQ(rach_cfg_common.rach_cfg_generic.ra_resp_win, asn1::rrc_nr::rach_cfg_generic_s::ra_resp_win_opts::sl10);
+  ASSERT_TRUE(rach_cfg_common.ssb_per_rach_occasion_and_cb_preambs_per_ssb_present);
 
 #if JSON_OUTPUT
   asn1::json_writer json_writer;

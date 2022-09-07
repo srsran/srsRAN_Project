@@ -73,7 +73,7 @@ TEST_F(asn1_e1ap_test, when_gnb_du_up_e1_setup_correct_then_packing_successful)
 
   srsgnb::byte_buffer buffer;
   asn1::bit_ref       bref(buffer);
-  EXPECT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
+  ASSERT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
 
   // TODO: Accept byte buffer in pcap and log.
   std::vector<uint8_t> bytes{buffer.begin(), buffer.end()};

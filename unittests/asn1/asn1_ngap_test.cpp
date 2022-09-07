@@ -83,9 +83,9 @@ TEST_F(asn1_ngap_test, when_setup_message_correct_then_packing_successful)
 
   srsgnb::byte_buffer tx_buffer;
   asn1::bit_ref       bref(tx_buffer);
-  EXPECT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
+  ASSERT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
 
-  EXPECT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
+  ASSERT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
 
   std::vector<uint8_t> bytes{tx_buffer.begin(), tx_buffer.end()};
 #if JSON_OUTPUT
@@ -128,9 +128,9 @@ TEST_F(asn1_ngap_test, when_setup_response_correct_then_packing_successful)
 
   srsgnb::byte_buffer tx_pdu;
   asn1::bit_ref       bref(tx_pdu);
-  EXPECT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
+  ASSERT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
 
-  EXPECT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
+  ASSERT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
 
   std::vector<uint8_t> tx_buffer{tx_pdu.begin(), tx_pdu.end()};
 #if JSON_OUTPUT
@@ -162,9 +162,9 @@ TEST_F(asn1_ngap_test, when_setup_failure_correct_then_packing_successful)
 
   srsgnb::byte_buffer tx_pdu;
   asn1::bit_ref       bref(tx_pdu);
-  EXPECT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
+  ASSERT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
 
-  EXPECT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
+  ASSERT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
 
   std::vector<uint8_t> tx_buffer{tx_pdu.begin(), tx_pdu.end()};
 #if JSON_OUTPUT

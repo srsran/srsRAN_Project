@@ -107,9 +107,9 @@ TEST_F(asn1_f1ap_test, when_setup_message_correct_then_packing_successful)
 
   srsgnb::byte_buffer tx_buffer;
   asn1::bit_ref       bref(tx_buffer);
-  EXPECT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
+  ASSERT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
 
-  EXPECT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
+  ASSERT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
 
   std::vector<uint8_t> bytes{tx_buffer.begin(), tx_buffer.end()};
 #if JSON_OUTPUT
@@ -137,9 +137,9 @@ TEST_F(asn1_f1ap_test, when_setup_response_correct_then_packing_successful)
 
   srsgnb::byte_buffer tx_pdu;
   asn1::bit_ref       bref(tx_pdu);
-  EXPECT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
+  ASSERT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
 
-  EXPECT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
+  ASSERT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
 
   std::vector<uint8_t> tx_buffer{tx_pdu.begin(), tx_pdu.end()};
 #if JSON_OUTPUT
@@ -173,9 +173,9 @@ TEST_F(asn1_f1ap_test, when_setup_failure_correct_then_packing_successful)
 
   srsgnb::byte_buffer tx_pdu;
   asn1::bit_ref       bref(tx_pdu);
-  EXPECT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
+  ASSERT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
 
-  EXPECT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
+  ASSERT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
 
   std::vector<uint8_t> tx_buffer{tx_pdu.begin(), tx_pdu.end()};
 #if JSON_OUTPUT
@@ -234,14 +234,14 @@ TEST_F(asn1_f1ap_test, when_ue_context_setup_request_correct_then_unpacking_succ
   asn1::cbit_ref          bref{rx_pdu};
   asn1::f1ap::f1_ap_pdu_c pdu;
 
-  EXPECT_EQ(pdu.unpack(bref), SRSASN_SUCCESS);
-  EXPECT_EQ(asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg, pdu.type());
+  ASSERT_EQ(pdu.unpack(bref), SRSASN_SUCCESS);
+  ASSERT_EQ(asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg, pdu.type());
 
-  EXPECT_EQ(pdu.init_msg().proc_code, ASN1_F1AP_ID_UE_CONTEXT_SETUP);
-  EXPECT_EQ(pdu.init_msg().value.type(),
+  ASSERT_EQ(pdu.init_msg().proc_code, ASN1_F1AP_ID_UE_CONTEXT_SETUP);
+  ASSERT_EQ(pdu.init_msg().value.type(),
             asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request);
 
-  EXPECT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
+  ASSERT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
 
 #if JSON_OUTPUT
   int               unpacked_len = bref.distance_bytes();
@@ -271,14 +271,14 @@ TEST_F(asn1_f1ap_test, when_initial_ul_rrc_message_transfer_correct_then_unpacki
   asn1::cbit_ref          bref{rx_pdu};
   asn1::f1ap::f1_ap_pdu_c pdu;
 
-  EXPECT_EQ(pdu.unpack(bref), SRSASN_SUCCESS);
-  EXPECT_EQ(pdu.type(), asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(pdu.unpack(bref), SRSASN_SUCCESS);
+  ASSERT_EQ(pdu.type(), asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
 
-  EXPECT_EQ(pdu.init_msg().proc_code, ASN1_F1AP_ID_INIT_ULRRC_MSG_TRANSFER);
-  EXPECT_EQ(pdu.init_msg().value.type(),
+  ASSERT_EQ(pdu.init_msg().proc_code, ASN1_F1AP_ID_INIT_ULRRC_MSG_TRANSFER);
+  ASSERT_EQ(pdu.init_msg().value.type(),
             asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::init_ulrrc_msg_transfer);
 
-  EXPECT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
+  ASSERT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
 
 #if JSON_OUTPUT
   int               unpacked_len = bref.distance_bytes();
@@ -325,9 +325,9 @@ TEST_F(asn1_f1ap_test, when_initial_ul_rrc_message_transfer_packing_correct_then
 
   srsgnb::byte_buffer tx_buffer;
   asn1::bit_ref       bref_tx(tx_buffer);
-  EXPECT_EQ(tx_pdu.pack(bref_tx), SRSASN_SUCCESS);
+  ASSERT_EQ(tx_pdu.pack(bref_tx), SRSASN_SUCCESS);
 
   // compare against original TV
-  EXPECT_EQ(tx_buffer.length(), sizeof(rx_msg));
-  EXPECT_EQ(rx_pdu, tx_buffer);
+  ASSERT_EQ(tx_buffer.length(), sizeof(rx_msg));
+  ASSERT_EQ(rx_pdu, tx_buffer);
 }
