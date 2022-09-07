@@ -116,5 +116,5 @@ public:
 TEST_F(cu_du_test, when_f1setup_successful_then_du_connected)
 {
   // check that DU has been added
-  EXPECT_EQ(cu_cp_obj->get_nof_dus(), 1);
+  ASSERT_EQ(cu_cp_obj->get_nof_dus(), 1);
 }
