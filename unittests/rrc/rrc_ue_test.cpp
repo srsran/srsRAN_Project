@@ -90,7 +90,7 @@ protected:
     ue_ctxt.rrc->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(byte_buffer{rrc_setup_complete_pdu});
   }
 
-  void check_srb1_exists() { EXPECT_EQ(ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb1)].rrc_tx_notifier, nullptr); }
+  void check_srb1_exists() { ASSERT_EQ(ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb1)].rrc_tx_notifier, nullptr); }
 
   void tick_timer()
   {
@@ -102,10 +102,10 @@ protected:
 
   void check_ue_release_not_requested()
   {
-    EXPECT_NE(du_proc_rrc_ue->last_ue_ctxt_rel_cmd.ue_index, ALLOCATED_UE_INDEX);
+    ASSERT_NE(du_proc_rrc_ue->last_ue_ctxt_rel_cmd.ue_index, ALLOCATED_UE_INDEX);
   }
 
-  void check_ue_release_requested() { EXPECT_EQ(du_proc_rrc_ue->last_ue_ctxt_rel_cmd.ue_index, ALLOCATED_UE_INDEX); }
+  void check_ue_release_requested() { ASSERT_EQ(du_proc_rrc_ue->last_ue_ctxt_rel_cmd.ue_index, ALLOCATED_UE_INDEX); }
 
 private:
   const ue_index_t                                     ALLOCATED_UE_INDEX = int_to_ue_index(23);
@@ -142,7 +142,7 @@ TEST_F(rrc_setup, when_amf_disconnected_then_rrc_reject_sent)
   receive_setup_request();
 
   // check if the RRC reject message was generated
-  EXPECT_EQ(get_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_reject);
+  ASSERT_EQ(get_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_reject);
 }
 
 /// Test the RRC setup with connected AMF
@@ -152,7 +152,7 @@ TEST_F(rrc_setup, when_amf_connected_then_rrc_setup_sent)
   receive_setup_request();
 
   // check if the RRC setup message was generated
-  EXPECT_EQ(get_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_setup);
+  ASSERT_EQ(get_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_setup);
 
   // check if SRB1 was created
   check_srb1_exists();
