@@ -114,7 +114,7 @@ TEST(security_nea1_test, testset4)
   const char* key_cstr       = "AA1F95AEA533BCB32EB63BF52D8F831A";
   uint32_t    count          = 0x72d8c671;
   uint8_t     bearer         = 0x10;
-  uint8_t     direction       = 1;
+  uint8_t     direction      = 1;
   uint32_t    length         = 1022;
   const char* plaintext_cstr = "FB1B96C5C8BADFB2E8E8EDFDE78E57F2AD81E74103FC430A534DCC37AFCEC70E1517BB06F27219DAE49022D"
                                "DC47A068DE4C9496A951A6B09EDBDC864C7ADBD740AC50C022F3082BAFD22D78197C5D508B977BCA13F32E6"

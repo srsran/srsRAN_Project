@@ -107,7 +107,7 @@ inline void zero_tailing_bits(uint8_t* data, uint32_t length_bits)
 inline void zero_tailing_bits(uint8_t& tail_byte, uint8_t length_bits)
 {
   uint8_t bits = (8 - (length_bits & 0x07)) & 0x07;
-  tail_byte &= (uint8_t)(0xFF << bits);
+  tail_byte &= (uint8_t)(0xff << bits);
 }
 
 } // namespace srsgnb
