@@ -68,7 +68,7 @@ TEST_F(cu_cp_test, when_new_connection_then_du_added)
   cu_cp_obj->on_new_connection();
 
   // check that DU has been added
-  EXPECT_EQ(cu_cp_obj->get_nof_dus(), 1U);
+  ASSERT_EQ(cu_cp_obj->get_nof_dus(), 1U);
 }
 
 /// Test the DU connection
@@ -78,13 +78,13 @@ TEST_F(cu_cp_test, when_du_remove_request_received_then_du_removed)
   cu_cp_obj->on_new_connection();
 
   // Check that DU has been added
-  EXPECT_EQ(cu_cp_obj->get_nof_dus(), 1U);
+  ASSERT_EQ(cu_cp_obj->get_nof_dus(), 1U);
 
   // Remove DU
   cu_cp_obj->handle_du_remove_request(MIN_DU_INDEX);
 
   // Check that DU has been removed
-  EXPECT_EQ(cu_cp_obj->get_nof_dus(), 0U);
+  ASSERT_EQ(cu_cp_obj->get_nof_dus(), 0U);
 }
 
 /// Test exeeding the maximum number of connected DUs
@@ -95,14 +95,12 @@ TEST_F(cu_cp_test, when_max_nof_dus_connected_then_reject_new_connection)
   }
 
   // Check that MAX_NOF_DUS are connected
-  EXPECT_EQ(cu_cp_obj->get_nof_dus(), MAX_NOF_DUS);
+  ASSERT_EQ(cu_cp_obj->get_nof_dus(), MAX_NOF_DUS);
 
   cu_cp_obj->on_new_connection();
 
   // Check that MAX_NOF_DUS are connected
-  EXPECT_EQ(cu_cp_obj->get_nof_dus(), MAX_NOF_DUS);
-
-  cu_cp_obj->stop();
+  ASSERT_EQ(cu_cp_obj->get_nof_dus(), MAX_NOF_DUS);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -134,7 +132,7 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
   cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(ul_rrc_msg);
 
   // check that UE has been added
-  EXPECT_EQ(cu_cp_obj->get_nof_ues(), 1U);
+  ASSERT_EQ(cu_cp_obj->get_nof_ues(), 1U);
 }
 
 TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
@@ -154,7 +152,7 @@ TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
   cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 
   // check that UE has been added
-  EXPECT_EQ(cu_cp_obj->get_nof_ues(), 0U);
+  ASSERT_EQ(cu_cp_obj->get_nof_ues(), 0U);
 }
 
 /// Test the f1 initial UL RRC message transfer procedure
@@ -188,7 +186,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(ul_rrc_msg);
 
     // check that UE has been added
-    EXPECT_EQ(cu_cp_obj->get_nof_ues(), 1U);
+    ASSERT_EQ(cu_cp_obj->get_nof_ues(), 1U);
   }
 
   // Disconnect AMF
@@ -205,10 +203,10 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 
     // Check that UE has been added to F1AP (the AMF connection drop isn't visible to F1AP)
-    EXPECT_EQ(cu_cp_obj->get_f1c_statistics_handler(int_to_du_index(0)).get_nof_ues(), 2);
+    ASSERT_EQ(cu_cp_obj->get_f1c_statistics_handler(int_to_du_index(0)).get_nof_ues(), 2);
 
     // The UE should not exists in the CU-CP though
-    EXPECT_EQ(cu_cp_obj->get_nof_ues(), 1U);
+    ASSERT_EQ(cu_cp_obj->get_nof_ues(), 1U);
 
     // Inject UE Context Release Complete message
     f1c_message ue_context_release_complete_msg =
@@ -217,6 +215,6 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(ue_context_release_complete_msg);
 
     // Check that UE has also been removed from F1AP
-    EXPECT_EQ(cu_cp_obj->get_f1c_statistics_handler(int_to_du_index(0)).get_nof_ues(), 1);
+    ASSERT_EQ(cu_cp_obj->get_f1c_statistics_handler(int_to_du_index(0)).get_nof_ues(), 1);
   }
 }
