@@ -69,8 +69,8 @@ TEST_F(du_processor_test, when_valid_f1setup_received_then_f1_setup_response_sen
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 
   // Check response is F1SetupResponse
-  EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), f1_ap_pdu_c::types_opts::options::successful_outcome);
-  EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.successful_outcome().value.type(),
+  ASSERT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), f1_ap_pdu_c::types_opts::options::successful_outcome);
+  ASSERT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.successful_outcome().value.type(),
             f1_ap_elem_procs_o::successful_outcome_c::types_opts::options::f1_setup_resp);
 }
 
@@ -84,8 +84,8 @@ TEST_F(du_processor_test, when_du_served_cells_list_missing_then_f1setup_rejecte
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 
   // Check the generated PDU is indeed the F1 Setup failure
-  EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), f1_ap_pdu_c::types_opts::options::unsuccessful_outcome);
-  EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.unsuccessful_outcome().value.type(),
+  ASSERT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), f1_ap_pdu_c::types_opts::options::unsuccessful_outcome);
+  ASSERT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.unsuccessful_outcome().value.type(),
             f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail);
 }
 
@@ -100,8 +100,8 @@ TEST_F(du_processor_test, when_gnb_du_sys_info_missing_then_f1setup_rejected)
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 
   // Check the generated PDU is indeed the F1 Setup failure
-  EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), f1_ap_pdu_c::types_opts::options::unsuccessful_outcome);
-  EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.unsuccessful_outcome().value.type(),
+  ASSERT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), f1_ap_pdu_c::types_opts::options::unsuccessful_outcome);
+  ASSERT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.unsuccessful_outcome().value.type(),
             f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail);
 }
 
@@ -122,8 +122,8 @@ TEST_F(du_processor_test, when_max_nof_du_cells_exeeded_then_f1setup_rejected)
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 
   // Check the generated PDU is indeed the F1 Setup failure
-  EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), f1_ap_pdu_c::types_opts::options::unsuccessful_outcome);
-  EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.unsuccessful_outcome().value.type(),
+  ASSERT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), f1_ap_pdu_c::types_opts::options::unsuccessful_outcome);
+  ASSERT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.unsuccessful_outcome().value.type(),
             f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail);
 }
 
@@ -144,9 +144,9 @@ TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  EXPECT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+  ASSERT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
 
-  EXPECT_EQ(du_processor_obj->get_nof_ues(), 1);
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), 1);
 }
 
 TEST_F(du_processor_test, when_cell_id_invalid_then_ue_not_added)
@@ -162,9 +162,9 @@ TEST_F(du_processor_test, when_cell_id_invalid_then_ue_not_added)
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  EXPECT_EQ(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+  ASSERT_EQ(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
 
-  EXPECT_EQ(du_processor_obj->get_nof_ues(), 0);
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), 0);
 }
 
 TEST_F(du_processor_test, when_rnti_invalid_then_ue_not_added)
@@ -180,9 +180,9 @@ TEST_F(du_processor_test, when_rnti_invalid_then_ue_not_added)
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  EXPECT_EQ(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+  ASSERT_EQ(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
 
-  EXPECT_EQ(du_processor_obj->get_nof_ues(), 0);
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), 0);
 }
 
 TEST_F(du_processor_test, when_ue_exists_then_ue_not_added)
@@ -198,15 +198,15 @@ TEST_F(du_processor_test, when_ue_exists_then_ue_not_added)
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  EXPECT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+  ASSERT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
 
-  EXPECT_EQ(du_processor_obj->get_nof_ues(), 1);
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), 1);
 
   // Pass same message to DU processor again
   ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  EXPECT_EQ(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+  ASSERT_EQ(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
 
-  EXPECT_EQ(du_processor_obj->get_nof_ues(), 1);
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), 1);
 }
 
 TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
@@ -229,13 +229,13 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
     // Pass message to DU processor
     ue_creation_complete_message ue_creation_complete_msg =
         du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-    EXPECT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+    ASSERT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
   }
 
   // Reset cu-cp logger loglevel
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::debug);
 
-  EXPECT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES);
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES);
 
   // Add one more UE to DU processor
   // Generate ue_creation message
@@ -244,9 +244,9 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  EXPECT_EQ(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+  ASSERT_EQ(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
 
-  EXPECT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES);
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -265,15 +265,17 @@ TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_delet
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  EXPECT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+  ASSERT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
 
-  EXPECT_EQ(du_processor_obj->get_nof_ues(), 1);
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), 1);
 
   // Generate UE context release command message
   ue_context_release_command_message ue_context_release_command_msg = generate_ue_context_release_command(MIN_UE_INDEX);
 
   // Pass message to DU processor
   du_processor_obj->handle_ue_context_release_command(ue_context_release_command_msg);
+
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), 0);
 }
 
 TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_removed_from_full_ue_db_then_ue_added)
@@ -296,13 +298,13 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
     // Pass message to DU processor
     ue_creation_complete_message ue_creation_complete_msg =
         du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-    EXPECT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+    ASSERT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
   }
 
   // Reset cu-cp logger loglevel
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::debug);
 
-  EXPECT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES);
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES);
 
   // Generate UE context release command message
   ue_context_release_command_message ue_context_release_command_msg = generate_ue_context_release_command(MIN_UE_INDEX);
@@ -310,7 +312,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   // Pass message to DU processor
   du_processor_obj->handle_ue_context_release_command(ue_context_release_command_msg);
 
-  EXPECT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES - 1);
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES - 1);
 
   // Add one more UE to DU processor
   // Generate ue_creation message
@@ -319,7 +321,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  EXPECT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+  ASSERT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
 
-  EXPECT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES);
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES);
 }
