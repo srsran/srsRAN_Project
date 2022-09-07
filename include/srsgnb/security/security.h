@@ -79,32 +79,35 @@ void security_nia1(const sec_128_as_key& key,
 /******************************************************************************
  * Encryption / Decryption
  *****************************************************************************/
-void security_nea1(const sec_128_as_key& key,
-                   uint32_t              count,
-                   uint8_t               bearer,
-                   security_direction    direction,
-                   byte_buffer_view      buf,
-                   uint8_t*              msg_out);
+byte_buffer security_nea1(const sec_128_as_key&   key,
+                          uint32_t                count,
+                          uint8_t                 bearer,
+                          security_direction      direction,
+                          const byte_buffer_view& msg);
 
-void security_nea1(const sec_128_as_key& key,
-                   uint32_t              count,
-                   uint8_t               bearer,
-                   security_direction    direction,
-                   byte_buffer_view      buf,
-                   uint32_t              length,
-                   uint8_t*              msg_out);
+byte_buffer security_nea1(const sec_128_as_key&   key,
+                          uint32_t                count,
+                          uint8_t                 bearer,
+                          security_direction      direction,
+                          const byte_buffer_view& msg,
+                          uint32_t                msg_len);
 
-/*********************************************************************
-    Name: zero_tailing_bits
-
-    Description: Fill tailing bits with zeros.
-
-    Document Reference: -
-*********************************************************************/
+/// \brief Fill tailing bits of the last byte of a contiguous memory with zeros.
+/// \param[inout] data Pointer to the contiguous memory to operate on
+/// \param[in] length_bits Number of occupied bits in the whole memory buffer that shall not be zeroed
 inline void zero_tailing_bits(uint8_t* data, uint32_t length_bits)
 {
   uint8_t bits = (8 - (length_bits & 0x07)) & 0x07;
   data[(length_bits + 7) / 8 - 1] &= (uint8_t)(0xff << bits);
+}
+
+/// \brief Fill tailing bits of a given byte with zeros.
+/// \param[inout] tail_byte Reference to the byte to operate on
+/// \param[in] length_bits Number of occupied bits in the tail_byte that shall not be zeroed
+inline void zero_tailing_bits(uint8_t& tail_byte, uint8_t length_bits)
+{
+  uint8_t bits = (8 - (length_bits & 0x07)) & 0x07;
+  tail_byte &= (uint8_t)(0xFF << bits);
 }
 
 } // namespace srsgnb

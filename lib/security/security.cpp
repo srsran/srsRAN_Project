@@ -57,34 +57,22 @@ void srsgnb::security_nia1(const sec_128_as_key& key,
  * Encryption / Decryption
  *****************************************************************************/
 
-void srsgnb::security_nea1(const sec_128_as_key& key,
-                           uint32_t              count,
-                           uint8_t               bearer,
-                           security_direction    direction,
-                           byte_buffer_view      buf,
-                           uint8_t*              msg_out)
+byte_buffer srsgnb::security_nea1(const sec_128_as_key&   key,
+                                  uint32_t                count,
+                                  uint8_t                 bearer,
+                                  security_direction      direction,
+                                  const byte_buffer_view& msg)
 {
-  security_nea1(key, count, bearer, direction, buf, buf.length() * 8, msg_out);
+  return security_nea1(key, count, bearer, direction, msg, msg.length() * 8);
 }
 
-void srsgnb::security_nea1(const sec_128_as_key& key,
-                           uint32_t              count,
-                           uint8_t               bearer,
-                           security_direction    direction,
-                           byte_buffer_view      buf,
-                           uint32_t              msg_len,
-                           uint8_t*              msg_out)
+byte_buffer srsgnb::security_nea1(const sec_128_as_key&   key,
+                                  uint32_t                count,
+                                  uint8_t                 bearer,
+                                  security_direction      direction,
+                                  const byte_buffer_view& msg,
+                                  uint32_t                msg_len)
 {
-  // FIXME for now we copy the byte buffer to a contiguous piece of memory.
-  // This will be fixed later.
-  std::vector<uint8_t> continuous_buf;
-  continuous_buf.reserve(buf.length());
-
-  for (uint32_t i = 0; i < buf.length(); i++) {
-    continuous_buf.push_back(buf[i]);
-  }
-  uint8_t* msg     = continuous_buf.data();
-
   S3G_STATE state, *state_ptr;
   uint32_t  k[]  = {0, 0, 0, 0};
   uint32_t  iv[] = {0, 0, 0, 0};
@@ -92,11 +80,12 @@ void srsgnb::security_nea1(const sec_128_as_key& key,
   int32_t   i;
   uint32_t  msg_len_block_8, msg_len_block_32;
 
-  if (msg != nullptr && msg_out != nullptr) {
-    state_ptr        = &state;
-    msg_len_block_8  = (msg_len + 7) / 8;
-    msg_len_block_32 = (msg_len + 31) / 32;
+  byte_buffer msg_out;
 
+  state_ptr        = &state;
+  msg_len_block_8  = (msg_len + 7) / 8;
+  msg_len_block_32 = (msg_len + 31) / 32;
+  if (msg_len_block_8 <= msg.length()) {
     // Transform key
     for (i = 3; i >= 0; i--) {
       k[i] = (key[4 * (3 - i) + 0] << 24) | (key[4 * (3 - i) + 1] << 16) | (key[4 * (3 - i) + 2] << 8) |
@@ -113,28 +102,30 @@ void srsgnb::security_nea1(const sec_128_as_key& key,
     s3g_initialize(state_ptr, k, iv);
 
     // Generate keystream
-
     ks = (uint32_t*)calloc(msg_len_block_32, sizeof(uint32_t));
     s3g_generate_keystream(state_ptr, msg_len_block_32, ks);
 
-    // generate output except last block
+    // Generate output except last block
+    byte_buffer::const_iterator msg_it = msg.begin();
     for (i = 0; i < (int32_t)msg_len_block_32 - 1; i++) {
-      msg_out[4 * i + 0] = msg[4 * i + 0] ^ ((ks[i] >> 24) & 0xff);
-      msg_out[4 * i + 1] = msg[4 * i + 1] ^ ((ks[i] >> 16) & 0xff);
-      msg_out[4 * i + 2] = msg[4 * i + 2] ^ ((ks[i] >> 8) & 0xff);
-      msg_out[4 * i + 3] = msg[4 * i + 3] ^ ((ks[i] & 0xff));
+      msg_out.append(*msg_it++ ^ ((ks[i] >> 24) & 0xff));
+      msg_out.append(*msg_it++ ^ ((ks[i] >> 16) & 0xff));
+      msg_out.append(*msg_it++ ^ ((ks[i] >> 8) & 0xff));
+      msg_out.append(*msg_it++ ^ ((ks[i]) & 0xff));
     }
 
     // process last bytes
     for (i = (msg_len_block_32 - 1) * 4; i < (int32_t)msg_len_block_8; i++) {
-      msg_out[i] = msg[i] ^ ((ks[i / 4] >> ((3 - (i % 4)) * 8)) & 0xff);
+      msg_out.append(*msg_it++ ^ ((ks[i / 4] >> ((3 - (i % 4)) * 8)) & 0xff));
     }
 
     // Zero tailing bits
-    zero_tailing_bits(msg_out, msg_len);
+    zero_tailing_bits(msg_out.back(), msg_len);
 
     // Clean up
     free(ks);
     s3g_deinitialize(state_ptr);
   }
+
+  return msg_out;
 }

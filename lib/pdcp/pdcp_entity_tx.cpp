@@ -134,8 +134,6 @@ void pdcp_entity_tx::integrity_generate(byte_buffer& buf, uint32_t count, sec_ma
 
 void pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count, byte_buffer& ct)
 {
-  std::array<uint8_t, pdcp_max_sdu_size> ct_tmp = {};
-
   // If control plane use RRC integrity key. If data use user plane key
   const sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
 
@@ -147,11 +145,7 @@ void pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count, byte_b
     case ciphering_algorithm::nea0:
       break;
     case ciphering_algorithm::nea1:
-      security_nea1(k_enc, count, lcid - 1, direction, msg, ct_tmp.data());
-      for (unsigned i = 0; i < msg.length(); i++) {
-        ct.append(ct_tmp[i]);
-      }
-      // memcpy(ct, ct_tmp, msg.length());
+      ct = security_nea1(k_enc, count, lcid - 1, direction, msg);
       break;
     case ciphering_algorithm::nea2:
       // security_128_eea2(&(k_enc[16]), count, cfg.bearer_id - 1, cfg.tx_direction, msg, msg_len, ct_tmp);

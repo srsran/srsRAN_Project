@@ -38,25 +38,14 @@ TEST(security_nea1_test, testset1)
   const char* ciphertext_cstr = "5D5BFE75EB04F68CE0A12377EA00B37D47C6A0BA06309155086A859C4341B378";
 
   // Pack hex strings into srsgnb types
-  sec_128_as_key     key            = make_sec_128_as_key(key_cstr);
-  security_direction dir            = static_cast<security_direction>(direction);
-  byte_buffer        plaintext_buf  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext_buf = make_byte_buffer(ciphertext_cstr);
-  byte_buffer        ciphertext_out;
+  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  security_direction dir        = static_cast<security_direction>(direction);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
-  // Prepare temporary types and copy data
-  uint8_t* ciphertext = new uint8_t[ciphertext_buf.length()];
-
-  security_nea1(key, count, bearer, dir, plaintext_buf, length, ciphertext);
-
-  // Copy back into srsgnb types
-  for (size_t i = 0; i < ciphertext_buf.length(); i++) {
-    ciphertext_out.append(ciphertext[i]);
-  }
-
-  delete[] ciphertext;
-
-  EXPECT_EQ(ciphertext_out, ciphertext_buf);
+  // Apply ciphering and compare results
+  byte_buffer ciphertext_out = security_nea1(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext_out, ciphertext);
 }
 
 /// 128-NEA1 Test Set 2
@@ -79,25 +68,14 @@ TEST(security_nea1_test, testset2)
       "7B82F9EAD41A1FE65EABEBFBC1F3A4C56C9A26FCF7B3D66D0220EE4775BC58170A2B12F3431D11B344D6E36C";
 
   // Pack hex strings into srsgnb types
-  sec_128_as_key     key            = make_sec_128_as_key(key_cstr);
-  security_direction dir            = static_cast<security_direction>(direction);
-  byte_buffer        plaintext_buf  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext_buf = make_byte_buffer(ciphertext_cstr);
-  byte_buffer        ciphertext_out;
+  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  security_direction dir        = static_cast<security_direction>(direction);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
-  // Prepare temporary types and copy data
-  uint8_t* ciphertext = new uint8_t[ciphertext_buf.length()];
-
-  security_nea1(key, count, bearer, dir, plaintext_buf, length, ciphertext);
-
-  // Copy back into srsgnb types
-  for (size_t i = 0; i < ciphertext_buf.length(); i++) {
-    ciphertext_out.append(ciphertext[i]);
-  }
-
-  delete[] ciphertext;
-
-  EXPECT_EQ(ciphertext_out, ciphertext_buf);
+  // Apply ciphering and compare results
+  byte_buffer ciphertext_out = security_nea1(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext_out, ciphertext);
 }
 
 /// 128-NEA1 Test Set 3
@@ -116,25 +94,14 @@ TEST(security_nea1_test, testset3)
   const char* ciphertext_cstr = "48148E5452A210C05F46BC80DC6F73495B02048C1B958B026102CA97280279A4C18D2EE308921C";
 
   // Pack hex strings into srsgnb types
-  sec_128_as_key     key            = make_sec_128_as_key(key_cstr);
-  security_direction dir            = static_cast<security_direction>(direction);
-  byte_buffer        plaintext_buf  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext_buf = make_byte_buffer(ciphertext_cstr);
-  byte_buffer        ciphertext_out;
+  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  security_direction dir        = static_cast<security_direction>(direction);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
-  // Prepare temporary types and copy data
-  uint8_t* ciphertext = new uint8_t[ciphertext_buf.length()];
-
-  security_nea1(key, count, bearer, dir, plaintext_buf, length, ciphertext);
-
-  // Copy back into srsgnb types
-  for (size_t i = 0; i < ciphertext_buf.length(); i++) {
-    ciphertext_out.append(ciphertext[i]);
-  }
-
-  delete[] ciphertext;
-
-  EXPECT_EQ(ciphertext_out, ciphertext_buf);
+  // Apply ciphering and compare results
+  byte_buffer ciphertext_out = security_nea1(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext_out, ciphertext);
 }
 
 /// 128-NEA1 Test Set 4
@@ -157,25 +124,14 @@ TEST(security_nea1_test, testset4)
                                 "F6B4A9913E96B6DB7ABCACE415177C1D0115C5F09B5FDEA0B3ADB8F9DA6E9F9A04C543397B9D43F87330";
 
   // Pack hex strings into srsgnb types
-  sec_128_as_key     key            = make_sec_128_as_key(key_cstr);
-  security_direction dir            = static_cast<security_direction>(direction);
-  byte_buffer        plaintext_buf  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext_buf = make_byte_buffer(ciphertext_cstr);
-  byte_buffer        ciphertext_out;
+  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  security_direction dir        = static_cast<security_direction>(direction);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
-  // Prepare temporary types and copy data
-  uint8_t* ciphertext = new uint8_t[ciphertext_buf.length()];
-
-  security_nea1(key, count, bearer, dir, plaintext_buf, length, ciphertext);
-
-  // Copy back into srsgnb types
-  for (size_t i = 0; i < ciphertext_buf.length(); i++) {
-    ciphertext_out.append(ciphertext[i]);
-  }
-
-  delete[] ciphertext;
-
-  EXPECT_EQ(ciphertext_out, ciphertext_buf);
+  // Apply ciphering and compare results
+  byte_buffer ciphertext_out = security_nea1(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext_out, ciphertext);
 }
 
 /// 128-NEA1 Test Set 5
@@ -200,25 +156,14 @@ TEST(security_nea1_test, testset5)
       "42E28E8A94EDB9119F412D054BE1FA7272B5FFB2B2570F4F7CEAF383A8A9D93572F04D6E3A6E293726EC62C8";
 
   // Pack hex strings into srsgnb types
-  sec_128_as_key     key            = make_sec_128_as_key(key_cstr);
-  security_direction dir            = static_cast<security_direction>(direction);
-  byte_buffer        plaintext_buf  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext_buf = make_byte_buffer(ciphertext_cstr);
-  byte_buffer        ciphertext_out;
+  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  security_direction dir        = static_cast<security_direction>(direction);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
-  // Prepare temporary types and copy data
-  uint8_t* ciphertext = new uint8_t[ciphertext_buf.length()];
-
-  security_nea1(key, count, bearer, dir, plaintext_buf, length, ciphertext);
-
-  // Copy back into srsgnb types
-  for (size_t i = 0; i < ciphertext_buf.length(); i++) {
-    ciphertext_out.append(ciphertext[i]);
-  }
-
-  delete[] ciphertext;
-
-  EXPECT_EQ(ciphertext_out, ciphertext_buf);
+  // Apply ciphering and compare results
+  byte_buffer ciphertext_out = security_nea1(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext_out, ciphertext);
 }
 
 /// 128-NEA1 Test Set 6
@@ -255,23 +200,12 @@ TEST(security_nea1_test, testset6)
       "B68495CD75AB66D964D4CAFE64DD9404DAE2DC5110617F194FC3C184F583CD0DEF6D00";
 
   // Pack hex strings into srsgnb types
-  sec_128_as_key     key            = make_sec_128_as_key(key_cstr);
-  security_direction dir            = static_cast<security_direction>(direction);
-  byte_buffer        plaintext_buf  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext_buf = make_byte_buffer(ciphertext_cstr);
-  byte_buffer        ciphertext_out;
+  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  security_direction dir        = static_cast<security_direction>(direction);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
 
-  // Prepare temporary types and copy data
-  uint8_t* ciphertext = new uint8_t[ciphertext_buf.length()];
-
-  security_nea1(key, count, bearer, dir, plaintext_buf, length, ciphertext);
-
-  // Copy back into srsgnb types
-  for (size_t i = 0; i < ciphertext_buf.length(); i++) {
-    ciphertext_out.append(ciphertext[i]);
-  }
-
-  delete[] ciphertext;
-
-  EXPECT_EQ(ciphertext_out, ciphertext_buf);
+  // Apply ciphering and compare results
+  byte_buffer ciphertext_out = security_nea1(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext_out, ciphertext);
 }
