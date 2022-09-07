@@ -90,4 +90,3 @@ void s3g_generate_keystream(S3G_STATE* state, uint32_t n, uint32_t* ks);
  */
 
 uint8_t* s3g_f9(const uint8_t* key, uint32_t count, uint32_t fresh, uint32_t dir, uint8_t* data, uint64_t length);
-

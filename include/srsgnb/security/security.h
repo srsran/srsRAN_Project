@@ -96,7 +96,7 @@ void security_nea1(const sec_128_as_key& key,
 inline void zero_tailing_bits(uint8_t* data, uint32_t length_bits)
 {
   uint8_t bits = (8 - (length_bits & 0x07)) & 0x07;
-  data[(length_bits + 7) / 8 - 1] &= (uint8_t)(0xFF << bits);
+  data[(length_bits + 7) / 8 - 1] &= (uint8_t)(0xff << bits);
 }
 
 } // namespace srsgnb

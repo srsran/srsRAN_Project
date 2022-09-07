@@ -95,7 +95,7 @@ void srsgnb::security_nea1(const sec_128_as_key& key,
 
     // Construct iv
     iv[3] = count;
-    iv[2] = ((bearer & 0x1F) << 27) | ((static_cast<uint8_t>(direction) & 0x01) << 26);
+    iv[2] = ((bearer & 0x1f) << 27) | ((static_cast<uint8_t>(direction) & 0x01) << 26);
     iv[1] = iv[3];
     iv[0] = iv[2];
 
@@ -107,17 +107,17 @@ void srsgnb::security_nea1(const sec_128_as_key& key,
     ks = (uint32_t*)calloc(msg_len_block_32, sizeof(uint32_t));
     s3g_generate_keystream(state_ptr, msg_len_block_32, ks);
 
-    // Generate output except last block
+    // generate output except last block
     for (i = 0; i < (int32_t)msg_len_block_32 - 1; i++) {
-      msg_out[4 * i + 0] = msg[4 * i + 0] ^ ((ks[i] >> 24) & 0xFF);
-      msg_out[4 * i + 1] = msg[4 * i + 1] ^ ((ks[i] >> 16) & 0xFF);
-      msg_out[4 * i + 2] = msg[4 * i + 2] ^ ((ks[i] >> 8) & 0xFF);
-      msg_out[4 * i + 3] = msg[4 * i + 3] ^ ((ks[i] & 0xFF));
+      msg_out[4 * i + 0] = msg[4 * i + 0] ^ ((ks[i] >> 24) & 0xff);
+      msg_out[4 * i + 1] = msg[4 * i + 1] ^ ((ks[i] >> 16) & 0xff);
+      msg_out[4 * i + 2] = msg[4 * i + 2] ^ ((ks[i] >> 8) & 0xff);
+      msg_out[4 * i + 3] = msg[4 * i + 3] ^ ((ks[i] & 0xff));
     }
 
-    // Process last bytes
+    // process last bytes
     for (i = (msg_len_block_32 - 1) * 4; i < (int32_t)msg_len_block_8; i++) {
-      msg_out[i] = msg[i] ^ ((ks[i / 4] >> ((3 - (i % 4)) * 8)) & 0xFF);
+      msg_out[i] = msg[i] ^ ((ks[i / 4] >> ((3 - (i % 4)) * 8)) & 0xff);
     }
 
     // Zero tailing bits
@@ -128,4 +128,3 @@ void srsgnb::security_nea1(const sec_128_as_key& key,
     s3g_deinitialize(state_ptr);
   }
 }
-
