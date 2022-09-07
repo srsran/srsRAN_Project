@@ -111,3 +111,26 @@ inline void zero_tailing_bits(uint8_t& tail_byte, uint8_t length_bits)
 }
 
 } // namespace srsgnb
+
+//
+// Formatters
+//
+namespace fmt {
+
+// Security direction
+template <>
+struct formatter<srsgnb::security_direction> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::security_direction dir, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    constexpr static const char* options[] = {"Uplink", "Downlink"};
+    return format_to(ctx.out(), "{}", options[static_cast<unsigned>(dir)]);
+  }
+};
+} // namespace fmt

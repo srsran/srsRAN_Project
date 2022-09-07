@@ -127,9 +127,9 @@ void pdcp_entity_tx::integrity_generate(byte_buffer& buf, uint32_t count, sec_ma
   }
 
   logger.log_debug("Integrity gen input: COUNT {}, Bearer ID {}, Direction {}", count, lcid, direction);
-  // logger.log_debug(k_int.begin(), k_int.end(), "Integrity gen key:");
-  // logger.log_debug(buf.begin(), buf.end(), "Integrity gen input msg:");
-  // logger.log_debug(mac.begin(), mac.end(), "MAC (generated)");
+  logger.log_debug((uint8_t*)k_int.data(), k_int.size(), "Integrity gen key:");
+  logger.log_debug(buf.begin(), buf.end(), "Integrity gen input message:");
+  logger.log_debug((uint8_t*)mac.data(), mac.size(), "MAC (generated)");
 }
 
 void pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count, byte_buffer& ct)
@@ -137,9 +137,9 @@ void pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count, byte_b
   // If control plane use RRC integrity key. If data use user plane key
   const sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
 
-  // logger.log_debug("Cipher encrypt input: COUNT: {}, Bearer ID: {}, Direction {}", count, lcid, "Uplink");
-  // logger.log_debug(k_enc.begin(), k_enc.end(), "Cipher encrypt key:");
-  // logger.log_debug(msg.begin(), msg.end(), "Cipher encrypt input msg");
+  logger.log_debug("Cipher encrypt input: COUNT: {}, Bearer ID: {}, Direction {}", count, lcid, direction);
+  logger.log_debug((uint8_t*)k_enc.data(), k_enc.size(), "Cipher encrypt key:");
+  logger.log_debug(msg.begin(), msg.end(), "Cipher encrypt input msg");
 
   switch (sec_cfg.cipher_algo) {
     case ciphering_algorithm::nea0:
@@ -158,7 +158,7 @@ void pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count, byte_b
     default:
       break;
   }
-  // logger.log_debug(ct.begin(), ct.end(), "Cipher encrypt output msg");
+  logger.log_debug(ct.begin(), ct.end(), "Cipher encrypt output msg");
 }
 
 /*
