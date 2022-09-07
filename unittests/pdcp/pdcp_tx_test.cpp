@@ -83,15 +83,8 @@ TEST_P(pdcp_tx_test, pdu_gen)
     byte_buffer exp_pdu;
     get_expected_pdu(tx_next, exp_pdu);
 
-    // FIXME for now, the PDCP only writes the header to the SDU.
-    // Later this check will be changed to use the expected PDU
-    // rather than original SDU + header.
-    byte_buffer_view hdr     = {pdu, 0, pdu_hdr_len};
-    byte_buffer_view hdr_exp = {exp_pdu, 0, pdu_hdr_len};
-    ASSERT_EQ(hdr.length(), hdr_exp.length());
-    ASSERT_EQ(hdr, hdr_exp);
-    // ASSERT_EQ(pdu.length(), exp_pdu.length());
-    // ASSERT_EQ(pdu, exp_pdu);
+    ASSERT_EQ(pdu.length(), exp_pdu.length());
+    ASSERT_EQ(pdu, exp_pdu);
   };
 
   if (config.sn_size == pdcp_sn_size::size12bits) {
