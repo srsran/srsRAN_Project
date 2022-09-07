@@ -12,6 +12,7 @@
 
 #include "../cell/resource_grid.h"
 #include "../pdcch_scheduling/pdcch_scheduler.h"
+#include "../support/prbs_calculator.h"
 #include "../support/slot_event_list.h"
 #include "../ue_scheduling/harq_process.h"
 #include "srsgnb/ran/prach/prach_configuration.h"
@@ -103,6 +104,14 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");
   const unsigned        ra_win_nof_slots;
   bwp_configuration     initial_active_dl_bwp;
+
+  /// Pre-cached information related to RAR for a given PDSCH time resource.
+  struct rar_param_cached_data {
+    dmrs_information dmrs_info;
+    pdsch_prbs_tbs   prbs_tbs;
+  };
+  std::vector<rar_param_cached_data> rar_data;
+  sch_mcs_description                rar_mcs_config;
 
   // variables
   slot_event_list<rach_indication_message> pending_rachs;

@@ -56,12 +56,37 @@ ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_scheduler& pdcc
   initial_active_dl_bwp(cfg.dl_cfg_common.init_dl_bwp.generic_params),
   pending_msg3s(MAX_NOF_MSG3)
 {
+  // RAR payload size in bytes as per TS38.321, 6.1.5 and 6.2.3.
+  static const unsigned rar_payload_size_bytes = 7, rar_subheader_size_bytes = 1;
+  // As per TS 38.214, Section 5.1.3.2, nof_oh_prb = 0 if PDSCH is scheduled by PDCCH with a CRC scrambled by RA-RNTI.
+  static const unsigned nof_oh_prb = 0;
+  static const unsigned nof_layers = 1;
+
   if (cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
     // See 38.213 - If a UE is not provided initialDownlinkBWP, an initial active DL BWP is defined by a location
     // and number of contiguous PRBs, starting from a PRB with the lowest index and ending at a PRB with the highest
     // index among PRBs of a CORESET for Type0-PDCCH CSS set, and a SCS and a cyclic prefix for PDCCH reception in the
     // CORESET for Type0-PDCCH CSS set.
     initial_active_dl_bwp.crbs = get_coreset0_crbs(cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
+  }
+
+  // Cache PDSCH DM-RS information and RAR required TBS and number of PRBs.
+  rar_data.resize(get_pdsch_cfg().pdsch_td_alloc_list.size());
+  const unsigned mcs_index = 0; // TODO: parameterize mcs.
+  rar_mcs_config           = pdsch_mcs_get_config(pdsch_mcs_table::qam64, mcs_index);
+  for (unsigned i = 0; i != rar_data.size(); ++i) {
+    rar_data[i].dmrs_info =
+        make_dmrs_info_common(cfg.dl_cfg_common.init_dl_bwp.pdsch_common, i, cfg.pci, cfg.dmrs_typeA_pos);
+
+    unsigned nof_symb_sh = get_pdsch_cfg().pdsch_td_alloc_list[i].symbols.length();
+    rar_data[i].prbs_tbs =
+        get_nof_prbs(prbs_calculator_pdsch_config{rar_payload_size_bytes + rar_subheader_size_bytes,
+                                                  nof_symb_sh,
+                                                  calculate_nof_dmrs_per_rb(rar_data[i].dmrs_info),
+                                                  nof_oh_prb,
+                                                  get_bits_per_symbol(modulation_scheme::QPSK),
+                                                  static_cast<float>(rar_mcs_config.target_code_rate / 1024.0),
+                                                  nof_layers});
   }
 }
 
@@ -279,11 +304,9 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
 unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc)
 {
-  // RAR payload size in bytes as per TS38.321, 6.1.5 and 6.2.3.
-  //  static const unsigned rar_payload_size_bytes = 7, rar_subheader_size_bytes = 1;
-  // TODO: Make smarter algorithm for RAR size derivation.
-  static const unsigned nof_prbs_per_rar = 4, nof_prbs_per_msg3 = 3;
+  static const unsigned nof_prbs_per_msg3    = 3; // TODO: Derive Msg3 size.
   static const unsigned pdsch_time_res_index = 0;
+  const unsigned        nof_prbs_per_rar     = rar_data[pdsch_time_res_index].prbs_tbs.nof_prbs;
 
   cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
   cell_slot_resource_allocator& pdsch_alloc =
@@ -418,9 +441,8 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   sch_mcs_description mcs_config = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
   cw.qam_mod                     = mcs_config.modulation;
   cw.target_code_rate            = mcs_config.target_code_rate;
-  cw.tb_size_bytes               = 0; // TODO
-  rar.pdsch_cfg.dmrs =
-      make_dmrs_info_common(cfg.dl_cfg_common.init_dl_bwp.pdsch_common, dci.time_resource, cfg.pci, cfg.dmrs_typeA_pos);
+  cw.tb_size_bytes               = rar_data[dci.time_resource].prbs_tbs.tbs_bytes;
+  rar.pdsch_cfg.dmrs             = rar_data[dci.time_resource].dmrs_info;
 
   for (unsigned i = 0; i < msg3_candidates.size(); ++i) {
     const auto&                   msg3_candidate = msg3_candidates[i];
