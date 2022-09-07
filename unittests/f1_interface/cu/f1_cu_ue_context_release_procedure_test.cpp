@@ -23,7 +23,7 @@ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_ue_removed)
   f1c_message init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(41255);
   f1ap->handle_message(init_ul_rrc_msg);
 
-  EXPECT_EQ(f1ap->get_nof_ues(), 1);
+  ASSERT_EQ(f1ap->get_nof_ues(), 1);
 
   // Action 2: Start UE Context Release procedure
   test_logger.info("Starting UE Context Release procedure");
@@ -36,15 +36,15 @@ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_ue_removed)
   lazy_task_launcher<ue_index_t> t_launcher(t);
 
   // Status: Procedure not yet ready.
-  EXPECT_FALSE(t.ready());
+  ASSERT_FALSE(t.ready());
 
   // Action 3: Inject UE Context Release Complete message
   test_logger.info("Injecting UE Context Release Complete message");
   f1c_message ue_ctxt_rel_complete_msg = generate_f1_ue_context_release_complete_msg(0, 41255);
   f1ap->handle_message(ue_ctxt_rel_complete_msg);
 
-  EXPECT_TRUE(t.ready());
-  EXPECT_EQ(t.get(), MIN_UE_INDEX);
+  ASSERT_TRUE(t.ready());
+  ASSERT_EQ(t.get(), MIN_UE_INDEX);
 
-  EXPECT_EQ(f1ap->get_nof_ues(), 0);
+  ASSERT_EQ(f1ap->get_nof_ues(), 0);
 }
