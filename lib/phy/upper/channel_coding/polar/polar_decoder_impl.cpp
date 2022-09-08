@@ -139,12 +139,14 @@ polar_decoder_impl::polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint
   uint8_t  n_llr_all_stages = nMax + 1;
   uint16_t llr_all_stages   = (1U << n_llr_all_stages) - 1;
 
+  // Allocate memory.
   llr_alloc.resize(llr_all_stages);
 
+  // Assign a valid view for the first stage llr0 and an invalid view for llr1.
   llr0[0] = llr_alloc.first(1);
+  llr1[0] = {};
 
-  // Initialize all LLR pointers.
-  llr1[0] = llr_alloc.subspan(1, 1);
+  // Assign a valid view for the rest of stages llr0 and llr1.
   for (uint8_t s = 1; s != n_llr_all_stages; ++s) {
     llr0[s] = llr_alloc.subspan(param.code_stage_size[s] - 1, param.code_stage_size[s]);
     llr1[s] = llr0[s].last(param.code_stage_size[s - 1]);
