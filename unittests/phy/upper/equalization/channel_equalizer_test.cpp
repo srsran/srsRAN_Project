@@ -14,9 +14,18 @@
 
 using namespace srsgnb;
 
-static constexpr float MAX_ERROR_EQ = 1e-6;
+static constexpr float MAX_ERROR_EQ = 1e-5;
 
-void read_symbols(re_measurement<cf_t>& symbols, const re_measurement_exploded& syms_expl)
+static static_re_measurement<cf_t, MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_PORTS> rx_symbols;
+static static_re_measurement<cf_t, MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS>
+    eq_symbols_expected;
+static static_re_measurement<cf_t, MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS> eq_symbols_actual;
+static static_re_measurement<float, MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS>
+    eq_noise_vars_actual;
+
+static channel_estimate test_ch_estimate;
+
+static void read_symbols(re_measurement<cf_t>& symbols, const re_measurement_exploded& syms_expl)
 {
   re_measurement_dimensions re_dims;
   re_dims.nof_subc    = syms_expl.nof_prb * NRE;
@@ -35,7 +44,7 @@ void read_symbols(re_measurement<cf_t>& symbols, const re_measurement_exploded& 
   }
 }
 
-void read_ch_estimates(channel_estimate& ch_est, const ch_estimates_exploded& ch_est_expl)
+static void read_ch_estimates(channel_estimate& ch_est, const ch_estimates_exploded& ch_est_expl)
 {
   channel_estimate::channel_estimate_dimensions ch_dims;
   ch_dims.nof_prb       = ch_est_expl.nof_prb;
@@ -62,56 +71,48 @@ void read_ch_estimates(channel_estimate& ch_est, const ch_estimates_exploded& ch
   }
 }
 
+static void read_test_data(const test_case_t& t_case)
+{
+  // Read the test case symbols and estimates.
+  read_symbols(rx_symbols, t_case.received_symbols);
+  read_symbols(eq_symbols_expected, t_case.equalized_symbols);
+  read_ch_estimates(test_ch_estimate, t_case.ch_estimates);
+
+  // Resize the equalizer output data structures.
+  eq_noise_vars_actual.resize(eq_symbols_expected.size());
+  eq_symbols_actual.resize(eq_symbols_expected.size());
+}
+
+static void assert_equalization_error(const test_case_t& t_case)
+{
+  for (unsigned i_layer = 0; i_layer != t_case.ch_estimates.nof_tx_layers; ++i_layer) {
+    for (unsigned i_symbol = 0; i_symbol != t_case.ch_estimates.nof_symbols; ++i_symbol) {
+      span<const cf_t> eq_subcs_actual   = eq_symbols_actual.get_symbol(i_symbol, i_layer);
+      span<const cf_t> eq_subcs_expected = eq_symbols_expected.get_symbol(i_symbol, i_layer);
+      for (unsigned i_subc = 0; i_subc != t_case.ch_estimates.nof_prb * NRE; ++i_subc) {
+        float eq_error = std::abs(eq_subcs_expected[i_subc] - eq_subcs_actual[i_subc]);
+        TESTASSERT(eq_error < MAX_ERROR_EQ, "Equalized symbols error too large!");
+      }
+    }
+  }
+}
+
 int main()
 {
-  dynamic_re_measurement<cf_t> test_rx_symbols({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_PORTS});
-  dynamic_re_measurement<cf_t> test_eq_symbols_expected(
-      {MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS});
-  dynamic_re_measurement<cf_t> test_eq_symbols_actual(
-      {MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS});
-  dynamic_re_measurement<float> test_noise_vars({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS});
-  channel_estimate              test_ch_estimate;
-
-  dynamic_re_measurement<float> eq_symbols_error({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS});
-
   // Create channel equalizer.
   std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_zf_impl_factory();
   std::unique_ptr<channel_equalizer>         test_equalizer    = equalizer_factory->create();
 
   for (const auto& t_case : channel_equalizer_test_data) {
-    // For now, check only Zero Forcing equalizer.
+    // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
     if (t_case.equalizer_type == "ZF") {
-      read_symbols(test_rx_symbols, t_case.received_symbols);
-      read_symbols(test_eq_symbols_expected, t_case.equalized_symbols);
-      read_ch_estimates(test_ch_estimate, t_case.ch_estimates);
-      test_noise_vars.resize(test_eq_symbols_expected.size());
-      test_eq_symbols_actual.resize(test_eq_symbols_expected.size());
-      eq_symbols_error.resize(test_eq_symbols_expected.size());
+      read_test_data(t_case);
 
-      test_equalizer->equalize(
-          test_eq_symbols_actual, test_noise_vars, test_rx_symbols, test_ch_estimate, t_case.scaling);
+      test_equalizer->equalize(eq_symbols_actual, eq_noise_vars_actual, rx_symbols, test_ch_estimate, t_case.scaling);
 
-      // Compute Error.
-      for (unsigned i_layer = 0; i_layer != t_case.ch_estimates.nof_tx_layers; ++i_layer) {
-        for (unsigned i_symbol = 0; i_symbol != t_case.ch_estimates.nof_symbols; ++i_symbol) {
-          span<const cf_t> eq_subcs_actual   = test_eq_symbols_actual.get_symbol(i_symbol, i_layer);
-          span<const cf_t> eq_subcs_expected = test_eq_symbols_expected.get_symbol(i_symbol, i_layer);
-          span<float>      eq_subcs_error    = eq_symbols_error.get_symbol(i_symbol, i_layer);
-          for (unsigned i_subc = 0; i_subc != t_case.ch_estimates.nof_prb * NRE; ++i_subc) {
-            eq_subcs_error[i_subc] = std::abs(eq_subcs_expected[i_subc] - eq_subcs_actual[i_subc]);
-          }
-        }
-      }
-
-      // Assert Error with respect to the golden equalized symbols.
-      for (unsigned i_layer = 0; i_layer != t_case.ch_estimates.nof_tx_layers; ++i_layer) {
-        for (unsigned i_symbol = 0; i_symbol != t_case.ch_estimates.nof_symbols; ++i_symbol) {
-          span<const float> eq_subcs_error = eq_symbols_error.get_symbol(i_symbol, i_layer);
-          for (unsigned i_subc = 0; i_subc != t_case.ch_estimates.nof_prb * NRE; ++i_subc) {
-            TESTASSERT(eq_subcs_error[i_subc] <= MAX_ERROR_EQ, "Equalizer error too large!");
-          }
-        }
-      }
+      // Compute and assert absolute error between the expected and the actual symbols after equalization.
+      // For now, the nose variance errors are not computed, as their calculation is not implemented for all cases yet.
+      assert_equalization_error(t_case);
     }
   }
 }
