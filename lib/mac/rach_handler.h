@@ -27,7 +27,7 @@ public:
   {
     if (rnti_table.nof_ues() >= MAX_NOF_DU_UES) {
       // If the number of UEs is already maximum, ignore RACH.
-      return INITIAL_RNTI;
+      return rnti_t::INVALID_RNTI;
     }
     // Increments rnti counter until it finds an available temp C-RNTI.
     rnti_t temp_crnti;
@@ -70,7 +70,7 @@ public:
       sched_occasion.frequency_index = occasion.frequency_index;
       for (const auto& preamble : occasion.preambles) {
         rnti_t alloc_tc_rnti = rnti_alloc.allocate();
-        if (alloc_tc_rnti == INITIAL_RNTI) {
+        if (alloc_tc_rnti == rnti_t::INVALID_RNTI) {
           logger.warning(
               "Ignoring PRACH, cell={} preamble id={}. Cause: Failed to allocate TC-RNTI.", cell_index, preamble.index);
           continue;
@@ -86,6 +86,8 @@ public:
         sched_rach.occasions.pop_back();
       }
     }
+
+    notify_sched(sched_rach);
   }
 
 private:
