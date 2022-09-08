@@ -167,18 +167,13 @@ byte_buffer srsgnb::security_nea2(const sec_128_as_key&   key,
       nonce_cnt[3] = (count)&0xff;
       nonce_cnt[4] = ((bearer & 0x1f) << 3) | ((to_number(direction) & 0x01) << 2);
 
-      // temporary conversion into contiguous memory
-      constexpr uint16_t                     pdcp_max_sdu_size = 9000;
-      std::array<uint8_t, pdcp_max_sdu_size> msg_tmp           = {};
-      std::array<uint8_t, pdcp_max_sdu_size> ct_tmp            = {};
-      std::copy(msg.begin(), msg.end(), msg_tmp.begin());
-
       // Encryption
-      ret = aes_crypt_ctr(&ctx, msg_len_block_8, &nc_off, nonce_cnt, stream_blk, msg_tmp.data(), ct_tmp.data());
-
-      // temporary back conversion
-      for (unsigned i = 0; i < msg.length(); i++) {
-        msg_out.append(ct_tmp[i]);
+      byte_buffer::const_iterator msg_it = msg.begin();
+      for (uint32_t i = 0; i < msg_len_block_8; i++) {
+        // FIXME: call aes_crypt_ctr in larger contiguous chunks when available/supported
+        uint8_t out;
+        ret = aes_crypt_ctr(&ctx, 1, &nc_off, nonce_cnt, stream_blk, &(*msg_it++), &out);
+        msg_out.append(out);
       }
     }
 
