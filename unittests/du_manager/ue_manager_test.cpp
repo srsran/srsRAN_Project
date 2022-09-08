@@ -111,6 +111,7 @@ void test_ue_concurrent_procedures(test_outcome outcome)
 
   // Action 2: F1 UE creation finishes.
   f1_ue_ctx_mng_dummy.wait_ue_create.result.result = true;
+  f1_ue_ctx_mng_dummy.wait_ue_create.result.bearers_added.resize(1);
   f1_ue_ctx_mng_dummy.wait_ue_create.ready_ev.set();
 
   // TEST: MAC UE creation started but hasn't returned yet
@@ -213,6 +214,7 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
   cfg.f1ap_ue_ctx_mng = &f1_ue_ctx_mng_dummy;
 
   f1_ue_ctx_mng_dummy.wait_ue_create.result.result = true;
+  f1_ue_ctx_mng_dummy.wait_ue_create.result.bearers_added.resize(1);
   f1_ue_ctx_mng_dummy.wait_ue_create.ready_ev.set(); // set automatic completion.
 
   mac_dummy.wait_ue_create.result.ue_index   = first_ue_index;

@@ -59,7 +59,8 @@ private:
 
     // Create F1c bearer for SRB0.
     auto& ue_pcell = du_ctx.served_cells[msg.cell_index];
-    auto  srb0     = std::make_unique<f1c_srb0_du_bearer>(u.gnb_du_ue_f1ap_id,
+    auto  srb0     = std::make_unique<f1c_srb0_du_bearer>(u.ue_index,
+                                                     u.gnb_du_ue_f1ap_id,
                                                      msg.c_rnti,
                                                      ue_pcell.served_cell_info.nrcgi,
                                                      std::move(msg.du_cu_rrc_container),

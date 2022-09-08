@@ -38,16 +38,13 @@ public:
   async_task<f1_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) override;
 
   // F1AP RRC Message Transfer Procedure functions as per TS38.473, Section 8.4.
-  void handle_pdu(f1_rx_pdu pdu) override;
   void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) override {}
-  void handle_init_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg) override {}
-  void handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg) override {}
 
   // f1c message handler functions
   void handle_message(const f1c_message& msg) override;
   void handle_connection_loss() override {}
 
-  // f1ap ue context manager functions
+  // F1AP UE context manager functions
   async_task<f1ap_ue_create_response> handle_ue_creation_request(const f1ap_ue_create_request& msg) override;
   void handle_ue_context_release_request(const f1ap_ue_context_release_request_message& request) override {}
   async_task<f1ap_ue_context_modification_response_message>

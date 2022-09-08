@@ -9,22 +9,26 @@
  */
 
 #include "f1c_du_bearer_impl.h"
+#include "../../ran/gnb_format.h"
 #include "procedures/f1ap_du_event_manager.h"
 
 using namespace srsgnb::srs_du;
 
-f1c_srb0_du_bearer::f1c_srb0_du_bearer(gnb_du_ue_f1ap_id_t        du_ue_id,
+f1c_srb0_du_bearer::f1c_srb0_du_bearer(du_ue_index_t              ue_index_,
+                                       gnb_du_ue_f1ap_id_t        du_ue_id,
                                        rnti_t                     c_rnti_,
                                        const asn1::f1ap::nrcgi_s& nr_cgi_,
                                        byte_buffer                du_cu_rrc_container_,
                                        f1c_message_notifier&      f1c_notifier_,
                                        f1ap_event_manager&        ev_manager_) :
+  ue_index(ue_index_),
   gnb_du_f1ap_ue_id(du_ue_id),
   c_rnti(c_rnti_),
   nr_cgi(nr_cgi_),
   du_cu_rrc_container(std::move(du_cu_rrc_container_)),
   f1c_notifier(f1c_notifier_),
-  ev_manager(ev_manager_)
+  ev_manager(ev_manager_),
+  logger(srslog::fetch_basic_logger("F1AP-DU"))
 {
 }
 
@@ -54,4 +58,7 @@ void f1c_srb0_du_bearer::handle_pdu(byte_buffer_slice_chain pdu)
 
   // Signal that the transaction has completed and the DU does not expect a response.
   ev_manager.transactions.set(transaction.id(), f1ap_outcome{});
+
+  log_ue_event(
+      logger, ue_event_prefix{"UL", ue_index}.set_channel("SRB0") | c_rnti, "Initial UL RRC Message Transfer.");
 }

@@ -80,20 +80,6 @@ f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modi
   });
 }
 
-void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
-{
-  log_ue_event(logger, ue_event_prefix{"UL", pdu.ue_index}.set_channel("SRB0"), "Received PDU.");
-
-  // FIXME: fill message
-  f1c_message msg;
-
-  // Make it an initial message to let test pass.
-  msg.pdu.set_init_msg();
-
-  // send to handler
-  f1c_notifier.on_new_message(msg);
-}
-
 void f1ap_du_impl::handle_message(const f1c_message& msg)
 {
   expected<gnb_du_ue_f1ap_id_t> gnb_du_ue_f1ap_id = get_gnb_du_ue_f1ap_id(msg.pdu);

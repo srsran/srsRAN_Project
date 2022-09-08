@@ -23,22 +23,28 @@ class f1ap_event_manager;
 class f1c_srb0_du_bearer final : public f1_du_bearer
 {
 public:
-  f1c_srb0_du_bearer(gnb_du_ue_f1ap_id_t        du_ue_id,
+  f1c_srb0_du_bearer(du_ue_index_t              ue_index_,
+                     gnb_du_ue_f1ap_id_t        du_ue_id,
                      rnti_t                     c_rnti_,
                      const asn1::f1ap::nrcgi_s& nr_cgi_,
                      byte_buffer                du_cu_rrc_container_,
                      f1c_message_notifier&      f1c_notifier_,
                      f1ap_event_manager&        ev_manager_);
 
+  /// \brief Packs and forwards the initial UL RRC message transfer as per TS 38.473 section 8.4.1.
+  /// \param[in] pdu contains the UL-CCCH message that is packed in the RRC container of the initial UL RRC message
+  /// transfer message.
   void handle_pdu(byte_buffer_slice_chain pdu) override;
 
 private:
+  du_ue_index_t             ue_index;
   gnb_du_ue_f1ap_id_t       gnb_du_f1ap_ue_id;
   rnti_t                    c_rnti;
   const asn1::f1ap::nrcgi_s nr_cgi;
   byte_buffer               du_cu_rrc_container;
   f1c_message_notifier&     f1c_notifier;
   f1ap_event_manager&       ev_manager;
+  srslog::basic_logger&     logger;
 };
 
 class f1c_other_srb_du_bearer final : public f1_du_bearer
@@ -55,6 +61,8 @@ public:
   {
   }
 
+  /// \brief Packs and forwards the UL RRC message transfer as per TS 38.473 section 8.4.3.
+  /// \param[in] pdu The message to be encoded in the RRC container of the UL RRC message transfer message to transmit.
   void handle_pdu(byte_buffer_slice_chain pdu) override
   {
     f1c_message msg;
