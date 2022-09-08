@@ -29,36 +29,25 @@ TEST_P(pdcp_rx_test, sn_unpack)
 {
   init(GetParam());
 
-  // 12 bit PDUs
-  byte_buffer buf_count0_snlen12{pdu1_count0_snlen12};       // [HFN | SN] 0000 0000 0000 0000 0000 | 0000 0000 0000
-  byte_buffer buf_count2048_snlen12{pdu1_count2048_snlen12}; // [HFN | SN] 0000 0000 0000 0000 0000 | 0001 0000 0000
-  byte_buffer buf_count4096_snlen12{pdu1_count4096_snlen12}; // [HFN | SN] 0000 0000 0000 0000 0001 | 0000 0000 0000
-  byte_buffer buf_count4294967295_snlen12{pdu1_count4294967295_snlen12}; // All 1's
+  auto test_hdr_reader = [this](uint32_t count) {
+    // Get PDU to test
+    byte_buffer test_pdu;
+    get_test_pdu(count, test_pdu);
+    uint32_t sn = {};
+    ASSERT_TRUE(pdcp_rx->read_data_pdu_header(test_pdu, sn));
+    ASSERT_EQ(sn, SN(count));
+  };
 
-  // 18 bit PDUs
-  byte_buffer buf_count0_snlen18{pdu1_count0_snlen18};           // [HFN | SN] 0000 0000 0000 00|00 0000 0000 0000 0000
-  byte_buffer buf_count131072_snlen18{pdu1_count131072_snlen18}; // [HFN | SN] 0000 0000 0000 00|10 0000 0000 0000 0000
-  byte_buffer buf_count262144_snlen18{pdu1_count262144_snlen18}; // [HFN | SN] 0000 0000 0000 01|00 0000 0000 0000 0000
-  byte_buffer buf_count4294967295_snlen18{pdu1_count4294967295_snlen18}; // All 1's
-  uint32_t    sn;
   if (config.sn_size == pdcp_sn_size::size12bits) {
-    ASSERT_TRUE(pdcp_rx->read_data_pdu_header(buf_count0_snlen12, sn));
-    ASSERT_EQ(0, sn);
-    ASSERT_TRUE(pdcp_rx->read_data_pdu_header(buf_count2048_snlen12, sn));
-    ASSERT_EQ(2048, sn); // Multi-byte SN
-    ASSERT_TRUE(pdcp_rx->read_data_pdu_header(buf_count4096_snlen12, sn));
-    ASSERT_EQ(0, sn); // SN wraparound
-    ASSERT_TRUE(pdcp_rx->read_data_pdu_header(buf_count4294967295_snlen12, sn));
-    ASSERT_EQ(4095, sn); // All 1's
+    test_hdr_reader(0);
+    test_hdr_reader(2048);
+    test_hdr_reader(4096);
+    test_hdr_reader(4294967295);
   } else if (config.sn_size == pdcp_sn_size::size18bits) {
-    ASSERT_TRUE(pdcp_rx->read_data_pdu_header(buf_count0_snlen18, sn));
-    ASSERT_EQ(0, sn);
-    ASSERT_TRUE(pdcp_rx->read_data_pdu_header(buf_count131072_snlen18, sn));
-    ASSERT_EQ(131072, sn);
-    ASSERT_TRUE(pdcp_rx->read_data_pdu_header(buf_count262144_snlen18, sn));
-    ASSERT_EQ(0, sn);
-    ASSERT_TRUE(pdcp_rx->read_data_pdu_header(buf_count4294967295_snlen18, sn));
-    ASSERT_EQ(262143, sn);
+    test_hdr_reader(0);
+    test_hdr_reader(131072);
+    test_hdr_reader(262144);
+    test_hdr_reader(4294967295);
   } else {
     FAIL();
   }

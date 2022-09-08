@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../../lib/pdcp/pdcp_entity_rx.h"
+#include "pdcp_test_vectors.h"
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/support/timers.h"
 #include <gtest/gtest.h>
@@ -79,6 +80,18 @@ protected:
     // Create PDCP RX entity
     pdcp_rx = std::make_unique<pdcp_entity_rx>(0, LCID_SRB1, config, test_frame);
   }
+
+  /// \brief Gets test PDU based on the COUNT and SN size
+  /// \param count COUNT being tested
+  /// \param exp_pdu Expected PDU that is set to the correct test vector
+  void get_test_pdu(uint32_t count, byte_buffer& exp_pdu)
+  {
+    ASSERT_EQ(true, get_pdu_test_vector(sn_size, count, exp_pdu));
+  }
+
+  uint32_t SN(uint32_t count) const { return count & (0xffffffffU >> (32U - static_cast<uint8_t>(sn_size))); }
+  uint32_t HFN(uint32_t count) const { return (count >> static_cast<uint8_t>(sn_size)); }
+  uint32_t COUNT(uint32_t hfn, uint32_t sn) const { return (hfn << static_cast<uint8_t>(sn_size)) | sn; }
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 

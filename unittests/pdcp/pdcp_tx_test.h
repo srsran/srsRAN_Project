@@ -91,45 +91,7 @@ protected:
   /// \param exp_pdu Expected PDU that is set to the correct test vector
   void get_expected_pdu(uint32_t count, byte_buffer& exp_pdu)
   {
-    if (sn_size == pdcp_sn_size::size12bits) {
-      switch (count) {
-        case 0:
-          exp_pdu = byte_buffer{pdu1_count0_snlen12};
-          return;
-        case 2048:
-          exp_pdu = byte_buffer{pdu1_count2048_snlen12};
-          return;
-        case 4096:
-          exp_pdu = byte_buffer{pdu1_count4096_snlen12};
-          return;
-        case 4294967295:
-          exp_pdu = byte_buffer{pdu1_count4294967295_snlen12};
-          return;
-        default:
-          FAIL();
-      }
-    } else if (sn_size == pdcp_sn_size::size18bits) {
-      switch (count) {
-        case 0:
-          exp_pdu = byte_buffer{pdu1_count0_snlen18};
-          return;
-        case 131072:
-          exp_pdu = byte_buffer{pdu1_count131072_snlen18};
-          return;
-        case 262144:
-          exp_pdu = byte_buffer{pdu1_count262144_snlen18};
-          return;
-        case 4294967295:
-          exp_pdu = byte_buffer{pdu1_count4294967295_snlen18};
-          return;
-        default:
-          FAIL();
-      }
-    } else {
-      FAIL();
-    }
-
-    FAIL();
+    ASSERT_EQ(true, get_pdu_test_vector(sn_size, count, exp_pdu));
   }
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
