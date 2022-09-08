@@ -109,6 +109,19 @@ byte_buffer security_nea2(const sec_128_as_key&   key,
                           const byte_buffer_view& msg,
                           uint32_t                msg_len);
 
+byte_buffer security_nea3(const sec_128_as_key&   key,
+                          uint32_t                count,
+                          uint8_t                 bearer,
+                          security_direction      direction,
+                          const byte_buffer_view& msg);
+
+byte_buffer security_nea3(const sec_128_as_key&   key,
+                          uint32_t                count,
+                          uint8_t                 bearer,
+                          security_direction      direction,
+                          const byte_buffer_view& msg,
+                          uint32_t                msg_len);
+
 /// \brief Fill tailing bits of the last byte of a contiguous memory with zeros.
 /// \param[inout] data Pointer to the contiguous memory to operate on
 /// \param[in] length_bits Number of occupied bits in the whole memory buffer that shall not be zeroed

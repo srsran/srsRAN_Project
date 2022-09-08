@@ -13,6 +13,7 @@
 #include "srsgnb/security/security.h"
 #include "s3g.h"
 #include "ssl.h"
+#include "zuc.h"
 
 #ifdef HAVE_MBEDTLS
 #include "mbedtls/md5.h"
@@ -181,6 +182,97 @@ byte_buffer srsgnb::security_nea2(const sec_128_as_key&   key,
       // Zero tailing bits
       zero_tailing_bits(msg_out.back(), msg_len);
     }
+  }
+
+  return msg_out;
+}
+
+byte_buffer srsgnb::security_nea3(const sec_128_as_key&   key,
+                                  uint32_t                count,
+                                  uint8_t                 bearer,
+                                  security_direction      direction,
+                                  const byte_buffer_view& msg)
+{
+  return security_nea3(key, count, bearer, direction, msg, msg.length() * 8);
+}
+
+byte_buffer srsgnb::security_nea3(const sec_128_as_key&   key,
+                                  uint32_t                count,
+                                  uint8_t                 bearer,
+                                  security_direction      direction,
+                                  const byte_buffer_view& msg_,
+                                  uint32_t                msg_len)
+{
+  uint8_t iv[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  uint32_t* ks;
+  int32_t   i;
+  uint32_t  msg_len_block_8, msg_len_block_32;
+
+  byte_buffer msg_out;
+
+  msg_len_block_8  = (msg_len + 7) / 8;
+  msg_len_block_32 = (msg_len + 31) / 32;
+
+  // temporary conversion into contiguous memory
+  constexpr uint16_t                     pdcp_max_sdu_size = 9000;
+  std::array<uint8_t, pdcp_max_sdu_size> msg               = {};
+  std::array<uint8_t, pdcp_max_sdu_size> out               = {};
+  std::copy(msg_.begin(), msg_.end(), msg.begin());
+
+  if (msg_len_block_8 <= msg_.length()) {
+    // Construct iv
+    iv[0]  = (count >> 24) & 0xff;
+    iv[1]  = (count >> 16) & 0xff;
+    iv[2]  = (count >> 8) & 0xff;
+    iv[3]  = (count)&0xff;
+    iv[4]  = ((bearer & 0x1f) << 3) | ((to_number(direction) & 0x01) << 2);
+    iv[5]  = 0;
+    iv[6]  = 0;
+    iv[7]  = 0;
+    iv[8]  = iv[0];
+    iv[9]  = iv[1];
+    iv[10] = iv[2];
+    iv[11] = iv[3];
+    iv[12] = iv[4];
+    iv[13] = iv[5];
+    iv[14] = iv[6];
+    iv[15] = iv[7];
+
+    zuc_state_t zuc_state;
+    // Initialize keystream
+    zuc_initialize(&zuc_state, key.data(), iv);
+
+    // Generate keystream
+
+    ks = (uint32_t*)calloc(msg_len_block_32, sizeof(uint32_t));
+    zuc_generate_keystream(&zuc_state, msg_len_block_32, ks);
+
+    // Generate output except last block
+    for (i = 0; i < (int32_t)msg_len_block_32 - 1; i++) {
+      out[4 * i + 0] = msg[4 * i + 0] ^ ((ks[i] >> 24) & 0xff);
+      out[4 * i + 1] = msg[4 * i + 1] ^ ((ks[i] >> 16) & 0xff);
+      out[4 * i + 2] = msg[4 * i + 2] ^ ((ks[i] >> 8) & 0xff);
+      out[4 * i + 3] = msg[4 * i + 3] ^ ((ks[i] & 0xff));
+    }
+
+    // Process last bytes
+    for (i = (msg_len_block_32 - 1) * 4; i < (int32_t)msg_len_block_8; i++) {
+      out[i] = msg[i] ^ ((ks[i / 4] >> ((3 - (i % 4)) * 8)) & 0xff);
+    }
+
+    // Zero tailing bits
+    zero_tailing_bits(out.data(), msg_len);
+
+    for (i = 0; i < (int32_t)msg_len_block_8; i++) {
+      msg_out.append(out[i]);
+    }
+
+    // zero_tailing_bits(msg_out.back(), msg_len);
+
+    // Clean up
+    free(ks);
+    // zuc_deinitialize(state_ptr);
   }
 
   return msg_out;

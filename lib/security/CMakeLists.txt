@@ -7,7 +7,7 @@
 #
 
 
-set(SOURCES security.cpp s3g.cpp)
+set(SOURCES security.cpp s3g.cpp zuc.cpp)
 
 add_library(srsgnb_security STATIC ${SOURCES})
 target_include_directories(srsgnb_security PUBLIC ${SEC_INCLUDE_DIRS})
