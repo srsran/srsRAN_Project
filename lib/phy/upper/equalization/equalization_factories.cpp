@@ -10,7 +10,6 @@
 
 #include "srsgnb/phy/upper/equalization/equalization_factories.h"
 #include "channel_equalizer_zf_impl.h"
-#include "srsgnb/support/srsgnb_assert.h"
 
 using namespace srsgnb;
 
@@ -21,10 +20,7 @@ class channel_equalizer_zf_impl_factory : public channel_equalizer_factory
 public:
   channel_equalizer_zf_impl_factory() = default;
 
-  std::unique_ptr<channel_equalizer> create() override
-  {
-    return std::make_unique<channel_equalizer_zf_impl>();
-  }
+  std::unique_ptr<channel_equalizer> create() override { return std::make_unique<channel_equalizer_zf_impl>(); }
 };
 } // namespace
 

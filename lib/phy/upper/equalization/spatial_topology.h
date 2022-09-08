@@ -88,14 +88,14 @@ public:
 
   /// \brief compares two spatial topologies.
   ///
-  /// The spatial topologies are considered equal if they have the same number of Rx ports and Tx layers.
+  /// \returns \c true if both spatial topologies have the same \c value.
   bool operator==(const spatial_topology& other) { return value == other.value; }
 
   bool operator!=(const spatial_topology& other) { return value != other.value; }
 
   /// \brief compares a spatial topology with one of its possible values.
   ///
-  /// \returns \c true if both spatial topologies match.
+  /// \returns \c true if both spatial topology values match.
   bool operator==(const options& other_value) { return value == other_value; }
 
   bool operator!=(const options& other_value) { return value != other_value; }

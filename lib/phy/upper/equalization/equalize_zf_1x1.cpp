@@ -8,6 +8,9 @@
  *
  */
 
+/// \file
+/// \brief Zero Forcing equalization function implementation for a SISO channel.
+
 #include "equalize_zf_1x1.h"
 #include "srsgnb/srsvec/sc_prod.h"
 

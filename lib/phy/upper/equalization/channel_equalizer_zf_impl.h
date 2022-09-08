@@ -8,12 +8,16 @@
  *
  */
 
+/// \file
+/// \brief Channel equalizer implementation using the Zero Forcing method.
+
 #pragma once
 
 #include "srsgnb/phy/upper/equalization/channel_equalizer.h"
 
 namespace srsgnb {
 
+/// Channel equalizer implementation using the Zero Forcing algorithm.
 class channel_equalizer_zf_impl : public channel_equalizer
 {
 public:

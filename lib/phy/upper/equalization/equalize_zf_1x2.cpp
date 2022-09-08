@@ -8,6 +8,9 @@
  *
  */
 
+/// \file
+/// \brief Zero Forcing equalization function implementation for a MISO 1 X 2 channel.
+
 #include "equalize_zf_1x2.h"
 #include "srsgnb/srsvec/zero.h"
 

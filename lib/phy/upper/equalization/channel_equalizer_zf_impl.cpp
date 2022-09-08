@@ -8,6 +8,9 @@
  *
  */
 
+/// \file
+/// \brief Zero Forcing equalization function implementation.
+
 #include "channel_equalizer_zf_impl.h"
 #include "equalize_zf_1x1.h"
 #include "equalize_zf_1x2.h"

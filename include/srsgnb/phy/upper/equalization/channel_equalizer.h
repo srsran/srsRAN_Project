@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include "srsgnb/adt/complex.h"
 #include "srsgnb/phy/upper/channel_estimation.h"
 #include "srsgnb/phy/upper/re_measurement.h"
 
@@ -41,10 +40,13 @@ public:
   /// estimated channel coefficients. The variance of the point-to-point equivalent noise perturbing each modulated
   /// symbol is also estimated.
   ///
-  /// \param[out] mod_symbols Estimated modulation symbols.
-  /// \param[out] noise_vars  Estimated noise variances (after equalization).
-  /// \param[in]  ch_symbols  Channel symbols, i.e., complex samples from the receive ports.
-  /// \param[in]  ch_estimate Channel coefficients (typically provided by the channel estimator).
+  /// \param[out] mod_symbols  Estimated modulation symbols.
+  /// \param[out] noise_vars   Estimated noise variances (after equalization).
+  /// \param[in]  ch_symbols   Channel symbols, i.e., complex samples from the receive ports.
+  /// \param[in]  ch_estimates Channel coefficients (typically provided by the channel estimator).
+  /// \param[in]  tx_scaling   Transmission gain scaling factor.
+  /// \note The sizes of \c mod_symbols, \c noise_vars and \c ch_symbols must be consistent with the
+  /// \c ch_estimates channel dimensions.
   virtual void equalize(equalizer_symbol_list&          mod_symbols,
                         equalizer_noise_var_list&       noise_vars,
                         const equalizer_ch_symbol_list& ch_symbols,
