@@ -63,12 +63,13 @@ private:
     // TODO: MAC RNTI needs to be cleared.
   }
 
-  /// Creates SRB0 in RLC and connects it to MAC and F1.
+  /// Creates UE object in F1.
+  f1ap_ue_create_response create_f1_ue();
+
+  /// Creates SRB0 in RLC.
   void create_rlc_srb0();
 
   async_task<mac_ue_create_response_message> make_mac_ue_create_req();
-
-  async_task<f1ap_ue_create_response> make_f1_ue_create_req();
 
   ul_ccch_indication_message  msg;
   const du_manager_config_t&  cfg;

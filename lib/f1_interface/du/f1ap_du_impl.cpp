@@ -42,9 +42,9 @@ async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(co
   return launch_async<f1ap_du_setup_procedure>(request, f1c_notifier, *events, task_sched->get_timer_manager(), ctxt);
 }
 
-async_task<f1ap_ue_create_response> f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_create_request& msg)
+f1ap_ue_create_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_create_request& msg)
 {
-  return launch_async<f1ap_du_ue_creation_procedure>(msg, ues, ctxt, ue_exec_mapper, ctrl_exec, f1c_notifier, *events);
+  return create_f1ap_du_ue(msg, ues, ctxt, f1c_notifier, *events);
 }
 
 void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg)

@@ -27,7 +27,7 @@ public:
                      gnb_du_ue_f1ap_id_t        du_ue_id,
                      rnti_t                     c_rnti_,
                      const asn1::f1ap::nrcgi_s& nr_cgi_,
-                     byte_buffer                du_cu_rrc_container_,
+                     const byte_buffer&         du_cu_rrc_container_,
                      f1c_message_notifier&      f1c_notifier_,
                      f1ap_event_manager&        ev_manager_);
 

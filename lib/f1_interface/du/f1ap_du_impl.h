@@ -45,7 +45,7 @@ public:
   void handle_connection_loss() override {}
 
   // F1AP UE context manager functions
-  async_task<f1ap_ue_create_response> handle_ue_creation_request(const f1ap_ue_create_request& msg) override;
+  f1ap_ue_create_response handle_ue_creation_request(const f1ap_ue_create_request& msg) override;
   void handle_ue_context_release_request(const f1ap_ue_context_release_request_message& request) override {}
   async_task<f1ap_ue_context_modification_response_message>
        handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg) override;

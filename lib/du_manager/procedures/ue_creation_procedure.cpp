@@ -45,7 +45,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   }
 
   // > Initiate creation of F1 UE context and await result.
-  CORO_AWAIT_VALUE(f1_resp, make_f1_ue_create_req());
+  f1_resp = create_f1_ue();
   if (not f1_resp.result) {
     log_proc_failure(logger, ue_ctx.ue_index, msg.crnti, name(), "UE failed to be created in F1AP.");
     clear_ue();
@@ -131,7 +131,7 @@ async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_cr
   return cfg.mac_ue_mng->handle_ue_create_request(mac_ue_create_msg);
 }
 
-async_task<f1ap_ue_create_response> ue_creation_procedure::make_f1_ue_create_req()
+f1ap_ue_create_response ue_creation_procedure::create_f1_ue()
 {
   using namespace asn1::rrc_nr;
 

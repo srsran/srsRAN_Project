@@ -50,14 +50,14 @@ class f1_ue_context_manager_dummy : public f1ap_ue_context_manager
 {
 public:
   optional<f1ap_ue_create_request>                                        last_ue_create{};
-  wait_manual_event_tester<f1ap_ue_create_response>                       wait_ue_create;
+  f1ap_ue_create_response                                                 next_ue_create_response;
   wait_manual_event_tester<f1ap_ue_context_modification_response_message> wait_ue_mod;
 
   /// Initiates creation of UE context in F1.
-  async_task<f1ap_ue_create_response> handle_ue_creation_request(const f1ap_ue_create_request& msg) override
+  f1ap_ue_create_response handle_ue_creation_request(const f1ap_ue_create_request& msg) override
   {
     last_ue_create = msg;
-    return wait_ue_create.launch();
+    return next_ue_create_response;
   }
 
   void handle_ue_context_release_request(const f1ap_ue_context_release_request_message& request) override {}
@@ -84,6 +84,8 @@ void test_ue_concurrent_procedures(test_outcome outcome)
 
   mac_test_dummy              mac_dummy;
   f1_ue_context_manager_dummy f1_ue_ctx_mng_dummy;
+  f1_ue_ctx_mng_dummy.next_ue_create_response.result = true;
+  f1_ue_ctx_mng_dummy.next_ue_create_response.bearers_added.resize(1);
 
   du_manager_config_t cfg{};
   cfg.mac_ue_mng      = &mac_dummy;
@@ -101,18 +103,12 @@ void test_ue_concurrent_procedures(test_outcome outcome)
   test_logger.info("TEST: Pushing UL CCCH indication for RNTI=0x{:x}...", ccch_ind.crnti);
   ue_mng.handle_ue_create_request(ccch_ind);
 
-  // TEST: F1 UE Creation started, but hasn't finished.
+  // TEST: F1 UE Creation started and completed. MAC UE Creation started but hasn't returned yet.
   TESTASSERT(f1_ue_ctx_mng_dummy.last_ue_create.has_value());
   ue_index = f1_ue_ctx_mng_dummy.last_ue_create.value().ue_index;
-  TESTASSERT(f1_ue_ctx_mng_dummy.last_ue_create.value().ue_index < MAX_NOF_DU_UES);
-  TESTASSERT(not mac_dummy.last_ue_create_msg.has_value()); // The MAC UE creation hasn't started.
+  TESTASSERT(ue_index < MAX_NOF_DU_UES);
   TESTASSERT(mac_dummy.last_pushed_ul_ccch_msg.empty());
   TESTASSERT(ue_mng.get_ues().empty());
-
-  // Action 2: F1 UE creation finishes.
-  f1_ue_ctx_mng_dummy.wait_ue_create.result.result = true;
-  f1_ue_ctx_mng_dummy.wait_ue_create.result.bearers_added.resize(1);
-  f1_ue_ctx_mng_dummy.wait_ue_create.ready_ev.set();
 
   // TEST: MAC UE creation started but hasn't returned yet
   TESTASSERT(mac_dummy.last_ue_create_msg.has_value());
@@ -213,9 +209,8 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
   cfg.mac_ue_mng      = &mac_dummy;
   cfg.f1ap_ue_ctx_mng = &f1_ue_ctx_mng_dummy;
 
-  f1_ue_ctx_mng_dummy.wait_ue_create.result.result = true;
-  f1_ue_ctx_mng_dummy.wait_ue_create.result.bearers_added.resize(1);
-  f1_ue_ctx_mng_dummy.wait_ue_create.ready_ev.set(); // set automatic completion.
+  f1_ue_ctx_mng_dummy.next_ue_create_response.result = true;
+  f1_ue_ctx_mng_dummy.next_ue_create_response.bearers_added.resize(1);
 
   mac_dummy.wait_ue_create.result.ue_index   = first_ue_index;
   mac_dummy.wait_ue_create.result.cell_index = to_du_cell_index(0);

@@ -129,7 +129,7 @@ public:
   virtual ~f1ap_ue_context_manager() = default;
 
   /// Initiates creation of UE context in F1.
-  virtual async_task<f1ap_ue_create_response> handle_ue_creation_request(const f1ap_ue_create_request& msg) = 0;
+  virtual f1ap_ue_create_response handle_ue_creation_request(const f1ap_ue_create_request& msg) = 0;
 
   /// \brief Initiates UE context release request procedure as per TS 38.473 section 8.3.2.
   /// \param[in] request The UE Context Release Request message to transmit.
