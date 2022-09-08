@@ -9,6 +9,7 @@
  */
 
 #include "f1ap_du_setup_procedure.h"
+#include "../f1ap_du_context.h"
 #include "srsgnb/support/async/async_timer.h"
 
 using namespace srsgnb;
@@ -18,11 +19,13 @@ using namespace asn1::f1ap;
 f1ap_du_setup_procedure::f1ap_du_setup_procedure(const f1_setup_request_message& request_,
                                                  f1c_message_notifier&           cu_notif_,
                                                  f1ap_event_manager&             ev_mng_,
-                                                 timer_manager&                  timers) :
+                                                 timer_manager&                  timers,
+                                                 f1ap_du_context&                du_ctxt_) :
   request(request_),
   cu_notifier(cu_notif_),
   ev_mng(ev_mng_),
   logger(srslog::fetch_basic_logger("F1AP-DU")),
+  du_ctxt(du_ctxt_),
   f1_setup_wait_timer(timers.create_unique_timer())
 {
 }
@@ -113,6 +116,15 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
     logger.info("Received F1AP PDU with successful outcome.");
     res.msg     = cu_pdu_response.value().value.f1_setup_resp();
     res.success = true;
+
+    // Update F1 DU Context.
+    du_ctxt.gnb_du_id   = request.msg->gnb_du_id->value;
+    du_ctxt.gnb_du_name = request.msg->gnb_du_name->to_string();
+    du_ctxt.served_cells.resize(request.msg->gnb_du_served_cells_list.value.size());
+    for (unsigned i = 0; i != du_ctxt.served_cells.size(); ++i) {
+      du_ctxt.served_cells[i] = request.msg->gnb_du_served_cells_list.value[i]->gnb_du_served_cells_item();
+    }
+
   } else if (cu_pdu_response.has_value() or cu_pdu_response.error().value.type().value !=
                                                 f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail) {
     logger.error("Received F1AP PDU with unexpected F1AP PDU type {}",

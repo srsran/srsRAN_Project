@@ -15,6 +15,7 @@
 #include "srsgnb/f1_interface/du/f1ap_du.h"
 
 namespace srsgnb {
+namespace srs_du {
 
 struct f1ap_du_ue_context {
   du_ue_index_t gnb_du_f1ap_ue_id = (du_ue_index_t)-1;
@@ -27,6 +28,11 @@ struct f1ap_du_cell_context {};
 struct f1ap_du_context {
   std::vector<f1ap_du_cell_context>              cell_ctxt_manager;
   slot_array<f1ap_du_ue_context, MAX_NOF_DU_UES> ue_ctxt_manager;
+
+  uint64_t                                            gnb_du_id;
+  std::string                                         gnb_du_name;
+  std::vector<asn1::f1ap::gnb_du_served_cells_item_s> served_cells;
 };
 
+} // namespace srs_du
 } // namespace srsgnb

@@ -10,12 +10,14 @@
 
 #pragma once
 
+#include "f1_du_bearer.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/common/f1c_common.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
+#include "srsgnb/ran/rnti.h"
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/timers.h"
 
@@ -23,11 +25,15 @@ namespace srsgnb {
 namespace srs_du {
 
 struct f1ap_ue_create_request {
-  du_ue_index_t ue_index;
+  du_ue_index_t   ue_index;
+  du_cell_index_t cell_index;
+  rnti_t          c_rnti;
+  byte_buffer     du_cu_rrc_container;
 };
 
 struct f1ap_ue_create_response {
-  bool result;
+  bool                       result;
+  std::vector<f1_du_bearer*> bearers_added;
 };
 
 struct f1_rx_pdu {
@@ -97,7 +103,7 @@ class f1ap_connection_manager
 public:
   virtual ~f1ap_connection_manager() = default;
 
-  /// \brief Initiates the F1 Setup procedure.
+  /// \brief Initiates the F1 Setup procedure as per TS 38.473, Section 8.2.3.
   /// \param[in] request The F1SetupRequest message to transmit.
   /// \return Returns a f1_setup_response_message struct with the success member set to 'true' in case of a
   /// successful outcome, 'false' otherwise. \remark The DU transmits the F1SetupRequest as per TS 38.473 section 8.2.3

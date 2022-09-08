@@ -130,6 +130,8 @@ void ue_cell_configuration::addmod_bwp_ded_cfg(bwp_id_t bwpid, const bwp_downlin
                            bwp_dl_ded.pdcch_cfg->ss_to_addmod_list,
                            bwp_dl_ded.pdcch_cfg->ss_to_rel_list,
                            [](const search_space_configuration& ss) { return ss.id; });
+
+  self_bwp_ded.pdsch_cfg = bwp_dl_ded.pdsch_cfg;
 }
 
 void ue_cell_configuration::release_bwp_ded_cfg(bwp_id_t bwpid)

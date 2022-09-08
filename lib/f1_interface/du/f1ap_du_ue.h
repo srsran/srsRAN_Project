@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "f1c_du_bearer_impl.h"
 #include "srsgnb/f1_interface/common/f1c_types.h"
 #include "srsgnb/ran/du_types.h"
 #include <unordered_map>
@@ -25,9 +26,10 @@ public:
   {
   }
 
-  const du_ue_index_t       ue_index;
-  const gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id;
-  optional<uint64_t>        gnb_cu_ue_f1ap_id;
+  const du_ue_index_t                        ue_index;
+  const gnb_du_ue_f1ap_id_t                  gnb_du_ue_f1ap_id;
+  optional<uint64_t>                         gnb_cu_ue_f1ap_id;
+  std::vector<std::unique_ptr<f1_du_bearer>> bearers;
 };
 
 /// \brief Stores the list of UE contexts currently registered in the F1AP-DU.
@@ -61,6 +63,8 @@ public:
 
   f1ap_du_ue&       operator[](du_ue_index_t ue_index) { return ues[ue_index]; }
   const f1ap_du_ue& operator[](du_ue_index_t ue_index) const { return ues[ue_index]; }
+
+  f1ap_du_ue* find(du_ue_index_t ue_index) { return ues.contains(ue_index) ? &ues[ue_index] : nullptr; }
 
   du_ue_index_t get_ue_index(gnb_du_ue_f1ap_id_t du_ue_f1ap_id) const
   {

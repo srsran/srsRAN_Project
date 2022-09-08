@@ -34,12 +34,12 @@ public:
                du_high_ue_executor_mapper& ue_exec_mapper);
   ~f1ap_du_impl();
 
-  // f1ap connection manager functions
+  // F1AP interface management procedures functions as per TS38.473, Section 8.2.
   async_task<f1_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) override;
 
-  // f1ap rrc message transfer procedure functions
-  void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) override {}
+  // F1AP RRC Message Transfer Procedure functions as per TS38.473, Section 8.4.
   void handle_pdu(f1_rx_pdu pdu) override;
+  void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) override {}
   void handle_init_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg) override {}
   void handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg) override {}
 

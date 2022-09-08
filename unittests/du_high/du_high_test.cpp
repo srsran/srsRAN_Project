@@ -147,6 +147,8 @@ void test_du_ue_create()
   du_high du_obj(cfg);
 
   du_obj.start();
+  TESTASSERT(pdu_handler.last_f1c_msg.pdu.type() != asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype);
+  pdu_handler.last_f1c_msg.pdu = {};
 
   // Push F1c setup response to DU, signaling that the CU accepted the f1c connection.
   f1c_message f1c_msg;
@@ -169,7 +171,8 @@ void test_du_ue_create()
     }
     workers.ctrl_worker.run_next_blocking();
   }
-  TESTASSERT(pdu_handler.last_f1c_msg.pdu.type() != asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype);
+  TESTASSERT(pdu_handler.last_f1c_msg.pdu.type() == asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
+  TESTASSERT(pdu_handler.last_f1c_msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_INIT_ULRRC_MSG_TRANSFER);
 
   workers.stop();
 }
@@ -180,6 +183,7 @@ int main()
 
   srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);
   srslog::fetch_basic_logger("F1AP").set_level(srslog::basic_levels::info);
+  srslog::fetch_basic_logger("ASN1").set_level(srslog::basic_levels::info);
 
   test_f1_setup_local();
   test_f1_setup_network();

@@ -19,6 +19,8 @@
 namespace srsgnb {
 namespace srs_du {
 
+struct f1ap_du_context;
+
 /// F1 Setup Procedure for the gNB-DU as per TS 38.473, 8.2.3.
 class f1ap_du_setup_procedure
 {
@@ -26,7 +28,8 @@ public:
   f1ap_du_setup_procedure(const f1_setup_request_message& request_,
                           f1c_message_notifier&           cu_notif_,
                           f1ap_event_manager&             ev_mng_,
-                          timer_manager&                  timers);
+                          timer_manager&                  timers,
+                          f1ap_du_context&                du_ctxt_);
 
   void operator()(coro_context<async_task<f1_setup_response_message>>& ctx);
 
@@ -44,6 +47,7 @@ private:
   f1c_message_notifier&          cu_notifier;
   f1ap_event_manager&            ev_mng;
   srslog::basic_logger&          logger;
+  f1ap_du_context&               du_ctxt;
 
   unique_timer f1_setup_wait_timer;
 

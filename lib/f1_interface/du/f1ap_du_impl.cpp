@@ -12,6 +12,7 @@
 #include "../../ran/gnb_format.h"
 #include "du/procedures/f1ap_du_setup_procedure.h"
 #include "du/procedures/f1ap_du_ue_creation_procedure.h"
+#include "f1c_du_bearer_impl.h"
 #include "handlers/f1c_task_scheduler_impl.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/support/async/event_signal.h"
@@ -38,12 +39,12 @@ f1ap_du_impl::~f1ap_du_impl() {}
 
 async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& request)
 {
-  return launch_async<f1ap_du_setup_procedure>(request, f1c_notifier, *events, task_sched->get_timer_manager());
+  return launch_async<f1ap_du_setup_procedure>(request, f1c_notifier, *events, task_sched->get_timer_manager(), ctxt);
 }
 
 async_task<f1ap_ue_create_response> f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_create_request& msg)
 {
-  return launch_async<f1ap_du_ue_creation_procedure>(msg, ues, ue_exec_mapper, ctrl_exec);
+  return launch_async<f1ap_du_ue_creation_procedure>(msg, ues, ctxt, ue_exec_mapper, ctrl_exec, f1c_notifier, *events);
 }
 
 void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg)

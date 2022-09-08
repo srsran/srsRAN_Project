@@ -64,7 +64,7 @@ private:
   }
 
   /// Creates SRB0 in RLC and connects it to MAC and F1.
-  void create_srb0();
+  void create_rlc_srb0();
 
   async_task<mac_ue_create_response_message> make_mac_ue_create_req();
 
