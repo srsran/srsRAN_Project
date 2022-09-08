@@ -19,6 +19,8 @@
 namespace srsgnb {
 namespace srs_du {
 
+/// \brief Creates an UE object in the F1AP and SRB0.
+/// \return Result of the F1 UE creation that contains the outcome (success/failure) and list of created F1c bearers.
 f1ap_ue_create_response create_f1ap_du_ue(const f1ap_ue_create_request& msg,
                                           f1ap_du_ue_manager&           ues,
                                           const f1ap_du_context&        du_ctx,

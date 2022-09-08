@@ -53,33 +53,11 @@ public:
   f1c_other_srb_du_bearer(gnb_du_ue_f1ap_id_t   gnb_du_f1ap_ue_id_,
                           gnb_cu_ue_f1ap_id_t   gnb_cu_f1ap_ue_id_,
                           srb_id_t              srb_id_,
-                          f1c_message_notifier& f1c_notifier_) :
-    gnb_du_f1ap_ue_id(gnb_du_f1ap_ue_id_),
-    gnb_cu_f1ap_ue_id(gnb_cu_f1ap_ue_id_),
-    srb_id(srb_id_),
-    f1c_notifier(f1c_notifier_)
-  {
-  }
+                          f1c_message_notifier& f1c_notifier_);
 
   /// \brief Packs and forwards the UL RRC message transfer as per TS 38.473 section 8.4.3.
   /// \param[in] pdu The message to be encoded in the RRC container of the UL RRC message transfer message to transmit.
-  void handle_pdu(byte_buffer_slice_chain pdu) override
-  {
-    f1c_message msg;
-
-    // Fill F1AP UL RRC Message Transfer.
-    msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_ULRRC_MSG_TRANSFER);
-    asn1::f1ap::ulrrc_msg_transfer_s& ul_msg = msg.pdu.init_msg().value.ulrrc_msg_transfer();
-    ul_msg->gnb_du_ue_f1_ap_id->value        = gnb_du_ue_f1ap_id_to_uint(gnb_du_f1ap_ue_id);
-    ul_msg->gnb_cu_ue_f1_ap_id->value        = gnb_cu_ue_f1ap_id_to_uint(gnb_cu_f1ap_ue_id);
-    ul_msg->srbid->value                     = srb_id_to_uint(srb_id);
-    ul_msg->rrc_container->resize(pdu.length());
-    std::copy(pdu.begin(), pdu.end(), ul_msg->rrc_container->begin());
-    ul_msg->sel_plmnid_present              = false;
-    ul_msg->new_g_nb_du_ue_f1_ap_id_present = false;
-
-    f1c_notifier.on_new_message(msg);
-  }
+  void handle_pdu(byte_buffer_slice_chain pdu) override;
 
 private:
   gnb_du_ue_f1ap_id_t   gnb_du_f1ap_ue_id;

@@ -45,7 +45,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   }
 
   // > Initiate creation of F1 UE context and await result.
-  f1_resp = create_f1_ue();
+  create_f1_ue();
   if (not f1_resp.result) {
     log_proc_failure(logger, ue_ctx.ue_index, msg.crnti, name(), "UE failed to be created in F1AP.");
     clear_ue();
@@ -131,7 +131,7 @@ async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_cr
   return cfg.mac_ue_mng->handle_ue_create_request(mac_ue_create_msg);
 }
 
-f1ap_ue_create_response ue_creation_procedure::create_f1_ue()
+void ue_creation_procedure::create_f1_ue()
 {
   using namespace asn1::rrc_nr;
 
@@ -163,5 +163,5 @@ f1ap_ue_create_response ue_creation_procedure::create_f1_ue()
   asn1::SRSASN_CODE result = cell_group.pack(bref);
   srsgnb_assert(result == asn1::SRSASN_SUCCESS, "Failed to generate CellConfigGroup");
 
-  return cfg.f1ap_ue_ctx_mng->handle_ue_creation_request(f1_msg);
+  f1_resp = cfg.f1ap_ue_ctx_mng->handle_ue_creation_request(f1_msg);
 }

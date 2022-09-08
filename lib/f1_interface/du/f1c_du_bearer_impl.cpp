@@ -62,3 +62,32 @@ void f1c_srb0_du_bearer::handle_pdu(byte_buffer_slice_chain pdu)
   log_ue_event(
       logger, ue_event_prefix{"UL", ue_index}.set_channel("SRB0") | c_rnti, "Initial UL RRC Message Transfer.");
 }
+
+f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(gnb_du_ue_f1ap_id_t   gnb_du_f1ap_ue_id_,
+                                                 gnb_cu_ue_f1ap_id_t   gnb_cu_f1ap_ue_id_,
+                                                 srb_id_t              srb_id_,
+                                                 f1c_message_notifier& f1c_notifier_) :
+  gnb_du_f1ap_ue_id(gnb_du_f1ap_ue_id_),
+  gnb_cu_f1ap_ue_id(gnb_cu_f1ap_ue_id_),
+  srb_id(srb_id_),
+  f1c_notifier(f1c_notifier_)
+{
+}
+
+void f1c_other_srb_du_bearer::handle_pdu(byte_buffer_slice_chain pdu)
+{
+  f1c_message msg;
+
+  // Fill F1AP UL RRC Message Transfer.
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_ULRRC_MSG_TRANSFER);
+  asn1::f1ap::ulrrc_msg_transfer_s& ul_msg = msg.pdu.init_msg().value.ulrrc_msg_transfer();
+  ul_msg->gnb_du_ue_f1_ap_id->value        = gnb_du_ue_f1ap_id_to_uint(gnb_du_f1ap_ue_id);
+  ul_msg->gnb_cu_ue_f1_ap_id->value        = gnb_cu_ue_f1ap_id_to_uint(gnb_cu_f1ap_ue_id);
+  ul_msg->srbid->value                     = srb_id_to_uint(srb_id);
+  ul_msg->rrc_container->resize(pdu.length());
+  std::copy(pdu.begin(), pdu.end(), ul_msg->rrc_container->begin());
+  ul_msg->sel_plmnid_present              = false;
+  ul_msg->new_g_nb_du_ue_f1_ap_id_present = false;
+
+  f1c_notifier.on_new_message(msg);
+}

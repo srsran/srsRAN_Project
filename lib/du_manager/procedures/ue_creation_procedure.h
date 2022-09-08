@@ -64,7 +64,7 @@ private:
   }
 
   /// Creates UE object in F1.
-  f1ap_ue_create_response create_f1_ue();
+  void create_f1_ue();
 
   /// Creates SRB0 in RLC.
   void create_rlc_srb0();
