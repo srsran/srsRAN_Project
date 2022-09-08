@@ -12,6 +12,7 @@
 
 #include "srsgnb/security/security.h"
 #include "s3g.h"
+#include "ssl.h"
 
 #ifdef HAVE_MBEDTLS
 #include "mbedtls/md5.h"
@@ -125,6 +126,66 @@ byte_buffer srsgnb::security_nea1(const sec_128_as_key&   key,
     // Clean up
     free(ks);
     s3g_deinitialize(state_ptr);
+  }
+
+  return msg_out;
+}
+
+byte_buffer srsgnb::security_nea2(const sec_128_as_key&   key,
+                                  uint32_t                count,
+                                  uint8_t                 bearer,
+                                  security_direction      direction,
+                                  const byte_buffer_view& msg)
+{
+  return security_nea2(key, count, bearer, direction, msg, msg.length() * 8);
+}
+
+byte_buffer srsgnb::security_nea2(const sec_128_as_key&   key,
+                                  uint32_t                count,
+                                  uint8_t                 bearer,
+                                  security_direction      direction,
+                                  const byte_buffer_view& msg,
+                                  uint32_t                msg_len)
+{
+  aes_context   ctx;
+  unsigned char stream_blk[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  unsigned char nonce_cnt[16]  = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  int           ret;
+  size_t        nc_off          = 0;
+  uint32_t      msg_len_block_8 = (msg_len + 7) / 8;
+
+  byte_buffer msg_out;
+
+  ret = aes_setkey_enc(&ctx, key.data(), 128);
+
+  if (msg_len_block_8 <= msg.length()) {
+    if (ret == 0) {
+      // Construct nonce
+      nonce_cnt[0] = (count >> 24) & 0xff;
+      nonce_cnt[1] = (count >> 16) & 0xff;
+      nonce_cnt[2] = (count >> 8) & 0xff;
+      nonce_cnt[3] = (count)&0xff;
+      nonce_cnt[4] = ((bearer & 0x1f) << 3) | ((to_number(direction) & 0x01) << 2);
+
+      // temporary conversion into contiguous memory
+      constexpr uint16_t                     pdcp_max_sdu_size = 9000;
+      std::array<uint8_t, pdcp_max_sdu_size> msg_tmp           = {};
+      std::array<uint8_t, pdcp_max_sdu_size> ct_tmp            = {};
+      std::copy(msg.begin(), msg.end(), msg_tmp.begin());
+
+      // Encryption
+      ret = aes_crypt_ctr(&ctx, msg_len_block_8, &nc_off, nonce_cnt, stream_blk, msg_tmp.data(), ct_tmp.data());
+
+      // temporary back conversion
+      for (unsigned i = 0; i < msg.length(); i++) {
+        msg_out.append(ct_tmp[i]);
+      }
+    }
+
+    if (ret == 0) {
+      // Zero tailing bits
+      zero_tailing_bits(msg_out.back(), msg_len);
+    }
   }
 
   return msg_out;

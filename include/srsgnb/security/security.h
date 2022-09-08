@@ -51,6 +51,10 @@ enum class security_direction {
   uplink   = 0,
   downlink = 1,
 };
+constexpr uint8_t to_number(security_direction direction)
+{
+  return static_cast<uint8_t>(direction);
+}
 
 using sec_mac = std::array<uint8_t, sec_mac_len>;
 
@@ -86,6 +90,19 @@ byte_buffer security_nea1(const sec_128_as_key&   key,
                           const byte_buffer_view& msg);
 
 byte_buffer security_nea1(const sec_128_as_key&   key,
+                          uint32_t                count,
+                          uint8_t                 bearer,
+                          security_direction      direction,
+                          const byte_buffer_view& msg,
+                          uint32_t                msg_len);
+
+byte_buffer security_nea2(const sec_128_as_key&   key,
+                          uint32_t                count,
+                          uint8_t                 bearer,
+                          security_direction      direction,
+                          const byte_buffer_view& msg);
+
+byte_buffer security_nea2(const sec_128_as_key&   key,
                           uint32_t                count,
                           uint8_t                 bearer,
                           security_direction      direction,

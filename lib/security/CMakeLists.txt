@@ -10,4 +10,5 @@
 set(SOURCES security.cpp s3g.cpp)
 
 add_library(srsgnb_security STATIC ${SOURCES})
-target_link_libraries(srsgnb_security)
+target_include_directories(srsgnb_security PUBLIC ${SEC_INCLUDE_DIRS})
+target_link_libraries(srsgnb_security ${SEC_LIBRARIES})
