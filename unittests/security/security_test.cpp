@@ -272,8 +272,8 @@ TEST(security_nea2_test, testset3)
   uint8_t     bearer          = 0x04;
   uint8_t     direction       = 0;
   uint32_t    length          = 310;
-  const char* plaintext_cstr  = "fd40a41d370a1f65745095687d47ba1d36d2349e23f644392c8ea9c49d40c13271aff264d0f24800";
-  const char* ciphertext_cstr = "75750d37b4bba2a4dedb34235bd68c6645acdaaca48138a3b0c471e2a7041a576423d2927287f000";
+  const char* plaintext_cstr  = "fd40a41d370a1f65745095687d47ba1d36d2349e23f644392c8ea9c49d40c13271aff264d0f248";
+  const char* ciphertext_cstr = "75750d37b4bba2a4dedb34235bd68c6645acdaaca48138a3b0c471e2a7041a576423d2927287f0";
 
   // Pack hex strings into srsgnb types
   sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
@@ -283,6 +283,7 @@ TEST(security_nea2_test, testset3)
 
   // Apply ciphering and compare results
   byte_buffer ciphertext_out = security_nea2(key, count, bearer, dir, plaintext, length);
+  EXPECT_EQ(ciphertext_out.length(), ciphertext.length());
   EXPECT_EQ(ciphertext_out, ciphertext);
 }
 
@@ -363,7 +364,7 @@ TEST(security_nea2_test, testset6)
       "ca6fd5cfd3a195ce5abe65272af607ada1be65a6b4c9c0693234092c4d018f1756c6db9dc8a6d80b888138616b681262f954d0e771174878"
       "0d92291d86299972db741cfa4f37b8b56cdb18a7ca8218e86e4b4b716a4d04371fbec262fc5ad0b3819b187b97e55b1a4d7c19ee24c8b4d7"
       "723cfedf045b8acae4869517d80e50615d9035d5d9c5a40af602280b542597b0cb18619eeb35925759d195e100e8e4aa0c38a3c2abe0f3d8"
-      "ff04f3c33c295069c23694b5bbeacdd542e28e8a94edb9119f412d054be1fa7200b09000";
+      "ff04f3c33c295069c23694b5bbeacdd542e28e8a94edb9119f412d054be1fa7200b090";
   const char* ciphertext_cstr =
       "5cb72c6edc878f1566e10253afc364c9fa540d914db94cbee275d0917ca6af0d77acb4ef3bbe1a722b2ef5bd1d4b8e2aa5024ec1388a201e"
       "7bce7920aec615895f763a5564dcc4c482a2ee1d8bfecc4498eca83fbb75f9ab530e0dafbede2fa5895b82991b6277c529e0f2529d7f7960"
@@ -373,7 +374,7 @@ TEST(security_nea2_test, testset6)
       "021568855c8b9e52a981957a112827f978ba960f1447911b317b5511fbcc7fb13ac153db74251117e4861eb9e83bffffc4eb7755579038e5"
       "7924b1f78b3e1ad90bab2a07871b72db5eef96c334044966db0c37cafd1a89e5646a3580eb6465f121dce9cb88d85b96cf23ccccd4280767"
       "bee8eeb23d8652461db6493103003baf89f5e18261ea43c84a92ebffffe4909dc46c5192f825f770600b9602c557b5f8b431a79d45977dd9"
-      "c41b863da9e142e90020cfd074d6927b7ab3b6725d1a6f3f98b9c9daa8982aff06782800";
+      "c41b863da9e142e90020cfd074d6927b7ab3b6725d1a6f3f98b9c9daa8982aff067828";
 
   // Pack hex strings into srsgnb types
   sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
