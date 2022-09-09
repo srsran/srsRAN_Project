@@ -35,7 +35,11 @@ public:
 /// actual data-specific notifier, which will be later set up through the \ref set_slot_data_message_notifier() method.
 static slot_data_message_notifier_dummy dummy_data_notifier;
 
-phy_to_fapi_results_event_translator::phy_to_fapi_results_event_translator() : data_notifier(dummy_data_notifier) {}
+phy_to_fapi_results_event_translator::phy_to_fapi_results_event_translator() :
+  data_notifier(dummy_data_notifier), logger(srslog::fetch_basic_logger("FAPI"))
+{
+  logger.set_level(srslog::basic_levels::info);
+}
 
 void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_results& result)
 {
@@ -77,6 +81,13 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
                              preamble.time_advance.to_seconds() * 1e9,
                              clamp(preamble.power_dB, MIN_PREAMBLE_POWER_VALUE, MAX_PREAMBLE_POWER_VALUE),
                              clamp(preamble.snr_dB, MIN_PREAMBLE_SNR_VALUE, MAX_PREAMBLE_SNR_VALUE));
+
+    logger.info("Processing RACH with preamble index {}, power dB{}, time advance s{}, in SFN {}, slot{}\n",
+                preamble.preamble_index,
+                preamble.power_dB,
+                preamble.time_advance.to_seconds(),
+                result.context.slot.sfn(),
+                result.context.slot.slot_index());
   }
 
   error_type<fapi::validator_report> validation_result = validate_rach_indication(msg);
