@@ -20,6 +20,7 @@ Build Instructions
 * Mandatory requirements:
   * cmake:               <https://cmake.org/>
   * libfftw:             <https://www.fftw.org/>
+  * PolarSSL/mbedTLS:    <https://www.trustedfirmware.org/projects/mbed-tls/>
   * git-lfs:             <https://git-lfs.github.com/>
   * googletest:          <https://github.com/google/googletest/>
     * You can skip test building by using the cmake option `-DBUILD_TESTS=False`. GoogleTest is not mandatory when building without tests.
@@ -27,7 +28,7 @@ Build Instructions
 For example, on Ubuntu 22.04, one can install the required libraries with:
 
 ```bash
-sudo apt-get install cmake libfftw3-dev git-lfs libgtest-dev
+sudo apt-get install cmake libfftw3-dev libmbedtls-dev git-lfs libgtest-dev
 git lfs install
 ```
 
