@@ -124,7 +124,7 @@ struct dl_dci_pdu {
 
 /// CORESET CCE to REG mapping type.
 enum class cce_to_reg_mapping_type : uint8_t { non_interleaved, interleaved };
-enum class pdcch_coreset_type : uint8_t { pbch_or_sib1, other };
+enum class pdcch_coreset_type : uint8_t { pbch_or_coreset0, other };
 
 /// Downlink PDCCH PDU information.
 struct dl_pdcch_pdu {

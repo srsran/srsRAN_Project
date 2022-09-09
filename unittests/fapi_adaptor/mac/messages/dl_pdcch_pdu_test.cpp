@@ -50,9 +50,8 @@ static void test_conversion_ok()
                                                              : 0U,
                 fapi_pdu.shift_index);
   TESTASSERT_EQ(mac_pdu.coreset_cfg->precoder_granurality, fapi_pdu.precoder_granularity);
-  TESTASSERT_EQ((mac_pdu.dcis.front().parameters->dci.type == dci_dl_rnti_config_type::si_f1_0)
-                    ? fapi::pdcch_coreset_type::pbch_or_sib1
-                    : fapi::pdcch_coreset_type::other,
+  TESTASSERT_EQ((mac_pdu.coreset_cfg->id == to_coreset_id(0)) ? fapi::pdcch_coreset_type::pbch_or_coreset0
+                                                              : fapi::pdcch_coreset_type::other,
                 fapi_pdu.coreset_type);
 
   if (mac_pdu.coreset_cfg->id != to_coreset_id(0)) {

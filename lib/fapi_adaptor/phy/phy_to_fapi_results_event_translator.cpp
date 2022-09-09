@@ -82,7 +82,7 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
                              clamp(preamble.power_dB, MIN_PREAMBLE_POWER_VALUE, MAX_PREAMBLE_POWER_VALUE),
                              clamp(preamble.snr_dB, MIN_PREAMBLE_SNR_VALUE, MAX_PREAMBLE_SNR_VALUE));
 
-    logger.info("Processing RACH with preamble index {}, power dB{}, time advance s{}, in SFN {}, slot{}\n",
+    logger.info("Processing RACH with preamble index={}, power={}dB, time advance={}s, in SFN={}, slot={}\n",
                 preamble.preamble_index,
                 preamble.power_dB,
                 preamble.time_advance.to_seconds(),

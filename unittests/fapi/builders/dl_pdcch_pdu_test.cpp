@@ -43,7 +43,7 @@ static void test_coreset_params()
   unsigned                                         interleaver_size = 3;
   unsigned                                         shift_index      = 100;
   cce_to_reg_mapping_type                          mapping_type     = cce_to_reg_mapping_type::interleaved;
-  pdcch_coreset_type                               coreset_type     = pdcch_coreset_type::pbch_or_sib1;
+  pdcch_coreset_type                               coreset_type     = pdcch_coreset_type::pbch_or_coreset0;
   coreset_configuration::precoder_granularity_type granularity =
       coreset_configuration::precoder_granularity_type::same_as_reg_bundle;
 

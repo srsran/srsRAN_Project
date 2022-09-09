@@ -135,7 +135,7 @@ static bool validate_shift_index(message_type_id    msg_type,
                                  pdcch_coreset_type coreset_type,
                                  validator_report&  report)
 {
-  if (coreset_type == pdcch_coreset_type::pbch_or_sib1) {
+  if (coreset_type == pdcch_coreset_type::pbch_or_coreset0) {
     static constexpr unsigned MIN_VALUE = 0;
     static constexpr unsigned MAX_VALUE = 1023;
 

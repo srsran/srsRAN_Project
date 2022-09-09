@@ -39,17 +39,20 @@ void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
 
   // Fill Coreset parameters.
   // :TODO: change the start symbol index in the future.
-  unsigned start_symbol_index = 0;
+  unsigned             start_symbol_index = 0;
+  freq_resource_bitmap freq_bitmap_coreset0(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
+  freq_bitmap_coreset0.set(0);
+
   builder.set_coreset_parameters(
       start_symbol_index,
       coreset_cfg.duration,
-      (coreset_cfg.id == to_coreset_id(0)) ? freq_resource_bitmap() : coreset_cfg.freq_domain_resources(),
+      (coreset_cfg.id == to_coreset_id(0)) ? freq_bitmap_coreset0 : coreset_cfg.freq_domain_resources(),
       coreset_cfg.interleaved.has_value() ? fapi::cce_to_reg_mapping_type::interleaved
                                           : fapi::cce_to_reg_mapping_type::non_interleaved,
       coreset_cfg.interleaved.has_value() ? coreset_cfg.interleaved.value().reg_bundle_sz : 6U,
       coreset_cfg.interleaved.has_value() ? coreset_cfg.interleaved.value().interleaver_sz : 0U,
-      (dcis.front().parameters->dci.type == dci_dl_rnti_config_type::si_f1_0) ? fapi::pdcch_coreset_type::pbch_or_sib1
-                                                                              : fapi::pdcch_coreset_type::other,
+      (coreset_cfg.id == to_coreset_id(0)) ? fapi::pdcch_coreset_type::pbch_or_coreset0
+                                           : fapi::pdcch_coreset_type::other,
       coreset_cfg.interleaved.has_value() ? coreset_cfg.interleaved.value().shift_index : 0U,
       coreset_cfg.precoder_granurality);
 

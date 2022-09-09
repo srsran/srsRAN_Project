@@ -43,7 +43,7 @@ static void pdcch_conversion_test()
          {fapi::cce_to_reg_mapping_type::non_interleaved, fapi::cce_to_reg_mapping_type::interleaved}) {
       for (auto reg_bundle : {2U, 3U, 6U}) {
         for (auto interleaver_size : {2U, 3U, 6U}) {
-          for (auto type : {fapi::pdcch_coreset_type::pbch_or_sib1, fapi::pdcch_coreset_type::other}) {
+          for (auto type : {fapi::pdcch_coreset_type::pbch_or_coreset0, fapi::pdcch_coreset_type::other}) {
             for (auto precoder : {coreset_configuration::precoder_granularity_type::same_as_reg_bundle,
                                   coreset_configuration::precoder_granularity_type::all_contiguous_rbs}) {
               for (int power_nr = -9; power_nr != -7; ++power_nr) {
@@ -121,7 +121,7 @@ static void pdcch_conversion_test()
                   TESTASSERT_EQ(start_symbol_index, proc_pdu.coreset.start_symbol_index);
                   TESTASSERT_EQ(duration_symbol, proc_pdu.coreset.duration);
 
-                  if (type == fapi::pdcch_coreset_type::pbch_or_sib1) {
+                  if (type == fapi::pdcch_coreset_type::pbch_or_coreset0) {
                     TESTASSERT(proc_pdu.coreset.cce_to_reg_mapping ==
                                pdcch_processor::cce_to_reg_mapping_type::CORESET0);
                     TESTASSERT_EQ(0, proc_pdu.coreset.reg_bundle_size);

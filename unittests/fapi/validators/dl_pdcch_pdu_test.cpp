@@ -87,7 +87,7 @@ static const std::vector<test_group<dl_pdcch_pdu>> vector_test = {
      "CORESET type",
      {{0, true}, {1, true}, {2, false}}},
     {[](dl_pdcch_pdu& msg, int value) {
-       msg.coreset_type = pdcch_coreset_type::pbch_or_sib1;
+       msg.coreset_type = pdcch_coreset_type::pbch_or_coreset0;
        msg.shift_index  = value;
      },
      "Shift index - PBCH or SIB1",

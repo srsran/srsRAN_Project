@@ -60,7 +60,7 @@ static void fill_coreset(pdcch_processor::coreset_description& coreset, const fa
   coreset.duration           = fapi_pdu.duration_symbols;
 
   // Configure CCE-to-REG mapping depending on PDCCH CORESET.
-  if (fapi_pdu.coreset_type == fapi::pdcch_coreset_type::pbch_or_sib1) {
+  if (fapi_pdu.coreset_type == fapi::pdcch_coreset_type::pbch_or_coreset0) {
     // The PDCCH is located in CORESET0.
     coreset.cce_to_reg_mapping = pdcch_processor::cce_to_reg_mapping_type::CORESET0;
 
