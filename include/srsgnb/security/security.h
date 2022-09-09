@@ -88,6 +88,21 @@ void security_nia1(sec_mac&              mac,
                    byte_buffer_view      msg,
                    uint32_t              msg_len);
 
+void security_nia2(sec_mac&              mac,
+                   const sec_128_as_key& key,
+                   uint32_t              count,
+                   uint8_t               bearer,
+                   security_direction    direction,
+                   byte_buffer_view      msg);
+
+void security_nia2(sec_mac&              mac,
+                   const sec_128_as_key& key,
+                   uint32_t              count,
+                   uint8_t               bearer,
+                   security_direction    direction,
+                   byte_buffer_view      msg,
+                   uint32_t              msg_len);
+
 /******************************************************************************
  * Encryption / Decryption
  *****************************************************************************/

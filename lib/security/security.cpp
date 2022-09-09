@@ -66,6 +66,104 @@ void srsgnb::security_nia1(sec_mac&              mac,
   }
 }
 
+void srsgnb::security_nia2(sec_mac&              mac,
+                           const sec_128_as_key& key,
+                           uint32_t              count,
+                           uint8_t               bearer,
+                           security_direction    direction,
+                           byte_buffer_view      msg)
+{
+  security_nia2(mac, key, count, bearer, direction, msg, msg.length() * 8);
+}
+
+void srsgnb::security_nia2(sec_mac&              mac,
+                           const sec_128_as_key& key,
+                           uint32_t              count,
+                           uint8_t               bearer,
+                           security_direction    direction,
+                           byte_buffer_view      msg,
+                           uint32_t              msg_len)
+{
+  uint32_t    msg_len_block_8 = (msg_len + 7) / 8;
+  uint8_t     M[msg_len_block_8 + 8 + 16];
+  aes_context ctx;
+  uint32_t    i;
+  uint32_t    j;
+  uint32_t    n;
+  uint32_t    pad_bits;
+  uint8_t     const_zero[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  uint8_t     L[16];
+  uint8_t     K1[16];
+  uint8_t     K2[16];
+  uint8_t     T[16];
+  uint8_t     tmp[16];
+
+  if (msg_len_block_8 <= msg.length()) {
+    // Subkey L generation
+    aes_setkey_enc(&ctx, key.data(), 128);
+    aes_crypt_ecb(&ctx, AES_ENCRYPT, const_zero, L);
+
+    // Subkey K1 generation
+    for (i = 0; i < 15; i++) {
+      K1[i] = (L[i] << 1) | ((L[i + 1] >> 7) & 0x01);
+    }
+    K1[15] = L[15] << 1;
+    if (L[0] & 0x80) {
+      K1[15] ^= 0x87;
+    }
+
+    // Subkey K2 generation
+    for (i = 0; i < 15; i++) {
+      K2[i] = (K1[i] << 1) | ((K1[i + 1] >> 7) & 0x01);
+    }
+    K2[15] = K1[15] << 1;
+    if (K1[0] & 0x80) {
+      K2[15] ^= 0x87;
+    }
+
+    // Construct M
+    memset(M, 0, msg_len_block_8 + 8 + 16);
+    M[0] = (count >> 24) & 0xff;
+    M[1] = (count >> 16) & 0xff;
+    M[2] = (count >> 8) & 0xff;
+    M[3] = count & 0xff;
+    M[4] = (bearer << 3) | (to_number(direction) << 2);
+    for (i = 0; i < msg_len_block_8; i++) {
+      M[8 + i] = msg[i];
+    }
+
+    // MAC generation
+    n = (uint32_t)(ceilf((float)(msg_len_block_8 + 8) / (float)(16)));
+    for (i = 0; i < 16; i++) {
+      T[i] = 0;
+    }
+    for (i = 0; i < n - 1; i++) {
+      for (j = 0; j < 16; j++) {
+        tmp[j] = T[j] ^ M[i * 16 + j];
+      }
+      aes_crypt_ecb(&ctx, AES_ENCRYPT, tmp, T);
+    }
+    pad_bits = ((msg_len) + 64) % 128;
+    if (pad_bits == 0) {
+      for (j = 0; j < 16; j++) {
+        tmp[j] = T[j] ^ K1[j] ^ M[i * 16 + j];
+      }
+      aes_crypt_ecb(&ctx, AES_ENCRYPT, tmp, T);
+    } else {
+      pad_bits = (128 - pad_bits) - 1;
+      M[i * 16 + (15 - (pad_bits / 8))] |= 0x1 << (pad_bits % 8);
+      for (j = 0; j < 16; j++) {
+        tmp[j] = T[j] ^ K2[j] ^ M[i * 16 + j];
+      }
+      aes_crypt_ecb(&ctx, AES_ENCRYPT, tmp, T);
+    }
+
+    for (i = 0; i < 4; i++) {
+      mac[i] = T[i];
+    }
+  }
+}
+
 /******************************************************************************
  * Encryption / Decryption
  *****************************************************************************/

@@ -116,7 +116,7 @@ void pdcp_entity_tx::integrity_generate(sec_mac& mac, byte_buffer_view buf, uint
       security_nia1(mac, k_int, count, lcid - 1, direction, buf);
       break;
     case integrity_algorithm::nia2:
-      // security_nia2(&k128, count, 0, cfg.tx_direction, msg, msg_len, mac);
+      security_nia2(mac, k_int, count, lcid - 1, direction, buf);
       break;
     case integrity_algorithm::nia3:
       // security_nia3(&k128, count, 0, cfg.tx_direction, msg, msg_len, mac);
