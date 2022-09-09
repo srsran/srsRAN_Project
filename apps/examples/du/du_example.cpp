@@ -156,15 +156,13 @@ static const unsigned            sector_id                  = 0;
 static subcarrier_spacing        scs                        = subcarrier_spacing::kHz15;
 static subcarrier_spacing        scs_common                 = subcarrier_spacing::kHz15;
 static const double              tx_gain                    = 60.0;
+static const double              rx_gain                    = 70.0;
 static const unsigned            max_processing_delay_slots = 4;
 static const unsigned            ul_to_dl_subframe_offset   = 1;
 static const phy_time_unit       time_advance_calibration   = phy_time_unit::from_seconds(0.0);
 static const lower_phy_ta_offset ta_offset                  = lower_phy_ta_offset::n0;
 static const cyclic_prefix       cp                         = cyclic_prefix::NORMAL;
-static double                    dl_center_freq             = 2680.1e6;
 static unsigned                  dl_arfcn                   = 536020;
-static const double              rx_freq                    = 3.5e9;
-static const double              rx_gain                    = 60.0;
 static const unsigned            nof_ports                  = 1;
 static const unsigned            nof_sectors                = 1;
 static std::string               driver_name                = "zmq";
@@ -177,7 +175,7 @@ static std::array<uint16_t, NOF_NUMEROLOGIES>    nof_prb_ul_grid             = {
 static unsigned                                  offset_to_pointA            = 40;
 static unsigned                                  K_ssb                       = 6;
 static unsigned                                  coreset0_index              = 6;
-static unsigned                                  max_nof_concurrent_requests = 1;
+static unsigned                                  max_nof_concurrent_requests = 10;
 static const unsigned                            zero_correlation_zone       = 0;
 static const unsigned                            prach_config_index          = 16;
 static radio_configuration::clock_sources        clock_src                   = {};
@@ -185,6 +183,10 @@ static std::string                               log_level                   = "
 static radio_configuration::over_the_wire_format otw_format = radio_configuration::over_the_wire_format::DEFAULT;
 static std::string                               device_arguments;
 static std::atomic<bool>                         is_running = {true};
+// NOTE: ul_center_freq, dl_center_freq and ul_arfcn are derived from dl_arfcn.
+static float    dl_center_freq;
+static float    ul_center_freq;
+static unsigned ul_arfcn;
 
 // Amplitude control args.
 static float baseband_gain_dB       = -2.5F;
@@ -210,7 +212,6 @@ static const std::vector<configuration_profile> profiles = {
        pci              = 69;
        coreset0_index   = 9;
        otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
-       dl_center_freq   = 2680.1e6;
        // Prepare ZMQ addresses using TCP. Transmitter ports start at 5000+channel_id while receivers connect to
        // 6000+channel_id.
        unsigned port_base   = 5000;
@@ -235,7 +236,6 @@ static const std::vector<configuration_profile> profiles = {
        nof_prb_ul_grid  = {106, 51, 24, 0, 0};
        pci              = 1;
        otw_format       = radio_configuration::over_the_wire_format::SC12;
-       dl_center_freq   = 2680.1e6;
        clock_src.clock  = radio_configuration::clock_sources::source::INTERNAL;
        clock_src.sync   = radio_configuration::clock_sources::source::INTERNAL;
      }},
@@ -252,7 +252,6 @@ static const std::vector<configuration_profile> profiles = {
        K_ssb            = 7;
        offset_to_pointA = 69;
        otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
-       dl_center_freq   = 2600.e6;
        // Prepare ZMQ addresses using TCP. Transmitter ports start at 5000+channel_id while receivers connect to
        // 6000+channel_id.
        unsigned port_base   = 5000;
@@ -314,7 +313,7 @@ static lower_phy_configuration create_lower_phy_config(baseband_gateway&        
     lower_phy_sector_description sector_config;
     sector_config.bandwidth_rb = nof_prb_dl_grid[to_numerology_value(scs)];
     sector_config.dl_freq_hz   = dl_center_freq;
-    sector_config.ul_freq_hz   = rx_freq;
+    sector_config.ul_freq_hz   = ul_center_freq;
     for (unsigned port_id = 0; port_id < nof_ports; ++port_id) {
       lower_phy_sector_port_mapping port_mapping;
       port_mapping.stream_id  = sector_id;
@@ -437,7 +436,7 @@ static radio_configuration::radio create_radio_configuration()
       tx_stream_config.channels.emplace_back(tx_ch_config);
 
       radio_configuration::channel rx_ch_config;
-      rx_ch_config.freq.center_frequency_hz = rx_freq;
+      rx_ch_config.freq.center_frequency_hz = ul_center_freq;
       rx_ch_config.gain_dB                  = rx_gain;
       if (!rx_channel_args.empty()) {
         rx_ch_config.args = rx_channel_args[sector_id * nof_ports + port_id];
@@ -633,7 +632,7 @@ static int parse_args(int argc, char** argv)
 int main(int argc, char** argv)
 {
   srslog::init();
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("DU-Example");
   test_logger.set_level(srslog::basic_levels::info);
 
   // Parse arguments.
@@ -641,6 +640,19 @@ int main(int argc, char** argv)
   if (ret < 0) {
     return ret;
   }
+
+  // Calculate needed parameters.
+  dl_center_freq = band_helper::nr_arfcn_to_freq(dl_arfcn);
+  ul_arfcn       = band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn);
+  ul_center_freq = band_helper::nr_arfcn_to_freq(ul_arfcn);
+  test_logger.info("Starting DU example with DL ARFCN {}, UL ARFCN {}, DL center frequency {}, UL center frequency {}, "
+                   "tx gain {}, rx gain {}",
+                   dl_arfcn,
+                   ul_arfcn,
+                   dl_center_freq,
+                   ul_center_freq,
+                   tx_gain,
+                   rx_gain);
 
   worker_manager workers;
 
