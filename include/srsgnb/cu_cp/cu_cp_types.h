@@ -27,6 +27,8 @@ enum ue_index_t : uint16_t {
 /// Maximum number of DUs supported by CU-CP (implementation-defined).
 enum du_index_t : uint16_t { MIN_DU_INDEX = 0, MAX_DU_INDEX = 1, MAX_NOF_DUS = 2, INVALID_DU_INDEX = MAX_NOF_DUS };
 
+#define MAX_NOF_CU_UES (du_index_t::MAX_NOF_DUS * ue_index_t::MAX_NOF_UES)
+
 /// Maximum number of cells per DU supported by CU-CP (implementation-defined).
 enum du_cell_index_t : uint16_t {
   MIN_DU_CELL_INDEX     = 0,

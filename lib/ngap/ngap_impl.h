@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "ngap_ue.h"
 #include "srsgnb/asn1/ngap.h"
 #include "srsgnb/ngap/ngap.h"
 #include "srsgnb/support/timers.h"
@@ -52,6 +53,8 @@ private:
   ng_message_notifier&  ng_notifier;
 
   unique_timer ng_setup_timer;
+
+  ngap_ue_manager ues;
 
   std::unique_ptr<ngap_event_manager> events;
 };

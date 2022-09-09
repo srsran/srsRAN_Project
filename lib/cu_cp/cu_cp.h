@@ -72,8 +72,11 @@ private:
   /// \return The DU index.
   du_index_t get_next_du_index();
 
-  timer_manager       timers;
   cu_cp_configuration cfg;
+  timer_manager       timers;
+
+  // Handler for DU tasks.
+  async_task_sequencer main_ctrl_loop;
 
   // logger
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
@@ -85,9 +88,6 @@ private:
 
   // task event loops indexed by du_index
   slot_array<async_task_sequencer, MAX_NOF_DUS> du_ctrl_loop;
-
-  // Handler for DU tasks.
-  async_task_sequencer main_ctrl_loop;
 
   // F1AP to CU-CP adapter
   f1ap_cu_cp_adapter f1ap_ev_notifier;
