@@ -32,26 +32,37 @@ void srsgnb::security_nia1(const sec_128_as_key& key,
                            uint32_t              count,
                            uint8_t               bearer,
                            security_direction    direction,
-                           const byte_buffer&    buf,
+                           const byte_buffer&    msg,
                            sec_mac&              mac)
 {
-  uint32_t msg_len_bits = 0;
-  uint32_t i            = 0;
+  security_nia1(key, count, bearer, direction, msg, msg.length() * 8, mac);
+}
+
+void srsgnb::security_nia1(const sec_128_as_key& key,
+                           uint32_t              count,
+                           uint8_t               bearer,
+                           security_direction    direction,
+                           const byte_buffer&    msg,
+                           uint32_t              msg_len,
+                           sec_mac&              mac)
+{
+  uint32_t i = 0;
 
   // FIXME for now we copy the byte buffer to a contiguous piece of memory.
   // This will be fixed later.
   std::vector<uint8_t> continuous_buf;
-  continuous_buf.reserve(buf.length());
+  continuous_buf.reserve(msg.length());
 
-  for (uint32_t i = 0; i < buf.length(); i++) {
-    continuous_buf.push_back(buf[i]);
+  for (uint32_t i = 0; i < msg.length(); i++) {
+    continuous_buf.push_back(msg[i]);
   }
 
-  msg_len_bits = buf.length() * 8;
-  uint8_t* m_ptr =
-      s3g_f9(key.data(), count, bearer << 27, static_cast<uint8_t>(direction), continuous_buf.data(), msg_len_bits);
-  for (i = 0; i < 4; i++) {
-    mac[i] = m_ptr[i];
+  if ((msg_len + 7) / 8 <= msg.length()) {
+    uint8_t* m_ptr =
+        s3g_f9(key.data(), count, bearer << 27, static_cast<uint8_t>(direction), continuous_buf.data(), msg_len);
+    for (i = 0; i < 4; i++) {
+      mac[i] = m_ptr[i];
+    }
   }
 }
 
