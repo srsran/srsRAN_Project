@@ -85,16 +85,16 @@ void channel_equalizer_zf_impl::equalize(equalizer_symbol_list&          mod_sym
   spatial_topology topology(ch_estimates.size().nof_rx_ports, ch_estimates.size().nof_tx_layers);
 
   switch (topology.get_topology()) {
-    case spatial_topology::SISO:
+    case spatial_topology::siso:
       equalize_zf_1x1(mod_symbols, noise_vars, ch_symbols, ch_estimates, tx_scaling);
       break;
-    case spatial_topology::MISO_2X1:
+    case spatial_topology::miso_2x1:
       equalize_zf_1x2(mod_symbols, noise_vars, ch_symbols, ch_estimates, tx_scaling);
       break;
-    case spatial_topology::MIMO_2X2:
+    case spatial_topology::mimo_2x2:
       equalize_zf_2x2(mod_symbols, noise_vars, ch_symbols, ch_estimates, tx_scaling);
       break;
-    case spatial_topology::INVALID:
+    case spatial_topology::invalid:
     default:
       srsgnb_assertion_failure("Invalid channel spatial topology: {} Tx layers, {} Rx ports.",
                                ch_estimates.size().nof_tx_layers,

@@ -25,24 +25,27 @@ inline void equalize_zf_1x1_symbol(span<cf_t>       symbol_out,
                                    float            noise_var_estimate,
                                    float            tx_scaling)
 {
-  const std::size_t nof_subcs     = symbol_in.size();
-  const float       tx_scaling_sq = tx_scaling * tx_scaling;
+  const unsigned nof_subcs = symbol_in.size();
 
-  // Revert tx_scaling factor.
-  srsvec::sc_prod(symbol_in, 1 / tx_scaling, symbol_out);
-
-  for (std::size_t i_subc = 0; i_subc != nof_subcs; ++i_subc) {
+  for (unsigned i_subc = 0; i_subc != nof_subcs; ++i_subc) {
     // Prepare data.
-    const cf_t ch_est = ch_estimates[i_subc];
+    const cf_t  ch_est    = ch_estimates[i_subc] * tx_scaling;
+    const float ch_mod_sq = abs_sq(ch_est);
+
+    // Calculate the reciprocal of the channel estimate and its squared absolute value.
+    // Set the symbols and noise variances to zero in case of division by zero, NAN of INF.
+    cf_t  ch_est_rcp    = 0.0F;
+    float ch_mod_sq_rcp = 0.0F;
+    if (std::isnormal(ch_mod_sq)) {
+      ch_est_rcp    = 1.0F / ch_est;
+      ch_mod_sq_rcp = 1.0F / ch_mod_sq;
+    }
 
     // Apply Zero Forcing algorithm.
-    symbol_out[i_subc] = symbol_out[i_subc] / ch_est;
+    symbol_out[i_subc] = symbol_in[i_subc] * ch_est_rcp;
 
     // Calculate noise variances.
-    float ch_mod_sq = abs_sq(ch_est);
-    if (std::isnormal(ch_mod_sq)) {
-      noise_vars[i_subc] = noise_var_estimate / (ch_mod_sq * tx_scaling_sq);
-    }
+    noise_vars[i_subc] = noise_var_estimate * ch_mod_sq_rcp;
   }
 }
 
@@ -54,22 +57,16 @@ void srsgnb::equalize_zf_1x1(equalizer_symbol_list&          eq_symbols,
                              const channel_estimate&         ch_estimates,
                              float                           tx_scaling)
 {
-  const std::size_t nof_symbols = ch_symbols.size().nof_symbols;
-  const std::size_t nof_subcs   = ch_symbols.size().nof_subc;
-
-  span<const cf_t> channel_estimates  = ch_estimates.get_path_ch_estimate(0, 0);
-  const float      noise_var_estimate = ch_estimates.get_noise_variance(0, 0);
-
-  std::size_t re_index = 0;
+  const unsigned nof_symbols        = ch_symbols.size().nof_symbols;
+  const float    noise_var_estimate = ch_estimates.get_noise_variance(0);
 
   // Equalize symbol by symbol.
-  for (std::size_t i_symb = 0; i_symb != nof_symbols; ++i_symb) {
+  for (unsigned i_symb = 0; i_symb != nof_symbols; ++i_symb) {
     equalize_zf_1x1_symbol(eq_symbols.get_symbol(i_symb, 0),
                            noise_vars.get_symbol(i_symb, 0),
                            ch_symbols.get_symbol(i_symb, 0),
-                           channel_estimates.subspan(re_index, nof_subcs),
+                           ch_estimates.get_symbol_ch_estimate(i_symb),
                            noise_var_estimate,
                            tx_scaling);
-    re_index += nof_subcs;
   }
 }

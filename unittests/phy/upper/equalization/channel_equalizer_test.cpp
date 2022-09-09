@@ -100,7 +100,7 @@ static void assert_equalization_error(const test_case_t& t_case)
 int main()
 {
   // Create channel equalizer.
-  std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_zf_impl_factory();
+  std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_factory_zf();
   std::unique_ptr<channel_equalizer>         test_equalizer    = equalizer_factory->create();
 
   for (const auto& t_case : channel_equalizer_test_data) {

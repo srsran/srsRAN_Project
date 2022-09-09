@@ -26,19 +26,22 @@ inline void equalize_zf_1x2_symbol(span<cf_t>       symbol_out,
                                    span<const cf_t> ch_estimates_p1,
                                    float            tx_scaling)
 {
-  const std::size_t nof_subcs = symbol_in_p0.size();
+  const unsigned nof_subcs = symbol_in_p0.size();
 
-  for (std::size_t i_subc = 0; i_subc != nof_subcs; ++i_subc) {
+  for (unsigned i_subc = 0; i_subc != nof_subcs; ++i_subc) {
     // Prepare data.
     const cf_t ch_est_p0 = ch_estimates_p0[i_subc];
     const cf_t ch_est_p1 = ch_estimates_p1[i_subc];
 
-    // Apply Zero Forcing algorithm.
-    float d_zf = tx_scaling * (abs_sq(ch_est_p0) + abs_sq(ch_est_p1));
+    // Calculate the reciprocal of the denominator. Set the symbols to zero in case of division by zero, NAN of INF.
+    float d_zf     = tx_scaling * (abs_sq(ch_est_p0) + abs_sq(ch_est_p1));
+    float d_zf_rcp = 0.0F;
     if (std::isnormal(d_zf)) {
-      symbol_out[i_subc] =
-          (symbol_in_p0[i_subc] * std::conj(ch_est_p0) + symbol_in_p1[i_subc] * std::conj(ch_est_p1)) / d_zf;
+      d_zf_rcp = 1.0F / d_zf;
     }
+    // Apply Zero Forcing algorithm.
+    symbol_out[i_subc] =
+        (symbol_in_p0[i_subc] * std::conj(ch_est_p0) + symbol_in_p1[i_subc] * std::conj(ch_est_p1)) * d_zf_rcp;
   }
 
   // For now, do not compute the output noise variances.
@@ -53,23 +56,16 @@ void srsgnb::equalize_zf_1x2(equalizer_symbol_list&          eq_symbols,
                              const channel_estimate&         ch_estimates,
                              float                           tx_scaling)
 {
-  const std::size_t nof_symbols = ch_symbols.size().nof_symbols;
-  const std::size_t nof_subcs   = ch_symbols.size().nof_subc;
-
-  span<const cf_t> ch_estimates_p0 = ch_estimates.get_path_ch_estimate(0, 0);
-  span<const cf_t> ch_estimates_p1 = ch_estimates.get_path_ch_estimate(1, 0);
-
-  std::size_t re_index = 0;
+  const unsigned nof_symbols = ch_symbols.size().nof_symbols;
 
   // Equalize symbol by symbol.
-  for (std::size_t i_symb = 0; i_symb != nof_symbols; ++i_symb) {
+  for (unsigned i_symb = 0; i_symb != nof_symbols; ++i_symb) {
     equalize_zf_1x2_symbol(eq_symbols.get_symbol(i_symb, 0),
                            noise_vars.get_symbol(i_symb, 0),
                            ch_symbols.get_symbol(i_symb, 0),
                            ch_symbols.get_symbol(i_symb, 1),
-                           ch_estimates_p0.subspan(re_index, nof_subcs),
-                           ch_estimates_p1.subspan(re_index, nof_subcs),
+                           ch_estimates.get_symbol_ch_estimate(i_symb, 0),
+                           ch_estimates.get_symbol_ch_estimate(i_symb, 1),
                            tx_scaling);
-    re_index += nof_subcs;
   }
 }

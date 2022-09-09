@@ -31,6 +31,6 @@ public:
 };
 
 /// Creates a Zero Forcing channel equalizer factory.
-std::shared_ptr<channel_equalizer_factory> create_channel_equalizer_zf_impl_factory();
+std::shared_ptr<channel_equalizer_factory> create_channel_equalizer_factory_zf();
 
 } // namespace srsgnb

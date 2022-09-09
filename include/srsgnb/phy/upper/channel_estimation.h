@@ -158,12 +158,28 @@ public:
     return ce.get_view<2>({rx_port, tx_layer});
   }
 
-  /// \brief Returns a read-only view to the RE channel estimates  of the path between the given Rx port and Tx layer.
+  /// \brief Returns a read-only view to the RE channel estimates of the path between the given Rx port and Tx layer.
   ///
   /// The view is represented as a vector indexed by i) subcarriers and ii) OFDM symbols.
   span<const cf_t> get_path_ch_estimate(unsigned rx_port, unsigned tx_layer = 0) const
   {
     return ce.get_view<2>({rx_port, tx_layer});
+  }
+
+  /// \brief Returns a read-write view to the RE channel estimates for a given OFDM symbol, Rx port and Tx layer.
+  ///
+  /// The view is represented as a vector indexed by subcarrier.
+  span<cf_t> get_symbol_ch_estimate(unsigned i_symbol, unsigned rx_port = 0, unsigned tx_layer = 0)
+  {
+    return ce.get_view<1>({i_symbol, rx_port, tx_layer});
+  }
+
+  /// \brief Returns a read-only view to the RE channel estimates for a given OFDM symbol, Rx port and Tx layer.
+  ///
+  /// The view is represented as a vector indexed by subcarrier.
+  span<const cf_t> get_symbol_ch_estimate(unsigned i_symbol, unsigned rx_port = 0, unsigned tx_layer = 0) const
+  {
+    return ce.get_view<1>({i_symbol, rx_port, tx_layer});
   }
 
   /// Returns the general Channel State Information.

@@ -18,13 +18,13 @@ public:
   /// Supported channel configurations.
   enum options {
     /// Invalid or unsupported channel spatial topology.
-    INVALID = 0,
+    invalid = 0,
     /// Single Input Single Output (SISO) channel.
-    SISO,
+    siso,
     /// Multiple Input Single Output (MISO) channel with 2 Rx ports, making use of receiver-side spatial diversity.
-    MISO_2X1,
+    miso_2x1,
     /// Multiple Input Multiple Output (MIMO) channel with 2 Tx and 2 Rx ports, making use of spatial multiplexing.
-    MIMO_2X2
+    mimo_2x2
   };
 
   /// Default destructor.
@@ -40,68 +40,44 @@ public:
   constexpr spatial_topology(unsigned nof_rx_ports, unsigned nof_tx_layers)
   {
     if ((nof_rx_ports == 1) && (nof_tx_layers == 1)) {
-      value = SISO;
+      value = siso;
     } else if ((nof_rx_ports == 2) && (nof_tx_layers == 1)) {
-      value = MISO_2X1;
+      value = miso_2x1;
     } else if ((nof_rx_ports == 2) && (nof_tx_layers == 2)) {
-      value = MIMO_2X2;
+      value = mimo_2x2;
     } else {
-      value = INVALID;
+      value = invalid;
     }
   }
 
   /// Check if the spatial topology is valid.
-  constexpr bool is_valid() const { return value != INVALID; }
+  constexpr bool is_valid() const { return value != invalid; }
 
   /// Get the channel spatial topology.
   constexpr options get_topology() const { return value; }
 
-  /// Get the number of Tx layers of the channel, according to its spatial topology.
-  constexpr unsigned get_nof_tx_layers() const
-  {
-    switch (value) {
-      case SISO:
-      case MISO_2X1:
-        return 1;
-      case MIMO_2X2:
-        return 2;
-      case INVALID:
-      default:
-        return 0;
-    }
-  }
+  /// \name Comparison operators.
+  ///@{
 
-  /// Get the number of Rx ports of the channel, according to its spatial topology.
-  constexpr unsigned get_nof_rx_ports() const
-  {
-    switch (value) {
-      case SISO:
-        return 1;
-      case MISO_2X1:
-      case MIMO_2X2:
-        return 2;
-      case INVALID:
-      default:
-        return 0;
-    }
-  }
-
-  /// \brief compares two spatial topologies.
+  ///@{
+  /// \brief compare two spatial topologies.
   ///
-  /// \returns \c true if both spatial topologies have the same \c value.
+  /// The spatial topologies are considered equal if both have the same \c value.
   bool operator==(const spatial_topology& other) { return value == other.value; }
-
   bool operator!=(const spatial_topology& other) { return value != other.value; }
+  ///@}
 
-  /// \brief compares a spatial topology with one of its possible values.
+  ///@{
+  /// \brief compare a spatial topology with one of its possible values.
   ///
-  /// \returns \c true if both spatial topology values match.
+  /// They are considered equal if both spatial topology values match.
   bool operator==(const options& other_value) { return value == other_value; }
-
   bool operator!=(const options& other_value) { return value != other_value; }
+  ///@}
 
+  ///@}
 private:
   /// Stores the channel spatial topology.
-  options value = INVALID;
+  options value = invalid;
 };
 } // namespace srsgnb

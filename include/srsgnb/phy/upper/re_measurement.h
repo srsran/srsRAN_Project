@@ -32,18 +32,19 @@ struct re_measurement_dimensions {
   /// channel equalization) or to a single Tx layer (after channel equalization).
   unsigned nof_slices = 0;
 
-  /// \brief Compares two RE measurement dimensions.
-  ///
+  /// \name Comparison operators.
+  /// @{
+
   /// The RE dimensions are considered equal if the number of subcarriers, OFDM symbols and slices match.
   bool operator==(const re_measurement_dimensions& other) const
   {
     return (nof_subc == other.nof_subc) && (nof_symbols == other.nof_symbols) && (nof_slices == other.nof_slices);
   }
-
   bool operator!=(const re_measurement_dimensions& other) const
   {
     return !((nof_subc == other.nof_subc) && (nof_symbols == other.nof_symbols) && (nof_slices == other.nof_slices));
   }
+  /// @}
 };
 
 /// \brief Container interface for RE measurements.
