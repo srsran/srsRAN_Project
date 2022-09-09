@@ -151,8 +151,7 @@ void pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count, byte_b
       ct = security_nea2(k_enc, count, lcid - 1, direction, msg);
       break;
     case ciphering_algorithm::nea3:
-      // security_128_eea3(&(k_enc[16]), count, cfg.bearer_id - 1, cfg.tx_direction, msg, msg_len, ct_tmp);
-      // memcpy(ct, ct_tmp, msg_len);
+      ct = security_nea3(k_enc, count, lcid - 1, direction, msg);
       break;
     default:
       break;
