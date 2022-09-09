@@ -269,6 +269,13 @@ build alt [archlinux-latest]:
     OS: archlinux-latest
   parallel: *os-flags
 
+build alt [ubuntu-22.04, arm64v8]:
+  extends: .trigger build on nightly
+  variables:
+    OS: ubuntu-22.04
+    TAG_EXTENSION: "-pi4"
+  parallel: *os-flags
+
 build alt [ubuntu-20.04]:
   extends: .trigger build on weekly
   variables:

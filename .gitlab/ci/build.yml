@@ -22,6 +22,7 @@ variables:
   AUTO_DETECT_ISA: "False"
   # Test
   TEST_MODE: coverage # default, coverage, asan, tsan, valgrind, none
+  TAG_EXTENSION: ""
 
 stages:
   - build
@@ -30,7 +31,7 @@ stages:
 .build_and_unit:
   image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-builder-gnb-${OS}:${DOCKER_BUILDER_VERSION}
   tags:
-    - srs-rfci-docker
+    - srs-rfci-docker${TAG_EXTENSION}
 
 ################################################################################
 # Build
