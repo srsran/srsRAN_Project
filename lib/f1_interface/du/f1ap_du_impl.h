@@ -29,7 +29,7 @@ class f1ap_du_impl final : public f1_interface
 {
 public:
   f1ap_du_impl(f1c_message_notifier&       event_notifier_,
-               f1c_task_scheduler&         task_sched_,
+               f1c_du_config_notifier&     task_sched_,
                task_executor&              ctrl_exec,
                du_high_ue_executor_mapper& ue_exec_mapper);
   ~f1ap_du_impl();
@@ -74,7 +74,7 @@ private:
   task_executor&              ctrl_exec;
   du_high_ue_executor_mapper& ue_exec_mapper;
 
-  std::unique_ptr<f1c_task_scheduler> task_sched;
+  f1c_du_config_notifier& task_sched;
 
   f1ap_du_ue_manager ues;
 

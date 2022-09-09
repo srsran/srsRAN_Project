@@ -15,6 +15,12 @@ struct ul_ccch_indication_message;
 
 namespace srs_du {
 
+struct du_ue_config_update_request {
+  du_ue_index_t         ue_index;
+  std::vector<srb_id_t> srbs_to_addmod;
+  std::vector<drb_id_t> drbs_to_addmod;
+};
+
 struct du_ue_delete_message {
   du_ue_index_t ue_index;
 };
@@ -27,22 +33,17 @@ public:
   virtual void handle_ul_ccch_indication(const ul_ccch_indication_message& msg) = 0;
 };
 
-/// Interface to schedule asynchronous tasks respective to a given UE.
-class du_manager_ue_task_scheduler
+/// This class handles updates in cell and UE configurations. TODO: Better naming needed.
+class du_manager_configurator
 {
 public:
-  virtual ~du_manager_ue_task_scheduler() = default;
+  virtual ~du_manager_configurator() = default;
 
   /// \brief Schedule asynchronous task that is specific to a UE.
-  virtual void schedule_async_task(async_task<void>&& task) = 0;
-};
+  virtual void schedule_async_task(du_ue_index_t ue_index, async_task<void>&& task) = 0;
 
-class du_manager_task_scheduler
-{
-public:
-  virtual ~du_manager_task_scheduler() = default;
-
-  virtual du_manager_ue_task_scheduler& get_ue_task_scheduler(du_ue_index_t ue_index) = 0;
+  /// \brief Update the UE configuration in the DU, namely its SRBs and DRBs.
+  virtual void handle_ue_config_update(const du_ue_config_update_request& request) = 0;
 };
 
 class du_manager_interface_query
@@ -63,7 +64,7 @@ public:
 class du_manager_interface : public du_manager_interface_query,
                              public du_manager_ccch_handler,
                              public du_manager_controller,
-                             public du_manager_task_scheduler
+                             public du_manager_configurator
 {
 public:
   virtual ~du_manager_interface() = default;

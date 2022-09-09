@@ -36,7 +36,12 @@ public:
   void handle_ul_ccch_indication(const ul_ccch_indication_message& msg) override;
 
   // Task scheduling interface.
-  du_manager_ue_task_scheduler& get_ue_task_scheduler(du_ue_index_t ue_index) override;
+  void schedule_async_task(du_ue_index_t ue_index, async_task<void>&& task) override
+  {
+    ue_mng.schedule_async_task(ue_index, std::move(task));
+  }
+
+  void handle_ue_config_update(const du_ue_config_update_request& request) override;
 
   size_t nof_ues() override;
 

@@ -39,9 +39,12 @@ void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message
   });
 }
 
-du_manager_ue_task_scheduler& du_manager_impl::get_ue_task_scheduler(du_ue_index_t ue_index)
+void du_manager_impl::handle_ue_config_update(const du_ue_config_update_request& request)
 {
-  return ue_mng.get_ue_task_scheduler(ue_index);
+  cfg.du_mng_exec->execute([this, request]() {
+    // Start UE modification procedure.
+    ue_mng.handle_ue_reconf_request(request);
+  });
 }
 
 size_t du_manager_impl::nof_ues()

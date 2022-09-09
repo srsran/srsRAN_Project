@@ -11,6 +11,7 @@
 #include "du_ue_manager.h"
 #include "procedures/ue_creation_procedure.h"
 #include "procedures/ue_deletion_procedure.h"
+#include "procedures/ue_reconfiguration_procedure.h"
 
 using namespace srsgnb;
 using namespace srs_du;
@@ -30,20 +31,26 @@ void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& m
   // Search unallocated UE index with no pending events.
   du_ue_index_t ue_idx_candidate = MAX_NOF_DU_UES;
   for (size_t i = 0; i < ue_ctrl_loop.size(); ++i) {
-    if (not ue_db.contains(i) and ue_ctrl_loop[i].task_loop.empty()) {
+    if (not ue_db.contains(i) and ue_ctrl_loop[i].empty()) {
       ue_idx_candidate = to_du_ue_index(i);
       break;
     }
   }
 
   // Enqueue UE creation procedure
-  ue_ctrl_loop[ue_idx_candidate].task_loop.schedule<ue_creation_procedure>(ue_idx_candidate, msg, cfg, *this);
+  ue_ctrl_loop[ue_idx_candidate].schedule<ue_creation_procedure>(ue_idx_candidate, msg, cfg, *this);
+}
+
+void du_ue_manager::handle_ue_reconf_request(const du_ue_config_update_request& msg)
+{
+  // Enqueue UE reconfiguration procedure
+  ue_ctrl_loop[msg.ue_index].schedule<ue_reconfiguration_procedure>(msg, *this);
 }
 
 void du_ue_manager::handle_ue_delete_request(const du_ue_delete_message& msg)
 {
   // Enqueue UE deletion procedure
-  ue_ctrl_loop[msg.ue_index].task_loop.schedule<ue_deletion_procedure>(msg, cfg, *this);
+  ue_ctrl_loop[msg.ue_index].schedule<ue_deletion_procedure>(msg, cfg, *this);
 }
 
 du_ue_context* du_ue_manager::find_ue(du_ue_index_t ue_index)
@@ -91,7 +98,7 @@ void du_ue_manager::remove_ue(du_ue_index_t ue_index)
   logger.debug("Scheduling ueId={} deletion", ue_index);
 
   // Schedule UE removal task
-  ue_ctrl_loop[ue_index].task_loop.schedule([this, ue_index](coro_context<async_task<void>>& ctx) {
+  ue_ctrl_loop[ue_index].schedule([this, ue_index](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
     srsgnb_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ueId={}", ue_index);
     rnti_to_ue_index[ue_db[ue_index].rnti % MAX_NOF_DU_UES] = -1;

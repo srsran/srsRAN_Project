@@ -18,49 +18,60 @@
 namespace srsgnb {
 namespace srs_du {
 
-class f1c_ue_task_scheduler_adapter : public f1c_ue_task_scheduler
+class f1c_ue_task_scheduler_adapter final : public f1c_ue_config_update_handler
 {
 public:
-  f1c_ue_task_scheduler_adapter(timer_manager& timers_) : timers(timers_) {}
+  explicit f1c_ue_task_scheduler_adapter(du_ue_index_t ue_index_, timer_manager& timers_) :
+    ue_index(ue_index_), timers(timers_)
+  {
+  }
 
   unique_timer create_timer() override { return timers.create_unique_timer(); }
 
-  /// \brief Schedules UE task to run in the CTRL executor, and returns back to UE executor once the task is complete.
-  void schedule_async_task(async_task<void>&& task) override { task_sched->schedule_async_task(std::move(task)); }
+  void schedule_async_task(async_task<void>&& task) override { du_mng->schedule_async_task(ue_index, std::move(task)); }
 
-  void connect(du_manager_ue_task_scheduler& ue_task_sched_) { task_sched = &ue_task_sched_; }
+  void request_ue_config_update(const f1ap_ue_config_update_request& request) override
+  {
+    du_ue_config_update_request du_req;
+    du_req.ue_index       = ue_index;
+    du_req.srbs_to_addmod = request.srbs_to_addmod;
+    du_req.drbs_to_addmod = request.drbs_to_addmod;
+    du_mng->handle_ue_config_update(du_req);
+  }
+
+  void connect(du_manager_configurator& du_mng_) { du_mng = &du_mng_; }
 
 private:
-  timer_manager&                timers;
-  du_manager_ue_task_scheduler* task_sched;
+  du_ue_index_t            ue_index;
+  timer_manager&           timers;
+  du_manager_configurator* du_mng;
 };
 
-class f1c_task_scheduler_adapter : public f1c_task_scheduler
+class f1c_task_scheduler_adapter : public f1c_du_config_notifier
 {
 public:
   explicit f1c_task_scheduler_adapter(timer_manager& timers_) : timers(timers_)
   {
     for (unsigned i = 0; i != MAX_NOF_DU_UES; ++i) {
-      ues.emplace(i, timers);
+      ues.emplace(i, to_du_ue_index(i), timers);
     }
   }
 
-  void connect(du_manager_task_scheduler& du_task_sched_)
+  void connect(du_manager_configurator& du_mng_)
   {
-    du_task_sched = &du_task_sched_;
+    du_mng = &du_mng_;
     for (unsigned i = 0; i != MAX_NOF_DU_UES; ++i) {
-      du_ue_index_t ue_index = to_du_ue_index(i);
-      ues[i].connect(du_task_sched->get_ue_task_scheduler(ue_index));
+      ues[i].connect(*du_mng);
     }
   }
 
   timer_manager& get_timer_manager() override { return timers; }
 
-  f1c_ue_task_scheduler& get_ue_task_scheduler(du_ue_index_t ue_index) override { return ues[ue_index]; }
+  f1c_ue_config_update_handler& get_ue_handler(du_ue_index_t ue_index) override { return ues[ue_index]; }
 
 private:
   timer_manager&                                            timers;
-  du_manager_task_scheduler*                                du_task_sched;
+  du_manager_configurator*                                  du_mng;
   slot_array<f1c_ue_task_scheduler_adapter, MAX_NOF_DU_UES> ues;
 };
 

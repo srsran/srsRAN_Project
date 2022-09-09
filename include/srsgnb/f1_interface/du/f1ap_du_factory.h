@@ -10,7 +10,7 @@ namespace srs_du {
 
 /// Creates an instance of an F1AP DU interface, notifying outgoing packets on the specified listener object.
 std::unique_ptr<f1_interface> create_f1ap(f1c_message_notifier&       event_notifier,
-                                          f1c_task_scheduler&         task_sched,
+                                          f1c_du_config_notifier&     task_sched,
                                           task_executor&              ctrl_exec,
                                           du_high_ue_executor_mapper& ue_exec_mapper);
 

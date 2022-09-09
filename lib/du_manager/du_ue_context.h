@@ -16,6 +16,7 @@
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/rlc/rlc_entity.h"
+#include "srsgnb/support/async/async_task_loop.h"
 
 namespace srsgnb {
 namespace srs_du {

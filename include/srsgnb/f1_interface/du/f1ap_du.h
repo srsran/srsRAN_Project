@@ -122,6 +122,11 @@ struct f1ap_notify_message {
   asn1::f1ap::notify_s msg;
 };
 
+struct f1ap_ue_config_update_request {
+  std::vector<srb_id_t> srbs_to_addmod;
+  std::vector<drb_id_t> drbs_to_addmod;
+};
+
 /// Handle F1AP UE context management procedures as defined in TS 38.473 section 8.3.
 class f1ap_ue_context_manager
 {
@@ -151,7 +156,7 @@ public:
   virtual void handle_notify(const f1ap_notify_message& msg) = 0;
 };
 
-/// Handle scheduled tasks relative to a given UE.
+/// The F1c uses this interface to request services such as timers and scheduling of asynchronous tasks.
 class f1c_ue_task_scheduler
 {
 public:
@@ -164,6 +169,16 @@ public:
   virtual void schedule_async_task(async_task<void>&& task) = 0;
 };
 
+/// Handle scheduled tasks relative to a given UE.
+class f1c_ue_config_update_handler : public f1c_ue_task_scheduler
+{
+public:
+  virtual ~f1c_ue_config_update_handler() = default;
+
+  /// \brief Request the update of the UE configuration in the DU.
+  virtual void request_ue_config_update(const f1ap_ue_config_update_request& request) = 0;
+};
+
 /// Class to manage scheduling of asynchronous F1c tasks and timers.
 class f1c_task_scheduler
 {
@@ -171,9 +186,17 @@ public:
   virtual ~f1c_task_scheduler() = default;
 
   virtual timer_manager& get_timer_manager() = 0;
+};
+
+/// The F1AP uses this interface to notify the DU of new required updates (e.g. UE config modification, etc.) and to
+/// request services such as timers, scheduling of async tasks, etc.
+class f1c_du_config_notifier : public f1c_task_scheduler
+{
+public:
+  virtual ~f1c_du_config_notifier() = default;
 
   /// \brief Retrieve task scheduler specific to a given UE.
-  virtual f1c_ue_task_scheduler& get_ue_task_scheduler(du_ue_index_t ue_index) = 0;
+  virtual f1c_ue_config_update_handler& get_ue_handler(du_ue_index_t ue_index) = 0;
 };
 
 /// Combined entry point for F1C/U handling.
