@@ -63,16 +63,16 @@ public:
   /// \brief compare two spatial topologies.
   ///
   /// The spatial topologies are considered equal if both have the same \c value.
-  bool operator==(const spatial_topology& other) { return value == other.value; }
-  bool operator!=(const spatial_topology& other) { return value != other.value; }
+  bool operator==(const spatial_topology& other) const { return value == other.value; }
+  bool operator!=(const spatial_topology& other) const { return value != other.value; }
   ///@}
 
   ///@{
   /// \brief compare a spatial topology with one of its possible values.
   ///
   /// They are considered equal if both spatial topology values match.
-  bool operator==(const options& other_value) { return value == other_value; }
-  bool operator!=(const options& other_value) { return value != other_value; }
+  bool operator==(const options& other_value) const { return value == other_value; }
+  bool operator!=(const options& other_value) const { return value != other_value; }
   ///@}
 
   ///@}

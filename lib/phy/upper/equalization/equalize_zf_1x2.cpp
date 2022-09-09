@@ -16,15 +16,13 @@
 
 using namespace srsgnb;
 
-namespace {
-
-inline void equalize_zf_1x2_symbol(span<cf_t>       symbol_out,
-                                   span<float>      noise_vars,
-                                   span<const cf_t> symbol_in_p0,
-                                   span<const cf_t> symbol_in_p1,
-                                   span<const cf_t> ch_estimates_p0,
-                                   span<const cf_t> ch_estimates_p1,
-                                   float            tx_scaling)
+static inline void equalize_zf_1x2_symbol(span<cf_t>       symbol_out,
+                                          span<float>      noise_vars,
+                                          span<const cf_t> symbol_in_p0,
+                                          span<const cf_t> symbol_in_p1,
+                                          span<const cf_t> ch_estimates_p0,
+                                          span<const cf_t> ch_estimates_p1,
+                                          float            tx_scaling)
 {
   const unsigned nof_subcs = symbol_in_p0.size();
 
@@ -47,8 +45,6 @@ inline void equalize_zf_1x2_symbol(span<cf_t>       symbol_out,
   // For now, do not compute the output noise variances.
   srsvec::zero(noise_vars);
 }
-
-} // namespace
 
 void srsgnb::equalize_zf_1x2(equalizer_symbol_list&          eq_symbols,
                              equalizer_noise_var_list&       noise_vars,

@@ -40,10 +40,7 @@ struct re_measurement_dimensions {
   {
     return (nof_subc == other.nof_subc) && (nof_symbols == other.nof_symbols) && (nof_slices == other.nof_slices);
   }
-  bool operator!=(const re_measurement_dimensions& other) const
-  {
-    return !((nof_subc == other.nof_subc) && (nof_symbols == other.nof_symbols) && (nof_slices == other.nof_slices));
-  }
+  bool operator!=(const re_measurement_dimensions& other) const { return !(*this == other); }
   /// @}
 };
 

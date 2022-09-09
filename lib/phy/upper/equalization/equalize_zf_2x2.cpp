@@ -16,19 +16,17 @@
 
 using namespace srsgnb;
 
-namespace {
-
-inline void equalize_zf_2x2_symbol(span<cf_t>       symbol_out_l0,
-                                   span<cf_t>       symbol_out_l1,
-                                   span<float>      noise_vars_l0,
-                                   span<float>      noise_vars_l1,
-                                   span<const cf_t> symbol_in_p0,
-                                   span<const cf_t> symbol_in_p1,
-                                   span<const cf_t> ch_estimates_p0_l0,
-                                   span<const cf_t> ch_estimates_p0_l1,
-                                   span<const cf_t> ch_estimates_p1_l0,
-                                   span<const cf_t> ch_estimates_p1_l1,
-                                   float            tx_scaling)
+static inline void equalize_zf_2x2_symbol(span<cf_t>       symbol_out_l0,
+                                          span<cf_t>       symbol_out_l1,
+                                          span<float>      noise_vars_l0,
+                                          span<float>      noise_vars_l1,
+                                          span<const cf_t> symbol_in_p0,
+                                          span<const cf_t> symbol_in_p1,
+                                          span<const cf_t> ch_estimates_p0_l0,
+                                          span<const cf_t> ch_estimates_p0_l1,
+                                          span<const cf_t> ch_estimates_p1_l0,
+                                          span<const cf_t> ch_estimates_p1_l1,
+                                          float            tx_scaling)
 {
   const unsigned nof_subcs = symbol_in_p0.size();
 
@@ -72,8 +70,6 @@ inline void equalize_zf_2x2_symbol(span<cf_t>       symbol_out_l0,
   srsvec::zero(noise_vars_l0);
   srsvec::zero(noise_vars_l1);
 }
-
-} // namespace
 
 void srsgnb::equalize_zf_2x2(equalizer_symbol_list&          eq_symbols,
                              equalizer_noise_var_list&       noise_vars,
