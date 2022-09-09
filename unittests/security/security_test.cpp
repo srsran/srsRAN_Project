@@ -231,7 +231,7 @@ TEST(security_nia1_test, testset1)
 
   // Apply integrity check
   sec_mac mact_out = {};
-  security_nia1(key, count_i, bearer, dir, message, length, mact_out);
+  security_nia1(mact_out, key, count_i, bearer, dir, message, length);
   EXPECT_EQ(byte_buffer(mact_out), mact_buf);
 }
 
@@ -256,7 +256,7 @@ TEST(security_nia1_test, testset2)
 
   // Apply integrity check
   sec_mac mact_out = {};
-  security_nia1(key, count_i, bearer, dir, message, length, mact_out);
+  security_nia1(mact_out, key, count_i, bearer, dir, message, length);
   EXPECT_EQ(byte_buffer(mact_out), mact_buf);
 }
 
@@ -282,7 +282,7 @@ TEST(security_nia1_test, testset3)
 
   // Apply integrity check
   sec_mac mact_out = {};
-  security_nia1(key, count_i, bearer, dir, message, length, mact_out);
+  security_nia1(mact_out, key, count_i, bearer, dir, message, length);
   EXPECT_EQ(byte_buffer(mact_out), mact_buf);
 }
 
@@ -309,7 +309,7 @@ TEST(security_nia1_test, testset4)
 
   // Apply integrity check
   sec_mac mact_out = {};
-  security_nia1(key, count_i, bearer, dir, message, length, mact_out);
+  security_nia1(mact_out, key, count_i, bearer, dir, message, length);
   EXPECT_EQ(byte_buffer(mact_out), mact_buf);
 }
 
@@ -335,7 +335,7 @@ TEST(security_nia1_test, testset5)
 
   // Apply integrity check
   sec_mac mact_out = {};
-  security_nia1(key, count_i, bearer, dir, message, length, mact_out);
+  security_nia1(mact_out, key, count_i, bearer, dir, message, length);
   EXPECT_EQ(byte_buffer(mact_out), mact_buf);
 }
 
@@ -366,7 +366,7 @@ TEST(security_nia1_test, testset6)
 
   // Apply integrity check
   sec_mac mact_out = {};
-  security_nia1(key, count_i, bearer, dir, message, length, mact_out);
+  security_nia1(mact_out, key, count_i, bearer, dir, message, length);
   EXPECT_EQ(byte_buffer(mact_out), mact_buf);
 }
 
@@ -428,7 +428,7 @@ TEST(security_nia1_test, testset7)
 
   // Apply integrity check
   sec_mac mact_out = {};
-  security_nia1(key, count_i, bearer, dir, message, length, mact_out);
+  security_nia1(mact_out, key, count_i, bearer, dir, message, length);
   EXPECT_EQ(byte_buffer(mact_out), mact_buf);
 }
 

@@ -28,23 +28,23 @@ using namespace srsgnb;
  * Integrity Protection
  *****************************************************************************/
 
-void srsgnb::security_nia1(const sec_128_as_key& key,
+void srsgnb::security_nia1(sec_mac&              mac,
+                           const sec_128_as_key& key,
                            uint32_t              count,
                            uint8_t               bearer,
                            security_direction    direction,
-                           const byte_buffer&    msg,
-                           sec_mac&              mac)
+                           byte_buffer_view      msg)
 {
-  security_nia1(key, count, bearer, direction, msg, msg.length() * 8, mac);
+  security_nia1(mac, key, count, bearer, direction, msg, msg.length() * 8);
 }
 
-void srsgnb::security_nia1(const sec_128_as_key& key,
+void srsgnb::security_nia1(sec_mac&              mac,
+                           const sec_128_as_key& key,
                            uint32_t              count,
                            uint8_t               bearer,
                            security_direction    direction,
-                           const byte_buffer&    msg,
-                           uint32_t              msg_len,
-                           sec_mac&              mac)
+                           byte_buffer_view      msg,
+                           uint32_t              msg_len)
 {
   uint32_t i = 0;
 

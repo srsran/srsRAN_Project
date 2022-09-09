@@ -37,8 +37,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   write_data_pdu_header(hdr, st.tx_next);
 
   // Apply ciphering and integrity protection
-  byte_buffer protected_buf = {};
-  apply_ciphering_and_integrity_protection(hdr, buf, st.tx_next, protected_buf);
+  byte_buffer protected_buf = apply_ciphering_and_integrity_protection(std::move(hdr), std::move(buf), st.tx_next);
 
   // Set meta-data for RLC (TODO)
   // sdu->md.pdcp_sn = tx_next;
@@ -64,10 +63,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 /*
  * Ciphering and Integrity Protection Helpers
  */
-void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer& hdr,
-                                                              byte_buffer& sdu,
-                                                              uint32_t     count,
-                                                              byte_buffer& protected_buf)
+byte_buffer pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, byte_buffer sdu, uint32_t count)
 {
   // TS 38.323, section 5.9: Integrity protection
   // The data unit that is integrity protected is the PDU header
@@ -77,7 +73,7 @@ void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer& hdr,
     byte_buffer buf = {};
     buf.append(hdr);
     buf.append(sdu);
-    integrity_generate(buf, count, mac);
+    integrity_generate(mac, buf, count);
   }
 
   // TS 38.323, section 5.8: Ciphering
@@ -92,7 +88,7 @@ void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer& hdr,
     if (is_srb() || (is_drb() && (integrity_enabled == pdcp_integrity_enabled::enabled))) {
       buf.append(mac);
     }
-    cipher_encrypt(buf, count, ct);
+    ct = cipher_encrypt(buf, count);
   } else {
     ct.append(sdu);
     // Append MAC-I
@@ -102,11 +98,14 @@ void pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer& hdr,
   }
 
   // Construct the protected buffer
+  byte_buffer protected_buf;
   protected_buf.append(hdr);
   protected_buf.append(ct);
+
+  return protected_buf;
 }
 
-void pdcp_entity_tx::integrity_generate(byte_buffer& buf, uint32_t count, sec_mac& mac)
+void pdcp_entity_tx::integrity_generate(sec_mac& mac, byte_buffer_view buf, uint32_t count)
 {
   // If control plane use RRC integrity key. If data use user plane key
   const sec_128_as_key& k_int = is_srb() ? sec_cfg.k_128_rrc_int : sec_cfg.k_128_up_int;
@@ -114,7 +113,7 @@ void pdcp_entity_tx::integrity_generate(byte_buffer& buf, uint32_t count, sec_ma
     case integrity_algorithm::nia0:
       break;
     case integrity_algorithm::nia1:
-      security_nia1(k_int, count, lcid - 1, direction, buf, mac);
+      security_nia1(mac, k_int, count, lcid - 1, direction, buf);
       break;
     case integrity_algorithm::nia2:
       // security_nia2(&k128, count, 0, cfg.tx_direction, msg, msg_len, mac);
@@ -132,7 +131,7 @@ void pdcp_entity_tx::integrity_generate(byte_buffer& buf, uint32_t count, sec_ma
   logger.log_debug((uint8_t*)mac.data(), mac.size(), "MAC (generated)");
 }
 
-void pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count, byte_buffer& ct)
+byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
 {
   // If control plane use RRC integrity key. If data use user plane key
   const sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
@@ -140,6 +139,8 @@ void pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count, byte_b
   logger.log_debug("Cipher encrypt input: COUNT: {}, Bearer ID: {}, Direction {}", count, lcid, direction);
   logger.log_debug((uint8_t*)k_enc.data(), k_enc.size(), "Cipher encrypt key:");
   logger.log_debug(msg.begin(), msg.end(), "Cipher encrypt input msg");
+
+  byte_buffer ct;
 
   switch (sec_cfg.cipher_algo) {
     case ciphering_algorithm::nea0:
@@ -157,6 +158,7 @@ void pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count, byte_b
       break;
   }
   logger.log_debug(ct.begin(), ct.end(), "Cipher encrypt output msg");
+  return ct;
 }
 
 /*
