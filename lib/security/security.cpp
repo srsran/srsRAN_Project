@@ -200,7 +200,7 @@ byte_buffer srsgnb::security_nea3(const sec_128_as_key&   key,
                                   uint32_t                count,
                                   uint8_t                 bearer,
                                   security_direction      direction,
-                                  const byte_buffer_view& msg_,
+                                  const byte_buffer_view& msg,
                                   uint32_t                msg_len)
 {
   uint8_t iv[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -213,14 +213,7 @@ byte_buffer srsgnb::security_nea3(const sec_128_as_key&   key,
 
   msg_len_block_8  = (msg_len + 7) / 8;
   msg_len_block_32 = (msg_len + 31) / 32;
-
-  // temporary conversion into contiguous memory
-  constexpr uint16_t                     pdcp_max_sdu_size = 9000;
-  std::array<uint8_t, pdcp_max_sdu_size> msg               = {};
-  std::array<uint8_t, pdcp_max_sdu_size> out               = {};
-  std::copy(msg_.begin(), msg_.end(), msg.begin());
-
-  if (msg_len_block_8 <= msg_.length()) {
+  if (msg_len_block_8 <= msg.length()) {
     // Construct iv
     iv[0]  = (count >> 24) & 0xff;
     iv[1]  = (count >> 16) & 0xff;
@@ -249,30 +242,23 @@ byte_buffer srsgnb::security_nea3(const sec_128_as_key&   key,
     zuc_generate_keystream(&zuc_state, msg_len_block_32, ks);
 
     // Generate output except last block
+    byte_buffer::const_iterator msg_it = msg.begin();
     for (i = 0; i < (int32_t)msg_len_block_32 - 1; i++) {
-      out[4 * i + 0] = msg[4 * i + 0] ^ ((ks[i] >> 24) & 0xff);
-      out[4 * i + 1] = msg[4 * i + 1] ^ ((ks[i] >> 16) & 0xff);
-      out[4 * i + 2] = msg[4 * i + 2] ^ ((ks[i] >> 8) & 0xff);
-      out[4 * i + 3] = msg[4 * i + 3] ^ ((ks[i] & 0xff));
+      msg_out.append(*msg_it++ ^ ((ks[i] >> 24) & 0xff));
+      msg_out.append(*msg_it++ ^ ((ks[i] >> 16) & 0xff));
+      msg_out.append(*msg_it++ ^ ((ks[i] >> 8) & 0xff));
+      msg_out.append(*msg_it++ ^ ((ks[i] & 0xff)));
     }
 
     // Process last bytes
     for (i = (msg_len_block_32 - 1) * 4; i < (int32_t)msg_len_block_8; i++) {
-      out[i] = msg[i] ^ ((ks[i / 4] >> ((3 - (i % 4)) * 8)) & 0xff);
+      msg_out.append(*msg_it++ ^ ((ks[i / 4] >> ((3 - (i % 4)) * 8)) & 0xff));
     }
 
-    // Zero tailing bits
-    zero_tailing_bits(out.data(), msg_len);
-
-    for (i = 0; i < (int32_t)msg_len_block_8; i++) {
-      msg_out.append(out[i]);
-    }
-
-    // zero_tailing_bits(msg_out.back(), msg_len);
+    zero_tailing_bits(msg_out.back(), msg_len);
 
     // Clean up
     free(ks);
-    // zuc_deinitialize(state_ptr);
   }
 
   return msg_out;
