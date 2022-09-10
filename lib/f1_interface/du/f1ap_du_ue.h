@@ -42,6 +42,10 @@ public:
   f1c_du_configurator&                    du_handler;
   f1c_message_notifier&                   f1c_msg_notifier;
 
+  /// \brief Handles UE CONTEXT SETUP REQUEST as per TS38.473, Section 8.3.1.
+  void handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg);
+
+  /// \brief Handles UE CONTEXT MODIFICATION REQUEST as per TS38.473, Section 8.3.2.
   void handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg);
 };
 

@@ -138,6 +138,9 @@ void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
     case f1_ap_elem_procs_o::init_msg_c::types_opts::dlrrc_msg_transfer:
       handle_dl_rrc_message_transfer(msg.value.dlrrc_msg_transfer());
       break;
+    case f1_ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request:
+      u->handle_ue_context_setup_request(msg.value.ue_context_setup_request());
+      break;
     case f1_ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request:
       u->handle_ue_context_modification_request(msg.value.ue_context_mod_request());
       break;

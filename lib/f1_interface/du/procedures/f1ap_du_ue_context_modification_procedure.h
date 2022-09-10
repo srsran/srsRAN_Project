@@ -10,6 +10,9 @@
 
 #pragma once
 
+#include "../f1ap_du_ue.h"
+#include "srsgnb/asn1/f1ap.h"
+
 namespace srsgnb {
 namespace srs_du {
 

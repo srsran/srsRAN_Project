@@ -133,8 +133,12 @@ inline expected<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::ini
 {
   using namespace asn1::f1ap;
   switch (init_msg.value.type()) {
-    case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::dlrrc_msg_transfer:
+    case f1_ap_elem_procs_o::init_msg_c::types_opts::dlrrc_msg_transfer:
       return (gnb_du_ue_f1ap_id_t)init_msg.value.dlrrc_msg_transfer()->gnb_du_ue_f1_ap_id->value;
+    case f1_ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request:
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_setup_request()->gnb_du_ue_f1_ap_id->value;
+    case f1_ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request:
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_mod_request()->gnb_du_ue_f1_ap_id->value;
     default:
       break;
   }
