@@ -50,10 +50,16 @@ void ue_reconfiguration_procedure::add_bearers_in_ue_context()
   }
 
   for (const drb_to_addmod& drbtoadd : request.drbs_to_addmod) {
-    srsgnb_assert(not ue->bearers.contains(drbtoadd.lcid), "Reconfigurations of bearers not supported");
-    ue->bearers.emplace(drbtoadd.lcid);
-    du_logical_channel_context& drb = ue->bearers[drbtoadd.lcid];
-    drb.lcid                        = drbtoadd.lcid;
+    lcid_t lcid = drbtoadd.lcid;
+    if (lcid != lcid_t::INVALID_LCID) {
+      srsgnb_assert(not ue->bearers.contains(drbtoadd.lcid), "Reconfigurations of bearers not supported");
+    } else {
+      lcid = (lcid_t)ue->bearers.find_first_empty(srb_id_to_uint(srb_id_t::srb3) + 1);
+      srsgnb_assert(lcid != lcid_t::INVALID_LCID, "Unable to allocate LCID");
+    }
+    ue->bearers.emplace(lcid);
+    du_logical_channel_context& drb = ue->bearers[lcid];
+    drb.lcid                        = lcid;
     drb.drbid                       = drbtoadd.drbid;
   }
 }

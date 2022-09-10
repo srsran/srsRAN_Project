@@ -93,4 +93,9 @@ enum class drb_id_t : uint16_t {
   invalid
 };
 
+constexpr inline uint16_t drb_id_to_uint(drb_id_t id)
+{
+  return static_cast<uint16_t>(id);
+}
+
 } // namespace srsgnb

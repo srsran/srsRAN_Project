@@ -24,8 +24,14 @@ namespace srs_du {
 class f1ap_du_ue
 {
 public:
-  f1ap_du_ue(du_ue_index_t ue_index_, gnb_du_ue_f1ap_id_t gnb_f1_du_ue_id_, f1c_du_configurator& du_handler_) :
-    ue_index(ue_index_), gnb_du_ue_f1ap_id(gnb_f1_du_ue_id_), du_handler(du_handler_)
+  f1ap_du_ue(du_ue_index_t         ue_index_,
+             gnb_du_ue_f1ap_id_t   gnb_f1_du_ue_id_,
+             f1c_du_configurator&  du_handler_,
+             f1c_message_notifier& f1c_msg_notifier_) :
+    ue_index(ue_index_),
+    gnb_du_ue_f1ap_id(gnb_f1_du_ue_id_),
+    du_handler(du_handler_),
+    f1c_msg_notifier(f1c_msg_notifier_)
   {
   }
 
@@ -33,25 +39,27 @@ public:
   const gnb_du_ue_f1ap_id_t               gnb_du_ue_f1ap_id;
   gnb_cu_ue_f1ap_id_t                     gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;
   std::vector<std::unique_ptr<f1_bearer>> bearers;
+  f1c_du_configurator&                    du_handler;
+  f1c_message_notifier&                   f1c_msg_notifier;
 
   void handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg);
-
-private:
-  f1c_du_configurator& du_handler;
 };
 
 /// \brief Stores the list of UE contexts currently registered in the F1AP-DU.
 class f1ap_du_ue_manager
 {
 public:
-  f1ap_du_ue_manager(f1c_du_configurator& du_handler_) : du_handler(du_handler_) {}
+  f1ap_du_ue_manager(f1c_du_configurator& du_handler_, f1c_message_notifier& f1c_msg_notifier_) :
+    du_handler(du_handler_), f1c_msg_notifier(f1c_msg_notifier_)
+  {
+  }
 
   f1ap_du_ue& add_ue(du_ue_index_t ue_index)
   {
     srsgnb_assert(not ues.contains(ue_index), "Duplicate ueId={} detected", ue_index);
 
     gnb_du_ue_f1ap_id_t f1ap_id = static_cast<gnb_du_ue_f1ap_id_t>(next_gnb_f1_du_ue_id++);
-    ues.emplace(ue_index, ue_index, f1ap_id, du_handler);
+    ues.emplace(ue_index, ue_index, f1ap_id, du_handler, f1c_msg_notifier);
 
     {
       std::lock_guard<std::mutex> lock(map_mutex);
@@ -101,7 +109,8 @@ public:
   }
 
 private:
-  f1c_du_configurator& du_handler;
+  f1c_du_configurator&  du_handler;
+  f1c_message_notifier& f1c_msg_notifier;
 
   uint64_t next_gnb_f1_du_ue_id = 0;
 

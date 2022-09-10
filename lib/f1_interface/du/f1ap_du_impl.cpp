@@ -29,7 +29,7 @@ f1ap_du_impl::f1ap_du_impl(f1c_message_notifier&       message_notifier_,
   ctrl_exec(ctrl_exec_),
   ue_exec_mapper(ue_exec_mapper_),
   task_sched(du_mng_),
-  ues(du_mng_),
+  ues(du_mng_, f1c_notifier),
   events(std::make_unique<f1ap_event_manager>(task_sched.get_timer_manager()))
 {
 }
