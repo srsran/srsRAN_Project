@@ -48,7 +48,7 @@ public:
   ue_creation_procedure(du_ue_index_t                     ue_index,
                         const ul_ccch_indication_message& ccch_ind_msg,
                         const du_manager_config_t&        cfg_,
-                        ue_manager_ctrl_configurer&       ue_mng_);
+                        ue_manager_ctrl_configurator&     ue_mng_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -71,10 +71,10 @@ private:
 
   async_task<mac_ue_create_response_message> make_mac_ue_create_req();
 
-  ul_ccch_indication_message  msg;
-  const du_manager_config_t&  cfg;
-  srslog::basic_logger&       logger;
-  ue_manager_ctrl_configurer& ue_mng;
+  ul_ccch_indication_message    msg;
+  const du_manager_config_t&    cfg;
+  srslog::basic_logger&         logger;
+  ue_manager_ctrl_configurator& ue_mng;
 
   du_ue_context                  ue_ctx{};
   mac_ue_create_response_message mac_resp{};

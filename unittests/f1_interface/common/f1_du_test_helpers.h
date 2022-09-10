@@ -24,10 +24,10 @@
 namespace srsgnb {
 namespace srs_du {
 
-class dummy_f1c_task_scheduler : public f1c_du_config_notifier
+class dummy_f1c_task_scheduler : public f1c_du_configurator
 {
 public:
-  struct dummy_ue_task_sched : public f1c_ue_config_update_handler {
+  struct dummy_ue_task_sched : public f1c_ue_task_scheduler {
     dummy_f1c_task_scheduler* parent;
 
     dummy_ue_task_sched(dummy_f1c_task_scheduler* parent_) : parent(parent_) {}
@@ -36,8 +36,6 @@ public:
 
     /// \brief Schedule Async Task respective to a given UE.
     void schedule_async_task(async_task<void>&& task) override { parent->task_loop.schedule(std::move(task)); }
-
-    void request_ue_config_update(const f1ap_ue_config_update_request& request) override {}
   };
 
   timer_manager&       timers;
@@ -48,8 +46,16 @@ public:
 
   timer_manager& get_timer_manager() override { return timers; }
 
+  async_task<void> request_ue_config_update(const f1ap_ue_config_update_request& request) override
+  {
+    return launch_async([](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
   /// \brief Retrieve task scheduler specific to a given UE.
-  f1c_ue_config_update_handler& get_ue_handler(du_ue_index_t ue_index) override { return ue_sched; }
+  f1c_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) override { return ue_sched; }
 };
 
 class dummy_ue_executor_mapper : public du_high_ue_executor_mapper

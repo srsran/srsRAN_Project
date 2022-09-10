@@ -23,13 +23,14 @@ namespace srs_du {
 class ue_deletion_procedure
 {
 public:
-  ue_deletion_procedure(const du_ue_delete_message& msg_,
-                        const du_manager_config_t&  cfg_,
-                        ue_manager_ctrl_configurer& ue_mng_) :
+  ue_deletion_procedure(const du_ue_delete_message&   msg_,
+                        const du_manager_config_t&    cfg_,
+                        ue_manager_ctrl_configurator& ue_mng_) :
     msg(msg_), cfg(cfg_), logger(cfg.logger), ue_mng(ue_mng_)
-  {}
+  {
+  }
 
-  void operator()(coro_context<async_task<void> >& ctx)
+  void operator()(coro_context<async_task<void>>& ctx)
   {
     CORO_BEGIN(ctx);
 
@@ -69,10 +70,10 @@ private:
     return cfg.mac_ue_mng->handle_ue_delete_request(mac_msg);
   }
 
-  du_ue_delete_message        msg;
-  const du_manager_config_t&  cfg;
-  srslog::basic_logger&       logger;
-  ue_manager_ctrl_configurer& ue_mng;
+  du_ue_delete_message          msg;
+  const du_manager_config_t&    cfg;
+  srslog::basic_logger&         logger;
+  ue_manager_ctrl_configurator& ue_mng;
 
   du_ue_context* ue = nullptr;
 };

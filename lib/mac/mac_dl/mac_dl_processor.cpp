@@ -81,7 +81,7 @@ async_task<bool> mac_dl_processor::reconfigure_ue(const mac_ue_reconfiguration_r
     CORO_BEGIN(ctx);
 
     // 1. Change to respective DL executor
-    CORO_AWAIT(execute_on(cfg.dl_exec_mapper.executor(request.cell_index)));
+    CORO_AWAIT(execute_on(cfg.dl_exec_mapper.executor(request.pcell_index)));
 
     // 2. Remove UE DL bearers
     ue_mng.remove_bearers(request.ue_index, request.bearers_to_rem);

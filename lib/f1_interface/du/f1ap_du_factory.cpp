@@ -19,7 +19,7 @@ using namespace srsgnb;
 using namespace srs_du;
 
 std::unique_ptr<f1_interface> srsgnb::srs_du::create_f1ap(f1c_message_notifier&       message_notifier,
-                                                          f1c_du_config_notifier&     task_sched,
+                                                          f1c_du_configurator&        task_sched,
                                                           task_executor&              ctrl_exec,
                                                           du_high_ue_executor_mapper& ue_exec_mapper)
 {

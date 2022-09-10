@@ -3,6 +3,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
@@ -14,12 +15,6 @@ namespace srsgnb {
 struct ul_ccch_indication_message;
 
 namespace srs_du {
-
-struct du_ue_config_update_request {
-  du_ue_index_t         ue_index;
-  std::vector<srb_id_t> srbs_to_addmod;
-  std::vector<drb_id_t> drbs_to_addmod;
-};
 
 struct du_ue_delete_message {
   du_ue_index_t ue_index;
@@ -43,7 +38,7 @@ public:
   virtual void schedule_async_task(du_ue_index_t ue_index, async_task<void>&& task) = 0;
 
   /// \brief Update the UE configuration in the DU, namely its SRBs and DRBs.
-  virtual void handle_ue_config_update(const du_ue_config_update_request& request) = 0;
+  virtual async_task<void> handle_ue_config_update(const f1ap_ue_config_update_request& request) = 0;
 };
 
 class du_manager_interface_query

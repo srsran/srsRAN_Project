@@ -18,7 +18,7 @@ using namespace srsgnb::srs_du;
 ue_creation_procedure::ue_creation_procedure(du_ue_index_t                     ue_index,
                                              const ul_ccch_indication_message& ccch_ind_msg,
                                              const du_manager_config_t&        cfg_,
-                                             ue_manager_ctrl_configurer&       ue_mng_) :
+                                             ue_manager_ctrl_configurator&     ue_mng_) :
   msg(ccch_ind_msg), cfg(cfg_), logger(cfg.logger), ue_mng(ue_mng_)
 {
   ue_ctx.ue_index    = ue_index;

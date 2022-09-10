@@ -36,8 +36,8 @@ struct mac_ue_create_response_message {
 
 /// Input parameters used to reconfigure a UE in the scheduler.
 struct mac_ue_reconfiguration_request_message {
-  du_cell_index_t                         cell_index;
   du_ue_index_t                           ue_index;
+  du_cell_index_t                         pcell_index;
   rnti_t                                  crnti;
   std::vector<mac_logical_channel_addmod> bearers_to_addmod;
   std::vector<lcid_t>                     bearers_to_rem;

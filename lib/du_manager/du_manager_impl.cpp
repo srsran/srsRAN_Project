@@ -39,12 +39,9 @@ void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message
   });
 }
 
-void du_manager_impl::handle_ue_config_update(const du_ue_config_update_request& request)
+async_task<void> du_manager_impl::handle_ue_config_update(const f1ap_ue_config_update_request& request)
 {
-  cfg.du_mng_exec->execute([this, request]() {
-    // Start UE modification procedure.
-    ue_mng.handle_ue_reconf_request(request);
-  });
+  return ue_mng.handle_ue_reconf_request(request);
 }
 
 size_t du_manager_impl::nof_ues()

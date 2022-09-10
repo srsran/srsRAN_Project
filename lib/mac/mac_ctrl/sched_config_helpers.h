@@ -32,7 +32,7 @@ make_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& in
 {
   sched_ue_reconfiguration_message out{};
   out.ue_index    = in.ue_index;
-  out.pcell_index = in.cell_index;
+  out.pcell_index = in.pcell_index;
   out.crnti       = in.crnti;
   return out;
 }

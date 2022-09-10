@@ -41,10 +41,9 @@ void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& m
   ue_ctrl_loop[ue_idx_candidate].schedule<ue_creation_procedure>(ue_idx_candidate, msg, cfg, *this);
 }
 
-void du_ue_manager::handle_ue_reconf_request(const du_ue_config_update_request& msg)
+async_task<void> du_ue_manager::handle_ue_reconf_request(const f1ap_ue_config_update_request& msg)
 {
-  // Enqueue UE reconfiguration procedure
-  ue_ctrl_loop[msg.ue_index].schedule<ue_reconfiguration_procedure>(msg, *this);
+  return launch_async<ue_reconfiguration_procedure>(msg, *this, *cfg.mac_ue_mng);
 }
 
 void du_ue_manager::handle_ue_delete_request(const du_ue_delete_message& msg)

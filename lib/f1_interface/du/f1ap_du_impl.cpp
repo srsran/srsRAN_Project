@@ -21,14 +21,15 @@ using namespace asn1::f1ap;
 using namespace srs_du;
 
 f1ap_du_impl::f1ap_du_impl(f1c_message_notifier&       message_notifier_,
-                           f1c_du_config_notifier&     task_sched_,
+                           f1c_du_configurator&        du_mng_,
                            task_executor&              ctrl_exec_,
                            du_high_ue_executor_mapper& ue_exec_mapper_) :
   logger(srslog::fetch_basic_logger("DU-F1AP")),
   f1c_notifier(message_notifier_),
   ctrl_exec(ctrl_exec_),
   ue_exec_mapper(ue_exec_mapper_),
-  task_sched(task_sched_),
+  task_sched(du_mng_),
+  ues(du_mng_),
   events(std::make_unique<f1ap_event_manager>(task_sched.get_timer_manager()))
 {
 }
@@ -81,6 +82,7 @@ f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modi
 
 void f1ap_du_impl::handle_message(const f1c_message& msg)
 {
+  // Log message.
   expected<gnb_du_ue_f1ap_id_t> gnb_du_ue_f1ap_id = get_gnb_du_ue_f1ap_id(msg.pdu);
   expected<uint8_t>             transaction_id    = get_transaction_id(msg.pdu);
   if (transaction_id.has_value()) {
@@ -126,9 +128,18 @@ void f1ap_du_impl::handle_message(const f1c_message& msg)
 
 void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
 {
+  expected<gnb_du_ue_f1ap_id_t> gnb_du_ue_f1ap_id = get_gnb_du_ue_f1ap_id(msg);
+  f1ap_du_ue*                   u                 = nullptr;
+  if (gnb_du_ue_f1ap_id.has_value()) {
+    u = ues.find(gnb_du_ue_f1ap_id.value());
+  }
+
   switch (msg.value.type().value) {
-    case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::dlrrc_msg_transfer:
+    case f1_ap_elem_procs_o::init_msg_c::types_opts::dlrrc_msg_transfer:
       handle_dl_rrc_message_transfer(msg.value.dlrrc_msg_transfer());
+      break;
+    case f1_ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request:
+      u->handle_ue_context_modification_request(msg.value.ue_context_mod_request());
       break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());

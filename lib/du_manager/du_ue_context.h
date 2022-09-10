@@ -23,6 +23,7 @@ namespace srs_du {
 
 struct du_logical_channel_context {
   lcid_t                                               lcid;
+  drb_id_t                                             drbid; // Valid if DRB.
   std::unique_ptr<rlc_rx_upper_layer_data_notifier>    rlc_rx_ul_sdu_notif;
   std::unique_ptr<rlc_tx_upper_layer_data_notifier>    rlc_tx_ul_data_notif;
   std::unique_ptr<rlc_tx_upper_layer_control_notifier> rlc_tx_ul_ctrl_notif;

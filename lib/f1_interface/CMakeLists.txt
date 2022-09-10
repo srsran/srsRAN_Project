@@ -19,6 +19,7 @@ set(SOURCES
         du/handlers/f1c_du_packet_handler.cpp
         du/procedures/f1ap_du_setup_procedure.cpp
         du/f1c_du_bearer_impl.cpp
+        du/f1ap_du_ue.cpp
     )
 
 add_library(srsgnb_f1 STATIC ${SOURCES})
