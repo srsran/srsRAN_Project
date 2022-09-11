@@ -41,7 +41,8 @@ public:
     ue_mng.schedule_async_task(ue_index, std::move(task));
   }
 
-  async_task<void> handle_ue_config_update(const f1ap_ue_config_update_request& request) override;
+  async_task<f1ap_ue_config_update_response>
+  handle_ue_config_update(const f1ap_ue_config_update_request& request) override;
 
   size_t nof_ues() override;
 

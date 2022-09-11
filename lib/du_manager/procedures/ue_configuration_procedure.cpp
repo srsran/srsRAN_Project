@@ -8,22 +8,22 @@
  *
  */
 
-#include "ue_reconfiguration_procedure.h"
+#include "ue_configuration_procedure.h"
 #include "../../ran/gnb_format.h"
 #include "srsgnb/mac/mac_ue_configurator.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_du;
 
-ue_reconfiguration_procedure::ue_reconfiguration_procedure(const f1ap_ue_config_update_request& request_,
-                                                           ue_manager_ctrl_configurator&        ue_mng_,
-                                                           mac_ue_configurator&                 mac_ue_mng_) :
+ue_configuration_procedure::ue_configuration_procedure(const f1ap_ue_config_update_request& request_,
+                                                       ue_manager_ctrl_configurator&        ue_mng_,
+                                                       mac_ue_configurator&                 mac_ue_mng_) :
   request(request_), ue_mng(ue_mng_), mac_ue_mng(mac_ue_mng_), ue(ue_mng.find_ue(request.ue_index))
 {
   srsgnb_assert(ue != nullptr, "ueId={} not found", request.ue_index);
 }
 
-void ue_reconfiguration_procedure::operator()(coro_context<async_task<void>>& ctx)
+void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_config_update_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -35,10 +35,10 @@ void ue_reconfiguration_procedure::operator()(coro_context<async_task<void>>& ct
 
   log_proc_completed(logger, request.ue_index, ue->rnti, "UE Modification");
 
-  CORO_RETURN();
+  CORO_RETURN(make_ue_config_response());
 }
 
-void ue_reconfiguration_procedure::add_bearers_in_ue_context()
+void ue_configuration_procedure::add_bearers_in_ue_context()
 {
   for (srb_id_t srbid : request.srbs_to_addmod) {
     lcid_t lcid = (lcid_t)srbid;
@@ -64,7 +64,7 @@ void ue_reconfiguration_procedure::add_bearers_in_ue_context()
   }
 }
 
-async_task<mac_ue_reconfiguration_response_message> ue_reconfiguration_procedure::update_mac_bearers()
+async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::update_mac_bearers()
 {
   mac_ue_reconfiguration_request_message mac_ue_reconf_req;
   mac_ue_reconf_req.ue_index    = request.ue_index;
@@ -93,4 +93,12 @@ async_task<mac_ue_reconfiguration_response_message> ue_reconfiguration_procedure
   }
 
   return mac_ue_mng.handle_ue_reconfiguration_request(mac_ue_reconf_req);
+}
+
+f1ap_ue_config_update_response ue_configuration_procedure::make_ue_config_response()
+{
+  f1ap_ue_config_update_response resp;
+  resp.result = true;
+  // TODO: Add CellGroupConfig.
+  return resp;
 }

@@ -26,9 +26,9 @@ class du_ue_manager : public ue_manager_ctrl_configurator
 public:
   explicit du_ue_manager(du_manager_config_t& cfg_);
 
-  void             handle_ue_create_request(const ul_ccch_indication_message& msg);
-  async_task<void> handle_ue_reconf_request(const f1ap_ue_config_update_request& msg);
-  void             handle_ue_delete_request(const du_ue_delete_message& msg);
+  void                                       handle_ue_create_request(const ul_ccch_indication_message& msg);
+  async_task<f1ap_ue_config_update_response> handle_ue_config_request(const f1ap_ue_config_update_request& msg);
+  void                                       handle_ue_delete_request(const du_ue_delete_message& msg);
 
   const slot_array<du_ue_context, MAX_NOF_DU_UES>& get_ues() { return ue_db; }
 

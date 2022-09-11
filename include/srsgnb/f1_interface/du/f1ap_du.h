@@ -134,6 +134,11 @@ struct f1ap_ue_config_update_request {
   std::vector<drb_to_addmod> drbs_to_addmod;
 };
 
+struct f1ap_ue_config_update_response {
+  bool        result;
+  byte_buffer du_to_cu_rrc_container;
+};
+
 /// Handle F1AP UE context management procedures as defined in TS 38.473 section 8.3.
 class f1ap_ue_context_manager
 {
@@ -193,7 +198,8 @@ public:
   virtual ~f1c_du_configurator() = default;
 
   /// \brief Request the update of the UE configuration in the DU.
-  virtual async_task<void> request_ue_config_update(const f1ap_ue_config_update_request& request) = 0;
+  virtual async_task<f1ap_ue_config_update_response>
+  request_ue_config_update(const f1ap_ue_config_update_request& request) = 0;
 
   /// \brief Retrieve task scheduler specific to a given UE.
   virtual f1c_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) = 0;

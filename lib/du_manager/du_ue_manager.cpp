@@ -9,9 +9,9 @@
  */
 
 #include "du_ue_manager.h"
+#include "procedures/ue_configuration_procedure.h"
 #include "procedures/ue_creation_procedure.h"
 #include "procedures/ue_deletion_procedure.h"
-#include "procedures/ue_reconfiguration_procedure.h"
 
 using namespace srsgnb;
 using namespace srs_du;
@@ -41,9 +41,10 @@ void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& m
   ue_ctrl_loop[ue_idx_candidate].schedule<ue_creation_procedure>(ue_idx_candidate, msg, cfg, *this);
 }
 
-async_task<void> du_ue_manager::handle_ue_reconf_request(const f1ap_ue_config_update_request& msg)
+async_task<f1ap_ue_config_update_response>
+du_ue_manager::handle_ue_config_request(const f1ap_ue_config_update_request& msg)
 {
-  return launch_async<ue_reconfiguration_procedure>(msg, *this, *cfg.mac_ue_mng);
+  return launch_async<ue_configuration_procedure>(msg, *this, *cfg.mac_ue_mng);
 }
 
 void du_ue_manager::handle_ue_delete_request(const du_ue_delete_message& msg)

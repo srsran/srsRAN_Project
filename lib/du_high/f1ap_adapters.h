@@ -60,7 +60,8 @@ public:
 
   f1c_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) override { return ues[ue_index]; }
 
-  async_task<void> request_ue_config_update(const f1ap_ue_config_update_request& request) override
+  async_task<f1ap_ue_config_update_response>
+  request_ue_config_update(const f1ap_ue_config_update_request& request) override
   {
     return du_mng->handle_ue_config_update(request);
   }

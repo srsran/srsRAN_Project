@@ -46,11 +46,12 @@ public:
 
   timer_manager& get_timer_manager() override { return timers; }
 
-  async_task<void> request_ue_config_update(const f1ap_ue_config_update_request& request) override
+  async_task<f1ap_ue_config_update_response>
+  request_ue_config_update(const f1ap_ue_config_update_request& request) override
   {
-    return launch_async([](coro_context<async_task<void>>& ctx) {
+    return launch_async([](coro_context<async_task<f1ap_ue_config_update_response>>& ctx) {
       CORO_BEGIN(ctx);
-      CORO_RETURN();
+      CORO_RETURN(f1ap_ue_config_update_response{});
     });
   }
 

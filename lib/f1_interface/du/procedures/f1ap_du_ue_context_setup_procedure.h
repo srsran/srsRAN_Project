@@ -46,9 +46,13 @@ public:
     // TODO.
 
     // Setup new UE configuration in DU.
-    CORO_AWAIT(ue.du_handler.request_ue_config_update(du_request));
+    CORO_AWAIT_VALUE(du_response, ue.du_handler.request_ue_config_update(du_request));
 
-    send_ue_context_setup_response();
+    if (du_response.result) {
+      send_ue_context_setup_response();
+    } else {
+      send_ue_context_setup_failure();
+    }
 
     CORO_RETURN();
   }
@@ -64,7 +68,10 @@ private:
 
     resp->gnb_du_ue_f1_ap_id->value = gnb_du_ue_f1ap_id_to_uint(ue.gnb_du_ue_f1ap_id);
     resp->gnb_cu_ue_f1_ap_id->value = gnb_cu_ue_f1ap_id_to_uint(ue.gnb_cu_ue_f1ap_id);
-    // TODO: resp->duto_currc_info.value with CellConfigGroup.
+    resp->duto_currc_info.value.cell_group_cfg.resize(du_response.du_to_cu_rrc_container.length());
+    std::copy(du_response.du_to_cu_rrc_container.begin(),
+              du_response.du_to_cu_rrc_container.end(),
+              resp->duto_currc_info.value.cell_group_cfg.begin());
     resp->drbs_setup_list_present = not du_request.drbs_to_addmod.empty();
     if (resp->drbs_setup_list_present) {
       resp->drbs_setup_list->resize(du_request.drbs_to_addmod.size());
@@ -91,8 +98,25 @@ private:
     ue.f1c_msg_notifier.on_new_message(f1c_msg);
   }
 
+  void send_ue_context_setup_failure()
+  {
+    using namespace asn1::f1ap;
+
+    f1c_message f1c_msg;
+    f1c_msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
+    ue_context_setup_fail_s& resp = f1c_msg.pdu.unsuccessful_outcome().value.ue_context_setup_fail();
+
+    resp->gnb_du_ue_f1_ap_id->value        = gnb_du_ue_f1ap_id_to_uint(ue.gnb_du_ue_f1ap_id);
+    resp->gnb_cu_ue_f1_ap_id->value        = gnb_cu_ue_f1ap_id_to_uint(ue.gnb_cu_ue_f1ap_id);
+    resp->cause->set_radio_network().value = asn1::f1ap::cause_radio_network_opts::unspecified;
+
+    ue.f1c_msg_notifier.on_new_message(f1c_msg);
+  }
+
   f1ap_du_ue&                   ue;
   f1ap_ue_config_update_request du_request;
+
+  f1ap_ue_config_update_response du_response;
 };
 } // namespace srs_du
 } // namespace srsgnb
