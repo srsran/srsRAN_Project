@@ -81,88 +81,89 @@ span<const cf_t> resource_grid_impl::put(unsigned         port,
     unsigned mask32 = _mm256_movemask_epi8(_mm256_cmpgt_epi8(avx_mask, _mm256_setzero_si256()));
 
     // Process presets of 4 bits.
-    for (; mask32 != 0; mask32 = mask32 >> 4) {
-      switch (mask32 & 0xF) {
+    unsigned offset = 0;
+    for (; mask32 != 0; mask32 = mask32 >> 4, offset += 4) {
+      switch (mask32 & 0xf) {
         case 0B0000:
           // No subcarrier is active, skip.
           break;
         case 0B0001:
-          symb[i_subc + k_init + 0] = symbol_buffer[0];
-          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 1);
+          symb[i_subc + k_init + 0 + offset] = symbol_buffer[0];
+          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 1);
           break;
         case 0B0010:
-          symb[i_subc + k_init + 1] = symbol_buffer[0];
-          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 1);
+          symb[i_subc + k_init + 1 + offset] = symbol_buffer[0];
+          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 1);
           break;
         case 0B0011:
-          symb[i_subc + k_init + 0] = symbol_buffer[0];
-          symb[i_subc + k_init + 1] = symbol_buffer[1];
-          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 2);
+          symb[i_subc + k_init + 0 + offset] = symbol_buffer[0];
+          symb[i_subc + k_init + 1 + offset] = symbol_buffer[1];
+          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 2);
           break;
         case 0B0100:
-          symb[i_subc + k_init + 2] = symbol_buffer[0];
-          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 1);
+          symb[i_subc + k_init + 2 + offset] = symbol_buffer[0];
+          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 1);
           break;
         case 0B0101:
-          symb[i_subc + k_init + 0] = symbol_buffer[0];
-          symb[i_subc + k_init + 2] = symbol_buffer[1];
-          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 2);
+          symb[i_subc + k_init + 0 + offset] = symbol_buffer[0];
+          symb[i_subc + k_init + 2 + offset] = symbol_buffer[1];
+          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 2);
           break;
         case 0B0110:
-          symb[i_subc + k_init + 1] = symbol_buffer[0];
-          symb[i_subc + k_init + 2] = symbol_buffer[1];
-          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 2);
+          symb[i_subc + k_init + 1 + offset] = symbol_buffer[0];
+          symb[i_subc + k_init + 2 + offset] = symbol_buffer[1];
+          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 2);
           break;
         case 0B0111:
-          symb[i_subc + k_init + 0] = symbol_buffer[0];
-          symb[i_subc + k_init + 1] = symbol_buffer[1];
-          symb[i_subc + k_init + 2] = symbol_buffer[2];
-          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 3);
+          symb[i_subc + k_init + 0 + offset] = symbol_buffer[0];
+          symb[i_subc + k_init + 1 + offset] = symbol_buffer[1];
+          symb[i_subc + k_init + 2 + offset] = symbol_buffer[2];
+          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 3);
           break;
         case 0B1000:
-          symb[i_subc + k_init + 3] = symbol_buffer[0];
-          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 1);
+          symb[i_subc + k_init + 3 + offset] = symbol_buffer[0];
+          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 1);
           break;
         case 0B1001:
-          symb[i_subc + k_init + 0] = symbol_buffer[0];
-          symb[i_subc + k_init + 3] = symbol_buffer[1];
-          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 2);
+          symb[i_subc + k_init + 0 + offset] = symbol_buffer[0];
+          symb[i_subc + k_init + 3 + offset] = symbol_buffer[1];
+          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 2);
           break;
         case 0B1010:
-          symb[i_subc + k_init + 1] = symbol_buffer[0];
-          symb[i_subc + k_init + 3] = symbol_buffer[1];
-          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 2);
+          symb[i_subc + k_init + 1 + offset] = symbol_buffer[0];
+          symb[i_subc + k_init + 3 + offset] = symbol_buffer[1];
+          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 2);
           break;
         case 0B1011:
-          symb[i_subc + k_init + 0] = symbol_buffer[0];
-          symb[i_subc + k_init + 1] = symbol_buffer[1];
-          symb[i_subc + k_init + 3] = symbol_buffer[2];
-          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 3);
+          symb[i_subc + k_init + 0 + offset] = symbol_buffer[0];
+          symb[i_subc + k_init + 1 + offset] = symbol_buffer[1];
+          symb[i_subc + k_init + 3 + offset] = symbol_buffer[2];
+          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 3);
           break;
         case 0B1100:
-          symb[i_subc + k_init + 2] = symbol_buffer[0];
-          symb[i_subc + k_init + 3] = symbol_buffer[1];
-          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 2);
+          symb[i_subc + k_init + 2 + offset] = symbol_buffer[0];
+          symb[i_subc + k_init + 3 + offset] = symbol_buffer[1];
+          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 2);
           break;
         case 0B1101:
-          symb[i_subc + k_init + 0] = symbol_buffer[0];
-          symb[i_subc + k_init + 2] = symbol_buffer[1];
-          symb[i_subc + k_init + 3] = symbol_buffer[2];
-          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 3);
+          symb[i_subc + k_init + 0 + offset] = symbol_buffer[0];
+          symb[i_subc + k_init + 2 + offset] = symbol_buffer[1];
+          symb[i_subc + k_init + 3 + offset] = symbol_buffer[2];
+          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 3);
           break;
         case 0B1110:
-          symb[i_subc + k_init + 1] = symbol_buffer[0];
-          symb[i_subc + k_init + 2] = symbol_buffer[1];
-          symb[i_subc + k_init + 3] = symbol_buffer[2];
-          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 3);
+          symb[i_subc + k_init + 1 + offset] = symbol_buffer[0];
+          symb[i_subc + k_init + 2 + offset] = symbol_buffer[1];
+          symb[i_subc + k_init + 3 + offset] = symbol_buffer[2];
+          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 3);
           break;
         case 0B1111:
         default:
-          symb[i_subc + k_init + 0] = symbol_buffer[0];
-          symb[i_subc + k_init + 1] = symbol_buffer[1];
-          symb[i_subc + k_init + 2] = symbol_buffer[2];
-          symb[i_subc + k_init + 3] = symbol_buffer[3];
-          symbol_buffer             = symbol_buffer.last(symbol_buffer.size() - 4);
+          symb[i_subc + k_init + 0 + offset] = symbol_buffer[0];
+          symb[i_subc + k_init + 1 + offset] = symbol_buffer[1];
+          symb[i_subc + k_init + 2 + offset] = symbol_buffer[2];
+          symb[i_subc + k_init + 3 + offset] = symbol_buffer[3];
+          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 4);
           break;
       }
     }
