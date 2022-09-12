@@ -66,17 +66,19 @@ private:
   /// Creates UE object in F1.
   void create_f1_ue();
 
-  /// Creates SRB0 in RLC.
-  void create_rlc_srb0();
+  /// Creates SRB0 and SRB1 in RLC.
+  void create_rlc_srbs();
 
   async_task<mac_ue_create_response_message> make_mac_ue_create_req();
+
+  void connect_layer_bearers();
 
   ul_ccch_indication_message    msg;
   const du_manager_config_t&    cfg;
   srslog::basic_logger&         logger;
   ue_manager_ctrl_configurator& ue_mng;
 
-  du_ue_context                  ue_ctx{};
+  std::unique_ptr<du_ue_context> ue_ctx;
   mac_ue_create_response_message mac_resp{};
   f1ap_ue_create_response        f1_resp{};
 };

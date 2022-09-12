@@ -17,11 +17,12 @@ using namespace srsgnb::srs_du;
 
 void f1ap_du_ue::handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg)
 {
-  du_handler.get_ue_handler(ue_index).schedule_async_task(launch_async<f1ap_du_ue_context_setup_procedure>(msg, *this));
+  du_handler.get_ue_handler(context.ue_index)
+      .schedule_async_task(launch_async<f1ap_du_ue_context_setup_procedure>(msg, *this));
 }
 
 void f1ap_du_ue::handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg)
 {
-  du_handler.get_ue_handler(ue_index).schedule_async_task(
-      launch_async<f1ap_du_ue_context_modification_procedure>(msg, *this));
+  du_handler.get_ue_handler(context.ue_index)
+      .schedule_async_task(launch_async<f1ap_du_ue_context_modification_procedure>(msg, *this));
 }

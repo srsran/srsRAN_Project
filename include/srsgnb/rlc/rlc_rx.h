@@ -64,12 +64,7 @@ public:
 class rlc_rx_upper_layer_data_notifier
 {
 public:
-  rlc_rx_upper_layer_data_notifier()                                                    = default;
-  virtual ~rlc_rx_upper_layer_data_notifier()                                           = default;
-  rlc_rx_upper_layer_data_notifier(const rlc_rx_upper_layer_data_notifier&)             = delete;
-  rlc_rx_upper_layer_data_notifier& operator=(const rlc_rx_upper_layer_data_notifier&)  = delete;
-  rlc_rx_upper_layer_data_notifier(const rlc_rx_upper_layer_data_notifier&&)            = delete;
-  rlc_rx_upper_layer_data_notifier& operator=(const rlc_rx_upper_layer_data_notifier&&) = delete;
+  virtual ~rlc_rx_upper_layer_data_notifier() = default;
 
   /// This method is called to pass the SDU to the upper layers
   virtual void on_new_sdu(byte_buffer_slice_chain pdu) = 0;

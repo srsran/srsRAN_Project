@@ -18,7 +18,7 @@ using namespace srs_du;
 
 du_ue_manager::du_ue_manager(du_manager_config_t& cfg_) : cfg(cfg_), logger(cfg.logger)
 {
-  std::fill(rnti_to_ue_index.begin(), rnti_to_ue_index.end(), -1);
+  std::fill(rnti_to_ue_index.begin(), rnti_to_ue_index.end(), du_ue_index_t::INVALID_DU_UE_INDEX);
 
   const size_t number_of_pending_procedures = 16;
   for (size_t i = 0; i < MAX_NOF_DU_UES; ++i) {
@@ -31,8 +31,9 @@ void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& m
   // Search unallocated UE index with no pending events.
   du_ue_index_t ue_idx_candidate = MAX_NOF_DU_UES;
   for (size_t i = 0; i < ue_ctrl_loop.size(); ++i) {
-    if (not ue_db.contains(i) and ue_ctrl_loop[i].empty()) {
-      ue_idx_candidate = to_du_ue_index(i);
+    du_ue_index_t ue_index = to_du_ue_index(i);
+    if (not ue_db.contains(ue_index) and ue_ctrl_loop[ue_index].empty()) {
+      ue_idx_candidate = ue_index;
       break;
     }
   }
@@ -61,29 +62,29 @@ du_ue_context* du_ue_manager::find_ue(du_ue_index_t ue_index)
 
 du_ue_context* du_ue_manager::find_rnti(rnti_t rnti)
 {
-  if (rnti_to_ue_index[rnti % MAX_NOF_DU_UES] < 0) {
+  if (rnti_to_ue_index[rnti % MAX_NOF_DU_UES] == INVALID_DU_UE_INDEX) {
     return nullptr;
   }
   return &ue_db[rnti_to_ue_index[rnti % MAX_NOF_DU_UES]];
 }
 
-du_ue_context* du_ue_manager::add_ue(du_ue_context ue_ctx)
+du_ue_context* du_ue_manager::add_ue(std::unique_ptr<du_ue_context> ue_ctx)
 {
-  srsgnb_assert(ue_ctx.rnti != INVALID_RNTI, "Invalid RNTI");
-  srsgnb_assert(ue_ctx.ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_ctx.ue_index);
+  srsgnb_assert(ue_ctx->rnti != INVALID_RNTI, "Invalid RNTI");
+  srsgnb_assert(ue_ctx->ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_ctx->ue_index);
 
-  if (ue_db.contains(ue_ctx.ue_index) or rnti_to_ue_index[ue_ctx.rnti % MAX_NOF_DU_UES] >= 0) {
+  if (ue_db.contains(ue_ctx->ue_index) or rnti_to_ue_index[ue_ctx->rnti % MAX_NOF_DU_UES] != INVALID_DU_UE_INDEX) {
     // UE already existed with same ue_index
     return nullptr;
   }
 
   // Create UE object
-  du_ue_index_t ue_index = ue_ctx.ue_index;
-  ue_db.emplace(ue_index, std::move(ue_ctx));
+  du_ue_index_t ue_index = ue_ctx->ue_index;
+  ue_db.insert(ue_index, std::move(ue_ctx));
   auto& u = ue_db[ue_index];
 
   // Update RNTI -> UE index map
-  srsgnb_sanity_check(rnti_to_ue_index[u.rnti % MAX_NOF_DU_UES] < 0, "Invalid RNTI=0x{:x}", u.rnti);
+  srsgnb_sanity_check(rnti_to_ue_index[u.rnti % MAX_NOF_DU_UES] == INVALID_DU_UE_INDEX, "Invalid RNTI={:#x}", u.rnti);
   rnti_to_ue_index[u.rnti % MAX_NOF_DU_UES] = ue_index;
 
   return &u;
@@ -101,7 +102,7 @@ void du_ue_manager::remove_ue(du_ue_index_t ue_index)
   ue_ctrl_loop[ue_index].schedule([this, ue_index](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
     srsgnb_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ueId={}", ue_index);
-    rnti_to_ue_index[ue_db[ue_index].rnti % MAX_NOF_DU_UES] = -1;
+    rnti_to_ue_index[ue_db[ue_index].rnti % MAX_NOF_DU_UES] = INVALID_DU_UE_INDEX;
     ue_db.erase(ue_index);
     logger.info("Removed ueId={}", ue_index);
     CORO_RETURN();

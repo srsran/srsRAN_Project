@@ -11,6 +11,7 @@
 #pragma once
 
 #include "f1c_du_bearer_impl.h"
+#include "f1c_ue_context.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/f1_interface/common/f1c_types.h"
 #include "srsgnb/f1_interface/du/f1ap_du.h"
@@ -28,16 +29,11 @@ public:
              gnb_du_ue_f1ap_id_t   gnb_f1_du_ue_id_,
              f1c_du_configurator&  du_handler_,
              f1c_message_notifier& f1c_msg_notifier_) :
-    ue_index(ue_index_),
-    gnb_du_ue_f1ap_id(gnb_f1_du_ue_id_),
-    du_handler(du_handler_),
-    f1c_msg_notifier(f1c_msg_notifier_)
+    context(ue_index_, gnb_f1_du_ue_id_), du_handler(du_handler_), f1c_msg_notifier(f1c_msg_notifier_)
   {
   }
 
-  const du_ue_index_t                     ue_index;
-  const gnb_du_ue_f1ap_id_t               gnb_du_ue_f1ap_id;
-  gnb_cu_ue_f1ap_id_t                     gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;
+  f1c_ue_context                          context;
   std::vector<std::unique_ptr<f1_bearer>> bearers;
   f1c_du_configurator&                    du_handler;
   f1c_message_notifier&                   f1c_msg_notifier;
@@ -78,7 +74,7 @@ public:
     srsgnb_assert(ues.contains(ue_index), "ueId={} does not exist", ue_index);
     {
       std::lock_guard<std::mutex> lock(map_mutex);
-      f1ap_ue_id_to_du_ue_id_map.erase(ues[ue_index].gnb_du_ue_f1ap_id);
+      f1ap_ue_id_to_du_ue_id_map.erase(ues[ue_index].context.gnb_du_ue_f1ap_id);
     }
     ues.erase(ue_index);
   }

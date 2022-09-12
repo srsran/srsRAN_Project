@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "adapters/du_bearer_adapter.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/mac/mac_sdu_handler.h"
 #include "srsgnb/ran/du_types.h"
@@ -21,23 +22,19 @@
 namespace srsgnb {
 namespace srs_du {
 
-struct du_logical_channel_context {
-  lcid_t                                               lcid;
-  drb_id_t                                             drbid; // Valid if DRB.
-  std::unique_ptr<rlc_rx_upper_layer_data_notifier>    rlc_rx_ul_sdu_notif;
-  std::unique_ptr<rlc_tx_upper_layer_data_notifier>    rlc_tx_ul_data_notif;
-  std::unique_ptr<rlc_tx_upper_layer_control_notifier> rlc_tx_ul_ctrl_notif;
-  std::unique_ptr<rlc_tx_lower_layer_notifier>         rlc_tx_ll_data_notif;
-  std::unique_ptr<rlc_entity>                          rlc_bearer;
-  std::unique_ptr<mac_sdu_rx_notifier>                 mac_rx_notifier;
-  std::unique_ptr<mac_sdu_tx_builder>                  mac_tx_notifier;
+struct du_bearer {
+  lcid_t   lcid;
+  drb_id_t drbid; // Valid if DRB.
+
+  std::unique_ptr<rlc_entity> rlc_bearer;
+  du_bearer_adapter           bearer_connector;
 };
 
 struct du_ue_context {
   du_ue_index_t                           ue_index;
   rnti_t                                  rnti;
   du_cell_index_t                         pcell_index;
-  slot_vector<du_logical_channel_context> bearers;
+  slot_array<du_bearer, MAX_NOF_RB_LCIDS> bearers;
 };
 
 } // namespace srs_du

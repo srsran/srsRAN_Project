@@ -27,23 +27,27 @@ f1ap_ue_create_response create_f1ap_du_ue(const f1ap_ue_create_request& msg,
                                           f1c_message_notifier&         f1c_notifier,
                                           f1ap_event_manager&           ev_mng)
 {
-  f1ap_du_ue& u = ues.add_ue(msg.ue_index);
+  const asn1::f1ap::gnb_du_served_cells_item_s& ue_pcell = du_ctx.served_cells[msg.cell_index];
 
-  // Create F1c bearer for SRB0.
-  auto& ue_pcell = du_ctx.served_cells[msg.cell_index];
-  auto  srb0     = std::make_unique<f1c_srb0_du_bearer>(u.ue_index,
-                                                   u.gnb_du_ue_f1ap_id,
-                                                   msg.c_rnti,
-                                                   ue_pcell.served_cell_info.nrcgi,
-                                                   msg.du_cu_rrc_container,
-                                                   f1c_notifier,
-                                                   ev_mng);
-  u.bearers.push_back(std::move(srb0));
+  f1ap_du_ue& u  = ues.add_ue(msg.ue_index);
+  u.context.rnti = msg.c_rnti;
+
+  // Create an F1c bearer for each requested SRB.
+  for (const srb_to_addmod& srb : msg.srbs_to_add) {
+    if (srb.srb_id == srb_id_t::srb0) {
+      auto srb0 = std::make_unique<f1c_srb0_du_bearer>(
+          u.context, ue_pcell.served_cell_info.nrcgi, msg.du_cu_rrc_container, f1c_notifier, ev_mng);
+      u.bearers.push_back(std::move(srb0));
+    } else {
+      auto srb1 = std::make_unique<f1c_other_srb_du_bearer>(u.context, srb.srb_id, f1c_notifier);
+      u.bearers.push_back(std::move(srb1));
+    }
+  }
 
   // Prepare response.
   f1ap_ue_create_response resp{};
   resp.result = true;
-  for (std::unique_ptr<f1_bearer>& bearer : ues[msg.ue_index].bearers) {
+  for (std::unique_ptr<f1_bearer>& bearer : u.bearers) {
     resp.bearers_added.push_back(bearer.get());
   }
   return resp;

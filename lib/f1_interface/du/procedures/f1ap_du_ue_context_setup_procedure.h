@@ -24,7 +24,7 @@ public:
     using namespace asn1::f1ap;
 
     // Construct DU request.
-    du_request.ue_index = ue.ue_index;
+    du_request.ue_index = ue.context.ue_index;
     for (const auto& srb : msg->srbs_to_be_setup_list.value) {
       du_request.srbs_to_addmod.push_back((srb_id_t)srb.value().srbs_to_be_setup_item().srbid);
     }
@@ -66,8 +66,8 @@ private:
     f1c_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
     ue_context_setup_resp_s& resp = f1c_msg.pdu.successful_outcome().value.ue_context_setup_resp();
 
-    resp->gnb_du_ue_f1_ap_id->value = gnb_du_ue_f1ap_id_to_uint(ue.gnb_du_ue_f1ap_id);
-    resp->gnb_cu_ue_f1_ap_id->value = gnb_cu_ue_f1ap_id_to_uint(ue.gnb_cu_ue_f1ap_id);
+    resp->gnb_du_ue_f1_ap_id->value = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
+    resp->gnb_cu_ue_f1_ap_id->value = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
     resp->duto_currc_info.value.cell_group_cfg.resize(du_response.du_to_cu_rrc_container.length());
     std::copy(du_response.du_to_cu_rrc_container.begin(),
               du_response.du_to_cu_rrc_container.end(),
@@ -106,8 +106,8 @@ private:
     f1c_msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
     ue_context_setup_fail_s& resp = f1c_msg.pdu.unsuccessful_outcome().value.ue_context_setup_fail();
 
-    resp->gnb_du_ue_f1_ap_id->value        = gnb_du_ue_f1ap_id_to_uint(ue.gnb_du_ue_f1ap_id);
-    resp->gnb_cu_ue_f1_ap_id->value        = gnb_cu_ue_f1ap_id_to_uint(ue.gnb_cu_ue_f1ap_id);
+    resp->gnb_du_ue_f1_ap_id->value        = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
+    resp->gnb_cu_ue_f1_ap_id->value        = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
     resp->cause->set_radio_network().value = asn1::f1ap::cause_radio_network_opts::unspecified;
 
     ue.f1c_msg_notifier.on_new_message(f1c_msg);

@@ -75,12 +75,7 @@ public:
 class rlc_tx_upper_layer_data_notifier
 {
 public:
-  rlc_tx_upper_layer_data_notifier()                                                    = default;
-  virtual ~rlc_tx_upper_layer_data_notifier()                                           = default;
-  rlc_tx_upper_layer_data_notifier(const rlc_tx_upper_layer_data_notifier&)             = delete;
-  rlc_tx_upper_layer_data_notifier& operator=(const rlc_tx_upper_layer_data_notifier&)  = delete;
-  rlc_tx_upper_layer_data_notifier(const rlc_tx_upper_layer_data_notifier&&)            = delete;
-  rlc_tx_upper_layer_data_notifier& operator=(const rlc_tx_upper_layer_data_notifier&&) = delete;
+  virtual ~rlc_tx_upper_layer_data_notifier() = default;
 
   virtual void on_delivered_sdu(uint32_t pdcp_count) = 0;
 };

@@ -24,11 +24,17 @@
 namespace srsgnb {
 namespace srs_du {
 
+struct srb_to_addmod {
+  srb_id_t            srb_id;
+  f1_tx_pdu_notifier* f1_tx_pdu_notif;
+};
+
 struct f1ap_ue_create_request {
-  du_ue_index_t   ue_index;
-  du_cell_index_t cell_index;
-  rnti_t          c_rnti;
-  byte_buffer     du_cu_rrc_container;
+  du_ue_index_t              ue_index;
+  du_cell_index_t            cell_index;
+  rnti_t                     c_rnti;
+  byte_buffer                du_cu_rrc_container;
+  std::vector<srb_to_addmod> srbs_to_add;
 };
 
 struct f1ap_ue_create_response {

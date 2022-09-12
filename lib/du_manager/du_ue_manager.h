@@ -14,6 +14,7 @@
 #include "du_manager_interfaces.h"
 #include "du_ue_context.h"
 #include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/stable_id_map.h"
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/support/async/async_task_loop.h"
@@ -30,7 +31,7 @@ public:
   async_task<f1ap_ue_config_update_response> handle_ue_config_request(const f1ap_ue_config_update_request& msg);
   void                                       handle_ue_delete_request(const du_ue_delete_message& msg);
 
-  const slot_array<du_ue_context, MAX_NOF_DU_UES>& get_ues() { return ue_db; }
+  const stable_id_map<du_ue_index_t, du_ue_context, MAX_NOF_DU_UES>& get_ues() { return ue_db; }
 
   void schedule_async_task(du_ue_index_t ue_index, async_task<void>&& task)
   {
@@ -38,7 +39,7 @@ public:
   }
 
 private:
-  du_ue_context* add_ue(du_ue_context ue_ctx) override;
+  du_ue_context* add_ue(std::unique_ptr<du_ue_context> ue_ctx) override;
   du_ue_context* find_ue(du_ue_index_t ue_index) override;
   du_ue_context* find_rnti(rnti_t rnti) override;
   void           remove_ue(du_ue_index_t ue_index) override;
@@ -46,8 +47,8 @@ private:
   du_manager_config_t&  cfg;
   srslog::basic_logger& logger;
 
-  slot_array<du_ue_context, MAX_NOF_DU_UES> ue_db;
-  std::array<int, MAX_NOF_DU_UES>           rnti_to_ue_index;
+  stable_id_map<du_ue_index_t, du_ue_context, MAX_NOF_DU_UES> ue_db;
+  std::array<du_ue_index_t, MAX_NOF_DU_UES>                   rnti_to_ue_index;
 
   // task event loops indexed by ue_index
   slot_array<async_task_sequencer, MAX_NOF_DU_UES> ue_ctrl_loop;

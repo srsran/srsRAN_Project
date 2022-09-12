@@ -44,9 +44,9 @@ void ue_configuration_procedure::add_bearers_in_ue_context()
     lcid_t lcid = (lcid_t)srbid;
     srsgnb_assert(not ue->bearers.contains(lcid), "Reconfigurations of bearers not supported");
     ue->bearers.emplace(lcid);
-    du_logical_channel_context& srb = ue->bearers[lcid];
-    srb.lcid                        = lcid;
-    srb.drbid                       = drb_id_t::invalid;
+    du_bearer& srb = ue->bearers[lcid];
+    srb.lcid       = lcid;
+    srb.drbid      = drb_id_t::invalid;
   }
 
   for (const drb_to_addmod& drbtoadd : request.drbs_to_addmod) {
@@ -58,9 +58,9 @@ void ue_configuration_procedure::add_bearers_in_ue_context()
       srsgnb_assert(lcid != lcid_t::INVALID_LCID, "Unable to allocate LCID");
     }
     ue->bearers.emplace(lcid);
-    du_logical_channel_context& drb = ue->bearers[lcid];
-    drb.lcid                        = lcid;
-    drb.drbid                       = drbtoadd.drbid;
+    du_bearer& drb = ue->bearers[lcid];
+    drb.lcid       = lcid;
+    drb.drbid      = drbtoadd.drbid;
   }
 }
 
@@ -71,24 +71,24 @@ async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::
   mac_ue_reconf_req.pcell_index = ue->pcell_index;
 
   for (srb_id_t srbid : request.srbs_to_addmod) {
-    du_logical_channel_context& bearer = ue->bearers[srb_id_to_uint(srbid)];
+    du_bearer& bearer = ue->bearers[srb_id_to_uint(srbid)];
     mac_ue_reconf_req.bearers_to_addmod.emplace_back();
     mac_logical_channel_addmod& lc_ch = mac_ue_reconf_req.bearers_to_addmod.back();
 
     lc_ch.lcid      = bearer.lcid;
-    lc_ch.ul_bearer = bearer.mac_rx_notifier.get();
-    lc_ch.dl_bearer = bearer.mac_tx_notifier.get();
+    lc_ch.ul_bearer = &bearer.bearer_connector.mac_rx_notif;
+    lc_ch.dl_bearer = &bearer.bearer_connector.mac_tx_notif;
     mac_ue_reconf_req.bearers_to_addmod.push_back(std::move(lc_ch));
   }
 
   for (const drb_to_addmod& drb : request.drbs_to_addmod) {
-    du_logical_channel_context& bearer = ue->bearers[drb.lcid];
+    du_bearer& bearer = ue->bearers[drb.lcid];
     mac_ue_reconf_req.bearers_to_addmod.emplace_back();
     mac_logical_channel_addmod& lc_ch = mac_ue_reconf_req.bearers_to_addmod.back();
 
     lc_ch.lcid      = bearer.lcid;
-    lc_ch.ul_bearer = bearer.mac_rx_notifier.get();
-    lc_ch.dl_bearer = bearer.mac_tx_notifier.get();
+    lc_ch.ul_bearer = &bearer.bearer_connector.mac_rx_notif;
+    lc_ch.dl_bearer = &bearer.bearer_connector.mac_tx_notif;
     mac_ue_reconf_req.bearers_to_addmod.push_back(std::move(lc_ch));
   }
 

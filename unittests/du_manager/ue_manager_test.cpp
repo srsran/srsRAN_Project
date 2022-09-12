@@ -87,9 +87,12 @@ void test_ue_concurrent_procedures(test_outcome outcome)
   f1_ue_ctx_mng_dummy.next_ue_create_response.result = true;
   f1_ue_ctx_mng_dummy.next_ue_create_response.bearers_added.resize(1);
 
+  timer_manager timers;
+
   du_manager_config_t cfg{};
   cfg.mac_ue_mng      = &mac_dummy;
   cfg.f1ap_ue_ctx_mng = &f1_ue_ctx_mng_dummy;
+  cfg.timers          = &timers;
 
   du_ue_manager ue_mng{cfg};
   TESTASSERT(ue_mng.get_ues().empty());
@@ -114,9 +117,11 @@ void test_ue_concurrent_procedures(test_outcome outcome)
   TESTASSERT(mac_dummy.last_ue_create_msg.has_value());
   TESTASSERT_EQ(ccch_ind.crnti, mac_dummy.last_ue_create_msg->crnti);
   TESTASSERT_EQ(ccch_ind.cell_index, mac_dummy.last_ue_create_msg->cell_index);
-  TESTASSERT_EQ(1, mac_dummy.last_ue_create_msg->bearers.size());
-  TESTASSERT_EQ(0, mac_dummy.last_ue_create_msg->bearers[0].lcid);
+  TESTASSERT_EQ(2, mac_dummy.last_ue_create_msg->bearers.size());
+  TESTASSERT_EQ(LCID_SRB0, mac_dummy.last_ue_create_msg->bearers[0].lcid);
   TESTASSERT(mac_dummy.last_ue_create_msg->bearers[0].ul_bearer != nullptr);
+  TESTASSERT_EQ(LCID_SRB1, mac_dummy.last_ue_create_msg->bearers[1].lcid);
+  TESTASSERT(mac_dummy.last_ue_create_msg->bearers[1].ul_bearer != nullptr);
   // TODO: Check DL bearer
   TESTASSERT(ue_mng.get_ues().empty());
 
@@ -170,9 +175,12 @@ void test_inexistent_ue_removal()
   mac_test_dummy              mac_dummy;
   f1_ue_context_manager_dummy f1_ue_ctx_mng_dummy;
 
+  timer_manager timers;
+
   du_manager_config_t cfg{};
   cfg.mac_ue_mng      = &mac_dummy;
   cfg.f1ap_ue_ctx_mng = &f1_ue_ctx_mng_dummy;
+  cfg.timers          = &timers;
 
   du_ue_manager ue_mng{cfg};
   TESTASSERT(ue_mng.get_ues().empty());
@@ -205,9 +213,12 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
   mac_test_dummy              mac_dummy;
   f1_ue_context_manager_dummy f1_ue_ctx_mng_dummy;
 
+  timer_manager timers;
+
   du_manager_config_t cfg{};
   cfg.mac_ue_mng      = &mac_dummy;
   cfg.f1ap_ue_ctx_mng = &f1_ue_ctx_mng_dummy;
+  cfg.timers          = &timers;
 
   f1_ue_ctx_mng_dummy.next_ue_create_response.result = true;
   f1_ue_ctx_mng_dummy.next_ue_create_response.bearers_added.resize(1);
