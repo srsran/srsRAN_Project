@@ -9,51 +9,66 @@
  */
 
 #include "polar_encoder_impl.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
+#include "srsgnb/support/srsgnb_assert.h"
 
 using namespace srsgnb;
 
-polar_encoder_impl::polar_encoder_impl(unsigned code_size_log_) :
-  max_code_size_log(static_cast<uint8_t>(code_size_log_)),
-  max_code_size(1U << max_code_size_log),
-  max_code_half_size(max_code_size / 2),
-  i_even(max_code_half_size),
-  i_odd(max_code_half_size),
-  tmp(max_code_size)
+namespace {
+
+// Templated recursive stage function.
+template <unsigned CODE_SIZE_LOG>
+void stage_function(uint8_t* output, const uint8_t* input)
 {
-  for (uint16_t i = 0; i != max_code_size / 2; ++i) {
-    i_even[i] = 2 * i;
-    i_odd[i]  = 2 * i + 1;
+  unsigned code_size      = (1U << (CODE_SIZE_LOG));
+  unsigned code_half_size = code_size / 2;
+
+  stage_function<CODE_SIZE_LOG - 1>(output, input);
+  stage_function<CODE_SIZE_LOG - 1>(output + code_half_size, input + code_half_size);
+
+  for (unsigned i_bit = 0; i_bit != code_half_size; ++i_bit) {
+    output[i_bit] = output[i_bit] ^ output[i_bit + code_half_size];
   }
 }
 
+// Recursive stage function for 2 input bits.
+template <>
+void stage_function<1>(uint8_t* output, const uint8_t* input)
+{
+  output[0] = input[0] ^ input[1];
+  output[1] = input[1];
+}
+
+// Recursive polar encoder.
+template <unsigned MAX_CODE_SIZE_LOG>
+void polar_encode(uint8_t* output, const uint8_t* input, unsigned code_size_log)
+{
+  // If the code size match, run the stage function of the size.
+  if (MAX_CODE_SIZE_LOG == code_size_log) {
+    stage_function<MAX_CODE_SIZE_LOG>(output, input);
+    return;
+  }
+
+  // Otherwise, check the next smaller size.
+  polar_encode<MAX_CODE_SIZE_LOG - 1>(output, input, code_size_log);
+}
+
+// Recursive polar encoder of size 2.
+template <>
+void polar_encode<1>(uint8_t* output, const uint8_t* input, unsigned /**/)
+{
+  stage_function<1>(output, input);
+}
+
+} // namespace
+
 void polar_encoder_impl::encode(span<uint8_t> output, span<const uint8_t> input, unsigned code_size_log)
 {
-  // first stage also initializes output vector
-  uint16_t code_half_size = 1U << (code_size_log - 1U);
+  srsgnb_assert(code_size_log > 0 && code_size_log <= polar_code::eMAX,
+                "The logarithmic code size {} is invalid. It must be greater than zero and less than or equal to {}.",
+                code_size_log,
+                static_cast<unsigned>(polar_code::eMAX));
 
-  // Make sure it does not exceed the maximum allocated size
-  assert(code_half_size <= max_code_half_size);
-
-  for (uint16_t j = 0; j != code_half_size; ++j) {
-    tmp[j]                  = input[i_even[j]];
-    tmp[j + code_half_size] = input[i_odd[j]];
-  }
-
-  for (uint16_t j = 0; j != code_half_size; ++j) {
-    output[i_odd[j]]  = tmp[i_odd[j]];
-    output[i_even[j]] = tmp[i_even[j]] ^ tmp[i_odd[j]]; // bitXor
-  }
-
-  // remaining stages
-  for (uint16_t i = 1; i != code_size_log; ++i) {
-    for (uint16_t j = 0; j != code_half_size; ++j) {
-      tmp[j]                  = output[i_even[j]];
-      tmp[j + code_half_size] = output[i_odd[j]];
-    }
-
-    for (uint16_t j = 0; j != code_half_size; ++j) {
-      output[i_odd[j]]  = tmp[i_odd[j]];
-      output[i_even[j]] = tmp[i_even[j]] ^ tmp[i_odd[j]]; // bitXor
-    }
-  }
+  // Start with the largest encoder.
+  polar_encode<polar_code::eMAX>(output.data(), input.data(), code_size_log);
 }

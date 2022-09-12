@@ -120,7 +120,7 @@ static const std::vector<configuration_profile> profiles = {
      []() {
        pdcch_duration_set           = {1};
        pdcch_cce_to_reg_mapping_set = {pdcch_processor::cce_to_reg_mapping_type::CORESET0};
-       pdcch_aggregation_level_set  = {1};
+       pdcch_aggregation_level_set  = {16};
        pdcch_payload_size_set       = {pdcch_constants::MAX_DCI_PAYLOAD_SIZE};
 
        // Disable PDSCH.

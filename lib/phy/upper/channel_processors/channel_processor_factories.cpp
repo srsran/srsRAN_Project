@@ -51,7 +51,7 @@ public:
                                                polar_fec_factory->create_interleaver(),
                                                polar_fec_factory->create_allocator(),
                                                polar_fec_factory->create_code(),
-                                               polar_fec_factory->create_encoder(pbch_encoder::POLAR_N_MAX_LOG),
+                                               polar_fec_factory->create_encoder(),
                                                polar_fec_factory->create_rate_matcher());
   }
 
@@ -124,7 +124,7 @@ public:
                                                 polar_code_factory->create_interleaver(),
                                                 polar_code_factory->create_allocator(),
                                                 polar_code_factory->create_code(),
-                                                polar_code_factory->create_encoder(polar_code::NMAX_LOG),
+                                                polar_code_factory->create_encoder(),
                                                 polar_code_factory->create_rate_matcher());
   }
 };

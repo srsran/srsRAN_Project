@@ -133,12 +133,9 @@ public:
   }
   std::unique_ptr<polar_decoder> create_decoder(unsigned code_size_log) override
   {
-    return std::make_unique<polar_decoder_impl>(create_encoder(code_size_log), code_size_log);
+    return std::make_unique<polar_decoder_impl>(create_encoder(), code_size_log);
   }
-  std::unique_ptr<polar_encoder> create_encoder(unsigned code_size_log) override
-  {
-    return std::make_unique<polar_encoder_impl>(code_size_log);
-  }
+  std::unique_ptr<polar_encoder>     create_encoder() override { return std::make_unique<polar_encoder_impl>(); }
   std::unique_ptr<polar_interleaver> create_interleaver() override
   {
     return std::make_unique<polar_interleaver_impl>();

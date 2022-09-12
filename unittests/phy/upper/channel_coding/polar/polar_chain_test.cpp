@@ -133,7 +133,7 @@ int main(int argc, char** argv)
   TESTASSERT(code);
 
   // Create encoder
-  std::unique_ptr<polar_encoder> encoder = factory->create_encoder(nMax);
+  std::unique_ptr<polar_encoder> encoder = factory->create_encoder();
   TESTASSERT(encoder);
 
   // Create allocator

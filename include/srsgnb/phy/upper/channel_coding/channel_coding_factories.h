@@ -99,7 +99,7 @@ public:
   virtual std::unique_ptr<polar_code>           create_code()                          = 0;
   virtual std::unique_ptr<polar_deallocator>    create_deallocator()                   = 0;
   virtual std::unique_ptr<polar_decoder>        create_decoder(unsigned code_size_log) = 0;
-  virtual std::unique_ptr<polar_encoder>        create_encoder(unsigned code_size_log) = 0;
+  virtual std::unique_ptr<polar_encoder>        create_encoder()                       = 0;
   virtual std::unique_ptr<polar_interleaver>    create_interleaver()                   = 0;
   virtual std::unique_ptr<polar_rate_dematcher> create_rate_dematcher()                = 0;
   virtual std::unique_ptr<polar_rate_matcher>   create_rate_matcher()                  = 0;

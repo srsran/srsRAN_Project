@@ -17,18 +17,8 @@ namespace srsgnb {
 
 class polar_encoder_impl : public polar_encoder
 {
-private:
-  uint8_t max_code_size_log;   /*!< \brief The \f$ log_2\f$ of the maximum supported number of bits of the encoder
-                            input/output vector. */
-  uint16_t max_code_size;      /*!< \brief Number of bits of the encoder input/output vector. */
-  uint16_t max_code_half_size; /*!< \brief Half of the number of bits of the encoder input/output vector. */
-  srsvec::aligned_vec<uint16_t> i_even; /*!< \brief Pointer to the even positions of the encoder input/output vector. */
-  srsvec::aligned_vec<uint16_t> i_odd;  /*!< \brief Pointer to the odd positions of the encoder input/output vector. */
-  srsvec::aligned_vec<uint8_t>  tmp;    /*!< \brief Pointer to a temporary buffer. */
-
 public:
-  polar_encoder_impl(unsigned code_size_log);
-  ~polar_encoder_impl() = default;
+  // See interface for documentation.
   void encode(span<uint8_t> output, span<const uint8_t> input, unsigned code_size_log) override;
 };
 
