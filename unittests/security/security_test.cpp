@@ -1029,3 +1029,157 @@ TEST(security_nea3_test, testset5)
   byte_buffer ciphertext_out = security_nea3(key, count, bearer, dir, plaintext, length);
   EXPECT_EQ(ciphertext_out, ciphertext);
 }
+
+/// 128-NIA3 Test Set 1
+/// Ref: TS 33.501 Sec. D.4.7, TS 35.223 (Document 3) Sec. 4,
+/// ETSI TC SAGE "Specification of the 3GPP Confidentiality and Integrity Algorithms 128-EEA3 & 128-EIA3
+/// Document 3: Implementor's Test Data - Sec. 5
+TEST(security_nia3_test, testset1)
+{
+  // Testdata in plain format
+  const char* key_cstr     = "00000000000000000000000000000000";
+  uint32_t    count        = 0x0;
+  uint8_t     bearer       = 0x0;
+  uint8_t     direction    = 0;
+  uint32_t    length       = 1;
+  const char* message_cstr = "00000000";
+  const char* mac_cstr     = "c8a9595e";
+
+  // Pack hex strings into srsgnb types
+  sec_128_as_key     key     = make_sec_128_as_key(key_cstr);
+  security_direction dir     = static_cast<security_direction>(direction);
+  byte_buffer        message = make_byte_buffer(message_cstr);
+  byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
+
+  // Apply integrity check
+  sec_mac mac_out = {};
+  security_nia3(mac_out, key, count, bearer, dir, message, length);
+  EXPECT_EQ(byte_buffer(mac_out), mac_buf);
+}
+
+/// 128-NIA3 Test Set 2
+/// Ref: TS 33.501 Sec. D.4.7, TS 35.223 (Document 3) Sec. 4,
+/// ETSI TC SAGE "Specification of the 3GPP Confidentiality and Integrity Algorithms 128-EEA3 & 128-EIA3
+/// Document 3: Implementor's Test Data - Sec. 5
+TEST(security_nia3_test, testset2)
+{
+  // Testdata in plain format
+  const char* key_cstr     = "47054125561eb2dda94059da05097850";
+  uint32_t    count        = 0x561eb2dd;
+  uint8_t     bearer       = 0x14;
+  uint8_t     direction    = 0;
+  uint32_t    length       = 90;
+  const char* message_cstr = "000000000000000000000000";
+  const char* mac_cstr     = "6719a088";
+
+  // Pack hex strings into srsgnb types
+  sec_128_as_key     key     = make_sec_128_as_key(key_cstr);
+  security_direction dir     = static_cast<security_direction>(direction);
+  byte_buffer        message = make_byte_buffer(message_cstr);
+  byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
+
+  // Apply integrity check
+  sec_mac mac_out = {};
+  security_nia3(mac_out, key, count, bearer, dir, message, length);
+  EXPECT_EQ(byte_buffer(mac_out), mac_buf);
+}
+
+/// 128-NIA3 Test Set 3
+/// Ref: TS 33.501 Sec. D.4.7, TS 35.223 (Document 3) Sec. 4,
+/// ETSI TC SAGE "Specification of the 3GPP Confidentiality and Integrity Algorithms 128-EEA3 & 128-EIA3
+/// Document 3: Implementor's Test Data - Sec. 5
+TEST(security_nia3_test, testset3)
+{
+  // Testdata in plain format
+  const char* key_cstr     = "c9e6cec4607c72db000aefa88385ab0a";
+  uint32_t    count        = 0xa94059da;
+  uint8_t     bearer       = 0xa;
+  uint8_t     direction    = 1;
+  uint32_t    length       = 577;
+  const char* message_cstr = "983b41d47d780c9e1ad11d7eb70391b1de0b35da2dc62f83e7b78d6306ca0ea07e941b7be91348f9fcb170e22"
+                             "17fecd97f9f68adb16e5d7d21e569d280ed775cebde3f4093c5388100000000";
+  const char* mac_cstr     = "fae8ff0b";
+
+  // Pack hex strings into srsgnb types
+  sec_128_as_key     key     = make_sec_128_as_key(key_cstr);
+  security_direction dir     = static_cast<security_direction>(direction);
+  byte_buffer        message = make_byte_buffer(message_cstr);
+  byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
+
+  // Apply integrity check
+  sec_mac mac_out = {};
+  security_nia3(mac_out, key, count, bearer, dir, message, length);
+  EXPECT_EQ(byte_buffer(mac_out), mac_buf);
+}
+
+/// 128-NIA3 Test Set 4
+/// Ref: TS 33.501 Sec. D.4.7, TS 35.223 (Document 3) Sec. 4,
+/// ETSI TC SAGE "Specification of the 3GPP Confidentiality and Integrity Algorithms 128-EEA3 & 128-EIA3
+/// Document 3: Implementor's Test Data - Sec. 5
+TEST(security_nia3_test, testset4)
+{
+  // Testdata in plain format
+  const char* key_cstr  = "c8a48262d0c2e2bac4b96ef77e80ca59";
+  uint32_t    count     = 0x05097850;
+  uint8_t     bearer    = 0x10;
+  uint8_t     direction = 1;
+  uint32_t    length    = 2079;
+  const char* message_cstr =
+      "b546430bf87b4f1ee834704cd6951c36e26f108cf731788f48dc34f1678c05221c8fa7ff2f39f477e7e49ef60a4ec2c3de24312a96aa26e1"
+      "cfba57563838b297f47e8510c779fd6654b143386fa639d31edbd6c06e47d159d94362f26aeeedee0e4f49d9bf8412995415bfad56ee82d1"
+      "ca7463abf085b082b09904d6d990d43cf2e062f40839d93248b1eb92cdfed5300bc148280430b6d0caa094b6ec8911ab7dc36824b824dc0a"
+      "f6682b0935fde7b492a14dc2f43648038da2cf79170d2d50133fd49416cb6e33bea90b8bf4559b03732a01ea290e6d074f79bb83c10e5800"
+      "15cc1a85b36b5501046e9c4bdcae5135690b8666bd54b7a703ea7b6f220a5469a568027e";
+  const char* mac_cstr = "004ac4d6";
+
+  // Pack hex strings into srsgnb types
+  sec_128_as_key     key     = make_sec_128_as_key(key_cstr);
+  security_direction dir     = static_cast<security_direction>(direction);
+  byte_buffer        message = make_byte_buffer(message_cstr);
+  byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
+
+  // Apply integrity check
+  sec_mac mac_out = {};
+  security_nia3(mac_out, key, count, bearer, dir, message, length);
+  EXPECT_EQ(byte_buffer(mac_out), mac_buf);
+}
+
+/// 128-NIA3 Test Set 5
+/// Ref: TS 33.501 Sec. D.4.7, TS 35.223 (Document 3) Sec. 4,
+/// ETSI TC SAGE "Specification of the 3GPP Confidentiality and Integrity Algorithms 128-EEA3 & 128-EIA3
+/// Document 3: Implementor's Test Data - Sec. 5
+TEST(security_nia3_test, testset5)
+{
+  // Testdata in plain format
+  const char* key_cstr  = "6b8b08ee79e0b5982d6d128ea9f220cb";
+  uint32_t    count     = 0x561eb2dd;
+  uint8_t     bearer    = 0x1c;
+  uint8_t     direction = 0;
+  uint32_t    length    = 5670;
+  const char* message_cstr =
+      "5bad724710ba1c56d5a315f8d40f6e093780be8e8de07b6992432018e08ed96a5734af8bad8a575d3a1f162f85045cc770925571d9f5b94e"
+      "454a77c16e72936bf016ae157499f0543b5d52caa6dbeab697d2bb73e41b8075dce79b4b86044f661d4485a543dd78606e0419e8059859d3"
+      "cb2b67ce0977603f81ff839e331859544cfbc8d00fef1a4c8510fb547d6b06c611ef44f1bce107cfa45a06aab360152b28dc1ebe6f7fe09b"
+      "0516f9a5b02a1bd84bb0181e2e89e19bd8125930d178682f3862dc51b636f04e720c47c3ce51ad70d94b9b2255fbae906549f499f8c6d399"
+      "47ed5e5df8e2def113253e7b08d0a76b6bfc68c812f375c79b8fe5fd85976aa6d46b4a2339d8ae5147f680fbe70f978b38effd7b2f7866a2"
+      "2554e193a94e98a68b74bd25bb2b3f5fb0a5fd59887f9ab68159b7178d5b7b677cb546bf41eadca216fc10850128f8bdef5c8d89f96afa4f"
+      "a8b54885565ed838a950fee5f1c3b0a4f6fb71e54dfd169e82cecc7266c850e67c5ef0ba960f5214060e71eb172a75fc1486835cbea65344"
+      "65b055c96a72e4105224182325d830414b40214daa8091d2e0fb010ae15c6de90850973bdf1e423be148a237b87a0c9f34d4b47605b803d7"
+      "43a86a90399a4af396d3a1200a62f3d9507962e8e5bee6d3da2bb3f7237664ac7a292823900bc63503b29e80d63f6067bf8e1716ac25beba"
+      "350deb62a99fe03185eb4f69937ecd387941fda544ba67db0911774938b01827bcc69c92b3f772a9d2859ef003398b1f6bbad7b574f7989a"
+      "1d10b2df798e0dbf30d6587464d24878cd00c0eaee8a1a0cc753a27979e11b41db1de3d5038afaf49f5c682c3748d8a3a9ec54e6a371275f"
+      "1683510f8e4f90938f9ab6e134c2cfdf4841cba88e0cff2b0bcc8e6adcb71109b5198fecf1bb7e5c531aca50a56a8a3b6de59862d41fa113"
+      "d9cd957808f08571d9a4bb792af271f6cc6dbb8dc7ec36e36be1ed308164c31c7c0afc541c000000";
+  const char* mac_cstr = "0ca12792";
+
+  // Pack hex strings into srsgnb types
+  sec_128_as_key     key     = make_sec_128_as_key(key_cstr);
+  security_direction dir     = static_cast<security_direction>(direction);
+  byte_buffer        message = make_byte_buffer(message_cstr);
+  byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
+
+  // Apply integrity check
+  sec_mac mac_out = {};
+  security_nia3(mac_out, key, count, bearer, dir, message, length);
+  EXPECT_EQ(byte_buffer(mac_out), mac_buf);
+}

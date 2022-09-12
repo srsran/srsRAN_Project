@@ -164,6 +164,96 @@ void srsgnb::security_nia2(sec_mac&              mac,
   }
 }
 
+void srsgnb::security_nia3(sec_mac&              mac,
+                           const sec_128_as_key& key,
+                           uint32_t              count,
+                           uint8_t               bearer,
+                           security_direction    direction,
+                           byte_buffer_view      msg)
+{
+  security_nia3(mac, key, count, bearer, direction, msg, msg.length() * 8);
+}
+
+static uint32_t GET_WORD(uint32_t* DATA, uint32_t i)
+{
+  uint32_t WORD, ti;
+  ti = i % 32;
+  if (ti == 0)
+    WORD = DATA[i / 32];
+  else
+    WORD = (DATA[i / 32] << ti) | (DATA[i / 32 + 1] >> (32 - ti));
+  return WORD;
+}
+
+void srsgnb::security_nia3(sec_mac&              mac,
+                           const sec_128_as_key& key,
+                           uint32_t              count,
+                           uint8_t               bearer,
+                           security_direction    direction,
+                           byte_buffer_view      msg,
+                           uint32_t              msg_len)
+{
+  uint8_t iv[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  uint32_t* ks;
+  uint32_t  msg_len_block_8 = (msg_len + 7) / 8;
+  if (msg_len_block_8 <= msg.length()) {
+    // Construct iv
+    iv[0] = (count >> 24) & 0xff;
+    iv[1] = (count >> 16) & 0xff;
+    iv[2] = (count >> 8) & 0xff;
+    iv[3] = count & 0xff;
+
+    iv[4] = (bearer << 3) & 0xf8;
+    iv[5] = iv[6] = iv[7] = 0;
+
+    iv[8]  = ((count >> 24) & 0xff) ^ ((to_number(direction) & 1) << 7);
+    iv[9]  = (count >> 16) & 0xff;
+    iv[10] = (count >> 8) & 0xff;
+    iv[11] = count & 0xff;
+
+    iv[12] = iv[4];
+    iv[13] = iv[5];
+    iv[14] = iv[6] ^ ((to_number(direction) & 1) << 7);
+    iv[15] = iv[7];
+
+    zuc_state_t zuc_state;
+    // Initialize keystream
+    zuc_initialize(&zuc_state, key.data(), iv);
+
+    // Generate keystream
+    int N = msg_len + 64;
+    int L = (N + 31) / 32;
+
+    ks = (uint32_t*)calloc(L, sizeof(uint32_t));
+
+    zuc_generate_keystream(&zuc_state, L, ks);
+
+    byte_buffer::const_iterator msg_it = msg.begin();
+
+    uint32_t T = 0;
+    for (uint32_t i = 0; i < msg_len; i++) {
+      if (*msg_it & (1 << (7 - (i % 8)))) {
+        T ^= GET_WORD(ks, i);
+      }
+      if (i % 8 == 7) {
+        // continue with next byte
+        msg_it++;
+      }
+    }
+
+    T ^= GET_WORD(ks, msg_len);
+
+    uint32_t mac_tmp = T ^ ks[L - 1];
+    mac[0]           = (mac_tmp >> 24) & 0xff;
+    mac[1]           = (mac_tmp >> 16) & 0xff;
+    mac[2]           = (mac_tmp >> 8) & 0xff;
+    mac[3]           = mac_tmp & 0xff;
+
+    free(ks);
+  }
+}
+
 /******************************************************************************
  * Encryption / Decryption
  *****************************************************************************/
