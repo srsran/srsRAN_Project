@@ -19,6 +19,8 @@ set(SOURCES
         support/pdcch/pdcch_type0_css_occasions.cpp
         support/pdsch/pdsch_default_time_allocation.cpp
         support/pdsch/pdsch_dmrs_symbol_mask.cpp
+        support/pusch/pusch_default_time_allocation.cpp
+        support/pusch/pusch_dmrs_symbol_mask.cpp
         support/tbs_calculator.cpp
         support/prbs_calculator.cpp
         ue_scheduling/harq_process.cpp

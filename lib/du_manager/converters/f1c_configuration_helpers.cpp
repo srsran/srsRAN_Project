@@ -225,7 +225,7 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
       pdsch.pdsch_time_domain_alloc_list[i].k0 = cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[i].k0;
     }
     pdsch.pdsch_time_domain_alloc_list[i].map_type.value =
-        cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[i].map_type == pdsch_mapping_type::typeA
+        cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[i].map_type == sch_mapping_type::typeA
             ? pdsch_time_domain_res_alloc_s::map_type_opts::type_a
             : pdsch_time_domain_res_alloc_s::map_type_opts::type_b;
     pdsch.pdsch_time_domain_alloc_list[i].start_symbol_and_len =
@@ -332,7 +332,7 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
     pusch.pusch_time_domain_alloc_list[i].k2_present = true;
     pusch.pusch_time_domain_alloc_list[i].k2         = pusch_cfg.pusch_td_alloc_list[i].k2;
     pusch.pusch_time_domain_alloc_list[i].map_type.value =
-        pusch_cfg.pusch_td_alloc_list[i].map_type == pusch_time_domain_resource_allocation::mapping_type::typeA
+        pusch_cfg.pusch_td_alloc_list[i].map_type == sch_mapping_type::typeA
             ? pusch_time_domain_res_alloc_s::map_type_opts::type_a
             : pusch_time_domain_res_alloc_s::map_type_opts::type_b;
     pusch.pusch_time_domain_alloc_list[i].start_symbol_and_len =

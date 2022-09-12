@@ -16,22 +16,22 @@ static pdsch_default_time_allocation_config
 pdsch_default_time_allocation_default_A_get_normal(unsigned row_index, dmrs_typeA_position dmrs_pos)
 {
   // TS38.214 Table 5.1.2.1.1-2. Default PDSCH time domain resource allocation A for normal CP.
-  static const std::array<pdsch_default_time_allocation_config, 16> TABLE = {{{pdsch_mapping_type::typeA, 0, 2, 12},
-                                                                              {pdsch_mapping_type::typeA, 0, 2, 10},
-                                                                              {pdsch_mapping_type::typeA, 0, 2, 9},
-                                                                              {pdsch_mapping_type::typeA, 0, 2, 7},
-                                                                              {pdsch_mapping_type::typeA, 0, 2, 5},
-                                                                              {pdsch_mapping_type::typeB, 0, 9, 4},
-                                                                              {pdsch_mapping_type::typeB, 0, 4, 4},
-                                                                              {pdsch_mapping_type::typeB, 0, 5, 7},
-                                                                              {pdsch_mapping_type::typeB, 0, 5, 2},
-                                                                              {pdsch_mapping_type::typeB, 0, 9, 2},
-                                                                              {pdsch_mapping_type::typeB, 0, 12, 2},
-                                                                              {pdsch_mapping_type::typeA, 0, 1, 13},
-                                                                              {pdsch_mapping_type::typeA, 0, 1, 6},
-                                                                              {pdsch_mapping_type::typeA, 0, 2, 4},
-                                                                              {pdsch_mapping_type::typeB, 0, 4, 7},
-                                                                              {pdsch_mapping_type::typeB, 0, 8, 4}}};
+  static const std::array<pdsch_default_time_allocation_config, 16> TABLE = {{{sch_mapping_type::typeA, 0, 2, 12},
+                                                                              {sch_mapping_type::typeA, 0, 2, 10},
+                                                                              {sch_mapping_type::typeA, 0, 2, 9},
+                                                                              {sch_mapping_type::typeA, 0, 2, 7},
+                                                                              {sch_mapping_type::typeA, 0, 2, 5},
+                                                                              {sch_mapping_type::typeB, 0, 9, 4},
+                                                                              {sch_mapping_type::typeB, 0, 4, 4},
+                                                                              {sch_mapping_type::typeB, 0, 5, 7},
+                                                                              {sch_mapping_type::typeB, 0, 5, 2},
+                                                                              {sch_mapping_type::typeB, 0, 9, 2},
+                                                                              {sch_mapping_type::typeB, 0, 12, 2},
+                                                                              {sch_mapping_type::typeA, 0, 1, 13},
+                                                                              {sch_mapping_type::typeA, 0, 1, 6},
+                                                                              {sch_mapping_type::typeA, 0, 2, 4},
+                                                                              {sch_mapping_type::typeB, 0, 4, 7},
+                                                                              {sch_mapping_type::typeB, 0, 8, 4}}};
 
   if (row_index >= TABLE.size()) {
     return PDSCH_DEFAULT_TIME_ALLOCATION_RESERVED;
@@ -56,22 +56,22 @@ static pdsch_default_time_allocation_config
 pdsch_default_time_allocation_default_A_get_extended(unsigned row_index, dmrs_typeA_position dmrs_pos)
 {
   // TS38.214 Table 5.1.2.1.1-2. Default PDSCH time domain resource allocation A for normal CP.
-  static const std::array<pdsch_default_time_allocation_config, 16> TABLE = {{{pdsch_mapping_type::typeA, 0, 2, 6},
-                                                                              {pdsch_mapping_type::typeA, 0, 2, 10},
-                                                                              {pdsch_mapping_type::typeA, 0, 2, 9},
-                                                                              {pdsch_mapping_type::typeA, 0, 2, 7},
-                                                                              {pdsch_mapping_type::typeA, 0, 2, 5},
-                                                                              {pdsch_mapping_type::typeB, 0, 6, 4},
-                                                                              {pdsch_mapping_type::typeB, 0, 4, 4},
-                                                                              {pdsch_mapping_type::typeB, 0, 5, 6},
-                                                                              {pdsch_mapping_type::typeB, 0, 5, 2},
-                                                                              {pdsch_mapping_type::typeB, 0, 9, 2},
-                                                                              {pdsch_mapping_type::typeB, 0, 10, 2},
-                                                                              {pdsch_mapping_type::typeA, 0, 1, 11},
-                                                                              {pdsch_mapping_type::typeA, 0, 1, 6},
-                                                                              {pdsch_mapping_type::typeA, 0, 2, 4},
-                                                                              {pdsch_mapping_type::typeB, 0, 4, 6},
-                                                                              {pdsch_mapping_type::typeB, 0, 8, 4}}};
+  static const std::array<pdsch_default_time_allocation_config, 16> TABLE = {{{sch_mapping_type::typeA, 0, 2, 6},
+                                                                              {sch_mapping_type::typeA, 0, 2, 10},
+                                                                              {sch_mapping_type::typeA, 0, 2, 9},
+                                                                              {sch_mapping_type::typeA, 0, 2, 7},
+                                                                              {sch_mapping_type::typeA, 0, 2, 5},
+                                                                              {sch_mapping_type::typeB, 0, 6, 4},
+                                                                              {sch_mapping_type::typeB, 0, 4, 4},
+                                                                              {sch_mapping_type::typeB, 0, 5, 6},
+                                                                              {sch_mapping_type::typeB, 0, 5, 2},
+                                                                              {sch_mapping_type::typeB, 0, 9, 2},
+                                                                              {sch_mapping_type::typeB, 0, 10, 2},
+                                                                              {sch_mapping_type::typeA, 0, 1, 11},
+                                                                              {sch_mapping_type::typeA, 0, 1, 6},
+                                                                              {sch_mapping_type::typeA, 0, 2, 4},
+                                                                              {sch_mapping_type::typeB, 0, 4, 6},
+                                                                              {sch_mapping_type::typeB, 0, 8, 4}}};
 
   if (row_index >= TABLE.size()) {
     return PDSCH_DEFAULT_TIME_ALLOCATION_RESERVED;

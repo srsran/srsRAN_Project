@@ -101,7 +101,7 @@ void test_make_dmrs_info_common()
         }
 
         pdsch_cfg.pdsch_td_alloc_list.push_back(pdsch_time_domain_resource_allocation{
-            .k0 = 0, .map_type = pdsch_mapping_type::typeA, .symbols = ofdm_symbol_range{S, S + L}});
+            .k0 = 0, .map_type = sch_mapping_type::typeA, .symbols = ofdm_symbol_range{S, S + L}});
       }
 
       // Verify that for each symbol set [S, S+L) in pdsch_cfg.pdsch_td_alloc_list the function generates the correct

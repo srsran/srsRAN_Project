@@ -117,15 +117,20 @@ struct bwp_configuration {
   }
 };
 
-/// PDSCH Mapping Type. TypeA can start only at symbol 2 or 3 within a slot.
-/// \remark see TS 38.214, clause 5.3.
-enum class pdsch_mapping_type { typeA, typeB };
+/// \brief Physical shared channels Mapping Type.
+/// \remark see TS38.214 Section 5.3 for PDSCH and TS38.214 Section 6.4 for PUSCH.
+enum class sch_mapping_type {
+  /// TypeA time allocation, it can start only at symbol 2 or 3 within a slot.
+  typeA,
+  /// TypeB time allocation.
+  typeB
+};
 
 struct pdsch_time_domain_resource_allocation {
   /// Values: (0..32).
-  unsigned           k0;
-  pdsch_mapping_type map_type;
-  ofdm_symbol_range  symbols;
+  unsigned          k0;
+  sch_mapping_type  map_type;
+  ofdm_symbol_range symbols;
 };
 
 struct pdsch_config_common {
@@ -172,11 +177,9 @@ struct rach_config_common {
 };
 
 struct pusch_time_domain_resource_allocation {
-  enum class mapping_type { typeA, typeB };
-
   /// Values: (0..32).
-  unsigned     k2;
-  mapping_type map_type;
+  unsigned         k2;
+  sch_mapping_type map_type;
   /// OFDM symbol boundaries for PUSCH. Network configures the fields so it does not cross the slot boundary.
   ofdm_symbol_range symbols;
 };

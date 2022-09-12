@@ -175,7 +175,7 @@ inline dl_config_common make_default_dl_config_common(const du_cell_config_defau
   cfg.init_dl_bwp.pdcch_common.ra_search_space_id       = to_search_space_id(1);
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().k0       = 0;
-  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = pdsch_mapping_type::typeA;
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols  = {2, 14};
 
   return cfg;
@@ -211,10 +211,9 @@ inline ul_config_common make_default_ul_config_common(const du_cell_config_defau
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window               = 10;
   cfg.init_ul_bwp.pusch_cfg_common.emplace();
   cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.resize(1);
-  cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2 = 4;
-  cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].map_type =
-      pusch_time_domain_resource_allocation::mapping_type::typeA;
-  cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols = {0, 14};
+  cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2       = 4;
+  cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].map_type = sch_mapping_type::typeA;
+  cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols  = {0, 14};
   return cfg;
 }
 

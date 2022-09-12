@@ -23,7 +23,7 @@ namespace srsgnb {
 /// A configuration is invalid if the duration is not zero.
 struct pdsch_default_time_allocation_config {
   /// PDSCH mapping.
-  pdsch_mapping_type mapping_type;
+  sch_mapping_type mapping_type;
   /// PDCCH to PDSCH delay in slots, parameter \f$K_0\f$. The range is {0, 1}.
   uint8_t pdcch_to_pdsch_delay;
   /// Start symbol index within the slot, parameter \f$S\f$. The range is {0, ..., 10}.
