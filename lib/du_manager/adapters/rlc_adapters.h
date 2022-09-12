@@ -21,7 +21,11 @@ class rlc_rx_rrc_sdu_adapter : public rlc_rx_upper_layer_data_notifier
 public:
   void connect(f1_bearer& bearer_) { f1bearer = &bearer_; }
 
-  void on_new_sdu(byte_buffer_slice_chain pdu) override { f1bearer->handle_pdu(std::move(pdu)); }
+  void on_new_sdu(byte_buffer_slice_chain pdu) override
+  {
+    srsgnb_assert(f1bearer != nullptr, "RLC Rx Bearer notifier is disconnected");
+    f1bearer->handle_pdu(std::move(pdu));
+  }
 
 private:
   f1_bearer* f1bearer = nullptr;
@@ -62,6 +66,7 @@ public:
 
   void on_buffer_state_update(unsigned bsr) override
   {
+    srsgnb_assert(mac != nullptr, "RLC Tx Buffer State notifier is disconnected");
     mac_dl_bsr_indication_message msg{};
     msg.ue_index = ue_index;
     msg.lcid     = lcid;

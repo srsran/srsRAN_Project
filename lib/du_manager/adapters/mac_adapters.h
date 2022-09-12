@@ -22,7 +22,11 @@ class mac_sdu_rx_adapter : public mac_sdu_rx_notifier
 public:
   void connect(rlc_rx_lower_layer_interface& rlc_rx_) { rlc_handler = &rlc_rx_; }
 
-  void on_new_sdu(byte_buffer_slice sdu) override { rlc_handler->handle_pdu(std::move(sdu)); }
+  void on_new_sdu(byte_buffer_slice sdu) override
+  {
+    srsgnb_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
+    rlc_handler->handle_pdu(std::move(sdu));
+  }
 
 private:
   rlc_rx_lower_layer_interface* rlc_handler = nullptr;
@@ -33,9 +37,17 @@ class mac_sdu_tx_adapter : public mac_sdu_tx_builder
 public:
   void connect(rlc_tx_lower_layer_interface& rlc_tx) { rlc_handler = &rlc_tx; }
 
-  byte_buffer_slice_chain on_new_tx_sdu(unsigned nof_bytes) override { return rlc_handler->pull_pdu(nof_bytes); }
+  byte_buffer_slice_chain on_new_tx_sdu(unsigned nof_bytes) override
+  {
+    srsgnb_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
+    return rlc_handler->pull_pdu(nof_bytes);
+  }
 
-  unsigned on_buffer_state_update() override { return rlc_handler->get_buffer_state(); }
+  unsigned on_buffer_state_update() override
+  {
+    srsgnb_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
+    return rlc_handler->get_buffer_state();
+  }
 
 private:
   rlc_tx_lower_layer_interface* rlc_handler = nullptr;

@@ -21,7 +21,11 @@ class f1_tx_rlc_pdu_adapter final : public f1_tx_pdu_notifier
 public:
   void connect(rlc_tx_upper_layer_data_interface& rlc_tx_) { rlc_tx = &rlc_tx_; }
 
-  void on_tx_pdu(f1_tx_pdu pdu) override { rlc_tx->handle_sdu(rlc_sdu{pdu.pdcp_count, std::move(pdu.pdu)}); }
+  void on_tx_pdu(f1_tx_pdu pdu) override
+  {
+    srsgnb_assert(rlc_tx != nullptr, "MAC Tx PDU notifier is disconnected");
+    rlc_tx->handle_sdu(rlc_sdu{pdu.pdcp_count, std::move(pdu.pdu)});
+  }
 
 private:
   rlc_tx_upper_layer_data_interface* rlc_tx = nullptr;
