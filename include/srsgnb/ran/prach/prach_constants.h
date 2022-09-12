@@ -37,7 +37,7 @@ static constexpr phy_time_unit MAX_LENGTH_TIME_DOMAIN = phy_time_unit::from_unit
 /// Maximum number of preambles per time-frequency PRACH occasion as per TS38.211 Section 6.3.3.1.
 static constexpr unsigned MAX_NUM_PREAMBLES = 64;
 
-/// Maximum number of supported PRACH occasions.
+/// Maximum number of supported PRACH occasions per slot (implementation-defined).
 static constexpr unsigned MAX_PRACH_OCCASIONS = 1;
 
 } // namespace prach_constants

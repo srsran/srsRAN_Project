@@ -49,16 +49,36 @@ class ra_scheduler_tester : public ::testing::TestWithParam<test_params>
 protected:
   static constexpr unsigned tx_rx_delay = 4U;
   // We use this value to account for the case when the PDSCH or PUSCH is allocated several slots in advance.
-  static constexpr unsigned max_k_value = cell_resource_allocator::MAXIMUM_SLOT_DIFF;
+  unsigned max_k_value = 0;
 
   ra_scheduler_tester() { set_random_slot(); }
 
-  ~ra_scheduler_tester() override { srslog::flush(); }
+  ~ra_scheduler_tester() override
+  {
+    // Log pending allocations before finishing test.
+    for (unsigned i = 0; i != max_k_value; ++i) {
+      run_slot();
+    }
+    srslog::flush();
+  }
 
   void
   setup_sched(const sched_cell_configuration_request_message& msg = make_default_sched_cell_configuration_request())
   {
     bench.emplace(msg);
+
+    auto& dl_lst = bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+    for (auto& pdsch : dl_lst) {
+      if (pdsch.k0 > max_k_value) {
+        max_k_value = pdsch.k0;
+      }
+    }
+    auto& ul_lst = bench->cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+    for (auto& pusch : ul_lst) {
+      if (pusch.k2 > max_k_value) {
+        max_k_value = pusch.k2;
+      }
+    }
   }
 
   void handle_rach(const rach_indication_message& rach) { bench->ra_sch.handle_rach_indication(rach); }
@@ -385,8 +405,8 @@ TEST_P(ra_scheduler_tester, schedules_multiple_rars_per_slot_when_multiple_prach
   }
   handle_rach(rach_ind);
 
-  for (unsigned nof_sched_grants = 0, slot_count = 0; nof_sched_grants < rach_ind.occasions[0].preambles.size();
-       ++slot_count) {
+  unsigned nof_sched_grants = 0;
+  for (unsigned slot_count = 0; nof_sched_grants < rach_ind.occasions[0].preambles.size(); ++slot_count) {
     ASSERT_TRUE(++slot_count < 20);
     run_slot();
 
@@ -405,6 +425,7 @@ TEST_P(ra_scheduler_tester, schedules_multiple_rars_per_slot_when_multiple_prach
 
     nof_sched_grants += nof_grants;
   }
+  ASSERT_EQ(nof_sched_grants, nof_occasions);
 }
 
 /// This test verifies the correct scheduling of a RAR and Msg3 in an TDD frame. The scheduler has to find
