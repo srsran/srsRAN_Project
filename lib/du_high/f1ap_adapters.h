@@ -38,10 +38,10 @@ private:
   du_manager_configurator* du_mng;
 };
 
-class f1c_task_scheduler_adapter : public f1c_du_configurator
+class f1c_du_configurator_adapter : public f1c_du_configurator
 {
 public:
-  explicit f1c_task_scheduler_adapter(timer_manager& timers_) : timers(timers_)
+  explicit f1c_du_configurator_adapter(timer_manager& timers_) : timers(timers_)
   {
     for (unsigned i = 0; i != MAX_NOF_DU_UES; ++i) {
       ues.emplace(i, to_du_ue_index(i), timers);

@@ -47,13 +47,13 @@ private:
   mac_interface& mac;
 };
 
-du_high::du_high(const du_high_configuration& config_) : cfg(config_), timers(128), f1c_task_sched(timers)
+du_high::du_high(const du_high_configuration& config_) : cfg(config_), timers(128), f1c_du_cfg_handler(timers)
 {
   assert_du_high_configuration_valid(cfg);
 
   // Create layers
   mac  = create_mac(mac_ev_notifier, *cfg.ul_executors, *cfg.dl_executors, *cfg.du_mng_executor, *cfg.phy_adapter);
-  f1ap = create_f1ap(*cfg.f1c_notifier, f1c_task_sched, *cfg.du_mng_executor, *cfg.ul_executors);
+  f1ap = create_f1ap(*cfg.f1c_notifier, f1c_du_cfg_handler, *cfg.du_mng_executor, *cfg.ul_executors);
   du_manager = create_du_manager(timers,
                                  mac->get_ue_configurator(),
                                  mac->get_cell_manager(),
@@ -66,7 +66,7 @@ du_high::du_high(const du_high_configuration& config_) : cfg(config_), timers(12
 
   // Connect Layer<->DU manager adapters.
   mac_ev_notifier.connect(*du_manager);
-  f1c_task_sched.connect(*du_manager);
+  f1c_du_cfg_handler.connect(*du_manager);
 
   // Cell slot handler.
   main_cell_slot_handler = std::make_unique<du_high_slot_handler>(timers, *mac);

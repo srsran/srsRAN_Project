@@ -48,7 +48,7 @@ private:
 
   timer_manager timers;
 
-  f1c_task_scheduler_adapter f1c_task_sched;
+  f1c_du_configurator_adapter f1c_du_cfg_handler;
 
   std::unique_ptr<du_manager_interface> du_manager;
   std::unique_ptr<f1_interface>         f1ap;

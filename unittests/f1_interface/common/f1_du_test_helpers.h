@@ -24,13 +24,13 @@
 namespace srsgnb {
 namespace srs_du {
 
-class dummy_f1c_task_scheduler : public f1c_du_configurator
+class dummy_f1c_du_configurator : public f1c_du_configurator
 {
 public:
   struct dummy_ue_task_sched : public f1c_ue_task_scheduler {
-    dummy_f1c_task_scheduler* parent;
+    dummy_f1c_du_configurator* parent;
 
-    dummy_ue_task_sched(dummy_f1c_task_scheduler* parent_) : parent(parent_) {}
+    dummy_ue_task_sched(dummy_f1c_du_configurator* parent_) : parent(parent_) {}
 
     unique_timer create_timer() override { return parent->timers.create_unique_timer(); }
 
@@ -42,7 +42,7 @@ public:
   async_task_sequencer task_loop;
   dummy_ue_task_sched  ue_sched;
 
-  explicit dummy_f1c_task_scheduler(timer_manager& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
+  explicit dummy_f1c_du_configurator(timer_manager& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
 
   timer_manager& get_timer_manager() override { return timers; }
 
@@ -82,7 +82,7 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    f1ap = create_f1ap(msg_notifier, f1c_task_sched, ctrl_worker, ue_exec_mapper);
+    f1ap = create_f1ap(msg_notifier, f1c_du_cfg_handler, ctrl_worker, ue_exec_mapper);
   }
 
   void TearDown() override
@@ -93,7 +93,7 @@ protected:
 
   f1c_null_notifier             msg_notifier = {};
   timer_manager                 timers;
-  dummy_f1c_task_scheduler      f1c_task_sched{timers};
+  dummy_f1c_du_configurator     f1c_du_cfg_handler{timers};
   manual_task_worker            ctrl_worker{128};
   dummy_ue_executor_mapper      ue_exec_mapper{ctrl_worker};
   std::unique_ptr<f1_interface> f1ap;
