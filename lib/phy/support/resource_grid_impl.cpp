@@ -83,7 +83,7 @@ span<const cf_t> resource_grid_impl::put(unsigned         port,
     // Process presets of 4 bits.
     unsigned offset = 0;
     for (; mask32 != 0; mask32 = mask32 >> 4, offset += 4) {
-      switch (mask32 & 0xF) {
+      switch (mask32 & 0xf) {
         case 0B0000:
           // No subcarrier is active, skip.
           break;

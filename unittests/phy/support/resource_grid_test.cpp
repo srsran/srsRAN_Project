@@ -64,8 +64,9 @@ void test_coordinates(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
   unsigned port_gold = port_dist(rgen);
   for (unsigned i = 0; i != nof_elements; ++i) {
     // Generate coordinate, making sure there are no double entries
-    bool doubled = false;
+    bool doubled;
     do {
+      doubled        = false;
       coordinates[i] = {symbol_dist(rgen), subc_dist(rgen)};
 
       // Check if the coordinate exists
@@ -286,7 +287,7 @@ int main()
       for (unsigned nof_subc : {6 * 12, 15 * 12}) {
         test_all_zero(nof_ports, nof_symbols, nof_subc);
         // Test symbolic number of elements
-        for (unsigned nof_elements : {1, 2, 4, 8, 16}) {
+        for (unsigned nof_elements : {1, 2, 4, 8, 16, 32}) {
           test_coordinates(nof_ports, nof_symbols, nof_subc, nof_elements);
           test_mask(nof_ports, nof_symbols, nof_subc, nof_elements);
           test_consecutive(nof_ports, nof_symbols, nof_subc, nof_elements);
