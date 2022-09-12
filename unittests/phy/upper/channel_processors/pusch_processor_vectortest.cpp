@@ -80,7 +80,7 @@ protected:
     std::shared_ptr<ldpc_decoder_factory> ldpc_dec_factory = create_ldpc_decoder_factory_sw("generic");
     ASSERT_TRUE(ldpc_dec_factory);
 
-    // Create LDPC decoder factory.
+    // Create LDPC rate dematcher factory.
     std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rm_factory = create_ldpc_rate_dematcher_factory_sw();
     ASSERT_TRUE(ldpc_rm_factory);
 

@@ -142,7 +142,7 @@ void pusch_decoder_impl::decode(span<uint8_t>                    transport_block
   // Select CRC calculator for inner codeblock checks.
   crc_calculator* block_crc = select_crc(crc_set, tb_size, nof_cbs);
 
-  // Reset CRCs of new data is flagged.
+  // Reset CRCs if new data is flagged.
   span<bool> cb_crcs = soft_codeword->get_codeblocks_crc();
   if (cfg.new_data) {
     srsvec::zero(cb_crcs);

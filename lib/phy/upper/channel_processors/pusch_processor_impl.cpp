@@ -35,7 +35,7 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   unsigned nof_dmrs_per_prb = pdu.dmrs.nof_dmrs_per_rb() * pdu.nof_cdm_groups_without_data *
                               std::count(pdu.dmrs_symbol_mask.begin(), pdu.dmrs_symbol_mask.end(), true);
 
-  // Calculate the mnumber of data RE per PRB.
+  // Calculate the number of data RE per PRB.
   unsigned nof_re_per_prb = NRE * pdu.nof_symbols - nof_dmrs_per_prb;
 
   // Calculate the number of PUSCH symbols.
