@@ -45,7 +45,7 @@ prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& in
   unsigned N_cs = prach_cyclic_shifts_get(preamble_info.scs, config.restricted_set, config.zero_correlation_zone);
   srsgnb_assert(N_cs != PRACH_CYCLIC_SHIFTS_RESERVED, "Reserved cyclic shift.");
 
-  // Calculate maximum delay.
+  // Calculate maximum delay due to the cyclic prefix.
   phy_time_unit time_advance_max = preamble_info.cp_length;
 
   // If the cyclic shift is not zero...

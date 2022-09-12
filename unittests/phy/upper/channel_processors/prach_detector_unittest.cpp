@@ -90,7 +90,7 @@ protected:
     restricted_set_config      restricted_set   = std::get<2>(GetParam());
     unsigned                   N_cs = prach_cyclic_shifts_get(preamble_info.scs, restricted_set, zero_correlation_zone);
 
-    // Calculate maximum delay.
+    // Calculate maximum delay due to the cyclic prefix.
     phy_time_unit time_advance_max = preamble_info.cp_length;
 
     // If the cyclic shift is not zero...
