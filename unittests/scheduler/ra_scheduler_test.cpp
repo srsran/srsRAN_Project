@@ -111,13 +111,21 @@ protected:
     }
 
     // Msg3 grant checks.
-    unsigned nof_msg3_matches = 0;
-    ASSERT_TRUE(msg3_consistent_with_rars(scheduled_rars(0), scheduled_puschs(0), nof_msg3_matches))
-        << "Msg3 PUSCHs parameters must match the content of the RAR grants";
-    ASSERT_EQ(scheduled_puschs(0).size(), nof_msg3_matches) << "All scheduled PUSCHs must be Msg3 grants";
+    unsigned nof_grants = 0, nof_puschs = 0;
+    for (const rar_information& rar : scheduled_rars(0)) {
+      nof_grants += rar.grants.size();
+    }
+    for (unsigned i = 0; i != bench->cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.size();
+         ++i) {
+      unsigned nof_msg3_matches = 0;
+      ASSERT_TRUE(msg3_consistent_with_rars(scheduled_rars(0), scheduled_puschs(i), nof_msg3_matches))
+          << "Msg3 PUSCHs parameters must match the content of the RAR grants";
+      nof_puschs += nof_msg3_matches;
+    }
+    ASSERT_EQ(nof_grants, nof_puschs);
 
-    TESTASSERT(bench->res_grid[0].result.dl.ue_grants.empty());
-    TESTASSERT(bench->res_grid[0].result.dl.bc.sibs.empty());
+    ASSERT_TRUE(bench->res_grid[0].result.dl.ue_grants.empty());
+    ASSERT_TRUE(bench->res_grid[0].result.dl.bc.sibs.empty());
   }
 
   void set_random_slot() { next_slot = {0, get_random_uint(0, 10240)}; }
