@@ -43,7 +43,7 @@ f1ap_ue_create_response create_f1ap_du_ue(const f1ap_ue_create_request& msg,
   // Prepare response.
   f1ap_ue_create_response resp{};
   resp.result = true;
-  for (std::unique_ptr<f1_du_bearer>& bearer : ues[msg.ue_index].bearers) {
+  for (std::unique_ptr<f1_bearer>& bearer : ues[msg.ue_index].bearers) {
     resp.bearers_added.push_back(bearer.get());
   }
   return resp;

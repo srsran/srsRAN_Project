@@ -25,7 +25,7 @@ public:
   virtual void handle_pdu(byte_buffer_slice_chain pdu) = 0;
 };
 
-class f1_du_bearer : public f1_pdu_handler
+class f1_bearer : public f1_pdu_handler
 {};
 
 } // namespace srs_du

@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/f1_interface/common/f1c_types.h"
-#include "srsgnb/f1_interface/du/f1_du_bearer.h"
+#include "srsgnb/f1_interface/du/f1_bearer.h"
 #include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/ran/rnti.h"
 
@@ -20,7 +20,7 @@ namespace srs_du {
 
 class f1ap_event_manager;
 
-class f1c_srb0_du_bearer final : public f1_du_bearer
+class f1c_srb0_du_bearer final : public f1_bearer
 {
 public:
   f1c_srb0_du_bearer(du_ue_index_t              ue_index_,
@@ -47,7 +47,7 @@ private:
   srslog::basic_logger&     logger;
 };
 
-class f1c_other_srb_du_bearer final : public f1_du_bearer
+class f1c_other_srb_du_bearer final : public f1_bearer
 {
 public:
   f1c_other_srb_du_bearer(gnb_du_ue_f1ap_id_t   gnb_du_f1ap_ue_id_,

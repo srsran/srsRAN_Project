@@ -26,10 +26,10 @@ public:
   {
   }
 
-  const du_ue_index_t                        ue_index;
-  const gnb_du_ue_f1ap_id_t                  gnb_du_ue_f1ap_id;
-  optional<uint64_t>                         gnb_cu_ue_f1ap_id;
-  std::vector<std::unique_ptr<f1_du_bearer>> bearers;
+  const du_ue_index_t                     ue_index;
+  const gnb_du_ue_f1ap_id_t               gnb_du_ue_f1ap_id;
+  optional<uint64_t>                      gnb_cu_ue_f1ap_id;
+  std::vector<std::unique_ptr<f1_bearer>> bearers;
 };
 
 /// \brief Stores the list of UE contexts currently registered in the F1AP-DU.
