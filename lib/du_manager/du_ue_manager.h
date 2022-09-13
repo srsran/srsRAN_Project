@@ -29,7 +29,7 @@ public:
 
   void                                       handle_ue_create_request(const ul_ccch_indication_message& msg);
   async_task<f1ap_ue_config_update_response> handle_ue_config_request(const f1ap_ue_config_update_request& msg);
-  void                                       handle_ue_delete_request(const du_ue_delete_message& msg);
+  void                                       handle_ue_delete_request(const f1ap_ue_delete_request& msg);
 
   const stable_id_map<du_ue_index_t, du_ue_context, MAX_NOF_DU_UES>& get_ues() { return ue_db; }
 

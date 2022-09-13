@@ -45,6 +45,11 @@ du_manager_impl::handle_ue_config_update(const f1ap_ue_config_update_request& re
   return ue_mng.handle_ue_config_request(request);
 }
 
+void du_manager_impl::handle_ue_delete_request(const f1ap_ue_delete_request& request)
+{
+  return ue_mng.handle_ue_delete_request(request);
+}
+
 size_t du_manager_impl::nof_ues()
 {
   // TODO: This is temporary code.

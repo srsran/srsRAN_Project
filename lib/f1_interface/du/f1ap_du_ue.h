@@ -13,6 +13,7 @@
 #include "f1c_du_bearer_impl.h"
 #include "f1c_ue_context.h"
 #include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/stable_id_map.h"
 #include "srsgnb/f1_interface/common/f1c_types.h"
 #include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/ran/du_types.h"
@@ -33,16 +34,27 @@ public:
   {
   }
 
-  f1c_ue_context                          context;
-  std::vector<std::unique_ptr<f1_bearer>> bearers;
-  f1c_du_configurator&                    du_handler;
-  f1c_message_notifier&                   f1c_msg_notifier;
+  void add_srb(srb_id_t srb_id, std::unique_ptr<f1_bearer> bearer)
+  {
+    srsgnb_assert(not srbs.contains(srb_id), "srbId={} already exists", srb_id);
+    srbs.insert(srb_id, std::move(bearer));
+  }
+
+  f1_bearer*       find_srb(srb_id_t srb_id) { return srbs.contains(srb_id) ? &srbs[srb_id] : nullptr; }
+  const f1_bearer* find_srb(srb_id_t srb_id) const { return srbs.contains(srb_id) ? &srbs[srb_id] : nullptr; }
+
+  f1c_ue_context        context;
+  f1c_du_configurator&  du_handler;
+  f1c_message_notifier& f1c_msg_notifier;
 
   /// \brief Handles UE CONTEXT SETUP REQUEST as per TS38.473, Section 8.3.1.
   void handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg);
 
   /// \brief Handles UE CONTEXT MODIFICATION REQUEST as per TS38.473, Section 8.3.2.
   void handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg);
+
+private:
+  stable_id_map<srb_id_t, f1_bearer, MAX_NOF_RB_LCIDS> srbs;
 };
 
 /// \brief Stores the list of UE contexts currently registered in the F1AP-DU.

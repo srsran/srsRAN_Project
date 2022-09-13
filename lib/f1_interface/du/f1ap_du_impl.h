@@ -65,8 +65,13 @@ private:
   /// \param[in] outcome The unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome);
 
-  /// \brief Notify the DU about the reception of a DL RRC message transfer message.
-  /// \param[in] msg The DL RRC message transfer message.
+  /// \brief Handle UE CONTEXT SETUP REQUEST as per TS38.473, Section 8.3.1.
+  void handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg);
+
+  /// \brief Handle UE CONTEXT MODIFICATION REQUEST as per TS38.473, Section 8.3.4.
+  void handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg);
+
+  /// \brief Handle DL RRC Message Transfer as per TS38.473, Section 8.4.2.2.
   void handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg);
 
   srslog::basic_logger&       logger;
@@ -74,7 +79,7 @@ private:
   task_executor&              ctrl_exec;
   du_high_ue_executor_mapper& ue_exec_mapper;
 
-  f1c_du_configurator& task_sched;
+  f1c_du_configurator& du_mng;
 
   f1ap_du_ue_manager ues;
 

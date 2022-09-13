@@ -18,11 +18,13 @@ f1c_srb0_du_bearer::f1c_srb0_du_bearer(f1c_ue_context&            ue_ctxt_,
                                        const asn1::f1ap::nrcgi_s& nr_cgi_,
                                        const byte_buffer&         du_cu_rrc_container_,
                                        f1c_message_notifier&      f1c_notifier_,
+                                       f1_tx_pdu_notifier&        f1c_pdu_notifier_,
                                        f1ap_event_manager&        ev_manager_) :
   ue_ctxt(ue_ctxt_),
   nr_cgi(nr_cgi_),
   du_cu_rrc_container(du_cu_rrc_container_.copy()),
   f1c_notifier(f1c_notifier_),
+  pdu_notifier(f1c_pdu_notifier_),
   ev_manager(ev_manager_),
   logger(srslog::fetch_basic_logger("F1AP-DU"))
 {
@@ -60,10 +62,23 @@ void f1c_srb0_du_bearer::handle_pdu(byte_buffer_slice_chain pdu)
                "Initial UL RRC Message Transfer.");
 }
 
+void f1c_srb0_du_bearer::handle_sdu(byte_buffer sdu)
+{
+  pdu_notifier.on_tx_pdu(std::move(sdu));
+
+  log_ue_event(
+      logger, ue_event_prefix{"DL", ue_ctxt.ue_index}.set_channel("SRB0") | ue_ctxt.rnti, "DL RRC Message Transfer.");
+}
+
 f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1c_ue_context&       ue_ctxt_,
                                                  srb_id_t              srb_id_,
-                                                 f1c_message_notifier& f1c_notifier_) :
-  ue_ctxt(ue_ctxt_), srb_id(srb_id_), f1c_notifier(f1c_notifier_)
+                                                 f1c_message_notifier& f1c_notifier_,
+                                                 f1_tx_pdu_notifier&   f1c_pdu_notifier_) :
+  ue_ctxt(ue_ctxt_),
+  srb_id(srb_id_),
+  f1c_notifier(f1c_notifier_),
+  pdu_notifier(f1c_pdu_notifier_),
+  logger(srslog::fetch_basic_logger("F1AP-DU"))
 {
 }
 
@@ -83,4 +98,17 @@ void f1c_other_srb_du_bearer::handle_pdu(byte_buffer_slice_chain pdu)
   ul_msg->new_g_nb_du_ue_f1_ap_id_present = false;
 
   f1c_notifier.on_new_message(msg);
+
+  log_ue_event(logger,
+               ue_event_prefix{"UL", ue_ctxt.ue_index}.set_channel(srb_id_to_string(srb_id)) | ue_ctxt.rnti,
+               "UL RRC Message Transfer.");
+}
+
+void f1c_other_srb_du_bearer::handle_sdu(srsgnb::byte_buffer sdu)
+{
+  pdu_notifier.on_tx_pdu(std::move(sdu));
+
+  log_ue_event(logger,
+               ue_event_prefix{"DL", ue_ctxt.ue_index}.set_channel(srb_id_to_string(srb_id)) | ue_ctxt.rnti,
+               "DL RRC Message Transfer.");
 }

@@ -34,21 +34,25 @@ f1ap_ue_create_response create_f1ap_du_ue(const f1ap_ue_create_request& msg,
 
   // Create an F1c bearer for each requested SRB.
   for (const srb_to_addmod& srb : msg.srbs_to_add) {
+    std::unique_ptr<f1_bearer> f1c_srb;
     if (srb.srb_id == srb_id_t::srb0) {
-      auto srb0 = std::make_unique<f1c_srb0_du_bearer>(
-          u.context, ue_pcell.served_cell_info.nrcgi, msg.du_cu_rrc_container, f1c_notifier, ev_mng);
-      u.bearers.push_back(std::move(srb0));
+      f1c_srb = std::make_unique<f1c_srb0_du_bearer>(u.context,
+                                                     ue_pcell.served_cell_info.nrcgi,
+                                                     msg.du_cu_rrc_container,
+                                                     f1c_notifier,
+                                                     *srb.f1_tx_pdu_notif,
+                                                     ev_mng);
     } else {
-      auto srb1 = std::make_unique<f1c_other_srb_du_bearer>(u.context, srb.srb_id, f1c_notifier);
-      u.bearers.push_back(std::move(srb1));
+      f1c_srb = std::make_unique<f1c_other_srb_du_bearer>(u.context, srb.srb_id, f1c_notifier, *srb.f1_tx_pdu_notif);
     }
+    u.add_srb(srb.srb_id, std::move(f1c_srb));
   }
 
   // Prepare response.
   f1ap_ue_create_response resp{};
   resp.result = true;
-  for (std::unique_ptr<f1_bearer>& bearer : u.bearers) {
-    resp.bearers_added.push_back(bearer.get());
+  for (const srb_to_addmod& srb : msg.srbs_to_add) {
+    resp.bearers_added.push_back(u.find_srb(srb.srb_id));
   }
   return resp;
 }

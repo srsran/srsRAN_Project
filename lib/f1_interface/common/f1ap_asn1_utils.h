@@ -65,6 +65,8 @@ inline expected<uint8_t> get_transaction_id(const asn1::f1ap::init_msg_s& out)
       return out.value.gnbdu_cfg_upd()->transaction_id->value;
     case f1_ap_elem_procs_o::init_msg_c::types_opts::f1_removal_request:
       return (*out.value.f1_removal_request())[0]->transaction_id();
+    case f1_ap_elem_procs_o::init_msg_c::types_opts::init_ulrrc_msg_transfer:
+      return (*out.value.init_ulrrc_msg_transfer()).transaction_id->value;
       // TODO: Remaining cases.
     default:
       break;
@@ -131,14 +133,24 @@ inline expected<uint8_t> get_transaction_id(const asn1::f1ap::f1_ap_pdu_c& pdu)
 
 inline expected<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::init_msg_s& init_msg)
 {
-  using namespace asn1::f1ap;
+  using init_msg_type = asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts;
   switch (init_msg.value.type()) {
-    case f1_ap_elem_procs_o::init_msg_c::types_opts::dlrrc_msg_transfer:
-      return (gnb_du_ue_f1ap_id_t)init_msg.value.dlrrc_msg_transfer()->gnb_du_ue_f1_ap_id->value;
-    case f1_ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request:
+    case init_msg_type::ue_context_setup_request:
       return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_setup_request()->gnb_du_ue_f1_ap_id->value;
-    case f1_ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request:
+    case init_msg_type::ue_context_release_cmd:
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_release_cmd()->gnb_du_ue_f1_ap_id->value;
+    case init_msg_type::ue_context_mod_request:
       return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_mod_request()->gnb_du_ue_f1_ap_id->value;
+    case init_msg_type::ue_context_mod_required:
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_mod_required()->gnb_du_ue_f1_ap_id->value;
+    case init_msg_type::ue_context_release_request:
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_release_request()->gnb_du_ue_f1_ap_id->value;
+    case init_msg_type::dlrrc_msg_transfer:
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.dlrrc_msg_transfer()->gnb_du_ue_f1_ap_id->value;
+    case init_msg_type::ulrrc_msg_transfer:
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.ulrrc_msg_transfer()->gnb_du_ue_f1_ap_id->value;
+    case init_msg_type::init_ulrrc_msg_transfer:
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.init_ulrrc_msg_transfer()->gnb_du_ue_f1_ap_id->value;
     default:
       break;
   }

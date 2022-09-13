@@ -55,6 +55,8 @@ public:
     });
   }
 
+  void request_ue_removal(const f1ap_ue_delete_request& request) override {}
+
   /// \brief Retrieve task scheduler specific to a given UE.
   f1c_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) override { return ue_sched; }
 };

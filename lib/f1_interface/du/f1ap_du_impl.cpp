@@ -28,9 +28,9 @@ f1ap_du_impl::f1ap_du_impl(f1c_message_notifier&       message_notifier_,
   f1c_notifier(message_notifier_),
   ctrl_exec(ctrl_exec_),
   ue_exec_mapper(ue_exec_mapper_),
-  task_sched(du_mng_),
+  du_mng(du_mng_),
   ues(du_mng_, f1c_notifier),
-  events(std::make_unique<f1ap_event_manager>(task_sched.get_timer_manager()))
+  events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_manager()))
 {
 }
 
@@ -39,7 +39,7 @@ f1ap_du_impl::~f1ap_du_impl() {}
 
 async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& request)
 {
-  return launch_async<f1ap_du_setup_procedure>(request, f1c_notifier, *events, task_sched.get_timer_manager(), ctxt);
+  return launch_async<f1ap_du_setup_procedure>(request, f1c_notifier, *events, du_mng.get_timer_manager(), ctxt);
 }
 
 f1ap_ue_create_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_create_request& msg)
@@ -47,10 +47,78 @@ f1ap_ue_create_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_c
   return create_f1ap_du_ue(msg, ues, ctxt, f1c_notifier, *events);
 }
 
+void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg)
+{
+  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1_ap_id->value);
+  f1ap_du_ue*         u                 = ues.find(gnb_du_ue_f1ap_id);
+
+  if (u == nullptr) {
+    logger.error("Discarding UE CONTEXT SETUP REQUEST. Cause: Unrecognized gNB-DU UE F1AP ID={}", gnb_du_ue_f1ap_id);
+    // TODO: Handle.
+    return;
+  }
+
+  u->handle_ue_context_setup_request(msg);
+}
+
+void f1ap_du_impl::handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg)
+{
+  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1_ap_id->value);
+  f1ap_du_ue*         u                 = ues.find(gnb_du_ue_f1ap_id);
+
+  if (u == nullptr) {
+    logger.error("Discarding UE CONTEXT MODIFICATION REQUEST. Cause: Unrecognized gNB-DU UE F1AP ID={}",
+                 gnb_du_ue_f1ap_id);
+    // TODO: Handle.
+    return;
+  }
+
+  u->handle_ue_context_modification_request(msg);
+}
+
 void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg)
 {
-  logger.info("Received F1AP DL RRC msg.");
-  // TODO: handle dl rrc message
+  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1_ap_id->value);
+  f1ap_du_ue*         u                 = ues.find(gnb_du_ue_f1ap_id);
+
+  // TODO: Check old gNB-DU UE F1AP ID.
+
+  if (msg->oldg_nb_du_ue_f1_ap_id_present) {
+    // > If the gNB-DU identifies the UE-associated logical F1-connection by the gNB-DU UE F1AP ID IE in the
+    // DL RRC MESSAGE TRANSFER message and the old gNB-DU UE F1AP ID IE is included, it shall release the old gNB-DU
+    // UE F1AP ID and the related configurations associated with the old gNB-DU UE F1AP ID.
+    gnb_du_ue_f1ap_id_t old_gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->oldg_nb_du_ue_f1_ap_id->value);
+    f1ap_du_ue*         old_ue                = ues.find(old_gnb_du_ue_f1ap_id);
+    if (old_ue != nullptr) {
+      f1ap_ue_delete_request request{};
+      request.ue_index = old_ue->context.ue_index;
+      du_mng.request_ue_removal(request);
+    } else {
+      logger.warning("old gNB-DU UE F1AP ID={} not found", old_gnb_du_ue_f1ap_id);
+    }
+  }
+
+  if (msg->new_g_nb_cu_ue_f1_ap_id_present) {
+    // > If the DL RRC MESSAGE TRANSFER message contains the New gNB-CU UE F1AP ID IE, the gNB-DU shall, if supported,
+    // replace the value received in the gNB-CU UE F1AP ID IE by the value of the New gNB-CU UE F1AP ID and use it
+    // for further signalling.
+    u->context.gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(msg->new_g_nb_cu_ue_f1_ap_id->value);
+  }
+
+  srb_id_t   srb_id     = int_to_srb_id(msg->srbid->value);
+  f1_bearer* srb_bearer = u->find_srb(srb_id);
+  if (srb_bearer == nullptr) {
+    logger.warning("Discarding DL RRC Message Transfer. Cause: srb-Id={} not found", srb_id);
+    // TODO: Handle error.
+    return;
+  }
+
+  // Forward SDU to lower layers.
+  byte_buffer sdu;
+  sdu.append(msg->rrc_container.value);
+  ue_exec_mapper.executor(u->context.ue_index).execute([sdu = std::move(sdu), srb_bearer]() mutable {
+    srb_bearer->handle_sdu(std::move(sdu));
+  });
 }
 
 async_task<f1ap_ue_context_modification_response_message>
@@ -96,53 +164,33 @@ void f1ap_du_impl::handle_message(const f1c_message& msg)
     logger.info("F1AP SDU, \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
   }
 
-  // Dispatch F1AP message to UE-specific executor if GNB-UE-F1AP-ID is specified. Otherwise, run in CTRL executor.
-  task_executor* exec = nullptr;
-  if (not gnb_du_ue_f1ap_id.has_value()) {
-    exec = &ctrl_exec;
-  } else {
-    du_ue_index_t ue_index = ues.get_ue_index(gnb_du_ue_f1ap_id.value());
-    if (ue_index == INVALID_DU_UE_INDEX) {
-      logger.warning("Discarding F1AP SDU. Cause: GNB-DU-UE-F1AP-ID={} does not exist", gnb_du_ue_f1ap_id.value());
-      return;
-    }
-    exec = &ue_exec_mapper.executor(ue_index);
+  switch (msg.pdu.type().value) {
+    case asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg:
+      handle_initiating_message(msg.pdu.init_msg());
+      break;
+    case asn1::f1ap::f1_ap_pdu_c::types_opts::successful_outcome:
+      handle_successful_outcome(msg.pdu.successful_outcome());
+      break;
+    case asn1::f1ap::f1_ap_pdu_c::types_opts::unsuccessful_outcome:
+      handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
+      break;
+    default:
+      logger.error("Invalid PDU type");
+      break;
   }
-  exec->execute([this, pdu = msg.pdu]() {
-    switch (pdu.type().value) {
-      case asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg:
-        handle_initiating_message(pdu.init_msg());
-        break;
-      case asn1::f1ap::f1_ap_pdu_c::types_opts::successful_outcome:
-        handle_successful_outcome(pdu.successful_outcome());
-        break;
-      case asn1::f1ap::f1_ap_pdu_c::types_opts::unsuccessful_outcome:
-        handle_unsuccessful_outcome(pdu.unsuccessful_outcome());
-        break;
-      default:
-        logger.error("Invalid PDU type");
-        break;
-    }
-  });
 }
 
 void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
 {
-  expected<gnb_du_ue_f1ap_id_t> gnb_du_ue_f1ap_id = get_gnb_du_ue_f1ap_id(msg);
-  f1ap_du_ue*                   u                 = nullptr;
-  if (gnb_du_ue_f1ap_id.has_value()) {
-    u = ues.find(gnb_du_ue_f1ap_id.value());
-  }
-
   switch (msg.value.type().value) {
     case f1_ap_elem_procs_o::init_msg_c::types_opts::dlrrc_msg_transfer:
       handle_dl_rrc_message_transfer(msg.value.dlrrc_msg_transfer());
       break;
     case f1_ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request:
-      u->handle_ue_context_setup_request(msg.value.ue_context_setup_request());
+      handle_ue_context_setup_request(msg.value.ue_context_setup_request());
       break;
     case f1_ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request:
-      u->handle_ue_context_modification_request(msg.value.ue_context_mod_request());
+      handle_ue_context_modification_request(msg.value.ue_context_mod_request());
       break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());

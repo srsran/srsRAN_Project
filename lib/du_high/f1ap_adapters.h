@@ -66,6 +66,8 @@ public:
     return du_mng->handle_ue_config_update(request);
   }
 
+  void request_ue_removal(const f1ap_ue_delete_request& request) override { du_mng->handle_ue_delete_request(request); }
+
 private:
   timer_manager&                                            timers;
   du_manager_configurator*                                  du_mng;

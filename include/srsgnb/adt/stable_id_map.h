@@ -25,6 +25,9 @@ namespace srsgnb {
 template <typename IdType, typename T, size_t MAX_SIZE>
 class stable_id_map
 {
+  static_assert(std::is_convertible<IdType, size_t>::value or std::is_enum<IdType>::value,
+                "IdType must be convertible to index");
+
   using container_t = std::array<std::unique_ptr<T>, MAX_SIZE>;
 
   template <typename Data>
@@ -76,14 +79,16 @@ public:
 
   bool contains(IdType id) const
   {
-    srsgnb_sanity_check(id < MAX_SIZE, "Invalid Id={}", id);
-    return elems[id] != nullptr;
+    size_t idx = static_cast<size_t>(id);
+    srsgnb_sanity_check(idx < MAX_SIZE, "Invalid Id={}", id);
+    return elems[idx] != nullptr;
   }
 
   void insert(IdType id_value, std::unique_ptr<T> u)
   {
     srsgnb_sanity_check(not contains(id_value), "Id={} already exists", id_value);
-    elems[id_value] = std::move(u);
+    size_t idx = static_cast<size_t>(id_value);
+    elems[idx] = std::move(u);
     ++nof_elems;
   }
 
@@ -91,7 +96,8 @@ public:
   void emplace(IdType id_value, Args&&... args)
   {
     srsgnb_sanity_check(not contains(id_value), "Id={} already exists", id_value);
-    elems[id_value] = std::make_unique<T>(std::forward<Args>(args)...);
+    size_t idx = static_cast<size_t>(id_value);
+    elems[idx] = std::make_unique<T>(std::forward<Args>(args)...);
     ++nof_elems;
   }
 
@@ -100,7 +106,8 @@ public:
     if (not contains(id_value)) {
       return false;
     }
-    elems[id_value].reset();
+    size_t idx = static_cast<size_t>(id_value);
+    elems[idx].reset();
     nof_elems--;
     return true;
   }
@@ -116,13 +123,22 @@ public:
   T& operator[](IdType id_value)
   {
     srsgnb_sanity_check(contains(id_value), "Id={} does not exist", id_value);
-    return *elems[id_value];
+    return *elems[static_cast<size_t>(id_value)];
   }
 
   const T& operator[](IdType id_value) const
   {
     srsgnb_sanity_check(contains(id_value), "Id={} does not exist", id_value);
-    return *elems[id_value];
+    return *elems[static_cast<size_t>(id_value)];
+  }
+
+  iterator find(IdType id_value)
+  {
+    return contains(id_value) ? iterator{elems.begin() + static_cast<size_t>(id_value), elems.end()} : end();
+  }
+  const_iterator find(IdType id_value) const
+  {
+    return contains(id_value) ? const_iterator{elems.begin() + static_cast<size_t>(id_value), elems.end()} : end();
   }
 
   size_t size() const { return nof_elems; }
@@ -133,8 +149,8 @@ public:
   const_iterator begin() const { return {elems.begin(), elems.end()}; }
   const_iterator end() const { return {elems.end(), elems.end()}; }
 
-  iterator       lower_bound(IdType id) { return {elems.begin() + id, elems.end()}; }
-  const_iterator lower_bound(IdType id) const { return {elems.begin() + id, elems.end()}; }
+  iterator       lower_bound(IdType id) { return {elems.begin() + static_cast<size_t>(id), elems.end()}; }
+  const_iterator lower_bound(IdType id) const { return {elems.begin() + static_cast<size_t>(id), elems.end()}; }
 
 private:
   size_t                                   nof_elems = 0;

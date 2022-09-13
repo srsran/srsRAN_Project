@@ -11,6 +11,7 @@
 #pragma once
 
 #include <cstdint>
+#include <type_traits>
 
 namespace srsgnb {
 
@@ -54,10 +55,21 @@ inline srb_id_t to_srb_id(lcid_t lcid)
   return is_srb(lcid) ? static_cast<srb_id_t>(lcid) : srb_id_t::nulltype;
 }
 
+inline srb_id_t int_to_srb_id(std::underlying_type_t<srb_id_t> val)
+{
+  return static_cast<srb_id_t>(val);
+}
+
 /// Convert SRB ID to LCID.
 inline lcid_t srb_id_to_lcid(srb_id_t srb_id)
 {
   return static_cast<lcid_t>(srb_id);
+}
+
+inline const char* srb_id_to_string(srb_id_t srb_id)
+{
+  constexpr static const char* names[] = {"SRB0", "SRB1", "SRB2", "SRB3", "invalid"};
+  return names[srb_id_to_uint(srb_id < srb_id_t::nulltype ? srb_id : srb_id_t::nulltype)];
 }
 
 enum class drb_id_t : uint16_t {
