@@ -51,6 +51,7 @@ void rlc_tx_am_entity::handle_sdu(rlc_sdu sdu)
                   sdu_queue.size_sdus());
   if (sdu_queue.write(sdu)) {
     metrics_add_sdus(1, sdu_length);
+    handle_buffer_state_update(); // take lock
   } else {
     logger.log_warning("Dropped Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}",
                        sdu_length,
@@ -64,36 +65,45 @@ void rlc_tx_am_entity::handle_sdu(rlc_sdu sdu)
 byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t nof_bytes)
 {
   std::lock_guard<std::mutex> lock(mutex);
+  byte_buffer_slice_chain     pdu_buf;
 
   logger.log_debug("MAC opportunity - bytes={}, tx_window size={} PDUs", nof_bytes, tx_window->size());
 
   // Tx STATUS if requested
   if (status_provider->status_report_required()) {
     rlc_am_status_pdu status_pdu = status_provider->get_status_pdu();
-    byte_buffer       pdu;
+
     if (status_pdu.get_packed_size() > nof_bytes) {
       if (not status_pdu.trim(nof_bytes)) {
         logger.log_warning("Could not trim status PDU down to {} bytes", nof_bytes);
-        return {};
+        handle_buffer_state_update_nolock(); // already locked
+        return pdu_buf;
       }
       logger.log_info("Trimmed status PDU to fit into {} bytes", nof_bytes);
       logger.log_debug("Trimmed status PDU: {}", status_pdu);
     }
+    byte_buffer pdu;
     status_pdu.pack(pdu);
     logger.log_debug("Status PDU built - {} bytes", pdu.length());
-    return byte_buffer_slice_chain(std::move(pdu));
+    pdu_buf.push_back(std::move(pdu));
+    handle_buffer_state_update_nolock(); // already locked
+    return pdu_buf;
   }
 
   // Retransmit if required
   if (not retx_queue.empty()) {
     logger.log_info("Re-transmission required. Retransmission queue size: {}", retx_queue.size());
-    return build_retx_pdu(nof_bytes);
+    pdu_buf = build_retx_pdu(nof_bytes);
+    handle_buffer_state_update_nolock(); // already locked
+    return pdu_buf;
   }
 
   // Send remaining segment, if it exists
   if (sn_under_segmentation != INVALID_RLC_SN) {
     if (tx_window->has_sn(sn_under_segmentation)) {
-      return build_continued_sdu_segment((*tx_window)[sn_under_segmentation], nof_bytes);
+      pdu_buf = build_continued_sdu_segment((*tx_window)[sn_under_segmentation], nof_bytes);
+      handle_buffer_state_update_nolock(); // already locked
+      return pdu_buf;
     } else {
       sn_under_segmentation = INVALID_RLC_SN;
       logger.log_error("SDU currently being segmented does not exist in tx_window. Aborting segmentation SN={}",
@@ -105,10 +115,12 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t nof_bytes)
   // Check whether there is something to TX
   if (sdu_queue.is_empty()) {
     logger.log_debug("No data available to be sent");
-    return {};
+    return pdu_buf;
   }
 
-  return build_new_pdu(nof_bytes);
+  pdu_buf = build_new_pdu(nof_bytes);
+  handle_buffer_state_update_nolock(); // already locked
+  return pdu_buf;
 }
 
 byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
@@ -534,6 +546,8 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
     }
   }
 
+  handle_buffer_state_update_nolock(); // already locked
+
   // Process retx_count and inform upper layers if needed
   for (uint32_t retx_sn : retx_sn_set) {
     auto& pdu = (*tx_window)[retx_sn];
@@ -549,6 +563,13 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
     // Inform upper layers if needed
     check_sn_reached_max_retx(retx_sn);
   }
+}
+
+void rlc_tx_am_entity::on_status_report_required()
+{
+  // this function is called from the RX entity
+  std::lock_guard<std::mutex> lock(mutex);
+  handle_buffer_state_update_nolock(); // already locked
 }
 
 bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
@@ -632,7 +653,12 @@ uint32_t rlc_tx_am_entity::get_buffer_state()
 void rlc_tx_am_entity::handle_buffer_state_update()
 {
   std::lock_guard<std::mutex> lock(mutex);
-  uint32_t                    bytes = get_buffer_state_nolock();
+  handle_buffer_state_update_nolock();
+}
+
+void rlc_tx_am_entity::handle_buffer_state_update_nolock()
+{
+  uint32_t bytes = get_buffer_state_nolock();
   lower_dn.on_buffer_state_update(bytes);
 }
 
@@ -657,7 +683,7 @@ uint32_t rlc_tx_am_entity::get_buffer_state_nolock()
   uint32_t             retx_bytes = retx_state.get_retx_bytes() + retx_state.get_n_retx_so_zero() * head_min_size +
                         retx_state.get_n_retx_so_nonzero() * head_max_size;
 
-  // TODO: status report size
+  // status report size
   uint32_t status_bytes = 0;
   if (status_provider->status_report_required()) {
     status_bytes = status_provider->get_status_pdu_length();
@@ -787,6 +813,8 @@ void rlc_tx_am_entity::timer_expired(uint32_t timeout_id)
       //
       // TODO: Increment ReTx counter, handle max_retx
       //
+
+      handle_buffer_state_update_nolock(); // already locked
     }
   }
 }

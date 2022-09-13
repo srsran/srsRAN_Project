@@ -80,6 +80,8 @@ private:
 
   /// Called when buffer state needs to be updated and forwarded to lower layers.
   void handle_buffer_state_update();
+  /// Called when buffer state needs to be updated and forwarded to lower layers while already holding a lock.
+  void handle_buffer_state_update_nolock();
 
   uint32_t get_buffer_state_nolock();
 

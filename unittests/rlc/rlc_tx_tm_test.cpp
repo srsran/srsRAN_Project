@@ -23,6 +23,8 @@ class rlc_tx_tm_test_frame : public rlc_tx_upper_layer_data_notifier,
 public:
   std::queue<byte_buffer_slice> sdu_queue;
   uint32_t                      sdu_counter = 0;
+  uint32_t                      bsr         = 0;
+  uint32_t                      bsr_count   = 0;
 
   // rlc_tx_upper_layer_data_notifier interface
   void on_delivered_sdu(uint32_t pdcp_count) override {}
@@ -32,7 +34,11 @@ public:
   void on_max_retx() override {}
 
   // rlc_tx_buffer_state_update_notifier interface
-  void on_buffer_state_update(unsigned bsr) override {}
+  void on_buffer_state_update(unsigned bsr) override
+  {
+    this->bsr = bsr;
+    this->bsr_count++;
+  }
 };
 
 /// Fixture class for RLC TM Tx tests
@@ -79,6 +85,8 @@ protected:
 TEST_F(rlc_tx_am_test, create_new_entity)
 {
   EXPECT_EQ(rlc->get_buffer_state(), 0);
+  EXPECT_EQ(tester->bsr, 0);
+  EXPECT_EQ(tester->bsr_count, 0);
 }
 
 TEST_F(rlc_tx_am_test, test_tx)
@@ -94,6 +102,8 @@ TEST_F(rlc_tx_am_test, test_tx)
   // write SDU into upper end
   rlc->handle_sdu(std::move(sdu));
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
+  EXPECT_EQ(tester->bsr, sdu_size);
+  EXPECT_EQ(tester->bsr_count, 1);
 
   byte_buffer_slice_chain pdu;
 
@@ -102,11 +112,15 @@ TEST_F(rlc_tx_am_test, test_tx)
   EXPECT_EQ(pdu.length(), sdu_size);
   EXPECT_EQ(pdu, sdu_buf);
   EXPECT_EQ(rlc->get_buffer_state(), 0);
+  EXPECT_EQ(tester->bsr, 0);
+  EXPECT_EQ(tester->bsr_count, 2);
 
   // read another PDU from lower end but there is nothing to read
   pdu = rlc->pull_pdu(sdu_size);
   EXPECT_EQ(pdu.length(), 0);
   EXPECT_EQ(rlc->get_buffer_state(), 0);
+  EXPECT_EQ(tester->bsr, 0);
+  EXPECT_EQ(tester->bsr_count, 2); // unchanged
 
   // write another SDU into upper end
   count++;
@@ -114,11 +128,15 @@ TEST_F(rlc_tx_am_test, test_tx)
   sdu     = {/* pdcp_count = */ count, sdu_buf.deep_copy()}; // no std::move - keep local copy for later comparison
   rlc->handle_sdu(std::move(sdu));
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
+  EXPECT_EQ(tester->bsr, sdu_size);
+  EXPECT_EQ(tester->bsr_count, 3);
 
   // read PDU from lower end with insufficient space for the whole SDU
   pdu = rlc->pull_pdu(sdu_size - 1);
   EXPECT_EQ(pdu.length(), 0);
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
+  EXPECT_EQ(tester->bsr, sdu_size);
+  EXPECT_EQ(tester->bsr_count, 3); // unchanged
 
   // write another SDU into upper end
   count++;
@@ -128,18 +146,24 @@ TEST_F(rlc_tx_am_test, test_tx)
   // write SDU into upper end
   rlc->handle_sdu(std::move(sdu));
   EXPECT_EQ(rlc->get_buffer_state(), 2 * sdu_size);
+  EXPECT_EQ(tester->bsr, 2 * sdu_size);
+  EXPECT_EQ(tester->bsr_count, 4);
 
   // read first PDU from lower end with oversized space
   pdu = rlc->pull_pdu(3 * sdu_size);
   EXPECT_EQ(pdu.length(), sdu_size);
   EXPECT_EQ(pdu, sdu_buf);
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
+  EXPECT_EQ(tester->bsr, sdu_size);
+  EXPECT_EQ(tester->bsr_count, 5);
 
   // read second PDU from lower end with oversized space
   pdu = rlc->pull_pdu(3 * sdu_size);
   EXPECT_EQ(pdu.length(), sdu_size);
   EXPECT_EQ(pdu, sdu_buf2);
   EXPECT_EQ(rlc->get_buffer_state(), 0);
+  EXPECT_EQ(tester->bsr, 0);
+  EXPECT_EQ(tester->bsr_count, 6);
 }
 
 int main(int argc, char** argv)

@@ -39,6 +39,7 @@ void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu)
                   sdu_queue.size_sdus());
   if (sdu_queue.write(sdu)) {
     metrics_add_sdus(1, sdu_length);
+    handle_buffer_state_update(); // take lock
   } else {
     logger.log_warning("Dropped Tx SDU (length: {} B, PDCP Count: {}, enqueued SDUs: {}",
                        sdu_length,
@@ -144,6 +145,7 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
   }
 
   metrics_add_pdus(1, pdu_buf.length());
+  handle_buffer_state_update_nolock(); // already locked
 
   log_state(srslog::basic_levels::debug);
 
@@ -200,7 +202,12 @@ uint32_t rlc_tx_um_entity::get_buffer_state()
 void rlc_tx_um_entity::handle_buffer_state_update()
 {
   std::lock_guard<std::mutex> lock(mutex);
-  uint32_t                    bytes = get_buffer_state_nolock();
+  handle_buffer_state_update_nolock();
+}
+
+void rlc_tx_um_entity::handle_buffer_state_update_nolock()
+{
+  uint32_t bytes = get_buffer_state_nolock();
   lower_dn.on_buffer_state_update(bytes);
 }
 

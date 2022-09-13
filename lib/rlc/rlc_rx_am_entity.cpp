@@ -57,6 +57,7 @@ void rlc_rx_am_entity::handle_pdu(byte_buffer_slice buf)
   } else {
     if (handle_data_pdu(std::move(buf))) {
       refresh_status_report();
+      notify_status_required();
     }
   }
 }
@@ -97,7 +98,7 @@ bool rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
   // received.
   if (header.p != 0U) {
     logger.log_info("status packet requested through polling bit");
-    do_status = true;
+    do_status.store(true, std::memory_order_relaxed);
   }
 
   // Check whether SDU is within Rx Window
@@ -439,7 +440,7 @@ void rlc_rx_am_entity::refresh_status_report()
 
 rlc_am_status_pdu rlc_rx_am_entity::get_status_pdu()
 {
-  do_status = false;
+  do_status.store(false, std::memory_order_relaxed);
   if (status_prohibit_timer.is_valid()) {
     status_prohibit_timer.run();
   }
@@ -456,6 +457,14 @@ uint32_t rlc_rx_am_entity::get_status_pdu_length()
 bool rlc_rx_am_entity::status_report_required()
 {
   return do_status.load(std::memory_order_relaxed) && not status_prohibit_timer.is_running();
+}
+
+void rlc_rx_am_entity::notify_status_required()
+{
+  if (status_report_required()) {
+    logger.log_info("Notifying TX that status report is required");
+    status_handler->on_status_report_required();
+  }
 }
 
 std::unique_ptr<rlc_am_window_base<rlc_rx_am_sdu_info>> rlc_rx_am_entity::create_rx_window(rlc_am_sn_size sn_size)
@@ -486,6 +495,7 @@ void rlc_rx_am_entity::on_expired_status_prohibit_timer(uint32_t timeout_id)
 {
   if (status_prohibit_timer.is_valid() && status_prohibit_timer.id() == timeout_id) {
     logger.log_debug("Status prohibit timer expired after {}ms", status_prohibit_timer.duration());
+    notify_status_required();
     return;
   }
 }
@@ -538,7 +548,8 @@ void rlc_rx_am_entity::on_expired_reassembly_timer(uint32_t timeout_id)
      *   triggered, but the STATUS report shall be triggered after RX_Highest_Status is updated.
      */
     refresh_status_report();
-    do_status = true;
+    do_status.store(true, std::memory_order_relaxed);
+    notify_status_required();
 
     logger.log_debug("State: {}", st);
     logger.log_debug("SDUs in rx_window: {}", st.rx_next, st.rx_next_highest, rx_window->size());

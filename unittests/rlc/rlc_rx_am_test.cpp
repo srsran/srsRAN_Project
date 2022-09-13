@@ -25,6 +25,7 @@ public:
   uint32_t                            sdu_counter = 0;
   rlc_am_sn_size                      sn_size;
   rlc_am_status_pdu                   status;
+  uint32_t                            status_trigger_counter = 0;
 
   rlc_rx_am_test_frame(rlc_am_sn_size sn_size) : sn_size(sn_size), status(sn_size) {}
 
@@ -37,6 +38,7 @@ public:
 
   // rlc_tx_am_status_handler interface
   virtual void handle_status_pdu(rlc_am_status_pdu status) override { this->status = status; }
+  virtual void on_status_report_required() override { this->status_trigger_counter++; }
 };
 
 /// Fixture class for RLC AM Rx tests.
@@ -236,6 +238,7 @@ protected:
       sdu_originals.pop_front();
     }
     EXPECT_EQ(tester->sdu_queue.size(), 0);
+    EXPECT_EQ(tester->status_trigger_counter, 0);
   }
 
   /// \brief Injects RLC AMD PDUs with SDU segments into the RLC AM entity starting from Sequence number sn_state
@@ -330,6 +333,7 @@ protected:
       sdu_originals.pop_front();
     }
     EXPECT_EQ(tester->sdu_queue.size(), 0);
+    EXPECT_EQ(tester->status_trigger_counter, 0);
   }
 
   srslog::basic_logger&                 logger  = srslog::fetch_basic_logger("TEST", false);
@@ -357,6 +361,8 @@ TEST_P(rlc_rx_am_test, read_initial_status)
   EXPECT_EQ(status_report.get_nacks().size(), 0);
   EXPECT_EQ(status_report.get_packed_size(), 3);
   EXPECT_EQ(rlc->get_status_pdu_length(), 3);
+
+  EXPECT_EQ(tester->status_trigger_counter, 0);
 }
 
 /// Verify Rx window boundary checks if Rx window is currently at the lower edge, i.e. at smallest SN value
@@ -420,6 +426,8 @@ TEST_P(rlc_rx_am_test, rx_valid_control_pdu)
   EXPECT_EQ(tester->status.ack_sn, status.ack_sn);
   ASSERT_EQ(tester->status.get_nacks().size(), status.get_nacks().size());
   EXPECT_EQ(tester->status.get_nacks().front().nack_sn, nack.nack_sn);
+
+  EXPECT_EQ(tester->status_trigger_counter, 0);
 }
 
 /// Verify that malformed status PDUs are not forwarded to the Tx entity (via interface)
@@ -466,6 +474,7 @@ TEST_P(rlc_rx_am_test, rx_short_data_pdu)
 
   // Check if polling bit of malformed PDU was properly ignored
   EXPECT_FALSE(rlc->status_report_required());
+  EXPECT_EQ(tester->status_trigger_counter, 0);
 }
 
 /// Verify proper handling of polling bit for valid PDUs inside the Rx window: The status-required state shall change
@@ -494,6 +503,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sn_inside_rx_window)
 
   // Check if polling bit of PDU was properly considered
   EXPECT_TRUE(rlc->status_report_required());
+  EXPECT_EQ(tester->status_trigger_counter, 1);
 
   // Check if SDU was properly unpacked and forwarded
   ASSERT_EQ(tester->sdu_queue.size(), 1);
@@ -528,6 +538,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sn_outside_rx_window)
 
   // Check if polling bit was considered, despite out-of-window SN
   EXPECT_TRUE(rlc->status_report_required());
+  EXPECT_EQ(tester->status_trigger_counter, 1);
 
   // Check if SDU was properly ignored
   ASSERT_EQ(tester->sdu_queue.size(), 0);
@@ -556,6 +567,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sdu_duplicate)
 
   // Check if polling bit has not changed
   EXPECT_FALSE(rlc->status_report_required());
+  EXPECT_EQ(tester->status_trigger_counter, 0);
 
   // Check if SDU was properly unpacked and forwarded
   ASSERT_EQ(tester->sdu_queue.size(), 1);
@@ -572,6 +584,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sdu_duplicate)
 
   // Check if polling bit was considered, despite duplicate SN
   EXPECT_TRUE(rlc->status_report_required());
+  EXPECT_EQ(tester->status_trigger_counter, 1);
 
   // Check if duplicate SDU was properly ignored
   ASSERT_EQ(tester->sdu_queue.size(), 0);
@@ -644,6 +657,7 @@ TEST_P(rlc_rx_am_test, status_prohibit_timer)
   init(GetParam());
 
   EXPECT_FALSE(rlc->status_report_required());
+  EXPECT_EQ(tester->status_trigger_counter, 0);
 
   uint32_t sn_state = 0;
   uint32_t sdu_size = 1;
@@ -670,16 +684,20 @@ TEST_P(rlc_rx_am_test, status_prohibit_timer)
 
   // Status report must not be required as long as status_prohibit_timer is running
   EXPECT_FALSE(rlc->status_report_required());
+  EXPECT_EQ(tester->status_trigger_counter, 0);
 
   for (int i = 0; i < config.t_status_prohibit; i++) {
     EXPECT_FALSE(rlc->status_report_required());
+    EXPECT_EQ(tester->status_trigger_counter, 0);
     timers.tick_all();
   }
   EXPECT_TRUE(rlc->status_report_required());
+  EXPECT_EQ(tester->status_trigger_counter, 1);
 
   // reading the size of the status PDU must not change anything on the required status
   EXPECT_EQ(rlc->get_status_pdu_length(), 3);
   EXPECT_TRUE(rlc->status_report_required());
+  EXPECT_EQ(tester->status_trigger_counter, 1);
 
   // check status report, reset status_prohibit_timer
   status_report = rlc->get_status_pdu();
@@ -689,6 +707,7 @@ TEST_P(rlc_rx_am_test, status_prohibit_timer)
   EXPECT_EQ(rlc->get_status_pdu_length(), 3);
 
   EXPECT_FALSE(rlc->status_report_required());
+  EXPECT_EQ(tester->status_trigger_counter, 1);
 }
 
 /// Verify reassembly timer:
@@ -733,10 +752,12 @@ TEST_P(rlc_rx_am_test, reassembly_timer)
   // Let the reassembly timer expire
   for (int i = 0; i < config.t_reassembly; i++) {
     EXPECT_FALSE(rlc->status_report_required());
+    EXPECT_EQ(tester->status_trigger_counter, 0);
     timers.tick_all();
   }
 
   EXPECT_TRUE(rlc->status_report_required());
+  EXPECT_EQ(tester->status_trigger_counter, 1);
 
   // check status report
   uint32_t nack_size = sn_size == rlc_am_sn_size::size12bits ? rlc_am_nr_status_pdu_sizeof_nack_sn_ext_12bit_sn
@@ -823,10 +844,12 @@ TEST_P(rlc_rx_am_test, status_report)
   // Let the reassembly timer expire (advance rx_highest_status to 4 and rx_next_status_trigger to 11)
   for (int t = 0; t < config.t_reassembly; t++) {
     EXPECT_FALSE(rlc->status_report_required());
+    EXPECT_EQ(tester->status_trigger_counter, 0);
     timers.tick_all();
   }
 
   EXPECT_TRUE(rlc->status_report_required());
+  EXPECT_EQ(tester->status_trigger_counter, 1);
 
   // Check status report
   uint32_t nack_size = sn_size == rlc_am_sn_size::size12bits ? rlc_am_nr_status_pdu_sizeof_nack_sn_ext_12bit_sn
@@ -864,6 +887,7 @@ TEST_P(rlc_rx_am_test, status_report)
   rlc->handle_pdu(std::move(pdu));
 
   EXPECT_FALSE(rlc->status_report_required()); // status prohibit timer is not yet expired, regardless we read status
+  EXPECT_EQ(tester->status_trigger_counter, 1);
 
   // Check status report
   status_report = rlc->get_status_pdu();
@@ -890,6 +914,8 @@ TEST_P(rlc_rx_am_test, status_report)
   for (int t = 0; t < config.t_reassembly; t++) {
     timers.tick_all();
   }
+
+  EXPECT_EQ(tester->status_trigger_counter, 2);
 
   // Check status report
   status_report = rlc->get_status_pdu();

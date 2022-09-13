@@ -20,7 +20,6 @@ class rlc_tx_tm_entity : public rlc_tx_entity
 {
 private:
   rlc_sdu_queue sdu_queue;
-  std::mutex    buffer_state_mutex;
 
 public:
   rlc_tx_tm_entity(du_ue_index_t                        du_index,
@@ -43,6 +42,7 @@ public:
                     sdu_queue.size_sdus());
     if (sdu_queue.write(sdu)) {
       metrics_add_sdus(1, sdu_length);
+      handle_buffer_state_update();
     } else {
       logger.log_warning("Dropped Tx SDU (length: {} B, enqueued SDUs: {})", sdu.buf.length(), sdu_queue.size_sdus());
       metrics_add_lost_sdus(1);
@@ -83,6 +83,8 @@ public:
     pdu.push_back(std::move(sdu.buf));
     logger.log_info("Tx PDU ({} B). Provided space ({} B)", sdu_size, nof_bytes);
     metrics_add_pdus(1, pdu.length());
+    handle_buffer_state_update();
+
     return pdu;
   }
 
@@ -90,8 +92,7 @@ public:
 
   void handle_buffer_state_update()
   {
-    std::lock_guard<std::mutex> lock(buffer_state_mutex);
-    unsigned                    bytes = get_buffer_state();
+    unsigned bytes = get_buffer_state();
     lower_dn.on_buffer_state_update(bytes);
   }
 };
