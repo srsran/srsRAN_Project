@@ -12,6 +12,7 @@
 #include "../../ran/gnb_format.h"
 #include "du/procedures/f1ap_du_setup_procedure.h"
 #include "du/procedures/f1ap_du_ue_creation_procedure.h"
+#include "du/procedures/f1ap_du_ue_release_procedure.h"
 #include "f1c_du_bearer_impl.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/support/async/event_signal.h"
@@ -32,6 +33,7 @@ f1ap_du_impl::f1ap_du_impl(f1c_message_notifier&       message_notifier_,
   ues(du_mng_, f1c_notifier),
   events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_manager()))
 {
+  (void)ctrl_exec;
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
@@ -59,6 +61,32 @@ void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_
   }
 
   u->handle_ue_context_setup_request(msg);
+}
+
+void f1ap_du_impl::handle_ue_context_release_command(const asn1::f1ap::ue_context_release_cmd_s& msg)
+{
+  if (msg->oldg_nb_du_ue_f1_ap_id_present) {
+    // If the old gNB-DU UE F1AP ID IE is included in the UE CONTEXT RELEASE COMMAND message, the gNB-DU shall
+    // additionally release the UE context associated with the old gNB-DU UE F1AP ID.
+    gnb_du_ue_f1ap_id_t old_gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->oldg_nb_du_ue_f1_ap_id->value);
+    f1ap_du_ue*         old_ue                = ues.find(old_gnb_du_ue_f1ap_id);
+    if (old_ue != nullptr) {
+      du_mng.get_ue_handler(old_ue->context.ue_index)
+          .schedule_async_task(du_mng.request_ue_removal(f1ap_ue_delete_request{old_ue->context.ue_index}));
+    } else {
+      logger.warning("old gNB-DU UE F1AP ID={} not found", old_gnb_du_ue_f1ap_id);
+    }
+  }
+
+  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1_ap_id->value);
+  f1ap_du_ue*         u                 = ues.find(gnb_du_ue_f1ap_id);
+  if (u == nullptr) {
+    logger.warning("Discarding UE CONTEXT RELEASE COMMAND. Cause: Unrecognized gNB-DU UE F1AP ID={}",
+                   gnb_du_ue_f1ap_id);
+    return;
+  }
+
+  du_mng.get_ue_handler(u->context.ue_index).schedule_async_task(launch_async<f1ap_du_ue_release_procedure>(msg, *u));
 }
 
 void f1ap_du_impl::handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg)
@@ -92,7 +120,7 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_tr
     if (old_ue != nullptr) {
       f1ap_ue_delete_request request{};
       request.ue_index = old_ue->context.ue_index;
-      du_mng.request_ue_removal(request);
+      du_mng.get_ue_handler(old_ue->context.ue_index).schedule_async_task(du_mng.request_ue_removal(request));
     } else {
       logger.warning("old gNB-DU UE F1AP ID={} not found", old_gnb_du_ue_f1ap_id);
     }

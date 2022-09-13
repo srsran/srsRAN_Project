@@ -68,6 +68,9 @@ private:
   /// \brief Handle UE CONTEXT SETUP REQUEST as per TS38.473, Section 8.3.1.
   void handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg);
 
+  /// \brief Handle UE CONTEXT MODIFICATION REQUEST as per TS38.473, Section 8.3.3.
+  void handle_ue_context_release_command(const asn1::f1ap::ue_context_release_cmd_s& msg);
+
   /// \brief Handle UE CONTEXT MODIFICATION REQUEST as per TS38.473, Section 8.3.4.
   void handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg);
 

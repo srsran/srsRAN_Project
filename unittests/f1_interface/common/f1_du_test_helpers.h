@@ -55,7 +55,13 @@ public:
     });
   }
 
-  void request_ue_removal(const f1ap_ue_delete_request& request) override {}
+  async_task<void> request_ue_removal(const f1ap_ue_delete_request& request) override
+  {
+    return launch_async([](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
 
   /// \brief Retrieve task scheduler specific to a given UE.
   f1c_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) override { return ue_sched; }

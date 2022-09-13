@@ -129,7 +129,7 @@ void test_ue_concurrent_procedures(test_outcome outcome)
   f1ap_ue_delete_request ue_del_req{};
   ue_del_req.ue_index = ue_index;
   test_logger.info("TEST: Starting UE deletion with UE index={}...", ue_del_req.ue_index);
-  ue_mng.handle_ue_delete_request(ue_del_req);
+  ue_mng.schedule_async_task(ue_index, ue_mng.handle_ue_delete_request(ue_del_req));
 
   // TEST: Given that UE creation task hasn't finished, the UE deletion isn't processed yet
   TESTASSERT(not mac_dummy.last_ue_delete_msg.has_value());
@@ -188,7 +188,7 @@ void test_inexistent_ue_removal()
   // Action 1: Start UE deletion
   f1ap_ue_delete_request ue_del_req{};
   ue_del_req.ue_index = to_du_ue_index(0);
-  ue_mng.handle_ue_delete_request(ue_del_req);
+  ue_mng.schedule_async_task(ue_del_req.ue_index, ue_mng.handle_ue_delete_request(ue_del_req));
 
   // There should not be any reply from MAC and F1AP should receive failure signal
   TESTASSERT(ue_mng.get_ues().empty());

@@ -48,10 +48,10 @@ du_ue_manager::handle_ue_config_request(const f1ap_ue_config_update_request& msg
   return launch_async<ue_configuration_procedure>(msg, *this, *cfg.mac_ue_mng);
 }
 
-void du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_request& msg)
+async_task<void> du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_request& msg)
 {
   // Enqueue UE deletion procedure
-  ue_ctrl_loop[msg.ue_index].schedule<ue_deletion_procedure>(msg, cfg, *this);
+  return launch_async<ue_deletion_procedure>(msg, cfg, *this);
 }
 
 du_ue_context* du_ue_manager::find_ue(du_ue_index_t ue_index)

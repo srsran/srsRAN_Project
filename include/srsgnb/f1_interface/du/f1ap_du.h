@@ -212,7 +212,7 @@ public:
   request_ue_config_update(const f1ap_ue_config_update_request& request) = 0;
 
   /// \brief Request the update of the UE configuration in the DU.
-  virtual void request_ue_removal(const f1ap_ue_delete_request& request) = 0;
+  virtual async_task<void> request_ue_removal(const f1ap_ue_delete_request& request) = 0;
 
   /// \brief Retrieve task scheduler specific to a given UE.
   virtual f1c_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) = 0;

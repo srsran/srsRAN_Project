@@ -42,7 +42,7 @@ public:
   handle_ue_config_update(const f1ap_ue_config_update_request& request) = 0;
 
   /// \brief Remove UE context from the DU.
-  virtual void handle_ue_delete_request(const f1ap_ue_delete_request& request) = 0;
+  virtual async_task<void> handle_ue_delete_request(const f1ap_ue_delete_request& request) = 0;
 };
 
 class du_manager_interface_query
