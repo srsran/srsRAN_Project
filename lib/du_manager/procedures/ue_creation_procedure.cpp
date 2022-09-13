@@ -57,6 +57,9 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   // > Initiate creation of RLC SRB0.
   create_rlc_srbs();
 
+  // > Connect bearers between layers F1AP<->RLC<->MAC.
+  connect_layer_bearers();
+
   // > Initiate MAC UE creation and await result.
   CORO_AWAIT_VALUE(mac_resp, make_mac_ue_create_req());
   if (not mac_resp.result) {
@@ -64,9 +67,6 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
     clear_ue();
     CORO_EARLY_RETURN();
   }
-
-  // > Connect bearers between layers F1AP<->RLC<->MAC.
-  connect_layer_bearers();
 
   // > Create UE context in DU manager.
   du_ue_index_t ue_index = ue_ctx->ue_index;
