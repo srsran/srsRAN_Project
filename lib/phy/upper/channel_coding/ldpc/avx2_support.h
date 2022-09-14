@@ -78,7 +78,7 @@ template <size_t nof_elements>
 inline void avx2_array<nof_elements>::set_at(unsigned pos, __m256i val)
 {
   unsigned index = (pos + margin) * AVX2_SIZE_BYTE;
-  std::memcpy(inner_array.data() + index, &val, AVX2_SIZE_BYTE);
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(inner_array.data() + index), val);
 }
 
 template <size_t nof_elements>

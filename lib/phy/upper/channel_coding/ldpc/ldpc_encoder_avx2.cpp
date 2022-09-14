@@ -15,21 +15,13 @@
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
 
-/// Rotates the contents of a node towards the right by \c steps chars, that is the \c steps * 8 most significant bits
-/// become the least significant ones - for short lifting sizes.
-/// \param[in]  a     The node to rotate.
-/// \param[in]  steps The order of the rotation as a number of chars.
-/// \param[in]  ls    The size of the node (lifting size).
-/// \return     The rotated node.
-static __m256i rotate_node_right_short(__m256i a, unsigned steps, unsigned ls);
-
 /// Rotates the contents of a node towards the left by \c steps chars, that is the \c steps * 8 least significant bits
-/// become the most significant ones - for short lifting sizes.
-/// \param[in]  a     The node to rotate.
-/// \param[in]  steps The order of the rotation as a number of chars.
-/// \param[in]  ls    The size of the node (lifting size).
-/// \return     The rotated node.
-static __m256i rotate_node_left_short(__m256i a, unsigned steps, unsigned ls);
+/// become the most significant ones - for long lifting sizes.
+/// \param[out] out       Pointer to the first AVX2 block of the output rotated node.
+/// \param[in]  in        Pointer to the first AVX2 block of the input node to rotate.
+/// \param[in]  steps     The order of the rotation as a number of chars.
+/// \param[in]  ls        The size of the node (lifting size).
+static void rotate_node_left(__m256i* out, const __m256i* in, unsigned steps, unsigned ls);
 
 /// Rotates the contents of a node towards the right by \c steps chars, that is the \c steps * 8 most significant bits
 /// become the least significant ones - for long lifting sizes.
@@ -37,7 +29,7 @@ static __m256i rotate_node_left_short(__m256i a, unsigned steps, unsigned ls);
 /// \param[in]  in        Pointer to the first AVX2 block of the input node to rotate.
 /// \param[in]  steps     The order of the rotation as a number of chars.
 /// \param[in]  ls        The size of the node (lifting size).
-static void rotate_node_right_long(__m256i* out, const __m256i* in, unsigned steps, unsigned ls);
+static void rotate_node_right(__m256i* out, const __m256i* in, unsigned steps, unsigned ls);
 
 ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_hr_strategy_short(const ldpc_base_graph_type current_bg,
                                                                                const uint8_t current_ls_index)
@@ -138,8 +130,9 @@ void ldpc_encoder_avx2::systematic_bits_short()
       if (node_shift == NO_EDGE) {
         continue;
       }
-      __m256i tmp = rotate_node_right_short(codeblock.get_at(k), node_shift, lifting_size);
-      tmp         = _mm256_and_si256(tmp, _mm256_set1_epi8(1));
+      __m256i tmp;
+      rotate_node_right(&tmp, codeblock.data_at(k), node_shift, lifting_size);
+      tmp = _mm256_and_si256(tmp, _mm256_set1_epi8(1));
       auxiliary.set_at(m, _mm256_xor_si256(auxiliary.get_at(m), tmp));
     }
   }
@@ -163,7 +156,7 @@ void ldpc_encoder_avx2::systematic_bits_long()
         i_aux += node_size_avx2;
         continue;
       }
-      rotate_node_right_long(rotated_node.data_at(0), codeblock.data_at(i_blk), node_shift, lifting_size);
+      rotate_node_right(rotated_node.data_at(0), codeblock.data_at(i_blk), node_shift, lifting_size);
       for (unsigned j = 0; j != node_size_avx2; ++j) {
         __m256i tmp_epi8 = _mm256_and_si256(rotated_node.get_at(j), _mm256_set1_epi8(1));
         auxiliary.set_at(i_aux, _mm256_xor_si256(auxiliary.get_at(i_aux), tmp_epi8));
@@ -184,7 +177,9 @@ void ldpc_encoder_avx2::high_rate_bg1_i6_short()
   __m256i tmp_epi8 = _mm256_xor_si256(auxiliary.get_at(0), auxiliary.get_at(1));
   tmp_epi8         = _mm256_xor_si256(tmp_epi8, auxiliary.get_at(2));
   tmp_epi8         = _mm256_xor_si256(tmp_epi8, auxiliary.get_at(3));
-  codeblock.set_at(skip0, rotate_node_left_short(tmp_epi8, 105 % lifting_size, lifting_size));
+  __m256i rotated_tmp;
+  rotate_node_left(&rotated_tmp, &tmp_epi8, 105 % lifting_size, lifting_size);
+  codeblock.set_at(skip0, rotated_tmp);
 
   // Second chunk of parity bits.
   codeblock.set_at(skip1, _mm256_xor_si256(auxiliary.get_at(0), codeblock.get_at(skip0)));
@@ -206,7 +201,8 @@ void ldpc_encoder_avx2::high_rate_bg1_other_short()
   codeblock.set_at(skip0, _mm256_xor_si256(codeblock.get_at(skip0), auxiliary.get_at(2)));
   codeblock.set_at(skip0, _mm256_xor_si256(codeblock.get_at(skip0), auxiliary.get_at(3)));
 
-  __m256i tmp_epi8 = rotate_node_right_short(codeblock.get_at(skip0), 1, lifting_size);
+  __m256i tmp_epi8;
+  rotate_node_right(&tmp_epi8, codeblock.data_at(skip0), 1, lifting_size);
 
   // Second chunk of parity bits.
   codeblock.set_at(skip1, _mm256_xor_si256(auxiliary.get_at(0), tmp_epi8));
@@ -228,7 +224,8 @@ void ldpc_encoder_avx2::high_rate_bg2_i3_7_short()
   codeblock.set_at(skip0, _mm256_xor_si256(codeblock.get_at(skip0), auxiliary.get_at(2)));
   codeblock.set_at(skip0, _mm256_xor_si256(codeblock.get_at(skip0), auxiliary.get_at(3)));
 
-  __m256i tmp_epi8 = rotate_node_right_short(codeblock.get_at(skip0), 1, lifting_size);
+  __m256i tmp_epi8;
+  rotate_node_right(&tmp_epi8, codeblock.data_at(skip0), 1, lifting_size);
   // Second chunk of parity bits.
   codeblock.set_at(skip1, _mm256_xor_si256(auxiliary.get_at(0), tmp_epi8));
   // Third chunk of parity bits.
@@ -248,7 +245,7 @@ void ldpc_encoder_avx2::high_rate_bg2_other_short()
   __m256i tmp_epi8 = _mm256_xor_si256(auxiliary.get_at(0), auxiliary.get_at(1));
   tmp_epi8         = _mm256_xor_si256(tmp_epi8, auxiliary.get_at(2));
   tmp_epi8         = _mm256_xor_si256(tmp_epi8, auxiliary.get_at(3));
-  codeblock.set_at(skip0, rotate_node_left_short(tmp_epi8, 1, lifting_size));
+  rotate_node_left(codeblock.data_at(skip0), &tmp_epi8, 1, lifting_size);
 
   // Second chunk of parity bits.
   codeblock.set_at(skip1, _mm256_xor_si256(auxiliary.get_at(0), codeblock.get_at(skip0)));
@@ -274,8 +271,7 @@ void ldpc_encoder_avx2::high_rate_bg1_i6_long()
     rotated_node.set_at(j, _mm256_xor_si256(rotated_node.get_at(j), auxiliary.get_at(node_size_x_3 + j)));
   }
 
-  rotate_node_right_long(
-      codeblock.data_at(skip0), rotated_node.data_at(0), lifting_size - 105 % lifting_size, lifting_size);
+  rotate_node_right(codeblock.data_at(skip0), rotated_node.data_at(0), lifting_size - 105 % lifting_size, lifting_size);
 
   for (unsigned j = 0; j != node_size_avx2; ++j) {
     // Second chunk of parity bits.
@@ -303,7 +299,7 @@ void ldpc_encoder_avx2::high_rate_bg1_other_long()
     codeblock.set_at(skip0 + j, _mm256_xor_si256(codeblock.get_at(skip0 + j), auxiliary.get_at(node_size_x_3 + j)));
   }
 
-  rotate_node_right_long(rotated_node.data_at(0), codeblock.data_at(skip0), 1, lifting_size);
+  rotate_node_right(rotated_node.data_at(0), codeblock.data_at(skip0), 1, lifting_size);
 
   for (unsigned j = 0; j != node_size_avx2; ++j) {
     // Second chunk of parity bits.
@@ -331,7 +327,7 @@ void ldpc_encoder_avx2::high_rate_bg2_i3_7_long()
     codeblock.set_at(skip0 + j, _mm256_xor_si256(codeblock.get_at(skip0 + j), auxiliary.get_at(node_size_x_3 + j)));
   }
 
-  rotate_node_right_long(rotated_node.data_at(0), codeblock.data_at(skip0), 1, lifting_size);
+  rotate_node_right(rotated_node.data_at(0), codeblock.data_at(skip0), 1, lifting_size);
 
   for (unsigned j = 0; j != node_size_avx2; ++j) {
     // Second chunk of parity bits.
@@ -359,7 +355,7 @@ void ldpc_encoder_avx2::high_rate_bg2_other_long()
     rotated_node.set_at(j, _mm256_xor_si256(rotated_node.get_at(j), auxiliary.get_at(node_size_x_3 + j)));
   }
 
-  rotate_node_right_long(codeblock.data_at(skip0), rotated_node.data_at(0), lifting_size - 1, lifting_size);
+  rotate_node_right(codeblock.data_at(skip0), rotated_node.data_at(0), lifting_size - 1, lifting_size);
 
   for (unsigned j = 0; j != node_size_avx2; ++j) {
     // Second chunk of parity bits.
@@ -390,7 +386,8 @@ void ldpc_encoder_avx2::ext_region_short()
       if (node_shift == ldpc::NO_EDGE) {
         continue;
       }
-      __m256i tmp_epi8 = rotate_node_right_short(codeblock.get_at(bg_K + k), node_shift, lifting_size);
+      __m256i tmp_epi8;
+      rotate_node_right(&tmp_epi8, codeblock.data_at(bg_K + k), node_shift, lifting_size);
       codeblock.set_at(skip, _mm256_xor_si256(codeblock.get_at(skip), tmp_epi8));
     }
   }
@@ -418,7 +415,7 @@ void ldpc_encoder_avx2::ext_region_long()
       if (node_shift == NO_EDGE) {
         continue;
       }
-      rotate_node_right_long(
+      rotate_node_right(
           rotated_node.data_at(0), codeblock.data_at((bg_K + k) * node_size_avx2), node_shift, lifting_size);
       for (unsigned j = 0; j != node_size_avx2; ++j) {
         codeblock.set_at(skip + j, _mm256_xor_si256(codeblock.get_at(skip + j), rotated_node.get_at(j)));
@@ -451,37 +448,13 @@ void ldpc_encoder_avx2::write_codeblock(span<uint8_t> out)
   srsvec::copy(out.subspan(i_out, remainder), tmp.subspan(i_tmp, remainder));
 }
 
-static __m256i rotate_node_right_short(const __m256i a, const unsigned steps, const unsigned ls)
+static void rotate_node_left(__m256i* out, const __m256i* in, unsigned steps, unsigned ls)
 {
-  // Create a temporary buffer with two copies of a (recall that, if ls < 32, that is ls < AVX2_SIZE_BYTE, part of the
-  // AVX2 array is empty).
-  std::array<int8_t, 2 * AVX2_SIZE_BYTE> tmp = {0};
-  std::memcpy(tmp.data(), &a, AVX2_SIZE_BYTE);
-  std::memcpy(tmp.data() + ls, &a, AVX2_SIZE_BYTE);
-
-  // Now pick the rotated version of a.
-  __m256i rotated = _mm256_setzero_si256();
-  std::memcpy(&rotated, tmp.data() + steps, ls);
-
-  return rotated;
+  std::memcpy(out, reinterpret_cast<const int8_t*>(in) + ls - steps, steps);
+  std::memcpy(reinterpret_cast<int8_t*>(out) + steps, in, ls - steps);
 }
 
-static __m256i rotate_node_left_short(__m256i a, unsigned steps, unsigned ls)
-{
-  // Create a temporary buffer with two copies of a (recall that, if ls < 32, that is ls < AVX2_SIZE_BYTE, part of the
-  // AVX2 array is empty).
-  std::array<int8_t, 2 * AVX2_SIZE_BYTE> tmp = {0};
-  std::memcpy(tmp.data(), &a, AVX2_SIZE_BYTE);
-  std::memcpy(tmp.data() + ls, &a, AVX2_SIZE_BYTE);
-
-  // Now pick the rotated version of a.
-  __m256i rotated = _mm256_setzero_si256();
-  std::memcpy(&rotated, tmp.data() + ls - steps, ls);
-
-  return rotated;
-}
-
-static void rotate_node_right_long(__m256i* out, const __m256i* in, unsigned steps, unsigned ls)
+static void rotate_node_right(__m256i* out, const __m256i* in, unsigned steps, unsigned ls)
 {
   std::memcpy(out, reinterpret_cast<const int8_t*>(in) + steps, ls - steps);
   std::memcpy(reinterpret_cast<int8_t*>(out) + ls - steps, in, steps);
