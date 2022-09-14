@@ -55,16 +55,6 @@ public:
   void handle_sdu(byte_buffer buf) final;
 
   /*
-   * Security configuration
-   */
-  void set_as_security_config(sec_128_as_config sec_cfg_) final { sec_cfg = sec_cfg_; }
-  void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) final
-  {
-    integrity_enabled = integ;
-    ciphering_enabled = cipher;
-  }
-
-  /*
    * Header helpers
    */
   bool write_data_pdu_header(byte_buffer& buf, uint32_t count);
@@ -73,6 +63,16 @@ public:
    * Testing helpers
    */
   void set_state(pdcp_tx_state st_) { st = st_; };
+
+  /*
+   * Security configuration
+   */
+  void set_as_security_config(sec_128_as_config sec_cfg_) final { sec_cfg = sec_cfg_; };
+  void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) final
+  {
+    integrity_enabled = integ;
+    ciphering_enabled = cipher;
+  }
 
 private:
   bearer_logger               logger;
@@ -84,9 +84,9 @@ private:
   void stop_discard_timer(uint32_t count) final {}
 
   pdcp_tx_state      st        = {};
-  sec_128_as_config  sec_cfg   = {};
   security_direction direction = security_direction::downlink;
 
+  sec_128_as_config      sec_cfg           = {};
   pdcp_integrity_enabled integrity_enabled = pdcp_integrity_enabled::no;
   pdcp_ciphering_enabled ciphering_enabled = pdcp_ciphering_enabled::no;
 

@@ -15,6 +15,7 @@
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/ran/bearer_logger.h"
+#include "srsgnb/security/security.h"
 
 namespace srsgnb {
 

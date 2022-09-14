@@ -20,7 +20,9 @@
 namespace srsgnb {
 /// Base class used for receiving RLC bearers.
 /// It provides interfaces for the RLC bearers, for the lower layers
-class pdcp_entity_rx : public pdcp_entity_tx_rx_base, public pdcp_rx_lower_interface
+class pdcp_entity_rx : public pdcp_entity_tx_rx_base,
+                       public pdcp_rx_lower_interface,
+                       public pdcp_rx_upper_control_interface
 {
 public:
   pdcp_entity_rx(uint32_t                     ue_index,
@@ -36,9 +38,23 @@ public:
    */
   bool read_data_pdu_header(const byte_buffer& buf, uint32_t& sn) const;
 
+  /*
+   * Security configuration
+   */
+  void set_as_security_config(sec_128_as_config sec_cfg_) final { sec_cfg = sec_cfg_; };
+  void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) final
+  {
+    integrity_enabled = integ;
+    ciphering_enabled = cipher;
+  }
+
 private:
   bearer_logger               logger;
   pdcp_config::pdcp_rx_config cfg;
+
+  sec_128_as_config      sec_cfg           = {};
+  pdcp_integrity_enabled integrity_enabled = pdcp_integrity_enabled::no;
+  pdcp_ciphering_enabled ciphering_enabled = pdcp_ciphering_enabled::no;
 
   void handle_pdu(byte_buffer buf) final;
 

@@ -11,7 +11,8 @@
 #pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/pdcp/pdcp_rx.h"
+#include "srsgnb/pdcp/pdcp_config.h"
+#include "srsgnb/security/security.h"
 
 /*
  * This file will hold the interfaces and notifiers for the PDCP entity.
@@ -80,4 +81,23 @@ public:
   virtual void on_protocol_failure()  = 0;
   virtual void on_integrity_failure() = 0;
 };
+
+/// This interface represents the control SAP of the receiving side of a PDCP entity.
+/// The RRC will use this interface to configure security keys and enable/disable
+/// integrity and ciphering.
+class pdcp_rx_upper_control_interface
+{
+public:
+  pdcp_rx_upper_control_interface()                                                   = default;
+  virtual ~pdcp_rx_upper_control_interface()                                          = default;
+  pdcp_rx_upper_control_interface(const pdcp_rx_upper_control_interface&)             = delete;
+  pdcp_rx_upper_control_interface& operator=(const pdcp_rx_upper_control_interface&)  = delete;
+  pdcp_rx_upper_control_interface(const pdcp_rx_upper_control_interface&&)            = delete;
+  pdcp_rx_upper_control_interface& operator=(const pdcp_rx_upper_control_interface&&) = delete;
+
+  /// Handle the incoming SDU.
+  virtual void set_as_security_config(sec_128_as_config sec_cfg)                                       = 0;
+  virtual void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) = 0;
+};
+
 } // namespace srsgnb
