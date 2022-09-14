@@ -12,6 +12,15 @@
 
 using namespace srsgnb;
 
+void pdcp_entity_rx::handle_pdu(byte_buffer buf)
+{
+  logger.log_info("RX PDU of {} B\n", buf.length());
+
+  // strip away the first two bytes containing the PDCP header
+  byte_buffer sdu(buf.begin() + 2, buf.end());
+  upper_dn.on_new_sdu(std::move(sdu));
+}
+
 bool pdcp_entity_rx::read_data_pdu_header(const byte_buffer& buf, uint32_t& sn) const
 {
   byte_buffer_reader buf_reader = buf;
