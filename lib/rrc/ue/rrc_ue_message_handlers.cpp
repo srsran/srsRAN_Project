@@ -88,7 +88,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
 
   // Launch RRC setup procedure
   task_sched.schedule_async_task(launch_async<rrc_setup_procedure>(
-      context, request_msg, du_to_cu_container, *this, du_processor_notifier, *event_mng, logger));
+      context, request_msg, du_to_cu_container, *this, du_processor_notifier, nas_notifier, *event_mng, logger));
 }
 
 void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)

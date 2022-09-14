@@ -36,6 +36,43 @@ async_task<ng_setup_response_message> ngap_impl::handle_ngap_setup_request(const
   return launch_async<ngap_setup_procedure>(request, ng_notifier, *events, logger);
 }
 
+void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
+{
+  logger.info("Handling Initial UE Message");
+
+  ngap_message ngap_msg = {};
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_INIT_UE_MSG);
+
+  auto& init_ue_msg = ngap_msg.pdu.init_msg().value.init_ue_msg();
+
+  init_ue_msg->ran_ue_ngap_id.value.value = ue_ngap_id_to_uint(msg.ue_ngap_id);
+
+  init_ue_msg->nas_pdu.value.resize(msg.nas_pdu.length());
+  std::copy(msg.nas_pdu.begin(), msg.nas_pdu.end(), init_ue_msg->nas_pdu.value.begin());
+
+  init_ue_msg->rrcestablishment_cause.value.value = msg.establishment_cause.value;
+
+  auto& user_loc_info_nr       = init_ue_msg->user_location_info.value.set_user_location_info_nr();
+  user_loc_info_nr.nr_cgi      = msg.nr_cgi;
+  user_loc_info_nr.tai.plmn_id = msg.nr_cgi.plmn_id;
+  // TODO: Set tAC
+
+  init_ue_msg->ue_context_request_present = true;
+  init_ue_msg->ue_context_request.value   = asn1::ngap::ue_context_request_opts::options::requested;
+
+  // TODO: Add missing optional values
+
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    ngap_msg.pdu.to_json(js);
+    logger.debug("Containerized Initial UE Message: {}", js.to_string());
+  }
+
+  // Forward message to AMF
+  ng_notifier.on_new_message(ngap_msg);
+}
+
 void ngap_impl::handle_message(const ngap_message& msg)
 {
   logger.info("Handling NGAP PDU of type \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));

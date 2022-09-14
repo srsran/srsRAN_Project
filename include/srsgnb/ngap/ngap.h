@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "ngap_types.h"
+#include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/ngap.h"
 #include "srsgnb/support/async/async_task.h"
 
@@ -74,8 +76,29 @@ public:
   virtual async_task<ng_setup_response_message> handle_ngap_setup_request(const ng_setup_request_message& request) = 0;
 };
 
+struct ngap_initial_ue_message {
+  ue_ngap_id_t                            ue_ngap_id;
+  byte_buffer                             nas_pdu;
+  asn1::ngap::rrcestablishment_cause_opts establishment_cause;
+  asn1::ngap::nr_cgi_s                    nr_cgi;
+};
+
+/// Handle NGAP NAS Message procedures as defined in TS 38.413 section 8.6.
+class ngap_nas_message_handler
+{
+public:
+  virtual ~ngap_nas_message_handler() = default;
+
+  /// \brief Initiates Initial UE message procedure as per TS 38.413 section 8.6.1.
+  /// \param[in] msg The ngap initial UE message to transmit.
+  virtual void handle_initial_ue_message(const ngap_initial_ue_message& msg) = 0;
+};
+
 /// Combined entry point for the NGAP object.
-class ngap_interface : public ng_message_handler, public ng_event_handler, public ngap_connection_manager
+class ngap_interface : public ng_message_handler,
+                       public ng_event_handler,
+                       public ngap_connection_manager,
+                       public ngap_nas_message_handler
 {
 public:
   virtual ~ngap_interface() = default;

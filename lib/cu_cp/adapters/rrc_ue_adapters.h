@@ -14,6 +14,7 @@
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
+#include "srsgnb/ngap/ngap.h"
 #include "srsgnb/rrc/rrc.h"
 
 namespace srsgnb {
@@ -100,7 +101,27 @@ private:
 class rrc_ue_ngap_adapter : public rrc_ue_nas_notifier
 {
 public:
-  void on_initial_ue_message(const initial_ue_message& msg) override {}
+  void connect_ngap(ngap_nas_message_handler& ngap_nas_msg_handler_) { ngap_nas_msg_handler = &ngap_nas_msg_handler_; }
+
+  void set_du_index(du_index_t du_index_) { du_index = du_index_; }
+
+  void on_initial_ue_message(const initial_ue_message& msg) override
+  {
+    srsgnb_assert(du_index != INVALID_DU_INDEX, "du_index of rrc_ue_ngap_adapter not set");
+
+    ngap_initial_ue_message ngap_init_ue_msg;
+    ngap_init_ue_msg.ue_ngap_id = get_ue_ngap_id(du_index, msg.ue_index);
+    ngap_init_ue_msg.nas_pdu.resize(msg.ded_nas_msg.size());
+    std::copy(msg.ded_nas_msg.begin(), msg.ded_nas_msg.end(), ngap_init_ue_msg.nas_pdu.begin());
+
+    ngap_init_ue_msg.establishment_cause.value =
+        rrcestablishment_cause_from_establishment_cause(msg.establishment_cause).value;
+
+    ngap_init_ue_msg.nr_cgi.nrcell_id.from_number(msg.cgi.nci.packed);
+    ngap_init_ue_msg.nr_cgi.plmn_id.from_string(msg.cgi.plmn_hex);
+
+    ngap_nas_msg_handler->handle_initial_ue_message(ngap_init_ue_msg);
+  }
 
   void on_ul_nas_transport_message(const ul_nas_transport_message& msg) override
   {
@@ -108,6 +129,53 @@ public:
     nas_pdu.resize(msg.ded_nas_msg.size());
     std::copy(msg.ded_nas_msg.begin(), msg.ded_nas_msg.end(), nas_pdu.begin());
   }
+
+private:
+  asn1::ngap::rrcestablishment_cause_opts
+  rrcestablishment_cause_from_establishment_cause(const asn1::rrc_nr::establishment_cause_opts& establishment_cause)
+  {
+    asn1::ngap::rrcestablishment_cause_opts rrcestablishment_cause = {};
+    switch (establishment_cause.value) {
+      case asn1::rrc_nr::establishment_cause_opts::options::emergency:
+        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::emergency;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::high_prio_access:
+        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::high_prio_access;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::mt_access:
+        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mt_access;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::mo_sig:
+        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mo_sig;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::mo_data:
+        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mo_data;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::mo_voice_call:
+        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mo_voice_call;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::mo_video_call:
+        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mo_video_call;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::mo_sms:
+        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mo_sms;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::mps_prio_access:
+        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mps_prio_access;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::mcs_prio_access:
+        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mcs_prio_access;
+        break;
+      default:
+        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::nulltype;
+        break;
+    }
+
+    return rrcestablishment_cause;
+  }
+
+  ngap_nas_message_handler* ngap_nas_msg_handler = nullptr;
+  du_index_t                du_index             = INVALID_DU_INDEX;
 };
 
 } // namespace srs_cu_cp

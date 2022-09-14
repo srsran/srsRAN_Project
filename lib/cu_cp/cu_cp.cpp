@@ -130,11 +130,16 @@ du_index_t cu_cp::add_du()
   std::unique_ptr<du_processor_interface> du =
       create_du_processor(std::move(du_cfg), f1ap_ev_notifier, *cfg.f1c_notifier, rrc_ue_ngap_ev_notifier);
 
+  rrc_ue_ngap_ev_notifier.connect_ngap(*ngap_entity);
+
   du_index_t du_index = get_next_du_index();
   if (du_index == INVALID_DU_INDEX) {
     logger.error("DU connection failed - maximum number of DUs connected ({})", MAX_NOF_DUS);
     return INVALID_DU_INDEX;
   }
+
+  // Add DU index to adapter
+  rrc_ue_ngap_ev_notifier.set_du_index(du_index);
 
   du->get_context().du_index = du_index;
 
