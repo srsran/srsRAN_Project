@@ -19,6 +19,7 @@
 #include "pdsch_processor_impl.h"
 #include "prach_detector_simple_impl.h"
 #include "prach_generator_impl.h"
+#include "pucch_processor_impl.h"
 #include "pusch_decoder_impl.h"
 #include "pusch_demodulator_impl.h"
 #include "pusch_processor_impl.h"
@@ -281,6 +282,17 @@ public:
     return std::make_unique<prach_generator_impl>(dft_factory->create(dft_config_l839),
                                                   dft_factory->create(dft_config_l139));
   }
+};
+
+class pucch_processor_factory_sw : public pucch_processor_factory
+{
+public:
+  explicit pucch_processor_factory_sw()
+  {
+    // Do nothing.
+  }
+
+  std::unique_ptr<pucch_processor> create() override { return std::make_unique<pucch_processor_impl>(); }
 };
 
 class pusch_decoder_factory_sw : public pusch_decoder_factory

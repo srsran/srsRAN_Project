@@ -23,6 +23,7 @@
 #include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/prach_detector.h"
 #include "srsgnb/phy/upper/channel_processors/prach_generator.h"
+#include "srsgnb/phy/upper/channel_processors/pucch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_decoder.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_demodulator.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_processor.h"
@@ -151,6 +152,15 @@ public:
 
 std::shared_ptr<prach_generator_factory>
 create_prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory);
+
+class pucch_processor_factory
+{
+public:
+  virtual ~pucch_processor_factory()                = default;
+  virtual std::unique_ptr<pucch_processor> create() = 0;
+};
+
+std::shared_ptr<pucch_processor_factory> create_pucch_processor_factory_sw();
 
 class pusch_decoder_factory
 {

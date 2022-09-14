@@ -10,12 +10,14 @@
 
 #pragma once
 
+#include "srsgnb/ran/phy_time_unit.h"
+
 namespace srsgnb {
 
 /// Channel State Information from received DM-RS.
 struct channel_state_information {
   /// Time alignment measurement in microseconds.
-  float time_aligment_us;
+  phy_time_unit time_aligment;
   /// Average EPRE in decibels.
   float epre_dB;
   /// Average RSRP in decibels.

@@ -37,4 +37,11 @@ static constexpr unsigned PUCCH_FORMAT2_MAX_NSYMB = 2;
 /// Maximum number of PRBs allocated for NR-PUCCH format 2.
 static constexpr unsigned PUCCH_FORMAT2_MAX_NPRB = 16;
 
+/// The maximum number of resource elements used by PUCCH is from by PUCCH format 3 with a bandwidth of 16 PRB and a
+/// duration of 14 symbols. In which, DM-RS occupy two symbols.
+static constexpr unsigned PUCCH_MAX_NOF_RE = 16 * (14 - 2);
+
+/// The maximum number of LLR used by PUCCH is derived from \ref PUCCH_MAX_NOF_RE assuming a QPSK modulation.
+static constexpr unsigned PUCCH_MAX_NOF_LLR = PUCCH_MAX_NOF_RE * 2;
+
 } // namespace srsgnb
