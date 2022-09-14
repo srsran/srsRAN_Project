@@ -173,20 +173,26 @@ void ldpc_encoder_avx2::high_rate_bg1_i6_short()
   unsigned skip2 = bg_K + 2;
   unsigned skip3 = bg_K + 3;
 
+  __m256i aux_0 = auxiliary.get_at(0);
+  __m256i aux_1 = auxiliary.get_at(1);
+  __m256i aux_2 = auxiliary.get_at(2);
+  __m256i aux_3 = auxiliary.get_at(3);
+
   // First chunk of parity bits.
-  __m256i tmp_epi8 = _mm256_xor_si256(auxiliary.get_at(0), auxiliary.get_at(1));
-  tmp_epi8         = _mm256_xor_si256(tmp_epi8, auxiliary.get_at(2));
-  tmp_epi8         = _mm256_xor_si256(tmp_epi8, auxiliary.get_at(3));
-  __m256i rotated_tmp;
-  rotate_node_left(&rotated_tmp, &tmp_epi8, 105 % lifting_size, lifting_size);
-  codeblock.set_at(skip0, rotated_tmp);
+  __m256i tmp_epi8 = _mm256_xor_si256(aux_0, aux_1);
+  tmp_epi8         = _mm256_xor_si256(tmp_epi8, aux_2);
+  tmp_epi8         = _mm256_xor_si256(tmp_epi8, aux_3);
+  __m256i block_0;
+  rotate_node_left(&block_0, &tmp_epi8, 105 % lifting_size, lifting_size);
+  codeblock.set_at(skip0, block_0);
 
   // Second chunk of parity bits.
-  codeblock.set_at(skip1, _mm256_xor_si256(auxiliary.get_at(0), codeblock.get_at(skip0)));
+  codeblock.set_at(skip1, _mm256_xor_si256(aux_0, block_0));
   // Fourth chunk of parity bits.
-  codeblock.set_at(skip3, _mm256_xor_si256(auxiliary.get_at(3), codeblock.get_at(skip0)));
+  __m256i block_3 = _mm256_xor_si256(aux_3, block_0);
+  codeblock.set_at(skip3, block_3);
   // Third chunk of parity bits.
-  codeblock.set_at(skip2, _mm256_xor_si256(auxiliary.get_at(2), codeblock.get_at(skip3)));
+  codeblock.set_at(skip2, _mm256_xor_si256(aux_2, block_3));
 }
 
 void ldpc_encoder_avx2::high_rate_bg1_other_short()
@@ -196,20 +202,27 @@ void ldpc_encoder_avx2::high_rate_bg1_other_short()
   unsigned skip2 = bg_K + 2;
   unsigned skip3 = bg_K + 3;
 
+  __m256i aux_0 = auxiliary.get_at(0);
+  __m256i aux_1 = auxiliary.get_at(1);
+  __m256i aux_2 = auxiliary.get_at(2);
+  __m256i aux_3 = auxiliary.get_at(3);
+
   // First chunk of parity bits.
-  codeblock.set_at(skip0, _mm256_xor_si256(auxiliary.get_at(0), auxiliary.get_at(1)));
-  codeblock.set_at(skip0, _mm256_xor_si256(codeblock.get_at(skip0), auxiliary.get_at(2)));
-  codeblock.set_at(skip0, _mm256_xor_si256(codeblock.get_at(skip0), auxiliary.get_at(3)));
+  __m256i block_0 = _mm256_xor_si256(aux_0, aux_1);
+  block_0         = _mm256_xor_si256(block_0, aux_2);
+  block_0         = _mm256_xor_si256(block_0, aux_3);
+  codeblock.set_at(skip0, block_0);
 
   __m256i tmp_epi8;
   rotate_node_right(&tmp_epi8, codeblock.data_at(skip0), 1, lifting_size);
 
   // Second chunk of parity bits.
-  codeblock.set_at(skip1, _mm256_xor_si256(auxiliary.get_at(0), tmp_epi8));
+  codeblock.set_at(skip1, _mm256_xor_si256(aux_0, tmp_epi8));
   // Fourth chunk of parity bits.
-  codeblock.set_at(skip3, _mm256_xor_si256(auxiliary.get_at(3), tmp_epi8));
+  __m256i block_3 = _mm256_xor_si256(aux_3, tmp_epi8);
+  codeblock.set_at(skip3, block_3);
   // Third chunk of parity bits.
-  codeblock.set_at(skip2, _mm256_xor_si256(auxiliary.get_at(2), codeblock.get_at(skip3)));
+  codeblock.set_at(skip2, _mm256_xor_si256(aux_2, block_3));
 }
 
 void ldpc_encoder_avx2::high_rate_bg2_i3_7_short()
@@ -219,19 +232,26 @@ void ldpc_encoder_avx2::high_rate_bg2_i3_7_short()
   unsigned skip2 = bg_K + 2;
   unsigned skip3 = bg_K + 3;
 
+  __m256i aux_0 = auxiliary.get_at(0);
+  __m256i aux_1 = auxiliary.get_at(1);
+  __m256i aux_2 = auxiliary.get_at(2);
+  __m256i aux_3 = auxiliary.get_at(3);
+
   // First chunk of parity bits.
-  codeblock.set_at(skip0, _mm256_xor_si256(auxiliary.get_at(0), auxiliary.get_at(1)));
-  codeblock.set_at(skip0, _mm256_xor_si256(codeblock.get_at(skip0), auxiliary.get_at(2)));
-  codeblock.set_at(skip0, _mm256_xor_si256(codeblock.get_at(skip0), auxiliary.get_at(3)));
+  __m256i block_0 = _mm256_xor_si256(aux_0, aux_1);
+  block_0         = _mm256_xor_si256(block_0, aux_2);
+  block_0         = _mm256_xor_si256(block_0, aux_3);
+  codeblock.set_at(skip0, block_0);
 
   __m256i tmp_epi8;
   rotate_node_right(&tmp_epi8, codeblock.data_at(skip0), 1, lifting_size);
   // Second chunk of parity bits.
-  codeblock.set_at(skip1, _mm256_xor_si256(auxiliary.get_at(0), tmp_epi8));
+  __m256i block_1 = _mm256_xor_si256(aux_0, tmp_epi8);
+  codeblock.set_at(skip1, block_1);
   // Third chunk of parity bits.
-  codeblock.set_at(skip2, _mm256_xor_si256(auxiliary.get_at(1), codeblock.get_at(skip1)));
+  codeblock.set_at(skip2, _mm256_xor_si256(aux_1, block_1));
   // Fourth chunk of parity bits.
-  codeblock.set_at(skip3, _mm256_xor_si256(auxiliary.get_at(3), tmp_epi8));
+  codeblock.set_at(skip3, _mm256_xor_si256(aux_3, tmp_epi8));
 }
 
 void ldpc_encoder_avx2::high_rate_bg2_other_short()
@@ -241,18 +261,27 @@ void ldpc_encoder_avx2::high_rate_bg2_other_short()
   unsigned skip2 = bg_K + 2;
   unsigned skip3 = bg_K + 3;
 
+  __m256i aux_0 = auxiliary.get_at(0);
+  __m256i aux_1 = auxiliary.get_at(1);
+  __m256i aux_2 = auxiliary.get_at(2);
+  __m256i aux_3 = auxiliary.get_at(3);
+
   // First chunk of parity bits.
-  __m256i tmp_epi8 = _mm256_xor_si256(auxiliary.get_at(0), auxiliary.get_at(1));
-  tmp_epi8         = _mm256_xor_si256(tmp_epi8, auxiliary.get_at(2));
-  tmp_epi8         = _mm256_xor_si256(tmp_epi8, auxiliary.get_at(3));
-  rotate_node_left(codeblock.data_at(skip0), &tmp_epi8, 1, lifting_size);
+  __m256i tmp_epi8 = _mm256_xor_si256(aux_0, aux_1);
+  tmp_epi8         = _mm256_xor_si256(tmp_epi8, aux_2);
+  tmp_epi8         = _mm256_xor_si256(tmp_epi8, aux_3);
+
+  __m256i block_0;
+  rotate_node_left(&block_0, &tmp_epi8, 1, lifting_size);
+  codeblock.set_at(skip0, block_0);
 
   // Second chunk of parity bits.
-  codeblock.set_at(skip1, _mm256_xor_si256(auxiliary.get_at(0), codeblock.get_at(skip0)));
+  __m256i block_1 = _mm256_xor_si256(aux_0, block_0);
+  codeblock.set_at(skip1, block_1);
   // Third chunk of parity bits.
-  codeblock.set_at(skip2, _mm256_xor_si256(auxiliary.get_at(1), codeblock.get_at(skip1)));
+  codeblock.set_at(skip2, _mm256_xor_si256(aux_1, block_1));
   // Fourth chunk of parity bits.
-  codeblock.set_at(skip3, _mm256_xor_si256(auxiliary.get_at(3), codeblock.get_at(skip0)));
+  codeblock.set_at(skip3, _mm256_xor_si256(aux_3, block_0));
 }
 
 void ldpc_encoder_avx2::high_rate_bg1_i6_long()
@@ -266,20 +295,23 @@ void ldpc_encoder_avx2::high_rate_bg1_i6_long()
 
   // First chunk of parity bits.
   for (unsigned j = 0; j != node_size_avx2; ++j) {
-    rotated_node.set_at(j, _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(node_size_avx2 + j)));
-    rotated_node.set_at(j, _mm256_xor_si256(rotated_node.get_at(j), auxiliary.get_at(node_size_x_2 + j)));
-    rotated_node.set_at(j, _mm256_xor_si256(rotated_node.get_at(j), auxiliary.get_at(node_size_x_3 + j)));
+    __m256i tmp_epi8 = _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(node_size_avx2 + j));
+    tmp_epi8         = _mm256_xor_si256(tmp_epi8, auxiliary.get_at(node_size_x_2 + j));
+    tmp_epi8         = _mm256_xor_si256(tmp_epi8, auxiliary.get_at(node_size_x_3 + j));
+    rotated_node.set_at(j, tmp_epi8);
   }
 
   rotate_node_right(codeblock.data_at(skip0), rotated_node.data_at(0), lifting_size - 105 % lifting_size, lifting_size);
 
   for (unsigned j = 0; j != node_size_avx2; ++j) {
+    __m256i block0 = codeblock.get_at(skip0 + j);
     // Second chunk of parity bits.
-    codeblock.set_at(skip1 + j, _mm256_xor_si256(auxiliary.get_at(j), codeblock.get_at(skip0 + j)));
+    codeblock.set_at(skip1 + j, _mm256_xor_si256(auxiliary.get_at(j), block0));
     // Fourth chunk of parity bits.
-    codeblock.set_at(skip3 + j, _mm256_xor_si256(auxiliary.get_at(node_size_x_3 + j), codeblock.get_at(skip0 + j)));
+    __m256i block3 = _mm256_xor_si256(auxiliary.get_at(node_size_x_3 + j), block0);
+    codeblock.set_at(skip3 + j, block3);
     // Third chunk of parity bits.
-    codeblock.set_at(skip2 + j, _mm256_xor_si256(auxiliary.get_at(node_size_x_2 + j), codeblock.get_at(skip3 + j)));
+    codeblock.set_at(skip2 + j, _mm256_xor_si256(auxiliary.get_at(node_size_x_2 + j), block3));
   }
 }
 
@@ -294,20 +326,23 @@ void ldpc_encoder_avx2::high_rate_bg1_other_long()
 
   // First chunk of parity bits.
   for (unsigned j = 0; j != node_size_avx2; ++j) {
-    codeblock.set_at(skip0 + j, _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(node_size_avx2 + j)));
-    codeblock.set_at(skip0 + j, _mm256_xor_si256(codeblock.get_at(skip0 + j), auxiliary.get_at(node_size_x_2 + j)));
-    codeblock.set_at(skip0 + j, _mm256_xor_si256(codeblock.get_at(skip0 + j), auxiliary.get_at(node_size_x_3 + j)));
+    __m256i block0 = _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(node_size_avx2 + j));
+    block0         = _mm256_xor_si256(block0, auxiliary.get_at(node_size_x_2 + j));
+    block0         = _mm256_xor_si256(block0, auxiliary.get_at(node_size_x_3 + j));
+    codeblock.set_at(skip0 + j, block0);
   }
 
   rotate_node_right(rotated_node.data_at(0), codeblock.data_at(skip0), 1, lifting_size);
 
   for (unsigned j = 0; j != node_size_avx2; ++j) {
+    __m256i rotated_j = rotated_node.get_at(j);
     // Second chunk of parity bits.
-    codeblock.set_at(skip1 + j, _mm256_xor_si256(auxiliary.get_at(j), rotated_node.get_at(j)));
+    codeblock.set_at(skip1 + j, _mm256_xor_si256(auxiliary.get_at(j), rotated_j));
     // Fourth chunk of parity bits.
-    codeblock.set_at(skip3 + j, _mm256_xor_si256(auxiliary.get_at(node_size_x_3 + j), rotated_node.get_at(j)));
+    __m256i block3 = _mm256_xor_si256(auxiliary.get_at(node_size_x_3 + j), rotated_j);
+    codeblock.set_at(skip3 + j, block3);
     // Third chunk of parity bits.
-    codeblock.set_at(skip2 + j, _mm256_xor_si256(auxiliary.get_at(node_size_x_2 + j), codeblock.get_at(skip3 + j)));
+    codeblock.set_at(skip2 + j, _mm256_xor_si256(auxiliary.get_at(node_size_x_2 + j), block3));
   }
 }
 
@@ -322,20 +357,23 @@ void ldpc_encoder_avx2::high_rate_bg2_i3_7_long()
 
   // First chunk of parity bits.
   for (unsigned j = 0; j != node_size_avx2; ++j) {
-    codeblock.set_at(skip0 + j, _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(node_size_avx2 + j)));
-    codeblock.set_at(skip0 + j, _mm256_xor_si256(codeblock.get_at(skip0 + j), auxiliary.get_at(node_size_x_2 + j)));
-    codeblock.set_at(skip0 + j, _mm256_xor_si256(codeblock.get_at(skip0 + j), auxiliary.get_at(node_size_x_3 + j)));
+    __m256i block0 = _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(node_size_avx2 + j));
+    block0         = _mm256_xor_si256(block0, auxiliary.get_at(node_size_x_2 + j));
+    block0         = _mm256_xor_si256(block0, auxiliary.get_at(node_size_x_3 + j));
+    codeblock.set_at(skip0 + j, block0);
   }
 
   rotate_node_right(rotated_node.data_at(0), codeblock.data_at(skip0), 1, lifting_size);
 
   for (unsigned j = 0; j != node_size_avx2; ++j) {
+    __m256i rotated_j = rotated_node.get_at(j);
     // Second chunk of parity bits.
-    codeblock.set_at(skip1 + j, _mm256_xor_si256(auxiliary.get_at(j), rotated_node.get_at(j)));
+    __m256i block_1 = _mm256_xor_si256(auxiliary.get_at(j), rotated_j);
+    codeblock.set_at(skip1 + j, block_1);
     // third chunk of parity bits
-    codeblock.set_at(skip2 + j, _mm256_xor_si256(auxiliary.get_at(node_size_avx2 + j), codeblock.get_at(skip1 + j)));
+    codeblock.set_at(skip2 + j, _mm256_xor_si256(auxiliary.get_at(node_size_avx2 + j), block_1));
     // fourth chunk of parity bits
-    codeblock.set_at(skip3 + j, _mm256_xor_si256(auxiliary.get_at(node_size_x_3 + j), rotated_node.get_at(j)));
+    codeblock.set_at(skip3 + j, _mm256_xor_si256(auxiliary.get_at(node_size_x_3 + j), rotated_j));
   }
 }
 
@@ -350,20 +388,23 @@ void ldpc_encoder_avx2::high_rate_bg2_other_long()
 
   // First chunk of parity bits.
   for (unsigned j = 0; j != node_size_avx2; ++j) {
-    rotated_node.set_at(j, _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(node_size_avx2 + j)));
-    rotated_node.set_at(j, _mm256_xor_si256(rotated_node.get_at(j), auxiliary.get_at(node_size_x_2 + j)));
-    rotated_node.set_at(j, _mm256_xor_si256(rotated_node.get_at(j), auxiliary.get_at(node_size_x_3 + j)));
+    __m256i rotated_j = _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(node_size_avx2 + j));
+    rotated_j         = _mm256_xor_si256(rotated_j, auxiliary.get_at(node_size_x_2 + j));
+    rotated_j         = _mm256_xor_si256(rotated_j, auxiliary.get_at(node_size_x_3 + j));
+    rotated_node.set_at(j, rotated_j);
   }
 
   rotate_node_right(codeblock.data_at(skip0), rotated_node.data_at(0), lifting_size - 1, lifting_size);
 
   for (unsigned j = 0; j != node_size_avx2; ++j) {
+    __m256i block_0 = codeblock.get_at(skip0 + j);
     // Second chunk of parity bits.
-    codeblock.set_at(skip1 + j, _mm256_xor_si256(auxiliary.get_at(j), codeblock.get_at(skip0 + j)));
+    __m256i block_1 = _mm256_xor_si256(auxiliary.get_at(j), block_0);
+    codeblock.set_at(skip1 + j, block_1);
     // Third chunk of parity bits.
-    codeblock.set_at(skip2 + j, _mm256_xor_si256(auxiliary.get_at(node_size_avx2 + j), codeblock.get_at(skip1 + j)));
+    codeblock.set_at(skip2 + j, _mm256_xor_si256(auxiliary.get_at(node_size_avx2 + j), block_1));
     // Fourth chunk of parity bits.
-    codeblock.set_at(skip3 + j, _mm256_xor_si256(auxiliary.get_at(node_size_x_3 + j), codeblock.get_at(skip0 + j)));
+    codeblock.set_at(skip3 + j, _mm256_xor_si256(auxiliary.get_at(node_size_x_3 + j), block_0));
   }
 }
 
