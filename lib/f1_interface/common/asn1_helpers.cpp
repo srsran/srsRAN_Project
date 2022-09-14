@@ -23,6 +23,14 @@ nr_cell_global_identity cgi_from_asn1(const asn1::f1ap::nrcgi_s& asn1_cgi)
   mnc_to_string(cgi.mnc, &mnc_string);
   cgi.plmn = mcc_string + mnc_string;
 
+  // Set PLMN hex string
+  // Add filler digit if MNC has only 2 digits
+  if (mnc_string.size() == 2) {
+    cgi.plmn_hex = mcc_string + "f" + mnc_string;
+  } else {
+    cgi.plmn_hex = cgi.plmn;
+  }
+
   cgi.nci.packed = asn1_cgi.nrcell_id.to_number();
   return cgi;
 }

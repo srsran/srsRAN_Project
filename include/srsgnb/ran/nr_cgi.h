@@ -23,10 +23,11 @@ struct nr_cell_identity {
 
 /// The NR Cell Global Identity (NR-CGI)
 struct nr_cell_global_identity {
-  uint16_t         mcc;  /// 3 digits mobile country code (BCD encoded)
-  uint16_t         mnc;  /// 2 or 3 digits mobile network code (BCD encoded)
-  std::string      plmn; /// Full PLMN as string
-  nr_cell_identity nci;  /// NR cell id
+  uint16_t         mcc;      /// 3 digits mobile country code (BCD encoded)
+  uint16_t         mnc;      /// 2 or 3 digits mobile network code (BCD encoded)
+  std::string      plmn;     /// Full PLMN as string (without possible filler digit)
+  std::string      plmn_hex; /// Full PLMN as hex string with filler digit if needed
+  nr_cell_identity nci;      /// NR cell id
 };
 
 } // namespace srsgnb
