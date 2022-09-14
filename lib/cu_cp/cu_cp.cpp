@@ -21,6 +21,7 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 {
   srsgnb_assert(cfg.cu_executor != nullptr, "Invalid CU-CP executor");
   srsgnb_assert(cfg.f1c_notifier != nullptr, "Invalid F1C notifier");
+  srsgnb_assert(cfg.ngc_notifier != nullptr, "Invalid NGC notifier");
 }
 
 cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_), main_ctrl_loop(128)
@@ -33,7 +34,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_), main_ctrl_loop(
   }
 
   // Create layers
-  ngap_entity = create_ngap(timers, ngap_amf_ev_notifier);
+  ngap_entity = create_ngap(timers, *cfg.ngc_notifier);
 
   // connect event notifier to layers
   f1ap_ev_notifier.connect_cu_cp(*this);

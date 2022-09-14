@@ -14,6 +14,7 @@
 #include "unittests/f1_interface/common/f1_cu_test_helpers.h"
 #include "unittests/f1_interface/common/test_helpers.h"
 #include "unittests/ngap/ngap_test_helpers.h"
+#include "unittests/ngap/test_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
@@ -33,12 +34,14 @@ protected:
     task_worker                    task_worker("thread", 1, false, os_thread_realtime_priority::MAX_PRIO);
     std::unique_ptr<task_executor> task_executor = make_task_executor(task_worker);
 
-    f1c_pdu_notifier = std::make_unique<dummy_f1c_pdu_notifier>(nullptr);
+    f1c_pdu_notifier  = std::make_unique<dummy_f1c_pdu_notifier>(nullptr);
+    ngap_amf_notifier = std::make_unique<dummy_ngap_amf_notifier>(nullptr);
 
     // create CU-CP config
     cu_cp_configuration cfg;
     cfg.cu_executor  = task_executor.get();
     cfg.f1c_notifier = f1c_pdu_notifier.get();
+    cfg.ngc_notifier = ngap_amf_notifier.get();
 
     // create and start DUT
     cu_cp_obj = std::make_unique<cu_cp>(std::move(cfg));
@@ -53,9 +56,10 @@ protected:
     cu_cp_obj->stop();
   }
 
-  std::unique_ptr<cu_cp>                  cu_cp_obj;
-  std::unique_ptr<dummy_f1c_pdu_notifier> f1c_pdu_notifier;
-  srslog::basic_logger&                   test_logger = srslog::fetch_basic_logger("TEST");
+  std::unique_ptr<cu_cp>                   cu_cp_obj;
+  std::unique_ptr<dummy_f1c_pdu_notifier>  f1c_pdu_notifier;
+  std::unique_ptr<dummy_ngap_amf_notifier> ngap_amf_notifier;
+  srslog::basic_logger&                    test_logger = srslog::fetch_basic_logger("TEST");
 };
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -72,7 +76,7 @@ TEST_F(cu_cp_test, when_new_connection_then_du_added)
   ASSERT_EQ(cu_cp_obj->get_nof_dus(), 1U);
 }
 
-/// Test the DU connection
+/// Test the DU removal
 TEST_F(cu_cp_test, when_du_remove_request_received_then_du_removed)
 {
   // Connect DU
@@ -146,6 +150,12 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
 
   // check that UE has been added
   ASSERT_EQ(cu_cp_obj->get_nof_ues(), 1U);
+
+  // check that the Initial UE Message was sent to the AMF
+  ASSERT_EQ(ngap_amf_notifier->last_ngap_msg.pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(ngap_amf_notifier->last_ngap_msg.pdu.init_msg().value.type().value,
+            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg);
+  ASSERT_EQ(ngap_amf_notifier->last_ngap_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id.value.value, 0);
 }
 
 TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
@@ -166,6 +176,10 @@ TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
 
   // check that UE has been added
   ASSERT_EQ(cu_cp_obj->get_nof_ues(), 0U);
+
+  // check that the Initial UE Message was not send to the AMF
+  ASSERT_NE(ngap_amf_notifier->last_ngap_msg.pdu.init_msg().value.type().value,
+            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg);
 }
 
 /// Test the f1 initial UL RRC message transfer procedure

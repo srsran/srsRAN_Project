@@ -28,7 +28,7 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    msg_notifier = std::make_unique<dummy_ngap_amf_notifier>();
+    msg_notifier = std::make_unique<dummy_ngap_amf_notifier>(nullptr);
 
     ngap = create_ngap(timers, *msg_notifier);
   }

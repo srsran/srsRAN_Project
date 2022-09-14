@@ -24,18 +24,27 @@ class dummy_ngap_amf_notifier : public ng_message_notifier
 {
 public:
   // FIXME: Add handler when ngap exists
-  dummy_ngap_amf_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_ngap_amf_notifier(ng_message_handler* handler_) :
+    logger(srslog::fetch_basic_logger("TEST")), handler(handler_){};
+
+  void attach_handler(ng_message_handler* handler_) { handler = handler_; };
 
   void on_new_message(const ngap_message& msg) override
   {
     logger.info("Received NGAP message");
     last_ngap_msg = msg;
+
+    if (handler != nullptr) {
+      logger.info("Forwarding NGAP PDU");
+      handler->handle_message(msg);
+    }
   };
 
   ngap_message last_ngap_msg;
 
 private:
   srslog::basic_logger& logger;
+  ng_message_handler*   handler = nullptr;
 };
 
 } // namespace srs_cu_cp
