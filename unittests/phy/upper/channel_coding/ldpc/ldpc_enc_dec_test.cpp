@@ -20,35 +20,62 @@
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsgnb/srslog/bundled/fmt/ostream.h"
+
+#include <gtest/gtest.h>
 #include <random>
 #include <string>
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
 
-/// Fixed log-likelihood ratio amplitude.
+namespace srsgnb {
+std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
+{
+  return os << fmt::format("BG{}, LS{}", tc.bg, tc.ls);
+}
+} // namespace srsgnb
+
+namespace {
+
+// Fixed log-likelihood ratio amplitude.
 constexpr log_likelihood_ratio LLRS_AMPL = 10;
-/// Transforms hard bits into log-likelihood ratios (with fixed amplitude).
+// Transforms hard bits into log-likelihood ratios (with fixed amplitude).
 const auto compute_llrs = [](uint8_t b) {
   return ((b == ldpc::FILLER_BIT) ? LLRS_AMPL : log_likelihood_ratio::copysign(LLRS_AMPL, 1 - 2 * b));
 };
 
-/// Checks whether two messages are equal: filler bits are counted as logical zeros.
+// Checks whether two messages are equal: filler bits are counted as logical zeros.
 const auto is_msg_equal = [](uint8_t a, uint8_t b) { return ((a == b) || ((a == 0) && (b == FILLER_BIT))); };
 
-int main()
-{
-  std::shared_ptr<ldpc_encoder_factory> enc_factory_generic = create_ldpc_encoder_factory_sw("generic");
-  TESTASSERT(enc_factory_generic);
-  std::unique_ptr<ldpc_encoder> enc_generic = enc_factory_generic->create();
-  TESTASSERT(enc_generic);
-  std::shared_ptr<ldpc_decoder_factory> dec_factory_generic = create_ldpc_decoder_factory_sw("generic");
-  TESTASSERT(dec_factory_generic);
-  std::unique_ptr<srsgnb::ldpc_decoder> dec_generic = dec_factory_generic->create();
-  TESTASSERT(dec_generic);
+using LDPCEncDecParams = std::tuple<std::string, test_case_t>;
 
-  for (const auto& test_data : ldpc_encoder_test_data) {
+class LDPCEncDecFixture : public ::testing::TestWithParam<LDPCEncDecParams>
+{
+protected:
+  // Creates the factories just once.
+  static void SetUpTestSuite()
+  {
+    if (!enc_factory_generic) {
+      enc_factory_generic = create_ldpc_encoder_factory_sw("generic");
+      ASSERT_NE(enc_factory_generic, nullptr);
+    }
+    if (!enc_factory_avx2) {
+      enc_factory_avx2 = create_ldpc_encoder_factory_sw("avx2");
+      ASSERT_NE(enc_factory_avx2, nullptr);
+    }
+    if (!dec_factory_generic) {
+      dec_factory_generic = create_ldpc_decoder_factory_sw("generic");
+      ASSERT_NE(dec_factory_generic, nullptr);
+    }
+  }
+
+  // Carries out most of the parametrized test setup: computes useful quantities (e.g., message and codeblock lengths),
+  // reads the data file and fills encoder/decoder configuration structures.
+  LDPCEncDecFixture()
+  {
+    test_case_t test_data = std::get<1>(GetParam());
+
     ldpc_base_graph_type bg = static_cast<ldpc_base_graph_type>(test_data.bg - 1);
     lifting_size_t       ls = static_cast<lifting_size_t>(test_data.ls);
 
@@ -63,54 +90,120 @@ int main()
     }
 
     // Compute lifted messages and codeblock lengths.
-    unsigned min_cb_length = min_cb_length_bg * ls;
-    unsigned max_cb_length = max_cb_length_bg * ls;
-    unsigned msg_length    = msg_length_bg * ls;
+    min_cb_length = min_cb_length_bg * ls;
+    max_cb_length = max_cb_length_bg * ls;
+    msg_length    = msg_length_bg * ls;
 
     // Read messages and codeblocks.
-    const std::vector<uint8_t> messages   = test_data.messages.read();
-    const std::vector<uint8_t> codeblocks = test_data.codeblocks.read();
+    messages   = test_data.messages.read();
+    codeblocks = test_data.codeblocks.read();
 
-    const unsigned nof_messages = test_data.nof_messages;
-    assert(messages.size() == static_cast<size_t>(nof_messages * msg_length));
-    assert(codeblocks.size() == static_cast<size_t>(nof_messages * max_cb_length));
+    nof_messages = test_data.nof_messages;
 
-    srsgnb::codeblock_metadata::tb_common_metadata cfg_enc = {bg, ls};
-    srsgnb::ldpc_decoder::configuration            cfg_dec = {{cfg_enc}, {}};
-    cfg_dec.algorithm_conf.max_iterations                  = 1;
+    // Encoder/decoder configurations.
+    cfg_enc = {bg, ls};
+    cfg_dec = {{cfg_enc}, {}};
+    // There is no noise - one decoder iteration should be enough.
+    cfg_dec.algorithm_conf.max_iterations = 1;
+  }
 
-    unsigned used_msg_bits   = 0;
-    unsigned used_cblck_bits = 0;
-    for (unsigned message_idx = 0; message_idx != nof_messages; ++message_idx) {
-      span<const uint8_t> msg_i = span<const uint8_t>(messages).subspan(used_msg_bits, msg_length);
-      used_msg_bits += msg_length;
-      span<const uint8_t> cblock_i = span<const uint8_t>(codeblocks).subspan(used_cblck_bits, max_cb_length);
-      used_cblck_bits += max_cb_length;
+  // Finalizes the test setup by asserting the creation of encoder and decoder as well as double-checking some of the
+  // quantities computed in the constructor.
+  void SetUp() override
+  {
+    decoder_test = dec_factory_generic->create();
+    ASSERT_NE(decoder_test, nullptr);
 
-      constexpr int NOF_STEPS   = 3;
-      unsigned      length_step = (max_cb_length - min_cb_length) / NOF_STEPS;
-      // check several shortened codeblocks
-      for (unsigned length = min_cb_length; length < max_cb_length; length += length_step) {
-        std::vector<uint8_t> encoded(length);
-        enc_generic->encode(encoded, msg_i, cfg_enc);
-        TESTASSERT(std::equal(encoded.begin(), encoded.end(), cblock_i.begin()), "Wrong codeblock.");
+    std::string implementation = std::get<0>(GetParam());
+    if (implementation == "generic") {
+      encoder_test = enc_factory_generic->create();
+      ASSERT_NE(encoder_test, nullptr);
+    } else if (implementation == "avx2") {
+      encoder_test = enc_factory_avx2->create();
+      ASSERT_NE(encoder_test, nullptr);
+    } else {
+      FAIL() << fmt::format("Invalid implementation type {}.", implementation);
+    }
 
-        std::vector<uint8_t>              decoded(msg_length);
-        std::vector<log_likelihood_ratio> llrs(length);
-        std::transform(cblock_i.begin(), cblock_i.begin() + length, llrs.begin(), compute_llrs);
-        dec_generic->decode(decoded, llrs, nullptr, cfg_dec);
-        TESTASSERT(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal), "Wrong recovered message.");
-      }
-      // check full-length codeblock
-      std::vector<uint8_t> encoded(max_cb_length);
-      enc_generic->encode(encoded, msg_i, cfg_enc);
-      TESTASSERT(std::equal(encoded.begin(), encoded.end(), cblock_i.begin()), "Wrong codeblock.");
+    ASSERT_EQ(messages.size(), static_cast<size_t>(nof_messages * msg_length))
+        << fmt::format("Expected message total size  {}, actual {}.", nof_messages * msg_length, messages.size());
+    ASSERT_EQ(codeblocks.size(), static_cast<size_t>(nof_messages * max_cb_length)) << fmt::format(
+        "Expected codeblock total size  {}, actual {}.", nof_messages * max_cb_length, codeblocks.size());
+  }
 
+  static std::shared_ptr<ldpc_encoder_factory> enc_factory_generic;
+  static std::shared_ptr<ldpc_encoder_factory> enc_factory_avx2;
+  static std::shared_ptr<ldpc_decoder_factory> dec_factory_generic;
+
+  std::unique_ptr<ldpc_encoder>         encoder_test;
+  std::unique_ptr<srsgnb::ldpc_decoder> decoder_test;
+
+  std::vector<uint8_t> messages;
+  unsigned             nof_messages;
+  unsigned             msg_length;
+
+  std::vector<uint8_t> codeblocks;
+  unsigned             min_cb_length;
+  unsigned             max_cb_length;
+
+  srsgnb::codeblock_metadata::tb_common_metadata cfg_enc;
+  srsgnb::ldpc_decoder::configuration            cfg_dec;
+};
+
+std::shared_ptr<ldpc_encoder_factory> LDPCEncDecFixture::enc_factory_generic = nullptr;
+std::shared_ptr<ldpc_encoder_factory> LDPCEncDecFixture::enc_factory_avx2    = nullptr;
+std::shared_ptr<ldpc_decoder_factory> LDPCEncDecFixture::dec_factory_generic = nullptr;
+
+// Returns a vector of with values [min_val, min_val + delta, ..., min_val + N * delta, max_val], where N = steps - 1 if
+// max_val - min_val is divisible by steps, and N = steps otherwise.
+std::vector<unsigned> create_range(unsigned min_val, unsigned max_val, unsigned steps)
+{
+  if (steps == 0) {
+    return {};
+  }
+
+  unsigned val_step = (max_val - min_val) / steps;
+
+  std::vector<unsigned> out;
+  for (unsigned val = min_val; val < max_val; val += val_step) {
+    out.emplace_back(val);
+  }
+  out.emplace_back(max_val);
+  return out;
+}
+
+TEST_P(LDPCEncDecFixture, LDPCEncDecTest)
+{
+  unsigned used_msg_bits   = 0;
+  unsigned used_cblck_bits = 0;
+  // For all test message-codeblock pairs...
+  for (unsigned message_idx = 0; message_idx != nof_messages; ++message_idx) {
+    span<const uint8_t> msg_i = span<const uint8_t>(messages).subspan(used_msg_bits, msg_length);
+    used_msg_bits += msg_length;
+    span<const uint8_t> cblock_i = span<const uint8_t>(codeblocks).subspan(used_cblck_bits, max_cb_length);
+    used_cblck_bits += max_cb_length;
+
+    // check several shortened codeblocks.
+    constexpr unsigned          NOF_STEPS    = 3;
+    const std::vector<unsigned> length_steps = create_range(min_cb_length, max_cb_length, NOF_STEPS);
+    for (const unsigned length : length_steps) {
+      // Check the encoder.
+      std::vector<uint8_t> encoded(length);
+      encoder_test->encode(encoded, msg_i, cfg_enc);
+      EXPECT_TRUE(std::equal(encoded.begin(), encoded.end(), cblock_i.begin())) << "Wrong codeblock.";
+
+      // Check the decoder - we need to transform hard bits into soft bits.
       std::vector<uint8_t>              decoded(msg_length);
-      std::vector<log_likelihood_ratio> llrs(max_cb_length);
-      std::transform(cblock_i.begin(), cblock_i.end(), llrs.begin(), compute_llrs);
-      dec_generic->decode(decoded, llrs, nullptr, cfg_dec);
-      TESTASSERT(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal), "Wrong recovered message.");
+      std::vector<log_likelihood_ratio> llrs(length);
+      std::transform(cblock_i.begin(), cblock_i.begin() + length, llrs.begin(), compute_llrs);
+      decoder_test->decode(decoded, llrs, nullptr, cfg_dec);
+      EXPECT_TRUE(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal))
+          << "Wrong recovered message.";
     }
   }
 }
+
+INSTANTIATE_TEST_SUITE_P(LDPCEncDecSuite,
+                         LDPCEncDecFixture,
+                         ::testing::Combine(::testing::Values("generic"), ::testing::ValuesIn(ldpc_encoder_test_data)));
+} // namespace

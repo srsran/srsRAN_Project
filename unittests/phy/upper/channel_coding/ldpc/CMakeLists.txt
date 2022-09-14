@@ -12,7 +12,7 @@ set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(ldpc_enc_dec_test ldpc_enc_dec_test.cpp)
-target_link_libraries(ldpc_enc_dec_test srsgnb_channel_coding srslog)
+target_link_libraries(ldpc_enc_dec_test srsgnb_channel_coding srslog gtest gtest_main)
 add_custom_command(
     TARGET ldpc_enc_dec_test
     POST_BUILD
