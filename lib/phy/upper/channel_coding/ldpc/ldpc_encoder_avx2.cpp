@@ -10,7 +10,6 @@
 
 #include "ldpc_encoder_avx2.h"
 #include "avx2_support.h"
-#include "srsgnb/srsvec/copy.h"
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
@@ -92,24 +91,14 @@ void ldpc_encoder_avx2::load_input(span<const uint8_t> in)
   // Resize internal buffer.
   codeblock_used_size = codeblock_length / lifting_size * node_size_avx2;
 
-  unsigned i_input = 0;
-  unsigned skip    = 0;
+  unsigned i_input        = 0;
+  unsigned i_avx2         = 0;
+  unsigned node_size_byte = node_size_avx2 * AVX2_SIZE_BYTE;
   for (unsigned i_node = 0; i_node != bg_K; ++i_node) {
-    unsigned i_avx2 = 0;
-    // First deal with the part of the node that fills AVX2 vectors completely.
-    for (unsigned max_i_avx2 = lifting_size / AVX2_SIZE_BYTE; i_avx2 != max_i_avx2; ++i_avx2) {
-      codeblock.set_at(skip++, _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(&in[i_input])));
-      i_input += AVX2_SIZE_BYTE;
-    }
-    // Now deal with the remaining part of the node.
-    unsigned left_over = lifting_size % AVX2_SIZE_BYTE;
-    if (left_over > 0) {
-      // First reset AX2 register.
-      codeblock.set_at(skip, _mm256_setzero_si256());
-      std::memcpy(codeblock.data_at(skip), &in[i_input], left_over);
-      ++skip;
-      i_input += left_over;
-    }
+    std::memset(codeblock.data_at(i_avx2), 0, node_size_byte);
+    std::memcpy(codeblock.data_at(i_avx2), in.data() + i_input, lifting_size);
+    i_avx2 += node_size_avx2;
+    i_input += lifting_size;
   }
 }
 
@@ -471,22 +460,18 @@ void ldpc_encoder_avx2::write_codeblock(span<uint8_t> out)
 {
   unsigned nof_nodes = codeblock_length / lifting_size;
 
-  unsigned node_size_byte = node_size_avx2 * AVX2_SIZE_BYTE;
-
-  span<uint8_t> tmp =
-      span<uint8_t>(reinterpret_cast<uint8_t*>(codeblock.data_at(0)), codeblock_used_size * AVX2_SIZE_BYTE);
   // The first two blocks are shortened and the last node is not considered, since it can be incomplete.
   unsigned i_out = 0;
-  unsigned i_tmp = 2 * node_size_byte;
+  unsigned i_in  = 2 * node_size_avx2;
   for (unsigned i_node = 2, max_i_node = nof_nodes - 1; i_node != max_i_node; ++i_node) {
-    srsvec::copy(out.subspan(i_out, lifting_size), tmp.subspan(i_tmp, lifting_size));
+    std::memcpy(out.data() + i_out, codeblock.data_at(i_in), lifting_size);
     i_out += lifting_size;
-    i_tmp += node_size_byte;
+    i_in += node_size_avx2;
   }
 
   // Take care of the last node.
   unsigned remainder = out.size() - i_out;
-  srsvec::copy(out.subspan(i_out, remainder), tmp.subspan(i_tmp, remainder));
+  std::memcpy(out.data() + i_out, codeblock.data_at(i_in), remainder);
 }
 
 static void rotate_node_left(__m256i* out, const __m256i* in, unsigned steps, unsigned ls)
