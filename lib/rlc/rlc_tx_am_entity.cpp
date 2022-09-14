@@ -9,6 +9,7 @@
  */
 
 #include "rlc_tx_am_entity.h"
+#include "srsgnb/adt/scope_exit.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
 using namespace srsgnb;
@@ -65,7 +66,10 @@ void rlc_tx_am_entity::handle_sdu(rlc_sdu sdu)
 byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t nof_bytes)
 {
   std::lock_guard<std::mutex> lock(mutex);
-  byte_buffer_slice_chain     pdu_buf;
+  auto                        on_function_exit = make_scope_exit([&]() {
+    logger.log_debug("Handling buffer state update");
+    handle_buffer_state_update_nolock(); // already locked
+  });
 
   logger.log_debug("MAC opportunity - bytes={}, tx_window size={} PDUs", nof_bytes, tx_window->size());
 
@@ -76,8 +80,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t nof_bytes)
     if (status_pdu.get_packed_size() > nof_bytes) {
       if (not status_pdu.trim(nof_bytes)) {
         logger.log_warning("Could not trim status PDU down to {} bytes", nof_bytes);
-        handle_buffer_state_update_nolock(); // already locked
-        return pdu_buf;
+        return {};
       }
       logger.log_info("Trimmed status PDU to fit into {} bytes", nof_bytes);
       logger.log_debug("Trimmed status PDU: {}", status_pdu);
@@ -85,25 +88,19 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t nof_bytes)
     byte_buffer pdu;
     status_pdu.pack(pdu);
     logger.log_debug("Status PDU built - {} bytes", pdu.length());
-    pdu_buf.push_back(std::move(pdu));
-    handle_buffer_state_update_nolock(); // already locked
-    return pdu_buf;
+    return byte_buffer_slice_chain{std::move(pdu)};
   }
 
   // Retransmit if required
   if (not retx_queue.empty()) {
     logger.log_info("Re-transmission required. Retransmission queue size: {}", retx_queue.size());
-    pdu_buf = build_retx_pdu(nof_bytes);
-    handle_buffer_state_update_nolock(); // already locked
-    return pdu_buf;
+    return build_retx_pdu(nof_bytes);
   }
 
   // Send remaining segment, if it exists
   if (sn_under_segmentation != INVALID_RLC_SN) {
     if (tx_window->has_sn(sn_under_segmentation)) {
-      pdu_buf = build_continued_sdu_segment((*tx_window)[sn_under_segmentation], nof_bytes);
-      handle_buffer_state_update_nolock(); // already locked
-      return pdu_buf;
+      return build_continued_sdu_segment((*tx_window)[sn_under_segmentation], nof_bytes);
     } else {
       sn_under_segmentation = INVALID_RLC_SN;
       logger.log_error("SDU currently being segmented does not exist in tx_window. Aborting segmentation SN={}",
@@ -115,12 +112,10 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t nof_bytes)
   // Check whether there is something to TX
   if (sdu_queue.is_empty()) {
     logger.log_debug("No data available to be sent");
-    return pdu_buf;
+    return {};
   }
 
-  pdu_buf = build_new_pdu(nof_bytes);
-  handle_buffer_state_update_nolock(); // already locked
-  return pdu_buf;
+  return build_new_pdu(nof_bytes);
 }
 
 byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
