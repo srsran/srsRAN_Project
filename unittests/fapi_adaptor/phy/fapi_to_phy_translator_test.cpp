@@ -24,7 +24,6 @@ using namespace unittest;
 static constexpr subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
 
 namespace {
-static resource_grid_spy grid;
 
 class resource_grid_pool_dummy : public resource_grid_pool
 {

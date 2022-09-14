@@ -14,6 +14,7 @@
 #include "srsgnb/fapi_adaptor/mac/messages/pdcch.h"
 #include "srsgnb/fapi_adaptor/mac/messages/pdsch.h"
 #include "srsgnb/fapi_adaptor/mac/messages/prach.h"
+#include "srsgnb/fapi_adaptor/mac/messages/pusch.h"
 #include "srsgnb/fapi_adaptor/mac/messages/ssb.h"
 #include "srsgnb/srslog/logger.h"
 
@@ -218,6 +219,11 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
   for (const auto& pdu : ul_res.ul_res->prachs) {
     fapi::ul_prach_pdu_builder pdu_builder = builder.add_prach_pdu();
     convert_prach_mac_to_fapi(pdu_builder, pdu);
+  }
+
+  for (const auto& pdu : ul_res.ul_res->puschs) {
+    fapi::ul_pusch_pdu_builder pdu_builder = builder.add_pusch_pdu();
+    convert_pusch_mac_to_fapi(pdu_builder, pdu.pusch_cfg);
   }
 
   // Validate that the UL_TTI.request message is correct.

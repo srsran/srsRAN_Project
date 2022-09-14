@@ -2477,7 +2477,7 @@ public:
 
   /// Adds a PUSCH PDU to the message and returns a builder that helps to fill the parameters.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH PDU.
-  ul_pusch_pdu_builder add_pusch_pdu(rnti_t rnti, uint32_t handle)
+  ul_pusch_pdu_builder add_pusch_pdu()
   {
     msg.pdus.emplace_back();
     auto& pdu    = msg.pdus.back();
@@ -2486,6 +2486,15 @@ public:
     ++msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUSCH)];
 
     ul_pusch_pdu_builder builder(pdu.pusch_pdu);
+
+    return builder;
+  }
+
+  /// Adds a PUSCH PDU to the message and returns a builder that helps to fill the parameters.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH PDU.
+  ul_pusch_pdu_builder add_pusch_pdu(rnti_t rnti, uint32_t handle)
+  {
+    ul_pusch_pdu_builder builder = add_pusch_pdu();
     builder.set_basic_parameters(rnti, handle);
 
     return builder;

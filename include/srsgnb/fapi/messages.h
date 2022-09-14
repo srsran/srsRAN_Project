@@ -558,7 +558,8 @@ struct uci_part1_to_part2_correspondence_v3 {
 
 /// Uplink PUSCH PDU information.
 struct ul_pusch_pdu {
-  static constexpr unsigned BITMAP_SIZE = 4U;
+  static constexpr unsigned RB_BITMAP_SIZE_IN_BYTES = 36;
+  static constexpr unsigned BITMAP_SIZE             = 4U;
   /// Bit position of the pdu_bitmap property.
   static constexpr unsigned PUSCH_DATA_BIT = 0U;
   static constexpr unsigned PUSCH_UCI_BIT  = 1U;

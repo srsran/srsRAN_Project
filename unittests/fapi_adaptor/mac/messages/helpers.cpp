@@ -313,3 +313,36 @@ prach_occasion_info unittests::build_valid_prach_occassion()
 
   return prach;
 }
+
+pusch_information unittests::build_valid_pusch_pdu()
+{
+  pusch_information pusch;
+
+  static bwp_configuration bwp_cfg = {false, subcarrier_spacing::kHz15, {10, 10}};
+
+  pusch.rnti             = to_rnti(29);
+  pusch.bwp_cfg          = &bwp_cfg;
+  pusch.prbs             = {prb_interval(10, 20)};
+  pusch.symbols          = {2, 12};
+  pusch.target_code_rate = 193;
+  pusch.qam_mod          = modulation_scheme::QAM256;
+  pusch.mcs_index        = {3};
+  pusch.mcs_table        = pusch_mcs_table::qam256;
+  pusch.dmrs             = {dmrs_symbol_mask(14), dmrs_config_type::type1, 2, 3, false, 0, 2, bounded_bitset<12>(12)};
+  pusch.intra_slot_freq_hopping    = false;
+  pusch.pusch_second_hop_prb       = 3;
+  pusch.tx_direct_current_location = 1;
+  pusch.ul_freq_shift_7p5khz       = false;
+  pusch.transform_precoding        = false;
+  pusch.n_id                       = 69;
+  pusch.nof_layers                 = 1;
+  pusch.pusch_dmrs_id              = 18;
+  pusch.dmrs_hopping_mode          = pusch_information::dmrs_hopping_mode::no_hopping;
+  pusch.rv_index                   = 1;
+  pusch.harq_id                    = 2;
+  pusch.new_data                   = true;
+  pusch.tb_size_bytes              = 11;
+  pusch.num_cb                     = 0;
+
+  return pusch;
+}

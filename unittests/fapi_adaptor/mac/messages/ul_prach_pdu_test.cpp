@@ -16,7 +16,7 @@ using namespace srsgnb;
 using namespace fapi_adaptor;
 using namespace unittests;
 
-TEST(UlPrachPduTest, valid_prach_should_pass)
+TEST(ULPRACHPDUTest, ValidPRACHShouldPass)
 {
   const prach_occasion_info& mac_pdu = build_valid_prach_occassion();
   fapi::ul_prach_pdu         fapi_pdu;
