@@ -290,7 +290,7 @@ void ldpc_encoder_avx2::high_rate_bg1_i6_long()
     rotated_node.set_at(j, tmp_epi8);
   }
 
-  rotate_node_right(codeblock.data_at(skip0), rotated_node.data_at(0), lifting_size - 105 % lifting_size, lifting_size);
+  rotate_node_left(codeblock.data_at(skip0), rotated_node.data_at(0), 105 % lifting_size, lifting_size);
 
   for (unsigned j = 0; j != node_size_avx2; ++j) {
     __m256i block0 = codeblock.get_at(skip0 + j);
@@ -383,7 +383,7 @@ void ldpc_encoder_avx2::high_rate_bg2_other_long()
     rotated_node.set_at(j, rotated_j);
   }
 
-  rotate_node_right(codeblock.data_at(skip0), rotated_node.data_at(0), lifting_size - 1, lifting_size);
+  rotate_node_left(codeblock.data_at(skip0), rotated_node.data_at(0), 1, lifting_size);
 
   for (unsigned j = 0; j != node_size_avx2; ++j) {
     __m256i block_0 = codeblock.get_at(skip0 + j);
