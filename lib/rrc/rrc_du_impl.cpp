@@ -39,6 +39,7 @@ rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
                                               nas_notifier,
                                               msg.ue_index,
                                               msg.c_rnti,
+                                              msg.cgi,
                                               cfg.ue_default_cfg,
                                               msg.srbs,
                                               msg.du_to_cu_container,

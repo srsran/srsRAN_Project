@@ -30,6 +30,7 @@ public:
               rrc_ue_nas_notifier&                   nas_notif_,
               const ue_index_t                       ue_index_,
               const rnti_t                           c_rnti_,
+              const nr_cell_global_identity          cgi_,
               const rrc_ue_cfg_t&                    cfg_,
               const srb_notifiers&                   srbs_,
               const asn1::unbounded_octstring<true>& du_to_cu_container,

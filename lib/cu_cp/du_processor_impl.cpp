@@ -178,6 +178,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   rrc_ue_creation_message rrc_ue_create_msg{};
   rrc_ue_create_msg.ue_index = ue_ctxt->ue_index;
   rrc_ue_create_msg.c_rnti   = ue_ctxt->c_rnti;
+  rrc_ue_create_msg.cgi      = msg.cgi;
   for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
     rrc_ue_create_msg.srbs[i] = ue_ctxt->srbs[i].rrc_tx_notifier.get();
   }
