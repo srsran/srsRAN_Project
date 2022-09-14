@@ -51,17 +51,17 @@ static void fill_codewords(fapi::dl_pdsch_pdu_builder&                          
                                     cw.tb_size_bytes);
   }
 
-  unsigned              tb_size_lbrm_bytes        = ldpc::MAX_CODEBLOCK_SIZE / 8;
-  const pdsch_codeword& cw                        = codewords.front();
-  static const bool     tb_crc_first_tb_required  = false;
-  static const bool     tb_crc_second_tb_required = false;
+  unsigned              tb_size_lbrm_bytes           = ldpc::MAX_CODEBLOCK_SIZE / 8;
+  const pdsch_codeword& cw                           = codewords.front();
+  static const bool     is_tb_crc_first_tb_required  = false;
+  static const bool     is_tb_crc_second_tb_required = false;
 
   // NOTE: MAC uses the value of the target code rate x[1024], as per TS 38.214, Section 5.1.3.1, table 5.1.3.1-1.
   float R = cw.target_code_rate * (1.F / 1024);
   builder.set_maintenance_v3_codeword_parameters(get_ldpc_base_graph(R, cw.tb_size_bytes),
                                                  tb_size_lbrm_bytes,
-                                                 tb_crc_first_tb_required,
-                                                 tb_crc_second_tb_required);
+                                                 is_tb_crc_first_tb_required,
+                                                 is_tb_crc_second_tb_required);
 }
 
 static void fill_codeword_information(fapi::dl_pdsch_pdu_builder& builder, unsigned nid_pdsch)
@@ -143,14 +143,14 @@ static void fill_coreset(fapi::dl_pdsch_pdu_builder&  builder,
 }
 
 static fapi::pdsch_trans_type get_pdsch_trans_type(coreset_id id,
-                                                   bool       interleaved,
-                                                   bool       dci_1_0_in_common_search_space,
-                                                   bool       type0_pdcch_css,
-                                                   bool       coreset0_configured_for_cell)
+                                                   bool       is_interleaved,
+                                                   bool       is_dci_1_0_present_in_common_search_space,
+                                                   bool       is_dci_1_0_in_type0_pdcch_css,
+                                                   bool       is_coreset0_configured_for_cell)
 {
-  if (!interleaved) {
+  if (!is_interleaved) {
     // Non-interleaved.
-    if (dci_1_0_in_common_search_space) {
+    if (is_dci_1_0_present_in_common_search_space) {
       return fapi::pdsch_trans_type::non_interleaved_common_ss;
     }
     return fapi::pdsch_trans_type::non_interleaved_other;
@@ -159,11 +159,11 @@ static fapi::pdsch_trans_type get_pdsch_trans_type(coreset_id id,
   // Interleaved cases.
   if (id == to_coreset_id(0)) {
     // CORESET0 Case.
-    if (dci_1_0_in_common_search_space) {
-      if (type0_pdcch_css) {
+    if (is_dci_1_0_present_in_common_search_space) {
+      if (is_dci_1_0_in_type0_pdcch_css) {
         return fapi::pdsch_trans_type::interleaved_common_type0_coreset0;
       }
-      if (coreset0_configured_for_cell) {
+      if (is_coreset0_configured_for_cell) {
         return fapi::pdsch_trans_type::interleaved_common_any_coreset0_present;
       }
       return fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present;
@@ -192,26 +192,27 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   fill_power_parameters(builder);
 
   // Get the VRB-to-PRB mapping from the DCI.
-  bool interleaved = mac_pdu.pdcch_cfg->dci.si_f1_0.vrb_to_prb_mapping;
+  bool is_interleaved = mac_pdu.pdcch_cfg->dci.si_f1_0.vrb_to_prb_mapping;
   // Frequency allocation.
-  // Note: As definef in TS38.214 Section 5.1.2.3, DCI format 1_0 uses bundle size of 2.
+  // Note: As defined in TS38.214 Section 5.1.2.3, DCI format 1_0 uses bundle size of 2.
   fill_frequency_allocation(builder,
                             mac_pdu.pdsch_cfg.prbs,
-                            interleaved ? fapi::vrb_to_prb_mapping_type::interleaved_rb_size2
-                                        : fapi::vrb_to_prb_mapping_type::non_interleaved);
+                            is_interleaved ? fapi::vrb_to_prb_mapping_type::interleaved_rb_size2
+                                           : fapi::vrb_to_prb_mapping_type::non_interleaved);
 
   // :TODO: in the future we need the MAC to provide these variables.
   // DCI 1_0 is in common search space.
-  static const bool dci_1_0_in_common_ss = true;
-  // DCI 1_0 in not in Type0-PDCCH common search space.
-  static const bool type0_pdcch_css = false;
-  // CORESET0 not configured for the cell.
-  static const bool      coreset0_configured_for_cell = false;
-  fapi::pdsch_trans_type trans_type                   = get_pdsch_trans_type(mac_pdu.pdcch_cfg->ctx.coreset_cfg->id,
-                                                           interleaved,
-                                                           dci_1_0_in_common_ss,
-                                                           type0_pdcch_css,
-                                                           coreset0_configured_for_cell);
+  static const bool is_dci_1_0_in_common_ss = true;
+  // DCI 1_0 is not in Type0-PDCCH common search space.
+  static const bool is_dci_1_0_in_type0_pdcch_css = false;
+  // CORESET0 is not configured for the cell.
+  static const bool is_coreset0_configured_for_cell = false;
+
+  fapi::pdsch_trans_type trans_type = get_pdsch_trans_type(mac_pdu.pdcch_cfg->ctx.coreset_cfg->id,
+                                                           is_interleaved,
+                                                           is_dci_1_0_in_common_ss,
+                                                           is_dci_1_0_in_type0_pdcch_css,
+                                                           is_coreset0_configured_for_cell);
   fill_coreset(builder, *mac_pdu.pdcch_cfg->ctx.coreset_cfg, trans_type);
 
   // :TODO Rate-Matching related parameters, not used now.
@@ -243,26 +244,27 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   fill_power_parameters(builder);
 
   // Get the VRB-to-PRB mapping from the DCI.
-  bool interleaved = mac_pdu.pdcch_cfg->dci.ra_f1_0.vrb_to_prb_mapping;
+  bool is_interleaved = mac_pdu.pdcch_cfg->dci.ra_f1_0.vrb_to_prb_mapping;
   // Frequency allocation.
-  // Note: As definef in TS38.214 Section 5.1.2.3, DCI format 1_0 uses bundle size of 2.
+  // Note: As defined in TS38.214 Section 5.1.2.3, DCI format 1_0 uses bundle size of 2.
   fill_frequency_allocation(builder,
                             mac_pdu.pdsch_cfg.prbs,
-                            interleaved ? fapi::vrb_to_prb_mapping_type::interleaved_rb_size2
-                                        : fapi::vrb_to_prb_mapping_type::non_interleaved);
+                            is_interleaved ? fapi::vrb_to_prb_mapping_type::interleaved_rb_size2
+                                           : fapi::vrb_to_prb_mapping_type::non_interleaved);
 
   // :TODO: in the future we need the MAC to provide these variables.
   // DCI 1_0 is in common search space.
-  static const bool dci_1_0_in_common_ss = true;
-  // DCI 1_0 in not in Type0-PDCCH common search space.
-  static const bool type0_pdcch_css = false;
-  // CORESET0 not configured for the cell.
-  static const bool      coreset0_configured_for_cell = false;
-  fapi::pdsch_trans_type trans_type                   = get_pdsch_trans_type(mac_pdu.pdcch_cfg->ctx.coreset_cfg->id,
-                                                           interleaved,
-                                                           dci_1_0_in_common_ss,
-                                                           type0_pdcch_css,
-                                                           coreset0_configured_for_cell);
+  static const bool is_dci_1_0_in_common_ss = true;
+  // DCI 1_0 is not in Type0-PDCCH common search space.
+  static const bool is_dci_1_0_in_type0_pdcch_css = false;
+  // CORESET0 is not configured for the cell.
+  static const bool is_coreset0_configured_for_cell = false;
+
+  fapi::pdsch_trans_type trans_type = get_pdsch_trans_type(mac_pdu.pdcch_cfg->ctx.coreset_cfg->id,
+                                                           is_interleaved,
+                                                           is_dci_1_0_in_common_ss,
+                                                           is_dci_1_0_in_type0_pdcch_css,
+                                                           is_coreset0_configured_for_cell);
   fill_coreset(builder, *mac_pdu.pdcch_cfg->ctx.coreset_cfg, trans_type);
 
   // :TODO Rate-Matching related parameters, not used now.

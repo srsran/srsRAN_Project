@@ -30,14 +30,20 @@ public:
   /// Labels for the different types of PDSCH PDUs.
   enum pdsch_pdu_type { sib = 0, rar, ue, last };
 
+  struct pdu_struct {
+    unsigned fapi_index;
+    unsigned cw_index;
+  };
+
   /// \brief Records a PDU in the registry.
   ///
   /// \param[in] fapi_pdu_index Index of the FAPI PDU.
+  /// \param[in] cw_index Codeword index.
   /// \param[in] type PDSCH PDU type.
-  void register_pdu(unsigned fapi_pdu_index, pdsch_pdu_type type)
+  void register_pdu(unsigned fapi_pdu_index, unsigned cw_index, pdsch_pdu_type type)
   {
     srsgnb_assert(type < last, "Invalid PDSCH PDU data type");
-    pdus[type].push_back(fapi_pdu_index);
+    pdus[type].push_back({fapi_pdu_index, cw_index});
   }
 
   /// \brief Returns the number of recorded PDUs of the given type.
@@ -54,8 +60,8 @@ public:
   ///
   /// \param[in] mac_pdu_index Index of the MAC PDU.
   /// \param[in] type          PDSCH PDU type.
-  /// \return Index of the FAPI PDU associated to the MAC PDU.
-  unsigned get_fapi_pdu_index(unsigned mac_pdu_index, pdsch_pdu_type type) const
+  /// \return A PDU struct that contains the index of the FAPI PDU and the codeword index.
+  const pdu_struct& get_fapi_pdu_index(unsigned mac_pdu_index, pdsch_pdu_type type) const
   {
     srsgnb_assert(type < last, "Invalid PDSCH PDU data type");
     srsgnb_assert(mac_pdu_index < pdus[type].size(), "MAC PDU index is not registered");
@@ -67,7 +73,7 @@ public:
   void reset() { pdus = {}; }
 
 private:
-  using pdu_vector = static_vector<unsigned, MAX_DL_PDUS_PER_SLOT>;
+  using pdu_vector = static_vector<pdu_struct, MAX_DL_PDUS_PER_SLOT>;
   std::array<pdu_vector, last> pdus;
 };
 

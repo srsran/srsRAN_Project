@@ -222,7 +222,7 @@ static const std::vector<configuration_profile> profiles = {
        }
      }},
     {"uhd_20MHz_n7",
-     "Single 20MHz FDD in band n7 using ZMQ.",
+     "Single 20MHz FDD in band n7 using UHD.",
      []() {
        driver_name      = "uhd";
        device_arguments = "type=b200";

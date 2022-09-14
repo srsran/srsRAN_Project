@@ -112,13 +112,19 @@ static void add_pdsch_pdus_to_request(fapi::dl_tti_request_message_builder& buil
   for (const auto& pdu : dl_res.dl_res->bc.sibs) {
     fapi::dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
     convert_pdsch_mac_to_fapi(pdsch_builder, pdu);
-    pdsch_registry.register_pdu(pdsch_builder.get_pdu_id(), pdsch_pdu_registry::sib);
+    // Add one entry per codeword to the registry.
+    for (unsigned i = 0, e = pdu.pdsch_cfg.codewords.size(); i != e; ++i) {
+      pdsch_registry.register_pdu(pdsch_builder.get_pdu_id(), i, pdsch_pdu_registry::sib);
+    }
   }
 
   for (const auto& pdu : dl_res.dl_res->rar_grants) {
     fapi::dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
     convert_pdsch_mac_to_fapi(pdsch_builder, pdu);
-    pdsch_registry.register_pdu(pdsch_builder.get_pdu_id(), pdsch_pdu_registry::rar);
+    // Add one entry per codeword to the registry.
+    for (unsigned i = 0, e = pdu.pdsch_cfg.codewords.size(); i != e; ++i) {
+      pdsch_registry.register_pdu(pdsch_builder.get_pdu_id(), i, pdsch_pdu_registry::rar);
+    }
   }
 }
 
@@ -181,21 +187,20 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
 
   builder.set_basic_parameters(dl_data.slot.sfn(), dl_data.slot.slot_index());
 
-  // CW field value of the Tx_Data.request message.
-  static const unsigned cw = 1;
-
   // Add SIB1 PDUs.
   const static_vector<span<const uint8_t>, MAX_SIB1_PDUS_PER_SLOT>& sib1_pdus = dl_data.sib1_pdus;
   for (unsigned i = 0, e = sib1_pdus.size(); i != e; ++i) {
+    const pdsch_pdu_registry::pdu_struct& registry_pdu = pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registry::sib);
     builder.add_pdu_custom_payload(
-        pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registry::sib), cw, {sib1_pdus[i].data(), sib1_pdus[i].size()});
+        registry_pdu.fapi_index, registry_pdu.cw_index, {sib1_pdus[i].data(), sib1_pdus[i].size()});
   }
 
   // Add RAR PDUs.
   const static_vector<span<const uint8_t>, MAX_RAR_PDUS_PER_SLOT>& rar_pdus = dl_data.rar_pdus;
   for (unsigned i = 0, e = rar_pdus.size(); i != e; ++i) {
+    const pdsch_pdu_registry::pdu_struct& registry_pdu = pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registry::rar);
     builder.add_pdu_custom_payload(
-        pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registry::rar), cw, {rar_pdus[i].data(), rar_pdus[i].size()});
+        registry_pdu.fapi_index, registry_pdu.cw_index, {rar_pdus[i].data(), rar_pdus[i].size()});
   }
 
   // Send the message.
