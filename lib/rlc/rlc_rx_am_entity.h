@@ -202,23 +202,20 @@ private:
   /// reassembles the SDU if possible and forwards it to upper layer.
   ///
   /// \param buf The data PDU to be handled (including header and payload)
-  /// \return True if the rx_window changed and requires the cached status PDU to be rebuilt, false otherwise
-  bool handle_data_pdu(byte_buffer_slice buf);
+  void handle_data_pdu(byte_buffer_slice buf);
 
   /// Handles a received data PDU which contains an SDU, puts it into the receive window and forwards it to upper layer.
   ///
   /// \param header The header of the PDU, used for sanity check
   /// \param payload The PDU payload, i.e. the SDU
-  /// \return True if the rx_window changed and requires the cached status PDU to be rebuilt, false on error
-  bool handle_full_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload);
+  void handle_full_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload);
 
   /// Handles a received data PDU which contains an SDU segment, puts it into the receive window if required,
   /// reassembles the SDU if possible and forwards it to upper layer.
   ///
   /// \param header The header of the PDU, used for sanity check and tracking of the segment offset
   /// \param payload The PDU payload, i.e. the SDU segment
-  /// \return True if the rx_window changed and requires the cached status PDU to be rebuilt, false otherwise
-  bool handle_segment_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload);
+  void handle_segment_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload);
 
   void update_segment_inventory(rlc_rx_am_sdu_info& rx_sdu) const;
 

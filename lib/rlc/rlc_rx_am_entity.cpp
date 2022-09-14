@@ -9,6 +9,7 @@
  */
 
 #include "rlc_rx_am_entity.h"
+#include "srsgnb/adt/scope_exit.h"
 
 using namespace srsgnb;
 
@@ -55,10 +56,7 @@ void rlc_rx_am_entity::handle_pdu(byte_buffer_slice buf)
   if (rlc_am_status_pdu::is_control_pdu(buf.view())) {
     handle_control_pdu(std::move(buf));
   } else {
-    if (handle_data_pdu(std::move(buf))) {
-      refresh_status_report();
-      notify_status_required();
-    }
+    handle_data_pdu(std::move(buf));
   }
 }
 
@@ -73,14 +71,30 @@ void rlc_rx_am_entity::handle_control_pdu(byte_buffer_slice buf)
   }
 }
 
-bool rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
+void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
 {
+  bool status_changed   = false;
+  bool status_requested = false;
+  auto on_function_exit = make_scope_exit([&]() {
+    logger.log_debug(
+        "Post-processing data PDU: status_changed={}, status_requested={}", status_changed, status_requested);
+    if (status_changed) {
+      refresh_status_report();
+    }
+    if (status_requested) {
+      do_status.store(true, std::memory_order_relaxed);
+    }
+    if (status_changed || status_requested) {
+      notify_status_required();
+    }
+  });
+
   logger.log_debug(buf.begin(), buf.end(), "Rx data PDU ({} B)", buf.length());
   rlc_am_pdu_header header = {};
   if (not rlc_am_read_data_pdu_header(buf.view(), cfg.sn_field_length, &header)) {
     logger.log_warning("Failed to unpack header of RLC PDU");
     metrics_add_malformed_pdus(1);
-    return rx_window_not_changed;
+    return;
   }
   logger.log_debug("PDU header: {}", header);
 
@@ -88,30 +102,30 @@ bool rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
   size_t            header_len = header.get_packed_size();
   byte_buffer_slice payload    = buf.make_slice(header_len, buf.length() - header_len);
 
-  // Trigger polling if poll bit is set.
+  // Store the poll bit for later evaluation on_function_exit.
   // We do this before checking if the PDU is inside the RX window,
-  // as the RX window may have advanced without the TX having received the ACKs
+  // as the RX window may have advanced without the TX having received the ACKs.
   // This can cause a data stall, whereby the TX keeps retransmiting
   // a PDU outside of the Rx window.
   // Also, we do this before discarding duplicate SDUs/SDU segments
-  // Because t-PollRetransmit may transmit a PDU that was already
+  // because t-PollRetransmit may transmit a PDU that was already
   // received.
   if (header.p != 0U) {
     logger.log_info("status packet requested through polling bit");
-    do_status.store(true, std::memory_order_relaxed);
+    status_requested = true;
   }
 
   // Check whether SDU is within Rx Window
   if (!inside_rx_window(header.sn)) {
     logger.log_info(
         "SN={} outside rx window [{}:{}] - discarding", header.sn, st.rx_next, (st.rx_next + am_window_size) % mod);
-    return rx_window_not_changed;
+    return;
   }
 
   // Section 5.2.3.2.2, discard duplicate PDUs
   if (rx_window->has_sn(header.sn) && (*rx_window)[header.sn].fully_received) {
     logger.log_info("discarding duplicate SN={}", header.sn);
-    return rx_window_not_changed;
+    return;
   }
 
   // Section 5.2.3.2.2, discard segments with overlapping bytes
@@ -132,18 +146,18 @@ bool rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
                         segm.header.so,
                         segm_last_byte,
                         segm.payload.length());
-        return rx_window_not_changed;
+        return;
       }
     }
   }
 
   // Write to rx window either full SDU or SDU segment
-  bool rx_window_change_state = rx_window_not_changed;
   if (header.si == rlc_si_field::full_sdu) {
-    rx_window_change_state = handle_full_data_sdu(header, std::move(payload));
+    handle_full_data_sdu(header, std::move(payload));
   } else {
-    rx_window_change_state = handle_segment_data_sdu(header, std::move(payload));
+    handle_segment_data_sdu(header, std::move(payload));
   }
+  status_changed = true;
 
   logger.log_debug("State: {}", st);
 
@@ -267,15 +281,13 @@ bool rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
       st.rx_next_status_trigger = st.rx_next_highest;
     }
   }
-
-  return rx_window_change_state;
 }
 
-bool rlc_rx_am_entity::handle_full_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload)
+void rlc_rx_am_entity::handle_full_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload)
 {
   if (header.si != rlc_si_field::full_sdu) {
     logger.log_error("called {} with SDU segment. Header: {}", __FUNCTION__, header);
-    return rx_window_not_changed;
+    return;
   }
 
   // Full SDU received. Add to Rx window and use full payload as SDU.
@@ -284,15 +296,13 @@ bool rlc_rx_am_entity::handle_full_data_sdu(const rlc_am_pdu_header& header, byt
   rx_sdu.sdu            = std::move(payload);
   rx_sdu.fully_received = true;
   rx_sdu.has_gap        = false;
-
-  return rx_window_changed;
 }
 
-bool rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload)
+void rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload)
 {
   if (header.si == rlc_si_field::full_sdu) {
     logger.log_error("called {} with full SDU. Header: {}", __FUNCTION__, header);
-    return rx_window_not_changed;
+    return;
   }
 
   // Log SDU segment reception
@@ -322,8 +332,6 @@ bool rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
       }
     }
   }
-
-  return rx_window_changed;
 }
 
 void rlc_rx_am_entity::update_segment_inventory(rlc_rx_am_sdu_info& rx_sdu) const
