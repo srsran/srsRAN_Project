@@ -41,13 +41,13 @@ void ngap_impl::handle_message(const ngap_message& msg)
   logger.info("Handling NGAP PDU of type \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
 
   switch (msg.pdu.type().value) {
-    case asn1::ngap::ngap_pdu_c::types_opts::init_msg:
+    case ngap_pdu_c::types_opts::init_msg:
       handle_initiating_message(msg.pdu.init_msg());
       break;
-    case asn1::ngap::ngap_pdu_c::types_opts::successful_outcome:
+    case ngap_pdu_c::types_opts::successful_outcome:
       handle_successful_outcome(msg.pdu.successful_outcome());
       break;
-    case asn1::ngap::ngap_pdu_c::types_opts::unsuccessful_outcome:
+    case ngap_pdu_c::types_opts::unsuccessful_outcome:
       handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
       break;
     default:
@@ -56,7 +56,7 @@ void ngap_impl::handle_message(const ngap_message& msg)
   }
 }
 
-void ngap_impl::handle_initiating_message(const asn1::ngap::init_msg_s& msg)
+void ngap_impl::handle_initiating_message(const init_msg_s& msg)
 {
   switch (msg.value.type().value) {
     default:
@@ -64,10 +64,10 @@ void ngap_impl::handle_initiating_message(const asn1::ngap::init_msg_s& msg)
   }
 }
 
-void ngap_impl::handle_successful_outcome(const asn1::ngap::successful_outcome_s& outcome)
+void ngap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
 {
   switch (outcome.value.type().value) {
-    case asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::ng_setup_resp: {
+    case ngap_elem_procs_o::successful_outcome_c::types_opts::ng_setup_resp: {
       events->ngap_setup_response.set(&outcome.value.ng_setup_resp());
     } break;
     default:
@@ -75,10 +75,10 @@ void ngap_impl::handle_successful_outcome(const asn1::ngap::successful_outcome_s
   }
 }
 
-void ngap_impl::handle_unsuccessful_outcome(const asn1::ngap::unsuccessful_outcome_s& outcome)
+void ngap_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcome)
 {
   switch (outcome.value.type().value) {
-    case asn1::ngap::ngap_elem_procs_o::unsuccessful_outcome_c::types_opts::ng_setup_fail: {
+    case ngap_elem_procs_o::unsuccessful_outcome_c::types_opts::ng_setup_fail: {
       events->ngap_setup_response.set(&outcome.value.ng_setup_fail());
     } break;
     default:
