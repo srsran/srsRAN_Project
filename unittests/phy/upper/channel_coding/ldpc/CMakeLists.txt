@@ -36,7 +36,7 @@ add_custom_command(
 add_test(ldpc_rm_test ldpc_rm_test)
 
 add_executable(ldpc_segmenter_test ldpc_segmenter_test.cpp)
-target_link_libraries(ldpc_segmenter_test srsgnb_channel_coding srslog)
+target_link_libraries(ldpc_segmenter_test srsgnb_channel_coding srslog gtest gtest_main)
 add_custom_command(
     TARGET ldpc_segmenter_test
     POST_BUILD
