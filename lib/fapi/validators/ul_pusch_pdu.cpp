@@ -249,15 +249,6 @@ static bool validate_harq_process_id(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "HARQ process id", msg_type, pdu_type, report);
 }
 
-/// Validates the new data property of the optional PUSCH data information, as per SCF-222 v4.0 section 3.4.3.2.
-static bool validate_new_data(unsigned value, validator_report& report)
-{
-  static constexpr unsigned MIN_VALUE = 0;
-  static constexpr unsigned MAX_VALUE = 1;
-
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "New data", msg_type, pdu_type, report);
-}
-
 /// Validates the HARQ ACK bit length property of the optional PUSCH UCI information, as per SCF-222 v4.0
 /// section 3.4.3.2.
 static bool validate_harq_ack_bit_len(unsigned value, validator_report& report)
@@ -493,7 +484,7 @@ bool srsgnb::fapi::validate_ul_pusch_pdu(const ul_pusch_pdu& pdu, validator_repo
   result &= validate_scs(static_cast<unsigned>(pdu.scs), report);
   result &= validate_cyclic_prefix(static_cast<unsigned>(pdu.cyclic_prefix), report);
   // NOTE: Target code rate property range is not specified, so it will not be validated.
-  result &= validate_qam_mod_order(pdu.qam_mod_order, pdu.transform_precoding, report);
+  result &= validate_qam_mod_order(get_bits_per_symbol(pdu.qam_mod_order), pdu.transform_precoding, report);
   result &= validate_mcs_index(pdu.mcs_index, report);
   result &= validate_mcs_table(static_cast<unsigned>(pdu.mcs_table), report);
   // NOTE: Transform precoding uses the whole range of the variable, so it will not be validated.
@@ -514,6 +505,7 @@ bool srsgnb::fapi::validate_ul_pusch_pdu(const ul_pusch_pdu& pdu, validator_repo
     result &= validate_rb_start(pdu.rb_start, report);
     result &= validate_rb_size(pdu.rb_size, report);
   }
+
   result &= validate_vrb_to_prb_mapping(static_cast<unsigned>(pdu.vrb_to_prb_mapping), report);
   // NOTE: Intra slot frequency hopping property uses the whole range, so it will not be validated.
   result &= validate_tx_direct_current_location(pdu.tx_direct_current_location, report);
@@ -525,7 +517,6 @@ bool srsgnb::fapi::validate_ul_pusch_pdu(const ul_pusch_pdu& pdu, validator_repo
     const auto& data = pdu.pusch_data;
     result &= validate_rv_index(data.rv_index, report);
     result &= validate_harq_process_id(data.harq_process_id, report);
-    result &= validate_new_data(data.new_data, report);
     // NOTE: TB size property range is not specified, so it will not be validated.
     // NOTE: Num CB property range is not specified, so it will not be validated.
     // NOTE: CB present and position bitmap property will not be validated.

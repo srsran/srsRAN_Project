@@ -48,13 +48,13 @@ static void test_bwp_params()
 
 static void test_information_params()
 {
-  float                target_code_rate    = 32.1f;
-  unsigned             qam_mod_order       = 2;
-  unsigned             mcs_index           = 4;
-  pusch_mcs_table_type mcs_table           = pusch_mcs_table_type::not_qam256;
-  bool                 transform_precoding = false;
-  unsigned             nid_pusch           = 890;
-  unsigned             num_layers          = 2;
+  float             target_code_rate    = 32.1f;
+  modulation_scheme qam_mod_order       = modulation_scheme::QAM256;
+  unsigned          mcs_index           = 4;
+  pusch_mcs_table   mcs_table           = pusch_mcs_table::qam256;
+  bool              transform_precoding = false;
+  unsigned          nid_pusch           = 890;
+  unsigned          num_layers          = 2;
 
   ul_pusch_pdu         pdu;
   ul_pusch_pdu_builder builder(pdu);
@@ -166,7 +166,7 @@ static void test_optional_pusch_data_params()
 {
   unsigned                                          rv_index        = 2;
   unsigned                                          harq_process_id = 9;
-  unsigned                                          new_data        = 1;
+  bool                                              new_data        = false;
   unsigned                                          tb_size         = 89898989;
   unsigned                                          num_cb          = 16;
   static_vector<uint8_t, ul_pusch_data::MAX_NUM_CB> cb_present      = {1, 5};

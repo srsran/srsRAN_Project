@@ -12,10 +12,12 @@
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/ldpc_base_graph.h"
+#include "srsgnb/ran/modulation_scheme.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/pdcch/coreset.h"
 #include "srsgnb/ran/prach/prach_subcarrier_spacing.h"
 #include "srsgnb/ran/prach/restricted_set_config.h"
+#include "srsgnb/ran/pusch/pusch_mcs.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
@@ -471,7 +473,7 @@ struct ul_pusch_data {
 
   uint8_t                            rv_index;
   uint8_t                            harq_process_id;
-  uint8_t                            new_data;
+  bool                               new_data;
   uint32_t                           tb_size;
   uint16_t                           num_cb;
   static_vector<uint8_t, MAX_NUM_CB> cb_present_and_position;
@@ -554,14 +556,6 @@ struct uci_part1_to_part2_correspondence_v3 {
   static_vector<part2_info, MAX_NUM_PART2_INFO> part2;
 };
 
-enum class pusch_mcs_table_type : uint8_t {
-  not_qam256,
-  qam256,
-  qam64_low_se,
-  not_qam256_with_tp,
-  qam64_low_se_with_tp
-};
-
 /// Uplink PUSCH PDU information.
 struct ul_pusch_pdu {
   static constexpr unsigned BITMAP_SIZE = 4U;
@@ -579,9 +573,9 @@ struct ul_pusch_pdu {
   subcarrier_spacing       scs;
   cyclic_prefix_type       cyclic_prefix;
   uint16_t                 target_code_rate;
-  uint8_t                  qam_mod_order;
+  modulation_scheme        qam_mod_order;
   uint8_t                  mcs_index;
-  pusch_mcs_table_type     mcs_table;
+  pusch_mcs_table          mcs_table;
   bool                     transform_precoding;
   uint16_t                 nid_pusch;
   uint8_t                  num_layers;

@@ -17,7 +17,7 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-static const std::vector<test_group<ul_pusch_pdu> > vector_test = {
+static const std::vector<test_group<ul_pusch_pdu>> vector_test = {
     {[](ul_pusch_pdu& pdu, int value) { pdu.rnti = to_rnti(value); },
      "RNTI",
      {{0, false}, {1, true}, {32768, true}, {65535, true}}},
@@ -35,29 +35,20 @@ static const std::vector<test_group<ul_pusch_pdu> > vector_test = {
      {{0, true}, {1, true}, {2, false}}},
     {[](ul_pusch_pdu& pdu, int value) {
        pdu.transform_precoding = false;
-       pdu.qam_mod_order       = value;
+       pdu.qam_mod_order       = static_cast<modulation_scheme>(value);
      },
      "QAM modulation order",
      {{1, false}, {2, true}, {3, false}, {4, true}, {5, false}, {6, true}, {7, false}, {8, true}, {9, false}}},
     {[](ul_pusch_pdu& pdu, int value) {
        pdu.transform_precoding = true;
-       pdu.qam_mod_order       = value;
+       pdu.qam_mod_order       = static_cast<modulation_scheme>(value);
      },
      "QAM modulation order",
-     {{0, false},
-      {1, true},
-      {2, true},
-      {3, false},
-      {4, true},
-      {5, false},
-      {6, true},
-      {7, false},
-      {8, true},
-      {9, false}}},
+     {{1, true}, {2, true}, {3, false}, {4, true}, {5, false}, {6, true}, {7, false}, {8, true}, {9, false}}},
     {[](ul_pusch_pdu& pdu, int value) { pdu.mcs_index = value; },
      "MCS index",
      {{0, true}, {16, true}, {31, true}, {32, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.mcs_table = static_cast<pusch_mcs_table_type>(value); },
+    {[](ul_pusch_pdu& pdu, int value) { pdu.mcs_table = static_cast<pusch_mcs_table>(value); },
      "MCS table",
      {{0, true}, {2, true}, {4, true}, {5, false}}},
     {[](ul_pusch_pdu& pdu, int value) { pdu.nid_pusch = value; },
@@ -84,12 +75,14 @@ static const std::vector<test_group<ul_pusch_pdu> > vector_test = {
      {{0, true}, {1, true}, {2, false}}},
     {[](ul_pusch_pdu& pdu, int value) {
        pdu.resource_alloc = resource_allocation_type::type_1;
+       pdu.rb_size        = 1;
        pdu.rb_start       = value;
      },
      "RB start",
      {{0, true}, {128, true}, {274, true}, {275, false}}},
     {[](ul_pusch_pdu& pdu, int value) {
        pdu.resource_alloc = resource_allocation_type::type_1;
+       pdu.rb_start       = 1;
        pdu.rb_size        = value;
      },
      "RB size",
@@ -112,9 +105,6 @@ static const std::vector<test_group<ul_pusch_pdu> > vector_test = {
     {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_data.harq_process_id = value; },
      "HARQ process id",
      {{0, true}, {1, true}, {7, true}, {15, true}, {16, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_data.new_data = value; },
-     "New data",
-     {{0, true}, {1, true}, {2, false}}},
     {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_uci.harq_ack_bit_length = value; },
      "HARQ ACK bit length",
      {{0, true}, {200, true}, {800, true}, {1706, true}, {1707, false}}},

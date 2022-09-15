@@ -2141,13 +2141,13 @@ public:
 
   /// Sets the PUSCH PDU information parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH PDU.
-  ul_pusch_pdu_builder& set_information_parameters(float                target_code_rate,
-                                                   uint8_t              qam_mod_order,
-                                                   uint8_t              mcs_index,
-                                                   pusch_mcs_table_type mcs_table,
-                                                   bool                 transform_precoding,
-                                                   uint16_t             nid_pusch,
-                                                   uint8_t              num_layers)
+  ul_pusch_pdu_builder& set_information_parameters(float             target_code_rate,
+                                                   modulation_scheme qam_mod_order,
+                                                   uint8_t           mcs_index,
+                                                   pusch_mcs_table   mcs_table,
+                                                   bool              transform_precoding,
+                                                   uint16_t          nid_pusch,
+                                                   uint8_t           num_layers)
   {
     pdu.target_code_rate    = static_cast<uint16_t>(target_code_rate * 10.F);
     pdu.qam_mod_order       = qam_mod_order;
@@ -2316,7 +2316,7 @@ public:
   // vector of bool.
   ul_pusch_pdu_builder& add_optional_pusch_data(uint8_t             rv_index,
                                                 uint8_t             harq_process_id,
-                                                uint8_t             new_data,
+                                                bool                new_data,
                                                 uint32_t            tb_size,
                                                 uint16_t            num_cb,
                                                 span<const uint8_t> cb_present_and_position)

@@ -947,7 +947,7 @@ ul_pucch_pdu unittest::build_valid_ul_pucch_f4_pdu()
   return pdu;
 }
 
-static unsigned generate_qam_mod_order(bool transform_precoding)
+static modulation_scheme generate_qam_mod_order(bool transform_precoding)
 {
   static constexpr std::array<unsigned, 5> values = {1, 2, 4, 6, 8};
 
@@ -958,7 +958,7 @@ static unsigned generate_qam_mod_order(bool transform_precoding)
     ++index;
   }
 
-  return values[index];
+  return static_cast<modulation_scheme>(values[index]);
 }
 
 static unsigned generate_mcs_index()
@@ -967,10 +967,10 @@ static unsigned generate_mcs_index()
   return dist(gen);
 }
 
-static pusch_mcs_table_type generate_mcs_table()
+static pusch_mcs_table generate_mcs_table()
 {
   std::uniform_int_distribution<unsigned> dist(0, 4);
-  return static_cast<pusch_mcs_table_type>(dist(gen));
+  return static_cast<pusch_mcs_table>(dist(gen));
 }
 
 static unsigned generate_num_layers()
@@ -1001,12 +1001,6 @@ static unsigned generate_num_dmrs_cdm_no_data()
 {
   std::uniform_int_distribution<unsigned> dist(1, 3);
   return dist(gen);
-}
-
-static resource_allocation_type generate_resource_allocation()
-{
-  std::uniform_int_distribution<unsigned> dist(0, 1);
-  return static_cast<resource_allocation_type>(dist(gen));
 }
 
 static unsigned generate_tx_direct_current_location()
@@ -1047,23 +1041,21 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
   pdu.nscid                               = generate_bool();
   pdu.num_dmrs_cdm_grps_no_data           = generate_num_dmrs_cdm_no_data();
   pdu.dmrs_ports                          = 4;
-  pdu.resource_alloc                      = generate_resource_allocation();
-  if (pdu.resource_alloc == resource_allocation_type::type_1) {
-    pdu.rb_start = generate_bwp_start();
-    pdu.rb_size  = generate_bwp_size();
-  }
-  pdu.vrb_to_prb_mapping            = vrb_to_prb_mapping_type::non_interleaved;
-  pdu.intra_slot_frequency_hopping  = generate_bool();
-  pdu.tx_direct_current_location    = generate_tx_direct_current_location();
-  pdu.uplink_frequency_shift_7p5kHz = generate_bool();
-  pdu.start_symbol_index            = generate_start_symbol_index();
-  pdu.nr_of_symbols                 = 3U;
+  pdu.resource_alloc                      = resource_allocation_type::type_1;
+  pdu.rb_start                            = generate_bwp_start();
+  pdu.rb_size                             = generate_bwp_size();
+  pdu.vrb_to_prb_mapping                  = vrb_to_prb_mapping_type::non_interleaved;
+  pdu.intra_slot_frequency_hopping        = generate_bool();
+  pdu.tx_direct_current_location          = generate_tx_direct_current_location();
+  pdu.uplink_frequency_shift_7p5kHz       = generate_bool();
+  pdu.start_symbol_index                  = generate_start_symbol_index();
+  pdu.nr_of_symbols                       = 3U;
 
   auto& data = pdu.pusch_data;
   pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_DATA_BIT);
   data.rv_index        = 2;
   data.harq_process_id = 2;
-  data.new_data        = 0;
+  data.new_data        = false;
   data.tb_size         = 213131;
   data.num_cb          = 3414;
 

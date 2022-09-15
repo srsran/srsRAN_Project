@@ -38,7 +38,10 @@ public:
     unsigned rv;
     /// LDPC base graph to use for CW generation.
     ldpc_base_graph_type ldpc_base_graph;
-    /// Flags new data transmissions.
+    /// \brief Flags new data transmissions.
+    ///
+    /// Unlike the NDI field in DCI, it does not toggle to indicate new transmission. It is true for the first
+    /// transmission of the HARQ process. Otherwise, it is false.
     bool new_data;
   };
 

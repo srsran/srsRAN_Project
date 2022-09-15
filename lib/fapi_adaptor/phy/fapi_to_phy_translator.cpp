@@ -12,6 +12,7 @@
 #include "srsgnb/fapi_adaptor/phy/messages/pdcch.h"
 #include "srsgnb/fapi_adaptor/phy/messages/pdsch.h"
 #include "srsgnb/fapi_adaptor/phy/messages/prach.h"
+#include "srsgnb/fapi_adaptor/phy/messages/pusch.h"
 #include "srsgnb/fapi_adaptor/phy/messages/ssb.h"
 #include "srsgnb/phy/support/prach_buffer_context.h"
 #include "srsgnb/phy/support/resource_grid_pool.h"
@@ -130,7 +131,12 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
         break;
       }
       case fapi::ul_pdu_type::PUCCH:
-      case fapi::ul_pdu_type::PUSCH:
+      case fapi::ul_pdu_type::PUSCH: {
+        pusch_processor::pdu_t pusch_pdu;
+        convert_pusch_fapi_to_phy(pusch_pdu, pdu.pusch_pdu, msg.sfn, msg.slot);
+        // :TODO: add the call to the uplink_request_processor.
+        break;
+      }
       case fapi::ul_pdu_type::SRS:
       case fapi::ul_pdu_type::msg_a_PUSCH:
       default:
