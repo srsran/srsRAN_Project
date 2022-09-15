@@ -23,8 +23,8 @@
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/pdsch/pdsch_mcs.h"
 #include "srsgnb/ran/prach/prach_preamble_format.h"
-#include "srsgnb/ran/pusch/pusch_mcs.h"
 #include "srsgnb/ran/pucch/pucch_mapping.h"
+#include "srsgnb/ran/pusch/pusch_mcs.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
@@ -322,7 +322,7 @@ struct ul_pucch_info {
   const bwp_configuration* bwp_cfg;
   pucch_format             format;
   /// PRBs and symbols for this PUCCH resource.
-  pucch_resources          resources;
+  pucch_resources resources;
   union {
     pucch_format_0 format_0;
     pucch_format_1 format_1;
