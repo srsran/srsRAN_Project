@@ -92,22 +92,22 @@ void f1ap_du_impl::handle_ue_context_release_command(const asn1::f1ap::ue_contex
 void f1ap_du_impl::handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg)
 {
   gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1_ap_id->value);
-  f1ap_du_ue*         u                 = ues.find(gnb_du_ue_f1ap_id);
+  f1ap_du_ue*         ue                = ues.find(gnb_du_ue_f1ap_id);
 
-  if (u == nullptr) {
+  if (ue == nullptr) {
     logger.error("Discarding UE CONTEXT MODIFICATION REQUEST. Cause: Unrecognized gNB-DU UE F1AP ID={}",
                  gnb_du_ue_f1ap_id);
     // TODO: Handle.
     return;
   }
 
-  u->handle_ue_context_modification_request(msg);
+  ue->handle_ue_context_modification_request(msg);
 }
 
 void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg)
 {
   gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1_ap_id->value);
-  f1ap_du_ue*         u                 = ues.find(gnb_du_ue_f1ap_id);
+  f1ap_du_ue*         ue                = ues.find(gnb_du_ue_f1ap_id);
 
   // TODO: Check old gNB-DU UE F1AP ID.
 
@@ -130,13 +130,13 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_tr
     // > If the DL RRC MESSAGE TRANSFER message contains the New gNB-CU UE F1AP ID IE, the gNB-DU shall, if supported,
     // replace the value received in the gNB-CU UE F1AP ID IE by the value of the New gNB-CU UE F1AP ID and use it
     // for further signalling.
-    u->context.gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(msg->new_g_nb_cu_ue_f1_ap_id->value);
+    ue->context.gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(msg->new_g_nb_cu_ue_f1_ap_id->value);
   }
 
   srb_id_t   srb_id     = int_to_srb_id(msg->srbid->value);
-  f1_bearer* srb_bearer = u->find_srb(srb_id);
+  f1_bearer* srb_bearer = ue->find_srb(srb_id);
   if (srb_bearer == nullptr) {
-    logger.warning("Discarding DL RRC Message Transfer. Cause: srb-Id={} not found", srb_id);
+    logger.warning("Discarding DL RRC Message Transfer. Cause: SRB Id={} not found", srb_id);
     // TODO: Handle error.
     return;
   }
@@ -144,7 +144,7 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_tr
   // Forward SDU to lower layers.
   byte_buffer sdu;
   sdu.append(msg->rrc_container.value);
-  ue_exec_mapper.executor(u->context.ue_index).execute([sdu = std::move(sdu), srb_bearer]() mutable {
+  ue_exec_mapper.executor(ue->context.ue_index).execute([sdu = std::move(sdu), srb_bearer]() mutable {
     srb_bearer->handle_sdu(std::move(sdu));
   });
 }

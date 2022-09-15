@@ -36,7 +36,7 @@ public:
 
   void add_srb(srb_id_t srb_id, std::unique_ptr<f1_bearer> bearer)
   {
-    srsgnb_assert(not srbs.contains(srb_id), "srbId={} already exists", srb_id);
+    srsgnb_assert(not srbs.contains(srb_id), "SRB Id={} already exists", srb_id);
     srbs.insert(srb_id, std::move(bearer));
   }
 
