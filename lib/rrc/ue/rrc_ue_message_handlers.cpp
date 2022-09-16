@@ -132,9 +132,10 @@ void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
 void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_transfer)
 {
   ul_nas_transport_message ul_nas_msg = {};
+  ul_nas_msg.ue_index                 = context.ue_index;
   ul_nas_msg.ded_nas_msg.resize(ul_info_transfer.ded_nas_msg.size());
   ul_nas_msg.ded_nas_msg = ul_info_transfer.ded_nas_msg;
-  // TODO: add cgi
+  ul_nas_msg.cgi         = context.cgi;
 
   nas_notifier.on_ul_nas_transport_message(ul_nas_msg);
 }

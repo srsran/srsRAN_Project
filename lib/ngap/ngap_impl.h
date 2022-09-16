@@ -33,6 +33,8 @@ public:
 
   void handle_initial_ue_message(const ngap_initial_ue_message& msg) override;
 
+  void handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg) override;
+
   // ng message handler functions
   void handle_message(const ngap_message& msg) override;
   void handle_connection_loss() override {}
@@ -41,6 +43,10 @@ private:
   /// \brief Notify about the reception of an initiating message.
   /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::ngap::init_msg_s& msg);
+
+  /// \brief Notify about the reception of an DL NAS Transport message.
+  /// \param[in] msg The received DL NAS Transport message.
+  void handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transport_s& msg);
 
   /// \brief Notify about the reception of a successful outcome message.
   /// \param[in] outcome The successful outcome message.
@@ -57,6 +63,8 @@ private:
   unique_timer ng_setup_timer;
 
   ngap_ue_manager ues;
+
+  std::array<ngap_ue_context, MAX_NOF_CU_UES> ue_ngap_id_to_ngap_ue_context;
 
   std::unique_ptr<ngap_event_manager> events;
 };

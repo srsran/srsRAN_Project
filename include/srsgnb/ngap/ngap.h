@@ -76,11 +76,23 @@ public:
   virtual async_task<ng_setup_response_message> handle_ngap_setup_request(const ng_setup_request_message& request) = 0;
 };
 
+struct ngap_ue_context {
+  ue_amf_id_t amf_ue_id = ue_amf_id_t::invalid;
+  ue_index_t  ue_index  = INVALID_UE_INDEX;
+  du_index_t  du_index  = INVALID_DU_INDEX;
+};
+
 struct ngap_initial_ue_message {
   ue_ngap_id_t                            ue_ngap_id;
   byte_buffer                             nas_pdu;
   asn1::ngap::rrcestablishment_cause_opts establishment_cause;
   asn1::ngap::nr_cgi_s                    nr_cgi;
+};
+
+struct ngap_ul_nas_transport_message {
+  ue_ngap_id_t         ue_ngap_id;
+  byte_buffer          nas_pdu;
+  asn1::ngap::nr_cgi_s nr_cgi;
 };
 
 /// Handle NGAP NAS Message procedures as defined in TS 38.413 section 8.6.
@@ -92,6 +104,10 @@ public:
   /// \brief Initiates Initial UE message procedure as per TS 38.413 section 8.6.1.
   /// \param[in] msg The ngap initial UE message to transmit.
   virtual void handle_initial_ue_message(const ngap_initial_ue_message& msg) = 0;
+
+  /// \brief Initiates Uplink NAS transport procedure as per TS 38.413 section 8.6.3.
+  /// \param[in] msg The ngap ul nas transfer message to transmit.
+  virtual void handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg) = 0;
 };
 
 /// Combined entry point for the NGAP object.

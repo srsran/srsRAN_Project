@@ -125,9 +125,17 @@ public:
 
   void on_ul_nas_transport_message(const ul_nas_transport_message& msg) override
   {
-    byte_buffer nas_pdu;
-    nas_pdu.resize(msg.ded_nas_msg.size());
-    std::copy(msg.ded_nas_msg.begin(), msg.ded_nas_msg.end(), nas_pdu.begin());
+    srsgnb_assert(du_index != INVALID_DU_INDEX, "du_index of rrc_ue_ngap_adapter not set");
+
+    ngap_ul_nas_transport_message ngap_ul_nas_msg;
+    ngap_ul_nas_msg.ue_ngap_id = get_ue_ngap_id(du_index, msg.ue_index);
+    ngap_ul_nas_msg.nas_pdu.resize(msg.ded_nas_msg.size());
+    std::copy(msg.ded_nas_msg.begin(), msg.ded_nas_msg.end(), ngap_ul_nas_msg.nas_pdu.begin());
+
+    ngap_ul_nas_msg.nr_cgi.nrcell_id.from_number(msg.cgi.nci.packed);
+    ngap_ul_nas_msg.nr_cgi.plmn_id.from_string(msg.cgi.plmn_hex);
+
+    ngap_nas_msg_handler->handle_ul_nas_transport_message(ngap_ul_nas_msg);
   }
 
 private:
