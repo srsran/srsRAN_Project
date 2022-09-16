@@ -52,39 +52,41 @@ private:
   /// Placeholder for strategy implementation of encode_ext_region.
   strategy_method ext_region = nullptr;
 
-  /// Helper method to set the high-rate encoding strategy for short lifting sizes.
-  static strategy_method select_hr_strategy_short(ldpc_base_graph_type current_bg, uint8_t current_ls_index);
   /// Helper method to set the high-rate encoding strategy for long lifting sizes.
-  static strategy_method select_hr_strategy_long(ldpc_base_graph_type current_bg, uint8_t current_ls_index);
+  static strategy_method
+  select_hr_strategy(ldpc_base_graph_type current_bg, uint8_t current_ls_index, unsigned node_size_avx2);
 
-  /// Short lifting size version of preprocess_systematic_bits - short lifting size.
-  void systematic_bits_short();
-  /// Long lifting size version of preprocess_systematic_bits - short lifting size.
-  void systematic_bits_long();
-  /// Carries out the high-rate region encoding for BG1 and lifting size index 6 - short lifting size.
-  void high_rate_bg1_i6_short();
-  /// Carries out the high-rate region encoding for BG1 and lifting size index in {0, 1, 2, 3, 4, 5, 7} - short lifting
-  /// size.
-  void high_rate_bg1_other_short();
-  /// Carries out the high-rate region encoding for BG2 and lifting size index in {3, 7} - short lifting size.
-  void high_rate_bg2_i3_7_short();
-  /// Carries out the high-rate region encoding for BG2 and lifting size index in {0, 1, 2, 4, 5, 6} - short lifting
-  /// size.
-  void high_rate_bg2_other_short();
-  /// Carries out the high-rate region encoding for BG1 and lifting size index 6 - long lifting size.
-  void high_rate_bg1_i6_long();
-  /// Carries out the high-rate region encoding for BG1 and lifting size index in {0, 1, 2, 3, 4, 5, 7} - long lifting
-  /// size.
-  void high_rate_bg1_other_long();
-  /// Carries out the high-rate region encoding for BG2 and lifting size index in {3, 7} - long lifting size.
-  void high_rate_bg2_i3_7_long();
-  /// Carries out the high-rate region encoding for BG2 and lifting size index in {0, 1, 2, 4, 5, 6} - long lifting
-  /// size.
-  void high_rate_bg2_other_long();
-  /// Carries out the extended region encoding when the lifting size is short.
-  void ext_region_short();
-  /// Carries out the extended region encoding when the lifting size is long.
-  void ext_region_long();
+  static strategy_method select_sys_bits_strategy(ldpc_base_graph_type current_bg, unsigned node_size_avx2);
+  static strategy_method select_ext_strategy(unsigned node_size_avx2);
+
+  /// \brief Long lifting size version of preprocess_systematic_bits - short lifting size.
+  /// \tparam BG_K_PH            Placeholder for the number of information nodes (i.e., K) for the current base graph.
+  /// \tparam BG_M_PH            Placeholder for the number of check nodes (i.e., M) for the current base graph.
+  /// \tparam NODE_SIZE_AVX2_PH  Placeholder for the number of AVX2 registers used to represent a code node.
+  template <unsigned BG_K_PH, unsigned BG_M_PH, unsigned NODE_SIZE_AVX2_PH>
+  void systematic_bits_inner();
+  /// \brief Carries out the high-rate region encoding for BG1 and lifting size index 6 - long lifting size.
+  /// \tparam NODE_SIZE_AVX2_PH  Placeholder for the number of AVX2 registers used to represent a code node.
+  template <unsigned NODE_SIZE_AVX2_PH>
+  void high_rate_bg1_i6_inner();
+  /// \brief Carries out the high-rate region encoding for BG1 and lifting size index in {0, 1, 2, 3, 4, 5, 7} - long
+  /// lifting size.
+  /// \tparam NODE_SIZE_AVX2_PH  Placeholder for the number of AVX2 registers used to represent a code node.
+  template <unsigned NODE_SIZE_AVX2_PH>
+  void high_rate_bg1_other_inner();
+  /// \brief Carries out the high-rate region encoding for BG2 and lifting size index in {3, 7} - long lifting size.
+  /// \tparam NODE_SIZE_AVX2_PH  Placeholder for the number of AVX2 registers used to represent a code node.
+  template <unsigned NODE_SIZE_AVX2_PH>
+  void high_rate_bg2_i3_7_inner();
+  /// \brief Carries out the high-rate region encoding for BG2 and lifting size index in {0, 1, 2, 4, 5, 6} - long
+  /// lifting size.
+  /// \tparam NODE_SIZE_AVX2_PH  Placeholder for the number of AVX2 registers used to represent a code node.
+  template <unsigned NODE_SIZE_AVX2_PH>
+  void high_rate_bg2_other_inner();
+  /// \brief Carries out the extended region encoding when the lifting size is long.
+  /// \tparam NODE_SIZE_AVX2_PH  Placeholder for the number of AVX2 registers used to represent a code node.
+  template <unsigned NODE_SIZE_AVX2_PH>
+  void ext_region_inner();
 
   /// Buffer containing the codeblock.
   mm256::avx2_array<MAX_BLK_SIZE_AVX2> codeblock;

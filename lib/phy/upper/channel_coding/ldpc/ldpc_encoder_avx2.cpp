@@ -30,40 +30,231 @@ static void rotate_node_left(__m256i* out, const __m256i* in, unsigned steps, un
 /// \param[in]  ls        The size of the node (lifting size).
 static void rotate_node_right(__m256i* out, const __m256i* in, unsigned steps, unsigned ls);
 
-ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_hr_strategy_short(const ldpc_base_graph_type current_bg,
-                                                                               const uint8_t current_ls_index)
+ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_hr_strategy(const ldpc_base_graph_type current_bg,
+                                                                         const uint8_t              current_ls_index,
+                                                                         const unsigned             node_size_avx2)
 {
   if (current_bg == ldpc_base_graph_type::BG1) {
     if (current_ls_index == 6) {
-      return &ldpc_encoder_avx2::high_rate_bg1_i6_short;
+      switch (node_size_avx2) {
+        case 1:
+          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<1>;
+        case 2:
+          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<2>;
+        case 3:
+          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<3>;
+        case 4:
+          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<4>;
+        case 5:
+          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<5>;
+        case 6:
+          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<6>;
+        case 7:
+          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<7>;
+        case 8:
+          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<8>;
+        case 9:
+          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<9>;
+        case 10:
+          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<10>;
+        case 11:
+          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<11>;
+        case 12:
+          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<12>;
+        default:
+          srsgnb_assert(false, "The node size in AVX2 registers should be between 1 and 12.");
+      }
     }
     // If current_lifting_index is not 6...
-    return &ldpc_encoder_avx2::high_rate_bg1_other_short;
+    switch (node_size_avx2) {
+      case 1:
+        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<1>;
+      case 2:
+        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<2>;
+      case 3:
+        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<3>;
+      case 4:
+        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<4>;
+      case 5:
+        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<5>;
+      case 6:
+        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<6>;
+      case 7:
+        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<7>;
+      case 8:
+        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<8>;
+      case 9:
+        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<9>;
+      case 10:
+        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<10>;
+      case 11:
+        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<11>;
+      case 12:
+        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<12>;
+      default:
+        srsgnb_assert(false, "The node size in AVX2 registers should be between 1 and 12.");
+    }
   }
   // Else, if current_bg == BG2...
   if ((current_ls_index == 3) || (current_ls_index == 7)) {
-    return &ldpc_encoder_avx2::high_rate_bg2_i3_7_short;
+    switch (node_size_avx2) {
+      case 1:
+        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<1>;
+      case 2:
+        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<2>;
+      case 3:
+        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<3>;
+      case 4:
+        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<4>;
+      case 5:
+        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<5>;
+      case 6:
+        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<6>;
+      case 7:
+        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<7>;
+      case 8:
+        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<8>;
+      case 9:
+        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<9>;
+      case 10:
+        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<10>;
+      case 11:
+        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<11>;
+      case 12:
+        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<12>;
+      default:
+        srsgnb_assert(false, "The node size in AVX2 registers should be between 1 and 12.");
+    }
   }
   // If current_lifting_index is neither 3 nor 7...
-  return &ldpc_encoder_avx2::high_rate_bg2_other_short;
+  switch (node_size_avx2) {
+    case 1:
+      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<1>;
+    case 2:
+      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<2>;
+    case 3:
+      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<3>;
+    case 4:
+      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<4>;
+    case 5:
+      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<5>;
+    case 6:
+      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<6>;
+    case 7:
+      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<7>;
+    case 8:
+      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<8>;
+    case 9:
+      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<9>;
+    case 10:
+      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<10>;
+    case 11:
+      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<11>;
+    case 12:
+      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<12>;
+    default:
+      srsgnb_assert(false, "The node size in AVX2 registers should be between 1 and 12.");
+  }
+  return nullptr;
 }
 
-ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_hr_strategy_long(const ldpc_base_graph_type current_bg,
-                                                                              const uint8_t current_ls_index)
+ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_sys_bits_strategy(ldpc_base_graph_type current_bg,
+                                                                               unsigned             node_size_avx2)
 {
   if (current_bg == ldpc_base_graph_type::BG1) {
-    if (current_ls_index == 6) {
-      return &ldpc_encoder_avx2::high_rate_bg1_i6_long;
+    constexpr unsigned BG1_K = BG1_N_FULL - BG1_M;
+    switch (node_size_avx2) {
+      case 1:
+        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 1>;
+      case 2:
+        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 2>;
+      case 3:
+        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 3>;
+      case 4:
+        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 4>;
+      case 5:
+        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 5>;
+      case 6:
+        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 6>;
+      case 7:
+        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 7>;
+      case 8:
+        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 8>;
+      case 9:
+        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 9>;
+      case 10:
+        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 10>;
+      case 11:
+        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 11>;
+      case 12:
+        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 12>;
+      default:
+        srsgnb_assert(false, "The node size in AVX2 registers should be between 1 and 12.");
     }
-    // If current_lifting_index is not 6...
-    return &ldpc_encoder_avx2::high_rate_bg1_other_long;
   }
-  // Else, if current_bg == BG2...
-  if ((current_ls_index == 3) || (current_ls_index == 7)) {
-    return &ldpc_encoder_avx2::high_rate_bg2_i3_7_long;
+  constexpr unsigned BG2_K = BG2_N_FULL - BG2_M;
+  switch (node_size_avx2) {
+    case 1:
+      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 1>;
+    case 2:
+      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 2>;
+    case 3:
+      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 3>;
+    case 4:
+      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 4>;
+    case 5:
+      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 5>;
+    case 6:
+      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 6>;
+    case 7:
+      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 7>;
+    case 8:
+      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 8>;
+    case 9:
+      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 9>;
+    case 10:
+      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 10>;
+    case 11:
+      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 11>;
+    case 12:
+      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 12>;
+    default:
+      srsgnb_assert(false, "The node size in AVX2 registers should be between 1 and 12.");
   }
-  // If current_lifting_index is neither 3 nor 7...
-  return &ldpc_encoder_avx2::high_rate_bg2_other_long;
+  return nullptr;
+}
+
+ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_ext_strategy(const unsigned node_size_avx2)
+{
+  switch (node_size_avx2) {
+    case 1:
+      return &ldpc_encoder_avx2::ext_region_inner<1>;
+    case 2:
+      return &ldpc_encoder_avx2::ext_region_inner<2>;
+    case 3:
+      return &ldpc_encoder_avx2::ext_region_inner<3>;
+    case 4:
+      return &ldpc_encoder_avx2::ext_region_inner<4>;
+    case 5:
+      return &ldpc_encoder_avx2::ext_region_inner<5>;
+    case 6:
+      return &ldpc_encoder_avx2::ext_region_inner<6>;
+    case 7:
+      return &ldpc_encoder_avx2::ext_region_inner<7>;
+    case 8:
+      return &ldpc_encoder_avx2::ext_region_inner<8>;
+    case 9:
+      return &ldpc_encoder_avx2::ext_region_inner<9>;
+    case 10:
+      return &ldpc_encoder_avx2::ext_region_inner<10>;
+    case 11:
+      return &ldpc_encoder_avx2::ext_region_inner<11>;
+    case 12:
+      return &ldpc_encoder_avx2::ext_region_inner<12>;
+    default:
+      srsgnb_assert(false, "The node size in AVX2 registers should be between 1 and 12.");
+  }
+  return nullptr;
 }
 
 void ldpc_encoder_avx2::select_strategy()
@@ -71,23 +262,16 @@ void ldpc_encoder_avx2::select_strategy()
   ldpc_base_graph_type current_bg       = current_graph->get_base_graph();
   uint8_t              current_ls_index = current_graph->get_lifting_index();
 
-  if (lifting_size <= AVX2_SIZE_BYTE) {
-    systematic_bits = &ldpc_encoder_avx2::systematic_bits_short;
-    high_rate       = select_hr_strategy_short(current_bg, current_ls_index);
-    ext_region      = &ldpc_encoder_avx2::ext_region_short;
+  // Each BG node contains LS bits, which are stored in node_size_avx2 AVX2 vectors.
+  node_size_avx2 = divide_ceil(lifting_size, AVX2_SIZE_BYTE);
 
-  } else { // if lifting_size > AVX2_SIZE_BYTE
-    systematic_bits = &ldpc_encoder_avx2::systematic_bits_long;
-    high_rate       = select_hr_strategy_long(current_bg, current_ls_index);
-    ext_region      = &ldpc_encoder_avx2::ext_region_long;
-  }
+  systematic_bits = select_sys_bits_strategy(current_bg, node_size_avx2);
+  high_rate       = select_hr_strategy(current_bg, current_ls_index, node_size_avx2);
+  ext_region      = select_ext_strategy(node_size_avx2);
 }
 
 void ldpc_encoder_avx2::load_input(span<const uint8_t> in)
 {
-  // Each BG node contains LS bits, which are stored in node_size_avx2 AVX2 vectors.
-  node_size_avx2 = divide_ceil(lifting_size, AVX2_SIZE_BYTE);
-
   // Resize internal buffer.
   codeblock_used_size = codeblock_length / lifting_size * node_size_avx2;
 
@@ -102,51 +286,25 @@ void ldpc_encoder_avx2::load_input(span<const uint8_t> in)
   }
 }
 
-void ldpc_encoder_avx2::systematic_bits_short()
+template <unsigned BG_K_PH, unsigned BG_M_PH, unsigned NODE_SIZE_AVX2_PH>
+void ldpc_encoder_avx2::systematic_bits_inner()
 {
   // Resize auxiliary buffer.
-  auxiliary_used_size = (codeblock_length / lifting_size - bg_K) * node_size_avx2;
+  auxiliary_used_size = (codeblock_length / lifting_size - BG_K_PH) * NODE_SIZE_AVX2_PH;
 
-  for (unsigned i_avx2 = 0; i_avx2 != auxiliary_used_size; ++i_avx2) {
-    auxiliary.set_at(i_avx2, _mm256_setzero_si256());
-  }
+  std::memset(auxiliary.data_at(0), 0, auxiliary_used_size * AVX2_SIZE_BYTE);
 
   // For each BG information node...
-  for (unsigned k = 0; k != bg_K; ++k) {
+  for (unsigned k = 0, i_blk = 0; k != BG_K_PH; ++k, i_blk += NODE_SIZE_AVX2_PH) {
     // and for each BG check node...
-    for (unsigned m = 0; m != bg_M; ++m) {
+    for (unsigned m = 0, i_aux = 0; m != BG_M_PH; ++m) {
       unsigned node_shift = current_graph->get_lifted_node(m, k);
       if (node_shift == NO_EDGE) {
-        continue;
-      }
-      __m256i tmp;
-      rotate_node_right(&tmp, codeblock.data_at(k), node_shift, lifting_size);
-      tmp = _mm256_and_si256(tmp, _mm256_set1_epi8(1));
-      auxiliary.set_at(m, _mm256_xor_si256(auxiliary.get_at(m), tmp));
-    }
-  }
-}
-
-void ldpc_encoder_avx2::systematic_bits_long()
-{
-  // Resize auxiliary buffer.
-  auxiliary_used_size = (codeblock_length / lifting_size - bg_K) * node_size_avx2;
-
-  for (unsigned i_avx2 = 0; i_avx2 != auxiliary_used_size; ++i_avx2) {
-    auxiliary.set_at(i_avx2, _mm256_setzero_si256());
-  }
-
-  // For each BG information node...
-  for (unsigned k = 0, i_blk = 0; k != bg_K; ++k, i_blk += node_size_avx2) {
-    // and for each BG check node...
-    for (unsigned m = 0, i_aux = 0; m != bg_M; ++m) {
-      unsigned node_shift = current_graph->get_lifted_node(m, k);
-      if (node_shift == NO_EDGE) {
-        i_aux += node_size_avx2;
+        i_aux += NODE_SIZE_AVX2_PH;
         continue;
       }
       rotate_node_right(rotated_node.data_at(0), codeblock.data_at(i_blk), node_shift, lifting_size);
-      for (unsigned j = 0; j != node_size_avx2; ++j) {
+      for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
         __m256i tmp_epi8 = _mm256_and_si256(rotated_node.get_at(j), _mm256_set1_epi8(1));
         auxiliary.set_at(i_aux, _mm256_xor_si256(auxiliary.get_at(i_aux), tmp_epi8));
         ++i_aux;
@@ -155,136 +313,19 @@ void ldpc_encoder_avx2::systematic_bits_long()
   }
 }
 
-void ldpc_encoder_avx2::high_rate_bg1_i6_short()
+template <unsigned NODE_SIZE_AVX2_PH>
+void ldpc_encoder_avx2::high_rate_bg1_i6_inner()
 {
-  unsigned skip0 = bg_K;
-  unsigned skip1 = bg_K + 1;
-  unsigned skip2 = bg_K + 2;
-  unsigned skip3 = bg_K + 3;
-
-  __m256i aux_0 = auxiliary.get_at(0);
-  __m256i aux_1 = auxiliary.get_at(1);
-  __m256i aux_2 = auxiliary.get_at(2);
-  __m256i aux_3 = auxiliary.get_at(3);
+  unsigned skip0         = bg_K * NODE_SIZE_AVX2_PH;
+  unsigned skip1         = (bg_K + 1) * NODE_SIZE_AVX2_PH;
+  unsigned skip2         = (bg_K + 2) * NODE_SIZE_AVX2_PH;
+  unsigned skip3         = (bg_K + 3) * NODE_SIZE_AVX2_PH;
+  unsigned node_size_x_2 = 2 * NODE_SIZE_AVX2_PH;
+  unsigned node_size_x_3 = 3 * NODE_SIZE_AVX2_PH;
 
   // First chunk of parity bits.
-  __m256i tmp_epi8 = _mm256_xor_si256(aux_0, aux_1);
-  tmp_epi8         = _mm256_xor_si256(tmp_epi8, aux_2);
-  tmp_epi8         = _mm256_xor_si256(tmp_epi8, aux_3);
-  __m256i block_0;
-  rotate_node_left(&block_0, &tmp_epi8, 105 % lifting_size, lifting_size);
-  codeblock.set_at(skip0, block_0);
-
-  // Second chunk of parity bits.
-  codeblock.set_at(skip1, _mm256_xor_si256(aux_0, block_0));
-  // Fourth chunk of parity bits.
-  __m256i block_3 = _mm256_xor_si256(aux_3, block_0);
-  codeblock.set_at(skip3, block_3);
-  // Third chunk of parity bits.
-  codeblock.set_at(skip2, _mm256_xor_si256(aux_2, block_3));
-}
-
-void ldpc_encoder_avx2::high_rate_bg1_other_short()
-{
-  unsigned skip0 = bg_K;
-  unsigned skip1 = bg_K + 1;
-  unsigned skip2 = bg_K + 2;
-  unsigned skip3 = bg_K + 3;
-
-  __m256i aux_0 = auxiliary.get_at(0);
-  __m256i aux_1 = auxiliary.get_at(1);
-  __m256i aux_2 = auxiliary.get_at(2);
-  __m256i aux_3 = auxiliary.get_at(3);
-
-  // First chunk of parity bits.
-  __m256i block_0 = _mm256_xor_si256(aux_0, aux_1);
-  block_0         = _mm256_xor_si256(block_0, aux_2);
-  block_0         = _mm256_xor_si256(block_0, aux_3);
-  codeblock.set_at(skip0, block_0);
-
-  __m256i tmp_epi8;
-  rotate_node_right(&tmp_epi8, codeblock.data_at(skip0), 1, lifting_size);
-
-  // Second chunk of parity bits.
-  codeblock.set_at(skip1, _mm256_xor_si256(aux_0, tmp_epi8));
-  // Fourth chunk of parity bits.
-  __m256i block_3 = _mm256_xor_si256(aux_3, tmp_epi8);
-  codeblock.set_at(skip3, block_3);
-  // Third chunk of parity bits.
-  codeblock.set_at(skip2, _mm256_xor_si256(aux_2, block_3));
-}
-
-void ldpc_encoder_avx2::high_rate_bg2_i3_7_short()
-{
-  unsigned skip0 = bg_K;
-  unsigned skip1 = bg_K + 1;
-  unsigned skip2 = bg_K + 2;
-  unsigned skip3 = bg_K + 3;
-
-  __m256i aux_0 = auxiliary.get_at(0);
-  __m256i aux_1 = auxiliary.get_at(1);
-  __m256i aux_2 = auxiliary.get_at(2);
-  __m256i aux_3 = auxiliary.get_at(3);
-
-  // First chunk of parity bits.
-  __m256i block_0 = _mm256_xor_si256(aux_0, aux_1);
-  block_0         = _mm256_xor_si256(block_0, aux_2);
-  block_0         = _mm256_xor_si256(block_0, aux_3);
-  codeblock.set_at(skip0, block_0);
-
-  __m256i tmp_epi8;
-  rotate_node_right(&tmp_epi8, codeblock.data_at(skip0), 1, lifting_size);
-  // Second chunk of parity bits.
-  __m256i block_1 = _mm256_xor_si256(aux_0, tmp_epi8);
-  codeblock.set_at(skip1, block_1);
-  // Third chunk of parity bits.
-  codeblock.set_at(skip2, _mm256_xor_si256(aux_1, block_1));
-  // Fourth chunk of parity bits.
-  codeblock.set_at(skip3, _mm256_xor_si256(aux_3, tmp_epi8));
-}
-
-void ldpc_encoder_avx2::high_rate_bg2_other_short()
-{
-  unsigned skip0 = bg_K;
-  unsigned skip1 = bg_K + 1;
-  unsigned skip2 = bg_K + 2;
-  unsigned skip3 = bg_K + 3;
-
-  __m256i aux_0 = auxiliary.get_at(0);
-  __m256i aux_1 = auxiliary.get_at(1);
-  __m256i aux_2 = auxiliary.get_at(2);
-  __m256i aux_3 = auxiliary.get_at(3);
-
-  // First chunk of parity bits.
-  __m256i tmp_epi8 = _mm256_xor_si256(aux_0, aux_1);
-  tmp_epi8         = _mm256_xor_si256(tmp_epi8, aux_2);
-  tmp_epi8         = _mm256_xor_si256(tmp_epi8, aux_3);
-
-  __m256i block_0;
-  rotate_node_left(&block_0, &tmp_epi8, 1, lifting_size);
-  codeblock.set_at(skip0, block_0);
-
-  // Second chunk of parity bits.
-  __m256i block_1 = _mm256_xor_si256(aux_0, block_0);
-  codeblock.set_at(skip1, block_1);
-  // Third chunk of parity bits.
-  codeblock.set_at(skip2, _mm256_xor_si256(aux_1, block_1));
-  // Fourth chunk of parity bits.
-  codeblock.set_at(skip3, _mm256_xor_si256(aux_3, block_0));
-}
-
-void ldpc_encoder_avx2::high_rate_bg1_i6_long()
-{
-  unsigned skip0         = bg_K * node_size_avx2;
-  unsigned skip1         = (bg_K + 1) * node_size_avx2;
-  unsigned skip2         = (bg_K + 2) * node_size_avx2;
-  unsigned skip3         = (bg_K + 3) * node_size_avx2;
-  unsigned node_size_x_2 = 2 * node_size_avx2;
-  unsigned node_size_x_3 = 3 * node_size_avx2;
-
-  // First chunk of parity bits.
-  for (unsigned j = 0; j != node_size_avx2; ++j) {
-    __m256i tmp_epi8 = _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(node_size_avx2 + j));
+  for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
+    __m256i tmp_epi8 = _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(NODE_SIZE_AVX2_PH + j));
     tmp_epi8         = _mm256_xor_si256(tmp_epi8, auxiliary.get_at(node_size_x_2 + j));
     tmp_epi8         = _mm256_xor_si256(tmp_epi8, auxiliary.get_at(node_size_x_3 + j));
     rotated_node.set_at(j, tmp_epi8);
@@ -292,7 +333,7 @@ void ldpc_encoder_avx2::high_rate_bg1_i6_long()
 
   rotate_node_left(codeblock.data_at(skip0), rotated_node.data_at(0), 105 % lifting_size, lifting_size);
 
-  for (unsigned j = 0; j != node_size_avx2; ++j) {
+  for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
     __m256i block0 = codeblock.get_at(skip0 + j);
     // Second chunk of parity bits.
     codeblock.set_at(skip1 + j, _mm256_xor_si256(auxiliary.get_at(j), block0));
@@ -304,18 +345,19 @@ void ldpc_encoder_avx2::high_rate_bg1_i6_long()
   }
 }
 
-void ldpc_encoder_avx2::high_rate_bg1_other_long()
+template <unsigned NODE_SIZE_AVX2_PH>
+void ldpc_encoder_avx2::high_rate_bg1_other_inner()
 {
-  unsigned skip0         = bg_K * node_size_avx2;
-  unsigned skip1         = (bg_K + 1) * node_size_avx2;
-  unsigned skip2         = (bg_K + 2) * node_size_avx2;
-  unsigned skip3         = (bg_K + 3) * node_size_avx2;
-  unsigned node_size_x_2 = 2 * node_size_avx2;
-  unsigned node_size_x_3 = 3 * node_size_avx2;
+  unsigned skip0         = bg_K * NODE_SIZE_AVX2_PH;
+  unsigned skip1         = (bg_K + 1) * NODE_SIZE_AVX2_PH;
+  unsigned skip2         = (bg_K + 2) * NODE_SIZE_AVX2_PH;
+  unsigned skip3         = (bg_K + 3) * NODE_SIZE_AVX2_PH;
+  unsigned node_size_x_2 = 2 * NODE_SIZE_AVX2_PH;
+  unsigned node_size_x_3 = 3 * NODE_SIZE_AVX2_PH;
 
   // First chunk of parity bits.
-  for (unsigned j = 0; j != node_size_avx2; ++j) {
-    __m256i block0 = _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(node_size_avx2 + j));
+  for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
+    __m256i block0 = _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(NODE_SIZE_AVX2_PH + j));
     block0         = _mm256_xor_si256(block0, auxiliary.get_at(node_size_x_2 + j));
     block0         = _mm256_xor_si256(block0, auxiliary.get_at(node_size_x_3 + j));
     codeblock.set_at(skip0 + j, block0);
@@ -323,7 +365,7 @@ void ldpc_encoder_avx2::high_rate_bg1_other_long()
 
   rotate_node_right(rotated_node.data_at(0), codeblock.data_at(skip0), 1, lifting_size);
 
-  for (unsigned j = 0; j != node_size_avx2; ++j) {
+  for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
     __m256i rotated_j = rotated_node.get_at(j);
     // Second chunk of parity bits.
     codeblock.set_at(skip1 + j, _mm256_xor_si256(auxiliary.get_at(j), rotated_j));
@@ -335,18 +377,19 @@ void ldpc_encoder_avx2::high_rate_bg1_other_long()
   }
 }
 
-void ldpc_encoder_avx2::high_rate_bg2_i3_7_long()
+template <unsigned NODE_SIZE_AVX2_PH>
+void ldpc_encoder_avx2::high_rate_bg2_i3_7_inner()
 {
-  unsigned skip0         = bg_K * node_size_avx2;
-  unsigned skip1         = (bg_K + 1) * node_size_avx2;
-  unsigned skip2         = (bg_K + 2) * node_size_avx2;
-  unsigned skip3         = (bg_K + 3) * node_size_avx2;
-  unsigned node_size_x_2 = 2 * node_size_avx2;
-  unsigned node_size_x_3 = 3 * node_size_avx2;
+  unsigned skip0         = bg_K * NODE_SIZE_AVX2_PH;
+  unsigned skip1         = (bg_K + 1) * NODE_SIZE_AVX2_PH;
+  unsigned skip2         = (bg_K + 2) * NODE_SIZE_AVX2_PH;
+  unsigned skip3         = (bg_K + 3) * NODE_SIZE_AVX2_PH;
+  unsigned node_size_x_2 = 2 * NODE_SIZE_AVX2_PH;
+  unsigned node_size_x_3 = 3 * NODE_SIZE_AVX2_PH;
 
   // First chunk of parity bits.
-  for (unsigned j = 0; j != node_size_avx2; ++j) {
-    __m256i block0 = _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(node_size_avx2 + j));
+  for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
+    __m256i block0 = _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(NODE_SIZE_AVX2_PH + j));
     block0         = _mm256_xor_si256(block0, auxiliary.get_at(node_size_x_2 + j));
     block0         = _mm256_xor_si256(block0, auxiliary.get_at(node_size_x_3 + j));
     codeblock.set_at(skip0 + j, block0);
@@ -354,30 +397,31 @@ void ldpc_encoder_avx2::high_rate_bg2_i3_7_long()
 
   rotate_node_right(rotated_node.data_at(0), codeblock.data_at(skip0), 1, lifting_size);
 
-  for (unsigned j = 0; j != node_size_avx2; ++j) {
+  for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
     __m256i rotated_j = rotated_node.get_at(j);
     // Second chunk of parity bits.
     __m256i block_1 = _mm256_xor_si256(auxiliary.get_at(j), rotated_j);
     codeblock.set_at(skip1 + j, block_1);
     // third chunk of parity bits
-    codeblock.set_at(skip2 + j, _mm256_xor_si256(auxiliary.get_at(node_size_avx2 + j), block_1));
+    codeblock.set_at(skip2 + j, _mm256_xor_si256(auxiliary.get_at(NODE_SIZE_AVX2_PH + j), block_1));
     // fourth chunk of parity bits
     codeblock.set_at(skip3 + j, _mm256_xor_si256(auxiliary.get_at(node_size_x_3 + j), rotated_j));
   }
 }
 
-void ldpc_encoder_avx2::high_rate_bg2_other_long()
+template <unsigned NODE_SIZE_AVX2_PH>
+void ldpc_encoder_avx2::high_rate_bg2_other_inner()
 {
-  unsigned skip0         = bg_K * node_size_avx2;
-  unsigned skip1         = (bg_K + 1) * node_size_avx2;
-  unsigned skip2         = (bg_K + 2) * node_size_avx2;
-  unsigned skip3         = (bg_K + 3) * node_size_avx2;
-  unsigned node_size_x_2 = 2 * node_size_avx2;
-  unsigned node_size_x_3 = 3 * node_size_avx2;
+  unsigned skip0         = bg_K * NODE_SIZE_AVX2_PH;
+  unsigned skip1         = (bg_K + 1) * NODE_SIZE_AVX2_PH;
+  unsigned skip2         = (bg_K + 2) * NODE_SIZE_AVX2_PH;
+  unsigned skip3         = (bg_K + 3) * NODE_SIZE_AVX2_PH;
+  unsigned node_size_x_2 = 2 * NODE_SIZE_AVX2_PH;
+  unsigned node_size_x_3 = 3 * NODE_SIZE_AVX2_PH;
 
   // First chunk of parity bits.
-  for (unsigned j = 0; j != node_size_avx2; ++j) {
-    __m256i rotated_j = _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(node_size_avx2 + j));
+  for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
+    __m256i rotated_j = _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(NODE_SIZE_AVX2_PH + j));
     rotated_j         = _mm256_xor_si256(rotated_j, auxiliary.get_at(node_size_x_2 + j));
     rotated_j         = _mm256_xor_si256(rotated_j, auxiliary.get_at(node_size_x_3 + j));
     rotated_node.set_at(j, rotated_j);
@@ -385,74 +429,49 @@ void ldpc_encoder_avx2::high_rate_bg2_other_long()
 
   rotate_node_left(codeblock.data_at(skip0), rotated_node.data_at(0), 1, lifting_size);
 
-  for (unsigned j = 0; j != node_size_avx2; ++j) {
+  for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
     __m256i block_0 = codeblock.get_at(skip0 + j);
     // Second chunk of parity bits.
     __m256i block_1 = _mm256_xor_si256(auxiliary.get_at(j), block_0);
     codeblock.set_at(skip1 + j, block_1);
     // Third chunk of parity bits.
-    codeblock.set_at(skip2 + j, _mm256_xor_si256(auxiliary.get_at(node_size_avx2 + j), block_1));
+    codeblock.set_at(skip2 + j, _mm256_xor_si256(auxiliary.get_at(NODE_SIZE_AVX2_PH + j), block_1));
     // Fourth chunk of parity bits.
     codeblock.set_at(skip3 + j, _mm256_xor_si256(auxiliary.get_at(node_size_x_3 + j), block_0));
   }
 }
 
-void ldpc_encoder_avx2::ext_region_short()
+template <unsigned NODE_SIZE_AVX2_PH>
+void ldpc_encoder_avx2::ext_region_inner()
 {
   // We only compute the variable nodes needed to fill the codeword.
   // Also, recall the high-rate region has length (bg_K + 4) * lifting_size.
   unsigned nof_layers = codeblock_length / lifting_size - bg_K;
 
   // Encode the extended region.
-  for (unsigned m = 4; m != nof_layers; ++m) {
-    unsigned skip = bg_K + m;
-
-    // The systematic part has already been computed.
-    codeblock.set_at(skip, auxiliary.get_at(m));
-
-    // Sum the contribution due to the high-rate region, with the proper circular shifts.
-    for (unsigned k = 0; k != 4; ++k) {
-      unsigned node_shift = current_graph->get_lifted_node(m, bg_K + k);
-      if (node_shift == ldpc::NO_EDGE) {
-        continue;
-      }
-      __m256i tmp_epi8;
-      rotate_node_right(&tmp_epi8, codeblock.data_at(bg_K + k), node_shift, lifting_size);
-      codeblock.set_at(skip, _mm256_xor_si256(codeblock.get_at(skip), tmp_epi8));
-    }
-  }
-}
-
-void ldpc_encoder_avx2::ext_region_long()
-{
-  // We only compute the variable nodes needed to fill the codeword.
-  // Also, recall the high-rate region has length (bg_K + 4) * lifting_size.
-  unsigned nof_layers = codeblock_length / lifting_size - bg_K;
-
-  // Encode the extended region.
-  unsigned skip     = (bg_K + 4) * node_size_avx2;
-  unsigned skip_aux = 4 * node_size_avx2;
+  unsigned skip     = (bg_K + 4) * NODE_SIZE_AVX2_PH;
+  unsigned skip_aux = 4 * NODE_SIZE_AVX2_PH;
   for (unsigned m = 4; m != nof_layers; ++m) {
     // The systematic part has already been computed.
-    for (unsigned j = 0; j != node_size_avx2; ++j) {
+    for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
       codeblock.set_at(skip + j, auxiliary.get_at(skip_aux + j));
     }
 
     // Sum the contribution due to the high-rate region, with the proper circular shifts.
-    for (unsigned k = 0; k < 4; ++k) {
+    for (unsigned k = 0; k != 4; ++k) {
       unsigned node_shift = current_graph->get_lifted_node(m, bg_K + k);
 
       if (node_shift == NO_EDGE) {
         continue;
       }
       rotate_node_right(
-          rotated_node.data_at(0), codeblock.data_at((bg_K + k) * node_size_avx2), node_shift, lifting_size);
-      for (unsigned j = 0; j != node_size_avx2; ++j) {
+          rotated_node.data_at(0), codeblock.data_at((bg_K + k) * NODE_SIZE_AVX2_PH), node_shift, lifting_size);
+      for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
         codeblock.set_at(skip + j, _mm256_xor_si256(codeblock.get_at(skip + j), rotated_node.get_at(j)));
       }
     }
-    skip += node_size_avx2;
-    skip_aux += node_size_avx2;
+    skip += NODE_SIZE_AVX2_PH;
+    skip_aux += NODE_SIZE_AVX2_PH;
   }
 }
 
