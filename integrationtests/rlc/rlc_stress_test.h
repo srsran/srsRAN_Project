@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/rlc/rlc_rx.h"
+#include "srsgnb/rlc/rlc_tx.h"
 #include "srsgnb/srslog/srslog.h"
 #include <getopt.h>
 
@@ -64,6 +65,22 @@ bool parse_args(stress_test_args& args, int argc, char* argv[])
 class pdcp_rx_dummy : public rlc_rx_upper_layer_data_notifier
 {
   void on_new_sdu(byte_buffer_slice_chain pdu) final {}
+};
+
+class pdcp_tx_dummy : public rlc_tx_upper_layer_data_notifier, public rlc_tx_upper_layer_control_notifier
+{
+  // rlc_tx_upper_layer_data_notifier interface
+  void on_delivered_sdu(uint32_t pdcp_count) final {}
+
+  // rlc_tx_upper_layer_control_notifier interface
+  void on_protocol_failure() final {}
+  void on_max_retx() final {}
+};
+
+class mac_tx_dummy : public rlc_tx_lower_layer_notifier
+{
+  // rlc_tx_lower_layer_notifier interface
+  void on_buffer_state_update(unsigned bsr) final {}
 };
 
 } // namespace srsgnb

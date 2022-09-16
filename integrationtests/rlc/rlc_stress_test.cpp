@@ -56,9 +56,14 @@ void stress_test(stress_test_args args)
   }
 
   // RLC gNB
-  std::unique_ptr<rlc_rx_upper_layer_data_notifier> pdcp_rx = std::make_unique<pdcp_rx_dummy>();
-  rlc_entity_creation_message                       msg;
+  std::unique_ptr<pdcp_rx_dummy> pdcp_rx = std::make_unique<pdcp_rx_dummy>();
+  std::unique_ptr<pdcp_tx_dummy> pdcp_tx = std::make_unique<pdcp_tx_dummy>();
+  std::unique_ptr<mac_tx_dummy>  mac_tx  = std::make_unique<mac_tx_dummy>();
+  rlc_entity_creation_message    msg;
   msg.rx_upper_dn                 = pdcp_rx.get();
+  msg.tx_upper_cn                 = pdcp_tx.get();
+  msg.tx_upper_dn                 = pdcp_tx.get();
+  msg.tx_lower_dn                 = mac_tx.get();
   msg.config                      = cnfg;
   msg.timers                      = &timers;
   std::unique_ptr<rlc_entity> rlc = create_rlc_entity(msg);
