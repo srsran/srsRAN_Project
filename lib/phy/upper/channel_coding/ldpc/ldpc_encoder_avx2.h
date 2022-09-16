@@ -87,18 +87,18 @@ private:
   void ext_region_long();
 
   /// Buffer containing the codeblock.
-  avx2_array<MAX_BLK_SIZE_AVX2> codeblock;
+  mm256::avx2_array<MAX_BLK_SIZE_AVX2> codeblock;
 
   /// Used portion of the codeblock buffer.
   size_t codeblock_used_size = 0;
 
   /// Auxiliary buffer for storing chunks of codeblocks.
-  avx2_array<MAX_AUX_SIZE_AVX2> auxiliary;
+  mm256::avx2_array<MAX_AUX_SIZE_AVX2> auxiliary;
   /// Used portion of the auxiliary buffer.
   size_t auxiliary_used_size = 0;
 
   /// Auxiliary buffer for storing a single node during rotations.
-  avx2_array<MAX_NODE_SIZE_AVX2> rotated_node;
+  mm256::avx2_array<MAX_NODE_SIZE_AVX2> rotated_node;
 
   /// Node size as a number of AVX2 vectors.
   unsigned node_size_avx2 = 0;

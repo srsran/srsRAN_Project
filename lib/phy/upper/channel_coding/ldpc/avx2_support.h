@@ -21,6 +21,7 @@ namespace srsgnb {
 /// Number of bytes in an AVX2 register.
 constexpr unsigned AVX2_SIZE_BYTE = 32;
 
+namespace mm256 {
 /// \brief Mimics an array of AVX2 registers.
 /// \tparam nof_elements The number of AVX2 registers in the array.
 template <size_t nof_elements>
@@ -87,5 +88,7 @@ inline __m256i avx2_array<nof_elements>::get_at(unsigned pos) const
   unsigned index = (pos + margin) * AVX2_SIZE_BYTE;
   return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(inner_array.data() + index));
 }
+
+} // namespace mm256
 
 } // namespace srsgnb
