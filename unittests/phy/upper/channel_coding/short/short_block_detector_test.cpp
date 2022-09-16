@@ -15,14 +15,18 @@
 /// messages (for comparison purposes) are provided as test vectors.
 
 #include "short_block_detector_test_data.h"
-#include "srsgnb/phy/upper/channel_coding/short/short_block_detector.h"
+#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/support/srsgnb_test.h"
 
 /// \cond
 using namespace srsgnb;
 int main()
 {
-  std::unique_ptr<short_block_detector> test_detector = create_short_block_detector();
+  std::shared_ptr<short_block_detector_factory> short_block_detector_factory = create_short_block_detector_factory_sw();
+  TESTASSERT(short_block_detector_factory);
+
+  std::unique_ptr<short_block_detector> test_detector = short_block_detector_factory->create();
+  TESTASSERT(test_detector);
 
   for (const auto& test_data : short_block_detector_test_data) {
     unsigned          nof_messages     = test_data.nof_messages;

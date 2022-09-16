@@ -25,6 +25,7 @@
 #include "pusch_processor_impl.h"
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "ssb_processor_impl.h"
+#include "uci_decoder_impl.h"
 
 using namespace srsgnb;
 
@@ -422,6 +423,24 @@ private:
   std::shared_ptr<sss_processor_factory>       sss_factory;
 };
 
+class uci_decoder_factory_sw : public uci_decoder_factory
+{
+private:
+  std::shared_ptr<short_block_detector_factory> decoder_factory;
+
+public:
+  explicit uci_decoder_factory_sw(uci_decoder_factory_sw_configuration& config) :
+    decoder_factory(std::move(config.decoder_factory))
+  {
+    srsgnb_assert(decoder_factory, "Invalid UCI decoder factory.");
+  }
+
+  std::unique_ptr<uci_decoder> create() override
+  {
+    return std::make_unique<uci_decoder_impl>(decoder_factory->create());
+  }
+};
+
 } // namespace
 
 std::shared_ptr<pbch_encoder_factory>
@@ -525,4 +544,9 @@ std::shared_ptr<ssb_processor_factory>
 srsgnb::create_ssb_processor_factory_sw(ssb_processor_factory_sw_configuration& config)
 {
   return std::make_shared<ssb_processor_factory_sw>(config);
+}
+
+std::shared_ptr<uci_decoder_factory> srsgnb::create_uci_decoder_factory_sw(uci_decoder_factory_sw_configuration& config)
+{
+  return std::make_shared<uci_decoder_factory_sw>(config);
 }

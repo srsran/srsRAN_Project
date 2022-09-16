@@ -23,6 +23,7 @@
 #include "polar/polar_interleaver_impl.h"
 #include "polar/polar_rate_dematcher_impl.h"
 #include "polar/polar_rate_matcher_impl.h"
+#include "short/short_block_detector_impl.h"
 
 using namespace srsgnb;
 
@@ -150,6 +151,14 @@ public:
   }
 };
 
+class short_block_detector_factory_sw : public short_block_detector_factory
+{
+public:
+  explicit short_block_detector_factory_sw() {}
+
+  std::unique_ptr<short_block_detector> create() override { return std::make_unique<short_block_detector_impl>(); }
+};
+
 } // namespace
 
 std::shared_ptr<ldpc_decoder_factory> srsgnb::create_ldpc_decoder_factory_sw(const std::string& dec_type)
@@ -191,4 +200,9 @@ std::shared_ptr<crc_calculator_factory> srsgnb::create_crc_calculator_factory_sw
 std::shared_ptr<polar_factory> srsgnb::create_polar_factory_sw()
 {
   return std::make_shared<polar_factory_sw>();
+}
+
+std::shared_ptr<short_block_detector_factory> srsgnb::create_short_block_detector_factory_sw()
+{
+  return std::make_unique<short_block_detector_factory_sw>();
 }

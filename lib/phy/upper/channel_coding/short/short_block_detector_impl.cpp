@@ -181,8 +181,3 @@ bool short_block_detector_impl::detect(span<uint8_t>                    output,
   constexpr std::array<double, MAX_MSG_LENGTH> THRESHOLDS = {0, 0, 12, 14, 16, 18, 20, 22, 24, 26, 29};
   return (max_metric > THRESHOLDS[out_size - 1]);
 };
-
-std::unique_ptr<short_block_detector> srsgnb::create_short_block_detector()
-{
-  return std::make_unique<short_block_detector_impl>();
-}

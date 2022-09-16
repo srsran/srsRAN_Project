@@ -39,6 +39,4 @@ public:
   /// \remark When the detection test fails, the function returns \c false and the content of \c output is unreliable.
   virtual bool detect(span<uint8_t> output, span<const log_likelihood_ratio> input, modulation_scheme mod) = 0;
 };
-
-std::unique_ptr<short_block_detector> create_short_block_detector();
 } // namespace srsgnb

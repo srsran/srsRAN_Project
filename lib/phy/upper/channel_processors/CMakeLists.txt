@@ -48,6 +48,9 @@ target_link_libraries(srsgnb_pusch_processor srsgnb_upper_phy_support)
 add_library(srsgnb_ssb_processor STATIC ssb_processor_impl.cpp)
 target_link_libraries(srsgnb_ssb_processor srsgnb_sequence_generators srsgnb_signal_processors)
 
+add_library(srsgnb_uci_decoder STATIC uci_decoder_impl.cpp)
+target_link_libraries(srsgnb_uci_decoder srsgnb_channel_coding srsvec)
+
 add_library(srsgnb_channel_processors STATIC channel_processor_factories.cpp)
 target_link_libraries(srsgnb_channel_processors
         srsgnb_pbch_encoder
@@ -62,7 +65,8 @@ target_link_libraries(srsgnb_channel_processors
         srsgnb_pusch_decoder
         srsgnb_pusch_demodulator
         srsgnb_pusch_processor
-        srsgnb_ssb_processor)
+        srsgnb_ssb_processor
+        srsgnb_uci_decoder)
 
 install(TARGETS srsgnb_channel_processors
                 srsgnb_pbch_encoder
@@ -78,4 +82,5 @@ install(TARGETS srsgnb_channel_processors
                 srsgnb_pusch_demodulator
                 srsgnb_pusch_processor
                 srsgnb_ssb_processor
+                srsgnb_uci_decoder
         EXPORT srsgnb_export)

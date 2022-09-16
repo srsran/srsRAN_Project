@@ -23,6 +23,7 @@
 #include "srsgnb/phy/upper/channel_coding/polar/polar_interleaver.h"
 #include "srsgnb/phy/upper/channel_coding/polar/polar_rate_dematcher.h"
 #include "srsgnb/phy/upper/channel_coding/polar/polar_rate_matcher.h"
+#include "srsgnb/phy/upper/channel_coding/short/short_block_detector.h"
 #include <memory>
 
 namespace srsgnb {
@@ -106,5 +107,14 @@ public:
 };
 
 std::shared_ptr<polar_factory> create_polar_factory_sw();
+
+class short_block_detector_factory
+{
+public:
+  virtual ~short_block_detector_factory()                = default;
+  virtual std::unique_ptr<short_block_detector> create() = 0;
+};
+
+std::shared_ptr<short_block_detector_factory> create_short_block_detector_factory_sw();
 
 } // namespace srsgnb

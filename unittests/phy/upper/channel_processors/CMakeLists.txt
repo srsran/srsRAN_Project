@@ -178,3 +178,15 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/ssb_processor_test_data.tar.gz
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ssb_processor_test_data.tar.gz
         VERBATIM)
+
+add_executable(uci_decoder_test uci_decoder_test.cpp)
+target_link_libraries(uci_decoder_test srsgnb_channel_processors srsgnb_channel_coding srsgnb_upper_phy_support)
+add_custom_command(
+        TARGET uci_decoder_test
+        POST_BUILD
+        WORKING_DIRECTORY ${TEST_DATA_DIR}
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/uci_decoder_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/uci_decoder_test_data.tar.gz
+        VERBATIM
+)
+add_test(uci_decoder_test uci_decoder_test)
