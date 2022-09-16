@@ -29,13 +29,27 @@ void stress_test(stress_test_args args)
   }
   srslog::set_default_sink(*log_sink);
 
+  timer_manager timers;
+
   rlc_config cnfg = {};
   if (args.mode == "TM") {
     cnfg.mode = srsgnb::rlc_mode::tm;
-  } else if (args.mode == "UM") {
-    cnfg.mode = srsgnb::rlc_mode::um_bidir;
-  } else if (args.mode == "AM") {
-    cnfg.mode = srsgnb::rlc_mode::am;
+  } else if (args.mode == "UM6") {
+    cnfg.mode                  = srsgnb::rlc_mode::um_bidir;
+    cnfg.um.rx.sn_field_length = rlc_um_sn_size::size6bits;
+    cnfg.um.tx.sn_field_length = rlc_um_sn_size::size6bits;
+  } else if (args.mode == "UM12") {
+    cnfg.mode                  = srsgnb::rlc_mode::um_bidir;
+    cnfg.um.rx.sn_field_length = rlc_um_sn_size::size12bits;
+    cnfg.um.tx.sn_field_length = rlc_um_sn_size::size12bits;
+  } else if (args.mode == "AM12") {
+    cnfg.mode                  = srsgnb::rlc_mode::am;
+    cnfg.am.rx.sn_field_length = rlc_am_sn_size::size12bits;
+    cnfg.am.tx.sn_field_length = rlc_am_sn_size::size12bits;
+  } else if (args.mode == "AM18") {
+    cnfg.mode                  = srsgnb::rlc_mode::am;
+    cnfg.am.rx.sn_field_length = rlc_am_sn_size::size18bits;
+    cnfg.am.tx.sn_field_length = rlc_am_sn_size::size18bits;
   } else {
     fprintf(stderr, "Unsupported RLC mode %s, exiting.\n", args.mode.c_str());
     exit(-1);
@@ -45,7 +59,8 @@ void stress_test(stress_test_args args)
   std::unique_ptr<rlc_rx_upper_layer_data_notifier> pdcp_rx = std::make_unique<pdcp_rx_dummy>();
   rlc_entity_creation_message                       msg;
   msg.rx_upper_dn                 = pdcp_rx.get();
-  msg.config                      = std::move(cnfg);
+  msg.config                      = cnfg;
+  msg.timers                      = &timers;
   std::unique_ptr<rlc_entity> rlc = create_rlc_entity(msg);
 
   // RLC UE
