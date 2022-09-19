@@ -95,11 +95,11 @@ struct ngap_ul_nas_transport_message {
   asn1::ngap::nr_cgi_s nr_cgi;
 };
 
-/// Handle NGAP NAS Message procedures as defined in TS 38.413 section 8.6.
-class ngap_nas_message_handler
+/// Handle NGC NAS Message procedures as defined in TS 38.413 section 8.6.
+class ngc_nas_message_handler
 {
 public:
-  virtual ~ngap_nas_message_handler() = default;
+  virtual ~ngc_nas_message_handler() = default;
 
   /// \brief Initiates Initial UE message procedure as per TS 38.413 section 8.6.1.
   /// \param[in] msg The ngap initial UE message to transmit.
@@ -114,7 +114,7 @@ public:
 class ngap_interface : public ngc_message_handler,
                        public ngc_event_handler,
                        public ngc_connection_manager,
-                       public ngap_nas_message_handler
+                       public ngc_nas_message_handler
 {
 public:
   virtual ~ngap_interface() = default;

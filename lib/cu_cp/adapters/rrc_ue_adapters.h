@@ -101,7 +101,7 @@ private:
 class rrc_ue_ngap_adapter : public rrc_ue_nas_notifier
 {
 public:
-  void connect_ngap(ngap_nas_message_handler& ngap_nas_msg_handler_) { ngap_nas_msg_handler = &ngap_nas_msg_handler_; }
+  void connect_ngap(ngc_nas_message_handler& ngc_nas_msg_handler_) { ngc_nas_msg_handler = &ngc_nas_msg_handler_; }
 
   void set_du_index(du_index_t du_index_) { du_index = du_index_; }
 
@@ -120,7 +120,7 @@ public:
     ngap_init_ue_msg.nr_cgi.nrcell_id.from_number(msg.cgi.nci.packed);
     ngap_init_ue_msg.nr_cgi.plmn_id.from_string(msg.cgi.plmn_hex);
 
-    ngap_nas_msg_handler->handle_initial_ue_message(ngap_init_ue_msg);
+    ngc_nas_msg_handler->handle_initial_ue_message(ngap_init_ue_msg);
   }
 
   void on_ul_nas_transport_message(const ul_nas_transport_message& msg) override
@@ -135,7 +135,7 @@ public:
     ngap_ul_nas_msg.nr_cgi.nrcell_id.from_number(msg.cgi.nci.packed);
     ngap_ul_nas_msg.nr_cgi.plmn_id.from_string(msg.cgi.plmn_hex);
 
-    ngap_nas_msg_handler->handle_ul_nas_transport_message(ngap_ul_nas_msg);
+    ngc_nas_msg_handler->handle_ul_nas_transport_message(ngap_ul_nas_msg);
   }
 
 private:
@@ -182,8 +182,8 @@ private:
     return rrcestablishment_cause;
   }
 
-  ngap_nas_message_handler* ngap_nas_msg_handler = nullptr;
-  du_index_t                du_index             = INVALID_DU_INDEX;
+  ngc_nas_message_handler* ngc_nas_msg_handler = nullptr;
+  du_index_t               du_index            = INVALID_DU_INDEX;
 };
 
 } // namespace srs_cu_cp
