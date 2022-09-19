@@ -53,6 +53,33 @@ TEST_P(pdcp_rx_test, sn_unpack)
   }
 }
 
+TEST_P(pdcp_rx_test, rx_in_order)
+{
+  init(GetParam());
+
+  auto test_rx_in_order = [this](uint32_t count) {
+    byte_buffer test_pdu1;
+    get_test_pdu(count, test_pdu1);
+    byte_buffer test_pdu2;
+    get_test_pdu(count + 1, test_pdu2);
+    // pdcp_rx_state test1_init_state = {.tx_next = count, .rx_next = count, .rx_deliv = count, .rx_reord = 0};
+    // TESTASSERT(rx_helper.test_rx(std::move(test1_pdus), test1_init_state, 2, tst_sdu1) == 0);
+  };
+
+  if (config.sn_size == pdcp_sn_size::size12bits) {
+    test_rx_in_order(0);
+    test_rx_in_order(2048);
+    test_rx_in_order(4096);
+    test_rx_in_order(4294967295);
+  } else if (config.sn_size == pdcp_sn_size::size18bits) {
+    // test_hdr_reader(0);
+    // test_hdr_reader(131072);
+    // test_hdr_reader(262144);
+    // test_hdr_reader(4294967295);
+  } else {
+    FAIL();
+  }
+}
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////
