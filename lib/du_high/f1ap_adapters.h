@@ -58,6 +58,8 @@ public:
 
   timer_manager& get_timer_manager() override { return timers; }
 
+  void schedule_async_task(async_task<void>&& task) override { du_mng->schedule_async_task(std::move(task)); }
+
   f1c_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) override { return ues[ue_index]; }
 
   async_task<f1ap_ue_config_update_response>

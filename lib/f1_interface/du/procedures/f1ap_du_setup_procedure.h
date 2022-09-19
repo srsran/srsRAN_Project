@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "common/f1ap_asn1_utils.h"
+#include "../../common/f1ap_asn1_utils.h"
 #include "f1ap_du_event_manager.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/du/f1ap_du.h"

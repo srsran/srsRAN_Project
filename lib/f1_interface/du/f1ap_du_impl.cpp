@@ -13,6 +13,7 @@
 #include "du/procedures/f1ap_du_setup_procedure.h"
 #include "du/procedures/f1ap_du_ue_creation_procedure.h"
 #include "du/procedures/f1ap_du_ue_release_procedure.h"
+#include "du/procedures/gnb_cu_configuration_update_procedure.h"
 #include "f1c_du_bearer_impl.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/support/async/event_signal.h"
@@ -47,6 +48,11 @@ async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(co
 f1ap_ue_create_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_create_request& msg)
 {
   return create_f1ap_du_ue(msg, ues, ctxt, f1c_notifier, *events);
+}
+
+void f1ap_du_impl::handle_gnb_cu_configuration_update(const asn1::f1ap::gnbcu_cfg_upd_s& msg)
+{
+  du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, f1c_notifier));
 }
 
 void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg)
@@ -211,6 +217,9 @@ void f1ap_du_impl::handle_message(const f1c_message& msg)
 void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
+    case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::gnbcu_cfg_upd:
+      handle_gnb_cu_configuration_update(msg.value.gnbcu_cfg_upd());
+      break;
     case f1_ap_elem_procs_o::init_msg_c::types_opts::dlrrc_msg_transfer:
       handle_dl_rrc_message_transfer(msg.value.dlrrc_msg_transfer());
       break;

@@ -198,6 +198,9 @@ public:
   virtual ~f1c_task_scheduler() = default;
 
   virtual timer_manager& get_timer_manager() = 0;
+
+  /// \brief Schedule Async Task respective to the whole DU.
+  virtual void schedule_async_task(async_task<void>&& task) = 0;
 };
 
 /// The F1AP uses this interface to notify the DU of new required updates (e.g. UE config modification, etc.) and to

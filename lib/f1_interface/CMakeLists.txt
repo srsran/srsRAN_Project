@@ -6,6 +6,8 @@
 # the distribution.
 #
 
+add_subdirectory(du)
+
 set(SOURCES
         cu/f1c_cu_factory.cpp
         du/f1ap_du_factory.cpp
@@ -17,12 +19,11 @@ set(SOURCES
         common/f1ap_asn1_packer.cpp
         common/asn1_helpers.cpp
         du/handlers/f1c_du_packet_handler.cpp
-        du/procedures/f1ap_du_setup_procedure.cpp
         du/f1c_du_bearer_impl.cpp
         du/f1ap_du_ue.cpp
     )
 
 add_library(srsgnb_f1 STATIC ${SOURCES})
-target_link_libraries(srsgnb_f1 f1ap_asn1)
+target_link_libraries(srsgnb_f1 f1ap_asn1 srsgnb_f1c_du_procedures)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

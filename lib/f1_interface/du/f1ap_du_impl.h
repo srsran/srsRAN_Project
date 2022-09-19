@@ -65,6 +65,9 @@ private:
   /// \param[in] outcome The unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome);
 
+  /// \brief Handle GNB-CU CONFIGURATION UPDATE as per TS38.473, Section 8.2.5.2.
+  void handle_gnb_cu_configuration_update(const asn1::f1ap::gnbcu_cfg_upd_s& msg);
+
   /// \brief Handle UE CONTEXT SETUP REQUEST as per TS38.473, Section 8.3.1.
   void handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg);
 

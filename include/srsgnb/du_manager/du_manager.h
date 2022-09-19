@@ -34,6 +34,9 @@ class du_manager_configurator
 public:
   virtual ~du_manager_configurator() = default;
 
+  /// \brief Schedule asynchronous task in a DU-wide scope.
+  virtual void schedule_async_task(async_task<void>&& task) = 0;
+
   /// \brief Schedule asynchronous task that is specific to a UE.
   virtual void schedule_async_task(du_ue_index_t ue_index, async_task<void>&& task) = 0;
 

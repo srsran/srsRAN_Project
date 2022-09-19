@@ -46,6 +46,8 @@ public:
 
   timer_manager& get_timer_manager() override { return timers; }
 
+  void schedule_async_task(async_task<void>&& task) override { task_loop.schedule(std::move(task)); }
+
   async_task<f1ap_ue_config_update_response>
   request_ue_config_update(const f1ap_ue_config_update_request& request) override
   {
