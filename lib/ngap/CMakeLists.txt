@@ -7,7 +7,7 @@
 #
 
 set(SOURCES
-        ngap_factory.cpp
+        ngc_factory.cpp
         ngap_impl.cpp
         procedures/ngap_setup_procedure.cpp
     )

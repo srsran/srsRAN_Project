@@ -12,7 +12,7 @@
 
 #include "srsgnb/asn1/asn1_utils.h"
 #include "srsgnb/ngap/ngap.h"
-#include "srsgnb/ngap/ngap_factory.h"
+#include "srsgnb/ngap/ngc_factory.h"
 #include "test_helpers.h"
 #include <gtest/gtest.h>
 
