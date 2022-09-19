@@ -8,7 +8,7 @@
 
 set(SOURCES
         ngc_factory.cpp
-        ngap_impl.cpp
+        ngc_impl.cpp
         procedures/ngap_setup_procedure.cpp
     )
 

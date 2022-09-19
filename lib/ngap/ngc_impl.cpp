@@ -8,7 +8,7 @@
  *
  */
 
-#include "ngap_impl.h"
+#include "ngc_impl.h"
 #include "procedures/ngap_setup_procedure.h"
 #include "srsgnb/support/async/event_signal.h"
 
@@ -16,7 +16,7 @@ using namespace srsgnb;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
-ngap_impl::ngap_impl(timer_manager& timers_, ngc_message_notifier& message_notifier_) :
+ngc_impl::ngc_impl(timer_manager& timers_, ngc_message_notifier& message_notifier_) :
   logger(srslog::fetch_basic_logger("NGAP")),
   timers(timers_),
   ngc_notifier(message_notifier_),
@@ -32,14 +32,14 @@ ngap_impl::ngap_impl(timer_manager& timers_, ngc_message_notifier& message_notif
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
-ngap_impl::~ngap_impl() {}
+ngc_impl::~ngc_impl() {}
 
-async_task<ng_setup_response_message> ngap_impl::handle_ngap_setup_request(const ng_setup_request_message& request)
+async_task<ng_setup_response_message> ngc_impl::handle_ngap_setup_request(const ng_setup_request_message& request)
 {
   return launch_async<ngap_setup_procedure>(request, ngc_notifier, *events, logger);
 }
 
-void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
+void ngc_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
 {
   logger.info("Handling Initial UE Message");
 
@@ -84,7 +84,7 @@ void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
   ngc_notifier.on_new_message(ngc_msg);
 }
 
-void ngap_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg)
+void ngc_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg)
 {
   logger.info("Handling UL NAS Transport Message");
 
@@ -123,7 +123,7 @@ void ngap_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_mess
   ngc_notifier.on_new_message(ngc_msg);
 }
 
-void ngap_impl::handle_message(const ngc_message& msg)
+void ngc_impl::handle_message(const ngc_message& msg)
 {
   logger.info("Handling NGAP PDU of type \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
 
@@ -143,7 +143,7 @@ void ngap_impl::handle_message(const ngc_message& msg)
   }
 }
 
-void ngap_impl::handle_initiating_message(const init_msg_s& msg)
+void ngc_impl::handle_initiating_message(const init_msg_s& msg)
 {
   switch (msg.value.type().value) {
     case ngap_elem_procs_o::init_msg_c::types_opts::dl_nas_transport:
@@ -154,7 +154,7 @@ void ngap_impl::handle_initiating_message(const init_msg_s& msg)
   }
 }
 
-void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transport_s& msg)
+void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transport_s& msg)
 {
   std::underlying_type_t<ue_ngap_id_t> ue_ngap_id_uint = msg->ran_ue_ngap_id.value.value;
 
@@ -166,7 +166,7 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
   // TODO: create NGAP to RRC UE adapter and forward message
 }
 
-void ngap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
+void ngc_impl::handle_successful_outcome(const successful_outcome_s& outcome)
 {
   switch (outcome.value.type().value) {
     case ngap_elem_procs_o::successful_outcome_c::types_opts::ng_setup_resp: {
@@ -177,7 +177,7 @@ void ngap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
   }
 }
 
-void ngap_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcome)
+void ngc_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcome)
 {
   switch (outcome.value.type().value) {
     case ngap_elem_procs_o::unsuccessful_outcome_c::types_opts::ng_setup_fail: {

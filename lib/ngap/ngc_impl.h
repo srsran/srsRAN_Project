@@ -22,11 +22,11 @@ namespace srs_cu_cp {
 
 class ngap_event_manager;
 
-class ngap_impl final : public ngc_interface
+class ngc_impl final : public ngc_interface
 {
 public:
-  ngap_impl(timer_manager& timers_, ngc_message_notifier& event_notifier_);
-  ~ngap_impl();
+  ngc_impl(timer_manager& timers_, ngc_message_notifier& event_notifier_);
+  ~ngc_impl();
 
   // ngap connection manager functions
   async_task<ng_setup_response_message> handle_ngap_setup_request(const ng_setup_request_message& request) override;
