@@ -9,7 +9,7 @@
 set(SOURCES
         ngc_factory.cpp
         ngc_impl.cpp
-        procedures/ngap_setup_procedure.cpp
+        procedures/ng_setup_procedure.cpp
     )
 
 add_library(srsgnb_ngap STATIC ${SOURCES})

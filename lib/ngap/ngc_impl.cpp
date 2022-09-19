@@ -9,7 +9,7 @@
  */
 
 #include "ngc_impl.h"
-#include "procedures/ngap_setup_procedure.h"
+#include "procedures/ng_setup_procedure.h"
 #include "srsgnb/support/async/event_signal.h"
 
 using namespace srsgnb;
@@ -36,7 +36,7 @@ ngc_impl::~ngc_impl() {}
 
 async_task<ng_setup_response_message> ngc_impl::handle_ngap_setup_request(const ng_setup_request_message& request)
 {
-  return launch_async<ngap_setup_procedure>(request, ngc_notifier, *events, logger);
+  return launch_async<ng_setup_procedure>(request, ngc_notifier, *events, logger);
 }
 
 void ngc_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)

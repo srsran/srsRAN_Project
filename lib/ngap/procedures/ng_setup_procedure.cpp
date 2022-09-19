@@ -8,21 +8,21 @@
  *
  */
 
-#include "ngap_setup_procedure.h"
+#include "ng_setup_procedure.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
 using namespace asn1::ngap;
 
-ngap_setup_procedure::ngap_setup_procedure(const ng_setup_request_message& request_,
-                                           ngc_message_notifier&           amf_notif_,
-                                           ngap_event_manager&             ev_mng_,
-                                           srslog::basic_logger&           logger_) :
+ng_setup_procedure::ng_setup_procedure(const ng_setup_request_message& request_,
+                                       ngc_message_notifier&           amf_notif_,
+                                       ngap_event_manager&             ev_mng_,
+                                       srslog::basic_logger&           logger_) :
   request(request_), amf_notifier(amf_notif_), ev_mng(ev_mng_), logger(logger_)
 {
 }
 
-void ngap_setup_procedure::operator()(coro_context<async_task<ng_setup_response_message>>& ctx)
+void ng_setup_procedure::operator()(coro_context<async_task<ng_setup_response_message>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -50,7 +50,7 @@ void ngap_setup_procedure::operator()(coro_context<async_task<ng_setup_response_
   CORO_RETURN(create_ng_setup_result());
 }
 
-void ngap_setup_procedure::send_ng_setup_request()
+void ng_setup_procedure::send_ng_setup_request()
 {
   ngc_message msg = {};
   // set NGAP PDU contents
@@ -64,7 +64,7 @@ void ngap_setup_procedure::send_ng_setup_request()
   amf_notifier.on_new_message(msg);
 }
 
-bool ngap_setup_procedure::retry_required()
+bool ng_setup_procedure::retry_required()
 {
   if (ngap_setup_outcome.has_value()) {
     // Success case.
@@ -87,7 +87,7 @@ bool ngap_setup_procedure::retry_required()
   return true;
 }
 
-ng_setup_response_message ngap_setup_procedure::create_ng_setup_result()
+ng_setup_response_message ng_setup_procedure::create_ng_setup_result()
 {
   ng_setup_response_message res{};
 
