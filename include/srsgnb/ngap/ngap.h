@@ -24,10 +24,10 @@ struct ngap_message {
 };
 
 /// This interface is used to push NGAP messages to the NG interface.
-class ng_message_handler
+class ngc_message_handler
 {
 public:
-  virtual ~ng_message_handler() = default;
+  virtual ~ngc_message_handler() = default;
 
   /// Handle the incoming NGAP message.
   virtual void handle_message(const ngap_message& msg) = 0;
@@ -111,7 +111,7 @@ public:
 };
 
 /// Combined entry point for the NGAP object.
-class ngap_interface : public ng_message_handler,
+class ngap_interface : public ngc_message_handler,
                        public ng_event_handler,
                        public ngap_connection_manager,
                        public ngap_nas_message_handler

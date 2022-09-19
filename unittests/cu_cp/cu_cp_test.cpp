@@ -116,7 +116,7 @@ TEST_F(cu_cp_test, when_ng_setup_response_received_then_amf_connected)
 {
   // Connect AMF by injecting a ng_setup_response
   ngap_message ngap_msg = generate_ng_setup_response_message();
-  cu_cp_obj->get_ng_message_handler().handle_message(ngap_msg);
+  cu_cp_obj->get_ngc_message_handler().handle_message(ngap_msg);
 
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());
 }
@@ -125,7 +125,7 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
 {
   // Connect AMF by injecting a ng_setup_response
   ngap_message ngap_msg = generate_ng_setup_response_message();
-  cu_cp_obj->get_ng_message_handler().handle_message(ngap_msg);
+  cu_cp_obj->get_ngc_message_handler().handle_message(ngap_msg);
 
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());
 
@@ -187,7 +187,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
 {
   // Connect AMF by injecting a ng_setup_response
   ngap_message ngap_msg = generate_ng_setup_response_message();
-  cu_cp_obj->get_ng_message_handler().handle_message(ngap_msg);
+  cu_cp_obj->get_ngc_message_handler().handle_message(ngap_msg);
 
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());
 

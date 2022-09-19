@@ -24,10 +24,10 @@ class dummy_ngap_amf_notifier : public ng_message_notifier
 {
 public:
   // FIXME: Add handler when ngap exists
-  dummy_ngap_amf_notifier(ng_message_handler* handler_) :
+  dummy_ngap_amf_notifier(ngc_message_handler* handler_) :
     logger(srslog::fetch_basic_logger("TEST")), handler(handler_){};
 
-  void attach_handler(ng_message_handler* handler_) { handler = handler_; };
+  void attach_handler(ngc_message_handler* handler_) { handler = handler_; };
 
   void on_new_message(const ngap_message& msg) override
   {
@@ -44,7 +44,7 @@ public:
 
 private:
   srslog::basic_logger& logger;
-  ng_message_handler*   handler = nullptr;
+  ngc_message_handler*  handler = nullptr;
 };
 
 } // namespace srs_cu_cp
