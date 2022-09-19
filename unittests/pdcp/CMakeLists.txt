@@ -15,3 +15,6 @@ gtest_discover_tests(pdcp_tx_test)
 add_executable(pdcp_rx_test pdcp_rx_test.cpp)
 target_link_libraries(pdcp_rx_test srsgnb_pdcp srsgnb_security srsgnb_support srslog gtest gtest_main)
 gtest_discover_tests(pdcp_rx_test)
+
+add_executable(pdcp_gen_helper pdcp_gen_helper.cpp)
+target_link_libraries(pdcp_gen_helper srsgnb_pdcp srsgnb_security srsgnb_support srslog)
