@@ -175,6 +175,8 @@ struct rach_config_common {
   /// derived from the prach-ConfigurationIndex in RACH-ConfigGeneric as per TS38.211 Tables 6.3.3.1-[1-3].
   subcarrier_spacing    msg1_scs;
   restricted_set_config restricted_set;
+  /// Enables the transform precoder for Msg3 transmission according to clause 6.1.3 of TS 38.214.
+  bool msg3_transform_precoder;
 };
 
 struct pusch_time_domain_resource_allocation {

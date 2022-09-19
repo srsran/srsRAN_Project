@@ -73,6 +73,7 @@ private:
   const pdsch_config_common& get_pdsch_cfg() const { return cfg.dl_cfg_common.init_dl_bwp.pdsch_common; }
   const bwp_configuration&   get_ul_bwp_cfg() const { return cfg.ul_cfg_common.init_ul_bwp.generic_params; }
   const pusch_config_common& get_pusch_cfg() const { return *cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common; }
+  const rach_config_common&  get_rach_cfg() const { return *cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common; }
 
   void handle_rach_indication_impl(const rach_indication_message& msg);
 

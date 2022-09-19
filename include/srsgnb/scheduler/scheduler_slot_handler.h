@@ -177,6 +177,8 @@ struct pusch_information {
   sch_mcs_index mcs_index;
   /// MCS table (See TS38.214 Section 6.1.4.1).
   pusch_mcs_table mcs_table;
+  /// Indicates if transform precoding is enabled or disabled (see TS 38.214, Section 6.1.4.1).
+  bool transform_precoding;
   /// DMRS configuration as per TS38.211 Section 6.4.1.1.
   dmrs_information dmrs;
 };
