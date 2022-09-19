@@ -18,6 +18,20 @@
 #include "srsgnb/ran/bearer_logger.h"
 
 namespace srsgnb {
+
+/// PDCP RX state variables,
+/// TS 38.323, section 7.1
+struct pdcp_rx_state {
+  /// RX_NEXT indicates the COUNT value of the next PDCP SDU expected to be received.
+  uint32_t rx_next;
+  /// RX_DELIV indicates the COUNT value of the first PDCP SDU not delivered to the upper layers, but still
+  /// waited for.
+  uint32_t rx_deliv;
+  /// RX_REORD indicates the COUNT value following the COUNT value associated with the PDCP Data PDU which
+  /// triggered t-Reordering.
+  uint32_t rx_reord;
+};
+
 /// Base class used for receiving RLC bearers.
 /// It provides interfaces for the RLC bearers, for the lower layers
 class pdcp_entity_rx : public pdcp_entity_tx_rx_base,
@@ -57,6 +71,8 @@ private:
   pdcp_ciphering_enabled ciphering_enabled = pdcp_ciphering_enabled::no;
 
   void handle_pdu(byte_buffer buf) final;
+
+  pdcp_rx_state st = {};
 
   /*
    * Notifiers
