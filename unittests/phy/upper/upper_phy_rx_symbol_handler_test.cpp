@@ -22,16 +22,21 @@ namespace {
 class UpperPhyRxSymbolHandlerFixture : public ::testing::Test
 {
 protected:
+  std::unique_ptr<rx_softbuffer_pool>    soft_pool;
   uplink_processor_spy*                  ul_proc_spy;
   std::unique_ptr<uplink_processor_pool> ul_processor_pool;
   upper_phy_rx_symbol_handler_impl       rx_handler;
   prach_buffer_context                   context;
   prach_buffer_spy                       buffer_dummy;
   prach_detector::configuration          config;
+  uplink_slot_pdu_repository             pdu_repo;
 
   void handle_prach_symbol() { rx_handler.handle_rx_prach_window(context, buffer_dummy); }
 
-  UpperPhyRxSymbolHandlerFixture() : ul_processor_pool(create_ul_processor_pool()), rx_handler(*ul_processor_pool)
+  UpperPhyRxSymbolHandlerFixture() :
+    soft_pool(create_rx_softbuffer_pool(rx_softbuffer_pool_description())),
+    ul_processor_pool(create_ul_processor_pool()),
+    rx_handler(*ul_processor_pool, pdu_repo, *soft_pool, srslog::fetch_basic_logger("TEST"))
   {
     context.sector = 0;
     context.slot   = slot_point(0, 0, 0);

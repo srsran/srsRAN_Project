@@ -23,6 +23,9 @@ public:
   // See interface for documentation.
   void on_new_prach_results(const ul_prach_results& result) override;
 
+  // See interface for documentation.
+  void on_new_pusch_results(const ul_pusch_results& result) override;
+
   /// Connects this proxy to the notifier the notifications of new upper PHY receive results are forwarded to.
   ///
   /// \param notif RX results notifier to which the notifications will be forwarded.

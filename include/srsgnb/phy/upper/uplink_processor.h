@@ -14,6 +14,7 @@
 #pragma once
 
 #include "srsgnb/phy/upper/channel_processors/prach_detector.h"
+#include "srsgnb/phy/upper/channel_processors/pusch_processor.h"
 
 namespace srsgnb {
 
@@ -31,6 +32,16 @@ class slot_point;
 class uplink_processor
 {
 public:
+  /// Defines the intermediate struct that contains all the data of the PUSCH PDU.
+  struct pusch_pdu {
+    /// HARQ process number.
+    unsigned harq_id;
+    /// Transport block size in bytes.
+    unsigned tb_size;
+    /// PUSCH processor PDU.
+    pusch_processor::pdu_t pdu;
+  };
+
   virtual ~uplink_processor() = default;
 
   /// \brief Processes the PRACH using the given configuration and context.
@@ -41,6 +52,19 @@ public:
   /// \param[in] buffer        Channel symbols the PRACH detection is performed on.
   /// \param[in] context       Context used by the underlying PRACH detector.
   virtual void process_prach(const prach_buffer& buffer, const prach_buffer_context& context) = 0;
+
+  /// \brief Processes a PUSCH transmission.
+  ///
+  /// The size of each transport block is determined by <tt> data[TB index].size() </tt>.
+  ///
+  /// \param[out] data Provides the transport block to receive.
+  /// \param[in,out] softbuffer Provides the data reception softbuffer.
+  /// \param[in] grid Provides the destination resource grid.
+  /// \param[in] pdu Provides the necessary parameters to process the PUSCH transmission.
+  virtual void process_pusch(span<uint8_t>                      data,
+                             rx_softbuffer&                     softbuffer,
+                             const resource_grid_reader&        grid,
+                             const uplink_processor::pusch_pdu& pdu) = 0;
 };
 
 /// \brief Pool of uplink processors.

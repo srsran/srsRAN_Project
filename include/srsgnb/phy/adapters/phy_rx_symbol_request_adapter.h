@@ -33,13 +33,11 @@ public:
   }
 
   // See interface for documentation.
-  void on_uplink_slot_request(const upper_phy_rx_symbol_context& context, resource_grid& grid) override
+  void on_uplink_slot_request(const resource_grid_context& context, resource_grid& grid) override
   {
     report_fatal_error_if_not(rx_symbol_request_handler, "Adapter is not connected.");
-    resource_grid_context lower_context;
-    lower_context.slot   = context.slot;
-    lower_context.sector = context.sector;
-    rx_symbol_request_handler->request_uplink_slot(lower_context, grid);
+
+    rx_symbol_request_handler->request_uplink_slot(context, grid);
   }
 };
 

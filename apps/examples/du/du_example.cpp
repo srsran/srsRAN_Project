@@ -265,33 +265,10 @@ static const std::vector<configuration_profile> profiles = {
        }
      }}};
 
-static std::unique_ptr<resource_grid_pool> build_ul_resource_grid_pool()
-{
-  unsigned                                    nof_slots = max_processing_delay_slots * 2;
-  std::vector<std::unique_ptr<resource_grid>> grids;
-  grids.reserve(nof_sectors * nof_slots);
-
-  for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
-    for (unsigned slot_id = 0; slot_id != nof_slots; ++slot_id) {
-      std::unique_ptr<resource_grid> grid =
-          create_resource_grid(1, get_nsymb_per_slot(cp), nof_prb_dl_grid[to_numerology_value(scs)] * NRE);
-      if (!grid) {
-        srslog::fetch_basic_logger("TEST").error("Failed to create UL resource grid");
-        return nullptr;
-      }
-      grids.emplace_back(std::move(grid));
-    }
-  }
-
-  // Create UL resource grid pool.
-  return create_resource_grid_pool(nof_sectors, nof_slots, std::move(grids));
-}
-
 static lower_phy_configuration create_lower_phy_config(baseband_gateway&             bb_gateway,
                                                        lower_phy_rx_symbol_notifier& rx_symbol_notifier,
                                                        lower_phy_timing_notifier&    timing_notifier,
                                                        lower_phy_error_notifier&     error_notifier,
-                                                       resource_grid_pool&           ul_resource_grid_pool,
                                                        task_executor&                prach_executor)
 {
   // Derived parameters.
@@ -335,7 +312,6 @@ static std::unique_ptr<lower_phy> build_lower_phy(baseband_gateway&             
                                                   lower_phy_rx_symbol_notifier& rx_symbol_notifier,
                                                   lower_phy_timing_notifier&    timing_notifier,
                                                   lower_phy_error_notifier&     error_notifier,
-                                                  resource_grid_pool&           ul_resource_grid_pool,
                                                   task_executor&                prach_executor)
 {
   // Create DFT factory. It tries to create a FFTW based factory. If FFTW library is not available, it creates a FFTX
@@ -409,8 +385,8 @@ static std::unique_ptr<lower_phy> build_lower_phy(baseband_gateway&             
     return nullptr;
   }
 
-  lower_phy_configuration config = create_lower_phy_config(
-      bb_gateway, rx_symbol_notifier, timing_notifier, error_notifier, ul_resource_grid_pool, prach_executor);
+  lower_phy_configuration config =
+      create_lower_phy_config(bb_gateway, rx_symbol_notifier, timing_notifier, error_notifier, prach_executor);
 
   return lphy_factory->create(config);
 }
@@ -503,12 +479,14 @@ create_radio(const std::string& radio_driver, task_executor& executor, radio_not
   return factory->create(radio_config, executor, radio_handler);
 }
 
-static std::unique_ptr<phy_fapi_adaptor> build_phy_fapi_adaptor(downlink_processor_pool&  dl_processor_pool,
-                                                                resource_grid_pool&       dl_rg_pool,
-                                                                uplink_request_processor& ul_request_processor)
+static std::unique_ptr<phy_fapi_adaptor> build_phy_fapi_adaptor(downlink_processor_pool&    dl_processor_pool,
+                                                                resource_grid_pool&         dl_rg_pool,
+                                                                uplink_request_processor&   ul_request_processor,
+                                                                resource_grid_pool&         ul_rg_pool,
+                                                                uplink_slot_pdu_repository& ul_pdu_repository)
 {
-  std::unique_ptr<phy_fapi_adaptor_factory> phy_factory =
-      create_phy_fapi_adaptor_factory(dl_processor_pool, dl_rg_pool, ul_request_processor);
+  std::unique_ptr<phy_fapi_adaptor_factory> phy_factory = create_phy_fapi_adaptor_factory(
+      dl_processor_pool, dl_rg_pool, ul_request_processor, ul_rg_pool, ul_pdu_repository);
 
   phy_fapi_adaptor_factory_config phy_fapi_config;
   phy_fapi_config.sector_id   = sector_id;
@@ -547,11 +525,18 @@ static std::unique_ptr<upper_phy> build_upper(upper_phy_rg_gateway&             
   upper_config.nof_slots_dl_rg         = 40;
   upper_config.nof_dl_processors       = 10;
   upper_config.dl_bw_rb                = nof_prb_dl_grid[to_numerology_value(scs)];
+  upper_config.ul_bw_rb                = nof_prb_ul_grid[to_numerology_value(scs)];
   upper_config.gateway                 = &gateway;
   upper_config.dl_executor             = &dl_executor;
   upper_config.nof_ul_processors       = 60;
   upper_config.ul_executor             = &ul_executor;
   upper_config.symbol_request_notifier = &rx_symbol_request_notifier;
+
+  // :TODO: remember to check this configuration.
+  upper_config.softbuffer_config.max_softbuffers      = upper_config.nof_ul_processors * 4;
+  upper_config.softbuffer_config.max_nof_codeblocks   = 128;
+  upper_config.softbuffer_config.max_codeblock_size   = 1024;
+  upper_config.softbuffer_config.expire_timeout_slots = 20;
 
   return up_phy_factory->create(upper_config);
 }
@@ -669,13 +654,6 @@ int main(int argc, char** argv)
 
   test_logger.info("Radio session created successfully");
 
-  // Create UL resource grid pool.
-  std::unique_ptr<resource_grid_pool> ul_rg_pool = build_ul_resource_grid_pool();
-  if (!ul_rg_pool) {
-    test_logger.error("Failed to create UL Resource grid pool");
-    return -1;
-  }
-
   // Create Lower-Upper adapters.
   phy_error_adapter             error_adapter(log_level);
   phy_rx_symbol_adapter         rx_symbol_adapter;
@@ -685,12 +663,8 @@ int main(int argc, char** argv)
 
   // Create lower PHY.
   test_logger.info("Creating lower PHY object...");
-  std::unique_ptr<lower_phy> lower = build_lower_phy(radio->get_baseband_gateway(),
-                                                     rx_symbol_adapter,
-                                                     timing_adapter,
-                                                     error_adapter,
-                                                     *ul_rg_pool,
-                                                     workers.lower_prach_executor);
+  std::unique_ptr<lower_phy> lower = build_lower_phy(
+      radio->get_baseband_gateway(), rx_symbol_adapter, timing_adapter, error_adapter, workers.lower_prach_executor);
   if (!lower) {
     test_logger.error("Failed to create Lower PHY");
     return -1;
@@ -716,7 +690,9 @@ int main(int argc, char** argv)
   test_logger.info("Creating FAPI adaptors...");
   std::unique_ptr<phy_fapi_adaptor> phy_adaptor = build_phy_fapi_adaptor(upper->get_downlink_processor_pool(),
                                                                          upper->get_downlink_resource_grid_pool(),
-                                                                         upper->get_uplink_request_processor());
+                                                                         upper->get_uplink_request_processor(),
+                                                                         upper->get_uplink_resource_grid_pool(),
+                                                                         upper->get_uplink_slot_pdu_repository());
   if (!phy_adaptor) {
     test_logger.error("Failed to create PHY-FAPI adaptor");
 

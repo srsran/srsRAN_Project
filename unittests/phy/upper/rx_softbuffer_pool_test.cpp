@@ -13,18 +13,6 @@
 #include "srsgnb/srsvec/compare.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-namespace srsgnb {
-struct rx_softbuffer_pool_description {
-  unsigned max_codeblock_size;
-  unsigned max_softbuffers;
-  unsigned max_nof_codeblocks;
-  unsigned expire_timeout_slots;
-};
-
-std::unique_ptr<rx_softbuffer_pool> create_rx_softbuffer_pool(const rx_softbuffer_pool_description& config);
-
-} // namespace srsgnb
-
 using namespace srsgnb;
 
 // Tests that the pool returns nullptr when the limit of softbuffers is reached.

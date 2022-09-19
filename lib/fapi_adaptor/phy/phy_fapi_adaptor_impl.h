@@ -25,6 +25,19 @@ struct prach_config;
 
 namespace fapi_adaptor {
 
+/// Defines the configuration for the PHY-FAPI adaptor implementation.
+struct phy_fapi_adaptor_impl_config {
+  unsigned                    sector_id;
+  downlink_processor_pool*    dl_processor_pool;
+  resource_grid_pool*         dl_rg_pool;
+  uplink_request_processor*   ul_request_processor;
+  resource_grid_pool*         ul_rg_pool;
+  uplink_slot_pdu_repository* ul_pdu_repository;
+  subcarrier_spacing          scs_common;
+  const fapi::prach_config*   prach_cfg;
+  const fapi::carrier_config* carrier_cfg;
+};
+
 /// \brief PHY&ndash;FAPI bidirectional adaptor implementation.
 class phy_fapi_adaptor_impl : public phy_fapi_adaptor
 {
@@ -38,13 +51,7 @@ public:
   /// \param[in] scs_common Common subcarrier spacing, as per TS38.331 Section 6.2.2.
   /// \param[in] prach_cfg PRACH configuration.
   /// \param[in] carrier_cfg Carrier configuration.
-  phy_fapi_adaptor_impl(unsigned                    sector_id,
-                        downlink_processor_pool&    dl_processor_pool,
-                        resource_grid_pool&         rg_pool,
-                        uplink_request_processor&   ul_request_processor,
-                        subcarrier_spacing          scs_common,
-                        const fapi::prach_config&   prach_cfg,
-                        const fapi::carrier_config& carrier_cfg);
+  phy_fapi_adaptor_impl(const phy_fapi_adaptor_impl_config& config);
 
   // See interface for documentation.
   upper_phy_timing_notifier& get_timing_notifier() override;

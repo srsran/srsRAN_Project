@@ -23,9 +23,10 @@ TEST(FapiPhyULPUSCHAdaptorTest, ValidPDUPass)
   unsigned sfn  = 1U;
   unsigned slot = 2U;
 
-  pusch_processor::pdu_t phy_pdu;
-  convert_pusch_fapi_to_phy(phy_pdu, fapi_pdu, sfn, slot);
+  uplink_processor::pusch_pdu pdu;
+  convert_pusch_fapi_to_phy(pdu, fapi_pdu, sfn, slot);
 
+  const pusch_processor::pdu_t& phy_pdu = pdu.pdu;
   ASSERT_EQ(slot_point(to_numerology_value(fapi_pdu.scs), sfn, slot), phy_pdu.slot);
   ASSERT_EQ(fapi_pdu.start_symbol_index, phy_pdu.start_symbol_index);
   ASSERT_EQ(fapi_pdu.nr_of_symbols, phy_pdu.nof_symbols);
@@ -72,4 +73,6 @@ TEST(FapiPhyULPUSCHAdaptorTest, ValidPDUPass)
   ASSERT_EQ(fapi_pdu.pusch_data.rv_index, phy_pdu.codeword.value().rv);
   ASSERT_EQ(fapi_pdu.pusch_data.new_data, phy_pdu.codeword.value().new_data);
   ASSERT_EQ(fapi_pdu.pusch_maintenance_v3.ldpc_base_graph, phy_pdu.codeword.value().ldpc_base_graph);
+  ASSERT_EQ(fapi_pdu.pusch_data.tb_size, pdu.tb_size);
+  ASSERT_EQ(fapi_pdu.pusch_data.harq_process_id, pdu.harq_id);
 }

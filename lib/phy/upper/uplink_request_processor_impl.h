@@ -32,6 +32,9 @@ public:
   // See interface for documentation.
   void process_prach_request(const prach_buffer_context& context) override;
 
+  // See interface for documentation.
+  void process_uplink_slot_request(const resource_grid_context& context, resource_grid& grid) override;
+
 private:
   /// Symbol request notifier.
   upper_phy_rx_symbol_request_notifier& symbol_request_notifier;

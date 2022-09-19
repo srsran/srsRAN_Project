@@ -19,6 +19,7 @@ class upper_phy_rx_results_notifier;
 class upper_phy_rx_symbol_handler;
 class upper_phy_timing_handler;
 class upper_phy_timing_notifier;
+class uplink_slot_pdu_repository;
 
 /// \brief Upper PHY interface.
 ///
@@ -47,8 +48,14 @@ public:
   /// \brief Returns the downlink resource grid pool of this upper PHY.
   virtual resource_grid_pool& get_downlink_resource_grid_pool() = 0;
 
+  /// \brief Returns the uplink resource grid pool of this upper PHY.
+  virtual resource_grid_pool& get_uplink_resource_grid_pool() = 0;
+
   /// \brief Returns the uplink request processor of this upper PHY.
   virtual uplink_request_processor& get_uplink_request_processor() = 0;
+
+  /// \brief Returns the uplink slot PDU repository of this upper PHY.
+  virtual uplink_slot_pdu_repository& get_uplink_slot_pdu_repository() = 0;
 
   /// \brief Sets the upper PHY timing notifier for this upper PHY.
   ///

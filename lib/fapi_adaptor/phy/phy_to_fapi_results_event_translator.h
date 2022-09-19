@@ -29,11 +29,21 @@ public:
   // See interface for documentation.
   void on_new_prach_results(const ul_prach_results& result) override;
 
+  // See interface for documentation.
+  void on_new_pusch_results(const ul_pusch_results& result) override;
+
   /// \brief Configures the FAPI slot-based, data-specific notifier to the given one.
   void set_slot_data_message_notifier(fapi::slot_data_message_notifier& fapi_data_slot_notifier)
   {
     data_notifier = std::ref(fapi_data_slot_notifier);
   }
+
+private:
+  /// Notifies a new CRC.indication through the data_notifier.
+  void notify_crc_indication(const ul_pusch_results& result);
+
+  /// Notifies a new Rx_Data.indication through the data_notifier.
+  void notify_rx_data_indication(const ul_pusch_results& result);
 
 private:
   /// FAPI slot-based, data-specific message notifier.

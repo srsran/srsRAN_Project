@@ -21,8 +21,22 @@ class downlink_processor;
 class downlink_processor_pool;
 class resource_grid_pool;
 class uplink_request_processor;
+class uplink_slot_pdu_repository;
 
 namespace fapi_adaptor {
+
+/// Defines the configuration for the PHY-FAPI translator implementation.
+struct fapi_to_phy_translator_config {
+  unsigned                    sector_id;
+  downlink_processor_pool*    dl_processor_pool;
+  resource_grid_pool*         dl_rg_pool;
+  uplink_request_processor*   ul_request_processor;
+  resource_grid_pool*         ul_rg_pool;
+  uplink_slot_pdu_repository* ul_pdu_repository;
+  subcarrier_spacing          scs_common;
+  const fapi::prach_config*   prach_cfg;
+  const fapi::carrier_config* carrier_cfg;
+};
 
 /// \brief FAPI-to-PHY message translator.
 ///
@@ -75,25 +89,21 @@ public:
   ///
   /// \param[in] sector_id Sector identifier.
   /// \param[in] dl_processor_pool Downlink processor pool that will be used to process PDUs.
-  /// \param[in] rg_pool Resource grid pool that will be used to process PDUs.
+  /// \param[in] dl_rg_pool Resource grid pool that will be used to process PDUs.
   /// \param[in] ul_request_processor Uplink request processor.
   /// \param[in] scs_common Common subcarrier spacing, as per TS38.331 Section 6.2.2.
   /// \param[in] prach_cfg PRACH configuration.
   /// \param[in] carrier_cfg Carrier configuration.
-  fapi_to_phy_translator(unsigned                    sector_id,
-                         downlink_processor_pool&    dl_processor_pool,
-                         resource_grid_pool&         rg_pool,
-                         uplink_request_processor&   ul_request_processor,
-                         subcarrier_spacing          scs_common,
-                         const fapi::prach_config&   prach_cfg,
-                         const fapi::carrier_config& carrier_cfg) :
-    sector_id(sector_id),
-    dl_processor_pool(dl_processor_pool),
-    rg_pool(rg_pool),
-    ul_request_processor(ul_request_processor),
-    scs_common(scs_common),
-    prach_cfg(prach_cfg),
-    carrier_cfg(carrier_cfg)
+  fapi_to_phy_translator(const fapi_to_phy_translator_config& config) :
+    sector_id(config.sector_id),
+    dl_processor_pool(*config.dl_processor_pool),
+    dl_rg_pool(*config.dl_rg_pool),
+    ul_request_processor(*config.ul_request_processor),
+    ul_rg_pool(*config.ul_rg_pool),
+    ul_pdu_repository(*config.ul_pdu_repository),
+    scs_common(config.scs_common),
+    prach_cfg(*config.prach_cfg),
+    carrier_cfg(*config.carrier_cfg)
   {
   }
 
@@ -127,14 +137,18 @@ private:
   const unsigned sector_id;
   /// Downlink processor pool.
   downlink_processor_pool& dl_processor_pool;
-  /// Resource grid pool.
-  resource_grid_pool& rg_pool;
+  /// Downlink resource grid pool.
+  resource_grid_pool& dl_rg_pool;
   /// Uplink request processor.
   uplink_request_processor& ul_request_processor;
+  /// Uplink resource grid pool.
+  resource_grid_pool& ul_rg_pool;
   /// Current slot task controller.
   slot_based_upper_phy_controller current_slot_controller;
   /// PDSCH PDU repository.
   static_vector<pdsch_processor::pdu_t, fapi::dl_tti_request_message::MAX_NUM_PDUS> pdsch_pdu_repository;
+  /// Uplink slot PDU repository.
+  uplink_slot_pdu_repository& ul_pdu_repository;
   /// Protects concurrent access to shared variables.
   //: TODO: make this lock free.
   std::mutex mutex;

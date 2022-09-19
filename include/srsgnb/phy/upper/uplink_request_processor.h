@@ -13,6 +13,8 @@
 namespace srsgnb {
 
 struct prach_buffer_context;
+class resource_grid;
+struct resource_grid_context;
 
 /// \brief Interface of the uplink request processor.
 ///
@@ -31,6 +33,12 @@ public:
   ///
   /// \param[in] context Context used by the underlying PRACH detector.
   virtual void process_prach_request(const prach_buffer_context& context) = 0;
+
+  /// \brief Processes the uplink request using the given context and grid.
+  ///
+  /// \param[in] context Resource grid context.
+  /// \param[in] grid    Grid in which to store the captured data.
+  virtual void process_uplink_slot_request(const resource_grid_context& context, resource_grid& grid) = 0;
 };
 
 } // namespace srsgnb

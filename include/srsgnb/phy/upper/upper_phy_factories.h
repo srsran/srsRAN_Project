@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/phy/upper/downlink_processor.h"
+#include "srsgnb/phy/upper/rx_softbuffer_pool.h"
 #include "srsgnb/phy/upper/uplink_processor.h"
 #include "srsgnb/phy/upper/upper_phy.h"
 #include <memory>
@@ -121,6 +122,8 @@ std::unique_ptr<downlink_processor_pool> create_dl_processor_pool(downlink_proce
 
 /// Upper PHY configuration parameters used to create a new upper PHY object.
 struct upper_phy_config {
+  /// Log level.
+  srslog::basic_levels log_level;
   /// Radio sector identifier.
   unsigned sector_id;
   /// Port identifier within the sector.
@@ -131,6 +134,8 @@ struct upper_phy_config {
   unsigned nof_dl_processors;
   /// Number of RBs for downlink.
   unsigned dl_bw_rb;
+  /// Number of RBs for uplink.
+  unsigned ul_bw_rb;
   /// Upper PHY resource grid gateway.
   upper_phy_rg_gateway* gateway;
   /// Downlink task executor.
@@ -141,6 +146,8 @@ struct upper_phy_config {
   task_executor* ul_executor;
   /// Received symbol request notifier.
   upper_phy_rx_symbol_request_notifier* symbol_request_notifier;
+  /// Softbuffer pool configuration.
+  rx_softbuffer_pool_description softbuffer_config;
 };
 
 /// \brief Factory that builds upper PHY objects.

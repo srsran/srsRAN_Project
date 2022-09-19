@@ -13,15 +13,24 @@
 using namespace srsgnb;
 using namespace fapi_adaptor;
 
-phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(unsigned                    sector_id,
-                                             downlink_processor_pool&    dl_processor_pool,
-                                             resource_grid_pool&         rg_pool,
-                                             uplink_request_processor&   ul_request_processor,
-                                             subcarrier_spacing          scs_common,
-                                             const fapi::prach_config&   prach_cfg,
-                                             const fapi::carrier_config& carrier_cfg) :
-  fapi_translator(sector_id, dl_processor_pool, rg_pool, ul_request_processor, scs_common, prach_cfg, carrier_cfg),
-  time_translator(fapi_translator)
+static fapi_to_phy_translator_config to_fapi_translator(const phy_fapi_adaptor_impl_config& config)
+{
+  fapi_to_phy_translator_config fapi_config;
+  fapi_config.ul_pdu_repository    = config.ul_pdu_repository;
+  fapi_config.ul_rg_pool           = config.ul_rg_pool;
+  fapi_config.ul_request_processor = config.ul_request_processor;
+  fapi_config.sector_id            = config.sector_id;
+  fapi_config.dl_processor_pool    = config.dl_processor_pool;
+  fapi_config.dl_rg_pool           = config.dl_rg_pool;
+  fapi_config.carrier_cfg          = config.carrier_cfg;
+  fapi_config.prach_cfg            = config.prach_cfg;
+  fapi_config.scs_common           = config.scs_common;
+
+  return fapi_config;
+}
+
+phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(const phy_fapi_adaptor_impl_config& config) :
+  fapi_translator(to_fapi_translator(config)), time_translator(fapi_translator)
 {
 }
 

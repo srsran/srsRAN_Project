@@ -14,7 +14,7 @@ using namespace srsgnb;
 using namespace fapi_adaptor;
 
 /// Fills the optional codeword description parameter of the PUSCH PDU if present.
-static void fill_codeword(pusch_processor::pdu_t& proc_pdu, const fapi::ul_pusch_pdu& fapi_pdu)
+static void fill_codeword(uplink_processor::pusch_pdu& pdu, const fapi::ul_pusch_pdu& fapi_pdu)
 {
   if (!fapi_pdu.pdu_bitmap[fapi::ul_pusch_pdu::PUSCH_DATA_BIT]) {
     return;
@@ -24,7 +24,10 @@ static void fill_codeword(pusch_processor::pdu_t& proc_pdu, const fapi::ul_pusch
   cw.ldpc_base_graph = fapi_pdu.pusch_maintenance_v3.ldpc_base_graph;
   cw.new_data        = fapi_pdu.pusch_data.new_data;
 
-  proc_pdu.codeword = optional<pusch_processor::codeword_description>(std::move(cw));
+  pdu.harq_id = fapi_pdu.pusch_data.harq_process_id;
+  pdu.tb_size = fapi_pdu.pusch_data.tb_size;
+
+  pdu.pdu.codeword = optional<pusch_processor::codeword_description>(std::move(cw));
 }
 
 /// Fills the rb_allocation parameter of the PUSCH PDU.
@@ -48,15 +51,17 @@ static void fill_rb_allocation(pusch_processor::pdu_t& proc_pdu, const fapi::ul_
   proc_pdu.freq_alloc = rb_allocation::make_type0(vrb_bitmap, {});
 }
 
-void srsgnb::fapi_adaptor::convert_pusch_fapi_to_phy(pusch_processor::pdu_t&   proc_pdu,
-                                                     const fapi::ul_pusch_pdu& fapi_pdu,
-                                                     uint16_t                  sfn,
-                                                     uint16_t                  slot)
+void srsgnb::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu& pdu,
+                                                     const fapi::ul_pusch_pdu&    fapi_pdu,
+                                                     uint16_t                     sfn,
+                                                     uint16_t                     slot)
 {
-  proc_pdu.slot         = slot_point(to_numerology_value(fapi_pdu.scs), sfn, slot);
-  proc_pdu.rnti         = fapi_pdu.rnti;
-  proc_pdu.bwp_start_rb = fapi_pdu.bwp_start;
-  proc_pdu.bwp_size_rb  = fapi_pdu.bwp_size;
+  // Fill the PUSCH processor parameters.
+  pusch_processor::pdu_t& proc_pdu = pdu.pdu;
+  proc_pdu.slot                    = slot_point(to_numerology_value(fapi_pdu.scs), sfn, slot);
+  proc_pdu.rnti                    = fapi_pdu.rnti;
+  proc_pdu.bwp_start_rb            = fapi_pdu.bwp_start;
+  proc_pdu.bwp_size_rb             = fapi_pdu.bwp_size;
 
   proc_pdu.cp =
       cyclic_prefix((fapi_pdu.cyclic_prefix == fapi::cyclic_prefix_type::normal) ? cyclic_prefix::options::NORMAL
@@ -83,7 +88,7 @@ void srsgnb::fapi_adaptor::convert_pusch_fapi_to_phy(pusch_processor::pdu_t&   p
 
   fill_rb_allocation(proc_pdu, fapi_pdu);
 
-  fill_codeword(proc_pdu, fapi_pdu);
+  fill_codeword(pdu, fapi_pdu);
 
   // :TODO: Check the ports.
   proc_pdu.rx_ports = {0};

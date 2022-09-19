@@ -77,4 +77,18 @@ public:
   virtual void run_slot(const slot_point& slot) = 0;
 };
 
+/// Describes a receiver softbuffer pool parameters.
+struct rx_softbuffer_pool_description {
+  /// Indicates the maximum codeblock size.
+  unsigned max_codeblock_size;
+  /// Indicates the number of softbuffers available in the pool.
+  unsigned max_softbuffers;
+  /// Indicates the number of codeblocks available in the pool for all the softbuffers.
+  unsigned max_nof_codeblocks;
+  /// Indicates the softbuffer lifetime as a number of slots.
+  unsigned expire_timeout_slots;
+};
+
+std::unique_ptr<rx_softbuffer_pool> create_rx_softbuffer_pool(const rx_softbuffer_pool_description& config);
+
 } // namespace srsgnb

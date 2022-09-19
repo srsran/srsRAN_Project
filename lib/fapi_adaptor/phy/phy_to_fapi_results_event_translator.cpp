@@ -98,3 +98,59 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
 
   data_notifier.get().on_rach_indication(msg);
 }
+
+void phy_to_fapi_results_event_translator::on_new_pusch_results(const ul_pusch_results& result)
+{
+  // :TODO: this way one PDU is sent for one indication. Should this be improved?
+  if (result.data.has_value()) {
+    notify_crc_indication(result);
+    notify_rx_data_indication(result);
+  }
+
+  // :TODO: UCI.
+}
+
+void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_results& result)
+{
+  fapi::crc_indication_message         msg;
+  fapi::crc_indication_message_builder builder(msg);
+
+  builder.set_basic_parameters(result.slot.sfn(), result.slot.slot_index());
+
+  // Handle is not supported for now.
+  unsigned handle = 0;
+  // CB CRC status is not supported for now.
+  unsigned                            num_cb = 0;
+  const ul_pusch_results::pusch_data& data   = result.data.value();
+  builder.add_pdu(handle,
+                  data.rnti,
+                  optional<uint8_t>(),
+                  data.harq_id,
+                  data.decoder_result.tb_crc_ok,
+                  num_cb,
+                  {},
+                  {result.csi.sinr_dB},
+                  optional<unsigned>(),
+                  optional<int>(result.csi.time_alignment.to_seconds() * 1e9),
+                  optional<float>(),
+                  {result.csi.rsrp_dB});
+
+  data_notifier.get().on_crc_indication(msg);
+}
+
+void phy_to_fapi_results_event_translator::notify_rx_data_indication(const ul_pusch_results& result)
+{
+  fapi::rx_data_indication_message         msg;
+  fapi::rx_data_indication_message_builder builder(msg);
+
+  // Uplink CP/UP plane separation is not supported for now.
+  unsigned control_length = 0;
+  builder.set_basic_parameters(result.slot.sfn(), result.slot.slot_index(), control_length);
+
+  // Handle is not supported for now.
+  unsigned                            handle = 0;
+  const ul_pusch_results::pusch_data& data   = result.data.value();
+  builder.add_custom_pdu(handle, data.rnti, optional<unsigned>(), data.harq_id, data.payload);
+
+  data_notifier.get().on_rx_data_indication(msg);
+}

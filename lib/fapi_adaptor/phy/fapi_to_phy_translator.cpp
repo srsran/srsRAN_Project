@@ -18,6 +18,7 @@
 #include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
 #include "srsgnb/phy/upper/uplink_request_processor.h"
+#include "srsgnb/phy/upper/uplink_slot_pdu_repository.h"
 
 using namespace srsgnb;
 using namespace fapi_adaptor;
@@ -122,6 +123,7 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
 
   std::lock_guard<std::mutex> lock(mutex);
 
+  resource_grid_context rg_context;
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
       case fapi::ul_pdu_type::PRACH: {
@@ -132,9 +134,15 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
       }
       case fapi::ul_pdu_type::PUCCH:
       case fapi::ul_pdu_type::PUSCH: {
-        pusch_processor::pdu_t pusch_pdu;
-        convert_pusch_fapi_to_phy(pusch_pdu, pdu.pusch_pdu, msg.sfn, msg.slot);
-        // :TODO: add the call to the uplink_request_processor.
+        slot_point slot = slot_point(to_numerology_value(pdu.pusch_pdu.scs), msg.sfn, msg.slot);
+        if (!rg_context.slot.valid()) {
+          rg_context.slot   = slot;
+          rg_context.sector = sector_id;
+        }
+        uplink_processor::pusch_pdu ul_pdu;
+        convert_pusch_fapi_to_phy(ul_pdu, pdu.pusch_pdu, msg.sfn, msg.slot);
+        // Add the PDU to the repo for later processing.
+        ul_pdu_repository.add_pusch_pdu(slot, ul_pdu);
         break;
       }
       case fapi::ul_pdu_type::SRS:
@@ -142,6 +150,16 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
       default:
         srsgnb_assert(0, "UL_TTI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
     }
+  }
+
+  // Notify to capture uplink slot.
+  if (rg_context.slot.valid()) {
+    // Get ul_resource_grid.
+    resource_grid& ul_rg = ul_rg_pool.get_resource_grid(rg_context);
+    // Note: this won't work for multiple UL_TTI.request messages in the same slot.
+    ul_rg.set_all_zero();
+    // Request to capture uplink slot.
+    ul_request_processor.process_uplink_slot_request(rg_context, ul_rg);
   }
 }
 
@@ -168,6 +186,6 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
 void fapi_to_phy_translator::handle_new_slot(slot_point slot)
 {
   std::lock_guard<std::mutex> lock(mutex);
-  current_slot_controller = slot_based_upper_phy_controller(dl_processor_pool, rg_pool, slot, sector_id);
+  current_slot_controller = slot_based_upper_phy_controller(dl_processor_pool, dl_rg_pool, slot, sector_id);
   pdsch_pdu_repository.clear();
 }

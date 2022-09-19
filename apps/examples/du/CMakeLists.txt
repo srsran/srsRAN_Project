@@ -16,6 +16,7 @@ target_link_libraries(du_example
         srsgnb_upper_phy
         srsgnb_signal_processors
         srsgnb_channel_processors
+        srsgnb_channel_equalizer
         srsgnb_lower_phy
         srsgnb_radio)
 target_include_directories(du_example PRIVATE ${CMAKE_SOURCE_DIR})

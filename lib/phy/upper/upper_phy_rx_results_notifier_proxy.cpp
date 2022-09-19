@@ -19,6 +19,12 @@ void upper_phy_rx_results_notifier_proxy::on_new_prach_results(const ul_prach_re
   notifier->on_new_prach_results(result);
 }
 
+void upper_phy_rx_results_notifier_proxy::on_new_pusch_results(const ul_pusch_results& result)
+{
+  report_fatal_error_if_not(notifier, "Invalid results notifier object.");
+  notifier->on_new_pusch_results(result);
+}
+
 void upper_phy_rx_results_notifier_proxy::connect(upper_phy_rx_results_notifier& notif)
 {
   report_fatal_error_if_not(!notifier, "Results notifier already configured.");

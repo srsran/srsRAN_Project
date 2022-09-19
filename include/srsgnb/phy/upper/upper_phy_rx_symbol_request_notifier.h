@@ -18,7 +18,7 @@ namespace srsgnb {
 class prach_buffer;
 struct prach_buffer_context;
 class resource_grid;
-struct upper_phy_rx_symbol_context;
+struct resource_grid_context;
 
 /// \brief Interface of the upper-PHY notifier in charge of requesting symbol captures.
 class upper_phy_rx_symbol_request_notifier
@@ -34,9 +34,9 @@ public:
 
   /// \brief Notifies the event of an uplink slot request.
   ///
-  /// \param[in] context Context of the capture request.
+  /// \param[in] context Resource grid context.
   /// \param[in] grid    Grid in which to store the captured data.
-  virtual void on_uplink_slot_request(const upper_phy_rx_symbol_context& context, resource_grid& grid) = 0;
+  virtual void on_uplink_slot_request(const resource_grid_context& context, resource_grid& grid) = 0;
 };
 
 } // namespace srsgnb

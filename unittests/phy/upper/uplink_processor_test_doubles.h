@@ -24,6 +24,13 @@ public:
     has_proces_prach_method_called = true;
   }
 
+  void process_pusch(span<uint8_t>                      data,
+                     rx_softbuffer&                     softbuffer,
+                     const resource_grid_reader&        grid,
+                     const uplink_processor::pusch_pdu& pdu) override
+  {
+  }
+
   bool has_process_prach_method_called() const { return has_proces_prach_method_called; }
 };
 

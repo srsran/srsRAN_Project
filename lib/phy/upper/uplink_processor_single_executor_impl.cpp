@@ -31,12 +31,17 @@ static prach_detector::configuration get_prach_dectector_config_from_prach_conte
 }
 
 uplink_processor_single_executor_impl::uplink_processor_single_executor_impl(
-    std::unique_ptr<prach_detector> detector_,
-    task_executor&                  executor,
-    upper_phy_rx_results_notifier&  results_notifier) :
-  detector(std::move(detector_)), executor(executor), results_notifier(results_notifier)
+    std::unique_ptr<prach_detector>  detector_,
+    std::unique_ptr<pusch_processor> pusch_proc_,
+    task_executor&                   executor,
+    upper_phy_rx_results_notifier&   results_notifier) :
+  detector(std::move(detector_)),
+  pusch_proc(std::move(pusch_proc_)),
+  executor(executor),
+  results_notifier(results_notifier)
 {
   srsgnb_assert(detector, "A valid PRACH detector must be provided");
+  srsgnb_assert(pusch_proc, "A valid PUSCH processor must be provided");
 }
 
 void uplink_processor_single_executor_impl::process_prach(const prach_buffer&         buffer,
@@ -52,5 +57,33 @@ void uplink_processor_single_executor_impl::process_prach(const prach_buffer&   
 
     // Notify the PRACH results.
     results_notifier.on_new_prach_results(ul_results);
+  });
+}
+
+void uplink_processor_single_executor_impl::process_pusch(span<uint8_t>                      data,
+                                                          rx_softbuffer&                     softbuffer,
+                                                          const resource_grid_reader&        grid,
+                                                          const uplink_processor::pusch_pdu& pdu)
+{
+  executor.execute([data, &softbuffer, &grid, pdu, this]() {
+    pusch_processor_result proc_result = pusch_proc->process(data, softbuffer, grid, pdu.pdu);
+
+    ul_pusch_results result;
+    result.slot = pdu.pdu.slot;
+    result.csi  = proc_result.csi;
+
+    if (proc_result.data.has_value()) {
+      result.data.emplace();
+      ul_pusch_results::pusch_data& results_data = result.data.value();
+      results_data.harq_id                       = pdu.harq_id;
+      results_data.rnti                          = to_rnti(pdu.pdu.rnti);
+      results_data.decoder_result                = proc_result.data.value();
+      results_data.payload                       = data;
+    }
+
+    // :TODO: Add the UCI to the notifier results when available.
+
+    // Notify the PUSCH results.
+    results_notifier.on_new_pusch_results(result);
   });
 }

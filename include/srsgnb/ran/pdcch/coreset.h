@@ -72,6 +72,7 @@ struct coreset_configuration {
     srsgnb_assert(id == to_coreset_id(0), "Invalid access to CORESET#0 RBs for a coresetId>0");
     return coreset0_rbs;
   }
+
   void set_freq_domain_resources(freq_resource_bitmap res_bitmap)
   {
     srsgnb_assert(id != to_coreset_id(0), "Invalid access to CORESET#0 RBs for a coresetId>0");

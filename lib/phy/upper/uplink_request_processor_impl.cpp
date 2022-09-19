@@ -29,3 +29,9 @@ void uplink_request_processor_impl::process_prach_request(const prach_buffer_con
   // Notify the PRACH capture request event.
   symbol_request_notifier.on_prach_capture_request(context, buffer);
 }
+
+void uplink_request_processor_impl::process_uplink_slot_request(const resource_grid_context& context,
+                                                                resource_grid&               grid)
+{
+  symbol_request_notifier.on_uplink_slot_request(context, grid);
+}

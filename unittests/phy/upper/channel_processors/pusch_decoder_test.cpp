@@ -24,18 +24,6 @@
 #include <getopt.h>
 
 /// \cond
-namespace srsgnb {
-struct rx_softbuffer_pool_description {
-  unsigned max_codeblock_size;
-  unsigned max_softbuffers;
-  unsigned max_nof_codeblocks;
-  unsigned expire_timeout_slots;
-};
-
-std::unique_ptr<rx_softbuffer_pool> create_rx_softbuffer_pool(const rx_softbuffer_pool_description& config);
-
-} // namespace srsgnb
-
 using namespace srsgnb;
 
 static bool     use_early_stop      = false;

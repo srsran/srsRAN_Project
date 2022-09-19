@@ -20,6 +20,7 @@ namespace srsgnb {
 class downlink_processor_pool;
 class resource_grid_pool;
 class uplink_request_processor;
+class uplink_slot_pdu_repository;
 
 namespace fapi_adaptor {
 
@@ -47,9 +48,11 @@ public:
 
 /// Creates a \c phy_fapi_adaptor_factory object.
 std::unique_ptr<phy_fapi_adaptor_factory>
-create_phy_fapi_adaptor_factory(downlink_processor_pool&  dl_processor_pool,
-                                resource_grid_pool&       rg_pool,
-                                uplink_request_processor& ul_request_processor);
+create_phy_fapi_adaptor_factory(downlink_processor_pool&    dl_processor_pool,
+                                resource_grid_pool&         rg_pool,
+                                uplink_request_processor&   ul_request_processor,
+                                resource_grid_pool&         ul_rg_pool,
+                                uplink_slot_pdu_repository& ul_pdu_repository);
 
 } // namespace fapi_adaptor
 } // namespace srsgnb
