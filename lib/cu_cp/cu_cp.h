@@ -82,7 +82,7 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
 
   // Components
-  std::unique_ptr<ngap_interface> ngap_entity;
+  std::unique_ptr<ngc_interface> ngc_entity;
 
   slot_array<std::unique_ptr<du_processor_interface>, MAX_NOF_DUS> du_db;
 

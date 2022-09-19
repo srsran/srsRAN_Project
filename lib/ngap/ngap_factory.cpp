@@ -16,8 +16,8 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-std::unique_ptr<ngap_interface> srsgnb::srs_cu_cp::create_ngap(timer_manager&        timers,
-                                                               ngc_message_notifier& message_notifier)
+std::unique_ptr<ngc_interface> srsgnb::srs_cu_cp::create_ngc(timer_manager&        timers,
+                                                             ngc_message_notifier& message_notifier)
 {
   auto ngap = std::make_unique<ngap_impl>(timers, message_notifier);
   return ngap;

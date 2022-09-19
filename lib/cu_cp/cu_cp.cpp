@@ -34,7 +34,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_), main_ctrl_loop(
   }
 
   // Create layers
-  ngap_entity = create_ngap(timers, *cfg.ngc_notifier);
+  ngc_entity = create_ngc(timers, *cfg.ngc_notifier);
 
   // connect event notifier to layers
   f1ap_ev_notifier.connect_cu_cp(*this);
@@ -48,7 +48,7 @@ cu_cp::~cu_cp()
 void cu_cp::start()
 {
   // start NG setup procedure.
-  main_ctrl_loop.schedule<initial_cu_cp_setup_procedure>(*ngap_entity, *this);
+  main_ctrl_loop.schedule<initial_cu_cp_setup_procedure>(*ngc_entity, *this);
 }
 
 void cu_cp::stop() {}
@@ -69,7 +69,7 @@ f1c_statistics_handler& cu_cp::get_f1c_statistics_handler(du_index_t du_index)
 
 ngc_message_handler& cu_cp::get_ngc_message_handler()
 {
-  return *ngap_entity;
+  return *ngc_entity;
 };
 
 void cu_cp::on_new_connection()
@@ -131,7 +131,7 @@ du_index_t cu_cp::add_du()
   std::unique_ptr<du_processor_interface> du =
       create_du_processor(std::move(du_cfg), f1ap_ev_notifier, *cfg.f1c_notifier, rrc_ue_ngap_ev_notifier);
 
-  rrc_ue_ngap_ev_notifier.connect_ngap(*ngap_entity);
+  rrc_ue_ngap_ev_notifier.connect_ngap(*ngc_entity);
 
   du_index_t du_index = get_next_du_index();
   if (du_index == INVALID_DU_INDEX) {

@@ -22,7 +22,7 @@ namespace srs_cu_cp {
 
 class ngap_event_manager;
 
-class ngap_impl final : public ngap_interface
+class ngap_impl final : public ngc_interface
 {
 public:
   ngap_impl(timer_manager& timers_, ngc_message_notifier& event_notifier_);

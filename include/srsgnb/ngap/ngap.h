@@ -111,13 +111,13 @@ public:
 };
 
 /// Combined entry point for the NGAP object.
-class ngap_interface : public ngc_message_handler,
-                       public ngc_event_handler,
-                       public ngc_connection_manager,
-                       public ngc_nas_message_handler
+class ngc_interface : public ngc_message_handler,
+                      public ngc_event_handler,
+                      public ngc_connection_manager,
+                      public ngc_nas_message_handler
 {
 public:
-  virtual ~ngap_interface() = default;
+  virtual ~ngc_interface() = default;
 };
 
 } // namespace srs_cu_cp
