@@ -443,6 +443,8 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   cw.target_code_rate            = mcs_config.target_code_rate;
   cw.tb_size_bytes               = rar_data[dci.time_resource].prbs_tbs.tbs_bytes;
   rar.pdsch_cfg.dmrs             = rar_data[dci.time_resource].dmrs_info;
+  // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for RA-RNTI.
+  rar.pdsch_cfg.n_id = cfg.pci;
 
   for (unsigned i = 0; i < msg3_candidates.size(); ++i) {
     const auto&                   msg3_candidate = msg3_candidates[i];
@@ -485,7 +487,18 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     pusch.pusch_cfg.qam_mod             = msg3_mcs_config.modulation;
     pusch.pusch_cfg.target_code_rate    = msg3_mcs_config.target_code_rate;
     pusch.pusch_cfg.transform_precoding = get_rach_cfg().msg3_transform_precoder;
-    // TODO
+    // As per TS 38.211, Section 6.3.1.1, n_ID is set to Physical Cell ID for TC-RNTI.
+    pusch.pusch_cfg.n_id                       = cfg.pci;
+    pusch.pusch_cfg.nof_layers                 = 1;
+    pusch.pusch_cfg.intra_slot_freq_hopping    = false;
+    pusch.pusch_cfg.tx_direct_current_location = 0;
+    pusch.pusch_cfg.ul_freq_shift_7p5khz       = false;
+    pusch.pusch_cfg.dmrs_hopping_mode          = pusch_information::dmrs_hopping_mode::no_hopping;
+    pusch.pusch_cfg.pusch_second_hop_prb       = 0;
+    pusch.pusch_cfg.rv_index                   = 0;
+    pusch.pusch_cfg.harq_id                    = pending_msg3.harq.pid;
+    pusch.pusch_cfg.new_data                   = true;
+    pusch.pusch_cfg.tb_size_bytes              = 7; // TODO
 
     // Allocate Msg3 UL HARQ
     bool success = pending_msg3.harq.new_tx(msg3_alloc.slot, prbs, msg3_mcs, max_msg3_retxs);

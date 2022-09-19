@@ -168,6 +168,19 @@ struct pusch_information {
   const bwp_configuration* bwp_cfg;
   prb_grant                prbs;
   ofdm_symbol_range        symbols;
+  /// \brief For resource allocation type 1, it indicates if intra-slot frequency hopping is enabled, as per TS38.212
+  /// Section 7.3.1.1.
+  bool intra_slot_freq_hopping;
+  /// \brief Index of the first PRB after intra-slot frequency hopping, as indicated by the value of \f$RB_{start}\f$
+  /// for i=1, as per TS38.214, Section 6.3. Valid when intra_slot_freq_hopping is enabled. Values: {0,...274}.
+  uint16_t pusch_second_hop_prb;
+  /// \brief The uplink Tx Direct Current location for the carrier. Only values in the value range of this field
+  /// between 0 and 3299, which indicate the subcarrier index within the carrier corresponding to the numerology of the
+  /// corresponding uplink BWP and value 3300, which indicates "Outside the carrier" and value 3301, which indicates
+  /// "Undetermined position within the carrier" are used.
+  uint16_t tx_direct_current_location;
+  /// Indicates whether there is 7.5 kHz shift or not.
+  bool ul_freq_shift_7p5khz;
   /// Target code rate, normalized to 1024 (see TS38.214 Table 6.1.4.1).
   float target_code_rate;
   /// Subcarrier modulation scheme, as per TS38.211 Section 6.1.
@@ -179,8 +192,24 @@ struct pusch_information {
   pusch_mcs_table mcs_table;
   /// Indicates if transform precoding is enabled or disabled (see TS 38.214, Section 6.1.4.1).
   bool transform_precoding;
+  /// Parameter \f$n_{ID}\f$ as per TS38.211 Section 6.3.1.1. Values: {0,...,1023}.
+  uint16_t n_id;
+  /// Number of layers as per TS38.211, Section 6.3.1.3.
+  unsigned nof_layers;
   /// DMRS configuration as per TS38.211 Section 6.4.1.1.
   dmrs_information dmrs;
+  /// \brief PUSCH DMRS hopping mode as per TS38.211, Section 6.4.1.1.1.2. It is only valid when the transform
+  /// precoding for PUSCH is enabled.
+  enum class dmrs_hopping_mode { no_hopping, group_hopping, sequence_hopping } dmrs_hopping_mode;
+  /// Redundancy version index (see TS38.214 Table 6.1.4). Values: {0,...,3}.
+  uint8_t rv_index;
+  /// HARQ process number as per TS38.212 Section 7.3.1.1. Values: {0,...,15}.
+  uint8_t harq_id;
+  /// \brief Signals whether the PUSCH PDU corresponds to an initial transmission or a retransmission of a MAC PDU for
+  /// this HARQ process ID for this TB.
+  bool new_data;
+  /// Transport block size in bytes.
+  uint32_t tb_size_bytes;
 };
 
 /// \brief RAR grant composed of subheader as per TS38.321 6.2.2, payload as per TS38.321 6.2.3,
