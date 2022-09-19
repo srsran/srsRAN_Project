@@ -115,8 +115,8 @@ TEST_F(cu_cp_test, when_max_nof_dus_connected_then_reject_new_connection)
 TEST_F(cu_cp_test, when_ng_setup_response_received_then_amf_connected)
 {
   // Connect AMF by injecting a ng_setup_response
-  ngap_message ngap_msg = generate_ng_setup_response_message();
-  cu_cp_obj->get_ngc_message_handler().handle_message(ngap_msg);
+  ngc_message ngc_msg = generate_ng_setup_response_message();
+  cu_cp_obj->get_ngc_message_handler().handle_message(ngc_msg);
 
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());
 }
@@ -124,8 +124,8 @@ TEST_F(cu_cp_test, when_ng_setup_response_received_then_amf_connected)
 TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
 {
   // Connect AMF by injecting a ng_setup_response
-  ngap_message ngap_msg = generate_ng_setup_response_message();
-  cu_cp_obj->get_ngc_message_handler().handle_message(ngap_msg);
+  ngc_message ngc_msg = generate_ng_setup_response_message();
+  cu_cp_obj->get_ngc_message_handler().handle_message(ngc_msg);
 
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());
 
@@ -152,10 +152,10 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
   ASSERT_EQ(cu_cp_obj->get_nof_ues(), 1U);
 
   // check that the Initial UE Message was sent to the AMF
-  ASSERT_EQ(ngap_amf_notifier->last_ngap_msg.pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
-  ASSERT_EQ(ngap_amf_notifier->last_ngap_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(ngap_amf_notifier->last_ngc_msg.pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(ngap_amf_notifier->last_ngc_msg.pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg);
-  ASSERT_EQ(ngap_amf_notifier->last_ngap_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id.value.value, 0);
+  ASSERT_EQ(ngap_amf_notifier->last_ngc_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id.value.value, 0);
 }
 
 TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
@@ -178,7 +178,7 @@ TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
   ASSERT_EQ(cu_cp_obj->get_nof_ues(), 0U);
 
   // check that the Initial UE Message was not send to the AMF
-  ASSERT_NE(ngap_amf_notifier->last_ngap_msg.pdu.init_msg().value.type().value,
+  ASSERT_NE(ngap_amf_notifier->last_ngc_msg.pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg);
 }
 
@@ -186,8 +186,8 @@ TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
 TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
 {
   // Connect AMF by injecting a ng_setup_response
-  ngap_message ngap_msg = generate_ng_setup_response_message();
-  cu_cp_obj->get_ngc_message_handler().handle_message(ngap_msg);
+  ngc_message ngc_msg = generate_ng_setup_response_message();
+  cu_cp_obj->get_ngc_message_handler().handle_message(ngc_msg);
 
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());
 

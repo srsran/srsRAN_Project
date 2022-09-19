@@ -29,10 +29,10 @@ public:
 
   void attach_handler(ngc_message_handler* handler_) { handler = handler_; };
 
-  void on_new_message(const ngap_message& msg) override
+  void on_new_message(const ngc_message& msg) override
   {
     logger.info("Received NGAP message");
-    last_ngap_msg = msg;
+    last_ngc_msg = msg;
 
     if (handler != nullptr) {
       logger.info("Forwarding NGAP PDU");
@@ -40,7 +40,7 @@ public:
     }
   };
 
-  ngap_message last_ngap_msg;
+  ngc_message last_ngc_msg;
 
 private:
   srslog::basic_logger& logger;

@@ -51,11 +51,11 @@ void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
   logger.debug(
       "Created NGAP UE (ue_ngap_id={}, du_index={}, ue_index={}).", msg.ue_ngap_id, ue_ctxt.du_index, ue_ctxt.ue_index);
 
-  ngap_message ngap_msg = {};
-  ngap_msg.pdu.set_init_msg();
-  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_INIT_UE_MSG);
+  ngc_message ngc_msg = {};
+  ngc_msg.pdu.set_init_msg();
+  ngc_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_INIT_UE_MSG);
 
-  auto& init_ue_msg = ngap_msg.pdu.init_msg().value.init_ue_msg();
+  auto& init_ue_msg = ngc_msg.pdu.init_msg().value.init_ue_msg();
 
   init_ue_msg->ran_ue_ngap_id.value.value = ue_ngap_id_to_uint(msg.ue_ngap_id);
 
@@ -76,23 +76,23 @@ void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
-    ngap_msg.pdu.to_json(js);
+    ngc_msg.pdu.to_json(js);
     logger.debug("Containerized Initial UE Message: {}", js.to_string());
   }
 
   // Forward message to AMF
-  ng_notifier.on_new_message(ngap_msg);
+  ng_notifier.on_new_message(ngc_msg);
 }
 
 void ngap_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg)
 {
   logger.info("Handling UL NAS Transport Message");
 
-  ngap_message ngap_msg = {};
-  ngap_msg.pdu.set_init_msg();
-  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UL_NAS_TRANSPORT);
+  ngc_message ngc_msg = {};
+  ngc_msg.pdu.set_init_msg();
+  ngc_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UL_NAS_TRANSPORT);
 
-  auto& ul_nas_transport_msg = ngap_msg.pdu.init_msg().value.ul_nas_transport();
+  auto& ul_nas_transport_msg = ngc_msg.pdu.init_msg().value.ul_nas_transport();
 
   std::underlying_type_t<ue_ngap_id_t> ue_ngap_id_uint = ue_ngap_id_to_uint(msg.ue_ngap_id);
   ul_nas_transport_msg->ran_ue_ngap_id.value.value     = ue_ngap_id_uint;
@@ -115,15 +115,15 @@ void ngap_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_mess
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
-    ngap_msg.pdu.to_json(js);
+    ngc_msg.pdu.to_json(js);
     logger.debug("Containerized UL NAS Transport Message: {}", js.to_string());
   }
 
   // Forward message to AMF
-  ng_notifier.on_new_message(ngap_msg);
+  ng_notifier.on_new_message(ngc_msg);
 }
 
-void ngap_impl::handle_message(const ngap_message& msg)
+void ngap_impl::handle_message(const ngc_message& msg)
 {
   logger.info("Handling NGAP PDU of type \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
 

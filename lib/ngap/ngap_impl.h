@@ -35,8 +35,8 @@ public:
 
   void handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg) override;
 
-  // ng message handler functions
-  void handle_message(const ngap_message& msg) override;
+  // ngc message handler functions
+  void handle_message(const ngc_message& msg) override;
   void handle_connection_loss() override {}
 
 private:

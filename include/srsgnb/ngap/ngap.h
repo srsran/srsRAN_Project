@@ -19,18 +19,18 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
-struct ngap_message {
+struct ngc_message {
   asn1::ngap::ngap_pdu_c pdu;
 };
 
-/// This interface is used to push NGAP messages to the NG interface.
+/// This interface is used to push NGC messages to the NGC interface.
 class ngc_message_handler
 {
 public:
   virtual ~ngc_message_handler() = default;
 
-  /// Handle the incoming NGAP message.
-  virtual void handle_message(const ngap_message& msg) = 0;
+  /// Handle the incoming NGC message.
+  virtual void handle_message(const ngc_message& msg) = 0;
 };
 
 /// Interface used by NG to inform about events.
@@ -48,7 +48,7 @@ public:
   virtual ~ng_message_notifier() = default;
 
   /// This callback is invoked on each received NGAP message.
-  virtual void on_new_message(const ngap_message& msg) = 0;
+  virtual void on_new_message(const ngc_message& msg) = 0;
 };
 
 struct ng_setup_request_message {
