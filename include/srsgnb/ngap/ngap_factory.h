@@ -19,7 +19,7 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Creates an instance of an NGAP interface, notifying outgoing packets on the specified listener object.
-std::unique_ptr<ngap_interface> create_ngap(timer_manager& timer_db, ng_message_notifier& event_notifier);
+std::unique_ptr<ngap_interface> create_ngap(timer_manager& timer_db, ngc_message_notifier& event_notifier);
 
 } // namespace srs_cu_cp
 

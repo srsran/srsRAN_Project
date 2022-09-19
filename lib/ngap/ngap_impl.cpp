@@ -16,10 +16,10 @@ using namespace srsgnb;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
-ngap_impl::ngap_impl(timer_manager& timers_, ng_message_notifier& message_notifier_) :
+ngap_impl::ngap_impl(timer_manager& timers_, ngc_message_notifier& message_notifier_) :
   logger(srslog::fetch_basic_logger("NGAP")),
   timers(timers_),
-  ng_notifier(message_notifier_),
+  ngc_notifier(message_notifier_),
   events(std::make_unique<ngap_event_manager>())
 {
   ngap_ue_context empty_context = {};
@@ -36,7 +36,7 @@ ngap_impl::~ngap_impl() {}
 
 async_task<ng_setup_response_message> ngap_impl::handle_ngap_setup_request(const ng_setup_request_message& request)
 {
-  return launch_async<ngap_setup_procedure>(request, ng_notifier, *events, logger);
+  return launch_async<ngap_setup_procedure>(request, ngc_notifier, *events, logger);
 }
 
 void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
@@ -81,7 +81,7 @@ void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
   }
 
   // Forward message to AMF
-  ng_notifier.on_new_message(ngc_msg);
+  ngc_notifier.on_new_message(ngc_msg);
 }
 
 void ngap_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg)
@@ -120,7 +120,7 @@ void ngap_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_mess
   }
 
   // Forward message to AMF
-  ng_notifier.on_new_message(ngc_msg);
+  ngc_notifier.on_new_message(ngc_msg);
 }
 
 void ngap_impl::handle_message(const ngc_message& msg)

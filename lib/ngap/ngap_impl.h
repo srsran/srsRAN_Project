@@ -25,7 +25,7 @@ class ngap_event_manager;
 class ngap_impl final : public ngap_interface
 {
 public:
-  ngap_impl(timer_manager& timers_, ng_message_notifier& event_notifier_);
+  ngap_impl(timer_manager& timers_, ngc_message_notifier& event_notifier_);
   ~ngap_impl();
 
   // ngap connection manager functions
@@ -58,7 +58,7 @@ private:
 
   srslog::basic_logger& logger;
   timer_manager&        timers;
-  ng_message_notifier&  ng_notifier;
+  ngc_message_notifier& ngc_notifier;
 
   unique_timer ng_setup_timer;
 

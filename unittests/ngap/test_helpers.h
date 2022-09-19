@@ -20,7 +20,7 @@ namespace srs_cu_cp {
 /// Reusable notifier class that a) stores the received msg for test inspection and b)
 /// calls the registered msg handler (if any). The handler can be added upon construction
 /// or later via the attach_handler() method.
-class dummy_ngap_amf_notifier : public ng_message_notifier
+class dummy_ngap_amf_notifier : public ngc_message_notifier
 {
 public:
   // FIXME: Add handler when ngap exists

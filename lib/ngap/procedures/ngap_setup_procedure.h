@@ -22,7 +22,7 @@ class ngap_setup_procedure
 {
 public:
   ngap_setup_procedure(const ng_setup_request_message& request_,
-                       ng_message_notifier&            cu_notif_,
+                       ngc_message_notifier&            cu_notif_,
                        ngap_event_manager&             ev_mng_,
                        srslog::basic_logger&           logger_);
 
@@ -39,7 +39,7 @@ private:
   ng_setup_response_message create_ng_setup_result();
 
   const ng_setup_request_message request;
-  ng_message_notifier&           amf_notifier;
+  ngc_message_notifier&           amf_notifier;
   ngap_event_manager&            ev_mng;
   srslog::basic_logger&          logger;
 

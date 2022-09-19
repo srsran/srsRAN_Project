@@ -18,7 +18,7 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Adapter between NGAP and AMF
-class ngap_amf_adapter : public ng_message_notifier
+class ngap_amf_adapter : public ngc_message_notifier
 {
 public:
   void on_new_message(const ngc_message& msg) override{

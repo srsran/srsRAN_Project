@@ -15,7 +15,7 @@ using namespace srsgnb::srs_cu_cp;
 using namespace asn1::ngap;
 
 ngap_setup_procedure::ngap_setup_procedure(const ng_setup_request_message& request_,
-                                           ng_message_notifier&            amf_notif_,
+                                           ngc_message_notifier&           amf_notif_,
                                            ngap_event_manager&             ev_mng_,
                                            srslog::basic_logger&           logger_) :
   request(request_), amf_notifier(amf_notif_), ev_mng(ev_mng_), logger(logger_)

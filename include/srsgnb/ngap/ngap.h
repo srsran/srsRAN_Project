@@ -41,13 +41,13 @@ public:
   virtual void handle_connection_loss() = 0;
 };
 
-/// This interface notifies the reception of new NGAP messages over the NG interface.
-class ng_message_notifier
+/// This interface notifies the reception of new NGC messages over the NGC interface.
+class ngc_message_notifier
 {
 public:
-  virtual ~ng_message_notifier() = default;
+  virtual ~ngc_message_notifier() = default;
 
-  /// This callback is invoked on each received NGAP message.
+  /// This callback is invoked on each received NGC message.
   virtual void on_new_message(const ngc_message& msg) = 0;
 };
 
