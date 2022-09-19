@@ -28,14 +28,14 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    msg_notifier = std::make_unique<dummy_ngap_amf_notifier>(nullptr);
+    msg_notifier = std::make_unique<dummy_ngc_amf_notifier>(nullptr);
 
     ngc = create_ngc(timers, *msg_notifier);
   }
 
-  timer_manager                            timers;
-  std::unique_ptr<dummy_ngap_amf_notifier> msg_notifier;
-  std::unique_ptr<ngc_interface>           ngc;
+  timer_manager                           timers;
+  std::unique_ptr<dummy_ngc_amf_notifier> msg_notifier;
+  std::unique_ptr<ngc_interface>          ngc;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };

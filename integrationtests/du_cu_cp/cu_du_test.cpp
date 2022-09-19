@@ -72,15 +72,15 @@ protected:
     std::unique_ptr<task_executor> task_executor = make_task_executor(task_worker);
 
     // create message handler for CU and DU to relay messages back and forth
-    dummy_cu_cp_f1c_pdu_notifier       cu_msg_handler(nullptr, nullptr);
-    dummy_f1c_pdu_notifier             du_msg_handler(nullptr);
-    srs_cu_cp::dummy_ngap_amf_notifier ngap_amf_notifier(nullptr);
+    dummy_cu_cp_f1c_pdu_notifier      cu_msg_handler(nullptr, nullptr);
+    dummy_f1c_pdu_notifier            du_msg_handler(nullptr);
+    srs_cu_cp::dummy_ngc_amf_notifier ngc_amf_notifier(nullptr);
 
     // create CU-CP config
     srs_cu_cp::cu_cp_configuration cu_cfg;
     cu_cfg.cu_executor  = task_executor.get();
     cu_cfg.f1c_notifier = &cu_msg_handler;
-    cu_cfg.ngc_notifier = &ngap_amf_notifier;
+    cu_cfg.ngc_notifier = &ngc_amf_notifier;
 
     // create and start CU
     cu_cp_obj = std::make_unique<srs_cu_cp::cu_cp>(std::move(cu_cfg));
