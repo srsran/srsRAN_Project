@@ -19,6 +19,7 @@
 
 namespace srsgnb {
 
+// Header length
 constexpr size_t pdcp_data_pdu_header_size_12bit = 2;
 constexpr size_t pdcp_data_pdu_header_size_18bit = 3;
 constexpr size_t pdcp_data_pdu_header_size(pdcp_sn_size sn_size)
@@ -33,22 +34,41 @@ constexpr size_t pdcp_data_pdu_header_size(pdcp_sn_size sn_size)
   return pdcp_data_pdu_header_size_12bit;
 }
 
+// Window size
+constexpr size_t   pdcp_window_size_12bit = 4095;
+constexpr size_t   pdcp_window_size_18bit = 262143;
+constexpr uint32_t pdcp_window_size(pdcp_sn_size sn_size)
+{
+  switch (sn_size) {
+    case pdcp_sn_size::size12bits:
+      return pdcp_window_size_12bit;
+    case pdcp_sn_size::size18bits:
+      return pdcp_window_size_18bit;
+  }
+  srsgnb_assertion_failure("Cannot determine PDCP window size: unsupported sn_size {}", to_number(sn_size));
+  return pdcp_window_size_12bit;
+}
+
 /// Base class used for both TX and RX PDCP entities.
 /// Stores common header and SN/HFN helpers
 class pdcp_entity_tx_rx_base
 {
 protected:
   explicit pdcp_entity_tx_rx_base(lcid_t lcid, pdcp_sn_size sn_size) :
-    lcid(lcid), hdr_len_bytes((pdcp_data_pdu_header_size(sn_size))), sn_size(to_number(sn_size))
+    lcid(lcid),
+    hdr_len_bytes((pdcp_data_pdu_header_size(sn_size))),
+    window_size(pdcp_window_size(sn_size)),
+    sn_size(to_number(sn_size))
   {
   }
 
   lcid_t lcid = {};
 
   /*
-   * Header helpers
+   * Header and window helpers
    */
   const uint32_t hdr_len_bytes;
+  const uint32_t window_size;
 
   /*
    * SN, HFN and COUNT helpers

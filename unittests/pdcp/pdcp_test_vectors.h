@@ -39,6 +39,7 @@ const int                                   pdu_size_snlen12       = 8;
 const int                                   pdu_size_snlen18       = 9;
 const std::array<uint8_t, pdu_size_snlen12> pdu1_count0_snlen12    = {0x80, 0x00, 0x28, 0xb7, 0xe0, 0xc5, 0x10, 0x48};
 const std::array<uint8_t, pdu_size_snlen12> pdu1_count2048_snlen12 = {0x88, 0x00, 0xe3, 0x37, 0xfe, 0x24, 0xc3, 0xe9};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_count4095_snlen12 = {0x8f, 0xff, 0x1a, 0x08, 0xbe, 0xa4, 0x32, 0x86};
 const std::array<uint8_t, pdu_size_snlen12> pdu1_count4096_snlen12 = {0x80, 0x00, 0x4f, 0xd2, 0x5c, 0xdc, 0x86, 0xfe};
 const std::array<uint8_t, pdu_size_snlen12> pdu1_count4294967295_snlen12 =
     {0x8f, 0xff, 0xaa, 0x13, 0xb5, 0x1f, 0x8a, 0x68};
@@ -65,6 +66,9 @@ inline bool get_pdu_test_vector(pdcp_sn_size sn_size, uint32_t count, byte_buffe
         return true;
       case 2048:
         exp_pdu = byte_buffer{pdu1_count2048_snlen12};
+        return true;
+      case 4095:
+        exp_pdu = byte_buffer{pdu1_count4095_snlen12};
         return true;
       case 4096:
         exp_pdu = byte_buffer{pdu1_count4096_snlen12};

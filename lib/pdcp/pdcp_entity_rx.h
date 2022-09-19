@@ -47,6 +47,8 @@ public:
   {
   }
 
+  void handle_pdu(byte_buffer buf) final;
+
   /*
    * Header helpers
    */
@@ -62,6 +64,11 @@ public:
     ciphering_enabled = cipher;
   }
 
+  /*
+   * Testing Helpers
+   */
+  void set_state(pdcp_rx_state st_) { st = st_; }
+
 private:
   bearer_logger               logger;
   pdcp_config::pdcp_rx_config cfg;
@@ -69,8 +76,6 @@ private:
   sec_128_as_config      sec_cfg           = {};
   pdcp_integrity_enabled integrity_enabled = pdcp_integrity_enabled::no;
   pdcp_ciphering_enabled ciphering_enabled = pdcp_ciphering_enabled::no;
-
-  void handle_pdu(byte_buffer buf) final;
 
   pdcp_rx_state st = {};
 

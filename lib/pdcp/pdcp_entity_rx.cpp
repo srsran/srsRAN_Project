@@ -14,29 +14,33 @@ using namespace srsgnb;
 
 void pdcp_entity_rx::handle_pdu(byte_buffer buf)
 {
-  /*
   // Log PDU
   logger.log_info(buf.begin(),
                   buf.end(),
-                  "RX PDU ({} B), integrity={}, encryption={}",
-                  buf->N_bytes,
+                  "RX PDU ({} B), integrity={}, ciphering={}",
+                  buf.length(),
                   integrity_enabled,
-                  encryption_enabled);
+                  ciphering_enabled);
 
-  if (rx_overflow) {
-    logger.warning("Rx PDCP COUNTs have overflowed. Discarding SDU.");
-    return;
-  }
+  // TODO Config max HFN and notify RRC
+  // if (rx_overflow) {
+  //  logger.warning("Rx PDCP COUNTs have overflowed. Discarding SDU.");
+  //  return;
+  // }
 
   // Sanity check
-  if (pdu->N_bytes <= cfg.hdr_len_bytes) {
+  if (buf.length() <= hdr_len_bytes) {
     return;
   }
-  logger.debug("Rx PDCP state - RX_NEXT=%u, RX_DELIV=%u, RX_REORD=%u", rx_next, rx_deliv, rx_reord);
+  logger.log_debug("Rx PDCP state - RX_NEXT={}, RX_DELIV={}, RX_REORD={}", st.rx_next, st.rx_deliv, st.rx_reord);
 
   // Extract RCVD_SN from header
-  uint32_t rcvd_sn = read_data_header(pdu);
-  */
+  uint32_t rcvd_sn = {};
+  if (not read_data_pdu_header(buf, rcvd_sn)) {
+    logger.log_error("Error extracting PDCP SN");
+    return;
+  }
+
   /*
    * Calculate RCVD_COUNT:
    *
@@ -48,17 +52,17 @@ void pdcp_entity_rx::handle_pdu(byte_buffer buf)
    *   - RCVD_HFN = HFN(RX_DELIV);
    * - RCVD_COUNT = [RCVD_HFN, RCVD_SN].
    */
-  /*
- uint32_t rcvd_hfn, rcvd_count;
- if ((int64_t)rcvd_sn < (int64_t)SN(rx_deliv) - (int64_t)window_size) {
-   rcvd_hfn = HFN(rx_deliv) + 1;
- } else if (rcvd_sn >= SN(rx_deliv) + window_size) {
-   rcvd_hfn = HFN(rx_deliv) - 1;
- } else {
-   rcvd_hfn = HFN(rx_deliv);
- }
- rcvd_count = COUNT(rcvd_hfn, rcvd_sn);
- */
+  uint32_t rcvd_hfn, __attribute__((unused)) rcvd_count;
+  if ((int64_t)rcvd_sn < (int64_t)SN(st.rx_deliv) - (int64_t)window_size) {
+    rcvd_hfn = HFN(st.rx_deliv) + 1;
+  } else if (rcvd_sn >= SN(st.rx_deliv) + window_size) {
+    rcvd_hfn = HFN(st.rx_deliv) - 1;
+  } else {
+    rcvd_hfn = HFN(st.rx_deliv);
+  }
+  rcvd_count = COUNT(rcvd_hfn, rcvd_sn);
+
+  upper_dn.on_new_sdu(std::move(buf));
 }
 
 bool pdcp_entity_rx::read_data_pdu_header(const byte_buffer& buf, uint32_t& sn) const
