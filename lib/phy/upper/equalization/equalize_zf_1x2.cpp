@@ -29,12 +29,12 @@ static inline void equalize_zf_1x2_symbol(span<cf_t>       symbol_out,
 
   for (unsigned i_subc = 0; i_subc != nof_subcs; ++i_subc) {
     // Channel estimates.
-    const cf_t  ch_p0        = ch_estimates_p0[i_subc];
-    const cf_t  ch_p1        = ch_estimates_p1[i_subc];
+    const cf_t ch_p0 = ch_estimates_p0[i_subc];
+    const cf_t ch_p1 = ch_estimates_p1[i_subc];
 
     // Conjugated channel estimates.
-    const cf_t  ch_p0_conj   = std::conj(ch_p0);
-    const cf_t  ch_p1_conj   = std::conj(ch_p1);
+    const cf_t ch_p0_conj = std::conj(ch_p0);
+    const cf_t ch_p1_conj = std::conj(ch_p1);
 
     // Absolute squares of the channel estimates.
     const float ch_p0_mod_sq = std::real(ch_p0 * ch_p0_conj);

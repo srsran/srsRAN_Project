@@ -11,7 +11,12 @@ set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(channel_equalizer_test channel_equalizer_test.cpp)
-target_link_libraries(channel_equalizer_test srsgnb_channel_equalizer srslog)
+target_link_libraries(
+        channel_equalizer_test
+        srsgnb_channel_equalizer
+        srslog
+        gtest
+        gtest_main)
 add_test(channel_equalizer_test channel_equalizer_test)
 
 add_custom_command(
