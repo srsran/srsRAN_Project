@@ -14,9 +14,9 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-initial_cu_cp_setup_procedure::initial_cu_cp_setup_procedure(ngap_connection_manager&        ngap_conn_mng_,
+initial_cu_cp_setup_procedure::initial_cu_cp_setup_procedure(ngc_connection_manager&         ngc_conn_mng_,
                                                              cu_cp_ngap_connection_notifier& cu_cp_ngap_ev_notifier_) :
-  ngap_conn_mng(ngap_conn_mng_), cu_cp_ngap_ev_notifier(cu_cp_ngap_ev_notifier_)
+  ngc_conn_mng(ngc_conn_mng_), cu_cp_ngap_ev_notifier(cu_cp_ngap_ev_notifier_)
 {
 }
 
@@ -46,7 +46,7 @@ async_task<ng_setup_response_message> initial_cu_cp_setup_procedure::start_ng_se
   // TODO: Fill request message
 
   // Initiate ng Setup Request.
-  return ngap_conn_mng.handle_ngap_setup_request(request_msg);
+  return ngc_conn_mng.handle_ngap_setup_request(request_msg);
 }
 
 void initial_cu_cp_setup_procedure::handle_ng_setup_response(const asn1::ngap::ng_setup_resp_s& resp)

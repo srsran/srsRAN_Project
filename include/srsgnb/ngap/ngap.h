@@ -61,11 +61,11 @@ struct ng_setup_response_message {
   bool                        success;
 };
 
-/// Handle NGAP interface management procedures as defined in TS 38.413 section 8.7
-class ngap_connection_manager
+/// Handle NGC interface management procedures as defined in TS 38.413 section 8.7
+class ngc_connection_manager
 {
 public:
-  virtual ~ngap_connection_manager() = default;
+  virtual ~ngc_connection_manager() = default;
 
   /// \brief Initiates the NG Setup procedure.
   /// \param[in] request The NGSetupRequest message to transmit.
@@ -113,7 +113,7 @@ public:
 /// Combined entry point for the NGAP object.
 class ngap_interface : public ngc_message_handler,
                        public ngc_event_handler,
-                       public ngap_connection_manager,
+                       public ngc_connection_manager,
                        public ngap_nas_message_handler
 {
 public:
