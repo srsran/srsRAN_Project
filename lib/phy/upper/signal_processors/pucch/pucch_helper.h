@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/frame_types.h"
-#include "srsgnb/ran/pucch_mapping.h"
+#include "srsgnb/ran/pucch/pucch_mapping.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/support/error_handling.h"
 

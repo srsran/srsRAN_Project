@@ -14,7 +14,7 @@
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/upper/channel_estimation.h"
 #include "srsgnb/ran/cyclic_prefix.h"
-#include "srsgnb/ran/pucch_mapping.h"
+#include "srsgnb/ran/pucch/pucch_mapping.h"
 #include "srsgnb/ran/slot_point.h"
 #include <memory>
 

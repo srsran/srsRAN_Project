@@ -4,16 +4,26 @@
 #include "srsgnb/mac/mac_sdu_handler.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/ran/sr_configuration.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {
+
+/// \c MAC-CellGroupConfig, TS 38.331.
+struct mac_cell_group_config {
+  /// \c schedulingRequestConfig.
+  std::vector<scheduling_request_to_addmod> scheduling_request_config;
+  // TODO: add remaining fields.
+};
 
 /// Parameters passed to MAC concerning a created logical channel.
 struct mac_logical_channel_addmod {
   lcid_t               lcid;
   mac_sdu_rx_notifier* ul_bearer;
   mac_sdu_tx_builder*  dl_bearer;
+  // MAC Logical Channel Config.
+  logical_channel_config lc_config;
 };
 
 /// Input parameters used to create a UE in the scheduler.
@@ -23,6 +33,7 @@ struct mac_ue_create_request_message {
   rnti_t                                  crnti;
   std::vector<mac_logical_channel_addmod> bearers;
   const byte_buffer*                      ul_ccch_msg;
+  mac_cell_group_config                   mac_cell_group_cfg;
   // Scheduler-only params
   serving_cell_ue_configuration_request serv_cell_cfg;
 };

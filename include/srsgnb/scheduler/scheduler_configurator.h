@@ -14,12 +14,14 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/ran/carrier_configuration.h"
 #include "srsgnb/ran/du_types.h"
+#include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/phy_time_unit.h"
 #include "srsgnb/ran/prach/prach_constants.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/sib_configuration.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/ran/sr_configuration.h"
 #include "srsgnb/ran/ssb_configuration.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
@@ -98,7 +100,24 @@ struct bwp_downlink {
   optional<bwp_downlink_dedicated> bwp_dl_ded;
 };
 
-/// \remark See TS 38.331, "ServingCellConfig"
+/// \c LogicalChannelConfig, TS 38.331.
+struct logical_channel_config {
+  lcid_t  lcid;
+  uint8_t priority;
+  // TODO: add remaining fields;
+  optional<uint8_t>                        lc_group;
+  optional<scheduling_request_resource_id> sr_id;
+  bool                                     lc_sr_mask;
+  bool                                     lc_sr_delay_timer_applied;
+};
+
+/// Uplink configuration, as per \c UplinkConfig, in \c ServingCellConfig, TS 38.331.
+struct uplink_config {
+  bwp_uplink_dedicated init_ul_bwp;
+  // TODO: add remaining fields.
+};
+
+/// \remark See TS 38.331, "ServingCellConfig".
 struct serving_cell_ue_configuration_request {
   /// Initial Downlink BWP.
   optional<bwp_downlink_dedicated> init_dl_bwp;
@@ -110,9 +129,16 @@ struct serving_cell_ue_configuration_request {
 
 /// UE Creation Request.
 struct sched_ue_creation_request_message {
-  du_ue_index_t                         ue_index;
-  rnti_t                                crnti;
-  du_cell_index_t                       pcell_index;
+  du_ue_index_t   ue_index;
+  rnti_t          crnti;
+  du_cell_index_t pcell_index;
+  /// List of \c mac-LogicalChannelConfig, TS 38.331; contained in \c rlc-BearerToAddModList.
+  /// This is common to all cells belonging to \c masterCellGroup, TS 38.331.
+  std::vector<logical_channel_config> lc_config_list;
+  /// \c schedulingRequestToAddModList, TS 38.331; part of \c schedulingRequestConfig, in \c mac-CellGroupConfig.
+  /// This is common to all cells belonging to masterCellGroup, TS 38.331.
+  std::vector<scheduling_request_to_addmod> sched_request_config_list;
+  /// \c spCellConfig, as part of \c CellGroupConfig, TS 38.331.
   serving_cell_ue_configuration_request serv_cell_cfg;
 };
 

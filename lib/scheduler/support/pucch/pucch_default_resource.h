@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/ran/pucch_mapping.h"
+#include "srsgnb/ran/pucch/pucch_mapping.h"
 #include <cstdint>
 
 /// \file

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/ran/pucch_mapping.h"
+#include "srsgnb/ran/pucch/pucch_mapping.h"
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsgnb_assert.h"
 #include <array>

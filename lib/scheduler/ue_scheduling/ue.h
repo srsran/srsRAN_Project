@@ -55,7 +55,11 @@ class ue
 {
 public:
   ue(const cell_configuration& cell_cfg_common_, const sched_ue_creation_request_message& req) :
-    ue_index(req.ue_index), crnti(req.crnti), cell_cfg_common(cell_cfg_common_)
+    ue_index(req.ue_index),
+    crnti(req.crnti),
+    cell_cfg_common(cell_cfg_common_),
+    log_channels_configs(req.lc_config_list),
+    sched_request_configs(req.sched_request_config_list)
   {
     cells[0] = std::make_unique<ue_carrier>(ue_index, req.crnti, req.pcell_index, cell_cfg_common, req.serv_cell_cfg);
     ue_cells.push_back(cells[0].get());
@@ -109,7 +113,13 @@ public:
 private:
   static const size_t MAX_CELLS = 4;
 
+  /// Cell configuration. This is common to all UEs within the same cell.
   const cell_configuration& cell_cfg_common;
+
+  /// List of \c mac-LogicalChannelConfig, TS 38.331; \ref sched_ue_creation_request_message.
+  std::vector<logical_channel_config> log_channels_configs;
+  /// \c schedulingRequestToAddModList, TS 38.331; \ref sched_ue_creation_request_message.
+  std::vector<scheduling_request_to_addmod> sched_request_configs;
 
   std::array<std::unique_ptr<ue_carrier>, MAX_CELLS> cells;
 

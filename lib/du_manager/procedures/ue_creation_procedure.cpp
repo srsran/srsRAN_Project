@@ -132,6 +132,13 @@ async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_cr
     lc.lcid      = bearer.lcid;
     lc.ul_bearer = &bearer.bearer_connector.mac_rx_notif;
     lc.dl_bearer = &bearer.bearer_connector.mac_tx_notif;
+    // Add MAC-LogicalChannelAddMod.
+    lc.lc_config.lcid = lc.lcid;
+    lc.lc_config.lc_group.emplace(0);
+    lc.lc_config.priority                  = 1;
+    lc.lc_config.lc_sr_mask                = false;
+    lc.lc_config.lc_sr_delay_timer_applied = false;
+    lc.lc_config.sr_id.emplace(mac_ue_create_msg.mac_cell_group_cfg.scheduling_request_config.back().sr_id);
   }
   mac_ue_create_msg.ul_ccch_msg = &msg.subpdu;
   return cfg.mac_ue_mng->handle_ue_create_request(mac_ue_create_msg);

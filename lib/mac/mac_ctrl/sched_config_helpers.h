@@ -23,6 +23,12 @@ inline sched_ue_creation_request_message make_ue_creation_request(const mac_ue_c
   out.pcell_index   = in.cell_index;
   out.crnti         = in.crnti;
   out.serv_cell_cfg = in.serv_cell_cfg;
+  for (auto bearer : in.bearers) {
+    out.lc_config_list.emplace_back(bearer.lc_config);
+  }
+  for (auto sr_cfg : in.mac_cell_group_cfg.scheduling_request_config) {
+    out.sched_request_config_list.emplace_back(sr_cfg);
+  }
   return out;
 }
 

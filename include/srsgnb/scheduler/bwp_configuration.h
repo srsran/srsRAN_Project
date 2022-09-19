@@ -18,6 +18,7 @@
 #include "srsgnb/ran/ofdm_symbol_range.h"
 #include "srsgnb/ran/pdcch/coreset.h"
 #include "srsgnb/ran/prach/restricted_set_config.h"
+#include "srsgnb/ran/pucch/pucch_configuration.h"
 #include "srsgnb/ran/resource_block.h"
 #include <bitset>
 
@@ -190,13 +191,25 @@ struct pusch_config_common {
   std::vector<pusch_time_domain_resource_allocation> pusch_td_alloc_list;
 };
 
+/// \remark See TS 38.331, "PUCCH-ConfigCommon".
+struct pucch_config_common {
+  enum class pucch_group_hop_opt { neither, disabled, enable };
+  /// Values: {0,...,15}.
+  uint8_t             pucch_resource_common;
+  pucch_group_hop_opt pucch_group_hopping;
+  /// Values: {0, ..., 1023}.
+  optional<unsigned> hopping_id;
+  /// Values: {-202, ..., 24}
+  int p0_nominal;
+};
+
 /// Used to configure the common, cell-specific parameters of an UL BWP.
 /// \remark See TS 38.331, BWP-UplinkCommon.
 struct bwp_uplink_common {
   bwp_configuration             generic_params;
   optional<rach_config_common>  rach_cfg_common;
   optional<pusch_config_common> pusch_cfg_common;
-  // TODO: Other fields.
+  optional<pucch_config_common> pucch_cfg_common;
 };
 
 /// \brief It provides parameters determining the location and width of the actual carrier.
@@ -242,6 +255,14 @@ struct frequency_info_ul {
 struct ul_config_common {
   frequency_info_ul freq_info_ul;
   bwp_uplink_common init_ul_bwp;
+};
+
+/////////////////////////////////     "Dedicated" FIELDS    /////////////////////////////////////
+
+/// Used to configure the dedicated UE-specific parameters of an UL BWP.
+/// \remark See TS 38.331, BWP-UplinkDedicated.
+struct bwp_uplink_dedicated {
+  pucch_config pucch_cnf;
 };
 
 } // namespace srsgnb
