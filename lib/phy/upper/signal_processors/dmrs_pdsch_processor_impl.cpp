@@ -9,7 +9,6 @@
  */
 
 #include "dmrs_pdsch_processor_impl.h"
-#include "../resource_grid_helpers.h"
 #include "dmrs_helper.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"
@@ -68,12 +67,11 @@ void srsgnb::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequ
       sequence, *prg, amplitude, config.reference_point_k_rb, config.type.nof_dmrs_per_rb(), config.rb_mask);
 }
 
-void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer& grid,
-                                                span<const cf_t>      sequence,
-                                                unsigned              rg_subc_mask_ref,
-                                                span<const bool>      rg_subc_mask,
-                                                unsigned              symbol,
-                                                const config_t&       config)
+void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer&               grid,
+                                                span<const cf_t>                    sequence,
+                                                const bounded_bitset<MAX_RB * NRE>& rg_subc_mask,
+                                                unsigned                            symbol,
+                                                const config_t&                     config)
 {
   // Resource elements views for each port.
   static_vector<span<const cf_t>, MAX_PORTS> re(config.ports.size());
@@ -123,31 +121,24 @@ void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer& grid,
     const params_t& params = (config.type == dmrs_type::TYPE1) ? params_type1[port] : params_type2[port];
 
     // Put port elements in the resource grid.
-    grid.put(config.ports[port],
-             symbol,
-             rg_subc_mask_ref + params.delta,
-             rg_subc_mask.first(rg_subc_mask.size() - params.delta),
-             re[port]);
+    grid.put(config.ports[port], symbol, params.delta, rg_subc_mask, re[port]);
   }
 }
 
 void srsgnb::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const config_t& config)
 {
   // Resource element allocation within a resource block for PDCCH.
-  static const std::array<bool, NRE> re_mask_type1 = {
+  static const bounded_bitset<NRE> re_mask_type1 = {
       true, false, true, false, true, false, true, false, true, false, true, false};
-  static const std::array<bool, NRE> re_mask_type2 = {
+  static const bounded_bitset<NRE> re_mask_type2 = {
       true, true, false, false, false, false, true, true, false, false, false, false};
 
   // Count number of RB.
   unsigned dmrs_re_count = config.type.nof_dmrs_per_rb() * config.rb_mask.count();
 
-  // Initial subcarrier index.
-  unsigned rg_subc_mask_ref = get_rg_subc_mask_reference(config.rb_mask);
-
   // Create RG OFDM symbol mask. Identical for all OFDM symbols.
-  static_vector<bool, MAX_RB* NRE> rg_subc_mask =
-      get_rg_subc_mask(config.rb_mask, config.type == dmrs_type::TYPE1 ? re_mask_type1 : re_mask_type2);
+  bounded_bitset<MAX_RB* NRE> rg_subc_mask =
+      config.rb_mask.kronecker_product<NRE>((config.type == dmrs_type::TYPE1) ? re_mask_type1 : re_mask_type2);
 
   // For each symbol in the slot....
   for (unsigned symbol = 0; symbol < MAX_NSYMB_PER_SLOT; ++symbol) {
@@ -161,6 +152,6 @@ void srsgnb::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const co
     sequence_generation(sequence, symbol, config);
 
     // Mapping to physical resources for the given symbol.
-    mapping(grid, sequence, rg_subc_mask_ref, rg_subc_mask, symbol, config);
+    mapping(grid, sequence, rg_subc_mask, symbol, config);
   }
 }

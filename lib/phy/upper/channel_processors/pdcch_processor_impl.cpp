@@ -65,17 +65,14 @@ void pdcch_processor_impl::process(srsgnb::resource_grid_writer& grid, const pdc
     // Generate RB mask.
     bounded_bitset<MAX_RB> rb_mask = compute_rb_mask(coreset, dci);
 
-    // Extract payload.
-    const static_vector<uint8_t, MAX_DCI_PAYLOAD_SIZE>& payload = dci.payload;
-
     // Populate PDCCH encoder configuration.
     pdcch_encoder::config_t encoder_config = {};
     encoder_config.E                       = dci.aggregation_level * NOF_REG_PER_CCE * NOF_RE_PDCCH_PER_RB * 2;
     encoder_config.rnti                    = dci.rnti;
 
     // Encode.
-    static_vector<uint8_t, MAX_NOF_BITS> encoded(nof_encoded_bits(dci.aggregation_level));
-    encoder->encode(encoded, payload, encoder_config);
+    span<uint8_t> encoded = span<uint8_t>(temp_encoded).first(nof_encoded_bits(dci.aggregation_level));
+    encoder->encode(encoded, dci.payload, encoder_config);
 
     // Populate PDCCH modulator configuration.
     pdcch_modulator::config_t modulator_config = {};

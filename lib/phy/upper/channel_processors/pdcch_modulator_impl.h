@@ -38,6 +38,12 @@ private:
   /// Provides an implementation of the the pseudo-random generator.
   std::unique_ptr<pseudo_random_generator> scrambler;
 
+  /// Temporal storage of scrambled bits.
+  std::array<uint8_t, MAX_BITS> temp_b_hat = {};
+
+  /// Temporal storage of resource elements.
+  std::array<cf_t, MAX_RE> temp_d_pdcch = {};
+
   /// \brief Scrambles a codeword. Implements TS 38.211 section 7.3.2.3 Scrambling.
   ///
   /// \param[out] b_hat Output bits after scrambling.

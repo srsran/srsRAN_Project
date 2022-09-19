@@ -11,13 +11,8 @@
 #include "resource_grid_impl.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/zero.h"
-#include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/srsgnb_assert.h"
 #include <cassert>
-
-#ifdef HAVE_AVX2
-#include <immintrin.h>
-#endif // HAVE_AVX2
 
 using namespace srsgnb;
 
@@ -69,106 +64,7 @@ span<const cf_t> resource_grid_impl::put(unsigned         port,
   span<cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({l, port});
 
   // Iterate mask using AVX2 intrinsics and preset groups of 4 subcarriers.
-  unsigned i_subc = 0;
-#if HAVE_AVX2
-  for (unsigned i_subc_end = 32 * (mask.size() / 32); i_subc < i_subc_end; i_subc += 32) {
-    // Load 32 consecutive subcarrier mask values in an AVX register.
-    __m256i avx_mask = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(mask.data() + i_subc));
-
-    // Get the subcarrier mask packed in an integer
-    unsigned mask32 = _mm256_movemask_epi8(_mm256_cmpgt_epi8(avx_mask, _mm256_setzero_si256()));
-
-    // Process presets of 4 bits.
-    unsigned offset = 0;
-    for (; mask32 != 0; mask32 = mask32 >> 4, offset += 4) {
-      switch (mask32 & 0xf) {
-        case 0B0000:
-          // No subcarrier is active, skip.
-          break;
-        case 0B0001:
-          rg_symbol[i_subc + k_init + 0 + offset] = symbol_buffer[0];
-          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 1);
-          break;
-        case 0B0010:
-          rg_symbol[i_subc + k_init + 1 + offset] = symbol_buffer[0];
-          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 1);
-          break;
-        case 0B0011:
-          rg_symbol[i_subc + k_init + 0 + offset] = symbol_buffer[0];
-          rg_symbol[i_subc + k_init + 1 + offset] = symbol_buffer[1];
-          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 2);
-          break;
-        case 0B0100:
-          rg_symbol[i_subc + k_init + 2 + offset] = symbol_buffer[0];
-          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 1);
-          break;
-        case 0B0101:
-          rg_symbol[i_subc + k_init + 0 + offset] = symbol_buffer[0];
-          rg_symbol[i_subc + k_init + 2 + offset] = symbol_buffer[1];
-          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 2);
-          break;
-        case 0B0110:
-          rg_symbol[i_subc + k_init + 1 + offset] = symbol_buffer[0];
-          rg_symbol[i_subc + k_init + 2 + offset] = symbol_buffer[1];
-          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 2);
-          break;
-        case 0B0111:
-          rg_symbol[i_subc + k_init + 0 + offset] = symbol_buffer[0];
-          rg_symbol[i_subc + k_init + 1 + offset] = symbol_buffer[1];
-          rg_symbol[i_subc + k_init + 2 + offset] = symbol_buffer[2];
-          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 3);
-          break;
-        case 0B1000:
-          rg_symbol[i_subc + k_init + 3 + offset] = symbol_buffer[0];
-          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 1);
-          break;
-        case 0B1001:
-          rg_symbol[i_subc + k_init + 0 + offset] = symbol_buffer[0];
-          rg_symbol[i_subc + k_init + 3 + offset] = symbol_buffer[1];
-          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 2);
-          break;
-        case 0B1010:
-          rg_symbol[i_subc + k_init + 1 + offset] = symbol_buffer[0];
-          rg_symbol[i_subc + k_init + 3 + offset] = symbol_buffer[1];
-          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 2);
-          break;
-        case 0B1011:
-          rg_symbol[i_subc + k_init + 0 + offset] = symbol_buffer[0];
-          rg_symbol[i_subc + k_init + 1 + offset] = symbol_buffer[1];
-          rg_symbol[i_subc + k_init + 3 + offset] = symbol_buffer[2];
-          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 3);
-          break;
-        case 0B1100:
-          rg_symbol[i_subc + k_init + 2 + offset] = symbol_buffer[0];
-          rg_symbol[i_subc + k_init + 3 + offset] = symbol_buffer[1];
-          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 2);
-          break;
-        case 0B1101:
-          rg_symbol[i_subc + k_init + 0 + offset] = symbol_buffer[0];
-          rg_symbol[i_subc + k_init + 2 + offset] = symbol_buffer[1];
-          rg_symbol[i_subc + k_init + 3 + offset] = symbol_buffer[2];
-          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 3);
-          break;
-        case 0B1110:
-          rg_symbol[i_subc + k_init + 1 + offset] = symbol_buffer[0];
-          rg_symbol[i_subc + k_init + 2 + offset] = symbol_buffer[1];
-          rg_symbol[i_subc + k_init + 3 + offset] = symbol_buffer[2];
-          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 3);
-          break;
-        case 0B1111:
-        default:
-          rg_symbol[i_subc + k_init + 0 + offset] = symbol_buffer[0];
-          rg_symbol[i_subc + k_init + 1 + offset] = symbol_buffer[1];
-          rg_symbol[i_subc + k_init + 2 + offset] = symbol_buffer[2];
-          rg_symbol[i_subc + k_init + 3 + offset] = symbol_buffer[3];
-          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 4);
-          break;
-      }
-    }
-  }
-#endif // HAVE_AVX2
-
-  for (unsigned i_subc_end = mask.size(); i_subc < i_subc_end; ++i_subc) {
+  for (unsigned i_subc = 0, i_subc_end = mask.size(); i_subc < i_subc_end; ++i_subc) {
     if (mask[i_subc]) {
       rg_symbol[i_subc + k_init] = symbol_buffer.front();
       symbol_buffer              = symbol_buffer.last(symbol_buffer.size() - 1);
@@ -179,15 +75,47 @@ span<const cf_t> resource_grid_impl::put(unsigned         port,
   // Update symbol buffer
   return symbol_buffer;
 }
+
+span<const cf_t> resource_grid_impl::put(unsigned                            port,
+                                         unsigned                            l,
+                                         unsigned                            k_init,
+                                         const bounded_bitset<NRE * MAX_RB>& mask,
+                                         span<const cf_t>                    symbols)
+{
+  assert(l < nof_symb);
+  assert(mask.size() <= nof_subc);
+  assert(port < nof_ports);
+
+  // Get view of the OFDM symbol subcarriers.
+  span<cf_t> symb = rg_buffer.get_view<dimensions::symbol>({l, port});
+
+  srsgnb_assert(mask.count() <= symbols.size(),
+                "The number ones in mask {} exceeds the number of symbols {}.",
+                mask.count(),
+                symbols.size());
+
+  mask.for_each(0, mask.size(), [&](unsigned i_subc) {
+    symb[i_subc + k_init] = symbols.front();
+    symbols               = symbols.last(symbols.size() - 1);
+  });
+
+  empty[port] = false;
+
+  return symbols;
+}
+
 void resource_grid_impl::put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols)
 {
-  report_fatal_error_if_not(l < nof_symb, "Symbol index ({}) is out-of-range (max. {})", l, nof_symb);
-  report_fatal_error_if_not(k_init + symbols.size() <= nof_subc,
-                            "Subcarrier indexes ({},{}) are out-of-range (max. {})",
-                            k_init,
-                            symbols.size(),
-                            nof_subc);
-  report_fatal_error_if_not(port < nof_ports, "Port index ({}) is out-of-range (max. {})", port, nof_ports);
+  srsgnb_assert(
+      k_init + symbols.size() <= nof_subc,
+      "The initial subcarrier index (i.e., {}) plus the number of symbols (i.e., {}) exceeds the maximum number of "
+      "subcarriers (i.e., {})",
+      k_init,
+      symbols.size(),
+      nof_subc);
+  srsgnb_assert(l < nof_symb, "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})", l, nof_symb);
+  srsgnb_assert(
+      port < nof_ports, "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})", port, nof_ports);
 
   // Select destination OFDM symbol from the resource grid.
   span<cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({l, port});
@@ -232,9 +160,15 @@ resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsigned 
 {
   unsigned mask_size = mask.size();
 
-  assert(l < nof_symb);
-  assert(mask_size <= nof_subc);
-  assert(port < nof_ports);
+  srsgnb_assert(k_init + mask_size <= nof_subc,
+                "The initial subcarrier index (i.e., {}) plus the mask size (i.e., {}) exceeds the maximum number of "
+                "subcarriers (i.e., {})",
+                k_init,
+                mask.size(),
+                nof_subc);
+  srsgnb_assert(l < nof_symb, "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})", l, nof_symb);
+  srsgnb_assert(
+      port < nof_ports, "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})", port, nof_ports);
 
   // Access the OFDM symbol from the resource grid.
   span<const cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({l, port});
@@ -252,11 +186,50 @@ resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsigned 
   return symbols.last(symbols.size() - count);
 }
 
+span<cf_t> resource_grid_impl::get(span<cf_t>                          symbols,
+                                   unsigned                            port,
+                                   unsigned                            l,
+                                   unsigned                            k_init,
+                                   const bounded_bitset<MAX_RB * NRE>& mask) const
+{
+  srsgnb_assert(k_init + mask.size() <= nof_subc,
+                "The initial subcarrier index (i.e., {}) plus the mask size (i.e., {}) exceeds the maximum number of "
+                "subcarriers (i.e., {})",
+                k_init,
+                mask.size(),
+                nof_subc);
+  srsgnb_assert(l < nof_symb, "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})", l, nof_symb);
+  srsgnb_assert(
+      port < nof_ports, "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})", port, nof_ports);
+
+  // Get view of the OFDM symbol subcarriers.
+  span<const cf_t> symb = rg_buffer.get_view<dimensions::symbol>({l, port});
+
+  srsgnb_assert(mask.count() <= symbols.size(),
+                "The number ones in mask {} exceeds the number of symbols {}.",
+                mask.count(),
+                symbols.size());
+
+  mask.for_each(0, mask.size(), [&](unsigned i_subc) {
+    symbols.front() = symb[i_subc + k_init];
+    symbols         = symbols.last(symbols.size() - 1);
+  });
+
+  return symbols;
+}
+
 void resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const
 {
-  assert(l < nof_symb);
-  assert(k_init + symbols.size() <= nof_subc);
-  assert(port < nof_ports);
+  srsgnb_assert(
+      k_init + symbols.size() <= nof_subc,
+      "The initial subcarrier index (i.e., {}) plus the number of symbols (i.e., {}) exceeds the maximum number of "
+      "subcarriers (i.e., {})",
+      k_init,
+      symbols.size(),
+      nof_subc);
+  srsgnb_assert(l < nof_symb, "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})", l, nof_symb);
+  srsgnb_assert(
+      port < nof_ports, "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})", port, nof_ports);
 
   // Access the OFDM symbol from the resource grid.
   span<const cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({l, port});

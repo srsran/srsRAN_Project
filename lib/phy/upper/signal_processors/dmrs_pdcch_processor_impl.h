@@ -23,9 +23,6 @@ private:
   /// Defines the DMRS index increment in frequency domain.
   static constexpr unsigned STRIDE = 4;
 
-  /// Defines the DMRS index offset in a resource block.
-  static constexpr unsigned OFFSET = 1;
-
   /// Defines the number of DMRS per active resource block.
   static constexpr unsigned NOF_DMRS_PER_RB = NRE / STRIDE;
 
@@ -34,6 +31,9 @@ private:
 
   /// Pseudo-random sequence generator instance.
   std::unique_ptr<pseudo_random_generator> prg;
+
+  /// Temporary sequence storage.
+  std::array<cf_t, MAX_NOF_DMRS_PER_SYMBOL> temp_sequence;
 
   /// \brief Computes the initial pseudo-random state.
   /// \param[in] symbol Denotes the symbol index.
@@ -57,19 +57,17 @@ private:
   ///
   /// \param[out] grid            Destination resource grid.
   /// \param[in] sequence         Sequence to write in the resource grid.
-  /// \param[in] rg_subc_mask_ref Subcarrier index in the resource grid of the mask first element.
   /// \param[in] rg_subc_mask     Indicates the subcarriers where \c sequence is mapped onto.
   /// \param[in] symbol           Denotes the OFDM symbol index within the slot.
   /// \param[in] ports            Port list.
   void mapping(resource_grid_writer&                    grid,
                span<const cf_t>                         sequence,
-               unsigned                                 rg_subc_mask_ref,
-               span<const bool>                         rg_subc_mask,
+               const bounded_bitset<MAX_RB * NRE>&      rg_subc_mask,
                unsigned                                 symbol,
                const static_vector<uint8_t, MAX_PORTS>& ports);
 
 public:
-  dmrs_pdcch_processor_impl(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
+  explicit dmrs_pdcch_processor_impl(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
   {
     srsgnb_assert(prg, "Invalid PRG.");
   }

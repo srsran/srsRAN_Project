@@ -208,6 +208,86 @@ void test_mask(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, unsi
   }
 }
 
+void test_mask_bitset(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, unsigned nof_elements)
+{
+  // Create grid and zero.
+  std::unique_ptr<resource_grid> grid = create_resource_grid(nof_ports, nof_symbols, nof_subc);
+  grid->set_all_zero();
+
+  std::uniform_int_distribution<unsigned> port_dist(0, nof_ports - 1);
+  std::uniform_int_distribution<unsigned> symbol_dist(0, nof_symbols - 1);
+  std::uniform_int_distribution<unsigned> subc_dist(0, nof_subc - 1);
+  std::uniform_real_distribution<float>   value_dist(-1.0, +1.0);
+
+  // Put elements in grid.
+  unsigned                     symbol_idx = symbol_dist(rgen);
+  srsvec::aligned_vec<cf_t>    symbols_gold(nof_elements);
+  bounded_bitset<MAX_RB * NRE> mask(nof_subc);
+
+  // Fill mask and generate symbols.
+  unsigned port_gold = port_dist(rgen);
+  for (unsigned i = 0; i != nof_elements; ++i) {
+    unsigned subc = 0;
+
+    // Select a subcarrier that has not been set yet.
+    do {
+      subc = subc_dist(rgen);
+    } while (mask.test(subc));
+
+    // Create random allocation
+    mask.set(subc);
+    symbols_gold[i] = {value_dist(rgen), value_dist(rgen)};
+  }
+
+  // Put elements.
+  span<const cf_t> symbol_buffer_put = grid->put(port_gold, symbol_idx, 0, mask, symbols_gold);
+
+  // Make sure all symbols are used.
+  TESTASSERT(symbol_buffer_put.empty());
+
+  // Assert grid entries.
+  unsigned count = 0;
+  for (unsigned port = 0; port != nof_ports; ++port) {
+    // Verify the grid for the port is NOT empty.
+    TESTASSERT_EQ(port != port_gold, grid->is_empty(port));
+
+    for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
+      // Get resource grid data for the given symbol.
+      std::vector<cf_t> rg_data(nof_subc);
+      grid->get(rg_data, port, symbol, 0);
+
+      for (unsigned subc = 0; subc != nof_subc; ++subc) {
+        cf_t gold  = {0.0, 0.0};
+        cf_t value = rg_data[subc];
+
+        if (port == port_gold && symbol == symbol_idx && mask.test(subc)) {
+          gold = symbols_gold[count];
+          count++;
+        }
+
+        TESTASSERT_EQ(gold.real(), value.real());
+        TESTASSERT_EQ(gold.imag(), value.imag());
+      }
+    }
+  }
+
+  // Get elements using the same mask.
+  srsvec::aligned_vec<cf_t> symbols(nof_elements);
+  span<cf_t>                symbol_buffer_get = grid->get(symbols, port_gold, symbol_idx, 0, mask);
+
+  // Make sure all symbols are used.
+  TESTASSERT(symbol_buffer_get.empty(), "Symbol buffer - not empty.");
+
+  // Assert that symbols are equal.
+  for (unsigned i = 0; i != nof_elements; ++i) {
+    cf_t gold  = symbols_gold[i];
+    cf_t value = symbols[i];
+
+    TESTASSERT_EQ(gold.real(), value.real());
+    TESTASSERT_EQ(gold.imag(), value.imag());
+  }
+}
+
 void test_consecutive(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, unsigned nof_elements)
 {
   // Create grid and zero
@@ -290,6 +370,7 @@ int main()
         for (unsigned nof_elements : {1, 2, 4, 8, 16, 32}) {
           test_coordinates(nof_ports, nof_symbols, nof_subc, nof_elements);
           test_mask(nof_ports, nof_symbols, nof_subc, nof_elements);
+          test_mask_bitset(nof_ports, nof_symbols, nof_subc, nof_elements);
           test_consecutive(nof_ports, nof_symbols, nof_subc, nof_elements);
         }
       }

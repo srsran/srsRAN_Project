@@ -9,7 +9,6 @@
  */
 
 #include "dmrs_pdcch_processor_impl.h"
-#include "../resource_grid_helpers.h"
 #include "dmrs_helper.h"
 #include "srsgnb/support/math_utils.h"
 
@@ -37,14 +36,13 @@ void dmrs_pdcch_processor_impl::sequence_generation(span<cf_t>                  
 
 void dmrs_pdcch_processor_impl::mapping(resource_grid_writer&                    grid,
                                         span<const cf_t>                         sequence,
-                                        unsigned                                 rg_subc_mask_ref,
-                                        span<const bool>                         rg_subc_mask,
+                                        const bounded_bitset<MAX_RB * NRE>&      rg_subc_mask,
                                         unsigned                                 symbol,
                                         const static_vector<uint8_t, MAX_PORTS>& ports)
 {
   // Put signal for each port.
   for (unsigned port_idx : ports) {
-    grid.put(port_idx, symbol, rg_subc_mask_ref, rg_subc_mask, sequence);
+    grid.put(port_idx, symbol, 0, rg_subc_mask, sequence);
   }
 }
 
@@ -52,27 +50,24 @@ void dmrs_pdcch_processor_impl::map(srsgnb::resource_grid_writer&               
                                     const srsgnb::dmrs_pdcch_processor::config_t& config)
 {
   // Resource element allocation within a resource block for PDCCH.
-  static const std::array<bool, NRE> re_mask = {
+  static const bounded_bitset<NRE> re_mask = {
       false, true, false, false, false, true, false, false, false, true, false, false};
 
   // Count number of DMRS.
   unsigned count_dmrs = config.rb_mask.count() * NOF_DMRS_PER_RB;
 
-  // Initial subcarrier index.
-  unsigned rg_subc_mask_ref = get_rg_subc_mask_reference(config.rb_mask);
-
   // Create RG OFDM symbol mask. Identical for all OFDM symbols.
-  static_vector<bool, MAX_RB* NRE> rg_subc_mask = get_rg_subc_mask(config.rb_mask, re_mask);
+  bounded_bitset<MAX_RB* NRE> rg_subc_mask = config.rb_mask.kronecker_product<NRE>(re_mask);
 
   // Generate and map for each symbol of the PDCCH transmission.
   for (unsigned symbol = 0; symbol != config.start_symbol_index + config.duration; ++symbol) {
     // Temporal allocation of the sequence.
-    static_vector<cf_t, MAX_NOF_DMRS_PER_SYMBOL> sequence(count_dmrs);
+    span<cf_t> sequence = span<cf_t>(temp_sequence).first(count_dmrs);
 
     // Generate sequence.
     sequence_generation(sequence, symbol, config);
 
     // Map sequence in symbols.
-    mapping(grid, sequence, rg_subc_mask_ref, rg_subc_mask, symbol, config.ports);
+    mapping(grid, sequence, rg_subc_mask, symbol, config.ports);
   }
 }

@@ -37,6 +37,8 @@ private:
   std::unique_ptr<pdcch_modulator> modulator;
   /// Provides the DMRS for PDCCH.
   std::unique_ptr<dmrs_pdcch_processor> dmrs;
+  /// Temporary encoded bits.
+  std::array<uint8_t, pdcch_constants::MAX_NOF_BITS> temp_encoded = {};
 
   /// \brief Calculates the number of encoded bits for a PDCCH transmission.
   /// \param[in] aggregation_level Indicates the PDCCH transmission aggregation level.
@@ -67,8 +69,5 @@ public:
   // See interface for documentation.
   void process(resource_grid_writer& grid, const pdu_t& pdu) override;
 };
-
-/// Creates a generic PDCCH processor.
-std::unique_ptr<pdcch_processor> create_pdcch_processor(pdcch_processor_config_t& config);
 
 } // namespace srsgnb

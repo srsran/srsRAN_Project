@@ -10,8 +10,10 @@
 
 #pragma once
 
+#include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
+#include "srsgnb/phy/constants.h"
 
 namespace srsgnb {
 
@@ -63,19 +65,37 @@ public:
   virtual void put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) = 0;
 
   /// \brief Puts a number of resource elements in the resource grid at the given port and symbol using a mask to
-  /// indicate which subcarriers are mapped and which are not.
+  /// indicate which subcarriers are allocated and which are not.
   ///
   /// \param[in] port    Port index.
   /// \param[in] l       Symbol index.
   /// \param[in] k_init  Initial subcarrier index.
   /// \param[in] mask    Boolean mask denoting the subcarriers to be written (if \c true), starting from \c k_init.
   /// \param[in] symbols Symbols to be written into the resource grid.
-  /// \return A \c span<cf_t> containing the unused entries of \c symbols.
+  /// \return A view to the unused entries of \c symbols.
   /// \note The number of elements of \c mask shall be equal to or greater than the resource grid number of subcarriers.
   /// \note The number of elements of \c symbols shall be equal to or greater than the number of true elements in
   /// \c mask.
   virtual span<const cf_t>
   put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) = 0;
+
+  /// \brief Puts a number of resource elements in the resource grid at the given port and symbol using a bounded bitset
+  /// to indicate which subcarriers are allocated and which are not.
+  ///
+  /// \param[in] port    Port index.
+  /// \param[in] l       Symbol index.
+  /// \param[in] k_init  Initial subcarrier index.
+  /// \param[in] mask    Bitset denoting the subcarriers to be written (if \c true), starting from \c k_init.
+  /// \param[in] symbols Symbols to be written into the resource grid.
+  /// \return A view to the unused entries of \c symbols.
+  /// \note The number of elements of \c mask shall be equal to or greater than the resource grid number of subcarriers.
+  /// \note The number of elements of \c symbols shall be equal to or greater than the number of true elements in
+  /// \c mask.
+  virtual span<const cf_t> put(unsigned                            port,
+                               unsigned                            l,
+                               unsigned                            k_init,
+                               const bounded_bitset<NRE * MAX_RB>& mask,
+                               span<const cf_t>                    symbols) = 0;
 
   /// \brief Puts a consecutive number of resource elements for the given \c port and symbol \c l, starting at \c
   /// k_init.
@@ -117,19 +137,37 @@ public:
   virtual void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const = 0;
 
   /// \brief Gets a number of resource elements in the resource grid at the given port and symbol using a mask to
-  /// indicate which subcarriers are mapped and which are not.
+  /// indicate which subcarriers are allocated and which are not.
   ///
   /// \param[out] symbols Destination symbol buffer.
   /// \param[in]  port    Port index.
   /// \param[in]  l       Symbol index.
   /// \param[in]  k_init  Initial subcarrier index.
   /// \param[in] mask     Boolean mask denoting the subcarriers to be read (if \c true), starting from \c k_init.
-  /// \return A \c span<cf_t> with the unused entries of \c symbols.
+  /// \return A view to the unused entries of \c symbols.
   /// \note The number of elements of \c mask shall be equal to or greater than the resource grid number of subcarriers.
   /// \note The number of elements of \c symbol shall be equal to or greater than the number of true elements in
   /// \c mask.
   virtual span<cf_t>
   get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const = 0;
+
+  /// \brief Gets a number of resource elements in the resource grid at the given port and symbol using a bounded bitset
+  /// to indicate which subcarriers are allocated and which are not.
+  ///
+  /// \param[out] symbols Destination symbol buffer.
+  /// \param[in]  port    Port index.
+  /// \param[in]  l       Symbol index.
+  /// \param[in]  k_init  Initial subcarrier index.
+  /// \param[in] mask     Boolean mask denoting the subcarriers to be read (if \c true), starting from \c k_init.
+  /// \return A view to the unused entries of \c symbols.
+  /// \note The number of elements of \c mask shall be equal to or greater than the resource grid number of subcarriers.
+  /// \note The number of elements of \c symbol shall be equal to or greater than the number of true elements in
+  /// \c mask.
+  virtual span<cf_t> get(span<cf_t>                          symbols,
+                         unsigned                            port,
+                         unsigned                            l,
+                         unsigned                            k_init,
+                         const bounded_bitset<MAX_RB * NRE>& mask) const = 0;
 
   /// \brief Gets a consecutive number of resource elements for a given port and symbol \c l starting at \c k_init.
   ///

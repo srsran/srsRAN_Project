@@ -78,6 +78,24 @@ public:
     return symbols.last(symbols.size() - count);
   }
 
+  span<const cf_t> put(unsigned                            port,
+                       unsigned                            l,
+                       unsigned                            k_init,
+                       const bounded_bitset<NRE * MAX_RB>& mask,
+                       span<const cf_t>                    symbols) override
+  {
+    unsigned count = 0;
+    for (unsigned k = 0; k != mask.size(); ++k) {
+      if (mask.test(k)) {
+        put(port, l, k + k_init, symbols[count]);
+        count++;
+      }
+    }
+
+    // Consume buffer.
+    return symbols.last(symbols.size() - count);
+  }
+
   // See interface for documentation.
   void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override
   {
@@ -230,6 +248,20 @@ public:
     // Consume buffer.
     return symbols.last(symbols.size() - count);
   }
+  span<cf_t> get(span<cf_t>                          symbols,
+                 unsigned                            port,
+                 unsigned                            l,
+                 unsigned                            k_init,
+                 const bounded_bitset<MAX_RB * NRE>& mask) const override
+  {
+    mask.for_each(0, mask.size(), [&](unsigned i_subc) {
+      symbols.front() = get(static_cast<uint8_t>(port), l, k_init + i_subc);
+      symbols         = symbols.last(symbols.size() - 1);
+    });
+
+    // Consume buffer.
+    return symbols;
+  }
   void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override
   {
     cf_t* symbol_ptr = symbols.data();
@@ -312,6 +344,16 @@ public:
     return reader.get(symbols, port, l, k_init, mask);
   }
 
+  span<cf_t> get(span<cf_t>                          symbols,
+                 unsigned                            port,
+                 unsigned                            l,
+                 unsigned                            k_init,
+                 const bounded_bitset<MAX_RB * NRE>& mask) const override
+  {
+    ++get_count;
+    return reader.get(symbols, port, l, k_init, mask);
+  }
+
   void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override
   {
     ++get_count;
@@ -326,6 +368,16 @@ public:
 
   span<const cf_t>
   put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override
+  {
+    ++put_count;
+    return writer.put(port, l, k_init, mask, symbols);
+  }
+
+  span<const cf_t> put(unsigned                            port,
+                       unsigned                            l,
+                       unsigned                            k_init,
+                       const bounded_bitset<NRE * MAX_RB>& mask,
+                       span<const cf_t>                    symbols) override
   {
     ++put_count;
     return writer.put(port, l, k_init, mask, symbols);
@@ -386,8 +438,17 @@ public:
     failure();
     return {};
   }
+  span<const cf_t> put(unsigned                            port,
+                       unsigned                            l,
+                       unsigned                            k_init,
+                       const bounded_bitset<NRE * MAX_RB>& mask,
+                       span<const cf_t>                    symbols) override
+  {
+    failure();
+    return {};
+  }
   void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override { failure(); }
-  bool is_empty(unsigned int port) const override
+  bool is_empty(unsigned port) const override
   {
     failure();
     return true;
@@ -397,6 +458,15 @@ public:
     failure();
   }
   span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
+  {
+    failure();
+    return {};
+  }
+  span<cf_t> get(span<cf_t>                          symbols,
+                 unsigned                            port,
+                 unsigned                            l,
+                 unsigned                            k_init,
+                 const bounded_bitset<MAX_RB * NRE>& mask) const override
   {
     failure();
     return {};

@@ -10,7 +10,6 @@
 
 #include "pdcch_encoder_impl.h"
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/srsvec/binary.h"
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/copy.h"
@@ -74,15 +73,13 @@ void pdcch_encoder_impl::encode(span<uint8_t> encoded, span<const uint8_t> data,
   uint16_t K = data.size() + CRC_LEN;
   code->set(K, config.E, polar_code::NMAX_LOG - 1, polar_code_ibil::not_present);
 
-  // Attach CRC
-  // Allocate extra L bits for leading 1s used in CRC calculation according to TS 38.312 section 7.3.2
-  static_vector<uint8_t, MAX_K + CRC_LEN> c(K + CRC_LEN);
-  span<uint8_t>                           c_span{c};
-  crc_attach(c_span, data, config.rnti);
+  // Attach CRC. Allocate extra L bits for leading 1s used in CRC calculation according to TS38.312 Section 7.3.2.
+  span<uint8_t> c = span<uint8_t>(temp_c).first(K + CRC_LEN);
+  crc_attach(c, data, config.rnti);
 
   // Encode
-  static_vector<uint8_t, polar_code::NMAX> d(code->get_N());
-  channel_coding(d, c_span);
+  span<uint8_t> d = span<uint8_t>(temp_d).first(code->get_N());
+  channel_coding(d, c);
 
   // Rate match
   rate_matching(encoded, d);

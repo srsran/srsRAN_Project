@@ -9,7 +9,6 @@
  */
 
 #include "pdcch_modulator_impl.h"
-#include "../resource_grid_helpers.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
 using namespace srsgnb;
@@ -40,14 +39,11 @@ void pdcch_modulator_impl::modulate(span<cf_t> d_pdcch, span<const uint8_t> b_ha
 void pdcch_modulator_impl::map(resource_grid_writer& grid, span<const cf_t> d_pdcch, const config_t& config)
 {
   // Resource element allocation within a resource block for PDCCH.
-  static const std::array<bool, NRE> re_mask = {
+  static const bounded_bitset<NRE> re_mask = {
       true, false, true, true, true, false, true, true, true, false, true, true};
 
-  // Initial subcarrier index.
-  unsigned rg_subc_mask_ref = get_rg_subc_mask_reference(config.rb_mask);
-
   // Create RG OFDM symbol mask. Identical for all OFDM symbols.
-  static_vector<bool, MAX_RB* NRE> rg_subc_mask = get_rg_subc_mask(config.rb_mask, re_mask);
+  bounded_bitset<MAX_RB* NRE> rg_subc_mask = config.rb_mask.kronecker_product<NRE>(re_mask);
 
   // Repeat the same process for all ports.
   for (uint8_t port_idx : config.ports) {
@@ -59,7 +55,7 @@ void pdcch_modulator_impl::map(resource_grid_writer& grid, span<const cf_t> d_pd
                   end_symbol_index = config.start_symbol_index + config.duration;
          symbol_idx != end_symbol_index;
          ++symbol_idx) {
-      d_buffer = grid.put(port_idx, symbol_idx, rg_subc_mask_ref, rg_subc_mask, d_buffer);
+      d_buffer = grid.put(port_idx, symbol_idx, 0, rg_subc_mask, d_buffer);
     }
   }
 }
@@ -69,11 +65,11 @@ void pdcch_modulator_impl::modulate(srsgnb::resource_grid_writer&            gri
                                     const srsgnb::pdcch_modulator::config_t& config)
 {
   // Apply scrambling.
-  static_vector<uint8_t, MAX_BITS> b_hat(data.size());
+  span<uint8_t> b_hat = span<uint8_t>(temp_b_hat).first(data.size());
   scramble(b_hat, data, config);
 
   // Apply modulation mapping.
-  static_vector<cf_t, MAX_RE> d_pdcch(data.size() / 2);
+  span<cf_t> d_pdcch = span<cf_t>(temp_d_pdcch).first(data.size() / 2);
   modulate(d_pdcch, b_hat, config.scaling);
 
   // Map to resource elements.

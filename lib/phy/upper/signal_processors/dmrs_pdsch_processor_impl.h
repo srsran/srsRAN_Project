@@ -60,19 +60,17 @@ private:
   /// This method implements the signal mapping as described in TS 38.211 section 7.4.1.1.2. In addition, it applies
   /// precoding if configured.
   ///
-  /// \param[out] grid            Provides the grid destination to map the signal.
-  /// \param[in] sequence         Provides the generated sequence for the given symbol.
-  /// \param[in] rg_subc_mask_ref Subcarrier index in the resource grid of the mask first element.
-  /// \param[in] rg_subc_mask     Indicates the subcarriers where \c sequence is mapped onto.
-  /// \param[in] symbol           Denotes the symbol index.
-  /// \param[in] config           Provides the required fields to map the signal.
-  /// \note The method expects \c base_mask to have \c NRE entries padding as \c false at the beginning.
-  void mapping(resource_grid_writer& grid,
-               span<const cf_t>      sequence,
-               unsigned              rg_subc_mask_ref,
-               span<const bool>      rg_subc_mask,
-               unsigned              symbol,
-               const config_t&       config);
+  /// \param[out] grid        Grid destination to map the signal.
+  /// \param[in] sequence     Generated sequence for the given symbol.
+  /// \param[in] rg_subc_mask Subcarriers where \c sequence is mapped onto, as a boolean mask.
+  /// \param[in] symbol       Symbol index.
+  /// \param[in] config       Configuration parameters.
+  /// \note The method expects \c base_mask to start with \c NRE entries of zero-padding (i.e., set to \c false).
+  void mapping(resource_grid_writer&               grid,
+               span<const cf_t>                    sequence,
+               const bounded_bitset<MAX_RB * NRE>& rg_subc_mask,
+               unsigned                            symbol,
+               const config_t&                     config);
 
   /// Temporal resource element storage, just in case weights or precoding is applied for each port.
   std::array<std::array<cf_t, MAX_DMRS_PER_SYMBOL>, MAX_PORTS> static_temp_re;

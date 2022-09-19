@@ -45,6 +45,11 @@ private:
   std::unique_ptr<polar_encoder>      encoder;
   std::unique_ptr<polar_rate_matcher> rm;
 
+  /// Temporary payload with CRC appended.
+  std::array<uint8_t, MAX_K + CRC_LEN> temp_c = {};
+  /// Temporary encoded data prior to rate matching.
+  std::array<uint8_t, polar_code::NMAX> temp_d = {};
+
   /// \brief CRC attachment
   ///
   /// \param[out] c     Payload with CRC attached
@@ -94,7 +99,7 @@ public:
   }
 
   // See interface for the documentation.
-  virtual void encode(span<uint8_t> encoded, span<const uint8_t> data, const config_t& config) override;
+  void encode(span<uint8_t> encoded, span<const uint8_t> data, const config_t& config) override;
 };
 
 } // namespace srsgnb

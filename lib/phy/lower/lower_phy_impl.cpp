@@ -30,6 +30,16 @@ public:
     srsvec::zero(symbols);
     return {};
   }
+
+  span<cf_t> get(span<cf_t> symbols,
+                 unsigned /**/,
+                 unsigned /**/,
+                 unsigned /**/,
+                 const bounded_bitset<MAX_RB * NRE>& /**/) const override
+  {
+    srsvec::zero(symbols);
+    return {};
+  }
   void get(span<cf_t> symbols, unsigned /**/, unsigned /**/, unsigned /**/) const override { srsvec::zero(symbols); }
 };
 

@@ -325,6 +325,46 @@ public:
     }
   }
 
+  /// \brief Kronecker product of the bitset with another bitset.
+  ///
+  /// Expands the bitset by a factor of \c other.size() replacing every \c true bit with the contents of \c other and
+  /// every \c false bit with \c other.size() \c false bits.
+  ///
+  /// \tparam Factor    Maximum expansion factor.
+  /// \param[in] other  Bitset used for expansion.
+  /// \return The result of the bitset product.
+  /// \remark The current implementation supports only a bitset containing one word. An assertion is triggered if \c
+  /// other contains more than one word.
+  template <unsigned Factor>
+  bounded_bitset<Factor * N> kronecker_product(const bounded_bitset<Factor>& other) const
+  {
+    static_assert(Factor <= bits_per_word,
+                  "The current algorithm does not support a filter containing more than one word.");
+
+    // Prepare an empty result.
+    bounded_bitset<Factor * N> result(size() * other.size());
+
+    for_each(0, size(), [&](unsigned bit_index) {
+      unsigned bitpos = bit_index * Factor;
+      word_t   word   = other.buffer[0];
+
+      unsigned bit_offset = bitpos % bits_per_word;
+      unsigned word_index = bitpos / bits_per_word;
+
+      result.buffer[word_index] |= (word << bit_offset);
+      if (bit_offset && (bit_offset + other.size() > bits_per_word)) {
+        result.buffer[word_index + 1] |= (word >> (bits_per_word - bit_offset));
+      }
+    });
+
+    srsgnb_assert(count() * other.count() == result.count(),
+                  "The resultant number of ones is not consistent with inputs. It expected {} but got {}.",
+                  count() * other.count(),
+                  result.count());
+
+    return result;
+  }
+
   /// \brief Check if bit with provided index is set to true.
   /// \param[in] pos Position in bitset.
   /// \return Returns true if bit at position pos is set.
@@ -445,14 +485,6 @@ public:
         continue;
       }
 
-      if (w == static_cast<word_t>(std::numeric_limits<word_t>::max())) {
-        for (size_t bitpos = 0; bitpos != bits_per_word; ++bitpos) {
-          size_t j = i * bits_per_word + bitpos;
-          function(j);
-        }
-        continue;
-      }
-
       if (i == startword) {
         w &= mask_msb_zeros<word_t>(startpos % bits_per_word);
       }
@@ -461,11 +493,77 @@ public:
         w &= mask_lsb_zeros<word_t>(endpos % bits_per_word);
       }
 
-      for (size_t bitpos = i * bits_per_word; w != static_cast<word_t>(0); ++bitpos) {
-        if ((w & static_cast<word_t>(1)) != static_cast<word_t>(0)) {
-          function(bitpos);
+      // Process presets of 4 bits.
+      unsigned bitpos = i * bits_per_word;
+      for (; w != 0; w = w >> 4, bitpos += 4) {
+        switch (w & 0xf) {
+          case 0B0000:
+            // All bits are false, skip.
+            break;
+          case 0B0001:
+            function(bitpos + 0);
+            break;
+          case 0B0010:
+            function(bitpos + 1);
+            break;
+          case 0B0011:
+            function(bitpos + 0);
+            function(bitpos + 1);
+            break;
+          case 0B0100:
+            function(bitpos + 2);
+            break;
+          case 0B0101:
+            function(bitpos + 0);
+            function(bitpos + 2);
+            break;
+          case 0B0110:
+            function(bitpos + 1);
+            function(bitpos + 2);
+            break;
+          case 0B0111:
+            function(bitpos + 0);
+            function(bitpos + 1);
+            function(bitpos + 2);
+            break;
+          case 0B1000:
+            function(bitpos + 3);
+            break;
+          case 0B1001:
+            function(bitpos + 0);
+            function(bitpos + 3);
+            break;
+          case 0B1010:
+            function(bitpos + 1);
+            function(bitpos + 3);
+            break;
+          case 0B1011:
+            function(bitpos + 0);
+            function(bitpos + 1);
+            function(bitpos + 3);
+            break;
+          case 0B1100:
+            function(bitpos + 2);
+            function(bitpos + 3);
+            break;
+          case 0B1101:
+            function(bitpos + 0);
+            function(bitpos + 2);
+            function(bitpos + 3);
+            break;
+          case 0B1110:
+            function(bitpos + 1);
+            function(bitpos + 2);
+            function(bitpos + 3);
+            break;
+          case 0B1111:
+          default:
+            function(bitpos + 0);
+            function(bitpos + 1);
+            function(bitpos + 2);
+            function(bitpos + 3);
+            break;
         }
-        w = (w >> static_cast<word_t>(1));
       }
     }
   }
