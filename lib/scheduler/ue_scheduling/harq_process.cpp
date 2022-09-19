@@ -57,7 +57,7 @@ void harq_process::reset()
 bool harq_process::new_tx_common(slot_point       slot_tx_,
                                  slot_point       slot_ack_,
                                  const prb_grant& grant,
-                                 uint32_t         mcs,
+                                 sch_mcs_index    mcs,
                                  uint32_t         max_retx_)
 {
   if (not empty()) {
@@ -84,7 +84,7 @@ bool harq_process::set_tbs(uint32_t tbs)
   return true;
 }
 
-bool harq_process::set_mcs(uint32_t mcs)
+bool harq_process::set_mcs(sch_mcs_index mcs)
 {
   if (empty() or nof_retx() > 0) {
     return false;
@@ -125,7 +125,7 @@ dl_harq_process::dl_harq_process(harq_id_t id_) : harq_process(id_) {}
 bool dl_harq_process::new_tx(slot_point       slot_tx,
                              slot_point       slot_ack,
                              const prb_grant& grant,
-                             uint32_t         mcs,
+                             sch_mcs_index    mcs,
                              uint32_t         max_retx)
 {
   return harq_process::new_tx_common(slot_tx, slot_ack, grant, mcs, max_retx);
@@ -136,9 +136,9 @@ bool dl_harq_process::new_retx(slot_point slot_tx, slot_point slot_ack, const pr
   return harq_process::new_retx_common(slot_tx, slot_ack, grant);
 }
 
-bool ul_harq_process::new_tx(slot_point slot_tx, const prb_grant& grant, uint32_t mcs_, uint32_t max_retx)
+bool ul_harq_process::new_tx(slot_point slot_tx, const prb_grant& grant, sch_mcs_index mcs, uint32_t max_retx)
 {
-  return harq_process::new_tx_common(slot_tx, slot_tx, grant, mcs_, max_retx);
+  return harq_process::new_tx_common(slot_tx, slot_tx, grant, mcs, max_retx);
 }
 
 bool ul_harq_process::new_retx(slot_point slot_tx, const prb_grant& grant)

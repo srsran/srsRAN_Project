@@ -52,6 +52,8 @@ public:
   void run_slot(cell_resource_allocator& res_alloc);
 
 private:
+  static constexpr unsigned rar_mcs_index = 0, msg3_mcs_index = 0; // TODO: Parameterize.
+
   struct pending_rar_t {
     rnti_t                                                    ra_rnti = INVALID_RNTI;
     slot_point                                                prach_slot_rx;
@@ -113,6 +115,14 @@ private:
   };
   std::vector<rar_param_cached_data> rar_data;
   sch_mcs_description                rar_mcs_config;
+
+  /// Pre-cached information related to Msg3 for different PUSCH time resources.
+  struct msg3_param_cached_data {
+    dmrs_information dmrs_info;
+    pdsch_prbs_tbs   prbs_tbs;
+  };
+  std::vector<msg3_param_cached_data> msg3_data;
+  sch_mcs_description                 msg3_mcs_config;
 
   // variables
   slot_event_list<rach_indication_message> pending_rachs;

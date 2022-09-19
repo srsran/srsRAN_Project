@@ -214,12 +214,12 @@ enum test_mode { acked, max_retx_reached, invalid_retx_params };
 /// Test DL HARQ process in different states: empty, allocated and waiting for ACK, allocated with pending reTx
 void test_dl_harq_proc(test_mode tmode)
 {
-  constexpr unsigned  harq_delay   = 4;
-  constexpr unsigned  tx_gnb_delay = 2;
-  constexpr unsigned  max_retx     = 1;
-  constexpr harq_id_t pid          = to_harq_id(1);
-  constexpr unsigned  mcs          = 8;
-  constexpr unsigned  tbs          = 1224;
+  constexpr unsigned      harq_delay   = 4;
+  constexpr unsigned      tx_gnb_delay = 2;
+  constexpr unsigned      max_retx     = 1;
+  constexpr harq_id_t     pid          = to_harq_id(1);
+  constexpr sch_mcs_index mcs          = 8;
+  constexpr unsigned      tbs          = 1224;
 
   dl_harq_process dl_proc{pid};
   prb_grant       prbgrant{prb_interval{0, 60}};

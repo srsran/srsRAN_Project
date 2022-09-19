@@ -12,6 +12,7 @@
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/ran/sch_mcs.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/scheduler/sched_consts.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
@@ -42,7 +43,7 @@ public:
   bool set_tbs(uint32_t tbs);
 
   // NOTE: Has to be used before first tx is dispatched
-  bool set_mcs(uint32_t mcs);
+  bool set_mcs(sch_mcs_index mcs);
 
   /// Checks whether the HARQ process has no Transport Block currently stored.
   bool empty() const
@@ -66,7 +67,7 @@ public:
   uint32_t         max_nof_retx() const { return max_retx; }
   uint32_t         tbs(unsigned tb_index) const { return tb[tb_index].tbs; }
   bool             ndi(unsigned tb_index) const { return tb[tb_index].ndi; }
-  uint32_t         mcs(unsigned tb_index) const { return tb[tb_index].mcs; }
+  sch_mcs_index    mcs(unsigned tb_index) const { return tb[tb_index].mcs; }
   const prb_grant& prbs() const { return prbs_; }
   slot_point       harq_slot_tx() const { return slot_tx; }
   slot_point       harq_slot_ack() const { return slot_ack; }
@@ -76,17 +77,18 @@ public:
   const harq_id_t pid;
 
 protected:
-  bool new_tx_common(slot_point slot_tx, slot_point slot_ack, const prb_grant& grant, uint32_t mcs, uint32_t max_retx);
+  bool
+  new_tx_common(slot_point slot_tx, slot_point slot_ack, const prb_grant& grant, sch_mcs_index mcs, uint32_t max_retx);
   bool new_retx_common(slot_point slot_tx, slot_point slot_ack, const prb_grant& grant);
   bool new_retx_common(slot_point slot_tx, slot_point slot_ack);
 
   struct tb_t {
     enum class state_t { empty, pending_retx, waiting_ack } state = state_t::empty;
-    bool     ack_state                                            = false;
-    bool     ndi                                                  = false;
-    uint32_t n_rtx                                                = 0;
-    uint32_t mcs                                                  = 0;
-    uint32_t tbs                                                  = 0;
+    bool          ack_state                                       = false;
+    bool          ndi                                             = false;
+    uint32_t      n_rtx                                           = 0;
+    sch_mcs_index mcs                                             = 0;
+    uint32_t      tbs                                             = 0;
   };
 
   uint32_t max_retx = 1;
@@ -107,7 +109,7 @@ public:
 
   /// \brief Called on every new transmission. It marks this HARQ process as busy and stores respective TB
   /// information.
-  bool new_tx(slot_point slot_tx, slot_point slot_ack, const prb_grant& grant, uint32_t mcs, uint32_t max_retx);
+  bool new_tx(slot_point slot_tx, slot_point slot_ack, const prb_grant& grant, sch_mcs_index mcs, uint32_t max_retx);
 
   /// \brief Called on every HARQ retransmission. It updates the HARQ internal state accordingly.
   bool new_retx(slot_point slot_tx, slot_point slot_ack, const prb_grant& grant);
@@ -120,7 +122,7 @@ public:
 
   /// \brief Called on every new transmission. It marks this HARQ process as busy and stores respective TB
   /// information.
-  bool new_tx(slot_point slot_tx, const prb_grant& grant, uint32_t mcs, uint32_t max_retx);
+  bool new_tx(slot_point slot_tx, const prb_grant& grant, sch_mcs_index mcs, uint32_t max_retx);
 
   /// \brief Called on every HARQ retransmission. It updates the HARQ internal state accordingly.
   bool new_retx(slot_point slot_tx, const prb_grant& grant);
