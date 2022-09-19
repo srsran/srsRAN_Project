@@ -50,7 +50,7 @@ void harq_process::reset()
   tb[0].ack_state = false;
   tb[0].state     = tb_t::state_t::empty;
   tb[0].n_rtx     = 0;
-  tb[0].mcs       = std::numeric_limits<uint32_t>::max();
+  tb[0].mcs       = 31;
   tb[0].tbs       = std::numeric_limits<uint32_t>::max();
 }
 
