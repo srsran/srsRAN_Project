@@ -34,10 +34,10 @@ public:
 };
 
 /// Interface used by NG to inform about events.
-class ng_event_handler
+class ngc_event_handler
 {
 public:
-  virtual ~ng_event_handler()           = default;
+  virtual ~ngc_event_handler()          = default;
   virtual void handle_connection_loss() = 0;
 };
 
@@ -112,7 +112,7 @@ public:
 
 /// Combined entry point for the NGAP object.
 class ngap_interface : public ngc_message_handler,
-                       public ng_event_handler,
+                       public ngc_event_handler,
                        public ngap_connection_manager,
                        public ngap_nas_message_handler
 {
