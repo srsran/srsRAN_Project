@@ -54,8 +54,9 @@ constexpr uint32_t pdcp_window_size(pdcp_sn_size sn_size)
 class pdcp_entity_tx_rx_base
 {
 protected:
-  explicit pdcp_entity_tx_rx_base(lcid_t lcid, pdcp_sn_size sn_size) :
+  explicit pdcp_entity_tx_rx_base(lcid_t lcid, pdcp_rb_type rb_type, pdcp_sn_size sn_size) :
     lcid(lcid),
+    rb_type(rb_type),
     hdr_len_bytes((pdcp_data_pdu_header_size(sn_size))),
     window_size(pdcp_window_size(sn_size)),
     sn_size(to_number(sn_size))
@@ -63,6 +64,13 @@ protected:
   }
 
   lcid_t lcid = {};
+
+  /*
+   * RB helpers
+   */
+  const pdcp_rb_type rb_type;
+  bool               is_srb() { return rb_type == pdcp_rb_type::srb; }
+  bool               is_drb() { return rb_type == pdcp_rb_type::drb; }
 
   /*
    * Header and window helpers

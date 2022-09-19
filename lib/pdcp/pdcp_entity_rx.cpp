@@ -62,7 +62,81 @@ void pdcp_entity_rx::handle_pdu(byte_buffer buf)
   }
   rcvd_count = COUNT(rcvd_hfn, rcvd_sn);
 
-  upper_dn.on_new_sdu(std::move(buf));
+  /*
+   * TS 38.323, section 5.8: Deciphering
+   *
+   * The data unit that is ciphered is the MAC-I and the
+   * data part of the PDCP Data PDU except the
+   * SDAP header and the SDAP Control PDU if included in the PDCP SDU.
+   */
+  if (ciphering_enabled == pdcp_ciphering_enabled::enabled) {
+    // cipher_decrypt(
+    //     &pdu->msg[cfg.hdr_len_bytes], pdu->N_bytes - cfg.hdr_len_bytes, rcvd_count, &pdu->msg[cfg.hdr_len_bytes]);
+  }
+
+  /*
+   * Extract MAC-I:
+   * Always extract from SRBs, only extract from DRBs if integrity is enabled
+   */
+  // sec_mac mac = {};
+  if (is_srb() || (is_drb() && (integrity_enabled == pdcp_integrity_enabled::enabled))) {
+    // extract_mac(pdu, mac);
+  }
+
+  // After checking the integrity, we can discard the header.
+  // discard_data_header(buf);
+
+  /*
+   * Check valid rcvd_count:
+   *
+   * - if RCVD_COUNT < RX_DELIV; or
+   * - if the PDCP Data PDU with COUNT = RCVD_COUNT has been received before:
+   *   - discard the PDCP Data PDU;
+   */
+  if (rcvd_count < st.rx_deliv) {
+    logger.log_debug("Out-of-order after time-out, duplicate or COUNT wrap-around");
+    logger.log_debug("RCVD_COUNT %u, RCVD_COUNT %u", rcvd_count, st.rx_deliv);
+    return; // Invalid count, drop.
+  }
+
+  // Check if PDU has been received
+  if (reorder_queue.find(rcvd_count) != reorder_queue.end()) {
+    logger.log_debug("Duplicate PDU, dropping");
+    return; // PDU already present, drop.
+  }
+
+  // Store PDU in reception buffer
+  reorder_queue[rcvd_count] = std::move(buf);
+
+  // Update RX_NEXT
+  if (rcvd_count >= st.rx_next) {
+    st.rx_next = rcvd_count + 1;
+  }
+
+  // TODO if out-of-order configured, submit to upper layer
+
+  if (rcvd_count == st.rx_deliv) {
+    // Deliver to upper layers in ascending order of associated COUNT
+    // deliver_all_consecutive_counts();
+    upper_dn.on_new_sdu(std::move(buf)); // FIXME
+  }
+
+  // Handle reordering timers
+  /*
+  if (reordering_timer.is_running() and rx_deliv >= rx_reord) {
+    reordering_timer.stop();
+    logger.debug("Stopped t-Reordering - RX_DELIV=%d, RX_REORD=%ld", rx_deliv, rx_reord);
+  }
+
+  if (cfg.t_reordering != pdcp_t_reordering_t::infinity) {
+    if (not reordering_timer.is_running() and rx_deliv < rx_next) {
+      rx_reord = rx_next;
+      reordering_timer.run();
+      logger.debug("Started t-Reordering - RX_REORD=%ld, RX_DELIV=%ld, RX_NEXT=%ld", rx_reord, rx_deliv, rx_next);
+    }
+  }*/
+
+  logger.log_debug("Rx PDCP state - RX_NEXT={}, RX_DELIV={}, RX_REORD={}", st.rx_next, st.rx_deliv, st.rx_reord);
 }
 
 bool pdcp_entity_rx::read_data_pdu_header(const byte_buffer& buf, uint32_t& sn) const

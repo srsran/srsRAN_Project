@@ -41,7 +41,7 @@ public:
                  pdcp_config::pdcp_tx_config     cfg_,
                  pdcp_tx_lower_notifier&         lower_dn,
                  pdcp_tx_upper_control_notifier& upper_cn) :
-    pdcp_entity_tx_rx_base(lcid, cfg_.sn_size),
+    pdcp_entity_tx_rx_base(lcid, cfg_.rb_type, cfg_.sn_size),
     logger("PDCP", ue_index, lcid),
     cfg(cfg_),
     lower_dn(lower_dn),

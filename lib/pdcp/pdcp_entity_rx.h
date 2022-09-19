@@ -16,6 +16,7 @@
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/ran/bearer_logger.h"
+#include <map>
 
 namespace srsgnb {
 
@@ -43,7 +44,10 @@ public:
                  lcid_t                       lcid,
                  pdcp_config::pdcp_rx_config  cfg_,
                  pdcp_rx_upper_data_notifier& upper_dn_) :
-    pdcp_entity_tx_rx_base(lcid, cfg_.sn_size), logger("PDCP", ue_index, lcid), cfg(cfg_), upper_dn(upper_dn_)
+    pdcp_entity_tx_rx_base(lcid, cfg_.rb_type, cfg_.sn_size),
+    logger("PDCP", ue_index, lcid),
+    cfg(cfg_),
+    upper_dn(upper_dn_)
   {
   }
 
@@ -78,6 +82,8 @@ private:
   pdcp_ciphering_enabled ciphering_enabled = pdcp_ciphering_enabled::no;
 
   pdcp_rx_state st = {};
+
+  std::map<uint32_t, byte_buffer> reorder_queue;
 
   /*
    * Notifiers
