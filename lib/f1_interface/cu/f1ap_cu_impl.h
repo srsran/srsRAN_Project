@@ -23,7 +23,7 @@ namespace srs_cu_cp {
 
 class f1ap_event_manager;
 
-class f1ap_cu_impl final : public f1_interface
+class f1ap_cu_impl final : public f1c_interface
 {
 public:
   f1ap_cu_impl(f1c_message_notifier&       f1c_pdu_notifier_,

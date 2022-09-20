@@ -28,7 +28,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
   // Generate F1SetupRequest
   f1c_message f1setup_msg = generate_valid_f1_setup_request();
 
-  f1ap->handle_message(f1setup_msg);
+  f1c->handle_message(f1setup_msg);
 
   // Action 2: Check if F1SetupRequest was forwarded to DU processor
   ASSERT_EQ(du_processor_notifier->last_f1_setup_request_msg.request->gnb_du_id.value, 0x11U);
@@ -37,7 +37,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
   test_logger.info("TEST: Transmit F1SetupResponse message...");
   f1_setup_response_message msg = {};
   msg.success                   = true;
-  f1ap->handle_f1_setup_response(msg);
+  f1c->handle_f1_setup_response(msg);
 
   // Check the generated PDU is indeed the F1 Setup response
   ASSERT_EQ(asn1::f1ap::f1_ap_pdu_c::types_opts::options::successful_outcome,
@@ -58,7 +58,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_invalid_then_reject_du)
   setup_req->gnb_du_served_cells_list.id      = ASN1_F1AP_ID_G_NB_DU_SERVED_CELLS_LIST;
   setup_req->gnb_du_served_cells_list.crit    = asn1::crit_opts::reject;
 
-  f1ap->handle_message(f1setup_msg);
+  f1c->handle_message(f1setup_msg);
 
   // Action 2: Check if F1SetupRequest was forwarded to DU processor
   ASSERT_EQ(du_processor_notifier->last_f1_setup_request_msg.request->gnb_du_id.value, 0x11U);
@@ -67,7 +67,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_invalid_then_reject_du)
   test_logger.info("TEST: Transmit F1SetupFailure message...");
   f1_setup_response_message msg = {};
   msg.success                   = false;
-  f1ap->handle_f1_setup_response(msg);
+  f1c->handle_f1_setup_response(msg);
 
   // Check the generated PDU is indeed the F1 Setup failure
   ASSERT_EQ(asn1::f1ap::f1_ap_pdu_c::types_opts::options::unsuccessful_outcome,

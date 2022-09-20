@@ -210,16 +210,16 @@ public:
   virtual int get_nof_ues() = 0;
 };
 
-/// Combined entry point for F1C/U handling.
-class f1_interface : public f1c_message_handler,
-                     public f1c_event_handler,
-                     public f1c_rrc_message_handler,
-                     public f1c_connection_manager,
-                     public f1c_ue_context_manager,
-                     public f1c_statistics_handler
+/// Combined entry point for F1C handling.
+class f1c_interface : public f1c_message_handler,
+                      public f1c_event_handler,
+                      public f1c_rrc_message_handler,
+                      public f1c_connection_manager,
+                      public f1c_ue_context_manager,
+                      public f1c_statistics_handler
 {
 public:
-  virtual ~f1_interface() = default;
+  virtual ~f1c_interface() = default;
 
   /// \brief Update a notifier to higher layers for a UE.
   /// \param[in] ue_index The index of the UE.

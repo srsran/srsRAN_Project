@@ -34,8 +34,8 @@ du_processor_impl::du_processor_impl(const du_processor_config_t cfg_,
     ue_ctrl_loop.emplace(i, number_of_pending_procedures);
   }
 
-  // create f1ap
-  f1ap = create_f1ap(f1c_notifier, f1ap_ev_notifier, f1c_du_mgmt_notifier);
+  // create f1c
+  f1c = create_f1c(f1c_notifier, f1ap_ev_notifier, f1c_du_mgmt_notifier);
   f1ap_ev_notifier.connect_du_processor(*this);
 
   // create RRC
@@ -125,7 +125,7 @@ void du_processor_impl::send_f1_setup_response(const du_processor_context& du_ct
   f1_setup_response_message response;
   response.success = true;
   fill_asn1_f1_setup_response(response.response, cfg.name, cfg.rrc_version, cell_db);
-  f1ap->handle_f1_setup_response(response);
+  f1c->handle_f1_setup_response(response);
 }
 
 void du_processor_impl::send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause)
@@ -133,7 +133,7 @@ void du_processor_impl::send_f1_setup_failure(asn1::f1ap::cause_c::types::option
   f1_setup_response_message response;
   response.success = false;
   response.failure->cause->set(cause);
-  f1ap->handle_f1_setup_response(response);
+  f1c->handle_f1_setup_response(response);
 }
 
 du_cell_index_t du_processor_impl::get_next_du_cell_index()
@@ -214,7 +214,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
   if (msg.srb_id == srb_id_t::srb0) {
     // create direct connection with UE manager to RRC adapter
     srb.rx_notifier     = std::make_unique<f1ap_rrc_ue_adapter>(ue_ctxt->rrc->get_ul_ccch_pdu_handler());
-    srb.rrc_tx_notifier = std::make_unique<rrc_ue_f1ap_adapter>(*f1ap, ue_ctxt->ue_index);
+    srb.rrc_tx_notifier = std::make_unique<rrc_ue_f1ap_adapter>(*f1c, ue_ctxt->ue_index);
 
     // update notifier in RRC
     ue_ctxt->rrc->connect_srb_notifier(msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier.get());
@@ -224,7 +224,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
 
     // add adapter for PDCP to talk to F1AP (Tx) and RRC (Rx)
     srb.pdcp_context->pdcp_tx_notifier =
-        std::make_unique<pdcp_du_processor_adapter>(*f1ap, ue_ctxt->ue_index, msg.srb_id);
+        std::make_unique<pdcp_du_processor_adapter>(*f1c, ue_ctxt->ue_index, msg.srb_id);
     srb.pdcp_context->rrc_rx_notifier = std::make_unique<pdcp_rrc_ue_adapter>(ue_ctxt->rrc->get_ul_dcch_pdu_handler());
 
     // prepare PDCP creation message
@@ -241,7 +241,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     // create PDCP entity
     srb.pdcp_context->pdcp_bearer = create_pdcp_entity(srb_pdcp);
 
-    // created adapters between F1AP to PDCP (Rx) and RRC to PDCP (Tx)
+    // created adapters between F1C to PDCP (Rx) and RRC to PDCP (Tx)
     srb.rx_notifier = std::make_unique<f1ap_pdcp_adapter>(srb.pdcp_context->pdcp_bearer->get_rx_lower_interface());
     srb.rrc_tx_notifier =
         std::make_unique<rrc_ue_pdcp_adapter>(srb.pdcp_context->pdcp_bearer->get_tx_upper_data_interface());
@@ -250,7 +250,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     ue_ctxt->rrc->connect_srb_notifier(msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier.get());
 
     // update notifier in F1AP
-    f1ap->connect_srb_notifier(
+    f1c->connect_srb_notifier(
         ue_ctxt->ue_index, msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rx_notifier.get());
   } else {
     logger.error("Couldn't create SRB{}.", msg.srb_id);
@@ -268,7 +268,7 @@ void du_processor_impl::handle_ue_context_release_command(const ue_context_relea
 
     ue_index_t result_idx;
 
-    CORO_AWAIT_VALUE(result_idx, f1ap->handle_ue_context_release_command(f1ap_msg));
+    CORO_AWAIT_VALUE(result_idx, f1c->handle_ue_context_release_command(f1ap_msg));
 
     if (result_idx == f1ap_msg.ue_index) {
       logger.info("Removed UE(ue_index={}) from F1AP.", f1ap_msg.ue_index);

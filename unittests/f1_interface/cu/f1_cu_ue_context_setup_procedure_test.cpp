@@ -21,7 +21,7 @@ TEST_F(f1ap_cu_test, when_ue_setup_response_received_then_procedure_successful)
   // Action 1: Launch UE Context Setup procedure
   f1ap_ue_context_setup_request_message request_msg = {};
   test_logger.info("Lauch ue context setup procedure...");
-  async_task<f1ap_ue_context_setup_response_message>         t = f1ap->handle_ue_context_setup_request(request_msg);
+  async_task<f1ap_ue_context_setup_response_message>         t = f1c->handle_ue_context_setup_request(request_msg);
   lazy_task_launcher<f1ap_ue_context_setup_response_message> t_launcher(t);
 
   // Status: DU received UE Context Setup Request message.
@@ -35,7 +35,7 @@ TEST_F(f1ap_cu_test, when_ue_setup_response_received_then_procedure_successful)
   // Action 2: F1 UE Context Setup Response received.
   f1c_message ue_context_setup_response = generate_ue_context_setup_response_msg(0, 41255);
   test_logger.info("Injecting UEContextSetupResponse");
-  f1ap->handle_message(ue_context_setup_response);
+  f1c->handle_message(ue_context_setup_response);
 
   EXPECT_TRUE(t.ready());
   EXPECT_TRUE(t.get().success);
@@ -48,7 +48,7 @@ TEST_F(f1ap_cu_test, when_ue_setup_failure_received_then_procedure_unsuccessful)
   // Action 1: Launch UE Context Setup procedure
   f1ap_ue_context_setup_request_message request_msg = {};
   test_logger.info("Lauch ue context setup procedure...");
-  async_task<f1ap_ue_context_setup_response_message>         t = f1ap->handle_ue_context_setup_request(request_msg);
+  async_task<f1ap_ue_context_setup_response_message>         t = f1c->handle_ue_context_setup_request(request_msg);
   lazy_task_launcher<f1ap_ue_context_setup_response_message> t_launcher(t);
 
   // Status: DU received UE Context Setup Request message.
@@ -62,7 +62,7 @@ TEST_F(f1ap_cu_test, when_ue_setup_failure_received_then_procedure_unsuccessful)
   // Action 2: F1 UE Context Setup Failure received.
   f1c_message ue_context_setup_failure = generate_ue_context_setup_failure_msg(0, 41255);
   test_logger.info("Injecting UEContextSetupFailure");
-  f1ap->handle_message(ue_context_setup_failure);
+  f1c->handle_message(ue_context_setup_failure);
 
   EXPECT_TRUE(t.ready());
   EXPECT_FALSE(t.get().success);

@@ -43,8 +43,8 @@ public:
   // getter functions
 
   du_processor_context&   get_context() override { return context; };
-  f1c_message_handler&    get_f1c_message_handler() override { return *f1ap; };
-  f1c_statistics_handler& get_f1c_statistics_handler() override { return *f1ap; };
+  f1c_message_handler&    get_f1c_message_handler() override { return *f1c; };
+  f1c_statistics_handler& get_f1c_statistics_handler() override { return *f1c; };
 
   size_t get_nof_ues() override { return ue_mng.get_nof_ues(); };
 
@@ -106,7 +106,7 @@ private:
   timer_manager timer_db;
 
   // Components
-  std::unique_ptr<f1_interface>         f1ap;
+  std::unique_ptr<f1c_interface>        f1c;
   std::unique_ptr<rrc_du_ue_repository> rrc;
 
   ue_manager ue_mng;

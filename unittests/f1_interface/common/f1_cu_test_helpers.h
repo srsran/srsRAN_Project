@@ -33,7 +33,7 @@ protected:
     du_processor_notifier = std::make_unique<dummy_f1c_du_processor_notifier>();
     f1c_du_mgmt_notifier  = std::make_unique<dummy_f1c_du_management_notifier>(nullptr);
 
-    f1ap = create_f1ap(*f1c_pdu_notifier, *du_processor_notifier, *f1c_du_mgmt_notifier);
+    f1c = create_f1c(*f1c_pdu_notifier, *du_processor_notifier, *f1c_du_mgmt_notifier);
   }
 
   void TearDown() override
@@ -42,7 +42,7 @@ protected:
     srslog::flush();
   }
 
-  std::unique_ptr<f1_interface>                     f1ap;
+  std::unique_ptr<f1c_interface>                    f1c;
   std::unique_ptr<dummy_f1c_pdu_notifier>           f1c_pdu_notifier;
   std::unique_ptr<dummy_f1c_du_processor_notifier>  du_processor_notifier;
   std::unique_ptr<dummy_f1c_du_management_notifier> f1c_du_mgmt_notifier;
