@@ -41,6 +41,7 @@ public:
     // Tx/Rx interconnect
     tx_am->set_status_provider(rx_am.get());
     rx_am->set_status_handler(tx_am.get());
+    rx_am->set_status_notifier(tx_am.get());
 
     // Store entities
     tx = std::move(tx_am);

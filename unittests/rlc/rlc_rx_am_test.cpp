@@ -18,7 +18,9 @@
 using namespace srsgnb;
 
 /// Mocking class of the surrounding layers invoked by the RLC AM Rx entity.
-class rlc_rx_am_test_frame : public rlc_rx_upper_layer_data_notifier, public rlc_tx_am_status_handler
+class rlc_rx_am_test_frame : public rlc_rx_upper_layer_data_notifier,
+                             public rlc_tx_am_status_handler,
+                             public rlc_tx_am_status_notifier
 {
 public:
   std::queue<byte_buffer_slice_chain> sdu_queue;
@@ -85,6 +87,7 @@ protected:
 
     // Bind AM Tx/Rx interconnect
     rlc->set_status_handler(tester.get());
+    rlc->set_status_notifier(tester.get());
   }
 
   /// \brief Creates a list of RLC AMD PDU(s) containing either one RLC SDU or multiple RLC SDU segments

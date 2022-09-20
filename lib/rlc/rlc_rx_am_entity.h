@@ -82,6 +82,8 @@ private:
 
   /// Status handler
   rlc_tx_am_status_handler* status_handler = nullptr;
+  /// Status notifier
+  rlc_tx_am_status_notifier* status_notifier = nullptr;
   /// Indicates whether a status report is required
   std::atomic<bool> do_status = {false};
 
@@ -124,6 +126,7 @@ public:
 
   // Rx/Tx interconnect
   void set_status_handler(rlc_tx_am_status_handler* status_handler_) { status_handler = status_handler_; }
+  void set_status_notifier(rlc_tx_am_status_notifier* status_notifier_) { status_notifier = status_notifier_; }
 
   // Interfaces for lower layers
   void handle_pdu(byte_buffer_slice buf) override;

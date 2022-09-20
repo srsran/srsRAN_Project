@@ -30,9 +30,7 @@ public:
 };
 
 /// This interface represents the status PDU entry point of a RLC TX AM entity.
-/// The RLC RX AM entity uses this class to
-/// - forward received status PDUs to the RLC TX AM entity
-/// - inform the RLC TX AM entity that a status report is required (either by timeout or by request if the other peer
+/// The RLC RX AM entity uses this class to forward received status PDUs to the RLC TX AM entity
 class rlc_tx_am_status_handler
 {
 public:
@@ -41,6 +39,14 @@ public:
   /// \brief Status PDU handler for TX entity
   /// \param status The status PDU to be processed by the RLC TX AM entity
   virtual void handle_status_pdu(rlc_am_status_pdu status) = 0;
+};
+
+/// This interface represents the RLC TX AM entity that the RLC RX AM must notify to inform the RLC TX AM entity that a
+/// status report is required (either by timeout or by request of the other peer)
+class rlc_tx_am_status_notifier
+{
+public:
+  virtual ~rlc_tx_am_status_notifier() = default;
 
   /// \brief Informs the TX entity that a status report is required
   virtual void on_status_report_required() = 0;

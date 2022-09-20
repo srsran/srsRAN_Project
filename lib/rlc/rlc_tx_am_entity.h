@@ -61,7 +61,7 @@ struct rlc_tx_am_state {
   uint32_t byte_without_poll = 0;
 };
 
-class rlc_tx_am_entity : public rlc_tx_entity, public rlc_tx_am_status_handler
+class rlc_tx_am_entity : public rlc_tx_entity, public rlc_tx_am_status_handler, public rlc_tx_am_status_notifier
 {
 private:
   // Config storage
