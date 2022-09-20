@@ -102,15 +102,15 @@ public:
   virtual ~ngc_nas_message_handler() = default;
 
   /// \brief Initiates Initial UE message procedure as per TS 38.413 section 8.6.1.
-  /// \param[in] msg The ngap initial UE message to transmit.
+  /// \param[in] msg The initial UE message to transmit.
   virtual void handle_initial_ue_message(const ngap_initial_ue_message& msg) = 0;
 
   /// \brief Initiates Uplink NAS transport procedure as per TS 38.413 section 8.6.3.
-  /// \param[in] msg The ngap ul nas transfer message to transmit.
+  /// \param[in] msg The ul nas transfer message to transmit.
   virtual void handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg) = 0;
 };
 
-/// Combined entry point for the NGAP object.
+/// Combined entry point for the NGC object.
 class ngc_interface : public ngc_message_handler,
                       public ngc_event_handler,
                       public ngc_connection_manager,

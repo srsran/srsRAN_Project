@@ -12,7 +12,7 @@
 
 #include "cu_cp_types.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
-#include "srsgnb/ngap/ngap.h"
+#include "srsgnb/ngap/ngc.h"
 #include <string>
 
 namespace srsgnb {

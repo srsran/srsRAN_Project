@@ -12,7 +12,7 @@
 
 #include "ngap_ue.h"
 #include "srsgnb/asn1/ngap.h"
-#include "srsgnb/ngap/ngap.h"
+#include "srsgnb/ngap/ngc.h"
 #include "srsgnb/support/timers.h"
 #include <memory>
 

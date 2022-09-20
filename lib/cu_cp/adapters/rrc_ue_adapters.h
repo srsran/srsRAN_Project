@@ -14,7 +14,7 @@
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
-#include "srsgnb/ngap/ngap.h"
+#include "srsgnb/ngap/ngc.h"
 #include "srsgnb/rrc/rrc.h"
 
 namespace srsgnb {

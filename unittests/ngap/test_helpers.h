@@ -12,7 +12,7 @@
 
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/ngap/ngap.h"
+#include "srsgnb/ngap/ngc.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {

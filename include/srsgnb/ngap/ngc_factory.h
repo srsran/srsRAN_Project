@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "ngap.h"
+#include "ngc.h"
 #include "srsgnb/support/timers.h"
 #include <memory>
 

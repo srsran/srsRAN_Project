@@ -12,7 +12,7 @@
 
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
-#include "srsgnb/ngap/ngap.h"
+#include "srsgnb/ngap/ngc.h"
 #include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {
