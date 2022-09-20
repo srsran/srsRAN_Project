@@ -52,11 +52,16 @@ private:
   /// Placeholder for strategy implementation of encode_ext_region.
   strategy_method ext_region = nullptr;
 
-  /// Helper method to set the high-rate encoding strategy for long lifting sizes.
+  /// Helper method to set the high-rate encoding strategy.
+  template <unsigned NODE_SIZE_AVX2_PH>
   static strategy_method
   select_hr_strategy(ldpc_base_graph_type current_bg, uint8_t current_ls_index, unsigned node_size_avx2);
 
+  /// Helper method to set the strategy for the systematic bits.
+  template <unsigned NODE_SIZE_AVX2_PH>
   static strategy_method select_sys_bits_strategy(ldpc_base_graph_type current_bg, unsigned node_size_avx2);
+  /// Helper method to set the extended-region encoding strategy.
+  template <unsigned NODE_SIZE_AVX2_PH>
   static strategy_method select_ext_strategy(unsigned node_size_avx2);
 
   /// \brief Long lifting size version of preprocess_systematic_bits - short lifting size.

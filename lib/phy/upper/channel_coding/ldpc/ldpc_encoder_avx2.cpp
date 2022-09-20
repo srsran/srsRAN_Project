@@ -30,231 +30,98 @@ static void rotate_node_left(__m256i* out, const __m256i* in, unsigned steps, un
 /// \param[in]  ls        The size of the node (lifting size).
 static void rotate_node_right(__m256i* out, const __m256i* in, unsigned steps, unsigned ls);
 
+// Recursively selects the proper strategy for the high-rate region by successively decreasing the value of the template
+// parameter.
+template <unsigned NODE_SIZE_AVX2_PH>
 ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_hr_strategy(const ldpc_base_graph_type current_bg,
                                                                          const uint8_t              current_ls_index,
                                                                          const unsigned             node_size_avx2)
 {
+  if (node_size_avx2 != NODE_SIZE_AVX2_PH) {
+    return select_hr_strategy<NODE_SIZE_AVX2_PH - 1>(current_bg, current_ls_index, node_size_avx2);
+  }
+
   if (current_bg == ldpc_base_graph_type::BG1) {
     if (current_ls_index == 6) {
-      switch (node_size_avx2) {
-        case 1:
-          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<1>;
-        case 2:
-          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<2>;
-        case 3:
-          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<3>;
-        case 4:
-          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<4>;
-        case 5:
-          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<5>;
-        case 6:
-          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<6>;
-        case 7:
-          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<7>;
-        case 8:
-          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<8>;
-        case 9:
-          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<9>;
-        case 10:
-          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<10>;
-        case 11:
-          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<11>;
-        case 12:
-          return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<12>;
-        default:
-          srsgnb_assert(false, "The node size in AVX2 registers should be between 1 and 12.");
-      }
+      return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<NODE_SIZE_AVX2_PH>;
     }
     // If current_lifting_index is not 6...
-    switch (node_size_avx2) {
-      case 1:
-        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<1>;
-      case 2:
-        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<2>;
-      case 3:
-        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<3>;
-      case 4:
-        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<4>;
-      case 5:
-        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<5>;
-      case 6:
-        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<6>;
-      case 7:
-        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<7>;
-      case 8:
-        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<8>;
-      case 9:
-        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<9>;
-      case 10:
-        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<10>;
-      case 11:
-        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<11>;
-      case 12:
-        return &ldpc_encoder_avx2::high_rate_bg1_other_inner<12>;
-      default:
-        srsgnb_assert(false, "The node size in AVX2 registers should be between 1 and 12.");
-    }
+    return &ldpc_encoder_avx2::high_rate_bg1_other_inner<NODE_SIZE_AVX2_PH>;
   }
   // Else, if current_bg == BG2...
   if ((current_ls_index == 3) || (current_ls_index == 7)) {
-    switch (node_size_avx2) {
-      case 1:
-        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<1>;
-      case 2:
-        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<2>;
-      case 3:
-        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<3>;
-      case 4:
-        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<4>;
-      case 5:
-        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<5>;
-      case 6:
-        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<6>;
-      case 7:
-        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<7>;
-      case 8:
-        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<8>;
-      case 9:
-        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<9>;
-      case 10:
-        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<10>;
-      case 11:
-        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<11>;
-      case 12:
-        return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<12>;
-      default:
-        srsgnb_assert(false, "The node size in AVX2 registers should be between 1 and 12.");
-    }
+    return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<NODE_SIZE_AVX2_PH>;
   }
   // If current_lifting_index is neither 3 nor 7...
-  switch (node_size_avx2) {
-    case 1:
-      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<1>;
-    case 2:
-      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<2>;
-    case 3:
-      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<3>;
-    case 4:
-      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<4>;
-    case 5:
-      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<5>;
-    case 6:
-      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<6>;
-    case 7:
-      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<7>;
-    case 8:
-      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<8>;
-    case 9:
-      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<9>;
-    case 10:
-      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<10>;
-    case 11:
-      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<11>;
-    case 12:
-      return &ldpc_encoder_avx2::high_rate_bg2_other_inner<12>;
-    default:
-      srsgnb_assert(false, "The node size in AVX2 registers should be between 1 and 12.");
-  }
-  return nullptr;
+  return &ldpc_encoder_avx2::high_rate_bg2_other_inner<NODE_SIZE_AVX2_PH>;
 }
 
+// Ensures that the recursion stops when NODE_SIZE_AVX2_PH == 1.
+template <>
+ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_hr_strategy<1>(const ldpc_base_graph_type current_bg,
+                                                                            const uint8_t              current_ls_index,
+                                                                            const unsigned /*node_size_avx2*/)
+{
+  if (current_bg == ldpc_base_graph_type::BG1) {
+    if (current_ls_index == 6) {
+      return &ldpc_encoder_avx2::high_rate_bg1_i6_inner<1>;
+    }
+    // If current_lifting_index is not 6...
+    return &ldpc_encoder_avx2::high_rate_bg1_other_inner<1>;
+  }
+  // Else, if current_bg == BG2...
+  if ((current_ls_index == 3) || (current_ls_index == 7)) {
+    return &ldpc_encoder_avx2::high_rate_bg2_i3_7_inner<1>;
+  }
+  // If current_lifting_index is neither 3 nor 7...
+  return &ldpc_encoder_avx2::high_rate_bg2_other_inner<1>;
+}
+
+static constexpr unsigned BG1_K = BG1_N_FULL - BG1_M;
+static constexpr unsigned BG2_K = BG2_N_FULL - BG2_M;
+
+// Recursively selects the proper strategy for the systematic bits by successively decreasing the value of the template
+// parameter.
+template <unsigned NODE_SIZE_AVX2_PH>
 ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_sys_bits_strategy(ldpc_base_graph_type current_bg,
                                                                                unsigned             node_size_avx2)
 {
+  if (node_size_avx2 != NODE_SIZE_AVX2_PH) {
+    return select_sys_bits_strategy<NODE_SIZE_AVX2_PH - 1>(current_bg, node_size_avx2);
+  }
   if (current_bg == ldpc_base_graph_type::BG1) {
-    constexpr unsigned BG1_K = BG1_N_FULL - BG1_M;
-    switch (node_size_avx2) {
-      case 1:
-        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 1>;
-      case 2:
-        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 2>;
-      case 3:
-        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 3>;
-      case 4:
-        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 4>;
-      case 5:
-        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 5>;
-      case 6:
-        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 6>;
-      case 7:
-        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 7>;
-      case 8:
-        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 8>;
-      case 9:
-        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 9>;
-      case 10:
-        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 10>;
-      case 11:
-        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 11>;
-      case 12:
-        return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 12>;
-      default:
-        srsgnb_assert(false, "The node size in AVX2 registers should be between 1 and 12.");
-    }
+    return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, NODE_SIZE_AVX2_PH>;
   }
-  constexpr unsigned BG2_K = BG2_N_FULL - BG2_M;
-  switch (node_size_avx2) {
-    case 1:
-      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 1>;
-    case 2:
-      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 2>;
-    case 3:
-      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 3>;
-    case 4:
-      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 4>;
-    case 5:
-      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 5>;
-    case 6:
-      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 6>;
-    case 7:
-      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 7>;
-    case 8:
-      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 8>;
-    case 9:
-      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 9>;
-    case 10:
-      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 10>;
-    case 11:
-      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 11>;
-    case 12:
-      return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 12>;
-    default:
-      srsgnb_assert(false, "The node size in AVX2 registers should be between 1 and 12.");
-  }
-  return nullptr;
+  return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, NODE_SIZE_AVX2_PH>;
 }
 
+// Ensures that the recursion stops when NODE_SIZE_AVX2_PH == 1.
+template <>
+ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_sys_bits_strategy<1>(ldpc_base_graph_type current_bg,
+                                                                                  unsigned /*node_size_avx2*/)
+{
+  if (current_bg == ldpc_base_graph_type::BG1) {
+    return &ldpc_encoder_avx2::systematic_bits_inner<BG1_K, BG1_M, 1>;
+  }
+  return &ldpc_encoder_avx2::systematic_bits_inner<BG2_K, BG2_M, 1>;
+}
+
+// Recursively selects the proper strategy for the extended region by successively decreasing the value of the template
+// parameter.
+template <unsigned NODE_SIZE_AVX2_PH>
 ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_ext_strategy(const unsigned node_size_avx2)
 {
-  switch (node_size_avx2) {
-    case 1:
-      return &ldpc_encoder_avx2::ext_region_inner<1>;
-    case 2:
-      return &ldpc_encoder_avx2::ext_region_inner<2>;
-    case 3:
-      return &ldpc_encoder_avx2::ext_region_inner<3>;
-    case 4:
-      return &ldpc_encoder_avx2::ext_region_inner<4>;
-    case 5:
-      return &ldpc_encoder_avx2::ext_region_inner<5>;
-    case 6:
-      return &ldpc_encoder_avx2::ext_region_inner<6>;
-    case 7:
-      return &ldpc_encoder_avx2::ext_region_inner<7>;
-    case 8:
-      return &ldpc_encoder_avx2::ext_region_inner<8>;
-    case 9:
-      return &ldpc_encoder_avx2::ext_region_inner<9>;
-    case 10:
-      return &ldpc_encoder_avx2::ext_region_inner<10>;
-    case 11:
-      return &ldpc_encoder_avx2::ext_region_inner<11>;
-    case 12:
-      return &ldpc_encoder_avx2::ext_region_inner<12>;
-    default:
-      srsgnb_assert(false, "The node size in AVX2 registers should be between 1 and 12.");
+  if (node_size_avx2 == NODE_SIZE_AVX2_PH) {
+    return &ldpc_encoder_avx2::ext_region_inner<NODE_SIZE_AVX2_PH>;
   }
-  return nullptr;
+  return select_ext_strategy<NODE_SIZE_AVX2_PH - 1>(node_size_avx2);
+}
+
+// Ensures that the recursion stops when NODE_SIZE_AVX2_PH == 1.
+template <>
+ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_ext_strategy<1>(const unsigned /*node_size_avx2*/)
+{
+  return &ldpc_encoder_avx2::ext_region_inner<1>;
 }
 
 void ldpc_encoder_avx2::select_strategy()
@@ -265,9 +132,9 @@ void ldpc_encoder_avx2::select_strategy()
   // Each BG node contains LS bits, which are stored in node_size_avx2 AVX2 vectors.
   node_size_avx2 = divide_ceil(lifting_size, AVX2_SIZE_BYTE);
 
-  systematic_bits = select_sys_bits_strategy(current_bg, node_size_avx2);
-  high_rate       = select_hr_strategy(current_bg, current_ls_index, node_size_avx2);
-  ext_region      = select_ext_strategy(node_size_avx2);
+  systematic_bits = select_sys_bits_strategy<MAX_NODE_SIZE_AVX2>(current_bg, node_size_avx2);
+  high_rate       = select_hr_strategy<MAX_NODE_SIZE_AVX2>(current_bg, current_ls_index, node_size_avx2);
+  ext_region      = select_ext_strategy<MAX_NODE_SIZE_AVX2>(node_size_avx2);
 }
 
 void ldpc_encoder_avx2::load_input(span<const uint8_t> in)
