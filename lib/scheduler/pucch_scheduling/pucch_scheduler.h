@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../cell/resource_grid.h"
+#include "../ue_scheduling/ue.h"
 #include "../ue_scheduling/ue_configuration.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
@@ -22,18 +23,22 @@ class pucch_scheduler
 public:
   virtual ~pucch_scheduler() = default;
 
-  /// Allocates RE space for UE-dedicated DL PDCCH, avoiding in the process collisions with other PDCCH allocations.
-  /// \param[out] slot_alloc struct with scheduling results.
-  /// \param[out,in] dl_alloc_info information with DL DCI, needed for HARQ-(N)-ACK scheduling info.
-  /// \param rnti RNTI of UE being allocated.
-  /// \param user UE configuration for the provided cell.
-  /// \param bwp_id BWP Id to use.
-  /// \return Allocated PUCCH if successful, if any.
-  virtual ul_pucch_info* alloc_pucch_ue(cell_slot_resource_allocator& slot_alloc,
-                                        pdcch_dl_information&         dl_alloc_info,
-                                        rnti_t                        rnti,
-                                        const ue_cell_configuration&  user,
-                                        bwp_id_t                      bwpid) = 0;
+  /// Allocate the PUCCH resource for HARQ-ACK for a given UE.
+  /// \param[out] pucch_res_indicator PUCCH resource indicator field for DCI 1_0 and 1_1.
+  /// \param[out] harq_feedback_timing_indicator PUCCH delay (with respect to PDSCH) to be encoded in DCI 1_0 and 1_1.
+  /// \param[out, in] slot_alloc struct with scheduling results.
+  /// \param[in] rnti RNTI of UE being allocated.
+  /// \param[in] dci_info information with DL DCI, needed for HARQ-(N)-ACK scheduling info.
+  /// \param[in] ue object that contain the PUCCH resource and Logical Channel configuration.
+  /// \param[in] user UE configuration for the provided cell.
+  /// \return[in] Allocated PUCCH pointer, if successful. Else it returns \c nullptr.
+  virtual ul_pucch_info* alloc_pucch_harq_ack_ue(unsigned&                    pucch_res_indicator,
+                                                 unsigned&                    harq_feedback_timing_indicator,
+                                                 cell_resource_allocator&     slot_alloc,
+                                                 const pdcch_dl_information&  dci_info,
+                                                 rnti_t                       rnti,
+                                                 const ue&                    ue,
+                                                 const ue_cell_configuration& user) = 0;
 };
 
 } // namespace srsgnb

@@ -147,14 +147,14 @@ static asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::options rach_msg1_fdm_co
 }
 
 static asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::options
-pucch_group_hop_convert_to_asn1(pucch_config_common::pucch_group_hop_opt group_hop_value)
+pucch_group_hop_convert_to_asn1(pucch_group_hopping group_hop_value)
 {
   switch (group_hop_value) {
-    case pucch_config_common::pucch_group_hop_opt::disabled:
+    case pucch_group_hopping::DISABLE:
       return asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::disable;
-    case pucch_config_common::pucch_group_hop_opt::enable:
+    case pucch_group_hopping::ENABLE:
       return asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::enable;
-    case pucch_config_common::pucch_group_hop_opt::neither:
+    case pucch_group_hopping::NEITHER:
       return asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::neither;
     default:
       report_fatal_error("Invalid msg1-fdm field. Return default value 1");
@@ -249,7 +249,7 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   pucch_cfg_common_s& pucch                = out.init_ul_bwp.pucch_cfg_common.set_setup();
   pucch.pucch_res_common_present           = true;
   pucch.pucch_res_common                   = pucch_cfg.pucch_resource_common;
-  pucch.pucch_group_hop.value              = pucch_group_hop_convert_to_asn1(pucch_cfg.pucch_group_hopping);
+  pucch.pucch_group_hop.value              = pucch_group_hop_convert_to_asn1(pucch_cfg.group_hopping);
   pucch.p0_nominal_present                 = true;
   pucch.p0_nominal                         = -90;
   if (pucch_cfg.hopping_id.has_value()) {

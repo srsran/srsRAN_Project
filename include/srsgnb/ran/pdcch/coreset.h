@@ -91,6 +91,16 @@ struct coreset_configuration {
            pdcch_dmrs_scrambling_id == rhs.pdcch_dmrs_scrambling_id;
   }
 
+  /// Computes \f$N_{CCE}\f$, as per TS 38.213, Section 9.2.1, which is the number of CCEs in a CORESET of a PDCCH
+  /// reception with DCI format 1_0 or DCI format 1_1.
+  const unsigned get_nof_cces() const
+  {
+    // For \c frequencyDomainResources, TS 38.331, each 1 in the bitset corresponds to 6 RBs.
+    unsigned nof_rbs = id == to_coreset_id(0) ? coreset0_rbs.length() : other_coreset_freq_resources.count() * 6;
+    // A CCE corresponds to 6 REGs, where a REG is 1 RB x 1 symbol.
+    return nof_rbs * duration / 6;
+  }
+
 private:
   crb_interval         coreset0_rbs;
   freq_resource_bitmap other_coreset_freq_resources;

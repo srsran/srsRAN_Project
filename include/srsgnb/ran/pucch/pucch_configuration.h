@@ -98,10 +98,10 @@ struct pucch_resource_set {
 struct pucch_config {
   /// \c PUCCH-ResourceSet, from 0 to 3.
   // NOTE: PUCCH resource set ID 0 can only contain PUCCH format 0 and 1.
-  optional<pucch_resource_set> pucch_res_set_0;
-  optional<pucch_resource_set> pucch_res_set_1;
-  optional<pucch_resource_set> pucch_res_set_2;
-  optional<pucch_resource_set> pucch_res_set_3;
+  pucch_resource_set pucch_res_set_0;
+  pucch_resource_set pucch_res_set_1;
+  pucch_resource_set pucch_res_set_2;
+  pucch_resource_set pucch_res_set_3;
   /// List of \c PUCCH-Resource.
   std::vector<pucch_resource> pucch_res_list;
   /// \c format1 .. \c format4, which contain the parameters that are common to a given PUCCH Format.

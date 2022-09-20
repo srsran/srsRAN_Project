@@ -32,6 +32,8 @@ void ue_cell_configuration::reconfigure(const serving_cell_ue_configuration_requ
   }
 
   update_config_maps();
+
+  update_ul_config(cell_cfg_ded_req);
 }
 
 void ue_cell_configuration::addmod_bwp_cfg(bwp_id_t bwpid, const bwp_downlink& bwp_dl)
@@ -162,4 +164,19 @@ ue_cell_configuration::get_pdsch_time_domain_list(search_space_id ss_id) const
   return pdsch_default_time_allocations_default_A_table(
       bwp_dl.bwp_dl_common->generic_params.cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL,
       cell_cfg_common.dmrs_typeA_pos);
+}
+
+void ue_cell_configuration::update_ul_config(const serving_cell_ue_configuration_request& cell_cfg_ded_req)
+{
+  // Copy the configuration to the current object.
+  if (cell_cfg_ded_req.ul_config.has_value()) {
+    if (not ul_config.has_value()) {
+      ul_config.emplace();
+    }
+    ul_config.value() = cell_cfg_ded_req.ul_config.value();
+  }
+  // If the configuration does not contain any ul_config, then remove the config.
+  else {
+    ul_config.reset();
+  }
 }

@@ -211,11 +211,9 @@ struct pusch_config_common {
 
 /// \remark See TS 38.331, "PUCCH-ConfigCommon".
 struct pucch_config_common {
-  enum class pucch_group_hop_opt { neither, disabled, enable };
-
   /// Values: {0,...,15}.
   uint8_t             pucch_resource_common;
-  pucch_group_hop_opt pucch_group_hopping;
+  pucch_group_hopping group_hopping;
   /// Values: {0, ..., 1023}.
   optional<unsigned> hopping_id;
   /// Values: {-202, ..., 24}
@@ -281,7 +279,7 @@ struct ul_config_common {
 /// Used to configure the dedicated UE-specific parameters of an UL BWP.
 /// \remark See TS 38.331, BWP-UplinkDedicated.
 struct bwp_uplink_dedicated {
-  pucch_config pucch_cnf;
+  optional<pucch_config> pucch_cnf;
 };
 
 } // namespace srsgnb

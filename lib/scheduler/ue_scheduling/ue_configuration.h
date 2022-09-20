@@ -45,12 +45,16 @@ public:
   /// Get UE list of pdsch-TimeDomainAllocationList as per TS38.214 clause 5.1.2.1.1.
   span<const pdsch_time_domain_resource_allocation> get_pdsch_time_domain_list(search_space_id ss_id) const;
 
+  /// UL configuration.
+  optional<uplink_config> ul_config;
+
 private:
   void addmod_bwp_cfg(bwp_id_t bwpid, const bwp_downlink& bwp_dl);
   void addmod_bwp_common_cfg(bwp_id_t bwpid, const bwp_downlink_common& bwp_dl);
   void addmod_bwp_ded_cfg(bwp_id_t bwpid, const bwp_downlink_dedicated& bwp_dl_ded);
   void release_bwp_ded_cfg(bwp_id_t bwpid);
   void update_config_maps();
+  void update_ul_config(const serving_cell_ue_configuration_request& cell_cfg_ded_req);
 
   /// List of UE BWP configurations.
   slot_array<bwp_downlink, MAX_NOF_BWPS> dl_bwps_cfg;

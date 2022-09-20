@@ -39,7 +39,7 @@ struct pucch_resources {
 
 /// Scheduler output for PUCCH Format 0.
 struct pucch_format_0 {
-  /// \c pucch-GroupHopping, as per TS 38.331
+  /// \c pucch-GroupHopping, as per TS 38.331.
   pucch_group_hopping group_hopping;
   /// \f$n_{ID}\f$ as per Section 6.3.2.2.1, TS 38.211.
   unsigned n_id_hopping;
@@ -51,7 +51,7 @@ struct pucch_format_0 {
 
 /// Scheduler output for PUCCH Format 1.
 struct pucch_format_1 {
-  /// \c pucch-GroupHopping, as per TS 38.331
+  /// \c pucch-GroupHopping, as per TS 38.331.
   pucch_group_hopping group_hopping;
   /// \f$n_{ID}\f$ as per Section 6.3.2.2.1, TS 38.211.
   unsigned n_id_hopping;
@@ -60,8 +60,7 @@ struct pucch_format_1 {
   sr_nof_bits              sr_bits;
   unsigned                 harq_ack_nof_bits;
   pucch_repetition_tx_slot slot_repetition;
-  /// \c timeDomainOCC as per TS 38.331, or equivalent to index \f$n\f$ in Table 6.3.2.4.1-2, TS 38.211. Only for PUCCH
-  /// Format 1 only.
+  /// \c timeDomainOCC as per TS 38.331, or equivalent to index \f$n\f$ in Table 6.3.2.4.1-2, TS 38.211.
   uint8_t time_domain_occ;
 };
 

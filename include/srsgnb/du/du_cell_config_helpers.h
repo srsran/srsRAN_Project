@@ -218,7 +218,7 @@ inline ul_config_common make_default_ul_config_common(const du_cell_config_defau
   // TODO: Set these parameters according to some reliable source.
   cfg.init_ul_bwp.pucch_cfg_common.emplace();
   cfg.init_ul_bwp.pucch_cfg_common->pucch_resource_common = 11;
-  cfg.init_ul_bwp.pucch_cfg_common->pucch_group_hopping   = pucch_config_common::pucch_group_hop_opt::neither;
+  cfg.init_ul_bwp.pucch_cfg_common->group_hopping         = pucch_group_hopping::NEITHER;
   cfg.init_ul_bwp.pucch_cfg_common->p0_nominal            = -90;
 
   return cfg;

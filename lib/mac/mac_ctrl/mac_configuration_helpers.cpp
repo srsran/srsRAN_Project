@@ -22,14 +22,12 @@ srsgnb::make_scheduler_ue_creation_request(const mac_ue_create_request_message& 
   ret.serv_cell_cfg = request.serv_cell_cfg;
 
   ret.serv_cell_cfg.ul_config.emplace();
-
-  auto& ul_config = ret.serv_cell_cfg.ul_config.value();
-  auto& pucch_cfg = ul_config.init_ul_bwp.pucch_cnf;
+  ret.serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cnf.emplace();
+  auto& pucch_cfg = ret.serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cnf.value();
 
   // Configure PUCCH.
-  pucch_cfg.pucch_res_set_0.emplace();
-  pucch_cfg.pucch_res_set_0.value().pucch_res_id_list.push_back(0);
-  pucch_cfg.pucch_res_set_0.value().pucch_res_id_list.push_back(1);
+  pucch_cfg.pucch_res_set_0.pucch_res_id_list.emplace_back(0);
+  pucch_cfg.pucch_res_set_0.pucch_res_id_list.emplace_back(1);
 
   // PUCCH resource 0.
   pucch_resource res_basic{.res_id = 0, .starting_prb = 51, .second_hop_prb = 0, .intraslot_freq_hopping = true};
