@@ -18,11 +18,11 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Interface to notify about NGAP connections to the CU-CP
-class cu_cp_ngap_connection_notifier
+/// Interface to notify about NGC connections to the CU-CP
+class cu_cp_ngc_connection_notifier
 {
 public:
-  virtual ~cu_cp_ngap_connection_notifier() = default;
+  virtual ~cu_cp_ngc_connection_notifier() = default;
 
   /// \brief Notifies the CU-CP about a successful AMF connection.
   virtual void on_amf_connection() = 0;
@@ -94,7 +94,7 @@ class cu_cp_interface : public cu_cp_du_connection_notifier,
                         public cu_cp_du_handler,
                         public cu_cp_du_interface,
                         public cu_cp_ng_interface,
-                        public cu_cp_ngap_connection_notifier
+                        public cu_cp_ngc_connection_notifier
 {
 public:
   virtual ~cu_cp_interface() = default;

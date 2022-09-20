@@ -46,7 +46,7 @@ public:
   void on_new_connection() override;
   void handle_du_remove_request(const du_index_t du_index) override;
 
-  // ngap_connection_notifier
+  // ngc_connection_notifier
   void on_amf_connection() override;
   void on_amf_connection_drop() override;
 

@@ -14,9 +14,9 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-initial_cu_cp_setup_procedure::initial_cu_cp_setup_procedure(ngc_connection_manager&         ngc_conn_mng_,
-                                                             cu_cp_ngap_connection_notifier& cu_cp_ngap_ev_notifier_) :
-  ngc_conn_mng(ngc_conn_mng_), cu_cp_ngap_ev_notifier(cu_cp_ngap_ev_notifier_)
+initial_cu_cp_setup_procedure::initial_cu_cp_setup_procedure(ngc_connection_manager&        ngc_conn_mng_,
+                                                             cu_cp_ngc_connection_notifier& cu_cp_ngc_ev_notifier_) :
+  ngc_conn_mng(ngc_conn_mng_), cu_cp_ngc_ev_notifier(cu_cp_ngc_ev_notifier_)
 {
 }
 
@@ -51,6 +51,6 @@ async_task<ng_setup_response_message> initial_cu_cp_setup_procedure::start_ng_se
 
 void initial_cu_cp_setup_procedure::handle_ng_setup_response(const asn1::ngap::ng_setup_resp_s& resp)
 {
-  cu_cp_ngap_ev_notifier.on_amf_connection();
+  cu_cp_ngc_ev_notifier.on_amf_connection();
   // TODO
 }
