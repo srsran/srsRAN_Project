@@ -14,7 +14,7 @@
 #include "../ue_manager_interfaces.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/du_processor.h"
-#include "srsgnb/f1_interface/cu/f1ap_cu.h"
+#include "srsgnb/f1_interface/cu/f1c_cu.h"
 #include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "f1ap_cu.h"
+#include "f1c_cu.h"
 #include <memory>
 
 namespace srsgnb {

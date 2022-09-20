@@ -14,7 +14,7 @@
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/ue_context.h"
 #include "srsgnb/f1_interface/common/f1c_common.h"
-#include "srsgnb/f1_interface/cu/f1ap_cu.h"
+#include "srsgnb/f1_interface/cu/f1c_cu.h"
 
 namespace srsgnb {
 

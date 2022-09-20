@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu_factory.h"
+#include "srsgnb/f1_interface/cu/f1c_cu.h"
 #include "srsgnb/support/test_utils.h"
 #include "unittests/f1_interface/common/f1_cu_test_helpers.h"
 #include "unittests/f1_interface/common/test_helpers.h"

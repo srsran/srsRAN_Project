@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/f1_interface/cu/f1ap_cu.h"
+#include "srsgnb/f1_interface/cu/f1c_cu.h"
 #include "srsgnb/support/executors/task_executor.h"
 
 namespace srsgnb {

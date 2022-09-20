@@ -14,7 +14,7 @@
 #include "procedures/f1ap_ue_context_release_procedure.h"
 #include "procedures/f1ap_ue_context_setup_procedure.h"
 #include "srsgnb/asn1/f1ap.h"
-#include "srsgnb/f1_interface/cu/f1ap_cu.h"
+#include "srsgnb/f1_interface/cu/f1c_cu.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include <memory>
 
