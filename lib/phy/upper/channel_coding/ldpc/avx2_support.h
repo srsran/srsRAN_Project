@@ -36,17 +36,41 @@ public:
   /// actual array.
   /// \param[in] mm Number of guard AVX2 registers allocated before the start of the array.
   /// \remark The useful size of the array is therefore <tt>nof_elements - mm<\tt>.
-  explicit avx2_array(unsigned mm);
+  explicit avx2_array(unsigned mm) : inner_array(), margin(mm)
+  {
+    srsgnb_assert(mm < nof_elements, "The margin must be smaller than the number of elements.");
+  }
 
   /// Returns a pointer to the \c pos AVX2 register inside the array.
-  __m256i* data_at(unsigned pos);
+  __m256i* data_at(unsigned pos)
+  {
+    unsigned index = (pos + margin) * AVX2_SIZE_BYTE;
+    return reinterpret_cast<__m256i*>(inner_array.data() + index);
+  }
+
   /// Returns a read-only pointer to the \c pos AVX2 register inside the array.
-  const __m256i* data_at(unsigned pos) const;
+  const __m256i* data_at(unsigned pos) const
+  {
+    unsigned index = (pos + margin) * AVX2_SIZE_BYTE;
+    return reinterpret_cast<const __m256i*>(inner_array.data() + index);
+  }
+
+  // Unfortunately, we can't work with the array subscript operator [] since there seems to be no easy way to access a
+  // __m256i object by reference.
 
   /// Sets the \c pos AVX2 register to \c val.
-  void set_at(unsigned pos, __m256i val);
+  void set_at(unsigned pos, __m256i val)
+  {
+    unsigned index = (pos + margin) * AVX2_SIZE_BYTE;
+    _mm256_storeu_si256(reinterpret_cast<__m256i*>(inner_array.data() + index), val);
+  }
+
   /// Gets the value stored in the \c pos AVX2 register.
-  __m256i get_at(unsigned pos) const;
+  __m256i get_at(unsigned pos) const
+  {
+    unsigned index = (pos + margin) * AVX2_SIZE_BYTE;
+    return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(inner_array.data() + index));
+  }
 
 private:
   /// Actual array where the AVX2 registers are stored.
@@ -54,40 +78,6 @@ private:
   /// Number of guard AVX2 registers at the beginning of the array.
   unsigned margin = 0;
 };
-
-template <size_t nof_elements>
-inline avx2_array<nof_elements>::avx2_array(unsigned mm) : inner_array(), margin(mm)
-{
-  srsgnb_assert(mm < nof_elements, "The margin must be smaller than the number of elements.");
-}
-
-template <size_t nof_elements>
-inline __m256i* avx2_array<nof_elements>::data_at(unsigned pos)
-{
-  unsigned index = (pos + margin) * AVX2_SIZE_BYTE;
-  return reinterpret_cast<__m256i*>(inner_array.data() + index);
-}
-
-template <size_t nof_elements>
-inline const __m256i* avx2_array<nof_elements>::data_at(unsigned pos) const
-{
-  unsigned index = (pos + margin) * AVX2_SIZE_BYTE;
-  return reinterpret_cast<const __m256i*>(inner_array.data() + index);
-}
-
-template <size_t nof_elements>
-inline void avx2_array<nof_elements>::set_at(unsigned pos, __m256i val)
-{
-  unsigned index = (pos + margin) * AVX2_SIZE_BYTE;
-  _mm256_storeu_si256(reinterpret_cast<__m256i*>(inner_array.data() + index), val);
-}
-
-template <size_t nof_elements>
-inline __m256i avx2_array<nof_elements>::get_at(unsigned pos) const
-{
-  unsigned index = (pos + margin) * AVX2_SIZE_BYTE;
-  return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(inner_array.data() + index));
-}
 
 } // namespace mm256
 
