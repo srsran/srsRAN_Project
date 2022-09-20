@@ -42,9 +42,6 @@ public:
 
   bool set_tbs(uint32_t tbs);
 
-  // NOTE: Has to be used before first tx is dispatched
-  bool set_mcs(sch_mcs_index mcs);
-
   /// Checks whether the HARQ process has no Transport Block currently stored.
   bool empty() const
   {

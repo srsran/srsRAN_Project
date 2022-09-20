@@ -198,6 +198,9 @@ struct pusch_information {
   unsigned nof_layers;
   /// DMRS configuration as per TS38.211 Section 6.4.1.1.
   dmrs_information dmrs;
+  /// \brief PUSCH DMRS ID \f$n_{ID}^{RS}\f$ as per TS38.211 Section 6.4.1.1.1.2. This field is only valid when
+  /// transform_precoding is enabled. Values: {0,...,1007} (Rel-15), {0,...,65535} (Rel-16).
+  uint16_t pusch_dmrs_id;
   /// \brief PUSCH DMRS hopping mode as per TS38.211, Section 6.4.1.1.1.2. It is only valid when the transform
   /// precoding for PUSCH is enabled.
   enum class dmrs_hopping_mode { no_hopping, group_hopping, sequence_hopping } dmrs_hopping_mode;
@@ -206,7 +209,8 @@ struct pusch_information {
   /// HARQ process number as per TS38.212 Section 7.3.1.1. Values: {0,...,15}.
   uint8_t harq_id;
   /// \brief Signals whether the PUSCH PDU corresponds to an initial transmission or a retransmission of a MAC PDU for
-  /// this HARQ process ID for this TB.
+  /// this HARQ process ID for this TB. Note: Unlike NDI, new_data does not toggle to indicate new transmission,
+  /// but is set to 1.
   bool new_data;
   /// Transport block size in bytes.
   uint32_t tb_size_bytes;

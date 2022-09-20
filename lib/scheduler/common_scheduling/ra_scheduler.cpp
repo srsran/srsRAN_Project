@@ -500,6 +500,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     pusch.pusch_cfg.ul_freq_shift_7p5khz       = false;
     pusch.pusch_cfg.dmrs                       = msg3_data[msg3_info.time_resource_assignment].dmrs_info;
     pusch.pusch_cfg.dmrs_hopping_mode          = pusch_information::dmrs_hopping_mode::no_hopping;
+    pusch.pusch_cfg.pusch_dmrs_id              = 0;
     pusch.pusch_cfg.pusch_second_hop_prb       = 0;
     pusch.pusch_cfg.rv_index                   = 0;
     pusch.pusch_cfg.harq_id                    = pending_msg3.harq.pid;

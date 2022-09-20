@@ -84,15 +84,6 @@ bool harq_process::set_tbs(uint32_t tbs)
   return true;
 }
 
-bool harq_process::set_mcs(sch_mcs_index mcs)
-{
-  if (empty() or nof_retx() > 0) {
-    return false;
-  }
-  tb[0].mcs = mcs;
-  return true;
-}
-
 bool harq_process::new_retx_common(slot_point slot_tx_, slot_point slot_ack_, const prb_grant& grant)
 {
   if (grant.is_alloc_type0() != prbs_.is_alloc_type0() or
