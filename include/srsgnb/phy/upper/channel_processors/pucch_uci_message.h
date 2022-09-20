@@ -19,6 +19,9 @@ namespace srsgnb {
 ///
 /// As the total number of bits is limited to \ref uci_constants::MAX_NOF_PAYLOAD_BITS, the UCI payload storage is
 /// common for all fields and each of the fields point to a view of the common storage \c data.
+///
+/// The payload size of each field is determined by the field view size. A field is not present if it is empty. The
+/// total payload size does not exceed \c uci_constants::MAX_NOF_PAYLOAD_BITS.
 struct pucch_uci_message {
   /// Message decode or detection status.
   uci_status status;

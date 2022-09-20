@@ -32,14 +32,14 @@ public:
   /// Default destructor.
   virtual ~pucch_detector() = default;
 
-  /// \brief Demodulates a PUCCH Format 0 transmission.
+  /// \brief Detects a PUCCH Format 0 transmission.
   /// \param[in]  grid   Input resource grid.
   /// \param[in]  config PUCCH Format 0 configuration parameters.
   /// \return A pair containing the detected PUCCH message and the channel state information.
   virtual std::pair<pucch_uci_message, channel_state_information> detect(const resource_grid_reader&  grid,
                                                                          const format0_configuration& config) = 0;
 
-  /// \brief Demodulates a PUCCH Format 1 transmission.
+  /// \brief Detects a PUCCH Format 1 transmission.
   /// \param[in]  grid      Input resource grid.
   /// \param[in]  estimates Estimated channel.
   /// \param[in]  config    PUCCH Format 1 configuration parameters.

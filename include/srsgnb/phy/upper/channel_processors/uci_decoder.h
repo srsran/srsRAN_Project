@@ -33,7 +33,7 @@ public:
   /// Default destructor.
   virtual ~uci_decoder() = default;
 
-  /// \brief Decodes Uplink Control Information carried in PUSCH.
+  /// \brief Decodes Uplink Control Information carried in either PUCCH or PUSCH.
   /// \param[out] message View of the decoded message.
   /// \param[in]  llr     The received soft-bits, as a sequence of log-likelihood ratios.
   /// \return The decoding status.

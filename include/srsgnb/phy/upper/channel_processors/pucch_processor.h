@@ -20,7 +20,7 @@ namespace srsgnb {
 class pucch_processor
 {
 public:
-  /// \brief Collects common PUCCH configuration parameters among the different formats.
+  /// \brief Collects PUCCH configuration parameters that are common for all formats.
   ///
   /// \remark The total payload size for Format 0 and 1 shall not exceed two.
   /// \remark The total payload size for Formats 2, 3 and 4 shall not exceed 1706.
@@ -37,10 +37,10 @@ public:
     ///
     /// Index of the first PRB prior to frequency hopping or for no frequency hopping as per TS38.213 Section 9.2.1.
     unsigned starting_prb;
-    /// \brief Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274} if it has a value.
-    /// Otherwise, intra-slot frequency is disabled.
+    /// \brief Index of the first PRB after frequency hopping as per TS38.213 Section 9.2.1.
     ///
-    /// Index of the first PRB after frequency hopping as per TS38.213 Section 9.2.1.
+    /// Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274} if intra-slot frequency hopping is
+    /// enabled, empty otherwise.
     optional<unsigned> second_hop_prb;
     /// Number of expected SR bits {0, ..., 4}.
     unsigned nof_sr;
