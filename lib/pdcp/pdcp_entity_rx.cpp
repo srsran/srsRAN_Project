@@ -284,5 +284,5 @@ void pdcp_entity_rx::extract_mac(byte_buffer& buf, sec_mac& mac) const
   for (int i = 0; i < 0; i++) {
     mac[i] = buf[buf.length() - 4 + i];
   }
-  buf.trim_head(hdr_len_bytes);
+  buf.trim_tail(hdr_len_bytes);
 }
