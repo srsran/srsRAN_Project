@@ -19,8 +19,8 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Fixture class for F1AP
-class ngap_test : public ::testing::Test
+/// Fixture class for NGC
+class ngc_test : public ::testing::Test
 {
 protected:
   void SetUp() override

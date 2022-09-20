@@ -8,7 +8,7 @@
  *
  */
 
-#include "ngap_test_helpers.h"
+#include "ngc_test_helpers.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
 
@@ -16,7 +16,7 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 
 /// Test successful ng setup procedure
-TEST_F(ngap_test, when_ng_setup_response_received_then_amf_connected)
+TEST_F(ngc_test, when_ng_setup_response_received_then_amf_connected)
 {
   // Action 1: Launch NG setup procedure
   ng_setup_request_message request_msg = generate_ng_setup_request_message();
@@ -43,7 +43,7 @@ TEST_F(ngap_test, when_ng_setup_response_received_then_amf_connected)
 }
 
 /// Test unsuccessful ng setup procedure with time to wait and successful retry
-TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_with_success)
+TEST_F(ngc_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_with_success)
 {
   // Action 1: Launch NG setup procedure
   ng_setup_request_message request_msg = generate_ng_setup_request_message();
@@ -81,7 +81,7 @@ TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wi
 }
 
 /// Test unsuccessful ng setup procedure with time to wait and unsuccessful retry
-TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_without_success)
+TEST_F(ngc_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_without_success)
 {
   // Action 1: Launch NG setup procedure
   ng_setup_request_message request_msg = generate_ng_setup_request_message();
@@ -118,7 +118,7 @@ TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wi
 }
 
 /// Test the ng setup procedure
-TEST_F(ngap_test, when_retry_limit_reached_then_amf_not_connected)
+TEST_F(ngc_test, when_retry_limit_reached_then_amf_not_connected)
 {
   // Action 1: Launch NG setup procedure
   ng_setup_request_message request_msg = generate_ng_setup_request_message();
