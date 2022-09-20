@@ -12,19 +12,19 @@
 
 namespace srsgnb {
 
-/// Determines UCI decoding or detection status, it is common for PUCCH and PUSCH.
+/// Labels for the UCI decoding/detection status, common for both PUCCH and PUSCH UCI.
 enum class uci_status {
   /// Unknown status.
   unknown,
   /// \brief The UCI message is valid.
   ///
-  /// If the message is longer than 12 bits, it means that CRC has passed. Otherwise, detector correlation exceeded the
-  /// threshold.
+  /// Messages longer than 12 bits are considered as \c valid when the CRC has passed. For shorter messages, the \c
+  /// valid state means that the detection metric is above the threshold.
   valid,
   /// \brief The UCI message is invalid.
   ///
-  /// If the message is longer than 12 bits, it means that CRC has not passed. Otherwise, detector correlation did not
-  /// reach the threshold.
+  /// Messages longer than 12 bits are considered as \c invalid when the CRC failed. For shorter messages, the \c
+  /// invalid state means that all detection metrics are below the threshold.
   invalid
 };
 

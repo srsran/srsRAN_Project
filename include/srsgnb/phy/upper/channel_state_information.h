@@ -16,7 +16,7 @@ namespace srsgnb {
 
 /// Channel State Information from received DM-RS.
 struct channel_state_information {
-  /// Time alignment measurement in microseconds.
+  /// Time alignment measurement.
   phy_time_unit time_aligment;
   /// Average EPRE in decibels.
   float epre_dB;

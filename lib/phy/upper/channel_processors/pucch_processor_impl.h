@@ -18,15 +18,15 @@
 
 namespace srsgnb {
 
+/// Implementation of the PUCCH processor interface.
 class pucch_processor_impl : public pucch_processor
 {
 public:
   // See interface for documentation.
-  pucch_processor_result process_format0(const resource_grid_reader& grid, const format0_configuration& config) override
+  pucch_processor_result process(const resource_grid_reader& grid, const format0_configuration& config) override
   {
     pucch_detector::format0_configuration                   detector_config;
-    std::pair<pucch_uci_message, channel_state_information> detection_result =
-        detector->detect_format0(grid, detector_config);
+    std::pair<pucch_uci_message, channel_state_information> detection_result = detector->detect(grid, detector_config);
 
     pucch_processor_result result;
     result.message = detection_result.first;
@@ -36,7 +36,7 @@ public:
   }
 
   // See interface for documentation.
-  pucch_processor_result process_format1(const resource_grid_reader& grid, const format1_configuration& config) override
+  pucch_processor_result process(const resource_grid_reader& grid, const format1_configuration& config) override
   {
     pucch_processor_result result;
 
@@ -46,13 +46,13 @@ public:
     result.csi = estimates.get_channel_state_information();
 
     pucch_detector::format1_configuration detector_config;
-    result.message = detector->detect_format1(grid, estimates, detector_config);
+    result.message = detector->detect(grid, estimates, detector_config);
 
     return result;
   }
 
   // See interface for documentation.
-  pucch_processor_result process_format2(const resource_grid_reader& grid, const format2_configuration& config) override
+  pucch_processor_result process(const resource_grid_reader& grid, const format2_configuration& config) override
   {
     pucch_processor_result result;
     result.message.full_payload =
@@ -71,7 +71,7 @@ public:
 
     span<log_likelihood_ratio>               llr = span<log_likelihood_ratio>(temp_llr).first(0);
     pucch_demodulator::format2_configuration demod_config;
-    demodulator->demodulate_format2(llr, grid, estimates, demod_config);
+    demodulator->demodulate(llr, grid, estimates, demod_config);
 
     uci_decoder::configuration decoder_config;
     result.message.status = decoder->decode(result.message.full_payload, llr, decoder_config);
@@ -80,14 +80,14 @@ public:
   }
 
   // See interface for documentation.
-  pucch_processor_result process_format3(const resource_grid_reader& grid, const format3_configuration& config) override
+  pucch_processor_result process(const resource_grid_reader& grid, const format3_configuration& config) override
   {
     // TBD.
     return pucch_processor_result();
   }
 
   // See interface for documentation.
-  pucch_processor_result process_format4(const resource_grid_reader& grid, const format4_configuration& config) override
+  pucch_processor_result process(const resource_grid_reader& grid, const format4_configuration& config) override
   {
     // TBD.
     return pucch_processor_result();

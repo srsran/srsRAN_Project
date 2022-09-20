@@ -25,23 +25,27 @@ enum class pucch_group_hopping {
 /// \brief PUCCH Formats as described in TS 38.213 clause 9.2.
 enum class pucch_format { FORMAT_0, FORMAT_1, FORMAT_2, FORMAT_3, FORMAT_4, NOF_FORMATS };
 
-/// Maximum number of symbols (without DMRS) that NR-PUCCH format 1 can transmit.
+/// Maximum number of symbols (without DMRS) that NR-PUCCH Format 1 can transmit.
 static constexpr unsigned PUCCH_FORMAT1_N_MAX = 7;
 
-/// Minimum number of symbols that NR-PUCCH format 2 can transmit.
+/// Minimum number of symbols that NR-PUCCH Format 2 can transmit.
 static constexpr unsigned PUCCH_FORMAT2_MIN_NSYMB = 1;
 
-/// Maximum number of symbols that NR-PUCCH format 2 can transmit.
+/// Maximum number of symbols that NR-PUCCH Format 2 can transmit.
 static constexpr unsigned PUCCH_FORMAT2_MAX_NSYMB = 2;
 
-/// Maximum number of PRBs allocated for NR-PUCCH format 2.
+/// Maximum number of PRBs allocated for NR-PUCCH Format 2.
 static constexpr unsigned PUCCH_FORMAT2_MAX_NPRB = 16;
 
-/// The maximum number of resource elements used by PUCCH is from by PUCCH format 3 with a bandwidth of 16 PRB and a
-/// duration of 14 symbols. In which, DM-RS occupy two symbols.
+/// \brief Maximum number of resource elements used by PUCCH.
+///
+/// It corresponds to PUCCH Format 3 with a bandwidth of 16 PRBs and a duration of 14 symbols, two of which are occupied
+/// by the DM-RS.
 static constexpr unsigned PUCCH_MAX_NOF_RE = 16 * (14 - 2);
 
-/// The maximum number of LLR used by PUCCH is derived from \ref PUCCH_MAX_NOF_RE assuming a QPSK modulation.
+/// \brief Maximum number of LLRs corresponding to a PUCCH.
+///
+/// Derives from \ref PUCCH_MAX_NOF_RE assuming QPSK modulation.
 static constexpr unsigned PUCCH_MAX_NOF_LLR = PUCCH_MAX_NOF_RE * 2;
 
 } // namespace srsgnb

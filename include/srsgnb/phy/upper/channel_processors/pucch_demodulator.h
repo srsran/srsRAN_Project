@@ -20,17 +20,17 @@ namespace srsgnb {
 class pucch_demodulator
 {
 public:
-  /// Collects PUCCH format 2 demodulation parameters.
+  /// Collects PUCCH Format 2 demodulation parameters.
   struct format2_configuration {
     // Add here PUCCH demodulator parameters...
   };
 
-  /// Collects PUCCH format 3 demodulation parameters.
+  /// Collects PUCCH Format 3 demodulation parameters.
   struct format3_configuration {
     // Add here PUCCH demodulator parameters...
   };
 
-  /// Collects PUCCH format 4 demodulation parameters.
+  /// Collects PUCCH Format 4 demodulation parameters.
   struct format4_configuration {
     // Add here PUCCH demodulator parameters...
   };
@@ -38,35 +38,35 @@ public:
   /// Default destructor.
   virtual ~pucch_demodulator() = default;
 
-  /// \brief Demodulates a PUCCH format 2 transmission.
+  /// \brief Demodulates a PUCCH Format 2 transmission.
   /// \param[out] llr       Destination PUCCH soft-bit buffer.
   /// \param[in]  grid      Input resource grid.
-  /// \param[in]  estimates Input resource grid.
-  /// \param[in]  config    PUCCH format 2 configuration parameters.
-  virtual void demodulate_format2(span<log_likelihood_ratio>   llr,
-                                  const resource_grid_reader&  grid,
-                                  const channel_estimate&      estimates,
-                                  const format2_configuration& config) = 0;
+  /// \param[in]  estimates Channel estimates.
+  /// \param[in]  config    PUCCH Format 2 configuration parameters.
+  virtual void demodulate(span<log_likelihood_ratio>   llr,
+                          const resource_grid_reader&  grid,
+                          const channel_estimate&      estimates,
+                          const format2_configuration& config) = 0;
 
-  /// \brief Demodulates a PUCCH format 3 transmission.
+  /// \brief Demodulates a PUCCH Format 3 transmission.
   /// \param[out] llr       Destination PUCCH soft-bit buffer.
   /// \param[in]  grid      Input resource grid.
-  /// \param[in]  estimates Input resource grid.
-  /// \param[in]  config    PUCCH format 3 configuration parameters.
-  virtual void demodulate_format3(span<log_likelihood_ratio>   llr,
-                                  const resource_grid_reader&  grid,
-                                  const channel_estimate&      estimates,
-                                  const format3_configuration& config) = 0;
+  /// \param[in]  estimates Channel estimates.
+  /// \param[in]  config    PUCCH Format 3 configuration parameters.
+  virtual void demodulate(span<log_likelihood_ratio>   llr,
+                          const resource_grid_reader&  grid,
+                          const channel_estimate&      estimates,
+                          const format3_configuration& config) = 0;
 
-  /// \brief Demodulates a PUCCH format 4 transmission.
+  /// \brief Demodulates a PUCCH Format 4 transmission.
   /// \param[out] llr       Destination PUCCH soft-bit buffer.
   /// \param[in]  grid      Input resource grid.
-  /// \param[in]  estimates Input resource grid.
-  /// \param[in]  config    PUCCH format 4 configuration parameters.
-  virtual void demodulate_format4(span<log_likelihood_ratio>   llr,
-                                  const resource_grid_reader&  grid,
-                                  const channel_estimate&      estimates,
-                                  const format4_configuration& config) = 0;
+  /// \param[in]  estimates Channel estimates.
+  /// \param[in]  config    PUCCH Format 4 configuration parameters.
+  virtual void demodulate(span<log_likelihood_ratio>   llr,
+                          const resource_grid_reader&  grid,
+                          const channel_estimate&      estimates,
+                          const format4_configuration& config) = 0;
 };
 
 } // namespace srsgnb

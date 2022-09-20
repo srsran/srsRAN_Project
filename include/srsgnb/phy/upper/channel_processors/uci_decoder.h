@@ -14,10 +14,10 @@ namespace srsgnb {
 
 /// \brief Uplink Control Information decoder.
 ///
-/// Decodes UCI bits payload containing SR, HARQ-ACK and/or CSI bits transmitted on PUCCH as the inverse steps described
+/// Decodes UCI payloads containing SR, HARQ-ACK and/or CSI bits, transmitted on PUCCH. It reverses the steps described
 /// in TS38.212 Sections 6.3.1.2, 6.3.1.3, 6.3.1.4 and 6.3.1.5.
 ///
-/// Decodes UCI bits payload of either HARQ-ACK or CSI bits transmitted on PUSCH as the inverse steps described in
+/// Decodes UCI payloads of either HARQ-ACK or CSI bits, transmitted on PUSCH. It reverses the steps described in
 /// TS38.212 Sections 6.3.2.2, 6.3.2.3 and 6.3.2.4.
 class uci_decoder
 {

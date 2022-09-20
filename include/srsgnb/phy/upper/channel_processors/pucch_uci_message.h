@@ -15,7 +15,7 @@
 
 namespace srsgnb {
 
-/// \brief Collects uplink control information message.
+/// \brief Collects the uplink control information message.
 ///
 /// As the total number of bits is limited to \ref uci_constants::MAX_NOF_PAYLOAD_BITS, the UCI payload storage is
 /// common for all fields and each of the fields point to a view of the common storage \c data.

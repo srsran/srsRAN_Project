@@ -22,7 +22,8 @@ class pucch_processor
 public:
   /// \brief Collects common PUCCH configuration parameters among the different formats.
   ///
-  /// \remark The total number of bits for Format 0 and 1 shall not exceed two.
+  /// \remark The total payload size for Format 0 and 1 shall not exceed two.
+  /// \remark The total payload size for Formats 2, 3 and 4 shall not exceed 1706.
   struct common_configuration {
     /// Slot and numerology.
     slot_point slot;
@@ -55,7 +56,7 @@ public:
   struct format0_configuration {
     /// Common parameters.
     common_configuration common;
-    /// Initial cyclic shift {0, ... 11}.
+    /// Initial cyclic shift {0, ..., 11}.
     unsigned initial_cyclic_shift;
     /// Number of symbols for the PUCCH transmission {1, 2}.
     unsigned nof_symbols;
@@ -67,7 +68,7 @@ public:
   struct format1_configuration {
     /// Common parameters.
     common_configuration common;
-    /// Initial cyclic shift {0, ... 11}.
+    /// Initial cyclic shift {0, ..., 11}.
     unsigned initial_cyclic_shift;
     /// Number of symbols for the PUCCH transmission {4, ..., 14}.
     unsigned nof_symbols;
@@ -108,36 +109,31 @@ public:
   /// \param[out] grid    Resource grid.
   /// \param[in]  config  PUCCH Format 0 configuration.
   /// \return The PUCCH process result.
-  virtual pucch_processor_result process_format0(const resource_grid_reader&  grid,
-                                                 const format0_configuration& config) = 0;
+  virtual pucch_processor_result process(const resource_grid_reader& grid, const format0_configuration& config) = 0;
 
   /// \brief Processes a PUCCH Format 1 message.
   /// \param[out] grid    Resource grid.
   /// \param[in]  config  PUCCH Format 1 configuration.
   /// \return The PUCCH process result.
-  virtual pucch_processor_result process_format1(const resource_grid_reader&  grid,
-                                                 const format1_configuration& config) = 0;
+  virtual pucch_processor_result process(const resource_grid_reader& grid, const format1_configuration& config) = 0;
 
   /// \brief Processes a PUCCH Format 2 message.
   /// \param[out] grid    Resource grid.
   /// \param[in]  config  PUCCH Format 2 configuration.
   /// \return The PUCCH process result.
-  virtual pucch_processor_result process_format2(const resource_grid_reader&  grid,
-                                                 const format2_configuration& config) = 0;
+  virtual pucch_processor_result process(const resource_grid_reader& grid, const format2_configuration& config) = 0;
 
   /// \brief Processes a PUCCH Format 3 message.
   /// \param[out] grid    Resource grid.
   /// \param[in]  config  PUCCH Format 3 configuration.
   /// \return The PUCCH process result.
-  virtual pucch_processor_result process_format3(const resource_grid_reader&  grid,
-                                                 const format3_configuration& config) = 0;
+  virtual pucch_processor_result process(const resource_grid_reader& grid, const format3_configuration& config) = 0;
 
   /// \brief Processes a PUCCH Format 4 message.
   /// \param[out] indication PUCCH process result.
   /// \param[in]  config     PUCCH Format 4 configuration.
   /// \return The PUCCH process result.
-  virtual pucch_processor_result process_format4(const resource_grid_reader&  grid,
-                                                 const format4_configuration& config) = 0;
+  virtual pucch_processor_result process(const resource_grid_reader& grid, const format4_configuration& config) = 0;
 };
 
 } // namespace srsgnb
