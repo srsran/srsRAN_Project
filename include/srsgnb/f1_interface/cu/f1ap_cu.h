@@ -99,11 +99,11 @@ struct f1ap_ue_context_modification_response_message {
   bool                              success;
 };
 
-/// Handle F1AP UE context management procedures as defined in TS 38.473 section 8.3.
-class f1ap_ue_context_manager
+/// Handle F1C UE context management procedures as defined in TS 38.473 section 8.3.
+class f1c_ue_context_manager
 {
 public:
-  virtual ~f1ap_ue_context_manager() = default;
+  virtual ~f1c_ue_context_manager() = default;
 
   /// Establish the UE context in F1.
   virtual async_task<f1ap_ue_context_setup_response_message>
@@ -215,7 +215,7 @@ class f1_interface : public f1c_message_handler,
                      public f1c_event_handler,
                      public f1c_rrc_message_handler,
                      public f1c_connection_manager,
-                     public f1ap_ue_context_manager,
+                     public f1c_ue_context_manager,
                      public f1c_statistics_handler
 {
 public:
