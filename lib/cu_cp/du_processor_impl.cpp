@@ -242,7 +242,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     srb.pdcp_context->pdcp_bearer = create_pdcp_entity(srb_pdcp);
 
     // created adapters between F1C to PDCP (Rx) and RRC to PDCP (Tx)
-    srb.rx_notifier = std::make_unique<f1ap_pdcp_adapter>(srb.pdcp_context->pdcp_bearer->get_rx_lower_interface());
+    srb.rx_notifier = std::make_unique<f1c_pdcp_adapter>(srb.pdcp_context->pdcp_bearer->get_rx_lower_interface());
     srb.rrc_tx_notifier =
         std::make_unique<rrc_ue_pdcp_adapter>(srb.pdcp_context->pdcp_bearer->get_tx_upper_data_interface());
 

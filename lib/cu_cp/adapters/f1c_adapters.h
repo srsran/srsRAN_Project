@@ -82,11 +82,11 @@ private:
   rrc_ul_ccch_pdu_handler& rrc_handler;
 };
 
-/// Adapter between F1AP and PDCP in UL direction (Rx)
-class f1ap_pdcp_adapter : public f1c_rrc_message_notifier
+/// Adapter between F1C and PDCP in UL direction (Rx)
+class f1c_pdcp_adapter : public f1c_rrc_message_notifier
 {
 public:
-  explicit f1ap_pdcp_adapter(pdcp_rx_lower_interface& pdcp_rx_) : pdcp_rx(pdcp_rx_) {}
+  explicit f1c_pdcp_adapter(pdcp_rx_lower_interface& pdcp_rx_) : pdcp_rx(pdcp_rx_) {}
 
   void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
   {
