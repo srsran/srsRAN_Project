@@ -122,7 +122,7 @@ f1c_message generate_valid_f1_setup_request()
   return f1_setup_request;
 }
 
-f1c_message generate_f1_init_ul_rrc_msg_base(unsigned int c_rnti)
+f1c_message generate_init_ul_rrc_msg_base(unsigned int c_rnti)
 {
   f1c_message init_ul_rrc_msg = {};
 
@@ -144,9 +144,9 @@ f1c_message generate_f1_init_ul_rrc_msg_base(unsigned int c_rnti)
   return init_ul_rrc_msg;
 }
 
-f1c_message generate_valid_f1_init_ul_rrc_msg(unsigned int c_rnti)
+f1c_message generate_valid_init_ul_rrc_msg(unsigned int c_rnti)
 {
-  f1c_message init_ul_rrc_msg = generate_f1_init_ul_rrc_msg_base(c_rnti);
+  f1c_message init_ul_rrc_msg = generate_init_ul_rrc_msg_base(c_rnti);
 
   auto& init_ul_rrc                         = init_ul_rrc_msg.pdu.init_msg().value.init_ulrrc_msg_transfer();
   init_ul_rrc->duto_currc_container_present = true;
@@ -178,7 +178,7 @@ f1c_message generate_valid_rrc_setup_complete_msg(unsigned int cu_ue_id, unsigne
   return ul_rrc_msg;
 }
 
-f1c_message generate_f1_ue_context_release_complete_msg(unsigned int cu_ue_id, unsigned int c_rnti)
+f1c_message generate_ue_context_release_complete_msg(unsigned int cu_ue_id, unsigned int c_rnti)
 {
   f1c_message ue_ctxt_rel_complete_msg = {};
   ue_ctxt_rel_complete_msg.pdu.set_successful_outcome();

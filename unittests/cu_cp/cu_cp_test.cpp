@@ -139,7 +139,7 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
   cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
 
   // Inject Initial UL RRC message
-  f1c_message init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(41255);
+  f1c_message init_ul_rrc_msg = generate_valid_init_ul_rrc_msg(41255);
   test_logger.info("Injecting Initial UL RRC message");
   cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 
@@ -170,7 +170,7 @@ TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
   cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
 
   // Inject Initial UL RRC message
-  f1c_message init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(41255);
+  f1c_message init_ul_rrc_msg = generate_valid_init_ul_rrc_msg(41255);
   test_logger.info("Injecting Initial UL RRC message");
   cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 
@@ -206,7 +206,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
     unsigned int first_ue_cu_ue_id = 0;
 
     // Inject Initial UL RRC message
-    f1c_message init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(first_ue_c_rnti);
+    f1c_message init_ul_rrc_msg = generate_valid_init_ul_rrc_msg(first_ue_c_rnti);
     test_logger.info("Injecting Initial UL RRC message");
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 
@@ -230,7 +230,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
     unsigned int second_ue_cu_ue_id = 1;
 
     // Inject Initial UL RRC message
-    f1c_message init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(second_ue_c_rnti);
+    f1c_message init_ul_rrc_msg = generate_valid_init_ul_rrc_msg(second_ue_c_rnti);
     test_logger.info("Injecting Initial UL RRC message");
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 
@@ -242,7 +242,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
 
     // Inject UE Context Release Complete message
     f1c_message ue_context_release_complete_msg =
-        generate_f1_ue_context_release_complete_msg(second_ue_cu_ue_id, second_ue_c_rnti);
+        generate_ue_context_release_complete_msg(second_ue_cu_ue_id, second_ue_c_rnti);
     test_logger.info("Injecting UE Context Release Complete message");
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(ue_context_release_complete_msg);
 
