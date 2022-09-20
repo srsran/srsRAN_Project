@@ -16,7 +16,7 @@ using namespace asn1::f1ap;
 
 f1ap_ue_context_modification_procedure::f1ap_ue_context_modification_procedure(const ue_context_mod_request_s& request_,
                                                                                f1c_message_notifier& f1c_notif_,
-                                                                               f1ap_event_manager&   ev_mng_,
+                                                                               f1c_event_manager&    ev_mng_,
                                                                                srslog::basic_logger& logger_) :
   request(request_), f1c_notifier(f1c_notif_), ev_mng(ev_mng_), logger(logger_)
 {

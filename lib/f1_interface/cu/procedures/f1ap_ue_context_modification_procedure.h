@@ -12,7 +12,7 @@
 
 #include "../f1c_cu_impl.h"
 #include "common/f1ap_asn1_utils.h"
-#include "f1ap_cu_event_manager.h"
+#include "f1c_cu_event_manager.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/cu/f1c_cu.h"
 #include "srsgnb/support/async/async_task.h"
@@ -25,7 +25,7 @@ class f1ap_ue_context_modification_procedure
 public:
   f1ap_ue_context_modification_procedure(const asn1::f1ap::ue_context_mod_request_s& request_,
                                          f1c_message_notifier&                       f1c_notif_,
-                                         f1ap_event_manager&                         ev_mng_,
+                                         f1c_event_manager&                          ev_mng_,
                                          srslog::basic_logger&                       logger_);
 
   void operator()(coro_context<async_task<f1ap_ue_context_modification_response_message>>& ctx);
@@ -39,10 +39,10 @@ private:
 
   const asn1::f1ap::ue_context_mod_request_s request;
   f1c_message_notifier&                      f1c_notifier;
-  f1ap_event_manager&                        ev_mng;
+  f1c_event_manager&                         ev_mng;
   srslog::basic_logger&                      logger;
 
-  f1ap_event_manager::f1ap_ue_context_modification_outcome_t ue_ctxt_mod_outcome;
+  f1c_event_manager::f1_ue_context_modification_outcome_t ue_ctxt_mod_outcome;
 };
 
 } // namespace srs_cu_cp

@@ -24,7 +24,7 @@ f1c_cu_impl::f1c_cu_impl(f1c_message_notifier&       f1c_pdu_notifier_,
   pdu_notifier(f1c_pdu_notifier_),
   du_processor_notifier(f1c_du_processor_notifier_),
   du_management_notifier(f1c_du_management_notifier_),
-  events(std::make_unique<f1ap_event_manager>())
+  events(std::make_unique<f1c_event_manager>())
 {
   f1ap_ue_context empty_context = {};
   std::fill(cu_ue_id_to_f1ap_ue_context.begin(), cu_ue_id_to_f1ap_ue_context.end(), empty_context);
