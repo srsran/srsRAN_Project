@@ -28,7 +28,7 @@ struct cu_srb_pdcp_context {
   std::unique_ptr<pdcp_rx_upper_data_notifier> rrc_rx_notifier;
 };
 
-/// Context for a SRB with adapters between DU processor, F1AP, RRC and optinally PDCP.
+/// Context for a SRB with adapters between DU processor, F1C, RRC and optinally PDCP.
 struct cu_srb_context {
   std::unique_ptr<f1c_rrc_message_notifier> rx_notifier     = std::make_unique<f1c_rrc_null_notifier>();
   std::unique_ptr<rrc_pdu_notifier>         rrc_tx_notifier = std::make_unique<rrc_pdu_null_notifier>();

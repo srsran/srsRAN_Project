@@ -20,7 +20,7 @@ using namespace srs_cu_cp;
 f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&       f1c_pdu_notifier_,
                            f1c_du_processor_notifier&  f1c_du_processor_notifier_,
                            f1c_du_management_notifier& f1c_du_management_notifier_) :
-  logger(srslog::fetch_basic_logger("CU-F1AP")),
+  logger(srslog::fetch_basic_logger("CU-F1C")),
   pdu_notifier(f1c_pdu_notifier_),
   du_processor_notifier(f1c_du_processor_notifier_),
   du_management_notifier(f1c_du_management_notifier_),
@@ -146,7 +146,7 @@ f1ap_cu_impl::handle_ue_context_modification_request(const f1ap_ue_context_modif
 
 void f1ap_cu_impl::handle_message(const f1c_message& msg)
 {
-  logger.info("Handling F1AP PDU of type {}", msg.pdu.type().to_string());
+  logger.info("Handling F1C PDU of type {}", msg.pdu.type().to_string());
 
   switch (msg.pdu.type().value) {
     case asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg:
@@ -159,7 +159,7 @@ void f1ap_cu_impl::handle_message(const f1c_message& msg)
       handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
       break;
     default:
-      logger.error("Invalid F1AP PDU type");
+      logger.error("Invalid F1C PDU type");
       break;
   }
 }
@@ -217,7 +217,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ulrrc_msg_transfer_s
 
   gnb_cu_ue_f1ap_id_t cu_ue_id = get_next_cu_ue_id();
   if (cu_ue_id == gnb_cu_ue_f1ap_id_t::invalid) {
-    logger.error("No CU UE F1AP ID available.");
+    logger.error("No CU UE F1C ID available.");
     return;
   }
 

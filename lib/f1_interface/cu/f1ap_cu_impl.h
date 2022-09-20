@@ -33,15 +33,15 @@ public:
 
   void connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1c_rrc_message_notifier& notifier) override;
 
-  // f1ap connection manager functions
+  // f1c connection manager functions
 
   void handle_f1_setup_response(const f1_setup_response_message& msg) override;
 
-  // f1ap rrc message transfer procedure functions
+  // f1c rrc message transfer procedure functions
 
   void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg) override;
 
-  // f1ap ue context manager functions
+  // f1c ue context manager functions
 
   async_task<f1ap_ue_context_setup_response_message>
   handle_ue_context_setup_request(const f1ap_ue_context_setup_request_message& request) override;
@@ -57,7 +57,7 @@ public:
 
   void handle_connection_loss() override {}
 
-  // F1AP statistics
+  // F1C statistics
   int get_nof_ues() override;
 
 private:
@@ -68,11 +68,11 @@ private:
   /// \brief Notify about the reception of an Initial UL RRC Message Transfer message.
   /// This starts the UE and SRB creation at the DU processor, F1 and RRC UE.
   /// @see rrc_setup_procedure.
-  /// \param[in] msg The F1AP initial UL RRC message.
+  /// \param[in] msg The F1C initial UL RRC message.
   void handle_initial_ul_rrc_message(const asn1::f1ap::init_ulrrc_msg_transfer_s& msg);
 
   /// \brief Notify about the reception of an UL RRC Message Transfer message.
-  /// \param[in] msg The F1AP UL RRC message.
+  /// \param[in] msg The F1C UL RRC message.
   void handle_ul_rrc_message(const asn1::f1ap::ulrrc_msg_transfer_s& msg);
 
   /// \brief Notify about the reception of an successful outcome.

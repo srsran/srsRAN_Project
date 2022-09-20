@@ -24,24 +24,24 @@ namespace srs_cu_cp {
 /// \brief Handles the creation of SRBs in the RRC UE.
 ///  \startuml
 ///    queue DU
-///    participant F1AP
+///    participant F1C
 ///    participant PDCP
 ///    participant RRC
 ///    participant "DU processor" as DUMNG
-///    DU->F1AP: initial UL RRC message
-///    activate F1AP
-///    F1AP->DUMNG: ue_creation_request
+///    DU->F1C: initial UL RRC message
+///    activate F1C
+///    F1C->DUMNG: ue_creation_request
 ///    activate DUMNG
 ///    Note over DUMNG: Allocate UE index
 ///    Note over DUMNG: Create UE object
 ///    Note over DUMNG: Create SRB0 notifiers
 ///    DUMNG->RRC: create_ue (with SRB0 handle)
-///    DUMNG-->F1AP: return of "ue_creation_request" (with UE index and SRB0 handle)
+///    DUMNG-->F1C: return of "ue_creation_request" (with UE index and SRB0 handle)
 ///    deactivate DUMNG
-///    Note over F1AP: Allocate F1AP-CU-UE-ID
-///    Note over F1AP: Association of UE index\nwith F1AP-CU-UE-ID
-///    F1AP->RRC: notify_init_ul_rrc_msg
-///    deactivate F1AP
+///    Note over F1C: Allocate F1C-CU-UE-ID
+///    Note over F1C: Association of UE index\nwith F1C-CU-UE-ID
+///    F1C->RRC: notify_init_ul_rrc_msg
+///    deactivate F1C
 ///    Note over RRC: Decide RRC Setup vs Reject
 ///    activate RRC
 ///    RRC->DUMNG: request_srb_creation (SRB1)
@@ -51,10 +51,10 @@ namespace srs_cu_cp {
 ///    DUMNG-->RRC: return of "request_srb_creation (SRB1)"
 ///    deactivate DUMNG
 ///    Note over RRC: Initiate RRCSetup procedure
-///    RRC->F1AP: send_rrc_setup
-///    F1AP->DU: DL RRC Message Transfer
-///    DU->F1AP: UL RRC Message Transfer
-///    F1AP->RRC: rrc_setup_complete
+///    RRC->F1C: send_rrc_setup
+///    F1C->DU: DL RRC Message Transfer
+///    DU->F1C: UL RRC Message Transfer
+///    F1C->RRC: rrc_setup_complete
 ///    deactivate RRC
 ///    Note over RRC: Decide next step
 ///  \enduml

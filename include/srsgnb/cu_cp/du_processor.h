@@ -51,7 +51,7 @@ struct ue_creation_message {
   rnti_t                          c_rnti;
 };
 
-/// Interface for an F1AP notifier to communicate with the DU processor.
+/// Interface for an F1C notifier to communicate with the DU processor.
 class du_processor_f1c_interface : public du_processor_srb_interface
 {
 public:
@@ -100,7 +100,7 @@ class du_processor_rrc_ue_interface : public du_processor_srb_interface
 public:
   virtual ~du_processor_rrc_ue_interface() = default;
 
-  /// \brief Handle a UE Context Release Command and notify F1AP.
+  /// \brief Handle a UE Context Release Command and notify F1C.
   /// \param[in] msg The UE Context Release Command Message.
   virtual void handle_ue_context_release_command(const ue_context_release_command_message& msg) = 0;
 };

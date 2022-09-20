@@ -146,7 +146,7 @@ public:
   };
 
 private:
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("F1AP");
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("F1C");
 };
 
 /// Non-owning handlers to RRC message notifiers.
@@ -168,7 +168,7 @@ struct ue_creation_complete_message {
   f1ap_srb_notifiers srbs;
 };
 
-/// Methods used by F1AP to notify the DU processor.
+/// Methods used by F1C to notify the DU processor.
 class f1c_du_processor_notifier
 {
 public:
@@ -188,7 +188,7 @@ public:
   virtual du_index_t get_du_index() = 0;
 };
 
-/// Methods used by F1AP to notify about DU specific events.
+/// Methods used by F1C to notify about DU specific events.
 class f1c_du_management_notifier
 {
 public:
@@ -199,13 +199,13 @@ public:
   virtual void on_du_remove_request_received(const du_index_t du_index) = 0;
 };
 
-/// Methods to get statistics of the F1AP.
+/// Methods to get statistics of the F1C.
 class f1c_statistics_handler
 {
 public:
   virtual ~f1c_statistics_handler() = default;
 
-  /// \brief Returns the number of connected UEs at the F1AP
+  /// \brief Returns the number of connected UEs at the F1C
   /// \return The number of connected UEs.
   virtual int get_nof_ues() = 0;
 };

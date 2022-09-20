@@ -234,7 +234,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
     test_logger.info("Injecting Initial UL RRC message");
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 
-    // Check that UE has been added to F1AP (the AMF connection drop isn't visible to F1AP)
+    // Check that UE has been added to F1C (the AMF connection drop isn't visible to F1C)
     ASSERT_EQ(cu_cp_obj->get_f1c_statistics_handler(int_to_du_index(0)).get_nof_ues(), 2);
 
     // The UE should not exists in the CU-CP though
@@ -246,7 +246,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
     test_logger.info("Injecting UE Context Release Complete message");
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(ue_context_release_complete_msg);
 
-    // Check that UE has also been removed from F1AP
+    // Check that UE has also been removed from F1C
     ASSERT_EQ(cu_cp_obj->get_f1c_statistics_handler(int_to_du_index(0)).get_nof_ues(), 1);
   }
 }

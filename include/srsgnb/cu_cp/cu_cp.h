@@ -41,7 +41,7 @@ public:
   virtual void on_new_connection() = 0;
 };
 
-/// Interface used to handle DU specific F1AP procedure outcomes (e.g. F1 removal request)
+/// Interface used to handle DU specific F1C procedure outcomes (e.g. F1 removal request)
 class cu_cp_du_handler
 {
 public:
