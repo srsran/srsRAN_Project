@@ -37,7 +37,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
   test_logger.info("TEST: Transmit F1SetupResponse message...");
   f1_setup_response_message msg = {};
   msg.success                   = true;
-  f1ap->handle_f1ap_setup_response(msg);
+  f1ap->handle_f1_setup_response(msg);
 
   // Check the generated PDU is indeed the F1 Setup response
   ASSERT_EQ(asn1::f1ap::f1_ap_pdu_c::types_opts::options::successful_outcome,
@@ -67,7 +67,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_invalid_then_reject_du)
   test_logger.info("TEST: Transmit F1SetupFailure message...");
   f1_setup_response_message msg = {};
   msg.success                   = false;
-  f1ap->handle_f1ap_setup_response(msg);
+  f1ap->handle_f1_setup_response(msg);
 
   // Check the generated PDU is indeed the F1 Setup failure
   ASSERT_EQ(asn1::f1ap::f1_ap_pdu_c::types_opts::options::unsuccessful_outcome,

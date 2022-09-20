@@ -42,7 +42,7 @@ void f1ap_cu_impl::connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1
   ue_ctxt.srbs[srb_id_to_uint(srb_id)] = &notifier;
 }
 
-void f1ap_cu_impl::handle_f1ap_setup_response(const f1_setup_response_message& msg)
+void f1ap_cu_impl::handle_f1_setup_response(const f1_setup_response_message& msg)
 {
   // Pack message into PDU
   f1c_message f1c_msg;

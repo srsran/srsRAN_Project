@@ -66,7 +66,7 @@ public:
   /// \brief Creates and transmits the F1 Setup outcome to the DU.
   /// \param[in] msg The f1_setup_response_message to transmit.
   /// \remark The CU transmits the F1SetupResponse/F1SetupFailure as per TS 38.473 section 8.2.3.
-  virtual void handle_f1ap_setup_response(const f1_setup_response_message& msg) = 0;
+  virtual void handle_f1_setup_response(const f1_setup_response_message& msg) = 0;
 };
 
 struct f1ap_ue_context_setup_request_message {

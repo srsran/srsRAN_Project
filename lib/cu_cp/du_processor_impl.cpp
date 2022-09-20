@@ -125,7 +125,7 @@ void du_processor_impl::send_f1_setup_response(const du_processor_context& du_ct
   f1_setup_response_message response;
   response.success = true;
   fill_asn1_f1_setup_response(response.response, cfg.name, cfg.rrc_version, cell_db);
-  f1ap->handle_f1ap_setup_response(response);
+  f1ap->handle_f1_setup_response(response);
 }
 
 void du_processor_impl::send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause)
@@ -133,7 +133,7 @@ void du_processor_impl::send_f1_setup_failure(asn1::f1ap::cause_c::types::option
   f1_setup_response_message response;
   response.success = false;
   response.failure->cause->set(cause);
-  f1ap->handle_f1ap_setup_response(response);
+  f1ap->handle_f1_setup_response(response);
 }
 
 du_cell_index_t du_processor_impl::get_next_du_cell_index()

@@ -35,7 +35,7 @@ public:
 
   // f1ap connection manager functions
 
-  void handle_f1ap_setup_response(const f1_setup_response_message& msg) override;
+  void handle_f1_setup_response(const f1_setup_response_message& msg) override;
 
   // f1ap rrc message transfer procedure functions
 
