@@ -7,7 +7,7 @@
 #
 
 set(SOURCES
-        cu/f1ap_cu_factory.cpp
+        cu/f1c_cu_factory.cpp
         du/f1ap_du_factory.cpp
         du/f1ap_du_impl.cpp
         cu/f1ap_cu_impl.cpp

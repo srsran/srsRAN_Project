@@ -12,8 +12,8 @@
 
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/f1_interface/common/f1c_common.h"
-#include "srsgnb/f1_interface/cu/f1ap_cu_factory.h"
 #include "srsgnb/f1_interface/cu/f1c_cu.h"
+#include "srsgnb/f1_interface/cu/f1c_cu_factory.h"
 #include "test_helpers.h"
 #include <gtest/gtest.h>
 

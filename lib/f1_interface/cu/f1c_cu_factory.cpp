@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/f1_interface/cu/f1ap_cu_factory.h"
 #include "common/f1ap_packet_procedures_impl.h"
 #include "f1ap_cu_impl.h"
+#include "srsgnb/f1_interface/cu/f1c_cu_factory.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.
 
