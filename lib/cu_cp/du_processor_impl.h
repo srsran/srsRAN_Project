@@ -70,7 +70,7 @@ public:
 
 private:
   /// \brief Lookup the cell based on a given NR cell ID.
-  /// \param[in] packed_nr_cell_id The packed NR cell ID received over F1AP.
+  /// \param[in] packed_nr_cell_id The packed NR cell ID received over F1C.
   du_cell_index_t find_cell(uint64_t packed_nr_cell_id);
 
   /// \brief Get the next available DU cell index.
@@ -81,7 +81,7 @@ private:
   /// \return The DU processor cell database.
   slot_array<du_cell_context, MAX_NOF_DU_CELLS>& get_cell_db() { return cell_db; };
 
-  // F1AP senders
+  // F1C senders
 
   /// \brief Create and transmit the F1 Setup response message.
   /// \param[in] du_ctxt The context of the DU that should receive the message.
@@ -99,7 +99,7 @@ private:
   rrc_ue_nas_notifier&        rrc_ue_ngc_ev_notifier;
 
   du_processor_context                          context;
-  slot_array<du_cell_context, MAX_NOF_DU_CELLS> cell_db; /// flattened version of served cells list provided by DU/F1AP
+  slot_array<du_cell_context, MAX_NOF_DU_CELLS> cell_db; /// flattened version of served cells list provided by DU/F1C
   std::atomic<uint16_t>                         next_du_cell_index{0};
 
   // timers associated with a given DU.
@@ -111,8 +111,8 @@ private:
 
   ue_manager ue_mng;
 
-  // F1AP to DU processor adapter
-  f1ap_du_processor_adapter f1ap_ev_notifier;
+  // F1C to DU processor adapter
+  f1c_du_processor_adapter f1c_ev_notifier;
 
   // RRC UE to DU processor adapter
   rrc_ue_du_processor_adapter rrc_ue_ev_notifier;

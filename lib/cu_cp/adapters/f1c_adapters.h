@@ -36,8 +36,8 @@ private:
   cu_cp_du_handler* du_handler = nullptr;
 };
 
-/// Adapter between F1AP and DU processor
-class f1ap_du_processor_adapter : public f1c_du_processor_notifier
+/// Adapter between F1C and DU processor
+class f1c_du_processor_adapter : public f1c_du_processor_notifier
 {
 public:
   void connect_du_processor(du_processor_f1c_interface& du_processor_f1c_) { du_f1c_handler = &du_processor_f1c_; }

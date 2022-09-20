@@ -35,8 +35,8 @@ du_processor_impl::du_processor_impl(const du_processor_config_t cfg_,
   }
 
   // create f1c
-  f1c = create_f1c(f1c_notifier, f1ap_ev_notifier, f1c_du_mgmt_notifier);
-  f1ap_ev_notifier.connect_du_processor(*this);
+  f1c = create_f1c(f1c_notifier, f1c_ev_notifier, f1c_du_mgmt_notifier);
+  f1c_ev_notifier.connect_du_processor(*this);
 
   // create RRC
   rrc_du_creation_message rrc_creation_msg(cfg.rrc_cfg, rrc_ue_ev_notifier, rrc_ue_ngc_ev_notifier);
@@ -119,7 +119,7 @@ du_index_t du_processor_impl::get_du_index()
   return context.du_index;
 };
 
-/// Sender for F1AP messages
+/// Sender for F1C messages
 void du_processor_impl::send_f1_setup_response(const du_processor_context& du_ctxt)
 {
   f1_setup_response_message response;
@@ -222,7 +222,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     // create PDCP context for this SRB
     srb.pdcp_context.emplace();
 
-    // add adapter for PDCP to talk to F1AP (Tx) and RRC (Rx)
+    // add adapter for PDCP to talk to F1C (Tx) and RRC (Rx)
     srb.pdcp_context->pdcp_tx_notifier =
         std::make_unique<pdcp_du_processor_adapter>(*f1c, ue_ctxt->ue_index, msg.srb_id);
     srb.pdcp_context->rrc_rx_notifier = std::make_unique<pdcp_rrc_ue_adapter>(ue_ctxt->rrc->get_ul_dcch_pdu_handler());
@@ -249,7 +249,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     // update notifier in RRC
     ue_ctxt->rrc->connect_srb_notifier(msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier.get());
 
-    // update notifier in F1AP
+    // update notifier in F1C
     f1c->connect_srb_notifier(
         ue_ctxt->ue_index, msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rx_notifier.get());
   } else {
@@ -271,7 +271,7 @@ void du_processor_impl::handle_ue_context_release_command(const ue_context_relea
     CORO_AWAIT_VALUE(result_idx, f1c->handle_ue_context_release_command(f1ap_msg));
 
     if (result_idx == f1ap_msg.ue_index) {
-      logger.info("Removed UE(ue_index={}) from F1AP.", f1ap_msg.ue_index);
+      logger.info("Removed UE(ue_index={}) from F1C.", f1ap_msg.ue_index);
     }
 
     CORO_RETURN();
