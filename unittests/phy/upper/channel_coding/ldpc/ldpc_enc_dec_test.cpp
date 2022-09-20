@@ -205,5 +205,11 @@ TEST_P(LDPCEncDecFixture, LDPCEncDecTest)
 
 INSTANTIATE_TEST_SUITE_P(LDPCEncDecSuite,
                          LDPCEncDecFixture,
-                         ::testing::Combine(::testing::Values("generic"), ::testing::ValuesIn(ldpc_encoder_test_data)));
+                         ::testing::Combine(::testing::Values("generic"
+#ifdef HAVE_AVX2
+                                                              ,
+                                                              "avx2"
+#endif
+                                                              ),
+                                            ::testing::ValuesIn(ldpc_encoder_test_data)));
 } // namespace
