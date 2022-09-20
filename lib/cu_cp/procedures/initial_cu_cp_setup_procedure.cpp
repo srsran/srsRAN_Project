@@ -45,8 +45,8 @@ async_task<ng_setup_response_message> initial_cu_cp_setup_procedure::start_ng_se
 
   // TODO: Fill request message
 
-  // Initiate ng Setup Request.
-  return ngc_conn_mng.handle_ngap_setup_request(request_msg);
+  // Initiate NG Setup Request.
+  return ngc_conn_mng.handle_ng_setup_request(request_msg);
 }
 
 void initial_cu_cp_setup_procedure::handle_ng_setup_response(const asn1::ngap::ng_setup_resp_s& resp)

@@ -72,8 +72,8 @@ public:
   /// \return Returns a ng_setup_response_message struct with the success member set to 'true' in case of a
   /// successful outcome, 'false' otherwise.
   /// \remark The CU transmits the NGSetupRequest as per TS 38.413 section 8.7.1
-  /// and awaits the response. If a NGSetupFailure is received the NGAP will handle the failure.
-  virtual async_task<ng_setup_response_message> handle_ngap_setup_request(const ng_setup_request_message& request) = 0;
+  /// and awaits the response. If a NGSetupFailure is received the NGC will handle the failure.
+  virtual async_task<ng_setup_response_message> handle_ng_setup_request(const ng_setup_request_message& request) = 0;
 };
 
 struct ngap_ue_context {

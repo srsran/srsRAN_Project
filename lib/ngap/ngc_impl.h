@@ -28,8 +28,8 @@ public:
   ngc_impl(timer_manager& timers_, ngc_message_notifier& event_notifier_);
   ~ngc_impl();
 
-  // ngap connection manager functions
-  async_task<ng_setup_response_message> handle_ngap_setup_request(const ng_setup_request_message& request) override;
+  // ngc connection manager functions
+  async_task<ng_setup_response_message> handle_ng_setup_request(const ng_setup_request_message& request) override;
 
   void handle_initial_ue_message(const ngap_initial_ue_message& msg) override;
 

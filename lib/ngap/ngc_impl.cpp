@@ -34,7 +34,7 @@ ngc_impl::ngc_impl(timer_manager& timers_, ngc_message_notifier& message_notifie
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 ngc_impl::~ngc_impl() {}
 
-async_task<ng_setup_response_message> ngc_impl::handle_ngap_setup_request(const ng_setup_request_message& request)
+async_task<ng_setup_response_message> ngc_impl::handle_ng_setup_request(const ng_setup_request_message& request)
 {
   return launch_async<ng_setup_procedure>(request, ngc_notifier, *events, logger);
 }
