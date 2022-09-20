@@ -65,6 +65,8 @@ TEST_P(pdcp_rx_test, rx_in_order)
 
     pdcp_rx->set_as_security_config(sec_cfg);
     pdcp_rx->enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+    // Set the direction to downlink to avoid duplicating the test vectors.
+    pdcp_rx->set_direction(security_direction::downlink);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);

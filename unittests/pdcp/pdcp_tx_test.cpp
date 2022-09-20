@@ -12,6 +12,7 @@
 #include "../../lib/pdcp/pdcp_entity_impl.h"
 #include "pdcp_test_vectors.h"
 #include "srsgnb/pdcp/pdcp_config.h"
+#include "srsgnb/support/test_utils.h"
 #include "srsgnb/support/timers.h"
 #include <gtest/gtest.h>
 #include <queue>
@@ -47,6 +48,7 @@ TEST_P(pdcp_tx_test, sn_pack)
     test_hdr_writer(0);
     test_hdr_writer(2048);
     test_hdr_writer(4096);
+    test_hdr_writer(4096);
     test_hdr_writer(4294967295);
   } else if (config.sn_size == pdcp_sn_size::size18bits) {
     test_hdr_writer(0);
@@ -64,6 +66,7 @@ TEST_P(pdcp_tx_test, pdu_gen)
   init(GetParam());
 
   auto test_pdu_gen = [this](uint32_t tx_next) {
+    srsgnb::test_delimit_logger delimiter("TX PDU generation. SN_SIZE={} COUNT={}", sn_size, tx_next);
     // Set state of PDCP entiy
     pdcp_tx_state st = {tx_next};
     pdcp_tx->set_state(st);
@@ -90,6 +93,7 @@ TEST_P(pdcp_tx_test, pdu_gen)
   if (config.sn_size == pdcp_sn_size::size12bits) {
     test_pdu_gen(0);
     test_pdu_gen(2048);
+    test_pdu_gen(4095);
     test_pdu_gen(4096);
     test_pdu_gen(4294967295);
   } else if (config.sn_size == pdcp_sn_size::size18bits) {
