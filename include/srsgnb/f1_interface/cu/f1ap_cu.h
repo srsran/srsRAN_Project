@@ -57,11 +57,11 @@ struct f1_setup_request_message {
   asn1::f1ap::f1_setup_request_s request;
 };
 
-/// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
-class f1ap_connection_manager
+/// Handle F1C interface management procedures as defined in TS 38.473 section 8.2.
+class f1c_connection_manager
 {
 public:
-  virtual ~f1ap_connection_manager() = default;
+  virtual ~f1c_connection_manager() = default;
 
   /// \brief Creates and transmits the F1 Setup outcome to the DU.
   /// \param[in] msg The f1_setup_response_message to transmit.
@@ -214,7 +214,7 @@ public:
 class f1_interface : public f1c_message_handler,
                      public f1c_event_handler,
                      public f1c_rrc_message_handler,
-                     public f1ap_connection_manager,
+                     public f1c_connection_manager,
                      public f1ap_ue_context_manager,
                      public f1c_statistics_handler
 {
