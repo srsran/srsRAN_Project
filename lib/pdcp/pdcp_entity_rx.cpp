@@ -191,10 +191,10 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
     }
     srslog::basic_levels level = is_valid ? srslog::basic_levels::debug : srslog::basic_levels::error;
     logger.log(level, "Integrity check input - COUNT {}, Bearer ID {}, Direction {}", count, lcid, direction);
-    // logger.log(level, k_int, 32, "Integrity check key:");
-    // logger.log(level, mac_exp, 4, "MAC %s (expected):", is_valid ? "match" : "mismatch");
-    // logger.log(level, mac, 4, "MAC %s (found):", is_valid ? "match" : "mismatch");
-    // logger.log(level, buf.begin(), buf.end(), "Integrity check input msg (Bytes={})", buf.length());
+    logger.log(level, (uint8_t*)k_int.data(), 16, "Integrity check key:");
+    logger.log(level, (uint8_t*)mac_exp.data(), 4, "MAC {} (expected):", is_valid ? "match" : "mismatch");
+    logger.log(level, (uint8_t*)mac.data(), 4, "MAC {} (found):", is_valid ? "match" : "mismatch");
+    logger.log(level, buf.begin(), buf.end(), "Integrity check input msg (Bytes={})", buf.length());
   }
 
   return is_valid;

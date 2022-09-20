@@ -97,6 +97,31 @@ public:
     log_helper(it_begin, it_end, logger.error, fmt, std::forward<Args>(args)...);
   }
 
+  template <typename It, typename... Args>
+  void log(const srslog::basic_levels level, It it_begin, It it_end, const char* fmt, Args&&... args) const
+  {
+    switch (level) {
+      case srslog::basic_levels::debug:
+        log_debug(it_begin, it_end, fmt, std::forward<Args>(args)...);
+        break;
+      case srslog::basic_levels::info:
+        log_info(it_begin, it_end, fmt, std::forward<Args>(args)...);
+        break;
+      case srslog::basic_levels::warning:
+        log_warning(it_begin, it_end, fmt, std::forward<Args>(args)...);
+        break;
+      case srslog::basic_levels::error:
+        log_error(it_begin, it_end, fmt, std::forward<Args>(args)...);
+        break;
+      case srslog::basic_levels::none:
+        // skip
+        break;
+      default:
+        log_warning("Unsupported log level: {}", basic_level_to_string(level));
+        break;
+    }
+  }
+
   template <typename... Args>
   void log_debug(uint8_t* msg, size_t len, const char* fmt, Args&&... args) const
   {
@@ -116,6 +141,31 @@ public:
   void log_error(uint8_t* msg, size_t len, const char* fmt, Args&&... args) const
   {
     log_helper(msg, len, logger.error, fmt, std::forward<Args>(args)...);
+  }
+
+  template <typename... Args>
+  void log(const srslog::basic_levels level, uint8_t* msg, size_t len, const char* fmt, Args&&... args) const
+  {
+    switch (level) {
+      case srslog::basic_levels::debug:
+        log_debug(msg, len, fmt, std::forward<Args>(args)...);
+        break;
+      case srslog::basic_levels::info:
+        log_info(msg, len, fmt, std::forward<Args>(args)...);
+        break;
+      case srslog::basic_levels::warning:
+        log_warning(msg, len, fmt, std::forward<Args>(args)...);
+        break;
+      case srslog::basic_levels::error:
+        log_error(msg, len, fmt, std::forward<Args>(args)...);
+        break;
+      case srslog::basic_levels::none:
+        // skip
+        break;
+      default:
+        log_warning("Unsupported log level: {}", basic_level_to_string(level));
+        break;
+    }
   }
 
   const uint32_t ue_index;
