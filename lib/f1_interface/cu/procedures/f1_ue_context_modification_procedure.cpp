@@ -8,21 +8,21 @@
  *
  */
 
-#include "f1ap_ue_context_modification_procedure.h"
+#include "f1_ue_context_modification_procedure.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
 using namespace asn1::f1ap;
 
-f1ap_ue_context_modification_procedure::f1ap_ue_context_modification_procedure(const ue_context_mod_request_s& request_,
-                                                                               f1c_message_notifier& f1c_notif_,
-                                                                               f1c_event_manager&    ev_mng_,
-                                                                               srslog::basic_logger& logger_) :
+f1_ue_context_modification_procedure::f1_ue_context_modification_procedure(const ue_context_mod_request_s& request_,
+                                                                           f1c_message_notifier&           f1c_notif_,
+                                                                           f1c_event_manager&              ev_mng_,
+                                                                           srslog::basic_logger&           logger_) :
   request(request_), f1c_notifier(f1c_notif_), ev_mng(ev_mng_), logger(logger_)
 {
 }
 
-void f1ap_ue_context_modification_procedure::operator()(
+void f1_ue_context_modification_procedure::operator()(
     coro_context<async_task<f1ap_ue_context_modification_response_message>>& ctx)
 {
   CORO_BEGIN(ctx);
@@ -37,7 +37,7 @@ void f1ap_ue_context_modification_procedure::operator()(
   CORO_RETURN(create_ue_context_modification_result());
 }
 
-void f1ap_ue_context_modification_procedure::send_ue_context_modification_request()
+void f1_ue_context_modification_procedure::send_ue_context_modification_request()
 {
   // Pack message into PDU
   f1c_message f1c_ue_ctxt_mod_request_msg;
@@ -56,7 +56,7 @@ void f1ap_ue_context_modification_procedure::send_ue_context_modification_reques
 }
 
 f1ap_ue_context_modification_response_message
-f1ap_ue_context_modification_procedure::create_ue_context_modification_result()
+f1_ue_context_modification_procedure::create_ue_context_modification_result()
 {
   f1ap_ue_context_modification_response_message res{};
 

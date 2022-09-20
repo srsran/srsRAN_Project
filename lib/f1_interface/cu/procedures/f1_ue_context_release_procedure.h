@@ -20,14 +20,14 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class f1ap_ue_context_release_procedure
+class f1_ue_context_release_procedure
 {
 public:
-  f1ap_ue_context_release_procedure(f1ap_ue_context&                            ue_ctxt_,
-                                    const asn1::f1ap::ue_context_release_cmd_s& command_,
-                                    f1c_message_notifier&                       f1c_notif_,
-                                    f1c_event_manager&                          ev_mng_,
-                                    srslog::basic_logger&                       logger_);
+  f1_ue_context_release_procedure(f1ap_ue_context&                            ue_ctxt_,
+                                  const asn1::f1ap::ue_context_release_cmd_s& command_,
+                                  f1c_message_notifier&                       f1c_notif_,
+                                  f1c_event_manager&                          ev_mng_,
+                                  srslog::basic_logger&                       logger_);
 
   void operator()(coro_context<async_task<ue_index_t>>& ctx);
 

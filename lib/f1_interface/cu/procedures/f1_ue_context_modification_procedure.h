@@ -20,13 +20,13 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class f1ap_ue_context_modification_procedure
+class f1_ue_context_modification_procedure
 {
 public:
-  f1ap_ue_context_modification_procedure(const asn1::f1ap::ue_context_mod_request_s& request_,
-                                         f1c_message_notifier&                       f1c_notif_,
-                                         f1c_event_manager&                          ev_mng_,
-                                         srslog::basic_logger&                       logger_);
+  f1_ue_context_modification_procedure(const asn1::f1ap::ue_context_mod_request_s& request_,
+                                       f1c_message_notifier&                       f1c_notif_,
+                                       f1c_event_manager&                          ev_mng_,
+                                       srslog::basic_logger&                       logger_);
 
   void operator()(coro_context<async_task<f1ap_ue_context_modification_response_message>>& ctx);
 

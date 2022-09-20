@@ -111,7 +111,7 @@ void f1c_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg)
 async_task<f1ap_ue_context_setup_response_message>
 f1c_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request_message& request)
 {
-  return launch_async<f1ap_ue_context_setup_procedure>(request.msg, pdu_notifier, *events, logger);
+  return launch_async<f1_ue_context_setup_procedure>(request.msg, pdu_notifier, *events, logger);
 }
 
 async_task<ue_index_t>
@@ -135,13 +135,13 @@ f1c_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_com
   ue_ctxt_rel_cmd->gnb_du_ue_f1_ap_id.value            = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
   ue_ctxt_rel_cmd->cause.value                         = msg.cause;
 
-  return launch_async<f1ap_ue_context_release_procedure>(ue_ctxt, ue_ctxt_rel_cmd, pdu_notifier, *events, logger);
+  return launch_async<f1_ue_context_release_procedure>(ue_ctxt, ue_ctxt_rel_cmd, pdu_notifier, *events, logger);
 }
 
 async_task<f1ap_ue_context_modification_response_message>
 f1c_cu_impl::handle_ue_context_modification_request(const f1ap_ue_context_modification_request_message& request)
 {
-  return launch_async<f1ap_ue_context_modification_procedure>(request.msg, pdu_notifier, *events, logger);
+  return launch_async<f1_ue_context_modification_procedure>(request.msg, pdu_notifier, *events, logger);
 }
 
 void f1c_cu_impl::handle_message(const f1c_message& msg)

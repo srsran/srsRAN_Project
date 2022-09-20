@@ -11,9 +11,9 @@ set(SOURCES
         du/f1ap_du_factory.cpp
         du/f1ap_du_impl.cpp
         cu/f1c_cu_impl.cpp
-        cu/procedures/f1ap_ue_context_setup_procedure.cpp
-        cu/procedures/f1ap_ue_context_release_procedure.cpp
-        cu/procedures/f1ap_ue_context_modification_procedure.cpp
+        cu/procedures/f1_ue_context_setup_procedure.cpp
+        cu/procedures/f1_ue_context_release_procedure.cpp
+        cu/procedures/f1_ue_context_modification_procedure.cpp
         common/f1ap_asn1_packer.cpp
         common/asn1_helpers.cpp
         du/handlers/f1c_du_packet_handler.cpp

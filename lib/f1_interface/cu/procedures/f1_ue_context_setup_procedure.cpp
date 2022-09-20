@@ -8,21 +8,21 @@
  *
  */
 
-#include "f1ap_ue_context_setup_procedure.h"
+#include "f1_ue_context_setup_procedure.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
 using namespace asn1::f1ap;
 
-f1ap_ue_context_setup_procedure::f1ap_ue_context_setup_procedure(const ue_context_setup_request_s& request_,
-                                                                 f1c_message_notifier&             f1c_notif_,
-                                                                 f1c_event_manager&                ev_mng_,
-                                                                 srslog::basic_logger&             logger_) :
+f1_ue_context_setup_procedure::f1_ue_context_setup_procedure(const ue_context_setup_request_s& request_,
+                                                             f1c_message_notifier&             f1c_notif_,
+                                                             f1c_event_manager&                ev_mng_,
+                                                             srslog::basic_logger&             logger_) :
   request(request_), f1c_notifier(f1c_notif_), ev_mng(ev_mng_), logger(logger_)
 {
 }
 
-void f1ap_ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_context_setup_response_message>>& ctx)
+void f1_ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_context_setup_response_message>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -36,7 +36,7 @@ void f1ap_ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue
   CORO_RETURN(create_ue_context_setup_result());
 }
 
-void f1ap_ue_context_setup_procedure::send_ue_context_setup_request()
+void f1_ue_context_setup_procedure::send_ue_context_setup_request()
 {
   // Pack message into PDU
   f1c_message f1c_ue_ctxt_setup_request_msg;
@@ -54,7 +54,7 @@ void f1ap_ue_context_setup_procedure::send_ue_context_setup_request()
   f1c_notifier.on_new_message(f1c_ue_ctxt_setup_request_msg);
 }
 
-f1ap_ue_context_setup_response_message f1ap_ue_context_setup_procedure::create_ue_context_setup_result()
+f1ap_ue_context_setup_response_message f1_ue_context_setup_procedure::create_ue_context_setup_result()
 {
   f1ap_ue_context_setup_response_message res{};
 
