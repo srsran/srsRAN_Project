@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "adapters/f1ap_adapters.h"
+#include "adapters/f1c_adapters.h"
 #include "adapters/ngc_adapters.h"
 #include "du_processor_impl.h"
 #include "srsgnb/cu_cp/cu_cp.h"

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "adapters/f1ap_adapters.h"
+#include "adapters/f1c_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
