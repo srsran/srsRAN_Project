@@ -17,10 +17,10 @@
 using namespace srsgnb;
 
 static inline void equalize_zf_1x1_symbol(span<cf_t>       symbol_out,
-                                          span<float>      noise_vars,
+                                          span<float>      eq_noise_vars,
                                           span<const cf_t> symbol_in,
                                           span<const cf_t> ch_estimates,
-                                          float            noise_var_estimate,
+                                          float            noise_var_est,
                                           float            tx_scaling)
 {
   const unsigned nof_subcs = symbol_in.size();
@@ -43,7 +43,7 @@ static inline void equalize_zf_1x1_symbol(span<cf_t>       symbol_out,
     symbol_out[i_subc] = symbol_in[i_subc] * ch_est_rcp;
 
     // Calculate noise variances.
-    noise_vars[i_subc] = noise_var_estimate * ch_mod_sq_rcp;
+    eq_noise_vars[i_subc] = noise_var_est * ch_mod_sq_rcp;
   }
 }
 

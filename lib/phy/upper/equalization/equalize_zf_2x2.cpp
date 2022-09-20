@@ -18,16 +18,15 @@ using namespace srsgnb;
 
 static inline void equalize_zf_2x2_symbol(span<cf_t>       symbol_out_l0,
                                           span<cf_t>       symbol_out_l1,
-                                          span<float>      noise_vars_l0,
-                                          span<float>      noise_vars_l1,
+                                          span<float>      eq_noise_vars_l0,
+                                          span<float>      eq_noise_vars_l1,
                                           span<const cf_t> symbol_in_p0,
                                           span<const cf_t> symbol_in_p1,
                                           span<const cf_t> ch_estimates_p0_l0,
                                           span<const cf_t> ch_estimates_p0_l1,
                                           span<const cf_t> ch_estimates_p1_l0,
                                           span<const cf_t> ch_estimates_p1_l1,
-                                          float            noise_var_p0,
-                                          float            noise_var_p1,
+                                          float            noise_var_est,
                                           float            tx_scaling)
 {
   const unsigned nof_subcs = symbol_in_p0.size();
@@ -56,35 +55,37 @@ static inline void equalize_zf_2x2_symbol(span<cf_t>       symbol_out_l0,
     const cf_t re_in_p1 = symbol_in_p1[i_subc];
 
     // Calculate the product of the channel matrix and its hermitian transpose.
+    // The diagonal coefficients are the squared norms of the channel matrix column vectors.
+    const float norm_sq_ch_l0 = ch_p0_l0_mod_sq + ch_p1_l0_mod_sq;
+    const float norm_sq_ch_l1 = ch_p0_l1_mod_sq + ch_p1_l1_mod_sq;
+
+    // Calculate the anti-diagonal coefficients, which are -xi and -xi_conj.
     const cf_t  xi        = (ch_p0_l0_conj * ch_p0_l1) + (ch_p1_l0_conj * ch_p1_l1);
     const cf_t  xi_conj   = std::conj(xi);
     const float xi_mod_sq = std::real(xi * xi_conj);
 
-    const float norm_sq_ch_l0 = ch_p0_l0_mod_sq + ch_p1_l0_mod_sq;
-    const float norm_sq_ch_l1 = ch_p0_l1_mod_sq + ch_p1_l1_mod_sq;
+    // Apply a matched filter for each Tx layer to the input signal.
+    const cf_t matched_input_l0 = (ch_p0_l0_conj * re_in_p0) + (ch_p1_l0_conj * re_in_p1);
+    const cf_t matched_input_l1 = (ch_p0_l1_conj * re_in_p0) + (ch_p1_l1_conj * re_in_p1);
 
-    // Calculate the Moore-Penrose pseudo-inverse of the channel matrix.
-    const cf_t pinv_l0_p0 = norm_sq_ch_l1 * ch_p0_l0_conj - xi * ch_p0_l1_conj;
-    const cf_t pinv_l0_p1 = norm_sq_ch_l1 * ch_p1_l0_conj - xi * ch_p1_l1_conj;
-    const cf_t pinv_l1_p0 = norm_sq_ch_l0 * ch_p0_l1_conj - xi_conj * ch_p0_l0_conj;
-    const cf_t pinv_l1_p1 = norm_sq_ch_l0 * ch_p1_l1_conj - xi_conj * ch_p1_l0_conj;
-
-    // Calculate the reciprocal of the denominator. Set the symbols to zero in case of division by zero, NAN of INF.
-    const float d_pinv        = tx_scaling * ((norm_sq_ch_l0 * norm_sq_ch_l1) - xi_mod_sq);
-    float       d_pinv_rcp    = 0.0F;
-    float       d_pinv_rcp_sq = 0.0F;
+    // Calculate the reciprocal of the denominators. Set the symbols to zero in case of division by zero, NAN of INF.
+    const float d_pinv      = tx_scaling * ((norm_sq_ch_l0 * norm_sq_ch_l1) - xi_mod_sq);
+    const float d_nvars     = tx_scaling * d_pinv;
+    float       d_pinv_rcp  = 0.0F;
+    float       d_nvars_rcp = 0.0F;
     if (std::isnormal(d_pinv)) {
-      d_pinv_rcp    = 1.0F / d_pinv;
-      d_pinv_rcp_sq = d_pinv_rcp * d_pinv_rcp;
+      d_pinv_rcp  = 1.0F / d_pinv;
+      d_nvars_rcp = 1.0F / d_nvars;
     }
 
-    // Apply Zero Forcing algorithm.
-    symbol_out_l0[i_subc] = ((pinv_l0_p0 * re_in_p0) + (pinv_l0_p1 * re_in_p1)) * d_pinv_rcp;
-    symbol_out_l1[i_subc] = ((pinv_l1_p0 * re_in_p0) + (pinv_l1_p1 * re_in_p1)) * d_pinv_rcp;
+    // Apply Zero Forcing algorithm. This is equivalent to multiplying the input signal with the
+    // pseudo-inverse of the channel matrix.
+    symbol_out_l0[i_subc] = ((norm_sq_ch_l1 * matched_input_l0) - (xi * matched_input_l1)) * d_pinv_rcp;
+    symbol_out_l1[i_subc] = ((norm_sq_ch_l0 * matched_input_l1) - (xi_conj * matched_input_l0)) * d_pinv_rcp;
 
     // Calculate noise variances.
-    noise_vars_l0[i_subc] = ((abs_sq(pinv_l0_p0) * noise_var_p0) + (abs_sq(pinv_l0_p1) * noise_var_p1)) * d_pinv_rcp_sq;
-    noise_vars_l1[i_subc] = ((abs_sq(pinv_l1_p0) * noise_var_p0) + (abs_sq(pinv_l1_p1) * noise_var_p1)) * d_pinv_rcp_sq;
+    eq_noise_vars_l0[i_subc] = noise_var_est * norm_sq_ch_l1 * d_nvars_rcp;
+    eq_noise_vars_l1[i_subc] = noise_var_est * norm_sq_ch_l0 * d_nvars_rcp;
   }
 }
 
@@ -109,7 +110,6 @@ void srsgnb::equalize_zf_2x2(equalizer_symbol_list&          eq_symbols,
                            ch_estimates.get_symbol_ch_estimate(i_symb, 1, 0),
                            ch_estimates.get_symbol_ch_estimate(i_symb, 1, 1),
                            ch_estimates.get_noise_variance(0),
-                           ch_estimates.get_noise_variance(1),
                            tx_scaling);
   }
 }

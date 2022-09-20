@@ -10,7 +10,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 13-Sep-2022:
+// This file was generated using the following MATLAB class on 19-Sep-2022:
 //   + "srsChEqualizerUnittest.m"
 
 #include "srsgnb/adt/complex.h"

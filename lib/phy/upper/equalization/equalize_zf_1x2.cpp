@@ -16,13 +16,12 @@
 using namespace srsgnb;
 
 static inline void equalize_zf_1x2_symbol(span<cf_t>       symbol_out,
-                                          span<float>      noise_vars,
+                                          span<float>      eq_noise_vars,
                                           span<const cf_t> symbol_in_p0,
                                           span<const cf_t> symbol_in_p1,
                                           span<const cf_t> ch_estimates_p0,
                                           span<const cf_t> ch_estimates_p1,
-                                          float            noise_var_p0,
-                                          float            noise_var_p1,
+                                          float            noise_var_est,
                                           float            tx_scaling)
 {
   const unsigned nof_subcs = symbol_in_p0.size();
@@ -40,19 +39,20 @@ static inline void equalize_zf_1x2_symbol(span<cf_t>       symbol_out,
     const float ch_p0_mod_sq = std::real(ch_p0 * ch_p0_conj);
     const float ch_p1_mod_sq = std::real(ch_p1 * ch_p1_conj);
 
-    // Calculate the reciprocal of the denominator. Set the symbols to zero in case of division by zero, NAN of INF.
-    float d_pinv        = tx_scaling * (ch_p0_mod_sq + ch_p1_mod_sq);
-    float d_pinv_rcp    = 0.0F;
-    float d_pinv_rcp_sq = 0.0F;
+    // Calculate the reciprocal of the denominators. Set the symbols to zero in case of division by zero, NAN of INF.
+    const float d_pinv           = tx_scaling * (ch_p0_mod_sq + ch_p1_mod_sq);
+    const float d_nvars          = d_pinv * tx_scaling;
+    float       d_pinv_rcp       = 0.0F;
+    float       d_pinv_rcp_nvars = 0.0F;
     if (std::isnormal(d_pinv)) {
-      d_pinv_rcp    = 1.0F / d_pinv;
-      d_pinv_rcp_sq = d_pinv_rcp * d_pinv_rcp;
+      d_pinv_rcp       = 1.0F / d_pinv;
+      d_pinv_rcp_nvars = 1.0F / d_nvars;
     }
     // Apply Zero Forcing algorithm.
     symbol_out[i_subc] = ((symbol_in_p0[i_subc] * ch_p0_conj) + (symbol_in_p1[i_subc] * ch_p1_conj)) * d_pinv_rcp;
 
     // Calculate noise variances.
-    noise_vars[i_subc] = ((ch_p0_mod_sq * noise_var_p0) + (ch_p1_mod_sq * noise_var_p1)) * d_pinv_rcp_sq;
+    eq_noise_vars[i_subc] = noise_var_est * d_pinv_rcp_nvars;
   }
 }
 
@@ -73,7 +73,6 @@ void srsgnb::equalize_zf_1x2(equalizer_symbol_list&          eq_symbols,
                            ch_estimates.get_symbol_ch_estimate(i_symb, 0),
                            ch_estimates.get_symbol_ch_estimate(i_symb, 1),
                            ch_estimates.get_noise_variance(0),
-                           ch_estimates.get_noise_variance(1),
                            tx_scaling);
   }
 }
