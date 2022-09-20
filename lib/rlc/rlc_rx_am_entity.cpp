@@ -470,7 +470,7 @@ bool rlc_rx_am_entity::status_report_required()
 void rlc_rx_am_entity::notify_status_required()
 {
   if (status_report_required()) {
-    logger.log_info("Notifying TX that status report is required");
+    logger.log_debug("Notifying TX that status report is required");
     status_handler->on_status_report_required();
   }
 }

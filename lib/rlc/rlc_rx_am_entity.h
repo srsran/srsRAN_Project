@@ -133,7 +133,8 @@ public:
   uint32_t          get_status_pdu_length() override;
   bool              status_report_required() override;
 
-  /// Inform the Tx entity that a status report is required (whenever do_status is set to true)
+  /// Inform the Tx entity that a status report is required (whenever do_status is set to true and t-statusProhibit is
+  /// not running)
   void notify_status_required();
 
   /*
