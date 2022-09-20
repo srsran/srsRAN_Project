@@ -199,46 +199,34 @@ bool pdcp_entity_rx::integrity_verify(sec_mac& mac, byte_buffer_view buf, uint32
   return is_valid;
 }
 
-void pdcp_entity_rx::cipher_decrypt(uint8_t* ct, uint32_t ct_len, uint32_t count, uint8_t* msg)
+byte_buffer_view pdcp_entity_rx::cipher_decrypt(byte_buffer_view msg, uint32_t count)
 {
-  /*
-  uint8_t* k_enc;
-  uint8_t  msg_tmp[PDCP_MAX_SDU_SIZE];
+  // If control plane use RRC integrity key. If data use user plane key
+  const sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
 
-  // If control plane use RRC encrytion key. If data use user plane key
-  if (is_srb()) {
-    k_enc = sec_cfg.k_rrc_enc.data();
-  } else {
-    k_enc = sec_cfg.k_up_enc.data();
-  }
+  logger.log_debug("Cipher decrypt input: COUNT: {}, Bearer ID: {}, Direction {}", count, lcid, direction);
+  logger.log_debug((uint8_t*)k_enc.data(), k_enc.size(), "Cipher decrypt key:");
+  logger.log_debug(msg.begin(), msg.end(), "Cipher decrypt input msg");
 
-  logger.debug("Cipher decrypt input: COUNT: %" PRIu32 ", Bearer ID: %d, Direction %s",
-               count,
-               cfg.bearer_id,
-               (cfg.rx_direction == SECURITY_DIRECTION_DOWNLINK) ? "Downlink" : "Uplink");
-  logger.debug(k_enc, 32, "Cipher decrypt key:");
-  logger.debug(ct, ct_len, "Cipher decrypt input msg");
+  byte_buffer ct;
 
   switch (sec_cfg.cipher_algo) {
-    case CIPHERING_ALGORITHM_ID_EEA0:
+    case ciphering_algorithm::nea0:
       break;
-    case CIPHERING_ALGORITHM_ID_128_EEA1:
-      security_128_eea1(&k_enc[16], count, cfg.bearer_id - 1, cfg.rx_direction, ct, ct_len, msg_tmp);
-      memcpy(msg, msg_tmp, ct_len);
+    case ciphering_algorithm::nea1:
+      ct = security_nea1(k_enc, count, lcid - 1, direction, msg);
       break;
-    case CIPHERING_ALGORITHM_ID_128_EEA2:
-      security_128_eea2(&k_enc[16], count, cfg.bearer_id - 1, cfg.rx_direction, ct, ct_len, msg_tmp);
-      memcpy(msg, msg_tmp, ct_len);
+    case ciphering_algorithm::nea2:
+      ct = security_nea2(k_enc, count, lcid - 1, direction, msg);
       break;
-    case CIPHERING_ALGORITHM_ID_128_EEA3:
-      security_128_eea3(&k_enc[16], count, cfg.bearer_id - 1, cfg.rx_direction, ct, ct_len, msg_tmp);
-      memcpy(msg, msg_tmp, ct_len);
+    case ciphering_algorithm::nea3:
+      ct = security_nea3(k_enc, count, lcid - 1, direction, msg);
       break;
     default:
       break;
   }
-  logger.debug(msg, ct_len, "Cipher decrypt output msg");
-  */
+  logger.log_debug(ct.begin(), ct.end(), "Cipher decrypt output msg");
+  return ct;
 }
 
 /*

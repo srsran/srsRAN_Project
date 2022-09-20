@@ -87,8 +87,8 @@ private:
 
   std::map<uint32_t, byte_buffer> reorder_queue;
 
-  bool integrity_verify(sec_mac& mac, byte_buffer_view buf, uint32_t count);
-  void cipher_decrypt(uint8_t* ct, uint32_t ct_len, uint32_t count, uint8_t* msg);
+  bool             integrity_verify(sec_mac& mac, byte_buffer_view buf, uint32_t count);
+  byte_buffer_view cipher_decrypt(byte_buffer_view msg, uint32_t count);
 
   /*
    * Notifiers
