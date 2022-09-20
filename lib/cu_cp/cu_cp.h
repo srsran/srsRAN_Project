@@ -11,7 +11,7 @@
 #pragma once
 
 #include "adapters/f1ap_adapters.h"
-#include "adapters/ngap_adapters.h"
+#include "adapters/ngc_adapters.h"
 #include "du_processor_impl.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
@@ -92,7 +92,7 @@ private:
   // F1AP to CU-CP adapter
   f1ap_cu_cp_adapter f1ap_ev_notifier;
 
-  // RRC UE to NGAP adapter
+  // RRC UE to NGC adapter
   rrc_ue_ngc_adapter rrc_ue_ngc_ev_notifier;
 
   std::atomic<bool> amf_connected = {false};

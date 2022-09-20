@@ -17,7 +17,7 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Adapter between NGAP and AMF
+/// Adapter between NGC and AMF
 class ngc_amf_adapter : public ngc_message_notifier
 {
 public:
