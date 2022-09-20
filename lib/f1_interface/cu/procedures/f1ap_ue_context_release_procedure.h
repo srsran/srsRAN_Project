@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../f1ap_cu_impl.h"
+#include "../f1c_cu_impl.h"
 #include "common/f1ap_asn1_utils.h"
 #include "f1ap_cu_event_manager.h"
 #include "srsgnb/asn1/f1ap.h"

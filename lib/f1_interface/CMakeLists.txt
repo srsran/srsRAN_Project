@@ -10,7 +10,7 @@ set(SOURCES
         cu/f1c_cu_factory.cpp
         du/f1ap_du_factory.cpp
         du/f1ap_du_impl.cpp
-        cu/f1ap_cu_impl.cpp
+        cu/f1c_cu_impl.cpp
         cu/procedures/f1ap_ue_context_setup_procedure.cpp
         cu/procedures/f1ap_ue_context_release_procedure.cpp
         cu/procedures/f1ap_ue_context_modification_procedure.cpp
