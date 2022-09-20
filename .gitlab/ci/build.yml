@@ -6,23 +6,29 @@ include:
 variables:
   # Input variables
   # General
-  os_type: ubuntu
-  os_version: "22.04"
-  docker_version: $DOCKER_BUILDER_VERSION
+  OS: ubuntu-22.04
   # Build
-  compiler: gcc
-  uhd_version: "4.1.0.5"
-  # Tests
-  run_tests: "true"
-  # Modes
-  mode: coverage # default, coverage, tsan, asan, valgrind
+  COMPILER: gcc
+  UHD_VERSION: "" # Empty for OS default
+  BUILD_TYPE: "" # Empty for cmake default
+  ASSERT_LEVEL: PARANOID
+  ENABLE_EXPORT: "" # Empty for cmake default
+  ENABLE_FFTW: "" # Empty for cmake default
+  ENABLE_UHD: "" # Empty for cmake default
+  ENABLE_ZERO_MQ: "" # Empty for cmake default
+  ENABLE_ASAN: "" # Empty for cmake default
+  ENABLE_TSAN: "" # Empty for cmake default
+  ENABLE_GCOV: "True"
+  AUTO_DETECT_ISA: "False"
+  # Test
+  TEST_MODE: coverage # default, coverage, asan, tsan, valgrind, none
 
 stages:
   - build
   - tests
 
 .build_and_unit:
-  image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-builder-gnb-${os_type}-${os_version}:$docker_version
+  image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-builder-gnb-${OS}:${DOCKER_BUILDER_VERSION}
   tags:
     - srs-rfci-docker
 
@@ -36,22 +42,44 @@ stages:
   before_script:
     - |
       build_srsgnb() {
-        case $mode in
-          coverage)
-            build_extra="-DENABLE_GCOV=True"
-            ;;
-          tsan)
-            build_extra="-DCMAKE_BUILD_TYPE=Debug -DENABLE_TSAN=True"
-            ;;
-          asan)
-            build_extra="-DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=True"
-            ;;
-          valgrind)
-            build_extra="-DCMAKE_BUILD_TYPE=Debug -DAUTO_DETECT_ISA=False"
-            ;;
-        esac      
+        if [ -n "${UHD_VERSION}" ]; then
+          BUILD_EXTRA="${BUILD_EXTRA} -u ${UHD_VERSION}"
+        fi
+        if [ -n "${BUILD_TYPE}" ]; then
+          BUILD_EXTRA="${BUILD_EXTRA} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+        fi
+        if [ -n "${ASSERT_LEVEL}" ]; then
+          BUILD_EXTRA="${BUILD_EXTRA} -DASSERT_LEVEL=${ASSERT_LEVEL}"
+        fi
+        if [ -n "${AUTO_DETECT_ISA}" ]; then
+          BUILD_EXTRA="${BUILD_EXTRA} -DAUTO_DETECT_ISA=${AUTO_DETECT_ISA}"
+        fi
+        if [ -n "${ENABLE_EXPORT}" ]; then
+          BUILD_EXTRA="${BUILD_EXTRA} -DENABLE_EXPORT=${ENABLE_EXPORT}"
+        fi
+        if [ -n "${ENABLE_FFTW}" ]; then
+          BUILD_EXTRA="${BUILD_EXTRA} -DENABLE_FFTW=${ENABLE_FFTW}"
+        fi
+        if [ -n "${ENABLE_UHD}" ]; then
+          BUILD_EXTRA="${BUILD_EXTRA} -DENABLE_UHD=${ENABLE_UHD}"
+        fi
+        if [ -n "${ENABLE_ZERO_MQ}" ]; then
+          BUILD_EXTRA="${BUILD_EXTRA} -DENABLE_ZERO_MQ=${ENABLE_ZERO_MQ}"
+        fi
+        if [ -n "${ENABLE_ASAN}" ]; then
+          BUILD_EXTRA="${BUILD_EXTRA} -DENABLE_ASAN=${ENABLE_ASAN}"
+        fi
+        if [ -n "${ENABLE_TSAN}" ]; then
+          BUILD_EXTRA="${BUILD_EXTRA} -DENABLE_TSAN=${ENABLE_TSAN}"
+        fi
+        if [ -n "${ENABLE_GCOV}" ]; then
+          BUILD_EXTRA="${BUILD_EXTRA} -DENABLE_GCOV=${ENABLE_GCOV}"
+        fi
+        if [[ $TEST_MODE = "none" ]]; then
+          BUILD_EXTRA="${BUILD_EXTRA} -DBUILD_TESTS=False"
+        fi
 
-        BUILD_CMD="builder.sh -c $compiler -u $uhd_version -DASSERT_LEVEL=PARANOID $build_extra ."
+        BUILD_CMD="builder.sh -c ${COMPILER}${BUILD_EXTRA} ."
         echo "${BUILD_CMD}"
         echo "============================================================================================="
         $BUILD_CMD
@@ -59,7 +87,7 @@ stages:
   script:
     - build_srsgnb
   cache: &build_cache
-    key: ${os_type}-${os_version}-${docker_version}-${compiler}-${mode}
+    key: ${OS}-${DOCKER_BUILDER_VERSION}-${COMPILER}-${TEST_MODE}
     paths:
       - ccache
     policy: pull
@@ -92,7 +120,7 @@ build [clean and update cache]:
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
-    - if: $ON_SCHEDULE
+    - if: $CI_DESCRIPTION =~ /Nightly/
   cache:
     <<: *build_cache
     policy: push
@@ -102,6 +130,7 @@ build [clean]:
   extends: .build
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+    - if: $CI_DESCRIPTION =~ /Weekly/
   cache: []
 
 ################################################################################
@@ -114,7 +143,7 @@ build [clean]:
   rules:
     - if: $ON_DEFAULT_BRANCH
       when: never
-    - if: $run_tests == "true"
+    - if: $TEST_MODE != "none"
   needs:
     - job: build [cached]
       artifacts: true
@@ -131,7 +160,7 @@ build [clean]:
     # Launch ctest
     - cd build
     - |
-      case $mode in
+      case $TEST_MODE in
         tsan)
           ctest_extra="-L tsan"
           ;;
@@ -151,7 +180,7 @@ build [clean]:
 
     # Launch coverage
     - |
-      if [[ $mode = "coverage" ]]; then 
+      if [[ $TEST_MODE = "coverage" ]]; then 
         gcovr --xml --print-summary -j "$(nproc --all)" --exclude-unreachable-branches \
           --exclude-directories unittests \
           --exclude-directories integrationtests  \

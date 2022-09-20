@@ -1,3 +1,8 @@
+# How to test nighlt/weekly schedules
+# Generate a schedule for your branch whit a CI_DESCRIPTION variable
+# that contains "Nightly"/"Weekly" and an extra word
+# Ex: "Test Weekly", "Nighlty add feature"
+
 include:
   - project: softwareradiosystems/testing-tools
     ref: "22"
@@ -29,22 +34,6 @@ include-guards:
 ################################################################################
 ## Build + Unit Tests + Integration tests
 ################################################################################
-cmake flag check:
-  stage: build
-  extends: .build_and_unit
-  rules:
-    - if: $ON_MR
-    - if: $ON_SCHEDULE
-  script:
-    - CC=/usr/bin/gcc
-    - CXX=/usr/bin/g++
-    - mkdir build && cd build && cmake -G Ninja ${flag} ..
-  parallel:
-    matrix:
-      - flag:
-          [-DSTOP_ON_WARNING=True, -DENABLE_EXPORT=True, -DBUILD_TESTS=False]
-  needs: []
-
 intermediate commits:
   extends: .build
   rules:
@@ -75,71 +64,109 @@ intermediate commits:
     mode: default
   needs: []
 
-alt:
+.trigger build on mr:
   extends: .trigger build
   rules:
     - if: $ON_MR
-      variables:
-        run_tests: "false"
-    - if: $ON_SCHEDULE
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      # Nightly will update the cache
+
+.trigger build on nightly:
+  extends: .trigger build
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    # By default, nightly builds push cache. Force 'no cache' mode
+    CI_MERGE_REQUEST_LABELS: no-cache
+
+.trigger build on weekly:
+  extends: .trigger build
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+
+# Default build in build.yml
+
+build [next]:
+  extends: .trigger build on mr
+  rules:
+    - if: $ON_MR
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: archlinux-latest
+    COMPILER: gcc
+    ENABLE_GCOV: "False"
+    TEST_MODE: default
+
+build [asan]:
+  extends: .trigger build on mr
+  allow_failure: true # Temporal
+  variables:
+    OS: ubuntu-22.04
+    COMPILER: gcc
+    BUILD_TYPE: Debug
+    ENABLE_GCOV: "False"
+    ENABLE_ASAN: "True"
+    TEST_MODE: asan
+
+build [tsan]:
+  extends: .trigger build on mr
+  variables:
+    OS: ubuntu-22.04
+    COMPILER: clang
+    BUILD_TYPE: Debug
+    ENABLE_GCOV: "False"
+    ENABLE_TSAN: "True"
+    TEST_MODE: tsan
+
+build alt [ubuntu 22.04]:
+  extends: .trigger build on nightly
+  variables:
+    OS: ubuntu-22.04
+  parallel: &os-flags
+    matrix:
+      - COMPILER: [gcc, clang]
+        BUILD_TYPE: [Debug, Release]
+        ASSERT_LEVEL: [MINIMAL, NORMAL, PARANOID]
+        ENABLE_EXPORT: ["True", "False"]
+        ENABLE_GCOV: "False"
+        TEST_MODE: default
+
+build alt [archlinux-latest]:
+  extends: .trigger build on nightly
+  variables:
+    OS: archlinux-latest
+  parallel: *os-flags
+
+build alt [ubuntu-20.04]:
+  extends: .trigger build on weekly
+  variables:
+    OS: ubuntu-20.04
+  parallel: *os-flags
+
+build alt [uhd]:
+  extends: .trigger build on weekly
   parallel:
     matrix:
-      - os_type: ubuntu
-        os_version: "22.04"
-        compiler: clang
-        uhd_version: "4.1.0.5"
-      - os_type: ubuntu
-        os_version: "20.04"
-        uhd_version: "3.15.0.0"
-        compiler: [gcc, clang]
-      - os_type: archlinux
-        os_version: latest
-        uhd_version: "4.2.0.0"
-        compiler: [gcc, clang]
+      - OS: ubuntu-22.04
+        COMPILER: [gcc, clang]
+        ENABLE_GCOV: "False"
+        UHD_VERSION: "4.2.0.0"
+        TEST_MODE: none
+      - OS: ubuntu-20.04
+        COMPILER: [gcc, clang]
+        ENABLE_GCOV: "False"
+        UHD_VERSION: ["4.2.0.0", "4.1.0.5"]
+        TEST_MODE: none
 
-sanitizers [tsan]:
-  extends: .trigger build
-  rules:
-    - if: $ON_SCHEDULE
+valgrind:
+  extends: .trigger build on weekly
   variables:
-    compiler: clang
-    mode: tsan
-    CI_MERGE_REQUEST_LABELS: no-cache
-
-sanitizers [asan]:
-  extends: .trigger build
-  rules:
-    - if: $ON_SCHEDULE
-  variables:
-    compiler: gcc
-    mode: asan
-    CI_MERGE_REQUEST_LABELS: no-cache
-
-sanitizers [valgrind]:
-  extends: .trigger build
-  rules:
-    - if: $ON_SCHEDULE
-  variables:
-    compiler: gcc
-    mode: valgrind
-    CI_MERGE_REQUEST_LABELS: no-cache
-
-alt uhd:
-  extends: .trigger build
-  rules:
-    - if: $ON_SCHEDULE
-      variables:
-        CI_MERGE_REQUEST_LABELS: no-cache
-  parallel:
-    matrix:
-      - os_type: ubuntu
-        os_version: "22.04"
-        compiler: [gcc, clang]
-        uhd_version: "4.2.0.0"
-      - os_type: ubuntu
-        os_version: "20.04"
-        compiler: [gcc, clang]
-        uhd_version: ["4.2.0.0", "4.1.0.5"]
+    OS: ubuntu-22.04
+    COMPILER: gcc
+    AUTO_DETECT_ISA: "False"
+    ENABLE_GCOV: "False"
+    BUILD_TYPE: Debug
+    TEST_MODE: valgrind
 
 ################################################################################
 # Doc generation
@@ -154,7 +181,7 @@ alt uhd:
 unit requirements:
   stage: documentation
   rules:
-    - if: $ON_SCHEDULE
+    - if: $CI_DESCRIPTION =~ /Nightly/
       when: always # Even if previous stages/required jobs fail
   image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-tools:$SRS_TOOLS_VERSION
   script:
@@ -176,7 +203,7 @@ unit coverage:
       variables:
         coverage_report: summary
       when: always # Even if previous stages/required jobs fail
-    - if: $ON_SCHEDULE
+    - if: $CI_DESCRIPTION =~ /Nightly/
       variables:
         coverage_report: full
       when: always # Even if previous stages/required jobs fail
@@ -229,7 +256,7 @@ unit tests web:
   stage: documentation
   extends: .depends on unit test jobs
   rules:
-    - if: $ON_SCHEDULE
+    - if: $CI_DESCRIPTION =~ /Nightly/
       when: always # Even if previous stages/required jobs fail
   image: python:3.9-alpine # sh entrypoint
   variables:
@@ -247,7 +274,7 @@ unit tests web:
 pages:
   stage: documentation
   rules:
-    - if: $ON_SCHEDULE
+    - if: $CI_DESCRIPTION == "Nightly"
       when: always # Even if previous stages/required jobs fail
   image: registry.gitlab.com/softwareradiosystems/testing-tools/doxygen:$DOCKER_DOXYGEN_VERSION
   script:
@@ -277,3 +304,37 @@ pages:
     paths:
       - public
     expire_in: 10 minutes
+
+################################################################################
+# Git workflow graduation
+################################################################################
+.gratuation:
+  image: alpine:3.16.0 # sh entrypoint
+  before_script:
+    - apk add --update --no-cache git git-lfs
+  stage: .post
+  variables:
+    GRADUATION_BRANCH: ""
+  script:
+    - git config user.email "${CODEBOT_USERNAME}@srs.io"
+    - git config user.name ${CODEBOT_USERNAME}
+    - git remote remove origin
+    - git remote add origin https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git
+    - git fetch origin $GRADUATION_BRANCH
+    - git checkout -t origin/$GRADUATION_BRANCH
+    - git rebase ${CI_COMMIT_SHA}
+    - git push
+
+promote to next:
+  extends: .gratuation
+  rules:
+    - if: $CI_DESCRIPTION == "Nightly"
+  variables:
+    GRADUATION_BRANCH: next
+
+promote to main:
+  extends: .gratuation
+  rules:
+    - if: $CI_DESCRIPTION == "Weekly"
+  variables:
+    GRADUATION_BRANCH: main

@@ -1,5 +1,5 @@
 Nightly:
-  cron: "30 2 * * *"
+  cron: "00 1 * * 1-5"
   cron_timezone: "Europe/Madrid"
   ref: dev
   active: true
@@ -7,6 +7,22 @@ Nightly:
     - variable_type: env_var
       key: CI_DESCRIPTION
       value: "Nightly"
+    - variable_type: env_var
+      key: NOTIFY_SLACK
+      value: "true"
+    - variable_type: env_var
+      key: SLACK_CHANNEL_OK
+      value: "#ci_gnb"
+
+Weekly:
+  cron: "00 1 * * 6"
+  cron_timezone: "Europe/Madrid"
+  ref: next
+  active: true
+  variables:
+    - variable_type: env_var
+      key: CI_DESCRIPTION
+      value: "Weekly"
     - variable_type: env_var
       key: NOTIFY_SLACK
       value: "true"
