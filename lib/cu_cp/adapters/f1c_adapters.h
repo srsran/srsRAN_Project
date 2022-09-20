@@ -66,11 +66,11 @@ private:
   du_processor_f1c_interface* du_f1c_handler = nullptr;
 };
 
-/// Adapter between F1AP and RRC UE
-class f1ap_rrc_ue_adapter : public f1c_rrc_message_notifier
+/// Adapter between F1C and RRC UE
+class f1c_rrc_ue_adapter : public f1c_rrc_message_notifier
 {
 public:
-  explicit f1ap_rrc_ue_adapter(rrc_ul_ccch_pdu_handler& rrc_rx) : rrc_handler(rrc_rx) {}
+  explicit f1c_rrc_ue_adapter(rrc_ul_ccch_pdu_handler& rrc_rx) : rrc_handler(rrc_rx) {}
 
   void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
   {
