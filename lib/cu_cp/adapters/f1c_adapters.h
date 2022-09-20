@@ -20,8 +20,8 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Adapter between F1AP and CU-CP, to handle DU specific procedure outcomes (e.g. F1 Remove)
-class f1ap_cu_cp_adapter : public f1c_du_management_notifier
+/// Adapter between F1C and CU-CP, to handle DU specific procedure outcomes (e.g. F1 Remove)
+class f1c_cu_cp_adapter : public f1c_du_management_notifier
 {
 public:
   void connect_cu_cp(cu_cp_du_handler& cu_cp_mng_) { du_handler = &cu_cp_mng_; }

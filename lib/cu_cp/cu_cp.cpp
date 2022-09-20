@@ -37,7 +37,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_), main_ctrl_loop(
   ngc_entity = create_ngc(timers, *cfg.ngc_notifier);
 
   // connect event notifier to layers
-  f1ap_ev_notifier.connect_cu_cp(*this);
+  f1c_ev_notifier.connect_cu_cp(*this);
 }
 
 cu_cp::~cu_cp()
@@ -129,7 +129,7 @@ du_index_t cu_cp::add_du()
   du_processor_config_t du_cfg = {};
 
   std::unique_ptr<du_processor_interface> du =
-      create_du_processor(std::move(du_cfg), f1ap_ev_notifier, *cfg.f1c_notifier, rrc_ue_ngc_ev_notifier);
+      create_du_processor(std::move(du_cfg), f1c_ev_notifier, *cfg.f1c_notifier, rrc_ue_ngc_ev_notifier);
 
   rrc_ue_ngc_ev_notifier.connect_ngc(*ngc_entity);
 

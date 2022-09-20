@@ -89,8 +89,8 @@ private:
   // task event loops indexed by du_index
   slot_array<async_task_sequencer, MAX_NOF_DUS> du_ctrl_loop;
 
-  // F1AP to CU-CP adapter
-  f1ap_cu_cp_adapter f1ap_ev_notifier;
+  // F1C to CU-CP adapter
+  f1c_cu_cp_adapter f1c_ev_notifier;
 
   // RRC UE to NGC adapter
   rrc_ue_ngc_adapter rrc_ue_ngc_ev_notifier;
