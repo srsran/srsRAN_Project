@@ -115,7 +115,7 @@ private:
 class dummy_rrc_ue_nas_notifier : public srs_cu_cp::rrc_ue_nas_notifier
 {
 public:
-  // FIXME: Add handler when ngap exists
+  // FIXME: Add handler when ngc exists
   dummy_rrc_ue_nas_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
 
   void on_initial_ue_message(const srs_cu_cp::initial_ue_message& msg) override

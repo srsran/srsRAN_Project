@@ -46,7 +46,7 @@ private:
   bool reject_users = true; ///< Reject all connection attempts, i.e. when AMF is not connected.
 
   rrc_ue_du_processor_notifier& rrc_ue_du_proc_notifier; // notifier to the DU processor
-  rrc_ue_nas_notifier&          nas_notifier;            // notifier to the NGAP
+  rrc_ue_nas_notifier&          nas_notifier;            // notifier to the NGC
 
   // RRC-internal user database indexed by ue_index
   slot_array<std::unique_ptr<rrc_ue_impl>, MAX_NOF_UES> ue_db;

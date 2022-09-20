@@ -53,7 +53,7 @@ void ng_setup_procedure::operator()(coro_context<async_task<ng_setup_response_me
 void ng_setup_procedure::send_ng_setup_request()
 {
   ngc_message msg = {};
-  // set NGAP PDU contents
+  // set NGC PDU contents
   msg.pdu.set_init_msg();
   msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_NG_SETUP);
   msg.pdu.init_msg().value.ng_setup_request() = request.msg;
@@ -92,12 +92,12 @@ ng_setup_response_message ng_setup_procedure::create_ng_setup_result()
   ng_setup_response_message res{};
 
   if (ng_setup_outcome.has_value()) {
-    logger.info("Received NGAP PDU with successful outcome.");
+    logger.info("Received NGC PDU with successful outcome.");
     res.msg     = *ng_setup_outcome.value();
     res.success = true;
   } else {
     const asn1::ngap::ng_setup_fail_s& ng_fail = *ng_setup_outcome.error();
-    logger.info("Received NGAP PDU with unsuccessful outcome. Cause: {}", get_cause_str(ng_fail->cause.value));
+    logger.info("Received NGC PDU with unsuccessful outcome. Cause: {}", get_cause_str(ng_fail->cause.value));
     res.success = false;
   }
   return res;

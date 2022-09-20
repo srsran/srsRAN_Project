@@ -76,7 +76,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
       break;
     case asn1::rrc_nr::init_ue_id_c::types_opts::random_value:
       context.setup_ue_id = request_ies.ue_id.random_value().to_number();
-      // TODO: communicate with NGAP
+      // TODO: communicate with NGC
       break;
     default:
       logger.error("Unsupported RRCSetupRequest");

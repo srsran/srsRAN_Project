@@ -163,7 +163,7 @@ void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpor
     ue_ngap_id_to_ngc_ue_context[ue_ngap_id_uint].amf_ue_id = uint_to_ue_amf_id(msg->amf_ue_ngap_id.value.value);
   }
 
-  // TODO: create NGAP to RRC UE adapter and forward message
+  // TODO: create NGC to RRC UE adapter and forward message
 }
 
 void ngc_impl::handle_successful_outcome(const successful_outcome_s& outcome)

@@ -96,7 +96,7 @@ private:
   rrc_ue_context_t              context;
   rrc_du_ue_manager&            rrc_du;                // reference to the parant RRC object
   rrc_ue_du_processor_notifier& du_processor_notifier; // notifier to the DU processor
-  rrc_ue_nas_notifier&          nas_notifier;          // notifier to the NGAP
+  rrc_ue_nas_notifier&          nas_notifier;          // notifier to the NGC
   srb_notifiers                 srbs;                  // set notifiers for all SRBs
   byte_buffer                   du_to_cu_container;    // initial RRC message from DU to CU
   rrc_ue_task_scheduler&        task_sched;

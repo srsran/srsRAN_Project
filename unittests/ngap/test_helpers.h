@@ -23,7 +23,6 @@ namespace srs_cu_cp {
 class dummy_ngc_amf_notifier : public ngc_message_notifier
 {
 public:
-  // FIXME: Add handler when ngap exists
   dummy_ngc_amf_notifier(ngc_message_handler* handler_) :
     logger(srslog::fetch_basic_logger("TEST")), handler(handler_){};
 
@@ -31,11 +30,11 @@ public:
 
   void on_new_message(const ngc_message& msg) override
   {
-    logger.info("Received NGAP message");
+    logger.info("Received NGC message");
     last_ngc_msg = msg;
 
     if (handler != nullptr) {
-      logger.info("Forwarding NGAP PDU");
+      logger.info("Forwarding NGC PDU");
       handler->handle_message(msg);
     }
   };

@@ -32,7 +32,7 @@ private:
   /// Send NG SETUP REQUEST to AMF.
   void send_ng_setup_request();
 
-  /// Checks whether the NGAP should attempt again to connect to AMF.
+  /// Checks whether the NGC should attempt again to connect to AMF.
   bool retry_required();
 
   /// Creates procedure result to send back to procedure caller.
