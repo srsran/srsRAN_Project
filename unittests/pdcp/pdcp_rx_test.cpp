@@ -12,6 +12,7 @@
 #include "../../lib/pdcp/pdcp_entity_impl.h"
 #include "pdcp_test_vectors.h"
 #include "srsgnb/pdcp/pdcp_config.h"
+#include "srsgnb/support/test_utils.h"
 #include "srsgnb/support/timers.h"
 #include <gtest/gtest.h>
 #include <queue>
@@ -22,6 +23,7 @@ TEST_P(pdcp_rx_test, create_new_entity)
 {
   init(GetParam());
 
+  srsgnb::test_delimit_logger delimiter("Entity creation test. SN_SIZE={} ", sn_size);
   ASSERT_NE(pdcp_rx, nullptr);
 }
 
@@ -30,6 +32,7 @@ TEST_P(pdcp_rx_test, sn_unpack)
   init(GetParam());
 
   auto test_hdr_reader = [this](uint32_t count) {
+    srsgnb::test_delimit_logger delimiter("Header reader test. SN_SIZE={} COUNT={}", sn_size, count);
     // Get PDU to test
     byte_buffer test_pdu;
     get_test_pdu(count, test_pdu);
@@ -58,6 +61,11 @@ TEST_P(pdcp_rx_test, rx_in_order)
   init(GetParam());
 
   auto test_rx_in_order = [this](uint32_t count) {
+    srsgnb::test_delimit_logger delimiter("RX in order test. SN_SIZE={} COUNT={}", sn_size, count);
+
+    pdcp_rx->set_as_security_config(sec_cfg);
+    pdcp_rx->enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
     byte_buffer test_pdu2;

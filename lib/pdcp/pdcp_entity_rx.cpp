@@ -112,7 +112,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer pdu)
    */
   if (rcvd_count < st.rx_deliv) {
     logger.log_debug("Out-of-order after time-out, duplicate or COUNT wrap-around");
-    logger.log_debug("RCVD_COUNT %u, RCVD_COUNT %u", rcvd_count, st.rx_deliv);
+    logger.log_debug("RCVD_COUNT {}, RCVD_COUNT {}", rcvd_count, st.rx_deliv);
     return; // Invalid count, drop.
   }
 

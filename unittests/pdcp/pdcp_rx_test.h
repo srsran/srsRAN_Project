@@ -77,8 +77,19 @@ protected:
     config.out_of_order_delivery = false;
     config.t_reordering          = pdcp_t_reordering::ms10;
 
+    // Set security keys
+    sec_cfg.k_128_rrc_int = k_128_int;
+    sec_cfg.k_128_up_int  = k_128_int;
+    sec_cfg.k_128_rrc_enc = k_128_enc;
+    sec_cfg.k_128_up_enc  = k_128_enc;
+
+    // Set encription/integrity algorithms
+    sec_cfg.integ_algo  = integrity_algorithm::nia1;
+    sec_cfg.cipher_algo = ciphering_algorithm::nea1;
+
     // Create PDCP RX entity
     pdcp_rx = std::make_unique<pdcp_entity_rx>(0, LCID_SRB1, config, test_frame);
+    srslog::flush();
   }
 
   /// \brief Gets test PDU based on the COUNT and SN size
@@ -99,6 +110,8 @@ protected:
   pdcp_config::pdcp_rx_config config  = {};
   timer_manager               timers;
   pdcp_rx_test_frame          test_frame = {};
+
+  sec_128_as_config sec_cfg;
 
   std::unique_ptr<pdcp_entity_rx> pdcp_rx;
   pdcp_rx_lower_interface*        pdcp_rx_lower = nullptr;
