@@ -83,8 +83,24 @@ void pdcp_entity_rx::handle_pdu(byte_buffer buf)
     // extract_mac(pdu, mac);
   }
 
+  /*
+   * TS 38.323, section 5.9: Integrity verification
+   *
+   * The data unit that is integrity protected is the PDU header
+   * and the data part of the PDU before ciphering.
+   */
+  if (integrity_enabled == pdcp_integrity_enabled::enabled) {
+    bool is_valid = true; // FIXME
+    // bool is_valid = integrity_verify(pdu->msg, pdu->N_bytes, rcvd_count, mac);
+    if (!is_valid) {
+      logger.log_error(buf.begin(), buf.end(), "Integrity failed. Dropping PDU");
+      // rrc->notify_pdcp_integrity_error(lcid); // FIXME
+      return; // Invalid packet, drop.
+    }
+    logger.log_debug(buf.begin(), buf.end(), "Integrity verification successful");
+  }
   // After checking the integrity, we can discard the header.
-  // discard_data_header(buf);
+  discard_data_header(buf);
 
   /*
    * Check valid rcvd_count:
@@ -139,6 +155,95 @@ void pdcp_entity_rx::handle_pdu(byte_buffer buf)
   logger.log_debug("Rx PDCP state - RX_NEXT={}, RX_DELIV={}, RX_REORD={}", st.rx_next, st.rx_deliv, st.rx_reord);
 }
 
+/*
+ * Security helpers
+ */
+bool pdcp_entity_rx::integrity_verify(sec_mac& mac, byte_buffer_view buf, uint32_t count)
+{
+  // If control plane use RRC integrity key. If data use user plane key
+  const sec_128_as_key& k_int = is_srb() ? sec_cfg.k_128_rrc_int : sec_cfg.k_128_up_int;
+
+  sec_mac mac_exp  = {};
+  bool    is_valid = true;
+  switch (sec_cfg.integ_algo) {
+    case integrity_algorithm::nia0:
+      break;
+    case integrity_algorithm::nia1:
+      security_nia1(mac_exp, k_int, count, lcid - 1, direction, buf);
+      break;
+    case integrity_algorithm::nia2:
+      security_nia2(mac_exp, k_int, count, lcid - 1, direction, buf);
+      break;
+    case integrity_algorithm::nia3:
+      security_nia3(mac_exp, k_int, count, lcid - 1, direction, buf);
+      break;
+    default:
+      break;
+  }
+
+  if (sec_cfg.integ_algo != integrity_algorithm::nia0) {
+    for (uint8_t i = 0; i < 4; i++) {
+      if (mac[i] != mac_exp[i]) {
+        is_valid = false;
+        break;
+      }
+    }
+    srslog::basic_levels level = is_valid ? srslog::basic_levels::debug : srslog::basic_levels::error;
+    logger.log(level, "Integrity check input - COUNT {}, Bearer ID {}, Direction {}", count, lcid, direction);
+    // logger.log(level, k_int, 32, "Integrity check key:");
+    // logger.log(level, mac_exp, 4, "MAC %s (expected):", is_valid ? "match" : "mismatch");
+    // logger.log(level, mac, 4, "MAC %s (found):", is_valid ? "match" : "mismatch");
+    // logger.log(level, buf.begin(), buf.end(), "Integrity check input msg (Bytes={})", buf.length());
+  }
+
+  return is_valid;
+}
+
+void pdcp_entity_rx::cipher_decrypt(uint8_t* ct, uint32_t ct_len, uint32_t count, uint8_t* msg)
+{
+  /*
+  uint8_t* k_enc;
+  uint8_t  msg_tmp[PDCP_MAX_SDU_SIZE];
+
+  // If control plane use RRC encrytion key. If data use user plane key
+  if (is_srb()) {
+    k_enc = sec_cfg.k_rrc_enc.data();
+  } else {
+    k_enc = sec_cfg.k_up_enc.data();
+  }
+
+  logger.debug("Cipher decrypt input: COUNT: %" PRIu32 ", Bearer ID: %d, Direction %s",
+               count,
+               cfg.bearer_id,
+               (cfg.rx_direction == SECURITY_DIRECTION_DOWNLINK) ? "Downlink" : "Uplink");
+  logger.debug(k_enc, 32, "Cipher decrypt key:");
+  logger.debug(ct, ct_len, "Cipher decrypt input msg");
+
+  switch (sec_cfg.cipher_algo) {
+    case CIPHERING_ALGORITHM_ID_EEA0:
+      break;
+    case CIPHERING_ALGORITHM_ID_128_EEA1:
+      security_128_eea1(&k_enc[16], count, cfg.bearer_id - 1, cfg.rx_direction, ct, ct_len, msg_tmp);
+      memcpy(msg, msg_tmp, ct_len);
+      break;
+    case CIPHERING_ALGORITHM_ID_128_EEA2:
+      security_128_eea2(&k_enc[16], count, cfg.bearer_id - 1, cfg.rx_direction, ct, ct_len, msg_tmp);
+      memcpy(msg, msg_tmp, ct_len);
+      break;
+    case CIPHERING_ALGORITHM_ID_128_EEA3:
+      security_128_eea3(&k_enc[16], count, cfg.bearer_id - 1, cfg.rx_direction, ct, ct_len, msg_tmp);
+      memcpy(msg, msg_tmp, ct_len);
+      break;
+    default:
+      break;
+  }
+  logger.debug(msg, ct_len, "Cipher decrypt output msg");
+  */
+}
+
+/*
+ * Header helpers
+ */
 bool pdcp_entity_rx::read_data_pdu_header(const byte_buffer& buf, uint32_t& sn) const
 {
   byte_buffer_reader buf_reader = buf;
@@ -174,4 +279,9 @@ bool pdcp_entity_rx::read_data_pdu_header(const byte_buffer& buf, uint32_t& sn) 
       return false;
   }
   return true;
+}
+
+void pdcp_entity_rx::discard_data_header(byte_buffer& buf) const
+{
+  buf.trim_head(hdr_len_bytes);
 }

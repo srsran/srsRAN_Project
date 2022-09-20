@@ -57,6 +57,7 @@ public:
    * Header helpers
    */
   bool read_data_pdu_header(const byte_buffer& buf, uint32_t& sn) const;
+  void discard_data_header(byte_buffer& buf) const;
 
   /*
    * Security configuration
@@ -78,12 +79,16 @@ private:
   pdcp_config::pdcp_rx_config cfg;
 
   sec_128_as_config      sec_cfg           = {};
+  security_direction     direction         = security_direction::uplink;
   pdcp_integrity_enabled integrity_enabled = pdcp_integrity_enabled::no;
   pdcp_ciphering_enabled ciphering_enabled = pdcp_ciphering_enabled::no;
 
   pdcp_rx_state st = {};
 
   std::map<uint32_t, byte_buffer> reorder_queue;
+
+  bool integrity_verify(sec_mac& mac, byte_buffer_view buf, uint32_t count);
+  void cipher_decrypt(uint8_t* ct, uint32_t ct_len, uint32_t count, uint8_t* msg);
 
   /*
    * Notifiers
