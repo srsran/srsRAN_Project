@@ -34,9 +34,9 @@ private:
 class pdcp_du_processor_adapter : public pdcp_tx_lower_notifier
 {
 public:
-  explicit pdcp_du_processor_adapter(f1ap_rrc_message_handler& f1c_handler_,
-                                     const ue_index_t&         ue_index_,
-                                     const srb_id_t&           srb_id_) :
+  explicit pdcp_du_processor_adapter(f1c_rrc_message_handler& f1c_handler_,
+                                     const ue_index_t&        ue_index_,
+                                     const srb_id_t&          srb_id_) :
     f1c_handler(f1c_handler_), ue_index(ue_index_), srb_id(srb_id_)
   {
   }
@@ -58,9 +58,9 @@ public:
   }
 
 private:
-  f1ap_rrc_message_handler& f1c_handler;
-  const ue_index_t          ue_index;
-  const srb_id_t            srb_id;
+  f1c_rrc_message_handler& f1c_handler;
+  const ue_index_t         ue_index;
+  const srb_id_t           srb_id;
 };
 
 } // namespace srs_cu_cp

@@ -37,10 +37,10 @@ struct f1ap_dl_rrc_message {
   asn1::unbounded_octstring<true> rrc_container;
 };
 
-class f1ap_rrc_message_handler
+class f1c_rrc_message_handler
 {
 public:
-  virtual ~f1ap_rrc_message_handler() = default;
+  virtual ~f1c_rrc_message_handler() = default;
 
   /// \brief Packs and transmits the DL RRC message transfer as per TS 38.473 section 8.4.2.
   /// \param[in] msg The DL RRC message transfer message to transmit.
@@ -213,7 +213,7 @@ public:
 /// Combined entry point for F1C/U handling.
 class f1_interface : public f1c_message_handler,
                      public f1c_event_handler,
-                     public f1ap_rrc_message_handler,
+                     public f1c_rrc_message_handler,
                      public f1ap_connection_manager,
                      public f1ap_ue_context_manager,
                      public f1c_statistics_handler
