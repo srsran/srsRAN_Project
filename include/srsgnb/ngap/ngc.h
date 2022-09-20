@@ -76,7 +76,7 @@ public:
   virtual async_task<ng_setup_response_message> handle_ng_setup_request(const ng_setup_request_message& request) = 0;
 };
 
-struct ngap_ue_context {
+struct ngc_ue_context {
   ue_amf_id_t amf_ue_id = ue_amf_id_t::invalid;
   ue_index_t  ue_index  = INVALID_UE_INDEX;
   du_index_t  du_index  = INVALID_DU_INDEX;

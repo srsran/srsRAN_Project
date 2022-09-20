@@ -64,7 +64,7 @@ private:
 
   ngap_ue_manager ues;
 
-  std::array<ngap_ue_context, MAX_NOF_CU_UES> ue_ngap_id_to_ngap_ue_context;
+  std::array<ngc_ue_context, MAX_NOF_CU_UES> ue_ngap_id_to_ngc_ue_context;
 
   std::unique_ptr<ngap_event_manager> events;
 };

@@ -22,8 +22,8 @@ ngc_impl::ngc_impl(timer_manager& timers_, ngc_message_notifier& message_notifie
   ngc_notifier(message_notifier_),
   events(std::make_unique<ngap_event_manager>())
 {
-  ngap_ue_context empty_context = {};
-  std::fill(ue_ngap_id_to_ngap_ue_context.begin(), ue_ngap_id_to_ngap_ue_context.end(), empty_context);
+  ngc_ue_context empty_context = {};
+  std::fill(ue_ngap_id_to_ngc_ue_context.begin(), ue_ngap_id_to_ngc_ue_context.end(), empty_context);
 
   ng_setup_timer = timers.create_unique_timer();
   ng_setup_timer.set(1000, [](uint32_t tid) {
@@ -44,9 +44,9 @@ void ngc_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
   logger.info("Handling Initial UE Message");
 
   // Create UE context and store it
-  ngap_ue_context ue_ctxt = {};
-  ue_ctxt.du_index        = get_du_index_from_ue_ngap_id(msg.ue_ngap_id);
-  ue_ctxt.ue_index        = get_ue_index_from_ue_ngap_id(msg.ue_ngap_id);
+  ngc_ue_context ue_ctxt = {};
+  ue_ctxt.du_index       = get_du_index_from_ue_ngap_id(msg.ue_ngap_id);
+  ue_ctxt.ue_index       = get_ue_index_from_ue_ngap_id(msg.ue_ngap_id);
 
   logger.debug(
       "Created NGAP UE (ue_ngap_id={}, du_index={}, ue_index={}).", msg.ue_ngap_id, ue_ctxt.du_index, ue_ctxt.ue_index);
@@ -97,12 +97,12 @@ void ngc_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_messa
   std::underlying_type_t<ue_ngap_id_t> ue_ngap_id_uint = ue_ngap_id_to_uint(msg.ue_ngap_id);
   ul_nas_transport_msg->ran_ue_ngap_id.value.value     = ue_ngap_id_uint;
 
-  if (ue_ngap_id_to_ngap_ue_context[ue_ngap_id_uint].amf_ue_id == ue_amf_id_t::invalid) {
+  if (ue_ngap_id_to_ngc_ue_context[ue_ngap_id_uint].amf_ue_id == ue_amf_id_t::invalid) {
     logger.error("UE AMF ID for ue_ngap_id={} not found!", ue_ngap_id_uint);
     return;
   }
 
-  ue_amf_id_t ue_amf_id                            = ue_ngap_id_to_ngap_ue_context[ue_ngap_id_uint].amf_ue_id;
+  ue_amf_id_t ue_amf_id                            = ue_ngap_id_to_ngc_ue_context[ue_ngap_id_uint].amf_ue_id;
   ul_nas_transport_msg->amf_ue_ngap_id.value.value = ue_amf_id_to_uint(ue_amf_id);
 
   ul_nas_transport_msg->nas_pdu.value.resize(msg.nas_pdu.length());
@@ -159,8 +159,8 @@ void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpor
   std::underlying_type_t<ue_ngap_id_t> ue_ngap_id_uint = msg->ran_ue_ngap_id.value.value;
 
   // Add AMF UE ID to ue ngap context if it is not set (this is the first DL NAS Transport message)
-  if (ue_ngap_id_to_ngap_ue_context[ue_ngap_id_uint].amf_ue_id == ue_amf_id_t::invalid) {
-    ue_ngap_id_to_ngap_ue_context[ue_ngap_id_uint].amf_ue_id = uint_to_ue_amf_id(msg->amf_ue_ngap_id.value.value);
+  if (ue_ngap_id_to_ngc_ue_context[ue_ngap_id_uint].amf_ue_id == ue_amf_id_t::invalid) {
+    ue_ngap_id_to_ngc_ue_context[ue_ngap_id_uint].amf_ue_id = uint_to_ue_amf_id(msg->amf_ue_ngap_id.value.value);
   }
 
   // TODO: create NGAP to RRC UE adapter and forward message
