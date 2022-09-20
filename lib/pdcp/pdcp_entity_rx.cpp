@@ -71,7 +71,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer pdu)
    */
   byte_buffer sdu;
   if (ciphering_enabled == pdcp_ciphering_enabled::enabled) {
-    sdu = cipher_decrypt(std::move(pdu), rcvd_count);
+    sdu = cipher_decrypt(byte_buffer_view{pdu, hdr_len_bytes, pdu.length() - hdr_len_bytes}, rcvd_count);
   } else {
     sdu = std::move(pdu);
   }
