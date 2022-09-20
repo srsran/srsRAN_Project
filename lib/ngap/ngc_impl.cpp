@@ -17,10 +17,10 @@ using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
 ngc_impl::ngc_impl(timer_manager& timers_, ngc_message_notifier& message_notifier_) :
-  logger(srslog::fetch_basic_logger("NGAP")),
+  logger(srslog::fetch_basic_logger("NGC")),
   timers(timers_),
   ngc_notifier(message_notifier_),
-  events(std::make_unique<ngap_event_manager>())
+  events(std::make_unique<ngc_event_manager>())
 {
   ngc_ue_context empty_context = {};
   std::fill(ue_ngap_id_to_ngc_ue_context.begin(), ue_ngap_id_to_ngc_ue_context.end(), empty_context);
@@ -170,7 +170,7 @@ void ngc_impl::handle_successful_outcome(const successful_outcome_s& outcome)
 {
   switch (outcome.value.type().value) {
     case ngap_elem_procs_o::successful_outcome_c::types_opts::ng_setup_resp: {
-      events->ngap_setup_response.set(&outcome.value.ng_setup_resp());
+      events->ng_setup_response.set(&outcome.value.ng_setup_resp());
     } break;
     default:
       logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
@@ -181,7 +181,7 @@ void ngc_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcome
 {
   switch (outcome.value.type().value) {
     case ngap_elem_procs_o::unsuccessful_outcome_c::types_opts::ng_setup_fail: {
-      events->ngap_setup_response.set(&outcome.value.ng_setup_fail());
+      events->ng_setup_response.set(&outcome.value.ng_setup_fail());
     } break;
     default:
       logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());

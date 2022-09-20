@@ -16,7 +16,7 @@ using namespace asn1::ngap;
 
 ng_setup_procedure::ng_setup_procedure(const ng_setup_request_message& request_,
                                        ngc_message_notifier&           amf_notif_,
-                                       ngap_event_manager&             ev_mng_,
+                                       ngc_event_manager&              ev_mng_,
                                        srslog::basic_logger&           logger_) :
   request(request_), amf_notifier(amf_notif_), ev_mng(ev_mng_), logger(logger_)
 {
@@ -31,7 +31,7 @@ void ng_setup_procedure::operator()(coro_context<async_task<ng_setup_response_me
     send_ng_setup_request();
 
     // Await AMF response.
-    CORO_AWAIT_VALUE(ngap_setup_outcome, ev_mng.ngap_setup_response);
+    CORO_AWAIT_VALUE(ng_setup_outcome, ev_mng.ng_setup_response);
 
     if (not retry_required()) {
       // No more attempts. Exit loop.
@@ -66,12 +66,12 @@ void ng_setup_procedure::send_ng_setup_request()
 
 bool ng_setup_procedure::retry_required()
 {
-  if (ngap_setup_outcome.has_value()) {
+  if (ng_setup_outcome.has_value()) {
     // Success case.
     return false;
   }
 
-  const asn1::ngap::ng_setup_fail_s& ng_fail = *ngap_setup_outcome.error();
+  const asn1::ngap::ng_setup_fail_s& ng_fail = *ng_setup_outcome.error();
   if (not ng_fail->time_to_wait_present) {
     // AMF didn't command a waiting time.
     logger.error("AMF did not set any retry waiting time.");
@@ -91,12 +91,12 @@ ng_setup_response_message ng_setup_procedure::create_ng_setup_result()
 {
   ng_setup_response_message res{};
 
-  if (ngap_setup_outcome.has_value()) {
+  if (ng_setup_outcome.has_value()) {
     logger.info("Received NGAP PDU with successful outcome.");
-    res.msg     = *ngap_setup_outcome.value();
+    res.msg     = *ng_setup_outcome.value();
     res.success = true;
   } else {
-    const asn1::ngap::ng_setup_fail_s& ng_fail = *ngap_setup_outcome.error();
+    const asn1::ngap::ng_setup_fail_s& ng_fail = *ng_setup_outcome.error();
     logger.info("Received NGAP PDU with unsuccessful outcome. Cause: {}", get_cause_str(ng_fail->cause.value));
     res.success = false;
   }

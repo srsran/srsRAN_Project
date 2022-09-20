@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../ngap_asn1_utils.h"
-#include "ngap_event_manager.h"
+#include "ngc_event_manager.h"
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/support/async/async_task.h"
 
@@ -23,7 +23,7 @@ class ng_setup_procedure
 public:
   ng_setup_procedure(const ng_setup_request_message& request_,
                      ngc_message_notifier&           cu_notif_,
-                     ngap_event_manager&             ev_mng_,
+                     ngc_event_manager&              ev_mng_,
                      srslog::basic_logger&           logger_);
 
   void operator()(coro_context<async_task<ng_setup_response_message>>& ctx);
@@ -40,13 +40,13 @@ private:
 
   const ng_setup_request_message request;
   ngc_message_notifier&          amf_notifier;
-  ngap_event_manager&            ev_mng;
+  ngc_event_manager&             ev_mng;
   srslog::basic_logger&          logger;
 
   unsigned ng_setup_retry_no = 0;
   unsigned time_to_wait      = 0;
 
-  ngap_event_manager::ngap_setup_outcome_t ngap_setup_outcome;
+  ngc_event_manager::ng_setup_outcome_t ng_setup_outcome;
 };
 
 } // namespace srs_cu_cp

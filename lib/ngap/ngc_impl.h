@@ -20,7 +20,7 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
-class ngap_event_manager;
+class ngc_event_manager;
 
 class ngc_impl final : public ngc_interface
 {
@@ -66,7 +66,7 @@ private:
 
   std::array<ngc_ue_context, MAX_NOF_CU_UES> ue_ngap_id_to_ngc_ue_context;
 
-  std::unique_ptr<ngap_event_manager> events;
+  std::unique_ptr<ngc_event_manager> events;
 };
 
 } // namespace srs_cu_cp

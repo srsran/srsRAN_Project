@@ -17,12 +17,12 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class ngap_event_manager
+class ngc_event_manager
 {
 public:
   /// NG setup procedure outcome
-  using ngap_setup_outcome_t = expected<const asn1::ngap::ng_setup_resp_s*, const asn1::ngap::ng_setup_fail_s*>;
-  event_signal<ngap_setup_outcome_t> ngap_setup_response;
+  using ng_setup_outcome_t = expected<const asn1::ngap::ng_setup_resp_s*, const asn1::ngap::ng_setup_fail_s*>;
+  event_signal<ng_setup_outcome_t> ng_setup_response;
 };
 
 } // namespace srs_cu_cp
