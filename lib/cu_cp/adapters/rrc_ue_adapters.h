@@ -97,17 +97,17 @@ private:
   pdcp_tx_upper_data_interface& pdcp_handler;
 };
 
-// Adapter between RRC UE and NGAP
-class rrc_ue_ngap_adapter : public rrc_ue_nas_notifier
+// Adapter between RRC UE and NGC
+class rrc_ue_ngc_adapter : public rrc_ue_nas_notifier
 {
 public:
-  void connect_ngap(ngc_nas_message_handler& ngc_nas_msg_handler_) { ngc_nas_msg_handler = &ngc_nas_msg_handler_; }
+  void connect_ngc(ngc_nas_message_handler& ngc_nas_msg_handler_) { ngc_nas_msg_handler = &ngc_nas_msg_handler_; }
 
   void set_du_index(du_index_t du_index_) { du_index = du_index_; }
 
   void on_initial_ue_message(const initial_ue_message& msg) override
   {
-    srsgnb_assert(du_index != INVALID_DU_INDEX, "du_index of rrc_ue_ngap_adapter not set");
+    srsgnb_assert(du_index != INVALID_DU_INDEX, "du_index of rrc_ue_ngc_adapter not set");
 
     ngap_initial_ue_message ngap_init_ue_msg;
     ngap_init_ue_msg.ue_ngap_id = get_ue_ngap_id(du_index, msg.ue_index);
@@ -125,7 +125,7 @@ public:
 
   void on_ul_nas_transport_message(const ul_nas_transport_message& msg) override
   {
-    srsgnb_assert(du_index != INVALID_DU_INDEX, "du_index of rrc_ue_ngap_adapter not set");
+    srsgnb_assert(du_index != INVALID_DU_INDEX, "du_index of rrc_ue_ngc_adapter not set");
 
     ngap_ul_nas_transport_message ngap_ul_nas_msg;
     ngap_ul_nas_msg.ue_ngap_id = get_ue_ngap_id(du_index, msg.ue_index);

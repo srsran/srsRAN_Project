@@ -93,7 +93,7 @@ private:
   f1ap_cu_cp_adapter f1ap_ev_notifier;
 
   // RRC UE to NGAP adapter
-  rrc_ue_ngap_adapter rrc_ue_ngap_ev_notifier;
+  rrc_ue_ngc_adapter rrc_ue_ngc_ev_notifier;
 
   std::atomic<bool> amf_connected = {false};
 };

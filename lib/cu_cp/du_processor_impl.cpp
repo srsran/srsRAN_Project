@@ -22,11 +22,11 @@ using namespace srs_cu_cp;
 du_processor_impl::du_processor_impl(const du_processor_config_t cfg_,
                                      f1c_du_management_notifier& f1c_du_mgmt_notifier_,
                                      f1c_message_notifier&       f1c_notifier_,
-                                     rrc_ue_nas_notifier&        rrc_ue_ngap_ev_notifier_) :
+                                     rrc_ue_nas_notifier&        rrc_ue_ngc_ev_notifier_) :
   cfg(cfg_),
   f1c_du_mgmt_notifier(f1c_du_mgmt_notifier_),
   f1c_notifier(f1c_notifier_),
-  rrc_ue_ngap_ev_notifier(rrc_ue_ngap_ev_notifier_),
+  rrc_ue_ngc_ev_notifier(rrc_ue_ngc_ev_notifier_),
   ue_mng(cfg_.logger)
 {
   const size_t number_of_pending_procedures = 16;
@@ -39,7 +39,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t cfg_,
   f1ap_ev_notifier.connect_du_processor(*this);
 
   // create RRC
-  rrc_du_creation_message rrc_creation_msg(cfg.rrc_cfg, rrc_ue_ev_notifier, rrc_ue_ngap_ev_notifier);
+  rrc_du_creation_message rrc_creation_msg(cfg.rrc_cfg, rrc_ue_ev_notifier, rrc_ue_ngc_ev_notifier);
   rrc = create_rrc_du(rrc_creation_msg);
 
   rrc_ue_ev_notifier.connect_du_processor(*this);

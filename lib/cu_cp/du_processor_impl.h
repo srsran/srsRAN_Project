@@ -32,7 +32,7 @@ public:
   du_processor_impl(const du_processor_config_t du_processor_config_,
                     f1c_du_management_notifier& f1c_du_mgmt_notifier_,
                     f1c_message_notifier&       f1c_notifier_,
-                    rrc_ue_nas_notifier&        rrc_ue_ngap_ev_notifier_);
+                    rrc_ue_nas_notifier&        rrc_ue_ngc_ev_notifier_);
   ~du_processor_impl() = default;
 
   // message handlers
@@ -96,7 +96,7 @@ private:
 
   f1c_du_management_notifier& f1c_du_mgmt_notifier;
   f1c_message_notifier&       f1c_notifier;
-  rrc_ue_nas_notifier&        rrc_ue_ngap_ev_notifier;
+  rrc_ue_nas_notifier&        rrc_ue_ngc_ev_notifier;
 
   du_processor_context                          context;
   slot_array<du_cell_context, MAX_NOF_DU_CELLS> cell_db; /// flattened version of served cells list provided by DU/F1AP

@@ -23,7 +23,7 @@ namespace srs_cu_cp {
 std::unique_ptr<du_processor_interface> create_du_processor(const du_processor_config_t du_processor_config_,
                                                             f1c_du_management_notifier& f1c_du_mgmt_notifier_,
                                                             f1c_message_notifier&       f1c_notifier_,
-                                                            rrc_ue_nas_notifier&        rrc_ue_ngap_ev_notifier_);
+                                                            rrc_ue_nas_notifier&        rrc_ue_ngc_ev_notifier_);
 
 } // namespace srs_cu_cp
 } // namespace srsgnb
