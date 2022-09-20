@@ -33,9 +33,9 @@ static void rotate_node_right(__m256i* out, const __m256i* in, unsigned steps, u
 // Recursively selects the proper strategy for the high-rate region by successively decreasing the value of the template
 // parameter.
 template <unsigned NODE_SIZE_AVX2_PH>
-ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_hr_strategy(const ldpc_base_graph_type current_bg,
-                                                                         const uint8_t              current_ls_index,
-                                                                         const unsigned             node_size_avx2)
+ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_hr_strategy(ldpc_base_graph_type current_bg,
+                                                                         uint8_t              current_ls_index,
+                                                                         unsigned             node_size_avx2)
 {
   if (node_size_avx2 != NODE_SIZE_AVX2_PH) {
     return select_hr_strategy<NODE_SIZE_AVX2_PH - 1>(current_bg, current_ls_index, node_size_avx2);
@@ -58,9 +58,9 @@ ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_hr_strategy(const l
 
 // Ensures that the recursion stops when NODE_SIZE_AVX2_PH == 1.
 template <>
-ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_hr_strategy<1>(const ldpc_base_graph_type current_bg,
-                                                                            const uint8_t              current_ls_index,
-                                                                            const unsigned /*node_size_avx2*/)
+ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_hr_strategy<1>(ldpc_base_graph_type current_bg,
+                                                                            uint8_t              current_ls_index,
+                                                                            unsigned /*node_size_avx2*/)
 {
   if (current_bg == ldpc_base_graph_type::BG1) {
     if (current_ls_index == 6) {
@@ -109,7 +109,7 @@ ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_sys_bits_strategy<1
 // Recursively selects the proper strategy for the extended region by successively decreasing the value of the template
 // parameter.
 template <unsigned NODE_SIZE_AVX2_PH>
-ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_ext_strategy(const unsigned node_size_avx2)
+ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_ext_strategy(unsigned node_size_avx2)
 {
   if (node_size_avx2 == NODE_SIZE_AVX2_PH) {
     return &ldpc_encoder_avx2::ext_region_inner<NODE_SIZE_AVX2_PH>;
@@ -119,7 +119,7 @@ ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_ext_strategy(const 
 
 // Ensures that the recursion stops when NODE_SIZE_AVX2_PH == 1.
 template <>
-ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_ext_strategy<1>(const unsigned /*node_size_avx2*/)
+ldpc_encoder_avx2::strategy_method ldpc_encoder_avx2::select_ext_strategy<1>(unsigned /*node_size_avx2*/)
 {
   return &ldpc_encoder_avx2::ext_region_inner<1>;
 }
