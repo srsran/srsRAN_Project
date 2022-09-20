@@ -20,7 +20,7 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 
 /// Test the successful f1 setup procedure
-TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
+TEST_F(f1c_cu_test, when_f1_setup_request_valid_then_connect_du)
 {
   // Action 1: Receive F1SetupRequest message
   test_logger.info("TEST: Receive F1SetupRequest message...");
@@ -47,7 +47,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
 }
 
 /// Test the f1 setup failure
-TEST_F(f1ap_cu_test, when_f1_setup_request_invalid_then_reject_du)
+TEST_F(f1c_cu_test, when_f1_setup_request_invalid_then_reject_du)
 {
   // Generate F1SetupRequest
   f1c_message f1setup_msg = generate_f1_setup_request_base();

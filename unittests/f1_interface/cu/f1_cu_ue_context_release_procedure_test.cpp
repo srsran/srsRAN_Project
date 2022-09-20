@@ -16,7 +16,7 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 
 /// Test the f1 UE context release procedure (gNB-CU initiated)
-TEST_F(f1ap_cu_test, when_ue_release_command_received_then_ue_removed)
+TEST_F(f1c_cu_test, when_ue_release_command_received_then_ue_removed)
 {
   // Action 1: Add UE
   test_logger.info("Injecting Initial UL RRC message");

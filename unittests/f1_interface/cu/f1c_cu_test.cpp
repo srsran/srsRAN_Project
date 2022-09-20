@@ -23,7 +23,7 @@ using namespace asn1::f1ap;
 /* Handling of unsupported messages                                                 */
 //////////////////////////////////////////////////////////////////////////////////////
 
-TEST_F(f1ap_cu_test, when_unsupported_f1ap_pdu_received_then_message_ignored)
+TEST_F(f1c_cu_test, when_unsupported_f1ap_pdu_received_then_message_ignored)
 {
   // Set last message of PDU notifier to init_msg
   f1c_pdu_notifier->last_f1c_msg.pdu.set_init_msg();
@@ -38,7 +38,7 @@ TEST_F(f1ap_cu_test, when_unsupported_f1ap_pdu_received_then_message_ignored)
   EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), asn1::f1ap::f1_ap_pdu_c::types_opts::options::init_msg);
 }
 
-TEST_F(f1ap_cu_test, when_unsupported_init_msg_received_then_message_ignored)
+TEST_F(f1c_cu_test, when_unsupported_init_msg_received_then_message_ignored)
 {
   // Set last message of PDU notifier to successful outcome
   f1c_pdu_notifier->last_f1c_msg.pdu.set_successful_outcome();
@@ -54,7 +54,7 @@ TEST_F(f1ap_cu_test, when_unsupported_init_msg_received_then_message_ignored)
             asn1::f1ap::f1_ap_pdu_c::types_opts::options::successful_outcome);
 }
 
-TEST_F(f1ap_cu_test, when_unsupported_successful_outcome_received_then_message_ignored)
+TEST_F(f1c_cu_test, when_unsupported_successful_outcome_received_then_message_ignored)
 {
   // Set last message of PDU notifier to init_msg
   f1c_pdu_notifier->last_f1c_msg.pdu.set_init_msg();
@@ -69,7 +69,7 @@ TEST_F(f1ap_cu_test, when_unsupported_successful_outcome_received_then_message_i
   EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), asn1::f1ap::f1_ap_pdu_c::types_opts::options::init_msg);
 }
 
-TEST_F(f1ap_cu_test, when_unsupported_unsuccessful_outcome_received_then_message_ignored)
+TEST_F(f1c_cu_test, when_unsupported_unsuccessful_outcome_received_then_message_ignored)
 {
   // Set last message of PDU notifier to init_msg
   f1c_pdu_notifier->last_f1c_msg.pdu.set_init_msg();
@@ -88,7 +88,7 @@ TEST_F(f1ap_cu_test, when_unsupported_unsuccessful_outcome_received_then_message
 /* Initial UL RRC Message handling                                                  */
 //////////////////////////////////////////////////////////////////////////////////////
 
-TEST_F(f1ap_cu_test, when_duto_currc_container_missing_then_ue_not_added)
+TEST_F(f1c_cu_test, when_duto_currc_container_missing_then_ue_not_added)
 {
   // Generate F1 Initial UL RRC Message without DU to CU RRC Container
   f1c_message init_ul_rrc_msg = generate_f1_init_ul_rrc_msg_base(41255);
@@ -99,7 +99,7 @@ TEST_F(f1ap_cu_test, when_duto_currc_container_missing_then_ue_not_added)
   EXPECT_EQ(f1c->get_nof_ues(), 0);
 }
 
-TEST_F(f1ap_cu_test, when_max_nof_ues_exceeded_then_ue_not_added)
+TEST_F(f1c_cu_test, when_max_nof_ues_exceeded_then_ue_not_added)
 {
   // Reduce F1AP and TEST logger loglevel to warning to reduce console output
   srslog::fetch_basic_logger("CU-F1C").set_level(srslog::basic_levels::warning);
@@ -132,7 +132,7 @@ TEST_F(f1ap_cu_test, when_max_nof_ues_exceeded_then_ue_not_added)
   EXPECT_EQ(f1c->get_nof_ues(), MAX_NOF_UES);
 }
 
-TEST_F(f1ap_cu_test, when_ue_creation_fails_then_ue_not_added)
+TEST_F(f1c_cu_test, when_ue_creation_fails_then_ue_not_added)
 {
   // Add maximum number of UEs to dummy DU processor
   du_processor_notifier->set_ue_index(MAX_NOF_UES);
@@ -147,7 +147,7 @@ TEST_F(f1ap_cu_test, when_ue_creation_fails_then_ue_not_added)
   EXPECT_EQ(f1c->get_nof_ues(), 0);
 }
 
-TEST_F(f1ap_cu_test, when_rrc_setup_complete_present_then_forward_over_srb1)
+TEST_F(f1c_cu_test, when_rrc_setup_complete_present_then_forward_over_srb1)
 {
   // Generate F1 Initial UL RRC Message with RRC Setup Complete present
   f1c_message init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(41255);
@@ -165,7 +165,7 @@ TEST_F(f1ap_cu_test, when_rrc_setup_complete_present_then_forward_over_srb1)
 /* F1 Removal Request handling                                                      */
 //////////////////////////////////////////////////////////////////////////////////////
 
-TEST_F(f1ap_cu_test, when_f1_removal_request_received_then_du_deleted)
+TEST_F(f1c_cu_test, when_f1_removal_request_received_then_du_deleted)
 {
   // Generate F1 Removal Request Message
   f1c_message removal_request = {};

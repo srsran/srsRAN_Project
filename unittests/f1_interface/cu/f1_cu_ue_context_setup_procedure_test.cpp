@@ -16,7 +16,7 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 
 /// Test the successful UE context setup procedure
-TEST_F(f1ap_cu_test, when_ue_setup_response_received_then_procedure_successful)
+TEST_F(f1c_cu_test, when_ue_setup_response_received_then_procedure_successful)
 {
   // Action 1: Launch UE Context Setup procedure
   f1ap_ue_context_setup_request_message request_msg = {};
@@ -43,7 +43,7 @@ TEST_F(f1ap_cu_test, when_ue_setup_response_received_then_procedure_successful)
 }
 
 /// Test the unsuccessful UE context setup procedure
-TEST_F(f1ap_cu_test, when_ue_setup_failure_received_then_procedure_unsuccessful)
+TEST_F(f1c_cu_test, when_ue_setup_failure_received_then_procedure_unsuccessful)
 {
   // Action 1: Launch UE Context Setup procedure
   f1ap_ue_context_setup_request_message request_msg = {};

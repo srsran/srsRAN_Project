@@ -16,7 +16,7 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 
 /// Test the successful UE context modification procedure (gNB-CU initiated)
-TEST_F(f1ap_cu_test, when_ue_modification_response_received_then_procedure_successful)
+TEST_F(f1c_cu_test, when_ue_modification_response_received_then_procedure_successful)
 {
   // Action 1: Launch UE Context modification procedure
   f1ap_ue_context_modification_request_message request_msg = {};
@@ -44,7 +44,7 @@ TEST_F(f1ap_cu_test, when_ue_modification_response_received_then_procedure_succe
 }
 
 /// Test the unsuccessful UE context modification procedure (gNB-CU initiated)
-TEST_F(f1ap_cu_test, when_ue_modification_failure_received_then_procedure_unsuccessful)
+TEST_F(f1c_cu_test, when_ue_modification_failure_received_then_procedure_unsuccessful)
 {
   // Action 1: Launch UE Context modification procedure
   f1ap_ue_context_modification_request_message request_msg = {};

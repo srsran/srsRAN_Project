@@ -21,7 +21,7 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Fixture class for F1AP
-class f1ap_cu_test : public ::testing::Test
+class f1c_cu_test : public ::testing::Test
 {
 protected:
   void SetUp() override
