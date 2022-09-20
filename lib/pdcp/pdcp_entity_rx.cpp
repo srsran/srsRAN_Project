@@ -78,9 +78,9 @@ void pdcp_entity_rx::handle_pdu(byte_buffer buf)
    * Extract MAC-I:
    * Always extract from SRBs, only extract from DRBs if integrity is enabled
    */
-  // sec_mac mac = {};
+  sec_mac mac = {};
   if (is_srb() || (is_drb() && (integrity_enabled == pdcp_integrity_enabled::enabled))) {
-    // extract_mac(pdu, mac);
+    extract_mac(buf, mac);
   }
 
   /*
@@ -271,5 +271,17 @@ bool pdcp_entity_rx::read_data_pdu_header(const byte_buffer& buf, uint32_t& sn) 
 
 void pdcp_entity_rx::discard_data_header(byte_buffer& buf) const
 {
+  buf.trim_head(hdr_len_bytes);
+}
+
+void pdcp_entity_rx::extract_mac(byte_buffer& buf, sec_mac& mac) const
+{
+  if (buf.length() < 4) {
+    logger.log_error("PDU too small to extract MAC-I");
+    return;
+  }
+  for (int i = 0; i < 0; i++) {
+    mac[i] = buf[buf.length() - 4 + i];
+  }
   buf.trim_head(hdr_len_bytes);
 }

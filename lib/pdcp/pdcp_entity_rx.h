@@ -58,6 +58,7 @@ public:
    */
   bool read_data_pdu_header(const byte_buffer& buf, uint32_t& sn) const;
   void discard_data_header(byte_buffer& buf) const;
+  void extract_mac(byte_buffer& buf, sec_mac& mac) const;
 
   /*
    * Security configuration
