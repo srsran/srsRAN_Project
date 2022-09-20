@@ -12,13 +12,13 @@
 
 using namespace srsgnb;
 
-void pdcp_entity_rx::handle_pdu(byte_buffer buf)
+void pdcp_entity_rx::handle_pdu(byte_buffer pdu)
 {
   // Log PDU
-  logger.log_info(buf.begin(),
-                  buf.end(),
+  logger.log_info(pdu.begin(),
+                  pdu.end(),
                   "RX PDU ({} B), integrity={}, ciphering={}",
-                  buf.length(),
+                  pdu.length(),
                   integrity_enabled,
                   ciphering_enabled);
 
@@ -29,14 +29,14 @@ void pdcp_entity_rx::handle_pdu(byte_buffer buf)
   // }
 
   // Sanity check
-  if (buf.length() <= hdr_len_bytes) {
+  if (pdu.length() <= hdr_len_bytes) {
     return;
   }
   logger.log_debug("Rx PDCP state - RX_NEXT={}, RX_DELIV={}, RX_REORD={}", st.rx_next, st.rx_deliv, st.rx_reord);
 
   // Extract RCVD_SN from header
   uint32_t rcvd_sn = {};
-  if (not read_data_pdu_header(buf, rcvd_sn)) {
+  if (not read_data_pdu_header(pdu, rcvd_sn)) {
     logger.log_error("Error extracting PDCP SN");
     return;
   }
@@ -69,9 +69,11 @@ void pdcp_entity_rx::handle_pdu(byte_buffer buf)
    * data part of the PDCP Data PDU except the
    * SDAP header and the SDAP Control PDU if included in the PDCP SDU.
    */
+  byte_buffer sdu;
   if (ciphering_enabled == pdcp_ciphering_enabled::enabled) {
-    // cipher_decrypt(
-    //     &pdu->msg[cfg.hdr_len_bytes], pdu->N_bytes - cfg.hdr_len_bytes, rcvd_count, &pdu->msg[cfg.hdr_len_bytes]);
+    sdu = cipher_decrypt(std::move(pdu), rcvd_count);
+  } else {
+    sdu = std::move(pdu);
   }
 
   /*
@@ -80,7 +82,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer buf)
    */
   sec_mac mac = {};
   if (is_srb() || (is_drb() && (integrity_enabled == pdcp_integrity_enabled::enabled))) {
-    extract_mac(buf, mac);
+    extract_mac(sdu, mac);
   }
 
   /*
@@ -90,17 +92,16 @@ void pdcp_entity_rx::handle_pdu(byte_buffer buf)
    * and the data part of the PDU before ciphering.
    */
   if (integrity_enabled == pdcp_integrity_enabled::enabled) {
-    bool is_valid = true; // FIXME
-    // bool is_valid = integrity_verify(pdu->msg, pdu->N_bytes, rcvd_count, mac);
+    bool is_valid = integrity_verify(sdu, rcvd_count, mac);
     if (!is_valid) {
-      logger.log_error(buf.begin(), buf.end(), "Integrity failed. Dropping PDU");
-      // rrc->notify_pdcp_integrity_error(lcid); // FIXME
+      logger.log_error(sdu.begin(), sdu.end(), "Integrity failed. Dropping PDU");
+      // upper_cn->notify_pdcp_integrity_error(lcid); // FIXME
       return; // Invalid packet, drop.
     }
-    logger.log_debug(buf.begin(), buf.end(), "Integrity verification successful");
+    logger.log_debug(sdu.begin(), sdu.end(), "Integrity verification successful");
   }
   // After checking the integrity, we can discard the header.
-  discard_data_header(buf);
+  discard_data_header(sdu);
 
   /*
    * Check valid rcvd_count:
@@ -122,7 +123,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer buf)
   }
 
   // Store PDU in reception buffer
-  reorder_queue[rcvd_count] = std::move(buf);
+  reorder_queue[rcvd_count] = std::move(sdu);
 
   // Update RX_NEXT
   if (rcvd_count >= st.rx_next) {
@@ -134,7 +135,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer buf)
   if (rcvd_count == st.rx_deliv) {
     // Deliver to upper layers in ascending order of associated COUNT
     // deliver_all_consecutive_counts();
-    upper_dn.on_new_sdu(std::move(buf)); // FIXME
+    upper_dn.on_new_sdu(std::move(sdu)); // FIXME
   }
 
   // Handle reordering timers
@@ -158,7 +159,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer buf)
 /*
  * Security helpers
  */
-bool pdcp_entity_rx::integrity_verify(sec_mac& mac, byte_buffer_view buf, uint32_t count)
+bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, const sec_mac& mac)
 {
   // If control plane use RRC integrity key. If data use user plane key
   const sec_128_as_key& k_int = is_srb() ? sec_cfg.k_128_rrc_int : sec_cfg.k_128_up_int;
@@ -199,7 +200,7 @@ bool pdcp_entity_rx::integrity_verify(sec_mac& mac, byte_buffer_view buf, uint32
   return is_valid;
 }
 
-byte_buffer_view pdcp_entity_rx::cipher_decrypt(byte_buffer_view msg, uint32_t count)
+byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_view msg, uint32_t count)
 {
   // If control plane use RRC integrity key. If data use user plane key
   const sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
