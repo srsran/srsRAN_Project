@@ -11,196 +11,589 @@
 #include "../../../lib/fapi/validators/ul_pusch_pdu.h"
 #include "helpers.h"
 #include "srsgnb/fapi/message_validators.h"
-#include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-static const std::vector<test_group<ul_pusch_pdu>> vector_test = {
-    {[](ul_pusch_pdu& pdu, int value) { pdu.rnti = to_rnti(value); },
-     "RNTI",
-     {{0, false}, {1, true}, {32768, true}, {65535, true}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.bwp_size = value; },
-     "BWP size",
-     {{0, false}, {1, true}, {128, true}, {275, true}, {276, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.bwp_start = value; },
-     "BWP start",
-     {{0, true}, {128, true}, {274, true}, {275, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.scs = static_cast<subcarrier_spacing>(value); },
-     "Subcarrier spacing",
-     {{0, true}, {2, true}, {4, true}, {5, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.cyclic_prefix = static_cast<cyclic_prefix_type>(value); },
-     "Cyclic prefix",
-     {{0, true}, {1, true}, {2, false}}},
-    {[](ul_pusch_pdu& pdu, int value) {
-       pdu.transform_precoding = false;
-       pdu.qam_mod_order       = static_cast<modulation_scheme>(value);
-     },
-     "QAM modulation order",
-     {{1, false}, {2, true}, {3, false}, {4, true}, {5, false}, {6, true}, {7, false}, {8, true}, {9, false}}},
-    {[](ul_pusch_pdu& pdu, int value) {
-       pdu.transform_precoding = true;
-       pdu.qam_mod_order       = static_cast<modulation_scheme>(value);
-     },
-     "QAM modulation order",
-     {{1, true}, {2, true}, {3, false}, {4, true}, {5, false}, {6, true}, {7, false}, {8, true}, {9, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.mcs_index = value; },
-     "MCS index",
-     {{0, true}, {16, true}, {31, true}, {32, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.mcs_table = static_cast<pusch_mcs_table>(value); },
-     "MCS table",
-     {{0, true}, {2, true}, {4, true}, {5, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.nid_pusch = value; },
-     "NID PUSCH",
-     {{0, true}, {512, true}, {1023, true}, {1024, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.num_layers = value; },
-     "Number of layers",
-     {{0, false}, {1, true}, {4, true}, {5, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.dmrs_type = static_cast<dmrs_config_type>(value); },
-     "DMRS config type",
-     {{0, true}, {1, true}, {2, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.low_papr_dmrs = static_cast<low_papr_dmrs_type>(value); },
-     "Low PAPR DMRS",
-     {{0, true}, {1, true}, {2, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_dmrs_identity = value; },
-     "PUSCH DMRS identity",
-     {{0, true}, {503, true}, {1007, true}, {1008, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.nscid = value; }, "NSCID", {{0, true}, {1, true}, {2, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.num_dmrs_cdm_grps_no_data = value; },
-     "Number of DMRS CDM groups without data",
-     {{0, false}, {1, true}, {2, true}, {3, true}, {4, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.resource_alloc = static_cast<resource_allocation_type>(value); },
-     "Resource allocation type",
-     {{0, true}, {1, true}, {2, false}}},
-    {[](ul_pusch_pdu& pdu, int value) {
-       pdu.resource_alloc = resource_allocation_type::type_1;
-       pdu.rb_size        = 1;
-       pdu.rb_start       = value;
-     },
-     "RB start",
-     {{0, true}, {128, true}, {274, true}, {275, false}}},
-    {[](ul_pusch_pdu& pdu, int value) {
-       pdu.resource_alloc = resource_allocation_type::type_1;
-       pdu.rb_start       = 1;
-       pdu.rb_size        = value;
-     },
-     "RB size",
-     {{0, false}, {1, true}, {128, true}, {275, true}, {276, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.vrb_to_prb_mapping = static_cast<vrb_to_prb_mapping_type>(value); },
-     "VRB-to-PRB mapping",
-     {{0, true}, {1, false}, {2, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.tx_direct_current_location = value; },
-     "Tx direct current location",
-     {{0, true}, {1, true}, {2048, true}, {4095, true}, {4096, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.start_symbol_index = value; },
-     "Start symbol index",
-     {{0, true}, {1, true}, {6, true}, {13, true}, {14, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.nr_of_symbols = value; },
-     "Number of symbols",
-     {{0, false}, {1, true}, {7, true}, {14, true}, {15, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_data.rv_index = value; },
-     "RV index",
-     {{0, true}, {1, true}, {2, true}, {3, true}, {4, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_data.harq_process_id = value; },
-     "HARQ process id",
-     {{0, true}, {1, true}, {7, true}, {15, true}, {16, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_uci.harq_ack_bit_length = value; },
-     "HARQ ACK bit length",
-     {{0, true}, {200, true}, {800, true}, {1706, true}, {1707, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_uci.csi_part1_bit_length = value; },
-     "CSI part1 bit length",
-     {{0, true}, {200, true}, {800, true}, {1706, true}, {1707, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_uci.flags_csi_part2 = value; },
-     "Flag CSI part2",
-     {{0, true}, {1, false}, {65534, false}, {65535, true}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_uci.alpha_scaling = value; },
-     "Alpha scaling",
-     {{0, true}, {1, true}, {2, true}, {3, true}, {4, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_uci.beta_offset_harq_ack = value; },
-     "Beta offset HARQ ACK",
-     {{0, true}, {7, true}, {15, true}, {16, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_uci.beta_offset_csi1 = value; },
-     "Beta offset CSI Part1",
-     {{0, true}, {9, true}, {18, true}, {19, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_uci.beta_offset_csi2 = value; },
-     "Beta offset CSI Part2",
-     {{0, true}, {9, true}, {18, true}, {19, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_ptrs.port_info.back().ptrs_dmrs_port = value; },
-     "PTRS DMRS port",
-     {{0, true}, {5, true}, {11, true}, {12, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_ptrs.port_info.back().ptrs_re_offset = value; },
-     "PTRS RE offset",
-     {{0, true}, {5, true}, {11, true}, {12, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_ptrs.ptrs_time_density = value; },
-     "PTRS time density",
-     {{0, true}, {1, true}, {2, true}, {3, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_ptrs.ptrs_freq_density = value; },
-     "PTRS frequency density",
-     {{0, true}, {1, true}, {2, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_ptrs.ul_ptrs_power = static_cast<ul_ptrs_power_type>(value); },
-     "UL PTRS power",
-     {{0, true}, {2, true}, {3, true}, {4, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_ofdm.low_papr_group_number = value; },
-     "Low PAPR group number",
-     {{0, true}, {15, true}, {29, true}, {30, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_ofdm.ul_ptrs_sample_density = value; },
-     "UL PTRS sample density",
-     {{0, false}, {1, true}, {4, true}, {8, true}, {9, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_ofdm.ul_ptrs_time_density_transform_precoding = value; },
-     "UL PTRS time density transform precoding",
-     {{0, false}, {1, true}, {2, true}, {4, true}, {5, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_maintenance_v3.pusch_trans_type = value; },
-     "PUSCH trans type",
-     {{0, true}, {2, true}, {2, true}, {3, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_maintenance_v3.delta_bwp0_start_from_active_bwp = value; },
-     "Delta BWP0 start from active BWP",
-     {{0, true}, {128, true}, {274, true}, {275, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_maintenance_v3.initial_ul_bwp_size = value; },
-     "Initial UL BWP size",
-     {{0, true}, {128, true}, {274, true}, {275, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_maintenance_v3.group_or_sequence_hopping = value; },
-     "Group or sequence hopping",
-     {{0, true}, {2, true}, {2, true}, {3, false}}},
-    {[](ul_pusch_pdu& pdu, int value) { pdu.pusch_maintenance_v3.pusch_second_hop_prb = value; },
-     "PUSCH second hop PRB",
-     {{0, true}, {128, true}, {274, true}, {275, false}}},
-    {[](ul_pusch_pdu& pdu, int value) {
-       pdu.pusch_maintenance_v3.ldpc_base_graph = static_cast<ldpc_base_graph_type>(value);
-     },
-     "LDPC base graph",
-     {{0, false}, {1, true}, {2, true}, {3, false}}},
-    {[](ul_pusch_pdu& pdu, int value) {
-       pdu.uci_correspondence.part2.back().part2_size_map_scope =
-           static_cast<uci_part1_to_part2_correspondence_v3::map_scope_type>(value);
-     },
-     "Part2 size map scope",
-     {{0, true}, {1, true}, {2, false}}}};
+class ValidatePUSCHPDUField : public ValidateFAPIPDU<ul_pusch_pdu, ul_pdu_type>,
+                              public testing::TestWithParam<std::tuple<pdu_field_data<ul_pusch_pdu>, test_case_data>>
+{};
 
-static void test_validate_each_field_error()
+TEST_P(ValidatePUSCHPDUField, WithValue)
 {
-  for (const auto& group : vector_test) {
-    for (const auto& test_case : group) {
-      validator_report report(0, 0);
-      auto             pdu = build_valid_ul_pusch_pdu();
-      group.update_msg(pdu, test_case.value);
-      bool result = validate_ul_pusch_pdu(pdu, report);
+  auto params = GetParam();
 
-      TESTASSERT_EQ(result, test_case.result);
-      if (!result) {
-        TESTASSERT_EQ(1U, report.reports.size());
-        const auto& rep = report.reports.back();
-        TESTASSERT_EQ(std::strcmp(group.property(), rep.property_name), 0);
-        TESTASSERT_EQ(message_type_id::ul_tti_request, rep.message_type);
-        TESTASSERT_EQ(ul_pdu_type::PUSCH, static_cast<ul_pdu_type>(rep.pdu_type.value()));
-      } else {
-        TESTASSERT(report.reports.empty());
-      }
-    }
-  }
+  execute_test(std::get<0>(params),
+               std::get<1>(params),
+               build_valid_ul_pusch_pdu,
+               validate_ul_pusch_pdu,
+               srsgnb::fapi::message_type_id::ul_tti_request,
+               ul_pdu_type::PUSCH);
+};
+
+INSTANTIATE_TEST_SUITE_P(RNTI,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "RNTI",
+                                              [](ul_pusch_pdu& pdu, int value) { pdu.rnti = to_rnti(value); }}),
+                                          testing::Values(test_case_data{0, false},
+                                                          test_case_data{1, true},
+                                                          test_case_data{32768, true},
+                                                          test_case_data{65535, true})));
+
+INSTANTIATE_TEST_SUITE_P(BWP_Size,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "BWP size",
+                                              [](ul_pusch_pdu& pdu, int value) { pdu.bwp_size = value; }}),
+                                          testing::Values(test_case_data{0, false},
+                                                          test_case_data{1, true},
+                                                          test_case_data{128, true},
+                                                          test_case_data{275, true},
+                                                          test_case_data{276, false})));
+
+INSTANTIATE_TEST_SUITE_P(BWP_Start,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "BWP start",
+                                              [](ul_pusch_pdu& pdu, int value) { pdu.bwp_start = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{128, true},
+                                                          test_case_data{274, true},
+                                                          test_case_data{275, false})));
+
+INSTANTIATE_TEST_SUITE_P(Subcarrier_spacing,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "Subcarrier spacing",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.scs = to_subcarrier_spacing(value);
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{4, true},
+                                                          test_case_data{5, false})));
+
+INSTANTIATE_TEST_SUITE_P(
+    Cyclic_prefix,
+    ValidatePUSCHPDUField,
+    testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{"Cyclic prefix",
+                                                                  [](ul_pusch_pdu& pdu, int value) {
+                                                                    pdu.cyclic_prefix =
+                                                                        static_cast<cyclic_prefix_type>(value);
+                                                                  }}),
+                     testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
+
+INSTANTIATE_TEST_SUITE_P(Modulation_order_tp_disabled,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "QAM modulation order",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.transform_precoding = false;
+                                                pdu.qam_mod_order       = static_cast<modulation_scheme>(value);
+                                              }}),
+                                          testing::Values(test_case_data{1, false},
+                                                          test_case_data{2, true},
+                                                          test_case_data{3, false},
+                                                          test_case_data{4, true},
+                                                          test_case_data{5, false},
+                                                          test_case_data{6, true},
+                                                          test_case_data{7, false},
+                                                          test_case_data{8, true})));
+
+INSTANTIATE_TEST_SUITE_P(Modulation_order_tp_enabled,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "QAM modulation order",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.transform_precoding = true;
+                                                pdu.qam_mod_order       = static_cast<modulation_scheme>(value);
+                                              }}),
+                                          testing::Values(test_case_data{1, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{3, false},
+                                                          test_case_data{4, true},
+                                                          test_case_data{5, false},
+                                                          test_case_data{6, true},
+                                                          test_case_data{7, false},
+                                                          test_case_data{8, true})));
+
+INSTANTIATE_TEST_SUITE_P(MCS_index,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "MCS index",
+                                              [](ul_pusch_pdu& pdu, int value) { pdu.mcs_index = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{16, true},
+                                                          test_case_data{31, true},
+                                                          test_case_data{32, false})));
+
+INSTANTIATE_TEST_SUITE_P(MCS_table,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "MCS table",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.mcs_table = static_cast<pusch_mcs_table>(value);
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{4, true},
+                                                          test_case_data{5, false})));
+
+INSTANTIATE_TEST_SUITE_P(NID_PUSCH,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "NID PUSCH",
+                                              [](ul_pusch_pdu& pdu, int value) { pdu.nid_pusch = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{512, true},
+                                                          test_case_data{1023, true},
+                                                          test_case_data{1024, false})));
+
+INSTANTIATE_TEST_SUITE_P(Layers,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "Number of layers",
+                                              [](ul_pusch_pdu& pdu, int value) { pdu.num_layers = value; }}),
+                                          testing::Values(test_case_data{0, false},
+                                                          test_case_data{1, true},
+                                                          test_case_data{4, true},
+                                                          test_case_data{5, false})));
+
+INSTANTIATE_TEST_SUITE_P(
+    DMRS_type,
+    ValidatePUSCHPDUField,
+    testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                         "DMRS config type",
+                         [](ul_pusch_pdu& pdu, int value) { pdu.dmrs_type = static_cast<dmrs_config_type>(value); }}),
+                     testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
+
+INSTANTIATE_TEST_SUITE_P(
+    Low_PAPR_DMRS,
+    ValidatePUSCHPDUField,
+    testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{"Low PAPR DMRS",
+                                                                  [](ul_pusch_pdu& pdu, int value) {
+                                                                    pdu.low_papr_dmrs =
+                                                                        static_cast<low_papr_dmrs_type>(value);
+                                                                  }}),
+                     testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
+
+INSTANTIATE_TEST_SUITE_P(DMRS_identity,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "PUSCH DMRS identity",
+                                              [](ul_pusch_pdu& pdu, int value) { pdu.pusch_dmrs_identity = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{503, true},
+                                                          test_case_data{1007, true},
+                                                          test_case_data{1008, false})));
+
+INSTANTIATE_TEST_SUITE_P(
+    NSCID,
+    ValidatePUSCHPDUField,
+    testing::Combine(
+        testing::Values(pdu_field_data<ul_pusch_pdu>{"NSCID", [](ul_pusch_pdu& pdu, int value) { pdu.nscid = value; }}),
+        testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
+
+INSTANTIATE_TEST_SUITE_P(DMRS_groups_no_data,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "Number of DMRS CDM groups without data",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.num_dmrs_cdm_grps_no_data = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, false},
+                                                          test_case_data{1, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{3, true},
+                                                          test_case_data{4, false})));
+
+INSTANTIATE_TEST_SUITE_P(
+    Resource_allocation_type,
+    ValidatePUSCHPDUField,
+    testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{"Resource allocation type",
+                                                                  [](ul_pusch_pdu& pdu, int value) {
+                                                                    pdu.resource_alloc =
+                                                                        static_cast<resource_allocation_type>(value);
+                                                                  }}),
+                     testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
+
+INSTANTIATE_TEST_SUITE_P(RB_start,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "RB start",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.resource_alloc = resource_allocation_type::type_1;
+                                                pdu.rb_size        = 1;
+                                                pdu.rb_start       = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{128, true},
+                                                          test_case_data{274, true},
+                                                          test_case_data{275, false})));
+
+INSTANTIATE_TEST_SUITE_P(RB_size,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "RB size",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.resource_alloc = resource_allocation_type::type_1;
+                                                pdu.rb_start       = 1;
+                                                pdu.rb_size        = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, false},
+                                                          test_case_data{1, true},
+                                                          test_case_data{128, true},
+                                                          test_case_data{275, true},
+                                                          test_case_data{276, false})));
+
+INSTANTIATE_TEST_SUITE_P(
+    VRB_mapping,
+    ValidatePUSCHPDUField,
+    testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{"VRB-to-PRB mapping",
+                                                                  [](ul_pusch_pdu& pdu, int value) {
+                                                                    pdu.vrb_to_prb_mapping =
+                                                                        static_cast<vrb_to_prb_mapping_type>(value);
+                                                                  }}),
+                     testing::Values(test_case_data{0, true}, test_case_data{1, false}, test_case_data{2, false})));
+
+INSTANTIATE_TEST_SUITE_P(Tx_direct_current_location,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "Tx direct current location",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.tx_direct_current_location = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{1, true},
+                                                          test_case_data{2048, true},
+                                                          test_case_data{4095, true},
+                                                          test_case_data{4096, false})));
+
+INSTANTIATE_TEST_SUITE_P(Symbol_start,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "Start symbol index",
+                                              [](ul_pusch_pdu& pdu, int value) { pdu.start_symbol_index = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{1, true},
+                                                          test_case_data{6, true},
+                                                          test_case_data{13, true},
+                                                          test_case_data{14, false})));
+
+INSTANTIATE_TEST_SUITE_P(Num_symbols,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "Number of symbols",
+                                              [](ul_pusch_pdu& pdu, int value) { pdu.nr_of_symbols = value; }}),
+                                          testing::Values(test_case_data{0, false},
+                                                          test_case_data{1, true},
+                                                          test_case_data{7, true},
+                                                          test_case_data{14, true},
+                                                          test_case_data{15, false})));
+
+INSTANTIATE_TEST_SUITE_P(RV_index,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "RV index",
+                                              [](ul_pusch_pdu& pdu, int value) { pdu.pusch_data.rv_index = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{1, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{3, true},
+                                                          test_case_data{4, false})));
+
+INSTANTIATE_TEST_SUITE_P(HARQ_index,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "HARQ process id",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_data.harq_process_id = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{1, true},
+                                                          test_case_data{7, true},
+                                                          test_case_data{15, true},
+                                                          test_case_data{16, false})));
+
+INSTANTIATE_TEST_SUITE_P(HARQ_ack_bitlen,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "HARQ ACK bit length",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_uci.harq_ack_bit_length = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{200, true},
+                                                          test_case_data{800, true},
+                                                          test_case_data{1706, true},
+                                                          test_case_data{1707, false})));
+
+INSTANTIATE_TEST_SUITE_P(CSI_part1_bitlen,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "CSI part1 bit length",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_uci.csi_part1_bit_length = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{200, true},
+                                                          test_case_data{800, true},
+                                                          test_case_data{1706, true},
+                                                          test_case_data{1707, false})));
+
+INSTANTIATE_TEST_SUITE_P(CSI_part2_bitlen,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "Flag CSI part2",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_uci.flags_csi_part2 = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{1, false},
+                                                          test_case_data{65534, false},
+                                                          test_case_data{65535, true})));
+
+INSTANTIATE_TEST_SUITE_P(alpha_scaling,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "Alpha scaling",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_uci.alpha_scaling = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{1, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{3, true},
+                                                          test_case_data{4, false})));
+
+INSTANTIATE_TEST_SUITE_P(beta_offset_HARQ,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "Beta offset HARQ ACK",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_uci.beta_offset_harq_ack = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{7, true},
+                                                          test_case_data{15, true},
+                                                          test_case_data{16, false})));
+
+INSTANTIATE_TEST_SUITE_P(beta_offset_CSI1,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "Beta offset CSI Part1",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_uci.beta_offset_csi1 = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{9, true},
+                                                          test_case_data{18, true},
+                                                          test_case_data{19, false})));
+
+INSTANTIATE_TEST_SUITE_P(beta_offset_CSI2,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "Beta offset CSI Part2",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_uci.beta_offset_csi2 = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{9, true},
+                                                          test_case_data{18, true},
+                                                          test_case_data{19, false})));
+
+INSTANTIATE_TEST_SUITE_P(PTRS_port,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "PTRS DMRS port",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_ptrs.port_info.back().ptrs_dmrs_port = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{5, true},
+                                                          test_case_data{11, true},
+                                                          test_case_data{12, false})));
+
+INSTANTIATE_TEST_SUITE_P(PTRS_RE_offset,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "PTRS RE offset",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_ptrs.port_info.back().ptrs_re_offset = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{5, true},
+                                                          test_case_data{11, true},
+                                                          test_case_data{12, false})));
+
+INSTANTIATE_TEST_SUITE_P(PTRS_time_density,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "PTRS time density",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_ptrs.ptrs_time_density = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{1, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{3, false})));
+
+INSTANTIATE_TEST_SUITE_P(
+    PTRS_freq_density,
+    ValidatePUSCHPDUField,
+    testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                         "PTRS frequency density",
+                         [](ul_pusch_pdu& pdu, int value) { pdu.pusch_ptrs.ptrs_freq_density = value; }}),
+                     testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
+
+INSTANTIATE_TEST_SUITE_P(UL_PTRS_power,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "UL PTRS power",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_ptrs.ul_ptrs_power = static_cast<ul_ptrs_power_type>(value);
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{3, true},
+                                                          test_case_data{4, false})));
+
+INSTANTIATE_TEST_SUITE_P(low_PAPR_group,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "Low PAPR group number",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_ofdm.low_papr_group_number = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{15, true},
+                                                          test_case_data{29, true},
+                                                          test_case_data{30, false})));
+
+INSTANTIATE_TEST_SUITE_P(UL_PTRS_sample_density,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "UL PTRS sample density",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_ofdm.ul_ptrs_sample_density = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, false},
+                                                          test_case_data{1, true},
+                                                          test_case_data{4, true},
+                                                          test_case_data{8, true},
+                                                          test_case_data{9, false})));
+
+INSTANTIATE_TEST_SUITE_P(UL_PTRS_time_density,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "UL PTRS time density transform precoding",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_ofdm.ul_ptrs_time_density_transform_precoding = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, false},
+                                                          test_case_data{1, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{4, true},
+                                                          test_case_data{5, false})));
+
+INSTANTIATE_TEST_SUITE_P(trans_type,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "PUSCH trans type",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_maintenance_v3.pusch_trans_type = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{3, false})));
+
+INSTANTIATE_TEST_SUITE_P(delta_BWP0_to_active_BWP,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "Delta BWP0 start from active BWP",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_maintenance_v3.delta_bwp0_start_from_active_bwp = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{128, true},
+                                                          test_case_data{274, true},
+                                                          test_case_data{275, false})));
+
+INSTANTIATE_TEST_SUITE_P(initial_BWP_size,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "Initial UL BWP size",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_maintenance_v3.initial_ul_bwp_size = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{128, true},
+                                                          test_case_data{274, true},
+                                                          test_case_data{275, false})));
+
+INSTANTIATE_TEST_SUITE_P(group_seq_hopping,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "Group or sequence hopping",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_maintenance_v3.group_or_sequence_hopping = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{3, false})));
+
+INSTANTIATE_TEST_SUITE_P(second_hop_PRB,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "PUSCH second hop PRB",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_maintenance_v3.pusch_second_hop_prb = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{128, true},
+                                                          test_case_data{274, true},
+                                                          test_case_data{275, false})));
+
+INSTANTIATE_TEST_SUITE_P(LDPC_graph,
+                         ValidatePUSCHPDUField,
+                         testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                                              "LDPC base graph",
+                                              [](ul_pusch_pdu& pdu, int value) {
+                                                pdu.pusch_maintenance_v3.ldpc_base_graph =
+                                                    static_cast<ldpc_base_graph_type>(value);
+                                              }}),
+                                          testing::Values(test_case_data{0, false},
+                                                          test_case_data{1, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{3, false})));
+
+INSTANTIATE_TEST_SUITE_P(
+    part2_size_map,
+    ValidatePUSCHPDUField,
+    testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                         "Part2 size map scope",
+                         [](ul_pusch_pdu& pdu, int value) {
+                           pdu.uci_correspondence.part2.back().part2_size_map_scope =
+                               static_cast<uci_part1_to_part2_correspondence_v3::map_scope_type>(value);
+                         }}),
+                     testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
+
+/// Valid PDU should pass.
+TEST(ValidatePUSCHPDU, ValidPDUPasses)
+{
+  validator_report report(0, 0);
+  const auto&      pdu = build_valid_ul_pusch_pdu();
+  EXPECT_TRUE(validate_ul_pusch_pdu(pdu, report));
+  // Assert no reports were generated.
+  EXPECT_TRUE(report.reports.empty());
 }
 
-static void test_validate_more_that_one_error_simultaneously()
+/// Add 3 errors and check that validation fails with 3 errors.
+TEST(ValidatePUSCHPDU, InvalidPDUFails)
 {
   validator_report report(0, 0);
   auto             pdu = build_valid_ul_pusch_pdu();
@@ -211,28 +604,12 @@ static void test_validate_more_that_one_error_simultaneously()
   pdu.nr_of_symbols  = 32;
   pdu.resource_alloc = static_cast<resource_allocation_type>(54);
 
-  TESTASSERT(!validate_ul_pusch_pdu(pdu, report));
-  TESTASSERT_EQ(4U, report.reports.size());
+  EXPECT_FALSE(validate_ul_pusch_pdu(pdu, report));
+  ASSERT_EQ(4U, report.reports.size());
   // Check that the properties that caused the error are different.
   for (unsigned i = 0, e = report.reports.size(); i != e; ++i) {
     for (unsigned j = i + 1; j != e; ++j) {
-      TESTASSERT(std::strcmp(report.reports[i].property_name, report.reports[j].property_name) != 0);
+      EXPECT_TRUE(std::strcmp(report.reports[i].property_name, report.reports[j].property_name) != 0);
     }
   }
-}
-
-static void test_validate_pusch_pdu_ok()
-{
-  validator_report report(0, 0);
-  const auto&      pdu = build_valid_ul_pusch_pdu();
-  TESTASSERT(validate_ul_pusch_pdu(pdu, report));
-  TESTASSERT(report.reports.empty());
-}
-
-int main()
-{
-  test_validate_pusch_pdu_ok();
-  test_validate_each_field_error();
-  test_validate_more_that_one_error_simultaneously();
-  fmt::print("UL PUSCH PDU validator -> OK\n");
 }

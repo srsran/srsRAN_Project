@@ -11,7 +11,6 @@
 #include "../../../lib/fapi/validators/dl_csi_pdu.h"
 #include "helpers.h"
 #include "srsgnb/fapi/message_validators.h"
-#include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
 using namespace fapi;
