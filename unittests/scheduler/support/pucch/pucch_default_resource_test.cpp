@@ -32,7 +32,7 @@ protected:
   {
     pucch_default_resource result;
 
-    // Select PUCCH Format.
+    // Select format.
     if (row_index < 3) {
       result.format = pucch_format::FORMAT_0;
     } else {
