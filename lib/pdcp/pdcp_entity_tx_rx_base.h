@@ -35,8 +35,8 @@ constexpr size_t pdcp_data_pdu_header_size(pdcp_sn_size sn_size)
 }
 
 // Window size
-constexpr size_t   pdcp_window_size_12bit = 4095;
-constexpr size_t   pdcp_window_size_18bit = 262143;
+constexpr size_t   pdcp_window_size_12bit = 2048;
+constexpr size_t   pdcp_window_size_18bit = 131072;
 constexpr uint32_t pdcp_window_size(pdcp_sn_size sn_size)
 {
   switch (sn_size) {

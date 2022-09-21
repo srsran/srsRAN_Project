@@ -77,6 +77,10 @@ TEST_P(pdcp_rx_test, rx_in_order)
     pdcp_rx->handle_pdu(std::move(test_pdu1));
     pdcp_rx->handle_pdu(std::move(test_pdu2));
     ASSERT_EQ(2, test_frame.sdu_queue.size());
+    while (not test_frame.sdu_queue.empty()) {
+      ASSERT_EQ(test_frame.sdu_queue.front(), sdu1);
+      test_frame.sdu_queue.pop();
+    }
     // test_frame.sdu_queue.front();
     //  TESTASSERT(rx_helper.test_rx(std::move(test1_pdus), test1_init_state, 2, tst_sdu1) == 0);
   };

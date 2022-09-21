@@ -89,6 +89,8 @@ private:
 
   std::map<uint32_t, byte_buffer> reorder_queue;
 
+  void deliver_all_consecutive_counts();
+
   bool        integrity_verify(byte_buffer_view buf, uint32_t count, const sec_mac& mac);
   byte_buffer cipher_decrypt(byte_buffer_view msg, uint32_t count);
 

@@ -72,6 +72,8 @@ void pdcp_entity_rx::handle_pdu(byte_buffer pdu)
   byte_buffer sdu;
   if (ciphering_enabled == pdcp_ciphering_enabled::enabled) {
     sdu = cipher_decrypt(byte_buffer_view{pdu, hdr_len_bytes, pdu.length() - hdr_len_bytes}, rcvd_count);
+    pdu.trim_tail(pdu.length() - hdr_len_bytes);
+    sdu.chain_before(std::move(pdu));
   } else {
     sdu = std::move(pdu);
   }
@@ -134,8 +136,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer pdu)
 
   if (rcvd_count == st.rx_deliv) {
     // Deliver to upper layers in ascending order of associated COUNT
-    // deliver_all_consecutive_counts();
-    upper_dn.on_new_sdu(std::move(sdu)); // FIXME
+    deliver_all_consecutive_counts();
   }
 
   // Handle reordering timers
@@ -156,6 +157,22 @@ void pdcp_entity_rx::handle_pdu(byte_buffer pdu)
   logger.log_debug("Rx PDCP state - RX_NEXT={}, RX_DELIV={}, RX_REORD={}", st.rx_next, st.rx_deliv, st.rx_reord);
 }
 
+// Deliver all consecutively associated COUNTs.
+// Update RX_NEXT after submitting to higher layers
+void pdcp_entity_rx::deliver_all_consecutive_counts()
+{
+  for (std::map<uint32_t, byte_buffer>::iterator it = reorder_queue.begin();
+       it != reorder_queue.end() && it->first == st.rx_deliv;
+       reorder_queue.erase(it++)) {
+    logger.log_debug("Delivering SDU with RCVD_COUNT {}", it->first);
+
+    // Pass PDCP SDU to the next layers
+    upper_dn.on_new_sdu(std::move(it->second));
+
+    // Update RX_DELIV
+    st.rx_deliv = st.rx_deliv + 1;
+  }
+}
 /*
  * Security helpers
  */
@@ -190,7 +207,13 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
       }
     }
     srslog::basic_levels level = is_valid ? srslog::basic_levels::debug : srslog::basic_levels::error;
-    logger.log(level, "Integrity check input - COUNT {}, Bearer ID {}, Direction {}", count, lcid, direction);
+    logger.log(level,
+               buf.begin(),
+               buf.end(),
+               "Integrity check input - COUNT {}, Bearer ID {}, Direction {}",
+               count,
+               lcid,
+               direction);
     logger.log(level, (uint8_t*)k_int.data(), 16, "Integrity check key:");
     logger.log(level, (uint8_t*)mac_exp.data(), 4, "MAC {} (expected):", is_valid ? "match" : "mismatch");
     logger.log(level, (uint8_t*)mac.data(), 4, "MAC {} (found):", is_valid ? "match" : "mismatch");
@@ -277,12 +300,12 @@ void pdcp_entity_rx::discard_data_header(byte_buffer& buf) const
 
 void pdcp_entity_rx::extract_mac(byte_buffer& buf, sec_mac& mac) const
 {
-  if (buf.length() < 4) {
+  if (buf.length() <= sec_mac_len) {
     logger.log_error("PDU too small to extract MAC-I");
     return;
   }
-  for (int i = 0; i < 0; i++) {
-    mac[i] = buf[buf.length() - 4 + i];
+  for (unsigned i = 0; i < sec_mac_len; i++) {
+    mac[i] = buf[buf.length() - sec_mac_len + i];
   }
-  buf.trim_tail(hdr_len_bytes);
+  buf.trim_tail(sec_mac_len);
 }
