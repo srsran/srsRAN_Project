@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/upper/channel_estimation.h"
 #include "srsgnb/phy/upper/channel_processors/pucch_uci_message.h"
 

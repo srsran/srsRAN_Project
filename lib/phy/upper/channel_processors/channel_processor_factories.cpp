@@ -24,6 +24,7 @@
 #include "pusch_demodulator_impl.h"
 #include "pusch_processor_impl.h"
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "ssb_processor_impl.h"
 #include "uci_decoder_impl.h"
 
@@ -288,12 +289,27 @@ public:
 class pucch_processor_factory_sw : public pucch_processor_factory
 {
 public:
-  explicit pucch_processor_factory_sw()
+  pucch_processor_factory_sw(std::shared_ptr<dmrs_pucch_estimator_factory>&       dmrs_factory_,
+                             std::shared_ptr<pucch_detector_factory>&             detector_factory_,
+                             const channel_estimate::channel_estimate_dimensions& channel_estimate_dimensions_) :
+    dmrs_factory(std::move(dmrs_factory_)),
+    detector_factory(std::move(detector_factory_)),
+    channel_estimate_dimensions(channel_estimate_dimensions_)
   {
-    // Do nothing.
+    srsgnb_assert(dmrs_factory, "Invalid DM-RS estimator factory.");
+    srsgnb_assert(detector_factory, "Invalid detector factory.");
   }
 
-  std::unique_ptr<pucch_processor> create() override { return std::make_unique<pucch_processor_impl>(); }
+  std::unique_ptr<pucch_processor> create() override
+  {
+    return std::make_unique<pucch_processor_impl>(
+        dmrs_factory->create_format1(), detector_factory->create(), channel_estimate_dimensions);
+  }
+
+private:
+  std::shared_ptr<dmrs_pucch_estimator_factory> dmrs_factory;
+  std::shared_ptr<pucch_detector_factory>       detector_factory;
+  channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
 };
 
 class pusch_decoder_factory_sw : public pusch_decoder_factory
@@ -511,6 +527,14 @@ srsgnb::create_prach_detector_factory_simple(std::shared_ptr<dft_processor_facto
 {
   return std::make_shared<prach_detector_factory_simple>(
       std::move(dft_factory), std::move(prach_gen_factory), dft_size_detector);
+}
+
+std::shared_ptr<pucch_processor_factory> srsgnb::create_pucch_processor_factory_sw(
+    std::shared_ptr<dmrs_pucch_estimator_factory>        dmrs_factory,
+    std::shared_ptr<pucch_detector_factory>              detector_factory,
+    const channel_estimate::channel_estimate_dimensions& channel_estimate_dimensions)
+{
+  return std::make_shared<pucch_processor_factory_sw>(dmrs_factory, detector_factory, channel_estimate_dimensions);
 }
 
 std::shared_ptr<prach_generator_factory>

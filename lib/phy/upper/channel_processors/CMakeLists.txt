@@ -37,6 +37,8 @@ add_library(srsgnb_prach_detector STATIC
         prach_generator_impl.cpp)
 target_link_libraries(srsgnb_prach_detector srsgnb_ran srsvec)
 
+add_library(srsgnb_pucch_processor STATIC pucch_processor_impl.cpp)
+
 add_library(srsgnb_pusch_decoder STATIC pusch_decoder_impl.cpp)
 target_link_libraries(srsgnb_pusch_decoder srsgnb_channel_coding srsvec)
 
@@ -62,6 +64,7 @@ target_link_libraries(srsgnb_channel_processors
         srsgnb_pdsch_modulator
         srsgnb_pdsch_processor
         srsgnb_prach_detector
+        srsgnb_pucch_processor
         srsgnb_pusch_decoder
         srsgnb_pusch_demodulator
         srsgnb_pusch_processor
@@ -78,6 +81,7 @@ install(TARGETS srsgnb_channel_processors
                 srsgnb_pdsch_modulator
                 srsgnb_pdsch_processor
                 srsgnb_prach_detector
+                srsgnb_pucch_processor
                 srsgnb_pusch_decoder
                 srsgnb_pusch_demodulator
                 srsgnb_pusch_processor

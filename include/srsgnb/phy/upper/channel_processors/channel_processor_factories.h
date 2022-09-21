@@ -23,6 +23,7 @@
 #include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/prach_detector.h"
 #include "srsgnb/phy/upper/channel_processors/prach_generator.h"
+#include "srsgnb/phy/upper/channel_processors/pucch_detector.h"
 #include "srsgnb/phy/upper/channel_processors/pucch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_decoder.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_demodulator.h"
@@ -154,6 +155,13 @@ public:
 std::shared_ptr<prach_generator_factory>
 create_prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory);
 
+class pucch_detector_factory
+{
+public:
+  virtual ~pucch_detector_factory()                = default;
+  virtual std::unique_ptr<pucch_detector> create() = 0;
+};
+
 class pucch_processor_factory
 {
 public:
@@ -161,7 +169,10 @@ public:
   virtual std::unique_ptr<pucch_processor> create() = 0;
 };
 
-std::shared_ptr<pucch_processor_factory> create_pucch_processor_factory_sw();
+std::shared_ptr<pucch_processor_factory>
+create_pucch_processor_factory_sw(std::shared_ptr<dmrs_pucch_estimator_factory>        dmrs_factory,
+                                  std::shared_ptr<pucch_detector_factory>              detector_factory,
+                                  const channel_estimate::channel_estimate_dimensions& channel_estimate_dimensions);
 
 class pusch_decoder_factory
 {

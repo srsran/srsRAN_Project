@@ -38,9 +38,9 @@ private:
 public:
   pucch_orthogonal_sequence()
   {
-    for (unsigned n_pucch = 1; n_pucch < PUCCH_FORMAT1_N_MAX; ++n_pucch) {
-      for (unsigned i = 0; i < PUCCH_FORMAT1_N_MAX; ++i) {
-        for (unsigned m = 0; m < PUCCH_FORMAT1_N_MAX; ++m) {
+    for (unsigned n_pucch = 1, max_n_pucch = PUCCH_FORMAT1_N_MAX + 1; n_pucch != max_n_pucch; ++n_pucch) {
+      for (unsigned i = 0; i != PUCCH_FORMAT1_N_MAX; ++i) {
+        for (unsigned m = 0; m != PUCCH_FORMAT1_N_MAX; ++m) {
           auto rho                               = static_cast<float>(pucch_format1_rho[i][n_pucch - 1][m]);
           orthogonal_sequence[i][n_pucch - 1][m] = std::exp(COMPLEX_J * TWOPI * rho / static_cast<float>(n_pucch));
         }

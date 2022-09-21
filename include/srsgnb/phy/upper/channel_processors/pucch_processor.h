@@ -10,20 +10,25 @@
 
 #pragma once
 
-#include "pucch_processor_result.h"
 #include "srsgnb/adt/optional.h"
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/support/resource_grid.h"
+#include "srsgnb/phy/upper/channel_processors/pucch_processor_result.h"
 #include "srsgnb/phy/upper/channel_processors/pucch_uci_message.h"
+#include "srsgnb/ran/modulation_scheme.h"
+#include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
 
+/// PUCCH processor interface for all formats.
 class pucch_processor
 {
 public:
   /// \brief Collects PUCCH configuration parameters that are common for all formats.
   ///
   /// \remark The total payload size for Format 0 and 1 shall not exceed two.
-  /// \remark The total payload size for Formats 2, 3 and 4 shall not exceed 1706.
+  /// \remark \anchor PUCCH_payload_size The total payload size for Formats 2, 3 and 4 shall not exceed 1706.
+  /// Specifically, one should have <tt>nof_sr + nof_harq_ack + nof_csi_part1 + nof_csi_part2 <= 1706</tt>.
   struct common_configuration {
     /// Slot and numerology.
     slot_point slot;
@@ -42,14 +47,30 @@ public:
     /// Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274} if intra-slot frequency hopping is
     /// enabled, empty otherwise.
     optional<unsigned> second_hop_prb;
+    /// \brief Parameter \f$n_{\mathrm{ID}}\f$ in TS38.211 Section 6.3.2.2.1 {0, ..., 1023}.
+    ///
+    /// It must be set to the higher layer parameter \e hopingID given by TS38.331 Section 6.3.2, Information Element \e
+    /// PUCCH-ConfigCommon, if it is configured. Otherwise, it must be equal to the physical cell identifier
+    /// \f$N_{\mathrm{ID}}^{\mathrm{cell}}\f$.
+    unsigned n_id;
+    /// \brief DM-RS scrambling identity {0, ..., 65535}.
+    ///
+    /// Corresponds to parameter \f$N_{\mathrm{ID}}^0\f$ in TS38.211 Section 6.4.1.3.2.1.
+    ///
+    /// It must be set to the higher layer parameter \e scramblingID0 given by TS38.331 Section 6.3.2, Information
+    /// Element \e DMRS-UplinkConfig, if it is configured. Otherwise, it must be equal to the physical cell identifier
+    /// \f$N_{\mathrm{ID}}^{\mathrm{cell}}\f$.
+    unsigned n_id_0;
     /// Number of expected SR bits {0, ..., 4}.
     unsigned nof_sr;
-    /// Number of expected HARQ-ACK bits {0, ..., 1706}.
+    /// Number of expected HARQ-ACK bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
     unsigned nof_harq_ack;
-    /// Number of expected CSI part 1 bits {0, ..., 1706}.
+    /// Number of expected CSI part 1 bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
     unsigned nof_csi_part1;
-    /// Number of expected CSI part 2 bits {0, ..., 1706}.
+    /// Number of expected CSI part 2 bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
     unsigned nof_csi_part2;
+    /// Port indexes used for the PUCCH reception.
+    static_vector<uint8_t, MAX_PORTS> ports;
   };
 
   /// Collects specific PUCCH Format 0 parameters.
@@ -72,7 +93,7 @@ public:
     unsigned initial_cyclic_shift;
     /// Number of symbols for the PUCCH transmission {4, ..., 14}.
     unsigned nof_symbols;
-    /// Start symbol index {0, ..., 11}.
+    /// Start symbol index {0, ..., 10}.
     unsigned start_symbol_index;
     /// Time domain orthogonal cyclic code {0, ..., 6}.
     unsigned time_domain_occ;

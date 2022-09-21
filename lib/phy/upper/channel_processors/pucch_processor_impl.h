@@ -12,6 +12,7 @@
 
 #include "srsgnb/phy/upper/channel_processors/pucch_demodulator.h"
 #include "srsgnb/phy/upper/channel_processors/pucch_detector.h"
+#include "srsgnb/phy/upper/channel_processors/pucch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/uci_decoder.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
 #include "uci_decoder.h"
@@ -36,48 +37,10 @@ public:
   }
 
   // See interface for documentation.
-  pucch_processor_result process(const resource_grid_reader& grid, const format1_configuration& config) override
-  {
-    pucch_processor_result result;
-
-    dmrs_pucch_processor::config_t estimator_config;
-    channel_estimator->estimate(estimates, grid, estimator_config);
-
-    result.csi = estimates.get_channel_state_information();
-
-    pucch_detector::format1_configuration detector_config;
-    result.message = detector->detect(grid, estimates, detector_config);
-
-    return result;
-  }
+  pucch_processor_result process(const resource_grid_reader& grid, const format1_configuration& config) override;
 
   // See interface for documentation.
-  pucch_processor_result process(const resource_grid_reader& grid, const format2_configuration& config) override
-  {
-    pucch_processor_result result;
-    result.message.full_payload =
-        span<uint8_t>(result.message.data)
-            .first(config.common.nof_sr + config.common.nof_harq_ack + config.common.nof_csi_part1);
-    result.message.harq_ack = result.message.full_payload.first(config.common.nof_harq_ack);
-    result.message.csi_part1 =
-        result.message.full_payload.subspan(config.common.nof_harq_ack, config.common.nof_csi_part1);
-    result.message.sr =
-        result.message.full_payload.subspan(config.common.nof_harq_ack + config.common.nof_sr, config.common.nof_sr);
-
-    dmrs_pucch_processor::config_t estimator_config;
-    channel_estimator->estimate(estimates, grid, estimator_config);
-
-    result.csi = estimates.get_channel_state_information();
-
-    span<log_likelihood_ratio>               llr = span<log_likelihood_ratio>(temp_llr).first(0);
-    pucch_demodulator::format2_configuration demod_config;
-    demodulator->demodulate(llr, grid, estimates, demod_config);
-
-    uci_decoder::configuration decoder_config;
-    result.message.status = decoder->decode(result.message.full_payload, llr, decoder_config);
-
-    return result;
-  }
+  pucch_processor_result process(const resource_grid_reader& grid, const format2_configuration& config) override;
 
   // See interface for documentation.
   pucch_processor_result process(const resource_grid_reader& grid, const format3_configuration& config) override
@@ -93,15 +56,25 @@ public:
     return pucch_processor_result();
   }
 
+  /// PUCCH processor constructor.
+  pucch_processor_impl(std::unique_ptr<dmrs_pucch_processor>                channel_estimator_,
+                       std::unique_ptr<pucch_detector>                      detector_,
+                       const channel_estimate::channel_estimate_dimensions& estimates_dimensions) :
+    channel_estimator(std::move(channel_estimator_)), detector(std::move(detector_)), estimates(estimates_dimensions)
+  {
+    srsgnb_assert(channel_estimator, "Invalid channel estimator.");
+    srsgnb_assert(detector, "Invalid detector.");
+  }
+
 private:
+  /// Channel estimator.
+  std::unique_ptr<dmrs_pucch_processor> channel_estimator;
   /// PUCCH detector for 1 or 2 bits, using format 0 and 1.
   std::unique_ptr<pucch_detector> detector;
   /// PUCCH demodulator for more than 2 bits, using formats 2, 3 and 4.
   std::unique_ptr<pucch_demodulator> demodulator;
   /// UCI decoder for more than 2 bits, using formats 2, 3 and 4.
   std::unique_ptr<uci_decoder> decoder;
-  /// Channel estimator.
-  std::unique_ptr<dmrs_pucch_processor> channel_estimator;
   /// Temporal channel estimates.
   channel_estimate estimates;
   /// Temporal LLR storage.

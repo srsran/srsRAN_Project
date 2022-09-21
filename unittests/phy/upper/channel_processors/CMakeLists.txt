@@ -110,6 +110,18 @@ add_custom_command(
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/prach_generator_test_data.tar.gz
         VERBATIM)
 
+add_executable(pucch_processor_format1_vectortest pucch_processor_format1_vectortest.cpp)
+target_link_libraries(pucch_processor_format1_vectortest srsgnb_phy_support srsgnb_channel_processors srslog gtest gtest_main)
+add_test(pucch_processor_format1_vectortest pucch_processor_format1_vectortest)
+
+add_custom_command(
+        TARGET pucch_processor_format1_vectortest
+        POST_BUILD
+        WORKING_DIRECTORY ${TEST_DATA_DIR}
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pucch_processor_format1_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pucch_processor_format1_test_data.tar.gz
+        VERBATIM)
+
 add_executable(pusch_decoder_test pusch_decoder_test.cpp)
 target_link_libraries(pusch_decoder_test srsgnb_channel_processors srslog srsgnb_upper_phy_support)
 add_test(pusch_decoder_test pusch_decoder_test -e0 -i2)
