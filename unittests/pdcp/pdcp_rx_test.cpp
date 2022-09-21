@@ -81,20 +81,16 @@ TEST_P(pdcp_rx_test, rx_in_order)
       ASSERT_EQ(test_frame.sdu_queue.front(), sdu1);
       test_frame.sdu_queue.pop();
     }
-    // test_frame.sdu_queue.front();
-    //  TESTASSERT(rx_helper.test_rx(std::move(test1_pdus), test1_init_state, 2, tst_sdu1) == 0);
   };
 
   if (config.sn_size == pdcp_sn_size::size12bits) {
-    // test_rx_in_order(0);
-    //  test_rx_in_order(2048);
+    test_rx_in_order(0);
+    test_rx_in_order(2047);
     test_rx_in_order(4095);
-    // test_rx_in_order(4294967295);
   } else if (config.sn_size == pdcp_sn_size::size18bits) {
-    // test_hdr_reader(0);
-    // test_hdr_reader(131072);
-    // test_hdr_reader(262144);
-    // test_hdr_reader(4294967295);
+    test_rx_in_order(0);
+    test_rx_in_order(131071);
+    test_rx_in_order(262143);
   } else {
     FAIL();
   }
