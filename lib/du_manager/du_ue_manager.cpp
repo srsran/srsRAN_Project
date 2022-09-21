@@ -54,13 +54,13 @@ async_task<void> du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_re
   return launch_async<ue_deletion_procedure>(msg, cfg, *this);
 }
 
-du_ue_context* du_ue_manager::find_ue(du_ue_index_t ue_index)
+du_ue* du_ue_manager::find_ue(du_ue_index_t ue_index)
 {
   srsgnb_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
   return ue_db.contains(ue_index) ? &ue_db[ue_index] : nullptr;
 }
 
-du_ue_context* du_ue_manager::find_rnti(rnti_t rnti)
+du_ue* du_ue_manager::find_rnti(rnti_t rnti)
 {
   if (rnti_to_ue_index[rnti % MAX_NOF_DU_UES] == INVALID_DU_UE_INDEX) {
     return nullptr;
@@ -68,7 +68,7 @@ du_ue_context* du_ue_manager::find_rnti(rnti_t rnti)
   return &ue_db[rnti_to_ue_index[rnti % MAX_NOF_DU_UES]];
 }
 
-du_ue_context* du_ue_manager::add_ue(std::unique_ptr<du_ue_context> ue_ctx)
+du_ue* du_ue_manager::add_ue(std::unique_ptr<du_ue> ue_ctx)
 {
   srsgnb_assert(ue_ctx->rnti != INVALID_RNTI, "Invalid RNTI");
   srsgnb_assert(ue_ctx->ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_ctx->ue_index);

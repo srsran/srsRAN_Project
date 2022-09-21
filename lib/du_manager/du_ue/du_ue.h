@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "adapters/du_bearer_adapter.h"
+#include "../adapters/du_bearer_adapter.h"
+#include "cell_group_config.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/mac/mac_sdu_handler.h"
 #include "srsgnb/ran/du_types.h"
@@ -30,11 +31,18 @@ struct du_bearer {
   du_bearer_adapter           bearer_connector;
 };
 
-struct du_ue_context {
-  du_ue_index_t                           ue_index;
+struct du_ue {
+  explicit du_ue(du_ue_index_t ue_index_, du_cell_index_t pcell_index_, rnti_t rnti_) :
+    ue_index(ue_index_), rnti(rnti_), pcell_index(pcell_index_)
+  {
+  }
+
+  const du_ue_index_t                     ue_index;
   rnti_t                                  rnti;
   du_cell_index_t                         pcell_index;
   slot_array<du_bearer, MAX_NOF_RB_LCIDS> bearers;
+
+  std::vector<cell_group_config> cells;
 };
 
 } // namespace srs_du

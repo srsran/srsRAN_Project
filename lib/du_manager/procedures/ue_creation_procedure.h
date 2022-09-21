@@ -14,7 +14,7 @@
 #include "../converters/mac_cell_configuration_helpers.h"
 #include "../du_manager_config.h"
 #include "../du_manager_interfaces.h"
-#include "../du_ue_context.h"
+#include "../du_ue/du_ue.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/rlc/rlc_factory.h"
 #include "srsgnb/rlc/rlc_rx.h"
@@ -78,7 +78,7 @@ private:
   srslog::basic_logger&         logger;
   ue_manager_ctrl_configurator& ue_mng;
 
-  std::unique_ptr<du_ue_context> ue_ctx;
+  std::unique_ptr<du_ue>         ue_ctx;
   mac_ue_create_response_message mac_resp{};
   f1ap_ue_create_response        f1_resp{};
 };

@@ -10,6 +10,7 @@
 
 #include "ue_configuration_procedure.h"
 #include "../../ran/gnb_format.h"
+#include "../converters/asn1_cell_group_config_helpers.h"
 #include "srsgnb/mac/mac_ue_configurator.h"
 
 using namespace srsgnb;
@@ -18,7 +19,11 @@ using namespace srsgnb::srs_du;
 ue_configuration_procedure::ue_configuration_procedure(const f1ap_ue_config_update_request& request_,
                                                        ue_manager_ctrl_configurator&        ue_mng_,
                                                        mac_ue_configurator&                 mac_ue_mng_) :
-  request(request_), ue_mng(ue_mng_), mac_ue_mng(mac_ue_mng_), ue(ue_mng.find_ue(request.ue_index))
+  request(request_),
+  ue_mng(ue_mng_),
+  mac_ue_mng(mac_ue_mng_),
+  ue(ue_mng.find_ue(request.ue_index)),
+  next_cell_group(make_reconf_ue_cell_group_config(request))
 {
   srsgnb_assert(ue != nullptr, "ueId={} not found", request.ue_index);
 }
@@ -29,7 +34,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_conf
 
   log_proc_started(logger, request.ue_index, ue->rnti, "UE Modification");
 
-  add_bearers_in_ue_context();
+  add_bearers_to_ue_context();
 
   CORO_AWAIT(update_mac_bearers());
 
@@ -38,7 +43,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_conf
   CORO_RETURN(make_ue_config_response());
 }
 
-void ue_configuration_procedure::add_bearers_in_ue_context()
+void ue_configuration_procedure::add_bearers_to_ue_context()
 {
   for (srb_id_t srbid : request.srbs_to_addmod) {
     lcid_t lcid = (lcid_t)srbid;
@@ -99,6 +104,15 @@ f1ap_ue_config_update_response ue_configuration_procedure::make_ue_config_respon
 {
   f1ap_ue_config_update_response resp;
   resp.result = true;
-  // TODO: Add CellGroupConfig.
+
+  // Add CellGroupConfig.
+  asn1::rrc_nr::cell_group_cfg_s asn1_cell_group;
+  calculate_cell_group_config_diff(ue->cells[0], next_cell_group, asn1_cell_group);
+  {
+    asn1::bit_ref     bref{resp.du_to_cu_rrc_container};
+    asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);
+    srsgnb_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
+  }
+
   return resp;
 }

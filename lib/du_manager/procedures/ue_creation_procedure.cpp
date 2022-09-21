@@ -11,6 +11,7 @@
 #include "ue_creation_procedure.h"
 #include "../adapters/mac_adapters.h"
 #include "../adapters/rlc_adapters.h"
+#include "../converters/asn1_cell_group_config_helpers.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_du;
@@ -19,15 +20,18 @@ ue_creation_procedure::ue_creation_procedure(du_ue_index_t                     u
                                              const ul_ccch_indication_message& ccch_ind_msg,
                                              const du_manager_config_t&        cfg_,
                                              ue_manager_ctrl_configurator&     ue_mng_) :
-  msg(ccch_ind_msg), cfg(cfg_), logger(cfg.logger), ue_mng(ue_mng_), ue_ctx(std::make_unique<du_ue_context>())
+  msg(ccch_ind_msg),
+  cfg(cfg_),
+  logger(cfg.logger),
+  ue_mng(ue_mng_),
+  ue_ctx(std::make_unique<du_ue>(ue_index, ccch_ind_msg.cell_index, ccch_ind_msg.crnti))
 {
-  ue_ctx->ue_index    = ue_index;
-  ue_ctx->rnti        = ccch_ind_msg.crnti;
-  ue_ctx->pcell_index = ccch_ind_msg.cell_index;
   ue_ctx->bearers.emplace(LCID_SRB0);
   ue_ctx->bearers[LCID_SRB0].lcid = LCID_SRB0;
   ue_ctx->bearers.emplace(LCID_SRB1);
   ue_ctx->bearers[LCID_SRB1].lcid = LCID_SRB1;
+
+  ue_ctx->cells.push_back(make_initial_ue_cell_group_config());
 }
 
 void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
@@ -165,6 +169,7 @@ void ue_creation_procedure::create_f1_ue()
   // Pack SRB1 configuration that is going to be passed in the F1AP DU-to-CU-RRC-Container IE to the CU as per TS38.473,
   // Section 8.4.1.2.
   cell_group_cfg_s cell_group;
+  calculate_cell_group_config_diff({}, ue_ctx->cells[0], cell_group);
   cell_group.rlc_bearer_to_add_mod_list.resize(1);
   cell_group.rlc_bearer_to_add_mod_list[0].lc_ch_id        = 1;
   cell_group.rlc_bearer_to_add_mod_list[0].rlc_cfg_present = true;
@@ -181,9 +186,11 @@ void ue_creation_procedure::create_f1_ue()
   am.dl_am_rlc.t_status_prohibit.value                     = t_status_prohibit_opts::ms0;
   // TODO: Fill Remaining.
 
-  asn1::bit_ref     bref{f1_msg.du_cu_rrc_container};
-  asn1::SRSASN_CODE result = cell_group.pack(bref);
-  srsgnb_assert(result == asn1::SRSASN_SUCCESS, "Failed to generate CellConfigGroup");
+  {
+    asn1::bit_ref     bref{f1_msg.du_cu_rrc_container};
+    asn1::SRSASN_CODE result = cell_group.pack(bref);
+    srsgnb_assert(result == asn1::SRSASN_SUCCESS, "Failed to generate CellConfigGroup");
+  }
 
   f1_resp = cfg.f1ap_ue_ctx_mng->handle_ue_creation_request(f1_msg);
 }

@@ -13,7 +13,7 @@
 #include "../../lib/ran/gnb_format.h"
 #include "du_manager_config.h"
 #include "du_manager_interfaces.h"
-#include "du_ue_context.h"
+#include "du_ue/du_ue.h"
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/support/async/async_task.h"
 
@@ -75,7 +75,7 @@ private:
   srslog::basic_logger&         logger;
   ue_manager_ctrl_configurator& ue_mng;
 
-  du_ue_context* ue = nullptr;
+  du_ue* ue = nullptr;
 };
 
 } // namespace srs_du

@@ -8,5 +8,5 @@
 
 set(SOURCES initial_du_setup_procedure.cpp ue_creation_procedure.cpp ue_configuration_procedure.cpp)
 add_library(srsgnb_du_manager_procedures STATIC ${SOURCES})
-target_link_libraries(srsgnb_du_manager_procedures srsgnb_ran)
+target_link_libraries(srsgnb_du_manager_procedures du_manager_ue srsgnb_ran)
 

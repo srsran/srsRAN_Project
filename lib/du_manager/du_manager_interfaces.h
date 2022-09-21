@@ -11,7 +11,7 @@
 #pragma once
 
 #include "du_manager_config.h"
-#include "du_ue_context.h"
+#include "du_ue/du_ue.h"
 
 namespace srsgnb {
 namespace srs_du {
@@ -19,11 +19,11 @@ namespace srs_du {
 class ue_manager_ctrl_configurator
 {
 public:
-  virtual ~ue_manager_ctrl_configurator()                         = default;
-  virtual du_ue_context* add_ue(std::unique_ptr<du_ue_context> u) = 0;
-  virtual void           remove_ue(du_ue_index_t ue_index)        = 0;
-  virtual du_ue_context* find_ue(du_ue_index_t ue_index)          = 0;
-  virtual du_ue_context* find_rnti(rnti_t rnti)                   = 0;
+  virtual ~ue_manager_ctrl_configurator()          = default;
+  virtual du_ue* add_ue(std::unique_ptr<du_ue> u)  = 0;
+  virtual void   remove_ue(du_ue_index_t ue_index) = 0;
+  virtual du_ue* find_ue(du_ue_index_t ue_index)   = 0;
+  virtual du_ue* find_rnti(rnti_t rnti)            = 0;
 };
 
 } // namespace srs_du
