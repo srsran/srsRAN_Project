@@ -11,9 +11,9 @@
 #include "../../lib/pdcp/pdcp_entity_impl.h"
 #include "pdcp_test_vectors.h"
 #include "srsgnb/pdcp/pdcp_config.h"
+#include <cstdlib>
 #include <getopt.h>
 #include <queue>
-#include <stdlib.h>
 
 using namespace srsgnb;
 
@@ -123,4 +123,3 @@ int main(int argc, char** argv)
   logger.info(frame.pdu_queue.front().begin(), frame.pdu_queue.front().end(), "PDCP PDU");
   return 0;
 }
-

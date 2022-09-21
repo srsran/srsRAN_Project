@@ -52,7 +52,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer pdu)
    *   - RCVD_HFN = HFN(RX_DELIV);
    * - RCVD_COUNT = [RCVD_HFN, RCVD_SN].
    */
-  uint32_t rcvd_hfn, __attribute__((unused)) rcvd_count;
+  uint32_t rcvd_hfn, rcvd_count;
   if ((int64_t)rcvd_sn < (int64_t)SN(st.rx_deliv) - (int64_t)window_size) {
     rcvd_hfn = HFN(st.rx_deliv) + 1;
   } else if (rcvd_sn >= SN(st.rx_deliv) + window_size) {

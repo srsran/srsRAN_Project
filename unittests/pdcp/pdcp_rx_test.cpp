@@ -75,7 +75,49 @@ TEST_P(pdcp_rx_test, rx_in_order)
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
     pdcp_rx->set_state(init_state);
     pdcp_rx->handle_pdu(std::move(test_pdu1));
+    ASSERT_EQ(1, test_frame.sdu_queue.size());
     pdcp_rx->handle_pdu(std::move(test_pdu2));
+    ASSERT_EQ(2, test_frame.sdu_queue.size());
+    while (not test_frame.sdu_queue.empty()) {
+      ASSERT_EQ(test_frame.sdu_queue.front(), sdu1);
+      test_frame.sdu_queue.pop();
+    }
+  };
+
+  if (config.sn_size == pdcp_sn_size::size12bits) {
+    test_rx_in_order(0);
+    test_rx_in_order(2047);
+    test_rx_in_order(4095);
+  } else if (config.sn_size == pdcp_sn_size::size18bits) {
+    test_rx_in_order(0);
+    test_rx_in_order(131071);
+    test_rx_in_order(262143);
+  } else {
+    FAIL();
+  }
+}
+
+TEST_P(pdcp_rx_test, rx_out_of_order)
+{
+  init(GetParam());
+
+  auto test_rx_in_order = [this](uint32_t count) {
+    srsgnb::test_delimit_logger delimiter("RX in order test. SN_SIZE={} COUNT={}", sn_size, count);
+
+    pdcp_rx->set_as_security_config(sec_cfg);
+    pdcp_rx->enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+    // Set the direction to downlink to avoid duplicating the test vectors.
+    pdcp_rx->set_direction(security_direction::downlink);
+
+    byte_buffer test_pdu1;
+    get_test_pdu(count, test_pdu1);
+    byte_buffer test_pdu2;
+    get_test_pdu(count + 1, test_pdu2);
+    pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
+    pdcp_rx->set_state(init_state);
+    pdcp_rx->handle_pdu(std::move(test_pdu2));
+    ASSERT_EQ(0, test_frame.sdu_queue.size());
+    pdcp_rx->handle_pdu(std::move(test_pdu1));
     ASSERT_EQ(2, test_frame.sdu_queue.size());
     while (not test_frame.sdu_queue.empty()) {
       ASSERT_EQ(test_frame.sdu_queue.front(), sdu1);
