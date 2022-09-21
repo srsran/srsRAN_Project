@@ -85,7 +85,7 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
       do_status.store(true, std::memory_order_relaxed);
     }
     if (status_changed || status_requested) {
-      notify_status_required();
+      notify_status_report_changed();
     }
   });
 
@@ -467,11 +467,11 @@ bool rlc_rx_am_entity::status_report_required()
   return do_status.load(std::memory_order_relaxed) && not status_prohibit_timer.is_running();
 }
 
-void rlc_rx_am_entity::notify_status_required()
+void rlc_rx_am_entity::notify_status_report_changed()
 {
   if (status_report_required()) {
-    logger.log_debug("Notifying TX that status report is required");
-    status_notifier->on_status_report_required();
+    logger.log_debug("Notifying TX that status report has changed");
+    status_notifier->on_status_report_changed();
   }
 }
 
@@ -503,7 +503,7 @@ void rlc_rx_am_entity::on_expired_status_prohibit_timer(uint32_t timeout_id)
 {
   if (status_prohibit_timer.is_valid() && status_prohibit_timer.id() == timeout_id) {
     logger.log_debug("Status prohibit timer expired after {}ms", status_prohibit_timer.duration());
-    notify_status_required();
+    notify_status_report_changed();
     return;
   }
 }
@@ -557,7 +557,7 @@ void rlc_rx_am_entity::on_expired_reassembly_timer(uint32_t timeout_id)
      */
     refresh_status_report();
     do_status.store(true, std::memory_order_relaxed);
-    notify_status_required();
+    notify_status_report_changed();
 
     logger.log_debug("State: {}", st);
     logger.log_debug("SDUs in rx_window: {}", st.rx_next, st.rx_next_highest, rx_window->size());

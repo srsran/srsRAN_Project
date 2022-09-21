@@ -40,7 +40,8 @@ public:
 
   // rlc_tx_am_status_handler interface
   virtual void handle_status_pdu(rlc_am_status_pdu status) override { this->status = status; }
-  virtual void on_status_report_required() override { this->status_trigger_counter++; }
+  // rlc_tx_am_status_notifier interface
+  virtual void on_status_report_changed() override { this->status_trigger_counter++; }
 };
 
 /// Fixture class for RLC AM Rx tests.

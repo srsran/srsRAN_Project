@@ -560,7 +560,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
   }
 }
 
-void rlc_tx_am_entity::on_status_report_required()
+void rlc_tx_am_entity::on_status_report_changed()
 {
   // this function is called from the RX entity
   std::lock_guard<std::mutex> lock(mutex);

@@ -42,14 +42,16 @@ public:
 };
 
 /// This interface represents the RLC TX AM entity that the RLC RX AM must notify to inform the RLC TX AM entity that a
-/// status report is required (either by timeout or by request of the other peer)
+/// status report is triggered (either by timeout or by request of the other peer) or its size has changed (e.g. further
+/// PDUs have been received)
 class rlc_tx_am_status_notifier
 {
 public:
   virtual ~rlc_tx_am_status_notifier() = default;
 
-  /// \brief Informs the TX entity that a status report is required
-  virtual void on_status_report_required() = 0;
+  /// \brief Informs the TX entity that a status report is triggered or its size has changed, so that the buffer status
+  /// report needs to be updated.
+  virtual void on_status_report_changed() = 0;
 };
 
 } // namespace srsgnb

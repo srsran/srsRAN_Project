@@ -716,7 +716,7 @@ TEST_P(rlc_tx_am_test, buffer_state_considers_status_report)
   EXPECT_EQ(rlc->get_buffer_state(), 0);
   EXPECT_EQ(tester->transmitted_pdcp_count_list.size(), 0);
 
-  // First set the status_required flag without triggering the on_status_report_required() event
+  // First set the status_required flag without triggering the on_status_report_changed() event
   tester->status_required = true;
   EXPECT_EQ(rlc->get_buffer_state(), tester->status.get_packed_size());
   EXPECT_EQ(tester->bsr, 0);       // unchanged
@@ -730,8 +730,8 @@ TEST_P(rlc_tx_am_test, buffer_state_considers_status_report)
   EXPECT_EQ(tester->bsr, 0);       // unchanged
   EXPECT_EQ(tester->bsr_count, 0); // unchanged
 
-  // Now trigger on_status_report_required() as well and check for the expected outcomes
-  rlc->on_status_report_required();
+  // Now trigger on_status_report_changed() as well and check for the expected outcomes
+  rlc->on_status_report_changed();
   EXPECT_EQ(tester->bsr, tester->status.get_packed_size()); // expecting the size of the status report
   EXPECT_EQ(tester->bsr_count, 1);                          // a bsr should be sent to lower layers
 
@@ -759,7 +759,7 @@ TEST_P(rlc_tx_am_test, status_report_priority)
 
   // Set status report required
   tester->status_required = true;
-  rlc->on_status_report_required();
+  rlc->on_status_report_changed();
   EXPECT_EQ(rlc->get_buffer_state(), tester->status.get_packed_size() + pdu_size);
   EXPECT_EQ(tester->bsr, tester->status.get_packed_size() + pdu_size);
   EXPECT_EQ(tester->bsr_count, 2);
@@ -800,7 +800,7 @@ TEST_P(rlc_tx_am_test, status_report_trim)
 
   // Set status report required
   tester->status_required = true;
-  rlc->on_status_report_required();
+  rlc->on_status_report_changed();
   EXPECT_EQ(rlc->get_buffer_state(), tester->status.get_packed_size());
   EXPECT_EQ(tester->bsr, tester->status.get_packed_size());
   EXPECT_EQ(tester->bsr_count, 1);
@@ -820,7 +820,7 @@ TEST_P(rlc_tx_am_test, status_report_trim)
   // Append further NACKs that will be trimmed
   nack.nack_sn = 15;
   tester->status.push_nack(nack);
-  rlc->on_status_report_required();
+  rlc->on_status_report_changed();
   EXPECT_EQ(rlc->get_buffer_state(), tester->status.get_packed_size());
   EXPECT_EQ(tester->bsr, tester->status.get_packed_size());
   EXPECT_EQ(tester->bsr_count, 2);

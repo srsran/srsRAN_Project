@@ -125,7 +125,8 @@ public:
 
   // Status handler interface
   void handle_status_pdu(rlc_am_status_pdu status) override;
-  void on_status_report_required() override;
+  // Status notifier interface
+  void on_status_report_changed() override;
 
   /// \brief Determines whether the polling bit in a PDU header has to be set or not
   /// Ref: TS 38.322, Sec. 5.3.3.2
