@@ -16,63 +16,63 @@
 
 using namespace srsgnb;
 
-static inline void equalize_zf_2x2_symbol(span<cf_t>       symbol_out_l0,
-                                          span<cf_t>       symbol_out_l1,
-                                          span<float>      eq_noise_vars_l0,
-                                          span<float>      eq_noise_vars_l1,
-                                          span<const cf_t> symbol_in_p0,
-                                          span<const cf_t> symbol_in_p1,
-                                          span<const cf_t> ch_estimates_p0_l0,
-                                          span<const cf_t> ch_estimates_p0_l1,
-                                          span<const cf_t> ch_estimates_p1_l0,
-                                          span<const cf_t> ch_estimates_p1_l1,
-                                          float            noise_var_est,
-                                          float            tx_scaling)
+static void equalize_zf_2x2_symbol(span<cf_t>       symbol_out_l0,
+                                   span<cf_t>       symbol_out_l1,
+                                   span<float>      eq_noise_vars_l0,
+                                   span<float>      eq_noise_vars_l1,
+                                   span<const cf_t> symbol_in_p0,
+                                   span<const cf_t> symbol_in_p1,
+                                   span<const cf_t> ch_estimates_p0_l0,
+                                   span<const cf_t> ch_estimates_p0_l1,
+                                   span<const cf_t> ch_estimates_p1_l0,
+                                   span<const cf_t> ch_estimates_p1_l1,
+                                   float            noise_var_est,
+                                   float            tx_scaling)
 {
   const unsigned nof_subcs = symbol_in_p0.size();
 
   for (unsigned i_subc = 0; i_subc != nof_subcs; ++i_subc) {
     // Channel estimates.
-    const cf_t ch_p0_l0 = ch_estimates_p0_l0[i_subc];
-    const cf_t ch_p0_l1 = ch_estimates_p0_l1[i_subc];
-    const cf_t ch_p1_l0 = ch_estimates_p1_l0[i_subc];
-    const cf_t ch_p1_l1 = ch_estimates_p1_l1[i_subc];
+    cf_t ch_p0_l0 = ch_estimates_p0_l0[i_subc];
+    cf_t ch_p0_l1 = ch_estimates_p0_l1[i_subc];
+    cf_t ch_p1_l0 = ch_estimates_p1_l0[i_subc];
+    cf_t ch_p1_l1 = ch_estimates_p1_l1[i_subc];
 
     // Conjugated channel estimates.
-    const cf_t ch_p0_l0_conj = std::conj(ch_p0_l0);
-    const cf_t ch_p0_l1_conj = std::conj(ch_p0_l1);
-    const cf_t ch_p1_l0_conj = std::conj(ch_p1_l0);
-    const cf_t ch_p1_l1_conj = std::conj(ch_p1_l1);
+    cf_t ch_p0_l0_conj = std::conj(ch_p0_l0);
+    cf_t ch_p0_l1_conj = std::conj(ch_p0_l1);
+    cf_t ch_p1_l0_conj = std::conj(ch_p1_l0);
+    cf_t ch_p1_l1_conj = std::conj(ch_p1_l1);
 
     // Absolute squares of the channel estimates.
-    const float ch_p0_l0_mod_sq = std::real(ch_p0_l0 * ch_p0_l0_conj);
-    const float ch_p0_l1_mod_sq = std::real(ch_p0_l1 * ch_p0_l1_conj);
-    const float ch_p1_l0_mod_sq = std::real(ch_p1_l0 * ch_p1_l0_conj);
-    const float ch_p1_l1_mod_sq = std::real(ch_p1_l1 * ch_p1_l1_conj);
+    float ch_p0_l0_mod_sq = abs_sq(ch_p0_l0);
+    float ch_p0_l1_mod_sq = abs_sq(ch_p0_l1);
+    float ch_p1_l0_mod_sq = abs_sq(ch_p1_l0);
+    float ch_p1_l1_mod_sq = abs_sq(ch_p1_l1);
 
     // Resource Elements coming from the Rx ports.
-    const cf_t re_in_p0 = symbol_in_p0[i_subc];
-    const cf_t re_in_p1 = symbol_in_p1[i_subc];
+    cf_t re_in_p0 = symbol_in_p0[i_subc];
+    cf_t re_in_p1 = symbol_in_p1[i_subc];
 
     // Calculate the product of the channel matrix and its hermitian transpose.
     // The diagonal coefficients are the squared norms of the channel matrix column vectors.
-    const float norm_sq_ch_l0 = ch_p0_l0_mod_sq + ch_p1_l0_mod_sq;
-    const float norm_sq_ch_l1 = ch_p0_l1_mod_sq + ch_p1_l1_mod_sq;
+    float norm_sq_ch_l0 = ch_p0_l0_mod_sq + ch_p1_l0_mod_sq;
+    float norm_sq_ch_l1 = ch_p0_l1_mod_sq + ch_p1_l1_mod_sq;
 
     // Calculate the anti-diagonal coefficients, which are -xi and -xi_conj.
-    const cf_t  xi        = (ch_p0_l0_conj * ch_p0_l1) + (ch_p1_l0_conj * ch_p1_l1);
-    const cf_t  xi_conj   = std::conj(xi);
-    const float xi_mod_sq = std::real(xi * xi_conj);
+    cf_t  xi        = (ch_p0_l0_conj * ch_p0_l1) + (ch_p1_l0_conj * ch_p1_l1);
+    cf_t  xi_conj   = std::conj(xi);
+    float xi_mod_sq = abs_sq(xi);
 
     // Apply a matched filter for each Tx layer to the input signal.
-    const cf_t matched_input_l0 = (ch_p0_l0_conj * re_in_p0) + (ch_p1_l0_conj * re_in_p1);
-    const cf_t matched_input_l1 = (ch_p0_l1_conj * re_in_p0) + (ch_p1_l1_conj * re_in_p1);
+    cf_t matched_input_l0 = (ch_p0_l0_conj * re_in_p0) + (ch_p1_l0_conj * re_in_p1);
+    cf_t matched_input_l1 = (ch_p0_l1_conj * re_in_p0) + (ch_p1_l1_conj * re_in_p1);
 
     // Calculate the reciprocal of the denominators. Set the symbols to zero in case of division by zero, NAN of INF.
-    const float d_pinv      = tx_scaling * ((norm_sq_ch_l0 * norm_sq_ch_l1) - xi_mod_sq);
-    const float d_nvars     = tx_scaling * d_pinv;
-    float       d_pinv_rcp  = 0.0F;
-    float       d_nvars_rcp = 0.0F;
+    float d_pinv      = tx_scaling * ((norm_sq_ch_l0 * norm_sq_ch_l1) - xi_mod_sq);
+    float d_nvars     = tx_scaling * d_pinv;
+    float d_pinv_rcp  = 0.0F;
+    float d_nvars_rcp = 0.0F;
     if (std::isnormal(d_pinv)) {
       d_pinv_rcp  = 1.0F / d_pinv;
       d_nvars_rcp = 1.0F / d_nvars;

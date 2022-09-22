@@ -46,21 +46,40 @@ protected:
   static_re_measurement<float, MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS> eq_noise_vars_actual;
   channel_estimate                                                                                test_ch_estimate;
 
-  std::shared_ptr<channel_equalizer_factory> equalizer_factory;
-  std::unique_ptr<channel_equalizer>         test_equalizer;
+  static std::shared_ptr<channel_equalizer_factory> equalizer_factory;
+  static std::unique_ptr<channel_equalizer>         test_equalizer;
 
-  void SetUp() override
+  static void SetUpTestSuite()
   {
-    // Create channel equalizer.
-    equalizer_factory = create_channel_equalizer_factory_zf();
-    ASSERT_TRUE(equalizer_factory);
+    // Create channel equalizer factory.
+    if (!equalizer_factory) {
+      equalizer_factory = create_channel_equalizer_factory_zf();
+      ASSERT_NE(equalizer_factory, nullptr) << "Cannot create equalizer factory";
+    }
 
-    test_equalizer = equalizer_factory->create();
-    ASSERT_TRUE(test_equalizer);
+    // Create channel equalizer.
+    if (!test_equalizer) {
+      test_equalizer = equalizer_factory->create();
+      ASSERT_NE(test_equalizer, nullptr) << "Cannot create channel equalizer";
+    }
   }
 
+  void ReadData(const ChannelEqualizerParams& t_case)
+  {
+    // Read the test case symbols and estimates.
+    ASSERT_NO_FATAL_FAILURE(ReadReMeasurement(rx_symbols, t_case.received_symbols));
+    ASSERT_NO_FATAL_FAILURE(ReadReMeasurement(eq_symbols_expected, t_case.equalized_symbols));
+    ASSERT_NO_FATAL_FAILURE(ReadReMeasurement(eq_noise_vars_expected, t_case.equalized_noise_vars));
+    ASSERT_NO_FATAL_FAILURE(ReadChannelEstimates(test_ch_estimate, t_case.ch_estimates));
+
+    // Resize the equalizer output data structures.
+    eq_noise_vars_actual.resize(eq_symbols_expected.size());
+    eq_symbols_actual.resize(eq_symbols_expected.size());
+  }
+
+private:
   template <typename T>
-  void ReadReMeasurement(re_measurement<T>& data, const re_measurement_exploded<T>& data_exploded)
+  static void ReadReMeasurement(re_measurement<T>& data, const re_measurement_exploded<T>& data_exploded)
   {
     re_measurement_dimensions re_dims;
     re_dims.nof_subc    = data_exploded.nof_prb * NRE;
@@ -79,7 +98,7 @@ protected:
     }
   }
 
-  void ReadChannelEstimates(channel_estimate& ch_est, const ch_estimates_exploded& ch_est_expl)
+  static void ReadChannelEstimates(channel_estimate& ch_est, const ch_estimates_exploded& ch_est_expl)
   {
     channel_estimate::channel_estimate_dimensions ch_dims;
     ch_dims.nof_prb       = ch_est_expl.nof_prb;
@@ -105,20 +124,10 @@ protected:
       }
     }
   }
-
-  void ReadData(const ChannelEqualizerParams& t_case)
-  {
-    // Read the test case symbols and estimates.
-    ReadReMeasurement(rx_symbols, t_case.received_symbols);
-    ReadReMeasurement(eq_symbols_expected, t_case.equalized_symbols);
-    ReadReMeasurement(eq_noise_vars_expected, t_case.equalized_noise_vars);
-    ReadChannelEstimates(test_ch_estimate, t_case.ch_estimates);
-
-    // Resize the equalizer output data structures.
-    eq_noise_vars_actual.resize(eq_symbols_expected.size());
-    eq_symbols_actual.resize(eq_symbols_expected.size());
-  }
 };
+
+std::shared_ptr<channel_equalizer_factory> ChannelEqualizerFixture::equalizer_factory = nullptr;
+std::unique_ptr<channel_equalizer>         ChannelEqualizerFixture::test_equalizer    = nullptr;
 
 TEST_P(ChannelEqualizerFixture, ChannelEqualizerTest)
 {
@@ -127,27 +136,31 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerTest)
   ReadData(t_case);
 
   // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
-  if (t_case.equalizer_type == "ZF") {
-    // Equalize the symbols coming from the Rx ports.
-    test_equalizer->equalize(eq_symbols_actual, eq_noise_vars_actual, rx_symbols, test_ch_estimate, t_case.scaling);
+  if (t_case.equalizer_type != "ZF") {
+    GTEST_SKIP();
+  }
 
-    // Assert results.
-    for (unsigned i_layer = 0; i_layer != t_case.ch_estimates.nof_tx_layers; ++i_layer) {
-      for (unsigned i_symbol = 0; i_symbol != t_case.ch_estimates.nof_symbols; ++i_symbol) {
-        span<const cf_t>  eq_subcs_actual         = eq_symbols_actual.get_symbol(i_symbol, i_layer);
-        span<const cf_t>  eq_subcs_expected       = eq_symbols_expected.get_symbol(i_symbol, i_layer);
-        span<const float> eq_nvars_subcs_expected = eq_noise_vars_expected.get_symbol(i_symbol, i_layer);
-        span<const float> eq_nvars_subcs_actual   = eq_noise_vars_actual.get_symbol(i_symbol, i_layer);
+  // Equalize the symbols coming from the Rx ports.
+  test_equalizer->equalize(eq_symbols_actual, eq_noise_vars_actual, rx_symbols, test_ch_estimate, t_case.scaling);
 
-        for (unsigned i_subc = 0; i_subc != t_case.ch_estimates.nof_prb * NRE; ++i_subc) {
-          // Compute and assert absolute error between the expected and the actual symbols after equalization.
-          float eq_error = std::abs(eq_subcs_expected[i_subc] - eq_subcs_actual[i_subc]);
-          ASSERT_TRUE(eq_error < MAX_ERROR_EQ) << "Excessive equalized symbols error.";
+  // Assert results.
+  for (unsigned i_layer = 0; i_layer != t_case.ch_estimates.nof_tx_layers; ++i_layer) {
+    for (unsigned i_symbol = 0; i_symbol != t_case.ch_estimates.nof_symbols; ++i_symbol) {
+      span<const cf_t>  eq_subcs_actual         = eq_symbols_actual.get_symbol(i_symbol, i_layer);
+      span<const cf_t>  eq_subcs_expected       = eq_symbols_expected.get_symbol(i_symbol, i_layer);
+      span<const float> eq_nvars_subcs_expected = eq_noise_vars_expected.get_symbol(i_symbol, i_layer);
+      span<const float> eq_nvars_subcs_actual   = eq_noise_vars_actual.get_symbol(i_symbol, i_layer);
 
-          // Compute and assert absolute error between the expected and the actual post equalization noise variances.
-          float noise_vars_error = std::abs(eq_nvars_subcs_expected[i_subc] - eq_nvars_subcs_actual[i_subc]);
-          ASSERT_TRUE(noise_vars_error < MAX_ERROR_EQ) << "Excessive post-equalization noise variance error.";
-        }
+      for (unsigned i_subc = 0; i_subc != t_case.ch_estimates.nof_prb * NRE; ++i_subc) {
+        // Assert error between the expected and the actual symbols after equalization.
+        ASSERT_NEAR(std::real(eq_subcs_expected[i_subc]), std::real(eq_subcs_actual[i_subc]), MAX_ERROR_EQ)
+            << "Excessive equalized symbols error.";
+        ASSERT_NEAR(std::imag(eq_subcs_expected[i_subc]), std::imag(eq_subcs_actual[i_subc]), MAX_ERROR_EQ)
+            << "Excessive equalized symbols error.";
+
+        // Assert error between the expected and the actual post equalization noise variances.
+        ASSERT_NEAR(eq_nvars_subcs_expected[i_subc], eq_nvars_subcs_actual[i_subc], MAX_ERROR_EQ)
+            << "Excessive post-equalization equivalent noise variance error.";
       }
     }
   }
