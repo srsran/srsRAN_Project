@@ -30,6 +30,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer pdu)
 
   // Sanity check
   if (pdu.length() <= hdr_len_bytes) {
+    logger.log_error("PDCP PDU is too small. PDU length={}, header length={}", pdu.length(), hdr_len_bytes);
     return;
   }
   logger.log_debug("Rx PDCP state - RX_NEXT={}, RX_DELIV={}, RX_REORD={}", st.rx_next, st.rx_deliv, st.rx_reord);
@@ -210,7 +211,7 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
     logger.log(level,
                buf.begin(),
                buf.end(),
-               "Integrity check input - COUNT {}, Bearer ID {}, Direction {}",
+               "Integrity check input - COUNT: {}, Bearer ID: {}, Direction: {}",
                count,
                lcid,
                direction);
@@ -228,7 +229,7 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_view msg, uint32_t count)
   // If control plane use RRC integrity key. If data use user plane key
   const sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
 
-  logger.log_debug("Cipher decrypt input: COUNT: {}, Bearer ID: {}, Direction {}", count, lcid, direction);
+  logger.log_debug("Cipher decrypt input: COUNT: {}, Bearer ID: {}, Direction: {}", count, lcid, direction);
   logger.log_debug((uint8_t*)k_enc.data(), k_enc.size(), "Cipher decrypt key:");
   logger.log_debug(msg.begin(), msg.end(), "Cipher decrypt input msg");
 
