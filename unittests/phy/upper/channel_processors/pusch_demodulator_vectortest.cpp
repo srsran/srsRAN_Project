@@ -12,6 +12,7 @@
 #include "pusch_demodulator_test_data.h"
 #include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsgnb/phy/upper/equalization/equalization_factories.h"
 #include "srsgnb/srslog/bundled/fmt/ostream.h"
 #include "srsgnb/srsvec/compare.h"
 #include <gtest/gtest.h>
@@ -43,30 +44,6 @@ std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 
 } // namespace srsgnb
 
-namespace {
-class channel_equalizer_spy : public channel_equalizer
-{
-public:
-  void equalize(equalizer_symbol_list&          mod_symbols,
-                equalizer_noise_var_list&       noise_vars,
-                const equalizer_ch_symbol_list& ch_symbols,
-                const channel_estimate&         ch_estimates,
-                float /**/) override
-  {
-    for (unsigned i_layer = 0, i_layer_end = noise_vars.size().nof_slices; i_layer != i_layer_end; ++i_layer) {
-      float       noise_var  = ch_estimates.get_noise_variance(0, i_layer);
-      span<float> layer_data = noise_vars.get_slice(i_layer);
-      std::fill(layer_data.begin(), layer_data.end(), noise_var);
-
-      srsvec::copy(mod_symbols.get_slice(i_layer), ch_symbols.get_slice(i_layer));
-    }
-  }
-};
-
-PHY_SPY_FACTORY_TEMPLATE(channel_equalizer);
-
-} // namespace
-
 class PuschDemodulatorFixture : public ::testing::TestWithParam<PuschDemodulatorParams>
 {
 protected:
@@ -82,7 +59,7 @@ protected:
   {
     const test_case_t& test_case = GetParam();
 
-    std::shared_ptr<channel_equalizer_factory> equalizer_factory = std::make_shared<channel_equalizer_factory_spy>();
+    std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_factory_zf();
     ASSERT_TRUE(equalizer_factory);
 
     std::shared_ptr<channel_modulation_factory> demod_factory = create_channel_modulation_sw_factory();

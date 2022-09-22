@@ -126,6 +126,7 @@ add_custom_command(
 add_executable(pusch_demodulator_vectortest pusch_demodulator_vectortest.cpp)
 target_link_libraries(pusch_demodulator_vectortest
         srsgnb_channel_processors
+        srsgnb_channel_equalizer
         srsgnb_phy_support
         srslog
         srsgnb_upper_phy_support
