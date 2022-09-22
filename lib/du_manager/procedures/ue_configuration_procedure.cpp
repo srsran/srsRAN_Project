@@ -19,13 +19,11 @@ using namespace srsgnb::srs_du;
 ue_configuration_procedure::ue_configuration_procedure(const f1ap_ue_config_update_request& request_,
                                                        ue_manager_ctrl_configurator&        ue_mng_,
                                                        mac_ue_configurator&                 mac_ue_mng_) :
-  request(request_),
-  ue_mng(ue_mng_),
-  mac_ue_mng(mac_ue_mng_),
-  ue(ue_mng.find_ue(request.ue_index)),
-  next_cell_group(make_reconf_ue_cell_group_config(request))
+  request(request_), ue_mng(ue_mng_), mac_ue_mng(mac_ue_mng_), ue(ue_mng.find_ue(request.ue_index))
 {
   srsgnb_assert(ue != nullptr, "ueId={} not found", request.ue_index);
+
+  calculate_next_ue_context();
 }
 
 void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_config_update_response>>& ctx)
@@ -41,6 +39,33 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_conf
   log_proc_completed(logger, request.ue_index, ue->rnti, "UE Modification");
 
   CORO_RETURN(make_ue_config_response());
+}
+
+void ue_configuration_procedure::calculate_next_ue_context()
+{
+  next_cell_group = ue->cells[0];
+
+  // Add SRBs to next UE context.
+  for (srb_id_t srbid : request.srbs_to_addmod) {
+    rlc_bearer_config srb_to_addmod = make_default_srb(srb_id_to_lcid(srbid));
+
+    auto it = std::find_if(next_cell_group.rlc_bearers.begin(),
+                           next_cell_group.rlc_bearers.end(),
+                           [srbid](const rlc_bearer_config& cfg) { return cfg.lcid == srb_id_to_lcid(srbid); });
+    if (it == next_cell_group.rlc_bearers.end()) {
+      next_cell_group.rlc_bearers.push_back(srb_to_addmod);
+    } else {
+      *it = srb_to_addmod;
+    }
+  }
+
+  // Add DRBs to next UE context.
+  for (const drb_to_addmod& drb : request.drbs_to_addmod) {
+    rlc_bearer_config drb_to_addmod = make_default_srb(drb.lcid);
+    drb_to_addmod.drb_id            = drb.drbid;
+    next_cell_group.rlc_bearers.push_back(drb_to_addmod);
+    // TODO: Check if it is add or mod.
+  }
 }
 
 void ue_configuration_procedure::add_bearers_to_ue_context()
@@ -105,7 +130,7 @@ f1ap_ue_config_update_response ue_configuration_procedure::make_ue_config_respon
   f1ap_ue_config_update_response resp;
   resp.result = true;
 
-  // Add CellGroupConfig.
+  // Calculate ASN.1 CellGroupConfig to be sent in DU-to-CU container.
   asn1::rrc_nr::cell_group_cfg_s asn1_cell_group;
   calculate_cell_group_config_diff(ue->cells[0], next_cell_group, asn1_cell_group);
   {
@@ -113,6 +138,9 @@ f1ap_ue_config_update_response ue_configuration_procedure::make_ue_config_respon
     asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);
     srsgnb_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
   }
+
+  // Update UE context.
+  ue->cells[0] = next_cell_group;
 
   return resp;
 }

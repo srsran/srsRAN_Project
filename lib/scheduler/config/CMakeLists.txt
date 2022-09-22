@@ -6,6 +6,6 @@
 # the distribution.
 #
 
-set(SOURCES cell_group_config.cpp)
-add_library(du_manager_ue STATIC ${SOURCES})
-target_link_libraries(du_manager_ue srsgnb_ran)
+set(SOURCES serving_cell_config_factory.cpp)
+add_library(sched_config STATIC ${SOURCES})
+target_link_libraries(sched_config srsgnb_ran)

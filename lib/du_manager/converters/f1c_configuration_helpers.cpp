@@ -9,6 +9,7 @@
  */
 
 #include "f1c_configuration_helpers.h"
+#include "asn1_cell_group_config_helpers.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/support/error_handling.h"
 
@@ -55,123 +56,6 @@ static asn1::rrc_nr::subcarrier_spacing_e get_asn1_scs(subcarrier_spacing scs)
   return asn1::rrc_nr::subcarrier_spacing_e{static_cast<asn1::rrc_nr::subcarrier_spacing_opts::options>(scs)};
 }
 
-static asn1::rrc_nr::coreset_s make_asn1_rrc_coreset(const coreset_configuration& cfg)
-{
-  using namespace asn1::rrc_nr;
-  coreset_s cs;
-  cs.coreset_id = cfg.id;
-  cs.freq_domain_res.from_number(cfg.freq_domain_resources().to_uint64());
-  cs.dur = cfg.duration;
-  if (cfg.interleaved.has_value()) {
-    auto& interv = cs.cce_reg_map_type.set_interleaved();
-    asn1::number_to_enum(interv.reg_bundle_size, cfg.interleaved->reg_bundle_sz);
-    asn1::number_to_enum(interv.interleaver_size, cfg.interleaved->interleaver_sz);
-    interv.shift_idx_present = true;
-    interv.shift_idx         = cfg.interleaved->shift_index;
-  } else {
-    cs.cce_reg_map_type.set_non_interleaved();
-  }
-  cs.precoder_granularity.value =
-      cfg.precoder_granurality == coreset_configuration::precoder_granularity_type::same_as_reg_bundle
-          ? coreset_s::precoder_granularity_opts::same_as_reg_bundle
-          : coreset_s::precoder_granularity_opts::all_contiguous_rbs;
-  cs.pdcch_dmrs_scrambling_id_present = true;
-  cs.pdcch_dmrs_scrambling_id         = cfg.pdcch_dmrs_scrambling_id;
-  return cs;
-}
-
-static asn1::rrc_nr::search_space_s make_asn1_rrc_search_space(const search_space_configuration& cfg)
-{
-  using namespace asn1::rrc_nr;
-  search_space_s ss;
-  ss.search_space_id                                = cfg.id;
-  ss.coreset_id_present                             = true;
-  ss.coreset_id                                     = cfg.cs_id;
-  ss.monitoring_slot_periodicity_and_offset_present = true;
-  search_space_s::monitoring_slot_periodicity_and_offset_c_::types period;
-  bool success = asn1::number_to_enum(period, cfg.monitoring_slot_period);
-  srsgnb_assert(success, "Invalid slot period");
-  ss.monitoring_slot_periodicity_and_offset.set(period);
-  switch (ss.monitoring_slot_periodicity_and_offset.type().value) {
-    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl1:
-      break;
-    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl2:
-      ss.monitoring_slot_periodicity_and_offset.sl2() = cfg.monitoring_slot_offset;
-      break;
-    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl4:
-      ss.monitoring_slot_periodicity_and_offset.sl4() = cfg.monitoring_slot_offset;
-      break;
-    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl5:
-      ss.monitoring_slot_periodicity_and_offset.sl5() = cfg.monitoring_slot_offset;
-      break;
-    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl8:
-      ss.monitoring_slot_periodicity_and_offset.sl8() = cfg.monitoring_slot_offset;
-      break;
-    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl10:
-      ss.monitoring_slot_periodicity_and_offset.sl10() = cfg.monitoring_slot_offset;
-      break;
-    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl16:
-      ss.monitoring_slot_periodicity_and_offset.sl16() = cfg.monitoring_slot_offset;
-      break;
-    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl20:
-      ss.monitoring_slot_periodicity_and_offset.sl20() = cfg.monitoring_slot_offset;
-      break;
-    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl40:
-      ss.monitoring_slot_periodicity_and_offset.sl40() = cfg.monitoring_slot_offset;
-      break;
-    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl80:
-      ss.monitoring_slot_periodicity_and_offset.sl80() = cfg.monitoring_slot_offset;
-      break;
-    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl160:
-      ss.monitoring_slot_periodicity_and_offset.sl160() = cfg.monitoring_slot_offset;
-      break;
-    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl320:
-      ss.monitoring_slot_periodicity_and_offset.sl320() = cfg.monitoring_slot_offset;
-      break;
-    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl640:
-      ss.monitoring_slot_periodicity_and_offset.sl640() = cfg.monitoring_slot_offset;
-      break;
-    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl1280:
-      ss.monitoring_slot_periodicity_and_offset.sl1280() = cfg.monitoring_slot_offset;
-      break;
-    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl2560:
-      ss.monitoring_slot_periodicity_and_offset.sl2560() = cfg.monitoring_slot_offset;
-      break;
-    default:
-      srsgnb_assertion_failure("Invalid PDCCH slot offset={}", cfg.monitoring_slot_offset);
-  }
-  if (cfg.duration != 1) {
-    ss.dur_present = true;
-    ss.dur         = cfg.duration;
-  }
-  if (cfg.monitoring_symbols_within_slot.has_value()) {
-    ss.monitoring_symbols_within_slot_present = true;
-    ss.monitoring_symbols_within_slot.from_number(cfg.monitoring_symbols_within_slot->to_ulong());
-  }
-  ss.nrof_candidates_present = true;
-  asn1::number_to_enum(ss.nrof_candidates.aggregation_level1, cfg.nof_candidates[0]);
-  asn1::number_to_enum(ss.nrof_candidates.aggregation_level2, cfg.nof_candidates[1]);
-  asn1::number_to_enum(ss.nrof_candidates.aggregation_level4, cfg.nof_candidates[2]);
-  asn1::number_to_enum(ss.nrof_candidates.aggregation_level8, cfg.nof_candidates[3]);
-  asn1::number_to_enum(ss.nrof_candidates.aggregation_level16, cfg.nof_candidates[4]);
-  ss.search_space_type_present = true;
-  if (cfg.type == search_space_configuration::type::common) {
-    ss.search_space_type.set_common();
-    ss.search_space_type.common().dci_format0_minus0_and_format1_minus0_present = cfg.common.f0_0_and_f1_0;
-    ss.search_space_type.common().dci_format2_minus0_present                    = cfg.common.f2_0;
-    ss.search_space_type.common().dci_format2_minus1_present                    = cfg.common.f2_1;
-    ss.search_space_type.common().dci_format2_minus2_present                    = cfg.common.f2_2;
-    ss.search_space_type.common().dci_format2_minus3_present                    = cfg.common.f2_3;
-  } else {
-    ss.search_space_type.set_ue_specific();
-    ss.search_space_type.ue_specific().dci_formats.value =
-        cfg.ue_specific == srsgnb::search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0
-            ? search_space_s::search_space_type_c_::ue_specific_s_::dci_formats_opts::formats0_minus0_and_minus1_minus0
-            : search_space_s::search_space_type_c_::ue_specific_s_::dci_formats_opts::formats0_minus1_and_minus1_minus1;
-  }
-  return ss;
-}
-
 static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl_config_common& cfg)
 {
   using namespace asn1::rrc_nr;
@@ -201,12 +85,12 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
   pdcch.coreset_zero_present               = false; // Sent by MIB.
   pdcch.common_coreset_present             = cfg.init_dl_bwp.pdcch_common.common_coreset.has_value();
   if (pdcch.common_coreset_present) {
-    pdcch.common_coreset = make_asn1_rrc_coreset(cfg.init_dl_bwp.pdcch_common.common_coreset.value());
+    pdcch.common_coreset = srsgnb::srs_du::make_asn1_rrc_coreset(cfg.init_dl_bwp.pdcch_common.common_coreset.value());
   }
   pdcch.search_space_zero_present = false; // Sent by MIB.
   for (size_t ss_idx = 1; ss_idx < cfg.init_dl_bwp.pdcch_common.search_spaces.size(); ++ss_idx) {
     const search_space_configuration& ss = cfg.init_dl_bwp.pdcch_common.search_spaces[ss_idx];
-    pdcch.common_search_space_list.push_back(make_asn1_rrc_search_space(ss));
+    pdcch.common_search_space_list.push_back(srsgnb::srs_du::make_asn1_rrc_search_space(ss));
   }
   pdcch.search_space_sib1_present           = true;
   pdcch.search_space_sib1                   = cfg.init_dl_bwp.pdcch_common.sib1_search_space_id;

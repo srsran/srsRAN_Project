@@ -7,7 +7,6 @@
 #
 
 add_subdirectory(converters)
-add_subdirectory(du_ue)
 add_subdirectory(procedures)
 
 set(SOURCES du_manager_factory.cpp du_manager_impl.cpp du_ue_manager.cpp du_cell_manager.cpp)
@@ -16,7 +15,6 @@ add_library(srsgnb_du_manager STATIC ${SOURCES})
 target_link_libraries(srsgnb_du_manager
                       srsgnb_du_manager_procedures
                       du_manager_converters
-                      du_manager_ue
                       srsgnb_du_config_validators
                       srsgnb_rlc)
 

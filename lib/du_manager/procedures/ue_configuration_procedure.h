@@ -26,6 +26,8 @@ public:
   void operator()(coro_context<async_task<f1ap_ue_config_update_response>>& ctx);
 
 private:
+  void calculate_next_ue_context();
+
   void add_bearers_to_ue_context();
 
   async_task<mac_ue_reconfiguration_response_message> update_mac_bearers();

@@ -6,6 +6,7 @@
 # the distribution.
 #
 
+add_subdirectory(config)
 add_subdirectory(common_scheduling)
 
 set(SOURCES

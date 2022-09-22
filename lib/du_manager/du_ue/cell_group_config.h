@@ -10,17 +10,26 @@
 
 #pragma once
 
-#include "srsgnb/du_manager/du_manager.h"
+#include "rlc_config_helpers.h"
+#include "srsgnb/ran/du_types.h"
+#include "srsgnb/ran/lcid.h"
+#include "srsgnb/rlc/rlc_config.h"
+#include "srsgnb/scheduler/config/serving_cell_config.h"
 
 namespace srsgnb {
 namespace srs_du {
 
+/// Serving cell specific MAC and PHY parameters for a SpCell.
+struct spcell_config {
+  du_cell_index_t     serv_cell_idx;
+  serving_cell_config spcell_cfg_ded;
+};
+
 /// This struct stores the accumulated CellGroupConfig.
-struct cell_group_config {};
-
-cell_group_config make_initial_ue_cell_group_config();
-
-cell_group_config make_reconf_ue_cell_group_config(const f1ap_ue_config_update_request& request);
+struct cell_group_config {
+  std::vector<rlc_bearer_config> rlc_bearers;
+  spcell_config                  spcell_cfg;
+};
 
 } // namespace srs_du
 } // namespace srsgnb

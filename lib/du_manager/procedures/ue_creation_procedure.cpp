@@ -12,6 +12,8 @@
 #include "../adapters/mac_adapters.h"
 #include "../adapters/rlc_adapters.h"
 #include "../converters/asn1_cell_group_config_helpers.h"
+#include "../du_ue/cell_group_config.h"
+#include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_du;
@@ -31,7 +33,11 @@ ue_creation_procedure::ue_creation_procedure(du_ue_index_t                     u
   ue_ctx->bearers.emplace(LCID_SRB1);
   ue_ctx->bearers[LCID_SRB1].lcid = LCID_SRB1;
 
-  ue_ctx->cells.push_back(make_initial_ue_cell_group_config());
+  ue_ctx->cells.resize(1);
+  cell_group_config& pcell = ue_ctx->cells[0];
+  pcell.rlc_bearers.push_back(make_default_srb(LCID_SRB1));
+  pcell.spcell_cfg.serv_cell_idx  = msg.cell_index;
+  pcell.spcell_cfg.spcell_cfg_ded = make_default_initial_ue_serving_cell_config();
 }
 
 void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
@@ -104,23 +110,15 @@ void ue_creation_procedure::create_rlc_srbs()
   srb0.rlc_bearer     = create_rlc_entity(rlc_msg);
 
   // Create SRB1 RLC entity.
-  du_bearer& srb1                        = ue_ctx->bearers[LCID_SRB1];
-  rlc_msg.lcid                           = LCID_SRB1;
-  rlc_msg.rx_upper_dn                    = &srb1.bearer_connector.rlc_rx_sdu_notif;
-  rlc_msg.tx_upper_dn                    = &srb1.bearer_connector.rlc_tx_data_notif;
-  rlc_msg.tx_upper_cn                    = &srb1.bearer_connector.rlc_tx_ctrl_notif;
-  rlc_msg.tx_lower_dn                    = &srb1.bearer_connector.rlc_tx_buffer_state_notif;
-  rlc_msg.config.mode                    = rlc_mode::am;
-  rlc_msg.config.am.tx.sn_field_length   = rlc_am_sn_size::size12bits;
-  rlc_msg.config.am.tx.t_poll_retx       = 45;
-  rlc_msg.config.am.tx.poll_pdu          = -1;
-  rlc_msg.config.am.tx.poll_byte         = -1;
-  rlc_msg.config.am.tx.max_retx_thresh   = 8;
-  rlc_msg.config.am.rx.sn_field_length   = rlc_am_sn_size::size12bits;
-  rlc_msg.config.am.rx.t_reassembly      = 35;
-  rlc_msg.config.am.rx.t_status_prohibit = 0;
-  rlc_msg.timers                         = cfg.timers;
-  srb1.rlc_bearer                        = create_rlc_entity(rlc_msg);
+  du_bearer& srb1     = ue_ctx->bearers[LCID_SRB1];
+  rlc_msg.lcid        = LCID_SRB1;
+  rlc_msg.rx_upper_dn = &srb1.bearer_connector.rlc_rx_sdu_notif;
+  rlc_msg.tx_upper_dn = &srb1.bearer_connector.rlc_tx_data_notif;
+  rlc_msg.tx_upper_cn = &srb1.bearer_connector.rlc_tx_ctrl_notif;
+  rlc_msg.tx_lower_dn = &srb1.bearer_connector.rlc_tx_buffer_state_notif;
+  rlc_msg.config      = ue_ctx->cells[0].rlc_bearers[0].rlc_cfg;
+  rlc_msg.timers      = cfg.timers;
+  srb1.rlc_bearer     = create_rlc_entity(rlc_msg);
 }
 
 async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_create_req()

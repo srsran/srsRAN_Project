@@ -12,12 +12,13 @@
 
 #include "../adapters/du_bearer_adapter.h"
 #include "cell_group_config.h"
+#include "rlc_config_helpers.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/mac/mac_sdu_handler.h"
 #include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/rlc/rlc_entity.h"
+#include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 #include "srsgnb/support/async/async_task_loop.h"
 
 namespace srsgnb {

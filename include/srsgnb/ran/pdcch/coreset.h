@@ -45,6 +45,12 @@ struct coreset_configuration {
     unsigned interleaver_sz;
     /// Values: (0..MAX_NOF_PRBS-1).
     unsigned shift_index;
+
+    bool operator==(const interleaved_mapping_type& rhs) const
+    {
+      return reg_bundle_sz == rhs.reg_bundle_sz and interleaver_sz == rhs.interleaver_sz and
+             shift_index == rhs.shift_index;
+    }
   };
   enum class precoder_granularity_type { same_as_reg_bundle, all_contiguous_rbs };
 
@@ -75,6 +81,13 @@ struct coreset_configuration {
   {
     srsgnb_assert(id != to_coreset_id(0), "Invalid access to CORESET#0 RBs for a coresetId>0");
     return other_coreset_freq_resources;
+  }
+
+  bool operator==(const coreset_configuration& rhs) const
+  {
+    return id == rhs.id and duration == rhs.duration and interleaved == rhs.interleaved and
+           precoder_granurality == rhs.precoder_granurality and
+           pdcch_dmrs_scrambling_id == rhs.pdcch_dmrs_scrambling_id;
   }
 
 private:

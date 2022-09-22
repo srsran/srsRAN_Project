@@ -53,6 +53,12 @@ struct search_space_configuration {
     bool f2_1;
     bool f2_2;
     bool f2_3;
+
+    bool operator==(const common_dci_format& rhs) const
+    {
+      return f0_0_and_f1_0 == rhs.f0_0_and_f1_0 and f2_0 == rhs.f2_0 and f2_1 == rhs.f2_1 and f2_2 == rhs.f2_2 and
+             f2_3 == rhs.f2_3;
+    }
   };
   /// SearchSpace UE-specific DCI formats.
   enum class ue_specific_dci_format { f0_0_and_f1_0, f0_1_and_1_1 };
@@ -77,6 +83,16 @@ struct search_space_configuration {
     common_dci_format      common;
     ue_specific_dci_format ue_specific;
   };
+
+  bool operator==(const search_space_configuration& rhs) const
+  {
+    return id == rhs.id and cs_id == rhs.cs_id and monitoring_slot_period == rhs.monitoring_slot_period and
+           monitoring_slot_offset == rhs.monitoring_slot_offset and duration == rhs.duration and
+           monitoring_symbols_within_slot == rhs.monitoring_symbols_within_slot and
+           nof_candidates == rhs.nof_candidates and type == rhs.type and
+           ((type == type::common and common == rhs.common) or
+            (type == type::ue_dedicated and ue_specific == rhs.ue_specific));
+  }
 };
 
 /// \remark See TS 38.331, "PDCCH-ConfigCommon"
