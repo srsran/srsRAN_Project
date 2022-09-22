@@ -25,6 +25,7 @@
 #include "srsgnb/ran/pucch/pucch_mapping.h"
 #include "srsgnb/ran/pusch/pusch_mcs.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/ran/slot_pdu_capacity_contants.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/scheduler/config/bwp_configuration.h"
@@ -33,23 +34,6 @@
 #include <cstddef>
 
 namespace srsgnb {
-
-/// Maximum grants per slot. Implementation-specific.
-const size_t MAX_GRANTS = 16;
-/// Maximum Logical channels per TB. Implementation-specific.
-const size_t MAX_LC_GRANTS = 4;
-/// Maximum SSB opportunity per slot. This can be derived from the candidate ODFM symbols indices within the ranges
-/// 0-13, 14-27, 28-41, 42-55, etc.. from TS 38.213, Section 4.1.
-const size_t MAX_SSB_PER_SLOT = 2;
-/// [Implementation defined] This corresponds to "Number of search space sets per slot" in Table 13-11, TS 38.213.
-constexpr size_t MAX_SIB1_PDUS_PER_SLOT = 2;
-/// [Implementation defined] This corresponds to maximum number of RARs that can be scheduled per slot.
-constexpr size_t MAX_RAR_PDUS_PER_SLOT = 16;
-/// Maximum number of PRACH occasions within a slot as per TS38.211, Tables 6.3.3.2-[2-4] and maximum msg1-FDM of 8
-/// according to TS 38.331.
-const static size_t MAX_NOF_PRACHS_PER_SLOT = 56;
-/// Maximum number of codewords per PDSCH grant. Implementation-specific.
-const static size_t MAX_NOF_CODEWORDS_PER_PDSCH = 2;
 
 struct beamforming_info {
   // TODO
@@ -159,7 +143,7 @@ struct dl_msg_lc_info {
 
 struct dl_msg_tb_info {
   /// List of allocated logical channels.
-  static_vector<dl_msg_lc_info, MAX_LC_GRANTS> subpdus;
+  static_vector<dl_msg_lc_info, MAX_LC_PER_TB> subpdus;
 };
 
 /// Dedicated DL Grant for UEs.
@@ -246,9 +230,9 @@ struct rar_ul_grant {
 
 /// Stores the information associated with a RAR.
 struct rar_information {
-  const pdcch_dl_information*             pdcch_cfg;
-  pdsch_information                       pdsch_cfg;
-  static_vector<rar_ul_grant, MAX_GRANTS> grants;
+  const pdcch_dl_information*                        pdcch_cfg;
+  pdsch_information                                  pdsch_cfg;
+  static_vector<rar_ul_grant, MAX_RAR_PDUS_PER_SLOT> grants;
 };
 
 /// Stores the information associated with an SSB.
@@ -274,19 +258,19 @@ struct dl_broadcast_allocation {
 
 struct dl_sched_result {
   /// Allocated DL PDCCHs. Includes both SIB, RAR and Data PDCCHs.
-  static_vector<pdcch_dl_information, MAX_GRANTS> dl_pdcchs;
+  static_vector<pdcch_dl_information, MAX_DL_PDCCH_PDUS_PER_SLOT> dl_pdcchs;
 
   /// Allocated UL PDCCHs.
-  static_vector<pdcch_ul_information, MAX_GRANTS> ul_pdcchs;
+  static_vector<pdcch_ul_information, MAX_UL_PDCCH_PDUS_PER_SLOT> ul_pdcchs;
 
   /// Allocation of SSB and SIBs.
   dl_broadcast_allocation bc;
 
   /// Allocation of dedicated RARs.
-  static_vector<rar_information, MAX_GRANTS> rar_grants;
+  static_vector<rar_information, MAX_RAR_PDUS_PER_SLOT> rar_grants;
 
   /// Allocation of dedicated UE messages.
-  static_vector<dl_msg_alloc, MAX_GRANTS> ue_grants;
+  static_vector<dl_msg_alloc, MAX_UE_PDUS_PER_SLOT> ue_grants;
 };
 
 struct ul_sched_info {
@@ -334,11 +318,11 @@ struct pucch_info {
 
 struct ul_sched_result {
   /// PUSCH grants allocated in the current slot.
-  static_vector<ul_sched_info, MAX_GRANTS> puschs;
+  static_vector<ul_sched_info, MAX_PUSCH_PDUS_PER_SLOT> puschs;
   /// PRACH occasions within the given slot.
   static_vector<prach_occasion_info, MAX_NOF_PRACHS_PER_SLOT> prachs;
   /// PUCCH grants allocated in the current slot.
-  static_vector<pucch_info, MAX_GRANTS> pucchs;
+  static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT> pucchs;
 };
 
 /// Scheduler decision made for DL and UL in a given slot.

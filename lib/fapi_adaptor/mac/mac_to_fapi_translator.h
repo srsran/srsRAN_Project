@@ -26,6 +26,11 @@ namespace fapi_adaptor {
 /// This class stores the index positions of the PDSCH PDUs carried in the FAPI DL_TTI.request.
 class pdsch_pdu_registry
 {
+  /// Maximum number of PDUs that the registry will contain. It is multiplied by 2 because it also stores the CW index
+  /// and a PUSCH PDU can contain up to 2 CW.
+  static constexpr size_t MAX_PDUS =
+      std::max({MAX_SIB1_PDUS_PER_SLOT, MAX_RAR_PDUS_PER_SLOT, MAX_UE_PDUS_PER_SLOT}) * 2U;
+
 public:
   /// Labels for the different types of PDSCH PDUs.
   enum pdsch_pdu_type { sib = 0, rar, ue, last };
@@ -73,7 +78,7 @@ public:
   void reset() { pdus = {}; }
 
 private:
-  using pdu_vector = static_vector<pdu_struct, MAX_DL_PDUS_PER_SLOT>;
+  using pdu_vector = static_vector<pdu_struct, MAX_PDUS>;
   std::array<pdu_vector, last> pdus;
 };
 

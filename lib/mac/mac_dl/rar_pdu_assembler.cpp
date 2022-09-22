@@ -113,7 +113,8 @@ rar_pdu_assembler::rar_pdu_assembler(const mac_cell_creation_request& cell_cfg_)
   // Note: The ring has to be large enough to accommodate all the RARs in a given slot, for a sufficiently large
   // number of slots.
   static const size_t GRID_NOF_SUBFRAMES = 20;
-  rar_payload_ring_buffer.resize(GRID_NOF_SUBFRAMES * get_nof_slots_per_subframe(cell_cfg.scs_common) * MAX_GRANTS);
+  rar_payload_ring_buffer.resize(GRID_NOF_SUBFRAMES * get_nof_slots_per_subframe(cell_cfg.scs_common) *
+                                 MAX_RAR_PDUS_PER_SLOT);
 }
 
 span<const uint8_t> rar_pdu_assembler::encode_rar_pdu(const rar_information& rar)

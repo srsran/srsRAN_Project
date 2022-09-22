@@ -38,10 +38,10 @@ struct pdcch_group {
 
 } // namespace
 
-static static_vector<unsigned, MAX_DL_PDUS_PER_SLOT>
-find_same_bwp_and_coreset_for_first_element(const static_vector<pdcch_group, MAX_DL_PDUS_PER_SLOT>& candidates)
+static static_vector<unsigned, MAX_DL_PDCCH_PDUS_PER_SLOT>
+find_same_bwp_and_coreset_for_first_element(const static_vector<pdcch_group, MAX_DL_PDCCH_PDUS_PER_SLOT>& candidates)
 {
-  static_vector<unsigned, MAX_DL_PDUS_PER_SLOT> result;
+  static_vector<unsigned, MAX_DL_PDCCH_PDUS_PER_SLOT> result;
 
   const pdcch_group& lhs = candidates.front();
 
@@ -56,9 +56,9 @@ find_same_bwp_and_coreset_for_first_element(const static_vector<pdcch_group, MAX
 static void add_pdcch_pdus_to_request(fapi::dl_tti_request_message_builder& builder, const mac_dl_sched_result& dl_res)
 {
   // Group the PDU's.
-  static_vector<mac_pdcch_pdu, MAX_DL_PDUS_PER_SLOT> pdus;
+  static_vector<mac_pdcch_pdu, MAX_DL_PDCCH_PDUS_PER_SLOT> pdus;
 
-  static_vector<pdcch_group, MAX_DL_PDUS_PER_SLOT> candidates;
+  static_vector<pdcch_group, MAX_DL_PDCCH_PDUS_PER_SLOT> candidates;
 
   // Fill the candidates.
   for (unsigned i = 0, e = dl_res.pdcch_pdus.size(); i != e; ++i) {
@@ -78,7 +78,7 @@ static void add_pdcch_pdus_to_request(fapi::dl_tti_request_message_builder& buil
     pdu.dcis.push_back({candidate.info, candidate.payload});
 
     // Find the same BWP and Coreset PDUs.
-    const static_vector<unsigned, MAX_DL_PDUS_PER_SLOT>& pdu_indexes =
+    const static_vector<unsigned, MAX_DL_PDCCH_PDUS_PER_SLOT>& pdu_indexes =
         find_same_bwp_and_coreset_for_first_element(candidates);
 
     // Append the DCIs and remove them from the candidates.

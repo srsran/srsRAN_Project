@@ -12,9 +12,9 @@
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/mac/mac_constants.h"
 #include "srsgnb/ran/phy_time_unit.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/ran/slot_pdu_capacity_contants.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
@@ -41,8 +41,8 @@ struct mac_crc_pdu {
 
 /// \brief List of UL CRC indications for a given slot and cell.
 struct mac_crc_indication_message {
-  slot_point                                       sl_rx;
-  static_vector<mac_crc_pdu, MAX_UL_PDUS_PER_SLOT> crcs;
+  slot_point                                          sl_rx;
+  static_vector<mac_crc_pdu, MAX_PUSCH_PDUS_PER_SLOT> crcs;
 };
 
 /// Interface to handle feedback information from the PHY.

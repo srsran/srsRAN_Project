@@ -348,8 +348,8 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
 
   // 3. Find available RBs in PUSCH for Msg3 grants. This process requires searching for a valid K2 value in
   // the list of PUSCH-TimeDomainResourceAllocation in PUSCHConfigCommon.
-  static_vector<msg3_alloc_candidate, MAX_GRANTS> msg3_candidates;
-  auto                                            pusch_list = get_pusch_time_domain_resource_table(get_pusch_cfg());
+  static_vector<msg3_alloc_candidate, MAX_GRANTS_PER_RAR> msg3_candidates;
+  auto pusch_list = get_pusch_time_domain_resource_table(get_pusch_cfg());
   for (unsigned puschidx = 0; puschidx < pusch_list.size(); ++puschidx) {
     unsigned pusch_res_max_allocs = max_nof_allocs - msg3_candidates.size();
     // 3. Verify if Msg3 delay provided by current PUSCH-TimeDomainResourceAllocation corresponds to an UL slot.

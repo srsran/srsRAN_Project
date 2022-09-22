@@ -55,7 +55,7 @@ private:
   unsigned                  slot_index;
 
   /// list of grants in a given slot.
-  static_vector<alloc_record, MAX_GRANTS> records;
+  static_vector<alloc_record, MAX_DL_PDCCH_PDUS_PER_SLOT + MAX_UL_PDCCH_PDUS_PER_SLOT> records;
 
   /// dfs decision tree for the given slot.
   std::vector<tree_node> dfs_tree, saved_dfs_tree;

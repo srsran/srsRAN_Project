@@ -27,7 +27,7 @@ std::uniform_int_distribution<unsigned> freq_res_dist(0, 16383);
 std::uniform_int_distribution<unsigned> ta_dist(0, 63);
 std::uniform_int_distribution<unsigned> freq_hop_dist(0, 1);
 std::uniform_int_distribution<uint8_t>  tpc_dist(0, 7);
-std::uniform_int_distribution<unsigned> nof_ul_grants_per_rar(1, MAX_GRANTS - 1);
+std::uniform_int_distribution<unsigned> nof_ul_grants_per_rar(1, MAX_RAR_PDUS_PER_SLOT - 1);
 
 // Check TS38.321 6.2.2 and 6.2.3.
 static const unsigned RAR_PDU_SIZE = 8;
@@ -148,7 +148,7 @@ void test_rar_assembler_maintains_old_results()
 
   // The RAR assembler has to internally store previous slot results. This variable defines a reasonable slot duration
   // that the RAR assembler has to keep these results stored.
-  static constexpr unsigned MEMORY_RESULT_IN_SLOTS = MAX_GRANTS * NOF_SUBFRAMES_PER_FRAME;
+  static constexpr unsigned MEMORY_RESULT_IN_SLOTS = MAX_RAR_PDUS_PER_SLOT * NOF_SUBFRAMES_PER_FRAME;
 
   circular_array<span<const uint8_t>, MEMORY_RESULT_IN_SLOTS> previous_pdus;
   circular_array<rar_information, MEMORY_RESULT_IN_SLOTS>     previous_rars;

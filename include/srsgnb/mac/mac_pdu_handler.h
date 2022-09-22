@@ -3,7 +3,6 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/mac/mac_constants.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
@@ -21,7 +20,7 @@ struct mac_rx_pdu {
   harq_pid_value harq_id;
   byte_buffer    pdu;
 };
-using mac_rx_pdu_list = static_vector<mac_rx_pdu, MAX_UL_PDUS_PER_SLOT>;
+using mac_rx_pdu_list = static_vector<mac_rx_pdu, MAX_PUSCH_PDUS_PER_SLOT>;
 
 /// Rx_Data.indication Message.
 struct mac_rx_data_indication {

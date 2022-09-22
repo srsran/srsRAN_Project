@@ -14,10 +14,10 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/mac/bsr_format.h"
 #include "srsgnb/mac/lcid_dl_sch.h"
-#include "srsgnb/mac/mac_constants.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/phy_time_unit.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/ran/slot_pdu_capacity_contants.h"
 
 namespace srsgnb {
 
@@ -59,8 +59,8 @@ struct ul_crc_pdu_indication {
 
 /// \brief UL HARQ CRC indication for a given UE PDU.
 struct ul_crc_indication {
-  du_cell_index_t                                            cell_index;
-  static_vector<ul_crc_pdu_indication, MAX_UL_PDUS_PER_SLOT> crcs;
+  du_cell_index_t                                               cell_index;
+  static_vector<ul_crc_pdu_indication, MAX_PUSCH_PDUS_PER_SLOT> crcs;
 };
 
 struct dl_mac_ce_indication {
