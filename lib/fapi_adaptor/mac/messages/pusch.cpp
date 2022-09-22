@@ -22,21 +22,6 @@ void srsgnb::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu& fapi_pd
   convert_pusch_mac_to_fapi(builder, mac_pdu);
 }
 
-static fapi::dmrs_config_type convert_dmrs_type_mac_to_fapi(srsgnb::dmrs_config_type type)
-{
-  switch (type) {
-    case srsgnb::dmrs_config_type::type1:
-      return fapi::dmrs_config_type::type_1;
-    case srsgnb::dmrs_config_type::type2:
-      return fapi::dmrs_config_type::type_2;
-    default:
-      srsgnb_assert(0, "Unexpected DMRS type ({})", static_cast<unsigned>(type));
-      break;
-  }
-  // Fallback value.
-  return fapi::dmrs_config_type::type_1;
-}
-
 void srsgnb::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder& builder,
                                                      const pusch_information&    mac_pdu)
 {
@@ -66,7 +51,7 @@ void srsgnb::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder&
 
   const dmrs_information& dmrs_cfg = mac_pdu.dmrs;
   builder.set_dmrs_parameters(dmrs_cfg.dmrs_symb_pos.to_uint64(),
-                              convert_dmrs_type_mac_to_fapi(dmrs_cfg.config_type),
+                              dmrs_cfg.config_type,
                               dmrs_cfg.dmrs_scrambling_id,
                               dmrs_cfg.dmrs_scrambling_id_complement,
                               dmrs_cfg.low_papr_dmrs ? fapi::low_papr_dmrs_type::dependent_cdm_group

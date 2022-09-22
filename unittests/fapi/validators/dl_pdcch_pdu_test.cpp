@@ -27,7 +27,7 @@ static const std::vector<test_group<dl_pdcch_pdu>> vector_test = {
     {[](dl_pdcch_pdu& msg, int value) { msg.scs = static_cast<subcarrier_spacing>(value); },
      "Subcarrier spacing",
      {{0, true}, {2, true}, {4, true}, {5, false}}},
-    {[](dl_pdcch_pdu& msg, int value) { msg.cyclic_prefix = static_cast<cyclic_prefix_type>(value); },
+    {[](dl_pdcch_pdu& msg, int value) { msg.cp = static_cast<cyclic_prefix::options>(value); },
      "Cyclic prefix",
      {{0, true}, {1, true}, {2, false}}},
     {[](dl_pdcch_pdu& msg, int value) { msg.start_symbol_index = value; },

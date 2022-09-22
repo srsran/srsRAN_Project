@@ -14,6 +14,7 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/fapi/messages.h"
+#include "srsgnb/ran/dmrs.h"
 #include "srsgnb/ran/pdcch/coreset.h"
 #include "srsgnb/ran/pdcch/dci_packing.h"
 #include "srsgnb/support/math_utils.h"
@@ -30,8 +31,8 @@ class dl_ssb_pdu_builder
 public:
   explicit dl_ssb_pdu_builder(dl_ssb_pdu& pdu) : pdu(pdu), v3(pdu.ssb_maintenance_v3)
   {
-    v3.ss_pbch_block_power_scaling = std::numeric_limits<int16_t>::min();
-    v3.beta_pss_profile_sss        = std::numeric_limits<int16_t>::min();
+    v3.ss_pbch_block_power_scaling = std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::min();
+    v3.beta_pss_profile_sss        = std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::min();
   }
 
   /// Sets the basic parameters for the fields of the SSB/PBCH PDU.
@@ -40,7 +41,7 @@ public:
                                            beta_pss_profile_type beta_pss_profile_nr,
                                            uint8_t               ssb_block_index,
                                            uint8_t               ssb_subcarrier_offset,
-                                           uint16_t              ssb_offset_pointA)
+                                           ssb_offset_to_pointA  ssb_offset_pointA)
   {
     pdu.phys_cell_id          = phys_cell_id;
     pdu.beta_pss_profile_nr   = beta_pss_profile_nr;
@@ -72,13 +73,13 @@ public:
   /// with the most significant bit being the leftmost (in this case a0 in position 24 of the uint32_t).
   dl_ssb_pdu_builder& set_bch_payload_phy_timing_info(uint32_t bch_payload)
   {
-    static constexpr unsigned MAX_SIZE_IN_BITS = 24U;
+    static constexpr unsigned MAX_SIZE = (1U << 24U);
 
-    srsgnb_assert(bch_payload < (1U << MAX_SIZE_IN_BITS), "BCH payload value out of bounds");
+    srsgnb_assert(bch_payload < MAX_SIZE, "BCH payload value out of bounds");
 
     pdu.bch_payload_flag = bch_payload_type::phy_timing_info;
-    // Only use the 24 least significant bits.
-    pdu.bch_payload.bch_payload = (bch_payload & ((1U << MAX_SIZE_IN_BITS) - 1));
+    // Clear unused bits in the high part of the payload.
+    pdu.bch_payload.bch_payload = bch_payload & (MAX_SIZE - 1);
 
     return *this;
   }
@@ -86,13 +87,13 @@ public:
   /// Sets the BCH payload configured by the PHY and returns a reference to the builder.
   /// \note Use this function when the PHY generates the full PBCH payload.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table PHY generated MIB PDU.
-  dl_ssb_pdu_builder& set_bch_payload_phy_full(uint8_t dmrs_type_a_position,
-                                               uint8_t pdcch_config_sib1,
-                                               bool    cell_barred,
-                                               bool    intra_freq_reselection)
+  dl_ssb_pdu_builder& set_bch_payload_phy_full(dmrs_typeA_position dmrs_type_a_position,
+                                               uint8_t             pdcch_config_sib1,
+                                               bool                cell_barred,
+                                               bool                intra_freq_reselection)
   {
     pdu.bch_payload_flag                              = bch_payload_type::phy_full;
-    pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position   = dmrs_type_a_position;
+    pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position   = (dmrs_type_a_position == dmrs_typeA_position::pos2) ? 0 : 1;
     pdu.bch_payload.phy_mib_pdu.pdcch_config_sib1     = pdcch_config_sib1;
     pdu.bch_payload.phy_mib_pdu.cell_barred           = cell_barred;
     pdu.bch_payload.phy_mib_pdu.intrafreq_reselection = intra_freq_reselection;
@@ -104,11 +105,11 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table SSB/PBCH PDU maintenance FAPIv3.
   /// \note ssbPduIndex field is automatically filled when adding a new SSB PDU to the DL TTI request message.
   dl_ssb_pdu_builder&
-  set_maintenance_v3_basic_parameters(ssb_pattern_case case_type, subcarrier_spacing scs, uint8_t l_max)
+  set_maintenance_v3_basic_parameters(ssb_pattern_case case_type, subcarrier_spacing scs, uint8_t L_max)
   {
     v3.case_type = case_type;
     v3.scs       = scs;
-    v3.lmax      = l_max;
+    v3.L_max     = L_max;
 
     return *this;
   }
@@ -120,34 +121,32 @@ public:
   {
     // Power scaling in SS-PBCH in hundredths of dBs.
     int ss_block_power = (power_scaling_ss_pbch_dB) ? static_cast<int>(power_scaling_ss_pbch_dB.value() * 100) : -32768;
-    srsgnb_assert(ss_block_power <= std::numeric_limits<int16_t>::max(),
+    srsgnb_assert(ss_block_power <= std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::max(),
                   "SS PBCH block power scaling ({}) exceeds the maximum ({}).",
                   ss_block_power,
-                  std::numeric_limits<int16_t>::max());
-    srsgnb_assert(ss_block_power >= std::numeric_limits<int16_t>::min(),
+                  std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::max());
+    srsgnb_assert(ss_block_power >= std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::min(),
                   "SS PBCH block power scaling ({}) does not reach the minimum ({}).",
                   ss_block_power,
-                  std::numeric_limits<int16_t>::min());
-    v3.ss_pbch_block_power_scaling = static_cast<int16_t>(ss_block_power);
+                  std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::min());
+    v3.ss_pbch_block_power_scaling = static_cast<decltype(v3.ss_pbch_block_power_scaling)>(ss_block_power);
 
     // SSS to PSS ratio in thousandths of dBs.
     int beta_pss = (pss_to_sss_ratio_dB) ? static_cast<int>(pss_to_sss_ratio_dB.value() * 1000) : -32768;
-    srsgnb_assert(beta_pss <= std::numeric_limits<int16_t>::max(),
+    srsgnb_assert(beta_pss <= std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::max(),
                   "PSS to SSS ratio ({}) exceeds the maximum ({}).",
                   beta_pss,
-                  std::numeric_limits<int16_t>::max());
-    srsgnb_assert(beta_pss >= std::numeric_limits<int16_t>::min(),
+                  std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::max());
+    srsgnb_assert(beta_pss >= std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::min(),
                   "PSS to SSS ratio ({}) does not reach the minimum ({}).",
                   beta_pss,
-                  std::numeric_limits<int16_t>::min());
+                  std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::min());
 
-    v3.beta_pss_profile_sss = static_cast<int16_t>(beta_pss);
+    v3.beta_pss_profile_sss = static_cast<decltype(v3.beta_pss_profile_sss)>(beta_pss);
 
     return *this;
   }
 
-  //: TODO: params v4 - MU-MIMO.
-  // :TODO: beamforming.
 private:
   dl_ssb_pdu&            pdu;
   dl_ssb_maintenance_v3& v3;
@@ -163,8 +162,10 @@ public:
                      dl_pdcch_pdu_parameters_v4::dci_params&        pdu_v4) :
     pdu(pdu), pdu_v3(pdu_v3), pdu_v4(pdu_v4)
   {
-    pdu_v3.pdcch_data_power_offset_profile_sss = std::numeric_limits<int16_t>::min();
-    pdu_v3.pdcch_dmrs_power_offset_profile_sss = std::numeric_limits<int16_t>::min();
+    pdu_v3.pdcch_data_power_offset_profile_sss =
+        std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::min();
+    pdu_v3.pdcch_dmrs_power_offset_profile_sss =
+        std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::min();
   }
 
   /// Sets the basic parameters for the fields of the DL DCI PDU.
@@ -192,16 +193,16 @@ public:
                     ? static_cast<int>(power_control_offset_ss_profile_nr_dB.value())
                     : -127;
 
-    srsgnb_assert(value <= std::numeric_limits<int8_t>::max(),
+    srsgnb_assert(value <= std::numeric_limits<decltype(pdu.power_control_offset_ss_profile_nr)>::max(),
                   "SS profile NR ({}) exceeds the maximum ({}).",
                   value,
-                  std::numeric_limits<int8_t>::max());
+                  std::numeric_limits<decltype(pdu.power_control_offset_ss_profile_nr)>::max());
     srsgnb_assert(value >= std::numeric_limits<int8_t>::min(),
                   "SS profile NR ({}) does not reach the minimum ({}).",
                   value,
-                  std::numeric_limits<int8_t>::min());
+                  std::numeric_limits<decltype(pdu.power_control_offset_ss_profile_nr)>::min());
 
-    pdu.power_control_offset_ss_profile_nr = static_cast<int8_t>(value);
+    pdu.power_control_offset_ss_profile_nr = static_cast<decltype(pdu.power_control_offset_ss_profile_nr)>(value);
 
     return *this;
   }
@@ -210,23 +211,10 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table DL DCI PDU.
   dl_dci_pdu_builder& set_payload(const dci_payload& payload)
   {
-    // Set the payload size in bits.
-    pdu.payload_size_in_bits = payload.size();
-
-    // Set the payload size initializing it with zeros.
-    pdu.payload.resize(std::ceil(payload.size() / 8.F), 0U);
-
-    // NOTE: bit order is bit0-bit7 are mapped to first byte of MSB - LSB. The first byte of the array carries the MSB
-    // of the payload in the bit position 0.
-    // NOTE: This builder is assuming that bit 0 is the MSB in dci_payload bitmap.
-    for (unsigned i = 0, e = payload.size(); i != e; ++i) {
-      pdu.payload[i / 8] |= uint8_t(payload.test(i) ? 1U : 0U) << (i % 8);
-    }
+    pdu.payload = payload;
 
     return *this;
   }
-
-  // :TODO: Beamforming.
 
   /// Sets the maintenance v3 DCI parameters of the PDCCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table PDCCH PDU maintenance FAPIv3.
@@ -234,39 +222,42 @@ public:
                                                         optional<float> pdcch_dmrs_power_offset_profile_sss_dB,
                                                         optional<float> pdcch_data_power_offset_profile_sss_dB)
   {
-    pdu_v3.collocated_AL16_candidate = (collocated_al16_candidate_present) ? 1U : 0U;
+    pdu_v3.collocated_AL16_candidate = collocated_al16_candidate_present;
 
-    static constexpr int USE_OTHER_FIELDS = std::numeric_limits<int16_t>::min();
+    static constexpr int USE_OTHER_FIELDS =
+        std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::min();
 
     int value = (pdcch_dmrs_power_offset_profile_sss_dB)
                     ? static_cast<int>(pdcch_dmrs_power_offset_profile_sss_dB.value() * 1000)
                     : USE_OTHER_FIELDS;
 
-    srsgnb_assert(value <= std::numeric_limits<int16_t>::max(),
+    srsgnb_assert(value <= std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::max(),
                   "PDCCH DMRS power offset profile SSS ({}) exceeds the maximum ({}).",
                   value,
-                  std::numeric_limits<int16_t>::max());
-    srsgnb_assert(value >= std::numeric_limits<int16_t>::min(),
+                  std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::max());
+    srsgnb_assert(value >= std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::min(),
                   "PDCCH DMRS power offset profile SSS ({}) is under the minimum ({}).",
                   value,
-                  std::numeric_limits<int16_t>::min());
+                  std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::min());
 
-    pdu_v3.pdcch_dmrs_power_offset_profile_sss = static_cast<int16_t>(value);
+    pdu_v3.pdcch_dmrs_power_offset_profile_sss =
+        static_cast<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>(value);
 
     value = (pdcch_data_power_offset_profile_sss_dB)
                 ? static_cast<int>(pdcch_data_power_offset_profile_sss_dB.value() * 1000)
                 : USE_OTHER_FIELDS;
 
-    srsgnb_assert(value <= std::numeric_limits<int16_t>::max(),
+    srsgnb_assert(value <= std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::max(),
                   "PDCCH data power offset profile SSS ({}) exceeds the maximum ({}).",
                   value,
-                  std::numeric_limits<int16_t>::max());
-    srsgnb_assert(value >= std::numeric_limits<int16_t>::min(),
+                  std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::max());
+    srsgnb_assert(value >= std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::min(),
                   "PDCCH data power offset profile SSS ({}) is under the minimum ({}).",
                   value,
-                  std::numeric_limits<int16_t>::min());
+                  std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::min());
 
-    pdu_v3.pdcch_data_power_offset_profile_sss = static_cast<int16_t>(value);
+    pdu_v3.pdcch_data_power_offset_profile_sss =
+        static_cast<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>(value);
 
     return *this;
   }
@@ -290,19 +281,17 @@ private:
 class dl_pdcch_pdu_builder
 {
 public:
-  explicit dl_pdcch_pdu_builder(dl_pdcch_pdu& pdu) : pdu(pdu) { pdu.freq_domain_resource.fill(0); }
+  explicit dl_pdcch_pdu_builder(dl_pdcch_pdu& pdu) : pdu(pdu) {}
 
   /// Sets the BWP parameters for the fields of the PDCCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table PDCCH PDU.
-  dl_pdcch_pdu_builder& set_bwp_parameters(uint16_t           coreset_bwp_size,
-                                           uint16_t           coreset_bwp_start,
-                                           subcarrier_spacing scs,
-                                           cyclic_prefix_type prefix)
+  dl_pdcch_pdu_builder&
+  set_bwp_parameters(uint16_t coreset_bwp_size, uint16_t coreset_bwp_start, subcarrier_spacing scs, cyclic_prefix cp)
   {
     pdu.coreset_bwp_size  = coreset_bwp_size;
     pdu.coreset_bwp_start = coreset_bwp_start;
     pdu.scs               = scs;
-    pdu.cyclic_prefix     = prefix;
+    pdu.cp                = cp;
 
     return *this;
   }
@@ -321,17 +310,13 @@ public:
   {
     pdu.start_symbol_index   = start_symbol_index;
     pdu.duration_symbols     = duration_symbols;
+    pdu.freq_domain_resource = freq_domain_resource;
     pdu.cce_reg_mapping_type = cce_req_mapping_type;
     pdu.reg_bundle_size      = reg_bundle_size;
     pdu.interleaver_size     = interleaver_size;
     pdu.coreset_type         = coreset_type;
     pdu.shift_index          = shift_index;
     pdu.precoder_granularity = precoder_granularity;
-
-    // NOTE: Assuming that the LSB of freq_domain_resource bitmap is in position 0.
-    for (unsigned i = 0, e = freq_domain_resource.size(); i != e; ++i) {
-      pdu.freq_domain_resource[i / 8] |= uint8_t(freq_domain_resource.test(i) ? 1U : 0U) << i % 8;
-    }
 
     return *this;
   }
@@ -479,8 +464,8 @@ public:
                                             uint8_t            num_dmrs_cdm_groups_no_data,
                                             uint16_t           dmrs_ports)
   {
-    pdu.dl_dmrs_symb_pos               = dl_dmrs_symb_pos;
-    pdu.dmrs_type                      = dmrs_type;
+    pdu.dl_dmrs_symb_pos = dl_dmrs_symb_pos;
+    pdu.dmrs_type        = (dmrs_type == dmrs_config_type::type1) ? dmrs_cfg_type::type_1 : dmrs_cfg_type::type_2;
     pdu.pdsch_dmrs_scrambling_id       = pdsch_dmrs_scrambling_id;
     pdu.pdsch_dmrs_scrambling_id_compl = pdsch_dmrs_scrambling_id_complement;
     pdu.low_papr_dmrs                  = low_parp_dmrs;
@@ -537,10 +522,10 @@ public:
     return *this;
   }
 
-  // :TODO: Finish PTRS.
   dl_pdsch_pdu_builder& set_ptrs_params()
   {
     pdu.pdu_bitmap.set(dl_pdsch_pdu::PDU_BITMAP_PTRS_BIT);
+    // :TODO: Implement me!
 
     return *this;
   }
@@ -854,16 +839,16 @@ class dl_tti_request_message_builder
 {
 public:
   /// Constructs a builder that will help to fill the given DL TTI request message.
-  explicit dl_tti_request_message_builder(dl_tti_request_message& msg) : msg(msg) { msg.num_pdus_of_each_type.fill(0); }
+  explicit dl_tti_request_message_builder(dl_tti_request_message& msg) : msg(msg) {}
 
   /// Sets the DL_TTI.request basic parameters and returns a reference to the builder.
   /// \note nPDUs and nPDUsOfEachType properties are filled by the add_*_pdu() functions.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2 in table DL_TTI.request message body.
-  dl_tti_request_message_builder& set_basic_parameters(uint16_t sfn, uint16_t slot, uint16_t n_group)
+  dl_tti_request_message_builder& set_basic_parameters(uint16_t sfn, uint16_t slot, uint16_t n_groups)
   {
     msg.sfn        = sfn;
     msg.slot       = slot;
-    msg.num_groups = n_group;
+    msg.num_groups = n_groups;
 
     return *this;
   }
@@ -879,7 +864,7 @@ public:
 
     // Fill the PDCCH PDU index value. The index value will be the index of the pdu in the array of PDCCH pdus.
     dl_pdcch_pdu_maintenance_v3& info          = pdu.pdcch_pdu.maintenance_v3;
-    auto&                        num_pdcch_pdu = msg.num_pdus_of_each_type[static_cast<int>(dl_pdu_type::PDCCH)];
+    auto&                        num_pdcch_pdu = msg.num_pdus_of_each_type[static_cast<size_t>(dl_pdu_type::PDCCH)];
     info.pdcch_pdu_index                       = num_pdcch_pdu;
 
     // Increase the number of PDCCH pdus in the request.
@@ -912,7 +897,7 @@ public:
     dl_tti_request_pdu& pdu = msg.pdus.back();
 
     // Fill the PDSCH PDU index value. The index value will be the index of the PDU in the array of PDSCH PDUs.
-    auto& num_pdsch_pdu     = msg.num_pdus_of_each_type[static_cast<int>(dl_pdu_type::PDSCH)];
+    auto& num_pdsch_pdu     = msg.num_pdus_of_each_type[static_cast<size_t>(dl_pdu_type::PDSCH)];
     pdu.pdsch_pdu.pdu_index = num_pdsch_pdu;
 
     // Increase the number of PDSCH PDU.
@@ -942,7 +927,7 @@ public:
     dl_tti_request_pdu& pdu = msg.pdus.back();
 
     // Fill the CSI PDU index value. The index value will be the index of the PDU in the array of CSI PDUs.
-    auto& num_csi_pdu = msg.num_pdus_of_each_type[static_cast<int>(dl_pdu_type::CSI_RS)];
+    auto& num_csi_pdu = msg.num_pdus_of_each_type[static_cast<size_t>(dl_pdu_type::CSI_RS)];
     pdu.csi_rs_pdu.csi_rs_maintenance_v3.csi_rs_pdu_index = num_csi_pdu;
 
     // Increase the number of CSI PDU.
@@ -963,7 +948,7 @@ public:
                                  beta_pss_profile_type beta_pss_profile_nr,
                                  uint8_t               ssb_block_index,
                                  uint8_t               ssb_subcarrier_offset,
-                                 uint16_t              ssb_offset_pointA)
+                                 ssb_offset_to_pointA  ssb_offset_pointA)
   {
     dl_ssb_pdu_builder builder = add_ssb_pdu();
 
@@ -983,7 +968,7 @@ public:
 
     // Fill the SSB PDU index value. The index value will be the index of the PDU in the array of SSB pdus.
     dl_ssb_maintenance_v3& info        = pdu.ssb_pdu.ssb_maintenance_v3;
-    auto&                  num_ssb_pdu = msg.num_pdus_of_each_type[static_cast<int>(dl_pdu_type::SSB)];
+    auto&                  num_ssb_pdu = msg.num_pdus_of_each_type[static_cast<size_t>(dl_pdu_type::SSB)];
     info.ssb_pdu_index                 = num_ssb_pdu;
 
     // Increase the number of SSB PDUs in the request.
@@ -996,7 +981,7 @@ public:
     return builder;
   }
 
-  //: TODO: groups array
+  //: TODO: PDU groups array
   //: TODO: top level rate match patterns
 
 private:
@@ -1034,7 +1019,7 @@ public:
     pdu.pdu.maintenance_v3.pdcch_pdu_index = pdcch_index;
 
     // Increase the number of PDCCH pdus in the request.
-    ++msg.num_pdus_of_each_type[static_cast<int>(dl_pdu_type::PDCCH)];
+    ++msg.num_pdus_of_each_type[static_cast<size_t>(dl_pdu_type::PDCCH)];
     msg.num_pdus_of_each_type[ul_dci_request_message::DCI_INDEX] += nof_dci_in_pdu;
 
     pdu.pdu_type = ul_dci_pdu_type::PDCCH;
@@ -1934,8 +1919,6 @@ public:
 
   //: TODO: beamforming
   //: TODO: uplink spatial assignment
-  //: TODO: msgA signalling in v4
-  //: TODO: msgA pusch beamforming
 };
 
 /// PUCCH PDU builder that helps to fill in the parameters specified in SCF-222 v4.0 section 3.4.3.3.
@@ -2208,8 +2191,8 @@ public:
                                             uint8_t            num_dmrs_cdm_grps_no_data,
                                             uint16_t           dmrs_ports)
   {
-    pdu.ul_dmrs_symb_pos                    = ul_dmrs_symb_pos;
-    pdu.dmrs_type                           = dmrs_type;
+    pdu.ul_dmrs_symb_pos = ul_dmrs_symb_pos;
+    pdu.dmrs_type        = (dmrs_type == dmrs_config_type::type1) ? dmrs_cfg_type::type_1 : dmrs_cfg_type::type_2;
     pdu.pusch_dmrs_scrambling_id            = pusch_dmrs_scrambling_id;
     pdu.pusch_dmrs_scrambling_id_complement = pusch_dmrs_scrambling_id_complement;
     pdu.low_papr_dmrs                       = low_papr_dmrs;

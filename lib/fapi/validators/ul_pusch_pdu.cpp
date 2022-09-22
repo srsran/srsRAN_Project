@@ -119,7 +119,7 @@ static bool validate_num_layers(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Number of layers", msg_type, pdu_type, report);
 }
 
-/// Validates the dmrs config type property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the DMRS config type property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
 static bool validate_dmrs_config_type(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;

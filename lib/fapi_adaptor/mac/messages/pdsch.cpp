@@ -22,21 +22,6 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pd
   convert_pdsch_mac_to_fapi(builder, mac_pdu);
 }
 
-static fapi::dmrs_config_type convert_dmrs_type_mac_to_fapi(srsgnb::dmrs_config_type type)
-{
-  switch (type) {
-    case srsgnb::dmrs_config_type::type1:
-      return fapi::dmrs_config_type::type_1;
-    case srsgnb::dmrs_config_type::type2:
-      return fapi::dmrs_config_type::type_2;
-    default:
-      srsgnb_assert(0, "Unexpected DMRS type ({})", static_cast<unsigned>(type));
-      break;
-  }
-  // Fallback value.
-  return fapi::dmrs_config_type::type_1;
-}
-
 static void fill_codewords(fapi::dl_pdsch_pdu_builder&                                   builder,
                            const static_vector<pdsch_codeword, MAX_CODEWORDS_PER_PDSCH>& codewords)
 {
@@ -75,7 +60,7 @@ static void fill_codeword_information(fapi::dl_pdsch_pdu_builder& builder, unsig
 static void fill_dmrs(fapi::dl_pdsch_pdu_builder& builder, const dmrs_information& dmrs)
 {
   builder.set_dmrs_parameters(dmrs.dmrs_symb_pos.to_uint64(),
-                              convert_dmrs_type_mac_to_fapi(dmrs.config_type),
+                              dmrs.config_type,
                               dmrs.dmrs_scrambling_id,
                               dmrs.dmrs_scrambling_id_complement,
                               dmrs.low_papr_dmrs ? fapi::low_papr_dmrs_type::dependent_cdm_group

@@ -19,34 +19,40 @@ void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu& fapi_pd
   convert_pdcch_mac_to_fapi(builder, mac_pdu);
 }
 
-void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder& builder, const mac_pdcch_pdu& mac_pdu)
+static void fill_bwp_parameters(fapi::dl_pdcch_pdu_builder&  builder,
+                                const bwp_configuration&     bwp_cfg,
+                                const coreset_configuration& coreset_cfg)
 {
-  const static_vector<dci_info, MAX_DL_PDCCH_PDUS_PER_SLOT>& dcis = mac_pdu.dcis;
-  srsgnb_assert(!dcis.empty(), "No DL_DCI to add to the PDCCH PDU");
-
-  const bwp_configuration&     bwp_cfg     = *mac_pdu.bwp_cfg;
-  const coreset_configuration& coreset_cfg = *mac_pdu.coreset_cfg;
-
-  // For CORESET0 CRBs is provided by the CORESET, instead of BWP.
+  // According to the FreqDomainResource description field in the FAPI specs, for CORESET0 we need to take its starting
+  // point and size, otherwise, for the rest of CORESETs take it from the BWP where the CORESET belongs.
   const crb_interval& crbs = (coreset_cfg.id == to_coreset_id(0)) ? coreset_cfg.coreset0_crbs() : bwp_cfg.crbs;
 
-  // Fill BWP parameters.
   builder.set_bwp_parameters(crbs.length(),
                              crbs.start(),
                              bwp_cfg.scs,
-                             (bwp_cfg.cp_extended) ? fapi::cyclic_prefix_type::extended
-                                                   : fapi::cyclic_prefix_type::normal);
+                             (bwp_cfg.cp_extended) ? cyclic_prefix::options::EXTENDED : cyclic_prefix::options::NORMAL);
+}
 
-  // Fill Coreset parameters.
-  // :TODO: change the start symbol index in the future.
-  unsigned             start_symbol_index = 0;
+static freq_resource_bitmap calculate_coreset0_freq_res_bitmap(const coreset_configuration& coreset_cfg)
+{
   freq_resource_bitmap freq_bitmap_coreset0(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
-  freq_bitmap_coreset0.set(0);
+
+  unsigned num_bits = coreset_cfg.coreset0_crbs().length() / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
+  freq_bitmap_coreset0.fill(0, num_bits);
+
+  return freq_bitmap_coreset0;
+}
+
+static void fill_coreset_parameters(fapi::dl_pdcch_pdu_builder& builder, const coreset_configuration& coreset_cfg)
+{
+  // TODO: take this from the MAC structs after the pending PR 757 is merged.
+  unsigned start_symbol_index = 0;
 
   builder.set_coreset_parameters(
       start_symbol_index,
       coreset_cfg.duration,
-      (coreset_cfg.id == to_coreset_id(0)) ? freq_bitmap_coreset0 : coreset_cfg.freq_domain_resources(),
+      (coreset_cfg.id == to_coreset_id(0)) ? calculate_coreset0_freq_res_bitmap(coreset_cfg)
+                                           : coreset_cfg.freq_domain_resources(),
       coreset_cfg.interleaved.has_value() ? fapi::cce_to_reg_mapping_type::interleaved
                                           : fapi::cce_to_reg_mapping_type::non_interleaved,
       coreset_cfg.interleaved.has_value() ? coreset_cfg.interleaved.value().reg_bundle_sz : 6U,
@@ -55,6 +61,20 @@ void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
                                            : fapi::pdcch_coreset_type::other,
       coreset_cfg.interleaved.has_value() ? coreset_cfg.interleaved.value().shift_index : 0U,
       coreset_cfg.precoder_granurality);
+}
+
+void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder& builder, const mac_pdcch_pdu& mac_pdu)
+{
+  const static_vector<dci_info, MAX_NUM_DCIS_PER_PDCCH_PDU>& dcis = mac_pdu.dcis;
+  srsgnb_assert(!dcis.empty(), "No DCIs to add into the PDCCH PDU");
+
+  const coreset_configuration& coreset_cfg = *mac_pdu.coreset_cfg;
+
+  // Fill BWP parameters.
+  fill_bwp_parameters(builder, *mac_pdu.bwp_cfg, coreset_cfg);
+
+  // Fill CORESET parameters.
+  fill_coreset_parameters(builder, *mac_pdu.coreset_cfg);
 
   // Fill the DCIs.
   for (const auto& dci : dcis) {
@@ -66,13 +86,14 @@ void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
                                      dci.parameters->ctx.cces.ncce,
                                      to_nof_cces(dci.parameters->ctx.cces.aggr_lvl));
 
-    // :TODO: check this power value.
+    // This parameter is not passed by the MAC, set it to zero.
     dci_builder.set_tx_power_info_parameter({0.F});
 
-    // :TODO: check collocated Al16 candicate and powers.
+    // These parameters are not passed by the MAC, leave them as disabled.
     dci_builder.set_maintenance_v3_dci_parameters(false, {}, {});
 
     dci_builder.set_parameters_v4_dci(coreset_cfg.pdcch_dmrs_scrambling_id);
+
     dci_builder.set_payload(*dci.payload);
   }
 }

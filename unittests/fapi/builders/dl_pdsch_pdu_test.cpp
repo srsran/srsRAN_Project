@@ -123,7 +123,7 @@ static void test_dmrs_parameters()
   std::uniform_int_distribution<unsigned> dmrs_scrambling_id_dist(0, 65535);
   std::uniform_int_distribution<unsigned> dmrs_scrambling_id_complement_dist(0, 65535);
 
-  for (auto config_type : {dmrs_config_type::type_1, dmrs_config_type::type_2}) {
+  for (auto config_type : {dmrs_config_type::type1, dmrs_config_type::type2}) {
     for (auto low_papr : {low_papr_dmrs_type::dependent_cdm_group, low_papr_dmrs_type::independent_cdm_group}) {
       for (auto nscid : {0U, 1U}) {
         for (unsigned num_dmrs_cdm_grp_no_data = 0; num_dmrs_cdm_grp_no_data != 4; ++num_dmrs_cdm_grp_no_data) {
@@ -143,7 +143,8 @@ static void test_dmrs_parameters()
                                       dmrs_ports);
 
           TESTASSERT_EQ(dmrs_symbol_pos, pdu.dl_dmrs_symb_pos);
-          TESTASSERT_EQ(config_type, pdu.dmrs_type);
+          TESTASSERT_EQ(config_type == dmrs_config_type::type1 ? dmrs_cfg_type::type_1 : dmrs_cfg_type::type_2,
+                        pdu.dmrs_type);
           TESTASSERT_EQ(dmrs_scrambling_id, pdu.pdsch_dmrs_scrambling_id);
           TESTASSERT_EQ(dmrs_scrambling_id_complement, pdu.pdsch_dmrs_scrambling_id_compl);
           TESTASSERT_EQ(low_papr, pdu.low_papr_dmrs);

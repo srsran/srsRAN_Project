@@ -34,7 +34,7 @@ static void test_basic_params()
   TESTASSERT_EQ(pss_profile, pdu.beta_pss_profile_nr);
   TESTASSERT_EQ(block_index, pdu.ssb_block_index);
   TESTASSERT_EQ(subcarrier_offset, pdu.ssb_subcarrier_offset);
-  TESTASSERT_EQ(offset_pointA, pdu.ssb_offset_pointA);
+  TESTASSERT_EQ(offset_pointA, pdu.ssb_offset_pointA.to_uint());
 }
 
 static void test_maintenance_v3_basic_params()
@@ -51,7 +51,7 @@ static void test_maintenance_v3_basic_params()
   const dl_ssb_maintenance_v3& v3 = pdu.ssb_maintenance_v3;
   TESTASSERT_EQ(ssb_case, v3.case_type);
   TESTASSERT_EQ(scs, v3.scs);
-  TESTASSERT_EQ(Lmax, v3.lmax);
+  TESTASSERT_EQ(Lmax, v3.L_max);
 }
 
 static void test_maintenance_v3_tx_power_params()
@@ -107,16 +107,16 @@ static void test_bch_payload_phy()
   dl_ssb_pdu         pdu;
   dl_ssb_pdu_builder builder(pdu);
 
-  unsigned dmrs_typeA_position    = 1;
-  unsigned pdcch_sib1             = 134;
-  bool     barred                 = true;
-  bool     intra_freq_reselection = false;
+  dmrs_typeA_position dmrs_typeA_pos         = dmrs_typeA_position::pos2;
+  unsigned            pdcch_sib1             = 134;
+  bool                barred                 = true;
+  bool                intra_freq_reselection = false;
 
-  builder.set_bch_payload_phy_full(dmrs_typeA_position, pdcch_sib1, barred, intra_freq_reselection);
+  builder.set_bch_payload_phy_full(dmrs_typeA_pos, pdcch_sib1, barred, intra_freq_reselection);
 
   TESTASSERT_EQ(bch_payload_type::phy_full, pdu.bch_payload_flag);
   const dl_ssb_phy_mib_pdu& mib = pdu.bch_payload.phy_mib_pdu;
-  TESTASSERT_EQ(dmrs_typeA_position, mib.dmrs_typeA_position);
+  TESTASSERT_EQ((dmrs_typeA_pos == dmrs_typeA_position::pos2) ? 0 : 1, mib.dmrs_typeA_position);
   TESTASSERT_EQ(pdcch_sib1, mib.pdcch_config_sib1);
   TESTASSERT_EQ(barred, mib.cell_barred);
   TESTASSERT_EQ(intra_freq_reselection, mib.intrafreq_reselection);

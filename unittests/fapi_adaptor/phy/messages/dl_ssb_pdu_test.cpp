@@ -30,6 +30,7 @@ static void ssb_conversion_test()
   std::uniform_int_distribution<uint8_t>  binary_1bit_dist(0, 1);
   std::uniform_int_distribution<uint8_t>  binary_8bit_dist(0, UINT8_MAX);
   std::uniform_int_distribution<unsigned> binary_dist(0, 1);
+  std::uniform_int_distribution<unsigned> dmrs_type_A_dist(2, 3);
   std::uniform_int_distribution<unsigned> subcarrier_offset_dist(0, 23);
   std::uniform_int_distribution<unsigned> offset_pointA_dist(0, 2199);
   std::uniform_int_distribution<unsigned> sib1_dist(0, 255);
@@ -56,14 +57,14 @@ static void ssb_conversion_test()
                                                   ssb_pattern_case::E}) {
               slot_point slot(
                   static_cast<uint32_t>(scs), sfn_dist(gen), slot_dist(gen) % (10 << static_cast<uint32_t>(scs)));
-              unsigned sfn                    = slot.sfn();
-              unsigned pci                    = pci_dist(gen);
-              unsigned ssb_subcarrier_offset  = subcarrier_offset_dist(gen);
-              unsigned offset_pointA          = offset_pointA_dist(gen);
-              uint8_t  dmrs_type_a_position   = binary_dist(gen);
-              uint8_t  pdcch_config_sib1      = binary_8bit_dist(gen);
-              bool     cell_barred            = binary_dist(gen);
-              bool     intra_freq_reselection = binary_dist(gen);
+              unsigned            sfn                    = slot.sfn();
+              unsigned            pci                    = pci_dist(gen);
+              unsigned            ssb_subcarrier_offset  = subcarrier_offset_dist(gen);
+              unsigned            offset_pointA          = offset_pointA_dist(gen);
+              dmrs_typeA_position dmrs_type_a_position   = static_cast<dmrs_typeA_position>(dmrs_type_A_dist(gen));
+              uint8_t             pdcch_config_sib1      = binary_8bit_dist(gen);
+              bool                cell_barred            = binary_dist(gen);
+              bool                intra_freq_reselection = binary_dist(gen);
 
               // :TODO: Begin with the MAC structure when it is defined.
               fapi::dl_tti_request_message         msg = {};
@@ -131,7 +132,8 @@ static void ssb_conversion_test()
               TESTASSERT_EQ(pdu.bch_payload[11], (ssb_subcarrier_offset >> 0U) & 1U);
 
               // dmrs-TypeA-Position - 1 bit
-              TESTASSERT_EQ(pdu.bch_payload[12], dmrs_type_a_position);
+              TESTASSERT_EQ(pdu.bch_payload[12],
+                            static_cast<unsigned>(dmrs_type_a_position == dmrs_typeA_position::pos2) ? 0 : 1);
 
               // pdcch-ConfigSIB1
               // controlResourceSetZero - 4 bits

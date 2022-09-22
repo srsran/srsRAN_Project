@@ -44,8 +44,8 @@ TEST(FapiPhyULPUSCHAdaptorTest, ValidPDUPass)
   for (unsigned i = 0; i != 14; ++i) {
     ASSERT_EQ(((fapi_pdu.ul_dmrs_symb_pos >> i) & 1U) == 1U, phy_pdu.dmrs_symbol_mask[i]);
   }
-  ASSERT_EQ(dmrs_type((fapi_pdu.dmrs_type == fapi::dmrs_config_type::type_1) ? dmrs_type::options::TYPE1
-                                                                             : dmrs_type::options::TYPE2),
+  ASSERT_EQ(dmrs_type((fapi_pdu.dmrs_type == fapi::dmrs_cfg_type::type_1) ? dmrs_type::options::TYPE1
+                                                                          : dmrs_type::options::TYPE2),
             phy_pdu.dmrs);
   ASSERT_EQ(fapi_pdu.pusch_dmrs_scrambling_id, phy_pdu.scrambling_id);
   ASSERT_EQ(fapi_pdu.nscid, phy_pdu.n_scid);

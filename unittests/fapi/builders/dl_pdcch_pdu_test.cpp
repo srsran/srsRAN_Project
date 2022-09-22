@@ -22,14 +22,14 @@ static void test_bwp_params()
   unsigned           bwp_size  = 100;
   unsigned           bwp_start = 100;
   subcarrier_spacing scs       = subcarrier_spacing::kHz60;
-  cyclic_prefix_type cyclic_p  = cyclic_prefix_type::normal;
+  cyclic_prefix      cp        = cyclic_prefix::options::NORMAL;
 
-  builder.set_bwp_parameters(bwp_size, bwp_start, scs, cyclic_p);
+  builder.set_bwp_parameters(bwp_size, bwp_start, scs, cp);
 
   TESTASSERT_EQ(bwp_size, pdu.coreset_bwp_size);
   TESTASSERT_EQ(bwp_start, pdu.coreset_bwp_start);
   TESTASSERT_EQ(scs, pdu.scs);
-  TESTASSERT_EQ(cyclic_p, pdu.cyclic_prefix);
+  TESTASSERT_EQ(cp, pdu.cp);
 }
 
 static void test_coreset_params()
@@ -68,10 +68,7 @@ static void test_coreset_params()
   TESTASSERT_EQ(coreset_type, pdu.coreset_type);
   TESTASSERT_EQ(shift_index, pdu.shift_index);
   TESTASSERT_EQ(granularity, pdu.precoder_granularity);
-
-  for (unsigned i = 0, e = freq_domain.size(); i != e; ++i) {
-    TESTASSERT_EQ(freq_domain.test(i), bool((pdu.freq_domain_resource[i / 8] >> i % 8) & 1U));
-  }
+  TESTASSERT_EQ(freq_domain, pdu.freq_domain_resource);
 }
 
 static void test_add_dl_dci()
@@ -183,10 +180,7 @@ static void test_payload_dci()
   dci_payload payload = {1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1};
   builder_dci.set_payload(payload);
 
-  const auto& pdu_payload = pdu.dl_dci.back().payload;
-  for (unsigned i = 0, e = payload.size(); i != e; ++i) {
-    TESTASSERT_EQ(payload.test(i), bool((pdu_payload[i / 8] >> i % 8) & 1U));
-  }
+  TESTASSERT_EQ(payload, pdu.dl_dci.back().payload);
 }
 
 static void test_dl_dci_params()

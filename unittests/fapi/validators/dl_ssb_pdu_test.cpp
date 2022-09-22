@@ -17,7 +17,7 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-static const std::vector<test_group<dl_ssb_pdu> > vector_test = {
+static const std::vector<test_group<dl_ssb_pdu>> vector_test = {
     {[](dl_ssb_pdu& msg, int value) { msg.phys_cell_id = value; },
      "Physical cell ID",
      {{0, true}, {511, true}, {1007, true}, {1008, false}}},
@@ -35,15 +35,17 @@ static const std::vector<test_group<dl_ssb_pdu> > vector_test = {
      {{0, true}, {16, true}, {31, true}, {32, false}}},
     {[](dl_ssb_pdu& msg, int value) { msg.ssb_offset_pointA = value; },
      "Offset point A",
-     {{0, true}, {1100, true}, {2199, true}, {2200, false}}},
+     // TODO: the 2200 case is caught by the bounded integer class with an assertion. Convert this to a death test once
+     // ported to gtest.
+     {{0, true}, {1100, true}, {2199, true} /*, {2200, false}*/}},
     {[](dl_ssb_pdu& msg, int value) { msg.ssb_maintenance_v3.case_type = static_cast<ssb_pattern_case>(value); },
      "SSB Case type",
      {{0, true}, {2, true}, {4, true}, {5, false}}},
     {[](dl_ssb_pdu& msg, int value) { msg.ssb_maintenance_v3.scs = static_cast<subcarrier_spacing>(value); },
      "Subcarrier spacing",
      {{0, true}, {2, true}, {4, true}, {5, false}}},
-    {[](dl_ssb_pdu& msg, int value) { msg.ssb_maintenance_v3.lmax = value; },
-     "LMax",
+    {[](dl_ssb_pdu& msg, int value) { msg.ssb_maintenance_v3.L_max = value; },
+     "L_max",
      {{3, false}, {4, true}, {5, false}, {7, false}, {8, true}, {9, false}, {63, false}, {64, true}, {65, false}}},
     {[](dl_ssb_pdu& msg, int value) { msg.ssb_maintenance_v3.ss_pbch_block_power_scaling = value; },
      "Baseband power scaling applied to SS-PBCH",

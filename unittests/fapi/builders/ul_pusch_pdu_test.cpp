@@ -74,7 +74,7 @@ static void test_information_params()
 static void test_dmrs_params()
 {
   unsigned           ul_dmrs_sym_pos                     = 98;
-  dmrs_config_type   dmrs_type                           = dmrs_config_type::type_2;
+  dmrs_config_type   dmrs_type                           = dmrs_config_type::type2;
   unsigned           pusch_dmrs_scrambling_id            = 54;
   unsigned           pusch_dmrs_scrambling_id_complement = 554;
   low_papr_dmrs_type low_papr                            = low_papr_dmrs_type::independent_cdm_group;
@@ -97,7 +97,7 @@ static void test_dmrs_params()
                               dmrs_ports);
 
   TESTASSERT_EQ(ul_dmrs_sym_pos, pdu.ul_dmrs_symb_pos);
-  TESTASSERT_EQ(dmrs_type, pdu.dmrs_type);
+  TESTASSERT_EQ(dmrs_type == dmrs_config_type::type1 ? dmrs_cfg_type::type_1 : dmrs_cfg_type::type_2, pdu.dmrs_type);
   TESTASSERT_EQ(pusch_dmrs_scrambling_id, pdu.pusch_dmrs_scrambling_id);
   TESTASSERT_EQ(pusch_dmrs_scrambling_id_complement, pdu.pusch_dmrs_scrambling_id_complement);
   TESTASSERT_EQ(low_papr, pdu.low_papr_dmrs);

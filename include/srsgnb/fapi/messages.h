@@ -11,10 +11,12 @@
 #pragma once
 
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/ldpc_base_graph.h"
 #include "srsgnb/ran/modulation_scheme.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/pdcch/coreset.h"
+#include "srsgnb/ran/pdcch/dci_packing.h"
 #include "srsgnb/ran/prach/prach_subcarrier_spacing.h"
 #include "srsgnb/ran/prach/restricted_set_config.h"
 #include "srsgnb/ran/pucch/pucch_mapping.h"
@@ -102,10 +104,11 @@ struct dl_pdcch_pdu_parameters_v4 {
   static_vector<dci_params, MAX_DCI_PER_SLOT> params;
 
   //: TODO: spatial_stream_indices_present
-  //: TODO: mu_mimo;
+  //: TODO: mu_mimo
 };
 
 /// Cyclic prefix type IDs.
+//: TODO: remove this type once all messages use the new cyclic_prefix type in ran.
 enum class cyclic_prefix_type : uint8_t { normal, extended };
 
 /// Downlink DCI PDU configuration.
@@ -119,10 +122,9 @@ struct dl_dci_pdu {
   uint8_t  cce_index;
   uint8_t  aggregation_level;
   //: TODO: beamforming info
-  uint8_t                                       beta_pdcch_1_0;
-  int8_t                                        power_control_offset_ss_profile_nr;
-  uint16_t                                      payload_size_in_bits;
-  static_vector<uint8_t, MAX_DCI_PAYLOAD_BYTES> payload;
+  uint8_t     beta_pdcch_1_0;
+  int8_t      power_control_offset_ss_profile_nr;
+  dci_payload payload;
 };
 
 /// CORESET CCE to REG mapping type.
@@ -134,19 +136,20 @@ struct dl_pdcch_pdu {
   uint16_t                                         coreset_bwp_size;
   uint16_t                                         coreset_bwp_start;
   subcarrier_spacing                               scs;
-  cyclic_prefix_type                               cyclic_prefix;
+  cyclic_prefix                                    cp;
   uint8_t                                          start_symbol_index;
   uint8_t                                          duration_symbols;
-  std::array<uint8_t, 6>                           freq_domain_resource;
+  freq_resource_bitmap                             freq_domain_resource;
   cce_to_reg_mapping_type                          cce_reg_mapping_type;
   uint8_t                                          reg_bundle_size;
   uint8_t                                          interleaver_size;
   pdcch_coreset_type                               coreset_type;
   uint16_t                                         shift_index;
   coreset_configuration::precoder_granularity_type precoder_granularity;
-  static_vector<dl_dci_pdu, MAX_DCI_PER_SLOT>      dl_dci;
-  dl_pdcch_pdu_maintenance_v3                      maintenance_v3;
-  dl_pdcch_pdu_parameters_v4                       parameters_v4;
+  //: TODO: should this be equal to MAX_GRANTS from RAN? review it
+  static_vector<dl_dci_pdu, MAX_DCI_PER_SLOT> dl_dci;
+  dl_pdcch_pdu_maintenance_v3                 maintenance_v3;
+  dl_pdcch_pdu_parameters_v4                  parameters_v4;
 };
 
 enum class pdsch_trans_type : uint8_t {
@@ -225,7 +228,7 @@ enum class vrb_to_prb_mapping_type : uint8_t { non_interleaved, interleaved_rb_s
 enum class nzp_csi_rs_epre_to_ssb : uint8_t { dB_minus_3, dB0, dB3, dB6, L1_use_profile_sss };
 enum class inline_tb_crc_type : uint8_t { data_payload, control_message };
 enum class pdsch_ref_point_type : uint8_t { point_a, subcarrier_0 };
-enum class dmrs_config_type : uint8_t { type_1, type_2 };
+enum class dmrs_cfg_type : uint8_t { type_1, type_2 };
 
 /// Downlink PDSCH PDU information.
 struct dl_pdsch_pdu {
@@ -261,7 +264,7 @@ struct dl_pdsch_pdu {
   pdsch_ref_point_type                                 ref_point;
   uint16_t                                             dl_dmrs_symb_pos;
   uint16_t                                             pdsch_dmrs_scrambling_id;
-  dmrs_config_type                                     dmrs_type;
+  dmrs_cfg_type                                        dmrs_type;
   uint16_t                                             pdsch_dmrs_scrambling_id_compl;
   low_papr_dmrs_type                                   low_papr_dmrs;
   uint8_t                                              nscid;
@@ -339,13 +342,15 @@ struct dl_ssb_maintenance_v3 {
   uint8_t            ssb_pdu_index;
   ssb_pattern_case   case_type;
   subcarrier_spacing scs;
-  uint8_t            lmax;
+  uint8_t            L_max;
   int16_t            ss_pbch_block_power_scaling;
   int16_t            beta_pss_profile_sss;
 };
 
+/// PSS EPRE to SSS EPRE in a SS/PBCH block.
 enum class beta_pss_profile_type : uint8_t { dB_0 = 0, dB_3 = 1, beta_pss_profile_sss = 255 };
 
+/// BCH payload generation options.
 enum class bch_payload_type : uint8_t { mac_full, phy_timing_info, phy_full };
 
 /// Downlink SSB PDU information.
@@ -354,7 +359,7 @@ struct dl_ssb_pdu {
   beta_pss_profile_type beta_pss_profile_nr;
   uint8_t               ssb_block_index;
   uint8_t               ssb_subcarrier_offset;
-  uint16_t              ssb_offset_pointA;
+  ssb_offset_to_pointA  ssb_offset_pointA;
   bch_payload_type      bch_payload_flag;
   dl_ssb_bch_payload    bch_payload;
   //: TODO: beamforming
@@ -379,19 +384,16 @@ struct dl_tti_request_pdu {
 
 /// Downlink TTI request message.
 struct dl_tti_request_message : public base_message {
-  /// DL DCI index in the array number PDUs of each type.
+  /// Array index for the number of DL DCIs.
   static constexpr unsigned DL_DCI_INDEX = 4;
-  /// Maximum number of supported DL PDU types or DCIs supported in this release.
+  /// Maximum supported number of DL PDU types in this release.
   static constexpr unsigned MAX_NUM_DL_TYPES = 5;
-  /// Maximum number of supported PDUs in this message.
+  /// Maximum supported number of PDUs in this message.
   static constexpr unsigned MAX_NUM_PDUS = 64;
-  /// Maximum number of supported PDU groups.
-  //: TODO: this value seems to be a capability in the phy see tags 9a,9b. we should keep this in sync
-  static constexpr unsigned MAX_PDU_GROUPS = 16;
 
   uint16_t                                        sfn;
   uint16_t                                        slot;
-  std::array<uint16_t, MAX_NUM_DL_TYPES>          num_pdus_of_each_type;
+  std::array<uint16_t, MAX_NUM_DL_TYPES>          num_pdus_of_each_type = {};
   uint16_t                                        num_groups;
   static_vector<dl_tti_request_pdu, MAX_NUM_PDUS> pdus;
   //: TODO: groups array
@@ -582,7 +584,7 @@ struct ul_pusch_pdu {
   uint16_t                 nid_pusch;
   uint8_t                  num_layers;
   uint16_t                 ul_dmrs_symb_pos;
-  dmrs_config_type         dmrs_type;
+  dmrs_cfg_type            dmrs_type;
   uint16_t                 pusch_dmrs_scrambling_id;
   uint16_t                 pusch_dmrs_scrambling_id_complement;
   low_papr_dmrs_type       low_papr_dmrs;

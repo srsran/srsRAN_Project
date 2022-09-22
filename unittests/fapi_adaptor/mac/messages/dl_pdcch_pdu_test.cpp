@@ -28,8 +28,8 @@ static void test_conversion_ok()
   convert_pdcch_mac_to_fapi(fapi_pdu, mac_pdu);
 
   // BWP.
-  TESTASSERT_EQ(mac_pdu.bwp_cfg->cp_extended ? fapi::cyclic_prefix_type::extended : fapi::cyclic_prefix_type::normal,
-                fapi_pdu.cyclic_prefix);
+  TESTASSERT_EQ(mac_pdu.bwp_cfg->cp_extended ? cyclic_prefix::options::EXTENDED : cyclic_prefix::options::NORMAL,
+                fapi_pdu.cp);
   TESTASSERT_EQ(mac_pdu.bwp_cfg->scs, fapi_pdu.scs);
   TESTASSERT_EQ(mac_pdu.coreset_cfg->coreset0_crbs().start(), fapi_pdu.coreset_bwp_start);
   TESTASSERT_EQ(mac_pdu.coreset_cfg->coreset0_crbs().length(), fapi_pdu.coreset_bwp_size);
@@ -55,10 +55,7 @@ static void test_conversion_ok()
                 fapi_pdu.coreset_type);
 
   if (mac_pdu.coreset_cfg->id != to_coreset_id(0)) {
-    const freq_resource_bitmap& mac_freq = mac_pdu.coreset_cfg->freq_domain_resources();
-    for (unsigned i = 0, e = mac_freq.size(); i != e; ++i) {
-      TESTASSERT_EQ(mac_freq.test(i), bool((fapi_pdu.freq_domain_resource[i / 8] >> i % 8) & 1U));
-    }
+    TESTASSERT_EQ(mac_pdu.coreset_cfg->freq_domain_resources(), fapi_pdu.freq_domain_resource);
   }
 
   // DCIs.
@@ -70,11 +67,7 @@ static void test_conversion_ok()
                 fapi_pdu.dl_dci.front().aggregation_level);
   TESTASSERT_EQ(mac_pdu.coreset_cfg->pdcch_dmrs_scrambling_id, fapi_pdu.parameters_v4.params.front().nid_pdcch_dmrs);
 
-  const dci_payload&               mac_pay  = *mac_pdu.dcis.front().payload;
-  const static_vector<uint8_t, 16> fapi_pay = fapi_pdu.dl_dci.front().payload;
-  for (unsigned i = 0, e = mac_pay.size(); i != e; ++i) {
-    TESTASSERT_EQ(mac_pay.test(i), bool((fapi_pay[i / 8] >> i % 8) & 1U));
-  }
+  TESTASSERT_EQ(*mac_pdu.dcis.front().payload, fapi_pdu.dl_dci.front().payload);
 }
 
 int main()

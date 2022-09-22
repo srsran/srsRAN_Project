@@ -122,7 +122,7 @@ static void pdcch_conversion_benchmark()
     builder_pdcch.set_bwp_parameters(bwp_size_dist(gen),
                                      bwp_start_dist(gen),
                                      subcarrier_spacing::kHz240,
-                                     static_cast<fapi::cyclic_prefix_type>(binary_dist(gen)));
+                                     static_cast<cyclic_prefix::options>(binary_dist(gen)));
 
     builder_pdcch.set_coreset_parameters(
         start_symbol_index_dist(gen),

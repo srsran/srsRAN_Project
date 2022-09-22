@@ -53,7 +53,8 @@ find_same_bwp_and_coreset_for_first_element(const static_vector<pdcch_group, MAX
   return result;
 }
 
-static void add_pdcch_pdus_to_request(fapi::dl_tti_request_message_builder& builder, const mac_dl_sched_result& dl_res)
+static void add_pdcch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& builder,
+                                         const mac_dl_sched_result&            dl_res)
 {
   // Group the PDU's.
   static_vector<mac_pdcch_pdu, MAX_DL_PDCCH_PDUS_PER_SLOT> pdus;
@@ -99,7 +100,7 @@ static void add_pdcch_pdus_to_request(fapi::dl_tti_request_message_builder& buil
   }
 }
 
-static void add_ssb_pdus_to_request(fapi::dl_tti_request_message_builder& builder, const mac_dl_sched_result& dl_res)
+static void add_ssb_pdus_to_dl_request(fapi::dl_tti_request_message_builder& builder, const mac_dl_sched_result& dl_res)
 {
   for (const auto& pdu : dl_res.ssb_pdu) {
     fapi::dl_ssb_pdu_builder ssb_builder = builder.add_ssb_pdu();
@@ -107,9 +108,9 @@ static void add_ssb_pdus_to_request(fapi::dl_tti_request_message_builder& builde
   }
 }
 
-static void add_pdsch_pdus_to_request(fapi::dl_tti_request_message_builder& builder,
-                                      pdsch_pdu_registry&                   pdsch_registry,
-                                      const mac_dl_sched_result&            dl_res)
+static void add_pdsch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& builder,
+                                         pdsch_pdu_registry&                   pdsch_registry,
+                                         const mac_dl_sched_result&            dl_res)
 {
   for (const auto& pdu : dl_res.dl_res->bc.sibs) {
     fapi::dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
@@ -132,27 +133,27 @@ static void add_pdsch_pdus_to_request(fapi::dl_tti_request_message_builder& buil
 
 void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res)
 {
-  // :TODO: should we manage here 2 different numerologies in the same dl_res?
+  //: TODO: Add here an static assertion to check that the max size of the vectors in dl_res fit in the FAPI message.
   fapi::dl_tti_request_message         msg;
   fapi::dl_tti_request_message_builder builder(msg);
 
-  // FAPI implementation doesn't support groups at the moment.
-  static const unsigned num_groups = 0;
-  builder.set_basic_parameters(dl_res.slot.sfn(), dl_res.slot.slot_index(), num_groups);
+  // This FAPI implementation does not support PDU groups.
+  const unsigned num_pdu_groups = 0;
+  builder.set_basic_parameters(dl_res.slot.sfn(), dl_res.slot.slot_index(), num_pdu_groups);
 
-  // Add PDCCH PDUs to the DL_TTI.request.
-  add_pdcch_pdus_to_request(builder, dl_res);
+  // Add PDCCH PDUs to the DL_TTI.request message.
+  add_pdcch_pdus_to_dl_request(builder, dl_res);
 
-  // Add SSB PDUs to the DL_TTI.request.
-  add_ssb_pdus_to_request(builder, dl_res);
+  // Add SSB PDUs to the DL_TTI.request message.
+  add_ssb_pdus_to_dl_request(builder, dl_res);
 
   {
     std::lock_guard<std::mutex> lock(mutex);
-    // Add PDSCH PDUs to the DL_TTI.request.
-    add_pdsch_pdus_to_request(builder, pdsch_registry, dl_res);
+    // Add PDSCH PDUs to the DL_TTI.request message.
+    add_pdsch_pdus_to_dl_request(builder, pdsch_registry, dl_res);
   }
 
-  // Validate that the DL_TTI.request message is correct.
+  // Validate the DL_TTI.request message.
   error_type<fapi::validator_report> result = validate_dl_tti_request(msg);
 
   if (!result) {
@@ -161,6 +162,7 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
     return;
   }
 
+  // Send the message.
   msg_gw.dl_tti_request(msg);
 }
 
@@ -189,7 +191,7 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
 
   builder.set_basic_parameters(dl_data.slot.sfn(), dl_data.slot.slot_index());
 
-  // Add SIB1 PDUs.
+  // Add SIB1 PDUs to the Tx_Data.request message.
   const static_vector<span<const uint8_t>, MAX_SIB1_PDUS_PER_SLOT>& sib1_pdus = dl_data.sib1_pdus;
   for (unsigned i = 0, e = sib1_pdus.size(); i != e; ++i) {
     const pdsch_pdu_registry::pdu_struct& registry_pdu = pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registry::sib);
@@ -197,7 +199,7 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
         registry_pdu.fapi_index, registry_pdu.cw_index, {sib1_pdus[i].data(), sib1_pdus[i].size()});
   }
 
-  // Add RAR PDUs.
+  // Add RAR PDUs to the Tx_Data.request message.
   const static_vector<span<const uint8_t>, MAX_RAR_PDUS_PER_SLOT>& rar_pdus = dl_data.rar_pdus;
   for (unsigned i = 0, e = rar_pdus.size(); i != e; ++i) {
     const pdsch_pdu_registry::pdu_struct& registry_pdu = pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registry::rar);
@@ -217,6 +219,7 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
   // :TODO: Should we check here the numerology matches incoming slot and configured numerology for cell?
   builder.set_basic_parameters(ul_res.slot.sfn(), ul_res.slot.slot_index());
 
+  // Add PRACH PDUs to the UL_TTI.request message.
   for (const auto& pdu : ul_res.ul_res->prachs) {
     fapi::ul_prach_pdu_builder pdu_builder = builder.add_prach_pdu();
     convert_prach_mac_to_fapi(pdu_builder, pdu);
@@ -232,7 +235,7 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
     convert_pucch_mac_to_fapi(pdu_builder, pdu);
   }
 
-  // Validate that the UL_TTI.request message is correct.
+  // Validate the UL_TTI.request message.
   error_type<fapi::validator_report> result = validate_ul_tti_request(msg);
 
   if (!result) {
@@ -241,5 +244,6 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
     return;
   }
 
+  // Send the message.
   msg_gw.ul_tti_request(msg);
 }

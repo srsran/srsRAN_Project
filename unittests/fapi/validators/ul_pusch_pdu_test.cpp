@@ -166,7 +166,7 @@ INSTANTIATE_TEST_SUITE_P(
     ValidatePUSCHPDUField,
     testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                          "DMRS config type",
-                         [](ul_pusch_pdu& pdu, int value) { pdu.dmrs_type = static_cast<dmrs_config_type>(value); }}),
+                         [](ul_pusch_pdu& pdu, int value) { pdu.dmrs_type = static_cast<dmrs_cfg_type>(value); }}),
                      testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
 
 INSTANTIATE_TEST_SUITE_P(

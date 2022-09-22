@@ -14,7 +14,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/ran/cyclic_prefix.h"
-#include "srsgnb/ran/pdcch/pdcch_constants.h"
+#include "srsgnb/ran/pdcch/coreset.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
@@ -93,7 +93,7 @@ public:
     ///
     /// This is a bitmap defining non-overlapping groups of 6 PRBs in ascending order. Defined as \f$N_{CORESET}^RB\f$
     /// as per TS38.211 Section 7.3.2.2.
-    bounded_bitset<pdcch_constants::MAX_NOF_FREQ_RESOURCES> frequency_resources;
+    freq_resource_bitmap frequency_resources;
     /// CCE-to-REG mapping.
     cce_to_reg_mapping_type cce_to_reg_mapping;
     /// \brief The number of REGs in a bundle. Corresponds to parameter \f$L\f$ in TS38.211 7.3.2.2.

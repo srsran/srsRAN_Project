@@ -22,12 +22,12 @@ static uint32_t fill_phy_timing_info_in_bch_payload(const fapi::dl_ssb_pdu& fapi
   uint32_t payload = fapi_pdu.bch_payload.bch_payload << 8U;
 
   // Add the SFN.
-  payload |= ((sfn & 0xf) << 4U);
+  payload |= ((sfn & 0xfU) << 4U);
 
   // Add the half radio frame bit.
   payload |= (hrf << 3U);
 
-  if (fapi_pdu.ssb_maintenance_v3.lmax == 64) {
+  if (fapi_pdu.ssb_maintenance_v3.L_max == 64) {
     // Pack the 6th, 5th and 4th bits of SS/PBCH block index.
     payload |= ((fapi_pdu.ssb_block_index >> 3U) & 7U);
   } else {
@@ -82,7 +82,7 @@ generate_bch_payload(const fapi::dl_ssb_pdu& fapi_pdu, uint32_t sfn, bool hrf, s
   // Half radio frame bit.
   payload |= (hrf << 3U);
 
-  if (fapi_pdu.ssb_maintenance_v3.lmax == 64) {
+  if (fapi_pdu.ssb_maintenance_v3.L_max == 64) {
     // Pack the 6th, 5th and 4th bits of SS/PBCH block index.
     payload |= ((fapi_pdu.ssb_block_index >> 3U) & 7U);
   } else {
@@ -152,7 +152,7 @@ void srsgnb::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t&   proc_
   proc_pdu.phys_cell_id      = fapi_pdu.phys_cell_id;
   proc_pdu.beta_pss          = convert_to_beta_pss(fapi_pdu);
   proc_pdu.ssb_idx           = fapi_pdu.ssb_block_index;
-  proc_pdu.L_max             = fapi_pdu.ssb_maintenance_v3.lmax;
+  proc_pdu.L_max             = fapi_pdu.ssb_maintenance_v3.L_max;
   proc_pdu.subcarrier_offset = fapi_pdu.ssb_subcarrier_offset;
   proc_pdu.offset_to_pointA  = fapi_pdu.ssb_offset_pointA;
   proc_pdu.pattern_case      = fapi_pdu.ssb_maintenance_v3.case_type;
@@ -161,6 +161,6 @@ void srsgnb::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t&   proc_
   // Fill in the BCH payload.
   fill_bch_payload(proc_pdu.bch_payload, fapi_pdu, sfn, proc_pdu.slot.is_odd_hrf(), scs_common);
 
-  // :TODO: Implement the ports array when the beamforming is added.
+  // :TODO: Implement the ports array when beamforming is added.
   proc_pdu.ports = {0};
 }

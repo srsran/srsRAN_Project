@@ -78,7 +78,7 @@ void srsgnb::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu
   }
 
   proc_pdu.dmrs =
-      fapi_pdu.dmrs_type == fapi::dmrs_config_type::type_1 ? dmrs_type::options::TYPE1 : dmrs_type::options::TYPE2;
+      fapi_pdu.dmrs_type == fapi::dmrs_cfg_type::type_1 ? dmrs_type::options::TYPE1 : dmrs_type::options::TYPE2;
   proc_pdu.scrambling_id               = fapi_pdu.pusch_dmrs_scrambling_id;
   proc_pdu.n_scid                      = fapi_pdu.nscid;
   proc_pdu.nof_cdm_groups_without_data = fapi_pdu.num_dmrs_cdm_grps_no_data;

@@ -64,7 +64,7 @@ static bool validate_subcarrier_offset(unsigned value, validator_report& report)
 }
 
 /// Validates the offset point A property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4.
-static bool validate_offset_point_a(unsigned value, validator_report& report)
+static bool validate_offset_point_A(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 2199;
@@ -79,7 +79,7 @@ static bool validate_dmrs_type_a_position(unsigned value, validator_report& repo
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 1;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Dmrs type A position", msg_type, pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "DMRS type A position", msg_type, pdu_type, report);
 }
 
 /// Validates the case property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4 in table SSB/PBCH PDU maintenance
@@ -143,13 +143,13 @@ static bool validate_beta_pss_profile_sss(const dl_ssb_pdu& pdu, validator_repor
 
 /// Validates the LMax property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4 in table SSB/PBCH PDU  maintenance
 /// FAPIv3.
-static bool validate_lmax(unsigned value, validator_report& report)
+static bool validate_Lmax(unsigned value, validator_report& report)
 {
   if (value == 4 || value == 8 || value == 64) {
     return true;
   }
 
-  report.append(value, "LMax", msg_type, pdu_type);
+  report.append(value, "L_max", msg_type, pdu_type);
   return false;
 }
 
@@ -161,7 +161,7 @@ bool srsgnb::fapi::validate_dl_ssb_pdu(const dl_ssb_pdu& pdu, validator_report& 
   result &= validate_beta_pss_profile_nr(static_cast<unsigned>(pdu.beta_pss_profile_nr), report);
   result &= validate_block_index(pdu.ssb_block_index, report);
   result &= validate_subcarrier_offset(pdu.ssb_subcarrier_offset, report);
-  result &= validate_offset_point_a(pdu.ssb_offset_pointA, report);
+  result &= validate_offset_point_A(pdu.ssb_offset_pointA.to_uint(), report);
   // NOTE: BCH payload property will not be validated.
   if (pdu.bch_payload_flag == bch_payload_type::phy_full) {
     result &= validate_dmrs_type_a_position(pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position, report);
@@ -173,7 +173,7 @@ bool srsgnb::fapi::validate_dl_ssb_pdu(const dl_ssb_pdu& pdu, validator_report& 
   // NOTE: SSB PDU index property will not be validated, as its range is not defined.
   result &= validate_case(static_cast<unsigned>(pdu.ssb_maintenance_v3.case_type), report);
   result &= validate_subcarrier_spacing(static_cast<unsigned>(pdu.ssb_maintenance_v3.scs), report);
-  result &= validate_lmax(pdu.ssb_maintenance_v3.lmax, report);
+  result &= validate_Lmax(pdu.ssb_maintenance_v3.L_max, report);
   result &= validate_ss_pbch_power_scaling(pdu.ssb_maintenance_v3.ss_pbch_block_power_scaling, report);
   result &= validate_beta_pss_profile_sss(pdu, report);
 

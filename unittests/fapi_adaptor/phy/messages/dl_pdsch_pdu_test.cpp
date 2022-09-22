@@ -135,7 +135,7 @@ static void pdsch_conversion_test()
 
   for (auto cyclic_p : {fapi::cyclic_prefix_type::normal, fapi::cyclic_prefix_type::extended}) {
     for (auto ref_point : {fapi::pdsch_ref_point_type::point_a, fapi::pdsch_ref_point_type::subcarrier_0}) {
-      for (auto config_type : {fapi::dmrs_config_type::type_1, fapi::dmrs_config_type::type_2}) {
+      for (auto config_type : {dmrs_config_type::type1, dmrs_config_type::type2}) {
         for (auto low_papr :
              {fapi::low_papr_dmrs_type::independent_cdm_group, fapi::low_papr_dmrs_type::dependent_cdm_group}) {
           for (auto resource_alloc : {fapi::resource_allocation_type::type_0, fapi::resource_allocation_type::type_1}) {
@@ -263,7 +263,7 @@ static void pdsch_conversion_test()
                         }
 
                         TESTASSERT_EQ(static_cast<unsigned>(ref_point), static_cast<unsigned>(proc_pdu.ref_point));
-                        TESTASSERT(dmrs_type((config_type == fapi::dmrs_config_type::type_1)
+                        TESTASSERT(dmrs_type((config_type == dmrs_config_type::type1)
                                                  ? dmrs_type::options::TYPE1
                                                  : dmrs_type::options::TYPE2) == proc_pdu.dmrs);
                         TESTASSERT_EQ(scrambling_id, proc_pdu.scrambling_id);

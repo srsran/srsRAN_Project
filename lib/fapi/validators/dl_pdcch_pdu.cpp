@@ -221,7 +221,7 @@ bool srsgnb::fapi::validate_dl_pdcch_pdu(message_type_id msg_type, const dl_pdcc
   result &= validate_coreset_bwp_size(msg_type, pdu.coreset_bwp_size, report);
   result &= validate_coreset_bwp_start(msg_type, pdu.coreset_bwp_start, report);
   result &= validate_scs(msg_type, static_cast<unsigned>(pdu.scs), report);
-  result &= validate_cp(msg_type, static_cast<unsigned>(pdu.cyclic_prefix), report);
+  result &= validate_cp(msg_type, pdu.cp.value, report);
   result &= validate_start_symbol_index(msg_type, pdu.start_symbol_index, report);
   result &= validate_duration_symbols(msg_type, pdu.duration_symbols, report);
   result &= validate_cce_reg_mapping_type(msg_type, static_cast<unsigned>(pdu.cce_reg_mapping_type), report);

@@ -38,7 +38,7 @@ static void pdcch_conversion_test()
   std::uniform_int_distribution<unsigned> nid_data_dist(0, 65535);
   std::uniform_real_distribution<float>   power_dmrs_dist(-32.767, 32.767);
 
-  for (auto cyclic_p : {fapi::cyclic_prefix_type::normal, fapi::cyclic_prefix_type::extended}) {
+  for (auto cp : {cyclic_prefix::options::NORMAL, cyclic_prefix::options::EXTENDED}) {
     for (auto cce_reg_mapping :
          {fapi::cce_to_reg_mapping_type::non_interleaved, fapi::cce_to_reg_mapping_type::interleaved}) {
       for (auto reg_bundle : {2U, 3U, 6U}) {
@@ -70,7 +70,7 @@ static void pdcch_conversion_test()
                                                       0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1};
 
                   // Always work with the biggest numerology.
-                  builder.set_bwp_parameters(bwp_size, bwp_start, subcarrier_spacing::kHz240, cyclic_p);
+                  builder.set_bwp_parameters(bwp_size, bwp_start, subcarrier_spacing::kHz240, cp);
                   builder.set_coreset_parameters(start_symbol_index,
                                                  duration_symbol,
                                                  freq_domain,
@@ -113,7 +113,7 @@ static void pdcch_conversion_test()
                   // Test basic parameters.
                   TESTASSERT_EQ(sfn, proc_pdu.slot.sfn());
                   TESTASSERT_EQ(slot, proc_pdu.slot.slot_index());
-                  TESTASSERT_EQ(static_cast<cyclic_prefix::options>(cyclic_p), proc_pdu.cp.value);
+                  TESTASSERT_EQ(cp, proc_pdu.cp.value);
 
                   // Test coreset parameters.
                   TESTASSERT_EQ(bwp_size, proc_pdu.coreset.bwp_size_rb);
