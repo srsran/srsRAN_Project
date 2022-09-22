@@ -64,6 +64,12 @@ protected:
     }
   }
 
+  void SetUp() override
+  {
+    ASSERT_NE(equalizer_factory, nullptr) << "Cannot create equalizer factory";
+    ASSERT_NE(test_equalizer, nullptr) << "Cannot create channel equalizer";
+  }
+
   void ReadData(const ChannelEqualizerParams& t_case)
   {
     // Read the test case symbols and estimates.
