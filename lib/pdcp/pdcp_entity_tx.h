@@ -17,6 +17,8 @@
 #include "srsgnb/pdcp/pdcp_tx.h"
 #include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/security/security.h"
+#include "srsgnb/support/timers.h"
+#include <map>
 
 namespace srsgnb {
 
@@ -47,6 +49,11 @@ public:
     lower_dn(lower_dn),
     upper_cn(upper_cn)
   {
+    // Validate configuration
+    srsgnb_assert((is_um() && cfg.discard_timer == pdcp_discard_timer::not_configured) || is_am(),
+                  "We do not support RLC UM with discard timers");
+    if (cfg.discard_timer != pdcp_discard_timer::not_configured && cfg.discard_timer != pdcp_discard_timer::infinity) {
+    }
   }
 
   /*
@@ -95,10 +102,30 @@ private:
   void        integrity_generate(sec_mac& mac, byte_buffer_view buf, uint32_t count);
   byte_buffer cipher_encrypt(byte_buffer_view buf, uint32_t count);
 
+  /// \brief discardTimer
+  /// This map is used to store the discard timers that are used by the transmitting side of an PDCP entity
+  /// to order lower layers to discard PDCP PDUs if the timer expired. See section 5.2.1 and 7.3 of TS 38.323.
+  /// Currently, this is only supported when using RLC AM, as only AM as the ability to stop the timers.
+  std::map<uint32_t, unique_timer> discard_timers_map;
+  class discard_callback;
+
   /*
    * RB helpers
    */
   bool is_srb() { return cfg.rb_type == pdcp_rb_type::srb; }
   bool is_drb() { return cfg.rb_type == pdcp_rb_type::drb; }
+  bool is_um() { return cfg.rlc_mode == pdcp_rlc_mode::um; }
+  bool is_am() { return cfg.rlc_mode == pdcp_rlc_mode::am; }
+};
+
+class pdcp_entity_tx::discard_callback
+{
+public:
+  discard_callback(pdcp_entity_tx* parent_, uint32_t count_) : parent(parent_), discard_count(count_){};
+  void operator()(uint32_t timer_id);
+
+private:
+  pdcp_entity_tx* parent;
+  uint32_t        discard_count;
 };
 } // namespace srsgnb

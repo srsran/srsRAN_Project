@@ -196,3 +196,19 @@ bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, uint32_t count)
   }
   return true;
 }
+
+/*
+ * Timers
+ */
+// Discard Timer Callback (discardTimer)
+void pdcp_entity_tx::discard_callback::operator()(uint32_t timer_id)
+{
+  parent->logger.log_debug("Discard timer expired for PDU with SN=%d", discard_count);
+
+  // Notify the RLC of the discard. It's the RLC to actually discard, if no segment was transmitted yet.
+  parent->lower_dn.on_discard_pdu(discard_count);
+
+  // Remove timer from map
+  // NOTE: this will delete the callback. It *must* be the last instruction.
+  parent->discard_timers_map.erase(discard_count);
+}
