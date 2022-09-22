@@ -10,12 +10,10 @@
 
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
+#include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsgnb/srsvec/compare.h"
+#include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsgnb_test.h"
-
-namespace srsgnb {
-std::unique_ptr<low_papr_sequence_generator> create_low_papr_sequence_generator();
-}
 
 using namespace srsgnb;
 
@@ -25,13 +23,23 @@ int main()
   std::uniform_int_distribution<unsigned> dist(0, INT32_MAX);
 
   // Generate alphas.
-  std::vector<float> alphas;
-  for (unsigned i = 0; i != NRE; ++i) {
-    alphas.emplace_back(M_PI_4 * static_cast<float>(i) / static_cast<float>(NRE));
-  }
+  std::array<float, NRE> alphas = {};
+  std::generate(alphas.begin(), alphas.end(), [&, n = 0]() mutable {
+    return M_PI_4 * static_cast<float>(n++) / static_cast<float>(NRE);
+  });
+
+  // Create generator factory.
+  std::shared_ptr<low_papr_sequence_generator_factory> generator_factory =
+      create_low_papr_sequence_generator_sw_factory();
+  TESTASSERT(generator_factory);
+
+  std::shared_ptr<low_papr_sequence_collection_factory> collection_factory =
+      create_low_papr_sequence_collection_sw_factory(generator_factory);
+  TESTASSERT(collection_factory);
 
   // Create generator.
-  std::unique_ptr<low_papr_sequence_generator> generator = create_low_papr_sequence_generator();
+  std::unique_ptr<low_papr_sequence_generator> generator = generator_factory->create();
+  TESTASSERT(generator);
 
   // For each possible size...
   for (unsigned M_zc : sizes) {
@@ -52,7 +60,7 @@ int main()
     }
 
     // Create collection.
-    low_papr_sequence_collection collection(*generator, m, delta, alphas);
+    std::unique_ptr<low_papr_sequence_collection> collection = collection_factory->create(m, delta, alphas);
 
     // Iterate all possible groups.
     for (unsigned u = 0; u < 30; ++u) {
@@ -66,7 +74,7 @@ int main()
         // Iterate all alpha indexes.
         for (unsigned alpha_idx = 0; alpha_idx != alphas.size(); ++alpha_idx) {
           // Get sequence from collection
-          span<const cf_t> sequence = collection.get(u, v, alpha_idx);
+          span<const cf_t> sequence = collection->get(u, v, alpha_idx);
 
           // Generate sequence.
           std::vector<cf_t> sequence2(M_zc);

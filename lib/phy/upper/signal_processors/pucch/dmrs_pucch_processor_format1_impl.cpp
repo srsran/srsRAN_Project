@@ -101,7 +101,7 @@ void dmrs_pucch_processor_format1_impl::sequence_generation(span<srsgnb::cf_t>  
   srsgnb_assert(!r_uv.empty(), "low PAPR sequence not implemented for the specified u, v and alpha");
 
   // Get orthogonal sequence.
-  cf_t w_i_m = occ->get_sequence_value(cfg.n_pucch, pucch_config.time_domain_occ, cfg.m);
+  cf_t w_i_m = occ.get_sequence_value(cfg.n_pucch, pucch_config.time_domain_occ, cfg.m);
 
   // Compute z(n) = w(i) * r_uv(n).
   srsvec::sc_prod(r_uv, w_i_m, sequence);

@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_generator.h"
-#include <memory>
 
 namespace srsgnb {
 
@@ -85,8 +84,5 @@ public:
   // See interface for documentation.
   void generate(span<cf_t> sequence, unsigned u, unsigned v, float alpha) const override;
 };
-
-/// Creates a generic low PAPR sequence generator.
-std::unique_ptr<low_papr_sequence_generator> create_low_papr_sequence_generator();
 
 } // namespace srsgnb

@@ -11,44 +11,51 @@
 #include "../../../../lib/phy/upper/signal_processors/pucch/pucch_orthogonal_sequence.h"
 #include "../../support/resource_grid_test_doubles.h"
 #include "dmrs_pucch_processor_test_data.h"
-#include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
-#include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
+#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 
 using namespace srsgnb;
-
-// forward-declare
-namespace srsgnb {
-std::unique_ptr<low_papr_sequence_generator> create_low_papr_sequence_generator();
-}
 
 int main()
 {
   // Fixed BW
   const unsigned nof_prb = 52;
 
-  // Create low PAPR sequence generator.
-  std::unique_ptr<low_papr_sequence_generator> generator = create_low_papr_sequence_generator();
+  // Create pseudo-random sequence generator factory.
+  std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
+  TESTASSERT(prg_factory);
 
-  // Low PAPR sequence parameters, assumes M_zc = 12
-  unsigned m     = 1;
-  unsigned delta = 0;
-  // Generate alphas for 1PRB (see TS38.211 clause 6.3.2.2.2).
-  std::vector<float> alphas_1prb;
-  for (unsigned i = 0; i != NRE; ++i) {
-    alphas_1prb.emplace_back(2U * M_PI * static_cast<float>(i) / static_cast<float>(NRE));
-  }
+  // Create low PAPR sequence generator factory.
+  std::shared_ptr<low_papr_sequence_generator_factory> lpg_factory = create_low_papr_sequence_generator_sw_factory();
+  TESTASSERT(lpg_factory);
 
-  // Pre-generate a low PAPR sequence collection.
-  low_papr_sequence_collection collection(*generator, m, delta, alphas_1prb);
+  // Create low PAPR collection factory.
+  std::shared_ptr<low_papr_sequence_collection_factory> lpc_factory =
+      create_low_papr_sequence_collection_sw_factory(lpg_factory);
+  TESTASSERT(lpc_factory);
 
-  // Pre-generate orthogonal cover sequences.
-  pucch_orthogonal_sequence orthogonal_sequences;
+  // Create DM-RS for PUCCH estimator factory.
+  std::shared_ptr<dmrs_pucch_estimator_factory> estimator_factory =
+      create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory);
+  TESTASSERT(estimator_factory);
 
   // Iterate over test cases.
   for (const test_case_t& test_case : dmrs_pucch_processor_test_data) {
     // Create DMRS-PUCCH processor.
-    std::unique_ptr<dmrs_pucch_processor> dmrs_pucch =
-        create_dmrs_pucch_processor(test_case.config.format, &collection, &orthogonal_sequences);
+    std::unique_ptr<dmrs_pucch_processor> dmrs_pucch = nullptr;
+    switch (test_case.config.format) {
+      case pucch_format::FORMAT_1:
+        dmrs_pucch = estimator_factory->create_format1();
+        break;
+      case pucch_format::FORMAT_2:
+        dmrs_pucch = estimator_factory->create_format2();
+      case pucch_format::FORMAT_0:
+      case pucch_format::FORMAT_3:
+      case pucch_format::FORMAT_4:
+      case pucch_format::NOF_FORMATS:
+      default:
+        break;
+    }
+    TESTASSERT(dmrs_pucch);
 
     // Load Matlab generated symbols.
     const std::vector<resource_grid_reader_spy::expected_entry_t> testvector_symbols = test_case.symbols.read();

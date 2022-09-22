@@ -15,6 +15,8 @@
 #include "dmrs_pusch_estimator_impl.h"
 #include "port_channel_estimator_average_impl.h"
 #include "pss_processor_impl.h"
+#include "pucch/dmrs_pucch_processor_format1_impl.h"
+#include "pucch/dmrs_pucch_processor_format2_impl.h"
 #include "sss_processor_impl.h"
 
 using namespace srsgnb;
@@ -73,6 +75,41 @@ public:
   {
     return std::make_unique<dmrs_pdsch_processor_impl>(prg_factory->create());
   }
+};
+
+class dmrs_pucch_estimator_sw_factory : public dmrs_pucch_estimator_factory
+{
+public:
+  dmrs_pucch_estimator_sw_factory(std::shared_ptr<pseudo_random_generator_factory>&      prg_factory_,
+                                  std::shared_ptr<low_papr_sequence_collection_factory>& lpc_factory_) :
+    prg_factory(std::move(prg_factory_)), lpc_factory(std::move(lpc_factory_))
+  {
+    srsgnb_assert(prg_factory, "Invalid sequence generator factory.");
+    srsgnb_assert(lpc_factory, "Invalid sequence collection factory.");
+  }
+
+  std::unique_ptr<dmrs_pucch_processor> create_format1() override
+  {
+    // Prepare DM-RS for PUCCH Format 1 low PAPR sequence parameters.
+    unsigned               m      = 1;
+    unsigned               delta  = 0;
+    std::array<float, NRE> alphas = {};
+    std::generate(alphas.begin(), alphas.end(), [&, n = 0]() mutable {
+      return TWOPI * static_cast<float>(n++) / static_cast<float>(NRE);
+    });
+
+    return std::make_unique<dmrs_pucch_processor_format1_impl>(prg_factory->create(),
+                                                               lpc_factory->create(m, delta, alphas));
+  }
+
+  std::unique_ptr<dmrs_pucch_processor> create_format2() override
+  {
+    return std::make_unique<dmrs_pucch_processor_format2_impl>(prg_factory->create());
+  }
+
+private:
+  std::shared_ptr<pseudo_random_generator_factory>      prg_factory;
+  std::shared_ptr<low_papr_sequence_collection_factory> lpc_factory;
 };
 
 class dmrs_pusch_estimator_factory_sw : public dmrs_pusch_estimator_factory
@@ -135,6 +172,13 @@ std::shared_ptr<dmrs_pdsch_processor_factory>
 srsgnb::create_dmrs_pdsch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
   return std::make_shared<dmrs_pdsch_processor_sw_factory>(std::move(prg_factory));
+}
+
+std::shared_ptr<dmrs_pucch_estimator_factory>
+srsgnb::create_dmrs_pucch_estimator_factory_sw(std::shared_ptr<pseudo_random_generator_factory>      prg_factory,
+                                               std::shared_ptr<low_papr_sequence_collection_factory> lpc_factory)
+{
+  return std::make_shared<dmrs_pucch_estimator_sw_factory>(prg_factory, lpc_factory);
 }
 
 std::shared_ptr<dmrs_pusch_estimator_factory>

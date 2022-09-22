@@ -10,9 +10,34 @@
 
 #pragma once
 
+#include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
+#include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_generator.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include <memory>
 
 namespace srsgnb {
+
+class low_papr_sequence_generator_factory;
+
+class low_papr_sequence_collection_factory
+{
+public:
+  virtual ~low_papr_sequence_collection_factory() = default;
+  virtual std::unique_ptr<low_papr_sequence_collection>
+  create(unsigned m, unsigned delta, span<const float> alphas) = 0;
+};
+
+std::shared_ptr<low_papr_sequence_collection_factory>
+create_low_papr_sequence_collection_sw_factory(std::shared_ptr<low_papr_sequence_generator_factory> lpg_factory);
+
+class low_papr_sequence_generator_factory
+{
+public:
+  virtual ~low_papr_sequence_generator_factory()                = default;
+  virtual std::unique_ptr<low_papr_sequence_generator> create() = 0;
+};
+
+std::shared_ptr<low_papr_sequence_generator_factory> create_low_papr_sequence_generator_sw_factory();
 
 class pseudo_random_generator_factory
 {

@@ -5,6 +5,7 @@
 #include "srsgnb/phy/upper/signal_processors/dmrs_pbch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdcch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdsch_processor.h"
+#include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pusch_estimator.h"
 #include "srsgnb/phy/upper/signal_processors/port_channel_estimator.h"
 #include "srsgnb/phy/upper/signal_processors/pss_processor.h"
@@ -45,6 +46,18 @@ public:
 
 std::shared_ptr<dmrs_pdsch_processor_factory>
 create_dmrs_pdsch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory);
+
+class dmrs_pucch_estimator_factory
+{
+public:
+  virtual ~dmrs_pucch_estimator_factory()                        = default;
+  virtual std::unique_ptr<dmrs_pucch_processor> create_format1() = 0;
+  virtual std::unique_ptr<dmrs_pucch_processor> create_format2() = 0;
+};
+
+std::shared_ptr<dmrs_pucch_estimator_factory>
+create_dmrs_pucch_estimator_factory_sw(std::shared_ptr<pseudo_random_generator_factory>      prg_factory,
+                                       std::shared_ptr<low_papr_sequence_collection_factory> lpc_factory);
 
 class dmrs_pusch_estimator_factory
 {

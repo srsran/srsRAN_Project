@@ -15,7 +15,6 @@ set(SOURCES
         port_channel_estimator_average_impl.cpp
         pucch/dmrs_pucch_processor_format1_impl.cpp
         pucch/dmrs_pucch_processor_format2_impl.cpp
-        pucch/dmrs_pucch_processor_factories.cpp
         signal_processor_factories.cpp
         pss_processor_impl.cpp
         sss_processor_impl.cpp

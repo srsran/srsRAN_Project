@@ -7,6 +7,7 @@
 #
 
 set(SOURCES
+        low_papr_sequence_collection_impl.cpp
         low_papr_sequence_generator_impl.cpp
         pseudo_random_generator_impl.cpp
         sequence_generator_factories.cpp
@@ -15,5 +16,6 @@ set(SOURCES
 include_directories(../../../../include/srsgnb/phy/upper/sequence_generators)
 
 add_library(srsgnb_sequence_generators STATIC ${SOURCES})
+target_link_libraries(srsgnb_sequence_generators srsgnb_support srsvec)
 
 install(TARGETS srsgnb_sequence_generators EXPORT srsgnb_export)

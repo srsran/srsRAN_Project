@@ -16,13 +16,8 @@
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/pucch/pucch_mapping.h"
 #include "srsgnb/ran/slot_point.h"
-#include <memory>
 
 namespace srsgnb {
-
-// forward declarations
-class pucch_orthogonal_sequence;
-class low_papr_sequence_collection;
 
 /// Describes a DMRS for PUCCH processor interface.
 class dmrs_pucch_processor
@@ -77,10 +72,5 @@ public:
   /// \param[in]  config   Provides the required configuration to estimate channel.
   virtual void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const config_t& config) = 0;
 };
-
-/// Creates a generic DMRS for PUCCH instance.
-std::unique_ptr<dmrs_pucch_processor> create_dmrs_pucch_processor(const pucch_format&                 format,
-                                                                  const low_papr_sequence_collection* c   = nullptr,
-                                                                  const pucch_orthogonal_sequence*    occ = nullptr);
 
 } // namespace srsgnb

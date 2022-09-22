@@ -199,8 +199,3 @@ void low_papr_sequence_generator_impl::generate(span<cf_t> sequence, unsigned u,
   // Do complex exponential and adjust amplitude.
   cexp(sequence, alpha, arg);
 }
-
-std::unique_ptr<low_papr_sequence_generator> srsgnb::create_low_papr_sequence_generator()
-{
-  return std::make_unique<low_papr_sequence_generator_impl>();
-}

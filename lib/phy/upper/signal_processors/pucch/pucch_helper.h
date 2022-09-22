@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/phy/constants.h"
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/ran/cyclic_prefix.h"

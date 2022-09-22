@@ -24,10 +24,10 @@ private:
   pucch_helper helper;
 
   /// Format 1 implementation expects pre-generated sequence collection on instantiation.
-  const low_papr_sequence_collection* sequence_collection;
+  std::unique_ptr<const low_papr_sequence_collection> sequence_collection;
 
   /// Pre-generated orthogonal cover code.
-  const pucch_orthogonal_sequence* occ;
+  const pucch_orthogonal_sequence occ;
 
   // Internal struct holding sequence generation parameters.
   struct sequence_generation_config {
@@ -61,11 +61,12 @@ private:
   void mapping(span<cf_t> ce, const resource_grid_reader& grid, unsigned start_prb, unsigned symbol) const;
 
 public:
-  dmrs_pucch_processor_format1_impl(std::unique_ptr<pseudo_random_generator> prg,
-                                    const low_papr_sequence_collection*      c,
-                                    const pucch_orthogonal_sequence*         occ) :
-    helper(std::move(prg)), sequence_collection(c), occ(occ)
-  {}
+  dmrs_pucch_processor_format1_impl(std::unique_ptr<pseudo_random_generator>            prg_,
+                                    std::unique_ptr<const low_papr_sequence_collection> sequence_collection_) :
+    helper(std::move(prg_)), sequence_collection(std::move(sequence_collection_))
+  {
+    srsgnb_assert(sequence_collection, "Invalid sequence collection.");
+  }
 
   void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const config_t& config) override;
 };
