@@ -506,6 +506,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     pusch.pusch_cfg.harq_id                    = pending_msg3.harq.pid;
     pusch.pusch_cfg.new_data                   = true;
     pusch.pusch_cfg.tb_size_bytes              = msg3_data[msg3_info.time_resource_assignment].prbs_tbs.tbs_bytes;
+    pusch.pusch_cfg.num_cb                     = 0;
 
     // Allocate Msg3 UL HARQ
     bool success = pending_msg3.harq.new_tx(msg3_alloc.slot, prbs, msg3_info.mcs, max_msg3_retxs);

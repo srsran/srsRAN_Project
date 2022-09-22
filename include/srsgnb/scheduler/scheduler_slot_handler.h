@@ -214,6 +214,10 @@ struct pusch_information {
   bool new_data;
   /// Transport block size in bytes.
   uint32_t tb_size_bytes;
+  /// \brief Number of CBs in the TB (could be more than the number of CBs in this PUSCH transmission). Should be set
+  /// to zero in any of the following conditions: 1) CBG is not supported or requested 2) newData=1 (new transmission)
+  /// 3) tbSize=0.
+  uint16_t num_cb;
 };
 
 /// \brief RAR grant composed of subheader as per TS38.321 6.2.2, payload as per TS38.321 6.2.3,
