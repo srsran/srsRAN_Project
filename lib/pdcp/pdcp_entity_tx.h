@@ -42,24 +42,33 @@ public:
                  lcid_t                          lcid,
                  pdcp_config::pdcp_tx_config     cfg_,
                  pdcp_tx_lower_notifier&         lower_dn,
-                 pdcp_tx_upper_control_notifier& upper_cn) :
+                 pdcp_tx_upper_control_notifier& upper_cn,
+                 timer_manager&                  timers) :
     pdcp_entity_tx_rx_base(lcid, cfg_.rb_type, cfg_.sn_size),
     logger("PDCP", ue_index, lcid),
     cfg(cfg_),
     lower_dn(lower_dn),
-    upper_cn(upper_cn)
+    upper_cn(upper_cn),
+    timers(timers)
   {
     // Validate configuration
     srsgnb_assert((is_um() && cfg.discard_timer == pdcp_discard_timer::not_configured) || is_am(),
-                  "We do not support RLC UM with discard timers");
-    if (cfg.discard_timer != pdcp_discard_timer::not_configured && cfg.discard_timer != pdcp_discard_timer::infinity) {
-    }
+                  "RLC UM with discard timer is un-supported. RLC mode={}, discardTimer={}",
+                  cfg.rlc_mode,
+                  cfg.discard_timer);
   }
 
   /*
    * SDU/PDU handlers
    */
   void handle_sdu(byte_buffer buf) final;
+
+  void stop_discard_timer(uint32_t count) final
+  {
+    // Remove timer from map
+    logger.log_debug("Stopping discard timer for COUNT={}", count);
+    discard_timers_map.erase(count);
+  }
 
   /*
    * Header helpers
@@ -69,7 +78,8 @@ public:
   /*
    * Testing helpers
    */
-  void set_state(pdcp_tx_state st_) { st = st_; };
+  void     set_state(pdcp_tx_state st_) { st = st_; };
+  uint32_t nof_discard_timers() { return discard_timers_map.size(); }
 
   /*
    * Security configuration
@@ -87,8 +97,7 @@ private:
 
   pdcp_tx_lower_notifier&         lower_dn;
   pdcp_tx_upper_control_notifier& upper_cn;
-
-  void stop_discard_timer(uint32_t count) final {}
+  timer_manager&                  timers;
 
   pdcp_tx_state      st        = {};
   security_direction direction = security_direction::downlink;

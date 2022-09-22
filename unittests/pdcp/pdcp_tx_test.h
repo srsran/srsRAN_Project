@@ -59,7 +59,7 @@ protected:
 
   /// \brief Initializes fixture according to size sequence number size
   /// \param sn_size_ size of the sequence number
-  void init(pdcp_sn_size sn_size_)
+  void init(pdcp_sn_size sn_size_, pdcp_discard_timer discard_timer = pdcp_discard_timer::ms10)
   {
     logger.info("Creating PDCP TX ({} bit)", to_number(sn_size_));
 
@@ -67,10 +67,10 @@ protected:
     pdu_hdr_len = pdcp_data_pdu_header_size(sn_size); // Round up division
 
     // Set TX config
+    config.sn_size       = sn_size;
     config.rb_type       = pdcp_rb_type::drb;
     config.rlc_mode      = pdcp_rlc_mode::am;
-    config.sn_size       = sn_size;
-    config.discard_timer = pdcp_discard_timer::ms10;
+    config.discard_timer = discard_timer;
 
     // Set security keys
     sec_cfg.k_128_rrc_int = k_128_int;
@@ -83,7 +83,7 @@ protected:
     sec_cfg.cipher_algo = ciphering_algorithm::nea1;
 
     // Create RLC entities
-    pdcp_tx = std::make_unique<pdcp_entity_tx>(0, LCID_SRB1, config, test_frame, test_frame);
+    pdcp_tx = std::make_unique<pdcp_entity_tx>(0, LCID_SRB1, config, test_frame, test_frame, timers);
   }
 
   /// \brief Gets expected PDU based on the COUNT being tested

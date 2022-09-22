@@ -106,6 +106,99 @@ TEST_P(pdcp_tx_test, pdu_gen)
   }
 }
 
+/// Test correct start of PDCP discard timers
+/// and normal expiry of them
+TEST_P(pdcp_tx_test, discard_timer_and_expiry)
+{
+  init(GetParam(), pdcp_discard_timer::ms10);
+
+  auto test_discard_timer_expiry = [this](uint32_t tx_next) {
+    // Set state of PDCP entiy
+    pdcp_tx_state st = {tx_next};
+    pdcp_tx->set_state(st);
+    pdcp_tx->set_as_security_config(sec_cfg);
+    pdcp_tx->enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+
+    // Write first SDU
+    {
+      byte_buffer sdu = {sdu1};
+      pdcp_tx->handle_sdu(std::move(sdu));
+      ASSERT_EQ(1, pdcp_tx->nof_discard_timers());
+    }
+    // Write second SDU
+    {
+      byte_buffer sdu = {sdu1};
+      pdcp_tx->handle_sdu(std::move(sdu));
+      ASSERT_EQ(2, pdcp_tx->nof_discard_timers());
+    }
+    // Let timers expire
+    for (int i = 0; i < 10; i++) {
+      timers.tick_all();
+    }
+
+    // Timers should have expired now.
+    ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
+  };
+
+  if (config.sn_size == pdcp_sn_size::size12bits) {
+    test_discard_timer_expiry(0);
+    test_discard_timer_expiry(2047);
+    test_discard_timer_expiry(4095);
+  } else if (config.sn_size == pdcp_sn_size::size18bits) {
+    test_discard_timer_expiry(0);
+    test_discard_timer_expiry(131071);
+    test_discard_timer_expiry(262143);
+  } else {
+    FAIL();
+  }
+}
+
+/// Test correct start of PDCP discard timers
+/// and stop from lower layers
+TEST_P(pdcp_tx_test, discard_timer_and_stop)
+{
+  init(GetParam(), pdcp_discard_timer::ms10);
+
+  auto test_discard_timer_stop = [this](uint32_t tx_next) {
+    // Set state of PDCP entiy
+    pdcp_tx_state st = {tx_next};
+    pdcp_tx->set_state(st);
+    pdcp_tx->set_as_security_config(sec_cfg);
+    pdcp_tx->enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+
+    // Write first SDU
+    {
+      byte_buffer sdu = {sdu1};
+      pdcp_tx->handle_sdu(std::move(sdu));
+      ASSERT_EQ(1, pdcp_tx->nof_discard_timers());
+    }
+    // Write second SDU
+    {
+      byte_buffer sdu = {sdu1};
+      pdcp_tx->handle_sdu(std::move(sdu));
+      ASSERT_EQ(2, pdcp_tx->nof_discard_timers());
+    }
+
+    pdcp_tx->stop_discard_timer(tx_next);
+    ASSERT_EQ(1, pdcp_tx->nof_discard_timers());
+    // Timers should have expired now.
+    pdcp_tx->stop_discard_timer(tx_next + 1);
+    ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
+  };
+
+  if (config.sn_size == pdcp_sn_size::size12bits) {
+    test_discard_timer_stop(0);
+    test_discard_timer_stop(2048);
+    test_discard_timer_stop(4096);
+  } else if (config.sn_size == pdcp_sn_size::size18bits) {
+    test_discard_timer_stop(0);
+    test_discard_timer_stop(131072);
+    test_discard_timer_stop(262144);
+  } else {
+    FAIL();
+  }
+}
+
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////

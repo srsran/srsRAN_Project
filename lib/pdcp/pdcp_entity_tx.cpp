@@ -27,7 +27,14 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   }
 
   // Start discard timer
-  // TODO
+  if (cfg.discard_timer != pdcp_discard_timer::infinity && cfg.discard_timer != pdcp_discard_timer::not_configured) {
+    unique_timer discard_timer = timers.create_unique_timer();
+    discard_timer.set(static_cast<uint32_t>(cfg.discard_timer), discard_callback{this, st.tx_next});
+    discard_timer.run();
+    discard_timers_map.insert(std::make_pair(st.tx_next, std::move(discard_timer)));
+    logger.log_debug(
+        "Discard Timer set for COUNT {}. Timeout: {}ms", st.tx_next, static_cast<uint32_t>(cfg.discard_timer));
+  }
 
   // Perform header compression
   // TODO
@@ -203,7 +210,7 @@ bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, uint32_t count)
 // Discard Timer Callback (discardTimer)
 void pdcp_entity_tx::discard_callback::operator()(uint32_t timer_id)
 {
-  parent->logger.log_debug("Discard timer expired for PDU with SN=%d", discard_count);
+  parent->logger.log_debug("Discard timer expired for PDU with COUNT={}", discard_count);
 
   // Notify the RLC of the discard. It's the RLC to actually discard, if no segment was transmitted yet.
   parent->lower_dn.on_discard_pdu(discard_count);

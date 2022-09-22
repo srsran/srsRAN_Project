@@ -91,6 +91,8 @@ int main(int argc, char** argv)
   pdcp_sn_size sn_size = args.sn_size == "12" ? pdcp_sn_size::size12bits : pdcp_sn_size::size18bits;
   logger.info("Creating PDCP TX ({} bit)", sn_size);
 
+  timer_manager timers;
+
   // Set TX config
   pdcp_config::pdcp_tx_config config = {};
   config.rb_type                     = pdcp_rb_type::drb;
@@ -111,8 +113,9 @@ int main(int argc, char** argv)
 
   pdcp_tx_gen_frame frame = {};
   // Create RLC entities
-  std::unique_ptr<pdcp_entity_tx> pdcp_tx = std::make_unique<pdcp_entity_tx>(0, LCID_SRB1, config, frame, frame);
-  pdcp_tx_state                   st      = {args.count};
+  std::unique_ptr<pdcp_entity_tx> pdcp_tx =
+      std::make_unique<pdcp_entity_tx>(0, LCID_SRB1, config, frame, frame, timers);
+  pdcp_tx_state st = {args.count};
   pdcp_tx->set_state(st);
   pdcp_tx->set_as_security_config(sec_cfg);
   pdcp_tx->enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
