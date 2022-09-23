@@ -88,7 +88,7 @@ protected:
     sec_cfg.cipher_algo = ciphering_algorithm::nea1;
 
     // Create PDCP RX entity
-    pdcp_rx = std::make_unique<pdcp_entity_rx>(0, LCID_SRB1, config, test_frame);
+    pdcp_rx = std::make_unique<pdcp_entity_rx>(0, LCID_SRB1, config, test_frame, timers);
     srslog::flush();
   }
 

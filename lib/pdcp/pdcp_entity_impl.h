@@ -35,7 +35,7 @@ public:
   {
     tx = std::make_unique<pdcp_entity_tx>(ue_index, lcid, config.tx, tx_lower_dn, tx_upper_cn, timers);
     logger.log_info("PDCP TX configured: {}", config.tx);
-    rx = std::make_unique<pdcp_entity_rx>(ue_index, lcid, config.rx, rx_upper_dn);
+    rx = std::make_unique<pdcp_entity_rx>(ue_index, lcid, config.rx, rx_upper_dn, timers);
     logger.log_info("PDCP RX configured: {}", config.rx);
   }
   ~pdcp_entity_impl() override = default;

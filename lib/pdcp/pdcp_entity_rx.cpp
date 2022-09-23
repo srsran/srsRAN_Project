@@ -141,19 +141,20 @@ void pdcp_entity_rx::handle_pdu(byte_buffer pdu)
   }
 
   // Handle reordering timers
-  /*
-  if (reordering_timer.is_running() and rx_deliv >= rx_reord) {
+
+  if (reordering_timer.is_running() and st.rx_deliv >= st.rx_reord) {
     reordering_timer.stop();
-    logger.debug("Stopped t-Reordering - RX_DELIV=%d, RX_REORD=%ld", rx_deliv, rx_reord);
+    logger.log_debug("Stopped t-Reordering - RX_DELIV={}, RX_REORD={}", st.rx_deliv, st.rx_reord);
   }
 
-  if (cfg.t_reordering != pdcp_t_reordering_t::infinity) {
-    if (not reordering_timer.is_running() and rx_deliv < rx_next) {
-      rx_reord = rx_next;
+  if (cfg.t_reordering != pdcp_t_reordering::infinity) {
+    if (not reordering_timer.is_running() and st.rx_deliv < st.rx_next) {
+      st.rx_reord = st.rx_next;
       reordering_timer.run();
-      logger.debug("Started t-Reordering - RX_REORD=%ld, RX_DELIV=%ld, RX_NEXT=%ld", rx_reord, rx_deliv, rx_next);
+      logger.log_debug(
+          "Started t-Reordering - RX_REORD={}, RX_DELIV={}, RX_NEXT={}", st.rx_reord, st.rx_deliv, st.rx_next);
     }
-  }*/
+  }
 
   logger.log_debug("Rx PDCP state - RX_NEXT={}, RX_DELIV={}, RX_REORD={}", st.rx_next, st.rx_deliv, st.rx_reord);
 }
