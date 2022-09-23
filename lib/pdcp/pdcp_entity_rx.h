@@ -45,14 +45,7 @@ public:
                  lcid_t                       lcid,
                  pdcp_config::pdcp_rx_config  cfg_,
                  pdcp_rx_upper_data_notifier& upper_dn_,
-                 timer_manager&               timers) :
-    pdcp_entity_tx_rx_base(lcid, cfg_.rb_type, cfg_.sn_size),
-    logger("PDCP", ue_index, lcid),
-    cfg(cfg_),
-    upper_dn(upper_dn_),
-    timers(timers)
-  {
-  }
+                 timer_manager&               timers);
 
   void handle_pdu(byte_buffer buf) final;
 
@@ -90,8 +83,10 @@ private:
 
   pdcp_rx_state st = {};
 
+  // Reordering queue and timer.
   std::map<uint32_t, byte_buffer> reorder_queue;
   unique_timer                    reordering_timer;
+  class reordering_callback;
 
   void deliver_all_consecutive_counts();
 
@@ -106,4 +101,14 @@ private:
   timer_manager& timers;
 };
 
+// Reordering callback (t-Reordering)
+class pdcp_entity_rx::reordering_callback
+{
+public:
+  explicit reordering_callback(pdcp_entity_rx* parent_) : parent(parent_) {}
+  void operator()(uint32_t timer_id);
+
+private:
+  pdcp_entity_rx* parent;
+};
 } // namespace srsgnb

@@ -12,6 +12,28 @@
 
 using namespace srsgnb;
 
+pdcp_entity_rx::pdcp_entity_rx(uint32_t                     ue_index,
+                               lcid_t                       lcid,
+                               pdcp_config::pdcp_rx_config  cfg_,
+                               pdcp_rx_upper_data_notifier& upper_dn_,
+                               timer_manager&               timers) :
+  pdcp_entity_tx_rx_base(lcid, cfg_.rb_type, cfg_.sn_size),
+  logger("PDCP", ue_index, lcid),
+  cfg(cfg_),
+  upper_dn(upper_dn_),
+  timers(timers)
+{
+  // t-Reordering timer
+  if (cfg.t_reordering != pdcp_t_reordering::infinity) {
+    reordering_timer = timers.create_unique_timer();
+    if (static_cast<uint32_t>(cfg.t_reordering) > 0) {
+      reordering_timer.set(static_cast<uint32_t>(cfg.t_reordering), reordering_callback{this});
+    }
+  } else if (cfg.rlc_mode == pdcp_rlc_mode::um) {
+    logger.log_error("{} possible PDCP-NR misconfiguration: using infinite re-ordering timer with RLC UM bearer.");
+  }
+}
+
 void pdcp_entity_rx::handle_pdu(byte_buffer pdu)
 {
   // Log PDU
@@ -167,7 +189,7 @@ void pdcp_entity_rx::deliver_all_consecutive_counts()
        reorder_queue.erase(it++)) {
     logger.log_debug("Delivering SDU with RCVD_COUNT {}", it->first);
 
-    // Pass PDCP SDU to the next layers
+    // Pass PDCP SDU to the upper layers
     upper_dn.on_new_sdu(std::move(it->second));
 
     // Update RX_DELIV
@@ -252,6 +274,40 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_view msg, uint32_t count)
   }
   logger.log_debug(ct.begin(), ct.end(), "Cipher decrypt output msg");
   return ct;
+}
+
+/*
+ * Timers
+ */
+// Reordering Timer Callback (t-reordering)
+void pdcp_entity_rx::reordering_callback::operator()(uint32_t /*timer_id*/)
+{
+  parent->logger.log_info("Reordering timer expired. RX_REORD={}, re-order queue size={}",
+                          parent->st.rx_reord,
+                          parent->reorder_queue.size());
+
+  // Deliver all PDCP SDU(s) with associated COUNT value(s) < RX_REORD
+  for (std::map<uint32_t, byte_buffer>::iterator it = parent->reorder_queue.begin();
+       it != parent->reorder_queue.end() && it->first < parent->st.rx_reord;
+       parent->reorder_queue.erase(it++)) {
+    // Deliver PDCP SDU to the upper layers
+    parent->upper_dn.on_new_sdu(std::move(it->second));
+  }
+
+  // Update RX_DELIV to the first PDCP SDU not delivered to the upper layers
+  parent->st.rx_deliv = parent->st.rx_reord;
+
+  // Deliver all PDCP SDU(s) consecutively associated COUNT value(s) starting from RX_REORD
+  parent->deliver_all_consecutive_counts();
+
+  if (parent->st.rx_deliv < parent->st.rx_next) {
+    parent->logger.log_debug("Updating RX_REORD to %ld. Old RX_REORD=%ld, RX_DELIV=%ld",
+                             parent->st.rx_next,
+                             parent->st.rx_reord,
+                             parent->st.rx_deliv);
+    parent->st.rx_reord = parent->st.rx_next;
+    parent->reordering_timer.run();
+  }
 }
 
 /*
