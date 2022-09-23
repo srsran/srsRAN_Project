@@ -92,6 +92,8 @@ struct dci_dl_context_information {
   unsigned n_rnti_pdcch_data;
   /// CCE position of the allocated PDCCH.
   cce_position cces;
+  /// Starting symbol of the Search Space.
+  unsigned starting_symbol;
   /// Precoding and beamforming info used for this DCI.
   beamforming_info bf;
   /// Transmission power information used for this DCI.
