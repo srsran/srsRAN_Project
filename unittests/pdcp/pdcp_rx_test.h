@@ -64,7 +64,7 @@ protected:
 
   /// \brief Initializes fixture according to size sequence number size
   /// \param sn_size_ size of the sequence number
-  void init(pdcp_sn_size sn_size_)
+  void init(pdcp_sn_size sn_size_, pdcp_t_reordering t_reordering = pdcp_t_reordering::ms10)
   {
     logger.info("Creating PDCP RX ({} bit)", to_number(sn_size_));
 
@@ -75,7 +75,7 @@ protected:
     config.rlc_mode              = pdcp_rlc_mode::am;
     config.sn_size               = sn_size;
     config.out_of_order_delivery = false;
-    config.t_reordering          = pdcp_t_reordering::ms10;
+    config.t_reordering          = t_reordering;
 
     // Set security keys
     sec_cfg.k_128_rrc_int = k_128_int;
@@ -98,6 +98,15 @@ protected:
   void get_test_pdu(uint32_t count, byte_buffer& exp_pdu)
   {
     ASSERT_EQ(true, get_pdu_test_vector(sn_size, count, exp_pdu));
+  }
+
+  /// \brief Helper to advance the timers
+  /// \param nof_tick Number of ticks to advance timers
+  void tick_all(uint32_t nof_ticks)
+  {
+    for (uint32_t i = 0; i < nof_ticks; i++) {
+      timers.tick_all();
+    }
   }
 
   uint32_t SN(uint32_t count) const { return count & (0xffffffffU >> (32U - static_cast<uint8_t>(sn_size))); }

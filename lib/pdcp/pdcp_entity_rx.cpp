@@ -141,7 +141,6 @@ void pdcp_entity_rx::handle_pdu(byte_buffer pdu)
   }
 
   // Handle reordering timers
-
   if (reordering_timer.is_running() and st.rx_deliv >= st.rx_reord) {
     reordering_timer.stop();
     logger.log_debug("Stopped t-Reordering - RX_DELIV={}, RX_REORD={}", st.rx_deliv, st.rx_reord);
