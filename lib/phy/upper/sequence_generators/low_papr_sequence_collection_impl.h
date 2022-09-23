@@ -21,10 +21,11 @@ namespace srsgnb {
 class low_papr_sequence_collection_impl : public low_papr_sequence_collection
 {
 public:
-  /// \brief Initialize the sequence generator with the length and an alpha list.
+  /// \brief Constructor: Initializes the sequence generator with the given list of \f$\alpha\f$ indices and the proper
+  /// length.
   ///
-  /// This method generates a collection of low PAPR sequences \f$r^{(\alpha, \beta)}_{u,v}\f$ as per TS 38.211
-  /// section 5.2.2 that can be later accessed by the method get(). The sequence length is
+  /// This method generates a collection of low PAPR sequences \f$r^{(\alpha, \delta)}_{u,v}\f$ as per TS38.211
+  /// Section 5.2.2 that can be later accessed by the method get(). The sequence length is
   /// \f$M_{ZC}=m \cdot N^{RB}_{sc}/2^\delta\f$.
   ///
   /// \param[in] generator Low PAPR sequence generator.
