@@ -46,11 +46,11 @@ private:
   using strategy_method = void (ldpc_encoder_avx2::*)();
 
   /// Placeholder for strategy implementation of preprocess_systematic_bits.
-  strategy_method systematic_bits = nullptr;
+  strategy_method systematic_bits;
   /// Placeholder for strategy implementation of encode_high_rate.
-  strategy_method high_rate = nullptr;
+  strategy_method high_rate;
   /// Placeholder for strategy implementation of encode_ext_region.
-  strategy_method ext_region = nullptr;
+  strategy_method ext_region;
 
   /// Helper method to set the high-rate encoding strategy.
   template <unsigned NODE_SIZE_AVX2_PH>
