@@ -87,6 +87,7 @@ private:
   std::map<uint32_t, byte_buffer> reorder_queue;
   unique_timer                    reordering_timer;
   class reordering_callback;
+  void handle_t_reordering_expire();
 
   void deliver_all_consecutive_counts();
 
