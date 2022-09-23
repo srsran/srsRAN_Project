@@ -111,6 +111,11 @@ protected:
   // quantities computed in the constructor.
   void SetUp() override
   {
+    // Check the factories again, since ASSERT_* is not fatal in SetUpTestSuite in old googletest releases.
+    ASSERT_NE(enc_factory_generic, nullptr);
+    ASSERT_NE(enc_factory_avx2, nullptr);
+    ASSERT_NE(dec_factory_generic, nullptr);
+
     decoder_test = dec_factory_generic->create();
     ASSERT_NE(decoder_test, nullptr);
 
