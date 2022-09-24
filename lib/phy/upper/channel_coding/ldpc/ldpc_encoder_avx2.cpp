@@ -14,21 +14,21 @@
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
 
-/// Rotates the contents of a node towards the left by \c steps chars, that is the \c steps * 8 least significant bits
-/// become the most significant ones - for long lifting sizes.
+/// \brief Rotates the contents of a node towards the left by \c steps chars, that is the \c steps * 8 least significant
+/// bits become the most significant ones - for long lifting sizes.
 /// \param[out] out       Pointer to the first AVX2 block of the output rotated node.
 /// \param[in]  in        Pointer to the first AVX2 block of the input node to rotate.
 /// \param[in]  steps     The order of the rotation as a number of chars.
 /// \param[in]  ls        The size of the node (lifting size).
-static void rotate_node_left(__m256i* out, const __m256i* in, unsigned steps, unsigned ls);
+static void rotate_node_left(int8_t* out, const int8_t* in, unsigned steps, unsigned ls);
 
-/// Rotates the contents of a node towards the right by \c steps chars, that is the \c steps * 8 most significant bits
-/// become the least significant ones - for long lifting sizes.
+/// \brief Rotates the contents of a node towards the right by \c steps chars, that is the \c steps * 8 most significant
+/// bits become the least significant ones - for long lifting sizes.
 /// \param[out] out       Pointer to the first AVX2 block of the output rotated node.
 /// \param[in]  in        Pointer to the first AVX2 block of the input node to rotate.
 /// \param[in]  steps     The order of the rotation as a number of chars.
 /// \param[in]  ls        The size of the node (lifting size).
-static void rotate_node_right(__m256i* out, const __m256i* in, unsigned steps, unsigned ls);
+static void rotate_node_right(int8_t* out, const int8_t* in, unsigned steps, unsigned ls);
 
 // Recursively selects the proper strategy for the high-rate region by successively decreasing the value of the template
 // parameter.
@@ -145,9 +145,10 @@ void ldpc_encoder_avx2::load_input(span<const uint8_t> in)
   unsigned i_input        = 0;
   unsigned i_avx2         = 0;
   unsigned node_size_byte = node_size_avx2 * AVX2_SIZE_BYTE;
+  unsigned tail_bytes     = node_size_byte - lifting_size;
   for (unsigned i_node = 0; i_node != bg_K; ++i_node) {
-    std::memset(codeblock.data_at(i_avx2), 0, node_size_byte);
     std::memcpy(codeblock.data_at(i_avx2), in.data() + i_input, lifting_size);
+    std::memset(codeblock.data_at(i_avx2, lifting_size), 0, tail_bytes);
     i_avx2 += node_size_avx2;
     i_input += lifting_size;
   }
@@ -170,7 +171,7 @@ void ldpc_encoder_avx2::systematic_bits_inner()
         i_aux += NODE_SIZE_AVX2_PH;
         continue;
       }
-      rotate_node_right(rotated_node.data_at(0), codeblock.data_at(i_blk), node_shift, lifting_size);
+      rotate_node_right(rotated_node.data_at(0, 0), codeblock.data_at(i_blk, 0), node_shift, lifting_size);
       for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
         __m256i tmp_epi8 = _mm256_and_si256(rotated_node.get_at(j), _mm256_set1_epi8(1));
         auxiliary.set_at(i_aux, _mm256_xor_si256(auxiliary.get_at(i_aux), tmp_epi8));
@@ -198,7 +199,7 @@ void ldpc_encoder_avx2::high_rate_bg1_i6_inner()
     rotated_node.set_at(j, tmp_epi8);
   }
 
-  rotate_node_left(codeblock.data_at(skip0), rotated_node.data_at(0), 105 % lifting_size, lifting_size);
+  rotate_node_left(codeblock.data_at(skip0, 0), rotated_node.data_at(0, 0), 105 % lifting_size, lifting_size);
 
   for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
     __m256i block0 = codeblock.get_at(skip0 + j);
@@ -230,7 +231,7 @@ void ldpc_encoder_avx2::high_rate_bg1_other_inner()
     codeblock.set_at(skip0 + j, block0);
   }
 
-  rotate_node_right(rotated_node.data_at(0), codeblock.data_at(skip0), 1, lifting_size);
+  rotate_node_right(rotated_node.data_at(0, 0), codeblock.data_at(skip0, 0), 1, lifting_size);
 
   for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
     __m256i rotated_j = rotated_node.get_at(j);
@@ -262,7 +263,7 @@ void ldpc_encoder_avx2::high_rate_bg2_i3_7_inner()
     codeblock.set_at(skip0 + j, block0);
   }
 
-  rotate_node_right(rotated_node.data_at(0), codeblock.data_at(skip0), 1, lifting_size);
+  rotate_node_right(rotated_node.data_at(0, 0), codeblock.data_at(skip0, 0), 1, lifting_size);
 
   for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
     __m256i rotated_j = rotated_node.get_at(j);
@@ -294,7 +295,7 @@ void ldpc_encoder_avx2::high_rate_bg2_other_inner()
     rotated_node.set_at(j, rotated_j);
   }
 
-  rotate_node_left(codeblock.data_at(skip0), rotated_node.data_at(0), 1, lifting_size);
+  rotate_node_left(codeblock.data_at(skip0, 0), rotated_node.data_at(0, 0), 1, lifting_size);
 
   for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
     __m256i block_0 = codeblock.get_at(skip0 + j);
@@ -332,7 +333,7 @@ void ldpc_encoder_avx2::ext_region_inner()
         continue;
       }
       rotate_node_right(
-          rotated_node.data_at(0), codeblock.data_at((bg_K + k) * NODE_SIZE_AVX2_PH), node_shift, lifting_size);
+          rotated_node.data_at(0, 0), codeblock.data_at((bg_K + k) * NODE_SIZE_AVX2_PH, 0), node_shift, lifting_size);
       for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
         codeblock.set_at(skip + j, _mm256_xor_si256(codeblock.get_at(skip + j), rotated_node.get_at(j)));
       }
@@ -360,14 +361,14 @@ void ldpc_encoder_avx2::write_codeblock(span<uint8_t> out)
   std::memcpy(out.data() + i_out, codeblock.data_at(i_in), remainder);
 }
 
-static void rotate_node_left(__m256i* out, const __m256i* in, unsigned steps, unsigned ls)
+static void rotate_node_left(int8_t* out, const int8_t* in, unsigned steps, unsigned ls)
 {
-  std::memcpy(out, reinterpret_cast<const int8_t*>(in) + ls - steps, steps);
-  std::memcpy(reinterpret_cast<int8_t*>(out) + steps, in, ls - steps);
+  std::memcpy(out, in + ls - steps, steps);
+  std::memcpy(out + steps, in, ls - steps);
 }
 
-static void rotate_node_right(__m256i* out, const __m256i* in, unsigned steps, unsigned ls)
+static void rotate_node_right(int8_t* out, const int8_t* in, unsigned steps, unsigned ls)
 {
-  std::memcpy(out, reinterpret_cast<const int8_t*>(in) + steps, ls - steps);
-  std::memcpy(reinterpret_cast<int8_t*>(out) + ls - steps, in, steps);
+  std::memcpy(out, in + steps, ls - steps);
+  std::memcpy(out + ls - steps, in, steps);
 }

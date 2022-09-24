@@ -15,9 +15,6 @@
 
 #include "avx2_support.h"
 #include "ldpc_encoder_impl.h"
-#include "srsgnb/srsvec/aligned_vec.h"
-
-#include <immintrin.h>
 
 namespace srsgnb {
 

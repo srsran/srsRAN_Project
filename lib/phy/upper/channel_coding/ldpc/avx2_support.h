@@ -55,6 +55,20 @@ public:
     return reinterpret_cast<const __m256i*>(inner_array.data() + index);
   }
 
+  /// Returns a pointer to the byte at position <tt>pos * AVX2_SIZE_BYTE + byte</tt> inside the array.
+  int8_t* data_at(unsigned pos, unsigned byte)
+  {
+    unsigned index = (pos + margin) * AVX2_SIZE_BYTE + byte;
+    return (inner_array.data() + index);
+  }
+
+  /// Returns a read-only pointer to the \c pos AVX2 register inside the array.
+  const int8_t* data_at(unsigned pos, unsigned byte) const
+  {
+    unsigned index = (pos + margin) * AVX2_SIZE_BYTE + byte;
+    return (inner_array.data() + index);
+  }
+
   // Unfortunately, we can't work with the array subscript operator [] since there seems to be no easy way to access a
   // __m256i object by reference.
 
