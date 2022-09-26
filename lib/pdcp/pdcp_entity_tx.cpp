@@ -27,14 +27,15 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 
   // The PDCP is not allowed to use the same COUNT value more than once for a given security key,
   // see TS 38.331, section 5.3.1.2. To avoid this, we notify the RRC once we exceed a "maximum"
-  // COUNT. It is then the RRC's responsibility to refresh the keys. We continue transmitting until after
-  // we reached UINT32_MAX. After that we simply refuse to TX any further.
-  if (st.tx_next > cfg.max_count) {
+  // COUNT. It is then the RRC's responsibility to refresh the keys. We continue transmitting until
+  // we reached a maximum hard COUNT, after which we simply refuse to TX any further.
+  if (st.tx_next > cfg.max_count.notify) {
     logger.log_warning("Approaching COUNT wrap-around, notifying RRC. COUNT={}");
     upper_cn.on_max_count_reached();
   }
-  if (st.tx_next == UINT32_MAX) {
+  if (st.tx_next >= cfg.max_count.hard) {
     logger.log_warning("Reached maximum COUNT, Re-fusing to transmit further. COUNT={}");
+    upper_cn.on_protocol_failure();
     return;
   }
 

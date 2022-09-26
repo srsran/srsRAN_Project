@@ -107,9 +107,18 @@ enum class pdcp_discard_timer {
   infinity       = -1
 };
 
-/// Max usable COUNT before notifying the RRC
-/// Roughly 75% of usable COUNTs.
-const uint32_t pdcp_default_max_count = 3221225472;
+/// The PDCP cannot re-use COUNTs, see TS 38.331, section 5.3.1.2.
+/// To avoid this, we define two thresholds, one where we accept messages
+/// but notify the RRC and another where we no longer accept messages.
+/// Here, we define some default values for this, both for TX and RX.
+const uint32_t pdcp_tx_default_max_count_notify = 0xC0000000;
+const uint32_t pdcp_tx_default_max_count_hard   = UINT32_MAX;
+const uint32_t pdcp_rx_default_max_count_notify = 0xC0000000;
+const uint32_t pdcp_rx_default_max_count_hard   = 0xD0000000;
+struct pdcp_max_count {
+  uint32_t notify;
+  uint32_t hard;
+};
 
 /// \brief Configurable parameters for PDCP that are common
 /// for both TX and RX.
@@ -122,7 +131,6 @@ struct pdcp_config_common {
   pdcp_security_direction direction;
   bool                    integrity_protection_required;
   bool                    ciphering_required;
-  uint32_t                max_count = pdcp_default_max_count;
 };
 
 /// \brief Configurable parameters for PDCP
@@ -135,10 +143,12 @@ struct pdcp_config {
   struct pdcp_tx_config : pdcp_config_common {
     pdcp_discard_timer discard_timer;
     bool               status_report_required;
+    pdcp_max_count     max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
   } tx;
   struct pdcp_rx_config : pdcp_config_common {
     bool              out_of_order_delivery;
     pdcp_t_reordering t_reordering;
+    pdcp_max_count    max_count = {pdcp_rx_default_max_count_notify, pdcp_rx_default_max_count_hard};
   } rx;
 };
 } // namespace srsgnb

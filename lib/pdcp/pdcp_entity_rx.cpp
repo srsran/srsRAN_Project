@@ -93,14 +93,15 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
 
   // The PDCP is not allowed to use the same COUNT value more than once for a given security key,
   // see TS 38.331, section 5.3.1.2. To avoid this, we notify the RRC once we exceed a "maximum"
-  // COUNT. It is then the RRC's responsibility to refresh the keys. We continue receiving until
-  // we reach a RCVD_COUNT of [0x80, 0x00, 0x00, 0x00], after which we refuse to receive any further.
-  if (rcvd_count > cfg.max_count) {
+  // notification COUNT. It is then the RRC's responsibility to refresh the keys. We continue receiving until
+  // we reach a hard maximum RCVD_COUNT, after which we refuse to receive any further.
+  if (rcvd_count > cfg.max_count.notify) {
     logger.log_warning("Approaching COUNT wrap-around, notifying RRC. COUNT={}");
     upper_cn.on_max_count_reached();
   }
-  if (rcvd_count >= 0x80000000) {
+  if (rcvd_count >= cfg.max_count.hard) {
     logger.log_error("Reached maximum COUNT, Re-fusing to transmit further. COUNT={}");
+    upper_cn.on_protocol_failure();
     return;
   }
 
