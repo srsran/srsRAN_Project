@@ -85,7 +85,7 @@ void test_ue_concurrent_procedures(test_outcome outcome)
   mac_test_dummy              mac_dummy;
   f1_ue_context_manager_dummy f1_ue_ctx_mng_dummy;
   f1_ue_ctx_mng_dummy.next_ue_create_response.result = true;
-  f1_ue_ctx_mng_dummy.next_ue_create_response.bearers_added.resize(1);
+  f1_ue_ctx_mng_dummy.next_ue_create_response.bearers_added.resize(2);
 
   timer_manager timers;
 
@@ -221,7 +221,7 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
   cfg.timers          = &timers;
 
   f1_ue_ctx_mng_dummy.next_ue_create_response.result = true;
-  f1_ue_ctx_mng_dummy.next_ue_create_response.bearers_added.resize(1);
+  f1_ue_ctx_mng_dummy.next_ue_create_response.bearers_added.resize(2);
 
   mac_dummy.wait_ue_create.result.ue_index   = first_ue_index;
   mac_dummy.wait_ue_create.result.cell_index = to_du_cell_index(0);
