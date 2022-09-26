@@ -787,6 +787,7 @@ int main(int argc, char** argv)
   // Configure the DU slot handler.
   mac_adaptor->set_cell_slot_handler(du_obj.get_slot_handler(to_du_cell_index(0)));
   mac_adaptor->set_cell_rach_handler(du_obj.get_rach_handler(to_du_cell_index(0)));
+  mac_adaptor->set_cell_pdu_handler(du_obj.get_pdu_handler(to_du_cell_index(0)));
 
   // Start processing.
   test_logger.info("Starting lower PHY...");

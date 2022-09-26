@@ -44,6 +44,9 @@ public:
   // See interface for documentation.
   void set_cell_rach_handler(mac_cell_rach_handler& mac_rach_handler) override;
 
+  // See interface for documentation.
+  void set_cell_pdu_handler(mac_pdu_handler& handler) override;
+
 private:
   /// Unique sector identifier for the adaptor.
   const unsigned sector_id;

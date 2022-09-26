@@ -12,6 +12,7 @@
 
 #include "srsgnb/fapi/slot_data_message_notifier.h"
 #include "srsgnb/mac/mac_cell_rach_handler.h"
+#include "srsgnb/mac/mac_pdu_handler.h"
 
 namespace srsgnb {
 namespace fapi_adaptor {
@@ -46,8 +47,12 @@ public:
   /// Sets the given cell-specific MAC RACH handler. This handler will be used to receive new RACH notifications.
   void set_cell_rach_handler(mac_cell_rach_handler& mac_rach_handler);
 
+  /// Sets the given cell-specific MAC PDU handler. This handler will be used to receive new PDU notifications.
+  void set_cell_pdu_handler(mac_pdu_handler& handler);
+
 private:
   std::reference_wrapper<mac_cell_rach_handler> rach_handler;
+  std::reference_wrapper<mac_pdu_handler>       pdu_handler;
 
   // :TODO: subcarrier spacing should be retrieved from the cells configuration in the future.
   const subcarrier_spacing scs;

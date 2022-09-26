@@ -46,3 +46,8 @@ void mac_fapi_adaptor_impl::set_cell_rach_handler(mac_cell_rach_handler& mac_rac
 {
   fapi_data_translator.set_cell_rach_handler(mac_rach_handler);
 }
+
+void mac_fapi_adaptor_impl::set_cell_pdu_handler(mac_pdu_handler& handler)
+{
+  fapi_data_translator.set_cell_pdu_handler(handler);
+}

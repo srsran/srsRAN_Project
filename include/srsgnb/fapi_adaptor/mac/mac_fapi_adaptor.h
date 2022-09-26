@@ -20,6 +20,7 @@ class slot_time_message_notifier;
 class mac_cell_rach_handler;
 class mac_cell_result_notifier;
 class mac_cell_slot_handler;
+class mac_pdu_handler;
 
 namespace fapi_adaptor {
 
@@ -48,6 +49,9 @@ public:
 
   /// \brief Configures the MAC cell RACH handler to the given one.
   virtual void set_cell_rach_handler(mac_cell_rach_handler& mac_rach_handler) = 0;
+
+  /// \brief Configures the MAC cell PDU handler to the given one.
+  virtual void set_cell_pdu_handler(mac_pdu_handler& handler) = 0;
 
   // :TODO: add the rest of the MAC handlers.
 

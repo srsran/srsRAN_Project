@@ -10,7 +10,6 @@
 
 #include "fapi_to_mac_data_msg_translator.h"
 #include "srsgnb/fapi/messages.h"
-#include "srsgnb/mac/mac_cell_rach_handler.h"
 
 using namespace srsgnb;
 using namespace fapi_adaptor;
@@ -23,20 +22,45 @@ public:
   void handle_rach_indication(const mac_rach_indication& rach_ind) override {}
 };
 
+class mac_pdu_handler_dummy : public mac_pdu_handler
+{
+public:
+  void handle_rx_data_indication(mac_rx_data_indication pdu) override {}
+};
+
 } // namespace
 
 /// This dummy object is passed to the constructor of the FAPI-to-MAC message translator as a placeholder for the
 /// actual, cell-specific MAC RACH handler, which will be later set up through the \ref set_cell_rach_handler() method.
 static mac_cell_rach_handler_dummy dummy_mac_rach_handler;
 
+/// This dummy object is passed to the constructor of the FAPI-to-MAC message translator as a placeholder for the
+/// actual, cell-specific MAC PDU handler, which will be later set up through the \ref set_cell_pdu_handler() method.
+static mac_pdu_handler_dummy dummy_pdu_handler;
+
 fapi_to_mac_data_msg_translator::fapi_to_mac_data_msg_translator(subcarrier_spacing scs) :
-  rach_handler(dummy_mac_rach_handler), scs(scs)
+  rach_handler(dummy_mac_rach_handler), pdu_handler(dummy_pdu_handler), scs(scs)
 {
 }
 
 void fapi_to_mac_data_msg_translator::on_dl_tti_response(const fapi::dl_tti_response_message& msg) {}
 
-void fapi_to_mac_data_msg_translator::on_rx_data_indication(const fapi::rx_data_indication_message& msg) {}
+void fapi_to_mac_data_msg_translator::on_rx_data_indication(const fapi::rx_data_indication_message& msg)
+{
+  mac_rx_data_indication indication;
+
+  indication.sl_rx      = slot_point(to_numerology_value(scs), msg.sfn, msg.slot);
+  indication.cell_index = to_du_cell_index(0);
+  for (const auto& fapi_pdu : msg.pdus) {
+    indication.pdus.emplace_back();
+    mac_rx_pdu& pdu = indication.pdus.back();
+    pdu.harq_id     = fapi_pdu.harq_id;
+    pdu.rnti        = fapi_pdu.rnti;
+    pdu.pdu         = span<const uint8_t>(fapi_pdu.data, fapi_pdu.pdu_length);
+  }
+
+  pdu_handler.get().handle_rx_data_indication(indication);
+}
 
 void fapi_to_mac_data_msg_translator::on_crc_indication(const fapi::crc_indication_message& msg) {}
 
@@ -94,4 +118,9 @@ void fapi_to_mac_data_msg_translator::on_rach_indication(const fapi::rach_indica
 void fapi_to_mac_data_msg_translator::set_cell_rach_handler(mac_cell_rach_handler& mac_rach_handler)
 {
   rach_handler = std::ref(mac_rach_handler);
+}
+
+void fapi_to_mac_data_msg_translator::set_cell_pdu_handler(mac_pdu_handler& handler)
+{
+  pdu_handler = std::ref(handler);
 }
