@@ -1,5 +1,5 @@
 Nightly:
-  cron: "00 1 * * 1-5"
+  cron: "00 1 * * 1-6"
   cron_timezone: "Europe/Madrid"
   ref: dev
   active: true
@@ -15,7 +15,7 @@ Nightly:
       value: "#ci_gnb"
 
 Weekly:
-  cron: "00 1 * * 6"
+  cron: "00 8 * * 6"
   cron_timezone: "Europe/Madrid"
   ref: next
   active: true

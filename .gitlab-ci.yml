@@ -5,10 +5,10 @@
 
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "22"
+    ref: "23"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/testing-tools
-    ref: "22"
+    ref: "23"
     file: .gitlab/ci-shared/features/all.yml
   - local: .gitlab/ci/build.yml
 
@@ -61,7 +61,8 @@ intermediate commits:
     include: .gitlab/ci/build.yml
     strategy: depend
   variables:
-    mode: default
+    # Schedule variables are not inherited by default
+    CI_DESCRIPTION: $CI_DESCRIPTION
   needs: []
 
 .trigger build on mr:
@@ -99,7 +100,6 @@ build [next]:
 
 build [asan]:
   extends: .trigger build on mr
-  allow_failure: true # Temporal
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
@@ -158,7 +158,7 @@ build alt [uhd]:
         UHD_VERSION: ["4.2.0.0", "4.1.0.5"]
         TEST_MODE: none
 
-valgrind:
+build [valgrind]:
   extends: .trigger build on weekly
   variables:
     OS: ubuntu-22.04
