@@ -27,7 +27,7 @@ public:
   uint32_t                pdu_counter = 0;
 
   /// PDCP TX upper layer control notifier
-  void on_max_hfn_reached() final {}
+  void on_max_count_reached() final {}
   void on_protocol_failure() final {}
 
   /// PDCP TX lower layer data notifier

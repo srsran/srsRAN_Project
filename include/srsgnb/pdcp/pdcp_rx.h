@@ -82,6 +82,7 @@ public:
 
   virtual void on_protocol_failure()  = 0;
   virtual void on_integrity_failure() = 0;
+  virtual void on_max_count_reached() = 0;
 };
 
 /// This interface represents the control SAP of the receiving side of a PDCP entity.

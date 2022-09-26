@@ -25,9 +25,17 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 {
   metrics_add_sdus(1, buf.length());
 
-  bool max_hfn_reached = false; // FIXME actually check HFN
-  if (max_hfn_reached) {
-    upper_cn.on_max_hfn_reached();
+  // The PDCP is not allowed to use the same COUNT value more than once for a given security key,
+  // see TS 38.331, section 5.3.1.2. To avoid this, we notify the RRC once we exceed a "maximum"
+  // COUNT. It is then the RRC's responsibility to refresh the keys. We continue transmitting until after
+  // we reached UINT32_MAX. After that we simply refuse to TX any further.
+  if (st.tx_next > cfg.max_count) {
+    logger.log_warning("Approaching COUNT wrap-around, notifying RRC. COUNT={}");
+    upper_cn.on_max_count_reached();
+  }
+  if (st.tx_next == UINT32_MAX) {
+    logger.log_warning("Reached maximum COUNT, Re-fusing to transmit further. COUNT={}");
+    return;
   }
 
   // Start discard timer

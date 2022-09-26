@@ -54,7 +54,7 @@ public:
   void send_pdu();
 
   // pdcp_tx_upper_layer_control_notifier interface
-  void on_max_hfn_reached() final{};
+  void on_max_count_reached() final{};
   void on_protocol_failure() final {}
 };
 } // namespace srsgnb

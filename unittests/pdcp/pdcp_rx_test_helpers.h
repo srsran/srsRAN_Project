@@ -39,6 +39,7 @@ public:
 
   /// PDCP TX/RX upper layer control notifier
   void on_protocol_failure() override {}
+  void on_max_count_reached() override {}
 };
 
 /// Fixture class for PDCP tests

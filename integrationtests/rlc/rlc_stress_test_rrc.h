@@ -26,7 +26,7 @@ public:
   // PDCP -> RRC
   void on_integrity_failure() final {}
   void on_protocol_failure() final {}
-  void on_max_hfn_reached() final {}
+  void on_max_count_reached() final {}
 };
 
 } // namespace srsgnb

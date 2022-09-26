@@ -107,6 +107,10 @@ enum class pdcp_discard_timer {
   infinity       = -1
 };
 
+/// Max usable COUNT before notifying the RRC
+/// Roughly 75% of usable COUNTs.
+const uint32_t pdcp_default_max_count = 3221225472;
+
 /// \brief Configurable parameters for PDCP that are common
 /// for both TX and RX.
 ///
@@ -118,6 +122,7 @@ struct pdcp_config_common {
   pdcp_security_direction direction;
   bool                    integrity_protection_required;
   bool                    ciphering_required;
+  uint32_t                max_count = pdcp_default_max_count;
 };
 
 /// \brief Configurable parameters for PDCP
