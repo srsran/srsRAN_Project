@@ -61,6 +61,9 @@ void srsgnb::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder&
                                      mac_pdu.n_id,
                                      mac_pdu.nof_layers);
 
+  // The low_papr_dmrs field expects transform precoding to be disabled.
+  srsgnb_assert(!mac_pdu.transform_precoding, "Transform precoding not yet supported");
+
   const dmrs_information& dmrs_cfg = mac_pdu.dmrs;
   builder.set_dmrs_parameters(dmrs_cfg.dmrs_symb_pos.to_uint64(),
                               convert_dmrs_type_mac_to_fapi(dmrs_cfg.config_type),
@@ -95,16 +98,18 @@ void srsgnb::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder&
 
   builder.set_allocation_in_time_parameters(mac_pdu.symbols.start(), mac_pdu.symbols.length());
 
+  // Sending data through PUSCH is optional, but for now, the MAC does not signal this, use the TB size to catch it.
+  srsgnb_assert(mac_pdu.tb_size_bytes, "Transport block of null size");
+
   // Add PUSCH Data.
   builder.add_optional_pusch_data(
       mac_pdu.rv_index, mac_pdu.harq_id, mac_pdu.new_data, mac_pdu.tb_size_bytes, mac_pdu.num_cb, {});
 
-  unsigned tb_size_lbrm_bytes = ldpc::MAX_CODEBLOCK_SIZE / 8;
+  const unsigned tb_size_lbrm_bytes = ldpc::MAX_CODEBLOCK_SIZE / 8;
   builder.set_maintenance_v3_frequency_allocation_parameters(
       mac_pdu.pusch_second_hop_prb, get_ldpc_base_graph(R, mac_pdu.tb_size_bytes), tb_size_lbrm_bytes);
 
   builder.set_maintenance_v3_dmrs_parameters(static_cast<unsigned>(mac_pdu.dmrs_hopping_mode));
 
-  // :TODO: add the rest of the parameters.
   // :TODO: add optional UCI.
 }
