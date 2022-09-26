@@ -12,15 +12,17 @@
 
 using namespace srsgnb;
 
-pdcp_entity_rx::pdcp_entity_rx(uint32_t                     ue_index,
-                               lcid_t                       lcid,
-                               pdcp_config::pdcp_rx_config  cfg_,
-                               pdcp_rx_upper_data_notifier& upper_dn_,
-                               timer_manager&               timers_) :
+pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
+                               lcid_t                          lcid,
+                               pdcp_config::pdcp_rx_config     cfg_,
+                               pdcp_rx_upper_data_notifier&    upper_dn_,
+                               pdcp_rx_upper_control_notifier& upper_cn_,
+                               timer_manager&                  timers_) :
   pdcp_entity_tx_rx_base(lcid, cfg_.rb_type, cfg_.sn_size),
   logger("PDCP", ue_index, lcid),
   cfg(cfg_),
   upper_dn(upper_dn_),
+  upper_cn(upper_cn_),
   timers(timers_)
 {
   // t-Reordering timer
@@ -120,7 +122,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer pdu)
     bool is_valid = integrity_verify(sdu, rcvd_count, mac);
     if (!is_valid) {
       logger.log_error(sdu.begin(), sdu.end(), "Integrity failed. Dropping PDU");
-      // upper_cn->notify_pdcp_integrity_error(lcid); // FIXME
+      upper_cn.on_integrity_failure();
       return; // Invalid packet, drop.
     }
     logger.log_debug(sdu.begin(), sdu.end(), "Integrity verification successful");

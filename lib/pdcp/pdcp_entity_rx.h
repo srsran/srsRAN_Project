@@ -41,11 +41,12 @@ class pdcp_entity_rx : public pdcp_entity_tx_rx_base,
                        public pdcp_rx_upper_control_interface
 {
 public:
-  pdcp_entity_rx(uint32_t                     ue_index,
-                 lcid_t                       lcid,
-                 pdcp_config::pdcp_rx_config  cfg_,
-                 pdcp_rx_upper_data_notifier& upper_dn_,
-                 timer_manager&               timers);
+  pdcp_entity_rx(uint32_t                        ue_index,
+                 lcid_t                          lcid,
+                 pdcp_config::pdcp_rx_config     cfg_,
+                 pdcp_rx_upper_data_notifier&    upper_dn_,
+                 pdcp_rx_upper_control_notifier& upper_cn_,
+                 timer_manager&                  timers);
 
   void handle_pdu(byte_buffer buf) final;
 
@@ -97,7 +98,8 @@ private:
   /*
    * Notifiers
    */
-  pdcp_rx_upper_data_notifier& upper_dn;
+  pdcp_rx_upper_data_notifier&    upper_dn;
+  pdcp_rx_upper_control_notifier& upper_cn;
 
   timer_manager& timers;
 };

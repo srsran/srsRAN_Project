@@ -23,8 +23,9 @@ namespace srsgnb {
 class pdcp_rx_test_frame : public pdcp_rx_upper_data_notifier, public pdcp_rx_upper_control_notifier
 {
 public:
-  std::queue<byte_buffer> sdu_queue   = {};
-  uint32_t                sdu_counter = 0;
+  std::queue<byte_buffer> sdu_queue              = {};
+  uint32_t                sdu_counter            = 0;
+  uint32_t                integrity_fail_counter = 0;
 
   /// PDCP RX upper layer data notifier
   void on_new_sdu(byte_buffer sdu) override
@@ -34,7 +35,7 @@ public:
   }
 
   /// PDCP RX upper layer control notifier
-  void on_integrity_failure() override {}
+  void on_integrity_failure() override { integrity_fail_counter++; }
 
   /// PDCP TX/RX upper layer control notifier
   void on_protocol_failure() override {}
@@ -88,7 +89,8 @@ protected:
     sec_cfg.cipher_algo = ciphering_algorithm::nea1;
 
     // Create PDCP RX entity
-    pdcp_rx = std::make_unique<pdcp_entity_rx>(0, LCID_SRB1, config, test_frame, timers);
+    test_frame = std::make_unique<pdcp_rx_test_frame>();
+    pdcp_rx    = std::make_unique<pdcp_entity_rx>(0, LCID_SRB1, config, *test_frame, *test_frame, timers);
     srslog::flush();
   }
 
@@ -115,10 +117,10 @@ protected:
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 
-  pdcp_sn_size                sn_size = GetParam();
-  pdcp_config::pdcp_rx_config config  = {};
-  timer_manager               timers;
-  pdcp_rx_test_frame          test_frame = {};
+  pdcp_sn_size                        sn_size = GetParam();
+  pdcp_config::pdcp_rx_config         config  = {};
+  timer_manager                       timers;
+  std::unique_ptr<pdcp_rx_test_frame> test_frame = {};
 
   sec_128_as_config sec_cfg;
 

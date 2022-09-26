@@ -17,6 +17,12 @@ using namespace srsgnb;
 
 std::unique_ptr<pdcp_entity> srsgnb::create_pdcp_entity(pdcp_entity_creation_message& msg)
 {
-  return std::make_unique<pdcp_entity_impl>(
-      msg.ue_index, msg.lcid, msg.config, *msg.tx_lower, *msg.tx_upper_cn, *msg.rx_upper_dn, *msg.timers);
+  return std::make_unique<pdcp_entity_impl>(msg.ue_index,
+                                            msg.lcid,
+                                            msg.config,
+                                            *msg.tx_lower,
+                                            *msg.tx_upper_cn,
+                                            *msg.rx_upper_dn,
+                                            *msg.rx_upper_cn,
+                                            *msg.timers);
 }

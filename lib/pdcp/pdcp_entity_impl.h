@@ -30,12 +30,13 @@ public:
                    pdcp_tx_lower_notifier&         tx_lower_dn,
                    pdcp_tx_upper_control_notifier& tx_upper_cn,
                    pdcp_rx_upper_data_notifier&    rx_upper_dn,
+                   pdcp_rx_upper_control_notifier& rx_upper_cn,
                    timer_manager&                  timers) :
     logger("PDCP", ue_index, lcid)
   {
     tx = std::make_unique<pdcp_entity_tx>(ue_index, lcid, config.tx, tx_lower_dn, tx_upper_cn, timers);
     logger.log_info("PDCP TX configured: {}", config.tx);
-    rx = std::make_unique<pdcp_entity_rx>(ue_index, lcid, config.rx, rx_upper_dn, timers);
+    rx = std::make_unique<pdcp_entity_rx>(ue_index, lcid, config.rx, rx_upper_dn, rx_upper_cn, timers);
     logger.log_info("PDCP RX configured: {}", config.rx);
   }
   ~pdcp_entity_impl() override = default;
