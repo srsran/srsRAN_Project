@@ -199,6 +199,39 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
   }
 }
 
+/// Test COUNT wrap-around protection systems
+TEST_P(pdcp_tx_test, count_wraparound)
+{
+  uint32_t       tx_next = 262144;
+  uint32_t       n_sdus  = 10;
+  pdcp_max_count max_count{tx_next, tx_next + n_sdus};
+  init(GetParam(), pdcp_discard_timer::ms10, max_count);
+
+  auto test_max_count = [this, n_sdus](uint32_t tx_next) {
+    // Set state of PDCP entiy
+    pdcp_tx_state st = {tx_next};
+    pdcp_tx->set_state(st);
+    pdcp_tx->set_as_security_config(sec_cfg);
+    pdcp_tx->enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+
+    // Write first SDU
+    for (uint32_t i = 0; i < n_sdus; i++) {
+      byte_buffer sdu = {sdu1};
+      pdcp_tx->handle_sdu(std::move(sdu));
+      ASSERT_EQ(1, pdcp_tx->nof_discard_timers());
+    }
+    // TODO check nof max_count reached and max protocol failures.
+    ASSERT_EQ(true, false);
+  };
+
+  if (config.sn_size == pdcp_sn_size::size12bits) {
+    test_max_count(tx_next);
+  } else if (config.sn_size == pdcp_sn_size::size18bits) {
+    test_max_count(tx_next);
+  } else {
+    FAIL();
+  }
+}
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////

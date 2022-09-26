@@ -42,7 +42,9 @@ class pdcp_tx_test_helper
 protected:
   /// \brief Initializes fixture according to size sequence number size
   /// \param sn_size_ size of the sequence number
-  void init(pdcp_sn_size sn_size_, pdcp_discard_timer discard_timer = pdcp_discard_timer::ms10)
+  void init(pdcp_sn_size       sn_size_,
+            pdcp_discard_timer discard_timer = pdcp_discard_timer::ms10,
+            pdcp_max_count     max_count     = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard})
   {
     logger.info("Creating PDCP TX ({} bit)", to_number(sn_size_));
 
@@ -55,6 +57,7 @@ protected:
     config.rlc_mode      = pdcp_rlc_mode::am;
     config.direction     = pdcp_security_direction::downlink;
     config.discard_timer = discard_timer;
+    config.max_count     = max_count;
 
     // Set security keys
     sec_cfg.k_128_rrc_int = k_128_int;
