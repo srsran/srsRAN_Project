@@ -236,7 +236,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     srb_pdcp.tx_upper_cn = nullptr; // TODO: add CN handler
     srb_pdcp.rx_upper_dn = srb.pdcp_context->rrc_rx_notifier.get();
     srb_pdcp.rx_upper_cn = nullptr; // TODO: add CN handler
-    srb_pdcp.timers      = nullptr; // TODO: add timers
+    srb_pdcp.timers      = &timer_db;
 
     // create PDCP entity
     srb.pdcp_context->pdcp_bearer = create_pdcp_entity(srb_pdcp);
