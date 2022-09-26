@@ -218,7 +218,7 @@ static dci_dl_context_information generate_dci_context(const bwp_configuration& 
   info.coreset_cfg = &coreset;
 
   info.rnti              = generate_rnti();
-  info.n_rnti_pdcch_data = 2;
+  info.n_id_pdcch_data   = 2;
   info.n_rnti_pdcch_data = 4;
   info.cces.ncce         = 2;
   info.cces.aggr_lvl     = static_cast<aggregation_level>(generate_case_pattern());
