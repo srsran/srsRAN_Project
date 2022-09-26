@@ -67,11 +67,11 @@ public:
   void on_buffer_state_update(unsigned bsr) override
   {
     srsgnb_assert(mac != nullptr, "RLC Tx Buffer State notifier is disconnected");
-    mac_dl_bsr_indication_message msg{};
-    msg.ue_index = ue_index;
-    msg.lcid     = lcid;
-    msg.bsr      = bsr;
-    mac->handle_dl_bsr_update_required(msg);
+    mac_dl_buffer_state_indication_message bs{};
+    bs.ue_index = ue_index;
+    bs.lcid     = lcid;
+    bs.bs       = bsr;
+    mac->handle_dl_buffer_state_update_required(bs);
   }
 
 private:

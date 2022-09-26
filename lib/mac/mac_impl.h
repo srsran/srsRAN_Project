@@ -51,7 +51,7 @@ public:
 
   mac_pdu_handler& get_pdu_handler(du_cell_index_t cell_index) override { return ul_unit; }
 
-  void handle_dl_bsr_update_required(const mac_dl_bsr_indication_message& dl_bsr) override;
+  void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override;
 
 private:
   mac_common_config_t cfg;

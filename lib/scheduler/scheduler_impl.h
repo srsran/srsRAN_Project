@@ -48,7 +48,7 @@ public:
   }
 
   /// UE DL Buffer Status Report.
-  void handle_dl_bsr_indication(const dl_bsr_indication_message& bsr) override
+  void handle_dl_buffer_state_update_indication(const dl_buffer_state_indication_message& bs) override
   { // TODO
   }
 

@@ -190,12 +190,12 @@ void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_
         srsgnb_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
         // Update DL BSR for the allocated logical channel.
-        dl_bsr_indication_message bsr{};
-        bsr.ue_index = ue_mng.get_ue_index(grant.pdsch_cfg.rnti);
-        bsr.rnti     = grant.pdsch_cfg.rnti;
-        bsr.lcid     = bearer_alloc.lcid;
-        bsr.bsr      = bearer->on_buffer_state_update();
-        sched_obj.handle_dl_bsr_indication(bsr);
+        dl_buffer_state_indication_message bs{};
+        bs.ue_index = ue_mng.get_ue_index(grant.pdsch_cfg.rnti);
+        bs.rnti     = grant.pdsch_cfg.rnti;
+        bs.lcid     = bearer_alloc.lcid;
+        bs.bs       = bearer->on_buffer_state_update();
+        sched_obj.handle_dl_buffer_state_update_indication(bs);
       }
     }
   }

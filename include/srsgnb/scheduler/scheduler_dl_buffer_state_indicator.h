@@ -15,12 +15,12 @@
 
 namespace srsgnb {
 
-/// DL Buffer state update for a given RLC bearer.
-struct dl_bsr_indication_message {
+/// DL Buffer state for a given RLC bearer.
+struct dl_buffer_state_indication_message {
   du_ue_index_t ue_index;
   rnti_t        rnti;
   lcid_t        lcid;
-  unsigned      bsr;
+  unsigned      bs;
 };
 
 /// Scheduler interface to push DL Buffer State Reports for a given RLC bearer.
@@ -30,7 +30,7 @@ public:
   virtual ~scheduler_dl_buffer_state_indicator() = default;
 
   /// Forward DL buffer state update to scheduler.
-  virtual void handle_dl_bsr_indication(const dl_bsr_indication_message& bsr) = 0;
+  virtual void handle_dl_buffer_state_update_indication(const dl_buffer_state_indication_message& bs) = 0;
 };
 
 } // namespace srsgnb

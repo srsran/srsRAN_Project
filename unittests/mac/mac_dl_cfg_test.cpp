@@ -50,7 +50,7 @@ public:
   const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override { return nullptr; }
   void                handle_sr_indication(const sr_indication_message& sr) override {}
   void                handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override {}
-  void                handle_dl_bsr_indication(const dl_bsr_indication_message& bsr) override {}
+  void                handle_dl_buffer_state_update_indication(const dl_buffer_state_indication_message& bs) override {}
   void                handle_crc_indication(const ul_crc_indication& crc) override {}
 };
 
