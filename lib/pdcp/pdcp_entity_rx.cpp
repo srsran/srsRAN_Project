@@ -16,12 +16,12 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                     ue_index,
                                lcid_t                       lcid,
                                pdcp_config::pdcp_rx_config  cfg_,
                                pdcp_rx_upper_data_notifier& upper_dn_,
-                               timer_manager&               timers) :
+                               timer_manager&               timers_) :
   pdcp_entity_tx_rx_base(lcid, cfg_.rb_type, cfg_.sn_size),
   logger("PDCP", ue_index, lcid),
   cfg(cfg_),
   upper_dn(upper_dn_),
-  timers(timers)
+  timers(timers_)
 {
   // t-Reordering timer
   if (cfg.t_reordering != pdcp_t_reordering::infinity) {
