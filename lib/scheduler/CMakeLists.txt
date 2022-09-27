@@ -31,6 +31,7 @@ set(SOURCES
         ue_scheduling/ue_cell_grid_allocator.cpp
         ue_scheduling/ue_configuration.cpp
         ue_scheduling/ue_event_manager.cpp
+        ue_scheduling/ue_srb0_scheduler.cpp
         ue_scheduling/ue_scheduler_impl.cpp
         ue_scheduling/dl_logical_channel_manager.cpp
         scheduler_factory.cpp

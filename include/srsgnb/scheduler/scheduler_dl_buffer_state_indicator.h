@@ -15,7 +15,7 @@
 
 namespace srsgnb {
 
-/// DL Buffer state for a given RLC bearer.
+/// DL buffer state for a given RLC bearer.
 struct dl_buffer_state_indication_message {
   du_ue_index_t ue_index;
   rnti_t        rnti;
@@ -23,7 +23,7 @@ struct dl_buffer_state_indication_message {
   unsigned      bs;
 };
 
-/// Scheduler interface to push DL Buffer State Reports for a given RLC bearer.
+/// Scheduler interface to push DL buffer state Reports for a given RLC bearer.
 class scheduler_dl_buffer_state_indicator
 {
 public:

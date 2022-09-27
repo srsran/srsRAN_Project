@@ -38,6 +38,10 @@ public:
   /// Schedule UE DL grants for a given {slot, cell}.
   virtual void run_slot(slot_point slot_tx, du_cell_index_t cell_index) = 0;
 
+  /// Handles DL buffer state reported by upper layers.
+  /// \param[in] bs DL buffer state. This object provides buffer state for a particular logical channel.
+  virtual void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) = 0;
+
   /// Return UE configurator.
   virtual scheduler_ue_configurator& get_ue_configurator() = 0;
 

@@ -47,9 +47,10 @@ public:
     feedback_handler.handle_ul_bsr_indication(bsr);
   }
 
-  /// UE DL Buffer Status Report.
+  /// UE DL buffer state update.
   void handle_dl_buffer_state_update_indication(const dl_buffer_state_indication_message& bs) override
-  { // TODO
+  {
+    ue_sched->handle_dl_buffer_state_indication(bs);
   }
 
   void handle_crc_indication(const ul_crc_indication& crc) override;

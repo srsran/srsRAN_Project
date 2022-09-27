@@ -18,6 +18,7 @@
 #include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
 #include "ue_scheduler.h"
+#include "ue_srb0_scheduler.h"
 
 namespace srsgnb {
 
@@ -32,6 +33,9 @@ public:
 
   /// Schedule UE DL grants for a given {slot, cell}.
   void run_slot(slot_point slot_tx, du_cell_index_t cell_index) override;
+
+  /// Handles DL buffer state reported by upper layers.
+  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override;
 
   scheduler_ue_configurator& get_ue_configurator() override { return event_mng; }
 
@@ -51,6 +55,9 @@ private:
 
   /// Scheduling Strategy
   std::unique_ptr<scheduler_policy> sched_strategy;
+
+  /// SRB0 scheduler
+  ue_srb0_scheduler srb0_sched;
 
   /// Mutex used to lock carriers for joint carrier scheduling.
   slot_sync_point sync_point;
