@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/rlc/rlc_tx.h"
 #include "srsgnb/srslog/srslog.h"
@@ -136,4 +137,33 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
   }
   return true;
 }
+
+inline rlc_config get_rlc_config_from_args(const stress_test_args& args)
+{
+  rlc_config cnfg = {};
+  if (args.mode == "TM") {
+    cnfg.mode = srsgnb::rlc_mode::tm;
+  } else if (args.mode == "UM6") {
+    cnfg.mode                  = srsgnb::rlc_mode::um_bidir;
+    cnfg.um.rx.sn_field_length = rlc_um_sn_size::size6bits;
+    cnfg.um.tx.sn_field_length = rlc_um_sn_size::size6bits;
+  } else if (args.mode == "UM12") {
+    cnfg.mode                  = srsgnb::rlc_mode::um_bidir;
+    cnfg.um.rx.sn_field_length = rlc_um_sn_size::size12bits;
+    cnfg.um.tx.sn_field_length = rlc_um_sn_size::size12bits;
+  } else if (args.mode == "AM12") {
+    cnfg.mode                  = srsgnb::rlc_mode::am;
+    cnfg.am.rx.sn_field_length = rlc_am_sn_size::size12bits;
+    cnfg.am.tx.sn_field_length = rlc_am_sn_size::size12bits;
+  } else if (args.mode == "AM18") {
+    cnfg.mode                  = srsgnb::rlc_mode::am;
+    cnfg.am.rx.sn_field_length = rlc_am_sn_size::size18bits;
+    cnfg.am.tx.sn_field_length = rlc_am_sn_size::size18bits;
+  } else {
+    fprintf(stderr, "Unsupported RLC mode %s, exiting.\n", args.mode.c_str());
+    exit(-1);
+  }
+  return cnfg;
+}
+
 } // namespace srsgnb
