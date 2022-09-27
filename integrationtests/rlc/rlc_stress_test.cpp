@@ -16,97 +16,6 @@
 
 using namespace srsgnb;
 
-void pdcp_traffic_sink::on_new_sdu(byte_buffer_slice_chain pdu)
-{
-  logger.info(pdu.begin(), pdu.end(), "Received PDU ({} B)", pdu.length());
-}
-
-void pdcp_traffic_source::send_pdu()
-{
-  rlc_sdu sdu;
-  sdu.pdcp_count = pdcp_count++;
-
-  // random or fixed SDU size
-  if (args.sdu_size < 1) {
-    sdu_size = int_dist(rgen);
-  } else {
-    sdu_size = args.sdu_size;
-  }
-
-  for (uint32_t i = 0; i < sdu_size; i++) {
-    sdu.buf.append(payload);
-    payload++;
-  }
-
-  rlc_tx_upper->handle_sdu(sdu);
-}
-
-void mac_dummy::run_tx_tti()
-{
-  // Pull a number of RLC PDUs
-  for (uint32_t i = 0; i < args.nof_pdu_tti; i++) {
-    // Get MAC opportunity size (maximum size of the RLC PDU)
-    float factor = 1.0f;
-    if (not args.const_opp) {
-      factor = 0.5f + real_dist(rgen);
-    }
-    int opp_size = static_cast<int>(args.avg_opp_size * factor);
-
-    // Request data to transmit
-    if (bsr.load(std::memory_order_relaxed) > 0) {
-      byte_buffer_slice_chain pdu = rlc_tx_lower->pull_pdu(opp_size);
-      // Push RLC PDU in the list
-      if (pdu.length() > 0) {
-        pdu_list.push_back(std::move(pdu));
-      }
-    }
-  }
-}
-
-void mac_dummy::run_rx_tti()
-{
-  auto pdu_it      = pdu_list.begin(); // PDU iterator
-  bool skip_action = false;            // Avoid discarding a duplicated or duplicating a discarded
-
-  while (pdu_it != pdu_list.end()) {
-    // Drop
-    float rnd = real_dist(rgen);
-    if (std::isnan(rnd) || ((rnd > args.pdu_drop_rate) || skip_action)) {
-      // Cut/Trim
-      byte_buffer_slice_chain::iterator pdu_end = pdu_it->end();
-      if ((real_dist(rgen) < args.pdu_cut_rate)) {
-        size_t pdu_len     = pdu_it->length();
-        size_t trimmed_len = static_cast<size_t>(pdu_len * real_dist(rgen));
-        if (trimmed_len < pdu_len) {
-          pdu_end = pdu_it->begin() + trimmed_len;
-        }
-        logger.info("Cutting MAC PDU len ({} B -> {} B)", pdu_it->length(), pdu_len);
-      }
-
-      // Write PDU copy in RX
-      rlc_rx_lower->handle_pdu(byte_buffer(pdu_it->begin(), pdu_end));
-
-      // Write PCAP
-      // TODO: write PCAP
-    } else {
-      logger.info(pdu_it->begin(), pdu_it->end(), "Dropping RLC PDU ({} B)", pdu_it->length());
-      skip_action = true; // Avoid drop duplicating this PDU
-    }
-
-    // Duplicate
-    if (real_dist(rgen) > args.pdu_duplicate_rate || skip_action) {
-      pdu_it++;
-      skip_action = false; // Allow action on the next PDU
-    } else {
-      logger.info(pdu_it->begin(), pdu_it->end(), "Duplicating RLC PDU ({} B)", pdu_it->length());
-      skip_action = true; // Avoid drop of this PDU
-    }
-  }
-
-  // clear pdu_list
-  pdu_list.clear();
-}
-
 void stress_test(stress_test_args args)
 {
   srslog::sink* log_sink =
@@ -155,14 +64,14 @@ void stress_test(stress_test_args args)
   // RLC1
   std::unique_ptr<pdcp_traffic_sink>   traffic_sink1   = std::make_unique<pdcp_traffic_sink>();
   std::unique_ptr<pdcp_traffic_source> traffic_source1 = std::make_unique<pdcp_traffic_source>(args);
-  rlc_entity_creation_message          msg1;
-  msg1.rx_upper_dn                 = traffic_sink1.get();
-  msg1.tx_upper_cn                 = traffic_source1.get();
-  msg1.tx_upper_dn                 = traffic_source1.get();
-  msg1.tx_lower_dn                 = mac12.get();
-  msg1.config                      = cnfg;
-  msg1.timers                      = &timers;
-  std::unique_ptr<rlc_entity> rlc1 = create_rlc_entity(msg1);
+  rlc_entity_creation_message          msg1            = {};
+  msg1.rx_upper_dn                                     = traffic_sink1.get();
+  msg1.tx_upper_cn                                     = traffic_source1.get();
+  msg1.tx_upper_dn                                     = traffic_source1.get();
+  msg1.tx_lower_dn                                     = mac12.get();
+  msg1.config                                          = cnfg;
+  msg1.timers                                          = &timers;
+  std::unique_ptr<rlc_entity> rlc1                     = create_rlc_entity(msg1);
   traffic_source1->set_rlc_tx_upper(rlc1->get_tx_upper_layer_data_interface());
   mac12->set_rlc_tx_lower(rlc1->get_tx_lower_layer_interface());
   mac21->set_rlc_rx_lower(rlc1->get_rx_lower_layer_interface());
@@ -170,14 +79,14 @@ void stress_test(stress_test_args args)
   // RLC2
   std::unique_ptr<pdcp_traffic_sink>   traffic_sink2   = std::make_unique<pdcp_traffic_sink>();
   std::unique_ptr<pdcp_traffic_source> traffic_source2 = std::make_unique<pdcp_traffic_source>(args);
-  rlc_entity_creation_message          msg2;
-  msg2.rx_upper_dn                 = traffic_sink2.get();
-  msg2.tx_upper_cn                 = traffic_source2.get();
-  msg2.tx_upper_dn                 = traffic_source2.get();
-  msg2.tx_lower_dn                 = mac21.get();
-  msg2.config                      = cnfg;
-  msg2.timers                      = &timers;
-  std::unique_ptr<rlc_entity> rlc2 = create_rlc_entity(msg2);
+  rlc_entity_creation_message          msg2            = {};
+  msg2.rx_upper_dn                                     = traffic_sink2.get();
+  msg2.tx_upper_cn                                     = traffic_source2.get();
+  msg2.tx_upper_dn                                     = traffic_source2.get();
+  msg2.tx_lower_dn                                     = mac21.get();
+  msg2.config                                          = cnfg;
+  msg2.timers                                          = &timers;
+  std::unique_ptr<rlc_entity> rlc2                     = create_rlc_entity(msg2);
   traffic_source2->set_rlc_tx_upper(rlc2->get_tx_upper_layer_data_interface());
   mac21->set_rlc_tx_lower(rlc2->get_tx_lower_layer_interface());
   mac12->set_rlc_rx_lower(rlc2->get_rx_lower_layer_interface());
