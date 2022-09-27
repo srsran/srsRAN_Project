@@ -47,7 +47,7 @@ void mac_dummy::run_tx_tti()
   for (uint32_t i = 0; i < args.nof_pdu_tti; i++) {
     // Get MAC PDU size
     float factor = 1.0f;
-    if (args.random_opp) {
+    if (not args.const_opp) {
       factor = 0.5f + real_dist(rgen);
     }
     int opp_size = static_cast<int>(args.avg_opp_size * factor);
