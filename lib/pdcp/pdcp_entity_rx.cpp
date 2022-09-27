@@ -40,6 +40,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   } else if (cfg.rlc_mode == pdcp_rlc_mode::um) {
     logger.log_error("{} possible PDCP-NR misconfiguration: using infinite re-ordering timer with RLC UM bearer.");
   }
+  logger.log_info("Configured PDCP RX entity. Configuration: {}", cfg);
 }
 
 void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
@@ -53,12 +54,6 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
                   pdu.length(),
                   integrity_enabled,
                   ciphering_enabled);
-
-  // TODO Config max HFN and notify RRC
-  // if (rx_overflow) {
-  //  logger.warning("Rx PDCP COUNTs have overflowed. Discarding SDU.");
-  //  return;
-  // }
 
   // Sanity check
   if (pdu.length() <= hdr_len_bytes) {
@@ -96,6 +91,20 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
     rcvd_hfn = HFN(st.rx_deliv);
   }
   rcvd_count = COUNT(rcvd_hfn, rcvd_sn);
+
+  // The PDCP is not allowed to use the same COUNT value more than once for a given security key,
+  // see TS 38.331, section 5.3.1.2. To avoid this, we notify the RRC once we exceed a "maximum"
+  // notification COUNT. It is then the RRC's responsibility to refresh the keys. We continue receiving until
+  // we reach a hard maximum RCVD_COUNT, after which we refuse to receive any further.
+  if (rcvd_count > cfg.max_count.notify) {
+    logger.log_warning("Approaching COUNT wrap-around, notifying RRC. COUNT={}", rcvd_count);
+    upper_cn.on_max_count_reached();
+  }
+  if (rcvd_count >= cfg.max_count.hard) {
+    logger.log_error("Reached maximum COUNT, Re-fusing to transmit further. COUNT={}", rcvd_count);
+    upper_cn.on_protocol_failure();
+    return;
+  }
 
   /*
    * TS 38.323, section 5.8: Deciphering

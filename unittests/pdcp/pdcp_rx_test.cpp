@@ -296,6 +296,46 @@ TEST_P(pdcp_rx_test, rx_integrity_fail)
   }
 }
 
+/// Test count wrap-around protection for PDCP RX
+/// Receive one PDU before notify limit, four after notify
+/// limit and one after the hard limit.
+TEST_P(pdcp_rx_test, count_wraparound)
+{
+  uint32_t       rx_next_notify = 262144;
+  uint32_t       rx_next_max    = 262148;
+  uint32_t       rx_next_start  = 262143;
+  uint32_t       n_sdus         = 6;
+  pdcp_max_count max_count{rx_next_notify, rx_next_max};
+  init(GetParam(), pdcp_t_reordering::ms10, max_count);
+
+  auto test_max_count = [this, n_sdus](uint32_t count) {
+    // Set state of PDCP entiy
+    // Do not enable integrity or ciphering, to make it easier to generate test vectors.
+    pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
+    pdcp_rx->set_state(init_state);
+    pdcp_rx->set_as_security_config(sec_cfg);
+
+    // Write SDUs
+    for (uint32_t i = 0; i < n_sdus; i++) {
+      byte_buffer pdu;
+      get_test_pdu(count + i, pdu);
+      pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(pdu)});
+    }
+
+    // check nof max_count reached and max protocol failures.
+    ASSERT_EQ(5, test_frame->sdu_queue.size());
+    ASSERT_EQ(4, test_frame->nof_max_count_reached);
+    ASSERT_EQ(1, test_frame->nof_protocol_failure);
+  };
+
+  if (config.sn_size == pdcp_sn_size::size12bits) {
+    // test_max_count(rx_next_start);
+  } else if (config.sn_size == pdcp_sn_size::size18bits) {
+    test_max_count(rx_next_start);
+  } else {
+    FAIL();
+  }
+}
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////

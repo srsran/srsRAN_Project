@@ -206,11 +206,13 @@ struct formatter<srsgnb::pdcp_config::pdcp_tx_config> {
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "rb_type={}, rlc_mode={}, sn_size={}, discard_timer={}",
+                     "rb_type={}, rlc_mode={}, sn_size={}, discard_timer={}, max_count=[{}, {}]",
                      cfg.rb_type,
                      cfg.rlc_mode,
                      cfg.sn_size,
-                     cfg.discard_timer);
+                     cfg.discard_timer,
+                     cfg.max_count.notify,
+                     cfg.max_count.hard);
   }
 };
 
@@ -228,11 +230,13 @@ struct formatter<srsgnb::pdcp_config::pdcp_rx_config> {
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "rb_type={}, rlc_mode={}, sn_size={}, t_reordering={}",
+                     "rb_type={}, rlc_mode={}, sn_size={}, t_reordering={}, max_count=[{}, {}]",
                      cfg.rb_type,
                      cfg.rlc_mode,
                      cfg.sn_size,
-                     cfg.t_reordering);
+                     cfg.t_reordering,
+                     cfg.max_count.notify,
+                     cfg.max_count.hard);
   }
 };
 } // namespace fmt

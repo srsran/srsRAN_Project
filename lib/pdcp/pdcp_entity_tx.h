@@ -60,6 +60,8 @@ public:
                   cfg.discard_timer);
     direction =
         cfg.direction == pdcp_security_direction::uplink ? security_direction::uplink : security_direction::downlink;
+
+    logger.log_info("PDCP TX entity configured. Configuration: {}", cfg);
   }
 
   /*

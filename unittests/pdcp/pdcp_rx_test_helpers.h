@@ -26,6 +26,8 @@ public:
   std::queue<byte_buffer> sdu_queue              = {};
   uint32_t                sdu_counter            = 0;
   uint32_t                integrity_fail_counter = 0;
+  uint32_t                nof_max_count_reached  = 0;
+  uint32_t                nof_protocol_failure   = 0;
 
   /// PDCP RX upper layer data notifier
   void on_new_sdu(byte_buffer sdu) override
@@ -36,10 +38,8 @@ public:
 
   /// PDCP RX upper layer control notifier
   void on_integrity_failure() override { integrity_fail_counter++; }
-
-  /// PDCP TX/RX upper layer control notifier
-  void on_protocol_failure() override {}
-  void on_max_count_reached() override {}
+  void on_protocol_failure() override { nof_protocol_failure++; }
+  void on_max_count_reached() override { nof_max_count_reached++; }
 };
 
 /// Fixture class for PDCP tests
@@ -48,7 +48,9 @@ class pdcp_rx_test_helper
 protected:
   /// \brief Initializes fixture according to size sequence number size
   /// \param sn_size_ size of the sequence number
-  void init(pdcp_sn_size sn_size_, pdcp_t_reordering t_reordering = pdcp_t_reordering::ms10)
+  void init(pdcp_sn_size      sn_size_,
+            pdcp_t_reordering t_reordering = pdcp_t_reordering::ms10,
+            pdcp_max_count    max_count    = {pdcp_rx_default_max_count_notify, pdcp_rx_default_max_count_hard})
   {
     logger.info("Creating PDCP RX ({} bit)", to_number(sn_size_));
 
@@ -61,6 +63,7 @@ protected:
     config.direction             = pdcp_security_direction::downlink;
     config.out_of_order_delivery = false;
     config.t_reordering          = t_reordering;
+    config.max_count             = max_count;
 
     // Set security keys
     sec_cfg.k_128_rrc_int = k_128_int;
