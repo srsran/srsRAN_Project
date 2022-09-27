@@ -63,13 +63,15 @@ static std::vector<std::string>                  tx_channel_args            = {}
 static std::vector<std::string>                  rx_channel_args            = {};
 static sampling_rate                             srate                      = sampling_rate::from_MHz(23.04);
 static unsigned                                  bw_rb                      = 52;
-static radio_configuration::over_the_wire_format otw_format     = radio_configuration::over_the_wire_format::SC16;
-static unsigned                                  duration_slots = 60000;
-static bool                                      zmq_loopback   = true;
-static ssb_pattern_case                          ssb_pattern    = ssb_pattern_case::A;
+static radio_configuration::over_the_wire_format otw_format         = radio_configuration::over_the_wire_format::SC16;
+static unsigned                                  duration_slots     = 60000;
+static bool                                      zmq_loopback       = true;
+static ssb_pattern_case                          ssb_pattern        = ssb_pattern_case::A;
+static bool                                      enable_random_data = false;
+static modulation_scheme                         data_mod_scheme    = modulation_scheme::QPSK;
 
 // Amplitude control args.
-static float baseband_gain_dB       = -2.5F;
+static float baseband_gain_dB       = -10.0F;
 static bool  enable_clipping        = false;
 static float full_scale_amplitude   = 1.0F;
 static float amplitude_ceiling_dBFS = -0.1F;
@@ -217,6 +219,9 @@ static void usage(std::string prog)
   fmt::print("\t-v Logging level. [Default {}]\n", log_level);
   fmt::print("\t-c Enable amplitude clipping. [Default {}]\n", enable_clipping);
   fmt::print("\t-b Baseband gain prior to clipping (in dB). [Default {}]\n", baseband_gain_dB);
+  fmt::print("\t-d Fill the resource grid with random data [Default {}]\n", enable_random_data);
+  fmt::print("\t-m Data modulation (π/2-BPSK, BPSK, QPSK, 16QAM, 64QAM or 256QAM). [Default {}]\n",
+             to_string(data_mod_scheme));
   fmt::print("\t-h Print this message.\n");
 }
 
@@ -225,7 +230,7 @@ static void parse_args(int argc, char** argv)
   std::string profile_name;
 
   int opt = 0;
-  while ((opt = getopt(argc, argv, "D:P:L:v:b:ch")) != -1) {
+  while ((opt = getopt(argc, argv, "D:P:L:v:b:m:cdh")) != -1) {
     switch (opt) {
       case 'P':
         if (optarg != nullptr) {
@@ -244,6 +249,14 @@ static void parse_args(int argc, char** argv)
         break;
       case 'v':
         log_level = std::string(optarg);
+        break;
+      case 'd':
+        enable_random_data = true;
+        break;
+      case 'm':
+        if (optarg != nullptr) {
+          data_mod_scheme = from_string(std::string(optarg));
+        }
         break;
       case 'c':
         enable_clipping = true;
@@ -458,6 +471,8 @@ int main(int argc, char** argv)
   upper_phy_sample_config.ssb_config.subcarrier_offset = subcarrier_offset;
   upper_phy_sample_config.ssb_config.offset_pointA     = ssb_offset_pointA_subc_rb;
   upper_phy_sample_config.ssb_config.pattern_case      = ssb_pattern;
+  upper_phy_sample_config.enable_random_data           = enable_random_data;
+  upper_phy_sample_config.data_modulation              = data_mod_scheme;
   upper_phy                                            = upper_phy_ssb_example::create(upper_phy_sample_config);
   srsgnb_assert(upper_phy, "Failed to create upper physical layer.");
 

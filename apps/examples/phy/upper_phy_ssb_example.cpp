@@ -10,7 +10,6 @@
 
 #include "upper_phy_ssb_example.h"
 #include "srsgnb/phy/support/support_factories.h"
-#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_encoder.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_modulator.h"
@@ -23,6 +22,7 @@
 #include "srsgnb/phy/upper/signal_processors/sss_processor.h"
 #include <condition_variable>
 #include <mutex>
+#include <random>
 
 using namespace srsgnb;
 
@@ -38,27 +38,48 @@ private:
   bool                                quit         = false;
   std::unique_ptr<resource_grid_pool> dl_rg_pool;
   std::unique_ptr<ssb_processor>      ssb;
+  std::unique_ptr<modulation_mapper>  data_modulator;
   upper_phy_rg_gateway*               gateway;
   ssb_configuration                   ssb_config;
+  bool                                enable_random_data;
+  modulation_scheme                   data_modulation;
+  unsigned                            nof_subcs;
+  std::mt19937                        rgen;
+
+  // Pseudo-random data and symbol buffers.
+  static constexpr unsigned MAX_NRE_PER_SLOT = MAX_NSYMB_PER_SLOT * MAX_RB * NRE;
+  static_vector<uint8_t, MAX_NRE_PER_SLOT * MODULATION_MAX_BITS_PER_SYMBOL> data;
+  static_vector<cf_t, MAX_NRE_PER_SLOT>                                     data_symbols;
 
 public:
   /// Default constructor.
   upper_phy_example_sw(srslog::basic_logger&               logger_,
                        std::unique_ptr<resource_grid_pool> dl_rg_pool_,
                        std::unique_ptr<ssb_processor>      ssb_,
+                       std::unique_ptr<modulation_mapper>  data_modulator_,
                        upper_phy_rg_gateway*               gateway_,
-                       const ssb_configuration&            ssb_config_) :
+                       const ssb_configuration&            ssb_config_,
+                       bool                                enable_random_data_,
+                       modulation_scheme                   data_modulation_,
+                       unsigned                            nof_subcs_) :
     logger(logger_),
     dl_rg_pool(std::move(dl_rg_pool_)),
     ssb(std::move(ssb_)),
+    data_modulator(std::move(data_modulator_)),
     gateway(gateway_),
-    ssb_config(ssb_config_)
+    ssb_config(ssb_config_),
+    enable_random_data(enable_random_data_),
+    data_modulation(data_modulation_),
+    nof_subcs(nof_subcs_),
+    rgen(0)
   {
     srsgnb_assert(dl_rg_pool, "Invalid RG pool.");
     srsgnb_assert(ssb, "Invalid SSB processor.");
+    srsgnb_assert(data_modulator, "Invalid modulation mapper.");
     srsgnb_assert(gateway, "Invalid RG gateway.");
     srsgnb_assert(ssb_config.period_ms, "SSB period cannot be 0 ms.");
     srsgnb_assert(ssb_config.period_ms % 5 == 0, "SSB period ({}) must be multiple of 5 ms.", ssb_config.period_ms);
+    srsgnb_assert(nof_subcs != 0, "Number of OFDM subcarriers cannot be zero.");
   }
 
   void handle_tti_boundary(const upper_phy_timing_context& context) override
@@ -117,6 +138,30 @@ public:
         logger.info("SSB: phys_cell_id={}; ssb_idx={};", pdu.phys_cell_id, pdu.ssb_idx);
       }
     }
+
+    // Fill the empty resource grids with pseudo-random data.
+    if (rg.is_empty(0) && enable_random_data) {
+      unsigned mod_order = get_bits_per_symbol(data_modulation);
+
+      data.resize(MAX_NSYMB_PER_SLOT * nof_subcs * mod_order);
+      data_symbols.resize(MAX_NSYMB_PER_SLOT * nof_subcs);
+
+      // Generate the pseudo-random data bits.
+      std::generate(data.begin(), data.end(), [&rgen = rgen]() { return rgen() & 1; });
+
+      // Modulate the data into symbols.
+      data_modulator->modulate(data, data_symbols, data_modulation);
+
+      span<cf_t> data_span(data_symbols.begin(), data_symbols.end());
+      for (unsigned i_symbol = 0; i_symbol < nsymb_per_slot; ++i_symbol) {
+        // Write data into the resource grid.
+        rg.put(0, i_symbol, 0, data_span.first(nof_subcs));
+
+        // Advance data view.
+        data_span = data_span.last(data_span.size() - nof_subcs);
+      }
+    }
+
     gateway->send(rg_context, rg);
 
     // Raise TTI boundary and notify.
@@ -213,6 +258,9 @@ std::unique_ptr<upper_phy_ssb_example> srsgnb::upper_phy_ssb_example::create(con
   std::unique_ptr<ssb_processor> ssb = ssb_factory->create();
   ASSERT_FACTORY(ssb);
 
+  // Determine the number of subcarriers of the resource grid.
+  unsigned nof_subcs = config.max_nof_prb * NRE;
+
   // Create DL resource grid pool configuration.
   std::unique_ptr<resource_grid_pool> dl_rg_pool = nullptr;
   {
@@ -223,7 +271,7 @@ std::unique_ptr<upper_phy_ssb_example> srsgnb::upper_phy_ssb_example::create(con
 
     for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {
       for (unsigned slot_id = 0; slot_id != nof_slots; ++slot_id) {
-        grids.push_back(create_resource_grid(config.max_nof_ports, MAX_NSYMB_PER_SLOT, config.max_nof_prb * NRE));
+        grids.push_back(create_resource_grid(config.max_nof_ports, MAX_NSYMB_PER_SLOT, nof_subcs));
         ASSERT_FACTORY(grids.back());
       }
     }
@@ -233,6 +281,17 @@ std::unique_ptr<upper_phy_ssb_example> srsgnb::upper_phy_ssb_example::create(con
     ASSERT_FACTORY(dl_rg_pool);
   }
 
-  return std::make_unique<upper_phy_example_sw>(
-      logger, std::move(dl_rg_pool), std::move(ssb), config.gateway, config.ssb_config);
+  // Create modulation mapper for random data.
+  std::shared_ptr<channel_modulation_factory> data_modulator_factory = create_channel_modulation_sw_factory();
+  std::unique_ptr<modulation_mapper>          data_modulator = data_modulator_factory->create_modulation_mapper();
+
+  return std::make_unique<upper_phy_example_sw>(logger,
+                                                std::move(dl_rg_pool),
+                                                std::move(ssb),
+                                                std::move(data_modulator),
+                                                config.gateway,
+                                                config.ssb_config,
+                                                config.enable_random_data,
+                                                config.data_modulation,
+                                                nof_subcs);
 }

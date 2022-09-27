@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
 #include "srsgnb/phy/upper/upper_phy_timing_handler.h"
 #include "srsgnb/ran/cyclic_prefix.h"
@@ -73,6 +74,10 @@ public:
     std::string ldpc_encoder_type;
     /// Resource grid gateway.
     upper_phy_rg_gateway* gateway;
+    /// Enable the generation and allocation of pseudo-random data within the resource grid.
+    bool enable_random_data;
+    /// Modulation scheme used for the pseudo-random data.
+    modulation_scheme data_modulation;
   };
 
   /// Creates an upper PHY sample.

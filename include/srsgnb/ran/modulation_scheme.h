@@ -57,6 +57,25 @@ inline std::string to_string(modulation_scheme mod)
   }
 }
 
+inline modulation_scheme from_string(const std::string& mod_scheme_string)
+{
+  modulation_scheme mod_scheme = modulation_scheme::PI_2_BPSK;
+  if (mod_scheme_string == "π/2-BPSK") {
+    mod_scheme = modulation_scheme::PI_2_BPSK;
+  } else if (mod_scheme_string == "BPSK") {
+    mod_scheme = modulation_scheme::BPSK;
+  } else if (mod_scheme_string == "QPSK") {
+    mod_scheme = modulation_scheme::QPSK;
+  } else if (mod_scheme_string == "16QAM") {
+    mod_scheme = modulation_scheme::QAM16;
+  } else if (mod_scheme_string == "64QAM") {
+    mod_scheme = modulation_scheme::QAM64;
+  } else if (mod_scheme_string == "256QAM") {
+    mod_scheme = modulation_scheme::QAM256;
+  }
+  return mod_scheme;
+}
+
 /// \brief Bits per symbol for a given modulation scheme.
 /// \param[in] mod Modulation scheme.
 /// \returns The number of bits per modulated symbol (sometimes referred to as modulation order).
