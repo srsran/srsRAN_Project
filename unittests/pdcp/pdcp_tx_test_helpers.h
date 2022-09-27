@@ -23,12 +23,13 @@ namespace srsgnb {
 class pdcp_tx_test_frame : public pdcp_tx_lower_notifier, public pdcp_tx_upper_control_notifier
 {
 public:
-  std::queue<byte_buffer> pdu_queue   = {};
-  uint32_t                pdu_counter = 0;
+  std::queue<byte_buffer> pdu_queue             = {};
+  uint32_t                nof_max_count_reached = 0;
+  uint32_t                nof_protocol_failure  = 0;
 
   /// PDCP TX upper layer control notifier
-  void on_max_count_reached() final {}
-  void on_protocol_failure() final {}
+  void on_max_count_reached() final { nof_max_count_reached++; }
+  void on_protocol_failure() final { nof_protocol_failure++; }
 
   /// PDCP TX lower layer data notifier
   void on_new_pdu(byte_buffer pdu) final { pdu_queue.push(std::move(pdu)); }
@@ -113,6 +114,9 @@ protected:
 
   // Security configuration
   sec_128_as_config sec_cfg = {};
+
+  // Default max COUNT
+  const pdcp_max_count default_max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
 
   std::unique_ptr<pdcp_entity_tx> pdcp_tx;
 };

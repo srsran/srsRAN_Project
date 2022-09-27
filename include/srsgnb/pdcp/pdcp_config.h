@@ -112,7 +112,7 @@ enum class pdcp_discard_timer {
 /// but notify the RRC and another where we no longer accept messages.
 /// Here, we define some default values for this, both for TX and RX.
 const uint32_t pdcp_tx_default_max_count_notify = 0xC0000000;
-const uint32_t pdcp_tx_default_max_count_hard   = UINT32_MAX;
+const uint32_t pdcp_tx_default_max_count_hard   = UINT32_MAX - 1;
 const uint32_t pdcp_rx_default_max_count_notify = 0xC0000000;
 const uint32_t pdcp_rx_default_max_count_hard   = 0xD0000000;
 struct pdcp_max_count {

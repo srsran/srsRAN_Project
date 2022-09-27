@@ -48,13 +48,10 @@ TEST_P(pdcp_tx_test, sn_pack)
     test_hdr_writer(0);
     test_hdr_writer(2048);
     test_hdr_writer(4096);
-    test_hdr_writer(4096);
-    test_hdr_writer(4294967295);
   } else if (config.sn_size == pdcp_sn_size::size18bits) {
     test_hdr_writer(0);
     test_hdr_writer(131072);
     test_hdr_writer(262144);
-    test_hdr_writer(4294967295);
   } else {
     FAIL();
   }
@@ -95,12 +92,10 @@ TEST_P(pdcp_tx_test, pdu_gen)
     test_pdu_gen(2048);
     test_pdu_gen(4095);
     test_pdu_gen(4096);
-    test_pdu_gen(4294967295);
   } else if (config.sn_size == pdcp_sn_size::size18bits) {
     test_pdu_gen(0);
     test_pdu_gen(131072);
     test_pdu_gen(262144);
-    test_pdu_gen(4294967295);
   } else {
     FAIL();
   }
@@ -110,7 +105,7 @@ TEST_P(pdcp_tx_test, pdu_gen)
 /// and normal expiry of them
 TEST_P(pdcp_tx_test, discard_timer_and_expiry)
 {
-  init(GetParam(), pdcp_discard_timer::ms10);
+  init(GetParam());
 
   auto test_discard_timer_expiry = [this](uint32_t tx_next) {
     // Set state of PDCP entiy
@@ -157,7 +152,7 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
 /// and stop from lower layers
 TEST_P(pdcp_tx_test, discard_timer_and_stop)
 {
-  init(GetParam(), pdcp_discard_timer::ms10);
+  init(GetParam());
 
   auto test_discard_timer_stop = [this](uint32_t tx_next) {
     // Set state of PDCP entiy
@@ -202,9 +197,11 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
 /// Test COUNT wrap-around protection systems
 TEST_P(pdcp_tx_test, count_wraparound)
 {
-  uint32_t       tx_next = 262144;
-  uint32_t       n_sdus  = 10;
-  pdcp_max_count max_count{tx_next, tx_next + n_sdus};
+  uint32_t       tx_next_notify = 262144;
+  uint32_t       tx_next_max    = 262154;
+  uint32_t       tx_next_start  = 262143;
+  uint32_t       n_sdus         = 20;
+  pdcp_max_count max_count{tx_next_notify, tx_next_max};
   init(GetParam(), pdcp_discard_timer::ms10, max_count);
 
   auto test_max_count = [this, n_sdus](uint32_t tx_next) {
@@ -218,16 +215,17 @@ TEST_P(pdcp_tx_test, count_wraparound)
     for (uint32_t i = 0; i < n_sdus; i++) {
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
-      ASSERT_EQ(1, pdcp_tx->nof_discard_timers());
     }
-    // TODO check nof max_count reached and max protocol failures.
-    ASSERT_EQ(true, false);
+    // check nof max_count reached and max protocol failures.
+    ASSERT_EQ(11, test_frame.pdu_queue.size());
+    ASSERT_EQ(10, test_frame.nof_max_count_reached);
+    ASSERT_EQ(9, test_frame.nof_protocol_failure);
   };
 
   if (config.sn_size == pdcp_sn_size::size12bits) {
-    test_max_count(tx_next);
+    test_max_count(tx_next_start);
   } else if (config.sn_size == pdcp_sn_size::size18bits) {
-    test_max_count(tx_next);
+    test_max_count(tx_next_start);
   } else {
     FAIL();
   }

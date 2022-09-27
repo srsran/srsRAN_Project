@@ -29,14 +29,14 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   // see TS 38.331, section 5.3.1.2. To avoid this, we notify the RRC once we exceed a "maximum"
   // COUNT. It is then the RRC's responsibility to refresh the keys. We continue transmitting until
   // we reached a maximum hard COUNT, after which we simply refuse to TX any further.
-  if (st.tx_next > cfg.max_count.notify) {
-    logger.log_warning("Approaching COUNT wrap-around, notifying RRC. COUNT={}");
-    upper_cn.on_max_count_reached();
-  }
   if (st.tx_next >= cfg.max_count.hard) {
-    logger.log_warning("Reached maximum COUNT, Re-fusing to transmit further. COUNT={}");
+    logger.log_error("Reached maximum COUNT, Re-fusing to transmit further. COUNT={}", st.tx_next);
     upper_cn.on_protocol_failure();
     return;
+  }
+  if (st.tx_next >= cfg.max_count.notify) {
+    logger.log_warning("Approaching COUNT wrap-around, notifying RRC. COUNT={}", st.tx_next);
+    upper_cn.on_max_count_reached();
   }
 
   // Start discard timer
