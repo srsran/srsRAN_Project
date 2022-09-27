@@ -25,8 +25,7 @@ class mac_dummy : public rlc_tx_lower_layer_notifier
   std::mt19937                          rgen;
   std::uniform_real_distribution<float> real_dist;
 
-  std::atomic<unsigned>                bsr;
-  std::vector<byte_buffer_slice_chain> pdu_list;
+  std::atomic<unsigned> bsr;
 
   rlc_tx_lower_layer_interface* rlc_tx_lower = nullptr;
   rlc_rx_lower_layer_interface* rlc_rx_lower = nullptr;
@@ -35,8 +34,8 @@ public:
   mac_dummy(stress_test_args& args) :
     args(args), logger(srslog::fetch_basic_logger("MAC", false)), rgen(args.seed), bsr(0){};
 
-  void run_tx_tti();
-  void run_rx_tti();
+  std::vector<byte_buffer_slice_chain> run_tx_tti();
+  void                                 run_rx_tti(std::vector<byte_buffer_slice_chain> pdu_list);
 
   // rlc_tx_lower_layer_notifier interface
   void on_buffer_state_update(unsigned bsr) final { this->bsr.store(bsr, std::memory_order_relaxed); }

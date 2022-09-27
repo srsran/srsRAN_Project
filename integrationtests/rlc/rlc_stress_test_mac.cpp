@@ -14,8 +14,9 @@
 
 using namespace srsgnb;
 
-void mac_dummy::run_tx_tti()
+std::vector<byte_buffer_slice_chain> mac_dummy::run_tx_tti()
 {
+  std::vector<byte_buffer_slice_chain> pdu_list;
   // Pull a number of RLC PDUs
   for (uint32_t i = 0; i < args.nof_pdu_tti; i++) {
     // Get MAC opportunity size (maximum size of the RLC PDU)
@@ -34,9 +35,10 @@ void mac_dummy::run_tx_tti()
       }
     }
   }
+  return pdu_list;
 }
 
-void mac_dummy::run_rx_tti()
+void mac_dummy::run_rx_tti(std::vector<byte_buffer_slice_chain> pdu_list)
 {
   auto pdu_it      = pdu_list.begin(); // PDU iterator
   bool skip_action = false;            // Avoid discarding a duplicated or duplicating a discarded

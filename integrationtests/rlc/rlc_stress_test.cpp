@@ -13,8 +13,59 @@
 #include "rlc_stress_test.h"
 #include "srsgnb/rlc/rlc_factory.h"
 #include <random>
+#include <unistd.h>
 
 using namespace srsgnb;
+
+class stress_stack
+{
+public:
+  stress_stack(stress_test_args args, timer_manager& timers_) : timers(timers_)
+  {
+    // MAC
+    mac = std::make_unique<mac_dummy>(args);
+
+    // PDCP
+    traffic_sink   = std::make_unique<pdcp_traffic_sink>();
+    traffic_source = std::make_unique<pdcp_traffic_source>(args);
+
+    // RLC
+    rlc_config                  cnfg = get_rlc_config_from_args(args);
+    rlc_entity_creation_message msg  = {};
+    msg.rx_upper_dn                  = traffic_sink.get();
+    msg.tx_upper_cn                  = traffic_source.get();
+    msg.tx_upper_dn                  = traffic_source.get();
+    msg.tx_lower_dn                  = mac.get();
+    msg.config                       = cnfg;
+    msg.timers                       = &timers;
+    rlc                              = create_rlc_entity(msg);
+    traffic_source->set_rlc_tx_upper(rlc->get_tx_upper_layer_data_interface());
+    mac->set_rlc_tx_lower(rlc->get_tx_lower_layer_interface());
+    mac->set_rlc_rx_lower(rlc->get_rx_lower_layer_interface());
+  }
+
+  void start()
+  { // TODO
+  }
+  void stop()
+  { // TODO
+  }
+
+public:
+  // TODO MAC, RLC and PDCP should be private
+  // MAC
+  std::unique_ptr<mac_dummy> mac = nullptr;
+
+  // RLC
+  std::unique_ptr<rlc_entity> rlc;
+
+  // PDCP
+  std::unique_ptr<pdcp_traffic_sink>   traffic_sink   = nullptr;
+  std::unique_ptr<pdcp_traffic_source> traffic_source = nullptr;
+
+  // Timers
+  timer_manager& timers;
+};
 
 void stress_test(stress_test_args args)
 {
@@ -29,60 +80,32 @@ void stress_test(stress_test_args args)
   }
   srslog::set_default_sink(*log_sink);
 
+  // Have one common timer for both UE and gNB
+  // emulators for now.
   timer_manager timers;
-  rlc_config    cnfg = get_rlc_config_from_args(args);
 
-  // MAC12: RLC1->MAC12->RLC2
-  std::unique_ptr<mac_dummy> mac12 = std::make_unique<mac_dummy>(args);
-
-  // MAC21: RLC2->MAC21->RLC1
-  std::unique_ptr<mac_dummy> mac21 = std::make_unique<mac_dummy>(args);
-
-  // RLC1
-  std::unique_ptr<pdcp_traffic_sink>   traffic_sink1   = std::make_unique<pdcp_traffic_sink>();
-  std::unique_ptr<pdcp_traffic_source> traffic_source1 = std::make_unique<pdcp_traffic_source>(args);
-  rlc_entity_creation_message          msg1            = {};
-  msg1.rx_upper_dn                                     = traffic_sink1.get();
-  msg1.tx_upper_cn                                     = traffic_source1.get();
-  msg1.tx_upper_dn                                     = traffic_source1.get();
-  msg1.tx_lower_dn                                     = mac12.get();
-  msg1.config                                          = cnfg;
-  msg1.timers                                          = &timers;
-  std::unique_ptr<rlc_entity> rlc1                     = create_rlc_entity(msg1);
-  traffic_source1->set_rlc_tx_upper(rlc1->get_tx_upper_layer_data_interface());
-  mac12->set_rlc_tx_lower(rlc1->get_tx_lower_layer_interface());
-  mac21->set_rlc_rx_lower(rlc1->get_rx_lower_layer_interface());
-
-  // RLC2
-  std::unique_ptr<pdcp_traffic_sink>   traffic_sink2   = std::make_unique<pdcp_traffic_sink>();
-  std::unique_ptr<pdcp_traffic_source> traffic_source2 = std::make_unique<pdcp_traffic_source>(args);
-  rlc_entity_creation_message          msg2            = {};
-  msg2.rx_upper_dn                                     = traffic_sink2.get();
-  msg2.tx_upper_cn                                     = traffic_source2.get();
-  msg2.tx_upper_dn                                     = traffic_source2.get();
-  msg2.tx_lower_dn                                     = mac21.get();
-  msg2.config                                          = cnfg;
-  msg2.timers                                          = &timers;
-  std::unique_ptr<rlc_entity> rlc2                     = create_rlc_entity(msg2);
-  traffic_source2->set_rlc_tx_upper(rlc2->get_tx_upper_layer_data_interface());
-  mac21->set_rlc_tx_lower(rlc2->get_tx_lower_layer_interface());
-  mac12->set_rlc_rx_lower(rlc2->get_rx_lower_layer_interface());
+  // Create the UE/gNB emulators
+  stress_stack ue_emulator(args, timers);
+  stress_stack gnb_emulator(args, timers);
 
   // Launch transmission
   // Fixme: create worker thread and executer
+  ue_emulator.start();
+  gnb_emulator.start();
+
   for (uint32_t n = 0; n < 100; n++) {
-    traffic_source1->send_pdu();
-    traffic_source2->send_pdu();
+    ue_emulator.traffic_source->send_pdu();
+    gnb_emulator.traffic_source->send_pdu();
   }
 
-  while (rlc1->get_tx_lower_layer_interface()->get_buffer_state() > 0) {
+  while (ue_emulator.rlc->get_tx_lower_layer_interface()->get_buffer_state() > 0) {
     // RLC1->MAC12->RLC2
-    mac12->run_tx_tti();
-    mac12->run_rx_tti();
+    std::vector<byte_buffer_slice_chain> pdu_list1 = ue_emulator.mac->run_tx_tti();
+    gnb_emulator.mac->run_rx_tti(std::move(pdu_list1));
 
     // RLC2->MAC21->RLC1
-    mac21->run_tx_tti();
-    mac21->run_rx_tti();
+    std::vector<byte_buffer_slice_chain> pdu_list2 = gnb_emulator.mac->run_tx_tti();
+    ue_emulator.mac->run_rx_tti(std::move(pdu_list2));
 
     timers.tick_all();
   }
