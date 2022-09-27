@@ -41,8 +41,10 @@ std::ostream& operator<<(std::ostream& os, modulation_scheme mod)
     case modulation_scheme::QAM64:
       return os << "64QAM";
     case modulation_scheme::QAM256:
-    default:
       return os << "256QAM";
+    case modulation_scheme::INVALID:
+    default:
+      return os << "invalid";
   }
 }
 

@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <array>
 #include <string>
 
 namespace srsgnb {
@@ -35,7 +36,9 @@ enum class modulation_scheme {
   /// 64-point Quadrature Amplitude Modulation (64-QAM) described in TS38.211 Section 5.1.5.
   QAM64 = 6,
   /// 256-point Quadrature Amplitude Modulation (256-QAM) described in TS38.211 Section 5.1.6.
-  QAM256 = MODULATION_MAX_BITS_PER_SYMBOL
+  QAM256 = MODULATION_MAX_BITS_PER_SYMBOL,
+  /// Invalid modulation scheme.
+  INVALID = INT32_MAX
 };
 
 inline std::string to_string(modulation_scheme mod)
@@ -52,14 +55,20 @@ inline std::string to_string(modulation_scheme mod)
     case modulation_scheme::QAM64:
       return "64QAM";
     case modulation_scheme::QAM256:
-    default:
       return "256QAM";
+    case modulation_scheme::INVALID:
+    default:
+      return "invalid";
   }
 }
 
+/// \brief Converts a string into a modulation scheme.
+/// \param[in] mod_scheme_string input string.
+/// \returns The corresponding \c modulation_scheme. If the input string does not correspond with any valid option, it
+/// returns \c modulation_scheme::INVALID
 inline modulation_scheme from_string(const std::string& mod_scheme_string)
 {
-  modulation_scheme mod_scheme = modulation_scheme::PI_2_BPSK;
+  modulation_scheme mod_scheme = modulation_scheme::INVALID;
   if (mod_scheme_string == "π/2-BPSK") {
     mod_scheme = modulation_scheme::PI_2_BPSK;
   } else if (mod_scheme_string == "BPSK") {
@@ -78,12 +87,15 @@ inline modulation_scheme from_string(const std::string& mod_scheme_string)
 
 /// \brief Bits per symbol for a given modulation scheme.
 /// \param[in] mod Modulation scheme.
-/// \returns The number of bits per modulated symbol (sometimes referred to as modulation order).
+/// \returns The number of bits per modulated symbol (sometimes referred to as modulation order), or 0 if the modulation
+/// scheme is invalid.
 inline constexpr unsigned get_bits_per_symbol(modulation_scheme mod)
 {
   unsigned ret = static_cast<unsigned>(mod);
   if (mod == modulation_scheme::PI_2_BPSK) {
     ret = 1;
+  } else if (mod == modulation_scheme::INVALID) {
+    ret = 0;
   }
 
   // Give a hint to the compiler that the returned bits per symbol will not be greater than 8 under any circumstance.
@@ -91,6 +103,34 @@ inline constexpr unsigned get_bits_per_symbol(modulation_scheme mod)
     __builtin_unreachable();
   }
 
+  return ret;
+}
+
+/// \brief Checks if a modulation scheme is valid.
+/// \param[in] mod Modulation scheme.
+/// \returns \c true if the modulation scheme is valid, \c false otherwise.
+inline bool is_valid(modulation_scheme mod)
+{
+  return !(mod == modulation_scheme::INVALID);
+}
+
+/// \brief Lists all the modulation schemes.
+/// \returns A string containing a comma-separated list with the supported modulation schemes.
+inline std::string list_all_modulation_schemes()
+{
+  std::string ret;
+  for (modulation_scheme mod : {modulation_scheme::PI_2_BPSK,
+                                modulation_scheme::BPSK,
+                                modulation_scheme::QPSK,
+                                modulation_scheme::QAM16,
+                                modulation_scheme::QAM64,
+                                modulation_scheme::QAM256}) {
+    ret += to_string(mod);
+    ret += ", ";
+  }
+
+  // Remove last comma and space.
+  ret.erase(ret.size() - 2);
   return ret;
 }
 
