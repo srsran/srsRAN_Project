@@ -18,3 +18,4 @@ set(SOURCES
         ul_pusch_pdu.cpp)
 
 add_library(fapi_validators STATIC ${SOURCES})
+target_link_libraries(fapi_validators srslog)
