@@ -232,6 +232,19 @@ void calculate_pdsch_config_diff(const pdsch_config& src, const pdsch_config& de
   dmrsA.dmrs_add_position_present          = true;
   dmrsA.dmrs_add_position.value            = dmrs_dl_cfg_s::dmrs_add_position_opts::pos1;
 
+  out.tci_states_to_add_mod_list.resize(1);
+  out.tci_states_to_add_mod_list[0].tci_state_id = 0;
+  out.tci_states_to_add_mod_list[0].qcl_type1.ref_sig.set_ssb();
+  out.tci_states_to_add_mod_list[0].qcl_type1.ref_sig.ssb() = 0;
+  out.tci_states_to_add_mod_list[0].qcl_type1.qcl_type      = asn1::rrc_nr::qcl_info_s::qcl_type_opts::type_d;
+
+  out.res_alloc.value = asn1::rrc_nr::pdsch_cfg_s::res_alloc_opts::res_alloc_type1;
+  out.rbg_size.value  = asn1::rrc_nr::pdsch_cfg_s::rbg_size_opts::cfg1;
+  out.prb_bundling_type.set_static_bundling();
+  out.prb_bundling_type.static_bundling().bundle_size_present = true;
+  out.prb_bundling_type.static_bundling().bundle_size =
+      pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::wideband;
+
   // TODO: Remaining.
 }
 
@@ -241,12 +254,20 @@ void calculate_bwp_dl_dedicated_diff(const bwp_downlink_dedicated& src,
 {
   if (dest.pdcch_cfg.has_value()) {
     out.pdcch_cfg_present = true;
-    calculate_pdcch_config_diff(*src.pdcch_cfg, *dest.pdcch_cfg, out.pdcch_cfg.set_setup());
+    if (not src.pdcch_cfg.has_value()) {
+      calculate_pdcch_config_diff({}, *dest.pdcch_cfg, out.pdcch_cfg.set_setup());
+    } else {
+      calculate_pdcch_config_diff(*src.pdcch_cfg, *dest.pdcch_cfg, out.pdcch_cfg.set_setup());
+    }
   }
 
   if (dest.pdsch_cfg.has_value()) {
     out.pdsch_cfg_present = true;
-    calculate_pdsch_config_diff(*src.pdsch_cfg, *dest.pdsch_cfg, out.pdsch_cfg.set_setup());
+    if (not src.pdcch_cfg.has_value()) {
+      calculate_pdsch_config_diff({}, *dest.pdsch_cfg, out.pdsch_cfg.set_setup());
+    } else {
+      calculate_pdsch_config_diff(*src.pdsch_cfg, *dest.pdsch_cfg, out.pdsch_cfg.set_setup());
+    }
   }
 
   // TODO: Remaining.

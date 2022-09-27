@@ -22,7 +22,7 @@ serving_cell_config srsgnb::make_default_initial_ue_serving_cell_config()
   pdcch_config& pdcch_cfg = serv_cell.init_dl_bwp.pdcch_cfg.value();
   // >> Add CORESET#2.
   pdcch_cfg.coreset_to_addmod_list.push_back(du_config_helpers::make_default_coreset_config());
-  pdcch_cfg.coreset_to_addmod_list[0].id = to_coreset_id(2);
+  pdcch_cfg.coreset_to_addmod_list[0].id = to_coreset_id(1);
   // >> Add SearchSpace#2.
   pdcch_cfg.ss_to_addmod_list.push_back(du_config_helpers::make_default_ue_search_space_config());
 

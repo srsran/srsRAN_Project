@@ -139,9 +139,8 @@ inline search_space_configuration make_default_common_search_space_config()
 inline search_space_configuration make_default_ue_search_space_config()
 {
   search_space_configuration cfg = make_default_common_search_space_config();
-  cfg.cs_id                      = to_coreset_id(2);
+  cfg.cs_id                      = to_coreset_id(1);
   cfg.id                         = to_search_space_id(2);
-  cfg.nof_candidates             = {2, 2, 2, 1, 0};
   return cfg;
 }
 
