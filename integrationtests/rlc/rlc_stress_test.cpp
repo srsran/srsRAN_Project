@@ -24,7 +24,7 @@ void pdcp_traffic_sink::on_new_sdu(byte_buffer_slice_chain pdu)
 void pdcp_traffic_source::send_pdu()
 {
   rlc_sdu sdu;
-  sdu.pdcp_count = pdcp_sn++;
+  sdu.pdcp_count = pdcp_count++;
 
   // random or fixed SDU size
   if (args.sdu_size < 1) {
@@ -43,9 +43,9 @@ void pdcp_traffic_source::send_pdu()
 
 void mac_dummy::run_tx_tti()
 {
-  // Generate A number of MAC PDUs
+  // Pull a number of RLC PDUs
   for (uint32_t i = 0; i < args.nof_pdu_tti; i++) {
-    // Get MAC PDU size
+    // Get MAC opportunity size (maximum size of the RLC PDU)
     float factor = 1.0f;
     if (not args.const_opp) {
       factor = 0.5f + real_dist(rgen);
@@ -55,7 +55,7 @@ void mac_dummy::run_tx_tti()
     // Request data to transmit
     if (bsr.load(std::memory_order_relaxed) > 0) {
       byte_buffer_slice_chain pdu = rlc_tx_lower->pull_pdu(opp_size);
-      // Push PDU in the list
+      // Push RLC PDU in the list
       if (pdu.length() > 0) {
         pdu_list.push_back(std::move(pdu));
       }

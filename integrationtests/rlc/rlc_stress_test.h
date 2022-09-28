@@ -145,9 +145,9 @@ public:
 class pdcp_traffic_source : public rlc_tx_upper_layer_data_notifier, public rlc_tx_upper_layer_control_notifier
 {
   stress_test_args& args;
-  uint32_t          pdcp_sn  = 0;
-  uint32_t          sdu_size = 0;
-  uint8_t           payload  = 0x0; // increment for each SDU
+  uint32_t          pdcp_count = 0;
+  uint32_t          sdu_size   = 0;
+  uint8_t           payload    = 0x0; // increment for each SDU byte
 
   std::mt19937                    rgen;
   std::uniform_int_distribution<> int_dist;
