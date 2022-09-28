@@ -43,6 +43,8 @@ public:
 
   mac_cell_rach_handler& get_rach_handler(du_cell_index_t cell_index);
 
+  mac_cell_control_information_handler& get_control_information_handler(du_cell_index_t cell_index);
+
 private:
   du_high_configuration cfg;
 

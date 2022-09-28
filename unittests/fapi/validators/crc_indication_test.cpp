@@ -83,7 +83,7 @@ static void test_crc_indication_validator_error()
   rnti_t                                                        rnti   = to_rnti(10);
   optional<uint8_t>                                             rapid;
   uint8_t                                                       harq_id       = 128;
-  uint8_t                                                       tb_crc_status = 180;
+  bool                                                          tb_crc_status = true;
   static_vector<uint8_t, crc_ind_pdu::MAX_NUM_CB_PER_TTI_BYTES> cb_crc_status;
   uint16_t                                                      num_cb = 14;
 
@@ -113,7 +113,7 @@ static void test_crc_indication_validator_error()
 
   const auto& report = result.error();
   // Assert 3 reports were generated.
-  TESTASSERT_EQ(report.reports.size(), 3u);
+  TESTASSERT_EQ(report.reports.size(), 2u);
 }
 
 int main()

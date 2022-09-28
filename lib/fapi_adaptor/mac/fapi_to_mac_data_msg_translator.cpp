@@ -28,6 +28,12 @@ public:
   void handle_rx_data_indication(mac_rx_data_indication pdu) override {}
 };
 
+class mac_cell_control_information_handler_dummy : public mac_cell_control_information_handler
+{
+public:
+  void handle_crc(const mac_crc_indication_message& msg) override {}
+};
+
 } // namespace
 
 /// This dummy object is passed to the constructor of the FAPI-to-MAC message translator as a placeholder for the
@@ -38,8 +44,12 @@ static mac_cell_rach_handler_dummy dummy_mac_rach_handler;
 /// actual, cell-specific MAC PDU handler, which will be later set up through the \ref set_cell_pdu_handler() method.
 static mac_pdu_handler_dummy dummy_pdu_handler;
 
+/// This dummy object is passed to the constructor of the FAPI-to-MAC message translator as a placeholder for the
+/// actual, cell-specific MAC CRC handler, which will be later set up through the \ref set_cell_crc_handler() method.
+static mac_cell_control_information_handler_dummy dummy_crc_handler;
+
 fapi_to_mac_data_msg_translator::fapi_to_mac_data_msg_translator(subcarrier_spacing scs) :
-  rach_handler(dummy_mac_rach_handler), pdu_handler(dummy_pdu_handler), scs(scs)
+  rach_handler(dummy_mac_rach_handler), pdu_handler(dummy_pdu_handler), crc_handler(dummy_crc_handler), scs(scs)
 {
 }
 
@@ -62,7 +72,22 @@ void fapi_to_mac_data_msg_translator::on_rx_data_indication(const fapi::rx_data_
   pdu_handler.get().handle_rx_data_indication(indication);
 }
 
-void fapi_to_mac_data_msg_translator::on_crc_indication(const fapi::crc_indication_message& msg) {}
+void fapi_to_mac_data_msg_translator::on_crc_indication(const fapi::crc_indication_message& msg)
+{
+  mac_crc_indication_message indication;
+  indication.sl_rx = slot_point(to_numerology_value(scs), msg.sfn, msg.slot);
+
+  for (const auto& fapi_pdu : msg.pdus) {
+    indication.crcs.emplace_back();
+    mac_crc_pdu& pdu = indication.crcs.back();
+
+    pdu.harq_id        = fapi_pdu.harq_id;
+    pdu.rnti           = fapi_pdu.rnti;
+    pdu.tb_crc_success = fapi_pdu.tb_crc_status_ok;
+  }
+
+  crc_handler.get().handle_crc(indication);
+}
 
 void fapi_to_mac_data_msg_translator::on_uci_indication(const fapi::uci_indication_message& msg) {}
 
@@ -123,4 +148,9 @@ void fapi_to_mac_data_msg_translator::set_cell_rach_handler(mac_cell_rach_handle
 void fapi_to_mac_data_msg_translator::set_cell_pdu_handler(mac_pdu_handler& handler)
 {
   pdu_handler = std::ref(handler);
+}
+
+void fapi_to_mac_data_msg_translator::set_cell_crc_handler(mac_cell_control_information_handler& handler)
+{
+  crc_handler = std::ref(handler);
 }

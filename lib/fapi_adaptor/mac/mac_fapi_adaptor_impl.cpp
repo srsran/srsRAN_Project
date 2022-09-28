@@ -51,3 +51,8 @@ void mac_fapi_adaptor_impl::set_cell_pdu_handler(mac_pdu_handler& handler)
 {
   fapi_data_translator.set_cell_pdu_handler(handler);
 }
+
+void mac_fapi_adaptor_impl::set_cell_crc_handler(mac_cell_control_information_handler& handler)
+{
+  fapi_data_translator.set_cell_crc_handler(handler);
+}

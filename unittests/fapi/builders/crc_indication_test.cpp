@@ -72,7 +72,7 @@ static void test_crc_indication_builder_ok()
     TESTASSERT_EQ(harq_id, pdu.harq_id);
     TESTASSERT_EQ(rnti, pdu.rnti);
     TESTASSERT_EQ(rapid ? rapid.value() : 255, pdu.rapid);
-    TESTASSERT_EQ(tb_crc_status, pdu.tb_crc_status);
+    TESTASSERT_EQ(tb_crc_status, pdu.tb_crc_status_ok);
     TESTASSERT(cb_crc_status == pdu.cb_crc_status);
     TESTASSERT_EQ(static_cast<int16_t>(ul_sinr_dB ? ul_sinr_dB.value() * 500.F : -32768), pdu.ul_sinr_metric);
     TESTASSERT_EQ(static_cast<uint16_t>(timing_advance_offset ? timing_advance_offset.value() : 65535),
@@ -130,7 +130,7 @@ static void test_crc_indication_builder_ok_no_metrics()
   TESTASSERT_EQ(harq_id, pdu.harq_id);
   TESTASSERT_EQ(rnti, pdu.rnti);
   TESTASSERT_EQ(rapid ? rapid.value() : 255, pdu.rapid);
-  TESTASSERT_EQ(tb_crc_status, pdu.tb_crc_status);
+  TESTASSERT_EQ(tb_crc_status, pdu.tb_crc_status_ok);
   TESTASSERT(cb_crc_status == pdu.cb_crc_status);
   TESTASSERT_EQ(num_cb, pdu.num_cb);
   TESTASSERT_EQ(static_cast<int16_t>(ul_sinr_dB ? ul_sinr_dB.value() * 500.F : -32768), pdu.ul_sinr_metric);

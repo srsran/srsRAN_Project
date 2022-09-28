@@ -198,15 +198,6 @@ static bool validate_harq_id(unsigned value, message_type_id msg_id, validator_r
   return validate_field(MIN_VALUE, MAX_VALUE, value, "HARQ ID", msg_id, report);
 }
 
-/// Validates the TB CRC status property of a CRC.indication PDU, as per SCF-222 v4.0 section 3.4.8.
-static bool validate_tb_crc_status(unsigned value, validator_report& report)
-{
-  static constexpr unsigned MIN_VALUE = 0;
-  static constexpr unsigned MAX_VALUE = 1;
-
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "TB CRC status", message_type_id::crc_indication, report);
-}
-
 /// Validates the UL SINR metric property of a CRC.indication PDU, as per SCF-222 v4.0 section 3.4.8.
 static bool validate_ul_sinr_metric(int value, validator_report& report)
 {
@@ -294,7 +285,6 @@ error_type<validator_report> srsgnb::fapi::validate_crc_indication(const crc_ind
     success &= validate_rnti(pdu.rnti, message_type_id::crc_indication, report);
     success &= validate_rapid(pdu.rapid, message_type_id::crc_indication, report);
     success &= validate_harq_id(pdu.harq_id, message_type_id::crc_indication, report);
-    success &= validate_tb_crc_status(pdu.tb_crc_status, report);
     // NOTE: CB CRC status bitmap property will not be validated.
     success &= validate_ul_sinr_metric(pdu.ul_sinr_metric, report);
     success &= validate_timing_advance_offset(pdu.timing_advance_offset, report);

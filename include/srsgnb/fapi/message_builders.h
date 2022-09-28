@@ -1107,7 +1107,7 @@ public:
                                           rnti_t              rnti,
                                           optional<uint8_t>   rapid,
                                           uint8_t             harq_id,
-                                          uint8_t             tb_crc_status,
+                                          bool                tb_crc_status_ok,
                                           uint16_t            num_cb,
                                           span<const uint8_t> cb_crc_status,
                                           optional<float>     ul_sinr_dB,
@@ -1120,12 +1120,12 @@ public:
     msg.pdus.emplace_back();
     auto& pdu = msg.pdus.back();
 
-    pdu.handle        = handle;
-    pdu.rnti          = rnti;
-    pdu.rapid         = (rapid) ? rapid.value() : 255U;
-    pdu.harq_id       = harq_id;
-    pdu.tb_crc_status = tb_crc_status;
-    pdu.num_cb        = num_cb;
+    pdu.handle           = handle;
+    pdu.rnti             = rnti;
+    pdu.rapid            = (rapid) ? rapid.value() : 255U;
+    pdu.harq_id          = harq_id;
+    pdu.tb_crc_status_ok = tb_crc_status_ok;
+    pdu.num_cb           = num_cb;
     pdu.cb_crc_status.assign(cb_crc_status.begin(), cb_crc_status.end());
     pdu.timing_advance_offset =
         (timing_advance_offset) ? timing_advance_offset.value() : std::numeric_limits<uint16_t>::max();

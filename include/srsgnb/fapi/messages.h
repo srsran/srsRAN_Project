@@ -871,7 +871,7 @@ struct crc_ind_pdu {
   rnti_t                                           rnti;
   uint8_t                                          rapid;
   uint8_t                                          harq_id;
-  uint8_t                                          tb_crc_status;
+  bool                                             tb_crc_status_ok;
   uint16_t                                         num_cb;
   static_vector<uint8_t, MAX_NUM_CB_PER_TTI_BYTES> cb_crc_status;
   int16_t                                          ul_sinr_metric;
