@@ -28,7 +28,7 @@ struct stress_test_args {
   uint32_t             avg_opp_size       = 1505;
   bool                 const_opp          = false;
   uint32_t             seed               = 0;
-  uint32_t             nof_pdu_tti        = 1;
+  uint32_t             nof_pdu_tti        = 100;
   std::string          log_filename       = "stdout";
   srslog::basic_levels log_level          = srslog::basic_levels::debug;
   uint32_t             log_hex_limit      = 32;

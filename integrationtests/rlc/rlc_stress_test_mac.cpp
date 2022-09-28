@@ -14,10 +14,10 @@
 
 using namespace srsgnb;
 
-std::vector<byte_buffer_slice_chain> mac_dummy::run_tx_tti()
+std::vector<byte_buffer_slice_chain> mac_dummy::run_tx_tti(uint32_t tti)
 {
+  logger.log_info("Running TX TTI={}. Generating list of {} PDUs", tti, args.nof_pdu_tti);
   std::vector<byte_buffer_slice_chain> pdu_list;
-  logger.log_info("Generating list PDU for TTI. PDUs per TTI={}", args.nof_pdu_tti);
   // Pull a number of RLC PDUs
   for (uint32_t i = 0; i < args.nof_pdu_tti; i++) {
     // Get MAC opportunity size (maximum size of the RLC PDU)
@@ -45,13 +45,13 @@ std::vector<byte_buffer_slice_chain> mac_dummy::run_tx_tti()
   return pdu_list;
 }
 
-void mac_dummy::run_rx_tti(std::vector<byte_buffer_slice_chain> pdu_list)
+void mac_dummy::run_rx_tti()
 {
-  logger.log_debug("Run RX TTI. Number of RX PDUs={}", pdu_list.size());
-  auto pdu_it      = pdu_list.begin(); // PDU iterator
-  bool skip_action = false;            // Avoid discarding a duplicated or duplicating a discarded
+  logger.log_debug("Run RX TTI. Number of RX PDUs={}", pdu_rx_list.size());
+  auto pdu_it      = pdu_rx_list.begin(); // PDU iterator
+  bool skip_action = false;               // Avoid discarding a duplicated or duplicating a discarded
 
-  while (pdu_it != pdu_list.end()) {
+  while (pdu_it != pdu_rx_list.end()) {
     // Drop
     float rnd = real_dist(rgen);
     if (std::isnan(rnd) || ((rnd > args.pdu_drop_rate) || skip_action)) {
@@ -87,5 +87,11 @@ void mac_dummy::run_rx_tti(std::vector<byte_buffer_slice_chain> pdu_list)
   }
 
   // clear pdu_list
-  pdu_list.clear();
+  pdu_rx_list.clear();
+}
+
+void mac_dummy::push_rx_pdus(std::vector<byte_buffer_slice_chain> list_pdus)
+{
+  pdu_rx_list.insert(
+      pdu_rx_list.end(), std::make_move_iterator(list_pdus.begin()), std::make_move_iterator(list_pdus.end()));
 }
