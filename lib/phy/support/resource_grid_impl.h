@@ -12,6 +12,8 @@
 
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/srsvec/aligned_vec.h"
+#include "srsgnb/adt/tensor.h"
+
 
 namespace srsgnb {
 
@@ -24,12 +26,12 @@ private:
   unsigned          nof_symb;
   unsigned          nof_subc;
 
-  /// \brief Stores the resource grid buffers
+  /// \brief Stores the resource grid data.
   ///
-  /// Each \c srsvec::aligned_vec<cf_t> represents a flattened resource grid for each port of \c nof_ports. The resource
-  /// elements are organised in increasing subcarrier index and then symbol where the resource element of symbol \c l
-  /// and subcarrier \c k access is \c port_buffers[port][nof_subc * l + k].
-  std::vector<srsvec::aligned_vec<cf_t>> port_buffers;
+  /// The resource grid buffer is a three-dimensional array with the dimensions representing, in order, subcarriers,
+  /// OFDM symbols and antenna ports. The underlying data structure is indexed in the same order: i) subcarriers,
+  /// ii) OFDM symbols, iii) ports.
+  dynamic_tensor<3, cf_t> rg_buffer;
 
 public:
   resource_grid_impl(unsigned nof_ports, unsigned nof_symb, unsigned nof_subc);
