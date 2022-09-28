@@ -38,6 +38,7 @@ intermediate commits:
   extends: .build
   rules:
     - if: $ON_MR
+      # allow_failure: true
   script:
     - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git git-lfs
     - git lfs install
@@ -50,7 +51,9 @@ intermediate commits:
         echo "#### $rev ####"
         echo "##################################################"
         git checkout $rev
+        sed -i "s/-Wall -Werror/-Wall/" CMakeLists.txt
         build_srsgnb
+        sed -i "s/-Wall/-Wall -Werror/" CMakeLists.txt
       done
   after_script:
     - rm -Rf build
