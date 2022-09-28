@@ -10,10 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/support/resource_grid.h"
-#include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/adt/tensor.h"
-
+#include "srsgnb/phy/support/resource_grid.h"
 
 namespace srsgnb {
 
@@ -21,6 +19,9 @@ namespace srsgnb {
 class resource_grid_impl : public resource_grid
 {
 private:
+  /// Dimension, i.e. number of coordinates, of each indexing level of the resource grid.
+  enum dimensions : unsigned { symbol = 1, port = 2, all = 3 };
+
   std::vector<bool> empty;
   unsigned          nof_ports;
   unsigned          nof_symb;
@@ -29,9 +30,8 @@ private:
   /// \brief Stores the resource grid data.
   ///
   /// The resource grid buffer is a three-dimensional array with the dimensions representing, in order, subcarriers,
-  /// OFDM symbols and antenna ports. The underlying data structure is indexed in the same order: i) subcarriers,
-  /// ii) OFDM symbols, iii) ports.
-  dynamic_tensor<3, cf_t> rg_buffer;
+  /// OFDM symbols and antenna ports.
+  dynamic_tensor<dimensions::all, cf_t> rg_buffer;
 
 public:
   resource_grid_impl(unsigned nof_ports, unsigned nof_symb, unsigned nof_subc);

@@ -25,7 +25,7 @@ resource_grid_impl::resource_grid_impl(unsigned nof_ports_, unsigned nof_symb_, 
   empty(nof_ports_), nof_ports(nof_ports_), nof_symb(nof_symb_), nof_subc(nof_subc_)
 {
   // Reserve memory for the internal buffer.
-  rg_buffer.reserve({nof_subc_, nof_symb_, nof_ports_});
+  rg_buffer.reserve({nof_subc, nof_symb, nof_ports});
 }
 
 void resource_grid_impl::put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols)
@@ -35,9 +35,7 @@ void resource_grid_impl::put(unsigned port, span<const resource_grid_coordinate>
                 coordinates.size(),
                 symbols.size());
 
-  // Select buffer from the port index
   srsgnb_assert(port < nof_ports, "The port index {} is out of range (max {}).", port, nof_ports - 1);
-  span<cf_t> buffer = rg_buffer.get_view<2>({port});
 
   unsigned count = 0;
   for (const resource_grid_coordinate& coordinate : coordinates) {
@@ -47,7 +45,12 @@ void resource_grid_impl::put(unsigned port, span<const resource_grid_coordinate>
                   "Subcarrier index {} is out of range (max {}).",
                   coordinate.subcarrier,
                   nof_subc);
-    buffer[coordinate.symbol * nof_subc + coordinate.subcarrier] = symbols[count++];
+
+    // Select destination OFDM symbol from the resource grid.
+    span<cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({coordinate.symbol, port});
+
+    // Write into the desired resource element.
+    rg_symbol[coordinate.subcarrier] = symbols[count++];
   }
   empty[port] = false;
 }
@@ -60,13 +63,10 @@ span<const cf_t> resource_grid_impl::put(unsigned         port,
 {
   assert(l < nof_symb);
   assert(mask.size() <= nof_subc);
-
-  // Select buffer from the port index
   assert(port < nof_ports);
-  span<cf_t> buffer = rg_buffer.get_view<2>({port});
 
-  // Select destination symbol in buffer
-  span<cf_t> symb = buffer.subspan(l * nof_subc, nof_subc);
+  // Select destination OFDM symbol from the resource grid.
+  span<cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({l, port});
 
   // Iterate mask using AVX2 intrinsics and preset groups of 4 subcarriers.
   unsigned i_subc = 0;
@@ -86,82 +86,82 @@ span<const cf_t> resource_grid_impl::put(unsigned         port,
           // No subcarrier is active, skip.
           break;
         case 0B0001:
-          symb[i_subc + k_init + 0 + offset] = symbol_buffer[0];
-          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 1);
+          rg_symbol[i_subc + k_init + 0 + offset] = symbol_buffer[0];
+          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 1);
           break;
         case 0B0010:
-          symb[i_subc + k_init + 1 + offset] = symbol_buffer[0];
-          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 1);
+          rg_symbol[i_subc + k_init + 1 + offset] = symbol_buffer[0];
+          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 1);
           break;
         case 0B0011:
-          symb[i_subc + k_init + 0 + offset] = symbol_buffer[0];
-          symb[i_subc + k_init + 1 + offset] = symbol_buffer[1];
-          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 2);
+          rg_symbol[i_subc + k_init + 0 + offset] = symbol_buffer[0];
+          rg_symbol[i_subc + k_init + 1 + offset] = symbol_buffer[1];
+          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 2);
           break;
         case 0B0100:
-          symb[i_subc + k_init + 2 + offset] = symbol_buffer[0];
-          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 1);
+          rg_symbol[i_subc + k_init + 2 + offset] = symbol_buffer[0];
+          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 1);
           break;
         case 0B0101:
-          symb[i_subc + k_init + 0 + offset] = symbol_buffer[0];
-          symb[i_subc + k_init + 2 + offset] = symbol_buffer[1];
-          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 2);
+          rg_symbol[i_subc + k_init + 0 + offset] = symbol_buffer[0];
+          rg_symbol[i_subc + k_init + 2 + offset] = symbol_buffer[1];
+          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 2);
           break;
         case 0B0110:
-          symb[i_subc + k_init + 1 + offset] = symbol_buffer[0];
-          symb[i_subc + k_init + 2 + offset] = symbol_buffer[1];
-          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 2);
+          rg_symbol[i_subc + k_init + 1 + offset] = symbol_buffer[0];
+          rg_symbol[i_subc + k_init + 2 + offset] = symbol_buffer[1];
+          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 2);
           break;
         case 0B0111:
-          symb[i_subc + k_init + 0 + offset] = symbol_buffer[0];
-          symb[i_subc + k_init + 1 + offset] = symbol_buffer[1];
-          symb[i_subc + k_init + 2 + offset] = symbol_buffer[2];
-          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 3);
+          rg_symbol[i_subc + k_init + 0 + offset] = symbol_buffer[0];
+          rg_symbol[i_subc + k_init + 1 + offset] = symbol_buffer[1];
+          rg_symbol[i_subc + k_init + 2 + offset] = symbol_buffer[2];
+          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 3);
           break;
         case 0B1000:
-          symb[i_subc + k_init + 3 + offset] = symbol_buffer[0];
-          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 1);
+          rg_symbol[i_subc + k_init + 3 + offset] = symbol_buffer[0];
+          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 1);
           break;
         case 0B1001:
-          symb[i_subc + k_init + 0 + offset] = symbol_buffer[0];
-          symb[i_subc + k_init + 3 + offset] = symbol_buffer[1];
-          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 2);
+          rg_symbol[i_subc + k_init + 0 + offset] = symbol_buffer[0];
+          rg_symbol[i_subc + k_init + 3 + offset] = symbol_buffer[1];
+          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 2);
           break;
         case 0B1010:
-          symb[i_subc + k_init + 1 + offset] = symbol_buffer[0];
-          symb[i_subc + k_init + 3 + offset] = symbol_buffer[1];
-          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 2);
+          rg_symbol[i_subc + k_init + 1 + offset] = symbol_buffer[0];
+          rg_symbol[i_subc + k_init + 3 + offset] = symbol_buffer[1];
+          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 2);
           break;
         case 0B1011:
-          symb[i_subc + k_init + 0 + offset] = symbol_buffer[0];
-          symb[i_subc + k_init + 1 + offset] = symbol_buffer[1];
-          symb[i_subc + k_init + 3 + offset] = symbol_buffer[2];
-          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 3);
+          rg_symbol[i_subc + k_init + 0 + offset] = symbol_buffer[0];
+          rg_symbol[i_subc + k_init + 1 + offset] = symbol_buffer[1];
+          rg_symbol[i_subc + k_init + 3 + offset] = symbol_buffer[2];
+          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 3);
           break;
         case 0B1100:
-          symb[i_subc + k_init + 2 + offset] = symbol_buffer[0];
-          symb[i_subc + k_init + 3 + offset] = symbol_buffer[1];
-          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 2);
+          rg_symbol[i_subc + k_init + 2 + offset] = symbol_buffer[0];
+          rg_symbol[i_subc + k_init + 3 + offset] = symbol_buffer[1];
+          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 2);
           break;
         case 0B1101:
-          symb[i_subc + k_init + 0 + offset] = symbol_buffer[0];
-          symb[i_subc + k_init + 2 + offset] = symbol_buffer[1];
-          symb[i_subc + k_init + 3 + offset] = symbol_buffer[2];
-          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 3);
+          rg_symbol[i_subc + k_init + 0 + offset] = symbol_buffer[0];
+          rg_symbol[i_subc + k_init + 2 + offset] = symbol_buffer[1];
+          rg_symbol[i_subc + k_init + 3 + offset] = symbol_buffer[2];
+          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 3);
           break;
         case 0B1110:
-          symb[i_subc + k_init + 1 + offset] = symbol_buffer[0];
-          symb[i_subc + k_init + 2 + offset] = symbol_buffer[1];
-          symb[i_subc + k_init + 3 + offset] = symbol_buffer[2];
-          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 3);
+          rg_symbol[i_subc + k_init + 1 + offset] = symbol_buffer[0];
+          rg_symbol[i_subc + k_init + 2 + offset] = symbol_buffer[1];
+          rg_symbol[i_subc + k_init + 3 + offset] = symbol_buffer[2];
+          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 3);
           break;
         case 0B1111:
         default:
-          symb[i_subc + k_init + 0 + offset] = symbol_buffer[0];
-          symb[i_subc + k_init + 1 + offset] = symbol_buffer[1];
-          symb[i_subc + k_init + 2 + offset] = symbol_buffer[2];
-          symb[i_subc + k_init + 3 + offset] = symbol_buffer[3];
-          symbol_buffer                      = symbol_buffer.last(symbol_buffer.size() - 4);
+          rg_symbol[i_subc + k_init + 0 + offset] = symbol_buffer[0];
+          rg_symbol[i_subc + k_init + 1 + offset] = symbol_buffer[1];
+          rg_symbol[i_subc + k_init + 2 + offset] = symbol_buffer[2];
+          rg_symbol[i_subc + k_init + 3 + offset] = symbol_buffer[3];
+          symbol_buffer                           = symbol_buffer.last(symbol_buffer.size() - 4);
           break;
       }
     }
@@ -170,8 +170,8 @@ span<const cf_t> resource_grid_impl::put(unsigned         port,
 
   for (unsigned i_subc_end = mask.size(); i_subc < i_subc_end; ++i_subc) {
     if (mask[i_subc]) {
-      symb[i_subc + k_init] = symbol_buffer.front();
-      symbol_buffer         = symbol_buffer.last(symbol_buffer.size() - 1);
+      rg_symbol[i_subc + k_init] = symbol_buffer.front();
+      symbol_buffer              = symbol_buffer.last(symbol_buffer.size() - 1);
     }
   }
   empty[port] = false;
@@ -189,19 +189,19 @@ void resource_grid_impl::put(unsigned port, unsigned l, unsigned k_init, span<co
                             nof_subc);
   report_fatal_error_if_not(port < nof_ports, "Port index ({}) is out-of-range (max. {})", port, nof_ports);
 
-  // Select buffer from the port index
-  span<cf_t> buffer = rg_buffer.get_view<2>({port});
+  // Select destination OFDM symbol from the resource grid.
+  span<cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({l, port});
 
-  // Copy
-  srsvec::copy(buffer.subspan(l * nof_subc + k_init, symbols.size()), symbols);
+  // Copy resource elements.
+  srsvec::copy(rg_symbol.subspan(k_init, symbols.size()), symbols);
   empty[port] = false;
 }
 void resource_grid_impl::set_all_zero()
 {
-  // For each port buffer set to zero
+  // For each non-empty port, set the underlying resource elements to zero.
   for (unsigned port = 0; port != nof_ports; ++port) {
     if (!empty[port]) {
-      srsvec::zero(rg_buffer.get_view<2>({port}));
+      srsvec::zero(rg_buffer.get_view<dimensions::port>({port}));
       empty[port] = true;
     }
   }
@@ -209,43 +209,46 @@ void resource_grid_impl::set_all_zero()
 
 void resource_grid_impl::get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const
 {
-  assert(coordinates.size() == symbols.size());
+  unsigned nof_re = coordinates.size();
 
-  // Select buffer from the port index
+  assert(nof_re == symbols.size());
   assert(port < nof_ports);
-  span<const cf_t> buffer = rg_buffer.get_view<2>({port});
 
-  cf_t* symbol_ptr = symbols.begin();
-  for (const resource_grid_coordinate& coordinate : coordinates) {
+  // Iterate through the coordinates and access the desired resource elements.
+  for (unsigned i_re = 0; i_re != nof_re; ++i_re) {
+    resource_grid_coordinate coordinate = coordinates[i_re];
+
     assert(coordinate.symbol < nof_symb);
     assert(coordinate.subcarrier < nof_subc);
-    *(symbol_ptr++) = buffer[coordinate.symbol * nof_subc + coordinate.subcarrier];
+
+    // Access the OFDM symbol from the resource grid.
+    span<const cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({coordinate.symbol, port});
+    symbols[i_re]              = rg_symbol[coordinate.subcarrier];
   }
 }
 
 span<cf_t>
 resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const
 {
+  unsigned mask_size = mask.size();
+
   assert(l < nof_symb);
-  assert(mask.size() <= nof_subc);
-
-  // Select buffer from the port index
+  assert(mask_size <= nof_subc);
   assert(port < nof_ports);
-  span<const cf_t> buffer = rg_buffer.get_view<2>({port});
 
-  // Select destination symbol in buffer
-  span<const cf_t> symb = buffer.subspan(l * nof_subc, nof_subc);
+  // Access the OFDM symbol from the resource grid.
+  span<const cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({l, port});
 
-  // Iterate mask
+  // Iterate mask.
   unsigned count = 0;
-  for (unsigned k = 0; k != mask.size(); ++k) {
+  for (unsigned k = 0; k != mask_size; ++k) {
     if (mask[k]) {
-      symbols[count] = symb[k + k_init];
+      symbols[count] = rg_symbol[k + k_init];
       count++;
     }
   }
 
-  // Update symbol buffer
+  // Update symbol buffer.
   return symbols.last(symbols.size() - count);
 }
 
@@ -253,13 +256,13 @@ void resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsi
 {
   assert(l < nof_symb);
   assert(k_init + symbols.size() <= nof_subc);
-
-  // Select buffer from the port index
   assert(port < nof_ports);
-  span<const cf_t> buffer = rg_buffer.get_view<2>({port});
 
-  // Copy
-  srsvec::copy(symbols, buffer.subspan(l * nof_subc + k_init, symbols.size()));
+  // Access the OFDM symbol from the resource grid.
+  span<const cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({l, port});
+
+  // Copy resource elements.
+  srsvec::copy(symbols, rg_symbol.subspan(k_init, symbols.size()));
 }
 
 bool resource_grid_impl::is_empty(unsigned port) const

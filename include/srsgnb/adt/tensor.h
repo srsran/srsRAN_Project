@@ -61,14 +61,14 @@ public:
     return data.subspan(get_view_offset<N>(indices), view_size);
   }
 
-  /// Gets the reference of an element.
+  /// Gets the reference to an element.
   Type& operator[](const std::array<unsigned, NDIMS>& indices)
   {
     span<Type> data = get_data();
     return data[get_view_offset<0>(indices)];
   }
 
-  /// Gets a read-only the reference of an element.
+  /// Gets a read-only reference to an element.
   const Type& operator[](const std::array<unsigned, NDIMS>& indices) const
   {
     span<const Type> data = get_data();
