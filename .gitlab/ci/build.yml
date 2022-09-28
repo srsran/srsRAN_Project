@@ -1,6 +1,6 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "23"
+    ref: "24"
     file: .gitlab/ci-shared/setup/all.yml
 
 variables:
@@ -193,6 +193,8 @@ build [clean]:
           --exclude "${CI_PROJECT_DIR}/lib/asn1/f1ap.cpp" \
           --exclude "${CI_PROJECT_DIR}/lib/asn1/ngap.cpp" \
           --exclude "${CI_PROJECT_DIR}/lib/asn1/rrc_nr/.*" \
+          --exclude "${CI_PROJECT_DIR}/lib/phy/generic_functions/fftx/lib_fftx_dftbat_srcs/.* \
+          --exclude "${CI_PROJECT_DIR}/lib/phy/generic_functions/fftx/lib_fftx_idftbat_srcs/.* \
           --exclude-lines-by-pattern ".*srsgnb_assert.*|.*srsgnb_sanity_check.*" \
           --root ${CI_PROJECT_DIR} -o coverage.xml
 
