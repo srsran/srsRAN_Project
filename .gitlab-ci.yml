@@ -87,6 +87,68 @@ intermediate commits:
 
 # Default build in build.yml
 
+build custom [launcher]:
+  image: alpine:3.16.0 # sh entrypoint
+  stage: build
+  rules:
+    - if: $ON_MR
+      when: manual
+      allow_failure: true
+  variables:
+    OS: ""
+    COMPILER: ""
+    TEST_MODE: ""
+    BUILD_ARGS: ""
+  script:
+    - |
+      error=0
+      if [ "$OS" = !"ubuntu-22.04" ] && [ "$OS" != "ubuntu-20.04" ] && [ "$OS" != "archlinux-latest" ]; then
+          error=1
+      elif [ "$COMPILER" != "gcc" ] && [ "$COMPILER" != "clang" ]; then
+          error=1
+      elif [ "$TEST_MODE" != "default" ] && [ "$TEST_MODE" != "coverage" ] && [ "$TEST_MODE" != "asan" ] && [ "$TEST_MODE" != "tsan" ] && [ "$TEST_MODE" != "valgrind" ] && [ "$TEST_MODE" != "none" ]; then
+          error=1
+      elif [ "$BUILD_ARGS" = "" ]; then
+          error=1
+      fi
+    - |
+      if [ $error = 1 ]; then
+          echo "Invalid flags:"
+          echo "OS [$OS] must be one of ubuntu-22.04, ubuntu-20.04, archlinux-latest"
+          echo "COMPILER [$COMPILER] must be one of gcc, clang"
+          echo "TEST_MODE [$TEST_MODE] must be one of default, coverage, asan, tsan, valgrind, none"
+          echo "BUILD_ARGS [$BUILD_ARGS] must not be empty and it will be pased to cmake"
+      fi
+    - |
+      {
+          echo "CUSTOM_OS=$OS"
+          echo "CUSTOM_COMPILER=$COMPILER"
+          echo "CUSTOM_TEST_MODE=$TEST_MODE"
+          echo "CUSTOM_BUILD_ARGS= $BUILD_ARGS"
+      } >>custom.env
+    - cat custom.env
+    - exit $error
+  artifacts:
+    reports:
+      dotenv: custom.env
+  needs: []
+
+build custom [trigger job]:
+  extends: .trigger build
+  needs:
+    - build custom [launcher]
+  rules:
+    - if: $ON_MR
+      allow_failure: true
+  variables:
+    OS: $CUSTOM_OS
+    COMPILER: $CUSTOM_COMPILER
+    TEST_MODE: $CUSTOM_TEST_MODE
+    BUILD_ARGS: $CUSTOM_BUILD_ARGS
+    ENABLE_GCOV: ""
+    ASSERT_LEVEL: ""
+    AUTO_DETECT_ISA: ""
+
 build [next]:
   extends: .trigger build on mr
   rules:

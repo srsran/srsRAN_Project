@@ -43,43 +43,43 @@ stages:
     - |
       build_srsgnb() {
         if [ -n "${UHD_VERSION}" ]; then
-          BUILD_EXTRA="${BUILD_EXTRA} -u ${UHD_VERSION}"
+          BUILD_ARGS="${BUILD_ARGS} -u ${UHD_VERSION}"
         fi
         if [ -n "${BUILD_TYPE}" ]; then
-          BUILD_EXTRA="${BUILD_EXTRA} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+          BUILD_ARGS="${BUILD_ARGS} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
         fi
         if [ -n "${ASSERT_LEVEL}" ]; then
-          BUILD_EXTRA="${BUILD_EXTRA} -DASSERT_LEVEL=${ASSERT_LEVEL}"
+          BUILD_ARGS="${BUILD_ARGS} -DASSERT_LEVEL=${ASSERT_LEVEL}"
         fi
         if [ -n "${AUTO_DETECT_ISA}" ]; then
-          BUILD_EXTRA="${BUILD_EXTRA} -DAUTO_DETECT_ISA=${AUTO_DETECT_ISA}"
+          BUILD_ARGS="${BUILD_ARGS} -DAUTO_DETECT_ISA=${AUTO_DETECT_ISA}"
         fi
         if [ -n "${ENABLE_EXPORT}" ]; then
-          BUILD_EXTRA="${BUILD_EXTRA} -DENABLE_EXPORT=${ENABLE_EXPORT}"
+          BUILD_ARGS="${BUILD_ARGS} -DENABLE_EXPORT=${ENABLE_EXPORT}"
         fi
         if [ -n "${ENABLE_FFTW}" ]; then
-          BUILD_EXTRA="${BUILD_EXTRA} -DENABLE_FFTW=${ENABLE_FFTW}"
+          BUILD_ARGS="${BUILD_ARGS} -DENABLE_FFTW=${ENABLE_FFTW}"
         fi
         if [ -n "${ENABLE_UHD}" ]; then
-          BUILD_EXTRA="${BUILD_EXTRA} -DENABLE_UHD=${ENABLE_UHD}"
+          BUILD_ARGS="${BUILD_ARGS} -DENABLE_UHD=${ENABLE_UHD}"
         fi
         if [ -n "${ENABLE_ZERO_MQ}" ]; then
-          BUILD_EXTRA="${BUILD_EXTRA} -DENABLE_ZERO_MQ=${ENABLE_ZERO_MQ}"
+          BUILD_ARGS="${BUILD_ARGS} -DENABLE_ZERO_MQ=${ENABLE_ZERO_MQ}"
         fi
         if [ -n "${ENABLE_ASAN}" ]; then
-          BUILD_EXTRA="${BUILD_EXTRA} -DENABLE_ASAN=${ENABLE_ASAN}"
+          BUILD_ARGS="${BUILD_ARGS} -DENABLE_ASAN=${ENABLE_ASAN}"
         fi
         if [ -n "${ENABLE_TSAN}" ]; then
-          BUILD_EXTRA="${BUILD_EXTRA} -DENABLE_TSAN=${ENABLE_TSAN}"
+          BUILD_ARGS="${BUILD_ARGS} -DENABLE_TSAN=${ENABLE_TSAN}"
         fi
         if [ -n "${ENABLE_GCOV}" ]; then
-          BUILD_EXTRA="${BUILD_EXTRA} -DENABLE_GCOV=${ENABLE_GCOV}"
+          BUILD_ARGS="${BUILD_ARGS} -DENABLE_GCOV=${ENABLE_GCOV}"
         fi
         if [[ $TEST_MODE = "none" ]]; then
-          BUILD_EXTRA="${BUILD_EXTRA} -DBUILD_TESTS=False"
+          BUILD_ARGS="${BUILD_ARGS} -DBUILD_TESTS=False"
         fi
 
-        BUILD_CMD="builder.sh -c ${COMPILER}${BUILD_EXTRA} ."
+        BUILD_CMD="builder.sh -c ${COMPILER} ${BUILD_ARGS} ."
         echo "${BUILD_CMD}"
         echo "============================================================================================="
         $BUILD_CMD
