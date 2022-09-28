@@ -34,30 +34,29 @@ public:
   /// Schedule UE DL grants for a given {slot, cell}.
   void run_slot(slot_point slot_tx, du_cell_index_t cell_index) override;
 
-  /// Handles DL buffer state reported by upper layers.
-  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override;
-
   scheduler_ue_configurator& get_ue_configurator() override { return event_mng; }
 
   scheduler_feedback_handler& get_feedback_handler() override { return event_mng; }
 
+  scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() override { return event_mng; }
+
 private:
   void run_sched_strategy(slot_point sl_tx);
 
-  /// Repository of created UEs.
-  ue_list ue_db;
-
-  /// Processor of UE input events.
-  ue_event_manager event_mng;
-
-  /// Allocator of grants in the resource grid.
-  ue_cell_grid_allocator ue_alloc;
+  /// SRB0 scheduler
+  ue_srb0_scheduler srb0_sched;
 
   /// Scheduling Strategy
   std::unique_ptr<scheduler_policy> sched_strategy;
 
-  /// SRB0 scheduler
-  ue_srb0_scheduler srb0_sched;
+  /// Repository of created UEs.
+  ue_list ue_db;
+
+  /// Allocator of grants in the resource grid.
+  ue_cell_grid_allocator ue_alloc;
+
+  /// Processor of UE input events.
+  ue_event_manager event_mng;
 
   /// Mutex used to lock carriers for joint carrier scheduling.
   slot_sync_point sync_point;

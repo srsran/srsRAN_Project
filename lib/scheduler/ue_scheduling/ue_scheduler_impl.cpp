@@ -14,10 +14,10 @@
 using namespace srsgnb;
 
 ue_scheduler_impl::ue_scheduler_impl(sched_configuration_notifier& mac_notif) :
-  event_mng(ue_db, mac_notif),
-  ue_alloc(ue_db, srslog::fetch_basic_logger("MAC")),
+  srb0_sched(srslog::fetch_basic_logger("MAC")),
   sched_strategy(create_scheduler_strategy(scheduler_strategy_params{"time_rr", &srslog::fetch_basic_logger("MAC")})),
-  srb0_sched(srslog::fetch_basic_logger("MAC"))
+  ue_alloc(ue_db, srslog::fetch_basic_logger("MAC")),
+  event_mng(ue_db, mac_notif, srb0_sched, *sched_strategy)
 {
 }
 
@@ -32,13 +32,15 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
   // Perform round-robin prioritization of UL and DL scheduling. This avoids that we give unfair preference to DL over
   // UL scheduling or vice-versa, when allocating PDCCHs.
   if (slot_tx.to_uint() % 2 == 0) {
-    // Start with DL
-    sched_strategy->dl_sched(ue_alloc, ue_db);
-    sched_strategy->ul_sched(ue_alloc, ue_db);
+    // Start with DL re-Tx, then SRB0 and then new Tx
+    sched_strategy->dl_sched(ue_alloc, ue_db, true);
+    // Schedule SRB0 first before scheduling other bearers
+    srb0_sched.run_slot(ue_alloc, ue_db);
+    sched_strategy->ul_sched(ue_alloc, ue_db, false);
   } else {
     // Start with UL
-    sched_strategy->ul_sched(ue_alloc, ue_db);
-    sched_strategy->dl_sched(ue_alloc, ue_db);
+    sched_strategy->ul_sched(ue_alloc, ue_db, true);
+    sched_strategy->dl_sched(ue_alloc, ue_db, false);
   }
 }
 
@@ -48,17 +50,5 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
   event_mng.run(slot_tx, cell_index);
 
   // Synchronize all carriers. Last thread to reach this synchronization point, runs UE scheduling strategy.
-  sync_point.wait(slot_tx, ue_alloc.nof_cells(), [this, slot_tx]() {
-    // Schedule SRB0 first before scheduling other bearers
-    srb0_sched.schedule_srb0(ue_alloc, ue_db);
-    run_sched_strategy(slot_tx);
-  });
-}
-
-void ue_scheduler_impl::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
-{
-  if (bs.lcid == LCID_SRB0) {
-    srb0_sched.handle_dl_buffer_state_indication(bs);
-  }
-  // TODO: Handle non-SRB0 scenario
+  sync_point.wait(slot_tx, ue_alloc.nof_cells(), [this, slot_tx]() { run_sched_strategy(slot_tx); });
 }

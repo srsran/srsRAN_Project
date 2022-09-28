@@ -36,7 +36,7 @@ void mac_impl::handle_dl_buffer_state_update_required(const mac_dl_buffer_state_
   bs.ue_index = dl_bs.ue_index;
   bs.lcid     = dl_bs.lcid;
   bs.bs       = dl_bs.bs;
-  sched_obj->handle_dl_buffer_state_update_indication(bs);
+  sched_obj->handle_dl_buffer_state_indication(bs);
 }
 
 } // namespace srsgnb

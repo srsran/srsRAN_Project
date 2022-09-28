@@ -56,8 +56,12 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ue_event_manager::ue_event_manager(ue_list& ue_db_, sched_configuration_notifier& mac_notifier_) :
-  ue_db(ue_db_), mac_notifier(mac_notifier_), logger(srslog::fetch_basic_logger("MAC"))
+ue_event_manager::ue_event_manager(ue_list& ue_db,
+                                   sched_configuration_notifier& mac_notifier,
+                                   ue_srb0_scheduler& srb0_sched,
+                                   scheduler_policy&  sched_strategy) :
+  ue_db(ue_db), mac_notifier(mac_notifier), logger(srslog::fetch_basic_logger("MAC")), srb0_sched(srb0_sched),
+  sched_strategy(sched_strategy)
 {
 }
 
@@ -153,6 +157,14 @@ void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& c
     ev_logger.enqueue("mac_ce(ueId={},ce={})", ce.ue_index, ce.ce_lcid);
     ue_db[ce.ue_index].handle_dl_mac_ce_indication(ce);
   });
+}
+
+void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
+{
+  if (bs.lcid == LCID_SRB0) {
+    srb0_sched.handle_dl_buffer_state_indication(bs);
+  }
+  // TODO: Handle other logical channels
 }
 
 void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)

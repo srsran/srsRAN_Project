@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../policy/ue_allocator.h"
+#include "../support/slot_event_list.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include "ue.h"
 #include <mutex>
@@ -31,12 +32,11 @@ public:
   /// \param[in/out] pdsch_alloc PDSCH grant allocator. This object provides a handle to allocate PDSCH grants in the
   ///                            gNB resource grid and observe the current DL gNB resource grid occupancy state.
   /// \param[in] ues List of eligible UEs to be scheduled in the given slot.
-  void schedule_srb0(ue_pdsch_allocator& pdsch_alloc, const ue_list& ues);
+  void run_slot(ue_pdsch_allocator& pdsch_alloc, const ue_list& ues);
 
 private:
   /// Pending list of SRB0 DL buffer state reported by upper layers which are yet to be scheduled.
-  std::vector<dl_buffer_state_indication_message> dl_bs;
-  std::mutex dl_bs_mutex;
+  slot_event_list<dl_buffer_state_indication_message> dl_bs;
 
   srslog::basic_logger& logger;
 };

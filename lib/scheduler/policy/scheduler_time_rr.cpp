@@ -116,38 +116,28 @@ bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_retx)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void scheduler_time_rr::dl_sched(ue_pdsch_allocator& pdsch_alloc, const ue_list& ues)
+void scheduler_time_rr::dl_sched(ue_pdsch_allocator& pdsch_alloc, const ue_list& ues, bool is_retx)
 {
-  // Increment Round-robin counter to prioritize different UEs.
-  rr_count++;
-
-  // Start with retxs
-  auto retx_ue_function = [&pdsch_alloc](const ue& u) { return alloc_dl_ue(u, pdsch_alloc, true); };
-  if (round_robin_apply(ues, rr_count, retx_ue_function)) {
-    return;
+  if (not is_retx) {
+    // Increment Round-robin counter to prioritize different UEs.
+    rr_count++;
   }
 
-  // Allocate newtxs
-  auto newtx_ue_function = [&pdsch_alloc](const ue& u) { return alloc_dl_ue(u, pdsch_alloc, false); };
-  if (round_robin_apply(ues, rr_count, newtx_ue_function)) {
+  auto tx_ue_function = [&pdsch_alloc, is_retx](const ue& u) { return alloc_dl_ue(u, pdsch_alloc, is_retx); };
+  if (round_robin_apply(ues, rr_count, tx_ue_function)) {
     return;
   }
 }
 
-void scheduler_time_rr::ul_sched(ue_pusch_allocator& pusch_alloc, const ue_list& ues)
+void scheduler_time_rr::ul_sched(ue_pusch_allocator& pusch_alloc, const ue_list& ues, bool is_retx)
 {
-  // Increment Round-robin counter to prioritize different UEs.
-  rr_count++;
-
-  // Start with retxs
-  auto retx_ue_function = [&pusch_alloc](const ue& u) { return alloc_ul_ue(u, pusch_alloc, true); };
-  if (round_robin_apply(ues, rr_count, retx_ue_function)) {
-    return;
+  if (not is_retx) {
+    // Increment Round-robin counter to prioritize different UEs.
+    rr_count++;
   }
 
-  // Allocate newtxs
-  auto newtx_ue_function = [&pusch_alloc](const ue& u) { return alloc_ul_ue(u, pusch_alloc, false); };
-  if (round_robin_apply(ues, rr_count, newtx_ue_function)) {
+  auto tx_ue_function = [&pusch_alloc, is_retx](const ue& u) { return alloc_ul_ue(u, pusch_alloc, is_retx); };
+  if (round_robin_apply(ues, rr_count, tx_ue_function)) {
     return;
   }
 }

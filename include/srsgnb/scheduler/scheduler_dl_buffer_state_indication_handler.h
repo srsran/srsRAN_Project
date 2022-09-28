@@ -23,14 +23,14 @@ struct dl_buffer_state_indication_message {
   unsigned      bs;
 };
 
-/// Scheduler interface to push DL buffer state Reports for a given RLC bearer.
-class scheduler_dl_buffer_state_indicator
+/// Scheduler interface to push DL buffer state updates for a given RLC bearer.
+class scheduler_dl_buffer_state_indication_handler
 {
 public:
-  virtual ~scheduler_dl_buffer_state_indicator() = default;
+  virtual ~scheduler_dl_buffer_state_indication_handler() = default;
 
   /// Forward DL buffer state update to scheduler.
-  virtual void handle_dl_buffer_state_update_indication(const dl_buffer_state_indication_message& bs) = 0;
+  virtual void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) = 0;
 };
 
 } // namespace srsgnb

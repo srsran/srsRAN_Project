@@ -48,9 +48,9 @@ public:
   }
 
   /// UE DL buffer state update.
-  void handle_dl_buffer_state_update_indication(const dl_buffer_state_indication_message& bs) override
+  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override
   {
-    ue_sched->handle_dl_buffer_state_indication(bs);
+    dl_bs_handler.handle_dl_buffer_state_indication(bs);
   }
 
   void handle_crc_indication(const ul_crc_indication& crc) override;
@@ -65,9 +65,10 @@ private:
   srslog::basic_logger&         logger;
 
   /// Scheduler for UEs.
-  std::unique_ptr<ue_scheduler> ue_sched;
-  scheduler_ue_configurator&    ue_cfg_handler;
-  scheduler_feedback_handler&   feedback_handler;
+  std::unique_ptr<ue_scheduler>                 ue_sched;
+  scheduler_ue_configurator&                    ue_cfg_handler;
+  scheduler_feedback_handler&                   feedback_handler;
+  scheduler_dl_buffer_state_indication_handler& dl_bs_handler;
 
   /// Cell-specific resources and schedulers.
   scheduler_cell_manager cells;

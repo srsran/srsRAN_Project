@@ -10,10 +10,12 @@
 
 #pragma once
 
+#include "../policy/scheduler_policy.h"
 #include "../support/slot_event_list.h"
 #include "srsgnb/adt/unique_function.h"
 #include "srsgnb/ran/du_types.h"
 #include "ue.h"
+#include "ue_srb0_scheduler.h"
 
 namespace srsgnb {
 
@@ -22,10 +24,15 @@ class event_logger;
 /// \brief Class used to manage events that arrive to the scheduler and are directed at UEs.
 /// This class acts as a facade for several of the ue_scheduler subcomponents, managing the asynchronous configuration
 /// of the UEs and logging in a thread-safe manner.
-class ue_event_manager : public scheduler_ue_configurator, public scheduler_feedback_handler
+class ue_event_manager : public scheduler_ue_configurator,
+                         public scheduler_feedback_handler,
+                         public scheduler_dl_buffer_state_indication_handler
 {
 public:
-  ue_event_manager(ue_list& ue_db_, sched_configuration_notifier& mac_notifier_);
+  ue_event_manager(ue_list& ue_db,
+                   sched_configuration_notifier& mac_notifier,
+                   ue_srb0_scheduler& srb0_sched,
+                   scheduler_policy&  sched_strategy);
 
   void add_cell_config(const cell_configuration& cell_cfg_);
 
@@ -39,6 +46,9 @@ public:
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
   void handle_crc_indication(const ul_crc_indication& crc) override;
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce) override;
+
+  /// Scheduler DL buffer state indication handler interface.
+  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override;
 
   /// Process events for a given slot and cell index.
   void run(slot_point sl, du_cell_index_t cell_index);
@@ -84,6 +94,10 @@ private:
   /// UE carriers when CA is enabled (e.g. SR, BSR, reconfig).
   slot_event_list<common_event_t> common_events;
   slot_point                      last_sl;
+
+  /// Reference to SRB0 and other bearers scheduler
+  ue_srb0_scheduler& srb0_sched;
+  scheduler_policy&  sched_strategy;
 };
 
 } // namespace srsgnb
