@@ -57,6 +57,10 @@ add_executable(sched_harq_test sched_harq_test.cpp)
 target_link_libraries(sched_harq_test srsgnb_sched srslog)
 add_test(sched_harq_test sched_prb_test)
 
+add_executable(dl_logical_channel_test dl_logical_channel_test.cpp)
+target_link_libraries(dl_logical_channel_test srsgnb_sched srslog gtest gtest_main)
+add_test(dl_logical_channel_test dl_logical_channel_test)
+
 add_executable(sched_no_ue_test sched_no_ue_test.cpp)
 target_link_libraries(sched_no_ue_test srsgnb_sched du_manager_converters srslog mac_configuration_helpers scheduler_test_suite)
 add_test(sched_no_ue_test sched_no_ue_test)

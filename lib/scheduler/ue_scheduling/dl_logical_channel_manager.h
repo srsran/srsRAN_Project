@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/mac/lcid_dl_sch.h"
+#include "srsgnb/mac/mac_pdu_format.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 #include <queue>
 
@@ -18,8 +19,6 @@ namespace srsgnb {
 
 class dl_logical_channel_manager
 {
-  static constexpr unsigned MAC_MAX_SDU_SUBHEADER_SIZE = 3;
-
 public:
   void set_status(lcid_t lcid, bool active) { channels[lcid].active = active; }
 
@@ -30,7 +29,7 @@ public:
   bool has_pending_bytes() const
   {
     return not pending_ces.empty() or
-           std::any_of(channels.begin(), channels.end(), [](const auto& ch) { return ch.buf_st > 0; });
+           std::any_of(channels.begin(), channels.end(), [](const auto& ch) { return ch.active and ch.buf_st > 0; });
   }
 
   /// \brief Checks whether UE has pending CEs to be scheduled.
@@ -43,16 +42,17 @@ public:
     for (const lcid_dl_sch_t& ce : pending_ces) {
       bytes += ce.sizeof_ce();
     }
-    for (const channel_context& ch : channels) {
-      if (ch.active) {
-        bytes += ch.buf_st + MAC_MAX_SDU_SUBHEADER_SIZE;
-      }
+    for (unsigned i = 0; i <= MAX_LCID; ++i) {
+      bytes += pending_bytes((lcid_t)i);
     }
     return bytes;
   }
 
-  /// \brief Last DL buffer status for given LCID (no MAC overhead included).
-  unsigned pending_bytes(lcid_t lcid) const { return is_active(lcid) ? channels[lcid].buf_st : 0; }
+  /// \brief Last DL buffer status for given LCID (MAC subheader included).
+  unsigned pending_bytes(lcid_t lcid) const
+  {
+    return is_active(lcid) ? get_mac_sdu_required_bytes(channels[lcid].buf_st) : 0;
+  }
 
   /// \brief Update DL buffer status for a given LCID.
   void handle_dl_buffer_status_indication(lcid_t lcid, unsigned buffer_status)
@@ -94,7 +94,7 @@ private:
   /// \brief Updates DL Buffer State for a given LCID based on available space.
   unsigned allocate_mac_sdu(lcid_t lcid, unsigned rem_bytes);
 
-  std::array<channel_context, MAX_LCID> channels;
+  std::array<channel_context, MAX_NOF_RB_LCIDS> channels;
 
   std::deque<lcid_dl_sch_t> pending_ces;
 };

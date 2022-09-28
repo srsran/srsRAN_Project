@@ -16,6 +16,7 @@
 
 namespace srsgnb {
 
+/// \brief LCID representation for PDSCH.
 class lcid_dl_sch_t
 {
   using underlying_type = std::underlying_type_t<lcid_t>;

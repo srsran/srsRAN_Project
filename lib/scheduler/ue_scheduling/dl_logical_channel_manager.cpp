@@ -14,34 +14,13 @@ using namespace srsgnb;
 
 namespace {
 
-constexpr unsigned FIXED_SIZED_MAC_CE_SUBHEADER_SIZE = 1;
-constexpr unsigned MIN_MAC_SUBHEADER_SIZE            = 2;
-constexpr unsigned MAX_MAC_SUBHEADER_SIZE            = 3;
-
-/// TS 38.321 sec 6.1 - MAC SDU subheader is 2 bytes if L<=128 and 3 otherwise.
-unsigned get_mac_subheader_size(unsigned sdu_bytes)
-{
-  return sdu_bytes == 0 ? 0 : (sdu_bytes > 128 ? MAX_MAC_SUBHEADER_SIZE : MIN_MAC_SUBHEADER_SIZE);
-}
 unsigned get_mac_sdu_size(unsigned sdu_and_subheader_bytes)
 {
   if (sdu_and_subheader_bytes == 0) {
     return 0;
   }
-  unsigned sdu_size = sdu_and_subheader_bytes - MIN_MAC_SUBHEADER_SIZE;
+  unsigned sdu_size = sdu_and_subheader_bytes - MIN_MAC_SDU_SUBHEADER_SIZE;
   return sdu_size <= 128 ? sdu_size : sdu_size - 1;
-}
-unsigned get_mac_sdu_and_subheader_size(unsigned sdu_bytes)
-{
-  return sdu_bytes + get_mac_subheader_size(sdu_bytes);
-}
-unsigned get_mac_subpdu_and_subheader_size(lcid_dl_sch_t lcid, unsigned sdu_bytes)
-{
-  if (lcid.is_ce() and not lcid.is_var_len_ce()) {
-    srsgnb_sanity_check(sdu_bytes == lcid.sizeof_ce(), "Invalid MAC CE size");
-    return FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + sdu_bytes;
-  }
-  return get_mac_sdu_and_subheader_size(sdu_bytes);
 }
 
 } // namespace
@@ -84,11 +63,11 @@ unsigned dl_logical_channel_manager::allocate_mac_sdu(lcid_t lcid, unsigned rem_
   }
 
   // Account for available space and MAC subheader to decide the number of bytes to allocate.
-  unsigned alloc_bytes = std::min(rem_bytes, get_mac_sdu_and_subheader_size(lch_bytes));
+  unsigned alloc_bytes = std::min(rem_bytes, get_mac_sdu_required_bytes(lch_bytes));
 
   // If it is last PDU of the TBS, allocate all leftover bytes.
   unsigned leftover_bytes = rem_bytes - alloc_bytes;
-  if (leftover_bytes > 0 and (leftover_bytes <= MAX_MAC_SUBHEADER_SIZE or pending_bytes() == 0)) {
+  if (leftover_bytes > 0 and (leftover_bytes <= MAX_MAC_SDU_SUBHEADER_SIZE or pending_bytes() == 0)) {
     alloc_bytes += leftover_bytes;
   }
 
@@ -106,7 +85,12 @@ unsigned dl_logical_channel_manager::allocate_mac_ce(dl_msg_lc_info& subpdu, uns
 
   lcid_dl_sch_t lcid        = pending_ces.front();
   unsigned      ce_size     = lcid.sizeof_ce();
-  unsigned      alloc_bytes = get_mac_subpdu_and_subheader_size(lcid, ce_size);
+  unsigned      alloc_bytes = 0;
+  if (lcid.is_var_len_ce()) {
+    alloc_bytes = get_mac_sdu_required_bytes(ce_size);
+  } else {
+    alloc_bytes = ce_size + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE;
+  }
 
   // Verify there is space for both MAC CE and subheader.
   if (rem_bytes < alloc_bytes) {
@@ -129,7 +113,7 @@ unsigned srsgnb::allocate_mac_sdus(dl_msg_tb_info& tb_info, dl_logical_channel_m
 
   // if we do not have enough bytes to fit MAC subheader, skip MAC SDU allocation.
   // Note: We assume upper layer accounts for its own subheaders when updating the buffer state.
-  while (rem_tbs > MAX_MAC_SUBHEADER_SIZE and not tb_info.subpdus.full()) {
+  while (rem_tbs > MAX_MAC_SDU_SUBHEADER_SIZE and not tb_info.subpdus.full()) {
     dl_msg_lc_info subpdu;
     unsigned       alloc_bytes = lch_mng.allocate_mac_sdu(subpdu, rem_tbs);
     if (alloc_bytes == 0) {
