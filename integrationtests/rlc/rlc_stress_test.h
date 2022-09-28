@@ -47,6 +47,7 @@ bool parse_args(stress_test_args& args, int argc, char* argv[])
                                                {"pdu_duplicate_rate", required_argument, nullptr, 'D'},
                                                {"log_filename", required_argument, nullptr, 'l'},
                                                {"seed", required_argument, nullptr, 'S'},
+                                               {"nof_pdu_tti", required_argument, nullptr, 'T'},
                                                {nullptr, 0, nullptr, 0}};
   // clang-format off
   static const char usage[] =
@@ -64,13 +65,14 @@ bool parse_args(stress_test_args& args, int argc, char* argv[])
     "  -D, --pdu_duplicate_rate <rate> Set rate at which RLC PDUs are dropped.\n"
     "  -l, --log_filename <filename>   Set log filename. Use 'stdout' to print to console.\n"
     "  -S, --seed <seed>               Set seed to use in run. 0 means the seed is randomly generated.\n"
+    "  -T, --nof_pdu_tti <num>         Set number of PDUs processed in a TTI.\n"
     "\n";
   // clang-format on
 
   // Parse arguments
   while (true) {
     int option_index = 0;
-    int c            = getopt_long(argc, argv, "hm:s:z:Z:op:d:c:D:l:S:", long_options, &option_index);
+    int c            = getopt_long(argc, argv, "hm:s:z:Z:op:d:c:D:l:S:T:", long_options, &option_index);
     if (c == -1) {
       break;
     }
@@ -122,6 +124,10 @@ bool parse_args(stress_test_args& args, int argc, char* argv[])
       case 'S':
         args.seed = std::strtol(optarg, nullptr, 10);
         fprintf(stdout, "Seed %d\n", args.seed);
+        break;
+      case 'T':
+        args.nof_pdu_tti = std::strtol(optarg, nullptr, 10);
+        fprintf(stdout, "PDUs per TTI %d\n", args.nof_pdu_tti);
         break;
       default:
         fprintf(stderr, "error parsing arguments\n");
