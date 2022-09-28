@@ -98,7 +98,6 @@ TEST(dl_logical_channel_test, total_pending_bytes_equal_sum_of_logical_channel_p
   ASSERT_FALSE(lch_mng.has_pending_ces());
   for (unsigned i = 0; i != lcids.size(); ++i) {
     ASSERT_EQ(lch_mng.pending_bytes(lcids[i]), buf_st_inds[i]);
-    ASSERT_EQ(lch_mng.has_pending_bytes(), buf_st_inds[i] > 0);
   }
 }
 
@@ -125,6 +124,17 @@ TEST(dl_mac_ce_test, derivation_of_mac_ce_size)
   ASSERT_EQ(lcid_dl_sch_t{lcid_dl_sch_t::SCELL_ACTIV_4_OCTET}.sizeof_ce(), 4);
 }
 
+TEST(dl_logical_channel_test, no_mac_subpdus_scheduled_if_no_bytes_pending)
+{
+  dl_logical_channel_manager lch_mng;
+
+  dl_msg_lc_info subpdu;
+  unsigned       allocated_bytes = lch_mng.allocate_mac_ce(subpdu, 100000);
+  allocated_bytes += lch_mng.allocate_mac_sdu(subpdu, 100000);
+
+  ASSERT_EQ(allocated_bytes, 0);
+}
+
 TEST(dl_logical_channel_test, mac_ce_is_scheduled_if_tb_has_space)
 {
   dl_logical_channel_manager lch_mng;
@@ -146,4 +156,41 @@ TEST(dl_logical_channel_test, mac_ce_is_scheduled_if_tb_has_space)
     ASSERT_FALSE(subpdu.lcid.is_valid());
     ASSERT_EQ(subpdu.sched_bytes, 0);
   }
+}
+
+TEST(dl_logical_channel_test, mac_sdu_is_scheduled_if_tb_has_space)
+{
+  dl_logical_channel_manager lch_mng;
+  lcid_t                     lcid = LCID_SRB1;
+  lch_mng.set_status(lcid, true);
+
+  unsigned sdu_size = get_random_uint(1, 1000);
+  lch_mng.handle_dl_buffer_status_indication(lcid, sdu_size);
+  unsigned tb_size = get_random_uint(0, sdu_size * 2);
+
+  unsigned rem_bytes = tb_size, rem_sdu_size = sdu_size;
+  do {
+    unsigned       pending_bytes = lch_mng.pending_bytes();
+    dl_msg_lc_info subpdu;
+    unsigned       allocated_bytes = lch_mng.allocate_mac_sdu(subpdu, rem_bytes);
+    if (not subpdu.lcid.is_valid()) {
+      // There was not enough space in the TB to deplete all the pending tx bytes.
+      ASSERT_LT(tb_size, get_mac_sdu_required_bytes(sdu_size));
+      break;
+    }
+
+    ASSERT_EQ(subpdu.lcid, lcid) << "Incorrect LCID allocated";
+    ASSERT_EQ(get_mac_sdu_required_bytes(subpdu.sched_bytes), allocated_bytes);
+    ASSERT_LE(allocated_bytes, rem_bytes) << "allocated bytes are larger than the TB size";
+
+    if (allocated_bytes >= pending_bytes) {
+      ASSERT_FALSE(lch_mng.has_pending_bytes()) << "subPDU is large enough to deplete all the pending tx bytes";
+    } else {
+      rem_sdu_size -= subpdu.sched_bytes;
+      ASSERT_EQ(get_mac_sdu_required_bytes(rem_sdu_size), lch_mng.pending_bytes())
+          << "incorrect calculation of remaining pending tx bytes";
+    }
+
+    rem_bytes -= allocated_bytes;
+  } while (lch_mng.has_pending_bytes());
 }

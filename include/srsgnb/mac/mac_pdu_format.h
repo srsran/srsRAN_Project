@@ -15,13 +15,16 @@
 namespace srsgnb {
 
 constexpr unsigned FIXED_SIZED_MAC_CE_SUBHEADER_SIZE = 1;
+constexpr unsigned MAC_SDU_SUBHEADER_LENGTH_THRES    = 256;
 constexpr unsigned MIN_MAC_SDU_SUBHEADER_SIZE        = 2;
 constexpr unsigned MAX_MAC_SDU_SUBHEADER_SIZE        = 3;
 
 /// \brief Derive MAC SDU subheader size in bytes as per TS38.321, Section 6.1.
 inline unsigned get_mac_sdu_subheader_size(unsigned payload)
 {
-  return payload == 0 ? 0 : payload > 128 ? MAX_MAC_SDU_SUBHEADER_SIZE : MIN_MAC_SDU_SUBHEADER_SIZE;
+  return payload == 0                                ? 0
+         : payload >= MAC_SDU_SUBHEADER_LENGTH_THRES ? MAX_MAC_SDU_SUBHEADER_SIZE
+                                                     : MIN_MAC_SDU_SUBHEADER_SIZE;
 }
 
 /// \brief Derive MAC SDU total size in bytes (includes subheader).

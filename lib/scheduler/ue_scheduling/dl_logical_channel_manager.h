@@ -93,7 +93,7 @@ private:
   lcid_t get_max_prio_lcid() const;
 
   /// \brief Updates DL Buffer State for a given LCID based on available space.
-  unsigned allocate_mac_sdu(lcid_t lcid, unsigned rem_bytes);
+  unsigned allocate_mac_sdu(dl_msg_lc_info& subpdu, lcid_t lcid, unsigned rem_bytes);
 
   std::array<channel_context, MAX_NOF_RB_LCIDS> channels;
 
