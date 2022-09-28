@@ -34,6 +34,12 @@ std::vector<lcid_t> shuffled_lcids()
   return lcids;
 }
 
+lcid_dl_sch_t get_random_dl_mac_ce()
+{
+  return (lcid_dl_sch_t)get_random_uint((unsigned)lcid_dl_sch_t::SCELL_ACTIV_4_OCTET,
+                                        (unsigned)lcid_dl_sch_t::UE_CON_RES_ID);
+}
+
 } // namespace
 
 TEST(dl_logical_channel_test, when_buffer_state_is_zero_no_tx_data_is_pending)
@@ -93,5 +99,51 @@ TEST(dl_logical_channel_test, total_pending_bytes_equal_sum_of_logical_channel_p
   for (unsigned i = 0; i != lcids.size(); ++i) {
     ASSERT_EQ(lch_mng.pending_bytes(lcids[i]), buf_st_inds[i]);
     ASSERT_EQ(lch_mng.has_pending_bytes(), buf_st_inds[i] > 0);
+  }
+}
+
+TEST(dl_logical_channel_test, mac_ce_indication_updates_tx_pending_bytes)
+{
+  dl_logical_channel_manager lch_mng;
+
+  lch_mng.handle_mac_ce_indication(lcid_dl_sch_t::UE_CON_RES_ID);
+
+  ASSERT_TRUE(lch_mng.has_pending_bytes());
+  ASSERT_TRUE(lch_mng.has_pending_ces());
+  ASSERT_EQ(lch_mng.pending_bytes(),
+            lcid_dl_sch_t{lcid_dl_sch_t::UE_CON_RES_ID}.sizeof_ce() + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE);
+}
+
+TEST(dl_mac_ce_test, derivation_of_mac_ce_size)
+{
+  // Note: see TS38.321, Section 6.1.3.
+  ASSERT_EQ(lcid_dl_sch_t{lcid_dl_sch_t::UE_CON_RES_ID}.sizeof_ce(), 6);
+  ASSERT_EQ(lcid_dl_sch_t{lcid_dl_sch_t::TA_CMD}.sizeof_ce(), 1);
+  ASSERT_EQ(lcid_dl_sch_t{lcid_dl_sch_t::DRX_CMD}.sizeof_ce(), 0);
+  ASSERT_EQ(lcid_dl_sch_t{lcid_dl_sch_t::LONG_DRX_CMD}.sizeof_ce(), 0);
+  ASSERT_EQ(lcid_dl_sch_t{lcid_dl_sch_t::SCELL_ACTIV_1_OCTET}.sizeof_ce(), 1);
+  ASSERT_EQ(lcid_dl_sch_t{lcid_dl_sch_t::SCELL_ACTIV_4_OCTET}.sizeof_ce(), 4);
+}
+
+TEST(dl_logical_channel_test, mac_ce_is_scheduled_if_tb_has_space)
+{
+  dl_logical_channel_manager lch_mng;
+
+  lcid_dl_sch_t ce_lcid = get_random_dl_mac_ce();
+  lch_mng.handle_mac_ce_indication(ce_lcid);
+  unsigned mac_ce_required_bytes = lcid_dl_sch_t{ce_lcid}.sizeof_ce() + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE;
+  unsigned tb_size               = get_random_uint(0, 50);
+
+  dl_msg_lc_info subpdu;
+  unsigned       allocated_bytes = lch_mng.allocate_mac_ce(subpdu, tb_size);
+
+  if (mac_ce_required_bytes <= tb_size) {
+    ASSERT_EQ(allocated_bytes, mac_ce_required_bytes);
+    ASSERT_EQ(subpdu.lcid, ce_lcid);
+    ASSERT_EQ(subpdu.sched_bytes, lcid_dl_sch_t{ce_lcid}.sizeof_ce());
+  } else {
+    ASSERT_EQ(allocated_bytes, 0);
+    ASSERT_FALSE(subpdu.lcid.is_valid());
+    ASSERT_EQ(subpdu.sched_bytes, 0);
   }
 }

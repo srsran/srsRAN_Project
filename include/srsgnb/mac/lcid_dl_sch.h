@@ -37,6 +37,11 @@ public:
 
     RECOMMENDED_BIT_RATE = 0b101111,
 
+    // TODO: Add remaining.
+
+    SCELL_ACTIV_4_OCTET = 0b111001,
+    SCELL_ACTIV_1_OCTET = 0b111010,
+
     LONG_DRX_CMD  = 0b111011,
     DRX_CMD       = 0b111100,
     TA_CMD        = 0b111101,
@@ -76,6 +81,13 @@ public:
   {
     // Values taken from TS38.321, Section 6.1.3.
     switch (lcid_val) {
+      case SCELL_ACTIV_4_OCTET:
+        return 4;
+      case SCELL_ACTIV_1_OCTET:
+        return 1;
+      case LONG_DRX_CMD:
+      case DRX_CMD:
+        return 0;
       case TA_CMD:
         return 1;
       case UE_CON_RES_ID:

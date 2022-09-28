@@ -40,7 +40,8 @@ public:
   {
     unsigned bytes = 0;
     for (const lcid_dl_sch_t& ce : pending_ces) {
-      bytes += ce.sizeof_ce();
+      bytes += ce.is_var_len_ce() ? get_mac_sdu_required_bytes(ce.sizeof_ce())
+                                  : FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + ce.sizeof_ce();
     }
     for (unsigned i = 0; i <= MAX_LCID; ++i) {
       bytes += pending_bytes((lcid_t)i);

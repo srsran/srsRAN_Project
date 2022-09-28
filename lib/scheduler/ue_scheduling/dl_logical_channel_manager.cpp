@@ -79,6 +79,8 @@ unsigned dl_logical_channel_manager::allocate_mac_sdu(lcid_t lcid, unsigned rem_
 
 unsigned dl_logical_channel_manager::allocate_mac_ce(dl_msg_lc_info& subpdu, unsigned rem_bytes)
 {
+  subpdu.lcid        = lcid_dl_sch_t::MIN_RESERVED;
+  subpdu.sched_bytes = 0;
   if (pending_ces.empty()) {
     return 0;
   }
