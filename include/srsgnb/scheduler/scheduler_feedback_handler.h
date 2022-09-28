@@ -13,6 +13,7 @@
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/mac/bsr_format.h"
+#include "srsgnb/mac/lcid_dl_sch.h"
 #include "srsgnb/mac/mac_constants.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/phy_time_unit.h"
@@ -62,6 +63,11 @@ struct ul_crc_indication {
   static_vector<ul_crc_pdu_indication, MAX_UL_PDUS_PER_SLOT> crcs;
 };
 
+struct dl_mac_ce_indication {
+  du_ue_index_t ue_index;
+  lcid_dl_sch_t ce_lcid;
+};
+
 class scheduler_feedback_handler
 {
 public:
@@ -69,6 +75,9 @@ public:
   virtual void handle_sr_indication(const sr_indication_message& sr)          = 0;
   virtual void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) = 0;
   virtual void handle_crc_indication(const ul_crc_indication& crc)            = 0;
+
+  /// \brief Command scheduling of DL MAC CE for a given UE.
+  virtual void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) = 0;
 };
 
 } // namespace srsgnb

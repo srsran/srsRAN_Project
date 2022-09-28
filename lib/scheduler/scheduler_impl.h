@@ -54,6 +54,11 @@ public:
 
   void handle_crc_indication(const ul_crc_indication& crc) override;
 
+  void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override
+  {
+    feedback_handler.handle_dl_mac_ce_indication(mac_ce);
+  }
+
 private:
   sched_configuration_notifier& mac_notifier;
   srslog::basic_logger&         logger;

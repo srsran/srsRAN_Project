@@ -15,6 +15,7 @@
 #include "sched_consts.h"
 #include "scheduler_dci.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/mac/lcid_dl_sch.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/modulation_scheme.h"
@@ -149,14 +150,14 @@ struct pdsch_information {
 
 struct dl_msg_lc_info {
   /// LCID {0..32}.
-  lcid_t lcid;
+  lcid_dl_sch_t lcid;
   /// Number of scheduled bytes for this specific logical channel. {0..65535}.
   unsigned sched_bytes;
 };
 
 struct dl_msg_tb_info {
   /// List of allocated logical channels.
-  static_vector<dl_msg_lc_info, MAX_LC_GRANTS> lc_lst;
+  static_vector<dl_msg_lc_info, MAX_LC_GRANTS> subpdus;
 };
 
 /// Dedicated DL Grant for UEs.

@@ -52,6 +52,7 @@ public:
   void                handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override {}
   void                handle_dl_buffer_state_update_indication(const dl_buffer_state_indication_message& bs) override {}
   void                handle_crc_indication(const ul_crc_indication& crc) override {}
+  void                handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce) override {}
 };
 
 /// Enum used to track the progress of the test task

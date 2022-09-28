@@ -130,8 +130,8 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   cw.target_code_rate                             = mcs_config.target_code_rate;
   // Set MAC logical channels to schedule in this PDU.
   msg.tb_list.emplace_back();
-  msg.tb_list.back().lc_lst.emplace_back();
-  msg.tb_list.back().lc_lst.back().lcid = lcid_t::LCID_SRB0;
+  msg.tb_list.back().subpdus.emplace_back();
+  msg.tb_list.back().subpdus.back().lcid = lcid_t::LCID_SRB0;
 
   return true;
 }

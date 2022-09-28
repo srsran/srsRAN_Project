@@ -159,21 +159,32 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
   // Assemble data grants.
   for (const dl_msg_alloc& grant : dl_res.ue_grants) {
     for (const dl_msg_tb_info& tb_info : grant.tb_list) {
-      for (const dl_msg_lc_info& bearer_alloc : tb_info.lc_lst) {
-        // Fetch RLC Bearer.
-        mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.pdsch_cfg.rnti, bearer_alloc.lcid);
-        srsgnb_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
+      for (const dl_msg_lc_info& subpdu : tb_info.subpdus) {
+        if (subpdu.lcid.is_sdu()) {
+          // Encode MAC SDU.
 
-        unsigned rem_bytes = bearer_alloc.sched_bytes;
-        while (rem_bytes >= MIN_MAC_SDU_SIZE) {
-          // Assemble MAC Tx SDU.
-          byte_buffer_slice_chain sdu = bearer->on_new_tx_sdu(bearer_alloc.sched_bytes);
-          if (sdu.empty()) {
-            // TODO: Handle.
-            break;
+          // Fetch RLC Bearer.
+          mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.pdsch_cfg.rnti, subpdu.lcid.to_lcid());
+          srsgnb_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
+
+          unsigned rem_bytes = subpdu.sched_bytes;
+          while (rem_bytes > MIN_MAC_SDU_SIZE) {
+            // Assemble MAC Tx SDU.
+            byte_buffer_slice_chain sdu = bearer->on_new_tx_sdu(subpdu.sched_bytes);
+            if (sdu.empty()) {
+              // TODO: Handle.
+              break;
+            }
+
+            // TODO: Add subheader.
+
+            data_res.ue_pdus.emplace_back(std::move(sdu));
+            rem_bytes -= sdu.length();
           }
-          data_res.ue_pdus.emplace_back(std::move(sdu));
-          rem_bytes -= sdu.length();
+        } else {
+          // Encode MAC CE.
+
+          // TODO: Encode subPDU.
         }
       }
     }
@@ -184,16 +195,20 @@ void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_
 {
   for (const dl_msg_alloc& grant : dl_res.ue_grants) {
     for (const dl_msg_tb_info& tb_info : grant.tb_list) {
-      for (const dl_msg_lc_info& bearer_alloc : tb_info.lc_lst) {
+      for (const dl_msg_lc_info& subpdu : tb_info.subpdus) {
+        if (not subpdu.lcid.is_sdu()) {
+          continue;
+        }
+
         // Fetch RLC Bearer.
-        mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.pdsch_cfg.rnti, bearer_alloc.lcid);
+        mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.pdsch_cfg.rnti, subpdu.lcid.to_lcid());
         srsgnb_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
         // Update DL BSR for the allocated logical channel.
         dl_buffer_state_indication_message bs{};
         bs.ue_index = ue_mng.get_ue_index(grant.pdsch_cfg.rnti);
         bs.rnti     = grant.pdsch_cfg.rnti;
-        bs.lcid     = bearer_alloc.lcid;
+        bs.lcid     = subpdu.lcid.to_lcid();
         bs.bs       = bearer->on_buffer_state_update();
         sched_obj.handle_dl_buffer_state_update_indication(bs);
       }

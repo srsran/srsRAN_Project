@@ -140,11 +140,19 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
   for (unsigned i = 0; i != crc_ind.crcs.size(); ++i) {
     cell_specific_events[crc_ind.cell_index].emplace(
         crc_ind.crcs[i].ue_index, [crc = crc_ind.crcs[i]](ue_carrier& ue_cc, event_logger& ev_logger) {
-          ev_logger.enqueue("crc(ueId={})", crc.ue_index);
+          ev_logger.enqueue("crc(ueId={},h_id={},value={})", crc.ue_index, crc.harq_id, crc.tb_crc_success);
           // TODO: Derive TB.
           ue_cc.harqs.ul_harq(crc.harq_id).ack_info(0, crc.tb_crc_success);
         });
   }
+}
+
+void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)
+{
+  common_events.emplace(ce.ue_index, [this, ce](event_logger& ev_logger) {
+    ev_logger.enqueue("mac_ce(ueId={},ce={})", ce.ue_index, ce.ce_lcid);
+    ue_db[ce.ue_index].handle_dl_mac_ce_indication(ce);
+  });
 }
 
 void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)

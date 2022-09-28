@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "dl_logical_channel_manager.h"
 #include "harq_process.h"
 #include "srsgnb/adt/stable_id_map.h"
 #include "srsgnb/ran/du_types.h"
@@ -101,6 +102,10 @@ public:
 
   void handle_sr_indication(const sr_indication_message& msg);
   void handle_bsr_indication(const ul_bsr_indication_message& msg);
+  void handle_dl_mac_ce_indication(const dl_mac_ce_indication& msg)
+  {
+    dl_lc_ch_mng.handle_mac_ce_indication(msg.ce_lcid);
+  }
 
   void handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg) {}
 
@@ -127,6 +132,8 @@ private:
 
   sr_indication_message     last_sr;
   ul_bsr_indication_message last_bsr;
+
+  dl_logical_channel_manager dl_lc_ch_mng;
 };
 
 /// Container that stores all scheduler UEs.
