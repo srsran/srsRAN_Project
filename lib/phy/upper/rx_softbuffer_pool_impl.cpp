@@ -77,7 +77,7 @@ void rx_softbuffer_pool_impl::run_slot(const slot_point& slot)
   }
 }
 
-std::unique_ptr<rx_softbuffer_pool> srsgnb::create_rx_softbuffer_pool(const rx_softbuffer_pool_description& config)
+std::unique_ptr<rx_softbuffer_pool> srsgnb::create_rx_softbuffer_pool(const rx_softbuffer_pool_config& config)
 {
   return std::make_unique<rx_softbuffer_pool_impl>(config);
 }

@@ -32,7 +32,7 @@ class slot_point;
 class uplink_processor
 {
 public:
-  /// Defines the intermediate struct that contains all the data of the PUSCH PDU.
+  /// PUSCH PDU and metadata.
   struct pusch_pdu {
     /// HARQ process number.
     unsigned harq_id;
@@ -55,12 +55,12 @@ public:
 
   /// \brief Processes a PUSCH transmission.
   ///
-  /// The size of each transport block is determined by <tt> data[TB index].size() </tt>.
+  /// The size of each transport block is determined by <tt>data[TB index].size()</tt>.
   ///
-  /// \param[out] data Provides the transport block to receive.
-  /// \param[in,out] softbuffer Provides the data reception softbuffer.
-  /// \param[in] grid Provides the destination resource grid.
-  /// \param[in] pdu Provides the necessary parameters to process the PUSCH transmission.
+  /// \param[out]    data       Received transport block.
+  /// \param[in,out] softbuffer Data reception softbuffer.
+  /// \param[in]     grid       Grid the capture data is stored in.
+  /// \param[in]     pdu        PUSCH transmission parameters.
   virtual void process_pusch(span<uint8_t>                      data,
                              rx_softbuffer&                     softbuffer,
                              const resource_grid_reader&        grid,

@@ -39,10 +39,10 @@ public:
   }
 
 private:
-  /// Notifies a new CRC.indication through the data_notifier.
+  /// Notifies a new FAPI \e CRC.indication through the data notifier.
   void notify_crc_indication(const ul_pusch_results& result);
 
-  /// Notifies a new Rx_Data.indication through the data_notifier.
+  /// Notifies a new FAPI \e Rx_Data.indication through the data notifier.
   void notify_rx_data_indication(const ul_pusch_results& result);
 
 private:

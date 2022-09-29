@@ -101,7 +101,6 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
 
 void phy_to_fapi_results_event_translator::on_new_pusch_results(const ul_pusch_results& result)
 {
-  // :TODO: this way one PDU is sent for one indication. Should this be improved?
   if (result.data.has_value()) {
     notify_crc_indication(result);
     notify_rx_data_indication(result);

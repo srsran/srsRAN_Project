@@ -25,21 +25,33 @@
 
 namespace srsgnb {
 
-/// Struct that defines the configuration of the upper PHY implementation.
+/// Upper PHY implementation configuration.
 struct upper_phy_impl_config {
-  unsigned                                             sector_id;
-  std::unique_ptr<downlink_processor_pool>             dl_processor_pool;
-  std::unique_ptr<resource_grid_pool>                  dl_rg_pool;
-  std::unique_ptr<resource_grid_pool>                  ul_rg_pool;
-  std::unique_ptr<uplink_processor_pool>               ul_processor_pool;
-  std::unique_ptr<prach_buffer_pool>                   prach_pool;
+  /// Base station sector identifier.
+  unsigned sector_id;
+  /// Downlink processor pool.
+  std::unique_ptr<downlink_processor_pool> dl_processor_pool;
+  /// Downlink resource grid pool.
+  std::unique_ptr<resource_grid_pool> dl_rg_pool;
+  /// Uplink resource grid pool.
+  std::unique_ptr<resource_grid_pool> ul_rg_pool;
+  /// Uplink processor pool.
+  std::unique_ptr<uplink_processor_pool> ul_processor_pool;
+  /// PRACH buffer pool.
+  std::unique_ptr<prach_buffer_pool> prach_pool;
+  /// Upper PHY uplink results notifier.
   std::unique_ptr<upper_phy_rx_results_notifier_proxy> notifier_proxy;
-  std::unique_ptr<rx_softbuffer_pool>                  soft_pool;
-  upper_phy_rx_symbol_request_notifier*                symbol_request_notifier;
-  srslog::basic_levels                                 log_level;
+  /// Softbuffer pool.
+  std::unique_ptr<rx_softbuffer_pool> soft_pool;
+  /// Symbol request notifier.
+  upper_phy_rx_symbol_request_notifier* symbol_request_notifier;
+  /// Log level.
+  srslog::basic_levels log_level;
 };
 
-/// \brief Implementation of the upper_phy interface. This object will handle the ownership of the upper PHY components.
+/// \brief Implementation of the upper PHY interface.
+///
+/// Instances of this class will handle the ownership of the upper PHY components.
 class upper_phy_impl : public upper_phy
 {
   // :TODO: remove this dummy when the implementations are created.
@@ -50,7 +62,7 @@ class upper_phy_impl : public upper_phy
     rx_softbuffer_pool&                               softbuffer_pool;
 
   public:
-    explicit upper_phy_timing_handler_dummy(upper_phy_timing_notifier& notifier, rx_softbuffer_pool& softbuffer_pool) :
+    upper_phy_timing_handler_dummy(upper_phy_timing_notifier& notifier, rx_softbuffer_pool& softbuffer_pool) :
       notifier(notifier), softbuffer_pool(softbuffer_pool)
     {
     }
@@ -70,6 +82,7 @@ class upper_phy_impl : public upper_phy
   };
 
 public:
+  /// Constructs an upper PHY implementation object with the given configuration.
   explicit upper_phy_impl(upper_phy_impl_config&& config);
 
   // See interface for documentation.
@@ -100,6 +113,7 @@ public:
   void set_results_notifier(upper_phy_rx_results_notifier& notifier) override;
 
 private:
+  /// Upper PHY logger.
   srslog::basic_logger& logger;
   /// Base station sector identifier.
   const unsigned sector_id;

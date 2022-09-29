@@ -19,7 +19,7 @@ using namespace srsgnb;
 static void test_softbuffer_limit()
 {
   // Create pool configuration for the test.
-  rx_softbuffer_pool_description pool_config;
+  rx_softbuffer_pool_config pool_config;
   pool_config.max_codeblock_size   = 16;
   pool_config.max_softbuffers      = 4;
   pool_config.max_nof_codeblocks   = 4;
@@ -56,7 +56,7 @@ static void test_softbuffer_limit()
 static void test_codeblock_limit()
 {
   // Create pool configuration for the test.
-  rx_softbuffer_pool_description pool_config;
+  rx_softbuffer_pool_config pool_config;
   pool_config.max_codeblock_size   = 16;
   pool_config.max_softbuffers      = 2;
   pool_config.max_nof_codeblocks   = 1;
@@ -86,7 +86,7 @@ static void test_codeblock_limit()
 static void test_softbuffer_free()
 {
   // Create pool configuration for the test.
-  rx_softbuffer_pool_description pool_config;
+  rx_softbuffer_pool_config pool_config;
   pool_config.max_codeblock_size   = 16;
   pool_config.max_softbuffers      = 1;
   pool_config.max_nof_codeblocks   = 1;
@@ -127,7 +127,7 @@ static void test_softbuffer_expire()
   unsigned delay = 3;
 
   // Create pool configuration for the test.
-  rx_softbuffer_pool_description pool_config;
+  rx_softbuffer_pool_config pool_config;
   pool_config.max_codeblock_size   = 16;
   pool_config.max_softbuffers      = 1;
   pool_config.max_nof_codeblocks   = 1;
@@ -178,7 +178,7 @@ static void test_softbuffer_contents()
   unsigned data_size = 5;
 
   // Create pool configuration for the test.
-  rx_softbuffer_pool_description pool_config;
+  rx_softbuffer_pool_config pool_config;
   pool_config.max_codeblock_size   = cb_size;
   pool_config.max_softbuffers      = 4;
   pool_config.max_nof_codeblocks   = pool_config.max_softbuffers * nof_cb_x_buffer;

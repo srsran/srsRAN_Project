@@ -23,22 +23,25 @@ class task_executor;
 class uplink_processor;
 class uplink_processor_pool;
 
-/// Pool that stores payload containers.
-class payload_container_pool
+/// Payload buffer pool.
+class payload_buffer_pool
 {
-  /// Maximum number of payloads that the pool contains.
+  /// Maximum number of payloads contained by the pool.
   static const size_t MAX_NUM_PAYLOAD = 4096U;
 
 public:
-  std::vector<uint8_t>& get_next_container()
+  /// Returns the next available buffer from the pool.
+  std::vector<uint8_t>& adquire_payload_buffer()
   {
     unsigned i = index++ % MAX_NUM_PAYLOAD;
     return pool[i];
   }
 
 private:
+  /// Buffer pool.
   circular_array<std::vector<uint8_t>, MAX_NUM_PAYLOAD> pool;
-  unsigned                                              index = 0;
+  /// Index used to retrieve the next container.
+  unsigned index = 0;
 };
 
 /// \brief Implementation of the upper PHY handler of receive symbols events.
@@ -50,10 +53,10 @@ private:
 class upper_phy_rx_symbol_handler_impl : public upper_phy_rx_symbol_handler
 {
 public:
-  explicit upper_phy_rx_symbol_handler_impl(uplink_processor_pool&      ul_processor_pool,
-                                            uplink_slot_pdu_repository& pdu_registry,
-                                            rx_softbuffer_pool&         soft_pool,
-                                            srslog::basic_logger&       logger);
+  upper_phy_rx_symbol_handler_impl(uplink_processor_pool&      ul_processor_pool,
+                                   uplink_slot_pdu_repository& pdu_registry,
+                                   rx_softbuffer_pool&         soft_pool,
+                                   srslog::basic_logger&       logger);
 
   // See interface for documentation.
   void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) override;
@@ -79,7 +82,7 @@ private:
   /// Softbuffer pool.
   rx_softbuffer_pool& soft_pool;
   /// Pool of containers for the payload.
-  payload_container_pool payload_pool;
+  payload_buffer_pool payload_pool;
   /// Upper PHY logger.
   srslog::basic_logger& logger;
 };

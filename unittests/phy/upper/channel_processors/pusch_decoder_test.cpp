@@ -85,7 +85,7 @@ int main(int argc, char** argv)
 
   pusch_decoder_result dec_stats = {};
 
-  rx_softbuffer_pool_description pool_config = {};
+  rx_softbuffer_pool_config pool_config = {};
 
   for (const auto& test_data : pusch_decoder_test_data) {
     segmenter_config                  cfg         = test_data.config;

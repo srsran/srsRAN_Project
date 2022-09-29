@@ -25,16 +25,25 @@ class uplink_slot_pdu_repository;
 
 namespace fapi_adaptor {
 
-/// Defines the configuration for the PHY-FAPI translator implementation.
+/// FAPI-to-PHY translator configuration.
 struct fapi_to_phy_translator_config {
-  unsigned                    sector_id;
-  downlink_processor_pool*    dl_processor_pool;
-  resource_grid_pool*         dl_rg_pool;
-  uplink_request_processor*   ul_request_processor;
-  resource_grid_pool*         ul_rg_pool;
+  /// Base station sector identifier.
+  unsigned sector_id;
+  /// Downlink processor pool.
+  downlink_processor_pool* dl_processor_pool;
+  /// Downlink resource grid pool.
+  resource_grid_pool* dl_rg_pool;
+  /// Uplink request processor.
+  uplink_request_processor* ul_request_processor;
+  /// Uplink resource grid pool.
+  resource_grid_pool* ul_rg_pool;
+  /// Uplink slot PDU repository.
   uplink_slot_pdu_repository* ul_pdu_repository;
-  subcarrier_spacing          scs_common;
-  const fapi::prach_config*   prach_cfg;
+  /// Common subcarrier spacing, as per TS38.331 Section 6.2.2.
+  subcarrier_spacing scs_common;
+  /// FAPI PRACH configuration TLV as per SCF-222 v4.0 section 3.3.2.4.
+  const fapi::prach_config* prach_cfg;
+  /// FAPI carrier configuration TLV as per SCF-222 v4.0 section 3.3.2.4.
   const fapi::carrier_config* carrier_cfg;
 };
 
@@ -85,16 +94,7 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
   };
 
 public:
-  /// \brief Constructor for the FAPI-to-PHY translator.
-  ///
-  /// \param[in] sector_id Sector identifier.
-  /// \param[in] dl_processor_pool Downlink processor pool that will be used to process PDUs.
-  /// \param[in] dl_rg_pool Resource grid pool that will be used to process PDUs.
-  /// \param[in] ul_request_processor Uplink request processor.
-  /// \param[in] scs_common Common subcarrier spacing, as per TS38.331 Section 6.2.2.
-  /// \param[in] prach_cfg PRACH configuration.
-  /// \param[in] carrier_cfg Carrier configuration.
-  fapi_to_phy_translator(const fapi_to_phy_translator_config& config) :
+  explicit fapi_to_phy_translator(const fapi_to_phy_translator_config& config) :
     sector_id(config.sector_id),
     dl_processor_pool(*config.dl_processor_pool),
     dl_rg_pool(*config.dl_rg_pool),

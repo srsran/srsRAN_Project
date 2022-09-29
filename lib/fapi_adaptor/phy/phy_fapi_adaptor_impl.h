@@ -25,16 +25,25 @@ struct prach_config;
 
 namespace fapi_adaptor {
 
-/// Defines the configuration for the PHY-FAPI adaptor implementation.
+/// PHY/FAPI adaptor implementation configuration.
 struct phy_fapi_adaptor_impl_config {
-  unsigned                    sector_id;
-  downlink_processor_pool*    dl_processor_pool;
-  resource_grid_pool*         dl_rg_pool;
-  uplink_request_processor*   ul_request_processor;
-  resource_grid_pool*         ul_rg_pool;
+  /// Base station sector identifier.
+  unsigned sector_id;
+  /// Downlink processor pool.
+  downlink_processor_pool* dl_processor_pool;
+  /// Downlink resource grid pool.
+  resource_grid_pool* dl_rg_pool;
+  /// Uplink request processor.
+  uplink_request_processor* ul_request_processor;
+  /// Uplink resource grid pool.
+  resource_grid_pool* ul_rg_pool;
+  /// Uplink slot PDU repository.
   uplink_slot_pdu_repository* ul_pdu_repository;
-  subcarrier_spacing          scs_common;
-  const fapi::prach_config*   prach_cfg;
+  /// Common subcarrier spacing, as per TS38.331 Section 6.2.2.
+  subcarrier_spacing scs_common;
+  /// FAPI PRACH configuration TLV as per SCF-222 v4.0 section 3.3.2.4.
+  const fapi::prach_config* prach_cfg;
+  /// FAPI carrier configuration TLV as per SCF-222 v4.0 section 3.3.2.4.
   const fapi::carrier_config* carrier_cfg;
 };
 
@@ -42,16 +51,8 @@ struct phy_fapi_adaptor_impl_config {
 class phy_fapi_adaptor_impl : public phy_fapi_adaptor
 {
 public:
-  /// \brief Constructor for the PHY&ndash;FAPI bidirectional adaptor.
-  ///
-  /// \param[in] sector_id Sector identifier.
-  /// \param[in] dl_processor_pool Downlink processor pool that will be used to process PDUs.
-  /// \param[in] rg_pool Resource grid pool that will be used to process PDUs.
-  /// \param[in] ul_request_processor Uplink request processor.
-  /// \param[in] scs_common Common subcarrier spacing, as per TS38.331 Section 6.2.2.
-  /// \param[in] prach_cfg PRACH configuration.
-  /// \param[in] carrier_cfg Carrier configuration.
-  phy_fapi_adaptor_impl(const phy_fapi_adaptor_impl_config& config);
+  /// Constructor for the PHY&ndash;FAPI bidirectional adaptor.
+  explicit phy_fapi_adaptor_impl(const phy_fapi_adaptor_impl_config& config);
 
   // See interface for documentation.
   upper_phy_timing_notifier& get_timing_notifier() override;

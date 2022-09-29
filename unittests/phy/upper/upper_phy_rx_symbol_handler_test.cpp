@@ -34,7 +34,7 @@ protected:
   void handle_prach_symbol() { rx_handler.handle_rx_prach_window(context, buffer_dummy); }
 
   UpperPhyRxSymbolHandlerFixture() :
-    soft_pool(create_rx_softbuffer_pool(rx_softbuffer_pool_description())),
+    soft_pool(create_rx_softbuffer_pool(rx_softbuffer_pool_config())),
     ul_processor_pool(create_ul_processor_pool()),
     rx_handler(*ul_processor_pool, pdu_repo, *soft_pool, srslog::fetch_basic_logger("TEST"))
   {

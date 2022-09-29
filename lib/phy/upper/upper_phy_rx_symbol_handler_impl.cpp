@@ -27,18 +27,18 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
                                                         const resource_grid_reader&        grid)
 {
   // Check if all the symbols are present in the grid.
-  span<const uplink_slot_pdu_entry> pdus        = pdu_repository.get_pdus(context.slot);
-  unsigned                          nof_symbols = 0;
+  span<const uplink_slot_pdu_entry> pdus = pdu_repository.get_pdus(context.slot);
 
-  if (pdus.empty()) {
-    logger.error("No PDUs are registered to be processed within this slot {}", context.slot);
-    return;
-  }
+  srsgnb_assert(!pdus.empty(),
+                "Received notification for processing an uplink slot, but no PUSCH/PUCCH PDUs are expected to be "
+                "processed in the slot={}",
+                context.slot);
 
   // :TODO: update this when adding PUCCH. First PDU can be a PUCCH PDU.
-  nof_symbols             = get_nsymb_per_slot(pdus.front().pusch.pdu.cp);
+  unsigned nof_symbols    = get_nsymb_per_slot(pdus.front().pusch.pdu.cp);
   unsigned last_symbol_id = nof_symbols - 1U;
 
+  // Process the PDUs when all symbols of the slot have been received.
   if (context.symbol != last_symbol_id) {
     return;
   }
@@ -47,16 +47,15 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
   uplink_processor& ul_processor = ul_processor_pool.get_processor(context.slot, context.sector);
 
   // Process all the PDUs from the pool.
-
   for (const auto& pdu : pdus) {
     switch (pdu.type) {
       case uplink_slot_pdu_entry::pdu_type::PUSCH: {
         process_pusch(pdu.pusch, ul_processor, grid, context.slot);
         break;
-        case uplink_slot_pdu_entry::pdu_type::PUCCH:
-          // :TODO: add PUCCH.
-          break;
       }
+      case uplink_slot_pdu_entry::pdu_type::PUCCH:
+        // :TODO: add PUCCH.
+        break;
     }
   }
 
@@ -89,7 +88,7 @@ void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pus
     return;
   }
 
-  std::vector<uint8_t>& payload = payload_pool.get_next_container();
+  std::vector<uint8_t>& payload = payload_pool.adquire_payload_buffer();
   payload.resize(pdu.tb_size);
 
   ul_processor.process_pusch(payload, *buffer, grid, pdu);

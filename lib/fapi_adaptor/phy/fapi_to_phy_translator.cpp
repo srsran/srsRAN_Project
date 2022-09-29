@@ -133,6 +133,7 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
         break;
       }
       case fapi::ul_pdu_type::PUCCH:
+        break;
       case fapi::ul_pdu_type::PUSCH: {
         slot_point slot = slot_point(to_numerology_value(pdu.pusch_pdu.scs), msg.sfn, msg.slot);
         if (!rg_context.slot.valid()) {
@@ -146,7 +147,6 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
         break;
       }
       case fapi::ul_pdu_type::SRS:
-      case fapi::ul_pdu_type::msg_a_PUSCH:
       default:
         srsgnb_assert(0, "UL_TTI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
     }

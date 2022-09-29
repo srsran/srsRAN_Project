@@ -13,7 +13,8 @@
 using namespace srsgnb;
 using namespace fapi_adaptor;
 
-static fapi_to_phy_translator_config to_fapi_translator(const phy_fapi_adaptor_impl_config& config)
+/// Generates and returns a FAPI-to-PHY translator configuration from the given PHY adaptor configuration.
+static fapi_to_phy_translator_config generate_fapi_to_phy_translator_config(const phy_fapi_adaptor_impl_config& config)
 {
   fapi_to_phy_translator_config fapi_config;
   fapi_config.ul_pdu_repository    = config.ul_pdu_repository;
@@ -30,7 +31,7 @@ static fapi_to_phy_translator_config to_fapi_translator(const phy_fapi_adaptor_i
 }
 
 phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(const phy_fapi_adaptor_impl_config& config) :
-  fapi_translator(to_fapi_translator(config)), time_translator(fapi_translator)
+  fapi_translator(generate_fapi_to_phy_translator_config(config)), time_translator(fapi_translator)
 {
 }
 

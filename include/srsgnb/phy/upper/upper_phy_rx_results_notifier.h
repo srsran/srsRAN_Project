@@ -22,7 +22,7 @@
 
 namespace srsgnb {
 
-/// \brief PRACH results structure.
+/// PRACH results structure.
 struct ul_prach_results {
   /// PRACH buffer context associated with this uplink PRACH results.
   prach_buffer_context context;
@@ -30,26 +30,29 @@ struct ul_prach_results {
   prach_detection_result result;
 };
 
-/// \brief PUSCH results structure.
+/// PUSCH results and metadata.
 struct ul_pusch_results {
+  /// PUSCH data processing results, metadata and payload.
   struct pusch_data {
-    /// Provides \f$n_{RNTI}\f$ from TS 38.211 section 6.3.1.1 Scrambling.
+    /// Parameter \f$n_{RNTI}\f$ from TS38.211 Section 6.3.1.1.
     rnti_t rnti;
     /// HARQ process ID.
     unsigned harq_id;
     /// PUSCH decoder result.
     pusch_decoder_result decoder_result;
-    /// Data payload of the PUSCH PDU.
+    /// \brief Data payload of the PUSCH PDU.
     ///
     /// Note: the size of the span is zero if the PDU does not contain PUSCH data.
     span<const uint8_t> payload;
   };
 
-  /// Indicates the slot and numerology.
+  /// Slot description (also specifies the numerology).
   slot_point slot;
   /// Channel state information.
   channel_state_information csi;
-  /// Contains the results for the data PUSCH.
+  /// \brief PUSCH data
+  ///
+  /// Note: This parameter is valid if the PUSCH PDU contains data, otherwise it is not.
   optional<pusch_data> data;
 };
 

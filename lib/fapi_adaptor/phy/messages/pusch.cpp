@@ -13,7 +13,7 @@
 using namespace srsgnb;
 using namespace fapi_adaptor;
 
-/// Fills the optional codeword description parameter of the PUSCH PDU if present.
+/// Fills the optional codeword description parameter of the PUSCH PDU, if present.
 static void fill_codeword(uplink_processor::pusch_pdu& pdu, const fapi::ul_pusch_pdu& fapi_pdu)
 {
   if (!fapi_pdu.pdu_bitmap[fapi::ul_pusch_pdu::PUSCH_DATA_BIT]) {
@@ -30,7 +30,7 @@ static void fill_codeword(uplink_processor::pusch_pdu& pdu, const fapi::ul_pusch
   pdu.pdu.codeword = optional<pusch_processor::codeword_description>(std::move(cw));
 }
 
-/// Fills the rb_allocation parameter of the PUSCH PDU.
+/// Fills the \c rb_allocation parameter of the PUSCH PDU.
 static void fill_rb_allocation(pusch_processor::pdu_t& proc_pdu, const fapi::ul_pusch_pdu& fapi_pdu)
 {
   if (fapi_pdu.resource_alloc == fapi::resource_allocation_type::type_1) {

@@ -147,7 +147,7 @@ struct upper_phy_config {
   /// Received symbol request notifier.
   upper_phy_rx_symbol_request_notifier* symbol_request_notifier;
   /// Softbuffer pool configuration.
-  rx_softbuffer_pool_description softbuffer_config;
+  rx_softbuffer_pool_config softbuffer_config;
 };
 
 /// \brief Factory that builds upper PHY objects.

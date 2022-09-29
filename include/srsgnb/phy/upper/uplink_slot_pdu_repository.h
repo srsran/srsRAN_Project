@@ -17,7 +17,7 @@ namespace srsgnb {
 
 /// Defines an entry of the uplink slot PDU repository.
 struct uplink_slot_pdu_entry {
-  /// Defines the PDU type supported.
+  /// Labels for the supported PDU types.
   enum class pdu_type { PUSCH, PUCCH };
 
   pdu_type type;
@@ -26,17 +26,20 @@ struct uplink_slot_pdu_entry {
   // :TOOD: add the PUCCH PDU.
 };
 
-/// Uplink slot PDU registry.
+/// \brief Uplink slot PDU repository.
 ///
-/// This class registers the PUSCH and PUCCH PDUs, indexing them by slot that will be processed in an uplink slot.
+/// This class registers PUSCH and PUCCH PDUs. PDUs are indexed by the uplink slot they will be processed in.
+// :TODO: move this class to private when the uplink processor gets refactorized.
 class uplink_slot_pdu_repository
 {
-  /// Maximum number of PDUs per slot.
-  /// Note: Worst case is 65535.
+  /// \brief Maximum number of PDUs per slot.
+  /// \note Worst case is 65535.
+  // :TODO: Use the RAN constants here when the PR is merged.
   static constexpr unsigned MAX_NUM_PDUS = 1024;
 
-  /// Maximum number of slots that the registry supports. In worst case (scs 240kHz) this number should be able to store
-  /// 20ms.
+  /// \brief Maximum number of slots supported by the registry.
+  ///
+  /// In the worst case (subcarrier spacing of 240kHz), this number should be equivalent to 20ms.
   static constexpr unsigned MAX_NUM_SLOTS = 320;
 
   using slot_entry = static_vector<uplink_slot_pdu_entry, MAX_NUM_PDUS>;
@@ -49,18 +52,19 @@ public:
     entry.type  = uplink_slot_pdu_entry::pdu_type::PUSCH;
     entry.pusch = pdu;
 
-    registry[slot.to_uint()].push_back(entry);
+    repository[slot.to_uint()].push_back(entry);
   }
 
   // :TODO: extend with PUCCH.
 
   /// Clears the given slot of the registry.
-  void clear_slot(slot_point slot) { registry[slot.to_uint()].clear(); }
+  void clear_slot(slot_point slot) { repository[slot.to_uint()].clear(); }
 
   /// Returns a span that contains the PDUs for the given slot.
-  span<const uplink_slot_pdu_entry> get_pdus(slot_point slot) const { return registry[slot.to_uint()]; }
+  span<const uplink_slot_pdu_entry> get_pdus(slot_point slot) const { return repository[slot.to_uint()]; }
 
 private:
-  circular_array<slot_entry, MAX_NUM_SLOTS> registry;
+  /// Repository that contains the PDUs.
+  circular_array<slot_entry, MAX_NUM_SLOTS> repository;
 };
 } // namespace srsgnb

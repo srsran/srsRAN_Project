@@ -132,6 +132,7 @@ static std::unique_ptr<resource_grid_pool> create_dl_resource_grid_pool(const up
   unsigned                                    nof_sectors = 1;
   unsigned                                    nof_slots   = config.nof_slots_dl_rg;
   std::vector<std::unique_ptr<resource_grid>> grids;
+  grids.reserve(nof_sectors * nof_slots);
   for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
     for (unsigned slot_id = 0; slot_id != nof_slots; ++slot_id) {
       std::unique_ptr<resource_grid> grid =
@@ -150,16 +151,12 @@ static std::unique_ptr<resource_grid_pool> create_ul_resource_grid_pool(const up
   unsigned                                    nof_slots   = config.nof_ul_processors * 4;
   std::vector<std::unique_ptr<resource_grid>> grids;
   grids.reserve(nof_sectors * nof_slots);
-
   for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
     for (unsigned slot_id = 0; slot_id != nof_slots; ++slot_id) {
       std::unique_ptr<resource_grid> grid =
           create_resource_grid(config.nof_ports, MAX_NSYMB_PER_SLOT, config.ul_bw_rb * NRE);
-      if (!grid) {
-        srslog::fetch_basic_logger("TEST").error("Failed to create UL resource grid");
-        return nullptr;
-      }
-      grids.emplace_back(std::move(grid));
+      report_fatal_error_if_not(grid, "Invalid resource grid.");
+      grids.push_back(std::move(grid));
     }
   }
 
