@@ -15,6 +15,7 @@
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include "ue.h"
 #include <mutex>
+#include <unordered_map>
 
 namespace srsgnb {
 
@@ -35,8 +36,8 @@ public:
   void run_slot(ue_pdsch_allocator& pdsch_alloc, const ue_list& ues);
 
 private:
-  /// Pending list of SRB0 DL buffer state reported by upper layers which are yet to be scheduled.
-  slot_event_list<dl_buffer_state_indication_message> dl_bs;
+  /// List of SRB0 DL buffer state reported by upper layers to be scheduled.
+  std::unordered_map<rnti_t, dl_buffer_state_indication_message> ue_dl_bs;
 
   srslog::basic_logger& logger;
 };

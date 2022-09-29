@@ -21,9 +21,11 @@ void ue_srb0_scheduler::run_slot(ue_pdsch_allocator& pdsch_alloc, const ue_list&
   if (ues.empty()) {
     return;
   }
-  // Schedule pending SRB0 messages
-  dl_bs.slot_indication();
-  for (const auto& bs : dl_bs.get_events()) {
+
+  std::unordered_map<rnti_t, dl_buffer_state_indication_message> failed_ue_dl_bs{};
+  // Schedule SRB0 messages
+  for (auto const& it : ue_dl_bs) {
+    auto bs = it.second;
     if (not ues.contains(bs.ue_index)) {
       continue;
     }
@@ -47,21 +49,22 @@ void ue_srb0_scheduler::run_slot(ue_pdsch_allocator& pdsch_alloc, const ue_list&
           dmrs_information dmrs_info = make_dmrs_info_common(
               cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
-          const pdsch_time_domain_resource_allocation& pdsch       = pdsch_list[time_res];
-          static const unsigned                        nof_symb_sh = pdsch.symbols.length();
-          static const unsigned                        mod_order   = get_bits_per_symbol(modulation_scheme::QPSK);
-          static const unsigned                        nof_layers  = 1; // Assumption
-          // TODO: As per Section 5.1.3.2, TS 38.214, need to derive xOverhead in PDSCH-ServingCellconfig.
+          const auto&           pdsch           = pdsch_list[time_res];
+          static const unsigned nof_symb_sh     = pdsch.symbols.length();
+          static const unsigned mod_order       = get_bits_per_symbol(modulation_scheme::QPSK);
+          static const unsigned srb0_mcs_index  = 0; // TODO: Need to parameterize
+          sch_mcs_description   srb0_msc_config = pdsch_mcs_get_config(pdsch_mcs_table::qam64, srb0_mcs_index);
+          static const unsigned nof_layers      = 1; // Assumption
+          // TODO: As per Section 5.1.3.2, TS 38.214, need to derive xOverhead from PDSCH-ServingCellconfig.
           // Assumed to be not configured hence set to 0 as per spec.
-          static const unsigned nof_oh_prb       = 0;
-          static const float    target_code_rate = 379.0F;
+          static const unsigned nof_oh_prb = 0;
           pdsch_prbs_tbs        srb0_prbs_tbs =
               get_nof_prbs(prbs_calculator_pdsch_config{bs.bs,
                                                         nof_symb_sh,
                                                         calculate_nof_dmrs_per_rb(dmrs_info),
                                                         nof_oh_prb,
                                                         mod_order,
-                                                        static_cast<float>(target_code_rate / 1024),
+                                                        static_cast<float>(srb0_msc_config.target_code_rate / 1024),
                                                         nof_layers});
 
           const cell_slot_resource_grid& grid      = pdsch_alloc.dl_resource_grid(ue_cc->cell_index, pdsch.k0);
@@ -70,7 +73,8 @@ void ue_srb0_scheduler::run_slot(ue_pdsch_allocator& pdsch_alloc, const ue_list&
           crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, srb0_prbs_tbs.nof_prbs, 0);
           if (ue_grant_crbs.length() < srb0_prbs_tbs.nof_prbs) {
             logger.error("SCHED: Not enough PDSCH space for SRB0 message. Will re-try in next slot");
-            // TODO: Keep copy of unscheduled buffer states
+            // Keep copy of failed DL buffer states
+            failed_ue_dl_bs.insert({it.first, it.second});
             continue;
           }
           // Successful allocation
@@ -86,9 +90,15 @@ void ue_srb0_scheduler::run_slot(ue_pdsch_allocator& pdsch_alloc, const ue_list&
       }
     }
   }
+  ue_dl_bs.clear();
+  failed_ue_dl_bs.swap(ue_dl_bs);
 }
 
 void ue_srb0_scheduler::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
 {
-  dl_bs.emplace(bs);
+  if (ue_dl_bs.find(bs.rnti) != ue_dl_bs.end()) {
+    ue_dl_bs[bs.rnti] = bs;
+  } else {
+    ue_dl_bs.insert({bs.rnti, bs});
+  }
 }
