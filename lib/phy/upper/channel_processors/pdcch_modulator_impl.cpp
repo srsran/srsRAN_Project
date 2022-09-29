@@ -17,7 +17,7 @@ using namespace srsgnb;
 void pdcch_modulator_impl::scramble(span<uint8_t> b_hat, span<const uint8_t> b, const pdcch_modulator::config_t& config)
 {
   // Calculate initial sequence state.
-  unsigned c_init = ((config.n_rnti << 16U) + config.n_id) % (1 << 31);
+  unsigned c_init = ((config.n_rnti << 16U) + config.n_id) % (1U << 31U);
 
   // Initialize the scrambler with the initial state.
   scrambler->init(c_init);
