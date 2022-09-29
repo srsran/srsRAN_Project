@@ -39,8 +39,9 @@ git lfs install
 Download and build srsGNB:
 
 ```bash
-git clone https://github.com/softwareradiosystems/srsgnb.git
-cd srsGNB
+git clone https://gitlab.com/softwareradiosystems/srsgnb.git
+cd srsgnb
+git lfs pull
 mkdir build
 cd build
 cmake ../
