@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include "detail/type_storage.h"
 #include "srsgnb/support/srsgnb_assert.h"
 #include <iterator>
 #include <memory>
@@ -86,12 +85,12 @@ public:
   T& operator[](std::size_t i) noexcept
   {
     srsgnb_assert(i < size_, "Array index is out of bounds");
-    return buffer[i].get();
+    return get_element(i);
   }
   const T& operator[](std::size_t i) const noexcept
   {
     srsgnb_assert(i < size_, "Array index is out of bounds");
-    return buffer[i].get();
+    return get_element(i);
   }
   T& back()
   {
@@ -179,22 +178,16 @@ public:
   void resize(size_type count)
   {
     static_assert(std::is_default_constructible<T>::value, "T must be default constructible");
-    srsgnb_assert(count <= MAX_N, "Provided static vector size is too high");
     resize(count, T());
   }
   void resize(size_type count, const T& value)
   {
     static_assert(std::is_copy_constructible<T>::value, "T must be copy constructible");
-    srsgnb_assert(count <= MAX_N, "Provided static vector size is too high");
     if (size_ > count) {
       destroy(begin() + count, end());
       size_ = count;
     } else if (size_ < count) {
       size_t to_append = count - size_;
-      if (to_append > MAX_N) {
-        // Note: Gcc 11 fails compilation without this assertion. Potentially a bug.
-        __builtin_unreachable();
-      }
       append(to_append, value);
     }
   }
@@ -218,8 +211,8 @@ public:
       swap(small_vec[i], big_vec[i]);
     }
     for (size_t i = small_size; i < big_size; ++i) {
-      small_vec.buffer[i].emplace(std::move(big_vec[i]));
-      big_vec.buffer[i].destroy();
+      new (&small_vec.buffer[i]) T(std::move(big_vec[i]));
+      get_element(i).~T();
     }
     small_vec.size_ = big_size;
     big_vec.size_   = small_size;
@@ -236,6 +229,10 @@ private:
   {
     size_type N = std::distance(it_begin, it_end);
     srsgnb_assert(N + size_ <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
+    if (N + size_ > MAX_N) {
+      // Note: Gcc 11 fails compilation without this hint. Potentially a bug.
+      __builtin_unreachable();
+    }
     std::uninitialized_copy(it_begin, it_end, end());
     size_ += N;
   }
@@ -243,6 +240,10 @@ private:
   {
     static_assert(std::is_copy_constructible<T>::value, "T must be copy-constructible");
     srsgnb_assert(N + size_ <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
+    if (N + size_ > MAX_N or N > MAX_N) {
+      // Note: Gcc 11 fails compilation without this hint. Potentially a bug.
+      __builtin_unreachable();
+    }
     std::uninitialized_fill_n(end(), N, element);
     size_ += N;
   }
@@ -250,14 +251,22 @@ private:
   {
     static_assert(std::is_default_constructible<T>::value, "T must be default-constructible");
     srsgnb_assert(N + size_ <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
-    for (size_type i = size_; i < size_ + N; ++i) {
-      buffer[i].emplace();
+    if (N + size_ > MAX_N) {
+      // Note: Gcc 11 fails compilation without this hint. Potentially a bug.
+      __builtin_unreachable();
+    }
+    for (size_type i = size_; i != size_ + N; ++i) {
+      new (&buffer[i]) T();
     }
     size_ += N;
   }
 
-  std::size_t                                size_ = 0;
-  std::array<detail::type_storage<T>, MAX_N> buffer;
+  T&       get_element(size_type idx) noexcept { return reinterpret_cast<T&>(buffer[idx]); }
+  const T& get_element(size_type idx) const noexcept { return reinterpret_cast<const T&>(buffer[idx]); }
+
+  std::size_t size_ = 0;
+
+  std::array<std::aligned_storage_t<sizeof(T), alignof(T)>, MAX_N> buffer;
 };
 
 } // namespace srsgnb
