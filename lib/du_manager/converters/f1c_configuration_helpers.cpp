@@ -369,8 +369,8 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
   cell.ss_pbch_block_pwr               = du_cfg.ssb_cfg.ssb_block_power;
   cell.n_timing_advance_offset_present = true;
   cell.n_timing_advance_offset.value   = asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n0;
-
   // TODO: Fill remaining fields.
+
   return cell;
 }
 

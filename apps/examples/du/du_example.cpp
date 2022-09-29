@@ -176,13 +176,16 @@ static unsigned                                  offset_to_pointA            = 4
 static unsigned                                  K_ssb                       = 6;
 static unsigned                                  coreset0_index              = 6;
 static unsigned                                  max_nof_concurrent_requests = 10;
-static const unsigned                            zero_correlation_zone       = 0;
-static const unsigned                            prach_config_index          = 16;
 static radio_configuration::clock_sources        clock_src                   = {};
 static std::string                               log_level                   = "info";
 static radio_configuration::over_the_wire_format otw_format = radio_configuration::over_the_wire_format::DEFAULT;
 static std::string                               device_arguments;
 static std::atomic<bool>                         is_running = {true};
+/// PRACH params
+static unsigned       prach_msg1_freq_offset    = 0;
+static unsigned       prach_root_sequence_index = 0;
+static const unsigned zero_correlation_zone     = 0;
+static const unsigned prach_config_index        = 16;
 // NOTE: ul_center_freq, dl_center_freq and ul_arfcn are derived from dl_arfcn.
 static float    dl_center_freq;
 static float    ul_center_freq;
@@ -467,10 +470,9 @@ static fapi::prach_config generate_prach_config_tlv()
   // Add FD occasion info.
   config.fd_occasions.emplace_back();
   fapi::prach_fd_occasion_config& fd_occasion = config.fd_occasions.back();
-  // NOTE: place a value here. It doesn't matter with this config.
-  fd_occasion.prach_root_sequence_index = 1;
-  fd_occasion.prach_freq_offset         = 0;
-  fd_occasion.prach_zero_corr_conf      = zero_correlation_zone;
+  fd_occasion.prach_root_sequence_index       = prach_root_sequence_index;
+  fd_occasion.prach_freq_offset               = prach_msg1_freq_offset;
+  fd_occasion.prach_zero_corr_conf            = zero_correlation_zone;
 
   return config;
 }
@@ -763,6 +765,9 @@ int main(int argc, char** argv)
   cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.zero_correlation_zone_config =
       zero_correlation_zone;
   cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.prach_config_index = prach_config_index;
+  cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.msg1_frequency_start =
+      prach_msg1_freq_offset;
+  cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().prach_root_seq_index = prach_root_sequence_index;
 
   test_logger.info("Creating DU high object...");
   du_high du_obj(cfg);
