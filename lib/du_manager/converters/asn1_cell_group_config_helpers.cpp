@@ -202,18 +202,18 @@ rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
 void calculate_pdcch_config_diff(const pdcch_config& src, const pdcch_config& dest, asn1::rrc_nr::pdcch_cfg_s& out)
 {
   calculate_addmodremlist_diff(
-      src.coreset_to_addmod_list,
-      dest.coreset_to_addmod_list,
       out.coreset_to_add_mod_list,
       out.coreset_to_release_list,
+      src.coreset_to_addmod_list,
+      dest.coreset_to_addmod_list,
       [](const coreset_configuration& cs_cfg) { return make_asn1_rrc_coreset(cs_cfg); },
       [](const coreset_configuration& cs_cfg) { return (uint8_t)cs_cfg.id; });
 
   calculate_addmodremlist_diff(
-      src.ss_to_addmod_list,
-      dest.ss_to_addmod_list,
       out.search_spaces_to_add_mod_list,
       out.search_spaces_to_release_list,
+      src.ss_to_addmod_list,
+      dest.ss_to_addmod_list,
       [](const search_space_configuration& ss) { return make_asn1_rrc_search_space(ss); },
       [](const search_space_configuration& ss) { return (uint8_t)ss.id; });
 
@@ -286,10 +286,10 @@ void srsgnb::srs_du::calculate_cell_group_config_diff(const cell_group_config&  
                                                       asn1::rrc_nr::cell_group_cfg_s& out)
 {
   calculate_addmodremlist_diff(
-      src.rlc_bearers,
-      dest.rlc_bearers,
       out.rlc_bearer_to_add_mod_list,
       out.rlc_bearer_to_release_list,
+      src.rlc_bearers,
+      dest.rlc_bearers,
       [](const rlc_bearer_config& b) { return make_asn1_rrc_rlc_bearer(b); },
       [](const rlc_bearer_config& b) { return (uint8_t)b.lcid; });
 

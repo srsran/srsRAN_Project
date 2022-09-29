@@ -53,45 +53,45 @@ obj_id_comparator<GetId> make_id_comparator(GetId&& g)
 
 /**
  * Apply toAddModList/toRemoveList changes
- * @param src_list original list of rrc fields
+ * @param prev_list original list of rrc fields
  * @param add_diff_list added/modified elements
  * @param rm_diff_list removed elements
- * @param target_list resulting list. (Can be same as src_list)
+ * @param next_list resulting list. (Can be same as prev_list)
  */
 template <typename AddModList, typename RemoveList, typename GetId>
-void apply_addmodremlist_diff(const AddModList& src_list,
+void apply_addmodremlist_diff(const AddModList& prev_list,
                               const AddModList& add_diff_list,
                               const RemoveList& rm_diff_list,
-                              AddModList&       target_list,
+                              AddModList&       next_list,
                               const GetId&      id_func)
 {
   if (add_diff_list.size() == 0 and rm_diff_list.size() == 0) {
-    if (&target_list != &src_list) {
-      target_list = src_list;
+    if (&next_list != &prev_list) {
+      next_list = prev_list;
     }
     return;
   }
   auto id_cmp_op = make_id_comparator(id_func);
-  srsgnb_sanity_check(std::is_sorted(src_list.begin(), src_list.end(), id_cmp_op), "Expected sorted list");
+  srsgnb_sanity_check(std::is_sorted(prev_list.begin(), prev_list.end(), id_cmp_op), "Expected sorted list");
   srsgnb_sanity_check(std::is_sorted(add_diff_list.begin(), add_diff_list.end(), id_cmp_op), "Expected sorted list");
   srsgnb_sanity_check(std::is_sorted(rm_diff_list.begin(), rm_diff_list.end()), "Expected sorted list");
 
   AddModList tmp_lst;
   // apply remove list
-  std::set_difference(src_list.begin(),
-                      src_list.end(),
+  std::set_difference(prev_list.begin(),
+                      prev_list.end(),
                       rm_diff_list.begin(),
                       rm_diff_list.end(),
                       std::back_inserter(tmp_lst),
                       id_cmp_op);
 
   // apply toaddmodlist
-  target_list.clear();
+  next_list.clear();
   std::set_union(add_diff_list.begin(),
                  add_diff_list.end(),
                  tmp_lst.begin(),
                  tmp_lst.end(),
-                 std::back_inserter(target_list),
+                 std::back_inserter(next_list),
                  id_cmp_op);
 }
 
@@ -104,24 +104,35 @@ void apply_addmodremlist_diff(AddModList&       src_and_dest_list,
   apply_addmodremlist_diff(src_and_dest_list, add_diff_list, rm_diff_list, src_and_dest_list, id_func);
 }
 
-/// \brief Invoke rem_func, add_func and mod_func for any detected difference between src_list and target_list.
+/// \brief Invokes rem_func, add_func and mod_func for any detected differences between prev_list and next_list.
+/// \tparam List List of objects, where each object has an ID.
+/// \param[in] rem_func Callable with signature void(const obj_type&), where obj_type is the value_type of \c List,
+/// which gets called for every object whose id exists in \c prev_list but does not exist in \c next_list.
+/// \param[in] add_func Callable with signature void(const obj_type&), where obj_type is the value_type of \c List,
+/// which gets called for every object whose id exists in \c next_list but does not exist in \c prev_list.
+/// \param[in] mod_func Callable with signature void(const obj_type&), where obj_type is the value_type of \c List,
+/// which gets called for every object whose id exists in both \c next_list and \c prev_list, but its parameters are
+/// different between the two lists.
+/// \param[in] prev_list Previous list of objects.
+/// \param[in] next_list Next list of objects.
+/// \param[in] id_func function to extract the ID from an object with type equal to the value_type of \c List.
 template <typename List, typename RemFunctor, typename AddFunctor, typename ModFunctor, typename GetId>
-std::enable_if_t<not is_iterable<AddFunctor>::value> calculate_addmodremlist_diff(const List&  src_list,
-                                                                                  const List&  target_list,
-                                                                                  RemFunctor   rem_func,
-                                                                                  AddFunctor   add_func,
-                                                                                  ModFunctor   mod_func,
-                                                                                  const GetId& id_func)
+std::enable_if_t<not is_iterable<AddFunctor>::value> calculate_addmodremlist_diff(const RemFunctor& rem_func,
+                                                                                  const AddFunctor& add_func,
+                                                                                  const ModFunctor& mod_func,
+                                                                                  const List&       prev_list,
+                                                                                  const List&       next_list,
+                                                                                  const GetId&      id_func)
 {
   auto id_cmp_op = make_id_comparator(id_func);
-  srsgnb_sanity_check(std::is_sorted(src_list.begin(), src_list.end(), id_cmp_op), "Expected sorted list");
-  srsgnb_sanity_check(std::is_sorted(target_list.begin(), target_list.end(), id_cmp_op), "Expected sorted list");
+  srsgnb_sanity_check(std::is_sorted(prev_list.begin(), prev_list.end(), id_cmp_op), "Expected sorted list");
+  srsgnb_sanity_check(std::is_sorted(next_list.begin(), next_list.end(), id_cmp_op), "Expected sorted list");
 
-  auto src_it    = src_list.begin();
-  auto target_it = target_list.begin();
+  auto src_it    = prev_list.begin();
+  auto target_it = next_list.begin();
 
-  bool src_left    = src_it != src_list.end();
-  bool target_left = target_it != target_list.end();
+  bool src_left    = src_it != prev_list.end();
+  bool target_left = target_it != next_list.end();
   while (src_left or target_left) {
     if (not target_left or (src_left and id_cmp_op(*src_it, *target_it))) {
       rem_func(src_it++);
@@ -131,21 +142,31 @@ std::enable_if_t<not is_iterable<AddFunctor>::value> calculate_addmodremlist_dif
     } else {
       mod_func(src_it++, target_it++);
     }
-    src_left    = src_it != src_list.end();
-    target_left = target_it != target_list.end();
+    src_left    = src_it != prev_list.end();
+    target_left = target_it != next_list.end();
   }
 }
 
-/// \brief Generate toAddModList and toReleaseList based on differences between src_list and target_list.
+/// \brief Generate toAddModList and toReleaseList based on differences between prev_list and next_list.
+/// \tparam List List of objects, where each object has an ID.
+/// \tparam toAddModList List of objects added or modified.
+/// \tparam RemoveList List of IDs for objects removed.
+/// \param[out] add_diff_list Difference in terms of added/modified objects between \c prev_list and \c next_list.
+/// \param[out] rem_diff_list Difference in terms of removed objects between  \c prev_list and \c next_list.
+/// \param[in] prev_list Previous list of objects.
+/// \param[in] next_list Next list of objects.
+/// \param[in] convert_func Callable used to convert an object with type \c List::value_type into an object with type
+/// \c toAddModList::value_type.
+/// \param[in] id_func function to extract the ID from an object with type equal to the value_type of \c List.
 template <typename List, typename toAddModList, typename RemoveList, typename ConvertElem, typename GetId>
-std::enable_if_t<is_iterable<toAddModList>::value> calculate_addmodremlist_diff(const List&        src_list,
-                                                                                const List&        target_list,
-                                                                                toAddModList&      add_diff_list,
+std::enable_if_t<is_iterable<toAddModList>::value> calculate_addmodremlist_diff(toAddModList&      add_diff_list,
                                                                                 RemoveList&        rem_diff_list,
+                                                                                const List&        prev_list,
+                                                                                const List&        next_list,
                                                                                 const ConvertElem& convert_func,
                                                                                 const GetId&       id_func)
 {
-  if (&src_list == &target_list) {
+  if (&prev_list == &next_list) {
     // No difference because src and target are the same list. Early return.
     add_diff_list.clear();
     rem_diff_list.clear();
@@ -163,34 +184,43 @@ std::enable_if_t<is_iterable<toAddModList>::value> calculate_addmodremlist_diff(
       add_diff_list.push_back(convert_func(*target_it));
     }
   };
-  calculate_addmodremlist_diff(src_list, target_list, rem_func, add_func, mod_func, id_func);
+  calculate_addmodremlist_diff(rem_func, add_func, mod_func, prev_list, next_list, id_func);
 }
 
+/// \brief Generate toAddModList and toReleaseList based on differences between prev_list and next_list.
+/// \tparam List List of objects, where each object has an ID.
+/// \tparam toAddModList List of objects added or modified.
+/// \tparam RemoveList List of IDs for objects removed.
+/// \param[out] add_diff_list Difference in terms of added/modified objects between \c prev_list and \c next_list.
+/// \param[out] rem_diff_list Difference in terms of removed objects between  \c prev_list and \c next_list.
+/// \param[in] prev_list Previous list of objects.
+/// \param[in] next_list Next list of objects.
+/// \param[in] id_func function to extract the ID from an object with type equal to the value_type of \c List.
 template <typename toAddModList, typename RemoveList, typename GetId>
-void calculate_addmodremlist_diff(const toAddModList& src_list,
-                                  const toAddModList& target_list,
-                                  toAddModList&       add_diff_list,
+void calculate_addmodremlist_diff(toAddModList&       add_diff_list,
                                   RemoveList&         rem_diff_list,
+                                  const toAddModList& prev_list,
+                                  const toAddModList& next_list,
                                   const GetId&        id_func)
 {
-  using elem_type = decltype(*src_list.begin());
+  using elem_type = decltype(*prev_list.begin());
 
-  if (&src_list == &add_diff_list) {
-    // use const src_list instead.
-    toAddModList src_list2 = src_list;
-    calculate_addmodremlist_diff(src_list2, target_list, add_diff_list, rem_diff_list, id_func);
+  if (&prev_list == &add_diff_list) {
+    // use const prev_list instead.
+    toAddModList prev_list2 = prev_list;
+    calculate_addmodremlist_diff(add_diff_list, rem_diff_list, prev_list2, next_list, id_func);
     return;
   }
 
-  if (&target_list == &add_diff_list) {
-    // use const target_list
-    toAddModList target_list2 = target_list;
-    calculate_addmodremlist_diff(src_list, target_list2, add_diff_list, rem_diff_list, id_func);
+  if (&next_list == &add_diff_list) {
+    // use const next_list
+    toAddModList next_list2 = next_list;
+    calculate_addmodremlist_diff(add_diff_list, rem_diff_list, prev_list, next_list2, id_func);
     return;
   }
 
   calculate_addmodremlist_diff(
-      src_list, target_list, add_diff_list, rem_diff_list, [](const elem_type& e) { return e; }, id_func);
+      add_diff_list, rem_diff_list, prev_list, next_list, [](const elem_type& e) { return e; }, id_func);
 }
 
 } // namespace srsgnb
