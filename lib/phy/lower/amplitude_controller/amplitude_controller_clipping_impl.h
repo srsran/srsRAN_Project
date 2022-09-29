@@ -25,9 +25,9 @@ private:
   /// Enables or disables the clipping process.
   bool clipping_enabled;
   /// Gain factor applied to the input signal, before the clipping process.
-  float gain_lin;
-  /// Sample magnitude corresponding to the radio device's full scale value.
-  float full_scale_lin;
+  float amplitude_gain;
+  /// Squared value of the amplitude corresponding to the radio device's full scale power.
+  float full_scale_pwr;
   /// Maximum amplitude allowed by the clipping.
   float ceiling_lin;
   /// Runtime metrics reported by the amplitude controller.
@@ -44,8 +44,8 @@ public:
                                      float full_scale_lin,
                                      float ceiling_dBFS) :
     clipping_enabled(enable_clipping),
-    gain_lin(convert_dB_to_amplitude(input_gain_dB)),
-    full_scale_lin(full_scale_lin),
+    amplitude_gain(convert_dB_to_amplitude(input_gain_dB)),
+    full_scale_pwr(full_scale_lin * full_scale_lin),
     ceiling_lin(full_scale_lin * convert_dB_to_amplitude(ceiling_dBFS))
   {
     // Do nothing.

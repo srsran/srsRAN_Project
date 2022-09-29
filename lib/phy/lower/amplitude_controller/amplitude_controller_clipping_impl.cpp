@@ -22,9 +22,9 @@ amplitude_controller_metrics amplitude_controller_clipping_impl::process(span<cf
 
   // Compute Mean and Peak signal power.
   float avg_power         = srsvec::average_power(input);
-  float peak_amplitude    = std::sqrt(srsvec::max_abs_element(input).second);
-  metrics.avg_power_dBFS  = convert_power_to_dB(avg_power / (full_scale_lin * full_scale_lin));
-  metrics.peak_power_dBFS = convert_power_to_dB(peak_amplitude / full_scale_lin);
+  float peak_power        = srsvec::max_abs_element(input).second;
+  metrics.avg_power_dBFS  = convert_power_to_dB(avg_power / full_scale_pwr);
+  metrics.peak_power_dBFS = convert_power_to_dB(peak_power / full_scale_pwr);
 
   // Compute signal PAPR.
   if ((std::isnormal(metrics.avg_power_dBFS)) && (std::isnormal(metrics.peak_power_dBFS))) {
@@ -34,15 +34,13 @@ amplitude_controller_metrics amplitude_controller_clipping_impl::process(span<cf
   }
 
   // Apply the gain factor.
-  metrics.gain_dB = convert_amplitude_to_dB(gain_lin);
-  srsvec::sc_prod(input, gain_lin, output);
+  metrics.gain_dB = convert_amplitude_to_dB(amplitude_gain);
+  srsvec::sc_prod(input, amplitude_gain, output);
 
   // Clip the signal and count the number of clipped and processed samples.
   if (clipping_enabled) {
     metrics.nof_processed_samples += input.size();
-    if (peak_amplitude * gain_lin > ceiling_lin) {
-      metrics.nof_clipped_samples += srsvec::clip_iq(output, output, ceiling_lin);
-    }
+    metrics.nof_clipped_samples += srsvec::clip_iq(output, output, ceiling_lin);
     metrics.clipping_probability =
         static_cast<double>(metrics.nof_clipped_samples) / static_cast<double>(metrics.nof_processed_samples);
   } else {
