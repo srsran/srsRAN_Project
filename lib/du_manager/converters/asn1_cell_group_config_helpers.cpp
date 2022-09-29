@@ -199,7 +199,7 @@ rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
   return out;
 }
 
-void calculate_pdcch_config_diff(const pdcch_config& src, const pdcch_config& dest, asn1::rrc_nr::pdcch_cfg_s& out)
+void calculate_pdcch_config_diff(asn1::rrc_nr::pdcch_cfg_s& out, const pdcch_config& src, const pdcch_config& dest)
 {
   calculate_addmodremlist_diff(
       out.coreset_to_add_mod_list,
@@ -220,7 +220,7 @@ void calculate_pdcch_config_diff(const pdcch_config& src, const pdcch_config& de
   // TODO: Remaining.
 }
 
-void calculate_pdsch_config_diff(const pdsch_config& src, const pdsch_config& dest, asn1::rrc_nr::pdsch_cfg_s& out)
+void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_config& src, const pdsch_config& dest)
 {
   out.data_scrambling_id_pdsch_present = dest.data_scrambling_id_pdsch.has_value();
   if (out.data_scrambling_id_pdsch_present) {
@@ -248,26 +248,20 @@ void calculate_pdsch_config_diff(const pdsch_config& src, const pdsch_config& de
   // TODO: Remaining.
 }
 
-void calculate_bwp_dl_dedicated_diff(const bwp_downlink_dedicated& src,
-                                     const bwp_downlink_dedicated& dest,
-                                     asn1::rrc_nr::bwp_dl_ded_s&   out)
+void calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
+                                     const bwp_downlink_dedicated& src,
+                                     const bwp_downlink_dedicated& dest)
 {
   if (dest.pdcch_cfg.has_value()) {
     out.pdcch_cfg_present = true;
-    if (not src.pdcch_cfg.has_value()) {
-      calculate_pdcch_config_diff({}, *dest.pdcch_cfg, out.pdcch_cfg.set_setup());
-    } else {
-      calculate_pdcch_config_diff(*src.pdcch_cfg, *dest.pdcch_cfg, out.pdcch_cfg.set_setup());
-    }
+    calculate_pdcch_config_diff(
+        out.pdcch_cfg.set_setup(), src.pdcch_cfg.has_value() ? *src.pdcch_cfg : pdcch_config{}, *dest.pdcch_cfg);
   }
 
   if (dest.pdsch_cfg.has_value()) {
     out.pdsch_cfg_present = true;
-    if (not src.pdcch_cfg.has_value()) {
-      calculate_pdsch_config_diff({}, *dest.pdsch_cfg, out.pdsch_cfg.set_setup());
-    } else {
-      calculate_pdsch_config_diff(*src.pdsch_cfg, *dest.pdsch_cfg, out.pdsch_cfg.set_setup());
-    }
+    calculate_pdsch_config_diff(
+        out.pdsch_cfg.set_setup(), src.pdcch_cfg.has_value() ? *dest.pdsch_cfg : pdsch_config{}, *dest.pdsch_cfg);
   }
 
   // TODO: Remaining.
@@ -278,7 +272,7 @@ void calculate_serving_cell_config_diff(const serving_cell_config&        src,
                                         asn1::rrc_nr::serving_cell_cfg_s& out)
 {
   out.init_dl_bwp_present = true;
-  calculate_bwp_dl_dedicated_diff(src.init_dl_bwp, dest.init_dl_bwp, out.init_dl_bwp);
+  calculate_bwp_dl_dedicated_diff(out.init_dl_bwp, src.init_dl_bwp, dest.init_dl_bwp);
 }
 
 void srsgnb::srs_du::calculate_cell_group_config_diff(const cell_group_config&        src,
