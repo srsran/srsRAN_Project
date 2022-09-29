@@ -23,6 +23,10 @@ public:
     siso,
     /// Multiple Input Single Output (MISO) channel with 2 Rx ports, making use of receiver-side spatial diversity.
     miso_2x1,
+    /// Multiple Input Single Output (MISO) channel with 3 Rx ports, making use of receiver-side spatial diversity.
+    miso_3x1,
+    /// Multiple Input Single Output (MISO) channel with 4 Rx ports, making use of receiver-side spatial diversity.
+    miso_4x1,
     /// Multiple Input Multiple Output (MIMO) channel with 2 Tx and 2 Rx ports, making use of spatial multiplexing.
     mimo_2x2
   };
@@ -43,10 +47,32 @@ public:
       value = siso;
     } else if ((nof_rx_ports == 2) && (nof_tx_layers == 1)) {
       value = miso_2x1;
+    } else if ((nof_rx_ports == 3) && (nof_tx_layers == 1)) {
+      value = miso_3x1;
+    } else if ((nof_rx_ports == 4) && (nof_tx_layers == 1)) {
+      value = miso_4x1;
     } else if ((nof_rx_ports == 2) && (nof_tx_layers == 2)) {
       value = mimo_2x2;
     } else {
       value = invalid;
+    }
+  }
+
+  static constexpr unsigned get_nof_rx_ports(spatial_topology::options value)
+  {
+    switch (value) {
+      case siso:
+        return 1;
+      case miso_2x1:
+      case mimo_2x2:
+        return 2;
+      case miso_3x1:
+        return 3;
+      case miso_4x1:
+        return 4;
+      case invalid:
+      default:
+        return 0;
     }
   }
 
