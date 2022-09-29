@@ -57,23 +57,21 @@ public:
 
   void set_grid(RG& grid, unsigned sector_id)
   {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     grids[sector_id] = &grid;
   }
 
   RG* get_grid(unsigned sector_id)
   {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     return grids[sector_id];
   }
 
   /// Resets all pointers.
   void reset()
   {
-    std::unique_lock<std::mutex> lock(mutex);
-    for (auto& rg : grids) {
-      rg = nullptr;
-    }
+    std::lock_guard<std::mutex> lock(mutex);
+    std::fill(grids.begin(), grids.end(), nullptr);
   }
 };
 

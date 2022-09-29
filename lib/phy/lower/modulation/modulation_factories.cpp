@@ -58,7 +58,7 @@ public:
   create_ofdm_symbol_demodulator(const ofdm_demodulator_configuration& config) override
   {
     ofdm_demodulator_common_configuration common_config;
-    common_config.dft = dft_factory->create({config.dft_size, dft_processor::direction::INVERSE});
+    common_config.dft = dft_factory->create({config.dft_size, dft_processor::direction::DIRECT});
     return std::make_unique<ofdm_symbol_demodulator_impl>(common_config, config);
   }
 

@@ -15,6 +15,8 @@
 
 using namespace srsgnb;
 
+namespace {
+
 class resource_grid_reader_empty : public resource_grid_reader
 {
 public:
@@ -31,23 +33,24 @@ public:
   void get(span<cf_t> symbols, unsigned /**/, unsigned /**/, unsigned /**/) const override { srsvec::zero(symbols); }
 };
 
+} // namespace
+
 static const resource_grid_reader_empty rg_reader_empty;
 
 baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
 {
-  // Get transmit resource grid buffer for the given slot.
-  lower_phy_rg_buffer<resource_grid>& ul_grid_buffer =
-      ul_rg_buffers[ul_slot_context.system_slot() % ul_rg_buffers.size()];
+  // Get the transmission resource grid buffer for the given slot.
+  lower_phy_rg_buffer<resource_grid>& ul_grid_buffer = ul_rg_buffers[ul_slot_context.system_slot()];
 
   // Calculate symbol size. Assumes all sectors have the same symbol size.
   unsigned symbol_sz = modulators[0]->get_symbol_size(symbol_id);
 
-  // For each stream, receive baseband signal.
-  for (unsigned stream_id = 0; stream_id != radio_buffers.size(); ++stream_id) {
+  // For each stream, receive the baseband signal.
+  for (unsigned stream_id = 0, nof_streams = radio_buffers.size(); stream_id != nof_streams; ++stream_id) {
     // Prepare buffer size.
     radio_buffers[stream_id].resize(symbol_sz);
 
-    // Receive baseband signal.
+    // Receive the baseband signal.
     receive_metadata[stream_id] = receiver.receive(radio_buffers[stream_id], stream_id);
   }
 
@@ -56,7 +59,7 @@ baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
   // ...
 
   // Demodulate signal for each sector.
-  for (unsigned sector_id = 0; sector_id != sectors.size(); ++sector_id) {
+  for (unsigned sector_id = 0, nof_sectors = sectors.size(); sector_id != nof_sectors; ++sector_id) {
     // Select sector configuration.
     const lower_phy_sector_description& sector = sectors[sector_id];
 
@@ -64,7 +67,7 @@ baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
     resource_grid* ul_rg = ul_grid_buffer.get_grid(sector_id);
 
     // For each port of the sector.
-    for (unsigned port_id = 0; port_id != sector.port_mapping.size(); ++port_id) {
+    for (unsigned port_id = 0, nof_ports = sector.port_mapping.size(); port_id != nof_ports; ++port_id) {
       // Select port mapping.
       const lower_phy_sector_port_mapping& port_mapping = sector.port_mapping[port_id];
 
@@ -80,10 +83,15 @@ baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
       prach_context.port   = port_id;
       prach_proc->get_baseband().process_symbol(buffer, prach_context);
 
-      // Call uplink processor.
+      // Demodulate the baseband signal if it has been requested.
       if (ul_rg) {
         demodulators[sector_id]->demodulate(*ul_rg, buffer, port_id, symbol_id);
       }
+    }
+
+    // Skip the symbol notification when it has not been requested.
+    if (!ul_rg) {
+      continue;
     }
 
     // Notify the received symbols.
@@ -108,12 +116,12 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, baseband_gateway_time
 
   // Resize radio buffers, assume all sectors and ports symbol sizes are the same.
   unsigned symbol_sz = modulators.front()->get_symbol_size(symbol_id);
-  for (baseband_gateway_buffer_dynamic& buffer : radio_buffers) {
+  for (auto& buffer : radio_buffers) {
     buffer.resize(symbol_sz);
   }
 
   // Iterate for each sector...
-  for (unsigned sector_id = 0; sector_id != sectors.size(); ++sector_id) {
+  for (unsigned sector_id = 0, nof_sectors = sectors.size(); sector_id != nof_sectors; ++sector_id) {
     // Select sector configuration.
     const lower_phy_sector_description& sector = sectors[sector_id];
 
@@ -131,7 +139,7 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, baseband_gateway_time
     }
 
     // Iterate for each port in the sector...
-    for (unsigned port_id = 0; port_id != sector.port_mapping.size(); ++port_id) {
+    for (unsigned port_id = 0, nof_ports = sector.port_mapping.size(); port_id != nof_ports; ++port_id) {
       // Select port mapping.
       const lower_phy_sector_port_mapping& port_mapping = sector.port_mapping[port_id];
 
@@ -140,29 +148,29 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, baseband_gateway_time
           radio_buffers[port_mapping.stream_id].get_channel_buffer(port_mapping.channel_id);
 
       // Modulate symbol if the resource grid is available. Otherwise, set all to zeros.
-      if (dl_rg != nullptr) {
-        modulators[sector_id]->modulate(buffer, *dl_rg, port_id, symbol_id);
-
-        // Process time domain signal with the amplitude controller.
-        amplitude_controller_metrics amplitude_control_metrics =
-            amplitude_controllers[sector_id]->process(buffer, buffer);
-        logger.debug(
-            "Amplitude controller metrics: Mean pwr={:.2f} dBFS, Peak pwr={:.2f} dBFS, PAPR={:.2f} dB, Gain={:.2f} dB, "
-            "Clipped sps={}, Clipping prob={:.2e}.",
-            amplitude_control_metrics.avg_power_dBFS,
-            amplitude_control_metrics.peak_power_dBFS,
-            amplitude_control_metrics.papr_dB,
-            amplitude_control_metrics.gain_dB,
-            amplitude_control_metrics.nof_clipped_samples,
-            amplitude_control_metrics.clipping_probability);
-      } else {
+      if (dl_rg == nullptr) {
         srsvec::zero(buffer);
+        continue;
       }
+      modulators[sector_id]->modulate(buffer, *dl_rg, port_id, symbol_id);
+
+      // Process time domain signal with the amplitude controller.
+      amplitude_controller_metrics amplitude_control_metrics =
+          amplitude_controllers[sector_id]->process(buffer, buffer);
+      logger.debug(
+          "Amplitude controller metrics: Mean pwr={:.2f} dBFS, Peak pwr={:.2f} dBFS, PAPR={:.2f} dB, Gain={:.2f} dB, "
+          "Clipped sps={}, Clipping prob={:.2e}.",
+          amplitude_control_metrics.avg_power_dBFS,
+          amplitude_control_metrics.peak_power_dBFS,
+          amplitude_control_metrics.papr_dB,
+          amplitude_control_metrics.gain_dB,
+          amplitude_control_metrics.nof_clipped_samples,
+          amplitude_control_metrics.clipping_probability);
     }
   }
 
   // Transmit signal.
-  for (unsigned stream_id = 0; stream_id != radio_buffers.size(); ++stream_id) {
+  for (unsigned stream_id = 0, nof_streams = radio_buffers.size(); stream_id != nof_streams; ++stream_id) {
     transmitter.transmit(stream_id, transmit_metadata, radio_buffers[stream_id]);
   }
 }
@@ -213,7 +221,7 @@ void lower_phy_impl::process_symbol()
     // Reset DL resource grid buffers.
     logger.debug("Clearing DL resource grid slot {}.", dl_slot_context.system_slot());
     dl_rg_buffers[dl_slot_context.system_slot()].reset();
-    ul_rg_buffers[dl_slot_context.system_slot()].reset();
+    ul_rg_buffers[ul_slot_context.system_slot()].reset();
 
     // Reset the symbol index.
     symbol_slot_idx = 0;
@@ -316,12 +324,12 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, c
 
   // Create pool of transmit resource grids.
   unsigned ul_to_dl_slot_offset = config.ul_to_dl_subframe_offset * ul_slot_context.nof_slots_per_subframe();
-  for (unsigned slot_count = 0; slot_count != dl_rg_buffers.size(); ++slot_count) {
+  for (unsigned slot_count = 0, nof_slots = dl_rg_buffers.size(); slot_count != nof_slots; ++slot_count) {
     dl_rg_buffers[slot_count].set_nof_sectors(sectors.size());
 
     // If the slot is inside the start transition, then set an initial resource grid reader than is empty.
     if (slot_count >= ul_to_dl_slot_offset && slot_count < ul_to_dl_slot_offset + max_processing_delay_slots) {
-      for (unsigned sector_id = 0; sector_id != sectors.size(); ++sector_id) {
+      for (unsigned sector_id = 0, nof_sectors = sectors.size(); sector_id != nof_sectors; ++sector_id) {
         logger.debug("Writing initial DL resource grid for sector {} and slot {}.", sector_id, slot_count);
         dl_rg_buffers[slot_count].set_grid(rg_reader_empty, sector_id);
       }
@@ -329,8 +337,8 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, c
   }
 
   // Create pool of receive resource grids.
-  for (unsigned slot_count = 0; slot_count != ul_rg_buffers.size(); ++slot_count) {
-    ul_rg_buffers[slot_count].set_nof_sectors(sectors.size());
+  for (auto& ul_rg_buffer : ul_rg_buffers) {
+    ul_rg_buffer.set_nof_sectors(sectors.size());
   }
 
   // Signal a successful initialization.
