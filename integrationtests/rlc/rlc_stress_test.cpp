@@ -80,6 +80,18 @@ void stress_test(stress_test_args args)
   }
   srslog::set_default_sink(*log_sink);
 
+  auto& log_stack = srslog::fetch_basic_logger("STACK", false);
+  log_stack.set_level(args.log_level);
+  log_stack.set_hex_dump_max_size(args.log_hex_limit);
+
+  auto& log_rlc = srslog::fetch_basic_logger("RLC", false);
+  log_rlc.set_level(args.log_level);
+  log_rlc.set_hex_dump_max_size(args.log_hex_limit);
+
+  auto& log_mac = srslog::fetch_basic_logger("MAC", false);
+  log_mac.set_level(args.log_level);
+  log_mac.set_hex_dump_max_size(args.log_hex_limit);
+
   // Have one common timer for both UE and gNB
   // emulators for now.
   timer_manager timers;

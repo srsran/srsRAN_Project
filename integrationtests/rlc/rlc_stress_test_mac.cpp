@@ -17,6 +17,7 @@ using namespace srsgnb;
 std::vector<byte_buffer_slice_chain> mac_dummy::run_tx_tti()
 {
   std::vector<byte_buffer_slice_chain> pdu_list;
+  logger.info("Generating list PDU for TTI. PDUs per TTI={}", args.nof_pdu_tti);
   // Pull a number of RLC PDUs
   for (uint32_t i = 0; i < args.nof_pdu_tti; i++) {
     // Get MAC opportunity size (maximum size of the RLC PDU)
@@ -29,10 +30,16 @@ std::vector<byte_buffer_slice_chain> mac_dummy::run_tx_tti()
     // Request data to transmit
     if (bsr.load(std::memory_order_relaxed) > 0) {
       byte_buffer_slice_chain pdu = rlc_tx_lower->pull_pdu(opp_size);
+      logger.debug("Pulled PDU. PDU size={}, MAC opportunity={}, buffer_state={}",
+                   pdu.length(),
+                   opp_size,
+                   bsr.load(std::memory_order_relaxed));
       // Push PDU in the list
       if (pdu.length() > 0) {
         pdu_list.push_back(std::move(pdu));
       }
+    } else {
+      logger.debug("Did not pull a PDU. No data to TX.");
     }
   }
   return pdu_list;

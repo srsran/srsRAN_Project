@@ -20,18 +20,20 @@
 namespace srsgnb {
 
 struct stress_test_args {
-  std::string mode               = "UM12";
-  int32_t     sdu_size           = -1;
-  float       pdu_drop_rate      = 0.1;
-  float       pdu_cut_rate       = 0.0;
-  float       pdu_duplicate_rate = 0.0;
-  uint32_t    avg_opp_size       = 1505;
-  bool        const_opp          = false;
-  uint32_t    seed               = 0;
-  uint32_t    nof_pdu_tti        = 1;
-  std::string log_filename       = "stdout";
-  uint32_t    min_sdu_size       = 5;
-  uint32_t    max_sdu_size       = 9000;
+  std::string          mode               = "UM12";
+  int32_t              sdu_size           = -1;
+  float                pdu_drop_rate      = 0.1;
+  float                pdu_cut_rate       = 0.0;
+  float                pdu_duplicate_rate = 0.0;
+  uint32_t             avg_opp_size       = 1505;
+  bool                 const_opp          = false;
+  uint32_t             seed               = 0;
+  uint32_t             nof_pdu_tti        = 1;
+  std::string          log_filename       = "stdout";
+  srslog::basic_levels log_level          = srslog::basic_levels::debug;
+  uint32_t             log_hex_limit      = 32;
+  uint32_t             min_sdu_size       = 5;
+  uint32_t             max_sdu_size       = 9000;
 };
 
 inline bool parse_args(stress_test_args& args, int argc, char* argv[])
@@ -47,6 +49,8 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
                                                {"pdu_cut_rate", required_argument, nullptr, 'c'},
                                                {"pdu_duplicate_rate", required_argument, nullptr, 'D'},
                                                {"log_filename", required_argument, nullptr, 'l'},
+                                               {"log_level", required_argument, nullptr, 'L'},
+                                               {"log_hex_limit", required_argument, nullptr, 'H'},
                                                {"seed", required_argument, nullptr, 'S'},
                                                {"nof_pdu_tti", required_argument, nullptr, 'T'},
                                                {nullptr, 0, nullptr, 0}};
@@ -65,6 +69,8 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
     "  -c, --pdu_cut_rate <rate>       Set rate at which RLC PDUs are chopped in length.\n"
     "  -D, --pdu_duplicate_rate <rate> Set rate at which RLC PDUs are dropped.\n"
     "  -l, --log_filename <filename>   Set log filename. Use 'stdout' to print to console.\n"
+    "  -L, --log_level <level>         Set log level (default: debug).\n"
+    "  -H, --log_hex_limit <hex_limit> Set log limit for hex dumps (default: 32 bytes).\n"
     "  -S, --seed <seed>               Set seed to use in run. 0 means the seed is randomly generated.\n"
     "  -T, --nof_pdu_tti <num>         Set number of PDUs processed in a TTI.\n"
     "\n";
@@ -73,7 +79,7 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
   // Parse arguments
   while (true) {
     int option_index = 0;
-    int c            = getopt_long(argc, argv, "hm:s:z:Z:op:d:c:D:l:S:T:", long_options, &option_index);
+    int c            = getopt_long(argc, argv, "hm:s:z:Z:op:d:c:D:l:L:H:S:T:", long_options, &option_index);
     if (c == -1) {
       break;
     }
@@ -121,6 +127,14 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
       case 'l':
         args.log_filename = std::string(optarg);
         fprintf(stdout, "Log filename %s\n", args.log_filename.c_str());
+        break;
+      case 'L':
+        args.log_level = srslog::str_to_basic_level(std::string(optarg));
+        fprintf(stdout, "Log level %s\n", optarg);
+        break;
+      case 'H':
+        args.log_hex_limit = std::strtol(optarg, nullptr, 10);
+        fprintf(stdout, "Log hex limit %d\n", args.log_hex_limit);
         break;
       case 'S':
         args.seed = std::strtol(optarg, nullptr, 10);
