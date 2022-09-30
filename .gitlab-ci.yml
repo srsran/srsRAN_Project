@@ -151,6 +151,7 @@ build custom [trigger job]:
     ENABLE_GCOV: ""
     ASSERT_LEVEL: ""
     AUTO_DETECT_ISA: ""
+    CI_MERGE_REQUEST_LABELS: no-cache
 
 build [next]:
   extends: .trigger build on mr
