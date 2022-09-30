@@ -14,6 +14,7 @@
 #include "s3g.h"
 #include "ssl.h"
 #include "zuc.h"
+#include <arpa/inet.h>
 
 #ifdef HAVE_MBEDTLS
 #include "mbedtls/md5.h"
@@ -22,7 +23,153 @@
 #include "polarssl/md5.h"
 #endif
 
+#define FC_5G_K_GNB_STAR_DERIVATION 0x70
+#define FC_5G_ALGORITHM_KEY_DERIVATION 0x69
+#define FC_5G_KAUSF_DERIVATION 0x6a
+#define FC_5G_RES_STAR_DERIVATION 0x6b
+#define FC_5G_KSEAF_DERIVATION 0x6c
+#define FC_5G_KAMF_DERIVATION 0x6d
+#define FC_5G_KGNB_KN3IWF_DERIVATION 0x6e
+#define FC_5G_NH_GNB_DERIVATION 0x6f
+
+#define ALGO_5G_DISTINGUISHER_NAS_ENC_ALG 0x01
+#define ALGO_5G_DISTINGUISHER_NAS_INT_ALG 0x02
+#define ALGO_5G_DISTINGUISHER_RRC_ENC_ALG 0x03
+#define ALGO_5G_DISTINGUISHER_RRC_INT_ALG 0x04
+#define ALGO_5G_DISTINGUISHER_UP_ENC_ALG 0x05
+#define ALGO_5G_DISTINGUISHER_UP_INT_ALG 0x06
+
 using namespace srsgnb;
+
+/******************************************************************************
+ * Key Generation
+ *****************************************************************************/
+bool srsgnb::security_generate_k_nr_rrc(const uint8_t*            k_gnb,
+                                        const ciphering_algorithm enc_alg_id,
+                                        const integrity_algorithm int_alg_id,
+                                        uint8_t*                  k_rrc_enc,
+                                        uint8_t*                  k_rrc_int)
+{
+  if (k_gnb == NULL || k_rrc_enc == NULL || k_rrc_int == NULL) {
+    return false;
+  }
+  std::array<uint8_t, 32> key;
+
+  memcpy(key.data(), k_gnb, 32);
+
+  // Derive RRC ENC
+  // algorithm type distinguisher
+  std::vector<uint8_t> algo_distinguisher;
+  algo_distinguisher.resize(1);
+  algo_distinguisher[0] = ALGO_5G_DISTINGUISHER_RRC_ENC_ALG;
+
+  // algorithm type distinguisher
+  std::vector<uint8_t> algorithm_identity;
+  algorithm_identity.resize(1);
+  algorithm_identity[0] = static_cast<uint8_t>(enc_alg_id);
+
+  if (kdf_common(FC_5G_ALGORITHM_KEY_DERIVATION, key, algo_distinguisher, algorithm_identity, k_rrc_enc) != true) {
+    return false;
+  }
+
+  // Derive RRC INT
+  // algorithm type distinguisher
+  algo_distinguisher.resize(1);
+  algo_distinguisher[0] = ALGO_5G_DISTINGUISHER_RRC_INT_ALG;
+
+  // algorithm type distinguisher
+  algorithm_identity.resize(1);
+  algorithm_identity[0] = static_cast<uint8_t>(int_alg_id);
+
+  // Derive RRC int
+  if (kdf_common(FC_5G_ALGORITHM_KEY_DERIVATION, key, algo_distinguisher, algorithm_identity, k_rrc_int) != true) {
+    return false;
+  }
+  return true;
+}
+
+bool srsgnb::security_generate_k_nr_up(const uint8_t*            k_gnb,
+                                       const ciphering_algorithm enc_alg_id,
+                                       const integrity_algorithm int_alg_id,
+                                       uint8_t*                  k_up_enc,
+                                       uint8_t*                  k_up_int)
+{
+  if (k_gnb == NULL || k_up_enc == NULL || k_up_int == NULL) {
+    return false;
+  }
+  std::array<uint8_t, 32> key;
+
+  memcpy(key.data(), k_gnb, 32);
+
+  // Derive UP ENC
+  // algorithm type distinguisher
+  std::vector<uint8_t> algo_distinguisher;
+  algo_distinguisher.resize(1);
+  algo_distinguisher[0] = ALGO_5G_DISTINGUISHER_UP_ENC_ALG;
+
+  // algorithm type distinguisher
+  std::vector<uint8_t> algorithm_identity;
+  algorithm_identity.resize(1);
+  algorithm_identity[0] = static_cast<uint8_t>(enc_alg_id);
+
+  if (kdf_common(FC_5G_ALGORITHM_KEY_DERIVATION, key, algo_distinguisher, algorithm_identity, k_up_enc) != true) {
+    return false;
+  }
+
+  // Derive UP INT
+  // algorithm type distinguisher
+  algo_distinguisher.resize(1);
+  algo_distinguisher[0] = ALGO_5G_DISTINGUISHER_UP_INT_ALG;
+
+  // algorithm type distinguisher
+  algorithm_identity.resize(1);
+  algorithm_identity[0] = static_cast<uint8_t>(int_alg_id);
+
+  // Derive UP int
+  if (kdf_common(FC_5G_ALGORITHM_KEY_DERIVATION, key, algo_distinguisher, algorithm_identity, k_up_int) != true) {
+    return false;
+  }
+  return true;
+}
+
+bool srsgnb::kdf_common(const uint8_t                  fc,
+                        const std::array<uint8_t, 32>& key,
+                        const std::vector<uint8_t>&    P0,
+                        const std::vector<uint8_t>&    P1,
+                        uint8_t*                       output)
+{
+  uint8_t* s;
+  uint32_t s_len = 1 + P0.size() + 2 + P1.size() + 2;
+
+  s = (uint8_t*)calloc(s_len, sizeof(uint8_t));
+
+  if (s == nullptr) {
+    return false;
+  }
+
+  uint32_t i = 0;
+  s[i]       = fc; // FC
+  i++;
+
+  // P0
+  memcpy(&s[i], P0.data(), P0.size());
+  i += P0.size();
+  uint16_t p0_length_value = htons(P0.size());
+  memcpy(&s[i], &p0_length_value, sizeof(p0_length_value));
+  i += sizeof(p0_length_value);
+
+  // P1
+  memcpy(&s[i], P1.data(), P1.size());
+  i += P1.size();
+  uint16_t p1_length_value = htons(P1.size());
+  memcpy(&s[i], &p1_length_value, sizeof(p1_length_value));
+  i += sizeof(p1_length_value);
+
+  sha256(key.data(), key.size(), s, i, output, 0);
+  free(s);
+
+  return true;
+}
 
 /******************************************************************************
  * Integrity Protection
