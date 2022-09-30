@@ -134,6 +134,12 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
                   optional<float>(),
                   {result.csi.rsrp_dB});
 
+  error_type<fapi::validator_report> validation_result = validate_crc_indication(msg);
+  if (!validation_result) {
+    log_validator_report(validation_result.error());
+    return;
+  }
+
   data_notifier.get().on_crc_indication(msg);
 }
 
@@ -150,6 +156,12 @@ void phy_to_fapi_results_event_translator::notify_rx_data_indication(const ul_pu
   unsigned                            handle = 0;
   const ul_pusch_results::pusch_data& data   = result.data.value();
   builder.add_custom_pdu(handle, data.rnti, optional<unsigned>(), data.harq_id, data.payload);
+
+  error_type<fapi::validator_report> validation_result = validate_rx_data_indication(msg);
+  if (!validation_result) {
+    log_validator_report(validation_result.error());
+    return;
+  }
 
   data_notifier.get().on_rx_data_indication(msg);
 }
