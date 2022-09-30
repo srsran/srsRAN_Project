@@ -16,7 +16,7 @@ using namespace srsgnb;
 
 void pdcp_traffic_sink::on_new_sdu(byte_buffer_slice_chain pdu)
 {
-  logger.info(pdu.begin(), pdu.end(), "Received PDU ({} B)", pdu.length());
+  logger.log_info(pdu.begin(), pdu.end(), "Received PDU ({} B)", pdu.length());
 }
 
 void pdcp_traffic_source::send_pdu()
@@ -36,5 +36,6 @@ void pdcp_traffic_source::send_pdu()
     payload++;
   }
 
+  logger.log_info(sdu.buf.begin(), sdu.buf.end(), "Sending SDU ({} B, COUNT={})", sdu.buf.length(), sdu.pdcp_count);
   rlc_tx_upper->handle_sdu(sdu);
 }

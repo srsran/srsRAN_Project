@@ -17,7 +17,7 @@ using namespace srsgnb;
 std::vector<byte_buffer_slice_chain> mac_dummy::run_tx_tti()
 {
   std::vector<byte_buffer_slice_chain> pdu_list;
-  logger.info("Generating list PDU for TTI. PDUs per TTI={}", args.nof_pdu_tti);
+  logger.log_info("Generating list PDU for TTI. PDUs per TTI={}", args.nof_pdu_tti);
   // Pull a number of RLC PDUs
   for (uint32_t i = 0; i < args.nof_pdu_tti; i++) {
     // Get MAC opportunity size (maximum size of the RLC PDU)
@@ -30,16 +30,16 @@ std::vector<byte_buffer_slice_chain> mac_dummy::run_tx_tti()
     // Request data to transmit
     if (bsr.load(std::memory_order_relaxed) > 0) {
       byte_buffer_slice_chain pdu = rlc_tx_lower->pull_pdu(opp_size);
-      logger.debug("Pulled PDU. PDU size={}, MAC opportunity={}, buffer_state={}",
-                   pdu.length(),
-                   opp_size,
-                   bsr.load(std::memory_order_relaxed));
+      logger.log_debug("Pulled PDU. PDU size={}, MAC opportunity={}, buffer_state={}",
+                       pdu.length(),
+                       opp_size,
+                       bsr.load(std::memory_order_relaxed));
       // Push PDU in the list
       if (pdu.length() > 0) {
         pdu_list.push_back(std::move(pdu));
       }
     } else {
-      logger.debug("Did not pull a PDU. No data to TX.");
+      logger.log_debug("Did not pull a PDU. No data to TX.");
     }
   }
   return pdu_list;
@@ -47,6 +47,7 @@ std::vector<byte_buffer_slice_chain> mac_dummy::run_tx_tti()
 
 void mac_dummy::run_rx_tti(std::vector<byte_buffer_slice_chain> pdu_list)
 {
+  logger.log_debug("Run RX TTI. Number of RX PDUs={}", pdu_list.size());
   auto pdu_it      = pdu_list.begin(); // PDU iterator
   bool skip_action = false;            // Avoid discarding a duplicated or duplicating a discarded
 
@@ -62,7 +63,7 @@ void mac_dummy::run_rx_tti(std::vector<byte_buffer_slice_chain> pdu_list)
         if (trimmed_len < pdu_len) {
           pdu_end = pdu_it->begin() + trimmed_len;
         }
-        logger.info("Cutting MAC PDU len ({} B -> {} B)", pdu_it->length(), pdu_len);
+        logger.log_info("Cutting MAC PDU len ({} B -> {} B)", pdu_it->length(), pdu_len);
       }
 
       // Write PDU copy in RX
@@ -71,7 +72,7 @@ void mac_dummy::run_rx_tti(std::vector<byte_buffer_slice_chain> pdu_list)
       // Write PCAP
       // TODO: write PCAP
     } else {
-      logger.info(pdu_it->begin(), pdu_it->end(), "Dropping RLC PDU ({} B)", pdu_it->length());
+      logger.log_info(pdu_it->begin(), pdu_it->end(), "Dropping RLC PDU ({} B)", pdu_it->length());
       skip_action = true; // Avoid drop duplicating this PDU
     }
 
@@ -80,7 +81,7 @@ void mac_dummy::run_rx_tti(std::vector<byte_buffer_slice_chain> pdu_list)
       pdu_it++;
       skip_action = false; // Allow action on the next PDU
     } else {
-      logger.info(pdu_it->begin(), pdu_it->end(), "Duplicating RLC PDU ({} B)", pdu_it->length());
+      logger.log_info(pdu_it->begin(), pdu_it->end(), "Duplicating RLC PDU ({} B)", pdu_it->length());
       skip_action = true; // Avoid drop of this PDU
     }
   }

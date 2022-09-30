@@ -11,6 +11,7 @@
 #pragma once
 
 #include "rlc_stress_test_args.h"
+#include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/rlc/rlc_tx.h"
 #include "srsgnb/srslog/srslog.h"
@@ -20,10 +21,10 @@ namespace srsgnb {
 
 class pdcp_traffic_sink : public rlc_rx_upper_layer_data_notifier
 {
-  srslog::basic_logger& logger;
+  bearer_logger logger;
 
 public:
-  pdcp_traffic_sink() : logger(srslog::fetch_basic_logger("PDCP_RX", false)) {}
+  pdcp_traffic_sink(uint32_t id) : logger("PDCP", id, lcid_t{}) {}
 
   // rlc_rx_upper_layer_data_notifier interface
   void on_new_sdu(byte_buffer_slice_chain pdu) final;
@@ -31,19 +32,21 @@ public:
 
 class pdcp_traffic_source : public rlc_tx_upper_layer_data_notifier, public rlc_tx_upper_layer_control_notifier
 {
-  stress_test_args& args;
-  uint32_t          pdcp_count = 0;
-  uint32_t          sdu_size   = 0;
-  uint8_t           payload    = 0x0; // increment for each SDU
+  const stress_test_args& args;
+  uint32_t                pdcp_count = 0;
+  uint32_t                sdu_size   = 0;
+  uint8_t                 payload    = 0x0; // increment for each SDU
 
   std::mt19937                    rgen;
   std::uniform_int_distribution<> int_dist;
 
   rlc_tx_upper_layer_data_interface* rlc_tx_upper = nullptr;
 
+  srsgnb::bearer_logger logger;
+
 public:
-  pdcp_traffic_source(stress_test_args& args) :
-    args(args), rgen(args.seed), int_dist(args.min_sdu_size, args.max_sdu_size)
+  explicit pdcp_traffic_source(const stress_test_args& args, uint32_t id) :
+    args(args), rgen(args.seed), int_dist(args.min_sdu_size, args.max_sdu_size), logger("PDCP", id, lcid_t{})
   {
   }
 

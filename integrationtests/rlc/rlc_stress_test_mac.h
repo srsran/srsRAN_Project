@@ -11,6 +11,7 @@
 #pragma once
 
 #include "rlc_stress_test_args.h"
+#include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/rlc/rlc_tx.h"
 #include "srsgnb/srslog/srslog.h"
@@ -19,8 +20,8 @@
 namespace srsgnb {
 class mac_dummy : public rlc_tx_lower_layer_notifier
 {
-  stress_test_args&     args;
-  srslog::basic_logger& logger;
+  stress_test_args& args;
+  bearer_logger     logger;
 
   std::mt19937                          rgen;
   std::uniform_real_distribution<float> real_dist;
@@ -31,8 +32,7 @@ class mac_dummy : public rlc_tx_lower_layer_notifier
   rlc_rx_lower_layer_interface* rlc_rx_lower = nullptr;
 
 public:
-  mac_dummy(stress_test_args& args) :
-    args(args), logger(srslog::fetch_basic_logger("MAC", false)), rgen(args.seed), bsr(0){};
+  mac_dummy(stress_test_args& args, uint32_t id) : args(args), logger("MAC", id, lcid_t{}), rgen(args.seed), bsr(0) {}
 
   std::vector<byte_buffer_slice_chain> run_tx_tti();
   void                                 run_rx_tti(std::vector<byte_buffer_slice_chain> pdu_list);

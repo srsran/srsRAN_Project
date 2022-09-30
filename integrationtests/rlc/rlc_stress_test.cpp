@@ -11,6 +11,7 @@
  */
 
 #include "rlc_stress_test.h"
+#include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/rlc/rlc_factory.h"
 #include <random>
 #include <unistd.h>
@@ -20,18 +21,21 @@ using namespace srsgnb;
 class stress_stack
 {
 public:
-  stress_stack(stress_test_args args, timer_manager& timers_) : timers(timers_)
+  stress_stack(stress_test_args args, uint32_t id, timer_manager& timers_) :
+    stack_id(id), timers(timers_), logger("STACK", id, lcid_t{})
   {
     // MAC
-    mac = std::make_unique<mac_dummy>(args);
+    mac = std::make_unique<mac_dummy>(args, id);
 
     // PDCP
-    traffic_sink   = std::make_unique<pdcp_traffic_sink>();
-    traffic_source = std::make_unique<pdcp_traffic_source>(args);
+    traffic_sink   = std::make_unique<pdcp_traffic_sink>(id);
+    traffic_source = std::make_unique<pdcp_traffic_source>(args, id);
 
     // RLC
     rlc_config                  cnfg = get_rlc_config_from_args(args);
     rlc_entity_creation_message msg  = {};
+    msg.ue_index                     = static_cast<du_ue_index_t>(stack_id);
+    msg.lcid                         = lcid_t{};
     msg.rx_upper_dn                  = traffic_sink.get();
     msg.tx_upper_cn                  = traffic_source.get();
     msg.tx_upper_dn                  = traffic_source.get();
@@ -53,6 +57,9 @@ public:
 
 public:
   // TODO MAC, RLC and PDCP should be private
+  // Stack ID for logging
+  uint16_t stack_id;
+
   // MAC
   std::unique_ptr<mac_dummy> mac = nullptr;
 
@@ -65,6 +72,8 @@ public:
 
   // Timers
   timer_manager& timers;
+
+  srsgnb::bearer_logger logger;
 };
 
 void stress_test(stress_test_args args)
@@ -84,6 +93,10 @@ void stress_test(stress_test_args args)
   log_stack.set_level(args.log_level);
   log_stack.set_hex_dump_max_size(args.log_hex_limit);
 
+  auto& log_pdcp = srslog::fetch_basic_logger("PDCP", false);
+  log_pdcp.set_level(args.log_level);
+  log_pdcp.set_hex_dump_max_size(args.log_hex_limit);
+
   auto& log_rlc = srslog::fetch_basic_logger("RLC", false);
   log_rlc.set_level(args.log_level);
   log_rlc.set_hex_dump_max_size(args.log_hex_limit);
@@ -97,8 +110,8 @@ void stress_test(stress_test_args args)
   timer_manager timers;
 
   // Create the UE/gNB emulators
-  stress_stack ue_emulator(args, timers);
-  stress_stack gnb_emulator(args, timers);
+  stress_stack ue_emulator(args, 0, timers);
+  stress_stack gnb_emulator(args, 1, timers);
 
   // Launch transmission
   // Fixme: create worker thread and executer
