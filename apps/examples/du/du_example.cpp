@@ -159,6 +159,7 @@ static const double              tx_gain                    = 60.0;
 static const double              rx_gain                    = 70.0;
 static const unsigned            max_processing_delay_slots = 4;
 static const unsigned            ul_to_dl_subframe_offset   = 1;
+static const phy_time_unit       time_advance_calibration   = phy_time_unit::from_seconds(0.0);
 static const lower_phy_ta_offset ta_offset                  = lower_phy_ta_offset::n0;
 static const cyclic_prefix       cp                         = cyclic_prefix::NORMAL;
 static unsigned                  dl_arfcn                   = 536020;
@@ -181,8 +182,7 @@ static radio_configuration::clock_sources        clock_src                   = {
 static std::string                               log_level                   = "info";
 static radio_configuration::over_the_wire_format otw_format = radio_configuration::over_the_wire_format::DEFAULT;
 static std::string                               device_arguments;
-static std::atomic<bool>                         is_running               = {true};
-static phy_time_unit                             time_advance_calibration = phy_time_unit::from_seconds(0.0);
+static std::atomic<bool>                         is_running = {true};
 // NOTE: ul_center_freq, dl_center_freq and ul_arfcn are derived from dl_arfcn.
 static float    dl_center_freq;
 static float    ul_center_freq;
@@ -212,8 +212,6 @@ static const std::vector<configuration_profile> profiles = {
        pci              = 69;
        coreset0_index   = 9;
        otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
-       // TODO: Investigate the reason to compensate for a 16 sample delay to align the signal a the slot boundary.
-       time_advance_calibration = phy_time_unit::from_seconds(-(1 / srate.to_Hz()) * 16);
        // Prepare ZMQ addresses using TCP. Transmitter ports start at 5000+channel_id while receivers connect to
        // 6000+channel_id.
        unsigned port_base   = 5000;

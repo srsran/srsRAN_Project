@@ -30,6 +30,8 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
   // Compute least-square estimates and store in them in temp_symbols.
   for (unsigned i_layer = 0; i_layer != cfg.nof_tx_layers; ++i_layer) {
     srsvec::prod_conj(temp_symbols.get_slice(i_layer), symbols.get_slice(i_layer), temp_symbols.get_slice(i_layer));
+    // TODO: Set the noise variance to a fixed value until it is properly calculated.
+    estimate.set_noise_variance(1e-5F, port, i_layer);
   }
 
   // Interpolate.

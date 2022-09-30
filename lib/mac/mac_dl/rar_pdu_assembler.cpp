@@ -47,7 +47,7 @@ void rar_pdu_encoder::encode(span<uint8_t> output_buf)
   for (unsigned i = 0; i != rar_info.grants.size(); ++i) {
     encode_rar_subpdu(rar_info.grants[i], i == rar_info.grants.size() - 1);
   }
-  srsgnb_sanity_check(ptr == output_buf.data() + output_buf.size(), "Encoded RAR PDU length differs from expected");
+  srsgnb_sanity_check(ptr <= output_buf.data() + output_buf.size(), "Encoded RAR PDU length differs from expected");
 }
 
 void rar_pdu_encoder::encode_rar_subpdu(const rar_ul_grant& grant, bool is_last_subpdu)
