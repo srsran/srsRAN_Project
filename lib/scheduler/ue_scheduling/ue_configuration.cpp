@@ -169,14 +169,5 @@ ue_cell_configuration::get_pdsch_time_domain_list(search_space_id ss_id) const
 void ue_cell_configuration::update_ul_config(const serving_cell_ue_configuration_request& cell_cfg_ded_req)
 {
   // Copy the configuration to the current object.
-  if (cell_cfg_ded_req.ul_config.has_value()) {
-    if (not ul_config.has_value()) {
-      ul_config.emplace();
-    }
-    ul_config.value() = cell_cfg_ded_req.ul_config.value();
-  }
-  // If the configuration does not contain any ul_config, then remove the config.
-  else {
-    ul_config.reset();
-  }
+  ul_config = cell_cfg_ded_req.ul_config;
 }

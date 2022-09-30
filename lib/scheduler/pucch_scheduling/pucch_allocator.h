@@ -18,10 +18,10 @@
 namespace srsgnb {
 
 /// PUCCH scheduling interface.
-class pucch_scheduler
+class pucch_allocator
 {
 public:
-  virtual ~pucch_scheduler() = default;
+  virtual ~pucch_allocator() = default;
 
   /// Allocate the PUCCH resource for HARQ-ACK for a given UE.
   /// \param[out] pucch_res_indicator PUCCH resource indicator field for DCI 1_0 and 1_1.
@@ -32,13 +32,13 @@ public:
   /// \param[in] ue object that contain the PUCCH resource and Logical Channel configuration.
   /// \param[in] user UE configuration for the provided cell.
   /// \return[in] Allocated PUCCH pointer, if successful. Else it returns \c nullptr.
-  virtual ul_pucch_info* alloc_pucch_harq_ack_ue(unsigned&                    pucch_res_indicator,
-                                                 unsigned&                    harq_feedback_timing_indicator,
-                                                 cell_resource_allocator&     slot_alloc,
-                                                 const pdcch_dl_information&  dci_info,
-                                                 rnti_t                       rnti,
-                                                 const ue&                    ue,
-                                                 const ue_cell_configuration& user) = 0;
+  virtual pucch_info* alloc_pucch_harq_ack_ue(unsigned&                    pucch_res_indicator,
+                                              unsigned&                    harq_feedback_timing_indicator,
+                                              cell_resource_allocator&     slot_alloc,
+                                              const pdcch_dl_information&  dci_info,
+                                              rnti_t                       rnti,
+                                              const ue&                    ue,
+                                              const ue_cell_configuration& user) = 0;
 };
 
 } // namespace srsgnb

@@ -317,7 +317,7 @@ struct prach_occasion_info {
 };
 
 /// Info about PUCCH used resource.
-struct ul_pucch_info {
+struct pucch_info {
   rnti_t                   crnti;
   const bwp_configuration* bwp_cfg;
   pucch_format             format;
@@ -338,7 +338,7 @@ struct ul_sched_result {
   /// PRACH occasions within the given slot.
   static_vector<prach_occasion_info, MAX_NOF_PRACHS_PER_SLOT> prachs;
   /// PUCCH grants allocated in the current slot.
-  static_vector<ul_pucch_info, MAX_GRANTS> pucchs;
+  static_vector<pucch_info, MAX_GRANTS> pucchs;
 };
 
 /// Scheduler decision made for DL and UL in a given slot.

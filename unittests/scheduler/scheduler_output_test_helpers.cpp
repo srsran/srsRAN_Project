@@ -159,5 +159,29 @@ std::vector<test_grant_info> srsgnb::get_ul_grants(const cell_configuration& cel
     grants.back().grant = grant_info{pusch.pusch_cfg.bwp_cfg->scs, pusch.pusch_cfg.symbols, crbs};
   }
 
+  // Fill PUCCHs.
+  for (const pucch_info& pucch : ul_res.pucchs) {
+    const bwp_configuration& bwp_cfg = *pucch.bwp_cfg;
+    grants.emplace_back();
+    grants.back().type = test_grant_info::PUCCH;
+    grants.back().rnti = INVALID_RNTI;
+    if (pucch.resources.intra_slot_freq_hop) {
+      ofdm_symbol_range first_hop_symbols{pucch.resources.symbols.start(),
+                                          pucch.resources.symbols.start() + pucch.resources.symbols.length() / 2};
+      ofdm_symbol_range second_hop_symbols{pucch.resources.symbols.start() + pucch.resources.symbols.length() / 2,
+                                           pucch.resources.symbols.stop()};
+
+      unsigned crb_first_hop = prb_to_crb(bwp_cfg, pucch.resources.prbs.start());
+      grants.back().grant = grant_info{bwp_cfg.scs, first_hop_symbols, crb_interval{crb_first_hop, crb_first_hop + 1}};
+      unsigned crb_second_hop = prb_to_crb(bwp_cfg, pucch.resources.prbs.stop());
+      grants.back().grant =
+          grant_info{bwp_cfg.scs, second_hop_symbols, crb_interval{crb_second_hop, crb_second_hop + 1}};
+    } else {
+      unsigned crb_first_hop = prb_to_crb(bwp_cfg, pucch.resources.prbs.start());
+      grants.back().grant =
+          grant_info{bwp_cfg.scs, pucch.resources.symbols, crb_interval{crb_first_hop, crb_first_hop + 1}};
+    }
+  }
+
   return grants;
 }

@@ -12,18 +12,18 @@
 
 #include "../cell/resource_grid.h"
 #include "../ue_scheduling/ue_configuration.h"
-#include "pucch_scheduler.h"
+#include "pucch_allocator.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
 
 namespace srsgnb {
 
 /// Implementation of the PUCCH scheduler interface.
-class pucch_scheduler_impl final : public pucch_scheduler
+class pucch_allocator_impl final : public pucch_allocator
 {
 public:
-  explicit pucch_scheduler_impl(const cell_configuration& cell_cfg_);
+  explicit pucch_allocator_impl(const cell_configuration& cell_cfg_);
 
-  ~pucch_scheduler_impl() override;
+  ~pucch_allocator_impl() override;
 
   /// Allocate the PUCCH resource for HARQ-ACK for a given UE.
   /// \param[out] pucch_res_indicator PUCCH resource indicator field for DCI 1_0 and 1_1.
@@ -34,13 +34,13 @@ public:
   /// \param[in] ue object that contain the PUCCH resource and Logical Channel configuration.
   /// \param[in] user UE configuration for the provided cell.
   /// \return[in] Allocated PUCCH pointer, if successful. Else, it returns \c nullptr.
-  ul_pucch_info* alloc_pucch_harq_ack_ue(unsigned&                    pucch_res_indicator,
-                                         unsigned&                    harq_feedback_timing_indicator,
-                                         cell_resource_allocator&     slot_alloc,
-                                         const pdcch_dl_information&  dci_info,
-                                         rnti_t                       rnti,
-                                         const ue&                    ue,
-                                         const ue_cell_configuration& user) override;
+  pucch_info* alloc_pucch_harq_ack_ue(unsigned&                    pucch_res_indicator,
+                                      unsigned&                    harq_feedback_timing_indicator,
+                                      cell_resource_allocator&     slot_alloc,
+                                      const pdcch_dl_information&  dci_info,
+                                      rnti_t                       rnti,
+                                      const ue&                    ue,
+                                      const ue_cell_configuration& user) override;
 
 private:
   // Structs with the info about the PUCCH resources.
@@ -62,7 +62,7 @@ private:
                                                   const dci_dl_context_information& dci_info);
 
   // Fills the output of the PUCCH scheduler.
-  void fill_pucch_res_output(ul_pucch_info&               pucch_info,
+  void fill_pucch_res_output(pucch_info&                  pucch_info,
                              rnti_t                       rnti,
                              pucch_res_alloc_cfg          pucch_res,
                              const ue_cell_configuration& ue_cell_cfg);

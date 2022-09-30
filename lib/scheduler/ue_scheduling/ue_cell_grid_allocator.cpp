@@ -20,7 +20,7 @@ ue_cell_grid_allocator::ue_cell_grid_allocator(ue_list& ues_, srslog::basic_logg
 
 void ue_cell_grid_allocator::add_cell(du_cell_index_t          cell_index,
                                       pdcch_scheduler&         pdcch_sched,
-                                      pucch_scheduler&         pucch_sched,
+                                      pucch_allocator&         pucch_sched,
                                       cell_resource_allocator& cell_alloc)
 {
   cells.emplace(cell_index, cell_t{cell_index, &pdcch_sched, &pucch_sched, &cell_alloc});
@@ -81,16 +81,16 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   }
 
   // Allocate PUCCH.
-  unsigned       pucch_res_indicator;
-  unsigned       harq_feedback_timing_indicator;
-  ul_pucch_info* pucch = get_pucch_sched(grant.cell_index)
-                             .alloc_pucch_harq_ack_ue(pucch_res_indicator,
-                                                      harq_feedback_timing_indicator,
-                                                      get_res_alloc(grant.cell_index),
-                                                      *pdcch,
-                                                      u.crnti,
-                                                      u,
-                                                      ue_cell_cfg);
+  unsigned    pucch_res_indicator;
+  unsigned    harq_feedback_timing_indicator;
+  pucch_info* pucch = get_pucch_sched(grant.cell_index)
+                          .alloc_pucch_harq_ack_ue(pucch_res_indicator,
+                                                   harq_feedback_timing_indicator,
+                                                   get_res_alloc(grant.cell_index),
+                                                   *pdcch,
+                                                   u.crnti,
+                                                   u,
+                                                   ue_cell_cfg);
   if (pucch == nullptr) {
     logger.warning("Failed to allocate PDSCH. Cause: No space in PUCCH.");
     // TODO: remove PDCCH allocation.

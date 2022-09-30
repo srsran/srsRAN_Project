@@ -72,4 +72,10 @@ void test_scheduler_result_consistency(const cell_configuration& cell_cfg, const
 void test_scheduler_result_consistency(const cell_configuration&      cell_cfg,
                                        const cell_resource_allocator& cell_res_grid);
 
+/// \brief Verifies that the cell resource grid PRBs and symbols was filled with the allocated PUCCHs.
+// TODO: Replace this function with a more thorough check.
+bool assert_ul_resource_grid_filled(const cell_configuration&      cell_cfg,
+                                    const cell_resource_allocator& cell_res_grid,
+                                    unsigned                       tx_delay);
+
 } // namespace srsgnb

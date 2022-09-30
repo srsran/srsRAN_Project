@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../pucch_scheduling/pucch_scheduler.h"
+#include "../pucch_scheduling/pucch_allocator.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include "ue.h" // TEMP
 
@@ -22,7 +22,7 @@ struct cell_resource_allocator;
 struct ue_scheduler_cell_params {
   du_cell_index_t          cell_index;
   pdcch_scheduler*         pdcch_sched;
-  pucch_scheduler*         pucch_sched;
+  pucch_allocator*         pucch_sched;
   cell_resource_allocator* cell_res_alloc;
 };
 

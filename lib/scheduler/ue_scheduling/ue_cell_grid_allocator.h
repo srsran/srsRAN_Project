@@ -12,7 +12,7 @@
 #include "../cell/resource_grid.h"
 #include "../pdcch_scheduling/pdcch_scheduler.h"
 #include "../policy/ue_allocator.h"
-#include "../pucch_scheduling/pucch_scheduler.h"
+#include "../pucch_scheduling/pucch_allocator.h"
 
 namespace srsgnb {
 
@@ -26,7 +26,7 @@ public:
   /// Adds a new cell to the UE allocator.
   void add_cell(du_cell_index_t          cell_index,
                 pdcch_scheduler&         pdcch_sched,
-                pucch_scheduler&         pucch_sched,
+                pucch_allocator&         pucch_sched,
                 cell_resource_allocator& cell_alloc);
 
   size_t nof_cells() const { return cells.size(); }
@@ -49,7 +49,7 @@ private:
   struct cell_t {
     du_cell_index_t          cell_index;
     pdcch_scheduler*         pdcch_sched;
-    pucch_scheduler*         pucch_sched;
+    pucch_allocator*         pucch_sched;
     cell_resource_allocator* cell_alloc;
   };
 
@@ -57,7 +57,7 @@ private:
 
   pdcch_scheduler& get_pdcch_sched(du_cell_index_t cell_index) { return *cells[cell_index].pdcch_sched; }
 
-  pucch_scheduler& get_pucch_sched(du_cell_index_t cell_index) { return *cells[cell_index].pucch_sched; }
+  pucch_allocator& get_pucch_sched(du_cell_index_t cell_index) { return *cells[cell_index].pucch_sched; }
 
   cell_resource_allocator&       get_res_alloc(du_cell_index_t cell_index) { return *cells[cell_index].cell_alloc; }
   const cell_resource_allocator& get_res_alloc(du_cell_index_t cell_index) const

@@ -8,18 +8,18 @@
  *
  */
 
-#include "pucch_scheduler_impl.h"
+#include "pucch_allocator_impl.h"
 #include "../support/pucch/pucch_default_resource.h"
 
-namespace srsgnb {
+using namespace srsgnb;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-pucch_scheduler_impl::pucch_scheduler_impl(const cell_configuration& cell_cfg_) : cell_cfg(cell_cfg_) {}
+pucch_allocator_impl::pucch_allocator_impl(const cell_configuration& cell_cfg_) : cell_cfg(cell_cfg_) {}
 
-pucch_scheduler_impl::~pucch_scheduler_impl() = default;
+pucch_allocator_impl::~pucch_allocator_impl() = default;
 
-const unsigned pucch_scheduler_impl::get_pdsch_k0() const
+const unsigned pucch_allocator_impl::get_pdsch_k0() const
 {
   static const unsigned      pdsch_time_res_index = 0;
   const pdsch_config_common& pdsch_cfg            = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common;
@@ -27,8 +27,8 @@ const unsigned pucch_scheduler_impl::get_pdsch_k0() const
   return pdsch_cfg.pdsch_td_alloc_list[pdsch_time_res_index].k0;
 }
 
-pucch_scheduler_impl::pucch_res_alloc_cfg
-pucch_scheduler_impl::alloc_pucch_common_res_harq(unsigned&                         pucch_res_indicator,
+pucch_allocator_impl::pucch_res_alloc_cfg
+pucch_allocator_impl::alloc_pucch_common_res_harq(unsigned&                         pucch_res_indicator,
                                                   cell_slot_resource_allocator&     pucch_alloc,
                                                   const dci_dl_context_information& dci_info)
 {
@@ -72,7 +72,8 @@ pucch_scheduler_impl::alloc_pucch_common_res_harq(unsigned&                     
         init_ul_bwp_param.scs, second_hop_symbols, crb_interval{crb_second_hop, crb_second_hop + 1}};
 
     // Compute CS index as per Section 9.2.1, TS 38.213.
-    size_t cs_idx = static_cast<size_t>(r_pucch - 8) % pucch_res.cs_indexes.size();
+    size_t cs_idx = r_pucch < 8 ? static_cast<size_t>(r_pucch) % pucch_res.cs_indexes.size()
+                                : static_cast<size_t>(r_pucch - 8) % pucch_res.cs_indexes.size();
     srsgnb_assert(cs_idx < pucch_res.cs_indexes.size(), "CS index exceeds static vector size");
     uint8_t cyclic_shift = pucch_res.cs_indexes[cs_idx];
 
@@ -108,7 +109,7 @@ static bool has_ded_pucch_resource_cfg(const ue_cell_configuration& ue_cell_cfg)
   return false;
 }
 
-void pucch_scheduler_impl::fill_pucch_res_output(ul_pucch_info&               pucch_info,
+void pucch_allocator_impl::fill_pucch_res_output(pucch_info&                  pucch_info,
                                                  rnti_t                       rnti,
                                                  pucch_res_alloc_cfg          pucch_res,
                                                  const ue_cell_configuration& ue_cell_cfg)
@@ -162,13 +163,13 @@ void pucch_scheduler_impl::fill_pucch_res_output(ul_pucch_info&               pu
   }
 }
 
-ul_pucch_info* pucch_scheduler_impl::alloc_pucch_harq_ack_ue(unsigned&                   pucch_res_indicator,
-                                                             unsigned&                   harq_feedback_timing_indicator,
-                                                             cell_resource_allocator&    slot_alloc,
-                                                             const pdcch_dl_information& dci_info,
-                                                             rnti_t                      rnti,
-                                                             const ue&                   ue,
-                                                             const ue_cell_configuration& ue_cell_cfg)
+pucch_info* pucch_allocator_impl::alloc_pucch_harq_ack_ue(unsigned&                    pucch_res_indicator,
+                                                          unsigned&                    harq_feedback_timing_indicator,
+                                                          cell_resource_allocator&     slot_alloc,
+                                                          const pdcch_dl_information&  dci_info,
+                                                          rnti_t                       rnti,
+                                                          const ue&                    ue,
+                                                          const ue_cell_configuration& ue_cell_cfg)
 {
   // Get resource allocator for SLOT k0+k1.
   // TODO: extend scheduler for k1 different from 4 slots.
@@ -197,14 +198,13 @@ ul_pucch_info* pucch_scheduler_impl::alloc_pucch_harq_ack_ue(unsigned&          
 
   // Fill scheduler output.
   pucch_slot_alloc.result.ul.pucchs.emplace_back();
-  ul_pucch_info& pucch_info = pucch_slot_alloc.result.ul.pucchs.back();
+  pucch_info& pucch_info = pucch_slot_alloc.result.ul.pucchs.back();
   fill_pucch_res_output(pucch_info, rnti, pucch_res, ue_cell_cfg);
 
-  // NOTE: HARQ feedback is encoded for DCI 1_0.
+  // NOTE: HARQ feedback is encoded for DCI 1_0. As per TS 38.213, Section 9.2.3, the harq_feedback_timing_indicator
+  // maps to {1, 2, 3, 4, 5, 6, 7, 8}.
   // TODO: extend the HARQ feedback indicator to DCI format 1_1.
-  harq_feedback_timing_indicator = k1;
+  harq_feedback_timing_indicator = k1 - 1;
 
   return &pucch_info;
 }
-
-} // namespace srsgnb

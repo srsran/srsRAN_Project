@@ -15,8 +15,10 @@
 
 namespace srsgnb {
 
+/// Parameters of a grant allocation in the cell resource grid.
+
 struct test_grant_info {
-  enum type_t { SSB, DL_PDCCH, UL_PDCCH, SIB, RAR, UE_DL, UE_UL, PRACH } type;
+  enum type_t { SSB, DL_PDCCH, UL_PDCCH, SIB, RAR, UE_DL, UE_UL, PUCCH, PRACH } type;
   rnti_t     rnti;
   grant_info grant;
 };

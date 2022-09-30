@@ -11,7 +11,6 @@
 #include "scheduler_test_suite.h"
 #include "lib/scheduler/cell/resource_grid.h"
 #include "lib/scheduler/common_scheduling/ra_scheduler.h"
-#include "lib/scheduler/support/bwp_helpers.h"
 #include "lib/scheduler/support/config_helpers.h"
 #include "scheduler_output_test_helpers.h"
 #include "srsgnb/ran/prach/prach_configuration.h"
@@ -256,6 +255,22 @@ void assert_dl_resource_grid_filled(const cell_configuration& cell_cfg, const ce
                  test_grant.rnti);
     }
   }
+}
+
+/// \brief Verifies that the cell resource grid PRBs and symbols was filled with the allocated PUCCHs.
+bool srsgnb::assert_ul_resource_grid_filled(const cell_configuration&      cell_cfg,
+                                            const cell_resource_allocator& cell_res_grid,
+                                            unsigned                       tx_delay)
+{
+  std::vector<test_grant_info> ul_grants = get_ul_grants(cell_cfg, cell_res_grid[tx_delay].result.ul);
+  for (const test_grant_info& test_grant : ul_grants) {
+    if (test_grant.type == srsgnb::test_grant_info::UE_UL || test_grant.type == srsgnb::test_grant_info::PUCCH) {
+      if (cell_res_grid[tx_delay].ul_res_grid.all_set(test_grant.grant)) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 void srsgnb::test_scheduler_result_consistency(const cell_configuration&      cell_cfg,
