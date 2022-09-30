@@ -297,6 +297,10 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
         // Remove only allocated Msg3 grants
         std::copy(rar_req.tc_rntis.begin() + nof_allocs, rar_req.tc_rntis.end(), rar_req.tc_rntis.begin());
         size_t new_pending_msg3s = rar_req.tc_rntis.size() > nof_allocs ? rar_req.tc_rntis.size() - nof_allocs : 0;
+        if (new_pending_msg3s > prach_constants::MAX_NUM_PREAMBLES) {
+          // Note: This check must be added to avoid compilation issue in gcc9.4.0. Potentially a false alarm.
+          __builtin_unreachable();
+        }
         rar_req.tc_rntis.resize(new_pending_msg3s);
         break;
       }
