@@ -121,6 +121,7 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
   // CB CRC status is not supported for now.
   unsigned                            num_cb = 0;
   const ul_pusch_results::pusch_data& data   = result.data.value();
+  // :TODO: fill the power parameters when they are valid.
   builder.add_pdu(handle,
                   data.rnti,
                   optional<uint8_t>(),
@@ -128,11 +129,11 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
                   data.decoder_result.tb_crc_ok,
                   num_cb,
                   {},
-                  {result.csi.sinr_dB},
-                  optional<unsigned>(),
+                  {},
+                  {},
                   optional<int>(result.csi.time_alignment.to_seconds() * 1e9),
-                  optional<float>(),
-                  {result.csi.rsrp_dB});
+                  {},
+                  {});
 
   error_type<fapi::validator_report> validation_result = validate_crc_indication(msg);
   if (!validation_result) {

@@ -490,6 +490,7 @@ static std::unique_ptr<phy_fapi_adaptor> build_phy_fapi_adaptor(downlink_process
 
   phy_fapi_adaptor_factory_config phy_fapi_config;
   phy_fapi_config.sector_id   = sector_id;
+  phy_fapi_config.scs         = scs;
   phy_fapi_config.scs_common  = scs_common;
   phy_fapi_config.prach_cfg   = generate_prach_config_tlv();
   phy_fapi_config.carrier_cfg = generate_carrier_config_tlv();

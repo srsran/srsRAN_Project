@@ -162,7 +162,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&   p
                                                      uint16_t                  sfn,
                                                      uint16_t                  slot)
 {
-  proc_pdu.slot         = slot_point(static_cast<uint32_t>(fapi_pdu.scs), sfn, slot);
+  proc_pdu.slot         = slot_point(fapi_pdu.scs, sfn, slot);
   proc_pdu.rnti         = fapi_pdu.rnti;
   proc_pdu.bwp_size_rb  = fapi_pdu.bwp_size;
   proc_pdu.bwp_start_rb = fapi_pdu.bwp_start;

@@ -20,8 +20,10 @@ struct uplink_slot_pdu_entry {
   /// Labels for the supported PDU types.
   enum class pdu_type { PUSCH, PUCCH };
 
+  /// PDU type.
   pdu_type type;
   // :TODO: convert this to variant.
+  /// PUSCH PDU.
   uplink_processor::pusch_pdu pusch;
   // :TOOD: add the PUCCH PDU.
 };
@@ -33,7 +35,6 @@ struct uplink_slot_pdu_entry {
 class uplink_slot_pdu_repository
 {
   /// \brief Maximum number of PDUs per slot.
-  /// \note Worst case is 65535.
   // :TODO: Use the RAN constants here when the PR is merged.
   static constexpr unsigned MAX_NUM_PDUS = 1024;
 

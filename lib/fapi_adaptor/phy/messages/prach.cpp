@@ -48,7 +48,7 @@ void srsgnb::fapi_adaptor::convert_prach_fapi_to_phy(prach_buffer_context&      
   srsgnb_assert(fapi_pdu.index_fd_ra == 0, "Only one FD occasion supported.");
   srsgnb_assert(fapi_pdu.num_prach_ocas == 1, "Only one PRACH occasion supported.");
 
-  context.slot                 = slot_point(to_numerology_value(prach_cfg.prach_ul_bwp_pusch_scs), sfn, slot);
+  context.slot                 = slot_point(prach_cfg.prach_ul_bwp_pusch_scs, sfn, slot);
   context.sector               = sector_id;
   context.format               = convert_fapi_format_to_phy(fapi_pdu.prach_format);
   context.start_symbol         = fapi_pdu.prach_start_symbol;

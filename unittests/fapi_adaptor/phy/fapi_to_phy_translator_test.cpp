@@ -69,6 +69,7 @@ protected:
   fapi::prach_config             prach_cfg;
   fapi::carrier_config           carrier_cfg;
   fapi_to_phy_translator_config  config = {sector_id,
+                                           subcarrier_spacing::kHz15,
                                            &dl_processor_pool,
                                            &rg_pool,
                                            &ul_request_processor,

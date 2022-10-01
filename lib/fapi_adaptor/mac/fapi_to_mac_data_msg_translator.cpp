@@ -59,7 +59,7 @@ void fapi_to_mac_data_msg_translator::on_rx_data_indication(const fapi::rx_data_
 {
   mac_rx_data_indication indication;
 
-  indication.sl_rx      = slot_point(to_numerology_value(scs), msg.sfn, msg.slot);
+  indication.sl_rx      = slot_point(scs, msg.sfn, msg.slot);
   indication.cell_index = to_du_cell_index(0);
   for (const auto& fapi_pdu : msg.pdus) {
     indication.pdus.emplace_back();
@@ -75,7 +75,7 @@ void fapi_to_mac_data_msg_translator::on_rx_data_indication(const fapi::rx_data_
 void fapi_to_mac_data_msg_translator::on_crc_indication(const fapi::crc_indication_message& msg)
 {
   mac_crc_indication_message indication;
-  indication.sl_rx = slot_point(to_numerology_value(scs), msg.sfn, msg.slot);
+  indication.sl_rx = slot_point(scs, msg.sfn, msg.slot);
 
   for (const auto& fapi_pdu : msg.pdus) {
     indication.crcs.emplace_back();
@@ -114,7 +114,7 @@ static float to_snr_dB(int fapi_snr)
 void fapi_to_mac_data_msg_translator::on_rach_indication(const fapi::rach_indication_message& msg)
 {
   mac_rach_indication indication;
-  indication.slot_rx = slot_point(to_numerology_value(scs), msg.sfn, msg.slot);
+  indication.slot_rx = slot_point(scs, msg.sfn, msg.slot);
   for (const auto& pdu : msg.pdus) {
     srsgnb_assert(pdu.avg_rssi != std::numeric_limits<uint16_t>::max(), "Average RSSI field not set");
 

@@ -148,7 +148,7 @@ void srsgnb::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t&   proc_
   srsgnb_assert(fapi_pdu.ssb_maintenance_v3.scs != subcarrier_spacing::kHz60,
                 "Invalid value for SSB subcarrier spacing");
 
-  proc_pdu.slot              = slot_point(static_cast<uint32_t>(fapi_pdu.ssb_maintenance_v3.scs), sfn, slot);
+  proc_pdu.slot              = slot_point(fapi_pdu.ssb_maintenance_v3.scs, sfn, slot);
   proc_pdu.phys_cell_id      = fapi_pdu.phys_cell_id;
   proc_pdu.beta_pss          = convert_to_beta_pss(fapi_pdu);
   proc_pdu.ssb_idx           = fapi_pdu.ssb_block_index;

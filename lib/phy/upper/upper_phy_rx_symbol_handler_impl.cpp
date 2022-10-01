@@ -88,7 +88,7 @@ void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pus
     return;
   }
 
-  std::vector<uint8_t>& payload = payload_pool.adquire_payload_buffer();
+  std::vector<uint8_t>& payload = payload_pool.acquire_payload_buffer();
   payload.resize(pdu.tb_size);
 
   ul_processor.process_pusch(payload, *buffer, grid, pdu);

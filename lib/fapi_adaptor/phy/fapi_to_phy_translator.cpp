@@ -123,7 +123,7 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
 
   std::lock_guard<std::mutex> lock(mutex);
 
-  resource_grid_context rg_context;
+  bool request_uplink_slot = false;
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
       case fapi::ul_pdu_type::PRACH: {
@@ -133,17 +133,15 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
         break;
       }
       case fapi::ul_pdu_type::PUCCH:
+        request_uplink_slot |= true;
         break;
       case fapi::ul_pdu_type::PUSCH: {
-        slot_point slot = slot_point(to_numerology_value(pdu.pusch_pdu.scs), msg.sfn, msg.slot);
-        if (!rg_context.slot.valid()) {
-          rg_context.slot   = slot;
-          rg_context.sector = sector_id;
-        }
         uplink_processor::pusch_pdu ul_pdu;
         convert_pusch_fapi_to_phy(ul_pdu, pdu.pusch_pdu, msg.sfn, msg.slot);
         // Add the PDU to the repo for later processing.
+        slot_point slot(scs, msg.sfn, msg.slot);
         ul_pdu_repository.add_pusch_pdu(slot, ul_pdu);
+        request_uplink_slot |= true;
         break;
       }
       case fapi::ul_pdu_type::SRS:
@@ -153,7 +151,10 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   }
 
   // Notify to capture uplink slot.
-  if (rg_context.slot.valid()) {
+  if (request_uplink_slot) {
+    resource_grid_context rg_context;
+    rg_context.slot   = slot_point(scs, msg.sfn, msg.slot);
+    rg_context.sector = sector_id;
     // Get ul_resource_grid.
     resource_grid& ul_rg = ul_rg_pool.get_resource_grid(rg_context);
     // Note: this won't work for multiple UL_TTI.request messages in the same slot.

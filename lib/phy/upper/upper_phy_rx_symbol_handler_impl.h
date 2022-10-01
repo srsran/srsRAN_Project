@@ -31,7 +31,7 @@ class payload_buffer_pool
 
 public:
   /// Returns the next available buffer from the pool.
-  std::vector<uint8_t>& adquire_payload_buffer()
+  std::vector<uint8_t>& acquire_payload_buffer()
   {
     unsigned i = index++ % MAX_NUM_PAYLOAD;
     return pool[i];

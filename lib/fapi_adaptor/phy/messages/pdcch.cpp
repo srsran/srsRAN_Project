@@ -104,7 +104,7 @@ void srsgnb::fapi_adaptor::convert_pdcch_fapi_to_phy(pdcch_processor::pdu_t&   p
                                                      uint16_t                  sfn,
                                                      uint16_t                  slot)
 {
-  proc_pdu.slot = slot_point(static_cast<uint32_t>(fapi_pdu.scs), sfn, slot);
+  proc_pdu.slot = slot_point(fapi_pdu.scs, sfn, slot);
   proc_pdu.cp =
       cyclic_prefix((fapi_pdu.cyclic_prefix == fapi::cyclic_prefix_type::normal) ? cyclic_prefix::options::NORMAL
                                                                                  : cyclic_prefix::options::EXTENDED);

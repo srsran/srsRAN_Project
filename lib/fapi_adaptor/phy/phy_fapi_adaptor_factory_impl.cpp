@@ -18,10 +18,11 @@ std::unique_ptr<phy_fapi_adaptor> phy_fapi_adaptor_factory_impl::create(const ph
 {
   phy_fapi_adaptor_impl_config adaptor_config;
 
+  adaptor_config.sector_id            = config.sector_id;
+  adaptor_config.scs                  = config.scs;
   adaptor_config.ul_pdu_repository    = &ul_pdu_repository;
   adaptor_config.ul_rg_pool           = &ul_rg_pool;
   adaptor_config.ul_request_processor = &ul_request_processor;
-  adaptor_config.sector_id            = config.sector_id;
   adaptor_config.scs_common           = config.scs_common;
   adaptor_config.dl_processor_pool    = &dl_processor_pool;
   adaptor_config.dl_rg_pool           = &dl_rg_pool;

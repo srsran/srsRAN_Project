@@ -29,6 +29,8 @@ namespace fapi_adaptor {
 struct phy_fapi_adaptor_impl_config {
   /// Base station sector identifier.
   unsigned sector_id;
+  /// Subcarrier spacing as per TS38.211 Section 4.2.
+  subcarrier_spacing scs;
   /// Downlink processor pool.
   downlink_processor_pool* dl_processor_pool;
   /// Downlink resource grid pool.

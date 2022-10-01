@@ -58,7 +58,7 @@ void srsgnb::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu
 {
   // Fill the PUSCH processor parameters.
   pusch_processor::pdu_t& proc_pdu = pdu.pdu;
-  proc_pdu.slot                    = slot_point(to_numerology_value(fapi_pdu.scs), sfn, slot);
+  proc_pdu.slot                    = slot_point(fapi_pdu.scs, sfn, slot);
   proc_pdu.rnti                    = fapi_pdu.rnti;
   proc_pdu.bwp_start_rb            = fapi_pdu.bwp_start;
   proc_pdu.bwp_size_rb             = fapi_pdu.bwp_size;

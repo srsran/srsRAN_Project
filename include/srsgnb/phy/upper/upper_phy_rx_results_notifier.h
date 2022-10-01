@@ -42,7 +42,7 @@ struct ul_pusch_results {
     pusch_decoder_result decoder_result;
     /// \brief Data payload of the PUSCH PDU.
     ///
-    /// Note: the size of the span is zero if the PDU does not contain PUSCH data.
+    /// \note The size of the span is zero if the PDU does not contain PUSCH data.
     span<const uint8_t> payload;
   };
 
@@ -52,7 +52,8 @@ struct ul_pusch_results {
   channel_state_information csi;
   /// \brief PUSCH data
   ///
-  /// Note: This parameter is valid if the PUSCH PDU contains data, otherwise it is not.
+  ///
+  /// \note This parameter is valid if the PUSCH PDU contains data, otherwise it is not.
   optional<pusch_data> data;
 };
 

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/interval.h"
+#include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
 namespace srsgnb {
@@ -55,6 +56,19 @@ public:
     numerology_val(numerology), count_val(slot_radio_frame_idx_ + sfn_val * nof_slots_per_frame())
   {
     srsgnb_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology idx={} passed", numerology);
+    srsgnb_assert(sfn_val < NOF_SFNS, "Invalid SFN={} provided", sfn_val);
+    srsgnb_assert(slot_radio_frame_idx_ < nof_slots_per_frame(),
+                  "Slot index={} exceeds maximum number of slots={}",
+                  slot_radio_frame_idx_,
+                  nof_slots_per_frame());
+  }
+
+  /// Takes a subcarrier spacing, SFN and slot index in radio frame.
+  constexpr slot_point(subcarrier_spacing scs, uint32_t sfn_val, uint32_t slot_radio_frame_idx_) :
+    numerology_val(to_numerology_value(scs)), count_val(slot_radio_frame_idx_ + sfn_val * nof_slots_per_frame())
+  {
+    srsgnb_assert(
+        to_numerology_value(scs) < NOF_NUMEROLOGIES, "Invalid numerology idx={} passed", to_numerology_value(scs));
     srsgnb_assert(sfn_val < NOF_SFNS, "Invalid SFN={} provided", sfn_val);
     srsgnb_assert(slot_radio_frame_idx_ < nof_slots_per_frame(),
                   "Slot index={} exceeds maximum number of slots={}",

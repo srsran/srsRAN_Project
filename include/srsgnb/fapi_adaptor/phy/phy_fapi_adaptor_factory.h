@@ -28,6 +28,8 @@ namespace fapi_adaptor {
 struct phy_fapi_adaptor_factory_config {
   /// Base station sector identifier.
   unsigned sector_id;
+  /// Subcarrier spacing as per TS38.211 Section 4.2.
+  subcarrier_spacing scs;
   /// Common subcarrier spacing as per TS38.331 Section 6.2.2.
   subcarrier_spacing scs_common;
   /// PRACH configuration as per SCF-222 v4.0 Section 3.3.2.4 TLV 0x1031.
