@@ -62,44 +62,50 @@ target_link_libraries(dl_logical_channel_test srsgnb_sched srslog gtest gtest_ma
 add_test(dl_logical_channel_test dl_logical_channel_test)
 
 add_executable(sched_no_ue_test sched_no_ue_test.cpp)
-target_link_libraries(sched_no_ue_test srsgnb_sched du_manager_converters srslog mac_configuration_helpers scheduler_test_suite)
+target_link_libraries(sched_no_ue_test srsgnb_sched srslog mac_configuration_helpers
+                      sched_config
+                      scheduler_test_suite)
 add_test(sched_no_ue_test sched_no_ue_test)
 
 add_executable(ssb_scheduler_test ssb_scheduler_test.cpp)
-target_link_libraries(ssb_scheduler_test srsgnb_sched du_manager_converters srslog mac_configuration_helpers)
+target_link_libraries(ssb_scheduler_test srsgnb_sched srslog mac_configuration_helpers sched_config)
 add_test(ssb_scheduler_test ssb_scheduler_test)
 
 add_executable(resource_allocator_test resource_allocator_test.cpp)
-target_link_libraries(resource_allocator_test srsgnb_sched du_manager_converters srslog mac_configuration_helpers)
+target_link_libraries(resource_allocator_test srsgnb_sched srslog mac_configuration_helpers sched_config)
 add_test(resource_allocator_test resource_allocator_test)
 
 add_executable(ra_scheduler_test ra_scheduler_test.cpp)
 target_link_libraries(ra_scheduler_test
                       srsgnb_sched
-                      du_manager_converters
                       srslog
                       mac_configuration_helpers
                       scheduler_test_suite
+                      sched_config
                       gtest
                       gtest_main)
 add_test(ra_scheduler_test ra_scheduler_test)
 
 add_executable(pdcch_scheduler_test pdcch_scheduler_test.cpp)
-target_link_libraries(pdcch_scheduler_test srsgnb_sched du_manager_converters srslog mac_configuration_helpers)
+target_link_libraries(pdcch_scheduler_test srsgnb_sched srslog mac_configuration_helpers sched_config)
 add_test(pdcch_scheduler_test pdcch_scheduler_test)
 
 add_executable(pucch_scheduler_test pucch_scheduler_test.cpp)
-target_link_libraries(pucch_scheduler_test srsgnb_sched du_manager_converters scheduler_test_suite srslog mac_configuration_helpers gtest)
+target_link_libraries(pucch_scheduler_test srsgnb_sched scheduler_test_suite srslog mac_configuration_helpers sched_config gtest)
 add_test(pucch_scheduler_test pucch_scheduler_test)
 
 add_executable(ue_configuration_test ue_configuration_test.cpp)
-target_link_libraries(ue_configuration_test srsgnb_sched du_manager_converters  srslog mac_configuration_helpers)
+target_link_libraries(ue_configuration_test
+                      srsgnb_sched
+                      srslog
+                      mac_configuration_helpers
+                      sched_config)
 add_test(ue_configuration_test ue_configuration_test)
 
 add_executable(sib1_scheduler_test sib1_scheduler_test.cpp)
-target_link_libraries(sib1_scheduler_test srsgnb_sched du_manager_converters srslog mac_configuration_helpers scheduler_test_suite)
+target_link_libraries(sib1_scheduler_test srsgnb_sched srslog mac_configuration_helpers sched_config scheduler_test_suite)
 add_test(sib1_scheduler_test sib1_scheduler_test)
 
 add_executable(prach_scheduler_test prach_scheduler_test.cpp)
-target_link_libraries(prach_scheduler_test srsgnb_sched du_manager_converters srslog scheduler_test_suite gtest gtest_main)
+target_link_libraries(prach_scheduler_test srsgnb_sched srslog scheduler_test_suite sched_config gtest gtest_main)
 gtest_discover_tests(prach_scheduler_test)

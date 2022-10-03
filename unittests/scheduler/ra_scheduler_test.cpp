@@ -185,7 +185,7 @@ protected:
       }
     }
     if (mode == srsgnb::duplex_mode::TDD) {
-      msg.tdd_ul_dl_cfg_common = du_config_helpers::make_default_tdd_ul_dl_config_common();
+      msg.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common();
     }
     return msg;
   }

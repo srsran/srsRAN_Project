@@ -716,7 +716,7 @@ int main(int argc, char** argv)
   // Configuration for the cell.
   srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);
 
-  struct du_cell_config_default_params default_config;
+  struct du_cell_config_master_params default_config;
   default_config.pci               = pci;
   default_config.scs_common        = scs_common;
   default_config.nof_crbs          = nof_prb_dl_grid[to_numerology_value(scs)];
@@ -733,7 +733,7 @@ int main(int argc, char** argv)
   cfg.ul_executors          = &workers.ul_exec_mapper;
   cfg.f1c_notifier          = &notifier;
   cfg.phy_adapter           = &phy;
-  cfg.cells                 = {du_config_helpers::make_default_du_cell_config(default_config)};
+  cfg.cells                 = {config_helpers::make_default_du_cell_config(default_config)};
 
   du_cell_config& cell_cfg = cfg.cells.back();
   cell_cfg.ssb_cfg.k_ssb   = K_ssb;

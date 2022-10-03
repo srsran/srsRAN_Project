@@ -8,4 +8,4 @@
 
 set(SOURCES serving_cell_config_factory.cpp)
 add_library(sched_config STATIC ${SOURCES})
-target_link_libraries(sched_config srsgnb_ran)
+target_link_libraries(sched_config srsgnb_ran du_manager_converters)

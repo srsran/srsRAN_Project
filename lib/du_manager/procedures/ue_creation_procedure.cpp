@@ -37,7 +37,7 @@ ue_creation_procedure::ue_creation_procedure(du_ue_index_t                     u
   cell_group_config& pcell = ue_ctx->cells[0];
   pcell.rlc_bearers.push_back(make_default_srb(LCID_SRB1));
   pcell.spcell_cfg.serv_cell_idx  = msg.cell_index;
-  pcell.spcell_cfg.spcell_cfg_ded = make_default_initial_ue_serving_cell_config();
+  pcell.spcell_cfg.spcell_cfg_ded = config_helpers::make_default_initial_ue_serving_cell_config();
 }
 
 void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)

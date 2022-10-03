@@ -49,8 +49,7 @@ void test_ue_cfg_reconfig()
   ue_cell_reconf.init_dl_bwp.emplace();
   ue_cell_reconf.init_dl_bwp->pdcch_cfg.emplace();
   ue_cell_reconf.init_dl_bwp->pdcch_cfg->coreset_to_addmod_list.emplace_back();
-  ue_cell_reconf.init_dl_bwp->pdcch_cfg->coreset_to_addmod_list.back() =
-      du_config_helpers::make_default_coreset_config();
+  ue_cell_reconf.init_dl_bwp->pdcch_cfg->coreset_to_addmod_list.back() = config_helpers::make_default_coreset_config();
   ue_cell_reconf.init_dl_bwp->pdcch_cfg->coreset_to_addmod_list.back().id = to_coreset_id(2);
   ue_cell_reconf.init_dl_bwp->pdcch_cfg->ss_to_rel_list.emplace_back();
   ue_cell_reconf.init_dl_bwp->pdcch_cfg->ss_to_rel_list[0] = to_search_space_id(2);

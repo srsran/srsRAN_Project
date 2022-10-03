@@ -19,6 +19,7 @@ target_link_libraries(f1_du_setup_procedure_test
                       f1ap_asn1
                       du_manager_converters
                       srsgnb_ran
+                      sched_config
                       gtest
                       gtest_main)
 target_include_directories(f1_du_setup_procedure_test PRIVATE ${CMAKE_SOURCE_DIR})

@@ -11,4 +11,4 @@ set_directory_properties(PROPERTIES LABELS "sched")
 include_directories(../..)
 
 add_executable(scheduler_no_ues_benchmark scheduler_no_ues_benchmark.cpp)
-target_link_libraries(scheduler_no_ues_benchmark srsgnb_sched srslog du_manager_converters)
+target_link_libraries(scheduler_no_ues_benchmark srsgnb_sched srslog sched_config)

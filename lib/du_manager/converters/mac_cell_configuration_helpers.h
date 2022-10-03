@@ -36,7 +36,7 @@ inline mac_ue_create_request_message make_default_ue_creation_request()
   msg.serv_cell_cfg.init_dl_bwp.emplace();
   bwp_downlink_dedicated& dl_bwp = *msg.serv_cell_cfg.init_dl_bwp;
   dl_bwp.pdcch_cfg.emplace();
-  dl_bwp.pdcch_cfg->coreset_to_addmod_list.emplace_back(du_config_helpers::make_default_coreset_config());
+  dl_bwp.pdcch_cfg->coreset_to_addmod_list.emplace_back(config_helpers::make_default_coreset_config());
   coreset_configuration& cs_cfg = dl_bwp.pdcch_cfg->coreset_to_addmod_list.back();
   cs_cfg.id                     = to_coreset_id(1);
   dl_bwp.pdsch_cfg.emplace();
@@ -45,7 +45,7 @@ inline mac_ue_create_request_message make_default_ue_creation_request()
   scheduling_request_to_addmod sr_0{.sr_id = scheduling_request_resource_id::SR_ID_MIN, .max_tx = sr_max_tx::n64};
   msg.mac_cell_group_cfg.scheduling_request_config.emplace_back(sr_0);
 
-  dl_bwp.pdcch_cfg->ss_to_addmod_list.emplace_back(du_config_helpers::make_default_ue_search_space_config());
+  dl_bwp.pdcch_cfg->ss_to_addmod_list.emplace_back(config_helpers::make_default_ue_search_space_config());
   return msg;
 }
 

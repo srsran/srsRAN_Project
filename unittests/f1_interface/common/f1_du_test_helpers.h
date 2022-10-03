@@ -115,7 +115,7 @@ f1_setup_request_message generate_f1_setup_request_message()
 {
   f1_setup_request_message           request_msg  = {};
   du_setup_params                    setup_params = {};
-  du_cell_config                     cell         = du_config_helpers::make_default_du_cell_config();
+  du_cell_config                     cell         = config_helpers::make_default_du_cell_config();
   std::vector<const du_cell_config*> cells        = {&cell};
   fill_asn1_f1_setup_request(request_msg.msg, setup_params, cells);
 

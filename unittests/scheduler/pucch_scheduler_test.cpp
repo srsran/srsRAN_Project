@@ -227,7 +227,7 @@ public:
     cell_cfg{cell_req},
     user{cell_cfg, make_ue_creation_request(test_helpers::make_default_ue_creation_request())},
     ue_cell_cfg{cell_cfg, serving_cell_ue_configuration_request{}},
-    coreset_cfg{du_config_helpers::make_default_coreset_config()},
+    coreset_cfg{config_helpers::make_default_coreset_config()},
     dci_info{make_default_dci(n_cces, &coreset_cfg)},
     k0{0},
     pucch_sched{cell_cfg},

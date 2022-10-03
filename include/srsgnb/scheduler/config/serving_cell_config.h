@@ -11,6 +11,8 @@
 #pragma once
 
 #include "../bwp_configuration.h"
+#include "srsgnb/ran/carrier_configuration.h"
+#include "srsgnb/ran/ssb_configuration.h"
 
 namespace srsgnb {
 

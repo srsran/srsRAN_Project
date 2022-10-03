@@ -94,7 +94,7 @@ protected:
     du_cfg.ul_executors    = &workers.ul_exec_mapper;
     du_cfg.f1c_notifier    = &du_msg_handler;
     du_cfg.phy_adapter     = &phy;
-    du_cfg.cells           = {du_config_helpers::make_default_du_cell_config()};
+    du_cfg.cells           = {config_helpers::make_default_du_cell_config()};
 
     // create DU object
     du_obj = std::make_unique<srs_du::du_high>(std::move(du_cfg));

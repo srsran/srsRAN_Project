@@ -62,7 +62,7 @@ void test_f1_setup_local()
   cfg.ul_executors    = &workers.ul_exec_mapper;
   cfg.f1c_notifier    = &notifier;
   cfg.phy_adapter     = &phy;
-  cfg.cells           = {du_config_helpers::make_default_du_cell_config()};
+  cfg.cells           = {config_helpers::make_default_du_cell_config()};
 
   du_high du_obj(cfg);
 
@@ -102,7 +102,7 @@ void test_f1_setup_network()
   cfg.ul_executors    = &workers.ul_exec_mapper;
   cfg.f1c_notifier    = &notifier;
   cfg.phy_adapter     = &phy;
-  cfg.cells           = {du_config_helpers::make_default_du_cell_config()};
+  cfg.cells           = {config_helpers::make_default_du_cell_config()};
 
   du_high du_obj(cfg);
 
@@ -142,7 +142,7 @@ void test_du_ue_create()
   cfg.ul_executors    = &workers.ul_exec_mapper;
   cfg.f1c_notifier    = &notifier;
   cfg.phy_adapter     = &phy;
-  cfg.cells           = {du_config_helpers::make_default_du_cell_config()};
+  cfg.cells           = {config_helpers::make_default_du_cell_config()};
 
   du_high du_obj(cfg);
 
