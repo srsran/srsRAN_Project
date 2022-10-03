@@ -79,29 +79,23 @@ struct logical_channel_config {
 
 /// \remark See TS 38.331, "ServingCellConfig".
 struct serving_cell_ue_configuration_request {
-  /// Initial Downlink BWP.
-  optional<bwp_downlink_dedicated> init_dl_bwp;
-  /// List of UE DL BWPs. Size: (0..maxNrofBWPs=4)
-  std::vector<bwp_downlink> dl_bwps_to_addmod_list;
-  /// List of UE DL BWPs to remove. Size: (0..maxNrofBWPs=4)
-  std::vector<bwp_id_t> dl_bwps_to_rel_list;
-  /// \c uplinkConfig, containing the UL configuration.
-  optional<uplink_config> ul_config;
+  du_cell_index_t cell_index;
+  /// \c spCellConfig, as part of \c CellGroupConfig, TS 38.331.
+  optional<serving_cell_config> serv_cell_cfg;
 };
 
 /// UE Creation Request.
 struct sched_ue_creation_request_message {
-  du_ue_index_t   ue_index;
-  rnti_t          crnti;
-  du_cell_index_t pcell_index;
+  du_ue_index_t ue_index;
+  rnti_t        crnti;
   /// List of \c mac-LogicalChannelConfig, TS 38.331; contained in \c rlc-BearerToAddModList.
   /// This is common to all cells belonging to \c masterCellGroup, TS 38.331.
   std::vector<logical_channel_config> lc_config_list;
   /// \c schedulingRequestToAddModList, TS 38.331; part of \c schedulingRequestConfig, in \c mac-CellGroupConfig.
   /// This is common to all cells belonging to masterCellGroup, TS 38.331.
   std::vector<scheduling_request_to_addmod> sched_request_config_list;
-  /// \c spCellConfig, as part of \c CellGroupConfig, TS 38.331.
-  serving_cell_ue_configuration_request serv_cell_cfg;
+  /// List of configured cells.
+  std::vector<serving_cell_ue_configuration_request> cells;
 };
 
 /// UE Reconfiguration Request.

@@ -15,23 +15,6 @@
 
 namespace srsgnb {
 
-/// Convert MAC UE Create Request Message to Scheduler UE Create Request.
-inline sched_ue_creation_request_message make_ue_creation_request(const mac_ue_create_request_message& in)
-{
-  sched_ue_creation_request_message out{};
-  out.ue_index      = in.ue_index;
-  out.pcell_index   = in.cell_index;
-  out.crnti         = in.crnti;
-  out.serv_cell_cfg = in.serv_cell_cfg;
-  for (auto bearer : in.bearers) {
-    out.lc_config_list.emplace_back(bearer.lc_config);
-  }
-  for (auto sr_cfg : in.mac_cell_group_cfg.scheduling_request_config) {
-    out.sched_request_config_list.emplace_back(sr_cfg);
-  }
-  return out;
-}
-
 /// Convert MAC UE Reconfiguration Request Message to Scheduler UE Reconfiguration Request.
 inline sched_ue_reconfiguration_message
 make_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& in)

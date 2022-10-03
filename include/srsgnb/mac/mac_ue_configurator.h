@@ -35,7 +35,7 @@ struct mac_ue_create_request_message {
   const byte_buffer*                      ul_ccch_msg;
   mac_cell_group_config                   mac_cell_group_cfg;
   // Scheduler-only params
-  serving_cell_ue_configuration_request serv_cell_cfg;
+  optional<serving_cell_config> serv_cell_cfg;
 };
 
 /// Outcome of a MAC UE creation request procedure.

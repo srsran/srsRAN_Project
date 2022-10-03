@@ -7,150 +7,129 @@ using namespace srsgnb;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ue_cell_configuration::ue_cell_configuration(const cell_configuration&                    cell_cfg_common_,
-                                             const serving_cell_ue_configuration_request& cell_cfg_ded_req) :
+ue_cell_configuration::ue_cell_configuration(const cell_configuration&  cell_cfg_common_,
+                                             const serving_cell_config& serv_cell_cfg_) :
   cell_cfg_common(cell_cfg_common_)
 {
-  // Apply Common Config.
-  addmod_bwp_common_cfg(to_bwp_id(0), cell_cfg_common.dl_cfg_common.init_dl_bwp);
-
   // Apply UE-dedicated Config.
-  reconfigure(cell_cfg_ded_req);
+  reconfigure(serv_cell_cfg_);
 }
 
-void ue_cell_configuration::reconfigure(const serving_cell_ue_configuration_request& cell_cfg_ded_req)
+void ue_cell_configuration::reconfigure(const serving_cell_config& cell_cfg_ded_req)
 {
-  // Update DL BWPs.
-  if (cell_cfg_ded_req.init_dl_bwp.has_value()) {
-    addmod_bwp_ded_cfg(to_bwp_id(0), *cell_cfg_ded_req.init_dl_bwp);
-  }
-  for (bwp_id_t bwpid : cell_cfg_ded_req.dl_bwps_to_rel_list) {
-    release_bwp_ded_cfg(bwpid);
-  }
-  for (const bwp_downlink& dl_bwp : cell_cfg_ded_req.dl_bwps_to_addmod_list) {
-    addmod_bwp_cfg(dl_bwp.bwp_id, dl_bwp);
-  }
+  cell_cfg_ded = cell_cfg_ded_req;
 
-  update_config_maps();
-
-  update_ul_config(cell_cfg_ded_req);
-}
-
-void ue_cell_configuration::addmod_bwp_cfg(bwp_id_t bwpid, const bwp_downlink& bwp_dl)
-{
-  if (not dl_bwps_cfg.contains(bwpid)) {
-    dl_bwps_cfg.emplace(bwpid);
-  }
-  if (bwp_dl.bwp_dl_ded.has_value()) {
-    addmod_bwp_ded_cfg(bwpid, *bwp_dl.bwp_dl_ded);
-  }
-}
-
-void ue_cell_configuration::addmod_bwp_common_cfg(srsgnb::bwp_id_t bwpid, const srsgnb::bwp_downlink_common& bwp_dl)
-{
-  if (not dl_bwps_cfg.contains(bwpid)) {
-    dl_bwps_cfg.emplace(bwpid);
-  }
-
-  // Note: Common config does not apply diffs.
-  dl_bwps_cfg[bwpid].bwp_dl_common = bwp_dl;
-}
-
-void ue_cell_configuration::update_config_maps()
-{
-  // Update DL BWPs.
-  dl_bwps = {};
-  for (const bwp_downlink& bwp_dl : dl_bwps_cfg) {
-    dl_bwps[bwp_dl.bwp_id] = &bwp_dl;
-  }
-
-  // Update DL CORESETs.
-  dl_coresets       = {};
-  coreset_to_bwp_id = {};
-  for (const bwp_downlink& bwp_dl : dl_bwps_cfg) {
-    if (bwp_dl.bwp_dl_common.has_value()) {
-      if (bwp_dl.bwp_dl_common->pdcch_common.coreset0.has_value()) {
-        dl_coresets[0]       = &*bwp_dl.bwp_dl_common->pdcch_common.coreset0;
-        coreset_to_bwp_id[0] = bwp_dl.bwp_id;
-      }
-      if (bwp_dl.bwp_dl_common->pdcch_common.common_coreset.has_value()) {
-        dl_coresets[bwp_dl.bwp_dl_common->pdcch_common.common_coreset->id] =
-            &*bwp_dl.bwp_dl_common->pdcch_common.common_coreset;
-        coreset_to_bwp_id[bwp_dl.bwp_dl_common->pdcch_common.common_coreset->id] = bwp_dl.bwp_id;
-      }
-    }
-    if (bwp_dl.bwp_dl_ded.has_value()) {
-      // TS 38.331, "PDCCH-Config" - In case network reconfigures control resource set with the same
-      // ControlResourceSetId as used for commonControlResourceSet configured via PDCCH-ConfigCommon,
-      // the configuration from PDCCH-Config always takes precedence and should not be updated by the UE based on
-      // servingCellConfigCommon.
-      for (const coreset_configuration& cs_cfg : bwp_dl.bwp_dl_ded->pdcch_cfg->coresets) {
-        dl_coresets[cs_cfg.id]       = &cs_cfg;
-        coreset_to_bwp_id[cs_cfg.id] = bwp_dl.bwp_id;
-      }
-    }
-  }
-
-  // Update DL SearchSpaces.
+  // Clear previous lookup tables.
+  bwp_table        = {};
+  dl_coresets      = {};
   dl_search_spaces = {};
-  for (const bwp_downlink& bwp_dl : dl_bwps_cfg) {
-    if (bwp_dl.bwp_dl_common.has_value()) {
-      for (const search_space_configuration& ss_cfg : bwp_dl.bwp_dl_common->pdcch_common.search_spaces) {
-        dl_search_spaces[ss_cfg.id] = &ss_cfg;
-      }
+
+  // Recompute DL param lookup tables.
+  configure_bwp_common_cfg(to_bwp_id(0), cell_cfg_common.dl_cfg_common.init_dl_bwp);
+  configure_bwp_ded_cfg(to_bwp_id(0), cell_cfg_ded.init_dl_bwp);
+  for (const bwp_downlink& bwp : cell_cfg_ded.dl_bwps) {
+    if (bwp.bwp_dl_common.has_value()) {
+      configure_bwp_common_cfg(bwp.bwp_id, *bwp.bwp_dl_common);
     }
-    if (bwp_dl.bwp_dl_ded.has_value()) {
-      for (const search_space_configuration& ss_cfg : bwp_dl.bwp_dl_ded->pdcch_cfg->search_spaces) {
-        dl_search_spaces[ss_cfg.id] = &ss_cfg;
-      }
+    if (bwp.bwp_dl_ded.has_value()) {
+      configure_bwp_ded_cfg(bwp.bwp_id, *bwp.bwp_dl_ded);
     }
+  }
+
+  // Recompute UL param lookup tables.
+  configure_bwp_common_cfg(to_bwp_id(0), cell_cfg_common.ul_cfg_common.init_ul_bwp);
+  if(cell_cfg_ded.ul_config.has_value()) {
+    configure_bwp_ded_cfg(to_bwp_id(0), cell_cfg_ded.ul_config->init_ul_bwp);
   }
 }
 
-void ue_cell_configuration::addmod_bwp_ded_cfg(bwp_id_t bwpid, const bwp_downlink_dedicated& bwp_dl_ded)
+void ue_cell_configuration::configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_downlink_common& bwp_dl_common)
 {
-  if (not dl_bwps_cfg.contains(bwpid)) {
-    dl_bwps_cfg.emplace(bwpid);
+  // Compute DL BWP-Id lookup table.
+  bwp_table[bwpid].dl_bwp_common = &bwp_dl_common;
+  for (const search_space_configuration& ss : bwp_dl_common.pdcch_common.search_spaces) {
+    bwp_table[bwpid].dl_search_spaces.push_back(&ss);
   }
-  if (not dl_bwps_cfg[bwpid].bwp_dl_ded.has_value()) {
-    dl_bwps_cfg[bwpid].bwp_dl_ded.emplace(bwp_dl_ded);
-  } else {
-    *dl_bwps_cfg[bwpid].bwp_dl_ded = bwp_dl_ded;
+
+  // Compute CORESET-Id lookup table.
+  if (bwp_dl_common.pdcch_common.coreset0.has_value()) {
+    dl_coresets[0]          = &*bwp_dl_common.pdcch_common.coreset0;
+    coreset_id_to_bwp_id[0] = bwpid;
+  }
+  if (bwp_dl_common.pdcch_common.common_coreset.has_value()) {
+    dl_coresets[bwp_dl_common.pdcch_common.common_coreset->id] = &*bwp_dl_common.pdcch_common.common_coreset;
+
+    coreset_id_to_bwp_id[bwp_dl_common.pdcch_common.common_coreset->id] = bwpid;
+  }
+
+  // Compute SearchSpace-Id lookup table.
+  for (const search_space_configuration& ss : bwp_dl_common.pdcch_common.search_spaces) {
+    dl_search_spaces[ss.id] = &ss;
   }
 }
 
-void ue_cell_configuration::release_bwp_ded_cfg(bwp_id_t bwpid)
+void ue_cell_configuration::configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_uplink_common& bwp_ul_common)
 {
-  srsgnb_assert(dl_bwps_cfg.contains(bwpid), "BWP-id={} does not exist", bwpid);
-  dl_bwps_cfg.erase(bwpid);
+  // Compute UL BWP-Id lookup table.
+  bwp_table[bwpid].ul_bwp_common = &bwp_ul_common;
+}
+
+void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_downlink_dedicated& bwp_dl_ded)
+{
+  // Compute DL BWP-Id lookup table.
+  bwp_table[bwpid].dl_bwp_ded = &bwp_dl_ded;
+  if(not bwp_dl_ded.pdcch_cfg.has_value()) {
+    return;
+  }
+
+  for (const search_space_configuration& ss : bwp_dl_ded.pdcch_cfg->search_spaces) {
+    bwp_table[bwpid].dl_search_spaces.push_back(&ss);
+  }
+
+  // Compute CORESET-Id lookup table.
+  for (const coreset_configuration& cs : bwp_dl_ded.pdcch_cfg->coresets) {
+    // TS 38.331, "PDCCH-Config" - In case network reconfigures control resource set with the same
+    // ControlResourceSetId as used for commonControlResourceSet configured via PDCCH-ConfigCommon,
+    // the configuration from PDCCH-Config always takes precedence and should not be updated by the UE based on
+    // servingCellConfigCommon.
+    dl_coresets[cs.id] = &cs;
+
+    coreset_id_to_bwp_id[cs.id] = bwpid;
+  }
+
+  // Compute SearchSpace-Id lookup table.
+  for (const search_space_configuration& ss : bwp_dl_ded.pdcch_cfg->search_spaces) {
+    dl_search_spaces[ss.id] = &ss;
+  }
+}
+
+void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_uplink_dedicated& bwp_ul_ded)
+{
+  // Compute UL BWP-Id lookup table.
+  bwp_table[bwpid].ul_bwp_ded = &bwp_ul_ded;
 }
 
 span<const pdsch_time_domain_resource_allocation>
 ue_cell_configuration::get_pdsch_time_domain_list(search_space_id ss_id) const
 {
-  const search_space_configuration& ss_cfg = *dl_search_spaces[ss_id];
-  const bwp_downlink&               bwp_dl = *dl_bwps[coreset_to_bwp_id[dl_search_spaces[ss_id]->cs_id]];
+  srsgnb_assert(dl_search_spaces[ss_id] != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
+  const search_space_configuration& ss_cfg  = *dl_search_spaces[ss_id];
+  const bwp_params&                 bwp_row = bwp_table[coreset_id_to_bwp_id[ss_cfg.cs_id]];
 
   if (ss_cfg.type != search_space_configuration::type::common or ss_cfg.cs_id != to_coreset_id(0)) {
-    if (not bwp_dl.bwp_dl_ded->pdsch_cfg->pdsch_td_alloc_list.empty()) {
+    if (not bwp_row.dl_bwp_ded->pdsch_cfg->pdsch_td_alloc_list.empty()) {
       // UE dedicated pdsch-TimeDomain list.
-      return bwp_dl.bwp_dl_ded->pdsch_cfg->pdsch_td_alloc_list;
+      return bwp_row.dl_bwp_ded->pdsch_cfg->pdsch_td_alloc_list;
     }
   }
 
-  if (not bwp_dl.bwp_dl_common->pdsch_common.pdsch_td_alloc_list.empty()) {
+  if (not bwp_row.dl_bwp_common->pdsch_common.pdsch_td_alloc_list.empty()) {
     // common pdsch-TimeDomain list.
-    return bwp_dl.bwp_dl_common->pdsch_common.pdsch_td_alloc_list;
+    return bwp_row.dl_bwp_common->pdsch_common.pdsch_td_alloc_list;
   }
 
   // default A table case.
   return pdsch_default_time_allocations_default_A_table(
-      bwp_dl.bwp_dl_common->generic_params.cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL,
+      bwp_row.dl_bwp_common->generic_params.cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL,
       cell_cfg_common.dmrs_typeA_pos);
-}
-
-void ue_cell_configuration::update_ul_config(const serving_cell_ue_configuration_request& cell_cfg_ded_req)
-{
-  // Copy the configuration to the current object.
-  ul_config = cell_cfg_ded_req.ul_config;
 }

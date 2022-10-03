@@ -42,8 +42,8 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   }
   const ue_cell_configuration&                 ue_cell_cfg = ue_cc->cfg();
   const cell_configuration&                    cell_cfg    = ue_cell_cfg.cell_cfg_common;
-  const bwp_downlink&                          bwp_dl      = *ue_cell_cfg.dl_bwps[ue_cc->active_bwp_id()];
-  subcarrier_spacing                           scs         = bwp_dl.bwp_dl_common->generic_params.scs;
+  const bwp_downlink_common&                   bwp_dl_cmn  = ue_cell_cfg.dl_bwp_common(ue_cc->active_bwp_id());
+  subcarrier_spacing                           scs         = bwp_dl_cmn.generic_params.scs;
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg =
       ue_cc->cfg().get_pdsch_time_domain_list(grant.ss_id)[grant.time_res_index];
 
@@ -64,7 +64,7 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   }
 
   // Find a SearchSpace candidate.
-  const search_space_configuration* ss_cfg = ue_cell_cfg.dl_search_spaces[grant.ss_id];
+  const search_space_configuration* ss_cfg = ue_cell_cfg.find_dl_search_space(grant.ss_id);
   if (ss_cfg == nullptr) {
     logger.warning("Failed to allocate PDSCH. Cause: No valid SearchSpace found.");
     return false;
@@ -131,9 +131,10 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   msg.pdsch_cfg.dmrs = make_dmrs_info_common(
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, grant.time_res_index, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
   // See TS 38.211, 7.3.1.1. - Scrambling.
-  if (bwp_dl.bwp_dl_ded.has_value() and bwp_dl.bwp_dl_ded->pdsch_cfg->data_scrambling_id_pdsch.has_value() and
+  const bwp_downlink_dedicated* bwp_dl_ded = ue_cell_cfg.find_dl_bwp_ded(ue_cc->active_bwp_id());
+  if (bwp_dl_ded != nullptr and bwp_dl_ded->pdsch_cfg->data_scrambling_id_pdsch.has_value() and
       (grant.dci_fmt != dci_dl_format::f1_0 or ss_cfg->type != search_space_configuration::type::common)) {
-    msg.pdsch_cfg.n_id = *bwp_dl.bwp_dl_ded->pdsch_cfg->data_scrambling_id_pdsch;
+    msg.pdsch_cfg.n_id = *bwp_dl_ded->pdsch_cfg->data_scrambling_id_pdsch;
   } else {
     msg.pdsch_cfg.n_id = cell_cfg.pci;
   }

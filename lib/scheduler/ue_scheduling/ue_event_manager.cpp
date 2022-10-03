@@ -64,7 +64,7 @@ ue_event_manager::ue_event_manager(ue_list& ue_db_, sched_configuration_notifier
 void ue_event_manager::handle_add_ue_request(const sched_ue_creation_request_message& ue_request)
 {
   // Create UE object outside the scheduler slot indication handler to minimize latency.
-  std::unique_ptr<ue> u = std::make_unique<ue>(*cells[ue_request.pcell_index], ue_request);
+  std::unique_ptr<ue> u = std::make_unique<ue>(*cells[ue_request.cells[0].cell_index], ue_request);
 
   // Defer UE object addition to ue list to the slot indication handler.
   common_events.emplace(MAX_NOF_DU_UES, [this, u = std::move(u)](event_logger& ev_logger) mutable {

@@ -90,8 +90,9 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(unsigned&                     
 static bool has_ded_pucch_resource_cfg(const ue_cell_configuration& ue_cell_cfg)
 {
   // Check if there is any PUCCH res config in the UE configuration.
-  if (ue_cell_cfg.ul_config.has_value() and ue_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
-    const auto& pucch_cfg = ue_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value();
+  if (ue_cell_cfg.cfg_dedicated().ul_config.has_value() and
+      ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
+    const auto& pucch_cfg = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value();
     // NOTE: We assume that the PUCCH resources for HARQ-ACK are in PUCCH Resource Set 0, only.
     // TODO: change this so as to extend the check to other PUCCH Resource Sets.
     if (not pucch_cfg.pucch_res_set_0.pucch_res_id_list.empty()) {

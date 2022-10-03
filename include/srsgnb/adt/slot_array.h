@@ -149,8 +149,10 @@ public:
   void clear() noexcept
   {
     this->nof_elems = 0;
-    for (auto& e : *this) {
-      e.reset();
+    for (auto& e : this->vec) {
+      if (e.has_value()) {
+        e.reset();
+      }
     }
   }
 

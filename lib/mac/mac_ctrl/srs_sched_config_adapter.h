@@ -45,7 +45,7 @@ public:
       CORO_BEGIN(ctx);
 
       // Create UE in the Scheduler.
-      srs_sched->handle_add_ue_request(make_ue_creation_request(msg));
+      srs_sched->handle_add_ue_request(make_scheduler_ue_creation_request(msg));
 
       // Await Scheduler notification that UE was added.
       CORO_AWAIT(sched_cfg_notif_map[msg.ue_index].ue_config_ready);

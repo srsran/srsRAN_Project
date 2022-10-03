@@ -66,10 +66,9 @@ struct serving_cell_config {
   /// Initial Downlink BWP.
   bwp_downlink_dedicated init_dl_bwp;
   /// List of UE DL BWPs. Size: (0..maxNrofBWPs=4)
-  std::vector<bwp_downlink> dl_bwps_to_addmod_list;
-  /// List of UE DL BWPs to remove. Size: (0..maxNrofBWPs=4)
-  std::vector<bwp_id_t> dl_bwps_to_rel_list;
-  uplink_config         ul_cfg;
+  std::vector<bwp_downlink> dl_bwps;
+  /// \c uplinkConfig, containing the UL configuration.
+  optional<uplink_config> ul_config;
 };
 
 } // namespace srsgnb

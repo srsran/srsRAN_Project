@@ -47,21 +47,22 @@ bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
     }
 
     // Search for available symbolxRB resources in different SearchSpaces.
-    const bwp_downlink& bwp_dl = *ue_cc->cfg().dl_bwps[ue_cc->active_bwp_id()];
-    for (const search_space_configuration& ss_cfg : ue_cc->cfg().get_dl_search_spaces(ue_cc->active_bwp_id())) {
-      span<const pdsch_time_domain_resource_allocation> pdsch_list = ue_cc->cfg().get_pdsch_time_domain_list(ss_cfg.id);
+    const bwp_downlink_common& bwp_dl = ue_cc->cfg().dl_bwp_common(ue_cc->active_bwp_id());
+    for (const search_space_configuration* ss_cfg : ue_cc->cfg().get_dl_search_spaces(ue_cc->active_bwp_id())) {
+      span<const pdsch_time_domain_resource_allocation> pdsch_list =
+          ue_cc->cfg().get_pdsch_time_domain_list(ss_cfg->id);
 
       for (unsigned time_res = 0; time_res != pdsch_list.size(); ++time_res) {
         const pdsch_time_domain_resource_allocation& pdsch = pdsch_list[time_res];
         const cell_slot_resource_grid&               grid  = pdsch_alloc.dl_resource_grid(ue_cc->cell_index, pdsch.k0);
-        const bwp_configuration&                     bwp_cfg   = bwp_dl.bwp_dl_common->generic_params;
+        const bwp_configuration&                     bwp_cfg   = bwp_dl.generic_params;
         prb_bitmap                                   used_crbs = grid.used_crbs(bwp_cfg, pdsch.symbols);
         crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, bwp_cfg.crbs.length(), 0);
         if (not ue_grant_crbs.empty()) {
           pdsch_alloc.allocate_pdsch(ue_pdsch_grant{&u,
                                                     ue_cc->cell_index,
                                                     h->pid,
-                                                    ss_cfg.id,
+                                                    ss_cfg->id,
                                                     time_res,
                                                     ue_grant_crbs,
                                                     dci_dl_format::f1_0,
@@ -90,24 +91,20 @@ bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_retx)
     if (h == nullptr) {
       continue;
     }
-    unsigned                       k2   = 4; // TODO: Take from config.
-    const cell_slot_resource_grid& grid = pusch_alloc.ul_resource_grid(ue_cc->cell_index, k2);
-    for (const bwp_configuration* bwp : ue_cc->cfg().ul_bwps) {
-      if (bwp == nullptr) {
-        continue;
-      }
-      prb_bitmap   used_crbs     = grid.used_crbs(*bwp, pusch_symbols);
-      crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, bwp->crbs.length(), 0);
-      if (not ue_grant_crbs.empty()) {
-        pusch_alloc.allocate_pusch(ue_pusch_grant{&u,
-                                                  ue_cc->cell_index,
-                                                  h->pid,
-                                                  ue_grant_crbs,
-                                                  pusch_symbols,
-                                                  k2,
-                                                  to_search_space_id(1),
-                                                  aggregation_level::n4});
-      }
+    unsigned                       k2        = 4; // TODO: Take from config.
+    const cell_slot_resource_grid& grid      = pusch_alloc.ul_resource_grid(ue_cc->cell_index, k2);
+    const bwp_uplink_common&       bwp_ul    = ue_cc->cfg().ul_bwp_common(ue_cc->active_bwp_id());
+    prb_bitmap                     used_crbs = grid.used_crbs(bwp_ul.generic_params, pusch_symbols);
+    crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, bwp_ul.generic_params.crbs.length(), 0);
+    if (not ue_grant_crbs.empty()) {
+      pusch_alloc.allocate_pusch(ue_pusch_grant{&u,
+                                                ue_cc->cell_index,
+                                                h->pid,
+                                                ue_grant_crbs,
+                                                pusch_symbols,
+                                                k2,
+                                                to_search_space_id(1),
+                                                aggregation_level::n4});
     }
   }
   return false;

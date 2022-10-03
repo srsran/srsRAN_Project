@@ -232,5 +232,36 @@ serving_cell_config srsgnb::config_helpers::make_default_initial_ue_serving_cell
   pdsch_config& pdsch_cfg            = serv_cell.init_dl_bwp.pdsch_cfg.value();
   pdsch_cfg.data_scrambling_id_pdsch = 0;
 
+  // > UL Config.
+  serv_cell.ul_config.emplace();
+  serv_cell.ul_config.value().init_ul_bwp.pucch_cfg.emplace();
+  auto& pucch_cfg = serv_cell.ul_config.value().init_ul_bwp.pucch_cfg.value();
+
+  // >> PUCCH.
+  pucch_cfg.pucch_res_set_0.pucch_res_id_list.emplace_back(0);
+  pucch_cfg.pucch_res_set_0.pucch_res_id_list.emplace_back(1);
+  // >>> PUCCH resource 0.
+  pucch_resource res_basic{.res_id = 0, .starting_prb = 51, .second_hop_prb = 0, .intraslot_freq_hopping = true};
+  res_basic.format_1.initial_cyclic_shift = 0;
+  res_basic.format_1.nof_symbols          = 14;
+  res_basic.format_1.starting_sym_idx     = 0;
+  res_basic.format_1.time_domain_occ      = 0;
+  pucch_cfg.pucch_res_list.push_back(res_basic);
+  // >>> PUCCH resource 1.
+  pucch_cfg.pucch_res_list.push_back(res_basic);
+  pucch_resource& res1               = pucch_cfg.pucch_res_list.back();
+  res1.format_1.initial_cyclic_shift = 4;
+
+  // TODO: add more PUCCH resources.
+
+  pucch_cfg.dl_data_to_ul_ack.push_back(4);
+
+  // >>> SR Resource.
+  pucch_cfg.sr_res_list.push_back(scheduling_request_resource_config{.sr_res_id    = 1,
+                                                                     .sr_id        = uint_to_sched_req_id(0),
+                                                                     .period       = sr_periodicity::sl_40,
+                                                                     .offset       = 0,
+                                                                     .pucch_res_id = 40});
+
   return serv_cell;
 }

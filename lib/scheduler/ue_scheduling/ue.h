@@ -24,14 +24,13 @@ class ue_carrier
 public:
   ue_carrier(du_ue_index_t                                ue_index,
              rnti_t                                       crnti_val,
-             du_cell_index_t                              cell_index,
              const cell_configuration&                    cell_cfg_common_,
              const serving_cell_ue_configuration_request& ue_serv_cell) :
     ue_index(ue_index),
-    cell_index(cell_index),
+    cell_index(ue_serv_cell.cell_index),
     harqs(crnti_val, 52, 16, srslog::fetch_basic_logger("MAC")),
     crnti_(crnti_val),
-    ue_cfg(cell_cfg_common_, ue_serv_cell)
+    ue_cfg(cell_cfg_common_, *ue_serv_cell.serv_cell_cfg)
   {
   }
 
@@ -62,8 +61,10 @@ public:
     log_channels_configs(req.lc_config_list),
     sched_request_configs(req.sched_request_config_list)
   {
-    cells[0] = std::make_unique<ue_carrier>(ue_index, req.crnti, req.pcell_index, cell_cfg_common, req.serv_cell_cfg);
-    ue_cells.push_back(cells[0].get());
+    for (unsigned i = 0; i != req.cells.size(); ++i) {
+      carriers[i] = std::make_unique<ue_carrier>(ue_index, req.crnti, cell_cfg_common, req.cells[i]);
+      ue_cc_list.push_back(carriers[i].get());
+    }
   }
   ue(const ue&)            = delete;
   ue(ue&&)                 = delete;
@@ -78,18 +79,18 @@ public:
   ue_carrier* find_cc(du_cell_index_t cell_index)
   {
     srsgnb_assert(cell_index < MAX_CELLS, "Invalid cell_index={}", cell_index);
-    return cells[cell_index].get();
+    return carriers[cell_index].get();
   }
 
   const ue_carrier* find_cc(du_cell_index_t cell_index) const
   {
     srsgnb_assert(cell_index < MAX_CELLS, "Invalid cell_index={}", cell_index);
-    return cells[cell_index].get();
+    return carriers[cell_index].get();
   }
 
-  span<ue_carrier*> ue_carriers() { return ue_cells; }
+  span<ue_carrier*> ue_carriers() { return ue_cc_list; }
 
-  span<ue_carrier* const> ue_carriers() const { return span<ue_carrier* const>(ue_cells.data(), ue_cells.size()); }
+  span<ue_carrier* const> ue_carriers() const { return span<ue_carrier* const>(ue_cc_list.data(), ue_cc_list.size()); }
 
   bool has_pending_txs() const
   {
@@ -126,9 +127,11 @@ private:
   /// \c schedulingRequestToAddModList, TS 38.331; \ref sched_ue_creation_request_message.
   std::vector<scheduling_request_to_addmod> sched_request_configs;
 
-  std::array<std::unique_ptr<ue_carrier>, MAX_CELLS> cells;
+  /// List of UE carriers indexed by DU Cell Index.
+  std::array<std::unique_ptr<ue_carrier>, MAX_CELLS> carriers;
 
-  static_vector<ue_carrier*, MAX_CELLS> ue_cells;
+  /// List of UE carriers indexed by UE component carrier index.
+  static_vector<ue_carrier*, MAX_CELLS> ue_cc_list;
 
   sr_indication_message     last_sr;
   ul_bsr_indication_message last_bsr;

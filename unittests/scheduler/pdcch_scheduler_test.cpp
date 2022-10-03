@@ -86,7 +86,7 @@ void test_pdcch_sched_ue()
   cell_configuration      cfg{msg};
   cell_resource_allocator res_grid{cfg};
 
-  ue_cell_configuration ue_cfg{cfg, ue_creation_msg.serv_cell_cfg};
+  ue_cell_configuration ue_cfg{cfg, *ue_creation_msg.cells[0].serv_cell_cfg};
   bwp_id_t              bwpid = to_bwp_id(0);
 
   pdcch_scheduler_impl pdcch_sch(cfg);
@@ -105,8 +105,8 @@ void test_pdcch_sched_ue()
   TESTASSERT(pdcch == &res_grid[0].result.dl.dl_pdcchs[0]);
   TESTASSERT_EQ(aggregation_level::n4, pdcch->ctx.cces.aggr_lvl);
   TESTASSERT_EQ(rnti, pdcch->ctx.rnti);
-  TESTASSERT(*pdcch->ctx.bwp_cfg == ue_cfg.dl_bwps[0]->bwp_dl_common->generic_params);
-  TESTASSERT(pdcch->ctx.coreset_cfg == ue_cfg.dl_coresets[1]);
+  TESTASSERT(*pdcch->ctx.bwp_cfg == ue_cfg.dl_bwp_common(to_bwp_id(0)).generic_params);
+  TESTASSERT(*pdcch->ctx.coreset_cfg == ue_cfg.dl_coreset(to_coreset_id(1)));
 
   // Action: Try allocate an DL PDCCH for another UE that fails due to lack of PDCCH resources.
   rnti  = to_rnti(0x4602);
