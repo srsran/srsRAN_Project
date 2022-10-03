@@ -19,7 +19,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/ssb_configuration.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
-#include "srsgnb/scheduler/bwp_configuration.h"
+#include "srsgnb/scheduler/config/bwp_configuration.h"
 #include "srsgnb/scheduler/sched_consts.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include "srsgnb/scheduler/scheduler_dci.h"

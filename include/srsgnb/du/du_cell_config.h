@@ -13,7 +13,7 @@
 #include "srsgnb/ran/carrier_configuration.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/ssb_configuration.h"
-#include "srsgnb/scheduler/bwp_configuration.h"
+#include "srsgnb/scheduler/config/bwp_configuration.h"
 
 namespace srsgnb {
 

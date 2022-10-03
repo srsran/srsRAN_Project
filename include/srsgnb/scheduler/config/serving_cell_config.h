@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../bwp_configuration.h"
+#include "bwp_configuration.h"
 #include "srsgnb/ran/carrier_configuration.h"
 #include "srsgnb/ran/ssb_configuration.h"
 
@@ -18,12 +18,10 @@ namespace srsgnb {
 
 /// "PDCCH-Config" - UE-dedicated PDCCH configuration as per TS 38.331.
 struct pdcch_config {
-  /// List of CORESETs to be used by the UE. In case of CORESET Id overlap with commonControlResourceSet,
+  /// List of CORESETs to be used by the UE. In case of CORESET Id overlaps with commonControlResourceSet,
   /// the CORESET in this list takes precedence. Size: (0..3).
-  std::vector<coreset_configuration>      coreset_to_addmod_list;
-  std::vector<coreset_id>                 coreset_to_rel_list;
-  std::vector<search_space_configuration> ss_to_addmod_list;
-  std::vector<search_space_id>            ss_to_rel_list;
+  std::vector<coreset_configuration>      coresets;
+  std::vector<search_space_configuration> search_spaces;
   // TODO: add remaining fields.
 };
 
@@ -49,6 +47,12 @@ struct bwp_downlink {
   bwp_id_t                         bwp_id;
   optional<bwp_downlink_common>    bwp_dl_common;
   optional<bwp_downlink_dedicated> bwp_dl_ded;
+};
+
+/// Used to configure the dedicated UE-specific parameters of an UL BWP.
+/// \remark See TS 38.331, BWP-UplinkDedicated.
+struct bwp_uplink_dedicated {
+  optional<pucch_config> pucch_cfg;
 };
 
 /// Uplink configuration, as per \c UplinkConfig, in \c ServingCellConfig, TS 38.331.

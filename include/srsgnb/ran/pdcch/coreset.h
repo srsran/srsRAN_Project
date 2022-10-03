@@ -19,7 +19,7 @@ namespace srsgnb {
 
 /// Max number of CORESETs per BWP per cell (including UE-specific and common CORESETs).
 /// \remark See TS 38.331, "PDCCH-Config".
-const size_t MAX_NOF_CORESETS_PER_BWP = 3;
+constexpr size_t MAX_NOF_CORESETS_PER_BWP = 3;
 
 /// Describes a frequency resource bitmap for CORESET allocation. Each resource represents a group of 6 PRBs.
 /// \remark See TS 38.331, "ControlResourceSet"

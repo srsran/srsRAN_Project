@@ -4,7 +4,7 @@
 #include "../cell/cell_configuration.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/du_types.h"
-#include "srsgnb/scheduler/bwp_configuration.h"
+#include "srsgnb/scheduler/config/bwp_configuration.h"
 
 namespace srsgnb {
 
@@ -39,7 +39,7 @@ public:
     if (bwpid == to_bwp_id(0)) {
       return dl_bwps_cfg[bwpid].bwp_dl_common->pdcch_common.search_spaces;
     }
-    return dl_bwps_cfg[bwpid].bwp_dl_ded->pdcch_cfg->ss_to_addmod_list;
+    return dl_bwps_cfg[bwpid].bwp_dl_ded->pdcch_cfg->search_spaces;
   }
 
   /// Get UE list of pdsch-TimeDomainAllocationList as per TS38.214 clause 5.1.2.1.1.

@@ -84,7 +84,7 @@ void ue_cell_configuration::update_config_maps()
       // ControlResourceSetId as used for commonControlResourceSet configured via PDCCH-ConfigCommon,
       // the configuration from PDCCH-Config always takes precedence and should not be updated by the UE based on
       // servingCellConfigCommon.
-      for (const coreset_configuration& cs_cfg : bwp_dl.bwp_dl_ded->pdcch_cfg->coreset_to_addmod_list) {
+      for (const coreset_configuration& cs_cfg : bwp_dl.bwp_dl_ded->pdcch_cfg->coresets) {
         dl_coresets[cs_cfg.id]       = &cs_cfg;
         coreset_to_bwp_id[cs_cfg.id] = bwp_dl.bwp_id;
       }
@@ -100,7 +100,7 @@ void ue_cell_configuration::update_config_maps()
       }
     }
     if (bwp_dl.bwp_dl_ded.has_value()) {
-      for (const search_space_configuration& ss_cfg : bwp_dl.bwp_dl_ded->pdcch_cfg->ss_to_addmod_list) {
+      for (const search_space_configuration& ss_cfg : bwp_dl.bwp_dl_ded->pdcch_cfg->search_spaces) {
         dl_search_spaces[ss_cfg.id] = &ss_cfg;
       }
     }
@@ -113,27 +113,10 @@ void ue_cell_configuration::addmod_bwp_ded_cfg(bwp_id_t bwpid, const bwp_downlin
     dl_bwps_cfg.emplace(bwpid);
   }
   if (not dl_bwps_cfg[bwpid].bwp_dl_ded.has_value()) {
-    dl_bwps_cfg[bwpid].bwp_dl_ded.emplace();
+    dl_bwps_cfg[bwpid].bwp_dl_ded.emplace(bwp_dl_ded);
+  } else {
+    *dl_bwps_cfg[bwpid].bwp_dl_ded = bwp_dl_ded;
   }
-  bwp_downlink_dedicated& self_bwp_ded = *dl_bwps_cfg[bwpid].bwp_dl_ded;
-  if (not self_bwp_ded.pdcch_cfg.has_value()) {
-    self_bwp_ded.pdcch_cfg.emplace();
-  }
-  pdcch_config& self_pdcch = *self_bwp_ded.pdcch_cfg;
-
-  // Apply CORESET diff.
-  apply_addmodremlist_diff(self_pdcch.coreset_to_addmod_list,
-                           bwp_dl_ded.pdcch_cfg->coreset_to_addmod_list,
-                           bwp_dl_ded.pdcch_cfg->coreset_to_rel_list,
-                           [](const coreset_configuration& cs) { return cs.id; });
-
-  // Apply SearchSpace diff.
-  apply_addmodremlist_diff(self_pdcch.ss_to_addmod_list,
-                           bwp_dl_ded.pdcch_cfg->ss_to_addmod_list,
-                           bwp_dl_ded.pdcch_cfg->ss_to_rel_list,
-                           [](const search_space_configuration& ss) { return ss.id; });
-
-  self_bwp_ded.pdsch_cfg = bwp_dl_ded.pdsch_cfg;
 }
 
 void ue_cell_configuration::release_bwp_ded_cfg(bwp_id_t bwpid)

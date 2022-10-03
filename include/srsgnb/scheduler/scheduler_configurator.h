@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "bwp_configuration.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/ran/carrier_configuration.h"
 #include "srsgnb/ran/du_types.h"
@@ -25,8 +24,9 @@
 #include "srsgnb/ran/ssb_configuration.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
+#include "srsgnb/scheduler/config/bwp_configuration.h"
+#include "srsgnb/scheduler/config/dmrs.h"
 #include "srsgnb/scheduler/config/serving_cell_config.h"
-#include "srsgnb/scheduler/dmrs.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
 
 namespace srsgnb {

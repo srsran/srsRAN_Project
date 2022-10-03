@@ -204,16 +204,16 @@ void calculate_pdcch_config_diff(asn1::rrc_nr::pdcch_cfg_s& out, const pdcch_con
   calculate_addmodremlist_diff(
       out.coreset_to_add_mod_list,
       out.coreset_to_release_list,
-      src.coreset_to_addmod_list,
-      dest.coreset_to_addmod_list,
+      src.coresets,
+      dest.coresets,
       [](const coreset_configuration& cs_cfg) { return make_asn1_rrc_coreset(cs_cfg); },
       [](const coreset_configuration& cs_cfg) { return (uint8_t)cs_cfg.id; });
 
   calculate_addmodremlist_diff(
       out.search_spaces_to_add_mod_list,
       out.search_spaces_to_release_list,
-      src.ss_to_addmod_list,
-      dest.ss_to_addmod_list,
+      src.search_spaces,
+      dest.search_spaces,
       [](const search_space_configuration& ss) { return make_asn1_rrc_search_space(ss); },
       [](const search_space_configuration& ss) { return (uint8_t)ss.id; });
 

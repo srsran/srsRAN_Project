@@ -13,7 +13,7 @@
 #include "srsgnb/mac/cell_configuration.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/ssb_configuration.h"
-#include "srsgnb/scheduler/dmrs.h"
+#include "srsgnb/scheduler/config/dmrs.h"
 #include <cstddef>
 
 namespace srsgnb {

@@ -29,12 +29,11 @@ void test_ue_cfg_creation()
              cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].cs_id);
 
   // Test Dedicated Config.
-  TESTASSERT(ue_cfg.dl_coresets[1]->id ==
-             ue_create_msg.serv_cell_cfg.init_dl_bwp->pdcch_cfg->coreset_to_addmod_list[0].id);
+  TESTASSERT(ue_cfg.dl_coresets[1]->id == ue_create_msg.serv_cell_cfg.init_dl_bwp->pdcch_cfg->coresets[0].id);
   TESTASSERT(ue_cfg.dl_coresets[2] == nullptr);
   TESTASSERT_EQ(2, ue_cfg.dl_search_spaces[2]->id);
   TESTASSERT_EQ(ue_cfg.dl_search_spaces[2]->cs_id,
-                ue_create_msg.serv_cell_cfg.init_dl_bwp->pdcch_cfg->ss_to_addmod_list[0].cs_id);
+                ue_create_msg.serv_cell_cfg.init_dl_bwp->pdcch_cfg->search_spaces[0].cs_id);
   TESTASSERT(ue_cfg.dl_search_spaces[3] == nullptr);
 }
 
@@ -48,11 +47,9 @@ void test_ue_cfg_reconfig()
   serving_cell_ue_configuration_request ue_cell_reconf{};
   ue_cell_reconf.init_dl_bwp.emplace();
   ue_cell_reconf.init_dl_bwp->pdcch_cfg.emplace();
-  ue_cell_reconf.init_dl_bwp->pdcch_cfg->coreset_to_addmod_list.emplace_back();
-  ue_cell_reconf.init_dl_bwp->pdcch_cfg->coreset_to_addmod_list.back() = config_helpers::make_default_coreset_config();
-  ue_cell_reconf.init_dl_bwp->pdcch_cfg->coreset_to_addmod_list.back().id = to_coreset_id(2);
-  ue_cell_reconf.init_dl_bwp->pdcch_cfg->ss_to_rel_list.emplace_back();
-  ue_cell_reconf.init_dl_bwp->pdcch_cfg->ss_to_rel_list[0] = to_search_space_id(2);
+  ue_cell_reconf.init_dl_bwp->pdcch_cfg->coresets.emplace_back();
+  ue_cell_reconf.init_dl_bwp->pdcch_cfg->coresets.back()    = config_helpers::make_default_coreset_config();
+  ue_cell_reconf.init_dl_bwp->pdcch_cfg->coresets.back().id = to_coreset_id(2);
 
   ue_cfg.reconfigure(ue_cell_reconf);
 

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/scheduler/dmrs.h"
+#include "srsgnb/scheduler/config/dmrs.h"
 
 namespace srsgnb {
 

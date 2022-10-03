@@ -11,8 +11,8 @@
 #pragma once
 
 #include "srsgnb/ran/cyclic_prefix.h"
-#include "srsgnb/scheduler/bwp_configuration.h"
-#include "srsgnb/scheduler/dmrs.h"
+#include "srsgnb/scheduler/config/bwp_configuration.h"
+#include "srsgnb/scheduler/config/dmrs.h"
 
 namespace srsgnb {
 

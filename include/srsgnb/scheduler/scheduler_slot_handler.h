@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "bwp_configuration.h"
 #include "prb_grant.h"
 #include "sched_consts.h"
 #include "scheduler_dci.h"
@@ -28,7 +27,8 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
-#include "srsgnb/scheduler/dmrs.h"
+#include "srsgnb/scheduler/config/bwp_configuration.h"
+#include "srsgnb/scheduler/config/dmrs.h"
 #include "srsgnb/scheduler/scheduler_pucch_format.h"
 #include <cstddef>
 

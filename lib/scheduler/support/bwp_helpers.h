@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/scheduler/bwp_configuration.h"
+#include "srsgnb/scheduler/config/bwp_configuration.h"
 
 namespace srsgnb {
 
