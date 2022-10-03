@@ -105,14 +105,15 @@ void apply_addmodremlist_diff(AddModList&       src_and_dest_list,
 }
 
 /// \brief Invokes rem_func, add_func and mod_func for any detected differences between prev_list and next_list.
-/// \tparam List List of objects, where each object has an ID.
-/// \param[in] rem_func Callable with signature void(const obj_type&), where obj_type is the value_type of \c List,
+/// \param rem_func Callable with signature void(const obj_type&), where obj_type is the value_type of \c List,
 /// which gets called for every object whose id exists in \c prev_list but does not exist in \c next_list.
-/// \param[in] add_func Callable with signature void(const obj_type&), where obj_type is the value_type of \c List,
+/// \param add_func Callable with signature void(const obj_type&), where obj_type is the value_type of \c List,
 /// which gets called for every object whose id exists in \c next_list but does not exist in \c prev_list.
-/// \param[in] mod_func Callable with signature void(const obj_type&), where obj_type is the value_type of \c List,
+/// \param mod_func Callable with signature void(const obj_type&), where obj_type is the value_type of \c List,
 /// which gets called for every object whose id exists in both \c next_list and \c prev_list, but its parameters are
 /// different between the two lists.
+/// \tparam List List of objects, where each object has an ID.
+/// \tparam GetId Function to obtain ID of an object.
 /// \param[in] prev_list Previous list of objects.
 /// \param[in] next_list Next list of objects.
 /// \param[in] id_func function to extract the ID from an object with type equal to the value_type of \c List.
@@ -148,9 +149,11 @@ std::enable_if_t<not is_iterable<AddFunctor>::value> calculate_addmodremlist_dif
 }
 
 /// \brief Generate toAddModList and toReleaseList based on differences between prev_list and next_list.
-/// \tparam List List of objects, where each object has an ID.
 /// \tparam toAddModList List of objects added or modified.
 /// \tparam RemoveList List of IDs for objects removed.
+/// \tparam List List of objects, where each object has an ID.
+/// \tparam ConvertElem Function to convert element of \c List to element of \c toAddModList.
+/// \tparam GetId Function to obtain ID of an object.
 /// \param[out] add_diff_list Difference in terms of added/modified objects between \c prev_list and \c next_list.
 /// \param[out] rem_diff_list Difference in terms of removed objects between  \c prev_list and \c next_list.
 /// \param[in] prev_list Previous list of objects.
@@ -188,9 +191,9 @@ std::enable_if_t<is_iterable<toAddModList>::value> calculate_addmodremlist_diff(
 }
 
 /// \brief Generate toAddModList and toReleaseList based on differences between prev_list and next_list.
-/// \tparam List List of objects, where each object has an ID.
 /// \tparam toAddModList List of objects added or modified.
 /// \tparam RemoveList List of IDs for objects removed.
+/// \tparam GetId Function to obtain ID of an object.
 /// \param[out] add_diff_list Difference in terms of added/modified objects between \c prev_list and \c next_list.
 /// \param[out] rem_diff_list Difference in terms of removed objects between  \c prev_list and \c next_list.
 /// \param[in] prev_list Previous list of objects.
