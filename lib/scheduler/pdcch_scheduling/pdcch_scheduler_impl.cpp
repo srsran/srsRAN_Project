@@ -284,9 +284,9 @@ pdcch_ul_information* pdcch_scheduler_impl::alloc_ul_pdcch_ue(cell_slot_resource
   pdcch.ctx.rnti              = rnti;
   pdcch.ctx.cces.ncce         = 0;
   // [Implementation-defined] We allocate the DCI on the SearchSpace starting from symbols 0.
-  pdcch.ctx.starting_symbol   = 0;
-  pdcch.ctx.cces.aggr_lvl     = aggr_lvl;
-  pdcch.dci.format_type       = dci_fmt;
+  pdcch.ctx.starting_symbol = 0;
+  pdcch.ctx.cces.aggr_lvl   = aggr_lvl;
+  pdcch.dci.format_type     = dci_fmt;
 
   // Allocate a position for UL PDCCH in CORESET.
   pdcch_slot_allocator& pdcch_alloc = get_pdcch_slot_alloc(slot_alloc.slot);
@@ -320,8 +320,8 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_dl_pdcch_helper(cell_slot_reso
   pdcch.ctx.rnti              = rnti;
   pdcch.ctx.cces.ncce         = 0;
   // [Implementation-defined] We allocate the DCI on the SearchSpace starting from symbols 0.
-  pdcch.ctx.starting_symbol   = 0;
-  pdcch.ctx.cces.aggr_lvl     = aggr_lvl;
+  pdcch.ctx.starting_symbol = 0;
+  pdcch.ctx.cces.aggr_lvl   = aggr_lvl;
   // See TS 38.211, 7.3.2.3 - Scrambling.
   pdcch.ctx.n_id_pdcch_data = cs_cfg.pdcch_dmrs_scrambling_id;
   if (ss_cfg.type == search_space_configuration::type::ue_dedicated and
