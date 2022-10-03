@@ -38,7 +38,7 @@ public:
   constexpr spatial_topology() = default;
 
   /// Construct from value. Allows implicit conversion from a channel spatial topology option.
-  explicit constexpr spatial_topology(options opt) : value(opt) {}
+  constexpr spatial_topology(options opt) : value(opt) {}
 
   /// Construct from a given number or Rx ports and Tx layers.
   constexpr spatial_topology(unsigned nof_rx_ports, unsigned nof_tx_layers)
@@ -58,6 +58,30 @@ public:
     }
   }
 
+  /// Converts a channel topology into string format.
+  std::string to_string() const
+  {
+    switch (value) {
+      case siso:
+        return "siso";
+      case miso_2x1:
+        return "miso_2x1";
+      case mimo_2x2:
+        return "mimo_2x2";
+      case miso_3x1:
+        return "miso_3x1";
+      case miso_4x1:
+        return "miso_4x1";
+      case invalid:
+      default:
+        return "invalid";
+    }
+  }
+
+  /// \name Channel dimension getters.
+  ///@{
+
+  /// Gets the number of Rx ports from a \c spatial_topology::options value.
   static constexpr unsigned get_nof_rx_ports(spatial_topology::options value)
   {
     switch (value) {
@@ -75,6 +99,60 @@ public:
         return 0;
     }
   }
+
+  /// Gets the number of Rx ports from a \c spatial_topology instance.
+  constexpr unsigned get_nof_rx_ports()
+  {
+    switch (value) {
+      case siso:
+        return 1;
+      case miso_2x1:
+      case mimo_2x2:
+        return 2;
+      case miso_3x1:
+        return 3;
+      case miso_4x1:
+        return 4;
+      case invalid:
+      default:
+        return 0;
+    }
+  }
+
+  /// Gets the number of Tx layers from a \c spatial_topology::options value.
+  static constexpr unsigned get_nof_tx_layers(spatial_topology::options value)
+  {
+    switch (value) {
+      case siso:
+      case miso_2x1:
+      case miso_3x1:
+      case miso_4x1:
+        return 1;
+      case mimo_2x2:
+        return 2;
+      case invalid:
+      default:
+        return 0;
+    }
+  }
+
+  /// Gets the number of Tx layers from a \c spatial_topology instance.
+  constexpr unsigned get_nof_tx_layers()
+  {
+    switch (value) {
+      case siso:
+      case miso_2x1:
+      case miso_3x1:
+      case miso_4x1:
+        return 1;
+      case mimo_2x2:
+        return 2;
+      case invalid:
+      default:
+        return 0;
+    }
+  }
+  ///@}
 
   /// Check if the spatial topology is valid.
   constexpr bool is_valid() const { return value != invalid; }

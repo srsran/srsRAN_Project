@@ -15,7 +15,7 @@
 #include "equalize_zf_1x1.h"
 #include "equalize_zf_1xn.h"
 #include "equalize_zf_2x2.h"
-#include "spatial_topology.h"
+#include "srsgnb/ran/spatial_topology.h"
 
 using namespace srsgnb;
 
