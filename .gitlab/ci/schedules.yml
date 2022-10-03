@@ -8,6 +8,9 @@ Nightly:
       key: CI_DESCRIPTION
       value: "Nightly"
     - variable_type: env_var
+      key: GRADUATION_BRANCH
+      value: next
+    - variable_type: env_var
       key: NOTIFY_SLACK
       value: "true"
     - variable_type: env_var
@@ -23,6 +26,9 @@ Weekly:
     - variable_type: env_var
       key: CI_DESCRIPTION
       value: "Weekly"
+    - variable_type: env_var
+      key: GRADUATION_BRANCH
+      value: main
     - variable_type: env_var
       key: NOTIFY_SLACK
       value: "true"

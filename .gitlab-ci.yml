@@ -457,13 +457,13 @@ pages:
 ################################################################################
 # Git workflow graduation
 ################################################################################
-.gratuation:
+promote code:
+  stage: .post
+  rules:
+    - if: $GRADUATION_BRANCH
   image: alpine:3.16.0 # sh entrypoint
   before_script:
     - apk add --update --no-cache git git-lfs
-  stage: .post
-  variables:
-    GRADUATION_BRANCH: ""
   script:
     - git config user.email "${CODEBOT_USERNAME}@srs.io"
     - git config user.name ${CODEBOT_USERNAME}
@@ -473,17 +473,3 @@ pages:
     - git checkout -t origin/$GRADUATION_BRANCH
     - git rebase ${CI_COMMIT_SHA}
     - git push
-
-promote to next:
-  extends: .gratuation
-  rules:
-    - if: $CI_DESCRIPTION == "Nightly"
-  variables:
-    GRADUATION_BRANCH: next
-
-promote to main:
-  extends: .gratuation
-  rules:
-    - if: $CI_DESCRIPTION == "Weekly"
-  variables:
-    GRADUATION_BRANCH: main
