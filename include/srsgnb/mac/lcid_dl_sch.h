@@ -57,7 +57,10 @@ public:
     return *this;
   }
 
-  explicit        operator underlying_type() const { return lcid_val; }
+  /// convert lcid_dl_sch_t to underlying integer type via cast.
+  explicit operator underlying_type() const { return lcid_val; }
+
+  /// convert lcid_dl_sch_t to underlying integer type.
   underlying_type value() const { return lcid_val; }
 
   /// Whether LCID is an MAC CE

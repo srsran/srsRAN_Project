@@ -89,7 +89,7 @@ private:
     unsigned buf_st = 0;
   };
 
-  /// \brief Returns the next highest priority LCID.
+  /// \brief Returns the next highest priority LCID. The prioritization policy is implementation-defined.
   lcid_t get_max_prio_lcid() const;
 
   /// \brief Updates DL Buffer State for a given LCID based on available space.
