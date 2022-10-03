@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "pucch_detector.h"
 #include "srsgnb/phy/generic_functions/generic_functions_factories.h"
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
@@ -161,6 +162,8 @@ public:
   virtual ~pucch_detector_factory()                = default;
   virtual std::unique_ptr<pucch_detector> create() = 0;
 };
+
+std::shared_ptr<pucch_detector_factory> create_pucch_detector_factory_sw();
 
 class pucch_processor_factory
 {

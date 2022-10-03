@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/channel_processors/uci_status.h"
 #include "srsgnb/ran/uci/uci_constants.h"
 

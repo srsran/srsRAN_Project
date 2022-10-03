@@ -8,6 +8,9 @@
  *
  */
 
+/// \file
+/// \brief PUCCH detector interface for Formats 0 and 1.
+
 #pragma once
 
 #include "srsgnb/phy/support/resource_grid.h"

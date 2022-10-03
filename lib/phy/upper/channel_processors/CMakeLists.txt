@@ -39,6 +39,11 @@ target_link_libraries(srsgnb_prach_detector srsgnb_ran srsvec)
 
 add_library(srsgnb_pucch_processor STATIC pucch_processor_impl.cpp)
 
+add_library(srsgnb_pucch_detector STATIC pucch_detector_impl.cpp)
+target_include_directories(srsgnb_pucch_detector
+        PUBLIC ${CMAKE_SOURCE_DIR}/include/srsgnb/phy/upper/channel_processors
+        )
+
 add_library(srsgnb_pusch_decoder STATIC pusch_decoder_impl.cpp)
 target_link_libraries(srsgnb_pusch_decoder srsgnb_channel_coding srsvec)
 
@@ -65,6 +70,7 @@ target_link_libraries(srsgnb_channel_processors
         srsgnb_pdsch_processor
         srsgnb_prach_detector
         srsgnb_pucch_processor
+        srsgnb_pucch_detector
         srsgnb_pusch_decoder
         srsgnb_pusch_demodulator
         srsgnb_pusch_processor
@@ -72,19 +78,19 @@ target_link_libraries(srsgnb_channel_processors
         srsgnb_uci_decoder)
 
 install(TARGETS srsgnb_channel_processors
-                srsgnb_pbch_encoder
-                srsgnb_pbch_modulator
-                srsgnb_pdcch_encoder
-                srsgnb_pdcch_modulator
-                srsgnb_pdcch_processor
-                srsgnb_pdsch_encoder
-                srsgnb_pdsch_modulator
-                srsgnb_pdsch_processor
-                srsgnb_prach_detector
-                srsgnb_pucch_processor
-                srsgnb_pusch_decoder
-                srsgnb_pusch_demodulator
-                srsgnb_pusch_processor
-                srsgnb_ssb_processor
-                srsgnb_uci_decoder
+        srsgnb_pbch_encoder
+        srsgnb_pbch_modulator
+        srsgnb_pdcch_encoder
+        srsgnb_pdcch_modulator
+        srsgnb_pdcch_processor
+        srsgnb_pdsch_encoder
+        srsgnb_pdsch_modulator
+        srsgnb_pdsch_processor
+        srsgnb_prach_detector
+        srsgnb_pucch_processor
+        srsgnb_pusch_decoder
+        srsgnb_pusch_demodulator
+        srsgnb_pusch_processor
+        srsgnb_ssb_processor
+        srsgnb_uci_decoder
         EXPORT srsgnb_export)

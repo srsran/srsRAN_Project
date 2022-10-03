@@ -19,6 +19,7 @@
 #include "pdsch_processor_impl.h"
 #include "prach_detector_simple_impl.h"
 #include "prach_generator_impl.h"
+#include "pucch_detector_impl.h"
 #include "pucch_processor_impl.h"
 #include "pusch_decoder_impl.h"
 #include "pusch_demodulator_impl.h"
@@ -286,6 +287,11 @@ public:
   }
 };
 
+class pucch_detector_factory_sw : public pucch_detector_factory
+{
+  std::unique_ptr<pucch_detector> create() override { return std::make_unique<pucch_detector_impl>(); }
+};
+
 class pucch_processor_factory_sw : public pucch_processor_factory
 {
 public:
@@ -541,6 +547,11 @@ std::shared_ptr<prach_generator_factory>
 srsgnb::create_prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory)
 {
   return std::make_shared<prach_generator_factory_sw>(std::move(dft_factory));
+}
+
+std::shared_ptr<pucch_detector_factory> srsgnb::create_pucch_detector_factory_sw()
+{
+  return std::make_shared<pucch_detector_factory_sw>();
 }
 
 std::shared_ptr<pusch_decoder_factory>
