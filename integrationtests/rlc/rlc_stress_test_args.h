@@ -180,4 +180,35 @@ inline rlc_config get_rlc_config_from_args(const stress_test_args& args)
   return cnfg;
 }
 
+inline void init_log_from_args(const stress_test_args& args)
+{
+  srslog::init();
+
+  srslog::sink* log_sink =
+      (args.log_filename == "stdout") ? srslog::create_stdout_sink() : srslog::create_file_sink(args.log_filename);
+  if (log_sink == nullptr) {
+    return;
+  }
+  srslog::log_channel* chan = srslog::create_log_channel("main_channel", *log_sink);
+  if (chan == nullptr) {
+    return;
+  }
+  srslog::set_default_sink(*log_sink);
+
+  auto& log_stack = srslog::fetch_basic_logger("STACK", false);
+  log_stack.set_level(args.log_level);
+  log_stack.set_hex_dump_max_size(args.log_hex_limit);
+
+  auto& log_pdcp = srslog::fetch_basic_logger("PDCP", false);
+  log_pdcp.set_level(args.log_level);
+  log_pdcp.set_hex_dump_max_size(args.log_hex_limit);
+
+  auto& log_rlc = srslog::fetch_basic_logger("RLC", false);
+  log_rlc.set_level(args.log_level);
+  log_rlc.set_hex_dump_max_size(args.log_hex_limit);
+
+  auto& log_mac = srslog::fetch_basic_logger("MAC", false);
+  log_mac.set_level(args.log_level);
+  log_mac.set_hex_dump_max_size(args.log_hex_limit);
+}
 } // namespace srsgnb
