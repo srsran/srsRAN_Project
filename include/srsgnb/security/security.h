@@ -73,19 +73,19 @@ struct sec_128_as_config {
 /******************************************************************************
  * Key Generation
  *****************************************************************************/
-bool kdf_common(sec_as_key&                 key_out,
+void kdf_common(sec_as_key&                 key_out,
                 const sec_as_key&           key_in,
                 const uint8_t               fc,
-                const std::vector<uint8_t>& P0,
-                const std::vector<uint8_t>& P1);
+                const std::vector<uint8_t>& p0,
+                const std::vector<uint8_t>& p1);
 
-bool security_generate_k_nr_rrc(sec_as_key&               k_rrc_enc,
+void security_generate_k_nr_rrc(sec_as_key&               k_rrc_enc,
                                 sec_as_key&               k_rrc_int,
                                 const sec_as_key&         k_gnb,
                                 const ciphering_algorithm enc_alg_id,
                                 const integrity_algorithm int_alg_id);
 
-bool security_generate_k_nr_up(sec_as_key&               k_up_enc,
+void security_generate_k_nr_up(sec_as_key&               k_up_enc,
                                sec_as_key&               k_up_int,
                                const sec_as_key&         k_gnb,
                                const ciphering_algorithm enc_alg_id,

@@ -44,7 +44,7 @@ using namespace srsgnb;
 /******************************************************************************
  * Key Generation
  *****************************************************************************/
-bool srsgnb::security_generate_k_nr_rrc(sec_as_key&               k_rrc_enc,
+void srsgnb::security_generate_k_nr_rrc(sec_as_key&               k_rrc_enc,
                                         sec_as_key&               k_rrc_int,
                                         const sec_as_key&         k_gnb,
                                         const ciphering_algorithm enc_alg_id,
@@ -61,9 +61,7 @@ bool srsgnb::security_generate_k_nr_rrc(sec_as_key&               k_rrc_enc,
   algorithm_identity.resize(1);
   algorithm_identity[0] = static_cast<uint8_t>(enc_alg_id);
 
-  if (kdf_common(k_rrc_enc, k_gnb, FC_5G_ALGORITHM_KEY_DERIVATION, algo_distinguisher, algorithm_identity) != true) {
-    return false;
-  }
+  kdf_common(k_rrc_enc, k_gnb, FC_5G_ALGORITHM_KEY_DERIVATION, algo_distinguisher, algorithm_identity);
 
   // Derive RRC INT
   // algorithm type distinguisher
@@ -75,13 +73,10 @@ bool srsgnb::security_generate_k_nr_rrc(sec_as_key&               k_rrc_enc,
   algorithm_identity[0] = static_cast<uint8_t>(int_alg_id);
 
   // Derive RRC int
-  if (kdf_common(k_rrc_int, k_gnb, FC_5G_ALGORITHM_KEY_DERIVATION, algo_distinguisher, algorithm_identity) != true) {
-    return false;
-  }
-  return true;
+  kdf_common(k_rrc_int, k_gnb, FC_5G_ALGORITHM_KEY_DERIVATION, algo_distinguisher, algorithm_identity);
 }
 
-bool srsgnb::security_generate_k_nr_up(sec_as_key&               k_up_enc,
+void srsgnb::security_generate_k_nr_up(sec_as_key&               k_up_enc,
                                        sec_as_key&               k_up_int,
                                        const sec_as_key&         k_gnb,
                                        const ciphering_algorithm enc_alg_id,
@@ -98,9 +93,7 @@ bool srsgnb::security_generate_k_nr_up(sec_as_key&               k_up_enc,
   algorithm_identity.resize(1);
   algorithm_identity[0] = static_cast<uint8_t>(enc_alg_id);
 
-  if (kdf_common(k_up_enc, k_gnb, FC_5G_ALGORITHM_KEY_DERIVATION, algo_distinguisher, algorithm_identity) != true) {
-    return false;
-  }
+  kdf_common(k_up_enc, k_gnb, FC_5G_ALGORITHM_KEY_DERIVATION, algo_distinguisher, algorithm_identity);
 
   // Derive UP INT
   // algorithm type distinguisher
@@ -112,49 +105,46 @@ bool srsgnb::security_generate_k_nr_up(sec_as_key&               k_up_enc,
   algorithm_identity[0] = static_cast<uint8_t>(int_alg_id);
 
   // Derive UP int
-  if (kdf_common(k_up_int, k_gnb, FC_5G_ALGORITHM_KEY_DERIVATION, algo_distinguisher, algorithm_identity) != true) {
-    return false;
-  }
-  return true;
+  kdf_common(k_up_int, k_gnb, FC_5G_ALGORITHM_KEY_DERIVATION, algo_distinguisher, algorithm_identity);
 }
 
-bool srsgnb::kdf_common(sec_as_key&                 key_out,
+void srsgnb::kdf_common(sec_as_key&                 key_out,
                         const sec_as_key&           key_in,
                         const uint8_t               fc,
-                        const std::vector<uint8_t>& P0,
-                        const std::vector<uint8_t>& P1)
+                        const std::vector<uint8_t>& p0,
+                        const std::vector<uint8_t>& p1)
 {
-  uint8_t* s;
-  uint32_t s_len = 1 + P0.size() + 2 + P1.size() + 2;
+  union p_len {
+    uint16_t                                  length_value;
+    std::array<uint8_t, sizeof(length_value)> bytes;
+  };
 
-  s = (uint8_t*)calloc(s_len, sizeof(uint8_t));
+  std::vector<uint8_t> s;
+  s.resize(1 + p0.size() + sizeof(p_len) + p1.size() + sizeof(p_len));
 
-  if (s == nullptr) {
-    return false;
-  }
+  std::vector<uint8_t>::iterator s_it = s.begin();
 
-  uint32_t i = 0;
-  s[i]       = fc; // FC
-  i++;
+  // FC
+  *s_it = fc;
+  s_it++;
 
   // P0
-  memcpy(&s[i], P0.data(), P0.size());
-  i += P0.size();
-  uint16_t p0_length_value = htons(P0.size());
-  memcpy(&s[i], &p0_length_value, sizeof(p0_length_value));
-  i += sizeof(p0_length_value);
+  std::copy(p0.begin(), p0.end(), s_it);
+  s_it += p0.size();
+
+  p_len p0_len = {htons(p0.size())};
+  std::copy(p0_len.bytes.begin(), p0_len.bytes.end(), s_it);
+  s_it += sizeof(p0_len);
 
   // P1
-  memcpy(&s[i], P1.data(), P1.size());
-  i += P1.size();
-  uint16_t p1_length_value = htons(P1.size());
-  memcpy(&s[i], &p1_length_value, sizeof(p1_length_value));
-  i += sizeof(p1_length_value);
+  std::copy(p1.begin(), p1.end(), s_it);
+  s_it += p1.size();
 
-  sha256(key_in.data(), key_in.size(), s, i, key_out.data(), 0);
-  free(s);
+  p_len p1_len = {htons(p1.size())};
+  std::copy(p1_len.bytes.begin(), p1_len.bytes.end(), s_it);
+  s_it += sizeof(p1_len);
 
-  return true;
+  sha256(key_in.data(), key_in.size(), s.data(), s.size(), key_out.data(), 0);
 }
 
 /******************************************************************************
