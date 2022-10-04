@@ -50,14 +50,7 @@ enum class integrity_algorithm {
 /// FC Values
 /// Ref: TS 33.501 Sec. A.1.2
 enum class fc_value {
-  k_gnb_star_derivation    = 0x70,
-  algorithm_key_derivation = 0x69,
-  kausf_derivation         = 0x6a,
-  res_star_derivation      = 0x6b,
-  kseaf_derivation         = 0x6c,
-  kamf_derivation          = 0x6d,
-  kgnb_kn3iwf_derivation   = 0x6e,
-  nh_gnb_derivation        = 0x6f
+  algorithm_key_derivation = 0x69, ///< Algorithm key derivation functions (Sec. A.8)
 };
 constexpr uint8_t to_number(fc_value fc)
 {
@@ -65,7 +58,7 @@ constexpr uint8_t to_number(fc_value fc)
 }
 
 /// Security Algorithm Distinguisher
-/// Ref: TS 33.501 Sec. A.8
+/// Ref: TS 33.501 Sec. A.8, Table A.8-1
 enum class security_algo_distinguisher {
   nas_enc_alg = 0x01,
   nas_int_alg = 0x02,
