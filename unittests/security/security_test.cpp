@@ -14,6 +14,15 @@
 using namespace srsgnb;
 
 /// Converts a hex string (e.g. 01FA02) to a sec_as_key.
+sec_as_key make_sec_as_key(std::string hex_str)
+{
+  byte_buffer key_buf = make_byte_buffer(hex_str);
+  sec_as_key  key     = {};
+  std::copy(key_buf.begin(), key_buf.end(), key.begin());
+  return key;
+}
+
+/// Converts a hex string (e.g. 01FA02) to a sec_128_as_key.
 sec_128_as_key make_sec_128_as_key(std::string hex_str)
 {
   byte_buffer    key_buf = make_byte_buffer(hex_str);
@@ -1200,32 +1209,37 @@ TEST(security_nia3_test, testset5)
 /// Generation of k_rrc_end and k_rrc_int
 TEST(security_gen_k_rrc, testset1)
 {
-  uint8_t sk_gnb[] = {0x45, 0xcb, 0xc3, 0xf8, 0xa8, 0x11, 0x93, 0xfd, 0x5c, 0x52, 0x29, 0x30, 0x0d, 0x59, 0xed, 0xf8,
-                      0x12, 0xe9, 0x98, 0xa1, 0x15, 0xec, 0x4e, 0x0c, 0xe9, 0x03, 0xba, 0x89, 0x36, 0x7e, 0x26, 0x28};
-  uint8_t k_rrc_enc_o[32];
-  uint8_t k_rrc_int_o[32];
+  // Testdata in plain format
+  const char* sk_gnb_cstr    = "45cbc3f8a81193fd5c5229300d59edf812e998a115ec4e0ce903ba89367e2628";
+  const char* k_rrc_enc_cstr = "52a995dff89bc294bd89ffb137a29f2466a09e992386c8d1df7892964c6fb522";
+
+  // Pack hex strings into srsgnb types
+  sec_as_key sk_gnb    = make_sec_as_key(sk_gnb_cstr);
+  sec_as_key k_rrc_enc = make_sec_as_key(k_rrc_enc_cstr);
+  sec_as_key k_rrc_enc_o;
+  sec_as_key k_rrc_int_o;
 
   EXPECT_TRUE(srsgnb::security_generate_k_nr_rrc(
-      sk_gnb, srsgnb::ciphering_algorithm::nea2, srsgnb::integrity_algorithm::nia0, k_rrc_enc_o, k_rrc_int_o));
+      k_rrc_enc_o, k_rrc_int_o, sk_gnb, srsgnb::ciphering_algorithm::nea2, srsgnb::integrity_algorithm::nia0));
 
-  uint8_t k_rrc_enc[] = {0x52, 0xa9, 0x95, 0xdf, 0xf8, 0x9b, 0xc2, 0x94, 0xbd, 0x89, 0xff,
-                         0xb1, 0x37, 0xa2, 0x9f, 0x24, 0x66, 0xa0, 0x9e, 0x99, 0x23, 0x86,
-                         0xc8, 0xd1, 0xdf, 0x78, 0x92, 0x96, 0x4c, 0x6f, 0xb5, 0x22};
-  EXPECT_EQ(arrcmp(k_rrc_enc_o, k_rrc_enc, sizeof(k_rrc_enc_o)), 0);
+  EXPECT_TRUE(k_rrc_enc_o == k_rrc_enc);
 }
 
 /// Generation of k_up_end and k_up_int
 TEST(security_gen_k_up, testset1)
 {
-  uint8_t sk_gnb[] = {0x45, 0xcb, 0xc3, 0xf8, 0xa8, 0x11, 0x93, 0xfd, 0x5c, 0x52, 0x29, 0x30, 0x0d, 0x59, 0xed, 0xf8,
-                      0x12, 0xe9, 0x98, 0xa1, 0x15, 0xec, 0x4e, 0x0c, 0xe9, 0x03, 0xba, 0x89, 0x36, 0x7e, 0x26, 0x28};
-  uint8_t k_up_enc_o[32];
-  uint8_t k_up_int_o[32];
+  // Testdata in plain format
+  const char* sk_gnb_cstr   = "45cbc3f8a81193fd5c5229300d59edf812e998a115ec4e0ce903ba89367e2628";
+  const char* k_up_enc_cstr = "7ce20670bbbcc5904087c0d42653c540152052d3dfbc3f05869b7f920095be68";
+
+  // Pack hex strings into srsgnb types
+  sec_as_key sk_gnb   = make_sec_as_key(sk_gnb_cstr);
+  sec_as_key k_up_enc = make_sec_as_key(k_up_enc_cstr);
+  sec_as_key k_up_enc_o;
+  sec_as_key k_up_int_o;
 
   EXPECT_TRUE(srsgnb::security_generate_k_nr_up(
-      sk_gnb, srsgnb::ciphering_algorithm::nea2, srsgnb::integrity_algorithm::nia0, k_up_enc_o, k_up_int_o));
+      k_up_enc_o, k_up_int_o, sk_gnb, srsgnb::ciphering_algorithm::nea2, srsgnb::integrity_algorithm::nia0));
 
-  uint8_t k_up_enc[] = {0x7c, 0xe2, 0x06, 0x70, 0xbb, 0xbc, 0xc5, 0x90, 0x40, 0x87, 0xc0, 0xd4, 0x26, 0x53, 0xc5, 0x40,
-                        0x15, 0x20, 0x52, 0xd3, 0xdf, 0xbc, 0x3f, 0x05, 0x86, 0x9b, 0x7f, 0x92, 0x00, 0x95, 0xbe, 0x68};
-  EXPECT_EQ(arrcmp(k_up_enc_o, k_up_enc, sizeof(k_up_enc_o)), 0);
+  EXPECT_TRUE(k_up_enc_o == k_up_enc);
 }

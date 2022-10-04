@@ -44,19 +44,12 @@ using namespace srsgnb;
 /******************************************************************************
  * Key Generation
  *****************************************************************************/
-bool srsgnb::security_generate_k_nr_rrc(const uint8_t*            k_gnb,
+bool srsgnb::security_generate_k_nr_rrc(sec_as_key&               k_rrc_enc,
+                                        sec_as_key&               k_rrc_int,
+                                        const sec_as_key&         k_gnb,
                                         const ciphering_algorithm enc_alg_id,
-                                        const integrity_algorithm int_alg_id,
-                                        uint8_t*                  k_rrc_enc,
-                                        uint8_t*                  k_rrc_int)
+                                        const integrity_algorithm int_alg_id)
 {
-  if (k_gnb == NULL || k_rrc_enc == NULL || k_rrc_int == NULL) {
-    return false;
-  }
-  std::array<uint8_t, 32> key;
-
-  memcpy(key.data(), k_gnb, 32);
-
   // Derive RRC ENC
   // algorithm type distinguisher
   std::vector<uint8_t> algo_distinguisher;
@@ -68,7 +61,7 @@ bool srsgnb::security_generate_k_nr_rrc(const uint8_t*            k_gnb,
   algorithm_identity.resize(1);
   algorithm_identity[0] = static_cast<uint8_t>(enc_alg_id);
 
-  if (kdf_common(FC_5G_ALGORITHM_KEY_DERIVATION, key, algo_distinguisher, algorithm_identity, k_rrc_enc) != true) {
+  if (kdf_common(k_rrc_enc, k_gnb, FC_5G_ALGORITHM_KEY_DERIVATION, algo_distinguisher, algorithm_identity) != true) {
     return false;
   }
 
@@ -82,25 +75,18 @@ bool srsgnb::security_generate_k_nr_rrc(const uint8_t*            k_gnb,
   algorithm_identity[0] = static_cast<uint8_t>(int_alg_id);
 
   // Derive RRC int
-  if (kdf_common(FC_5G_ALGORITHM_KEY_DERIVATION, key, algo_distinguisher, algorithm_identity, k_rrc_int) != true) {
+  if (kdf_common(k_rrc_int, k_gnb, FC_5G_ALGORITHM_KEY_DERIVATION, algo_distinguisher, algorithm_identity) != true) {
     return false;
   }
   return true;
 }
 
-bool srsgnb::security_generate_k_nr_up(const uint8_t*            k_gnb,
+bool srsgnb::security_generate_k_nr_up(sec_as_key&               k_up_enc,
+                                       sec_as_key&               k_up_int,
+                                       const sec_as_key&         k_gnb,
                                        const ciphering_algorithm enc_alg_id,
-                                       const integrity_algorithm int_alg_id,
-                                       uint8_t*                  k_up_enc,
-                                       uint8_t*                  k_up_int)
+                                       const integrity_algorithm int_alg_id)
 {
-  if (k_gnb == NULL || k_up_enc == NULL || k_up_int == NULL) {
-    return false;
-  }
-  std::array<uint8_t, 32> key;
-
-  memcpy(key.data(), k_gnb, 32);
-
   // Derive UP ENC
   // algorithm type distinguisher
   std::vector<uint8_t> algo_distinguisher;
@@ -112,7 +98,7 @@ bool srsgnb::security_generate_k_nr_up(const uint8_t*            k_gnb,
   algorithm_identity.resize(1);
   algorithm_identity[0] = static_cast<uint8_t>(enc_alg_id);
 
-  if (kdf_common(FC_5G_ALGORITHM_KEY_DERIVATION, key, algo_distinguisher, algorithm_identity, k_up_enc) != true) {
+  if (kdf_common(k_up_enc, k_gnb, FC_5G_ALGORITHM_KEY_DERIVATION, algo_distinguisher, algorithm_identity) != true) {
     return false;
   }
 
@@ -126,17 +112,17 @@ bool srsgnb::security_generate_k_nr_up(const uint8_t*            k_gnb,
   algorithm_identity[0] = static_cast<uint8_t>(int_alg_id);
 
   // Derive UP int
-  if (kdf_common(FC_5G_ALGORITHM_KEY_DERIVATION, key, algo_distinguisher, algorithm_identity, k_up_int) != true) {
+  if (kdf_common(k_up_int, k_gnb, FC_5G_ALGORITHM_KEY_DERIVATION, algo_distinguisher, algorithm_identity) != true) {
     return false;
   }
   return true;
 }
 
-bool srsgnb::kdf_common(const uint8_t                  fc,
-                        const std::array<uint8_t, 32>& key,
-                        const std::vector<uint8_t>&    P0,
-                        const std::vector<uint8_t>&    P1,
-                        uint8_t*                       output)
+bool srsgnb::kdf_common(sec_as_key&                 key_out,
+                        const sec_as_key&           key_in,
+                        const uint8_t               fc,
+                        const std::vector<uint8_t>& P0,
+                        const std::vector<uint8_t>& P1)
 {
   uint8_t* s;
   uint32_t s_len = 1 + P0.size() + 2 + P1.size() + 2;
@@ -165,7 +151,7 @@ bool srsgnb::kdf_common(const uint8_t                  fc,
   memcpy(&s[i], &p1_length_value, sizeof(p1_length_value));
   i += sizeof(p1_length_value);
 
-  sha256(key.data(), key.size(), s, i, output, 0);
+  sha256(key_in.data(), key_in.size(), s, i, key_out.data(), 0);
   free(s);
 
   return true;

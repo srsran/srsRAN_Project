@@ -73,23 +73,23 @@ struct sec_128_as_config {
 /******************************************************************************
  * Key Generation
  *****************************************************************************/
-bool kdf_common(const uint8_t                  fc,
-                const std::array<uint8_t, 32>& key,
-                const std::vector<uint8_t>&    P0,
-                const std::vector<uint8_t>&    P1,
-                uint8_t*                       output);
+bool kdf_common(sec_as_key&                 key_out,
+                const sec_as_key&           key_in,
+                const uint8_t               fc,
+                const std::vector<uint8_t>& P0,
+                const std::vector<uint8_t>& P1);
 
-bool security_generate_k_nr_rrc(const uint8_t*            k_gnb,
+bool security_generate_k_nr_rrc(sec_as_key&               k_rrc_enc,
+                                sec_as_key&               k_rrc_int,
+                                const sec_as_key&         k_gnb,
                                 const ciphering_algorithm enc_alg_id,
-                                const integrity_algorithm int_alg_id,
-                                uint8_t*                  k_rrc_enc,
-                                uint8_t*                  k_rrc_int);
+                                const integrity_algorithm int_alg_id);
 
-bool security_generate_k_nr_up(const uint8_t*            k_gnb,
+bool security_generate_k_nr_up(sec_as_key&               k_up_enc,
+                               sec_as_key&               k_up_int,
+                               const sec_as_key&         k_gnb,
                                const ciphering_algorithm enc_alg_id,
-                               const integrity_algorithm int_alg_id,
-                               uint8_t*                  k_up_enc,
-                               uint8_t*                  k_up_int);
+                               const integrity_algorithm int_alg_id);
 
 /******************************************************************************
  * Integrity Protection
