@@ -60,12 +60,10 @@ constexpr uint8_t to_number(fc_value fc)
 /// Security Algorithm Distinguisher
 /// Ref: TS 33.501 Sec. A.8, Table A.8-1
 enum class security_algo_distinguisher {
-  nas_enc_alg = 0x01,
-  nas_int_alg = 0x02,
-  rrc_enc_alg = 0x03,
-  rrc_int_alg = 0x04,
-  up_enc_alg  = 0x05,
-  up_int_alg  = 0x06
+  rrc_enc_alg = 0x03, ///< N-RRC-enc-alg
+  rrc_int_alg = 0x04, ///< N-RRC-int-alg
+  up_enc_alg  = 0x05, ///< N-UP-enc-alg
+  up_int_alg  = 0x06  ///< N-UP-int-alg
 };
 constexpr uint8_t to_number(security_algo_distinguisher algo)
 {
@@ -98,18 +96,25 @@ struct sec_128_as_config {
 /******************************************************************************
  * Key Generation
  *****************************************************************************/
-void kdf_common(sec_as_key&                 key_out,
-                const sec_as_key&           key_in,
-                const fc_value              fc,
-                const std::vector<uint8_t>& p0,
-                const std::vector<uint8_t>& p1);
 
+/// Generic key derivation function
+/// Ref: TS 33.220 Sec. B.2
+void generic_kdf(sec_as_key&                 key_out,
+                 const sec_as_key&           key_in,
+                 const fc_value              fc,
+                 const std::vector<uint8_t>& p0,
+                 const std::vector<uint8_t>& p1);
+
+/// Algorithm key derivation function (RRC)
+/// Ref: TS 33.501 Sec. A8
 void security_generate_k_rrc(sec_as_key&               k_rrc_enc,
                              sec_as_key&               k_rrc_int,
                              const sec_as_key&         k_gnb,
                              const ciphering_algorithm enc_alg_id,
                              const integrity_algorithm int_alg_id);
 
+/// Algorithm key derivation function (UP)
+/// Ref: TS 33.501 Sec. A8
 void security_generate_k_up(sec_as_key&               k_up_enc,
                             sec_as_key&               k_up_int,
                             const sec_as_key&         k_gnb,

@@ -45,7 +45,7 @@ void srsgnb::security_generate_k_rrc(sec_as_key&               k_rrc_enc,
   algorithm_identity.resize(1);
   algorithm_identity[0] = static_cast<uint8_t>(enc_alg_id);
 
-  kdf_common(k_rrc_enc, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
+  generic_kdf(k_rrc_enc, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 
   // Derive RRC INT
   // algorithm type distinguisher
@@ -57,7 +57,7 @@ void srsgnb::security_generate_k_rrc(sec_as_key&               k_rrc_enc,
   algorithm_identity[0] = static_cast<uint8_t>(int_alg_id);
 
   // Derive RRC int
-  kdf_common(k_rrc_int, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
+  generic_kdf(k_rrc_int, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 }
 
 void srsgnb::security_generate_k_up(sec_as_key&               k_up_enc,
@@ -77,7 +77,7 @@ void srsgnb::security_generate_k_up(sec_as_key&               k_up_enc,
   algorithm_identity.resize(1);
   algorithm_identity[0] = static_cast<uint8_t>(enc_alg_id);
 
-  kdf_common(k_up_enc, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
+  generic_kdf(k_up_enc, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 
   // Derive UP INT
   // algorithm type distinguisher
@@ -89,14 +89,14 @@ void srsgnb::security_generate_k_up(sec_as_key&               k_up_enc,
   algorithm_identity[0] = static_cast<uint8_t>(int_alg_id);
 
   // Derive UP int
-  kdf_common(k_up_int, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
+  generic_kdf(k_up_int, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 }
 
-void srsgnb::kdf_common(sec_as_key&                 key_out,
-                        const sec_as_key&           key_in,
-                        const fc_value              fc,
-                        const std::vector<uint8_t>& p0,
-                        const std::vector<uint8_t>& p1)
+void srsgnb::generic_kdf(sec_as_key&                 key_out,
+                         const sec_as_key&           key_in,
+                         const fc_value              fc,
+                         const std::vector<uint8_t>& p0,
+                         const std::vector<uint8_t>& p1)
 {
   union p_len {
     uint16_t                                  length_value;
