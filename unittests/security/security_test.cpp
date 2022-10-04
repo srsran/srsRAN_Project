@@ -1219,7 +1219,7 @@ TEST(security_gen_k_rrc, testset1)
   sec_as_key k_rrc_enc_o;
   sec_as_key k_rrc_int_o;
 
-  srsgnb::security_generate_k_nr_rrc(
+  srsgnb::security_generate_k_rrc(
       k_rrc_enc_o, k_rrc_int_o, sk_gnb, srsgnb::ciphering_algorithm::nea2, srsgnb::integrity_algorithm::nia0);
   EXPECT_TRUE(k_rrc_enc_o == k_rrc_enc);
 }
@@ -1237,7 +1237,7 @@ TEST(security_gen_k_up, testset1)
   sec_as_key k_up_enc_o;
   sec_as_key k_up_int_o;
 
-  srsgnb::security_generate_k_nr_up(
+  srsgnb::security_generate_k_up(
       k_up_enc_o, k_up_int_o, sk_gnb, srsgnb::ciphering_algorithm::nea2, srsgnb::integrity_algorithm::nia0);
   EXPECT_TRUE(k_up_enc_o == k_up_enc);
 }

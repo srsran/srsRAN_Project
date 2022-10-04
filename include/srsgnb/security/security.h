@@ -47,6 +47,38 @@ enum class integrity_algorithm {
   nia3,
 };
 
+/// FC Values
+/// Ref: TS 33.501 Sec. A.1.2
+enum class fc_value {
+  k_gnb_star_derivation    = 0x70,
+  algorithm_key_derivation = 0x69,
+  kausf_derivation         = 0x6a,
+  res_star_derivation      = 0x6b,
+  kseaf_derivation         = 0x6c,
+  kamf_derivation          = 0x6d,
+  kgnb_kn3iwf_derivation   = 0x6e,
+  nh_gnb_derivation        = 0x6f
+};
+constexpr uint8_t to_number(fc_value fc)
+{
+  return static_cast<uint8_t>(fc);
+}
+
+/// Security Algorithm Distinguisher
+/// Ref: TS 33.501 Sec. A.8
+enum class security_algo_distinguisher {
+  nas_enc_alg = 0x01,
+  nas_int_alg = 0x02,
+  rrc_enc_alg = 0x03,
+  rrc_int_alg = 0x04,
+  up_enc_alg  = 0x05,
+  up_int_alg  = 0x06
+};
+constexpr uint8_t to_number(security_algo_distinguisher algo)
+{
+  return static_cast<uint8_t>(algo);
+}
+
 enum class security_direction {
   uplink   = 0,
   downlink = 1,
@@ -75,21 +107,21 @@ struct sec_128_as_config {
  *****************************************************************************/
 void kdf_common(sec_as_key&                 key_out,
                 const sec_as_key&           key_in,
-                const uint8_t               fc,
+                const fc_value              fc,
                 const std::vector<uint8_t>& p0,
                 const std::vector<uint8_t>& p1);
 
-void security_generate_k_nr_rrc(sec_as_key&               k_rrc_enc,
-                                sec_as_key&               k_rrc_int,
-                                const sec_as_key&         k_gnb,
-                                const ciphering_algorithm enc_alg_id,
-                                const integrity_algorithm int_alg_id);
+void security_generate_k_rrc(sec_as_key&               k_rrc_enc,
+                             sec_as_key&               k_rrc_int,
+                             const sec_as_key&         k_gnb,
+                             const ciphering_algorithm enc_alg_id,
+                             const integrity_algorithm int_alg_id);
 
-void security_generate_k_nr_up(sec_as_key&               k_up_enc,
-                               sec_as_key&               k_up_int,
-                               const sec_as_key&         k_gnb,
-                               const ciphering_algorithm enc_alg_id,
-                               const integrity_algorithm int_alg_id);
+void security_generate_k_up(sec_as_key&               k_up_enc,
+                            sec_as_key&               k_up_int,
+                            const sec_as_key&         k_gnb,
+                            const ciphering_algorithm enc_alg_id,
+                            const integrity_algorithm int_alg_id);
 
 /******************************************************************************
  * Integrity Protection

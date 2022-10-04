@@ -23,94 +23,78 @@
 #include "polarssl/md5.h"
 #endif
 
-#define FC_5G_K_GNB_STAR_DERIVATION 0x70
-#define FC_5G_ALGORITHM_KEY_DERIVATION 0x69
-#define FC_5G_KAUSF_DERIVATION 0x6a
-#define FC_5G_RES_STAR_DERIVATION 0x6b
-#define FC_5G_KSEAF_DERIVATION 0x6c
-#define FC_5G_KAMF_DERIVATION 0x6d
-#define FC_5G_KGNB_KN3IWF_DERIVATION 0x6e
-#define FC_5G_NH_GNB_DERIVATION 0x6f
-
-#define ALGO_5G_DISTINGUISHER_NAS_ENC_ALG 0x01
-#define ALGO_5G_DISTINGUISHER_NAS_INT_ALG 0x02
-#define ALGO_5G_DISTINGUISHER_RRC_ENC_ALG 0x03
-#define ALGO_5G_DISTINGUISHER_RRC_INT_ALG 0x04
-#define ALGO_5G_DISTINGUISHER_UP_ENC_ALG 0x05
-#define ALGO_5G_DISTINGUISHER_UP_INT_ALG 0x06
-
 using namespace srsgnb;
 
 /******************************************************************************
  * Key Generation
  *****************************************************************************/
-void srsgnb::security_generate_k_nr_rrc(sec_as_key&               k_rrc_enc,
-                                        sec_as_key&               k_rrc_int,
-                                        const sec_as_key&         k_gnb,
-                                        const ciphering_algorithm enc_alg_id,
-                                        const integrity_algorithm int_alg_id)
+void srsgnb::security_generate_k_rrc(sec_as_key&               k_rrc_enc,
+                                     sec_as_key&               k_rrc_int,
+                                     const sec_as_key&         k_gnb,
+                                     const ciphering_algorithm enc_alg_id,
+                                     const integrity_algorithm int_alg_id)
 {
   // Derive RRC ENC
   // algorithm type distinguisher
   std::vector<uint8_t> algo_distinguisher;
   algo_distinguisher.resize(1);
-  algo_distinguisher[0] = ALGO_5G_DISTINGUISHER_RRC_ENC_ALG;
+  algo_distinguisher[0] = to_number(security_algo_distinguisher::rrc_enc_alg);
 
   // algorithm type distinguisher
   std::vector<uint8_t> algorithm_identity;
   algorithm_identity.resize(1);
   algorithm_identity[0] = static_cast<uint8_t>(enc_alg_id);
 
-  kdf_common(k_rrc_enc, k_gnb, FC_5G_ALGORITHM_KEY_DERIVATION, algo_distinguisher, algorithm_identity);
+  kdf_common(k_rrc_enc, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 
   // Derive RRC INT
   // algorithm type distinguisher
   algo_distinguisher.resize(1);
-  algo_distinguisher[0] = ALGO_5G_DISTINGUISHER_RRC_INT_ALG;
+  algo_distinguisher[0] = to_number(security_algo_distinguisher::rrc_int_alg);
 
   // algorithm type distinguisher
   algorithm_identity.resize(1);
   algorithm_identity[0] = static_cast<uint8_t>(int_alg_id);
 
   // Derive RRC int
-  kdf_common(k_rrc_int, k_gnb, FC_5G_ALGORITHM_KEY_DERIVATION, algo_distinguisher, algorithm_identity);
+  kdf_common(k_rrc_int, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 }
 
-void srsgnb::security_generate_k_nr_up(sec_as_key&               k_up_enc,
-                                       sec_as_key&               k_up_int,
-                                       const sec_as_key&         k_gnb,
-                                       const ciphering_algorithm enc_alg_id,
-                                       const integrity_algorithm int_alg_id)
+void srsgnb::security_generate_k_up(sec_as_key&               k_up_enc,
+                                    sec_as_key&               k_up_int,
+                                    const sec_as_key&         k_gnb,
+                                    const ciphering_algorithm enc_alg_id,
+                                    const integrity_algorithm int_alg_id)
 {
   // Derive UP ENC
   // algorithm type distinguisher
   std::vector<uint8_t> algo_distinguisher;
   algo_distinguisher.resize(1);
-  algo_distinguisher[0] = ALGO_5G_DISTINGUISHER_UP_ENC_ALG;
+  algo_distinguisher[0] = to_number(security_algo_distinguisher::up_enc_alg);
 
   // algorithm type distinguisher
   std::vector<uint8_t> algorithm_identity;
   algorithm_identity.resize(1);
   algorithm_identity[0] = static_cast<uint8_t>(enc_alg_id);
 
-  kdf_common(k_up_enc, k_gnb, FC_5G_ALGORITHM_KEY_DERIVATION, algo_distinguisher, algorithm_identity);
+  kdf_common(k_up_enc, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 
   // Derive UP INT
   // algorithm type distinguisher
   algo_distinguisher.resize(1);
-  algo_distinguisher[0] = ALGO_5G_DISTINGUISHER_UP_INT_ALG;
+  algo_distinguisher[0] = to_number(security_algo_distinguisher::up_int_alg);
 
   // algorithm type distinguisher
   algorithm_identity.resize(1);
   algorithm_identity[0] = static_cast<uint8_t>(int_alg_id);
 
   // Derive UP int
-  kdf_common(k_up_int, k_gnb, FC_5G_ALGORITHM_KEY_DERIVATION, algo_distinguisher, algorithm_identity);
+  kdf_common(k_up_int, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 }
 
 void srsgnb::kdf_common(sec_as_key&                 key_out,
                         const sec_as_key&           key_in,
-                        const uint8_t               fc,
+                        const fc_value              fc,
                         const std::vector<uint8_t>& p0,
                         const std::vector<uint8_t>& p1)
 {
@@ -125,7 +109,7 @@ void srsgnb::kdf_common(sec_as_key&                 key_out,
   std::vector<uint8_t>::iterator s_it = s.begin();
 
   // FC
-  *s_it = fc;
+  *s_it = to_number(fc);
   s_it++;
 
   // P0
