@@ -36,10 +36,18 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
     sched_strategy->dl_sched(ue_alloc, ue_db, true);
     // Schedule SRB0 first before scheduling other bearers
     srb0_sched.run_slot(ue_alloc, ue_db);
+    sched_strategy->dl_sched(ue_alloc, ue_db, false);
+    // UL re-Tx and then new Tx
+    sched_strategy->ul_sched(ue_alloc, ue_db, true);
     sched_strategy->ul_sched(ue_alloc, ue_db, false);
   } else {
-    // Start with UL
+    // Start with UL re-Tx and then new Tx
     sched_strategy->ul_sched(ue_alloc, ue_db, true);
+    sched_strategy->ul_sched(ue_alloc, ue_db, false);
+    // Start with DL re-Tx, then SRB0 and then new Tx
+    sched_strategy->dl_sched(ue_alloc, ue_db, true);
+    // Schedule SRB0 first before scheduling other bearers
+    srb0_sched.run_slot(ue_alloc, ue_db);
     sched_strategy->dl_sched(ue_alloc, ue_db, false);
   }
 }
