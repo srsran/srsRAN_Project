@@ -109,3 +109,14 @@ add_test(sib1_scheduler_test sib1_scheduler_test)
 add_executable(prach_scheduler_test prach_scheduler_test.cpp)
 target_link_libraries(prach_scheduler_test srsgnb_sched srslog scheduler_test_suite sched_config gtest gtest_main)
 gtest_discover_tests(prach_scheduler_test)
+
+add_executable(srb0_scheduler_test srb0_scheduler_test.cpp)
+target_link_libraries(srb0_scheduler_test
+                      srsgnb_sched
+                      srslog
+                      mac_configuration_helpers
+                      scheduler_test_suite
+                      sched_config
+                      gtest
+                      gtest_main)
+add_test(srb0_scheduler_test srb0_scheduler_test)
