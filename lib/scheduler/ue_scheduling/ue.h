@@ -116,6 +116,8 @@ public:
     return cells;
   }
 
+  dl_logical_channel_manager dl_lc_ch_mng;
+
 private:
   static const size_t MAX_CELLS = 4;
 
@@ -135,8 +137,6 @@ private:
 
   sr_indication_message     last_sr;
   ul_bsr_indication_message last_bsr;
-
-  dl_logical_channel_manager dl_lc_ch_mng;
 };
 
 /// Container that stores all scheduler UEs.

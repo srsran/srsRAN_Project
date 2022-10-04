@@ -221,7 +221,7 @@ serving_cell_config srsgnb::config_helpers::make_default_initial_ue_serving_cell
   // > PDCCH-Config.
   serv_cell.init_dl_bwp.pdcch_cfg.emplace();
   pdcch_config& pdcch_cfg = serv_cell.init_dl_bwp.pdcch_cfg.value();
-  // >> Add CORESET#2.
+  // >> Add CORESET#1.
   pdcch_cfg.coresets.push_back(make_default_coreset_config());
   pdcch_cfg.coresets[0].id = to_coreset_id(1);
   // >> Add SearchSpace#2.

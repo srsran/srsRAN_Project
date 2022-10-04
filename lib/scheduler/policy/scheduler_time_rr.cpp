@@ -38,6 +38,10 @@ bool round_robin_apply(const ue_list& ue_db, uint32_t rr_count, const Predicate&
 /// Allocate UE PDSCH grant.
 bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
 {
+  if(not is_retx and not u.dl_lc_ch_mng.has_pending_bytes()) {
+    return false;
+  }
+
   // Prioritize PCell over SCells.
   for (const ue_carrier* ue_cc : u.ue_carriers()) {
     // Search available HARQ.

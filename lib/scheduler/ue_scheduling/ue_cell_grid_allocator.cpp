@@ -10,6 +10,7 @@
 #include "ue_cell_grid_allocator.h"
 #include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/tbs_calculator.h"
 
 using namespace srsgnb;
 
@@ -28,6 +29,7 @@ void ue_cell_grid_allocator::add_cell(du_cell_index_t          cell_index,
 
 bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
 {
+  static constexpr uint32_t nof_layers = 1;
   srsgnb_assert(ues.contains(grant.user->ue_index), "Invalid UE candidate index={}", grant.user->ue_index);
   srsgnb_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
   ue& u = ues[grant.user->ue_index];
@@ -148,10 +150,23 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   sch_mcs_description mcs_config                  = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
   cw.qam_mod                                      = mcs_config.modulation;
   cw.target_code_rate                             = mcs_config.target_code_rate;
+  unsigned nof_symb_sh                            = pdsch_td_cfg.symbols.length();
+  unsigned tb_scaling_field                       = 0; // TODO.
+  unsigned nof_oh_prb                             = 0; // TODO: ue_cell_cfg.cfg_ded().pdsch_serv_cell_cfg;
+  cw.tb_size_bytes =
+      tbs_calculator_pdsch_calculate(tbs_calculator_pdsch_configuration{nof_symb_sh,
+                                                                        calculate_nof_dmrs_per_rb(msg.pdsch_cfg.dmrs),
+                                                                        nof_oh_prb,
+                                                                        cw.target_code_rate,
+                                                                        get_bits_per_symbol(cw.qam_mod),
+                                                                        nof_layers,
+                                                                        tb_scaling_field,
+                                                                        grant.crbs.length()});
+
   // Set MAC logical channels to schedule in this PDU.
   msg.tb_list.emplace_back();
-  msg.tb_list.back().subpdus.emplace_back();
-  msg.tb_list.back().subpdus.back().lcid = lcid_t::LCID_SRB0;
+  allocate_mac_ces(msg.tb_list.back(), u.dl_lc_ch_mng, cw.tb_size_bytes);
+  allocate_mac_sdus(msg.tb_list.back(), u.dl_lc_ch_mng, cw.tb_size_bytes);
 
   return true;
 }
