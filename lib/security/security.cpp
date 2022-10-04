@@ -131,6 +131,16 @@ void srsgnb::generic_kdf(sec_as_key&                 key_out,
   sha256(key_in.data(), key_in.size(), s.data(), s.size(), key_out.data(), 0);
 }
 
+sec_128_as_key srsgnb::truncate_key(const sec_as_key& key_in)
+{
+  sec_128_as_key key_out = {};
+  static_assert(sec_key_len > 0, "sec_key_len too small");
+  static_assert(sec_128_key_len > 0, "sec_128_key_len too small");
+  static_assert(sec_128_key_len <= sec_key_len, "sec_128_key_len is larger than sec_key_len");
+  std::copy(key_in.begin() + (sec_key_len - sec_128_key_len), key_in.end(), key_out.begin());
+  return key_out;
+}
+
 /******************************************************************************
  * Integrity Protection
  *****************************************************************************/

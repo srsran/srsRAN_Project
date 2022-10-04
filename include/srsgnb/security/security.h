@@ -106,7 +106,7 @@ void generic_kdf(sec_as_key&                 key_out,
                  const std::vector<uint8_t>& p1);
 
 /// Algorithm key derivation function (RRC)
-/// Ref: TS 33.501 Sec. A8
+/// Ref: TS 33.501 Sec. A.8
 void security_generate_k_rrc(sec_as_key&               k_rrc_enc,
                              sec_as_key&               k_rrc_int,
                              const sec_as_key&         k_gnb,
@@ -114,12 +114,16 @@ void security_generate_k_rrc(sec_as_key&               k_rrc_enc,
                              const integrity_algorithm int_alg_id);
 
 /// Algorithm key derivation function (UP)
-/// Ref: TS 33.501 Sec. A8
+/// Ref: TS 33.501 Sec. A.8
 void security_generate_k_up(sec_as_key&               k_up_enc,
                             sec_as_key&               k_up_int,
                             const sec_as_key&         k_gnb,
                             const ciphering_algorithm enc_alg_id,
                             const integrity_algorithm int_alg_id);
+
+/// Truncate 256-bit key to 128-bit key using the least significant bits.
+/// Ref: TS 33.501 Sec. A.8
+sec_128_as_key truncate_key(const sec_as_key& key_in);
 
 /******************************************************************************
  * Integrity Protection

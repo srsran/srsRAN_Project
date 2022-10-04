@@ -1247,3 +1247,18 @@ TEST(security_gen_k_up, testset1)
   EXPECT_TRUE(k_up_enc_o == k_up_enc);
   EXPECT_TRUE(k_up_int_o == k_up_int);
 }
+
+/// Truncation of 256-bit key to a 128-bit key
+TEST(security_truncate_key, testset1)
+{
+  // Testdata in plain format
+  const char* k_256_cstr = "d46259077dd393da0b503ac713c38f57c05623c8a37b346aa4e041a08ea62a07";
+  const char* k_128_cstr = "c05623c8a37b346aa4e041a08ea62a07";
+
+  // Pack hex strings into srsgnb types
+  sec_as_key     k_256 = make_sec_as_key(k_256_cstr);
+  sec_128_as_key k_128 = make_sec_128_as_key(k_128_cstr);
+
+  sec_128_as_key k_trunc = truncate_key(k_256);
+  EXPECT_TRUE(k_trunc == k_128);
+}
