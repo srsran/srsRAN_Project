@@ -8,12 +8,12 @@
 *
 */
 
-#include "srsgnb/ran/duplex_mode.h"
 #include "config_generators.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_scheduler_impl.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_srb0_scheduler.h"
 #include "scheduler_test_suite.h"
+#include "srsgnb/ran/duplex_mode.h"
 #include <gtest/gtest.h>
 #include <random>
 
@@ -100,6 +100,9 @@ protected:
     next_slot++;
 
     bench->srb0_sched.run_slot(bench->ue_alloc, bench->ue_db);
+
+    // Check sched result consistency.
+    test_scheduler_result_consistency(bench->cell_cfg, bench->res_grid);
   }
 
   const pusch_time_domain_resource_allocation& get_pusch_td_resource(uint8_t time_resource) const
