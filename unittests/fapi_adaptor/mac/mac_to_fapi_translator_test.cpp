@@ -66,7 +66,7 @@ static void test_valid_dl_sched_results_generate_correct_dl_tti_request()
   TESTASSERT_EQ((msg.pdus.end() - 2)->pdu_type, fapi::dl_pdu_type::SSB);
   TESTASSERT_EQ((msg.pdus.end() - 3)->pdu_type, fapi::dl_pdu_type::SSB);
 
-  const srsgnb::dl_ssb_pdu& pdu      = result.ssb_pdu.front();
+  const srsgnb::dl_ssb_pdu& pdu      = result.ssb_pdus.front();
   const fapi::dl_ssb_pdu&   fapi_pdu = (msg.pdus.end() - 3)->ssb_pdu;
   TESTASSERT_EQ(pdu.pci, fapi_pdu.phys_cell_id);
   TESTASSERT_EQ(static_cast<unsigned>(pdu.pss_to_sss_epre), static_cast<unsigned>(fapi_pdu.beta_pss_profile_nr));

@@ -22,6 +22,7 @@ static void test_conversion_ok()
   const mac_dl_sched_result& result  = build_valid_mac_dl_sched_result();
   const mac_pdcch_pdu&       mac_pdu = {result.dl_res->dl_pdcchs.front().ctx.bwp_cfg,
                                         result.dl_res->dl_pdcchs.front().ctx.coreset_cfg,
+                                        result.dl_res->dl_pdcchs.front().ctx.starting_symbol,
                                         {{&result.dl_res->dl_pdcchs.front(), &result.pdcch_pdus.front()}}};
 
   fapi::dl_pdcch_pdu fapi_pdu;

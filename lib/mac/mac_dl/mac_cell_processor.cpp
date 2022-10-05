@@ -129,8 +129,8 @@ void mac_cell_processor::assemble_dl_sched_request(mac_dl_sched_result&   mac_re
 
   // Assemble SSB scheduling info and additional SSB/MIB parameters to pass to PHY.
   for (auto& ssb : dl_res.bc.ssb_info) {
-    mac_res.ssb_pdu.emplace_back();
-    ssb_helper.assemble_ssb(mac_res.ssb_pdu.back(), ssb);
+    mac_res.ssb_pdus.emplace_back();
+    ssb_helper.assemble_ssb(mac_res.ssb_pdus.back(), ssb);
   }
 
   // Encode PDCCH DCI payloads.

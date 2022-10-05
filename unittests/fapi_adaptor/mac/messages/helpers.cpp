@@ -289,8 +289,8 @@ mac_dl_sched_result unittests::build_valid_mac_dl_sched_result()
   result_in_mem.bc.sibs.push_back(build_valid_sib1_information_pdu());
 
   // Add SSBs.
-  result.ssb_pdu.push_back(build_valid_dl_ssb_pdu());
-  result.ssb_pdu.push_back(build_valid_dl_ssb_pdu());
+  result.ssb_pdus.push_back(build_valid_dl_ssb_pdu());
+  result.ssb_pdus.push_back(build_valid_dl_ssb_pdu());
 
   return result;
 }

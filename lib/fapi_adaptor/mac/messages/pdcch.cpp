@@ -43,11 +43,10 @@ static freq_resource_bitmap calculate_coreset0_freq_res_bitmap(const coreset_con
   return freq_bitmap_coreset0;
 }
 
-static void fill_coreset_parameters(fapi::dl_pdcch_pdu_builder& builder, const coreset_configuration& coreset_cfg)
+static void fill_coreset_parameters(fapi::dl_pdcch_pdu_builder&  builder,
+                                    const coreset_configuration& coreset_cfg,
+                                    unsigned                     start_symbol_index)
 {
-  // TODO: take this from the MAC structs after the pending PR 757 is merged.
-  unsigned start_symbol_index = 0;
-
   builder.set_coreset_parameters(
       start_symbol_index,
       coreset_cfg.duration,
@@ -65,7 +64,7 @@ static void fill_coreset_parameters(fapi::dl_pdcch_pdu_builder& builder, const c
 
 void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder& builder, const mac_pdcch_pdu& mac_pdu)
 {
-  const static_vector<dci_info, MAX_NUM_DCIS_PER_PDCCH_PDU>& dcis = mac_pdu.dcis;
+  const static_vector<mac_pdcch_pdu::dci_info, MAX_NUM_DCIS_PER_PDCCH_PDU>& dcis = mac_pdu.dcis;
   srsgnb_assert(!dcis.empty(), "No DCIs to add into the PDCCH PDU");
 
   const coreset_configuration& coreset_cfg = *mac_pdu.coreset_cfg;
@@ -74,7 +73,7 @@ void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
   fill_bwp_parameters(builder, *mac_pdu.bwp_cfg, coreset_cfg);
 
   // Fill CORESET parameters.
-  fill_coreset_parameters(builder, *mac_pdu.coreset_cfg);
+  fill_coreset_parameters(builder, *mac_pdu.coreset_cfg, mac_pdu.start_symbol);
 
   // Fill the DCIs.
   for (const auto& dci : dcis) {

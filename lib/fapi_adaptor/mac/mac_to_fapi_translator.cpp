@@ -24,85 +24,65 @@ using namespace fapi_adaptor;
 
 namespace {
 
-/// Helper struct to group PDCCH PDUs.
+/// Helper struct to group DCIs into FAPI PDCCH PDUs.
 struct pdcch_group {
   const pdcch_dl_information* info;
   const dci_payload*          payload;
 
   bool operator==(const pdcch_group& other) const
   {
-    // :TODO: comparing the 2 pointers, change this to compare the BWP.
-    return info->ctx.bwp_cfg == other.info->ctx.bwp_cfg && info->ctx.coreset_cfg == other.info->ctx.coreset_cfg;
+    return (info->ctx.coreset_cfg->id == other.info->ctx.coreset_cfg->id &&
+            *info->ctx.bwp_cfg == *other.info->ctx.bwp_cfg &&
+            info->ctx.starting_symbol == other.info->ctx.starting_symbol);
+  }
+  bool operator<(const pdcch_group& other) const
+  {
+    return std::tie(info->ctx.coreset_cfg->id, *info->ctx.bwp_cfg, info->ctx.starting_symbol) <
+           std::tie(other.info->ctx.coreset_cfg->id, *other.info->ctx.bwp_cfg, other.info->ctx.starting_symbol);
   }
 };
 
 } // namespace
 
-static static_vector<unsigned, MAX_DL_PDCCH_PDUS_PER_SLOT>
-find_same_bwp_and_coreset_for_first_element(const static_vector<pdcch_group, MAX_DL_PDCCH_PDUS_PER_SLOT>& candidates)
-{
-  static_vector<unsigned, MAX_DL_PDCCH_PDUS_PER_SLOT> result;
-
-  const pdcch_group& lhs = candidates.front();
-
-  for (auto I = std::find(candidates.begin() + 1, candidates.end(), lhs), E = candidates.end(); I != E;
-       I = std::find(I + 1, candidates.end(), lhs)) {
-    result.push_back(std::distance(candidates.begin(), I));
-  }
-
-  return result;
-}
-
 static void add_pdcch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& builder,
-                                         const mac_dl_sched_result&            dl_res)
+                                         span<const pdcch_dl_information>      pdcch_info,
+                                         span<const dci_payload>               payloads)
 {
-  // Group the PDU's.
-  static_vector<mac_pdcch_pdu, MAX_DL_PDCCH_PDUS_PER_SLOT> pdus;
+  srsgnb_assert(pdcch_info.size() == payloads.size(), "Size mismatch");
 
-  static_vector<pdcch_group, MAX_DL_PDCCH_PDUS_PER_SLOT> candidates;
-
-  // Fill the candidates.
-  for (unsigned i = 0, e = dl_res.pdcch_pdus.size(); i != e; ++i) {
-    candidates.push_back({&dl_res.dl_res->dl_pdcchs[i], &dl_res.pdcch_pdus[i]});
+  if (pdcch_info.empty()) {
+    return;
   }
 
-  // Fill the PDUs.
-  while (!candidates.empty()) {
-    pdus.emplace_back();
-    mac_pdcch_pdu& pdu = pdus.back();
+  static_vector<pdcch_group, MAX_DL_PDUS_PER_SLOT> groups;
+  for (unsigned i = 0, e = pdcch_info.size(); i != e; ++i) {
+    groups.push_back({&pdcch_info[i], &payloads[i]});
+  }
 
-    const pdcch_group& candidate = candidates.front();
+  // Group DCIs into FAPI PDCCH PDUs.
+  std::sort(groups.begin(), groups.end());
+  auto* pivot = groups.begin();
+  auto* end   = groups.end();
+  while (pivot != end) {
+    auto* i = pivot;
+    pivot   = std::lower_bound(pivot, end, *pivot, std::equal_to<>{});
 
-    // Fill the PDU data.
-    pdu.bwp_cfg     = candidate.info->ctx.bwp_cfg;
-    pdu.coreset_cfg = candidate.info->ctx.coreset_cfg;
-    pdu.dcis.push_back({candidate.info, candidate.payload});
-
-    // Find the same BWP and Coreset PDUs.
-    const static_vector<unsigned, MAX_DL_PDCCH_PDUS_PER_SLOT>& pdu_indexes =
-        find_same_bwp_and_coreset_for_first_element(candidates);
-
-    // Append the DCIs and remove them from the candidates.
-    for (unsigned i = pdu_indexes.size(); i; --i) {
-      unsigned index = i - 1;
-      pdu.dcis.push_back({candidates[index].info, candidates[index].payload});
-      candidates.erase((candidates.begin() + index));
+    mac_pdcch_pdu pdu;
+    pdu.bwp_cfg      = i->info->ctx.bwp_cfg;
+    pdu.coreset_cfg  = i->info->ctx.coreset_cfg;
+    pdu.start_symbol = i->info->ctx.starting_symbol;
+    for (; i != pivot; ++i) {
+      pdu.dcis.push_back({i->info, i->payload});
     }
 
-    // Remove the first element.
-    candidates.erase(candidates.begin());
-  }
-
-  // Convert the MAC PDUs into FAPI PDUs.
-  for (const auto& pdu : pdus) {
     fapi::dl_pdcch_pdu_builder pdcch_builder = builder.add_pdcch_pdu(pdu.dcis.size());
     convert_pdcch_mac_to_fapi(pdcch_builder, pdu);
   }
 }
 
-static void add_ssb_pdus_to_dl_request(fapi::dl_tti_request_message_builder& builder, const mac_dl_sched_result& dl_res)
+static void add_ssb_pdus_to_dl_request(fapi::dl_tti_request_message_builder& builder, span<const dl_ssb_pdu> ssb_pdus)
 {
-  for (const auto& pdu : dl_res.ssb_pdu) {
+  for (const auto& pdu : ssb_pdus) {
     fapi::dl_ssb_pdu_builder ssb_builder = builder.add_ssb_pdu();
     convert_ssb_mac_to_fapi(ssb_builder, pdu);
   }
@@ -110,9 +90,10 @@ static void add_ssb_pdus_to_dl_request(fapi::dl_tti_request_message_builder& bui
 
 static void add_pdsch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& builder,
                                          pdsch_pdu_registry&                   pdsch_registry,
-                                         const mac_dl_sched_result&            dl_res)
+                                         span<const sib_information>           sibs,
+                                         span<const rar_information>           rars)
 {
-  for (const auto& pdu : dl_res.dl_res->bc.sibs) {
+  for (const auto& pdu : sibs) {
     fapi::dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
     convert_pdsch_mac_to_fapi(pdsch_builder, pdu);
     // Add one entry per codeword to the registry.
@@ -121,7 +102,7 @@ static void add_pdsch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& b
     }
   }
 
-  for (const auto& pdu : dl_res.dl_res->rar_grants) {
+  for (const auto& pdu : rars) {
     fapi::dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
     convert_pdsch_mac_to_fapi(pdsch_builder, pdu);
     // Add one entry per codeword to the registry.
@@ -142,15 +123,15 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   builder.set_basic_parameters(dl_res.slot.sfn(), dl_res.slot.slot_index(), num_pdu_groups);
 
   // Add PDCCH PDUs to the DL_TTI.request message.
-  add_pdcch_pdus_to_dl_request(builder, dl_res);
+  add_pdcch_pdus_to_dl_request(builder, dl_res.dl_res->dl_pdcchs, dl_res.pdcch_pdus);
 
   // Add SSB PDUs to the DL_TTI.request message.
-  add_ssb_pdus_to_dl_request(builder, dl_res);
+  add_ssb_pdus_to_dl_request(builder, dl_res.ssb_pdus);
 
   {
     std::lock_guard<std::mutex> lock(mutex);
     // Add PDSCH PDUs to the DL_TTI.request message.
-    add_pdsch_pdus_to_dl_request(builder, pdsch_registry, dl_res);
+    add_pdsch_pdus_to_dl_request(builder, pdsch_registry, dl_res.dl_res->bc.sibs, dl_res.dl_res->rar_grants);
   }
 
   // Validate the DL_TTI.request message.
@@ -225,6 +206,7 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
     convert_prach_mac_to_fapi(pdu_builder, pdu);
   }
 
+  // Add PUSCH PDUs to the UL_TTI.request message.
   for (const auto& pdu : ul_res.ul_res->puschs) {
     fapi::ul_pusch_pdu_builder pdu_builder = builder.add_pusch_pdu();
     convert_pusch_mac_to_fapi(pdu_builder, pdu.pusch_cfg);

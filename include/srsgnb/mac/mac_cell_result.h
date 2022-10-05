@@ -52,7 +52,7 @@ struct dl_ssb_pdu {
 struct mac_dl_sched_result {
   slot_point                                             slot;
   const dl_sched_result*                                 dl_res;
-  static_vector<dl_ssb_pdu, MAX_SSB_PER_SLOT>            ssb_pdu;
+  static_vector<dl_ssb_pdu, MAX_SSB_PER_SLOT>            ssb_pdus;
   static_vector<dci_payload, MAX_DL_PDCCH_PDUS_PER_SLOT> pdcch_pdus;
 };
 

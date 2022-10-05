@@ -60,7 +60,12 @@ struct bwp_configuration {
 
   bool operator==(const bwp_configuration& other) const
   {
-    return scs == other.scs and crbs == other.crbs and cp_extended == other.cp_extended;
+    return scs == other.scs and cp_extended == other.cp_extended and crbs == other.crbs;
+  }
+
+  bool operator<(const bwp_configuration& other) const
+  {
+    return std::tie(cp_extended, scs, crbs) < std::tie(other.cp_extended, other.scs, other.crbs);
   }
 };
 

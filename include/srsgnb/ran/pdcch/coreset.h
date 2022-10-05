@@ -86,9 +86,14 @@ struct coreset_configuration {
 
   bool operator==(const coreset_configuration& rhs) const
   {
-    return id == rhs.id and duration == rhs.duration and interleaved == rhs.interleaved and
-           precoder_granurality == rhs.precoder_granurality and
-           pdcch_dmrs_scrambling_id == rhs.pdcch_dmrs_scrambling_id;
+    if (std::tie(id, duration, interleaved, precoder_granurality, pdcch_dmrs_scrambling_id) !=
+        std::tie(rhs.id, rhs.duration, rhs.interleaved, rhs.precoder_granurality, rhs.pdcch_dmrs_scrambling_id)) {
+      return false;
+    }
+    if (id == to_coreset_id(0)) {
+      return (coreset0_crbs() == rhs.coreset0_crbs());
+    }
+    return (freq_domain_resources() == rhs.freq_domain_resources());
   }
 
   /// Computes \f$N_{CCE}\f$, as per TS 38.213, Section 9.2.1, which is the number of CCEs in a CORESET of a PDCCH
