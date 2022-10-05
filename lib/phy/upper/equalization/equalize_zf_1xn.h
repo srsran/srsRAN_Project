@@ -9,7 +9,7 @@
  */
 
 /// \file
-/// \brief Zero Forcing equalizer algorithm for a MISO 1 X 2 channel.
+/// \brief Zero Forcing equalizer algorithm for a MISO 1 X N channel.
 
 #pragma once
 
@@ -67,6 +67,21 @@ static void equalize_zf_1xn_symbol(span<cf_t>                             symbol
     eq_noise_vars[i_subc] = noise_var_est * d_pinv_rcp_nvars;
   }
 }
+
+/// \brief Processes a single OFDM symbol with the Zero-Forcing equalization algorithm. specialization for SISO case.
+/// \param[out] symbol_out    Resultant equalized symbol.
+/// \param[out] eq_noise_vars Noise variances after equalization.
+/// \param[in]  symbol_in     Channel symbols, i.e., complex samples from the receive ports.
+/// \param[in]  ch_estimates  Channel estimation coefficients.
+/// \param[in]  noise_var_est Estimated noise variance. It is assumed to be the same for each receive port.
+/// \param[in]  tx_scaling    Transmission gain scaling factor.
+void equalize_zf_1x1_symbol(span<cf_t>       symbol_out,
+                            span<float>      eq_noise_vars,
+                            span<const cf_t> symbol_in,
+                            span<const cf_t> ch_estimates,
+                            float            noise_var_est,
+                            float            tx_scaling);
+
 } // namespace detail
 
 /// \brief Implementation of a Zero Forcing equalizer for a MISO 1 X \c RX_PORTS channel.
@@ -104,4 +119,27 @@ void equalize_zf_1xn(equalizer_symbol_list&          eq_symbols,
                                              tx_scaling);
   }
 }
+
+/// Specialization for the SISO case.
+template <>
+inline void equalize_zf_1xn<1>(equalizer_symbol_list&          eq_symbols,
+                               equalizer_noise_var_list&       noise_vars,
+                               const equalizer_ch_symbol_list& ch_symbols,
+                               const channel_estimate&         ch_estimates,
+                               float                           tx_scaling)
+{
+  const unsigned nof_symbols        = ch_symbols.size().nof_symbols;
+  const float    noise_var_estimate = ch_estimates.get_noise_variance(0);
+
+  // Equalize symbol by symbol.
+  for (unsigned i_symb = 0; i_symb != nof_symbols; ++i_symb) {
+    detail::equalize_zf_1x1_symbol(eq_symbols.get_symbol(i_symb, 0),
+                                   noise_vars.get_symbol(i_symb, 0),
+                                   ch_symbols.get_symbol(i_symb, 0),
+                                   ch_estimates.get_symbol_ch_estimate(i_symb),
+                                   noise_var_estimate,
+                                   tx_scaling);
+  }
+}
+
 } // namespace srsgnb

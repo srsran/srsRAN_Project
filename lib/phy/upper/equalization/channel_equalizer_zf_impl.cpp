@@ -12,7 +12,6 @@
 /// \brief Zero Forcing equalization function implementation.
 
 #include "channel_equalizer_zf_impl.h"
-#include "equalize_zf_1x1.h"
 #include "equalize_zf_1xn.h"
 #include "equalize_zf_2x2.h"
 #include "srsgnb/ran/spatial_topology.h"
@@ -86,7 +85,8 @@ void channel_equalizer_zf_impl::equalize(equalizer_symbol_list&          mod_sym
 
   switch (topology.get_topology()) {
     case spatial_topology::siso:
-      equalize_zf_1x1(mod_symbols, noise_vars, ch_symbols, ch_estimates, tx_scaling);
+      equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::siso)>(
+          mod_symbols, noise_vars, ch_symbols, ch_estimates, tx_scaling);
       break;
     case spatial_topology::miso_2x1:
       equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::miso_2x1)>(

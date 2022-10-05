@@ -9,7 +9,7 @@
 set(SOURCES
         channel_equalizer_zf_impl.cpp
         equalization_factories.cpp
-        equalize_zf_1x1.cpp
+        equalize_zf_1xn.cpp
         equalize_zf_2x2.cpp
         )
 
