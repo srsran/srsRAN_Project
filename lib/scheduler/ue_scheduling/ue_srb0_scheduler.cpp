@@ -22,28 +22,27 @@ void ue_srb0_scheduler::run_slot(ue_pdsch_allocator& pdsch_alloc, const ue_list&
     return;
   }
 
-  // Queue of UEs with failed SRB0 scheduling attempt.
-  std::queue<du_ue_index_t> failed_ues;
   // Schedule SRB0 messages
-  while (not pending_ues.empty()) {
+  auto it = pending_ues.begin();
+  while (it != pending_ues.end()) {
     // Check if UE exists
-    if (not ues.contains(pending_ues.front())) {
-      pending_ues.pop();
+    if (not ues.contains(*it)) {
+      it = pending_ues.erase(it);
       continue;
     }
 
-    const auto& u = ues[pending_ues.front()];
-    if (not schedule_srb0(pdsch_alloc, u)) {
-      failed_ues.push(pending_ues.front());
+    const auto& u = ues[*it];
+    if (schedule_srb0(pdsch_alloc, u)) {
+      it = pending_ues.erase(it);
+    } else {
+      ++it;
     }
-    pending_ues.pop();
   }
-  failed_ues.swap(pending_ues);
 }
 
 void ue_srb0_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_index)
 {
-  pending_ues.push(ue_index);
+  pending_ues.push_back(ue_index);
 }
 
 bool ue_srb0_scheduler::schedule_srb0(ue_pdsch_allocator& pdsch_alloc, const ue& u)

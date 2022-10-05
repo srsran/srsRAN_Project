@@ -38,8 +38,8 @@ private:
   /// \brief Tries to schedule SRB0 messages for a UE. Returns true if successful, false otherwise.
   bool schedule_srb0(ue_pdsch_allocator& pdsch_alloc, const ue& u);
 
-  /// Queue of UE's DU Indexes for which SRB0 messages needs to be scheduled.
-  std::queue<du_ue_index_t> pending_ues;
+  /// List of UE's DU Indexes for which SRB0 messages needs to be scheduled.
+  std::vector<du_ue_index_t> pending_ues;
 
   srslog::basic_logger& logger;
 };
