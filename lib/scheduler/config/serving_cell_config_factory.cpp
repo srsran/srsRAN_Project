@@ -21,6 +21,7 @@ srsgnb::config_helpers::make_default_carrier_configuration(const du_cell_config_
   cfg.carrier_bw_mhz = bs_channel_bandwidth_to_MHz(params.channel_bw_mhz);
   cfg.arfcn          = params.dl_arfcn;
   cfg.nof_ant        = 1;
+  cfg.band           = params.band;
   return cfg;
 }
 

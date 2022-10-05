@@ -13,6 +13,10 @@ class ue_cell_configuration
 {
 public:
   ue_cell_configuration(const cell_configuration& cell_cfg_common_, const serving_cell_config& serv_cell_cfg_);
+  ue_cell_configuration(const ue_cell_configuration&)            = delete;
+  ue_cell_configuration(ue_cell_configuration&&)                 = delete;
+  ue_cell_configuration& operator=(const ue_cell_configuration&) = delete;
+  ue_cell_configuration& operator=(ue_cell_configuration&&)      = delete;
 
   void reconfigure(const serving_cell_config& cell_cfg_ded_);
 
