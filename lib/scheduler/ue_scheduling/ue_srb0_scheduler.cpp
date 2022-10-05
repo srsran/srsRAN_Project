@@ -54,8 +54,8 @@ bool ue_srb0_scheduler::schedule_srb0(ue_pdsch_allocator& pdsch_alloc, const ue&
     // Search for empty HARQ.
     const dl_harq_process* h = ue_cc->harqs.find_empty_dl_harq();
     if (h == nullptr) {
-      logger.error("SCHED: No empty HARQ found.");
-      return false;
+      logger.error("SCHED: No empty HARQ process found in UE cell index={}.", ue_cc->cell_index);
+      continue;
     }
 
     // Search for available symbolxRB resources in different SearchSpaces.
@@ -91,9 +91,8 @@ bool ue_srb0_scheduler::schedule_srb0(ue_pdsch_allocator& pdsch_alloc, const ue&
         const bwp_configuration&       bwp_cfg   = bwp_dl.generic_params;
         prb_bitmap                     used_crbs = grid.used_crbs(bwp_cfg, pdsch.symbols);
         crb_interval ue_grant_crbs               = find_empty_interval_of_length(used_crbs, srb0_prbs_tbs.nof_prbs, 0);
-        if (ue_grant_crbs.length() < srb0_prbs_tbs.nof_prbs) {
-          logger.error("SCHED: Not enough PDSCH space for SRB0 message. Will re-try in next slot");
-          return false;
+        if (ue_grant_crbs.length() >= srb0_prbs_tbs.nof_prbs) {
+          return true;
         }
         // Successful allocation
         pdsch_alloc.allocate_pdsch(ue_pdsch_grant{&u,
@@ -107,5 +106,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue_pdsch_allocator& pdsch_alloc, const ue&
       }
     }
   }
+  // No resource found in UE's carriers and Search spaces
+  logger.error("SCHED: Not enough PDSCH space for SRB0 message. Will re-try in next slot");
   return false;
 }
