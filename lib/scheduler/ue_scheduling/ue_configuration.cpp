@@ -38,7 +38,7 @@ void ue_cell_configuration::reconfigure(const serving_cell_config& cell_cfg_ded_
 
   // Recompute UL param lookup tables.
   configure_bwp_common_cfg(to_bwp_id(0), cell_cfg_common.ul_cfg_common.init_ul_bwp);
-  if(cell_cfg_ded.ul_config.has_value()) {
+  if (cell_cfg_ded.ul_config.has_value()) {
     configure_bwp_ded_cfg(to_bwp_id(0), cell_cfg_ded.ul_config->init_ul_bwp);
   }
 }
@@ -78,7 +78,7 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_down
 {
   // Compute DL BWP-Id lookup table.
   bwp_table[bwpid].dl_bwp_ded = &bwp_dl_ded;
-  if(not bwp_dl_ded.pdcch_cfg.has_value()) {
+  if (not bwp_dl_ded.pdcch_cfg.has_value()) {
     return;
   }
 
