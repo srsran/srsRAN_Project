@@ -19,6 +19,43 @@ namespace srsgnb {
 /// DCI payload data type.
 using dci_payload = bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>;
 
+/// \brief Required parameters for packing a DCI format 1_0 scrambled by C-RNTI, as per TS38.212 Section 7.3.1.2.1.
+///
+/// \note The case where the random access procedure is initiated by a PDCCH order is handled separately.
+struct dci_1_0_c_rnti_configuration {
+  /// Identifier for DCI formats – 1 bit.
+  /// \remark The value of this field is always set to 1, indicating a DL DCI format.
+  unsigned dci_format_id;
+  /// Parameter \f$N_{RB}^{DL,BWP}\f$. It must be set according to TS38.212 Section 7.3.1.0.
+  unsigned N_rb_dl_bwp;
+  /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
+  /// \rceil\f$ bits as per TS38.214 Section 5.1.2.2.2.
+  unsigned frequency_resource;
+  /// Time domain resource assignment - 4 bit as per TS38.214 Section 5.1.2.1.
+  unsigned time_resource;
+  /// \brief VRB-to-PRB mapping - 1 bit as per TS38.212 Table 7.3.1.2.2-5.
+  unsigned vrb_to_prb_mapping;
+  /// \brief Modulation and coding scheme - 5 bits as per TS38.214 Section 5.1.3.
+  unsigned modulation_coding_scheme;
+  /// \brief New data indicator - 1 bit.
+  unsigned new_data_indicator;
+  /// \brief Redundancy version - 2 bits as per TS38.212 Table 7.3.1.1.1-2.
+  unsigned redundancy_version;
+  /// \brief HARQ process number - 4 bits.
+  unsigned harq_process_number;
+  /// \brief Downlink assignment index - 2 bits as per TS38.213 Section 9.1.3.
+  unsigned dl_assignment_index;
+  /// \brief TPC command for scheduled PUCCH – 2 bits as per TS38.213 Section 7.2.1.
+  unsigned tpc_command;
+  /// \brief PUCCH resource indicator – 3 bits as per TS38.213 Section 9.2.3.
+  unsigned pucch_resource_indicator;
+  /// \brief PDSCH to HARQ feedback timing indicator – 3 bits as per TS38.213 Section 9.2.3.
+  unsigned pdsch_harq_fb_timing_indicator;
+};
+
+/// Packs a DCI format 1_0 scrambled by C-RNTI.
+dci_payload dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& config);
+
 /// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by P-RNTI as per TS38.212
 /// Section 7.3.1.2.1.
 struct dci_1_0_p_rnti_configuration {

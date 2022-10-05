@@ -13,6 +13,50 @@
 
 using namespace srsgnb;
 
+dci_payload srsgnb::dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& config)
+{
+  unsigned    frequency_resource_nof_bits = log2_ceil(config.N_rb_dl_bwp * (config.N_rb_dl_bwp + 1) / 2);
+  dci_payload payload;
+
+  // Identifier for DCI formats - 1 bit.
+  payload.push_back(config.dci_format_id, 1);
+
+  // Frequency domain resource assignment - frequency_resource_nof_bits bits.
+  payload.push_back(config.frequency_resource, frequency_resource_nof_bits);
+
+  // Time domain resource assignment - 4 bit.
+  payload.push_back(config.time_resource, 4);
+
+  // VRB-to-PRB mapping - 1 bit.
+  payload.push_back(config.vrb_to_prb_mapping, 1);
+
+  // Modulation coding scheme - 5 bits.
+  payload.push_back(config.modulation_coding_scheme, 5);
+
+  // New data indicator - 1 bit.
+  payload.push_back(config.new_data_indicator, 1);
+
+  // Redundancy version - 2 bit.
+  payload.push_back(config.redundancy_version, 2);
+
+  // HARQ process number - 4 bit.
+  payload.push_back(config.harq_process_number, 4);
+
+  // Downlink assignment index - 2 bit.
+  payload.push_back(config.dl_assignment_index, 2);
+
+  // TPC command for scheduled PUCCH - 2 bit.
+  payload.push_back(config.tpc_command, 2);
+
+  // PUCCH resource indicator - 3 bit.
+  payload.push_back(config.pucch_resource_indicator, 3);
+
+  // PDSCH to HARQ feedback timing indicator - 3 bit.
+  payload.push_back(config.pdsch_harq_fb_timing_indicator, 3);
+
+  return payload;
+}
+
 dci_payload srsgnb::dci_1_0_p_rnti_pack(const dci_1_0_p_rnti_configuration& config)
 {
   unsigned    frequency_resource_nof_bits = log2_ceil(config.N_rb_dl_bwp * (config.N_rb_dl_bwp + 1) / 2);
