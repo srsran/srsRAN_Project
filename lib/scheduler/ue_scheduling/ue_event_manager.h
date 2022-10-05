@@ -29,10 +29,7 @@ class ue_event_manager : public scheduler_ue_configurator,
                          public scheduler_dl_buffer_state_indication_handler
 {
 public:
-  ue_event_manager(ue_list&                      ue_db,
-                   sched_configuration_notifier& mac_notifier,
-                   ue_srb0_scheduler&            srb0_sched,
-                   scheduler_policy&             sched_strategy);
+  ue_event_manager(ue_list& ue_db, sched_configuration_notifier& mac_notifier, ue_srb0_scheduler& srb0_sched);
 
   void add_cell_config(const cell_configuration& cell_cfg_);
 
@@ -97,7 +94,6 @@ private:
 
   /// Reference to SRB0 and other bearers scheduler
   ue_srb0_scheduler& srb0_sched;
-  scheduler_policy&  sched_strategy;
 };
 
 } // namespace srsgnb

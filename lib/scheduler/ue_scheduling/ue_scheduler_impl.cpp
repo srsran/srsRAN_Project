@@ -17,7 +17,7 @@ ue_scheduler_impl::ue_scheduler_impl(sched_configuration_notifier& mac_notif) :
   srb0_sched(srslog::fetch_basic_logger("MAC")),
   sched_strategy(create_scheduler_strategy(scheduler_strategy_params{"time_rr", &srslog::fetch_basic_logger("MAC")})),
   ue_alloc(ue_db, srslog::fetch_basic_logger("MAC")),
-  event_mng(ue_db, mac_notif, srb0_sched, *sched_strategy)
+  event_mng(ue_db, mac_notif, srb0_sched)
 {
 }
 
