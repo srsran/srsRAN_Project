@@ -18,7 +18,7 @@
 
 namespace srsgnb {
 
-/// Defines SRB0 scheduler that is used to allocate grants for UE's SRB0 DL messages in a given slot
+/// Defines SRB0 scheduler that is used to allocate grants for UE's SRB0 DL messages in a given slot.
 class ue_srb0_scheduler
 {
 public:
