@@ -14,8 +14,7 @@
 #include "../support/slot_event_list.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include "ue.h"
-#include <mutex>
-#include <unordered_map>
+#include <queue>
 
 namespace srsgnb {
 
@@ -26,8 +25,8 @@ public:
   explicit ue_srb0_scheduler(srslog::basic_logger& logger);
 
   /// Handles DL buffer state reported by upper layers.
-  /// \param[in] bs DL buffer state. This object provides buffer state for a particular logical channel.
-  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs);
+  /// \param[in] ue_index UE's DU Index for which SRB0 message needs to be scheduled.
+  void handle_dl_buffer_state_indication(du_ue_index_t ue_index);
 
   /// Schedule UE's SRB0 DL grants for a given slot and one or more cells.
   /// \param[in/out] pdsch_alloc PDSCH grant allocator. This object provides a handle to allocate PDSCH grants in the
@@ -36,8 +35,11 @@ public:
   void run_slot(ue_pdsch_allocator& pdsch_alloc, const ue_list& ues);
 
 private:
-  /// List of SRB0 DL buffer state reported by upper layers to be scheduled.
-  std::unordered_map<rnti_t, dl_buffer_state_indication_message> ue_dl_bs;
+  /// \brief Tries to schedule SRB0 messages for a UE. Returns true if successful, false otherwise.
+  bool schedule_srb0(ue_pdsch_allocator& pdsch_alloc, const ue& u);
+
+  /// Queue of UE's DU Indexes for which SRB0 messages needs to be scheduled.
+  std::queue<du_ue_index_t> pending_ues;
 
   srslog::basic_logger& logger;
 };

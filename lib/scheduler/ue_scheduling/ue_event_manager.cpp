@@ -159,10 +159,14 @@ void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& c
 
 void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
 {
-  if (bs.lcid == LCID_SRB0) {
-    srb0_sched.handle_dl_buffer_state_indication(bs);
-  }
-  // TODO: Handle other logical channels
+  common_events.emplace(bs.ue_index, [this, bs](event_logger& ev_logger) {
+    ev_logger.enqueue("mac_bs(ueId={},bs={})", bs.ue_index, bs.lcid);
+    ue_db[bs.ue_index].handle_dl_buffer_state_indication(bs);
+    if (bs.lcid == LCID_SRB0) {
+      srb0_sched.handle_dl_buffer_state_indication(bs.ue_index);
+    }
+    // TODO: Handle other logical channels
+  });
 }
 
 void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)

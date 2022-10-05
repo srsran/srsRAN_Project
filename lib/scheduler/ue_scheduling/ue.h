@@ -108,6 +108,13 @@ public:
     dl_lc_ch_mng.handle_mac_ce_indication(msg.ce_lcid);
   }
 
+  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& msg)
+  {
+    dl_lc_ch_mng.handle_dl_buffer_status_indication(msg.lcid, msg.bs);
+  }
+
+  const dl_logical_channel_manager& get_dl_logical_channel_manager() const { return dl_lc_ch_mng; }
+
   void handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg) {}
 
   span<const du_cell_index_t> ue_cell_indexes() const
