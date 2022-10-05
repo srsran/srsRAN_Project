@@ -19,14 +19,6 @@ pucch_allocator_impl::pucch_allocator_impl(const cell_configuration& cell_cfg_) 
 
 pucch_allocator_impl::~pucch_allocator_impl() = default;
 
-const unsigned pucch_allocator_impl::get_pdsch_k0() const
-{
-  static const unsigned      pdsch_time_res_index = 0;
-  const pdsch_config_common& pdsch_cfg            = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common;
-
-  return pdsch_cfg.pdsch_td_alloc_list[pdsch_time_res_index].k0;
-}
-
 pucch_allocator_impl::pucch_res_alloc_cfg
 pucch_allocator_impl::alloc_pucch_common_res_harq(unsigned&                         pucch_res_indicator,
                                                   cell_slot_resource_allocator&     pucch_alloc,
@@ -98,8 +90,8 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(unsigned&                     
 static bool has_ded_pucch_resource_cfg(const ue_cell_configuration& ue_cell_cfg)
 {
   // Check if there is any PUCCH res config in the UE configuration.
-  if (ue_cell_cfg.ul_config.has_value() and ue_cell_cfg.ul_config.value().init_ul_bwp.pucch_cnf.has_value()) {
-    const auto& pucch_cfg = ue_cell_cfg.ul_config.value().init_ul_bwp.pucch_cnf.value();
+  if (ue_cell_cfg.ul_config.has_value() and ue_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
+    const auto& pucch_cfg = ue_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value();
     // NOTE: We assume that the PUCCH resources for HARQ-ACK are in PUCCH Resource Set 0, only.
     // TODO: change this so as to extend the check to other PUCCH Resource Sets.
     if (not pucch_cfg.pucch_res_set_0.pucch_res_id_list.empty()) {
@@ -166,8 +158,8 @@ void pucch_allocator_impl::fill_pucch_res_output(pucch_info&                  pu
 pucch_info* pucch_allocator_impl::alloc_pucch_harq_ack_ue(unsigned&                    pucch_res_indicator,
                                                           unsigned&                    harq_feedback_timing_indicator,
                                                           cell_resource_allocator&     slot_alloc,
+                                                          unsigned                     pdsch_time_domain_resource,
                                                           const pdcch_dl_information&  dci_info,
-                                                          rnti_t                       rnti,
                                                           const ue&                    ue,
                                                           const ue_cell_configuration& ue_cell_cfg)
 {
@@ -175,10 +167,10 @@ pucch_info* pucch_allocator_impl::alloc_pucch_harq_ack_ue(unsigned&             
   // TODO: extend scheduler for k1 different from 4 slots.
   const unsigned k1 = 4;
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
-  cell_slot_resource_allocator& pucch_slot_alloc = slot_alloc[get_pdsch_k0() + k1];
+  cell_slot_resource_allocator& pucch_slot_alloc = slot_alloc[pdsch_time_domain_resource + k1];
 
   // Get the PUCCH resources, either from default tables or from dedicated
-  pucch_res_alloc_cfg pucch_res = {.has_config = false};
+  pucch_res_alloc_cfg pucch_res;
   if (has_ded_pucch_resource_cfg(ue_cell_cfg)) {
     srsgnb_assert(false, "PUCCH scheduler for dedicated resources not yet implemented");
   } else {
@@ -199,7 +191,7 @@ pucch_info* pucch_allocator_impl::alloc_pucch_harq_ack_ue(unsigned&             
   // Fill scheduler output.
   pucch_slot_alloc.result.ul.pucchs.emplace_back();
   pucch_info& pucch_info = pucch_slot_alloc.result.ul.pucchs.back();
-  fill_pucch_res_output(pucch_info, rnti, pucch_res, ue_cell_cfg);
+  fill_pucch_res_output(pucch_info, ue.crnti, pucch_res, ue_cell_cfg);
 
   // NOTE: HARQ feedback is encoded for DCI 1_0. As per TS 38.213, Section 9.2.3, the harq_feedback_timing_indicator
   // maps to {1, 2, 3, 4, 5, 6, 7, 8}.

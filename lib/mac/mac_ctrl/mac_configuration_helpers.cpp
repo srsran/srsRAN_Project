@@ -22,8 +22,8 @@ srsgnb::make_scheduler_ue_creation_request(const mac_ue_create_request_message& 
   ret.serv_cell_cfg = request.serv_cell_cfg;
 
   ret.serv_cell_cfg.ul_config.emplace();
-  ret.serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cnf.emplace();
-  auto& pucch_cfg = ret.serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cnf.value();
+  ret.serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.emplace();
+  auto& pucch_cfg = ret.serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value();
 
   // Configure PUCCH.
   pucch_cfg.pucch_res_set_0.pucch_res_id_list.emplace_back(0);

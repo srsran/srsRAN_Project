@@ -279,7 +279,7 @@ struct ul_config_common {
 /// Used to configure the dedicated UE-specific parameters of an UL BWP.
 /// \remark See TS 38.331, BWP-UplinkDedicated.
 struct bwp_uplink_dedicated {
-  optional<pucch_config> pucch_cnf;
+  optional<pucch_config> pucch_cfg;
 };
 
 } // namespace srsgnb

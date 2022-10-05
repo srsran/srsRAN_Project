@@ -38,14 +38,14 @@ struct pucch_common_all_formats {
   bool          simultaneous_harq_ack_csi;
 };
 
-/// \c PUCCH-format0, in \c PUCCH-Config, TS 38.331.
+/// Configuration for \c PUCCH-format0, in \c PUCCH-Config, TS 38.331.
 struct pucch_format_0_cfg {
   uint8_t initial_cyclic_shift;
   uint8_t nof_symbols;
   uint8_t starting_sym_idx;
 };
 
-/// \c PUCCH-format1, in \c PUCCH-Config, TS 38.331.
+/// Configuration for \c PUCCH-format1, in \c PUCCH-Config, TS 38.331.
 struct pucch_format_1_cfg {
   uint8_t initial_cyclic_shift;
   uint8_t nof_symbols;
@@ -53,14 +53,14 @@ struct pucch_format_1_cfg {
   uint8_t time_domain_occ;
 };
 
-/// \c PUCCH-format2, in \c PUCCH-Config, TS 38.331.
+/// Configuration for \c PUCCH-format2, in \c PUCCH-Config, TS 38.331.
 struct pucch_format_2_3_cfg {
   uint8_t nof_prbs;
   uint8_t nof_symbols;
   uint8_t starting_sym_idx;
 };
 
-/// \c PUCCH-format4, in \c PUCCH-Config, TS 38.331.
+/// Configuration for \c PUCCH-format4, in \c PUCCH-Config, TS 38.331.
 struct pucch_format_4_cfg {
   uint8_t          nof_symbols;
   pucch_f4_occ_len occ_length;

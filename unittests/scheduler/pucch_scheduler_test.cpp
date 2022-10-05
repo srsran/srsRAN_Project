@@ -229,6 +229,7 @@ public:
     ue_cell_cfg{cell_cfg, serving_cell_ue_configuration_request{}},
     coreset_cfg{du_config_helpers::make_default_coreset_config()},
     dci_info{make_default_dci(n_cces, &coreset_cfg)},
+    k0{0},
     pucch_sched{cell_cfg},
     sl_tx{to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs), 0}
   {
@@ -244,6 +245,7 @@ public:
   ue_cell_configuration   ue_cell_cfg;
   coreset_configuration   coreset_cfg;
   pdcch_dl_information    dci_info;
+  unsigned                k0;
   // Variables that are needed for the PUCCH scheduler.
   pucch_allocator_impl pucch_sched;
   slot_point           sl_tx;
@@ -251,10 +253,10 @@ public:
   unsigned tx_delay{4};
 };
 
-class TestPucchOutput : public ::testing::TestWithParam<pucch_test_parameters>
+class test_pucch_output : public ::testing::TestWithParam<pucch_test_parameters>
 {
 public:
-  TestPucchOutput() :
+  test_pucch_output() :
     params{GetParam()},
     t_bench(params.pucch_input_params.pucch_res_common, params.pucch_input_params.n_cces),
     pucch_output_builder{&t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params,
@@ -285,13 +287,13 @@ protected:
 };
 
 // Tests the output of the PUCCH allocator (or PUCCH PDU).
-TEST_P(TestPucchOutput, test_pucch_output_info)
+TEST_P(test_pucch_output, test_pucch_output_info)
 {
   pucch_info* pucch_test = t_bench.pucch_sched.alloc_pucch_harq_ack_ue(pucch_res_indicator,
                                                                        harq_timing_indicator,
                                                                        t_bench.res_grid,
+                                                                       t_bench.k0,
                                                                        t_bench.dci_info,
-                                                                       to_rnti(0x4601),
                                                                        t_bench.user,
                                                                        t_bench.ue_cell_cfg);
 
@@ -300,13 +302,13 @@ TEST_P(TestPucchOutput, test_pucch_output_info)
 }
 
 // Tests whether PUCCH allocator fills the scheduler grid correctly.
-TEST_P(TestPucchOutput, test_pucch_grid_filling)
+TEST_P(test_pucch_output, test_pucch_grid_filling)
 {
   t_bench.pucch_sched.alloc_pucch_harq_ack_ue(pucch_res_indicator,
                                               harq_timing_indicator,
                                               t_bench.res_grid,
+                                              t_bench.k0,
                                               t_bench.dci_info,
-                                              to_rnti(0x4601),
                                               t_bench.user,
                                               t_bench.ue_cell_cfg);
 
@@ -314,13 +316,13 @@ TEST_P(TestPucchOutput, test_pucch_grid_filling)
 }
 
 // Tests whether PUCCH allocator returns the correct values for the DCI.
-TEST_P(TestPucchOutput, test_pucch_output_for_dci)
+TEST_P(test_pucch_output, test_pucch_output_for_dci)
 {
   t_bench.pucch_sched.alloc_pucch_harq_ack_ue(pucch_res_indicator,
                                               harq_timing_indicator,
                                               t_bench.res_grid,
+                                              t_bench.k0,
                                               t_bench.dci_info,
-                                              to_rnti(0x4601),
                                               t_bench.user,
                                               t_bench.ue_cell_cfg);
 
@@ -330,7 +332,7 @@ TEST_P(TestPucchOutput, test_pucch_output_for_dci)
 
 INSTANTIATE_TEST_SUITE_P(
     test_pucch_output_for_dci,
-    TestPucchOutput,
+    test_pucch_output,
     testing::Values(pucch_test_parameters{.dci_pucch_res_indicator     = 0,
                                           .dci_harq_timining_indicator = 3,
                                           .output_params               = expected_output_params{pucch_format::FORMAT_0,

@@ -87,8 +87,8 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
                           .alloc_pucch_harq_ack_ue(pucch_res_indicator,
                                                    harq_feedback_timing_indicator,
                                                    get_res_alloc(grant.cell_index),
+                                                   pdsch_td_cfg.k0,
                                                    *pdcch,
-                                                   u.crnti,
                                                    u,
                                                    ue_cell_cfg);
   if (pucch == nullptr) {

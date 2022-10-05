@@ -26,27 +26,28 @@ public:
   ~pucch_allocator_impl() override;
 
   /// Allocate the PUCCH resource for HARQ-ACK for a given UE.
-  /// \param[out] pucch_res_indicator PUCCH resource indicator field for DCI 1_0 and 1_1.
-  /// \param[out] harq_feedback_timing_indicator PUCCH delay (with respect to PDSCH) to be encoded in DCI 1_0 and 1_1.
+  /// \param[out] pucch_res_indicator <em>PUCCH resource indicator<\em> field for DCI 1_0 and 1_1.
+  /// \param[out] harq_feedback_timing_indicator <em>PDSCH-to-HARQ_feedback timing indicator<\em>, as per TS 38.213,
+  /// Section 9.2.3; it represents the PUCCH delay (with respect to PDSCH) to be encoded in DCI 1_0 and 1_1.
   /// \param[out,in] slot_alloc struct with scheduling results.
+  /// \param[in] pdsch_time_domain_resource k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] dci_info information with DL DCI, needed for HARQ-(N)-ACK scheduling info.
-  /// \param[in] rnti RNTI of UE being allocated.
   /// \param[in] ue object that contain the PUCCH resource and Logical Channel configuration.
   /// \param[in] user UE configuration for the provided cell.
-  /// \return[in] Allocated PUCCH pointer, if successful. Else, it returns \c nullptr.
+  /// \return Allocated PUCCH pointer, if successful. Else, it returns \c nullptr.
   pucch_info* alloc_pucch_harq_ack_ue(unsigned&                    pucch_res_indicator,
                                       unsigned&                    harq_feedback_timing_indicator,
                                       cell_resource_allocator&     slot_alloc,
+                                      unsigned                     pdsch_time_domain_resource,
                                       const pdcch_dl_information&  dci_info,
-                                      rnti_t                       rnti,
                                       const ue&                    ue,
-                                      const ue_cell_configuration& user) override;
+                                      const ue_cell_configuration& ue_cell_cfg) override;
 
 private:
   // Structs with the info about the PUCCH resources.
   struct pucch_res_alloc_cfg {
     /// True if the struct has a valid config.
-    bool       has_config;
+    bool       has_config{false};
     grant_info first_hop_res;
     // Contains grant only if intra-slot freq-hopping is active.
     optional<grant_info> second_hop_res;
@@ -66,9 +67,6 @@ private:
                              rnti_t                       rnti,
                              pucch_res_alloc_cfg          pucch_res,
                              const ue_cell_configuration& ue_cell_cfg);
-
-  // Retrieves delay in slot (i.e., k0) between the DCI and the PDSCH.
-  const unsigned get_pdsch_k0() const;
 
   // Cell configuration.
   const cell_configuration& cell_cfg;
