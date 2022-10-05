@@ -172,6 +172,14 @@ public:
 
   const fragment_container_t& slices() const { return fragments; }
 
+  void chain_after(byte_buffer_slice_chain&& other)
+  {
+    while (not other.fragments.empty()) {
+      fragments.push_back(std::move(other.fragments.front()));
+      other.fragments.pop_front();
+    }
+  }
+
   template <typename Range>
   bool operator==(const Range& other) const
   {

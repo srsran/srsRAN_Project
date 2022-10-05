@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../mac_config.h"
+#include "dl_sch_pdu_assembler.h"
 #include "mac_dl_ue_manager.h"
 #include "rar_pdu_assembler.h"
 #include "sib_pdu_assembler.h"
@@ -70,8 +71,9 @@ private:
   /// parameters are passed to the scheduler and also also to the PHY to generate the SSB PDU and PBCH payload.
   ssb_assembler ssb_helper;
 
-  sib_pdu_assembler sib_assembler;
-  rar_pdu_assembler rar_assembler;
+  sib_pdu_assembler    sib_assembler;
+  rar_pdu_assembler    rar_assembler;
+  dl_sch_pdu_assembler dlsch_assembler;
 
   mac_scheduler&     sched_obj;
   mac_dl_ue_manager& ue_mng;

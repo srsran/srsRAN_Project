@@ -126,6 +126,15 @@ public:
   }
   ~expected() { destroy(); }
 
+  void set_value()
+  {
+    if (not has_value()) {
+      unexpected.~E();
+      construct_val(T{});
+    } else {
+      val = T{};
+    }
+  }
   void set_error()
   {
     if (has_value()) {

@@ -9,7 +9,6 @@
  */
 
 #include "mac_cell_processor.h"
-#include "sib_pdu_assembler.h"
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/support/async/execute_on.h"
 
@@ -27,6 +26,7 @@ mac_cell_processor::mac_cell_processor(mac_common_config_t&             cfg_,
   ssb_helper(cell_cfg_req_),
   sib_assembler(cell_cfg_req_.bcch_dl_sch_payload),
   rar_assembler(cell_cfg_req_),
+  dlsch_assembler(ue_mng_),
   sched_obj(sched_),
   ue_mng(ue_mng_)
 {
@@ -141,8 +141,6 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
                                                   du_cell_index_t        cell_index,
                                                   const dl_sched_result& dl_res)
 {
-  static const unsigned MIN_MAC_SDU_SIZE = 3;
-
   data_res.slot = sl_tx;
   // Assemble scheduled BCCH-DL-SCH message containing SIBs' payload.
   for (const sib_information& sib_info : dl_res.bc.sibs) {
@@ -159,34 +157,7 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
   // Assemble data grants.
   for (const dl_msg_alloc& grant : dl_res.ue_grants) {
     for (const dl_msg_tb_info& tb_info : grant.tb_list) {
-      for (const dl_msg_lc_info& subpdu : tb_info.subpdus) {
-        if (subpdu.lcid.is_sdu()) {
-          // Encode MAC SDU.
-
-          // Fetch RLC Bearer.
-          mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.pdsch_cfg.rnti, subpdu.lcid.to_lcid());
-          srsgnb_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
-
-          unsigned rem_bytes = subpdu.sched_bytes;
-          while (rem_bytes > MIN_MAC_SDU_SIZE) {
-            // Assemble MAC Tx SDU.
-            byte_buffer_slice_chain sdu = bearer->on_new_tx_sdu(subpdu.sched_bytes);
-            if (sdu.empty()) {
-              // TODO: Handle.
-              break;
-            }
-
-            // TODO: Add subheader.
-
-            data_res.ue_pdus.emplace_back(std::move(sdu));
-            rem_bytes -= sdu.length();
-          }
-        } else {
-          // Encode MAC CE.
-
-          // TODO: Encode subPDU.
-        }
-      }
+      data_res.ue_pdus.push_back(dlsch_assembler.assemble_pdu(grant.pdsch_cfg.rnti, tb_info));
     }
   }
 }
