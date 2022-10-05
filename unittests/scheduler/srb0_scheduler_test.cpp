@@ -49,6 +49,10 @@ struct test_bench {
     ue_alloc(ue_db, srslog::fetch_basic_logger("MAC")),
     srb0_sched(srslog::fetch_basic_logger("MAC"))
   {
+    // Add UE to UE DB
+    auto ue_creation_msg = make_scheduler_ue_creation_request(test_helpers::make_default_ue_creation_request());
+    auto u               = std::make_unique<ue>(cell_cfg, ue_creation_msg);
+    ue_db.insert(to_du_ue_index(0), std::move(u));
   }
 };
 
@@ -98,6 +102,7 @@ protected:
     test_logger.set_context(next_slot.to_uint());
 
     bench->res_grid.slot_indication(next_slot);
+    // TODO: Fill some parts of the resource grid here
     next_slot++;
 
     bench->srb0_sched.run_slot(bench->ue_alloc, bench->ue_db);
