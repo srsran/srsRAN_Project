@@ -1,12 +1,12 @@
 /*
-*
-* Copyright 2013-2022 Software Radio Systems Limited
-*
-* By using this file, you agree to the terms and conditions set
-* forth in the LICENSE file which can be found at the top level of
-* the distribution.
-*
-*/
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #include "config_generators.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_scheduler_impl.h"
@@ -32,13 +32,13 @@ using test_params = std::tuple<uint8_t, std::vector<uint8_t>>;
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
 struct test_bench {
-  cell_configuration                       cell_cfg;
-  cell_resource_allocator                  res_grid;
-  pdcch_scheduler_impl                     pdcch_sch;
-  slot_point                               sl_tx;
-  ue_list                                  ue_db;
-  ue_cell_grid_allocator                   ue_alloc;
-  ue_srb0_scheduler                        srb0_sched;
+  cell_configuration      cell_cfg;
+  cell_resource_allocator res_grid;
+  pdcch_scheduler_impl    pdcch_sch;
+  slot_point              sl_tx;
+  ue_list                 ue_db;
+  ue_cell_grid_allocator  ue_alloc;
+  ue_srb0_scheduler       srb0_sched;
 
   explicit test_bench(
       const sched_cell_configuration_request_message& cell_req = make_default_sched_cell_configuration_request()) :
@@ -47,13 +47,14 @@ struct test_bench {
     pdcch_sch{cell_cfg},
     sl_tx{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0},
     ue_alloc(ue_db, srslog::fetch_basic_logger("MAC")),
-    srb0_sched(srslog::fetch_basic_logger("MAC")) {}
+    srb0_sched(srslog::fetch_basic_logger("MAC"))
+  {
+  }
 };
 
 class srb0_scheduler_tester : public ::testing::TestWithParam<test_params>
 {
 protected:
-
   slot_point            next_slot{0, 0};
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("MAC");

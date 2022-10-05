@@ -56,11 +56,14 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ue_event_manager::ue_event_manager(ue_list& ue_db,
+ue_event_manager::ue_event_manager(ue_list&                      ue_db,
                                    sched_configuration_notifier& mac_notifier,
-                                   ue_srb0_scheduler& srb0_sched,
-                                   scheduler_policy&  sched_strategy) :
-  ue_db(ue_db), mac_notifier(mac_notifier), logger(srslog::fetch_basic_logger("MAC")), srb0_sched(srb0_sched),
+                                   ue_srb0_scheduler&            srb0_sched,
+                                   scheduler_policy&             sched_strategy) :
+  ue_db(ue_db),
+  mac_notifier(mac_notifier),
+  logger(srslog::fetch_basic_logger("MAC")),
+  srb0_sched(srb0_sched),
   sched_strategy(sched_strategy)
 {
 }

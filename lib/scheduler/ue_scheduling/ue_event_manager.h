@@ -29,10 +29,10 @@ class ue_event_manager : public scheduler_ue_configurator,
                          public scheduler_dl_buffer_state_indication_handler
 {
 public:
-  ue_event_manager(ue_list& ue_db,
+  ue_event_manager(ue_list&                      ue_db,
                    sched_configuration_notifier& mac_notifier,
-                   ue_srb0_scheduler& srb0_sched,
-                   scheduler_policy&  sched_strategy);
+                   ue_srb0_scheduler&            srb0_sched,
+                   scheduler_policy&             sched_strategy);
 
   void add_cell_config(const cell_configuration& cell_cfg_);
 
