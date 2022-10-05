@@ -70,7 +70,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue_pdsch_allocator& pdsch_alloc, const ue&
             cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
         const auto&           pdsch           = pdsch_list[time_res];
-        static const unsigned nof_symb_sh     = pdsch.symbols.length();
+        const unsigned        nof_symb_sh     = pdsch.symbols.length();
         static const unsigned mod_order       = get_bits_per_symbol(modulation_scheme::QPSK);
         static const unsigned srb0_mcs_index  = 0; // TODO: Need to parameterize
         sch_mcs_description   srb0_msc_config = pdsch_mcs_get_config(pdsch_mcs_table::qam64, srb0_mcs_index);
