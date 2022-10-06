@@ -17,6 +17,7 @@
 #include "rlc_sdu_queue.h"
 #include "rlc_tx_entity.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"
 #include <set>
 
@@ -110,7 +111,8 @@ public:
                    rlc_tx_upper_layer_data_notifier&    upper_dn,
                    rlc_tx_upper_layer_control_notifier& upper_cn,
                    rlc_tx_lower_layer_notifier&         lower_dn,
-                   timer_manager&                       timers);
+                   timer_manager&                       timers,
+                   task_executor&                       pcell_executor);
 
   // Tx/Rx interconnect
   void set_status_provider(rlc_rx_am_status_provider* status_provider_) { status_provider = status_provider_; }

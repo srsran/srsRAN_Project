@@ -10,6 +10,7 @@
 
 #include "../../lib/rlc/rlc_tx_am_entity.h"
 #include "rlc_test_helpers.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <queue>
 
@@ -97,7 +98,7 @@ protected:
 
     // Create RLC AM TX entity
     rlc = std::make_unique<rlc_tx_am_entity>(
-        du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, *tester, *tester, *tester, timers);
+        du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, *tester, *tester, *tester, timers, pcell_worker);
 
     // Bind AM Rx/Tx interconnect
     rlc->set_status_provider(tester.get());
@@ -227,6 +228,7 @@ protected:
   rlc_am_sn_size                        sn_size = GetParam();
   rlc_tx_am_config                      config;
   timer_manager                         timers;
+  manual_task_worker                    pcell_worker{128};
   std::unique_ptr<rlc_tx_am_test_frame> tester;
   std::unique_ptr<rlc_tx_am_entity>     rlc;
 };

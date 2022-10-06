@@ -26,12 +26,13 @@ public:
                 rlc_tx_upper_layer_data_notifier&    tx_upper_dn,
                 rlc_tx_upper_layer_control_notifier& tx_upper_cn,
                 rlc_tx_lower_layer_notifier&         tx_lower_dn,
-                timer_manager&                       timers) :
+                timer_manager&                       timers,
+                task_executor&                       pcell_executor) :
     rlc_base_entity(du_index, lcid)
   {
     // Create AM entities
-    std::unique_ptr<rlc_tx_am_entity> tx_am =
-        std::make_unique<rlc_tx_am_entity>(du_index, lcid, config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn, timers);
+    std::unique_ptr<rlc_tx_am_entity> tx_am = std::make_unique<rlc_tx_am_entity>(
+        du_index, lcid, config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn, timers, pcell_executor);
     logger.log_info("RLC TX AM configured: {}", config.tx);
 
     std::unique_ptr<rlc_rx_am_entity> rx_am =

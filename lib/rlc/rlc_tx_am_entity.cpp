@@ -20,7 +20,8 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
                                    rlc_tx_upper_layer_data_notifier&    upper_dn,
                                    rlc_tx_upper_layer_control_notifier& upper_cn,
                                    rlc_tx_lower_layer_notifier&         lower_dn,
-                                   timer_manager&                       timers) :
+                                   timer_manager&                       timers,
+                                   task_executor&                       pcell_executor) :
   rlc_tx_entity(du_index, lcid, upper_dn, upper_cn, lower_dn),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
@@ -35,8 +36,9 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
 
   //  configure t_poll_retransmission timer
   if (cfg.t_poll_retx > 0) {
-    poll_retransmit_timer.set(static_cast<uint32_t>(cfg.t_poll_retx),
-                              [this](uint32_t timerid) { timer_expired(timerid); });
+    poll_retransmit_timer.set(static_cast<uint32_t>(cfg.t_poll_retx), [this, &pcell_executor](uint32_t timerid) {
+      pcell_executor.execute([this, timerid]() { timer_expired(timerid); });
+    });
   }
 }
 

@@ -14,6 +14,7 @@
 #include "srsgnb/rlc/rlc_entity.h"
 #include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/rlc/rlc_tx.h"
+#include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"
 #include <memory>
 
@@ -28,6 +29,7 @@ struct rlc_entity_creation_message {
   rlc_tx_upper_layer_control_notifier* tx_upper_cn;
   rlc_tx_lower_layer_notifier*         tx_lower_dn;
   timer_manager*                       timers;
+  task_executor*                       pcell_executor;
 };
 
 /// Creates an instance of a RLC bearer
