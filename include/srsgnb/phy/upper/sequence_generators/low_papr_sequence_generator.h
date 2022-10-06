@@ -15,18 +15,18 @@
 
 namespace srsgnb {
 
-/// Describes a low PAPR sequence generator interface that implements TS 38.211 section 5.2.2 for any possible length.
+/// Describes a low PAPR sequence generator interface that implements TS38.211 Section 5.2.2 for any possible length.
 class low_papr_sequence_generator
 {
 public:
   /// Default destructor.
   virtual ~low_papr_sequence_generator() = default;
 
-  /// \brief Generates a \f$r^{(\alpha, \beta)}_{u,v}\f$ sequence as per TS 38.211 section 5.2.2.
+  /// \brief Generates a \f$r^{(\alpha, \delta)}_{u,v}\f$ sequence as per TS38.211 Section 5.2.2.
   /// \param[out] sequence Provides the destination buffer and the sequence length.
-  /// \param[in] u Indicates the sequence group {0...29}.
-  /// \param[in] v Indicates the sequence base {0,1}.
-  /// \param[in] alpha Indicates the \f$\alpha\f$ parameter.
+  /// \param[in] u         Sequence group {0, ..., 29}.
+  /// \param[in] v         Sequence number {0, 1}.
+  /// \param[in] alpha     Cyclic shift (i.e., parameter \f$\alpha\f$).
   virtual void generate(span<cf_t> sequence, unsigned u, unsigned v, float alpha) const = 0;
 };
 

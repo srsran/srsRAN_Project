@@ -15,7 +15,7 @@
 
 namespace srsgnb {
 
-/// \brief Describes a low PAPR sequence collection as per TS 38.211 section 5.2.2.
+/// \brief Describes a low PAPR sequence collection as per TS38.211 Section 5.2.2.
 ///
 /// This class describes a collection of \f$r^{(\alpha, \delta)}_{u,v}(n)\f$ sequences. The collection of sequences is
 /// generated at construction time. The constructor is not suitable for real-time operation while the sequence retrieval
