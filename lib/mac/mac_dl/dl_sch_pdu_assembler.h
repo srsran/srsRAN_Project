@@ -37,7 +37,7 @@ public:
 
     // Encode Header.
     byte_buffer subpdu;
-    encode_header(subpdu, F_bit, lcid, header_length, sdu.length());
+    encode_subheader(subpdu, F_bit, lcid, header_length, sdu.length());
     pdu.push_back(std::move(subpdu));
 
     // Encode SDU.
@@ -53,7 +53,7 @@ public:
 
     // Encode header and payload.
     byte_buffer subpdu;
-    encode_header(subpdu, false, lcid_dl_sch_t::UE_CON_RES_ID, header_len, payload_len);
+    encode_subheader(subpdu, false, lcid_dl_sch_t::UE_CON_RES_ID, header_len, payload_len);
     subpdu.append(con_res_payload);
     pdu.push_back(std::move(subpdu));
   }
@@ -64,18 +64,20 @@ public:
     unsigned    header_len = 1;
     unsigned    sdu_len    = len - 1;
     byte_buffer subpdu;
-    encode_header(subpdu, false, lcid_dl_sch_t::PADDING, header_len, sdu_len);
+    encode_subheader(subpdu, false, lcid_dl_sch_t::PADDING, header_len, sdu_len);
     for (unsigned i = 0; i != sdu_len; ++i) {
       subpdu.append(0);
     }
     pdu.push_back(std::move(subpdu));
   }
 
+  size_t nof_bytes() const { return pdu.length(); }
+
   byte_buffer_slice_chain pop() { return std::move(pdu); }
 
 private:
   static void
-  encode_header(byte_buffer& subpdu, bool F_bit, lcid_dl_sch_t lcid, unsigned header_len, unsigned payload_len)
+  encode_subheader(byte_buffer& subpdu, bool F_bit, lcid_dl_sch_t lcid, unsigned header_len, unsigned payload_len)
   {
     subpdu.append(((F_bit ? 1U : 0U) << 6U) | (lcid.value() & 0x3FU));
     if (header_len == 3) {
@@ -101,7 +103,7 @@ class dl_sch_pdu_assembler
 public:
   dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_) : ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("MAC")) {}
 
-  byte_buffer_slice_chain assemble_pdu(rnti_t rnti, const dl_msg_tb_info& tb_info)
+  byte_buffer_slice_chain assemble_pdu(rnti_t rnti, const dl_msg_tb_info& tb_info, unsigned tb_size_bytes)
   {
     dl_sch_pdu ue_pdu;
     for (const dl_msg_lc_info& subpdu : tb_info.subpdus) {
@@ -111,6 +113,13 @@ public:
         assemble_ce(ue_pdu, rnti, subpdu);
       }
     }
+
+    // Add Padding if required.
+    unsigned current_size = ue_pdu.nof_bytes();
+    if (current_size < tb_size_bytes) {
+      ue_pdu.add_padding(tb_size_bytes - current_size);
+    }
+
     return ue_pdu.pop();
   }
 
@@ -133,10 +142,10 @@ private:
         break;
       }
 
+      rem_bytes -= sdu.length();
+
       // Add SDU as a subPDU.
       ue_pdu.add_sdu(subpdu.lcid.to_lcid(), std::move(sdu));
-
-      rem_bytes -= sdu.length();
     }
   }
 

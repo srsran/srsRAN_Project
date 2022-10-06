@@ -295,8 +295,8 @@ class byte_buffer
     template <typename OtherT>
     friend struct iterator_impl;
 
-    byte_buffer_segment* current_segment;
-    size_t               offset;
+    byte_buffer_segment* current_segment = nullptr;
+    size_t               offset          = 0;
   };
 
 public:

@@ -8,6 +8,7 @@
  *
  */
 
+#include "lib/du_manager/converters/mac_cell_configuration_helpers.h"
 #include "lib/mac/mac_dl/dl_sch_pdu_assembler.h"
 #include "srsgnb/support/bit_encoding.h"
 #include <gtest/gtest.h>
@@ -104,5 +105,81 @@ TEST(mac_dl_sch_pdu, mac_sdu_16bit_L_pack)
   enc.pack(lcid, 6);         // LCID
   enc.pack(payload_len, 16); // L
   enc.pack_bytes(payload);
+
+  ASSERT_EQ(result, expected);
+}
+
+class dummy_dl_bearer : public mac_sdu_tx_builder
+{
+public:
+  byte_buffer last_sdu;
+
+  byte_buffer_slice_chain on_new_tx_sdu(unsigned nof_bytes) override
+  {
+    last_sdu.clear();
+    for (unsigned i = 0; i != nof_bytes; ++i) {
+      last_sdu.append(get_random_uint(0, 255));
+    }
+    return byte_buffer_slice_chain{last_sdu.copy()};
+  }
+
+  unsigned on_buffer_state_update() override { return 0; }
+};
+
+class mac_dl_sch_assembler_tester : public testing::Test
+{
+public:
+  mac_dl_sch_assembler_tester() : ue_mng(rnti_table), dl_sch_enc(ue_mng)
+  {
+    for (unsigned i = 0; i != UE_CON_RES_ID_LEN; ++i) {
+      msg3_pdu.append(get_random_uint(0, 255));
+    }
+
+    // Create UE.
+    req.bearers.resize(1);
+    req.bearers[0].lcid      = LCID_SRB0;
+    req.bearers[0].dl_bearer = &dl_bearer;
+    req.ul_ccch_msg          = &msg3_pdu;
+    rnti_table.add_ue(req.crnti, req.ue_index);
+    ue_mng.add_ue(req);
+  }
+
+protected:
+  byte_buffer                   msg3_pdu;
+  mac_ue_create_request_message req = test_helpers::make_default_ue_creation_request();
+  du_rnti_table                 rnti_table;
+  mac_dl_ue_manager             ue_mng;
+  dummy_dl_bearer               dl_bearer;
+  dl_sch_pdu_assembler          dl_sch_enc;
+};
+
+TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)
+{
+  unsigned sdu_size = get_random_uint(1, 255);
+  unsigned tb_size  = get_random_uint(sdu_size, sdu_size + 100);
+
+  dl_msg_tb_info tb_info;
+  tb_info.subpdus.push_back(dl_msg_lc_info{lcid_dl_sch_t::UE_CON_RES_ID, 1 + UE_CON_RES_ID_LEN});
+  tb_info.subpdus.push_back(dl_msg_lc_info{LCID_SRB0, sdu_size});
+  byte_buffer_slice_chain result = this->dl_sch_enc.assemble_pdu(this->req.crnti, tb_info, tb_size);
+
+  byte_buffer expected;
+  bit_encoder enc(expected);
+  // UE ConRes Id.
+  enc.pack(0b00, 2);                         // R | F
+  enc.pack(lcid_dl_sch_t::UE_CON_RES_ID, 6); // LCID
+  enc.pack_bytes(this->msg3_pdu);            // UE ConRes Id.
+  // MAC SDU.
+  enc.pack(0b00, 2);                  // R | F
+  enc.pack(LCID_SRB0, 6);             // LCID
+  enc.pack(sdu_size, 8);              // L
+  enc.pack_bytes(dl_bearer.last_sdu); // SDU
+  // Padding.
+  enc.pack(0b00, 2);                   // R | F
+  enc.pack(lcid_dl_sch_t::PADDING, 6); // LCID
+  std::vector<uint8_t> zeros(tb_size - expected.length(), 0);
+  enc.pack_bytes(zeros);
+
+  ASSERT_EQ(dl_bearer.last_sdu.length(), sdu_size);
   ASSERT_EQ(result, expected);
 }

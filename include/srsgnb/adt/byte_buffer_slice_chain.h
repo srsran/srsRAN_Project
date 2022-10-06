@@ -44,7 +44,7 @@ class byte_buffer_slice_chain
     iterator_impl(parent_t& parent_, fragment_it_t frag_it_, underlying_it_t it_) :
       parent(&parent_), frag_it(frag_it_), it(it_)
     {
-      if (it == frag_it->end() and frag_it != parent->fragments.end()) {
+      if (frag_it != parent->fragments.end() and it == frag_it->end()) {
         ++frag_it;
         it = frag_it->begin();
       }
