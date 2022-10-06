@@ -128,7 +128,7 @@ protected:
     ASSERT_TRUE(bench->res_grid[0].result.dl.bc.sibs.empty());
   }
 
-  void set_random_slot() { next_slot = {0, get_random_uint(0, 10240)}; }
+  void set_random_slot() { next_slot = {0, get_random_uint(0, 10239)}; }
 
   rach_indication_message::preamble create_preamble()
   {
