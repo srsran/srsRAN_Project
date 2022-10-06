@@ -286,45 +286,53 @@ void make_asn1_rrc_pucch_formats_common_param(asn1::rrc_nr::pucch_format_cfg_s& 
   out.add_dmrs_present           = cfg.additional_dmrs;
   out.pi2_bpsk_present           = cfg.pi_2_bpsk;
   out.simul_harq_ack_csi_present = cfg.simultaneous_harq_ack_csi;
-  out.max_code_rate_present      = true;
-  switch (cfg.max_c_rate) {
-    case pucch_common_all_formats::max_code_rate::dot_08:
-      out.max_code_rate = pucch_max_code_rate_opts::zero_dot08;
-      break;
-    case pucch_common_all_formats::max_code_rate::dot_15:
-      out.max_code_rate = pucch_max_code_rate_opts::zero_dot15;
-      break;
-    case pucch_common_all_formats::max_code_rate::dot_25:
-      out.max_code_rate = pucch_max_code_rate_opts::zero_dot25;
-      break;
-    case pucch_common_all_formats::max_code_rate::dot_35:
-      out.max_code_rate = pucch_max_code_rate_opts::zero_dot35;
-      break;
-    case pucch_common_all_formats::max_code_rate::dot_45:
-      out.max_code_rate = pucch_max_code_rate_opts::zero_dot45;
-      break;
-    case pucch_common_all_formats::max_code_rate::dot_60:
-      out.max_code_rate = pucch_max_code_rate_opts::zero_dot60;
-      break;
-    case pucch_common_all_formats::max_code_rate::dot_80:
-      out.max_code_rate = pucch_max_code_rate_opts::zero_dot80;
-      break;
-    default:
-      srsgnb_assertion_failure("Invalid PUCCH Common Format 1 Max. Code Rate={}", cfg.max_c_rate);
+  if (cfg.max_c_rate == pucch_common_all_formats::max_code_rate::not_set) {
+    out.max_code_rate_present = false;
+  } else {
+    out.max_code_rate_present = true;
+    switch (cfg.max_c_rate) {
+      case pucch_common_all_formats::max_code_rate::dot_08:
+        out.max_code_rate = pucch_max_code_rate_opts::zero_dot08;
+        break;
+      case pucch_common_all_formats::max_code_rate::dot_15:
+        out.max_code_rate = pucch_max_code_rate_opts::zero_dot15;
+        break;
+      case pucch_common_all_formats::max_code_rate::dot_25:
+        out.max_code_rate = pucch_max_code_rate_opts::zero_dot25;
+        break;
+      case pucch_common_all_formats::max_code_rate::dot_35:
+        out.max_code_rate = pucch_max_code_rate_opts::zero_dot35;
+        break;
+      case pucch_common_all_formats::max_code_rate::dot_45:
+        out.max_code_rate = pucch_max_code_rate_opts::zero_dot45;
+        break;
+      case pucch_common_all_formats::max_code_rate::dot_60:
+        out.max_code_rate = pucch_max_code_rate_opts::zero_dot60;
+        break;
+      case pucch_common_all_formats::max_code_rate::dot_80:
+        out.max_code_rate = pucch_max_code_rate_opts::zero_dot80;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid PUCCH Common Format 1 Max. Code Rate={}", cfg.max_c_rate);
+    }
   }
-  out.nrof_slots_present = true;
-  switch (cfg.nof_slots) {
-    case pucch_common_all_formats::num_of_slots::n2:
-      out.nrof_slots = pucch_format_cfg_s::nrof_slots_opts::n2;
-      break;
-    case pucch_common_all_formats::num_of_slots::n4:
-      out.nrof_slots = pucch_format_cfg_s::nrof_slots_opts::n4;
-      break;
-    case pucch_common_all_formats::num_of_slots::n8:
-      out.nrof_slots = pucch_format_cfg_s::nrof_slots_opts::n8;
-      break;
-    default:
-      srsgnb_assertion_failure("Invalid PUCCH Common Format 1 No. of slots={}", cfg.nof_slots);
+  if (cfg.nof_slots == pucch_common_all_formats::num_of_slots::not_set) {
+    out.nrof_slots_present = false;
+  } else {
+    out.nrof_slots_present = true;
+    switch (cfg.nof_slots) {
+      case pucch_common_all_formats::num_of_slots::n2:
+        out.nrof_slots = pucch_format_cfg_s::nrof_slots_opts::n2;
+        break;
+      case pucch_common_all_formats::num_of_slots::n4:
+        out.nrof_slots = pucch_format_cfg_s::nrof_slots_opts::n4;
+        break;
+      case pucch_common_all_formats::num_of_slots::n8:
+        out.nrof_slots = pucch_format_cfg_s::nrof_slots_opts::n8;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid PUCCH Common Format 1 No. of slots={}", cfg.nof_slots);
+    }
   }
 }
 

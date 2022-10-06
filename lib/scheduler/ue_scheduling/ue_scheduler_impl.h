@@ -11,10 +11,12 @@
 #pragma once
 
 #include "../policy/scheduler_policy.h"
+#include "../pucch_scheduling/pucch_scheduler_impl.h"
 #include "../support/slot_event_list.h"
 #include "../support/slot_sync_point.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/adt/unique_function.h"
+#include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 #include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
 #include "ue_scheduler.h"
@@ -46,12 +48,16 @@ private:
   struct cell {
     cell_resource_allocator* cell_res_alloc;
 
-    /// SRB0 scheduler
+    /// PUCCH scheduler.
+    pucch_scheduler_impl pucch_sched;
+
+    /// SRB0 scheduler.
     ue_srb0_scheduler srb0_sched;
 
     cell(const ue_scheduler_cell_params& params, ue_list& ues) :
       cell_res_alloc(params.cell_res_alloc),
-      srb0_sched(params.cell_res_alloc->cfg, *params.pdcch_sched, *params.pucch_sched, ues, params.max_msg4_mcs_index)
+      pucch_sched(params.cell_res_alloc->cfg, config_helpers::make_default_ue_uplink_config(), ues),
+      srb0_sched(params.cell_res_alloc->cfg, *params.pdcch_sched, pucch_sched, ues, params.max_msg4_mcs_index)
     {
     }
   };

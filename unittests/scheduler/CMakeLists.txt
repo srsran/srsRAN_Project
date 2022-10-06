@@ -98,6 +98,10 @@ add_executable(pucch_scheduler_test pucch_scheduler_test.cpp)
 target_link_libraries(pucch_scheduler_test srsgnb_sched scheduler_test_suite srslog mac_configuration_helpers sched_config gtest)
 add_test(pucch_scheduler_test pucch_scheduler_test)
 
+add_executable(pucch_sr_scheduling_test pucch_sr_scheduling_test.cpp)
+target_link_libraries(pucch_sr_scheduling_test srsgnb_sched scheduler_test_suite srslog mac_configuration_helpers sched_config gtest)
+add_test(pucch_sr_scheduling_test pucch_sr_scheduling_test)
+
 add_executable(ue_configuration_test ue_configuration_test.cpp)
 target_link_libraries(ue_configuration_test
                       srsgnb_sched

@@ -14,7 +14,7 @@
 #include "../common_scheduling/ra_scheduler.h"
 #include "../common_scheduling/sib_scheduler.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
-#include "../pucch_scheduling/pucch_allocator_impl.h"
+#include "../pucch_scheduling/pucch_scheduler_impl.h"
 #include "cell_configuration.h"
 #include "resource_grid.h"
 
@@ -31,8 +31,7 @@ public:
     pdcch_sch(cell_cfg),
     ra_sch(cell_cfg, pdcch_sch),
     prach_sch(cell_cfg),
-    sib1_sch(cell_cfg, pdcch_sch, msg),
-    pucch_sch(cell_cfg)
+    sib1_sch(cell_cfg, pdcch_sch, msg)
   {
   }
 
@@ -49,7 +48,6 @@ public:
   ra_scheduler                  ra_sch;
   prach_scheduler               prach_sch;
   sib1_scheduler                sib1_sch;
-  pucch_allocator_impl          pucch_sch;
 };
 
 class scheduler_cell_manager

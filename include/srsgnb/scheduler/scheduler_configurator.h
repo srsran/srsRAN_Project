@@ -76,7 +76,7 @@ struct logical_channel_config {
   uint8_t priority;
   // TODO: add remaining fields;
   optional<uint8_t>                        lc_group;
-  optional<scheduling_request_resource_id> sr_id;
+  optional<scheduling_request_id>          sr_id;
   bool                                     lc_sr_mask;
   bool                                     lc_sr_delay_timer_applied;
 };

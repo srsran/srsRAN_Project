@@ -24,28 +24,27 @@ struct pucch_harq_ack_grant {
   /// reporting.
   /// \remark This is valid only if \c pucch is NOT nullptr.
   unsigned pucch_res_indicator;
-  /// Represents \k1, which is the delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
-  /// \remark This is valid only if \c pucch is NOT nullptr.
-  unsigned k1;
   /// Pointer of the allocated PUCCH PDU; if \c nullptr, the allocation wasn't successful.
   pucch_info* pucch_pdu{nullptr};
 };
 
 /// PUCCH scheduling interface.
-class pucch_allocator
+class pucch_scheduler
 {
 public:
-  virtual ~pucch_allocator() = default;
+  virtual ~pucch_scheduler() = default;
 
   /// Allocate the PUCCH resource for HARQ-ACK for a given UE.
   /// \param[out,in] slot_alloc struct with scheduling results.
   /// \param[in] tcrnti temporary RNTI  of the UE.
   /// \param[in] pdsch_time_domain_resource k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
+  /// \param[in] k1 delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
   /// \param[in] dci_info information with DL DCI, needed for HARQ-(N)-ACK scheduling info.
   /// \return The grant for the UE's PUCCH HARQ-(N)-ACK report.
   virtual pucch_harq_ack_grant alloc_common_pucch_harq_ack_ue(cell_resource_allocator&    slot_alloc,
                                                               rnti_t                      tcrnti,
                                                               unsigned                    pdsch_time_domain_resource,
+                                                              unsigned                    k1,
                                                               const pdcch_dl_information& dci_info) = 0;
 };
 

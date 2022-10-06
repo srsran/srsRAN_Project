@@ -19,7 +19,7 @@ using namespace srsgnb;
 
 ue_srb0_scheduler::ue_srb0_scheduler(const cell_configuration& cell_cfg_,
                                      pdcch_resource_allocator& pdcch_sch_,
-                                     pucch_allocator&          pucch_sch_,
+                                     pucch_scheduler&          pucch_sch_,
                                      ue_list&                  ues_,
                                      unsigned                  max_msg4_mcs_index_) :
   cell_cfg(cell_cfg_),
@@ -176,8 +176,9 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   }
 
   // Allocate PUCCH resources.
+  const unsigned       k1 = 4;
   pucch_harq_ack_grant pucch_grant =
-      pucch_sch.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_time_res, *pdcch);
+      pucch_sch.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_time_res, k1, *pdcch);
   if (pucch_grant.pucch_pdu == nullptr) {
     logger.warning("SCHED: Failed to allocate PDSCH. Cause: No space in PUCCH.");
     // TODO: remove PDCCH allocation.
@@ -191,13 +192,15 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   pdsch_alloc.result.dl.ue_grants.emplace_back();
 
   // Allocate UE DL HARQ.
-  slot_point uci_slot = pdsch_alloc.slot + pucch_grant.k1;
+  slot_point   uci_slot = pdsch_alloc.slot + k1;
+
   // TODO: Parameterize.
   const static unsigned max_retx = 4;
   bool                  success  = h_dl->new_tx(pdsch_alloc.slot, uci_slot, ue_grant_prbs, mcs_idx, max_retx);
   srsgnb_assert(success, "Failed to allocate DL HARQ newtx");
 
-  fill_srb0_grant(u, *h_dl, *pdcch, pdsch_alloc.result.dl.ue_grants.back(), pucch_grant, pdsch_time_res, ue_grant_prbs);
+  fill_srb0_grant(
+      u, *h_dl, *pdcch, pdsch_alloc.result.dl.ue_grants.back(), pucch_grant, pdsch_time_res, k1, ue_grant_prbs);
 
   return true;
 }
@@ -208,6 +211,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
                                         dl_msg_alloc&         msg,
                                         pucch_harq_ack_grant& pucch,
                                         unsigned              pdsch_time_res,
+                                        unsigned              k1,
                                         const prb_interval&   ue_grant_prbs)
 {
   constexpr static unsigned nof_layers = 1;
@@ -232,7 +236,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
   dci.tpc_command              = 0;
   dci.pucch_resource_indicator = pucch.pucch_res_indicator;
   // As per TS 38.213, Section 9.2.3, the harq_feedback_timing_indicator maps to {1, 2, 3, 4, 5, 6, 7, 8} for DCI 1_0.
-  dci.pdsch_harq_fb_timing_indicator = pucch.k1 - 1;
+  dci.pdsch_harq_fb_timing_indicator = k1 - 1;
 
   // Fill PDSCH.
   msg.pdsch_cfg.rnti        = u.crnti;

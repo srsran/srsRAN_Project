@@ -32,7 +32,7 @@ inline sched_ue_creation_request_message make_default_sched_ue_creation_request(
   msg.ue_index = to_du_ue_index(0);
   msg.crnti    = to_rnti(0x4601);
 
-  scheduling_request_to_addmod sr_0{.sr_id = scheduling_request_resource_id::SR_ID_MIN, .max_tx = sr_max_tx::n64};
+  scheduling_request_to_addmod sr_0{.sr_id = scheduling_request_id::SR_ID_MIN, .max_tx = sr_max_tx::n64};
   msg.sched_request_config_list.push_back(sr_0);
 
   msg.cells.resize(1);

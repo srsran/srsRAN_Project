@@ -41,8 +41,8 @@ enum class pucch_f4_occ_idx { n0, n1, n2, n3 };
 /// \c PUCCH-FormatConfig, in \c PUCCH-Config, TS 38.331. It describes the parameters that are common for a given PUCCH
 /// format.
 struct pucch_common_all_formats {
-  enum class max_code_rate { dot_08, dot_15, dot_25, dot_35, dot_45, dot_60, dot_80 };
-  enum class num_of_slots { n2, n4, n8 };
+  enum class max_code_rate { not_set = 0, dot_08, dot_15, dot_25, dot_35, dot_45, dot_60, dot_80 };
+  enum class num_of_slots { not_set = 0, n2, n4, n8 };
 
   bool operator==(const pucch_common_all_formats& rhs) const
   {
@@ -52,12 +52,13 @@ struct pucch_common_all_formats {
   }
   bool operator!=(const pucch_common_all_formats& rhs) const { return !(rhs == *this); }
 
-  bool          interslot_freq_hop;
-  bool          additional_dmrs;
-  max_code_rate max_c_rate;
-  num_of_slots  nof_slots;
-  bool          pi_2_bpsk;
-  bool          simultaneous_harq_ack_csi;
+  // The false or not_set value indicates that the field is optional and not set.
+  bool          interslot_freq_hop{false};
+  bool          additional_dmrs{false};
+  max_code_rate max_c_rate{max_code_rate::not_set};
+  num_of_slots  nof_slots{num_of_slots::not_set};
+  bool          pi_2_bpsk{false};
+  bool          simultaneous_harq_ack_csi{false};
 };
 
 /// Configuration for \c PUCCH-format0, in \c PUCCH-Config, TS 38.331.

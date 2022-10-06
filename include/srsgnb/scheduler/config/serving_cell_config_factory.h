@@ -38,6 +38,8 @@ ul_config_common make_default_ul_config_common(const du_cell_config_master_param
 
 ssb_configuration make_default_ssb_config(const du_cell_config_master_params& params = {});
 
+uplink_config make_default_ue_uplink_config();
+
 serving_cell_config make_default_initial_ue_serving_cell_config();
 
 } // namespace config_helpers

@@ -35,7 +35,7 @@ inline mac_ue_create_request_message make_default_ue_creation_request()
 
   msg.serv_cell_cfg.emplace(config_helpers::make_default_initial_ue_serving_cell_config());
 
-  scheduling_request_to_addmod sr_0{.sr_id = scheduling_request_resource_id::SR_ID_MIN, .max_tx = sr_max_tx::n64};
+  scheduling_request_to_addmod sr_0{.sr_id = scheduling_request_id::SR_ID_MIN, .max_tx = sr_max_tx::n64};
   msg.mac_cell_group_cfg.scheduling_request_config.emplace_back(sr_0);
 
   return msg;

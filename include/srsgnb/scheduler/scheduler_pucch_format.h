@@ -28,9 +28,9 @@ enum class pucch_format_4_sf { sf2, sf4 };
 /// PRBs and symbols used for PUCCH resources.
 struct pucch_resources {
   prb_interval      prbs;
-  prb_interval      second_hop_prbs;
   ofdm_symbol_range symbols;
   bool              intra_slot_freq_hop;
+  prb_interval      second_hop_prbs;
 };
 
 /// Scheduler output for PUCCH Format 0.
@@ -52,12 +52,12 @@ struct pucch_format_1 {
   /// \f$n_{ID}\f$ as per Section 6.3.2.2.1, TS 38.211.
   unsigned n_id_hopping;
   /// \c initialCyclicShift, as per TS 38.331, or Section 9.2.1, TS 38.211.
-  uint8_t                  initial_cyclic_shift;
+  uint8_t initial_cyclic_shift;
+  /// \c timeDomainOCC as per TS 38.331, or equivalent to index \f$n\f$ in Table 6.3.2.4.1-2, TS 38.211.
+  uint8_t                  time_domain_occ;
   sr_nof_bits              sr_bits;
   unsigned                 harq_ack_nof_bits;
   pucch_repetition_tx_slot slot_repetition;
-  /// \c timeDomainOCC as per TS 38.331, or equivalent to index \f$n\f$ in Table 6.3.2.4.1-2, TS 38.211.
-  uint8_t time_domain_occ;
 };
 
 /// Scheduler output for PUCCH Format 2.
