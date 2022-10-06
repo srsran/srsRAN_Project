@@ -27,7 +27,7 @@ using namespace srsgnb;
 class stress_stack
 {
 public:
-  stress_stack(stress_test_args args, uint32_t id) :
+  stress_stack(const stress_test_args& args, uint32_t id) :
     stack_id(id),
     upper_name("Upper-Worker" + std::to_string(id)),
     lower_name("Lower-Worker" + std::to_string(id)),

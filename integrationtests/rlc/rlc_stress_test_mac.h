@@ -20,8 +20,8 @@
 namespace srsgnb {
 class mac_dummy : public rlc_tx_lower_layer_notifier
 {
-  stress_test_args& args;
-  bearer_logger     logger;
+  const stress_test_args& args;
+  bearer_logger           logger;
 
   std::mt19937                          rgen;
   std::uniform_real_distribution<float> real_dist;
@@ -32,7 +32,10 @@ class mac_dummy : public rlc_tx_lower_layer_notifier
   rlc_rx_lower_layer_interface* rlc_rx_lower = nullptr;
 
 public:
-  mac_dummy(stress_test_args& args, uint32_t id) : args(args), logger("MAC", id, lcid_t{}), rgen(args.seed), bsr(0) {}
+  mac_dummy(const stress_test_args& args, uint32_t id) :
+    args(args), logger("MAC", id, lcid_t{}), rgen(args.seed), bsr(0)
+  {
+  }
 
   std::vector<byte_buffer_slice_chain> pdu_rx_list;
   std::vector<byte_buffer_slice_chain> run_tx_tti(uint32_t tti);
