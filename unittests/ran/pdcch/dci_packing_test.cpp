@@ -363,7 +363,6 @@ static void test_dci_1_0_tc_rnti_packing()
   std::uniform_int_distribution<unsigned> new_data_indicator_dist(0, pow2(1) - 1);
   std::uniform_int_distribution<unsigned> redundancy_version_dist(0, pow2(2) - 1);
   std::uniform_int_distribution<unsigned> harq_process_number_dist(0, pow2(4) - 1);
-  std::uniform_int_distribution<unsigned> dl_assignment_index_dist(0, pow2(2) - 1);
   std::uniform_int_distribution<unsigned> tpc_command_dist(0, pow2(2) - 1);
   std::uniform_int_distribution<unsigned> pucch_resource_indicator_dist(0, pow2(3) - 1);
   std::uniform_int_distribution<unsigned> pdsch_harq_fb_timing_dist(0, pow2(3) - 1);
@@ -386,7 +385,6 @@ static void test_dci_1_0_tc_rnti_packing()
       config.new_data_indicator             = new_data_indicator_dist(rgen);
       config.redundancy_version             = redundancy_version_dist(rgen);
       config.harq_process_number            = harq_process_number_dist(rgen);
-      config.dl_assignment_index            = dl_assignment_index_dist(rgen);
       config.tpc_command                    = tpc_command_dist(rgen);
       config.pucch_resource_indicator       = pucch_resource_indicator_dist(rgen);
       config.pdsch_harq_fb_timing_indicator = pdsch_harq_fb_timing_dist(rgen);
@@ -434,9 +432,8 @@ static void test_dci_1_0_tc_rnti_packing()
       expected.push_back((config.harq_process_number >> 1U) & 1U);
       expected.push_back((config.harq_process_number >> 0U) & 1U);
 
-      // Downlink assignment index - 2 bit.
-      expected.push_back((config.dl_assignment_index >> 1U) & 1U);
-      expected.push_back((config.dl_assignment_index >> 0U) & 1U);
+      // Downlink assignment index - 2 bit, reserved.
+      std::fill_n(std::back_inserter(expected), 2, 0);
 
       // TPC command for scheduled PUCCH - 2 bit.
       expected.push_back((config.tpc_command >> 1U) & 1U);

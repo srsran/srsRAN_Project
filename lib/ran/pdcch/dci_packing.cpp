@@ -193,8 +193,8 @@ dci_payload srsgnb::dci_1_0_tc_rnti_pack(const dci_1_0_tc_rnti_configuration& co
   // HARQ process number - 4 bit.
   payload.push_back(config.harq_process_number, 4);
 
-  // Downlink assignment index - 2 bit.
-  payload.push_back(config.dl_assignment_index, 2);
+  // Downlink assignment index - 2 bit, reserved.
+  payload.push_back(0x00U, 2);
 
   // TPC command for scheduled PUCCH - 2 bit.
   payload.push_back(config.tpc_command, 2);

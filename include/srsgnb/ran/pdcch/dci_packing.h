@@ -172,8 +172,6 @@ struct dci_1_0_tc_rnti_configuration {
   unsigned redundancy_version;
   /// HARQ process number - 4 bits.
   unsigned harq_process_number;
-  /// Downlink assignment index - 2 bits, reserved.
-  unsigned dl_assignment_index;
   /// TPC command for scheduled PUCCH – 2 bits as per TS38.213 Section 7.2.1.
   unsigned tpc_command;
   /// PUCCH resource indicator – 3 bits as per TS38.213 Section 9.2.3.
