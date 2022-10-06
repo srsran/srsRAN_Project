@@ -18,6 +18,8 @@
 
 namespace srsgnb {
 
+/// \brief This class represents and encodes a MAC DL-SCH PDU that may contain multiple subPDUs.
+/// Each subPDU is composed of a MAC subheader and MAC CE or MAC SDU payload.
 class dl_sch_pdu
 {
   // SDUs up to 256 B can use the short 8-bit L field
@@ -58,6 +60,7 @@ public:
     pdu.push_back(std::move(subpdu));
   }
 
+  /// Adds a padding CE as a subPDU.
   void add_padding(unsigned len)
   {
     // 1 Byte R/LCID MAC subheader.
@@ -71,22 +74,26 @@ public:
     pdu.push_back(std::move(subpdu));
   }
 
+  /// Number of bytes of the MAC PDU.
   size_t nof_bytes() const { return pdu.length(); }
 
+  /// Pops the held MAC PDU bytes. After this call, the class represents an empty MAC PDU.
   byte_buffer_slice_chain pop() { return std::move(pdu); }
+
+  void clear() { pdu.clear(); }
 
 private:
   static void
   encode_subheader(byte_buffer& subpdu, bool F_bit, lcid_dl_sch_t lcid, unsigned header_len, unsigned payload_len)
   {
-    subpdu.append(((F_bit ? 1U : 0U) << 6U) | (lcid.value() & 0x3FU));
+    subpdu.append(((F_bit ? 1U : 0U) << 6U) | (lcid.value() & 0x3fU));
     if (header_len == 3) {
       // 3 Byte R/F/LCID/L MAC subheader with 16-bit L field
-      subpdu.append((payload_len & 0xFF00U) >> 8U);
-      subpdu.append((payload_len & 0xFFU));
+      subpdu.append((payload_len & 0xff00U) >> 8U);
+      subpdu.append((payload_len & 0xffU));
     } else if (header_len == 2) {
       // 2 Byte R/F/LCID/L MAC subheader with 8-bit L field
-      subpdu.append((payload_len & 0xFFU));
+      subpdu.append((payload_len & 0xffU));
     } else if (header_len == 1) {
       // do nothing
     } else {
@@ -97,15 +104,25 @@ private:
   byte_buffer_slice_chain pdu;
 };
 
-/// Class that manages the encoding of DL-SCH MAC PDUs to be emplaced in Transport Blocks.
+/// \brief Class that manages the encoding of DL-SCH MAC PDUs that will be stored in Transport Blocks.
 class dl_sch_pdu_assembler
 {
 public:
-  dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_) : ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("MAC")) {}
+  explicit dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_) : ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("MAC"))
+  {
+  }
 
+  /// \brief Encodes a MAC DL-SCH PDU with the provided scheduler information.
+  /// \param rnti RNTI for which the MAC PDU was allocated.
+  /// \param tb_info The information relative to the transport block allocated by the scheduler. This class contains
+  /// a list of LCIDs of the subPDUs to allocated together with how many bytes each subPDU should take.
+  /// \param tb_size_bytes Number of bytes allocated for the Transport Block.
+  /// \return Byte container with assembled PDU. This container length should be lower or equal to \c tb_size_bytes.
   byte_buffer_slice_chain assemble_pdu(rnti_t rnti, const dl_msg_tb_info& tb_info, unsigned tb_size_bytes)
   {
     dl_sch_pdu ue_pdu;
+
+    // Encode added subPDUs.
     for (const dl_msg_lc_info& subpdu : tb_info.subpdus) {
       if (subpdu.lcid.is_sdu()) {
         assemble_sdu(ue_pdu, rnti, subpdu);
@@ -118,12 +135,17 @@ public:
     unsigned current_size = ue_pdu.nof_bytes();
     if (current_size < tb_size_bytes) {
       ue_pdu.add_padding(tb_size_bytes - current_size);
+    } else if (current_size > tb_size_bytes) {
+      logger.error("ERROR: Allocated subPDUs exceed TB size ({} > {})", current_size, tb_size_bytes);
+      ue_pdu.clear();
+      return {};
     }
 
     return ue_pdu.pop();
   }
 
 private:
+  /// Assemble MAC subPDU with an SDU.
   void assemble_sdu(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu)
   {
     static const unsigned MIN_MAC_SDU_SIZE = 3;
@@ -147,8 +169,14 @@ private:
       // Add SDU as a subPDU.
       ue_pdu.add_sdu(subpdu.lcid.to_lcid(), std::move(sdu));
     }
+    if (rem_bytes == subpdu.sched_bytes) {
+      logger.error("ERROR: Skipping MAC subPDU encoding. Cause: Allocated SDU size={} is too small to fit MAC "
+                   "subheader and payload.",
+                   subpdu.sched_bytes);
+    }
   }
 
+  /// Assemble MAC subPDU with a CE.
   void assemble_ce(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu)
   {
     switch (subpdu.lcid.value()) {

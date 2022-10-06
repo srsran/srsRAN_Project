@@ -131,6 +131,8 @@ class mac_dl_sch_assembler_tester : public testing::Test
 public:
   mac_dl_sch_assembler_tester() : ue_mng(rnti_table), dl_sch_enc(ue_mng)
   {
+    srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
+
     for (unsigned i = 0; i != UE_CON_RES_ID_LEN; ++i) {
       msg3_pdu.append(get_random_uint(0, 255));
     }
@@ -144,6 +146,8 @@ public:
     ue_mng.add_ue(req);
   }
 
+  ~mac_dl_sch_assembler_tester() { srslog::flush(); }
+
 protected:
   byte_buffer                   msg3_pdu;
   mac_ue_create_request_message req = test_helpers::make_default_ue_creation_request();
@@ -155,11 +159,13 @@ protected:
 
 TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)
 {
-  unsigned sdu_size = get_random_uint(1, 255);
-  unsigned tb_size  = get_random_uint(sdu_size, sdu_size + 100);
+  const unsigned sdu_subheader_size = 2;
+  const unsigned sdu_size           = get_random_uint(5, 255);
+  const unsigned conres_ce_size     = UE_CON_RES_ID_LEN + 1;
+  const unsigned tb_size            = sdu_subheader_size + sdu_size + conres_ce_size + get_random_uint(0, 100);
 
   dl_msg_tb_info tb_info;
-  tb_info.subpdus.push_back(dl_msg_lc_info{lcid_dl_sch_t::UE_CON_RES_ID, 1 + UE_CON_RES_ID_LEN});
+  tb_info.subpdus.push_back(dl_msg_lc_info{lcid_dl_sch_t::UE_CON_RES_ID, conres_ce_size});
   tb_info.subpdus.push_back(dl_msg_lc_info{LCID_SRB0, sdu_size});
   byte_buffer_slice_chain result = this->dl_sch_enc.assemble_pdu(this->req.crnti, tb_info, tb_size);
 
@@ -174,12 +180,16 @@ TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)
   enc.pack(LCID_SRB0, 6);             // LCID
   enc.pack(sdu_size, 8);              // L
   enc.pack_bytes(dl_bearer.last_sdu); // SDU
-  // Padding.
-  enc.pack(0b00, 2);                   // R | F
-  enc.pack(lcid_dl_sch_t::PADDING, 6); // LCID
-  std::vector<uint8_t> zeros(tb_size - expected.length(), 0);
-  enc.pack_bytes(zeros);
+  ASSERT_GE(tb_size, expected.length());
+  if (expected.length() < tb_size) {
+    // Padding.
+    enc.pack(0b00, 2);                   // R | F
+    enc.pack(lcid_dl_sch_t::PADDING, 6); // LCID
+    std::vector<uint8_t> zeros(tb_size - expected.length(), 0);
+    enc.pack_bytes(zeros);
+  }
 
+  ASSERT_EQ(tb_size, expected.length());
   ASSERT_EQ(dl_bearer.last_sdu.length(), sdu_size);
   ASSERT_EQ(result, expected);
 }
