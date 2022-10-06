@@ -15,6 +15,8 @@
 #include "srsgnb/rlc/rlc_factory.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/srsgnb_assert.h"
+#include <condition_variable>
+#include <mutex>
 #include <random>
 #include <unistd.h>
 
@@ -70,6 +72,9 @@ public:
   {
     srsgnb_assert(peer_stack != nullptr, "Peer stack was not set when starting the stack.");
     srsgnb_assert(peer_stack != this, "Peer cannot be itself.");
+    for (uint32_t i = 0; i < 20; i++) {
+      traffic_source->send_pdu();
+    }
     lower_worker.start();
     upper_worker.start();
 
@@ -79,34 +84,62 @@ public:
 
   void stop()
   {
-    fprintf(stderr, "Stopping stack. Id=%d\n", stack_id);
+    fprintf(stderr, "Waiting to lower worker. Stack id=%d\n", stack_id);
+    std::unique_lock<std::mutex> lk_lower(mutex_lower);
+    cv_lower.wait(lk_lower, [this] { return stopping_lower; });
+    fprintf(stderr,
+            "Lower thread no longer processing. Stack id=%d, stopping=%s\n",
+            stack_id,
+            stopping_lower ? "true" : "false");
+
+    fprintf(stderr, "Waiting to stop upper worker. Stack id=%d\n", stack_id);
+    std::unique_lock<std::mutex> lk_upper(mutex_upper);
+    cv_upper.wait(lk_upper, [this] { return stopping_upper; });
+    fprintf(stderr, "Upper thread no longer processing. Stack id=%d\n", stack_id);
+
     lower_worker.stop();
     upper_worker.stop();
   }
 
   void run_upper_tti(uint32_t tti)
   {
-    logger.log_info("Running upper TTI={}, PDU RX queue size={}", tti, mac->pdu_rx_list.size());
-    for (uint32_t i = 0; i < 5; i++) {
-      traffic_source->send_pdu();
+    logger.log_warning("Running upper TTI={}, PDU RX queue size={}", tti, mac->pdu_rx_list.size());
+    lower_executor->defer([this]() { run_lower_tti(); });
+    if (tti < 500) {
+      for (uint32_t i = 0; i < 20; i++) {
+        traffic_source->send_pdu();
+      }
+      mac->run_rx_tti();
+      timers.tick_all(); // timers are run from the upper executor
+    } else {
+      // Manual unlocking is done before notifying, to avoid waking up
+      // the waiting thread only to block again (see notify_one for details)
+      std::unique_lock<std::mutex> lk(mutex_upper);
+      stopping_upper = true;
+      lk.unlock();
+      cv_lower.notify_all();
     }
-    mac->run_rx_tti();
-    timers.tick_all(); // timers are run from the upper executor
   }
 
   void run_lower_tti()
   {
     static uint32_t tti = 0;
     if (tti < 500) {
-      logger.log_info("Running lower TTI={}", tti);
+      logger.log_warning("Running lower TTI={}", tti);
       std::vector<byte_buffer_slice_chain> pdu_list = mac->run_tx_tti(tti);
       logger.log_info("Generated PDU list size={}", pdu_list.size());
       upper_executor->defer([this]() { run_upper_tti(tti); });
-      tti++;
       peer_stack->push_pdus(std::move(pdu_list));
-      lower_executor->defer([this]() { run_lower_tti(); });
+      tti++;
+    } else {
+      logger.log_warning("Stopping lower TTI={}", tti);
+      // Manual unlocking is done before notifying, to avoid waking up
+      // the waiting thread only to block again (see notify_one for details)
+      std::unique_lock<std::mutex> lk(mutex_lower);
+      stopping_lower = true;
+      lk.unlock();
+      cv_lower.notify_all();
     }
-    srslog::flush();
   }
 
   void push_pdus(std::vector<byte_buffer_slice_chain> list_pdus)
@@ -116,6 +149,14 @@ public:
   }
 
   void set_peer_stack(stress_stack* peer_stack_) { peer_stack = peer_stack_; }
+
+  // Mutex and condition variables for stopping workers
+  std::mutex              mutex_lower;
+  std::mutex              mutex_upper;
+  std::condition_variable cv_lower;
+  std::condition_variable cv_upper;
+  bool                    stopping_lower = false;
+  bool                    stopping_upper = false;
 
 private:
   // Stack ID for logging
@@ -163,8 +204,6 @@ void stress_test(const stress_test_args& args)
   //  Launch transmission
   ue_emulator.start();
   gnb_emulator.start();
-
-  sleep(3);
 
   //  Wait for threads to finish
   ue_emulator.stop();
