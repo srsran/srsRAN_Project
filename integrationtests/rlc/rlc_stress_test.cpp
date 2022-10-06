@@ -132,6 +132,9 @@ private:
 
   stress_stack* peer_stack = nullptr;
 
+  // Timers
+  timer_manager timers;
+
   // MAC
   std::unique_ptr<mac_dummy> mac = nullptr;
 
@@ -141,9 +144,6 @@ private:
   // PDCP
   std::unique_ptr<pdcp_traffic_sink>   traffic_sink   = nullptr;
   std::unique_ptr<pdcp_traffic_source> traffic_source = nullptr;
-
-  // Timers
-  timer_manager timers;
 
   // Logging
   srsgnb::bearer_logger logger;
