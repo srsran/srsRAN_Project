@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../pdcch_scheduling/pdcch_scheduler.h"
+#include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/scheduler/sched_consts.h"
@@ -25,7 +25,7 @@ class sib1_scheduler
 {
 public:
   sib1_scheduler(const cell_configuration&                       cfg_,
-                 pdcch_scheduler&                                pdcch_sch,
+                 pdcch_resource_allocator&                       pdcch_sch,
                  const sched_cell_configuration_request_message& msg);
 
   /// \brief Performs beams' SIB1s (if any) scheduling for the current slot.
@@ -65,7 +65,7 @@ private:
 
   /// Parameters for SIB1 scheduling.
   const cell_configuration& cell_cfg;
-  pdcch_scheduler&          pdcch_sched;
+  pdcch_resource_allocator& pdcch_sched;
 
   /// Parameters for SIB1 scheduling.
   uint8_t           coreset0;

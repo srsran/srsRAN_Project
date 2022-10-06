@@ -10,7 +10,7 @@
 #pragma once
 
 #include "../cell/resource_grid.h"
-#include "../pdcch_scheduling/pdcch_scheduler.h"
+#include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../ue_scheduling/ue.h"
 #include "../ue_scheduling/ue_scheduler.h"
 #include "srsgnb/ran/slot_point.h"

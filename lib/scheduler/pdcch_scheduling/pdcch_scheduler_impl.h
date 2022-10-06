@@ -12,12 +12,12 @@
 
 #include "../cell/resource_grid.h"
 #include "../ue_scheduling/ue_configuration.h"
-#include "pdcch_scheduler.h"
+#include "pdcch_resource_allocator.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
 
 namespace srsgnb {
 
-class pdcch_scheduler_impl final : public pdcch_scheduler
+class pdcch_scheduler_impl final : public pdcch_resource_allocator
 {
 public:
   explicit pdcch_scheduler_impl(const cell_configuration& cell_cfg_);

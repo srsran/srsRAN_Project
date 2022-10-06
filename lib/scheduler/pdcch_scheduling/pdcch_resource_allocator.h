@@ -7,11 +7,11 @@
 
 namespace srsgnb {
 
-/// PDCCH scheduling algorithm for a single cell and for both common and UE-dedicated CORESETs.
-class pdcch_scheduler
+/// PDCCH resource allocation algorithm for a single cell and for both common and UE-dedicated CORESETs.
+class pdcch_resource_allocator
 {
 public:
-  virtual ~pdcch_scheduler() = default;
+  virtual ~pdcch_resource_allocator() = default;
 
   /// Allocates RE space for common PDCCH, avoiding in the process collisions with other PDCCH allocations.
   /// \param rnti RNTI of allocation. Values: SI-RNTI, P-RNTI, RA-RNTIs.

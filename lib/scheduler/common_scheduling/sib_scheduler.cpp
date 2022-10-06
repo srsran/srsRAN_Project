@@ -60,7 +60,7 @@ static slot_point get_sib1_n0(unsigned sib1_offset, double sib1_M, subcarrier_sp
 //  ------   Public methods   ------ .
 
 sib1_scheduler::sib1_scheduler(const cell_configuration&                       cfg_,
-                               pdcch_scheduler&                                pdcch_sch,
+                               pdcch_resource_allocator&                       pdcch_sch,
                                const sched_cell_configuration_request_message& msg) :
   cell_cfg{cfg_},
   pdcch_sched{pdcch_sch},

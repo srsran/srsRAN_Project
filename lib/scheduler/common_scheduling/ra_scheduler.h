@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../cell/resource_grid.h"
-#include "../pdcch_scheduling/pdcch_scheduler.h"
+#include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../support/prbs_calculator.h"
 #include "../support/slot_event_list.h"
 #include "../ue_scheduling/harq_process.h"
@@ -39,7 +39,7 @@ class ra_scheduler
   static constexpr size_t MAX_NOF_MSG3 = 1024;
 
 public:
-  explicit ra_scheduler(const cell_configuration& cfg_, pdcch_scheduler& pdcch_sched_);
+  explicit ra_scheduler(const cell_configuration& cfg_, pdcch_resource_allocator& pdcch_sched_);
 
   /// Enqueue RACH indication
   /// \remark See TS 38.321, 5.1.3 - RAP transmission.
@@ -101,7 +101,7 @@ private:
 
   // args
   const cell_configuration& cfg;
-  pdcch_scheduler&          pdcch_sch;
+  pdcch_resource_allocator& pdcch_sch;
 
   // derived from args
   srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");

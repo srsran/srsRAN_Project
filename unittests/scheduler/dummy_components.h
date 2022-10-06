@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "lib/scheduler/pdcch_scheduling/pdcch_scheduler.h"
+#include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator.h"
 #include "srsgnb/support/test_utils.h"
 
 namespace srsgnb {
 
-class dummy_pdcch_scheduler : public pdcch_scheduler
+class dummy_pdcch_scheduler : public pdcch_resource_allocator
 {
 public:
   pdcch_dl_information* alloc_pdcch_common(cell_slot_resource_allocator& slot_alloc,

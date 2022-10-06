@@ -19,10 +19,10 @@ ue_cell_grid_allocator::ue_cell_grid_allocator(ue_list& ues_, srslog::basic_logg
 {
 }
 
-void ue_cell_grid_allocator::add_cell(du_cell_index_t          cell_index,
-                                      pdcch_scheduler&         pdcch_sched,
-                                      pucch_allocator&         pucch_sched,
-                                      cell_resource_allocator& cell_alloc)
+void ue_cell_grid_allocator::add_cell(du_cell_index_t           cell_index,
+                                      pdcch_resource_allocator& pdcch_sched,
+                                      pucch_allocator&          pucch_sched,
+                                      cell_resource_allocator&  cell_alloc)
 {
   cells.emplace(cell_index, cell_t{cell_index, &pdcch_sched, &pucch_sched, &cell_alloc});
 }

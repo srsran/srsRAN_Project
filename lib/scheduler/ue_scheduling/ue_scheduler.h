@@ -16,14 +16,14 @@
 
 namespace srsgnb {
 
-class pdcch_scheduler;
+class pdcch_resource_allocator;
 struct cell_resource_allocator;
 
 struct ue_scheduler_cell_params {
-  du_cell_index_t          cell_index;
-  pdcch_scheduler*         pdcch_sched;
-  pucch_allocator*         pucch_sched;
-  cell_resource_allocator* cell_res_alloc;
+  du_cell_index_t           cell_index;
+  pdcch_resource_allocator* pdcch_sched;
+  pucch_allocator*          pucch_sched;
+  cell_resource_allocator*  cell_res_alloc;
 };
 
 /// Interface of data scheduler that is used to allocate UE DL and UL grants in a given slot

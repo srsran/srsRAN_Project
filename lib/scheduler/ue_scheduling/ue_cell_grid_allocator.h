@@ -10,7 +10,7 @@
 #pragma once
 
 #include "../cell/resource_grid.h"
-#include "../pdcch_scheduling/pdcch_scheduler.h"
+#include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../policy/ue_allocator.h"
 #include "../pucch_scheduling/pucch_allocator.h"
 
@@ -24,10 +24,10 @@ public:
   ue_cell_grid_allocator(ue_list& ues_, srslog::basic_logger& logger_);
 
   /// Adds a new cell to the UE allocator.
-  void add_cell(du_cell_index_t          cell_index,
-                pdcch_scheduler&         pdcch_sched,
-                pucch_allocator&         pucch_sched,
-                cell_resource_allocator& cell_alloc);
+  void add_cell(du_cell_index_t           cell_index,
+                pdcch_resource_allocator& pdcch_sched,
+                pucch_allocator&          pucch_sched,
+                cell_resource_allocator&  cell_alloc);
 
   size_t nof_cells() const { return cells.size(); }
 
@@ -47,15 +47,15 @@ public:
 
 private:
   struct cell_t {
-    du_cell_index_t          cell_index;
-    pdcch_scheduler*         pdcch_sched;
-    pucch_allocator*         pucch_sched;
-    cell_resource_allocator* cell_alloc;
+    du_cell_index_t           cell_index;
+    pdcch_resource_allocator* pdcch_sched;
+    pucch_allocator*          pucch_sched;
+    cell_resource_allocator*  cell_alloc;
   };
 
   bool has_cell(du_cell_index_t cell_index) const { return cells.contains(cell_index); }
 
-  pdcch_scheduler& get_pdcch_sched(du_cell_index_t cell_index) { return *cells[cell_index].pdcch_sched; }
+  pdcch_resource_allocator& get_pdcch_sched(du_cell_index_t cell_index) { return *cells[cell_index].pdcch_sched; }
 
   pucch_allocator& get_pucch_sched(du_cell_index_t cell_index) { return *cells[cell_index].pucch_sched; }
 

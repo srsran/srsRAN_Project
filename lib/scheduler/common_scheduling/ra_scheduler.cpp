@@ -48,7 +48,7 @@ uint16_t srsgnb::get_ra_rnti(slot_point sl_rx, unsigned symbol_index, unsigned f
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_scheduler& pdcch_sch_) :
+ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_resource_allocator& pdcch_sch_) :
   cfg(cfg_),
   pdcch_sch(pdcch_sch_),
   ra_win_nof_slots(cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window),
