@@ -18,6 +18,9 @@
 
 namespace srsgnb {
 
+constexpr static size_t UE_CON_RES_ID_LEN = 6;
+using ue_con_res_id_t                     = std::array<uint8_t, UE_CON_RES_ID_LEN>;
+
 class mac_dl_ue_manager
 {
 public:
@@ -106,14 +109,14 @@ public:
     return true;
   }
 
-  /// Returns received Msg3 bytes. In case of ConRes CE, the packed Msg3 is used for disambiguation.
-  byte_buffer pop_msg3(rnti_t rnti)
+  /// \brief Returns UE Contention Resolution Id, which is derived from Msg3 bytes.
+  ue_con_res_id_t get_con_res_id(rnti_t rnti)
   {
     du_ue_index_t ue_index = rnti_table[rnti];
     if (not ue_db.contains(ue_index)) {
       return {};
     }
-    return std::move(ue_db[ue_index].msg3_subpdu);
+    return ue_db[ue_index].msg3_subpdu;
   }
 
 private:
@@ -121,7 +124,7 @@ private:
     rnti_t                           rnti     = INVALID_RNTI;
     du_ue_index_t                    ue_index = MAX_NOF_DU_UES;
     slot_vector<mac_sdu_tx_builder*> dl_bearers;
-    byte_buffer                      msg3_subpdu;
+    ue_con_res_id_t                  msg3_subpdu;
   };
 
   bool add_ue_nolock(du_ue_index_t ue_index, rnti_t crnti, const byte_buffer* ul_ccch_msg)
@@ -135,7 +138,9 @@ private:
     u.rnti     = crnti;
     if (ul_ccch_msg != nullptr) {
       // Store Msg3.
-      u.msg3_subpdu = ul_ccch_msg->copy();
+      srsgnb_assert(
+          ul_ccch_msg->length() >= UE_CON_RES_ID_LEN, "Invalid UL-CCCH message length ({} < 6)", ul_ccch_msg->length());
+      std::copy(ul_ccch_msg->begin(), ul_ccch_msg->begin() + UE_CON_RES_ID_LEN, u.msg3_subpdu.begin());
     }
     return true;
   }

@@ -358,6 +358,16 @@ public:
   /// Performs a shallow copy. Head segment reference counter is incremented.
   byte_buffer copy() const { return byte_buffer{*this}; }
 
+  /// Append bytes of a iterator range.
+  template <typename Iterator>
+  void append(Iterator begin, Iterator end)
+  {
+    static_assert(std::is_same<typename Iterator::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
+    for (auto it = begin; it != end; ++it) {
+      append(*it);
+    }
+  }
+
   /// Appends bytes to the byte buffer. This function may retrieve new segments from a memory pool.
   void append(span<const uint8_t> bytes)
   {
@@ -382,6 +392,7 @@ public:
   /// Appends bytes from another byte_buffer. This function may allocate new segments.
   void append(const byte_buffer& other)
   {
+    srsgnb_sanity_check(&other != this, "Self-append not supported");
     if (empty() and not other.empty()) {
       append_segment();
     }

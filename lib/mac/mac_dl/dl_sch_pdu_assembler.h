@@ -12,6 +12,8 @@
 
 #include "mac_dl_ue_manager.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
+#include "srsgnb/mac/lcid_dl_sch.h"
+#include "srsgnb/scheduler/scheduler_slot_handler.h"
 #include "srsgnb/support/error_handling.h"
 
 namespace srsgnb {
@@ -22,9 +24,6 @@ class dl_sch_pdu
   constexpr static size_t MAC_SUBHEADER_LEN_THRESHOLD = 256;
 
 public:
-  constexpr static size_t UE_CON_RES_ID_LEN = 6;
-  using ue_con_res_id_t                     = std::array<uint8_t, UE_CON_RES_ID_LEN>;
-
   /// Adds a MAC SDU as a subPDU.
   void add_sdu(lcid_t lcid_, byte_buffer_slice_chain&& sdu)
   {
@@ -145,9 +144,8 @@ private:
   {
     switch (subpdu.lcid.value()) {
       case lcid_dl_sch_t::UE_CON_RES_ID: {
-        byte_buffer                 msg3 = ue_mng.pop_msg3(rnti);
-        dl_sch_pdu::ue_con_res_id_t conres;
-        std::copy(msg3.begin(), msg3.end(), conres.begin());
+        ue_con_res_id_t conres = ue_mng.get_con_res_id(rnti);
+        std::copy(conres.begin(), conres.end(), conres.begin());
         ue_pdu.add_ue_con_res_id(conres);
       } break;
       default:
