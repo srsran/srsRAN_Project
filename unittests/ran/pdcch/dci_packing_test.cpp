@@ -355,6 +355,109 @@ static void test_dci_1_0_ra_rnti_packing()
   }
 }
 
+static void test_dci_1_0_tc_rnti_packing()
+{
+  std::uniform_int_distribution<unsigned> time_resource_dist(0, pow2(4) - 1);
+  std::uniform_int_distribution<unsigned> vrb_to_prb_mapping_dist(0, pow2(1) - 1);
+  std::uniform_int_distribution<unsigned> modulation_coding_scheme_dist(0, pow2(5) - 1);
+  std::uniform_int_distribution<unsigned> new_data_indicator_dist(0, pow2(1) - 1);
+  std::uniform_int_distribution<unsigned> redundancy_version_dist(0, pow2(2) - 1);
+  std::uniform_int_distribution<unsigned> harq_process_number_dist(0, pow2(4) - 1);
+  std::uniform_int_distribution<unsigned> dl_assignment_index_dist(0, pow2(2) - 1);
+  std::uniform_int_distribution<unsigned> tpc_command_dist(0, pow2(2) - 1);
+  std::uniform_int_distribution<unsigned> pucch_resource_indicator_dist(0, pow2(3) - 1);
+  std::uniform_int_distribution<unsigned> pdsch_harq_fb_timing_dist(0, pow2(3) - 1);
+
+  for (unsigned rep = 0; rep != nof_repetitions; ++rep) {
+    for (unsigned N_rb_dl_bwp : {24, 48, 96}) {
+      dci_1_0_tc_rnti_configuration config = {};
+
+      unsigned frequency_resource_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
+      std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
+
+      // Identifier for DCI format is always set to 1, according to TS38.211 Section 7.3.1.2.1.
+      config.dci_format_id = 1;
+
+      config.N_rb_dl_bwp                    = N_rb_dl_bwp;
+      config.frequency_resource             = frequency_resource_dist(rgen);
+      config.time_resource                  = time_resource_dist(rgen);
+      config.vrb_to_prb_mapping             = vrb_to_prb_mapping_dist(rgen);
+      config.modulation_coding_scheme       = modulation_coding_scheme_dist(rgen);
+      config.new_data_indicator             = new_data_indicator_dist(rgen);
+      config.redundancy_version             = redundancy_version_dist(rgen);
+      config.harq_process_number            = harq_process_number_dist(rgen);
+      config.dl_assignment_index            = dl_assignment_index_dist(rgen);
+      config.tpc_command                    = tpc_command_dist(rgen);
+      config.pucch_resource_indicator       = pucch_resource_indicator_dist(rgen);
+      config.pdsch_harq_fb_timing_indicator = pdsch_harq_fb_timing_dist(rgen);
+
+      // Generate the test payload.
+      dci_payload payload = dci_1_0_tc_rnti_pack(config);
+
+      // Generate the expected payload.
+      static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> expected;
+
+      // Identifier for DCI formats - 1 bit.
+      expected.push_back((config.dci_format_id >> 0U) & 1U);
+
+      // Frequency domain resource assignment - frequency_resource_nof_bits bits.
+      for (unsigned bitpos = 0; bitpos != frequency_resource_nof_bits; ++bitpos) {
+        expected.push_back((config.frequency_resource >> (frequency_resource_nof_bits - 1 - bitpos)) & 1U);
+      }
+
+      // Time domain resource assignment - 4 bit.
+      expected.push_back((config.time_resource >> 3U) & 1U);
+      expected.push_back((config.time_resource >> 2U) & 1U);
+      expected.push_back((config.time_resource >> 1U) & 1U);
+      expected.push_back((config.time_resource >> 0U) & 1U);
+
+      // VRB-to-PRB mapping - 1 bit.
+      expected.push_back((config.vrb_to_prb_mapping >> 0U) & 1U);
+
+      // Modulation and coding scheme - 5 bits.
+      expected.push_back((config.modulation_coding_scheme >> 4U) & 1U);
+      expected.push_back((config.modulation_coding_scheme >> 3U) & 1U);
+      expected.push_back((config.modulation_coding_scheme >> 2U) & 1U);
+      expected.push_back((config.modulation_coding_scheme >> 1U) & 1U);
+      expected.push_back((config.modulation_coding_scheme >> 0U) & 1U);
+
+      // New data indicator - 1 bit.
+      expected.push_back((config.new_data_indicator >> 0U) & 1U);
+
+      // Redundancy version - 2 bit.
+      expected.push_back((config.redundancy_version >> 1U) & 1U);
+      expected.push_back((config.redundancy_version >> 0U) & 1U);
+
+      // HARQ process number - 4 bit.
+      expected.push_back((config.harq_process_number >> 3U) & 1U);
+      expected.push_back((config.harq_process_number >> 2U) & 1U);
+      expected.push_back((config.harq_process_number >> 1U) & 1U);
+      expected.push_back((config.harq_process_number >> 0U) & 1U);
+
+      // Downlink assignment index - 2 bit.
+      expected.push_back((config.dl_assignment_index >> 1U) & 1U);
+      expected.push_back((config.dl_assignment_index >> 0U) & 1U);
+
+      // TPC command for scheduled PUCCH - 2 bit.
+      expected.push_back((config.tpc_command >> 1U) & 1U);
+      expected.push_back((config.tpc_command >> 0U) & 1U);
+
+      // PUCCH resource indicator - 3 bit.
+      expected.push_back((config.pucch_resource_indicator >> 2U) & 1U);
+      expected.push_back((config.pucch_resource_indicator >> 1U) & 1U);
+      expected.push_back((config.pucch_resource_indicator >> 0U) & 1U);
+
+      // PDSCH to HARQ feedback timing indicator - 3 bit.
+      expected.push_back((config.pdsch_harq_fb_timing_indicator >> 2U) & 1U);
+      expected.push_back((config.pdsch_harq_fb_timing_indicator >> 1U) & 1U);
+      expected.push_back((config.pdsch_harq_fb_timing_indicator >> 0U) & 1U);
+
+      // Assert expected payload.
+      TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
+    }
+  }
+}
+
 static void test_dci_rar_packing()
 {
   std::uniform_int_distribution<unsigned> frequency_hopping_flag_dist(0, pow2(1) - 1);
@@ -428,6 +531,7 @@ int main()
   test_dci_1_0_p_rnti_packing();
   test_dci_1_0_si_rnti_packing();
   test_dci_1_0_ra_rnti_packing();
+  test_dci_1_0_tc_rnti_packing();
   test_dci_rar_packing();
 
   return 0;
