@@ -11,7 +11,7 @@
 #include "ra_scheduler.h"
 #include "../../ran/gnb_format.h"
 #include "../pdcch_scheduling/pdcch_config_helpers.h"
-#include "../pdcch_scheduling/pdcch_scheduler_impl.h"
+#include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "../support/dmrs_helpers.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 
@@ -62,10 +62,8 @@ ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_resource_alloca
   static const unsigned nof_layers = 1;
 
   if (cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
-    // See 38.213 - If a UE is not provided initialDownlinkBWP, an initial active DL BWP is defined by a location
-    // and number of contiguous PRBs, starting from a PRB with the lowest index and ending at a PRB with the highest
-    // index among PRBs of a CORESET for Type0-PDCCH CSS set, and a SCS and a cyclic prefix for PDCCH reception in the
-    // CORESET for Type0-PDCCH CSS set.
+    // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB is the size of CORESET 0 if CORESET 0 is configured for the cell
+    // and N^{DL,BWP}_RB is the size of initial DL bandwidth part if CORESET 0 is not configured for the cell.
     initial_active_dl_bwp.crbs = get_coreset0_crbs(cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
   }
 

@@ -9,7 +9,8 @@
  */
 
 #include "config_generators.h"
-#include "lib/scheduler/pdcch_scheduling/pdcch_scheduler_impl.h"
+#include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
+#include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_srb0_scheduler.h"
 #include "scheduler_test_suite.h"
@@ -32,22 +33,24 @@ using test_params = std::tuple<uint8_t, std::vector<uint8_t>>;
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
 struct test_bench {
-  cell_configuration      cell_cfg;
-  cell_resource_allocator res_grid;
-  pdcch_scheduler_impl    pdcch_sch;
-  slot_point              sl_tx;
-  ue_list                 ue_db;
-  ue_cell_grid_allocator  ue_alloc;
-  ue_srb0_scheduler       srb0_sched;
+  cell_configuration            cell_cfg;
+  cell_resource_allocator       res_grid;
+  pdcch_resource_allocator_impl pdcch_sch;
+  pucch_allocator_impl          pucch_sch;
+  slot_point                    sl_tx;
+  ue_list                       ue_db;
+  ue_cell_grid_allocator        ue_alloc;
+  ue_srb0_scheduler             srb0_sched;
 
   explicit test_bench(
       const sched_cell_configuration_request_message& cell_req = make_default_sched_cell_configuration_request()) :
     cell_cfg{cell_req},
     res_grid{cell_cfg},
     pdcch_sch{cell_cfg},
+    pucch_sch{cell_cfg},
     sl_tx{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0},
     ue_alloc(ue_db, srslog::fetch_basic_logger("MAC")),
-    srb0_sched(srslog::fetch_basic_logger("MAC"))
+    srb0_sched(cell_cfg, pdcch_sch, pucch_sch, ue_db)
   {
     // Add UE to UE DB
     auto ue_creation_msg = make_scheduler_ue_creation_request(test_helpers::make_default_ue_creation_request());
@@ -105,7 +108,7 @@ protected:
     // TODO: Fill some parts of the resource grid here
     next_slot++;
 
-    bench->srb0_sched.run_slot(bench->ue_alloc, bench->ue_db);
+    bench->srb0_sched.run_slot(bench->res_grid);
 
     // Check sched result consistency.
     test_scheduler_result_consistency(bench->cell_cfg, bench->res_grid);

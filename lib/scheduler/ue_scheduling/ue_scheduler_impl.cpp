@@ -14,16 +14,16 @@
 using namespace srsgnb;
 
 ue_scheduler_impl::ue_scheduler_impl(sched_configuration_notifier& mac_notif) :
-  srb0_sched(srslog::fetch_basic_logger("MAC")),
   sched_strategy(create_scheduler_strategy(scheduler_strategy_params{"time_rr", &srslog::fetch_basic_logger("MAC")})),
   ue_alloc(ue_db, srslog::fetch_basic_logger("MAC")),
-  event_mng(ue_db, mac_notif, srb0_sched)
+  event_mng(ue_db, mac_notif)
 {
 }
 
 void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 {
-  event_mng.add_cell_config(params.cell_res_alloc->cfg);
+  cells[params.cell_index] = std::make_unique<cell>(params, ue_db);
+  event_mng.add_cell(params.cell_res_alloc->cfg, cells[params.cell_index]->srb0_sched);
   ue_alloc.add_cell(params.cell_index, *params.pdcch_sched, *params.pucch_sched, *params.cell_res_alloc);
 }
 
@@ -34,8 +34,6 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
   if (slot_tx.to_uint() % 2 == 0) {
     // Start with DL re-Tx, then SRB0 and then new Tx
     sched_strategy->dl_sched(ue_alloc, ue_db, true);
-    // Schedule SRB0 first before scheduling other bearers
-    srb0_sched.run_slot(ue_alloc, ue_db);
     sched_strategy->dl_sched(ue_alloc, ue_db, false);
     // UL re-Tx and then new Tx
     sched_strategy->ul_sched(ue_alloc, ue_db, true);
@@ -46,8 +44,6 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
     sched_strategy->ul_sched(ue_alloc, ue_db, false);
     // Start with DL re-Tx, then SRB0 and then new Tx
     sched_strategy->dl_sched(ue_alloc, ue_db, true);
-    // Schedule SRB0 first before scheduling other bearers
-    srb0_sched.run_slot(ue_alloc, ue_db);
     sched_strategy->dl_sched(ue_alloc, ue_db, false);
   }
 }
@@ -56,6 +52,9 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
 {
   // Process any pending events that are directed at UEs.
   event_mng.run(slot_tx, cell_index);
+
+  // Run cell-specific schedulers.
+  cells[cell_index]->srb0_sched.run_slot(*cells[cell_index]->cell_res_alloc);
 
   // Synchronize all carriers. Last thread to reach this synchronization point, runs UE scheduling strategy.
   sync_point.wait(slot_tx, ue_alloc.nof_cells(), [this, slot_tx]() { run_sched_strategy(slot_tx); });

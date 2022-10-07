@@ -14,7 +14,7 @@ set(SOURCES
         cell/resource_block_group.cpp
         cell/prb_grant.cpp
         cell/resource_grid.cpp
-        pdcch_scheduling/pdcch_scheduler_impl.cpp
+        pdcch_scheduling/pdcch_resource_allocator_impl.cpp
         policy/scheduler_policy_factory.cpp
         policy/scheduler_time_rr.cpp
         pucch_scheduling/pucch_allocator_impl.cpp

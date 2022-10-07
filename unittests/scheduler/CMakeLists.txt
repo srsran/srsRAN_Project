@@ -86,9 +86,9 @@ target_link_libraries(ra_scheduler_test
                       gtest_main)
 add_test(ra_scheduler_test ra_scheduler_test)
 
-add_executable(pdcch_scheduler_test pdcch_scheduler_test.cpp)
-target_link_libraries(pdcch_scheduler_test srsgnb_sched srslog mac_configuration_helpers sched_config)
-add_test(pdcch_scheduler_test pdcch_scheduler_test)
+add_executable(pdcch_resource_allocator_test pdcch_resource_allocator_test.cpp)
+target_link_libraries(pdcch_resource_allocator_test srsgnb_sched srslog mac_configuration_helpers sched_config)
+add_test(pdcch_resource_allocator_test pdcch_resource_allocator_test)
 
 add_executable(pucch_scheduler_test pucch_scheduler_test.cpp)
 target_link_libraries(pucch_scheduler_test srsgnb_sched scheduler_test_suite srslog mac_configuration_helpers sched_config gtest)

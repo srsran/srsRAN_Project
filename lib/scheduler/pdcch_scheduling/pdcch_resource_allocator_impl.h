@@ -17,11 +17,11 @@
 
 namespace srsgnb {
 
-class pdcch_scheduler_impl final : public pdcch_resource_allocator
+class pdcch_resource_allocator_impl final : public pdcch_resource_allocator
 {
 public:
-  explicit pdcch_scheduler_impl(const cell_configuration& cell_cfg_);
-  ~pdcch_scheduler_impl() override;
+  explicit pdcch_resource_allocator_impl(const cell_configuration& cell_cfg_);
+  ~pdcch_resource_allocator_impl() override;
 
   void slot_indication(slot_point sl_tx);
 

@@ -43,8 +43,20 @@ public:
 private:
   void run_sched_strategy(slot_point sl_tx);
 
-  /// SRB0 scheduler
-  ue_srb0_scheduler srb0_sched;
+  struct cell {
+    cell_resource_allocator* cell_res_alloc;
+
+    /// SRB0 scheduler
+    ue_srb0_scheduler srb0_sched;
+
+    cell(const ue_scheduler_cell_params& params, ue_list& ues) :
+      cell_res_alloc(params.cell_res_alloc),
+      srb0_sched(params.cell_res_alloc->cfg, *params.pdcch_sched, *params.pucch_sched, ues)
+    {
+    }
+  };
+
+  std::array<std::unique_ptr<cell>, MAX_NOF_DU_CELLS> cells;
 
   /// Scheduling Strategy
   std::unique_ptr<scheduler_policy> sched_strategy;

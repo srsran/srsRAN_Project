@@ -22,7 +22,10 @@ namespace srsgnb {
 class ue_srb0_scheduler
 {
 public:
-  explicit ue_srb0_scheduler(srslog::basic_logger& logger);
+  explicit ue_srb0_scheduler(const cell_configuration& cell_cfg_,
+                             pdcch_resource_allocator& pdcch_sch_,
+                             pucch_allocator&          pucch_sch_,
+                             ue_list&                  ues_);
 
   /// Handles DL buffer state reported by upper layers.
   /// \param[in] ue_index UE's DU Index for which SRB0 message needs to be scheduled.
@@ -32,11 +35,35 @@ public:
   /// \param[in/out] pdsch_alloc PDSCH grant allocator. This object provides a handle to allocate PDSCH grants in the
   ///                            gNB resource grid and observe the current DL gNB resource grid occupancy state.
   /// \param[in] ues List of eligible UEs to be scheduled in the given slot.
-  void run_slot(ue_pdsch_allocator& pdsch_alloc, const ue_list& ues);
+  void run_slot(cell_resource_allocator& res_alloc);
 
 private:
-  /// \brief Tries to schedule SRB0 messages for a UE. Returns true if successful, false otherwise.
-  bool schedule_srb0(ue_pdsch_allocator& pdsch_alloc, const ue& u);
+  /// \brief Tries to schedule SRB0 message for a UE. Returns true if successful, false otherwise.
+  bool schedule_srb0(cell_resource_allocator& res_alloc, ue& u);
+
+  /// \brief Tries to schedule SRB0 message for a UE and a specific PDSCH TimeDomain Resource and Search Space.
+  bool schedule_srb0(ue&                               u,
+                     cell_resource_allocator&          res_alloc,
+                     unsigned                          pdsch_time_res,
+                     const search_space_configuration& ss_cfg);
+
+  void fill_srb0_grant(ue&                   u,
+                       harq_process&         h_dl,
+                       pdcch_dl_information& pdcch,
+                       dl_msg_alloc&         msg,
+                       unsigned              pdsch_time_res,
+                       const crb_interval&   ue_grant_crbs,
+                       unsigned              pucch_res_indicator,
+                       unsigned              harq_feedback_timing_indicator);
+
+  const pdsch_time_domain_resource_allocation& get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const;
+
+  const cell_configuration& cell_cfg;
+  pdcch_resource_allocator& pdcch_sch;
+  pucch_allocator&          pucch_sch;
+  ue_list&                  ues;
+
+  bwp_configuration initial_active_dl_bwp;
 
   /// List of UE's DU Indexes for which SRB0 messages needs to be scheduled.
   std::vector<du_ue_index_t> pending_ues;

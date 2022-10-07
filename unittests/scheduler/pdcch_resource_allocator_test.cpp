@@ -1,6 +1,6 @@
 
 #include "config_generators.h"
-#include "lib/scheduler/pdcch_scheduling/pdcch_scheduler_impl.h"
+#include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "srsgnb/mac/mac_configuration_helpers.h"
 #include "srsgnb/support/test_utils.h"
 #include <random>
@@ -15,7 +15,7 @@ void test_pdcch_sched_sib1()
   cell_configuration                       cfg{msg};
   cell_resource_allocator                  res_grid{cfg};
 
-  pdcch_scheduler_impl pdcch_sch(cfg);
+  pdcch_resource_allocator_impl pdcch_sch(cfg);
 
   slot_point sl_tx{0, 0};
 
@@ -47,7 +47,7 @@ void test_pdcch_sched_rar()
   cell_configuration                       cfg{msg};
   cell_resource_allocator                  res_grid{cfg};
 
-  pdcch_scheduler_impl pdcch_sch(cfg);
+  pdcch_resource_allocator_impl pdcch_sch(cfg);
 
   slot_point sl_tx{0, 0};
 
@@ -89,7 +89,7 @@ void test_pdcch_sched_ue()
   ue_cell_configuration ue_cfg{cfg, *ue_creation_msg.cells[0].serv_cell_cfg};
   bwp_id_t              bwpid = to_bwp_id(0);
 
-  pdcch_scheduler_impl pdcch_sch(cfg);
+  pdcch_resource_allocator_impl pdcch_sch(cfg);
 
   slot_point sl_tx{0, 0};
   res_grid.slot_indication(sl_tx);
@@ -141,7 +141,7 @@ void test_pdcch_sched_monitoring_period()
         cell_configuration      cfg{msg};
         cell_resource_allocator res_grid{cfg};
 
-        pdcch_scheduler_impl pdcch_sch(cfg);
+        pdcch_resource_allocator_impl pdcch_sch(cfg);
 
         // Action: Attempt allocation of one RAR outside PDCCH monitoring window.
         slot_point sl_tx{0, first_sl};

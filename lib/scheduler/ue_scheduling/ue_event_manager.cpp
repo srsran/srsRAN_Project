@@ -56,17 +56,15 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ue_event_manager::ue_event_manager(ue_list&                      ue_db,
-                                   sched_configuration_notifier& mac_notifier,
-                                   ue_srb0_scheduler&            srb0_sched) :
-  ue_db(ue_db), mac_notifier(mac_notifier), logger(srslog::fetch_basic_logger("MAC")), srb0_sched(srb0_sched)
+ue_event_manager::ue_event_manager(ue_list& ue_db, sched_configuration_notifier& mac_notifier) :
+  ue_db(ue_db), mac_notifier(mac_notifier), logger(srslog::fetch_basic_logger("MAC"))
 {
 }
 
 void ue_event_manager::handle_add_ue_request(const sched_ue_creation_request_message& ue_request)
 {
   // Create UE object outside the scheduler slot indication handler to minimize latency.
-  std::unique_ptr<ue> u = std::make_unique<ue>(*cells[ue_request.cells[0].cell_index], ue_request);
+  std::unique_ptr<ue> u = std::make_unique<ue>(*cells[ue_request.cells[0].cell_index].cfg, ue_request);
 
   // Defer UE object addition to ue list to the slot indication handler.
   common_events.emplace(MAX_NOF_DU_UES, [this, u = std::move(u)](event_logger& ev_logger) mutable {
@@ -161,9 +159,10 @@ void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_i
 {
   common_events.emplace(bs.ue_index, [this, bs](event_logger& ev_logger) {
     ev_logger.enqueue("mac_bs(ueId={},bs={})", bs.ue_index, bs.lcid);
-    ue_db[bs.ue_index].handle_dl_buffer_state_indication(bs);
+    ue& u = ue_db[bs.ue_index];
+    u.handle_dl_buffer_state_indication(bs);
     if (bs.lcid == LCID_SRB0) {
-      srb0_sched.handle_dl_buffer_state_indication(bs.ue_index);
+      cells[u.ue_carriers()[0]->cell_index].srb0_sched->handle_dl_buffer_state_indication(bs.ue_index);
     }
     // TODO: Handle other logical channels
   });
@@ -239,16 +238,17 @@ void ue_event_manager::run(slot_point sl, du_cell_index_t cell_index)
   process_cell_specific(cell_index);
 }
 
-void ue_event_manager::add_cell_config(const cell_configuration& cell_cfg_)
+void ue_event_manager::add_cell(const cell_configuration& cell_cfg_, ue_srb0_scheduler& srb0_sched)
 {
   srsgnb_assert(not cell_exists(cell_cfg_.cell_index), "Overwriting cell configurations not supported");
 
-  cells[cell_cfg_.cell_index] = &cell_cfg_;
+  cells[cell_cfg_.cell_index].cfg        = &cell_cfg_;
+  cells[cell_cfg_.cell_index].srb0_sched = &srb0_sched;
 }
 
 bool ue_event_manager::cell_exists(du_cell_index_t cell_index) const
 {
-  return cell_index < MAX_NOF_DU_CELLS and cells[cell_index] != nullptr;
+  return cell_index < MAX_NOF_DU_CELLS and cells[cell_index].cfg != nullptr;
 }
 
 void ue_event_manager::log_invalid_ue_index(du_ue_index_t ue_index) const

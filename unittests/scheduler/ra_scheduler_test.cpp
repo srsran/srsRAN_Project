@@ -29,10 +29,10 @@ unsigned get_random_uint(unsigned min, unsigned max)
 }
 
 struct test_bench {
-  cell_configuration      cell_cfg;
-  cell_resource_allocator res_grid{cell_cfg};
-  dummy_pdcch_scheduler   pdcch_sch;
-  ra_scheduler            ra_sch{cell_cfg, pdcch_sch};
+  cell_configuration             cell_cfg;
+  cell_resource_allocator        res_grid{cell_cfg};
+  dummy_pdcch_resource_allocator pdcch_sch;
+  ra_scheduler                   ra_sch{cell_cfg, pdcch_sch};
 
   test_bench(
       const sched_cell_configuration_request_message& cell_req = make_default_sched_cell_configuration_request()) :

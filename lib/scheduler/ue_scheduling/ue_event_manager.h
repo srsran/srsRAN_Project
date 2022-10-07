@@ -29,9 +29,9 @@ class ue_event_manager : public scheduler_ue_configurator,
                          public scheduler_dl_buffer_state_indication_handler
 {
 public:
-  ue_event_manager(ue_list& ue_db, sched_configuration_notifier& mac_notifier, ue_srb0_scheduler& srb0_sched);
+  ue_event_manager(ue_list& ue_db, sched_configuration_notifier& mac_notifier);
 
-  void add_cell_config(const cell_configuration& cell_cfg_);
+  void add_cell(const cell_configuration& cell_cfg_, ue_srb0_scheduler& srb0_sched);
 
   /// UE Add/Mod/Remove interface.
   void handle_add_ue_request(const sched_ue_creation_request_message& ue_request) override;
@@ -82,7 +82,13 @@ private:
   srslog::basic_logger&         logger;
 
   /// List of added and configured cells.
-  std::array<const cell_configuration*, MAX_NOF_DU_UES> cells{};
+  struct cell {
+    const cell_configuration* cfg = nullptr;
+
+    /// Reference to SRB0 and other bearers scheduler
+    ue_srb0_scheduler* srb0_sched = nullptr;
+  };
+  std::array<cell, MAX_NOF_DU_UES> cells{};
 
   /// Pending Events list per cell.
   std::array<slot_event_list<carrier_event_t>, MAX_NOF_DU_CELLS> cell_specific_events;
@@ -91,9 +97,6 @@ private:
   /// UE carriers when CA is enabled (e.g. SR, BSR, reconfig).
   slot_event_list<common_event_t> common_events;
   slot_point                      last_sl;
-
-  /// Reference to SRB0 and other bearers scheduler
-  ue_srb0_scheduler& srb0_sched;
 };
 
 } // namespace srsgnb

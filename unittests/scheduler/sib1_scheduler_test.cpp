@@ -17,7 +17,7 @@
 using namespace srsgnb;
 
 // Dummy PDCCH scheduler required to instantiate the SIB1 scheduler.
-class dummy_pdcch_scheduler : public pdcch_resource_allocator
+class dummy_pdcch_resource_allocator : public pdcch_resource_allocator
 {
 public:
   pdcch_dl_information* alloc_pdcch_common(cell_slot_resource_allocator& slot_alloc,
@@ -69,7 +69,7 @@ struct test_bench {
   sched_cell_configuration_request_message cfg_msg;
   cell_configuration                       cfg;
   cell_resource_allocator                  res_grid;
-  dummy_pdcch_scheduler                    pdcch_sch;
+  dummy_pdcch_resource_allocator           pdcch_sch;
   slot_point                               sl_tx;
 
   // Test bench ctor for SIB1 scheduler test use. It allows us to set single parameters.

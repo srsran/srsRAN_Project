@@ -159,8 +159,8 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
 
   // Set MAC logical channels to schedule in this PDU.
   msg.tb_list.emplace_back();
-  allocate_mac_ces(msg.tb_list.back(), u.dl_lc_ch_mng, cw.tb_size_bytes);
-  allocate_mac_sdus(msg.tb_list.back(), u.dl_lc_ch_mng, cw.tb_size_bytes);
+  allocate_mac_ces(msg.tb_list.back(), u.dl_lc_ch_mgr, cw.tb_size_bytes);
+  allocate_mac_sdus(msg.tb_list.back(), u.dl_lc_ch_mgr, cw.tb_size_bytes);
 
   return true;
 }
