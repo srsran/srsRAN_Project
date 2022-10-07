@@ -28,9 +28,12 @@ struct stress_test_args {
   uint32_t             avg_opp_size       = 1505;
   bool                 const_opp          = false;
   uint32_t             seed               = 0;
-  uint32_t             nof_pdu_tti        = 100;
+  uint32_t             nof_pdu_tti        = 10;
   std::string          log_filename       = "stdout";
-  srslog::basic_levels log_level          = srslog::basic_levels::debug;
+  srslog::basic_levels log_level_stack    = srslog::basic_levels::debug;
+  srslog::basic_levels log_level_rlc      = srslog::basic_levels::debug;
+  srslog::basic_levels log_level_pdcp     = srslog::basic_levels::debug;
+  srslog::basic_levels log_level_mac      = srslog::basic_levels::debug;
   uint32_t             log_hex_limit      = 32;
   uint32_t             min_sdu_size       = 5;
   uint32_t             max_sdu_size       = 9000;
@@ -49,7 +52,10 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
                                                {"pdu_cut_rate", required_argument, nullptr, 'c'},
                                                {"pdu_duplicate_rate", required_argument, nullptr, 'D'},
                                                {"log_filename", required_argument, nullptr, 'l'},
-                                               {"log_level", required_argument, nullptr, 'L'},
+                                               {"log_stack_level", required_argument, nullptr, 'L'},
+                                               {"log_pdcp_level", required_argument, nullptr, 'P'},
+                                               {"log_rlc_level", required_argument, nullptr, 'R'},
+                                               {"log_mac_level", required_argument, nullptr, 'M'},
                                                {"log_hex_limit", required_argument, nullptr, 'H'},
                                                {"seed", required_argument, nullptr, 'S'},
                                                {"nof_pdu_tti", required_argument, nullptr, 'T'},
@@ -69,7 +75,10 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
     "  -c, --pdu_cut_rate <rate>       Set rate at which RLC PDUs are chopped in length.\n"
     "  -D, --pdu_duplicate_rate <rate> Set rate at which RLC PDUs are dropped.\n"
     "  -l, --log_filename <filename>   Set log filename. Use 'stdout' to print to console.\n"
-    "  -L, --log_level <level>         Set log level (default: debug).\n"
+    "  -L, --log_stack_level <level>   Set STACK log level (default: debug).\n"
+    "  -P, --log_pdcp_level <level>    Set PDCP log level (default: debug).\n"
+    "  -R, --log_rlc_level <level>     Set RLC log level (default: debug).\n"
+    "  -M, --log_mac_level <level>     Set MAC log level (default: debug).\n"
     "  -H, --log_hex_limit <hex_limit> Set log limit for hex dumps (default: 32 bytes).\n"
     "  -S, --seed <seed>               Set seed to use in run. 0 means the seed is randomly generated.\n"
     "  -T, --nof_pdu_tti <num>         Set number of PDUs processed in a TTI.\n"
@@ -79,7 +88,7 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
   // Parse arguments
   while (true) {
     int option_index = 0;
-    int c            = getopt_long(argc, argv, "hm:s:z:Z:op:d:c:D:l:L:H:S:T:", long_options, &option_index);
+    int c            = getopt_long(argc, argv, "hm:s:z:Z:op:d:c:D:l:L:P:R:M:H:S:T:", long_options, &option_index);
     if (c == -1) {
       break;
     }
@@ -129,8 +138,20 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
         fprintf(stdout, "Log filename %s\n", args.log_filename.c_str());
         break;
       case 'L':
-        args.log_level = srslog::str_to_basic_level(std::string(optarg));
-        fprintf(stdout, "Log level %s\n", optarg);
+        args.log_level_stack = srslog::str_to_basic_level(std::string(optarg));
+        fprintf(stdout, "STACK log level %s\n", optarg);
+        break;
+      case 'P':
+        args.log_level_pdcp = srslog::str_to_basic_level(std::string(optarg));
+        fprintf(stdout, "PDCP log level %s\n", optarg);
+        break;
+      case 'R':
+        args.log_level_rlc = srslog::str_to_basic_level(std::string(optarg));
+        fprintf(stdout, "RLC log level %s\n", optarg);
+        break;
+      case 'M':
+        args.log_level_mac = srslog::str_to_basic_level(std::string(optarg));
+        fprintf(stdout, "MAC log level %s\n", optarg);
         break;
       case 'H':
         args.log_hex_limit = std::strtol(optarg, nullptr, 10);
@@ -196,19 +217,19 @@ inline void init_log_from_args(const stress_test_args& args)
   srslog::set_default_sink(*log_sink);
 
   auto& log_stack = srslog::fetch_basic_logger("STACK", false);
-  log_stack.set_level(args.log_level);
+  log_stack.set_level(args.log_level_stack);
   log_stack.set_hex_dump_max_size(args.log_hex_limit);
 
   auto& log_pdcp = srslog::fetch_basic_logger("PDCP", false);
-  log_pdcp.set_level(args.log_level);
+  log_pdcp.set_level(args.log_level_pdcp);
   log_pdcp.set_hex_dump_max_size(args.log_hex_limit);
 
   auto& log_rlc = srslog::fetch_basic_logger("RLC", false);
-  log_rlc.set_level(args.log_level);
+  log_rlc.set_level(args.log_level_rlc);
   log_rlc.set_hex_dump_max_size(args.log_hex_limit);
 
   auto& log_mac = srslog::fetch_basic_logger("MAC", false);
-  log_mac.set_level(args.log_level);
+  log_mac.set_level(args.log_level_mac);
   log_mac.set_hex_dump_max_size(args.log_hex_limit);
 }
 } // namespace srsgnb
