@@ -82,7 +82,7 @@ public:
     upper_worker.start();
 
     // Schedule the TTI when the thread are started.
-    lower_executor->defer([this]() { run_lower_tti(); });
+    lower_executor->defer([this]() { run_lower_tti(0); });
   }
 
   void stop()
@@ -105,8 +105,8 @@ public:
   void run_upper_tti(uint32_t tti)
   {
     logger.log_info("Running upper TTI={}, PDU RX queue size={}", tti, mac->pdu_rx_list.size());
-    lower_executor->defer([this]() { run_lower_tti(); });
-    if (tti < args.nof_ttis) {
+    lower_executor->defer([this, tti]() { run_lower_tti(tti + 1); });
+    if (tti < (args.nof_ttis - 1)) {
       for (uint32_t i = 0; i < 20; i++) {
         traffic_source->send_pdu();
       }
@@ -118,16 +118,16 @@ public:
       lk.unlock();
       cv_lower.notify_all();
     }
+    logger.log_info("Finished running upper TTI={}, PDU RX queue size={}", tti, mac->pdu_rx_list.size());
   }
 
-  void run_lower_tti()
+  void run_lower_tti(uint32_t tti)
   {
-    static uint32_t tti = 0;
+    logger.log_info("Running lower TTI={}", tti);
     if (tti < args.nof_ttis) {
-      logger.log_info("Running lower TTI={}", tti);
       std::vector<byte_buffer_slice_chain> pdu_list = mac->run_tx_tti(tti);
       logger.log_info("Generated PDU list size={}", pdu_list.size());
-      upper_executor->defer([this]() { run_upper_tti(tti); });
+      upper_executor->defer([this, tti]() { run_upper_tti(tti); });
       peer_stack->push_pdus(std::move(pdu_list));
       tti++;
     } else {
@@ -137,6 +137,7 @@ public:
       lk.unlock();
       cv_lower.notify_all();
     }
+    logger.log_info("Finished running lower TTI={}", tti);
   }
 
   void push_pdus(std::vector<byte_buffer_slice_chain> list_pdus)

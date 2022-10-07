@@ -99,7 +99,7 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
     switch (c) {
       case 'h':
         fprintf(stdout, "%s", usage);
-        break;
+        exit(0);
       case 'm':
         args.mode = std::string(optarg);
         fprintf(stdout, "RLC Mode %s\n", args.mode.c_str());
