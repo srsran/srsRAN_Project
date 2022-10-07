@@ -87,6 +87,7 @@ install(TARGETS srsgnb_channel_processors
         srsgnb_pdsch_modulator
         srsgnb_pdsch_processor
         srsgnb_prach_detector
+        srsgnb_pucch_detector
         srsgnb_pucch_processor
         srsgnb_pusch_decoder
         srsgnb_pusch_demodulator

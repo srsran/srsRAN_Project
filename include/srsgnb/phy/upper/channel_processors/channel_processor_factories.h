@@ -163,7 +163,9 @@ public:
   virtual std::unique_ptr<pucch_detector> create() = 0;
 };
 
-std::shared_ptr<pucch_detector_factory> create_pucch_detector_factory_sw();
+std::shared_ptr<pucch_detector_factory>
+create_pucch_detector_factory_sw(std::shared_ptr<low_papr_sequence_collection_factory> lpcf,
+                                 std::shared_ptr<pseudo_random_generator_factory>      prgf);
 
 class pucch_processor_factory
 {

@@ -8,7 +8,8 @@
  *
  */
 
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
+#include <utility>
+
 #include "pbch_encoder_impl.h"
 #include "pbch_modulator_impl.h"
 #include "pdcch_encoder_impl.h"
@@ -25,6 +26,7 @@
 #include "pusch_demodulator_impl.h"
 #include "pusch_processor_impl.h"
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "ssb_processor_impl.h"
 #include "uci_decoder_impl.h"
@@ -289,7 +291,27 @@ public:
 
 class pucch_detector_factory_sw : public pucch_detector_factory
 {
-  std::unique_ptr<pucch_detector> create() override { return std::make_unique<pucch_detector_impl>(); }
+private:
+  std::shared_ptr<low_papr_sequence_collection_factory> low_papr_factory;
+  std::shared_ptr<pseudo_random_generator_factory>      prg_factory;
+
+public:
+  pucch_detector_factory_sw(std::shared_ptr<low_papr_sequence_collection_factory> lpcf,
+                            std::shared_ptr<pseudo_random_generator_factory>      prgf) :
+    low_papr_factory(std::move(lpcf)), prg_factory(std::move(prgf))
+  {
+    srsgnb_assert(low_papr_factory, "Invalid low-PAPR sequence collection factory.");
+    srsgnb_assert(prg_factory, "Invalid pseudorandom generator factory.");
+  }
+
+  std::unique_ptr<pucch_detector> create() override
+  {
+    std::array<float, NRE> alphas = {};
+    std::generate(alphas.begin(), alphas.end(), [n = 0U]() mutable {
+      return (TWOPI * static_cast<float>(n++) / static_cast<float>(NRE));
+    });
+    return std::make_unique<pucch_detector_impl>(low_papr_factory->create(1, 0, alphas), prg_factory->create());
+  }
 };
 
 class pucch_processor_factory_sw : public pucch_processor_factory
@@ -549,9 +571,11 @@ srsgnb::create_prach_generator_factory_sw(std::shared_ptr<dft_processor_factory>
   return std::make_shared<prach_generator_factory_sw>(std::move(dft_factory));
 }
 
-std::shared_ptr<pucch_detector_factory> srsgnb::create_pucch_detector_factory_sw()
+std::shared_ptr<pucch_detector_factory>
+srsgnb::create_pucch_detector_factory_sw(std::shared_ptr<low_papr_sequence_collection_factory> lpcf,
+                                         std::shared_ptr<pseudo_random_generator_factory>      prgf)
 {
-  return std::make_shared<pucch_detector_factory_sw>();
+  return std::make_shared<pucch_detector_factory_sw>(std::move(lpcf), std::move(prgf));
 }
 
 std::shared_ptr<pusch_decoder_factory>
