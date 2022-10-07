@@ -162,9 +162,12 @@ void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_i
     ue& u = ue_db[bs.ue_index];
     u.handle_dl_buffer_state_indication(bs);
     if (bs.lcid == LCID_SRB0) {
+      // Enqueue a UE Contention Resolution ID.
+      u.dl_lc_ch_mgr.handle_mac_ce_indication(lcid_dl_sch_t::UE_CON_RES_ID);
+
+      // Signal SRB0 scheduler regarding the UE SRB0 pending bytes.
       cells[u.ue_carriers()[0]->cell_index].srb0_sched->handle_dl_buffer_state_indication(bs.ue_index);
     }
-    // TODO: Handle other logical channels
   });
 }
 
