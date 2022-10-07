@@ -842,6 +842,38 @@ TEST_P(rlc_tx_am_test, status_report_trim)
   EXPECT_EQ(pdu.length(), tester->status.get_packed_size());
 }
 
+TEST_P(rlc_tx_am_test, expire_poll_retransmit_timer_causing_retx)
+{
+  init(GetParam());
+  const uint32_t          n_pdus = 5;
+  byte_buffer_slice_chain pdus[n_pdus];
+
+  const uint32_t sdu_size        = 1;
+  const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t pdu_size        = header_min_size + sdu_size;
+
+  tx_full_pdus(pdus, n_pdus, 1);
+  EXPECT_EQ(rlc->get_buffer_state(), 0);
+  EXPECT_EQ(tester->bsr, 0);
+  EXPECT_EQ(tester->bsr_count, 2 * n_pdus);
+  tester->bsr_count = 0; // reset
+
+  // advance timers to expire poll_retransmit_timer
+  for (int i = 0; i < config.t_poll_retx; i++) {
+    EXPECT_EQ(tester->bsr, 0);
+    timers.tick_all();
+  }
+
+  // expiry of poll_retransmit_timer should schedule an SDU for ReTx
+  EXPECT_EQ(tester->bsr, pdu_size);
+
+  // check if the polling (P) bit is set in the PDU header
+  byte_buffer_slice_chain pdu     = rlc->pull_pdu(pdu_size);
+  rlc_am_pdu_header       pdu_hdr = {};
+  rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr);
+  EXPECT_TRUE(pdu_hdr.p);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size
 ///////////////////////////////////////////////////////////////////////////////
