@@ -138,9 +138,9 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
       ul_bsr_ind.crnti      = ctx.pdu_rx.rnti;
       ul_bsr_ind.type       = bsr_fmt;
       if (sched_bsr.nof_bytes == 0) {
-        // Assume all LCGs are 0 if reported SBSR is 0
-        for (lcg_id_t j = 0; j <= MAX_LOGICAL_CHANNEL_GROUP; j++) {
-          ul_bsr_ind.reported_lcgs.push_back(ul_bsr_lcg_report{j, 0U});
+        // Assume all LCGs are 0 if reported SBSR is 0.
+        for (unsigned j = 0; j <= MAX_LCG_ID; ++j) {
+          ul_bsr_ind.reported_lcgs.push_back(ul_bsr_lcg_report{uint_to_lcg_id(j), 0U});
         }
       } else {
         ul_bsr_ind.reported_lcgs.push_back(sched_bsr);

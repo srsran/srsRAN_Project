@@ -16,6 +16,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
 #include "ue_configuration.h"
+#include "ul_logical_channel_manager.h"
 
 namespace srsgnb {
 
@@ -92,34 +93,35 @@ public:
 
   span<ue_carrier* const> ue_carriers() const { return span<ue_carrier* const>(ue_cc_list.data(), ue_cc_list.size()); }
 
-  bool has_pending_txs() const
-  {
-    return not last_bsr.reported_lcgs.empty() and last_bsr.reported_lcgs[0].nof_bytes > 0;
-  }
-
-  bool is_ca_enabled() const { return false; }
+  bool is_ca_enabled() const { return ue_cc_list.size() > 1; }
 
   void activate_cells(bounded_bitset<MAX_NOF_DU_CELLS> activ_bitmap) {}
 
-  void handle_sr_indication(const sr_indication_message& msg);
-  void handle_bsr_indication(const ul_bsr_indication_message& msg);
+  /// \brief Handle received SR indication.
+  void handle_sr_indication(const sr_indication_message& msg) { ul_lc_ch_mgr.handle_sr_indication(msg); }
+
+  /// \brief Once an UL grant is given, the SR status of the UE must be reset.
+  void reset_sr_indication() { ul_lc_ch_mgr.reset_sr_indication(); }
+
+  /// \brief Handles received BSR indication by updating UE UL logical channel states.
+  void handle_bsr_indication(const ul_bsr_indication_message& msg) { ul_lc_ch_mgr.handle_bsr_indication(msg); }
+
+  /// \brief Handles MAC CE indication.
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& msg)
   {
     dl_lc_ch_mgr.handle_mac_ce_indication(msg.ce_lcid);
   }
 
+  /// \brief Handles DL Buffer State indication.
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& msg)
   {
     dl_lc_ch_mgr.handle_dl_buffer_status_indication(msg.lcid, msg.bs);
   }
 
-  void handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg) {}
+  void handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg);
 
-  span<const du_cell_index_t> ue_cell_indexes() const
-  {
-    const static static_vector<du_cell_index_t, 1> cells{0};
-    return cells;
-  }
+  /// \brief Computes the number of pending bytes to be allocated for the first time in UL for a given UE.
+  unsigned pending_ul_newtx_bytes() const;
 
   /// UE DL Logical Channel Manager.
   dl_logical_channel_manager dl_lc_ch_mgr;
@@ -141,8 +143,8 @@ private:
   /// List of UE carriers indexed by UE component carrier index.
   static_vector<ue_carrier*, MAX_CELLS> ue_cc_list;
 
-  sr_indication_message     last_sr;
-  ul_bsr_indication_message last_bsr;
+  /// UE UL Logical Channel Manager.
+  ul_logical_channel_manager ul_lc_ch_mgr;
 };
 
 /// Container that stores all scheduler UEs.

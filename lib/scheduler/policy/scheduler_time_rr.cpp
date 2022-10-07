@@ -84,6 +84,14 @@ bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_retx)
 {
   ofdm_symbol_range pusch_symbols{2, 14};
 
+  unsigned pending_newtx_bytes = 0;
+  if (not is_retx) {
+    pending_newtx_bytes = u.pending_ul_newtx_bytes();
+    if (pending_newtx_bytes == 0) {
+      return false;
+    }
+  }
+
   // Prioritize PCell over SCells.
   for (const ue_carrier* ue_cc : u.ue_carriers()) {
     const ul_harq_process* h = nullptr;

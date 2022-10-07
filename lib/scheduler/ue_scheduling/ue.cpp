@@ -12,12 +12,31 @@
 
 using namespace srsgnb;
 
-void ue::handle_sr_indication(const sr_indication_message& msg)
+void ue::handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg)
 {
-  last_sr = msg;
+  // TODO.
 }
 
-void ue::handle_bsr_indication(const ul_bsr_indication_message& msg)
+unsigned ue::pending_ul_newtx_bytes() const
 {
-  last_bsr = msg;
+  constexpr static unsigned SR_GRANT_BYTES = 512;
+
+  // Sum the last BSRs.
+  unsigned pending_bytes = ul_lc_ch_mgr.pending_bytes();
+
+  // Subtract the bytes already allocated in UL HARQs.
+  for (const ue_carrier* ue_cc : ue_cc_list) {
+    if (pending_bytes == 0) {
+      break;
+    }
+    unsigned harq_bytes = 0;
+    for (unsigned i = 0; i != ue_cc->harqs.nof_ul_harqs(); ++i) {
+      const ul_harq_process& h_ul = ue_cc->harqs.ul_harq(i);
+      harq_bytes += h_ul.tbs();
+    }
+    pending_bytes -= std::min(pending_bytes, harq_bytes);
+  }
+
+  // If there are no pending bytes, check if a SR is pending.
+  return pending_bytes == 0 ? 0 : (ul_lc_ch_mgr.has_pending_sr() ? SR_GRANT_BYTES : 0);
 }

@@ -61,8 +61,16 @@ public:
   uint32_t nof_retx() const { return tb[0].n_rtx; }
 
   /// \brief Current maximum value of retransmissions of a single TB.
-  uint32_t         max_nof_retx() const { return max_retx; }
-  uint32_t         tbs(unsigned tb_index) const { return tb[tb_index].tbs; }
+  uint32_t max_nof_retx() const { return max_retx; }
+  uint32_t tbs(unsigned tb_index) const { return tb[tb_index].tbs; }
+  uint32_t tbs() const
+  {
+    unsigned sum_bytes = 0;
+    for (const auto& t : tb) {
+      sum_bytes += t.tbs;
+    }
+    return sum_bytes;
+  }
   bool             ndi(unsigned tb_index) const { return tb[tb_index].ndi; }
   sch_mcs_index    mcs(unsigned tb_index) const { return tb[tb_index].mcs; }
   const prb_grant& prbs() const { return prbs_; }

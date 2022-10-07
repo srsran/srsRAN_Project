@@ -36,7 +36,7 @@ struct ul_bsr_lcg_report {
   uint32_t nof_bytes;
 };
 
-using ul_bsr_lcg_report_list = static_vector<ul_bsr_lcg_report, MAX_LOGICAL_CHANNEL_GROUP>;
+using ul_bsr_lcg_report_list = static_vector<ul_bsr_lcg_report, MAX_NOF_LCGS>;
 
 /// \brief UL Buffer Status Report.
 /// \remark See ORAN WG8, 9.2.3.2.18 UL Buffer Status Report Indication.

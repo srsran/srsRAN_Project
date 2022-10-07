@@ -671,7 +671,7 @@ void test_rx_indication_processing_sbsr()
   ul_bsr_ind.ue_index   = ue1_idx;
   ul_bsr_ind.crnti      = ue1_rnti;
   ul_bsr_ind.type       = bsr_format::SHORT_BSR;
-  ul_bsr_lcg_report sbsr_report{.lcg_id = 2U, .nof_bytes = 28581};
+  ul_bsr_lcg_report sbsr_report{.lcg_id = uint_to_lcg_id(2U), .nof_bytes = 28581};
   ul_bsr_ind.reported_lcgs.push_back(sbsr_report);
   // Test if notification sent to Scheduler has been received and it is correct.
   TESTASSERT(t_bench.verify_sched_bsr_notification(ul_bsr_ind));
@@ -700,7 +700,7 @@ void test_rx_indication_processing_s_trunc_bsr()
   ul_bsr_ind.ue_index   = ue1_idx;
   ul_bsr_ind.crnti      = ue1_rnti;
   ul_bsr_ind.type       = bsr_format::SHORT_TRUNC_BSR;
-  ul_bsr_lcg_report sbsr_report{.lcg_id = 5U, .nof_bytes = 745};
+  ul_bsr_lcg_report sbsr_report{.lcg_id = uint_to_lcg_id(5U), .nof_bytes = 745};
   ul_bsr_ind.reported_lcgs.push_back(sbsr_report);
 
   // Test if notification sent to Scheduler has been received and it is correct.
@@ -730,9 +730,9 @@ void test_rx_indication_processing_long_bsr()
   ul_bsr_ind.ue_index   = ue1_idx;
   ul_bsr_ind.crnti      = ue1_rnti;
   ul_bsr_ind.type       = bsr_format::LONG_BSR;
-  ul_bsr_lcg_report bsr_report_lcg0{.lcg_id = 0U, .nof_bytes = 8453028U};
+  ul_bsr_lcg_report bsr_report_lcg0{.lcg_id = uint_to_lcg_id(0U), .nof_bytes = 8453028U};
   ul_bsr_ind.reported_lcgs.push_back(bsr_report_lcg0);
-  ul_bsr_lcg_report bsr_report_lcg7{.lcg_id = 7U, .nof_bytes = 468377U};
+  ul_bsr_lcg_report bsr_report_lcg7{.lcg_id = uint_to_lcg_id(7U), .nof_bytes = 468377U};
   ul_bsr_ind.reported_lcgs.push_back(bsr_report_lcg7);
 
   // Test if notification sent to Scheduler has been received and it is correct.
@@ -809,7 +809,7 @@ void test_rx_indication_processing_ce_rnti_sbsr()
   ul_bsr_ind.ue_index   = ue1_idx;
   ul_bsr_ind.crnti      = ue1_rnti;
   ul_bsr_ind.type       = bsr_format::SHORT_BSR;
-  ul_bsr_lcg_report sbsr_report{.lcg_id = 2U, .nof_bytes = 28581};
+  ul_bsr_lcg_report sbsr_report{.lcg_id = uint_to_lcg_id(2U), .nof_bytes = 28581};
   ul_bsr_ind.reported_lcgs.push_back(sbsr_report);
   TESTASSERT(t_bench.verify_sched_bsr_notification(ul_bsr_ind));
 }

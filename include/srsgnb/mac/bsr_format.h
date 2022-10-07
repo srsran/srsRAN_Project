@@ -17,11 +17,13 @@
 
 namespace srsgnb {
 
-/// Logical Channel Group
-using lcg_id_t = uint32_t;
+/// Logical Channel Group as per TS38.331.
+enum lcg_id_t : uint8_t { MAX_LCG_ID = 7, MAX_NOF_LCGS = 8, LCG_ID_INVALID = 8 };
 
-/// TS 38.321, 6.1.3.1 - Buffer Status Report MAC CEs
-const lcg_id_t MAX_LOGICAL_CHANNEL_GROUP = 8;
+inline lcg_id_t uint_to_lcg_id(std::underlying_type_t<lcg_id_t> val)
+{
+  return static_cast<lcg_id_t>(val);
+}
 
 /// TS 38.321, 6.1.3.1 - Buffer Status Report MAC CEs
 enum class bsr_format { SHORT_BSR, LONG_BSR, SHORT_TRUNC_BSR, LONG_TRUNC_BSR };

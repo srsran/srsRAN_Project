@@ -199,7 +199,7 @@ void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
         ev.callback = {};
         continue;
       }
-      if (ue_db[ev.ue_index].ue_cell_indexes()[0] == cell_index) {
+      if (ue_db[ev.ue_index].ue_carriers()[0]->cell_index == cell_index) {
         // If we are currently processing PCell.
         ev.callback(ev_logger);
         ev.callback = {};
