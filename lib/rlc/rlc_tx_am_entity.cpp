@@ -781,7 +781,7 @@ void rlc_tx_am_entity::timer_expired(uint32_t timeout_id)
      *   - consider any RLC SDU which has not been positively acknowledged for retransmission.
      * - include a poll in an AMD PDU as described in section 5.3.3.2.
      */
-    if ((sdu_queue.is_empty() && retx_queue.empty()) || tx_window->full()) {
+    if ((sdu_queue.is_empty() && retx_queue.empty() && sn_under_segmentation == INVALID_RLC_SN) || tx_window->full()) {
       if (tx_window->empty()) {
         logger.log_error(
             "t-PollRetransmit expired, but the tx_window is empty. st=[{}], tx_window_size={}", st, tx_window->size());
