@@ -29,6 +29,7 @@ struct stress_test_args {
   bool                 const_opp          = false;
   uint32_t             seed               = 0;
   uint32_t             nof_pdu_tti        = 10;
+  uint32_t             nof_ttis           = 5000;
   std::string          log_filename       = "stdout";
   srslog::basic_levels log_level_stack    = srslog::basic_levels::debug;
   srslog::basic_levels log_level_rlc      = srslog::basic_levels::debug;
@@ -51,6 +52,7 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
                                                {"pdu_drop_rate", required_argument, nullptr, 'd'},
                                                {"pdu_cut_rate", required_argument, nullptr, 'c'},
                                                {"pdu_duplicate_rate", required_argument, nullptr, 'D'},
+                                               {"nof_ttis", required_argument, nullptr, 't'},
                                                {"log_filename", required_argument, nullptr, 'l'},
                                                {"log_stack_level", required_argument, nullptr, 'L'},
                                                {"log_pdcp_level", required_argument, nullptr, 'P'},
@@ -74,6 +76,7 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
     "  -d, --pdu_drop_rate <rate>      Set rate at which RLC PDUs are dropped.\n"
     "  -c, --pdu_cut_rate <rate>       Set rate at which RLC PDUs are chopped in length.\n"
     "  -D, --pdu_duplicate_rate <rate> Set rate at which RLC PDUs are dropped.\n"
+    "  -l, --nof_ttis <ttis>           Set number of TTIs to emulate.\n"
     "  -l, --log_filename <filename>   Set log filename. Use 'stdout' to print to console.\n"
     "  -L, --log_stack_level <level>   Set STACK log level (default: debug).\n"
     "  -P, --log_pdcp_level <level>    Set PDCP log level (default: debug).\n"
@@ -88,7 +91,7 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
   // Parse arguments
   while (true) {
     int option_index = 0;
-    int c            = getopt_long(argc, argv, "hm:s:z:Z:op:d:c:D:l:L:P:R:M:H:S:T:", long_options, &option_index);
+    int c            = getopt_long(argc, argv, "hm:s:z:Z:op:d:c:D:t:l:L:P:R:M:H:S:T:", long_options, &option_index);
     if (c == -1) {
       break;
     }
@@ -132,6 +135,10 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
       case 'D':
         args.pdu_duplicate_rate = std::strtod(optarg, nullptr);
         fprintf(stdout, "RLC PDU duplicate rate %f\n", args.pdu_duplicate_rate);
+        break;
+      case 't':
+        args.nof_ttis = std::strtol(optarg, nullptr, 10);
+        fprintf(stdout, "Number of TTIs to emulate %u\n", args.nof_ttis);
         break;
       case 'l':
         args.log_filename = std::string(optarg);

@@ -31,6 +31,7 @@ class stress_stack
 public:
   stress_stack(const stress_test_args& args, uint32_t id) :
     stack_id(id),
+    args(args),
     upper_name("Upper-Worker" + std::to_string(id)),
     lower_name("Lower-Worker" + std::to_string(id)),
     upper_worker{upper_name, task_worker_queue_size, true},
@@ -105,7 +106,7 @@ public:
   {
     logger.log_info("Running upper TTI={}, PDU RX queue size={}", tti, mac->pdu_rx_list.size());
     lower_executor->defer([this]() { run_lower_tti(); });
-    if (tti < 500) {
+    if (tti < args.nof_ttis) {
       for (uint32_t i = 0; i < 20; i++) {
         traffic_source->send_pdu();
       }
@@ -122,7 +123,7 @@ public:
   void run_lower_tti()
   {
     static uint32_t tti = 0;
-    if (tti < 500) {
+    if (tti < args.nof_ttis) {
       logger.log_info("Running lower TTI={}", tti);
       std::vector<byte_buffer_slice_chain> pdu_list = mac->run_tx_tti(tti);
       logger.log_info("Generated PDU list size={}", pdu_list.size());
@@ -157,6 +158,9 @@ public:
 private:
   // Stack ID for logging
   uint16_t stack_id;
+
+  // Arguments
+  const stress_test_args& args;
 
   // Executors
   uint16_t                       task_worker_queue_size = 9000;
