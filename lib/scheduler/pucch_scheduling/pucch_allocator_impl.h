@@ -26,20 +26,15 @@ public:
   ~pucch_allocator_impl() override;
 
   /// Allocate the PUCCH resource for HARQ-ACK for a given UE.
-  /// \param[out] pucch_res_indicator <em>PUCCH resource indicator<\em> field for DCI 1_0 and 1_1.
-  /// \param[out] harq_feedback_timing_indicator <em>PDSCH-to-HARQ_feedback timing indicator<\em>, as per TS 38.213,
-  /// Section 9.2.3; it represents the PUCCH delay (with respect to PDSCH) to be encoded in DCI 1_0 and 1_1.
   /// \param[out,in] slot_alloc struct with scheduling results.
   /// \param[in] tcrnti temporary RNTI  of the UE.
   /// \param[in] pdsch_time_domain_resource k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] dci_info information with DL DCI, needed for HARQ-(N)-ACK scheduling info.
-  /// \return Allocated PUCCH pointer, if successful. Else, it returns \c nullptr.
-  pucch_info* alloc_common_pucch_harq_ack_ue(unsigned&                   pucch_res_indicator,
-                                             unsigned&                   harq_feedback_timing_indicator,
-                                             cell_resource_allocator&    slot_alloc,
-                                             rnti_t                      tcrnti,
-                                             unsigned                    pdsch_time_domain_resource,
-                                             const pdcch_dl_information& dci_info) override;
+  /// \return The grant for the UE's PUCCH HARQ-(N)-ACK report.
+  pucch_harq_ack_grant alloc_common_pucch_harq_ack_ue(cell_resource_allocator&    slot_alloc,
+                                                      rnti_t                      tcrnti,
+                                                      unsigned                    pdsch_time_domain_resource,
+                                                      const pdcch_dl_information& dci_info) override;
 
 private:
   // Structs with the info about the PUCCH resources.

@@ -44,7 +44,7 @@ struct pucch_params {
 // Parameters to be passed to test for PUCCH output assessment.
 struct pucch_test_parameters {
   unsigned               dci_pucch_res_indicator;
-  unsigned               dci_harq_timining_indicator;
+  unsigned               k1;
   expected_output_params output_params;
   pucch_params           pucch_input_params;
 };
@@ -289,18 +289,18 @@ protected:
 // Tests the output of the PUCCH allocator (or PUCCH PDU).
 TEST_P(test_pucch_output, test_pucch_output_info)
 {
-  pucch_info* pucch_test = t_bench.pucch_sched.alloc_common_pucch_harq_ack_ue(
-      pucch_res_indicator, harq_timing_indicator, t_bench.res_grid, t_bench.user.crnti, t_bench.k0, t_bench.dci_info);
+  pucch_harq_ack_grant pucch_test = t_bench.pucch_sched.alloc_common_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.user.crnti, t_bench.k0, t_bench.dci_info);
 
-  ASSERT_TRUE(pucch_test != nullptr);
-  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, *pucch_test));
+  ASSERT_TRUE(pucch_test.pucch_pdu != nullptr);
+  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, *pucch_test.pucch_pdu));
 }
 
 // Tests whether PUCCH allocator fills the scheduler grid correctly.
 TEST_P(test_pucch_output, test_pucch_grid_filling)
 {
   t_bench.pucch_sched.alloc_common_pucch_harq_ack_ue(
-      pucch_res_indicator, harq_timing_indicator, t_bench.res_grid, t_bench.user.crnti, t_bench.k0, t_bench.dci_info);
+      t_bench.res_grid, t_bench.user.crnti, t_bench.k0, t_bench.dci_info);
 
   ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, t_bench.tx_delay));
 }
@@ -308,19 +308,19 @@ TEST_P(test_pucch_output, test_pucch_grid_filling)
 // Tests whether PUCCH allocator returns the correct values for the DCI.
 TEST_P(test_pucch_output, test_pucch_output_for_dci)
 {
-  t_bench.pucch_sched.alloc_common_pucch_harq_ack_ue(
-      pucch_res_indicator, harq_timing_indicator, t_bench.res_grid, t_bench.user.crnti, t_bench.k0, t_bench.dci_info);
+  pucch_harq_ack_grant pucch_test = t_bench.pucch_sched.alloc_common_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.user.crnti, t_bench.k0, t_bench.dci_info);
 
-  ASSERT_EQ(GetParam().dci_pucch_res_indicator, pucch_res_indicator);
-  ASSERT_EQ(GetParam().dci_harq_timining_indicator, harq_timing_indicator);
+  ASSERT_EQ(GetParam().dci_pucch_res_indicator, pucch_test.pucch_res_indicator);
+  ASSERT_EQ(GetParam().k1, pucch_test.k1);
 }
 
 INSTANTIATE_TEST_SUITE_P(
     test_pucch_output_for_dci,
     test_pucch_output,
-    testing::Values(pucch_test_parameters{.dci_pucch_res_indicator     = 0,
-                                          .dci_harq_timining_indicator = 3,
-                                          .output_params               = expected_output_params{pucch_format::FORMAT_0,
+    testing::Values(pucch_test_parameters{.dci_pucch_res_indicator = 0,
+                                          .k1                      = 4,
+                                          .output_params           = expected_output_params{pucch_format::FORMAT_0,
                                                                                   prb_interval{0, 1},
                                                                                   prb_interval{51, 52},
                                                                                   ofdm_symbol_range{12, 14},
@@ -329,10 +329,10 @@ INSTANTIATE_TEST_SUITE_P(
                                                                                   sr_nof_bits::no_sr,
                                                                                   1,
                                                                                   0},
-                                          .pucch_input_params          = pucch_params{0, 1}},
-                    pucch_test_parameters{.dci_pucch_res_indicator     = 0,
-                                          .dci_harq_timining_indicator = 3,
-                                          .output_params               = expected_output_params{pucch_format::FORMAT_0,
+                                          .pucch_input_params      = pucch_params{0, 1}},
+                    pucch_test_parameters{.dci_pucch_res_indicator = 0,
+                                          .k1                      = 4,
+                                          .output_params           = expected_output_params{pucch_format::FORMAT_0,
                                                                                   prb_interval{3, 4},
                                                                                   prb_interval{48, 49},
                                                                                   ofdm_symbol_range{12, 14},
@@ -341,10 +341,10 @@ INSTANTIATE_TEST_SUITE_P(
                                                                                   sr_nof_bits::no_sr,
                                                                                   1,
                                                                                   0},
-                                          .pucch_input_params          = pucch_params{2, 1}},
-                    pucch_test_parameters{.dci_pucch_res_indicator     = 0,
-                                          .dci_harq_timining_indicator = 3,
-                                          .output_params               = expected_output_params{pucch_format::FORMAT_0,
+                                          .pucch_input_params      = pucch_params{2, 1}},
+                    pucch_test_parameters{.dci_pucch_res_indicator = 0,
+                                          .k1                      = 4,
+                                          .output_params           = expected_output_params{pucch_format::FORMAT_0,
                                                                                   prb_interval{3, 4},
                                                                                   prb_interval{48, 49},
                                                                                   ofdm_symbol_range{12, 14},
@@ -353,10 +353,10 @@ INSTANTIATE_TEST_SUITE_P(
                                                                                   sr_nof_bits::no_sr,
                                                                                   1,
                                                                                   0},
-                                          .pucch_input_params          = pucch_params{2, 6}},
-                    pucch_test_parameters{.dci_pucch_res_indicator     = 0,
-                                          .dci_harq_timining_indicator = 3,
-                                          .output_params               = expected_output_params{pucch_format::FORMAT_1,
+                                          .pucch_input_params      = pucch_params{2, 6}},
+                    pucch_test_parameters{.dci_pucch_res_indicator = 0,
+                                          .k1                      = 4,
+                                          .output_params           = expected_output_params{pucch_format::FORMAT_1,
                                                                                   prb_interval{4, 5},
                                                                                   prb_interval{47, 48},
                                                                                   ofdm_symbol_range{4, 14},
@@ -365,10 +365,10 @@ INSTANTIATE_TEST_SUITE_P(
                                                                                   sr_nof_bits::no_sr,
                                                                                   1,
                                                                                   0},
-                                          .pucch_input_params          = pucch_params{10, 0}},
-                    pucch_test_parameters{.dci_pucch_res_indicator     = 0,
-                                          .dci_harq_timining_indicator = 3,
-                                          .output_params               = expected_output_params{pucch_format::FORMAT_1,
+                                          .pucch_input_params      = pucch_params{10, 0}},
+                    pucch_test_parameters{.dci_pucch_res_indicator = 0,
+                                          .k1                      = 4,
+                                          .output_params           = expected_output_params{pucch_format::FORMAT_1,
                                                                                   prb_interval{4, 5},
                                                                                   prb_interval{47, 48},
                                                                                   ofdm_symbol_range{4, 14},
@@ -377,10 +377,10 @@ INSTANTIATE_TEST_SUITE_P(
                                                                                   sr_nof_bits::no_sr,
                                                                                   1,
                                                                                   0},
-                                          .pucch_input_params          = pucch_params{10, 6}},
-                    pucch_test_parameters{.dci_pucch_res_indicator     = 0,
-                                          .dci_harq_timining_indicator = 3,
-                                          .output_params               = expected_output_params{pucch_format::FORMAT_1,
+                                          .pucch_input_params      = pucch_params{10, 6}},
+                    pucch_test_parameters{.dci_pucch_res_indicator = 0,
+                                          .k1                      = 4,
+                                          .output_params           = expected_output_params{pucch_format::FORMAT_1,
                                                                                   prb_interval{0, 1},
                                                                                   prb_interval{51, 52},
                                                                                   ofdm_symbol_range{0, 14},
@@ -389,10 +389,10 @@ INSTANTIATE_TEST_SUITE_P(
                                                                                   sr_nof_bits::no_sr,
                                                                                   1,
                                                                                   0},
-                                          .pucch_input_params          = pucch_params{11, 0}},
-                    pucch_test_parameters{.dci_pucch_res_indicator     = 0,
-                                          .dci_harq_timining_indicator = 3,
-                                          .output_params               = expected_output_params{pucch_format::FORMAT_1,
+                                          .pucch_input_params      = pucch_params{11, 0}},
+                    pucch_test_parameters{.dci_pucch_res_indicator = 0,
+                                          .k1                      = 4,
+                                          .output_params           = expected_output_params{pucch_format::FORMAT_1,
                                                                                   prb_interval{1, 2},
                                                                                   prb_interval{50, 51},
                                                                                   ofdm_symbol_range{0, 14},
@@ -401,10 +401,10 @@ INSTANTIATE_TEST_SUITE_P(
                                                                                   sr_nof_bits::no_sr,
                                                                                   1,
                                                                                   0},
-                                          .pucch_input_params          = pucch_params{11, 6}},
-                    pucch_test_parameters{.dci_pucch_res_indicator     = 0,
-                                          .dci_harq_timining_indicator = 3,
-                                          .output_params               = expected_output_params{pucch_format::FORMAT_1,
+                                          .pucch_input_params      = pucch_params{11, 6}},
+                    pucch_test_parameters{.dci_pucch_res_indicator = 0,
+                                          .k1                      = 4,
+                                          .output_params           = expected_output_params{pucch_format::FORMAT_1,
                                                                                   prb_interval{13, 14},
                                                                                   prb_interval{38, 39},
                                                                                   ofdm_symbol_range{0, 14},
@@ -413,10 +413,10 @@ INSTANTIATE_TEST_SUITE_P(
                                                                                   sr_nof_bits::no_sr,
                                                                                   1,
                                                                                   0},
-                                          .pucch_input_params          = pucch_params{15, 0}},
-                    pucch_test_parameters{.dci_pucch_res_indicator     = 0,
-                                          .dci_harq_timining_indicator = 3,
-                                          .output_params               = expected_output_params{pucch_format::FORMAT_1,
+                                          .pucch_input_params      = pucch_params{15, 0}},
+                    pucch_test_parameters{.dci_pucch_res_indicator = 0,
+                                          .k1                      = 4,
+                                          .output_params           = expected_output_params{pucch_format::FORMAT_1,
                                                                                   prb_interval{13, 14},
                                                                                   prb_interval{38, 39},
                                                                                   ofdm_symbol_range{0, 14},
@@ -425,7 +425,7 @@ INSTANTIATE_TEST_SUITE_P(
                                                                                   sr_nof_bits::no_sr,
                                                                                   1,
                                                                                   0},
-                                          .pucch_input_params          = pucch_params{15, 6}})
+                                          .pucch_input_params      = pucch_params{15, 6}})
 
 );
 

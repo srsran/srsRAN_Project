@@ -83,16 +83,10 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   }
 
   // Allocate PUCCH.
-  unsigned    pucch_res_indicator;
-  unsigned    harq_feedback_timing_indicator;
-  pucch_info* pucch = get_pucch_sched(grant.cell_index)
-                          .alloc_common_pucch_harq_ack_ue(pucch_res_indicator,
-                                                          harq_feedback_timing_indicator,
-                                                          get_res_alloc(grant.cell_index),
-                                                          u.crnti,
-                                                          pdsch_td_cfg.k0,
-                                                          *pdcch);
-  if (pucch == nullptr) {
+  pucch_harq_ack_grant pucch =
+      get_pucch_sched(grant.cell_index)
+          .alloc_common_pucch_harq_ack_ue(get_res_alloc(grant.cell_index), u.crnti, pdsch_td_cfg.k0, *pdcch);
+  if (pucch.pucch_pdu == nullptr) {
     logger.warning("Failed to allocate PDSCH. Cause: No space in PUCCH.");
     // TODO: remove PDCCH allocation.
     return false;

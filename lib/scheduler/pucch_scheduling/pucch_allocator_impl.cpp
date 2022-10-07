@@ -134,26 +134,29 @@ void pucch_allocator_impl::fill_pucch_res_output(pucch_info& pucch_info, rnti_t 
   }
 }
 
-pucch_info* pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(unsigned& pucch_res_indicator,
-                                                                 unsigned& harq_feedback_timing_indicator,
-                                                                 cell_resource_allocator&    slot_alloc,
-                                                                 rnti_t                      tcrnti,
-                                                                 unsigned                    pdsch_time_domain_resource,
-                                                                 const pdcch_dl_information& dci_info)
+pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_resource_allocator& slot_alloc,
+                                                                          rnti_t                   tcrnti,
+                                                                          unsigned pdsch_time_domain_resource,
+                                                                          const pdcch_dl_information& dci_info)
 {
-  // Get resource allocator for SLOT k0+k1.
+  // PUCCH output.
+  pucch_harq_ack_grant pucch_harq_ack_output{};
+
+  // Fill output with k1 value.
   // TODO: extend scheduler for k1 different from 4 slots.
-  const unsigned k1 = 4;
+  const unsigned k1        = 4;
+  pucch_harq_ack_output.k1 = k1;
+
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
   cell_slot_resource_allocator& pucch_slot_alloc = slot_alloc[pdsch_time_domain_resource + k1];
 
   // Get the PUCCH resources, either from default tables or from dedicated
   pucch_res_alloc_cfg pucch_res;
-  pucch_res = alloc_pucch_common_res_harq(pucch_res_indicator, pucch_slot_alloc, dci_info.ctx);
+  pucch_res = alloc_pucch_common_res_harq(pucch_harq_ack_output.pucch_res_indicator, pucch_slot_alloc, dci_info.ctx);
 
   // No resources available for PUCCH.
   if (pucch_res.has_config) {
-    return NULL;
+    return pucch_harq_ack_output;
   }
 
   // Fill Slot grid.
@@ -166,11 +169,7 @@ pucch_info* pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(unsigned& pucch
   pucch_slot_alloc.result.ul.pucchs.emplace_back();
   pucch_info& pucch_info = pucch_slot_alloc.result.ul.pucchs.back();
   fill_pucch_res_output(pucch_info, tcrnti, pucch_res);
+  pucch_harq_ack_output.pucch_pdu = &pucch_info;
 
-  // NOTE: HARQ feedback is encoded for DCI 1_0. As per TS 38.213, Section 9.2.3, the harq_feedback_timing_indicator
-  // maps to {1, 2, 3, 4, 5, 6, 7, 8}.
-  // TODO: extend the HARQ feedback indicator to DCI format 1_1.
-  harq_feedback_timing_indicator = k1 - 1;
-
-  return &pucch_info;
+  return pucch_harq_ack_output;
 }
