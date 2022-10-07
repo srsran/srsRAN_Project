@@ -130,6 +130,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   crb_interval             ue_grant_crbs = find_empty_interval_of_length(used_crbs, srb0_prbs_tbs.nof_prbs, 0);
   if (ue_grant_crbs.length() < srb0_prbs_tbs.nof_prbs) {
     logger.info("Postponed SRB0 PDU scheduling for rnti={:#x}. Cause: Not enough PRBs ({} < {})",
+                u.crnti,
                 ue_grant_crbs.length(),
                 srb0_prbs_tbs.nof_prbs);
     return false;
