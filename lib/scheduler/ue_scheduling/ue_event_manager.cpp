@@ -64,7 +64,7 @@ ue_event_manager::ue_event_manager(ue_list& ue_db, sched_configuration_notifier&
 void ue_event_manager::handle_add_ue_request(const sched_ue_creation_request_message& ue_request)
 {
   // Create UE object outside the scheduler slot indication handler to minimize latency.
-  std::unique_ptr<ue> u = std::make_unique<ue>(*cells[ue_request.cells[0].cell_index].cfg, ue_request);
+  std::unique_ptr<ue> u = std::make_unique<ue>(*du_cells[ue_request.cells[0].cell_index].cfg, ue_request);
 
   // Defer UE object addition to ue list to the slot indication handler.
   common_events.emplace(MAX_NOF_DU_UES, [this, u = std::move(u)](event_logger& ev_logger) mutable {
@@ -139,7 +139,7 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 
   for (unsigned i = 0; i != crc_ind.crcs.size(); ++i) {
     cell_specific_events[crc_ind.cell_index].emplace(
-        crc_ind.crcs[i].ue_index, [crc = crc_ind.crcs[i]](ue_carrier& ue_cc, event_logger& ev_logger) {
+        crc_ind.crcs[i].ue_index, [crc = crc_ind.crcs[i]](ue_cell& ue_cc, event_logger& ev_logger) {
           ev_logger.enqueue("crc(ueId={},h_id={},value={})", crc.ue_index, crc.harq_id, crc.tb_crc_success);
           // TODO: Derive TB.
           ue_cc.harqs.ul_harq(crc.harq_id).ack_info(0, crc.tb_crc_success);
@@ -165,8 +165,8 @@ void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_i
       // Enqueue a UE Contention Resolution ID.
       u.dl_lc_ch_mgr.handle_mac_ce_indication(lcid_dl_sch_t::UE_CON_RES_ID);
 
-      // Signal SRB0 scheduler regarding the UE SRB0 pending bytes.
-      cells[u.ue_carriers()[0]->cell_index].srb0_sched->handle_dl_buffer_state_indication(bs.ue_index);
+      // Signal SRB0 scheduler with the new SRB0 buffer state.
+      du_cells[u.get_pcell().cell_index].srb0_sched->handle_dl_buffer_state_indication(bs.ue_index);
     }
   });
 }
@@ -199,7 +199,7 @@ void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
         ev.callback = {};
         continue;
       }
-      if (ue_db[ev.ue_index].ue_carriers()[0]->cell_index == cell_index) {
+      if (ue_db[ev.ue_index].get_pcell().cell_index == cell_index) {
         // If we are currently processing PCell.
         ev.callback(ev_logger);
         ev.callback = {};
@@ -220,8 +220,8 @@ void ue_event_manager::process_cell_specific(du_cell_index_t cell_index)
       log_invalid_ue_index(ev.ue_index);
       continue;
     }
-    ue&         ue    = ue_db[ev.ue_index];
-    ue_carrier* ue_cc = ue.find_cc(cell_index);
+    ue&      ue    = ue_db[ev.ue_index];
+    ue_cell* ue_cc = ue.find_cell(cell_index);
     if (ue_cc == nullptr) {
       log_invalid_cc(ev.ue_index, cell_index);
       continue;
@@ -245,13 +245,13 @@ void ue_event_manager::add_cell(const cell_configuration& cell_cfg_, ue_srb0_sch
 {
   srsgnb_assert(not cell_exists(cell_cfg_.cell_index), "Overwriting cell configurations not supported");
 
-  cells[cell_cfg_.cell_index].cfg        = &cell_cfg_;
-  cells[cell_cfg_.cell_index].srb0_sched = &srb0_sched;
+  du_cells[cell_cfg_.cell_index].cfg        = &cell_cfg_;
+  du_cells[cell_cfg_.cell_index].srb0_sched = &srb0_sched;
 }
 
 bool ue_event_manager::cell_exists(du_cell_index_t cell_index) const
 {
-  return cell_index < MAX_NOF_DU_CELLS and cells[cell_index].cfg != nullptr;
+  return cell_index < MAX_NOF_DU_CELLS and du_cells[cell_index].cfg != nullptr;
 }
 
 void ue_event_manager::log_invalid_ue_index(du_ue_index_t ue_index) const

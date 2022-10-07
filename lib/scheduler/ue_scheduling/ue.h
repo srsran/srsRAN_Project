@@ -20,13 +20,14 @@
 
 namespace srsgnb {
 
-class ue_carrier
+/// \brief Context respective to a UE serving cell.
+class ue_cell
 {
 public:
-  ue_carrier(du_ue_index_t                                ue_index,
-             rnti_t                                       crnti_val,
-             const cell_configuration&                    cell_cfg_common_,
-             const serving_cell_ue_configuration_request& ue_serv_cell) :
+  ue_cell(du_ue_index_t                                ue_index,
+          rnti_t                                       crnti_val,
+          const cell_configuration&                    cell_cfg_common_,
+          const serving_cell_ue_configuration_request& ue_serv_cell) :
     ue_index(ue_index),
     cell_index(ue_serv_cell.cell_index),
     harqs(crnti_val, 52, 16, srslog::fetch_basic_logger("MAC")),
@@ -63,8 +64,8 @@ public:
     sched_request_configs(req.sched_request_config_list)
   {
     for (unsigned i = 0; i != req.cells.size(); ++i) {
-      carriers[i] = std::make_unique<ue_carrier>(ue_index, req.crnti, cell_cfg_common, req.cells[i]);
-      ue_cc_list.push_back(carriers[i].get());
+      du_cells[i] = std::make_unique<ue_cell>(ue_index, req.crnti, cell_cfg_common, req.cells[i]);
+      ue_cells.push_back(du_cells[i].get());
     }
   }
   ue(const ue&)            = delete;
@@ -77,23 +78,37 @@ public:
 
   void slot_indication(slot_point sl_tx) {}
 
-  ue_carrier* find_cc(du_cell_index_t cell_index)
+  ue_cell* find_cell(du_cell_index_t cell_index)
   {
     srsgnb_assert(cell_index < MAX_CELLS, "Invalid cell_index={}", cell_index);
-    return carriers[cell_index].get();
+    return du_cells[cell_index].get();
   }
-
-  const ue_carrier* find_cc(du_cell_index_t cell_index) const
+  const ue_cell* find_cell(du_cell_index_t cell_index) const
   {
     srsgnb_assert(cell_index < MAX_CELLS, "Invalid cell_index={}", cell_index);
-    return carriers[cell_index].get();
+    return du_cells[cell_index].get();
   }
 
-  span<ue_carrier*> ue_carriers() { return ue_cc_list; }
+  /// \brief Fetch UE cell based on UE-specific cell identifier. E.g. PCell corresponds to ue_cell_index==0.
+  ue_cell& get_cell(ue_cell_index_t ue_cell_index)
+  {
+    srsgnb_assert(ue_cell_index < ue_cells.size(), "Invalid cell_index={}", ue_cell_index);
+    return *ue_cells[ue_cell_index];
+  }
+  const ue_cell& get_cell(ue_cell_index_t ue_cell_index) const
+  {
+    srsgnb_assert(ue_cell_index < ue_cells.size(), "Invalid cell_index={}", ue_cell_index);
+    return *ue_cells[ue_cell_index];
+  }
 
-  span<ue_carrier* const> ue_carriers() const { return span<ue_carrier* const>(ue_cc_list.data(), ue_cc_list.size()); }
+  /// \brief Fetch UE PCell.
+  ue_cell&       get_pcell() { return *ue_cells[0]; }
+  const ue_cell& get_pcell() const { return *ue_cells[0]; }
 
-  bool is_ca_enabled() const { return ue_cc_list.size() > 1; }
+  /// \brief Number of cells configured for the UE.
+  unsigned nof_cells() const { return ue_cells.size(); }
+
+  bool is_ca_enabled() const { return ue_cells.size() > 1; }
 
   void activate_cells(bounded_bitset<MAX_NOF_DU_CELLS> activ_bitmap) {}
 
@@ -137,11 +152,14 @@ private:
   /// \c schedulingRequestToAddModList, TS 38.331; \ref sched_ue_creation_request_message.
   std::vector<scheduling_request_to_addmod> sched_request_configs;
 
-  /// List of UE carriers indexed by DU Cell Index.
-  std::array<std::unique_ptr<ue_carrier>, MAX_CELLS> carriers;
+  /// List of UE cells indexed by \c du_cell_index_t. If an element is null, it means that the DU cell is not
+  /// configured to be used by the UE.
+  std::array<std::unique_ptr<ue_cell>, MAX_CELLS> du_cells;
 
-  /// List of UE carriers indexed by UE component carrier index.
-  static_vector<ue_carrier*, MAX_CELLS> ue_cc_list;
+  /// List of UE cells indexed by \c ue_cell_index_t. The size of the list is equal to the number of cells aggregated
+  /// and configured for the UE. PCell corresponds to ue_cell_index=0. the first SCell corresponds to ue_cell_index=1,
+  /// etc.
+  static_vector<ue_cell*, MAX_CELLS> ue_cells;
 
   /// UE UL Logical Channel Manager.
   ul_logical_channel_manager ul_lc_ch_mgr;

@@ -35,7 +35,7 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   ue& u = ues[grant.user->ue_index];
 
   // Verify UE carrier is active.
-  ue_carrier* ue_cc = u.find_cc(grant.cell_index);
+  ue_cell* ue_cc = u.find_cell(grant.cell_index);
   if (ue_cc == nullptr or not ue_cc->is_active()) {
     logger.warning("SCHED: PDSCH allocation failed. Cause: The UE={} carrier with cell_index={} is inactive",
                    u.ue_index,

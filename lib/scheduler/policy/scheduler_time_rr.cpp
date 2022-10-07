@@ -43,28 +43,28 @@ bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
   }
 
   // Prioritize PCell over SCells.
-  for (const ue_carrier* ue_cc : u.ue_carriers()) {
+  for (unsigned i = 0; i != u.nof_cells(); ++i) {
+    const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
     // Search available HARQ.
-    const dl_harq_process* h = is_retx ? ue_cc->harqs.find_pending_dl_retx() : ue_cc->harqs.find_empty_dl_harq();
+    const dl_harq_process* h = is_retx ? ue_cc.harqs.find_pending_dl_retx() : ue_cc.harqs.find_empty_dl_harq();
     if (h == nullptr) {
       continue;
     }
 
     // Search for available symbolxRB resources in different SearchSpaces.
-    const bwp_downlink_common& bwp_dl = ue_cc->cfg().dl_bwp_common(ue_cc->active_bwp_id());
-    for (const search_space_configuration* ss_cfg : ue_cc->cfg().get_dl_search_spaces(ue_cc->active_bwp_id())) {
-      span<const pdsch_time_domain_resource_allocation> pdsch_list =
-          ue_cc->cfg().get_pdsch_time_domain_list(ss_cfg->id);
+    const bwp_downlink_common& bwp_dl = ue_cc.cfg().dl_bwp_common(ue_cc.active_bwp_id());
+    for (const search_space_configuration* ss_cfg : ue_cc.cfg().get_dl_search_spaces(ue_cc.active_bwp_id())) {
+      span<const pdsch_time_domain_resource_allocation> pdsch_list = ue_cc.cfg().get_pdsch_time_domain_list(ss_cfg->id);
 
       for (unsigned time_res = 0; time_res != pdsch_list.size(); ++time_res) {
-        const pdsch_time_domain_resource_allocation& pdsch = pdsch_list[time_res];
-        const cell_slot_resource_grid&               grid  = pdsch_alloc.dl_resource_grid(ue_cc->cell_index, pdsch.k0);
-        const bwp_configuration&                     bwp_cfg   = bwp_dl.generic_params;
+        const pdsch_time_domain_resource_allocation& pdsch   = pdsch_list[time_res];
+        const cell_slot_resource_grid&               grid    = pdsch_alloc.dl_resource_grid(ue_cc.cell_index, pdsch.k0);
+        const bwp_configuration&                     bwp_cfg = bwp_dl.generic_params;
         prb_bitmap                                   used_crbs = grid.used_crbs(bwp_cfg, pdsch.symbols);
         crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, bwp_cfg.crbs.length(), 0);
         if (not ue_grant_crbs.empty()) {
           pdsch_alloc.allocate_pdsch(ue_pdsch_grant{&u,
-                                                    ue_cc->cell_index,
+                                                    ue_cc.cell_index,
                                                     h->pid,
                                                     ss_cfg->id,
                                                     time_res,
@@ -93,24 +93,25 @@ bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_retx)
   }
 
   // Prioritize PCell over SCells.
-  for (const ue_carrier* ue_cc : u.ue_carriers()) {
-    const ul_harq_process* h = nullptr;
+  for (unsigned i = 0; i != u.nof_cells(); ++i) {
+    const ue_cell&         ue_cc = u.get_cell(to_ue_cell_index(i));
+    const ul_harq_process* h     = nullptr;
     if (is_retx) {
-      h = ue_cc->harqs.find_pending_ul_retx();
+      h = ue_cc.harqs.find_pending_ul_retx();
     } else {
-      h = ue_cc->harqs.find_empty_ul_harq();
+      h = ue_cc.harqs.find_empty_ul_harq();
     }
     if (h == nullptr) {
       continue;
     }
     unsigned                       k2        = 4; // TODO: Take from config.
-    const cell_slot_resource_grid& grid      = pusch_alloc.ul_resource_grid(ue_cc->cell_index, k2);
-    const bwp_uplink_common&       bwp_ul    = ue_cc->cfg().ul_bwp_common(ue_cc->active_bwp_id());
+    const cell_slot_resource_grid& grid      = pusch_alloc.ul_resource_grid(ue_cc.cell_index, k2);
+    const bwp_uplink_common&       bwp_ul    = ue_cc.cfg().ul_bwp_common(ue_cc.active_bwp_id());
     prb_bitmap                     used_crbs = grid.used_crbs(bwp_ul.generic_params, pusch_symbols);
     crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, bwp_ul.generic_params.crbs.length(), 0);
     if (not ue_grant_crbs.empty()) {
       pusch_alloc.allocate_pusch(ue_pusch_grant{&u,
-                                                ue_cc->cell_index,
+                                                ue_cc.cell_index,
                                                 h->pid,
                                                 ue_grant_crbs,
                                                 pusch_symbols,

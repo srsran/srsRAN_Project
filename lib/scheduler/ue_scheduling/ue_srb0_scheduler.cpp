@@ -88,7 +88,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
                                       unsigned                          pdsch_time_res,
                                       const search_space_configuration& ss_cfg)
 {
-  ue_carrier&                                  ue_pcell     = *u.ue_carriers()[0];
+  ue_cell&                                     ue_pcell     = u.get_pcell();
   subcarrier_spacing                           scs          = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs;
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(pdsch_time_res);
 

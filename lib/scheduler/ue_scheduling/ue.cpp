@@ -25,7 +25,7 @@ unsigned ue::pending_ul_newtx_bytes() const
   unsigned pending_bytes = ul_lc_ch_mgr.pending_bytes();
 
   // Subtract the bytes already allocated in UL HARQs.
-  for (const ue_carrier* ue_cc : ue_cc_list) {
+  for (const ue_cell* ue_cc : ue_cells) {
     if (pending_bytes == 0) {
       break;
     }
