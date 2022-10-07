@@ -37,7 +37,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   //  configure t_poll_retransmission timer
   if (cfg.t_poll_retx > 0) {
     poll_retransmit_timer.set(static_cast<uint32_t>(cfg.t_poll_retx), [this, &pcell_executor](uint32_t timerid) {
-      pcell_executor.execute([this, timerid]() { timer_expired(timerid); });
+      pcell_executor.execute([this, timerid]() { on_expired_poll_retransmit_timer(timerid); });
     });
   }
 }
@@ -764,7 +764,7 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
   return poll;
 }
 
-void rlc_tx_am_entity::timer_expired(uint32_t timeout_id)
+void rlc_tx_am_entity::on_expired_poll_retransmit_timer(uint32_t timeout_id)
 {
   std::unique_lock<std::mutex> lock(mutex);
 

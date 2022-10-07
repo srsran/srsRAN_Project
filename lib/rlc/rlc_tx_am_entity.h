@@ -139,7 +139,14 @@ public:
   uint8_t get_polling_bit(uint32_t sn, bool is_retx, uint32_t payload_size);
 
   // Timers
-  void timer_expired(uint32_t timeout_id);
+
+  /// \brief on_expired_poll_retransmit_timer Handler for expired poll_retransmit_timer
+  ///
+  /// Note: This function shall be executed by the same executor that calls pull_pdu(), i.e. the pcell_executor,
+  /// in order to avoid incidential blocking of those critical paths.
+  ///
+  /// \param timeout_id The timer ID
+  void on_expired_poll_retransmit_timer(uint32_t timeout_id);
 
   // Window helpers
 
