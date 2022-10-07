@@ -289,13 +289,8 @@ protected:
 // Tests the output of the PUCCH allocator (or PUCCH PDU).
 TEST_P(test_pucch_output, test_pucch_output_info)
 {
-  pucch_info* pucch_test = t_bench.pucch_sched.alloc_pucch_harq_ack_ue(pucch_res_indicator,
-                                                                       harq_timing_indicator,
-                                                                       t_bench.res_grid,
-                                                                       t_bench.k0,
-                                                                       t_bench.dci_info,
-                                                                       t_bench.user,
-                                                                       t_bench.ue_cell_cfg);
+  pucch_info* pucch_test = t_bench.pucch_sched.alloc_common_pucch_harq_ack_ue(
+      pucch_res_indicator, harq_timing_indicator, t_bench.res_grid, t_bench.user.crnti, t_bench.k0, t_bench.dci_info);
 
   ASSERT_TRUE(pucch_test != nullptr);
   ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, *pucch_test));
@@ -304,13 +299,8 @@ TEST_P(test_pucch_output, test_pucch_output_info)
 // Tests whether PUCCH allocator fills the scheduler grid correctly.
 TEST_P(test_pucch_output, test_pucch_grid_filling)
 {
-  t_bench.pucch_sched.alloc_pucch_harq_ack_ue(pucch_res_indicator,
-                                              harq_timing_indicator,
-                                              t_bench.res_grid,
-                                              t_bench.k0,
-                                              t_bench.dci_info,
-                                              t_bench.user,
-                                              t_bench.ue_cell_cfg);
+  t_bench.pucch_sched.alloc_common_pucch_harq_ack_ue(
+      pucch_res_indicator, harq_timing_indicator, t_bench.res_grid, t_bench.user.crnti, t_bench.k0, t_bench.dci_info);
 
   ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, t_bench.tx_delay));
 }
@@ -318,13 +308,8 @@ TEST_P(test_pucch_output, test_pucch_grid_filling)
 // Tests whether PUCCH allocator returns the correct values for the DCI.
 TEST_P(test_pucch_output, test_pucch_output_for_dci)
 {
-  t_bench.pucch_sched.alloc_pucch_harq_ack_ue(pucch_res_indicator,
-                                              harq_timing_indicator,
-                                              t_bench.res_grid,
-                                              t_bench.k0,
-                                              t_bench.dci_info,
-                                              t_bench.user,
-                                              t_bench.ue_cell_cfg);
+  t_bench.pucch_sched.alloc_common_pucch_harq_ack_ue(
+      pucch_res_indicator, harq_timing_indicator, t_bench.res_grid, t_bench.user.crnti, t_bench.k0, t_bench.dci_info);
 
   ASSERT_EQ(GetParam().dci_pucch_res_indicator, pucch_res_indicator);
   ASSERT_EQ(GetParam().dci_harq_timining_indicator, harq_timing_indicator);

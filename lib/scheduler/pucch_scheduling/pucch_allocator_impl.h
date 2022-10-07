@@ -30,18 +30,16 @@ public:
   /// \param[out] harq_feedback_timing_indicator <em>PDSCH-to-HARQ_feedback timing indicator<\em>, as per TS 38.213,
   /// Section 9.2.3; it represents the PUCCH delay (with respect to PDSCH) to be encoded in DCI 1_0 and 1_1.
   /// \param[out,in] slot_alloc struct with scheduling results.
+  /// \param[in] tcrnti temporary RNTI  of the UE.
   /// \param[in] pdsch_time_domain_resource k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] dci_info information with DL DCI, needed for HARQ-(N)-ACK scheduling info.
-  /// \param[in] ue object that contain the PUCCH resource and Logical Channel configuration.
-  /// \param[in] user UE configuration for the provided cell.
   /// \return Allocated PUCCH pointer, if successful. Else, it returns \c nullptr.
-  pucch_info* alloc_pucch_harq_ack_ue(unsigned&                    pucch_res_indicator,
-                                      unsigned&                    harq_feedback_timing_indicator,
-                                      cell_resource_allocator&     slot_alloc,
-                                      unsigned                     pdsch_time_domain_resource,
-                                      const pdcch_dl_information&  dci_info,
-                                      const ue&                    ue,
-                                      const ue_cell_configuration& ue_cell_cfg) override;
+  pucch_info* alloc_common_pucch_harq_ack_ue(unsigned&                   pucch_res_indicator,
+                                             unsigned&                   harq_feedback_timing_indicator,
+                                             cell_resource_allocator&    slot_alloc,
+                                             rnti_t                      tcrnti,
+                                             unsigned                    pdsch_time_domain_resource,
+                                             const pdcch_dl_information& dci_info) override;
 
 private:
   // Structs with the info about the PUCCH resources.
@@ -63,10 +61,7 @@ private:
                                                   const dci_dl_context_information& dci_info);
 
   // Fills the output of the PUCCH scheduler.
-  void fill_pucch_res_output(pucch_info&                  pucch_info,
-                             rnti_t                       rnti,
-                             pucch_res_alloc_cfg          pucch_res,
-                             const ue_cell_configuration& ue_cell_cfg);
+  void fill_pucch_res_output(pucch_info& pucch_info, rnti_t rnti, pucch_res_alloc_cfg pucch_res);
 
   // Cell configuration.
   const cell_configuration& cell_cfg;

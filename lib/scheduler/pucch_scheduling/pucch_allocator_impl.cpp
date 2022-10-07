@@ -87,40 +87,18 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(unsigned&                     
   return pucch_res_alloc_cfg{.has_config = false};
 }
 
-static bool has_ded_pucch_resource_cfg(const ue_cell_configuration& ue_cell_cfg)
+void pucch_allocator_impl::fill_pucch_res_output(pucch_info& pucch_info, rnti_t rnti, pucch_res_alloc_cfg pucch_res)
 {
-  // Check if there is any PUCCH res config in the UE configuration.
-  if (ue_cell_cfg.cfg_dedicated().ul_config.has_value() and
-      ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
-    const auto& pucch_cfg = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value();
-    // NOTE: We assume that the PUCCH resources for HARQ-ACK are in PUCCH Resource Set 0, only.
-    // TODO: change this so as to extend the check to other PUCCH Resource Sets.
-    if (not pucch_cfg.pucch_res_set_0.pucch_res_id_list.empty()) {
-      return true;
-    }
-  }
-  return false;
-}
+  pucch_info.crnti                         = rnti;
+  pucch_info.format                        = pucch_res.format;
+  pucch_info.bwp_cfg                       = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+  pucch_info.resources.intra_slot_freq_hop = true;
+  pucch_info.resources.prbs                = crb_to_prb(*pucch_info.bwp_cfg, pucch_res.first_hop_res.crbs);
+  srsgnb_assert(pucch_res.second_hop_res.has_value(), "Missing configuration for PUCCH resource configuration");
 
-void pucch_allocator_impl::fill_pucch_res_output(pucch_info&                  pucch_info,
-                                                 rnti_t                       rnti,
-                                                 pucch_res_alloc_cfg          pucch_res,
-                                                 const ue_cell_configuration& ue_cell_cfg)
-{
-  pucch_info.crnti  = rnti;
-  pucch_info.format = pucch_res.format;
-  if (has_ded_pucch_resource_cfg(ue_cell_cfg)) {
-    srsgnb_assert(false, "PUCCH scheduler for dedicated resources not yet implemented");
-  } else {
-    pucch_info.bwp_cfg                       = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-    pucch_info.resources.intra_slot_freq_hop = true;
-    pucch_info.resources.prbs                = crb_to_prb(*pucch_info.bwp_cfg, pucch_res.first_hop_res.crbs);
-    srsgnb_assert(pucch_res.second_hop_res.has_value(), "Missing configuration for PUCCH resource configuration");
-
-    pucch_info.resources.second_hop_prbs = crb_to_prb(*pucch_info.bwp_cfg, pucch_res.second_hop_res.value().crbs);
-    pucch_info.resources.symbols =
-        ofdm_symbol_range{pucch_res.first_hop_res.symbols.start(), pucch_res.second_hop_res.value().symbols.stop()};
-  }
+  pucch_info.resources.second_hop_prbs = crb_to_prb(*pucch_info.bwp_cfg, pucch_res.second_hop_res.value().crbs);
+  pucch_info.resources.symbols =
+      ofdm_symbol_range{pucch_res.first_hop_res.symbols.start(), pucch_res.second_hop_res.value().symbols.stop()};
 
   switch (pucch_res.format) {
     case pucch_format::FORMAT_0: {
@@ -156,13 +134,12 @@ void pucch_allocator_impl::fill_pucch_res_output(pucch_info&                  pu
   }
 }
 
-pucch_info* pucch_allocator_impl::alloc_pucch_harq_ack_ue(unsigned&                    pucch_res_indicator,
-                                                          unsigned&                    harq_feedback_timing_indicator,
-                                                          cell_resource_allocator&     slot_alloc,
-                                                          unsigned                     pdsch_time_domain_resource,
-                                                          const pdcch_dl_information&  dci_info,
-                                                          const ue&                    ue,
-                                                          const ue_cell_configuration& ue_cell_cfg)
+pucch_info* pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(unsigned& pucch_res_indicator,
+                                                                 unsigned& harq_feedback_timing_indicator,
+                                                                 cell_resource_allocator&    slot_alloc,
+                                                                 rnti_t                      tcrnti,
+                                                                 unsigned                    pdsch_time_domain_resource,
+                                                                 const pdcch_dl_information& dci_info)
 {
   // Get resource allocator for SLOT k0+k1.
   // TODO: extend scheduler for k1 different from 4 slots.
@@ -172,11 +149,7 @@ pucch_info* pucch_allocator_impl::alloc_pucch_harq_ack_ue(unsigned&             
 
   // Get the PUCCH resources, either from default tables or from dedicated
   pucch_res_alloc_cfg pucch_res;
-  if (has_ded_pucch_resource_cfg(ue_cell_cfg)) {
-    srsgnb_assert(false, "PUCCH scheduler for dedicated resources not yet implemented");
-  } else {
-    pucch_res = alloc_pucch_common_res_harq(pucch_res_indicator, pucch_slot_alloc, dci_info.ctx);
-  }
+  pucch_res = alloc_pucch_common_res_harq(pucch_res_indicator, pucch_slot_alloc, dci_info.ctx);
 
   // No resources available for PUCCH.
   if (pucch_res.has_config) {
@@ -192,7 +165,7 @@ pucch_info* pucch_allocator_impl::alloc_pucch_harq_ack_ue(unsigned&             
   // Fill scheduler output.
   pucch_slot_alloc.result.ul.pucchs.emplace_back();
   pucch_info& pucch_info = pucch_slot_alloc.result.ul.pucchs.back();
-  fill_pucch_res_output(pucch_info, ue.crnti, pucch_res, ue_cell_cfg);
+  fill_pucch_res_output(pucch_info, tcrnti, pucch_res);
 
   // NOTE: HARQ feedback is encoded for DCI 1_0. As per TS 38.213, Section 9.2.3, the harq_feedback_timing_indicator
   // maps to {1, 2, 3, 4, 5, 6, 7, 8}.
