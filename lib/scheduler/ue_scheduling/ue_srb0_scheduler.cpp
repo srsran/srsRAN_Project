@@ -107,13 +107,13 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   srsgnb_assert(h_dl != nullptr, "UE must have empty HARQs during SRB0 PDU allocation");
 
   // Find available symbol x RB resources.
-  const unsigned   pending_bytes = u.dl_lc_ch_mgr.has_pending_ces() + u.dl_lc_ch_mgr.pending_bytes(LCID_SRB0);
+  const unsigned   pending_bytes = u.dl_lc_ch_mgr.pending_ce_bytes() + u.dl_lc_ch_mgr.pending_bytes(LCID_SRB0);
   dmrs_information dmrs_info     = make_dmrs_info_common(
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
   const unsigned        nof_symb_sh     = pdsch_td_cfg.symbols.length();
   static const unsigned mod_order       = get_bits_per_symbol(modulation_scheme::QPSK);
   static const unsigned srb0_mcs_index  = 1; // TODO: Need to parameterize.
-  sch_mcs_description   srb0_msc_config = pdsch_mcs_get_config(pdsch_mcs_table::qam64, srb0_mcs_index);
+  sch_mcs_description   srb0_mcs_config = pdsch_mcs_get_config(pdsch_mcs_table::qam64, srb0_mcs_index);
   static const unsigned nof_layers      = 1; // Assumption
   // TODO: As per Section 5.1.3.2, TS 38.214, need to derive xOverhead from PDSCH-ServingCellconfig.
   // Assumed to be not configured hence set to 0 as per spec.
@@ -124,7 +124,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
                                                 calculate_nof_dmrs_per_rb(dmrs_info),
                                                 nof_oh_prb,
                                                 mod_order,
-                                                static_cast<float>(srb0_msc_config.target_code_rate / 1024),
+                                                static_cast<float>(srb0_mcs_config.target_code_rate / 1024),
                                                 nof_layers});
   const bwp_configuration& bwp_cfg       = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
   prb_bitmap               used_crbs     = pdsch_alloc.dl_res_grid.used_crbs(bwp_cfg, pdsch_td_cfg.symbols);
@@ -162,10 +162,9 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
 
   // Allocate UE DL HARQ.
   prb_interval          prbs     = crb_to_prb(*pdcch->ctx.bwp_cfg, ue_grant_crbs);
-  slot_point            uci_slot = pdsch_alloc.slot + 4; // TODO.
-  const static unsigned mcs      = 4;                    // TODO.
-  const static unsigned max_retx = 4;                    // TODO.
-  bool                  success  = h_dl->new_tx(pdsch_alloc.slot, uci_slot, prbs, mcs, max_retx);
+  slot_point            uci_slot = pdsch_alloc.slot + pucch_grant.k1;
+  const static unsigned max_retx = 4; // TODO: Parameterize.
+  bool                  success  = h_dl->new_tx(pdsch_alloc.slot, uci_slot, prbs, srb0_mcs_index, max_retx);
   srsgnb_assert(success, "Failed to allocate DL HARQ newtx");
 
   fill_srb0_grant(u,
