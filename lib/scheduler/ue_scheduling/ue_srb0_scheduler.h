@@ -51,10 +51,9 @@ private:
                        harq_process&         h_dl,
                        pdcch_dl_information& pdcch,
                        dl_msg_alloc&         msg,
+                       pucch_harq_ack_grant& pucch,
                        unsigned              pdsch_time_res,
-                       const crb_interval&   ue_grant_crbs,
-                       unsigned              pucch_res_indicator,
-                       unsigned              harq_feedback_timing_indicator);
+                       const crb_interval&   ue_grant_crbs);
 
   const pdsch_time_domain_resource_allocation& get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const;
 

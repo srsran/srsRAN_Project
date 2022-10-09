@@ -144,8 +144,6 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   }
 
   // Allocate PUCCH resources.
-  unsigned             pucch_res_indicator            = 0;
-  unsigned             harq_feedback_timing_indicator = 0;
   pucch_harq_ack_grant pucch_grant =
       pucch_sch.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_time_res, *pdcch);
   if (pucch_grant.pucch_pdu == nullptr) {
@@ -167,14 +165,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   bool                  success  = h_dl->new_tx(pdsch_alloc.slot, uci_slot, prbs, srb0_mcs_index, max_retx);
   srsgnb_assert(success, "Failed to allocate DL HARQ newtx");
 
-  fill_srb0_grant(u,
-                  *h_dl,
-                  *pdcch,
-                  pdsch_alloc.result.dl.ue_grants.back(),
-                  pdsch_time_res,
-                  ue_grant_crbs,
-                  pucch_res_indicator,
-                  harq_feedback_timing_indicator);
+  fill_srb0_grant(u, *h_dl, *pdcch, pdsch_alloc.result.dl.ue_grants.back(), pucch_grant, pdsch_time_res, ue_grant_crbs);
 
   return true;
 }
@@ -183,10 +174,9 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
                                         harq_process&         h_dl,
                                         pdcch_dl_information& pdcch,
                                         dl_msg_alloc&         msg,
+                                        pucch_harq_ack_grant& pucch,
                                         unsigned              pdsch_time_res,
-                                        const crb_interval&   ue_grant_crbs,
-                                        unsigned              pucch_res_indicator,
-                                        unsigned              harq_feedback_timing_indicator)
+                                        const crb_interval&   ue_grant_crbs)
 {
   constexpr static unsigned nof_layers = 1;
 
@@ -200,18 +190,16 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
   dci.N_rb_dl_bwp                    = initial_active_dl_bwp.crbs.length();
   dci.frequency_resource             = ra_frequency_type1_get_riv(
       ra_frequency_type1_configuration{dci.N_rb_dl_bwp, ue_grant_crbs.start(), ue_grant_crbs.length()});
-  dci.time_resource                  = pdsch_time_res;
-  dci.vrb_to_prb_mapping             = 0; // TODO.
-  dci.modulation_coding_scheme       = h_dl.mcs(0).to_uint();
-  dci.new_data_indicator             = 1;
-  dci.redundancy_version             = 0;
-  dci.harq_process_number            = h_dl.pid;
-  dci.tpc_command                    = 0; // TODO.
-  dci.pucch_resource_indicator       = pucch_res_indicator;
-  dci.pdsch_harq_fb_timing_indicator = harq_feedback_timing_indicator;
-
-  // Fill PUCCH.
-  // TODO.
+  dci.time_resource            = pdsch_time_res;
+  dci.vrb_to_prb_mapping       = 0; // TODO.
+  dci.modulation_coding_scheme = h_dl.mcs(0).to_uint();
+  dci.new_data_indicator       = 1;
+  dci.redundancy_version       = 0;
+  dci.harq_process_number      = h_dl.pid;
+  dci.tpc_command              = 0; // TODO.
+  dci.pucch_resource_indicator = pucch.pucch_res_indicator;
+  // As per TS 38.213, Section 9.2.3, the harq_feedback_timing_indicator maps to {1, 2, 3, 4, 5, 6, 7, 8} for DCI 1_0.
+  dci.pdsch_harq_fb_timing_indicator = pucch.k1 - 1;
 
   // Fill PDSCH.
   msg.pdsch_cfg.rnti    = u.crnti;
