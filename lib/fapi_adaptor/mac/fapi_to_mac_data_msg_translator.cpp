@@ -62,6 +62,10 @@ void fapi_to_mac_data_msg_translator::on_rx_data_indication(const fapi::rx_data_
   indication.sl_rx      = slot_point(scs, msg.sfn, msg.slot);
   indication.cell_index = to_du_cell_index(0);
   for (const auto& fapi_pdu : msg.pdus) {
+    // PDUs that were not successfully decoded have zero length.
+    if (fapi_pdu.pdu_length == 0) {
+      continue;
+    }
     indication.pdus.emplace_back();
     mac_rx_pdu& pdu = indication.pdus.back();
     pdu.harq_id     = fapi_pdu.harq_id;
@@ -69,7 +73,10 @@ void fapi_to_mac_data_msg_translator::on_rx_data_indication(const fapi::rx_data_
     pdu.pdu         = span<const uint8_t>(fapi_pdu.data, fapi_pdu.pdu_length);
   }
 
-  pdu_handler.get().handle_rx_data_indication(indication);
+  // Only invoke the MAC when there are successfully decoded PDUs available.
+  if (!indication.pdus.empty()) {
+    pdu_handler.get().handle_rx_data_indication(indication);
+  }
 }
 
 void fapi_to_mac_data_msg_translator::on_crc_indication(const fapi::crc_indication_message& msg)
