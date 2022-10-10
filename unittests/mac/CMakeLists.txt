@@ -10,9 +10,9 @@ set_directory_properties(PROPERTIES LABELS "mac")
 
 include_directories(../..)
 
-add_executable(mac_ue_create_test_alt mac_ue_create_test_alt.cpp)
-target_link_libraries(mac_ue_create_test_alt srsgnb_support srslog gtest gtest_main)
-gtest_discover_tests(mac_ue_create_test_alt)
+add_executable(mac_ue_create_test mac_ue_create_test.cpp)
+target_link_libraries(mac_ue_create_test srsgnb_support srslog gtest gtest_main)
+gtest_discover_tests(mac_ue_create_test)
 
 add_executable(mac_ctrl_test mac_ctrl_test.cpp)
 target_link_libraries(mac_ctrl_test srsgnb_support srslog rrc_nr_asn1 srsgnb_mac)
