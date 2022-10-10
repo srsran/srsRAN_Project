@@ -47,7 +47,7 @@ private:
   slot_point     t;
 };
 srslog::basic_logger& test_bench::test_logger = srslog::fetch_basic_logger("TEST");
-srslog::basic_logger& test_bench::mac_logger  = srslog::fetch_basic_logger("MAC-NR");
+srslog::basic_logger& test_bench::mac_logger  = srslog::fetch_basic_logger("MAC");
 
 struct harq_proc_params {
   uint32_t arq_slot_delay;
@@ -648,7 +648,7 @@ int main()
 {
   // Initialize logger
   srslog::init();
-  auto& harq_logger = srslog::fetch_basic_logger("MAC-NR");
+  auto& harq_logger = srslog::fetch_basic_logger("MAC");
   harq_logger.set_level(srslog::basic_levels::info);
   auto& test_logger = srslog::fetch_basic_logger("TEST");
   test_logger.set_level(srslog::basic_levels::info);
