@@ -10,7 +10,9 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/support/test_utils.h"
+#include <gtest/gtest.h>
 #include <list>
+#include <random>
 
 using namespace srsgnb;
 
@@ -21,62 +23,142 @@ static_assert(std::is_same<byte_buffer::iterator::reference, uint8_t&>::value, "
 static_assert(std::is_same<byte_buffer::const_iterator::reference, const uint8_t&>::value, "Invalid reference type");
 static_assert(std::is_same<byte_buffer::const_iterator::pointer, const uint8_t*>::value, "Invalid pointer type");
 
-std::vector<uint8_t> make_small_vec()
+std::random_device rd;
+std::mt19937       g(rd());
+
+unsigned get_random_uint(unsigned min, unsigned max)
 {
-  return {1, 2, 3, 4, 5, 6};
+  return std::uniform_int_distribution<unsigned>{min, max}(g);
 }
 
-std::vector<uint8_t> make_big_vec()
+/// Creates a vector of specified size.
+std::vector<uint8_t> make_vec(unsigned size)
 {
-  std::vector<uint8_t> vec(byte_buffer_segment::capacity() - byte_buffer_segment::DEFAULT_HEADROOM);
+  std::vector<uint8_t> vec(size);
   for (size_t i = 0; i < vec.size(); ++i) {
     vec[i] = i;
   }
   return vec;
 }
 
-void test_buffer_segment()
+/// Creates a small vector of bytes that fits in one segment.
+std::vector<uint8_t> make_small_vec()
 {
-  constexpr static size_t segment_size          = byte_buffer_segment::SEGMENT_SIZE;
-  constexpr static size_t segment_headroom_init = byte_buffer_segment::DEFAULT_HEADROOM;
-  byte_buffer_segment     segment;
-  TESTASSERT(segment.begin() == segment.end());
-  TESTASSERT_EQ(0, segment.length());
-  TESTASSERT_EQ(segment_size, segment.headroom() + segment.tailroom());
-  TESTASSERT_EQ(segment_headroom_init, segment.headroom());
-  TESTASSERT(segment.next() == nullptr);
-
-  // append
-  auto bytes = make_small_vec();
-  segment.append(bytes);
-  TESTASSERT(segment == bytes);
-  TESTASSERT(std::equal(segment.begin(), segment.end(), bytes.begin(), bytes.end()));
-
-  // prepend
-  segment.prepend(bytes);
-  auto bytes2 = bytes;
-  bytes2.insert(bytes2.end(), bytes.begin(), bytes.end());
-  TESTASSERT(segment == bytes2);
-  TESTASSERT(std::equal(segment.begin(), segment.end(), bytes2.begin(), bytes2.end()));
-
-  // trim front
-  segment.trim_head(4);
-  TESTASSERT(segment == span<uint8_t>{bytes2}.subspan(4, bytes2.size() - 4));
-  TESTASSERT(std::equal(segment.begin(), segment.end(), bytes2.begin() + 4, bytes2.end()));
-
-  // trim back
-  segment.trim_tail(2);
-  TESTASSERT(segment == span<uint8_t>{bytes2}.subspan(4, bytes2.size() - 6));
-  TESTASSERT(std::equal(segment.begin(), segment.end(), bytes2.begin() + 4, bytes2.end() - 2));
-
-  // comparison
-  byte_buffer_segment segment2 = segment;
-  TESTASSERT(segment == segment2);
-  segment2.trim_tail(1);
-  TESTASSERT(segment != segment2);
+  return make_vec(6);
 }
 
-void test_byte_buffer_append()
+/// Creates a medium-sized vector of bytes that fills a segment TAILROOM.
+std::vector<uint8_t> make_medium_vec()
+{
+  return make_vec(byte_buffer_segment::capacity() - byte_buffer_segment::DEFAULT_HEADROOM);
+}
+
+/// creates a large vector that occupies more than one segment.
+std::vector<uint8_t> make_large_vec()
+{
+  return make_vec(byte_buffer_segment::capacity() + 1);
+}
+
+///////////////////////// byte_buffer_segment //////////////////////////////
+
+TEST(buffer_segment_test, default_init_segment_is_empty_and_has_headroom)
+{
+  byte_buffer_segment segment;
+  ASSERT_EQ(segment.begin(), segment.end());
+  ASSERT_EQ(0, segment.length());
+  ASSERT_EQ((size_t)byte_buffer_segment::SEGMENT_SIZE, segment.headroom() + segment.tailroom());
+  ASSERT_EQ((size_t)byte_buffer_segment::DEFAULT_HEADROOM, segment.headroom());
+  ASSERT_EQ(segment.next(), nullptr);
+}
+
+TEST(buffer_segment_test, append_bytes_on_empty_buffer)
+{
+  byte_buffer_segment segment;
+
+  const std::vector<uint8_t> bytes = make_small_vec();
+  segment.append(bytes);
+  ASSERT_EQ(bytes.size(), segment.length());
+  ASSERT_EQ(segment, bytes);
+  ASSERT_TRUE(std::equal(segment.begin(), segment.end(), bytes.begin(), bytes.end()));
+}
+
+TEST(buffer_segment_test, prepend_bytes_on_empty_buffer)
+{
+  byte_buffer_segment segment;
+
+  const std::vector<uint8_t> bytes = make_small_vec();
+  segment.prepend(bytes);
+  ASSERT_EQ(segment, bytes);
+  ASSERT_TRUE(std::equal(segment.begin(), segment.end(), bytes.begin(), bytes.end()));
+}
+
+TEST(buffer_segment_test, multiple_appends)
+{
+  byte_buffer_segment  segment;
+  std::vector<uint8_t> tot_bytes;
+
+  for (unsigned i = 0; i != 5; ++i) {
+    const std::vector<uint8_t> bytes = make_small_vec();
+    tot_bytes.insert(tot_bytes.end(), bytes.begin(), bytes.end());
+    segment.append(bytes);
+  }
+  ASSERT_TRUE(segment == tot_bytes);
+}
+
+TEST(buffer_segment_test, trim_head)
+{
+  byte_buffer_segment        segment;
+  const std::vector<uint8_t> bytes = make_small_vec();
+  segment.append(bytes);
+
+  unsigned n = get_random_uint(1, 6);
+  segment.trim_head(n);
+  ASSERT_EQ(segment, span<const uint8_t>{bytes}.subspan(n, bytes.size() - n));
+  ASSERT_TRUE(std::equal(segment.begin(), segment.end(), bytes.begin() + n, bytes.end()));
+}
+
+TEST(buffer_segment_test, trim_tail)
+{
+  byte_buffer_segment        segment;
+  const std::vector<uint8_t> bytes = make_small_vec();
+  segment.append(bytes);
+
+  unsigned n = get_random_uint(1, 6);
+  segment.trim_tail(n);
+  ASSERT_EQ(segment, span<const uint8_t>{bytes}.subspan(0, bytes.size() - n));
+  ASSERT_TRUE(std::equal(segment.begin(), segment.end(), bytes.begin(), bytes.end() - n));
+}
+
+TEST(buffer_segment_test, copy_ctor)
+{
+  byte_buffer_segment        segment;
+  const std::vector<uint8_t> bytes = make_small_vec();
+  segment.append(bytes);
+
+  byte_buffer_segment segment2 = segment;
+  ASSERT_EQ(segment2, segment);
+  ASSERT_TRUE(std::equal(segment2.begin(), segment2.end(), bytes.begin(), bytes.end()));
+  segment.trim_tail(1);
+  segment.append(10);
+  ASSERT_NE(segment, segment2) << "byte_buffer_segment copy ctor must make deep copy";
+}
+
+TEST(buffer_segment_test, move_ctor)
+{
+  byte_buffer_segment        segment;
+  const std::vector<uint8_t> bytes = make_small_vec();
+  segment.append(bytes);
+
+  byte_buffer_segment segment2 = std::move(segment);
+  ASSERT_TRUE(std::equal(segment2.begin(), segment2.end(), bytes.begin(), bytes.end()));
+  segment.resize(0);
+  segment.append(10);
+  ASSERT_NE(segment, segment2) << "byte_buffer_segment move ctor must make deep copy";
+}
+
+///////////////////////// byte_buffer //////////////////////////////
+
+TEST(byte_buffer, append)
 {
   byte_buffer pdu;
   TESTASSERT(pdu.empty());
@@ -87,7 +169,7 @@ void test_byte_buffer_append()
   TESTASSERT_EQ(pdu.length(), bytes.size());
 
   // create a new segment during the append.
-  auto bytes2 = make_big_vec();
+  auto bytes2 = make_medium_vec();
   pdu.append(bytes2);
   TESTASSERT_EQ(pdu.length(), bytes2.size() + bytes.size());
 
@@ -98,7 +180,7 @@ void test_byte_buffer_append()
   TESTASSERT_EQ(pdu.length() + bytes.size(), pdu2.length());
 }
 
-void test_byte_buffer_prepend()
+TEST(byte_buffer, prepend)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes = make_small_vec();
@@ -107,7 +189,7 @@ void test_byte_buffer_prepend()
   TESTASSERT_EQ(pdu.length(), bytes.size());
   TESTASSERT(pdu == bytes);
 
-  auto bytes2 = make_big_vec();
+  auto bytes2 = make_medium_vec();
   pdu.prepend(bytes2);
   TESTASSERT_EQ(pdu.length(), bytes.size() + bytes2.size());
 
@@ -116,7 +198,7 @@ void test_byte_buffer_prepend()
   TESTASSERT(bytes_concat == pdu);
 }
 
-void test_byte_buffer_clear()
+TEST(byte_buffer, clear)
 {
   byte_buffer pdu;
   pdu.append(make_small_vec());
@@ -127,15 +209,15 @@ void test_byte_buffer_clear()
   TESTASSERT(pdu.empty());
   TESTASSERT(pdu.length() == 0);
 
-  pdu.append(make_big_vec());
-  pdu.append(make_big_vec());
+  pdu.append(make_medium_vec());
+  pdu.append(make_medium_vec());
 
   TESTASSERT(not pdu.empty());
   pdu.clear();
   TESTASSERT(pdu.empty());
 }
 
-void test_byte_buffer_compare()
+TEST(byte_buffer, compare)
 {
   byte_buffer          pdu, pdu2, pdu3, pdu4;
   std::vector<uint8_t> bytes  = {1, 2, 3, 4, 5, 6};
@@ -174,7 +256,7 @@ void test_byte_buffer_compare()
   TESTASSERT(pdu == bytes);
 }
 
-void test_byte_buffer_iterator()
+TEST(byte_buffer, iterator)
 {
   byte_buffer pdu;
 
@@ -201,7 +283,7 @@ void test_byte_buffer_iterator()
   TESTASSERT_EQ(bytes.size() - 2, (size_t)(pdu.end() - (pdu.begin() + 2)));
 
   // multiple segments
-  std::vector<uint8_t> bytes2 = make_big_vec();
+  std::vector<uint8_t> bytes2 = make_medium_vec();
   pdu.append(bytes2);
   std::vector<uint8_t> bytes_concat = bytes;
   bytes_concat.insert(bytes_concat.end(), bytes2.begin(), bytes2.end());
@@ -226,11 +308,11 @@ void test_byte_buffer_iterator()
   TESTASSERT_EQ(bytes_concat.size() - 2, (size_t)(pdu.end() - (pdu.begin() + 2)));
 }
 
-void test_byte_buffer_copy()
+TEST(byte_buffer, copy)
 {
   byte_buffer pdu;
 
-  std::vector<uint8_t> bytes = make_small_vec(), bytes2 = make_big_vec();
+  std::vector<uint8_t> bytes = make_small_vec(), bytes2 = make_medium_vec();
   auto                 bytes_concat = bytes;
   bytes_concat.insert(bytes_concat.end(), bytes2.begin(), bytes2.end());
   pdu.append(bytes);
@@ -261,7 +343,7 @@ void test_byte_buffer_copy()
   TESTASSERT(pdu == bytes_concat);
 }
 
-void test_byte_buffer_move()
+TEST(byte_buffer, move)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes = {1, 2, 3, 4, 5, 6};
@@ -272,7 +354,7 @@ void test_byte_buffer_move()
   TESTASSERT(pdu2 == bytes);
 }
 
-void test_byte_buffer_formatter()
+TEST(byte_buffer, formatter)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes = {1, 2, 3, 4, 15, 16, 255};
@@ -283,7 +365,7 @@ void test_byte_buffer_formatter()
   TESTASSERT(result == "01 02 03 04 0f 10 ff");
 }
 
-void test_byte_buffer_view()
+TEST(byte_buffer_view, length)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes = make_small_vec();
@@ -298,7 +380,7 @@ void test_byte_buffer_view()
   TESTASSERT_EQ(4, view.view(2, 4).length());
 }
 
-void test_byte_buffer_trim()
+TEST(byte_buffer, trim)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes = make_small_vec();
@@ -308,7 +390,7 @@ void test_byte_buffer_trim()
   pdu.trim_head(2);
   TESTASSERT(pdu == span<const uint8_t>{bytes}.subspan(2, bytes.size() - 2));
 
-  std::vector<uint8_t> bytes2 = make_big_vec();
+  std::vector<uint8_t> bytes2 = make_medium_vec();
   pdu.append(bytes2);
 
   auto bytes_concat = bytes;
@@ -323,11 +405,11 @@ void test_byte_buffer_trim()
   TESTASSERT(pdu == span<const uint8_t>{bytes2}.last(2));
 }
 
-void test_byte_buffer_linearize()
+TEST(byte_buffer, linearize)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes        = make_small_vec();
-  std::vector<uint8_t> bytes2       = make_big_vec();
+  std::vector<uint8_t> bytes2       = make_medium_vec();
   auto                 bytes_concat = bytes;
   bytes_concat.insert(bytes_concat.end(), bytes2.begin(), bytes2.end());
 
@@ -350,7 +432,7 @@ void test_byte_buffer_linearize()
   TESTASSERT(pdu.is_contiguous());
 }
 
-void test_byte_buffer_initializer_list()
+TEST(byte_buffer, initializer_list)
 {
   byte_buffer pdu = {1, 2, 3, 4, 5, 6};
   TESTASSERT_EQ(6, pdu.length());
@@ -359,14 +441,14 @@ void test_byte_buffer_initializer_list()
   TESTASSERT(are_equal);
 }
 
-void test_byte_buffer_from_hexdump()
+TEST(byte_buffer, hexdump)
 {
   std::vector<uint8_t> bytes{0x1, 0x2, 0x3, 0x4, 0x5, 0xff};
   byte_buffer          pdu = make_byte_buffer("0102030405FF");
   TESTASSERT(pdu == bytes);
 }
 
-void test_byte_buffer_iterator_plus_equal_op()
+TEST(byte_buffer, iterator_plus_equal_op)
 {
   // Test with small vector of bytes
   // Make initial vector
@@ -387,7 +469,7 @@ void test_byte_buffer_iterator_plus_equal_op()
   TESTASSERT(it == pdu.cend());
 
   // Test with big vector of bytes
-  bytes = make_big_vec();
+  bytes = make_medium_vec();
   pdu.clear();
   pdu.append(bytes);
 
@@ -420,7 +502,7 @@ void test_byte_buffer_iterator_plus_equal_op()
   TESTASSERT(it == pdu.cend());
 }
 
-void test_byte_buffer_reader_split_advance()
+TEST(byte_buffer_reader, split_advance)
 {
   // Test with small vector of bytes
   // Make initial vector
@@ -450,7 +532,7 @@ void test_byte_buffer_reader_split_advance()
 
   // Test with byte buffer made of several segments
   // Make initial vector
-  bytes = make_big_vec();
+  bytes = make_medium_vec();
   pdu.clear();
   pdu.append(bytes);
   pdu.append(bytes);
@@ -477,7 +559,7 @@ void test_byte_buffer_reader_split_advance()
   TESTASSERT(view.end() == pdu_long_reader.begin());
 }
 
-void test_byte_buffer_writer()
+TEST(byte_buffer_writer, all)
 {
   byte_buffer        pdu;
   byte_buffer_writer writer{pdu};
@@ -502,7 +584,7 @@ void test_byte_buffer_writer()
   TESTASSERT_EQ(10, writer.back());
 }
 
-void test_byte_buffer_reserve_prepend()
+TEST(byte_buffer, reserve_prepend)
 {
   byte_buffer pdu;
 
@@ -517,7 +599,7 @@ void test_byte_buffer_reserve_prepend()
   TESTASSERT(view == small_vec);
 
   // Prepend big vector
-  std::vector<uint8_t> big_vec = make_big_vec();
+  std::vector<uint8_t> big_vec = make_medium_vec();
   byte_buffer_view     view2   = pdu.reserve_prepend(big_vec.size());
   TESTASSERT_EQ(small_vec.size() + big_vec.size(), pdu.length());
   TESTASSERT_EQ(big_vec.size(), view2.length());
@@ -526,11 +608,11 @@ void test_byte_buffer_reserve_prepend()
   TESTASSERT(view2 == big_vec);
 }
 
-void test_byte_buffer_chain()
+TEST(byte_buffer_chain, all)
 {
   byte_buffer pdu;
   TESTASSERT(pdu.empty());
-  std::vector<uint8_t> big_vec      = make_big_vec();
+  std::vector<uint8_t> big_vec      = make_medium_vec();
   std::vector<uint8_t> small_vec    = make_small_vec();
   std::vector<uint8_t> bytes_concat = big_vec;
   bytes_concat.insert(bytes_concat.end(), small_vec.begin(), small_vec.end());
@@ -558,27 +640,4 @@ void test_byte_buffer_chain()
   TESTASSERT(pdu2.empty());
   TESTASSERT_EQ(big_vec.size() * 2 + small_vec.size(), pdu.length());
   TESTASSERT(pdu == bytes_concat2);
-}
-
-int main()
-{
-  test_buffer_segment();
-  test_byte_buffer_append();
-  test_byte_buffer_prepend();
-  test_byte_buffer_clear();
-  test_byte_buffer_iterator();
-  test_byte_buffer_compare();
-  test_byte_buffer_copy();
-  test_byte_buffer_move();
-  test_byte_buffer_formatter();
-  test_byte_buffer_view();
-  test_byte_buffer_trim();
-  test_byte_buffer_linearize();
-  test_byte_buffer_initializer_list();
-  test_byte_buffer_from_hexdump();
-  test_byte_buffer_iterator_plus_equal_op();
-  test_byte_buffer_reader_split_advance();
-  test_byte_buffer_writer();
-  test_byte_buffer_reserve_prepend();
-  test_byte_buffer_chain();
 }

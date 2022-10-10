@@ -317,10 +317,10 @@ public:
       append(*other_begin);
     }
   }
-  byte_buffer(byte_buffer&& other) noexcept : head(std::move(other.head)), tail(other.tail), len(other.len)
+  byte_buffer(byte_buffer&& other) noexcept : head(std::move(other.head)), tail(other.tail), pkt_len(other.pkt_len)
   {
-    other.tail = nullptr;
-    other.len  = 0;
+    other.tail    = nullptr;
+    other.pkt_len = 0;
   }
 
   /// copy assignment is disabled. Use std::move, .copy() or .deep_copy() instead.
@@ -329,11 +329,11 @@ public:
   /// Move assignment of byte_buffer. It avoids unnecessary reference counting increment.
   byte_buffer& operator=(byte_buffer&& other) noexcept
   {
-    head       = std::move(other.head);
-    tail       = other.tail;
-    len        = other.len;
-    other.tail = nullptr;
-    other.len  = 0;
+    head          = std::move(other.head);
+    tail          = other.tail;
+    pkt_len       = other.pkt_len;
+    other.tail    = nullptr;
+    other.pkt_len = 0;
     return *this;
   }
 
@@ -382,7 +382,7 @@ public:
       span<const uint8_t> subspan  = bytes.subspan(count, to_write);
       tail->append(subspan);
       count += to_write;
-      len += to_write;
+      pkt_len += to_write;
     }
   }
 
@@ -406,7 +406,7 @@ public:
         tail->append(other_it, other_it + to_append);
         other_it += to_append;
       }
-      len += seg->length();
+      pkt_len += seg->length();
     }
   }
 
@@ -417,7 +417,7 @@ public:
       append_segment();
     }
     tail->append(byte);
-    len++;
+    pkt_len++;
   }
 
   /// Appends a view of bytes into current byte buffer.
@@ -441,7 +441,7 @@ public:
       head->prepend(subspan);
       count += to_write;
     }
-    len += bytes.size();
+    pkt_len += bytes.size();
   }
 
   /// Prepends space in byte_buffer. This function may allocate new segments.
@@ -457,9 +457,9 @@ public:
     } else {
       tail->metadata().next = std::move(after.head);
       tail                  = after.tail;
-      len += after.len;
-      after.len  = 0;
-      after.tail = nullptr;
+      pkt_len += after.pkt_len;
+      after.pkt_len = 0;
+      after.tail    = nullptr;
     }
     return *this;
   }
@@ -472,9 +472,9 @@ public:
     } else {
       before.tail->metadata().next = std::move(head);
       head                         = std::move(before.head);
-      len += before.len;
-      before.len  = 0;
-      before.tail = nullptr;
+      pkt_len += before.pkt_len;
+      before.pkt_len = 0;
+      before.tail    = nullptr;
     }
     return *this;
   }
@@ -482,9 +482,9 @@ public:
   /// Clear byte buffer.
   void clear()
   {
-    head = nullptr;
-    tail = nullptr;
-    len  = 0;
+    head    = nullptr;
+    tail    = nullptr;
+    pkt_len = 0;
   }
 
   /// Removes "nof_bytes" from the head of the byte_buffer.
@@ -499,7 +499,7 @@ public:
         head = std::move(head->metadata().next);
       }
     }
-    len -= nof_bytes;
+    pkt_len -= nof_bytes;
   }
 
   /// \brief Remove "nof_bytes" bytes at the end of the byte_buffer.
@@ -510,7 +510,7 @@ public:
   {
     if (tail->length() >= nof_bytes) {
       tail->trim_tail(nof_bytes);
-      len -= nof_bytes;
+      pkt_len -= nof_bytes;
       return 0;
     }
     return -1;
@@ -520,7 +520,7 @@ public:
   bool empty() const { return length() == 0; }
 
   /// Checks byte_buffer length.
-  size_t length() const { return len; }
+  size_t length() const { return pkt_len; }
 
   uint8_t&       back() { return tail->back(); }
   const uint8_t& back() const { return tail->back(); }
@@ -594,7 +594,7 @@ public:
         }
       }
     }
-    len = new_sz;
+    pkt_len = new_sz;
   }
 
 private:
@@ -630,7 +630,9 @@ private:
   // TODO: Optimize. shared_ptr<> has a lot of boilerplate we don't need.
   std::shared_ptr<byte_buffer_segment> head = nullptr;
   byte_buffer_segment*                 tail = nullptr;
-  size_t                               len  = 0;
+
+  /// Total Length of the byte buffer packet;
+  size_t pkt_len = 0;
 };
 
 inline bool operator==(const byte_buffer& buf, span<const uint8_t> bytes)
@@ -919,7 +921,7 @@ inline byte_buffer_view byte_buffer::reserve_prepend(size_t nof_bytes)
     head->reserve_prepend(to_reserve);
     count -= to_reserve;
   }
-  len += nof_bytes;
+  pkt_len += nof_bytes;
   return byte_buffer_view{begin(), begin() + nof_bytes};
 }
 

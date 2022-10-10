@@ -18,7 +18,7 @@ std::vector<uint8_t> make_small_vec()
   return {1, 2, 3, 4, 5, 6};
 }
 
-std::vector<uint8_t> make_big_vec()
+std::vector<uint8_t> make_medium_vec()
 {
   std::vector<uint8_t> vec(byte_buffer_segment::capacity() - byte_buffer_segment::DEFAULT_HEADROOM);
   for (size_t i = 0; i < vec.size(); ++i) {
@@ -38,7 +38,7 @@ void test_empty_slice()
 
 void test_shallow_slice()
 {
-  std::vector<uint8_t> vec = make_big_vec();
+  std::vector<uint8_t> vec = make_medium_vec();
   byte_buffer          pdu{vec};
 
   byte_buffer_slice slice{pdu.copy()};
@@ -76,7 +76,7 @@ void test_shallow_slice()
 
 void test_deep_slice()
 {
-  std::vector<uint8_t> vec = make_big_vec();
+  std::vector<uint8_t> vec = make_medium_vec();
   byte_buffer          pdu{vec};
 
   byte_buffer_slice slice{pdu.deep_copy()};
@@ -113,7 +113,7 @@ void test_deep_slice()
 
 void test_move_slice()
 {
-  std::vector<uint8_t> vec = make_big_vec();
+  std::vector<uint8_t> vec = make_medium_vec();
   byte_buffer          pdu{vec};
 
   byte_buffer_slice slice{std::move(pdu)};

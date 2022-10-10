@@ -13,7 +13,7 @@ target_link_libraries(bounded_bitset_test srslog gtest gtest_main)
 add_test(bounded_bitset_test bounded_bitset_test)
 
 add_executable(byte_buffer_test byte_buffer_test.cpp)
-target_link_libraries(byte_buffer_test srslog)
+target_link_libraries(byte_buffer_test srslog gtest gtest_main)
 add_test(byte_buffer_test byte_buffer_test)
 
 add_executable(circular_buffer_test circular_buffer_test.cpp)
