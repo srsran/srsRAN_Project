@@ -52,7 +52,6 @@ private:
   static_vector<cf_t, MAX_NRE_PER_SLOT>                                     data_symbols;
 
 public:
-  /// Default constructor.
   upper_phy_example_sw(srslog::basic_logger&               logger_,
                        std::unique_ptr<resource_grid_pool> dl_rg_pool_,
                        std::unique_ptr<ssb_processor>      ssb_,
@@ -152,13 +151,12 @@ public:
       // Modulate the data into symbols.
       data_modulator->modulate(data, data_symbols, data_modulation);
 
-      span<cf_t> data_span(data_symbols.begin(), data_symbols.end());
-      for (unsigned i_symbol = 0; i_symbol < nsymb_per_slot; ++i_symbol) {
+      span<cf_t> data_span(data_symbols);
+      unsigned   offset = 0;
+      for (unsigned i_symbol = 0; i_symbol != nsymb_per_slot; ++i_symbol) {
         // Write data into the resource grid.
-        rg.put(0, i_symbol, 0, data_span.first(nof_subcs));
-
-        // Advance data view.
-        data_span = data_span.last(data_span.size() - nof_subcs);
+        rg.put(0, i_symbol, 0, data_span.subspan(offset, nof_subcs));
+        offset += nof_subcs;
       }
     }
 

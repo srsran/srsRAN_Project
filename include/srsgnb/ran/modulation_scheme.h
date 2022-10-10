@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include <array>
+#include "srsgnb/support/srsgnb_assert.h"
 #include <string>
 
 namespace srsgnb {
@@ -36,16 +36,14 @@ enum class modulation_scheme {
   /// 64-point Quadrature Amplitude Modulation (64-QAM) described in TS38.211 Section 5.1.5.
   QAM64 = 6,
   /// 256-point Quadrature Amplitude Modulation (256-QAM) described in TS38.211 Section 5.1.6.
-  QAM256 = MODULATION_MAX_BITS_PER_SYMBOL,
-  /// Invalid modulation scheme.
-  INVALID = INT32_MAX
+  QAM256 = MODULATION_MAX_BITS_PER_SYMBOL
 };
 
 inline std::string to_string(modulation_scheme mod)
 {
   switch (mod) {
     case modulation_scheme::PI_2_BPSK:
-      return "π/2-BPSK";
+      return "pi/2-BPSK";
     case modulation_scheme::BPSK:
       return "BPSK";
     case modulation_scheme::QPSK:
@@ -55,21 +53,18 @@ inline std::string to_string(modulation_scheme mod)
     case modulation_scheme::QAM64:
       return "64QAM";
     case modulation_scheme::QAM256:
-      return "256QAM";
-    case modulation_scheme::INVALID:
     default:
-      return "invalid";
+      return "256QAM";
   }
 }
 
 /// \brief Converts a string into a modulation scheme.
 /// \param[in] mod_scheme_string input string.
-/// \returns The corresponding \c modulation_scheme. If the input string does not correspond with any valid option, it
-/// returns \c modulation_scheme::INVALID
-inline modulation_scheme from_string(const std::string& mod_scheme_string)
+/// \returns The corresponding \c modulation_scheme.
+inline modulation_scheme modulation_scheme_from_string(const std::string& mod_scheme_string)
 {
-  modulation_scheme mod_scheme = modulation_scheme::INVALID;
-  if (mod_scheme_string == "π/2-BPSK") {
+  modulation_scheme mod_scheme = modulation_scheme::QAM256;
+  if (mod_scheme_string == "pi/2-BPSK") {
     mod_scheme = modulation_scheme::PI_2_BPSK;
   } else if (mod_scheme_string == "BPSK") {
     mod_scheme = modulation_scheme::BPSK;
@@ -81,21 +76,20 @@ inline modulation_scheme from_string(const std::string& mod_scheme_string)
     mod_scheme = modulation_scheme::QAM64;
   } else if (mod_scheme_string == "256QAM") {
     mod_scheme = modulation_scheme::QAM256;
+  } else {
+    srsgnb_assertion_failure("Invalid modulation scheme: {}", mod_scheme_string);
   }
   return mod_scheme;
 }
 
 /// \brief Bits per symbol for a given modulation scheme.
 /// \param[in] mod Modulation scheme.
-/// \returns The number of bits per modulated symbol (sometimes referred to as modulation order), or 0 if the modulation
-/// scheme is invalid.
+/// \returns The number of bits per modulated symbol (sometimes referred to as modulation order).
 inline constexpr unsigned get_bits_per_symbol(modulation_scheme mod)
 {
   unsigned ret = static_cast<unsigned>(mod);
   if (mod == modulation_scheme::PI_2_BPSK) {
     ret = 1;
-  } else if (mod == modulation_scheme::INVALID) {
-    ret = 0;
   }
 
   // Give a hint to the compiler that the returned bits per symbol will not be greater than 8 under any circumstance.
@@ -103,34 +97,6 @@ inline constexpr unsigned get_bits_per_symbol(modulation_scheme mod)
     __builtin_unreachable();
   }
 
-  return ret;
-}
-
-/// \brief Checks if a modulation scheme is valid.
-/// \param[in] mod Modulation scheme.
-/// \returns \c true if the modulation scheme is valid, \c false otherwise.
-inline bool is_valid(modulation_scheme mod)
-{
-  return !(mod == modulation_scheme::INVALID);
-}
-
-/// \brief Lists all the modulation schemes.
-/// \returns A string containing a comma-separated list with the supported modulation schemes.
-inline std::string list_all_modulation_schemes()
-{
-  std::string ret;
-  for (modulation_scheme mod : {modulation_scheme::PI_2_BPSK,
-                                modulation_scheme::BPSK,
-                                modulation_scheme::QPSK,
-                                modulation_scheme::QAM16,
-                                modulation_scheme::QAM64,
-                                modulation_scheme::QAM256}) {
-    ret += to_string(mod);
-    ret += ", ";
-  }
-
-  // Remove last comma and space.
-  ret.erase(ret.size() - 2);
   return ret;
 }
 

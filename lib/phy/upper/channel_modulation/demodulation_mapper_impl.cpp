@@ -86,8 +86,7 @@ void demodulation_mapper_impl::demodulate_soft(span<log_likelihood_ratio> llrs,
     case modulation_scheme::QAM256:
       demodulate_soft_QAM256(llrs, symbols, noise_vars);
       break;
-    case modulation_scheme::INVALID:
     default:
-      srsgnb_assert(false, "Invalid modulation scheme.");
+      srsgnb_assertion_failure("Invalid modulation scheme.");
   }
 }

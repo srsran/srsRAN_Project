@@ -167,8 +167,7 @@ void modulation_mapper_impl::modulate(srsgnb::span<const uint8_t> input,
     case modulation_scheme::QAM256:
       qam256_modulator.modulate(input, symbols);
       break;
-    case modulation_scheme::INVALID:
     default:
-      srsgnb_assert(false, "Invalid modulation scheme.");
+      srsgnb_assertion_failure("Invalid modulation scheme.");
   }
 }

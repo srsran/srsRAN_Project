@@ -43,6 +43,14 @@ struct configuration_profile {
 
 using namespace srsgnb;
 
+// List of allowed data modulations.
+static std::vector<std::string> modulations = {to_string(modulation_scheme::PI_2_BPSK),
+                                               to_string(modulation_scheme::BPSK),
+                                               to_string(modulation_scheme::QPSK),
+                                               to_string(modulation_scheme::QAM16),
+                                               to_string(modulation_scheme::QAM64),
+                                               to_string(modulation_scheme::QAM256)};
+
 static std::string log_level = "warning";
 
 // Program parameters.
@@ -220,7 +228,8 @@ static void usage(std::string prog)
   fmt::print("\t-c Enable amplitude clipping. [Default {}]\n", enable_clipping);
   fmt::print("\t-b Baseband gain prior to clipping (in dB). [Default {}]\n", baseband_gain_dB);
   fmt::print("\t-d Fill the resource grid with random data [Default {}]\n", enable_random_data);
-  fmt::print("\t-m Data modulation ({}). [Default {}]\n", list_all_modulation_schemes(), to_string(data_mod_scheme));
+  fmt::print(
+      "\t-m Data modulation scheme ({}). [Default {}]\n", span<std::string>(modulations), to_string(data_mod_scheme));
   fmt::print("\t-h Print this message.\n");
 }
 
@@ -254,7 +263,7 @@ static void parse_args(int argc, char** argv)
         break;
       case 'm':
         if (optarg != nullptr) {
-          data_mod_scheme = from_string(std::string(optarg));
+          data_mod_scheme = modulation_scheme_from_string(std::string(optarg));
         }
         break;
       case 'c':
@@ -388,8 +397,6 @@ int main(int argc, char** argv)
                             cp.to_string(),
                             to_numerology_value(scs),
                             srate);
-  report_fatal_error_if_not(
-      is_valid(data_mod_scheme), "Invalid modulation scheme. Available options: {}.", list_all_modulation_schemes());
 
   // Radio asynchronous task executor.
   task_worker                    async_task_worker("async_thread", nof_sectors + 1);
