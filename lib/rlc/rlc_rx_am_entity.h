@@ -14,6 +14,7 @@
 #include "rlc_am_pdu.h"
 #include "rlc_am_window.h"
 #include "rlc_rx_entity.h"
+#include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"
 #include <set>
 
@@ -122,7 +123,8 @@ public:
                    lcid_t                            lcid,
                    const rlc_rx_am_config&           config,
                    rlc_rx_upper_layer_data_notifier& upper_dn,
-                   timer_manager&                    timers);
+                   timer_manager&                    timers,
+                   task_executor&                    ue_executor);
 
   // Rx/Tx interconnect
   void set_status_handler(rlc_tx_am_status_handler* status_handler_) { status_handler = status_handler_; }
@@ -228,6 +230,13 @@ private:
   void refresh_status_report();
 
   void on_expired_status_prohibit_timer(uint32_t timeout_id);
+
+  /// \brief on_expired_reassembly_timer Handler for expired reassembly timer
+  ///
+  /// Note: This function shall be executed by the same executor that calls handle_pdu(), i.e. the ue_executor,
+  /// in order to avoid incidential blocking of those critical paths.
+  ///
+  /// \param timeout_id The timer ID
   void on_expired_reassembly_timer(uint32_t timeout_id);
 
   /// Creates the rx_window according to sn_size

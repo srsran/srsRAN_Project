@@ -30,6 +30,7 @@ struct rlc_entity_creation_message {
   rlc_tx_lower_layer_notifier*         tx_lower_dn;
   timer_manager*                       timers;
   task_executor*                       pcell_executor;
+  task_executor*                       ue_executor;
 };
 
 /// Creates an instance of a RLC bearer

@@ -17,7 +17,8 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
                                    lcid_t                            lcid,
                                    const rlc_rx_am_config&           config,
                                    rlc_rx_upper_layer_data_notifier& upper_dn,
-                                   timer_manager&                    timers) :
+                                   timer_manager&                    timers,
+                                   task_executor&                    ue_executor) :
   rlc_rx_entity(du_index, lcid, upper_dn),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
@@ -37,10 +38,12 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
     status_prohibit_timer.set(static_cast<uint32_t>(cfg.t_status_prohibit),
                               [this](uint32_t tid) { on_expired_status_prohibit_timer(tid); });
   }
+
   // configure reassembly_timer
   if (cfg.t_reassembly > 0) {
-    reassembly_timer.set(static_cast<uint32_t>(cfg.t_reassembly),
-                         [this](uint32_t tid) { on_expired_reassembly_timer(tid); });
+    reassembly_timer.set(static_cast<uint32_t>(cfg.t_reassembly), [this, &ue_executor](uint32_t tid) {
+      ue_executor.execute([this, tid]() { on_expired_reassembly_timer(tid); });
+    });
   }
 
   // initialize status report
