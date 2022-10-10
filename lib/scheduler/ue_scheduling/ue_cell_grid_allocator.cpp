@@ -155,7 +155,8 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
                                                                         get_bits_per_symbol(cw.qam_mod),
                                                                         nof_layers,
                                                                         tb_scaling_field,
-                                                                        grant.crbs.length()});
+                                                                        grant.crbs.length()}) /
+      8U;
 
   // Set MAC logical channels to schedule in this PDU.
   msg.tb_list.emplace_back();

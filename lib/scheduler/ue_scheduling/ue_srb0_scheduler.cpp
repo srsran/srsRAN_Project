@@ -232,7 +232,8 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
                                                                         get_bits_per_symbol(cw.qam_mod),
                                                                         nof_layers,
                                                                         tb_scaling_field,
-                                                                        ue_grant_crbs.length()});
+                                                                        ue_grant_crbs.length()}) /
+      8U;
 
   // Set MAC logical channels to schedule in this PDU.
   msg.tb_list.emplace_back();

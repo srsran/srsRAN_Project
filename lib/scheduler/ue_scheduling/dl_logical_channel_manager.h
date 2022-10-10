@@ -20,6 +20,12 @@ namespace srsgnb {
 class dl_logical_channel_manager
 {
 public:
+  dl_logical_channel_manager()
+  {
+    // SRB0 is always activated.
+    set_status(LCID_SRB0, true);
+  }
+
   void set_status(lcid_t lcid, bool active) { channels[lcid].active = active; }
 
   /// \brief Verifies if logical channel is activated for DL.
