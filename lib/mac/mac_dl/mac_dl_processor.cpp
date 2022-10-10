@@ -45,7 +45,7 @@ async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& r
     CORO_BEGIN(ctx);
 
     // 1. Change to respective DL executor
-    CORO_AWAIT(execute_on(cfg.dl_exec_mapper.executor(request.cell_index)));
+    CORO_AWAIT(execute_on(cfg.cell_exec_mapper.executor(request.cell_index)));
 
     // 2. Insert UE and DL bearers
     ue_mng.add_ue(request);
@@ -63,7 +63,7 @@ async_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request_message
     CORO_BEGIN(ctx);
 
     // 1. Change to respective DL executor
-    CORO_AWAIT(execute_on(cfg.dl_exec_mapper.executor(request.cell_index)));
+    CORO_AWAIT(execute_on(cfg.cell_exec_mapper.executor(request.cell_index)));
 
     // 2. Remove UE associated DL channels
     ue_mng.remove_ue(request.ue_index);
@@ -81,7 +81,7 @@ async_task<bool> mac_dl_processor::reconfigure_ue(const mac_ue_reconfiguration_r
     CORO_BEGIN(ctx);
 
     // 1. Change to respective DL executor
-    CORO_AWAIT(execute_on(cfg.dl_exec_mapper.executor(request.pcell_index)));
+    CORO_AWAIT(execute_on(cfg.cell_exec_mapper.executor(request.pcell_index)));
 
     // 2. Remove UE DL bearers
     ue_mng.remove_bearers(request.ue_index, request.bearers_to_rem);

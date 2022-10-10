@@ -12,8 +12,8 @@
 
 #include "srsgnb/adt/circular_array.h"
 #include "srsgnb/adt/span.h"
+#include "srsgnb/du_high/du_high_cell_executor_mapper.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
-#include "srsgnb/du_high/du_l2_dl_executor_mapper.h"
 
 namespace srsgnb {
 
@@ -74,7 +74,7 @@ private:
 };
 
 /// Dispatch DL tasks based on cell index.
-class cell_dl_executor_mapper final : public du_l2_dl_executor_mapper
+class cell_dl_executor_mapper final : public du_high_cell_executor_mapper
 {
 public:
   explicit cell_dl_executor_mapper(const std::initializer_list<task_executor*>& execs_) :

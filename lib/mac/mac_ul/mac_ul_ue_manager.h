@@ -12,8 +12,6 @@
 
 #include "../../ran/gnb_format.h"
 #include "../du_rnti_table.h"
-#include "../mac_config.h"
-#include "mac_ul_sch_pdu.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/ran/du_types.h"
@@ -40,10 +38,7 @@ public:
 class mac_ul_ue_manager
 {
 public:
-  mac_ul_ue_manager(mac_common_config_t& cfg_, du_rnti_table& rnti_table_) :
-    cfg(cfg_), logger(cfg.logger), rnti_table(rnti_table_)
-  {
-  }
+  mac_ul_ue_manager(du_rnti_table& rnti_table_) : logger(srslog::fetch_basic_logger("MAC")), rnti_table(rnti_table_) {}
 
   /// Checks whether RNTI exists.
   bool contains_rnti(rnti_t rnti) const { return ue_db.contains(rnti_table[rnti]); }
@@ -138,7 +133,6 @@ private:
   }
 
   /// Arguments of UE manager.
-  mac_common_config_t&  cfg;
   srslog::basic_logger& logger;
   du_rnti_table&        rnti_table;
 

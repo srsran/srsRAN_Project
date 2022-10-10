@@ -12,11 +12,17 @@
 
 using namespace srsgnb;
 
-pdu_rx_handler::pdu_rx_handler(mac_common_config_t&        cfg_,
+pdu_rx_handler::pdu_rx_handler(mac_ul_ccch_notifier&       ccch_notifier_,
+                               du_high_ue_executor_mapper& ue_exec_mapper_,
                                scheduler_feedback_handler& sched_,
                                mac_ul_ue_manager&          ue_manager_,
                                du_rnti_table&              rnti_table_) :
-  cfg(cfg_), logger(cfg.logger), sched(sched_), ue_manager(ue_manager_), rnti_table(rnti_table_)
+  ccch_notifier(ccch_notifier_),
+  ue_exec_mapper(ue_exec_mapper_),
+  logger(srslog::fetch_basic_logger("MAC")),
+  sched(sched_),
+  ue_manager(ue_manager_),
+  rnti_table(rnti_table_)
 {
 }
 
@@ -185,7 +191,7 @@ bool pdu_rx_handler::handle_ccch_msg(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
   msg.cell_index = ctx.cell_index_rx;
   msg.slot_rx    = ctx.slot_rx;
   msg.subpdu.append(sdu.payload());
-  cfg.event_notifier.on_ul_ccch_msg_received(msg);
+  ccch_notifier.on_ul_ccch_msg_received(msg);
 
   return true;
 }
@@ -201,7 +207,7 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
   ctx.ue_index = rnti_table[ctx.pdu_rx.rnti];
 
   // 2. Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
-  cfg.ul_exec_mapper.executor(ctx.ue_index).execute([this, ctx = std::move(ctx)]() mutable {
+  ue_exec_mapper.executor(ctx.ue_index).execute([this, ctx = std::move(ctx)]() mutable {
     // 3. Handle remaining subPDUs using old C-RNTI.
     handle_rx_subpdus(ctx);
 

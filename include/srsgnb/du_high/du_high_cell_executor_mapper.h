@@ -7,10 +7,10 @@
 namespace srsgnb {
 
 /// This interface is used to allow the DU to choose between different DL task executors.
-class du_l2_dl_executor_mapper
+class du_high_cell_executor_mapper
 {
 public:
-  virtual ~du_l2_dl_executor_mapper() = default;
+  virtual ~du_high_cell_executor_mapper() = default;
 
   virtual task_executor& executor(du_cell_index_t cell_index) = 0;
 };

@@ -13,8 +13,8 @@
 #include "../../lib/mac/mac_config_interfaces.h"
 #include "../../lib/mac/mac_ctrl/mac_scheduler_configurator.h"
 #include "srsgnb/adt/optional.h"
+#include "srsgnb/du_high/du_high_cell_executor_mapper.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
-#include "srsgnb/du_high/du_l2_dl_executor_mapper.h"
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/executors/task_executor.h"
@@ -146,7 +146,7 @@ public:
   task_executor& exec;
 };
 
-class dummy_dl_executor_mapper : public du_l2_dl_executor_mapper
+class dummy_dl_executor_mapper : public du_high_cell_executor_mapper
 {
 public:
   dummy_dl_executor_mapper(const std::initializer_list<task_executor*>& execs_) : execs(execs_.begin(), execs_.end()) {}

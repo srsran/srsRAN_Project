@@ -11,30 +11,30 @@
 #pragma once
 
 #include "srsgnb/adt/span.h"
+#include "srsgnb/du_high/du_high_cell_executor_mapper.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
-#include "srsgnb/du_high/du_l2_dl_executor_mapper.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/mac/mac_cell_result.h"
 
 namespace srsgnb {
 
 struct mac_common_config_t {
-  srslog::basic_logger&       logger;
-  mac_ul_ccch_notifier&       event_notifier;
-  du_high_ue_executor_mapper& ul_exec_mapper;
-  du_l2_dl_executor_mapper&   dl_exec_mapper;
-  task_executor&              ctrl_exec;
-  mac_result_notifier&        phy_notifier;
+  srslog::basic_logger&         logger;
+  mac_ul_ccch_notifier&         event_notifier;
+  du_high_ue_executor_mapper&   ue_exec_mapper;
+  du_high_cell_executor_mapper& cell_exec_mapper;
+  task_executor&                ctrl_exec;
+  mac_result_notifier&          phy_notifier;
 
-  mac_common_config_t(mac_ul_ccch_notifier&       event_notifier_,
-                      du_high_ue_executor_mapper& ul_exec_,
-                      du_l2_dl_executor_mapper&   dl_exec_,
-                      task_executor&              ctrl_exec_,
-                      mac_result_notifier&        phy_notifier_) :
+  mac_common_config_t(mac_ul_ccch_notifier&         event_notifier_,
+                      du_high_ue_executor_mapper&   ul_exec_,
+                      du_high_cell_executor_mapper& dl_exec_,
+                      task_executor&                ctrl_exec_,
+                      mac_result_notifier&          phy_notifier_) :
     logger(srslog::fetch_basic_logger("MAC")),
     event_notifier(event_notifier_),
-    ul_exec_mapper(ul_exec_),
-    dl_exec_mapper(dl_exec_),
+    ue_exec_mapper(ul_exec_),
+    cell_exec_mapper(dl_exec_),
     ctrl_exec(ctrl_exec_),
     phy_notifier(phy_notifier_)
   {

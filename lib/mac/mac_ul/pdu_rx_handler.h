@@ -15,6 +15,7 @@
 #include "mac_ul_sch_pdu.h"
 #include "mac_ul_ue_manager.h"
 #include "srsgnb/adt/slot_array.h"
+#include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/slot_point.h"
@@ -68,7 +69,8 @@ struct decoded_mac_rx_pdu {
 class pdu_rx_handler
 {
 public:
-  pdu_rx_handler(mac_common_config_t&        cfg_,
+  pdu_rx_handler(mac_ul_ccch_notifier&       ccch_notifier_,
+                 du_high_ue_executor_mapper& ue_exec_mapper_,
                  scheduler_feedback_handler& sched_,
                  mac_ul_ue_manager&          ue_manager_,
                  du_rnti_table&              rnti_table_);
@@ -115,7 +117,8 @@ private:
   /// \return true if correctly handled.
   bool handle_crnti_ce(decoded_mac_rx_pdu& pdu, const mac_ul_sch_subpdu& subpdu);
 
-  mac_common_config_t&        cfg;
+  mac_ul_ccch_notifier&       ccch_notifier;
+  du_high_ue_executor_mapper& ue_exec_mapper;
   srslog::basic_logger&       logger;
   scheduler_feedback_handler& sched;
   mac_ul_ue_manager&          ue_manager;

@@ -8,9 +8,9 @@
  *
  */
 
-#include "../../lib/mac/du_rnti_table.h"
-#include "../../lib/mac/mac_config.h"
-#include "../../lib/mac/mac_ul/mac_ul_processor.h"
+#include "lib/mac/du_rnti_table.h"
+#include "lib/mac/mac_config.h"
+#include "lib/mac/mac_ul/mac_ul_processor.h"
 #include "mac_ctrl_test_dummies.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include "srsgnb/scheduler/scheduler_feedback_handler.h"
