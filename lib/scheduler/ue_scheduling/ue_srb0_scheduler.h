@@ -32,9 +32,7 @@ public:
   void handle_dl_buffer_state_indication(du_ue_index_t ue_index);
 
   /// Schedule UE's SRB0 DL grants for a given slot and one or more cells.
-  /// \param[in/out] pdsch_alloc PDSCH grant allocator. This object provides a handle to allocate PDSCH grants in the
-  ///                            gNB resource grid and observe the current DL gNB resource grid occupancy state.
-  /// \param[in] ues List of eligible UEs to be scheduled in the given slot.
+  /// \param[in] res_alloc Resource Grid of the cell where the DL grant is going to be allocated.
   void run_slot(cell_resource_allocator& res_alloc);
 
 private:
