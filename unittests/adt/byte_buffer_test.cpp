@@ -47,113 +47,10 @@ std::vector<uint8_t> make_small_vec()
   return make_vec(6);
 }
 
-/// Creates a medium-sized vector of bytes that fills a segment TAILROOM.
-std::vector<uint8_t> make_medium_vec()
-{
-  return make_vec(byte_buffer_segment::capacity() - byte_buffer_segment::DEFAULT_HEADROOM);
-}
-
-/// creates a large vector that occupies more than one segment.
+/// Creates a large vector of bytes that fills a segment TAILROOM.
 std::vector<uint8_t> make_large_vec()
 {
-  return make_vec(byte_buffer_segment::capacity() + 1);
-}
-
-///////////////////////// byte_buffer_segment //////////////////////////////
-
-TEST(buffer_segment_test, default_init_segment_is_empty_and_has_headroom)
-{
-  byte_buffer_segment segment;
-  ASSERT_EQ(segment.begin(), segment.end());
-  ASSERT_EQ(0, segment.length());
-  ASSERT_EQ((size_t)byte_buffer_segment::SEGMENT_SIZE, segment.headroom() + segment.tailroom());
-  ASSERT_EQ((size_t)byte_buffer_segment::DEFAULT_HEADROOM, segment.headroom());
-  ASSERT_EQ(segment.next(), nullptr);
-}
-
-TEST(buffer_segment_test, append_bytes_on_empty_buffer)
-{
-  byte_buffer_segment segment;
-
-  const std::vector<uint8_t> bytes = make_small_vec();
-  segment.append(bytes);
-  ASSERT_EQ(bytes.size(), segment.length());
-  ASSERT_EQ(segment, bytes);
-  ASSERT_TRUE(std::equal(segment.begin(), segment.end(), bytes.begin(), bytes.end()));
-}
-
-TEST(buffer_segment_test, prepend_bytes_on_empty_buffer)
-{
-  byte_buffer_segment segment;
-
-  const std::vector<uint8_t> bytes = make_small_vec();
-  segment.prepend(bytes);
-  ASSERT_EQ(segment, bytes);
-  ASSERT_TRUE(std::equal(segment.begin(), segment.end(), bytes.begin(), bytes.end()));
-}
-
-TEST(buffer_segment_test, multiple_appends)
-{
-  byte_buffer_segment  segment;
-  std::vector<uint8_t> tot_bytes;
-
-  for (unsigned i = 0; i != 5; ++i) {
-    const std::vector<uint8_t> bytes = make_small_vec();
-    tot_bytes.insert(tot_bytes.end(), bytes.begin(), bytes.end());
-    segment.append(bytes);
-  }
-  ASSERT_TRUE(segment == tot_bytes);
-}
-
-TEST(buffer_segment_test, trim_head)
-{
-  byte_buffer_segment        segment;
-  const std::vector<uint8_t> bytes = make_small_vec();
-  segment.append(bytes);
-
-  unsigned n = get_random_uint(1, 6);
-  segment.trim_head(n);
-  ASSERT_EQ(segment, span<const uint8_t>{bytes}.subspan(n, bytes.size() - n));
-  ASSERT_TRUE(std::equal(segment.begin(), segment.end(), bytes.begin() + n, bytes.end()));
-}
-
-TEST(buffer_segment_test, trim_tail)
-{
-  byte_buffer_segment        segment;
-  const std::vector<uint8_t> bytes = make_small_vec();
-  segment.append(bytes);
-
-  unsigned n = get_random_uint(1, 6);
-  segment.trim_tail(n);
-  ASSERT_EQ(segment, span<const uint8_t>{bytes}.subspan(0, bytes.size() - n));
-  ASSERT_TRUE(std::equal(segment.begin(), segment.end(), bytes.begin(), bytes.end() - n));
-}
-
-TEST(buffer_segment_test, copy_ctor)
-{
-  byte_buffer_segment        segment;
-  const std::vector<uint8_t> bytes = make_small_vec();
-  segment.append(bytes);
-
-  byte_buffer_segment segment2 = segment;
-  ASSERT_EQ(segment2, segment);
-  ASSERT_TRUE(std::equal(segment2.begin(), segment2.end(), bytes.begin(), bytes.end()));
-  segment.trim_tail(1);
-  segment.append(10);
-  ASSERT_NE(segment, segment2) << "byte_buffer_segment copy ctor must make deep copy";
-}
-
-TEST(buffer_segment_test, move_ctor)
-{
-  byte_buffer_segment        segment;
-  const std::vector<uint8_t> bytes = make_small_vec();
-  segment.append(bytes);
-
-  byte_buffer_segment segment2 = std::move(segment);
-  ASSERT_TRUE(std::equal(segment2.begin(), segment2.end(), bytes.begin(), bytes.end()));
-  segment.resize(0);
-  segment.append(10);
-  ASSERT_NE(segment, segment2) << "byte_buffer_segment move ctor must make deep copy";
+  return make_vec(byte_buffer_segment::capacity() - byte_buffer_segment::DEFAULT_HEADROOM);
 }
 
 ///////////////////////// byte_buffer //////////////////////////////
@@ -169,7 +66,7 @@ TEST(byte_buffer, append)
   TESTASSERT_EQ(pdu.length(), bytes.size());
 
   // create a new segment during the append.
-  auto bytes2 = make_medium_vec();
+  auto bytes2 = make_large_vec();
   pdu.append(bytes2);
   TESTASSERT_EQ(pdu.length(), bytes2.size() + bytes.size());
 
@@ -189,7 +86,7 @@ TEST(byte_buffer, prepend)
   TESTASSERT_EQ(pdu.length(), bytes.size());
   TESTASSERT(pdu == bytes);
 
-  auto bytes2 = make_medium_vec();
+  auto bytes2 = make_large_vec();
   pdu.prepend(bytes2);
   TESTASSERT_EQ(pdu.length(), bytes.size() + bytes2.size());
 
@@ -209,8 +106,8 @@ TEST(byte_buffer, clear)
   TESTASSERT(pdu.empty());
   TESTASSERT(pdu.length() == 0);
 
-  pdu.append(make_medium_vec());
-  pdu.append(make_medium_vec());
+  pdu.append(make_large_vec());
+  pdu.append(make_large_vec());
 
   TESTASSERT(not pdu.empty());
   pdu.clear();
@@ -283,7 +180,7 @@ TEST(byte_buffer, iterator)
   TESTASSERT_EQ(bytes.size() - 2, (size_t)(pdu.end() - (pdu.begin() + 2)));
 
   // multiple segments
-  std::vector<uint8_t> bytes2 = make_medium_vec();
+  std::vector<uint8_t> bytes2 = make_large_vec();
   pdu.append(bytes2);
   std::vector<uint8_t> bytes_concat = bytes;
   bytes_concat.insert(bytes_concat.end(), bytes2.begin(), bytes2.end());
@@ -312,7 +209,7 @@ TEST(byte_buffer, copy)
 {
   byte_buffer pdu;
 
-  std::vector<uint8_t> bytes = make_small_vec(), bytes2 = make_medium_vec();
+  std::vector<uint8_t> bytes = make_small_vec(), bytes2 = make_large_vec();
   auto                 bytes_concat = bytes;
   bytes_concat.insert(bytes_concat.end(), bytes2.begin(), bytes2.end());
   pdu.append(bytes);
@@ -345,13 +242,14 @@ TEST(byte_buffer, copy)
 
 TEST(byte_buffer, move)
 {
-  byte_buffer          pdu;
-  std::vector<uint8_t> bytes = {1, 2, 3, 4, 5, 6};
+  byte_buffer                pdu;
+  const std::vector<uint8_t> bytes = make_small_vec();
   pdu.append(bytes);
 
   byte_buffer pdu2{std::move(pdu)};
-  TESTASSERT(not pdu2.empty() and pdu.empty());
-  TESTASSERT(pdu2 == bytes);
+  ASSERT_TRUE(pdu.empty());
+  ASSERT_FALSE(pdu2.empty());
+  ASSERT_EQ(pdu2, bytes);
 }
 
 TEST(byte_buffer, formatter)
@@ -365,21 +263,6 @@ TEST(byte_buffer, formatter)
   TESTASSERT(result == "01 02 03 04 0f 10 ff");
 }
 
-TEST(byte_buffer_view, length)
-{
-  byte_buffer          pdu;
-  std::vector<uint8_t> bytes = make_small_vec();
-  pdu.append(bytes);
-
-  byte_buffer_view view = pdu;
-
-  TESTASSERT(not view.empty());
-  TESTASSERT_EQ(6, view.length());
-  TESTASSERT_EQ(6, view.end() - view.begin());
-  TESTASSERT_EQ(4, view.view(0, 4).length());
-  TESTASSERT_EQ(4, view.view(2, 4).length());
-}
-
 TEST(byte_buffer, trim)
 {
   byte_buffer          pdu;
@@ -390,7 +273,7 @@ TEST(byte_buffer, trim)
   pdu.trim_head(2);
   TESTASSERT(pdu == span<const uint8_t>{bytes}.subspan(2, bytes.size() - 2));
 
-  std::vector<uint8_t> bytes2 = make_medium_vec();
+  std::vector<uint8_t> bytes2 = make_large_vec();
   pdu.append(bytes2);
 
   auto bytes_concat = bytes;
@@ -409,7 +292,7 @@ TEST(byte_buffer, linearize)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes        = make_small_vec();
-  std::vector<uint8_t> bytes2       = make_medium_vec();
+  std::vector<uint8_t> bytes2       = make_large_vec();
   auto                 bytes_concat = bytes;
   bytes_concat.insert(bytes_concat.end(), bytes2.begin(), bytes2.end());
 
@@ -469,7 +352,7 @@ TEST(byte_buffer, iterator_plus_equal_op)
   TESTASSERT(it == pdu.cend());
 
   // Test with big vector of bytes
-  bytes = make_medium_vec();
+  bytes = make_large_vec();
   pdu.clear();
   pdu.append(bytes);
 
@@ -502,6 +385,66 @@ TEST(byte_buffer, iterator_plus_equal_op)
   TESTASSERT(it == pdu.cend());
 }
 
+TEST(byte_buffer, iterator_of_segments)
+{
+  byte_buffer          pdu;
+  std::vector<uint8_t> bytes = make_small_vec();
+
+  // empty buffer.
+  ASSERT_EQ(pdu.segments().begin(), pdu.segments().end());
+
+  // one-segment buffer
+  pdu.append(bytes);
+  ASSERT_NE(pdu.segments().begin(), pdu.segments().end());
+  ASSERT_EQ(*pdu.segments().begin(), span<const uint8_t>(bytes));
+  ASSERT_EQ(++pdu.segments().begin(), pdu.segments().end());
+
+  // two-segment buffer.
+  std::vector<uint8_t> bytes2 = make_large_vec();
+  pdu.append(bytes2);
+  ASSERT_EQ(*pdu.segments().begin(), span<const uint8_t>(bytes));
+  ASSERT_EQ(*(pdu.segments().begin()++), span<const uint8_t>(bytes));
+  ASSERT_EQ(++(++pdu.segments().begin()), pdu.segments().end());
+}
+
+TEST(byte_buffer_view, length)
+{
+  byte_buffer          pdu;
+  std::vector<uint8_t> bytes = make_small_vec();
+  pdu.append(bytes);
+
+  byte_buffer_view view = pdu;
+
+  ASSERT_FALSE(view.empty());
+  ASSERT_EQ(6, view.length());
+  ASSERT_EQ(6, view.end() - view.begin());
+  ASSERT_EQ(4, view.view(0, 4).length());
+  ASSERT_EQ(4, view.view(2, 4).length());
+}
+
+TEST(byte_buffer_view, segment_iterator)
+{
+  byte_buffer          pdu;
+  std::vector<uint8_t> bytes = make_small_vec(), bytes2 = make_large_vec();
+  pdu.append(bytes);
+  pdu.append(bytes2);
+  bytes.insert(bytes.end(), bytes2.begin(), bytes2.end());
+
+  unsigned         offset      = get_random_uint(0, 10);
+  unsigned         last_offset = get_random_uint(offset + 1, bytes.size());
+  byte_buffer_view view{pdu.begin() + offset, pdu.begin() + last_offset};
+
+  unsigned seg_offset = offset;
+  for (auto seg_it = view.segments().begin(); seg_it != view.segments().end(); ++seg_it) {
+    ASSERT_NE(seg_it, view.segments().end());
+    unsigned seg_len = seg_it->size();
+    ASSERT_GT(seg_len, 0);
+    ASSERT_EQ(*seg_it, span<const uint8_t>(bytes.data() + seg_offset, seg_len));
+    seg_offset += seg_len;
+  }
+  ASSERT_EQ(seg_offset - offset, view.length());
+}
+
 TEST(byte_buffer_reader, split_advance)
 {
   // Test with small vector of bytes
@@ -532,7 +475,7 @@ TEST(byte_buffer_reader, split_advance)
 
   // Test with byte buffer made of several segments
   // Make initial vector
-  bytes = make_medium_vec();
+  bytes = make_large_vec();
   pdu.clear();
   pdu.append(bytes);
   pdu.append(bytes);
@@ -599,7 +542,7 @@ TEST(byte_buffer, reserve_prepend)
   TESTASSERT(view == small_vec);
 
   // Prepend big vector
-  std::vector<uint8_t> big_vec = make_medium_vec();
+  std::vector<uint8_t> big_vec = make_large_vec();
   byte_buffer_view     view2   = pdu.reserve_prepend(big_vec.size());
   TESTASSERT_EQ(small_vec.size() + big_vec.size(), pdu.length());
   TESTASSERT_EQ(big_vec.size(), view2.length());
@@ -612,7 +555,7 @@ TEST(byte_buffer_chain, all)
 {
   byte_buffer pdu;
   TESTASSERT(pdu.empty());
-  std::vector<uint8_t> big_vec      = make_medium_vec();
+  std::vector<uint8_t> big_vec      = make_large_vec();
   std::vector<uint8_t> small_vec    = make_small_vec();
   std::vector<uint8_t> bytes_concat = big_vec;
   bytes_concat.insert(bytes_concat.end(), small_vec.begin(), small_vec.end());
