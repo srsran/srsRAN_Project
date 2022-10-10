@@ -572,9 +572,8 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 
 void rlc_tx_am_entity::on_status_report_changed()
 {
-  // this function is called from the RX entity
-  std::lock_guard<std::mutex> lock(mutex);
-  handle_buffer_state_update_nolock(); // already locked
+  // Redirect handling of status to pcell_executor
+  pcell_executor.execute([this]() { handle_buffer_state_update(); });
 }
 
 bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
