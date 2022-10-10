@@ -117,7 +117,7 @@ struct rlc_am_config {
 /// Ref: 3GPP TS 38.322 v15.3.0 Section 7
 struct rlc_rx_um_config {
   rlc_um_sn_size sn_field_length; ///< Number of bits used for sequence number
-  int32_t        t_reassembly_ms; ///< Timer used by rx to detect PDU loss (ms)
+  int32_t        t_reassembly;    ///< Timer used by rx to detect PDU loss (ms)
 };
 
 /// \brief Configurable Tx parameters for RLC UM
@@ -266,7 +266,7 @@ struct formatter<srsgnb::rlc_rx_um_config> {
   template <typename FormatContext>
   auto format(srsgnb::rlc_rx_um_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "sn_field_length={}, t_reassembly_ms={}", cfg.sn_field_length, cfg.t_reassembly_ms);
+    return format_to(ctx.out(), "sn_field_length={}, t_reassembly_ms={}", cfg.sn_field_length, cfg.t_reassembly);
   }
 };
 

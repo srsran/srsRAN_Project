@@ -14,6 +14,7 @@
 #include "rlc_sdu_queue.h"
 #include "rlc_um_pdu.h"
 #include "srsgnb/rlc/rlc_metrics.h"
+#include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"
 #include <map>
 
@@ -100,9 +101,10 @@ public:
                    lcid_t                            lcid,
                    const rlc_rx_um_config&           config,
                    rlc_rx_upper_layer_data_notifier& upper_dn,
-                   timer_manager&                    timers);
+                   timer_manager&                    timers,
+                   task_executor&                    ue_executor);
 
-  void timer_expired(uint32_t timeout_id);
+  void on_expired_status_prohibit_timer(uint32_t timeout_id);
 
   void handle_pdu(byte_buffer_slice buf) override;
 };

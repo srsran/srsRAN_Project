@@ -16,19 +16,22 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
                                    lcid_t                            lcid,
                                    const rlc_rx_um_config&           config,
                                    rlc_rx_upper_layer_data_notifier& upper_dn,
-                                   timer_manager&                    timers) :
+                                   timer_manager&                    timers,
+                                   task_executor&                    ue_executor) :
   rlc_rx_entity(du_index, lcid, upper_dn),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   um_window_size(window_size(to_number(cfg.sn_field_length))),
   reassembly_timer(timers.create_unique_timer())
 {
-  // check timer
-  srsgnb_assert(reassembly_timer.is_valid(), "Cannot create RLC RX UM: timers not configured");
+  // check reassembly_timer
+  srsgnb_assert(reassembly_timer.is_valid(), "Cannot create RLC RX UM: reassembly_timer not configured");
 
-  // configure timer
-  if (cfg.t_reassembly_ms > 0) {
-    reassembly_timer.set(static_cast<uint32_t>(cfg.t_reassembly_ms), [this](uint32_t tid) { timer_expired(tid); });
+  // configure reassembly_timer
+  if (cfg.t_reassembly > 0) {
+    reassembly_timer.set(static_cast<uint32_t>(cfg.t_reassembly), [this, &ue_executor](uint32_t tid) {
+      ue_executor.execute([this, tid]() { on_expired_status_prohibit_timer(tid); });
+    });
   }
 }
 
@@ -236,7 +239,7 @@ void rlc_rx_um_entity::update_total_sdu_length(rlc_rx_um_sdu_info& sdu_info, con
 };
 
 // TS 38.322 v16.2.0 Sec. 5.2.2.2.4
-void rlc_rx_um_entity::timer_expired(uint32_t timeout_id)
+void rlc_rx_um_entity::on_expired_status_prohibit_timer(uint32_t timeout_id)
 {
   if (reassembly_timer.id() == timeout_id) {
     logger.log_debug("reassembly timeout expiry for SN={} - updating rx_next_reassembly and reassembling",

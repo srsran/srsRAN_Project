@@ -26,13 +26,14 @@ public:
                 rlc_tx_upper_layer_data_notifier&    tx_upper_dn,
                 rlc_tx_upper_layer_control_notifier& tx_upper_cn,
                 rlc_tx_lower_layer_notifier&         tx_lower_dn,
-                timer_manager&                       timers) :
+                timer_manager&                       timers,
+                task_executor&                       ue_executor) :
     rlc_base_entity(du_index, lcid)
   {
     tx = std::make_unique<rlc_tx_um_entity>(du_index, lcid, config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn);
     logger.log_info("RLC TX UM configured: sn_field_length={}", config.tx);
 
-    rx = std::make_unique<rlc_rx_um_entity>(du_index, lcid, config.rx, rx_upper_dn, timers);
+    rx = std::make_unique<rlc_rx_um_entity>(du_index, lcid, config.rx, rx_upper_dn, timers, ue_executor);
     logger.log_info("RLC RX UM configured: {}", config.rx);
   }
 };

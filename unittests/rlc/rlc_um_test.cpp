@@ -9,6 +9,7 @@
  */
 
 #include "../../lib/rlc/rlc_um_entity.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <queue>
 
@@ -85,16 +86,30 @@ protected:
 
     // Set Rx config
     config.rx.sn_field_length = sn_size;
-    config.rx.t_reassembly_ms = 5;
+    config.rx.t_reassembly    = 5;
 
     // Set Tx config
     config.tx.sn_field_length = sn_size;
 
     // Create RLC entities
-    rlc1 = std::make_unique<rlc_um_entity>(
-        du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
-    rlc2 = std::make_unique<rlc_um_entity>(
-        du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
+    rlc1 = std::make_unique<rlc_um_entity>(du_ue_index_t::MIN_DU_UE_INDEX,
+                                           lcid_t::LCID_SRB0,
+                                           config,
+                                           tester1,
+                                           tester1,
+                                           tester1,
+                                           tester1,
+                                           timers,
+                                           ue_worker);
+    rlc2 = std::make_unique<rlc_um_entity>(du_ue_index_t::MIN_DU_UE_INDEX,
+                                           lcid_t::LCID_SRB0,
+                                           config,
+                                           tester2,
+                                           tester2,
+                                           tester2,
+                                           tester2,
+                                           timers,
+                                           ue_worker);
 
     // Bind interfaces
     rlc1_rx_lower = rlc1->get_rx_lower_layer_interface();
@@ -186,6 +201,7 @@ protected:
   rlc_um_sn_size                     sn_size;
   rlc_um_config                      config;
   timer_manager                      timers;
+  manual_task_worker                 ue_worker{128};
   rlc_test_frame                     tester1, tester2;
   std::unique_ptr<rlc_um_entity>     rlc1, rlc2;
   rlc_rx_lower_layer_interface*      rlc1_rx_lower = nullptr;
