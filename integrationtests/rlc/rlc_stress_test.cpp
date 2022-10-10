@@ -103,7 +103,6 @@ public:
   void run_upper_tti(uint32_t tti)
   {
     logger.log_info("Running upper TTI={}, PDU RX queue size={}", tti, mac->pdu_rx_list.size());
-    lower_executor->defer([this, tti]() { run_lower_tti(tti + 1); });
     if (tti < (args.nof_ttis - 1)) {
       for (uint32_t i = 0; i < 20; i++) {
         traffic_source->send_pdu();
@@ -116,6 +115,7 @@ public:
       lk.unlock();
       cv_lower.notify_all();
     }
+    lower_executor->defer([this, tti]() { run_lower_tti(tti + 1); });
     logger.log_info("Finished running upper TTI={}, PDU RX queue size={}", tti, mac->pdu_rx_list.size());
   }
 
@@ -141,7 +141,9 @@ public:
   void push_pdus(std::vector<byte_buffer_slice_chain> list_pdus)
   {
     auto push_fnc = [this, list_pdus = std::move(list_pdus)]() mutable { mac->push_rx_pdus(std::move(list_pdus)); };
-    upper_executor->defer(std::move(push_fnc));
+    if (!stopping_lower && !stopping_upper) {
+      upper_executor->defer(std::move(push_fnc));
+    }
   }
 
   void set_peer_stack(stress_stack* peer_stack_) { peer_stack = peer_stack_; }

@@ -38,10 +38,10 @@ public:
               bool                             start_postponed = false,
               os_thread_realtime_priority      prio_           = os_thread_realtime_priority::NO_REALTIME,
               const os_sched_affinity_bitmask& mask_           = {});
-  task_worker(const task_worker&) = delete;
-  task_worker(task_worker&&)      = delete;
+  task_worker(const task_worker&)            = delete;
+  task_worker(task_worker&&)                 = delete;
   task_worker& operator=(const task_worker&) = delete;
-  task_worker& operator=(task_worker&&) = delete;
+  task_worker& operator=(task_worker&&)      = delete;
   ~task_worker();
 
   /// Stop task worker, if running.
@@ -55,7 +55,8 @@ public:
   {
     auto ret = pending_tasks.try_push(std::move(task));
     if (ret.is_error()) {
-      logger.error("Cannot push anymore tasks into the worker queue. maximum size is {}",
+      logger.error("Cannot push anymore tasks into the {} worker queue. maximum size is {}",
+                   worker_name,
                    uint32_t(pending_tasks.max_size()));
       return;
     }
