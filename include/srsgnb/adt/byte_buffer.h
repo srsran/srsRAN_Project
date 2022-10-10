@@ -615,6 +615,10 @@ public:
   iterator       end() { return sliced_view.end(); }
   const_iterator end() const { return sliced_view.end(); }
 
+  /// Returns a non-owning list of segments that compose the byte_buffer.
+  byte_buffer_segment_range       segments() { return sliced_view.segments(); }
+  const_byte_buffer_segment_range segments() const { return sliced_view.segments(); }
+
   template <typename Range>
   bool operator==(const Range& r) const
   {
