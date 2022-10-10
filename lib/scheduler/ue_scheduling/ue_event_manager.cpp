@@ -158,7 +158,7 @@ void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& c
 void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
 {
   common_events.emplace(bs.ue_index, [this, bs](event_logger& ev_logger) {
-    ev_logger.enqueue("mac_bs(ueId={},bs={})", bs.ue_index, bs.lcid);
+    ev_logger.enqueue("mac_bs(ueId={},lcid={},bs={})", bs.ue_index, bs.lcid, bs.bs);
     ue& u = ue_db[bs.ue_index];
     u.handle_dl_buffer_state_indication(bs);
     if (bs.lcid == LCID_SRB0) {
