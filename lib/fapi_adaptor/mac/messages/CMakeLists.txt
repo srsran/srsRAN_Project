@@ -10,6 +10,7 @@ set(SOURCES
         pdcch.cpp
         pdsch.cpp
         prach.cpp
+        pucch.cpp
         pusch.cpp
         ssb.cpp)
 

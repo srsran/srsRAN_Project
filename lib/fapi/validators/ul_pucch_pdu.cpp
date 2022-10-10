@@ -113,9 +113,9 @@ static bool validate_start_symbol_index(unsigned value, validator_report& report
 }
 
 /// Validates the duration symbols property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
-static bool validate_duration_symbols(unsigned value, pucch_format_type format_type, validator_report& report)
+static bool validate_duration_symbols(unsigned value, pucch_format format_type, validator_report& report)
 {
-  if (format_type == pucch_format_type::f0 || format_type == pucch_format_type::f2) {
+  if (format_type == pucch_format::FORMAT_0 || format_type == pucch_format::FORMAT_2) {
     static constexpr unsigned MIN_VALUE = 1;
     static constexpr unsigned MAX_VALUE = 2;
 
@@ -212,9 +212,9 @@ static bool validate_m0_pucch_dmrs_cyclic_shift(unsigned value, validator_report
 }
 
 /// Validates the SR bit len property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
-static bool validate_sr_bit_len(unsigned value, pucch_format_type format_type, validator_report& report)
+static bool validate_sr_bit_len(unsigned value, pucch_format format_type, validator_report& report)
 {
-  if (format_type == pucch_format_type::f0 || format_type == pucch_format_type::f1) {
+  if (format_type == pucch_format::FORMAT_0 || format_type == pucch_format::FORMAT_1) {
     static constexpr unsigned MIN_VALUE = 0;
     static constexpr unsigned MAX_VALUE = 1;
 
@@ -228,13 +228,13 @@ static bool validate_sr_bit_len(unsigned value, pucch_format_type format_type, v
 }
 
 /// Validates the HARQ bit len property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
-static bool validate_harq_bit_len(unsigned value, pucch_format_type format_type, validator_report& report)
+static bool validate_harq_bit_len(unsigned value, pucch_format format_type, validator_report& report)
 {
   if (value == 0) {
     return true;
   }
 
-  if (format_type == pucch_format_type::f0 || format_type == pucch_format_type::f1) {
+  if (format_type == pucch_format::FORMAT_0 || format_type == pucch_format::FORMAT_1) {
     static constexpr unsigned MIN_VALUE = 1;
     static constexpr unsigned MAX_VALUE = 2;
 
@@ -257,9 +257,9 @@ static bool validate_csi_part1_bit_len(unsigned value, validator_report& report)
 }
 
 /// Validates the max code rate property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
-static bool validate_max_code_rate(unsigned value, pucch_format_type format_type, validator_report& report)
+static bool validate_max_code_rate(unsigned value, pucch_format format_type, validator_report& report)
 {
-  if (format_type == pucch_format_type::f0 || format_type == pucch_format_type::f1) {
+  if (format_type == pucch_format::FORMAT_0 || format_type == pucch_format::FORMAT_1) {
     static constexpr unsigned INVALID = 255;
 
     if (value == INVALID) {
@@ -306,25 +306,25 @@ bool srsgnb::fapi::validate_ul_pucch_pdu(const ul_pucch_pdu& pdu, validator_repo
   // NOTE: Intra slot frequency hopping property uses the whole range of the variable, so it will not be validated.
   result &= validate_second_hop_prb(pdu.second_hop_prb, report);
   // NOTE: Obsolete 8bit property is not supported in this release, so it will not be validated.
-  if (pdu.format_type == pucch_format_type::f0 || pdu.format_type == pucch_format_type::f1 ||
-      pdu.format_type == pucch_format_type::f3 || pdu.format_type == pucch_format_type::f4) {
-    result &= validate_pucch_group_hopping(static_cast<unsigned>(pdu.pucch_group_hopping), report);
+  if (pdu.format_type == pucch_format::FORMAT_0 || pdu.format_type == pucch_format::FORMAT_1 ||
+      pdu.format_type == pucch_format::FORMAT_3 || pdu.format_type == pucch_format::FORMAT_4) {
+    result &= validate_pucch_group_hopping(static_cast<unsigned>(pdu.pucch_grp_hopping), report);
     result &= validate_nid_pucch_hopping(pdu.nid_pucch_hopping, report);
     result &= validate_initial_cyclic_shift(pdu.initial_cyclic_shift, report);
   }
-  if (pdu.format_type == pucch_format_type::f2 || pdu.format_type == pucch_format_type::f3 ||
-      pdu.format_type == pucch_format_type::f4) {
+  if (pdu.format_type == pucch_format::FORMAT_2 || pdu.format_type == pucch_format::FORMAT_3 ||
+      pdu.format_type == pucch_format::FORMAT_4) {
     result &= validate_nid_pucch_scrambling(pdu.nid_pucch_scrambling, report);
     result &= validate_csi_part1_bit_len(pdu.csi_part1_bit_length, report);
   }
-  if (pdu.format_type == pucch_format_type::f1) {
+  if (pdu.format_type == pucch_format::FORMAT_1) {
     result &= validate_time_domain_occ_idx(pdu.time_domain_occ_index, report);
   }
-  if (pdu.format_type == pucch_format_type::f4) {
+  if (pdu.format_type == pucch_format::FORMAT_4) {
     result &= validate_pre_dft_occ_index(pdu.pre_dft_occ_idx, report);
     result &= validate_pre_dft_occ_len(pdu.pre_dft_occ_len, report);
   }
-  if (pdu.format_type == pucch_format_type::f3 || pdu.format_type == pucch_format_type::f4) {
+  if (pdu.format_type == pucch_format::FORMAT_3 || pdu.format_type == pucch_format::FORMAT_4) {
     // NOTE: Add DMRS flag property uses the whole range of the variable, so it will not be validated.
     // NOTE: NID0 PUCCH DMRS scrambling property uses the whole range of the variable, so it will not be validated.
     result &= validate_m0_pucch_dmrs_cyclic_shift(pdu.m0_pucch_dmrs_cyclic_shift, report);

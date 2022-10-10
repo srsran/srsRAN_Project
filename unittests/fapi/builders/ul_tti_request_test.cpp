@@ -73,7 +73,7 @@ static void test_add_pucch_f0_pdu()
 
   rnti_t                       rnti       = to_rnti(3);
   uint32_t                     handle     = 3214;
-  pucch_format_type            format     = pucch_format_type::f0;
+  pucch_format                 format     = pucch_format::FORMAT_0;
   multi_slot_tx_indicator_type slot_type  = multi_slot_tx_indicator_type::no_multi_slot_transmission;
   bool                         pi_to_bpsk = false;
 
@@ -102,7 +102,7 @@ static void test_add_pucch_f1_pdu()
 
   rnti_t                       rnti       = to_rnti(3);
   uint32_t                     handle     = 3214;
-  pucch_format_type            format     = pucch_format_type::f1;
+  pucch_format                 format     = pucch_format::FORMAT_1;
   multi_slot_tx_indicator_type slot_type  = multi_slot_tx_indicator_type::no_multi_slot_transmission;
   bool                         pi_to_bpsk = false;
 
@@ -131,7 +131,7 @@ static void test_add_pucch_f2_pdu()
 
   rnti_t                       rnti       = to_rnti(3);
   uint32_t                     handle     = 3214;
-  pucch_format_type            format     = pucch_format_type::f2;
+  pucch_format                 format     = pucch_format::FORMAT_2;
   multi_slot_tx_indicator_type slot_type  = multi_slot_tx_indicator_type::no_multi_slot_transmission;
   bool                         pi_to_bpsk = false;
 
@@ -160,7 +160,7 @@ static void test_add_pucch_f3_pdu()
 
   rnti_t                       rnti       = to_rnti(3);
   uint32_t                     handle     = 3214;
-  pucch_format_type            format     = pucch_format_type::f3;
+  pucch_format                 format     = pucch_format::FORMAT_3;
   multi_slot_tx_indicator_type slot_type  = multi_slot_tx_indicator_type::no_multi_slot_transmission;
   bool                         pi_to_bpsk = false;
 
@@ -189,7 +189,7 @@ static void test_add_pucch_f4_pdu()
 
   rnti_t                       rnti       = to_rnti(3);
   uint32_t                     handle     = 3214;
-  pucch_format_type            format     = pucch_format_type::f4;
+  pucch_format                 format     = pucch_format::FORMAT_4;
   multi_slot_tx_indicator_type slot_type  = multi_slot_tx_indicator_type::no_multi_slot_transmission;
   bool                         pi_to_bpsk = false;
 

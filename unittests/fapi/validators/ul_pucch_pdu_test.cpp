@@ -18,7 +18,7 @@ using namespace fapi;
 using namespace unittest;
 
 // Vector test for the properties valid for all the PUCCH formats.
-static const std::vector<test_group<ul_pucch_pdu> > vector_test_common_fields = {
+static const std::vector<test_group<ul_pucch_pdu>> vector_test_common_fields = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.rnti = to_rnti(value); },
      "RNTI",
      {{0, false}, {1, true}, {32768, true}, {65535, true}}},
@@ -60,11 +60,11 @@ static const std::vector<test_group<ul_pucch_pdu> > vector_test_common_fields = 
 
 static void validate_common()
 {
-  std::vector<std::function<ul_pucch_pdu()> > builders = {build_valid_ul_pucch_f0_pdu,
-                                                          build_valid_ul_pucch_f1_pdu,
-                                                          build_valid_ul_pucch_f2_pdu,
-                                                          build_valid_ul_pucch_f3_pdu,
-                                                          build_valid_ul_pucch_f4_pdu};
+  std::vector<std::function<ul_pucch_pdu()>> builders = {build_valid_ul_pucch_f0_pdu,
+                                                         build_valid_ul_pucch_f1_pdu,
+                                                         build_valid_ul_pucch_f2_pdu,
+                                                         build_valid_ul_pucch_f3_pdu,
+                                                         build_valid_ul_pucch_f4_pdu};
 
   for (auto builder : builders) {
     for (const auto& group : vector_test_common_fields) {
@@ -89,11 +89,11 @@ static void validate_common()
   }
 }
 
-static const std::vector<test_group<ul_pucch_pdu> > vector_test_f0 = {
+static const std::vector<test_group<ul_pucch_pdu>> vector_test_f0 = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.nr_of_symbols = value; },
      "Duration in symbols",
      {{0, false}, {1, true}, {2, true}, {3, false}}},
-    {[](ul_pucch_pdu& pdu, int value) { pdu.pucch_group_hopping = static_cast<pucch_group_hopping_type>(value); },
+    {[](ul_pucch_pdu& pdu, int value) { pdu.pucch_grp_hopping = static_cast<pucch_group_hopping>(value); },
      "PUCCH group hopping",
      {{0, true}, {2, true}, {3, false}}},
     {[](ul_pucch_pdu& pdu, int value) { pdu.nid_pucch_hopping = value; },
@@ -133,14 +133,14 @@ static void validate_f0()
   }
 }
 
-static const std::vector<test_group<ul_pucch_pdu> > vector_test_f1 = {
+static const std::vector<test_group<ul_pucch_pdu>> vector_test_f1 = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.nr_of_symbols = value; },
      "Duration in symbols",
      {{3, false}, {4, true}, {14, true}, {15, false}}},
     {[](ul_pucch_pdu& pdu, int value) { pdu.time_domain_occ_index = value; },
      "Time domain occ index",
      {{0, true}, {6, true}, {7, false}}},
-    {[](ul_pucch_pdu& pdu, int value) { pdu.pucch_group_hopping = static_cast<pucch_group_hopping_type>(value); },
+    {[](ul_pucch_pdu& pdu, int value) { pdu.pucch_grp_hopping = static_cast<pucch_group_hopping>(value); },
      "PUCCH group hopping",
      {{0, true}, {2, true}, {3, false}}},
     {[](ul_pucch_pdu& pdu, int value) { pdu.nid_pucch_hopping = value; },
@@ -180,7 +180,7 @@ static void validate_f1()
   }
 }
 
-static const std::vector<test_group<ul_pucch_pdu> > vector_test_f2 = {
+static const std::vector<test_group<ul_pucch_pdu>> vector_test_f2 = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.nr_of_symbols = value; },
      "Duration in symbols",
      {{0, false}, {1, true}, {2, true}, {3, false}}},
@@ -221,7 +221,7 @@ static void validate_f2()
   }
 }
 
-static const std::vector<test_group<ul_pucch_pdu> > vector_test_f3 = {
+static const std::vector<test_group<ul_pucch_pdu>> vector_test_f3 = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.nr_of_symbols = value; },
      "Duration in symbols",
      {{3, false}, {4, true}, {14, true}, {15, false}}},
@@ -231,7 +231,7 @@ static const std::vector<test_group<ul_pucch_pdu> > vector_test_f3 = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.m0_pucch_dmrs_cyclic_shift = value; },
      "M0 PUCCH DMRS cyclic shift",
      {{0, true}, {4, true}, {9, true}, {10, false}}},
-    {[](ul_pucch_pdu& pdu, int value) { pdu.pucch_group_hopping = static_cast<pucch_group_hopping_type>(value); },
+    {[](ul_pucch_pdu& pdu, int value) { pdu.pucch_grp_hopping = static_cast<pucch_group_hopping>(value); },
      "PUCCH group hopping",
      {{0, true}, {2, true}, {3, false}}},
     {[](ul_pucch_pdu& pdu, int value) { pdu.nid_pucch_hopping = value; },
@@ -274,14 +274,14 @@ static const void validate_f3()
   }
 }
 
-static const std::vector<test_group<ul_pucch_pdu> > vector_test_f4 = {
+static const std::vector<test_group<ul_pucch_pdu>> vector_test_f4 = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.nr_of_symbols = value; },
      "Duration in symbols",
      {{3, false}, {4, true}, {14, true}, {15, false}}},
     {[](ul_pucch_pdu& pdu, int value) { pdu.nid_pucch_scrambling = value; },
      "NID PUCCH scrambling",
      {{0, true}, {512, true}, {1023, true}, {1024, false}}},
-    {[](ul_pucch_pdu& pdu, int value) { pdu.pucch_group_hopping = static_cast<pucch_group_hopping_type>(value); },
+    {[](ul_pucch_pdu& pdu, int value) { pdu.pucch_grp_hopping = static_cast<pucch_group_hopping>(value); },
      "PUCCH group hopping",
      {{0, true}, {2, true}, {3, false}}},
     {[](ul_pucch_pdu& pdu, int value) { pdu.pre_dft_occ_idx = value; },
@@ -343,18 +343,18 @@ static void test_validate_each_field_error()
   validate_f4();
 }
 
-static const std::vector<test_group<ul_pucch_pdu> > vector_test_pucch_format = {
-    {[](ul_pucch_pdu& pdu, int value) { pdu.format_type = static_cast<pucch_format_type>(value); },
+static const std::vector<test_group<ul_pucch_pdu>> vector_test_pucch_format = {
+    {[](ul_pucch_pdu& pdu, int value) { pdu.format_type = static_cast<pucch_format>(value); },
      "Format type",
      {{5, false}}}};
 
 static void test_validate_pucch_format_error()
 {
-  std::vector<std::function<ul_pucch_pdu()> > builders = {build_valid_ul_pucch_f0_pdu,
-                                                          build_valid_ul_pucch_f1_pdu,
-                                                          build_valid_ul_pucch_f2_pdu,
-                                                          build_valid_ul_pucch_f3_pdu,
-                                                          build_valid_ul_pucch_f4_pdu};
+  std::vector<std::function<ul_pucch_pdu()>> builders = {build_valid_ul_pucch_f0_pdu,
+                                                         build_valid_ul_pucch_f1_pdu,
+                                                         build_valid_ul_pucch_f2_pdu,
+                                                         build_valid_ul_pucch_f3_pdu,
+                                                         build_valid_ul_pucch_f4_pdu};
 
   for (auto builder : builders) {
     for (const auto& group : vector_test_pucch_format) {
@@ -377,11 +377,11 @@ static void test_validate_pucch_format_error()
 
 static void test_validate_more_that_one_error_simultaneously()
 {
-  std::vector<std::function<ul_pucch_pdu()> > builders = {build_valid_ul_pucch_f0_pdu,
-                                                          build_valid_ul_pucch_f1_pdu,
-                                                          build_valid_ul_pucch_f2_pdu,
-                                                          build_valid_ul_pucch_f3_pdu,
-                                                          build_valid_ul_pucch_f4_pdu};
+  std::vector<std::function<ul_pucch_pdu()>> builders = {build_valid_ul_pucch_f0_pdu,
+                                                         build_valid_ul_pucch_f1_pdu,
+                                                         build_valid_ul_pucch_f2_pdu,
+                                                         build_valid_ul_pucch_f3_pdu,
+                                                         build_valid_ul_pucch_f4_pdu};
 
   for (auto builder : builders) {
     validator_report report(0, 0);
@@ -406,11 +406,11 @@ static void test_validate_more_that_one_error_simultaneously()
 
 static void test_validate_pucch_pdu_ok()
 {
-  std::vector<std::function<ul_pucch_pdu()> > builders = {build_valid_ul_pucch_f0_pdu,
-                                                          build_valid_ul_pucch_f1_pdu,
-                                                          build_valid_ul_pucch_f2_pdu,
-                                                          build_valid_ul_pucch_f3_pdu,
-                                                          build_valid_ul_pucch_f4_pdu};
+  std::vector<std::function<ul_pucch_pdu()>> builders = {build_valid_ul_pucch_f0_pdu,
+                                                         build_valid_ul_pucch_f1_pdu,
+                                                         build_valid_ul_pucch_f2_pdu,
+                                                         build_valid_ul_pucch_f3_pdu,
+                                                         build_valid_ul_pucch_f4_pdu};
 
   for (auto builder : builders) {
     validator_report report(0, 0);

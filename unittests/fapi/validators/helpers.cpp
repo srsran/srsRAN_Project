@@ -773,9 +773,9 @@ static unsigned generate_prb_size()
   return dist(gen);
 }
 
-static unsigned generate_nof_symbols(pucch_format_type type)
+static unsigned generate_nof_symbols(pucch_format type)
 {
-  if (type == pucch_format_type::f0 || type == pucch_format_type::f2) {
+  if (type == pucch_format::FORMAT_0 || type == pucch_format::FORMAT_2) {
     std::uniform_int_distribution<unsigned> dist(1, 2);
     return dist(gen);
   }
@@ -784,9 +784,9 @@ static unsigned generate_nof_symbols(pucch_format_type type)
   return dist(gen);
 }
 
-static unsigned generate_sr_bit_len(pucch_format_type type)
+static unsigned generate_sr_bit_len(pucch_format type)
 {
-  if (type == pucch_format_type::f0 || type == pucch_format_type::f1) {
+  if (type == pucch_format::FORMAT_0 || type == pucch_format::FORMAT_1) {
     std::uniform_int_distribution<unsigned> dist(0, 1);
     return dist(gen);
   }
@@ -795,9 +795,9 @@ static unsigned generate_sr_bit_len(pucch_format_type type)
   return dist(gen);
 }
 
-static unsigned generate_harq_bit_len(pucch_format_type type)
+static unsigned generate_harq_bit_len(pucch_format type)
 {
-  if (type == pucch_format_type::f0 || type == pucch_format_type::f1) {
+  if (type == pucch_format::FORMAT_0 || type == pucch_format::FORMAT_1) {
     std::uniform_int_distribution<unsigned> dist(1, 2);
     return dist(gen);
   }
@@ -806,9 +806,9 @@ static unsigned generate_harq_bit_len(pucch_format_type type)
   return dist(gen);
 }
 
-static unsigned generate_max_code_rate(pucch_format_type type)
+static unsigned generate_max_code_rate(pucch_format type)
 {
-  if (type == pucch_format_type::f0 || type == pucch_format_type::f1) {
+  if (type == pucch_format::FORMAT_0 || type == pucch_format::FORMAT_1) {
     return 255;
   }
 
@@ -816,10 +816,10 @@ static unsigned generate_max_code_rate(pucch_format_type type)
   return dist(gen);
 }
 
-static pucch_group_hopping_type generate_pucch_group_hopping()
+static pucch_group_hopping generate_pucch_group_hopping()
 {
   std::uniform_int_distribution<unsigned> dist(0, 2);
-  return static_cast<pucch_group_hopping_type>(dist(gen));
+  return static_cast<pucch_group_hopping>(dist(gen));
 }
 
 static unsigned generate_nid_pucch_hopping()
@@ -857,7 +857,7 @@ static ul_pucch_pdu generate_generic_ul_pucch_pdu()
   pdu.start_symbol_index             = generate_start_symbol_index();
   pdu.intra_slot_frequency_hopping   = true;
   pdu.second_hop_prb                 = generate_bwp_start();
-  pdu.pucch_group_hopping            = generate_pucch_group_hopping();
+  pdu.pucch_grp_hopping              = generate_pucch_group_hopping();
   pdu.nid_pucch_hopping              = generate_nid_pucch_hopping();
   pdu.initial_cyclic_shift           = generate_initial_cyclic_shift();
   pdu.nid_pucch_scrambling           = generate_nid_pucch_hopping();
@@ -884,65 +884,65 @@ static ul_pucch_pdu generate_generic_ul_pucch_pdu()
 
 ul_pucch_pdu unittest::build_valid_ul_pucch_f0_pdu()
 {
-  auto                               pdu    = generate_generic_ul_pucch_pdu();
-  static constexpr pucch_format_type format = pucch_format_type::f0;
-  pdu.format_type                           = format;
-  pdu.nr_of_symbols                         = generate_nof_symbols(format);
-  pdu.sr_bit_len                            = generate_sr_bit_len(format);
-  pdu.bit_len_harq                          = generate_harq_bit_len(format);
-  pdu.pucch_maintenance_v3.max_code_rate    = generate_max_code_rate(format);
+  auto                          pdu      = generate_generic_ul_pucch_pdu();
+  static constexpr pucch_format format   = pucch_format::FORMAT_0;
+  pdu.format_type                        = format;
+  pdu.nr_of_symbols                      = generate_nof_symbols(format);
+  pdu.sr_bit_len                         = generate_sr_bit_len(format);
+  pdu.bit_len_harq                       = generate_harq_bit_len(format);
+  pdu.pucch_maintenance_v3.max_code_rate = generate_max_code_rate(format);
 
   return pdu;
 }
 
 ul_pucch_pdu unittest::build_valid_ul_pucch_f1_pdu()
 {
-  auto                               pdu    = generate_generic_ul_pucch_pdu();
-  static constexpr pucch_format_type format = pucch_format_type::f1;
-  pdu.format_type                           = format;
-  pdu.nr_of_symbols                         = generate_nof_symbols(format);
-  pdu.sr_bit_len                            = generate_sr_bit_len(format);
-  pdu.bit_len_harq                          = generate_harq_bit_len(format);
-  pdu.pucch_maintenance_v3.max_code_rate    = generate_max_code_rate(format);
+  auto                          pdu      = generate_generic_ul_pucch_pdu();
+  static constexpr pucch_format format   = pucch_format::FORMAT_1;
+  pdu.format_type                        = format;
+  pdu.nr_of_symbols                      = generate_nof_symbols(format);
+  pdu.sr_bit_len                         = generate_sr_bit_len(format);
+  pdu.bit_len_harq                       = generate_harq_bit_len(format);
+  pdu.pucch_maintenance_v3.max_code_rate = generate_max_code_rate(format);
 
   return pdu;
 }
 
 ul_pucch_pdu unittest::build_valid_ul_pucch_f2_pdu()
 {
-  auto                               pdu    = generate_generic_ul_pucch_pdu();
-  static constexpr pucch_format_type format = pucch_format_type::f2;
-  pdu.format_type                           = format;
-  pdu.nr_of_symbols                         = generate_nof_symbols(format);
-  pdu.sr_bit_len                            = generate_sr_bit_len(format);
-  pdu.bit_len_harq                          = generate_harq_bit_len(format);
-  pdu.pucch_maintenance_v3.max_code_rate    = generate_max_code_rate(format);
+  auto                          pdu      = generate_generic_ul_pucch_pdu();
+  static constexpr pucch_format format   = pucch_format::FORMAT_2;
+  pdu.format_type                        = format;
+  pdu.nr_of_symbols                      = generate_nof_symbols(format);
+  pdu.sr_bit_len                         = generate_sr_bit_len(format);
+  pdu.bit_len_harq                       = generate_harq_bit_len(format);
+  pdu.pucch_maintenance_v3.max_code_rate = generate_max_code_rate(format);
 
   return pdu;
 }
 
 ul_pucch_pdu unittest::build_valid_ul_pucch_f3_pdu()
 {
-  auto                               pdu    = generate_generic_ul_pucch_pdu();
-  static constexpr pucch_format_type format = pucch_format_type::f3;
-  pdu.format_type                           = format;
-  pdu.nr_of_symbols                         = generate_nof_symbols(format);
-  pdu.sr_bit_len                            = generate_sr_bit_len(format);
-  pdu.bit_len_harq                          = generate_harq_bit_len(format);
-  pdu.pucch_maintenance_v3.max_code_rate    = generate_max_code_rate(format);
+  auto                          pdu      = generate_generic_ul_pucch_pdu();
+  static constexpr pucch_format format   = pucch_format::FORMAT_3;
+  pdu.format_type                        = format;
+  pdu.nr_of_symbols                      = generate_nof_symbols(format);
+  pdu.sr_bit_len                         = generate_sr_bit_len(format);
+  pdu.bit_len_harq                       = generate_harq_bit_len(format);
+  pdu.pucch_maintenance_v3.max_code_rate = generate_max_code_rate(format);
 
   return pdu;
 }
 
 ul_pucch_pdu unittest::build_valid_ul_pucch_f4_pdu()
 {
-  auto                               pdu    = generate_generic_ul_pucch_pdu();
-  static constexpr pucch_format_type format = pucch_format_type::f4;
-  pdu.format_type                           = format;
-  pdu.nr_of_symbols                         = generate_nof_symbols(format);
-  pdu.sr_bit_len                            = generate_sr_bit_len(format);
-  pdu.bit_len_harq                          = generate_harq_bit_len(format);
-  pdu.pucch_maintenance_v3.max_code_rate    = generate_max_code_rate(format);
+  auto                          pdu      = generate_generic_ul_pucch_pdu();
+  static constexpr pucch_format format   = pucch_format::FORMAT_4;
+  pdu.format_type                        = format;
+  pdu.nr_of_symbols                      = generate_nof_symbols(format);
+  pdu.sr_bit_len                         = generate_sr_bit_len(format);
+  pdu.bit_len_harq                       = generate_harq_bit_len(format);
+  pdu.pucch_maintenance_v3.max_code_rate = generate_max_code_rate(format);
 
   return pdu;
 }

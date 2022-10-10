@@ -1919,7 +1919,7 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
   ul_pucch_pdu_builder& set_basic_parameters(rnti_t                       rnti,
                                              uint32_t                     handle,
-                                             pucch_format_type            format_type,
+                                             pucch_format                 format_type,
                                              multi_slot_tx_indicator_type multi_slot_tx_type,
                                              bool                         pi2_bpsk)
   {
@@ -1967,15 +1967,15 @@ public:
 
   /// Sets the PUCCH PDU hopping information parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
-  ul_pucch_pdu_builder& set_hopping_information_parameters(bool                     intra_slot_frequency_hopping,
-                                                           uint16_t                 second_hop_prb,
-                                                           pucch_group_hopping_type pucch_group_hopping,
-                                                           uint16_t                 nid_pucch_hopping,
-                                                           uint16_t                 initial_cyclic_shift)
+  ul_pucch_pdu_builder& set_hopping_information_parameters(bool                intra_slot_frequency_hopping,
+                                                           uint16_t            second_hop_prb,
+                                                           pucch_group_hopping pucch_group_hopping,
+                                                           uint16_t            nid_pucch_hopping,
+                                                           uint16_t            initial_cyclic_shift)
   {
     pdu.intra_slot_frequency_hopping = intra_slot_frequency_hopping;
     pdu.second_hop_prb               = second_hop_prb;
-    pdu.pucch_group_hopping          = pucch_group_hopping;
+    pdu.pucch_grp_hopping            = pucch_group_hopping;
     pdu.nid_pucch_hopping            = nid_pucch_hopping;
     pdu.initial_cyclic_shift         = initial_cyclic_shift;
 
@@ -2451,25 +2451,34 @@ public:
     return builder;
   }
 
-  /// Adds a PUCCH format 0/1 PDU to the message and returns a builder that helps to fill the parameters.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
-  ul_pucch_pdu_builder add_pucch_pdu(rnti_t                       rnti,
-                                     uint32_t                     handle,
-                                     pucch_format_type            format_type,
-                                     multi_slot_tx_indicator_type multi_slot_tx_type,
-                                     bool                         pi2_bpsk)
+  /// Adds a PUCCH PDU to the message with the given format type and returns a builder that helps to fill the
+  /// parameters.
+  ul_pucch_pdu_builder add_pucch_pdu(pucch_format format_type)
   {
     msg.pdus.emplace_back();
     auto& pdu    = msg.pdus.back();
     pdu.pdu_type = ul_pdu_type::PUCCH;
 
-    if (format_type == pucch_format_type::f0 || format_type == pucch_format_type::f1) {
+    if (format_type == pucch_format::FORMAT_0 || format_type == pucch_format::FORMAT_1) {
       ++msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format01)];
     } else {
       ++msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format234)];
     }
 
     ul_pucch_pdu_builder builder(pdu.pucch_pdu);
+
+    return builder;
+  }
+
+  /// Adds a PUCCH PDU to the message and returns a builder that helps to fill the parameters.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
+  ul_pucch_pdu_builder add_pucch_pdu(rnti_t                       rnti,
+                                     uint32_t                     handle,
+                                     pucch_format                 format_type,
+                                     multi_slot_tx_indicator_type multi_slot_tx_type,
+                                     bool                         pi2_bpsk)
+  {
+    ul_pucch_pdu_builder builder = add_pucch_pdu(format_type);
     builder.set_basic_parameters(rnti, handle, format_type, multi_slot_tx_type, pi2_bpsk);
 
     return builder;

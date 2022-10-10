@@ -17,6 +17,7 @@
 #include "srsgnb/ran/pdcch/coreset.h"
 #include "srsgnb/ran/prach/prach_subcarrier_spacing.h"
 #include "srsgnb/ran/prach/restricted_set_config.h"
+#include "srsgnb/ran/pucch/pucch_mapping.h"
 #include "srsgnb/ran/pusch/pusch_mcs.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/ssb_properties.h"
@@ -615,8 +616,6 @@ struct ul_pucch_maintenance_v3 {
   uint8_t ul_bwp_id;
 };
 
-enum class pucch_format_type : uint8_t { f0, f1, f2, f3, f4 };
-enum class pucch_group_hopping_type : uint8_t { neither, enabled, disabled };
 enum class multi_slot_tx_indicator_type : uint8_t {
   no_multi_slot_transmission,
   multi_slot_transmission_starts,
@@ -632,7 +631,7 @@ struct ul_pucch_pdu {
   uint16_t                     bwp_start;
   subcarrier_spacing           scs;
   cyclic_prefix_type           cyclic_prefix;
-  pucch_format_type            format_type;
+  pucch_format                 format_type;
   multi_slot_tx_indicator_type multi_slot_tx_indicator;
   bool                         pi2_bpsk;
   uint16_t                     prb_start;
@@ -641,7 +640,7 @@ struct ul_pucch_pdu {
   uint8_t                      nr_of_symbols;
   bool                         intra_slot_frequency_hopping;
   uint16_t                     second_hop_prb;
-  pucch_group_hopping_type     pucch_group_hopping;
+  pucch_group_hopping          pucch_grp_hopping;
   uint8_t                      reserved;
   uint16_t                     nid_pucch_hopping;
   uint16_t                     initial_cyclic_shift;

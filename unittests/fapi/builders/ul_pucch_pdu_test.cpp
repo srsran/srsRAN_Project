@@ -18,7 +18,7 @@ static void test_basic_params()
 {
   rnti_t                       rnti        = to_rnti(14);
   uint32_t                     handle      = 192;
-  pucch_format_type            format_type = pucch_format_type::f1;
+  pucch_format                 format_type = pucch_format::FORMAT_1;
   multi_slot_tx_indicator_type multi_slot  = multi_slot_tx_indicator_type::no_multi_slot_transmission;
   bool                         pi2         = false;
 
@@ -82,21 +82,21 @@ static void test_allocation_in_time_params()
 
 static void test_hopping_information_params()
 {
-  bool                     intra_slot_freq      = true;
-  unsigned                 second_hop_prb       = 100;
-  pucch_group_hopping_type pucch_group_hopping  = pucch_group_hopping_type::neither;
-  unsigned                 nid_pucch_hopping    = 200;
-  unsigned                 inicial_cyclic_shift = 7;
+  bool                intra_slot_freq      = true;
+  unsigned            second_hop_prb       = 100;
+  pucch_group_hopping pucch_grp_hopping    = pucch_group_hopping::NEITHER;
+  unsigned            nid_pucch_hopping    = 200;
+  unsigned            inicial_cyclic_shift = 7;
 
   ul_pucch_pdu         pdu;
   ul_pucch_pdu_builder builder(pdu);
 
   builder.set_hopping_information_parameters(
-      intra_slot_freq, second_hop_prb, pucch_group_hopping, nid_pucch_hopping, inicial_cyclic_shift);
+      intra_slot_freq, second_hop_prb, pucch_grp_hopping, nid_pucch_hopping, inicial_cyclic_shift);
 
   TESTASSERT_EQ(intra_slot_freq, pdu.intra_slot_frequency_hopping);
   TESTASSERT_EQ(second_hop_prb, pdu.second_hop_prb);
-  TESTASSERT_EQ(pucch_group_hopping, pdu.pucch_group_hopping);
+  TESTASSERT_EQ(pucch_grp_hopping, pdu.pucch_grp_hopping);
   TESTASSERT_EQ(nid_pucch_hopping, pdu.nid_pucch_hopping);
   TESTASSERT_EQ(inicial_cyclic_shift, pdu.initial_cyclic_shift);
 }
