@@ -114,43 +114,58 @@ TEST(byte_buffer, clear)
   TESTASSERT(pdu.empty());
 }
 
-TEST(byte_buffer, compare)
+TEST(byte_buffer, eq_compare_with_span)
 {
   byte_buffer          pdu, pdu2, pdu3, pdu4;
-  std::vector<uint8_t> bytes  = {1, 2, 3, 4, 5, 6};
-  std::vector<uint8_t> bytes2 = {1, 2, 3, 4, 5};
-  std::vector<uint8_t> bytes3 = {2, 2, 3, 4, 5, 6};
+  std::vector<uint8_t> bytes         = {1, 2, 3, 4, 5, 6};
+  std::vector<uint8_t> shorter_bytes = {1, 2, 3, 4, 5};
+  std::vector<uint8_t> diff_bytes    = {2, 2, 3, 4, 5, 6};
+  std::vector<uint8_t> longer_bytes  = {1, 2, 3, 4, 5, 6, 7};
 
   pdu.append(bytes);
 
-  TESTASSERT(pdu == bytes);
-  TESTASSERT(bytes == pdu);
-  TESTASSERT(bytes2 != pdu);
-  TESTASSERT(bytes3 != pdu);
+  ASSERT_EQ(pdu, bytes);
+  ASSERT_EQ(bytes, pdu);
+  ASSERT_NE(shorter_bytes, pdu);
+  ASSERT_NE(diff_bytes, pdu);
+  ASSERT_NE(longer_bytes, pdu);
+  ASSERT_NE(pdu, shorter_bytes);
+  ASSERT_NE(pdu, diff_bytes);
+  ASSERT_NE(pdu, longer_bytes);
+}
 
-  pdu2.append(bytes);
-  pdu3.append(bytes2);
-  pdu4.append(bytes3);
+TEST(byte_buffer, eq_compare_with_byte_buffer)
+{
+  byte_buffer          pdu, pdu_eq, pdu_shorter, pdu_diff;
+  std::vector<uint8_t> bytes         = {1, 2, 3, 4, 5, 6};
+  std::vector<uint8_t> shorter_bytes = {1, 2, 3, 4, 5};
+  std::vector<uint8_t> diff_bytes    = {2, 2, 3, 4, 5, 6};
+  std::vector<uint8_t> longer_bytes  = {1, 2, 3, 4, 5, 6, 7};
 
-  TESTASSERT(pdu == pdu2);
-  TESTASSERT(pdu != pdu3);
-  TESTASSERT(pdu != pdu4);
-  TESTASSERT(pdu2 != pdu4);
-  TESTASSERT(pdu3 != pdu4);
+  pdu.append(bytes);
+  pdu_eq.append(bytes);
+  pdu_shorter.append(shorter_bytes);
+  pdu_diff.append(diff_bytes);
+
+  ASSERT_EQ(pdu, pdu_eq);
+  ASSERT_NE(pdu, pdu_shorter);
+  ASSERT_NE(pdu, pdu_diff);
+  ASSERT_NE(pdu_eq, pdu_diff);
+  ASSERT_NE(pdu_shorter, pdu_diff);
 
   // create a new segment during the append.
-  bytes2.resize(byte_buffer_segment::SEGMENT_SIZE);
-  for (size_t i = 0; i < bytes2.size(); ++i) {
-    bytes2[i] = i;
+  shorter_bytes.resize(byte_buffer_segment::SEGMENT_SIZE);
+  for (size_t i = 0; i < shorter_bytes.size(); ++i) {
+    shorter_bytes[i] = i;
   }
-  pdu.append(bytes2);
-  bytes.insert(bytes.end(), bytes2.begin(), bytes2.end());
-  TESTASSERT(pdu == bytes);
+  pdu.append(shorter_bytes);
+  bytes.insert(bytes.end(), shorter_bytes.begin(), shorter_bytes.end());
+  ASSERT_EQ(pdu, bytes);
 
   // create a new segment during the prepend.
-  pdu.prepend(bytes2);
-  bytes.insert(bytes.begin(), bytes2.begin(), bytes2.end());
-  TESTASSERT(pdu == bytes);
+  pdu.prepend(shorter_bytes);
+  bytes.insert(bytes.begin(), shorter_bytes.begin(), shorter_bytes.end());
+  ASSERT_EQ(pdu, bytes);
 }
 
 TEST(byte_buffer, iterator)
@@ -388,23 +403,27 @@ TEST(byte_buffer, iterator_plus_equal_op)
 TEST(byte_buffer, iterator_of_segments)
 {
   byte_buffer          pdu;
-  std::vector<uint8_t> bytes = make_small_vec();
+  std::vector<uint8_t> small_vec_bytes = make_small_vec();
 
   // empty buffer.
   ASSERT_EQ(pdu.segments().begin(), pdu.segments().end());
 
   // one-segment buffer
-  pdu.append(bytes);
+  pdu.append(small_vec_bytes);
   ASSERT_NE(pdu.segments().begin(), pdu.segments().end());
-  ASSERT_EQ(*pdu.segments().begin(), span<const uint8_t>(bytes));
+  ASSERT_EQ(*pdu.segments().begin(), span<const uint8_t>(small_vec_bytes));
   ASSERT_EQ(++pdu.segments().begin(), pdu.segments().end());
 
-  // two-segment buffer.
-  std::vector<uint8_t> bytes2 = make_large_vec();
-  pdu.append(bytes2);
-  ASSERT_EQ(*pdu.segments().begin(), span<const uint8_t>(bytes));
-  ASSERT_EQ(*(pdu.segments().begin()++), span<const uint8_t>(bytes));
-  ASSERT_EQ(++(++pdu.segments().begin()), pdu.segments().end());
+  // multiple-segment buffer.
+  pdu.append(make_vec(get_random_uint(1, 10000)));
+  std::vector<uint8_t> total_bytes(pdu.begin(), pdu.end());
+  unsigned             seg_offset = 0;
+  for (auto seg_it = pdu.segments().begin(); seg_it != pdu.segments().end(); ++seg_it) {
+    ASSERT_TRUE(seg_it->size() > 0);
+    ASSERT_EQ(*seg_it, span<const uint8_t>(total_bytes.data() + seg_offset, seg_it->size()));
+    seg_offset += seg_it->size();
+  }
+  ASSERT_EQ(seg_offset, total_bytes.size());
 }
 
 TEST(byte_buffer_view, length)

@@ -448,9 +448,12 @@ private:
 
 inline bool operator==(const byte_buffer& buf, span<const uint8_t> bytes)
 {
-  size_t i = 0;
+  if (buf.length() != bytes.size()) {
+    return false;
+  }
+  unsigned i = 0;
   for (uint8_t val : buf) {
-    if (i >= bytes.size() or val != bytes[i]) {
+    if (val != bytes[i]) {
       return false;
     }
     i++;
