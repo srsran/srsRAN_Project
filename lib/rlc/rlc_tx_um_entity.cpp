@@ -41,10 +41,10 @@ void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu)
     metrics_add_sdus(1, sdu_length);
     handle_buffer_state_update(); // take lock
   } else {
-    logger.log_warning("Dropped Tx SDU (length: {} B, PDCP Count: {}, enqueued SDUs: {}",
-                       sdu_length,
-                       sdu.pdcp_count,
-                       sdu_queue.size_sdus());
+    logger.log_info("Dropped Tx SDU (length: {} B, PDCP Count: {}, enqueued SDUs: {}",
+                    sdu_length,
+                    sdu.pdcp_count,
+                    sdu_queue.size_sdus());
     metrics_add_lost_sdus(1);
   }
 }

@@ -29,15 +29,15 @@ struct stress_test_args {
   bool                 const_opp          = false;
   uint32_t             seed               = 0;
   uint32_t             nof_pdu_tti        = 10;
-  uint32_t             nof_ttis           = 5000;
+  uint32_t             nof_ttis           = 1000;
   std::string          log_filename       = "stdout";
-  srslog::basic_levels log_level_stack    = srslog::basic_levels::debug;
-  srslog::basic_levels log_level_rlc      = srslog::basic_levels::debug;
-  srslog::basic_levels log_level_pdcp     = srslog::basic_levels::debug;
-  srslog::basic_levels log_level_mac      = srslog::basic_levels::debug;
+  srslog::basic_levels log_level_stack    = srslog::basic_levels::warning;
+  srslog::basic_levels log_level_rlc      = srslog::basic_levels::warning;
+  srslog::basic_levels log_level_pdcp     = srslog::basic_levels::warning;
+  srslog::basic_levels log_level_mac      = srslog::basic_levels::warning;
   uint32_t             log_hex_limit      = 32;
   uint32_t             min_sdu_size       = 5;
-  uint32_t             max_sdu_size       = 9000;
+  uint32_t             max_sdu_size       = 1500;
 };
 
 inline bool parse_args(stress_test_args& args, int argc, char* argv[])

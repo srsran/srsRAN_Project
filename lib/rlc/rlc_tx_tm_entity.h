@@ -44,7 +44,7 @@ public:
       metrics_add_sdus(1, sdu_length);
       handle_buffer_state_update();
     } else {
-      logger.log_warning("Dropped Tx SDU (length: {} B, enqueued SDUs: {})", sdu.buf.length(), sdu_queue.size_sdus());
+      logger.log_info("Dropped Tx SDU (length: {} B, enqueued SDUs: {})", sdu.buf.length(), sdu_queue.size_sdus());
       metrics_add_lost_sdus(1);
     }
   }

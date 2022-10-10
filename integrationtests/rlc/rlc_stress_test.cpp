@@ -63,8 +63,6 @@ public:
     traffic_source->set_rlc_tx_upper(rlc->get_tx_upper_layer_data_interface());
     mac->set_rlc_tx_lower(rlc->get_tx_lower_layer_interface());
     mac->set_rlc_rx_lower(rlc->get_rx_lower_layer_interface());
-
-    srslog::flush();
   }
 
   ~stress_stack() = default;
@@ -164,7 +162,7 @@ private:
   const stress_test_args& args;
 
   // Executors
-  uint16_t                       task_worker_queue_size = 9000;
+  uint16_t                       task_worker_queue_size = 15000;
   std::string                    upper_name;
   std::string                    lower_name;
   task_worker                    upper_worker;
