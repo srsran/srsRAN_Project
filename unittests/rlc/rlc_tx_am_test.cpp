@@ -385,7 +385,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_without_segmentation)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = n_pdus;
   status_pdu.push_nack(nack);
-  rlc->handle_status_pdu(status_pdu);
+  rlc->on_status_pdu(status_pdu);
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
@@ -432,7 +432,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = n_pdus;
   status_pdu.push_nack(nack);
-  rlc->handle_status_pdu(status_pdu);
+  rlc->on_status_pdu(status_pdu);
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
@@ -484,7 +484,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_first_segment_without_segmentation)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = n_pdus;
   status_pdu.push_nack(nack);
-  rlc->handle_status_pdu(status_pdu);
+  rlc->on_status_pdu(status_pdu);
   EXPECT_EQ(rlc->get_buffer_state(), nack.so_end - nack.so_start + 1 + header_min_size);
   EXPECT_EQ(tester->bsr, nack.so_end - nack.so_start + 1 + header_min_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
@@ -535,7 +535,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = n_pdus;
   status_pdu.push_nack(nack);
-  rlc->handle_status_pdu(status_pdu);
+  rlc->on_status_pdu(status_pdu);
   EXPECT_EQ(rlc->get_buffer_state(), nack.so_end - nack.so_start + 1 + header_max_size);
   EXPECT_EQ(tester->bsr, nack.so_end - nack.so_start + 1 + header_max_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
@@ -587,7 +587,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = n_pdus;
   status_pdu.push_nack(nack);
-  rlc->handle_status_pdu(status_pdu);
+  rlc->on_status_pdu(status_pdu);
   EXPECT_EQ(rlc->get_buffer_state(), nack.so_end - nack.so_start + 1 + header_max_size);
   EXPECT_EQ(tester->bsr, nack.so_end - nack.so_start + 1 + header_max_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
@@ -637,7 +637,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = n_pdus;
   status_pdu.push_nack(nack);
-  rlc->handle_status_pdu(status_pdu);
+  rlc->on_status_pdu(status_pdu);
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
@@ -686,7 +686,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
   rlc_am_status_pdu status_pdu(sn_size);
   status_pdu.ack_sn = n_pdus;
   status_pdu.push_nack(nack);
-  rlc->handle_status_pdu(status_pdu);
+  rlc->on_status_pdu(status_pdu);
   EXPECT_EQ(rlc->get_buffer_state(), nack.so_end + 1 + header_min_size);
   EXPECT_EQ(tester->bsr, nack.so_end + 1 + header_min_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);

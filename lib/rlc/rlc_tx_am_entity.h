@@ -104,6 +104,8 @@ private:
   /// Ref: TS 38.322 Sec. 7.3
   unique_timer poll_retransmit_timer;
 
+  task_executor& pcell_executor;
+
 public:
   rlc_tx_am_entity(du_ue_index_t                        du_index,
                    lcid_t                               lcid,
@@ -126,7 +128,7 @@ public:
   uint32_t get_buffer_state() override;
 
   // Status handler interface
-  void handle_status_pdu(rlc_am_status_pdu status) override;
+  void on_status_pdu(rlc_am_status_pdu status) override;
   // Status notifier interface
   void on_status_report_changed() override;
 
@@ -210,6 +212,10 @@ private:
   {
     return retx.so == 0 ? head_min_size : head_max_size;
   }
+
+  /// \brief Evaluates a status PDU, schedules ReTx and removes ACK'ed SDUs from Tx window
+  /// \param status The status PDU
+  void handle_status_pdu(rlc_am_status_pdu status);
 
   /// \brief Schedules ReTx for NACK'ed PDUs
   ///

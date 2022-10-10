@@ -29,7 +29,8 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   tx_window(create_tx_window(cfg.sn_field_length)),
   head_min_size(rlc_am_pdu_header_min_size(cfg.sn_field_length)),
   head_max_size(rlc_am_pdu_header_max_size(cfg.sn_field_length)),
-  poll_retransmit_timer(timers.create_unique_timer())
+  poll_retransmit_timer(timers.create_unique_timer()),
+  pcell_executor(pcell_executor)
 {
   // check timer t_poll_retransmission timer
   srsgnb_assert(poll_retransmit_timer.is_valid(), "Cannot create RLC RX AM: timers not configured");
@@ -444,6 +445,13 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
   log_state(srslog::basic_levels::debug);
 
   return pdu_buf;
+}
+
+void rlc_tx_am_entity::on_status_pdu(rlc_am_status_pdu status)
+{
+  // Redirect handling of status to pcell_executor
+  auto handle_func = [this, status = std::move(status)]() mutable { handle_status_pdu(std::move(status)); };
+  pcell_executor.execute(std::move(handle_func));
 }
 
 void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)

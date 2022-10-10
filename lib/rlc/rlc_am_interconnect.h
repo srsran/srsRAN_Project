@@ -38,7 +38,7 @@ public:
 
   /// \brief Status PDU handler for TX entity
   /// \param status The status PDU to be processed by the RLC TX AM entity
-  virtual void handle_status_pdu(rlc_am_status_pdu status) = 0;
+  virtual void on_status_pdu(rlc_am_status_pdu status) = 0;
 };
 
 /// This interface represents the RLC TX AM entity that the RLC RX AM must notify to inform the RLC TX AM entity that a
