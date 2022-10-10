@@ -17,8 +17,7 @@ using namespace fapi_adaptor;
 
 void srsgnb::fapi_adaptor::convert_pucch_mac_to_fapi(fapi::ul_pucch_pdu& fapi_pdu, const pucch_info& mac_pdu)
 {
-  fapi::ul_pucch_pdu         msg;
-  fapi::ul_pucch_pdu_builder builder(msg);
+  fapi::ul_pucch_pdu_builder builder(fapi_pdu);
 
   convert_pucch_mac_to_fapi(builder, mac_pdu);
 }
@@ -53,6 +52,10 @@ static void fill_format1_custom_parameters(fapi::ul_pucch_pdu_builder& builder, 
                                              f1.n_id_hopping,
                                              f1.initial_cyclic_shift);
 
+  // Do not use pi/2 BPSK for UCI symbols.
+  static const bool use_pi_to_bpsk = false;
+  builder.set_format_common_parameters(mac_pdu.format, f1.slot_repetition, use_pi_to_bpsk);
+
   // Time domain occasion.
   builder.set_format1_parameters(f1.time_domain_occ);
 
@@ -77,12 +80,7 @@ void srsgnb::fapi_adaptor::convert_pucch_mac_to_fapi(fapi::ul_pucch_pdu_builder&
 {
   // Handle is not supported.
   static const unsigned handle = 0;
-  // No multi-slot transmission.
-  static const fapi::multi_slot_tx_indicator_type multi_slot =
-      fapi::multi_slot_tx_indicator_type::no_multi_slot_transmission;
-  // Do not use pi/2 BPSK for UCI symbols.
-  static const bool use_pi_to_bpsk = false;
-  builder.set_basic_parameters(mac_pdu.crnti, handle, mac_pdu.format, multi_slot, use_pi_to_bpsk);
+  builder.set_basic_parameters(mac_pdu.crnti, handle);
 
   // :TODO: update CP to the RAN type when it becomes available.
   const bwp_configuration& bwp_cfg = *mac_pdu.bwp_cfg;

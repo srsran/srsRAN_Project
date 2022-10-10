@@ -16,19 +16,29 @@ using namespace fapi;
 
 static void test_basic_params()
 {
-  rnti_t                       rnti        = to_rnti(14);
-  uint32_t                     handle      = 192;
-  pucch_format                 format_type = pucch_format::FORMAT_1;
-  multi_slot_tx_indicator_type multi_slot  = multi_slot_tx_indicator_type::no_multi_slot_transmission;
-  bool                         pi2         = false;
+  rnti_t   rnti   = to_rnti(14);
+  uint32_t handle = 192;
 
   ul_pucch_pdu         pdu;
   ul_pucch_pdu_builder builder(pdu);
 
-  builder.set_basic_parameters(rnti, handle, format_type, multi_slot, pi2);
+  builder.set_basic_parameters(rnti, handle);
 
   TESTASSERT_EQ(rnti, pdu.rnti);
   TESTASSERT_EQ(handle, pdu.handle);
+}
+
+static void test_format_common_params()
+{
+  pucch_format             format_type = pucch_format::FORMAT_1;
+  pucch_repetition_tx_slot multi_slot  = srsgnb::pucch_repetition_tx_slot::no_multi_slot;
+  bool                     pi2         = false;
+
+  ul_pucch_pdu         pdu;
+  ul_pucch_pdu_builder builder(pdu);
+
+  builder.set_format_common_parameters(format_type, multi_slot, pi2);
+
   TESTASSERT_EQ(format_type, pdu.format_type);
   TESTASSERT_EQ(multi_slot, pdu.multi_slot_tx_indicator);
   TESTASSERT_EQ(pi2, pdu.pi2_bpsk);
@@ -227,6 +237,7 @@ static void test_uci_part1_part2_params()
 int main()
 {
   test_basic_params();
+  test_format_common_params();
   test_bwp_params();
   test_allocation_in_freq_params();
   test_allocation_in_time_params();

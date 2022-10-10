@@ -761,10 +761,10 @@ uci_indication_message unittest::build_valid_uci_indication()
   return msg;
 }
 
-static multi_slot_tx_indicator_type generate_multi_slot_tx_indicator()
+static pucch_repetition_tx_slot generate_multi_slot_tx_indicator()
 {
   std::uniform_int_distribution<unsigned> dist(0, 3);
-  return static_cast<multi_slot_tx_indicator_type>(dist(gen));
+  return static_cast<pucch_repetition_tx_slot>(dist(gen));
 }
 
 static unsigned generate_prb_size()

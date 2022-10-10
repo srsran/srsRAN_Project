@@ -17,10 +17,6 @@
 
 namespace srsgnb {
 
-/// Defines whether the PUCCH within the current slot belongs to a PUCCH repetition. For more details, ref. to
-/// TS 38.213, Section 9.2.6.
-enum class pucch_repetition_tx_slot { no_multi_slot, starts, continues, ends };
-
 /// Labels that code how many bits are used for SR.
 /// For PUCCH Format 0-1, valid values: no_sr = no SR occasion; one = SR occasion.
 /// For PUCCH Format 2-3-4, all possible values are valid.

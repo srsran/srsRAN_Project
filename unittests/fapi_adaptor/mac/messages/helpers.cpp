@@ -346,3 +346,27 @@ pusch_information unittests::build_valid_pusch_pdu()
 
   return pusch;
 }
+
+pucch_info unittests::build_valid_pucch_format_1_pdu()
+{
+  pucch_info pucch;
+
+  static bwp_configuration bwp_cfg = {false, subcarrier_spacing::kHz15, {2, 10}};
+
+  pucch.crnti                         = to_rnti(29);
+  pucch.bwp_cfg                       = &bwp_cfg;
+  pucch.format                        = pucch_format::FORMAT_1;
+  pucch.resources.prbs                = {1, 4};
+  pucch.resources.symbols             = {0, 14};
+  pucch.resources.intra_slot_freq_hop = false;
+  pucch.resources.second_hop_prbs     = {2, 12};
+  pucch.format_1.harq_ack_nof_bits    = 2;
+  pucch.format_1.sr_bits              = sr_nof_bits::no_sr;
+  pucch.format_1.time_domain_occ      = 3;
+  pucch.format_1.initial_cyclic_shift = 9;
+  pucch.format_1.n_id_hopping         = 2;
+  pucch.format_1.group_hopping        = srsgnb::pucch_group_hopping::NEITHER;
+  pucch.format_1.slot_repetition      = srsgnb::pucch_repetition_tx_slot::no_multi_slot;
+
+  return pucch;
+}

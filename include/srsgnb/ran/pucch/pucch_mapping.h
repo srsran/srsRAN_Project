@@ -25,6 +25,10 @@ enum class pucch_group_hopping {
 /// \brief PUCCH Formats as described in TS 38.213 clause 9.2.
 enum class pucch_format { FORMAT_0, FORMAT_1, FORMAT_2, FORMAT_3, FORMAT_4, NOF_FORMATS };
 
+/// Defines whether the PUCCH within the current slot belongs to a PUCCH repetition. For more details, ref. to
+/// TS 38.213, Section 9.2.6.
+enum class pucch_repetition_tx_slot { no_multi_slot, starts, continues, ends };
+
 /// Maximum number of symbols (without DMRS) that NR-PUCCH Format 1 can transmit.
 static constexpr unsigned PUCCH_FORMAT1_N_MAX = 7;
 

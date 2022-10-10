@@ -30,5 +30,8 @@ prach_occasion_info build_valid_prach_occassion();
 /// Builds and returns a valid PUSCH PDU.
 pusch_information build_valid_pusch_pdu();
 
+/// Build and returns a valid PUCCH format 1 PDU.
+pucch_info build_valid_pucch_format_1_pdu();
+
 } // namespace unittests
 } // namespace srsgnb

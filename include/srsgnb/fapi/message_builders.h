@@ -1917,14 +1917,19 @@ public:
 
   /// Sets the PUCCH PDU basic parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
-  ul_pucch_pdu_builder& set_basic_parameters(rnti_t                       rnti,
-                                             uint32_t                     handle,
-                                             pucch_format                 format_type,
-                                             multi_slot_tx_indicator_type multi_slot_tx_type,
-                                             bool                         pi2_bpsk)
+  ul_pucch_pdu_builder& set_basic_parameters(rnti_t rnti, uint32_t handle)
   {
-    pdu.rnti                    = rnti;
-    pdu.handle                  = handle;
+    pdu.rnti   = rnti;
+    pdu.handle = handle;
+
+    return *this;
+  }
+
+  /// Sets the PUCCH PDU basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
+  ul_pucch_pdu_builder&
+  set_format_common_parameters(pucch_format format_type, pucch_repetition_tx_slot multi_slot_tx_type, bool pi2_bpsk)
+  {
     pdu.format_type             = format_type;
     pdu.multi_slot_tx_indicator = multi_slot_tx_type;
     pdu.pi2_bpsk                = pi2_bpsk;
@@ -2466,20 +2471,17 @@ public:
     }
 
     ul_pucch_pdu_builder builder(pdu.pucch_pdu);
+    pdu.pucch_pdu.format_type = format_type;
 
     return builder;
   }
 
   /// Adds a PUCCH PDU to the message and returns a builder that helps to fill the parameters.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
-  ul_pucch_pdu_builder add_pucch_pdu(rnti_t                       rnti,
-                                     uint32_t                     handle,
-                                     pucch_format                 format_type,
-                                     multi_slot_tx_indicator_type multi_slot_tx_type,
-                                     bool                         pi2_bpsk)
+  ul_pucch_pdu_builder add_pucch_pdu(rnti_t rnti, uint32_t handle, pucch_format format_type)
   {
     ul_pucch_pdu_builder builder = add_pucch_pdu(format_type);
-    builder.set_basic_parameters(rnti, handle, format_type, multi_slot_tx_type, pi2_bpsk);
+    builder.set_basic_parameters(rnti, handle);
 
     return builder;
   }

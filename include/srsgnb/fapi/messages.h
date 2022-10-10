@@ -616,44 +616,37 @@ struct ul_pucch_maintenance_v3 {
   uint8_t ul_bwp_id;
 };
 
-enum class multi_slot_tx_indicator_type : uint8_t {
-  no_multi_slot_transmission,
-  multi_slot_transmission_starts,
-  multi_slot_transmission_continues,
-  multi_slot_transmission_ends
-};
-
 /// Encodes PUCCH pdu.
 struct ul_pucch_pdu {
-  rnti_t                       rnti;
-  uint32_t                     handle;
-  uint16_t                     bwp_size;
-  uint16_t                     bwp_start;
-  subcarrier_spacing           scs;
-  cyclic_prefix_type           cyclic_prefix;
-  pucch_format                 format_type;
-  multi_slot_tx_indicator_type multi_slot_tx_indicator;
-  bool                         pi2_bpsk;
-  uint16_t                     prb_start;
-  uint16_t                     prb_size;
-  uint8_t                      start_symbol_index;
-  uint8_t                      nr_of_symbols;
-  bool                         intra_slot_frequency_hopping;
-  uint16_t                     second_hop_prb;
-  pucch_group_hopping          pucch_grp_hopping;
-  uint8_t                      reserved;
-  uint16_t                     nid_pucch_hopping;
-  uint16_t                     initial_cyclic_shift;
-  uint16_t                     nid_pucch_scrambling;
-  uint8_t                      time_domain_occ_index;
-  uint8_t                      pre_dft_occ_idx;
-  uint8_t                      pre_dft_occ_len;
-  bool                         add_dmrs_flag;
-  uint16_t                     nid0_pucch_dmrs_scrambling;
-  uint8_t                      m0_pucch_dmrs_cyclic_shift;
-  uint8_t                      sr_bit_len;
-  uint16_t                     bit_len_harq;
-  uint16_t                     csi_part1_bit_length;
+  rnti_t                   rnti;
+  uint32_t                 handle;
+  uint16_t                 bwp_size;
+  uint16_t                 bwp_start;
+  subcarrier_spacing       scs;
+  cyclic_prefix_type       cyclic_prefix;
+  pucch_format             format_type;
+  pucch_repetition_tx_slot multi_slot_tx_indicator;
+  bool                     pi2_bpsk;
+  uint16_t                 prb_start;
+  uint16_t                 prb_size;
+  uint8_t                  start_symbol_index;
+  uint8_t                  nr_of_symbols;
+  bool                     intra_slot_frequency_hopping;
+  uint16_t                 second_hop_prb;
+  pucch_group_hopping      pucch_grp_hopping;
+  uint8_t                  reserved;
+  uint16_t                 nid_pucch_hopping;
+  uint16_t                 initial_cyclic_shift;
+  uint16_t                 nid_pucch_scrambling;
+  uint8_t                  time_domain_occ_index;
+  uint8_t                  pre_dft_occ_idx;
+  uint8_t                  pre_dft_occ_len;
+  bool                     add_dmrs_flag;
+  uint16_t                 nid0_pucch_dmrs_scrambling;
+  uint8_t                  m0_pucch_dmrs_cyclic_shift;
+  uint8_t                  sr_bit_len;
+  uint16_t                 bit_len_harq;
+  uint16_t                 csi_part1_bit_length;
   //: TODO: beamforming struct
   ul_pucch_maintenance_v3              pucch_maintenance_v3;
   uci_part1_to_part2_correspondence_v3 uci_correspondence;

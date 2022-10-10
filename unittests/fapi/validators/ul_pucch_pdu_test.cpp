@@ -34,9 +34,7 @@ static const std::vector<test_group<ul_pucch_pdu>> vector_test_common_fields = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.cyclic_prefix = static_cast<cyclic_prefix_type>(value); },
      "Cyclic prefix",
      {{0, true}, {1, true}, {2, false}}},
-    {[](ul_pucch_pdu& pdu, int value) {
-       pdu.multi_slot_tx_indicator = static_cast<multi_slot_tx_indicator_type>(value);
-     },
+    {[](ul_pucch_pdu& pdu, int value) { pdu.multi_slot_tx_indicator = static_cast<pucch_repetition_tx_slot>(value); },
      "Multi slot tx indicator",
      {{0, true}, {1, true}, {3, true}, {4, false}}},
     {[](ul_pucch_pdu& pdu, int value) { pdu.prb_start = value; },

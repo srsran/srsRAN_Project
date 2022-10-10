@@ -71,13 +71,11 @@ static void test_add_pucch_f0_pdu()
   TESTASSERT_EQ(0U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format234)]);
   TESTASSERT_EQ(0U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format01)]);
 
-  rnti_t                       rnti       = to_rnti(3);
-  uint32_t                     handle     = 3214;
-  pucch_format                 format     = pucch_format::FORMAT_0;
-  multi_slot_tx_indicator_type slot_type  = multi_slot_tx_indicator_type::no_multi_slot_transmission;
-  bool                         pi_to_bpsk = false;
+  rnti_t       rnti   = to_rnti(3);
+  uint32_t     handle = 3214;
+  pucch_format format = pucch_format::FORMAT_0;
 
-  builder.add_pucch_pdu(rnti, handle, format, slot_type, pi_to_bpsk);
+  builder.add_pucch_pdu(rnti, handle, format);
 
   TESTASSERT_EQ(1U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format01)]);
   TESTASSERT_EQ(0U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format234)]);
@@ -87,8 +85,6 @@ static void test_add_pucch_f0_pdu()
   TESTASSERT_EQ(rnti, pdu.rnti);
   TESTASSERT_EQ(handle, pdu.handle);
   TESTASSERT_EQ(format, pdu.format_type);
-  TESTASSERT_EQ(slot_type, pdu.multi_slot_tx_indicator);
-  TESTASSERT_EQ(pi_to_bpsk, pdu.pi2_bpsk);
 }
 
 static void test_add_pucch_f1_pdu()
@@ -100,13 +96,11 @@ static void test_add_pucch_f1_pdu()
   TESTASSERT_EQ(0U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format234)]);
   TESTASSERT_EQ(0U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format01)]);
 
-  rnti_t                       rnti       = to_rnti(3);
-  uint32_t                     handle     = 3214;
-  pucch_format                 format     = pucch_format::FORMAT_1;
-  multi_slot_tx_indicator_type slot_type  = multi_slot_tx_indicator_type::no_multi_slot_transmission;
-  bool                         pi_to_bpsk = false;
+  rnti_t       rnti   = to_rnti(3);
+  uint32_t     handle = 3214;
+  pucch_format format = pucch_format::FORMAT_1;
 
-  builder.add_pucch_pdu(rnti, handle, format, slot_type, pi_to_bpsk);
+  builder.add_pucch_pdu(rnti, handle, format);
 
   TESTASSERT_EQ(1U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format01)]);
   TESTASSERT_EQ(0U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format234)]);
@@ -116,8 +110,6 @@ static void test_add_pucch_f1_pdu()
   TESTASSERT_EQ(rnti, pdu.rnti);
   TESTASSERT_EQ(handle, pdu.handle);
   TESTASSERT_EQ(format, pdu.format_type);
-  TESTASSERT_EQ(slot_type, pdu.multi_slot_tx_indicator);
-  TESTASSERT_EQ(pi_to_bpsk, pdu.pi2_bpsk);
 }
 
 static void test_add_pucch_f2_pdu()
@@ -129,13 +121,11 @@ static void test_add_pucch_f2_pdu()
   TESTASSERT_EQ(0U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format234)]);
   TESTASSERT_EQ(0U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format01)]);
 
-  rnti_t                       rnti       = to_rnti(3);
-  uint32_t                     handle     = 3214;
-  pucch_format                 format     = pucch_format::FORMAT_2;
-  multi_slot_tx_indicator_type slot_type  = multi_slot_tx_indicator_type::no_multi_slot_transmission;
-  bool                         pi_to_bpsk = false;
+  rnti_t       rnti   = to_rnti(3);
+  uint32_t     handle = 3214;
+  pucch_format format = pucch_format::FORMAT_2;
 
-  builder.add_pucch_pdu(rnti, handle, format, slot_type, pi_to_bpsk);
+  builder.add_pucch_pdu(rnti, handle, format);
 
   TESTASSERT_EQ(0U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format01)]);
   TESTASSERT_EQ(1U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format234)]);
@@ -145,8 +135,6 @@ static void test_add_pucch_f2_pdu()
   TESTASSERT_EQ(rnti, pdu.rnti);
   TESTASSERT_EQ(handle, pdu.handle);
   TESTASSERT_EQ(format, pdu.format_type);
-  TESTASSERT_EQ(slot_type, pdu.multi_slot_tx_indicator);
-  TESTASSERT_EQ(pi_to_bpsk, pdu.pi2_bpsk);
 }
 
 static void test_add_pucch_f3_pdu()
@@ -158,13 +146,11 @@ static void test_add_pucch_f3_pdu()
   TESTASSERT_EQ(0U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format234)]);
   TESTASSERT_EQ(0U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format01)]);
 
-  rnti_t                       rnti       = to_rnti(3);
-  uint32_t                     handle     = 3214;
-  pucch_format                 format     = pucch_format::FORMAT_3;
-  multi_slot_tx_indicator_type slot_type  = multi_slot_tx_indicator_type::no_multi_slot_transmission;
-  bool                         pi_to_bpsk = false;
+  rnti_t       rnti   = to_rnti(3);
+  uint32_t     handle = 3214;
+  pucch_format format = pucch_format::FORMAT_3;
 
-  builder.add_pucch_pdu(rnti, handle, format, slot_type, pi_to_bpsk);
+  builder.add_pucch_pdu(rnti, handle, format);
 
   TESTASSERT_EQ(0U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format01)]);
   TESTASSERT_EQ(1U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format234)]);
@@ -174,8 +160,6 @@ static void test_add_pucch_f3_pdu()
   TESTASSERT_EQ(rnti, pdu.rnti);
   TESTASSERT_EQ(handle, pdu.handle);
   TESTASSERT_EQ(format, pdu.format_type);
-  TESTASSERT_EQ(slot_type, pdu.multi_slot_tx_indicator);
-  TESTASSERT_EQ(pi_to_bpsk, pdu.pi2_bpsk);
 }
 
 static void test_add_pucch_f4_pdu()
@@ -187,13 +171,11 @@ static void test_add_pucch_f4_pdu()
   TESTASSERT_EQ(0U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format234)]);
   TESTASSERT_EQ(0U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format01)]);
 
-  rnti_t                       rnti       = to_rnti(3);
-  uint32_t                     handle     = 3214;
-  pucch_format                 format     = pucch_format::FORMAT_4;
-  multi_slot_tx_indicator_type slot_type  = multi_slot_tx_indicator_type::no_multi_slot_transmission;
-  bool                         pi_to_bpsk = false;
+  rnti_t       rnti   = to_rnti(3);
+  uint32_t     handle = 3214;
+  pucch_format format = pucch_format::FORMAT_4;
 
-  builder.add_pucch_pdu(rnti, handle, format, slot_type, pi_to_bpsk);
+  builder.add_pucch_pdu(rnti, handle, format);
 
   TESTASSERT_EQ(0U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format01)]);
   TESTASSERT_EQ(1U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format234)]);
@@ -203,8 +185,6 @@ static void test_add_pucch_f4_pdu()
   TESTASSERT_EQ(rnti, pdu.rnti);
   TESTASSERT_EQ(handle, pdu.handle);
   TESTASSERT_EQ(format, pdu.format_type);
-  TESTASSERT_EQ(slot_type, pdu.multi_slot_tx_indicator);
-  TESTASSERT_EQ(pi_to_bpsk, pdu.pi2_bpsk);
 }
 
 static void test_add_pusch_pdu()
