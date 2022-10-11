@@ -12,6 +12,8 @@
 
 #include "harq_process.h"
 #include "srsgnb/mac/bsr_format.h"
+#include "srsgnb/mac/mac_pdu_format.h"
+#include "srsgnb/scheduler/scheduler_feedback_handler.h"
 
 namespace srsgnb {
 
@@ -39,8 +41,14 @@ public:
     return bytes;
   }
 
-  /// \brief Last UL BSR for given LCG-ID.
-  unsigned pending_bytes(lcg_id_t lcg_id) const { return is_active(lcg_id) ? groups[lcg_id].buf_st : 0; }
+  /// \brief Returns the last UL BSR for given LCG-ID plus the estimated number of bytes required for the upper layer
+  /// headers and MAC subPDU subheader.
+  unsigned pending_bytes(lcg_id_t lcg_id) const
+  {
+    // Note: TS38.321, 6.1.3.1 - The size of the RLC and MAC headers are not considered in the buffer size computation.
+    return is_active(lcg_id) ? get_mac_sdu_required_bytes(add_upper_layer_header_bytes(lcg_id, groups[lcg_id].buf_st))
+                             : 0;
+  }
 
   /// \brief Checks whether a SR indication handling is pending.
   bool has_pending_sr() const { return sr_pending; }
@@ -68,6 +76,20 @@ private:
     /// DL Buffer status of this logical channel.
     unsigned buf_st = 0;
   };
+
+  /// \brief Adds an estimate of the upper layer required header bytes.
+  static unsigned add_upper_layer_header_bytes(lcg_id_t lcgid, unsigned payload_bytes)
+  {
+    // Estimate of the number of bytes required for the upper layer header.
+    constexpr static unsigned RLC_HEADER_SIZE_ESTIMATE = 3U;
+
+    if (payload_bytes == 0 or lcgid == 0) {
+      // In case of no payload or LCG-ID == 0, there is no need to account for upper layer header.
+      return 0;
+    }
+    return payload_bytes + RLC_HEADER_SIZE_ESTIMATE;
+  }
+
   bool sr_pending = false;
 
   std::array<channel_group_context, MAX_NOF_LCGS> groups;

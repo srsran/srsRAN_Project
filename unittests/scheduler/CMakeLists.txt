@@ -61,6 +61,10 @@ add_executable(dl_logical_channel_test dl_logical_channel_test.cpp)
 target_link_libraries(dl_logical_channel_test srsgnb_sched srslog gtest gtest_main)
 add_test(dl_logical_channel_test dl_logical_channel_test)
 
+add_executable(ul_logical_channel_test ul_logical_channel_test.cpp)
+target_link_libraries(ul_logical_channel_test srsgnb_sched srslog gtest gtest_main)
+add_test(ul_logical_channel_test ul_logical_channel_test)
+
 add_executable(sched_no_ue_test sched_no_ue_test.cpp)
 target_link_libraries(sched_no_ue_test srsgnb_sched srslog mac_configuration_helpers
                       sched_config

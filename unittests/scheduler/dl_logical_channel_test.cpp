@@ -46,6 +46,7 @@ TEST(dl_logical_channel_test, when_buffer_state_is_zero_no_tx_data_is_pending)
 {
   dl_logical_channel_manager lch_mng;
   lcid_t                     lcid = (lcid_t)get_random_uint(0, MAX_LCID);
+  lch_mng.set_status(lcid, true);
   lch_mng.handle_dl_buffer_status_indication(lcid, 0);
 
   ASSERT_EQ(lch_mng.pending_bytes(lcid), 0);
