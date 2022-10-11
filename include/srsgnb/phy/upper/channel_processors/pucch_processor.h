@@ -12,9 +12,11 @@
 
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/phy/constants.h"
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/upper/channel_processors/pucch_processor_result.h"
 #include "srsgnb/phy/upper/channel_processors/pucch_uci_message.h"
+#include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/modulation_scheme.h"
 #include "srsgnb/ran/slot_point.h"
 

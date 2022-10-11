@@ -14,7 +14,10 @@
 #pragma once
 
 #include "srsgnb/phy/upper/channel_processors/prach_detector.h"
+#include "srsgnb/phy/upper/channel_processors/pucch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_processor.h"
+#include "srsgnb/ran/pucch/pucch_mapping.h"
+#include "srsgnb/ran/rnti.h"
 
 namespace srsgnb {
 
@@ -24,15 +27,15 @@ class slot_point;
 
 /// \brief Uplink processor interface.
 ///
-/// The uplink processor is in charge of handling incoming requests to process the physical uplink channels within a
-/// certain slot.
+/// The uplink processor is in charge of handling incoming requests to process the physical uplink channels within
+/// a certain slot.
 ///
 /// Requests are dispatched asynchronously as they get enqueued for execution, and generate an event through the \ref
 /// upper_phy_rx_results_notifier interface upon completion.
 class uplink_processor
 {
 public:
-  /// PUSCH PDU and metadata.
+  /// PUSCH PDU configuration.
   struct pusch_pdu {
     /// HARQ process number.
     unsigned harq_id;
@@ -40,6 +43,29 @@ public:
     unsigned tb_size;
     /// PUSCH processor PDU.
     pusch_processor::pdu_t pdu;
+  };
+
+  /// PUCCH PDU configuration.
+  struct pucch_pdu {
+    /// Slot point.
+    slot_point slot;
+    /// Cyclic prefix type.
+    cyclic_prefix cp;
+    /// Radio Network Temporary Identifier (RNTI).
+    rnti_t rnti;
+    /// PUCCH format.
+    pucch_format format_type;
+    // :TODO: the formats will use a variant when available.
+    /// PUCCH format 0.
+    pucch_processor::format0_configuration format0;
+    /// PUCCH format 1.
+    pucch_processor::format1_configuration format1;
+    /// PUCCH format 2.
+    pucch_processor::format2_configuration format2;
+    /// PUCCH format 3.
+    pucch_processor::format3_configuration format3;
+    /// PUCCH format 4.
+    pucch_processor::format4_configuration format4;
   };
 
   virtual ~uplink_processor() = default;
@@ -65,6 +91,12 @@ public:
                              rx_softbuffer&                     softbuffer,
                              const resource_grid_reader&        grid,
                              const uplink_processor::pusch_pdu& pdu) = 0;
+
+  /// \brief Processes a PUCCH transmission.
+  ///
+  /// \param[in] grid Resource grid.
+  /// \param[in] pdu  PUCCH transmission parameters.
+  virtual void process_pucch(const resource_grid_reader& grid, const pucch_pdu& pdu) = 0;
 };
 
 /// \brief Pool of uplink processors.

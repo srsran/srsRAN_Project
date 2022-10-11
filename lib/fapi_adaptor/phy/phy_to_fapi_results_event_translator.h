@@ -32,7 +32,10 @@ public:
   // See interface for documentation.
   void on_new_pusch_results(const ul_pusch_results& result) override;
 
-  /// \brief Configures the FAPI slot-based, data-specific notifier to the given one.
+  // See interface for documentation.
+  void on_new_pucch_results(const ul_pucch_results& result) override;
+
+  /// Configures the FAPI slot-based, data-specific notifier to the given one.
   void set_slot_data_message_notifier(fapi::slot_data_message_notifier& fapi_data_slot_notifier)
   {
     data_notifier = std::ref(fapi_data_slot_notifier);

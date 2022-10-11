@@ -25,7 +25,8 @@ struct uplink_slot_pdu_entry {
   // :TODO: convert this to variant.
   /// PUSCH PDU.
   uplink_processor::pusch_pdu pusch;
-  // :TOOD: add the PUCCH PDU.
+  /// PUCCH PDU.
+  uplink_processor::pucch_pdu pucch;
 };
 
 /// \brief Uplink slot PDU repository.
@@ -52,11 +53,21 @@ public:
     uplink_slot_pdu_entry entry;
     entry.type  = uplink_slot_pdu_entry::pdu_type::PUSCH;
     entry.pusch = pdu;
+    entry.pucch = {};
 
     repository[slot.to_uint()].push_back(entry);
   }
 
-  // :TODO: extend with PUCCH.
+  /// Adds the given PUCCH PDU to the repository at the given slot.
+  void add_pucch_pdu(slot_point slot, const uplink_processor::pucch_pdu& pdu)
+  {
+    uplink_slot_pdu_entry entry;
+    entry.type  = uplink_slot_pdu_entry::pdu_type::PUCCH;
+    entry.pucch = pdu;
+    entry.pusch = {};
+
+    repository[slot.to_uint()].push_back(entry);
+  }
 
   /// Clears the given slot of the registry.
   void clear_slot(slot_point slot) { repository[slot.to_uint()].clear(); }

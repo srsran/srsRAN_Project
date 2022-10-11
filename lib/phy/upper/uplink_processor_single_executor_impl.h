@@ -27,6 +27,7 @@ class uplink_processor_single_executor_impl : public uplink_processor
 public:
   uplink_processor_single_executor_impl(std::unique_ptr<prach_detector>  detector_,
                                         std::unique_ptr<pusch_processor> pusch_proc_,
+                                        std::unique_ptr<pucch_processor> pucch_proc_,
                                         task_executor&                   executor,
                                         upper_phy_rx_results_notifier&   results_notifier);
 
@@ -39,11 +40,16 @@ public:
                      const resource_grid_reader&        grid,
                      const uplink_processor::pusch_pdu& pdu) override;
 
+  // See interface for documentation.
+  void process_pucch(const resource_grid_reader& grid, const pucch_pdu& pdu) override;
+
 private:
   /// PRACH detector.
   std::unique_ptr<prach_detector> detector;
   /// PUSCH processor.
   std::unique_ptr<pusch_processor> pusch_proc;
+  /// PUCCH processor.
+  std::unique_ptr<pucch_processor> pucch_proc;
   /// Executor for the tasks generated within this uplink processor.
   task_executor& executor;
   /// Notifier of results for the processing tasks.

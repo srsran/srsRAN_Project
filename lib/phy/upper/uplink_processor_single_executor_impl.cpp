@@ -33,15 +33,18 @@ static prach_detector::configuration get_prach_dectector_config_from_prach_conte
 uplink_processor_single_executor_impl::uplink_processor_single_executor_impl(
     std::unique_ptr<prach_detector>  detector_,
     std::unique_ptr<pusch_processor> pusch_proc_,
+    std::unique_ptr<pucch_processor> pucch_proc_,
     task_executor&                   executor,
     upper_phy_rx_results_notifier&   results_notifier) :
   detector(std::move(detector_)),
   pusch_proc(std::move(pusch_proc_)),
+  pucch_proc(std::move(pucch_proc_)),
   executor(executor),
   results_notifier(results_notifier)
 {
   srsgnb_assert(detector, "A valid PRACH detector must be provided");
   srsgnb_assert(pusch_proc, "A valid PUSCH processor must be provided");
+  srsgnb_assert(pucch_proc, "A valid PUCCH processor must be provided");
 }
 
 void uplink_processor_single_executor_impl::process_prach(const prach_buffer&         buffer,
@@ -85,5 +88,44 @@ void uplink_processor_single_executor_impl::process_pusch(span<uint8_t>         
 
     // Notify the PUSCH results.
     results_notifier.on_new_pusch_results(result);
+  });
+}
+
+void uplink_processor_single_executor_impl::process_pucch(const resource_grid_reader&        grid,
+                                                          const uplink_processor::pucch_pdu& pdu)
+{
+  executor.execute([&grid, pdu, this]() {
+    srsgnb_assert(pdu.format_type == pucch_format::FORMAT_1, "Currently supporting PUCCH format 1 exclusively");
+
+    pucch_processor_result proc_result;
+    ul_pucch_results       result;
+    // Process the PUCCH.
+    switch (pdu.format_type) {
+      case pucch_format::FORMAT_0:
+        proc_result = pucch_proc->process(grid, pdu.format0);
+        break;
+      case pucch_format::FORMAT_1:
+        proc_result = pucch_proc->process(grid, pdu.format1);
+        break;
+      case pucch_format::FORMAT_2:
+        proc_result = pucch_proc->process(grid, pdu.format2);
+        break;
+      case pucch_format::FORMAT_3:
+        proc_result = pucch_proc->process(grid, pdu.format3);
+        break;
+      case pucch_format::FORMAT_4:
+        proc_result = pucch_proc->process(grid, pdu.format4);
+        break;
+      default:
+        srsgnb_assert(0, "Invalid PUCCH format={}", pdu.format_type);
+    }
+
+    // Write the results.
+    result.rnti             = pdu.rnti;
+    result.slot             = pdu.slot;
+    result.processor_result = proc_result;
+
+    // Notify the PUCCH results.
+    results_notifier.on_new_pucch_results(result);
   });
 }

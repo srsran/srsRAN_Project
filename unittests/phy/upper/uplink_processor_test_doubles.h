@@ -31,6 +31,8 @@ public:
   {
   }
 
+  void process_pucch(const resource_grid_reader& grid, const pucch_pdu& config) override {}
+
   bool has_process_prach_method_called() const { return has_proces_prach_method_called; }
 };
 

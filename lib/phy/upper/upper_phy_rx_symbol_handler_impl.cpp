@@ -34,8 +34,9 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
                 "processed in the slot={}",
                 context.slot);
 
-  // :TODO: update this when adding PUCCH. First PDU can be a PUCCH PDU.
-  unsigned nof_symbols    = get_nsymb_per_slot(pdus.front().pusch.pdu.cp);
+  const uplink_slot_pdu_entry& first_entry = pdus.front();
+  unsigned                     nof_symbols = get_nsymb_per_slot(
+      (first_entry.type == uplink_slot_pdu_entry::pdu_type::PUSCH) ? first_entry.pusch.pdu.cp : first_entry.pucch.cp);
   unsigned last_symbol_id = nof_symbols - 1U;
 
   // Process the PDUs when all symbols of the slot have been received.
@@ -49,12 +50,11 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
   // Process all the PDUs from the pool.
   for (const auto& pdu : pdus) {
     switch (pdu.type) {
-      case uplink_slot_pdu_entry::pdu_type::PUSCH: {
+      case uplink_slot_pdu_entry::pdu_type::PUSCH:
         process_pusch(pdu.pusch, ul_processor, grid, context.slot);
         break;
-      }
       case uplink_slot_pdu_entry::pdu_type::PUCCH:
-        // :TODO: add PUCCH.
+        ul_processor.process_pucch(grid, pdu.pucch);
         break;
     }
   }

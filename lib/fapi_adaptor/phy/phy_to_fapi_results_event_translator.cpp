@@ -166,3 +166,37 @@ void phy_to_fapi_results_event_translator::notify_rx_data_indication(const ul_pu
 
   data_notifier.get().on_rx_data_indication(msg);
 }
+
+void phy_to_fapi_results_event_translator::on_new_pucch_results(const ul_pucch_results& result)
+{
+  fapi::uci_indication_message         msg;
+  fapi::uci_indication_message_builder builder(msg);
+
+  builder.set_basic_parameters(result.slot.sfn(), result.slot.slot_index());
+
+  // Do not use the handle for now.
+  static const unsigned handle = 0;
+
+  if (result.format == pucch_format::FORMAT_0 || result.format == pucch_format::FORMAT_1) {
+    fapi::uci_pucch_pdu_format_0_1_builder builder_format01 =
+        builder.add_format_0_1_pucch_pdu(handle, result.rnti, result.format);
+
+    const channel_state_information& csi_info = result.processor_result.csi;
+    builder_format01.set_metrics_parameters(
+        {csi_info.sinr_dB}, {}, {static_cast<int>(csi_info.time_alignment.to_seconds() * 1e9)}, {}, {csi_info.rsrp_dB});
+
+    builder_format01.set_harq_parameters({}, result.processor_result.message.harq_ack);
+
+    // :TODO: Add SR.
+  } else {
+    // :TODO: add the rest of the formats.
+  }
+
+  error_type<fapi::validator_report> validation_result = validate_uci_indication(msg);
+  if (!validation_result) {
+    log_validator_report(validation_result.error());
+    return;
+  }
+
+  data_notifier.get().on_uci_indication(msg);
+}

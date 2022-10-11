@@ -23,6 +23,8 @@ public:
 
   void on_new_pusch_results(const ul_pusch_results& result) override {}
 
+  void on_new_pucch_results(const ul_pucch_results& result) override {}
+
   bool has_prach_result_been_notified() const { return prach_results_notified; }
 };
 

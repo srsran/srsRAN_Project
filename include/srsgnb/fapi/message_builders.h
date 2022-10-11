@@ -22,6 +22,8 @@
 namespace srsgnb {
 namespace fapi {
 
+// :TODO: Review the builders documentation so it matches the UCI builder.
+
 /// Helper class to fill in the DL SSB PDU parameters specified in SCF-222 v4.0 section 3.4.2.4.
 class dl_ssb_pdu_builder
 {
@@ -1258,7 +1260,7 @@ public:
   }
 };
 
-/// RACH.indication message builder that helps to fill in the parameters specified in SCF-222 v4.0 section 3.4.11.
+/// \e RACH.indication message builder that helps to fill in the parameters specified in SCF-222 v4.0 Section 3.4.11.
 class rach_indication_message_builder
 {
   rach_indication_message& msg;
@@ -1298,7 +1300,7 @@ public:
   }
 };
 
-/// UCI PUSCH PDU builder that helps fill in the parameters specified in SCF-222 v4.0 section 3.4.9.1
+/// UCI PUSCH PDU builder that helps fill in the parameters specified in SCF-222 v4.0 section 3.4.9.1.
 class uci_pusch_pdu_builder
 {
   uci_pusch_pdu& pdu;
@@ -1306,8 +1308,8 @@ class uci_pusch_pdu_builder
 public:
   explicit uci_pusch_pdu_builder(uci_pusch_pdu& pdu) : pdu(pdu) { pdu.pdu_bitmap = 0; }
 
-  /// Sets the UCI PUSCH PDU basic parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.1 in table UCI PUSCH PDU.
+  /// \brief Sets the UCI PUSCH PDU basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.1 in Table UCI PUSCH PDU.
   uci_pusch_pdu_builder& set_basic_parameters(uint32_t handle, rnti_t rnti)
   {
     pdu.handle = handle;
@@ -1316,8 +1318,8 @@ public:
     return *this;
   }
 
-  /// Sets the UCI PUSCH PDU metrics parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.1 in table UCI PUSCH PDU.
+  /// \brief Sets the UCI PUSCH PDU metrics parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.1 in Table UCI PUSCH PDU.
   uci_pusch_pdu_builder& set_metrics_parameters(optional<float>    ul_sinr_metric,
                                                 optional<unsigned> timing_advance_offset,
                                                 optional<int>      timing_advance_offset_ns,
@@ -1371,9 +1373,9 @@ public:
     return *this;
   }
 
-  /// Sets the HARQ PDU parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table HARQ PDU for format 2,3 or 4 or for
-  /// PUSCH.
+  /// \brief Sets the HARQ PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table HARQ PDU for Format 2, Format 3 or
+  /// Format 4 or for PUSCH.
   uci_pusch_pdu_builder&
   set_harq_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
   {
@@ -1388,8 +1390,8 @@ public:
     return *this;
   }
 
-  /// Sets the CSI part 1 PDU parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table CSI Part1 PDU.
+  /// \brief Sets the CSI part 1 PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table CSI Part1 PDU.
   uci_pusch_pdu_builder&
   set_csi_part1_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
   {
@@ -1403,8 +1405,8 @@ public:
     return *this;
   }
 
-  /// Sets the CSI part 2 PDU parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table CSI Part2 PDU.
+  /// \brief Sets the CSI part 2 PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table CSI Part2 PDU.
   uci_pusch_pdu_builder&
   set_csi_part2_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
   {
@@ -1419,7 +1421,8 @@ public:
   }
 };
 
-/// UCI PUCCH PDU format 0/1 builder that helps fill in the parameters specified in SCF-222 v4.0 section 3.4.9.2
+/// UCI PUCCH PDU Format 0 or Format 1 builder that helps fill in the parameters specified in SCF-222 v4.0
+/// Section 3.4.9.2.
 class uci_pucch_pdu_format_0_1_builder
 {
   uci_pucch_pdu_format_0_1& pdu;
@@ -1427,20 +1430,29 @@ class uci_pucch_pdu_format_0_1_builder
 public:
   explicit uci_pucch_pdu_format_0_1_builder(uci_pucch_pdu_format_0_1& pdu) : pdu(pdu) { pdu.pdu_bitmap = 0; }
 
-  /// Sets the UCI PUCCH PDU format 0/1 basic parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.2 in table UCI PUCCH format 0 or 1 PDU.
-  uci_pucch_pdu_format_0_1_builder&
-  set_basic_parameters(uint32_t handle, rnti_t rnti, uci_pucch_pdu_format_0_1::format_type type)
+  /// \brief Sets the UCI PUCCH PDU Format 0 and Format 1 basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.2 in Table UCI PUCCH Format 0 or Format 1 PDU.
+  uci_pucch_pdu_format_0_1_builder& set_basic_parameters(uint32_t handle, rnti_t rnti, pucch_format type)
   {
-    pdu.handle       = handle;
-    pdu.rnti         = rnti;
-    pdu.pucch_format = type;
+    pdu.handle = handle;
+    pdu.rnti   = rnti;
+    switch (type) {
+      case pucch_format::FORMAT_0:
+        pdu.pucch_format = uci_pucch_pdu_format_0_1::format_type::format_0;
+        break;
+      case pucch_format::FORMAT_1:
+        pdu.pucch_format = uci_pucch_pdu_format_0_1::format_type::format_1;
+        break;
+      default:
+        srsgnb_assert(0, "PUCCH format={} is not supported by this PDU", type);
+        break;
+    }
 
     return *this;
   }
 
-  /// Sets the UCI PUCCH PDU format 0/1 metrics parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.2 in table UCI PUCCH format 0 or 1 PDU.
+  /// \brief Sets the UCI PUCCH PDU Format 0 and Format 1 metrics parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.2 in Table UCI PUCCH Format 0 or Format 1 PDU.
   uci_pucch_pdu_format_0_1_builder& set_metrics_parameters(optional<float>    ul_sinr_metric,
                                                            optional<unsigned> timing_advance_offset,
                                                            optional<int>      timing_advance_offset_ns,
@@ -1494,8 +1506,8 @@ public:
     return *this;
   }
 
-  /// Sets the SR PDU parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table SR PDU for format 0 or 1 PDU.
+  /// \brief Sets the SR PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table SR PDU for Format 0 or Format 1 PDU.
   uci_pucch_pdu_format_0_1_builder& set_sr_parameters(bool detected, optional<unsigned> confidence_level)
   {
     pdu.pdu_bitmap.set(uci_pucch_pdu_format_0_1::SR_BIT);
@@ -1509,8 +1521,9 @@ public:
     return *this;
   }
 
-  /// Sets the HARQ PDU parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.2 in table HARQ PDU for format 0 or 1 PDU.
+  /// \brief Sets the HARQ PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.2 in Table HARQ PDU for Format 0 or Format 1
+  /// PDU.
   uci_pucch_pdu_format_0_1_builder& set_harq_parameters(optional<unsigned> confidence_level, span<const uint8_t> value)
   {
     pdu.pdu_bitmap.set(uci_pucch_pdu_format_0_1::HARQ_BIT);
@@ -1523,7 +1536,8 @@ public:
   }
 };
 
-/// UCI PUSCH PDU format 2/3/4 builder that helps fill in the parameters specified in SCF-222 v4.0 section 3.4.9.3
+/// UCI PUSCH PDU Format 2, Format 3 or Format 4 builder that helps fill in the parameters specified in SCF-222 v4.0
+/// Section 3.4.9.3.
 class uci_pucch_pdu_format_2_3_4_builder
 {
   uci_pucch_pdu_format_2_3_4& pdu;
@@ -1531,20 +1545,35 @@ class uci_pucch_pdu_format_2_3_4_builder
 public:
   explicit uci_pucch_pdu_format_2_3_4_builder(uci_pucch_pdu_format_2_3_4& pdu) : pdu(pdu) { pdu.pdu_bitmap = 0; }
 
-  /// Sets the UCI PUCCH format 2/3/4 PDU basic parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.3 in table UCI PUCCH format 2,3 or 4 PDU.
-  uci_pucch_pdu_format_2_3_4_builder&
-  set_basic_parameters(uint32_t handle, rnti_t rnti, uci_pucch_pdu_format_2_3_4::format_type type)
+  /// \brief Sets the UCI PUCCH Format 2, Format 3 and Format 4 PDU basic parameters and returns a reference to the
+  /// builder. \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.3 in Table UCI PUCCH Format 2, Format
+  /// 3 or Format 4 PDU.
+  uci_pucch_pdu_format_2_3_4_builder& set_basic_parameters(uint32_t handle, rnti_t rnti, pucch_format type)
   {
-    pdu.handle       = handle;
-    pdu.rnti         = rnti;
-    pdu.pucch_format = type;
+    pdu.handle = handle;
+    pdu.rnti   = rnti;
+    switch (type) {
+      case pucch_format::FORMAT_2:
+        pdu.pucch_format = uci_pucch_pdu_format_2_3_4::format_type::format_2;
+        break;
+      case pucch_format::FORMAT_3:
+        pdu.pucch_format = uci_pucch_pdu_format_2_3_4::format_type::format_3;
+        break;
+      case pucch_format::FORMAT_4:
+        pdu.pucch_format = uci_pucch_pdu_format_2_3_4::format_type::format_4;
+        break;
+      default:
+        srsgnb_assert(0, "PUCCH format={} is not supported by this PDU", type);
+        break;
+    }
 
     return *this;
   }
 
-  /// Sets the UCI PUCCH format 2/3/4 PDU metric parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.3 in table UCI PUCCH format 2,3 or 4 PDU.
+  /// \brief Sets the UCI PUCCH Format 2, Format 3 and Format 4 PDU metric parameters and returns a reference to the
+  /// builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.3 in Table UCI PUCCH Format 2, Format
+  /// 3 or Format 4 PDU.
   uci_pucch_pdu_format_2_3_4_builder& set_metrics_parameters(optional<float>    ul_sinr_metric,
                                                              optional<unsigned> timing_advance_offset,
                                                              optional<int>      timing_advance_offset_ns,
@@ -1598,8 +1627,9 @@ public:
     return *this;
   }
 
-  /// Sets the SR PDU parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table SR PDU for format 2,3 or 4 PDU.
+  /// \brief Sets the SR PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.3 in Table UCI PUCCH Format 2, Format 3 or
+  /// Format 4 PDU.
   uci_pucch_pdu_format_2_3_4_builder& set_sr_parameters(uint16_t bit_length, span<const uint8_t> payload)
   {
     pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::SR_BIT);
@@ -1613,8 +1643,9 @@ public:
     return *this;
   }
 
-  /// Sets the HARQ PDU parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table HARQ PDU for format 2,3 or 4 PDU.
+  /// \brief Sets the HARQ PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.3 in Table UCI PUCCH Format 2, Format 3 or
+  /// Format 4 PDU.
   uci_pucch_pdu_format_2_3_4_builder&
   set_harq_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
   {
@@ -1629,8 +1660,8 @@ public:
     return *this;
   }
 
-  /// Sets the CSI Part 1 PDU parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table CSI Part 1 PDU.
+  /// \brief Sets the CSI Part 1 PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table CSI Part 1 PDU.
   uci_pucch_pdu_format_2_3_4_builder&
   set_csi_part1_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
   {
@@ -1644,8 +1675,8 @@ public:
     return *this;
   }
 
-  /// Sets the CSI Part 2 PDU parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table CSI Part 2 PDU.
+  /// \brief Sets the CSI Part 2 PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table CSI Part 2 PDU.
   uci_pucch_pdu_format_2_3_4_builder&
   set_csi_part2_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
   {
@@ -1659,8 +1690,8 @@ public:
     return *this;
   }
 
-  /// Sets the UCI Part 1 Payload parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table UCI Payload for PUSCH or PUCCH
+  /// \brief Sets the UCI Part 1 Payload parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table UCI Payload for PUSCH or PUCCH
   /// transport.
   uci_pucch_pdu_format_2_3_4_builder&
   set_uci_part1_payload(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
@@ -1676,8 +1707,8 @@ public:
     return *this;
   }
 
-  /// Sets the UCI Part 2 Payload parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table UCI Payload for PUSCH or PUCCH
+  /// \brief Sets the UCI Part 2 Payload parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table UCI Payload for PUSCH or PUCCH
   /// transport.
   uci_pucch_pdu_format_2_3_4_builder&
   set_uci_part2_payload(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
@@ -1694,7 +1725,7 @@ public:
   }
 };
 
-/// UCI.indication message builder that helps to fill in the parameters specified in SCF-222 v4.0 section 3.4.9.
+/// UCI.indication message builder that helps to fill in the parameters specified in SCF-222 v4.0 Section 3.4.9.
 class uci_indication_message_builder
 {
   uci_indication_message& msg;
@@ -1702,8 +1733,8 @@ class uci_indication_message_builder
 public:
   explicit uci_indication_message_builder(uci_indication_message& msg) : msg(msg) {}
 
-  /// Sets the UCI.indication basic parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9 in table UCI.indication message body.
+  /// \brief Sets the \e UCI.indication basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9 in table UCI.indication message body.
   uci_indication_message_builder& set_basic_parameters(uint16_t sfn, uint16_t slot)
   {
     msg.sfn  = sfn;
@@ -1712,7 +1743,7 @@ public:
     return *this;
   }
 
-  /// Adds a PUSCH PDU to the UCI.indication message and returns a PUSCH PDU builder.
+  /// Adds a PUSCH PDU to the \e UCI.indication message and returns a PUSCH PDU builder.
   uci_pusch_pdu_builder add_pusch_pdu(uint32_t handle, rnti_t rnti)
   {
     msg.pdus.emplace_back();
@@ -1726,9 +1757,9 @@ public:
     return builder;
   }
 
-  /// Adds a PUCCH format 0/1 PDU to the UCI.indication message and returns a PUCCH format 0/1 PDU builder.
-  uci_pucch_pdu_format_0_1_builder
-  add_uci_pucch_pdu_format_0_1_pdu(uint32_t handle, rnti_t rnti, uci_pucch_pdu_format_0_1::format_type type)
+  /// Adds a PUCCH Format 0 and Format 1 PDU to the \e UCI.indication message and returns a PUCCH Format 0 and Format 1
+  /// PDU builder.
+  uci_pucch_pdu_format_0_1_builder add_format_0_1_pucch_pdu(uint32_t handle, rnti_t rnti, pucch_format type)
   {
     msg.pdus.emplace_back();
     auto& pdu = msg.pdus.back();
@@ -1741,9 +1772,9 @@ public:
     return builder;
   }
 
-  /// Adds a PUCCH format 2/3/4 PDU to the UCI.indication message and returns a PUCCH format 2/3/4 PDU builder.
-  uci_pucch_pdu_format_2_3_4_builder
-  add_uci_pucch_pdu_format_2_3_4_pdu(uint32_t handle, rnti_t rnti, uci_pucch_pdu_format_2_3_4::format_type type)
+  /// Adds a PUCCH Format 2, Format 3 and Format 4  PDU to the \e UCI.indication message and returns a PUCCH Format 2,
+  /// Format 3 and Format 4 PDU builder.
+  uci_pucch_pdu_format_2_3_4_builder add_format_2_3_4_pucch_pdu(uint32_t handle, rnti_t rnti, pucch_format type)
   {
     msg.pdus.emplace_back();
     auto& pdu = msg.pdus.back();

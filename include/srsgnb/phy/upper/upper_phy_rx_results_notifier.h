@@ -17,7 +17,9 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/support/prach_buffer_context.h"
 #include "srsgnb/phy/upper/channel_processors/prach_detection_result.h"
+#include "srsgnb/phy/upper/channel_processors/pucch_processor_result.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_processor_result.h"
+#include "srsgnb/ran/pucch/pucch_mapping.h"
 #include "srsgnb/ran/rnti.h"
 
 namespace srsgnb {
@@ -30,7 +32,7 @@ struct ul_prach_results {
   prach_detection_result result;
 };
 
-/// PUSCH results and metadata.
+/// PUSCH results structure.
 struct ul_pusch_results {
   /// PUSCH data processing results, metadata and payload.
   struct pusch_data {
@@ -57,6 +59,18 @@ struct ul_pusch_results {
   optional<pusch_data> data;
 };
 
+/// PUCCH results and metadata.
+struct ul_pucch_results {
+  /// Slot description (also specifies the numerology).
+  slot_point slot;
+  /// Radio Network Temporary Identifier (RNTI).
+  rnti_t rnti;
+  /// PUCCH format type.
+  pucch_format format;
+  /// PUCCH processor result.
+  pucch_processor_result processor_result;
+};
+
 /// \brief Interface of the upper-PHY notifier in charge of messages carrying the result of uplink detection and
 /// decoding.
 class upper_phy_rx_results_notifier
@@ -70,6 +84,9 @@ public:
 
   /// \brief Notifies the results of a PUSCH decodification.
   virtual void on_new_pusch_results(const ul_pusch_results& result) = 0;
+
+  /// \brief Notifies the results of a PUCCH decodification.
+  virtual void on_new_pucch_results(const ul_pucch_results& result) = 0;
 };
 
 } // namespace srsgnb

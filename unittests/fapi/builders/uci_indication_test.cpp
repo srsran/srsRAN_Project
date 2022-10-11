@@ -437,11 +437,11 @@ static void test_uci_add_pucch_format_0_1_pdu()
   uci_indication_message         msg;
   uci_indication_message_builder builder(msg);
 
-  unsigned                              handle = handle_dist(gen);
-  rnti_t                                rnti   = to_rnti(rnti_dist(gen));
-  uci_pucch_pdu_format_0_1::format_type format = static_cast<uci_pucch_pdu_format_0_1::format_type>(format_dist(gen));
+  unsigned     handle = handle_dist(gen);
+  rnti_t       rnti   = to_rnti(rnti_dist(gen));
+  pucch_format format = static_cast<pucch_format>(format_dist(gen));
 
-  builder.add_uci_pucch_pdu_format_0_1_pdu(handle, rnti, format);
+  builder.add_format_0_1_pucch_pdu(handle, rnti, format);
 
   TESTASSERT_EQ(1, msg.pdus.size());
   TESTASSERT_EQ(uci_pdu_type::PUCCH_format_0_1, msg.pdus.back().pdu_type);
@@ -449,24 +449,25 @@ static void test_uci_add_pucch_format_0_1_pdu()
   const auto& pdu = msg.pdus.back().pucch_pdu_f01;
   TESTASSERT_EQ(rnti, pdu.rnti);
   TESTASSERT_EQ(handle, pdu.handle);
-  TESTASSERT_EQ(format, pdu.pucch_format);
+  TESTASSERT_EQ((format == srsgnb::pucch_format::FORMAT_0) ? uci_pucch_pdu_format_0_1::format_type::format_0
+                                                           : uci_pucch_pdu_format_0_1::format_type::format_1,
+                pdu.pucch_format);
 }
 
 static void test_uci_add_pucch_format_2_3_4_pdu()
 {
   std::uniform_int_distribution<unsigned> handle_dist(0, 1023);
   std::uniform_int_distribution<unsigned> rnti_dist(1, 65535);
-  std::uniform_int_distribution<unsigned> format_dist(0, 2);
+  std::uniform_int_distribution<unsigned> format_dist(2, 4);
 
   uci_indication_message         msg;
   uci_indication_message_builder builder(msg);
 
-  unsigned                                handle = handle_dist(gen);
-  rnti_t                                  rnti   = to_rnti(rnti_dist(gen));
-  uci_pucch_pdu_format_2_3_4::format_type format =
-      static_cast<uci_pucch_pdu_format_2_3_4::format_type>(format_dist(gen));
+  unsigned     handle = handle_dist(gen);
+  rnti_t       rnti   = to_rnti(rnti_dist(gen));
+  pucch_format format = static_cast<pucch_format>(format_dist(gen));
 
-  builder.add_uci_pucch_pdu_format_2_3_4_pdu(handle, rnti, format);
+  builder.add_format_2_3_4_pucch_pdu(handle, rnti, format);
 
   TESTASSERT_EQ(1, msg.pdus.size());
   TESTASSERT_EQ(uci_pdu_type::PUCCH_format_2_3_4, msg.pdus.back().pdu_type);
@@ -474,7 +475,7 @@ static void test_uci_add_pucch_format_2_3_4_pdu()
   const auto& pdu = msg.pdus.back().pucch_pdu_f234;
   TESTASSERT_EQ(rnti, pdu.rnti);
   TESTASSERT_EQ(handle, pdu.handle);
-  TESTASSERT_EQ(format, pdu.pucch_format);
+  TESTASSERT_EQ((static_cast<unsigned>(format) - 2U), static_cast<unsigned>(pdu.pucch_format));
 }
 
 static void test_uci_indication_ok()

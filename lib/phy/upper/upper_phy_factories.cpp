@@ -36,12 +36,18 @@ class uplink_processor_single_executor_factory : public uplink_processor_factory
 public:
   uplink_processor_single_executor_factory(std::shared_ptr<prach_detector_factory>  prach_factory_,
                                            std::shared_ptr<pusch_processor_factory> pusch_factory_,
+                                           std::shared_ptr<pucch_processor_factory> pucch_factory_,
                                            task_executor&                           executor,
                                            upper_phy_rx_results_notifier&           results_notifier) :
-    prach_factory(prach_factory_), pusch_factory(pusch_factory_), executor(executor), results_notifier(results_notifier)
+    prach_factory(prach_factory_),
+    pusch_factory(pusch_factory_),
+    pucch_factory(pucch_factory_),
+    executor(executor),
+    results_notifier(results_notifier)
   {
     report_fatal_error_if_not(prach_factory, "Invalid PRACH factory.");
     report_fatal_error_if_not(pusch_factory, "Invalid PUSCH factory.");
+    report_fatal_error_if_not(pucch_factory, "Invalid PUCCH factory.");
   }
 
   // See interface for documentation.
@@ -53,13 +59,17 @@ public:
     std::unique_ptr<pusch_processor> pusch_proc = pusch_factory->create();
     report_fatal_error_if_not(pusch_proc, "Invalid PUSCH processor.");
 
+    std::unique_ptr<pucch_processor> pucch_proc = pucch_factory->create();
+    report_fatal_error_if_not(pucch_proc, "Invalid PUCCH processor.");
+
     return std::make_unique<uplink_processor_single_executor_impl>(
-        std::move(detector), std::move(pusch_proc), executor, results_notifier);
+        std::move(detector), std::move(pusch_proc), std::move(pucch_proc), executor, results_notifier);
   }
 
 private:
   std::shared_ptr<prach_detector_factory>  prach_factory;
   std::shared_ptr<pusch_processor_factory> pusch_factory;
+  std::shared_ptr<pucch_processor_factory> pucch_factory;
   task_executor&                           executor;
   upper_phy_rx_results_notifier&           results_notifier;
 };
@@ -208,7 +218,27 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(const upp
   std::shared_ptr<pusch_processor_factory> pusch_factory = create_pusch_processor_factory_sw(pusch_config);
   report_fatal_error_if_not(pusch_factory, "Invalid PUSCH processor factory.");
 
-  uplink_processor_single_executor_factory factory(prach_factory, pusch_factory, *config.ul_executor, notifier);
+  std::shared_ptr<low_papr_sequence_generator_factory>  lpg_factory = create_low_papr_sequence_generator_sw_factory();
+  std::shared_ptr<low_papr_sequence_collection_factory> lpc_factory =
+      create_low_papr_sequence_collection_sw_factory(lpg_factory);
+  std::shared_ptr<dmrs_pucch_estimator_factory> pucch_dmrs_factory =
+      create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory);
+
+  // :TODO: fix this! At this moment there is not PUCCH dectector in dev.
+  std::shared_ptr<pucch_detector_factory> pucch_detector_fact = nullptr;
+  report_fatal_error_if_not(pucch_detector_fact, "Invalid PUCCH detector factory.");
+  channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
+  channel_estimate_dimensions.nof_tx_layers = 1;
+  channel_estimate_dimensions.nof_rx_ports  = 1;
+  channel_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
+  channel_estimate_dimensions.nof_prb       = config.ul_bw_rb;
+
+  std::shared_ptr<pucch_processor_factory> pucch_factory =
+      create_pucch_processor_factory_sw(pucch_dmrs_factory, pucch_detector_fact, channel_estimate_dimensions);
+  report_fatal_error_if_not(pucch_factory, "Invalid PUCCH processor factory.");
+
+  uplink_processor_single_executor_factory factory(
+      prach_factory, pusch_factory, pucch_factory, *config.ul_executor, notifier);
 
   uplink_processor_pool_config config_pool;
   config_pool.num_sectors = 1;

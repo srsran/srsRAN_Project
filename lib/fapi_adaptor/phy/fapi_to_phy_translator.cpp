@@ -12,6 +12,7 @@
 #include "srsgnb/fapi_adaptor/phy/messages/pdcch.h"
 #include "srsgnb/fapi_adaptor/phy/messages/pdsch.h"
 #include "srsgnb/fapi_adaptor/phy/messages/prach.h"
+#include "srsgnb/fapi_adaptor/phy/messages/pucch.h"
 #include "srsgnb/fapi_adaptor/phy/messages/pusch.h"
 #include "srsgnb/fapi_adaptor/phy/messages/ssb.h"
 #include "srsgnb/phy/support/prach_buffer_context.h"
@@ -132,13 +133,19 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
         ul_request_processor.process_prach_request(context);
         break;
       }
-      case fapi::ul_pdu_type::PUCCH:
+      case fapi::ul_pdu_type::PUCCH: {
+        uplink_processor::pucch_pdu ul_pdu;
+        convert_pucch_fapi_to_phy(ul_pdu, pdu.pucch_pdu, msg.sfn, msg.slot);
+        // Add the PDU to the repository for later processing.
+        slot_point slot(scs, msg.sfn, msg.slot);
+        ul_pdu_repository.add_pucch_pdu(slot, ul_pdu);
         request_uplink_slot |= true;
         break;
+      }
       case fapi::ul_pdu_type::PUSCH: {
         uplink_processor::pusch_pdu ul_pdu;
         convert_pusch_fapi_to_phy(ul_pdu, pdu.pusch_pdu, msg.sfn, msg.slot);
-        // Add the PDU to the repo for later processing.
+        // Add the PDU to the repository for later processing.
         slot_point slot(scs, msg.sfn, msg.slot);
         ul_pdu_repository.add_pusch_pdu(slot, ul_pdu);
         request_uplink_slot |= true;
