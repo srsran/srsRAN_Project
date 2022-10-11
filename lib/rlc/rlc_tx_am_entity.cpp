@@ -30,6 +30,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   head_min_size(rlc_am_pdu_header_min_size(cfg.sn_field_length)),
   head_max_size(rlc_am_pdu_header_max_size(cfg.sn_field_length)),
   poll_retransmit_timer(timers.create_unique_timer()),
+  is_poll_retransmit_timer_expired(false),
   pcell_executor(pcell_executor)
 {
   // check timer t_poll_retransmission timer
@@ -738,6 +739,16 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
   }
 
   /*
+   * From Sec. 5.3.3.4 Expiry of t-PollRetransmit
+   * [...]
+   * - include a poll in an AMD PDU as described in clause 5.3.3.2.
+   */
+  if (is_poll_retransmit_timer_expired.exchange(false, std::memory_order_relaxed)) {
+    logger.log_debug("Setting poll bit due to expired poll retransmit timer. SN={}, POLL_SN={}", sn, st.poll_sn);
+    poll = 1;
+  }
+
+  /*
    * - If poll bit is included:
    *     - set PDU_WITHOUT_POLL to 0;
    *     - set BYTE_WITHOUT_POLL to 0.
@@ -786,7 +797,6 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer(uint32_t timeout_id)
      *   - consider the RLC SDU with the highest SN among the RLC SDUs submitted to lower layer for
      *   retransmission; or
      *   - consider any RLC SDU which has not been positively acknowledged for retransmission.
-     * - include a poll in an AMD PDU as described in section 5.3.3.2.
      */
     if ((sdu_queue.is_empty() && retx_queue.empty() && sn_under_segmentation == INVALID_RLC_SN) || tx_window->full()) {
       if (tx_window->empty()) {
@@ -820,6 +830,10 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer(uint32_t timeout_id)
 
       handle_buffer_state_update_nolock(); // already locked
     }
+    /*
+     * - include a poll in an AMD PDU as described in clause 5.3.3.2.
+     */
+    is_poll_retransmit_timer_expired.store(true, std::memory_order_relaxed);
   }
 }
 
