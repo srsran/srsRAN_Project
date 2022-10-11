@@ -5,10 +5,10 @@
 
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "27"
+    ref: "28"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/testing-tools
-    ref: "27"
+    ref: "28"
     file: .gitlab/ci-shared/features/all.yml
   - local: .gitlab/ci/build.yml
 
@@ -184,7 +184,7 @@ unit coverage:
     # Download coverage history from the registry
     - |
       download_from_registry() {
-        apk add --update curl
+        apk add curl
         
         cd ${CI_PROJECT_DIR}
         http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${PACKAGE_URL}" -o output.tar.gz)
@@ -296,7 +296,7 @@ promote code:
     - if: $GRADUATION_BRANCH
   image: alpine:3.16.0 # sh entrypoint
   before_script:
-    - apk add --update --no-cache git git-lfs
+    - apk add git git-lfs
   script:
     - git config user.email "${CODEBOT_USERNAME}@srs.io"
     - git config user.name ${CODEBOT_USERNAME}

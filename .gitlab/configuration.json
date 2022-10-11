@@ -1,0 +1,135 @@
+{
+    "_api_version_": "4",
+    "allow_merge_on_skipped_pipeline": false,
+    "approvalrules": [
+        {
+            "applies_to_all_protected_branches": false,
+            "approvals_required": 1,
+            "contains_hidden_groups": false,
+            "eligible_approvers": [],
+            "groups": [],
+            "name": "All Members",
+            "protected_branches": [],
+            "rule_type": "any_approver",
+            "users": []
+        }
+    ],
+    "approvals": {
+        "disable_overriding_approvers_per_merge_request": true,
+        "merge_requests_author_approval": true,
+        "merge_requests_disable_committers_approval": true,
+        "require_password_to_approve": false,
+        "reset_approvals_on_push": false,
+        "selective_code_owner_removals": false
+    },
+    "auto_cancel_pending_pipelines": "enabled",
+    "auto_devops_enabled": false,
+    "autoclose_referenced_issues": true,
+    "can_create_merge_request_in": true,
+    "ci_allow_fork_pipelines_to_run_in_parent_project": false,
+    "ci_separated_caches": false,
+    "container_expiration_policy": {
+        "enabled": false
+    },
+    "container_registry_access_level": "enabled",
+    "default_branch": "dev",
+    "enforce_auth_checks_on_uploads": true,
+    "forking_access_level": "disabled",
+    "jobs_enabled": true,
+    "keep_latest_artifact": true,
+    "lfs_enabled": true,
+    "merge_method": "ff",
+    "merge_pipelines_enabled": true,
+    "merge_requests_access_level": "enabled",
+    "merge_requests_enabled": true,
+    "merge_trains_enabled": false,
+    "only_allow_merge_if_all_discussions_are_resolved": false,
+    "only_allow_merge_if_pipeline_succeeds": true,
+    "operations_access_level": "enabled",
+    "packages_enabled": true,
+    "pages_access_level": "private",
+    "protectedtags": [],
+    "protectedbranches": [
+        {
+            "allow_force_push": false,
+            "code_owner_approval_required": false,
+            "merge_access_levels": [
+                {
+                    "access_level": 30,
+                    "access_level_description": "Developers + Maintainers",
+                    "group_id": null,
+                    "user_id": null
+                }
+            ],
+            "name": "dev",
+            "push_access_levels": [
+                {
+                    "access_level": 0,
+                    "access_level_description": "No one",
+                    "group_id": null,
+                    "user_id": null
+                }
+            ],
+            "unprotect_access_levels": []
+        },
+        {
+            "allow_force_push": false,
+            "code_owner_approval_required": false,
+            "merge_access_levels": [
+                {
+                    "access_level": 40,
+                    "access_level_description": "Maintainers",
+                    "group_id": null,
+                    "user_id": null
+                }
+            ],
+            "name": "next",
+            "push_access_levels": [
+                {
+                    "access_level": 0,
+                    "access_level_description": "No one",
+                    "group_id": null,
+                    "user_id": null
+                }
+            ],
+            "unprotect_access_levels": []
+        },
+        {
+            "allow_force_push": false,
+            "code_owner_approval_required": false,
+            "merge_access_levels": [
+                {
+                    "access_level": 40,
+                    "access_level_description": "Maintainers",
+                    "group_id": null,
+                    "user_id": null
+                }
+            ],
+            "name": "main",
+            "push_access_levels": [
+                {
+                    "access_level": 0,
+                    "access_level_description": "No one",
+                    "group_id": null,
+                    "user_id": null
+                }
+            ],
+            "unprotect_access_levels": []
+        }
+    ],
+    "releases_access_level": "enabled",
+    "remove_source_branch_after_merge": true,
+    "repository_access_level": "enabled",
+    "request_access_enabled": true,
+    "requirements_access_level": "enabled",
+    "requirements_enabled": false,
+    "resolve_outdated_diff_discussions": false,
+    "security_and_compliance_access_level": "private",
+    "security_and_compliance_enabled": true,
+    "shared_runners_enabled": true,
+    "snippets_enabled": true,
+    "squash_option": "default_off",
+    "visibility": "private",
+    "wiki_access_level": "enabled",
+    "wiki_enabled": true
+}
