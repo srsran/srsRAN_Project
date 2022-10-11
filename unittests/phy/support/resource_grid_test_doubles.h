@@ -207,17 +207,8 @@ private:
 class resource_grid_reader_spy : public resource_grid_reader
 {
 public:
-  /// Describes an expected resource grid reader spy entry.
-  struct expected_entry_t {
-    /// Indicates the port index.
-    uint8_t port;
-    /// Indicates the symbol index.
-    uint8_t symbol;
-    /// Indicates the subcarrier index.
-    uint16_t subcarrier;
-    /// Provides the complex resource element value.
-    cf_t value;
-  };
+  using expected_entry_t = resource_grid_writer_spy::expected_entry_t;
+
   bool is_empty(unsigned port) const override { return entries.empty(); }
   void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override
   {

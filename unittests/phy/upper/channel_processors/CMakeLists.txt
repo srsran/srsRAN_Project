@@ -204,3 +204,15 @@ add_custom_command(
         VERBATIM
 )
 add_test(uci_decoder_test uci_decoder_test)
+
+add_executable(pucch_detector_test pucch_detector_test.cpp)
+target_link_libraries(pucch_detector_test srsgnb_channel_processors srslog gtest gtest_main)
+add_custom_command(
+        TARGET pucch_detector_test
+        POST_BUILD
+        WORKING_DIRECTORY ${TEST_DATA_DIR}
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pucch_detector_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pucch_detector_test_data.tar.gz
+        VERBATIM
+)
+add_test(pucch_detector_test pucch_detector_test)
