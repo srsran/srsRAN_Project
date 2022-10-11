@@ -429,27 +429,27 @@ TEST(byte_buffer, iterator_of_segments)
 TEST(byte_buffer_view, length)
 {
   byte_buffer          pdu;
-  std::vector<uint8_t> bytes = make_small_vec();
+  unsigned             len   = get_random_uint(1, 100000);
+  std::vector<uint8_t> bytes = make_vec(len);
   pdu.append(bytes);
 
   byte_buffer_view view = pdu;
 
   ASSERT_FALSE(view.empty());
-  ASSERT_EQ(6, view.length());
-  ASSERT_EQ(6, view.end() - view.begin());
-  ASSERT_EQ(4, view.view(0, 4).length());
-  ASSERT_EQ(4, view.view(2, 4).length());
+  ASSERT_EQ(len, view.length());
+  ASSERT_EQ(len, view.end() - view.begin());
+  unsigned offset = get_random_uint(0, len);
+  unsigned len2   = get_random_uint(1, len - offset);
+  ASSERT_EQ(len2, view.view(offset, len2).length());
 }
 
 TEST(byte_buffer_view, segment_iterator)
 {
   byte_buffer          pdu;
-  std::vector<uint8_t> bytes = make_small_vec(), bytes2 = make_large_vec();
+  std::vector<uint8_t> bytes = make_vec(get_random_uint(1, 4 * byte_buffer_segment::SEGMENT_SIZE));
   pdu.append(bytes);
-  pdu.append(bytes2);
-  bytes.insert(bytes.end(), bytes2.begin(), bytes2.end());
 
-  unsigned         offset      = get_random_uint(0, 10);
+  unsigned         offset      = get_random_uint(0, bytes.size() - 1);
   unsigned         last_offset = get_random_uint(offset + 1, bytes.size());
   byte_buffer_view view{pdu.begin() + offset, pdu.begin() + last_offset};
 
@@ -461,7 +461,7 @@ TEST(byte_buffer_view, segment_iterator)
     ASSERT_EQ(*seg_it, span<const uint8_t>(bytes.data() + seg_offset, seg_len));
     seg_offset += seg_len;
   }
-  ASSERT_EQ(seg_offset - offset, view.length());
+  ASSERT_EQ(seg_offset, last_offset);
 }
 
 TEST(byte_buffer_reader, split_advance)

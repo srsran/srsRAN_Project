@@ -233,15 +233,20 @@ public:
   byte_buffer_segment_list_iterator_impl(SegmentType* seg, unsigned offset_, unsigned size_) :
     current_segment(seg), offset(offset_), rem_bytes(size_)
   {
+    srsgnb_assert(current_segment != nullptr or (offset == 0 and rem_bytes == 0),
+                  "Positive offset or length for empty segment");
+    srsgnb_assert(current_segment == nullptr or offset < current_segment->length(), "Invalid offset");
   }
 
   reference operator*()
   {
-    return reference{current_segment->data() + offset, std::min(rem_bytes, (unsigned)current_segment->length())};
+    return reference{current_segment->data() + offset,
+                     std::min(rem_bytes, (unsigned)current_segment->length() - offset)};
   }
   reference operator*() const
   {
-    return reference{current_segment->data() + offset, std::min(rem_bytes, (unsigned)current_segment->length())};
+    return reference{current_segment->data() + offset,
+                     std::min(rem_bytes, (unsigned)current_segment->length() - offset)};
   }
   pointer operator->() { return pointer{this->operator*()}; }
   pointer operator->() const { return pointer{this->operator*()}; }
@@ -249,8 +254,8 @@ public:
   iterator_type& operator++()
   {
     srsgnb_assert(current_segment != nullptr, "operator++ called after end()");
+    rem_bytes -= std::min(rem_bytes, (unsigned)current_segment->length() - offset);
     offset = 0;
-    rem_bytes -= std::min(rem_bytes, (unsigned)current_segment->length());
     if (rem_bytes == 0) {
       current_segment = nullptr;
     } else {
