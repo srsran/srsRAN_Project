@@ -44,7 +44,7 @@ private:
   f1c_event_manager&                         ev_mng;
   srslog::basic_logger&                      logger;
 
-  f1c_event_manager::f1_ue_context_release_outcome_t f1_ue_ctxt_rel_outcome;
+  f1c_event_manager::f1_ue_context_release_outcome_t f1_ue_ctxt_rel_outcome = nullptr;
 };
 
 } // namespace srs_cu_cp
