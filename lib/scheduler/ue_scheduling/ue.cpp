@@ -17,6 +17,18 @@ void ue::handle_reconfiguration_request(const sched_ue_reconfiguration_message& 
   // TODO.
 }
 
+unsigned ue::pending_dl_newtx_bytes() const
+{
+  unsigned pending_bytes = dl_lc_ch_mgr.pending_bytes(LCID_SRB0);
+
+  if (pending_bytes > 0) {
+    // In case SRB0 has data, only allocate SRB0 and CEs.
+    return pending_bytes + dl_lc_ch_mgr.pending_ce_bytes();
+  }
+
+  return dl_lc_ch_mgr.pending_bytes();
+}
+
 unsigned ue::pending_ul_newtx_bytes() const
 {
   constexpr static unsigned SR_GRANT_BYTES = 512;
@@ -39,4 +51,12 @@ unsigned ue::pending_ul_newtx_bytes() const
 
   // If there are no pending bytes, check if a SR is pending.
   return pending_bytes == 0 ? 0 : (ul_lc_ch_mgr.has_pending_sr() ? SR_GRANT_BYTES : 0);
+}
+
+unsigned ue::build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes)
+{
+  unsigned total_subpdu_bytes = 0;
+  total_subpdu_bytes += allocate_mac_ces(tb_info, dl_lc_ch_mgr, tb_size_bytes);
+  total_subpdu_bytes += allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes);
+  return total_subpdu_bytes;
 }

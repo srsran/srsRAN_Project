@@ -107,7 +107,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   srsgnb_assert(h_dl != nullptr, "UE must have empty HARQs during SRB0 PDU allocation");
 
   // Find available symbol x RB resources.
-  const unsigned   pending_bytes = u.dl_lc_ch_mgr.pending_ce_bytes() + u.dl_lc_ch_mgr.pending_bytes(LCID_SRB0);
+  const unsigned   pending_bytes = u.pending_dl_newtx_bytes();
   dmrs_information dmrs_info     = make_dmrs_info_common(
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
   const unsigned        nof_symb_sh     = pdsch_td_cfg.symbols.length();
@@ -236,8 +236,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
 
   // Set MAC logical channels to schedule in this PDU.
   msg.tb_list.emplace_back();
-  allocate_mac_ces(msg.tb_list.back(), u.dl_lc_ch_mgr, cw.tb_size_bytes);
-  allocate_mac_sdus(msg.tb_list.back(), u.dl_lc_ch_mgr, cw.tb_size_bytes);
+  u.build_dl_transport_block_info(msg.tb_list.back(), cw.tb_size_bytes);
 }
 
 const pdsch_time_domain_resource_allocation& ue_srb0_scheduler::get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const

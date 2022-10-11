@@ -90,13 +90,13 @@ long_bsr_report srsgnb::decode_lbsr(bsr_format format, byte_buffer_view payload)
     if (lbsr.bitmap & (0x1U << i)) {
       lcg_bsr_report bsr = {};
       bsr.lcg_id         = uint_to_lcg_id(i);
-      // For the Long truncated, some BSR words can be not present, assume BSR > 0 in that case
-      // TODO Modify this so that it takes LCG priotity into account for LONG TRUNCATED BSR
       if (reader.length() > 0) {
         bsr.buffer_size = *reader;
         ++reader;
       } else if (format == bsr_format::LONG_TRUNC_BSR) {
-        bsr.buffer_size = 63; // just assume it has 63 bytes to transmit
+        // In the case of Long truncated BSR, some LCG buffer sizes may not be present. Assume BSR > 0 in that case.
+        // Assume that the LCG has 64 bytes pending (implementation-defined).
+        bsr.buffer_size = 64;
       } else {
         srslog::fetch_basic_logger("MAC").error("Error parsing LongBSR CE: sdu_length={} but there are {} active bsr\n",
                                                 payload.length(),

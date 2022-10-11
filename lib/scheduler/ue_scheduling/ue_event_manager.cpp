@@ -162,9 +162,6 @@ void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_i
     ue& u = ue_db[bs.ue_index];
     u.handle_dl_buffer_state_indication(bs);
     if (bs.lcid == LCID_SRB0) {
-      // Enqueue a UE Contention Resolution ID.
-      u.dl_lc_ch_mgr.handle_mac_ce_indication(lcid_dl_sch_t::UE_CON_RES_ID);
-
       // Signal SRB0 scheduler with the new SRB0 buffer state.
       du_cells[u.get_pcell().cell_index].srb0_sched->handle_dl_buffer_state_indication(bs.ue_index);
     }
@@ -215,7 +212,7 @@ void ue_event_manager::process_cell_specific(du_cell_index_t cell_index)
   // Pop and process pending cell-specific events.
   cell_specific_events[cell_index].slot_indication();
   auto events = cell_specific_events[cell_index].get_events();
-  for (carrier_event_t& ev : events) {
+  for (cell_event_t& ev : events) {
     if (not ue_db.contains(ev.ue_index)) {
       log_invalid_ue_index(ev.ue_index);
       continue;

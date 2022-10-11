@@ -60,12 +60,12 @@ private:
     {
     }
   };
-  struct carrier_event_t {
+  struct cell_event_t {
     du_ue_index_t                                  ue_index = MAX_NOF_DU_UES;
     unique_function<void(ue_cell&, event_logger&)> callback;
 
     template <typename Callable>
-    carrier_event_t(du_ue_index_t ue_index_, Callable&& c) : ue_index(ue_index_), callback(std::forward<Callable>(c))
+    cell_event_t(du_ue_index_t ue_index_, Callable&& c) : ue_index(ue_index_), callback(std::forward<Callable>(c))
     {
     }
   };
@@ -88,10 +88,10 @@ private:
     /// Reference to SRB0 and other bearers scheduler
     ue_srb0_scheduler* srb0_sched = nullptr;
   };
-  std::array<du_cell, MAX_NOF_DU_UES> du_cells{};
+  std::array<du_cell, MAX_NOF_DU_CELLS> du_cells{};
 
   /// Pending Events list per cell.
-  std::array<slot_event_list<carrier_event_t>, MAX_NOF_DU_CELLS> cell_specific_events;
+  std::array<slot_event_list<cell_event_t>, MAX_NOF_DU_CELLS> cell_specific_events;
 
   /// Pending Events list common to all cells. We use this list for events that require synchronization across
   /// UE carriers when CA is enabled (e.g. SR, BSR, reconfig).

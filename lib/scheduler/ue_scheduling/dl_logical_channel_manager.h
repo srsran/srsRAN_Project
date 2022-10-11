@@ -25,12 +25,15 @@ public:
   /// \brief Verifies if logical channel is activated for DL.
   bool is_active(lcid_t lcid) const { return channels[lcid].active; }
 
-  /// \brief Checks whether a logical channel has pending data.
+  /// \brief Checks whether the UE has pending data.
   bool has_pending_bytes() const
   {
     return not pending_ces.empty() or
            std::any_of(channels.begin(), channels.end(), [](const auto& ch) { return ch.active and ch.buf_st > 0; });
   }
+
+  /// \brief Checks whether a logical channel has pending data.
+  bool has_pending_bytes(lcid_t lcid) const { return pending_bytes(lcid) > 0; }
 
   /// \brief Checks whether UE has pending CEs to be scheduled.
   bool has_pending_ces() const { return not pending_ces.empty(); }
