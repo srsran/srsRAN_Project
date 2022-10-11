@@ -50,7 +50,7 @@ void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
     }
 
     auto& u = ues[*it];
-    if (schedule_srb0(res_alloc, u)) {
+    if (u.has_pending_dl_newtx_bytes(LCID_SRB0) and schedule_srb0(res_alloc, u)) {
       it = pending_ues.erase(it);
     } else {
       ++it;
