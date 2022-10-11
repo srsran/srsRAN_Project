@@ -59,6 +59,8 @@ public:
     msg.tx_lower_dn                  = mac.get();
     msg.config                       = cnfg;
     msg.timers                       = &timers;
+    msg.pcell_executor               = lower_executor.get();
+    msg.ue_executor                  = upper_executor.get();
     rlc                              = create_rlc_entity(msg);
     traffic_source->set_rlc_tx_upper(rlc->get_tx_upper_layer_data_interface());
     mac->set_rlc_tx_lower(rlc->get_tx_lower_layer_interface());
@@ -83,7 +85,7 @@ public:
     lower_executor->defer([this]() { run_lower_tti(0); });
   }
 
-  void stop()
+  void wait_for_finish()
   {
     logger.log_info("Waiting to lower worker. Stack id={}\n", stack_id);
     std::unique_lock<std::mutex> lk_lower(mutex_lower);
@@ -203,9 +205,9 @@ void stress_test(const stress_test_args& args)
   ue_emulator.start();
   gnb_emulator.start();
 
-  //  Wait for threads to finish
-  ue_emulator.stop();
-  gnb_emulator.stop();
+  //  Wait for test to finish
+  ue_emulator.wait_for_finish();
+  gnb_emulator.wait_for_finish();
 
   // Print and analyse metrics
   // TODO
