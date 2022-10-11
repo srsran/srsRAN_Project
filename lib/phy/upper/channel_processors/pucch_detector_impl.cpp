@@ -225,7 +225,6 @@ pucch_uci_message pucch_detector_impl::detect(const resource_grid_reader&  grid,
   ch_estimates.resize(nof_res);
   eq_time_spread_sequence.resize(nof_res);
   eq_time_spread_noise_var.resize(nof_res);
-  repeated_symbol.resize(nof_res);
 
   // Compute the number of data symbols before frequency hop.
   nof_data_symbols         = config.nof_symbols / 2;
@@ -233,6 +232,8 @@ pucch_uci_message pucch_detector_impl::detect(const resource_grid_reader&  grid,
   if (config.second_hop_prb.has_value()) {
     nof_data_symbols_pre_hop = config.nof_symbols / 4;
   }
+
+  alpha_indices.resize(nof_data_symbols);
 
   extract_data_and_estimates(
       grid, estimates, config.start_symbol_index, config.starting_prb, config.second_hop_prb, config.port);
@@ -323,28 +324,41 @@ void pucch_detector_impl::extract_data_and_estimates(const resource_grid_reader&
   }
 }
 
-// Computest the index of the cyclic shift.
-static unsigned compute_i_alpha(unsigned                 m0,
-                                unsigned                 l,
-                                unsigned                 n_id,
-                                unsigned                 n_sf,
-                                unsigned                 nof_symbols_per_slot,
-                                pseudo_random_generator& prg)
+// Computest the indices of the cyclic shifts for all symbols.
+static void compute_alpha_indices(span<unsigned>           indices,
+                                  unsigned                 m0,
+                                  unsigned                 start_symbol,
+                                  unsigned                 nof_symbols,
+                                  unsigned                 n_id,
+                                  unsigned                 n_sf,
+                                  unsigned                 nof_symbols_per_slot,
+                                  pseudo_random_generator& prg)
 {
+  srsgnb_assert(indices.size() == nof_symbols / 2,
+                "The number of alpha indices {} does not match with the number of allocated symbols {}.",
+                indices.size(),
+                nof_symbols);
+
+  constexpr unsigned CHIPS_PER_SYMBOL = 8;
   // Initialize the pseduorandom generator.
   prg.init(n_id);
   // Create the required PR numbers.
-  prg.advance(8 * (nof_symbols_per_slot * n_sf + l));
-  std::array<float, 8> c_values = {};
-  prg.generate(c_values, 1.0F);
+  prg.advance(CHIPS_PER_SYMBOL * (nof_symbols_per_slot * n_sf + start_symbol));
+  std::vector<float> c_values_all(CHIPS_PER_SYMBOL * nof_symbols);
+  prg.generate(c_values_all, 1.0F);
 
-  // Compute n_cs
-  unsigned n_cs = std::accumulate(c_values.begin(), c_values.end(), 0.0F, [n = 0U](unsigned a, float b) mutable {
-    return (a + ((b < 0) ? 1 : 0) * (1U << (n++)));
-  });
-
-  // Compute alpha index.
-  return (m0 + n_cs) % NRE;
+  unsigned offset = CHIPS_PER_SYMBOL;
+  // Only every other symbol, starting from the second one, contains data.
+  for (unsigned i_symbol = 1, i_alpha = 0; i_symbol < nof_symbols;
+       i_symbol += 2, ++i_alpha, offset += 2 * CHIPS_PER_SYMBOL) {
+    // Compute n_cs
+    span<float> c_values = span<float>(c_values_all).subspan(offset, CHIPS_PER_SYMBOL);
+    unsigned    n_cs     = std::accumulate(c_values.begin(), c_values.end(), 0U, [n = 0U](unsigned a, float b) mutable {
+      return (a + ((b < 0) ? 1U : 0U) * (1U << (n++)));
+    });
+    // Compute alpha index.
+    indices[i_alpha] = (m0 + n_cs) % NRE;
+  }
 }
 
 void pucch_detector_impl::marginalize_w_and_r_out(const format1_configuration& config)
@@ -361,18 +375,21 @@ void pucch_detector_impl::marginalize_w_and_r_out(const format1_configuration& c
 
   span<const cf_t> w_star = get_w_star<MAX_N_DATA_SYMBOLS>(nof_data_symbols_pre_hop, time_domain_occ);
 
+  compute_alpha_indices(alpha_indices,
+                        config.initial_cyclic_shift,
+                        config.start_symbol_index,
+                        config.nof_symbols,
+                        config.n_id,
+                        n_sf,
+                        nof_symbols_per_slot,
+                        *pseudo_random);
+
+  detected_symbol = 0;
   unsigned offset = 0;
   for (unsigned i_symbol = 0; i_symbol != nof_data_symbols_pre_hop; ++i_symbol, offset += NRE) {
-    unsigned         i_alpha = compute_i_alpha(config.initial_cyclic_shift,
-                                       config.start_symbol_index + (2 * i_symbol + 1),
-                                       config.n_id,
-                                       n_sf,
-                                       nof_symbols_per_slot,
-                                       *pseudo_random);
-    span<const cf_t> seq_r   = low_papr->get(group_index, sequence_number, i_alpha);
+    span<const cf_t> seq_r = low_papr->get(group_index, sequence_number, alpha_indices[i_symbol]);
     for (unsigned i_elem = 0; i_elem != NRE; ++i_elem) {
-      repeated_symbol[offset + i_elem] =
-          eq_time_spread_sequence[offset + i_elem] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
+      detected_symbol += eq_time_spread_sequence[offset + i_elem] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
     }
   }
 
@@ -380,21 +397,15 @@ void pucch_detector_impl::marginalize_w_and_r_out(const format1_configuration& c
   w_star                             = get_w_star<MAX_N_DATA_SYMBOLS>(nof_data_symbols_post_hop, time_domain_occ);
 
   for (unsigned i_symbol = 0; i_symbol != nof_data_symbols_post_hop; ++i_symbol, offset += NRE) {
-    unsigned         i_alpha = compute_i_alpha(config.initial_cyclic_shift,
-                                       config.start_symbol_index + (2 * (i_symbol + nof_data_symbols_pre_hop) + 1),
-                                       config.n_id,
-                                       n_sf,
-                                       nof_symbols_per_slot,
-                                       *pseudo_random);
-    span<const cf_t> seq_r   = low_papr->get(group_index, sequence_number, i_alpha);
+    span<const cf_t> seq_r =
+        low_papr->get(group_index, sequence_number, alpha_indices[i_symbol + nof_data_symbols_pre_hop]);
     for (unsigned i_elem = 0; i_elem != NRE; ++i_elem) {
-      repeated_symbol[offset + i_elem] =
-          eq_time_spread_sequence[offset + i_elem] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
+      detected_symbol += eq_time_spread_sequence[offset + i_elem] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
     }
   }
 
-  auto n_repetitions = static_cast<float>(repeated_symbol.size());
-  detected_symbol = std::accumulate(repeated_symbol.begin(), repeated_symbol.end(), 0.0F * COMPLEX_J) / n_repetitions;
-  eq_noise_var    = std::accumulate(eq_time_spread_noise_var.begin(), eq_time_spread_noise_var.end(), 0.0F) /
+  auto n_repetitions = static_cast<float>(eq_time_spread_sequence.size());
+  detected_symbol /= n_repetitions;
+  eq_noise_var = std::accumulate(eq_time_spread_noise_var.begin(), eq_time_spread_noise_var.end(), 0.0F) /
                  n_repetitions / n_repetitions;
 }

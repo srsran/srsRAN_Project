@@ -88,8 +88,8 @@ private:
   static_vector<cf_t, MAX_ALLOCATED_RE_F1 / 2> eq_time_spread_sequence;
   /// Buffer for storing the equivalent channel noise variances corresponding to the equalized spread data sequence.
   static_vector<float, MAX_ALLOCATED_RE_F1 / 2> eq_time_spread_noise_var;
-  /// Buffer for storing the data symbol spread over all allocated resources.
-  static_vector<cf_t, MAX_ALLOCATED_RE_F1 / 2> repeated_symbol;
+  /// Buffer for storing alpha indices.
+  static_vector<unsigned, MAX_NSYMB_PER_SLOT / 2> alpha_indices;
   /// Detected symbol.
   cf_t detected_symbol = 0;
   /// Equivalent noise variance of detected symbol.
