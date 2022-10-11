@@ -218,7 +218,7 @@ public:
   }
 
   /// Sets the channel estimate for the resource element at the given coordinates.
-  void set_ch_estimate(float ce_val, unsigned subcarrier, unsigned symbol, unsigned rx_port = 0, unsigned tx_layer = 0)
+  void set_ch_estimate(cf_t ce_val, unsigned subcarrier, unsigned symbol, unsigned rx_port = 0, unsigned tx_layer = 0)
   {
     ce[{subcarrier, symbol, rx_port, tx_layer}] = ce_val;
   }
