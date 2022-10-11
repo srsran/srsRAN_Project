@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/srslog/srslog.h"
 #include <mutex>
 
 namespace srsgnb {
@@ -141,5 +142,53 @@ struct rlc_bearer_metrics_container {
   rlc_bearer_tx_metrics_container tx;
   rlc_bearer_rx_metrics_container rx;
 };
-
 } // namespace srsgnb
+
+namespace fmt {
+// RLC TX metrics formatter
+template <>
+struct formatter<srsgnb::rlc_bearer_tx_metrics_container> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::rlc_bearer_tx_metrics_container m, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "num_sdus={}, num_sdu_bytes={}, num_dropped_sdus={}, num_pdus={}, num_pdu_bytes={}",
+                     m.num_sdus,
+                     m.num_sdu_bytes,
+                     m.num_dropped_sdus,
+                     m.num_pdus,
+                     m.num_pdu_bytes);
+  }
+};
+
+// RLC RX metrics formatter
+template <>
+struct formatter<srsgnb::rlc_bearer_rx_metrics_container> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::rlc_bearer_rx_metrics_container m, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "num_pdus={}, num_pdu_bytes={}, num_dropped_pdus={}, num_sdus={}, num_sdu_bytes={}",
+                     m.num_pdus,
+                     m.num_pdu_bytes,
+                     m.num_lost_pdus,
+                     m.num_malformed_pdus,
+                     m.num_sdus,
+                     m.num_sdu_bytes);
+  }
+};
+} // namespace fmt

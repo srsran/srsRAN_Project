@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/rlc/rlc_metrics.h"
 #include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/rlc/rlc_tx.h"
 
@@ -30,6 +31,7 @@ public:
   virtual rlc_tx_upper_layer_data_interface* get_tx_upper_layer_data_interface() = 0;
   virtual rlc_tx_lower_layer_interface*      get_tx_lower_layer_interface()      = 0;
   virtual rlc_rx_lower_layer_interface*      get_rx_lower_layer_interface()      = 0;
+  virtual rlc_bearer_metrics_container       get_metrics()                       = 0;
 };
 
 } // namespace srsgnb

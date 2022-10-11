@@ -38,7 +38,7 @@ public:
   rlc_tx_lower_layer_interface*      get_tx_lower_layer_interface() final { return tx.get(); };
   rlc_rx_lower_layer_interface*      get_rx_lower_layer_interface() final { return rx.get(); };
 
-  rlc_bearer_metrics_container get_metrics()
+  rlc_bearer_metrics_container get_metrics() final
   {
     rlc_bearer_metrics_container metrics = {};
     metrics.tx                           = tx->get_metrics();
