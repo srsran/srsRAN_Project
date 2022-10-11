@@ -13,6 +13,86 @@
 
 using namespace srsgnb;
 
+dci_payload dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& config)
+{
+  unsigned    frequency_resource_nof_bits = log2_ceil(config.N_rb_ul_bwp * (config.N_rb_ul_bwp + 1) / 2);
+  dci_payload payload;
+
+  // Identifier for DCI formats - 1 bit.
+  payload.push_back(config.dci_format_id, 1);
+
+  // Frequency domain resource assignment - frequency_resource_nof_bits bits.
+  payload.push_back(config.frequency_resource, frequency_resource_nof_bits);
+
+  // Time domain resource assignment - 4 bit.
+  payload.push_back(config.time_resource, 4);
+
+  // Frequency hopping flag - 1 bit.
+  payload.push_back(config.frequency_hopping_flag, 1);
+
+  // Modulation coding scheme - 5 bits.
+  payload.push_back(config.modulation_coding_scheme, 5);
+
+  // New data indicator - 1 bit.
+  payload.push_back(config.new_data_indicator, 1);
+
+  // Redundancy version - 2 bit.
+  payload.push_back(config.redundancy_version, 2);
+
+  // HARQ process number - 4 bit.
+  payload.push_back(config.harq_process_number, 4);
+
+  // TPC command for scheduled PUSCH - 2 bit.
+  payload.push_back(config.tpc_command, 2);
+
+  // Padding bits, if necessary, as per TS38.212 Section 7.3.1.0.
+
+  // UL/SUL indicator - 1 bit if present.
+  payload.push_back(config.ul_sul_indicator, 1);
+
+  return payload;
+}
+
+dci_payload dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& config)
+{
+  unsigned    frequency_resource_nof_bits = log2_ceil(config.N_rb_ul_bwp * (config.N_rb_ul_bwp + 1) / 2);
+  dci_payload payload;
+
+  // Identifier for DCI formats - 1 bit.
+  payload.push_back(config.dci_format_id, 1);
+
+  // Frequency domain resource assignment - frequency_resource_nof_bits bits.
+  payload.push_back(config.frequency_resource, frequency_resource_nof_bits);
+
+  // Time domain resource assignment - 4 bit.
+  payload.push_back(config.time_resource, 4);
+
+  // Frequency hopping flag - 1 bit.
+  payload.push_back(config.frequency_hopping_flag, 1);
+
+  // Modulation coding scheme - 5 bits.
+  payload.push_back(config.modulation_coding_scheme, 5);
+
+  // New data indicator - 1 bit, reserved.
+  payload.push_back(0x00U, 1);
+
+  // Redundancy version - 2 bit.
+  payload.push_back(config.redundancy_version, 2);
+
+  // HARQ process number - 4 bit, reserved.
+  payload.push_back(0x00U, 4);
+
+  // TPC command for scheduled PUSCH - 2 bit.
+  payload.push_back(config.tpc_command, 2);
+
+  // Padding bits, if necessary, as per TS38.212 Section 7.3.1.0.
+
+  // UL/SUL indicator - 1 bit if present, reserved.
+  payload.push_back(0x00U, 1);
+
+  return payload;
+}
+
 dci_payload srsgnb::dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& config)
 {
   unsigned    frequency_resource_nof_bits = log2_ceil(config.N_rb_dl_bwp * (config.N_rb_dl_bwp + 1) / 2);

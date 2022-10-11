@@ -19,6 +19,68 @@ namespace srsgnb {
 /// DCI payload data type.
 using dci_payload = bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>;
 
+
+/// \brief Describes the necessary parameters for packing a DCI format 0_0 scrambled by C-RNTI, CS-RNTI or MCS-C-RNTI.
+/// \remark Defined in TS38.212 Section 7.3.1.1.1.
+struct dci_0_0_c_rnti_configuration {
+  /// \brief Identifier for DCI formats – 1 bit.
+  /// \remark The value of this field is always set to 0, indicating an UL DCI format.
+  unsigned dci_format_id;
+  /// Parameter \f$N_{RB}^{UL,BWP}\f$. It must be set according to TS38.212 Section 7.3.1.0.
+  unsigned N_rb_ul_bwp;
+  /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{UL,BWP}(N_{RB}^{UL,BWP}+1)/2) \Bigr
+  /// \rceil\f$ bits as per TS38.214 Section 6.1.2.2.2.
+  unsigned frequency_resource;
+  /// Time domain resource assignment - 4 bit as per TS38.214 Section 6.1.2.1.
+  unsigned time_resource;
+  /// Frequency hopping flag. 1 bit as per TS38.214 Section 6.3 and Table 7.3.1.1.1-3.
+  unsigned frequency_hopping_flag;
+  /// Modulation and coding scheme - 5 bits as per TS38.214 Section 6.1.4.1.
+  unsigned modulation_coding_scheme;
+  /// New data indicator - 1 bit.
+  unsigned new_data_indicator;
+  /// Redundancy version - 2 bits as per TS38.212 Table 7.3.1.1.1-2.
+  unsigned redundancy_version;
+  /// HARQ process number - 4 bits.
+  unsigned harq_process_number;
+  /// TPC command for scheduled PUSCH – 2 bits as per TS38.213 Section 7.1.1.
+  unsigned tpc_command;
+  /// UL/SUL indicator - 1 bit if present.
+  unsigned ul_sul_indicator;
+
+};
+
+/// Packs a DCI format 0_0 scrambled by C-RNTI, CS-RNTI or MCS-C-RNTI.
+dci_payload dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& config);
+
+/// \brief Describes the necessary parameters for packing a DCI format 0_0 scrambled by TC-RNTI.
+/// \remark Defined in TS38.212 Section 7.3.1.1.1.
+struct dci_0_0_tc_rnti_configuration {
+  /// \brief Identifier for DCI formats – 1 bit.
+  /// \remark The value of this field is always set to 0, indicating an UL DCI format.
+  unsigned dci_format_id;
+  /// Parameter \f$N_{RB}^{UL,BWP}\f$. It must be set to the size of the initial UL BWP.
+  unsigned N_rb_ul_bwp;
+  /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{UL,BWP}(N_{RB}^{UL,BWP}+1)/2) \Bigr
+  /// \rceil\f$ bits as per TS38.214 Section 6.1.2.2.2.
+  unsigned frequency_resource;
+  /// Time domain resource assignment - 4 bit as per TS38.214 Section 6.1.2.1.
+  unsigned time_resource;
+  /// Frequency hopping flag. 1 bit as per TS38.214 Section 6.3 and Table 7.3.1.1.1-3.
+  unsigned frequency_hopping_flag;
+  /// Modulation and coding scheme - 5 bits as per TS38.214 Section 6.1.4.1.
+  unsigned modulation_coding_scheme;
+  /// Redundancy version - 2 bits as per TS38.212 Table 7.3.1.1.1-2.
+  unsigned redundancy_version;
+  /// TPC command for scheduled PUSCH – 2 bits as per TS38.213 Section 7.1.1.
+  unsigned tpc_command;
+
+  /// Padding bits, if necessary, as per TS38.212 Section 7.3.1.0.
+};
+
+/// Packs a DCI format 0_0 scrambled by TC-RNTI.
+dci_payload dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& config);
+
 /// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by C-RNTI, CS-RNTI or MCS-C-RNTI.
 /// \remark Defined in TS38.212 Section 7.3.1.2.1.
 /// \remark The case where the random access procedure is initiated by a PDCCH order is handled separately.
