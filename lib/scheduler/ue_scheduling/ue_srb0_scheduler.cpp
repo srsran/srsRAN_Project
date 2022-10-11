@@ -117,15 +117,14 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   static const unsigned nof_layers      = 1; // Assumption
   // TODO: As per Section 5.1.3.2, TS 38.214, need to derive xOverhead from PDSCH-ServingCellconfig.
   // Assumed to be not configured hence set to 0 as per spec.
-  static const unsigned nof_oh_prb = 0;
-  pdsch_prbs_tbs        srb0_prbs_tbs =
-      get_nof_prbs(prbs_calculator_pdsch_config{pending_bytes,
-                                                nof_symb_sh,
-                                                calculate_nof_dmrs_per_rb(dmrs_info),
-                                                nof_oh_prb,
-                                                mod_order,
-                                                static_cast<float>(srb0_mcs_config.target_code_rate / 1024),
-                                                nof_layers});
+  static const unsigned    nof_oh_prb    = 0;
+  pdsch_prbs_tbs           srb0_prbs_tbs = get_nof_prbs(prbs_calculator_pdsch_config{pending_bytes,
+                                                                           nof_symb_sh,
+                                                                           calculate_nof_dmrs_per_rb(dmrs_info),
+                                                                           nof_oh_prb,
+                                                                           mod_order,
+                                                                           srb0_mcs_config.target_code_rate / 1024.0F,
+                                                                           nof_layers});
   const bwp_configuration& bwp_cfg       = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
   prb_bitmap               used_crbs     = pdsch_alloc.dl_res_grid.used_crbs(bwp_cfg, pdsch_td_cfg.symbols);
   crb_interval             ue_grant_crbs = find_empty_interval_of_length(used_crbs, srb0_prbs_tbs.nof_prbs, 0);
@@ -213,27 +212,28 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
 
   // Add codeword.
   msg.pdsch_cfg.codewords.emplace_back();
-  pdsch_codeword&           cw        = msg.pdsch_cfg.codewords.back();
-  static constexpr unsigned new_tx_rv = 0;
-  cw.rv_index                         = new_tx_rv;
-  cw.mcs_index                        = h_dl.mcs(0);
-  cw.mcs_table                        = pdsch_mcs_table::qam64;
-  sch_mcs_description mcs_config      = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
-  cw.qam_mod                          = mcs_config.modulation;
-  cw.target_code_rate                 = mcs_config.target_code_rate;
-  unsigned nof_symb_sh                = pdsch_td_cfg.symbols.length();
-  unsigned tb_scaling_field           = 0; // TODO.
-  unsigned nof_oh_prb                 = 0; // TODO.
+  pdsch_codeword&           cw                = msg.pdsch_cfg.codewords.back();
+  static constexpr unsigned new_tx_rv         = 0;
+  cw.rv_index                                 = new_tx_rv;
+  cw.mcs_index                                = h_dl.mcs(0);
+  cw.mcs_table                                = pdsch_mcs_table::qam64;
+  sch_mcs_description mcs_config              = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
+  cw.qam_mod                                  = mcs_config.modulation;
+  cw.target_code_rate                         = mcs_config.target_code_rate;
+  unsigned                  nof_symb_sh       = pdsch_td_cfg.symbols.length();
+  unsigned                  tb_scaling_field  = 0; // TODO.
+  unsigned                  nof_oh_prb        = 0; // TODO.
+  constexpr static unsigned nof_bits_per_byte = 8U;
   cw.tb_size_bytes =
       tbs_calculator_pdsch_calculate(tbs_calculator_pdsch_configuration{nof_symb_sh,
                                                                         calculate_nof_dmrs_per_rb(msg.pdsch_cfg.dmrs),
                                                                         nof_oh_prb,
-                                                                        cw.target_code_rate / 1024,
+                                                                        cw.target_code_rate / 1024.0F,
                                                                         get_bits_per_symbol(cw.qam_mod),
                                                                         nof_layers,
                                                                         tb_scaling_field,
                                                                         ue_grant_crbs.length()}) /
-      8U;
+      nof_bits_per_byte;
 
   // Set MAC logical channels to schedule in this PDU.
   msg.tb_list.emplace_back();

@@ -176,7 +176,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
                                                                            calculate_nof_dmrs_per_rb(dmrs_info),
                                                                            nof_oh_prb,
                                                                            mod_order,
-                                                                           static_cast<float>(target_code_rate / 1024),
+                                                                           target_code_rate / 1024.0F,
                                                                            nof_layers});
 
   // 1. Find available RBs in PDSCH for SIB1 grant.

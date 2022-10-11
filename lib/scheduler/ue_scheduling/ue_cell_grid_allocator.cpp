@@ -144,19 +144,20 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   sch_mcs_description mcs_config                  = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
   cw.qam_mod                                      = mcs_config.modulation;
   cw.target_code_rate                             = mcs_config.target_code_rate;
-  unsigned nof_symb_sh                            = pdsch_td_cfg.symbols.length();
-  unsigned tb_scaling_field                       = 0; // TODO.
-  unsigned nof_oh_prb                             = 0; // TODO: ue_cell_cfg.cfg_ded().pdsch_serv_cell_cfg;
+  unsigned                  nof_symb_sh           = pdsch_td_cfg.symbols.length();
+  unsigned                  tb_scaling_field      = 0; // TODO.
+  unsigned                  nof_oh_prb            = 0; // TODO: ue_cell_cfg.cfg_ded().pdsch_serv_cell_cfg;
+  constexpr static unsigned nof_bits_per_byte     = 8U;
   cw.tb_size_bytes =
       tbs_calculator_pdsch_calculate(tbs_calculator_pdsch_configuration{nof_symb_sh,
                                                                         calculate_nof_dmrs_per_rb(msg.pdsch_cfg.dmrs),
                                                                         nof_oh_prb,
-                                                                        cw.target_code_rate,
+                                                                        cw.target_code_rate / 1024.0F,
                                                                         get_bits_per_symbol(cw.qam_mod),
                                                                         nof_layers,
                                                                         tb_scaling_field,
                                                                         grant.crbs.length()}) /
-      8U;
+      nof_bits_per_byte;
 
   // Set MAC logical channels to schedule in this PDU.
   msg.tb_list.emplace_back();

@@ -75,14 +75,13 @@ ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_resource_alloca
         make_dmrs_info_common(cfg.dl_cfg_common.init_dl_bwp.pdsch_common, i, cfg.pci, cfg.dmrs_typeA_pos);
 
     unsigned nof_symb_sh = get_pdsch_cfg().pdsch_td_alloc_list[i].symbols.length();
-    rar_data[i].prbs_tbs =
-        get_nof_prbs(prbs_calculator_pdsch_config{rar_payload_size_bytes + rar_subheader_size_bytes,
-                                                  nof_symb_sh,
-                                                  calculate_nof_dmrs_per_rb(rar_data[i].dmrs_info),
-                                                  nof_oh_prb,
-                                                  get_bits_per_symbol(modulation_scheme::QPSK),
-                                                  static_cast<float>(rar_mcs_config.target_code_rate / 1024.0),
-                                                  nof_layers});
+    rar_data[i].prbs_tbs = get_nof_prbs(prbs_calculator_pdsch_config{rar_payload_size_bytes + rar_subheader_size_bytes,
+                                                                     nof_symb_sh,
+                                                                     calculate_nof_dmrs_per_rb(rar_data[i].dmrs_info),
+                                                                     nof_oh_prb,
+                                                                     get_bits_per_symbol(modulation_scheme::QPSK),
+                                                                     rar_mcs_config.target_code_rate / 1024.0F,
+                                                                     nof_layers});
   }
 
   // Cache PUSCH DM-RS information and Msg3 required TBS and number of PRBs.
