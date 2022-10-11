@@ -58,15 +58,7 @@ public:
     /// Parameter \e timeDomainOCC in TS38.213 Section 9.2.1. Corresponds to the index \f$i\f$ of the time-domain
     /// orthogonal spreading sequence \f$w_i(m)\f$ in TS38.211 Section 6.3.2.4.1.
     unsigned time_domain_occ;
-    /// \brief Sequence group index {0, ..., 29}.
-    ///
-    /// This is denoted by \f$u\f$ in TS38.211 Section 6.3.2.4.
-    unsigned group_index;
-    /// \brief Sequence number within the group {0, 1}.
-    ///
-    /// This is denoted by \f$v\f$ in TS38.211 Section 6.3.2.4.
-    unsigned sequence_number;
-    /// \brief Cyclic shift initial index {0, 3, 6, 9}.
+    /// \brief Cyclic shift initial index {0, ..., 11}.
     ///
     /// Index used to retrieve the cyclic shift for generating the low-PAPR sequence. Specifically, it corresponds to
     /// parameter \f$m_0\f$ in the formula for the cyclic shift \f$\alpha\f$ in TS38.211 Section 6.3.2.2.2.

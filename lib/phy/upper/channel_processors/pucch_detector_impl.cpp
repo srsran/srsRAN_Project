@@ -127,6 +127,9 @@ span<const cf_t> get_w_star<7>(unsigned length, unsigned i)
                                                {0, 4, 1, 5, 2, 6, 3},
                                                {0, 5, 3, 1, 6, 4, 2},
                                                {0, 6, 5, 4, 3, 2, 1}}});
+  if (length == 0) {
+    return {};
+  }
   if (length != N) {
     return get_w_star<N - 1>(length, i);
   }
@@ -160,22 +163,15 @@ static void validate_config(const pucch_detector::format1_configuration& config)
   srsgnb_assert(config.time_domain_occ <= 6,
                 "Setting {} as the time-domain OCC index, but only values between 0 and 6 are valid.",
                 config.time_domain_occ);
-  srsgnb_assert(
-      config.group_index <= 29, "The group index is a number between 0 and 29 - provided {}", config.group_index);
-  srsgnb_assert(config.sequence_number <= 1,
-                "The sequence number can only be either 0 or 1 - provided {}",
-                config.sequence_number);
-  srsgnb_assert((config.initial_cyclic_shift <= 9) && (config.initial_cyclic_shift % 3 == 0),
-                "The initial cyclic shift takes values in {{0, 3, 6, 9}} - provided {}.",
-                config.initial_cyclic_shift);
   srsgnb_assert(config.n_id <= 1023,
                 "Initializing the pseudorandom generator with {}, but only values between 0 and 1023 are valid.",
                 config.n_id);
   srsgnb_assert(config.nof_sr <= 1, "At most one SR bit - requested {}.", config.nof_sr);
   srsgnb_assert(config.nof_harq_ack <= 2, "At most two ACK bits - requested {}.", config.nof_harq_ack);
-  srsgnb_assert(!((config.nof_harq_ack > 0) && (config.nof_sr > 0)),
-                "Requiring {} ACK bits and one SR bit, but no SR bits are transmitted when ACK bits are.",
-                config.nof_harq_ack);
+  // todo: No SR is sent if nof_ack > 0 - should we put an assert or just return an empty sr?
+  // srsgnb_assert(!((config.nof_harq_ack > 0) && (config.nof_sr > 0)),
+  //               "Requiring {} ACK bits and one SR bit, but no SR bits are transmitted when ACK bits are.",
+  //               config.nof_harq_ack);
 }
 
 // TEMPORARY: need to refactor equalizer interface.
@@ -205,7 +201,7 @@ static float detect_bits(span<uint8_t> out_bits, cf_t detected_symbol, float eq_
   unsigned bits              = (detection_metric > 0) ? 0U : 3U;
   detection_metric           = std::abs(detection_metric);
   float    detection_metric2 = std::real(detected_symbol) - std::imag(detected_symbol);
-  unsigned bits2             = (detection_metric2 > 0) ? 1U : 2U;
+  unsigned bits2             = (detection_metric2 > 0) ? 2U : 1U;
   detection_metric2          = std::abs(detection_metric2);
   if ((nof_bits > 1) && (detection_metric2 > detection_metric)) {
     out_bits[0] = (bits2 & 1U);
@@ -223,8 +219,8 @@ pucch_uci_message pucch_detector_impl::detect(const resource_grid_reader&  grid,
 {
   validate_config(config);
 
-  // Total number of REs used for PUCCH data.
-  unsigned nof_res = config.nof_symbols * NRE / 2;
+  // Total number of REs used for PUCCH data (recall that positive integer division implies taking the floor).
+  unsigned nof_res = (config.nof_symbols / 2) * NRE;
   time_spread_sequence.resize(nof_res);
   ch_estimates.resize(nof_res);
   eq_time_spread_sequence.resize(nof_res);
@@ -238,7 +234,8 @@ pucch_uci_message pucch_detector_impl::detect(const resource_grid_reader&  grid,
     nof_data_symbols_pre_hop = config.nof_symbols / 4;
   }
 
-  extract_data_and_estimates(grid, estimates, config.starting_prb, config.second_hop_prb, config.port);
+  extract_data_and_estimates(
+      grid, estimates, config.start_symbol_index, config.starting_prb, config.second_hop_prb, config.port);
 
   equalize(eq_time_spread_sequence,
            eq_time_spread_noise_var,
@@ -249,70 +246,79 @@ pucch_uci_message pucch_detector_impl::detect(const resource_grid_reader&  grid,
 
   marginalize_w_and_r_out(config);
 
-  unsigned               nof_bits         = std::max(config.nof_harq_ack, config.nof_sr);
-  std::array<uint8_t, 2> msg_bits         = {};
-  float                  detection_metric = detect_bits(msg_bits, detected_symbol, eq_noise_var, nof_bits);
+  unsigned          nof_bits = std::max(config.nof_harq_ack, config.nof_sr);
+  pucch_uci_message output;
+  float             detection_metric = detect_bits(output.data, detected_symbol, eq_noise_var, nof_bits);
 
   // Check whether the computed detection metric is above the threshold, which is set to guarantee a 1% FA probability.
   bool is_msg_ok = (detection_metric > 2.33);
 
-  pucch_uci_message output;
-
   if (!is_msg_ok) {
     if ((config.nof_harq_ack == 0) && (config.nof_sr == 1)) {
-      // Nothing is sent if the UCI message only contains one 0-valued SR bit.
-      output.sr[0] = 0;
+      // Nothing is sent if the UCI message only contains one negative SR bit.
+      // todo: Should we set the SR bit to 0 or 1? Note that a positive SR bit corresponds to transmitting a 0, but
+      // MATLAB denotes a positive SNR with 1.
+      output.data[0]  = 0U;
+      output.harq_ack = {};
+      output.sr       = {output.data.data(), 1};
       // todo: not sure whether we should set this to valid or not.
       output.status = uci_status::valid;
+      return output;
     }
     output.status = uci_status::invalid;
     return output;
   }
 
   if (config.nof_harq_ack > 0) {
-    for (unsigned i = 0; i != config.nof_harq_ack; ++i) {
-      output.harq_ack[i] = msg_bits[i];
-    }
+    output.harq_ack = {output.data.data(), config.nof_harq_ack};
     // Recall that no SR bits are sent if there's at least one ACK bit.
+    output.sr     = {};
     output.status = uci_status::valid;
     return output;
   }
 
-  // If we are here, there should only be an SR bit and it should be 1, since nothing is sent for SR = 0 and no ACK.
+  // If we are here, there should only be a positive SR bit and it should be 0, since nothing is sent for negative
+  // SR and no ACK.
   output.status = uci_status::invalid;
-  if (msg_bits[0] == 1U) {
-    output.sr[0]  = 1U;
-    output.status = uci_status::valid;
+  if (output.data[0] == 0U) {
+    // todo: Here I'm not sure - a 0-valued bit is sent when the SR is positive, should we set SR to 0 (the value of the
+    // bit) or to 1 (as, e.g., MATLAB does)?
+    output.data[0]  = 1U;
+    output.sr       = {output.data.data(), 1};
+    output.harq_ack = {};
+    output.status   = uci_status::valid;
   }
   return output;
 }
 
 void pucch_detector_impl::extract_data_and_estimates(const resource_grid_reader& grid,
                                                      const channel_estimate&     estimates,
+                                                     unsigned                    first_symbol,
                                                      unsigned                    first_prb,
                                                      const optional<unsigned>&   second_prb,
                                                      unsigned                    port)
 {
-  unsigned i_symbol = 0;
-  unsigned skip     = 0;
-  for (; i_symbol != nof_data_symbols_pre_hop; ++i_symbol, skip += NRE) {
+  unsigned i_symbol     = 0;
+  unsigned skip         = 0;
+  unsigned symbol_index = first_symbol + 1;
+  for (; i_symbol != nof_data_symbols_pre_hop; ++i_symbol, skip += NRE, symbol_index += 2) {
     // Index of the first subcarrier assigned to PUCCH, before hopping.
     unsigned   k_init         = NRE * first_prb;
     span<cf_t> sequence_chunk = span<cf_t>(time_spread_sequence).subspan(skip, NRE);
-    grid.get(sequence_chunk, port, 2 * i_symbol + 1, k_init);
+    grid.get(sequence_chunk, port, symbol_index, k_init);
 
-    span<const cf_t> tmp = estimates.get_symbol_ch_estimate(2 * i_symbol + 1, port);
+    span<const cf_t> tmp = estimates.get_symbol_ch_estimate(symbol_index, port);
     std::copy_n(tmp.begin() + k_init, NRE, ch_estimates.begin() + skip);
   }
 
-  for (; i_symbol != nof_data_symbols; ++i_symbol, skip += NRE) {
+  for (; i_symbol != nof_data_symbols; ++i_symbol, skip += NRE, symbol_index += 2) {
     // Index of the first subcarrier assigned to PUCCH, after hopping. Note that we only enter this loop if
     // second_prb.has_value().
     unsigned   k_init         = NRE * second_prb.value();
     span<cf_t> sequence_chunk = span<cf_t>(time_spread_sequence).subspan(skip, NRE);
-    grid.get(sequence_chunk, port, 2 * i_symbol + 1, k_init);
+    grid.get(sequence_chunk, port, symbol_index, k_init);
 
-    span<const cf_t> tmp = estimates.get_symbol_ch_estimate(2 * i_symbol + 1, port);
+    span<const cf_t> tmp = estimates.get_symbol_ch_estimate(symbol_index, port);
     std::copy_n(tmp.begin() + k_init, NRE, ch_estimates.begin() + skip);
   }
 }
@@ -333,19 +339,21 @@ static unsigned compute_i_alpha(unsigned                 m0,
   prg.generate(c_values, 1.0F);
 
   // Compute n_cs
-  unsigned n_cs = std::accumulate(c_values.begin(), c_values.end(), 0.0F, [n = 0U](unsigned a, unsigned b) mutable {
-    return (a + static_cast<unsigned>(b) * (1U << (n++)));
+  unsigned n_cs = std::accumulate(c_values.begin(), c_values.end(), 0.0F, [n = 0U](unsigned a, float b) mutable {
+    return (a + ((b < 0) ? 1 : 0) * (1U << (n++)));
   });
 
-  // Compute alpha index - we negate the expression in TS38.211 Section 6.3.2.2.2 to get the conjugated sequence.
-  return ((NRE - m0 - n_cs) % NRE);
+  // Compute alpha index.
+  return (m0 + n_cs) % NRE;
 }
 
 void pucch_detector_impl::marginalize_w_and_r_out(const format1_configuration& config)
 {
   unsigned time_domain_occ = config.time_domain_occ;
-  unsigned group_index     = config.group_index;
-  unsigned sequence_number = config.sequence_number;
+  // todo(david): The next 2 instructions only hold for groupHopping = 'neither', which is the one we focus at the
+  // moment. I'm not sure if I should include "pucch_mapping.h" and add a group_hopping field to the configuration.
+  unsigned group_index     = config.n_id % 30;
+  unsigned sequence_number = 0;
 
   unsigned nof_symbols_per_slot = get_nsymb_per_slot(config.cp);
   // Get slot number in radio frame.
@@ -361,9 +369,10 @@ void pucch_detector_impl::marginalize_w_and_r_out(const format1_configuration& c
                                        n_sf,
                                        nof_symbols_per_slot,
                                        *pseudo_random);
-    span<const cf_t> r_star  = low_papr->get(group_index, sequence_number, i_alpha);
+    span<const cf_t> seq_r   = low_papr->get(group_index, sequence_number, i_alpha);
     for (unsigned i_elem = 0; i_elem != NRE; ++i_elem) {
-      repeated_symbol[offset + i_elem] = eq_time_spread_sequence[offset + i_elem] * w_star[i_symbol] * r_star[i_elem];
+      repeated_symbol[offset + i_elem] =
+          eq_time_spread_sequence[offset + i_elem] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
     }
   }
 
@@ -377,9 +386,10 @@ void pucch_detector_impl::marginalize_w_and_r_out(const format1_configuration& c
                                        n_sf,
                                        nof_symbols_per_slot,
                                        *pseudo_random);
-    span<const cf_t> r_star  = low_papr->get(group_index, sequence_number, i_alpha);
+    span<const cf_t> seq_r   = low_papr->get(group_index, sequence_number, i_alpha);
     for (unsigned i_elem = 0; i_elem != NRE; ++i_elem) {
-      repeated_symbol[offset + i_elem] = eq_time_spread_sequence[offset + i_elem] * w_star[i_symbol] * r_star[i_elem];
+      repeated_symbol[offset + i_elem] =
+          eq_time_spread_sequence[offset + i_elem] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
     }
   }
 

@@ -62,6 +62,7 @@ private:
   /// This method extracts the PUCCH data REs from the resource grid as well as the corresponding channel estimates.
   void extract_data_and_estimates(const resource_grid_reader& grid,
                                   const channel_estimate&     estimates,
+                                  unsigned                    first_symbol,
                                   unsigned                    first_prb,
                                   const optional<unsigned>&   second_prb,
                                   unsigned                    port);
