@@ -35,7 +35,7 @@ public:
 private:
   du_ue_index_t            ue_index;
   timer_manager&           timers;
-  du_manager_configurator* du_mng;
+  du_manager_configurator* du_mng = nullptr;
 };
 
 class f1c_du_configurator_adapter : public f1c_du_configurator
@@ -75,7 +75,7 @@ public:
 
 private:
   timer_manager&                                            timers;
-  du_manager_configurator*                                  du_mng;
+  du_manager_configurator*                                  du_mng = nullptr;
   slot_array<f1c_ue_task_scheduler_adapter, MAX_NOF_DU_UES> ues;
 };
 
