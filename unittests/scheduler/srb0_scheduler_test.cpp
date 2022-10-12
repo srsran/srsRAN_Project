@@ -30,9 +30,8 @@ unsigned get_random_uint(unsigned min, unsigned max)
 
 // Parameters to be passed to test
 struct srb0_test_params {
-  uint8_t              k0;
-  uint8_t              k1;
-  std::vector<uint8_t> k2;
+  uint8_t k0;
+  uint8_t k1;
 };
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
@@ -46,7 +45,6 @@ struct test_bench {
   ue_srb0_scheduler             srb0_sched;
 
   explicit test_bench(
-      const srb0_test_params&                         params,
       const sched_cell_configuration_request_message& cell_req = make_default_sched_cell_configuration_request()) :
     cell_cfg{cell_req},
     res_grid{cell_cfg},
@@ -83,7 +81,7 @@ protected:
   void
   setup_sched(const sched_cell_configuration_request_message& msg = make_default_sched_cell_configuration_request())
   {
-    bench.emplace(params, msg);
+    bench.emplace(msg);
 
     const auto& dl_lst = bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
     for (const auto& pdsch : dl_lst) {
@@ -114,26 +112,11 @@ protected:
     test_scheduler_result_consistency(bench->cell_cfg, bench->res_grid);
   }
 
-  const pusch_time_domain_resource_allocation& get_pusch_td_resource(uint8_t time_resource) const
-  {
-    return bench->cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[time_resource];
-  }
-
   sched_cell_configuration_request_message create_random_cell_config_request(duplex_mode mode) const
   {
     sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
     msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = params.k0;
 
-    const auto& k2s        = params.k2;
-    auto&       pusch_list = msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
-    if (k2s.empty()) {
-      pusch_list[0].k2 = get_random_uint(2, 4);
-    } else {
-      pusch_list.resize(k2s.size(), pusch_list[0]);
-      for (unsigned i = 0; i != k2s.size(); ++i) {
-        pusch_list[i].k2 = k2s[i];
-      }
-    }
     if (mode == duplex_mode::TDD) {
       msg.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common();
     }
@@ -146,8 +129,6 @@ protected:
   }
 
   span<const pdcch_dl_information> scheduled_dl_pdcchs() { return bench->res_grid[0].result.dl.dl_pdcchs; }
-
-  slot_point result_slot_tx() const { return bench->res_grid[0].slot; }
 
   static bool ue_is_allocated_pdcch(span<const pdcch_dl_information> dl_pdcchs, const ue& u)
   {
@@ -303,8 +284,7 @@ TEST_P(srb0_scheduler_tester, failed_allocating_resources)
 
 INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
                          srb0_scheduler_tester,
-                         testing::Values(srb0_test_params{.k0 = 1, .k1 = 4, .k2 = {2}},
-                                         srb0_test_params{.k0 = 1, .k1 = 4, .k2 = {2, 4}}));
+                         testing::Values(srb0_test_params{.k0 = 1, .k1 = 4}, srb0_test_params{.k0 = 1, .k1 = 4}));
 
 int main(int argc, char** argv)
 {
