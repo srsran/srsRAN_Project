@@ -31,7 +31,7 @@ struct stress_test_args {
   uint32_t             nof_pdu_tti        = 10;
   uint32_t             nof_ttis           = 500;
   std::string          log_filename       = "stdout";
-  srslog::basic_levels log_level_stack    = srslog::basic_levels::error;
+  srslog::basic_levels log_level_stack    = srslog::basic_levels::info;
   srslog::basic_levels log_level_rlc      = srslog::basic_levels::error;
   srslog::basic_levels log_level_pdcp     = srslog::basic_levels::error;
   srslog::basic_levels log_level_mac      = srslog::basic_levels::error;

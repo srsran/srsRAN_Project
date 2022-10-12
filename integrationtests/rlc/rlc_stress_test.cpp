@@ -75,10 +75,11 @@ public:
     srsgnb_assert(peer_stack != nullptr, "Peer stack was not set when starting the stack.");
     srsgnb_assert(peer_stack != this, "Peer cannot be itself.");
 
-    logger.log_info("Starting stack threads");
     for (uint32_t i = 0; i < 20; i++) {
       traffic_source->send_pdu();
     }
+
+    logger.log_debug("Starting stack workers");
     pcell_worker.start();
     ue_worker.start();
 
@@ -88,16 +89,20 @@ public:
 
   void wait_for_finish()
   {
-    logger.log_info("Waiting to lower worker. Stack id={}\n", stack_id);
-    std::unique_lock<std::mutex> lk_lower(mutex_lower);
-    cv_lower.wait(lk_lower, [this] { return stopping_lower; });
-    logger.log_info(
-        "Lower thread no longer processing. Stack id={}, stopping={}\n", stack_id, stopping_lower ? "true" : "false");
+    logger.log_debug("Waiting for PCell worker to finish. Stack id={}\n", stack_id);
+    {
+      std::unique_lock<std::mutex> lk_pcell(mutex_pcell);
+      cv_pcell.wait(lk_pcell, [this] { return stopping_pcell; });
+    }
+    logger.log_debug(
+        "PCell worker no longer processing. Stack id={}, stopping={}\n", stack_id, stopping_pcell ? "true" : "false");
 
-    logger.log_info("Waiting to stop upper worker. Stack id={}\n", stack_id);
-    std::unique_lock<std::mutex> lk_upper(mutex_upper);
-    cv_upper.wait(lk_upper, [this] { return stopping_upper; });
-    logger.log_info("Upper thread no longer processing. Stack id={}", stack_id);
+    logger.log_debug("Waiting to stop upper worker. Stack id={}\n", stack_id);
+    {
+      std::unique_lock<std::mutex> lk_ue(mutex_ue);
+      cv_ue.wait(lk_ue, [this] { return stopping_ue; });
+    }
+    logger.log_debug("Upper thread no longer processing. Stack id={}", stack_id);
 
     pcell_worker.stop();
     ue_worker.stop();
@@ -105,7 +110,7 @@ public:
 
   void run_upper_tti(uint32_t tti)
   {
-    logger.log_info("Running upper TTI={}, PDU RX queue size={}", tti, mac->pdu_rx_list.size());
+    logger.log_debug("Running upper TTI={}, PDU RX queue size={}", tti, mac->pdu_rx_list.size());
     if (tti < (args.nof_ttis - 1)) {
       for (uint32_t i = 0; i < 20; i++) {
         traffic_source->send_pdu();
@@ -113,38 +118,38 @@ public:
       mac->run_rx_tti();
       timers.tick_all(); // timers are run from the upper executor
     } else {
-      std::unique_lock<std::mutex> lk(mutex_upper);
-      stopping_upper = true;
+      std::unique_lock<std::mutex> lk(mutex_ue);
+      stopping_ue = true;
       lk.unlock();
-      cv_lower.notify_all();
+      cv_ue.notify_all();
     }
     pcell_executor->defer([this, tti]() { run_lower_tti(tti + 1); });
-    logger.log_info("Finished running upper TTI={}, PDU RX queue size={}", tti, mac->pdu_rx_list.size());
+    logger.log_debug("Finished running upper TTI={}, PDU RX queue size={}", tti, mac->pdu_rx_list.size());
   }
 
   void run_lower_tti(uint32_t tti)
   {
-    logger.log_info("Running lower TTI={}", tti);
+    logger.log_debug("Running lower TTI={}", tti);
     if (tti < args.nof_ttis) {
       std::vector<byte_buffer_slice_chain> pdu_list = mac->run_tx_tti(tti);
-      logger.log_info("Generated PDU list size={}", pdu_list.size());
+      logger.log_debug("Generated PDU list size={}", pdu_list.size());
       ue_executor->defer([this, tti]() { run_upper_tti(tti); });
       peer_stack->push_pdus(std::move(pdu_list));
       tti++;
     } else {
-      logger.log_info("Stopping lower TTI={}", tti);
-      std::unique_lock<std::mutex> lk(mutex_lower);
-      stopping_lower = true;
+      logger.log_debug("Stopping lower TTI={}", tti);
+      std::unique_lock<std::mutex> lk(mutex_pcell);
+      stopping_pcell = true;
       lk.unlock();
-      cv_lower.notify_all();
+      cv_pcell.notify_all();
     }
-    logger.log_info("Finished running lower TTI={}", tti);
+    logger.log_debug("Finished running lower TTI={}", tti);
   }
 
   void push_pdus(std::vector<byte_buffer_slice_chain> list_pdus)
   {
     auto push_fnc = [this, list_pdus = std::move(list_pdus)]() mutable { mac->push_rx_pdus(std::move(list_pdus)); };
-    if (!stopping_lower && !stopping_upper) {
+    if (!stopping_pcell && !stopping_ue) {
       ue_executor->defer(std::move(push_fnc));
     }
   }
@@ -152,12 +157,12 @@ public:
   void set_peer_stack(stress_stack* peer_stack_) { peer_stack = peer_stack_; }
 
   // Mutex and condition variables for stopping workers
-  std::mutex              mutex_lower;
-  std::mutex              mutex_upper;
-  std::condition_variable cv_lower;
-  std::condition_variable cv_upper;
-  bool                    stopping_lower = false;
-  bool                    stopping_upper = false;
+  std::mutex              mutex_pcell;
+  std::mutex              mutex_ue;
+  std::condition_variable cv_pcell;
+  std::condition_variable cv_ue;
+  bool                    stopping_pcell = false;
+  bool                    stopping_ue    = false;
 
 private:
   // Stack ID for logging
