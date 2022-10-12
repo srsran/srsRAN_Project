@@ -945,7 +945,7 @@ struct uci_pusch_pdu {
 
 /// SR PDU for format 0 or 1.
 struct sr_pdu_format_0_1 {
-  uint8_t sr_indication;
+  bool    sr_indication;
   uint8_t sr_confidence_level;
 };
 

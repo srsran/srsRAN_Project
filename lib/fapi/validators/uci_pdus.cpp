@@ -215,21 +215,6 @@ static bool validate_pucch_format01(unsigned value, validator_report& report)
                         report);
 }
 
-/// Validates the SR indication property of the SR PDU for format 0/1, as per SCF-222 v4.0 section 3.4.9.4.
-static bool validate_sr_indication(unsigned value, validator_report& report)
-{
-  static constexpr unsigned MIN_VALUE = 0;
-  static constexpr unsigned MAX_VALUE = 1;
-
-  return validate_field(MIN_VALUE,
-                        MAX_VALUE,
-                        value,
-                        "SR indication",
-                        msg_type,
-                        static_cast<unsigned>(uci_pdu_type::PUCCH_format_0_1),
-                        report);
-}
-
 /// Validates the SR confidence level property of the SR PDU for format 0 or 1, as per SCF-222 v4.0 section 3.4.9.4.
 static bool validate_sr_confidence_level(unsigned value, validator_report& report)
 {
@@ -318,7 +303,7 @@ bool srsgnb::fapi::validate_uci_pucch_format01_pdu(const uci_pucch_pdu_format_0_
 
   // Validate SR information when it is present.
   if (pdu.pdu_bitmap[uci_pucch_pdu_format_0_1::SR_BIT]) {
-    result &= validate_sr_indication(pdu.sr.sr_indication, report);
+    // NOTE: SR indication property is a bool, so it is not needed to be validated.
     result &= validate_sr_confidence_level(pdu.sr.sr_confidence_level, report);
   }
 

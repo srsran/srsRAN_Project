@@ -506,6 +506,14 @@ static bool validate_message_id(unsigned value, validator_report& report)
     return true;
   }
 
+  // Check third range.
+  static constexpr unsigned MIN_VALUE_THIRD_RANGE = 0x180U;
+  static constexpr unsigned MAX_VALUE_THIRD_RANGE = 0x182U;
+
+  if (MIN_VALUE_THIRD_RANGE <= value && value <= MAX_VALUE_THIRD_RANGE) {
+    return true;
+  }
+
   report.append(static_cast<int>(value), "Message ID", message_type_id::error_indication);
 
   return false;
@@ -516,7 +524,7 @@ static bool validate_message_id(unsigned value, validator_report& report)
 static bool validate_error_code(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0U;
-  static constexpr unsigned MAX_VALUE = 12U;
+  static constexpr unsigned MAX_VALUE = 0xcU;
 
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Error code", message_type_id::error_indication, report);
 }

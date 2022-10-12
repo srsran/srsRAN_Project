@@ -1502,7 +1502,7 @@ public:
 
     auto& sr_pdu = pdu.sr;
 
-    sr_pdu.sr_indication = (detected) ? 1U : 0U;
+    sr_pdu.sr_indication = detected;
 
     sr_pdu.sr_confidence_level = (confidence_level) ? confidence_level.value() : std::numeric_limits<uint8_t>::max();
 

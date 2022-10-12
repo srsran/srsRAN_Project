@@ -16,47 +16,52 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-using namespace unittest;
+class ValidateSlotIndicationField
+  : public ValidateFAPIMessage<slot_indication_message>,
+    public testing::TestWithParam<std::tuple<pdu_field_data<slot_indication_message>, test_case_data>>
+{};
 
-static const std::vector<test_group<slot_indication_message> > vector_test = {
-    {[](slot_indication_message& msg, int value) { msg.sfn = value; },
-     "sfn",
-     {{0, true}, {511, true}, {1023, true}, {1024, false}}},
-    {[](slot_indication_message& msg, int value) { msg.slot = value; },
-     "slot",
-     {{0, true}, {79, true}, {159, true}, {160, false}}}};
-
-static void test_validate_each_field_error()
+TEST_P(ValidateSlotIndicationField, WithValue)
 {
-  for (const auto& group : vector_test) {
-    for (const auto& test_case : group) {
-      auto msg = build_valid_slot_indication();
-      group.update_msg(msg, test_case.value);
-      auto result = validate_slot_indication(msg);
+  auto params = GetParam();
 
-      TESTASSERT_EQ(result.operator bool(), test_case.result);
-      if (!result) {
-        const auto& report = result.error();
-        TESTASSERT_EQ(1U, report.reports.size());
-        const auto& rep = report.reports.back();
-        TESTASSERT_EQ(std::strcmp(group.property(), rep.property_name), 0);
-        TESTASSERT_EQ(message_type_id::slot_indication, rep.message_type);
-        TESTASSERT(!rep.pdu_type);
-      }
-    }
-  }
-}
+  execute_test(std::get<0>(params),
+               std::get<1>(params),
+               build_valid_slot_indication,
+               validate_slot_indication,
+               srsgnb::fapi::message_type_id::slot_indication);
+};
 
-static void test_validate_slot_indication_ok()
+INSTANTIATE_TEST_SUITE_P(SFN,
+                         ValidateSlotIndicationField,
+                         testing::Combine(testing::Values(pdu_field_data<slot_indication_message>{
+                                              "sfn",
+                                              [](slot_indication_message& msg, int value) { msg.sfn = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{522, true},
+                                                          test_case_data{1023, true},
+                                                          test_case_data{1024, false})));
+
+INSTANTIATE_TEST_SUITE_P(slot,
+                         ValidateSlotIndicationField,
+                         testing::Combine(testing::Values(pdu_field_data<slot_indication_message>{
+                                              "slot",
+                                              [](slot_indication_message& msg, int value) { msg.slot = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{80, true},
+                                                          test_case_data{159, true},
+                                                          test_case_data{160, false})));
+
+TEST(ValidateSlotIndication, ValidMessagePasses)
 {
   const auto& msg = build_valid_slot_indication();
 
   const auto& result = validate_slot_indication(msg);
 
-  TESTASSERT(result);
+  ASSERT_TRUE(result);
 }
 
-static void test_validate_slot_indication_error()
+TEST(ValidateSlotIndication, InvalidMessageFails)
 {
   auto msg = build_valid_slot_indication();
 
@@ -65,17 +70,9 @@ static void test_validate_slot_indication_error()
 
   const auto& result = validate_slot_indication(msg);
 
-  TESTASSERT(!result);
+  ASSERT_FALSE(result);
 
   const auto& report = result.error();
   // Check that the 2 errors are reported.
-  TESTASSERT_EQ(report.reports.size(), 2U);
-}
-
-int main()
-{
-  test_validate_slot_indication_ok();
-  test_validate_slot_indication_error();
-  test_validate_each_field_error();
-  fmt::print("SLOT.indication validator -> Ok\n");
+  ASSERT_EQ(report.reports.size(), 2U);
 }
