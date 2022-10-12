@@ -54,6 +54,10 @@ private:
   std::vector<data>                      values;
 };
 
+/// Builds and returns a valid CRC.indication message. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.8.
+srsgnb::fapi::crc_indication_message build_valid_crc_indication();
+
 /// Builds and returns a valid DL CSI-RS pdu. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.2.3.
 srsgnb::fapi::dl_csi_rs_pdu build_valid_dl_csi_pdu();

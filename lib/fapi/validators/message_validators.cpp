@@ -198,20 +198,6 @@ static bool validate_harq_id(unsigned value, message_type_id msg_id, validator_r
   return validate_field(MIN_VALUE, MAX_VALUE, value, "HARQ ID", msg_id, report);
 }
 
-/// Validates the UL SINR metric property of a CRC.indication PDU, as per SCF-222 v4.0 section 3.4.8.
-static bool validate_ul_sinr_metric(int value, validator_report& report)
-{
-  static constexpr int INVALID   = -32768;
-  static constexpr int MIN_VALUE = -32767;
-  static constexpr int MAX_VALUE = 32767;
-
-  if (value == INVALID) {
-    return true;
-  }
-
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "UL SINR metric", message_type_id::crc_indication, report);
-}
-
 /// Validates the timing advance offset property of a CRC.indication PDU, as per SCF-222 v4.0 section 3.4.8.
 static bool validate_timing_advance_offset(unsigned value, validator_report& report)
 {
@@ -286,7 +272,7 @@ error_type<validator_report> srsgnb::fapi::validate_crc_indication(const crc_ind
     success &= validate_rapid(pdu.rapid, message_type_id::crc_indication, report);
     success &= validate_harq_id(pdu.harq_id, message_type_id::crc_indication, report);
     // NOTE: CB CRC status bitmap property will not be validated.
-    success &= validate_ul_sinr_metric(pdu.ul_sinr_metric, report);
+    // NOTE: SINR property uses the whole variable range, so it will not be tested.
     success &= validate_timing_advance_offset(pdu.timing_advance_offset, report);
     success &= validate_timing_advance_offset_ns(pdu.timing_advance_offset_ns, report);
     success &= validate_rssi(pdu.rssi, report);

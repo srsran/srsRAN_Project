@@ -8,117 +8,162 @@
  *
  */
 
-#include "srsgnb/fapi/message_builders.h"
+#include "helpers.h"
 #include "srsgnb/fapi/message_validators.h"
-#include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;
 using namespace fapi;
+using namespace unittest;
 
-static void test_crc_indication_validator_ok()
+class ValidateCRCMessageField
+  : public ValidateFAPIMessage<crc_indication_message>,
+    public testing::TestWithParam<std::tuple<pdu_field_data<crc_indication_message>, test_case_data>>
+{};
+
+TEST_P(ValidateCRCMessageField, WithValue)
 {
-  for (unsigned i = 0; i != 2; ++i) {
-    crc_indication_message         msg;
-    crc_indication_message_builder builder(msg);
+  auto params = GetParam();
 
-    unsigned slot = 15;
-    unsigned sfn  = 100;
+  execute_test(std::get<0>(params),
+               std::get<1>(params),
+               build_valid_crc_indication,
+               validate_crc_indication,
+               srsgnb::fapi::message_type_id::crc_indication);
+};
 
-    builder.set_basic_parameters(sfn, slot);
+INSTANTIATE_TEST_SUITE_P(SFN,
+                         ValidateCRCMessageField,
+                         testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
+                                              "sfn",
+                                              [](crc_indication_message& msg, int value) { msg.sfn = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{522, true},
+                                                          test_case_data{1023, true},
+                                                          test_case_data{1024, false})));
 
-    uint32_t                                                      handle = 34U;
-    rnti_t                                                        rnti   = to_rnti(10);
-    optional<uint8_t>                                             rapid;
-    uint8_t                                                       harq_id       = 0;
-    uint8_t                                                       tb_crc_status = 0;
-    static_vector<uint8_t, crc_ind_pdu::MAX_NUM_CB_PER_TTI_BYTES> cb_crc_status;
-    uint16_t                                                      num_cb = 13;
+INSTANTIATE_TEST_SUITE_P(slot,
+                         ValidateCRCMessageField,
+                         testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
+                                              "slot",
+                                              [](crc_indication_message& msg, int value) { msg.slot = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{80, true},
+                                                          test_case_data{159, true},
+                                                          test_case_data{160, false})));
 
-    optional<float>    ul_sinr_dB;
-    optional<unsigned> timing_advance_offset;
-    optional<int>      timing_advance_offset_in_ns;
-    optional<float>    rssi_dB;
-    optional<float>    rsrp_dB;
+INSTANTIATE_TEST_SUITE_P(
+    RNTI,
+    ValidateCRCMessageField,
+    testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
+                         "RNTI",
+                         [](crc_indication_message& msg, int value) { msg.pdus.front().rnti = to_rnti(value); }}),
+                     testing::Values(test_case_data{0, false}, test_case_data{1, true}, test_case_data{159, true})));
 
-    if (i) {
-      ul_sinr_dB.emplace(-65);
-      timing_advance_offset.emplace(30);
-      timing_advance_offset_in_ns.emplace(-12345);
-      rssi_dB.emplace(-64);
-      rsrp_dB.emplace(-100);
-    }
+INSTANTIATE_TEST_SUITE_P(RAPID,
+                         ValidateCRCMessageField,
+                         testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
+                                              "RAPID",
+                                              [](crc_indication_message& msg, int value) {
+                                                msg.pdus.front().rapid = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{31, true},
+                                                          test_case_data{63, true},
+                                                          test_case_data{64, false},
+                                                          test_case_data{254, false},
+                                                          test_case_data{255, true})));
 
-    builder.add_pdu(handle,
-                    rnti,
-                    rapid,
-                    harq_id,
-                    tb_crc_status,
-                    num_cb,
-                    {cb_crc_status},
-                    ul_sinr_dB,
-                    timing_advance_offset,
-                    timing_advance_offset_in_ns,
-                    rssi_dB,
-                    rsrp_dB,
-                    i);
+INSTANTIATE_TEST_SUITE_P(HARQ,
+                         ValidateCRCMessageField,
+                         testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
+                                              "HARQ ID",
+                                              [](crc_indication_message& msg, int value) {
+                                                msg.pdus.front().harq_id = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{8, true},
+                                                          test_case_data{15, true},
+                                                          test_case_data{16, false})));
 
-    validator_report report(0, 0);
-    const auto&      result = validate_crc_indication(msg);
+INSTANTIATE_TEST_SUITE_P(TA,
+                         ValidateCRCMessageField,
+                         testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
+                                              "Timing advance offset",
+                                              [](crc_indication_message& msg, int value) {
+                                                msg.pdus.front().timing_advance_offset = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{31, true},
+                                                          test_case_data{63, true},
+                                                          test_case_data{64, false},
+                                                          test_case_data{65534, false},
+                                                          test_case_data{65535, true})));
 
-    TESTASSERT(result);
-  }
+INSTANTIATE_TEST_SUITE_P(TA_ns,
+                         ValidateCRCMessageField,
+                         testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
+                                              "Timing advance offset in nanoseconds",
+                                              [](crc_indication_message& msg, int value) {
+                                                msg.pdus.front().timing_advance_offset_ns = value;
+                                              }}),
+                                          testing::Values(test_case_data{static_cast<unsigned>(int16_t(-32768)), true},
+                                                          test_case_data{static_cast<unsigned>(int16_t(-32767)), false},
+                                                          test_case_data{static_cast<unsigned>(int16_t(-16801)), false},
+                                                          test_case_data{static_cast<unsigned>(int16_t(-16800)), true},
+                                                          test_case_data{0, true},
+                                                          test_case_data{16800, true},
+                                                          test_case_data{16801, false})));
+
+INSTANTIATE_TEST_SUITE_P(RSSI,
+                         ValidateCRCMessageField,
+                         testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
+                                              "RSSI",
+                                              [](crc_indication_message& msg, int value) {
+                                                msg.pdus.front().rssi = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{640, true},
+                                                          test_case_data{1280, true},
+                                                          test_case_data{1281, false},
+                                                          test_case_data{65534, false},
+                                                          test_case_data{65535, true})));
+
+INSTANTIATE_TEST_SUITE_P(RSRP,
+                         ValidateCRCMessageField,
+                         testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
+                                              "RSRP",
+                                              [](crc_indication_message& msg, int value) {
+                                                msg.pdus.front().rsrp = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{640, true},
+                                                          test_case_data{1280, true},
+                                                          test_case_data{1281, false},
+                                                          test_case_data{65534, false},
+                                                          test_case_data{65535, true})));
+
+/// Valid Message should pass.
+TEST(ValidateCRCIndication, ValidMessagePasses)
+{
+  const crc_indication_message& msg    = build_valid_crc_indication();
+  const auto&                   result = validate_crc_indication(msg);
+
+  ASSERT_TRUE(result);
 }
 
-static void test_crc_indication_validator_error()
+/// Add 3 errors and check that validation fails with 3 errors.
+TEST(ValidateCRCIndication, InvalidMessageFails)
 {
-  crc_indication_message         msg;
-  crc_indication_message_builder builder(msg);
+  crc_indication_message msg = build_valid_crc_indication();
 
-  unsigned slot = 15;
-  unsigned sfn  = 100;
-
-  builder.set_basic_parameters(sfn, slot);
-
-  uint32_t                                                      handle = 34U;
-  rnti_t                                                        rnti   = to_rnti(10);
-  optional<uint8_t>                                             rapid;
-  uint8_t                                                       harq_id       = 128;
-  bool                                                          tb_crc_status = true;
-  static_vector<uint8_t, crc_ind_pdu::MAX_NUM_CB_PER_TTI_BYTES> cb_crc_status;
-  uint16_t                                                      num_cb = 14;
-
-  optional<float>    ul_sinr_dB;
-  optional<unsigned> timing_advance_offset;
-  optional<int>      timing_advance_offset_in_ns;
-  optional<float>    rssi_dB;
-  rssi_dB.emplace(10);
-  optional<float> rsrp_dB;
-
-  builder.add_pdu(handle,
-                  rnti,
-                  rapid,
-                  harq_id,
-                  tb_crc_status,
-                  num_cb,
-                  {cb_crc_status},
-                  ul_sinr_dB,
-                  timing_advance_offset,
-                  timing_advance_offset_in_ns,
-                  rssi_dB,
-                  rsrp_dB);
+  // Force 3 errors.
+  msg.slot                                  = 1025;
+  msg.pdus.front().rsrp                     = 10000;
+  msg.pdus.front().timing_advance_offset_ns = -30000;
 
   const auto& result = validate_crc_indication(msg);
 
-  TESTASSERT(!result);
-
-  const auto& report = result.error();
+  ASSERT_FALSE(result);
   // Assert 3 reports were generated.
-  TESTASSERT_EQ(report.reports.size(), 2u);
-}
-
-int main()
-{
-  test_crc_indication_validator_ok();
-  test_crc_indication_validator_error();
-  fmt::print("CRC.indication message validator -> OK\n");
+  ASSERT_EQ(result.error().reports.size(), 3u);
 }

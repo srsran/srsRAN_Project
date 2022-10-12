@@ -14,9 +14,9 @@
 #include <random>
 
 static std::mt19937 gen(0);
+
 using namespace srsgnb;
 using namespace fapi;
-using namespace unittest;
 
 static unsigned generate_sfn()
 {
@@ -1203,6 +1203,27 @@ tx_data_request_message unittest::build_valid_tx_data_request()
   pdu.pdu_index          = 4231;
   pdu.tlv_custom.length  = 12;
   pdu.tlv_custom.payload = nullptr;
+
+  return msg;
+}
+
+srsgnb::fapi::crc_indication_message unittest::build_valid_crc_indication()
+{
+  crc_indication_message msg;
+
+  msg.sfn  = 238;
+  msg.slot = 3;
+  msg.pdus.emplace_back();
+  crc_ind_pdu& pdu             = msg.pdus.front();
+  pdu.rnti                     = to_rnti(34);
+  pdu.rapid                    = 3;
+  pdu.harq_id                  = 2;
+  pdu.tb_crc_status_ok         = true;
+  pdu.ul_sinr_metric           = 0;
+  pdu.timing_advance_offset    = 0;
+  pdu.timing_advance_offset_ns = 0;
+  pdu.rssi                     = 100;
+  pdu.rsrp                     = 10;
 
   return msg;
 }
