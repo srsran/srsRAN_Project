@@ -23,23 +23,24 @@
 using namespace srsgnb;
 
 /// \brief Stack emulator used to stress test the RLC TX/RX entities.
-/// This will contain two executors (threads) to accuratly emulate a real stack.
-/// One for the MAC TX that will pull PDUs from RLC, another for MAC RX and
-/// PDCP RX and TX.
+/// This emulator will try to mimic a real gNB stack as closely as possible.
+/// To do this, it will contain two executors (threads) the PCell executor and a UE executor.
+/// The PCell executor will emulate the MAC TX by pulling PDUs from RLC;
+/// while the UE executor will emulate the MAC RX and PDCP RX and TX.
 class stress_stack
 {
 public:
   stress_stack(const stress_test_args& args, uint32_t id) :
     stack_id(id),
     args(args),
-    upper_name("Upper-Worker" + std::to_string(id)),
-    lower_name("Lower-Worker" + std::to_string(id)),
-    upper_worker{upper_name, task_worker_queue_size, true},
-    lower_worker{lower_name, task_worker_queue_size, true},
+    ue_name("UE-Worker-" + std::to_string(id)),
+    pcell_name("PCell-Worker-" + std::to_string(id)),
+    ue_worker{ue_name, task_worker_queue_size, true},
+    pcell_worker{pcell_name, task_worker_queue_size, true},
     logger("STACK", id, lcid_t{})
   {
-    upper_executor = make_task_executor(upper_worker);
-    lower_executor = make_task_executor(lower_worker);
+    ue_executor    = make_task_executor(ue_worker);
+    pcell_executor = make_task_executor(pcell_worker);
 
     // MAC
     mac = std::make_unique<mac_dummy>(args, id);
@@ -59,8 +60,8 @@ public:
     msg.tx_lower_dn                  = mac.get();
     msg.config                       = cnfg;
     msg.timers                       = &timers;
-    msg.pcell_executor               = lower_executor.get();
-    msg.ue_executor                  = upper_executor.get();
+    msg.pcell_executor               = pcell_executor.get();
+    msg.ue_executor                  = ue_executor.get();
     rlc                              = create_rlc_entity(msg);
     traffic_source->set_rlc_tx_upper(rlc->get_tx_upper_layer_data_interface());
     mac->set_rlc_tx_lower(rlc->get_tx_lower_layer_interface());
@@ -78,11 +79,11 @@ public:
     for (uint32_t i = 0; i < 20; i++) {
       traffic_source->send_pdu();
     }
-    lower_worker.start();
-    upper_worker.start();
+    pcell_worker.start();
+    ue_worker.start();
 
     // Schedule the TTI when the thread are started.
-    lower_executor->defer([this]() { run_lower_tti(0); });
+    pcell_executor->defer([this]() { run_lower_tti(0); });
   }
 
   void wait_for_finish()
@@ -98,8 +99,8 @@ public:
     cv_upper.wait(lk_upper, [this] { return stopping_upper; });
     logger.log_info("Upper thread no longer processing. Stack id={}", stack_id);
 
-    lower_worker.stop();
-    upper_worker.stop();
+    pcell_worker.stop();
+    ue_worker.stop();
   }
 
   void run_upper_tti(uint32_t tti)
@@ -117,7 +118,7 @@ public:
       lk.unlock();
       cv_lower.notify_all();
     }
-    lower_executor->defer([this, tti]() { run_lower_tti(tti + 1); });
+    pcell_executor->defer([this, tti]() { run_lower_tti(tti + 1); });
     logger.log_info("Finished running upper TTI={}, PDU RX queue size={}", tti, mac->pdu_rx_list.size());
   }
 
@@ -127,7 +128,7 @@ public:
     if (tti < args.nof_ttis) {
       std::vector<byte_buffer_slice_chain> pdu_list = mac->run_tx_tti(tti);
       logger.log_info("Generated PDU list size={}", pdu_list.size());
-      upper_executor->defer([this, tti]() { run_upper_tti(tti); });
+      ue_executor->defer([this, tti]() { run_upper_tti(tti); });
       peer_stack->push_pdus(std::move(pdu_list));
       tti++;
     } else {
@@ -144,7 +145,7 @@ public:
   {
     auto push_fnc = [this, list_pdus = std::move(list_pdus)]() mutable { mac->push_rx_pdus(std::move(list_pdus)); };
     if (!stopping_lower && !stopping_upper) {
-      upper_executor->defer(std::move(push_fnc));
+      ue_executor->defer(std::move(push_fnc));
     }
   }
 
@@ -167,12 +168,12 @@ private:
 
   // Executors
   uint16_t                       task_worker_queue_size = 15000;
-  std::string                    upper_name;
-  std::string                    lower_name;
-  task_worker                    upper_worker;
-  task_worker                    lower_worker;
-  std::unique_ptr<task_executor> upper_executor;
-  std::unique_ptr<task_executor> lower_executor;
+  std::string                    ue_name;
+  std::string                    pcell_name;
+  task_worker                    ue_worker;
+  task_worker                    pcell_worker;
+  std::unique_ptr<task_executor> ue_executor;
+  std::unique_ptr<task_executor> pcell_executor;
 
   stress_stack* peer_stack = nullptr;
 
@@ -195,19 +196,19 @@ private:
 
 void stress_test(const stress_test_args& args)
 {
-  // Create the UE/gNB emulators
-  stress_stack ue_emulator(args, 0);
-  stress_stack gnb_emulator(args, 1);
-  ue_emulator.set_peer_stack(&gnb_emulator);
-  gnb_emulator.set_peer_stack(&ue_emulator);
+  // Create the stack emulators
+  stress_stack stack_emulator_0(args, 0);
+  stress_stack stack_emulator_1(args, 1);
+  stack_emulator_0.set_peer_stack(&stack_emulator_1);
+  stack_emulator_1.set_peer_stack(&stack_emulator_0);
 
   //  Launch transmission
-  ue_emulator.start();
-  gnb_emulator.start();
+  stack_emulator_0.start();
+  stack_emulator_1.start();
 
   //  Wait for test to finish
-  ue_emulator.wait_for_finish();
-  gnb_emulator.wait_for_finish();
+  stack_emulator_0.wait_for_finish();
+  stack_emulator_1.wait_for_finish();
 
   // Print and analyse metrics
   // TODO
