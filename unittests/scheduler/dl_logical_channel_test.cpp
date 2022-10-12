@@ -62,9 +62,14 @@ TEST(dl_logical_channel_test, buffer_state_indication_has_no_effect_in_inactive_
   unsigned                   buf_st = get_random_uint(0, 10000);
   lch_mng.handle_dl_buffer_status_indication(lcid, buf_st);
 
-  ASSERT_EQ(lch_mng.pending_bytes(), 0);
-  ASSERT_EQ(lch_mng.pending_bytes(lcid), 0);
-  ASSERT_FALSE(lch_mng.has_pending_bytes());
+  // SRB0 is active by default
+  ASSERT_EQ(lch_mng.pending_bytes(), lcid == LCID_SRB0 ? get_mac_sdu_required_bytes(buf_st) : 0);
+  ASSERT_EQ(lch_mng.pending_bytes(lcid), lcid == LCID_SRB0 ? get_mac_sdu_required_bytes(buf_st) : 0);
+  if (lcid == LCID_SRB0) {
+    ASSERT_TRUE(lch_mng.has_pending_bytes());
+  } else {
+    ASSERT_FALSE(lch_mng.has_pending_bytes());
+  }
   ASSERT_FALSE(lch_mng.has_pending_ces());
 }
 
