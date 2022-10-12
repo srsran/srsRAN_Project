@@ -10,19 +10,18 @@
  *
  */
 
-#include "rlc_stress_test_pdcp.h"
+#include "rlc_stress_test_traffic.h"
 
 using namespace srsgnb;
 
-void pdcp_traffic_sink::on_new_sdu(byte_buffer_slice_chain pdu)
+void stress_traffic_sink::on_new_sdu(byte_buffer pdu)
 {
   logger.log_info(pdu.begin(), pdu.end(), "Received PDU ({} B)", pdu.length());
 }
 
-void pdcp_traffic_source::send_pdu()
+void stress_traffic_source::send_pdu()
 {
-  rlc_sdu sdu;
-  sdu.pdcp_count = pdcp_count++;
+  byte_buffer sdu;
 
   // random or fixed SDU size
   if (args.sdu_size < 1) {
@@ -32,10 +31,10 @@ void pdcp_traffic_source::send_pdu()
   }
 
   for (uint32_t i = 0; i < sdu_size; i++) {
-    sdu.buf.append(payload);
+    sdu.append(payload);
     payload++;
   }
 
-  logger.log_info(sdu.buf.begin(), sdu.buf.end(), "Sending SDU ({} B, COUNT={})", sdu.buf.length(), sdu.pdcp_count);
-  rlc_tx_upper->handle_sdu(sdu);
+  logger.log_info(sdu.begin(), sdu.end(), "Sending SDU ({} B)", sdu.length());
+  pdcp_tx_upper->handle_sdu(std::move(sdu));
 }

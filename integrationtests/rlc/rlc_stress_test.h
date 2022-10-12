@@ -12,4 +12,4 @@
 
 #include "rlc_stress_test_args.h"
 #include "rlc_stress_test_mac.h"
-#include "rlc_stress_test_pdcp.h"
+#include "rlc_stress_test_traffic.h"
