@@ -59,6 +59,7 @@ public:
     traffic_source->set_pdcp_tx_upper(&pdcp->get_tx_upper_data_interface());
 
     // F1
+    f1 = std::make_unique<f1_dummy>(id);
 
     // RLC
     rlc_config                  rlc_cnfg = get_rlc_config_from_args(args);
@@ -203,6 +204,9 @@ private:
 
   // RLC
   std::unique_ptr<rlc_entity> rlc = nullptr;
+
+  // F1
+  std::unique_ptr<f1_dummy> f1 = nullptr;
 
   // PDCP
   std::unique_ptr<pdcp_entity> pdcp = nullptr;

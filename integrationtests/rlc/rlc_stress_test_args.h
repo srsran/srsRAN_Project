@@ -34,6 +34,7 @@ struct stress_test_args {
   std::string          log_filename       = "stdout";
   srslog::basic_levels log_level_stack    = srslog::basic_levels::info;
   srslog::basic_levels log_level_rlc      = srslog::basic_levels::error;
+  srslog::basic_levels log_level_f1       = srslog::basic_levels::error;
   srslog::basic_levels log_level_pdcp     = srslog::basic_levels::error;
   srslog::basic_levels log_level_mac      = srslog::basic_levels::error;
   uint32_t             log_hex_limit      = 32;
@@ -57,6 +58,7 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
                                                {"log_filename", required_argument, nullptr, 'l'},
                                                {"log_stack_level", required_argument, nullptr, 'L'},
                                                {"log_pdcp_level", required_argument, nullptr, 'P'},
+                                               {"log_f1_level", required_argument, nullptr, 'F'},
                                                {"log_rlc_level", required_argument, nullptr, 'R'},
                                                {"log_mac_level", required_argument, nullptr, 'M'},
                                                {"log_hex_limit", required_argument, nullptr, 'H'},
@@ -79,10 +81,11 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
     "  -D, --pdu_duplicate_rate <rate> Set rate at which RLC PDUs are dropped.\n"
     "  -l, --nof_ttis <ttis>           Set number of TTIs to emulate.\n"
     "  -l, --log_filename <filename>   Set log filename. Use 'stdout' to print to console.\n"
-    "  -L, --log_stack_level <level>   Set STACK log level (default: debug).\n"
-    "  -P, --log_pdcp_level <level>    Set PDCP log level (default: debug).\n"
-    "  -R, --log_rlc_level <level>     Set RLC log level (default: debug).\n"
-    "  -M, --log_mac_level <level>     Set MAC log level (default: debug).\n"
+    "  -L, --log_stack_level <level>   Set STACK log level (default: info).\n"
+    "  -P, --log_pdcp_level <level>    Set PDCP log level (default: error).\n"
+    "  -F, --log_f1_level <level>      Set F1 log level (default: error).\n"
+    "  -R, --log_rlc_level <level>     Set RLC log level (default: error).\n"
+    "  -M, --log_mac_level <level>     Set MAC log level (default: error).\n"
     "  -H, --log_hex_limit <hex_limit> Set log limit for hex dumps (default: 32 bytes).\n"
     "  -S, --seed <seed>               Set seed to use in run. 0 means the seed is randomly generated.\n"
     "  -T, --nof_pdu_tti <num>         Set number of PDUs processed in a TTI.\n"
@@ -92,7 +95,7 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
   // Parse arguments
   while (true) {
     int option_index = 0;
-    int c            = getopt_long(argc, argv, "hm:s:z:Z:op:d:c:D:t:l:L:P:R:M:H:S:T:", long_options, &option_index);
+    int c            = getopt_long(argc, argv, "hm:s:z:Z:op:d:c:D:t:l:L:P:F:R:M:H:S:T:", long_options, &option_index);
     if (c == -1) {
       break;
     }
@@ -152,6 +155,10 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
       case 'P':
         args.log_level_pdcp = srslog::str_to_basic_level(std::string(optarg));
         fprintf(stdout, "PDCP log level %s\n", optarg);
+        break;
+      case 'F':
+        args.log_level_f1 = srslog::str_to_basic_level(std::string(optarg));
+        fprintf(stdout, "F1 log level %s\n", optarg);
         break;
       case 'R':
         args.log_level_rlc = srslog::str_to_basic_level(std::string(optarg));
@@ -237,6 +244,10 @@ inline void init_log_from_args(const stress_test_args& args)
   auto& log_pdcp = srslog::fetch_basic_logger("PDCP", false);
   log_pdcp.set_level(args.log_level_pdcp);
   log_pdcp.set_hex_dump_max_size(args.log_hex_limit);
+
+  auto& log_f1 = srslog::fetch_basic_logger("F1", false);
+  log_f1.set_level(args.log_level_pdcp);
+  log_f1.set_hex_dump_max_size(args.log_hex_limit);
 
   auto& log_rlc = srslog::fetch_basic_logger("RLC", false);
   log_rlc.set_level(args.log_level_rlc);
