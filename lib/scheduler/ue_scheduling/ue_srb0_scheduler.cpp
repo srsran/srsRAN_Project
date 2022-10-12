@@ -117,17 +117,16 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   static const unsigned nof_layers      = 1; // Assumption
   // TODO: As per Section 5.1.3.2, TS 38.214, need to derive xOverhead from PDSCH-ServingCellconfig.
   // Assumed to be not configured hence set to 0 as per spec.
-  static const unsigned    nof_oh_prb    = 0;
-  pdsch_prbs_tbs           srb0_prbs_tbs = get_nof_prbs(prbs_calculator_pdsch_config{pending_bytes,
+  static const unsigned nof_oh_prb    = 0;
+  pdsch_prbs_tbs        srb0_prbs_tbs = get_nof_prbs(prbs_calculator_pdsch_config{pending_bytes,
                                                                            nof_symb_sh,
                                                                            calculate_nof_dmrs_per_rb(dmrs_info),
                                                                            nof_oh_prb,
                                                                            mod_order,
                                                                            srb0_mcs_config.target_code_rate / 1024.0F,
                                                                            nof_layers});
-  const bwp_configuration& bwp_cfg       = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
-  prb_bitmap               used_crbs     = pdsch_alloc.dl_res_grid.used_crbs(bwp_cfg, pdsch_td_cfg.symbols);
-  crb_interval             ue_grant_crbs = find_empty_interval_of_length(used_crbs, srb0_prbs_tbs.nof_prbs, 0);
+  prb_bitmap            used_crbs     = pdsch_alloc.dl_res_grid.used_crbs(initial_active_dl_bwp, pdsch_td_cfg.symbols);
+  crb_interval          ue_grant_crbs = find_empty_interval_of_length(used_crbs, srb0_prbs_tbs.nof_prbs, 0);
   if (ue_grant_crbs.length() < srb0_prbs_tbs.nof_prbs) {
     logger.info("Postponed SRB0 PDU scheduling for rnti={:#x}. Cause: Not enough PRBs ({} < {})",
                 u.crnti,
