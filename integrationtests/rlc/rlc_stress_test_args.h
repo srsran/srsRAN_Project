@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/rlc/rlc_tx.h"
@@ -178,6 +179,12 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
     }
   }
   return true;
+}
+
+inline pdcp_config get_pdcp_config_from_args(const stress_test_args& args)
+{
+  pdcp_config cnfg = {};
+  return cnfg;
 }
 
 inline rlc_config get_rlc_config_from_args(const stress_test_args& args)

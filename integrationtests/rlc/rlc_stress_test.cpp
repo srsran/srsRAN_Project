@@ -11,6 +11,7 @@
  */
 
 #include "rlc_stress_test.h"
+#include "srsgnb/pdcp/pdcp_factory.h"
 #include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/rlc/rlc_factory.h"
 #include "srsgnb/support/executors/task_worker.h"
@@ -45,24 +46,30 @@ public:
     // MAC
     mac = std::make_unique<mac_dummy>(args, id);
 
-    // PDCP
+    // Trafic generators
     traffic_sink   = std::make_unique<pdcp_traffic_sink>(id);
     traffic_source = std::make_unique<pdcp_traffic_source>(args, id);
 
+    // PDCP
+    pdcp_config                  pdcp_cnfg = {};
+    pdcp_entity_creation_message pdcp_msg  = {};
+    pdcp_msg.config                        = pdcp_cnfg;
+    pdcp                                   = create_pdcp_entity(pdcp_msg);
+
     // RLC
-    rlc_config                  cnfg = get_rlc_config_from_args(args);
-    rlc_entity_creation_message msg  = {};
-    msg.ue_index                     = static_cast<du_ue_index_t>(stack_id);
-    msg.lcid                         = lcid_t{};
-    msg.rx_upper_dn                  = traffic_sink.get();
-    msg.tx_upper_cn                  = traffic_source.get();
-    msg.tx_upper_dn                  = traffic_source.get();
-    msg.tx_lower_dn                  = mac.get();
-    msg.config                       = cnfg;
-    msg.timers                       = &timers;
-    msg.pcell_executor               = pcell_executor.get();
-    msg.ue_executor                  = ue_executor.get();
-    rlc                              = create_rlc_entity(msg);
+    rlc_config                  rlc_cnfg = get_rlc_config_from_args(args);
+    rlc_entity_creation_message rlc_msg  = {};
+    rlc_msg.ue_index                     = static_cast<du_ue_index_t>(stack_id);
+    rlc_msg.lcid                         = lcid_t{};
+    rlc_msg.rx_upper_dn                  = traffic_sink.get();
+    rlc_msg.tx_upper_cn                  = traffic_source.get();
+    rlc_msg.tx_upper_dn                  = traffic_source.get();
+    rlc_msg.tx_lower_dn                  = mac.get();
+    rlc_msg.config                       = rlc_cnfg;
+    rlc_msg.timers                       = &timers;
+    rlc_msg.pcell_executor               = pcell_executor.get();
+    rlc_msg.ue_executor                  = ue_executor.get();
+    rlc                                  = create_rlc_entity(rlc_msg);
     traffic_source->set_rlc_tx_upper(rlc->get_tx_upper_layer_data_interface());
     mac->set_rlc_tx_lower(rlc->get_tx_lower_layer_interface());
     mac->set_rlc_rx_lower(rlc->get_rx_lower_layer_interface());
@@ -191,9 +198,12 @@ private:
   std::unique_ptr<mac_dummy> mac = nullptr;
 
   // RLC
-  std::unique_ptr<rlc_entity> rlc;
+  std::unique_ptr<rlc_entity> rlc = nullptr;
 
   // PDCP
+  std::unique_ptr<pdcp_entity> pdcp = nullptr;
+
+  // Traffic generators
   std::unique_ptr<pdcp_traffic_sink>   traffic_sink   = nullptr;
   std::unique_ptr<pdcp_traffic_source> traffic_source = nullptr;
 
