@@ -126,6 +126,7 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   // TODO: Use UE-dedicated DMRS info.
   msg.pdsch_cfg.dmrs = make_dmrs_info_common(
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, grant.time_res_index, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  msg.pdsch_cfg.is_interleaved = pdcch->dci.c_rnti_f1_0.vrb_to_prb_mapping > 0;
   // See TS 38.211, 7.3.1.1. - Scrambling.
   const bwp_downlink_dedicated* bwp_dl_ded = ue_cell_cfg.find_dl_bwp_ded(ue_cc->active_bwp_id());
   if (bwp_dl_ded != nullptr and bwp_dl_ded->pdsch_cfg.has_value() and

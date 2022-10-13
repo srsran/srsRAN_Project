@@ -26,8 +26,8 @@ static void test_conversion_ok()
 
   // BWP params
   const bwp_configuration& bwp_cfg = *pdu.pdsch_cfg.bwp_cfg;
-  TESTASSERT_EQ(pdu.pdcch_cfg->ctx.coreset_cfg->coreset0_crbs().length(), fapi_pdu.bwp_size);
-  TESTASSERT_EQ(pdu.pdcch_cfg->ctx.coreset_cfg->coreset0_crbs().start(), fapi_pdu.bwp_start);
+  TESTASSERT_EQ(pdu.pdsch_cfg.coreset_cfg->coreset0_crbs().length(), fapi_pdu.bwp_size);
+  TESTASSERT_EQ(pdu.pdsch_cfg.coreset_cfg->coreset0_crbs().start(), fapi_pdu.bwp_start);
   TESTASSERT_EQ(bwp_cfg.scs, fapi_pdu.scs);
   TESTASSERT_EQ(bwp_cfg.cp_extended ? fapi::cyclic_prefix_type::extended : fapi::cyclic_prefix_type::normal,
                 fapi_pdu.cyclic_prefix);

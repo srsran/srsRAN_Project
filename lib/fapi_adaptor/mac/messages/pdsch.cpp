@@ -176,15 +176,15 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
                                                      const sib_information&      mac_pdu)
 {
   srsgnb_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
-  srsgnb_assert(mac_pdu.pdcch_cfg->ctx.coreset_cfg, "Invalid CORESET configuration");
+  srsgnb_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
 
   // Fill all the parameters contained in the MAC PDSCH information struct.
   fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
 
   // BWP parameters.
   // NOTE: as it is a SIB1 PDU, use the CORESET BWP parameters.
-  builder.set_bwp_parameters(mac_pdu.pdcch_cfg->ctx.coreset_cfg->coreset0_crbs().length(),
-                             mac_pdu.pdcch_cfg->ctx.coreset_cfg->coreset0_crbs().start(),
+  builder.set_bwp_parameters(mac_pdu.pdsch_cfg.coreset_cfg->coreset0_crbs().length(),
+                             mac_pdu.pdsch_cfg.coreset_cfg->coreset0_crbs().start(),
                              mac_pdu.pdsch_cfg.bwp_cfg->scs,
                              mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? fapi::cyclic_prefix_type::extended
                                                                     : fapi::cyclic_prefix_type::normal);
@@ -192,7 +192,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   fill_power_parameters(builder);
 
   // Get the VRB-to-PRB mapping from the DCI.
-  bool is_interleaved = mac_pdu.pdcch_cfg->dci.si_f1_0.vrb_to_prb_mapping;
+  bool is_interleaved = mac_pdu.pdsch_cfg.is_interleaved;
   // Frequency allocation.
   // Note: As defined in TS38.214 Section 5.1.2.3, DCI format 1_0 uses bundle size of 2.
   fill_frequency_allocation(builder,
@@ -208,12 +208,12 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   // CORESET0 is not configured for the cell.
   static const bool is_coreset0_configured_for_cell = false;
 
-  fapi::pdsch_trans_type trans_type = get_pdsch_trans_type(mac_pdu.pdcch_cfg->ctx.coreset_cfg->id,
+  fapi::pdsch_trans_type trans_type = get_pdsch_trans_type(mac_pdu.pdsch_cfg.coreset_cfg->id,
                                                            is_interleaved,
                                                            is_dci_1_0_in_common_ss,
                                                            is_dci_1_0_in_type0_pdcch_css,
                                                            is_coreset0_configured_for_cell);
-  fill_coreset(builder, *mac_pdu.pdcch_cfg->ctx.coreset_cfg, trans_type);
+  fill_coreset(builder, *mac_pdu.pdsch_cfg.coreset_cfg, trans_type);
 
   // :TODO Rate-Matching related parameters, not used now.
 }
@@ -229,7 +229,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
                                                      const rar_information&      mac_pdu)
 {
   srsgnb_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
-  srsgnb_assert(mac_pdu.pdcch_cfg->ctx.coreset_cfg, "Invalid CORESET configuration");
+  srsgnb_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
 
   // Fill all the parameters contained in the MAC PDSCH information struct.
   fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
@@ -244,7 +244,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   fill_power_parameters(builder);
 
   // Get the VRB-to-PRB mapping from the DCI.
-  bool is_interleaved = mac_pdu.pdcch_cfg->dci.ra_f1_0.vrb_to_prb_mapping;
+  bool is_interleaved = mac_pdu.pdsch_cfg.is_interleaved;
   // Frequency allocation.
   // Note: As defined in TS38.214 Section 5.1.2.3, DCI format 1_0 uses bundle size of 2.
   fill_frequency_allocation(builder,
@@ -260,12 +260,12 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   // CORESET0 is not configured for the cell.
   static const bool is_coreset0_configured_for_cell = false;
 
-  fapi::pdsch_trans_type trans_type = get_pdsch_trans_type(mac_pdu.pdcch_cfg->ctx.coreset_cfg->id,
+  fapi::pdsch_trans_type trans_type = get_pdsch_trans_type(mac_pdu.pdsch_cfg.coreset_cfg->id,
                                                            is_interleaved,
                                                            is_dci_1_0_in_common_ss,
                                                            is_dci_1_0_in_type0_pdcch_css,
                                                            is_coreset0_configured_for_cell);
-  fill_coreset(builder, *mac_pdu.pdcch_cfg->ctx.coreset_cfg, trans_type);
+  fill_coreset(builder, *mac_pdu.pdsch_cfg.coreset_cfg, trans_type);
 
   // :TODO Rate-Matching related parameters, not used now.
 }

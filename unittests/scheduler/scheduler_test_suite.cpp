@@ -121,9 +121,6 @@ void srsgnb::test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span
     TESTASSERT(sib.pdsch_cfg.prbs.is_alloc_type1());
     prb_interval prbs = sib.pdsch_cfg.prbs.prbs();
     TESTASSERT(prbs.stop() <= effective_init_bwp_cfg.crbs.length(), "PRB grant falls outside CORESET#0 RB boundaries");
-    if (sib.pdcch_cfg != nullptr) {
-      assert_pdcch_pdsch_common_consistency(cell_cfg, *sib.pdcch_cfg, sib.pdsch_cfg);
-    }
   }
 }
 

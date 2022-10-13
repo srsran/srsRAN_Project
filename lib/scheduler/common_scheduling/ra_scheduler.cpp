@@ -436,10 +436,9 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   // Fill RAR PDSCH.
   rar_alloc.result.dl.rar_grants.emplace_back();
   rar_information& rar      = rar_alloc.result.dl.rar_grants.back();
-  rar.pdcch_cfg             = &pdcch;
-  rar.pdsch_cfg.rnti        = rar.pdcch_cfg->ctx.rnti;
-  rar.pdsch_cfg.bwp_cfg     = rar.pdcch_cfg->ctx.bwp_cfg;
-  rar.pdsch_cfg.coreset_cfg = rar.pdcch_cfg->ctx.coreset_cfg;
+  rar.pdsch_cfg.rnti        = pdcch.ctx.rnti;
+  rar.pdsch_cfg.bwp_cfg     = pdcch.ctx.bwp_cfg;
+  rar.pdsch_cfg.coreset_cfg = pdcch.ctx.coreset_cfg;
   rar.pdsch_cfg.prbs        = rar_prbs;
   rar.pdsch_cfg.symbols     = get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols;
   rar.pdsch_cfg.codewords.emplace_back();
@@ -453,7 +452,8 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   cw.tb_size_bytes               = rar_data[dci.time_resource].prbs_tbs.tbs_bytes;
   rar.pdsch_cfg.dmrs             = rar_data[dci.time_resource].dmrs_info;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for RA-RNTI.
-  rar.pdsch_cfg.n_id = cfg.pci;
+  rar.pdsch_cfg.n_id           = cfg.pci;
+  rar.pdsch_cfg.is_interleaved = dci.vrb_to_prb_mapping > 0;
 
   for (unsigned i = 0; i < msg3_candidates.size(); ++i) {
     const auto&                   msg3_candidate = msg3_candidates[i];
@@ -525,7 +525,7 @@ void ra_scheduler::log_postponed_rar(const pending_rar_t& rar, const char* cause
 void ra_scheduler::log_rar_helper(fmt::memory_buffer& fmtbuf, const rar_information& rar) const
 {
   const char* prefix = "";
-  fmt::format_to(fmtbuf, "ra-rnti={:#x}, msg3 grants ({} allocated): [", rar.pdcch_cfg->ctx.rnti, rar.grants.size());
+  fmt::format_to(fmtbuf, "ra-rnti={:#x}, msg3 grants ({} allocated): [", rar.pdsch_cfg.rnti, rar.grants.size());
   for (const rar_ul_grant& msg3 : rar.grants) {
     fmt::format_to(fmtbuf,
                    "{}{{{:#x}: rapid={}, prbs={}, ta={}}}",

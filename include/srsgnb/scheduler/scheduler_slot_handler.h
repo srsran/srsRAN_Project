@@ -123,15 +123,17 @@ struct pdsch_codeword {
 
 /// \brief Information relative to a PDSCH grant in a given slot.
 struct pdsch_information {
-  rnti_t                                                     rnti;
-  const bwp_configuration*                                   bwp_cfg;
-  const coreset_configuration*                               coreset_cfg;
-  prb_grant                                                  prbs;
-  ofdm_symbol_range                                          symbols;
+  rnti_t                                                 rnti;
+  const bwp_configuration*                               bwp_cfg;
+  const coreset_configuration*                           coreset_cfg;
+  prb_grant                                              prbs;
+  ofdm_symbol_range                                      symbols;
   static_vector<pdsch_codeword, MAX_CODEWORDS_PER_PDSCH> codewords;
-  dmrs_information                                           dmrs;
+  dmrs_information                                       dmrs;
   /// Parameter n_ID, used for scrambling, as per TS 38.211, Section 7.3.1.1.
   unsigned n_id;
+  /// Whether the PDSCH is interleaved.
+  bool is_interleaved;
 };
 
 struct dl_msg_lc_info {
@@ -230,7 +232,6 @@ struct rar_ul_grant {
 
 /// Stores the information associated with a RAR.
 struct rar_information {
-  const pdcch_dl_information*                        pdcch_cfg;
   pdsch_information                                  pdsch_cfg;
   static_vector<rar_ul_grant, MAX_RAR_PDUS_PER_SLOT> grants;
 };
@@ -245,9 +246,8 @@ struct ssb_information {
 /// Stores the information associated with an SIB1 or other SI allocation.
 struct sib_information {
   enum si_indicator_type { sib1, other_si } si_indicator;
-  unsigned                    nof_txs;
-  const pdcch_dl_information* pdcch_cfg;
-  pdsch_information           pdsch_cfg;
+  unsigned          nof_txs;
+  pdsch_information pdsch_cfg;
 };
 
 /// See ORAN WG8, 9.2.3.3.12 - Downlink Broadcast Allocation.

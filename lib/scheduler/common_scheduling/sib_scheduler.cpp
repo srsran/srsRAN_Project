@@ -248,7 +248,6 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   // Add SIB1 to list of SIB1 information to pass to lower layers.
   res_grid.result.dl.bc.sibs.emplace_back();
   sib_information& sib1 = res_grid.result.dl.bc.sibs.back();
-  sib1.pdcch_cfg        = &res_grid.result.dl.dl_pdcchs.back();
   sib1.si_indicator     = sib_information::si_indicator_type::sib1;
 
   // Fill PDSCH configuration.
@@ -270,6 +269,7 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   cw.target_code_rate            = mcs_config.target_code_rate;
   // This is hard-coded, and derived as per Section 5.1.3.2, TS38.214, with nof PRBs= 5, MCS=5, N_RB_sc = 12,
   // N_sh_symb = 12, N_PRBs_DMRS = 36, N_PRBs_oh = 0.
-  cw.tb_size_bytes = static_cast<uint32_t>(tbs);
-  pdsch.dmrs       = dmrs_info;
+  cw.tb_size_bytes     = static_cast<uint32_t>(tbs);
+  pdsch.dmrs           = dmrs_info;
+  pdsch.is_interleaved = sib1_pdcch.dci.si_f1_0.vrb_to_prb_mapping > 0;
 }

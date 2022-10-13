@@ -256,22 +256,21 @@ sib_information unittests::build_valid_sib1_information_pdu()
 {
   static const coreset_configuration coreset_cfg = {generate_coreset_configuration()};
   static const bwp_configuration     bwp_config  = {generate_bwp_configuration()};
-  static const pdcch_dl_information  pdcch_info  = {generate_dci_context(bwp_config, coreset_cfg),
-                                                    generate_dci_dl_info()};
 
   sib_information info;
   info.si_indicator = sib_information::si_indicator_type::sib1;
 
-  info.nof_txs   = 0;
-  info.pdcch_cfg = &pdcch_info;
+  info.nof_txs = 0;
 
   // Add PDSCH info.
-  info.pdsch_cfg.rnti    = to_rnti(3);
-  info.pdsch_cfg.bwp_cfg = &bwp_config;
-  info.pdsch_cfg.prbs    = {prb_interval{40, 60}};
-  info.pdsch_cfg.symbols = {3, 10};
-  info.pdsch_cfg.dmrs    = {dmrs_symbol_mask(14), dmrs_config_type::type1, 2, 3, false, 0, 2, bounded_bitset<12>(12)};
-  info.pdsch_cfg.n_id    = generate_nid_pdsch();
+  info.pdsch_cfg.rnti        = to_rnti(3);
+  info.pdsch_cfg.bwp_cfg     = &bwp_config;
+  info.pdsch_cfg.coreset_cfg = &coreset_cfg;
+  info.pdsch_cfg.prbs        = {prb_interval{40, 60}};
+  info.pdsch_cfg.symbols     = {3, 10};
+  info.pdsch_cfg.dmrs = {dmrs_symbol_mask(14), dmrs_config_type::type1, 2, 3, false, 0, 2, bounded_bitset<12>(12)};
+  info.pdsch_cfg.n_id = generate_nid_pdsch();
+  info.pdsch_cfg.is_interleaved = false;
   info.pdsch_cfg.codewords.push_back(pdsch_codeword{3, modulation_scheme::QAM16, 5, pdsch_mcs_table::qam64, 2, 128});
 
   return info;

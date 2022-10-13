@@ -214,7 +214,8 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
   msg.pdsch_cfg.dmrs        = make_dmrs_info_common(
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
   // See TS 38.211, 7.3.1.1. - Scrambling.
-  msg.pdsch_cfg.n_id = cell_cfg.pci;
+  msg.pdsch_cfg.n_id           = cell_cfg.pci;
+  msg.pdsch_cfg.is_interleaved = dci.vrb_to_prb_mapping > 0;
 
   // Add codeword.
   msg.pdsch_cfg.codewords.emplace_back();
