@@ -20,7 +20,9 @@
 #include <random>
 
 namespace srsgnb {
-class f1_dummy : public pdcp_tx_lower_notifier
+class f1_dummy : public pdcp_tx_lower_notifier,
+                 public rlc_tx_upper_layer_data_notifier,
+                 public rlc_rx_upper_layer_data_notifier
 {
   bearer_logger logger;
 
@@ -30,19 +32,34 @@ class f1_dummy : public pdcp_tx_lower_notifier
 public:
   f1_dummy(uint32_t id) : logger("F1", id, lcid_t{}) {}
 
-  // PDCP -> RLC
+  // PDCP -> F1 -> RLC
   void on_new_pdu(byte_buffer buf) final
   {
     rlc_sdu sdu = {};
     sdu.buf     = std::move(buf);
-    logger.log_info("Passing PDU to RLC");
+    logger.log_info("Passing F1 PDU to RLC");
     rlc_tx_upper->handle_sdu(std::move(sdu));
   }
 
+  // PDCP -> F1 -> RLC
   void on_discard_pdu(uint32_t count) final
   {
-    logger.log_info("Discard PDU called");
+    logger.log_debug("Discard PDU called");
     // TODO
+  }
+
+  // RLC -> F1 -> PDCP
+  void on_delivered_sdu(uint32_t pdcp_count) final
+  {
+    logger.log_debug("Delivered SDU called");
+    // TODO
+  }
+
+  // RLC -> F1 -> PDCP
+  void on_new_sdu(byte_buffer_slice_chain pdu) final
+  {
+    logger.log_debug("Passing SDU to PDCP");
+    // pdcp_rx_lower->handle_pdu(std::move(pdu));
   }
 
   void set_rlc_tx_upper_data(rlc_tx_upper_layer_data_interface* rlc_tx_upper) { this->rlc_tx_upper = rlc_tx_upper; }
