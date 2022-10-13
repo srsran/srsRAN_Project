@@ -282,6 +282,24 @@ TEST_P(srb0_scheduler_tester, failed_allocating_resources)
   ASSERT_FALSE(ue_is_allocated_pdsch(get_ue(to_du_ue_index(1))));
 }
 
+TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
+{
+  setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
+  // Add UE.
+  add_ue(to_rnti(0x4601), to_du_ue_index(0));
+  // Notify about SRB0 message in DL of size 380 bytes.
+  unsigned mac_srb0_sdu_size = 380;
+  push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
+
+  unsigned exp_size = get_pending_bytes(to_du_ue_index(0));
+
+  run_slot();
+
+  ASSERT_TRUE(ue_is_allocated_pdcch(scheduled_dl_pdcchs(), get_ue(to_du_ue_index(0))));
+  ASSERT_TRUE(ue_is_allocated_pdsch(get_ue(to_du_ue_index(0))));
+  ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(get_ue(to_du_ue_index(0)), exp_size));
+}
+
 INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
                          srb0_scheduler_tester,
                          testing::Values(srb0_test_params{.k0 = 1, .k1 = 4}, srb0_test_params{.k0 = 2, .k1 = 4}));
