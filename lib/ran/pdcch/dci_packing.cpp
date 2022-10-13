@@ -13,13 +13,31 @@
 
 using namespace srsgnb;
 
-dci_payload dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& config)
+dci_payload srsgnb::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& config)
 {
-  unsigned    frequency_resource_nof_bits = log2_ceil(config.N_rb_ul_bwp * (config.N_rb_ul_bwp + 1) / 2);
   dci_payload payload;
+  unsigned    frequency_resource_nof_bits = log2_ceil(config.N_rb_ul_bwp * (config.N_rb_ul_bwp + 1) / 2);
 
   // Identifier for DCI formats - 1 bit.
   payload.push_back(config.dci_format_id, 1);
+
+  if (config.frequency_hopping_flag) {
+    // Assert that the number of bits used to pack the frequency hopping offset is valid.
+    srsgnb_assert((config.N_ul_hop == 1) || (config.N_ul_hop == 2),
+                  "DCI frequency offset number of bits must be either 1 or 2");
+
+    // Assert that the frequency hopping offset index can be packed with the allocated bits.
+    srsgnb_assert(config.hopping_offset < (1U << config.N_ul_hop),
+                  "DCI frequency offset value ({}) cannot be packed with the allocated number of bits ({})",
+                  config.hopping_offset,
+                  config.N_ul_hop);
+
+    // Truncate the frequency resource allocation field.
+    frequency_resource_nof_bits -= config.N_ul_hop;
+
+    // Frequency hopping offset - N_ul_hop bits.
+    payload.push_back(config.hopping_offset, config.N_ul_hop);
+  }
 
   // Frequency domain resource assignment - frequency_resource_nof_bits bits.
   payload.push_back(config.frequency_resource, frequency_resource_nof_bits);
@@ -48,18 +66,38 @@ dci_payload dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& config)
   // Padding bits, if necessary, as per TS38.212 Section 7.3.1.0.
 
   // UL/SUL indicator - 1 bit if present.
-  payload.push_back(config.ul_sul_indicator, 1);
+  if (config.ul_sul_indicator.has_value()) {
+    payload.push_back(config.ul_sul_indicator.value(), 1);
+  }
 
   return payload;
 }
 
-dci_payload dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& config)
+dci_payload srsgnb::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& config)
 {
   unsigned    frequency_resource_nof_bits = log2_ceil(config.N_rb_ul_bwp * (config.N_rb_ul_bwp + 1) / 2);
   dci_payload payload;
 
   // Identifier for DCI formats - 1 bit.
   payload.push_back(config.dci_format_id, 1);
+
+  if (config.frequency_hopping_flag) {
+    // Assert that the number of bits used to pack the frequency hopping offset is valid.
+    srsgnb_assert((config.N_ul_hop == 1) || (config.N_ul_hop == 2),
+                  "DCI frequency offset number of bits must be either 1 or 2");
+
+    // Assert that the frequency hopping offset index can be packed with the allocated bits.
+    srsgnb_assert(config.hopping_offset < (1U << config.N_ul_hop),
+                  "DCI frequency offset value ({}) cannot be packed with the allocated number of bits ({})",
+                  config.hopping_offset,
+                  config.N_ul_hop);
+
+    // Truncate the frequency resource allocation field.
+    frequency_resource_nof_bits -= config.N_ul_hop;
+
+    // Frequency hopping offset - N_ul_hop bits.
+    payload.push_back(config.hopping_offset, config.N_ul_hop);
+  }
 
   // Frequency domain resource assignment - frequency_resource_nof_bits bits.
   payload.push_back(config.frequency_resource, frequency_resource_nof_bits);
@@ -87,7 +125,8 @@ dci_payload dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& config)
 
   // Padding bits, if necessary, as per TS38.212 Section 7.3.1.0.
 
-  // UL/SUL indicator - 1 bit if present, reserved.
+  // UL/SUL indicator - 1 bit if present, reserved. The PUSCH allocation is always on the same UL carrier as the
+  // previous transmission of the same TB, as per TS38.212 Section 7.3.1.1.1.
   payload.push_back(0x00U, 1);
 
   return payload;
