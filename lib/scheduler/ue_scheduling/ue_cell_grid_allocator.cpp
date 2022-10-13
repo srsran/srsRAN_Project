@@ -117,11 +117,12 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
 
   // Fill PDSCH.
   pdsch_alloc.result.dl.ue_grants.emplace_back();
-  dl_msg_alloc& msg     = pdsch_alloc.result.dl.ue_grants.back();
-  msg.pdsch_cfg.rnti    = u.crnti;
-  msg.pdsch_cfg.bwp_cfg = pdcch->ctx.bwp_cfg;
-  msg.pdsch_cfg.prbs    = prbs;
-  msg.pdsch_cfg.symbols = pdsch_td_cfg.symbols;
+  dl_msg_alloc& msg         = pdsch_alloc.result.dl.ue_grants.back();
+  msg.pdsch_cfg.rnti        = u.crnti;
+  msg.pdsch_cfg.bwp_cfg     = pdcch->ctx.bwp_cfg;
+  msg.pdsch_cfg.coreset_cfg = pdcch->ctx.coreset_cfg;
+  msg.pdsch_cfg.prbs        = prbs;
+  msg.pdsch_cfg.symbols     = pdsch_td_cfg.symbols;
   // TODO: Use UE-dedicated DMRS info.
   msg.pdsch_cfg.dmrs = make_dmrs_info_common(
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, grant.time_res_index, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);

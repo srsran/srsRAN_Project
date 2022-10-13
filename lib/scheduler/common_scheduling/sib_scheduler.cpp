@@ -255,6 +255,7 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   pdsch_information& pdsch = sib1.pdsch_cfg;
   pdsch.rnti               = sib1_pdcch.ctx.rnti;
   pdsch.bwp_cfg            = sib1_pdcch.ctx.bwp_cfg;
+  pdsch.coreset_cfg        = sib1_pdcch.ctx.coreset_cfg;
   pdsch.symbols = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[dci.time_resource].symbols;
   pdsch.prbs    = sib1_prbs;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for SIB1.

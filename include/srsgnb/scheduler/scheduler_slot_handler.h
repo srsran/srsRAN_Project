@@ -121,15 +121,15 @@ struct pdsch_codeword {
   uint32_t tb_size_bytes;
 };
 
-/// Information related to a PDSCH allocation.
-/// \remark See FAPI PDSCH PDU.
+/// \brief Information relative to a PDSCH grant in a given slot.
 struct pdsch_information {
-  rnti_t                                                 rnti;
-  const bwp_configuration*                               bwp_cfg;
-  prb_grant                                              prbs;
-  ofdm_symbol_range                                      symbols;
+  rnti_t                                                     rnti;
+  const bwp_configuration*                                   bwp_cfg;
+  const coreset_configuration*                               coreset_cfg;
+  prb_grant                                                  prbs;
+  ofdm_symbol_range                                          symbols;
   static_vector<pdsch_codeword, MAX_CODEWORDS_PER_PDSCH> codewords;
-  dmrs_information                                       dmrs;
+  dmrs_information                                           dmrs;
   /// Parameter n_ID, used for scrambling, as per TS 38.211, Section 7.3.1.1.
   unsigned n_id;
 };

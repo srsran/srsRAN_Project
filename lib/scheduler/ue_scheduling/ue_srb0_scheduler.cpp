@@ -206,11 +206,12 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
   dci.pdsch_harq_fb_timing_indicator = pucch.k1 - 1;
 
   // Fill PDSCH.
-  msg.pdsch_cfg.rnti    = u.crnti;
-  msg.pdsch_cfg.bwp_cfg = pdcch.ctx.bwp_cfg;
-  msg.pdsch_cfg.prbs    = h_dl.prbs();
-  msg.pdsch_cfg.symbols = pdsch_td_cfg.symbols;
-  msg.pdsch_cfg.dmrs    = make_dmrs_info_common(
+  msg.pdsch_cfg.rnti        = u.crnti;
+  msg.pdsch_cfg.bwp_cfg     = pdcch.ctx.bwp_cfg;
+  msg.pdsch_cfg.coreset_cfg = pdcch.ctx.coreset_cfg;
+  msg.pdsch_cfg.prbs        = h_dl.prbs();
+  msg.pdsch_cfg.symbols     = pdsch_td_cfg.symbols;
+  msg.pdsch_cfg.dmrs        = make_dmrs_info_common(
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
   // See TS 38.211, 7.3.1.1. - Scrambling.
   msg.pdsch_cfg.n_id = cell_cfg.pci;

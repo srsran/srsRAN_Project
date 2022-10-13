@@ -435,12 +435,13 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
   // Fill RAR PDSCH.
   rar_alloc.result.dl.rar_grants.emplace_back();
-  rar_information& rar  = rar_alloc.result.dl.rar_grants.back();
-  rar.pdcch_cfg         = &pdcch;
-  rar.pdsch_cfg.rnti    = rar.pdcch_cfg->ctx.rnti;
-  rar.pdsch_cfg.bwp_cfg = rar.pdcch_cfg->ctx.bwp_cfg;
-  rar.pdsch_cfg.prbs    = rar_prbs;
-  rar.pdsch_cfg.symbols = get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols;
+  rar_information& rar      = rar_alloc.result.dl.rar_grants.back();
+  rar.pdcch_cfg             = &pdcch;
+  rar.pdsch_cfg.rnti        = rar.pdcch_cfg->ctx.rnti;
+  rar.pdsch_cfg.bwp_cfg     = rar.pdcch_cfg->ctx.bwp_cfg;
+  rar.pdsch_cfg.coreset_cfg = rar.pdcch_cfg->ctx.coreset_cfg;
+  rar.pdsch_cfg.prbs        = rar_prbs;
+  rar.pdsch_cfg.symbols     = get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols;
   rar.pdsch_cfg.codewords.emplace_back();
   pdsch_codeword& cw             = rar.pdsch_cfg.codewords.back();
   cw.mcs_table                   = pdsch_mcs_table::qam64;
