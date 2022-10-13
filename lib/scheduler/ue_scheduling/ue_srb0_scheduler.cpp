@@ -141,6 +141,12 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
     ++mcs_idx;
   }
 
+  if (prbs_tbs.tbs_bytes < pending_bytes) {
+    logger.info(
+        "SRB0 PDU size ({}) exceeds TBS calculated ({}) for rnti={:#x}.", pending_bytes, prbs_tbs.tbs_bytes, u.crnti);
+    return false;
+  }
+
   crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs, 0);
   if (ue_grant_crbs.length() < prbs_tbs.nof_prbs) {
     logger.info("Postponed SRB0 PDU scheduling for rnti={:#x}. Cause: Not enough PRBs ({} < {})",
