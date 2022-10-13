@@ -41,7 +41,7 @@ static unsigned convert_sr_bits_to_unsigned(sr_nof_bits value)
 }
 
 /// Fills the Format 1 parameters.
-static void fill_format1_custom_parameters(fapi::ul_pucch_pdu_builder& builder, const pucch_info& mac_pdu)
+static void fill_format1_parameters(fapi::ul_pucch_pdu_builder& builder, const pucch_info& mac_pdu)
 {
   // Hopping parameters.
   const prb_interval&   hop_prbs = mac_pdu.resources.second_hop_prbs;
@@ -54,7 +54,7 @@ static void fill_format1_custom_parameters(fapi::ul_pucch_pdu_builder& builder, 
 
   // Do not use pi/2 BPSK for UCI symbols.
   static const bool use_pi_to_bpsk = false;
-  builder.set_format_common_parameters(mac_pdu.format, f1.slot_repetition, use_pi_to_bpsk);
+  builder.set_common_parameters(mac_pdu.format, f1.slot_repetition, use_pi_to_bpsk);
 
   // Time domain occasion.
   builder.set_format1_parameters(f1.time_domain_occ);
@@ -65,11 +65,11 @@ static void fill_format1_custom_parameters(fapi::ul_pucch_pdu_builder& builder, 
       convert_sr_bits_to_unsigned(f1.sr_bits), f1.harq_ack_nof_bits, csi_part1_bit_length);
 }
 
-static void fill_format_custom_parameters(fapi::ul_pucch_pdu_builder& builder, const pucch_info& mac_pdu)
+static void fill_custom_parameters(fapi::ul_pucch_pdu_builder& builder, const pucch_info& mac_pdu)
 {
   switch (mac_pdu.format) {
     case pucch_format::FORMAT_1:
-      fill_format1_custom_parameters(builder, mac_pdu);
+      fill_format1_parameters(builder, mac_pdu);
       break;
     default:
       srsgnb_assert(0, "Invalid PUCCH format= {}", mac_pdu.format);
@@ -96,5 +96,5 @@ void srsgnb::fapi_adaptor::convert_pucch_mac_to_fapi(fapi::ul_pucch_pdu_builder&
   const ofdm_symbol_range& symbols = mac_pdu.resources.symbols;
   builder.set_allocation_in_time_parameters(symbols.start(), symbols.length());
 
-  fill_format_custom_parameters(builder, mac_pdu);
+  fill_custom_parameters(builder, mac_pdu);
 }

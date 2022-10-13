@@ -37,7 +37,7 @@ static void test_format_common_params()
   ul_pucch_pdu         pdu;
   ul_pucch_pdu_builder builder(pdu);
 
-  builder.set_format_common_parameters(format_type, multi_slot, pi2);
+  builder.set_common_parameters(format_type, multi_slot, pi2);
 
   TESTASSERT_EQ(format_type, pdu.format_type);
   TESTASSERT_EQ(multi_slot, pdu.multi_slot_tx_indicator);

@@ -1925,10 +1925,10 @@ public:
     return *this;
   }
 
-  /// Sets the PUCCH PDU basic parameters and returns a reference to the builder.
+  /// Sets the PUCCH PDU common parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
   ul_pucch_pdu_builder&
-  set_format_common_parameters(pucch_format format_type, pucch_repetition_tx_slot multi_slot_tx_type, bool pi2_bpsk)
+  set_common_parameters(pucch_format format_type, pucch_repetition_tx_slot multi_slot_tx_type, bool pi2_bpsk)
   {
     pdu.format_type             = format_type;
     pdu.multi_slot_tx_indicator = multi_slot_tx_type;
