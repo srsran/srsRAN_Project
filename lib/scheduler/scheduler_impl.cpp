@@ -77,6 +77,11 @@ void scheduler_impl::handle_crc_indication(const ul_crc_indication& crc_ind)
   }
 }
 
+void scheduler_impl::handle_uci_indication(const uci_indication& uci)
+{
+  feedback_handler.handle_uci_indication(uci);
+}
+
 const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
 {
   auto& cell = cells[cell_index];

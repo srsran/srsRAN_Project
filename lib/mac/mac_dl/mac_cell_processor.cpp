@@ -61,6 +61,35 @@ void mac_cell_processor::handle_crc(const mac_crc_indication_message& msg)
   sched_obj.handle_crc_indication(ind);
 }
 
+void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
+{
+  uci_indication ind{};
+  for (unsigned i = 0; i != msg.ucis.size(); ++i) {
+    ind.ucis[i].ue_index = ue_mng.get_ue_index(msg.ucis[i].rnti);
+    ind.ucis[i].crnti    = msg.ucis[i].rnti;
+
+    switch (msg.ucis[i].type) {
+      case mac_uci_pdu::pdu_type::pucch_f0_or_f1: {
+        const auto& pucch = msg.ucis[i].pucch_f0_or_f1;
+        if (pucch.sr_info.has_value()) {
+          ind.ucis[i].sr_detected = pucch.sr_info->sr_detected;
+        }
+        if (pucch.harq_info.has_value()) {
+          ind.ucis[i].harqs.resize(msg.ucis[i].pucch_f0_or_f1.harq_info->harqs.size());
+          for (unsigned j = 0; j != ind.ucis[i].harqs.size(); ++j) {
+            ind.ucis[i].harqs[j] = msg.ucis[i].pucch_f0_or_f1.harq_info->harqs[j] ==
+                                   mac_uci_pdu::pucch_f0_or_f1_type::harq_information::harq_value::ack;
+          }
+        }
+      } break;
+      default:
+        report_fatal_error("Unsupported PUCCH format");
+    }
+  }
+
+  sched_obj.handle_uci_indication(ind);
+}
+
 void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 {
   mac_dl_sched_result mac_dl_res{};

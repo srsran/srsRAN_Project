@@ -16,6 +16,7 @@
 #include "srsgnb/mac/lcid_dl_sch.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/phy_time_unit.h"
+#include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_pdu_capacity_contants.h"
 
@@ -63,6 +64,21 @@ struct ul_crc_indication {
   static_vector<ul_crc_pdu_indication, MAX_PUSCH_PDUS_PER_SLOT> crcs;
 };
 
+/// \brief UCI indication for a given UE.
+struct uci_indication {
+  struct uci_pdu {
+    du_ue_index_t          ue_index;
+    rnti_t                 crnti;
+    bool                   sr_detected;
+    static_vector<bool, 8> harqs;
+  };
+
+  du_cell_index_t cell_index;
+  slot_point      slot_rx;
+
+  static_vector<uci_pdu, 2> ucis;
+};
+
 struct dl_mac_ce_indication {
   du_ue_index_t ue_index;
   lcid_dl_sch_t ce_lcid;
@@ -75,6 +91,7 @@ public:
   virtual void handle_sr_indication(const sr_indication_message& sr)          = 0;
   virtual void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) = 0;
   virtual void handle_crc_indication(const ul_crc_indication& crc)            = 0;
+  virtual void handle_uci_indication(const uci_indication& uci)               = 0;
 
   /// \brief Command scheduling of DL MAC CE for a given UE.
   virtual void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) = 0;

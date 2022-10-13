@@ -41,6 +41,8 @@ public:
 
   void handle_crc(const mac_crc_indication_message& msg) override;
 
+  void handle_uci(const mac_uci_indication_message& msg) override;
+
 private:
   void handle_slot_indication_impl(slot_point sl_tx);
 

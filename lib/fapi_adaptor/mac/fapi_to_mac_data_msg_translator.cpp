@@ -32,6 +32,8 @@ class mac_cell_control_information_handler_dummy : public mac_cell_control_infor
 {
 public:
   void handle_crc(const mac_crc_indication_message& msg) override {}
+
+  void handle_uci(const mac_uci_indication_message& msg) override {}
 };
 
 } // namespace

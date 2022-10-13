@@ -147,6 +147,34 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
   }
 }
 
+void ue_event_manager::handle_uci_indication(const uci_indication& ind)
+{
+  srsgnb_sanity_check(cell_exists(ind.cell_index), "Invalid cell index");
+
+  for (unsigned i = 0; i != ind.ucis.size(); ++i) {
+    if (not ind.ucis[i].harqs.empty()) {
+      cell_specific_events[ind.cell_index].emplace(
+          ind.ucis[i].ue_index,
+          [uci_sl = ind.slot_rx, harqs = ind.ucis[i].harqs](ue_cell& ue_cc, event_logger& ev_logger) {
+            ev_logger.enqueue("uci(ueId={})", ue_cc.ue_index);
+            for (unsigned j = 0; j != ue_cc.harqs.nof_dl_harqs(); ++j) {
+              if (ue_cc.harqs.dl_harq(j).harq_slot_ack() == uci_sl) {
+                // TODO: Fetch the right PUCCH/PUSCH.
+                ue_cc.harqs.dl_harq(j).ack_info(0, harqs[0]);
+              }
+            }
+          });
+    }
+    if (ind.ucis[i].sr_detected) {
+      common_events.emplace(ind.ucis[i].ue_index, [ue_index = ind.ucis[i].ue_index, this](event_logger& ev_logger) {
+        ev_logger.enqueue("sr_ind(ueId={})", ue_index);
+        sr_indication_message sr_ind{};
+        ue_db[ue_index].handle_sr_indication(sr_ind);
+      });
+    }
+  }
+}
+
 void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)
 {
   common_events.emplace(ce.ue_index, [this, ce](event_logger& ev_logger) {

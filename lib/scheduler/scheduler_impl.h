@@ -55,6 +55,8 @@ public:
 
   void handle_crc_indication(const ul_crc_indication& crc) override;
 
+  void handle_uci_indication(const uci_indication& uci) override;
+
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override
   {
     feedback_handler.handle_dl_mac_ce_indication(mac_ce);
