@@ -107,7 +107,10 @@ public:
   /// \param[in]  value  Sequence amplitude.
   /// \remark The sequence length is inferred from the size of the output container.
   /// \remark This method modifies the internal state of the pseudo-random generator.
-  virtual void generate(span<cf_t> buffer, float value) { generate({(float*)buffer.data(), 2 * buffer.size()}, value); }
+  virtual void generate(span<cf_t> buffer, float value)
+  {
+    generate({reinterpret_cast<float*>(buffer.data()), 2 * buffer.size()}, value);
+  }
 };
 
 } // namespace srsgnb

@@ -32,7 +32,7 @@ void dmrs_pbch_processor_impl::generation(std::array<cf_t, NOF_RE>& sequence, co
   prg->init(c_init(config));
 
   // Generate sequence
-  prg->generate({(float*)sequence.data(), 2 * NOF_RE}, M_SQRT1_2);
+  prg->generate(sequence, M_SQRT1_2);
 }
 
 void dmrs_pbch_processor_impl::mapping(const std::array<cf_t, NOF_RE>& r,

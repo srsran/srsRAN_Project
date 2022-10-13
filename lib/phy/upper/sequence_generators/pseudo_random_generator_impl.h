@@ -94,9 +94,9 @@ private:
   static const x2_init_s x2_init;
 
   /// Memory register for sequence \f$x_1(n)\f$.
-  uint32_t x1;
+  uint32_t x1 = 0;
   /// Memory register for sequence \f$x_2(n)\f$.
-  uint32_t x2;
+  uint32_t x2 = 0;
 
   /// \brief Advances sequence \f$x_1(n)\f$ SEQUENCE_PAR_BITS steps simultaneously.
   /// \param[in] state Current 32-bit long state.
