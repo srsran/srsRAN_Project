@@ -283,9 +283,9 @@ span<const uint16_t> srsgnb::polar_code_impl::get_blk_interleaver(uint8_t n_)
 uint16_t srsgnb::polar_code_impl::setdiff_stable(const uint16_t* x,
                                                  const uint16_t* y,
                                                  uint16_t*       z,
-                                                 const int       T,
-                                                 const uint16_t  len1,
-                                                 const uint16_t  len2)
+                                                 int             T,
+                                                 uint16_t        len1,
+                                                 uint16_t        len2)
 {
   uint16_t o = 0;
   for (int i = 0; i < len1; i++) {
@@ -352,10 +352,9 @@ void srsgnb::polar_code_impl::set_code_params(uint16_t K_, uint16_t E_, uint8_t 
 
   // determination of the codeword size (N)
   // ceil(log2(E))
-  uint16_t tmpE = 0;
-  uint8_t  e    = 1;
+  uint8_t e = 1;
   for (; e <= eMAX; e++) {
-    tmpE = 1U << e; // 2^e
+    uint16_t tmpE = 1U << e; // 2^e
     if (tmpE >= E) {
       break;
     }
@@ -370,10 +369,9 @@ void srsgnb::polar_code_impl::set_code_params(uint16_t K_, uint16_t E_, uint8_t 
   }
 
   // ceil(log2(K))
-  uint16_t tmpK = 0;
-  uint8_t  k    = 0;
+  uint8_t k = 0;
   for (; k <= 10; k++) {
-    tmpK = 1U << k; // 2^e
+    uint16_t tmpK = 1U << k; // 2^e
     if (tmpK >= K) {
       break;
     }
@@ -402,15 +400,13 @@ srsgnb::polar_code_impl::polar_code_impl() : tmp_K_set(NMAX + 1), F_set(NMAX)
   // Do nothing
 }
 
-/*!
- * Compares two uint16_t
- */
-bool cmpfunc(const uint16_t ai, const uint16_t bi)
+// Compares two uint16_t
+bool cmpfunc(uint16_t ai, uint16_t bi)
 {
   return (ai < bi);
 }
 
-void srsgnb::polar_code_impl::set(const uint16_t K_, const uint16_t E_, const uint8_t nMax, polar_code_ibil ibil_)
+void srsgnb::polar_code_impl::set(uint16_t K_, uint16_t E_, uint8_t nMax, polar_code_ibil ibil_)
 {
   // check polar code parameters
   set_code_params(K_, E_, nMax);
@@ -455,7 +451,7 @@ void srsgnb::polar_code_impl::set(const uint16_t K_, const uint16_t E_, const ui
   }
 
   // This only happens if K=18:25 and E=E+189+1:8192
-  // In this cases there is no puncturing or shortening
+  // In these cases, there is no puncturing or shortening
   if (nWmPC == 1) {
     if (K <= 21) {
       PC_set[nPC - 1] = 252;
