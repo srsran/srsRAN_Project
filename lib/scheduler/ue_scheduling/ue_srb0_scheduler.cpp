@@ -40,10 +40,10 @@ void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
     return;
   }
 
-  // Schedule SRB0 messages
+  // Schedule SRB0 messages.
   auto it = pending_ues.begin();
   while (it != pending_ues.end()) {
-    // Check if UE exists
+    // Check if UE exists.
     if (not ues.contains(*it)) {
       it = pending_ues.erase(it);
       continue;
@@ -78,7 +78,7 @@ bool ue_srb0_scheduler::schedule_srb0(cell_resource_allocator& res_alloc, ue& u)
     }
   }
 
-  // No resource found in UE's carriers and Search spaces
+  // No resource found in UE's carriers and Search spaces.
   logger.warning("SCHED: Not enough PDSCH space for SRB0 message. Will re-try in next slot");
   return false;
 }
@@ -110,11 +110,13 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   const unsigned   pending_bytes = u.pending_dl_newtx_bytes();
   dmrs_information dmrs_info     = make_dmrs_info_common(
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
-  const unsigned        nof_symb_sh     = pdsch_td_cfg.symbols.length();
-  static const unsigned mod_order       = get_bits_per_symbol(modulation_scheme::QPSK);
-  static const unsigned srb0_mcs_index  = 1; // TODO: Need to parameterize.
+  const unsigned        nof_symb_sh = pdsch_td_cfg.symbols.length();
+  static const unsigned mod_order   = get_bits_per_symbol(modulation_scheme::QPSK);
+  // TODO: Need to parameterize.
+  static const unsigned srb0_mcs_index  = 1;
   sch_mcs_description   srb0_mcs_config = pdsch_mcs_get_config(pdsch_mcs_table::qam64, srb0_mcs_index);
-  static const unsigned nof_layers      = 1; // Assumption
+  // Assumption.
+  static const unsigned nof_layers = 1;
   // TODO: As per Section 5.1.3.2, TS 38.214, need to derive xOverhead from PDSCH-ServingCellconfig.
   // Assumed to be not configured hence set to 0 as per spec.
   static const unsigned nof_oh_prb    = 0;
@@ -158,9 +160,10 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   pdsch_alloc.result.dl.ue_grants.emplace_back();
 
   // Allocate UE DL HARQ.
-  prb_interval          prbs     = crb_to_prb(*pdcch->ctx.bwp_cfg, ue_grant_crbs);
-  slot_point            uci_slot = pdsch_alloc.slot + pucch_grant.k1;
-  const static unsigned max_retx = 4; // TODO: Parameterize.
+  prb_interval prbs     = crb_to_prb(*pdcch->ctx.bwp_cfg, ue_grant_crbs);
+  slot_point   uci_slot = pdsch_alloc.slot + pucch_grant.k1;
+  // TODO: Parameterize.
+  const static unsigned max_retx = 4;
   bool                  success  = h_dl->new_tx(pdsch_alloc.slot, uci_slot, prbs, srb0_mcs_index, max_retx);
   srsgnb_assert(success, "Failed to allocate DL HARQ newtx");
 
@@ -189,13 +192,15 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
   dci.N_rb_dl_bwp                    = initial_active_dl_bwp.crbs.length();
   dci.frequency_resource             = ra_frequency_type1_get_riv(
       ra_frequency_type1_configuration{dci.N_rb_dl_bwp, ue_grant_crbs.start(), ue_grant_crbs.length()});
-  dci.time_resource            = pdsch_time_res;
-  dci.vrb_to_prb_mapping       = 0; // TODO.
+  dci.time_resource = pdsch_time_res;
+  // TODO.
+  dci.vrb_to_prb_mapping       = 0;
   dci.modulation_coding_scheme = h_dl.mcs(0).to_uint();
   dci.new_data_indicator       = 1;
   dci.redundancy_version       = 0;
   dci.harq_process_number      = h_dl.pid;
-  dci.tpc_command              = 0; // TODO.
+  // TODO.
+  dci.tpc_command              = 0;
   dci.pucch_resource_indicator = pucch.pucch_res_indicator;
   // As per TS 38.213, Section 9.2.3, the harq_feedback_timing_indicator maps to {1, 2, 3, 4, 5, 6, 7, 8} for DCI 1_0.
   dci.pdsch_harq_fb_timing_indicator = pucch.k1 - 1;
@@ -212,17 +217,19 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
 
   // Add codeword.
   msg.pdsch_cfg.codewords.emplace_back();
-  pdsch_codeword&           cw                = msg.pdsch_cfg.codewords.back();
-  static constexpr unsigned new_tx_rv         = 0;
-  cw.rv_index                                 = new_tx_rv;
-  cw.mcs_index                                = h_dl.mcs(0);
-  cw.mcs_table                                = pdsch_mcs_table::qam64;
-  sch_mcs_description mcs_config              = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
-  cw.qam_mod                                  = mcs_config.modulation;
-  cw.target_code_rate                         = mcs_config.target_code_rate;
-  unsigned                  nof_symb_sh       = pdsch_td_cfg.symbols.length();
-  unsigned                  tb_scaling_field  = 0; // TODO.
-  unsigned                  nof_oh_prb        = 0; // TODO.
+  pdsch_codeword&           cw        = msg.pdsch_cfg.codewords.back();
+  static constexpr unsigned new_tx_rv = 0;
+  cw.rv_index                         = new_tx_rv;
+  cw.mcs_index                        = h_dl.mcs(0);
+  cw.mcs_table                        = pdsch_mcs_table::qam64;
+  sch_mcs_description mcs_config      = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
+  cw.qam_mod                          = mcs_config.modulation;
+  cw.target_code_rate                 = mcs_config.target_code_rate;
+  unsigned nof_symb_sh                = pdsch_td_cfg.symbols.length();
+  // TODO.
+  unsigned tb_scaling_field = 0;
+  // TODO.
+  unsigned                  nof_oh_prb        = 0;
   constexpr static unsigned nof_bits_per_byte = 8U;
   cw.tb_size_bytes =
       tbs_calculator_pdsch_calculate(tbs_calculator_pdsch_configuration{nof_symb_sh,

@@ -28,7 +28,7 @@ unsigned get_random_uint(unsigned min, unsigned max)
   return std::uniform_int_distribution<unsigned>{min, max}(g);
 }
 
-// Parameters to be passed to test
+// Parameters to be passed to test.
 struct srb0_test_params {
   uint8_t k0;
   uint8_t k1;
@@ -149,7 +149,7 @@ protected:
 
       // Fetch PDSCH resource grid allocators.
       cell_slot_resource_allocator& pdsch_alloc = bench->res_grid[pdsch_td_cfg.k0];
-      // Search for PDSCH UE grant
+      // Search for PDSCH UE grant.
       for (const auto& grant : pdsch_alloc.result.dl.ue_grants) {
         if (grant.pdsch_cfg.rnti == u.crnti) {
           return true;
@@ -170,7 +170,7 @@ protected:
 
       // Fetch PDSCH resource grid allocators.
       cell_slot_resource_allocator& pdsch_alloc = bench->res_grid[pdsch_td_cfg.k0];
-      // Search for PDSCH UE grant
+      // Search for PDSCH UE grant.
       for (const auto& grant : pdsch_alloc.result.dl.ue_grants) {
         if (grant.pdsch_cfg.rnti != u.crnti) {
           continue;
@@ -193,7 +193,7 @@ protected:
 
       // Fetch PUCCH resource grid allocators.
       cell_slot_resource_allocator& pucch_alloc = bench->res_grid[pdsch_td_cfg.k0 + params.k1];
-      // Search for PUCCH grant
+      // Search for PUCCH grant.
       for (const auto& grant : pucch_alloc.result.ul.pucchs) {
         if (grant.crnti == u.crnti) {
           return true;
@@ -205,16 +205,16 @@ protected:
 
   bool add_ue(rnti_t tc_rnti, du_ue_index_t ue_index)
   {
-    // Add cell to UE cell grid allocator
+    // Add cell to UE cell grid allocator.
     bench->ue_alloc.add_cell(bench->cell_cfg.cell_index, bench->pdcch_sch, bench->pucch_sch, bench->res_grid);
     auto ue_create_req     = test_helpers::make_default_ue_creation_request();
     ue_create_req.crnti    = tc_rnti;
     ue_create_req.ue_index = ue_index;
-    // Add UE to UE DB
+    // Add UE to UE DB.
     auto ue_creation_msg = make_scheduler_ue_creation_request(ue_create_req);
     auto u               = std::make_unique<ue>(bench->cell_cfg, ue_creation_msg);
     if (bench->ue_db.contains(ue_index)) {
-      // UE already exists
+      // UE already exists.
       return false;
     }
     bench->ue_db.insert(ue_index, std::move(u));
@@ -223,11 +223,11 @@ protected:
 
   void push_buffer_state_to_dl_ue(du_ue_index_t ue_idx, unsigned buffer_size)
   {
-    // Notification from upper layers of DL buffer state
+    // Notification from upper layers of DL buffer state.
     dl_buffer_state_indication_message msg{ue_idx, bench->ue_db[ue_idx].crnti, LCID_SRB0, buffer_size};
     bench->ue_db[ue_idx].handle_dl_buffer_state_indication(msg);
 
-    // Notify scheduler of DL buffer state
+    // Notify scheduler of DL buffer state.
     bench->srb0_sched.handle_dl_buffer_state_indication(ue_idx);
   }
 
@@ -239,20 +239,20 @@ protected:
 TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
 {
   setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
-  // Add UE
+  // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
-  // Notify about SRB0 message in DL of size 101 bytes
-  unsigned mac_srb0_sdu_size = 101; // In bytes
+  // Notify about SRB0 message in DL of size 101 bytes.
+  unsigned mac_srb0_sdu_size = 101;
   push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
 
   unsigned exp_size = get_pending_bytes(to_du_ue_index(0));
 
   run_slot();
 
-  // Test the following
-  // 1. Check for DCI_1_0 allocation for SRB0 on PDCCH
-  // 2. Check for PDSCH allocation
-  // 3. Check whether CW TB bytes matches with pending bytes to sent
+  // Test the following:
+  // 1. Check for DCI_1_0 allocation for SRB0 on PDCCH.
+  // 2. Check for PDSCH allocation.
+  // 3. Check whether CW TB bytes matches with pending bytes to be sent.
   ASSERT_TRUE(ue_is_allocated_pdcch(scheduled_dl_pdcchs(), get_ue(to_du_ue_index(0))));
   ASSERT_TRUE(ue_is_allocated_pdsch(get_ue(to_du_ue_index(0))));
   ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(get_ue(to_du_ue_index(0)), exp_size));
@@ -262,29 +262,29 @@ TEST_P(srb0_scheduler_tester, failed_allocating_resources)
 {
   setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
 
-  // Add UE 1
+  // Add UE 1.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
-  // Notify about SRB0 message in DL of size 101 bytes
-  // Note: This step is for filling resource grid so that no other UE's SRB0 message can be scheduled
-  unsigned ue1_mac_srb0_sdu_size = 101; // In bytes
+  // Notify about SRB0 message in DL of size 101 bytes.
+  // Note: This step is for filling resource grid so that no other UE's SRB0 message can be scheduled.
+  unsigned ue1_mac_srb0_sdu_size = 101;
   push_buffer_state_to_dl_ue(to_du_ue_index(0), ue1_mac_srb0_sdu_size);
 
-  // Add UE 2
+  // Add UE 2.
   add_ue(to_rnti(0x4602), to_du_ue_index(1));
-  // Notify about SRB0 message in DL of size 101 bytes
-  unsigned ue2_mac_srb0_sdu_size = 101; // In bytes
+  // Notify about SRB0 message in DL of size 101 bytes.
+  unsigned ue2_mac_srb0_sdu_size = 101;
   push_buffer_state_to_dl_ue(to_du_ue_index(1), ue2_mac_srb0_sdu_size);
 
   run_slot();
 
-  // Allocation for UE2 should fail
+  // Allocation for UE2 should fail.
   ASSERT_FALSE(ue_is_allocated_pdcch(scheduled_dl_pdcchs(), get_ue(to_du_ue_index(1))));
   ASSERT_FALSE(ue_is_allocated_pdsch(get_ue(to_du_ue_index(1))));
 }
 
 INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
                          srb0_scheduler_tester,
-                         testing::Values(srb0_test_params{.k0 = 1, .k1 = 4}, srb0_test_params{.k0 = 1, .k1 = 4}));
+                         testing::Values(srb0_test_params{.k0 = 1, .k1 = 4}, srb0_test_params{.k0 = 2, .k1 = 4}));
 
 int main(int argc, char** argv)
 {
