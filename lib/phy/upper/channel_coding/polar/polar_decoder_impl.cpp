@@ -123,6 +123,8 @@ polar_decoder_impl::polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint
     param.code_stage_size[i] = 2 * param.code_stage_size[i - 1];
   }
 
+  state.stage         = 0;
+  state.flag_finished = false;
   state.active_node_per_stage.resize(nMax + 1);
 
   // Allocates memory for estimated bits per stage.
