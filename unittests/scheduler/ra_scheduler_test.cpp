@@ -371,7 +371,7 @@ TEST_P(ra_scheduler_tester, schedules_one_rar_per_slot_when_multi_preambles_with
   setup_sched(create_random_cell_config_request(duplex_mode::FDD, GetParam()));
 
   // Forward single RACH occasion with multiple preambles.
-  rach_indication_message one_rach = create_rach_indication(get_random_uint(1, prach_constants::MAX_NUM_PREAMBLES));
+  rach_indication_message one_rach = create_rach_indication(get_random_uint(1, MAX_PREAMBLES_PER_PRACH_OCCASION));
   handle_rach(one_rach);
 
   for (unsigned nof_sched_grants = 0, slot_count = 0; nof_sched_grants < one_rach.occasions[0].preambles.size();
@@ -403,7 +403,7 @@ TEST_P(ra_scheduler_tester, schedules_multiple_rars_per_slot_when_multiple_prach
   setup_sched(create_random_cell_config_request(duplex_mode::FDD, GetParam()));
 
   // Forward multiple RACH occasions with one preamble.
-  unsigned                nof_occasions = get_random_uint(1, prach_constants::MAX_PRACH_OCCASIONS);
+  unsigned                nof_occasions = get_random_uint(1, MAX_PRACH_OCCASIONS_PER_SLOT);
   rach_indication_message rach_ind      = create_rach_indication(0);
   for (unsigned i = 0; i != nof_occasions; ++i) {
     rach_ind.occasions.emplace_back();

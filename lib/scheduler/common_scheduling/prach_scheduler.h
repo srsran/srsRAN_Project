@@ -45,7 +45,7 @@ private:
   std::bitset<NOF_SUBFRAMES_PER_FRAME> prach_subframe_occasion_bitmap;
 
   /// Pre-generated PRACH occasions.
-  static_vector<cached_prach_occasion, MAX_NOF_PRACHS_PER_SLOT> cached_prachs;
+  static_vector<cached_prach_occasion, MAX_PRACH_OCCASIONS_PER_SLOT> cached_prachs;
 };
 
 } // namespace srsgnb

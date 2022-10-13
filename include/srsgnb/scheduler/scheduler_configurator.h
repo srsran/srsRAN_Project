@@ -19,6 +19,7 @@
 #include "srsgnb/ran/prach/prach_constants.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/sib_configuration.h"
+#include "srsgnb/ran/slot_pdu_capacity_contants.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/sr_configuration.h"
 #include "srsgnb/ran/ssb_configuration.h"
@@ -126,12 +127,12 @@ struct rach_indication_message {
 
   struct occasion {
     /// Index of the first OFDM Symbol where RACH was detected.
-    unsigned                                                    start_symbol;
-    unsigned                                                    frequency_index;
-    static_vector<preamble, prach_constants::MAX_NUM_PREAMBLES> preambles;
+    unsigned                                                  start_symbol;
+    unsigned                                                  frequency_index;
+    static_vector<preamble, MAX_PREAMBLES_PER_PRACH_OCCASION> preambles;
   };
 
-  static_vector<occasion, prach_constants::MAX_PRACH_OCCASIONS> occasions;
+  static_vector<occasion, MAX_PRACH_OCCASIONS_PER_SLOT> occasions;
 };
 
 /// Interface to Add/Remove UEs and Cells.

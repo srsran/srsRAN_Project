@@ -35,12 +35,15 @@ static constexpr size_t MAX_UE_PDUS_PER_SLOT = 16;
 static constexpr size_t MAX_DL_PDCCH_PDUS_PER_SLOT =
     MAX_SIB1_PDUS_PER_SLOT + MAX_RAR_PDUS_PER_SLOT + MAX_UE_PDUS_PER_SLOT;
 
-/// Maximum number of PRACH occasions within a slot as per TS38.211, Tables 6.3.3.2-[2-4] and maximum msg1-FDM of 8
-/// according to TS 38.331.
-static constexpr size_t MAX_NOF_PRACHS_PER_SLOT = 56;
+/// [Implementation defined] Maximum number of PRACH occasions per slot supported by the current implementation.
+static constexpr size_t MAX_PRACH_OCCASIONS_PER_SLOT = 1;
+
+/// [Implementation defined] Maximum number of preambles per time-frequency PRACH occasion supported by the current
+/// implementation.
+static constexpr unsigned MAX_PREAMBLES_PER_PRACH_OCCASION = 64;
 
 /// [Implementation defined] Maximum number of codewords per PDSCH grant.
-static constexpr size_t MAX_NOF_CODEWORDS_PER_PDSCH = 2;
+static constexpr size_t MAX_CODEWORDS_PER_PDSCH = 2;
 
 /// [Implementation defined] Maximum number of PUSCH PDUs per slot.
 static constexpr size_t MAX_PUSCH_PDUS_PER_SLOT = 16U;
@@ -60,6 +63,6 @@ static constexpr size_t MAX_DL_PDUS_PER_SLOT = MAX_SSB_PER_SLOT + MAX_DL_PDCCH_P
 
 /// [Implementation defined] Maximum number of uplink PDUs per slot.
 static constexpr size_t MAX_UL_PDUS_PER_SLOT =
-    MAX_NOF_PRACHS_PER_SLOT + MAX_PUCCH_PDUS_PER_SLOT + MAX_PUSCH_PDUS_PER_SLOT;
+    MAX_PRACH_OCCASIONS_PER_SLOT + MAX_PUCCH_PDUS_PER_SLOT + MAX_PUSCH_PDUS_PER_SLOT;
 
 } // namespace srsgnb

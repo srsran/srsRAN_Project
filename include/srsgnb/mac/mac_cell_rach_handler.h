@@ -26,15 +26,15 @@ struct mac_rach_indication {
   };
 
   struct rach_occasion {
-    unsigned                                                         start_symbol;
-    unsigned                                                         slot_index;
-    unsigned                                                         frequency_index;
-    float                                                            rssi_dB;
-    static_vector<rach_preamble, prach_constants::MAX_NUM_PREAMBLES> preambles;
+    unsigned                                                       start_symbol;
+    unsigned                                                       slot_index;
+    unsigned                                                       frequency_index;
+    float                                                          rssi_dB;
+    static_vector<rach_preamble, MAX_PREAMBLES_PER_PRACH_OCCASION> preambles;
   };
 
-  slot_point                                                         slot_rx;
-  static_vector<rach_occasion, prach_constants::MAX_PRACH_OCCASIONS> occasions;
+  slot_point                                                 slot_rx;
+  static_vector<rach_occasion, MAX_PRACH_OCCASIONS_PER_SLOT> occasions;
 };
 
 /// Interface used to handle RACH indications specific to a cell.

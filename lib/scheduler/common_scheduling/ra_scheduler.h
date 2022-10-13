@@ -55,10 +55,10 @@ private:
   static constexpr unsigned rar_mcs_index = 0, msg3_mcs_index = 0; // TODO: Parameterize.
 
   struct pending_rar_t {
-    rnti_t                                                    ra_rnti = INVALID_RNTI;
-    slot_point                                                prach_slot_rx;
-    slot_interval                                             rar_window;
-    static_vector<rnti_t, prach_constants::MAX_NUM_PREAMBLES> tc_rntis;
+    rnti_t                                                  ra_rnti = INVALID_RNTI;
+    slot_point                                              prach_slot_rx;
+    slot_interval                                           rar_window;
+    static_vector<rnti_t, MAX_PREAMBLES_PER_PRACH_OCCASION> tc_rntis;
   };
   struct pending_msg3 {
     /// Detected PRACH Preamble associated to this Msg3.

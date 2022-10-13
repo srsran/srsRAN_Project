@@ -37,8 +37,8 @@ static fapi::dmrs_config_type convert_dmrs_type_mac_to_fapi(srsgnb::dmrs_config_
   return fapi::dmrs_config_type::type_1;
 }
 
-static void fill_codewords(fapi::dl_pdsch_pdu_builder&                                       builder,
-                           const static_vector<pdsch_codeword, MAX_NOF_CODEWORDS_PER_PDSCH>& codewords)
+static void fill_codewords(fapi::dl_pdsch_pdu_builder&                                   builder,
+                           const static_vector<pdsch_codeword, MAX_CODEWORDS_PER_PDSCH>& codewords)
 {
   srsgnb_assert(codewords.size() == 1, "Current FAPI implementation only supports 1 transport block per PDU");
   for (const auto& cw : codewords) {

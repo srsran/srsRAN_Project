@@ -124,12 +124,12 @@ struct pdsch_codeword {
 /// Information related to a PDSCH allocation.
 /// \remark See FAPI PDSCH PDU.
 struct pdsch_information {
-  rnti_t                                                     rnti;
-  const bwp_configuration*                                   bwp_cfg;
-  prb_grant                                                  prbs;
-  ofdm_symbol_range                                          symbols;
-  static_vector<pdsch_codeword, MAX_NOF_CODEWORDS_PER_PDSCH> codewords;
-  dmrs_information                                           dmrs;
+  rnti_t                                                 rnti;
+  const bwp_configuration*                               bwp_cfg;
+  prb_grant                                              prbs;
+  ofdm_symbol_range                                      symbols;
+  static_vector<pdsch_codeword, MAX_CODEWORDS_PER_PDSCH> codewords;
+  dmrs_information                                       dmrs;
   /// Parameter n_ID, used for scrambling, as per TS 38.211, Section 7.3.1.1.
   unsigned n_id;
 };
@@ -320,7 +320,7 @@ struct ul_sched_result {
   /// PUSCH grants allocated in the current slot.
   static_vector<ul_sched_info, MAX_PUSCH_PDUS_PER_SLOT> puschs;
   /// PRACH occasions within the given slot.
-  static_vector<prach_occasion_info, MAX_NOF_PRACHS_PER_SLOT> prachs;
+  static_vector<prach_occasion_info, MAX_PRACH_OCCASIONS_PER_SLOT> prachs;
   /// PUCCH grants allocated in the current slot.
   static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT> pucchs;
 };
