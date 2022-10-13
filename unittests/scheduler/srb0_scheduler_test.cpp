@@ -287,8 +287,8 @@ TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
   setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
-  // Notify about SRB0 message in DL of size 380 bytes.
-  unsigned mac_srb0_sdu_size = 380;
+  // Notify about SRB0 message in DL of size 458 bytes.
+  unsigned mac_srb0_sdu_size = 458;
   push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
 
   unsigned exp_size = get_pending_bytes(to_du_ue_index(0));
