@@ -66,6 +66,7 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
   uci_indication ind{};
   for (unsigned i = 0; i != msg.ucis.size(); ++i) {
     ind.ucis[i].ue_index    = ue_mng.get_ue_index(msg.ucis[i].rnti);
+    ind.ucis[i].crnti       = msg.ucis[i].rnti;
     ind.ucis[i].sr_detected = false;
 
     switch (msg.ucis[i].type) {

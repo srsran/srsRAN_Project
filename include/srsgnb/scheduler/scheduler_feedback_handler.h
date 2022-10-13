@@ -57,14 +57,13 @@ struct ul_crc_indication {
 
 /// \brief UCI indication for a given UE.
 struct uci_indication {
-  static constexpr size_t NOF_PDUS_PER_UCI_INDICATION = 2;
-
   struct uci_pdu {
     du_ue_index_t          ue_index;
+    rnti_t                 crnti;
     bool                   sr_detected;
     static_vector<bool, 8> harqs;
   };
-  using uci_pdu_list = static_vector<uci_pdu, NOF_PDUS_PER_UCI_INDICATION>;
+  using uci_pdu_list = static_vector<uci_pdu, 2>;
 
   du_cell_index_t cell_index;
   slot_point      slot_rx;
