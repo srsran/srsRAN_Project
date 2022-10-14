@@ -10,6 +10,7 @@
 
 #include "pucch_detector_test_doubles.h"
 #include "pucch_processor_format1_test_data.h"
+#include "srsgnb/srsvec/compare.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
@@ -49,6 +50,19 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
   return os << tc.config;
 }
 
+std::ostream& operator<<(std::ostream& os, const uci_status& status)
+{
+  switch (status) {
+    case uci_status::unknown:
+      return os << "unknown";
+    case uci_status::valid:
+      return os << "valid";
+    case uci_status::invalid:
+    default:
+      return os << "invalid";
+  }
+}
+
 } // namespace srsgnb
 
 namespace {
@@ -78,7 +92,8 @@ protected:
         create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory);
     ASSERT_NE(dmrs_factory, nullptr);
 
-    std::shared_ptr<pucch_detector_factory> detector_factory = std::make_shared<pucch_detector_factory_spy>();
+    std::shared_ptr<pucch_detector_factory> detector_factory =
+        create_pucch_detector_factory_sw(lpc_factory, prg_factory);
     ASSERT_NE(detector_factory, nullptr);
 
     channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
@@ -116,9 +131,28 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
 
   pucch_processor_result result = processor->process(grid, param.config);
 
+  // Check channel state information is expected.
   ASSERT_EQ(result.csi.time_alignment, phy_time_unit::from_seconds(0));
   ASSERT_EQ(result.csi.epre_dB, 0.0);
   ASSERT_EQ(result.csi.sinr_dB, 0.0);
+
+  // The message shall be valid.
+  ASSERT_EQ(result.message.status, uci_status::valid);
+  if (param.ack_bits.empty()) {
+    ASSERT_EQ(result.message.full_payload.data(), nullptr);
+    ASSERT_EQ(result.message.full_payload.size(), 0);
+    ASSERT_EQ(result.message.harq_ack.data(), nullptr);
+    ASSERT_EQ(result.message.harq_ack.size(), 0);
+  } else {
+    ASSERT_EQ(result.message.full_payload.size(), param.ack_bits.size());
+    ASSERT_TRUE(srsvec::equal(result.message.full_payload, param.ack_bits));
+    ASSERT_EQ(result.message.harq_ack.size(), param.ack_bits.size());
+    ASSERT_TRUE(srsvec::equal(result.message.harq_ack, param.ack_bits));
+  }
+  ASSERT_EQ(result.message.sr.data(), nullptr);
+  ASSERT_EQ(result.message.sr.size(), 0);
+  ASSERT_EQ(result.message.csi_part1.data(), nullptr);
+  ASSERT_EQ(result.message.csi_part1.size(), 0);
 }
 
 INSTANTIATE_TEST_SUITE_P(PucchProcessorFormat1,

@@ -263,21 +263,24 @@ pucch_uci_message pucch_detector_impl::detect(const resource_grid_reader&  grid,
   output.sr = {};
 
   if (!is_msg_ok) {
-    output.harq_ack = {};
-    output.status   = uci_status::invalid;
+    output.harq_ack     = {};
+    output.full_payload = {};
+    output.status       = uci_status::invalid;
     return output;
   }
 
   if (config.nof_harq_ack > 0) {
-    output.harq_ack = {output.data.data(), config.nof_harq_ack};
-    output.status   = uci_status::valid;
+    output.harq_ack     = {output.data.data(), config.nof_harq_ack};
+    output.full_payload = {output.data.data(), config.nof_harq_ack};
+    output.status       = uci_status::valid;
     return output;
   }
 
   // If we are here, there should only be a positive SR bit and it should be 0, since nothing is sent for negative
   // SR and no ACK.
-  output.status   = uci_status::unknown;
-  output.harq_ack = {};
+  output.status       = uci_status::unknown;
+  output.harq_ack     = {};
+  output.full_payload = {};
   if (output.data[0] == 0U) {
     output.status = uci_status::valid;
   }
