@@ -17,6 +17,7 @@
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/upper/channel_estimation.h"
 #include "srsgnb/phy/upper/channel_processors/pucch_uci_message.h"
+#include "srsgnb/ran/pucch/pucch_mapping.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
@@ -49,6 +50,8 @@ public:
     unsigned start_symbol_index;
     /// Number of OFDM symbols allocated to the PUCCH {4, ..., 14}.
     unsigned nof_symbols;
+    /// Group hopping scheme.
+    pucch_group_hopping group_hopping;
     /// Antenna port the PUCCH is received at.
     unsigned port;
     /// Amplitude scaling factor.
@@ -71,9 +74,9 @@ public:
     /// Element \e PUCCH-ConfigCommon) if it is configured. Otherwise, it must be equal to the physical cell identifier
     /// \f$N_{\textup{ID}}^{\textup{cell}}\f$.
     unsigned n_id;
-    /// Number of expected SR bits {0, 1}.
-    unsigned nof_sr;
-    /// Number of expected HARQ-ACK bits {0, 1, 2}.
+    /// \brief Number of expected HARQ-ACK bits {0, 1, 2}.
+    ///
+    /// This parameter should be set to zero when trying to detect a positive scheduling request only.
     unsigned nof_harq_ack;
   };
 

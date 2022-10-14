@@ -166,12 +166,7 @@ static void validate_config(const pucch_detector::format1_configuration& config)
   srsgnb_assert(config.n_id <= 1023,
                 "Initializing the pseudorandom generator with {}, but only values between 0 and 1023 are valid.",
                 config.n_id);
-  srsgnb_assert(config.nof_sr <= 1, "At most one SR bit - requested {}.", config.nof_sr);
   srsgnb_assert(config.nof_harq_ack <= 2, "At most two ACK bits - requested {}.", config.nof_harq_ack);
-  // todo: No SR is sent if nof_ack > 0 - should we put an assert or just return an empty sr?
-  // srsgnb_assert(!((config.nof_harq_ack > 0) && (config.nof_sr > 0)),
-  //               "Requiring {} ACK bits and one SR bit, but no SR bits are transmitted when ACK bits are.",
-  //               config.nof_harq_ack);
 }
 
 // TEMPORARY: need to refactor equalizer interface.
@@ -247,47 +242,37 @@ pucch_uci_message pucch_detector_impl::detect(const resource_grid_reader&  grid,
 
   marginalize_w_and_r_out(config);
 
-  unsigned          nof_bits = std::max(config.nof_harq_ack, config.nof_sr);
+  // Recall that, when nof_harq_ack == 0, we still need to look for the positive SR indicator (i.e., a single, 0-valued
+  // transmitted bit).
+  unsigned          nof_bits = std::max(config.nof_harq_ack, 1U);
   pucch_uci_message output;
   float             detection_metric = detect_bits(output.data, detected_symbol, eq_noise_var, nof_bits);
 
   // Check whether the computed detection metric is above the threshold, which is set to guarantee a 1% FA probability.
   bool is_msg_ok = (detection_metric > 2.33);
 
+  // We don't set the SR bit here - this task is delegated to a higher-level function, based on the uci_status returned
+  // by this detector and on the used PUCCH resource.
+  output.sr = {};
+
   if (!is_msg_ok) {
-    if ((config.nof_harq_ack == 0) && (config.nof_sr == 1)) {
-      // Nothing is sent if the UCI message only contains one negative SR bit.
-      // todo: Should we set the SR bit to 0 or 1? Note that a positive SR bit corresponds to transmitting a 0, but
-      // MATLAB denotes a positive SNR with 1.
-      output.data[0]  = 0U;
-      output.harq_ack = {};
-      output.sr       = {output.data.data(), 1};
-      // todo: not sure whether we should set this to valid or not.
-      output.status = uci_status::valid;
-      return output;
-    }
-    output.status = uci_status::invalid;
+    output.harq_ack = {};
+    output.status   = uci_status::invalid;
     return output;
   }
 
   if (config.nof_harq_ack > 0) {
     output.harq_ack = {output.data.data(), config.nof_harq_ack};
-    // Recall that no SR bits are sent if there's at least one ACK bit.
-    output.sr     = {};
-    output.status = uci_status::valid;
+    output.status   = uci_status::valid;
     return output;
   }
 
   // If we are here, there should only be a positive SR bit and it should be 0, since nothing is sent for negative
   // SR and no ACK.
-  output.status = uci_status::invalid;
+  output.status   = uci_status::unknown;
+  output.harq_ack = {};
   if (output.data[0] == 0U) {
-    // todo: Here I'm not sure - a 0-valued bit is sent when the SR is positive, should we set SR to 0 (the value of the
-    // bit) or to 1 (as, e.g., MATLAB does)?
-    output.data[0]  = 1U;
-    output.sr       = {output.data.data(), 1};
-    output.harq_ack = {};
-    output.status   = uci_status::valid;
+    output.status = uci_status::valid;
   }
   return output;
 }
@@ -364,8 +349,10 @@ static void compute_alpha_indices(span<unsigned>           indices,
 void pucch_detector_impl::marginalize_w_and_r_out(const format1_configuration& config)
 {
   unsigned time_domain_occ = config.time_domain_occ;
-  // todo(david): The next 2 instructions only hold for groupHopping = 'neither', which is the one we focus at the
-  // moment. I'm not sure if I should include "pucch_mapping.h" and add a group_hopping field to the configuration.
+
+  srsgnb_assert(config.group_hopping == pucch_group_hopping::NEITHER,
+                "At the moment, only group the hopping type 'neither' is implemented, requesting {}",
+                ((config.group_hopping == pucch_group_hopping::ENABLE) ? "enable" : "disable"));
   unsigned group_index     = config.n_id % 30;
   unsigned sequence_number = 0;
 

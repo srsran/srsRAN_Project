@@ -27,13 +27,13 @@ namespace srsgnb {
 std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
 {
   std::string hops = (tc.cfg.second_hop_prb.has_value() ? "intraslot frequency hopping" : "no frequency hopping");
-  return os << fmt::format("Numerology {}, {}, symbol allocation [{}, {}], {} SR bit(s), {} HARQ-ACK bit(s).",
+  return os << fmt::format("Numerology {}, {}, symbol allocation [{}, {}], {} HARQ-ACK bit(s), {} SR bit(s).",
                            tc.cfg.slot.numerology(),
                            hops,
                            tc.cfg.start_symbol_index,
                            tc.cfg.nof_symbols,
-                           tc.cfg.nof_sr,
-                           tc.cfg.nof_harq_ack);
+                           tc.cfg.nof_harq_ack,
+                           tc.sr_bit.size());
 }
 
 } // namespace srsgnb
@@ -111,12 +111,21 @@ TEST_P(PUCCHDetectFixture, Format1Test)
   std::unique_ptr<pucch_detector> pucch_det = detector_factory->create();
 
   pucch_uci_message msg = pucch_det->detect(grid, csi, test_data.cfg);
-  ASSERT_EQ(msg.status, uci_status::valid);
 
   if (test_data.cfg.nof_harq_ack == 0) {
-    ASSERT_EQ(msg.sr.size(), test_data.sr_bit.size()) << "Wrong number of SR bits.";
-    ASSERT_TRUE(std::equal(msg.sr.begin(), msg.sr.end(), test_data.sr_bit.begin())) << "The SR bit does not match.";
+    if (test_data.sr_bit.empty()) {
+      ASSERT_EQ(msg.status, uci_status::invalid) << "An empty PUCCH occasion should return an 'invalid' UCI.";
+      return;
+    }
+    if (test_data.sr_bit[0] == 1) {
+      ASSERT_EQ(msg.status, uci_status::valid) << "A positive SR-only PUCCH occasion should return a 'valid' UCI.";
+      return;
+    }
+    ASSERT_EQ(msg.status, uci_status::invalid) << "A negative SR-only PUCCH occasion should return an 'invalid' UCI.";
+    return;
   }
+
+  ASSERT_EQ(msg.status, uci_status::valid);
 
   ASSERT_EQ(msg.harq_ack.size(), test_data.ack_bits.size()) << "Wrong number of HARQ-ACK bits.";
   ASSERT_TRUE(std::equal(msg.harq_ack.begin(), msg.harq_ack.end(), test_data.ack_bits.begin()))
