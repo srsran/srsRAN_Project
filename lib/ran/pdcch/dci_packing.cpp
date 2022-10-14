@@ -13,6 +13,139 @@
 
 using namespace srsgnb;
 
+// Computes the number of information bits before padding for a DCI format 0_0 message. This is used to perform DCI size
+// alignment and to determine if the UL/SUL field is included in the size-aligned DCI format 0_0 payload.
+static unsigned dci_f0_0_bits_before_padding(unsigned N_rb_ul_bwp)
+
+{
+  constexpr unsigned dci_format_id_nof_bits            = 1;
+  constexpr unsigned time_resource_nof_bits            = 4;
+  constexpr unsigned frequency_hopping_flag_nof_bits   = 1;
+  constexpr unsigned modulation_coding_scheme_nof_bits = 5;
+  constexpr unsigned new_data_indicator_nof_bits       = 1;
+  constexpr unsigned redundancy_version_nof_bits       = 2;
+  constexpr unsigned harq_process_number_nof_bits      = 4;
+  constexpr unsigned tpc_command_nof_bits              = 2;
+
+  // Contribution to the DCI payload size that is fixed.
+  constexpr unsigned dci_fixed_nof_bits = dci_format_id_nof_bits + time_resource_nof_bits +
+                                          frequency_hopping_flag_nof_bits + modulation_coding_scheme_nof_bits +
+                                          new_data_indicator_nof_bits + redundancy_version_nof_bits +
+                                          harq_process_number_nof_bits + tpc_command_nof_bits;
+
+  // Frequency resource allocation field size. the frequency hopping offset is packed using the MSB bits of this field,
+  // therefore, the payload size is not altered by the use of frequency hopping. See TS38.212 Section 7.3.1.1.1.
+  unsigned dci_variable_nof_bits = log2_ceil(N_rb_ul_bwp * (N_rb_ul_bwp + 1) / 2);
+
+  return dci_fixed_nof_bits + dci_variable_nof_bits;
+}
+
+// Computes the number of information bits before padding for a DCI format 1_0 message. This is used to perform DCI size
+// alignment and to determine if the UL/SUL field is included in the size-aligned DCI format 0_0 payload.
+static unsigned dci_f1_0_bits_before_padding(unsigned N_rb_ul_bwp)
+{
+  // Contribution to the DCI payload size that is fixed. It is the same number of bits for all format 1_1 variants.
+  constexpr unsigned dci_fixed_nof_bits = 28U;
+
+  // Frequency resource allocation field size.
+  unsigned dci_variable_nof_bits = log2_ceil(N_rb_ul_bwp * (N_rb_ul_bwp + 1) / 2);
+
+  return dci_fixed_nof_bits + dci_variable_nof_bits;
+}
+
+dci_sizes get_dci_sizes(dci_config& config)
+{
+  dci_sizes sizes = {};
+
+  // TODO (joaquim): improve asserts.
+  srsgnb_assert(config.N_rb_dl_bwp_initial && config.N_rb_dl_bwp_active && config.N_rb_ul_bwp_initial &&
+                    config.N_rb_ul_bwp_active,
+                "Invalid DCI common config parameters.");
+
+  // Step 0
+  // - Determine DCI format 0_0 monitored in a common search space according to clause 7.3.1.1.1 where N_UL_BWP_RB is
+  // given by the size of the initial UL bandwidth part.
+  unsigned format0_0_info_bits_common = dci_f0_0_bits_before_padding(config.N_rb_ul_bwp_initial);
+
+  // - Determine DCI format 1_0 monitored in a common search space according to clause 7.3.1.2.1 where N_DL_BWP_RB given
+  // by:
+  //   - the size of CORESET 0 if CORESET 0 is configured for the cell; and
+  //   - the size of initial DL bandwidth part if CORESET 0 is not configured for the cell.
+  unsigned format1_0_info_bits_common = dci_f1_0_bits_before_padding(
+      static_cast<bool>(config.coreset0_bw) ? config.coreset0_bw : config.N_rb_dl_bwp_initial);
+
+  sizes.format0_0_common_size = format0_0_info_bits_common;
+  sizes.format1_0_common_size = format1_0_info_bits_common;
+
+  // - If DCI format 0_0 is monitored in common search space and if the number of information bits in the DCI format 0_0
+  // prior to padding is less than the payload size of the DCI format 1_0 monitored in common search space for
+  // scheduling the same serving cell, a number of zero padding bits are generated for the DCI format 0_0 until the
+  // payload size equals that of the DCI format 1_0.
+  if (format0_0_info_bits_common < format1_0_info_bits_common) {
+    // The number of padding bits is computed here, without taking the optional single bit UL/SUL field into account.
+    // This field is located after the padding, and it must only be included if the format 1_0 payload has a larger
+    // amount of bits before the padding bits. Therefore, the UL/SUL can be though of as a field that takes the space of
+    // the last padding bit within the format 0_0 payload, if present. See TS38.212 Sections 7.3.1.0 and 7.3.1.1.1.
+    unsigned padding_bits_incl_ul_sul = format1_0_info_bits_common - format0_0_info_bits_common;
+    sizes.format0_0_common_size += padding_bits_incl_ul_sul;
+  }
+
+  // - If DCI format 0_0 is monitored in common search space and if the number of information bits in the DCI format 0_0
+  // prior to truncation is larger than the payload size of the DCI format 1_0 monitored in common search space for
+  // scheduling the same serving cell, the bitwidth of the frequency domain resource assignment field in the DCI format
+  // 0_0 is reduced by truncating the first few most significant bits such that the size of DCI format 0_0 equals the
+  // size of the DCI format 1_0.
+  if (format0_0_info_bits_common > format1_0_info_bits_common) {
+    unsigned nof_truncated_bits = format0_0_info_bits_common - format1_0_info_bits_common;
+    sizes.format1_0_common_size -= nof_truncated_bits;
+  }
+
+  srsgnb_assert(sizes.format1_0_common_size == sizes.format0_0_common_size, "DCI format 0_0 and 1_0 sizes must match");
+
+  // Step 1
+  // - Determine DCI format 0_0 monitored in a UE-specific search space according to clause 7.3.1.1.1 where N_UL_BWP_RB
+  // is the size of the active UL bandwidth part.
+  unsigned format0_0_info_bits_ue = dci_f0_0_bits_before_padding(config.N_rb_ul_bwp_active);
+
+  // - Determine DCI format 1_0 monitored in a UE-specific search space according to clause 7.3.1.2.1 where N_DL_BWP_RB
+  // is the size of the active DL bandwidth part.
+  unsigned format1_0_info_bits_ue = dci_f1_0_bits_before_padding(config.N_rb_dl_bwp_active);
+
+  sizes.format0_0_ue_specific_size = format0_0_info_bits_ue;
+  sizes.format1_0_ue_specific_size = format1_0_info_bits_ue;
+
+  // - For a UE configured with supplementaryUplink in ServingCellConfig in a cell, if PUSCH is configured to be
+  // transmitted on both the SUL and the non-SUL of the cell and if the number of information bits in DCI format 0_0 in
+  // UE-specific search space for the SUL is not equal to the number of information bits in DCI format 0_0 in
+  // UE-specific search space for the non-SUL, a number of zero padding bits are generated for the smaller DCI format
+  // 0_0 until the payload size equals that of the larger DCI format 0_0.
+
+  // Not implemented.
+
+  // - If DCI format 0_0 is monitored in UE-specific search space and if the number of information bits in the DCI
+  // format 0_0 prior to padding is less than the payload size of the DCI format 1_0 monitored in UE-specific search
+  // space for scheduling the same serving cell, a number of zero padding bits are generated for the DCI format 0_0
+  // until the payload size equals that of the DCI format 1_0.
+  if (format0_0_info_bits_ue < format1_0_info_bits_ue) {
+    unsigned nof_padding_bits_incl_ul_sul = format1_0_info_bits_ue - format0_0_info_bits_ue;
+    sizes.format0_0_ue_specific_size += nof_padding_bits_incl_ul_sul;
+  }
+
+  // - If DCI format 1_0 is monitored in UE-specific search space and if the number of information bits in the DCI
+  // format 1_0 prior to padding is less than the payload size of the DCI format 0_0 monitored in UE-specific search
+  // space for scheduling the same serving cell, zeros shall be appended to the DCI format 1_0 until the payload size
+  // equals that of the DCI format 0_0
+  if (format1_0_info_bits_ue < format0_0_info_bits_ue) {
+    unsigned nof_padding_bits = format0_0_info_bits_ue - format1_0_info_bits_ue;
+    sizes.format1_0_ue_specific_size += nof_padding_bits;
+  }
+
+  srsgnb_assert(sizes.format1_0_ue_specific_size == sizes.format0_0_ue_specific_size,
+                "DCI format 0_0 and 1_0 sizes must match");
+
+  return sizes;
+}
+
 dci_payload srsgnb::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& config)
 {
   dci_payload payload;
@@ -63,11 +196,26 @@ dci_payload srsgnb::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& conf
   // TPC command for scheduled PUSCH - 2 bit.
   payload.push_back(config.tpc_command, 2);
 
-  // Padding bits, if necessary, as per TS38.212 Section 7.3.1.0.
+  unsigned nof_bits_before_padding = dci_f0_0_bits_before_padding(config.N_rb_ul_bwp);
+  srsgnb_assert(nof_bits_before_padding <= config.payload_size,
+                "DCI payload size must be able to fit the information bits");
 
-  // UL/SUL indicator - 1 bit if present.
-  if (config.ul_sul_indicator.has_value()) {
-    payload.push_back(config.ul_sul_indicator.value(), 1);
+  // Number of padding bits, including the UL/SUL optional field, if present.
+  unsigned padding_incl_ul_sul = config.payload_size - nof_bits_before_padding;
+
+  if (config.ul_sul_indicator.has_value() && (padding_incl_ul_sul > 0)) {
+    // UL/SUL field is included if it is present in the DCI message and the number of DCI format 1_0 bits before padding
+    // is larger than the number of DCI format 0_0 bits before padding.
+    constexpr unsigned nof_ul_sul_bit = 1U;
+    // Padding bits, if necessary, as per TS38.212 Section 7.3.1.0.
+    payload.push_back(0X00U, padding_incl_ul_sul - nof_ul_sul_bit);
+
+    // UL/SUL indicator - 1 bit.
+    payload.push_back(config.ul_sul_indicator.value(), nof_ul_sul_bit);
+  }
+  else {
+    // UL/SUL field is not included otherwise.
+    payload.push_back(0X00U, padding_incl_ul_sul);
   }
 
   return payload;

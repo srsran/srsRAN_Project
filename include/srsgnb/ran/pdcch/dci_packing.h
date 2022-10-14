@@ -22,13 +22,41 @@ using dci_payload = bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>;
 
 /// DCI payload sizes.
 struct dci_sizes {
-  unsigned format0_0_size;
-  unsigned format1_0_size;
+  // TODO (joaquim): document these fields.
+  unsigned format0_0_common_size;
+  unsigned format1_0_common_size;
+  unsigned format0_0_ue_specific_size;
+  unsigned format1_0_ue_specific_size;
 };
+
+struct dci_config {
+  // TODO (joaquim): document these fields.
+  unsigned N_rb_dl_bwp_initial;
+
+  /// UE DL dedicated search space.
+  unsigned N_rb_dl_bwp_active;
+
+  unsigned N_rb_ul_bwp_initial;
+  unsigned N_rb_ul_bwp_active;
+
+  unsigned coreset0_bw;
+
+  bool enable_sul;
+
+
+};
+
+// TODO (joaquim): document these fields.
+dci_payload get_dci_sizes(dci_config config);
 
 /// \brief Describes the necessary parameters for packing a DCI format 0_0 scrambled by C-RNTI, CS-RNTI or MCS-C-RNTI.
 /// \remark Defined in TS38.212 Section 7.3.1.1.1.
 struct dci_0_0_c_rnti_configuration {
+  /// \brief DCI format 0_0 payload size.
+  ///
+  /// the DCI payload size is determined by the DCI size alignment procedure, specified in TS38.212 Section 7.3.1.0 and
+  /// implemented by \c get_dci_sizes.
+  unsigned payload_size;
   /// \brief Identifier for DCI formats – 1 bit.
   /// \remark The value of this field is always set to 0, indicating an UL DCI format.
   unsigned dci_format_id;
@@ -71,7 +99,7 @@ struct dci_0_0_c_rnti_configuration {
   /// TPC command for scheduled PUSCH – 2 bits as per TS38.213 Section 7.1.1.
   unsigned tpc_command;
   /// UL/SUL indicator - 1 bit if present, as per TS38.212 Section 7.3.1.1.1 and Table 7.3.1.1.1-1.
-  optional<unsigned> ul_sul_indicator;
+  optional<bool> ul_sul_indicator;
 };
 
 /// Packs a DCI format 0_0 scrambled by C-RNTI, CS-RNTI or MCS-C-RNTI.
@@ -80,6 +108,11 @@ dci_payload dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& config);
 /// \brief Describes the necessary parameters for packing a DCI format 0_0 scrambled by TC-RNTI.
 /// \remark Defined in TS38.212 Section 7.3.1.1.1.
 struct dci_0_0_tc_rnti_configuration {
+  /// \brief DCI format 0_0 payload size.
+  ///
+  /// the DCI payload size is determined by the DCI size alignment procedure, specified in TS38.212 Section 7.3.1.0 and
+  /// implemented by \c get_dci_sizes.
+  unsigned payload_size;
   /// \brief Identifier for DCI formats – 1 bit.
   /// \remark The value of this field is always set to 0, indicating an UL DCI format.
   unsigned dci_format_id;
@@ -122,6 +155,11 @@ dci_payload dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& config);
 /// \remark Defined in TS38.212 Section 7.3.1.2.1.
 /// \remark The case where the random access procedure is initiated by a PDCCH order is handled separately.
 struct dci_1_0_c_rnti_configuration {
+  /// \brief DCI format 1_0 payload size.
+  ///
+  /// the DCI payload size is determined by the DCI size alignment procedure, specified in TS38.212 Section 7.3.1.0 and
+  /// implemented by \c get_dci_sizes.
+  unsigned payload_size;
   /// \brief Identifier for DCI formats – 1 bit.
   /// \remark The value of this field is always set to 1, indicating a DL DCI format.
   unsigned dci_format_id;
@@ -158,6 +196,11 @@ dci_payload dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& config);
 /// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by P-RNTI as per TS38.212
 /// Section 7.3.1.2.1.
 struct dci_1_0_p_rnti_configuration {
+  /// \brief DCI format 1_0 payload size.
+  ///
+  /// the DCI payload size is determined by the DCI size alignment procedure, specified in TS38.212 Section 7.3.1.0 and
+  /// implemented by \c get_dci_sizes.
+  unsigned payload_size;
   /// Indicates the content of the DCI format 1_0 payload when scrambled by P-RNTI.
   enum class payload_info {
     /// Indicates that only scheduling information for paging is present in the DCI.
@@ -200,6 +243,11 @@ dci_payload dci_1_0_p_rnti_pack(const dci_1_0_p_rnti_configuration& config);
 /// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by SI-RNTI as per TS38.212
 /// Section 7.3.1.2.1.
 struct dci_1_0_si_rnti_configuration {
+  /// \brief DCI format 1_0 payload size.
+  ///
+  /// the DCI payload size is determined by the DCI size alignment procedure, specified in TS38.212 Section 7.3.1.0 and
+  /// implemented by \c get_dci_sizes.
+  unsigned payload_size;
   /// Parameter \f$N_{RB}^{DL,BWP}\f$. It must be set to CORESET0 size.
   unsigned N_rb_dl_bwp;
   /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
@@ -224,6 +272,11 @@ dci_payload dci_1_0_si_rnti_pack(const dci_1_0_si_rnti_configuration& config);
 /// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by RA-RNTI as per TS38.212
 /// Section 7.3.1.2.1.
 struct dci_1_0_ra_rnti_configuration {
+  /// \brief DCI format 1_0 payload size.
+  ///
+  /// the DCI payload size is determined by the DCI size alignment procedure, specified in TS38.212 Section 7.3.1.0 and
+  /// implemented by \c get_dci_sizes.
+  unsigned payload_size;
   /// \brief Parameter \f$N_{RB}^{DL,BWP}\f$.
   ///
   /// It must be set to:
@@ -251,6 +304,11 @@ dci_payload dci_1_0_ra_rnti_pack(const dci_1_0_ra_rnti_configuration& config);
 /// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by TC-RNTI, as per TS38.212
 /// Section 7.3.1.2.1.
 struct dci_1_0_tc_rnti_configuration {
+  /// \brief DCI format 1_0 payload size.
+  ///
+  /// the DCI payload size is determined by the DCI size alignment procedure, specified in TS38.212 Section 7.3.1.0 and
+  /// implemented by \c get_dci_sizes.
+  unsigned payload_size;
   /// \brief Identifier for DCI formats – 1 bit.
   /// \remark The value of this field is always set to 1, indicating a DL DCI format.
   unsigned dci_format_id;
