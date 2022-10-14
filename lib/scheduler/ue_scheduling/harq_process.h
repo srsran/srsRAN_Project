@@ -77,6 +77,8 @@ public:
   slot_point       harq_slot_tx() const { return slot_tx; }
   slot_point       harq_slot_ack() const { return slot_ack; }
 
+  /// \brief Updates the ACK state of the HARQ process.
+  /// \return The number of bytes of the TB in case of ack==true, zero in case ack==false, and -1 if HARQ is inactive.
   int ack_info(uint32_t tb_idx, bool ack);
 
   const harq_id_t pid;

@@ -129,11 +129,34 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 
   for (unsigned i = 0; i != crc_ind.crcs.size(); ++i) {
     cell_specific_events[crc_ind.cell_index].emplace(
-        crc_ind.crcs[i].ue_index, [crc = crc_ind.crcs[i]](ue_cell& ue_cc, event_logger& ev_logger) {
+        crc_ind.crcs[i].ue_index, [this, crc = crc_ind.crcs[i]](ue_cell& ue_cc, event_logger& ev_logger) {
           ev_logger.enqueue("crc(ueId={},h_id={},value={})", crc.ue_index, crc.harq_id, crc.tb_crc_success);
           // TODO: Derive TB.
-          ue_cc.harqs.ul_harq(crc.harq_id).ack_info(0, crc.tb_crc_success);
+          int tbs = ue_cc.harqs.ul_harq(crc.harq_id).ack_info(0, crc.tb_crc_success);
+          if (tbs < 0) {
+            logger.warning("SCHED: ACK for h_id={} that is inactive", crc.harq_id);
+          }
         });
+  }
+}
+
+void ue_event_manager::handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<const bool> harq_bits)
+{
+  for (unsigned bit_idx = 0; bit_idx != harq_bits.size(); ++bit_idx) {
+    int tbs = -1;
+    for (unsigned h_id = 0; h_id != ue_cc.harqs.nof_dl_harqs(); ++h_id) {
+      if (ue_cc.harqs.dl_harq(h_id).harq_slot_ack() == uci_sl) {
+        // TODO: Fetch the right HARQ id, TB, CBG.
+        tbs = ue_cc.harqs.dl_harq(h_id).ack_info(0, harq_bits[bit_idx]);
+        if (tbs > 0) {
+          logger.debug("SCHED: ueid={}, dl_h_id={} with TB size={} bytes ACKed.", ue_cc.ue_index, h_id, tbs);
+        }
+        break;
+      }
+    }
+    if (tbs < 0) {
+      logger.warning("SCHED: DL HARQ for ueId={}, uci slot={} not found.", ue_cc.ue_index, uci_sl);
+    }
   }
 }
 
@@ -148,20 +171,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
           ind.ucis[i].ue_index,
           [this, uci_sl = ind.slot_rx, harq_bits = ind.ucis[i].harqs](ue_cell& ue_cc, event_logger& ev_logger) {
             ev_logger.enqueue("uci_harq(ueId={},{} harqs)", ue_cc.ue_index, harq_bits.size());
-            for (unsigned bit_idx = 0; bit_idx != harq_bits.size(); ++bit_idx) {
-              bool found = false;
-              for (unsigned h_id = 0; h_id != ue_cc.harqs.nof_dl_harqs(); ++h_id) {
-                if (ue_cc.harqs.dl_harq(h_id).harq_slot_ack() == uci_sl) {
-                  // TODO: Fetch the right HARQ id, TB, CBG.
-                  ue_cc.harqs.dl_harq(h_id).ack_info(0, harq_bits[bit_idx]);
-                  found = true;
-                  break;
-                }
-              }
-              if (not found) {
-                logger.warning("SCHED: DL HARQ for ueId={}, uci slot={} not found.", ue_cc.ue_index, uci_sl);
-              }
-            }
+            handle_harq_ind(ue_cc, uci_sl, harq_bits);
           });
     }
   }

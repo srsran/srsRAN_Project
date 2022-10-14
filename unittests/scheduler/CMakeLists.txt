@@ -124,3 +124,14 @@ target_link_libraries(srb0_scheduler_test
                       gtest
                       gtest_main)
 add_test(srb0_scheduler_test srb0_scheduler_test)
+
+add_executable(scheduler_uci_indication_test scheduler_uci_indication_test.cpp)
+target_link_libraries(scheduler_uci_indication_test
+                      srsgnb_sched
+                      srslog
+                      mac_configuration_helpers
+                      scheduler_test_suite
+                      sched_config
+                      gtest
+                      gtest_main)
+add_test(scheduler_uci_indication_test scheduler_uci_indication_test)

@@ -274,6 +274,9 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
                                                                         ue_grant_crbs.length()}) /
       nof_bits_per_byte;
 
+  // Set the number of bytes of the TB.
+  h_dl.set_tbs(cw.tb_size_bytes);
+
   // Set MAC logical channels to schedule in this PDU.
   msg.tb_list.emplace_back();
   u.build_dl_transport_block_info(msg.tb_list.back(), cw.tb_size_bytes);

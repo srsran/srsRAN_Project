@@ -77,6 +77,8 @@ private:
   void log_invalid_ue_index(du_ue_index_t ue_index) const;
   void log_invalid_cc(du_ue_index_t ue_index, du_cell_index_t cell_index) const;
 
+  void handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<const bool> harq_bits);
+
   ue_list&                      ue_db;
   sched_configuration_notifier& mac_notifier;
   srslog::basic_logger&         logger;
