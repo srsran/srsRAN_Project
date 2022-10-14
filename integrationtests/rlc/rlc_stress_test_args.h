@@ -33,6 +33,7 @@ struct stress_test_args {
   uint32_t             nof_ttis           = 500;
   std::string          log_filename       = "stdout";
   srslog::basic_levels log_level_stack    = srslog::basic_levels::info;
+  srslog::basic_levels log_level_traff    = srslog::basic_levels::error;
   srslog::basic_levels log_level_rlc      = srslog::basic_levels::error;
   srslog::basic_levels log_level_f1       = srslog::basic_levels::error;
   srslog::basic_levels log_level_pdcp     = srslog::basic_levels::error;
@@ -42,29 +43,45 @@ struct stress_test_args {
   uint32_t             max_sdu_size       = 1500;
 };
 
+// Log level optgars ints
+enum class long_only {
+  log_stack_level = 1000,
+  log_traff_level,
+  log_pdcp_level,
+  log_f1_level,
+  log_rlc_level,
+  log_mac_level,
+};
+constexpr int to_number(long_only e)
+{
+  return static_cast<int>(e);
+}
+
 inline bool parse_args(stress_test_args& args, int argc, char* argv[])
 {
-  static const struct option long_options[] = {{"help", no_argument, nullptr, 'h'},
-                                               {"mode", required_argument, nullptr, 'm'},
-                                               {"sdu_size", required_argument, nullptr, 's'},
-                                               {"min_sdu_size", required_argument, nullptr, 'z'},
-                                               {"max_sdu_size", required_argument, nullptr, 'Z'},
-                                               {"const_opp", no_argument, nullptr, 'o'},
-                                               {"avg_opp_size", required_argument, nullptr, 'p'},
-                                               {"pdu_drop_rate", required_argument, nullptr, 'd'},
-                                               {"pdu_cut_rate", required_argument, nullptr, 'c'},
-                                               {"pdu_duplicate_rate", required_argument, nullptr, 'D'},
-                                               {"nof_ttis", required_argument, nullptr, 't'},
-                                               {"log_filename", required_argument, nullptr, 'l'},
-                                               {"log_stack_level", required_argument, nullptr, 'L'},
-                                               {"log_pdcp_level", required_argument, nullptr, 'P'},
-                                               {"log_f1_level", required_argument, nullptr, 'F'},
-                                               {"log_rlc_level", required_argument, nullptr, 'R'},
-                                               {"log_mac_level", required_argument, nullptr, 'M'},
-                                               {"log_hex_limit", required_argument, nullptr, 'H'},
-                                               {"seed", required_argument, nullptr, 'S'},
-                                               {"nof_pdu_tti", required_argument, nullptr, 'T'},
-                                               {nullptr, 0, nullptr, 0}};
+  static const struct option long_options[] = {
+      {"help", no_argument, nullptr, 'h'},
+      {"mode", required_argument, nullptr, 'm'},
+      {"sdu_size", required_argument, nullptr, 's'},
+      {"min_sdu_size", required_argument, nullptr, 'z'},
+      {"max_sdu_size", required_argument, nullptr, 'Z'},
+      {"const_opp", no_argument, nullptr, 'o'},
+      {"avg_opp_size", required_argument, nullptr, 'p'},
+      {"pdu_drop_rate", required_argument, nullptr, 'd'},
+      {"pdu_cut_rate", required_argument, nullptr, 'c'},
+      {"pdu_duplicate_rate", required_argument, nullptr, 'D'},
+      {"nof_ttis", required_argument, nullptr, 't'},
+      {"log_filename", required_argument, nullptr, 'l'},
+      {"log_stack_level", required_argument, nullptr, to_number(long_only::log_stack_level)},
+      {"log_traffic_level", required_argument, nullptr, to_number(long_only::log_traff_level)},
+      {"log_pdcp_level", required_argument, nullptr, to_number(long_only::log_pdcp_level)},
+      {"log_f1_level", required_argument, nullptr, to_number(long_only::log_f1_level)},
+      {"log_rlc_level", required_argument, nullptr, to_number(long_only::log_rlc_level)},
+      {"log_mac_level", required_argument, nullptr, to_number(long_only::log_mac_level)},
+      {"log_hex_limit", required_argument, nullptr, 'H'},
+      {"seed", required_argument, nullptr, 'S'},
+      {"nof_pdu_tti", required_argument, nullptr, 'T'},
+      {nullptr, 0, nullptr, 0}};
   // clang-format off
   static const char usage[] =
     "Usage: rlc_stress_test [options]\n"
@@ -81,12 +98,13 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
     "  -D, --pdu_duplicate_rate <rate> Set rate at which RLC PDUs are dropped.\n"
     "  -l, --nof_ttis <ttis>           Set number of TTIs to emulate.\n"
     "  -l, --log_filename <filename>   Set log filename. Use 'stdout' to print to console.\n"
-    "  -L, --log_stack_level <level>   Set STACK log level (default: info).\n"
-    "  -P, --log_pdcp_level <level>    Set PDCP log level (default: error).\n"
-    "  -F, --log_f1_level <level>      Set F1 log level (default: error).\n"
-    "  -R, --log_rlc_level <level>     Set RLC log level (default: error).\n"
-    "  -M, --log_mac_level <level>     Set MAC log level (default: error).\n"
-    "  -H, --log_hex_limit <hex_limit> Set log limit for hex dumps (default: 32 bytes).\n"
+    "  --log_stack_level <level>       Set STACK log level (default: info).\n"
+    "  --log_traffic_level <level>     Set STACK log level (default: info).\n"
+    "  --log_pdcp_level <level>        Set PDCP log level (default: error).\n"
+    "  --log_f1_level <level>          Set F1 log level (default: error).\n"
+    "  --log_rlc_level <level>         Set RLC log level (default: error).\n"
+    "  --log_mac_level <level>         Set MAC log level (default: error).\n"
+    "  --log_hex_limit <hex_limit>     Set log limit for hex dumps (default: 32 bytes).\n"
     "  -S, --seed <seed>               Set seed to use in run. 0 means the seed is randomly generated.\n"
     "  -T, --nof_pdu_tti <num>         Set number of PDUs processed in a TTI.\n"
     "\n";
@@ -95,7 +113,7 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
   // Parse arguments
   while (true) {
     int option_index = 0;
-    int c            = getopt_long(argc, argv, "hm:s:z:Z:op:d:c:D:t:l:L:P:F:R:M:H:S:T:", long_options, &option_index);
+    int c            = getopt_long(argc, argv, "hm:s:z:Z:op:d:c:D:t:l:H:S:T:", long_options, &option_index);
     if (c == -1) {
       break;
     }
@@ -148,23 +166,27 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
         args.log_filename = std::string(optarg);
         fprintf(stdout, "Log filename %s\n", args.log_filename.c_str());
         break;
-      case 'L':
+      case to_number(long_only::log_stack_level):
         args.log_level_stack = srslog::str_to_basic_level(std::string(optarg));
         fprintf(stdout, "STACK log level %s\n", optarg);
         break;
-      case 'P':
+      case to_number(long_only::log_traff_level):
+        args.log_level_traff = srslog::str_to_basic_level(std::string(optarg));
+        fprintf(stdout, "TRAFF log level %s\n", optarg);
+        break;
+      case to_number(long_only::log_pdcp_level):
         args.log_level_pdcp = srslog::str_to_basic_level(std::string(optarg));
         fprintf(stdout, "PDCP log level %s\n", optarg);
         break;
-      case 'F':
+      case to_number(long_only::log_f1_level):
         args.log_level_f1 = srslog::str_to_basic_level(std::string(optarg));
         fprintf(stdout, "F1 log level %s\n", optarg);
         break;
-      case 'R':
+      case to_number(long_only::log_rlc_level):
         args.log_level_rlc = srslog::str_to_basic_level(std::string(optarg));
         fprintf(stdout, "RLC log level %s\n", optarg);
         break;
-      case 'M':
+      case to_number(long_only::log_mac_level):
         args.log_level_mac = srslog::str_to_basic_level(std::string(optarg));
         fprintf(stdout, "MAC log level %s\n", optarg);
         break;
@@ -240,6 +262,10 @@ inline void init_log_from_args(const stress_test_args& args)
   auto& log_stack = srslog::fetch_basic_logger("STACK", false);
   log_stack.set_level(args.log_level_stack);
   log_stack.set_hex_dump_max_size(args.log_hex_limit);
+
+  auto& log_traff = srslog::fetch_basic_logger("TRAFF", false);
+  log_traff.set_level(args.log_level_traff);
+  log_traff.set_hex_dump_max_size(args.log_hex_limit);
 
   auto& log_pdcp = srslog::fetch_basic_logger("PDCP", false);
   log_pdcp.set_level(args.log_level_pdcp);

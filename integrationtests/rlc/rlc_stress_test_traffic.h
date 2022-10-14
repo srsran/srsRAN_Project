@@ -24,7 +24,7 @@ class stress_traffic_sink : public pdcp_rx_upper_data_notifier
   bearer_logger logger;
 
 public:
-  stress_traffic_sink(uint32_t id) : logger("TRAF", id, lcid_t{}) {}
+  stress_traffic_sink(uint32_t id) : logger("TRAFF", id, lcid_t{}) {}
 
   // pdcp_rx_upper_data_notifier interface
   void on_new_sdu(byte_buffer pdu) final;
@@ -45,7 +45,7 @@ class stress_traffic_source : public pdcp_tx_upper_control_notifier
 
 public:
   explicit stress_traffic_source(const stress_test_args& args, uint32_t id) :
-    args(args), rgen(args.seed), int_dist(args.min_sdu_size, args.max_sdu_size), logger("PDCP", id, lcid_t{})
+    args(args), rgen(args.seed), int_dist(args.min_sdu_size, args.max_sdu_size), logger("TRAFF", id, lcid_t{})
   {
   }
 
