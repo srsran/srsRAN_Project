@@ -216,6 +216,9 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
   // See TS 38.211, 7.3.1.1. - Scrambling.
   msg.pdsch_cfg.n_id           = cell_cfg.pci;
   msg.pdsch_cfg.is_interleaved = dci.vrb_to_prb_mapping > 0;
+  // See TS38.213, 10.1. - Type1-PDCCH CSS set for CRC scrambled by a TC-RNTI on the PCell.
+  msg.pdsch_cfg.ss_set_type = search_space_set_type::type1;
+  msg.pdsch_cfg.dci_fmt     = dci_dl_format::f1_0;
 
   // Add codeword.
   msg.pdsch_cfg.codewords.emplace_back();

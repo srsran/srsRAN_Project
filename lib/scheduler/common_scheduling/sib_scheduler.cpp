@@ -272,4 +272,6 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   cw.tb_size_bytes     = static_cast<uint32_t>(tbs);
   pdsch.dmrs           = dmrs_info;
   pdsch.is_interleaved = sib1_pdcch.dci.si_f1_0.vrb_to_prb_mapping > 0;
+  pdsch.ss_set_type    = search_space_set_type::type0;
+  pdsch.dci_fmt        = dci_dl_format::f1_0;
 }

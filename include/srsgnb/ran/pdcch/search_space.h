@@ -33,6 +33,15 @@ inline bool is_search_space_valid(search_space_id ss_id)
   return ss_id < MAX_NOF_SEARCH_SPACES;
 }
 
+/// Search Space Set Type as per TS38.213, Section 10.1.
+enum class search_space_set_type { type0, type0A, type1, type2, type3, ue_specific };
+
+/// Checks whether the SearchSpace set is common or dedicated.
+inline bool is_common_search_space(search_space_set_type ss_set)
+{
+  return ss_set != search_space_set_type::ue_specific;
+}
+
 /// SearchSpace configuration as per TS38.331, "SearchSpace".
 struct search_space_configuration {
   /// SearchSpace Type.

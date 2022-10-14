@@ -454,6 +454,8 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for RA-RNTI.
   rar.pdsch_cfg.n_id           = cfg.pci;
   rar.pdsch_cfg.is_interleaved = dci.vrb_to_prb_mapping > 0;
+  rar.pdsch_cfg.ss_set_type    = search_space_set_type::type1;
+  rar.pdsch_cfg.dci_fmt        = dci_dl_format::f1_0;
 
   for (unsigned i = 0; i < msg3_candidates.size(); ++i) {
     const auto&                   msg3_candidate = msg3_candidates[i];

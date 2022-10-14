@@ -132,8 +132,10 @@ struct pdsch_information {
   dmrs_information                                       dmrs;
   /// Parameter n_ID, used for scrambling, as per TS 38.211, Section 7.3.1.1.
   unsigned n_id;
-  /// Whether the PDSCH is interleaved.
-  bool is_interleaved;
+  /// Whether the PDSCH is interleaved via VRB-to-PRB mapping.
+  bool                  is_interleaved;
+  search_space_set_type ss_set_type;
+  dci_dl_format         dci_fmt;
 };
 
 struct dl_msg_lc_info {
