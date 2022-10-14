@@ -170,7 +170,9 @@ void phy_to_fapi_results_event_translator::notify_rx_data_indication(const ul_pu
 /// Fills the SR parameters for PUCCH Format 0 or Format 1 using the given builder and results.
 static void fill_format_0_1_sr(fapi::uci_pucch_pdu_format_0_1_builder& builder, const ul_pucch_results& result)
 {
-  const ul_pucch_context& context = result.context;
+  srsgnb_assert(result.context.context_f0_f1.has_value(), "Context for PUCCH Format 0 or Format 1 is empty");
+
+  const ul_pucch_f0_f1_context& context = result.context.context_f0_f1.value();
   // Do nothing when there is no SR opportunity.
   if (!context.is_sr_opportunity) {
     return;
@@ -184,19 +186,21 @@ static void fill_format_0_1_sr(fapi::uci_pucch_pdu_format_0_1_builder& builder, 
 /// Fills the HARQ parameters for PUCCH Format 0 or Format 1 using the given builder and results.
 static void fill_format_0_1_harq(fapi::uci_pucch_pdu_format_0_1_builder& builder, const ul_pucch_results& result)
 {
-  const ul_pucch_context& context = result.context;
-  if (context.nof_harq == 0) {
+  srsgnb_assert(result.context.context_f0_f1.has_value(), "Context for PUCCH Format 0 or Format 1 is empty");
+
+  const ul_pucch_f0_f1_context& context = result.context.context_f0_f1.value();
+  if (context.nof_expected_harq_bits == 0) {
     return;
   }
 
   // Initialize with DTX.
   static_vector<uci_pucch_f0_or_f1_harq_values, fapi::uci_harq_format_0_1::MAX_NUM_HARQ> harq(
-      context.nof_harq, uci_pucch_f0_or_f1_harq_values::dtx);
+      context.nof_expected_harq_bits, uci_pucch_f0_or_f1_harq_values::dtx);
 
   const pucch_uci_message& msg = result.processor_result.message;
   // Write the contents when the uci status is valid.
   if (msg.status == uci_status::valid) {
-    for (unsigned i = 0; i != context.nof_harq; ++i) {
+    for (unsigned i = 0; i != context.nof_expected_harq_bits; ++i) {
       harq[i] = (msg.harq_ack[i] == 1) ? uci_pucch_f0_or_f1_harq_values::ack : uci_pucch_f0_or_f1_harq_values::nack;
     }
   }

@@ -16,6 +16,14 @@
 
 namespace srsgnb {
 
+/// PUCCH context for Format 0 or Format 1.
+struct ul_pucch_f0_f1_context {
+  /// Scheduling request opportunity indicator.
+  bool is_sr_opportunity;
+  /// Number of expected HARQ bits.
+  unsigned nof_expected_harq_bits;
+};
+
 /// PUCCH context.
 struct ul_pucch_context {
   /// Slot description (also specifies the numerology).
@@ -24,10 +32,8 @@ struct ul_pucch_context {
   rnti_t rnti;
   /// PUCCH format type.
   pucch_format format;
-  /// Scheduling request opportunity indicator.
-  bool is_sr_opportunity;
-  /// Number of HARQ.
-  unsigned nof_harq;
+  /// Format 0 or Format 1 context.
+  optional<ul_pucch_f0_f1_context> context_f0_f1;
 };
 
 } // namespace srsgnb
