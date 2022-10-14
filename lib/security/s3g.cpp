@@ -10,7 +10,7 @@
  *
  */
 
-#include "s3g.h"
+#include "srsgnb/security/s3g.h"
 
 /* S-box SQ */
 static const uint8_t SQ[256] = {

@@ -215,13 +215,13 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
     case integrity_algorithm::nia0:
       break;
     case integrity_algorithm::nia1:
-      security_nia1(mac_exp, k_int, count, lcid - 1, direction, buf);
+      security_nia1(mac_exp, k_int, count, lcid - 1, direction, buf.begin(), buf.end());
       break;
     case integrity_algorithm::nia2:
-      security_nia2(mac_exp, k_int, count, lcid - 1, direction, buf);
+      security_nia2(mac_exp, k_int, count, lcid - 1, direction, buf.begin(), buf.end());
       break;
     case integrity_algorithm::nia3:
-      security_nia3(mac_exp, k_int, count, lcid - 1, direction, buf);
+      security_nia3(mac_exp, k_int, count, lcid - 1, direction, buf.begin(), buf.end());
       break;
     default:
       break;
@@ -266,13 +266,13 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_view msg, uint32_t count)
     case ciphering_algorithm::nea0:
       break;
     case ciphering_algorithm::nea1:
-      ct = security_nea1(k_enc, count, lcid - 1, direction, msg);
+      ct = security_nea1(k_enc, count, lcid - 1, direction, msg.begin(), msg.end());
       break;
     case ciphering_algorithm::nea2:
-      ct = security_nea2(k_enc, count, lcid - 1, direction, msg);
+      ct = security_nea2(k_enc, count, lcid - 1, direction, msg.begin(), msg.end());
       break;
     case ciphering_algorithm::nea3:
-      ct = security_nea3(k_enc, count, lcid - 1, direction, msg);
+      ct = security_nea3(k_enc, count, lcid - 1, direction, msg.begin(), msg.end());
       break;
     default:
       break;

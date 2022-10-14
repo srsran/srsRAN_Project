@@ -10,7 +10,7 @@
  *
  */
 
-#include "zuc.h"
+#include "srsgnb/security/zuc.h"
 
 /// Adapted from ETSI/SAGE specifications:
 /// "Specification of the 3GPP Confidentiality
