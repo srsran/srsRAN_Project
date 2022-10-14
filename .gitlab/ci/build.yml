@@ -3,42 +3,35 @@ include:
     ref: "27"
     file: .gitlab/ci-shared/setup/all.yml
 
-variables:
-  # Input variables
-  # General
-  OS: ubuntu-22.04
-  # Build
-  COMPILER: gcc
-  UHD_VERSION: "" # Empty for OS default
-  BUILD_TYPE: "" # Empty for cmake default
-  ASSERT_LEVEL: PARANOID
-  ENABLE_EXPORT: "" # Empty for cmake default
-  ENABLE_FFTW: "" # Empty for cmake default
-  ENABLE_UHD: "" # Empty for cmake default
-  ENABLE_ZERO_MQ: "" # Empty for cmake default
-  ENABLE_ASAN: "" # Empty for cmake default
-  ENABLE_TSAN: "" # Empty for cmake default
-  ENABLE_GCOV: "True"
-  AUTO_DETECT_ISA: "False"
-  # Test
-  TEST_MODE: coverage # default, coverage, asan, tsan, valgrind, none
-  TAG_EXTENSION: ""
-
 stages:
-  - build
-  - tests
+  - build and unit tests
+
+# Template job
 
 .build_and_unit:
   image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-builder-gnb-${OS}:${DOCKER_BUILDER_VERSION}
   tags:
     - srs-rfci-docker${TAG_EXTENSION}
-
-################################################################################
-# Build
-################################################################################
-.build:
-  stage: build
-  extends: .build_and_unit
+  stage: build and unit tests
+  variables:
+    TAG_EXTENSION: ""
+    # General
+    OS: ubuntu-22.04
+    # Build
+    COMPILER: gcc
+    UHD_VERSION: "" # Empty for OS default
+    BUILD_TYPE: "" # Empty for cmake default
+    ASSERT_LEVEL: "" # Empty for cmake default
+    ENABLE_EXPORT: "" # Empty for cmake default
+    ENABLE_FFTW: "" # Empty for cmake default
+    ENABLE_UHD: "" # Empty for cmake default
+    ENABLE_ZERO_MQ: "" # Empty for cmake default
+    ENABLE_ASAN: "" # Empty for cmake default
+    ENABLE_TSAN: "" # Empty for cmake default
+    ENABLE_GCOV: "" # Empty for cmake default
+    AUTO_DETECT_ISA: "False"
+    # Test
+    TEST_MODE: none # default, coverage, asan, tsan, valgrind, none
   needs: []
   before_script:
     - |
@@ -85,130 +78,61 @@ stages:
         echo "============================================================================================="
         $BUILD_CMD
       }
+    - |
+      launch_tests() {
+        cd ${CI_PROJECT_DIR}/build
+        case $TEST_MODE in
+          none)
+            echo "Tests skipped"
+            exit 0
+            ;;
+          tsan)
+            ctest_extra="-L tsan"
+            ;;
+          valgrind)
+            cp DartConfiguration.tcl ${test_folder}/
+            sed -i "s/${CI_PROJECT_DIR//\//\\/}\/build/${CI_PROJECT_DIR//\//\\/}\/build\/${test_folder//\//\\/}/" ${test_folder}/DartConfiguration.tcl
+            sed -i "s/MemoryCheckCommandOptions: /MemoryCheckCommandOptions: --verbose --trace-children=yes --time-stamp=yes --leak-check=full --show-leak-kinds=all --show-reachable=yes/" ${test_folder}/DartConfiguration.tcl
+            G_DEBUG=gc-friendly G_SLICE=always-malloc
+            ctest_extra="-T memcheck --timeout 10800"
+            ;;
+        esac
+        CTEST_CMD="ctest -j "$(nproc --all)" $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
+        echo "${CTEST_CMD}"
+        echo "============================================================================================="
+        $CTEST_CMD && ret=0 || ret=1
+
+        if [[ $TEST_MODE = "coverage" ]]; then 
+          gcovr --xml --print-summary -j "$(nproc --all)" --exclude-unreachable-branches \
+            --exclude-directories unittests \
+            --exclude-directories integrationtests  \
+            --exclude-directories benchmarks \
+            --exclude-directories apps/examples \
+            --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/e1ap.h" \
+            --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/f1ap.h" \
+            --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/rrc_nr/.*" \
+            --exclude "${CI_PROJECT_DIR}/lib/asn1/e1ap.cpp" \
+            --exclude "${CI_PROJECT_DIR}/lib/asn1/f1ap.cpp" \
+            --exclude "${CI_PROJECT_DIR}/lib/asn1/ngap.cpp" \
+            --exclude "${CI_PROJECT_DIR}/lib/asn1/rrc_nr/.*" \
+            --exclude "${CI_PROJECT_DIR}/lib/phy/generic_functions/fftx/lib_fftx_dftbat_srcs/.* \
+            --exclude "${CI_PROJECT_DIR}/lib/phy/generic_functions/fftx/lib_fftx_idftbat_srcs/.* \
+            --exclude-lines-by-pattern ".*srsgnb_assert.*|.*srsgnb_sanity_check.*" \
+            --root ${CI_PROJECT_DIR} -o coverage.xml
+
+          filesize=$(stat -c%s coverage.xml)
+          maxsize=$((10*1204*1024))
+          (( filesize > maxsize )) && echo "coverage.xml is greater than 10MB, over gitlab limit" && exit 1
+        fi
+        exit $ret
+      }
   script:
     - build_srsgnb
-  cache: &build_cache
-    key: ${OS}-${DOCKER_BUILDER_VERSION}-${COMPILER}-${TEST_MODE}
-    paths:
-      - ccache
-    policy: pull
-  artifacts:
-    paths:
-      # Binaries
-      - build/apps/cu-up/cu-up
-      # Ctest
-      - build/CTestTestfile.cmake
-      - build/DartConfiguration.tcl
-      - build/unittests
-      - build/integrationtests
-      - build/**/*.gcno
-    expire_in: 10 minutes
-
-build [cached]:
-  # The job will use the cache for latest compilation
-  extends: .build
-  rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-      when: never
-    - if: $ON_MR
-  cache:
-    <<: *build_cache
-    policy: pull
-
-build [clean and update cache]:
-  # A clean build will be done and the job will push a new fresh cache
-  extends: .build
-  rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-      when: never
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  cache:
-    <<: *build_cache
-    policy: push
-
-build [clean]:
-  # Fresh build with no interacton with the cache
-  extends: .build
-  rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-    - if: $CI_DESCRIPTION =~ /Weekly/
-  cache: []
-
-################################################################################
-# Test execution
-################################################################################
-
-.ctest:
-  stage: tests
-  extends: .build_and_unit
-  rules:
-    - if: $ON_DEFAULT_BRANCH
-      when: never
-    - if: $TEST_MODE != "none"
-  needs:
-    - job: build [cached]
-      artifacts: true
-      optional: true
-    - job: build [clean and update cache]
-      artifacts: true
-      optional: true
-    - job: build [clean]
-      artifacts: true
-      optional: true
-  variables:
-    test_folder: ""
-  script:
-    # Launch ctest
-    - cd build
-    - |
-      case $TEST_MODE in
-        tsan)
-          ctest_extra="-L tsan"
-          ;;
-        valgrind)
-          cp DartConfiguration.tcl ${test_folder}/
-          sed -i "s/${CI_PROJECT_DIR//\//\\/}\/build/${CI_PROJECT_DIR//\//\\/}\/build\/${test_folder//\//\\/}/" ${test_folder}/DartConfiguration.tcl
-          sed -i "s/MemoryCheckCommandOptions: /MemoryCheckCommandOptions: --verbose --trace-children=yes --time-stamp=yes --leak-check=full --show-leak-kinds=all --show-reachable=yes/" ${test_folder}/DartConfiguration.tcl
-          G_DEBUG=gc-friendly G_SLICE=always-malloc
-          ctest_extra="-T memcheck --timeout 10800"
-          ;;
-      esac
-    - |
-      CTEST_CMD="ctest -j "$(nproc --all)" $ctest_extra --test-dir ${test_folder} --schedule-random --output-on-failure --output-junit xunit.xml"
-      echo "${CTEST_CMD}"
-      echo "============================================================================================="
-      $CTEST_CMD && ret=0 || ret=1
-
-    # Launch coverage
-    - |
-      if [[ $TEST_MODE = "coverage" ]]; then 
-        gcovr --xml --print-summary -j "$(nproc --all)" --exclude-unreachable-branches \
-          --exclude-directories unittests \
-          --exclude-directories integrationtests  \
-          --exclude-directories benchmarks \
-          --exclude-directories apps/examples \
-          --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/e1ap.h" \
-          --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/f1ap.h" \
-          --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/rrc_nr/.*" \
-          --exclude "${CI_PROJECT_DIR}/lib/asn1/e1ap.cpp" \
-          --exclude "${CI_PROJECT_DIR}/lib/asn1/f1ap.cpp" \
-          --exclude "${CI_PROJECT_DIR}/lib/asn1/ngap.cpp" \
-          --exclude "${CI_PROJECT_DIR}/lib/asn1/rrc_nr/.*" \
-          --exclude "${CI_PROJECT_DIR}/lib/phy/generic_functions/fftx/lib_fftx_dftbat_srcs/.* \
-          --exclude "${CI_PROJECT_DIR}/lib/phy/generic_functions/fftx/lib_fftx_idftbat_srcs/.* \
-          --exclude-lines-by-pattern ".*srsgnb_assert.*|.*srsgnb_sanity_check.*" \
-          --root ${CI_PROJECT_DIR} -o coverage.xml
-
-        filesize=$(stat -c%s coverage.xml)
-        maxsize=$((10*1204*1024))
-        (( filesize > maxsize )) && echo "coverage.xml is greater than 10MB, over gitlab limit" && exit 1
-      fi
-    - exit $ret
+    - launch_tests
   after_script:
-    # Move files to upload to root so no intermiddle folders will be created in the artifact
-    - mv ${CI_PROJECT_DIR}/build/${test_folder}/xunit.xml         ${CI_PROJECT_DIR}/${CI_JOB_ID}_xunit.xml
-    - mv ${CI_PROJECT_DIR}/build/coverage.xml                     ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage.xml
-    - mv ${CI_PROJECT_DIR}/build/${test_folder}/Testing/Temporary ${CI_PROJECT_DIR}/build/Testing/Temporary_${CI_JOB_ID}
+    - mv ${CI_PROJECT_DIR}/build/xunit.xml         ${CI_PROJECT_DIR}/${CI_JOB_ID}_xunit.xml
+    - mv ${CI_PROJECT_DIR}/build/coverage.xml      ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage.xml
+    - mv ${CI_PROJECT_DIR}/build/Testing/Temporary ${CI_PROJECT_DIR}/build/Testing/Temporary_${CI_JOB_ID}
   artifacts:
     when: always
     reports:
@@ -219,17 +143,174 @@ build [clean]:
     paths:
       - ${CI_JOB_ID}_xunit.xml
       - ${CI_JOB_ID}_coverage.xml
-      - build/Testing/Temporary
       - build/Testing/Temporary_${CI_JOB_ID}
     expire_in: 10 minutes
+  cache: &build_cache
+    key: ${OS}-${DOCKER_BUILDER_VERSION}-${COMPILER}-${TEST_MODE}
+    paths:
+      - ccache
+    policy: pull
 
-unit tests:
-  extends: .ctest
+# Main combinations
+
+.build_and_unit_main:
+  extends: .build_and_unit
   variables:
-    test_folder: unittests
+    ASSERT_LEVEL: PARANOID
+  parallel:
+    matrix:
+      - OS: ubuntu-22.04
+        TEST_MODE: coverage
+        COMPILER: gcc
+        BUILD_TYPE: Release
+        ENABLE_EXPORT: "False"
+        ENABLE_GCOV: "True"
+      - OS: archlinux-latest
+        TEST_MODE: default
+        COMPILER: gcc
+        BUILD_TYPE: Release        
+      - OS: ubuntu-22.04
+        TEST_MODE: asan
+        COMPILER: gcc
+        BUILD_TYPE: Debug
+        ENABLE_EXPORT: "False"
+        ENABLE_ASAN: "True"
+      - OS: ubuntu-22.04
+        TEST_MODE: tsan
+        COMPILER: clang
+        BUILD_TYPE: Debug
+        ENABLE_TSAN: "True"
+
+build cached:
+  extends: .build_and_unit_main
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
+    - if: $ON_MR
+  cache:
+    <<: *build_cache
+    policy: pull
+
+build update cache:
+  extends: .build_and_unit_main
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  cache:
+    <<: *build_cache
+    policy: push
+
+build clean:
+  extends: .build_and_unit_main
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+  cache: []
+
+# Alt combinations
+
+.build_and_unit_alt:
+  extends: .build_and_unit
+  variables:
+    OS: "" # Need to be specified
+  parallel:
+    matrix:
+      - TEST_MODE: default
+        COMPILER: [gcc, clang]
+        BUILD_TYPE: [Debug, Release]
+        ASSERT_LEVEL: [MINIMAL, NORMAL, PARANOID]
+        ENABLE_EXPORT: ["True", "False"]
+        ENABLE_GCOV: "False"
+        ENABLE_ASAN: "False"
+        ENABLE_TSAN: "False"
+
+build alt [ubuntu 22.04 amd64]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: ubuntu-22.04
+  cache: []
+
+# build alt [ubuntu 22.04 arm64v8]:
+#   extends: .build_and_unit_alt
+#   rules:
+#     - if: $CI_DESCRIPTION =~ /Nightly/
+#   variables:
+#     OS: ubuntu-22.04
+#     TAG_EXTENSION: "-pi4"
+#   cache: []
+
+build alt [archlinux-latest amd64]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: archlinux-latest
+  cache: []
+
+build alt [ubuntu-20.04 amd64]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    OS: ubuntu-20.04
+  cache: []
+
+# build alt [ubuntu-20.04 arm64v8]:
+#   extends: .build_and_unit_alt
+#   rules:
+#     - if: $CI_DESCRIPTION =~ /Weekly/
+#   variables:
+#     OS: ubuntu-20.04
+#     TAG_EXTENSION: "-pi4"
+#   cache: []
+
+# UHD
+
+build uhd alt:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    TEST_MODE: none
+    ASSERT_LEVEL: PARANOID
+  parallel:
+    matrix:
+      - OS: ubuntu-22.04
+        COMPILER: [gcc, clang]
+        UHD_VERSION: "4.2.0.0"
+      - OS: ubuntu-20.04
+        COMPILER: [gcc, clang]
+        UHD_VERSION: ["4.2.0.0", "4.1.0.5"]
+  cache: []
+
+# Extra sanitizers
+
+valgrind:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    OS: ubuntu-22.04
+    TEST_MODE: valgrind
+    COMPILER: gcc
+    BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+  cache: []
   timeout: 4 hours # valgrind mode
 
-integration tests:
-  extends: .ctest
+# Custom
+
+custom build:
+  extends: .build_and_unit
+  rules:
+    - if: $ON_MR
+      when: manual
+      allow_failure: true
   variables:
-    test_folder: integrationtests
+    OS: ""
+    COMPILER: ""
+    TEST_MODE: ""
+    BUILD_ARGS: ""
+  cache: []

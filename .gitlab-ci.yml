@@ -15,8 +15,7 @@ include:
 stages:
   - ci
   - static
-  - build
-  - tests
+  - build and unit tests
   - documentation
 
 ################################################################################
@@ -92,7 +91,7 @@ cppcheck [clean and update cache]:
 
 cppcheck [clean]:
   # Fresh build with no interacton with the cache
-  extends: .build
+  extends: .cppcheck
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
   cache: []
@@ -100,11 +99,21 @@ cppcheck [clean]:
 ################################################################################
 ## Build + Unit Tests + Integration tests
 ################################################################################
+
+# In build.yml
+
 intermediate commits:
-  extends: .build
+  extends: .build_and_unit
   rules:
     - if: $ON_MR
-      # allow_failure: true
+  variables:
+    OS: ubuntu-22.04
+    TEST_MODE: coverage
+    COMPILER: gcc
+    BUILD_TYPE: Release
+    ASSERT_LEVEL: PARANOID
+    ENABLE_EXPORT: "False"
+    ENABLE_GCOV: "True"
   script:
     - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git git-lfs
     - git lfs install
@@ -124,189 +133,6 @@ intermediate commits:
   after_script:
     - rm -Rf build
 
-.trigger build:
-  stage: build
-  trigger:
-    include: .gitlab/ci/build.yml
-    strategy: depend
-  variables:
-    # Schedule variables are not inherited by default
-    CI_DESCRIPTION: $CI_DESCRIPTION
-  needs: []
-
-.trigger build on mr:
-  extends: .trigger build
-  rules:
-    - if: $ON_MR
-    - if: $CI_DESCRIPTION =~ /Nightly/
-      # Nightly will update the cache
-
-.trigger build on nightly:
-  extends: .trigger build
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  variables:
-    # By default, nightly builds push cache. Force 'no cache' mode
-    CI_MERGE_REQUEST_LABELS: no-cache
-
-.trigger build on weekly:
-  extends: .trigger build
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-
-# Default build in build.yml
-
-build custom [launcher]:
-  image: alpine:3.16.0 # sh entrypoint
-  stage: build
-  rules:
-    - if: $ON_MR
-      when: manual
-      allow_failure: true
-  variables:
-    OS: ""
-    COMPILER: ""
-    TEST_MODE: ""
-    BUILD_ARGS: ""
-  script:
-    - |
-      error=0
-      if [ "$OS" = !"ubuntu-22.04" ] && [ "$OS" != "ubuntu-20.04" ] && [ "$OS" != "archlinux-latest" ]; then
-          error=1
-      elif [ "$COMPILER" != "gcc" ] && [ "$COMPILER" != "clang" ]; then
-          error=1
-      elif [ "$TEST_MODE" != "default" ] && [ "$TEST_MODE" != "coverage" ] && [ "$TEST_MODE" != "asan" ] && [ "$TEST_MODE" != "tsan" ] && [ "$TEST_MODE" != "valgrind" ] && [ "$TEST_MODE" != "none" ]; then
-          error=1
-      elif [ "$BUILD_ARGS" = "" ]; then
-          error=1
-      fi
-    - |
-      if [ $error = 1 ]; then
-          echo "Invalid flags:"
-          echo "OS [$OS] must be one of ubuntu-22.04, ubuntu-20.04, archlinux-latest"
-          echo "COMPILER [$COMPILER] must be one of gcc, clang"
-          echo "TEST_MODE [$TEST_MODE] must be one of default, coverage, asan, tsan, valgrind, none"
-          echo "BUILD_ARGS [$BUILD_ARGS] must not be empty and it will be pased to cmake"
-      fi
-    - |
-      {
-          echo "CUSTOM_OS=$OS"
-          echo "CUSTOM_COMPILER=$COMPILER"
-          echo "CUSTOM_TEST_MODE=$TEST_MODE"
-          echo "CUSTOM_BUILD_ARGS= $BUILD_ARGS"
-      } >>custom.env
-    - cat custom.env
-    - exit $error
-  artifacts:
-    reports:
-      dotenv: custom.env
-  needs: []
-
-build custom [trigger job]:
-  extends: .trigger build
-  needs:
-    - build custom [launcher]
-  rules:
-    - if: $ON_MR
-      allow_failure: true
-  variables:
-    OS: $CUSTOM_OS
-    COMPILER: $CUSTOM_COMPILER
-    TEST_MODE: $CUSTOM_TEST_MODE
-    BUILD_ARGS: $CUSTOM_BUILD_ARGS
-    ENABLE_GCOV: ""
-    ASSERT_LEVEL: ""
-    AUTO_DETECT_ISA: ""
-    CI_MERGE_REQUEST_LABELS: no-cache
-
-build [next]:
-  extends: .trigger build on mr
-  rules:
-    - if: $ON_MR
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  variables:
-    OS: archlinux-latest
-    COMPILER: gcc
-    ENABLE_GCOV: "False"
-    TEST_MODE: default
-
-build [asan]:
-  extends: .trigger build on mr
-  variables:
-    OS: ubuntu-22.04
-    COMPILER: gcc
-    BUILD_TYPE: Debug
-    ENABLE_GCOV: "False"
-    ENABLE_ASAN: "True"
-    TEST_MODE: asan
-
-build [tsan]:
-  extends: .trigger build on mr
-  variables:
-    OS: ubuntu-22.04
-    COMPILER: clang
-    BUILD_TYPE: Debug
-    ENABLE_GCOV: "False"
-    ENABLE_TSAN: "True"
-    TEST_MODE: tsan
-
-build alt [ubuntu 22.04]:
-  extends: .trigger build on nightly
-  variables:
-    OS: ubuntu-22.04
-  parallel: &os-flags
-    matrix:
-      - COMPILER: [gcc, clang]
-        BUILD_TYPE: [Debug, Release]
-        ASSERT_LEVEL: [MINIMAL, NORMAL, PARANOID]
-        ENABLE_EXPORT: ["True", "False"]
-        ENABLE_GCOV: "False"
-        TEST_MODE: default
-
-build alt [archlinux-latest]:
-  extends: .trigger build on nightly
-  variables:
-    OS: archlinux-latest
-  parallel: *os-flags
-
-build alt [ubuntu-22.04, arm64v8]:
-  extends: .trigger build on nightly
-  variables:
-    OS: ubuntu-22.04
-    TAG_EXTENSION: "-pi4"
-  parallel: *os-flags
-
-build alt [ubuntu-20.04]:
-  extends: .trigger build on weekly
-  variables:
-    OS: ubuntu-20.04
-  parallel: *os-flags
-
-build alt [uhd]:
-  extends: .trigger build on weekly
-  parallel:
-    matrix:
-      - OS: ubuntu-22.04
-        COMPILER: [gcc, clang]
-        ENABLE_GCOV: "False"
-        UHD_VERSION: "4.2.0.0"
-        TEST_MODE: none
-      - OS: ubuntu-20.04
-        COMPILER: [gcc, clang]
-        ENABLE_GCOV: "False"
-        UHD_VERSION: ["4.2.0.0", "4.1.0.5"]
-        TEST_MODE: none
-
-build [valgrind]:
-  extends: .trigger build on weekly
-  variables:
-    OS: ubuntu-22.04
-    COMPILER: gcc
-    AUTO_DETECT_ISA: "False"
-    ENABLE_GCOV: "False"
-    BUILD_TYPE: Debug
-    TEST_MODE: valgrind
-
 ################################################################################
 # Doc generation
 ################################################################################
@@ -314,7 +140,14 @@ build [valgrind]:
   # Here we handled how jobs in .gitlab-ci.yml depends on jobs inside build.yml
   # If unit tests related jobs change in build.yml, we'll need to change this one too
   needs:
-    - job: unit tests
+    - job: build cached
+      optional: true
+      artifacts: true
+    - job: build update cache
+      optional: true
+      artifacts: true
+    - job: build clean
+      optional: true
       artifacts: true
 
 unit requirements:
