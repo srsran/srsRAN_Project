@@ -11,10 +11,10 @@ stages:
 .build_and_unit:
   image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-builder-gnb-${OS}:${DOCKER_BUILDER_VERSION}
   tags:
-    - ${SRS_BUILD_JOB_TAG}${TAG_EXTENSION}
+    - ${SRS_INFRASTRUCTURE_TAG}-${ARCHITECTURE}
   stage: build and unit tests
   variables:
-    TAG_EXTENSION: ""
+    ARCHITECTURE: "amd64"
     # General
     OS: ubuntu-22.04
     # Build

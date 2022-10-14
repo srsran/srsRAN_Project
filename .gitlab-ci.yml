@@ -35,10 +35,11 @@ include-guards:
   stage: static
   needs: []
   tags:
-    - ${SRS_BUILD_JOB_TAG}
+    - ${SRS_INFRASTRUCTURE_TAG}-${ARCHITECTURE}
   variables:
     ANALYZER: ""
     ANALYZER_ARGS: ""
+    ARCHITECTURE: "amd64"
   before_script:
     - |
       echo "
