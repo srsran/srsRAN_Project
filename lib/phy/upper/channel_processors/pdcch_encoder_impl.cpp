@@ -37,10 +37,10 @@ void pdcch_encoder_impl::crc_attach(span<uint8_t>& c, span<const uint8_t> a, uns
   unsigned      checksum = crc24c->calculate_bit(a_prime);
 
   // Unpack and attach checksum
-  span<uint8_t> p = srsvec::bit_unpack(c.last(CRC_LEN), checksum, CRC_LEN);
+  srsvec::bit_unpack(c.last(CRC_LEN), checksum, CRC_LEN);
 
   // Scramble CRC parity bits with RNTI
-  p = c.last(RNTI_LEN);
+  span<uint8_t> p = c.last(RNTI_LEN);
   srsvec::binary_xor(unpacked_rnti, p, p);
 
   // Skip first L 1s added for CRC calculation

@@ -61,7 +61,7 @@ struct modulator_table_s {
       unsigned nof_symbols_sse = symbols.size() - divide_ceil(8, QM);
       for (cf_t& symbol : symbols.first(nof_symbols_sse)) {
         // Get 8 bytes in an MMX register.
-        __m64 mask = *((__m64*)input.data());
+        __m64 mask = *(reinterpret_cast<const __m64*>(input.data()));
 
         // Set all ones if greater than 0.
         mask = _mm_cmpgt_pi8(mask, _mm_setzero_si64());

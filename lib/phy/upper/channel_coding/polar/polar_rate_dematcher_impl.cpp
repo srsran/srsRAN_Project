@@ -32,14 +32,13 @@ static void interleaver_rm_rx_c(span<log_likelihood_ratio>       output,
 static log_likelihood_ratio*
 bit_selection_rm_rx_c(log_likelihood_ratio* e, const uint32_t E, const uint32_t N, const uint32_t K)
 {
-  log_likelihood_ratio* y   = e;
-  uint32_t              k_N = 0;
+  log_likelihood_ratio* y = e;
 
   if (E >= N) {
     // Add repetitions.
     for (uint32_t k = N; k != E; ++k) {
-      k_N    = k % N;
-      y[k_N] = log_likelihood_ratio::promotion_sum(y[k_N], e[k]);
+      uint32_t k_N = k % N;
+      y[k_N]       = log_likelihood_ratio::promotion_sum(y[k_N], e[k]);
     }
   } else {
     if (16 * K <= 7 * E) {
@@ -72,9 +71,8 @@ static void ch_interleaver_rm_rx_c(span<log_likelihood_ratio> e, span<const log_
   }
 
   unsigned i_out = 0;
-  unsigned i_in  = 0;
   for (unsigned r = 0; r != T; ++r) {
-    i_in = r;
+    unsigned i_in = r;
     for (unsigned c = 0, c_max = T - r; c != c_max; ++c) {
       if (i_in < E) {
         e[i_in] = f[i_out];

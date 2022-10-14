@@ -122,7 +122,7 @@ crc_calculator_checksum_t crc_calculator_impl::calculate_bit(srsgnb::span<const 
     span<const uint8_t> pter = input.subspan(8U * i, 8);
 #ifdef HAVE_SSE
     // Get 8 Bit
-    __m64 mask = _mm_cmpgt_pi8(*((__m64*)pter.data()), _mm_set1_pi8(0));
+    __m64 mask = _mm_cmpgt_pi8(*(reinterpret_cast<const __m64*>(pter.data())), _mm_set1_pi8(0));
 
     // Get mask and reverse.
     uint8_t byte = reverse_byte(static_cast<uint8_t>(_mm_movemask_pi8(mask)));

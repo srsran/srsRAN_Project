@@ -28,14 +28,11 @@ static uci_status detect_short_block(span<uint8_t>                     output,
 uci_status
 uci_decoder_impl::decode(span<uint8_t> message, span<const log_likelihood_ratio> llr, const configuration& config)
 {
-  // The decoder status is initially set to unknown.
-  uci_status dec_status = uci_status::unknown;
-
   unsigned msg_size = message.size();
   srsgnb_assert((msg_size <= MAX_UCI_MSG_LENGTH), "UCI message lengths above 11 bits are not currently supported.");
 
   // UCI messages between 1 and 11 bits will be handled by the short block decoder.
-  dec_status = detect_short_block(message, llr, decoder.get(), config);
+  uci_status dec_status = detect_short_block(message, llr, decoder.get(), config);
 
   return dec_status;
 }

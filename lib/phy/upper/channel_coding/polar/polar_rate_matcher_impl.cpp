@@ -28,14 +28,12 @@ static void interleaver_rm_tx(const uint8_t* input, uint8_t* output, const uint1
  */
 static span<uint8_t> bit_selection_rm_tx(uint8_t* y, const uint32_t N, const uint32_t E, const uint32_t K)
 {
-  uint8_t* e   = nullptr;
-  uint32_t k_N = 0;
+  uint8_t* e = y;
 
-  e = y;
   if (E >= N) { // repetition
     for (uint32_t k = N; k < E; k++) {
-      k_N  = k % N;
-      e[k] = y[k_N];
+      uint32_t k_N = k % N;
+      e[k]         = y[k_N];
     }
   } else {
     if (16 * K <= 7 * E) { // puncturing the first N-E bits
@@ -59,9 +57,8 @@ static void ch_interleaver_rm_tx(const uint8_t* e, uint8_t* f, const uint32_t E)
   }
 
   uint32_t i_out = 0;
-  uint32_t i_in  = 0;
   for (uint32_t r = 0; r < T; r++) {
-    i_in = r;
+    uint32_t i_in = r;
     for (uint32_t c = 0; c < T - r; c++) {
       if (i_in < E) {
         f[i_out] = e[i_in];

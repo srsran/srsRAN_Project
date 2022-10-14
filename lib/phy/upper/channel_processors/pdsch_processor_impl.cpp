@@ -44,9 +44,9 @@ span<const uint8_t> pdsch_processor_impl::encode(span<const uint8_t> data,
                                                  const pdu_t&        pdu)
 {
   // Select codeword specific parameters.
-  unsigned                                rv           = pdu.codewords[codeword_id].rv;
-  modulation_scheme                       modulation   = pdu.codewords[codeword_id].modulation;
-  std::array<uint8_t, MAX_CODEWORD_SIZE>& tmp_codeword = temp_codewords[codeword_id];
+  unsigned          rv           = pdu.codewords[codeword_id].rv;
+  modulation_scheme modulation   = pdu.codewords[codeword_id].modulation;
+  span<uint8_t>     tmp_codeword = temp_codewords[codeword_id];
 
   // Prepare encoder configuration.
   segmenter_config encoder_config;
@@ -58,7 +58,7 @@ span<const uint8_t> pdsch_processor_impl::encode(span<const uint8_t> data,
   encoder_config.nof_ch_symbols = Nre;
 
   // Prepare codeword size.
-  span<uint8_t> codeword = span<uint8_t>(tmp_codeword).first(Nre * nof_layers * get_bits_per_symbol(modulation));
+  span<uint8_t> codeword = tmp_codeword.first(Nre * nof_layers * get_bits_per_symbol(modulation));
 
   // Encode codeword.
   encoder->encode(codeword, data, encoder_config);
@@ -157,17 +157,17 @@ void pdsch_processor_impl::process(resource_grid_writer&                        
   unsigned Nre = compute_nof_data_re(pdu);
 
   // Prepare encoded codewords.
-  static_vector<span<const uint8_t>, pdsch_modulator::MAX_NOF_CODEWORDS> temp_codewords;
+  static_vector<span<const uint8_t>, pdsch_modulator::MAX_NOF_CODEWORDS> codewords;
 
   // Encode each codeword.
   for (unsigned codeword_id = 0; codeword_id != nof_codewords; ++codeword_id) {
     unsigned            nof_layers_cw = (codeword_id == 0) ? nof_layers_cw0 : nof_layers_cw1;
     span<const uint8_t> codeword      = encode(data[codeword_id], codeword_id, nof_layers_cw, Nre, pdu);
-    temp_codewords.emplace_back(codeword);
+    codewords.emplace_back(codeword);
   }
 
   // Modulate codewords.
-  modulate(grid, temp_codewords, pdu);
+  modulate(grid, codewords, pdu);
 
   // Prepare DMRS configuration and generate.
   put_dmrs(grid, pdu);
