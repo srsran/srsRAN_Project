@@ -42,18 +42,18 @@ static unsigned dci_f0_0_bits_before_padding(unsigned N_rb_ul_bwp)
 
 // Computes the number of information bits before padding for a DCI format 1_0 message. This is used to perform DCI size
 // alignment and to determine if the UL/SUL field is included in the size-aligned DCI format 0_0 payload.
-static unsigned dci_f1_0_bits_before_padding(unsigned N_rb_ul_bwp)
+static unsigned dci_f1_0_bits_before_padding(unsigned N_rb_dl_bwp)
 {
   // Contribution to the DCI payload size that is fixed. It is the same number of bits for all format 1_1 variants.
   constexpr unsigned dci_fixed_nof_bits = 28U;
 
   // Frequency resource allocation field size.
-  unsigned dci_variable_nof_bits = log2_ceil(N_rb_ul_bwp * (N_rb_ul_bwp + 1) / 2);
+  unsigned dci_variable_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
 
   return dci_fixed_nof_bits + dci_variable_nof_bits;
 }
 
-dci_sizes get_dci_sizes(dci_config& config)
+dci_sizes srsgnb::get_dci_sizes(const dci_config& config)
 {
   dci_sizes sizes = {};
 
@@ -97,7 +97,7 @@ dci_sizes get_dci_sizes(dci_config& config)
   // size of the DCI format 1_0.
   if (format0_0_info_bits_common > format1_0_info_bits_common) {
     unsigned nof_truncated_bits = format0_0_info_bits_common - format1_0_info_bits_common;
-    sizes.format1_0_common_size -= nof_truncated_bits;
+    sizes.format0_0_common_size -= nof_truncated_bits;
   }
 
   srsgnb_assert(sizes.format1_0_common_size == sizes.format0_0_common_size, "DCI format 0_0 and 1_0 sizes must match");
@@ -212,8 +212,7 @@ dci_payload srsgnb::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& conf
 
     // UL/SUL indicator - 1 bit.
     payload.push_back(config.ul_sul_indicator.value(), nof_ul_sul_bit);
-  }
-  else {
+  } else {
     // UL/SUL field is not included otherwise.
     payload.push_back(0X00U, padding_incl_ul_sul);
   }
@@ -321,6 +320,14 @@ dci_payload srsgnb::dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& conf
   // PDSCH to HARQ feedback timing indicator - 3 bit.
   payload.push_back(config.pdsch_harq_fb_timing_indicator, 3);
 
+  int nof_padding_bits = config.payload_size - dci_f1_0_bits_before_padding(config.N_rb_dl_bwp);
+
+  // Truncation is not allowed for DCI format 1_0.
+  srsgnb_assert(nof_padding_bits >= 0, "Truncation is not allowed for DCI format 1_0");
+
+  // Padding - nof_padding_bits bits.
+  payload.push_back(0x00U, nof_padding_bits);
+
   return payload;
 }
 
@@ -373,6 +380,10 @@ dci_payload srsgnb::dci_1_0_p_rnti_pack(const dci_1_0_p_rnti_configuration& conf
   // Reserved bits: 6 bits.
   payload.push_back(0x00U, 6);
 
+  // Since DCI format 1_0 scrambled by P-RNTI is used in common search space, no padding or truncation are applied.
+  srsgnb_assert(config.payload_size == dci_f1_0_bits_before_padding(config.N_rb_dl_bwp),
+                "padding or truncation are not allowed for DCI format 1_0 scrambled by P-RNTI");
+
   return payload;
 }
 
@@ -402,6 +413,10 @@ dci_payload srsgnb::dci_1_0_si_rnti_pack(const dci_1_0_si_rnti_configuration& co
   // Reserved bits - 15 bit.
   payload.push_back(0x00U, 15);
 
+  // Since DCI format 1_0 scrambled by SI-RNTI is used in common search space, no padding or truncation are applied.
+  srsgnb_assert(config.payload_size == dci_f1_0_bits_before_padding(config.N_rb_dl_bwp),
+                "padding or truncation are not allowed for DCI format 1_0 scrambled by SI-RNTI");
+
   return payload;
 }
 
@@ -427,6 +442,10 @@ dci_payload srsgnb::dci_1_0_ra_rnti_pack(const dci_1_0_ra_rnti_configuration& co
 
   // Reserved bits - 16 bits.
   payload.push_back(0x00U, 16);
+
+  // Since DCI format 1_0 scrambled by RA-RNTI is used in common search space, no padding or truncation are applied.
+  srsgnb_assert(config.payload_size == dci_f1_0_bits_before_padding(config.N_rb_dl_bwp),
+                "padding or truncation are not allowed for DCI format 1_0 scrambled by RA-RNTI");
 
   return payload;
 }
@@ -471,6 +490,10 @@ dci_payload srsgnb::dci_1_0_tc_rnti_pack(const dci_1_0_tc_rnti_configuration& co
 
   // PDSCH to HARQ feedback timing indicator - 3 bit.
   payload.push_back(config.pdsch_harq_fb_timing_indicator, 3);
+
+  // Since DCI format 1_0 scrambled by TC-RNTI is used in common search space, no padding or truncation are applied.
+  srsgnb_assert(config.payload_size == dci_f1_0_bits_before_padding(config.N_rb_dl_bwp),
+                "padding or truncation are not allowed for DCI format 1_0 scrambled by TC-RNTI");
 
   return payload;
 }

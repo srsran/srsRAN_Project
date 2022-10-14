@@ -47,7 +47,7 @@ struct dci_config {
 };
 
 // TODO (joaquim): document these fields.
-dci_payload get_dci_sizes(dci_config config);
+dci_sizes get_dci_sizes(const dci_config& config);
 
 /// \brief Describes the necessary parameters for packing a DCI format 0_0 scrambled by C-RNTI, CS-RNTI or MCS-C-RNTI.
 /// \remark Defined in TS38.212 Section 7.3.1.1.1.
