@@ -14,6 +14,7 @@
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/security/security.h"
+#include "srsgnb/srslog/srslog.h"
 
 /*
  * This file will hold the interfaces and notifiers for the PDCP entity.
@@ -101,4 +102,61 @@ public:
   virtual void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) = 0;
 };
 
+/*
+ * PDCP RX metrics interface and structures.
+ */
+/// This struct will hold relevant metrics for the PDCP RX
+struct pdcp_rx_metrics_container {
+  uint32_t num_pdus;
+  uint32_t num_pdu_bytes;
+  uint32_t num_dropped_pdus;
+  uint32_t num_sdus;
+  uint32_t num_sdu_bytes;
+  uint32_t integrity_failures;
+  uint32_t nof_t_reordering_timeouts;
+};
+
+/// This interface will allow the relevant entities to query PDCP RX
+/// metrics (and possibly reset them).
+class pdcp_rx_metrics_interface
+{
+public:
+  pdcp_rx_metrics_interface()                                                   = default;
+  virtual ~pdcp_rx_metrics_interface()                                          = default;
+  pdcp_rx_metrics_interface(const pdcp_rx_upper_control_interface&)             = delete;
+  pdcp_rx_metrics_interface& operator=(const pdcp_rx_upper_control_interface&)  = delete;
+  pdcp_rx_metrics_interface(const pdcp_rx_upper_control_interface&&)            = delete;
+  pdcp_rx_metrics_interface& operator=(const pdcp_rx_upper_control_interface&&) = delete;
+
+  /// Metrics interfaces.
+  virtual pdcp_rx_metrics_container get_metrics()           = 0;
+  virtual pdcp_rx_metrics_container get_metrics_and_reset() = 0;
+  virtual void                      reset_metrics()         = 0;
+};
+
 } // namespace srsgnb
+
+namespace fmt {
+// PDCP RX metrics formatter
+template <>
+struct formatter<srsgnb::pdcp_rx_metrics_container> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::pdcp_rx_metrics_container m, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "num_sdus={}, num_sdu_bytes={}, num_dropped_pdus={}, num_pdus={}, num_pdu_bytes={}",
+                     m.num_sdus,
+                     m.num_sdu_bytes,
+                     m.num_dropped_pdus,
+                     m.num_pdus,
+                     m.num_pdu_bytes);
+  }
+};
+} // namespace fmt
+

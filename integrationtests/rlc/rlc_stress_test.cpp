@@ -172,7 +172,8 @@ public:
 
   void set_peer_stack(stress_stack* peer_stack_) { peer_stack = peer_stack_; }
 
-  rlc_bearer_metrics_container get_metrics() { return rlc->get_metrics(); }
+  pdcp_metrics_container       get_pdcp_metrics() { return pdcp->get_metrics(); }
+  rlc_bearer_metrics_container get_rlc_metrics() { return rlc->get_metrics(); }
 
   // Mutex and condition variables for stopping workers
   std::mutex              mutex_pcell;
@@ -242,13 +243,22 @@ void stress_test(const stress_test_args& args)
   stack_emulator_1.wait_for_finish();
 
   // Print and analyse metrics
-  rlc_bearer_metrics_container stack0_metrics = stack_emulator_0.get_metrics();
-  rlc_bearer_metrics_container stack1_metrics = stack_emulator_1.get_metrics();
+  pdcp_metrics_container       stack0_pdcp_metrics = stack_emulator_0.get_pdcp_metrics();
+  pdcp_metrics_container       stack1_pdcp_metrics = stack_emulator_1.get_pdcp_metrics();
+  rlc_bearer_metrics_container stack0_rlc_metrics  = stack_emulator_0.get_rlc_metrics();
+  rlc_bearer_metrics_container stack1_rlc_metrics  = stack_emulator_1.get_rlc_metrics();
 
-  log_stack.info("STACK 0 emulator RLC TX metrics: {}", stack0_metrics.tx);
-  log_stack.info("STACK 0 emulator RLC RX metrics: {}", stack0_metrics.rx);
-  log_stack.info("STACK 1 emulator RLC TX metrics: {}", stack1_metrics.tx);
-  log_stack.info("STACK 1 emulator RLC RX metrics: {}", stack1_metrics.rx);
+  // Print PDCP metrics
+  // log_stack.info("STACK 0 emulator PDCP TX metrics: {}", stack0_pdcp_metrics.tx);
+  log_stack.info("STACK 0 emulator PDCP RX metrics: {}", stack0_pdcp_metrics.rx);
+  // log_stack.info("STACK 1 emulator PDCP TX metrics: {}", stack1_pdcp_metrics.tx);
+  log_stack.info("STACK 1 emulator PDCP RX metrics: {}", stack1_pdcp_metrics.rx);
+
+  // Print RLC metrics
+  log_stack.info("STACK 0 emulator RLC TX metrics: {}", stack0_rlc_metrics.tx);
+  log_stack.info("STACK 0 emulator RLC RX metrics: {}", stack0_rlc_metrics.rx);
+  log_stack.info("STACK 1 emulator RLC TX metrics: {}", stack1_rlc_metrics.tx);
+  log_stack.info("STACK 1 emulator RLC RX metrics: {}", stack1_rlc_metrics.rx);
 }
 
 int main(int argc, char** argv)

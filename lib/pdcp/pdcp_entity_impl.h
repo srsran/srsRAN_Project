@@ -44,6 +44,13 @@ public:
   pdcp_tx_lower_interface&      get_tx_lower_interface() final { return (*tx); };
   pdcp_rx_lower_interface&      get_rx_lower_interface() final { return (*rx); };
 
+  pdcp_metrics_container get_metrics() final
+  {
+    pdcp_metrics_container m;
+    m.rx = rx->get_metrics();
+    return m;
+  };
+
 private:
   bearer_logger logger;
 

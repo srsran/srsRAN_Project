@@ -16,6 +16,11 @@
 
 namespace srsgnb {
 
+struct pdcp_metrics_container {
+  // pdcp_tx_metrics_container tx;
+  pdcp_rx_metrics_container rx;
+};
+
 /// Interface for the PDCP bearer.
 /// Provides getters and setters for the RX and TX parts of the PDCP entity.
 class pdcp_entity
@@ -27,6 +32,7 @@ public:
   virtual pdcp_tx_lower_interface&      get_tx_lower_interface()      = 0;
   virtual pdcp_tx_upper_data_interface& get_tx_upper_data_interface() = 0;
   virtual pdcp_rx_lower_interface&      get_rx_lower_interface()      = 0;
+  virtual pdcp_metrics_container        get_metrics()                 = 0;
 };
 
 } // namespace srsgnb

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "pdcp_entity_tx_rx_base.h"
+#include "pdcp_rx_metrics.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/pdcp/pdcp_config.h"
@@ -38,7 +39,8 @@ struct pdcp_rx_state {
 /// It provides interfaces for the RLC bearers, for the lower layers
 class pdcp_entity_rx : public pdcp_entity_tx_rx_base,
                        public pdcp_rx_lower_interface,
-                       public pdcp_rx_upper_control_interface
+                       public pdcp_rx_upper_control_interface,
+                       public pdcp_rx_metrics
 {
 public:
   pdcp_entity_rx(uint32_t                        ue_index,
