@@ -17,6 +17,132 @@ using namespace srsgnb;
 static std::mt19937       rgen(1234);
 static constexpr unsigned nof_repetitions = 100;
 
+static dci_0_0_c_rnti_configuration build_dci_0_0_c_rnti_config(unsigned N_rb_ul_bwp, unsigned payload_size)
+{
+  dci_0_0_c_rnti_configuration config = {};
+
+  std::uniform_int_distribution<unsigned> N_ul_hop_dist(1, 2);
+  std::uniform_int_distribution<unsigned> time_resource_dist(0, pow2(4) - 1);
+  std::uniform_int_distribution<unsigned> frequency_hopping_flag_dist(0, pow2(1) - 1);
+  std::uniform_int_distribution<unsigned> modulation_coding_scheme_dist(0, pow2(5) - 1);
+  std::uniform_int_distribution<unsigned> new_data_indicator_dist(0, pow2(1) - 1);
+  std::uniform_int_distribution<unsigned> redundancy_version_dist(0, pow2(2) - 1);
+  std::uniform_int_distribution<unsigned> harq_process_number_dist(0, pow2(4) - 1);
+  std::uniform_int_distribution<unsigned> dl_assignment_index_dist(0, pow2(2) - 1);
+  std::uniform_int_distribution<unsigned> tpc_command_dist(0, pow2(2) - 1);
+  std::uniform_int_distribution<unsigned> pucch_resource_indicator_dist(0, pow2(3) - 1);
+  std::uniform_int_distribution<unsigned> pdsch_harq_fb_timing_dist(0, pow2(3) - 1);
+  std::uniform_int_distribution<unsigned> ul_sul_indicator_presence_dist(0, 1);
+
+  unsigned                                frequency_resource_nof_bits = log2_ceil(N_rb_ul_bwp * (N_rb_ul_bwp + 1) / 2);
+  std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
+
+  config.payload_size = payload_size;
+
+  // Identifier for DCI format is always set to 0, according to TS38.211 Section 7.3.1.1.1.
+  config.dci_format_id = 0;
+
+  config.N_ul_hop = N_ul_hop_dist(rgen);
+
+  // The hopping offset is packed with N_ul_hop bits.
+  std::uniform_int_distribution<unsigned> hopping_offset_dist(0, pow2(config.N_ul_hop) - 1);
+
+  config.hopping_offset           = hopping_offset_dist(rgen);
+  config.N_rb_ul_bwp              = N_rb_ul_bwp;
+  config.frequency_resource       = frequency_resource_dist(rgen);
+  config.time_resource            = time_resource_dist(rgen);
+  config.frequency_hopping_flag   = frequency_hopping_flag_dist(rgen);
+  config.modulation_coding_scheme = modulation_coding_scheme_dist(rgen);
+  config.new_data_indicator       = new_data_indicator_dist(rgen);
+  config.redundancy_version       = redundancy_version_dist(rgen);
+  config.harq_process_number      = harq_process_number_dist(rgen);
+  config.tpc_command              = tpc_command_dist(rgen);
+
+  // Add the UL/SUL indicator field.
+  if (static_cast<bool>(ul_sul_indicator_presence_dist(rgen))) {
+    std::uniform_int_distribution<unsigned> ul_sul_indicator_dist(0, 1);
+    config.ul_sul_indicator.emplace(static_cast<bool>(ul_sul_indicator_dist(rgen)));
+  }
+
+  return config;
+}
+
+static void test_dci_0_0_c_rnti_packing(const dci_0_0_c_rnti_configuration& config)
+{
+  // Generate the test payload.
+  dci_payload payload = dci_0_0_c_rnti_pack(config);
+
+  // Generate the expected payload.
+  static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> expected;
+
+  // Identifier for DCI formats - 1 bit.
+  expected.push_back((config.dci_format_id >> 0U) & 1U);
+
+  unsigned N_ul_hop = 0;
+  if (config.frequency_hopping_flag) {
+    N_ul_hop = config.N_ul_hop;
+
+    // Frequency hopping offset - N_ul_hop bits.
+    for (unsigned bitpos = 0; bitpos != N_ul_hop; ++bitpos) {
+      expected.push_back((config.hopping_offset >> (N_ul_hop - 1 - bitpos)) & 1U);
+    }
+  }
+
+  // Frequency domain resource assignment - frequency_resource_nof_bits bits.
+  unsigned frequency_resource_nof_bits = log2_ceil(config.N_rb_ul_bwp * (config.N_rb_ul_bwp + 1) / 2) - N_ul_hop;
+  for (unsigned bitpos = 0; bitpos != frequency_resource_nof_bits; ++bitpos) {
+    expected.push_back((config.frequency_resource >> (frequency_resource_nof_bits - 1 - bitpos)) & 1U);
+  }
+
+  // Time domain resource assignment - 4 bit.
+  expected.push_back((config.time_resource >> 3U) & 1U);
+  expected.push_back((config.time_resource >> 2U) & 1U);
+  expected.push_back((config.time_resource >> 1U) & 1U);
+  expected.push_back((config.time_resource >> 0U) & 1U);
+
+  // Frequency hopping flag - 1 bit.
+  expected.push_back(config.frequency_hopping_flag & 1U);
+
+  // Modulation and coding scheme - 5 bits.
+  expected.push_back((config.modulation_coding_scheme >> 4U) & 1U);
+  expected.push_back((config.modulation_coding_scheme >> 3U) & 1U);
+  expected.push_back((config.modulation_coding_scheme >> 2U) & 1U);
+  expected.push_back((config.modulation_coding_scheme >> 1U) & 1U);
+  expected.push_back((config.modulation_coding_scheme >> 0U) & 1U);
+
+  // New data indicator - 1 bit.
+  expected.push_back((config.new_data_indicator >> 0U) & 1U);
+
+  // Redundancy version - 2 bit.
+  expected.push_back((config.redundancy_version >> 1U) & 1U);
+  expected.push_back((config.redundancy_version >> 0U) & 1U);
+
+  // HARQ process number - 4 bit.
+  expected.push_back((config.harq_process_number >> 3U) & 1U);
+  expected.push_back((config.harq_process_number >> 2U) & 1U);
+  expected.push_back((config.harq_process_number >> 1U) & 1U);
+  expected.push_back((config.harq_process_number >> 0U) & 1U);
+
+  // TPC command for scheduled PUCCH - 2 bit.
+  expected.push_back((config.tpc_command >> 1U) & 1U);
+  expected.push_back((config.tpc_command >> 0U) & 1U);
+
+  unsigned nof_packed_bits     = expected.size();
+  unsigned padding_incl_ul_sul = config.payload_size - nof_packed_bits;
+  if (config.ul_sul_indicator.has_value() && (padding_incl_ul_sul > 0)) {
+    // UL/SUL field is present. First, apply padding.
+    std::fill_n(std::back_inserter(expected), padding_incl_ul_sul - 1, 0);
+    // DCI payload is terminated with the UL/SUL indicator.
+    expected.push_back(static_cast<unsigned>(config.ul_sul_indicator.value()) & 1U);
+  } else {
+    // UL/SUL field is not present, apply padding only.
+    std::fill_n(std::back_inserter(expected), padding_incl_ul_sul, 0);
+  }
+
+  // Assert expected payload.
+  TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
+}
+
 static dci_1_0_c_rnti_configuration build_dci_1_0_c_rnti_config(unsigned N_rb_dl_bwp, unsigned payload_size)
 {
   dci_1_0_c_rnti_configuration config = {};
@@ -123,9 +249,7 @@ static void test_dci_1_0_c_rnti_packing(const dci_1_0_c_rnti_configuration& conf
   unsigned nof_packed_bits  = expected.size();
   unsigned nof_padding_bits = config.payload_size - nof_packed_bits;
 
-  for (unsigned i_bit = 0; i_bit != nof_padding_bits; ++i_bit) {
-    expected.push_back(0x00U);
-  }
+  std::fill_n(std::back_inserter(expected), nof_padding_bits, 0);
 
   // Assert expected payload.
   TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
@@ -240,9 +364,7 @@ static void test_dci_1_0_p_rnti_packing(const dci_1_0_p_rnti_configuration& conf
   unsigned nof_packed_bits  = expected.size();
   unsigned nof_padding_bits = config.payload_size - nof_packed_bits;
 
-  for (unsigned i_bit = 0; i_bit != nof_padding_bits; ++i_bit) {
-    expected.push_back(0x00U);
-  }
+  std::fill_n(std::back_inserter(expected), nof_padding_bits, 0);
 
   // Assert expected payload.
   TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
@@ -315,9 +437,7 @@ static void test_dci_1_0_si_rnti_packing(const dci_1_0_si_rnti_configuration& co
   unsigned nof_packed_bits  = expected.size();
   unsigned nof_padding_bits = config.payload_size - nof_packed_bits;
 
-  for (unsigned i_bit = 0; i_bit != nof_padding_bits; ++i_bit) {
-    expected.push_back(0x00U);
-  }
+  std::fill_n(std::back_inserter(expected), nof_padding_bits, 0);
 
   // Assert expected payload.
   TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
@@ -387,9 +507,7 @@ static void test_dci_1_0_ra_rnti_packing(const dci_1_0_ra_rnti_configuration& co
   unsigned nof_packed_bits  = expected.size();
   unsigned nof_padding_bits = config.payload_size - nof_packed_bits;
 
-  for (unsigned i_bit = 0; i_bit != nof_padding_bits; ++i_bit) {
-    expected.push_back(0x00U);
-  }
+  std::fill_n(std::back_inserter(expected), nof_padding_bits, 0);
 
   // Assert expected payload.
   TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
@@ -496,6 +614,11 @@ static void test_dci_1_0_tc_rnti_packing(const dci_1_0_tc_rnti_configuration& co
   expected.push_back((config.pdsch_harq_fb_timing_indicator >> 1U) & 1U);
   expected.push_back((config.pdsch_harq_fb_timing_indicator >> 0U) & 1U);
 
+  unsigned nof_packed_bits  = expected.size();
+  unsigned nof_padding_bits = config.payload_size - nof_packed_bits;
+
+  std::fill_n(std::back_inserter(expected), nof_padding_bits, 0);
+
   // Assert expected payload.
   TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
 }
@@ -581,6 +704,9 @@ int main()
         config.coreset0_bw         = N_rb_dl_bwp;
 
         dci_sizes payload_sizes = get_dci_sizes(config);
+
+        test_dci_0_0_c_rnti_packing(
+            build_dci_0_0_c_rnti_config(config.N_rb_ul_bwp_active, payload_sizes.format0_0_ue_specific_size));
 
         // Test DCI format 1_0 scrambled by TC-RNTI.
         test_dci_1_0_tc_rnti_packing(

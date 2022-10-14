@@ -159,7 +159,11 @@ dci_payload srsgnb::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& conf
     srsgnb_assert((config.N_ul_hop == 1) || (config.N_ul_hop == 2),
                   "DCI frequency offset number of bits must be either 1 or 2");
 
-    // Assert that the frequency hopping offset index can be packed with the allocated bits.
+    // Assert that the frequency resource field has enough bits to include the frequency hopping offset.
+    srsgnb_assert(config.N_ul_hop < frequency_resource_nof_bits,
+                  "The frequency resource field must have enough bits to hold the frequency hopping offset");
+
+    // Assert that the frequency hopping offset can be packed with the allocated bits.
     srsgnb_assert(config.hopping_offset < (1U << config.N_ul_hop),
                   "DCI frequency offset value ({}) cannot be packed with the allocated number of bits ({})",
                   config.hopping_offset,
@@ -208,13 +212,13 @@ dci_payload srsgnb::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& conf
     // is larger than the number of DCI format 0_0 bits before padding.
     constexpr unsigned nof_ul_sul_bit = 1U;
     // Padding bits, if necessary, as per TS38.212 Section 7.3.1.0.
-    payload.push_back(0X00U, padding_incl_ul_sul - nof_ul_sul_bit);
+    payload.push_back(0x00U, padding_incl_ul_sul - nof_ul_sul_bit);
 
     // UL/SUL indicator - 1 bit.
     payload.push_back(config.ul_sul_indicator.value(), nof_ul_sul_bit);
   } else {
     // UL/SUL field is not included otherwise.
-    payload.push_back(0X00U, padding_incl_ul_sul);
+    payload.push_back(0x00U, padding_incl_ul_sul);
   }
 
   return payload;
@@ -225,6 +229,20 @@ dci_payload srsgnb::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& co
   unsigned    frequency_resource_nof_bits = log2_ceil(config.N_rb_ul_bwp * (config.N_rb_ul_bwp + 1) / 2);
   dci_payload payload;
 
+  unsigned nof_bits_before_padding = dci_f0_0_bits_before_padding(config.N_rb_ul_bwp);
+  srsgnb_assert(nof_bits_before_padding <= config.payload_size,
+                "DCI payload size must be able to fit the information bits");
+
+  // Number of padding or truncation bits, including the UL/SUL optional field, if present.
+  // the UL/SUL indicator is reserved in DCI format 0_0 scrabled by TC-RNTI, as per TS38.212 Section 7.3.1.1.1.
+  int padd_trunc_incl_ul_sul = config.payload_size - nof_bits_before_padding;
+
+  if (padd_trunc_incl_ul_sul < 0) {
+    // Truncation is applied by reducing the bitwidth of the frequency resource assignment field.
+    unsigned nof_truncation_bits = -padd_trunc_incl_ul_sul;
+    frequency_resource_nof_bits -= nof_truncation_bits;
+  }
+
   // Identifier for DCI formats - 1 bit.
   payload.push_back(config.dci_format_id, 1);
 
@@ -233,7 +251,11 @@ dci_payload srsgnb::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& co
     srsgnb_assert((config.N_ul_hop == 1) || (config.N_ul_hop == 2),
                   "DCI frequency offset number of bits must be either 1 or 2");
 
-    // Assert that the frequency hopping offset index can be packed with the allocated bits.
+    // Assert that the frequency resource field has enough bits to include the frequency hopping offset.
+    srsgnb_assert(config.N_ul_hop < frequency_resource_nof_bits,
+                  "The frequency resource field must have enough bits to hold the frequency hopping offset");
+
+    // Assert that the frequency hopping offset can be packed with the allocated bits.
     srsgnb_assert(config.hopping_offset < (1U << config.N_ul_hop),
                   "DCI frequency offset value ({}) cannot be packed with the allocated number of bits ({})",
                   config.hopping_offset,
@@ -270,11 +292,10 @@ dci_payload srsgnb::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& co
   // TPC command for scheduled PUSCH - 2 bit.
   payload.push_back(config.tpc_command, 2);
 
-  // Padding bits, if necessary, as per TS38.212 Section 7.3.1.0.
-
-  // UL/SUL indicator - 1 bit if present, reserved. The PUSCH allocation is always on the same UL carrier as the
-  // previous transmission of the same TB, as per TS38.212 Section 7.3.1.1.1.
-  payload.push_back(0x00U, 1);
+  if (padd_trunc_incl_ul_sul > 0) {
+    // Padding bits, including UL/SUL reserved field.
+    payload.push_back(0X00U, padd_trunc_incl_ul_sul);
+  }
 
   return payload;
 }
