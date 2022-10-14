@@ -12,6 +12,7 @@
 /// \brief PUCCH detector definition for Formats 0 and 1.
 
 #include "pucch_detector_impl.h"
+#include "srsgnb/srsvec/copy.h"
 
 using namespace srsgnb;
 
@@ -248,8 +249,14 @@ pucch_uci_message pucch_detector_impl::detect(const resource_grid_reader&  grid,
   pucch_uci_message output;
   float             detection_metric = detect_bits(output.data, detected_symbol, eq_noise_var, nof_bits);
 
-  // Check whether the computed detection metric is above the threshold, which is set to guarantee a 1% FA probability.
-  bool is_msg_ok = (detection_metric > 2.33);
+  // Detection threshold.
+  //
+  // The detection metric, as computed by \c detect_bits, is assumed to be normally distributed with variance 1 and mean
+  // either 0 (when there is no PUCCH) or larger than 0 (when there is a PUCCH). Therefore, one can target a constant
+  // probability of false alarm of 1% by setting the detection threshold T such that Q(T) = 0.01, where the Q-function
+  // is the tail distribution function of the standard normal distribution.
+  constexpr float THRESHOLD = 2.33;
+  bool            is_msg_ok = (detection_metric > THRESHOLD);
 
   // We don't set the SR bit here - this task is delegated to a higher-level function, based on the uci_status returned
   // by this detector and on the used PUCCH resource.
@@ -281,7 +288,7 @@ void pucch_detector_impl::extract_data_and_estimates(const resource_grid_reader&
                                                      const channel_estimate&     estimates,
                                                      unsigned                    first_symbol,
                                                      unsigned                    first_prb,
-                                                     const optional<unsigned>&   second_prb,
+                                                     optional<unsigned>          second_prb,
                                                      unsigned                    port)
 {
   unsigned i_symbol     = 0;
@@ -294,7 +301,7 @@ void pucch_detector_impl::extract_data_and_estimates(const resource_grid_reader&
     grid.get(sequence_chunk, port, symbol_index, k_init);
 
     span<const cf_t> tmp = estimates.get_symbol_ch_estimate(symbol_index, port);
-    std::copy_n(tmp.begin() + k_init, NRE, ch_estimates.begin() + skip);
+    srsvec::copy(ch_estimates.subspan(skip, NRE), tmp.subspan(k_init, NRE));
   }
 
   for (; i_symbol != nof_data_symbols; ++i_symbol, skip += NRE, symbol_index += 2) {

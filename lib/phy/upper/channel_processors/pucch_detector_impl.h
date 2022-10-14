@@ -64,7 +64,7 @@ private:
                                   const channel_estimate&     estimates,
                                   unsigned                    first_symbol,
                                   unsigned                    first_prb,
-                                  const optional<unsigned>&   second_prb,
+                                  optional<unsigned>          second_prb,
                                   unsigned                    port);
 
   /// \brief Marginalizes the spreading sequences out.

@@ -8,8 +8,7 @@
  *
  */
 
-#include <utility>
-
+#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "pbch_encoder_impl.h"
 #include "pbch_modulator_impl.h"
 #include "pdcch_encoder_impl.h"
@@ -26,7 +25,6 @@
 #include "pusch_demodulator_impl.h"
 #include "pusch_processor_impl.h"
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "ssb_processor_impl.h"
 #include "uci_decoder_impl.h"
