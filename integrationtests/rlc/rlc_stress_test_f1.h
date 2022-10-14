@@ -22,6 +22,7 @@
 namespace srsgnb {
 class f1_dummy : public pdcp_tx_lower_notifier,
                  public rlc_tx_upper_layer_data_notifier,
+                 public rlc_tx_upper_layer_control_notifier,
                  public rlc_rx_upper_layer_data_notifier
 {
   bearer_logger logger;
@@ -59,12 +60,20 @@ public:
   void on_new_sdu(byte_buffer_slice_chain pdu) final
   {
     logger.log_debug("Passing SDU to PDCP");
-    // pdcp_rx_lower->handle_pdu(std::move(pdu));
+    // TODO for now we copy to a new byte buffer
+    byte_buffer buf;
+    for (uint8_t byte : pdu) {
+      buf.append(byte);
+    }
+    pdcp_rx_lower->handle_pdu(std::move(buf));
   }
+
+  // RLC -> F1 -> RRC
+  void on_protocol_failure() final {}
+  void on_max_retx() final {}
 
   void set_rlc_tx_upper_data(rlc_tx_upper_layer_data_interface* rlc_tx_upper) { this->rlc_tx_upper = rlc_tx_upper; }
 
-  // RLC -> PDCP
   void set_pdcp_rx_lower(pdcp_rx_lower_interface* pdcp_rx_lower) { this->pdcp_rx_lower = pdcp_rx_lower; }
 };
 

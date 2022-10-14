@@ -58,9 +58,11 @@ public:
     pdcp_entity_creation_message pdcp_msg  = {};
     pdcp_msg.config                        = pdcp_cnfg;
     pdcp_msg.tx_lower                      = f1.get();
+    pdcp_msg.rx_upper_dn                   = traffic_sink.get();
     pdcp_msg.timers                        = &timers;
     pdcp                                   = create_pdcp_entity(pdcp_msg);
     traffic_source->set_pdcp_tx_upper(&pdcp->get_tx_upper_data_interface());
+    f1->set_pdcp_rx_lower(&pdcp->get_rx_lower_interface());
 
     // RLC
     rlc_config                  rlc_cnfg = get_rlc_config_from_args(args);
@@ -68,14 +70,14 @@ public:
     rlc_msg.ue_index                     = static_cast<du_ue_index_t>(stack_id);
     rlc_msg.lcid                         = lcid_t{};
     rlc_msg.rx_upper_dn                  = f1.get();
-    //  rlc_msg.tx_upper_cn                  = traffic_source.get();
-    rlc_msg.tx_upper_dn    = f1.get();
-    rlc_msg.tx_lower_dn    = mac.get();
-    rlc_msg.config         = rlc_cnfg;
-    rlc_msg.timers         = &timers;
-    rlc_msg.pcell_executor = pcell_executor.get();
-    rlc_msg.ue_executor    = ue_executor.get();
-    rlc                    = create_rlc_entity(rlc_msg);
+    rlc_msg.tx_upper_cn                  = f1.get();
+    rlc_msg.tx_upper_dn                  = f1.get();
+    rlc_msg.tx_lower_dn                  = mac.get();
+    rlc_msg.config                       = rlc_cnfg;
+    rlc_msg.timers                       = &timers;
+    rlc_msg.pcell_executor               = pcell_executor.get();
+    rlc_msg.ue_executor                  = ue_executor.get();
+    rlc                                  = create_rlc_entity(rlc_msg);
     f1->set_rlc_tx_upper_data(rlc->get_tx_upper_layer_data_interface());
 
     mac->set_rlc_tx_lower(rlc->get_tx_lower_layer_interface());
