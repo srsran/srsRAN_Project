@@ -80,16 +80,26 @@ private:
   std::unique_ptr<pseudo_random_generator> pseudo_random;
   /// \brief Buffer for storing the spread data sequence.
   /// \remark Only half of the allocated symbols contain data, the other half being used for DM-RS.
-  static_vector<cf_t, MAX_ALLOCATED_RE_F1 / 2> time_spread_sequence;
+  std::array<cf_t, MAX_ALLOCATED_RE_F1 / 2> time_spread_buffer;
+  /// View of the data sequence buffer.
+  span<cf_t> time_spread_sequence;
   /// Buffer for storing the channel estimates corresponding to the spread data sequence.
-  static_vector<cf_t, MAX_ALLOCATED_RE_F1 / 2> ch_estimates;
+  std::array<cf_t, MAX_ALLOCATED_RE_F1 / 2> ch_estimates_buffer;
+  /// View of the channel estimates buffer.
+  span<cf_t> ch_estimates;
   /// \brief Buffer for storing the spread data sequence after equalization.
   /// \remark Only half of the allocated symbols contain data, the other half being used for DM-RS.
-  static_vector<cf_t, MAX_ALLOCATED_RE_F1 / 2> eq_time_spread_sequence;
+  std::array<cf_t, MAX_ALLOCATED_RE_F1 / 2> eq_time_spread_buffer;
+  /// View of the equalized spread data sequence buffer.
+  span<cf_t> eq_time_spread_sequence;
   /// Buffer for storing the equivalent channel noise variances corresponding to the equalized spread data sequence.
-  static_vector<float, MAX_ALLOCATED_RE_F1 / 2> eq_time_spread_noise_var;
+  std::array<float, MAX_ALLOCATED_RE_F1 / 2> eq_time_spread_noise_var_buffer;
+  /// View of the equivalent (post-equalization) channel noise variance buffer.
+  span<float> eq_time_spread_noise_var;
   /// Buffer for storing alpha indices.
-  static_vector<unsigned, MAX_NSYMB_PER_SLOT / 2> alpha_indices;
+  std::array<unsigned, MAX_NSYMB_PER_SLOT / 2> alpha_buffer;
+  /// View of the alpha indices buffer.
+  span<unsigned> alpha_indices;
   /// Detected symbol.
   cf_t detected_symbol = 0;
   /// Equivalent noise variance of detected symbol.

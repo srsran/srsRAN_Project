@@ -215,11 +215,11 @@ pucch_uci_message pucch_detector_impl::detect(const resource_grid_reader&  grid,
   validate_config(config);
 
   // Total number of REs used for PUCCH data (recall that positive integer division implies taking the floor).
-  unsigned nof_res = (config.nof_symbols / 2) * NRE;
-  time_spread_sequence.resize(nof_res);
-  ch_estimates.resize(nof_res);
-  eq_time_spread_sequence.resize(nof_res);
-  eq_time_spread_noise_var.resize(nof_res);
+  unsigned nof_res         = (config.nof_symbols / 2) * NRE;
+  time_spread_sequence     = span<cf_t>(time_spread_buffer).first(nof_res);
+  ch_estimates             = span<cf_t>(ch_estimates_buffer).first(nof_res);
+  eq_time_spread_sequence  = span<cf_t>(eq_time_spread_buffer).first(nof_res);
+  eq_time_spread_noise_var = span<float>(eq_time_spread_noise_var_buffer).first(nof_res);
 
   // Compute the number of data symbols before frequency hop.
   nof_data_symbols         = config.nof_symbols / 2;
@@ -228,7 +228,7 @@ pucch_uci_message pucch_detector_impl::detect(const resource_grid_reader&  grid,
     nof_data_symbols_pre_hop = config.nof_symbols / 4;
   }
 
-  alpha_indices.resize(nof_data_symbols);
+  alpha_indices = span<unsigned>(alpha_buffer).first(nof_data_symbols);
 
   extract_data_and_estimates(
       grid, estimates, config.start_symbol_index, config.starting_prb, config.second_hop_prb, config.port);
@@ -329,7 +329,8 @@ static void compute_alpha_indices(span<unsigned>           indices,
   prg.init(n_id);
   // Create the required PR numbers.
   prg.advance(CHIPS_PER_SYMBOL * (nof_symbols_per_slot * n_sf + start_symbol));
-  std::vector<float> c_values_all(CHIPS_PER_SYMBOL * nof_symbols);
+  std::array<float, CHIPS_PER_SYMBOL* MAX_NSYMB_PER_SLOT> c_values_buffer = {};
+  span<float>                                             c_values_all(c_values_buffer);
   prg.generate(c_values_all, 1.0F);
 
   unsigned offset = CHIPS_PER_SYMBOL;
@@ -337,7 +338,7 @@ static void compute_alpha_indices(span<unsigned>           indices,
   for (unsigned i_symbol = 1, i_alpha = 0; i_symbol < nof_symbols;
        i_symbol += 2, ++i_alpha, offset += 2 * CHIPS_PER_SYMBOL) {
     // Compute n_cs
-    span<float> c_values = span<float>(c_values_all).subspan(offset, CHIPS_PER_SYMBOL);
+    span<float> c_values = c_values_all.subspan(offset, CHIPS_PER_SYMBOL);
     unsigned    n_cs     = std::accumulate(c_values.begin(), c_values.end(), 0U, [n = 0U](unsigned a, float b) mutable {
       return (a + ((b < 0) ? 1U : 0U) * (1U << (n++)));
     });
