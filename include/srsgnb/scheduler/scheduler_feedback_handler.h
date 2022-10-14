@@ -22,15 +22,6 @@
 
 namespace srsgnb {
 
-/// \brief Scheduling Request.
-/// \remark See ORAN WG8, 9.2.3.2.17 Scheduling Request Indication.
-struct sr_indication_message {
-  du_cell_index_t   cell_index;
-  du_ue_index_t     ue_index;
-  rnti_t            crnti;
-  bounded_bitset<8> sr_payload;
-};
-
 /// UL Buffer Status Report for a single logical channel group.
 struct ul_bsr_lcg_report {
   lcg_id_t lcg_id;
@@ -66,17 +57,18 @@ struct ul_crc_indication {
 
 /// \brief UCI indication for a given UE.
 struct uci_indication {
+  static constexpr size_t NOF_PDUS_PER_UCI_INDICATION = 2;
+
   struct uci_pdu {
     du_ue_index_t          ue_index;
-    rnti_t                 crnti;
     bool                   sr_detected;
     static_vector<bool, 8> harqs;
   };
+  using uci_pdu_list = static_vector<uci_pdu, NOF_PDUS_PER_UCI_INDICATION>;
 
   du_cell_index_t cell_index;
   slot_point      slot_rx;
-
-  static_vector<uci_pdu, 2> ucis;
+  uci_pdu_list    ucis;
 };
 
 struct dl_mac_ce_indication {
@@ -88,7 +80,6 @@ class scheduler_feedback_handler
 {
 public:
   virtual ~scheduler_feedback_handler()                                       = default;
-  virtual void handle_sr_indication(const sr_indication_message& sr)          = 0;
   virtual void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) = 0;
   virtual void handle_crc_indication(const ul_crc_indication& crc)            = 0;
   virtual void handle_uci_indication(const uci_indication& uci)               = 0;

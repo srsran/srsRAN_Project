@@ -38,9 +38,6 @@ public:
   /// Obtain scheduling result for a given slot.
   const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override;
 
-  /// UE Scheduling Request.
-  void handle_sr_indication(const sr_indication_message& sr) override { feedback_handler.handle_sr_indication(sr); }
-
   /// UE UL Buffer Status Report.
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override
   {

@@ -62,7 +62,7 @@ public:
   }
 
   /// \brief Indicate that the UE requested an UL grant.
-  void handle_sr_indication(const sr_indication_message& msg)
+  void handle_sr_indication()
   {
     sr_pending = true;
     // TODO: handle SR indication content.

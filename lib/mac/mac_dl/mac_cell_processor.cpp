@@ -65,8 +65,8 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
 {
   uci_indication ind{};
   for (unsigned i = 0; i != msg.ucis.size(); ++i) {
-    ind.ucis[i].ue_index = ue_mng.get_ue_index(msg.ucis[i].rnti);
-    ind.ucis[i].crnti    = msg.ucis[i].rnti;
+    ind.ucis[i].ue_index    = ue_mng.get_ue_index(msg.ucis[i].rnti);
+    ind.ucis[i].sr_detected = false;
 
     switch (msg.ucis[i].type) {
       case mac_uci_pdu::pdu_type::pucch_f0_or_f1: {
@@ -75,10 +75,10 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
           ind.ucis[i].sr_detected = pucch.sr_info->sr_detected;
         }
         if (pucch.harq_info.has_value()) {
-          ind.ucis[i].harqs.resize(msg.ucis[i].pucch_f0_or_f1.harq_info->harqs.size());
+          ind.ucis[i].harqs.resize(pucch.harq_info->harqs.size());
           for (unsigned j = 0; j != ind.ucis[i].harqs.size(); ++j) {
-            ind.ucis[i].harqs[j] = msg.ucis[i].pucch_f0_or_f1.harq_info->harqs[j] ==
-                                   mac_uci_pdu::pucch_f0_or_f1_type::harq_information::harq_value::ack;
+            ind.ucis[i].harqs[j] =
+                pucch.harq_info->harqs[j] == mac_uci_pdu::pucch_f0_or_f1_type::harq_information::harq_value::ack;
           }
         }
       } break;

@@ -113,7 +113,7 @@ public:
   void activate_cells(bounded_bitset<MAX_NOF_DU_CELLS> activ_bitmap) {}
 
   /// \brief Handle received SR indication.
-  void handle_sr_indication(const sr_indication_message& msg) { ul_lc_ch_mgr.handle_sr_indication(msg); }
+  void handle_sr_indication() { ul_lc_ch_mgr.handle_sr_indication(); }
 
   /// \brief Once an UL grant is given, the SR status of the UE must be reset.
   void reset_sr_indication() { ul_lc_ch_mgr.reset_sr_indication(); }

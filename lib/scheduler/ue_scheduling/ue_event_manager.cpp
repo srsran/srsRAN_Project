@@ -113,16 +113,6 @@ void ue_event_manager::handle_ue_delete_request(du_ue_index_t ue_index)
   });
 }
 
-void ue_event_manager::handle_sr_indication(const sr_indication_message& sr_ind)
-{
-  srsgnb_sanity_check(cell_exists(sr_ind.cell_index), "Invalid cell index");
-
-  common_events.emplace(sr_ind.ue_index, [this, sr_ind](event_logger& ev_logger) {
-    ev_logger.enqueue("sr_ind(ueId={})", sr_ind.ue_index);
-    ue_db[sr_ind.ue_index].handle_sr_indication(sr_ind);
-  });
-}
-
 void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr_ind)
 {
   srsgnb_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");
@@ -151,25 +141,37 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 {
   srsgnb_sanity_check(cell_exists(ind.cell_index), "Invalid cell index");
 
+  // Process DL HARQ ACKs.
   for (unsigned i = 0; i != ind.ucis.size(); ++i) {
     if (not ind.ucis[i].harqs.empty()) {
       cell_specific_events[ind.cell_index].emplace(
           ind.ucis[i].ue_index,
-          [uci_sl = ind.slot_rx, harqs = ind.ucis[i].harqs](ue_cell& ue_cc, event_logger& ev_logger) {
-            ev_logger.enqueue("uci(ueId={})", ue_cc.ue_index);
-            for (unsigned j = 0; j != ue_cc.harqs.nof_dl_harqs(); ++j) {
-              if (ue_cc.harqs.dl_harq(j).harq_slot_ack() == uci_sl) {
-                // TODO: Fetch the right PUCCH/PUSCH.
-                ue_cc.harqs.dl_harq(j).ack_info(0, harqs[0]);
+          [this, uci_sl = ind.slot_rx, harq_bits = ind.ucis[i].harqs](ue_cell& ue_cc, event_logger& ev_logger) {
+            ev_logger.enqueue("uci_harq(ueId={},{} harqs)", ue_cc.ue_index, harq_bits.size());
+            for (unsigned bit_idx = 0; bit_idx != harq_bits.size(); ++bit_idx) {
+              bool found = false;
+              for (unsigned h_id = 0; h_id != ue_cc.harqs.nof_dl_harqs(); ++h_id) {
+                if (ue_cc.harqs.dl_harq(h_id).harq_slot_ack() == uci_sl) {
+                  // TODO: Fetch the right HARQ id, TB, CBG.
+                  ue_cc.harqs.dl_harq(h_id).ack_info(0, harq_bits[bit_idx]);
+                  found = true;
+                  break;
+                }
+              }
+              if (not found) {
+                logger.warning("SCHED: DL HARQ for ueId={}, uci slot={} not found.", ue_cc.ue_index, uci_sl);
               }
             }
           });
     }
+  }
+
+  // Process SRs.
+  for (unsigned i = 0; i != ind.ucis.size(); ++i) {
     if (ind.ucis[i].sr_detected) {
       common_events.emplace(ind.ucis[i].ue_index, [ue_index = ind.ucis[i].ue_index, this](event_logger& ev_logger) {
         ev_logger.enqueue("sr_ind(ueId={})", ue_index);
-        sr_indication_message sr_ind{};
-        ue_db[ue_index].handle_sr_indication(sr_ind);
+        ue_db[ue_index].handle_sr_indication();
       });
     }
   }
