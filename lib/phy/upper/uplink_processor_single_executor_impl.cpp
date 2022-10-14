@@ -81,7 +81,7 @@ void uplink_processor_single_executor_impl::process_pusch(span<uint8_t>         
       results_data.harq_id                       = pdu.harq_id;
       results_data.rnti                          = to_rnti(pdu.pdu.rnti);
       results_data.decoder_result                = proc_result.data.value();
-      results_data.payload                       = (proc_result.data.value().tb_crc_ok) ? data : span<uint8_t>();
+      results_data.payload                       = (proc_result.data.value().tb_crc_ok) ? data : span<const uint8_t>();
     }
 
     // :TODO: Add the UCI to the notifier results when available.

@@ -113,6 +113,22 @@ TEST(ValidateRxDataIndication, ValidIndicationPasses)
   EXPECT_TRUE(result);
 }
 
+/// Valid Message with a PDU that was not successfully decoded should pass.
+TEST(ValidateRxDataIndication, ValidIndicationPassesWithInvalidPDU)
+{
+  auto msg = build_valid_rx_data_indication();
+
+  msg.pdus.back().rapid      = 1U;
+  msg.pdus.back().harq_id    = 1U;
+  msg.pdus.back().pdu_tag    = rx_data_indication_pdu::pdu_tag_type::custom;
+  msg.pdus.back().pdu_length = 0;
+  msg.pdus.back().data       = nullptr;
+
+  const auto& result = validate_rx_data_indication(msg);
+
+  EXPECT_TRUE(result);
+}
+
 /// Add 3 errors and check that validation fails with 3 errors.
 TEST(ValidateRxDataIndication, InvalidIndicationPasses)
 {
@@ -121,12 +137,11 @@ TEST(ValidateRxDataIndication, InvalidIndicationPasses)
   msg.pdus.back().rapid   = 64U;
   msg.pdus.back().harq_id = 16U;
   msg.pdus.back().pdu_tag = rx_data_indication_pdu::pdu_tag_type::MAC_PDU;
-  msg.pdus.back().data    = nullptr;
 
   const auto& result = validate_rx_data_indication(msg);
 
   EXPECT_FALSE(result);
   const auto& report = result.error();
-  // Check that the 4 errors are reported.
-  EXPECT_EQ(report.reports.size(), 4U);
+  // Check that the 3 errors are reported.
+  EXPECT_EQ(report.reports.size(), 3U);
 }

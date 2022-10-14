@@ -113,7 +113,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   const unsigned        nof_symb_sh = pdsch_td_cfg.symbols.length();
   static const unsigned mod_order   = get_bits_per_symbol(modulation_scheme::QPSK);
   // TODO: Need to parameterize.
-  static const unsigned srb0_mcs_index  = 1;
+  static const unsigned srb0_mcs_index  = 10;
   sch_mcs_description   srb0_mcs_config = pdsch_mcs_get_config(pdsch_mcs_table::qam64, srb0_mcs_index);
   // Assumption.
   static const unsigned nof_layers = 1;

@@ -92,7 +92,8 @@ static void add_ssb_pdus_to_dl_request(fapi::dl_tti_request_message_builder& bui
 static void add_pdsch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& builder,
                                          pdsch_pdu_registry&                   pdsch_registry,
                                          span<const sib_information>           sibs,
-                                         span<const rar_information>           rars)
+                                         span<const rar_information>           rars,
+                                         span<const dl_msg_alloc>              ue_grants)
 {
   for (const auto& pdu : sibs) {
     fapi::dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
@@ -109,6 +110,15 @@ static void add_pdsch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& b
     // Add one entry per codeword to the registry.
     for (unsigned i = 0, e = pdu.pdsch_cfg.codewords.size(); i != e; ++i) {
       pdsch_registry.register_pdu(pdsch_builder.get_pdu_id(), i, pdsch_pdu_registry::rar);
+    }
+  }
+
+  for (const auto& pdu : ue_grants) {
+    fapi::dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
+    convert_pdsch_mac_to_fapi(pdsch_builder, pdu);
+    // Add one entry per codeword to the registry.
+    for (unsigned i = 0, e = pdu.pdsch_cfg.codewords.size(); i != e; ++i) {
+      pdsch_registry.register_pdu(pdsch_builder.get_pdu_id(), i, pdsch_pdu_registry::ue);
     }
   }
 }
@@ -131,7 +141,8 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   {
     std::lock_guard<std::mutex> lock(mutex);
     // Add PDSCH PDUs to the DL_TTI.request message.
-    add_pdsch_pdus_to_dl_request(builder, pdsch_registry, dl_res.dl_res->bc.sibs, dl_res.dl_res->rar_grants);
+    add_pdsch_pdus_to_dl_request(
+        builder, pdsch_registry, dl_res.dl_res->bc.sibs, dl_res.dl_res->rar_grants, dl_res.dl_res->ue_grants);
   }
 
   // Validate the DL_TTI.request message.
@@ -186,6 +197,18 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
     const pdsch_pdu_registry::pdu_struct& registry_pdu = pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registry::rar);
     builder.add_pdu_custom_payload(
         registry_pdu.fapi_index, registry_pdu.cw_index, {rar_pdus[i].data(), rar_pdus[i].size()});
+  }
+
+  // Add UE specific PDUs.
+  const static_vector<byte_buffer_slice_chain, MAX_UE_PDUS_PER_SLOT>& ue_pdus = dl_data.ue_pdus;
+  for (unsigned i = 0, e = ue_pdus.size(); i != e; ++i) {
+    const pdsch_pdu_registry::pdu_struct& registry_pdu = pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registry::ue);
+    //: TODO: hack, remove me before merging!
+    auto* v = new std::vector<uint8_t>;
+    for (unsigned j = 0, je = ue_pdus[i].length(); j != je; ++j) {
+      v->push_back(ue_pdus[i][j]);
+    }
+    builder.add_pdu_custom_payload(registry_pdu.fapi_index, registry_pdu.cw_index, {v->data(), v->size()});
   }
 
   // Send the message.

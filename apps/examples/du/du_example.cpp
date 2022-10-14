@@ -70,10 +70,34 @@ public:
 
   void on_new_message(const f1c_message& msg) override
   {
-    if (msg.pdu.type() == asn1::f1ap::f1_ap_pdu_c::types::init_msg) {
-      // Generate a fake F1 Setup response message and pass it back to the DU.
-      f1c_message response;
+    if (msg.pdu.type() != asn1::f1ap::f1_ap_pdu_c::types::init_msg) {
+      return;
+    }
 
+    f1c_message response;
+    if (msg.pdu.init_msg().value.type().value ==
+        asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::init_ulrrc_msg_transfer) {
+      // Generate a fake DL RRC Message transfer message and pass it back to the DU.
+      response.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DLRRC_MSG_TRANSFER);
+
+      auto& resp                      = response.pdu.init_msg().value.dlrrc_msg_transfer();
+      resp->gnb_du_ue_f1_ap_id->value = msg.pdu.init_msg().value.init_ulrrc_msg_transfer()->gnb_du_ue_f1_ap_id->value;
+      resp->gnb_cu_ue_f1_ap_id->value = 0;
+      resp->srbid->value              = srb_id_to_uint(srb_id_t::srb0);
+      static constexpr uint8_t msg4[] = {
+          0x20, 0x40, 0x03, 0x82, 0xe0, 0x05, 0x80, 0x08, 0x8b, 0xd7, 0x63, 0x80, 0x83, 0x0f, 0x00, 0x03, 0xe1,
+          0x02, 0x04, 0x68, 0x3c, 0x08, 0x01, 0x05, 0x10, 0x48, 0x24, 0x06, 0x54, 0x00, 0x07, 0xc0, 0x00, 0x00,
+          0x00, 0x00, 0x04, 0x1b, 0x84, 0x21, 0x00, 0x00, 0x44, 0x0b, 0x28, 0x00, 0x02, 0x41, 0x00, 0x00, 0x10,
+          0x34, 0xd0, 0x35, 0x52, 0x4c, 0x40, 0x00, 0x10, 0x01, 0x02, 0x00, 0x02, 0x00, 0x68, 0x04, 0x00, 0x9d,
+          0xb2, 0x58, 0xc0, 0xa2, 0x00, 0x72, 0x34, 0x56, 0x78, 0x90, 0x00, 0x00, 0x4b, 0x03, 0x84, 0x10, 0x78,
+          0xbb, 0xf0, 0x30, 0x43, 0x80, 0x00, 0x00, 0x07, 0x12, 0x81, 0xc0, 0x00, 0x02, 0x05, 0xef, 0x40, 0x10,
+          0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x14, 0x10, 0x0c, 0xa8, 0x18, 0x06, 0x20, 0x00};
+
+      resp->rrc_container.value.resize(sizeof(msg4));
+      std::copy(msg4, msg4 + sizeof(msg4), resp->rrc_container.value.begin());
+    } else if (msg.pdu.init_msg().value.type().value ==
+               asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request) {
+      // Generate a fake F1 Setup response message and pass it back to the DU.
       response.pdu.set_successful_outcome();
       response.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
 
@@ -83,9 +107,11 @@ public:
       setup_res->gnb_cu_name_present  = true;
       setup_res->gnb_cu_name.value.from_string("srsCU");
       setup_res->gnb_cu_rrc_version.value.latest_rrc_version.from_number(2);
-
-      handler->handle_message(response);
+    } else {
+      return;
     }
+
+    handler->handle_message(response);
   }
 
 private:

@@ -624,7 +624,10 @@ error_type<validator_report> srsgnb::fapi::validate_rx_data_indication(const rx_
     success &= validate_harq_id(pdu.harq_id, msg_id, report);
     // NOTE: PDU length property will not be validated.
     success &= validate_pdu_tag(pdu.pdu_tag, report);
-    success &= validate_pdu_value(pdu.data, report);
+    // PDUs that were not decoded successfully do not carry data.
+    if (pdu.pdu_length) {
+      success &= validate_pdu_value(pdu.data, report);
+    }
   }
 
   // Build the result.
