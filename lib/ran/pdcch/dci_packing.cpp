@@ -230,8 +230,6 @@ dci_payload srsgnb::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& co
   dci_payload payload;
 
   unsigned nof_bits_before_padding = dci_f0_0_bits_before_padding(config.N_rb_ul_bwp);
-  srsgnb_assert(nof_bits_before_padding <= config.payload_size,
-                "DCI payload size must be able to fit the information bits");
 
   // Number of padding or truncation bits, including the UL/SUL optional field, if present.
   // the UL/SUL indicator is reserved in DCI format 0_0 scrabled by TC-RNTI, as per TS38.212 Section 7.3.1.1.1.
@@ -294,7 +292,7 @@ dci_payload srsgnb::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& co
 
   if (padd_trunc_incl_ul_sul > 0) {
     // Padding bits, including UL/SUL reserved field.
-    payload.push_back(0X00U, padd_trunc_incl_ul_sul);
+    payload.push_back(0x00U, padd_trunc_incl_ul_sul);
   }
 
   return payload;
