@@ -58,9 +58,6 @@ dci_sizes srsgnb::get_dci_sizes(const dci_config& config)
   dci_sizes sizes = {};
 
   // TODO (joaquim): improve asserts.
-  srsgnb_assert(config.N_rb_dl_bwp_initial && config.N_rb_dl_bwp_active && config.N_rb_ul_bwp_initial &&
-                    config.N_rb_ul_bwp_active,
-                "Invalid DCI common config parameters.");
 
   // Step 0
   // - Determine DCI format 0_0 monitored in a common search space according to clause 7.3.1.1.1 where N_UL_BWP_RB is

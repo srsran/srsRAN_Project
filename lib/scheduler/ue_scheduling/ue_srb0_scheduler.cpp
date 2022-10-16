@@ -213,11 +213,19 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(pdsch_time_res);
 
   // Fill DL PDCCH DCI.
+
+  // Only the initial BWP size is needed to perform DCI size alignment, since the size of DCI format 1_0 scrambled by
+  // SI-RNTI cannot be altered by padding or truncation.
+  dci_config dci_cfg          = {};
+  dci_cfg.N_rb_dl_bwp_initial = initial_active_dl_bwp.crbs.length();
+  dci_sizes dci_sz            = get_dci_sizes(dci_cfg);
+
   pdcch.dci.type                     = dci_dl_rnti_config_type::tc_rnti_f1_0;
   pdcch.dci.tc_rnti_f1_0             = {};
   dci_1_0_tc_rnti_configuration& dci = pdcch.dci.tc_rnti_f1_0;
+  dci.payload_size                   = dci_sz.format1_0_common_size;
   dci.dci_format_id                  = 1;
-  dci.N_rb_dl_bwp                    = initial_active_dl_bwp.crbs.length();
+  dci.N_rb_dl_bwp                    = dci_cfg.N_rb_dl_bwp_initial;
   dci.frequency_resource             = ra_frequency_type1_get_riv(
       ra_frequency_type1_configuration{dci.N_rb_dl_bwp, ue_grant_crbs.start(), ue_grant_crbs.length()});
   dci.time_resource = pdsch_time_res;

@@ -11,9 +11,9 @@
 #pragma once
 
 #include "srsgnb/adt/bounded_bitset.h"
+#include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/pdcch/pdcch_constants.h"
-#include "srsgnb/adt/optional.h"
 
 namespace srsgnb {
 
@@ -42,8 +42,6 @@ struct dci_config {
   unsigned coreset0_bw;
 
   bool enable_sul;
-
-
 };
 
 // TODO (joaquim): document these fields.
