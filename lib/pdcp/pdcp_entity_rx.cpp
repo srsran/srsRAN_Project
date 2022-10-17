@@ -40,6 +40,8 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
 
 void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
 {
+  metrics_add_pdus(1, pdu.length());
+
   // Log PDU
   logger.log_info(pdu.begin(),
                   pdu.end(),
@@ -56,6 +58,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
 
   // Sanity check
   if (pdu.length() <= hdr_len_bytes) {
+    metrics_add_dropped_pdus(1);
     logger.log_error("PDCP PDU is too small. PDU length={}, header length={}", pdu.length(), hdr_len_bytes);
     return;
   }
@@ -64,6 +67,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
   // Extract RCVD_SN from header
   uint32_t rcvd_sn = {};
   if (not read_data_pdu_header(pdu, rcvd_sn)) {
+    metrics_add_dropped_pdus(1);
     logger.log_error("Error extracting PDCP SN");
     return;
   }
@@ -127,6 +131,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
     bool is_valid = integrity_verify(sdu, rcvd_count, mac);
     if (!is_valid) {
       logger.log_error(sdu.begin(), sdu.end(), "Integrity failed. Dropping PDU");
+      metrics_add_integrity_failed_pdus(1);
       upper_cn.on_integrity_failure();
       return; // Invalid packet, drop.
     }
@@ -199,6 +204,7 @@ void pdcp_entity_rx::deliver_all_consecutive_counts()
     logger.log_debug("Delivering SDU with RCVD_COUNT {}", it->first);
 
     // Pass PDCP SDU to the upper layers
+    metrics_add_sdus(1, it->second.length());
     upper_dn.on_new_sdu(std::move(it->second));
 
     // Update RX_DELIV
