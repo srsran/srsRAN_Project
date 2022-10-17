@@ -8,6 +8,8 @@
  *
  */
 
+#include "srsgnb/security/ciphering.h"
+#include "srsgnb/security/integrity.h"
 #include "srsgnb/security/security.h"
 #include <gtest/gtest.h>
 

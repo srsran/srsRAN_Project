@@ -11,6 +11,7 @@
  */
 
 #include "srsgnb/security/security.h"
+#include "srsgnb/security/ssl.h"
 #include <arpa/inet.h>
 
 #ifdef HAVE_MBEDTLS

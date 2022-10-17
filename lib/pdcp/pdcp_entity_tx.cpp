@@ -9,6 +9,8 @@
  */
 
 #include "pdcp_entity_tx.h"
+#include "srsgnb/security/ciphering.h"
+#include "srsgnb/security/integrity.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
 using namespace srsgnb;
