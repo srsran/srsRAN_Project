@@ -63,9 +63,8 @@ void srsgnb::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu
   proc_pdu.bwp_start_rb            = fapi_pdu.bwp_start;
   proc_pdu.bwp_size_rb             = fapi_pdu.bwp_size;
 
-  proc_pdu.cp =
-      cyclic_prefix((fapi_pdu.cyclic_prefix == fapi::cyclic_prefix_type::normal) ? cyclic_prefix::options::NORMAL
-                                                                                 : cyclic_prefix::options::EXTENDED);
+  proc_pdu.cp = cyclic_prefix((fapi_pdu.cyclic_prefix == fapi::cyclic_prefix_type::normal) ? cyclic_prefix::NORMAL
+                                                                                           : cyclic_prefix::EXTENDED);
   proc_pdu.modulation    = fapi_pdu.qam_mod_order;
   proc_pdu.n_id          = fapi_pdu.nid_pusch;
   proc_pdu.nof_tx_layers = fapi_pdu.num_layers;

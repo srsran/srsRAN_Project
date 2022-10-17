@@ -166,9 +166,8 @@ void srsgnb::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&   p
   proc_pdu.rnti         = fapi_pdu.rnti;
   proc_pdu.bwp_size_rb  = fapi_pdu.bwp_size;
   proc_pdu.bwp_start_rb = fapi_pdu.bwp_start;
-  proc_pdu.cp =
-      cyclic_prefix((fapi_pdu.cyclic_prefix == fapi::cyclic_prefix_type::normal) ? cyclic_prefix::options::NORMAL
-                                                                                 : cyclic_prefix::options::EXTENDED);
+  proc_pdu.cp = cyclic_prefix((fapi_pdu.cyclic_prefix == fapi::cyclic_prefix_type::normal) ? cyclic_prefix::NORMAL
+                                                                                           : cyclic_prefix::EXTENDED);
 
   fill_codewords(proc_pdu, fapi_pdu);
 

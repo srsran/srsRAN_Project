@@ -30,7 +30,7 @@ static void fill_bwp_parameters(fapi::dl_pdcch_pdu_builder&  builder,
   builder.set_bwp_parameters(crbs.length(),
                              crbs.start(),
                              bwp_cfg.scs,
-                             (bwp_cfg.cp_extended) ? cyclic_prefix::options::EXTENDED : cyclic_prefix::options::NORMAL);
+                             (bwp_cfg.cp_extended) ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
 }
 
 static freq_resource_bitmap calculate_coreset0_freq_res_bitmap(const coreset_configuration& coreset_cfg)
