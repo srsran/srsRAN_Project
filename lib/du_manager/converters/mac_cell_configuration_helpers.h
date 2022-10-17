@@ -62,6 +62,10 @@ make_sched_cell_config_req(du_cell_index_t cell_index, const du_cell_config& du_
   sched_req.nof_ant_ports = 1;
   sched_req.nof_ant_ports = 1;
 
+  /// Msg4 parameters.
+  /// Note: A MCS index of 7 can handle Msg4 of size 458 bytes.
+  sched_req.max_msg4_mcs_index = 7;
+
   /// SIB1 parameters.
   sched_req.coreset0          = du_cfg.coreset0_idx;
   sched_req.searchspace0      = du_cfg.searchspace0_idx;

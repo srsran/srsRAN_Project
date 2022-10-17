@@ -30,8 +30,9 @@ unsigned get_random_uint(unsigned min, unsigned max)
 
 // Parameters to be passed to test.
 struct srb0_test_params {
-  uint8_t k0;
-  uint8_t k1;
+  uint8_t  k0;
+  uint8_t  k1;
+  unsigned max_mcs_index;
 };
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
@@ -51,7 +52,7 @@ struct test_bench {
     pdcch_sch{cell_cfg},
     pucch_sch{cell_cfg},
     ue_alloc(ue_db, srslog::fetch_basic_logger("MAC")),
-    srb0_sched(cell_cfg, pdcch_sch, pucch_sch, ue_db)
+    srb0_sched(cell_cfg, pdcch_sch, pucch_sch, ue_db, cell_req.max_msg4_mcs_index)
   {
   }
 };
@@ -116,6 +117,7 @@ protected:
   {
     sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
     msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = params.k0;
+    msg.max_msg4_mcs_index                                               = params.max_mcs_index;
 
     if (mode == duplex_mode::TDD) {
       msg.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common();
@@ -302,7 +304,8 @@ TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
 
 INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
                          srb0_scheduler_tester,
-                         testing::Values(srb0_test_params{.k0 = 1, .k1 = 4}, srb0_test_params{.k0 = 2, .k1 = 4}));
+                         testing::Values(srb0_test_params{.k0 = 1, .k1 = 4, .max_mcs_index = 27},
+                                         srb0_test_params{.k0 = 2, .k1 = 4, .max_mcs_index = 27}));
 
 int main(int argc, char** argv)
 {

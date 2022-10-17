@@ -51,7 +51,7 @@ private:
 
     cell(const ue_scheduler_cell_params& params, ue_list& ues) :
       cell_res_alloc(params.cell_res_alloc),
-      srb0_sched(params.cell_res_alloc->cfg, *params.pdcch_sched, *params.pucch_sched, ues)
+      srb0_sched(params.cell_res_alloc->cfg, *params.pdcch_sched, *params.pucch_sched, ues, params.max_msg4_mcs_index)
     {
     }
   };

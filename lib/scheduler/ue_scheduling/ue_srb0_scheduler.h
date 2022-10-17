@@ -25,7 +25,8 @@ public:
   explicit ue_srb0_scheduler(const cell_configuration& cell_cfg_,
                              pdcch_resource_allocator& pdcch_sch_,
                              pucch_allocator&          pucch_sch_,
-                             ue_list&                  ues_);
+                             ue_list&                  ues_,
+                             unsigned                  max_msg4_mcs_index_);
 
   /// Handles DL buffer state reported by upper layers.
   /// \param[in] ue_index UE's DU Index for which SRB0 message needs to be scheduled.
@@ -59,6 +60,9 @@ private:
   pdcch_resource_allocator& pdcch_sch;
   pucch_allocator&          pucch_sch;
   ue_list&                  ues;
+
+  /// Maximum MCS index that can be assigned when scheduling MSG4.
+  unsigned max_msg4_mcs_index;
 
   bwp_configuration initial_active_dl_bwp;
 

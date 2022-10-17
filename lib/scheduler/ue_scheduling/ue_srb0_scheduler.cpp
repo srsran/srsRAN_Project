@@ -20,11 +20,13 @@ using namespace srsgnb;
 ue_srb0_scheduler::ue_srb0_scheduler(const cell_configuration& cell_cfg_,
                                      pdcch_resource_allocator& pdcch_sch_,
                                      pucch_allocator&          pucch_sch_,
-                                     ue_list&                  ues_) :
+                                     ue_list&                  ues_,
+                                     unsigned                  max_msg4_mcs_index_) :
   cell_cfg(cell_cfg_),
   pdcch_sch(pdcch_sch_),
   pucch_sch(pucch_sch_),
   ues(ues_),
+  max_msg4_mcs_index(max_msg4_mcs_index_),
   initial_active_dl_bwp(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params),
   logger(srslog::fetch_basic_logger("MAC"))
 {
@@ -113,9 +115,8 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   const unsigned nof_symb_sh = pdsch_td_cfg.symbols.length();
   prb_bitmap     used_crbs   = pdsch_alloc.dl_res_grid.used_crbs(initial_active_dl_bwp, pdsch_td_cfg.symbols);
   crb_interval   unused_crbs = find_next_empty_interval(used_crbs, 0, used_crbs.size());
-  // See 38.214, table 5.1.3.1-1: MCS index table 1 for PDSCH.
-  constexpr static unsigned max_unreserved_srb0_mcs_idx = 28;
   // Try to find least MCS to fit SRB0 message.
+  // See 38.214, table 5.1.3.1-1: MCS index table 1 for PDSCH.
   unsigned mcs_idx = 0;
   // Assumption.
   static const unsigned nof_layers = 1;
@@ -123,7 +124,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   // Assumed to be not configured hence set to 0 as per spec.
   static const unsigned nof_oh_prb = 0;
   pdsch_prbs_tbs        prbs_tbs{};
-  while (mcs_idx <= max_unreserved_srb0_mcs_idx) {
+  while (mcs_idx <= max_msg4_mcs_index) {
     // See 38.214, clause 5.1.3.1 - the UE shall use I_MCS and Table 5.1.3.1-1 to determine the modulation order (Qm)
     // and Target code rate (R) used in the physical downlink shared channel.
     sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_mcs_table::qam64, mcs_idx);
@@ -144,6 +145,14 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   if (prbs_tbs.tbs_bytes < pending_bytes) {
     logger.info(
         "SRB0 PDU size ({}) exceeds TBS calculated ({}) for rnti={:#x}.", pending_bytes, prbs_tbs.tbs_bytes, u.crnti);
+    return false;
+  }
+
+  if (mcs_idx > max_msg4_mcs_index) {
+    logger.info("MCS index chosen ({}) exceeds maximum allowed MCS index ({}) for rnti={:#x}.",
+                mcs_idx,
+                max_msg4_mcs_index,
+                u.crnti);
     return false;
   }
 

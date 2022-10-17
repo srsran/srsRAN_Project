@@ -31,7 +31,8 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
   ue_sched->add_cell(ue_scheduler_cell_params{msg.cell_index,
                                               &cells[msg.cell_index].pdcch_sch,
                                               &cells[msg.cell_index].pucch_sch,
-                                              &cells[msg.cell_index].res_grid});
+                                              &cells[msg.cell_index].res_grid,
+                                              msg.max_msg4_mcs_index});
 
   logger.info("SCHED: Cell with cell_index={} was configured.", msg.cell_index);
 

@@ -58,6 +58,9 @@ struct sched_cell_configuration_request_message {
   /// This corresponds to searchSpaceZero as per PDCCH-ConfigSIB1, TS 38.331.
   uint8_t searchspace0;
 
+  /// [Implementation-defined] Msg4 parameters.
+  unsigned max_msg4_mcs_index;
+
   /// [Implementation-defined] SIB1 parameters.
   sib1_rtx_periodicity sib1_retx_period;
   uint8_t              sib1_mcs;

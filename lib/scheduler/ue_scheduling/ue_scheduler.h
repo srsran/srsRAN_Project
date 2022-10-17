@@ -24,6 +24,7 @@ struct ue_scheduler_cell_params {
   pdcch_resource_allocator* pdcch_sched;
   pucch_allocator*          pucch_sched;
   cell_resource_allocator*  cell_res_alloc;
+  unsigned                  max_msg4_mcs_index;
 };
 
 /// Interface of data scheduler that is used to allocate UE DL and UL grants in a given slot
