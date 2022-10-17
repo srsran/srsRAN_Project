@@ -19,7 +19,6 @@
 #include "s3g.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/ran/lcid.h"
-#include "srsgnb/srslog/detail/support/tmpl_utils.h"
 #include "srsgnb/srslog/srslog.h"
 #include "ssl.h"
 #include "zuc.h"
@@ -155,7 +154,7 @@ sec_128_as_key truncate_key(const sec_as_key& key_in);
  * Integrity Protection
  *****************************************************************************/
 
-template <typename It, typename std::enable_if<srslog::detail::is_byte_iterable<It>::value, int>::type = 0>
+template <typename It>
 void security_nia1(sec_mac&              mac,
                    const sec_128_as_key& key,
                    uint32_t              count,
@@ -165,6 +164,7 @@ void security_nia1(sec_mac&              mac,
                    It                    msg_end,
                    uint32_t              msg_len)
 {
+  static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
   uint32_t i = 0;
 
   // FIXME for now we copy the byte buffer to a contiguous piece of memory.
@@ -187,7 +187,7 @@ void security_nia1(sec_mac&              mac,
   }
 }
 
-template <typename It, typename std::enable_if<srslog::detail::is_byte_iterable<It>::value, int>::type = 0>
+template <typename It>
 void security_nia1(sec_mac&              mac,
                    const sec_128_as_key& key,
                    uint32_t              count,
@@ -199,7 +199,7 @@ void security_nia1(sec_mac&              mac,
   security_nia1(mac, key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }
 
-template <typename It, typename std::enable_if<srslog::detail::is_byte_iterable<It>::value, int>::type = 0>
+template <typename It>
 void security_nia2(sec_mac&              mac,
                    const sec_128_as_key& key,
                    uint32_t              count,
@@ -209,6 +209,7 @@ void security_nia2(sec_mac&              mac,
                    It                    msg_end,
                    uint32_t              msg_len)
 {
+  static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
   uint32_t    len             = std::distance(msg_begin, msg_end);
   uint32_t    msg_len_block_8 = (msg_len + 7) / 8;
   uint8_t     M[msg_len_block_8 + 8 + 16];
@@ -291,7 +292,7 @@ void security_nia2(sec_mac&              mac,
   }
 }
 
-template <typename It, typename std::enable_if<srslog::detail::is_byte_iterable<It>::value, int>::type = 0>
+template <typename It>
 void security_nia2(sec_mac&              mac,
                    const sec_128_as_key& key,
                    uint32_t              count,
@@ -314,7 +315,7 @@ inline uint32_t GET_WORD(uint32_t* DATA, uint32_t i)
   return WORD;
 }
 
-template <typename It, typename std::enable_if<srslog::detail::is_byte_iterable<It>::value, int>::type = 0>
+template <typename It>
 void security_nia3(sec_mac&              mac,
                    const sec_128_as_key& key,
                    uint32_t              count,
@@ -324,6 +325,7 @@ void security_nia3(sec_mac&              mac,
                    It                    msg_end,
                    uint32_t              msg_len)
 {
+  static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
   uint32_t len    = std::distance(msg_begin, msg_end);
   uint8_t  iv[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -384,7 +386,7 @@ void security_nia3(sec_mac&              mac,
   }
 }
 
-template <typename It, typename std::enable_if<srslog::detail::is_byte_iterable<It>::value, int>::type = 0>
+template <typename It>
 void security_nia3(sec_mac&              mac,
                    const sec_128_as_key& key,
                    uint32_t              count,
@@ -400,7 +402,7 @@ void security_nia3(sec_mac&              mac,
  * Encryption / Decryption
  *****************************************************************************/
 
-template <typename It, typename std::enable_if<srslog::detail::is_byte_iterable<It>::value, int>::type = 0>
+template <typename It>
 byte_buffer security_nea1(const sec_128_as_key& key,
                           uint32_t              count,
                           uint8_t               bearer,
@@ -409,6 +411,7 @@ byte_buffer security_nea1(const sec_128_as_key& key,
                           It                    msg_end,
                           uint32_t              msg_len)
 {
+  static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
   S3G_STATE state, *state_ptr;
   uint32_t  k[]  = {0, 0, 0, 0};
   uint32_t  iv[] = {0, 0, 0, 0};
@@ -466,7 +469,7 @@ byte_buffer security_nea1(const sec_128_as_key& key,
   return msg_out;
 }
 
-template <typename It, typename std::enable_if<srslog::detail::is_byte_iterable<It>::value, int>::type = 0>
+template <typename It>
 byte_buffer security_nea1(const sec_128_as_key& key,
                           uint32_t              count,
                           uint8_t               bearer,
@@ -477,7 +480,7 @@ byte_buffer security_nea1(const sec_128_as_key& key,
   return security_nea1(key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }
 
-template <typename It, typename std::enable_if<srslog::detail::is_byte_iterable<It>::value, int>::type = 0>
+template <typename It>
 byte_buffer security_nea2(const sec_128_as_key& key,
                           uint32_t              count,
                           uint8_t               bearer,
@@ -486,6 +489,7 @@ byte_buffer security_nea2(const sec_128_as_key& key,
                           It                    msg_end,
                           uint32_t              msg_len)
 {
+  static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
   aes_context   ctx;
   unsigned char stream_blk[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   unsigned char nonce_cnt[16]  = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -525,7 +529,7 @@ byte_buffer security_nea2(const sec_128_as_key& key,
   return msg_out;
 }
 
-template <typename It, typename std::enable_if<srslog::detail::is_byte_iterable<It>::value, int>::type = 0>
+template <typename It>
 byte_buffer security_nea2(const sec_128_as_key& key,
                           uint32_t              count,
                           uint8_t               bearer,
@@ -536,7 +540,7 @@ byte_buffer security_nea2(const sec_128_as_key& key,
   return security_nea2(key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }
 
-template <typename It, typename std::enable_if<srslog::detail::is_byte_iterable<It>::value, int>::type = 0>
+template <typename It>
 byte_buffer security_nea3(const sec_128_as_key& key,
                           uint32_t              count,
                           uint8_t               bearer,
@@ -545,6 +549,7 @@ byte_buffer security_nea3(const sec_128_as_key& key,
                           It                    msg_end,
                           uint32_t              msg_len)
 {
+  static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
   uint8_t iv[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
   uint32_t* ks;
@@ -606,7 +611,7 @@ byte_buffer security_nea3(const sec_128_as_key& key,
   return msg_out;
 }
 
-template <typename It, typename std::enable_if<srslog::detail::is_byte_iterable<It>::value, int>::type = 0>
+template <typename It>
 byte_buffer security_nea3(const sec_128_as_key& key,
                           uint32_t              count,
                           uint8_t               bearer,
