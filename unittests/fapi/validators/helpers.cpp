@@ -101,14 +101,6 @@ static cyclic_prefix generate_cyclic_prefix()
   return cyclic_prefix(static_cast<cyclic_prefix::options>(dist(gen)));
 }
 
-// TODO: Obsolete function to be removed when the cyclic_prefix_type gets replaced.
-static cyclic_prefix_type generate_cyclic_prefix_type()
-{
-  std::uniform_int_distribution<unsigned> dist(0, 1);
-
-  return static_cast<cyclic_prefix_type>(dist(gen));
-}
-
 static pci_t generate_pci()
 {
   std::uniform_int_distribution<unsigned> dist(0, 1007);
@@ -237,7 +229,7 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
   std::uniform_real_distribution<float>   power_dist(-32, 32.0);
 
   unsigned                 pdu_bitmap          = 0;
-  cyclic_prefix_type       cyclic_p            = cyclic_prefix_type::normal;
+  cyclic_prefix            cyclic_p            = cyclic_prefix::NORMAL;
   pdsch_ref_point_type     ref_point           = pdsch_ref_point_type::point_a;
   dmrs_config_type         config_type         = dmrs_config_type::type1;
   low_papr_dmrs_type       low_papr            = low_papr_dmrs_type::independent_cdm_group;
@@ -336,7 +328,7 @@ dl_csi_rs_pdu unittest::build_valid_dl_csi_pdu()
   dl_csi_rs_pdu pdu;
 
   pdu.scs                                                   = subcarrier_spacing::kHz15;
-  pdu.cyclic_prefix                                         = cyclic_prefix_type::normal;
+  pdu.cp                                                    = cyclic_prefix::NORMAL;
   pdu.start_rb                                              = 23;
   pdu.num_rbs                                               = 25;
   pdu.type                                                  = csi_type::CSI_RS_NZP;
@@ -857,7 +849,7 @@ static ul_pucch_pdu generate_generic_ul_pucch_pdu()
   pdu.bwp_size                       = generate_bwp_size();
   pdu.bwp_start                      = generate_bwp_start();
   pdu.scs                            = generate_scs();
-  pdu.cyclic_prefix                  = generate_cyclic_prefix_type();
+  pdu.cp                             = generate_cyclic_prefix();
   pdu.multi_slot_tx_indicator        = generate_multi_slot_tx_indicator();
   pdu.pi2_bpsk                       = true;
   pdu.prb_start                      = generate_bwp_start();
@@ -1032,7 +1024,7 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
   pdu.bwp_size                            = generate_bwp_size();
   pdu.bwp_start                           = generate_bwp_start();
   pdu.scs                                 = generate_scs();
-  pdu.cyclic_prefix                       = generate_cyclic_prefix_type();
+  pdu.cp                                  = generate_cyclic_prefix();
   pdu.target_code_rate                    = 1982U;
   pdu.transform_precoding                 = generate_bool();
   pdu.qam_mod_order                       = generate_qam_mod_order(pdu.transform_precoding);

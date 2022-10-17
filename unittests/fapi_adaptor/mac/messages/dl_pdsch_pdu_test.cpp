@@ -29,8 +29,7 @@ static void test_conversion_ok()
   TESTASSERT_EQ(pdu.pdsch_cfg.coreset_cfg->coreset0_crbs().length(), fapi_pdu.bwp_size);
   TESTASSERT_EQ(pdu.pdsch_cfg.coreset_cfg->coreset0_crbs().start(), fapi_pdu.bwp_start);
   TESTASSERT_EQ(bwp_cfg.scs, fapi_pdu.scs);
-  TESTASSERT_EQ(bwp_cfg.cp_extended ? fapi::cyclic_prefix_type::extended : fapi::cyclic_prefix_type::normal,
-                fapi_pdu.cyclic_prefix);
+  TESTASSERT_EQ(bwp_cfg.cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL, fapi_pdu.cp);
 
   // Codewords.
   const auto& fapi_cw = fapi_pdu.cws.front();

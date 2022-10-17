@@ -47,11 +47,9 @@ INSTANTIATE_TEST_SUITE_P(Subcarrier_spacing,
 INSTANTIATE_TEST_SUITE_P(
     Cyclic_prefix,
     ValidateCSIPDUField,
-    testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{"Cyclic prefix",
-                                                                   [](dl_csi_rs_pdu& pdu, int value) {
-                                                                     pdu.cyclic_prefix =
-                                                                         static_cast<cyclic_prefix_type>(value);
-                                                                   }}),
+    testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
+                         "Cyclic prefix",
+                         [](dl_csi_rs_pdu& pdu, int value) { pdu.cp = static_cast<cyclic_prefix::options>(value); }}),
                      testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
 
 INSTANTIATE_TEST_SUITE_P(Start_RB,

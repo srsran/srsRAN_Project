@@ -295,7 +295,7 @@ bool srsgnb::fapi::validate_ul_pucch_pdu(const ul_pucch_pdu& pdu, validator_repo
   result &= validate_bwp_size(pdu.bwp_size, report);
   result &= validate_bwp_start(pdu.bwp_start, report);
   result &= validate_scs(static_cast<unsigned>(pdu.scs), report);
-  result &= validate_cyclic_prefix(static_cast<unsigned>(pdu.cyclic_prefix), report);
+  result &= validate_cyclic_prefix(static_cast<unsigned>(pdu.cp), report);
   result &= validate_format_type(static_cast<unsigned>(pdu.format_type), report);
   result &= validate_multi_slot_tx_indicator(static_cast<unsigned>(pdu.multi_slot_tx_indicator), report);
   // NOTE: Pi to BPSK property uses the whole range of the variable, so it will not be validated.

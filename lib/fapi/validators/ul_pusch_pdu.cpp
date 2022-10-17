@@ -482,7 +482,7 @@ bool srsgnb::fapi::validate_ul_pusch_pdu(const ul_pusch_pdu& pdu, validator_repo
   result &= validate_bwp_size(pdu.bwp_size, report);
   result &= validate_bwp_start(pdu.bwp_start, report);
   result &= validate_scs(static_cast<unsigned>(pdu.scs), report);
-  result &= validate_cyclic_prefix(static_cast<unsigned>(pdu.cyclic_prefix), report);
+  result &= validate_cyclic_prefix(static_cast<unsigned>(pdu.cp), report);
   // NOTE: Target code rate property range is not specified, so it will not be validated.
   result &= validate_qam_mod_order(get_bits_per_symbol(pdu.qam_mod_order), pdu.transform_precoding, report);
   result &= validate_mcs_index(pdu.mcs_index, report);

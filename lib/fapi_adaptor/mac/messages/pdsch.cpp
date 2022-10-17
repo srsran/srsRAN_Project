@@ -171,8 +171,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   builder.set_bwp_parameters(mac_pdu.pdsch_cfg.coreset_cfg->coreset0_crbs().length(),
                              mac_pdu.pdsch_cfg.coreset_cfg->coreset0_crbs().start(),
                              mac_pdu.pdsch_cfg.bwp_cfg->scs,
-                             mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? fapi::cyclic_prefix_type::extended
-                                                                    : fapi::cyclic_prefix_type::normal);
+                             mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
 
   fill_power_parameters(builder);
 
@@ -223,8 +222,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   builder.set_bwp_parameters(mac_pdu.pdsch_cfg.bwp_cfg->crbs.length(),
                              mac_pdu.pdsch_cfg.bwp_cfg->crbs.start(),
                              mac_pdu.pdsch_cfg.bwp_cfg->scs,
-                             mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? fapi::cyclic_prefix_type::extended
-                                                                    : fapi::cyclic_prefix_type::normal);
+                             mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
 
   fill_power_parameters(builder);
 

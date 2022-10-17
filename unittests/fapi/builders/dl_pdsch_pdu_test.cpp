@@ -41,7 +41,7 @@ static void test_bwp_parameters()
                    subcarrier_spacing::kHz60,
                    subcarrier_spacing::kHz120,
                    subcarrier_spacing::kHz240}) {
-    for (auto cprefix : {cyclic_prefix_type::normal, cyclic_prefix_type::extended}) {
+    for (auto cprefix : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {
       dl_pdsch_pdu         pdu;
       dl_pdsch_pdu_builder builder(pdu);
 
@@ -53,7 +53,7 @@ static void test_bwp_parameters()
       TESTASSERT_EQ(bwp_size, pdu.bwp_size);
       TESTASSERT_EQ(bwp_start, pdu.bwp_start);
       TESTASSERT_EQ(scs, pdu.scs);
-      TESTASSERT_EQ(cprefix, pdu.cyclic_prefix);
+      TESTASSERT_EQ(cprefix, pdu.cp);
     }
   }
 }

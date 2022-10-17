@@ -417,12 +417,12 @@ public:
   /// Sets the BWP parameters for the fields of the PDSCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
   dl_pdsch_pdu_builder&
-  set_bwp_parameters(uint16_t bwp_size, uint16_t bwp_start, subcarrier_spacing scs, cyclic_prefix_type prefix)
+  set_bwp_parameters(uint16_t bwp_size, uint16_t bwp_start, subcarrier_spacing scs, cyclic_prefix cp)
   {
-    pdu.bwp_size      = bwp_size;
-    pdu.bwp_start     = bwp_start;
-    pdu.scs           = scs;
-    pdu.cyclic_prefix = prefix;
+    pdu.bwp_size  = bwp_size;
+    pdu.bwp_start = bwp_start;
+    pdu.scs       = scs;
+    pdu.cp        = cp;
 
     return *this;
   }
@@ -783,10 +783,10 @@ public:
 
   /// Sets the CSI-RS PDU BWP parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.3 in table CSI-RS PDU.
-  dl_csi_rs_pdu_builder& set_bwp_parameters(subcarrier_spacing scs, cyclic_prefix_type prefix)
+  dl_csi_rs_pdu_builder& set_bwp_parameters(subcarrier_spacing scs, cyclic_prefix cp)
   {
-    pdu.scs           = scs;
-    pdu.cyclic_prefix = prefix;
+    pdu.scs = scs;
+    pdu.cp  = cp;
 
     return *this;
   }
@@ -1955,12 +1955,12 @@ public:
   /// Sets the PUCCH PDU BWP parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
   ul_pucch_pdu_builder&
-  set_bwp_parameters(uint16_t bwp_size, uint16_t bwp_start, subcarrier_spacing scs, cyclic_prefix_type cp)
+  set_bwp_parameters(uint16_t bwp_size, uint16_t bwp_start, subcarrier_spacing scs, cyclic_prefix cp)
   {
-    pdu.bwp_size      = bwp_size;
-    pdu.bwp_start     = bwp_start;
-    pdu.scs           = scs;
-    pdu.cyclic_prefix = cp;
+    pdu.bwp_size  = bwp_size;
+    pdu.bwp_start = bwp_start;
+    pdu.scs       = scs;
+    pdu.cp        = cp;
 
     return *this;
   }
@@ -2149,12 +2149,12 @@ public:
   /// Sets the PUSCH PDU BWP parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH PDU.
   ul_pusch_pdu_builder&
-  set_bwp_parameters(uint16_t bwp_size, uint16_t bwp_start, subcarrier_spacing scs, cyclic_prefix_type cyclic_prefix)
+  set_bwp_parameters(uint16_t bwp_size, uint16_t bwp_start, subcarrier_spacing scs, cyclic_prefix cp)
   {
-    pdu.bwp_size      = bwp_size;
-    pdu.bwp_start     = bwp_start;
-    pdu.scs           = scs;
-    pdu.cyclic_prefix = cyclic_prefix;
+    pdu.bwp_size  = bwp_size;
+    pdu.bwp_start = bwp_start;
+    pdu.scs       = scs;
+    pdu.cp        = cp;
 
     return *this;
   }

@@ -364,7 +364,7 @@ bool srsgnb::fapi::validate_dl_pdsch_pdu(const dl_pdsch_pdu& pdu, validator_repo
   result &= validate_bwp_size(pdu.bwp_size, report);
   result &= validate_bwp_start(pdu.bwp_start, report);
   result &= validate_scs(static_cast<unsigned>(pdu.scs), report);
-  result &= validate_cp(static_cast<unsigned>(pdu.cyclic_prefix), report);
+  result &= validate_cp(static_cast<unsigned>(pdu.cp), report);
 
   // Validate the codewords.
   for (const auto& cw : pdu.cws) {

@@ -166,7 +166,7 @@ bool srsgnb::fapi::validate_dl_csi_pdu(const dl_csi_rs_pdu& pdu, validator_repor
   bool result = true;
 
   result &= validate_scs(static_cast<unsigned>(pdu.scs), report);
-  result &= validate_cp(static_cast<unsigned>(pdu.cyclic_prefix), report);
+  result &= validate_cp(static_cast<unsigned>(pdu.cp), report);
   result &= validate_start_rb(pdu.start_rb, report);
   result &= validate_nof_rb(pdu.num_rbs, report);
   result &= validate_csi_type(static_cast<unsigned>(pdu.type), report);

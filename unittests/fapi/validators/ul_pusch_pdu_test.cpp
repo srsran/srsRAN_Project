@@ -78,11 +78,9 @@ INSTANTIATE_TEST_SUITE_P(Subcarrier_spacing,
 INSTANTIATE_TEST_SUITE_P(
     Cyclic_prefix,
     ValidatePUSCHPDUField,
-    testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{"Cyclic prefix",
-                                                                  [](ul_pusch_pdu& pdu, int value) {
-                                                                    pdu.cyclic_prefix =
-                                                                        static_cast<cyclic_prefix_type>(value);
-                                                                  }}),
+    testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
+                         "Cyclic prefix",
+                         [](ul_pusch_pdu& pdu, int value) { pdu.cp = static_cast<cyclic_prefix::options>(value); }}),
                      testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
 
 INSTANTIATE_TEST_SUITE_P(Modulation_order_tp_disabled,

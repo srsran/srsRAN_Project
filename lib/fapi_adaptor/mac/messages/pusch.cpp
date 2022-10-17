@@ -34,8 +34,7 @@ void srsgnb::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder&
   builder.set_bwp_parameters(bwp_cfg.crbs.length(),
                              bwp_cfg.crbs.start(),
                              bwp_cfg.scs,
-                             (bwp_cfg.cp_extended) ? fapi::cyclic_prefix_type::extended
-                                                   : fapi::cyclic_prefix_type::normal);
+                             (bwp_cfg.cp_extended) ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
 
   float R = mac_pdu.target_code_rate * (1.F / 1024);
   builder.set_information_parameters(R,

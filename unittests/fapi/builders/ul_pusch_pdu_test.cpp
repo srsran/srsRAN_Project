@@ -33,7 +33,7 @@ static void test_bwp_params()
   unsigned           bwp_start = 100;
   unsigned           bwp_size  = 69;
   subcarrier_spacing scs       = subcarrier_spacing::kHz30;
-  cyclic_prefix_type cp        = cyclic_prefix_type::extended;
+  cyclic_prefix      cp        = cyclic_prefix::EXTENDED;
 
   ul_pusch_pdu         pdu;
   ul_pusch_pdu_builder builder(pdu);
@@ -43,7 +43,7 @@ static void test_bwp_params()
   TESTASSERT_EQ(bwp_size, pdu.bwp_size);
   TESTASSERT_EQ(bwp_start, pdu.bwp_start);
   TESTASSERT_EQ(scs, pdu.scs);
-  TESTASSERT_EQ(cp, pdu.cyclic_prefix);
+  TESTASSERT_EQ(cp, pdu.cp);
 }
 
 static void test_information_params()

@@ -25,8 +25,7 @@ TEST(ULPUSCHPDUTest, ValidPUSCHShouldPass)
   convert_pusch_mac_to_fapi(fapi_pdu, mac_pdu);
 
   // BWP.
-  ASSERT_EQ(mac_pdu.bwp_cfg->cp_extended ? fapi::cyclic_prefix_type::extended : fapi::cyclic_prefix_type::normal,
-            fapi_pdu.cyclic_prefix);
+  ASSERT_EQ(mac_pdu.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL, fapi_pdu.cp);
   ASSERT_EQ(mac_pdu.bwp_cfg->scs, fapi_pdu.scs);
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.start(), fapi_pdu.bwp_start);
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.length(), fapi_pdu.bwp_size);

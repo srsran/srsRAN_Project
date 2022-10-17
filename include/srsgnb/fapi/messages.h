@@ -109,10 +109,6 @@ struct dl_pdcch_pdu_parameters_v4 {
   //: TODO: mu_mimo
 };
 
-/// Cyclic prefix type IDs.
-//: TODO: remove this type once all messages use the new cyclic_prefix type in ran.
-enum class cyclic_prefix_type : uint8_t { normal, extended };
-
 /// Downlink DCI PDU configuration.
 struct dl_dci_pdu {
   rnti_t   rnti;
@@ -254,7 +250,7 @@ struct dl_pdsch_pdu {
   uint16_t                                             bwp_size;
   uint16_t                                             bwp_start;
   subcarrier_spacing                                   scs;
-  cyclic_prefix_type                                   cyclic_prefix;
+  cyclic_prefix                                        cp;
   static_vector<dl_pdsch_codeword, MAX_NUM_CW_PER_PDU> cws;
   uint16_t                                             nid_pdsch;
   uint8_t                                              num_layers;
@@ -301,7 +297,7 @@ enum class csi_freq_density_type : uint8_t { dot5_even_RB, dot5_odd_RB, one, thr
 /// Downlink CSI-RS PDU information.
 struct dl_csi_rs_pdu {
   subcarrier_spacing     scs;
-  cyclic_prefix_type     cyclic_prefix;
+  cyclic_prefix          cp;
   uint16_t               start_rb;
   uint16_t               num_rbs;
   csi_type               type;
@@ -569,7 +565,7 @@ struct ul_pusch_pdu {
   uint16_t                 bwp_size;
   uint16_t                 bwp_start;
   subcarrier_spacing       scs;
-  cyclic_prefix_type       cyclic_prefix;
+  cyclic_prefix            cp;
   uint16_t                 target_code_rate;
   modulation_scheme        qam_mod_order;
   uint8_t                  mcs_index;
@@ -619,7 +615,7 @@ struct ul_pucch_pdu {
   uint16_t                 bwp_size;
   uint16_t                 bwp_start;
   subcarrier_spacing       scs;
-  cyclic_prefix_type       cyclic_prefix;
+  cyclic_prefix            cp;
   pucch_format             format_type;
   pucch_repetition_tx_slot multi_slot_tx_indicator;
   bool                     pi2_bpsk;
@@ -659,7 +655,7 @@ struct ul_msg_a_pusch_pdu {
   uint16_t                bwp_size;
   uint16_t                bwp_start;
   subcarrier_spacing      scs;
-  cyclic_prefix_type      cyclic_prefix;
+  cyclic_prefix           cp;
   uint8_t                 msg_a_mcs;
   uint8_t                 transform_precoding;
   uint8_t                 n_id_msg_a_pusch;
@@ -712,7 +708,7 @@ struct ul_srs_pdu {
   uint16_t           bwp_size;
   uint16_t           bwp_start;
   subcarrier_spacing scs;
-  cyclic_prefix_type cyclic_prefix;
+  cyclic_prefix      cp;
   uint8_t            num_ant_ports;
   uint8_t            num_symbols;
   uint8_t            num_repetitions;
@@ -1233,7 +1229,7 @@ struct cell_param {
 
 /// Encodes the carrier parameters.
 struct carrier_param {
-  uint8_t  cyclic_prefix;
+  uint8_t  cp;
   uint8_t  supported_subcarrier_spacings_dl;
   uint8_t  supported_subcarrier_spacings_ssb;
   uint16_t supported_bandwidth_dl;
@@ -1573,7 +1569,7 @@ struct phy_config {
   uint16_t               sfn;
   uint8_t                slot;
   subcarrier_spacing     scs;
-  cyclic_prefix_type     cyclic_prefix;
+  cyclic_prefix          cp;
 };
 
 /// Encodes the carrier configuration.

@@ -133,7 +133,7 @@ static void pdsch_conversion_test()
   std::uniform_int_distribution<unsigned> start_symbol_index_dist(0, 13);
   std::uniform_real_distribution<float>   power_dist(-32, 32.0);
 
-  for (auto cyclic_p : {fapi::cyclic_prefix_type::normal, fapi::cyclic_prefix_type::extended}) {
+  for (auto cyclic_p : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {
     for (auto ref_point : {fapi::pdsch_ref_point_type::point_a, fapi::pdsch_ref_point_type::subcarrier_0}) {
       for (auto config_type : {dmrs_config_type::type1, dmrs_config_type::type2}) {
         for (auto low_papr :

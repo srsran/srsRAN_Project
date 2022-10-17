@@ -50,12 +50,12 @@ static void test_csi_bwp_params()
   dl_csi_rs_pdu_builder builder(pdu);
 
   subcarrier_spacing scs      = subcarrier_spacing::kHz60;
-  cyclic_prefix_type cyclic_p = cyclic_prefix_type::normal;
+  cyclic_prefix      cyclic_p = cyclic_prefix::NORMAL;
 
   builder.set_bwp_parameters(scs, cyclic_p);
 
   TESTASSERT_EQ(scs, pdu.scs);
-  TESTASSERT_EQ(cyclic_p, pdu.cyclic_prefix);
+  TESTASSERT_EQ(cyclic_p, pdu.cp);
 }
 
 static void test_csi_tx_power_info_params()
