@@ -18,8 +18,6 @@
 
 #include "s3g.h"
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/ran/lcid.h"
-#include "srsgnb/srslog/srslog.h"
 #include "ssl.h"
 #include "zuc.h"
 

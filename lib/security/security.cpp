@@ -11,7 +11,6 @@
  */
 
 #include "srsgnb/security/security.h"
-#include "srsgnb/adt/byte_buffer.h"
 #include <arpa/inet.h>
 
 #ifdef HAVE_MBEDTLS
