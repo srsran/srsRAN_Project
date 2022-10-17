@@ -5,10 +5,10 @@
 
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "29"
+    ref: "30"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/testing-tools
-    ref: "29"
+    ref: "30"
     file: .gitlab/ci-shared/features/all.yml
   - local: .gitlab/ci/build.yml
 
@@ -30,71 +30,85 @@ include-guards:
       - INPUT_PATH: "."
         INPUT_IGNORE: "^\\(include\\|docs\\)/.*"
 
-.cppcheck:
+.codechecker:
+  image: registry.gitlab.com/softwareradiosystems/testing-tools/codechecker-gnb:$DOCKER_CODECHECKER_VERSION
   stage: static
-  image:
-    name: registry.gitlab.com/softwareradiosystems/testing-tools/cppcheck:$DOCKER_CPPCHECK_VERSION
-    entrypoint: [""]
   needs: []
+  tags:
+    - ${SRS_BUILD_JOB_TAG}
+  variables:
+    ANALYZER: ""
+    ANALYZER_ARGS: ""
   before_script:
     - |
-      run_cppcheck() {
-        cd ${CI_PROJECT_DIR}
-        mkdir -p cppcheck_build cppcheck_html
-        cppcheck --enable=all --template=gcc --xml --cppcheck-build-dir=cppcheck_build -I ${CI_PROJECT_DIR} \
-          -i unittests -i integrationtests -i benchmarks -i apps/examples \
-          -i lib/asn1/ -i lib/phy/generic_functions/fftx/lib_fftx_dftbat_srcs/ -i lib/phy/generic_functions/fftx/lib_fftx_idftbat_srcs/ \
-          "$@" 2>cppcheck.xml
-        cppcheck-htmlreport --source-dir=. --title=srsGNB --file=cppcheck.xml --report-dir=cppcheck_html
-      }
+      echo "
+      -/usr/lib
+      -*unittests
+      -*integrationtests
+      -*benchmarks
+      -*apps/examples
+      -*lib/asn1
+      -*lib/phy/generic_functions/fftx/lib_fftx_dftbat_srcs
+      -*lib/phy/generic_functions/fftx/lib_fftx_idftbat_srcs" >/tmp/codechecker_skip
     - |
-      count_cppcheck_errors() {
-        cd ${CI_PROJECT_DIR}
-        num_errors=$(python3 -c 'import xml.etree.ElementTree as ET; import sys; print(sum([it.attrib["severity"] == "error" for it in ET.ElementTree(file=sys.argv[1]).getroot().find("errors").findall("error")]))' ./cppcheck.xml)
-        echo $num_errors
-      }
+      export CC=/usr/bin/clang
+      export CXX=/usr/bin/clang++
+      mkdir -p build
+      cd build || exit
+      cmake -DASSERT_LEVEL=PARANOID -DAUTO_DETECT_ISA=False -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_TESTS=False ..
   script:
-    - run_cppcheck .
-    - exit $(count_cppcheck_errors)
-  artifacts: &cppcheck_artifacts
+    - static-analyzer.sh -i /tmp/codechecker_skip --analyzers ${ANALYZER} ${ANALYZER_ARGS} $CI_PROJECT_DIR
+  artifacts: &codechecker_artifacts
+    reports:
+      codequality: code-quality-report.json
     paths:
-      - cppcheck_html
+      - codechecker_html/index.html
+      - codechecker_html/statistics.html
     when: always
     expire_in: 10 minutes
-  cache: &cppcheck_cache
-    key: cppcheck-${DOCKER_CPPCHECK_VERSION}
+  cache: &codechecker_cache
+    key: codechecker-${ANALYZER}-${DOCKER_CODECHECKER_VERSION}
     paths:
-      - cppcheck_build
+      - build/codechecker_output
+  timeout: 4 hours # clangsa is slow
 
-cppcheck [cached]:
-  extends: .cppcheck
-  artifacts:
-    <<: *cppcheck_artifacts
-    paths:
-      - cppcheck_html/index.html
-      - cppcheck_html/style.css
+codechecker:
+  extends: .codechecker
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-      when: never
     - if: $ON_MR
   cache:
-    <<: *cppcheck_cache
+    <<: *codechecker_cache
     policy: pull
+  parallel:
+    matrix:
+      - ANALYZER: clang-tidy
+        ANALYZER_ARGS: --tidy-config .clang-tidy
+      - ANALYZER: cppcheck
+        ANALYZER_ARGS: --cppcheck-max-template-recursion 10
+      - ANALYZER: clangsa
+        ANALYZER_ARGS: --dryrun --ctu
 
-cppcheck [clean and update cache]:
-  extends: .cppcheck
+codecheck clean:
+  extends: .codechecker
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  artifacts:
+    <<: *codechecker_artifacts
+    paths:
+      - codechecker_html/index.html
+      - codechecker_html/statistics.html
+      - build/codechecker_output
   cache:
-    <<: *cppcheck_cache
+    <<: *codechecker_cache
     policy: push
-
-cppcheck [clean]:
-  # Fresh build with no interacton with the cache
-  extends: .cppcheck
-  rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-  cache: []
+  parallel:
+    matrix:
+      - ANALYZER: clang-tidy
+        ANALYZER_ARGS: --tidy-config .clang-tidy
+      - ANALYZER: cppcheck
+        ANALYZER_ARGS: --cppcheck-max-template-recursion 10
+      - ANALYZER: clangsa
+        ANALYZER_ARGS: --ctu
 
 ################################################################################
 ## Build + Unit Tests + Integration tests
@@ -243,6 +257,21 @@ unit tests web:
       - test_report.html
     expire_in: 10 minutes
 
+codequality html:
+  stage: documentation
+  image: registry.gitlab.com/softwareradiosystems/testing-tools/codechecker-gnb:$DOCKER_CODECHECKER_VERSION
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: always # Even if previous stages/required jobs fail
+  needs:
+    - codecheck clean
+  script:
+    - CodeChecker parse --trim-path-prefix "$CI_PROJECT_DIR" -e html ./build/codechecker_output -o ./codechecker_html || true
+  artifacts:
+    paths:
+      - codechecker_html
+    expire_in: 10 minutes
+
 pages:
   stage: documentation
   rules:
@@ -253,7 +282,7 @@ pages:
     - doxygen_generator.sh
     - mv build/public .
     - mv coverage_html public/
-    - mv cppcheck_html public/
+    - mv codechecker_html public/
     - mv test_report.html public/
     - mv requirement_report.html public/
     - mv public/index.html public/index_doxygen.html
@@ -273,15 +302,8 @@ pages:
       artifacts: true
     - job: unit tests web
       artifacts: true
-    - job: cppcheck [cached]
+    - job: codequality html
       artifacts: true
-      optional: true
-    - job: cppcheck [clean and update cache]
-      artifacts: true
-      optional: true
-    - job: cppcheck [clean]
-      artifacts: true
-      optional: true
   artifacts:
     paths:
       - public
