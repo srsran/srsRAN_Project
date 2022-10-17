@@ -30,9 +30,8 @@ unsigned get_random_uint(unsigned min, unsigned max)
 
 // Parameters to be passed to test.
 struct srb0_test_params {
-  uint8_t  k0;
-  uint8_t  k1;
-  unsigned max_mcs_index;
+  uint8_t k0;
+  uint8_t k1;
 };
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
@@ -113,11 +112,12 @@ protected:
     test_scheduler_result_consistency(bench->cell_cfg, bench->res_grid);
   }
 
-  sched_cell_configuration_request_message create_random_cell_config_request(duplex_mode mode) const
+  sched_cell_configuration_request_message create_random_cell_config_request(duplex_mode mode,
+                                                                             unsigned    max_msg4_mcs_index_) const
   {
     sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
     msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = params.k0;
-    msg.max_msg4_mcs_index                                               = params.max_mcs_index;
+    msg.max_msg4_mcs_index                                               = max_msg4_mcs_index_;
 
     if (mode == duplex_mode::TDD) {
       msg.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common();
@@ -240,7 +240,7 @@ protected:
 
 TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
 {
-  setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
+  setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD, 1));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 101 bytes.
@@ -262,7 +262,7 @@ TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
 
 TEST_P(srb0_scheduler_tester, failed_allocating_resources)
 {
-  setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
+  setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD, 2));
 
   // Add UE 1.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
@@ -286,7 +286,7 @@ TEST_P(srb0_scheduler_tester, failed_allocating_resources)
 
 TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
 {
-  setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
+  setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD, 27));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 458 bytes.
@@ -302,10 +302,25 @@ TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
   ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(get_ue(to_du_ue_index(0)), exp_size));
 }
 
+TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index)
+{
+  setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD, 3));
+  // Add UE.
+  add_ue(to_rnti(0x4601), to_du_ue_index(0));
+  // Notify about SRB0 message in DL of size 360 bytes which requires MCS index > 3.
+  unsigned mac_srb0_sdu_size = 360;
+  push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
+
+  run_slot();
+
+  // Allocation for UE should fail.
+  ASSERT_FALSE(ue_is_allocated_pdcch(scheduled_dl_pdcchs(), get_ue(to_du_ue_index(0))));
+  ASSERT_FALSE(ue_is_allocated_pdsch(get_ue(to_du_ue_index(0))));
+}
+
 INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
                          srb0_scheduler_tester,
-                         testing::Values(srb0_test_params{.k0 = 1, .k1 = 4, .max_mcs_index = 27},
-                                         srb0_test_params{.k0 = 2, .k1 = 4, .max_mcs_index = 27}));
+                         testing::Values(srb0_test_params{.k0 = 1, .k1 = 4}, srb0_test_params{.k0 = 2, .k1 = 4}));
 
 int main(int argc, char** argv)
 {
