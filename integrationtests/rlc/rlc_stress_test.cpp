@@ -249,9 +249,9 @@ void stress_test(const stress_test_args& args)
   rlc_bearer_metrics_container stack1_rlc_metrics  = stack_emulator_1.get_rlc_metrics();
 
   // Print PDCP metrics
-  // log_stack.info("STACK 0 emulator PDCP TX metrics: {}", stack0_pdcp_metrics.tx);
+  log_stack.info("STACK 0 emulator PDCP TX metrics: {}", stack0_pdcp_metrics.tx);
   log_stack.info("STACK 0 emulator PDCP RX metrics: {}", stack0_pdcp_metrics.rx);
-  // log_stack.info("STACK 1 emulator PDCP TX metrics: {}", stack1_pdcp_metrics.tx);
+  log_stack.info("STACK 1 emulator PDCP TX metrics: {}", stack1_pdcp_metrics.tx);
   log_stack.info("STACK 1 emulator PDCP RX metrics: {}", stack1_pdcp_metrics.rx);
 
   // Print RLC metrics

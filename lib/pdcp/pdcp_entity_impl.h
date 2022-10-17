@@ -47,6 +47,7 @@ public:
   pdcp_metrics_container get_metrics() final
   {
     pdcp_metrics_container m;
+    m.tx = tx->get_metrics();
     m.rx = rx->get_metrics();
     return m;
   };

@@ -17,7 +17,7 @@
 namespace srsgnb {
 
 struct pdcp_metrics_container {
-  // pdcp_tx_metrics_container tx;
+  pdcp_tx_metrics_container tx;
   pdcp_rx_metrics_container rx;
 };
 
