@@ -11,7 +11,7 @@ stages:
 .build_and_unit:
   image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-builder-gnb-${OS}:${DOCKER_BUILDER_VERSION}
   tags:
-    - srs-rfci-docker${TAG_EXTENSION}
+    - ${SRS_BUILD_JOB_TAG}${TAG_EXTENSION}
   stage: build and unit tests
   variables:
     TAG_EXTENSION: ""
