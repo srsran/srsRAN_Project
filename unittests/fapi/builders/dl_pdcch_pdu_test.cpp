@@ -22,7 +22,7 @@ static void test_bwp_params()
   unsigned           bwp_size  = 100;
   unsigned           bwp_start = 100;
   subcarrier_spacing scs       = subcarrier_spacing::kHz60;
-  cyclic_prefix      cp        = cyclic_prefix::options::NORMAL;
+  cyclic_prefix      cp        = cyclic_prefix::NORMAL;
 
   builder.set_bwp_parameters(bwp_size, bwp_start, scs, cp);
 

@@ -38,7 +38,7 @@ static void pdcch_conversion_test()
   std::uniform_int_distribution<unsigned> nid_data_dist(0, 65535);
   std::uniform_real_distribution<float>   power_dmrs_dist(-32.767, 32.767);
 
-  for (auto cp : {cyclic_prefix::options::NORMAL, cyclic_prefix::options::EXTENDED}) {
+  for (auto cp : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {
     for (auto cce_reg_mapping :
          {fapi::cce_to_reg_mapping_type::non_interleaved, fapi::cce_to_reg_mapping_type::interleaved}) {
       for (auto reg_bundle : {2U, 3U, 6U}) {

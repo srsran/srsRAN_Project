@@ -76,6 +76,11 @@ struct slot_indication_message : public base_message {
   uint16_t slot;
 };
 
+/// \brief Maximum number of DCIs per PDCCH PDU.
+///
+/// \note DCIs are grouped by CORESET, BWP and starting symbol of the PDCCH PDU.
+static constexpr size_t MAX_NUM_DCIS_PER_PDCCH_PDU = MAX_DL_PDCCH_PDUS_PER_SLOT;
+
 /// PDCCH PDU maintenance information added in FAPIv3.
 struct dl_pdcch_pdu_maintenance_v3 {
   uint16_t pdcch_pdu_index;
@@ -89,7 +94,7 @@ struct dl_pdcch_pdu_maintenance_v3 {
     int16_t  pdcch_data_power_offset_profile_sss;
   };
 
-  static_vector<maintenance_info, MAX_DL_PDCCH_PDUS_PER_SLOT> info;
+  static_vector<maintenance_info, MAX_NUM_DCIS_PER_PDCCH_PDU> info;
 };
 
 /// PDCCH PDU parameters added in FAPIv4.
@@ -98,7 +103,7 @@ struct dl_pdcch_pdu_parameters_v4 {
   struct dci_params {
     uint16_t nid_pdcch_dmrs;
   };
-  static_vector<dci_params, MAX_DL_PDCCH_PDUS_PER_SLOT> params;
+  static_vector<dci_params, MAX_NUM_DCIS_PER_PDCCH_PDU> params;
 
   //: TODO: spatial_stream_indices_present
   //: TODO: mu_mimo
@@ -140,7 +145,7 @@ struct dl_pdcch_pdu {
   pdcch_coreset_type                                    coreset_type;
   uint16_t                                              shift_index;
   coreset_configuration::precoder_granularity_type      precoder_granularity;
-  static_vector<dl_dci_pdu, MAX_DL_PDCCH_PDUS_PER_SLOT> dl_dci;
+  static_vector<dl_dci_pdu, MAX_NUM_DCIS_PER_PDCCH_PDU> dl_dci;
   dl_pdcch_pdu_maintenance_v3                           maintenance_v3;
   dl_pdcch_pdu_parameters_v4                            parameters_v4;
 };

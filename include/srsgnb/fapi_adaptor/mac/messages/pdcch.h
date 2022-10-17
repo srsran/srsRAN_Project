@@ -16,11 +16,6 @@
 namespace srsgnb {
 namespace fapi_adaptor {
 
-/// \brief Maximum number of DCIs per PDCCH PDU.
-///
-/// \note DCIs are grouped by CORESET, BWP and starting symbol of the PDCCH PDU.
-static constexpr size_t MAX_NUM_DCIS_PER_PDCCH_PDU = MAX_DL_PDCCH_PDUS_PER_SLOT;
-
 /// Collection of downlink DCIs that share the same BWP, CORESET and starting symbol.
 struct mac_pdcch_pdu {
   /// Groups the DCI information.
@@ -33,10 +28,10 @@ struct mac_pdcch_pdu {
     const dci_payload*          payload;
   };
 
-  const bwp_configuration*                            bwp_cfg;
-  const coreset_configuration*                        coreset_cfg;
-  unsigned                                            start_symbol;
-  static_vector<dci_info, MAX_NUM_DCIS_PER_PDCCH_PDU> dcis;
+  const bwp_configuration*                                  bwp_cfg;
+  const coreset_configuration*                              coreset_cfg;
+  unsigned                                                  start_symbol;
+  static_vector<dci_info, fapi::MAX_NUM_DCIS_PER_PDCCH_PDU> dcis;
 };
 
 /// \brief Helper function that converts from a PDCCH MAC PDU to a PDCCH FAPI PDU.

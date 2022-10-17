@@ -143,7 +143,7 @@ static bool validate_beta_pss_profile_sss(const dl_ssb_pdu& pdu, validator_repor
 
 /// Validates the LMax property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4 in table SSB/PBCH PDU  maintenance
 /// FAPIv3.
-static bool validate_Lmax(unsigned value, validator_report& report)
+static bool validate_L_max(unsigned value, validator_report& report)
 {
   if (value == 4 || value == 8 || value == 64) {
     return true;
@@ -175,7 +175,7 @@ bool srsgnb::fapi::validate_dl_ssb_pdu(const dl_ssb_pdu& pdu, validator_report& 
   // NOTE: SSB PDU index property will not be validated, as its range is not defined.
   result &= validate_case(static_cast<unsigned>(pdu.ssb_maintenance_v3.case_type), report);
   result &= validate_subcarrier_spacing(static_cast<unsigned>(pdu.ssb_maintenance_v3.scs), report);
-  result &= validate_Lmax(pdu.ssb_maintenance_v3.L_max, report);
+  result &= validate_L_max(pdu.ssb_maintenance_v3.L_max, report);
   result &= validate_ss_pbch_power_scaling(pdu.ssb_maintenance_v3.ss_pbch_block_power_scaling, report);
   result &= validate_beta_pss_profile_sss(pdu, report);
 

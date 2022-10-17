@@ -33,8 +33,8 @@ TEST(FapiPhyULPUSCHAdaptorTest, ValidPDUPass)
   ASSERT_EQ(fapi_pdu.rnti, phy_pdu.rnti);
   ASSERT_EQ(fapi_pdu.bwp_start, phy_pdu.bwp_start_rb);
   ASSERT_EQ(fapi_pdu.bwp_size, phy_pdu.bwp_size_rb);
-  ASSERT_EQ((fapi_pdu.cyclic_prefix == fapi::cyclic_prefix_type::normal) ? cyclic_prefix::options::NORMAL
-                                                                         : cyclic_prefix::options::EXTENDED,
+  ASSERT_EQ((fapi_pdu.cyclic_prefix == fapi::cyclic_prefix_type::normal) ? cyclic_prefix::NORMAL
+                                                                         : cyclic_prefix::EXTENDED,
             phy_pdu.cp);
   ASSERT_EQ(fapi_pdu.qam_mod_order, phy_pdu.modulation);
   ASSERT_EQ(fapi_pdu.nid_pusch, phy_pdu.n_id);

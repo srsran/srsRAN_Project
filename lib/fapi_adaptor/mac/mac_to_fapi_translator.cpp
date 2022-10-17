@@ -33,9 +33,8 @@ struct pdcch_group {
 
   bool operator==(const pdcch_group& other) const
   {
-    return (info->ctx.coreset_cfg->id == other.info->ctx.coreset_cfg->id &&
-            *info->ctx.bwp_cfg == *other.info->ctx.bwp_cfg &&
-            info->ctx.starting_symbol == other.info->ctx.starting_symbol);
+    return std::tie(info->ctx.coreset_cfg->id, *info->ctx.bwp_cfg, info->ctx.starting_symbol) ==
+           std::tie(other.info->ctx.coreset_cfg->id, *other.info->ctx.bwp_cfg, other.info->ctx.starting_symbol);
   }
   bool operator<(const pdcch_group& other) const
   {
