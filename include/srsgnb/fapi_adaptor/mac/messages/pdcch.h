@@ -18,13 +18,17 @@ namespace fapi_adaptor {
 
 /// \brief Maximum number of DCIs per PDCCH PDU.
 ///
-/// \note DCIs are grouped by CORESET, BWP and starting symbol properties of the PDCCH PDU.
+/// \note DCIs are grouped by CORESET, BWP and starting symbol of the PDCCH PDU.
 static constexpr size_t MAX_NUM_DCIS_PER_PDCCH_PDU = MAX_DL_PDCCH_PDUS_PER_SLOT;
 
 /// Collection of downlink DCIs that share the same BWP, CORESET and starting symbol.
 struct mac_pdcch_pdu {
   /// Groups the DCI information.
   struct dci_info {
+    dci_info(const pdcch_dl_information* parameters, const dci_payload* payload) :
+      parameters(parameters), payload(payload)
+    {
+    }
     const pdcch_dl_information* parameters;
     const dci_payload*          payload;
   };

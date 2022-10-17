@@ -86,7 +86,7 @@ void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
                                      to_nof_cces(dci.parameters->ctx.cces.aggr_lvl));
 
     // This parameter is not passed by the MAC, set it to zero.
-    dci_builder.set_tx_power_info_parameter({0.F});
+    dci_builder.set_tx_power_info_parameter(0.F);
 
     // These parameters are not passed by the MAC, leave them as disabled.
     dci_builder.set_maintenance_v3_dci_parameters(false, {}, {});

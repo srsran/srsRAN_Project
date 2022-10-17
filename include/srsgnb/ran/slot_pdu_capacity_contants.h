@@ -35,6 +35,10 @@ static constexpr size_t MAX_UE_PDUS_PER_SLOT = 16;
 static constexpr size_t MAX_DL_PDCCH_PDUS_PER_SLOT =
     MAX_SIB1_PDUS_PER_SLOT + MAX_RAR_PDUS_PER_SLOT + MAX_UE_PDUS_PER_SLOT;
 
+/// [Implementation defined] This corresponds to maximum number of PDSCH PDUs that can be scheduled per slot.
+static constexpr size_t MAX_DL_PDSCH_PDUS_PER_SLOT =
+    MAX_SIB1_PDUS_PER_SLOT + MAX_RAR_PDUS_PER_SLOT + MAX_UE_PDUS_PER_SLOT;
+
 /// [Implementation defined] Maximum number of PRACH occasions per slot supported by the current implementation.
 static constexpr size_t MAX_PRACH_OCCASIONS_PER_SLOT = 1;
 

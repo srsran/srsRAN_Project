@@ -22,6 +22,7 @@
 #include "srsgnb/ran/pucch/pucch_mapping.h"
 #include "srsgnb/ran/pusch/pusch_mcs.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/ran/slot_pdu_capacity_contants.h"
 #include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include <array>
@@ -75,10 +76,6 @@ struct slot_indication_message : public base_message {
   uint16_t slot;
 };
 
-/// Maximum number of supported DCIs per slot.
-// :TODO: fapi speaks about max dci per slots, but maybe this is better named max dcis per PDU?
-static constexpr unsigned MAX_DCI_PER_SLOT = 4;
-
 /// PDCCH PDU maintenance information added in FAPIv3.
 struct dl_pdcch_pdu_maintenance_v3 {
   uint16_t pdcch_pdu_index;
@@ -92,7 +89,7 @@ struct dl_pdcch_pdu_maintenance_v3 {
     int16_t  pdcch_data_power_offset_profile_sss;
   };
 
-  static_vector<maintenance_info, MAX_DCI_PER_SLOT> info;
+  static_vector<maintenance_info, MAX_DL_PDCCH_PDUS_PER_SLOT> info;
 };
 
 /// PDCCH PDU parameters added in FAPIv4.
@@ -101,7 +98,7 @@ struct dl_pdcch_pdu_parameters_v4 {
   struct dci_params {
     uint16_t nid_pdcch_dmrs;
   };
-  static_vector<dci_params, MAX_DCI_PER_SLOT> params;
+  static_vector<dci_params, MAX_DL_PDCCH_PDUS_PER_SLOT> params;
 
   //: TODO: spatial_stream_indices_present
   //: TODO: mu_mimo
@@ -130,23 +127,22 @@ enum class pdcch_coreset_type : uint8_t { pbch_or_coreset0, other };
 
 /// Downlink PDCCH PDU information.
 struct dl_pdcch_pdu {
-  uint16_t                                         coreset_bwp_size;
-  uint16_t                                         coreset_bwp_start;
-  subcarrier_spacing                               scs;
-  cyclic_prefix                                    cp;
-  uint8_t                                          start_symbol_index;
-  uint8_t                                          duration_symbols;
-  freq_resource_bitmap                             freq_domain_resource;
-  cce_to_reg_mapping_type                          cce_reg_mapping_type;
-  uint8_t                                          reg_bundle_size;
-  uint8_t                                          interleaver_size;
-  pdcch_coreset_type                               coreset_type;
-  uint16_t                                         shift_index;
-  coreset_configuration::precoder_granularity_type precoder_granularity;
-  //: TODO: should this be equal to MAX_GRANTS from RAN? review it
-  static_vector<dl_dci_pdu, MAX_DCI_PER_SLOT> dl_dci;
-  dl_pdcch_pdu_maintenance_v3                 maintenance_v3;
-  dl_pdcch_pdu_parameters_v4                  parameters_v4;
+  uint16_t                                              coreset_bwp_size;
+  uint16_t                                              coreset_bwp_start;
+  subcarrier_spacing                                    scs;
+  cyclic_prefix                                         cp;
+  uint8_t                                               start_symbol_index;
+  uint8_t                                               duration_symbols;
+  freq_resource_bitmap                                  freq_domain_resource;
+  cce_to_reg_mapping_type                               cce_reg_mapping_type;
+  uint8_t                                               reg_bundle_size;
+  uint8_t                                               interleaver_size;
+  pdcch_coreset_type                                    coreset_type;
+  uint16_t                                              shift_index;
+  coreset_configuration::precoder_granularity_type      precoder_granularity;
+  static_vector<dl_dci_pdu, MAX_DL_PDCCH_PDUS_PER_SLOT> dl_dci;
+  dl_pdcch_pdu_maintenance_v3                           maintenance_v3;
+  dl_pdcch_pdu_parameters_v4                            parameters_v4;
 };
 
 enum class pdsch_trans_type : uint8_t {
@@ -385,14 +381,12 @@ struct dl_tti_request_message : public base_message {
   static constexpr unsigned DL_DCI_INDEX = 4;
   /// Maximum supported number of DL PDU types in this release.
   static constexpr unsigned MAX_NUM_DL_TYPES = 5;
-  /// Maximum supported number of PDUs in this message.
-  static constexpr unsigned MAX_NUM_PDUS = 64;
 
-  uint16_t                                        sfn;
-  uint16_t                                        slot;
-  std::array<uint16_t, MAX_NUM_DL_TYPES>          num_pdus_of_each_type = {};
-  uint16_t                                        num_groups;
-  static_vector<dl_tti_request_pdu, MAX_NUM_PDUS> pdus;
+  uint16_t                                                sfn;
+  uint16_t                                                slot;
+  std::array<uint16_t, MAX_NUM_DL_TYPES>                  num_pdus_of_each_type = {};
+  uint16_t                                                num_groups;
+  static_vector<dl_tti_request_pdu, MAX_DL_PDUS_PER_SLOT> pdus;
   //: TODO: groups array
   //: TODO: top level rate match patterns
 };
@@ -406,14 +400,10 @@ struct dl_tti_response_pdu {
 
 /// Downlink TTI response message.
 struct dl_tti_response_message : public base_message {
-  /// Maximum number of supported PDUs in this message.
-  // :TODO: keep in sync with dl_tti_request_message
-  static constexpr unsigned MAX_NUM_PDUS = 64;
-
-  uint16_t                                      sfn;
-  uint16_t                                      slot;
-  uint16_t                                      num_pdus;
-  std::array<dl_tti_response_pdu, MAX_NUM_PDUS> pdus;
+  uint16_t                                              sfn;
+  uint16_t                                              slot;
+  uint16_t                                              num_pdus;
+  std::array<dl_tti_response_pdu, MAX_DL_PDUS_PER_SLOT> pdus;
 };
 
 /// Uplink PDU type ID.

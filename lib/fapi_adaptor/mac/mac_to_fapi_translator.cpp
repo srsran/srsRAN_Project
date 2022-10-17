@@ -29,6 +29,8 @@ struct pdcch_group {
   const pdcch_dl_information* info;
   const dci_payload*          payload;
 
+  pdcch_group(const pdcch_dl_information* info, const dci_payload* payload) : info(info), payload(payload) {}
+
   bool operator==(const pdcch_group& other) const
   {
     return (info->ctx.coreset_cfg->id == other.info->ctx.coreset_cfg->id &&
@@ -56,7 +58,7 @@ static void add_pdcch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& b
 
   static_vector<pdcch_group, MAX_DL_PDUS_PER_SLOT> groups;
   for (unsigned i = 0, e = pdcch_info.size(); i != e; ++i) {
-    groups.push_back({&pdcch_info[i], &payloads[i]});
+    groups.emplace_back(&pdcch_info[i], &payloads[i]);
   }
 
   // Group DCIs into FAPI PDCCH PDUs.
@@ -72,7 +74,7 @@ static void add_pdcch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& b
     pdu.coreset_cfg  = i->info->ctx.coreset_cfg;
     pdu.start_symbol = i->info->ctx.starting_symbol;
     for (; i != pivot; ++i) {
-      pdu.dcis.push_back({i->info, i->payload});
+      pdu.dcis.emplace_back(i->info, i->payload);
     }
 
     fapi::dl_pdcch_pdu_builder pdcch_builder = builder.add_pdcch_pdu(pdu.dcis.size());
@@ -114,7 +116,6 @@ static void add_pdsch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& b
 
 void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res)
 {
-  //: TODO: Add here an static assertion to check that the max size of the vectors in dl_res fit in the FAPI message.
   fapi::dl_tti_request_message         msg;
   fapi::dl_tti_request_message_builder builder(msg);
 
