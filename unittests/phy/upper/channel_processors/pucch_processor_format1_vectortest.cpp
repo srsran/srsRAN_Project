@@ -138,20 +138,13 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
 
   // The message shall be valid.
   ASSERT_EQ(result.message.status, uci_status::valid);
-  if (param.ack_bits.empty()) {
-    ASSERT_EQ(result.message.full_payload.data(), nullptr);
-    ASSERT_EQ(result.message.full_payload.size(), 0);
-    ASSERT_EQ(result.message.harq_ack.data(), nullptr);
-    ASSERT_EQ(result.message.harq_ack.size(), 0);
-  } else {
-    ASSERT_EQ(result.message.full_payload.size(), param.ack_bits.size());
+  ASSERT_EQ(result.message.full_payload.size(), param.ack_bits.size());
+  ASSERT_EQ(result.message.harq_ack.size(), param.ack_bits.size());
+  if (!param.ack_bits.empty()) {
     ASSERT_TRUE(srsvec::equal(result.message.full_payload, param.ack_bits));
-    ASSERT_EQ(result.message.harq_ack.size(), param.ack_bits.size());
     ASSERT_TRUE(srsvec::equal(result.message.harq_ack, param.ack_bits));
   }
-  ASSERT_EQ(result.message.sr.data(), nullptr);
   ASSERT_EQ(result.message.sr.size(), 0);
-  ASSERT_EQ(result.message.csi_part1.data(), nullptr);
   ASSERT_EQ(result.message.csi_part1.size(), 0);
 }
 
