@@ -20,31 +20,47 @@ namespace srsgnb {
 /// DCI payload data type.
 using dci_payload = bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>;
 
-/// DCI payload sizes.
-struct dci_sizes {
-  // TODO (joaquim): document these fields.
-  unsigned format0_0_common_size;
-  unsigned format1_0_common_size;
-  unsigned format0_0_ue_specific_size;
-  unsigned format1_0_ue_specific_size;
-};
-
+/// \brief DCI configuration parameters required to perform the DCI size alignment procedure.
+///
+/// The size alignment procedure, specified in TS38.212 Section 7.3.1.0, reduces the number of different DCI sizes, to
+/// simplify the detection of DCI messages by the UE.
+///
+/// \remark CORESET 0 is assumed to be configured for the cell if \c coreset0_bw is set to any value other than 0.
 struct dci_config {
-  // TODO (joaquim): document these fields.
-  unsigned N_rb_dl_bwp_initial;
-
-  /// UE DL dedicated search space.
-  unsigned N_rb_dl_bwp_active;
-
-  unsigned N_rb_ul_bwp_initial;
-  unsigned N_rb_ul_bwp_active;
-
+  /// Bandwidth of the initial DL BWP in number of Resource Blocks.
+  unsigned dl_bwp_initial_bw;
+  /// Bandwidth of the active DL BWP in number of Resource Blocks.
+  unsigned dl_bwp_active_bw;
+  /// Bandwidth of the initial UL BWP in number of Resource Blocks.
+  unsigned ul_bwp_initial_bw;
+  /// Bandwidth of the active UL BWP in number of Resource Blocks.
+  unsigned ul_bwp_active_bw;
+  /// CORESET 0 DL bandwidth. Set to 0 if not configured.
   unsigned coreset0_bw;
-
-  bool enable_sul;
 };
 
-// TODO (joaquim): document these fields.
+/// \brief DCI payload sizes.
+///
+/// Holds the DCI payload sizes, in number of bits, after performing the DCI size alignment procedure specified in
+/// TS38.212 Section 7.3.1.0.
+struct dci_sizes {
+  /// Payload size for a DCI format 0_0 message monitored in a common search space.
+  unsigned format0_0_common_size;
+  /// Payload size for a DCI format 0_0 message monitored in a UE-specific search space.
+  unsigned format0_0_ue_size;
+  /// Payload size for a DCI format 1_0 message monitored in a common search space.
+  unsigned format1_0_common_size;
+  /// Payload size for a DCI format 1_0 message monitored in a UE-specific search space.
+  unsigned format1_0_ue_size;
+};
+
+/// \brief DCI payload size alignment procedure
+///
+/// Computes the DCI payload sizes, in number of bits, with the size alignment procedure specified in TS38.212
+/// Section 7.3.1.0.
+///
+/// \param[in] config Required DCI configuration parameters.
+/// \return the DCI payload sizes in number of bits.
 dci_sizes get_dci_sizes(const dci_config& config);
 
 /// \brief Describes the necessary parameters for packing a DCI format 0_0 scrambled by C-RNTI, CS-RNTI or MCS-C-RNTI.
@@ -79,7 +95,7 @@ struct dci_0_0_c_rnti_configuration {
   unsigned hopping_offset;
   /// Parameter \f$N_{RB}^{UL,BWP}\f$. It must be set according to TS38.212 Section 7.3.1.0.
   unsigned N_rb_ul_bwp;
-  /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{UL,BWP}(N_{RB}^{UL,BWP}+1)/2) \Bigr
+  /// Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{UL,BWP}(N_{RB}^{UL,BWP}+1)/2) \Bigr
   /// \rceil\f$ bits as per TS38.214 Section 6.1.2.2.2.
   unsigned frequency_resource;
   /// Time domain resource assignment - 4 bit as per TS38.214 Section 6.1.2.1.
@@ -100,7 +116,9 @@ struct dci_0_0_c_rnti_configuration {
   optional<bool> ul_sul_indicator;
 };
 
-/// Packs a DCI format 0_0 scrambled by C-RNTI, CS-RNTI or MCS-C-RNTI.
+/// \brief Packs a DCI format 0_0 scrambled by C-RNTI, CS-RNTI or MCS-C-RNTI.
+/// \remark It assumes that DCI format 0_0 scrambled by C-RNTI, CS-RNTI or MCS-C-RNTI is used in a UE-specific
+/// Search Space, and therefore no truncation is required.
 dci_payload dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& config);
 
 /// \brief Describes the necessary parameters for packing a DCI format 0_0 scrambled by TC-RNTI.
@@ -131,7 +149,7 @@ struct dci_0_0_tc_rnti_configuration {
   unsigned hopping_offset;
   /// Parameter \f$N_{RB}^{UL,BWP}\f$. It must be set to the size of the initial UL BWP.
   unsigned N_rb_ul_bwp;
-  /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{UL,BWP}(N_{RB}^{UL,BWP}+1)/2) \Bigr
+  /// Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{UL,BWP}(N_{RB}^{UL,BWP}+1)/2) \Bigr
   /// \rceil\f$ bits as per TS38.214 Section 6.1.2.2.2.
   unsigned frequency_resource;
   /// Time domain resource assignment - 4 bit as per TS38.214 Section 6.1.2.1.
@@ -163,7 +181,7 @@ struct dci_1_0_c_rnti_configuration {
   unsigned dci_format_id;
   /// Parameter \f$N_{RB}^{DL,BWP}\f$. It must be set according to TS38.212 Section 7.3.1.0.
   unsigned N_rb_dl_bwp;
-  /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
+  /// Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
   /// \rceil\f$ bits as per TS38.214 Section 5.1.2.2.2.
   unsigned frequency_resource;
   /// Time domain resource assignment - 4 bit as per TS38.214 Section 5.1.2.1.
@@ -193,12 +211,9 @@ dci_payload dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& config);
 
 /// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by P-RNTI as per TS38.212
 /// Section 7.3.1.2.1.
+/// \remark It assumes that DCI format 1_0 scrambled by P-RNTI is always used in a Common Search Space, and therefore
+/// no padding or truncation is required.
 struct dci_1_0_p_rnti_configuration {
-  /// \brief DCI format 1_0 payload size.
-  ///
-  /// the DCI payload size is determined by the DCI size alignment procedure, specified in TS38.212 Section 7.3.1.0 and
-  /// implemented by \c get_dci_sizes.
-  unsigned payload_size;
   /// Indicates the content of the DCI format 1_0 payload when scrambled by P-RNTI.
   enum class payload_info {
     /// Indicates that only scheduling information for paging is present in the DCI.
@@ -240,15 +255,12 @@ dci_payload dci_1_0_p_rnti_pack(const dci_1_0_p_rnti_configuration& config);
 
 /// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by SI-RNTI as per TS38.212
 /// Section 7.3.1.2.1.
+/// \remark It assumes that DCI format 1_0 scrambled by SI-RNTI is always used in a Common Search Space, and therefore
+/// no padding or truncation is required.
 struct dci_1_0_si_rnti_configuration {
-  /// \brief DCI format 1_0 payload size.
-  ///
-  /// the DCI payload size is determined by the DCI size alignment procedure, specified in TS38.212 Section 7.3.1.0 and
-  /// implemented by \c get_dci_sizes.
-  unsigned payload_size;
   /// Parameter \f$N_{RB}^{DL,BWP}\f$. It must be set to CORESET0 size.
   unsigned N_rb_dl_bwp;
-  /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
+  /// Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
   /// \rceil\f$ bits as per TS38.214 Section 5.1.2.2.2.
   unsigned frequency_resource;
   /// Time domain resource assignment - 4 bit as per TS38.214 Section 5.1.2.1.
@@ -269,19 +281,16 @@ dci_payload dci_1_0_si_rnti_pack(const dci_1_0_si_rnti_configuration& config);
 
 /// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by RA-RNTI as per TS38.212
 /// Section 7.3.1.2.1.
+/// \remark It assumes that DCI format 1_0 scrambled by RA-RNTI is always used in a Common Search Space, and therefore
+/// no padding or truncation is required.
 struct dci_1_0_ra_rnti_configuration {
-  /// \brief DCI format 1_0 payload size.
-  ///
-  /// the DCI payload size is determined by the DCI size alignment procedure, specified in TS38.212 Section 7.3.1.0 and
-  /// implemented by \c get_dci_sizes.
-  unsigned payload_size;
   /// \brief Parameter \f$N_{RB}^{DL,BWP}\f$.
   ///
   /// It must be set to:
   ///   - The CORESET0 size, if the CORESET0 is configured.
   ///   - Otherwise, the initial DL BWP size.
   unsigned N_rb_dl_bwp;
-  /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
+  /// Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
   /// \rceil\f$ bits as per TS38.214 Section 5.1.2.2.2.
   unsigned frequency_resource;
   /// Time domain resource assignment - 4 bits as per TS38.214 Section 5.1.2.1.
@@ -301,18 +310,15 @@ dci_payload dci_1_0_ra_rnti_pack(const dci_1_0_ra_rnti_configuration& config);
 
 /// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by TC-RNTI, as per TS38.212
 /// Section 7.3.1.2.1.
+/// \remark It assumes that DCI format 1_0 scrambled by TC-RNTI is always used in a Common Search Space, and therefore
+/// no padding or truncation is required.
 struct dci_1_0_tc_rnti_configuration {
-  /// \brief DCI format 1_0 payload size.
-  ///
-  /// the DCI payload size is determined by the DCI size alignment procedure, specified in TS38.212 Section 7.3.1.0 and
-  /// implemented by \c get_dci_sizes.
-  unsigned payload_size;
   /// \brief Identifier for DCI formats – 1 bit.
   /// \remark The value of this field is always set to 1, indicating a DL DCI format.
   unsigned dci_format_id;
   /// Parameter \f$N_{RB}^{DL,BWP}\f$. It must be set to the CORESET0 size.
   unsigned N_rb_dl_bwp;
-  /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
+  /// Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
   /// \rceil\f$ bits as per TS38.214 Section 5.1.2.2.2.
   unsigned frequency_resource;
   /// Time domain resource assignment - 4 bit as per TS38.214 Section 5.1.2.1.

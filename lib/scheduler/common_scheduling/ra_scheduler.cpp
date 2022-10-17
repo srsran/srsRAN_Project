@@ -417,19 +417,11 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   prb_interval                  rar_prbs    = crb_to_prb(initial_active_dl_bwp, rar_crbs);
 
   // Fill RAR DCI.
-
-  // Only the initial BWP size is needed to perform DCI size alignment, since the size of DCI format 1_0 scrambled by
-  // RA-RNTI cannot be altered by padding or truncation.
-  dci_config dci_cfg          = {};
-  dci_cfg.N_rb_dl_bwp_initial = initial_active_dl_bwp.crbs.length();
-  dci_sizes dci_sz            = get_dci_sizes(dci_cfg);
-
   pdcch_dl_information& pdcch        = pdcch_alloc.result.dl.dl_pdcchs.back();
   pdcch.dci.type                     = dci_dl_rnti_config_type::ra_f1_0;
   pdcch.dci.ra_f1_0                  = {};
   dci_1_0_ra_rnti_configuration& dci = pdcch.dci.ra_f1_0;
-  dci.payload_size                   = dci_sz.format1_0_common_size;
-  dci.N_rb_dl_bwp                    = dci_cfg.N_rb_dl_bwp_initial;
+  dci.N_rb_dl_bwp                    = initial_active_dl_bwp.crbs.length();
   dci.frequency_resource             = ra_frequency_type1_get_riv(
       ra_frequency_type1_configuration{dci.N_rb_dl_bwp, rar_prbs.start(), rar_prbs.length()});
   dci.time_resource            = pdsch_time_res_index;

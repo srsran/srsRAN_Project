@@ -13,8 +13,7 @@
 
 using namespace srsgnb;
 
-// Computes the number of information bits before padding for a DCI format 0_0 message. This is used to perform DCI size
-// alignment and to determine if the UL/SUL field is included in the size-aligned DCI format 0_0 payload.
+// Computes the number of information bits before padding for a DCI format 0_0 message.
 static unsigned dci_f0_0_bits_before_padding(unsigned N_rb_ul_bwp)
 
 {
@@ -40,8 +39,7 @@ static unsigned dci_f0_0_bits_before_padding(unsigned N_rb_ul_bwp)
   return dci_fixed_nof_bits + dci_variable_nof_bits;
 }
 
-// Computes the number of information bits before padding for a DCI format 1_0 message. This is used to perform DCI size
-// alignment and to determine if the UL/SUL field is included in the size-aligned DCI format 0_0 payload.
+// Computes the number of information bits before padding for a DCI format 1_0 message.
 static unsigned dci_f1_0_bits_before_padding(unsigned N_rb_dl_bwp)
 {
   // Contribution to the DCI payload size that is fixed. It is the same number of bits for all format 1_1 variants.
@@ -57,19 +55,17 @@ dci_sizes srsgnb::get_dci_sizes(const dci_config& config)
 {
   dci_sizes sizes = {};
 
-  // TODO (joaquim): improve asserts.
-
   // Step 0
   // - Determine DCI format 0_0 monitored in a common search space according to clause 7.3.1.1.1 where N_UL_BWP_RB is
   // given by the size of the initial UL bandwidth part.
-  unsigned format0_0_info_bits_common = dci_f0_0_bits_before_padding(config.N_rb_ul_bwp_initial);
+  unsigned format0_0_info_bits_common = dci_f0_0_bits_before_padding(config.ul_bwp_initial_bw);
 
   // - Determine DCI format 1_0 monitored in a common search space according to clause 7.3.1.2.1 where N_DL_BWP_RB given
   // by:
-  //   - the size of CORESET 0 if CORESET 0 is configured for the cell; and
+  //   - the size of CORESET 0 if CORESET 0 is configured for the cell
   //   - the size of initial DL bandwidth part if CORESET 0 is not configured for the cell.
   unsigned format1_0_info_bits_common = dci_f1_0_bits_before_padding(
-      static_cast<bool>(config.coreset0_bw) ? config.coreset0_bw : config.N_rb_dl_bwp_initial);
+      static_cast<bool>(config.coreset0_bw) ? config.coreset0_bw : config.dl_bwp_initial_bw);
 
   sizes.format0_0_common_size = format0_0_info_bits_common;
   sizes.format1_0_common_size = format1_0_info_bits_common;
@@ -79,10 +75,10 @@ dci_sizes srsgnb::get_dci_sizes(const dci_config& config)
   // scheduling the same serving cell, a number of zero padding bits are generated for the DCI format 0_0 until the
   // payload size equals that of the DCI format 1_0.
   if (format0_0_info_bits_common < format1_0_info_bits_common) {
-    // The number of padding bits is computed here, without taking the optional single bit UL/SUL field into account.
-    // This field is located after the padding, and it must only be included if the format 1_0 payload has a larger
-    // amount of bits before the padding bits. Therefore, the UL/SUL can be though of as a field that takes the space of
-    // the last padding bit within the format 0_0 payload, if present. See TS38.212 Sections 7.3.1.0 and 7.3.1.1.1.
+    // The number of padding bits is computed here, including the single bit UL/SUL field. This field is located after
+    // the padding, and it must only be included if the format 1_0 payload has a larger amount of bits before the
+    // padding bits than the format 0_0 payload. Therefore, the UL/SUL can be though of as a field that takes the space
+    // of the last padding bit within the format 0_0 payload, if present. See TS38.212 Sections 7.3.1.0 and 7.3.1.1.1.
     unsigned padding_bits_incl_ul_sul = format1_0_info_bits_common - format0_0_info_bits_common;
     sizes.format0_0_common_size += padding_bits_incl_ul_sul;
   }
@@ -102,14 +98,14 @@ dci_sizes srsgnb::get_dci_sizes(const dci_config& config)
   // Step 1
   // - Determine DCI format 0_0 monitored in a UE-specific search space according to clause 7.3.1.1.1 where N_UL_BWP_RB
   // is the size of the active UL bandwidth part.
-  unsigned format0_0_info_bits_ue = dci_f0_0_bits_before_padding(config.N_rb_ul_bwp_active);
+  unsigned format0_0_info_bits_ue = dci_f0_0_bits_before_padding(config.ul_bwp_active_bw);
 
   // - Determine DCI format 1_0 monitored in a UE-specific search space according to clause 7.3.1.2.1 where N_DL_BWP_RB
   // is the size of the active DL bandwidth part.
-  unsigned format1_0_info_bits_ue = dci_f1_0_bits_before_padding(config.N_rb_dl_bwp_active);
+  unsigned format1_0_info_bits_ue = dci_f1_0_bits_before_padding(config.dl_bwp_active_bw);
 
-  sizes.format0_0_ue_specific_size = format0_0_info_bits_ue;
-  sizes.format1_0_ue_specific_size = format1_0_info_bits_ue;
+  sizes.format0_0_ue_size = format0_0_info_bits_ue;
+  sizes.format1_0_ue_size = format1_0_info_bits_ue;
 
   // - For a UE configured with supplementaryUplink in ServingCellConfig in a cell, if PUSCH is configured to be
   // transmitted on both the SUL and the non-SUL of the cell and if the number of information bits in DCI format 0_0 in
@@ -125,7 +121,7 @@ dci_sizes srsgnb::get_dci_sizes(const dci_config& config)
   // until the payload size equals that of the DCI format 1_0.
   if (format0_0_info_bits_ue < format1_0_info_bits_ue) {
     unsigned nof_padding_bits_incl_ul_sul = format1_0_info_bits_ue - format0_0_info_bits_ue;
-    sizes.format0_0_ue_specific_size += nof_padding_bits_incl_ul_sul;
+    sizes.format0_0_ue_size += nof_padding_bits_incl_ul_sul;
   }
 
   // - If DCI format 1_0 is monitored in UE-specific search space and if the number of information bits in the DCI
@@ -134,11 +130,10 @@ dci_sizes srsgnb::get_dci_sizes(const dci_config& config)
   // equals that of the DCI format 0_0
   if (format1_0_info_bits_ue < format0_0_info_bits_ue) {
     unsigned nof_padding_bits = format0_0_info_bits_ue - format1_0_info_bits_ue;
-    sizes.format1_0_ue_specific_size += nof_padding_bits;
+    sizes.format1_0_ue_size += nof_padding_bits;
   }
 
-  srsgnb_assert(sizes.format1_0_ue_specific_size == sizes.format0_0_ue_specific_size,
-                "DCI format 0_0 and 1_0 sizes must match");
+  srsgnb_assert(sizes.format1_0_ue_size == sizes.format0_0_ue_size, "DCI format 0_0 and 1_0 sizes must match");
 
   return sizes;
 }
@@ -229,7 +224,6 @@ dci_payload srsgnb::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& co
   unsigned nof_bits_before_padding = dci_f0_0_bits_before_padding(config.N_rb_ul_bwp);
 
   // Number of padding or truncation bits, including the UL/SUL optional field, if present.
-  // the UL/SUL indicator is reserved in DCI format 0_0 scrabled by TC-RNTI, as per TS38.212 Section 7.3.1.1.1.
   int padd_trunc_incl_ul_sul = config.payload_size - nof_bits_before_padding;
 
   if (padd_trunc_incl_ul_sul < 0) {
@@ -256,7 +250,7 @@ dci_payload srsgnb::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& co
                   config.hopping_offset,
                   config.N_ul_hop);
 
-    // Truncate the frequency resource allocation field.
+    // Truncate the frequency resource allocation field. to fit the frequency hopping offset.
     frequency_resource_nof_bits -= config.N_ul_hop;
 
     // Frequency hopping offset - N_ul_hop bits.
@@ -396,10 +390,6 @@ dci_payload srsgnb::dci_1_0_p_rnti_pack(const dci_1_0_p_rnti_configuration& conf
   // Reserved bits: 6 bits.
   payload.push_back(0x00U, 6);
 
-  // Since DCI format 1_0 scrambled by P-RNTI is used in common search space, no padding or truncation are applied.
-  srsgnb_assert(config.payload_size == dci_f1_0_bits_before_padding(config.N_rb_dl_bwp),
-                "padding or truncation are not allowed for DCI format 1_0 scrambled by P-RNTI");
-
   return payload;
 }
 
@@ -429,10 +419,6 @@ dci_payload srsgnb::dci_1_0_si_rnti_pack(const dci_1_0_si_rnti_configuration& co
   // Reserved bits - 15 bit.
   payload.push_back(0x00U, 15);
 
-  // Since DCI format 1_0 scrambled by SI-RNTI is used in common search space, no padding or truncation are applied.
-  srsgnb_assert(config.payload_size == dci_f1_0_bits_before_padding(config.N_rb_dl_bwp),
-                "padding or truncation are not allowed for DCI format 1_0 scrambled by SI-RNTI");
-
   return payload;
 }
 
@@ -458,10 +444,6 @@ dci_payload srsgnb::dci_1_0_ra_rnti_pack(const dci_1_0_ra_rnti_configuration& co
 
   // Reserved bits - 16 bits.
   payload.push_back(0x00U, 16);
-
-  // Since DCI format 1_0 scrambled by RA-RNTI is used in common search space, no padding or truncation are applied.
-  srsgnb_assert(config.payload_size == dci_f1_0_bits_before_padding(config.N_rb_dl_bwp),
-                "padding or truncation are not allowed for DCI format 1_0 scrambled by RA-RNTI");
 
   return payload;
 }
@@ -506,10 +488,6 @@ dci_payload srsgnb::dci_1_0_tc_rnti_pack(const dci_1_0_tc_rnti_configuration& co
 
   // PDSCH to HARQ feedback timing indicator - 3 bit.
   payload.push_back(config.pdsch_harq_fb_timing_indicator, 3);
-
-  // Since DCI format 1_0 scrambled by TC-RNTI is used in common search space, no padding or truncation are applied.
-  srsgnb_assert(config.payload_size == dci_f1_0_bits_before_padding(config.N_rb_dl_bwp),
-                "padding or truncation are not allowed for DCI format 1_0 scrambled by TC-RNTI");
 
   return payload;
 }

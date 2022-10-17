@@ -231,18 +231,11 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   auto&        sib1_pdcch = res_grid.result.dl.dl_pdcchs.back();
   prb_interval sib1_prbs  = crb_to_prb(coreset0_bwp_cfg, sib1_crbs_grant);
 
-  // Only the CORESET 0 size is needed to perform DCI size alignment, since the size of DCI format 1_0 scrambled by
-  // SI-RNTI cannot be altered by padding or truncation.
-  dci_config dci_cfg  = {};
-  dci_cfg.coreset0_bw = coreset0_bwp_cfg.crbs.length();
-  dci_sizes dci_sz    = get_dci_sizes(dci_cfg);
-
   // Fill SIB1 DCI.
   sib1_pdcch.dci.type                = dci_dl_rnti_config_type::si_f1_0;
   sib1_pdcch.dci.si_f1_0             = {};
   dci_1_0_si_rnti_configuration& dci = sib1_pdcch.dci.si_f1_0;
-  dci.payload_size                   = dci_sz.format1_0_common_size;
-  dci.N_rb_dl_bwp                    = dci_cfg.coreset0_bw;
+  dci.N_rb_dl_bwp                    = coreset0_bwp_cfg.crbs.length();
   dci.frequency_resource             = ra_frequency_type1_get_riv(
       ra_frequency_type1_configuration{dci.N_rb_dl_bwp, sib1_prbs.start(), sib1_prbs.length()});
   // TODO: compute time_domain_assigment from OFDM symbols (WIP).
