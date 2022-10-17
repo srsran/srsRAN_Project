@@ -203,12 +203,11 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
   const static_vector<byte_buffer_slice_chain, MAX_UE_PDUS_PER_SLOT>& ue_pdus = dl_data.ue_pdus;
   for (unsigned i = 0, e = ue_pdus.size(); i != e; ++i) {
     const pdsch_pdu_registry::pdu_struct& registry_pdu = pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registry::ue);
-    //: TODO: hack, remove me before merging!
-    auto* v = new std::vector<uint8_t>;
+    std::vector<uint8_t>&                 buffer       = pdsch_pool.acquire_payload_buffer();
     for (unsigned j = 0, je = ue_pdus[i].length(); j != je; ++j) {
-      v->push_back(ue_pdus[i][j]);
+      buffer.push_back(ue_pdus[i][j]);
     }
-    builder.add_pdu_custom_payload(registry_pdu.fapi_index, registry_pdu.cw_index, {v->data(), v->size()});
+    builder.add_pdu_custom_payload(registry_pdu.fapi_index, registry_pdu.cw_index, {buffer.data(), buffer.size()});
   }
 
   // Send the message.
