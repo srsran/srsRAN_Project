@@ -156,14 +156,14 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   unsigned                  nof_oh_prb            = 0; // TODO: ue_cell_cfg.cfg_ded().pdsch_serv_cell_cfg;
   constexpr static unsigned nof_bits_per_byte     = 8U;
   cw.tb_size_bytes =
-      tbs_calculator_pdsch_calculate(tbs_calculator_pdsch_configuration{nof_symb_sh,
-                                                                        calculate_nof_dmrs_per_rb(msg.pdsch_cfg.dmrs),
-                                                                        nof_oh_prb,
-                                                                        cw.target_code_rate / 1024.0F,
-                                                                        get_bits_per_symbol(cw.qam_mod),
-                                                                        nof_layers,
-                                                                        tb_scaling_field,
-                                                                        grant.crbs.length()}) /
+      tbs_calculator_calculate(tbs_calculator_configuration{nof_symb_sh,
+                                                            calculate_nof_dmrs_per_rb(msg.pdsch_cfg.dmrs),
+                                                            nof_oh_prb,
+                                                            cw.target_code_rate / 1024.0F,
+                                                            get_bits_per_symbol(cw.qam_mod),
+                                                            nof_layers,
+                                                            tb_scaling_field,
+                                                            grant.crbs.length()}) /
       nof_bits_per_byte;
 
   // Set the number of bytes of the TB.

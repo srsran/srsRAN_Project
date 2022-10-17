@@ -109,7 +109,7 @@ unsigned srsgnb::tbs_calculator_table_find_smallest_not_less_than(unsigned nof_i
   return table_valid_tbs[index];
 }
 
-unsigned srsgnb::tbs_calculator_pdsch_calculate(const tbs_calculator_pdsch_configuration& config)
+unsigned srsgnb::tbs_calculator_calculate(const tbs_calculator_configuration& config)
 {
   static constexpr unsigned NOF_SC_RB = NOF_SUBCARRIERS_PER_RB;
 

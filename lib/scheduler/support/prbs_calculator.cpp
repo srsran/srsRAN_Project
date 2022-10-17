@@ -45,14 +45,14 @@ pdsch_prbs_tbs srsgnb::get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cf
   // 1 PRB greater than required to fit the payload size.
   // Thus, we compute the TBS for "nof_prbs_estimate - 1"; if TBS(nof_prbs_estimate - 1) is enough to accommodate the
   // payload_size, then we return nof_prbs_estimate - 1.
-  unsigned tbs_bits_lb = tbs_calculator_pdsch_calculate(tbs_calculator_pdsch_configuration{pdsch_cfg.nof_symb_sh,
-                                                                                           pdsch_cfg.nof_dmrs_prb,
-                                                                                           pdsch_cfg.nof_oh_prb,
-                                                                                           pdsch_cfg.target_code_rate,
-                                                                                           pdsch_cfg.mod_order,
-                                                                                           pdsch_cfg.nof_layers,
-                                                                                           pdsch_cfg.tb_scaling_field,
-                                                                                           nof_prbs_estimate - 1});
+  unsigned tbs_bits_lb = tbs_calculator_calculate(tbs_calculator_configuration{pdsch_cfg.nof_symb_sh,
+                                                                               pdsch_cfg.nof_dmrs_prb,
+                                                                               pdsch_cfg.nof_oh_prb,
+                                                                               pdsch_cfg.target_code_rate,
+                                                                               pdsch_cfg.mod_order,
+                                                                               pdsch_cfg.nof_layers,
+                                                                               pdsch_cfg.tb_scaling_field,
+                                                                               nof_prbs_estimate - 1});
   // TBS(nof_prbs_estimate-1) is big enough for payload_size; return the couple
   // {nof_prbs_estimate -1, TBS(nof_prbs_estimate-1)}
   if (tbs_bits_lb >= payload_size) {
@@ -60,14 +60,14 @@ pdsch_prbs_tbs srsgnb::get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cf
   }
 
   // TBS(nof_prbs_estimate-1) NOT big enough for payload_size; recompute the TBS for nof_prbs_estimate.
-  unsigned tbs_bits_ub = tbs_calculator_pdsch_calculate(tbs_calculator_pdsch_configuration{pdsch_cfg.nof_symb_sh,
-                                                                                           pdsch_cfg.nof_dmrs_prb,
-                                                                                           pdsch_cfg.nof_oh_prb,
-                                                                                           pdsch_cfg.target_code_rate,
-                                                                                           pdsch_cfg.mod_order,
-                                                                                           pdsch_cfg.nof_layers,
-                                                                                           pdsch_cfg.tb_scaling_field,
-                                                                                           nof_prbs_estimate});
+  unsigned tbs_bits_ub = tbs_calculator_calculate(tbs_calculator_configuration{pdsch_cfg.nof_symb_sh,
+                                                                               pdsch_cfg.nof_dmrs_prb,
+                                                                               pdsch_cfg.nof_oh_prb,
+                                                                               pdsch_cfg.target_code_rate,
+                                                                               pdsch_cfg.mod_order,
+                                                                               pdsch_cfg.nof_layers,
+                                                                               pdsch_cfg.tb_scaling_field,
+                                                                               nof_prbs_estimate});
 
   // Handle an edge-case. It could happen that the TBS corresponding to the min. number of PRBs to fit the payload
   // exceeds the maximum value of 3824 bits or 478 bytes. This means that the function is working outside its validity

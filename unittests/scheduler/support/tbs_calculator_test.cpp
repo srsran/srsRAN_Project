@@ -46,7 +46,7 @@ int main()
 
   // Tests the TBS calculation matches with the expected data.
   for (const test_case_t& test_case : tbs_calculator_test_data) {
-    unsigned tbs = tbs_calculator_pdsch_calculate(test_case.config);
+    unsigned tbs = tbs_calculator_calculate(test_case.config);
 
     TESTASSERT_EQ(test_case.tbs, tbs);
   }

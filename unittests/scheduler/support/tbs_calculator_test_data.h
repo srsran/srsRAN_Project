@@ -19,8 +19,8 @@
 namespace srsgnb {
 
 struct test_case_t {
-  tbs_calculator_pdsch_configuration config;
-  unsigned                           tbs;
+  tbs_calculator_configuration config;
+  unsigned                     tbs;
 };
 
 static const std::vector<test_case_t> tbs_calculator_test_data = {
