@@ -208,6 +208,10 @@ static void test_dci_0_0_c_rnti_packing(const dci_0_0_c_rnti_configuration& conf
     }
   }
 
+  // Position where the MSB of the frequency domain resource assignment field is located. This is useful to apply
+  // truncation, if required.
+  uint8_t* freq_resource_begin = expected.end();
+
   // Frequency domain resource assignment - frequency_resource_nof_bits bits.
   unsigned frequency_resource_nof_bits = log2_ceil(config.N_rb_ul_bwp * (config.N_rb_ul_bwp + 1) / 2) - N_ul_hop;
   for (unsigned bitpos = 0; bitpos != frequency_resource_nof_bits; ++bitpos) {
@@ -247,18 +251,30 @@ static void test_dci_0_0_c_rnti_packing(const dci_0_0_c_rnti_configuration& conf
   expected.push_back((config.tpc_command >> 1U) & 1U);
   expected.push_back((config.tpc_command >> 0U) & 1U);
 
-  // Determine the amount of padding. This assumes that the DCI format 0_0 message scrambled by C-RNTI, CS-RNTI or
-  // MCS-C-RNTI is used in a UE-specific search space and does not require truncation.
-  unsigned nof_packed_bits     = expected.size();
-  unsigned padding_incl_ul_sul = config.payload_size - nof_packed_bits;
-  if (config.ul_sul_indicator.has_value() && (padding_incl_ul_sul > 0)) {
-    // UL/SUL field is present. First, apply padding.
-    std::fill_n(std::back_inserter(expected), padding_incl_ul_sul - 1, 0);
-    // DCI payload is terminated with the UL/SUL indicator.
-    expected.push_back(static_cast<unsigned>(config.ul_sul_indicator.value()) & 1U);
-  } else {
-    // UL/SUL field is not present, apply padding only.
-    std::fill_n(std::back_inserter(expected), padding_incl_ul_sul, 0);
+  // Number of packed bits so far.
+  unsigned nof_packed_bits = expected.size();
+
+  // The difference between actual size and aligned DCI size determines the amount of padding or truncation. This is
+  // required because DCI format 0_0 scrambled by C-RNTI can be used in a common search space (fallback DCI format), and
+  // it must be aligned to the size of the DCI format 1_0 messages.
+  int padd_trunc_incl_ul_sul = config.payload_size - nof_packed_bits;
+
+  if (padd_trunc_incl_ul_sul < 0) {
+    // Truncation is applied to the MSB bits of the frequency domain resource assignment field.
+    unsigned nof_trunc_bits = -padd_trunc_incl_ul_sul;
+    expected.erase(freq_resource_begin, freq_resource_begin + nof_trunc_bits);
+  }
+
+  if (padd_trunc_incl_ul_sul > 0) {
+    if (config.ul_sul_indicator.has_value()) {
+      // UL/SUL field is present. First, apply padding.
+      std::fill_n(std::back_inserter(expected), padd_trunc_incl_ul_sul - 1, 0);
+      // DCI payload is terminated with the UL/SUL indicator.
+      expected.push_back(static_cast<unsigned>(config.ul_sul_indicator.value()) & 1U);
+    } else {
+      // UL/SUL field is not present, apply padding only.
+      std::fill_n(std::back_inserter(expected), padd_trunc_incl_ul_sul, 0);
+    }
   }
 
   // Assert expected payload.
@@ -819,18 +835,27 @@ int main()
             // Check DCI payload size.
             TESTASSERT_EQ(aligned_sizes.format0_0_common_size, dci0_0_tc_rnti_payload.size());
 
-            // Generate DCI format 0_0 scrambled by C-RNTI configuration.
-            dci_0_0_c_rnti_configuration dci0_0_c_rnti_cfg =
+            // Generate DCI format 0_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a common
+            // search space.
+            dci_0_0_c_rnti_configuration dci0_0_c_rnti_cfg_common =
+                build_dci_0_0_c_rnti_config(config.ul_bwp_initial_bw, aligned_sizes.format0_0_common_size);
+
+            // Generate DCI format 0_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
+            // UE-specific search space.
+            dci_0_0_c_rnti_configuration dci0_0_c_rnti_cfg_ue =
                 build_dci_0_0_c_rnti_config(config.ul_bwp_active_bw, aligned_sizes.format0_0_ue_size);
 
-            // Generate the DCI format 0_0 scrambled by C-RNTI payload.
-            dci_payload dci0_0_c_rnti_payload = dci_0_0_c_rnti_pack(dci0_0_c_rnti_cfg);
+            // Generate the DCI format 0_0 scrambled by C-RNTI payloads for common and UE-specific search space sets.
+            dci_payload dci0_0_c_rnti_payload_common = dci_0_0_c_rnti_pack(dci0_0_c_rnti_cfg_common);
+            dci_payload dci0_0_c_rnti_payload_ue     = dci_0_0_c_rnti_pack(dci0_0_c_rnti_cfg_ue);
 
             // Test DCI format 0_0 scrambled by C-RNTI packing.
-            test_dci_0_0_c_rnti_packing(dci0_0_c_rnti_cfg, dci0_0_c_rnti_payload);
+            test_dci_0_0_c_rnti_packing(dci0_0_c_rnti_cfg_common, dci0_0_c_rnti_payload_common);
+            test_dci_0_0_c_rnti_packing(dci0_0_c_rnti_cfg_ue, dci0_0_c_rnti_payload_ue);
 
-            // Check DCI payload size.
-            TESTASSERT_EQ(aligned_sizes.format0_0_ue_size, dci0_0_c_rnti_payload.size());
+            // Check DCI payload sizes.
+            TESTASSERT_EQ(aligned_sizes.format0_0_common_size, dci0_0_c_rnti_payload_common.size());
+            TESTASSERT_EQ(aligned_sizes.format0_0_ue_size, dci0_0_c_rnti_payload_ue.size());
 
             // Generate DCI format 1_0 scrambled by TC-RNTI configuration.
             dci_1_0_tc_rnti_configuration dci1_0_tc_rnti_cfg = build_dci_1_0_tc_rnti_config(config.dl_bwp_initial_bw);
@@ -844,18 +869,27 @@ int main()
             // Check DCI payload size.
             TESTASSERT_EQ(aligned_sizes.format1_0_common_size, dci1_0_tc_rnti_payload.size());
 
-            // Generate DCI format 1_0 scrambled by C-RNTI configuration.
-            dci_1_0_c_rnti_configuration dci1_0_c_rnti_cfg =
+            // Generate DCI format 1_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
+            // UE-specific search space.
+            dci_1_0_c_rnti_configuration dci1_0_c_rnti_cfg_ue =
                 build_dci_1_0_c_rnti_config(config.dl_bwp_active_bw, aligned_sizes.format1_0_ue_size);
 
-            // Generate the DCI format 1_0 scrambled by C-RNTI payload.
-            dci_payload dci1_0_c_rnti_payload = dci_1_0_c_rnti_pack(dci1_0_c_rnti_cfg);
+            // Generate DCI format 1_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
+            // common search space.
+            dci_1_0_c_rnti_configuration dci1_0_c_rnti_cfg_common =
+                build_dci_1_0_c_rnti_config(config.dl_bwp_initial_bw, aligned_sizes.format1_0_common_size);
+
+            // Generate the DCI format 1_0 scrambled by C-RNTI payloads for common and UE-specific search space sets.
+            dci_payload dci1_0_c_rnti_payload_common = dci_1_0_c_rnti_pack(dci1_0_c_rnti_cfg_common);
+            dci_payload dci1_0_c_rnti_payload_ue     = dci_1_0_c_rnti_pack(dci1_0_c_rnti_cfg_ue);
 
             // Test DCI format 1_0 scrambled by C-RNTI packing.
-            test_dci_1_0_c_rnti_packing(dci1_0_c_rnti_cfg, dci1_0_c_rnti_payload);
+            test_dci_1_0_c_rnti_packing(dci1_0_c_rnti_cfg_common, dci1_0_c_rnti_payload_common);
+            test_dci_1_0_c_rnti_packing(dci1_0_c_rnti_cfg_ue, dci1_0_c_rnti_payload_ue);
 
-            // Check DCI payload size.
-            TESTASSERT_EQ(aligned_sizes.format1_0_ue_size, dci1_0_c_rnti_payload.size());
+            // Check DCI payload sizes.
+            TESTASSERT_EQ(aligned_sizes.format1_0_common_size, dci1_0_c_rnti_payload_common.size());
+            TESTASSERT_EQ(aligned_sizes.format1_0_ue_size, dci1_0_c_rnti_payload_ue.size());
 
             for (dci_1_0_p_rnti_configuration::payload_info short_messages_indicator :
                  {dci_1_0_p_rnti_configuration::payload_info::scheduling_information,

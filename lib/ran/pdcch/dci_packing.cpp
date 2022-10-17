@@ -42,7 +42,7 @@ static unsigned dci_f0_0_bits_before_padding(unsigned N_rb_ul_bwp)
 // Computes the number of information bits before padding for a DCI format 1_0 message.
 static unsigned dci_f1_0_bits_before_padding(unsigned N_rb_dl_bwp)
 {
-  // Contribution to the DCI payload size that is fixed. It is the same number of bits for all format 1_1 variants.
+  // Contribution to the DCI payload size that is fixed. It is the same number of bits for all format 1_0 variants.
   constexpr unsigned dci_fixed_nof_bits = 28U;
 
   // Frequency resource allocation field size.
@@ -143,6 +143,17 @@ dci_payload srsgnb::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& conf
   dci_payload payload;
   unsigned    frequency_resource_nof_bits = log2_ceil(config.N_rb_ul_bwp * (config.N_rb_ul_bwp + 1) / 2);
 
+  unsigned nof_bits_before_padding = dci_f0_0_bits_before_padding(config.N_rb_ul_bwp);
+
+  // Number of padding or truncation bits, including the UL/SUL optional field, if present.
+  int padd_trunc_incl_ul_sul = config.payload_size - nof_bits_before_padding;
+
+  if (padd_trunc_incl_ul_sul < 0) {
+    // Truncation is applied by reducing the bitwidth of the frequency resource assignment field.
+    unsigned nof_truncation_bits = -padd_trunc_incl_ul_sul;
+    frequency_resource_nof_bits -= nof_truncation_bits;
+  }
+
   // Identifier for DCI formats - 1 bit.
   payload.push_back(config.dci_format_id, 1);
 
@@ -192,25 +203,26 @@ dci_payload srsgnb::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& conf
   // TPC command for scheduled PUSCH - 2 bit.
   payload.push_back(config.tpc_command, 2);
 
-  unsigned nof_bits_before_padding = dci_f0_0_bits_before_padding(config.N_rb_ul_bwp);
-  srsgnb_assert(nof_bits_before_padding <= config.payload_size,
-                "DCI payload size must be able to fit the information bits");
+  if (padd_trunc_incl_ul_sul < 0) {
+    // Truncation is applied by reducing the bitwidth of the frequency resource assignment field.
+    unsigned nof_truncation_bits = -padd_trunc_incl_ul_sul;
+    frequency_resource_nof_bits -= nof_truncation_bits;
+  }
 
-  // Number of padding bits, including the UL/SUL optional field, if present.
-  unsigned padding_incl_ul_sul = config.payload_size - nof_bits_before_padding;
+  if (padd_trunc_incl_ul_sul > 0) {
+    if (config.ul_sul_indicator.has_value()) {
+      // UL/SUL field is included if it is present in the DCI message and the number of DCI format 1_0 bits before
+      // padding is larger than the number of DCI format 0_0 bits before padding.
+      constexpr unsigned nof_ul_sul_bit = 1U;
+      // Padding bits, if necessary, as per TS38.212 Section 7.3.1.0.
+      payload.push_back(0x00U, padd_trunc_incl_ul_sul - nof_ul_sul_bit);
 
-  if (config.ul_sul_indicator.has_value() && (padding_incl_ul_sul > 0)) {
-    // UL/SUL field is included if it is present in the DCI message and the number of DCI format 1_0 bits before padding
-    // is larger than the number of DCI format 0_0 bits before padding.
-    constexpr unsigned nof_ul_sul_bit = 1U;
-    // Padding bits, if necessary, as per TS38.212 Section 7.3.1.0.
-    payload.push_back(0x00U, padding_incl_ul_sul - nof_ul_sul_bit);
-
-    // UL/SUL indicator - 1 bit.
-    payload.push_back(config.ul_sul_indicator.value(), nof_ul_sul_bit);
-  } else {
-    // UL/SUL field is not included otherwise.
-    payload.push_back(0x00U, padding_incl_ul_sul);
+      // UL/SUL indicator - 1 bit.
+      payload.push_back(config.ul_sul_indicator.value(), nof_ul_sul_bit);
+    } else {
+      // UL/SUL field is not included otherwise.
+      payload.push_back(0x00U, padd_trunc_incl_ul_sul);
+    }
   }
 
   return payload;
