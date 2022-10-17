@@ -8,16 +8,19 @@
  *
  */
 
+/// \file
+/// \brief asn.1 utilities.
+///
+/// In this file, we implement several algorithms used to add/mod/release asn.1 objects in lists
+/// based on their ids. This operations are commonly used during the application of Diffs/Deltas when the UE has
+/// to be reconfigured.
+
 #pragma once
 
 #include "srsgnb/support/async/detail/function_signature.h"
 #include "srsgnb/support/detail/is_iterable.h"
 #include "srsgnb/support/srsgnb_assert.h"
 #include <algorithm>
-
-/// \brief In this file, we implement several algorithms used to add/mod/release asn.1 objects in lists
-/// based on their ids. This operations are commonly used during the application of Diffs/Deltas when the UE has
-/// to be reconfigured.
 
 namespace srsgnb {
 

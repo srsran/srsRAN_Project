@@ -10,14 +10,10 @@
 
 #pragma once
 
-/// Notice that we are not using any implementation specific header files. We are decoupled.
 #include "srsgnb/sdap/sdap.h"
 #include "srsgnb/sdap/sdap_entity.h"
 #include "srsgnb/sdap/sdap_packet_procedures.h"
 #include <cstdio>
-
-/// This class implementation is decoupled from other concrete class implementations as it only depend on public
-/// interfaces.
 
 namespace srsgnb {
 
@@ -38,7 +34,8 @@ class sdap_ul_packet_procedure : public sdap_packet_procedures
 public:
   sdap_ul_packet_procedure(std::unique_ptr<sdap_entity> entity, sdap_sdu_rx_notifier& listener) :
     entity(std::move(entity)), listener(listener)
-  {}
+  {
+  }
 
   void handle_ul_data_packet(byte_buffer& data) override
   {
