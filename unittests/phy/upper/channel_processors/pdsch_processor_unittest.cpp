@@ -44,12 +44,12 @@ int main()
                                         std::shared_ptr<dmrs_pdsch_processor_factory>(dmrs_factory_spy));
   TESTASSERT(pdsch_proc_factory);
 
+  std::unique_ptr<pdsch_processor> pdsch = pdsch_proc_factory->create();
+  TESTASSERT(pdsch);
+
   pdsch_encoder_spy*        encoder_spy   = encoder_factory_spy->get_entries().front();
   pdsch_modulator_spy*      modulator_spy = modulator_factory_spy->get_entries().front();
   dmrs_pdsch_processor_spy* dmrs_spy      = dmrs_factory_spy->get_entries().front();
-
-  std::unique_ptr<pdsch_processor> pdsch = pdsch_proc_factory->create();
-  TESTASSERT(pdsch);
 
   for (unsigned nof_layers : {1, 5, 8}) {
     for (cyclic_prefix cp : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {
