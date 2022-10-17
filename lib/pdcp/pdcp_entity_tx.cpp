@@ -23,6 +23,8 @@ using namespace srsgnb;
 /// \ref TS 38.323 section 5.2.1: Transmit operation
 void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 {
+  metrics_add_sdus(1, buf.length());
+
   bool max_hfn_reached = false; // FIXME actually check HFN
   if (max_hfn_reached) {
     upper_cn.on_max_hfn_reached();
@@ -63,6 +65,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 
   // Check if PDCP is associated with more than on RLC entity TODO
   // Write to lower layers
+  metrics_add_pdus(1, protected_buf.length());
   lower_dn.on_new_pdu(std::move(protected_buf));
 
   // Increment TX_NEXT
@@ -216,6 +219,9 @@ void pdcp_entity_tx::discard_callback::operator()(uint32_t timer_id)
 
   // Notify the RLC of the discard. It's the RLC to actually discard, if no segment was transmitted yet.
   parent->lower_dn.on_discard_pdu(discard_count);
+
+  // Add discard to metrics
+  parent->metrics_add_discard_timouts(1);
 
   // Remove timer from map
   // NOTE: this will delete the callback. It *must* be the last instruction.

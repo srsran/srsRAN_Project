@@ -132,7 +132,7 @@ private:
 class pdcp_entity_tx::discard_callback
 {
 public:
-  discard_callback(pdcp_entity_tx* parent_, uint32_t count_) : parent(parent_), discard_count(count_){};
+  discard_callback(pdcp_entity_tx* parent_, uint32_t count_) : parent(parent_), discard_count(count_) {}
   void operator()(uint32_t timer_id);
 
 private:
