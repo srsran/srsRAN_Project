@@ -5,6 +5,7 @@
 # forth in the LICENSE file which can be found at the top level of
 # the distribution.
 #
+find_package(SCTP REQUIRED)
 
-add_library(srsgnb_gateway sctp_network_gateway.cpp)
-target_link_libraries(srsgnb_gateway srslog srsgnb_support srsgnb_du_manager srsgnb_mac srsgnb_f1)
+add_library(srsgnb_gateway network_gateway_factory.cpp sctp_network_gateway.cpp)
+target_link_libraries(srsgnb_gateway srslog ${SCTP_LIBRARIES})

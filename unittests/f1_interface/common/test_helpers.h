@@ -15,6 +15,7 @@
 #include "srsgnb/cu_cp/ue_context.h"
 #include "srsgnb/f1_interface/common/f1c_common.h"
 #include "srsgnb/f1_interface/cu/f1c_cu.h"
+#include "srsgnb/gateways/network_gateway.h"
 
 namespace srsgnb {
 
@@ -86,6 +87,19 @@ public:
     test_logger.info("Received F1 AP PDU");
     last_f1c_msg = msg;
   }
+};
+
+class dummy_network_gateway_notifier : public network_gateway_control_notifier, public network_gateway_data_notifier
+{
+public:
+  dummy_network_gateway_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+
+  void on_connection_loss() override { logger.info("Connection loss"); }
+  void on_connection_established() override { logger.info("Connection established"); }
+  void on_new_pdu(byte_buffer pdu) override { logger.info("Received PDU"); }
+
+private:
+  srslog::basic_logger& logger;
 };
 
 /// Reusable notifier class that a) stores the received PDU for test inspection and b)

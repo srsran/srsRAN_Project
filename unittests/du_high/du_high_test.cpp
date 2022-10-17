@@ -81,11 +81,13 @@ void test_f1_setup_network()
   class f1c_network_adapter : public f1c_message_handler
   {
   public:
-    f1c_network_adapter() : packer(gw, *this) {}
+    f1c_network_adapter() : gw(gw_config, gw_notifier, gw_notifier), packer(gw, *this) {}
 
     /// We require a network gateway and a packer
-    sctp_network_gateway gw;
-    f1ap_asn1_packer     packer;
+    network_gateway_config         gw_config;
+    dummy_network_gateway_notifier gw_notifier;
+    sctp_network_gateway           gw;
+    f1ap_asn1_packer               packer;
 
     f1c_message last_f1c_msg;
     void        handle_message(const f1c_message& msg) override { last_f1c_msg = msg; }

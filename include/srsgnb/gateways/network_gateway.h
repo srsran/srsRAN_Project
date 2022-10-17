@@ -4,7 +4,19 @@
 
 namespace srsgnb {
 
-/// Generic network gateway interfaces to connect components to the outside world.
+/// \brief Generic network gateway interfaces to connect components to the outside world.
+
+enum class network_gateway_type { sctp };
+
+struct network_gateway_config {
+  network_gateway_type type = network_gateway_type::sctp;
+  std::string          connect_address;
+  int                  connect_port = 0;
+  std::string          bind_address;
+  int                  bind_port         = 0;
+  bool                 non_blocking_mode = false;
+  unsigned             rx_timeout_sec    = 1; /// Socket received timeout in seconds
+};
 
 /// Interface to inject PDUs into gateway entity.
 class network_gateway_data_handler
@@ -28,14 +40,43 @@ public:
   virtual void on_new_pdu(byte_buffer pdu) = 0;
 };
 
-/// Interface to inform upper layers about connection drops, etc.
+/// Interface to inform upper layers about connection establishment, drops, etc.
 class network_gateway_control_notifier
 {
 public:
   virtual ~network_gateway_control_notifier() = default;
 
-  /// This callback is invoked when the connection is dropped.
+  /// \brief This callback is invoked when connect() succeeds (client) or a new client connected to a listening socket
+  /// (server).
+  virtual void on_connection_established() = 0;
+
+  /// \brief This callback is invoked when the connection is dropped or cannot be established in the first place..
   virtual void on_connection_loss() = 0;
 };
+
+/// Interface to trigger bind/listen/connect operations on gateway socket.
+class network_gateway_controller
+{
+public:
+  virtual ~network_gateway_controller() = default;
+
+  /// \brief Bind the configured address and port.
+  virtual bool bind() = 0;
+
+  /// \brief Start listening on socket.
+  virtual bool listen() = 0;
+
+  /// \brief Connect to the configured address and port.
+  virtual bool connect() = 0;
+
+  /// \brief Trigger receive call on socket.
+  virtual void receive() = 0;
+
+  /// \brief Return socket file descriptor.
+  virtual int get_socket_fd() = 0;
+};
+
+class network_gateway : public network_gateway_data_handler, public network_gateway_controller
+{};
 
 } // namespace srsgnb
