@@ -92,8 +92,9 @@ public:
                                                bool                cell_barred,
                                                bool                intra_freq_reselection)
   {
-    pdu.bch_payload_flag                              = bch_payload_type::phy_full;
-    pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position   = (dmrs_type_a_position == dmrs_typeA_position::pos2) ? 0 : 1;
+    pdu.bch_payload_flag = bch_payload_type::phy_full;
+    pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position =
+        (dmrs_type_a_position == dmrs_typeA_position::pos2) ? dmrs_typeA_pos::pos2 : dmrs_typeA_pos::pos3;
     pdu.bch_payload.phy_mib_pdu.pdcch_config_sib1     = pdcch_config_sib1;
     pdu.bch_payload.phy_mib_pdu.cell_barred           = cell_barred;
     pdu.bch_payload.phy_mib_pdu.intrafreq_reselection = intra_freq_reselection;

@@ -62,7 +62,7 @@ generate_bch_payload(const fapi::dl_ssb_pdu& fapi_pdu, uint32_t sfn, bool hrf, s
   payload |= ((fapi_pdu.ssb_subcarrier_offset & 0xfU) << 20U);
 
   // dmrs-TypeA-Position - 1 bit.
-  payload |= ((mib.dmrs_typeA_position & 0x1U) << 19U);
+  payload |= ((static_cast<std::underlying_type_t<fapi::dmrs_typeA_pos>>(mib.dmrs_typeA_position) & 0x1U) << 19U);
 
   // pdcch-ConfigSIB1 - 8 bits.
   payload |= ((mib.pdcch_config_sib1 & 0xffU) << 11U);

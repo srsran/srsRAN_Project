@@ -116,7 +116,8 @@ static void test_bch_payload_phy()
 
   TESTASSERT_EQ(bch_payload_type::phy_full, pdu.bch_payload_flag);
   const dl_ssb_phy_mib_pdu& mib = pdu.bch_payload.phy_mib_pdu;
-  TESTASSERT_EQ((dmrs_typeA_pos == dmrs_typeA_position::pos2) ? 0 : 1, mib.dmrs_typeA_position);
+  TESTASSERT_EQ((dmrs_typeA_pos == dmrs_typeA_position::pos2) ? dmrs_typeA_pos::pos2 : dmrs_typeA_pos::pos3,
+                mib.dmrs_typeA_position);
   TESTASSERT_EQ(pdcch_sib1, mib.pdcch_config_sib1);
   TESTASSERT_EQ(barred, mib.cell_barred);
   TESTASSERT_EQ(intra_freq_reselection, mib.intrafreq_reselection);

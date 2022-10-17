@@ -164,7 +164,9 @@ bool srsgnb::fapi::validate_dl_ssb_pdu(const dl_ssb_pdu& pdu, validator_report& 
   result &= validate_offset_point_A(pdu.ssb_offset_pointA.to_uint(), report);
   // NOTE: BCH payload property will not be validated.
   if (pdu.bch_payload_flag == bch_payload_type::phy_full) {
-    result &= validate_dmrs_type_a_position(pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position, report);
+    result &= validate_dmrs_type_a_position(
+        static_cast<std::underlying_type_t<fapi::dmrs_typeA_pos>>(pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position),
+        report);
     // NOTE:  PDCCH config SIB1 property uses the whole range and will not be validated.
     // NOTE:  Cell barred property uses the whole range and will not be validated.
     // NOTE:  Intra freq reselection property uses the whole range and will not be validated.

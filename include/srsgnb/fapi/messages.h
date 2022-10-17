@@ -314,12 +314,14 @@ struct dl_csi_rs_pdu {
   //: TODO: csi params v4
 };
 
+enum class dmrs_typeA_pos : uint8_t { pos2 = 0, pos3 };
+
 /// PHY generated MIB PDU information.
 struct dl_ssb_phy_mib_pdu {
-  uint8_t dmrs_typeA_position;
-  uint8_t pdcch_config_sib1;
-  bool    cell_barred;
-  bool    intrafreq_reselection;
+  dmrs_typeA_pos dmrs_typeA_position;
+  uint8_t        pdcch_config_sib1;
+  bool           cell_barred;
+  bool           intrafreq_reselection;
 };
 
 /// BCH payload information.
