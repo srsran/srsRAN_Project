@@ -19,13 +19,13 @@
 
 using namespace srsgnb;
 
-/// \brief Test correct packing of PDCP data PDU headers
+/// \brief Test correct metrics counting of PDCP data SDUs/PDUs.
 TEST_P(pdcp_tx_metrics_test, sdu_pdu)
 {
   init(GetParam());
 
   auto test_pdu_gen = [this](uint32_t tx_next) {
-    srsgnb::test_delimit_logger delimiter("TX PDU generation. SN_SIZE={} COUNT={}", sn_size, tx_next);
+    srsgnb::test_delimit_logger delimiter("TX SDU/PDU metrics test. SN_SIZE={} COUNT={}", sn_size, tx_next);
     // Set state of PDCP entiy
     pdcp_tx->reset_metrics();
     pdcp_tx_state st = {tx_next};

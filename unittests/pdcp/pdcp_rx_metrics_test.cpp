@@ -19,13 +19,13 @@
 
 using namespace srsgnb;
 
-/// \brief Test correct packing of PDCP data PDU headers
+/// \brief Test correct metrics counting of PDCP data SDUs/PDUs
 TEST_P(pdcp_rx_metrics_test, sdu_pdu_metrics)
 {
   init(GetParam());
 
   auto test_metrics = [this](uint32_t count) {
-    srsgnb::test_delimit_logger delimiter("RX PDU with bad integrity. SN_SIZE={} COUNT={}", sn_size, count);
+    srsgnb::test_delimit_logger delimiter("RX PDU/SDU metrics tests. SN_SIZE={} COUNT={}", sn_size, count);
     init(GetParam());
 
     pdcp_rx->set_as_security_config(sec_cfg);
@@ -68,12 +68,15 @@ TEST_P(pdcp_rx_metrics_test, sdu_pdu_metrics)
   }
 }
 
+/// \brief Test correct metrics counting of PDCP data with
+/// integrity failures.
 TEST_P(pdcp_rx_metrics_test, integrity_metrics)
 {
   init(GetParam());
 
   auto test_metrics = [this](uint32_t count) {
-    srsgnb::test_delimit_logger delimiter("RX PDU with bad integrity. SN_SIZE={} COUNT={}", sn_size, count);
+    srsgnb::test_delimit_logger delimiter(
+        "RX PDU with bad integrity metrics test. SN_SIZE={} COUNT={}", sn_size, count);
     init(GetParam());
 
     pdcp_rx->set_as_security_config(sec_cfg);
@@ -116,13 +119,13 @@ TEST_P(pdcp_rx_metrics_test, integrity_metrics)
   }
 }
 
-/// Test out of order reception of PDUs.
-/// The out-of-order PDU is received after the t-Reordering expires.
+/// \brief Test correct metrics counting of t-Reordering
+/// timeouts
 TEST_P(pdcp_rx_metrics_test, rx_reordering_timer)
 {
   auto test_rx_t_reorder = [this](uint32_t count) {
     srsgnb::test_delimit_logger delimiter(
-        "RX out-of-order test, t-Reordering expires. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
+        "t-Reordering expiration metrics test. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
     init(GetParam(), pdcp_t_reordering::ms10);
 
     pdcp_rx->set_as_security_config(sec_cfg);

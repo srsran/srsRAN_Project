@@ -36,6 +36,9 @@ protected:
     // init RLC logger
     srslog::fetch_basic_logger("PDCP", false).set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("PDCP", false).set_hex_dump_max_size(100);
+
+    // init SN size
+    sn_size = GetParam();
   }
 
   void TearDown() override

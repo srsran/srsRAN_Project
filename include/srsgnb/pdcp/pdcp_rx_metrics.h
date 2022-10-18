@@ -65,12 +65,13 @@ struct formatter<srsgnb::pdcp_rx_metrics_container> {
   {
     return format_to(ctx.out(),
                      "num_sdus={}, num_sdu_bytes={}, num_dropped_pdus={}, num_pdus={}, num_pdu_bytes={}, "
-                     "num_integrity_failed_pdus={}, num_t_reordering_timeouts={}",
+                     "num_integrity_verified_pdus={}, num_integrity_failed_pdus={}, num_t_reordering_timeouts={}",
                      m.num_sdus,
                      m.num_sdu_bytes,
                      m.num_dropped_pdus,
                      m.num_pdus,
                      m.num_pdu_bytes,
+                     m.num_integrity_verified_pdus,
                      m.num_integrity_failed_pdus,
                      m.num_t_reordering_timeouts);
   }
