@@ -21,12 +21,12 @@ public:
     invalid = 0,
     /// Single Input Single Output (SISO) channel.
     siso,
-    /// Multiple Input Single Output (MISO) channel with 2 Rx ports, making use of receiver-side spatial diversity.
-    miso_2x1,
-    /// Multiple Input Single Output (MISO) channel with 3 Rx ports, making use of receiver-side spatial diversity.
-    miso_3x1,
-    /// Multiple Input Single Output (MISO) channel with 4 Rx ports, making use of receiver-side spatial diversity.
-    miso_4x1,
+    /// Single Input Multiple Output (SIMO) channel with 2 Rx ports, making use of receiver-side spatial diversity.
+    simo_2x1,
+    /// Single Input Multiple Output (SIMO) channel with 3 Rx ports, making use of receiver-side spatial diversity.
+    simo_3x1,
+    /// Single Input Multiple Output (SIMO) channel with 4 Rx ports, making use of receiver-side spatial diversity.
+    simo_4x1,
     /// Multiple Input Multiple Output (MIMO) channel with 2 Tx and 2 Rx ports, making use of spatial multiplexing.
     mimo_2x2
   };
@@ -46,11 +46,11 @@ public:
     if ((nof_rx_ports == 1) && (nof_tx_layers == 1)) {
       value = siso;
     } else if ((nof_rx_ports == 2) && (nof_tx_layers == 1)) {
-      value = miso_2x1;
+      value = simo_2x1;
     } else if ((nof_rx_ports == 3) && (nof_tx_layers == 1)) {
-      value = miso_3x1;
+      value = simo_3x1;
     } else if ((nof_rx_ports == 4) && (nof_tx_layers == 1)) {
-      value = miso_4x1;
+      value = simo_4x1;
     } else if ((nof_rx_ports == 2) && (nof_tx_layers == 2)) {
       value = mimo_2x2;
     } else {
@@ -64,14 +64,14 @@ public:
     switch (value) {
       case siso:
         return "siso";
-      case miso_2x1:
-        return "miso_2x1";
+      case simo_2x1:
+        return "simo_2x1";
       case mimo_2x2:
         return "mimo_2x2";
-      case miso_3x1:
-        return "miso_3x1";
-      case miso_4x1:
-        return "miso_4x1";
+      case simo_3x1:
+        return "simo_3x1";
+      case simo_4x1:
+        return "simo_4x1";
       case invalid:
       default:
         return "invalid";
@@ -87,12 +87,12 @@ public:
     switch (value) {
       case siso:
         return 1;
-      case miso_2x1:
+      case simo_2x1:
       case mimo_2x2:
         return 2;
-      case miso_3x1:
+      case simo_3x1:
         return 3;
-      case miso_4x1:
+      case simo_4x1:
         return 4;
       case invalid:
       default:
@@ -106,12 +106,12 @@ public:
     switch (value) {
       case siso:
         return 1;
-      case miso_2x1:
+      case simo_2x1:
       case mimo_2x2:
         return 2;
-      case miso_3x1:
+      case simo_3x1:
         return 3;
-      case miso_4x1:
+      case simo_4x1:
         return 4;
       case invalid:
       default:
@@ -124,9 +124,9 @@ public:
   {
     switch (value) {
       case siso:
-      case miso_2x1:
-      case miso_3x1:
-      case miso_4x1:
+      case simo_2x1:
+      case simo_3x1:
+      case simo_4x1:
         return 1;
       case mimo_2x2:
         return 2;
@@ -141,9 +141,9 @@ public:
   {
     switch (value) {
       case siso:
-      case miso_2x1:
-      case miso_3x1:
-      case miso_4x1:
+      case simo_2x1:
+      case simo_3x1:
+      case simo_4x1:
         return 1;
       case mimo_2x2:
         return 2;

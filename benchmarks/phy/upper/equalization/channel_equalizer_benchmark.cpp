@@ -80,9 +80,9 @@ int main(int argc, char** argv)
   benchmarker perf_meas("Channel Equalizer", nof_repetitions);
 
   for (spatial_topology topology : {spatial_topology::siso,
-                                    spatial_topology::miso_2x1,
-                                    spatial_topology::miso_3x1,
-                                    spatial_topology::miso_4x1,
+                                    spatial_topology::simo_2x1,
+                                    spatial_topology::simo_3x1,
+                                    spatial_topology::simo_4x1,
                                     spatial_topology::mimo_2x2}) {
     // Get dimensions.
     unsigned nof_rx_ports     = topology.get_nof_rx_ports();

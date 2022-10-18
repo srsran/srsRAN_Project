@@ -88,16 +88,16 @@ void channel_equalizer_zf_impl::equalize(equalizer_symbol_list&          mod_sym
       equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::siso)>(
           mod_symbols, noise_vars, ch_symbols, ch_estimates, tx_scaling);
       break;
-    case spatial_topology::miso_2x1:
-      equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::miso_2x1)>(
+    case spatial_topology::simo_2x1:
+      equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::simo_2x1)>(
           mod_symbols, noise_vars, ch_symbols, ch_estimates, tx_scaling);
       break;
-    case spatial_topology::miso_3x1:
-      equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::miso_3x1)>(
+    case spatial_topology::simo_3x1:
+      equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::simo_3x1)>(
           mod_symbols, noise_vars, ch_symbols, ch_estimates, tx_scaling);
       break;
-    case spatial_topology::miso_4x1:
-      equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::miso_4x1)>(
+    case spatial_topology::simo_4x1:
+      equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::simo_4x1)>(
           mod_symbols, noise_vars, ch_symbols, ch_estimates, tx_scaling);
       break;
     case spatial_topology::mimo_2x2:

@@ -9,7 +9,7 @@
  */
 
 /// \file
-/// \brief Zero Forcing equalizer algorithm for a MISO 1 X N channel.
+/// \brief Zero Forcing equalizer algorithm for a SIMO 1 X N channel.
 
 #pragma once
 
@@ -28,12 +28,12 @@ namespace detail {
 /// \param[in]  noise_var_est Estimated noise variance. It is assumed to be the same for each receive port.
 /// \param[in]  tx_scaling    Transmission gain scaling factor.
 template <unsigned RX_PORTS>
-static void equalize_zf_1xn_symbol(span<cf_t>                             symbol_out,
-                                   span<float>                            eq_noise_vars,
-                                   std::array<span<const cf_t>, RX_PORTS> symbols_in,
-                                   std::array<span<const cf_t>, RX_PORTS> ch_estimates,
-                                   float                                  noise_var_est,
-                                   float                                  tx_scaling)
+static void equalize_zf_1xn_symbol(span<cf_t>                                    symbol_out,
+                                   span<float>                                   eq_noise_vars,
+                                   const std::array<span<const cf_t>, RX_PORTS>& symbols_in,
+                                   const std::array<span<const cf_t>, RX_PORTS>& ch_estimates,
+                                   float                                         noise_var_est,
+                                   float                                         tx_scaling)
 {
   unsigned nof_subcs = symbols_in[0].size();
 
@@ -84,7 +84,7 @@ void equalize_zf_1x1_symbol(span<cf_t>       symbol_out,
 
 } // namespace detail
 
-/// \brief Implementation of a Zero Forcing equalizer for a MISO 1 X \c RX_PORTS channel.
+/// \brief Implementation of a Zero Forcing equalizer for a SIMO 1 X \c RX_PORTS channel.
 /// \tparam RX_PORTS         Number of receive antenna ports.
 /// \param[out] eq_symbols   Resultant equalized symbols.
 /// \param[out] noise_vars   Noise variances after equalization.
