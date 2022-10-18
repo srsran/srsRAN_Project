@@ -11,7 +11,7 @@
 #pragma once
 
 #include <mutex>
-#include <srsgnb/pdcp/pdcp_rx.h>
+#include <srsgnb/pdcp/pdcp_rx_metrics.h>
 
 namespace srsgnb {
 
@@ -75,4 +75,3 @@ public:
 };
 
 } // namespace srsgnb
-

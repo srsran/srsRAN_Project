@@ -11,7 +11,7 @@
 #pragma once
 
 #include <mutex>
-#include <srsgnb/pdcp/pdcp_tx.h>
+#include <srsgnb/pdcp/pdcp_tx_metrics.h>
 
 namespace srsgnb {
 
@@ -61,6 +61,4 @@ public:
     metrics = {};
   }
 };
-
 } // namespace srsgnb
-

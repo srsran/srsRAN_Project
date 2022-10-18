@@ -12,7 +12,9 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
+#include "srsgnb/pdcp/pdcp_rx_metrics.h"
 #include "srsgnb/pdcp/pdcp_tx.h"
+#include "srsgnb/pdcp/pdcp_tx_metrics.h"
 
 namespace srsgnb {
 

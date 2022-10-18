@@ -11,7 +11,7 @@
 #pragma once
 
 #include "pdcp_entity_tx_rx_base.h"
-#include "pdcp_tx_metrics.h"
+#include "pdcp_tx_metrics_impl.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/pdcp/pdcp_config.h"
