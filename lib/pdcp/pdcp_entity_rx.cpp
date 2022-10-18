@@ -300,6 +300,7 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_slice_chain::const_iterat
  */
 void pdcp_entity_rx::handle_t_reordering_expire()
 {
+  metrics_add_t_reordering_timeouts(1);
   // Deliver all PDCP SDU(s) with associated COUNT value(s) < RX_REORD
   for (std::map<uint32_t, byte_buffer>::iterator it = reorder_queue.begin();
        it != reorder_queue.end() && it->first < st.rx_reord;

@@ -59,6 +59,12 @@ public:
     metrics.num_integrity_failed_pdus += num_pdus_;
   }
 
+  void metrics_add_t_reordering_timeouts(uint32_t num_timeouts_)
+  {
+    std::lock_guard<std::mutex> lock(metrics_mutex);
+    metrics.num_t_reordering_timeouts += num_timeouts_;
+  }
+
   pdcp_rx_metrics_container get_metrics() final
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
