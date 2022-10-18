@@ -22,6 +22,7 @@ namespace srsgnb {
 // Header length
 constexpr size_t pdcp_data_pdu_header_size_12bit = 2;
 constexpr size_t pdcp_data_pdu_header_size_18bit = 3;
+constexpr size_t pdcp_data_pdu_header_size_max   = pdcp_data_pdu_header_size_18bit;
 constexpr size_t pdcp_data_pdu_header_size(pdcp_sn_size sn_size)
 {
   switch (sn_size) {

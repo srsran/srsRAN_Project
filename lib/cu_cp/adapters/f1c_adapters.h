@@ -91,7 +91,7 @@ public:
   void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
   {
     byte_buffer pdu(rrc_container.begin(), rrc_container.end());
-    pdcp_rx.handle_pdu(std::move(pdu));
+    pdcp_rx.handle_pdu(byte_buffer_slice_chain{std::move(pdu)});
   }
 
 private:

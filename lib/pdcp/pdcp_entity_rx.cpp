@@ -38,7 +38,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   }
 }
 
-void pdcp_entity_rx::handle_pdu(byte_buffer pdu)
+void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
 {
   // Log PDU
   logger.log_info(pdu.begin(),
@@ -98,11 +98,14 @@ void pdcp_entity_rx::handle_pdu(byte_buffer pdu)
    */
   byte_buffer sdu;
   if (ciphering_enabled == pdcp_ciphering_enabled::enabled) {
-    sdu = cipher_decrypt(byte_buffer_view{pdu, hdr_len_bytes, pdu.length() - hdr_len_bytes}, rcvd_count);
-    pdu.trim_tail(pdu.length() - hdr_len_bytes);
-    sdu.chain_before(std::move(pdu));
+    sdu = cipher_decrypt(pdu.begin() + hdr_len_bytes, pdu.end(), rcvd_count);
+    std::array<uint8_t, pdcp_data_pdu_header_size_max> hdr_buf;
+    span<uint8_t>                                      hdr{hdr_buf.data(), hdr_len_bytes};
+    std::copy(pdu.begin(), pdu.begin() + hdr_len_bytes, hdr.begin());
+    sdu.prepend(hdr);
   } else {
-    sdu = std::move(pdu);
+    // TODO: Optimize - avoid bytewise copy
+    sdu = {pdu.begin(), pdu.end()};
   }
 
   /*
@@ -253,14 +256,16 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
   return is_valid;
 }
 
-byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_view msg, uint32_t count)
+byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_slice_chain::const_iterator msg_begin,
+                                           byte_buffer_slice_chain::const_iterator msg_end,
+                                           uint32_t                                count)
 {
   // If control plane use RRC integrity key. If data use user plane key
   const sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
 
   logger.log_debug("Cipher decrypt input: COUNT: {}, Bearer ID: {}, Direction: {}", count, lcid, direction);
   logger.log_debug((uint8_t*)k_enc.data(), k_enc.size(), "Cipher decrypt key:");
-  logger.log_debug(msg.begin(), msg.end(), "Cipher decrypt input msg");
+  logger.log_debug(msg_begin, msg_end, "Cipher decrypt input msg");
 
   byte_buffer ct;
 
@@ -268,13 +273,13 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_view msg, uint32_t count)
     case ciphering_algorithm::nea0:
       break;
     case ciphering_algorithm::nea1:
-      ct = security_nea1(k_enc, count, lcid - 1, direction, msg.begin(), msg.end());
+      ct = security_nea1(k_enc, count, lcid - 1, direction, msg_begin, msg_end);
       break;
     case ciphering_algorithm::nea2:
-      ct = security_nea2(k_enc, count, lcid - 1, direction, msg.begin(), msg.end());
+      ct = security_nea2(k_enc, count, lcid - 1, direction, msg_begin, msg_end);
       break;
     case ciphering_algorithm::nea3:
-      ct = security_nea3(k_enc, count, lcid - 1, direction, msg.begin(), msg.end());
+      ct = security_nea3(k_enc, count, lcid - 1, direction, msg_begin, msg_end);
       break;
     default:
       break;
@@ -326,35 +331,31 @@ void pdcp_entity_rx::reordering_callback::operator()(uint32_t /*timer_id*/)
 /*
  * Header helpers
  */
-bool pdcp_entity_rx::read_data_pdu_header(const byte_buffer& buf, uint32_t& sn) const
+bool pdcp_entity_rx::read_data_pdu_header(const byte_buffer_slice_chain& buf, uint32_t& sn) const
 {
-  byte_buffer_reader buf_reader = buf;
-  if (buf_reader.empty()) {
-    logger.log_warning("Unpacking header of empty PDCP PDU");
-    return false;
-  }
-
   // Check PDU is long enough to extract header
   if (buf.length() <= hdr_len_bytes) {
     logger.log_error("PDU too small to extract header");
     return false;
   }
 
+  byte_buffer_slice_chain::const_iterator buf_it = buf.begin();
+
   // Extract RCVD_SN
   switch (cfg.sn_size) {
     case pdcp_sn_size::size12bits:
-      sn = (*buf_reader & 0x0fU) << 8U; // first 4 bits SN
-      ++buf_reader;
-      sn |= (*buf_reader & 0xffU); // last 8 bits SN
-      ++buf_reader;
+      sn = (*buf_it & 0x0fU) << 8U; // first 4 bits SN
+      ++buf_it;
+      sn |= (*buf_it & 0xffU); // last 8 bits SN
+      ++buf_it;
       break;
     case pdcp_sn_size::size18bits:
-      sn = (*buf_reader & 0x03U) << 16U; // first 2 bits SN
-      ++buf_reader;
-      sn |= (*buf_reader & 0xffU) << 8U; // middle 8 bits SN
-      ++buf_reader;
-      sn |= (*buf_reader & 0xffU); // last 8 bits SN
-      ++buf_reader;
+      sn = (*buf_it & 0x03U) << 16U; // first 2 bits SN
+      ++buf_it;
+      sn |= (*buf_it & 0xffU) << 8U; // middle 8 bits SN
+      ++buf_it;
+      sn |= (*buf_it & 0xffU); // last 8 bits SN
+      ++buf_it;
       break;
     default:
       logger.log_error("Cannot extract RCVD_SN, invalid SN length configured: {}", cfg.sn_size);

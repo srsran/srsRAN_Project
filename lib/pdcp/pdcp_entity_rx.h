@@ -48,12 +48,12 @@ public:
                  pdcp_rx_upper_control_notifier& upper_cn_,
                  timer_manager&                  timers);
 
-  void handle_pdu(byte_buffer buf) final;
+  void handle_pdu(byte_buffer_slice_chain buf) final;
 
   /*
    * Header helpers
    */
-  bool read_data_pdu_header(const byte_buffer& buf, uint32_t& sn) const;
+  bool read_data_pdu_header(const byte_buffer_slice_chain& buf, uint32_t& sn) const;
   void discard_data_header(byte_buffer& buf) const;
   void extract_mac(byte_buffer& buf, sec_mac& mac) const;
 
@@ -93,7 +93,9 @@ private:
   void deliver_all_consecutive_counts();
 
   bool        integrity_verify(byte_buffer_view buf, uint32_t count, const sec_mac& mac);
-  byte_buffer cipher_decrypt(byte_buffer_view msg, uint32_t count);
+  byte_buffer cipher_decrypt(byte_buffer_slice_chain::const_iterator msg_begin,
+                             byte_buffer_slice_chain::const_iterator msg_end,
+                             uint32_t                                count);
 
   /*
    * Notifiers

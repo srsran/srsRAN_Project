@@ -34,7 +34,7 @@ public:
     std::printf("[Network] Receiving a fake packet of size = %u\n", (unsigned)buf.length());
 
     // Send the packet to the PDCP interface.
-    pdcp_if.handle_pdu(std::move(buf));
+    pdcp_if.handle_pdu(srsgnb::byte_buffer_slice_chain{std::move(buf)});
   }
 };
 

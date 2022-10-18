@@ -49,6 +49,10 @@ class byte_buffer_slice_chain
         it = frag_it->begin();
       }
     }
+    template <typename U, std::enable_if_t<not std::is_same<U, T>::value, bool> = true>
+    iterator_impl(const iterator_impl<U>& other) : parent(other.parent), frag_it(other.frag_it), it(other.it)
+    {
+    }
 
     reference operator*() { return *it; }
     reference operator*() const { return *it; }
@@ -105,6 +109,9 @@ class byte_buffer_slice_chain
     bool operator!=(const iterator_impl<T>& other) const { return !(*this == other); }
 
   private:
+    template <typename OtherT>
+    friend class iterator_impl;
+
     parent_t*       parent = nullptr;
     fragment_it_t   frag_it;
     underlying_it_t it;

@@ -65,7 +65,7 @@ public:
     for (uint8_t byte : pdu) {
       buf.append(byte);
     }
-    pdcp_rx_lower->handle_pdu(std::move(buf));
+    pdcp_rx_lower->handle_pdu(byte_buffer_slice_chain{std::move(buf)});
   }
 
   // RLC -> F1 -> RRC

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/security/security.h"
 
@@ -47,7 +48,7 @@ public:
   pdcp_rx_lower_interface(const pdcp_rx_lower_interface&&)            = delete;
   pdcp_rx_lower_interface& operator=(const pdcp_rx_lower_interface&&) = delete;
 
-  virtual void handle_pdu(byte_buffer pdu) = 0; ///< Handle the incoming PDU.
+  virtual void handle_pdu(byte_buffer_slice_chain pdu) = 0; ///< Handle the incoming PDU.
 };
 
 /// This interface represents the data exit point of the receiving side of a PDCP entity.
