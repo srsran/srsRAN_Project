@@ -25,8 +25,8 @@ using dci_payload = bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>;
 /// The size alignment procedure, specified in TS38.212 Section 7.3.1.0, reduces the number of different DCI sizes, to
 /// simplify the detection of DCI messages by the UE.
 ///
-/// \remark CORESET 0 is assumed to be configured for the cell if \c coreset0_bw is set to any value other than 0.
-struct dci_config {
+/// \remark CORESET 0 is assumed to be configured for the cell if \ref coreset0_bw is set to any value other than 0.
+struct dci_size_config {
   /// Bandwidth of the initial DL BWP in number of Resource Blocks.
   unsigned dl_bwp_initial_bw;
   /// Bandwidth of the active DL BWP in number of Resource Blocks.
@@ -59,48 +59,46 @@ struct dci_sizes {
 /// Computes the DCI payload sizes, in number of bits, with the size alignment procedure specified in TS38.212
 /// Section 7.3.1.0.
 ///
-/// \param[in] config Required DCI configuration parameters.
-/// \return the DCI payload sizes in number of bits.
-dci_sizes get_dci_sizes(const dci_config& config);
+/// \param[in] config Required DCI size configuration parameters.
+/// \return The DCI payload sizes in number of bits.
+dci_sizes get_dci_sizes(const dci_size_config& config);
 
 /// \brief Describes the necessary parameters for packing a DCI format 0_0 scrambled by C-RNTI, CS-RNTI or MCS-C-RNTI.
 /// \remark Defined in TS38.212 Section 7.3.1.1.1.
 struct dci_0_0_c_rnti_configuration {
   /// \brief DCI format 0_0 payload size.
   ///
-  /// the DCI payload size is determined by the DCI size alignment procedure, specified in TS38.212 Section 7.3.1.0 and
-  /// implemented by \c get_dci_sizes.
+  /// The DCI payload size is determined by the DCI size alignment procedure specified in TS38.212 Section 7.3.1.0. See
+  /// \ref get_dci_sizes for more information.
   unsigned payload_size;
-  /// \brief Identifier for DCI formats – 1 bit.
-  /// \remark The value of this field is always set to 0, indicating an UL DCI format.
-  unsigned dci_format_id;
-  /// \brief Parameter \f$N_{UL_hop}\f$, as per TS38.212 Section 7.3.1.1.1.
+  /// \brief Parameter \f$N_{\mathrm{UL\_hop}}\f$, as per TS38.212 Section 7.3.1.1.1.
   ///
-  /// \f$N_{UL_hop}\f$ is the number of bits used in the DCI payload to pack the frequency hopping offset, represented
-  /// by \c hopping_offset.
+  /// \f$N_{\mathrm{UL\_hop}}\f$ is the number of bits used in the DCI payload to pack the frequency hopping offset,
+  /// represented by \ref hopping_offset.
   ///
-  /// If frequency hopping is enabled via the \c frequency_hopping_flag, it must be set to:
-  ///   - 1, if the higher layer parameter frequencyHoppingOffsetLists has 2 possible offsets.
-  ///   - 2, if the higher layer parameter frequencyHoppingOffsetLists has 4 possible offsets.
+  /// If frequency hopping is enabled via the \ref frequency_hopping_flag, it must be set to:
+  ///   - 1, if the RRC parameter \e frequencyHoppingOffsetLists has 2 possible offsets.
+  ///   - 2, if the RRC parameter \e frequencyHoppingOffsetLists has 4 possible offsets.
   unsigned N_ul_hop;
-  /// \brief Frequency hopping offset, selected from the higher layer parameter \c frequencyHoppingOffsetLists.
+  /// \brief Frequency hopping offset, selected from the RRC parameter \e frequencyHoppingOffsetLists.
   ///
-  /// \c frequencyHoppingOffsetLists provides 2 or 4 selectable frequency offsets, as per TS38.214 Section 6.3. the
-  /// \c hopping_offset field acts as an index for \c frequencyHoppingOffsetLists, determining which of the possible
-  /// offsets is used.
+  /// \e frequencyHoppingOffsetLists, given by TS38.331 Section 6.3.2, \e PUSCH-Config Information Element, provides 2
+  /// or 4 selectable frequency offsets, as per TS38.214 Section 6.3. The \c hopping_offset field acts as an index for
+  /// \e frequencyHoppingOffsetLists, determining which of the possible offsets is used.
   ///
-  /// If frequency hopping is enabled via the \c frequency_hopping flag, it must be set to one of the following values:
-  ///   - (0, 1), if the higher layer parameter frequencyHoppingOffsetLists has 2 possible offsets.
-  ///   - (0, 1, 2, 3), if the higher layer parameter frequencyHoppingOffsetLists has 4 possible offsets.
+  /// If frequency hopping is enabled via the \ref frequency_hopping_flag, it must be set to one of the following
+  /// values:
+  ///   - (0, 1), if \e frequencyHoppingOffsetLists has 2 possible offsets.
+  ///   - (0, 1, 2, 3), if \e frequencyHoppingOffsetLists has 4 possible offsets.
   unsigned hopping_offset;
   /// Parameter \f$N_{RB}^{UL,BWP}\f$. It must be set according to TS38.212 Section 7.3.1.0.
   unsigned N_rb_ul_bwp;
-  /// Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{UL,BWP}(N_{RB}^{UL,BWP}+1)/2) \Bigr
+  /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{UL,BWP}(N_{RB}^{UL,BWP}+1)/2) \Bigr
   /// \rceil\f$ bits as per TS38.214 Section 6.1.2.2.2.
   unsigned frequency_resource;
   /// Time domain resource assignment - 4 bit as per TS38.214 Section 6.1.2.1.
   unsigned time_resource;
-  /// Frequency hopping flag. 1 bit as per TS38.214 Section 6.3 and Table 7.3.1.1.1-3.
+  /// Frequency hopping flag - 1 bit as per TS38.214 Section 6.3 and Table 7.3.1.1.1-3.
   unsigned frequency_hopping_flag;
   /// Modulation and coding scheme - 5 bits as per TS38.214 Section 6.1.4.1.
   unsigned modulation_coding_scheme;
@@ -110,15 +108,13 @@ struct dci_0_0_c_rnti_configuration {
   unsigned redundancy_version;
   /// HARQ process number - 4 bits.
   unsigned harq_process_number;
-  /// TPC command for scheduled PUSCH – 2 bits as per TS38.213 Section 7.1.1.
+  /// TPC command for scheduled PUSCH - 2 bits as per TS38.213 Section 7.1.1.
   unsigned tpc_command;
   /// UL/SUL indicator - 1 bit if present, as per TS38.212 Section 7.3.1.1.1 and Table 7.3.1.1.1-1.
   optional<bool> ul_sul_indicator;
 };
 
-/// \brief Packs a DCI format 0_0 scrambled by C-RNTI, CS-RNTI or MCS-C-RNTI.
-/// \remark It assumes that DCI format 0_0 scrambled by C-RNTI, CS-RNTI or MCS-C-RNTI is used in a UE-specific
-/// Search Space, and therefore no truncation is required.
+/// Packs a DCI format 0_0 scrambled by C-RNTI, CS-RNTI or MCS-C-RNTI.
 dci_payload dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& config);
 
 /// \brief Describes the necessary parameters for packing a DCI format 0_0 scrambled by TC-RNTI.
@@ -126,41 +122,39 @@ dci_payload dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& config);
 struct dci_0_0_tc_rnti_configuration {
   /// \brief DCI format 0_0 payload size.
   ///
-  /// the DCI payload size is determined by the DCI size alignment procedure, specified in TS38.212 Section 7.3.1.0 and
-  /// implemented by \c get_dci_sizes.
+  /// The DCI payload size is determined by the DCI size alignment procedure specified in TS38.212 Section 7.3.1.0. See
+  /// \ref get_dci_sizes for more information.
   unsigned payload_size;
-  /// \brief Identifier for DCI formats – 1 bit.
-  /// \remark The value of this field is always set to 0, indicating an UL DCI format.
-  unsigned dci_format_id;
-  /// \brief Parameter \f$N_{UL_hop}\f$, as per TS38.212 Section 7.3.1.1.1.
+  /// \brief Parameter \f$N_{\mathrm{UL\_hop}}\f$, as per TS38.212 Section 7.3.1.1.1.
   ///
-  /// \f$N_{UL_hop}\f$ is the number of bits used in the DCI payload to pack the frequency hopping offset, represented
-  /// by \c hopping_offset.
+  /// \f$N_{\mathrm{UL\_hop}}\f$ is the number of bits used in the DCI payload to pack the frequency hopping offset,
+  /// represented by \ref hopping_offset.
   ///
-  /// If frequency hopping is enabled via the \c frequency_hopping_flag, it must be set to:
+  /// If frequency hopping is enabled via the \ref frequency_hopping_flag, it must be set to:
   ///   - 1, if \f$N_{RB}^{UL,BWP}\f$ is smaller than 50.
   ///   - 2 otherwise.
   unsigned N_ul_hop;
   /// \brief Frequency hopping offset, as per TS 38.213 Section 8.3 and Table 8.3-1.
   ///
-  /// If frequency hopping is enabled via the \c frequency_hopping flag, it must be set to one of the following values:
-  ///   - (0, 1), if \c N_ul_hop is set to 1.
-  ///   - (0, 1, 2, 3), if \c N_ul_hop is set to 2.
+  /// If frequency hopping is enabled via the \ref frequency_hopping flag, it must be set to one of the following
+  /// values:
+  ///   - (0, 1), if \ref N_ul_hop is set to 1.
+  ///   - (0, 1, 2, 3), if \ref N_ul_hop is set to 2.
   unsigned hopping_offset;
   /// Parameter \f$N_{RB}^{UL,BWP}\f$. It must be set to the size of the initial UL BWP.
   unsigned N_rb_ul_bwp;
-  /// Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{UL,BWP}(N_{RB}^{UL,BWP}+1)/2) \Bigr
+  /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{UL,BWP}(N_{RB}^{UL,BWP}+1)/2) \Bigr
   /// \rceil\f$ bits as per TS38.214 Section 6.1.2.2.2.
   unsigned frequency_resource;
   /// Time domain resource assignment - 4 bit as per TS38.214 Section 6.1.2.1.
   unsigned time_resource;
-  /// Frequency hopping flag. 1 bit as per TS38.214 Section 6.3 and Table 7.3.1.1.1-3.
+  /// Frequency hopping flag - 1 bit as per TS38.214 Section 6.3 and Table 7.3.1.1.1-3.
   unsigned frequency_hopping_flag;
   /// Modulation and coding scheme - 5 bits as per TS38.214 Section 6.1.4.1.
   unsigned modulation_coding_scheme;
   /// Redundancy version - 2 bits as per TS38.212 Table 7.3.1.1.1-2.
   unsigned redundancy_version;
-  /// TPC command for scheduled PUSCH – 2 bits as per TS38.213 Section 7.1.1.
+  /// TPC command for scheduled PUSCH - 2 bits as per TS38.213 Section 7.1.1.
   unsigned tpc_command;
 };
 
@@ -173,15 +167,12 @@ dci_payload dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& config);
 struct dci_1_0_c_rnti_configuration {
   /// \brief DCI format 1_0 payload size.
   ///
-  /// the DCI payload size is determined by the DCI size alignment procedure, specified in TS38.212 Section 7.3.1.0 and
-  /// implemented by \c get_dci_sizes.
+  /// The DCI payload size is determined by the DCI size alignment procedure specified in TS38.212 Section 7.3.1.0. See
+  /// \ref get_dci_sizes for more information.
   unsigned payload_size;
-  /// \brief Identifier for DCI formats – 1 bit.
-  /// \remark The value of this field is always set to 1, indicating a DL DCI format.
-  unsigned dci_format_id;
   /// Parameter \f$N_{RB}^{DL,BWP}\f$. It must be set according to TS38.212 Section 7.3.1.0.
   unsigned N_rb_dl_bwp;
-  /// Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
+  /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
   /// \rceil\f$ bits as per TS38.214 Section 5.1.2.2.2.
   unsigned frequency_resource;
   /// Time domain resource assignment - 4 bit as per TS38.214 Section 5.1.2.1.
@@ -198,21 +189,19 @@ struct dci_1_0_c_rnti_configuration {
   unsigned harq_process_number;
   /// Downlink assignment index - 2 bits as per TS38.213 Section 9.1.3.
   unsigned dl_assignment_index;
-  /// TPC command for scheduled PUCCH – 2 bits as per TS38.213 Section 7.2.1.
+  /// TPC command for scheduled PUCCH - 2 bits as per TS38.213 Section 7.2.1.
   unsigned tpc_command;
-  /// PUCCH resource indicator – 3 bits as per TS38.213 Section 9.2.3.
+  /// PUCCH resource indicator - 3 bits as per TS38.213 Section 9.2.3.
   unsigned pucch_resource_indicator;
-  /// PDSCH to HARQ feedback timing indicator – 3 bits as per TS38.213 Section 9.2.3.
+  /// PDSCH to HARQ feedback timing indicator - 3 bits as per TS38.213 Section 9.2.3.
   unsigned pdsch_harq_fb_timing_indicator;
 };
 
 /// Packs a DCI format 1_0 scrambled by C-RNTI, CS-RNTI or MCS-C-RNTI.
 dci_payload dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& config);
 
-/// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by P-RNTI as per TS38.212
-/// Section 7.3.1.2.1.
-/// \remark It assumes that DCI format 1_0 scrambled by P-RNTI is always used in a Common Search Space, and therefore
-/// no padding or truncation is required.
+/// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by P-RNTI.
+/// \remark Defined in TS38.212 Section 7.3.1.2.1.
 struct dci_1_0_p_rnti_configuration {
   /// Indicates the content of the DCI format 1_0 payload when scrambled by P-RNTI.
   enum class payload_info {
@@ -253,14 +242,12 @@ struct dci_1_0_p_rnti_configuration {
 /// Packs a DCI format 1_0 scrambled by P-RNTI.
 dci_payload dci_1_0_p_rnti_pack(const dci_1_0_p_rnti_configuration& config);
 
-/// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by SI-RNTI as per TS38.212
-/// Section 7.3.1.2.1.
-/// \remark It assumes that DCI format 1_0 scrambled by SI-RNTI is always used in a Common Search Space, and therefore
-/// no padding or truncation is required.
+/// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by SI-RNTI.
+/// \remark Defined in TS38.212 Section 7.3.1.2.1.
 struct dci_1_0_si_rnti_configuration {
   /// Parameter \f$N_{RB}^{DL,BWP}\f$. It must be set to CORESET0 size.
   unsigned N_rb_dl_bwp;
-  /// Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
+  /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
   /// \rceil\f$ bits as per TS38.214 Section 5.1.2.2.2.
   unsigned frequency_resource;
   /// Time domain resource assignment - 4 bit as per TS38.214 Section 5.1.2.1.
@@ -279,10 +266,8 @@ struct dci_1_0_si_rnti_configuration {
 /// Packs a DCI format 1_0 scrambled by SI-RNTI.
 dci_payload dci_1_0_si_rnti_pack(const dci_1_0_si_rnti_configuration& config);
 
-/// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by RA-RNTI as per TS38.212
-/// Section 7.3.1.2.1.
-/// \remark It assumes that DCI format 1_0 scrambled by RA-RNTI is always used in a Common Search Space, and therefore
-/// no padding or truncation is required.
+/// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by RA-RNTI.
+/// \remark Defined in TS38.212 Section 7.3.1.2.1.
 struct dci_1_0_ra_rnti_configuration {
   /// \brief Parameter \f$N_{RB}^{DL,BWP}\f$.
   ///
@@ -290,7 +275,7 @@ struct dci_1_0_ra_rnti_configuration {
   ///   - The CORESET0 size, if the CORESET0 is configured.
   ///   - Otherwise, the initial DL BWP size.
   unsigned N_rb_dl_bwp;
-  /// Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
+  /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
   /// \rceil\f$ bits as per TS38.214 Section 5.1.2.2.2.
   unsigned frequency_resource;
   /// Time domain resource assignment - 4 bits as per TS38.214 Section 5.1.2.1.
@@ -308,17 +293,12 @@ struct dci_1_0_ra_rnti_configuration {
 /// Packs a DCI format 1_0 scrambled by RA-RNTI.
 dci_payload dci_1_0_ra_rnti_pack(const dci_1_0_ra_rnti_configuration& config);
 
-/// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by TC-RNTI, as per TS38.212
-/// Section 7.3.1.2.1.
-/// \remark It assumes that DCI format 1_0 scrambled by TC-RNTI is always used in a Common Search Space, and therefore
-/// no padding or truncation is required.
+/// \brief Describes the necessary parameters for packing a DCI format 1_0 scrambled by TC-RNTI.
+/// \remark Defined in TS38.212 Section 7.3.1.2.1.
 struct dci_1_0_tc_rnti_configuration {
-  /// \brief Identifier for DCI formats – 1 bit.
-  /// \remark The value of this field is always set to 1, indicating a DL DCI format.
-  unsigned dci_format_id;
   /// Parameter \f$N_{RB}^{DL,BWP}\f$. It must be set to the CORESET0 size.
   unsigned N_rb_dl_bwp;
-  /// Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
+  /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
   /// \rceil\f$ bits as per TS38.214 Section 5.1.2.2.2.
   unsigned frequency_resource;
   /// Time domain resource assignment - 4 bit as per TS38.214 Section 5.1.2.1.
@@ -333,11 +313,11 @@ struct dci_1_0_tc_rnti_configuration {
   unsigned redundancy_version;
   /// HARQ process number - 4 bits.
   unsigned harq_process_number;
-  /// TPC command for scheduled PUCCH – 2 bits as per TS38.213 Section 7.2.1.
+  /// TPC command for scheduled PUCCH - 2 bits as per TS38.213 Section 7.2.1.
   unsigned tpc_command;
-  /// PUCCH resource indicator – 3 bits as per TS38.213 Section 9.2.3.
+  /// PUCCH resource indicator - 3 bits as per TS38.213 Section 9.2.3.
   unsigned pucch_resource_indicator;
-  /// PDSCH to HARQ feedback timing indicator – 3 bits as per TS38.213 Section 9.2.3.
+  /// PDSCH to HARQ feedback timing indicator - 3 bits as per TS38.213 Section 9.2.3.
   unsigned pdsch_harq_fb_timing_indicator;
 };
 

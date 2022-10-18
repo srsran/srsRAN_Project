@@ -216,7 +216,6 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
   pdcch.dci.type                     = dci_dl_rnti_config_type::tc_rnti_f1_0;
   pdcch.dci.tc_rnti_f1_0             = {};
   dci_1_0_tc_rnti_configuration& dci = pdcch.dci.tc_rnti_f1_0;
-  dci.dci_format_id                  = 1;
   dci.N_rb_dl_bwp                    = initial_active_dl_bwp.crbs.length();
   dci.frequency_resource             = ra_frequency_type1_get_riv(
       ra_frequency_type1_configuration{dci.N_rb_dl_bwp, ue_grant_crbs.start(), ue_grant_crbs.length()});

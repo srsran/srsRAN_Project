@@ -37,11 +37,7 @@ static dci_0_0_tc_rnti_configuration build_dci_0_0_tc_rnti_config(unsigned N_rb_
   std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
 
   config.payload_size = payload_size;
-
-  // Identifier for DCI format is always set to 0, according to TS38.211 Section 7.3.1.1.1.
-  config.dci_format_id = 0;
-
-  config.N_ul_hop = N_ul_hop_dist(rgen);
+  config.N_ul_hop     = N_ul_hop_dist(rgen);
 
   // The hopping offset is packed with N_ul_hop bits.
   std::uniform_int_distribution<unsigned> hopping_offset_dist(0, pow2(config.N_ul_hop) - 1);
@@ -63,8 +59,8 @@ static void test_dci_0_0_tc_rnti_packing(const dci_0_0_tc_rnti_configuration& co
   // Generate the expected payload.
   static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> expected;
 
-  // Identifier for DCI formats - 1 bit.
-  expected.push_back(config.dci_format_id & 1U);
+  // Identifier for DCI formats - 1 bit. This field is always 0, indicating an UL DCI format.
+  expected.push_back(0x00U);
 
   unsigned N_ul_hop = 0;
   if (config.frequency_hopping_flag) {
@@ -161,11 +157,7 @@ static dci_0_0_c_rnti_configuration build_dci_0_0_c_rnti_config(unsigned N_rb_ul
   std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
 
   config.payload_size = payload_size;
-
-  // Identifier for DCI format is always set to 0, according to TS38.211 Section 7.3.1.1.1.
-  config.dci_format_id = 0;
-
-  config.N_ul_hop = N_ul_hop_dist(rgen);
+  config.N_ul_hop     = N_ul_hop_dist(rgen);
 
   // The hopping offset is packed with N_ul_hop bits.
   std::uniform_int_distribution<unsigned> hopping_offset_dist(0, pow2(config.N_ul_hop) - 1);
@@ -195,8 +187,8 @@ static void test_dci_0_0_c_rnti_packing(const dci_0_0_c_rnti_configuration& conf
   // Generate the expected payload.
   static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> expected;
 
-  // Identifier for DCI formats - 1 bit.
-  expected.push_back((config.dci_format_id >> 0U) & 1U);
+  // Identifier for DCI formats - 1 bit. This field is always 0, indicating an UL DCI format.
+  expected.push_back(0x00U);
 
   unsigned N_ul_hop = 0;
   if (config.frequency_hopping_flag) {
@@ -300,11 +292,7 @@ static dci_1_0_c_rnti_configuration build_dci_1_0_c_rnti_config(unsigned N_rb_dl
   unsigned                                frequency_resource_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
   std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
 
-  config.payload_size = payload_size;
-
-  // Identifier for DCI format is always set to 1, according to TS38.211 Section 7.3.1.2.1.
-  config.dci_format_id = 1;
-
+  config.payload_size                   = payload_size;
   config.N_rb_dl_bwp                    = N_rb_dl_bwp;
   config.frequency_resource             = frequency_resource_dist(rgen);
   config.time_resource                  = time_resource_dist(rgen);
@@ -326,8 +314,8 @@ static void test_dci_1_0_c_rnti_packing(const dci_1_0_c_rnti_configuration& conf
   // Generate the expected payload.
   static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> expected;
 
-  // Identifier for DCI formats - 1 bit.
-  expected.push_back((config.dci_format_id >> 0U) & 1U);
+  // Identifier for DCI formats - 1 bit. This field is always 1, indicating a DL DCI format.
+  expected.push_back(0x01U);
 
   // Frequency domain resource assignment - frequency_resource_nof_bits bits.
   unsigned frequency_resource_nof_bits = log2_ceil(config.N_rb_dl_bwp * (config.N_rb_dl_bwp + 1) / 2);
@@ -650,9 +638,6 @@ static dci_1_0_tc_rnti_configuration build_dci_1_0_tc_rnti_config(unsigned N_rb_
   unsigned                                frequency_resource_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
   std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
 
-  // Identifier for DCI format is always set to 1, according to TS38.211 Section 7.3.1.2.1.
-  config.dci_format_id = 1;
-
   config.N_rb_dl_bwp                    = N_rb_dl_bwp;
   config.frequency_resource             = frequency_resource_dist(rgen);
   config.time_resource                  = time_resource_dist(rgen);
@@ -673,8 +658,8 @@ static void test_dci_1_0_tc_rnti_packing(const dci_1_0_tc_rnti_configuration& co
   // Generate the expected payload.
   static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> expected;
 
-  // Identifier for DCI formats - 1 bit.
-  expected.push_back((config.dci_format_id >> 0U) & 1U);
+  // Identifier for DCI formats - 1 bit. This field is always 1, indicating a DL DCI format.
+  expected.push_back(0x01U);
 
   // Frequency domain resource assignment - frequency_resource_nof_bits bits.
   unsigned frequency_resource_nof_bits = log2_ceil(config.N_rb_dl_bwp * (config.N_rb_dl_bwp + 1) / 2);
@@ -806,7 +791,7 @@ int main()
       for (unsigned dl_bwp_active_bw : {12U, 96U, MAX_RB}) {
         for (unsigned ul_bwp_initial_bw : {12U, 96U, MAX_RB}) {
           for (unsigned ul_bwp_active_bw : {12U, 96U, MAX_RB}) {
-            dci_config config = {};
+            dci_size_config config = {};
 
             // Set the Bandwidth of the UL and DL, active and initial BWP.
             config.ul_bwp_initial_bw = ul_bwp_initial_bw;

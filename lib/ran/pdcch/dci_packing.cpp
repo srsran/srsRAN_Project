@@ -15,43 +15,52 @@ using namespace srsgnb;
 
 // Computes the number of information bits before padding for a DCI format 0_0 message.
 static unsigned dci_f0_0_bits_before_padding(unsigned N_rb_ul_bwp)
-
 {
-  constexpr unsigned dci_format_id_nof_bits            = 1;
-  constexpr unsigned time_resource_nof_bits            = 4;
-  constexpr unsigned frequency_hopping_flag_nof_bits   = 1;
-  constexpr unsigned modulation_coding_scheme_nof_bits = 5;
-  constexpr unsigned new_data_indicator_nof_bits       = 1;
-  constexpr unsigned redundancy_version_nof_bits       = 2;
-  constexpr unsigned harq_process_number_nof_bits      = 4;
-  constexpr unsigned tpc_command_nof_bits              = 2;
+  unsigned nof_bits = 0;
 
-  // Contribution to the DCI payload size that is fixed.
-  constexpr unsigned dci_fixed_nof_bits = dci_format_id_nof_bits + time_resource_nof_bits +
-                                          frequency_hopping_flag_nof_bits + modulation_coding_scheme_nof_bits +
-                                          new_data_indicator_nof_bits + redundancy_version_nof_bits +
-                                          harq_process_number_nof_bits + tpc_command_nof_bits;
+  // Identifier for DCI formats - 1 bit.
+  ++nof_bits;
 
-  // Frequency resource allocation field size. the frequency hopping offset is packed using the MSB bits of this field,
-  // therefore, the payload size is not altered by the use of frequency hopping. See TS38.212 Section 7.3.1.1.1.
-  unsigned dci_variable_nof_bits = log2_ceil(N_rb_ul_bwp * (N_rb_ul_bwp + 1) / 2);
+  // Frequency domain resource assignment. Number of bits as per TS38.214 Section 6.1.2.2.2.
+  nof_bits += log2_ceil(N_rb_ul_bwp * (N_rb_ul_bwp + 1) / 2);
 
-  return dci_fixed_nof_bits + dci_variable_nof_bits;
+  // Time domain resource assignment - 4 bit.
+  nof_bits += 4;
+
+  // Frequency hopping flag - 1 bit.
+  ++nof_bits;
+
+  // Modulation and coding scheme - 5 bit.
+  nof_bits += 5;
+
+  // New data indicator - 1 bit.
+  ++nof_bits;
+
+  // Redundancy version - 2 bit.
+  nof_bits += 2;
+
+  // HARQ process number - 4 bit.
+  nof_bits += 4;
+
+  // TPC command for scheduled PUSCH - 2 bit.
+  nof_bits += 2;
+
+  return nof_bits;
 }
 
 // Computes the number of information bits before padding for a DCI format 1_0 message.
 static unsigned dci_f1_0_bits_before_padding(unsigned N_rb_dl_bwp)
 {
   // Contribution to the DCI payload size that is fixed. It is the same number of bits for all format 1_0 variants.
-  constexpr unsigned dci_fixed_nof_bits = 28U;
+  unsigned nof_bits = 28U;
 
-  // Frequency resource allocation field size.
-  unsigned dci_variable_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
+  // Frequency domain resource assignment. Number of bits as per TS38.214 Section 5.1.2.2.2.
+  nof_bits += log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
 
-  return dci_fixed_nof_bits + dci_variable_nof_bits;
+  return nof_bits;
 }
 
-dci_sizes srsgnb::get_dci_sizes(const dci_config& config)
+dci_sizes srsgnb::get_dci_sizes(const dci_size_config& config)
 {
   dci_sizes sizes = {};
 
@@ -154,8 +163,8 @@ dci_payload srsgnb::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& conf
     frequency_resource_nof_bits -= nof_truncation_bits;
   }
 
-  // Identifier for DCI formats - 1 bit.
-  payload.push_back(config.dci_format_id, 1);
+  // Identifier for DCI formats - 1 bit. This field is always 0, indicating an UL DCI format.
+  payload.push_back(0x00U, 1);
 
   if (config.frequency_hopping_flag) {
     // Assert that the number of bits used to pack the frequency hopping offset is valid.
@@ -244,8 +253,8 @@ dci_payload srsgnb::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& co
     frequency_resource_nof_bits -= nof_truncation_bits;
   }
 
-  // Identifier for DCI formats - 1 bit.
-  payload.push_back(config.dci_format_id, 1);
+  // Identifier for DCI formats - 1 bit. This field is always 0, indicating an UL DCI format.
+  payload.push_back(0x00U, 1);
 
   if (config.frequency_hopping_flag) {
     // Assert that the number of bits used to pack the frequency hopping offset is valid.
@@ -306,8 +315,8 @@ dci_payload srsgnb::dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& conf
   unsigned    frequency_resource_nof_bits = log2_ceil(config.N_rb_dl_bwp * (config.N_rb_dl_bwp + 1) / 2);
   dci_payload payload;
 
-  // Identifier for DCI formats - 1 bit.
-  payload.push_back(config.dci_format_id, 1);
+  // Identifier for DCI formats - 1 bit. This field is always 1, indicating a DL DCI format.
+  payload.push_back(0x01U, 1);
 
   // Frequency domain resource assignment - frequency_resource_nof_bits bits.
   payload.push_back(config.frequency_resource, frequency_resource_nof_bits);
@@ -465,8 +474,8 @@ dci_payload srsgnb::dci_1_0_tc_rnti_pack(const dci_1_0_tc_rnti_configuration& co
   unsigned    frequency_resource_nof_bits = log2_ceil(config.N_rb_dl_bwp * (config.N_rb_dl_bwp + 1) / 2);
   dci_payload payload;
 
-  // Identifier for DCI formats - 1 bit.
-  payload.push_back(config.dci_format_id, 1);
+  // Identifier for DCI formats - 1 bit. This field is always 1, indicating a DL DCI format.
+  payload.push_back(0x01U, 1);
 
   // Frequency domain resource assignment - frequency_resource_nof_bits bits.
   payload.push_back(config.frequency_resource, frequency_resource_nof_bits);
