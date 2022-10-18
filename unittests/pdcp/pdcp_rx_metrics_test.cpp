@@ -49,7 +49,7 @@ TEST_P(pdcp_rx_metrics_test, sdu_pdu_metrics)
     ASSERT_EQ(m.num_pdu_bytes, exp_pdu_size);
     ASSERT_EQ(m.num_sdus, 1);
     ASSERT_EQ(m.num_sdu_bytes, exp_sdu_size);
-    ASSERT_EQ(m.num_integrity_verified_pdus, 0);
+    ASSERT_EQ(m.num_integrity_verified_pdus, 1);
     ASSERT_EQ(m.num_integrity_failed_pdus, 0);
     ASSERT_EQ(m.num_t_reordering_timeouts, 0);
   };
@@ -83,9 +83,9 @@ TEST_P(pdcp_rx_metrics_test, integrity_metrics)
 
     byte_buffer test_pdu;
     get_test_pdu(count, test_pdu);
+    test_pdu.append(0); // mess up the MAC
 
     // Get expected values
-    uint32_t exp_sdu_size = 2;
     uint32_t exp_pdu_size = test_pdu.length();
 
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
@@ -95,9 +95,10 @@ TEST_P(pdcp_rx_metrics_test, integrity_metrics)
     auto m = pdcp_rx->get_metrics();
     ASSERT_EQ(m.num_pdus, 1);
     ASSERT_EQ(m.num_pdu_bytes, exp_pdu_size);
-    ASSERT_EQ(m.num_sdus, 1);
-    ASSERT_EQ(m.num_sdu_bytes, exp_sdu_size);
-    ASSERT_EQ(m.num_integrity_failed_pdus, 0);
+    ASSERT_EQ(m.num_sdus, 0);
+    ASSERT_EQ(m.num_sdu_bytes, 0);
+    ASSERT_EQ(m.num_integrity_verified_pdus, 0);
+    ASSERT_EQ(m.num_integrity_failed_pdus, 1);
     ASSERT_EQ(m.num_t_reordering_timeouts, 0);
   };
 
