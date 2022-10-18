@@ -143,32 +143,32 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   }
 
   if (prbs_tbs.tbs_bytes < pending_bytes) {
-    logger.info(
+    logger.warning(
         "SRB0 PDU size ({}) exceeds TBS calculated ({}) for rnti={:#x}.", pending_bytes, prbs_tbs.tbs_bytes, u.crnti);
     return false;
   }
 
   if (mcs_idx > max_msg4_mcs_index) {
-    logger.info("MCS index chosen ({}) exceeds maximum allowed MCS index ({}) for rnti={:#x}.",
-                mcs_idx,
-                max_msg4_mcs_index,
-                u.crnti);
+    logger.warning("SCHED: MCS index chosen ({}) exceeds maximum allowed MCS index ({}) for rnti={:#x}.",
+                   mcs_idx,
+                   max_msg4_mcs_index,
+                   u.crnti);
     return false;
   }
 
   crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs, 0);
   if (ue_grant_crbs.length() < prbs_tbs.nof_prbs) {
-    logger.info("Postponed SRB0 PDU scheduling for rnti={:#x}. Cause: Not enough PRBs ({} < {})",
-                u.crnti,
-                ue_grant_crbs.length(),
-                prbs_tbs.nof_prbs);
+    logger.warning("SCHED: Postponed SRB0 PDU scheduling for rnti={:#x}. Cause: Not enough PRBs ({} < {})",
+                   u.crnti,
+                   ue_grant_crbs.length(),
+                   prbs_tbs.nof_prbs);
     return false;
   }
 
   // Allocate PDCCH resources.
   pdcch_dl_information* pdcch = pdcch_sch.alloc_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.id, aggregation_level::n4);
   if (pdcch == nullptr) {
-    logger.warning("Failed to allocate PDSCH. Cause: No space in PDCCH.");
+    logger.warning("SCHED: Failed to allocate PDSCH. Cause: No space in PDCCH.");
     return false;
   }
 
@@ -176,7 +176,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   pucch_harq_ack_grant pucch_grant =
       pucch_sch.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_time_res, *pdcch);
   if (pucch_grant.pucch_pdu == nullptr) {
-    logger.warning("Failed to allocate PDSCH. Cause: No space in PUCCH.");
+    logger.warning("SCHED: Failed to allocate PDSCH. Cause: No space in PUCCH.");
     // TODO: remove PDCCH allocation.
     return false;
   }
