@@ -16,8 +16,7 @@
 #include "srsgnb/phy/upper/channel_processors/prach_detector.h"
 #include "srsgnb/phy/upper/channel_processors/pucch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_processor.h"
-#include "srsgnb/ran/pucch/pucch_mapping.h"
-#include "srsgnb/ran/rnti.h"
+#include "srsgnb/phy/upper/uplink_processor_context.h"
 
 namespace srsgnb {
 
@@ -47,14 +46,8 @@ public:
 
   /// PUCCH PDU configuration.
   struct pucch_pdu {
-    /// Slot point.
-    slot_point slot;
-    /// Cyclic prefix type.
-    cyclic_prefix cp;
-    /// Radio Network Temporary Identifier (RNTI).
-    rnti_t rnti;
-    /// PUCCH format.
-    pucch_format format_type;
+    /// PUCCH context;
+    ul_pucch_context context;
     // :TODO: the formats will use a variant when available.
     /// PUCCH format 0.
     pucch_processor::format0_configuration format0;

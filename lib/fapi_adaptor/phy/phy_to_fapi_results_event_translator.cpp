@@ -167,27 +167,71 @@ void phy_to_fapi_results_event_translator::notify_rx_data_indication(const ul_pu
   data_notifier.get().on_rx_data_indication(msg);
 }
 
+/// Fills the SR parameters for PUCCH Format 0 or Format 1 using the given builder and results.
+static void fill_format_0_1_sr(fapi::uci_pucch_pdu_format_0_1_builder& builder, const ul_pucch_results& result)
+{
+  const ul_pucch_context& context = result.context;
+  // Do nothing when there is no SR opportunity.
+  if (!context.is_sr_opportunity) {
+    return;
+  }
+
+  // Set the SR detection based on the UCI status.
+  const pucch_uci_message& msg = result.processor_result.message;
+  builder.set_sr_parameters(msg.status == uci_status::valid, {});
+}
+
+/// Fills the HARQ parameters for PUCCH Format 0 or Format 1 using the given builder and results.
+static void fill_format_0_1_harq(fapi::uci_pucch_pdu_format_0_1_builder& builder, const ul_pucch_results& result)
+{
+  const ul_pucch_context& context = result.context;
+  if (context.nof_harq == 0) {
+    return;
+  }
+
+  // Initialize with DTX.
+  std::vector<uint8_t> harq(context.nof_harq, 2);
+
+  const pucch_uci_message& msg = result.processor_result.message;
+  // Write the contents when the uci status is valid.
+  if (msg.status == uci_status::valid) {
+    std::copy(msg.harq_ack.begin(), msg.harq_ack.end(), harq.begin());
+  }
+
+  // Write the parameters using the builder.
+  builder.set_harq_parameters({}, harq);
+}
+
+/// Adds a PUCCH Format 0 or Format 1 PDU to the given builder using the data provided by result.
+static void add_format_0_1_pucch_pdu(fapi::uci_indication_message_builder& builder, const ul_pucch_results& result)
+{
+  const ul_pucch_context& context = result.context;
+  // Do not use the handle for now.
+  static const unsigned                  handle = 0;
+  fapi::uci_pucch_pdu_format_0_1_builder builder_format01 =
+      builder.add_format_0_1_pucch_pdu(handle, context.rnti, context.format);
+
+  const channel_state_information& csi_info = result.processor_result.csi;
+  builder_format01.set_metrics_parameters(
+      {csi_info.sinr_dB}, {}, {static_cast<int>(csi_info.time_alignment.to_seconds() * 1e9)}, {}, {csi_info.rsrp_dB});
+
+  // Fill HARQ parameters.
+  fill_format_0_1_harq(builder_format01, result);
+
+  // Fill SR parameters.
+  fill_format_0_1_sr(builder_format01, result);
+}
+
 void phy_to_fapi_results_event_translator::on_new_pucch_results(const ul_pucch_results& result)
 {
   fapi::uci_indication_message         msg;
   fapi::uci_indication_message_builder builder(msg);
 
-  builder.set_basic_parameters(result.slot.sfn(), result.slot.slot_index());
+  const ul_pucch_context& context = result.context;
+  builder.set_basic_parameters(context.slot.sfn(), context.slot.slot_index());
 
-  // Do not use the handle for now.
-  static const unsigned handle = 0;
-
-  if (result.format == pucch_format::FORMAT_0 || result.format == pucch_format::FORMAT_1) {
-    fapi::uci_pucch_pdu_format_0_1_builder builder_format01 =
-        builder.add_format_0_1_pucch_pdu(handle, result.rnti, result.format);
-
-    const channel_state_information& csi_info = result.processor_result.csi;
-    builder_format01.set_metrics_parameters(
-        {csi_info.sinr_dB}, {}, {static_cast<int>(csi_info.time_alignment.to_seconds() * 1e9)}, {}, {csi_info.rsrp_dB});
-
-    builder_format01.set_harq_parameters({}, result.processor_result.message.harq_ack);
-
-    // :TODO: Add SR.
+  if (context.format == pucch_format::FORMAT_0 || context.format == pucch_format::FORMAT_1) {
+    add_format_0_1_pucch_pdu(builder, result);
   } else {
     // :TODO: add the rest of the formats.
   }

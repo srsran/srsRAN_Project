@@ -19,8 +19,7 @@
 #include "srsgnb/phy/upper/channel_processors/prach_detection_result.h"
 #include "srsgnb/phy/upper/channel_processors/pucch_processor_result.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_processor_result.h"
-#include "srsgnb/ran/pucch/pucch_mapping.h"
-#include "srsgnb/ran/rnti.h"
+#include "srsgnb/phy/upper/uplink_processor_context.h"
 
 namespace srsgnb {
 
@@ -59,14 +58,10 @@ struct ul_pusch_results {
   optional<pusch_data> data;
 };
 
-/// PUCCH results and metadata.
+/// PUCCH results structure.
 struct ul_pucch_results {
-  /// Slot description (also specifies the numerology).
-  slot_point slot;
-  /// Radio Network Temporary Identifier (RNTI).
-  rnti_t rnti;
-  /// PUCCH format type.
-  pucch_format format;
+  /// PUCCH context.
+  ul_pucch_context context;
   /// PUCCH processor result.
   pucch_processor_result processor_result;
 };

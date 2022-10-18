@@ -23,6 +23,28 @@ upper_phy_rx_symbol_handler_impl::upper_phy_rx_symbol_handler_impl(uplink_proces
 {
 }
 
+/// Returns the cyclic prefix from the given uplink processor PUCCH PDU.
+static cyclic_prefix get_cp(const uplink_processor::pucch_pdu& pdu)
+{
+  switch (pdu.context.format) {
+    case pucch_format::FORMAT_0:
+      return pdu.format0.common.cp;
+    case pucch_format::FORMAT_1:
+      return pdu.format1.common.cp;
+    case pucch_format::FORMAT_2:
+      return pdu.format2.common.cp;
+    case pucch_format::FORMAT_3:
+      return pdu.format3.common.cp;
+    case pucch_format::FORMAT_4:
+      return pdu.format4.common.cp;
+    default:
+      srsgnb_assert(0, "Invalid PUCCH format={}", pdu.context.format);
+      break;
+  }
+
+  return cyclic_prefix::NORMAL;
+}
+
 void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbol_context& context,
                                                         const resource_grid_reader&        grid)
 {
@@ -35,8 +57,9 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
                 context.slot);
 
   const uplink_slot_pdu_entry& first_entry = pdus.front();
-  unsigned                     nof_symbols = get_nsymb_per_slot(
-      (first_entry.type == uplink_slot_pdu_entry::pdu_type::PUSCH) ? first_entry.pusch.pdu.cp : first_entry.pucch.cp);
+  unsigned                     nof_symbols =
+      get_nsymb_per_slot((first_entry.type == uplink_slot_pdu_entry::pdu_type::PUSCH) ? first_entry.pusch.pdu.cp
+                                                                                      : get_cp(first_entry.pucch));
   unsigned last_symbol_id = nof_symbols - 1U;
 
   // Process the PDUs when all symbols of the slot have been received.

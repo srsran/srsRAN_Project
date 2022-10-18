@@ -95,12 +95,11 @@ void uplink_processor_single_executor_impl::process_pucch(const resource_grid_re
                                                           const uplink_processor::pucch_pdu& pdu)
 {
   executor.execute([&grid, pdu, this]() {
-    srsgnb_assert(pdu.format_type == pucch_format::FORMAT_1, "Currently supporting PUCCH format 1 exclusively");
+    srsgnb_assert(pdu.context.format == pucch_format::FORMAT_1, "Currently supporting PUCCH format 1 exclusively");
 
     pucch_processor_result proc_result;
-    ul_pucch_results       result;
     // Process the PUCCH.
-    switch (pdu.format_type) {
+    switch (pdu.context.format) {
       case pucch_format::FORMAT_0:
         proc_result = pucch_proc->process(grid, pdu.format0);
         break;
@@ -117,12 +116,12 @@ void uplink_processor_single_executor_impl::process_pucch(const resource_grid_re
         proc_result = pucch_proc->process(grid, pdu.format4);
         break;
       default:
-        srsgnb_assert(0, "Invalid PUCCH format={}", pdu.format_type);
+        srsgnb_assert(0, "Invalid PUCCH format={}", pdu.context.format);
     }
 
     // Write the results.
-    result.rnti             = pdu.rnti;
-    result.slot             = pdu.slot;
+    ul_pucch_results result;
+    result.context          = pdu.context;
     result.processor_result = proc_result;
 
     // Notify the PUCCH results.
