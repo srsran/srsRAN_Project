@@ -17,11 +17,13 @@ namespace srsgnb {
 
 /// \brief Writes the given span into a file in binary format.
 ///
-/// Note: T must be standard layout.
+/// The file is opened in truncated mode and writen in binary format.
 ///
-/// \param filename File name.
-/// \param data Data.
+/// \tparam    T        Type of the data to write.
+/// \param[in] filename Output file name (possibly, with path).
+/// \param[in] data     Data to write.
 /// \return True on success, false otherwise.
+/// \warning \c T must be standard layout.
 template <typename T>
 inline bool print(const char* filename, span<const T> data)
 {
