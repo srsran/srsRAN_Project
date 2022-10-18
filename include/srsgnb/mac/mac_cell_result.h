@@ -58,10 +58,10 @@ struct mac_dl_sched_result {
 
 /// List of DL PDUs produced by MAC in a given slot and cell.
 struct mac_dl_data_result {
-  slot_point                                                   slot;
-  static_vector<span<const uint8_t>, MAX_SIB1_PDUS_PER_SLOT>   sib1_pdus;
-  static_vector<span<const uint8_t>, MAX_RAR_PDUS_PER_SLOT>    rar_pdus;
-  static_vector<byte_buffer_slice_chain, MAX_UE_PDUS_PER_SLOT> ue_pdus;
+  slot_point                                                 slot;
+  static_vector<span<const uint8_t>, MAX_SIB1_PDUS_PER_SLOT> sib1_pdus;
+  static_vector<span<const uint8_t>, MAX_RAR_PDUS_PER_SLOT>  rar_pdus;
+  static_vector<span<const uint8_t>, MAX_UE_PDUS_PER_SLOT>   ue_pdus;
 };
 
 struct mac_ul_sched_result {

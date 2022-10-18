@@ -34,13 +34,14 @@ TEST(mac_dl_sch_pdu, mac_ce_con_res_id_pack)
   // |             ...               |  ...
   // |  UE Contention Resolution Id  |  Octet 6
 
-  dl_sch_pdu      pdu;
-  ue_con_res_id_t conres = {};
+  std::vector<uint8_t> bytes(dl_sch_pdu::MAX_PDU_LENGTH);
+  dl_sch_pdu           pdu(bytes);
+  ue_con_res_id_t      conres = {};
   for (unsigned i = 0; i != UE_CON_RES_ID_LEN; ++i) {
     conres[i] = get_random_uint(0, 255);
   }
   pdu.add_ue_con_res_id(conres);
-  byte_buffer_slice_chain result = pdu.pop();
+  span<const uint8_t> result = pdu.get();
 
   byte_buffer expected{0b00111110};
   expected.append(conres);
@@ -58,15 +59,16 @@ TEST(mac_dl_sch_pdu, mac_sdu_8bit_L_pack)
   // |             ...               |  ...
   // |            Payload            |  Octet <256 + 2
 
-  dl_sch_pdu  pdu;
-  unsigned    payload_len = get_random_uint(0, 255);
-  byte_buffer payload;
+  std::vector<uint8_t> bytes(dl_sch_pdu::MAX_PDU_LENGTH);
+  dl_sch_pdu           pdu(bytes);
+  unsigned             payload_len = get_random_uint(0, 255);
+  byte_buffer          payload;
   for (unsigned i = 0; i != payload_len; ++i) {
     payload.append(get_random_uint(0, 255));
   }
   lcid_t lcid = (lcid_t)get_random_uint(0, MAX_NOF_RB_LCIDS);
   pdu.add_sdu(lcid, byte_buffer_slice_chain{payload.copy()});
-  byte_buffer_slice_chain result = pdu.pop();
+  span<const uint8_t> result = pdu.get();
 
   byte_buffer expected;
   bit_encoder enc(expected);
@@ -89,15 +91,16 @@ TEST(mac_dl_sch_pdu, mac_sdu_16bit_L_pack)
   // |             ...               |  ...
   // |            Payload            |  Octet >=256 + 3
 
-  dl_sch_pdu  pdu;
-  unsigned    payload_len = get_random_uint(256, 100000);
-  byte_buffer payload;
+  std::vector<uint8_t> bytes(dl_sch_pdu::MAX_PDU_LENGTH);
+  dl_sch_pdu           pdu(bytes);
+  unsigned             payload_len = get_random_uint(256, dl_sch_pdu::MAX_PDU_LENGTH);
+  byte_buffer          payload;
   for (unsigned i = 0; i != payload_len; ++i) {
     payload.append(get_random_uint(0, 255));
   }
   lcid_t lcid = (lcid_t)get_random_uint(0, MAX_NOF_RB_LCIDS);
   pdu.add_sdu(lcid, byte_buffer_slice_chain{payload.copy()});
-  byte_buffer_slice_chain result = pdu.pop();
+  span<const uint8_t> result = pdu.get();
 
   byte_buffer expected;
   bit_encoder enc(expected);
@@ -129,7 +132,8 @@ public:
 class mac_dl_sch_assembler_tester : public testing::Test
 {
 public:
-  mac_dl_sch_assembler_tester() : ue_mng(rnti_table), dl_sch_enc(ue_mng)
+  mac_dl_sch_assembler_tester() :
+    pdu_pool(dl_sch_pdu::MAX_PDU_LENGTH * MAX_DL_PDUS_PER_SLOT), ue_mng(rnti_table), dl_sch_enc(ue_mng, pdu_pool)
   {
     srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
 
@@ -152,6 +156,7 @@ protected:
   byte_buffer                   msg3_pdu;
   mac_ue_create_request_message req = test_helpers::make_default_ue_creation_request();
   du_rnti_table                 rnti_table;
+  ring_buffer_pool              pdu_pool;
   mac_dl_ue_manager             ue_mng;
   dummy_dl_bearer               dl_bearer;
   dl_sch_pdu_assembler          dl_sch_enc;
@@ -167,7 +172,7 @@ TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)
   dl_msg_tb_info tb_info;
   tb_info.subpdus.push_back(dl_msg_lc_info{lcid_dl_sch_t::UE_CON_RES_ID, conres_ce_size});
   tb_info.subpdus.push_back(dl_msg_lc_info{LCID_SRB0, sdu_size});
-  byte_buffer_slice_chain result = this->dl_sch_enc.assemble_pdu(this->req.crnti, tb_info, tb_size);
+  span<const uint8_t> result = this->dl_sch_enc.assemble_pdu(this->req.crnti, tb_info, tb_size);
 
   byte_buffer expected;
   bit_encoder enc(expected);
@@ -190,6 +195,7 @@ TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)
   }
 
   ASSERT_EQ(tb_size, expected.length());
+  ASSERT_EQ(tb_size, result.size()) << "PDU was not padded correctly";
   ASSERT_EQ(dl_bearer.last_sdu.length(), sdu_size);
   ASSERT_EQ(result, expected);
 }

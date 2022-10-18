@@ -14,6 +14,9 @@
 
 using namespace srsgnb;
 
+/// Maximum PDSH K0 value as per TS38.331 "PDSCH-TimeDomainResourceAllocation".
+constexpr size_t MAX_K0_DELAY = 32;
+
 mac_cell_processor::mac_cell_processor(mac_common_config_t&             cfg_,
                                        const mac_cell_creation_request& cell_cfg_req_,
                                        mac_scheduler&                   sched_,
@@ -23,10 +26,12 @@ mac_cell_processor::mac_cell_processor(mac_common_config_t&             cfg_,
   cell_cfg(cell_cfg_req_),
   cell_exec(cfg.cell_exec_mapper.executor(cell_cfg.cell_index)),
   phy_cell(cfg.phy_notifier.get_cell(cell_cfg.cell_index)),
+  // The PDU pool has to be large enough to fit the maximum number of PDUs per slot for all possible K0 values.
+  pdu_pool(dl_sch_pdu::MAX_PDU_LENGTH * MAX_DL_PDUS_PER_SLOT * MAX_K0_DELAY),
   ssb_helper(cell_cfg_req_),
   sib_assembler(cell_cfg_req_.bcch_dl_sch_payload),
   rar_assembler(cell_cfg_req_),
-  dlsch_assembler(ue_mng_),
+  dlsch_assembler(ue_mng_, pdu_pool),
   sched_obj(sched_),
   ue_mng(ue_mng_)
 {

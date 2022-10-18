@@ -17,6 +17,7 @@
 #include "sib_pdu_assembler.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
+#include "srsgnb/support/memory_pool/ring_buffer_pool.h"
 #include "ssb_assembler.h"
 
 namespace srsgnb {
@@ -68,6 +69,8 @@ private:
   const mac_cell_creation_request cell_cfg;
   task_executor&                  cell_exec;
   mac_cell_result_notifier&       phy_cell;
+
+  ring_buffer_pool pdu_pool;
 
   /// ssb_helper: contains the SSB-specific parameters that are derived from those passed by the DU interface. These
   /// parameters are passed to the scheduler and also also to the PHY to generate the SSB PDU and PBCH payload.
