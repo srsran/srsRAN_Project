@@ -7,4 +7,5 @@
 #
 
 add_subdirectory(du_cu_cp)
+add_subdirectory(ngap)
 add_subdirectory(rlc)
