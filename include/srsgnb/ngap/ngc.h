@@ -19,6 +19,14 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
+/// \brief NGC configuration
+struct ngc_configuration {
+  int         gnb_id = 0;
+  std::string ran_node_name;
+  std::string plmn_id; /// BCD-encoded PLMN
+  int         tac;
+};
+
 struct ngc_message {
   asn1::ngap::ngap_pdu_c pdu;
 };
