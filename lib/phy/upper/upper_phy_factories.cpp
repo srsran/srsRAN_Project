@@ -224,9 +224,11 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(const upp
   std::shared_ptr<dmrs_pucch_estimator_factory> pucch_dmrs_factory =
       create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory);
 
-  // :TODO: fix this! At this moment there is not PUCCH dectector in dev.
-  std::shared_ptr<pucch_detector_factory> pucch_detector_fact = nullptr;
+  std::shared_ptr<pseudo_random_generator_factory> pseudorandom = create_pseudo_random_generator_sw_factory();
+  std::shared_ptr<pucch_detector_factory>          pucch_detector_fact =
+      create_pucch_detector_factory_sw(lpc_factory, pseudorandom);
   report_fatal_error_if_not(pucch_detector_fact, "Invalid PUCCH detector factory.");
+
   channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
   channel_estimate_dimensions.nof_tx_layers = 1;
   channel_estimate_dimensions.nof_rx_ports  = 1;
