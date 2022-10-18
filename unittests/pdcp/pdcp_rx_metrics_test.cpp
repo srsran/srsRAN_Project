@@ -1,0 +1,137 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#include "pdcp_rx_metrics_test.h"
+#include "../../lib/pdcp/pdcp_entity_impl.h"
+#include "pdcp_test_vectors.h"
+#include "srsgnb/pdcp/pdcp_config.h"
+#include "srsgnb/support/test_utils.h"
+#include "srsgnb/support/timers.h"
+#include <gtest/gtest.h>
+#include <queue>
+
+using namespace srsgnb;
+
+/// \brief Test correct packing of PDCP data PDU headers
+TEST_P(pdcp_rx_metrics_test, sdu_pdu_metrics)
+{
+  init(GetParam());
+
+  auto test_metrics = [this](uint32_t count) {
+    srsgnb::test_delimit_logger delimiter("RX PDU with bad integrity. SN_SIZE={} COUNT={}", sn_size, count);
+    init(GetParam());
+
+    pdcp_rx->set_as_security_config(sec_cfg);
+    pdcp_rx->enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+    // Set the direction to downlink to avoid duplicating the test vectors.
+    pdcp_rx->set_direction(security_direction::downlink);
+
+    byte_buffer test_pdu;
+    get_test_pdu(count, test_pdu);
+
+    // Get expected values
+    uint32_t exp_sdu_size = 2;
+    uint32_t exp_pdu_size = test_pdu.length();
+
+    pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
+    pdcp_rx->set_state(init_state);
+    pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu)});
+
+    auto m = pdcp_rx->get_metrics();
+    ASSERT_EQ(m.num_pdus, 1);
+    ASSERT_EQ(m.num_pdu_bytes, exp_pdu_size);
+    ASSERT_EQ(m.num_sdus, 1);
+    ASSERT_EQ(m.num_sdu_bytes, exp_sdu_size);
+    ASSERT_EQ(m.num_integrity_verified_pdus, 0);
+    ASSERT_EQ(m.num_integrity_failed_pdus, 0);
+    ASSERT_EQ(m.num_t_reordering_timeouts, 0);
+  };
+
+  if (config.sn_size == pdcp_sn_size::size12bits) {
+    test_metrics(0);
+    test_metrics(2048);
+    test_metrics(4095);
+    test_metrics(4096);
+  } else if (config.sn_size == pdcp_sn_size::size18bits) {
+    test_metrics(0);
+    test_metrics(131072);
+    test_metrics(262144);
+  } else {
+    FAIL();
+  }
+}
+
+TEST_P(pdcp_rx_metrics_test, integrity_metrics)
+{
+  init(GetParam());
+
+  auto test_metrics = [this](uint32_t count) {
+    srsgnb::test_delimit_logger delimiter("RX PDU with bad integrity. SN_SIZE={} COUNT={}", sn_size, count);
+    init(GetParam());
+
+    pdcp_rx->set_as_security_config(sec_cfg);
+    pdcp_rx->enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+    // Set the direction to downlink to avoid duplicating the test vectors.
+    pdcp_rx->set_direction(security_direction::downlink);
+
+    byte_buffer test_pdu;
+    get_test_pdu(count, test_pdu);
+
+    // Get expected values
+    uint32_t exp_sdu_size = 2;
+    uint32_t exp_pdu_size = test_pdu.length();
+
+    pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
+    pdcp_rx->set_state(init_state);
+    pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu)});
+
+    auto m = pdcp_rx->get_metrics();
+    ASSERT_EQ(m.num_pdus, 1);
+    ASSERT_EQ(m.num_pdu_bytes, exp_pdu_size);
+    ASSERT_EQ(m.num_sdus, 1);
+    ASSERT_EQ(m.num_sdu_bytes, exp_sdu_size);
+    ASSERT_EQ(m.num_integrity_failed_pdus, 0);
+    ASSERT_EQ(m.num_t_reordering_timeouts, 0);
+  };
+
+  if (config.sn_size == pdcp_sn_size::size12bits) {
+    test_metrics(0);
+    test_metrics(2048);
+    test_metrics(4095);
+    test_metrics(4096);
+  } else if (config.sn_size == pdcp_sn_size::size18bits) {
+    test_metrics(0);
+    test_metrics(131072);
+    test_metrics(262144);
+  } else {
+    FAIL();
+  }
+}
+
+///////////////////////////////////////////////////////////////////
+// Finally, instantiate all testcases for each supported SN size //
+///////////////////////////////////////////////////////////////////
+std::string test_param_info_to_string(const ::testing::TestParamInfo<pdcp_sn_size>& info)
+{
+  fmt::memory_buffer buffer;
+  fmt::format_to(buffer, "{}bit", to_number(info.param));
+  return fmt::to_string(buffer);
+}
+
+INSTANTIATE_TEST_SUITE_P(pdcp_rx_test_all_sn_sizes,
+                         pdcp_rx_metrics_test,
+                         ::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
+                         test_param_info_to_string);
+
+int main(int argc, char** argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

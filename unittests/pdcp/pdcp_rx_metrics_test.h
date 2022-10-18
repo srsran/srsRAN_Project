@@ -22,9 +22,9 @@ namespace srsgnb {
 
 /// Fixture class for PDCP tests
 /// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size
-class pdcp_rx_test : public pdcp_rx_test_helper,
-                     public ::testing::Test,
-                     public ::testing::WithParamInterface<pdcp_sn_size>
+class pdcp_rx_metrics_test : public pdcp_rx_test_helper,
+                             public ::testing::Test,
+                             public ::testing::WithParamInterface<pdcp_sn_size>
 {
 protected:
   void SetUp() override
