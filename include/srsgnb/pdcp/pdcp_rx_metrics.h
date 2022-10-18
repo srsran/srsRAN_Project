@@ -26,6 +26,7 @@ struct pdcp_rx_metrics_container {
   uint32_t num_dropped_pdus;
   uint32_t num_sdus;
   uint32_t num_sdu_bytes;
+  uint32_t num_integrity_verified_pdus;
   uint32_t num_integrity_failed_pdus;
   uint32_t num_t_reordering_timeouts;
 };

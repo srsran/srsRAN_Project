@@ -135,6 +135,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
       upper_cn.on_integrity_failure();
       return; // Invalid packet, drop.
     }
+    metrics_add_integrity_verified_pdus(1);
     logger.log_debug(sdu.begin(), sdu.end(), "Integrity verification successful");
   }
   // After checking the integrity, we can discard the header.

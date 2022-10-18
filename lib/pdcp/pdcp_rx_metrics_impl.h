@@ -47,6 +47,12 @@ public:
     metrics.num_dropped_pdus += num_pdus_;
   }
 
+  void metrics_add_integrity_verified_pdus(uint32_t num_pdus_)
+  {
+    std::lock_guard<std::mutex> lock(metrics_mutex);
+    metrics.num_integrity_verified_pdus += num_pdus_;
+  }
+
   void metrics_add_integrity_failed_pdus(uint32_t num_pdus_)
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
