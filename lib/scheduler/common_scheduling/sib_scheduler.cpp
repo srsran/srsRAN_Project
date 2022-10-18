@@ -157,7 +157,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
   // This is the list of parameters that are hard-coded and will need to be derived from some general config.
   static const ofdm_symbol_range sib1_ofdm_symbols{2, 14};
   static const unsigned          nof_symb_sh      = sib1_ofdm_symbols.length();
-  static const unsigned          mod_order        = get_bits_per_symbol(modulation_scheme::QPSK);
+  static const modulation_scheme mod_scheme       = modulation_scheme::QPSK;
   static const float             target_code_rate = 379.0f;
   static const unsigned          nof_layers       = 1;
   // Time resource will be passed to the next function to fill the DCI.
@@ -175,7 +175,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
                                                                            nof_symb_sh,
                                                                            calculate_nof_dmrs_per_rb(dmrs_info),
                                                                            nof_oh_prb,
-                                                                           mod_order,
+                                                                           mod_scheme,
                                                                            target_code_rate / 1024.0F,
                                                                            nof_layers});
 

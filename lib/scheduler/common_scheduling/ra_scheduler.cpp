@@ -79,7 +79,7 @@ ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_resource_alloca
                                                                      nof_symb_sh,
                                                                      calculate_nof_dmrs_per_rb(rar_data[i].dmrs_info),
                                                                      nof_oh_prb,
-                                                                     get_bits_per_symbol(modulation_scheme::QPSK),
+                                                                     modulation_scheme::QPSK,
                                                                      rar_mcs_config.target_code_rate / 1024.0F,
                                                                      nof_layers});
   }

@@ -160,7 +160,7 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
                                                             calculate_nof_dmrs_per_rb(msg.pdsch_cfg.dmrs),
                                                             nof_oh_prb,
                                                             cw.target_code_rate / 1024.0F,
-                                                            get_bits_per_symbol(cw.qam_mod),
+                                                            cw.qam_mod,
                                                             nof_layers,
                                                             tb_scaling_field,
                                                             grant.crbs.length()}) /

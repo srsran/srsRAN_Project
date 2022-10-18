@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/ran/modulation_scheme.h"
 #include "srsgnb/ran/resource_block.h"
 #include "srsgnb/support/math_utils.h"
 
@@ -35,10 +36,13 @@ struct prbs_calculator_pdsch_config {
   ///
   /// Otherwise, it must be set to the higher layer parameter \c xOverhead in \c PDSCH-ServingCellconfig.
   unsigned nof_oh_prb;
-  /// \brief  Number of bits per RE, parameter \f$Q_m\f$, as per Tables 5.1.3.1-1, 5.1.3.1-2, 5.1.3.1-3, in TS 38.214.
+  /// \brief Modulation scheme.
   ///
-  /// Possible values are {2, 4, 6, 8}.
-  unsigned mod_order;
+  /// Translates to the number of bits per RE, parameter \f$Q_m\f$, as per TS38.214,
+  /// Tables 5.1.3.1-1, 5.1.3.1-2, 5.1.3.1-3.
+  ///
+  /// Possible values are {QPSK, QAM-16, QAM-64, QAM-256}.
+  modulation_scheme mod_scheme;
   /// Target Code Rate, parameter \f$R\f$, as per Tables 5.1.3.1-1, 5.1.3.1-2, 5.1.3.1-3, in TS 38.214.
   float target_code_rate;
   /// \brief Number of layers, parameter \f$\nu\f$.

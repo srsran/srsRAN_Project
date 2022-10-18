@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include "srsgnb/ran/modulation_scheme.h"
+
 #include <array>
 
 namespace srsgnb {
@@ -51,16 +53,15 @@ struct tbs_calculator_configuration {
   ///
   /// Parameter \f$R\f$ for both PDSCH and PUSCH.
   float tcr;
-  /// \brief Modulation order, that is number of bits per RE.
+  /// \brief Modulation scheme for the SCH transmission.
   ///
-  /// Pparameter \f$Q_m\f$ for both PDSCH and PUSCH. Possible values are:
-  /// - 2 for QPSK,
-  /// - 4 for 16-QAM,
-  /// - 6 for 64-QAM, and
-  /// - 8 for 256-QAM.
-  // todo(david) Here it'd be probably clearer if we pass the modulation scheme - can we include
-  // 'ran/modulation_scheme.h' here?
-  unsigned modulation_order;
+  /// The modulation scheme yields the number of bits per RE, parameter \f$Q_m\f$ for both PDSCH and PUSCH. Possible
+  /// values are:
+  /// - QPSK,
+  /// - QAM-16,
+  /// - QAM-64, and
+  /// - 256-QAM.
+  modulation_scheme mod_scheme;
   /// \brief Number of layers.
   ///
   /// Parameter \f$\nu\f$. For PDSCH, the possible values are:

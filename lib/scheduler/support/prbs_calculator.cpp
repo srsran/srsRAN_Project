@@ -28,8 +28,10 @@ pdsch_prbs_tbs srsgnb::get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cf
   // greater or equal to the payload.
   float nof_info_estimate = static_cast<float>(tbs_calculator_table_find_smallest_not_less_than(payload_size));
 
+  unsigned nof_bit_per_symbol = get_bits_per_symbol(pdsch_cfg.mod_scheme);
+
   // Get N_re (as per Section 5.1.3.2, TS 38.214) from N_info.
-  float nof_re = nof_info_estimate / (pdsch_cfg.target_code_rate * static_cast<float>(pdsch_cfg.mod_order) *
+  float nof_re = nof_info_estimate / (pdsch_cfg.target_code_rate * static_cast<float>(nof_bit_per_symbol) *
                                       static_cast<float>(pdsch_cfg.nof_layers) *
                                       tbs_calculator_pdsch_get_scaling_factor(pdsch_cfg.tb_scaling_field));
 
@@ -49,7 +51,7 @@ pdsch_prbs_tbs srsgnb::get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cf
                                                                                pdsch_cfg.nof_dmrs_prb,
                                                                                pdsch_cfg.nof_oh_prb,
                                                                                pdsch_cfg.target_code_rate,
-                                                                               pdsch_cfg.mod_order,
+                                                                               pdsch_cfg.mod_scheme,
                                                                                pdsch_cfg.nof_layers,
                                                                                pdsch_cfg.tb_scaling_field,
                                                                                nof_prbs_estimate - 1});
@@ -64,7 +66,7 @@ pdsch_prbs_tbs srsgnb::get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cf
                                                                                pdsch_cfg.nof_dmrs_prb,
                                                                                pdsch_cfg.nof_oh_prb,
                                                                                pdsch_cfg.target_code_rate,
-                                                                               pdsch_cfg.mod_order,
+                                                                               pdsch_cfg.mod_scheme,
                                                                                pdsch_cfg.nof_layers,
                                                                                pdsch_cfg.tb_scaling_field,
                                                                                nof_prbs_estimate});
