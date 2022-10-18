@@ -651,7 +651,7 @@ static uci_harq_format_0_1 generate_harq_format01_pdu()
 
   std::uniform_int_distribution<unsigned> nof_dist(1, 2);
   for (unsigned i = 0, e = nof_dist(gen); i != e; ++i) {
-    pdu.harq_values.emplace_back(dist(gen));
+    pdu.harq_values.emplace_back(static_cast<uci_pucch_f0_or_f1_harq_values>(dist(gen)));
   }
 
   return pdu;

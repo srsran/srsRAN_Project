@@ -25,6 +25,7 @@
 #include "srsgnb/ran/slot_pdu_capacity_contants.h"
 #include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
+#include "srsgnb/ran/uci/uci_mapping.h"
 #include <array>
 #include <bitset>
 #include <cstdint>
@@ -938,8 +939,8 @@ struct uci_harq_format_0_1 {
   /// Maximum number of HARQ.
   static constexpr unsigned MAX_NUM_HARQ = 2U;
 
-  uint8_t                              harq_confidence_level;
-  static_vector<uint8_t, MAX_NUM_HARQ> harq_values;
+  uint8_t                                                     harq_confidence_level;
+  static_vector<uci_pucch_f0_or_f1_harq_values, MAX_NUM_HARQ> harq_values;
 };
 
 /// UCI PUCCH for format 0 or 1.

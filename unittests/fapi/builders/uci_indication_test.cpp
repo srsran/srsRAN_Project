@@ -193,7 +193,8 @@ static void test_uci_pucch_format01_pdu_harq()
       confidence.emplace(i);
     }
 
-    static_vector<uint8_t, uci_harq_format_0_1::MAX_NUM_HARQ> payload = {2, 3};
+    static_vector<uci_pucch_f0_or_f1_harq_values, uci_harq_format_0_1::MAX_NUM_HARQ> payload = {
+        uci_pucch_f0_or_f1_harq_values::ack, uci_pucch_f0_or_f1_harq_values::ack};
 
     builder.set_harq_parameters(confidence, {payload});
 

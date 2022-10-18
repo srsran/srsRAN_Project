@@ -327,7 +327,7 @@ INSTANTIATE_TEST_SUITE_P(HARQConfidence,
                                               "HARQ confidence level",
                                               [](uci_pucch_pdu_format_0_1& pdu, int value) {
                                                 pdu.pdu_bitmap.set(uci_pucch_pdu_format_0_1::HARQ_BIT);
-                                                pdu.harq.harq_values.resize(1, 0);
+                                                pdu.harq.harq_values.resize(1, uci_pucch_f0_or_f1_harq_values::nack);
                                                 pdu.harq.harq_confidence_level = value;
                                               }}),
                                           testing::Values(test_case_data{0, true},
@@ -343,7 +343,7 @@ INSTANTIATE_TEST_SUITE_P(
                          "Number of HARQ bits",
                          [](uci_pucch_pdu_format_0_1& pdu, int value) {
                            pdu.pdu_bitmap.set(uci_pucch_pdu_format_0_1::HARQ_BIT);
-                           pdu.harq.harq_values.resize(value, 0);
+                           pdu.harq.harq_values.resize(value, uci_pucch_f0_or_f1_harq_values::nack);
                            pdu.harq.harq_confidence_level = 0;
                          }}),
                      testing::Values(test_case_data{0, false}, test_case_data{1, true}, test_case_data{2, true})));
@@ -356,7 +356,8 @@ INSTANTIATE_TEST_SUITE_P(HARQValue,
                                                 pdu.pdu_bitmap.set(uci_pucch_pdu_format_0_1::HARQ_BIT);
                                                 pdu.harq.harq_confidence_level = 0;
                                                 pdu.harq.harq_values.resize(1);
-                                                pdu.harq.harq_values.front() = value;
+                                                pdu.harq.harq_values.front() =
+                                                    static_cast<uci_pucch_f0_or_f1_harq_values>(value);
                                               }}),
                                           testing::Values(test_case_data{0, true},
                                                           test_case_data{1, true},
@@ -379,7 +380,7 @@ TEST(ValidateUCIPUCCHFormat01PDU, InvalidPDUFails)
 
   // Add 3 errors.
   pdu.harq.harq_confidence_level = 2;
-  pdu.harq.harq_values.back()    = 3;
+  pdu.harq.harq_values.back()    = static_cast<uci_pucch_f0_or_f1_harq_values>(3);
   pdu.sr.sr_confidence_level     = 2;
 
   validator_report report(0, 0);

@@ -1510,7 +1510,8 @@ public:
   /// \brief Sets the HARQ PDU parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.2 in Table HARQ PDU for Format 0 or Format 1
   /// PDU.
-  uci_pucch_pdu_format_0_1_builder& set_harq_parameters(optional<unsigned> confidence_level, span<const uint8_t> value)
+  uci_pucch_pdu_format_0_1_builder& set_harq_parameters(optional<unsigned>                         confidence_level,
+                                                        span<const uci_pucch_f0_or_f1_harq_values> value)
   {
     pdu.pdu_bitmap.set(uci_pucch_pdu_format_0_1::HARQ_BIT);
 

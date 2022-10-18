@@ -190,12 +190,15 @@ static void fill_format_0_1_harq(fapi::uci_pucch_pdu_format_0_1_builder& builder
   }
 
   // Initialize with DTX.
-  std::vector<uint8_t> harq(context.nof_harq, 2);
+  static_vector<uci_pucch_f0_or_f1_harq_values, fapi::uci_harq_format_0_1::MAX_NUM_HARQ> harq(
+      context.nof_harq, uci_pucch_f0_or_f1_harq_values::dtx);
 
   const pucch_uci_message& msg = result.processor_result.message;
   // Write the contents when the uci status is valid.
   if (msg.status == uci_status::valid) {
-    std::copy(msg.harq_ack.begin(), msg.harq_ack.end(), harq.begin());
+    for (unsigned i = 0; i != context.nof_harq; ++i) {
+      harq[i] = (msg.harq_ack[i] == 1) ? uci_pucch_f0_or_f1_harq_values::ack : uci_pucch_f0_or_f1_harq_values::nack;
+    }
   }
 
   // Write the parameters using the builder.

@@ -312,7 +312,7 @@ bool srsgnb::fapi::validate_uci_pucch_format01_pdu(const uci_pucch_pdu_format_0_
     result &= validate_harq_format01_nof_harq(pdu.harq.harq_values.size(), report);
     result &= validate_harq_format01_confidence_level(pdu.harq.harq_confidence_level, report);
     for (const auto& harq : pdu.harq.harq_values) {
-      result &= validate_harq_format01_value(harq, report);
+      result &= validate_harq_format01_value(static_cast<unsigned>(harq), report);
     }
   }
 
