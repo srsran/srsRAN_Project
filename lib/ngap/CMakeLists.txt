@@ -9,6 +9,7 @@
 set(SOURCES
         ngc_factory.cpp
         ngc_impl.cpp
+        ngc_asn1_packer.cpp
         procedures/ng_setup_procedure.cpp
     )
 
