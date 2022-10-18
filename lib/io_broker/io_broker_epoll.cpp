@@ -53,11 +53,11 @@ io_broker_epoll::~io_broker_epoll()
   // wait for completion
   if (thread.running()) {
     thread.join();
-
-    std::lock_guard<std::mutex> lock(event_handler_mutex);
-    event_handler.clear();
-    close(epoll_fd);
   }
+
+  std::lock_guard<std::mutex> lock(event_handler_mutex);
+  event_handler.clear();
+  close(epoll_fd);
 }
 
 /// Function is executed in a loop until the thread is stopped.
