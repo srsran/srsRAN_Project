@@ -55,23 +55,22 @@ struct mac_uci_pdu {
   struct pucch_f0_or_f1_type {
     struct sr_information {
       bool sr_detected;
-      bool bad_confidence_level;
     };
     struct harq_information {
       constexpr static size_t NOF_HARQS_PER_UCI = 2;
       enum class harq_value { nack, ack, dtx };
-      bool                                         bad_confidence_level;
       static_vector<harq_value, NOF_HARQS_PER_UCI> harqs;
     };
 
     bool is_f1;
-    /// \brief Metric of channel quality that ranges from -65.534 to 65.534 in steps of 0.002 dB.
-    /// Value 0 corresponds to 0 dB.
-    int16_t ul_sinr;
+    /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBFs.
+    float ul_sinr;
     /// \brief Timing Advance measured for the UE. Values: {0, 63}.
-    phy_time_unit              time_advance_offset;
-    rssi_report                rssi;
-    rsrp_report                rsrp;
+    optional<phy_time_unit> time_advance_offset;
+    /// RSSI report in dBFs;
+    optional<float> rssi;
+    /// RSSI report in dBFs;
+    optional<float>            rsrp;
     optional<sr_information>   sr_info;
     optional<harq_information> harq_info;
   };

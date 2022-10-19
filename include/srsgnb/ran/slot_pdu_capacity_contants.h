@@ -69,4 +69,10 @@ static constexpr size_t MAX_DL_PDUS_PER_SLOT = MAX_SSB_PER_SLOT + MAX_DL_PDCCH_P
 static constexpr size_t MAX_UL_PDUS_PER_SLOT =
     MAX_PRACH_OCCASIONS_PER_SLOT + MAX_PUCCH_PDUS_PER_SLOT + MAX_PUSCH_PDUS_PER_SLOT;
 
+/// [Implementation defined] Maximum number of UCI PDUS per UCI indication.
+static constexpr size_t MAX_UCI_PDUS_PER_UCI_IND = 8;
+
+/// [Implementation defined] Maximum number of HARQ VALUES per HARQ PDU.
+static constexpr size_t MAX_HARQ_VALUES_PER_HARQ_PDU = 8;
+
 } // namespace srsgnb

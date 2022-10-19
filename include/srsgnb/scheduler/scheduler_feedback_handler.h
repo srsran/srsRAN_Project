@@ -58,12 +58,12 @@ struct ul_crc_indication {
 /// \brief UCI indication for a given UE.
 struct uci_indication {
   struct uci_pdu {
-    du_ue_index_t          ue_index;
-    rnti_t                 crnti;
-    bool                   sr_detected;
-    static_vector<bool, 8> harqs;
+    du_ue_index_t                                     ue_index;
+    rnti_t                                            crnti;
+    bool                                              sr_detected;
+    static_vector<bool, MAX_HARQ_VALUES_PER_HARQ_PDU> harqs;
   };
-  using uci_pdu_list = static_vector<uci_pdu, 2>;
+  using uci_pdu_list = static_vector<uci_pdu, MAX_UCI_PDUS_PER_UCI_IND>;
 
   du_cell_index_t cell_index;
   slot_point      slot_rx;
