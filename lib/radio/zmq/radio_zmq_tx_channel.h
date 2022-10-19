@@ -56,8 +56,10 @@ private:
   radio_notification_handler& notification_handler;
   /// Asynchronous task executor.
   task_executor& async_executor;
-  /// Indicates the number of transmitted samples.
-  uint64_t sample_count = 0;
+  /// Indicates the number of transmitted samples. Protected for concurrent read-write.
+  std::atomic<uint64_t> sample_count = {0};
+  /// Protects concurrent transmit alignment operations from the receiver thread.
+  std::mutex transmit_alignment_mutex;
 
   /// Transmits a single sample.
   void transmit_sample(radio_sample_type sample);

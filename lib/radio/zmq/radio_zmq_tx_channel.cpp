@@ -235,6 +235,14 @@ void radio_zmq_tx_channel::align(uint64_t timestamp)
 {
   unsigned count = 0;
 
+  // Early return if alignment is unnecessary.
+  if (sample_count >= timestamp) {
+    return;
+  }
+
+  // Protect concurrent alignment and transmit.
+  std::unique_lock<std::mutex> lock(transmit_alignment_mutex);
+
   // Transmit zeros until the sample count reaches the timestamp.
   while (sample_count < timestamp) {
     transmit_sample(0.0);
@@ -249,6 +257,9 @@ void radio_zmq_tx_channel::align(uint64_t timestamp)
 void radio_zmq_tx_channel::transmit(span<radio_sample_type> data)
 {
   logger.debug("Requested to transmit {} samples.", data.size());
+
+  // Protect concurrent alignment and transmit.
+  std::unique_lock<std::mutex> lock(transmit_alignment_mutex);
 
   // For each sample...
   for (radio_sample_type sample : data) {
