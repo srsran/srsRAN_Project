@@ -103,10 +103,7 @@ static const std::vector<test_group<ul_pucch_pdu>> vector_test_f0 = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.sr_bit_len = value; }, "SR bit len", {{0, true}, {1, true}, {2, false}}},
     {[](ul_pucch_pdu& pdu, int value) { pdu.bit_len_harq = value; },
      "HARQ bit len",
-     {{0, true}, {1, true}, {2, true}, {3, false}}},
-    {[](ul_pucch_pdu& pdu, int value) { pdu.pucch_maintenance_v3.max_code_rate = value; },
-     "Max code rate",
-     {{0, false}, {128, false}, {254, false}, {255, true}}}};
+     {{0, true}, {1, true}, {2, true}, {3, false}}}};
 
 static void validate_f0()
 {
@@ -150,10 +147,7 @@ static const std::vector<test_group<ul_pucch_pdu>> vector_test_f1 = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.sr_bit_len = value; }, "SR bit len", {{0, true}, {1, true}, {2, false}}},
     {[](ul_pucch_pdu& pdu, int value) { pdu.bit_len_harq = value; },
      "HARQ bit len",
-     {{0, true}, {1, true}, {2, true}, {3, false}}},
-    {[](ul_pucch_pdu& pdu, int value) { pdu.pucch_maintenance_v3.max_code_rate = value; },
-     "Max code rate",
-     {{0, false}, {128, false}, {254, false}, {255, true}}}};
+     {{0, true}, {1, true}, {2, true}, {3, false}}}};
 
 static void validate_f1()
 {

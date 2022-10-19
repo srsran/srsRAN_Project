@@ -316,6 +316,7 @@ bool srsgnb::fapi::validate_ul_pucch_pdu(const ul_pucch_pdu& pdu, validator_repo
       pdu.format_type == pucch_format::FORMAT_4) {
     result &= validate_nid_pucch_scrambling(pdu.nid_pucch_scrambling, report);
     result &= validate_csi_part1_bit_len(pdu.csi_part1_bit_length, report);
+    result &= validate_max_code_rate(pdu.pucch_maintenance_v3.max_code_rate, pdu.format_type, report);
   }
   if (pdu.format_type == pucch_format::FORMAT_1) {
     result &= validate_time_domain_occ_idx(pdu.time_domain_occ_index, report);
@@ -332,7 +333,6 @@ bool srsgnb::fapi::validate_ul_pucch_pdu(const ul_pucch_pdu& pdu, validator_repo
 
   result &= validate_sr_bit_len(pdu.sr_bit_len, pdu.format_type, report);
   result &= validate_harq_bit_len(pdu.bit_len_harq, pdu.format_type, report);
-  result &= validate_max_code_rate(pdu.pucch_maintenance_v3.max_code_rate, pdu.format_type, report);
   // NOTE: UL BWP ID property uses the whole range of the variable, so it will not be validated.
 
   // Validate UCI Part1 to Part2 correspondence.
