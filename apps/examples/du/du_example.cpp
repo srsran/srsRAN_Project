@@ -185,7 +185,7 @@ static const double              tx_gain                    = 60.0;
 static const double              rx_gain                    = 70.0;
 static const unsigned            max_processing_delay_slots = 4;
 static const unsigned            ul_to_dl_subframe_offset   = 1;
-static const phy_time_unit       time_advance_calibration   = phy_time_unit::from_seconds(0.0);
+static phy_time_unit             time_advance_calibration   = phy_time_unit::from_seconds(0.0);
 static const lower_phy_ta_offset ta_offset                  = lower_phy_ta_offset::n0;
 static const cyclic_prefix       cp                         = cyclic_prefix::NORMAL;
 static unsigned                  dl_arfcn                   = 536020;
@@ -228,19 +228,20 @@ static const std::vector<configuration_profile> profiles = {
     {"zmq_20MHz_n7",
      "Single 20MHz FDD in band n7 using ZMQ.",
      []() {
-       driver_name      = "zmq";
-       device_arguments = "";
-       scs              = subcarrier_spacing::kHz15;
-       scs_common       = subcarrier_spacing::kHz15;
-       srate            = sampling_rate::from_MHz(61.44);
-       dl_arfcn         = 536020;
-       K_ssb            = 6;
-       offset_to_pointA = 40;
-       nof_prb_dl_grid  = {106, 51, 24, 0, 0};
-       nof_prb_ul_grid  = {106, 51, 24, 0, 0};
-       pci              = 69;
-       coreset0_index   = 9;
-       otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
+       driver_name              = "zmq";
+       device_arguments         = "";
+       scs                      = subcarrier_spacing::kHz15;
+       scs_common               = subcarrier_spacing::kHz15;
+       srate                    = sampling_rate::from_MHz(61.44);
+       time_advance_calibration = phy_time_unit::from_seconds(-16.0F / srate.to_Hz());
+       dl_arfcn                 = 536020;
+       K_ssb                    = 6;
+       offset_to_pointA         = 40;
+       nof_prb_dl_grid          = {106, 51, 24, 0, 0};
+       nof_prb_ul_grid          = {106, 51, 24, 0, 0};
+       pci                      = 69;
+       coreset0_index           = 9;
+       otw_format               = radio_configuration::over_the_wire_format::DEFAULT;
        // Prepare ZMQ addresses using TCP. Transmitter ports start at 5000+channel_id while receivers connect to
        // 6000+channel_id.
        unsigned port_base   = 5000;
