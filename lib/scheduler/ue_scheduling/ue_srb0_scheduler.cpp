@@ -69,14 +69,17 @@ bool ue_srb0_scheduler::schedule_srb0(cell_resource_allocator& res_alloc, ue& u)
 {
   // Search valid PDSCH time domain resource.
   const auto& bwp_cfg_common = cell_cfg.dl_cfg_common.init_dl_bwp;
+  // See 3GPP TS 38.213, clause 10.1,
+  // A UE monitors PDCCH candidates in one or more of the following search spaces sets
+  //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
+  //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
+  const search_space_configuration& ss =
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common
+          .search_spaces[cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id];
   for (unsigned time_res_idx = 0; time_res_idx != bwp_cfg_common.pdsch_common.pdsch_td_alloc_list.size();
        ++time_res_idx) {
-    for (unsigned i = 1; i != bwp_cfg_common.pdcch_common.search_spaces.size(); ++i) {
-      // Note: Skip SearchSpace#0.
-      const search_space_configuration& ss = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[i];
-      if (schedule_srb0(u, res_alloc, time_res_idx, ss)) {
-        return true;
-      }
+    if (schedule_srb0(u, res_alloc, time_res_idx, ss)) {
+      return true;
     }
   }
 
