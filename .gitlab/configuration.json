@@ -28,7 +28,7 @@
     "can_create_merge_request_in": true,
     "ci_allow_fork_pipelines_to_run_in_parent_project": false,
     "ci_separated_caches": false,
-    "container_expiration_policy": {
+    "container_expiration_policy_attributes": {
         "enabled": false
     },
     "container_registry_access_level": "enabled",
@@ -48,12 +48,10 @@
     "operations_access_level": "enabled",
     "packages_enabled": true,
     "pages_access_level": "private",
-    "protectedtags": [],
     "protectedbranches": [
         {
             "allow_force_push": false,
-            "code_owner_approval_required": false,
-            "merge_access_levels": [
+            "allowed_to_merge": [
                 {
                     "access_level": 30,
                     "access_level_description": "Developers + Maintainers",
@@ -61,8 +59,7 @@
                     "user_id": null
                 }
             ],
-            "name": "dev",
-            "push_access_levels": [
+            "allowed_to_push": [
                 {
                     "access_level": 0,
                     "access_level_description": "No one",
@@ -70,12 +67,12 @@
                     "user_id": null
                 }
             ],
-            "unprotect_access_levels": []
+            "code_owner_approval_required": false,
+            "name": "dev"
         },
         {
             "allow_force_push": false,
-            "code_owner_approval_required": false,
-            "merge_access_levels": [
+            "allowed_to_merge": [
                 {
                     "access_level": 40,
                     "access_level_description": "Maintainers",
@@ -83,8 +80,7 @@
                     "user_id": null
                 }
             ],
-            "name": "next",
-            "push_access_levels": [
+            "allowed_to_push": [
                 {
                     "access_level": 0,
                     "access_level_description": "No one",
@@ -92,12 +88,12 @@
                     "user_id": null
                 }
             ],
-            "unprotect_access_levels": []
+            "code_owner_approval_required": false,
+            "name": "main"
         },
         {
             "allow_force_push": false,
-            "code_owner_approval_required": false,
-            "merge_access_levels": [
+            "allowed_to_merge": [
                 {
                     "access_level": 40,
                     "access_level_description": "Maintainers",
@@ -105,8 +101,7 @@
                     "user_id": null
                 }
             ],
-            "name": "main",
-            "push_access_levels": [
+            "allowed_to_push": [
                 {
                     "access_level": 0,
                     "access_level_description": "No one",
@@ -114,9 +109,11 @@
                     "user_id": null
                 }
             ],
-            "unprotect_access_levels": []
+            "code_owner_approval_required": false,
+            "name": "next"
         }
     ],
+    "protectedtags": [],
     "releases_access_level": "enabled",
     "remove_source_branch_after_merge": true,
     "repository_access_level": "enabled",
