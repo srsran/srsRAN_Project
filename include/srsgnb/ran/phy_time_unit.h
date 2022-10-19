@@ -83,7 +83,7 @@ public:
   /// \param[in] dft_size DFT size corresponding to the subcarrier spacing.
   /// \return The time value in samples.
   template <typename U>
-  constexpr unsigned to_samples(U sampling_rate_Hz_) const
+  constexpr value_type to_samples(U sampling_rate_Hz_) const
   {
     static_assert(std::is_convertible<U, uint64_t>::value, "Invalid type.");
     value_type sampling_rate_Hz = static_cast<value_type>(sampling_rate_Hz_);
@@ -92,7 +92,7 @@ public:
                   sampling_rate_Hz / 1000000,
                   (sampling_rate_Hz % 1000000) / 10000,
                   value);
-    return static_cast<unsigned>((value * sampling_rate_Hz) / (SCS_REF_HZ * N_F_REF * KAPPA));
+    return (value * sampling_rate_Hz) / (SCS_REF_HZ * N_F_REF * KAPPA);
   }
 
   /// \brief Gets the time expressed in units of \f$T_{\mathrm{A}}\f$.
