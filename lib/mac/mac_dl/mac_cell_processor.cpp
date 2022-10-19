@@ -27,7 +27,7 @@ mac_cell_processor::mac_cell_processor(mac_common_config_t&             cfg_,
   cell_exec(cfg.cell_exec_mapper.executor(cell_cfg.cell_index)),
   phy_cell(cfg.phy_notifier.get_cell(cell_cfg.cell_index)),
   // The PDU pool has to be large enough to fit the maximum number of PDUs per slot for all possible K0 values.
-  pdu_pool(dl_sch_pdu::MAX_PDU_LENGTH * MAX_DL_PDUS_PER_SLOT * MAX_K0_DELAY),
+  pdu_pool(dl_sch_pdu::MAX_PDU_LENGTH * MAX_DL_PDUS_PER_SLOT, MAX_K0_DELAY),
   ssb_helper(cell_cfg_req_),
   sib_assembler(cell_cfg_req_.bcch_dl_sch_payload),
   rar_assembler(cell_cfg_req_),
@@ -101,6 +101,9 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
 void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 {
   mac_dl_sched_result mac_dl_res{};
+
+  // Cleans old MAC DL PDU buffers.
+  pdu_pool.tick(sl_tx.to_uint());
 
   if (state != cell_state::active) {
     phy_cell.on_new_downlink_scheduler_results(mac_dl_res);

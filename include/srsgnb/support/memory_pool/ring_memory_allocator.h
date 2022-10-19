@@ -16,14 +16,14 @@
 namespace srsgnb {
 
 /// \brief This memory allocator allocates chunks of a contiguous memory region in a circular fashion.
-class ring_allocator
+class ring_memory_allocator
 {
 public:
-  explicit ring_allocator(span<uint8_t> mem_block_) : mem_block(mem_block_) {}
+  explicit ring_memory_allocator(span<uint8_t> mem_block_) : mem_block(mem_block_) {}
 
   void* allocate(size_t sz) noexcept
   {
-    srsgnb_assert(sz < mem_block.size(), "Invalid allocation size ({} > {})", sz, mem_block.size());
+    srsgnb_assert(sz <= mem_block.size(), "Invalid allocation size ({} > {})", sz, mem_block.size());
 
     if (next_offset + sz > mem_block.size()) {
       // Wrap-around.

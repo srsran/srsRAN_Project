@@ -133,7 +133,7 @@ class mac_dl_sch_assembler_tester : public testing::Test
 {
 public:
   mac_dl_sch_assembler_tester() :
-    pdu_pool(dl_sch_pdu::MAX_PDU_LENGTH * MAX_DL_PDUS_PER_SLOT), ue_mng(rnti_table), dl_sch_enc(ue_mng, pdu_pool)
+    pdu_pool(dl_sch_pdu::MAX_PDU_LENGTH * MAX_DL_PDUS_PER_SLOT, 1), ue_mng(rnti_table), dl_sch_enc(ue_mng, pdu_pool)
   {
     srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
 
@@ -156,7 +156,7 @@ protected:
   byte_buffer                   msg3_pdu;
   mac_ue_create_request_message req = test_helpers::make_default_ue_creation_request();
   du_rnti_table                 rnti_table;
-  ring_buffer_pool              pdu_pool;
+  ticking_ring_buffer_pool      pdu_pool;
   mac_dl_ue_manager             ue_mng;
   dummy_dl_bearer               dl_bearer;
   dl_sch_pdu_assembler          dl_sch_enc;

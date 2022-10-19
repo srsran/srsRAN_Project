@@ -83,10 +83,8 @@ public:
   /// Number of bytes of the MAC PDU.
   size_t nof_bytes() const { return byte_offset; }
 
-  /// Pops the held MAC PDU bytes. After this call, the class represents an empty MAC PDU.
-  span<uint8_t> get() { return pdu.subspan(0, byte_offset); }
-
-  void clear() { pdu = {}; }
+  /// Gets the held MAC PDU bytes.
+  span<uint8_t> get() { return pdu.first(byte_offset); }
 
 private:
   void encode_subheader(bool F_bit, lcid_dl_sch_t lcid, unsigned header_len, unsigned payload_len)
@@ -114,7 +112,7 @@ private:
 class dl_sch_pdu_assembler
 {
 public:
-  explicit dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_, ring_buffer_pool& pool_) :
+  explicit dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_, ticking_ring_buffer_pool& pool_) :
     ue_mng(ue_mng_), pdu_pool(pool_), logger(srslog::fetch_basic_logger("MAC"))
   {
   }
@@ -127,7 +125,12 @@ public:
   /// \return Byte container with assembled PDU. This container length should be lower or equal to \c tb_size_bytes.
   span<const uint8_t> assemble_pdu(rnti_t rnti, const dl_msg_tb_info& tb_info, unsigned tb_size_bytes)
   {
-    dl_sch_pdu ue_pdu(pdu_pool.allocate_buffer(tb_size_bytes));
+    span<uint8_t> pdu_bytes = pdu_pool.allocate_buffer(tb_size_bytes);
+    if (pdu_bytes.empty()) {
+      logger.warning("SCHED: Unable to allocate DL MAC PDU for rnti={:#x}.", rnti);
+      return {};
+    }
+    dl_sch_pdu ue_pdu(pdu_bytes);
 
     // Encode added subPDUs.
     for (const dl_msg_lc_info& subpdu : tb_info.subpdus) {
@@ -144,7 +147,6 @@ public:
       ue_pdu.add_padding(tb_size_bytes - current_size);
     } else if (current_size > tb_size_bytes) {
       logger.error("ERROR: Allocated subPDUs exceed TB size ({} > {})", current_size, tb_size_bytes);
-      ue_pdu.clear();
       return {};
     }
 
@@ -197,9 +199,9 @@ private:
     }
   }
 
-  mac_dl_ue_manager&    ue_mng;
-  ring_buffer_pool&     pdu_pool;
-  srslog::basic_logger& logger;
+  mac_dl_ue_manager&        ue_mng;
+  ticking_ring_buffer_pool& pdu_pool;
+  srslog::basic_logger&     logger;
 };
 
 } // namespace srsgnb

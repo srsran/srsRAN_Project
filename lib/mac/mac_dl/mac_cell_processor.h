@@ -70,7 +70,7 @@ private:
   task_executor&                  cell_exec;
   mac_cell_result_notifier&       phy_cell;
 
-  ring_buffer_pool pdu_pool;
+  ticking_ring_buffer_pool pdu_pool;
 
   /// ssb_helper: contains the SSB-specific parameters that are derived from those passed by the DU interface. These
   /// parameters are passed to the scheduler and also also to the PHY to generate the SSB PDU and PBCH payload.
