@@ -12,6 +12,7 @@
 
 #include "bwp_configuration.h"
 #include "srsgnb/ran/carrier_configuration.h"
+#include "srsgnb/ran/pucch/pucch_tpc.h"
 #include "srsgnb/ran/pusch/pusch_tpc.h"
 #include "srsgnb/ran/ssb_configuration.h"
 
@@ -28,6 +29,8 @@ struct pdcch_config {
   std::vector<search_space_configuration> search_spaces;
   /// TPC Commands Configuration to configure UE for extracting TPC commands for PUSCH from a group-TPC messages on DCI.
   optional<pusch_tpc_command_config> pusch_tpc_cmd_cfg;
+  /// TPC Commands Configuration to configure UE for extracting TPC commands for PUCCH from a group-TPC messages on DCI.
+  optional<pucch_tpc_command_config> pucch_tpc_cmd_cfg;
   // TODO: add remaining fields.
 };
 
