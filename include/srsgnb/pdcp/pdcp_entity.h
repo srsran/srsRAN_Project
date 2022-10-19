@@ -35,6 +35,8 @@ public:
   virtual pdcp_tx_upper_data_interface& get_tx_upper_data_interface() = 0;
   virtual pdcp_rx_lower_interface&      get_rx_lower_interface()      = 0;
   virtual pdcp_metrics_container        get_metrics()                 = 0;
+
+  // virtual set_
 };
 
 } // namespace srsgnb

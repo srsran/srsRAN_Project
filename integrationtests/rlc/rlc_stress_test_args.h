@@ -31,6 +31,7 @@ struct stress_test_args {
   uint32_t             seed               = 0;
   uint32_t             nof_pdu_tti        = 10;
   uint32_t             nof_ttis           = 500;
+  uint32_t             pdcp_sn_size       = 18;
   std::string          log_filename       = "stdout";
   srslog::basic_levels log_level_stack    = srslog::basic_levels::info;
   srslog::basic_levels log_level_traff    = srslog::basic_levels::error;
@@ -43,9 +44,10 @@ struct stress_test_args {
   uint32_t             max_sdu_size       = 1500;
 };
 
-// Log level optgars ints
+// Long only optgars ints
 enum class long_only {
-  log_stack_level = 1000,
+  pdcp_sn_size = 1000,
+  log_stack_level,
   log_traff_level,
   log_pdcp_level,
   log_f1_level,
@@ -71,6 +73,7 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
       {"pdu_cut_rate", required_argument, nullptr, 'c'},
       {"pdu_duplicate_rate", required_argument, nullptr, 'D'},
       {"nof_ttis", required_argument, nullptr, 't'},
+      {"pdcp_sn_size", required_argument, nullptr, to_number(long_only::pdcp_sn_size)},
       {"log_filename", required_argument, nullptr, 'l'},
       {"log_stack_level", required_argument, nullptr, to_number(long_only::log_stack_level)},
       {"log_traffic_level", required_argument, nullptr, to_number(long_only::log_traff_level)},
@@ -98,6 +101,7 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
     "  -D, --pdu_duplicate_rate <rate> Set rate at which RLC PDUs are dropped.\n"
     "  -l, --nof_ttis <ttis>           Set number of TTIs to emulate.\n"
     "  -l, --log_filename <filename>   Set log filename. Use 'stdout' to print to console.\n"
+    "  --pdcp_sn_size <level>          Set PDCP SN size.\n"
     "  --log_stack_level <level>       Set STACK log level (default: info).\n"
     "  --log_traffic_level <level>     Set STACK log level (default: info).\n"
     "  --log_pdcp_level <level>        Set PDCP log level (default: error).\n"
@@ -166,6 +170,10 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
         args.log_filename = std::string(optarg);
         fprintf(stdout, "Log filename %s\n", args.log_filename.c_str());
         break;
+      case to_number(long_only::pdcp_sn_size):
+        args.pdcp_sn_size = std::strtol(optarg, nullptr, 10);
+        fprintf(stdout, "STACK log level %s\n", optarg);
+        break;
       case to_number(long_only::log_stack_level):
         args.log_level_stack = srslog::str_to_basic_level(std::string(optarg));
         fprintf(stdout, "STACK log level %s\n", optarg);
@@ -213,6 +221,18 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
 inline pdcp_config get_pdcp_config_from_args(const stress_test_args& args)
 {
   pdcp_config cnfg = {};
+  cnfg.tx.rb_type  = pdcp_rb_type::drb;
+  cnfg.rx.rb_type  = pdcp_rb_type::drb;
+  if (args.pdcp_sn_size == 12) {
+    cnfg.tx.sn_size = srsgnb::pdcp_sn_size::size12bits;
+    cnfg.rx.sn_size = srsgnb::pdcp_sn_size::size12bits;
+  } else if (args.pdcp_sn_size == 18) {
+    cnfg.tx.sn_size = srsgnb::pdcp_sn_size::size18bits;
+    cnfg.rx.sn_size = srsgnb::pdcp_sn_size::size18bits;
+  } else {
+    fprintf(stderr, "Unsupported PDCP SN %d, exiting.\n", args.pdcp_sn_size);
+    exit(-1);
+  }
   return cnfg;
 }
 
