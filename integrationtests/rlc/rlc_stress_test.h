@@ -13,6 +13,7 @@
 #include "rlc_stress_test_args.h"
 #include "rlc_stress_test_f1.h"
 #include "rlc_stress_test_mac.h"
+#include "rlc_stress_test_rrc.h"
 #include "rlc_stress_test_traffic.h"
 #include "srsgnb/pdcp/pdcp_factory.h"
 #include "srsgnb/rlc/rlc_factory.h"
@@ -97,6 +98,9 @@ private:
 
   // PDCP
   std::unique_ptr<pdcp_entity> pdcp = nullptr;
+
+  // RRC
+  std::unique_ptr<rrc_dummy> rrc = nullptr;
 
   // Traffic generators
   std::unique_ptr<stress_traffic_sink>   traffic_sink   = nullptr;

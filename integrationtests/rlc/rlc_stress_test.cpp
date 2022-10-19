@@ -33,6 +33,9 @@ stress_stack::stress_stack(const stress_test_args& args, uint32_t id) :
   // F1
   f1 = std::make_unique<f1_dummy>(id);
 
+  // RRC dummy for notifications
+  rrc = std::make_unique<rrc_dummy>(id);
+
   // Trafic generators
   traffic_sink   = std::make_unique<stress_traffic_sink>(id);
   traffic_source = std::make_unique<stress_traffic_source>(args, id);
@@ -43,6 +46,7 @@ stress_stack::stress_stack(const stress_test_args& args, uint32_t id) :
   pdcp_msg.config                        = pdcp_cnfg;
   pdcp_msg.tx_lower                      = f1.get();
   pdcp_msg.rx_upper_dn                   = traffic_sink.get();
+  pdcp_msg.rx_upper_cn                   = rrc.get();
   pdcp_msg.timers                        = &timers;
   pdcp                                   = create_pdcp_entity(pdcp_msg);
   traffic_source->set_pdcp_tx_upper(&pdcp->get_tx_upper_data_interface());
