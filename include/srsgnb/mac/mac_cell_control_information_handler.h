@@ -17,6 +17,7 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_pdu_capacity_contants.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/ran/uci/uci_mapping.h"
 
 namespace srsgnb {
 
@@ -48,9 +49,8 @@ struct mac_uci_pdu {
       bool sr_detected;
     };
     struct harq_information {
-      constexpr static size_t NOF_HARQS_PER_UCI = 2;
-      enum class harq_value { nack, ack, dtx };
-      static_vector<harq_value, NOF_HARQS_PER_UCI> harqs;
+      constexpr static size_t                                          NOF_HARQS_PER_UCI = 2;
+      static_vector<uci_pucch_f0_or_f1_harq_values, NOF_HARQS_PER_UCI> harqs;
     };
 
     bool is_f1;
@@ -69,11 +69,10 @@ struct mac_uci_pdu {
 
   pdu_type type;
   rnti_t   rnti;
-  union {
-    pusch_type          pusch;
-    pucch_f0_or_f1_type pucch_f0_or_f1;
-    pucch_other_type    pucch_other;
-  };
+  // :TODO: add variant here.
+  pusch_type          pusch;
+  pucch_f0_or_f1_type pucch_f0_or_f1;
+  pucch_other_type    pucch_other;
 };
 
 /// \brief UCI indication that may contain multiple UCI PDUs.

@@ -98,7 +98,66 @@ void fapi_to_mac_data_msg_translator::on_crc_indication(const fapi::crc_indicati
   crc_handler.get().handle_crc(indication);
 }
 
-void fapi_to_mac_data_msg_translator::on_uci_indication(const fapi::uci_indication_message& msg) {}
+static void convert_fapi_to_mac_pucch_f0_f1(mac_uci_pdu::pucch_f0_or_f1_type&     mac_pucch,
+                                            const fapi::uci_pucch_pdu_format_0_1& fapi_pucch)
+{
+  mac_pucch.is_f1 = fapi_pucch.pucch_format == fapi::uci_pucch_pdu_format_0_1::format_type::format_1;
+
+  if (fapi_pucch.ul_sinr_metric != std::numeric_limits<decltype(fapi_pucch.ul_sinr_metric)>::min()) {
+    mac_pucch.ul_sinr = fapi_pucch.ul_sinr_metric * 0.002F;
+  }
+
+  if (fapi_pucch.timing_advance_offset_ns !=
+      std::numeric_limits<decltype(fapi_pucch.timing_advance_offset_ns)>::min()) {
+    mac_pucch.time_advance_offset =
+        phy_time_unit::from_seconds(static_cast<float>(fapi_pucch.timing_advance_offset_ns) * 1e-9);
+  }
+
+  if (fapi_pucch.rssi != std::numeric_limits<decltype(fapi_pucch.rssi)>::max()) {
+    mac_pucch.rssi = static_cast<float>(fapi_pucch.rssi) * 0.1F - 1280.F;
+  }
+
+  if (fapi_pucch.rsrp != std::numeric_limits<decltype(fapi_pucch.rsrp)>::max()) {
+    mac_pucch.rsrp = static_cast<float>(fapi_pucch.rsrp) * 0.1F - 1280.F;
+  }
+
+  // Fill SR.
+  if (fapi_pucch.pdu_bitmap.test(fapi::uci_pucch_pdu_format_0_1::SR_BIT)) {
+    mac_pucch.sr_info.emplace();
+    mac_pucch.sr_info.value().sr_detected = fapi_pucch.sr.sr_indication;
+  }
+
+  // Fill HARQ.
+  if (fapi_pucch.pdu_bitmap.test(fapi::uci_pucch_pdu_format_0_1::HARQ_BIT)) {
+    mac_pucch.harq_info.emplace();
+    mac_pucch.harq_info.value().harqs.assign(fapi_pucch.harq.harq_values.begin(), fapi_pucch.harq.harq_values.end());
+  }
+}
+
+void fapi_to_mac_data_msg_translator::on_uci_indication(const fapi::uci_indication_message& msg)
+{
+  mac_uci_indication_message mac_msg;
+
+  mac_msg.sl_rx = slot_point(scs, msg.sfn, msg.slot);
+  for (const auto& pdu : msg.pdus) {
+    switch (pdu.pdu_type) {
+      case fapi::uci_pdu_type::PUSCH:
+        break;
+      case fapi::uci_pdu_type::PUCCH_format_0_1: {
+        mac_msg.ucis.emplace_back();
+        mac_uci_pdu& mac_pdu = mac_msg.ucis.back();
+        mac_pdu.type         = mac_uci_pdu::pdu_type::pucch_f0_or_f1;
+        mac_pdu.rnti         = to_rnti(pdu.pucch_pdu_f01.rnti);
+        convert_fapi_to_mac_pucch_f0_f1(mac_pdu.pucch_f0_or_f1, pdu.pucch_pdu_f01);
+        break;
+      }
+      case fapi::uci_pdu_type::PUCCH_format_2_3_4:
+        break;
+    }
+  }
+
+  crc_handler.get().handle_uci(mac_msg);
+}
 
 void fapi_to_mac_data_msg_translator::on_srs_indication(const fapi::srs_indication_message& msg) {}
 

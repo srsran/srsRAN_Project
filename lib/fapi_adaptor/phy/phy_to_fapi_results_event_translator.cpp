@@ -219,8 +219,8 @@ static void add_format_0_1_pucch_pdu(fapi::uci_indication_message_builder& build
       builder.add_format_0_1_pucch_pdu(handle, context.rnti, context.format);
 
   const channel_state_information& csi_info = result.processor_result.csi;
-  // :TODO: Use the parameters when they're valid.
-  builder_format01.set_metrics_parameters({}, {}, {}, {}, {});
+  // :TODO: Use the CSI parameters when they're valid.
+  builder_format01.set_metrics_parameters({csi_info.sinr_dB}, {}, {}, {}, {});
 
   // Fill HARQ parameters.
   fill_format_0_1_harq(builder_format01, result);

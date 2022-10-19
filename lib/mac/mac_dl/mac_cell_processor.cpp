@@ -81,8 +81,7 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
         if (pucch.harq_info.has_value()) {
           ind.ucis[i].harqs.resize(pucch.harq_info->harqs.size());
           for (unsigned j = 0; j != ind.ucis[i].harqs.size(); ++j) {
-            ind.ucis[i].harqs[j] =
-                pucch.harq_info->harqs[j] == mac_uci_pdu::pucch_f0_or_f1_type::harq_information::harq_value::ack;
+            ind.ucis[i].harqs[j] = pucch.harq_info->harqs[j] == uci_pucch_f0_or_f1_harq_values::ack;
           }
         }
       } break;
