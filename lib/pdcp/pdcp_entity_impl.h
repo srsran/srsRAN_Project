@@ -40,9 +40,11 @@ public:
     logger.log_info("PDCP RX configured: {}", config.rx);
   }
   ~pdcp_entity_impl() override = default;
-  pdcp_tx_upper_data_interface& get_tx_upper_data_interface() final { return (*tx); };
-  pdcp_tx_lower_interface&      get_tx_lower_interface() final { return (*tx); };
-  pdcp_rx_lower_interface&      get_rx_lower_interface() final { return (*rx); };
+  pdcp_tx_upper_control_interface& get_tx_upper_control_interface() final { return (*tx); };
+  pdcp_tx_upper_data_interface&    get_tx_upper_data_interface() final { return (*tx); };
+  pdcp_tx_lower_interface&         get_tx_lower_interface() final { return (*tx); };
+  pdcp_rx_upper_control_interface& get_rx_upper_control_interface() final { return (*rx); };
+  pdcp_rx_lower_interface&         get_rx_lower_interface() final { return (*rx); };
 
   pdcp_metrics_container get_metrics() final
   {

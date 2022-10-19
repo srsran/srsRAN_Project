@@ -58,8 +58,12 @@ stress_stack::stress_stack(const stress_test_args& args, uint32_t id) :
   sec_cfg.integ_algo  = integrity_algorithm::nia1;
   sec_cfg.cipher_algo = ciphering_algorithm::nea1;
 
-  // pdcp->set_as_security_config(sec_cfg);
-  // pdcp->enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+  pdcp_tx_upper_control_interface& rrc_tx_if = pdcp->get_tx_upper_control_interface();
+  rrc_tx_if.enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+  rrc_tx_if.set_as_security_config(sec_cfg);
+  pdcp_rx_upper_control_interface& rrc_rx_if = pdcp->get_rx_upper_control_interface();
+  rrc_rx_if.enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+  rrc_rx_if.set_as_security_config(sec_cfg);
 
   // RLC
   rlc_config                  rlc_cnfg = get_rlc_config_from_args(args);
