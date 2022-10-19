@@ -12,6 +12,7 @@
 
 #include "bwp_configuration.h"
 #include "srsgnb/ran/carrier_configuration.h"
+#include "srsgnb/ran/pusch/pusch_tpc.h"
 #include "srsgnb/ran/ssb_configuration.h"
 
 namespace srsgnb {
@@ -19,9 +20,14 @@ namespace srsgnb {
 /// "PDCCH-Config" - UE-dedicated PDCCH configuration as per TS 38.331.
 struct pdcch_config {
   /// List of CORESETs to be used by the UE. In case of CORESET Id overlaps with commonControlResourceSet,
-  /// the CORESET in this list takes precedence. Size: (0..3).
-  std::vector<coreset_configuration>      coresets;
+  /// the CORESET in this list takes precedence. The network configures at most 3 CORESETs per BWP per cell (including
+  /// UE-specific and common CORESETs).
+  std::vector<coreset_configuration> coresets;
+  /// List of SearchSpaces to be used by the UE. The network configures at most 10 Search Spaces per BWP per cell
+  /// (including UE-specific and common Search Spaces).
   std::vector<search_space_configuration> search_spaces;
+  /// TPC Commands Configuration to configure UE for extracting TPC commands for PUSCH from a group-TPC messages on DCI.
+  optional<pusch_tpc_command_config> pusch_tpc_cmd_cfg;
   // TODO: add remaining fields.
 };
 
