@@ -21,12 +21,12 @@ namespace srsgnb {
 /// The identifiers are inspired by TS38.331 Section as 6.3.2 (see field \e PUCCH-TPC-CommandConfig).
 struct pucch_tpc_command_config {
   /// An index determining the position of the first bit of TPC command (applicable to the SpCell) inside the DCI format
-  /// 2-2 payload. Values (1..15).
+  /// 2-2 payload. Values {1..15}.
   /// The field is mandatory present if the PUCCH-TPC-CommandConfig is provided in the PDCCH-Config for the SpCell.
   /// Otherwise, the field is absent.
   optional<uint8_t> tpc_index_pcell;
   /// An index determining the position of the first bit of TPC command (applicable to the PUCCH SCell) inside the DCI
-  /// format 2-2 payload. Values (1..15).
+  /// format 2-2 payload. Values {1..15}.
   /// The field is mandatory present if the PUCCH-TPC-CommandConfig is provided in the PDCCH-Config for the PUCCH-SCell.
   /// The field is optionally present, need R, if the UE is configured with a PUCCH SCell in this cell group and if the
   /// PUCCH-TPC-CommandConfig is provided in the PDCCH-Config for the SpCell.

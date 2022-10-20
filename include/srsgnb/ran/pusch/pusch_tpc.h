@@ -21,11 +21,11 @@ namespace srsgnb {
 /// The identifiers are inspired by TS38.331 Section as 6.3.2 (see field \e PUSCH-TPC-CommandConfig).
 struct pusch_tpc_command_config {
   /// An index determining the position of the first bit of TPC command inside the DCI format 2-2 payload.
-  /// Values (1..15). Field is optionally present if this serving cell is configured with a supplementary uplink (SUL).
+  /// Values {1..15}. Field is optionally present if this serving cell is configured with a supplementary uplink (SUL).
   /// It is mandatory present otherwise.
   optional<uint8_t> tpc_index;
   /// An index determining the position of the first bit of TPC command inside the DCI format 2-2 payload.
-  /// Values (1..15). Present only if serving cell is configured with a supplementary uplink (SUL).
+  /// Values {1..15}. Present only if serving cell is configured with a supplementary uplink (SUL).
   optional<uint8_t> tpc_index_sul;
   /// The serving cell to which the acquired power control commands are applicable. If the value is absent, the UE
   /// applies the TPC commands to the serving cell on which the command has been received.

@@ -22,14 +22,14 @@ namespace srsgnb {
 struct srs_tpc_command_config {
   /// The starting bit position of a block within the group DCI with SRS request fields (optional) and TPC commands. The
   /// value 1 of the field corresponds to the first/left most bit of format2-3. See TS 38.212, clause 7.3.1 and
-  /// TS 38.213, clause 11.3. Values (1..31)
+  /// TS 38.213, clause 11.3. Values {1..31}.
   optional<uint8_t> starting_bit_of_format_2_3;
   /// Indicate whether or not an SRS Request will be included i.e. 0 means SRS request bits in the field is 0 bits
-  /// and 1 means SRS request bits in the field is 2 bits. Values (0..1)
+  /// and 1 means SRS request bits in the field is 2 bits. Values {0..1}.
   optional<uint8_t> field_type_format_2_3;
   /// The starting bit position of a block within the group DCI with SRS request fields (optional) and TPC commands for
   /// SUL. The value 1 of the field corresponds to the first/left most bit of format2-3. See TS 38.212, clause 7.3.1 and
-  /// TS 38.213, clause 11.3. Values (1..31)
+  /// TS 38.213, clause 11.3. Values {1..31}.
   optional<uint8_t> starting_bit_of_format_2_3_sul;
 
   bool operator==(const srs_tpc_command_config& rhs) const
