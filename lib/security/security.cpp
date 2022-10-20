@@ -34,25 +34,19 @@ void srsgnb::security_generate_k_rrc(sec_as_key&               k_rrc_enc,
 {
   // Derive RRC ENC
   // algorithm type distinguisher
-  std::vector<uint8_t> algo_distinguisher;
-  algo_distinguisher.resize(1);
-  algo_distinguisher[0] = to_number(security_algo_distinguisher::rrc_enc_alg);
+  std::array<uint8_t, 1> algo_distinguisher{to_number(security_algo_distinguisher::rrc_enc_alg)};
 
   // algorithm type distinguisher
-  std::vector<uint8_t> algorithm_identity;
-  algorithm_identity.resize(1);
-  algorithm_identity[0] = static_cast<uint8_t>(enc_alg_id);
+  std::array<uint8_t, 1> algorithm_identity{static_cast<uint8_t>(enc_alg_id)};
 
   generic_kdf(k_rrc_enc, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 
   // Derive RRC INT
   // algorithm type distinguisher
-  algo_distinguisher.resize(1);
-  algo_distinguisher[0] = to_number(security_algo_distinguisher::rrc_int_alg);
+  algo_distinguisher = {to_number(security_algo_distinguisher::rrc_int_alg)};
 
   // algorithm type distinguisher
-  algorithm_identity.resize(1);
-  algorithm_identity[0] = static_cast<uint8_t>(int_alg_id);
+  algorithm_identity = {static_cast<uint8_t>(int_alg_id)};
 
   // Derive RRC int
   generic_kdf(k_rrc_int, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
@@ -66,35 +60,29 @@ void srsgnb::security_generate_k_up(sec_as_key&               k_up_enc,
 {
   // Derive UP ENC
   // algorithm type distinguisher
-  std::vector<uint8_t> algo_distinguisher;
-  algo_distinguisher.resize(1);
-  algo_distinguisher[0] = to_number(security_algo_distinguisher::up_enc_alg);
+  std::array<uint8_t, 1> algo_distinguisher{to_number(security_algo_distinguisher::up_enc_alg)};
 
   // algorithm type distinguisher
-  std::vector<uint8_t> algorithm_identity;
-  algorithm_identity.resize(1);
-  algorithm_identity[0] = static_cast<uint8_t>(enc_alg_id);
+  std::array<uint8_t, 1> algorithm_identity{static_cast<uint8_t>(enc_alg_id)};
 
   generic_kdf(k_up_enc, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 
   // Derive UP INT
   // algorithm type distinguisher
-  algo_distinguisher.resize(1);
-  algo_distinguisher[0] = to_number(security_algo_distinguisher::up_int_alg);
+  algo_distinguisher = {to_number(security_algo_distinguisher::up_int_alg)};
 
   // algorithm type distinguisher
-  algorithm_identity.resize(1);
-  algorithm_identity[0] = static_cast<uint8_t>(int_alg_id);
+  algorithm_identity = {static_cast<uint8_t>(int_alg_id)};
 
   // Derive UP int
   generic_kdf(k_up_int, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 }
 
-void srsgnb::generic_kdf(sec_as_key&                 key_out,
-                         const sec_as_key&           key_in,
-                         const fc_value              fc,
-                         const std::vector<uint8_t>& p0,
-                         const std::vector<uint8_t>& p1)
+void srsgnb::generic_kdf(sec_as_key&         key_out,
+                         const sec_as_key&   key_in,
+                         const fc_value      fc,
+                         span<const uint8_t> p0,
+                         span<const uint8_t> p1)
 {
   union p_len {
     uint16_t                                  length_value;

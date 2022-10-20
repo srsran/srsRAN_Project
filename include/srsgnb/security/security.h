@@ -16,10 +16,10 @@
  * Common security header - wraps ciphering/integrity check algorithms.
  *****************************************************************************/
 
+#include "srsgnb/adt/span.h"
 #include "srsgnb/srslog/bundled/fmt/format.h"
 #include <array>
 #include <cstdint>
-#include <vector>
 
 namespace srsgnb {
 
@@ -120,11 +120,11 @@ inline void zero_tailing_bits(uint8_t& tail_byte, uint8_t length_bits)
 
 /// Generic key derivation function
 /// Ref: TS 33.220 Sec. B.2
-void generic_kdf(sec_as_key&                 key_out,
-                 const sec_as_key&           key_in,
-                 const fc_value              fc,
-                 const std::vector<uint8_t>& p0,
-                 const std::vector<uint8_t>& p1);
+void generic_kdf(sec_as_key&         key_out,
+                 const sec_as_key&   key_in,
+                 const fc_value      fc,
+                 span<const uint8_t> p0,
+                 span<const uint8_t> p1);
 
 /// Algorithm key derivation function (RRC)
 /// Ref: TS 33.501 Sec. A.8
