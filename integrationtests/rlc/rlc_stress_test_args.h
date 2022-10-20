@@ -218,7 +218,7 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
   return true;
 }
 
-inline pdcp_config get_pdcp_config_from_args(const stress_test_args& args)
+inline pdcp_config get_pdcp_config_from_args(uint32_t id, const stress_test_args& args)
 {
   pdcp_config cnfg = {};
   cnfg.tx.rb_type  = pdcp_rb_type::drb;
@@ -232,6 +232,13 @@ inline pdcp_config get_pdcp_config_from_args(const stress_test_args& args)
   } else {
     fprintf(stderr, "Unsupported PDCP SN %d, exiting.\n", args.pdcp_sn_size);
     exit(-1);
+  }
+  if (id == 0) {
+    cnfg.tx.direction = srsgnb::pdcp_security_direction::downlink;
+    cnfg.rx.direction = srsgnb::pdcp_security_direction::uplink;
+  } else {
+    cnfg.tx.direction = srsgnb::pdcp_security_direction::uplink;
+    cnfg.rx.direction = srsgnb::pdcp_security_direction::downlink;
   }
   return cnfg;
 }

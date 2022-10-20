@@ -134,7 +134,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
   if (integrity_enabled == pdcp_integrity_enabled::enabled) {
     bool is_valid = integrity_verify(sdu, rcvd_count, mac);
     if (!is_valid) {
-      logger.log_error(sdu.begin(), sdu.end(), "Integrity failed. Dropping PDU");
+      logger.log_warning(sdu.begin(), sdu.end(), "Integrity failed. Dropping PDU");
       metrics_add_integrity_failed_pdus(1);
       upper_cn.on_integrity_failure();
       return; // Invalid packet, drop.
@@ -250,7 +250,7 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
         break;
       }
     }
-    srslog::basic_levels level = is_valid ? srslog::basic_levels::debug : srslog::basic_levels::error;
+    srslog::basic_levels level = is_valid ? srslog::basic_levels::debug : srslog::basic_levels::warning;
     logger.log(level,
                buf.begin(),
                buf.end(),

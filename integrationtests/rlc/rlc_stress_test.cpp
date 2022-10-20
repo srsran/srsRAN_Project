@@ -41,7 +41,7 @@ stress_stack::stress_stack(const stress_test_args& args, uint32_t id) :
   traffic_source = std::make_unique<stress_traffic_source>(args, id);
 
   // PDCP
-  pdcp_config                  pdcp_cnfg = get_pdcp_config_from_args(args);
+  pdcp_config                  pdcp_cnfg = get_pdcp_config_from_args(id, args);
   pdcp_entity_creation_message pdcp_msg  = {};
   pdcp_msg.config                        = pdcp_cnfg;
   pdcp_msg.tx_lower                      = f1.get();
