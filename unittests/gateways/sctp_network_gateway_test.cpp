@@ -20,7 +20,7 @@
 
 using namespace srsgnb;
 
-static const std::string tx_buf = "hello world!";
+static const std::string tx_buf = "Hello World!";
 
 class dummy_network_gateway_control_notifier : public network_gateway_control_notifier
 {
@@ -198,13 +198,13 @@ TEST_F(sctp_network_gateway_tester, basic_trx_test)
 
   ASSERT_TRUE(server_control_notifier.get_connection_established());
 
-  byte_buffer pdu(tx_buf.begin(), tx_buf.end());
+  byte_buffer pdu(make_byte_buffer(tx_buf));
   send_to_server(pdu);
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
-  ASSERT_EQ(server_data_notifier.get_rx_bytes(), tx_buf.length());
+  ASSERT_EQ(server_data_notifier.get_rx_bytes(), tx_buf.size());
 }
 
 TEST_F(sctp_network_gateway_tester, basic_trx_test_v6)
@@ -222,11 +222,11 @@ TEST_F(sctp_network_gateway_tester, basic_trx_test_v6)
   start_receive_thread();
   ASSERT_TRUE(connect());
 
-  byte_buffer pdu(tx_buf.begin(), tx_buf.end());
+  byte_buffer pdu(make_byte_buffer(tx_buf));
   send_to_server(pdu);
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
-  ASSERT_EQ(server_data_notifier.get_rx_bytes(), tx_buf.length());
+  ASSERT_EQ(server_data_notifier.get_rx_bytes(), tx_buf.size());
 }

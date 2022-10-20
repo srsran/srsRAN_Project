@@ -33,7 +33,12 @@ public:
 
   /// Segment header where metadata gets stored.
   struct metadata_storage {
+    /// Next segment of the intrusive linked list of segments.
     std::shared_ptr<byte_buffer_segment> next = nullptr;
+    /// Tail of linked list of segments. This value is != nullptr if the list is not empty.
+    byte_buffer_segment* tail = nullptr;
+    /// Length of linked list of segments. This parameter is only != 0 for the first segment of the list.
+    size_t pkt_len = 0;
   };
 
   byte_buffer_segment(size_t headroom = DEFAULT_HEADROOM)
@@ -152,12 +157,12 @@ public:
 
   uint8_t& operator[](size_t idx)
   {
-    srsgnb_sanity_check(idx < length(), "Out-of-bound access");
+    srsgnb_assert(idx < length(), "Out-of-bound access");
     return *(begin() + idx);
   }
   const uint8_t& operator[](size_t idx) const
   {
-    srsgnb_sanity_check(idx < length(), "Out-of-bound access");
+    srsgnb_assert(idx < length(), "Out-of-bound access");
     return *(begin() + idx);
   }
 
@@ -166,12 +171,12 @@ public:
 
   uint8_t& back()
   {
-    srsgnb_sanity_check(not empty(), "back() called for empty segment.");
+    srsgnb_assert(not empty(), "back() called for empty segment.");
     return *(payload_data_end_ - 1);
   }
   const uint8_t& back() const
   {
-    srsgnb_sanity_check(not empty(), "back() called for empty segment.");
+    srsgnb_assert(not empty(), "back() called for empty segment.");
     return *(payload_data_end_ - 1);
   }
 
@@ -209,7 +214,96 @@ private:
 
 namespace detail {
 
-/// This class represents an iterator of a linked list of byte_buffer_segments.
+/// This class represents a byte iterator for a linked list of byte_buffer_segments.
+template <typename T>
+class byte_buffer_iterator_impl
+{
+public:
+  using iterator_type     = byte_buffer_iterator_impl<T>;
+  using value_type        = std::remove_const_t<T>;
+  using reference         = T&;
+  using pointer           = T*;
+  using difference_type   = std::ptrdiff_t;
+  using iterator_category = std::forward_iterator_tag;
+
+  explicit byte_buffer_iterator_impl(byte_buffer_segment* start_segment = nullptr, size_t offset_ = 0) :
+    current_segment(start_segment), offset(offset_)
+  {
+  }
+
+  /// Conversion from iterators of T to const T.
+  template <typename U, std::enable_if_t<not std::is_same<U, T>::value, bool> = true>
+  byte_buffer_iterator_impl(const byte_buffer_iterator_impl<U>& other) :
+    current_segment(other.current_segment), offset(other.offset)
+  {
+  }
+
+  reference operator*() { return *(current_segment->data() + offset); }
+  reference operator*() const { return *(current_segment->data() + offset); }
+  pointer   operator->() { return (current_segment->data() + offset); }
+  pointer   operator->() const { return (current_segment->data() + offset); }
+
+  byte_buffer_iterator_impl& operator++()
+  {
+    offset++;
+    if (offset >= current_segment->length()) {
+      offset          = 0;
+      current_segment = current_segment->next();
+    }
+    return *this;
+  }
+  byte_buffer_iterator_impl operator++(int)
+  {
+    byte_buffer_iterator_impl tmp(*this);
+    ++(*this);
+    return tmp;
+  }
+  byte_buffer_iterator_impl operator+(unsigned n) const
+  {
+    byte_buffer_iterator_impl tmp(*this);
+    tmp += n;
+    return tmp;
+  }
+  byte_buffer_iterator_impl& operator+=(unsigned n)
+  {
+    offset += n;
+    while (current_segment != nullptr and offset >= current_segment->length()) {
+      offset -= current_segment->length();
+      current_segment = current_segment->next();
+    }
+    srsgnb_assert(current_segment != nullptr or offset == 0, "Out-of-bounds Access");
+    return *this;
+  }
+
+  /// Distance between two iterators. The iterators must point at the same list of segments.
+  difference_type operator-(const byte_buffer_iterator_impl<T>& other) const
+  {
+    difference_type      diff = 0;
+    byte_buffer_segment* seg  = other.current_segment;
+    for (; seg != current_segment; seg = seg->next()) {
+      diff += seg->length();
+    }
+    diff += offset - other.offset;
+    return diff;
+  }
+
+  bool operator==(const byte_buffer_iterator_impl<T>& other) const
+  {
+    return current_segment == other.current_segment and offset == other.offset;
+  }
+  bool operator!=(const byte_buffer_iterator_impl<T>& other) const { return !(*this == other); }
+
+private:
+  template <typename OtherT>
+  friend class byte_buffer_iterator_impl;
+  template <typename U>
+  friend class byte_buffer_segment_list_iterator_impl;
+
+  byte_buffer_segment* current_segment = nullptr;
+  size_t               offset          = 0;
+};
+
+/// This class represents a byte_buffer_segment iterator for a linked list of byte_buffer_segments.
 template <typename SegmentType>
 class byte_buffer_segment_list_iterator_impl
 {
@@ -230,12 +324,17 @@ public:
     span<byte_type> ar;
   };
 
-  byte_buffer_segment_list_iterator_impl(SegmentType* seg, unsigned offset_, unsigned size_) :
+  byte_buffer_segment_list_iterator_impl(SegmentType* seg, size_t offset_, size_t size_) :
     current_segment(seg), offset(offset_), rem_bytes(size_)
   {
     srsgnb_assert(current_segment != nullptr or (offset == 0 and rem_bytes == 0),
                   "Positive offset or length for empty segment");
     srsgnb_assert(current_segment == nullptr or offset < current_segment->length(), "Invalid offset");
+  }
+  template <typename U>
+  byte_buffer_segment_list_iterator_impl(const byte_buffer_iterator_impl<U>& it, size_t size_) :
+    byte_buffer_segment_list_iterator_impl(it.current_segment, it.offset, size_)
+  {
   }
 
   reference operator*()
@@ -279,13 +378,18 @@ private:
   unsigned     rem_bytes       = 0;
 };
 
+/// This class represents a range (a begin and end pair) of byte_buffer_segment_list iterators.
 template <typename SegmentType>
 class byte_buffer_segment_range_impl
 {
 public:
   using iterator = byte_buffer_segment_list_iterator_impl<SegmentType>;
 
-  byte_buffer_segment_range_impl(SegmentType* seg, unsigned offset, unsigned size) : begin_(seg, offset, size) {}
+  byte_buffer_segment_range_impl(SegmentType* seg, size_t offset, size_t size) : begin_(seg, offset, size) {}
+  template <typename U>
+  byte_buffer_segment_range_impl(const byte_buffer_iterator_impl<U>& it, size_t size) : begin_(it, size)
+  {
+  }
 
   byte_buffer_segment_list_iterator_impl<SegmentType>       begin() { return begin_; }
   byte_buffer_segment_list_iterator_impl<const SegmentType> begin() const { return begin_; }
