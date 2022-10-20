@@ -72,7 +72,6 @@ public:
   /*
    * Testing Helpers
    */
-  void set_direction(security_direction direction_) { direction = direction_; };
   void set_state(pdcp_rx_state st_) { st = st_; }
 
 private:

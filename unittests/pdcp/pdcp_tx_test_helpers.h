@@ -53,6 +53,7 @@ protected:
     config.sn_size       = sn_size;
     config.rb_type       = pdcp_rb_type::drb;
     config.rlc_mode      = pdcp_rlc_mode::am;
+    config.direction     = pdcp_security_direction::downlink;
     config.discard_timer = discard_timer;
 
     // Set security keys

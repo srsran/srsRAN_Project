@@ -57,6 +57,7 @@ protected:
     config.rb_type               = pdcp_rb_type::drb;
     config.rlc_mode              = pdcp_rlc_mode::am;
     config.sn_size               = sn_size;
+    config.direction             = pdcp_security_direction::downlink;
     config.out_of_order_delivery = false;
     config.t_reordering          = t_reordering;
 

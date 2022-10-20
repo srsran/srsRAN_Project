@@ -58,6 +58,8 @@ public:
                   "RLC UM with discard timer is un-supported. RLC mode={}, discardTimer={}",
                   cfg.rlc_mode,
                   cfg.discard_timer);
+    direction =
+        cfg.direction == pdcp_security_direction::uplink ? security_direction::uplink : security_direction::downlink;
   }
 
   /*

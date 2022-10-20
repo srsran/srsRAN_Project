@@ -33,7 +33,10 @@ constexpr uint16_t to_number(pdcp_sn_size sn_size)
 /// Maximum supported PDCP SDU size, see TS 38.323, section 4.3.1.
 constexpr uint16_t pdcp_max_sdu_size = 9000;
 
-/// PDCP NR direction
+/// PDCP security direction
+enum class pdcp_security_direction { uplink, downlink };
+
+/// PDCP integrity/ciphering enabled
 enum class pdcp_integrity_enabled { no, enabled };
 enum class pdcp_ciphering_enabled { no, enabled };
 
@@ -112,8 +115,9 @@ struct pdcp_config_common {
   pdcp_rb_type  rb_type;
   pdcp_rlc_mode rlc_mode;
   pdcp_sn_size  sn_size = pdcp_sn_size::size12bits; // TODO remove default initialization and force parameter selection
-  bool          integrity_protection_required;
-  bool          ciphering_required;
+  pdcp_security_direction direction;
+  bool                    integrity_protection_required;
+  bool                    ciphering_required;
 };
 
 /// \brief Configurable parameters for PDCP

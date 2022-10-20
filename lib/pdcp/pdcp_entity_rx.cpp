@@ -27,6 +27,10 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   upper_cn(upper_cn_),
   timers(timers_)
 {
+  // Security direction
+  direction =
+      cfg.direction == pdcp_security_direction::uplink ? security_direction::uplink : security_direction::downlink;
+
   // t-Reordering timer
   if (cfg.t_reordering != pdcp_t_reordering::infinity) {
     reordering_timer = timers.create_unique_timer();
