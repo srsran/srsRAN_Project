@@ -24,11 +24,11 @@ struct validator_report {
 
   /// Error report information structure. Contains the information that helps to identify the source of the failure.
   struct error_report {
-    int32_t                     value;
-    std::pair<int32_t, int32_t> expected_value_range;
-    const char*                 property_name;
-    message_type_id             message_type;
-    optional<unsigned>          pdu_type;
+    int32_t                               value;
+    const char*                           property_name;
+    message_type_id                       message_type;
+    optional<std::pair<int32_t, int32_t>> expected_value_range;
+    optional<unsigned>                    pdu_type;
 
     error_report(int32_t                     value,
                  std::pair<int32_t, int32_t> range,
@@ -36,9 +36,9 @@ struct validator_report {
                  message_type_id             message_type,
                  unsigned                    pdu_type) :
       value(value),
-      expected_value_range(std::move(range)),
       property_name(name),
       message_type(message_type),
+      expected_value_range({std::move(range)}),
       pdu_type(pdu_type)
     {
     }
@@ -49,7 +49,7 @@ struct validator_report {
     }
 
     error_report(int32_t value, std::pair<int32_t, int32_t> range, const char* name, message_type_id message_type) :
-      value(value), expected_value_range(std::move(range)), property_name(name), message_type(message_type)
+      value(value), property_name(name), message_type(message_type), expected_value_range({std::move(range)})
     {
     }
 

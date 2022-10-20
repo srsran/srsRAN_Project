@@ -695,20 +695,227 @@ error_type<validator_report> srsgnb::fapi::validate_ul_tti_request(const ul_tti_
   return {};
 }
 
+/// Returns a string identifier for the given UCI.indication PDU.
+static const char* get_uci_pdu_type_string(uci_pdu_type pdu_id)
+{
+  switch (pdu_id) {
+    case uci_pdu_type::PUSCH:
+      return "PUSCH";
+    case uci_pdu_type::PUCCH_format_0_1:
+      return "PUCCH Format 0/1";
+    case uci_pdu_type::PUCCH_format_2_3_4:
+      return "PUCCH Format 2/3/4";
+    default:
+      srsgnb_assert(0, "Invalid UCI.indication PDU={}", pdu_id);
+      break;
+  }
+  return "";
+}
+
+/// Returns a string identifier for the given UL_TTI.request PDU.
+static const char* get_ul_tti_pdu_type_string(ul_pdu_type pdu_id)
+{
+  switch (pdu_id) {
+    case ul_pdu_type::PUSCH:
+      return "PUSCH";
+    case ul_pdu_type::PRACH:
+      return "PRACH";
+    case ul_pdu_type::PUCCH:
+      return "PUCCH";
+    case ul_pdu_type::SRS:
+      return "SRS";
+    default:
+      srsgnb_assert(0, "Invalid UL_TTI.request PDU={}", pdu_id);
+      break;
+  }
+  return "";
+}
+
+/// Returns a string identifier for the given DL_TTI.request PDU.
+static const char* get_dl_tti_pdu_type_string(dl_pdu_type pdu_id)
+{
+  switch (pdu_id) {
+    case dl_pdu_type::CSI_RS:
+      return "CSI-RS";
+    case dl_pdu_type::PDCCH:
+      return "PDCCH";
+    case dl_pdu_type::PDSCH:
+      return "PDSCH";
+    case dl_pdu_type::SSB:
+      return "SSB";
+    default:
+      srsgnb_assert(0, "Invalid DL_TTI.request PDU={}", pdu_id);
+      break;
+  }
+  return "";
+}
+
+/// Returns a string identifier for the given message and PDU.
+static const char* get_pdu_type_string(message_type_id msg_id, unsigned pdu_id)
+{
+  switch (msg_id) {
+    case message_type_id::rach_indication:
+    case message_type_id::crc_indication:
+    case message_type_id::error_indication:
+    case message_type_id::tx_data_request:
+    case message_type_id::ul_dci_request:
+    case message_type_id::rx_data_indication:
+    case message_type_id::slot_indication:
+    case message_type_id::config_request:
+    case message_type_id::config_response:
+    case message_type_id::dl_tti_response:
+    case message_type_id::param_request:
+    case message_type_id::param_response:
+    case message_type_id::srs_indication:
+    case message_type_id::start_request:
+    case message_type_id::stop_indication:
+    case message_type_id::stop_request:
+      return "";
+    case message_type_id::uci_indication:
+      return get_uci_pdu_type_string(static_cast<uci_pdu_type>(pdu_id));
+    case message_type_id::dl_tti_request:
+      return get_dl_tti_pdu_type_string(static_cast<dl_pdu_type>(pdu_id));
+    case message_type_id::ul_tti_request:
+      return get_ul_tti_pdu_type_string(static_cast<ul_pdu_type>(pdu_id));
+    default:
+      srsgnb_assert(0, "Invalid FAPI message type={}", msg_id);
+      break;
+  }
+  return "";
+}
+
+/// Returns a string identifier for the given message identifier.
+static const char* get_message_type_string(message_type_id msg_id)
+{
+  switch (msg_id) {
+    case message_type_id::rach_indication:
+      return "RACH.indication";
+    case message_type_id::crc_indication:
+      return "CRC.indication";
+    case message_type_id::error_indication:
+      return "ERROR.indication";
+    case message_type_id::dl_tti_request:
+      return "DL_TTI.request";
+    case message_type_id::tx_data_request:
+      return "Tx_Data.request";
+    case message_type_id::ul_dci_request:
+      return "UL_DCI.request";
+    case message_type_id::uci_indication:
+      return "UCI.indication";
+    case message_type_id::rx_data_indication:
+      return "Rx_Data.indication";
+    case message_type_id::slot_indication:
+      return "SLOT.indication";
+    case message_type_id::config_request:
+      return "CONFIG.request";
+    case message_type_id::config_response:
+      return "CONFIG.response";
+    case message_type_id::dl_tti_response:
+      return "DL_TTI.response";
+    case message_type_id::param_request:
+      return "PARAM.request";
+    case message_type_id::param_response:
+      return "PARAM.response";
+    case message_type_id::srs_indication:
+      return "SRS.indication";
+    case message_type_id::start_request:
+      return "START.request";
+    case message_type_id::stop_indication:
+      return "STOP.indication";
+    case message_type_id::stop_request:
+      return "STOP.request";
+    case message_type_id::ul_tti_request:
+      return "UL_TTI.request";
+    default:
+      srsgnb_assert(0, "Invalid FAPI message type={}", msg_id);
+      break;
+  }
+  return "";
+}
+
+static void log_pdu_and_range_report(srslog::basic_logger&                 logger,
+                                     const validator_report::error_report& report,
+                                     unsigned                              sfn,
+                                     unsigned                              slot)
+{
+  logger.error("Error Validating FAPI message at {}.{}, Error message type={}, PDU type={}, in property={}, value={}, "
+               "expected value range=[{}-{}]",
+               sfn,
+               slot,
+               get_message_type_string(report.message_type),
+               get_pdu_type_string(report.message_type, report.pdu_type.value()),
+               report.property_name,
+               report.value,
+               report.expected_value_range.value().first,
+               report.expected_value_range.value().second);
+}
+
+static void
+log_pdu_report(srslog::basic_logger& logger, const validator_report::error_report& report, unsigned sfn, unsigned slot)
+{
+  logger.error("Error Validating FAPI message at {}.{}, Error message type={}, PDU type={}, in property={}, value={}.",
+               sfn,
+               slot,
+               get_message_type_string(report.message_type),
+               get_pdu_type_string(report.message_type, report.pdu_type.value()),
+               report.property_name,
+               report.value);
+}
+
+static void log_range_report(srslog::basic_logger&                 logger,
+                             const validator_report::error_report& report,
+                             unsigned                              sfn,
+                             unsigned                              slot)
+{
+  logger.error("Error Validating FAPI message at {}.{}, Error message type={}, in property={}, value={}, "
+               "expected value range=[{}-{}].",
+               sfn,
+               slot,
+               get_message_type_string(report.message_type),
+               report.property_name,
+               report.value,
+               report.expected_value_range.value().first,
+               report.expected_value_range.value().second);
+}
+
+static void log_basic_report(srslog::basic_logger&                 logger,
+                             const validator_report::error_report& report,
+                             unsigned                              sfn,
+                             unsigned                              slot)
+{
+  logger.error("Error Validating FAPI message at {}.{}, Error message type ({}), in property ({}), value ({}).",
+               sfn,
+               slot,
+               get_message_type_string(report.message_type),
+               report.property_name,
+               report.value);
+}
+
 void srsgnb::fapi::log_validator_report(const validator_report& report)
 {
   static const std::string log_name = "FAPI";
+  srslog::basic_logger&    logger   = srslog::fetch_basic_logger(log_name);
 
-  srslog::fetch_basic_logger(log_name).error(
-      "FAPI message bad-formed in SFN ({}) and slot ({}).", report.sfn, report.slot);
   for (const auto& error : report.reports) {
-    srslog::fetch_basic_logger(log_name).error(
-        "Error message ({}), PDU ({}),  in property ({}), value ({}), expected [{} - {}]",
-        error.message_type,
-        error.pdu_type.has_value() ? error.pdu_type.value() : -1,
-        error.property_name,
-        error.value,
-        error.expected_value_range.first,
-        error.expected_value_range.second);
+    // Basic + PDU + Range log.
+    if (error.pdu_type.has_value() && error.expected_value_range.has_value()) {
+      log_pdu_and_range_report(logger, error, report.sfn, report.slot);
+      continue;
+    }
+
+    // Basic + PDU log.
+    if (error.pdu_type.has_value()) {
+      log_pdu_report(logger, error, report.sfn, report.slot);
+      continue;
+    }
+
+    // Basic + Range log.
+    if (error.expected_value_range.has_value()) {
+      log_range_report(logger, error, report.sfn, report.slot);
+      continue;
+    }
+
+    // Basic log.
+    log_basic_report(logger, error, report.sfn, report.slot);
   }
 }
