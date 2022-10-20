@@ -37,7 +37,7 @@ std::vector<uint8_t> make_vec(unsigned size)
 {
   std::vector<uint8_t> vec(size);
   for (size_t i = 0; i < vec.size(); ++i) {
-    vec[i] = i;
+    vec[i] = get_random_uint(0, 255);
   }
   return vec;
 }
@@ -96,16 +96,16 @@ TEST(byte_buffer, append)
 TEST(byte_buffer, prepend)
 {
   byte_buffer          pdu;
-  std::vector<uint8_t> bytes = make_small_vec();
+  std::vector<uint8_t> vec  = make_vec(get_random_uint(1, byte_buffer_segment::SEGMENT_SIZE * 4));
+  std::vector<uint8_t> vec2 = make_vec(get_random_uint(1, byte_buffer_segment::SEGMENT_SIZE * 4));
 
-  pdu.prepend(bytes);
-  ASSERT_EQ(pdu.length(), bytes.size());
-  ASSERT_EQ(pdu, bytes);
+  pdu.prepend(vec);
+  ASSERT_EQ(pdu.length(), vec.size());
+  ASSERT_EQ(pdu, vec);
 
-  auto bytes2 = make_large_vec();
-  pdu.prepend(bytes2);
-  ASSERT_EQ(pdu.length(), bytes.size() + bytes2.size());
-  ASSERT_EQ(pdu, concat_vec(bytes2, bytes));
+  pdu.prepend(vec2);
+  ASSERT_EQ(pdu.length(), vec.size() + vec2.size());
+  ASSERT_EQ(pdu, concat_vec(vec2, vec));
 }
 
 TEST(byte_buffer, clear)
@@ -118,6 +118,7 @@ TEST(byte_buffer, clear)
   pdu.clear();
   ASSERT_TRUE(pdu.empty());
   ASSERT_EQ(pdu.length(), 0);
+  ASSERT_EQ(pdu.begin(), pdu.end());
 }
 
 TEST(byte_buffer, eq_compare_with_span)
