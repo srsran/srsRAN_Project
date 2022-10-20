@@ -140,7 +140,7 @@ std::thread unique_thread::make_thread(const std::string&               name,
     pthread_t tself = pthread_self();
     if (pthread_setname_np(tself, name.c_str()) != 0) {
       perror("pthread_setname_np");
-      fmt::print("Thread [{}]: Error while setting thread name to {}.", std::this_thread::get_id(), name);
+      fmt::print("Thread [{}]: Error while setting thread name to {}.\n", std::this_thread::get_id(), name);
     }
 
     // Set thread OS priority and affinity.
