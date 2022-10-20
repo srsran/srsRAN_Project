@@ -20,15 +20,6 @@
 
 namespace srsgnb {
 
-/// CQI Value reported.
-using cqi_report = uint8_t;
-
-/// RSSI value reported.
-using rssi_report = uint16_t;
-
-/// RSRP value reported.
-using rsrp_report = uint16_t;
-
 /// CRC indication for a given PDU.
 struct mac_crc_pdu {
   rnti_t  rnti;
@@ -85,11 +76,10 @@ struct mac_uci_pdu {
   };
 };
 
-/// \brief UCI indication that may contain multiple UCIs.
+/// \brief UCI indication that may contain multiple UCI PDUs.
 struct mac_uci_indication_message {
-  constexpr static size_t                             MAX_UCIS_PER_INDICATION = 8;
-  slot_point                                          sl_rx;
-  static_vector<mac_uci_pdu, MAX_UCIS_PER_INDICATION> ucis;
+  slot_point                                           sl_rx;
+  static_vector<mac_uci_pdu, MAX_UCI_PDUS_PER_UCI_IND> ucis;
 };
 
 /// Interface to handle feedback information from the PHY.
