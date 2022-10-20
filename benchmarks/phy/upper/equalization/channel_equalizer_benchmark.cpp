@@ -10,7 +10,6 @@
 
 #include "srsgnb/phy/upper/channel_estimation.h"
 #include "srsgnb/phy/upper/equalization/equalization_factories.h"
-#include "srsgnb/phy/upper/re_measurement.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/spatial_topology.h"
 #include "srsgnb/support/benchmark_utils.h"
@@ -20,6 +19,9 @@
 #include <random>
 
 using namespace srsgnb;
+
+// Equalizer data dimensions.
+using eq_dims = channel_equalizer::re_dims;
 
 // Random generator.
 static std::mt19937 rgen(0);
@@ -72,10 +74,14 @@ int main(int argc, char** argv)
   // Symbol distribution.
   std::uniform_real_distribution<float> symbol_dist(-1.0F, 1.0F);
 
-  static_re_measurement<cf_t, MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_PORTS>                        rx_symbols;
-  static_re_measurement<cf_t, MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS>  eq_symbols;
-  static_re_measurement<float, MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS> eq_noise_vars;
-  channel_estimate                                                                                ch_est;
+  constexpr unsigned MAX_RX_RE = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * MAX_PORTS;
+  constexpr unsigned MAX_TX_RE = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * pusch_constants::MAX_NOF_LAYERS;
+
+  static_tensor<eq_dims::nof_dims, cf_t, MAX_RX_RE>  rx_symbols;
+  static_tensor<eq_dims::nof_dims, cf_t, MAX_TX_RE>  eq_symbols;
+  static_tensor<eq_dims::nof_dims, float, MAX_TX_RE> eq_noise_vars;
+
+  channel_estimate ch_est;
 
   benchmarker perf_meas("Channel Equalizer", nof_repetitions);
 
@@ -90,8 +96,10 @@ int main(int argc, char** argv)
     unsigned nof_ofdm_symbols = MAX_NSYMB_PER_SLOT;
     unsigned nof_subcarriers  = nof_prb * NRE;
 
-    re_measurement_dimensions rx_symbol_dims = {nof_subcarriers, nof_ofdm_symbols, nof_rx_ports};
-    re_measurement_dimensions tx_symbol_dims = {nof_subcarriers, nof_ofdm_symbols, nof_tx_layers};
+    std::array<unsigned, eq_dims::nof_dims> rx_symbol_dims = {
+        nof_subcarriers, nof_ofdm_symbols, nof_rx_ports};
+    std::array<unsigned, eq_dims::nof_dims> tx_symbol_dims = {
+        nof_subcarriers, nof_ofdm_symbols, nof_tx_layers};
 
     // Resize data structures.
     rx_symbols.resize(rx_symbol_dims);
@@ -108,7 +116,7 @@ int main(int argc, char** argv)
 
     for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
       // Generate Rx symbols.
-      span<cf_t> symbols = rx_symbols.get_slice(i_rx_port);
+      span<cf_t> symbols = rx_symbols.get_view<eq_dims::slice>({i_rx_port});
       std::generate(symbols.begin(), symbols.end(), [&rgen = rgen, &symbol_dist]() {
         return cf_t(symbol_dist(rgen), symbol_dist(rgen));
       });

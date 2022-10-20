@@ -24,17 +24,16 @@ void pusch_demodulator_impl::demodulate(span<log_likelihood_ratio>  data,
                                         const channel_estimate&     estimates,
                                         const configuration&        config)
 {
-  re_measurement_dimensions re_dims = {};
-  re_dims.nof_subc                  = config.rb_mask.count() * NRE;
-  re_dims.nof_symbols               = config.nof_symbols;
-  re_dims.nof_slices                = config.rx_ports.size();
+  std::array<unsigned, dims::nof_dims> re_dims = {static_cast<unsigned>(config.rb_mask.count() * NRE),
+                                                  config.nof_symbols,
+                                                  static_cast<unsigned>(config.rx_ports.size())};
 
   // Get REs from the resource grid.
   ch_symbols.resize(re_dims);
   get_ch_symbols(ch_symbols, grid, config);
 
   // Prepare internal buffers (the number of PRBs and OFDM symbols is the same as above).
-  re_dims.nof_slices = config.nof_tx_layers;
+  re_dims[dims::slice] = config.nof_tx_layers;
   mod_symbols_eq.resize(re_dims);
   noise_vars_eq.resize(re_dims);
 

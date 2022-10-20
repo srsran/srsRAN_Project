@@ -23,9 +23,9 @@ namespace srsgnb {
 /// \param[in]  ch_symbols   Channel symbols, i.e., complex samples from the receive ports.
 /// \param[in]  ch_estimates Channel estimation coefficients.
 /// \param[in]  tx_scaling   Transmission gain scaling factor.
-void equalize_zf_2x2(equalizer_symbol_list&          eq_symbols,
-                     equalizer_noise_var_list&       noise_vars,
-                     const equalizer_ch_symbol_list& ch_symbols,
-                     const channel_estimate&         ch_estimates,
-                     float                           tx_scaling);
+void equalize_zf_2x2(channel_equalizer::re_list&        eq_symbols,
+                     channel_equalizer::noise_var_list& noise_vars,
+                     const channel_equalizer::re_list&  ch_symbols,
+                     const channel_estimate&            ch_estimates,
+                     float                              tx_scaling);
 } // namespace srsgnb

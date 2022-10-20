@@ -78,6 +78,9 @@ public:
   /// Gets the dimension sizes.
   virtual const std::array<unsigned, NDIMS>& get_dimensions_size() const = 0;
 
+  /// Resizes the tensor.
+  virtual void resize(const std::array<unsigned, NDIMS>&  dims) = 0;
+
 protected:
   /// Gets the stored data.
   virtual span<Type> get_data() = 0;
@@ -137,7 +140,7 @@ public:
   }
 
   /// Resizes the tensor.
-  void resize(std::array<unsigned, NDIMS> dims)
+  void resize(const std::array<unsigned, NDIMS>& dims) override
   {
     dimensions_size     = dims;
     unsigned total_size = std::accumulate(begin(dimensions_size), end(dimensions_size), 1, std::multiplies<>());
@@ -204,7 +207,7 @@ public:
 
   /// Resizes the tensor. It resizes the maximum number of elements only if the total size number of elements is greater
   /// than the current one.
-  void resize(const dimensions_size_type& dims)
+  void resize(const dimensions_size_type& dims) override
   {
     dimensions_size     = dims;
     unsigned total_size = std::accumulate(begin(dimensions_size), end(dimensions_size), 1, std::multiplies<>());

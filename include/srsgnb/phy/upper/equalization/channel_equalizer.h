@@ -18,19 +18,19 @@
 
 namespace srsgnb {
 
-/// Container for equalized symbols.
-using equalizer_symbol_list = re_measurement<cf_t>;
-
-/// Container for the noise variance.
-using equalizer_noise_var_list = re_measurement<float>;
-
-/// Container for the channel symbols.
-using equalizer_ch_symbol_list = re_measurement<cf_t>;
-
 /// Channel equalizer interface.
 class channel_equalizer
 {
 public:
+  /// Dimension, i.e. number of coordinates, of each indexing level of the equalizer data.
+  enum re_dims : unsigned { re = 0, symbol = 1, slice = 2, nof_dims = 3 };
+
+  /// Container for input and output Resource Elements.
+  using re_list = tensor<re_dims::nof_dims, cf_t>;
+
+  /// Container for the noise variance.
+  using noise_var_list = tensor<re_dims::nof_dims, float>;
+
   /// Default destructor.
   virtual ~channel_equalizer() = default;
 
@@ -47,11 +47,11 @@ public:
   /// \param[in]  tx_scaling   Transmission gain scaling factor.
   /// \note The sizes of \c mod_symbols, \c noise_vars and \c ch_symbols must be consistent with the
   /// \c ch_estimates channel dimensions.
-  virtual void equalize(equalizer_symbol_list&          mod_symbols,
-                        equalizer_noise_var_list&       noise_vars,
-                        const equalizer_ch_symbol_list& ch_symbols,
-                        const channel_estimate&         ch_estimates,
-                        float                           tx_scaling) = 0;
+  virtual void equalize(re_list&                mod_symbols,
+                        noise_var_list&         noise_vars,
+                        const re_list&          ch_symbols,
+                        const channel_estimate& ch_estimates,
+                        float                   tx_scaling) = 0;
 };
 
 } // namespace srsgnb

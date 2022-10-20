@@ -32,19 +32,23 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 namespace {
 
 using ChannelEqualizerParams = test_case_t;
+using eq_dims                = channel_equalizer::re_dims;
 
 class ChannelEqualizerFixture : public ::testing::TestWithParam<ChannelEqualizerParams>
 {
 protected:
   static constexpr float MAX_ERROR_EQ = 1e-5;
 
-  static_re_measurement<cf_t, MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_PORTS>                       rx_symbols;
-  static_re_measurement<cf_t, MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS> eq_symbols_expected;
-  static_re_measurement<cf_t, MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS> eq_symbols_actual;
-  static_re_measurement<float, MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS>
-      eq_noise_vars_expected;
-  static_re_measurement<float, MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS> eq_noise_vars_actual;
-  channel_estimate                                                                                test_ch_estimate;
+  static constexpr unsigned MAX_RX_RE = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * MAX_PORTS;
+  static constexpr unsigned MAX_TX_RE = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * pusch_constants::MAX_NOF_LAYERS;
+
+  static_tensor<eq_dims::nof_dims, cf_t, MAX_RX_RE>  rx_symbols;
+  static_tensor<eq_dims::nof_dims, cf_t, MAX_TX_RE>  eq_symbols_expected;
+  static_tensor<eq_dims::nof_dims, cf_t, MAX_TX_RE>  eq_symbols_actual;
+  static_tensor<eq_dims::nof_dims, float, MAX_TX_RE> eq_noise_vars_expected;
+  static_tensor<eq_dims::nof_dims, float, MAX_TX_RE> eq_noise_vars_actual;
+
+  channel_estimate test_ch_estimate;
 
   static std::shared_ptr<channel_equalizer_factory> equalizer_factory;
   static std::unique_ptr<channel_equalizer>         test_equalizer;
@@ -79,27 +83,31 @@ protected:
     ASSERT_NO_FATAL_FAILURE(ReadChannelEstimates(test_ch_estimate, t_case.ch_estimates));
 
     // Resize the equalizer output data structures.
-    eq_noise_vars_actual.resize(eq_symbols_expected.size());
-    eq_symbols_actual.resize(eq_symbols_expected.size());
+    eq_noise_vars_actual.resize(eq_symbols_expected.get_dimensions_size());
+    eq_symbols_actual.resize(eq_symbols_expected.get_dimensions_size());
   }
 
 private:
   template <typename T>
-  static void ReadReMeasurement(re_measurement<T>& data, const re_measurement_exploded<T>& data_exploded)
+  static void ReadReMeasurement(tensor<eq_dims::nof_dims, T>& data, const re_measurement_exploded<T>& data_exploded)
   {
-    re_measurement_dimensions re_dims;
-    re_dims.nof_subc    = data_exploded.nof_prb * NRE;
-    re_dims.nof_symbols = data_exploded.nof_symbols;
-    re_dims.nof_slices  = data_exploded.nof_slices;
+    std::array<unsigned, eq_dims::nof_dims> tensor_dims = {
+        data_exploded.nof_prb * NRE, data_exploded.nof_symbols, data_exploded.nof_slices};
 
-    data.resize(re_dims);
+    data.resize(tensor_dims);
+
     const std::vector<T> all_syms     = data_exploded.measurements.read();
-    unsigned             slice_length = re_dims.nof_symbols * re_dims.nof_subc;
-    ASSERT_EQ(slice_length * re_dims.nof_slices, all_syms.size()) << "Wrong number of symbols.";
+    unsigned             slice_length = tensor_dims[eq_dims::symbol] * tensor_dims[eq_dims::re];
+    ASSERT_EQ(slice_length * tensor_dims[eq_dims::slice], all_syms.size()) << "Wrong number of symbols.";
 
     span<const T> all_syms_span(all_syms);
-    for (unsigned i_slice = 0, skip = 0; i_slice != re_dims.nof_slices; ++i_slice) {
-      data.set_slice(all_syms_span.subspan(skip, slice_length), i_slice);
+    for (unsigned i_slice = 0, skip = 0; i_slice != tensor_dims[eq_dims::slice]; ++i_slice) {
+      // Get the slice from the tensor.
+      span<T> slice = data.template get_view<eq_dims::slice>({i_slice});
+
+      // Copy the test case data.
+      srsvec::copy(slice, all_syms_span.subspan(skip, slice_length));
+
       skip += slice_length;
     }
   }
@@ -152,10 +160,10 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerTest)
   // Assert results.
   for (unsigned i_layer = 0; i_layer != t_case.ch_estimates.nof_tx_layers; ++i_layer) {
     for (unsigned i_symbol = 0; i_symbol != t_case.ch_estimates.nof_symbols; ++i_symbol) {
-      span<const cf_t>  eq_subcs_actual         = eq_symbols_actual.get_symbol(i_symbol, i_layer);
-      span<const cf_t>  eq_subcs_expected       = eq_symbols_expected.get_symbol(i_symbol, i_layer);
-      span<const float> eq_nvars_subcs_expected = eq_noise_vars_expected.get_symbol(i_symbol, i_layer);
-      span<const float> eq_nvars_subcs_actual   = eq_noise_vars_actual.get_symbol(i_symbol, i_layer);
+      span<const cf_t>  eq_subcs_actual         = eq_symbols_actual.get_view<eq_dims::symbol>({i_symbol, i_layer});
+      span<const cf_t>  eq_subcs_expected       = eq_symbols_expected.get_view<eq_dims::symbol>({i_symbol, i_layer});
+      span<const float> eq_nvars_subcs_expected = eq_noise_vars_expected.get_view<eq_dims::symbol>({i_symbol, i_layer});
+      span<const float> eq_nvars_subcs_actual   = eq_noise_vars_actual.get_view<eq_dims::symbol>({i_symbol, i_layer});
 
       for (unsigned i_subc = 0; i_subc != t_case.ch_estimates.nof_prb * NRE; ++i_subc) {
         // Assert error between the expected and the actual symbols after equalization.
