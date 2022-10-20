@@ -49,6 +49,7 @@ class stable_id_map
     iter_impl<Data>& operator++()
     {
       ++it;
+      next_valid_it();
       return *this;
     }
 
@@ -86,6 +87,7 @@ public:
 
   void insert(IdType id_value, std::unique_ptr<T> u)
   {
+    srsgnb_assert(u, "Inserting a null element in Id={}", id_value);
     srsgnb_sanity_check(not contains(id_value), "Id={} already exists", id_value);
     size_t idx = static_cast<size_t>(id_value);
     elems[idx] = std::move(u);
