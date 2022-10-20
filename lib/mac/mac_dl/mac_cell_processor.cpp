@@ -64,7 +64,8 @@ void mac_cell_processor::handle_crc(const mac_crc_indication_message& msg)
 void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
 {
   uci_indication ind{};
-  ind.slot_rx = msg.sl_rx;
+  ind.slot_rx    = msg.sl_rx;
+  ind.cell_index = cell_cfg.cell_index;
   ind.ucis.resize(msg.ucis.size());
   for (unsigned i = 0; i != msg.ucis.size(); ++i) {
     ind.ucis[i].ue_index    = ue_mng.get_ue_index(msg.ucis[i].rnti);
