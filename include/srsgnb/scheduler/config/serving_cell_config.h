@@ -12,6 +12,7 @@
 
 #include "bwp_configuration.h"
 #include "srsgnb/ran/carrier_configuration.h"
+#include "srsgnb/ran/pdcch/downlink_preemption.h"
 #include "srsgnb/ran/pucch/pucch_tpc.h"
 #include "srsgnb/ran/pucch/srs_tpc.h"
 #include "srsgnb/ran/pusch/pusch_tpc.h"
@@ -28,6 +29,8 @@ struct pdcch_config {
   /// List of SearchSpaces to be used by the UE. The network configures at most 10 Search Spaces per BWP per cell
   /// (including UE-specific and common Search Spaces).
   std::vector<search_space_configuration> search_spaces;
+  /// Configuration of downlink preemption indications to be monitored in this cell.
+  optional<downlink_preemption> dl_preemption;
   /// TPC Commands Configuration to configure UE for extracting TPC commands for PUSCH from a group-TPC messages on DCI.
   optional<pusch_tpc_command_config> pusch_tpc_cmd_cfg;
   /// TPC Commands Configuration to configure UE for extracting TPC commands for PUCCH from a group-TPC messages on DCI.
