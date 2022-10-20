@@ -96,7 +96,7 @@ void srsgnb::generic_kdf(sec_as_key&         key_out,
 
   // FC
   *s_it = to_number(fc);
-  s_it++;
+  ++s_it;
 
   // P0
   std::copy(p0.begin(), p0.end(), s_it);
