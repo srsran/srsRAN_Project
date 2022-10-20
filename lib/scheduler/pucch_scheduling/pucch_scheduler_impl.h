@@ -17,6 +17,7 @@
 
 namespace srsgnb {
 
+/// Class that is in charge of providing the scheduler an available PUCCH resource to be used, either for HARQ or SR.
 class pucch_resource_manager
 {
 public:
@@ -29,7 +30,18 @@ public:
     next_harq_res         = 0;
   };
 
-  int get_next_harq_res_available() { return next_harq_res < pucch_harq_resources.size() ? next_harq_res++ : -1; };
+  /// Returns the index of the PUCCH resource to be used for HARQ-ACK.
+  /// \remark: This index refers to the \c pucch-ResourceId of the \c PUCCH-Resource, as per TS 38.331.
+  /// \return The \c pucch-ResourceId of the resource to be used by the scheduler.
+  int get_next_harq_res_available()
+  {
+    return next_harq_res < pucch_harq_resources.size() ? pucch_harq_resources[next_harq_res++] : -1;
+  };
+
+  /// Returns the index of the PUCCH resource to be used for SR.
+  /// \remark: This index refers to the \c pucch-ResourceId of the \c PUCCH-Resource, as per TS 38.331.
+  /// \remark: There is only one resource used for SR.
+  /// \return The \c pucch-ResourceId of the resource to be used by the scheduler.
   int get_next_sr_res_available();
 
 private:
@@ -54,15 +66,18 @@ public:
   /// \param[in] tcrnti temporary RNTI  of the UE.
   /// \param[in] pdsch_time_domain_resource k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] k1 delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
-  /// \param[in] dci_info information with DL DCI, needed for HARQ-(N)-ACK scheduling info. \return The grant for
-  /// the UE's PUCCH HARQ-(N)-ACK report.
+  /// \param[in] dci_info information with DL DCI, needed for HARQ-(N)-ACK scheduling info.
+  /// \return The grant for the UE's PUCCH HARQ-(N)-ACK report.
   pucch_harq_ack_grant alloc_common_pucch_harq_ack_ue(cell_resource_allocator&    slot_alloc,
                                                       rnti_t                      tcrnti,
                                                       unsigned                    pdsch_time_domain_resource,
                                                       unsigned                    k1,
                                                       const pdcch_dl_information& dci_info) override;
 
-  void pucch_run_sr_allocator(cell_resource_allocator& slot_alloc, slot_point sl_tx);
+  /// Allocate the PUCCH resource all UEs's SR opportunities.
+  /// \param[out,in] res_alloc struct with scheduling results.
+  /// \param[in] sl_tx slot for which the SR should be allocated.
+  void pucch_run_sr_allocator(cell_resource_allocator& res_alloc, slot_point sl_tx) override;
 
 private:
   // Structs with the info about the PUCCH resources.

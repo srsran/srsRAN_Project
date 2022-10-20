@@ -8,6 +8,8 @@
  *
  */
 
+#pragma once
+
 #include "config_generators.h"
 #include "lib/du_manager/converters/mac_cell_configuration_helpers.h"
 #include "lib/mac/mac_ctrl/sched_config_helpers.h"
@@ -192,7 +194,7 @@ class test_bench
 {
 public:
   test_bench(unsigned pucch_res_common = 11, unsigned n_cces = 0) :
-    cell_req{make_default_sched_cell_configuration_request()},
+    cell_req{make_custom_sched_cell_configuration_request(pucch_res_common)},
     cell_cfg{cell_req},
     user{cell_cfg, make_scheduler_ue_creation_request(test_helpers::make_default_ue_creation_request())},
     ue_cell_cfg{cell_cfg, serving_cell_config{}},
@@ -225,12 +227,11 @@ public:
     res_grid.slot_indication(sl_tx);
   }
 
-  void add_harq_pucch_pdu(unsigned sl_harq)
+  sched_cell_configuration_request_message make_custom_sched_cell_configuration_request(unsigned pucch_res_common)
   {
-    res_grid[sl_harq].result.ul.pucchs.emplace_back();
-    auto& pucch  = res_grid[sl_harq].result.ul.pucchs.back();
-    pucch.crnti  = to_rnti(0x4601);
-    pucch.format = pucch_format::FORMAT_1;
+    sched_cell_configuration_request_message req = make_default_sched_cell_configuration_request();
+    cell_req.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common = pucch_res_common;
+    return req;
   }
 
   // Variables that are needed to generate the PUCCH scheduler.

@@ -46,6 +46,11 @@ public:
                                                               unsigned                    pdsch_time_domain_resource,
                                                               unsigned                    k1,
                                                               const pdcch_dl_information& dci_info) = 0;
+
+  /// Allocate the PUCCH resource all UEs's SR opportunities.
+  /// \param[out,in] res_alloc struct with scheduling results.
+  /// \param[in] sl_tx slot for which the SR should be allocated.
+  virtual void pucch_run_sr_allocator(cell_resource_allocator& res_alloc, slot_point sl_tx) = 0;
 };
 
 } // namespace srsgnb

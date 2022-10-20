@@ -8,12 +8,9 @@
  *
  */
 
-#include "config_generators.h"
-#include "lib/scheduler/pucch_scheduling/pucch_scheduler_impl.h"
 #include "pucch_test_utils.h"
 #include "scheduler_test_suite.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
-#include "srsgnb/mac/mac_configuration_helpers.h"
 #include <gtest/gtest.h>
 #include <random>
 

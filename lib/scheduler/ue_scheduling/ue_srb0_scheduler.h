@@ -55,7 +55,6 @@ private:
                        unsigned              k1,
                        const prb_interval&   ue_grant_prbs);
 
-
   const pdsch_time_domain_resource_allocation& get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const;
 
   const cell_configuration& cell_cfg;

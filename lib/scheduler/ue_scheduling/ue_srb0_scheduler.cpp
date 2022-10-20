@@ -192,7 +192,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   pdsch_alloc.result.dl.ue_grants.emplace_back();
 
   // Allocate UE DL HARQ.
-  slot_point   uci_slot = pdsch_alloc.slot + k1;
+  slot_point uci_slot = pdsch_alloc.slot + k1;
 
   // TODO: Parameterize.
   const static unsigned max_retx = 4;

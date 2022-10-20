@@ -75,10 +75,10 @@ struct logical_channel_config {
   lcid_t  lcid;
   uint8_t priority;
   // TODO: add remaining fields;
-  optional<uint8_t>                        lc_group;
-  optional<scheduling_request_id>          sr_id;
-  bool                                     lc_sr_mask;
-  bool                                     lc_sr_delay_timer_applied;
+  optional<uint8_t>               lc_group;
+  optional<scheduling_request_id> sr_id;
+  bool                            lc_sr_mask;
+  bool                            lc_sr_delay_timer_applied;
 };
 
 /// \remark See TS 38.331, "ServingCellConfig".
