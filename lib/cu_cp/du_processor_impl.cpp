@@ -229,14 +229,18 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
 
     // prepare PDCP creation message
     pdcp_entity_creation_message srb_pdcp{};
-    srb_pdcp.ue_index    = msg.ue_index;
-    srb_pdcp.lcid        = srb_id_to_lcid(msg.srb_id);
-    srb_pdcp.config      = {}; // TODO: writer converter from ASN1 for msg.pdcp_cfg;
-    srb_pdcp.tx_lower    = srb.pdcp_context->pdcp_tx_notifier.get();
-    srb_pdcp.tx_upper_cn = nullptr; // TODO: add CN handler
-    srb_pdcp.rx_upper_dn = srb.pdcp_context->rrc_rx_notifier.get();
-    srb_pdcp.rx_upper_cn = nullptr; // TODO: add CN handler
-    srb_pdcp.timers      = &timer_db;
+    srb_pdcp.ue_index           = msg.ue_index;
+    srb_pdcp.lcid               = srb_id_to_lcid(msg.srb_id);
+    srb_pdcp.config             = {}; // TODO: writer converter from ASN1 for msg.pdcp_cfg;
+    srb_pdcp.config.tx.rb_type  = pdcp_rb_type::srb;
+    srb_pdcp.config.tx.rlc_mode = pdcp_rlc_mode::am;
+    srb_pdcp.config.rx.rb_type  = pdcp_rb_type::srb;
+    srb_pdcp.config.rx.rlc_mode = pdcp_rlc_mode::am;
+    srb_pdcp.tx_lower           = srb.pdcp_context->pdcp_tx_notifier.get();
+    srb_pdcp.tx_upper_cn        = nullptr; // TODO: add CN handler
+    srb_pdcp.rx_upper_dn        = srb.pdcp_context->rrc_rx_notifier.get();
+    srb_pdcp.rx_upper_cn        = nullptr; // TODO: add CN handler
+    srb_pdcp.timers             = &timer_db;
 
     // create PDCP entity
     srb.pdcp_context->pdcp_bearer = create_pdcp_entity(srb_pdcp);
