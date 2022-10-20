@@ -16,9 +16,9 @@
 #include "srsgnb/mac/lcid_dl_sch.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/phy_time_unit.h"
-#include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_pdu_capacity_contants.h"
+#include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
 
