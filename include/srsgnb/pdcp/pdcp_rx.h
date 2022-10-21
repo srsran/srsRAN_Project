@@ -99,7 +99,7 @@ public:
   pdcp_rx_upper_control_interface& operator=(const pdcp_rx_upper_control_interface&&) = delete;
 
   /// Handle the incoming SDU.
-  virtual void set_as_security_config(sec_128_as_config sec_cfg)                                       = 0;
+  virtual void set_as_security_config(security::sec_128_as_config sec_cfg)                             = 0;
   virtual void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) = 0;
 };
 } // namespace srsgnb

@@ -22,6 +22,7 @@
 #include <cstdint>
 
 namespace srsgnb {
+namespace security {
 
 /// MAC-I length in bytes
 constexpr uint32_t sec_mac_len = 4;
@@ -128,24 +129,25 @@ void generic_kdf(sec_as_key&         key_out,
 
 /// Algorithm key derivation function (RRC)
 /// Ref: TS 33.501 Sec. A.8
-void security_generate_k_rrc(sec_as_key&               k_rrc_enc,
-                             sec_as_key&               k_rrc_int,
-                             const sec_as_key&         k_gnb,
-                             const ciphering_algorithm enc_alg_id,
-                             const integrity_algorithm int_alg_id);
+void generate_k_rrc(sec_as_key&               k_rrc_enc,
+                    sec_as_key&               k_rrc_int,
+                    const sec_as_key&         k_gnb,
+                    const ciphering_algorithm enc_alg_id,
+                    const integrity_algorithm int_alg_id);
 
 /// Algorithm key derivation function (UP)
 /// Ref: TS 33.501 Sec. A.8
-void security_generate_k_up(sec_as_key&               k_up_enc,
-                            sec_as_key&               k_up_int,
-                            const sec_as_key&         k_gnb,
-                            const ciphering_algorithm enc_alg_id,
-                            const integrity_algorithm int_alg_id);
+void generate_k_up(sec_as_key&               k_up_enc,
+                   sec_as_key&               k_up_int,
+                   const sec_as_key&         k_gnb,
+                   const ciphering_algorithm enc_alg_id,
+                   const integrity_algorithm int_alg_id);
 
 /// Truncate 256-bit key to 128-bit key using the least significant bits.
 /// Ref: TS 33.501 Sec. A.8
 sec_128_as_key truncate_key(const sec_as_key& key_in);
 
+} // namespace security
 } // namespace srsgnb
 
 //
@@ -155,7 +157,7 @@ namespace fmt {
 
 // Security direction
 template <>
-struct formatter<srsgnb::security_direction> {
+struct formatter<srsgnb::security::security_direction> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -163,7 +165,8 @@ struct formatter<srsgnb::security_direction> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::security_direction dir, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsgnb::security::security_direction dir, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
   {
     constexpr static const char* options[] = {"Uplink", "Downlink"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(dir)]);

@@ -74,7 +74,7 @@ private:
   std::unique_ptr<task_executor> pcell_executor;
 
   // Security
-  sec_128_as_config sec_cfg;
+  security::sec_128_as_config sec_cfg;
 
   // Peer stack
   stress_stack* peer_stack = nullptr;

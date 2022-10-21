@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
+using namespace srsgnb::security;
 
 /// Converts a hex string (e.g. 01FA02) to a sec_as_key.
 sec_as_key make_sec_as_key(std::string hex_str)
@@ -1223,8 +1224,7 @@ TEST(security_gen_k_rrc, testset1)
   sec_as_key k_rrc_enc_o;
   sec_as_key k_rrc_int_o;
 
-  srsgnb::security_generate_k_rrc(
-      k_rrc_enc_o, k_rrc_int_o, sk_gnb, srsgnb::ciphering_algorithm::nea2, srsgnb::integrity_algorithm::nia0);
+  generate_k_rrc(k_rrc_enc_o, k_rrc_int_o, sk_gnb, ciphering_algorithm::nea2, integrity_algorithm::nia0);
   EXPECT_TRUE(k_rrc_enc_o == k_rrc_enc);
   EXPECT_TRUE(k_rrc_int_o == k_rrc_int);
 }
@@ -1244,8 +1244,7 @@ TEST(security_gen_k_up, testset1)
   sec_as_key k_up_enc_o;
   sec_as_key k_up_int_o;
 
-  srsgnb::security_generate_k_up(
-      k_up_enc_o, k_up_int_o, sk_gnb, srsgnb::ciphering_algorithm::nea2, srsgnb::integrity_algorithm::nia0);
+  generate_k_up(k_up_enc_o, k_up_int_o, sk_gnb, ciphering_algorithm::nea2, integrity_algorithm::nia0);
   EXPECT_TRUE(k_up_enc_o == k_up_enc);
   EXPECT_TRUE(k_up_int_o == k_up_int);
 }

@@ -13,6 +13,9 @@
 #include "mbedtls/aes.h"
 #include "mbedtls/md.h"
 
+namespace srsgnb {
+namespace security {
+
 typedef mbedtls_aes_context aes_context;
 
 constexpr int aes_encrypt = 1;
@@ -48,3 +51,6 @@ inline void sha256(const unsigned char* key,
 {
   mbedtls_md_hmac(mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), key, keylen, input, ilen, output);
 }
+
+} // namespace security
+} // namespace srsgnb

@@ -10,6 +10,9 @@
 
 #pragma once
 
+namespace srsgnb {
+namespace security {
+
 typedef unsigned char u8;
 typedef unsigned int  u32;
 
@@ -43,3 +46,6 @@ typedef struct {
 
 void zuc_initialize(zuc_state_t* state, const u8* k, u8* iv);
 void zuc_generate_keystream(zuc_state_t* state, int key_stream_len, u32* p_keystream);
+
+} // namespace security
+} // namespace srsgnb

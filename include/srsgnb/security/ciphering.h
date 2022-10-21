@@ -19,6 +19,7 @@
 #include "zuc.h"
 
 namespace srsgnb {
+namespace security {
 
 /******************************************************************************
  * Encryption / Decryption
@@ -244,4 +245,5 @@ byte_buffer security_nea3(const sec_128_as_key& key,
   return security_nea3(key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }
 
+} // namespace security
 } // namespace srsgnb

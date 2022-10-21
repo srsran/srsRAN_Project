@@ -101,15 +101,15 @@ int main(int argc, char** argv)
   config.discard_timer               = pdcp_discard_timer::ms10;
 
   // Set security keys
-  sec_128_as_config sec_cfg = {};
-  sec_cfg.k_128_rrc_int     = k_128_int;
-  sec_cfg.k_128_up_int      = k_128_int;
-  sec_cfg.k_128_rrc_enc     = k_128_enc;
-  sec_cfg.k_128_up_enc      = k_128_enc;
+  security::sec_128_as_config sec_cfg = {};
+  sec_cfg.k_128_rrc_int               = k_128_int;
+  sec_cfg.k_128_up_int                = k_128_int;
+  sec_cfg.k_128_rrc_enc               = k_128_enc;
+  sec_cfg.k_128_up_enc                = k_128_enc;
 
   // Set encription/integrity algorithms
-  sec_cfg.integ_algo  = integrity_algorithm::nia1;
-  sec_cfg.cipher_algo = ciphering_algorithm::nea1;
+  sec_cfg.integ_algo  = security::integrity_algorithm::nia1;
+  sec_cfg.cipher_algo = security::ciphering_algorithm::nea1;
 
   pdcp_tx_gen_frame frame = {};
   // Create RLC entities

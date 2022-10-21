@@ -67,8 +67,8 @@ protected:
     sec_cfg.k_128_up_enc  = k_128_enc;
 
     // Set encription/integrity algorithms
-    sec_cfg.integ_algo  = integrity_algorithm::nia1;
-    sec_cfg.cipher_algo = ciphering_algorithm::nea1;
+    sec_cfg.integ_algo  = security::integrity_algorithm::nia1;
+    sec_cfg.cipher_algo = security::ciphering_algorithm::nea1;
 
     // Create RLC entities
     pdcp_tx = std::make_unique<pdcp_entity_tx>(0, LCID_SRB1, config, test_frame, test_frame, timers);
@@ -113,7 +113,7 @@ protected:
   byte_buffer buf_count4294967295_snlen18{pdu1_count4294967295_snlen18}; // All 1's
 
   // Security configuration
-  sec_128_as_config sec_cfg = {};
+  security::sec_128_as_config sec_cfg = {};
 
   // Default max COUNT
   const pdcp_max_count default_max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};

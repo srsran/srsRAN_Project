@@ -72,8 +72,8 @@ protected:
     sec_cfg.k_128_up_enc  = k_128_enc;
 
     // Set encription/integrity algorithms
-    sec_cfg.integ_algo  = integrity_algorithm::nia1;
-    sec_cfg.cipher_algo = ciphering_algorithm::nea1;
+    sec_cfg.integ_algo  = security::integrity_algorithm::nia1;
+    sec_cfg.cipher_algo = security::ciphering_algorithm::nea1;
 
     // Create PDCP RX entity
     test_frame = std::make_unique<pdcp_rx_test_frame>();
@@ -109,7 +109,7 @@ protected:
   timer_manager                       timers;
   std::unique_ptr<pdcp_rx_test_frame> test_frame = {};
 
-  sec_128_as_config sec_cfg;
+  security::sec_128_as_config sec_cfg;
 
   std::unique_ptr<pdcp_entity_rx> pdcp_rx;
   pdcp_rx_lower_interface*        pdcp_rx_lower = nullptr;

@@ -18,6 +18,7 @@
 #include "zuc.h"
 
 namespace srsgnb {
+namespace security {
 
 /******************************************************************************
  * Integrity Protection
@@ -262,4 +263,5 @@ void security_nia3(sec_mac&              mac,
   security_nia3(mac, key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }
 
+} // namespace security
 } // namespace srsgnb

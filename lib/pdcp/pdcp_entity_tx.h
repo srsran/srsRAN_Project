@@ -59,9 +59,8 @@ public:
                   "RLC UM with discard timer is un-supported. RLC mode={}, discardTimer={}",
                   cfg.rlc_mode,
                   cfg.discard_timer);
-    direction =
-        cfg.direction == pdcp_security_direction::uplink ? security_direction::uplink : security_direction::downlink;
-
+    direction = cfg.direction == pdcp_security_direction::uplink ? security::security_direction::uplink
+                                                                 : security::security_direction::downlink;
     logger.log_info("PDCP TX entity configured. Configuration: {}", cfg);
   }
 
@@ -95,7 +94,7 @@ public:
   /*
    * Security configuration
    */
-  void set_as_security_config(sec_128_as_config sec_cfg_) final
+  void set_as_security_config(security::sec_128_as_config sec_cfg_) final
   {
     sec_cfg = sec_cfg_;
     logger.log_info(
@@ -116,16 +115,16 @@ private:
   pdcp_tx_upper_control_notifier& upper_cn;
   timer_manager&                  timers;
 
-  pdcp_tx_state      st        = {};
-  security_direction direction = security_direction::downlink;
+  pdcp_tx_state                st        = {};
+  security::security_direction direction = security::security_direction::downlink;
 
-  sec_128_as_config      sec_cfg           = {};
-  pdcp_integrity_enabled integrity_enabled = pdcp_integrity_enabled::no;
-  pdcp_ciphering_enabled ciphering_enabled = pdcp_ciphering_enabled::no;
+  security::sec_128_as_config sec_cfg           = {};
+  pdcp_integrity_enabled      integrity_enabled = pdcp_integrity_enabled::no;
+  pdcp_ciphering_enabled      ciphering_enabled = pdcp_ciphering_enabled::no;
 
   /// Apply ciphering and integrity protection to the payload
   byte_buffer apply_ciphering_and_integrity_protection(byte_buffer hdr, byte_buffer buf, uint32_t count);
-  void        integrity_generate(sec_mac& mac, byte_buffer_view buf, uint32_t count);
+  void        integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count);
   byte_buffer cipher_encrypt(byte_buffer_view buf, uint32_t count);
 
   /// \brief discardTimer

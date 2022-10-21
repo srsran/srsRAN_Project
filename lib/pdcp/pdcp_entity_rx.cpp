@@ -28,8 +28,8 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   timers(timers_)
 {
   // Security direction
-  direction =
-      cfg.direction == pdcp_security_direction::uplink ? security_direction::uplink : security_direction::downlink;
+  direction = cfg.direction == pdcp_security_direction::uplink ? security::security_direction::uplink
+                                                               : security::security_direction::downlink;
 
   // t-Reordering timer
   if (cfg.t_reordering != pdcp_t_reordering::infinity) {
@@ -148,7 +148,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
    * Extract MAC-I:
    * Always extract from SRBs, only extract from DRBs if integrity is enabled
    */
-  sec_mac mac = {};
+  security::sec_mac mac = {};
   if (is_srb() || (is_drb() && (integrity_enabled == pdcp_integrity_enabled::enabled))) {
     extract_mac(sdu, mac);
   }
@@ -259,30 +259,30 @@ void pdcp_entity_rx::deliver_all_consecutive_counts()
 /*
  * Security helpers
  */
-bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, const sec_mac& mac)
+bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, const security::sec_mac& mac)
 {
   // If control plane use RRC integrity key. If data use user plane key
-  const sec_128_as_key& k_int = is_srb() ? sec_cfg.k_128_rrc_int : sec_cfg.k_128_up_int;
+  const security::sec_128_as_key& k_int = is_srb() ? sec_cfg.k_128_rrc_int : sec_cfg.k_128_up_int;
 
-  sec_mac mac_exp  = {};
-  bool    is_valid = true;
+  security::sec_mac mac_exp  = {};
+  bool              is_valid = true;
   switch (sec_cfg.integ_algo) {
-    case integrity_algorithm::nia0:
+    case security::integrity_algorithm::nia0:
       break;
-    case integrity_algorithm::nia1:
+    case security::integrity_algorithm::nia1:
       security_nia1(mac_exp, k_int, count, lcid - 1, direction, buf.begin(), buf.end());
       break;
-    case integrity_algorithm::nia2:
+    case security::integrity_algorithm::nia2:
       security_nia2(mac_exp, k_int, count, lcid - 1, direction, buf.begin(), buf.end());
       break;
-    case integrity_algorithm::nia3:
+    case security::integrity_algorithm::nia3:
       security_nia3(mac_exp, k_int, count, lcid - 1, direction, buf.begin(), buf.end());
       break;
     default:
       break;
   }
 
-  if (sec_cfg.integ_algo != integrity_algorithm::nia0) {
+  if (sec_cfg.integ_algo != security::integrity_algorithm::nia0) {
     for (uint8_t i = 0; i < 4; i++) {
       if (mac[i] != mac_exp[i]) {
         is_valid = false;
@@ -311,7 +311,7 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_slice_chain::const_iterat
                                            uint32_t                                count)
 {
   // If control plane use RRC integrity key. If data use user plane key
-  const sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
+  const security::sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
 
   logger.log_debug("Cipher decrypt input: COUNT: {}, Bearer ID: {}, Direction: {}", count, lcid, direction);
   logger.log_debug((uint8_t*)k_enc.data(), k_enc.size(), "Cipher decrypt key:");
@@ -320,16 +320,16 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_slice_chain::const_iterat
   byte_buffer ct;
 
   switch (sec_cfg.cipher_algo) {
-    case ciphering_algorithm::nea0:
+    case security::ciphering_algorithm::nea0:
       ct.append(msg_begin, msg_end);
       break;
-    case ciphering_algorithm::nea1:
+    case security::ciphering_algorithm::nea1:
       ct = security_nea1(k_enc, count, lcid - 1, direction, msg_begin, msg_end);
       break;
-    case ciphering_algorithm::nea2:
+    case security::ciphering_algorithm::nea2:
       ct = security_nea2(k_enc, count, lcid - 1, direction, msg_begin, msg_end);
       break;
-    case ciphering_algorithm::nea3:
+    case security::ciphering_algorithm::nea3:
       ct = security_nea3(k_enc, count, lcid - 1, direction, msg_begin, msg_end);
       break;
     default:
@@ -421,14 +421,14 @@ void pdcp_entity_rx::discard_data_header(byte_buffer& buf) const
   buf.trim_head(hdr_len_bytes);
 }
 
-void pdcp_entity_rx::extract_mac(byte_buffer& buf, sec_mac& mac) const
+void pdcp_entity_rx::extract_mac(byte_buffer& buf, security::sec_mac& mac) const
 {
-  if (buf.length() <= sec_mac_len) {
+  if (buf.length() <= security::sec_mac_len) {
     logger.log_error("PDU too small to extract MAC-I");
     return;
   }
-  for (unsigned i = 0; i < sec_mac_len; i++) {
-    mac[i] = buf[buf.length() - sec_mac_len + i];
+  for (unsigned i = 0; i < security::sec_mac_len; i++) {
+    mac[i] = buf[buf.length() - security::sec_mac_len + i];
   }
-  buf.trim_tail(sec_mac_len);
+  buf.trim_tail(security::sec_mac_len);
 }

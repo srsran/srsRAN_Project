@@ -15,15 +15,16 @@
 #include <arpa/inet.h>
 
 using namespace srsgnb;
+using namespace srsgnb::security;
 
 /******************************************************************************
  * Key Generation
  *****************************************************************************/
-void srsgnb::security_generate_k_rrc(sec_as_key&               k_rrc_enc,
-                                     sec_as_key&               k_rrc_int,
-                                     const sec_as_key&         k_gnb,
-                                     const ciphering_algorithm enc_alg_id,
-                                     const integrity_algorithm int_alg_id)
+void srsgnb::security::generate_k_rrc(sec_as_key&               k_rrc_enc,
+                                      sec_as_key&               k_rrc_int,
+                                      const sec_as_key&         k_gnb,
+                                      const ciphering_algorithm enc_alg_id,
+                                      const integrity_algorithm int_alg_id)
 {
   // Derive RRC ENC
   // algorithm type distinguisher
@@ -45,11 +46,11 @@ void srsgnb::security_generate_k_rrc(sec_as_key&               k_rrc_enc,
   generic_kdf(k_rrc_int, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 }
 
-void srsgnb::security_generate_k_up(sec_as_key&               k_up_enc,
-                                    sec_as_key&               k_up_int,
-                                    const sec_as_key&         k_gnb,
-                                    const ciphering_algorithm enc_alg_id,
-                                    const integrity_algorithm int_alg_id)
+void srsgnb::security::generate_k_up(sec_as_key&               k_up_enc,
+                                     sec_as_key&               k_up_int,
+                                     const sec_as_key&         k_gnb,
+                                     const ciphering_algorithm enc_alg_id,
+                                     const integrity_algorithm int_alg_id)
 {
   // Derive UP ENC
   // algorithm type distinguisher
@@ -71,11 +72,11 @@ void srsgnb::security_generate_k_up(sec_as_key&               k_up_enc,
   generic_kdf(k_up_int, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 }
 
-void srsgnb::generic_kdf(sec_as_key&         key_out,
-                         const sec_as_key&   key_in,
-                         const fc_value      fc,
-                         span<const uint8_t> p0,
-                         span<const uint8_t> p1)
+void srsgnb::security::generic_kdf(sec_as_key&         key_out,
+                                   const sec_as_key&   key_in,
+                                   const fc_value      fc,
+                                   span<const uint8_t> p0,
+                                   span<const uint8_t> p1)
 {
   union p_len {
     uint16_t                                  length_value;
@@ -110,7 +111,7 @@ void srsgnb::generic_kdf(sec_as_key&         key_out,
   sha256(key_in.data(), key_in.size(), s.data(), s.size(), key_out.data(), 0);
 }
 
-sec_128_as_key srsgnb::truncate_key(const sec_as_key& key_in)
+sec_128_as_key srsgnb::security::truncate_key(const sec_as_key& key_in)
 {
   sec_128_as_key key_out = {};
   static_assert(sec_key_len > 0, "sec_key_len too small");

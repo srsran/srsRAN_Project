@@ -29,6 +29,9 @@
 #include <cstdlib>
 #include <cstring>
 
+namespace srsgnb {
+namespace security {
+
 typedef struct {
   uint32_t* lfsr;
   uint32_t* fsm;
@@ -90,10 +93,13 @@ void s3g_generate_keystream(S3G_STATE* state, uint32_t n, uint32_t* ks);
  * Generates 32-bit MAC using UIA2 algorithm as defined in Section 4.
  */
 
-void s3g_f9(srsgnb::sec_mac& mac,
-            const uint8_t*   key,
-            uint32_t         count,
-            uint32_t         fresh,
-            uint32_t         dir,
-            uint8_t*         data,
-            uint64_t         length);
+void s3g_f9(sec_mac&       mac,
+            const uint8_t* key,
+            uint32_t       count,
+            uint32_t       fresh,
+            uint32_t       dir,
+            uint8_t*       data,
+            uint64_t       length);
+
+} // namespace security
+} // namespace srsgnb

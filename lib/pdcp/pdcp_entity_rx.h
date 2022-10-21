@@ -63,12 +63,12 @@ public:
   /// \return True if header was read successfully, false otherwise
   bool read_data_pdu_header(pdcp_data_pdu_header& hdr, const byte_buffer_slice_chain& buf) const;
   void discard_data_header(byte_buffer& buf) const;
-  void extract_mac(byte_buffer& buf, sec_mac& mac) const;
+  void extract_mac(byte_buffer& buf, security::sec_mac& mac) const;
 
   /*
    * Security configuration
    */
-  void set_as_security_config(sec_128_as_config sec_cfg_) final
+  void set_as_security_config(security::sec_128_as_config sec_cfg_) final
   {
     sec_cfg = sec_cfg_;
     logger.log_info(
@@ -91,10 +91,10 @@ private:
   bearer_logger                     logger;
   const pdcp_config::pdcp_rx_config cfg;
 
-  sec_128_as_config      sec_cfg           = {};
-  security_direction     direction         = security_direction::uplink;
-  pdcp_integrity_enabled integrity_enabled = pdcp_integrity_enabled::no;
-  pdcp_ciphering_enabled ciphering_enabled = pdcp_ciphering_enabled::no;
+  security::sec_128_as_config  sec_cfg           = {};
+  security::security_direction direction         = security::security_direction::uplink;
+  pdcp_integrity_enabled       integrity_enabled = pdcp_integrity_enabled::no;
+  pdcp_ciphering_enabled       ciphering_enabled = pdcp_ciphering_enabled::no;
 
   pdcp_rx_state st = {};
 
@@ -116,7 +116,7 @@ private:
 
   void deliver_all_consecutive_counts();
 
-  bool        integrity_verify(byte_buffer_view buf, uint32_t count, const sec_mac& mac);
+  bool        integrity_verify(byte_buffer_view buf, uint32_t count, const security::sec_mac& mac);
   byte_buffer cipher_decrypt(byte_buffer_slice_chain::const_iterator msg_begin,
                              byte_buffer_slice_chain::const_iterator msg_end,
                              uint32_t                                count);

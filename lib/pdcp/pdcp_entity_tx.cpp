@@ -100,7 +100,7 @@ byte_buffer pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer
   // TS 38.323, section 5.9: Integrity protection
   // The data unit that is integrity protected is the PDU header
   // and the data part of the PDU before ciphering.
-  sec_mac mac = {};
+  security::sec_mac mac = {};
   if (integrity_enabled == pdcp_integrity_enabled::enabled) {
     byte_buffer buf = {};
     buf.append(hdr);
@@ -137,20 +137,20 @@ byte_buffer pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer
   return protected_buf;
 }
 
-void pdcp_entity_tx::integrity_generate(sec_mac& mac, byte_buffer_view buf, uint32_t count)
+void pdcp_entity_tx::integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count)
 {
   // If control plane use RRC integrity key. If data use user plane key
-  const sec_128_as_key& k_int = is_srb() ? sec_cfg.k_128_rrc_int : sec_cfg.k_128_up_int;
+  const security::sec_128_as_key& k_int = is_srb() ? sec_cfg.k_128_rrc_int : sec_cfg.k_128_up_int;
   switch (sec_cfg.integ_algo) {
-    case integrity_algorithm::nia0:
+    case security::integrity_algorithm::nia0:
       break;
-    case integrity_algorithm::nia1:
+    case security::integrity_algorithm::nia1:
       security_nia1(mac, k_int, count, lcid - 1, direction, buf.begin(), buf.end());
       break;
-    case integrity_algorithm::nia2:
+    case security::integrity_algorithm::nia2:
       security_nia2(mac, k_int, count, lcid - 1, direction, buf.begin(), buf.end());
       break;
-    case integrity_algorithm::nia3:
+    case security::integrity_algorithm::nia3:
       security_nia3(mac, k_int, count, lcid - 1, direction, buf.begin(), buf.end());
       break;
     default:
@@ -166,7 +166,7 @@ void pdcp_entity_tx::integrity_generate(sec_mac& mac, byte_buffer_view buf, uint
 byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
 {
   // If control plane use RRC integrity key. If data use user plane key
-  const sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
+  const security::sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
 
   logger.log_debug("Cipher encrypt input: COUNT: {}, Bearer ID: {}, Direction {}", count, lcid, direction);
   logger.log_debug((uint8_t*)k_enc.data(), k_enc.size(), "Cipher encrypt key:");
@@ -175,16 +175,16 @@ byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
   byte_buffer ct;
 
   switch (sec_cfg.cipher_algo) {
-    case ciphering_algorithm::nea0:
+    case security::ciphering_algorithm::nea0:
       ct.append(msg);
       break;
-    case ciphering_algorithm::nea1:
+    case security::ciphering_algorithm::nea1:
       ct = security_nea1(k_enc, count, lcid - 1, direction, msg.begin(), msg.end());
       break;
-    case ciphering_algorithm::nea2:
+    case security::ciphering_algorithm::nea2:
       ct = security_nea2(k_enc, count, lcid - 1, direction, msg.begin(), msg.end());
       break;
-    case ciphering_algorithm::nea3:
+    case security::ciphering_algorithm::nea3:
       ct = security_nea3(k_enc, count, lcid - 1, direction, msg.begin(), msg.end());
       break;
     default:
