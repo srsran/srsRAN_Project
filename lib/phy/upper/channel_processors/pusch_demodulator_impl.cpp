@@ -24,34 +24,51 @@ void pusch_demodulator_impl::demodulate(span<log_likelihood_ratio>  data,
                                         const channel_estimate&     estimates,
                                         const configuration&        config)
 {
-  std::array<unsigned, dims::nof_dims> re_dims = {static_cast<unsigned>(config.rb_mask.count() * NRE),
-                                                  config.nof_symbols,
-                                                  static_cast<unsigned>(config.rx_ports.size())};
+  // Number of OFDM symbols containing DM-RS in a slot.
+  unsigned nof_dmrs_symbols = std::accumulate(config.dmrs_symb_pos.begin(), config.dmrs_symb_pos.end(), 0);
+
+  unsigned nof_rx_ports = static_cast<unsigned>(config.rx_ports.size());
+
+  // Number of data Resource Elements in a slot for a single Rx port.
+  unsigned nof_re_port = static_cast<unsigned>(config.rb_mask.count() * NRE) * (config.nof_symbols - nof_dmrs_symbols);
 
   // Get REs from the resource grid.
-  ch_symbols.resize(re_dims);
-  get_ch_symbols(ch_symbols, grid, config);
+  ch_re.resize({nof_re_port, nof_rx_ports});
+  ch_estimates.resize({nof_re_port, nof_rx_ports, config.nof_tx_layers});
 
-  // Prepare internal buffers (the number of PRBs and OFDM symbols is the same as above).
-  re_dims[dims::slice] = config.nof_tx_layers;
-  mod_symbols_eq.resize(re_dims);
-  noise_vars_eq.resize(re_dims);
+  // Extract the data symbols and channel estimates from the resource grid.
+  get_ch_data_re(ch_re, grid, config);
+  get_ch_data_estimates(ch_estimates, estimates, config);
+
+  // Extract the Rx port noise variances from the channel estimation.
+  for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
+    noise_var_estimates[i_port] = estimates.get_noise_variance(i_port, 0);
+  }
+
+  // Prepare internal buffers.
+  eq_re.resize({nof_re_port, config.nof_tx_layers});
+  eq_noise_vars.resize({nof_re_port, config.nof_tx_layers});
 
   // Get PUSCH data to DM-RS scaling ratio in linear.
   float scaling = convert_dB_to_amplitude(get_sch_to_dmrs_ratio_dB(config.nof_cdm_groups_without_data));
 
   // Equalize channels and, for each Tx layer, combine contribution from all Rx antenna ports.
-  equalizer->equalize(mod_symbols_eq, noise_vars_eq, ch_symbols, estimates, scaling);
+  equalizer->equalize(
+      eq_re, eq_noise_vars, ch_re, ch_estimates, span<float>(noise_var_estimates).first(nof_rx_ports), scaling);
 
-  unsigned    nof_symbols      = data.size() / get_bits_per_symbol(config.modulation);
-  span<cf_t>  mod_symbols_data = span<cf_t>(temp_mod_symbols_data).first(nof_symbols);
-  span<float> noise_vars_data  = span<float>(temp_noise_vars_data).first(nof_symbols);
+  // Assert that the number of RE returned by the channel equalizer matches the expected number of LLR.
+  srsgnb_assert(nof_re_port * config.nof_tx_layers == data.size() / get_bits_per_symbol(config.modulation),
+                "Number of equalized RE (i.e. {}) does not match the expected LLR data length (i.e. {})",
+                nof_re_port * config.nof_tx_layers,
+                data.size() / get_bits_per_symbol(config.modulation));
 
-  // Remove REs that were assigned to DM-RS symbols or reserved.
-  remove_dmrs(mod_symbols_data, noise_vars_data, mod_symbols_eq, noise_vars_eq, config);
+  // flatten the data coming from the equalizer to a single dimension, resulting in layer demapping.
+  span<const cf_t>  eq_re_flat = eq_re.get_view<static_cast<unsigned>(channel_equalizer::re_list::dims::nof_dims)>({});
+  span<const float> eq_vars_flat =
+      eq_noise_vars.get_view<static_cast<unsigned>(channel_equalizer::re_list::dims::nof_dims)>({});
 
   // Build LLRs from channel symbols.
-  demapper->demodulate_soft(data, mod_symbols_data, noise_vars_data, config.modulation);
+  demapper->demodulate_soft(data, eq_re_flat, eq_vars_flat, config.modulation);
 
   // Descramble.
   unsigned c_init = config.rnti * pow2(15) + config.n_id;

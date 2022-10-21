@@ -24,8 +24,6 @@ namespace srsgnb {
 class pusch_demodulator_impl : public pusch_demodulator
 {
 public:
-  using dims = channel_equalizer::re_dims;
-
   /// Constructor: sets up internal components and acquires their ownership.
   pusch_demodulator_impl(std::unique_ptr<channel_equalizer>       equalizer_,
                          std::unique_ptr<demodulation_mapper>     demapper_,
@@ -33,9 +31,9 @@ public:
     equalizer(std::move(equalizer_)),
     demapper(std::move(demapper_)),
     descrambler(std::move(descrambler_)),
-    ch_symbols({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_PORTS}),
-    mod_symbols_eq({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS}),
-    noise_vars_eq({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS})
+    ch_re({MAX_RB * NRE * MAX_NSYMB_PER_SLOT, MAX_PORTS}),
+    eq_re({MAX_RB * NRE * MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS}),
+    eq_noise_vars({MAX_RB * NRE * MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS})
   {
     srsgnb_assert(equalizer, "Invalid pointer to channel_equalizer object.");
     srsgnb_assert(demapper, "Invalid pointer to demodulation_mapper object.");
@@ -52,14 +50,20 @@ public:
                   const configuration&        config) override;
 
 private:
-  /// \brief Gets channel symbols from the resource grid.
+  /// \brief Gets channel data Resource Elements from the resource grid.
   ///
-  /// \param[out] symbols PUSCH channel symbols, organized by receive antenna port.
+  /// Extracts the PUSCH data RE's from the provided resource grid. The DM-RS symbols are skipped. The extracted RE's
+  /// are arranged in two dimensions, i.e., resource element and receive antenna port, as the channel equalizer expects.
+  ///
+  /// \param[out] data_re PUSCH channel data symbols, organized by receive antenna port.
   /// \param[in]  grid    Resource grid for the current slot.
   /// \param[in]  config  Configuration parameters.
-  void
-  get_ch_symbols(tensor<dims::nof_dims, cf_t>& symbols, const resource_grid_reader& grid, const configuration& config)
+  static void
+  get_ch_data_re(channel_equalizer::re_list& data_re, const resource_grid_reader& grid, const configuration& config)
   {
+    srsgnb_assert(config.dmrs_config_type == dmrs_type::TYPE1 && config.nof_cdm_groups_without_data == 2,
+                  "Only DM-RS type 1 with a number of CDM groups equal to 2 is implemented.");
+
     // Prepare RE mask.
     std::array<bool, MAX_RB* NRE> tmp_re_mask = {};
     span<bool>                    re_mask     = span<bool>(tmp_re_mask).first(config.rb_mask.size() * NRE);
@@ -68,51 +72,77 @@ private:
       std::fill(re_view.begin(), re_view.end(), true);
     });
 
+    // Number of subcarriers.
+    unsigned nof_subcs = config.rb_mask.size() * NRE;
+
     // Extract RE for each port and symbol.
     for (unsigned i_port = 0, i_port_end = config.rx_ports.size(); i_port != i_port_end; ++i_port) {
+      // Get a view of the port data RE.
+      span<cf_t> re_port_buffer = data_re.get_view<>({i_port});
+
       for (unsigned i_symbol = 0; i_symbol != config.nof_symbols; ++i_symbol) {
-        span<cf_t> symbol_buffer = symbols.get_view<dims::symbol>({i_symbol, i_port});
-        symbol_buffer            = grid.get(symbol_buffer, i_port, i_symbol + config.start_symbol_index, 0, re_mask);
-        srsgnb_assert(symbol_buffer.empty(), "Invalid number of RE read from the grid.");
-      }
-    }
-  }
-
-  /// \brief Removes elements corresponding to DM-RS symbols and reserved positions.
-  ///
-  /// From the equalizer output, removes all estimated modulation symbols and noise variances corresponding to DM-RS
-  /// positions. Also, performs layer demapping, thus returning two one-dimensional sequences.
-  ///
-  /// \param[out] symbols_out     Layer-demapped sequence of estimated modulation symbols.
-  /// \param[out] noise_vars_out  Layer-demapped sequence of equivalent symbol noise variances.
-  /// \param[in]  symbols_in      Equalized modulation and DM-RS symbols, grouped by layer.
-  /// \param[in]  noise_vars_in   Equivalent symbol noise variances, grouped by layer.
-  /// \param[in]  config          Configuration parameters.
-  void remove_dmrs(span<cf_t>                           symbols_out,
-                   span<float>                          noise_vars_out,
-                   const tensor<dims::nof_dims, cf_t>&  symbols_in,
-                   const tensor<dims::nof_dims, float>& noise_vars_in,
-                   const configuration&                 config)
-  {
-    srsgnb_assert(config.dmrs_config_type == dmrs_type::TYPE1 && config.nof_cdm_groups_without_data == 2,
-                  "Only DM-RS type 1 with a number of CDM groups equal to 2 is implemented.");
-
-    unsigned nof_subcarriers = symbols_in.get_dimensions_size()[channel_equalizer::re_dims::re];
-
-    for (unsigned i_layer = 0; i_layer != config.nof_tx_layers; ++i_layer) {
-      for (unsigned i_symbol = 0; i_symbol != config.nof_symbols; ++i_symbol) {
-        // Skip symbols carrying DM-RS.
+        // Skip data carrying DM-RS.
         if (config.dmrs_symb_pos[i_symbol + config.start_symbol_index]) {
           continue;
         }
 
-        // Copy data without DM-RS.
-        srsvec::copy(symbols_out.first(nof_subcarriers), symbols_in.get_view<dims::symbol>({i_symbol, i_layer}));
-        srsvec::copy(noise_vars_out.first(nof_subcarriers), noise_vars_in.get_view<dims::symbol>({i_symbol, i_layer}));
+        // Copy grid data resource elements into the buffer.
+        span<cf_t> unread_re =
+            grid.get(re_port_buffer.first(nof_subcs), i_port, i_symbol + config.start_symbol_index, 0, re_mask);
+
+        srsgnb_assert(
+            unread_re.empty(), "Invalid number of RE read from the grid. {} RE have not been read", unread_re.size());
 
         // Advance buffers.
-        symbols_out    = symbols_out.subspan(nof_subcarriers, symbols_out.size() - nof_subcarriers);
-        noise_vars_out = noise_vars_out.subspan(nof_subcarriers, noise_vars_out.size() - nof_subcarriers);
+        re_port_buffer = re_port_buffer.subspan(nof_subcs, re_port_buffer.size() - nof_subcs);
+      }
+    }
+  }
+
+  /// \brief Gets channel data estimates from the channel estimation.
+  ///
+  /// Extracts the channel estimation coefficients corresponding to the PUSCH data Resource Elements from the channel
+  /// estimate. The DM-RS symbols are skipped. The extracted channel coefficients are arranged in two dimensions, i.e.,
+  /// resource element and receive antenna port, as the channel equalizer expects.
+  ///
+  /// \param[out] data_estimates PUSCH channel estimates corresponding to the data symbols, organized by receive antenna port.
+  /// \param[in]  channel_estimate channel estimation object.
+  /// \param[in]  config  Configuration parameters.
+  static void get_ch_data_estimates(channel_equalizer::ch_est_list& data_estimates,
+                                    const channel_estimate&         channel_estimate,
+                                    const configuration&            config)
+  {
+    srsgnb_assert(config.dmrs_config_type == dmrs_type::TYPE1 && config.nof_cdm_groups_without_data == 2,
+                  "Only DM-RS type 1 with a number of CDM groups equal to 2 is implemented.");
+
+    // Number of subcarriers.
+    unsigned nof_subcs = config.rb_mask.size() * NRE;
+
+    // Extract data RE coefficients from the channel estimation.
+    for (unsigned i_layer = 0, i_layer_end = config.nof_tx_layers; i_layer != i_layer_end; ++i_layer) {
+      for (unsigned i_port = 0, i_port_end = config.rx_ports.size(); i_port != i_port_end; ++i_port) {
+        // Get a view of the port data estimates.
+        span<cf_t> ch_port_buffer = data_estimates.get_view<>({i_port, i_layer});
+
+        // Skip DM-RS estimates.
+        for (unsigned i_symbol = 0; i_symbol != config.nof_symbols; ++i_symbol) {
+          if (config.dmrs_symb_pos[i_symbol + config.start_symbol_index]) {
+            continue;
+          }
+
+          // Copy channel data estimates into the buffer.
+          span<const cf_t> symbol_estimates = channel_estimate.get_symbol_ch_estimate(i_symbol, i_port, i_layer);
+
+          srsgnb_assert(symbol_estimates.size() == nof_subcs,
+                        "Channel estimate symbol size (i.e. {}) does not match expected symbol size (i.e. {})",
+                        symbol_estimates.size(),
+                        nof_subcs);
+
+          srsvec::copy(ch_port_buffer.first(nof_subcs), symbol_estimates);
+
+          // Advance buffers.
+          ch_port_buffer = ch_port_buffer.subspan(nof_subcs, ch_port_buffer.size() - nof_subcs);
+        }
       }
     }
   }
@@ -168,15 +198,32 @@ private:
   std::unique_ptr<pseudo_random_generator> descrambler;
 
   /// Buffer used to transfer channel modulation symbols from the resource grid to the equalizer.
-  dynamic_tensor<dims::nof_dims, cf_t> ch_symbols;
-  /// Buffer used to store channel modulation symbols at the equalizer output.
-  dynamic_tensor<dims::nof_dims, cf_t> mod_symbols_eq;
+  dynamic_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
+                 cf_t,
+                 channel_equalizer::re_list::dims>
+      ch_re;
+
+  /// Buffer used to store channel modulation resource elements at the equalizer output.
+  dynamic_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
+                 cf_t,
+                 channel_equalizer::re_list::dims>
+      eq_re;
+
   /// Buffer used to transfer symbol noise variances at the equalizer output.
-  dynamic_tensor<dims::nof_dims, float> noise_vars_eq;
-  /// Buffer used to transfer channel modulation symbols to the demodulator.
-  std::array<cf_t, MAX_NOF_DATA_LLR> temp_mod_symbols_data;
-  /// Buffer used to transfer symbol noise variances to the demodulator.
-  std::array<float, MAX_NOF_DATA_LLR> temp_noise_vars_data;
+  dynamic_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
+                 float,
+                 channel_equalizer::re_list::dims>
+      eq_noise_vars;
+
+  /// Buffer used to transfer channel estimation coefficients from the channel estimate to the equalizer.
+  dynamic_tensor<std::underlying_type_t<channel_equalizer::ch_est_list::dims>(
+                     channel_equalizer::ch_est_list::dims::nof_dims),
+                 cf_t,
+                 channel_equalizer::ch_est_list::dims>
+      ch_estimates;
+
+  /// Buffer used to transfer noise variance estimates from the channel estimate to the equalizer.
+  std::array<float, pusch_constants::MAX_NOF_LAYERS> noise_var_estimates;
 };
 
 } // namespace srsgnb

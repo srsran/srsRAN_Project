@@ -21,7 +21,8 @@
 using namespace srsgnb;
 
 // Equalizer data dimensions.
-using eq_dims = channel_equalizer::re_dims;
+using re_dims = channel_equalizer::re_list::dims;
+using ch_dims = channel_equalizer::ch_est_list::dims;
 
 // Random generator.
 static std::mt19937 rgen(0);
@@ -74,15 +75,6 @@ int main(int argc, char** argv)
   // Symbol distribution.
   std::uniform_real_distribution<float> symbol_dist(-1.0F, 1.0F);
 
-  constexpr unsigned MAX_RX_RE = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * MAX_PORTS;
-  constexpr unsigned MAX_TX_RE = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * pusch_constants::MAX_NOF_LAYERS;
-
-  static_tensor<eq_dims::nof_dims, cf_t, MAX_RX_RE>  rx_symbols;
-  static_tensor<eq_dims::nof_dims, cf_t, MAX_TX_RE>  eq_symbols;
-  static_tensor<eq_dims::nof_dims, float, MAX_TX_RE> eq_noise_vars;
-
-  channel_estimate ch_est;
-
   benchmarker perf_meas("Channel Equalizer", nof_repetitions);
 
   for (spatial_topology topology : {spatial_topology::siso,
@@ -96,42 +88,36 @@ int main(int argc, char** argv)
     unsigned nof_ofdm_symbols = MAX_NSYMB_PER_SLOT;
     unsigned nof_subcarriers  = nof_prb * NRE;
 
-    std::array<unsigned, eq_dims::nof_dims> rx_symbol_dims = {
-        nof_subcarriers, nof_ofdm_symbols, nof_rx_ports};
-    std::array<unsigned, eq_dims::nof_dims> tx_symbol_dims = {
-        nof_subcarriers, nof_ofdm_symbols, nof_tx_layers};
+    // Create input and output data tensors.
+    dynamic_tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), cf_t, re_dims> rx_symbols(
+        {nof_subcarriers * nof_ofdm_symbols, nof_rx_ports});
+    dynamic_tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), cf_t, re_dims> eq_symbols(
+        {nof_subcarriers * nof_ofdm_symbols, nof_tx_layers});
+    dynamic_tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), float, re_dims> eq_noise_vars(
+        {nof_subcarriers * nof_ofdm_symbols, nof_tx_layers});
 
-    // Resize data structures.
-    rx_symbols.resize(rx_symbol_dims);
-    eq_symbols.resize(tx_symbol_dims);
-    eq_noise_vars.resize(tx_symbol_dims);
-
-    // Resize channel estimates.
-    channel_estimate::channel_estimate_dimensions ch_dims;
-    ch_dims.nof_prb       = nof_prb;
-    ch_dims.nof_symbols   = nof_ofdm_symbols;
-    ch_dims.nof_rx_ports  = nof_rx_ports;
-    ch_dims.nof_tx_layers = nof_tx_layers;
-    ch_est.resize(ch_dims);
+    // Create channel estimates tensor.
+    dynamic_tensor<std::underlying_type_t<ch_dims>(ch_dims::nof_dims), cf_t, ch_dims> channel_ests(
+        {nof_subcarriers * nof_ofdm_symbols, nof_rx_ports, nof_tx_layers});
 
     for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
       // Generate Rx symbols.
-      span<cf_t> symbols = rx_symbols.get_view<eq_dims::slice>({i_rx_port});
+      span<cf_t> symbols = rx_symbols.get_view<>({i_rx_port});
       std::generate(symbols.begin(), symbols.end(), [&rgen = rgen, &symbol_dist]() {
         return cf_t(symbol_dist(rgen), symbol_dist(rgen));
       });
 
       for (unsigned i_tx_layer = 0; i_tx_layer != nof_tx_layers; ++i_tx_layer) {
         // Generate estimates.
-        span<cf_t> ests = ch_est.get_path_ch_estimate(i_rx_port, i_tx_layer);
+        span<cf_t> ests = channel_ests.get_view<>({i_rx_port, i_tx_layer});
         std::generate(ests.begin(), ests.end(), [&rgen = rgen, &ch_mag_dist, &ch_phase_dist]() {
           return std::polar(ch_mag_dist(rgen), ch_phase_dist(rgen));
         });
-
-        // Set the noise variance.
-        ch_est.set_noise_variance(0.1F, i_rx_port, i_tx_layer);
       }
     }
+
+    // Set the port noise variances.
+    std::vector<float> noise_var_ests(nof_rx_ports, 0.1F);
 
     // Number of equalized resource elements.
     unsigned nof_processed_re = nof_subcarriers * nof_ofdm_symbols * nof_tx_layers;
@@ -140,14 +126,16 @@ int main(int argc, char** argv)
     std::string meas_descr = "ZF " + topology.to_string();
 
     // Equalize.
-    perf_meas.new_measure(
-        meas_descr, nof_processed_re, [&eq_symbols, &eq_noise_vars, &rx_symbols, &ch_est, &equalizer]() {
-          equalizer->equalize(eq_symbols, eq_noise_vars, rx_symbols, ch_est, 1.0F);
-        });
+    perf_meas.new_measure(meas_descr,
+                          nof_processed_re,
+                          [&eq_symbols, &eq_noise_vars, &rx_symbols, &channel_ests, &noise_var_ests, &equalizer]() {
+                            equalizer->equalize(
+                                eq_symbols, eq_noise_vars, rx_symbols, channel_ests, noise_var_ests, 1.0F);
+                          });
   }
 
   if (!silent) {
-    perf_meas.print_percentiles_throughput("symbols");
+    perf_meas.print_percentiles_throughput("RE");
   }
 
   return 0;

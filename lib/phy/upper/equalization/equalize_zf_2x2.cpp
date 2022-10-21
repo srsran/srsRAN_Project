@@ -89,27 +89,24 @@ static void equalize_zf_2x2_symbol(span<cf_t>       symbol_out_l0,
   }
 }
 
-void srsgnb::equalize_zf_2x2(channel_equalizer::re_list&        eq_symbols,
-                             channel_equalizer::noise_var_list& noise_vars,
-                             const channel_equalizer::re_list&  ch_symbols,
-                             const channel_estimate&            ch_estimates,
-                             float                              tx_scaling)
+void srsgnb::equalize_zf_2x2(channel_equalizer::re_list&           eq_symbols,
+                             channel_equalizer::noise_var_list&    noise_vars,
+                             const channel_equalizer::re_list&     ch_symbols,
+                             const channel_equalizer::ch_est_list& ch_estimates,
+                             float                                 noise_var_est,
+                             float                                 tx_scaling)
 {
-  const unsigned nof_symbols = ch_symbols.get_dimensions_size()[channel_equalizer::re_dims::symbol];
-
   // Equalize symbol by symbol.
-  for (unsigned i_symb = 0; i_symb != nof_symbols; ++i_symb) {
-    equalize_zf_2x2_symbol(eq_symbols.get_view<channel_equalizer::re_dims::symbol>({i_symb, 0}),
-                           eq_symbols.get_view<channel_equalizer::re_dims::symbol>({i_symb, 1}),
-                           noise_vars.get_view<channel_equalizer::re_dims::symbol>({i_symb, 0}),
-                           noise_vars.get_view<channel_equalizer::re_dims::symbol>({i_symb, 1}),
-                           ch_symbols.get_view<channel_equalizer::re_dims::symbol>({i_symb, 0}),
-                           ch_symbols.get_view<channel_equalizer::re_dims::symbol>({i_symb, 1}),
-                           ch_estimates.get_symbol_ch_estimate(i_symb, 0, 0),
-                           ch_estimates.get_symbol_ch_estimate(i_symb, 0, 1),
-                           ch_estimates.get_symbol_ch_estimate(i_symb, 1, 0),
-                           ch_estimates.get_symbol_ch_estimate(i_symb, 1, 1),
-                           ch_estimates.get_noise_variance(0),
-                           tx_scaling);
-  }
+  equalize_zf_2x2_symbol(eq_symbols.get_view<>({0}),
+                         eq_symbols.get_view<>({1}),
+                         noise_vars.get_view<>({0}),
+                         noise_vars.get_view<>({1}),
+                         ch_symbols.get_view<>({0}),
+                         ch_symbols.get_view<>({1}),
+                         ch_estimates.get_view<>({0, 0}),
+                         ch_estimates.get_view<>({0, 1}),
+                         ch_estimates.get_view<>({1, 0}),
+                         ch_estimates.get_view<>({1, 1}),
+                         noise_var_est,
+                         tx_scaling);
 }

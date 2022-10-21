@@ -18,11 +18,10 @@
 
 using namespace srsgnb;
 
-using dims = channel_equalizer::re_dims;
 //
-//static inline void assert_sizes(std::array<unsigned, dims::nof_dims>&          mod_symbols_size,
-//                                std::array<unsigned, dims::nof_dims>&          noise_vars_size,
-//                                std::array<unsigned, dims::nof_dims>&          ch_symbols_size,
+// static inline void assert_sizes(std::array<unsigned, re_dims::nof_dims>&          mod_symbols_size,
+//                                std::array<unsigned, re_dims::nof_dims>&          noise_vars_size,
+//                                std::array<unsigned, re_dims::nof_dims>&          ch_symbols_size,
 //                                channel_estimate::channel_estimate_dimensions& ch_estimates_size)
 //{
 //  srsgnb_assert(mod_symbols_size == noise_vars_size,
@@ -66,49 +65,54 @@ using dims = channel_equalizer::re_dims;
 //                ch_estimates_size.nof_symbols);
 //}
 
-void channel_equalizer_zf_impl::equalize(re_list&                mod_symbols,
-                                         noise_var_list&         noise_vars,
-                                         const re_list&          ch_symbols,
-                                         const channel_estimate& ch_estimates,
-                                         float                   tx_scaling)
+void channel_equalizer_zf_impl::equalize(re_list&           eq_symbols,
+                                         noise_var_list&    eq_noise_vars,
+                                         const re_list&     ch_symbols,
+                                         const ch_est_list& ch_estimates,
+                                         span<const float>  noise_var_estimates,
+                                         float              tx_scaling)
 {
-//  std::array<unsigned, re_dims::nof_dims>       mod_symbols_size  = mod_symbols.get_dimensions_size();
-//  std::array<unsigned, re_dims::nof_dims>       noise_vars_size   = noise_vars.get_dimensions_size();
-//  std::array<unsigned, re_dims::nof_dims>       ch_symbols_size   = ch_symbols.get_dimensions_size();
-//  channel_estimate::channel_estimate_dimensions ch_estimates_size = ch_estimates.size();
+  //  std::array<unsigned, re_dims::nof_dims>       eq_symbols_size  = eq_re.get_dimensions_size();
+  //  std::array<unsigned, re_dims::nof_dims>       eq_noise_vars_size   = eq_noise_vars.get_dimensions_size();
+  //  std::array<unsigned, re_dims::nof_dims>       ch_symbols_size   = ch_re.get_dimensions_size();
+  //  channel_estimate::channel_estimate_dimensions ch_estimates_size = ch_estimates.size();
 
   // Make sure that the input and output symbol lists and channel estimate dimensions are valid.
-//  assert_sizes(mod_symbols_size, noise_vars_size, ch_symbols_size, ch_estimates_size);
+  //  assert_sizes(eq_symbols_size, eq_noise_vars_size, ch_symbols_size, ch_estimates_size);
 
   srsgnb_assert(tx_scaling > 0, "Tx scaling factor must be positive.");
 
   // Determine the channel spatial topology based on the provided channel estimates.
-  spatial_topology topology(ch_estimates.size().nof_rx_ports, ch_estimates.size().nof_tx_layers);
+  spatial_topology topology(ch_estimates.get_dimension_size(ch_est_list::dims::rx_port),
+                            ch_estimates.get_dimension_size(ch_est_list::dims::tx_layer));
+
+  // For now, use the noise variance of a single Rx port.
+  float noise_var = noise_var_estimates[0];
 
   switch (topology.get_topology()) {
     case spatial_topology::siso:
       equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::siso)>(
-          mod_symbols, noise_vars, ch_symbols, ch_estimates, tx_scaling);
+          eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
       break;
     case spatial_topology::simo_2x1:
       equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::simo_2x1)>(
-          mod_symbols, noise_vars, ch_symbols, ch_estimates, tx_scaling);
+          eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
       break;
     case spatial_topology::simo_3x1:
       equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::simo_3x1)>(
-          mod_symbols, noise_vars, ch_symbols, ch_estimates, tx_scaling);
+          eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
       break;
     case spatial_topology::simo_4x1:
       equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::simo_4x1)>(
-          mod_symbols, noise_vars, ch_symbols, ch_estimates, tx_scaling);
+          eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
       break;
     case spatial_topology::mimo_2x2:
-      equalize_zf_2x2(mod_symbols, noise_vars, ch_symbols, ch_estimates, tx_scaling);
+      equalize_zf_2x2(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
       break;
     case spatial_topology::invalid:
     default:
       srsgnb_assertion_failure("Invalid channel spatial topology: {} Tx layers, {} Rx ports.",
-                               ch_estimates.size().nof_tx_layers,
-                               ch_estimates.size().nof_rx_ports);
+                               ch_estimates.get_dimension_size(ch_est_list::dims::rx_port),
+                               ch_estimates.get_dimension_size(ch_est_list::dims::tx_layer));
   }
 }

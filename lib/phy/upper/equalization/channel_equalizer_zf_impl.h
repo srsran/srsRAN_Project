@@ -25,11 +25,12 @@ public:
   explicit channel_equalizer_zf_impl() = default;
 
   /// See interface for documentation.
-  void equalize(re_list&                mod_symbols,
-                noise_var_list&         noise_vars,
-                const re_list&          ch_symbols,
-                const channel_estimate& ch_estimates,
-                float                   tx_scaling) override;
+  void equalize(re_list&           eq_symbols,
+                noise_var_list&    eq_noise_vars,
+                const re_list&     ch_symbols,
+                const ch_est_list& ch_estimates,
+                span<const float>  noise_var_estimates,
+                float              tx_scaling) override;
 };
 
 } // namespace srsgnb

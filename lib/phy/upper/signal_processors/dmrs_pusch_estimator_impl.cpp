@@ -50,20 +50,24 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
                                          const resource_grid_reader& grid,
                                          const configuration&        config)
 {
+  unsigned nof_rb        = config.rb_mask.count();
   unsigned nof_tx_layers = config.nof_tx_layers;
   unsigned nof_rx_ports  = config.rx_ports.size();
 
   // Select the DM-RS pattern for this PUSCH transmission.
   span<dmrs_pattern> coordinates = span<dmrs_pattern>(temp_coordinates).first(nof_tx_layers);
 
-  // Prepare symbol buffer dimensions.
+  // Prepare DM-RS symbol buffer dimensions.
   re_measurement_dimensions dims;
-  dims.nof_subc    = config.rb_mask.count() * config.type.nof_dmrs_per_rb();
+  dims.nof_subc    = nof_rb * config.type.nof_dmrs_per_rb();
   dims.nof_symbols = std::count(config.symbols_mask.begin(), config.symbols_mask.end(), true);
   dims.nof_slices  = nof_tx_layers;
 
-  // Resize symbol buffer.
+  // Resize DM-RS symbol buffer.
   temp_symbols.resize(dims);
+
+  // Resize channel estimate.
+  estimate.resize({nof_rb, config.nof_symbols, nof_rx_ports, nof_tx_layers});
 
   // Generate symbols and allocation patterns.
   generate(temp_symbols, coordinates, config);

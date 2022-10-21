@@ -90,56 +90,46 @@ void equalize_zf_1x1_symbol(span<cf_t>       symbol_out,
 /// \param[out] noise_vars   Noise variances after equalization.
 /// \param[in]  ch_symbols   Channel symbols, i.e., complex samples from the receive ports.
 /// \param[in]  ch_estimates Channel estimation coefficients.
+/// \param[in]  noise_var_est Estimated noise variance. It is assumed to be the same for each receive port.
 /// \param[in]  tx_scaling   Transmission gain scaling factor.
 template <unsigned RX_PORTS>
-void equalize_zf_1xn(channel_equalizer::re_list&        eq_symbols,
-                     channel_equalizer::noise_var_list& noise_vars,
-                     const channel_equalizer::re_list&  ch_symbols,
-                     const channel_estimate&            ch_estimates,
-                     float                              tx_scaling)
+void equalize_zf_1xn(channel_equalizer::re_list&           eq_symbols,
+                     channel_equalizer::noise_var_list&    noise_vars,
+                     const channel_equalizer::re_list&     ch_symbols,
+                     const channel_equalizer::ch_est_list& ch_estimates,
+                     float                                 noise_var_est,
+                     float                                 tx_scaling)
 {
-  const unsigned nof_symbols = ch_symbols.get_dimensions_size()[channel_equalizer::re_dims::symbol];
-
   // Structures to hold the Rx resource elements and estimates for all ports and a single OFDM symbol.
   std::array<span<const cf_t>, RX_PORTS> port_symbols;
   std::array<span<const cf_t>, RX_PORTS> port_estimates;
 
   // Equalize symbol by symbol.
-  for (unsigned i_symb = 0; i_symb != nof_symbols; ++i_symb) {
-    for (unsigned i_port = 0; i_port != RX_PORTS; ++i_port) {
-      port_symbols[i_port]   = ch_symbols.get_view<channel_equalizer::re_dims::symbol>({i_symb, i_port});
-      port_estimates[i_port] = ch_estimates.get_symbol_ch_estimate(i_symb, i_port, 0);
-    }
-
-    detail::equalize_zf_1xn_symbol<RX_PORTS>(eq_symbols.get_view<channel_equalizer::re_dims::symbol>({i_symb, 0}),
-                                             noise_vars.get_view<channel_equalizer::re_dims::symbol>({i_symb, 0}),
-                                             port_symbols,
-                                             port_estimates,
-                                             ch_estimates.get_noise_variance(0),
-                                             tx_scaling);
+  for (unsigned i_port = 0; i_port != RX_PORTS; ++i_port) {
+    port_symbols[i_port]   = ch_symbols.get_view<>({i_port});
+    port_estimates[i_port] = ch_estimates.template get_view<>({i_port, 0});
   }
+
+  detail::equalize_zf_1xn_symbol<RX_PORTS>(
+      eq_symbols.get_view<>({0}), noise_vars.get_view<>({0}), port_symbols, port_estimates, noise_var_est, tx_scaling);
 }
 
 /// Specialization for the SISO case.
 template <>
-inline void equalize_zf_1xn<1>(channel_equalizer::re_list&        eq_symbols,
-                               channel_equalizer::noise_var_list& noise_vars,
-                               const channel_equalizer::re_list&  ch_symbols,
-                               const channel_estimate&            ch_estimates,
-                               float                              tx_scaling)
+inline void equalize_zf_1xn<1>(channel_equalizer::re_list&           eq_symbols,
+                               channel_equalizer::noise_var_list&    noise_vars,
+                               const channel_equalizer::re_list&     ch_symbols,
+                               const channel_equalizer::ch_est_list& ch_estimates,
+                               float                                 noise_var_est,
+                               float                                 tx_scaling)
 {
-  const unsigned nof_symbols        = ch_symbols.get_dimensions_size()[channel_equalizer::re_dims::symbol];
-  const float    noise_var_estimate = ch_estimates.get_noise_variance(0);
-
   // Equalize symbol by symbol.
-  for (unsigned i_symb = 0; i_symb != nof_symbols; ++i_symb) {
-    detail::equalize_zf_1x1_symbol(eq_symbols.get_view<channel_equalizer::re_dims::symbol>({i_symb, 0}),
-                                   noise_vars.get_view<channel_equalizer::re_dims::symbol>({i_symb, 0}),
-                                   ch_symbols.get_view<channel_equalizer::re_dims::symbol>({i_symb, 0}),
-                                   ch_estimates.get_symbol_ch_estimate(i_symb),
-                                   noise_var_estimate,
-                                   tx_scaling);
-  }
+  detail::equalize_zf_1x1_symbol(eq_symbols.get_view<>({0}),
+                                 noise_vars.get_view<>({0}),
+                                 ch_symbols.get_view<>({0}),
+                                 ch_estimates.get_view<>({0}),
+                                 noise_var_est,
+                                 tx_scaling);
 }
 
 } // namespace srsgnb
