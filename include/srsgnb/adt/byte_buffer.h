@@ -244,6 +244,7 @@ public:
   const uint8_t& back() const { return get_tail()->back(); }
 
   const uint8_t& operator[](size_t i) const { return *(begin() + i); }
+  uint8_t&       operator[](size_t i) { return *(begin() + i); }
 
   template <typename Container, std::enable_if_t<std::is_convertible<Container, span<const uint8_t>>::value, int> = 0>
   bool operator==(const Container& container) const
@@ -495,13 +496,15 @@ public:
   byte_buffer_slice()                                           = default;
   explicit byte_buffer_slice(const byte_buffer_slice&) noexcept = default;
   byte_buffer_slice(byte_buffer_slice&&) noexcept               = default;
-  byte_buffer_slice(byte_buffer&& buf_) : sliced_view(buf_.begin(), buf_.end()), buf(std::move(buf_)) {}
-  explicit byte_buffer_slice(const byte_buffer& buf_) : sliced_view(buf_.begin(), buf_.end()), buf(buf_.copy()) {}
+  byte_buffer_slice(span<const uint8_t> bytes) : byte_buffer_slice(byte_buffer{bytes}) {}
+  byte_buffer_slice(std::initializer_list<uint8_t> bytes) : byte_buffer_slice(byte_buffer{bytes}) {}
+  byte_buffer_slice(byte_buffer&& buf_) : buf(std::move(buf_)), sliced_view(buf) {}
+  byte_buffer_slice(const byte_buffer& buf_) : buf(buf_.copy()), sliced_view(buf) {}
   byte_buffer_slice(const byte_buffer& buf_, size_t offset, size_t length) :
-    sliced_view(buf_, offset, length), buf(buf_.copy())
+    buf(buf_.copy()), sliced_view(buf, offset, length)
   {
   }
-  byte_buffer_slice(const byte_buffer& buf_, byte_buffer_view view) : sliced_view(view), buf(buf_.copy())
+  byte_buffer_slice(const byte_buffer& buf_, byte_buffer_view view) : buf(buf_.copy()), sliced_view(view)
   {
     srsgnb_sanity_check(view.begin() - byte_buffer_view{buf}.begin() < (int)buf.length(),
                         "byte_buffer_view is not part of the owned byte_buffer");
@@ -567,8 +570,8 @@ public:
   }
 
 private:
-  byte_buffer_view sliced_view;
   byte_buffer      buf;
+  byte_buffer_view sliced_view;
 };
 
 inline void byte_buffer::append(const byte_buffer_slice& slice)

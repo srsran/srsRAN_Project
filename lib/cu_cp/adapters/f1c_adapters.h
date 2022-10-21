@@ -74,7 +74,7 @@ public:
 
   void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
   {
-    byte_buffer_slice pdu({rrc_container.begin(), rrc_container.end()});
+    byte_buffer_slice pdu(byte_buffer{rrc_container.begin(), rrc_container.end()});
     rrc_handler.handle_ul_ccch_pdu(std::move(pdu));
   }
 
