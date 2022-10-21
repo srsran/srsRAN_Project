@@ -59,8 +59,8 @@ public:
   std::mutex              mutex_ue;
   std::condition_variable cv_pcell;
   std::condition_variable cv_ue;
-  bool                    stopping_pcell = false;
-  bool                    stopping_ue    = false;
+  std::atomic<bool>       stopping_pcell = {false};
+  std::atomic<bool>       stopping_ue    = {false};
 
 private:
   // Stack ID for logging

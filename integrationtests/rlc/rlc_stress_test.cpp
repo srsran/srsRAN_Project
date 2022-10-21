@@ -111,7 +111,7 @@ void stress_stack::wait_for_finish()
   logger.log_debug("Waiting for PCell worker to finish. Stack id={}\n", stack_id);
   {
     std::unique_lock<std::mutex> lk_pcell(mutex_pcell);
-    cv_pcell.wait(lk_pcell, [this] { return stopping_pcell; });
+    cv_pcell.wait(lk_pcell, [this] { return stopping_pcell.load(); });
   }
   logger.log_debug(
       "PCell worker no longer processing. Stack id={}, stopping={}\n", stack_id, stopping_pcell ? "true" : "false");
@@ -119,7 +119,7 @@ void stress_stack::wait_for_finish()
   logger.log_debug("Waiting to stop upper worker. Stack id={}\n", stack_id);
   {
     std::unique_lock<std::mutex> lk_ue(mutex_ue);
-    cv_ue.wait(lk_ue, [this] { return stopping_ue; });
+    cv_ue.wait(lk_ue, [this] { return stopping_ue.load(); });
   }
   logger.log_debug("Upper thread no longer processing. Stack id={}", stack_id);
 
@@ -168,7 +168,7 @@ void stress_stack::run_lower_tti(uint32_t tti)
 void stress_stack::push_pdus(std::vector<byte_buffer_slice_chain> list_pdus)
 {
   auto push_fnc = [this, list_pdus = std::move(list_pdus)]() mutable { mac->push_rx_pdus(std::move(list_pdus)); };
-  if (!stopping_pcell && !stopping_ue) {
+  if (!stopping_pcell.load() && !stopping_ue.load()) {
     ue_executor->defer(std::move(push_fnc));
   }
 }
