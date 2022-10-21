@@ -118,7 +118,6 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   const unsigned nof_symb_sh = pdsch_td_cfg.symbols.length();
   prb_bitmap     used_crbs   = pdsch_alloc.dl_res_grid.used_crbs(initial_active_dl_bwp, pdsch_td_cfg.symbols);
   crb_interval   unused_crbs = find_next_empty_interval(used_crbs, 0, used_crbs.size());
-  prb_interval   unused_prbs = crb_to_prb(initial_active_dl_bwp, unused_crbs);
   // Try to find least MCS to fit SRB0 message.
   // See 38.214, table 5.1.3.1-1: MCS index table 1 for PDSCH.
   unsigned mcs_idx = 0;
@@ -139,7 +138,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
                                                          mcs_config.modulation,
                                                          mcs_config.target_code_rate / 1024.0F,
                                                          nof_layers});
-    if (unused_prbs.length() >= prbs_tbs.nof_prbs) {
+    if (unused_crbs.length() >= prbs_tbs.nof_prbs) {
       break;
     }
     ++mcs_idx;
