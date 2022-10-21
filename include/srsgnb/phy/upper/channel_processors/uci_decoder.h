@@ -37,7 +37,7 @@ public:
 
   /// \brief Decodes Uplink Control Information carried in either PUCCH or PUSCH.
   /// \param[out] message View of the decoded message.
-  /// \param[in]  llr     The received soft-bits, as a sequence of log-likelihood ratios.
+  /// \param[in]  llr     The received soft bits, as a sequence of log-likelihood ratios.
   /// \return The decoding status.
   virtual uci_status
   decode(span<uint8_t> message, span<const log_likelihood_ratio> llr, const configuration& config) = 0;

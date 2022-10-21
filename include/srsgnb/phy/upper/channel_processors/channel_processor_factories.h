@@ -31,6 +31,7 @@
 #include "srsgnb/phy/upper/channel_processors/pusch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
 #include "srsgnb/phy/upper/channel_processors/uci_decoder.h"
+#include "srsgnb/phy/upper/channel_processors/ulsch_demultiplex.h"
 #include "srsgnb/phy/upper/equalization/equalization_factories.h"
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 #include <memory>
@@ -253,5 +254,14 @@ struct uci_decoder_factory_sw_configuration {
 };
 
 std::shared_ptr<uci_decoder_factory> create_uci_decoder_factory_sw(uci_decoder_factory_sw_configuration& config);
+
+class ulsch_demultiplex_factory
+{
+public:
+  virtual ~ulsch_demultiplex_factory()                = default;
+  virtual std::unique_ptr<ulsch_demultiplex> create() = 0;
+};
+
+std::shared_ptr<ulsch_demultiplex_factory> create_ulsch_demultiplex_factory_sw();
 
 } // namespace srsgnb

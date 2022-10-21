@@ -28,6 +28,7 @@
 #include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "ssb_processor_impl.h"
 #include "uci_decoder_impl.h"
+#include "ulsch_demultiplex_impl.h"
 
 using namespace srsgnb;
 
@@ -483,6 +484,12 @@ public:
   }
 };
 
+class ulsch_demultiplex_factory_sw : public ulsch_demultiplex_factory
+{
+public:
+  std::unique_ptr<ulsch_demultiplex> create() override { return std::make_unique<ulsch_demultiplex_impl>(); }
+};
+
 } // namespace
 
 std::shared_ptr<pbch_encoder_factory>
@@ -606,4 +613,9 @@ srsgnb::create_ssb_processor_factory_sw(ssb_processor_factory_sw_configuration& 
 std::shared_ptr<uci_decoder_factory> srsgnb::create_uci_decoder_factory_sw(uci_decoder_factory_sw_configuration& config)
 {
   return std::make_shared<uci_decoder_factory_sw>(config);
+}
+
+std::shared_ptr<ulsch_demultiplex_factory> srsgnb::create_ulsch_demultiplex_factory_sw()
+{
+  return std::make_shared<ulsch_demultiplex_factory_sw>();
 }

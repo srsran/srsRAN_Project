@@ -111,6 +111,18 @@ add_custom_command(
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/prach_generator_test_data.tar.gz
         VERBATIM)
 
+add_executable(pucch_detector_test pucch_detector_test.cpp)
+target_link_libraries(pucch_detector_test srsgnb_channel_processors srslog gtest gtest_main)
+add_custom_command(
+        TARGET pucch_detector_test
+        POST_BUILD
+        WORKING_DIRECTORY ${TEST_DATA_DIR}
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pucch_detector_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pucch_detector_test_data.tar.gz
+        VERBATIM
+)
+add_test(pucch_detector_test pucch_detector_test)
+
 add_executable(pucch_processor_format1_unittest pucch_processor_format1_unittest.cpp)
 target_link_libraries(pucch_processor_format1_unittest srsgnb_channel_processors srslog gtest gtest_main)
 add_test(pucch_processor_format1_unittest pucch_processor_format1_unittest)
@@ -209,14 +221,14 @@ add_custom_command(
 )
 add_test(uci_decoder_test uci_decoder_test)
 
-add_executable(pucch_detector_test pucch_detector_test.cpp)
-target_link_libraries(pucch_detector_test srsgnb_channel_processors srslog gtest gtest_main)
+add_executable(ulsch_demultiplex_test ulsch_demultiplex_test.cpp)
+target_link_libraries(ulsch_demultiplex_test srsgnb_channel_processors srsgnb_channel_coding gtest gtest_main)
 add_custom_command(
-        TARGET pucch_detector_test
+        TARGET ulsch_demultiplex_test
         POST_BUILD
         WORKING_DIRECTORY ${TEST_DATA_DIR}
-        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pucch_detector_test_data.tar.gz
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pucch_detector_test_data.tar.gz
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/ulsch_demultiplex_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ulsch_demultiplex_test_data.tar.gz
         VERBATIM
 )
-add_test(pucch_detector_test pucch_detector_test)
+add_test(ulsch_demultiplex_test ulsch_demultiplex_test)

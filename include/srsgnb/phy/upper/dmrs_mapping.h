@@ -18,8 +18,9 @@ namespace srsgnb {
 class dmrs_type
 {
 public:
-  /// DMRS types, as described in TS 38.331.
-  enum options { TYPE1 = 0, TYPE2 };
+  /// DM-RS types set to the higher layer parameter \e dmrs-Type given by TS38.331 Section 6.3.2, Information Element
+  /// \e DMRS-DownlinkConfig for downlink and \e DMRS-UplinkConfig for uplink.
+  enum options { TYPE1 = 1, TYPE2 };
 
   /// Default dmrs_type as normal.
   constexpr dmrs_type() = default;
