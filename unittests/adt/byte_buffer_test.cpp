@@ -65,14 +65,27 @@ std::vector<uint8_t> concat_vec(span<const uint8_t> before, span<const uint8_t> 
   return ret;
 }
 
+// Performs several checks that ensure the valid state of the byte_buffer length.
+// Note1: the byte_buffer::iterator operator- sums the lengths of the byte_buffer individual segments.
+// Note2: std::distance counts the number of iterations between begin() and end().
+#define ASSERT_EQ_LEN(buffer, len)                                                                                     \
+  ASSERT_EQ(buffer.empty(), (len) == 0);                                                                               \
+  ASSERT_EQ(buffer.length(), (len));                                                                                   \
+  ASSERT_EQ(buffer.end() - buffer.begin(), (len));                                                                     \
+  ASSERT_EQ(std::distance(buffer.begin(), buffer.end()), (len));
+
+// Ensures commutativity of byte_buffer::operator==, and consistency when compared to std::equal(...).
+#define ASSERT_EQ_BUFFER(buffer1, buffer2)                                                                             \
+  ASSERT_EQ(buffer1, buffer2);                                                                                         \
+  std::equal(buffer1.begin(), buffer1.end(), buffer2.begin(), buffer2.end());                                          \
+  ASSERT_EQ(buffer2, buffer1)
+
 ///////////////////////// byte_buffer //////////////////////////////
 
 TEST(byte_buffer, empty_byte_buffer_in_valid_state)
 {
   byte_buffer pdu;
-  ASSERT_TRUE(pdu.empty());
-  ASSERT_EQ(0, pdu.length());
-  ASSERT_EQ(pdu.begin(), pdu.end());
+  ASSERT_EQ_LEN(pdu, 0);
   ASSERT_EQ(pdu, std::vector<uint8_t>{});
   ASSERT_EQ(pdu, std::list<uint8_t>{});
 }
@@ -82,10 +95,7 @@ TEST(byte_buffer, ctor_with_span)
   std::vector<uint8_t> bytes = make_vec(get_random_uint(1, byte_buffer_segment::SEGMENT_SIZE * 4));
   byte_buffer          pdu{bytes};
 
-  ASSERT_FALSE(pdu.empty());
-  ASSERT_EQ(bytes.size(), pdu.length());
-  ASSERT_NE(pdu.begin(), pdu.end());
-  ASSERT_EQ(pdu.end() - pdu.begin(), bytes.size());
+  ASSERT_EQ_LEN(pdu, bytes.size());
   ASSERT_TRUE(std::equal(pdu.begin(), pdu.end(), bytes.begin(), bytes.end()));
 }
 
@@ -97,16 +107,13 @@ TEST(byte_buffer, equality_comparison)
   std::list<uint8_t>   not_a_span{bytes.begin(), bytes.end()};
 
   // comparison byte_buffer vs span.
-  ASSERT_EQ(pdu, bytes);
-  ASSERT_EQ(bytes, pdu);
+  ASSERT_EQ_BUFFER(pdu, bytes);
 
   // comparison byte_buffer vs byte_buffer.
-  ASSERT_EQ(pdu, pdu2);
-  ASSERT_EQ(pdu2, pdu);
+  ASSERT_EQ_BUFFER(pdu, pdu2);
 
   // comparison byte_buffer vs any other range.
   ASSERT_EQ(pdu, not_a_span);
-  ASSERT_EQ(not_a_span, pdu);
 
   // comparison byte_buffer vs other range of different length.
   std::vector<uint8_t> bytes2 = bytes;
@@ -118,7 +125,6 @@ TEST(byte_buffer, equality_comparison)
   ASSERT_NE(pdu, pdu2);
   ASSERT_NE(pdu2, pdu);
   ASSERT_NE(pdu, not_a_span2);
-  ASSERT_NE(not_a_span2, pdu);
 }
 
 TEST(byte_buffer, append)
@@ -128,9 +134,8 @@ TEST(byte_buffer, append)
 
   // Append span of bytes (that may occupy more than one segment).
   pdu.append(vec);
-  ASSERT_EQ(pdu.length(), vec.size());
-  ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin());
-  ASSERT_EQ(pdu, vec);
+  ASSERT_EQ_LEN(pdu, vec.size());
+  ASSERT_EQ_BUFFER(pdu, vec);
 
   // Append two byte_buffers.
   std::vector<uint8_t> vec2 = make_vec(get_random_uint(1, byte_buffer_segment::SEGMENT_SIZE * 4));
@@ -351,40 +356,62 @@ TEST(byte_buffer, trim)
   TESTASSERT(pdu == span<const uint8_t>{bytes2}.last(2));
 }
 
-TEST(byte_buffer, linearize)
+TEST(byte_buffer, prepend_and_trim_tail)
+{
+  byte_buffer        pdu;
+  byte_buffer        sdu;
+  constexpr uint32_t pdu_len    = 247;
+  constexpr uint32_t trim_len   = 4;
+  constexpr uint32_t prefix_len = 3;
+  for (uint32_t i = 0; i < pdu_len; i++) {
+    pdu.append(i);
+  }
+
+  sdu.append(pdu.begin() + prefix_len, pdu.end());
+  std::array<uint8_t, prefix_len> hdr_buf;
+  std::copy(pdu.begin(), pdu.begin() + prefix_len, hdr_buf.begin());
+  sdu.prepend(hdr_buf);
+
+  ASSERT_EQ(sdu.length(), pdu_len);
+  ASSERT_EQ(std::distance(sdu.begin(), sdu.end()), pdu_len);
+
+  sdu.trim_tail(trim_len);
+  ASSERT_EQ(sdu.length(), pdu_len - trim_len);
+  ASSERT_EQ(sdu.end() - sdu.begin(), pdu_len - trim_len);
+  ASSERT_EQ(std::distance(sdu.begin(), sdu.end()), pdu_len - trim_len);
+}
+
+TEST(byte_buffer, is_contiguous)
 {
   byte_buffer          pdu;
   std::vector<uint8_t> bytes        = make_small_vec();
   std::vector<uint8_t> bytes2       = make_large_vec();
-  auto                 bytes_concat = bytes;
-  bytes_concat.insert(bytes_concat.end(), bytes2.begin(), bytes2.end());
+  auto                 bytes_concat = concat_vec(bytes, bytes2);
 
   pdu.append(bytes);
-  TESTASSERT(pdu.is_contiguous());
+  ASSERT_TRUE(pdu.is_contiguous());
   pdu.append(bytes2);
-  TESTASSERT(not pdu.is_contiguous());
+  ASSERT_TRUE(not pdu.is_contiguous());
 
-  TESTASSERT(pdu == bytes_concat);
-  TESTASSERT(pdu.linearize() < 0);
-  TESTASSERT(pdu == bytes_concat);
+  ASSERT_EQ_BUFFER(pdu, bytes_concat);
+  ASSERT_TRUE(pdu.linearize() < 0);
+  ASSERT_EQ_BUFFER(pdu, bytes_concat) << "A failed linearization should not alter the original byte_buffer";
 
-  TESTASSERT(pdu.trim_tail(bytes.size() - 1) == 0);
-  TESTASSERT(not pdu.is_contiguous());
-  TESTASSERT(pdu.linearize() < 0);
+  ASSERT_TRUE(pdu.trim_tail(bytes.size() - 1) == 0);
+  ASSERT_TRUE(not pdu.is_contiguous());
+  ASSERT_TRUE(pdu.linearize() < 0);
 
-  TESTASSERT(pdu.trim_tail(1) == 0);
-  TESTASSERT(not pdu.is_contiguous());
-  TESTASSERT(pdu.linearize() == 0);
-  TESTASSERT(pdu.is_contiguous());
+  ASSERT_TRUE(pdu.trim_tail(1) == 0);
+  ASSERT_TRUE(pdu.is_contiguous());
 }
 
 TEST(byte_buffer, initializer_list)
 {
   byte_buffer pdu = {1, 2, 3, 4, 5, 6};
-  TESTASSERT_EQ(6, pdu.length());
+  ASSERT_EQ_LEN(pdu, 6);
 
   bool are_equal = pdu == std::vector<uint8_t>{1, 2, 3, 4, 5, 6};
-  TESTASSERT(are_equal);
+  ASSERT_TRUE(are_equal);
 }
 
 TEST(byte_buffer, hexdump)

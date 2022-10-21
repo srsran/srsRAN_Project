@@ -324,9 +324,13 @@ public:
   /// \return 0 if successful, -1 otherwise.
   int trim_tail(size_t nof_bytes)
   {
+    srsgnb_assert(length() >= nof_bytes, "Trimming too many bytes from byte_buffer");
     if (get_tail()->length() >= nof_bytes) {
       get_tail()->trim_tail(nof_bytes);
       head->metadata().pkt_len -= nof_bytes;
+      if (get_tail()->length() == 0) {
+        pop_last_segment();
+      }
       return 0;
     }
     return -1;
@@ -416,7 +420,7 @@ public:
   {
     return detail::compare_byte_buffer_range(lhs, r);
   }
-  template <typename T, std::enable_if_t<not is_byte_buffer_range<T>::value, int> = 0>
+  template <typename T, std::enable_if_t<std::is_convertible<T, span<const uint8_t>>::value, int> = 0>
   friend bool operator==(const T& r, const byte_buffer& rhs)
   {
     return detail::compare_byte_buffer_range(rhs, r);
@@ -426,7 +430,7 @@ public:
   {
     return !(lhs == r);
   }
-  template <typename T, std::enable_if_t<not is_byte_buffer_range<T>::value, int> = 0>
+  template <typename T, std::enable_if_t<std::is_convertible<T, span<const uint8_t>>::value, int> = 0>
   friend bool operator!=(const T& r, const byte_buffer& rhs)
   {
     return !(rhs == r);
@@ -462,6 +466,27 @@ private:
       head                     = std::move(buf);
       head->metadata().pkt_len = pkt_len;
     }
+  }
+
+  /// \brief Removes last segment of the byte_buffer.
+  /// Note: This operation is O(N), as it requires recomputing the tail.
+  void pop_last_segment()
+  {
+    if (get_tail() == nullptr) {
+      return;
+    }
+    if (head.get() == get_tail()) {
+      // there is only one segment.
+      clear();
+      return;
+    }
+    head->metadata().pkt_len -= get_tail()->length();
+    // recompute tail.
+    byte_buffer_segment* new_tail = head.get();
+    for (; new_tail->next() != get_tail(); new_tail = new_tail->next()) {
+    }
+    set_tail(new_tail);
+    new_tail->metadata().next = nullptr;
   }
 
   void                       set_tail(byte_buffer_segment* new_tail) { head->metadata().tail = new_tail; }
