@@ -272,6 +272,10 @@ void pdcp_entity_tx::integrity_generate(security::sec_mac& mac, byte_buffer_view
 {
   switch (sec_cfg.integ_algo) {
     case security::integrity_algorithm::nia0:
+      // TS 33.501, Sec. D.1
+      // The NIA0 algorithm shall be implemented in such way that it shall generate a 32 bit MAC-I/NAS-MAC and
+      // XMAC-I/XNAS-MAC of all zeroes (see sub-clause D.3.1).
+      std::fill(mac.begin(), mac.end(), 0);
       break;
     case security::integrity_algorithm::nia1:
       security_nia1(mac, sec_cfg.k_128_int, count, bearer_id, direction, buf.begin(), buf.end());

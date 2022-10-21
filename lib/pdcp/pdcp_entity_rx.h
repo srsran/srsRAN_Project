@@ -92,6 +92,16 @@ public:
                   sec_cfg.domain,
                   rb_type,
                   rb_id);
+    // The 'NULL' integrity protection algorithm (nia0) is used only for SRBs and for the UE in limited service mode,
+    // see TS 33.501 [11] and when used for SRBs, integrity protection is disabled for DRBs. In case the ′NULL'
+    // integrity protection algorithm is used, 'NULL' ciphering algorithm is also used.
+    // Ref: TS 38.331 Sec. 5.3.1.2
+    srsran_assert((is_srb() && sec_cfg_.cipher_algo == security::ciphering_algorithm::nea0) ||
+                      sec_cfg_.integ_algo != security::integrity_algorithm::nia0,
+                  "Integrity algorithm EIA0 is only permitted for SRBs configured with NEA0. is_srb={} NIA{} NEA{}",
+                  is_srb(),
+                  sec_cfg_.integ_algo,
+                  sec_cfg_.cipher_algo);
     sec_cfg = sec_cfg_;
     logger.log_info(
         "Security configured: NIA{} NEA{} domain={}", sec_cfg.integ_algo, sec_cfg.cipher_algo, sec_cfg.domain);
