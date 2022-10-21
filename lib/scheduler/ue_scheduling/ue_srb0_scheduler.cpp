@@ -118,6 +118,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   const unsigned nof_symb_sh = pdsch_td_cfg.symbols.length();
   prb_bitmap     used_crbs   = pdsch_alloc.dl_res_grid.used_crbs(initial_active_dl_bwp, pdsch_td_cfg.symbols);
   crb_interval   unused_crbs = find_next_empty_interval(used_crbs, 0, used_crbs.size());
+  prb_interval   unused_prbs = crb_to_prb(initial_active_dl_bwp, unused_crbs);
   // Try to find least MCS to fit SRB0 message.
   // See 38.214, table 5.1.3.1-1: MCS index table 1 for PDSCH.
   unsigned mcs_idx = 0;
@@ -138,7 +139,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
                                                          mcs_config.modulation,
                                                          mcs_config.target_code_rate / 1024.0F,
                                                          nof_layers});
-    if (unused_crbs.length() >= prbs_tbs.nof_prbs) {
+    if (unused_prbs.length() >= prbs_tbs.nof_prbs) {
       break;
     }
     ++mcs_idx;
@@ -159,10 +160,11 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   }
 
   crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs, 0);
-  if (ue_grant_crbs.length() < prbs_tbs.nof_prbs) {
+  prb_interval ue_grant_prbs = crb_to_prb(initial_active_dl_bwp, ue_grant_crbs);
+  if (ue_grant_prbs.length() < prbs_tbs.nof_prbs) {
     logger.warning("SCHED: Postponed SRB0 PDU scheduling for rnti={:#x}. Cause: Not enough PRBs ({} < {})",
                    u.crnti,
-                   ue_grant_crbs.length(),
+                   ue_grant_prbs.length(),
                    prbs_tbs.nof_prbs);
     return false;
   }
@@ -190,14 +192,13 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   pdsch_alloc.result.dl.ue_grants.emplace_back();
 
   // Allocate UE DL HARQ.
-  prb_interval prbs     = crb_to_prb(*pdcch->ctx.bwp_cfg, ue_grant_crbs);
-  slot_point   uci_slot = pdsch_alloc.slot + pucch_grant.k1;
+  slot_point uci_slot = pdsch_alloc.slot + pucch_grant.k1;
   // TODO: Parameterize.
   const static unsigned max_retx = 4;
-  bool                  success  = h_dl->new_tx(pdsch_alloc.slot, uci_slot, prbs, mcs_idx, max_retx);
+  bool                  success  = h_dl->new_tx(pdsch_alloc.slot, uci_slot, ue_grant_prbs, mcs_idx, max_retx);
   srsgnb_assert(success, "Failed to allocate DL HARQ newtx");
 
-  fill_srb0_grant(u, *h_dl, *pdcch, pdsch_alloc.result.dl.ue_grants.back(), pucch_grant, pdsch_time_res, ue_grant_crbs);
+  fill_srb0_grant(u, *h_dl, *pdcch, pdsch_alloc.result.dl.ue_grants.back(), pucch_grant, pdsch_time_res, ue_grant_prbs);
 
   return true;
 }
@@ -208,12 +209,11 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
                                         dl_msg_alloc&         msg,
                                         pucch_harq_ack_grant& pucch,
                                         unsigned              pdsch_time_res,
-                                        const crb_interval&   ue_grant_crbs)
+                                        const prb_interval&   ue_grant_prbs)
 {
   constexpr static unsigned nof_layers = 1;
 
-  const pdsch_time_domain_resource_allocation& pdsch_td_cfg  = get_pdsch_td_cfg(pdsch_time_res);
-  prb_interval                                 ue_grant_prbs = crb_to_prb(initial_active_dl_bwp, ue_grant_crbs);
+  const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(pdsch_time_res);
 
   // Fill DL PDCCH DCI.
   pdcch.dci.type                     = dci_dl_rnti_config_type::tc_rnti_f1_0;
@@ -274,7 +274,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
                                                             cw.qam_mod,
                                                             nof_layers,
                                                             tb_scaling_field,
-                                                            ue_grant_crbs.length()}) /
+                                                            ue_grant_prbs.length()}) /
       nof_bits_per_byte;
 
   // Set the number of bytes of the TB.
