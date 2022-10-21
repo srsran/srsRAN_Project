@@ -51,7 +51,6 @@ private:
 private:
   /// FAPI slot-based, data-specific message notifier.
   std::reference_wrapper<fapi::slot_data_message_notifier> data_notifier;
-  srslog::basic_logger&                                    logger;
 };
 
 } // namespace fapi_adaptor

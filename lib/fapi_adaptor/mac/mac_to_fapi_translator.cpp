@@ -17,7 +17,6 @@
 #include "srsgnb/fapi_adaptor/mac/messages/pucch.h"
 #include "srsgnb/fapi_adaptor/mac/messages/pusch.h"
 #include "srsgnb/fapi_adaptor/mac/messages/ssb.h"
-#include "srsgnb/srslog/logger.h"
 
 using namespace srsgnb;
 using namespace fapi_adaptor;
@@ -177,6 +176,8 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
                 "Number of PDUs ({}) and Payloads ({}) for SIB PDUs doesn't match",
                 pdsch_registry.get_nof_pdus(pdsch_pdu_registry::ue),
                 dl_data.ue_pdus.size());
+  srsgnb_assert(dl_data.sib1_pdus.size() || dl_data.rar_pdus.size() || dl_data.ue_pdus.size(),
+                "Error, received a Tx_Data.request with zero payloads");
 
   fapi::tx_data_request_message msg;
   fapi::tx_data_request_builder builder(msg);

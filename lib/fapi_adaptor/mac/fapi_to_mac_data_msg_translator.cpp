@@ -60,7 +60,6 @@ void fapi_to_mac_data_msg_translator::on_dl_tti_response(const fapi::dl_tti_resp
 void fapi_to_mac_data_msg_translator::on_rx_data_indication(const fapi::rx_data_indication_message& msg)
 {
   mac_rx_data_indication indication;
-
   indication.sl_rx      = slot_point(scs, msg.sfn, msg.slot);
   indication.cell_index = to_du_cell_index(0);
   for (const auto& fapi_pdu : msg.pdus) {
@@ -98,13 +97,31 @@ void fapi_to_mac_data_msg_translator::on_crc_indication(const fapi::crc_indicati
   crc_handler.get().handle_crc(indication);
 }
 
+/// Converts the given FAPI UCI SINR to dBs as per SCF-222 v4.0 section 3.4.9.
+static float to_uci_ul_sinr(int sinr)
+{
+  return static_cast<float>(sinr) * 0.002F;
+}
+
+/// Converts the given FAPI UCI RSSI to dBs as per SCF-222 v4.0 section 3.4.9.
+static float to_uci_ul_rssi(unsigned rssi)
+{
+  return static_cast<float>(rssi - 1280) * 0.1F;
+}
+
+/// Converts the given FAPI UCI RSRP to dBs as per SCF-222 v4.0 section 3.4.9.
+static float to_uci_ul_rsrp(unsigned rsrp)
+{
+  return static_cast<float>(rsrp - 1400) * 0.1F;
+}
+
 static void convert_fapi_to_mac_pucch_f0_f1(mac_uci_pdu::pucch_f0_or_f1_type&     mac_pucch,
                                             const fapi::uci_pucch_pdu_format_0_1& fapi_pucch)
 {
   mac_pucch.is_f1 = fapi_pucch.pucch_format == fapi::uci_pucch_pdu_format_0_1::format_type::format_1;
 
   if (fapi_pucch.ul_sinr_metric != std::numeric_limits<decltype(fapi_pucch.ul_sinr_metric)>::min()) {
-    mac_pucch.ul_sinr = fapi_pucch.ul_sinr_metric * 0.002F;
+    mac_pucch.ul_sinr = to_uci_ul_sinr(fapi_pucch.ul_sinr_metric);
   }
 
   if (fapi_pucch.timing_advance_offset_ns !=
@@ -114,11 +131,11 @@ static void convert_fapi_to_mac_pucch_f0_f1(mac_uci_pdu::pucch_f0_or_f1_type&   
   }
 
   if (fapi_pucch.rssi != std::numeric_limits<decltype(fapi_pucch.rssi)>::max()) {
-    mac_pucch.rssi = static_cast<float>(fapi_pucch.rssi) * 0.1F - 1280.F;
+    mac_pucch.rssi = to_uci_ul_rssi(fapi_pucch.rssi);
   }
 
   if (fapi_pucch.rsrp != std::numeric_limits<decltype(fapi_pucch.rsrp)>::max()) {
-    mac_pucch.rsrp = static_cast<float>(fapi_pucch.rsrp) * 0.1F - 1280.F;
+    mac_pucch.rsrp = to_uci_ul_rsrp(fapi_pucch.rsrp);
   }
 
   // Fill SR.
@@ -137,7 +154,6 @@ static void convert_fapi_to_mac_pucch_f0_f1(mac_uci_pdu::pucch_f0_or_f1_type&   
 void fapi_to_mac_data_msg_translator::on_uci_indication(const fapi::uci_indication_message& msg)
 {
   mac_uci_indication_message mac_msg;
-
   mac_msg.sl_rx = slot_point(scs, msg.sfn, msg.slot);
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
@@ -162,19 +178,19 @@ void fapi_to_mac_data_msg_translator::on_uci_indication(const fapi::uci_indicati
 void fapi_to_mac_data_msg_translator::on_srs_indication(const fapi::srs_indication_message& msg) {}
 
 /// Converts the given FAPI RACH occasion RSSI to dBs as per SCF-222 v4.0 section 3.4.11.
-static float to_rssi_dB(int fapi_rssi)
+static float to_prach_rssi_dB(int fapi_rssi)
 {
   return (fapi_rssi - 140000) * 0.001F;
 }
 
 /// Converts the given FAPI RACH preamble power to dBs as per SCF-222 v4.0 section 3.4.11.
-static float to_power_dB(int fapi_power)
+static float to_prach_preamble_power_dB(int fapi_power)
 {
-  return (fapi_power - 140000) * 0.001F;
+  return static_cast<float>(fapi_power - 140000) * 0.001F;
 }
 
 /// Converts the given FAPI RACH preamble SNR to dBs as per SCF-222 v4.0 section 3.4.11.
-static float to_snr_dB(int fapi_snr)
+static float to_prach_preamble_snr_dB(int fapi_snr)
 {
   return (fapi_snr - 128) * 0.5F;
 }
@@ -191,7 +207,7 @@ void fapi_to_mac_data_msg_translator::on_rach_indication(const fapi::rach_indica
     occas.frequency_index                     = pdu.ra_index;
     occas.slot_index                          = pdu.slot_index;
     occas.start_symbol                        = pdu.symbol_index;
-    occas.rssi_dB                             = to_rssi_dB(pdu.avg_rssi);
+    occas.rssi_dB                             = to_prach_rssi_dB(pdu.avg_rssi);
     for (const auto& preamble : pdu.preambles) {
       srsgnb_assert(preamble.preamble_pwr != std::numeric_limits<uint32_t>::max(), "Preamble power field not set");
       srsgnb_assert(preamble.preamble_snr != std::numeric_limits<uint8_t>::max(), "Preamble SNR field not set");
@@ -200,8 +216,8 @@ void fapi_to_mac_data_msg_translator::on_rach_indication(const fapi::rach_indica
       mac_rach_indication::rach_preamble& mac_pream = occas.preambles.back();
       mac_pream.index                               = preamble.preamble_index;
       mac_pream.time_advance = phy_time_unit::from_seconds(preamble.timing_advance_offset_ns * 1e-9);
-      mac_pream.power_dB     = to_power_dB(preamble.preamble_pwr);
-      mac_pream.snr_dB       = to_snr_dB(preamble.preamble_snr);
+      mac_pream.power_dB     = to_prach_preamble_power_dB(preamble.preamble_pwr);
+      mac_pream.snr_dB       = to_prach_preamble_snr_dB(preamble.preamble_snr);
     }
   }
 

@@ -17,7 +17,6 @@ using namespace fapi_adaptor;
 std::unique_ptr<phy_fapi_adaptor> phy_fapi_adaptor_factory_impl::create(const phy_fapi_adaptor_factory_config& config)
 {
   phy_fapi_adaptor_impl_config adaptor_config;
-
   adaptor_config.sector_id            = config.sector_id;
   adaptor_config.scs                  = config.scs;
   adaptor_config.ul_pdu_repository    = &ul_pdu_repository;

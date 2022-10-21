@@ -442,6 +442,44 @@ enum class prach_format_type : uint8_t {
   A3_B3,
 };
 
+inline constexpr const char* to_string(prach_format_type format)
+{
+  switch (format) {
+    case prach_format_type::zero:
+      return "0";
+    case prach_format_type::one:
+      return "1";
+    case prach_format_type::two:
+      return "2";
+    case prach_format_type::three:
+      return "3";
+    case prach_format_type::A1:
+      return "A1";
+    case prach_format_type::A1_B1:
+      return "A1/B1";
+    case prach_format_type::A2:
+      return "A2";
+    case prach_format_type::A2_B2:
+      return "A2/B2";
+    case prach_format_type::A3:
+      return "A3";
+    case prach_format_type::A3_B3:
+      return "A3/B3";
+    case prach_format_type::B1:
+      return "B1";
+    case prach_format_type::B4:
+      return "B4";
+    case prach_format_type::C0:
+      return "C0";
+    case prach_format_type::C2:
+      return "C2";
+    default:
+      srsgnb_assert(0, "Invalid PRACH format={}", format);
+      break;
+  }
+  return "";
+}
+
 /// Uplink PRACH PDU information.
 struct ul_prach_pdu {
   pci_t             phys_cell_id;

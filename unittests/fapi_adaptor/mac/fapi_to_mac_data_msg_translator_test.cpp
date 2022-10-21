@@ -54,12 +54,12 @@ protected:
 private:
   unsigned slot            = 0;
   unsigned sfn             = 1;
-  float    rssi            = 14;
+  float    rssi            = 14.F;
   unsigned slot_index      = 3;
   unsigned start_symbol    = 4;
   unsigned freq_index      = 5;
-  float    snr             = 12;
-  float    power           = 13;
+  float    snr             = 12.F;
+  float    power           = 13.F;
   unsigned time_advance_ns = 8;
 
   fapi::rach_indication_message build_message()

@@ -17,6 +17,7 @@ target_link_libraries(du_example
         srsgnb_gateway
         mac_fapi_adaptor_factory
         phy_fapi_adaptor_factory
+        srsgnb_fapi_message_loggers
         srsgnb_phy_support
         srsgnb_upper_phy
         srsgnb_signal_processors
