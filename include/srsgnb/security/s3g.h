@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "security.h"
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -79,14 +80,20 @@ void s3g_generate_keystream(S3G_STATE* state, uint32_t n, uint32_t* ks);
 // void snow3g_f8(u8* key, u32 count, u32 bearer, u32 dir, u8* data, u32 length);
 
 /* f9.
+ * Output : 32 bit block used as MAC
  * Input key: 128 bit Integrity Key.
  * Input count:32-bit Count, Frame dependent input.
  * Input fresh: 32-bit Random number.
  * Input dir:1 bit, direction of transmission (in the LSB).
  * Input data: length number of bits, input bit stream.
  * Input length: 64 bit Length, i.e., the number of bits to be MAC'd.
- * Output : 32 bit block used as MAC
  * Generates 32-bit MAC using UIA2 algorithm as defined in Section 4.
  */
 
-uint8_t* s3g_f9(const uint8_t* key, uint32_t count, uint32_t fresh, uint32_t dir, uint8_t* data, uint64_t length);
+void s3g_f9(srsgnb::sec_mac& mac,
+            const uint8_t*   key,
+            uint32_t         count,
+            uint32_t         fresh,
+            uint32_t         dir,
+            uint8_t*         data,
+            uint64_t         length);

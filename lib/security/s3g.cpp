@@ -472,17 +472,22 @@ uint8_t mask8bit(int n)
  * Output  : 32 bit block used as MAC
  * Generates 32-bit MAC using UIA2 algorithm as defined in Section 4.
  */
-uint8_t* s3g_f9(const uint8_t* key, uint32_t count, uint32_t fresh, uint32_t dir, uint8_t* data, uint64_t length)
+void s3g_f9(srsgnb::sec_mac& mac,
+            const uint8_t*   key,
+            uint32_t         count,
+            uint32_t         fresh,
+            uint32_t         dir,
+            uint8_t*         data,
+            uint64_t         length)
 {
-  uint32_t       K[4], IV[4], z[5];
-  uint32_t       i        = 0, D;
-  static uint8_t MAC_I[4] = {0, 0, 0, 0}; /* static memory for the result */
-  uint64_t       EVAL;
-  uint64_t       V;
-  uint64_t       P;
-  uint64_t       Q;
-  uint64_t       c;
-  S3G_STATE      state, *state_ptr;
+  uint32_t  K[4], IV[4], z[5];
+  uint32_t  i = 0, D;
+  uint64_t  EVAL;
+  uint64_t  V;
+  uint64_t  P;
+  uint64_t  Q;
+  uint64_t  c;
+  S3G_STATE state, *state_ptr;
 
   uint64_t M_D_2;
   int      rem_bits = 0;
@@ -549,11 +554,10 @@ uint8_t* s3g_f9(const uint8_t* key, uint32_t count, uint32_t fresh, uint32_t dir
 
   /* XOR with z_5: this is a modification to the reference C code,
      which forgot to XOR z[5] */
-  for (i = 0; i < 4; i++)
+  for (i = 0; i < 4; i++) {
     /*
     MAC_I[i] = (mac32 >> (8*(3-i))) & 0xff;
     */
-    MAC_I[i] = ((EVAL >> (56 - (i * 8))) ^ (z[4] >> (24 - (i * 8)))) & 0xff;
-
-  return MAC_I;
+    mac[i] = ((EVAL >> (56 - (i * 8))) ^ (z[4] >> (24 - (i * 8)))) & 0xff;
+  }
 }

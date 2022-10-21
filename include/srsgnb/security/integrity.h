@@ -34,7 +34,6 @@ void security_nia1(sec_mac&              mac,
                    uint32_t              msg_len)
 {
   static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
-  uint32_t i = 0;
 
   // FIXME for now we copy the byte buffer to a contiguous piece of memory.
   // This will be fixed later.
@@ -48,11 +47,7 @@ void security_nia1(sec_mac&              mac,
   }
 
   if ((msg_len + 7) / 8 <= len) {
-    uint8_t* m_ptr =
-        s3g_f9(key.data(), count, bearer << 27, static_cast<uint8_t>(direction), continuous_buf.data(), msg_len);
-    for (i = 0; i < 4; i++) {
-      mac[i] = m_ptr[i];
-    }
+    s3g_f9(mac, key.data(), count, bearer << 27, static_cast<uint8_t>(direction), continuous_buf.data(), msg_len);
   }
 }
 
