@@ -75,14 +75,8 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
                                                      const format2_configuration& config)
 {
   pucch_processor_result result;
-  result.message.full_payload =
-      span<uint8_t>(result.message.data)
-          .first(config.common.nof_sr + config.common.nof_harq_ack + config.common.nof_csi_part1);
-  result.message.harq_ack = result.message.full_payload.first(config.common.nof_harq_ack);
-  result.message.csi_part1 =
-      result.message.full_payload.subspan(config.common.nof_harq_ack, config.common.nof_csi_part1);
-  result.message.sr =
-      result.message.full_payload.subspan(config.common.nof_harq_ack + config.common.nof_sr, config.common.nof_sr);
+  result.message = pucch_uci_message(
+      config.common.nof_sr, config.common.nof_harq_ack, config.common.nof_csi_part1, config.common.nof_csi_part2);
 
   dmrs_pucch_processor::config_t estimator_config;
   channel_estimator->estimate(estimates, grid, estimator_config);
@@ -94,7 +88,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   demodulator->demodulate(llr, grid, estimates, demod_config);
 
   uci_decoder::configuration decoder_config;
-  result.message.status = decoder->decode(result.message.full_payload, llr, decoder_config);
+  result.message.set_status(decoder->decode(result.message.get_full_payload(), llr, decoder_config));
 
   return result;
 }

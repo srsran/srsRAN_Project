@@ -137,15 +137,16 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
   ASSERT_EQ(result.csi.sinr_dB, 0.0);
 
   // The message shall be valid.
-  ASSERT_EQ(result.message.status, uci_status::valid);
-  ASSERT_EQ(result.message.full_payload.size(), param.ack_bits.size());
-  ASSERT_EQ(result.message.harq_ack.size(), param.ack_bits.size());
+  ASSERT_EQ(result.message.get_status(), uci_status::valid);
+  ASSERT_EQ(result.message.get_full_payload().size(), param.ack_bits.size());
+  ASSERT_EQ(result.message.get_full_payload().size(), param.ack_bits.size());
   if (!param.ack_bits.empty()) {
-    ASSERT_TRUE(srsvec::equal(result.message.full_payload, param.ack_bits));
-    ASSERT_TRUE(srsvec::equal(result.message.harq_ack, param.ack_bits));
+    ASSERT_TRUE(srsvec::equal(result.message.get_full_payload(), param.ack_bits));
+    ASSERT_TRUE(srsvec::equal(result.message.get_harq_ack_bits(), param.ack_bits));
   }
-  ASSERT_EQ(result.message.sr.size(), 0);
-  ASSERT_EQ(result.message.csi_part1.size(), 0);
+  ASSERT_EQ(result.message.get_sr_bits().size(), 0);
+  ASSERT_EQ(result.message.get_csi_part1_bits().size(), 0);
+  ASSERT_EQ(result.message.get_csi_part2_bits().size(), 0);
 }
 
 INSTANTIATE_TEST_SUITE_P(PucchProcessorFormat1,

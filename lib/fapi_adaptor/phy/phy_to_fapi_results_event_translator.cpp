@@ -169,7 +169,7 @@ static void fill_format_0_1_sr(fapi::uci_pucch_pdu_format_0_1_builder& builder, 
 
   // Set the SR detection based on the UCI status.
   const pucch_uci_message& msg = result.processor_result.message;
-  builder.set_sr_parameters(msg.status == uci_status::valid, {});
+  builder.set_sr_parameters(msg.get_status() == uci_status::valid, {});
 }
 
 /// Fills the HARQ parameters for PUCCH Format 0 or Format 1 using the given builder and results.
@@ -188,9 +188,10 @@ static void fill_format_0_1_harq(fapi::uci_pucch_pdu_format_0_1_builder& builder
 
   const pucch_uci_message& msg = result.processor_result.message;
   // Write the contents when the uci status is valid.
-  if (msg.status == uci_status::valid) {
+  if (msg.get_status() == uci_status::valid) {
     for (unsigned i = 0; i != context.nof_expected_harq_bits; ++i) {
-      harq[i] = (msg.harq_ack[i] == 1) ? uci_pucch_f0_or_f1_harq_values::ack : uci_pucch_f0_or_f1_harq_values::nack;
+      harq[i] = (msg.get_harq_ack_bits()[i] == 1) ? uci_pucch_f0_or_f1_harq_values::ack
+                                                  : uci_pucch_f0_or_f1_harq_values::nack;
     }
   }
 

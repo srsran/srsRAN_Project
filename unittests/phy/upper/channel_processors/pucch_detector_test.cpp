@@ -114,21 +114,23 @@ TEST_P(PUCCHDetectFixture, Format1Test)
 
   if (test_data.cfg.nof_harq_ack == 0) {
     if (test_data.sr_bit.empty()) {
-      ASSERT_EQ(msg.status, uci_status::invalid) << "An empty PUCCH occasion should return an 'invalid' UCI.";
+      ASSERT_EQ(msg.get_status(), uci_status::invalid) << "An empty PUCCH occasion should return an 'invalid' UCI.";
       return;
     }
     if (test_data.sr_bit[0] == 1) {
-      ASSERT_EQ(msg.status, uci_status::valid) << "A positive SR-only PUCCH occasion should return a 'valid' UCI.";
+      ASSERT_EQ(msg.get_status(), uci_status::valid)
+          << "A positive SR-only PUCCH occasion should return a 'valid' UCI.";
       return;
     }
-    ASSERT_EQ(msg.status, uci_status::invalid) << "A negative SR-only PUCCH occasion should return an 'invalid' UCI.";
+    ASSERT_EQ(msg.get_status(), uci_status::invalid)
+        << "A negative SR-only PUCCH occasion should return an 'invalid' UCI.";
     return;
   }
 
-  ASSERT_EQ(msg.status, uci_status::valid);
+  ASSERT_EQ(msg.get_status(), uci_status::valid);
 
-  ASSERT_EQ(msg.harq_ack.size(), test_data.ack_bits.size()) << "Wrong number of HARQ-ACK bits.";
-  ASSERT_TRUE(std::equal(msg.harq_ack.begin(), msg.harq_ack.end(), test_data.ack_bits.begin()))
+  ASSERT_EQ(msg.get_harq_ack_bits().size(), test_data.ack_bits.size()) << "Wrong number of HARQ-ACK bits.";
+  ASSERT_TRUE(std::equal(msg.get_harq_ack_bits().begin(), msg.get_harq_ack_bits().end(), test_data.ack_bits.begin()))
       << "The HARQ-ACK bits do not match.";
 }
 
