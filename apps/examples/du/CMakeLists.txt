@@ -6,7 +6,12 @@
 # the distribution.
 #
 
-add_executable(du_example du_example.cpp)
+add_executable(du_example
+        du_example.cpp
+        fapi_factory.cpp
+        phy_factory.cpp
+        radio_factory.cpp)
+
 target_link_libraries(du_example
         srsgnb_du_high
         srsgnb_gateway
@@ -19,4 +24,5 @@ target_link_libraries(du_example
         srsgnb_channel_equalizer
         srsgnb_lower_phy
         srsgnb_radio)
+
 target_include_directories(du_example PRIVATE ${CMAKE_SOURCE_DIR})
