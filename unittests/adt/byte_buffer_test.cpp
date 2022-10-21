@@ -23,6 +23,9 @@ static_assert(std::is_same<byte_buffer::const_iterator::value_type, uint8_t>::va
 static_assert(std::is_same<byte_buffer::iterator::reference, uint8_t&>::value, "Invalid reference type");
 static_assert(std::is_same<byte_buffer::const_iterator::reference, const uint8_t&>::value, "Invalid reference type");
 static_assert(std::is_same<byte_buffer::const_iterator::pointer, const uint8_t*>::value, "Invalid pointer type");
+static_assert(is_byte_buffer_range<byte_buffer>::value, "Invalid metafunction is_byte_buffer_range");
+static_assert(is_byte_buffer_range<byte_buffer_view>::value, "Invalid metafunction is_byte_buffer_range");
+static_assert(is_byte_buffer_range<byte_buffer_slice>::value, "Invalid metafunction is_byte_buffer_range");
 
 std::random_device rd;
 std::mt19937       g(rd());
@@ -74,6 +77,50 @@ TEST(byte_buffer, empty_byte_buffer_in_valid_state)
   ASSERT_EQ(pdu, std::list<uint8_t>{});
 }
 
+TEST(byte_buffer, ctor_with_span)
+{
+  std::vector<uint8_t> bytes = make_vec(get_random_uint(1, byte_buffer_segment::SEGMENT_SIZE * 4));
+  byte_buffer          pdu{bytes};
+
+  ASSERT_FALSE(pdu.empty());
+  ASSERT_EQ(bytes.size(), pdu.length());
+  ASSERT_NE(pdu.begin(), pdu.end());
+  ASSERT_EQ(pdu.end() - pdu.begin(), bytes.size());
+  ASSERT_TRUE(std::equal(pdu.begin(), pdu.end(), bytes.begin(), bytes.end()));
+}
+
+TEST(byte_buffer, equality_comparison)
+{
+  std::vector<uint8_t> bytes = make_vec(get_random_uint(1, byte_buffer_segment::SEGMENT_SIZE * 4));
+  byte_buffer          pdu{bytes};
+  byte_buffer          pdu2{bytes};
+  std::list<uint8_t>   not_a_span{bytes.begin(), bytes.end()};
+
+  // comparison byte_buffer vs span.
+  ASSERT_EQ(pdu, bytes);
+  ASSERT_EQ(bytes, pdu);
+
+  // comparison byte_buffer vs byte_buffer.
+  ASSERT_EQ(pdu, pdu2);
+  ASSERT_EQ(pdu2, pdu);
+
+  // comparison byte_buffer vs any other range.
+  ASSERT_EQ(pdu, not_a_span);
+  ASSERT_EQ(not_a_span, pdu);
+
+  // comparison byte_buffer vs other range of different length.
+  std::vector<uint8_t> bytes2 = bytes;
+  bytes2.push_back(get_random_uint(0, 255));
+  std::list<uint8_t> not_a_span2{bytes2.begin(), bytes2.end()};
+  pdu2 = byte_buffer{bytes2};
+  ASSERT_NE(pdu, bytes2);
+  ASSERT_NE(bytes2, pdu);
+  ASSERT_NE(pdu, pdu2);
+  ASSERT_NE(pdu2, pdu);
+  ASSERT_NE(pdu, not_a_span2);
+  ASSERT_NE(not_a_span2, pdu);
+}
+
 TEST(byte_buffer, append)
 {
   byte_buffer          pdu;
@@ -82,6 +129,7 @@ TEST(byte_buffer, append)
   // Append span of bytes (that may occupy more than one segment).
   pdu.append(vec);
   ASSERT_EQ(pdu.length(), vec.size());
+  ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin());
   ASSERT_EQ(pdu, vec);
 
   // Append two byte_buffers.
@@ -90,6 +138,7 @@ TEST(byte_buffer, append)
   ASSERT_EQ(pdu2, vec2);
   pdu2.append(pdu);
   ASSERT_EQ(pdu.length() + vec2.size(), pdu2.length());
+  ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin());
   ASSERT_EQ(pdu2, concat_vec(vec2, vec));
 }
 
@@ -114,31 +163,14 @@ TEST(byte_buffer, clear)
   pdu.append(make_vec(get_random_uint(1, byte_buffer_segment::SEGMENT_SIZE * 4)));
 
   ASSERT_TRUE(not pdu.empty());
-  ASSERT_GT(pdu.length(), 0);
   pdu.clear();
   ASSERT_TRUE(pdu.empty());
   ASSERT_EQ(pdu.length(), 0);
   ASSERT_EQ(pdu.begin(), pdu.end());
-}
 
-TEST(byte_buffer, eq_compare_with_span)
-{
-  byte_buffer          pdu, pdu2, pdu3, pdu4;
-  std::vector<uint8_t> bytes         = {1, 2, 3, 4, 5, 6};
-  std::vector<uint8_t> shorter_bytes = {1, 2, 3, 4, 5};
-  std::vector<uint8_t> diff_bytes    = {2, 2, 3, 4, 5, 6};
-  std::vector<uint8_t> longer_bytes  = {1, 2, 3, 4, 5, 6, 7};
-
-  pdu.append(bytes);
-
-  ASSERT_EQ(pdu, bytes);
-  ASSERT_EQ(bytes, pdu);
-  ASSERT_NE(shorter_bytes, pdu);
-  ASSERT_NE(diff_bytes, pdu);
-  ASSERT_NE(longer_bytes, pdu);
-  ASSERT_NE(pdu, shorter_bytes);
-  ASSERT_NE(pdu, diff_bytes);
-  ASSERT_NE(pdu, longer_bytes);
+  // multiple clear calls are valid.
+  pdu.clear();
+  ASSERT_TRUE(pdu.empty());
 }
 
 TEST(byte_buffer, eq_compare_with_byte_buffer)
@@ -427,7 +459,7 @@ TEST(byte_buffer, iterator_of_segments)
   // one-segment buffer
   pdu.append(small_vec_bytes);
   ASSERT_NE(pdu.segments().begin(), pdu.segments().end());
-  ASSERT_EQ(*pdu.segments().begin(), span<const uint8_t>(small_vec_bytes));
+  ASSERT_EQ(*pdu.segments().begin(), span<uint8_t>(small_vec_bytes));
   ASSERT_EQ(++pdu.segments().begin(), pdu.segments().end());
 
   // multiple-segment buffer.
@@ -436,7 +468,7 @@ TEST(byte_buffer, iterator_of_segments)
   unsigned             seg_offset = 0;
   for (auto seg_it = pdu.segments().begin(); seg_it != pdu.segments().end(); ++seg_it) {
     ASSERT_TRUE(seg_it->size() > 0);
-    ASSERT_EQ(*seg_it, span<const uint8_t>(total_bytes.data() + seg_offset, seg_it->size()));
+    ASSERT_EQ(*seg_it, span<uint8_t>(total_bytes.data() + seg_offset, seg_it->size()));
     seg_offset += seg_it->size();
   }
   ASSERT_EQ(seg_offset, total_bytes.size());

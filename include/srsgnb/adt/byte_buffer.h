@@ -16,7 +16,96 @@
 
 namespace srsgnb {
 
-class byte_buffer_view;
+/// \brief Non-owning view to a byte sequence.
+/// The underlying byte sequence is not contiguous in memory. Instead, it is represented as an intrusive linked list of
+/// memory chunks, aka byte buffer segments.
+class byte_buffer_view
+{
+  /// Checks whether type is a byte_buffer/byte_buffer_slice.
+  template <typename ByteBufferType>
+  using is_owning_byte_buffer_type =
+      std::conditional_t<std::is_same<std::decay_t<ByteBufferType>, byte_buffer_view>::value,
+                         std::false_type,
+                         is_byte_buffer_range<ByteBufferType>>;
+
+public:
+  using value_type     = uint8_t;
+  using iterator       = detail::byte_buffer_iterator_impl<uint8_t>;
+  using const_iterator = detail::byte_buffer_iterator_impl<const uint8_t>;
+
+  byte_buffer_view() = default;
+
+  /// Conversion from a pair of iterators.
+  byte_buffer_view(iterator it_begin_, iterator it_end_) : it(it_begin_), it_end(it_end_) {}
+
+  /// Conversion from byte_buffer/byte_buffer_slice.
+  template <typename ByteBufferType, std::enable_if_t<is_owning_byte_buffer_type<ByteBufferType>::value, int> = 0>
+  byte_buffer_view(const ByteBufferType& buffer) : it(buffer.begin()), it_end(buffer.end())
+  {
+  }
+  template <typename ByteBufferType, std::enable_if_t<is_owning_byte_buffer_type<ByteBufferType>::value, int> = 0>
+  byte_buffer_view(const ByteBufferType& buffer, size_t start, size_t sz) : it(buffer.begin() + start), it_end(it + sz)
+  {
+  }
+
+  iterator       begin() { return it; }
+  iterator       end() { return it_end; }
+  const_iterator begin() const { return it; }
+  const_iterator end() const { return it_end; }
+
+  bool empty() const { return it == it_end; }
+
+  size_t length() const { return it_end - it; }
+
+  const uint8_t& operator[](size_t i) const { return *(it + i); }
+  uint8_t&       operator[](size_t i) { return *(it + i); }
+
+  /// Returns another sub-view with dimensions specified in arguments.
+  byte_buffer_view view(size_t offset, size_t size) const
+  {
+    srsgnb_assert(offset + size <= length(), "Invalid view dimensions.");
+    return {it + offset, it + offset + size};
+  }
+
+  /// Split byte buffer view into two contiguous views, with break point defined by "offset".
+  /// \param offset index at which view is split into two contiguous views.
+  /// \return pair of contiguous views.
+  std::pair<byte_buffer_view, byte_buffer_view> split(size_t offset)
+  {
+    auto it_split = begin() + offset;
+    return {{begin(), it_split}, {it_split, end()}};
+  }
+
+  /// Returns a non-owning list of segments that compose the byte_buffer.
+  const_byte_buffer_segment_range segments() const { return {it, length()}; }
+
+  /// \brief Equality comparison between byte buffer view and another range.
+  template <typename T>
+  friend bool operator==(const byte_buffer_view& lhs, const T& r)
+  {
+    return detail::compare_byte_buffer_range(lhs, r);
+  }
+  template <typename T, std::enable_if_t<not is_byte_buffer_range<T>::value, int> = 0>
+  friend bool operator==(const T& r, const byte_buffer_view& rhs)
+  {
+    return detail::compare_byte_buffer_range(rhs, r);
+  }
+  template <typename T>
+  friend bool operator!=(const byte_buffer_view& lhs, const T& r)
+  {
+    return not(lhs == r);
+  }
+  template <typename T, std::enable_if_t<not is_byte_buffer_range<T>::value, int> = 0>
+  friend bool operator!=(const T& r, const byte_buffer_view& rhs)
+  {
+    return not(rhs == r);
+  }
+
+protected:
+  iterator it{nullptr, 0};
+  iterator it_end{nullptr, 0};
+};
+
 class byte_buffer_slice;
 
 /// \brief Byte sequence, which represents its data in memory via an intrusive linked list of memory chunks.
@@ -135,7 +224,14 @@ public:
   }
 
   /// Appends a view of bytes into current byte buffer.
-  void append(const byte_buffer_view& view);
+  void append(const byte_buffer_view& view)
+  {
+    // append segment by segment.
+    auto view_segs = view.segments();
+    for (span<const uint8_t> seg : view_segs) {
+      append(seg);
+    }
+  }
 
   /// Appends an owning view of bytes into current byte buffer.
   void append(const byte_buffer_slice& view);
@@ -195,9 +291,11 @@ public:
   /// Clear byte buffer.
   void clear()
   {
-    set_tail(nullptr);
-    head->metadata().pkt_len = 0;
-    head                     = nullptr;
+    if (head != nullptr) {
+      set_tail(nullptr);
+      head->metadata().pkt_len = 0;
+      head                     = nullptr;
+    }
   }
 
   /// Removes "nof_bytes" from the head of the byte_buffer.
@@ -245,38 +343,6 @@ public:
 
   const uint8_t& operator[](size_t i) const { return *(begin() + i); }
   uint8_t&       operator[](size_t i) { return *(begin() + i); }
-
-  template <typename Container, std::enable_if_t<std::is_convertible<Container, span<const uint8_t>>::value, int> = 0>
-  bool operator==(const Container& container) const
-  {
-    // Use size for fast comparison.
-    if (static_cast<ssize_t>(length()) != container.end() - container.begin()) {
-      return false;
-    }
-    // Compare segment by segment.
-    auto segs = segments();
-    auto it   = container.begin();
-    for (auto seg_it = segs.begin(); seg_it != segs.end(); ++seg_it) {
-      auto next_it = it + (seg_it->end() - seg_it->begin());
-      if (not std::equal(seg_it->begin(), seg_it->end(), it, next_it)) {
-        return false;
-      }
-      it = next_it;
-    }
-    srsgnb_sanity_check(it == container.end(), "Invalid byte_buffer::length()");
-    return true;
-  }
-  template <typename Container,
-            std::enable_if_t<not std::is_convertible<Container, span<const uint8_t>>::value, int> = 0>
-  bool operator==(const Container& container) const
-  {
-    return std::equal(begin(), end(), container.begin(), container.end());
-  }
-  template <typename Container>
-  bool operator!=(const Container& other) const
-  {
-    return !(*this == other);
-  }
 
   iterator       begin() { return iterator{head.get(), 0}; }
   const_iterator cbegin() const { return const_iterator{head.get(), 0}; }
@@ -344,6 +410,28 @@ public:
   byte_buffer_segment_range       segments() { return byte_buffer_segment_range(head.get(), 0, length()); }
   const_byte_buffer_segment_range segments() const { return const_byte_buffer_segment_range(head.get(), 0, length()); }
 
+  /// \brief Equality comparison between byte buffer view and another range.
+  template <typename R>
+  friend bool operator==(const byte_buffer& lhs, const R& r)
+  {
+    return detail::compare_byte_buffer_range(lhs, r);
+  }
+  template <typename T, std::enable_if_t<not is_byte_buffer_range<T>::value, int> = 0>
+  friend bool operator==(const T& r, const byte_buffer& rhs)
+  {
+    return detail::compare_byte_buffer_range(rhs, r);
+  }
+  template <typename T>
+  friend bool operator!=(const byte_buffer& lhs, const T& r)
+  {
+    return !(lhs == r);
+  }
+  template <typename T, std::enable_if_t<not is_byte_buffer_range<T>::value, int> = 0>
+  friend bool operator!=(const T& r, const byte_buffer& rhs)
+  {
+    return !(rhs == r);
+  }
+
 private:
   void append_segment()
   {
@@ -383,102 +471,6 @@ private:
   // TODO: Optimize. shared_ptr<> has a lot of boilerplate we don't need.
   std::shared_ptr<byte_buffer_segment> head = nullptr;
 };
-
-inline bool operator==(const byte_buffer& buf, span<const uint8_t> bytes)
-{
-  if (buf.length() != bytes.size()) {
-    return false;
-  }
-  unsigned i = 0;
-  for (uint8_t val : buf) {
-    if (val != bytes[i]) {
-      return false;
-    }
-    i++;
-  }
-  return true;
-}
-inline bool operator==(span<const uint8_t> bytes, const byte_buffer& buf)
-{
-  return buf == bytes;
-}
-inline bool operator!=(const byte_buffer& buf, span<const uint8_t> bytes)
-{
-  return !(buf == bytes);
-}
-inline bool operator!=(span<const uint8_t> bytes, const byte_buffer& buf)
-{
-  return !(buf == bytes);
-}
-
-class byte_buffer_view
-{
-public:
-  using value_type     = uint8_t;
-  using iterator       = byte_buffer::iterator;
-  using const_iterator = byte_buffer::const_iterator;
-
-  byte_buffer_view() = default;
-  byte_buffer_view(iterator it_begin_, iterator it_end_) : it(it_begin_), it_end(it_end_) {}
-  byte_buffer_view(const byte_buffer& buffer) : it(buffer.begin()), it_end(buffer.end()) {}
-  byte_buffer_view(const byte_buffer& buffer, size_t start, size_t sz) : it(buffer.begin() + start), it_end(it + sz) {}
-
-  iterator       begin() { return it; }
-  iterator       end() { return it_end; }
-  const_iterator begin() const { return it; }
-  const_iterator end() const { return it_end; }
-
-  bool empty() const { return it == it_end; }
-
-  size_t length() const { return it_end - it; }
-
-  const uint8_t& operator[](size_t i) const { return *(it + i); }
-
-  /// Returns another sub-view with dimensions specified in arguments.
-  byte_buffer_view view(size_t offset, size_t size) const
-  {
-    srsgnb_assert(offset + size <= length(), "Invalid view dimensions.");
-    return {it + offset, it + offset + size};
-  }
-
-  /// Split byte buffer view into two contiguous views, with break point defined by "offset".
-  /// \param offset index at which view is split into two contiguous views.
-  /// \return pair of contiguous views.
-  std::pair<byte_buffer_view, byte_buffer_view> split(size_t offset)
-  {
-    auto it_split = begin() + offset;
-    return {{begin(), it_split}, {it_split, end()}};
-  }
-
-  /// Returns a non-owning list of segments that compose the byte_buffer.
-  byte_buffer_segment_range       segments() { return {it, length()}; }
-  const_byte_buffer_segment_range segments() const { return {it, length()}; }
-
-  /// Compare byte_buffer_view with Range.
-  template <typename Range>
-  bool operator==(const Range& other) const
-  {
-    return std::equal(begin(), end(), other.begin(), other.end());
-  }
-  template <typename Range>
-  bool operator!=(const Range& other) const
-  {
-    return not(*this == other);
-  }
-
-protected:
-  iterator it{nullptr, 0};
-  iterator it_end{nullptr, 0};
-};
-
-inline void byte_buffer::append(const byte_buffer_view& view)
-{
-  // append segment by segment.
-  auto view_segs = view.segments();
-  for (auto seg_it = view_segs.begin(); seg_it != view_segs.end(); ++seg_it) {
-    append(*seg_it);
-  }
-}
 
 /// \brief This class represents a sub-interval or make_slice of a potentially larger byte_buffer.
 /// Like byte_buffer and byte_buffer_view, the represented bytes by this class are not contiguous in memory.
@@ -554,19 +546,28 @@ public:
   const_iterator end() const { return sliced_view.end(); }
 
   /// Returns a non-owning list of segments that compose the byte_buffer.
-  byte_buffer_segment_range       segments() { return sliced_view.segments(); }
   const_byte_buffer_segment_range segments() const { return sliced_view.segments(); }
 
-  template <typename Range>
-  bool operator==(const Range& r) const
+  /// \brief Equality comparison between byte buffer slice and another range.
+  template <typename T>
+  friend bool operator==(const byte_buffer_slice& lhs, const T& r)
   {
-    return std::equal(begin(), end(), r.begin(), r.end());
+    return detail::compare_byte_buffer_range(lhs, r);
   }
-
-  template <typename Range>
-  bool operator!=(const Range& r) const
+  template <typename T, std::enable_if_t<not is_byte_buffer_range<T>::value, int> = 0>
+  friend bool operator==(const T& r, const byte_buffer_slice& rhs)
   {
-    return not(*this == r);
+    return detail::compare_byte_buffer_range(rhs, r);
+  }
+  template <typename T>
+  friend bool operator!=(const byte_buffer_slice& lhs, const T& r)
+  {
+    return not(lhs == r);
+  }
+  template <typename T, std::enable_if_t<not is_byte_buffer_range<T>::value, int> = 0>
+  friend bool operator!=(const T& r, const byte_buffer_slice& rhs)
+  {
+    return not(rhs == r);
   }
 
 private:

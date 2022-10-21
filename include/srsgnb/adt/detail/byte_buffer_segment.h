@@ -336,6 +336,11 @@ public:
     byte_buffer_segment_list_iterator_impl(it.current_segment, it.offset, size_)
   {
   }
+  template <typename OtherT>
+  byte_buffer_segment_list_iterator_impl(const byte_buffer_segment_list_iterator_impl<OtherT>& other) :
+    byte_buffer_segment_list_iterator_impl(other.current_segment, other.offset, other.rem_bytes)
+  {
+  }
 
   reference operator*()
   {
@@ -369,10 +374,16 @@ public:
     return tmp;
   }
 
-  bool operator==(const iterator_type& other) const { return current_segment == other.current_segment; }
+  bool operator==(const iterator_type& other) const
+  {
+    return current_segment == other.current_segment and offset == other.offset;
+  }
   bool operator!=(const iterator_type& other) const { return !(*this == other); }
 
 private:
+  template <typename OtherT>
+  friend class byte_buffer_segment_list_iterator_impl;
+
   SegmentType* current_segment = nullptr;
   unsigned     offset          = 0;
   unsigned     rem_bytes       = 0;
@@ -413,5 +424,95 @@ private:
 /// Range of byte_buffer_segments.
 using byte_buffer_segment_range       = detail::byte_buffer_segment_range_impl<byte_buffer_segment>;
 using const_byte_buffer_segment_range = detail::byte_buffer_segment_range_impl<const byte_buffer_segment>;
+
+/// \brief Checks whether a type represents a range of byte_buffer_iterators (e.g. byte_buffer, byte_buffer_slice,
+/// byte_buffer_view).
+template <typename ByteBufferType>
+using is_byte_buffer_range =
+    std::is_same<typename ByteBufferType::iterator, detail::byte_buffer_iterator_impl<uint8_t>>;
+
+namespace detail {
+
+/// \brief Compare byte buffer range and another container that is not a span or a byte_buffer type.
+/// The comparison is done byte by byte.
+template <
+    typename ByteBufferType,
+    typename U,
+    std::enable_if_t<not std::is_convertible<U, span<const uint8_t>>::value and not is_byte_buffer_range<U>::value,
+                     int> = 0>
+bool compare_byte_buffer_range(const ByteBufferType& t, const U& u)
+{
+  static_assert(is_byte_buffer_range<ByteBufferType>::value, "Invalid byte buffer type passed as argument");
+  return std::equal(t.begin(), t.end(), u.begin(), u.end());
+}
+
+/// \brief Comparison between a byte buffer type and a span of bytes.
+/// For optimization purposes, the comparison is done segment by segment rather than byte by byte.
+template <typename ByteBufferType,
+          typename U,
+          std::enable_if_t<std::is_convertible<U, span<const uint8_t>>::value, int> = 0>
+bool compare_byte_buffer_range(const ByteBufferType& buffer, const U& container)
+{
+  static_assert(is_byte_buffer_range<ByteBufferType>::value, "Invalid byte buffer type passed as argument");
+
+  if (buffer.length() != container.size()) {
+    return false;
+  }
+
+  const_byte_buffer_segment_range segments = buffer.segments();
+  auto                            other_it = container.begin();
+  for (span<const uint8_t> seg : segments) {
+    if (not std::equal(seg.begin(), seg.end(), other_it, other_it + seg.size())) {
+      return false;
+    }
+    other_it += seg.size();
+  }
+  srsgnb_sanity_check(other_it == container.end(), "segment list is in invalid state");
+  return true;
+}
+
+/// \brief Comparison between two byte buffer types.
+/// For optimization purposes, the comparison is done segment by segment rather than byte by byte.
+template <typename ByteBufferType1,
+          typename ByteBufferType2,
+          std::enable_if_t<is_byte_buffer_range<ByteBufferType2>::value, int> = 0>
+bool compare_byte_buffer_range(const ByteBufferType1& lhs, const ByteBufferType2& rhs)
+{
+  static_assert(is_byte_buffer_range<ByteBufferType1>::value, "Invalid byte buffer type passed as argument");
+  if (lhs.length() != rhs.length()) {
+    return false;
+  }
+  const_byte_buffer_segment_range segments1 = lhs.segments();
+  const_byte_buffer_segment_range segments2 = rhs.segments();
+  auto                            seg_it1   = segments1.begin();
+  auto                            seg_it2   = segments2.begin();
+
+  if (seg_it1->begin() == seg_it2->begin() and seg_it1->end() == seg_it2->end()) {
+    // shortcut in case the two byte buffers point to the same underlying memory.
+    return true;
+  }
+  unsigned offset1 = 0;
+  unsigned offset2 = 0;
+  while (seg_it1 != segments1.end() and seg_it2 != segments2.end()) {
+    unsigned to_cmp = std::min(seg_it1->size() - offset1, seg_it2->size() - offset2);
+    if (not std::equal(seg_it1->begin() + offset1, seg_it1->begin() + offset1 + to_cmp, seg_it2->begin() + offset2)) {
+      return false;
+    }
+    offset1 += to_cmp;
+    offset2 += to_cmp;
+    if (offset1 == seg_it1->size()) {
+      ++seg_it1;
+      offset1 = 0;
+    }
+    if (offset2 == seg_it2->size()) {
+      ++seg_it2;
+      offset2 = 0;
+    }
+  }
+  srsgnb_sanity_check(seg_it1 == segments1.end() and seg_it2 == segments2.end(), "byte buffers are in invalid state");
+  return true;
+}
+
+} // namespace detail
 
 } // namespace srsgnb

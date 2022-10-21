@@ -68,7 +68,7 @@ public:
   explicit bit_decoder(srsgnb::byte_buffer_view buffer_) : buffer(buffer_), it(buffer.begin()) {}
 
   /// Get a view to held byte buffer.
-  srsgnb::byte_buffer_view data() const { return buffer; }
+  byte_buffer_view data() const { return buffer; }
 
   /// Gets number of read bytes.
   unsigned nof_bytes() const { return (it - buffer.begin()) + (offset != 0 ? 1U : 0U); }
