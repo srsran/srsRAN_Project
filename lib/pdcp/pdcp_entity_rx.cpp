@@ -282,6 +282,7 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_slice_chain::const_iterat
 
   switch (sec_cfg.cipher_algo) {
     case ciphering_algorithm::nea0:
+      ct.append(msg_begin, msg_end);
       break;
     case ciphering_algorithm::nea1:
       ct = security_nea1(k_enc, count, lcid - 1, direction, msg_begin, msg_end);
