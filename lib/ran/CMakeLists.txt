@@ -18,7 +18,9 @@ add_library(srsgnb_ran band_helper.cpp
         prach/prach_frequency_mapping.cpp
         prach/prach_preamble_information.cpp
         pusch/pusch_mcs.cpp
-        resource_allocation/resource_allocation_frequency.cpp)
+        pusch/ulsch_info.cpp
+        resource_allocation/resource_allocation_frequency.cpp
+        sch/sch_segmentation.cpp)
 target_link_libraries(srsgnb_ran)
 
 install(TARGETS srsgnb_ran EXPORT srsgnb_export)

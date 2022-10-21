@@ -69,12 +69,6 @@ private:
   /// \param[in] c The CRC calculator to aggregate. The generation polynomial must be CRC24B.
   explicit ldpc_segmenter_impl(sch_crc c) : crc_set({std::move(c.crc16), std::move(c.crc24A), std::move(c.crc24B)}){};
 
-  /// Computes the lifting size used to encode/decode the current transport block, as per TS38.212 Section 5.2.2.
-  void compute_lifting_size();
-
-  /// Computes the length of each segment, as per TS38.212 Section 5.2.2.
-  void compute_segment_length();
-
   /// Computes the length of the rate-matched codeblock corresponding to each segment, as per TS38.212
   /// Section 5.4.2.1.
   unsigned compute_rm_length(unsigned i_seg, modulation_scheme mod, unsigned nof_layers) const;

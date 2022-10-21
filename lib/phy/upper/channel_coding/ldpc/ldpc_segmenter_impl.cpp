@@ -40,42 +40,6 @@ std::unique_ptr<ldpc_segmenter_rx> ldpc_segmenter_impl::create_ldpc_segmenter_im
   return std::unique_ptr<ldpc_segmenter_impl>(new ldpc_segmenter_impl());
 }
 
-void ldpc_segmenter_impl::compute_lifting_size()
-{
-  unsigned ref_length = 22;
-  if (base_graph == ldpc_base_graph_type::BG2) {
-    if (nof_tb_bits_in > 640) {
-      ref_length = 10;
-    } else if (nof_tb_bits_in > 560) {
-      ref_length = 9;
-    } else if (nof_tb_bits_in > 192) {
-      ref_length = 8;
-    } else {
-      ref_length = 6;
-    }
-  }
-
-  unsigned total_ref_length = nof_segments * ref_length;
-
-  lifting_size = 0;
-  for (auto ls : all_lifting_sizes) {
-    if (ls * total_ref_length >= nof_tb_bits_out) {
-      lifting_size = ls;
-      break;
-    }
-  }
-  assert(lifting_size != 0);
-}
-
-void ldpc_segmenter_impl::compute_segment_length()
-{
-  constexpr unsigned base_length_BG1 = BG1_N_FULL - BG1_M;
-  constexpr unsigned base_length_BG2 = BG2_N_FULL - BG2_M;
-  unsigned           base_length     = (base_graph == ldpc_base_graph_type::BG1) ? base_length_BG1 : base_length_BG2;
-
-  segment_length = base_length * lifting_size;
-}
-
 unsigned ldpc_segmenter_impl::compute_rm_length(unsigned i_seg, modulation_scheme mod, unsigned nof_layers) const
 {
   unsigned tmp = 0;
@@ -157,8 +121,8 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   if (nof_segments > 1) {
     nof_tb_bits_out += nof_segments * SEG_CRC_LENGTH;
   }
-  compute_lifting_size();
-  compute_segment_length();
+  lifting_size   = compute_lifting_size(nof_tb_bits_tmp, base_graph, nof_segments);
+  segment_length = compute_segment_length(base_graph, lifting_size);
 
   unsigned nof_crc_bits = 0;
   if (nof_segments > 1) {
@@ -250,8 +214,8 @@ void ldpc_segmenter_impl::segment(static_vector<described_rx_codeblock, MAX_NOF_
   if (nof_segments > 1) {
     nof_tb_bits_out += nof_segments * SEG_CRC_LENGTH;
   }
-  compute_lifting_size();
-  compute_segment_length();
+  lifting_size   = compute_lifting_size(tbs, base_graph, nof_segments);
+  segment_length = compute_segment_length(base_graph, lifting_size);
 
   unsigned nof_crc_bits = 0;
   if (nof_segments > 1) {
@@ -272,7 +236,7 @@ void ldpc_segmenter_impl::segment(static_vector<described_rx_codeblock, MAX_NOF_
 
   unsigned cw_offset = 0;
   for (unsigned i_segment = 0; i_segment != nof_segments; ++i_segment) {
-    unsigned nof_filler_bits = segment_length - max_info_bits - nof_crc_bits;
+    unsigned nof_filler_bits = segment_length - (max_info_bits + nof_crc_bits);
 
     codeblock_metadata tmp_description =
         generate_cb_metadata({i_segment, cw_length, cw_offset, nof_filler_bits, nof_crc_bits, nof_tb_crc_bits}, cfg);

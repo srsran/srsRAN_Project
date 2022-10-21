@@ -96,6 +96,16 @@ static constexpr uint8_t FILLER_BIT = 254;
 /// Maximum LDPC encoded codeblock size in bits.
 static constexpr unsigned MAX_CODEBLOCK_SIZE = all_lifting_sizes.back() * 66;
 
+/// \brief Computes the transport block CRC size from the transport block size.
+///
+/// \param[in] tbs Transport block size as a number of bits.
+/// \return The number of CRC bits appended to a transport block.
+inline constexpr unsigned compute_tb_crc_size(unsigned tbs)
+{
+  constexpr unsigned MAX_BITS_CRC16 = 3824;
+  return ((tbs <= MAX_BITS_CRC16) ? 16 : 24);
+}
+
 /// \brief Computes the number of codeblocks from the transport block size.
 ///
 /// \param[in] tbs Transport block size as a number of bits (not including CRC).
@@ -104,14 +114,68 @@ static constexpr unsigned MAX_CODEBLOCK_SIZE = all_lifting_sizes.back() * 66;
 inline constexpr unsigned compute_nof_codeblocks(unsigned tbs, ldpc_base_graph_type bg)
 {
   constexpr unsigned CBLOC_CRC_LENGTH = 24;
-  constexpr unsigned MAX_BITS_CRC16   = 3824;
-  unsigned           tb_and_crc_bits  = tbs + ((tbs <= MAX_BITS_CRC16) ? 16 : 24);
+  unsigned           tb_and_crc_bits  = tbs + compute_tb_crc_size(tbs);
 
   unsigned max_segment_length = (bg == ldpc_base_graph_type::BG1) ? 8448 : 3840;
 
   return ((tb_and_crc_bits <= max_segment_length)
               ? 1
               : divide_ceil(tb_and_crc_bits, max_segment_length - CBLOC_CRC_LENGTH));
+}
+
+/// \brief Computes the lifting size used to encode/decode the current transport block, as per TS38.212 Section 5.2.2.
+/// \param[in] tbs              Transport block size.
+/// \param[in] base_graph       LDPC base graph selected for the transmission.
+/// \param[in] nof_segments     Number of segments.
+/// \return The LDPC lifting size.
+inline unsigned compute_lifting_size(unsigned tbs, ldpc_base_graph_type base_graph, unsigned nof_segments)
+{
+  unsigned nof_tb_bits_in = tbs + compute_tb_crc_size(tbs);
+
+  unsigned ref_length = 22;
+  if (base_graph == ldpc_base_graph_type::BG2) {
+    if (nof_tb_bits_in > 640) {
+      ref_length = 10;
+    } else if (nof_tb_bits_in > 560) {
+      ref_length = 9;
+    } else if (nof_tb_bits_in > 192) {
+      ref_length = 8;
+    } else {
+      ref_length = 6;
+    }
+  }
+
+  unsigned total_ref_length = nof_segments * ref_length;
+
+  // Calculate the number of bits per transport block including codeblock CRC.
+  unsigned nof_tb_bits_out = nof_tb_bits_in;
+  if (nof_segments > 1) {
+    nof_tb_bits_out += 24 * nof_segments;
+  }
+
+  unsigned lifting_size = 0;
+  for (auto ls : all_lifting_sizes) {
+    if (ls * total_ref_length >= nof_tb_bits_out) {
+      lifting_size = ls;
+      break;
+    }
+  }
+  assert(lifting_size != 0);
+
+  return lifting_size;
+}
+
+/// \brief Computes the length of each segment, as per TS38.212 Section 5.2.2.
+/// \param[in] base_graph       LDPC base graph selected for the transmission.
+/// \param[in] lifting_size     Lifting size used to encode/decode the current transport block.
+/// \return The segment size according to the LDPC base graph and lifting size.
+inline unsigned compute_segment_length(ldpc_base_graph_type base_graph, unsigned lifting_size)
+{
+  constexpr unsigned base_length_BG1 = 22;
+  constexpr unsigned base_length_BG2 = 10;
+  unsigned           base_length     = (base_graph == ldpc_base_graph_type::BG1) ? base_length_BG1 : base_length_BG2;
+
+  return base_length * lifting_size;
 }
 
 } // namespace ldpc

@@ -1,0 +1,93 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include "srsgnb/adt/bounded_bitset.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
+#include "srsgnb/ran/cyclic_prefix.h"
+#include "srsgnb/ran/dmrs.h"
+#include "srsgnb/ran/ldpc_base_graph.h"
+#include "srsgnb/ran/modulation_scheme.h"
+#include "srsgnb/ran/sch/sch_segmentation.h"
+#include <array>
+
+namespace srsgnb {
+
+/// \brief Collects the necessary parameters to calculate the Uplink Shared Channel (UL-SCH) information.
+///
+/// The parameters are described in TS38.212 Section 6.3.2.4.1.
+struct ulsch_configuration {
+  /// Transport block size. Set to zero if no sched channel is multiplexed.
+  unsigned tbs;
+  /// Modulation scheme.
+  modulation_scheme modulation;
+  /// Target code rate, parameter \f$R\f$. Determined according to TS38.214 Section 6.1.4.1.
+  float target_code_rate;
+  /// Number of HARQ-ACK bits to multiplex in the transmission. Parameter \f$O_\mathrm{ACK}\f$.
+  unsigned nof_harq_ack_bits;
+  /// Number of CSI Part 1 bits to multiplex in the transmission. Parameter \f$O_\mathrm{CSI-1}\f$.
+  unsigned nof_csi_part1_bits;
+  /// Number of CSI Part 2 bits to multiplex in the transmission. Parameter \f$O_\mathrm{CSI-2}\f$.
+  unsigned nof_csi_part2_bits;
+  /// \brief Parameter \f$\alpha\f$ as per TS38.212 Section 6.3.2.4.
+  ///
+  /// Provided by the higher layer parameter \e scaling in TS38.331 Section 6.3.2 and Information Element \e
+  /// UCI-OnPUSCH.
+  float alpha_scaling;
+  /// Parameter \f$\beta _\mathrm{offset} ^\mathrm{HARQ-ACK}\f$.
+  float harq_ack_beta_offset;
+  /// Parameter \f$\beta _\mathrm{offset} ^\mathrm{CSI-1}\f$.
+  float harq_csi_part1_offset;
+  /// Parameter \f$\beta _\mathrm{offset} ^\mathrm{CSI-2}\f$.
+  float harq_csi_part2_offset;
+  /// Transmission bandwidth in resource blocks.
+  unsigned nof_rb;
+  /// First OFDM index for the transmission within the slot.
+  unsigned start_symbol_index;
+  /// Number of OFDM symbols used for the transmission.
+  unsigned nof_symbols;
+  /// DM-RS Type.
+  dmrs_config_type dmrs_type;
+  /// Indicates which OFDM symbols in the slot contain DM-RS.
+  bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask;
+  /// NUmber of CDN groups without data.
+  unsigned nof_cdm_groups_without_data;
+  /// Number of transmission layers.
+  unsigned nof_layers;
+};
+
+/// \brief Collects Uplink Shared Channel (UL-SCH) derived parameters.
+///
+/// The parameters are described in TS38.212.
+struct ulsch_information {
+  /// Shared channel (SCH) parameters.
+  sch_information sch;
+  /// Number of coded and rate matched UL-SCH data bits. Parameter \f$G^\mathrm{UL-SCH}\f$.
+  unsigned nof_ul_sch_bits;
+  /// Number of coded and rate matched HARQ-ACK data bits. Parameter \f$G^\mathrm{HARQ-ACK}\f$.
+  unsigned nof_harq_ack_bits;
+  /// Number of reserved bits for HARQ-ACK. Parameter \f$G^\mathrm{HARQ-ACK}_\mathrm{rvd}\f$.
+  unsigned nof_harq_ack_rvd;
+  /// Number of coded and rate matched CSI Part 1 data bits. Parameter \f$G^\mathrm{CSI-part1}\f$.
+  unsigned nof_csi_part1_bits;
+  /// Number of coded and rate matched CSI Part 2 data bits. Parameter \f$G^\mathrm{CSI-part2}\f$.
+  unsigned nof_csi_part2_bits;
+  /// Number of resource elements occupied by HARQ-ACK information. Parameter \f$Q'_\mathrm{ACK}\f$.
+  unsigned nof_harq_ack_re;
+  /// Number of resource elements occupied by CSI Part 1 information. Parameter \f$Q'_\mathrm{CSI-1}\f$.
+  unsigned nof_csi_part1_re;
+  /// Number of resource elements occupied by CSI Part 1 information. Parameter \f$Q'_\mathrm{CSI-2}\f$.
+  unsigned nof_csi_part2_re;
+};
+
+ulsch_information get_ulsch_information(const ulsch_configuration& config);
+
+} // namespace srsgnb
