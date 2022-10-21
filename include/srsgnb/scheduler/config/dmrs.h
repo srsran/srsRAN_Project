@@ -16,6 +16,9 @@
 
 namespace srsgnb {
 
+/// \brief Configuration used for DL phase tracking reference signal.
+///
+/// \remark See TS38.331 Section as 6.3.2 (see field \e PTRS-DownlinkConfig).
 struct ptrs_downlink_config {
   // TODO
 };

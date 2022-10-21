@@ -44,7 +44,9 @@ struct pdcch_config {
 struct pdsch_config {
   /// Identifier used to initialize data scrambling (c_init) for PDSCH. If the field is absent, the UE applies the PCI.
   /// See TS38.331, \e dataScramblingIdentityPDSCH, and TS38.211, 7.3.1.1. Values: {0,...,1023}.
-  optional<uint16_t> data_scrambling_id_pdsch;
+  optional<uint16_t>             data_scrambling_id_pdsch;
+  optional<dmrs_downlink_config> pdsch_mapping_type_a_dmrs;
+  optional<dmrs_downlink_config> pdsch_mapping_type_b_dmrs;
   /// PDSCH time domain resource allocations. Size: (0..maxNrofDL-Allocations=16).
   std::vector<pdsch_time_domain_resource_allocation> pdsch_td_alloc_list;
   // TODO: Remaining.
