@@ -14,6 +14,7 @@
 #include "dl_pdsch_pdu.h"
 #include "dl_ssb_pdu.h"
 #include "helpers.h"
+#include "srsgnb/support/format_utils.h"
 #include "uci_pdus.h"
 #include "ul_prach_pdu.h"
 #include "ul_pucch_pdu.h"
@@ -833,62 +834,39 @@ static const char* get_message_type_string(message_type_id msg_id)
   return "";
 }
 
-static void log_pdu_and_range_report(srslog::basic_logger&                 logger,
-                                     const validator_report::error_report& report,
-                                     unsigned                              sfn,
-                                     unsigned                              slot)
+static void log_pdu_and_range_report(fmt::memory_buffer& buffer, const validator_report::error_report& report)
 {
-  logger.error("Error Validating FAPI message at {}.{}, Error message type={}, PDU type={}, in property={}, value={}, "
-               "expected value range=[{}-{}]",
-               sfn,
-               slot,
-               get_message_type_string(report.message_type),
-               get_pdu_type_string(report.message_type, report.pdu_type.value()),
-               report.property_name,
-               report.value,
-               report.expected_value_range.value().first,
-               report.expected_value_range.value().second);
+  fmt::format_to(buffer,
+                 "\t- PDU type={}, property={}, value={}, expected value=[{}-{}]\n",
+                 get_pdu_type_string(report.message_type, report.pdu_type.value()),
+                 report.property_name,
+                 report.value,
+                 report.expected_value_range.value().first,
+                 report.expected_value_range.value().second);
 }
 
-static void
-log_pdu_report(srslog::basic_logger& logger, const validator_report::error_report& report, unsigned sfn, unsigned slot)
+static void log_pdu_report(fmt::memory_buffer& buffer, const validator_report::error_report& report)
 {
-  logger.error("Error Validating FAPI message at {}.{}, Error message type={}, PDU type={}, in property={}, value={}.",
-               sfn,
-               slot,
-               get_message_type_string(report.message_type),
-               get_pdu_type_string(report.message_type, report.pdu_type.value()),
-               report.property_name,
-               report.value);
+  fmt::format_to(buffer,
+                 "\t- PDU type={}, property={}, value={}\n",
+                 get_pdu_type_string(report.message_type, report.pdu_type.value()),
+                 report.property_name,
+                 report.value);
 }
 
-static void log_range_report(srslog::basic_logger&                 logger,
-                             const validator_report::error_report& report,
-                             unsigned                              sfn,
-                             unsigned                              slot)
+static void log_range_report(fmt::memory_buffer& buffer, const validator_report::error_report& report)
 {
-  logger.error("Error Validating FAPI message at {}.{}, Error message type={}, in property={}, value={}, "
-               "expected value range=[{}-{}].",
-               sfn,
-               slot,
-               get_message_type_string(report.message_type),
-               report.property_name,
-               report.value,
-               report.expected_value_range.value().first,
-               report.expected_value_range.value().second);
+  fmt::format_to(buffer,
+                 "\t- Property={}, value={}, expected value=[{}-{}]\n",
+                 report.property_name,
+                 report.value,
+                 report.expected_value_range.value().first,
+                 report.expected_value_range.value().second);
 }
 
-static void log_basic_report(srslog::basic_logger&                 logger,
-                             const validator_report::error_report& report,
-                             unsigned                              sfn,
-                             unsigned                              slot)
+static void log_basic_report(fmt::memory_buffer& buffer, const validator_report::error_report& report)
 {
-  logger.error("Error Validating FAPI message at {}.{}, Error message type ({}), in property ({}), value ({}).",
-               sfn,
-               slot,
-               get_message_type_string(report.message_type),
-               report.property_name,
-               report.value);
+  fmt::format_to(buffer, "\t- Property={}, value={}\n", report.property_name, report.value);
 }
 
 void srsgnb::fapi::log_validator_report(const validator_report& report)
@@ -896,26 +874,36 @@ void srsgnb::fapi::log_validator_report(const validator_report& report)
   static const std::string log_name = "FAPI";
   srslog::basic_logger&    logger   = srslog::fetch_basic_logger(log_name);
 
+  fmt::memory_buffer str_buffer;
+  fmt::format_to(str_buffer,
+                 "Detected {} errors in {} message at slot={}.{}:\n",
+                 report.reports.size(),
+                 get_message_type_string(report.reports.front().message_type),
+                 report.sfn,
+                 report.slot);
+
   for (const auto& error : report.reports) {
     // Basic + PDU + Range log.
     if (error.pdu_type.has_value() && error.expected_value_range.has_value()) {
-      log_pdu_and_range_report(logger, error, report.sfn, report.slot);
+      log_pdu_and_range_report(str_buffer, error);
       continue;
     }
 
     // Basic + PDU log.
     if (error.pdu_type.has_value()) {
-      log_pdu_report(logger, error, report.sfn, report.slot);
+      log_pdu_report(str_buffer, error);
       continue;
     }
 
     // Basic + Range log.
     if (error.expected_value_range.has_value()) {
-      log_range_report(logger, error, report.sfn, report.slot);
+      log_range_report(str_buffer, error);
       continue;
     }
 
     // Basic log.
-    log_basic_report(logger, error, report.sfn, report.slot);
+    log_basic_report(str_buffer, error);
   }
+
+  logger.error("{}", to_c_str(str_buffer));
 }
