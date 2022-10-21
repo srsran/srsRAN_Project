@@ -318,6 +318,56 @@ TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index
   ASSERT_FALSE(ue_is_allocated_pdsch(get_ue(to_du_ue_index(0))));
 }
 
+TEST_P(srb0_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_size)
+{
+  const auto max_msg4_mcs = get_random_uint(0, 27);
+  setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD,
+                                                max_msg4_mcs));
+  // Add UE.
+  add_ue(to_rnti(0x4601), to_du_ue_index(0));
+  // Random payload size.
+  unsigned mac_srb0_sdu_size = get_random_uint(1, 458);
+  push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
+
+  srslog::basic_logger& logger(srslog::fetch_basic_logger("TEST"));
+  logger.info("SRB0 scheduler sanity test params PDU size ({}), max msg4 mcs ({}).", mac_srb0_sdu_size, max_msg4_mcs);
+
+  run_slot();
+}
+
+TEST_P(srb0_scheduler_tester, test_msg4_successful_allocation_with_custom_cell_config)
+{
+  auto cell_cfg =
+      create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD, 0);
+
+  // Modify cell configuration (reproducing msg4 crash scenario in du_example)
+  cell_cfg.pci                          = 69;
+  cell_cfg.dl_carrier.arfcn             = 536020;
+  cell_cfg.ssb_config.offset_to_point_A = 40;
+  cell_cfg.ssb_config.k_ssb             = 6;
+  cell_cfg.coreset0                     = 9;
+
+  setup_sched(cell_cfg);
+
+  // Add UE.
+  add_ue(to_rnti(0x4601), to_du_ue_index(0));
+  // Notify about SRB0 message in DL of size 129 bytes.
+  unsigned mac_srb0_sdu_size = 129;
+  push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
+
+  unsigned exp_size = get_pending_bytes(to_du_ue_index(0));
+
+  run_slot();
+
+  // Test the following:
+  // 1. Check for DCI_1_0 allocation for SRB0 on PDCCH.
+  // 2. Check for PDSCH allocation.
+  // 3. Check whether CW TB bytes matches with pending bytes to be sent.
+  ASSERT_TRUE(ue_is_allocated_pdcch(scheduled_dl_pdcchs(), get_ue(to_du_ue_index(0))));
+  ASSERT_TRUE(ue_is_allocated_pdsch(get_ue(to_du_ue_index(0))));
+  ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(get_ue(to_du_ue_index(0)), exp_size));
+}
+
 INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
                          srb0_scheduler_tester,
                          testing::Values(srb0_test_params{.k0 = 1, .k1 = 4}, srb0_test_params{.k0 = 2, .k1 = 4}));
