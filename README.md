@@ -25,12 +25,26 @@ Build Instructions
   * googletest:          <https://github.com/google/googletest/>
     * You can skip test building by using the cmake option `-DBUILD_TESTS=False`. GoogleTest is not mandatory when building without tests.
 
-For example, on Ubuntu 22.04, one can install the required libraries with:
+You can install the required libraries for some example distributions with the commands below:
+
+<details open>
+<summary>Ubuntu 22.04</summary>
+
 
 ```bash
 sudo apt-get install cmake libfftw3-dev libmbedtls-dev git-lfs libgtest-dev
 git lfs install
 ```
+</details>
+<details>
+<summary>Arch Linux</summary>
+
+
+```bash
+sudo pacman -S cmake fftw mbedtls git-lfs gtest lksctp-tools
+git lfs install
+```
+</details>
 
 * Optional requirements
   * UHD:                 <https://github.com/EttusResearch/uhd>
