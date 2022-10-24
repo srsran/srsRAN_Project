@@ -30,7 +30,7 @@ public:
   void on_new_sdu(byte_buffer pdu) final;
 };
 
-class stress_traffic_source : public pdcp_tx_upper_control_notifier
+class stress_traffic_source
 {
   const stress_test_args& args;
   uint32_t                sdu_size = 0;
@@ -52,9 +52,5 @@ public:
   void set_pdcp_tx_upper(pdcp_tx_upper_data_interface* pdcp_tx_upper) { this->pdcp_tx_upper = pdcp_tx_upper; }
 
   void send_pdu();
-
-  // pdcp_tx_upper_layer_control_notifier interface
-  void on_max_count_reached() final{};
-  void on_protocol_failure() final {}
 };
 } // namespace srsgnb
