@@ -14,75 +14,13 @@
 #pragma once
 
 #include "channel_equalizer_zf_impl.h"
+#include "srsgnb/srsvec/add.h"
+#include "srsgnb/srsvec/dot_prod.h"
+#include "srsgnb/srsvec/prod.h"
+#include "srsgnb/srsvec/sc_prod.h"
+#include "srsgnb/srsvec/zero.h"
 
 namespace srsgnb {
-
-namespace detail {
-
-/// \brief Processes a single OFDM symbol with the Zero-Forcing equalization algorithm.
-/// \tparam RX_PORTS          Number of receive antenna ports.
-/// \param[out] symbol_out    Resultant equalized symbol.
-/// \param[out] eq_noise_vars Noise variances after equalization.
-/// \param[in]  symbols_in    Channel symbols, i.e., complex samples from the receive ports.
-/// \param[in]  ch_estimates  Channel estimation coefficients.
-/// \param[in]  noise_var_est Estimated noise variance. It is assumed to be the same for each receive port.
-/// \param[in]  tx_scaling    Transmission gain scaling factor.
-template <unsigned RX_PORTS>
-static void equalize_zf_1xn_symbol(span<cf_t>                                    symbol_out,
-                                   span<float>                                   eq_noise_vars,
-                                   const std::array<span<const cf_t>, RX_PORTS>& symbols_in,
-                                   const std::array<span<const cf_t>, RX_PORTS>& ch_estimates,
-                                   float                                         noise_var_est,
-                                   float                                         tx_scaling)
-{
-  unsigned nof_subcs = symbols_in[0].size();
-
-  for (unsigned i_subc = 0; i_subc != nof_subcs; ++i_subc) {
-    float ch_mod_sq = 0;
-    cf_t  re_out    = 0;
-
-    // Channel estimates and input resource elements.
-    for (unsigned i_port = 0; i_port != RX_PORTS; ++i_port) {
-      // Sum the absolute value squared of each port channel estimate.
-      ch_mod_sq += abs_sq(ch_estimates[i_port][i_subc]);
-
-      // Multiply each resource element by its matched filter, according to the channel estimates.
-      re_out += symbols_in[i_port][i_subc] * std::conj(ch_estimates[i_port][i_subc]);
-    }
-
-    // Calculate the reciprocal of the denominators. Set the symbols to zero in case of division by zero, NAN of INF.
-    float d_pinv           = tx_scaling * ch_mod_sq;
-    float d_nvars          = d_pinv * tx_scaling;
-    float d_pinv_rcp       = 0.0F;
-    float d_pinv_rcp_nvars = 0.0F;
-    if (std::isnormal(d_pinv)) {
-      d_pinv_rcp       = 1.0F / d_pinv;
-      d_pinv_rcp_nvars = 1.0F / d_nvars;
-    }
-    // Normalize the gain of the channel combined with the equalization to unity.
-    re_out *= d_pinv_rcp;
-    symbol_out[i_subc] = re_out;
-
-    // Calculate noise variances.
-    eq_noise_vars[i_subc] = noise_var_est * d_pinv_rcp_nvars;
-  }
-}
-
-/// \brief Processes a single OFDM symbol with the Zero-Forcing equalization algorithm. specialization for SISO case.
-/// \param[out] symbol_out    Resultant equalized symbol.
-/// \param[out] eq_noise_vars Noise variances after equalization.
-/// \param[in]  symbol_in     Channel symbols, i.e., complex samples from the receive ports.
-/// \param[in]  ch_estimates  Channel estimation coefficients.
-/// \param[in]  noise_var_est Estimated noise variance. It is assumed to be the same for each receive port.
-/// \param[in]  tx_scaling    Transmission gain scaling factor.
-void equalize_zf_1x1_symbol(span<cf_t>       symbol_out,
-                            span<float>      eq_noise_vars,
-                            span<const cf_t> symbol_in,
-                            span<const cf_t> ch_estimates,
-                            float            noise_var_est,
-                            float            tx_scaling);
-
-} // namespace detail
 
 /// \brief Implementation of a Zero Forcing equalizer for a SIMO 1 X \c RX_PORTS channel.
 /// \tparam RX_PORTS         Number of receive antenna ports.
@@ -100,18 +38,49 @@ void equalize_zf_1xn(channel_equalizer::re_list&           eq_symbols,
                      float                                 noise_var_est,
                      float                                 tx_scaling)
 {
-  // Structures to hold the Rx resource elements and estimates for all ports and a single OFDM symbol.
-  std::array<span<const cf_t>, RX_PORTS> port_symbols;
-  std::array<span<const cf_t>, RX_PORTS> port_estimates;
+  unsigned nof_subcs = ch_symbols.get_dimension_size(channel_equalizer::re_list::dims::re);
 
-  // Equalize symbol by symbol.
+  // Views over the output data.
+  span<float> nvars_out = noise_vars.template get_view({});
+  span<cf_t>  re_out    = eq_symbols.template get_view({});
+
+  // Zero the output buffers.
+  srsvec::zero(re_out);
+  srsvec::zero(nvars_out);
+
   for (unsigned i_port = 0; i_port != RX_PORTS; ++i_port) {
-    port_symbols[i_port]   = ch_symbols.get_view<>({i_port});
-    port_estimates[i_port] = ch_estimates.template get_view<>({i_port, 0});
+    // Get the port resource elements.
+    span<const cf_t> port_re = ch_symbols.template get_view({i_port});
+
+    // Get the port channel estimates.
+    span<const cf_t> port_ch_estimates = ch_estimates.template get_view({i_port});
+
+    for (unsigned i_subc = 0; i_subc != nof_subcs; ++i_subc) {
+      // Use the noise vars buffer as temp buffer to compute the channel square absolute value.
+      nvars_out[i_subc] += abs_sq(port_ch_estimates[i_subc]);
+
+      // Accumulate input RE matched with the channel response.
+      re_out[i_subc] += port_re[i_subc] * std::conj(port_ch_estimates[i_subc]);
+    }
   }
 
-  detail::equalize_zf_1xn_symbol<RX_PORTS>(
-      eq_symbols.get_view<>({0}), noise_vars.get_view<>({0}), port_symbols, port_estimates, noise_var_est, tx_scaling);
+  for (unsigned i_subc = 0; i_subc != nof_subcs; ++i_subc) {
+    // Calculate the reciprocal of the denominator. Set the symbols to zero in case of division by zero, NAN of INF.
+    float d_pinv           = tx_scaling * nvars_out[i_subc];
+    float d_nvars          = d_pinv * tx_scaling;
+    float d_pinv_rcp       = 0.0F;
+    float d_pinv_rcp_nvars = 0.0F;
+    if (std::isnormal(d_pinv)) {
+      d_pinv_rcp       = 1.0F / d_pinv;
+      d_pinv_rcp_nvars = 1.0F / d_nvars;
+    }
+
+    // Normalize the gain of the channel combined with the equalization to unity.
+    re_out[i_subc] *= d_pinv_rcp;
+
+    // Calculate noise variances.
+    nvars_out[i_subc] = d_pinv_rcp_nvars * noise_var_est;
+  }
 }
 
 /// Specialization for the SISO case.
@@ -123,13 +92,36 @@ inline void equalize_zf_1xn<1>(channel_equalizer::re_list&           eq_symbols,
                                float                                 noise_var_est,
                                float                                 tx_scaling)
 {
-  // Equalize symbol by symbol.
-  detail::equalize_zf_1x1_symbol(eq_symbols.get_view<>({0}),
-                                 noise_vars.get_view<>({0}),
-                                 ch_symbols.get_view<>({0}),
-                                 ch_estimates.get_view<>({0}),
-                                 noise_var_est,
-                                 tx_scaling);
+  unsigned nof_subcs = ch_symbols.get_dimension_size(channel_equalizer::re_list::dims::re);
+
+  // Views over the output data.
+  span<float> nvars_out = noise_vars.template get_view({});
+  span<cf_t>  re_out    = eq_symbols.template get_view({});
+
+  // Views over the input data.
+  span<const cf_t> ch_ests = ch_estimates.get_view({});
+  span<const cf_t> re_in   = ch_symbols.get_view({});
+
+  for (unsigned i_subc = 0; i_subc != nof_subcs; ++i_subc) {
+    // Prepare data.
+    cf_t  ch_est    = ch_ests[i_subc] * tx_scaling;
+    float ch_mod_sq = abs_sq(ch_est);
+
+    // Calculate the reciprocal of the channel estimate and its squared absolute value.
+    // Set the symbols and noise variances to zero in case of division by zero, NAN of INF.
+    cf_t  ch_est_rcp    = 0.0F;
+    float ch_mod_sq_rcp = 0.0F;
+    if (std::isnormal(ch_mod_sq)) {
+      ch_mod_sq_rcp = 1.0F / ch_mod_sq;
+      ch_est_rcp    = std::conj(ch_est) * ch_mod_sq_rcp;
+    }
+
+    // Apply Zero Forcing algorithm.
+    re_out[i_subc] = re_in[i_subc] * ch_est_rcp;
+
+    // Calculate noise variances.
+    nvars_out[i_subc] = noise_var_est * ch_mod_sq_rcp;
+  }
 }
 
 } // namespace srsgnb

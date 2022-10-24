@@ -55,7 +55,7 @@ public:
   /// \param[in]  ch_estimates Channel estimation coefficients, indexed by receive port and transmission layer.
   /// \param[in]  noise_var_estimates Noise variance estimation for each receive port.
   /// \param[in]  tx_scaling   Transmission gain scaling factor.
-  /// \note The sizes of \c eq_re, \c eq_noise_vars and \c ch_re must be consistent with the
+  /// \note The sizes of \c eq_symbols, \c eq_noise_vars and \c ch_symbols must be consistent with the
   /// \c ch_estimates channel dimensions.
   virtual void equalize(re_list&           eq_symbols,
                         noise_var_list&    eq_noise_vars,
