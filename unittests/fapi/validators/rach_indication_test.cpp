@@ -10,105 +10,176 @@
 
 #include "helpers.h"
 #include "srsgnb/fapi/message_validators.h"
-#include "srsgnb/support/srsgnb_test.h"
-#include <random>
 
 using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-static std::mt19937 gen(0);
+class validate_rach_indication_field
+  : public ValidateFAPIMessage<rach_indication_message>,
+    public testing::TestWithParam<std::tuple<pdu_field_data<rach_indication_message>, test_case_data>>
+{};
 
-static const std::vector<test_group<rach_indication_message> > vector_test = {
-    {[](rach_indication_message& msg, int value) { msg.sfn = value; },
-     "sfn",
-     {{0, true}, {511, true}, {1023, true}, {1024, false}}},
-    {[](rach_indication_message& msg, int value) { msg.slot = value; },
-     "slot",
-     {{0, true}, {79, true}, {159, true}, {160, false}}},
-    {[](rach_indication_message& msg, int value) { msg.pdus.back().symbol_index = value; },
-     "Symbol index",
-     {{0, true}, {6, true}, {13, true}, {14, false}}},
-    {[](rach_indication_message& msg, int value) { msg.pdus.back().slot_index = value; },
-     "Slot index",
-     {{0, true}, {40, true}, {79, true}, {80, false}}},
-    {[](rach_indication_message& msg, int value) { msg.pdus.back().ra_index = value; },
-     "Index of the received PRACH frequency domain occasion",
-     {{0, true}, {4, true}, {7, true}, {8, false}}},
-    {[](rach_indication_message& msg, int value) { msg.pdus.back().avg_rssi = value; },
-     "AVG RSSI",
-     {{0, true},
-      {85000, true},
-      {170000, true},
-      {170001, false},
-      {std::numeric_limits<uint32_t>::max() - 1, false},
-      {std::numeric_limits<uint32_t>::max(), true}}},
-    {[](rach_indication_message& msg, int value) { msg.pdus.back().rsrp = value; },
-     "RSRP",
-     {{0, true},
-      {640, true},
-      {1280, true},
-      {1281, false},
-      {std::numeric_limits<uint16_t>::max() - 1, false},
-      {std::numeric_limits<uint16_t>::max(), true}}},
-    {[](rach_indication_message& msg, int value) { msg.pdus.back().preambles.back().preamble_index = value; },
-     "Preamble index",
-     {{0, true}, {32, true}, {63, true}, {64, false}}},
-    {[](rach_indication_message& msg, int value) { msg.pdus.back().preambles.back().timing_advance_offset = value; },
-     "Timing advance offset",
-     {{0, true},
-      {1923, true},
-      {3846, true},
-      {3847, false},
-      {std::numeric_limits<uint16_t>::max() - 1, false},
-      {std::numeric_limits<uint16_t>::max(), true}}},
-    {[](rach_indication_message& msg, int value) { msg.pdus.back().preambles.back().timing_advance_offset_ns = value; },
-     "Timing advance offset in nanoseconds",
-     {{0, true},
-      {1002000, true},
-      {2005000, true},
-      {2005001, false},
-      {std::numeric_limits<uint32_t>::max() - 1, false},
-      {std::numeric_limits<uint32_t>::max(), true}}},
-    {[](rach_indication_message& msg, int value) { msg.pdus.back().preambles.back().preamble_pwr = value; },
-     "Preamble power",
-     {{0, true},
-      {85000, true},
-      {170000, true},
-      {170001, false},
-      {std::numeric_limits<uint32_t>::max() - 1, false},
-      {std::numeric_limits<uint32_t>::max(), true}}}};
-
-static void test_validate_each_field_error()
+TEST_P(validate_rach_indication_field, with_value)
 {
-  for (const auto& group : vector_test) {
-    for (const auto& test_case : group) {
-      auto msg = build_valid_rach_indication();
-      group.update_msg(msg, test_case.value);
-      auto result = validate_rach_indication(msg);
-      TESTASSERT_EQ(result.operator bool(), test_case.result);
-      if (!result) {
-        const auto& report = result.error();
-        TESTASSERT_EQ(1U, report.reports.size());
-        const auto& rep = report.reports.back();
-        TESTASSERT_EQ(std::strcmp(group.property(), rep.property_name), 0);
-        TESTASSERT_EQ(message_type_id::rach_indication, rep.message_type);
-        TESTASSERT(!rep.pdu_type);
-      }
-    }
-  }
-}
+  auto params = GetParam();
 
-static void test_rach_indication_validator_ok()
+  execute_test(std::get<0>(params),
+               std::get<1>(params),
+               build_valid_rach_indication,
+               validate_rach_indication,
+               srsgnb::fapi::message_type_id::rach_indication);
+};
+
+INSTANTIATE_TEST_SUITE_P(sfn,
+                         validate_rach_indication_field,
+                         testing::Combine(testing::Values(pdu_field_data<rach_indication_message>{
+                                              "sfn",
+                                              [](rach_indication_message& pdu, int value) { pdu.sfn = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{512, true},
+                                                          test_case_data{1023, true},
+                                                          test_case_data{1024, false})));
+
+INSTANTIATE_TEST_SUITE_P(slot,
+                         validate_rach_indication_field,
+                         testing::Combine(testing::Values(pdu_field_data<rach_indication_message>{
+                                              "slot",
+                                              [](rach_indication_message& pdu, int value) { pdu.slot = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{80, true},
+                                                          test_case_data{159, true},
+                                                          test_case_data{160, false})));
+
+INSTANTIATE_TEST_SUITE_P(symbol_index,
+                         validate_rach_indication_field,
+                         testing::Combine(testing::Values(pdu_field_data<rach_indication_message>{
+                                              "Symbol index",
+                                              [](rach_indication_message& msg, int value) {
+                                                msg.pdus.back().symbol_index = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{6, true},
+                                                          test_case_data{13, true},
+                                                          test_case_data{14, false})));
+
+INSTANTIATE_TEST_SUITE_P(slot_index,
+                         validate_rach_indication_field,
+                         testing::Combine(testing::Values(pdu_field_data<rach_indication_message>{
+                                              "Slot index",
+                                              [](rach_indication_message& msg, int value) {
+                                                msg.pdus.back().slot_index = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{40, true},
+                                                          test_case_data{79, true},
+                                                          test_case_data{80, false})));
+
+INSTANTIATE_TEST_SUITE_P(ra_index,
+                         validate_rach_indication_field,
+                         testing::Combine(testing::Values(pdu_field_data<rach_indication_message>{
+                                              "Index of the received PRACH frequency domain occasion",
+                                              [](rach_indication_message& msg, int value) {
+                                                msg.pdus.back().ra_index = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{4, true},
+                                                          test_case_data{7, true},
+                                                          test_case_data{8, false})));
+
+INSTANTIATE_TEST_SUITE_P(
+    rssi,
+    validate_rach_indication_field,
+    testing::Combine(testing::Values(pdu_field_data<rach_indication_message>{
+                         "AVG RSSI",
+                         [](rach_indication_message& msg, int value) { msg.pdus.back().avg_rssi = value; }}),
+                     testing::Values(test_case_data{0, true},
+                                     test_case_data{85000, true},
+                                     test_case_data{170000, true},
+                                     test_case_data{170001, false},
+                                     test_case_data{std::numeric_limits<uint32_t>::max() - 1, false},
+                                     test_case_data{std::numeric_limits<uint32_t>::max(), true})));
+
+INSTANTIATE_TEST_SUITE_P(
+    rsrp,
+    validate_rach_indication_field,
+    testing::Combine(testing::Values(pdu_field_data<rach_indication_message>{
+                         "RSRP",
+                         [](rach_indication_message& msg, int value) { msg.pdus.back().rsrp = value; }}),
+                     testing::Values(test_case_data{0, true},
+                                     test_case_data{640, true},
+                                     test_case_data{1280, true},
+                                     test_case_data{1281, false},
+                                     test_case_data{std::numeric_limits<uint16_t>::max() - 1, false},
+                                     test_case_data{std::numeric_limits<uint16_t>::max(), true})));
+
+INSTANTIATE_TEST_SUITE_P(preamble_index,
+                         validate_rach_indication_field,
+                         testing::Combine(testing::Values(pdu_field_data<rach_indication_message>{
+                                              "Preamble index",
+                                              [](rach_indication_message& msg, int value) {
+                                                msg.pdus.back().preambles.back().preamble_index = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{32, true},
+                                                          test_case_data{63, true},
+                                                          test_case_data{64, false})));
+
+INSTANTIATE_TEST_SUITE_P(ta,
+                         validate_rach_indication_field,
+                         testing::Combine(testing::Values(pdu_field_data<rach_indication_message>{
+                                              "Timing advance offset",
+                                              [](rach_indication_message& msg, int value) {
+                                                msg.pdus.back().preambles.back().timing_advance_offset = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{1923, true},
+                                                          test_case_data{3846, true},
+                                                          test_case_data{3847, false},
+                                                          test_case_data{std::numeric_limits<uint16_t>::max() - 1,
+                                                                         false},
+                                                          test_case_data{std::numeric_limits<uint16_t>::max(), true})));
+INSTANTIATE_TEST_SUITE_P(ta_ns,
+                         validate_rach_indication_field,
+                         testing::Combine(testing::Values(pdu_field_data<rach_indication_message>{
+                                              "Timing advance offset in nanoseconds",
+                                              [](rach_indication_message& msg, int value) {
+                                                msg.pdus.back().preambles.back().timing_advance_offset_ns = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{1002000, true},
+                                                          test_case_data{2005000, true},
+                                                          test_case_data{2005001, false},
+                                                          test_case_data{std::numeric_limits<uint32_t>::max() - 1,
+                                                                         false},
+                                                          test_case_data{std::numeric_limits<uint32_t>::max(), true})));
+
+INSTANTIATE_TEST_SUITE_P(preamble_pwr,
+                         validate_rach_indication_field,
+                         testing::Combine(testing::Values(pdu_field_data<rach_indication_message>{
+                                              "Preamble power",
+                                              [](rach_indication_message& msg, int value) {
+                                                msg.pdus.back().preambles.back().preamble_pwr = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{85000, true},
+                                                          test_case_data{170000, true},
+                                                          test_case_data{170001, false},
+                                                          test_case_data{std::numeric_limits<uint32_t>::max() - 1,
+                                                                         false},
+                                                          test_case_data{std::numeric_limits<uint32_t>::max(), true})));
+
+/// Valid Message should pass.
+TEST(validate_rach_indication, valid_indication_passes)
 {
   rach_indication_message msg = build_valid_rach_indication();
 
   const auto& result = validate_rach_indication(msg);
 
-  TESTASSERT(result);
+  ASSERT_TRUE(result);
 }
 
-static void test_rach_indication_validator_error()
+TEST(validate_rach_indication, invalid_indication_fails)
 {
   rach_indication_message msg = build_valid_rach_indication();
 
@@ -118,16 +189,8 @@ static void test_rach_indication_validator_error()
 
   const auto& result = validate_rach_indication(msg);
 
-  TESTASSERT(!result);
+  ASSERT_FALSE(result);
   const auto& report = result.error();
   // Check that the 3 errors are reported.
-  TESTASSERT_EQ(report.reports.size(), 3U);
-}
-
-int main()
-{
-  test_rach_indication_validator_ok();
-  test_rach_indication_validator_error();
-  test_validate_each_field_error();
-  fmt::print("RACH.indication builder -> OK\n");
+  ASSERT_EQ(report.reports.size(), 3U);
 }
