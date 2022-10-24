@@ -42,7 +42,7 @@ inline sched_ue_creation_request_message make_default_sched_ue_creation_request(
   return msg;
 }
 
-rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, rnti_t temp_crnti, unsigned rapid = 0)
+inline rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, rnti_t temp_crnti, unsigned rapid = 0)
 {
   rach_indication_message msg{};
   msg.cell_index = to_du_cell_index(0);

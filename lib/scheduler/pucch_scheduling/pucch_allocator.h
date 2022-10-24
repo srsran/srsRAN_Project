@@ -36,7 +36,7 @@ public:
 
   /// Allocate the PUCCH resource for HARQ-ACK for a given UE.
   /// \param[out,in] slot_alloc struct with scheduling results.
-  /// \param[in] tcrnti temporary RNTI  of the UE.
+  /// \param[in] tcrnti temporary RNTI of the UE.
   /// \param[in] pdsch_time_domain_resource k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] k1 delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
   /// \param[in] dci_info information with DL DCI, needed for HARQ-(N)-ACK scheduling info.
@@ -47,6 +47,10 @@ public:
                                                               unsigned                    k1,
                                                               const pdcch_dl_information& dci_info) = 0;
 
+  /// Allocate the PUCCH resource for a UE's SR opportunity.
+  /// \param[out,in] slot_alloc struct with scheduling results.
+  /// \param[in] crnti C-RNTI of the UE.
+  /// \param[in] ue_cell_cfg user configuration.
   virtual void pucch_allocate_sr_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                                              rnti_t                        crnti,
                                              const ue_cell_configuration&  ue_cell_cfg) = 0;

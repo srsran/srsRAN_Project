@@ -165,7 +165,7 @@ std::vector<test_grant_info> srsgnb::get_ul_grants(const cell_configuration& cel
     grants.emplace_back();
     grants.back().type = test_grant_info::PUCCH;
     grants.back().rnti = INVALID_RNTI;
-    if (pucch.resources.intra_slot_freq_hop) {
+    if (not pucch.resources.second_hop_prbs.empty()) {
       ofdm_symbol_range first_hop_symbols{pucch.resources.symbols.start(),
                                           pucch.resources.symbols.start() + pucch.resources.symbols.length() / 2};
       ofdm_symbol_range second_hop_symbols{pucch.resources.symbols.start() + pucch.resources.symbols.length() / 2,

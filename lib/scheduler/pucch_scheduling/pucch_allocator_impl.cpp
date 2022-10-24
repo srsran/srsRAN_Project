@@ -13,6 +13,69 @@
 
 using namespace srsgnb;
 
+/////////////    RESOURCE MANAGER     /////////////
+
+void pucch_resource_manager::slot_indication(slot_point slot_tx)
+{
+  // Update Slot.
+  last_sl_ind = slot_tx;
+
+  get_slot_resource_counter(last_sl_ind - 1).sr_resource_available   = true;
+  get_slot_resource_counter(last_sl_ind - 1).next_pucch_harq_res_idx = 0;
+}
+
+const pucch_resource* pucch_resource_manager::get_next_harq_res_available(slot_point          slot_harq,
+                                                                          const pucch_config& pucch_cfg)
+{
+  srsgnb_sanity_check(slot_harq < last_sl_ind + SLOT_RES_COUNTER_RING_SIZE,
+                      "PDCCH being allocated to far into the future");
+
+  const auto& pucch_res_list = pucch_cfg.pucch_res_list;
+  return get_slot_resource_counter(slot_harq).next_pucch_harq_res_idx < pucch_res_list.size()
+             ? &pucch_res_list[get_slot_resource_counter(slot_harq).next_pucch_harq_res_idx++]
+             : nullptr;
+};
+
+const pucch_resource* pucch_resource_manager::get_next_sr_res_available(slot_point          slot_sr,
+                                                                        const pucch_config& pucch_cfg)
+{
+  srsgnb_sanity_check(slot_sr < last_sl_ind + SLOT_RES_COUNTER_RING_SIZE,
+                      "PDCCH being allocated to far into the future");
+  srsgnb_sanity_check(pucch_cfg.sr_res_list.size() == 1, "UE SR resource list must have size 1.");
+
+  if (get_slot_resource_counter(slot_sr).sr_resource_available) {
+    const auto& pucch_res_list = pucch_cfg.pucch_res_list;
+
+    // Check if the list of PUCCH resources (corresponding to \c resourceToAddModList, as part of \c PUCCH-Config, as
+    // per TS 38.331) contains the resource indexed to be used for SR.
+    const auto sr_pucch_resource_cfg =
+        std::find_if(pucch_res_list.begin(),
+                     pucch_res_list.end(),
+                     [sr_res_idx = pucch_cfg.sr_res_list[0].pucch_res_id](const pucch_resource& pucch_sr_res_cfg) {
+                       return static_cast<unsigned>(sr_res_idx) == pucch_sr_res_cfg.res_id;
+                     });
+
+    // If there is no such PUCCH resource, skip to the next SR resource.
+    if (sr_pucch_resource_cfg == pucch_res_list.end()) {
+      // TODO: Add information about the LC which this SR is for.
+      return nullptr;
+    }
+
+    get_slot_resource_counter(slot_sr).sr_resource_available = false;
+    return &(*sr_pucch_resource_cfg);
+  }
+  return nullptr;
+};
+
+pucch_resource_manager::slot_resource_counter& pucch_resource_manager::get_slot_resource_counter(slot_point sl)
+{
+  srsgnb_sanity_check(sl < last_sl_ind + SLOT_RES_COUNTER_RING_SIZE,
+                      "PUCCH resource ring-buffer accessed too far into the future");
+  return resource_slots[sl.to_uint() % SLOT_RES_COUNTER_RING_SIZE];
+}
+
+/////////////     PUCCH ALLOCATOR     /////////////
+
 pucch_allocator_impl::pucch_allocator_impl(const cell_configuration& cell_cfg_) :
   cell_cfg(cell_cfg_), logger(srslog::fetch_basic_logger("MAC"))
 {
@@ -78,9 +141,8 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(unsigned&                     
       pucch_alloc.ul_res_grid.fill(second_hop_grant);
       pucch_res_alloc_cfg ret_pucch_resource{
           .first_hop_res = first_hop_grant, .cs = cyclic_shift, .format = pucch_res.format};
-      ret_pucch_resource.second_hop_res.emplace();
-      ret_pucch_resource.second_hop_res.value() = second_hop_grant;
-      pucch_res_indicator                       = d_pri;
+      ret_pucch_resource.second_hop_res = second_hop_grant;
+      pucch_res_indicator               = d_pri;
       return ret_pucch_resource;
     }
   }
@@ -88,18 +150,17 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(unsigned&                     
   return pucch_res_alloc_cfg{.has_config = false};
 }
 
-void pucch_allocator_impl::fill_pucch_res_output(pucch_info& pucch_info, rnti_t rnti, pucch_res_alloc_cfg pucch_res)
+void pucch_allocator_impl::fill_pucch_harq_grant(pucch_info&                pucch_info,
+                                                 rnti_t                     rnti,
+                                                 const pucch_res_alloc_cfg& pucch_res)
 {
-  pucch_info.crnti                         = rnti;
-  pucch_info.format                        = pucch_res.format;
-  pucch_info.bwp_cfg                       = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-  pucch_info.resources.intra_slot_freq_hop = true;
-  pucch_info.resources.prbs                = crb_to_prb(*pucch_info.bwp_cfg, pucch_res.first_hop_res.crbs);
-  srsgnb_assert(pucch_res.second_hop_res.has_value(), "Missing configuration for PUCCH resource configuration");
-
-  pucch_info.resources.second_hop_prbs = crb_to_prb(*pucch_info.bwp_cfg, pucch_res.second_hop_res.value().crbs);
+  pucch_info.crnti          = rnti;
+  pucch_info.format         = pucch_res.format;
+  pucch_info.bwp_cfg        = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+  pucch_info.resources.prbs = crb_to_prb(*pucch_info.bwp_cfg, pucch_res.first_hop_res.crbs);
+  pucch_info.resources.second_hop_prbs = crb_to_prb(*pucch_info.bwp_cfg, pucch_res.second_hop_res.crbs);
   pucch_info.resources.symbols =
-      ofdm_symbol_range{pucch_res.first_hop_res.symbols.start(), pucch_res.second_hop_res.value().symbols.stop()};
+      ofdm_symbol_range{pucch_res.first_hop_res.symbols.start(), pucch_res.second_hop_res.symbols.stop()};
 
   switch (pucch_res.format) {
     case pucch_format::FORMAT_0: {
@@ -165,14 +226,12 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_r
 
   // Fill Slot grid.
   pucch_slot_alloc.ul_res_grid.fill(pucch_res.first_hop_res);
-  if (pucch_res.second_hop_res.has_value()) {
-    pucch_slot_alloc.ul_res_grid.fill(pucch_res.second_hop_res.value());
-  }
+  pucch_slot_alloc.ul_res_grid.fill(pucch_res.second_hop_res);
 
   // Fill scheduler output.
   pucch_slot_alloc.result.ul.pucchs.emplace_back();
   pucch_info& pucch_info = pucch_slot_alloc.result.ul.pucchs.back();
-  fill_pucch_res_output(pucch_info, tcrnti, pucch_res);
+  fill_pucch_harq_grant(pucch_info, tcrnti, pucch_res);
   pucch_harq_ack_output.pucch_pdu = &pucch_info;
 
   return pucch_harq_ack_output;
@@ -192,7 +251,6 @@ get_harq_ack_granted_allocated(rnti_t crnti, static_vector<pucch_info, MAX_PUCCH
 void pucch_allocator_impl::fill_pucch_sr_grant(pucch_info&           pucch_sr_grant,
                                                rnti_t                crnti,
                                                const pucch_resource& pucch_sr_res,
-                                               const pucch_config&   pucch_cfg,
                                                unsigned              harq_ack_bits)
 {
   pucch_sr_grant.crnti   = crnti;
@@ -206,7 +264,6 @@ void pucch_allocator_impl::fill_pucch_sr_grant(pucch_info&           pucch_sr_gr
       pucch_sr_grant.resources.prbs.set(pucch_sr_res.starting_prb, pucch_sr_res.starting_prb + PUCCH_FORMAT_1_NOF_PRBS);
       pucch_sr_grant.resources.symbols.set(pucch_sr_res.format_1.starting_sym_idx,
                                            pucch_sr_res.format_1.starting_sym_idx + pucch_sr_res.format_1.nof_symbols);
-      pucch_sr_grant.resources.intra_slot_freq_hop = pucch_sr_res.intraslot_freq_hopping;
       if (pucch_sr_res.intraslot_freq_hopping) {
         pucch_sr_grant.resources.second_hop_prbs.set(pucch_sr_res.second_hop_prb,
                                                      pucch_sr_res.second_hop_prb + PUCCH_FORMAT_1_NOF_PRBS);
@@ -230,8 +287,8 @@ void pucch_allocator_impl::fill_pucch_sr_grant(pucch_info&           pucch_sr_gr
   }
 }
 
-void pucch_allocator_impl::allocate_pucch_on_grid(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                  const pucch_resource&         pucch_sr_res)
+void pucch_allocator_impl::allocate_pucch_sr_on_grid(cell_slot_resource_allocator& pucch_slot_alloc,
+                                                     const pucch_resource&         pucch_sr_res)
 {
   // NOTE: We do not check for collision in the grid, as it is assumed the PUCCH gets allocated in its reserved
   // resources.
@@ -266,19 +323,18 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
                                                          rnti_t                        crnti,
                                                          const ue_cell_configuration&  ue_cell_cfg)
 {
-  // Get the index of the PUCCH resource to be used for SR.
-  // NOTEs: (i) This index refers to the \c pucch-ResourceId of the \c PUCCH-Resource, as per TS 38.331.
-  //        (ii) get_next_sr_res_available() should be a function of sr_res; however, to simplify the
-  //        implementation, as assume sr_resource_cfg_list only has 1 element.
-  // TODO: extend sr_resource_cfg_list to multiple resource and get_next_sr_res_available() so that it becomes a
-  //       func of sr_res.
-
   if (not ue_cell_cfg.cfg_dedicated().ul_config.has_value() or
       not ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
     logger.warning("SCHED: SR allocation skipped for RNTI {:#x} due to PUCCH-Config not configured.", crnti);
     return;
   }
 
+  // Get the index of the PUCCH resource to be used for SR.
+  // NOTEs: (i) This index refers to the \c pucch-ResourceId of the \c PUCCH-Resource, as per TS 38.331.
+  //        (ii) get_next_sr_res_available() should be a function of sr_res; however, to simplify the
+  //        implementation, as assume sr_resource_cfg_list only has 1 element.
+  // TODO: extend sr_resource_cfg_list to multiple resource and get_next_sr_res_available() so that it becomes a
+  //       func of sr_res.
   const pucch_resource* pucch_sr_res = resource_manager.get_next_sr_res_available(
       pucch_slot_alloc.slot, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
   if (pucch_sr_res == nullptr) {
@@ -288,7 +344,8 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
     return;
   }
 
-  auto              pucch_harq_it = get_harq_ack_granted_allocated(crnti, pucch_slot_alloc.result.ul.pucchs);
+  // Check if there is any existing PUCCH grant for HARQ-ACK already allocated for this UE.
+  auto*             pucch_harq_it = get_harq_ack_granted_allocated(crnti, pucch_slot_alloc.result.ul.pucchs);
   const pucch_info* existing_pucch_harq_grant =
       pucch_harq_it != pucch_slot_alloc.result.ul.pucchs.end() ? pucch_harq_it : nullptr;
 
@@ -317,14 +374,21 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
 
   // NOTE: We do not check for collision in the grid, as it is assumed the PUCCH gets allocated in its reserved
   // resources.
-  allocate_pucch_on_grid(pucch_slot_alloc, *pucch_sr_res);
+  allocate_pucch_sr_on_grid(pucch_slot_alloc, *pucch_sr_res);
 
   // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
   pucch_slot_alloc.result.ul.pucchs.emplace_back();
-  fill_pucch_sr_grant(pucch_slot_alloc.result.ul.pucchs.back(),
-                      crnti,
-                      *pucch_sr_res,
-                      ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value(),
-                      nof_harq_ack_bits);
-  logger.info("SCHED: SR occasion for RNTI {:#x} scheduling completed.", crnti);
+  fill_pucch_sr_grant(pucch_slot_alloc.result.ul.pucchs.back(), crnti, *pucch_sr_res, nof_harq_ack_bits);
+  logger.debug("SCHED: SR occasion for RNTI {:#x} scheduling completed.", crnti);
+}
+
+void pucch_allocator_impl::slot_indication(slot_point sl_tx)
+{
+  // If last_sl_ind is not valid (not initialized), then the check sl_tx == last_sl_ind + 1 does not matter.
+  srsgnb_sanity_check(not last_sl_ind.valid() or sl_tx == last_sl_ind + 1, "Detected a skipped slot");
+
+  // Update Slot.
+  last_sl_ind = sl_tx;
+
+  resource_manager.slot_indication(sl_tx);
 }

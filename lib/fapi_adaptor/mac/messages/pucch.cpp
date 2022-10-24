@@ -44,13 +44,11 @@ static unsigned convert_sr_bits_to_unsigned(sr_nof_bits value)
 static void fill_format1_parameters(fapi::ul_pucch_pdu_builder& builder, const pucch_info& mac_pdu)
 {
   // Hopping parameters.
-  const prb_interval&   hop_prbs = mac_pdu.resources.second_hop_prbs;
-  const pucch_format_1& f1       = mac_pdu.format_1;
-  builder.set_hopping_information_parameters(mac_pdu.resources.intra_slot_freq_hop,
-                                             hop_prbs.start(),
-                                             f1.group_hopping,
-                                             f1.n_id_hopping,
-                                             f1.initial_cyclic_shift);
+  const prb_interval&   hop_prbs            = mac_pdu.resources.second_hop_prbs;
+  const pucch_format_1& f1                  = mac_pdu.format_1;
+  const bool            intra_slot_freq_hop = mac_pdu.resources.second_hop_prbs.empty() ? false : true;
+  builder.set_hopping_information_parameters(
+      intra_slot_freq_hop, hop_prbs.start(), f1.group_hopping, f1.n_id_hopping, f1.initial_cyclic_shift);
 
   // Do not use pi/2 BPSK for UCI symbols.
   static const bool use_pi_to_bpsk = false;

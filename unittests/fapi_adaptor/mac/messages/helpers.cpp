@@ -357,7 +357,6 @@ pucch_info unittests::build_valid_pucch_format_1_pdu()
   pucch.format                        = pucch_format::FORMAT_1;
   pucch.resources.prbs                = {1, 4};
   pucch.resources.symbols             = {0, 14};
-  pucch.resources.intra_slot_freq_hop = false;
   pucch.resources.second_hop_prbs     = {2, 12};
   pucch.format_1.harq_ack_nof_bits    = 2;
   pucch.format_1.sr_bits              = sr_nof_bits::no_sr;

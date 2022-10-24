@@ -39,7 +39,7 @@ TEST(ULPUCCHFormat1PDUTest, ValidPUCCHFormat1ShouldPass)
   ASSERT_EQ(resources.symbols.start(), fapi_pdu.start_symbol_index);
   ASSERT_EQ(resources.symbols.length(), fapi_pdu.nr_of_symbols);
   ASSERT_EQ(resources.second_hop_prbs.start(), fapi_pdu.second_hop_prb);
-  ASSERT_EQ(resources.intra_slot_freq_hop, fapi_pdu.intra_slot_frequency_hopping);
+  ASSERT_EQ(not resources.second_hop_prbs.empty() ? true : false, fapi_pdu.intra_slot_frequency_hopping);
 
   // Format 1.
   const pucch_format_1& f1 = mac_pdu.format_1;

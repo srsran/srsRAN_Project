@@ -26,16 +26,15 @@ public:
 
   ~pucch_scheduler_impl() override;
 
-  /// Allocate the PUCCH resource all UEs's SR opportunities.
+  /// Allocate the PUCCH resource for CSI or SR opportunities.
   /// \param[out,in] res_alloc struct with scheduling results.
-  /// \param[in] sl_tx slot for which the SR should be allocated.
+  /// \param[in] sl_tx slot for which the PUCCH resource should be allocated.
   void run_slot(cell_resource_allocator& res_alloc, slot_point sl_tx) override;
 
 private:
-  void sched_ue_sr_opportunity(cell_resource_allocator& cell_alloc, ue& user, slot_point sl_tx);
-
   // Cell configuration.
   const cell_configuration& cell_cfg;
+  // Ref to PUCCH resource allocator object.
   pucch_allocator&          pucch_alloc;
   ue_list&                  ues;
 
