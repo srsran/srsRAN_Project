@@ -77,10 +77,6 @@ struct dci_format0_0_info {
 };
 
 struct dci_ul_info {
-  bool          ndi;
-  uint32_t      pid;
-  uint32_t      mcs;
-  uint32_t      rv;
   dci_ul_format format_type;
   union {
     dci_format0_0_info f0_0;

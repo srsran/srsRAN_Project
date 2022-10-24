@@ -11,6 +11,7 @@
 #include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/tbs_calculator.h"
+#include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 
 using namespace srsgnb;
 
@@ -180,6 +181,9 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
 {
   srsgnb_assert(ues.contains(grant.user->ue_index), "Invalid UE candidate index={}", grant.user->ue_index);
   srsgnb_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
+  constexpr static unsigned      time_resource = 0;
+  constexpr static dci_ul_format dci_fmt       = dci_ul_format::f0_0;
+
   ue& u = ues[grant.user->ue_index];
 
   // Verify UE carrier is active.
@@ -190,11 +194,12 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
                    grant.cell_index);
     return false;
   }
-  const ue_cell_configuration&                 ue_cell_cfg  = ue_cc->cfg();
-//  const cell_configuration&                    cell_cfg     = ue_cell_cfg.cell_cfg_common;
-  const bwp_uplink_common&                     bwp_ul_cmn   = ue_cell_cfg.ul_bwp_common(ue_cc->active_bwp_id());
-  subcarrier_spacing                           scs          = bwp_ul_cmn.generic_params.scs;
-  const pusch_time_domain_resource_allocation& pusch_td_cfg = bwp_ul_cmn.pusch_cfg_common->pusch_td_alloc_list[0];
+  const ue_cell_configuration&                 ue_cell_cfg = ue_cc->cfg();
+  const cell_configuration&                    cell_cfg    = ue_cell_cfg.cell_cfg_common;
+  const bwp_uplink_common&                     bwp_ul_cmn  = ue_cell_cfg.ul_bwp_common(ue_cc->active_bwp_id());
+  subcarrier_spacing                           scs         = bwp_ul_cmn.generic_params.scs;
+  const pusch_time_domain_resource_allocation& pusch_td_cfg =
+      bwp_ul_cmn.pusch_cfg_common->pusch_td_alloc_list[time_resource];
 
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[0];
@@ -220,14 +225,10 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
   }
 
   // Allocate PDCCH position.
-  pdcch_ul_information* pdcch = get_pdcch_sched(grant.cell_index)
-                                    .alloc_ul_pdcch_ue(pdcch_alloc,
-                                                       u.crnti,
-                                                       ue_cell_cfg,
-                                                       ue_cc->active_bwp_id(),
-                                                       ss_cfg->id,
-                                                       grant.aggr_lvl,
-                                                       dci_ul_format::f0_1);
+  pdcch_ul_information* pdcch =
+      get_pdcch_sched(grant.cell_index)
+          .alloc_ul_pdcch_ue(
+              pdcch_alloc, u.crnti, ue_cell_cfg, ue_cc->active_bwp_id(), ss_cfg->id, grant.aggr_lvl, dci_fmt);
   if (pdcch == nullptr) {
     logger.warning("Failed to allocate PDSCH. Cause: No space in PDCCH.");
     return false;
@@ -252,64 +253,62 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
   }
 
   // Fill DL PDCCH DCI.
-  // TODO.
+  pdcch->dci.format_type                          = dci_fmt;
+  dci_format0_0_info& f0_0                        = pdcch->dci.f0_0;
+  f0_0.freq_domain_assigment                      = ra_frequency_type1_get_riv(ra_frequency_type1_configuration{
+      cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), prbs.start(), prbs.length()});
+  f0_0.time_domain_assigment                      = time_resource;
+  f0_0.freq_hopping                               = false; // TODO.
+  f0_0.mcs                                        = h_ul.mcs(0).to_uint();
+  f0_0.ndi                                        = h_ul.ndi(0);
+  static constexpr std::array<unsigned, 4> rv_idx = {0, 2, 3, 1};
+  f0_0.rv                                         = h_ul.nof_retx() % rv_idx.size();
+  f0_0.harq_id                                    = h_ul.pid;
+  f0_0.tpc                                        = 0;
+  f0_0.ul_sul_indicator                           = false;
 
   // Fill PUSCH.
   pusch_alloc.result.ul.puschs.emplace_back();
-  ul_sched_info& msg        = pusch_alloc.result.ul.puschs.back();
-  msg.pusch_cfg.rnti        = u.crnti;
-  msg.pusch_cfg.bwp_cfg     = pdcch->ctx.bwp_cfg;
-  msg.pusch_cfg.prbs        = prbs;
-  msg.pusch_cfg.symbols     = pusch_td_cfg.symbols;
-//  // TODO: Use UE-dedicated DMRS info.
-//  msg.pusch_cfg.dmrs = make_dmrs_info_common(
-//      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, grant.time_res_index, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
-//  msg.pusch_cfg.is_interleaved = pdcch->dci.c_rnti_f1_0.vrb_to_prb_mapping > 0;
-//  // See TS38.213, 10.1.
-//  msg.pusch_cfg.ss_set_type = ss_cfg->type == search_space_configuration::type::ue_dedicated
-//                                  ? search_space_set_type::ue_specific
-//                                  : search_space_set_type::type3;
-//  msg.pdsch_cfg.dci_fmt     = grant.dci_fmt;
-//  // See TS 38.211, 7.3.1.1. - Scrambling.
-//  const bwp_downlink_dedicated* bwp_dl_ded = ue_cell_cfg.find_dl_bwp_ded(ue_cc->active_bwp_id());
-//  if (bwp_dl_ded != nullptr and bwp_dl_ded->pdsch_cfg.has_value() and
-//      bwp_dl_ded->pdsch_cfg->data_scrambling_id_pdsch.has_value() and
-//      (grant.dci_fmt != dci_dl_format::f1_0 or ss_cfg->type != search_space_configuration::type::common)) {
-//    msg.pdsch_cfg.n_id = *bwp_dl_ded->pdsch_cfg->data_scrambling_id_pdsch;
-//  } else {
-//    msg.pdsch_cfg.n_id = cell_cfg.pci;
-//  }
-//  // Add codeword.
-//  msg.pdsch_cfg.codewords.emplace_back();
-//  pdsch_codeword&                          cw     = msg.pdsch_cfg.codewords.back();
-//  static constexpr std::array<unsigned, 4> rv_idx = {0, 2, 3, 1};
-//  cw.rv_index                                     = rv_idx[h_dl.nof_retx() % rv_idx.size()];
-//  cw.mcs_index                                    = h_dl.mcs(0);
-//  cw.mcs_table                                    = pdsch_mcs_table::qam64;
-//  sch_mcs_description mcs_config                  = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
-//  cw.qam_mod                                      = mcs_config.modulation;
-//  cw.target_code_rate                             = mcs_config.target_code_rate;
-//  unsigned                  nof_symb_sh           = pdsch_td_cfg.symbols.length();
-//  unsigned                  tb_scaling_field      = 0; // TODO.
-//  unsigned                  nof_oh_prb            = 0; // TODO: ue_cell_cfg.cfg_ded().pdsch_serv_cell_cfg;
-//  constexpr static unsigned nof_bits_per_byte     = 8U;
-//  cw.tb_size_bytes =
-//      tbs_calculator_calculate(tbs_calculator_configuration{nof_symb_sh,
-//                                                            calculate_nof_dmrs_per_rb(msg.pdsch_cfg.dmrs),
-//                                                            nof_oh_prb,
-//                                                            cw.target_code_rate / 1024.0F,
-//                                                            cw.qam_mod,
-//                                                            nof_layers,
-//                                                            tb_scaling_field,
-//                                                            grant.crbs.length()}) /
-//      nof_bits_per_byte;
-//
-//  // Set the number of bytes of the TB.
-//  h_dl.set_tbs(cw.tb_size_bytes);
-//
-//  // Set MAC logical channels to schedule in this PDU.
-//  msg.tb_list.emplace_back();
-//  u.build_dl_transport_block_info(msg.tb_list.back(), cw.tb_size_bytes);
+  ul_sched_info& msg                       = pusch_alloc.result.ul.puschs.back();
+  msg.pusch_cfg.rnti                       = u.crnti;
+  msg.pusch_cfg.bwp_cfg                    = pdcch->ctx.bwp_cfg;
+  msg.pusch_cfg.prbs                       = prbs;
+  msg.pusch_cfg.symbols                    = pusch_td_cfg.symbols;
+  msg.pusch_cfg.intra_slot_freq_hopping    = false; // TODO.
+  msg.pusch_cfg.tx_direct_current_location = 0;     // TODO.
+  msg.pusch_cfg.ul_freq_shift_7p5khz       = false;
+  msg.pusch_cfg.mcs_table                  = pusch_mcs_table::qam64;
+  msg.pusch_cfg.mcs_index                  = h_ul.mcs(0);
+  sch_mcs_description mcs_config    = pusch_mcs_get_config(msg.pusch_cfg.mcs_table, msg.pusch_cfg.mcs_index, false);
+  msg.pusch_cfg.qam_mod             = mcs_config.modulation;
+  msg.pusch_cfg.target_code_rate    = mcs_config.target_code_rate;
+  msg.pusch_cfg.transform_precoding = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->msg3_transform_precoder;
+  msg.pusch_cfg.n_id                = cell_cfg.pci;
+  msg.pusch_cfg.nof_layers          = 1;
+  msg.pusch_cfg.dmrs                = make_dmrs_info_common(
+      *cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  msg.pusch_cfg.pusch_dmrs_id                 = cell_cfg.pci;
+  msg.pusch_cfg.dmrs_hopping_mode             = pusch_information::dmrs_hopping_mode::no_hopping; // TODO.
+  msg.pusch_cfg.rv_index                      = rv_idx[h_ul.nof_retx() % rv_idx.size()];
+  msg.pusch_cfg.harq_id                       = h_ul.pid;
+  msg.pusch_cfg.new_data                      = h_ul.nof_retx() == 0;
+  unsigned                  nof_oh_prb        = 0; // TODO.
+  unsigned                  tb_scaling_field  = 0; // TODO.
+  constexpr static unsigned nof_bits_per_byte = 8U;
+  msg.pusch_cfg.tb_size_bytes =
+      tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pusch_td_cfg.symbols.length(),
+                                                            calculate_nof_dmrs_per_rb(msg.pusch_cfg.dmrs),
+                                                            nof_oh_prb,
+                                                            msg.pusch_cfg.target_code_rate / 1024.0F,
+                                                            msg.pusch_cfg.qam_mod,
+                                                            msg.pusch_cfg.nof_layers,
+                                                            tb_scaling_field,
+                                                            grant.crbs.length()}) /
+      nof_bits_per_byte;
+  msg.pusch_cfg.num_cb = 0;
+
+  // Set the number of bytes of the TB.
+  h_ul.set_tbs(msg.pusch_cfg.tb_size_bytes);
 
   return true;
 }
