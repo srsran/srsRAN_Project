@@ -321,19 +321,34 @@ public:
   /// \brief Remove "nof_bytes" bytes at the end of the byte_buffer.
   /// If the length is greater than the length of the last segment, the function will fail and return -1 without
   /// modifying the byte_buffer.
-  /// \return 0 if successful, -1 otherwise.
-  int trim_tail(size_t nof_bytes)
+  void trim_tail(size_t nof_bytes)
   {
     srsgnb_assert(length() >= nof_bytes, "Trimming too many bytes from byte_buffer");
+    if (nof_bytes == 0) {
+      return;
+    }
+
     if (get_tail()->length() >= nof_bytes) {
+      // Simplest scenario where the last segment is larger than the number of bytes to trim.
       get_tail()->trim_tail(nof_bytes);
       head->metadata().pkt_len -= nof_bytes;
       if (get_tail()->length() == 0) {
         pop_last_segment();
       }
-      return 0;
+      return;
     }
-    return -1;
+    size_t new_len = length() - nof_bytes;
+    auto   seg     = head.get();
+    for (size_t count = 0; seg != nullptr; seg = seg->metadata().next.get()) {
+      if (count + seg->length() >= new_len) {
+        seg->metadata().next = nullptr;
+        seg->resize(new_len - count);
+        set_tail(seg);
+        head->metadata().pkt_len = new_len;
+        break;
+      }
+      count += seg->length();
+    }
   }
 
   /// Checks whether byte_buffer is empty.

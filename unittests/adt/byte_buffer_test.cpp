@@ -360,7 +360,7 @@ TEST(byte_buffer, prepend_and_trim_tail)
 {
   byte_buffer        pdu;
   byte_buffer        sdu;
-  constexpr uint32_t pdu_len    = 247;
+  uint32_t           pdu_len    = byte_buffer_segment::SEGMENT_SIZE - 5 + get_random_uint(0, 10);
   constexpr uint32_t trim_len   = 4;
   constexpr uint32_t prefix_len = 3;
   for (uint32_t i = 0; i < pdu_len; i++) {
@@ -376,9 +376,7 @@ TEST(byte_buffer, prepend_and_trim_tail)
   ASSERT_EQ(std::distance(sdu.begin(), sdu.end()), pdu_len);
 
   sdu.trim_tail(trim_len);
-  ASSERT_EQ(sdu.length(), pdu_len - trim_len);
-  ASSERT_EQ(sdu.end() - sdu.begin(), pdu_len - trim_len);
-  ASSERT_EQ(std::distance(sdu.begin(), sdu.end()), pdu_len - trim_len);
+  ASSERT_EQ_LEN(sdu, pdu_len - trim_len);
 }
 
 TEST(byte_buffer, is_contiguous)
@@ -397,11 +395,11 @@ TEST(byte_buffer, is_contiguous)
   ASSERT_TRUE(pdu.linearize() < 0);
   ASSERT_EQ_BUFFER(pdu, bytes_concat) << "A failed linearization should not alter the original byte_buffer";
 
-  ASSERT_TRUE(pdu.trim_tail(bytes.size() - 1) == 0);
+  pdu.trim_tail(bytes.size() - 1);
   ASSERT_TRUE(not pdu.is_contiguous());
   ASSERT_TRUE(pdu.linearize() < 0);
 
-  ASSERT_TRUE(pdu.trim_tail(1) == 0);
+  pdu.trim_tail(1);
   ASSERT_TRUE(pdu.is_contiguous());
 }
 
