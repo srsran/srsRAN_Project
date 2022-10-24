@@ -24,7 +24,7 @@ class ue_srb0_scheduler
 public:
   explicit ue_srb0_scheduler(const cell_configuration& cell_cfg_,
                              pdcch_resource_allocator& pdcch_sch_,
-                             pucch_scheduler&          pucch_sch_,
+                             pucch_allocator&          pucch_alloc_,
                              ue_list&                  ues_,
                              unsigned                  max_msg4_mcs_index_);
 
@@ -59,7 +59,7 @@ private:
 
   const cell_configuration& cell_cfg;
   pdcch_resource_allocator& pdcch_sch;
-  pucch_scheduler&          pucch_sch;
+  pucch_allocator&          pucch_alloc;
   ue_list&                  ues;
 
   /// Maximum MCS index that can be assigned when scheduling MSG4.

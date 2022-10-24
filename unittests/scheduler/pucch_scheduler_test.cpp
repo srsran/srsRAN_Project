@@ -81,7 +81,7 @@ protected:
 // Tests the output of the PUCCH allocator (or PUCCH PDU).
 TEST_P(test_pucch_output, test_pucch_output_info)
 {
-  pucch_harq_ack_grant pucch_test = t_bench.pucch_sched.alloc_common_pucch_harq_ack_ue(
+  pucch_harq_ack_grant pucch_test = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.user.crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
 
   ASSERT_TRUE(pucch_test.pucch_pdu != nullptr);
@@ -91,7 +91,7 @@ TEST_P(test_pucch_output, test_pucch_output_info)
 // Tests whether PUCCH allocator fills the scheduler grid correctly.
 TEST_P(test_pucch_output, test_pucch_grid_filling)
 {
-  t_bench.pucch_sched.alloc_common_pucch_harq_ack_ue(
+  t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.user.crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
 
   ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, t_bench.k1));
@@ -100,7 +100,7 @@ TEST_P(test_pucch_output, test_pucch_grid_filling)
 // Tests whether PUCCH allocator returns the correct values for the DCI.
 TEST_P(test_pucch_output, test_pucch_output_for_dci)
 {
-  pucch_harq_ack_grant pucch_test = t_bench.pucch_sched.alloc_common_pucch_harq_ack_ue(
+  pucch_harq_ack_grant pucch_test = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.user.crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
 
   ASSERT_EQ(GetParam().dci_pucch_res_indicator, pucch_test.pucch_res_indicator);

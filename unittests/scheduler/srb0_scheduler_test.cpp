@@ -10,7 +10,7 @@
 
 #include "config_generators.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
-#include "lib/scheduler/pucch_scheduling/pucch_scheduler_impl.h"
+#include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_srb0_scheduler.h"
 #include "scheduler_test_suite.h"
@@ -39,7 +39,7 @@ struct test_bench {
   cell_configuration            cell_cfg;
   cell_resource_allocator       res_grid;
   pdcch_resource_allocator_impl pdcch_sch;
-  pucch_scheduler_impl          pucch_sch;
+  pucch_allocator_impl          pucch_alloc;
   ue_list                       ue_db;
   ue_cell_grid_allocator        ue_alloc;
   ue_srb0_scheduler             srb0_sched;
@@ -49,9 +49,9 @@ struct test_bench {
     cell_cfg{cell_req},
     res_grid{cell_cfg},
     pdcch_sch{cell_cfg},
-    pucch_sch{cell_cfg, config_helpers::make_default_ue_uplink_config(), ue_db},
+    pucch_alloc{cell_cfg},
     ue_alloc(ue_db, srslog::fetch_basic_logger("MAC")),
-    srb0_sched(cell_cfg, pdcch_sch, pucch_sch, ue_db, cell_req.max_msg4_mcs_index)
+    srb0_sched(cell_cfg, pdcch_sch, pucch_alloc, ue_db, cell_req.max_msg4_mcs_index)
   {
   }
 };
@@ -208,7 +208,7 @@ protected:
   bool add_ue(rnti_t tc_rnti, du_ue_index_t ue_index)
   {
     // Add cell to UE cell grid allocator.
-    bench->ue_alloc.add_cell(bench->cell_cfg.cell_index, bench->pdcch_sch, bench->pucch_sch, bench->res_grid);
+    bench->ue_alloc.add_cell(bench->cell_cfg.cell_index, bench->pdcch_sch, bench->pucch_alloc, bench->res_grid);
     auto ue_create_req     = test_helpers::make_default_ue_creation_request();
     ue_create_req.crnti    = tc_rnti;
     ue_create_req.ue_index = ue_index;

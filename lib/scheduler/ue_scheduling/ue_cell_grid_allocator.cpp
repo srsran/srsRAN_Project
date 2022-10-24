@@ -22,10 +22,10 @@ ue_cell_grid_allocator::ue_cell_grid_allocator(ue_list& ues_, srslog::basic_logg
 
 void ue_cell_grid_allocator::add_cell(du_cell_index_t           cell_index,
                                       pdcch_resource_allocator& pdcch_sched,
-                                      pucch_scheduler&          pucch_sched,
+                                      pucch_allocator&          pucch_alloc,
                                       cell_resource_allocator&  cell_alloc)
 {
-  cells.emplace(cell_index, cell_t{cell_index, &pdcch_sched, &pucch_sched, &cell_alloc});
+  cells.emplace(cell_index, cell_t{cell_index, &pdcch_sched, &pucch_alloc, &cell_alloc});
 }
 
 bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
@@ -86,7 +86,7 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   // Allocate PUCCH.
   const unsigned       k1 = 4;
   pucch_harq_ack_grant pucch =
-      get_pucch_sched(grant.cell_index)
+      get_pucch_alloc(grant.cell_index)
           .alloc_common_pucch_harq_ack_ue(get_res_alloc(grant.cell_index), u.crnti, pdsch_td_cfg.k0, k1, *pdcch);
   if (pucch.pucch_pdu == nullptr) {
     logger.warning("Failed to allocate PDSCH. Cause: No space in PUCCH.");

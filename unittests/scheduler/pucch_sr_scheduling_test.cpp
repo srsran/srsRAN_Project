@@ -8,6 +8,7 @@
  *
  */
 
+#include "lib/scheduler/pucch_scheduling/pucch_scheduler_impl.h"
 #include "pucch_test_utils.h"
 #include "scheduler_test_suite.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
@@ -121,10 +122,9 @@ protected:
 // Tests the output of the PUCCH allocator (or PUCCH PDU).
 TEST_P(test_pucch_output_sr_only, test_pucch_sr_only)
 {
-  test_bench t_bench{};
-
-  for (; t_bench.sl_tx.to_uint() < 1000; t_bench.slot_indication()) {
-    t_bench.pucch_sched.pucch_run_sr_allocator(t_bench.res_grid, t_bench.sl_tx);
+  for (; t_bench.sl_tx.to_uint() < 1000; t_bench.slot_indication(++t_bench.sl_tx)) {
+    t_bench.pucch_alloc.slot_indication(t_bench.sl_tx);
+    t_bench.pucch_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
 
     if (t_bench.sl_tx.to_uint() % 40 == 0) {
       ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
@@ -142,10 +142,11 @@ TEST_P(test_pucch_output_sr_harq, test_pucch_sr_harq)
   test_bench     t_bench{13, 0};
   const unsigned sl_point_harq_delay = 0;
 
-  for (; t_bench.sl_tx.to_uint() < 1000; t_bench.slot_indication()) {
-    t_bench.pucch_sched.alloc_common_pucch_harq_ack_ue(
+  for (; t_bench.sl_tx.to_uint() < 1000; t_bench.slot_indication(++t_bench.sl_tx)) {
+    t_bench.pucch_alloc.slot_indication(t_bench.sl_tx);
+    t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
         t_bench.res_grid, t_bench.user.crnti, t_bench.k0, sl_point_harq_delay, t_bench.dci_info);
-    t_bench.pucch_sched.pucch_run_sr_allocator(t_bench.res_grid, t_bench.sl_tx);
+    t_bench.pucch_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
 
     if (t_bench.sl_tx.to_uint() % sr_periodicity_to_slot(srsgnb::sr_periodicity::sl_40) == 0) {
       ASSERT_EQ(2, t_bench.res_grid[0].result.ul.pucchs.size());

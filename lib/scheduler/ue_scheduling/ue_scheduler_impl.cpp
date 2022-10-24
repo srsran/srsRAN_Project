@@ -24,8 +24,7 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 {
   cells[params.cell_index] = std::make_unique<cell>(params, ue_db);
   event_mng.add_cell(params.cell_res_alloc->cfg, cells[params.cell_index]->srb0_sched);
-  ue_alloc.add_cell(
-      params.cell_index, *params.pdcch_sched, cells[params.cell_index]->pucch_sched, *params.cell_res_alloc);
+  ue_alloc.add_cell(params.cell_index, *params.pdcch_sched, *params.pucch_alloc, *params.cell_res_alloc);
 }
 
 void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
@@ -60,5 +59,5 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
   // Synchronize all carriers. Last thread to reach this synchronization point, runs UE scheduling strategy.
   sync_point.wait(slot_tx, ue_alloc.nof_cells(), [this, slot_tx]() { run_sched_strategy(slot_tx); });
 
-  cells[cell_index]->pucch_sched.pucch_run_sr_allocator(*cells[cell_index]->cell_res_alloc, slot_tx);
+  cells[cell_index]->pucch_sched.run_slot(*cells[cell_index]->cell_res_alloc, slot_tx);
 }

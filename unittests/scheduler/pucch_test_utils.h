@@ -13,6 +13,7 @@
 #include "config_generators.h"
 #include "lib/du_manager/converters/mac_cell_configuration_helpers.h"
 #include "lib/mac/mac_ctrl/sched_config_helpers.h"
+#include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_scheduler_impl.h"
 #include "scheduler_test_suite.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
@@ -202,13 +203,14 @@ public:
     dci_info{make_default_dci(n_cces, &coreset_cfg)},
     k0{0},
     k1{4},
-    pucch_sched{cell_cfg, config_helpers::make_default_ue_uplink_config(), ues},
-    sl_tx{to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs), 0}
+    pucch_alloc{cell_cfg},
+    pucch_sched{cell_cfg, pucch_alloc, ues},
+    sl_tx{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
   {
-    res_grid.slot_indication(sl_tx);
     sched_ue_creation_request_message ue_req =
         make_scheduler_ue_creation_request(test_helpers::make_default_ue_creation_request());
     ues.insert(du_ue_index_t::MIN_DU_UE_INDEX, std::make_unique<ue>(cell_cfg, ue_req));
+    slot_indication(sl_tx);
   }
 
   pdcch_dl_information make_default_dci(unsigned n_cces, const coreset_configuration* coreset_cfg_)
@@ -219,9 +221,8 @@ public:
     return dci;
   }
 
-  void slot_indication()
+  void slot_indication(slot_point sl_tx)
   {
-    sl_tx++;
     mac_logger.set_context(sl_tx.to_uint());
     test_logger.set_context(sl_tx.to_uint());
     res_grid.slot_indication(sl_tx);
@@ -247,6 +248,7 @@ public:
   unsigned                k1;
   ue_list                 ues;
   // Variables that are needed for the PUCCH scheduler.
+  pucch_allocator_impl  pucch_alloc;
   pucch_scheduler_impl  pucch_sched;
   slot_point            sl_tx;
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");

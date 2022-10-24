@@ -19,12 +19,12 @@ using namespace srsgnb;
 
 ue_srb0_scheduler::ue_srb0_scheduler(const cell_configuration& cell_cfg_,
                                      pdcch_resource_allocator& pdcch_sch_,
-                                     pucch_scheduler&          pucch_sch_,
+                                     pucch_allocator&          pucch_alloc_,
                                      ue_list&                  ues_,
                                      unsigned                  max_msg4_mcs_index_) :
   cell_cfg(cell_cfg_),
   pdcch_sch(pdcch_sch_),
-  pucch_sch(pucch_sch_),
+  pucch_alloc(pucch_alloc_),
   ues(ues_),
   max_msg4_mcs_index(max_msg4_mcs_index_),
   initial_active_dl_bwp(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params),
@@ -178,7 +178,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   // Allocate PUCCH resources.
   const unsigned       k1 = 4;
   pucch_harq_ack_grant pucch_grant =
-      pucch_sch.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_time_res, k1, *pdcch);
+      pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_time_res, k1, *pdcch);
   if (pucch_grant.pucch_pdu == nullptr) {
     logger.warning("SCHED: Failed to allocate PDSCH. Cause: No space in PUCCH.");
     // TODO: remove PDCCH allocation.

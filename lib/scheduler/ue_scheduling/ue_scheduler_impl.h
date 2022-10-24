@@ -56,8 +56,8 @@ private:
 
     cell(const ue_scheduler_cell_params& params, ue_list& ues) :
       cell_res_alloc(params.cell_res_alloc),
-      pucch_sched(params.cell_res_alloc->cfg, config_helpers::make_default_ue_uplink_config(), ues),
-      srb0_sched(params.cell_res_alloc->cfg, *params.pdcch_sched, pucch_sched, ues, params.max_msg4_mcs_index)
+      pucch_sched(params.cell_res_alloc->cfg, *params.pucch_alloc, ues),
+      srb0_sched(params.cell_res_alloc->cfg, *params.pdcch_sched, *params.pucch_alloc, ues, params.max_msg4_mcs_index)
     {
     }
   };
