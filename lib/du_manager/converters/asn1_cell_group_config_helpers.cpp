@@ -263,6 +263,198 @@ void calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
     calculate_pdsch_config_diff(
         out.pdsch_cfg.set_setup(), src.pdcch_cfg.has_value() ? *dest.pdsch_cfg : pdsch_config{}, *dest.pdsch_cfg);
   }
+  // TODO: Remaining.
+}
+
+asn1::rrc_nr::pucch_res_set_s srsgnb::srs_du::make_asn1_rrc_pucch_resource_set(const pucch_resource_set& cfg)
+{
+  pucch_res_set_s pucch_res_s;
+  pucch_res_s.pucch_res_set_id = cfg.pucch_res_set_id;
+  for (const auto& it : cfg.pucch_res_id_list) {
+    pucch_res_s.res_list.push_back(it);
+  }
+  if (cfg.max_payload_size.has_value()) {
+    pucch_res_s.max_payload_size = cfg.max_payload_size.value();
+  }
+  return pucch_res_s;
+}
+
+void make_asn1_rrc_pucch_formats_common_param(asn1::rrc_nr::pucch_format_cfg_s& out,
+                                              const pucch_common_all_formats&   cfg)
+{
+  out.interslot_freq_hop_present = cfg.interslot_freq_hop;
+  out.add_dmrs_present           = cfg.additional_dmrs;
+  out.pi2_bpsk_present           = cfg.pi_2_bpsk;
+  out.simul_harq_ack_csi_present = cfg.simultaneous_harq_ack_csi;
+  out.max_code_rate_present      = true;
+  switch (cfg.max_c_rate) {
+    case pucch_common_all_formats::max_code_rate::dot_08:
+      out.max_code_rate = pucch_max_code_rate_opts::zero_dot08;
+      break;
+    case pucch_common_all_formats::max_code_rate::dot_15:
+      out.max_code_rate = pucch_max_code_rate_opts::zero_dot15;
+      break;
+    case pucch_common_all_formats::max_code_rate::dot_25:
+      out.max_code_rate = pucch_max_code_rate_opts::zero_dot25;
+      break;
+    case pucch_common_all_formats::max_code_rate::dot_35:
+      out.max_code_rate = pucch_max_code_rate_opts::zero_dot35;
+      break;
+    case pucch_common_all_formats::max_code_rate::dot_45:
+      out.max_code_rate = pucch_max_code_rate_opts::zero_dot45;
+      break;
+    case pucch_common_all_formats::max_code_rate::dot_60:
+      out.max_code_rate = pucch_max_code_rate_opts::zero_dot60;
+      break;
+    case pucch_common_all_formats::max_code_rate::dot_80:
+      out.max_code_rate = pucch_max_code_rate_opts::zero_dot80;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid PUCCH Common Format 1 Max. Code Rate={}", cfg.max_c_rate);
+  }
+  out.nrof_slots_present = true;
+  switch (cfg.nof_slots) {
+    case pucch_common_all_formats::num_of_slots::n2:
+      out.nrof_slots = pucch_format_cfg_s::nrof_slots_opts::n2;
+      break;
+    case pucch_common_all_formats::num_of_slots::n4:
+      out.nrof_slots = pucch_format_cfg_s::nrof_slots_opts::n4;
+      break;
+    case pucch_common_all_formats::num_of_slots::n8:
+      out.nrof_slots = pucch_format_cfg_s::nrof_slots_opts::n8;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid PUCCH Common Format 1 No. of slots={}", cfg.nof_slots);
+  }
+}
+
+asn1::rrc_nr::pucch_res_s srsgnb::srs_du::make_asn1_rrc_pucch_resource(const pucch_resource& cfg)
+{
+  pucch_res_s pucch_res;
+  pucch_res.pucch_res_id                = cfg.res_id;
+  pucch_res.start_prb                   = cfg.starting_prb;
+  pucch_res.intra_slot_freq_hop_present = cfg.intraslot_freq_hopping;
+  pucch_res.second_hop_prb              = cfg.second_hop_prb;
+  switch (cfg.format) {
+    case pucch_format::FORMAT_0: {
+      auto& format0             = pucch_res.format.set_format0();
+      format0.init_cyclic_shift = cfg.format_0.initial_cyclic_shift;
+      format0.nrof_symbols      = cfg.format_0.nof_symbols;
+      format0.start_symbol_idx  = cfg.format_0.starting_sym_idx;
+    } break;
+    case pucch_format::FORMAT_1: {
+      auto& format1             = pucch_res.format.set_format1();
+      format1.init_cyclic_shift = cfg.format_1.initial_cyclic_shift;
+      format1.nrof_symbols      = cfg.format_1.nof_symbols;
+      format1.start_symbol_idx  = cfg.format_1.starting_sym_idx;
+      format1.time_domain_occ   = cfg.format_1.time_domain_occ;
+    } break;
+    case pucch_format::FORMAT_2: {
+      auto& format2            = pucch_res.format.set_format2();
+      format2.start_symbol_idx = cfg.format_2.starting_sym_idx;
+      format2.nrof_symbols     = cfg.format_2.nof_symbols;
+      format2.nrof_prbs        = cfg.format_2.nof_prbs;
+    } break;
+    case pucch_format::FORMAT_3: {
+      auto& format3            = pucch_res.format.set_format3();
+      format3.start_symbol_idx = cfg.format_3.starting_sym_idx;
+      format3.nrof_symbols     = cfg.format_3.nof_symbols;
+      format3.nrof_prbs        = cfg.format_3.nof_prbs;
+    } break;
+    case pucch_format::FORMAT_4: {
+      auto& format4            = pucch_res.format.set_format4();
+      format4.start_symbol_idx = cfg.format_4.starting_sym_idx;
+      format4.nrof_symbols     = cfg.format_4.nof_symbols;
+      pucch_format4_s::occ_len_e_ format4_length;
+      switch (cfg.format_4.occ_index) {
+        case pucch_f4_occ_idx::n0:
+          format4.occ_idx = pucch_format4_s::occ_idx_opts::n0;
+          break;
+        case pucch_f4_occ_idx::n1:
+          format4.occ_idx = pucch_format4_s::occ_idx_opts::n1;
+          break;
+        case pucch_f4_occ_idx::n2:
+          format4.occ_idx = pucch_format4_s::occ_idx_opts::n2;
+          break;
+        case pucch_f4_occ_idx::n3:
+          format4.occ_idx = pucch_format4_s::occ_idx_opts::n3;
+          break;
+        default:
+          srsgnb_assertion_failure("Invalid PUCCH Format 4 index={}", cfg.format_4.occ_index);
+      }
+      switch (cfg.format_4.occ_length) {
+        case pucch_f4_occ_len::n2:
+          format4.occ_len = pucch_format4_s::occ_len_opts::n2;
+          break;
+        case pucch_f4_occ_len::n4:
+          format4.occ_len = pucch_format4_s::occ_len_opts::n4;
+          break;
+        default:
+          srsgnb_assertion_failure("Invalid PUCCH Format 4 length={}", cfg.format_4.occ_length);
+      }
+    } break;
+    default:
+      srsgnb_assertion_failure("Invalid PDCCH resource format={}", cfg.format);
+  }
+  return pucch_res;
+}
+
+void calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_config& src, const pucch_config& dest)
+{
+  // PUCCH Resource Set.
+  calculate_addmodremlist_diff(
+      out.res_set_to_add_mod_list,
+      out.res_set_to_release_list,
+      src.pucch_res_set,
+      dest.pucch_res_set,
+      [](const pucch_resource_set& res_set) { return make_asn1_rrc_pucch_resource_set(res_set); },
+      [](const pucch_resource_set& res_set) { return res_set.pucch_res_set_id; });
+
+  // PUCCH Resource.
+  calculate_addmodremlist_diff(
+      out.res_to_add_mod_list,
+      out.res_to_release_list,
+      src.pucch_res_list,
+      dest.pucch_res_list,
+      [](const pucch_resource& res) { return make_asn1_rrc_pucch_resource(res); },
+      [](const pucch_resource& res) { return res.res_id; });
+
+  if (dest.format_1_common_param.has_value()) {
+    out.format1_present = true;
+    make_asn1_rrc_pucch_formats_common_param(out.format1.set_setup(), dest.format_1_common_param.value());
+  }
+  if (dest.format_2_common_param.has_value()) {
+    out.format2_present = true;
+    make_asn1_rrc_pucch_formats_common_param(out.format2.set_setup(), dest.format_2_common_param.value());
+  }
+  if (dest.format_3_common_param.has_value()) {
+    out.format3_present = true;
+    make_asn1_rrc_pucch_formats_common_param(out.format3.set_setup(), dest.format_3_common_param.value());
+  }
+  if (dest.format_4_common_param.has_value()) {
+    out.format4_present = true;
+    make_asn1_rrc_pucch_formats_common_param(out.format4.set_setup(), dest.format_4_common_param.value());
+  }
+  // TODO: sr_res_list and dl_data_to_ul_ack
+}
+
+void calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,
+                                     const bwp_uplink_dedicated& src,
+                                     const bwp_uplink_dedicated& dest)
+{
+  if (dest.pucch_cfg.has_value()) {
+    out.pucch_cfg_present = true;
+    calculate_pucch_config_diff(out.pucch_cfg.set_setup(),
+                                src.pucch_cfg.has_value() ? src.pucch_cfg.value() : pucch_config{},
+                                dest.pucch_cfg.value());
+  }
+  // TODO: Remaining.
+}
+
+void calculate_uplink_config_diff(asn1::rrc_nr::ul_cfg_s& out, const uplink_config& src, const uplink_config& dest)
+{
+  out.init_ul_bwp_present = true;
+  calculate_bwp_ul_dedicated_diff(out.init_ul_bwp, src.init_ul_bwp, dest.init_ul_bwp);
 
   // TODO: Remaining.
 }
@@ -273,6 +465,11 @@ void calculate_serving_cell_config_diff(const serving_cell_config&        src,
 {
   out.init_dl_bwp_present = true;
   calculate_bwp_dl_dedicated_diff(out.init_dl_bwp, src.init_dl_bwp, dest.init_dl_bwp);
+  if (dest.ul_config.has_value()) {
+    out.ul_cfg_present = true;
+    calculate_uplink_config_diff(
+        out.ul_cfg, src.ul_config.has_value() ? *src.ul_config : uplink_config{}, *dest.ul_config);
+  }
 }
 
 void srsgnb::srs_du::calculate_cell_group_config_diff(const cell_group_config&        src,

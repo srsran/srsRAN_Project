@@ -20,6 +20,10 @@ asn1::rrc_nr::coreset_s make_asn1_rrc_coreset(const coreset_configuration& cfg);
 
 asn1::rrc_nr::search_space_s make_asn1_rrc_search_space(const search_space_configuration& cfg);
 
+asn1::rrc_nr::pucch_res_set_s make_asn1_rrc_pucch_resource_set(const pucch_resource_set& cfg);
+
+asn1::rrc_nr::pucch_res_s make_asn1_rrc_pucch_resource(const pucch_resource& cfg);
+
 void calculate_cell_group_config_diff(const cell_group_config&        src,
                                       const cell_group_config&        dest,
                                       asn1::rrc_nr::cell_group_cfg_s& out);

@@ -239,10 +239,13 @@ serving_cell_config srsgnb::config_helpers::make_default_initial_ue_serving_cell
   auto& pucch_cfg = serv_cell.ul_config.value().init_ul_bwp.pucch_cfg.value();
 
   // >> PUCCH.
-  pucch_cfg.pucch_res_set_0.pucch_res_id_list.emplace_back(0);
-  pucch_cfg.pucch_res_set_0.pucch_res_id_list.emplace_back(1);
+  pucch_cfg.pucch_res_set.emplace_back();
+  pucch_cfg.pucch_res_set.back().pucch_res_set_id = 0;
+  pucch_cfg.pucch_res_set.back().pucch_res_id_list.emplace_back(0);
+  pucch_cfg.pucch_res_set.back().pucch_res_id_list.emplace_back(1);
   // >>> PUCCH resource 0.
   pucch_resource res_basic{.res_id = 0, .starting_prb = 51, .second_hop_prb = 0, .intraslot_freq_hopping = true};
+  res_basic.format                        = pucch_format::FORMAT_1;
   res_basic.format_1.initial_cyclic_shift = 0;
   res_basic.format_1.nof_symbols          = 14;
   res_basic.format_1.starting_sym_idx     = 0;
