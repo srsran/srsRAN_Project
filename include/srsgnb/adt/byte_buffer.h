@@ -706,7 +706,7 @@ inline byte_buffer_view byte_buffer::reserve_prepend(size_t nof_bytes)
 }
 
 /// Converts a hex string (e.g. 01FA02) to a byte buffer.
-inline byte_buffer make_byte_buffer(std::string hex_str)
+inline byte_buffer make_byte_buffer(const std::string& hex_str)
 {
   srsgnb_assert(hex_str.size() % 2 == 0, "The number of hex digits must be even");
   byte_buffer ret;

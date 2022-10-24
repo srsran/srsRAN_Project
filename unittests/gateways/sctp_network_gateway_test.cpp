@@ -22,6 +22,15 @@ using namespace srsgnb;
 
 static const std::string tx_buf = "Hello World!";
 
+byte_buffer make_tx_byte_buffer()
+{
+  byte_buffer pdu{};
+  for (unsigned i = 0; i != tx_buf.size(); ++i) {
+    pdu.append((uint8_t)tx_buf[i]);
+  }
+  return pdu;
+}
+
 class dummy_network_gateway_control_notifier : public network_gateway_control_notifier
 {
 public:
@@ -198,7 +207,7 @@ TEST_F(sctp_network_gateway_tester, basic_trx_test)
 
   ASSERT_TRUE(server_control_notifier.get_connection_established());
 
-  byte_buffer pdu(make_byte_buffer(tx_buf));
+  byte_buffer pdu(make_tx_byte_buffer());
   send_to_server(pdu);
 
   // let the Rx thread pick up the message
@@ -222,7 +231,7 @@ TEST_F(sctp_network_gateway_tester, basic_trx_test_v6)
   start_receive_thread();
   ASSERT_TRUE(connect());
 
-  byte_buffer pdu(make_byte_buffer(tx_buf));
+  byte_buffer pdu(make_tx_byte_buffer());
   send_to_server(pdu);
 
   // let the Rx thread pick up the message
