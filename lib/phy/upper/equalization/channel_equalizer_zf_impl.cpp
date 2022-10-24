@@ -92,8 +92,8 @@ void equalize_zf_single_tx_layer(unsigned                              nof_ports
   srsgnb_assertion_failure("Invalid number of receive ports: {}", nof_ports);
 };
 
-// Call the equalizer function for receive spatial diversity with the appropriate number of ports, given by nof_ports.
-// Recursively evaluate a list of number of ports passed as an argument pack. Perform equalization when the right
+// Calls the equalizer function for receive spatial diversity with the appropriate number of ports, given by nof_ports.
+// Recursively evaluates a list of number of ports passed as an argument pack. Performs equalization when the right
 // number of ports value is found.
 template <unsigned NPorts, unsigned... NPortList>
 void equalize_zf_single_tx_layer(unsigned                              nof_ports,

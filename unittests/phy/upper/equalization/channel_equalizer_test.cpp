@@ -82,9 +82,9 @@ protected:
   void ReadData(const ChannelEqualizerParams& t_case)
   {
     // Read the test case symbols and estimates.
-    ASSERT_NO_FATAL_FAILURE(ReadReMeasurement(rx_symbols, t_case.received_symbols));
-    ASSERT_NO_FATAL_FAILURE(ReadReMeasurement(eq_symbols_expected, t_case.equalized_symbols));
-    ASSERT_NO_FATAL_FAILURE(ReadReMeasurement(eq_noise_vars_expected, t_case.equalized_noise_vars));
+    ASSERT_NO_FATAL_FAILURE(ReadResourceElements(rx_symbols, t_case.received_symbols));
+    ASSERT_NO_FATAL_FAILURE(ReadResourceElements(eq_symbols_expected, t_case.equalized_symbols));
+    ASSERT_NO_FATAL_FAILURE(ReadResourceElements(eq_noise_vars_expected, t_case.equalized_noise_vars));
     ASSERT_NO_FATAL_FAILURE(ReadChannelEstimates(test_ch_estimates, test_noise_vars, t_case.ch_estimates));
 
     // Resize the equalizer output data structures.
@@ -94,8 +94,8 @@ protected:
 
 private:
   template <typename T>
-  static void ReadReMeasurement(tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), T, re_dims>& data,
-                                const re_measurement_exploded<T>&                                       data_exploded)
+  static void ReadResourceElements(tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), T, re_dims>& data,
+                                   const re_exploded<T>& data_exploded)
   {
     // Resize the tensor holding the data.
     data.resize({data_exploded.nof_prb * NRE * data_exploded.nof_symbols, data_exploded.nof_slices});

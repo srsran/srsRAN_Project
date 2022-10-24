@@ -62,7 +62,7 @@ void pusch_demodulator_impl::demodulate(span<log_likelihood_ratio>  data,
                 nof_re_port * config.nof_tx_layers,
                 data.size() / get_bits_per_symbol(config.modulation));
 
-  // flatten the data coming from the equalizer to a single dimension, resulting in layer demapping.
+  // Flatten the data coming from the equalizer to a single dimension, resulting in layer demapping.
   span<const cf_t>  eq_re_flat = eq_re.get_view<static_cast<unsigned>(channel_equalizer::re_list::dims::nof_dims)>({});
   span<const float> eq_vars_flat =
       eq_noise_vars.get_view<static_cast<unsigned>(channel_equalizer::re_list::dims::nof_dims)>({});

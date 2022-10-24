@@ -10,7 +10,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 29-Sep-2022:
+// This file was generated using the following MATLAB class on 24-Oct-2022:
 //   + "srsChEqualizerUnittest.m"
 
 #include "srsgnb/adt/complex.h"
@@ -19,7 +19,7 @@
 namespace srsgnb {
 
 template <typename T>
-struct re_measurement_exploded {
+struct re_exploded {
   unsigned       nof_prb, nof_symbols, nof_slices;
   file_vector<T> measurements;
 };
@@ -31,13 +31,13 @@ struct ch_estimates_exploded {
 };
 
 struct test_case_t {
-  re_measurement_exploded<cf_t>  equalized_symbols;
-  re_measurement_exploded<float> equalized_noise_vars;
-  re_measurement_exploded<cf_t>  transmitted_symbols;
-  re_measurement_exploded<cf_t>  received_symbols;
-  ch_estimates_exploded          ch_estimates;
-  float                          scaling;
-  std::string                    equalizer_type;
+  re_exploded<cf_t>     equalized_symbols;
+  re_exploded<float>    equalized_noise_vars;
+  re_exploded<cf_t>     transmitted_symbols;
+  re_exploded<cf_t>     received_symbols;
+  ch_estimates_exploded ch_estimates;
+  float                 scaling;
+  std::string           equalizer_type;
 };
 
 static const std::vector<test_case_t> channel_equalizer_test_data = {

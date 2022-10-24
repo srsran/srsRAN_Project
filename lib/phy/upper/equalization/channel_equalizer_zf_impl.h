@@ -24,7 +24,7 @@ public:
   /// Default constructor.
   explicit channel_equalizer_zf_impl() = default;
 
-  /// See interface for documentation.
+  // See interface for documentation.
   void equalize(re_list&           eq_symbols,
                 noise_var_list&    eq_noise_vars,
                 const re_list&     ch_symbols,

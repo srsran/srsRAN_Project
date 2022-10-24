@@ -9,6 +9,9 @@
  *
  */
 
+/// \file
+/// \brief Multi-dimensional array data structure with static and dynamic implementations.
+
 #pragma once
 
 #include "srsgnb/adt/span.h"
@@ -29,6 +32,10 @@ class tensor
 public:
   /// Describes the tensor dimensions.
   using dims = Index_type;
+
+  /// Holds the tensor dimensions.
+  using dimensions_size_type = std::array<unsigned, NDIMS>;
+
   /// Default destructor.
   virtual ~tensor() = default;
 
@@ -39,8 +46,8 @@ public:
   template <unsigned N = 1>
   span<Type> get_view(const std::array<unsigned, NDIMS - N>& indices)
   {
-    span<Type>                         data            = get_data();
-    const std::array<unsigned, NDIMS>& dimensions_size = get_dimensions_size();
+    span<Type>                  data            = get_data();
+    const dimensions_size_type& dimensions_size = get_dimensions_size();
 
     // Calculate the view size for the first N dimensions.
     unsigned view_size = std::accumulate(dimensions_size.begin(), dimensions_size.begin() + N, 1, std::multiplies<>());
@@ -55,8 +62,8 @@ public:
   template <unsigned N = 1>
   span<const Type> get_view(const std::array<unsigned, NDIMS - N>& indices) const
   {
-    span<const Type>                   data            = get_data();
-    const std::array<unsigned, NDIMS>& dimensions_size = get_dimensions_size();
+    span<const Type>            data            = get_data();
+    const dimensions_size_type& dimensions_size = get_dimensions_size();
 
     // Calculate the view size for the first N dimensions.
     unsigned view_size = std::accumulate(dimensions_size.begin(), dimensions_size.begin() + N, 1, std::multiplies<>());
@@ -65,21 +72,21 @@ public:
   }
 
   /// Gets the reference to an element.
-  Type& operator[](const std::array<unsigned, NDIMS>& indices)
+  Type& operator[](const dimensions_size_type& indices)
   {
     span<Type> data = get_data();
     return data[get_view_offset<0>(indices)];
   }
 
   /// Gets a read-only reference to an element.
-  const Type& operator[](const std::array<unsigned, NDIMS>& indices) const
+  const Type& operator[](const dimensions_size_type& indices) const
   {
     span<const Type> data = get_data();
     return data[get_view_offset<0>(indices)];
   }
 
   /// Gets the dimension sizes.
-  virtual const std::array<unsigned, NDIMS>& get_dimensions_size() const = 0;
+  virtual const dimensions_size_type& get_dimensions_size() const = 0;
 
   /// Get a specific dimension size.
   /// \param[in] i_dimension tensor dimension.
@@ -90,7 +97,7 @@ public:
   }
 
   /// Resizes the tensor.
-  virtual void resize(const std::array<unsigned, NDIMS>& dimensions) = 0;
+  virtual void resize(const dimensions_size_type& dimensions) = 0;
 
 protected:
   /// Gets the stored data.
@@ -104,7 +111,7 @@ private:
   unsigned get_view_offset(const std::array<unsigned, NDIMS - N>& indices) const
   {
     // Get dimensions.
-    const std::array<unsigned, NDIMS>& dimensions_size = get_dimensions_size();
+    const dimensions_size_type& dimensions_size = get_dimensions_size();
     // Dimension initial stride.
     unsigned stride = std::accumulate(dimensions_size.begin(), dimensions_size.begin() + N, 1, std::multiplies<>());
     // Current offset of the dimension.
@@ -153,7 +160,7 @@ public:
   }
 
   /// Resizes the tensor.
-  void resize(const std::array<unsigned, NDIMS>& dimensions) override
+  void resize(const dimensions_size_type& dimensions) override
   {
     dimensions_size     = dimensions;
     unsigned total_size = std::accumulate(begin(dimensions_size), end(dimensions_size), 1, std::multiplies<>());
@@ -165,7 +172,7 @@ public:
   }
 
   // See interface for documentation.
-  const std::array<unsigned, NDIMS>& get_dimensions_size() const override { return dimensions_size; }
+  const dimensions_size_type& get_dimensions_size() const override { return dimensions_size; }
 
 protected:
   // See interface for documentation.
@@ -232,7 +239,7 @@ public:
   }
 
   // See interface for documentation.
-  const std::array<unsigned, NDIMS>& get_dimensions_size() const override { return dimensions_size; }
+  const dimensions_size_type& get_dimensions_size() const override { return dimensions_size; }
 
 protected:
   // See interface for documentation.
