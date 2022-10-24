@@ -26,12 +26,10 @@ struct radio_params {
   radio_configuration::over_the_wire_format otw_format;
   unsigned                                  nof_sectors;
   unsigned                                  nof_ports;
-
   /// Transmission parameters.
   double                   dl_frequency_hz;
   double                   tx_gain;
   std::vector<std::string> tx_channel_args;
-
   /// Reception parameters.
   double                   ul_frequency_hz;
   double                   rx_gain;

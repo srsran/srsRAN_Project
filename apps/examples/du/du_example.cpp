@@ -351,7 +351,7 @@ static int parse_args(int argc, char** argv)
   std::string profile_name;
 
   int opt = 0;
-  while ((opt = getopt(argc, argv, "D:P:L:v:b:ch")) != -1) {
+  while ((opt = ::getopt(argc, argv, "D:P:L:v:b:ch")) != -1) {
     switch (opt) {
       case 'P':
         if (optarg != nullptr) {
@@ -540,7 +540,8 @@ int main(int argc, char** argv)
   phy_rx_symbol_req_adapter.connect(&lower->get_request_handler());
 
   // Create FAPI adaptors.
-  auto phy_adaptor = build_phy_fapi_adaptor(0,
+  const unsigned sector_id   = 0;
+  auto           phy_adaptor = build_phy_fapi_adaptor(sector_id,
                                             scs,
                                             scs_common,
                                             upper->get_downlink_processor_pool(),
@@ -591,11 +592,11 @@ int main(int argc, char** argv)
   du_logger.info("DU-High created successfully");
 
   // Set signal handler.
-  signal(SIGINT, signal_handler);
-  signal(SIGTERM, signal_handler);
-  signal(SIGHUP, signal_handler);
-  signal(SIGQUIT, signal_handler);
-  signal(SIGKILL, signal_handler);
+  ::signal(SIGINT, signal_handler);
+  ::signal(SIGTERM, signal_handler);
+  ::signal(SIGHUP, signal_handler);
+  ::signal(SIGQUIT, signal_handler);
+  ::signal(SIGKILL, signal_handler);
 
   // Start execution.
   du_logger.info("Starting DU-High...");
