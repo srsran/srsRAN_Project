@@ -32,6 +32,7 @@ struct stress_test_args {
   uint32_t             nof_pdu_tti        = 10;
   uint32_t             nof_ttis           = 500;
   uint32_t             pdcp_sn_size       = 18;
+  uint32_t             pdcp_t_reordering  = 10;
   std::string          log_filename       = "stdout";
   srslog::basic_levels log_level_stack    = srslog::basic_levels::info;
   srslog::basic_levels log_level_traff    = srslog::basic_levels::error;
@@ -47,6 +48,7 @@ struct stress_test_args {
 // Long only optgars ints
 enum class long_only {
   pdcp_sn_size = 1000,
+  pdcp_t_reordering,
   log_stack_level,
   log_traff_level,
   log_pdcp_level,
@@ -74,6 +76,7 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
       {"pdu_duplicate_rate", required_argument, nullptr, 'D'},
       {"nof_ttis", required_argument, nullptr, 't'},
       {"pdcp_sn_size", required_argument, nullptr, to_number(long_only::pdcp_sn_size)},
+      {"pdcp_t_reordering", required_argument, nullptr, to_number(long_only::pdcp_t_reordering)},
       {"log_filename", required_argument, nullptr, 'l'},
       {"log_stack_level", required_argument, nullptr, to_number(long_only::log_stack_level)},
       {"log_traffic_level", required_argument, nullptr, to_number(long_only::log_traff_level)},
@@ -102,6 +105,7 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
     "  -l, --nof_ttis <ttis>           Set number of TTIs to emulate.\n"
     "  -l, --log_filename <filename>   Set log filename. Use 'stdout' to print to console.\n"
     "  --pdcp_sn_size <level>          Set PDCP SN size.\n"
+    "  --pdcp_t_reordering <timeout>   Set PDCP t-Reordering timeout (ms).\n"
     "  --log_stack_level <level>       Set STACK log level (default: info).\n"
     "  --log_traffic_level <level>     Set STACK log level (default: info).\n"
     "  --log_pdcp_level <level>        Set PDCP log level (default: error).\n"
@@ -172,7 +176,11 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
         break;
       case to_number(long_only::pdcp_sn_size):
         args.pdcp_sn_size = std::strtol(optarg, nullptr, 10);
-        fprintf(stdout, "STACK log level %s\n", optarg);
+        fprintf(stdout, "PDCP SN Size %s\n", optarg);
+        break;
+      case to_number(long_only::pdcp_t_reordering):
+        args.pdcp_t_reordering = std::strtol(optarg, nullptr, 10);
+        fprintf(stdout, "PDCP t-Reordering %s\n", optarg);
         break;
       case to_number(long_only::log_stack_level):
         args.log_level_stack = srslog::str_to_basic_level(std::string(optarg));
@@ -240,6 +248,7 @@ inline pdcp_config get_pdcp_config_from_args(uint32_t id, const stress_test_args
     cnfg.tx.direction = srsgnb::pdcp_security_direction::uplink;
     cnfg.rx.direction = srsgnb::pdcp_security_direction::downlink;
   }
+  cnfg.rx.t_reordering = static_cast<pdcp_t_reordering>(args.pdcp_t_reordering);
   return cnfg;
 }
 
