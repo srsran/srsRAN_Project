@@ -53,7 +53,7 @@ protected:
 
   static_tensor<std::underlying_type_t<ch_dims>(ch_dims::nof_dims), cf_t, MAX_CH_ESTS, ch_dims> test_ch_estimates;
 
-  std::array<float, MAX_PORTS> test_noise_vars;
+  std::vector<float> test_noise_vars;
 
   static std::shared_ptr<channel_equalizer_factory> equalizer_factory;
   static std::unique_ptr<channel_equalizer>         test_equalizer;
@@ -118,7 +118,7 @@ private:
   }
 
   static void ReadChannelEstimates(channel_equalizer::ch_est_list& ch_est,
-                                   span<float>                     noise_vars,
+                                   std::vector<float>&             noise_vars,
                                    const ch_estimates_exploded&    ch_est_expl)
   {
     // Number of Resource Elements for a single Tx-Rx path.
@@ -146,6 +146,7 @@ private:
     }
 
     // Read noise vars. For now, the noise variance is the same for all receive ports.
+    noise_vars.resize(nof_rx_ports);
     for (unsigned i_rx = 0; i_rx != nof_rx_ports; ++i_rx) {
       noise_vars[i_rx] = ch_est_expl.noise_var;
     }

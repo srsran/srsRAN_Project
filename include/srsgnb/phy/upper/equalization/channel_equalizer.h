@@ -22,9 +22,9 @@ namespace srsgnb {
 class channel_equalizer
 {
 private:
-  /// Dimension, i.e. number of coordinates, of each indexing level of the channel estimates.
+  /// Dimension, i.e. number of coordinates, of each indexing level of the channel estimation data.
   enum class ch_dims : unsigned { re = 0, rx_port = 1, tx_layer = 2, nof_dims = 3 };
-  /// Dimension, i.e. number of coordinates, of each indexing level of the Resource Elements.
+  /// Dimension, i.e., number of coordinates, of each indexing level of the Resource Element data.
   enum class re_dims : unsigned { re = 0, slice = 1, nof_dims = 2 };
 
 public:
@@ -49,14 +49,14 @@ public:
   /// estimated channel coefficients. The variance of the point-to-point equivalent noise perturbing each modulated
   /// symbol is also estimated.
   ///
-  /// \param[out] eq_symbols  Equalized modulation symbols, organized by transmission layer.
-  /// \param[out] eq_noise_vars   Post-equalization noise variances, organized by transmission layer.
-  /// \param[in]  ch_symbols   Channel symbols, i.e., complex samples organized by receive port.
-  /// \param[in]  ch_estimates Channel estimation coefficients, indexed by receive port and transmission layer.
+  /// \param[out] eq_symbols          Equalized modulation symbols, organized by transmission layer.
+  /// \param[out] eq_noise_vars       Post-equalization noise variances, organized by transmission layer.
+  /// \param[in]  ch_symbols          Channel symbols, i.e., complex samples organized by receive port.
+  /// \param[in]  ch_estimates        Channel estimation coefficients, indexed by receive port and transmission layer.
   /// \param[in]  noise_var_estimates Noise variance estimation for each receive port.
-  /// \param[in]  tx_scaling   Transmission gain scaling factor.
-  /// \note The sizes of \c eq_symbols, \c eq_noise_vars and \c ch_symbols must be consistent with the
-  /// \c ch_estimates channel dimensions.
+  /// \param[in]  tx_scaling          Transmission gain scaling factor.
+  /// \note The sizes of \c eq_symbols, \c eq_noise_vars, \c ch_symbols and \c noise_var_estimates must be consistent
+  /// with the \c ch_estimates channel dimensions.
   virtual void equalize(re_list&           eq_symbols,
                         noise_var_list&    eq_noise_vars,
                         const re_list&     ch_symbols,

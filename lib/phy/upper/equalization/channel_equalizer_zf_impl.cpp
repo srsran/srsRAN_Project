@@ -18,52 +18,116 @@
 
 using namespace srsgnb;
 
-//
-// static inline void assert_sizes(std::array<unsigned, re_dims::nof_dims>&          mod_symbols_size,
-//                                std::array<unsigned, re_dims::nof_dims>&          noise_vars_size,
-//                                std::array<unsigned, re_dims::nof_dims>&          ch_symbols_size,
-//                                channel_estimate::channel_estimate_dimensions& ch_estimates_size)
-//{
-//  srsgnb_assert(mod_symbols_size == noise_vars_size,
-//                "Noise variance dimensions do not match equalized symbols dimensions:\n"
-//                "Equalized symbols dimensions\t: ({} subcarriers x {} symbols x {} layers)\n"
-//                "Noise variance dimensions\t: ({} subcarriers x {} symbols x {} layers)",
-//                mod_symbols_size.nof_subc,
-//                mod_symbols_size.nof_symbols,
-//                mod_symbols_size.nof_slices,
-//                noise_vars_size.nof_subc,
-//                noise_vars_size.nof_symbols,
-//                noise_vars_size.nof_slices);
-//
-//  srsgnb_assert(ch_estimates_size.nof_rx_ports == ch_symbols_size.nof_slices,
-//                "Channel estimate Rx ports ({}) do not match received symbol ports ({}).",
-//                ch_estimates_size.nof_rx_ports,
-//                ch_symbols_size.nof_slices);
-//  srsgnb_assert(ch_estimates_size.nof_tx_layers == mod_symbols_size.nof_slices,
-//                "Channel estimate Tx layers ({}) do not match equalized symbol layers ({}).",
-//                ch_estimates_size.nof_tx_layers,
-//                mod_symbols_size.nof_slices);
-//
-//  srsgnb_assert((mod_symbols_size.nof_subc == ch_symbols_size.nof_subc) &&
-//                    (mod_symbols_size.nof_subc == ch_symbols_size.nof_subc),
-//                "Number of Subcarriers does not match:\n"
-//                "Equalized symbols subcarriers:\t {}\n"
-//                "Received symbols subcarriers:\t {}\n"
-//                "Channel estimates subcarriers: \t {}",
-//                mod_symbols_size.nof_subc,
-//                ch_symbols_size.nof_subc,
-//                ch_estimates_size.nof_prb * NRE);
-//
-//  srsgnb_assert((mod_symbols_size.nof_symbols == ch_symbols_size.nof_symbols) &&
-//                    (mod_symbols_size.nof_symbols == ch_symbols_size.nof_symbols),
-//                "Number of OFDM symbols does not match:\n"
-//                "Equalized symbols symbols:\t {}\n"
-//                "Received symbols symbols:\t {}\n"
-//                "Channel estimates symbols: \t {}",
-//                mod_symbols_size.nof_symbols,
-//                ch_symbols_size.nof_symbols,
-//                ch_estimates_size.nof_symbols);
-//}
+// Assert that the dimensions of the equalizer input and output data structures match.
+static inline void assert_sizes(channel_equalizer::re_list&           eq_symbols,
+                                channel_equalizer::noise_var_list&    eq_noise_vars,
+                                const channel_equalizer::re_list&     ch_symbols,
+                                const channel_equalizer::ch_est_list& ch_estimates,
+                                span<const float>                     noise_var_estimates)
+{
+  // Rx symbols dimensions.
+  unsigned ch_symb_nof_re       = ch_symbols.get_dimension_size(channel_equalizer::re_list::dims::re);
+  unsigned ch_symb_nof_rx_ports = ch_symbols.get_dimension_size(channel_equalizer::re_list::dims::slice);
+
+  // Output symbols dimensions.
+  unsigned eq_symb_nof_re        = eq_symbols.get_dimension_size(channel_equalizer::re_list::dims::re);
+  unsigned eq_symb_nof_tx_layers = eq_symbols.get_dimension_size(channel_equalizer::re_list::dims::slice);
+
+  // Noise var estimates dimensions.
+  unsigned nvar_ests_nof_rx_ports = noise_var_estimates.size();
+
+  // Output noise vars dimensions.
+  unsigned eq_nvars_nof_re        = eq_noise_vars.get_dimension_size(channel_equalizer::re_list::dims::re);
+  unsigned eq_nvars_nof_tx_layers = eq_noise_vars.get_dimension_size(channel_equalizer::re_list::dims::slice);
+
+  // Channel estimates dimensions.
+  unsigned ch_ests_nof_re        = ch_estimates.get_dimension_size(channel_equalizer::ch_est_list ::dims::re);
+  unsigned ch_ests_nof_rx_ports  = ch_estimates.get_dimension_size(channel_equalizer::ch_est_list ::dims::rx_port);
+  unsigned ch_ests_nof_tx_layers = ch_estimates.get_dimension_size(channel_equalizer::ch_est_list ::dims::tx_layer);
+
+  // Assert that the number of Resource Elements per port matches for all inputs and outputs.
+  srsgnb_assert((ch_symb_nof_re == ch_ests_nof_re) && (ch_symb_nof_re == eq_symb_nof_re) &&
+                    (ch_symb_nof_re == eq_nvars_nof_re),
+                "Number of single port Resource Elements does not match: \n"
+                "Received symbols RE:\t {}\n"
+                "Output symbols RE:\t {}\n"
+                "Output noise variance RE: \t {}\n"
+                "Channel estimates RE:\t {}",
+                ch_symb_nof_re,
+                eq_symb_nof_re,
+                eq_nvars_nof_re,
+                ch_ests_nof_re);
+
+  // Assert that the number of receive ports matches.
+  srsgnb_assert((ch_ests_nof_rx_ports == ch_symb_nof_rx_ports) && (ch_ests_nof_rx_ports == nvar_ests_nof_rx_ports),
+                "Number of Rx ports does not match: \n"
+                "Received symbols Rx ports:\t {}\n"
+                "Noise variance estimates Rx ports: \t {}\n"
+                "Channel estimates Rx ports:\t {}",
+                ch_symb_nof_rx_ports,
+                nvar_ests_nof_rx_ports,
+                ch_ests_nof_rx_ports);
+
+  // Assert that the number of transmit layers matches.
+  srsgnb_assert((ch_ests_nof_tx_layers == eq_symb_nof_tx_layers) && (ch_ests_nof_tx_layers == eq_nvars_nof_tx_layers),
+                "Number of Tx layers does not match: \n"
+                "Output symbols Tx layers:\t {}\n"
+                "Output noise variances Tx layers: \t {}\n"
+                "Channel estimates Tx layers:\t {}",
+                eq_symb_nof_tx_layers,
+                eq_nvars_nof_tx_layers,
+                ch_ests_nof_tx_layers);
+}
+
+// Empty list. Acts as a default case.
+template <class none = void>
+void equalize_zf_single_tx_layer(unsigned                              nof_ports,
+                                 channel_equalizer::re_list&           eq_symbols,
+                                 channel_equalizer::noise_var_list&    eq_noise_vars,
+                                 const channel_equalizer::re_list&     ch_symbols,
+                                 const channel_equalizer::ch_est_list& ch_estimates,
+                                 float                                 noise_var,
+                                 float                                 tx_scaling)
+{
+  srsgnb_assertion_failure("Invalid number of receive ports: {}", nof_ports);
+};
+
+// Call the equalizer function for receive spatial diversity with the appropriate number of ports, given by nof_ports.
+// Recursively evaluate a list of number of ports passed as an argument pack. Perform equalization when the right
+// number of ports value is found.
+template <unsigned NPorts, unsigned... NPortList>
+void equalize_zf_single_tx_layer(unsigned                              nof_ports,
+                                 channel_equalizer::re_list&           eq_symbols,
+                                 channel_equalizer::noise_var_list&    eq_noise_vars,
+                                 const channel_equalizer::re_list&     ch_symbols,
+                                 const channel_equalizer::ch_est_list& ch_estimates,
+                                 float                                 noise_var,
+                                 float                                 tx_scaling)
+{
+  if (NPorts != nof_ports) {
+    // Recursive call, discarding NPorts from the list.
+    return equalize_zf_single_tx_layer<NPortList...>(
+        nof_ports, eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+  }
+
+  // Perform equalization.
+  equalize_zf_1xn<NPorts>(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+}
+
+// Deduces the NPortList argument pack from a std::integer_sequence numeric sequence generated at compile time.
+template <unsigned... NPortList>
+void equalize_zf_single_tx_layer(unsigned nof_ports,
+                                 std::integer_sequence<unsigned, NPortList...>,
+                                 channel_equalizer::re_list&           eq_symbols,
+                                 channel_equalizer::noise_var_list&    eq_noise_vars,
+                                 const channel_equalizer::re_list&     ch_symbols,
+                                 const channel_equalizer::ch_est_list& ch_estimates,
+                                 float                                 noise_var,
+                                 float                                 tx_scaling)
+{
+  equalize_zf_single_tx_layer<NPortList...>(
+      nof_ports, eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+}
 
 void channel_equalizer_zf_impl::equalize(re_list&           eq_symbols,
                                          noise_var_list&    eq_noise_vars,
@@ -72,13 +136,8 @@ void channel_equalizer_zf_impl::equalize(re_list&           eq_symbols,
                                          span<const float>  noise_var_estimates,
                                          float              tx_scaling)
 {
-  //  std::array<unsigned, re_dims::nof_dims>       eq_symbols_size  = eq_re.get_dimensions_size();
-  //  std::array<unsigned, re_dims::nof_dims>       eq_noise_vars_size   = eq_noise_vars.get_dimensions_size();
-  //  std::array<unsigned, re_dims::nof_dims>       ch_symbols_size   = ch_re.get_dimensions_size();
-  //  channel_estimate::channel_estimate_dimensions ch_estimates_size = ch_estimates.size();
-
   // Make sure that the input and output symbol lists and channel estimate dimensions are valid.
-  //  assert_sizes(eq_symbols_size, eq_noise_vars_size, ch_symbols_size, ch_estimates_size);
+  assert_sizes(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var_estimates);
 
   srsgnb_assert(tx_scaling > 0, "Tx scaling factor must be positive.");
 
@@ -89,22 +148,20 @@ void channel_equalizer_zf_impl::equalize(re_list&           eq_symbols,
   // For now, use the noise variance of a single Rx port.
   float noise_var = noise_var_estimates[0];
 
+  // Select the appropriate equalization algorithm based on the channel topology.
   switch (topology.get_topology()) {
     case spatial_topology::siso:
-      equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::siso)>(
-          eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
-      break;
     case spatial_topology::simo_2x1:
-      equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::simo_2x1)>(
-          eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
-      break;
     case spatial_topology::simo_3x1:
-      equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::simo_3x1)>(
-          eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
-      break;
     case spatial_topology::simo_4x1:
-      equalize_zf_1xn<spatial_topology::get_nof_rx_ports(spatial_topology::simo_4x1)>(
-          eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+      equalize_zf_single_tx_layer(topology.get_nof_rx_ports(),
+                                  std::make_integer_sequence<unsigned, MAX_PORTS>(),
+                                  eq_symbols,
+                                  eq_noise_vars,
+                                  ch_symbols,
+                                  ch_estimates,
+                                  noise_var,
+                                  tx_scaling);
       break;
     case spatial_topology::mimo_2x2:
       equalize_zf_2x2(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
