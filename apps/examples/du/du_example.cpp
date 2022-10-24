@@ -14,6 +14,7 @@
 #include "phy_factory.h"
 #include "radio_factory.h"
 #include "radio_notifier_sample.h"
+#include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/fapi/logging_decorator_factories.h"
 #include "srsgnb/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
@@ -203,8 +204,28 @@ public:
           0xbb, 0xf0, 0x30, 0x43, 0x80, 0x00, 0x00, 0x07, 0x12, 0x81, 0xc0, 0x00, 0x02, 0x05, 0xef, 0x40, 0x10,
           0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x14, 0x10, 0x0c, 0xa8, 0x18, 0x06, 0x20, 0x00};
 
-      resp->rrc_container.value.resize(sizeof(msg4));
-      std::copy(msg4, msg4 + sizeof(msg4), resp->rrc_container.value.begin());
+      // Unpack the pre-canned Msg4, that contains the DL-CCCH RRC setup message.
+      byte_buffer                 msg4_pdu(span<const uint8_t>{msg4, sizeof(msg4)});
+      asn1::cbit_ref              r_bref{msg4_pdu};
+      asn1::rrc_nr::dl_ccch_msg_s msg4_rrc;
+      msg4_rrc.unpack(r_bref);
+
+      // Copy DU-to-CU RRC container stored in the F1AP "INITIAL UL RRC MESSAGE TRANSFER" to masterCellGroup field of
+      // the unpacked RRC Setup message.
+      const auto& src  = msg.pdu.init_msg().value.init_ulrrc_msg_transfer()->duto_currc_container.value;
+      auto&       dest = msg4_rrc.msg.c1().rrc_setup().crit_exts.rrc_setup().master_cell_group;
+      dest.resize(src.size());
+      std::copy(src.begin(), src.end(), dest.begin());
+
+      // Pack the updated RRC setup message.
+      msg4_pdu.clear();
+      asn1::bit_ref w_bref{msg4_pdu};
+      msg4_rrc.pack(w_bref);
+
+      // Store the packed RRC setup message in the RRC container field of the F1 DL RRC Message that is sent to the DU.
+      resp->rrc_container.value.resize(msg4_pdu.length());
+      std::copy(msg4_pdu.begin(), msg4_pdu.end(), resp->rrc_container.value.begin());
+
     } else if (msg.pdu.init_msg().value.type().value ==
                asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request) {
       // Generate a fake F1 Setup response message and pass it back to the DU.
