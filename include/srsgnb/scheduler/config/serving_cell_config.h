@@ -42,11 +42,22 @@ struct pdcch_config {
 
 /// "PDSCH-Config" - UE-dedicated PDSCH Configuration as per TS38.331.
 struct pdsch_config {
+  /// Interleaving unit configurable between 2 and 4 PRBs.
+  /// \remark See TS 38.211, clause 7.3.1.6.
+  enum class vrb_to_prb_interleaver { n2, n4 };
+
   /// Identifier used to initialize data scrambling (c_init) for PDSCH. If the field is absent, the UE applies the PCI.
   /// See TS38.331, \e dataScramblingIdentityPDSCH, and TS38.211, 7.3.1.1. Values: {0,...,1023}.
-  optional<uint16_t>             data_scrambling_id_pdsch;
+  optional<uint16_t> data_scrambling_id_pdsch;
+  /// DMRS configuration for PDSCH transmissions using PDSCH mapping type A (chosen dynamically via
+  /// PDSCH-TimeDomainResourceAllocation).
   optional<dmrs_downlink_config> pdsch_mapping_type_a_dmrs;
+  /// DMRS configuration for PDSCH transmissions using PDSCH mapping type B (chosen dynamically via
+  /// PDSCH-TimeDomainResourceAllocation).
   optional<dmrs_downlink_config> pdsch_mapping_type_b_dmrs;
+  /// Interleaving unit. If field is absent, the UE performs non-interleaved VRB-to-PRB mapping. The field
+  /// vrb-ToPRB-Interleaver applies to DCI format 1_1.
+  optional<vrb_to_prb_interleaver> vrb_to_prb_itlvr;
   /// PDSCH time domain resource allocations. Size: (0..maxNrofDL-Allocations=16).
   std::vector<pdsch_time_domain_resource_allocation> pdsch_td_alloc_list;
   // TODO: Remaining.
