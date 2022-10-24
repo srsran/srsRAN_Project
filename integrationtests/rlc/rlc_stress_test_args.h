@@ -14,41 +14,51 @@
 #include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/rlc/rlc_tx.h"
+#include "srsgnb/security/security.h"
 #include "srsgnb/srslog/srslog.h"
 #include <getopt.h>
 #include <random>
 
 namespace srsgnb {
 
+const std::array<uint8_t, 16> k_128_int =
+    {0x16, 0x17, 0x18, 0x19, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30, 0x31};
+const std::array<uint8_t, 16> k_128_enc =
+    {0x16, 0x17, 0x18, 0x19, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30, 0x31};
+
 struct stress_test_args {
-  std::string          mode               = "UM12";
-  int32_t              sdu_size           = -1;
-  float                pdu_drop_rate      = 0.1;
-  float                pdu_cut_rate       = 0.0;
-  float                pdu_duplicate_rate = 0.0;
-  uint32_t             avg_opp_size       = 1505;
-  bool                 const_opp          = false;
-  uint32_t             seed               = 0;
-  uint32_t             nof_pdu_tti        = 10;
-  uint32_t             nof_ttis           = 500;
-  uint32_t             pdcp_sn_size       = 18;
-  uint32_t             pdcp_t_reordering  = 10;
-  std::string          log_filename       = "stdout";
-  srslog::basic_levels log_level_stack    = srslog::basic_levels::info;
-  srslog::basic_levels log_level_traff    = srslog::basic_levels::error;
-  srslog::basic_levels log_level_rlc      = srslog::basic_levels::error;
-  srslog::basic_levels log_level_f1       = srslog::basic_levels::error;
-  srslog::basic_levels log_level_pdcp     = srslog::basic_levels::error;
-  srslog::basic_levels log_level_mac      = srslog::basic_levels::error;
-  uint32_t             log_hex_limit      = 32;
-  uint32_t             min_sdu_size       = 5;
-  uint32_t             max_sdu_size       = 1500;
+  std::string          mode                = "UM12";
+  int32_t              sdu_size            = -1;
+  float                pdu_drop_rate       = 0.1;
+  float                pdu_cut_rate        = 0.0;
+  float                pdu_duplicate_rate  = 0.0;
+  uint32_t             avg_opp_size        = 1505;
+  bool                 const_opp           = false;
+  uint32_t             seed                = 0;
+  uint32_t             nof_pdu_tti         = 10;
+  uint32_t             nof_ttis            = 500;
+  uint32_t             pdcp_sn_size        = 18;
+  uint32_t             pdcp_t_reordering   = 10;
+  uint32_t             pdcp_integrity_algo = 2;
+  uint32_t             pdcp_ciphering_algo = 2;
+  std::string          log_filename        = "stdout";
+  srslog::basic_levels log_level_stack     = srslog::basic_levels::info;
+  srslog::basic_levels log_level_traff     = srslog::basic_levels::error;
+  srslog::basic_levels log_level_rlc       = srslog::basic_levels::error;
+  srslog::basic_levels log_level_f1        = srslog::basic_levels::error;
+  srslog::basic_levels log_level_pdcp      = srslog::basic_levels::error;
+  srslog::basic_levels log_level_mac       = srslog::basic_levels::error;
+  uint32_t             log_hex_limit       = 32;
+  uint32_t             min_sdu_size        = 5;
+  uint32_t             max_sdu_size        = 1500;
 };
 
 // Long only optgars ints
 enum class long_only {
   pdcp_sn_size = 1000,
   pdcp_t_reordering,
+  pdcp_integrity_algo,
+  pdcp_ciphering_algo,
   log_stack_level,
   log_traff_level,
   log_pdcp_level,
@@ -77,6 +87,8 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
       {"nof_ttis", required_argument, nullptr, 't'},
       {"pdcp_sn_size", required_argument, nullptr, to_number(long_only::pdcp_sn_size)},
       {"pdcp_t_reordering", required_argument, nullptr, to_number(long_only::pdcp_t_reordering)},
+      {"pdcp_integrity_algo", required_argument, nullptr, to_number(long_only::pdcp_integrity_algo)},
+      {"pdcp_ciphering_algo", required_argument, nullptr, to_number(long_only::pdcp_ciphering_algo)},
       {"log_filename", required_argument, nullptr, 'l'},
       {"log_stack_level", required_argument, nullptr, to_number(long_only::log_stack_level)},
       {"log_traffic_level", required_argument, nullptr, to_number(long_only::log_traff_level)},
@@ -106,6 +118,8 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
     "  -l, --log_filename <filename>   Set log filename. Use 'stdout' to print to console.\n"
     "  --pdcp_sn_size <level>          Set PDCP SN size.\n"
     "  --pdcp_t_reordering <timeout>   Set PDCP t-Reordering timeout (ms).\n"
+    "  --pdcp_integrity_algo <algo>    Set PDCP NIA algo (default NIA2).\n"
+    "  --pdcp_ciphering_algo <algo>    Set PDCP NEA algo (default NEA2).\n"
     "  --log_stack_level <level>       Set STACK log level (default: info).\n"
     "  --log_traffic_level <level>     Set STACK log level (default: info).\n"
     "  --log_pdcp_level <level>        Set PDCP log level (default: error).\n"
@@ -182,6 +196,14 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
         args.pdcp_t_reordering = std::strtol(optarg, nullptr, 10);
         fprintf(stdout, "PDCP t-Reordering %s\n", optarg);
         break;
+      case to_number(long_only::pdcp_integrity_algo):
+        args.pdcp_integrity_algo = std::strtol(optarg, nullptr, 10);
+        fprintf(stdout, "PDCP integrity algorithm %s\n", optarg);
+        break;
+      case to_number(long_only::pdcp_ciphering_algo):
+        args.pdcp_ciphering_algo = std::strtol(optarg, nullptr, 10);
+        fprintf(stdout, "PDCP ciphering algorithm %s\n", optarg);
+        break;
       case to_number(long_only::log_stack_level):
         args.log_level_stack = srslog::str_to_basic_level(std::string(optarg));
         fprintf(stdout, "STACK log level %s\n", optarg);
@@ -224,6 +246,23 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
     }
   }
   return true;
+}
+
+inline sec_128_as_config get_security_config_from_args(const stress_test_args& args)
+{
+  sec_128_as_config sec_cfg = {};
+
+  // Set security keys
+  sec_cfg.k_128_rrc_int = k_128_int;
+  sec_cfg.k_128_up_int  = k_128_int;
+  sec_cfg.k_128_rrc_enc = k_128_enc;
+  sec_cfg.k_128_up_enc  = k_128_enc;
+
+  // Set encryption/integrity algorithms
+  sec_cfg.integ_algo  = static_cast<integrity_algorithm>(args.pdcp_integrity_algo);
+  sec_cfg.cipher_algo = static_cast<ciphering_algorithm>(args.pdcp_ciphering_algo);
+
+  return sec_cfg;
 }
 
 inline pdcp_config get_pdcp_config_from_args(uint32_t id, const stress_test_args& args)

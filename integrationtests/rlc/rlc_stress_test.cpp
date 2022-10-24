@@ -40,6 +40,8 @@ stress_stack::stress_stack(const stress_test_args& args, uint32_t id) :
   traffic_sink   = std::make_unique<stress_traffic_sink>(id);
   traffic_source = std::make_unique<stress_traffic_source>(args, id);
 
+  sec_cfg = get_security_config_from_args(args);
+
   // PDCP
   pdcp_config                  pdcp_cnfg = get_pdcp_config_from_args(id, args);
   pdcp_entity_creation_message pdcp_msg  = {};
@@ -51,16 +53,6 @@ stress_stack::stress_stack(const stress_test_args& args, uint32_t id) :
   pdcp                                   = create_pdcp_entity(pdcp_msg);
   traffic_source->set_pdcp_tx_upper(&pdcp->get_tx_upper_data_interface());
   f1->set_pdcp_rx_lower(&pdcp->get_rx_lower_interface());
-
-  // Set security keys
-  sec_cfg.k_128_rrc_int = k_128_int;
-  sec_cfg.k_128_up_int  = k_128_int;
-  sec_cfg.k_128_rrc_enc = k_128_enc;
-  sec_cfg.k_128_up_enc  = k_128_enc;
-
-  // Set encryption/integrity algorithms
-  sec_cfg.integ_algo  = integrity_algorithm::nia1;
-  sec_cfg.cipher_algo = ciphering_algorithm::nea1;
 
   pdcp_tx_upper_control_interface& rrc_tx_if = pdcp->get_tx_upper_control_interface();
   rrc_tx_if.enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);

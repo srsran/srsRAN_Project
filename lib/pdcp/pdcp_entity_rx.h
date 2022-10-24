@@ -62,11 +62,17 @@ public:
   /*
    * Security configuration
    */
-  void set_as_security_config(sec_128_as_config sec_cfg_) final { sec_cfg = sec_cfg_; };
+  void set_as_security_config(sec_128_as_config sec_cfg_) final
+  {
+    sec_cfg = sec_cfg_;
+    logger.log_info(
+        "Set RX security configuration, integ=NIA{}, cipher=NEA{}", sec_cfg.integ_algo, sec_cfg.cipher_algo);
+  };
   void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) final
   {
     integrity_enabled = integ;
     ciphering_enabled = cipher;
+    logger.log_info("Enabled/disabled RX security integrity={}, ciphering={}", integ, cipher);
   }
 
   /*
