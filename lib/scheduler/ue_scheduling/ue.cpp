@@ -50,7 +50,7 @@ unsigned ue::pending_ul_newtx_bytes() const
   }
 
   // If there are no pending bytes, check if a SR is pending.
-  return pending_bytes == 0 ? 0 : (ul_lc_ch_mgr.has_pending_sr() ? SR_GRANT_BYTES : 0);
+  return pending_bytes > 0 ? pending_bytes : (ul_lc_ch_mgr.has_pending_sr() ? SR_GRANT_BYTES : 0);
 }
 
 unsigned ue::build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes)

@@ -94,14 +94,11 @@ protected:
     return false;
   }
 
-  bool pusch_scheduled() const
+  bool ue_pusch_scheduled() const
   {
-    for (const auto& pusch : last_sched_res->ul.puschs) {
-      if (pusch.pusch_cfg.rnti == ue_rnti) {
-        return true;
-      }
-    }
-    return false;
+    return std::any_of(last_sched_res->ul.puschs.begin(), last_sched_res->ul.puschs.end(), [](const auto& pusch) {
+      return pusch.pusch_cfg.rnti == ue_rnti;
+    });
   }
 
   bool ue_pucch_scheduled() const
@@ -139,12 +136,30 @@ TEST_F(uci_sched_tester, no_retx_after_harq_ack)
   }
   ASSERT_TRUE(pucch_found);
 
-  // No more DL grants after the HACK.
+  // No more DL grants after the ACK.
   for (unsigned i = 0; i != MAX_COUNT; ++i) {
     run_slot();
     ASSERT_FALSE(ue_pdsch_scheduled());
     ASSERT_FALSE(ue_pucch_scheduled());
   }
+}
+
+TEST_F(uci_sched_tester, pusch_scheduled_after_sr_indication)
+{
+  static constexpr unsigned MAX_COUNT = 16;
+  notify_uci_ind(true, {});
+
+  bool pusch_found = false;
+  for (unsigned i = 0; i != MAX_COUNT; ++i) {
+    run_slot();
+    ASSERT_FALSE(ue_pdsch_scheduled());
+    ASSERT_FALSE(ue_pucch_scheduled());
+    if (ue_pusch_scheduled()) {
+      pusch_found = true;
+      break;
+    }
+  }
+  ASSERT_TRUE(pusch_found);
 }
 
 int main(int argc, char** argv)
