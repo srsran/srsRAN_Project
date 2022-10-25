@@ -83,28 +83,6 @@ private:
   std::array<pdu_vector, last> pdus;
 };
 
-//: TODO: temporary pool until the MAC passes UE PDUs as spans.
-class payload_buffer_pool
-{
-  /// Maximum number of payloads contained by the pool.
-  static const size_t MAX_NUM_PAYLOAD = 512U;
-
-public:
-  /// Returns the next available buffer from the pool.
-  std::vector<uint8_t>& acquire_payload_buffer()
-  {
-    unsigned i = index++ % MAX_NUM_PAYLOAD;
-    pool[i].clear();
-    return pool[i];
-  }
-
-private:
-  /// Buffer pool.
-  circular_array<std::vector<uint8_t>, MAX_NUM_PAYLOAD> pool;
-  /// Index used to retrieve the next container.
-  unsigned index = 0;
-};
-
 /// \brief MAC-to-FAPI translator.
 ///
 /// This class listens to cell-specific MAC events carrying scheduling results and translates them into FAPI messages
@@ -140,8 +118,7 @@ private:
   /// FAPI message gateway to the outside world.
   fapi::slot_message_gateway& msg_gw;
   /// PDSCH PDU registry helper object.
-  pdsch_pdu_registry  pdsch_registry;
-  payload_buffer_pool pdsch_pool;
+  pdsch_pdu_registry pdsch_registry;
   // Protects pdsch_registry.
   //: TODO: make this lock free.
   std::mutex mutex;
