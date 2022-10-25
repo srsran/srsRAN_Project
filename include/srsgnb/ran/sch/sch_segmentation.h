@@ -14,13 +14,13 @@
 
 namespace srsgnb {
 
-/// Collects Shared Channel (SCH) derived parameters from the transport block size and the target code rate.
+/// Collects Shared Channel (SCH) parameters derived from the transport block size and the target code rate.
 struct sch_information {
   /// Codeblock CRC size.
   static constexpr unsigned CB_CRC_SIZE = 24U;
   /// Transport block CRC size {16, 24}.
   unsigned tb_crc_size;
-  /// LDPC base graph selection.
+  /// LDPC base graph.
   ldpc_base_graph_type base_graph;
   /// Number of codeblocks {1, ..., 52}. Parameter \f$C\f$.
   unsigned nof_cb;

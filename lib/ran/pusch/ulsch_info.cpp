@@ -14,9 +14,7 @@
 
 using namespace srsgnb;
 
-namespace {
-
-constexpr unsigned get_crc_size_uci(unsigned nof_bits)
+static constexpr unsigned get_crc_size_uci(unsigned nof_bits)
 {
   if (nof_bits < 12) {
     return 0;
@@ -29,12 +27,12 @@ constexpr unsigned get_crc_size_uci(unsigned nof_bits)
   return 11;
 }
 
-constexpr unsigned calculate_nof_re_harq_ack(unsigned nof_harq_ack_bits,
-                                             float    beta_offset_pusch,
-                                             unsigned nof_re_uci,
-                                             unsigned sum_nof_cb_size,
-                                             float    alpha_scaling,
-                                             unsigned nof_re_uci_l0)
+static constexpr unsigned calculate_nof_re_harq_ack(unsigned nof_harq_ack_bits,
+                                                    float    beta_offset_pusch,
+                                                    unsigned nof_re_uci,
+                                                    unsigned sum_nof_cb_size,
+                                                    float    alpha_scaling,
+                                                    unsigned nof_re_uci_l0)
 {
   if (nof_harq_ack_bits == 0) {
     return 0;
@@ -46,15 +44,15 @@ constexpr unsigned calculate_nof_re_harq_ack(unsigned nof_harq_ack_bits,
                             static_cast<float>(nof_re_uci) / static_cast<float>(sum_nof_cb_size));
   unsigned right = std::ceil(alpha_scaling * static_cast<float>(nof_re_uci_l0));
 
-  return static_cast<unsigned>(std::min(left, right));
+  return std::min(left, right);
 }
 
-constexpr unsigned calculate_nof_re_harq_ack_without_sch(unsigned nof_harq_ack_bits,
-                                                         float    beta_offset_pusch,
-                                                         float    target_code_rate,
-                                                         unsigned modulation_order,
-                                                         float    alpha_scaling,
-                                                         unsigned nof_re_uci_l0)
+static constexpr unsigned calculate_nof_re_harq_ack_without_sch(unsigned nof_harq_ack_bits,
+                                                                float    beta_offset_pusch,
+                                                                float    target_code_rate,
+                                                                unsigned modulation_order,
+                                                                float    alpha_scaling,
+                                                                unsigned nof_re_uci_l0)
 {
   if (nof_harq_ack_bits == 0) {
     return 0;
@@ -66,10 +64,8 @@ constexpr unsigned calculate_nof_re_harq_ack_without_sch(unsigned nof_harq_ack_b
                             (target_code_rate * static_cast<float>(modulation_order)));
   unsigned right = std::ceil(alpha_scaling * static_cast<float>(nof_re_uci_l0));
 
-  return static_cast<unsigned>(std::min(left, right));
+  return std::min(left, right);
 }
-
-} // namespace
 
 ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& config)
 {
@@ -136,7 +132,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
                                                                    nof_re_uci_l0);
   }
 
-  // If more than two HARQ-ACK bits are multiplexed, then calculate the number of reserved bits as it was two HARQ-ACK
+  // If two or less HARQ-ACK bits are multiplexed, then calculate the number of reserved bits as it was two HARQ-ACK
   // payload bits.
   unsigned nof_harq_ack_rvd_re = 0;
   if (config.nof_harq_ack_bits < 2) {
