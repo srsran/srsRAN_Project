@@ -62,10 +62,12 @@ void pusch_demodulator_impl::demodulate(span<log_likelihood_ratio>  data,
                 nof_re_port * config.nof_tx_layers,
                 data.size() / get_bits_per_symbol(config.modulation));
 
-  // Flatten the data coming from the equalizer to a single dimension, resulting in layer demapping.
-  span<const cf_t>  eq_re_flat = eq_re.get_view<static_cast<unsigned>(channel_equalizer::re_list::dims::nof_dims)>({});
-  span<const float> eq_vars_flat =
-      eq_noise_vars.get_view<static_cast<unsigned>(channel_equalizer::re_list::dims::nof_dims)>({});
+  // For now, layer demapping is not implemented.
+  srsgnb_assert(config.nof_tx_layers == 1, "Only a single transmit layer is supported.");
+
+  // Get the equalized resource elements and noise variances for a single transmit layer.
+  span<const cf_t>  eq_re_flat   = eq_re.get_view({0});
+  span<const float> eq_vars_flat = eq_noise_vars.get_view({0});
 
   // Build LLRs from channel symbols.
   demapper->demodulate_soft(data, eq_re_flat, eq_vars_flat, config.modulation);

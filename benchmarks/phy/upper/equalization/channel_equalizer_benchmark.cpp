@@ -27,9 +27,10 @@ using ch_dims = channel_equalizer::ch_est_list::dims;
 // Random generator.
 static std::mt19937 rgen(0);
 
-static unsigned nof_repetitions = 1000;
-static unsigned nof_prb         = 106;
-static bool     silent          = false;
+static unsigned nof_repetitions   = 1000;
+static unsigned nof_prb           = 106;
+static unsigned max_simo_rx_ports = 4;
+static bool     silent            = false;
 
 static void usage(const char* prog)
 {
@@ -77,11 +78,17 @@ int main(int argc, char** argv)
 
   benchmarker perf_meas("Channel Equalizer", nof_repetitions);
 
-  for (spatial_topology topology : {spatial_topology::siso,
-                                    spatial_topology::simo_2x1,
-                                    spatial_topology::simo_3x1,
-                                    spatial_topology::simo_4x1,
-                                    spatial_topology::mimo_2x2}) {
+  // Test the supported channel topologies.
+  std::vector<spatial_topology> topologies;
+
+  // 1xN channels: single transmit layer and one or multiple receive ports.
+  for (unsigned i_rx_port = 1; i_rx_port <= max_simo_rx_ports; ++i_rx_port) {
+    topologies.emplace_back(spatial_topology(i_rx_port, 1));
+  }
+  // MIMO 2x2.
+  topologies.emplace_back(spatial_topology(2, 2));
+
+  for (spatial_topology topology : topologies) {
     // Get dimensions.
     unsigned nof_rx_ports     = topology.get_nof_rx_ports();
     unsigned nof_tx_layers    = topology.get_nof_tx_layers();

@@ -41,9 +41,9 @@ static inline void assert_sizes(channel_equalizer::re_list&           eq_symbols
   unsigned eq_nvars_nof_tx_layers = eq_noise_vars.get_dimension_size(channel_equalizer::re_list::dims::slice);
 
   // Channel estimates dimensions.
-  unsigned ch_ests_nof_re        = ch_estimates.get_dimension_size(channel_equalizer::ch_est_list ::dims::re);
-  unsigned ch_ests_nof_rx_ports  = ch_estimates.get_dimension_size(channel_equalizer::ch_est_list ::dims::rx_port);
-  unsigned ch_ests_nof_tx_layers = ch_estimates.get_dimension_size(channel_equalizer::ch_est_list ::dims::tx_layer);
+  unsigned ch_ests_nof_re        = ch_estimates.get_dimension_size(channel_equalizer::ch_est_list::dims::re);
+  unsigned ch_ests_nof_rx_ports  = ch_estimates.get_dimension_size(channel_equalizer::ch_est_list::dims::rx_port);
+  unsigned ch_ests_nof_tx_layers = ch_estimates.get_dimension_size(channel_equalizer::ch_est_list::dims::tx_layer);
 
   // Assert that the number of Resource Elements per port matches for all inputs and outputs.
   srsgnb_assert((ch_symb_nof_re == ch_ests_nof_re) && (ch_symb_nof_re == eq_symb_nof_re) &&
@@ -82,12 +82,12 @@ static inline void assert_sizes(channel_equalizer::re_list&           eq_symbols
 // Empty list. Acts as a default case.
 template <class none = void>
 void equalize_zf_single_tx_layer(unsigned                              nof_ports,
-                                 channel_equalizer::re_list&           eq_symbols,
-                                 channel_equalizer::noise_var_list&    eq_noise_vars,
-                                 const channel_equalizer::re_list&     ch_symbols,
-                                 const channel_equalizer::ch_est_list& ch_estimates,
-                                 float                                 noise_var,
-                                 float                                 tx_scaling)
+                                 channel_equalizer::re_list&           /**/,
+                                 channel_equalizer::noise_var_list&    /**/,
+                                 const channel_equalizer::re_list&     /**/,
+                                 const channel_equalizer::ch_est_list& /**/,
+                                 float                                 /**/,
+                                 float                                 /**/)
 {
   srsgnb_assertion_failure("Invalid number of receive ports: {}", nof_ports);
 };
@@ -151,9 +151,7 @@ void channel_equalizer_zf_impl::equalize(re_list&           eq_symbols,
   // Select the appropriate equalization algorithm based on the channel topology.
   switch (topology.get_topology()) {
     case spatial_topology::siso:
-    case spatial_topology::simo_2x1:
-    case spatial_topology::simo_3x1:
-    case spatial_topology::simo_4x1:
+    case spatial_topology::simo:
       equalize_zf_single_tx_layer(topology.get_nof_rx_ports(),
                                   std::make_integer_sequence<unsigned, MAX_PORTS>(),
                                   eq_symbols,
@@ -163,7 +161,7 @@ void channel_equalizer_zf_impl::equalize(re_list&           eq_symbols,
                                   noise_var,
                                   tx_scaling);
       break;
-    case spatial_topology::mimo_2x2:
+    case spatial_topology::mimo:
       equalize_zf_2x2(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
       break;
     case spatial_topology::invalid:
