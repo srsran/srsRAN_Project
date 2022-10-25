@@ -99,13 +99,13 @@ private:
     }
   }
 
-  /// \brief Gets channel data estimates from the channel estimation.
+  /// \brief Gets channel data estimates.
   ///
   /// Extracts the channel estimation coefficients corresponding to the PUSCH data Resource Elements from the channel
-  /// estimate. The DM-RS symbols are skipped. The extracted channel coefficients are arranged in two dimensions, i.e.,
-  /// resource element and receive antenna port, as the channel equalizer expects.
+  /// estimate. The DM-RS symbols are skipped. The extracted channel coefficients are arranged in three dimensions,
+  /// i.e., resource element, receive port and transmit layer, as the channel equalizer expects.
   ///
-  /// \param[out] data_estimates PUSCH channel estimates of the data symbols, organized by receive antenna port.
+  /// \param[out] data_estimates channel estimates of the data symbols, organized by receive port and transmit layer.
   /// \param[in]  channel_estimate channel estimation object.
   /// \param[in]  config  Configuration parameters.
   static void get_ch_data_estimates(channel_equalizer::ch_est_list& data_estimates,

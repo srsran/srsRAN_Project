@@ -8,13 +8,10 @@
  *
  */
 
-#include "srsgnb/phy/upper/channel_estimation.h"
 #include "srsgnb/phy/upper/equalization/equalization_factories.h"
-#include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/spatial_topology.h"
 #include "srsgnb/support/benchmark_utils.h"
 #include "srsgnb/support/srsgnb_test.h"
-#include <complex>
 #include <getopt.h>
 #include <random>
 

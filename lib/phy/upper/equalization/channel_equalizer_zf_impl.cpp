@@ -79,23 +79,8 @@ static inline void assert_sizes(channel_equalizer::re_list&           eq_symbols
                 ch_ests_nof_tx_layers);
 }
 
-// Empty list. Acts as a default case.
-template <class none = void>
-void equalize_zf_single_tx_layer(unsigned                              nof_ports,
-                                 channel_equalizer::re_list&           /**/,
-                                 channel_equalizer::noise_var_list&    /**/,
-                                 const channel_equalizer::re_list&     /**/,
-                                 const channel_equalizer::ch_est_list& /**/,
-                                 float                                 /**/,
-                                 float                                 /**/)
-{
-  srsgnb_assertion_failure("Invalid number of receive ports: {}", nof_ports);
-};
-
-// Calls the equalizer function for receive spatial diversity with the appropriate number of ports, given by nof_ports.
-// Recursively evaluates a list of number of ports passed as an argument pack. Performs equalization when the right
-// number of ports value is found.
-template <unsigned NPorts, unsigned... NPortList>
+// Calls the equalizer function for receive spatial diversity with the appropriate number of receive ports.
+template <unsigned NOF_PORTS>
 void equalize_zf_single_tx_layer(unsigned                              nof_ports,
                                  channel_equalizer::re_list&           eq_symbols,
                                  channel_equalizer::noise_var_list&    eq_noise_vars,
@@ -104,29 +89,27 @@ void equalize_zf_single_tx_layer(unsigned                              nof_ports
                                  float                                 noise_var,
                                  float                                 tx_scaling)
 {
-  if (NPorts != nof_ports) {
-    // Recursive call, discarding NPorts from the list.
-    return equalize_zf_single_tx_layer<NPortList...>(
+  if (NOF_PORTS != nof_ports) {
+    // Recursive call.
+    return equalize_zf_single_tx_layer<NOF_PORTS - 1>(
         nof_ports, eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
   }
 
   // Perform equalization.
-  equalize_zf_1xn<NPorts>(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+  equalize_zf_1xn<NOF_PORTS>(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
 }
 
-// Deduces the NPortList argument pack from a std::integer_sequence numeric sequence generated at compile time.
-template <unsigned... NPortList>
-void equalize_zf_single_tx_layer(unsigned nof_ports,
-                                 std::integer_sequence<unsigned, NPortList...>,
-                                 channel_equalizer::re_list&           eq_symbols,
-                                 channel_equalizer::noise_var_list&    eq_noise_vars,
-                                 const channel_equalizer::re_list&     ch_symbols,
-                                 const channel_equalizer::ch_est_list& ch_estimates,
-                                 float                                 noise_var,
-                                 float                                 tx_scaling)
+template <>
+void equalize_zf_single_tx_layer<1>(unsigned /**/,
+                                    channel_equalizer::re_list&           eq_symbols,
+                                    channel_equalizer::noise_var_list&    eq_noise_vars,
+                                    const channel_equalizer::re_list&     ch_symbols,
+                                    const channel_equalizer::ch_est_list& ch_estimates,
+                                    float                                 noise_var,
+                                    float                                 tx_scaling)
 {
-  equalize_zf_single_tx_layer<NPortList...>(
-      nof_ports, eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+  // Perform equalization.
+  equalize_zf_1xn<1>(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
 }
 
 void channel_equalizer_zf_impl::equalize(re_list&           eq_symbols,
@@ -152,21 +135,15 @@ void channel_equalizer_zf_impl::equalize(re_list&           eq_symbols,
   switch (topology.get_topology()) {
     case spatial_topology::siso:
     case spatial_topology::simo:
-      equalize_zf_single_tx_layer(topology.get_nof_rx_ports(),
-                                  std::make_integer_sequence<unsigned, MAX_PORTS>(),
-                                  eq_symbols,
-                                  eq_noise_vars,
-                                  ch_symbols,
-                                  ch_estimates,
-                                  noise_var,
-                                  tx_scaling);
+      equalize_zf_single_tx_layer<MAX_PORTS>(
+          topology.get_nof_rx_ports(), eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
       break;
     case spatial_topology::mimo:
       equalize_zf_2x2(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
       break;
     case spatial_topology::invalid:
     default:
-      srsgnb_assertion_failure("Invalid channel spatial topology: {} Tx layers, {} Rx ports.",
+      srsgnb_assertion_failure("Invalid channel spatial topology: {} Rx ports, {} Tx layers.",
                                ch_estimates.get_dimension_size(ch_est_list::dims::rx_port),
                                ch_estimates.get_dimension_size(ch_est_list::dims::tx_layer));
   }

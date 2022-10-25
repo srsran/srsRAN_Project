@@ -39,20 +39,20 @@ using PuschProcessorParams = test_case_t;
 class channel_equalizer_spy : public channel_equalizer
 {
 public:
-  void equalize(re_list&           mod_symbols,
-                noise_var_list&    noise_vars,
-                const re_list&     ch_symbols,
-                const ch_est_list& ch_estimates,
-                span<const float>  noise_var_estimates,
+  void equalize(re_list&        eq_symbols,
+                noise_var_list& eq_noise_vars,
+                const re_list&  ch_symbols,
+                const ch_est_list& /**/,
+                span<const float> /**/,
                 float /**/) override
   {
-    for (unsigned i_layer = 0, i_layer_end = noise_vars.get_dimension_size(re_list::dims::slice);
+    for (unsigned i_layer = 0, i_layer_end = eq_noise_vars.get_dimension_size(re_list::dims::slice);
          i_layer != i_layer_end;
          ++i_layer) {
-      span<float> layer_noise_var = noise_vars.get_view<>({i_layer});
+      span<float> layer_noise_var = eq_noise_vars.get_view<>({i_layer});
       std::fill(layer_noise_var.begin(), layer_noise_var.end(), 1e-2);
 
-      srsvec::copy(mod_symbols.get_view<>({i_layer}), ch_symbols.get_view<>({i_layer}));
+      srsvec::copy(eq_symbols.get_view<>({i_layer}), ch_symbols.get_view<>({i_layer}));
     }
   }
 };
