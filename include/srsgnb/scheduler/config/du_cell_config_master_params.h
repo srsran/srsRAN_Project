@@ -31,7 +31,7 @@ struct du_cell_config_master_params {
   /// The number of Common Resource Blocks (nof_crbs) for the main carrier is determined according to TS 38.104,
   /// Table 5.3.2-1.
   unsigned nof_crbs = band_helper::get_n_rbs_from_bw(channel_bw_mhz, scs_common, frequency_range::FR1);
-  /// This ARFCN represents "f_ref" for DL, as perTS 38.211, Section 5.4.2.1.
+  /// This ARFCN represents "f_ref" for DL, as per TS 38.211, Section 5.4.2.1.
   unsigned dl_arfcn = 365000;
   /// <em>NR operating band<\em>, as per Table 5.2-1 and 5.2-2, TS 38.104.
   nr_band band = nr_band::n3;
