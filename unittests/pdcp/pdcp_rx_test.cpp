@@ -306,9 +306,9 @@ TEST_P(pdcp_rx_test, count_wraparound)
   uint32_t       rx_next_start  = 262143;
   uint32_t       n_sdus         = 6;
   pdcp_max_count max_count{rx_next_notify, rx_next_max};
-  init(GetParam(), pdcp_t_reordering::ms10, max_count);
 
-  auto test_max_count = [this, n_sdus](uint32_t count) {
+  auto test_max_count = [this, n_sdus, max_count](uint32_t count) {
+    init(GetParam(), pdcp_t_reordering::ms10, max_count);
     // Set state of PDCP entiy
     // Do not enable integrity or ciphering, to make it easier to generate test vectors.
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
@@ -329,7 +329,7 @@ TEST_P(pdcp_rx_test, count_wraparound)
   };
 
   if (config.sn_size == pdcp_sn_size::size12bits) {
-    // test_max_count(rx_next_start);
+    test_max_count(rx_next_start);
   } else if (config.sn_size == pdcp_sn_size::size18bits) {
     test_max_count(rx_next_start);
   } else {

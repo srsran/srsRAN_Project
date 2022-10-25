@@ -35,16 +35,26 @@ const std::array<uint8_t, sdu_size> sdu2     = {0xde, 0xad};
 
 // Test PDUs for RX.
 // Generated from SDU1, using NIA1 and NEA1.
-const int                                   pdu_size_snlen12       = 8;
-const int                                   pdu_size_snlen18       = 9;
-const std::array<uint8_t, pdu_size_snlen12> pdu1_count0_snlen12    = {0x80, 0x00, 0x28, 0xb7, 0xe0, 0xc5, 0x10, 0x48};
-const std::array<uint8_t, pdu_size_snlen12> pdu1_count1_snlen12    = {0x80, 0x01, 0x34, 0x68, 0xae, 0x56, 0xdc, 0x2c};
-const std::array<uint8_t, pdu_size_snlen12> pdu1_count2047_snlen12 = {0x87, 0xff, 0x39, 0xb4, 0x2c, 0x50, 0x9f, 0xf6};
-const std::array<uint8_t, pdu_size_snlen12> pdu1_count2048_snlen12 = {0x88, 0x00, 0xe3, 0x37, 0xfe, 0x24, 0xc3, 0xe9};
-const std::array<uint8_t, pdu_size_snlen12> pdu1_count4095_snlen12 = {0x8f, 0xff, 0x1a, 0x08, 0xbe, 0xa4, 0x32, 0x86};
-const std::array<uint8_t, pdu_size_snlen12> pdu1_count4096_snlen12 = {0x80, 0x00, 0x4f, 0xd2, 0x5c, 0xdc, 0x86, 0xfe};
+const int pdu_size_snlen12 = 8;
+const int pdu_size_snlen18 = 9;
+
+// 12 bits
+const std::array<uint8_t, pdu_size_snlen12> pdu1_count0_snlen12      = {0x80, 0x00, 0x28, 0xb7, 0xe0, 0xc5, 0x10, 0x48};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_count1_snlen12      = {0x80, 0x01, 0x34, 0x68, 0xae, 0x56, 0xdc, 0x2c};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_count2047_snlen12   = {0x87, 0xff, 0x39, 0xb4, 0x2c, 0x50, 0x9f, 0xf6};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_count2048_snlen12   = {0x88, 0x00, 0xe3, 0x37, 0xfe, 0x24, 0xc3, 0xe9};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_count4095_snlen12   = {0x8f, 0xff, 0x1a, 0x08, 0xbe, 0xa4, 0x32, 0x86};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_count4096_snlen12   = {0x80, 0x00, 0x4f, 0xd2, 0x5c, 0xdc, 0x86, 0xfe};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_count262143_snlen12 = {0x8f, 0xff, 0xa7, 0xe3, 0x3f, 0x0d, 0xc0, 0x94};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_count262144_snlen12 = {0x80, 0x00, 0x6d, 0xc2, 0x76, 0xe8, 0xe1, 0x55};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_count262145_snlen12 = {0x80, 0x01, 0xed, 0xb2, 0x64, 0x36, 0x40, 0x80};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_count262146_snlen12 = {0x80, 0x02, 0xe0, 0x06, 0x0d, 0x18, 0xc1, 0xf6};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_count262147_snlen12 = {0x80, 0x03, 0x10, 0x49, 0x14, 0x0d, 0xd1, 0x1b};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_count262148_snlen12 = {0x80, 0x04, 0xfc, 0x2d, 0x3e, 0xcf, 0xb4, 0xa2};
 const std::array<uint8_t, pdu_size_snlen12> pdu1_count4294967295_snlen12 =
     {0x8f, 0xff, 0xaa, 0x13, 0xb5, 0x1f, 0x8a, 0x68};
+
+// 18 bits
 const std::array<uint8_t, pdu_size_snlen18> pdu1_count0_snlen18 =
     {0x80, 0x00, 0x00, 0x28, 0xb7, 0x87, 0xb7, 0x5f, 0xd7};
 const std::array<uint8_t, pdu_size_snlen18> pdu1_count1_snlen18 =
@@ -94,6 +104,24 @@ inline bool get_pdu_test_vector(pdcp_sn_size sn_size, uint32_t count, byte_buffe
         return true;
       case 4096:
         exp_pdu = byte_buffer{pdu1_count4096_snlen12};
+        return true;
+      case 262143:
+        exp_pdu = byte_buffer{pdu1_count262143_snlen12};
+        return true;
+      case 262144:
+        exp_pdu = byte_buffer{pdu1_count262144_snlen12};
+        return true;
+      case 262145:
+        exp_pdu = byte_buffer{pdu1_count262145_snlen12};
+        return true;
+      case 262146:
+        exp_pdu = byte_buffer{pdu1_count262146_snlen12};
+        return true;
+      case 262147:
+        exp_pdu = byte_buffer{pdu1_count262147_snlen12};
+        return true;
+      case 262148:
+        exp_pdu = byte_buffer{pdu1_count262148_snlen12};
         return true;
       case 4294967295:
         exp_pdu = byte_buffer{pdu1_count4294967295_snlen12};
