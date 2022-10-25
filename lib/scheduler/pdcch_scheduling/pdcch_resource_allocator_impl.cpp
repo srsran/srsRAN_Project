@@ -266,8 +266,7 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_ue(cell_slot
                                                                        const ue_cell_configuration&  user,
                                                                        bwp_id_t                      bwpid,
                                                                        search_space_id               ss_id,
-                                                                       aggregation_level             aggr_lvl,
-                                                                       dci_ul_format                 dci_fmt)
+                                                                       aggregation_level             aggr_lvl)
 {
   // Find Common or UE-specific BWP and CORESET configurations.
   const bwp_configuration&          bwp_cfg = user.dl_bwp_common(bwpid).generic_params;
@@ -284,7 +283,6 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_ue(cell_slot
   // [Implementation-defined] We allocate the DCI on the SearchSpace starting from symbols 0.
   pdcch.ctx.starting_symbol = 0;
   pdcch.ctx.cces.aggr_lvl   = aggr_lvl;
-  pdcch.dci.format_type     = dci_fmt;
 
   // Allocate a position for UL PDCCH in CORESET.
   pdcch_slot_allocator& pdcch_alloc = get_pdcch_slot_alloc(slot_alloc.slot);

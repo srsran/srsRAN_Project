@@ -13,6 +13,14 @@
 
 using namespace srsgnb;
 
+template <typename T>
+void test_trivial_optional_traits()
+{
+  static_assert(std::is_trivially_destructible<optional<T>>::value, "optional<T> should be trivially destructible");
+  static_assert(std::is_trivially_copy_constructible<optional<T>>::value, "optional<T> should be copy constructible");
+  static_assert(std::is_trivially_move_constructible<optional<T>>::value, "optional<T> should be move constructible");
+}
+
 void test_optional_int()
 {
   optional<int> opt, opt2(5);
@@ -47,6 +55,8 @@ void test_optional_move_only()
 
 int main()
 {
+  test_trivial_optional_traits<bool>();
+  test_trivial_optional_traits<int>();
   test_optional_int();
   test_optional_move_only();
 }

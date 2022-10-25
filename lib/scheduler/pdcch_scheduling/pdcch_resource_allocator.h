@@ -45,15 +45,13 @@ public:
   /// \param bwp_id BWP Id to use.
   /// \param ss_id Search Space Id to use.
   /// \param aggr_lvl Aggregation Level of PDCCH allocation.
-  /// \param dci_fmt DCI format to use.
   /// \return Allocated PDCCH if successful.
   virtual pdcch_ul_information* alloc_ul_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
                                                   rnti_t                        rnti,
                                                   const ue_cell_configuration&  user,
                                                   bwp_id_t                      bwpid,
                                                   search_space_id               ss_id,
-                                                  aggregation_level             aggr_lvl,
-                                                  dci_ul_format                 dci_fmt) = 0;
+                                                  aggregation_level             aggr_lvl) = 0;
 };
 
 } // namespace srsgnb

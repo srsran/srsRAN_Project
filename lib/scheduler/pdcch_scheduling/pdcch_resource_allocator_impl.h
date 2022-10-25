@@ -43,8 +43,7 @@ public:
                                           const ue_cell_configuration&  user,
                                           bwp_id_t                      bwpid,
                                           search_space_id               ss_id,
-                                          aggregation_level             aggr_lvl,
-                                          dci_ul_format                 dci_fmt) override;
+                                          aggregation_level             aggr_lvl) override;
 
 private:
   class pdcch_slot_allocator;

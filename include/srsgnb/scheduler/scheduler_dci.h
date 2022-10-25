@@ -63,24 +63,17 @@ struct dci_dl_info {
   };
 };
 
-/// \remark See TS 38.212, 7.3.1.1.1 - "Format 0_0".
-struct dci_format0_0_info {
-  uint32_t freq_domain_assigment;
-  uint32_t time_domain_assigment;
-  bool     freq_hopping;
-  uint8_t  mcs;
-  bool     ndi;
-  uint8_t  rv;
-  uint8_t  harq_id;
-  int8_t   tpc;
-  bool     ul_sul_indicator;
-};
+/// Defines which fields are stored in the DCI payload, based on the chosen DCI format and RNTI type.
+enum class dci_ul_rnti_config_type { tc_rnti_f0_0, c_rnti_f0_0 };
 
 struct dci_ul_info {
-  dci_ul_format format_type;
+  dci_ul_rnti_config_type type;
   union {
-    dci_format0_0_info f0_0;
+    dci_0_0_c_rnti_configuration  c_rnti_f0_0;
+    dci_0_0_tc_rnti_configuration tc_rnti_f0_0;
   };
+
+  dci_ul_info() : type(dci_ul_rnti_config_type::c_rnti_f0_0) { new (&c_rnti_f0_0) dci_0_0_c_rnti_configuration(); }
 };
 
 } // namespace srsgnb

@@ -162,6 +162,19 @@ static dci_payload encode_dci(const pdcch_dl_information& pdcch)
   }
 }
 
+/// Encodes UL DCI.
+static dci_payload encode_dci(const pdcch_ul_information& pdcch)
+{
+  switch (pdcch.dci.type) {
+    case dci_ul_rnti_config_type::c_rnti_f0_0:
+      return dci_0_0_c_rnti_pack(pdcch.dci.c_rnti_f0_0);
+    case dci_ul_rnti_config_type::tc_rnti_f0_0:
+      return dci_0_0_tc_rnti_pack(pdcch.dci.tc_rnti_f0_0);
+    default:
+      srsgnb_terminate("Invalid DCI format");
+  }
+}
+
 void mac_cell_processor::assemble_dl_sched_request(mac_dl_sched_result&   mac_res,
                                                    slot_point             sl_tx,
                                                    du_cell_index_t        cell_index,
@@ -177,8 +190,13 @@ void mac_cell_processor::assemble_dl_sched_request(mac_dl_sched_result&   mac_re
     ssb_helper.assemble_ssb(mac_res.ssb_pdus.back(), ssb);
   }
 
-  // Encode PDCCH DCI payloads.
+  // Encode DL PDCCH DCI payloads.
   for (const pdcch_dl_information& pdcch : dl_res.dl_pdcchs) {
+    mac_res.pdcch_pdus.push_back(encode_dci(pdcch));
+  }
+
+  // Encode UL PDCCH DCI payloads.
+  for (const pdcch_ul_information& pdcch : dl_res.ul_pdcchs) {
     mac_res.pdcch_pdus.push_back(encode_dci(pdcch));
   }
 }

@@ -182,9 +182,8 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
 {
   srsgnb_assert(ues.contains(grant.user->ue_index), "Invalid UE candidate index={}", grant.user->ue_index);
   srsgnb_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
-  constexpr static unsigned      time_resource        = 0; // TODO: Support other time resources.
-  constexpr static dci_ul_format dci_fmt              = dci_ul_format::f0_0;
-  constexpr static unsigned      pdcch_delay_in_slots = 0;
+  constexpr static unsigned time_resource        = 0; // TODO: Support other time resources.
+  constexpr static unsigned pdcch_delay_in_slots = 0;
 
   ue& u = ues[grant.user->ue_index];
 
@@ -229,8 +228,7 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
   // Allocate PDCCH position.
   pdcch_ul_information* pdcch =
       get_pdcch_sched(grant.cell_index)
-          .alloc_ul_pdcch_ue(
-              pdcch_alloc, u.crnti, ue_cell_cfg, ue_cc->active_bwp_id(), ss_cfg->id, grant.aggr_lvl, dci_fmt);
+          .alloc_ul_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ue_cc->active_bwp_id(), ss_cfg->id, grant.aggr_lvl);
   if (pdcch == nullptr) {
     logger.warning("Failed to allocate PDSCH. Cause: No space in PDCCH.");
     return false;
@@ -254,20 +252,30 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
     srsgnb_assert(success, "Failed to allocate UL HARQ retx");
   }
 
-  // Fill DL PDCCH DCI.
-  pdcch->dci.format_type                          = dci_fmt;
-  dci_format0_0_info& f0_0                        = pdcch->dci.f0_0;
-  f0_0.freq_domain_assigment                      = ra_frequency_type1_get_riv(ra_frequency_type1_configuration{
+  // Fill UL PDCCH DCI.
+  pdcch->dci.type                    = dci_ul_rnti_config_type::c_rnti_f0_0;
+  pdcch->dci.c_rnti_f0_0             = {};
+  dci_0_0_c_rnti_configuration& f0_0 = pdcch->dci.c_rnti_f0_0;
+  dci_sizes                     dci_sz =
+      get_dci_sizes(dci_size_config{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
+                                    ue_cell_cfg.dl_bwp_common(ue_cc->active_bwp_id()).generic_params.crbs.length(),
+                                    cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+                                    bwp_ul_cmn.generic_params.crbs.length()});
+  f0_0.payload_size             = dci_sz.format0_0_ue_size; // TODO: Check if SS is common or UE-dedicated.
+  f0_0.N_ul_hop                 = 0;                        // freq hopping is false.
+  f0_0.hopping_offset           = 0;                        // freq hopping is false.
+  f0_0.N_rb_ul_bwp              = bwp_ul_cmn.generic_params.crbs.length();
+  f0_0.frequency_resource       = ra_frequency_type1_get_riv(ra_frequency_type1_configuration{
       cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), prbs.start(), prbs.length()});
-  f0_0.time_domain_assigment                      = time_resource;
-  f0_0.freq_hopping                               = false; // TODO.
-  f0_0.mcs                                        = h_ul.mcs(0).to_uint();
-  f0_0.ndi                                        = h_ul.ndi(0);
+  f0_0.time_resource            = time_resource;
+  f0_0.frequency_hopping_flag   = 0; // TODO.
+  f0_0.modulation_coding_scheme = h_ul.mcs(0).to_uint();
+  f0_0.new_data_indicator       = h_ul.ndi(0);
   static constexpr std::array<unsigned, 4> rv_idx = {0, 2, 3, 1};
-  f0_0.rv                                         = h_ul.nof_retx() % rv_idx.size();
-  f0_0.harq_id                                    = h_ul.pid;
-  f0_0.tpc                                        = 0;
-  f0_0.ul_sul_indicator                           = false;
+  f0_0.redundancy_version                         = h_ul.nof_retx() % rv_idx.size();
+  f0_0.harq_process_number                        = h_ul.pid;
+  f0_0.tpc_command                                = 0;
+  f0_0.ul_sul_indicator                           = {};
 
   // Fill PUSCH.
   pusch_alloc.result.ul.puschs.emplace_back();
