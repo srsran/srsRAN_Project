@@ -25,28 +25,27 @@ namespace {
 
 /// Helper struct to group DCIs into FAPI PDCCH PDUs.
 struct pdcch_group {
-  const pdcch_dl_information* info;
-  const dci_payload*          payload;
+  const dci_dl_context_information* info;
+  const dci_payload*                payload;
 
-  pdcch_group(const pdcch_dl_information* info, const dci_payload* payload) : info(info), payload(payload) {}
+  pdcch_group(const dci_dl_context_information* info, const dci_payload* payload) : info(info), payload(payload) {}
 
   bool operator==(const pdcch_group& other) const
   {
-    return std::tie(info->ctx.coreset_cfg->id, *info->ctx.bwp_cfg, info->ctx.starting_symbol) ==
-           std::tie(other.info->ctx.coreset_cfg->id, *other.info->ctx.bwp_cfg, other.info->ctx.starting_symbol);
+    return std::tie(info->coreset_cfg->id, *info->bwp_cfg, info->starting_symbol) ==
+           std::tie(other.info->coreset_cfg->id, *other.info->bwp_cfg, other.info->starting_symbol);
   }
   bool operator<(const pdcch_group& other) const
   {
-    return std::tie(info->ctx.coreset_cfg->id, *info->ctx.bwp_cfg, info->ctx.starting_symbol) <
-           std::tie(other.info->ctx.coreset_cfg->id, *other.info->ctx.bwp_cfg, other.info->ctx.starting_symbol);
+    return std::tie(info->coreset_cfg->id, *info->bwp_cfg, info->starting_symbol) <
+           std::tie(other.info->coreset_cfg->id, *other.info->bwp_cfg, other.info->starting_symbol);
   }
 };
 
 } // namespace
 
-static void add_pdcch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& builder,
-                                         span<const pdcch_dl_information>      pdcch_info,
-                                         span<const dci_payload>               payloads)
+template <typename T, typename P>
+static void add_pdcch_pdus_to_builder(T& builder, span<const P> pdcch_info, span<const dci_payload> payloads)
 {
   srsgnb_assert(pdcch_info.size() == payloads.size(), "Size mismatch");
 
@@ -56,7 +55,7 @@ static void add_pdcch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& b
 
   static_vector<pdcch_group, MAX_DL_PDUS_PER_SLOT> groups;
   for (unsigned i = 0, e = pdcch_info.size(); i != e; ++i) {
-    groups.emplace_back(&pdcch_info[i], &payloads[i]);
+    groups.emplace_back(&pdcch_info[i].ctx, &payloads[i]);
   }
 
   // Group DCIs into FAPI PDCCH PDUs.
@@ -68,9 +67,9 @@ static void add_pdcch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& b
     pivot   = std::lower_bound(pivot, end, *pivot, std::equal_to<>{});
 
     mac_pdcch_pdu pdu;
-    pdu.bwp_cfg      = i->info->ctx.bwp_cfg;
-    pdu.coreset_cfg  = i->info->ctx.coreset_cfg;
-    pdu.start_symbol = i->info->ctx.starting_symbol;
+    pdu.bwp_cfg      = i->info->bwp_cfg;
+    pdu.coreset_cfg  = i->info->coreset_cfg;
+    pdu.start_symbol = i->info->starting_symbol;
     for (; i != pivot; ++i) {
       pdu.dcis.emplace_back(i->info, i->payload);
     }
@@ -132,7 +131,8 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   builder.set_basic_parameters(dl_res.slot.sfn(), dl_res.slot.slot_index(), num_pdu_groups);
 
   // Add PDCCH PDUs to the DL_TTI.request message.
-  add_pdcch_pdus_to_dl_request(builder, dl_res.dl_res->dl_pdcchs, dl_res.dl_pdcch_pdus);
+  add_pdcch_pdus_to_builder<fapi::dl_tti_request_message_builder, pdcch_dl_information>(
+      builder, dl_res.dl_res->dl_pdcchs, dl_res.dl_pdcch_pdus);
 
   // Add SSB PDUs to the DL_TTI.request message.
   add_ssb_pdus_to_dl_request(builder, dl_res.ssb_pdus);
@@ -155,6 +155,8 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
 
   // Send the message.
   msg_gw.dl_tti_request(msg);
+
+  on_new_uplink_dci(dl_res.dl_res->ul_pdcchs, dl_res.ul_pdcch_pdus, dl_res.slot);
 }
 
 void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_data)
@@ -248,4 +250,26 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
 
   // Send the message.
   msg_gw.ul_tti_request(msg);
+}
+
+void mac_to_fapi_translator::on_new_uplink_dci(span<const pdcch_ul_information> ul_pdcchs,
+                                               span<const dci_payload>          payload,
+                                               slot_point                       slot)
+{
+  fapi::ul_dci_request_message         msg;
+  fapi::ul_dci_request_message_builder builder(msg);
+
+  builder.set_basic_parameters(slot.sfn(), slot.slot_index());
+  add_pdcch_pdus_to_builder<fapi::ul_dci_request_message_builder, pdcch_ul_information>(builder, ul_pdcchs, payload);
+
+  // Validate the UL_TTI.request message.
+  error_type<fapi::validator_report> result = validate_ul_dci_request(msg);
+  if (!result) {
+    log_validator_report(result.error());
+
+    return;
+  }
+
+  // Send the message.
+  msg_gw.ul_dci_request(msg);
 }

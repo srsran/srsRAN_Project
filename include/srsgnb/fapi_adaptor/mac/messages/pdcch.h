@@ -20,12 +20,12 @@ namespace fapi_adaptor {
 struct mac_pdcch_pdu {
   /// Groups the DCI information.
   struct dci_info {
-    dci_info(const pdcch_dl_information* parameters, const dci_payload* payload) :
+    dci_info(const dci_dl_context_information* parameters, const dci_payload* payload) :
       parameters(parameters), payload(payload)
     {
     }
-    const pdcch_dl_information* parameters;
-    const dci_payload*          payload;
+    const dci_dl_context_information* parameters;
+    const dci_payload*                payload;
   };
 
   const bwp_configuration*                                  bwp_cfg;

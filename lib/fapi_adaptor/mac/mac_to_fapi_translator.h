@@ -115,6 +115,10 @@ public:
   }
 
 private:
+  /// Handles the event of new uplink DCIs.
+  void on_new_uplink_dci(span<const pdcch_ul_information> ul_pdcch, span<const dci_payload> payload, slot_point slot);
+
+private:
   /// FAPI message gateway to the outside world.
   fapi::slot_message_gateway& msg_gw;
   /// PDSCH PDU registry helper object.

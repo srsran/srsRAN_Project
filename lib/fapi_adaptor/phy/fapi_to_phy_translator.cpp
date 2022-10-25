@@ -171,7 +171,16 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   }
 }
 
-void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& msg) {}
+void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& msg)
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  
+  for (const auto& pdu : msg.pdus) {
+    pdcch_processor::pdu_t pdcch_pdu;
+    convert_pdcch_fapi_to_phy(pdcch_pdu, pdu.pdu, msg.sfn, msg.slot);
+    current_slot_controller->process_pdcch(pdcch_pdu);
+  }
+}
 
 void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message& msg)
 {
