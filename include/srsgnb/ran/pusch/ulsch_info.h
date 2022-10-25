@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsgnb/adt/bounded_bitset.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/dmrs.h"
 #include "srsgnb/ran/ldpc_base_graph.h"
