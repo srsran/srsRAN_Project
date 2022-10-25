@@ -181,8 +181,9 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
 {
   srsgnb_assert(ues.contains(grant.user->ue_index), "Invalid UE candidate index={}", grant.user->ue_index);
   srsgnb_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
-  constexpr static unsigned      time_resource = 0;
-  constexpr static dci_ul_format dci_fmt       = dci_ul_format::f0_0;
+  constexpr static unsigned      time_resource        = 0; // TODO: Support other time resources.
+  constexpr static dci_ul_format dci_fmt              = dci_ul_format::f0_0;
+  constexpr static unsigned      pdcch_delay_in_slots = 0;
 
   ue& u = ues[grant.user->ue_index];
 
@@ -202,8 +203,8 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
       bwp_ul_cmn.pusch_cfg_common->pusch_td_alloc_list[time_resource];
 
   // Fetch PDCCH and PDSCH resource grid allocators.
-  cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[0];
-  cell_slot_resource_allocator& pusch_alloc = get_res_alloc(grant.cell_index)[pusch_td_cfg.k2];
+  cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots];
+  cell_slot_resource_allocator& pusch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots + pusch_td_cfg.k2];
 
   // Verify there is space in PUSCH and PDCCH result lists for new allocations.
   if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {

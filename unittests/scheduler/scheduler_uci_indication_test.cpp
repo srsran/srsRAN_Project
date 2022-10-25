@@ -146,11 +146,12 @@ TEST_F(uci_sched_tester, no_retx_after_harq_ack)
 
 TEST_F(uci_sched_tester, pusch_scheduled_after_sr_indication)
 {
-  static constexpr unsigned MAX_COUNT = 16;
+  // Maximum delay between the SR indication being forwarded to the scheduler and the scheduler generating an UL grant.
+  static constexpr unsigned MAX_UL_GRANT_DELAY = 8;
   notify_uci_ind(true, {});
 
   bool pusch_found = false;
-  for (unsigned i = 0; i != MAX_COUNT; ++i) {
+  for (unsigned i = 0; i != MAX_UL_GRANT_DELAY; ++i) {
     run_slot();
     ASSERT_FALSE(ue_pdsch_scheduled());
     ASSERT_FALSE(ue_pucch_scheduled());
