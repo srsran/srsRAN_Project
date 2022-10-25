@@ -558,9 +558,9 @@ void calculate_serving_cell_config_diff(const serving_cell_config&        src,
   }
 }
 
-void srsgnb::srs_du::calculate_cell_group_config_diff(const cell_group_config&        src,
-                                                      const cell_group_config&        dest,
-                                                      asn1::rrc_nr::cell_group_cfg_s& out)
+void srsgnb::srs_du::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_cfg_s& out,
+                                                      const cell_group_config&        src,
+                                                      const cell_group_config&        dest)
 {
   calculate_addmodremlist_diff(
       out.rlc_bearer_to_add_mod_list,

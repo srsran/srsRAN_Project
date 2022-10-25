@@ -167,7 +167,7 @@ void ue_creation_procedure::create_f1_ue()
   // Pack SRB1 configuration that is going to be passed in the F1AP DU-to-CU-RRC-Container IE to the CU as per TS38.473,
   // Section 8.4.1.2.
   cell_group_cfg_s cell_group;
-  calculate_cell_group_config_diff({}, ue_ctx->cells[0], cell_group);
+  calculate_cell_group_config_diff(cell_group, {}, ue_ctx->cells[0]);
   cell_group.rlc_bearer_to_add_mod_list.resize(1);
   cell_group.rlc_bearer_to_add_mod_list[0].lc_ch_id        = 1;
   cell_group.rlc_bearer_to_add_mod_list[0].rlc_cfg_present = true;

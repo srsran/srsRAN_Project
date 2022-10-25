@@ -28,20 +28,21 @@ constexpr size_t MAX_NOF_PUCCH_RESOURCE_SETS = 4;
 constexpr size_t MAX_NOF_PUCCH_RESOURCES = 128;
 
 /// Maximum number of PUCCH Resources per PUCCH-ResourceSet.
-/// \remark See TS 38.331, "maxNrofPUCCH-ResourcesPerSet".
+/// \remark See TS 38.331, "maxNrofPUCCH-ResourcesPerSet". Only valid for the first \c pucch_resource_set, see
+/// TS 38.213, Section 9.2.1.
 constexpr size_t MAX_NOF_PUCCH_RESOURCES_PER_PUCCH_RESOURCE_SET = 32;
 
 /// Options for \c occ-Length in \c PUCCH-format4, in \c PUCCH-Config, TS 38.331.
-enum class pucch_f4_occ_len : uint8_t { n2 = 0, n4 };
+enum class pucch_f4_occ_len { n2, n4 };
 
 /// Options for \c occ-Index in \c PUCCH-format4, in \c PUCCH-Config, TS 38.331.
-enum class pucch_f4_occ_idx : uint8_t { n0 = 0, n1, n2, n3 };
+enum class pucch_f4_occ_idx { n0, n1, n2, n3 };
 
 /// \c PUCCH-FormatConfig, in \c PUCCH-Config, TS 38.331. It describes the parameters that are common for a given PUCCH
 /// format.
 struct pucch_common_all_formats {
-  enum class max_code_rate : uint8_t { dot_08 = 0, dot_15, dot_25, dot_35, dot_45, dot_60, dot_80 };
-  enum class num_of_slots : uint8_t { n2 = 0, n4, n8 };
+  enum class max_code_rate { dot_08, dot_15, dot_25, dot_35, dot_45, dot_60, dot_80 };
+  enum class num_of_slots { n2, n4, n8 };
 
   bool operator==(const pucch_common_all_formats& rhs) const
   {

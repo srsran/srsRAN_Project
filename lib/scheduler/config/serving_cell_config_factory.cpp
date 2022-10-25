@@ -244,7 +244,11 @@ serving_cell_config srsgnb::config_helpers::make_default_initial_ue_serving_cell
   pucch_cfg.pucch_res_set.back().pucch_res_id_list.emplace_back(0);
   pucch_cfg.pucch_res_set.back().pucch_res_id_list.emplace_back(1);
   // >>> PUCCH resource 0.
-  pucch_resource res_basic{.res_id = 0, .starting_prb = 51, .second_hop_prb = 0, .intraslot_freq_hopping = true};
+  pucch_resource res_basic{.res_id                 = 0,
+                           .starting_prb           = 51,
+                           .second_hop_prb         = 0,
+                           .intraslot_freq_hopping = true,
+                           .format                 = pucch_format::FORMAT_1};
   res_basic.format                        = pucch_format::FORMAT_1;
   res_basic.format_1.initial_cyclic_shift = 0;
   res_basic.format_1.nof_symbols          = 14;
@@ -253,8 +257,10 @@ serving_cell_config srsgnb::config_helpers::make_default_initial_ue_serving_cell
   pucch_cfg.pucch_res_list.push_back(res_basic);
   // >>> PUCCH resource 1.
   pucch_cfg.pucch_res_list.push_back(res_basic);
-  pucch_resource& res1               = pucch_cfg.pucch_res_list.back();
-  res1.format_1.initial_cyclic_shift = 4;
+  pucch_resource& res1 = pucch_cfg.pucch_res_list.back();
+  res1.res_id          = 1;
+  res1.starting_prb    = 0;
+  res1.second_hop_prb  = 51;
 
   // TODO: add more PUCCH resources.
 

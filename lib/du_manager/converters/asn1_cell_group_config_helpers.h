@@ -26,9 +26,13 @@ asn1::rrc_nr::sched_request_res_cfg_s make_asn1_rrc_sr_resource(const scheduling
 
 asn1::rrc_nr::pucch_res_s make_asn1_rrc_pucch_resource(const pucch_resource& cfg);
 
-void calculate_cell_group_config_diff(const cell_group_config&        src,
-                                      const cell_group_config&        dest,
-                                      asn1::rrc_nr::cell_group_cfg_s& out);
+/// \brief Fills ASN.1 CellGroupConfig struct.
+/// \param[out] out The ASN.1 CellGroupConfig struct to fill.
+/// \param[in] src Previous cell group configuration of UE.
+/// \param[in] dest Next cell group configuration of UE.
+void calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_cfg_s& out,
+                                      const cell_group_config&        src,
+                                      const cell_group_config&        dest);
 
 } // namespace srs_du
 } // namespace srsgnb

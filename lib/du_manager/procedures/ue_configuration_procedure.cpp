@@ -132,7 +132,7 @@ f1ap_ue_config_update_response ue_configuration_procedure::make_ue_config_respon
 
   // Calculate ASN.1 CellGroupConfig to be sent in DU-to-CU container.
   asn1::rrc_nr::cell_group_cfg_s asn1_cell_group;
-  calculate_cell_group_config_diff(ue->cells[0], next_cell_group, asn1_cell_group);
+  calculate_cell_group_config_diff(asn1_cell_group, ue->cells[0], next_cell_group);
   {
     asn1::bit_ref     bref{resp.du_to_cu_rrc_container};
     asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);
