@@ -121,6 +121,13 @@ static void add_pdsch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& b
   }
 }
 
+/// Clears the PDUs of the given DL_TTI.request message.
+static void clear_dl_tti_pdus(fapi::dl_tti_request_message& msg)
+{
+  msg.pdus.clear();
+  msg.num_pdus_of_each_type = {};
+}
+
 void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res)
 {
   fapi::dl_tti_request_message         msg;
@@ -150,7 +157,7 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   if (!result) {
     log_validator_report(result.error());
 
-    return;
+    clear_dl_tti_pdus(msg);
   }
 
   // Send the message.
@@ -214,6 +221,13 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
   msg_gw.tx_data_request(msg);
 }
 
+/// Clears the PDUs of the given UL_TTI.request message.
+static void clear_ul_tti_pdus(fapi::ul_tti_request_message& msg)
+{
+  msg.pdus.clear();
+  msg.num_pdus_of_each_type = {};
+}
+
 void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res)
 {
   fapi::ul_tti_request_message         msg;
@@ -245,7 +259,7 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
   if (!result) {
     log_validator_report(result.error());
 
-    return;
+    clear_ul_tti_pdus(msg);
   }
 
   // Send the message.
