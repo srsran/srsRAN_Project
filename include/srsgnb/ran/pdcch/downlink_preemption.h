@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "../../adt/optional.h"
-#include "../../adt/static_vector.h"
-#include "../du_types.h"
+#include "srsgnb/adt/optional.h"
+#include "srsgnb/adt/static_vector.h"
+#include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/rnti.h"
 #include <cstdint>
 

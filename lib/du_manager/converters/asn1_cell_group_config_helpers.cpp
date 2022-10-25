@@ -268,15 +268,15 @@ void calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
 
 asn1::rrc_nr::pucch_res_set_s srsgnb::srs_du::make_asn1_rrc_pucch_resource_set(const pucch_resource_set& cfg)
 {
-  pucch_res_set_s pucch_res_s;
-  pucch_res_s.pucch_res_set_id = cfg.pucch_res_set_id;
+  pucch_res_set_s pucch_res_set;
+  pucch_res_set.pucch_res_set_id = cfg.pucch_res_set_id;
   for (const auto& it : cfg.pucch_res_id_list) {
-    pucch_res_s.res_list.push_back(it);
+    pucch_res_set.res_list.push_back(it);
   }
   if (cfg.max_payload_size.has_value()) {
-    pucch_res_s.max_payload_size = cfg.max_payload_size.value();
+    pucch_res_set.max_payload_size = cfg.max_payload_size.value();
   }
-  return pucch_res_s;
+  return pucch_res_set;
 }
 
 void make_asn1_rrc_pucch_formats_common_param(asn1::rrc_nr::pucch_format_cfg_s& out,

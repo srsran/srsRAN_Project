@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "../../adt/optional.h"
-#include "../du_types.h"
+#include "srsgnb/adt/optional.h"
+#include "srsgnb/ran/du_types.h"
 #include <cstdint>
 
 namespace srsgnb {
