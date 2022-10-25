@@ -49,19 +49,19 @@ public:
     /// Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274} if intra-slot frequency hopping is
     /// enabled, empty otherwise.
     optional<unsigned> second_hop_prb;
-    /// \brief Parameter \f$n_{\mathrm{ID}}\f$ in TS38.211 Section 6.3.2.2.1 {0, ..., 1023}.
+    /// \brief Parameter \f$n_{\textup{ID}}\f$ in TS38.211 Section 6.3.2.2.1 {0, ..., 1023}.
     ///
     /// It must be set to the higher layer parameter \e hopingID given by TS38.331 Section 6.3.2, Information Element \e
     /// PUCCH-ConfigCommon, if it is configured. Otherwise, it must be equal to the physical cell identifier
-    /// \f$N_{\mathrm{ID}}^{\mathrm{cell}}\f$.
+    /// \f$N_{\textup{ID}}^{\textup{cell}}\f$.
     unsigned n_id;
     /// \brief DM-RS scrambling identity {0, ..., 65535}.
     ///
-    /// Corresponds to parameter \f$N_{\mathrm{ID}}^0\f$ in TS38.211 Section 6.4.1.3.2.1.
+    /// Corresponds to parameter \f$N_{\textup{ID}}^0\f$ in TS38.211 Section 6.4.1.3.2.1.
     ///
     /// It must be set to the higher layer parameter \e scramblingID0 given by TS38.331 Section 6.3.2, Information
     /// Element \e DMRS-UplinkConfig, if it is configured. Otherwise, it must be equal to the physical cell identifier
-    /// \f$N_{\mathrm{ID}}^{\mathrm{cell}}\f$.
+    /// \f$N_{\textup{ID}}^{\textup{cell}}\f$.
     unsigned n_id_0;
     /// Number of expected SR bits {0, ..., 4}.
     unsigned nof_sr;

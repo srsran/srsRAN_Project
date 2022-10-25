@@ -28,7 +28,7 @@ namespace srsgnb {
 /// \f[
 /// \ell(b_{m+i}) = \log \frac{\Pr(b_{m+i}=0|y_m)}{\Pr(b_{m+i}=1|y_m)}
 /// \f]
-/// where \f$i = 0,1,\dots,Q_{\mathrm{m}}-1\f$, with \f$Q_{\mathrm{m}}\f$ denoting the modulation order as defined in
+/// where \f$i = 0,1,\dots,Q_{\textup{m}}-1\f$, with \f$Q_{\textup{m}}\f$ denoting the modulation order as defined in
 /// TS38.211 Table 6.3.1.2-1, and where \f$\Pr(b_{m+i}=B|y_m)\f$ is the conditional probability of bit \f$b_{m+i}\f$
 /// being equal to \f$B\f$ given the modulation symbol \f$y_m\f$.
 class demodulation_mapper

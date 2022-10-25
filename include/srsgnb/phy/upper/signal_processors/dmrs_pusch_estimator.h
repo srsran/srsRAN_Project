@@ -39,9 +39,9 @@ public:
     bool n_scid;
     /// \brif DM-RS amplitude scaling factor.
     ///
-    /// Parameter \f$\beta _{\mathrm{PUSCH}}^{\mathrm{DMRS}}\f$ as per TS38.211 Section 6.4.1.1.3. It must be set
-    /// to \f$\beta _{\mathrm{PUSCH}}^{\mathrm{DMRS}}=10^{-\beta_{\mathrm{DMRS}}/20}\f$, as per TS38.214
-    /// Section 6.2.2, where \f$\beta_{\mathrm{DMRS}}\f$ is the PUSCH EPRE to DM-RS EPRE ratio expressed in decibels, as
+    /// Parameter \f$\beta _{\textup{PUSCH}}^{\textup{DMRS}}\f$ as per TS38.211 Section 6.4.1.1.3. It must be set
+    /// to \f$\beta _{\textup{PUSCH}}^{\textup{DMRS}}=10^{-\beta_{\textup{DMRS}}/20}\f$, as per TS38.214
+    /// Section 6.2.2, where \f$\beta_{\textup{DMRS}}\f$ is the PUSCH EPRE to DM-RS EPRE ratio expressed in decibels, as
     /// specified in TS38.214 Table 6.2.2-1.
     ///
     /// \sa get_sch_to_dmrs_ratio_dB()

@@ -42,7 +42,7 @@ struct prach_buffer_context {
   /// \brief Offset, in PRBs, between Point A and the PRB overlapping with the lowest RE of the first frequency-domain
   /// PRACH occasion.
   ///
-  /// Corresponds to parameter \f$k_1/N_{\mathrm{sc}}^{\mathrm{RB}}\f$ in TS38.211 Section 5.3.2. The number of PRBs is
+  /// Corresponds to parameter \f$k_1/N_{\textup{sc}}^{\textup{RB}}\f$ in TS38.211 Section 5.3.2. The number of PRBs is
   /// computed assuming a subcarrier spacing equal to \c pusch_scs.
   unsigned rb_offset;
   /// \brief Uplink resource grid size in PRBs.

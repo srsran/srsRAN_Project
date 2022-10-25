@@ -26,10 +26,10 @@ private:
   /// Length of the generator seed in bits.
   static constexpr unsigned SEQUENCE_SEED_LEN = 31;
 
-  /// \brief Parameter \f$N_{\mathrm{C}}\f$, as defined in TS38.211 Section 5.2.1.
+  /// \brief Parameter \f$N_{\textup{C}}\f$, as defined in TS38.211 Section 5.2.1.
   ///
   /// Corresponds to the delay between the state sequences \f$x_1(n), x_2(n)\f$ and the output sequence \f$c(n) =
-  /// x_1(n + N_{\mathrm{C}}) \oplus x_2(n + N_{\mathrm{C}})\f$.
+  /// x_1(n + N_{\textup{C}}) \oplus x_2(n + N_{\textup{C}})\f$.
   static constexpr unsigned SEQUENCE_NC = 1600;
 
   /// \name Parameters for parallel generation of the state sequences.
@@ -52,7 +52,7 @@ private:
     unsigned x1;
 
   public:
-    /// Initializes the first 31 elements of \f$x_1(n)\f$ and advances to position \f$N_{\mathrm{C}}\f$.
+    /// Initializes the first 31 elements of \f$x_1(n)\f$ and advances to position \f$N_{\textup{C}}\f$.
     x1_init_s();
     /// Returns the \f$x_1(n)\f$ state register after initialization.
     unsigned get() const;
@@ -61,18 +61,18 @@ private:
   /// \brief State sequence \f$x_2(n)\f$ initializer.
   ///
   /// Similarly to x1_init_s, this class is used to initialize the sequence \f$x_2(n)\f$ and advance it until position
-  /// \f$n = N_{\mathrm{C}}\f$. Here, however, the process is carried out simultaneously for all possible seeds of the
-  /// form \f$c_{\mathrm{init}} = 2^k\f$ for \f$k=0,1,\dots,30\f$. The initial state corresponding to any other seed can
+  /// \f$n = N_{\textup{C}}\f$. Here, however, the process is carried out simultaneously for all possible seeds of the
+  /// form \f$c_{\textup{init}} = 2^k\f$ for \f$k=0,1,\dots,30\f$. The initial state corresponding to any other seed can
   /// easily be computed from these basic ones after noticing that the map sending a seed to the corresponding sequence
   /// defines a group isomorphism between the set of seeds and the set of sequences (both groups under bitwise XOR).
   /// That is, if
   /// \f{align*}
-  /// c_{\mathrm{init}}^{(1)} &\mapsto x_2^{(1)}(n) &&\text{and} &
-  /// c_{\mathrm{init}}^{(2)} &\mapsto x_2^{(2)}(n)
+  /// c_{\textup{init}}^{(1)} &\mapsto x_2^{(1)}(n) &&\text{and} &
+  /// c_{\textup{init}}^{(2)} &\mapsto x_2^{(2)}(n)
   /// \f}
   /// then
   /// \f[
-  /// c_{\mathrm{init}}^{(1)} \oplus c_{\mathrm{init}}^{(2)} \mapsto x_2^{(1)}(n) \oplus x_2^{(2)}(n)
+  /// c_{\textup{init}}^{(1)} \oplus c_{\textup{init}}^{(2)} \mapsto x_2^{(1)}(n) \oplus x_2^{(2)}(n)
   /// \f]
   /// with the XOR operator acting bitwise between seeds and for all \f$n\f$ between sequences.
   class x2_init_s
@@ -82,7 +82,7 @@ private:
     std::array<unsigned, SEQUENCE_SEED_LEN> x2;
 
   public:
-    /// Initializes the first 31 elements of \f$x_2(n)\f$ and advances to position \f$N_{\mathrm{C}}\f$.
+    /// Initializes the first 31 elements of \f$x_2(n)\f$ and advances to position \f$N_{\textup{C}}\f$.
     x2_init_s();
     /// For the given seed, returns the \f$x_2(n)\f$ state register after initialization.
     unsigned get(unsigned c_init) const;

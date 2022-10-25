@@ -37,7 +37,7 @@ public:
 
   /// \brief Initializes the pseudo-random generator with the given seed.
   ///
-  /// \param[in] c_init Initialization seed (parameter \f$c_{\mathrm{init}}\f$ in TS38.211 Section 5.2.1).
+  /// \param[in] c_init Initialization seed (parameter \f$c_{\textup{init}}\f$ in TS38.211 Section 5.2.1).
   virtual void init(unsigned c_init) = 0;
 
   /// \brief Initializes the pseudo-random generator at the given state.

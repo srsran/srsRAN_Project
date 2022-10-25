@@ -267,8 +267,8 @@ struct is_llr_span_compatible<T,
 /// \param[in] x      A sequence of (possibly constant) log-likelihood ratios.
 /// \param[in] y      A second sequence of values.
 /// \param[in] init   Initialization value.
-/// \return The dot product between the two spans plus \c init, i.e. \f$ x \cdot y + \mathrm{init} = \sum_i x_i y_i +
-/// \mathrm{init}\f$.
+/// \return The dot product between the two spans plus \c init, i.e. \f$ x \cdot y + \textup{init} = \sum_i x_i y_i +
+/// \textup{init}\f$.
 /// \remark The two input spans must have the same length.
 /// \remark This function treats the LLRs as real values, thus neither saturation nor promotion apply.
 template <typename T, typename U, typename V>

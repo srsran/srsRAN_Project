@@ -71,9 +71,9 @@ struct dci_0_0_c_rnti_configuration {
   /// The DCI payload size is determined by the DCI size alignment procedure specified in TS38.212 Section 7.3.1.0. See
   /// \ref get_dci_sizes for more information.
   unsigned payload_size;
-  /// \brief Parameter \f$N_{\mathrm{UL\_hop}}\f$, as per TS38.212 Section 7.3.1.1.1.
+  /// \brief Parameter \f$N_{\textup{UL\_hop}}\f$, as per TS38.212 Section 7.3.1.1.1.
   ///
-  /// \f$N_{\mathrm{UL\_hop}}\f$ is the number of bits used in the DCI payload to pack the frequency hopping offset,
+  /// \f$N_{\textup{UL\_hop}}\f$ is the number of bits used in the DCI payload to pack the frequency hopping offset,
   /// represented by \ref hopping_offset.
   ///
   /// If frequency hopping is enabled via the \ref frequency_hopping_flag, it must be set to:
@@ -125,9 +125,9 @@ struct dci_0_0_tc_rnti_configuration {
   /// The DCI payload size is determined by the DCI size alignment procedure specified in TS38.212 Section 7.3.1.0. See
   /// \ref get_dci_sizes for more information.
   unsigned payload_size;
-  /// \brief Parameter \f$N_{\mathrm{UL\_hop}}\f$, as per TS38.212 Section 7.3.1.1.1.
+  /// \brief Parameter \f$N_{\textup{UL\_hop}}\f$, as per TS38.212 Section 7.3.1.1.1.
   ///
-  /// \f$N_{\mathrm{UL\_hop}}\f$ is the number of bits used in the DCI payload to pack the frequency hopping offset,
+  /// \f$N_{\textup{UL\_hop}}\f$ is the number of bits used in the DCI payload to pack the frequency hopping offset,
   /// represented by \ref hopping_offset.
   ///
   /// If frequency hopping is enabled via the \ref frequency_hopping_flag, it must be set to:
