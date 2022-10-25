@@ -22,6 +22,8 @@ asn1::rrc_nr::search_space_s make_asn1_rrc_search_space(const search_space_confi
 
 asn1::rrc_nr::pucch_res_set_s make_asn1_rrc_pucch_resource_set(const pucch_resource_set& cfg);
 
+asn1::rrc_nr::sched_request_res_cfg_s make_asn1_rrc_sr_resource(const scheduling_request_resource_config& cfg);
+
 asn1::rrc_nr::pucch_res_s make_asn1_rrc_pucch_resource(const pucch_resource& cfg);
 
 void calculate_cell_group_config_diff(const cell_group_config&        src,

@@ -14,6 +14,10 @@
 
 namespace srsgnb {
 
+/// Maximum number of SR resources per BWP in a cell.
+/// \remark See TS 38.331, "maxNrofSR-Resources".
+constexpr size_t MAX_NOF_SR_RESOURCES = 8;
+
 /// \c SchedulingRequestResourceId, as per TS 38.331.
 enum scheduling_request_resource_id : uint8_t { SR_ID_MIN = 0, SR_ID_MAX = 7 };
 
@@ -59,6 +63,13 @@ struct scheduling_request_to_addmod {
 
 /// SR Configuration, as per \c SchedulingRequestResourceConfig, TS 38.331.
 struct scheduling_request_resource_config {
+  bool operator==(const scheduling_request_resource_config& rhs) const
+  {
+    return sr_res_id == rhs.sr_res_id && sr_id == rhs.sr_id && period == rhs.period && offset == rhs.offset &&
+           pucch_res_id == rhs.pucch_res_id;
+  }
+  bool operator!=(const scheduling_request_resource_config& rhs) const { return !(rhs == *this); }
+
   /// \c schedulingRequestResourceId, which identifies this SchedulingRequestResourceConfig.
   unsigned sr_res_id;
   /// \c schedulingRequest, which is the ID of \ref scheduling_request_to_addmod that uses this resource.

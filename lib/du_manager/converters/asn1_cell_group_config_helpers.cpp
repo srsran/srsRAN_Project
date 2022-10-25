@@ -399,6 +399,79 @@ asn1::rrc_nr::pucch_res_s srsgnb::srs_du::make_asn1_rrc_pucch_resource(const puc
   return pucch_res;
 }
 
+asn1::rrc_nr::sched_request_res_cfg_s
+srsgnb::srs_du::make_asn1_rrc_sr_resource(const scheduling_request_resource_config& cfg)
+{
+  sched_request_res_cfg_s sr_res_cfg;
+  sr_res_cfg.sched_request_res_id           = cfg.sr_res_id;
+  sr_res_cfg.sched_request_id               = cfg.sr_id;
+  sr_res_cfg.res_present                    = true;
+  sr_res_cfg.res                            = cfg.pucch_res_id;
+  sr_res_cfg.periodicity_and_offset_present = true;
+  switch (cfg.period) {
+    case sr_periodicity::sym_2:
+      sr_res_cfg.periodicity_and_offset.set_sym2();
+      break;
+    case sr_periodicity::sym_6_or_7:
+      sr_res_cfg.periodicity_and_offset.set_sym6or7();
+      break;
+    case sr_periodicity::sl_1:
+      sr_res_cfg.periodicity_and_offset.set_sl1();
+      break;
+    case sr_periodicity::sl_2: {
+      auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl2();
+      period_and_offset       = cfg.offset;
+    } break;
+    case sr_periodicity::sl_4: {
+      auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl4();
+      period_and_offset       = cfg.offset;
+    } break;
+    case sr_periodicity::sl_5: {
+      auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl5();
+      period_and_offset       = cfg.offset;
+    } break;
+    case sr_periodicity::sl_8: {
+      auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl8();
+      period_and_offset       = cfg.offset;
+    } break;
+    case sr_periodicity::sl_10: {
+      auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl10();
+      period_and_offset       = cfg.offset;
+    } break;
+    case sr_periodicity::sl_16: {
+      auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl16();
+      period_and_offset       = cfg.offset;
+    } break;
+    case sr_periodicity::sl_20: {
+      auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl20();
+      period_and_offset       = cfg.offset;
+    } break;
+    case sr_periodicity::sl_40: {
+      auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl40();
+      period_and_offset       = cfg.offset;
+    } break;
+    case sr_periodicity::sl_80: {
+      auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl80();
+      period_and_offset       = cfg.offset;
+    } break;
+    case sr_periodicity::sl_160: {
+      auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl160();
+      period_and_offset       = cfg.offset;
+    } break;
+    case sr_periodicity::sl_320: {
+      auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl320();
+      period_and_offset       = cfg.offset;
+    } break;
+    case sr_periodicity::sl_640: {
+      auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl640();
+      period_and_offset       = cfg.offset;
+    } break;
+    default:
+      srsgnb_assertion_failure("Invalid SR periodicity={}", cfg.period);
+  }
+  return sr_res_cfg;
+}
+
 void calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_config& src, const pucch_config& dest)
 {
   // PUCCH Resource Set.
@@ -435,7 +508,20 @@ void calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_con
     out.format4_present = true;
     make_asn1_rrc_pucch_formats_common_param(out.format4.set_setup(), dest.format_4_common_param.value());
   }
-  // TODO: sr_res_list and dl_data_to_ul_ack
+
+  // SR Resource.
+  calculate_addmodremlist_diff(
+      out.sched_request_res_to_add_mod_list,
+      out.sched_request_res_to_release_list,
+      src.sr_res_list,
+      dest.sr_res_list,
+      [](const scheduling_request_resource_config& res) { return make_asn1_rrc_sr_resource(res); },
+      [](const scheduling_request_resource_config& res) { return res.sr_id; });
+
+  // dl-DataToUL-ACK.
+  for (const auto& timing : dest.dl_data_to_ul_ack) {
+    out.dl_data_to_ul_ack.push_back(timing);
+  }
 }
 
 void calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,

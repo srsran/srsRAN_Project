@@ -173,10 +173,10 @@ struct pucch_config {
   optional<pucch_common_all_formats> format_4_common_param;
 
   /// List of \c SchedulingRequestResourceConfig.
-  std::vector<scheduling_request_resource_config> sr_res_list;
+  static_vector<scheduling_request_resource_config, MAX_NOF_SR_RESOURCES> sr_res_list;
 
-  /// \c dl-DataToUL-ACK.
-  std::vector<unsigned> dl_data_to_ul_ack;
+  /// \c dl-DataToUL-ACK. Values {0..15}.
+  static_vector<uint8_t, 8> dl_data_to_ul_ack;
 };
 
 } // namespace srsgnb
