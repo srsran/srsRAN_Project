@@ -75,8 +75,14 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
                                                      const format2_configuration& config)
 {
   pucch_processor_result result;
-  result.message = pucch_uci_message(
-      config.common.nof_sr, config.common.nof_harq_ack, config.common.nof_csi_part1, config.common.nof_csi_part2);
+
+  pucch_uci_message::configuration pucch_uci_message_config = {};
+  pucch_uci_message_config.nof_sr                           = config.common.nof_sr;
+  pucch_uci_message_config.nof_harq_ack                     = config.common.nof_harq_ack;
+  pucch_uci_message_config.nof_csi_part1                    = config.common.nof_csi_part1;
+  pucch_uci_message_config.nof_csi_part2                    = config.common.nof_csi_part2;
+
+  result.message = pucch_uci_message(pucch_uci_message_config);
 
   dmrs_pucch_processor::config_t estimator_config;
   channel_estimator->estimate(estimates, grid, estimator_config);

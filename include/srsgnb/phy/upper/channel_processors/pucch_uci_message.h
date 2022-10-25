@@ -26,25 +26,35 @@ namespace srsgnb {
 class pucch_uci_message
 {
 public:
-  /// Default constructor. It sets the status to unknown all number of bits to zero.
+  /// Default constructor: sets the status to unknown and all number of bits to zero.
   pucch_uci_message() = default;
 
-  /// \brief Create and initialise PUCCH UCI message from the number of bits of each of the fields.
-  /// \param[in] nof_sr        Number of payload bits for Scheduling Request (SR).
-  /// \param[in] nof_harq_ack  Number of payload bits for HARQ-ACK feedback.
-  /// \param[in] nof_csi_part1 Number of payload bits for CSI-Part1 report.
-  /// \param[in] nof_csi_part2 Number of payload bits for CSI-Part2 report.
+  /// Collects the number of information bits for each of the PUCCH message fields.
+  struct configuration {
+    /// Number of Scheduling Request (SR) information bits.
+    unsigned nof_sr;
+    /// Number of HARQ-ACk information bits.
+    unsigned nof_harq_ack;
+    /// Number of CSI-Part1 information bits.
+    unsigned nof_csi_part1;
+    /// Number of CSI-Part2 information bits.
+    unsigned nof_csi_part2;
+  };
+
+  /// \brief Creates and initializes a PUCCH UCI message from the number of bits of each of the fields.
+  /// \param[in] config Configuration parameters.
   /// \remark An assertion is triggered if the total number of payload bits exceed \ref
   /// uci_constants::MAX_NOF_PAYLOAD_BITS.
-  pucch_uci_message(unsigned nof_sr, unsigned nof_harq_ack, unsigned nof_csi_part1, unsigned nof_csi_part2) :
-    nof_sr_bits(nof_sr),
-    nof_harq_ack_bits(nof_harq_ack),
-    nof_csi_part1_bits(nof_csi_part1),
-    nof_csi_part2_bits(nof_csi_part2)
+  explicit pucch_uci_message(const configuration& config) :
+    nof_sr_bits(config.nof_sr),
+    nof_harq_ack_bits(config.nof_harq_ack),
+    nof_csi_part1_bits(config.nof_csi_part1),
+    nof_csi_part2_bits(config.nof_csi_part2)
   {
-    srsgnb_assert(nof_sr + nof_harq_ack + nof_csi_part1 + nof_csi_part2 < uci_constants::MAX_NOF_PAYLOAD_BITS,
+    srsgnb_assert(config.nof_sr + config.nof_harq_ack + config.nof_csi_part1 + config.nof_csi_part2 <=
+                      uci_constants::MAX_NOF_PAYLOAD_BITS,
                   "The total number of payload bits (i.e. {}) shall not exceed {}.",
-                  nof_sr + nof_harq_ack + nof_csi_part1 + nof_csi_part2,
+                  config.nof_sr + config.nof_harq_ack + config.nof_csi_part1 + config.nof_csi_part2,
                   uci_constants::MAX_NOF_PAYLOAD_BITS);
   }
 
@@ -54,52 +64,52 @@ public:
   /// Gets the message status.
   uci_status get_status() const { return status; }
 
-  /// Get a read-write view of the full payload.
+  /// Gets a read-write view of the full payload.
   span<uint8_t> get_full_payload()
   {
     return span<uint8_t>(data).first(nof_sr_bits + nof_harq_ack_bits + nof_csi_part1_bits + nof_csi_part2_bits);
   }
 
-  /// Get a read-only view of the full payload.
+  /// Gets a read-only view of the full payload.
   span<const uint8_t> get_full_payload() const
   {
     return span<const uint8_t>(data).first(nof_sr_bits + nof_harq_ack_bits + nof_csi_part1_bits + nof_csi_part2_bits);
   }
 
-  /// Get a read-write view of the SR bits.
+  /// Gets a read-write view of the SR bits.
   span<uint8_t> get_sr_bits() { return span<uint8_t>(data).subspan(0, nof_sr_bits); }
 
-  /// Get a read-only view of the SR bits.
+  /// Gets a read-only view of the SR bits.
   span<const uint8_t> get_sr_bits() const { return span<const uint8_t>(data).subspan(0, nof_sr_bits); }
 
-  /// Get a read-write view of the HARQ-ACK bits.
+  /// Gets a read-write view of the HARQ-ACK bits.
   span<uint8_t> get_harq_ack_bits() { return span<uint8_t>(data).subspan(nof_sr_bits, nof_harq_ack_bits); }
 
-  /// Get a read-only view of the HARQ-ACK bits.
+  /// Gets a read-only view of the HARQ-ACK bits.
   span<const uint8_t> get_harq_ack_bits() const
   {
     return span<const uint8_t>(data).subspan(nof_sr_bits, nof_harq_ack_bits);
   }
 
-  /// Get a read-write view of the CSI-Part1 bits.
+  /// Gets a read-write view of the CSI-Part1 bits.
   span<uint8_t> get_csi_part1_bits()
   {
     return span<uint8_t>(data).subspan(nof_sr_bits + nof_harq_ack_bits, nof_csi_part1_bits);
   }
 
-  /// Get a read-only view of the CSI-Part1 bits.
+  /// Gets a read-only view of the CSI-Part1 bits.
   span<const uint8_t> get_csi_part1_bits() const
   {
     return span<const uint8_t>(data).subspan(nof_sr_bits + nof_harq_ack_bits, nof_csi_part1_bits);
   }
 
-  /// Get a read-write view of the CSI-Part1 bits.
+  /// Gets a read-write view of the CSI-Part1 bits.
   span<uint8_t> get_csi_part2_bits()
   {
     return span<uint8_t>(data).subspan(nof_sr_bits + nof_harq_ack_bits + nof_csi_part1_bits, nof_csi_part2_bits);
   }
 
-  /// Get a read-only view of the CSI-Part1 bits.
+  /// Gets a read-only view of the CSI-Part1 bits.
   span<const uint8_t> get_csi_part2_bits() const
   {
     return span<const uint8_t>(data).subspan(nof_sr_bits + nof_harq_ack_bits + nof_csi_part1_bits, nof_csi_part2_bits);

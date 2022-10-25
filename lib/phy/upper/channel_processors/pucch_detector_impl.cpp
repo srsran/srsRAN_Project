@@ -191,8 +191,9 @@ static void equalize(span<cf_t>       symbols_out,
 
 // Given the detected symbol and the corresponding equivalent noise variance, demodulates the symbol into nof_bits bits.
 // It also returns the detection metric used to decide whether the PUCCH was transmitted or not by threshold comparison.
-static float detect_bits(span<uint8_t> out_bits, cf_t detected_symbol, float eq_noise_var, unsigned nof_bits)
+static float detect_bits(span<uint8_t> out_bits, cf_t detected_symbol, float eq_noise_var)
 {
+  unsigned nof_bits          = out_bits.size();
   float    detection_metric  = std::real(detected_symbol) + std::imag(detected_symbol);
   unsigned bits              = (detection_metric > 0) ? 0U : 3U;
   detection_metric           = std::abs(detection_metric);
@@ -205,7 +206,9 @@ static float detect_bits(span<uint8_t> out_bits, cf_t detected_symbol, float eq_
     return (detection_metric2 / std::sqrt(eq_noise_var));
   }
   out_bits[0] = (bits & 1U);
-  out_bits[1] = ((bits >> 1U) & 1U);
+  if (nof_bits > 1) {
+    out_bits[1] = ((bits >> 1U) & 1U);
+  }
   return detection_metric / std::sqrt(eq_noise_var);
 }
 
@@ -247,21 +250,21 @@ pucch_uci_message pucch_detector_impl::detect(const resource_grid_reader&  grid,
   // We don't set the SR bit here - this task is delegated to a higher-level function, based on the uci_status returned
   // by this detector and on the used PUCCH resource.
   // This format doesn't support CSI reports.
-  pucch_uci_message output(0, config.nof_harq_ack, 0, 0);
+  pucch_uci_message::configuration pucch_uci_message_config = {};
+  pucch_uci_message_config.nof_harq_ack                     = config.nof_harq_ack;
+  pucch_uci_message output(pucch_uci_message_config);
 
   // Select view of the payload.
   span<uint8_t> bits = output.get_harq_ack_bits();
 
   // Recall that, when nof_harq_ack == 0, we still need to look for the positive SR indicator (i.e., a single, 0-valued
   // transmitted bit).
-  unsigned nof_bits = std::max(config.nof_harq_ack, 1U);
-
   std::array<uint8_t, 1> temp_bits = {};
   if (config.nof_harq_ack == 0) {
     bits = temp_bits;
   }
 
-  float detection_metric = detect_bits(bits, detected_symbol, eq_noise_var, nof_bits);
+  float detection_metric = detect_bits(bits, detected_symbol, eq_noise_var);
 
   // Detection threshold.
   //
