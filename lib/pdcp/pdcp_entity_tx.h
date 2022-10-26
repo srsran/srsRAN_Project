@@ -11,6 +11,7 @@
 #pragma once
 
 #include "pdcp_entity_tx_rx_base.h"
+#include "pdcp_pdu.h"
 #include "pdcp_tx_metrics_impl.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
@@ -67,7 +68,7 @@ public:
   /*
    * SDU/PDU handlers
    */
-  void handle_sdu(byte_buffer buf) final;
+  void handle_sdu(byte_buffer sdu) final;
 
   void stop_discard_timer(uint32_t count) final
   {
@@ -79,7 +80,11 @@ public:
   /*
    * Header helpers
    */
-  bool write_data_pdu_header(byte_buffer& buf, uint32_t count);
+
+  /// \brief Writes the header of a PDCP data PDU according to the content of the associated object
+  /// \param[out] buf Reference to a byte_buffer that is appended by the header bytes
+  /// \param[in] hdr Reference to a pdcp_data_pdu_header that represents the header content
+  void write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu_header& hdr) const;
 
   /*
    * Testing helpers
@@ -133,10 +138,10 @@ private:
   /*
    * RB helpers
    */
-  bool is_srb() { return cfg.rb_type == pdcp_rb_type::srb; }
-  bool is_drb() { return cfg.rb_type == pdcp_rb_type::drb; }
-  bool is_um() { return cfg.rlc_mode == pdcp_rlc_mode::um; }
-  bool is_am() { return cfg.rlc_mode == pdcp_rlc_mode::am; }
+  bool is_srb() const { return cfg.rb_type == pdcp_rb_type::srb; }
+  bool is_drb() const { return cfg.rb_type == pdcp_rb_type::drb; }
+  bool is_um() const { return cfg.rlc_mode == pdcp_rlc_mode::um; }
+  bool is_am() const { return cfg.rlc_mode == pdcp_rlc_mode::am; }
 };
 
 class pdcp_entity_tx::discard_callback

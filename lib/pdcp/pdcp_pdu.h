@@ -10,8 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/pdcp/pdcp_config.h"
+#include "srsgnb/support/srsgnb_assert.h"
+#include <cstdint>
+#include <memory>
+#include <string>
 
 namespace srsgnb {
 

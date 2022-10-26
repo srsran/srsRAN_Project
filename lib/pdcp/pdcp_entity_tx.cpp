@@ -19,11 +19,11 @@ using namespace srsgnb;
 /// and integrity protection and pass the resulting PDU
 /// to the lower layers.
 ///
-/// \param buf Buffer that hold the SDU from higher layers.
+/// \param sdu Buffer that hold the SDU from higher layers.
 /// \ref TS 38.323 section 5.2.1: Transmit operation
-void pdcp_entity_tx::handle_sdu(byte_buffer buf)
+void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
 {
-  metrics_add_sdus(1, buf.length());
+  metrics_add_sdus(1, sdu.length());
 
   // The PDCP is not allowed to use the same COUNT value more than once for a given security key,
   // see TS 38.331, section 5.3.1.2. To avoid this, we notify the RRC once we exceed a "maximum"
@@ -58,12 +58,16 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   // Perform header compression
   // TODO
 
-  // Write PDCP header info
-  byte_buffer hdr = {};
-  write_data_pdu_header(hdr, st.tx_next);
+  // Prepare header
+  pdcp_data_pdu_header hdr = {st.tx_next};
+
+  // Pack header
+  byte_buffer header_buf = {};
+  write_data_pdu_header(header_buf, hdr);
 
   // Apply ciphering and integrity protection
-  byte_buffer protected_buf = apply_ciphering_and_integrity_protection(std::move(hdr), std::move(buf), st.tx_next);
+  byte_buffer protected_buf =
+      apply_ciphering_and_integrity_protection(std::move(header_buf), std::move(sdu), st.tx_next);
 
   // Set meta-data for RLC (TODO)
   // sdu->md.pdcp_sn = tx_next;
@@ -192,7 +196,7 @@ byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
 /*
  * PDU Helpers
  */
-bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, uint32_t count)
+void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu_header& hdr) const
 {
   // Sanity check: 18bit SRB not allowed
   srsgnb_assert(!(is_srb() && cfg.sn_size == pdcp_sn_size::size18bits), "Invalid 18 bit SRB PDU");
@@ -207,7 +211,7 @@ bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, uint32_t count)
   }
 
   // Set SN
-  uint32_t sn = SN(count);
+  uint32_t sn = SN(hdr.sn);
   // Add SN
   switch (cfg.sn_size) {
     case pdcp_sn_size::size12bits:
@@ -222,7 +226,6 @@ bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, uint32_t count)
     default:
       logger.log_error("Invalid SN length configuration: {} bits", cfg.sn_size);
   }
-  return true;
 }
 
 /*

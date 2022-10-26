@@ -78,9 +78,9 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
   }
   logger.log_debug("Rx PDCP state - RX_NEXT={}, RX_DELIV={}, RX_REORD={}", st.rx_next, st.rx_deliv, st.rx_reord);
 
-  // Extract RCVD_SN from header
-  uint32_t rcvd_sn = {};
-  if (not read_data_pdu_header(pdu, rcvd_sn)) {
+  // Unpack header
+  pdcp_data_pdu_header hdr = {};
+  if (not read_data_pdu_header(hdr, pdu)) {
     metrics_add_dropped_pdus(1);
     logger.log_error("Error extracting PDCP SN");
     return;
@@ -98,14 +98,14 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
    * - RCVD_COUNT = [RCVD_HFN, RCVD_SN].
    */
   uint32_t rcvd_hfn, rcvd_count;
-  if ((int64_t)rcvd_sn < (int64_t)SN(st.rx_deliv) - (int64_t)window_size) {
+  if ((int64_t)hdr.sn < (int64_t)SN(st.rx_deliv) - (int64_t)window_size) {
     rcvd_hfn = HFN(st.rx_deliv) + 1;
-  } else if (rcvd_sn >= SN(st.rx_deliv) + window_size) {
+  } else if (hdr.sn >= SN(st.rx_deliv) + window_size) {
     rcvd_hfn = HFN(st.rx_deliv) - 1;
   } else {
     rcvd_hfn = HFN(st.rx_deliv);
   }
-  rcvd_count = COUNT(rcvd_hfn, rcvd_sn);
+  rcvd_count = COUNT(rcvd_hfn, hdr.sn);
 
   // The PDCP is not allowed to use the same COUNT value more than once for a given security key,
   // see TS 38.331, section 5.3.1.2. To avoid this, we notify the RRC once we exceed a "maximum"
@@ -137,10 +137,9 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
   byte_buffer sdu;
   if (ciphering_enabled == pdcp_ciphering_enabled::enabled) {
     sdu = cipher_decrypt(pdu.begin() + hdr_len_bytes, pdu.end(), rcvd_count);
-    std::array<uint8_t, pdcp_data_pdu_header_size_max> hdr_buf;
-    span<uint8_t>                                      hdr{hdr_buf.data(), hdr_len_bytes};
-    std::copy(pdu.begin(), pdu.begin() + hdr_len_bytes, hdr.begin());
-    sdu.prepend(hdr);
+    std::array<uint8_t, pdcp_data_pdu_header_size_max> header_buf;
+    std::copy(pdu.begin(), pdu.begin() + hdr_len_bytes, header_buf.begin());
+    sdu.prepend(span<uint8_t>{header_buf.data(), hdr_len_bytes});
   } else {
     // TODO: Optimize - avoid bytewise copy
     sdu = {pdu.begin(), pdu.end()};
@@ -385,7 +384,7 @@ void pdcp_entity_rx::reordering_callback::operator()(uint32_t /*timer_id*/)
 /*
  * Header helpers
  */
-bool pdcp_entity_rx::read_data_pdu_header(const byte_buffer_slice_chain& buf, uint32_t& sn) const
+bool pdcp_entity_rx::read_data_pdu_header(pdcp_data_pdu_header& hdr, const byte_buffer_slice_chain& buf) const
 {
   // Check PDU is long enough to extract header
   if (buf.length() <= hdr_len_bytes) {
@@ -398,17 +397,17 @@ bool pdcp_entity_rx::read_data_pdu_header(const byte_buffer_slice_chain& buf, ui
   // Extract RCVD_SN
   switch (cfg.sn_size) {
     case pdcp_sn_size::size12bits:
-      sn = (*buf_it & 0x0fU) << 8U; // first 4 bits SN
+      hdr.sn = (*buf_it & 0x0fU) << 8U; // first 4 bits SN
       ++buf_it;
-      sn |= (*buf_it & 0xffU); // last 8 bits SN
+      hdr.sn |= (*buf_it & 0xffU); // last 8 bits SN
       ++buf_it;
       break;
     case pdcp_sn_size::size18bits:
-      sn = (*buf_it & 0x03U) << 16U; // first 2 bits SN
+      hdr.sn = (*buf_it & 0x03U) << 16U; // first 2 bits SN
       ++buf_it;
-      sn |= (*buf_it & 0xffU) << 8U; // middle 8 bits SN
+      hdr.sn |= (*buf_it & 0xffU) << 8U; // middle 8 bits SN
       ++buf_it;
-      sn |= (*buf_it & 0xffU); // last 8 bits SN
+      hdr.sn |= (*buf_it & 0xffU); // last 8 bits SN
       ++buf_it;
       break;
     default:

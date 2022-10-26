@@ -56,7 +56,12 @@ public:
   /*
    * Header helpers
    */
-  bool read_data_pdu_header(const byte_buffer_slice_chain& buf, uint32_t& sn) const;
+
+  /// \brief Reads the header of a PDCP data PDU and writes the content into an associated object
+  /// \param[out] hdr Reference to a pdcp_data_pdu_header that is filled with the header content
+  /// \param[in] buf Reference to the PDU bytes
+  /// \return True if header was read successfully, false otherwise
+  bool read_data_pdu_header(pdcp_data_pdu_header& hdr, const byte_buffer_slice_chain& buf) const;
   void discard_data_header(byte_buffer& buf) const;
   void extract_mac(byte_buffer& buf, sec_mac& mac) const;
 

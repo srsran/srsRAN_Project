@@ -38,9 +38,9 @@ TEST_P(pdcp_rx_test, sn_unpack)
     // Get PDU to test
     byte_buffer test_pdu;
     get_test_pdu(count, test_pdu);
-    uint32_t sn = {};
-    ASSERT_TRUE(pdcp_rx->read_data_pdu_header(byte_buffer_slice_chain{std::move(test_pdu)}, sn));
-    ASSERT_EQ(sn, SN(count));
+    pdcp_data_pdu_header hdr;
+    ASSERT_TRUE(pdcp_rx->read_data_pdu_header(hdr, byte_buffer_slice_chain{std::move(test_pdu)}));
+    ASSERT_EQ(hdr.sn, SN(count));
   };
 
   if (sn_size == pdcp_sn_size::size12bits) {
