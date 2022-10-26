@@ -15,8 +15,8 @@
 
 typedef mbedtls_aes_context aes_context;
 
-#define AES_ENCRYPT 1
-#define AES_DECRYPT 0
+constexpr int aes_encrypt = 1;
+constexpr int aes_decrypt = 0;
 
 inline int aes_setkey_enc(aes_context* ctx, const unsigned char* key, unsigned int keysize)
 {

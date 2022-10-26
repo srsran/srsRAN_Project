@@ -92,7 +92,7 @@ void security_nia2(sec_mac&              mac,
   if (msg_len_block_8 <= len) {
     // Subkey L generation
     aes_setkey_enc(&ctx, key.data(), 128);
-    aes_crypt_ecb(&ctx, AES_ENCRYPT, const_zero, L);
+    aes_crypt_ecb(&ctx, aes_encrypt, const_zero, L);
 
     // Subkey K1 generation
     for (i = 0; i < 15; i++) {
@@ -133,21 +133,21 @@ void security_nia2(sec_mac&              mac,
       for (j = 0; j < 16; j++) {
         tmp[j] = T[j] ^ M[i * 16 + j];
       }
-      aes_crypt_ecb(&ctx, AES_ENCRYPT, tmp, T);
+      aes_crypt_ecb(&ctx, aes_encrypt, tmp, T);
     }
     pad_bits = ((msg_len) + 64) % 128;
     if (pad_bits == 0) {
       for (j = 0; j < 16; j++) {
         tmp[j] = T[j] ^ K1[j] ^ M[i * 16 + j];
       }
-      aes_crypt_ecb(&ctx, AES_ENCRYPT, tmp, T);
+      aes_crypt_ecb(&ctx, aes_encrypt, tmp, T);
     } else {
       pad_bits = (128 - pad_bits) - 1;
       M[i * 16 + (15 - (pad_bits / 8))] |= 0x1 << (pad_bits % 8);
       for (j = 0; j < 16; j++) {
         tmp[j] = T[j] ^ K2[j] ^ M[i * 16 + j];
       }
-      aes_crypt_ecb(&ctx, AES_ENCRYPT, tmp, T);
+      aes_crypt_ecb(&ctx, aes_encrypt, tmp, T);
     }
 
     for (i = 0; i < 4; i++) {
