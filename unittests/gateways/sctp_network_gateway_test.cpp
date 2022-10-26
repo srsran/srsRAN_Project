@@ -37,14 +37,11 @@ public:
   dummy_network_gateway_control_notifier() = default;
 
   void on_connection_loss() override { conn_dropped = true; }
-  void on_connection_established() override { conn_established = true; }
-
+  void on_connection_established() override { conn_dropped = false; }
   bool get_connection_dropped() { return conn_dropped; }
-  bool get_connection_established() { return conn_established; }
 
 private:
-  bool conn_established = false;
-  bool conn_dropped     = false;
+  bool conn_dropped = false;
 };
 
 class dummy_network_gateway_data_notifier : public network_gateway_data_notifier
@@ -66,6 +63,12 @@ private:
 class sctp_network_gateway_tester : public ::testing::Test
 {
 protected:
+  void SetUp() override
+  {
+    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
+    srslog::init();
+  }
+
   void set_config(network_gateway_config server_config, network_gateway_config client_config)
   {
     server = create_network_gateway({server_config, server_control_notifier, server_data_notifier});
@@ -76,6 +79,9 @@ protected:
 
   void TearDown() override
   {
+    // flush logger after each test
+    srslog::flush();
+
     stop_token.store(true, std::memory_order_relaxed);
     if (rx_thread.joinable()) {
       rx_thread.join();
@@ -134,6 +140,17 @@ TEST_F(sctp_network_gateway_tester, bind_fails_on_bogus_address)
   network_gateway_config config;
   config.bind_address = "1.1.1.1";
   config.connect_port = 8888;
+  config.reuse_addr   = true;
+  set_config(config, config);
+  ASSERT_FALSE(bind_and_listen());
+}
+
+TEST_F(sctp_network_gateway_tester, bind_fails_on_bogus_v6_address)
+{
+  network_gateway_config config;
+  config.bind_address = "1:1::";
+  config.connect_port = 8888;
+  config.reuse_addr   = true;
   set_config(config, config);
   ASSERT_FALSE(bind_and_listen());
 }
@@ -143,6 +160,17 @@ TEST_F(sctp_network_gateway_tester, bind_succeeds_on_localhost)
   network_gateway_config config;
   config.bind_address = "127.0.0.1";
   config.connect_port = 8888;
+  config.reuse_addr   = true;
+  set_config(config, config);
+  ASSERT_TRUE(bind_and_listen());
+}
+
+TEST_F(sctp_network_gateway_tester, bind_succeeds_on_v6_localhost)
+{
+  network_gateway_config config;
+  config.bind_address = "::1";
+  config.connect_port = 8888;
+  config.reuse_addr   = true;
   set_config(config, config);
   ASSERT_TRUE(bind_and_listen());
 }
@@ -151,40 +179,28 @@ TEST_F(sctp_network_gateway_tester, connect_fails_on_unexisting_socket)
 {
   ASSERT_FALSE(client_control_notifier.get_connection_dropped());
 
-  // in non-blocking mode, connects returns immediately
   network_gateway_config config;
   config.connect_address   = "127.0.0.1";
   config.connect_port      = 6666;
   config.non_blocking_mode = true;
+  config.reuse_addr        = true;
   set_config(config, config);
 
-  ASSERT_TRUE(connect());
-
-  // wait for connection to timeout
-  run_client_receive();
-
-  ASSERT_TRUE(client_control_notifier.get_connection_dropped());
+  ASSERT_FALSE(connect());
 }
 
-TEST_F(sctp_network_gateway_tester, connection_notification)
+TEST_F(sctp_network_gateway_tester, connect_fails_on_unexisting_socket_v6)
 {
-  network_gateway_config server_config;
-  server_config.bind_address = "127.0.0.1";
-  server_config.bind_port    = 9999;
+  ASSERT_FALSE(client_control_notifier.get_connection_dropped());
 
-  network_gateway_config client_config;
-  client_config.connect_address   = "127.0.0.1";
-  client_config.connect_port      = 9999;
-  client_config.non_blocking_mode = true;
-  set_config(server_config, client_config);
+  network_gateway_config config;
+  config.connect_address   = "::1";
+  config.connect_port      = 6666;
+  config.non_blocking_mode = true;
+  config.reuse_addr        = true;
+  set_config(config, config);
 
-  ASSERT_TRUE(bind_and_listen());
-  start_receive_thread();
-  ASSERT_TRUE(connect());
-
-  std::this_thread::sleep_for(std::chrono::milliseconds(250));
-
-  ASSERT_TRUE(server_control_notifier.get_connection_established());
+  ASSERT_FALSE(connect());
 }
 
 TEST_F(sctp_network_gateway_tester, basic_trx_test)
@@ -192,6 +208,7 @@ TEST_F(sctp_network_gateway_tester, basic_trx_test)
   network_gateway_config server_config;
   server_config.bind_address = "127.0.0.1";
   server_config.bind_port    = 7777;
+  server_config.reuse_addr   = true;
 
   network_gateway_config client_config;
   client_config.connect_address   = "127.0.0.1";
@@ -202,10 +219,6 @@ TEST_F(sctp_network_gateway_tester, basic_trx_test)
   ASSERT_TRUE(bind_and_listen());
   start_receive_thread();
   ASSERT_TRUE(connect());
-
-  std::this_thread::sleep_for(std::chrono::milliseconds(250));
-
-  ASSERT_TRUE(server_control_notifier.get_connection_established());
 
   byte_buffer pdu(make_tx_byte_buffer());
   send_to_server(pdu);
@@ -220,10 +233,38 @@ TEST_F(sctp_network_gateway_tester, basic_trx_test_v6)
 {
   network_gateway_config server_config;
   server_config.bind_address = "::1";
-  server_config.bind_port    = 4444;
+  server_config.bind_port    = 7777;
+  server_config.reuse_addr   = true;
+
   network_gateway_config client_config;
   client_config.connect_address   = "::1";
-  client_config.connect_port      = 4444;
+  client_config.connect_port      = 7777;
+  client_config.non_blocking_mode = true;
+  set_config(server_config, client_config);
+
+  ASSERT_TRUE(bind_and_listen());
+  start_receive_thread();
+  ASSERT_TRUE(connect());
+
+  byte_buffer pdu(make_tx_byte_buffer());
+  send_to_server(pdu);
+
+  // let the Rx thread pick up the message
+  std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
+  ASSERT_EQ(server_data_notifier.get_rx_bytes(), tx_buf.size());
+}
+
+TEST_F(sctp_network_gateway_tester, basic_trx_test_hostnames)
+{
+  network_gateway_config server_config;
+  server_config.bind_address = "localhost";
+  server_config.bind_port    = 5555;
+  server_config.reuse_addr   = true;
+
+  network_gateway_config client_config;
+  client_config.connect_address   = "localhost";
+  client_config.connect_port      = 5555;
   client_config.non_blocking_mode = true;
   set_config(server_config, client_config);
 
