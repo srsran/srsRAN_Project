@@ -114,7 +114,8 @@ public:
   size_t size() const { return pool.size(); }
 
 private:
-  using overflow_detector_t = std::conditional_t<ASSERTS_ENABLED, overflow_checker, no_overflow_checker>;
+  using overflow_detector_t =
+      std::conditional_t<SRSGNB_IS_DEFINED(ASSERTS_ENABLED), overflow_checker, no_overflow_checker>;
 
   ring_buffer_pool    pool;
   overflow_detector_t overflow_detector;
