@@ -158,7 +158,7 @@ private:
 /// Test object to verify correct move ctor/assignment logic
 struct moveonly_test_object {
   moveonly_test_object() : val_ptr(std::make_unique<int>(object_count_impl())) { object_count_impl()++; }
-  explicit moveonly_test_object(int v) : val_ptr(std::make_unique<int>(v)) { object_count_impl()++; }
+  moveonly_test_object(int v) : val_ptr(std::make_unique<int>(v)) { object_count_impl()++; }
   ~moveonly_test_object() { object_count_impl()--; }
   moveonly_test_object(moveonly_test_object&& other) noexcept : val_ptr(std::move(other.val_ptr))
   {
@@ -218,7 +218,5 @@ private:
 };
 
 #define CONDERROR(cond, fmt, ...) srsgnb_assert(not(cond), fmt, ##__VA_ARGS__)
-
-#define TESTERROR(fmt, ...) CONDERROR(true, fmt, ##__VA_ARGS__)
 
 } // namespace srsgnb

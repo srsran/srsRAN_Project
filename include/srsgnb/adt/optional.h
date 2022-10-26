@@ -15,165 +15,235 @@
 
 namespace srsgnb {
 
-namespace detail {
-
-/// Tag to disambiguate optional ctor overloads.
+/// Tag to disambiguate optional ctor overloads. Introduced only in C++17.
 struct in_place_t {};
 
-template <typename T, bool = std::is_trivially_destructible<T>::value>
-class base_optional_storage;
+namespace detail {
 
-/// Specialization of optional storage for non-trivially destructible types.
+/// Storage of an optional internal value and empty/has_value flag.
 template <typename T>
-class base_optional_storage<T, false>
-{
-public:
-  constexpr base_optional_storage() noexcept : dummy(), has_val(false) {}
-  template <typename... Args>
-  explicit base_optional_storage(in_place_t, Args&&... args) : val(std::forward<Args>(args)...), has_val(true)
-  {
-  }
-  base_optional_storage(const base_optional_storage& other) noexcept(std::is_nothrow_copy_constructible<T>::value) :
-    has_val(other.has_val)
-  {
-    if (has_val) {
-      new (&val) T(other.val);
-    }
-  }
-  base_optional_storage(base_optional_storage&& other) noexcept(std::is_nothrow_move_constructible<T>::value) :
-    has_val(other.has_val)
-  {
-    if (has_val) {
-      new (&val) T(std::move(other.val));
-    }
-  }
-  ~base_optional_storage() { reset(); }
+struct base_optional_storage {
+  using storageT = std::remove_const_t<T>;
 
-  template <typename... Args>
-  void set(Args&&... u) noexcept(std::is_nothrow_constructible<T, Args&&...>::value)
-  {
-    static_assert(std::is_constructible<T, Args&&...>::value, "Ctor T(Args&&...) does not exist.");
-    if (has_val) {
-      val = T(std::forward<Args>(u)...);
-    } else {
-      new (&val) T(std::forward<Args>(u)...);
-      has_val = true;
+  // Storage for trivially destructible type.
+  template <typename U, bool = std::is_trivially_destructible<U>::value>
+  union storage_type {
+    constexpr storage_type() noexcept : empty() {}
+    template <typename... Args>
+    explicit storage_type(in_place_t, Args&&... args) : val(std::forward<Args>(args)...)
+    {
     }
-  }
 
-  template <typename... Args>
-  void emplace(Args&&... args)
-  {
-    static_assert(std::is_constructible<T, Args&&...>::value, "Ctor T(Args&&...) does not exist.");
-    if (has_val) {
-      val.~T();
-    } else {
-      has_val = true;
-    }
-    new (&val) T(std::forward<Args>(args)...);
-  }
-
-  void reset()
-  {
-    if (has_val) {
-      val.~T();
-      has_val = false;
-    }
-  }
-
-  union {
-    std::true_type dummy;
-    T              val;
+    std::true_type empty;
+    U              val;
   };
-  bool has_val;
+
+  // Storage for non-trivially destructible type.
+  template <typename U>
+  union storage_type<U, false> {
+    constexpr storage_type() noexcept : empty() {}
+    template <typename... Args>
+    explicit storage_type(in_place_t, Args&&... args) : val(std::forward<Args>(args)...)
+    {
+    }
+
+    // User-defined destructor in case T is not trivially destructible.
+    ~storage_type() {}
+
+    std::true_type empty;
+    U              val;
+  };
+
+  constexpr base_optional_storage() noexcept = default;
+  template <typename... Args>
+  explicit base_optional_storage(in_place_t tag, Args&&... args) :
+    payload(tag, std::forward<Args>(args)...), has_val(true)
+  {
+  }
+  explicit base_optional_storage(bool has_val_, const storage_type<storageT>& payload) noexcept(
+      std::is_nothrow_copy_constructible<T>::value) :
+    has_val(has_val_)
+  {
+    if (has_val_) {
+      construct_(payload.val);
+    }
+  }
+  explicit base_optional_storage(bool has_val_, storage_type<storageT>&& payload) noexcept(
+      std::is_nothrow_move_constructible<T>::value) :
+    has_val(has_val_)
+  {
+    if (has_val_) {
+      construct_(std::move(payload.val));
+    }
+  }
+  base_optional_storage(const base_optional_storage<T>&)                = default;
+  base_optional_storage(base_optional_storage<T>&&) noexcept            = default;
+  base_optional_storage& operator=(const base_optional_storage<T>&)     = default;
+  base_optional_storage& operator=(base_optional_storage<T>&&) noexcept = default;
+
+  template <typename... Args>
+  constexpr void construct_(Args&&... args) noexcept(std::is_nothrow_constructible<storageT, Args...>::value)
+  {
+    new (&payload.val) storageT(std::forward<Args>(args)...);
+    has_val = true;
+  }
+
+  constexpr void destroy_() noexcept
+  {
+    has_val = false;
+    payload.val.~storageT();
+  }
+
+  constexpr void reset_() noexcept
+  {
+    if (has_val) {
+      destroy_();
+    }
+  }
+
+  constexpr void copy_assign_(const base_optional_storage<T>& other)
+  {
+    if (this == &other) {
+      return;
+    }
+    if (other.has_val and has_val) {
+      this->payload.val = other.payload.val;
+    } else {
+      if (other.has_val) {
+        this->construct_(other.payload.val);
+      } else {
+        this->reset_();
+      }
+    }
+  }
+
+  constexpr void move_assign_(base_optional_storage<T>&& other) noexcept(
+      std::is_nothrow_move_constructible<T>::value and std::is_nothrow_move_assignable<T>::value)
+  {
+    if (other.has_val and has_val) {
+      this->payload.val = std::move(other.payload.val);
+    } else {
+      if (other.has_val) {
+        this->construct_(std::move(other.payload.val));
+      } else {
+        this->reset_();
+      }
+    }
+  }
+
+  storage_type<storageT> payload;
+  bool                   has_val = false;
 };
 
-/// Specialization of optional storage for trivially destructible types.
-template <typename T>
-class base_optional_storage<T, true>
-{
-public:
-  constexpr base_optional_storage() noexcept : dummy(), has_val(false) {}
-  template <typename... Args>
-  explicit base_optional_storage(in_place_t, Args&&... args) : val(std::forward<Args>(args)...), has_val(true)
-  {
-  }
-
-  template <typename... Args>
-  void set(Args&&... args)
-  {
-    static_assert(std::is_constructible<T, Args&&...>::value, "Ctor T(Args...) does not exist.");
-    if (has_val) {
-      val = T(std::forward<Args>(args)...);
-    } else {
-      new (&val) T(std::forward<Args>(args)...);
-      has_val = true;
-    }
-  }
-
-  template <typename... Args>
-  void emplace(Args&&... args)
-  {
-    static_assert(std::is_constructible<T, Args&&...>::value, "Ctor T(Args&&...) does not exist.");
-    if (has_val) {
-      val.~T();
-    } else {
-      has_val = true;
-    }
-    new (&val) T(std::forward<Args>(args)...);
-  }
-
-  void reset() { has_val = false; }
-
-  union {
-    std::true_type dummy;
-    T              val;
-  };
-  bool has_val;
-};
-
+/// Specialization of optional<T> storage based on triviality traits of dtor/move/copy.
 template <typename T,
-          bool = std::is_trivially_copy_constructible<T>::value and std::is_trivially_copy_assignable<T>::value and
+          bool IsTriviallyDestructible = std::is_trivially_destructible<T>::value,
+          bool isTriviallyCopyable =
+              std::is_trivially_copy_constructible<T>::value and std::is_trivially_copy_assignable<T>::value,
+          bool                                                   isTriviallyMovable =
               std::is_trivially_move_constructible<T>::value and std::is_trivially_move_assignable<T>::value>
 class optional_storage;
 
+// Specialization for trivial dtor/copy/move.
 template <typename T>
-class optional_storage<T, true> : public base_optional_storage<T>
+class optional_storage<T, true, true, true> : public base_optional_storage<T>
 {
 public:
   using base_optional_storage<T>::base_optional_storage;
 };
 
+// Specialization for non-trivial copy.
 template <typename T>
-class optional_storage<T, false> : public base_optional_storage<T>
+class optional_storage<T, true, false, true> : public base_optional_storage<T>
 {
 public:
   using base_optional_storage<T>::base_optional_storage;
 
-  optional_storage(const optional_storage&) noexcept(std::is_nothrow_copy_constructible<T>::value) = default;
-  optional_storage(optional_storage&&) noexcept(std::is_nothrow_move_constructible<T>::value)      = default;
+  optional_storage()  = default;
+  ~optional_storage() = default;
+  optional_storage(const optional_storage& other) noexcept(std::is_nothrow_copy_constructible<T>::value) :
+    base_optional_storage<T>(other.has_val, other.payload)
+  {
+  }
+  optional_storage(optional_storage&&) noexcept            = default;
+  optional_storage& operator=(optional_storage&&) noexcept = default;
 
-  optional_storage& operator=(const optional_storage<T>& other) noexcept(std::is_nothrow_copy_assignable<T>::value)
+  optional_storage& operator=(const optional_storage& other)
   {
-    if (this == &other) {
-      return *this;
-    }
-    if (other.has_val) {
-      this->set(other.val);
-    } else {
-      this->reset();
-    }
+    this->copy_assign_(other);
     return *this;
   }
-  optional_storage& operator=(optional_storage<T>&& other) noexcept(std::is_nothrow_move_assignable<T>::value)
+};
+
+// Specialization for non-trivial move.
+template <typename T>
+class optional_storage<T, true, true, false> : public base_optional_storage<T>
+{
+public:
+  using base_optional_storage<T>::base_optional_storage;
+
+  optional_storage()                        = default;
+  ~optional_storage()                       = default;
+  optional_storage(const optional_storage&) = default;
+  optional_storage(optional_storage&& other) noexcept(std::is_nothrow_move_constructible<T>::value) :
+    base_optional_storage<T>(other.has_val, std::move(other.payload))
   {
-    if (other.has_val) {
-      this->set(std::move(other.val));
-    } else {
-      this->reset();
-    }
+  }
+  optional_storage& operator=(const optional_storage&) = default;
+
+  constexpr optional_storage& operator=(optional_storage&& other) noexcept(
+      std::is_nothrow_move_constructible<T>::value and std::is_nothrow_move_assignable<T>::value)
+  {
+    this->move_assign_(std::move(other));
     return *this;
   }
+};
+
+// Specialization for non-trivial move and copy.
+template <typename T>
+class optional_storage<T, true, false, false> : public base_optional_storage<T>
+{
+public:
+  using base_optional_storage<T>::base_optional_storage;
+
+  optional_storage()  = default;
+  ~optional_storage() = default;
+  optional_storage(const optional_storage& other) noexcept(std::is_nothrow_copy_constructible<T>::value) :
+    base_optional_storage<T>(other.has_val, other.payload)
+  {
+  }
+  optional_storage(optional_storage&& other) noexcept(std::is_nothrow_move_constructible<T>::value) :
+    base_optional_storage<T>(other.has_val, std::move(other.payload))
+  {
+  }
+
+  constexpr optional_storage& operator=(const optional_storage& other)
+  {
+    this->copy_assign_(other);
+    return *this;
+  }
+
+  constexpr optional_storage& operator=(optional_storage&& other) noexcept(
+      std::is_nothrow_move_constructible<T>::value and std::is_nothrow_move_assignable<T>::value)
+  {
+    this->move_assign_(std::move(other));
+    return *this;
+  }
+};
+
+// Specialization for non-trivial dtor.
+template <typename T, bool TrivialCopy, bool TrivialMove>
+class optional_storage<T, false, TrivialCopy, TrivialMove> : public optional_storage<T, true, false, false>
+{
+public:
+  using optional_storage<T, true, false, false>::optional_storage;
+  optional_storage()                                                                                  = default;
+  optional_storage(const optional_storage&)                                                           = default;
+  optional_storage(optional_storage&&) noexcept(std::is_nothrow_move_constructible<T>::value)         = default;
+  optional_storage& operator=(const optional_storage&)                                                = default;
+  optional_storage& operator=(optional_storage&&) noexcept(std::is_nothrow_move_assignable<T>::value) = default;
+
+  ~optional_storage() { this->reset_(); }
 };
 
 } // namespace detail
@@ -191,37 +261,55 @@ class optional
 public:
   using value_type = T;
 
-  optional() = default;
+  constexpr optional() = default;
   template <typename U = T, std::enable_if_t<not is_self<U>::value, int> = 0>
-  optional(U&& u) : storage(detail::in_place_t{}, std::forward<U>(u))
+  constexpr optional(U&& u) : storage(in_place_t{}, std::forward<U>(u))
   {
   }
 
-  bool     has_value() const noexcept { return storage.has_val; }
-  explicit operator bool() const noexcept { return has_value(); }
+  /// Checks the state of the optional.
+  /// return true if the optional is not empty. False otherwise.
+  constexpr bool     has_value() const noexcept { return storage.has_val; }
+  constexpr explicit operator bool() const noexcept { return has_value(); }
 
-  T& value() noexcept
-  {
-    srsgnb_assert(has_value(), "Invalid optional<T> access");
-    return storage.val;
-  }
-  const T& value() const noexcept
+  constexpr T& value() & noexcept
   {
     srsgnb_assert(has_value(), "Invalid optional<T> access");
-    return storage.val;
+    return storage.payload.val;
   }
-  T*       operator->() noexcept { return &value(); }
-  const T* operator->() const noexcept { return &value(); }
-  T&       operator*() noexcept { return value(); }
-  const T& operator*() const noexcept { return value(); }
+  constexpr T&& value() && noexcept
+  {
+    srsgnb_assert(has_value(), "Invalid optional<T> access");
+    return std::move(storage.payload.val);
+  }
+  constexpr const T& value() const& noexcept
+  {
+    srsgnb_assert(has_value(), "Invalid optional<T> access");
+    return storage.payload.val;
+  }
+  constexpr const T&& value() const&& noexcept
+  {
+    srsgnb_assert(has_value(), "Invalid optional<T> access");
+    return std::move(storage.payload.val);
+  }
+  constexpr T*        operator->() noexcept { return &value(); }
+  constexpr const T*  operator->() const noexcept { return &value(); }
+  constexpr T&        operator*() & noexcept { return value(); }
+  constexpr T&&       operator*() && noexcept { return value(); }
+  constexpr const T&  operator*() const& noexcept { return value(); }
+  constexpr const T&& operator*() const&& noexcept { return value(); }
 
+  /// Constructs a new object of type T inside the optional<T>'s storage, and sets the optional state to not empty.
   template <typename... Args>
-  void emplace(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args&&...>::value)
+  constexpr T& emplace(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args...>::value)
   {
-    storage.emplace(std::forward<Args>(args)...);
+    storage.reset_();
+    storage.construct_(std::forward<Args>(args)...);
+    return value();
   }
 
-  void reset() noexcept { storage.reset(); }
+  /// Resets the internal value stored in optional<T> and sets the optional state to empty.
+  constexpr void reset() noexcept { storage.reset_(); }
 
 private:
   detail::optional_storage<T> storage;
@@ -240,6 +328,12 @@ bool operator==(const optional<T>& lhs, const T& rhs) noexcept
 }
 
 template <typename T>
+bool operator==(const T& lhs, const optional<T>& rhs) noexcept
+{
+  return rhs.has_value() and lhs == rhs.value();
+}
+
+template <typename T>
 bool operator!=(const optional<T>& lhs, const optional<T>& rhs) noexcept
 {
   return not(lhs == rhs);
@@ -247,6 +341,12 @@ bool operator!=(const optional<T>& lhs, const optional<T>& rhs) noexcept
 
 template <typename T>
 bool operator!=(const optional<T>& lhs, const T& rhs) noexcept
+{
+  return not(lhs == rhs);
+}
+
+template <typename T>
+bool operator!=(const T& lhs, const optional<T>& rhs) noexcept
 {
   return not(lhs == rhs);
 }

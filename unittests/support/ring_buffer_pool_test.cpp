@@ -62,15 +62,16 @@ TEST(ticking_ring_buffer_pool, ticking_clears_allocated_bytes)
   ticking_ring_buffer_pool pool(max_bytes_per_tick, nof_ticks_depth);
 
   // Deplete pool.
+  unsigned tic = 0;
   for (unsigned i = 0; i != nof_ticks_depth; ++i) {
-    pool.tick(i);
+    pool.tick(tic++);
 
     pool.allocate_buffer(max_bytes_per_tick);
   }
 
   for (unsigned i = 0; i != nof_ticks_depth; ++i) {
     // Deallocates memory allocated in a given tick.
-    pool.tick(i);
+    pool.tick(tic++);
 
     // Pool should not overflow.
     pool.allocate_buffer(max_bytes_per_tick);
