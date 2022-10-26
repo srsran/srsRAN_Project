@@ -311,5 +311,8 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
   // Set the number of bytes of the TB.
   h_ul.set_tbs(msg.pusch_cfg.tb_size_bytes);
 
+  // In case there is a SR pending. Reset it.
+  u.reset_sr_indication();
+
   return true;
 }
