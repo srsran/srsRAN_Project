@@ -158,6 +158,22 @@ struct pdcp_config {
 //
 namespace fmt {
 
+// SN size
+template <>
+struct formatter<srsgnb::pdcp_sn_size> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::pdcp_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{} bit", to_number(sn_size));
+  }
+};
+
 // RB type
 template <>
 struct formatter<srsgnb::pdcp_rb_type> {
