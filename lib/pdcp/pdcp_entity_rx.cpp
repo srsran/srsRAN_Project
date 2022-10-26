@@ -97,12 +97,20 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
   // notification COUNT. It is then the RRC's responsibility to refresh the keys. We continue receiving until
   // we reach a hard maximum RCVD_COUNT, after which we refuse to receive any further.
   if (rcvd_count > cfg.max_count.notify) {
-    logger.log_warning("Approaching COUNT wrap-around, notifying RRC. COUNT={}", rcvd_count);
-    upper_cn.on_max_count_reached();
+    logger.log_warning("Approaching COUNT wrap-around. COUNT={}", rcvd_count);
+    if (!max_count_notified) {
+      upper_cn.on_max_count_reached();
+      logger.log_warning("Notifying RRC of proximity of COUNT wrap-around.", rcvd_count);
+      max_count_notified = true;
+    }
   }
-  if (rcvd_count >= cfg.max_count.hard) {
-    logger.log_error("Reached maximum COUNT, Re-fusing to transmit further. COUNT={}", rcvd_count);
-    upper_cn.on_protocol_failure();
+  if (rcvd_count >= cfg.max_count.hard && !max_count_overflow) {
+    logger.log_error("Reached maximum COUNT, Refusing to receive further. COUNT={}", rcvd_count);
+    if (!max_count_overflow) {
+      logger.log_error("Notifying RRC of having reached maximum COUNT.");
+      upper_cn.on_protocol_failure();
+      max_count_overflow = true;
+    }
     return;
   }
 

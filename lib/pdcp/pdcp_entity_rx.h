@@ -104,6 +104,9 @@ private:
                              byte_buffer_slice_chain::const_iterator msg_end,
                              uint32_t                                count);
 
+  bool max_count_notified = false;
+  bool max_count_overflow = false;
+
   /*
    * Notifiers
    */

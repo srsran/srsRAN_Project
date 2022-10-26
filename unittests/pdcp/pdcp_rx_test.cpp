@@ -324,7 +324,7 @@ TEST_P(pdcp_rx_test, count_wraparound)
 
     // check nof max_count reached and max protocol failures.
     ASSERT_EQ(5, test_frame->sdu_queue.size());
-    ASSERT_EQ(4, test_frame->nof_max_count_reached);
+    ASSERT_EQ(1, test_frame->nof_max_count_reached);
     ASSERT_EQ(1, test_frame->nof_protocol_failure);
   };
 
