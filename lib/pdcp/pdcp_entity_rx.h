@@ -68,6 +68,7 @@ public:
     logger.log_info(
         "Set RX security configuration, integ=NIA{}, cipher=NEA{}", sec_cfg.integ_algo, sec_cfg.cipher_algo);
   };
+
   void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) final
   {
     integrity_enabled = integ;
@@ -103,9 +104,6 @@ private:
   byte_buffer cipher_decrypt(byte_buffer_slice_chain::const_iterator msg_begin,
                              byte_buffer_slice_chain::const_iterator msg_end,
                              uint32_t                                count);
-
-  bool max_count_notified = false;
-  bool max_count_overflow = false;
 
   /*
    * Notifiers

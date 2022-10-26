@@ -218,8 +218,8 @@ TEST_P(pdcp_tx_test, count_wraparound)
     }
     // check nof max_count reached and max protocol failures.
     ASSERT_EQ(11, test_frame.pdu_queue.size());
-    ASSERT_EQ(10, test_frame.nof_max_count_reached);
-    ASSERT_EQ(9, test_frame.nof_protocol_failure);
+    ASSERT_EQ(1, test_frame.nof_max_count_reached);
+    ASSERT_EQ(1, test_frame.nof_protocol_failure);
   };
 
   if (config.sn_size == pdcp_sn_size::size12bits) {

@@ -80,6 +80,12 @@ protected:
   const uint32_t window_size;
 
   /*
+   * COUNT overflow helpers
+   */
+  bool max_count_notified = false;
+  bool max_count_overflow = false;
+
+  /*
    * SN, HFN and COUNT helpers
    */
   const uint32_t sn_size;

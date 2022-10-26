@@ -30,13 +30,19 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   // COUNT. It is then the RRC's responsibility to refresh the keys. We continue transmitting until
   // we reached a maximum hard COUNT, after which we simply refuse to TX any further.
   if (st.tx_next >= cfg.max_count.hard) {
-    logger.log_error("Reached maximum COUNT, Re-fusing to transmit further. COUNT={}", st.tx_next);
-    upper_cn.on_protocol_failure();
+    if (!max_count_overflow) {
+      logger.log_error("Reached maximum COUNT, refusing to transmit further. COUNT={}", st.tx_next);
+      upper_cn.on_protocol_failure();
+      max_count_overflow = true;
+    }
     return;
   }
   if (st.tx_next >= cfg.max_count.notify) {
-    logger.log_warning("Approaching COUNT wrap-around, notifying RRC. COUNT={}", st.tx_next);
-    upper_cn.on_max_count_reached();
+    if (!max_count_notified) {
+      logger.log_warning("Approaching COUNT wrap-around, notifying RRC. COUNT={}", st.tx_next);
+      upper_cn.on_max_count_reached();
+      max_count_notified = true;
+    }
   }
 
   // Start discard timer
