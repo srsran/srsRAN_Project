@@ -18,7 +18,7 @@
 
 using namespace srsgnb;
 
-// Assert that the dimensions of the equalizer input and output data structures match.
+/// Assert that the dimensions of the equalizer input and output data structures match.
 static inline void assert_sizes(channel_equalizer::re_list&           eq_symbols,
                                 channel_equalizer::noise_var_list&    eq_noise_vars,
                                 const channel_equalizer::re_list&     ch_symbols,
@@ -79,7 +79,7 @@ static inline void assert_sizes(channel_equalizer::re_list&           eq_symbols
                 ch_ests_nof_tx_layers);
 }
 
-// Calls the equalizer function for receive spatial diversity with the appropriate number of receive ports.
+/// Calls the equalizer function for receive spatial diversity with the appropriate number of receive ports.
 template <unsigned NOF_PORTS>
 void equalize_zf_single_tx_layer(unsigned                              nof_ports,
                                  channel_equalizer::re_list&           eq_symbols,
@@ -99,6 +99,7 @@ void equalize_zf_single_tx_layer(unsigned                              nof_ports
   equalize_zf_1xn<NOF_PORTS>(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
 }
 
+/// Specialization for a single receive port.
 template <>
 void equalize_zf_single_tx_layer<1>(unsigned /**/,
                                     channel_equalizer::re_list&           eq_symbols,

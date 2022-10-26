@@ -22,21 +22,38 @@ namespace srsgnb {
 class channel_equalizer
 {
 private:
-  /// Dimension, i.e. number of coordinates, of each indexing level of the channel estimation data.
-  enum class ch_dims : unsigned { re = 0, rx_port = 1, tx_layer = 2, nof_dims = 3 };
-  /// Dimension, i.e., number of coordinates, of each indexing level of the Resource Element data.
-  enum class re_dims : unsigned { re = 0, slice = 1, nof_dims = 2 };
+  /// Dimensions, i.e., number of coordinates, spanned by each indexing level of the Resource Element data.
+  enum class re_dims : unsigned {
+    /// Resource Element.
+    re = 0,
+    /// Set of all REs corresponding to a single receive port or a single transmit layer.
+    slice = 1,
+    /// Total number of dimensions.
+    nof_dims = 2
+  };
+
+  /// Dimensions, i.e. number of coordinates, spanned by each indexing level of the channel estimation data.
+  enum class ch_dims : unsigned {
+    /// Channel coefficient for a single Resource Element and a single Tx&ndash;Rx channel path.
+    re = 0,
+    /// Set of all channel coefficients corresponding to a single Tx&ndash;Rx channel path.
+    rx_port = 1,
+    /// Set of all channel coefficients corresponding to all Tx&ndash;Rx paths for a single Tx layer.
+    tx_layer = 2,
+    /// Total number of dimensions.
+    nof_dims = 3
+  };
 
 public:
   /// \brief Container for input and output Resource Elements.
   /// \remark Dimension indexing given by \ref channel_equalizer::re_dims
   using re_list = tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), cf_t, re_dims>;
 
-  /// Container for the post-equalization noise variances.
+  /// \brief Container for the post-equalization noise variances.
   /// \remark Dimension indexing given by \ref channel_equalizer::re_dims
   using noise_var_list = tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), float, re_dims>;
 
-  /// Container for the channel estimates.
+  /// \brief Container for the channel estimates.
   /// \remark Dimension indexing given by \ref channel_equalizer::ch_dims
   using ch_est_list = tensor<std::underlying_type_t<ch_dims>(ch_dims::nof_dims), cf_t, ch_dims>;
 

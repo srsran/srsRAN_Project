@@ -105,8 +105,8 @@ private:
   /// estimate. The DM-RS symbols are skipped. The extracted channel coefficients are arranged in three dimensions,
   /// i.e., resource element, receive port and transmit layer, as the channel equalizer expects.
   ///
-  /// \param[out] data_estimates channel estimates of the data symbols, organized by receive port and transmit layer.
-  /// \param[in]  channel_estimate channel estimation object.
+  /// \param[out] data_estimates Channel estimates of the data symbols, organized by receive port and transmit layer.
+  /// \param[in]  channel_estimate Channel estimation object.
   /// \param[in]  config  Configuration parameters.
   static void get_ch_data_estimates(channel_equalizer::ch_est_list& data_estimates,
                                     const channel_estimate&         channel_estimate,
