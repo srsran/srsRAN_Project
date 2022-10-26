@@ -77,8 +77,8 @@ ngc_message_handler& cu_cp::get_ngc_message_handler()
 
 void cu_cp::on_new_connection()
 {
-  logger.info("New DU connection - adding DU");
   du_index_t du_index = add_du();
+  logger.info("Added DU {}", du_index);
   if (du_index != INVALID_DU_INDEX && amf_connected) {
     du_db[du_index]->get_rrc_amf_connection_handler().handle_amf_connection();
   }
