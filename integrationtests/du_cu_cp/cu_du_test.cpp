@@ -8,7 +8,6 @@
  *
  */
 
-#include "../../lib/cu_cp/cu_cp.h"
 #include "../../lib/du_high/du_high.h"
 #include "../../lib/du_high/du_high_executor_strategies.h"
 #include "srsgnb/cu_cp/cu_cp.h"
