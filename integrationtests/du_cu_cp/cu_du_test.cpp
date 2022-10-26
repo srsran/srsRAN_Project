@@ -12,6 +12,7 @@
 #include "../../lib/du_high/du_high.h"
 #include "../../lib/du_high/du_high_executor_strategies.h"
 #include "srsgnb/cu_cp/cu_cp.h"
+#include "srsgnb/cu_cp/cu_cp_factory.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
@@ -83,7 +84,7 @@ protected:
     cu_cfg.ngc_notifier = &ngc_amf_notifier;
 
     // create and start CU
-    cu_cp_obj = std::make_unique<srs_cu_cp::cu_cp>(std::move(cu_cfg));
+    cu_cp_obj = create_cu_cp(cu_cfg);
 
     // create and start DU
     phy_dummy phy;
@@ -104,15 +105,14 @@ protected:
     du_msg_handler.attach_handler(&cu_cp_obj->get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)));
 
     // start CU and DU
-    cu_cp_obj->start();
     du_obj->start();
   }
 
 public:
-  std::unique_ptr<srs_cu_cp::cu_cp> cu_cp_obj;
-  std::unique_ptr<srs_du::du_high>  du_obj;
-  du_high_worker_manager            workers;
-  srslog::basic_logger&             test_logger = srslog::fetch_basic_logger("TEST");
+  std::unique_ptr<srs_cu_cp::cu_cp_interface> cu_cp_obj;
+  std::unique_ptr<srs_du::du_high>            du_obj;
+  du_high_worker_manager                      workers;
+  srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");
 };
 
 /// Test the f1 setup procedure was successful

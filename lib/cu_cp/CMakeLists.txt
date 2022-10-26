@@ -7,6 +7,7 @@
 #
 
 set(SOURCES
+      cu_cp_factory.cpp
       cu_cp.cpp
       du_processor_impl.cpp
       du_processor_factory.cpp
