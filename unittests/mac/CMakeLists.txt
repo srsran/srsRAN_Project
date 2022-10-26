@@ -42,3 +42,7 @@ add_test(mac_rar_pdu_assembler_test mac_rar_pdu_assembler_test)
 add_executable(dl_sch_pdu_assembler_test dl_sch_pdu_assembler_test.cpp)
 target_link_libraries(dl_sch_pdu_assembler_test srsgnb_mac srsgnb_support srslog sched_config gtest gtest_main)
 add_test(dl_sch_pdu_assembler_test dl_sch_pdu_assembler_test)
+
+add_executable(mac_cell_processor_test mac_cell_processor_test.cpp)
+target_link_libraries(mac_cell_processor_test srsgnb_mac sched_config gtest gtest_main)
+add_test(mac_cell_processor_test mac_cell_processor_test)

@@ -10,8 +10,10 @@
 
 #pragma once
 
-#include "../../lib/du_manager/converters/mac_cell_configuration_helpers.h"
+#include "lib/du_manager/converters/mac_cell_configuration_helpers.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
+#include "srsgnb/mac/mac_cell_result.h"
+#include "srsgnb/scheduler/mac_scheduler.h"
 
 namespace srsgnb {
 
@@ -24,6 +26,39 @@ inline mac_cell_creation_request make_default_mac_cell_config()
   mac_cell_creation_request req                 = make_mac_cell_config(to_du_cell_index(0), default_du_cell_cfg);
   return req;
 }
+
+class dummy_mac_scheduler : public mac_scheduler
+{
+public:
+  sched_result next_sched_result;
+
+  bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override { return true; }
+  void handle_rach_indication(const rach_indication_message& msg) override {}
+  void handle_add_ue_request(const sched_ue_creation_request_message& ue_request) override {}
+  void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) override {}
+  void handle_ue_delete_request(du_ue_index_t ue_index) override {}
+  void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override {}
+  void handle_crc_indication(const ul_crc_indication& crc) override {}
+  void handle_uci_indication(const uci_indication& uci) override {}
+  void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override {}
+  const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override
+  {
+    return &next_sched_result;
+  }
+  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override {}
+};
+
+class dummy_mac_cell_result_notifier : public mac_cell_result_notifier
+{
+public:
+  optional<mac_dl_sched_result> last_sched_res;
+  optional<mac_dl_data_result>  last_dl_data_res;
+  optional<mac_ul_sched_result> last_ul_res;
+
+  void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override { last_sched_res = dl_res; }
+  void on_new_downlink_data(const mac_dl_data_result& dl_data) override { last_dl_data_res = dl_data; }
+  void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override { last_ul_res = ul_res; }
+};
 
 } // namespace test_helpers
 

@@ -28,7 +28,13 @@ void mac_dl_processor::add_cell(const mac_cell_creation_request& cell_cfg_req)
   srsgnb_assert(not has_cell(cell_cfg_req.cell_index), "Overwriting existing cell is invalid.");
 
   // Create MAC cell and add it to list.
-  cells[cell_cfg_req.cell_index] = std::make_unique<mac_cell_processor>(cfg, cell_cfg_req, sched_obj, ue_mng);
+  cells[cell_cfg_req.cell_index] =
+      std::make_unique<mac_cell_processor>(cell_cfg_req,
+                                           sched_obj,
+                                           ue_mng,
+                                           cfg.phy_notifier.get_cell(cell_cfg_req.cell_index),
+                                           cfg.cell_exec_mapper.executor(cell_cfg_req.cell_index),
+                                           cfg.ctrl_exec);
 }
 
 void mac_dl_processor::remove_cell(du_cell_index_t cell_index)

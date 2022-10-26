@@ -17,15 +17,17 @@ using namespace srsgnb;
 /// Maximum PDSH K0 value as per TS38.331 "PDSCH-TimeDomainResourceAllocation".
 constexpr size_t MAX_K0_DELAY = 32;
 
-mac_cell_processor::mac_cell_processor(mac_common_config_t&             cfg_,
-                                       const mac_cell_creation_request& cell_cfg_req_,
+mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg_req_,
                                        mac_scheduler&                   sched_,
-                                       mac_dl_ue_manager&               ue_mng_) :
-  cfg(cfg_),
-  logger(cfg.logger),
+                                       mac_dl_ue_manager&               ue_mng_,
+                                       mac_cell_result_notifier&        phy_notifier_,
+                                       task_executor&                   cell_exec_,
+                                       task_executor&                   ctrl_exec_) :
+  logger(srslog::fetch_basic_logger("MAC")),
   cell_cfg(cell_cfg_req_),
-  cell_exec(cfg.cell_exec_mapper.executor(cell_cfg.cell_index)),
-  phy_cell(cfg.phy_notifier.get_cell(cell_cfg.cell_index)),
+  cell_exec(cell_exec_),
+  ctrl_exec(ctrl_exec_),
+  phy_cell(phy_notifier_),
   // The PDU pool has to be large enough to fit the maximum number of PDUs per slot for all possible K0 values.
   pdu_pool(dl_sch_pdu::MAX_PDU_LENGTH * MAX_DL_PDUS_PER_SLOT, MAX_K0_DELAY),
   ssb_helper(cell_cfg_req_),
@@ -39,12 +41,12 @@ mac_cell_processor::mac_cell_processor(mac_common_config_t&             cfg_,
 
 async_task<void> mac_cell_processor::start()
 {
-  return dispatch_and_resume_on(cell_exec, cfg.ctrl_exec, [this]() { state = cell_state::active; });
+  return dispatch_and_resume_on(cell_exec, ctrl_exec, [this]() { state = cell_state::active; });
 }
 
 async_task<void> mac_cell_processor::stop()
 {
-  return dispatch_and_resume_on(cell_exec, cfg.ctrl_exec, [this]() { state = cell_state::inactive; });
+  return dispatch_and_resume_on(cell_exec, ctrl_exec, [this]() { state = cell_state::inactive; });
 }
 
 void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
@@ -125,11 +127,13 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
 
   // Start assembling Slot Data Result.
-  mac_dl_data_result data_res;
-  assemble_dl_data_request(data_res, sl_tx, cell_cfg.cell_index, sl_res->dl);
+  if (not sl_res->dl.ue_grants.empty() or not sl_res->dl.rar_grants.empty() or not sl_res->dl.bc.sibs.empty()) {
+    mac_dl_data_result data_res;
+    assemble_dl_data_request(data_res, sl_tx, cell_cfg.cell_index, sl_res->dl);
 
-  // Send DL Data to PHY.
-  phy_cell.on_new_downlink_data(data_res);
+    // Send DL Data to PHY.
+    phy_cell.on_new_downlink_data(data_res);
+  }
 
   // Send UL sched result to PHY.
   mac_ul_sched_result mac_ul_res{};
@@ -168,7 +172,7 @@ void mac_cell_processor::assemble_dl_sched_request(mac_dl_sched_result&   mac_re
   mac_res.slot   = sl_tx;
 
   // Assemble SSB scheduling info and additional SSB/MIB parameters to pass to PHY.
-  for (auto& ssb : dl_res.bc.ssb_info) {
+  for (const ssb_information& ssb : dl_res.bc.ssb_info) {
     mac_res.ssb_pdus.emplace_back();
     ssb_helper.assemble_ssb(mac_res.ssb_pdus.back(), ssb);
   }

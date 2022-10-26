@@ -27,10 +27,12 @@ class mac_cell_processor final : public mac_cell_slot_handler,
                                  public mac_cell_control_information_handler
 {
 public:
-  mac_cell_processor(mac_common_config_t&             cfg_,
-                     const mac_cell_creation_request& cell_cfg_req_,
-                     mac_scheduler&                   sched_,
-                     mac_dl_ue_manager&               ue_mng);
+  mac_cell_processor(const mac_cell_creation_request& cell_cfg_req,
+                     mac_scheduler&                   sched,
+                     mac_dl_ue_manager&               ue_mng,
+                     mac_cell_result_notifier&        phy_notifier,
+                     task_executor&                   cell_exec,
+                     task_executor&                   ctrl_exec);
 
   /// Starts configured cell.
   async_task<void> start() override;
@@ -64,10 +66,10 @@ private:
   /// Update DL buffer states of the allocated DL bearers.
   void update_logical_channel_dl_buffer_states(const dl_sched_result& dl_res);
 
-  mac_common_config_t&            cfg;
   srslog::basic_logger&           logger;
   const mac_cell_creation_request cell_cfg;
   task_executor&                  cell_exec;
+  task_executor&                  ctrl_exec;
   mac_cell_result_notifier&       phy_cell;
 
   ticking_ring_buffer_pool pdu_pool;
