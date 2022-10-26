@@ -246,7 +246,7 @@ static void add_pdcch_pdus_to_result(mac_dl_sched_result& result)
 
   // Add the DCIs payload.
   for (unsigned i = 0; i != nof_pdus; ++i) {
-    result.pdcch_pdus.push_back(generate_dci_payload());
+    result.dl_pdcch_pdus.push_back(generate_dci_payload());
   }
 
   result.dl_res = &result_in_mem;

@@ -132,7 +132,7 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   builder.set_basic_parameters(dl_res.slot.sfn(), dl_res.slot.slot_index(), num_pdu_groups);
 
   // Add PDCCH PDUs to the DL_TTI.request message.
-  add_pdcch_pdus_to_dl_request(builder, dl_res.dl_res->dl_pdcchs, dl_res.pdcch_pdus);
+  add_pdcch_pdus_to_dl_request(builder, dl_res.dl_res->dl_pdcchs, dl_res.dl_pdcch_pdus);
 
   // Add SSB PDUs to the DL_TTI.request message.
   add_ssb_pdus_to_dl_request(builder, dl_res.ssb_pdus);

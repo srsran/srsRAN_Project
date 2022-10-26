@@ -53,7 +53,8 @@ struct mac_dl_sched_result {
   slot_point                                             slot;
   const dl_sched_result*                                 dl_res;
   static_vector<dl_ssb_pdu, MAX_SSB_PER_SLOT>            ssb_pdus;
-  static_vector<dci_payload, MAX_DL_PDCCH_PDUS_PER_SLOT> pdcch_pdus;
+  static_vector<dci_payload, MAX_DL_PDCCH_PDUS_PER_SLOT> dl_pdcch_pdus;
+  static_vector<dci_payload, MAX_UL_PDCCH_PDUS_PER_SLOT> ul_pdcch_pdus;
 };
 
 /// List of DL PDUs produced by MAC in a given slot and cell.

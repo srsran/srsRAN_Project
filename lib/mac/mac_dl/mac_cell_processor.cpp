@@ -192,12 +192,12 @@ void mac_cell_processor::assemble_dl_sched_request(mac_dl_sched_result&   mac_re
 
   // Encode DL PDCCH DCI payloads.
   for (const pdcch_dl_information& pdcch : dl_res.dl_pdcchs) {
-    mac_res.pdcch_pdus.push_back(encode_dci(pdcch));
+    mac_res.dl_pdcch_pdus.push_back(encode_dci(pdcch));
   }
 
   // Encode UL PDCCH DCI payloads.
   for (const pdcch_ul_information& pdcch : dl_res.ul_pdcchs) {
-    mac_res.pdcch_pdus.push_back(encode_dci(pdcch));
+    mac_res.ul_pdcch_pdus.push_back(encode_dci(pdcch));
   }
 }
 

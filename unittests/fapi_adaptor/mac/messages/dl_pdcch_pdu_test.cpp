@@ -23,7 +23,7 @@ static void test_conversion_ok()
   const mac_pdcch_pdu&       mac_pdu = {result.dl_res->dl_pdcchs.front().ctx.bwp_cfg,
                                         result.dl_res->dl_pdcchs.front().ctx.coreset_cfg,
                                         result.dl_res->dl_pdcchs.front().ctx.starting_symbol,
-                                        {{&result.dl_res->dl_pdcchs.front(), &result.pdcch_pdus.front()}}};
+                                        {{&result.dl_res->dl_pdcchs.front(), &result.dl_pdcch_pdus.front()}}};
 
   fapi::dl_pdcch_pdu fapi_pdu;
   convert_pdcch_mac_to_fapi(fapi_pdu, mac_pdu);
