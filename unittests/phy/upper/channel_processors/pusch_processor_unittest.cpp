@@ -127,7 +127,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   pdu.start_symbol_index          = start_symbol_index_dist(rgen);
   pdu.nof_symbols                 = std::min(MAX_NSYMB_PER_SLOT - pdu.start_symbol_index, nof_symbols_dist(rgen));
   pdu.tbs_lbrm_bytes              = tbs_lbrm_bytes_dist(rgen);
-  std::generate_n(pdu.dmrs_symbol_mask.begin(), pdu.nof_symbols, [&]() { return bool_dist(rgen) == 0; });
+  pdu.dmrs_symbol_mask            = {};
+  std::generate_n(
+      pdu.dmrs_symbol_mask.begin() + pdu.start_symbol_index, pdu.nof_symbols, [&]() { return bool_dist(rgen) == 0; });
 
   // Calculate number of symbols carrying DM-RS.
   unsigned nof_dmrs_symbols = std::count(pdu.dmrs_symbol_mask.begin(), pdu.dmrs_symbol_mask.end(), true);
