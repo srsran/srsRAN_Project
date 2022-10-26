@@ -5,10 +5,10 @@
 
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "30"
+    ref: "31"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/testing-tools
-    ref: "30"
+    ref: "31"
     file: .gitlab/ci-shared/features/all.yml
   - local: .gitlab/ci/build.yml
 
@@ -267,7 +267,7 @@ pages:
     - doxygen_generator.sh
     - mv build/public .
     - mv coverage_html public/
-    - mv codechecker_html public/
+    - mv codechecker*html public/
     - mv test_report.html public/
     - mv requirement_report.html public/
     - mv public/index.html public/index_doxygen.html
