@@ -24,43 +24,31 @@ sctp_network_gateway::sctp_network_gateway(network_gateway_config            con
   data_notifier(data_notifier_),
   logger(srslog::fetch_basic_logger("SCTP-NW-GW"))
 {
-  address_family = get_address_family(config.bind_address.c_str());
-  if (address_family < 0) {
-    // failed to get address family for bind address, try connect address
-    address_family = get_address_family(config.connect_address.c_str());
-    if (address_family < 0) {
-      logger.error("Couldn't determine address family for {} or {}", config.bind_address, config.connect_address);
-      return;
-    }
-  }
+}
 
-  // create SCTP socket
-  sock_fd = socket(address_family, SOCK_SEQPACKET, IPPROTO_SCTP);
-  if (sock_fd == -1) {
-    logger.error("Could not create SCTP socket");
-    return;
-  }
-
+bool sctp_network_gateway::set_sockopts()
+{
   if (not subscripe_to_events()) {
-    logger.error("Could not subscribe to SCTP events");
-    close_socket();
-    return;
+    logger.error("Couldn't subscribe to SCTP events");
+    return false;
   }
 
   if (config.rx_timeout_sec > 0) {
     if (not set_receive_timeout(config.rx_timeout_sec)) {
       logger.error("Couldn't set receive timeout for socket");
-      close_socket();
-      return;
+
+      return false;
     }
   }
 
-  if (config.non_blocking_mode) {
-    if (not set_non_blocking()) {
-      logger.error("Socket not non-blocking");
-      return;
+  if (config.reuse_addr) {
+    if (not set_reuse_addr()) {
+      logger.error("Couldn't set reuseaddr for socket");
+      return false;
     }
   }
+
+  return true;
 }
 
 /// \brief Subscribes to various SCTP events to handle accociation and shutdown gracefully.
@@ -71,7 +59,7 @@ bool sctp_network_gateway::subscripe_to_events()
   events.sctp_shutdown_event         = 1;
   events.sctp_association_event      = 1;
 
-  if (setsockopt(sock_fd, IPPROTO_SCTP, SCTP_EVENTS, &events, sizeof(events))) {
+  if (::setsockopt(sock_fd, IPPROTO_SCTP, SCTP_EVENTS, &events, sizeof(events))) {
     logger.error("Subscribing to SCTP events failed");
     return false;
   }
@@ -84,11 +72,21 @@ bool sctp_network_gateway::set_receive_timeout(unsigned rx_timeout_sec)
   tv.tv_sec  = rx_timeout_sec;
   tv.tv_usec = 0;
 
-  if (setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv)) {
+  if (::setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv)) {
     logger.error("Couldn't set receive timeout for socket");
     return false;
   }
 
+  return true;
+}
+
+bool sctp_network_gateway::set_reuse_addr()
+{
+  int one = 1;
+  if (::setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one))) {
+    logger.error("Couldn't set reuseaddr for socket");
+    return false;
+  }
   return true;
 }
 
@@ -99,43 +97,77 @@ bool sctp_network_gateway::is_initialized()
   return sock_fd != -1;
 }
 
-/// \brief Bind socket to given address and starts listenening for incoming connections.
+/// \brief Create and bind socket to given address.
 bool sctp_network_gateway::bind()
 {
-  // Bind port
-  struct sockaddr_in  bind_addr_v4 = {};
-  struct sockaddr_in6 bind_addr_v6 = {};
-  struct sockaddr*    bind_addr    = nullptr;
-  size_t              bind_addr_sz = 0;
-  if (address_family == AF_INET) {
-    if (not set_sockaddr(&bind_addr_v4, config.bind_address.c_str(), config.bind_port)) {
-      logger.error("Invalid net_ip: {}", config.bind_address.c_str());
-      return false;
-    }
-    bind_addr    = (struct sockaddr*)&bind_addr_v4;
-    bind_addr_sz = sizeof(bind_addr_v4);
-  } else if (address_family == AF_INET6) {
-    if (not set_sockaddr(&bind_addr_v6, config.bind_address.c_str(), config.bind_port)) {
-      logger.error("Invalid net_ip: {}", config.bind_address.c_str());
-      return false;
-    }
-    bind_addr    = (struct sockaddr*)&bind_addr_v6;
-    bind_addr_sz = sizeof(bind_addr_v6);
-  } else {
-    return false;
-  }
+  struct addrinfo hints;
+  // support ipv4, ipv6 and hostnames
+  hints.ai_family    = AF_UNSPEC;
+  hints.ai_socktype  = SOCK_SEQPACKET;
+  hints.ai_flags     = 0;
+  hints.ai_protocol  = IPPROTO_SCTP;
+  hints.ai_canonname = nullptr;
+  hints.ai_addr      = nullptr;
+  hints.ai_next      = nullptr;
 
-  int one = 1;
-  if (setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one))) {
-    close_socket();
-    logger.error("Couldn't set receive timeout for socket");
-    return false;
-  }
+  std::string      bind_port = std::to_string(config.bind_port);
+  struct addrinfo* results;
 
-  int ret = ::bind(sock_fd, bind_addr, bind_addr_sz);
+  int ret = getaddrinfo(config.bind_address.c_str(), bind_port.c_str(), &hints, &results);
   if (ret != 0) {
-    logger.error("Error binding SCTP socket");
-    close_socket();
+    logger.error("Getaddrinfo error: {} - {}", config.bind_address, gai_strerror(ret));
+    return false;
+  }
+
+  struct addrinfo* result;
+  for (result = results; result != nullptr; result = result->ai_next) {
+    // create SCTP socket
+    sock_fd = ::socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if (sock_fd == -1) {
+      ret = errno;
+      continue;
+    }
+
+    if (not set_sockopts()) {
+      close_socket();
+      continue;
+    }
+
+    char ip_addr[NI_MAXHOST], port_nr[NI_MAXSERV];
+    getnameinfo(
+        result->ai_addr, result->ai_addrlen, ip_addr, NI_MAXHOST, port_nr, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
+    logger.debug("Binding to {} port {}", ip_addr, port_nr);
+
+    if (::bind(sock_fd, result->ai_addr, result->ai_addrlen) == -1) {
+      // binding failed, try next address
+      ret = errno;
+      logger.debug("Failed to bind to {}:{} - {}", ip_addr, port_nr, strerror(ret));
+      close_socket();
+      continue;
+    }
+
+    // store client address
+    memcpy(&client_addr, result->ai_addr, result->ai_addrlen);
+    client_addrlen = result->ai_addrlen;
+
+    // set socket to non-blocking after bind is successful
+    if (config.non_blocking_mode) {
+      if (not set_non_blocking()) {
+        // failed, try next address
+        logger.error("Socket not non-blocking");
+        close_socket();
+        continue;
+      }
+    }
+
+    logger.debug("Binding successful");
+    break;
+  }
+
+  freeaddrinfo(results);
+
+  if (sock_fd == -1) {
+    logger.error("Error binding to {}:{} - {}", config.bind_address, config.bind_port, strerror(ret));
     return false;
   }
 
@@ -157,11 +189,6 @@ bool sctp_network_gateway::listen()
 
 bool sctp_network_gateway::connect()
 {
-  if (not is_initialized()) {
-    logger.error("Socket not initialized");
-    return false;
-  }
-
   // bind to address/port
   if (not config.bind_address.empty()) {
     if (not bind()) {
@@ -171,30 +198,74 @@ bool sctp_network_gateway::connect()
     }
   }
 
-  // Connect address
-  if (address_family == AF_INET) {
-    if (not set_sockaddr(&connect_addr_v4, config.connect_address.c_str(), config.connect_port)) {
-      logger.error("Invalid IPv4 address: {}", config.connect_address);
-      return false;
-    }
-    servaddr    = (struct sockaddr*)&connect_addr_v4;
-    servaddr_sz = sizeof(connect_addr_v4);
-  } else if (address_family == AF_INET6) {
-    if (not set_sockaddr(&connect_addr_v6, config.connect_address.c_str(), config.connect_port)) {
-      logger.error("Invalid IPv6 address: {}", config.connect_address);
-      return false;
-    }
-    servaddr    = (struct sockaddr*)&connect_addr_v6;
-    servaddr_sz = sizeof(connect_addr_v6);
-  } else {
+  struct addrinfo hints;
+  // support ipv4, ipv6 and hostnames
+  hints.ai_family    = AF_UNSPEC;
+  hints.ai_socktype  = SOCK_SEQPACKET;
+  hints.ai_flags     = 0;
+  hints.ai_protocol  = IPPROTO_SCTP;
+  hints.ai_canonname = nullptr;
+  hints.ai_addr      = nullptr;
+  hints.ai_next      = nullptr;
+
+  std::string      connect_port = std::to_string(config.connect_port);
+  struct addrinfo* results;
+
+  int ret = getaddrinfo(config.connect_address.c_str(), connect_port.c_str(), &hints, &results);
+  if (ret != 0) {
+    logger.error("Getaddrinfo error: {} - {}", config.connect_address, gai_strerror(ret));
     return false;
   }
 
-  // Connect
-  int ret = ::connect(sock_fd, servaddr, servaddr_sz);
-  if (ret == -1 && errno != EINPROGRESS) {
-    logger.error("Failed to establish socket connection to {}: {}", config.connect_address, strerror(errno));
-    close_socket();
+  struct addrinfo* result;
+  for (result = results; result != nullptr; result = result->ai_next) {
+    // create SCTP socket
+    sock_fd = ::socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if (sock_fd == -1) {
+      ret = errno;
+      continue;
+    }
+
+    if (not set_sockopts()) {
+      close_socket();
+      continue;
+    }
+
+    char ip_addr[NI_MAXHOST], port_nr[NI_MAXSERV];
+    getnameinfo(
+        result->ai_addr, result->ai_addrlen, ip_addr, NI_MAXHOST, port_nr, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
+    logger.debug("Connecting to {} port {}", ip_addr, port_nr);
+
+    if (::connect(sock_fd, result->ai_addr, result->ai_addrlen) == -1) {
+      // connection failed, try next address
+      ret = errno;
+      logger.debug("Failed to connect to {}:{} - {}", ip_addr, port_nr, strerror(ret));
+      close_socket();
+      continue;
+    }
+
+    // store server address
+    memcpy(&server_addr, result->ai_addr, result->ai_addrlen);
+    server_addrlen = result->ai_addrlen;
+
+    // set socket to non-blocking after connect is established
+    if (config.non_blocking_mode) {
+      if (not set_non_blocking()) {
+        // failed, try next address
+        logger.error("Socket not non-blocking");
+        close_socket();
+        continue;
+      }
+    }
+
+    logger.info("Connection successful");
+    break;
+  }
+
+  freeaddrinfo(results);
+
+  if (sock_fd == -1) {
+    logger.error("Error connecting to {}:{} - {}", config.connect_address, config.connect_port, strerror(ret));
     return false;
   }
 
@@ -219,53 +290,16 @@ bool sctp_network_gateway::close_socket()
   return true;
 }
 
-///< Set IP:port for ipv4
-int sctp_network_gateway::get_address_family(const char* ip_str)
-{
-  in6_addr tmp = {};
-  if (inet_pton(AF_INET, ip_str, (void*)&tmp) == 1) {
-    return AF_INET; // valid IPv4 address
-  }
-  if (inet_pton(AF_INET6, ip_str, (void*)&tmp) == 1) {
-    return AF_INET6; // valid IPv6 address
-  }
-  logger.error("Couldn't determine IP address family.");
-  return -1;
-}
-
-///< Set IP:port for ipv4
-bool sctp_network_gateway::set_sockaddr(sockaddr_in* addr, const char* ip_str, int port)
-{
-  addr->sin_family = AF_INET;
-  if (::inet_pton(addr->sin_family, ip_str, &addr->sin_addr) != 1) {
-    logger.error("Couldn't convert IPv4 address {}:{}, error: {}", ip_str, port, strerror(errno));
-    return false;
-  }
-  addr->sin_port = htons(port);
-  return true;
-}
-
-///< Set IP:port for ipv6
-bool sctp_network_gateway::set_sockaddr(sockaddr_in6* addr, const char* ip_str, int port)
-{
-  addr->sin6_family = AF_INET6;
-  if (::inet_pton(addr->sin6_family, ip_str, &addr->sin6_addr) != 1) {
-    logger.error("Couldn't convert IPv6 address {}:{}, error: {}", ip_str, port, strerror(errno));
-    return false;
-  }
-  addr->sin6_port = htons(port);
-  return true;
-}
-
 void sctp_network_gateway::receive()
 {
   struct sctp_sndrcvinfo sri       = {};
-  socklen_t              fromlen   = sizeof(client_addr);
   int                    msg_flags = 0;
-  int                    rx_bytes  = ::sctp_recvmsg(
-      sock_fd, rx_buffer.data(), rx_buffer.size(), (struct sockaddr*)&client_addr, &fromlen, &sri, &msg_flags);
+
+  int rx_bytes = ::sctp_recvmsg(
+      sock_fd, rx_buffer.data(), rx_buffer.size(), (struct sockaddr*)&client_addr, &client_addrlen, &sri, &msg_flags);
+
   if (rx_bytes == -1 && errno != EAGAIN) {
-    logger.error("Error reading from SCTP socket: %s", strerror(errno));
+    logger.error("Error reading from SCTP socket: {}", strerror(errno));
   } else if (rx_bytes == -1 && errno == EAGAIN) {
     logger.debug("Socket timeout reached");
   } else {
@@ -374,8 +408,16 @@ void sctp_network_gateway::handle_pdu(const byte_buffer& pdu)
 
   // send segment by segment over socket
   for (const auto& segment : pdu.segments()) {
-    int bytes_sent =
-        sctp_sendmsg(sock_fd, segment.data(), segment.size_bytes(), servaddr, servaddr_sz, ppi, 0, stream_no, 0, 0);
+    int bytes_sent = sctp_sendmsg(sock_fd,
+                                  segment.data(),
+                                  segment.size_bytes(),
+                                  (struct sockaddr*)&server_addr,
+                                  server_addrlen,
+                                  ppi,
+                                  0,
+                                  stream_no,
+                                  0,
+                                  0);
     if (bytes_sent == -1) {
       logger.error("Couldn't send {} B of data on SCTP socket", pdu.length());
       return;
@@ -392,8 +434,7 @@ bool sctp_network_gateway::set_non_blocking()
     return false;
   }
 
-  flags |= O_NONBLOCK;
-  int s = fcntl(sock_fd, F_SETFL, flags);
+  int s = fcntl(sock_fd, F_SETFL, flags | O_NONBLOCK);
   if (s == -1) {
     logger.error("Error setting socket to non-blocking mode: {}", strerror(errno));
     return false;

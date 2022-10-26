@@ -16,6 +16,7 @@ struct network_gateway_config {
   int                  bind_port         = 0;
   bool                 non_blocking_mode = false;
   unsigned             rx_timeout_sec    = 1; /// Socket received timeout in seconds
+  bool                 reuse_addr        = false;
 };
 
 /// Interface to inject PDUs into gateway entity.
@@ -50,7 +51,7 @@ public:
   /// (server).
   virtual void on_connection_established() = 0;
 
-  /// \brief This callback is invoked when the connection is dropped or cannot be established in the first place..
+  /// \brief This callback is invoked when the connection is dropped or cannot be established in the first place.
   virtual void on_connection_loss() = 0;
 };
 
@@ -60,13 +61,13 @@ class network_gateway_controller
 public:
   virtual ~network_gateway_controller() = default;
 
-  /// \brief Bind the configured address and port.
+  /// \brief Create and bind the configured address and port.
   virtual bool bind() = 0;
 
   /// \brief Start listening on socket.
   virtual bool listen() = 0;
 
-  /// \brief Connect to the configured address and port.
+  /// \brief Create and connect to the configured address and port.
   virtual bool connect() = 0;
 
   /// \brief Trigger receive call on socket.

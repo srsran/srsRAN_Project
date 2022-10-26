@@ -12,8 +12,10 @@
 
 #include "srsgnb/gateways/network_gateway.h"
 #include "srsgnb/srslog/srslog.h"
+#include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 
 namespace srsgnb {
 
@@ -30,12 +32,23 @@ private:
   // network_gateway_data_handler interface
   void handle_pdu(const byte_buffer& pdu) override;
 
+  bool set_sockopts();
+
   // network_gateway_controller interface
+  /// \brief Create and bind socket to given address.
   bool bind() override;
+
+  /// \brief Start listening on socket.
   bool listen() override;
+
+  /// \brief Create and connect socket to given address.
   bool connect() override;
+
+  /// \brief Trigger receive call on socket.
   void receive() override;
-  int  get_socket_fd() override;
+
+  /// \brief Return socket file descriptor.
+  int get_socket_fd() override;
 
   // internal helpers
   using socket_buffer_type = uint8_t;
@@ -45,9 +58,7 @@ private:
   // socket helpers
   bool set_non_blocking();
   bool set_receive_timeout(unsigned rx_timeout_sec);
-  int  get_address_family(const char* ip_str);
-  bool set_sockaddr(sockaddr_in6* addr, const char* ip_str, int port);
-  bool set_sockaddr(sockaddr_in* addr, const char* ip_str, int port);
+  bool set_reuse_addr();
   bool subscripe_to_events();
   bool close_socket();
 
@@ -56,14 +67,13 @@ private:
   network_gateway_data_notifier&    data_notifier;
   srslog::basic_logger&             logger;
 
-  int             sock_fd        = -1;
-  int             address_family = AF_INET; // set when parsing address config, default to IPv4
-  struct sockaddr client_addr    = {};
+  int sock_fd = -1;
 
-  struct sockaddr_in  connect_addr_v4 = {};
-  struct sockaddr_in6 connect_addr_v6 = {};
-  struct sockaddr*    servaddr        = nullptr; // contains the server address when operating as client
-  size_t              servaddr_sz     = 0;       // contains the server address when operating as client
+  struct sockaddr_storage client_addr    = {}; // the local address
+  socklen_t               client_addrlen = 0;
+
+  struct sockaddr_storage server_addr    = {}; // the server address when operating as client
+  socklen_t               server_addrlen = 0;
 
   unsigned ppi       = 0; /// the Payload Protocol Identifier (e.g. 18 for S1AP)
   unsigned stream_no = 0; /// the stream number to use for sending
