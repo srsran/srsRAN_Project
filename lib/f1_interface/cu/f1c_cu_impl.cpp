@@ -55,7 +55,7 @@ void f1c_cu_impl::handle_f1_setup_response(const f1_setup_response_message& msg)
     f1c_msg.pdu.successful_outcome().value.f1_setup_resp() = msg.response;
 
     // set values handled by F1
-    f1c_msg.pdu.successful_outcome().value.f1_setup_resp()->transaction_id.value = 99;
+    f1c_msg.pdu.successful_outcome().value.f1_setup_resp()->transaction_id.value = current_transaction_id;
 
     // send response
     pdu_notifier.on_new_message(f1c_msg);
@@ -67,7 +67,7 @@ void f1c_cu_impl::handle_f1_setup_response(const f1_setup_response_message& msg)
     auto& setup_fail                                         = f1c_msg.pdu.unsuccessful_outcome().value.f1_setup_fail();
 
     // set values handled by F1
-    setup_fail->transaction_id.value = 99;
+    setup_fail->transaction_id.value = current_transaction_id;
     setup_fail->cause.value.set_radio_network();
     setup_fail->cause.value.radio_network() = asn1::f1ap::cause_radio_network_opts::options::no_radio_res_available;
 
@@ -181,6 +181,7 @@ void f1c_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::options::f1_setup_request: {
       f1_setup_request_message req_msg = {};
       req_msg.request                  = msg.value.f1_setup_request();
+      current_transaction_id           = msg.value.f1_setup_request()->transaction_id.value;
       du_processor_notifier.on_f1_setup_request_received(req_msg);
     } break;
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::init_ulrrc_msg_transfer: {

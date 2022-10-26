@@ -101,12 +101,13 @@ private:
   std::array<f1ap_ue_context, MAX_NOF_UES> cu_ue_id_to_f1ap_ue_context;
 
   // nofifiers and handles
-
   f1c_message_notifier&       pdu_notifier;
   f1c_du_processor_notifier&  du_processor_notifier;
   f1c_du_management_notifier& du_management_notifier;
 
   std::unique_ptr<f1c_event_manager> events;
+
+  unsigned current_transaction_id = 0; // store current F1AP transaction id
 };
 
 } // namespace srs_cu_cp
