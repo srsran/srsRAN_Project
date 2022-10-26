@@ -22,16 +22,27 @@
 
 namespace srsgnb {
 
-/// PUCCH processor interface for all formats.
+/// \brief PUCCH processor interface for all formats.
+///
+/// \remark \anchor PUCCH_payload_size The total payload size for Formats 2, 3 and 4 shall not exceed 1706.
+/// Specifically, one should have <tt>nof_sr + nof_harq_ack + nof_csi_part1 + nof_csi_part2 <= 1706</tt>.
 class pucch_processor
 {
 public:
-  /// \brief Collects PUCCH configuration parameters that are common for all formats.
-  ///
-  /// \remark The total payload size for Format 0 and 1 shall not exceed two.
-  /// \remark \anchor PUCCH_payload_size The total payload size for Formats 2, 3 and 4 shall not exceed 1706.
-  /// Specifically, one should have <tt>nof_sr + nof_harq_ack + nof_csi_part1 + nof_csi_part2 <= 1706</tt>.
-  struct common_configuration {
+  /// Collects specific PUCCH Format 0 parameters.
+  struct format0_configuration {
+    /// Cyclic prefix configuration for the slot.
+    cyclic_prefix cp;
+    /// Initial cyclic shift {0, ..., 11}.
+    unsigned initial_cyclic_shift;
+    /// Number of symbols for the PUCCH transmission {1, 2}.
+    unsigned nof_symbols;
+    /// Start symbol index {0, ..., 13}.
+    unsigned start_symbol_index;
+  };
+
+  /// Collects PUCCH Format 1 parameters.
+  struct format1_configuration {
     /// Slot and numerology.
     slot_point slot;
     /// Number of contiguous PRBs allocated to the BWP {1, ..., 275}.
@@ -55,6 +66,39 @@ public:
     /// PUCCH-ConfigCommon, if it is configured. Otherwise, it must be equal to the physical cell identifier
     /// \f$N_{\textup{ID}}^{\textup{cell}}\f$.
     unsigned n_id;
+    /// Number of expected HARQ-ACK bits {0, ..., 2} (see also \ref PUCCH_payload_size "here").
+    unsigned nof_harq_ack;
+    /// Port indexes used for the PUCCH reception.
+    static_vector<uint8_t, MAX_PORTS> ports;
+    /// Initial cyclic shift {0, ..., 11}.
+    unsigned initial_cyclic_shift;
+    /// Number of symbols for the PUCCH transmission {4, ..., 14}.
+    unsigned nof_symbols;
+    /// Start symbol index {0, ..., 10}.
+    unsigned start_symbol_index;
+    /// Time domain orthogonal cyclic code {0, ..., 6}.
+    unsigned time_domain_occ;
+  };
+
+  /// Collects PUCCH Format 2 parameters.
+  struct format2_configuration {
+    /// Slot and numerology.
+    slot_point slot;
+    /// Number of contiguous PRBs allocated to the BWP {1, ..., 275}.
+    unsigned bwp_size_rb;
+    /// BWP start RB index from Point A {0, ..., 274}.
+    unsigned bwp_start_rb;
+    /// Cyclic prefix configuration for the slot.
+    cyclic_prefix cp;
+    /// \brief Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274}.
+    ///
+    /// Index of the first PRB prior to frequency hopping or for no frequency hopping as per TS38.213 Section 9.2.1.
+    unsigned starting_prb;
+    /// \brief Index of the first PRB after frequency hopping as per TS38.213 Section 9.2.1.
+    ///
+    /// Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274} if intra-slot frequency hopping is
+    /// enabled, empty otherwise.
+    optional<unsigned> second_hop_prb;
     /// \brief DM-RS scrambling identity {0, ..., 65535}.
     ///
     /// Corresponds to parameter \f$N_{\textup{ID}}^0\f$ in TS38.211 Section 6.4.1.3.2.1.
@@ -73,38 +117,6 @@ public:
     unsigned nof_csi_part2;
     /// Port indexes used for the PUCCH reception.
     static_vector<uint8_t, MAX_PORTS> ports;
-  };
-
-  /// Collects specific PUCCH Format 0 parameters.
-  struct format0_configuration {
-    /// Common parameters.
-    common_configuration common;
-    /// Initial cyclic shift {0, ..., 11}.
-    unsigned initial_cyclic_shift;
-    /// Number of symbols for the PUCCH transmission {1, 2}.
-    unsigned nof_symbols;
-    /// Start symbol index {0, ..., 13}.
-    unsigned start_symbol_index;
-  };
-
-  /// Collects specific PUCCH Format 1 parameters.
-  struct format1_configuration {
-    /// Common parameters.
-    common_configuration common;
-    /// Initial cyclic shift {0, ..., 11}.
-    unsigned initial_cyclic_shift;
-    /// Number of symbols for the PUCCH transmission {4, ..., 14}.
-    unsigned nof_symbols;
-    /// Start symbol index {0, ..., 10}.
-    unsigned start_symbol_index;
-    /// Time domain orthogonal cyclic code {0, ..., 6}.
-    unsigned time_domain_occ;
-  };
-
-  /// Collects specific PUCCH Format 2 parameters.
-  struct format2_configuration {
-    /// Common parameters.
-    common_configuration common;
     /// Number of PRB {1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 15, 16}.
     unsigned nof_prb;
     /// Number of symbols for the PUCCH transmission {4, ..., 14}.
@@ -115,14 +127,14 @@ public:
 
   /// Collects specific PUCCH Format 3 parameters.
   struct format3_configuration {
-    /// Common parameters.
-    common_configuration common;
+    /// Cyclic prefix configuration for the slot.
+    cyclic_prefix cp;
   };
 
   /// Collects specific PUCCH Format 4 parameters.
   struct format4_configuration {
-    /// Common parameters.
-    common_configuration common;
+    /// Cyclic prefix configuration for the slot.
+    cyclic_prefix cp;
   };
 
   /// Default destructor.

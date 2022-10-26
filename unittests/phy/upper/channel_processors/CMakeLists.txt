@@ -111,6 +111,10 @@ add_custom_command(
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/prach_generator_test_data.tar.gz
         VERBATIM)
 
+add_executable(pucch_processor_format1_unittest pucch_processor_format1_unittest.cpp)
+target_link_libraries(pucch_processor_format1_unittest srsgnb_channel_processors srslog gtest gtest_main)
+add_test(pucch_processor_format1_unittest pucch_processor_format1_unittest)
+
 add_executable(pucch_processor_format1_vectortest pucch_processor_format1_vectortest.cpp)
 target_link_libraries(pucch_processor_format1_vectortest srsgnb_phy_support srsgnb_channel_processors srslog gtest gtest_main)
 add_test(pucch_processor_format1_vectortest pucch_processor_format1_vectortest)

@@ -13,9 +13,8 @@
 using namespace srsgnb;
 using namespace fapi_adaptor;
 
-static void fill_common_parameters(pucch_processor::common_configuration& config,
-                                   const fapi::ul_pucch_pdu&              fapi_pdu,
-                                   slot_point                             slot)
+template <typename Config>
+static void fill_common_parameters(Config& config, const fapi::ul_pucch_pdu& fapi_pdu, slot_point slot)
 {
   config.slot         = slot;
   config.bwp_size_rb  = fapi_pdu.bwp_size;
@@ -26,23 +25,17 @@ static void fill_common_parameters(pucch_processor::common_configuration& config
     config.second_hop_prb.emplace(fapi_pdu.second_hop_prb);
   }
 
-  config.n_id          = fapi_pdu.nid_pucch_hopping;
-  config.n_id_0        = fapi_pdu.nid0_pucch_dmrs_scrambling;
-  config.nof_sr        = fapi_pdu.sr_bit_len;
-  config.nof_harq_ack  = fapi_pdu.bit_len_harq;
-  config.nof_csi_part1 = fapi_pdu.csi_part1_bit_length;
-  config.ports         = {0};
+  config.ports = {0};
 }
 
 static void fill_format1_parameters(pucch_processor::format1_configuration& config,
                                     const fapi::ul_pucch_pdu&               fapi_pdu,
                                     slot_point                              slot)
 {
-  fill_common_parameters(config.common, fapi_pdu, slot);
+  fill_common_parameters(config, fapi_pdu, slot);
 
-  // Format 1 does not support CSI.
-  config.common.nof_csi_part1 = 0U;
-  config.common.nof_csi_part2 = 0U;
+  config.n_id         = fapi_pdu.nid_pucch_hopping;
+  config.nof_harq_ack = fapi_pdu.bit_len_harq;
 
   config.initial_cyclic_shift = fapi_pdu.initial_cyclic_shift;
   config.nof_symbols          = fapi_pdu.nr_of_symbols;

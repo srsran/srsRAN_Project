@@ -17,28 +17,19 @@ using namespace srsgnb;
 
 namespace srsgnb {
 
-std::ostream& operator<<(std::ostream& os, const pucch_processor::common_configuration& config)
-{
-  return os << fmt::format(
-             "slot={}, bwp={}:{}, cp={}, start={}, hop={}, n_id={}, n_id_0={}, Nsr={}, Nack={}, Ncsi1={}, Ncsi2={}",
-             config.slot,
-             config.bwp_start_rb,
-             config.bwp_size_rb,
-             config.cp,
-             config.starting_prb,
-             config.second_hop_prb.has_value() ? std::to_string(config.second_hop_prb.value()) : "na",
-             config.n_id,
-             config.n_id_0,
-             config.nof_sr,
-             config.nof_harq_ack,
-             config.nof_csi_part1,
-             config.nof_csi_part2);
-}
-
 std::ostream& operator<<(std::ostream& os, const pucch_processor::format1_configuration& config)
 {
-  return os << config.common
-            << fmt::format(", cs={}, nsymb={}, start_symb={}, occ={}",
+  return os << fmt::format("slot={}, bwp={}:{}, cp={}, start={}, hop={}, n_id={}, Nack={}, ports={}, cs={}, nsymb={}, "
+                           "start_symb={}, occ={}",
+                           config.slot,
+                           config.bwp_start_rb,
+                           config.bwp_size_rb,
+                           config.cp,
+                           config.starting_prb,
+                           config.second_hop_prb.has_value() ? std::to_string(config.second_hop_prb.value()) : "na",
+                           config.n_id,
+                           config.nof_harq_ack,
+                           span<const uint8_t>(config.ports),
                            config.initial_cyclic_shift,
                            config.nof_symbols,
                            config.start_symbol_index,

@@ -16,10 +16,9 @@ using namespace srsgnb;
 using namespace fapi_adaptor;
 using namespace unittest;
 
-static void check_common_parameters(const pucch_processor::common_configuration& config,
-                                    const fapi::ul_pucch_pdu&                    fapi_pdu,
-                                    unsigned                                     sfn,
-                                    unsigned                                     slot)
+template <typename Config>
+static void
+check_common_parameters(const Config& config, const fapi::ul_pucch_pdu& fapi_pdu, unsigned sfn, unsigned slot)
 {
   ASSERT_EQ(slot_point(to_numerology_value(fapi_pdu.scs), sfn, slot), config.slot);
   ASSERT_EQ(fapi_pdu.bwp_start, config.bwp_start_rb);
@@ -30,9 +29,6 @@ static void check_common_parameters(const pucch_processor::common_configuration&
   if (config.second_hop_prb.has_value()) {
     ASSERT_EQ(fapi_pdu.second_hop_prb, config.second_hop_prb.value());
   }
-  ASSERT_EQ(fapi_pdu.nid_pucch_hopping, config.n_id);
-  ASSERT_EQ(fapi_pdu.nid0_pucch_dmrs_scrambling, config.n_id_0);
-  ASSERT_EQ(fapi_pdu.sr_bit_len, config.nof_sr);
   ASSERT_EQ(fapi_pdu.bit_len_harq, config.nof_harq_ack);
 }
 
@@ -73,9 +69,8 @@ TEST(FAPIPPHYULPUCCHAdaptorTest, ValidFormat1PDUPass)
   ASSERT_EQ(fapi_pdu.initial_cyclic_shift, phy_pdu.initial_cyclic_shift);
 
   // Common parameters.
-  check_common_parameters(phy_pdu.common, fapi_pdu, sfn, slot);
-  ASSERT_EQ(0, phy_pdu.common.nof_csi_part1);
-  ASSERT_EQ(0, phy_pdu.common.nof_csi_part2);
+  check_common_parameters(phy_pdu, fapi_pdu, sfn, slot);
+  ASSERT_EQ(fapi_pdu.nid_pucch_hopping, phy_pdu.n_id);
 
   // Context parameters.
   check_context_parameters(pdu.context, fapi_pdu, sfn, slot, pucch_format::FORMAT_1);

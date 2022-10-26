@@ -28,15 +28,15 @@ static cyclic_prefix get_cp(const uplink_processor::pucch_pdu& pdu)
 {
   switch (pdu.context.format) {
     case pucch_format::FORMAT_0:
-      return pdu.format0.common.cp;
+      return pdu.format0.cp;
     case pucch_format::FORMAT_1:
-      return pdu.format1.common.cp;
+      return pdu.format1.cp;
     case pucch_format::FORMAT_2:
-      return pdu.format2.common.cp;
+      return pdu.format2.cp;
     case pucch_format::FORMAT_3:
-      return pdu.format3.common.cp;
+      return pdu.format3.cp;
     case pucch_format::FORMAT_4:
-      return pdu.format4.common.cp;
+      return pdu.format4.cp;
     default:
       srsgnb_assert(0, "Invalid PUCCH format={}", pdu.context.format);
       break;
