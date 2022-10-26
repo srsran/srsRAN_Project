@@ -36,7 +36,7 @@ sch_information srsgnb::get_sch_segmentation_info(unsigned tbs, float target_cod
   result.lifting_size = ldpc::compute_lifting_size(tbs, result.base_graph, result.nof_cb);
 
   // Calculate the codeblock size.
-  result.nof_bits_per_cb = ldpc::compute_segment_length(result.base_graph, result.lifting_size);
+  result.nof_bits_per_cb = ldpc::compute_codeblock_size(result.base_graph, result.lifting_size);
 
   // Calculate the number of filler bits per codeblock.
   result.nof_filler_bits_per_cb = result.nof_bits_per_cb - nof_payload_bits_per_cb;

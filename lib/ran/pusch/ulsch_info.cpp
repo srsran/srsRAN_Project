@@ -169,7 +169,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
   srsgnb_assert(config.nof_csi_part2_bits == 0, "CSI Part 2 is not currently implemented.");
   result.nof_csi_part2_re = 0;
 
-  // Calculate actual number of RE used by HARQ-ACK. The RE used for HARQ-ACK bits are only accounted when there are
+  // Calculate actual number of RE used by HARQ-ACK. The RE used for HARQ-ACK bits are only considered when there are
   // more than 2 HARQ-ACK bits.
   unsigned nof_harq_ack_re = 0;
   if (config.nof_harq_ack_bits > 2) {

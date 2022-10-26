@@ -165,11 +165,12 @@ inline unsigned compute_lifting_size(unsigned tbs, ldpc_base_graph_type base_gra
   return lifting_size;
 }
 
-/// \brief Computes the length of each segment, as per TS38.212 Section 5.2.2.
-/// \param[in] base_graph       LDPC base graph selected for the transmission.
-/// \param[in] lifting_size     Lifting size used to encode/decode the current transport block.
-/// \return The segment size according to the LDPC base graph and lifting size.
-inline unsigned compute_segment_length(ldpc_base_graph_type base_graph, unsigned lifting_size)
+/// \brief Computes the codeblock size for the given base graph and lifting size.
+///
+/// As per TS38.212 Section 5.2.2, the number bits to encode is fixed for a given base graph and a given lifting size.
+/// The codeblock consists of information bits, CRC bits and the number of filler bits required to match the codeblock
+/// size.
+inline unsigned compute_codeblock_size(ldpc_base_graph_type base_graph, unsigned lifting_size)
 {
   constexpr unsigned base_length_BG1 = 22;
   constexpr unsigned base_length_BG2 = 10;

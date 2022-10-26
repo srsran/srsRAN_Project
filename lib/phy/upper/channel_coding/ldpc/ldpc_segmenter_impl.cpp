@@ -122,7 +122,7 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
     nof_tb_bits_out += nof_segments * SEG_CRC_LENGTH;
   }
   lifting_size   = compute_lifting_size(nof_tb_bits_tmp, base_graph, nof_segments);
-  segment_length = compute_segment_length(base_graph, lifting_size);
+  segment_length = compute_codeblock_size(base_graph, lifting_size);
 
   unsigned nof_crc_bits = 0;
   if (nof_segments > 1) {
@@ -215,7 +215,7 @@ void ldpc_segmenter_impl::segment(static_vector<described_rx_codeblock, MAX_NOF_
     nof_tb_bits_out += nof_segments * SEG_CRC_LENGTH;
   }
   lifting_size   = compute_lifting_size(tbs, base_graph, nof_segments);
-  segment_length = compute_segment_length(base_graph, lifting_size);
+  segment_length = compute_codeblock_size(base_graph, lifting_size);
 
   unsigned nof_crc_bits = 0;
   if (nof_segments > 1) {

@@ -28,7 +28,7 @@ struct sch_information {
   unsigned nof_filler_bits_per_cb;
   /// LDPC lifting size. Parameter \f$Z_c\f$.
   unsigned lifting_size;
-  /// Number of bits per codeblock after CRC appending. Parameter \f$K\f$.
+  /// Number of bits per codeblock including filler bits. Parameter \f$K\f$.
   unsigned nof_bits_per_cb;
 };
 
