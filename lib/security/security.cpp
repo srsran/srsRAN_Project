@@ -14,13 +14,6 @@
 #include "srsgnb/security/ssl.h"
 #include <arpa/inet.h>
 
-#ifdef HAVE_MBEDTLS
-#include "mbedtls/md5.h"
-#endif
-#ifdef HAVE_POLARSSL
-#include "polarssl/md5.h"
-#endif
-
 using namespace srsgnb;
 
 /******************************************************************************
