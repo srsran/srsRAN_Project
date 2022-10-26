@@ -54,6 +54,21 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
                   pdu.length(),
                   integrity_enabled,
                   ciphering_enabled);
+  // Sanity check
+  if (pdu.length() == 0) {
+    metrics_add_dropped_pdus(1);
+    logger.log_error("PDCP PDU is empty.");
+    return;
+  }
+
+  if (is_srb() || pdcp_pdu_get_dc(*(pdu.begin())) == pdcp_dc_field::data) {
+    handle_data_pdu(std::move(pdu));
+  } else {
+    handle_control_pdu(std::move(pdu));
+  }
+}
+void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
+{
 
   // Sanity check
   if (pdu.length() <= hdr_len_bytes) {
@@ -212,6 +227,17 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
   }
 
   logger.log_debug("Rx PDCP state - RX_NEXT={}, RX_DELIV={}, RX_REORD={}", st.rx_next, st.rx_deliv, st.rx_reord);
+}
+
+void pdcp_entity_rx::handle_control_pdu(byte_buffer_slice_chain pdu)
+{
+  // FIXME
+  logger.log_error(pdu.begin(),
+                   pdu.end(),
+                   "Received control PDU, however PDCP does not support this yet ({} B), integrity={}, ciphering={}",
+                   pdu.length(),
+                   integrity_enabled,
+                   ciphering_enabled);
 }
 
 // Deliver all consecutively associated COUNTs.

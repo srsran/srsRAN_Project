@@ -11,6 +11,7 @@
 #pragma once
 
 #include "pdcp_entity_tx_rx_base.h"
+#include "pdcp_pdu.h"
 #include "pdcp_rx_metrics_impl.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
@@ -97,6 +98,16 @@ private:
   unique_timer                    reordering_timer;
   class reordering_callback;
   void handle_t_reordering_expire();
+
+  // Handling of different PDU types
+
+  /// \brief Handles a received data PDU.
+  /// \param buf The data PDU to be handled (including header and payload)
+  void handle_data_pdu(byte_buffer_slice_chain buf);
+
+  /// \brief Handles a received control PDU.
+  /// \param buf The control PDU to be handled (including header and payload)
+  void handle_control_pdu(byte_buffer_slice_chain buf);
 
   void deliver_all_consecutive_counts();
 
