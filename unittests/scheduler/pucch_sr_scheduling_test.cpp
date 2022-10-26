@@ -54,9 +54,9 @@ public:
 
 protected:
   // Parameters that are passed by the routing to run the tests.
-  unsigned   pucch_res_common{11};
-  unsigned   n_cces{0};
-  test_bench t_bench;
+  unsigned       pucch_res_common{11};
+  unsigned       n_cces{0};
+  test_bench     t_bench;
   // This contains the list of output expected parameters for SR PUCCH PDU.
   expected_output_params expected_output_sr;
   // Expected SR PUCCH PDU that would be passed to PHY.

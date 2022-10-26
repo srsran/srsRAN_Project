@@ -77,11 +77,11 @@ public:
   const unsigned          k1{4};
   du_ue_index_t           ue_idx{du_ue_index_t::MIN_DU_UE_INDEX};
   ue_list                 ues;
-  pucch_allocator_impl  pucch_alloc;
-  pucch_scheduler_impl  pucch_sched;
-  slot_point            sl_tx;
-  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+  pucch_allocator_impl    pucch_alloc;
+  pucch_scheduler_impl    pucch_sched;
+  slot_point              sl_tx;
+  srslog::basic_logger&   mac_logger  = srslog::fetch_basic_logger("MAC");
+  srslog::basic_logger&   test_logger = srslog::fetch_basic_logger("TEST");
 };
 
 } // namespace srsgnb

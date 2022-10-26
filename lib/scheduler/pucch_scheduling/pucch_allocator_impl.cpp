@@ -154,10 +154,10 @@ void pucch_allocator_impl::fill_pucch_harq_grant(pucch_info&                pucc
                                                  rnti_t                     rnti,
                                                  const pucch_res_alloc_cfg& pucch_res)
 {
-  pucch_info.crnti          = rnti;
-  pucch_info.format         = pucch_res.format;
-  pucch_info.bwp_cfg        = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-  pucch_info.resources.prbs = crb_to_prb(*pucch_info.bwp_cfg, pucch_res.first_hop_res.crbs);
+  pucch_info.crnti                     = rnti;
+  pucch_info.format                    = pucch_res.format;
+  pucch_info.bwp_cfg                   = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+  pucch_info.resources.prbs            = crb_to_prb(*pucch_info.bwp_cfg, pucch_res.first_hop_res.crbs);
   pucch_info.resources.second_hop_prbs = crb_to_prb(*pucch_info.bwp_cfg, pucch_res.second_hop_res.crbs);
   pucch_info.resources.symbols =
       ofdm_symbol_range{pucch_res.first_hop_res.symbols.start(), pucch_res.second_hop_res.symbols.stop()};

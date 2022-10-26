@@ -35,8 +35,8 @@ private:
   // Cell configuration.
   const cell_configuration& cell_cfg;
   // Ref to PUCCH resource allocator object.
-  pucch_allocator&          pucch_alloc;
-  ue_list&                  ues;
+  pucch_allocator& pucch_alloc;
+  ue_list&         ues;
 
   srslog::basic_logger& logger;
 };
