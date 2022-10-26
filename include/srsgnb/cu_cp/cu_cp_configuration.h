@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/f1_interface/cu/f1c_cu.h"
+#include "srsgnb/ngap/ngc.h"
 #include "srsgnb/support/executors/task_executor.h"
 
 namespace srsgnb {
@@ -21,6 +22,7 @@ struct cu_cp_configuration {
   task_executor*        cu_executor  = nullptr;
   f1c_message_notifier* f1c_notifier = nullptr; /// Callback for incoming F1C messages.
   ngc_message_notifier* ngc_notifier = nullptr; /// Callack for outgoing NGC messages
+  ngc_configuration     ngc_config;
 };
 
 } // namespace srs_cu_cp
