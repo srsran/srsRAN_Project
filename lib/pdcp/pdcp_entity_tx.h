@@ -122,6 +122,8 @@ private:
   pdcp_integrity_enabled      integrity_enabled = pdcp_integrity_enabled::no;
   pdcp_ciphering_enabled      ciphering_enabled = pdcp_ciphering_enabled::no;
 
+  void write_to_lower_layers(byte_buffer buf);
+
   /// Apply ciphering and integrity protection to the payload
   byte_buffer apply_ciphering_and_integrity_protection(byte_buffer hdr, byte_buffer buf, uint32_t count);
   void        integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count);
@@ -141,7 +143,7 @@ private:
   /// This map is used to store the discard timers that are used by the transmitting side of an PDCP entity
   /// to order lower layers to discard PDCP PDUs if the timer expired. See section 5.2.1 and 7.3 of TS 38.323.
   /// Currently, this is only supported when using RLC AM, as only AM as the ability to stop the timers.
-  std::map<uint32_t, unique_timer> discard_timers_map;
+  std::map<uint32_t, discard_info> discard_timers_map;
   class discard_callback;
 
   /*

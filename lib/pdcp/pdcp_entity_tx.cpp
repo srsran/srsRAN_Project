@@ -45,16 +45,6 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
     }
   }
 
-  // Start discard timer
-  if (cfg.discard_timer != pdcp_discard_timer::infinity && cfg.discard_timer != pdcp_discard_timer::not_configured) {
-    unique_timer discard_timer = timers.create_unique_timer();
-    discard_timer.set(static_cast<uint32_t>(cfg.discard_timer), discard_callback{this, st.tx_next});
-    discard_timer.run();
-    discard_timers_map.insert(std::make_pair(st.tx_next, std::move(discard_timer)));
-    logger.log_debug(
-        "Discard Timer set for COUNT {}. Timeout: {}ms", st.tx_next, static_cast<uint32_t>(cfg.discard_timer));
-  }
-
   // Perform header compression
   // TODO
 
@@ -73,23 +63,42 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
   // Set meta-data for RLC (TODO)
   // sdu->md.pdcp_sn = tx_next;
 
-  logger.log_info(protected_buf.begin(),
-                  protected_buf.end(),
+  // Start discard timer
+  if (cfg.discard_timer != pdcp_discard_timer::infinity && cfg.discard_timer != pdcp_discard_timer::not_configured) {
+    unique_timer discard_timer = timers.create_unique_timer();
+    discard_timer.set(static_cast<uint32_t>(cfg.discard_timer), discard_callback{this, st.tx_next});
+    discard_timer.run();
+    discard_info info;
+    if (cfg.rlc_mode == pdcp_rlc_mode::um) {
+      info = {{}, std::move(discard_timer)};
+    } else {
+      info = {protected_buf.copy(), std::move(discard_timer)};
+    }
+    discard_timers_map.insert(std::make_pair(st.tx_next, std::move(info)));
+    logger.log_debug(
+        "Discard Timer set for COUNT {}. Timeout: {}ms", st.tx_next, static_cast<uint32_t>(cfg.discard_timer));
+  }
+
+  // Write to lower layers
+  write_to_lower_layers(std::move(protected_buf));
+
+  // Increment TX_NEXT
+  st.tx_next++;
+}
+
+void pdcp_entity_tx::write_to_lower_layers(byte_buffer buf)
+{
+  logger.log_info(buf.begin(),
+                  buf.end(),
                   "TX PDU ({}B), COUNT={}, HFN={}, SN={}, integrity={}, encryption={}",
-                  protected_buf.length(),
+                  buf.length(),
                   st.tx_next,
                   HFN(st.tx_next),
                   SN(st.tx_next),
                   integrity_enabled,
                   ciphering_enabled);
-
-  // Check if PDCP is associated with more than on RLC entity TODO
-  // Write to lower layers
-  metrics_add_pdus(1, protected_buf.length());
-  lower_dn.on_new_pdu(std::move(protected_buf));
-
-  // Increment TX_NEXT
-  st.tx_next++;
+  metrics_add_pdus(1, buf.length());
+  lower_dn.on_new_pdu(std::move(buf));
 }
 
 /*
@@ -200,6 +209,9 @@ byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
 void pdcp_entity_tx::data_recovery()
 {
   srsgnb_assert(is_drb() && cfg.rlc_mode == pdcp_rlc_mode::am, "Invalid bearer type for data recovery.");
+  for (const auto& info : discard_timers_map) {
+    write_to_lower_layers(info.second.buf.copy());
+  }
 }
 /*
  * PDU Helpers
