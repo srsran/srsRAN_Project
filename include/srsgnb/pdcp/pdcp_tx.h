@@ -99,9 +99,12 @@ public:
   pdcp_tx_upper_control_interface(const pdcp_tx_upper_control_interface&&)            = delete;
   pdcp_tx_upper_control_interface& operator=(const pdcp_tx_upper_control_interface&&) = delete;
 
-  /// Handle the incoming SDU.
+  // Setup security
   virtual void set_as_security_config(security::sec_128_as_config sec_cfg)                             = 0;
   virtual void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) = 0;
+
+  // Trigger data recovery
+  virtual void data_recovery() = 0;
 };
 
 /// This interface represents the control upper layer that the

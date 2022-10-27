@@ -195,6 +195,13 @@ byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
 }
 
 /*
+ * Status report and data recovery
+ */
+void pdcp_entity_tx::data_recovery()
+{
+  srsgnb_assert(is_drb() && cfg.rlc_mode == pdcp_rlc_mode::am, "Invalid bearer type for data recovery.");
+}
+/*
  * PDU Helpers
  */
 void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu_header& hdr) const

@@ -127,6 +127,16 @@ private:
   void        integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count);
   byte_buffer cipher_encrypt(byte_buffer_view buf, uint32_t count);
 
+  /// Performs data recovery, as specified as in TS 38.323, section 5.5.
+  void data_recovery() final;
+
+  /// Discard timer information. We keep both the discard timer
+  /// and a copy of the SDU for the data recovery procedure (for AM only).
+  struct discard_info {
+    byte_buffer  buf;
+    unique_timer discard_timer;
+  };
+
   /// \brief discardTimer
   /// This map is used to store the discard timers that are used by the transmitting side of an PDCP entity
   /// to order lower layers to discard PDCP PDUs if the timer expired. See section 5.2.1 and 7.3 of TS 38.323.
