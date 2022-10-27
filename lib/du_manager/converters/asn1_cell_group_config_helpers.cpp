@@ -581,7 +581,7 @@ void srsgnb::srs_du::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_c
       [](const rlc_bearer_config& b) { return (uint8_t)b.lcid; });
 
   out.sp_cell_cfg_present                 = true;
-  out.sp_cell_cfg.serv_cell_idx_present   = true;
+  out.sp_cell_cfg.serv_cell_idx_present   = false;
   out.sp_cell_cfg.serv_cell_idx           = dest.spcell_cfg.serv_cell_idx;
   out.sp_cell_cfg.sp_cell_cfg_ded_present = true;
   calculate_serving_cell_config_diff(
