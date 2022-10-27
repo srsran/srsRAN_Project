@@ -28,5 +28,9 @@ add_executable(pdcp_tx_status_report_test pdcp_tx_status_report_test.cpp)
 target_link_libraries(pdcp_tx_status_report_test srsgnb_pdcp srsgnb_security srsgnb_support srslog gtest gtest_main)
 gtest_discover_tests(pdcp_tx_status_report_test)
 
+add_executable(pdcp_rx_status_report_test pdcp_rx_status_report_test.cpp)
+target_link_libraries(pdcp_rx_status_report_test srsgnb_pdcp srsgnb_security srsgnb_support srslog gtest gtest_main)
+gtest_discover_tests(pdcp_rx_status_report_test)
+
 add_executable(pdcp_gen_helper pdcp_gen_helper.cpp)
 target_link_libraries(pdcp_gen_helper srsgnb_pdcp srsgnb_security srsgnb_support srslog)

@@ -11,6 +11,7 @@
 #include "pdcp_entity_rx.h"
 #include "srsgnb/security/ciphering.h"
 #include "srsgnb/security/integrity.h"
+#include "srsgnb/support/bit_encoding.h"
 
 using namespace srsgnb;
 
@@ -67,6 +68,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
     handle_control_pdu(std::move(pdu));
   }
 }
+
 void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
 {
   // Sanity check
@@ -201,6 +203,11 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
   }
 
   // TODO if out-of-order configured, submit to upper layer
+  // /!\ Caution: reorder_queue is used to build status report:
+  //     For out-of-order:
+  //     - store empty buffers there
+  //     - clean upon each rx'ed PDU
+  //     - don't forward empty buffer to upper layers
 
   if (rcvd_count == st.rx_deliv) {
     // Deliver to upper layers in ascending order of associated COUNT
@@ -254,6 +261,30 @@ void pdcp_entity_rx::deliver_all_consecutive_counts()
     // Update RX_DELIV
     st.rx_deliv = st.rx_deliv + 1;
   }
+}
+
+byte_buffer pdcp_entity_rx::compile_status_report()
+{
+  byte_buffer buf = {};
+  bit_encoder enc(buf);
+
+  // Pack PDU header
+  enc.pack(to_number(pdcp_dc_field::control), 1);
+  enc.pack(to_number(pdcp_control_pdu_type::status_report), 3);
+  enc.pack(0b0000, 4);
+
+  // Pack RX_DELIV into FMC field
+  enc.pack(st.rx_deliv, 32);
+
+  // Pack Bitmap
+  for (uint32_t i = st.rx_deliv + 1; i < st.rx_next; i++) {
+    // Bit == 0: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is missing.
+    // Bit == 1: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is correctly received.
+    unsigned bit = reorder_queue.find(i) != reorder_queue.end() ? 0 : 1;
+    enc.pack(bit, 1);
+  }
+
+  return buf;
 }
 
 /*

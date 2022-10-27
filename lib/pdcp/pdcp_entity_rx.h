@@ -53,6 +53,13 @@ public:
 
   void handle_pdu(byte_buffer_slice_chain buf) final;
 
+  /// \brief Compiles a PDCP status report
+  ///
+  /// Ref: TS 38.323, Sec. 5.4.1, Sec. 6.2.3.1 and Sec. 6.3.{9,10}
+  ///
+  /// \return Control PDU for PDCP status report as a byte_buffer
+  byte_buffer compile_status_report();
+
   /*
    * Header helpers
    */
