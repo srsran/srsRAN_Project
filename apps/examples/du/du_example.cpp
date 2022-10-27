@@ -89,9 +89,10 @@ static unsigned       offset_to_pointA = 40;
 static unsigned       K_ssb            = 6;
 static const unsigned coreset0_index   = 6;
 
-static std::string           log_level  = "info";
-static srslog::basic_logger& du_logger  = srslog::fetch_basic_logger("DU_APP");
-static std::atomic<bool>     is_running = {true};
+static std::string           log_level        = "info";
+static bool                  enable_fapi_logs = false;
+static srslog::basic_logger& du_logger        = srslog::fetch_basic_logger("DU_APP");
+static std::atomic<bool>     is_running       = {true};
 
 /// PRACH params
 static unsigned       prach_msg1_freq_offset    = 0;
@@ -108,7 +109,6 @@ static unsigned ul_arfcn;
 /// Amplitude control args.
 static float baseband_gain_dB       = -2.5F;
 static bool  enable_clipping        = false;
-static bool  enable_fapi_logs       = false;
 static float full_scale_amplitude   = 1.0F;
 static float amplitude_ceiling_dBFS = -0.1F;
 
