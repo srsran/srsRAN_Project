@@ -9,14 +9,16 @@
  */
 
 #include "initial_cu_cp_setup_procedure.h"
+#include "../ngc_asn1_helpers.h"
 #include "srsgnb/asn1/ngap.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
 initial_cu_cp_setup_procedure::initial_cu_cp_setup_procedure(ngc_connection_manager&        ngc_conn_mng_,
-                                                             cu_cp_ngc_connection_notifier& cu_cp_ngc_ev_notifier_) :
-  ngc_conn_mng(ngc_conn_mng_), cu_cp_ngc_ev_notifier(cu_cp_ngc_ev_notifier_)
+                                                             cu_cp_ngc_connection_notifier& cu_cp_ngc_ev_notifier_,
+                                                             ngc_configuration&             ngc_cfg_) :
+  ngc_conn_mng(ngc_conn_mng_), cu_cp_ngc_ev_notifier(cu_cp_ngc_ev_notifier_), ngc_cfg(ngc_cfg_)
 {
 }
 
@@ -43,7 +45,7 @@ async_task<ng_setup_response_message> initial_cu_cp_setup_procedure::start_ng_se
   // Prepare request to send to ng.
   ng_setup_request_message request_msg = {};
 
-  // TODO: Fill request message
+  fill_asn1_ng_setup_request(request_msg.msg, ngc_cfg.gnb_id, ngc_cfg.ran_node_name, ngc_cfg.plmn_id, ngc_cfg.tac);
 
   // Initiate NG Setup Request.
   return ngc_conn_mng.handle_ng_setup_request(request_msg);

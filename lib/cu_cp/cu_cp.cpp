@@ -47,8 +47,11 @@ cu_cp::~cu_cp()
 
 void cu_cp::start()
 {
+  // TODO: use real config
+  ngc_configuration ngc_cfg = {};
+
   // start NG setup procedure.
-  main_ctrl_loop.schedule<initial_cu_cp_setup_procedure>(*ngc_entity, *this);
+  main_ctrl_loop.schedule<initial_cu_cp_setup_procedure>(*ngc_entity, *this, ngc_cfg);
 }
 
 void cu_cp::stop() {}
