@@ -208,9 +208,9 @@ public:
   }
 
   /// Byte_buffer_segments are allocated using a pre-allocated segment memory pool.
-  void* operator new(size_t sz)
+  void* operator new(size_t sz, const std::nothrow_t& nothrow_value) noexcept
   {
-    constexpr static size_t byte_buffer_segment_pool_size = 4096;
+    constexpr static size_t byte_buffer_segment_pool_size = 8192;
     static auto& pool = pool_singleton::get_instance(sizeof(byte_buffer_segment), byte_buffer_segment_pool_size);
 
     return pool.allocate_node(sz);

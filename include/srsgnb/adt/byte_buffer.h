@@ -454,14 +454,19 @@ public:
 private:
   void append_segment()
   {
-    // TODO: Verify if allocation was successful. What to do if not?
     if (empty()) {
       // For first segment of byte_buffer, add a headroom.
-      head.reset(new byte_buffer_segment(byte_buffer_segment::DEFAULT_HEADROOM));
+      auto* p = new (std::nothrow) byte_buffer_segment(byte_buffer_segment::DEFAULT_HEADROOM);
+      // TODO: Verify if allocation was successful. What to do if not?
+      srsgnb_assert(p != nullptr, "Failed to allocate byte_buffer_segment");
+      head.reset(p);
       set_tail(head.get());
     } else {
       // No headroom needed for later segments.
-      get_tail()->metadata().next.reset(new byte_buffer_segment(0));
+      auto* p = new (std::nothrow) byte_buffer_segment(0);
+      // TODO: Verify if allocation was successful. What to do if not?
+      srsgnb_assert(p != nullptr, "Failed to allocate byte_buffer_segment");
+      get_tail()->metadata().next.reset(p);
       set_tail(get_tail()->next());
     }
   }

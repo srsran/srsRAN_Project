@@ -91,7 +91,7 @@ public:
   size_t nof_memory_blocks() const { return nof_blocks; }
 
   /// Allocate a node from the memory pool with the provided size.
-  void* allocate_node(size_t sz)
+  void* allocate_node(size_t sz) noexcept
   {
     srsgnb_assert(sz <= mblock_size, "Allocated node size={} exceeds max object size={}", sz, mblock_size);
     worker_ctxt* worker_ctxt = get_worker_cache();
