@@ -59,7 +59,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
   // TODO
 
   // Prepare header
-  pdcp_data_pdu_header hdr = {st.tx_next};
+  pdcp_data_pdu_header hdr = {};
+  hdr.sn                   = SN(st.tx_next);
 
   // Pack header
   byte_buffer header_buf = {};
@@ -210,18 +211,16 @@ void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
     hdr_writer.append(0x00); // No D/C bit field.
   }
 
-  // Set SN
-  uint32_t sn = SN(hdr.sn);
   // Add SN
   switch (cfg.sn_size) {
     case pdcp_sn_size::size12bits:
-      hdr_writer.back() |= (sn & 0x00000f00U) >> 8U;
-      hdr_writer.append((sn & 0x000000ffU));
+      hdr_writer.back() |= (hdr.sn & 0x00000f00U) >> 8U;
+      hdr_writer.append((hdr.sn & 0x000000ffU));
       break;
     case pdcp_sn_size::size18bits:
-      hdr_writer.back() |= (sn & 0x00030000U) >> 16U;
-      hdr_writer.append((sn & 0x0000ff00U) >> 8U);
-      hdr_writer.append((sn & 0x000000ffU));
+      hdr_writer.back() |= (hdr.sn & 0x00030000U) >> 16U;
+      hdr_writer.append((hdr.sn & 0x0000ff00U) >> 8U);
+      hdr_writer.append((hdr.sn & 0x000000ffU));
       break;
     default:
       logger.log_error("Invalid SN length configuration: {} bits", cfg.sn_size);
