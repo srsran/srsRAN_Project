@@ -129,6 +129,7 @@ void cu_cp::on_amf_connection_drop()
 /// Create DU object with valid index
 du_index_t cu_cp::add_du()
 {
+  // TODO: use real config
   du_processor_config_t du_cfg = {};
 
   std::unique_ptr<du_processor_interface> du =

@@ -19,7 +19,9 @@ namespace srs_cu_cp {
 
 /// \brief Fills ASN.1 F1SetupResponse struct.
 /// \param[out] response The F1SetupResponse ASN.1 struct to fill.
-/// \param[in] params DU setup parameters to add to the F1SetupRequest.
+/// \param[in] name The gNB CU name
+/// \param[in] rrc_version The RRC version
+/// \param[in] du_cell_db An array of DU cells to be activated
 void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&                         response,
                                  const std::string&                                   name,
                                  const uint8_t                                        rrc_version,
