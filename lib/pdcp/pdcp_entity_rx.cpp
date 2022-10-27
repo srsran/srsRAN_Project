@@ -69,7 +69,6 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
 }
 void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
 {
-
   // Sanity check
   if (pdu.length() <= hdr_len_bytes) {
     metrics_add_dropped_pdus(1);
