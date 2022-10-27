@@ -11,73 +11,160 @@
 #include "../../../lib/fapi/validators/ul_prach_pdu.h"
 #include "helpers.h"
 #include "srsgnb/fapi/message_validators.h"
-#include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-static const std::vector<test_group<ul_prach_pdu> > vector_test = {
-    {[](ul_prach_pdu& pdu, int value) { pdu.phys_cell_id = value; },
-     "Physical cell ID",
-     {{0, true}, {1007, true}, {100, true}, {1008, false}}},
-    {[](ul_prach_pdu& pdu, int value) { pdu.num_prach_ocas = value; },
-     "Number of PRACH occasions",
-     {{0, false}, {1, true}, {7, true}, {8, false}}},
-    {[](ul_prach_pdu& pdu, int value) { pdu.prach_format = static_cast<prach_format_type>(value); },
-     "PRACH format",
-     {{0, true}, {7, true}, {13, true}, {14, false}}},
-    {[](ul_prach_pdu& pdu, int value) { pdu.index_fd_ra = value; },
-     "Frequency domain occasion index",
-     {{0, true}, {3, true}, {7, true}, {8, false}}},
-    {[](ul_prach_pdu& pdu, int value) { pdu.prach_start_symbol = value; },
-     "PRACH start symbol",
-     {{0, true}, {7, true}, {13, true}, {14, false}}},
-    {[](ul_prach_pdu& pdu, int value) { pdu.num_cs = value; },
-     "Zero-correlation zone configuration number",
-     {{0, true}, {200, true}, {419, true}, {420, false}}},
-    {[](ul_prach_pdu& pdu, int value) { pdu.is_msg_a_prach = value; },
-     "Is msgA-PRACH",
-     {{0, true}, {1, true}, {2, true}, {3, false}}},
-    {[](ul_prach_pdu& pdu, int value) {
-       pdu.maintenance_v3.prach_config_scope = static_cast<prach_config_scope_type>(value);
-     },
-     "PRACH config scope",
-     {{0, true}, {1, true}, {2, false}}},
-    {[](ul_prach_pdu& pdu, int value) { pdu.maintenance_v3.num_fd_ra = value; },
-     "Number of frequency domain occasions",
-     {{0, false}, {1, true}, {4, true}, {8, true}, {9, false}}},
-    {[](ul_prach_pdu& pdu, int value) { pdu.maintenance_v3.start_preamble_index = value; },
-     "Start preamble index",
-     {{0, true}, {32, true}, {63, true}, {64, false}, {128, false}, {254, false}, {255, true}}},
-    {[](ul_prach_pdu& pdu, int value) { pdu.maintenance_v3.num_preamble_indices = value; },
-     "Number of preambles logical indices",
-     {{0, false}, {1, true}, {4, true}, {32, true}, {64, true}, {65, false}}}};
+class validate_prach_pdu_field : public ValidateFAPIPDU<ul_prach_pdu, ul_pdu_type>,
+                                 public testing::TestWithParam<std::tuple<pdu_field_data<ul_prach_pdu>, test_case_data>>
+{};
 
-static void test_validate_each_field_error()
+TEST_P(validate_prach_pdu_field, WithValue)
 {
-  for (const auto& group : vector_test) {
-    for (const auto& test_case : group) {
-      validator_report report(0, 0);
-      auto             pdu = build_valid_ul_prach_pdu();
-      group.update_msg(pdu, test_case.value);
-      bool result = validate_ul_prach_pdu(pdu, report);
+  auto params = GetParam();
 
-      TESTASSERT_EQ(result, test_case.result);
-      if (!result) {
-        TESTASSERT_EQ(1U, report.reports.size());
-        const auto& rep = report.reports.back();
-        TESTASSERT_EQ(std::strcmp(group.property(), rep.property_name), 0);
-        TESTASSERT_EQ(message_type_id::ul_tti_request, rep.message_type);
-        TESTASSERT_EQ(ul_pdu_type::PRACH, static_cast<ul_pdu_type>(rep.pdu_type.value()));
-      } else {
-        TESTASSERT(report.reports.empty());
-      }
-    }
-  }
+  execute_test(std::get<0>(params),
+               std::get<1>(params),
+               build_valid_ul_prach_pdu,
+               validate_ul_prach_pdu,
+               srsgnb::fapi::message_type_id::ul_tti_request,
+               ul_pdu_type::PRACH);
+};
+
+INSTANTIATE_TEST_SUITE_P(pci,
+                         validate_prach_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<ul_prach_pdu>{
+                                              "Physical cell ID",
+                                              [](ul_prach_pdu& pdu, int value) { pdu.phys_cell_id = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{1007, true},
+                                                          test_case_data{100, true},
+                                                          test_case_data{1008, false})));
+
+INSTANTIATE_TEST_SUITE_P(prach_occasions,
+                         validate_prach_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<ul_prach_pdu>{
+                                              "Number of PRACH occasions",
+                                              [](ul_prach_pdu& pdu, int value) { pdu.num_prach_ocas = value; }}),
+                                          testing::Values(test_case_data{0, false},
+                                                          test_case_data{1, true},
+                                                          test_case_data{7, true},
+                                                          test_case_data{8, false})));
+
+INSTANTIATE_TEST_SUITE_P(prach_format,
+                         validate_prach_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<ul_prach_pdu>{
+                                              "PRACH format",
+                                              [](ul_prach_pdu& pdu, int value) {
+                                                pdu.prach_format = static_cast<prach_format_type>(value);
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{7, true},
+                                                          test_case_data{13, true},
+                                                          test_case_data{14, false})));
+
+INSTANTIATE_TEST_SUITE_P(fd_ra_idx,
+                         validate_prach_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<ul_prach_pdu>{
+                                              "Frequency domain occasion index",
+                                              [](ul_prach_pdu& pdu, int value) { pdu.index_fd_ra = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{3, true},
+                                                          test_case_data{7, true},
+                                                          test_case_data{8, false})));
+
+INSTANTIATE_TEST_SUITE_P(prach_start_symb,
+                         validate_prach_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<ul_prach_pdu>{
+                                              "PRACH start symbol",
+                                              [](ul_prach_pdu& pdu, int value) { pdu.prach_start_symbol = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{7, true},
+                                                          test_case_data{13, true},
+                                                          test_case_data{14, false})));
+
+INSTANTIATE_TEST_SUITE_P(prach_zero_correlation_zone,
+                         validate_prach_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<ul_prach_pdu>{
+                                              "Zero-correlation zone configuration number",
+                                              [](ul_prach_pdu& pdu, int value) { pdu.num_cs = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{200, true},
+                                                          test_case_data{419, true},
+                                                          test_case_data{420, false})));
+
+INSTANTIATE_TEST_SUITE_P(is_msg_a_prach,
+                         validate_prach_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<ul_prach_pdu>{
+                                              "Is msgA-PRACH",
+                                              [](ul_prach_pdu& pdu, int value) { pdu.is_msg_a_prach = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{1, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{3, false})));
+
+INSTANTIATE_TEST_SUITE_P(
+    prach_config_scope,
+    validate_prach_pdu_field,
+    testing::Combine(testing::Values(pdu_field_data<ul_prach_pdu>{"PRACH config scope",
+                                                                  [](ul_prach_pdu& pdu, int value) {
+                                                                    pdu.maintenance_v3.prach_config_scope =
+                                                                        static_cast<prach_config_scope_type>(value);
+                                                                  }}),
+                     testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
+
+INSTANTIATE_TEST_SUITE_P(num_fd_ra,
+                         validate_prach_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<ul_prach_pdu>{
+                                              "Number of frequency domain occasions",
+                                              [](ul_prach_pdu& pdu, int value) {
+                                                pdu.maintenance_v3.num_fd_ra = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, false},
+                                                          test_case_data{1, true},
+                                                          test_case_data{4, true},
+                                                          test_case_data{8, true},
+                                                          test_case_data{9, false})));
+
+INSTANTIATE_TEST_SUITE_P(preamble_index,
+                         validate_prach_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<ul_prach_pdu>{
+                                              "Start preamble index",
+                                              [](ul_prach_pdu& pdu, int value) {
+                                                pdu.maintenance_v3.start_preamble_index = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{32, true},
+                                                          test_case_data{63, true},
+                                                          test_case_data{64, false},
+                                                          test_case_data{128, false},
+                                                          test_case_data{254, false},
+                                                          test_case_data{255, true})));
+
+INSTANTIATE_TEST_SUITE_P(num_preamble_indices,
+                         validate_prach_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<ul_prach_pdu>{
+                                              "Number of preambles logical indices",
+                                              [](ul_prach_pdu& pdu, int value) {
+                                                pdu.maintenance_v3.num_preamble_indices = value;
+                                              }}),
+                                          testing::Values(test_case_data{0, false},
+                                                          test_case_data{1, true},
+                                                          test_case_data{4, true},
+                                                          test_case_data{32, true},
+                                                          test_case_data{64, true},
+                                                          test_case_data{65, false})));
+
+TEST(validate_ul_prach_pdu, valid_pdu_passes)
+{
+  validator_report report(0, 0);
+  const auto&      pdu = build_valid_ul_prach_pdu();
+  ASSERT_TRUE(validate_ul_prach_pdu(pdu, report));
+  ASSERT_TRUE(report.reports.empty());
 }
 
-static void test_validate_more_that_one_error_simultaneously()
+TEST(validate_ul_prach_pdu, invalid_pdu_fails)
 {
   validator_report report(0, 0);
   auto             pdu = build_valid_ul_prach_pdu();
@@ -90,29 +177,13 @@ static void test_validate_more_that_one_error_simultaneously()
   pdu.index_fd_ra                         = 18;
   pdu.num_prach_ocas                      = 10;
 
-  TESTASSERT(!validate_ul_prach_pdu(pdu, report));
-  TESTASSERT_EQ(4U, report.reports.size());
-  TESTASSERT_EQ(6U, report.nof_errors);
+  ASSERT_FALSE(validate_ul_prach_pdu(pdu, report));
+  ASSERT_EQ(4U, report.reports.size());
+  ASSERT_EQ(6U, report.nof_errors);
   // Check that the properties that caused the error are different.
   for (unsigned i = 0, e = report.reports.size(); i != e; ++i) {
     for (unsigned j = i + 1; j != e; ++j) {
-      TESTASSERT(std::strcmp(report.reports[i].property_name, report.reports[j].property_name) != 0);
+      ASSERT_TRUE(std::strcmp(report.reports[i].property_name, report.reports[j].property_name) != 0);
     }
   }
-}
-
-static void test_validate_prach_pdu_ok()
-{
-  validator_report report(0, 0);
-  const auto&      pdu = build_valid_ul_prach_pdu();
-  TESTASSERT(validate_ul_prach_pdu(pdu, report));
-  TESTASSERT(report.reports.empty());
-}
-
-int main()
-{
-  test_validate_prach_pdu_ok();
-  test_validate_each_field_error();
-  test_validate_more_that_one_error_simultaneously();
-  fmt::print("UL PRACH PDU validator -> OK\n");
 }

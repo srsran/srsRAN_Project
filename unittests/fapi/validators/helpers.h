@@ -256,8 +256,8 @@ private:
 
   void check_message_params(bool result, message_type_id msg_type_id) const
   {
-    // In case of error, check the message type.
-    if (!result) {
+    // In case of error, check the PDU type.
+    if (base::report.reports.size()) {
       // Base class checks all the parameters but pdu_type, so it gets checked here. Base also checks that only one
       // error report exists, so the last (or the first) of them can be used for the check.
       const error_report& rep = base::report.reports.back();
@@ -293,7 +293,7 @@ private:
   void check_pdu_params(bool result, message_type_id msg_type_id, U pdu_type) const
   {
     // In case of error, check the PDU type.
-    if (!result) {
+    if (base::report.reports.size()) {
       // Base class checks all the parameters but pdu_type, so it gets checked here. Base also checks that only one
       // error report exists, so the last (or the first) of them can be used for the check.
       const auto& rep = base::report.reports.back();
