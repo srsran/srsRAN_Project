@@ -105,7 +105,7 @@ TEST_P(test_pucch_harq_common_output, test_pucch_grid_filling)
   t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
 
-  ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, t_bench.k1));
+  ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, t_bench.k1, true));
 }
 
 // Tests whether PUCCH allocator returns the correct values for the DCI.
@@ -148,7 +148,7 @@ INSTANTIATE_TEST_SUITE_P(
                                                                                   prb_interval{48, 49},
                                                                                   ofdm_symbol_range{12, 14},
                                                                                   true,
-                                                                                  8,
+                                                                                  4,
                                                                                   sr_nof_bits::no_sr,
                                                                                   1,
                                                                                   0},
@@ -170,7 +170,7 @@ INSTANTIATE_TEST_SUITE_P(
                                                                                   prb_interval{47, 48},
                                                                                   ofdm_symbol_range{4, 14},
                                                                                   true,
-                                                                                  6,
+                                                                                  3,
                                                                                   sr_nof_bits::no_sr,
                                                                                   1,
                                                                                   0},
@@ -188,11 +188,11 @@ INSTANTIATE_TEST_SUITE_P(
                                           .pucch_input_params      = pucch_params{11, 0}},
                     pucch_test_parameters{.dci_pucch_res_indicator = 0,
                                           .output_params           = expected_output_params{pucch_format::FORMAT_1,
-                                                                                  prb_interval{1, 2},
-                                                                                  prb_interval{50, 51},
+                                                                                  prb_interval{0, 1},
+                                                                                  prb_interval{51, 52},
                                                                                   ofdm_symbol_range{0, 14},
                                                                                   true,
-                                                                                  0,
+                                                                                  6,
                                                                                   sr_nof_bits::no_sr,
                                                                                   1,
                                                                                   0},
@@ -214,13 +214,11 @@ INSTANTIATE_TEST_SUITE_P(
                                                                                   prb_interval{38, 39},
                                                                                   ofdm_symbol_range{0, 14},
                                                                                   true,
-                                                                                  6,
+                                                                                  3,
                                                                                   sr_nof_bits::no_sr,
                                                                                   1,
                                                                                   0},
-                                          .pucch_input_params      = pucch_params{15, 6}})
-
-);
+                                          .pucch_input_params      = pucch_params{15, 6}}));
 
 class test_pucch_sr_allocator : public ::testing::Test
 {
@@ -265,7 +263,7 @@ TEST_F(test_pucch_sr_allocator, test_pucch_sr_only_grid_filled)
       t_bench.res_grid[0], t_bench.get_ue().crnti, t_bench.get_ue().get_pcell().cfg());
 
   ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
-  ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, sl_point_harq_delay));
+  ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, sl_point_harq_delay, true));
 }
 
 class test_pucch_sr_allocator_with_harq : public ::testing::Test
@@ -315,7 +313,7 @@ TEST_F(test_pucch_sr_allocator_with_harq, test_pucch_sr_harq_grid_filled)
       t_bench.res_grid[0], t_bench.get_ue().crnti, t_bench.get_ue().get_pcell().cfg());
 
   ASSERT_EQ(2, t_bench.res_grid[0].result.ul.pucchs.size());
-  ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, sl_point_harq_delay));
+  ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, sl_point_harq_delay, true));
 }
 
 int main(int argc, char** argv)

@@ -71,7 +71,6 @@ public:
 
   cell_configuration      cell_cfg;
   cell_resource_allocator res_grid{cell_cfg};
-  coreset_configuration   coreset_cfg;
   pdcch_dl_information    dci_info;
   const unsigned          k0;
   const unsigned          k1{4};

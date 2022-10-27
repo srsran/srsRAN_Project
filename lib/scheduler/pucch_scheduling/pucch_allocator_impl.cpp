@@ -142,12 +142,13 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(unsigned&                     
       pucch_res_alloc_cfg ret_pucch_resource{
           .first_hop_res = first_hop_grant, .cs = cyclic_shift, .format = pucch_res.format};
       ret_pucch_resource.second_hop_res = second_hop_grant;
+      ret_pucch_resource.has_config     = true;
       pucch_res_indicator               = d_pri;
       return ret_pucch_resource;
     }
   }
 
-  return pucch_res_alloc_cfg{.has_config = false};
+  return pucch_res_alloc_cfg{};
 }
 
 void pucch_allocator_impl::fill_pucch_harq_grant(pucch_info&                pucch_info,
@@ -215,12 +216,12 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_r
     return pucch_harq_ack_output;
   }
 
-  // Get the PUCCH resources, either from default tables or from dedicated
+  // Get the PUCCH resources, either from default tables.
   pucch_res_alloc_cfg pucch_res;
   pucch_res = alloc_pucch_common_res_harq(pucch_harq_ack_output.pucch_res_indicator, pucch_slot_alloc, dci_info.ctx);
 
   // No resources available for PUCCH.
-  if (pucch_res.has_config) {
+  if (not pucch_res.has_config) {
     return pucch_harq_ack_output;
   }
 
@@ -323,12 +324,6 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
                                                          rnti_t                        crnti,
                                                          const ue_cell_configuration&  ue_cell_cfg)
 {
-  if (not ue_cell_cfg.cfg_dedicated().ul_config.has_value() or
-      not ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
-    logger.warning("SCHED: SR allocation skipped for RNTI {:#x} due to PUCCH-Config not configured.", crnti);
-    return;
-  }
-
   // Get the index of the PUCCH resource to be used for SR.
   // NOTEs: (i) This index refers to the \c pucch-ResourceId of the \c PUCCH-Resource, as per TS 38.331.
   //        (ii) get_next_sr_res_available() should be a function of sr_res; however, to simplify the
@@ -338,9 +333,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   const pucch_resource* pucch_sr_res = resource_manager.get_next_sr_res_available(
       pucch_slot_alloc.slot, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
   if (pucch_sr_res == nullptr) {
-    logger.warning(
-        "SCHED: SR allocation skipped for RNTI {:#x} due to PUCCH ded. resource not configured or not available.",
-        crnti);
+    logger.warning("SCHED: SR allocation skipped for RNTI {:#x} due to PUCCH ded. resource not available.", crnti);
     return;
   }
 
@@ -348,14 +341,6 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   auto*             pucch_harq_it = get_harq_ack_granted_allocated(crnti, pucch_slot_alloc.result.ul.pucchs);
   const pucch_info* existing_pucch_harq_grant =
       pucch_harq_it != pucch_slot_alloc.result.ul.pucchs.end() ? pucch_harq_it : nullptr;
-
-  if (existing_pucch_harq_grant != nullptr) {
-    srsgnb_assert(existing_pucch_harq_grant->format == pucch_format::FORMAT_1 and
-                      pucch_sr_res->format == pucch_format::FORMAT_1,
-                  "Only PUCCH Format 1 currently supported");
-  }
-  srsgnb_assert(ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg->format_1_common_param.has_value(),
-                "Parameters for PUCCH Format 1 resource not configured");
 
   // Allocate PUCCH SR grant only.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {

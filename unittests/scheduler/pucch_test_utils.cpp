@@ -102,8 +102,7 @@ bool srsgnb::assess_ul_pucch_info(const pucch_info& expected, const pucch_info& 
 
 test_bench::test_bench(unsigned pucch_res_common, unsigned n_cces, sr_periodicity period, unsigned offset) :
   cell_cfg{make_custom_sched_cell_configuration_request(pucch_res_common)},
-  coreset_cfg{config_helpers::make_default_coreset_config()},
-  dci_info{make_default_dci(n_cces, &coreset_cfg)},
+  dci_info{make_default_dci(n_cces, &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value())},
   k0(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0),
   pucch_alloc{cell_cfg},
   pucch_sched{cell_cfg, pucch_alloc, ues},

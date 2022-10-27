@@ -76,6 +76,7 @@ void test_scheduler_result_consistency(const cell_configuration&      cell_cfg,
 // TODO: Replace this function with a more thorough check.
 bool assert_ul_resource_grid_filled(const cell_configuration&      cell_cfg,
                                     const cell_resource_allocator& cell_res_grid,
-                                    unsigned                       tx_delay);
+                                    unsigned                       tx_delay,
+                                    bool                           expect_grants = false);
 
 } // namespace srsgnb

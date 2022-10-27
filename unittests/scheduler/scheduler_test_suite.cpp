@@ -274,10 +274,14 @@ void assert_dl_resource_grid_filled(const cell_configuration& cell_cfg, const ce
 /// \brief Verifies that the cell resource grid PRBs and symbols was filled with the allocated PUCCHs.
 bool srsgnb::assert_ul_resource_grid_filled(const cell_configuration&      cell_cfg,
                                             const cell_resource_allocator& cell_res_grid,
-                                            unsigned                       tx_delay)
+                                            unsigned                       tx_delay,
+                                            bool                           expect_grants)
 {
   // The function get_ul_grants() returns 2 test_grant_info per pucch_info if intra_slot_freq_hopping is enabled.
   std::vector<test_grant_info> ul_grants = get_ul_grants(cell_cfg, cell_res_grid[tx_delay].result.ul);
+  if (expect_grants and ul_grants.empty()) {
+    return false;
+  }
   for (const test_grant_info& test_grant : ul_grants) {
     if (test_grant.type == srsgnb::test_grant_info::UE_UL || test_grant.type == srsgnb::test_grant_info::PUCCH) {
       if (not cell_res_grid[tx_delay].ul_res_grid.all_set(test_grant.grant)) {

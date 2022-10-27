@@ -41,16 +41,10 @@ void pucch_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_po
       return;
     }
 
-    // Check if UE has dedicated resources.
-    srsgnb_assert(user.nof_cells() > 0, "pCell not configured");
+    // At this point, we assume the config validator ensures there is pCell.
     auto& ue_cell = user.get_pcell();
-    srsgnb_assert(
-        ue_cell.cfg().cfg_dedicated().ul_config.has_value() and
-            ue_cell.cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value() and
-            not ue_cell.cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().pucch_res_list.empty() and
-            not ue_cell.cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().sr_res_list.empty(),
-        "SCHED: PUCCH ded resouces not configured.");
 
+    // At this point, we assume the UE has a \c ul_config, a \c pucch_cfg and a \c sr_res_list.
     const auto& sr_resource_cfg_list =
         ue_cell.cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().sr_res_list;
 
