@@ -25,7 +25,8 @@ namespace srsgnb {
 /// \brief Base tensor interface.
 /// \tparam NDIMS Number of dimensions.
 /// \tparam Type  Type of data to store.
-/// \tparam Index_type <c>enum class</c> representing the tensor dimensions.
+/// \tparam Index_type Data type used for representing dimension indexes. It is used in method \ref
+/// get_dimension_size().
 template <unsigned NDIMS, typename Type, typename Index_type = unsigned>
 class tensor
 {
@@ -88,8 +89,8 @@ public:
   /// Gets the dimension sizes.
   virtual const dimensions_size_type& get_dimensions_size() const = 0;
 
-  /// Get a specific dimension size.
-  /// \param[in] i_dimension tensor dimension.
+  /// \brief Gets a specific dimension size.
+  /// \param[in] i_dimension Tensor dimension.
   /// \return The size of the dimension specified by \c i_dimension.
   unsigned get_dimension_size(Index_type i_dimension) const
   {
@@ -134,7 +135,8 @@ private:
 /// \tparam NDIMS        Number of dimensions.
 /// \tparam Type         Type of data to store.
 /// \tparam MAX_ELEMENTS maximum number of elements.
-/// \tparam Index_type <c>enum class</c> representing the tensor dimensions.
+/// \tparam Index_type Data type used for representing dimension indexes. It is used in method \ref
+/// get_dimension_size().
 template <unsigned NDIMS, typename Type, unsigned MAX_ELEMENTS, typename Index_type = unsigned>
 class static_tensor : public tensor<NDIMS, Type, Index_type>
 {
@@ -159,7 +161,10 @@ public:
     // Do nothing.
   }
 
-  /// Resizes the tensor.
+  /// \brief Resizes the tensor.
+  ///
+  /// Modifies the tensor dimensions.
+  /// \warning An assertion is triggered if the total element count given by \c dimensions exceeds \c MAX_ELEMENTS.
   void resize(const dimensions_size_type& dimensions) override
   {
     dimensions_size     = dimensions;
@@ -191,7 +196,8 @@ private:
 /// \brief Dynamic tensor - the dimensions can be resized dynamically.
 /// \tparam NDIMS        Number of dimensions.
 /// \tparam Type         Type of data to store.
-/// \tparam Index_type <c>enum class</c> representing the tensor dimensions.
+/// \tparam Index_type Data type used for representing dimension indexes. It is used in method \ref
+/// get_dimension_size().
 template <unsigned NDIMS, typename Type, typename Index_type = unsigned>
 class dynamic_tensor : public tensor<NDIMS, Type, Index_type>
 {
@@ -227,8 +233,11 @@ public:
     elements.resize(total_size);
   }
 
-  /// Resizes the tensor. It resizes the maximum number of elements only if the total size number of elements is greater
-  /// than the current one.
+  /// \brief Resizes the tensor.
+  ///
+  /// Modifies the tensor dimensions.
+  /// \warning If the new total number of elements is larger than the former one, this function allocates more memory
+  /// and the content of the tensor may be lost.
   void resize(const dimensions_size_type& dimensions) override
   {
     dimensions_size     = dimensions;

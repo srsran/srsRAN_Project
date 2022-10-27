@@ -9,7 +9,6 @@
  */
 
 #include "srsgnb/phy/upper/equalization/equalization_factories.h"
-#include "srsgnb/ran/spatial_topology.h"
 #include "srsgnb/support/benchmark_utils.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <getopt.h>
@@ -76,19 +75,19 @@ int main(int argc, char** argv)
   benchmarker perf_meas("Channel Equalizer", nof_repetitions);
 
   // Test the supported channel topologies.
-  std::vector<spatial_topology> topologies;
+  std::vector<std::pair<unsigned, unsigned>> channel_topologies;
 
   // 1xN channels: single transmit layer and one or multiple receive ports.
   for (unsigned i_rx_port = 1; i_rx_port <= max_simo_rx_ports; ++i_rx_port) {
-    topologies.emplace_back(spatial_topology(i_rx_port, 1));
+    channel_topologies.emplace_back(std::make_pair(i_rx_port, 1));
   }
   // MIMO 2x2.
-  topologies.emplace_back(spatial_topology(2, 2));
+  channel_topologies.emplace_back(std::make_pair(2, 2));
 
-  for (spatial_topology topology : topologies) {
+  for (auto topology : channel_topologies) {
     // Get dimensions.
-    unsigned nof_rx_ports     = topology.get_nof_rx_ports();
-    unsigned nof_tx_layers    = topology.get_nof_tx_layers();
+    unsigned nof_rx_ports     = topology.first;
+    unsigned nof_tx_layers    = topology.second;
     unsigned nof_ofdm_symbols = MAX_NSYMB_PER_SLOT;
     unsigned nof_subcarriers  = nof_prb * NRE;
 
@@ -127,7 +126,7 @@ int main(int argc, char** argv)
     unsigned nof_processed_re = nof_subcarriers * nof_ofdm_symbols * nof_tx_layers;
 
     // Measurement description.
-    std::string meas_descr = "ZF " + topology.to_string();
+    std::string meas_descr = "ZF " + fmt::to_string(nof_tx_layers) + "x" + fmt::to_string(nof_rx_ports);
 
     // Equalize.
     perf_meas.new_measure(meas_descr,

@@ -121,16 +121,16 @@ private:
     // Extract data RE coefficients from the channel estimation.
     for (unsigned i_layer = 0, i_layer_end = config.nof_tx_layers; i_layer != i_layer_end; ++i_layer) {
       for (unsigned i_port = 0, i_port_end = config.rx_ports.size(); i_port != i_port_end; ++i_port) {
-        // Get a view of the port data estimates.
+        // Get a view of the channel estimates buffer for a single Rx port.
         span<cf_t> ch_port_buffer = data_estimates.get_view<>({i_port, i_layer});
 
-        // Skip DM-RS estimates.
         for (unsigned i_symbol = 0; i_symbol != config.nof_symbols; ++i_symbol) {
+          // Skip DM-RS estimates.
           if (config.dmrs_symb_pos[i_symbol + config.start_symbol_index]) {
             continue;
           }
 
-          // Copy channel data estimates into the buffer.
+          // View of the channel estimation for an OFDM symbol.
           span<const cf_t> symbol_estimates = channel_estimate.get_symbol_ch_estimate(i_symbol, i_port, i_layer);
 
           srsgnb_assert(symbol_estimates.size() == nof_subcs,
@@ -138,11 +138,19 @@ private:
                         symbol_estimates.size(),
                         nof_subcs);
 
-          srsvec::copy(ch_port_buffer.first(nof_subcs), symbol_estimates);
-
-          // Advance buffers.
-          ch_port_buffer = ch_port_buffer.subspan(nof_subcs, ch_port_buffer.size() - nof_subcs);
+          // Copy channel data estimates into the buffer.
+          config.rb_mask.for_each(0, config.rb_mask.size(), [&symbol_estimates, &ch_port_buffer](unsigned i_prb) {
+            // View over the estimates corresponding to a Resource Block.
+            span<const cf_t> rb_estimates = symbol_estimates.subspan(i_prb * NRE, NRE);
+            // Copy the estimates into the buffer.
+            srsvec::copy(ch_port_buffer.first(NRE), rb_estimates);
+            // Advance buffer.
+            ch_port_buffer = ch_port_buffer.last(ch_port_buffer.size() - NRE);
+          });
         }
+
+        // Assert that the expected number of channel coefficients are read.
+        srsgnb_assert(ch_port_buffer.size() == 0, "Incorrect number of extracted channel estimation coefficients.");
       }
     }
   }

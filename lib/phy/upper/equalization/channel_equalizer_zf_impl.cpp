@@ -14,7 +14,6 @@
 #include "channel_equalizer_zf_impl.h"
 #include "equalize_zf_1xn.h"
 #include "equalize_zf_2x2.h"
-#include "srsgnb/ran/spatial_topology.h"
 
 using namespace srsgnb;
 
@@ -125,27 +124,27 @@ void channel_equalizer_zf_impl::equalize(re_list&           eq_symbols,
 
   srsgnb_assert(tx_scaling > 0, "Tx scaling factor must be positive.");
 
-  // Determine the channel spatial topology based on the provided channel estimates.
-  spatial_topology topology(ch_estimates.get_dimension_size(ch_est_list::dims::rx_port),
-                            ch_estimates.get_dimension_size(ch_est_list::dims::tx_layer));
+  // Channel dimensions.
+  unsigned nof_rx_ports  = ch_estimates.get_dimension_size(ch_est_list::dims::rx_port);
+  unsigned nof_tx_layers = ch_estimates.get_dimension_size(ch_est_list::dims::tx_layer);
 
   // For now, use the noise variance of a single Rx port.
   float noise_var = noise_var_estimates[0];
 
-  // Select the appropriate equalization algorithm based on the channel topology.
-  switch (topology.get_topology()) {
-    case spatial_topology::siso:
-    case spatial_topology::simo:
-      equalize_zf_single_tx_layer<MAX_PORTS>(
-          topology.get_nof_rx_ports(), eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
-      break;
-    case spatial_topology::mimo:
-      equalize_zf_2x2(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
-      break;
-    case spatial_topology::invalid:
-    default:
-      srsgnb_assertion_failure("Invalid channel spatial topology: {} Rx ports, {} Tx layers.",
-                               ch_estimates.get_dimension_size(ch_est_list::dims::rx_port),
-                               ch_estimates.get_dimension_size(ch_est_list::dims::tx_layer));
+  // Single transmit layer and any number of receive ports.
+  if (nof_tx_layers == 1) {
+    equalize_zf_single_tx_layer<MAX_PORTS>(
+        nof_rx_ports, eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+    return;
   }
+
+  // Simplified case of two transmit layers and two receive ports.
+  if ((nof_rx_ports == 2) && (nof_tx_layers == 2)) {
+    equalize_zf_2x2(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+    return;
+  }
+
+  srsgnb_assertion_failure("Invalid channel spatial topology: {} Rx ports, {} Tx layers.",
+                           ch_estimates.get_dimension_size(ch_est_list::dims::rx_port),
+                           ch_estimates.get_dimension_size(ch_est_list::dims::tx_layer));
 }
