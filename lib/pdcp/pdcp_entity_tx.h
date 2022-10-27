@@ -107,6 +107,9 @@ public:
     logger.log_info("Enabled/disabled TX security integrity={}, ciphering={}", integ, cipher);
   }
 
+  /// Performs data recovery, as specified as in TS 38.323, section 5.5.
+  void data_recovery() final;
+
 private:
   bearer_logger               logger;
   pdcp_config::pdcp_tx_config cfg;
@@ -122,15 +125,12 @@ private:
   pdcp_integrity_enabled      integrity_enabled = pdcp_integrity_enabled::no;
   pdcp_ciphering_enabled      ciphering_enabled = pdcp_ciphering_enabled::no;
 
-  void write_to_lower_layers(byte_buffer buf);
+  void write_to_lower_layers(uint32_t count, byte_buffer buf);
 
   /// Apply ciphering and integrity protection to the payload
   byte_buffer apply_ciphering_and_integrity_protection(byte_buffer hdr, byte_buffer buf, uint32_t count);
   void        integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count);
   byte_buffer cipher_encrypt(byte_buffer_view buf, uint32_t count);
-
-  /// Performs data recovery, as specified as in TS 38.323, section 5.5.
-  void data_recovery() final;
 
   /// Discard timer information. We keep both the discard timer
   /// and a copy of the SDU for the data recovery procedure (for AM only).

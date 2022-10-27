@@ -63,7 +63,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
   // Set meta-data for RLC (TODO)
   // sdu->md.pdcp_sn = tx_next;
 
-  // Start discard timer
+  // Start discard timer. If using RLC AM, we store
+  // the PDU to use later in the data recovery procedure.
   if (cfg.discard_timer != pdcp_discard_timer::infinity && cfg.discard_timer != pdcp_discard_timer::not_configured) {
     unique_timer discard_timer = timers.create_unique_timer();
     discard_timer.set(static_cast<uint32_t>(cfg.discard_timer), discard_callback{this, st.tx_next});
@@ -76,25 +77,25 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
     }
     discard_timers_map.insert(std::make_pair(st.tx_next, std::move(info)));
     logger.log_debug(
-        "Discard Timer set for COUNT {}. Timeout: {}ms", st.tx_next, static_cast<uint32_t>(cfg.discard_timer));
+        "Discard timer set for COUNT {}. Timeout: {}ms", st.tx_next, static_cast<uint32_t>(cfg.discard_timer));
   }
 
   // Write to lower layers
-  write_to_lower_layers(std::move(protected_buf));
+  write_to_lower_layers(st.tx_next, std::move(protected_buf));
 
   // Increment TX_NEXT
   st.tx_next++;
 }
 
-void pdcp_entity_tx::write_to_lower_layers(byte_buffer buf)
+void pdcp_entity_tx::write_to_lower_layers(uint32_t count, byte_buffer buf)
 {
   logger.log_info(buf.begin(),
                   buf.end(),
                   "TX PDU ({}B), COUNT={}, HFN={}, SN={}, integrity={}, encryption={}",
                   buf.length(),
-                  st.tx_next,
-                  HFN(st.tx_next),
-                  SN(st.tx_next),
+                  count,
+                  HFN(count),
+                  SN(count),
                   integrity_enabled,
                   ciphering_enabled);
   metrics_add_pdus(1, buf.length());
@@ -209,8 +210,9 @@ byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
 void pdcp_entity_tx::data_recovery()
 {
   srsgnb_assert(is_drb() && cfg.rlc_mode == pdcp_rlc_mode::am, "Invalid bearer type for data recovery.");
+  logger.log_info("Data recovery requested");
   for (const auto& info : discard_timers_map) {
-    write_to_lower_layers(info.second.buf.copy());
+    write_to_lower_layers(info.first, info.second.buf.copy());
   }
 }
 /*
