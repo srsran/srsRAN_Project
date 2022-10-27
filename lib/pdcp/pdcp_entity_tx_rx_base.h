@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "pdcp_sn.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/pdcp/pdcp_config.h"
@@ -60,7 +61,7 @@ protected:
     rb_type(rb_type),
     hdr_len_bytes((pdcp_data_pdu_header_size(sn_size))),
     window_size(pdcp_window_size(sn_size)),
-    sn_size(to_number(sn_size))
+    sn_size(sn_size)
   {
   }
 
@@ -88,10 +89,10 @@ protected:
   /*
    * SN, HFN and COUNT helpers
    */
-  const uint32_t sn_size;
-  uint32_t       SN(uint32_t count) const { return count & (0xffffffffU >> (32U - sn_size)); }
-  uint32_t       HFN(uint32_t count) const { return (count >> sn_size); }
-  uint32_t       COUNT(uint32_t hfn, uint32_t sn) const { return (hfn << sn_size) | sn; }
+  const pdcp_sn_size sn_size;
+  uint32_t           SN(uint32_t count) const { return pdcp_compute_sn(count, sn_size); }
+  uint32_t           HFN(uint32_t count) const { return pdcp_compute_hfn(count, sn_size); }
+  uint32_t           COUNT(uint32_t hfn, uint32_t sn) const { return pdcp_compute_count(hfn, sn, sn_size); }
 };
 
 } // namespace srsgnb

@@ -88,8 +88,8 @@ public:
   void set_state(pdcp_rx_state st_) { st = st_; }
 
 private:
-  bearer_logger               logger;
-  pdcp_config::pdcp_rx_config cfg;
+  bearer_logger                     logger;
+  const pdcp_config::pdcp_rx_config cfg;
 
   sec_128_as_config      sec_cfg           = {};
   security_direction     direction         = security_direction::uplink;
