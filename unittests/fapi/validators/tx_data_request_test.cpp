@@ -10,64 +10,75 @@
 
 #include "helpers.h"
 #include "srsgnb/fapi/message_validators.h"
-#include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-static const std::vector<test_group<tx_data_request_message> > vector_test = {
-    {[](tx_data_request_message& msg, int value) { msg.sfn = value; },
-     "sfn",
-     {{0, true}, {511, true}, {1023, true}, {1024, false}}},
-    {[](tx_data_request_message& msg, int value) { msg.slot = value; },
-     "slot",
-     {{0, true}, {79, true}, {159, true}, {160, false}}},
-    {[](tx_data_request_message& msg, int value) { msg.pdus.back().cw_index = value; },
-     "CW index",
-     {{0, true}, {1, true}, {2, false}}},
-    {[](tx_data_request_message& msg, int value) {
-       (void)value;
-       msg.pdus.back().tlv_custom.payload = nullptr;
-     },
-     "TLV payload custom",
-     {{0, false}}}};
+class validate_tx_data_request_field
+  : public ValidateFAPIMessage<tx_data_request_message>,
+    public testing::TestWithParam<std::tuple<pdu_field_data<tx_data_request_message>, test_case_data>>
+{};
 
-static void test_validate_each_field_error()
+TEST_P(validate_tx_data_request_field, with_value)
 {
-  for (const auto& group : vector_test) {
-    for (const auto& test_case : group) {
-      auto    msg = build_valid_tx_data_request();
-      uint8_t payload;
-      msg.pdus.back().tlv_custom.payload = &payload;
-      group.update_msg(msg, test_case.value);
-      auto result = validate_tx_data_request(msg);
+  auto params = GetParam();
 
-      TESTASSERT_EQ(result.operator bool(), test_case.result);
-      if (!result) {
-        const auto& report = result.error();
-        TESTASSERT_EQ(1U, report.reports.size());
-        const auto& rep = report.reports.back();
-        TESTASSERT_EQ(std::strcmp(group.property(), rep.property_name), 0);
-        TESTASSERT_EQ(message_type_id::tx_data_request, rep.message_type);
-        TESTASSERT(!rep.pdu_type);
-      }
-    }
-  }
-}
+  execute_test(std::get<0>(params),
+               std::get<1>(params),
+               build_valid_tx_data_request,
+               validate_tx_data_request,
+               srsgnb::fapi::message_type_id::tx_data_request);
+};
 
-static void test_validate_tx_data_request_ok()
+INSTANTIATE_TEST_SUITE_P(sfn,
+                         validate_tx_data_request_field,
+                         testing::Combine(testing::Values(pdu_field_data<tx_data_request_message>{
+                                              "sfn",
+                                              [](tx_data_request_message& msg, int value) { msg.sfn = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{512, true},
+                                                          test_case_data{1023, true},
+                                                          test_case_data{1024, false})));
+
+INSTANTIATE_TEST_SUITE_P(slot,
+                         validate_tx_data_request_field,
+                         testing::Combine(testing::Values(pdu_field_data<tx_data_request_message>{
+                                              "slot",
+                                              [](tx_data_request_message& msg, int value) { msg.slot = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{80, true},
+                                                          test_case_data{159, true},
+                                                          test_case_data{160, false})));
+
+INSTANTIATE_TEST_SUITE_P(
+    cw_index,
+    validate_tx_data_request_field,
+    testing::Combine(testing::Values(pdu_field_data<tx_data_request_message>{
+                         "CW index",
+                         [](tx_data_request_message& msg, int value) { msg.pdus.back().cw_index = value; }}),
+                     testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
+
+INSTANTIATE_TEST_SUITE_P(tlv_payload_custom,
+                         validate_tx_data_request_field,
+                         testing::Combine(testing::Values(pdu_field_data<tx_data_request_message>{
+                                              "TLV payload custom",
+                                              [](tx_data_request_message& msg, int value) {
+                                                (void)value;
+                                                msg.pdus.back().tlv_custom.payload = nullptr;
+                                              }}),
+                                          testing::Values(test_case_data{0, false})));
+
+TEST(validate_uci_pusch_pdu, valid_pdu_passes)
 {
-  auto    msg = build_valid_tx_data_request();
-  uint8_t payload;
-  msg.pdus.back().tlv_custom.payload = &payload;
+  auto msg = build_valid_tx_data_request();
 
   const auto& result = validate_tx_data_request(msg);
 
-  TESTASSERT(result);
+  ASSERT_TRUE(result);
 }
 
-static void test_validate_tx_data_request_error()
+TEST(validate_uci_pusch_pdu, invalid_pdu_fails)
 {
   auto msg = build_valid_tx_data_request();
 
@@ -77,17 +88,9 @@ static void test_validate_tx_data_request_error()
 
   const auto& result = validate_tx_data_request(msg);
 
-  TESTASSERT(!result);
+  ASSERT_FALSE(result);
 
   const auto& report = result.error();
-  // Check that the 4 errors are reported.
-  TESTASSERT_EQ(report.reports.size(), 4u);
-}
-
-int main()
-{
-  test_validate_tx_data_request_ok();
-  test_validate_tx_data_request_error();
-  test_validate_each_field_error();
-  fmt::print("Tx_Data.request validator -> OK\n");
+  // Check that the 3 errors are reported.
+  ASSERT_EQ(report.reports.size(), 3u);
 }

@@ -1199,10 +1199,12 @@ tx_data_request_message unittest::build_valid_tx_data_request()
   msg.pdus.emplace_back();
   tx_data_req_pdu& pdu = msg.pdus.back();
 
-  pdu.cw_index           = generate_bool();
-  pdu.pdu_index          = 4231;
-  pdu.tlv_custom.length  = 12;
-  pdu.tlv_custom.payload = nullptr;
+  pdu.cw_index          = generate_bool();
+  pdu.pdu_index         = 4231;
+  pdu.tlv_custom.length = 12;
+
+  static uint8_t payload;
+  pdu.tlv_custom.payload = &payload;
 
   return msg;
 }
