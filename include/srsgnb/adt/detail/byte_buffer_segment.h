@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/span.h"
+#include "srsgnb/support/memory_pool/fixed_size_memory_block_pool.h"
 #include "srsgnb/support/srsgnb_assert.h"
 #include <array>
 #include <cstdint>
@@ -23,8 +24,11 @@ namespace srsgnb {
 /// Bytes can be added in the HEADROOM region via prepend() or in the TAILROOM via append()
 class byte_buffer_segment
 {
+  struct pool_tag {};
+  using pool_singleton = fixed_size_memory_block_pool<pool_tag>;
+
 public:
-  constexpr static size_t SEGMENT_SIZE     = 256;
+  constexpr static size_t SEGMENT_SIZE     = 1024;
   constexpr static size_t DEFAULT_HEADROOM = 16;
 
   using value_type     = uint8_t;
@@ -201,6 +205,22 @@ public:
   bool operator!=(const Container& other) const
   {
     return !(*this == other);
+  }
+
+  /// Byte_buffer_segments are allocated using a pre-allocated segment memory pool.
+  void* operator new(size_t sz)
+  {
+    constexpr static size_t byte_buffer_segment_pool_size = 4096;
+    static auto& pool = pool_singleton::get_instance(sizeof(byte_buffer_segment), byte_buffer_segment_pool_size);
+
+    return pool.allocate_node(sz);
+  }
+
+  /// Byte_buffer_segments are deallocated back to the global segment memory pool.
+  void operator delete(void* p)
+  {
+    static auto& pool = pool_singleton::get_instance();
+    pool.deallocate_node(p);
   }
 
 private:
@@ -512,6 +532,8 @@ bool compare_byte_buffer_range(const ByteBufferType1& lhs, const ByteBufferType2
   srsgnb_sanity_check(seg_it1 == segments1.end() and seg_it2 == segments2.end(), "byte buffers are in invalid state");
   return true;
 }
+
+struct byte_buffer_segment_pool_tag {};
 
 } // namespace detail
 

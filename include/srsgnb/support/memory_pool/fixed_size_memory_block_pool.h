@@ -20,26 +20,30 @@
 namespace srsgnb {
 
 /**
- * Concurrent memory pool of segments of equal size.
- * Each worker keeps a separate thread-local memory segment cache that it uses for fast, uncontended allocation &
+ * Concurrent memory pool of memory blocks of equal size.
+ * Each worker keeps a separate thread-local memory block cache that it uses for fast, uncontended allocation and
  * deallocation. When accessing a thread-local cache, no locks are required.
- * When this cache gets depleted, the worker tries to obtain segments from a central memory segment cache.
- * Since there is no stealing of segments between threads, it is possible that a worker cannot allocate while another
+ * When the local cache gets depleted, the worker tries to obtain segments from a central memory block cache.
+ * Since there is no stealing of segments between workers, it is possible that a worker cannot allocate while another
  * worker still has blocks in its own cache. To minimize the impact of this event, an upper bound is place on a worker
  * worker cache size. Once a worker reaches that upper bound, it sends half of its stored blocks to the central cache.
- * Note: Taking into account the usage of thread_local, this class is made a singleton
- * Note2: No considerations were made regarding false sharing between threads. It is assumed that the blocks are big
+ * Note: Taking into account the usage of thread_local, this class is made a singleton. To be able to instantiate
+ *       different pools, the user should use different IdTag types.
+ * Note2: No considerations were made regarding false sharing between workers. It is assumed that the blocks are big
  *        enough to fill a cache line.
- * @tparam NofObjects number of objects in the pool
+ * \tparam IdTag We use a ID type tag to be able to intantiate different pool objects.
+ * \tparam DebugSanitizeAddress when set to true, the pool verifies that the addresses allocated and deallocated are
+ * valid.
  */
 template <typename IdTag, bool DebugSanitizeAddress = false>
 class fixed_size_memory_block_pool
 {
   using pool_type = fixed_size_memory_block_pool<IdTag, DebugSanitizeAddress>;
 
-  const static size_t batch_steal_size = 16;
+  /// The number of blocks a worker tries to steal from the central memory block cache in a single batch.
+  constexpr static size_t batch_steal_size = 16;
 
-  // ctor only accessible from singleton get_instance()
+  /// Ctor of the memory pool. It is set as private because the class works as a singleton.
   explicit fixed_size_memory_block_pool(size_t memory_block_size_, size_t nof_blocks_) :
     mblock_size(align_next(memory_block_size_, alignof(std::max_align_t))), nof_blocks(nof_blocks_)
   {
@@ -80,10 +84,10 @@ public:
     return pool;
   }
 
-  /// Number of memory segments contained in this memory pool.
+  /// Number of memory blocks contained in this memory pool.
   size_t memory_block_size() const { return mblock_size; }
 
-  /// Number of memory segments contained in this memory pool.
+  /// Number of memory blocks contained in this memory pool.
   size_t nof_memory_blocks() const { return nof_blocks; }
 
   /// Allocate a node from the memory pool with the provided size.
@@ -106,6 +110,7 @@ public:
     return node;
   }
 
+  /// Deallocate node by returning it back to the memory pool.
   void deallocate_node(void* p)
   {
     srsgnb_assert(p != nullptr, "Deallocated nodes must have valid address");

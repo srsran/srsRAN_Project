@@ -454,15 +454,14 @@ public:
 private:
   void append_segment()
   {
-    // TODO: Use memory pool.
     // TODO: Verify if allocation was successful. What to do if not?
     if (empty()) {
       // For first segment of byte_buffer, add a headroom.
-      head = std::make_shared<byte_buffer_segment>((size_t)byte_buffer_segment::DEFAULT_HEADROOM);
+      head.reset(new byte_buffer_segment(byte_buffer_segment::DEFAULT_HEADROOM));
       set_tail(head.get());
     } else {
       // No headroom needed for later segments.
-      get_tail()->metadata().next = std::make_shared<byte_buffer_segment>(0);
+      get_tail()->metadata().next.reset(new byte_buffer_segment(0));
       set_tail(get_tail()->next());
     }
   }
