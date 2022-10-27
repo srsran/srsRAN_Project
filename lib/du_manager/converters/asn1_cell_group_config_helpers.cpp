@@ -222,6 +222,116 @@ void calculate_pdcch_config_diff(asn1::rrc_nr::pdcch_cfg_s& out, const pdcch_con
   // TODO: Remaining.
 }
 
+void make_asn1_rrc_dmrs_dl_for_pdsch(asn1::rrc_nr::dmrs_dl_cfg_s& out, const dmrs_downlink_config& cfg)
+{
+  if (cfg.type.has_value() && cfg.type.value() != dmrs_config_type::type2) {
+    // Note: Strange ASN1 generated code where there is no type field.
+    srsgnb_assertion_failure("Invalid DMRS DL Config type={}", cfg.type.value());
+  }
+
+  if (cfg.additional_positions.has_value()) {
+    out.dmrs_add_position_present = true;
+    switch (cfg.additional_positions.value()) {
+      case dmrs_additional_positions::pos0:
+        out.dmrs_add_position = dmrs_dl_cfg_s::dmrs_add_position_opts::pos0;
+        break;
+      case dmrs_additional_positions::pos1:
+        out.dmrs_add_position = dmrs_dl_cfg_s::dmrs_add_position_opts::pos1;
+        break;
+      case dmrs_additional_positions::pos3:
+        out.dmrs_add_position = dmrs_dl_cfg_s::dmrs_add_position_opts::pos3;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid DMRS DL Add. Position={}", cfg.additional_positions.value());
+    }
+  }
+
+  if (cfg.max_length.has_value() && cfg.max_length.value() != dmrs_max_length::len2) {
+    // Note: Strange ASN1 generated code where there is no max length field.
+    srsgnb_assertion_failure("Invalid DMRS DL max. length={}", cfg.max_length.value());
+  }
+
+  if (cfg.scrambling_id0.has_value()) {
+    out.scrambling_id0_present = true;
+    out.scrambling_id0         = cfg.scrambling_id0.value();
+  }
+
+  if (cfg.scrambling_id1.has_value()) {
+    out.scrambling_id1_present = true;
+    out.scrambling_id1         = cfg.scrambling_id1.value();
+  }
+}
+
+void make_asn1_rrc_qcl_info(asn1::rrc_nr::qcl_info_s& out, const qcl_info& cfg)
+{
+  if (cfg.cell.has_value()) {
+    out.cell_present = true;
+    out.cell         = cfg.cell.value();
+  }
+  if (cfg.bwp_id.has_value()) {
+    out.bwp_id_present = true;
+    out.bwp_id         = cfg.bwp_id.value();
+  }
+  if (cfg.ref_sig.type == srsgnb::qcl_info::reference_signal::reference_signal_type::ssb) {
+    auto& ssb = out.ref_sig.set_ssb();
+    ssb       = cfg.ref_sig.ssb;
+  } else if (cfg.ref_sig.type == srsgnb::qcl_info::reference_signal::reference_signal_type::csi_rs) {
+    auto& csi_rs = out.ref_sig.set_csi_rs();
+    csi_rs       = cfg.ref_sig.csi_rs;
+  }
+  switch (cfg.qcl_type) {
+    case qcl_info::qcl_type::type_a:
+      out.qcl_type = qcl_info_s::qcl_type_opts::type_a;
+      break;
+    case qcl_info::qcl_type::type_b:
+      out.qcl_type = qcl_info_s::qcl_type_opts::type_b;
+      break;
+    case qcl_info::qcl_type::type_c:
+      out.qcl_type = qcl_info_s::qcl_type_opts::type_c;
+      break;
+    case qcl_info::qcl_type::type_d:
+      out.qcl_type = qcl_info_s::qcl_type_opts::type_d;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid QCL Type={}", cfg.qcl_type);
+  }
+}
+
+asn1::rrc_nr::pdsch_time_domain_res_alloc_s
+make_asn1_rrc_pdsch_time_domain_alloc_list(const pdsch_time_domain_resource_allocation& cfg)
+{
+  pdsch_time_domain_res_alloc_s out{};
+  out.k0_present = true;
+  out.k0         = cfg.k0;
+  switch (cfg.map_type) {
+    case sch_mapping_type::typeA:
+      out.map_type = pdsch_time_domain_res_alloc_s::map_type_opts::type_a;
+      break;
+    case sch_mapping_type::typeB:
+      out.map_type = pdsch_time_domain_res_alloc_s::map_type_opts::type_b;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid SCH mapping Type={}", cfg.map_type);
+  }
+
+  out.start_symbol_and_len = ofdm_symbols_to_sliv(cfg.symbols);
+
+  return out;
+}
+
+asn1::rrc_nr::tci_state_s srsgnb::srs_du::make_asn1_rrc_tci_state(const tci_state& cfg)
+{
+  tci_state_s tci_st;
+  tci_st.tci_state_id = cfg.state_id;
+  make_asn1_rrc_qcl_info(tci_st.qcl_type1, cfg.qcl_type1);
+  if (cfg.qcl_type2.has_value()) {
+    tci_st.qcl_type2_present = true;
+    make_asn1_rrc_qcl_info(tci_st.qcl_type2, cfg.qcl_type2.value());
+  }
+
+  return tci_st;
+}
+
 void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_config& src, const pdsch_config& dest)
 {
   out.data_scrambling_id_pdsch_present = dest.data_scrambling_id_pdsch.has_value();
@@ -229,23 +339,138 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
     out.data_scrambling_id_pdsch = dest.data_scrambling_id_pdsch.value();
   }
 
-  out.dmrs_dl_for_pdsch_map_type_a_present = true;
-  dmrs_dl_cfg_s& dmrsA                     = out.dmrs_dl_for_pdsch_map_type_a.set_setup();
-  dmrsA.dmrs_add_position_present          = true;
-  dmrsA.dmrs_add_position.value            = dmrs_dl_cfg_s::dmrs_add_position_opts::pos1;
+  // DMRS Type A.
+  if ((dest.pdsch_mapping_type_a_dmrs.has_value() && not src.pdsch_mapping_type_a_dmrs.has_value()) ||
+      (dest.pdsch_mapping_type_a_dmrs.has_value() && src.pdsch_mapping_type_a_dmrs.has_value() &&
+       dest.pdsch_mapping_type_a_dmrs != src.pdsch_mapping_type_a_dmrs)) {
+    out.dmrs_dl_for_pdsch_map_type_a_present = true;
+    make_asn1_rrc_dmrs_dl_for_pdsch(out.dmrs_dl_for_pdsch_map_type_a.set_setup(),
+                                    dest.pdsch_mapping_type_a_dmrs.value());
+  }
 
-  out.tci_states_to_add_mod_list.resize(1);
-  out.tci_states_to_add_mod_list[0].tci_state_id = 0;
-  out.tci_states_to_add_mod_list[0].qcl_type1.ref_sig.set_ssb();
-  out.tci_states_to_add_mod_list[0].qcl_type1.ref_sig.ssb() = 0;
-  out.tci_states_to_add_mod_list[0].qcl_type1.qcl_type      = asn1::rrc_nr::qcl_info_s::qcl_type_opts::type_d;
+  // DMRS Type B.
+  if ((dest.pdsch_mapping_type_b_dmrs.has_value() && not src.pdsch_mapping_type_b_dmrs.has_value()) ||
+      (dest.pdsch_mapping_type_b_dmrs.has_value() && src.pdsch_mapping_type_b_dmrs.has_value() &&
+       dest.pdsch_mapping_type_b_dmrs != src.pdsch_mapping_type_b_dmrs)) {
+    out.dmrs_dl_for_pdsch_map_type_b_present = true;
+    make_asn1_rrc_dmrs_dl_for_pdsch(out.dmrs_dl_for_pdsch_map_type_b.set_setup(),
+                                    dest.pdsch_mapping_type_b_dmrs.value());
+  }
 
-  out.res_alloc.value = asn1::rrc_nr::pdsch_cfg_s::res_alloc_opts::res_alloc_type1;
-  out.rbg_size.value  = asn1::rrc_nr::pdsch_cfg_s::rbg_size_opts::cfg1;
-  out.prb_bundling_type.set_static_bundling();
-  out.prb_bundling_type.static_bundling().bundle_size_present = true;
-  out.prb_bundling_type.static_bundling().bundle_size =
-      pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::wideband;
+  // TCI states.
+  calculate_addmodremlist_diff(
+      out.tci_states_to_add_mod_list,
+      out.tci_states_to_release_list,
+      src.tci_states,
+      dest.tci_states,
+      [](const tci_state& st) { return make_asn1_rrc_tci_state(st); },
+      [](const tci_state& st) { return st.state_id; });
+
+  // VRB-to-PRB Interleaver.
+  if (dest.vrb_to_prb_itlvr.has_value()) {
+    out.vrb_to_prb_interleaver_present = true;
+    switch (dest.vrb_to_prb_itlvr.value()) {
+      case pdsch_config::vrb_to_prb_interleaver::n2:
+        out.vrb_to_prb_interleaver = pdsch_cfg_s::vrb_to_prb_interleaver_opts::n2;
+        break;
+      case pdsch_config::vrb_to_prb_interleaver::n4:
+        out.vrb_to_prb_interleaver = pdsch_cfg_s::vrb_to_prb_interleaver_opts::n4;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid VRB-to-PRB Interleaver={}", dest.vrb_to_prb_itlvr.value());
+    }
+  }
+
+  // Resource Allocation type.
+  switch (dest.res_alloc) {
+    case pdsch_config::resource_allocation::resource_allocation_type_0:
+      out.res_alloc = pdsch_cfg_s::res_alloc_opts::res_alloc_type0;
+      break;
+    case pdsch_config::resource_allocation::resource_allocation_type_1:
+      out.res_alloc = pdsch_cfg_s::res_alloc_opts::res_alloc_type1;
+      break;
+    case pdsch_config::resource_allocation::dynamic_switch:
+      out.res_alloc = pdsch_cfg_s::res_alloc_opts::dynamic_switch;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid resource allocation type={}", dest.res_alloc);
+  }
+
+  // PDSCH Time Domain Allocation.
+  if ((not dest.pdsch_td_alloc_list.empty() && src.pdsch_td_alloc_list.empty()) ||
+      (not dest.pdsch_td_alloc_list.empty() && not src.pdsch_td_alloc_list.empty() &&
+       dest.pdsch_td_alloc_list != src.pdsch_td_alloc_list)) {
+    out.pdsch_time_domain_alloc_list_present = true;
+    auto& alloc_list                         = out.pdsch_time_domain_alloc_list.set_setup();
+    for (const auto& td_alloc : dest.pdsch_td_alloc_list) {
+      alloc_list.push_back(make_asn1_rrc_pdsch_time_domain_alloc_list(td_alloc));
+    }
+  }
+
+  // RBG Size.
+  switch (dest.rbg_sz) {
+    case rbg_size::config1:
+      out.rbg_size = pdsch_cfg_s::rbg_size_opts::cfg1;
+      break;
+    case rbg_size::config2:
+      out.rbg_size = pdsch_cfg_s::rbg_size_opts::cfg2;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid RBG size={}", dest.rbg_sz);
+  }
+
+  // PRB Bundling.
+  if (dest.prb_bndlg.type == srsgnb::prb_bundling::prb_bundling_type::static_bundling) {
+    auto& st_bundling               = out.prb_bundling_type.set_static_bundling();
+    st_bundling.bundle_size_present = true;
+    switch (dest.prb_bndlg.st_bundling.sz) {
+      case prb_bundling::static_bundling::bundling_size::n4:
+        st_bundling.bundle_size = pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::n4;
+        break;
+      case prb_bundling::static_bundling::bundling_size::wideband:
+        st_bundling.bundle_size = pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::wideband;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid static PRB bundling size={}", dest.prb_bndlg.st_bundling.sz);
+    }
+  } else {
+    // Dynamic bundling.
+    auto& dy_bundling                    = out.prb_bundling_type.set_dynamic_bundling();
+    dy_bundling.bundle_size_set1_present = true;
+    switch (dest.prb_bndlg.dy_bundling.sz_set1) {
+      case prb_bundling::dynamic_bundling::bundling_size_set1::n4:
+        dy_bundling.bundle_size_set1 =
+            pdsch_cfg_s::prb_bundling_type_c_::dynamic_bundling_s_::bundle_size_set1_opts::n4;
+        break;
+      case prb_bundling::dynamic_bundling::bundling_size_set1::wideband:
+        dy_bundling.bundle_size_set1 =
+            pdsch_cfg_s::prb_bundling_type_c_::dynamic_bundling_s_::bundle_size_set1_opts::wideband;
+        break;
+      case prb_bundling::dynamic_bundling::bundling_size_set1::n2_wideband:
+        dy_bundling.bundle_size_set1 =
+            pdsch_cfg_s::prb_bundling_type_c_::dynamic_bundling_s_::bundle_size_set1_opts::n2_wideband;
+        break;
+      case prb_bundling::dynamic_bundling::bundling_size_set1::n4_wideband:
+        dy_bundling.bundle_size_set1 =
+            pdsch_cfg_s::prb_bundling_type_c_::dynamic_bundling_s_::bundle_size_set1_opts::n4_wideband;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid dynamic PRB bundling set 1 size={}", dest.prb_bndlg.dy_bundling.sz_set1);
+    }
+    dy_bundling.bundle_size_set2_present = true;
+    switch (dest.prb_bndlg.dy_bundling.sz_set2) {
+      case prb_bundling::dynamic_bundling::bundling_size_set2::n4:
+        dy_bundling.bundle_size_set2 =
+            pdsch_cfg_s::prb_bundling_type_c_::dynamic_bundling_s_::bundle_size_set2_opts::n4;
+        break;
+      case prb_bundling::dynamic_bundling::bundling_size_set2::wideband:
+        dy_bundling.bundle_size_set2 =
+            pdsch_cfg_s::prb_bundling_type_c_::dynamic_bundling_s_::bundle_size_set2_opts::wideband;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid dynamic PRB bundling set 2 size={}", dest.prb_bndlg.dy_bundling.sz_set2);
+    }
+  }
 
   // TODO: Remaining.
 }
@@ -256,16 +481,19 @@ void calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
 {
   if (dest.pdcch_cfg.has_value()) {
     out.pdcch_cfg_present = true;
-    calculate_pdcch_config_diff(
-        out.pdcch_cfg.set_setup(), src.pdcch_cfg.has_value() ? *src.pdcch_cfg : pdcch_config{}, *dest.pdcch_cfg);
+    calculate_pdcch_config_diff(out.pdcch_cfg.set_setup(),
+                                src.pdcch_cfg.has_value() ? src.pdcch_cfg.value() : pdcch_config{},
+                                dest.pdcch_cfg.value());
   }
 
-  if (dest.pdsch_cfg.has_value()) {
+  if ((dest.pdsch_cfg.has_value() && not src.pdsch_cfg.has_value()) ||
+      (dest.pdsch_cfg.has_value() && src.pdsch_cfg.has_value() && dest.pdsch_cfg != src.pdsch_cfg)) {
     out.pdsch_cfg_present = true;
-    calculate_pdsch_config_diff(
-        out.pdsch_cfg.set_setup(), src.pdcch_cfg.has_value() ? *dest.pdsch_cfg : pdsch_config{}, *dest.pdsch_cfg);
+    calculate_pdsch_config_diff(out.pdsch_cfg.set_setup(),
+                                src.pdsch_cfg.has_value() ? src.pdsch_cfg.value() : pdsch_config{},
+                                dest.pdsch_cfg.value());
   }
-  // TODO: Remaining.
+  // TODO: sps-Config and radioLinkMonitoringConfig.
 }
 
 asn1::rrc_nr::pucch_res_set_s srsgnb::srs_du::make_asn1_rrc_pucch_resource_set(const pucch_resource_set& cfg)
@@ -375,7 +603,6 @@ asn1::rrc_nr::pucch_res_s srsgnb::srs_du::make_asn1_rrc_pucch_resource(const puc
       auto& format4            = pucch_res.format.set_format4();
       format4.start_symbol_idx = cfg.format_4.starting_sym_idx;
       format4.nrof_symbols     = cfg.format_4.nof_symbols;
-      pucch_format4_s::occ_len_e_ format4_length;
       switch (cfg.format_4.occ_index) {
         case pucch_f4_occ_idx::n0:
           format4.occ_idx = pucch_format4_s::occ_idx_opts::n0;
@@ -502,19 +729,27 @@ void calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_con
       [](const pucch_resource& res) { return make_asn1_rrc_pucch_resource(res); },
       [](const pucch_resource& res) { return res.res_id; });
 
-  if (dest.format_1_common_param.has_value()) {
+  if ((dest.format_1_common_param.has_value() && not src.format_1_common_param.has_value()) ||
+      (dest.format_1_common_param.has_value() && src.format_1_common_param.has_value() &&
+       dest.format_1_common_param != src.format_1_common_param)) {
     out.format1_present = true;
     make_asn1_rrc_pucch_formats_common_param(out.format1.set_setup(), dest.format_1_common_param.value());
   }
-  if (dest.format_2_common_param.has_value()) {
+  if ((dest.format_2_common_param.has_value() && not src.format_2_common_param.has_value()) ||
+      (dest.format_2_common_param.has_value() && src.format_2_common_param.has_value() &&
+       dest.format_2_common_param != src.format_2_common_param)) {
     out.format2_present = true;
     make_asn1_rrc_pucch_formats_common_param(out.format2.set_setup(), dest.format_2_common_param.value());
   }
-  if (dest.format_3_common_param.has_value()) {
+  if ((dest.format_3_common_param.has_value() && not src.format_3_common_param.has_value()) ||
+      (dest.format_3_common_param.has_value() && src.format_3_common_param.has_value() &&
+       dest.format_3_common_param != src.format_3_common_param)) {
     out.format3_present = true;
     make_asn1_rrc_pucch_formats_common_param(out.format3.set_setup(), dest.format_3_common_param.value());
   }
-  if (dest.format_4_common_param.has_value()) {
+  if ((dest.format_4_common_param.has_value() && not src.format_4_common_param.has_value()) ||
+      (dest.format_4_common_param.has_value() && src.format_4_common_param.has_value() &&
+       dest.format_4_common_param != src.format_4_common_param)) {
     out.format4_present = true;
     make_asn1_rrc_pucch_formats_common_param(out.format4.set_setup(), dest.format_4_common_param.value());
   }
@@ -538,7 +773,8 @@ void calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,
                                      const bwp_uplink_dedicated& src,
                                      const bwp_uplink_dedicated& dest)
 {
-  if (dest.pucch_cfg.has_value()) {
+  if ((dest.pucch_cfg.has_value() && not src.pucch_cfg.has_value()) ||
+      (dest.pucch_cfg.has_value() && src.pucch_cfg.has_value() && dest.pucch_cfg != src.pucch_cfg)) {
     out.pucch_cfg_present = true;
     calculate_pucch_config_diff(out.pucch_cfg.set_setup(),
                                 src.pucch_cfg.has_value() ? src.pucch_cfg.value() : pucch_config{},
@@ -564,7 +800,7 @@ void calculate_serving_cell_config_diff(const serving_cell_config&        src,
   if (dest.ul_config.has_value()) {
     out.ul_cfg_present = true;
     calculate_uplink_config_diff(
-        out.ul_cfg, src.ul_config.has_value() ? *src.ul_config : uplink_config{}, *dest.ul_config);
+        out.ul_cfg, src.ul_config.has_value() ? src.ul_config.value() : uplink_config{}, dest.ul_config.value());
   }
 }
 

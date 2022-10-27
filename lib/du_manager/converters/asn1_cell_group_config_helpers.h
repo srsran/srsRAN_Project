@@ -26,6 +26,8 @@ asn1::rrc_nr::sched_request_res_cfg_s make_asn1_rrc_sr_resource(const scheduling
 
 asn1::rrc_nr::pucch_res_s make_asn1_rrc_pucch_resource(const pucch_resource& cfg);
 
+asn1::rrc_nr::tci_state_s make_asn1_rrc_tci_state(const tci_state& cfg);
+
 /// \brief Fills ASN.1 CellGroupConfig struct.
 /// \param[out] out The ASN.1 CellGroupConfig struct to fill.
 /// \param[in] src Previous cell group configuration of UE.

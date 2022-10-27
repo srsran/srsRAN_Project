@@ -19,14 +19,22 @@ namespace srsgnb {
 /// Used to configure downlink demodulation reference signals for PDSCH.
 /// \remark See TS 38.331, DMRS-DownlinkConfig.
 struct dmrs_downlink_config {
+  bool operator==(const dmrs_downlink_config& rhs) const
+  {
+    return type == rhs.type && additional_positions == rhs.additional_positions && max_length == rhs.max_length &&
+           scrambling_id0 == rhs.scrambling_id0 && scrambling_id1 == rhs.scrambling_id1;
+  }
+  bool operator!=(const dmrs_downlink_config& rhs) const { return !(rhs == *this); }
+
   /// Selection of the DMRS type to be used for DL (see TS 38.211, clause 7.4.1.1.1). If the field is absent, the
   /// UE uses DMRS type 1.
-  dmrs_config_type type{dmrs_config_type::type1};
+  optional<dmrs_config_type> type;
   /// Position for additional DM-RS in DL, see Tables 7.4.1.1.2-3 and 7.4.1.1.2-4 in TS 38.211. If the field is absent,
   /// the UE applies the value pos2.
-  dmrs_additional_positions additional_positions{dmrs_additional_positions::pos2};
-  /// The maximum number of OFDM symbols for DL front loaded DMRS. If the field is absent, the UE applies value len1.
-  dmrs_max_length max_length{dmrs_max_length::len1};
+  optional<dmrs_additional_positions> additional_positions;
+  /// The maximum number of OFDM symbols for DL front loaded DMRS. If the field is absent, the UE applies value len1. If
+  /// set to len2, the UE determines the actual number of DM-RS symbols by the associated DCI.
+  optional<dmrs_max_length> max_length;
   /// \brief DL DMRS scrambling initialization (see TS 38.211, clause 7.4.1.1.1).
   /// When the field is absent the UE applies the value Physical cell ID (physCellId) configured for this serving cell.
   optional<uint16_t> scrambling_id0;

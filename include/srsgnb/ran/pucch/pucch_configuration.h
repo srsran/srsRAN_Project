@@ -163,6 +163,15 @@ struct pucch_resource_set {
 
 /// \c PUCCH-Config, TS 38.311.
 struct pucch_config {
+  bool operator==(const pucch_config& rhs) const
+  {
+    return pucch_res_set == rhs.pucch_res_set && pucch_res_list == rhs.pucch_res_list &&
+           format_1_common_param == rhs.format_1_common_param && format_2_common_param == rhs.format_2_common_param &&
+           format_3_common_param == rhs.format_3_common_param && format_4_common_param == rhs.format_4_common_param &&
+           sr_res_list == rhs.sr_res_list && dl_data_to_ul_ack == rhs.dl_data_to_ul_ack;
+  }
+  bool operator!=(const pucch_config& rhs) const { return !(rhs == *this); }
+
   /// \c PUCCH-ResourceSet, from 0 to 3.
   // NOTE: PUCCH resource set ID 0 can only contain PUCCH format 0 and 1.
   static_vector<pucch_resource_set, MAX_NOF_PUCCH_RESOURCE_SETS> pucch_res_set;

@@ -279,6 +279,19 @@ serving_cell_config srsgnb::config_helpers::make_default_initial_ue_serving_cell
   serv_cell.init_dl_bwp.pdsch_cfg.emplace();
   pdsch_config& pdsch_cfg            = serv_cell.init_dl_bwp.pdsch_cfg.value();
   pdsch_cfg.data_scrambling_id_pdsch = 0;
+  pdsch_cfg.pdsch_mapping_type_a_dmrs.emplace();
+  dmrs_downlink_config dmrs_type_a = pdsch_cfg.pdsch_mapping_type_a_dmrs.value();
+  dmrs_type_a.additional_positions.emplace(dmrs_additional_positions::pos1);
+  pdsch_cfg.tci_states.push_back(tci_state{
+      .state_id  = static_cast<tci_state_id_t>(0),
+      .qcl_type1 = {.ref_sig  = {.type = qcl_info::reference_signal::reference_signal_type::ssb,
+                                 .ssb  = static_cast<ssb_id_t>(0)},
+                    .qcl_type = qcl_info::qcl_type::type_d},
+  });
+  pdsch_cfg.res_alloc                = pdsch_config::resource_allocation::resource_allocation_type_1;
+  pdsch_cfg.rbg_sz                   = rbg_size::config1;
+  pdsch_cfg.prb_bndlg.type           = prb_bundling::prb_bundling_type::static_bundling;
+  pdsch_cfg.prb_bndlg.st_bundling.sz = prb_bundling::static_bundling::bundling_size::wideband;
 
   // > UL Config.
   serv_cell.ul_config.emplace(make_default_ue_uplink_config());

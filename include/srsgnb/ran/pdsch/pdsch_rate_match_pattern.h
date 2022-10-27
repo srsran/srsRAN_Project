@@ -1,0 +1,127 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include "srsgnb/adt/optional.h"
+#include "srsgnb/phy/constants.h"
+#include <cstdint>
+#include <new>
+
+namespace srsgnb {
+
+/// \brief Rate matching pattern id used to identify a Rate matching pattern configuration.
+/// \remark See TS 38.331, "RateMatchPatternId" and "maxNrofRateMatchPatterns".
+enum rate_match_pattern_id_t : uint8_t {
+  MIN_RATE_MATCH_PATTERN_ID   = 0,
+  MAX_RATE_MATCH_PATTERN_ID   = 3,
+  MAX_NOF_RATE_MATCH_PATTERNS = 4
+};
+
+/// \brief Rate matching pattern for PDSCH.
+/// \remark See TS 38.331, RateMatchPattern.
+struct rate_match_pattern {
+  /// A symbol level bitmap in time domain. It indicates with a bit set to true that the UE shall rate match
+  /// around the corresponding symbol. This pattern recurs (in time domain) with the configured periodicityAndPattern.
+  /// \remark See TS 214, clause 5.1.4.1. For ECP the first 12 bits represent the symbols within the slot and the last
+  /// two bits within the bitstring are ignored by the UE.
+  struct symbols_in_resource_blocks {
+    /// \brief Type of symbols in resource block.
+    enum class symbols_in_resource_blocks_type { one_slot, two_slot };
+
+    bool operator==(const symbols_in_resource_blocks& rhs) const
+    {
+      return type == rhs.type && one_slot == rhs.one_slot && two_slot == rhs.two_slot;
+    }
+    bool operator!=(const symbols_in_resource_blocks& rhs) const { return !(rhs == *this); }
+
+    symbols_in_resource_blocks_type type;
+    union {
+      bounded_bitset<14> one_slot;
+      bounded_bitset<28> two_slot;
+    };
+  };
+
+  /// A time domain repetition pattern at which the pattern defined by symbolsInResourceBlock and resourceBlocks
+  /// recurs. This slot pattern repeats itself continuously. Absence of this field indicates the value n1, i.e., the
+  /// symbolsInResourceBlock recurs every 14 symbols.
+  /// \remark See TS 214, clause 5.1.4.1.
+  struct periodicity_and_pattern {
+    /// \brief Type of periodicity and pattern.
+    enum class periodicity_and_pattern_type { n2, n4, n5, n8, n10, n20, n40 };
+
+    bool operator==(const periodicity_and_pattern& rhs) const
+    {
+      return type == rhs.type && n2 == rhs.n2 && n4 == rhs.n4 && n5 == rhs.n5 && n8 == rhs.n8 && n10 == rhs.n10 &&
+             n20 == rhs.n20 && n40 == rhs.n40;
+    }
+    bool operator!=(const periodicity_and_pattern& rhs) const { return !(rhs == *this); }
+
+    periodicity_and_pattern_type type;
+    union {
+      bounded_bitset<2>  n2;
+      bounded_bitset<4>  n4;
+      bounded_bitset<5>  n5;
+      bounded_bitset<8>  n8;
+      bounded_bitset<10> n10;
+      bounded_bitset<20> n20;
+      bounded_bitset<40> n40;
+    };
+  };
+
+  /// Indicates rate matching pattern by a pair of bitmaps resourceBlocks and symbolsInResourceBlock to define
+  /// the rate match pattern within one or two slots, and a third bitmap periodicityAndPattern to define the repetition
+  /// pattern with which the pattern defined by the above bitmap pair occurs.
+  struct bitmaps {
+    bool operator==(const bitmaps& rhs) const
+    {
+      return rb == rhs.rb && sym_in_rb == rhs.sym_in_rb && repeat_pattern == rhs.repeat_pattern;
+    }
+    bool operator!=(const bitmaps& rhs) const { return !(rhs == *this); }
+
+    /// A resource block level bitmap in the frequency domain. A bit in the bitmap set to 1 indicates that the UE shall
+    /// apply rate matching in the corresponding resource block in accordance with the symbolsInResourceBlock bitmap. If
+    /// used as cell-level rate matching pattern, the bitmap identifies "common resource blocks (CRB)". If used as
+    /// BWP-level rate matching pattern, the bitmap identifies "physical resource blocks" inside the BWP. The first/
+    /// leftmost bit corresponds to resource block 0, and so on.
+    bounded_bitset<MAX_RB>            rb;
+    symbols_in_resource_blocks        sym_in_rb;
+    optional<periodicity_and_pattern> repeat_pattern;
+  };
+
+  /// \brief Rate matching pattern type.
+  enum class pattern_type { bitmaps, coreset };
+
+  bool operator==(const rate_match_pattern& rhs) const
+  {
+    return pattern_id == rhs.pattern_id && type == rhs.type && bmaps == rhs.bmaps && cs_id == rhs.cs_id &&
+           scs == rhs.scs;
+  }
+  bool operator!=(const rate_match_pattern& rhs) const { return !(rhs == *this); }
+
+  rate_match_pattern_id_t pattern_id;
+  pattern_type            type;
+  union {
+    bitmaps bmaps;
+    /// This ControlResourceSet is used as a PDSCH rate matching pattern, i.e., PDSCH reception rate matches around it.
+    /// In frequency domain, the resource is determined by the frequency domain resource of the CORESET with the
+    /// corresponding CORESET ID. Time domain resource is determined by the parameters of the associated search space of
+    /// the CORESET.
+    coreset_id cs_id;
+  };
+  /// The field is mandatory present if the RateMatchPattern is defined on cell level. The field is absent when the
+  /// RateMatchPattern is defined on BWP level. If the RateMatchPattern is defined on BWP level, the UE applies the SCS
+  /// of the BWP.
+  optional<subcarrier_spacing> scs;
+
+  // TODO: Remaining
+};
+
+} // namespace srsgnb

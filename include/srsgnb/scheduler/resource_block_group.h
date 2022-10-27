@@ -19,6 +19,10 @@ namespace srsgnb {
 /// \remark See TS 38.214, Sections 5.1.2.2.1 and 6.1.2.2.1.
 const size_t MAX_NOF_RBGS = 18;
 
+/// \brief RBG size types for PDSCH.
+/// \remark See TS 38.331, "rbg-Size".
+enum class rbg_size { config1, config2 };
+
 /// Nominal RBG-size (P value).
 /// \remark See TS 38.214, Sections 5.1.2.2 and 6.1.2.2.
 enum class nominal_rbg_size : unsigned { P2 = 2, P4 = 4, P8 = 8, P16 = 16 };

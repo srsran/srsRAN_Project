@@ -13,10 +13,14 @@
 #include "bwp_configuration.h"
 #include "srsgnb/ran/carrier_configuration.h"
 #include "srsgnb/ran/pdcch/downlink_preemption.h"
+#include "srsgnb/ran/pdsch/pdsch_mcs.h"
+#include "srsgnb/ran/pdsch/pdsch_prb_bundling.h"
+#include "srsgnb/ran/pdsch/pdsch_rate_match_pattern.h"
 #include "srsgnb/ran/pucch/pucch_tpc.h"
 #include "srsgnb/ran/pucch/srs_tpc.h"
 #include "srsgnb/ran/pusch/pusch_tpc.h"
 #include "srsgnb/ran/ssb_configuration.h"
+#include "srsgnb/ran/tci.h"
 
 namespace srsgnb {
 
@@ -42,9 +46,33 @@ struct pdcch_config {
 
 /// "PDSCH-Config" - UE-dedicated PDSCH Configuration as per TS38.331.
 struct pdsch_config {
-  /// Interleaving unit configurable between 2 and 4 PRBs.
+  /// \brief Interleaving unit configurable between 2 and 4 PRBs.
   /// \remark See TS 38.211, clause 7.3.1.6.
   enum class vrb_to_prb_interleaver { n2, n4 };
+
+  /// \brief Resource allocation type of to DCI format 1_1.
+  /// \remark See TS 38.214, clause 5.1.2.2.
+  enum class resource_allocation { resource_allocation_type_0, resource_allocation_type_1, dynamic_switch };
+
+  /// \brief Aggregation factor.
+  /// \remark See TS 38.214, clause 5.1.2.1.
+  enum class pdsch_aggregation_factor { n2, n4, n8 };
+
+  /// \brief Maximum number of code words a single DCI may schedule.
+  /// \remark See TS 38.331, "maxNrofCodeWordsScheduledByDCI".
+  enum class max_no_codeword_scheduled_by_dci { n1, n2 };
+
+  bool operator==(const pdsch_config& rhs) const
+  {
+    return data_scrambling_id_pdsch == rhs.data_scrambling_id_pdsch &&
+           pdsch_mapping_type_a_dmrs == rhs.pdsch_mapping_type_a_dmrs &&
+           pdsch_mapping_type_b_dmrs == rhs.pdsch_mapping_type_b_dmrs && vrb_to_prb_itlvr == rhs.vrb_to_prb_itlvr &&
+           tci_states == rhs.tci_states && res_alloc == rhs.res_alloc && aggr_factor == rhs.aggr_factor &&
+           pdsch_td_alloc_list == rhs.pdsch_td_alloc_list && rate_match_pattrn == rhs.rate_match_pattrn &&
+           rbg_sz == rhs.rbg_sz && mcs_table == rhs.mcs_table && nof_cw_sched_by_dci == rhs.nof_cw_sched_by_dci &&
+           prb_bndlg == rhs.prb_bndlg;
+  }
+  bool operator!=(const pdsch_config& rhs) const { return !(rhs == *this); }
 
   /// Identifier used to initialize data scrambling (c_init) for PDSCH. If the field is absent, the UE applies the PCI.
   /// See TS38.331, \e dataScramblingIdentityPDSCH, and TS38.211, 7.3.1.1. Values: {0,...,1023}.
@@ -58,8 +86,35 @@ struct pdsch_config {
   /// Interleaving unit. If field is absent, the UE performs non-interleaved VRB-to-PRB mapping. The field
   /// vrb-ToPRB-Interleaver applies to DCI format 1_1.
   optional<vrb_to_prb_interleaver> vrb_to_prb_itlvr;
+  /// A list of Transmission Configuration Indicator (TCI) states indicating a transmission configuration which includes
+  /// QCL-relationships between the DL RSs in one RS set and the PDSCH DMRS ports (see TS 38.214, clause 5.1.5).
+  static_vector<tci_state, MAX_NOF_TCI_STATES> tci_states;
+  /// Configuration of resource allocation type 0 and resource allocation type 1 for non-fallback DCI.
+  resource_allocation res_alloc;
+  /// Number of repetitions for data. When the field is absent the UE applies the value 1.
+  optional<pdsch_aggregation_factor> aggr_factor;
   /// PDSCH time domain resource allocations. Size: (0..maxNrofDL-Allocations=16).
   std::vector<pdsch_time_domain_resource_allocation> pdsch_td_alloc_list;
+  /// Resources patterns which the UE should rate match PDSCH around. The UE rate matches around the union of all
+  /// resources indicated in the rate match patterns. Rate match patterns defined here on cell level apply only to PDSCH
+  /// of the same numerology. See 38.214, clause 5.1.4,1.
+  static_vector<rate_match_pattern, MAX_NOF_RATE_MATCH_PATTERNS> rate_match_pattrn;
+  // TODO: RateMatchPatternGroup1 and RateMatchPatternGroup2
+
+  /// Selection between config 1 and config 2 for RBG size for PDSCH. The UE ignores this field if resourceAllocation is
+  /// set to resourceAllocationType1.
+  rbg_size rbg_sz;
+  /// Indicates which MCS table the UE shall use for PDSCH. (see TS 38.214 [19], clause 5.1.3.1). If the field is absent
+  /// the UE applies the value 64QAM. The field mcs-Table mcs-Table applies to DCI format 1_0 and DCI format 1_1.
+  optional<pdsch_mcs_table> mcs_table;
+  /// This changes the number of MCS/RV/NDI bits in the DCI message from 1 to 2.
+  optional<max_no_codeword_scheduled_by_dci> nof_cw_sched_by_dci;
+  /// Indicates the PRB bundle type and bundle size(s). If dynamic is chosen, the actual bundleSizeSet1 or
+  /// bundleSizeSet2 to use is indicated via DCI. Constraints on bundleSize(Set) setting depending on
+  /// vrb-ToPRB-Interleaver and rbg-Size settings are described in TS 38.214, clause 5.1.2.3. If a bundleSize(Set)
+  /// value is absent, the UE applies the value n2. The field prb-BundlingType applies to DCI format 1_1.
+  prb_bundling prb_bndlg;
+
   // TODO: Remaining.
 };
 
@@ -94,7 +149,7 @@ struct serving_cell_config {
   /// Initial Downlink BWP.
   bwp_downlink_dedicated init_dl_bwp;
   /// List of UE DL BWPs. Size: (0..maxNrofBWPs=4)
-  std::vector<bwp_downlink> dl_bwps;
+  static_vector<bwp_downlink, MAX_NOF_BWPS> dl_bwps;
   /// \c uplinkConfig, containing the UL configuration.
   optional<uplink_config> ul_config;
 };

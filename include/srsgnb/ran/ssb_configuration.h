@@ -15,6 +15,10 @@
 
 namespace srsgnb {
 
+/// SSB-Index identifies an SS-Block within an SS-Burst.
+/// \remark See TS 38.331, "SSB-Index" and "maxNrofSSBs". See also, TS 38.213, clause 4.1.
+enum ssb_id_t : uint8_t { MIN_SSB_ID = 0, MAX_SSB_ID = 63, MAX_NOF_SSB_RESOURCES = 64 };
+
 /// Maximum number of SS/PBCH beams in a SS/PBCH period as per TS38.213 Section 4.1.
 constexpr size_t NOF_BEAMS = 64;
 
