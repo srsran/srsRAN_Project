@@ -66,7 +66,7 @@ public:
     /// PUCCH-ConfigCommon, if it is configured. Otherwise, it must be equal to the physical cell identifier
     /// \f$N_{\textup{ID}}^{\textup{cell}}\f$.
     unsigned n_id;
-    /// Number of expected HARQ-ACK bits {0, ..., 2} (see also \ref PUCCH_payload_size "here").
+    /// Number of expected HARQ-ACK bits {0, 1, 2} (see also \ref PUCCH_payload_size "here").
     unsigned nof_harq_ack;
     /// Port indexes used for the PUCCH reception.
     static_vector<uint8_t, MAX_PORTS> ports;

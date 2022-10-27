@@ -13,8 +13,9 @@
 using namespace srsgnb;
 using namespace fapi_adaptor;
 
-template <typename Config>
-static void fill_common_parameters(Config& config, const fapi::ul_pucch_pdu& fapi_pdu, slot_point slot)
+static void fill_format1_parameters(pucch_processor::format1_configuration& config,
+                                    const fapi::ul_pucch_pdu&               fapi_pdu,
+                                    slot_point                              slot)
 {
   config.slot         = slot;
   config.bwp_size_rb  = fapi_pdu.bwp_size;
@@ -26,13 +27,6 @@ static void fill_common_parameters(Config& config, const fapi::ul_pucch_pdu& fap
   }
 
   config.ports = {0};
-}
-
-static void fill_format1_parameters(pucch_processor::format1_configuration& config,
-                                    const fapi::ul_pucch_pdu&               fapi_pdu,
-                                    slot_point                              slot)
-{
-  fill_common_parameters(config, fapi_pdu, slot);
 
   config.n_id         = fapi_pdu.nid_pucch_hopping;
   config.nof_harq_ack = fapi_pdu.bit_len_harq;

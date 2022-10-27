@@ -51,7 +51,7 @@ protected:
     detector_spy = detector_factory_spy->get_entries().front();
   }
 
-  pucch_processor::format1_configuration getParam()
+  pucch_processor::format1_configuration GetConfig()
   {
     std::mt19937                           rgen = std::mt19937(GetParam());
     pucch_processor::format1_configuration config;
@@ -101,7 +101,7 @@ protected:
 TEST_P(PucchProcessorFormat1Fixture, UnitTest)
 {
   // Generate random configuration with valid values.
-  pucch_processor::format1_configuration config = getParam();
+  pucch_processor::format1_configuration config = GetConfig();
 
   // Prepare resource grid.
   resource_grid_reader_spy grid;
