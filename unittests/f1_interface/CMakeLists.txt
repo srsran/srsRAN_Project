@@ -50,3 +50,15 @@ add_executable(f1c_cu_test cu/f1c_cu_test.cpp)
 target_link_libraries(f1c_cu_test srsgnb_f1 srsgnb_support srslog f1ap_asn1 gtest gtest_main)
 target_include_directories(f1c_cu_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(f1c_cu_test)
+
+add_executable(f1c_asn1_packer_test common/f1c_asn1_packer_test.cpp)
+target_link_libraries(f1c_asn1_packer_test
+                      srsgnb_f1
+                      srsgnb_support
+                      srslog
+                      f1ap_asn1
+                      srsgnb_ran
+                      gtest
+                      gtest_main)
+target_include_directories(f1c_asn1_packer_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(f1c_asn1_packer_test)

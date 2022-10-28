@@ -196,11 +196,24 @@ public:
   dummy_f1c_message_handler() : logger(srslog::fetch_basic_logger("TEST")){};
   void handle_message(const f1c_message& msg) override
   {
-    logger.info("Received a F1AP PDU of type %s\n", msg.pdu.type().to_string());
+    last_msg = msg;
+    logger.info("Received a F1AP PDU of type {}", msg.pdu.type().to_string());
   }
+
+  f1c_message last_msg;
 
 private:
   srslog::basic_logger& logger;
+};
+
+/// Dummy PDU handler
+class dummy_network_gateway_data_handler : public srsgnb::network_gateway_data_handler
+{
+public:
+  dummy_network_gateway_data_handler(){};
+  void handle_pdu(const byte_buffer& pdu) override { last_pdu = pdu.copy(); }
+
+  byte_buffer last_pdu;
 };
 
 } // namespace srsgnb
