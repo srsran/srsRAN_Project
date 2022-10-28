@@ -36,13 +36,13 @@ private:
 
   // network_gateway_controller interface
   /// \brief Create and bind socket to given address.
-  bool bind() override;
+  bool create_and_bind() override;
 
   /// \brief Start listening on socket.
   bool listen() override;
 
   /// \brief Create and connect socket to given address.
-  bool connect() override;
+  bool create_and_connect() override;
 
   /// \brief Trigger receive call on socket.
   void receive() override;

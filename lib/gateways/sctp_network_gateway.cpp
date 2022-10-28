@@ -98,7 +98,7 @@ bool sctp_network_gateway::is_initialized()
 }
 
 /// \brief Create and bind socket to given address.
-bool sctp_network_gateway::bind()
+bool sctp_network_gateway::create_and_bind()
 {
   struct addrinfo hints;
   // support ipv4, ipv6 and hostnames
@@ -187,11 +187,11 @@ bool sctp_network_gateway::listen()
   return true;
 }
 
-bool sctp_network_gateway::connect()
+bool sctp_network_gateway::create_and_connect()
 {
   // bind to address/port
   if (not config.bind_address.empty()) {
-    if (not bind()) {
+    if (not create_and_bind()) {
       logger.error("Couldn't bind to address {}:{}", config.bind_address, config.bind_port);
       close_socket();
       return false;

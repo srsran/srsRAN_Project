@@ -62,13 +62,13 @@ public:
   virtual ~network_gateway_controller() = default;
 
   /// \brief Create and bind the configured address and port.
-  virtual bool bind() = 0;
+  virtual bool create_and_bind() = 0;
 
   /// \brief Start listening on socket.
   virtual bool listen() = 0;
 
   /// \brief Create and connect to the configured address and port.
-  virtual bool connect() = 0;
+  virtual bool create_and_connect() = 0;
 
   /// \brief Trigger receive call on socket.
   virtual void receive() = 0;

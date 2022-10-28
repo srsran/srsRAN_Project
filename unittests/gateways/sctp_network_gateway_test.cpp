@@ -90,7 +90,7 @@ protected:
 
   bool bind_and_listen()
   {
-    if (server->bind() != true) {
+    if (server->create_and_bind() != true) {
       return false;
     }
 
@@ -115,7 +115,7 @@ protected:
     });
   }
 
-  bool connect() { return client->connect(); }
+  bool connect() { return client->create_and_connect(); }
 
   void run_client_receive() { client->receive(); }
 
