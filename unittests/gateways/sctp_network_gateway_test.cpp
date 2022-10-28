@@ -67,14 +67,10 @@ protected:
   {
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
-  }
 
-  void set_config(network_gateway_config server_config, network_gateway_config client_config)
-  {
-    server = create_network_gateway({server_config, server_control_notifier, server_data_notifier});
-    ASSERT_NE(server, nullptr);
-    client = create_network_gateway({client_config, client_control_notifier, client_data_notifier});
-    ASSERT_NE(client, nullptr);
+    // init GW logger
+    srslog::fetch_basic_logger("SCTP-NW-GW", false).set_level(srslog::basic_levels::debug);
+    srslog::fetch_basic_logger("SCTP-NW-GW", false).set_hex_dump_max_size(100);
   }
 
   void TearDown() override
@@ -86,6 +82,14 @@ protected:
     if (rx_thread.joinable()) {
       rx_thread.join();
     }
+  }
+
+  void set_config(network_gateway_config server_config, network_gateway_config client_config)
+  {
+    server = create_network_gateway({server_config, server_control_notifier, server_data_notifier});
+    ASSERT_NE(server, nullptr);
+    client = create_network_gateway({client_config, client_control_notifier, client_data_notifier});
+    ASSERT_NE(client, nullptr);
   }
 
   bool bind_and_listen()
