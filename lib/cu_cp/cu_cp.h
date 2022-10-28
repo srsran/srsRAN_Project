@@ -40,6 +40,7 @@ public:
   f1c_statistics_handler& get_f1c_statistics_handler(du_index_t du_index) override;
 
   ngc_message_handler& get_ngc_message_handler() override;
+  ngc_event_handler&   get_ngc_event_handler() override;
 
   bool amf_is_connected() override { return amf_connected; };
 

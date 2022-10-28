@@ -77,6 +77,11 @@ ngc_message_handler& cu_cp::get_ngc_message_handler()
   return *ngc_entity;
 };
 
+ngc_event_handler& cu_cp::get_ngc_event_handler()
+{
+  return *ngc_entity;
+}
+
 void cu_cp::on_new_connection()
 {
   du_index_t du_index = add_du();
