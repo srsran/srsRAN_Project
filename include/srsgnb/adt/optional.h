@@ -18,6 +18,14 @@ namespace srsgnb {
 /// Tag to disambiguate optional ctor overloads. Introduced only in C++17.
 struct in_place_t {};
 
+/// Empty class type to represent empty optional objects.
+struct nullopt_t {
+  explicit constexpr nullopt_t(int /**/) {}
+};
+
+/// Initializer for empty optional objects.
+constexpr nullopt_t nullopt{0};
+
 namespace detail {
 
 /// Storage of an optional internal value and empty/has_value flag.
@@ -248,9 +256,13 @@ public:
 
 } // namespace detail
 
-/// Wrapper class that represents an optional field of type T. In case has_value()==true, the object of type T has
-/// been constructed in the embedded buffer. The class handles the object safe construction, destruction, move, copy
-/// \tparam T type of stored object
+/// \brief Optional objects.
+///
+/// An instance of this class may either contain a value of type \c T (and <tt>has_value() == true</tt>) or be empty
+/// (and <tt>has_value() == false</tt>).
+///
+/// The class handles the safe construction, destruction, move and copy of the contained object.
+/// \tparam T Type of stored object.
 template <typename T>
 class optional
 {
@@ -262,6 +274,7 @@ public:
   using value_type = T;
 
   constexpr optional() = default;
+  constexpr optional(nullopt_t /**/) : storage() {}
   template <typename U = T, std::enable_if_t<not is_self<U>::value, int> = 0>
   constexpr optional(U&& u) : storage(in_place_t{}, std::forward<U>(u))
   {
@@ -298,6 +311,12 @@ public:
   constexpr T&&       operator*() && noexcept { return value(); }
   constexpr const T&  operator*() const& noexcept { return value(); }
   constexpr const T&& operator*() const&& noexcept { return value(); }
+
+  optional& operator=(nullopt_t /**/) noexcept
+  {
+    reset();
+    return *this;
+  }
 
   /// Constructs a new object of type T inside the optional<T>'s storage, and sets the optional state to not empty.
   template <typename... Args>

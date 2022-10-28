@@ -103,7 +103,7 @@ static optional<unsigned> decode_cblk(span<uint8_t>                       output
     return cfg.nof_ldpc_iterations;
   }
 
-  return {};
+  return nullopt;
 }
 
 // Checks the TB CRC (multiple codeblocks case).
