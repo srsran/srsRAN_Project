@@ -220,6 +220,7 @@ endif ()
 include(CTest)
 
 include_directories(include)
+include_directories(external)
 
 ########################################################################
 # Add headers to cmake project (useful for IDEs)
