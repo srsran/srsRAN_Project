@@ -5,10 +5,10 @@
 
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "32"
+    ref: "33"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/testing-tools
-    ref: "32"
+    ref: "33"
     file: .gitlab/ci-shared/features/all.yml
   - local: .gitlab/ci/build.yml
 
@@ -72,7 +72,7 @@ include-guards:
     key: codechecker-${ANALYZER}-${DOCKER_CODECHECKER_VERSION}
     paths:
       - build/codechecker_output
-  timeout: 4 hours # clangsa is slow
+  timeout: 8 hours # clangsa is slow
 
 codechecker:
   extends: .codechecker

@@ -1,6 +1,6 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "32"
+    ref: "33"
     file: .gitlab/ci-shared/setup/all.yml
 
 stages:
@@ -168,7 +168,7 @@ stages:
       - OS: archlinux-latest
         TEST_MODE: default
         COMPILER: gcc
-        BUILD_TYPE: Release        
+        BUILD_TYPE: Release
       - OS: ubuntu-22.04
         TEST_MODE: asan
         COMPILER: gcc
@@ -235,7 +235,7 @@ build alt [ubuntu 22.04 amd64]:
 # build alt [ubuntu 22.04 arm64v8]:
 #   extends: .build_and_unit_alt
 #   rules:
-#     - if: $CI_DESCRIPTION =~ /Nightly/
+#     - if: $CI_DESCRIPTION =~ /Weekly/
 #   variables:
 #     OS: ubuntu-22.04
 #     TAG_EXTENSION: "-pi4"
@@ -252,7 +252,7 @@ build alt [archlinux-latest amd64]:
 build alt [ubuntu-20.04 amd64]:
   extends: .build_and_unit_alt
   rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
+    - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     OS: ubuntu-20.04
   cache: []
@@ -302,15 +302,25 @@ valgrind:
 
 # Custom
 
-custom build:
+custom build [amd64]:
   extends: .build_and_unit
   rules:
     - if: $ON_MR
       when: manual
       allow_failure: true
   variables:
+    # must be one of ubuntu-22.04, ubuntu-20.04, archlinux-latest
     OS: ""
+    # must be one of gcc, clang
     COMPILER: ""
+    # must be one of default, coverage, asan, tsan, valgrind, none
     TEST_MODE: ""
+    # it will be pased to cmake
     BUILD_ARGS: ""
+
   cache: []
+
+custom build [arm64v8]:
+  extends: custom build [amd64]
+  variables:
+    TAG_EXTENSION: "-pi4"
