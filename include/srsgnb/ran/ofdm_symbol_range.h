@@ -34,9 +34,9 @@ inline ofdm_symbol_range sliv_to_ofdm_symbols(uint32_t sliv)
 /// \brief Converts OFDM symbol range to SLIV.
 /// \param[out] symbols Symbol interval as [S, S+L).
 /// \param[in] sliv An index giving a combination (jointly encoded) of start symbols and length indicator (SLIV).
-inline uint32_t ofdm_symbols_to_sliv(ofdm_symbol_range smb_range)
+inline uint32_t ofdm_symbol_range_to_sliv(ofdm_symbol_range symb_range)
 {
-  return sliv_from_s_and_l(NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, smb_range.start(), smb_range.length());
+  return sliv_from_s_and_l(NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, symb_range.start(), symb_range.length());
 }
 
 } // namespace srsgnb

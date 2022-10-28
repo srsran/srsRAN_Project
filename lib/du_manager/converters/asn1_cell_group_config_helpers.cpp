@@ -314,7 +314,7 @@ make_asn1_rrc_pdsch_time_domain_alloc_list(const pdsch_time_domain_resource_allo
       srsgnb_assertion_failure("Invalid SCH mapping Type={}", cfg.map_type);
   }
 
-  out.start_symbol_and_len = ofdm_symbols_to_sliv(cfg.symbols);
+  out.start_symbol_and_len = ofdm_symbol_range_to_sliv(cfg.symbols);
 
   return out;
 }
