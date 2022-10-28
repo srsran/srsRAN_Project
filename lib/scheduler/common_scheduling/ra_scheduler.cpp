@@ -174,6 +174,7 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
   // Pop pending CRCs and process them.
   pending_crcs.slot_indication();
   span<const ul_crc_indication> new_crc_inds = pending_crcs.get_events();
+
   for (const ul_crc_indication& crc_ind : new_crc_inds) {
     for (const ul_crc_pdu_indication& crc : crc_ind.crcs) {
       srsgnb_assert(crc.ue_index == INVALID_DU_UE_INDEX, "Msg3 HARQ CRCs cannot have a ueId assigned yet");

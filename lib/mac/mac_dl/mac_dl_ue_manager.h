@@ -54,7 +54,7 @@ public:
   {
     du_ue_index_t ue_index = rnti_table[rnti];
     if (not is_du_ue_index_valid(ue_index)) {
-      return MAX_NOF_DU_UES;
+      return INVALID_DU_UE_INDEX;
     }
     return ue_index;
   }

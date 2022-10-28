@@ -14,19 +14,12 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/sch_mcs.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/scheduler/harq_id.h"
 #include "srsgnb/scheduler/sched_consts.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
 #include <array>
 
 namespace srsgnb {
-
-/// Identification of an HARQ process.
-enum harq_id_t { MAX_HARQ_ID = 15, MAX_NOF_HARQS = 16 };
-
-constexpr inline harq_id_t to_harq_id(unsigned h_id)
-{
-  return static_cast<harq_id_t>(h_id);
-}
 
 /// Basic class for HARQ processes: will be extended by DL and UL HARQ process classes
 class harq_process
