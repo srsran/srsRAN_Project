@@ -8,13 +8,13 @@
  *
  */
 
-#include "config_generators.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_srb0_scheduler.h"
 #include "scheduler_test_suite.h"
 #include "srsgnb/ran/duplex_mode.h"
+#include "unittests/scheduler/utils/config_generators.h"
 #include <gtest/gtest.h>
 #include <random>
 

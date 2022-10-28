@@ -8,9 +8,9 @@
  *
  */
 
-#include "config_generators.h"
 #include "lib/scheduler/cell/resource_grid.h"
 #include "srsgnb/support/test_utils.h"
+#include "unittests/scheduler/utils/config_generators.h"
 
 using namespace srsgnb;
 

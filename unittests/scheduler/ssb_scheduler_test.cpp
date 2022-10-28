@@ -8,13 +8,13 @@
  *
  */
 
-#include "config_generators.h"
 #include "lib/scheduler/cell/resource_grid.h"
 #include "lib/scheduler/common_scheduling/ssb_scheduler.h"
 #include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/scheduler/sched_consts.h"
 #include "srsgnb/support/test_utils.h"
+#include "unittests/scheduler/utils/config_generators.h"
 
 /// This will be removed once we can get this value from the slot object.
 #define TEST_HARQ_ASSERT_MSG(SLOT, PERIODICITY, CASE)                                                                  \

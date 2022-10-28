@@ -8,21 +8,15 @@
  *
  */
 
-#include "config_generators.h"
 #include "lib/scheduler/cell/cell_configuration.h"
 #include "scheduler_test_suite.h"
 #include "srsgnb/scheduler/scheduler_factory.h"
 #include "srsgnb/support/test_utils.h"
+#include "unittests/scheduler/utils/config_generators.h"
+#include "utils/scheduler_test_bench.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
-
-class sched_cfg_dummy_notifier : public sched_configuration_notifier
-{
-public:
-  void on_ue_config_complete(du_ue_index_t ue_index) override {}
-  void on_ue_delete_response(du_ue_index_t ue_index) override {}
-};
 
 class uci_sched_tester : public ::testing::Test
 {

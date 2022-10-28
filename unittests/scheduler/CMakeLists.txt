@@ -142,3 +142,7 @@ target_link_libraries(scheduler_uci_indication_test
         gtest
         gtest_main)
 add_test(scheduler_uci_indication_test scheduler_uci_indication_test)
+
+add_executable(scheduler_retx_test scheduler_retx_test.cpp)
+target_link_libraries(scheduler_retx_test srsgnb_sched sched_config scheduler_test_suite gtest gtest_main)
+add_test(scheduler_retx_test scheduler_retx_test)

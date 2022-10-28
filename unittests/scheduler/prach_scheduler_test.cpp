@@ -8,9 +8,9 @@
  *
  */
 
-#include "config_generators.h"
 #include "lib/scheduler/common_scheduling/prach_scheduler.h"
 #include "scheduler_test_suite.h"
+#include "unittests/scheduler/utils/config_generators.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;

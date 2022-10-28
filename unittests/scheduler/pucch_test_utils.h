@@ -10,13 +10,13 @@
 
 #pragma once
 
-#include "config_generators.h"
 #include "lib/du_manager/converters/mac_cell_configuration_helpers.h"
 #include "lib/mac/mac_ctrl/sched_config_helpers.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_scheduler_impl.h"
 #include "scheduler_test_suite.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
+#include "unittests/scheduler/utils/config_generators.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {
