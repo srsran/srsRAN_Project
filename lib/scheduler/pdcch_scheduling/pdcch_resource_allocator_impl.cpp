@@ -255,8 +255,8 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_ue(cell_slot
 {
   // Find Common or UE-specific BWP and CORESET configurations.
   const bwp_configuration&          bwp_cfg = user.dl_bwp_common(bwpid).generic_params;
-  const search_space_configuration& ss_cfg  = user.dl_search_space(ss_id);
-  const coreset_configuration&      cs_cfg  = user.dl_coreset(ss_cfg.cs_id);
+  const search_space_configuration& ss_cfg  = user.search_space(ss_id);
+  const coreset_configuration&      cs_cfg  = user.coreset(ss_cfg.cs_id);
 
   return alloc_dl_pdcch_helper(slot_alloc, rnti, bwp_cfg, cs_cfg, ss_cfg, aggr_lvl, dci_fmt);
 }
@@ -269,9 +269,9 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_ue(cell_slot
                                                                        aggregation_level             aggr_lvl)
 {
   // Find Common or UE-specific BWP and CORESET configurations.
-  const bwp_configuration&          bwp_cfg = user.dl_bwp_common(bwpid).generic_params;
-  const search_space_configuration& ss_cfg  = user.dl_search_space(ss_id);
-  const coreset_configuration&      cs_cfg  = user.dl_coreset(ss_cfg.cs_id);
+  const bwp_configuration&          bwp_cfg = user.ul_bwp_common(bwpid).generic_params;
+  const search_space_configuration& ss_cfg  = user.search_space(ss_id);
+  const coreset_configuration&      cs_cfg  = user.coreset(ss_cfg.cs_id);
 
   // Create PDCCH list element.
   slot_alloc.result.dl.ul_pdcchs.emplace_back();
@@ -281,8 +281,10 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_ue(cell_slot
   pdcch.ctx.rnti              = rnti;
   pdcch.ctx.cces.ncce         = 0;
   // [Implementation-defined] We allocate the DCI on the SearchSpace starting from symbols 0.
-  pdcch.ctx.starting_symbol = 0;
-  pdcch.ctx.cces.aggr_lvl   = aggr_lvl;
+  pdcch.ctx.starting_symbol   = 0;
+  pdcch.ctx.cces.aggr_lvl     = aggr_lvl;
+  pdcch.ctx.n_id_pdcch_data   = get_scrambling_n_ID(cell_cfg, cs_cfg, ss_cfg);
+  pdcch.ctx.n_rnti_pdcch_data = get_scrambling_n_RNTI(rnti, cs_cfg, ss_cfg);
 
   // Allocate a position for UL PDCCH in CORESET.
   pdcch_slot_allocator& pdcch_alloc = get_pdcch_slot_alloc(slot_alloc.slot);
@@ -316,16 +318,10 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
   pdcch.ctx.rnti              = rnti;
   pdcch.ctx.cces.ncce         = 0;
   // [Implementation-defined] We allocate the DCI on the SearchSpace starting from symbols 0.
-  pdcch.ctx.starting_symbol = 0;
-  pdcch.ctx.cces.aggr_lvl   = aggr_lvl;
-  // See TS 38.211, 7.3.2.3 - Scrambling.
-  pdcch.ctx.n_id_pdcch_data = cs_cfg.pdcch_dmrs_scrambling_id;
-  if (ss_cfg.type == search_space_configuration::type::ue_dedicated and
-      cs_cfg.pdcch_dmrs_scrambling_id != cell_cfg.pci) {
-    pdcch.ctx.n_rnti_pdcch_data = rnti;
-  } else {
-    pdcch.ctx.n_rnti_pdcch_data = 0;
-  }
+  pdcch.ctx.starting_symbol   = 0;
+  pdcch.ctx.cces.aggr_lvl     = aggr_lvl;
+  pdcch.ctx.n_id_pdcch_data   = get_scrambling_n_ID(cell_cfg, cs_cfg, ss_cfg);
+  pdcch.ctx.n_rnti_pdcch_data = get_scrambling_n_RNTI(rnti, cs_cfg, ss_cfg);
 
   // Allocate a position for DL PDCCH in CORESET.
   if (not pdcch_alloc.alloc_pdcch(pdcch.ctx, slot_alloc, ss_cfg)) {

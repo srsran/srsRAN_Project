@@ -67,7 +67,7 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   }
 
   // Find a SearchSpace candidate.
-  const search_space_configuration* ss_cfg = ue_cell_cfg.find_dl_search_space(grant.ss_id);
+  const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(grant.ss_id);
   if (ss_cfg == nullptr) {
     logger.warning("Failed to allocate PDSCH. Cause: No valid SearchSpace found.");
     return false;
@@ -219,7 +219,7 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
   }
 
   // Find a SearchSpace candidate.
-  const search_space_configuration* ss_cfg = ue_cell_cfg.find_dl_search_space(grant.ss_id);
+  const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(grant.ss_id);
   if (ss_cfg == nullptr) {
     logger.warning("Failed to allocate PDSCH. Cause: No valid SearchSpace found.");
     return false;
@@ -253,14 +253,15 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
   }
 
   // Fill UL PDCCH DCI.
-  pdcch->dci.type                    = dci_ul_rnti_config_type::c_rnti_f0_0;
-  pdcch->dci.c_rnti_f0_0             = {};
-  dci_0_0_c_rnti_configuration& f0_0 = pdcch->dci.c_rnti_f0_0;
-  dci_sizes                     dci_sz =
-      get_dci_sizes(dci_size_config{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
-                                    ue_cell_cfg.dl_bwp_common(ue_cc->active_bwp_id()).generic_params.crbs.length(),
-                                    cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
-                                    bwp_ul_cmn.generic_params.crbs.length()});
+  pdcch->dci.type                      = dci_ul_rnti_config_type::c_rnti_f0_0;
+  pdcch->dci.c_rnti_f0_0               = {};
+  dci_0_0_c_rnti_configuration& f0_0   = pdcch->dci.c_rnti_f0_0;
+  dci_sizes                     dci_sz = get_dci_sizes(
+      dci_size_config{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
+                      ue_cell_cfg.dl_bwp_common(ue_cc->active_bwp_id()).generic_params.crbs.length(),
+                      cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+                      bwp_ul_cmn.generic_params.crbs.length(),
+                      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()});
   f0_0.payload_size             = dci_sz.format0_0_ue_size; // TODO: Check if SS is common or UE-dedicated.
   f0_0.N_ul_hop                 = 0;                        // freq hopping is false.
   f0_0.hopping_offset           = 0;                        // freq hopping is false.

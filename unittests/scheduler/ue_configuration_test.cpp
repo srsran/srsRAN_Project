@@ -18,20 +18,20 @@ void test_ue_cfg_creation()
   // Test Common Config.
   TESTASSERT(ue_cfg.find_dl_bwp_common(to_bwp_id(0)) != nullptr);
   TESTASSERT(ue_cfg.dl_bwp_common(to_bwp_id(0)).generic_params == cell_cfg.dl_cfg_common.init_dl_bwp.generic_params);
-  TESTASSERT(ue_cfg.dl_coreset(to_coreset_id(0)).id == cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->id);
-  TESTASSERT_EQ(0, ue_cfg.dl_search_space(to_search_space_id(0)).id);
-  TESTASSERT(ue_cfg.dl_search_space(to_search_space_id(0)) ==
+  TESTASSERT(ue_cfg.coreset(to_coreset_id(0)).id == cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->id);
+  TESTASSERT_EQ(0, ue_cfg.search_space(to_search_space_id(0)).id);
+  TESTASSERT(ue_cfg.search_space(to_search_space_id(0)) ==
              cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0]);
-  TESTASSERT_EQ(1, ue_cfg.dl_search_space(to_search_space_id(1)).id);
-  TESTASSERT(ue_cfg.dl_search_space(to_search_space_id(1)) ==
+  TESTASSERT_EQ(1, ue_cfg.search_space(to_search_space_id(1)).id);
+  TESTASSERT(ue_cfg.search_space(to_search_space_id(1)) ==
              cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1]);
 
   // Test Dedicated Config.
-  TESTASSERT(ue_cfg.find_dl_coreset(to_coreset_id(2)) == nullptr);
-  TESTASSERT_EQ(2, ue_cfg.dl_search_space(to_search_space_id(2)).id);
-  TESTASSERT(ue_cfg.dl_search_space(to_search_space_id(2)) ==
+  TESTASSERT(ue_cfg.find_coreset(to_coreset_id(2)) == nullptr);
+  TESTASSERT_EQ(2, ue_cfg.search_space(to_search_space_id(2)).id);
+  TESTASSERT(ue_cfg.search_space(to_search_space_id(2)) ==
              ue_create_msg.cells[0].serv_cell_cfg->init_dl_bwp.pdcch_cfg->search_spaces[0]);
-  TESTASSERT(ue_cfg.find_dl_search_space(to_search_space_id(3)) == nullptr);
+  TESTASSERT(ue_cfg.find_search_space(to_search_space_id(3)) == nullptr);
 }
 
 void test_ue_cfg_reconfig()
@@ -50,10 +50,9 @@ void test_ue_cfg_reconfig()
 
   ue_cfg.reconfigure(*ue_cell_reconf.serv_cell_cfg);
 
-  TESTASSERT(ue_cfg.find_dl_coreset(to_coreset_id(2)) != nullptr);
-  TESTASSERT_EQ(2, ue_cfg.dl_coreset(to_coreset_id(2)).id);
-  TESTASSERT(ue_cfg.dl_coreset(to_coreset_id(2)) ==
-             ue_cell_reconf.serv_cell_cfg->init_dl_bwp.pdcch_cfg->coresets.back());
+  TESTASSERT(ue_cfg.find_coreset(to_coreset_id(2)) != nullptr);
+  TESTASSERT_EQ(2, ue_cfg.coreset(to_coreset_id(2)).id);
+  TESTASSERT(ue_cfg.coreset(to_coreset_id(2)) == ue_cell_reconf.serv_cell_cfg->init_dl_bwp.pdcch_cfg->coresets.back());
 }
 
 int main()

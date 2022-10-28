@@ -20,9 +20,9 @@ void ue_cell_configuration::reconfigure(const serving_cell_config& cell_cfg_ded_
   cell_cfg_ded = cell_cfg_ded_req;
 
   // Clear previous lookup tables.
-  bwp_table        = {};
-  dl_coresets      = {};
-  dl_search_spaces = {};
+  bwp_table     = {};
+  coresets      = {};
+  search_spaces = {};
 
   // Recompute DL param lookup tables.
   configure_bwp_common_cfg(to_bwp_id(0), cell_cfg_common.dl_cfg_common.init_dl_bwp);
@@ -48,23 +48,23 @@ void ue_cell_configuration::configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_d
   // Compute DL BWP-Id lookup table.
   bwp_table[bwpid].dl_bwp_common = &bwp_dl_common;
   for (const search_space_configuration& ss : bwp_dl_common.pdcch_common.search_spaces) {
-    bwp_table[bwpid].dl_search_spaces.push_back(&ss);
+    bwp_table[bwpid].search_spaces.push_back(&ss);
   }
 
   // Compute CORESET-Id lookup table.
   if (bwp_dl_common.pdcch_common.coreset0.has_value()) {
-    dl_coresets[0]          = &*bwp_dl_common.pdcch_common.coreset0;
+    coresets[0]             = &*bwp_dl_common.pdcch_common.coreset0;
     coreset_id_to_bwp_id[0] = bwpid;
   }
   if (bwp_dl_common.pdcch_common.common_coreset.has_value()) {
-    dl_coresets[bwp_dl_common.pdcch_common.common_coreset->id] = &*bwp_dl_common.pdcch_common.common_coreset;
+    coresets[bwp_dl_common.pdcch_common.common_coreset->id] = &*bwp_dl_common.pdcch_common.common_coreset;
 
     coreset_id_to_bwp_id[bwp_dl_common.pdcch_common.common_coreset->id] = bwpid;
   }
 
   // Compute SearchSpace-Id lookup table.
   for (const search_space_configuration& ss : bwp_dl_common.pdcch_common.search_spaces) {
-    dl_search_spaces[ss.id] = &ss;
+    search_spaces[ss.id] = &ss;
   }
 }
 
@@ -83,7 +83,7 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_down
   }
 
   for (const search_space_configuration& ss : bwp_dl_ded.pdcch_cfg->search_spaces) {
-    bwp_table[bwpid].dl_search_spaces.push_back(&ss);
+    bwp_table[bwpid].search_spaces.push_back(&ss);
   }
 
   // Compute CORESET-Id lookup table.
@@ -92,14 +92,14 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_down
     // ControlResourceSetId as used for commonControlResourceSet configured via PDCCH-ConfigCommon,
     // the configuration from PDCCH-Config always takes precedence and should not be updated by the UE based on
     // servingCellConfigCommon.
-    dl_coresets[cs.id] = &cs;
+    coresets[cs.id] = &cs;
 
     coreset_id_to_bwp_id[cs.id] = bwpid;
   }
 
   // Compute SearchSpace-Id lookup table.
   for (const search_space_configuration& ss : bwp_dl_ded.pdcch_cfg->search_spaces) {
-    dl_search_spaces[ss.id] = &ss;
+    search_spaces[ss.id] = &ss;
   }
 }
 
@@ -112,8 +112,8 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_upli
 span<const pdsch_time_domain_resource_allocation>
 ue_cell_configuration::get_pdsch_time_domain_list(search_space_id ss_id) const
 {
-  srsgnb_assert(dl_search_spaces[ss_id] != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
-  const search_space_configuration& ss_cfg  = *dl_search_spaces[ss_id];
+  srsgnb_assert(search_spaces[ss_id] != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
+  const search_space_configuration& ss_cfg  = *search_spaces[ss_id];
   const bwp_params&                 bwp_row = bwp_table[coreset_id_to_bwp_id[ss_cfg.cs_id]];
 
   if (ss_cfg.type != search_space_configuration::type::common or ss_cfg.cs_id != to_coreset_id(0)) {

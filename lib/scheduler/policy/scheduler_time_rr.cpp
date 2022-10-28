@@ -53,7 +53,7 @@ bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
 
     // Search for available symbolxRB resources in different SearchSpaces.
     const bwp_downlink_common& bwp_dl = ue_cc.cfg().dl_bwp_common(ue_cc.active_bwp_id());
-    for (const search_space_configuration* ss_cfg : ue_cc.cfg().get_dl_search_spaces(ue_cc.active_bwp_id())) {
+    for (const search_space_configuration* ss_cfg : ue_cc.cfg().get_search_spaces(ue_cc.active_bwp_id())) {
       span<const pdsch_time_domain_resource_allocation> pdsch_list = ue_cc.cfg().get_pdsch_time_domain_list(ss_cfg->id);
 
       for (unsigned time_res = 0; time_res != pdsch_list.size(); ++time_res) {

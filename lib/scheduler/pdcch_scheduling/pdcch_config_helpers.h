@@ -59,4 +59,31 @@ inline prb_index_list cce_to_prb_mapping(const bwp_configuration&     bwp_cfg,
       bwp_cfg.crbs.start(), cs_cfg.freq_domain_resources(), cs_cfg.duration, to_nof_cces(aggr_lvl), ncce);
 }
 
+/// Calculates \f$n_ID\f$ as per TS38.211 7.3.2.3.
+/// \return integer within values: {0,1,...,65535}.
+inline unsigned get_scrambling_n_ID(const cell_configuration&         cell_cfg,
+                                    const coreset_configuration&      cs_cfg,
+                                    const search_space_configuration& ss_cfg)
+{
+  // For a UE-specifica search space [...] equals the higher-layer parameter pdcch-DMRS-ScramblingID if configured,
+  if (ss_cfg.type == search_space_configuration::type::ue_dedicated and cs_cfg.pdcch_dmrs_scrambling_id.has_value()) {
+    return *cs_cfg.pdcch_dmrs_scrambling_id;
+  }
+  // \f$n_id = N_\{ID}^{cell}\f$ otherwise.
+  return cell_cfg.pci;
+}
+
+/// Calculates \f$n_{RNTI}\f$ as per TS38.211, 7.3.2.3.
+/// \return integer within values: {0,1,...,65535}.
+inline unsigned
+get_scrambling_n_RNTI(rnti_t rnti, const coreset_configuration& cs_cfg, const search_space_configuration& ss_cfg)
+{
+  // given by the C-RNTI for a PDCCH in a UE-speicfic search space if the higher-layer parameter pdcch-DMRS-ScramblingID
+  // is configured,
+  if (ss_cfg.type == search_space_configuration::type::ue_dedicated and cs_cfg.pdcch_dmrs_scrambling_id.has_value()) {
+    return rnti;
+  }
+  return 0;
+}
+
 } // namespace srsgnb

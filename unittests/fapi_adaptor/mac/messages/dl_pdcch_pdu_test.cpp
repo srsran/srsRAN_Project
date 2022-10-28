@@ -65,7 +65,7 @@ static void test_conversion_ok()
   TESTASSERT_EQ(mac_pdu.dcis.front().parameters->ctx.cces.ncce, fapi_pdu.dl_dci.front().cce_index);
   TESTASSERT_EQ(to_nof_cces(mac_pdu.dcis.front().parameters->ctx.cces.aggr_lvl),
                 fapi_pdu.dl_dci.front().aggregation_level);
-  TESTASSERT_EQ(mac_pdu.coreset_cfg->pdcch_dmrs_scrambling_id, fapi_pdu.parameters_v4.params.front().nid_pdcch_dmrs);
+  TESTASSERT_EQ(*mac_pdu.coreset_cfg->pdcch_dmrs_scrambling_id, fapi_pdu.parameters_v4.params.front().nid_pdcch_dmrs);
 
   TESTASSERT_EQ(*mac_pdu.dcis.front().payload, fapi_pdu.dl_dci.front().payload);
 }

@@ -60,7 +60,7 @@ struct coreset_configuration {
   optional<interleaved_mapping_type> interleaved;
   precoder_granularity_type          precoder_granurality;
   /// PDCCH DMRS scrambling initialization. Values: (0..65535).
-  unsigned pdcch_dmrs_scrambling_id;
+  optional<unsigned> pdcch_dmrs_scrambling_id;
 
   void set_coreset0_crbs(crb_interval crbs)
   {
