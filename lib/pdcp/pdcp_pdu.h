@@ -21,9 +21,9 @@ namespace srsgnb {
 /// Ref: TS 38.323 Sec. 4.3.1
 constexpr size_t pdcp_sdu_max_size = 9000;
 
-/// Maximum supported size of a PDCP PDU
+/// Maximum supported size of a PDCP Control PDU
 /// Ref: TS 38.323 Sec. 4.3.1
-constexpr size_t pdcp_pdu_max_size = 9000;
+constexpr size_t pdcp_control_pdu_max_size = 9000;
 
 /// PDCP Data/Control (D/C) field
 /// Ref: TS 38.323 Sec. 6.3.7

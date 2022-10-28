@@ -276,8 +276,8 @@ byte_buffer pdcp_entity_rx::compile_status_report()
   // Pack RX_DELIV into FMC field
   enc.pack(st.rx_deliv, 32);
 
-  // Set bitmap boundaries, ensure to not exceed max PDU size (9000 Bytes)
-  constexpr uint32_t max_bits     = (pdcp_pdu_max_size - 5) * 8;
+  // Set bitmap boundaries, ensure to not exceed max control PDU size (9000 Bytes)
+  constexpr uint32_t max_bits     = (pdcp_control_pdu_max_size - 5) * 8;
   uint32_t           bitmap_begin = st.rx_deliv + 1; // Bitmap starts from FMC+1
   uint32_t           bitmap_end   = st.rx_next;
   if (bitmap_begin < bitmap_end && bitmap_end - bitmap_begin > max_bits) {
