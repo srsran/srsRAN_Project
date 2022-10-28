@@ -12,6 +12,7 @@
 
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsgnb/gateways/network_gateway.h"
 #include "srsgnb/ngap/ngc.h"
 
 namespace srsgnb {
@@ -44,6 +45,32 @@ public:
 private:
   srslog::basic_logger& logger;
   ngc_message_handler*  handler = nullptr;
+};
+
+/// Dummy handler storing and printing the received PDU.
+class dummy_ngc_message_handler : public ngc_message_handler
+{
+public:
+  dummy_ngc_message_handler() : logger(srslog::fetch_basic_logger("TEST")){};
+  void handle_message(const ngc_message& msg) override
+  {
+    last_msg = msg;
+    logger.info("Received a NGAP PDU of type {}", msg.pdu.type().to_string());
+  }
+  ngc_message last_msg;
+
+private:
+  srslog::basic_logger& logger;
+};
+
+/// Dummy PDU handler
+class dummy_network_gateway_data_handler : public srsgnb::network_gateway_data_handler
+{
+public:
+  dummy_network_gateway_data_handler(){};
+  void handle_pdu(const byte_buffer& pdu) override { last_pdu = pdu.copy(); }
+
+  byte_buffer last_pdu;
 };
 
 } // namespace srs_cu_cp
