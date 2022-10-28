@@ -60,7 +60,7 @@ bool sctp_network_gateway::subscripe_to_events()
   events.sctp_association_event      = 1;
 
   if (::setsockopt(sock_fd, IPPROTO_SCTP, SCTP_EVENTS, &events, sizeof(events))) {
-    logger.error("Subscribing to SCTP events failed");
+    logger.error("Subscribing to SCTP events failed: {}", strerror(errno));
     return false;
   }
   return true;
@@ -73,7 +73,7 @@ bool sctp_network_gateway::set_receive_timeout(unsigned rx_timeout_sec)
   tv.tv_usec = 0;
 
   if (::setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv)) {
-    logger.error("Couldn't set receive timeout for socket");
+    logger.error("Couldn't set receive timeout for socket: {}", strerror(errno));
     return false;
   }
 
@@ -84,7 +84,7 @@ bool sctp_network_gateway::set_reuse_addr()
 {
   int one = 1;
   if (::setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one))) {
-    logger.error("Couldn't set reuseaddr for socket");
+    logger.error("Couldn't set reuseaddr for socket: {}", strerror(errno));
     return false;
   }
   return true;
@@ -179,7 +179,7 @@ bool sctp_network_gateway::listen()
   // Listen for connections
   int ret = ::listen(sock_fd, SOMAXCONN);
   if (ret != 0) {
-    logger.error("Error in SCTP socket listen");
+    logger.error("Error in SCTP socket listen: {}", strerror(errno));
     close_socket();
     return false;
   }
@@ -280,8 +280,8 @@ bool sctp_network_gateway::close_socket()
     return false;
   }
 
-  if (close(sock_fd) == -1) {
-    logger.error("Error closing socket");
+  if (::close(sock_fd) == -1) {
+    logger.error("Error closing socket: {}", strerror(errno));
     return false;
   }
 
@@ -419,7 +419,7 @@ void sctp_network_gateway::handle_pdu(const byte_buffer& pdu)
                                   0,
                                   0);
     if (bytes_sent == -1) {
-      logger.error("Couldn't send {} B of data on SCTP socket", pdu.length());
+      logger.error("Couldn't send {} B of data on SCTP socket: {}", pdu.length(), strerror(errno));
       return;
     }
   }
