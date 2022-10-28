@@ -262,16 +262,17 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
                       cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
                       bwp_ul_cmn.generic_params.crbs.length(),
                       cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()});
-  f0_0.payload_size             = dci_sz.format0_0_ue_size; // TODO: Check if SS is common or UE-dedicated.
-  f0_0.N_ul_hop                 = 0;                        // freq hopping is false.
-  f0_0.hopping_offset           = 0;                        // freq hopping is false.
-  f0_0.N_rb_ul_bwp              = bwp_ul_cmn.generic_params.crbs.length();
-  f0_0.frequency_resource       = ra_frequency_type1_get_riv(ra_frequency_type1_configuration{
+  f0_0.payload_size       = ss_cfg->type == search_space_configuration::type::ue_dedicated ? dci_sz.format0_0_ue_size
+                                                                                           : dci_sz.format0_0_common_size;
+  f0_0.N_ul_hop           = 0; // freq hopping is false.
+  f0_0.hopping_offset     = 0; // freq hopping is false.
+  f0_0.N_rb_ul_bwp        = bwp_ul_cmn.generic_params.crbs.length();
+  f0_0.frequency_resource = ra_frequency_type1_get_riv(ra_frequency_type1_configuration{
       cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), prbs.start(), prbs.length()});
-  f0_0.time_resource            = time_resource;
-  f0_0.frequency_hopping_flag   = 0; // TODO.
-  f0_0.modulation_coding_scheme = h_ul.mcs(0).to_uint();
-  f0_0.new_data_indicator       = h_ul.ndi(0);
+  f0_0.time_resource      = time_resource;
+  f0_0.frequency_hopping_flag                     = 0; // TODO.
+  f0_0.modulation_coding_scheme                   = h_ul.mcs(0).to_uint();
+  f0_0.new_data_indicator                         = h_ul.ndi(0);
   static constexpr std::array<unsigned, 4> rv_idx = {0, 2, 3, 1};
   f0_0.redundancy_version                         = h_ul.nof_retx() % rv_idx.size();
   f0_0.harq_process_number                        = h_ul.pid;
