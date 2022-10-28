@@ -17,6 +17,14 @@
 
 namespace srsgnb {
 
+/// Maximum supported size of a PDCP SDU
+/// Ref: TS 38.323 Sec. 4.3.1
+constexpr size_t pdcp_sdu_max_size = 9000;
+
+/// Maximum supported size of a PDCP PDU
+/// Ref: TS 38.323 Sec. 4.3.1
+constexpr size_t pdcp_pdu_max_size = 9000;
+
 /// PDCP Data/Control (D/C) field
 /// Ref: TS 38.323 Sec. 6.3.7
 enum class pdcp_dc_field : unsigned {

@@ -75,6 +75,10 @@ const std::array<uint8_t, pdu_size_snlen18> pdu1_count262147_snlen18 =
     {0x80, 0x00, 0x03, 0x10, 0x49, 0x58, 0x17, 0x34, 0x71};
 const std::array<uint8_t, pdu_size_snlen18> pdu1_count262148_snlen18 =
     {0x80, 0x00, 0x04, 0xfc, 0x2d, 0x35, 0x36, 0x76, 0x33};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_count334103_snlen18 =
+    {0x81, 0x19, 0x17, 0x95, 0x46, 0xd3, 0xf8, 0x79, 0x5c};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_count334104_snlen18 =
+    {0x81, 0x19, 0x18, 0x64, 0xb4, 0x72, 0x84, 0xc7, 0xe4};
 const std::array<uint8_t, pdu_size_snlen18> pdu1_count4294967295_snlen18 =
     {0x83, 0xff, 0xff, 0xaa, 0x13, 0x1a, 0x29, 0x54, 0x12};
 
@@ -160,6 +164,12 @@ inline bool get_pdu_test_vector(pdcp_sn_size sn_size, uint32_t count, byte_buffe
         return true;
       case 262148:
         exp_pdu = byte_buffer{pdu1_count262148_snlen18};
+        return true;
+      case 334103:
+        exp_pdu = byte_buffer{pdu1_count334103_snlen18};
+        return true;
+      case 334104:
+        exp_pdu = byte_buffer{pdu1_count334104_snlen18};
         return true;
       case 4294967295:
         exp_pdu = byte_buffer{pdu1_count4294967295_snlen18};

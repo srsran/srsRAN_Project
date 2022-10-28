@@ -20,24 +20,43 @@
 
 using namespace srsgnb;
 
-/// Test correct consntruction of PDCP status report
+/// Test correct construction of PDCP status report
 /// All PDUs are received before the t-Reordering expires.
 TEST_P(pdcp_rx_status_report_test, build_status_report)
 {
-  auto test_rx_in_order = [this](uint32_t count) {
-    srsgnb::test_delimit_logger delimiter(
-        "RX build status report test, no t-Reordering. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
-    init(GetParam(), pdcp_t_reordering::ms10);
+  uint32_t count = 262143;
 
-    pdcp_rx->set_as_security_config(sec_cfg);
-    pdcp_rx->enable_or_disable_security(pdcp_integrity_enabled::no, pdcp_ciphering_enabled::enabled);
+  srsgnb::test_delimit_logger delimiter(
+      "RX build status report test, no t-Reordering. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
+  init(GetParam(), pdcp_t_reordering::ms10);
 
-    pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
-    pdcp_rx->set_state(init_state);
+  pdcp_rx->set_as_security_config(sec_cfg);
+  pdcp_rx->enable_or_disable_security(pdcp_integrity_enabled::no, pdcp_ciphering_enabled::enabled);
 
-    // Check status report in the initial state (no bitmap present)
-    byte_buffer status_report = pdcp_rx->compile_status_report();
-    EXPECT_EQ(status_report.length(), 5);
+  pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
+  pdcp_rx->set_state(init_state);
+
+  // Check status report in the initial state (no bitmap present)
+  byte_buffer status_report = pdcp_rx->compile_status_report();
+  EXPECT_EQ(status_report.length(), 5);
+  {
+    bit_decoder dec(status_report);
+    uint8_t     hdr_first_byte;
+    dec.unpack(hdr_first_byte, 8);
+    EXPECT_EQ(hdr_first_byte, 0x00);
+    uint32_t hdr_fmc;
+    dec.unpack(hdr_fmc, 32);
+    EXPECT_EQ(hdr_fmc, count);
+  }
+
+  for (uint32_t i = count + 5; i > count; i--) {
+    byte_buffer test_pdu;
+    get_test_pdu(i, test_pdu);
+    pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu)});
+
+    // Check status report while Rx'ing PDUs in reverse order (bitmap present)
+    status_report = pdcp_rx->compile_status_report();
+    EXPECT_EQ(status_report.length(), 6);
     {
       bit_decoder dec(status_report);
       uint8_t     hdr_first_byte;
@@ -46,54 +65,91 @@ TEST_P(pdcp_rx_status_report_test, build_status_report)
       uint32_t hdr_fmc;
       dec.unpack(hdr_fmc, 32);
       EXPECT_EQ(hdr_fmc, count);
+      uint8_t bitmap;
+      dec.unpack(bitmap, 8);
+      EXPECT_EQ(bitmap, (0b11110000 << (count + 5 - i)) & 0xff);
     }
+  }
 
-    for (uint32_t i = count + 5; i > count; i--) {
-      byte_buffer test_pdu;
-      get_test_pdu(i, test_pdu);
-      pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu)});
+  byte_buffer test_pdu;
+  get_test_pdu(count, test_pdu);
+  pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu)});
 
-      // Check status report while Rx'ing PDUs in reverse order (bitmap present)
-      status_report = pdcp_rx->compile_status_report();
-      EXPECT_EQ(status_report.length(), 6);
-      {
-        bit_decoder dec(status_report);
-        uint8_t     hdr_first_byte;
-        dec.unpack(hdr_first_byte, 8);
-        EXPECT_EQ(hdr_first_byte, 0x00);
-        uint32_t hdr_fmc;
-        dec.unpack(hdr_fmc, 32);
-        EXPECT_EQ(hdr_fmc, count);
-        uint8_t bitmap;
-        dec.unpack(bitmap, 8);
-        EXPECT_EQ(bitmap, (0b11110000 << (count + 5 - i)) & 0xff);
+  // Check status report in the final state (no bitmap present)
+  status_report = pdcp_rx->compile_status_report();
+  EXPECT_EQ(status_report.length(), 5);
+  {
+    bit_decoder dec(status_report);
+    uint8_t     hdr_first_byte;
+    dec.unpack(hdr_first_byte, 8);
+    EXPECT_EQ(hdr_first_byte, 0x00);
+    uint32_t hdr_fmc;
+    dec.unpack(hdr_fmc, 32);
+    EXPECT_EQ(hdr_fmc, count + 6);
+  }
+}
+
+/// Test correct construction of a truncated PDCP status report (9000 Bytes)
+TEST_P(pdcp_rx_status_report_test, build_truncated_status_report)
+{
+  // this test only applies to 18-bit SNs.
+  if (sn_size == pdcp_sn_size::size12bits) {
+    return;
+  }
+
+  uint32_t count = 262143;
+
+  srsgnb::test_delimit_logger delimiter(
+      "RX build status report test, no t-Reordering. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
+  init(GetParam(), pdcp_t_reordering::ms10);
+
+  pdcp_rx->set_as_security_config(sec_cfg);
+  pdcp_rx->enable_or_disable_security(pdcp_integrity_enabled::no, pdcp_ciphering_enabled::enabled);
+
+  pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
+  pdcp_rx->set_state(init_state);
+
+  // Check status report in the initial state (no bitmap present)
+  byte_buffer status_report = pdcp_rx->compile_status_report();
+  EXPECT_EQ(status_report.length(), 5);
+  {
+    bit_decoder dec(status_report);
+    uint8_t     hdr_first_byte;
+    dec.unpack(hdr_first_byte, 8);
+    EXPECT_EQ(hdr_first_byte, 0x00);
+    uint32_t hdr_fmc;
+    dec.unpack(hdr_fmc, 32);
+    EXPECT_EQ(hdr_fmc, count);
+  }
+
+  byte_buffer test_pdu1;
+  get_test_pdu(count + (9000 - 5) * 8, test_pdu1); // Rx PDU with a COUNT value at max capacity of the report
+  pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu1)});
+
+  byte_buffer test_pdu2;
+  get_test_pdu(count + 1 + (9000 - 5) * 8, test_pdu2); // Rx PDU with a COUNT value beyond max capacity of the report
+  pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu2)});
+
+  // Check status report in the final state (truncated bitmap present)
+  status_report = pdcp_rx->compile_status_report();
+  EXPECT_EQ(status_report.length(), 9000);
+  {
+    bit_decoder dec(status_report);
+    uint8_t     hdr_first_byte;
+    dec.unpack(hdr_first_byte, 8);
+    EXPECT_EQ(hdr_first_byte, 0x00);
+    uint32_t hdr_fmc;
+    dec.unpack(hdr_fmc, 32);
+    EXPECT_EQ(hdr_fmc, count);
+    uint8_t bitmap;
+    for (uint32_t i = 0; i < (9000 - 5); i++) {
+      ASSERT_TRUE(dec.unpack(bitmap, 8));
+      if (i < (9000 - 5) - 1) {
+        EXPECT_EQ(bitmap, 0xff); // whole bitmap shall be ones (all missing)
+      } else {
+        EXPECT_EQ(bitmap, 0xfe); // only the last one is received
       }
     }
-
-    byte_buffer test_pdu;
-    get_test_pdu(count, test_pdu);
-    pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu)});
-
-    // Check status report in the final state (no bitmap present)
-    status_report = pdcp_rx->compile_status_report();
-    EXPECT_EQ(status_report.length(), 5);
-    {
-      bit_decoder dec(status_report);
-      uint8_t     hdr_first_byte;
-      dec.unpack(hdr_first_byte, 8);
-      EXPECT_EQ(hdr_first_byte, 0x00);
-      uint32_t hdr_fmc;
-      dec.unpack(hdr_fmc, 32);
-      EXPECT_EQ(hdr_fmc, count + 6);
-    }
-  };
-
-  if (sn_size == pdcp_sn_size::size12bits) {
-    test_rx_in_order(262143);
-  } else if (sn_size == pdcp_sn_size::size18bits) {
-    test_rx_in_order(262143);
-  } else {
-    FAIL();
   }
 }
 

@@ -276,8 +276,16 @@ byte_buffer pdcp_entity_rx::compile_status_report()
   // Pack RX_DELIV into FMC field
   enc.pack(st.rx_deliv, 32);
 
-  // Pack Bitmap
-  for (uint32_t i = st.rx_deliv + 1; i < st.rx_next; i++) {
+  // Set bitmap boundaries, ensure to not exceed max PDU size (9000 Bytes)
+  constexpr uint32_t max_bits     = (pdcp_pdu_max_size - 5) * 8;
+  uint32_t           bitmap_begin = st.rx_deliv + 1; // Bitmap starts from FMC+1
+  uint32_t           bitmap_end   = st.rx_next;
+  if (bitmap_begin < bitmap_end && bitmap_end - bitmap_begin > max_bits) {
+    bitmap_end = bitmap_begin + max_bits;
+  }
+
+  // Pack bitmap
+  for (uint32_t i = bitmap_begin; i < bitmap_end; i++) {
     // Bit == 0: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is missing.
     // Bit == 1: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is correctly received.
     unsigned bit = reorder_queue.find(i) != reorder_queue.end() ? 0 : 1;
