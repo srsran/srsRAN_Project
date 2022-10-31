@@ -11,6 +11,7 @@
 #include "pdcp_entity_tx.h"
 #include "srsgnb/security/ciphering.h"
 #include "srsgnb/security/integrity.h"
+#include "srsgnb/support/bit_encoding.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
 using namespace srsgnb;
@@ -100,6 +101,62 @@ void pdcp_entity_tx::write_to_lower_layers(uint32_t count, byte_buffer buf)
                   ciphering_enabled);
   metrics_add_pdus(1, buf.length());
   lower_dn.on_new_pdu(std::move(buf));
+}
+
+void pdcp_entity_tx::handle_status_report(byte_buffer_slice_chain status)
+{
+  byte_buffer buf = {status.begin(), status.end()};
+  bit_decoder dec(buf);
+
+  // Unpack and check PDU header
+  uint32_t dc;
+  dec.unpack(dc, 1);
+  srsgnb_assert(dc == to_number(pdcp_dc_field::control),
+                "Cannot handle status report due to invalid D/C field: Expected {}, Got {}",
+                to_number(pdcp_dc_field::control),
+                dc);
+  uint32_t cpt;
+  dec.unpack(cpt, 3);
+  srsgnb_assert(cpt == to_number(pdcp_control_pdu_type::status_report),
+                "Cannot handle status report due to invalid control PDU type: Expected {}, Got {}",
+                to_number(pdcp_control_pdu_type::status_report),
+                cpt);
+  uint32_t reserved;
+  dec.unpack(reserved, 4);
+  if (reserved != 0) {
+    logger.log_warning("Ignoring status report because reserved bits are set: {}", reserved);
+    logger.log_debug(buf.begin(), buf.end(), "Ignored status report");
+    return;
+  }
+
+  // Unpack FMC field
+  uint32_t fmc;
+  dec.unpack(fmc, 32);
+  logger.log_info("Received PDCP status report with FMC={}", fmc);
+
+  // Discard any SDU with COUNT < FMC
+  for (auto it = discard_timers_map.begin(); it != discard_timers_map.end();) {
+    if (it->first < fmc) {
+      logger.log_debug("Discarding SDU with COUNT={}", it->first);
+      lower_dn.on_discard_pdu(it->first);
+      it = discard_timers_map.erase(it);
+    } else {
+      ++it;
+    }
+  }
+
+  // Evaluate bitmap: discard any SDU with the bit in the bitmap set to 1
+  unsigned bit;
+  while (dec.unpack(bit, 1)) {
+    fmc++;
+    // Bit == 0: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is missing.
+    // Bit == 1: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is correctly received.
+    if (bit == 1) {
+      logger.log_debug("Discarding SDU with COUNT={}", fmc);
+      lower_dn.on_discard_pdu(fmc);
+      discard_timers_map.erase(fmc);
+    }
+  }
 }
 
 /*

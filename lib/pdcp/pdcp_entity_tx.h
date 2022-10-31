@@ -76,6 +76,10 @@ public:
     discard_timers_map.erase(count);
   }
 
+  /// \brief Evaluates a status report
+  /// \param status The status report
+  void handle_status_report(byte_buffer_slice_chain status);
+
   /*
    * Header helpers
    */

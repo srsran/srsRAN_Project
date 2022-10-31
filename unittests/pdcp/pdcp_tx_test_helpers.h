@@ -26,6 +26,7 @@ public:
   std::queue<byte_buffer> pdu_queue             = {};
   uint32_t                nof_max_count_reached = 0;
   uint32_t                nof_protocol_failure  = 0;
+  std::queue<uint32_t>    sdu_discard_queue     = {};
 
   /// PDCP TX upper layer control notifier
   void on_max_count_reached() final { nof_max_count_reached++; }
@@ -33,7 +34,7 @@ public:
 
   /// PDCP TX lower layer data notifier
   void on_new_pdu(byte_buffer pdu) final { pdu_queue.push(std::move(pdu)); }
-  void on_discard_pdu(uint32_t count) final {}
+  void on_discard_pdu(uint32_t count) final { sdu_discard_queue.push(count); }
 };
 
 /// Fixture class for PDCP tests
