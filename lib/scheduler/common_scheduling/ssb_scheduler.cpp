@@ -51,7 +51,6 @@ static void fill_ssb_parameters(ssb_information_list& ssb_list,
                       (ssb_burst_symb_idx + NOF_SSB_OFDM_SYMBOLS) % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
   ssb_msg.crbs = get_ssb_crbs(ssb_scs, scs_common, offset_to_point_A, ssb_subc_offset);
   ssb_list.push_back(ssb_msg);
-  srslog::fetch_basic_logger("MAC").debug("SCHED: SSB scheduling complete.");
 }
 
 /// Perform allocation for case A and C (both paired and unpaired spectrum) - TS 38.213, Section 4.1.

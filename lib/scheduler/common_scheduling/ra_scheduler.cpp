@@ -521,8 +521,9 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
 void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3& msg3_ctx)
 {
+  const unsigned                k2          = 4; // TODO: Derive k2 for Msg3 retxs.
   cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
-  cell_slot_resource_allocator& pusch_alloc = res_alloc[4]; // TODO: Derive k2.
+  cell_slot_resource_allocator& pusch_alloc = res_alloc[k2];
 
   // Verify there is space in PUSCH and PDCCH result lists for new allocations.
   if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.ul_pdcchs.full()) {
@@ -561,7 +562,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
 
   // Allocate new retx in the HARQ.
   prb_interval prbs = crb_to_prb(bwp_ul_cmn, grant.crbs);
-  if (not msg3_ctx.harq.new_retx(res_alloc.slot_tx(), prbs)) {
+  if (not msg3_ctx.harq.new_retx(pusch_alloc.slot, prbs)) {
     logger.warning("SCHED: Failed to schedule Msg3 retx");
     msg3_ctx.harq.reset();
     return;
@@ -602,9 +603,11 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   ul_info.pusch_cfg.mcs_index                  = msg3_ctx.harq.mcs(0);
   sch_mcs_description mcs_config =
       pusch_mcs_get_config(ul_info.pusch_cfg.mcs_table, ul_info.pusch_cfg.mcs_index, false);
-  ul_info.pusch_cfg.target_code_rate          = mcs_config.target_code_rate;
-  ul_info.pusch_cfg.qam_mod                   = mcs_config.modulation;
-  ul_info.pusch_cfg.transform_precoding       = cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->msg3_transform_precoder;
+  ul_info.pusch_cfg.target_code_rate = mcs_config.target_code_rate;
+  ul_info.pusch_cfg.qam_mod          = mcs_config.modulation;
+  // TS 38.214, 6.1.3. - "transform precoding either 'enabled' or 'disabled' according to the higher layer configured
+  // parameter msg3-transformPrecoder".
+  ul_info.pusch_cfg.transform_precoding       = get_rach_cfg().msg3_transform_precoder;
   ul_info.pusch_cfg.n_id                      = cfg.pci;
   ul_info.pusch_cfg.nof_layers                = 1;
   ul_info.pusch_cfg.dmrs                      = msg3_data[pusch_td_res_index].dmrs_info;
@@ -672,5 +675,8 @@ void ra_scheduler::log_rars(const cell_resource_allocator& res_alloc) const
     fmt::format_to(fmtbuf, "\n- ");
     log_rar_helper(fmtbuf, rar);
   }
-  logger.info("{}", to_c_str(fmtbuf));
+
+  if (fmtbuf.size() > 0) {
+    logger.info("{}", to_c_str(fmtbuf));
+  }
 }

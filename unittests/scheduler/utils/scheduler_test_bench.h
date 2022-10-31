@@ -10,6 +10,7 @@
 
 #include "../scheduler_test_suite.h"
 #include "lib/scheduler/cell/cell_configuration.h"
+#include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include "srsgnb/scheduler/scheduler_factory.h"
 #include <random>
@@ -57,6 +58,7 @@ public:
     logger.set_context(next_slot.to_uint());
     last_sched_res = sched->slot_indication(next_slot, cell_idx);
     srsgnb_assert(last_sched_res != nullptr, "No scheduler output was provided");
+    result_logger.log(*last_sched_res);
     test_scheduler_result_consistency(cell_cfg_list[cell_idx], *last_sched_res);
     ++next_slot;
   }
@@ -65,6 +67,7 @@ public:
   srslog::basic_logger&          logger = srslog::fetch_basic_logger("MAC");
   sched_cfg_dummy_notifier       notif;
   std::unique_ptr<mac_scheduler> sched;
+  scheduler_result_logger        result_logger;
 
   slot_array<cell_configuration, MAX_NOF_DU_CELLS> cell_cfg_list;
 

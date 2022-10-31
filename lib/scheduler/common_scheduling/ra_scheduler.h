@@ -64,7 +64,9 @@ private:
     /// Detected PRACH Preamble associated to this Msg3.
     rach_indication_message::preamble preamble{};
     /// UL Harq used to schedule Msg3.
-    ul_harq_process harq{MAX_HARQ_ID};
+    /// Note: [TS 38.321, 5.4.2.1] "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is
+    /// used".
+    ul_harq_process harq{to_harq_id(0)};
   };
   struct msg3_alloc_candidate {
     unsigned     pusch_td_res_index;
