@@ -58,7 +58,6 @@ unsigned get_ulsch_demultiplex_nof_re_prb_dmrs(dmrs_type dmrs_, unsigned nof_cdm
   return (NRE - nof_re_dmrs_per_rb) * nof_prb;
 }
 
-template <unsigned NOF_BITS_PER_RE>
 void ulsch_demultiplex_generic(span<log_likelihood_ratio>              sch_data,
                                span<log_likelihood_ratio>              harq_ack,
                                span<log_likelihood_ratio>              csi_part1,
@@ -76,6 +75,9 @@ void ulsch_demultiplex_generic(span<log_likelihood_ratio>              sch_data,
     return;
   }
 
+  // Calculates the number of bits per resource element.
+  unsigned nof_bits_per_re = get_bits_per_symbol(config.modulation) * config.nof_layers;
+
   // OFDM symbol index of the first OFDM symbol after the first set of consecutive OFDM symbol(s) carrying DM-RS in the
   // first hop.
   unsigned l1 = get_ulsch_demultiplex_l1(config.dmrs_symbol_mask);
@@ -84,7 +86,7 @@ void ulsch_demultiplex_generic(span<log_likelihood_ratio>              sch_data,
   unsigned l1_csi = get_ulsch_demultiplex_l1_csi(config.dmrs_symbol_mask);
 
   // Number of bits multiplexed in OFDM symbols containing DM-RS.
-  unsigned nof_bits_dmrs = NOF_BITS_PER_RE * get_ulsch_demultiplex_nof_re_prb_dmrs(
+  unsigned nof_bits_dmrs = nof_bits_per_re * get_ulsch_demultiplex_nof_re_prb_dmrs(
                                                  config.dmrs, config.nof_cdm_groups_without_data, config.nof_prb);
 
   // Number of RE used for Phase Tracking Reference Signals.
@@ -131,26 +133,26 @@ void ulsch_demultiplex_generic(span<log_likelihood_ratio>              sch_data,
       if ((G_ack_rvd != 0) && (G_ack_rvd_remainder != 0)) {
         rvd_d          = 1;
         rvd_m_re_count = M_uci_sc;
-        if (G_ack_rvd_remainder < M_uci_sc * NOF_BITS_PER_RE) {
-          rvd_d          = (M_uci_sc * NOF_BITS_PER_RE) / G_ack_rvd_remainder;
-          rvd_m_re_count = divide_ceil(G_ack_rvd_remainder, NOF_BITS_PER_RE);
+        if (G_ack_rvd_remainder < M_uci_sc * nof_bits_per_re) {
+          rvd_d          = (M_uci_sc * nof_bits_per_re) / G_ack_rvd_remainder;
+          rvd_m_re_count = divide_ceil(G_ack_rvd_remainder, nof_bits_per_re);
         }
         M_uci_rvd = rvd_m_re_count;
 
         if (G_ack_remainder != 0) {
           ack_d          = 1;
           ack_m_re_count = M_uci_rvd;
-          if (G_ack_remainder < M_uci_rvd * NOF_BITS_PER_RE) {
-            ack_d          = (M_uci_rvd * NOF_BITS_PER_RE) / G_ack_remainder;
-            ack_m_re_count = divide_ceil(G_ack_remainder, NOF_BITS_PER_RE);
+          if (G_ack_remainder < M_uci_rvd * nof_bits_per_re) {
+            ack_d          = (M_uci_rvd * nof_bits_per_re) / G_ack_remainder;
+            ack_m_re_count = divide_ceil(G_ack_remainder, nof_bits_per_re);
           }
         }
       } else if (G_ack_remainder != 0) {
         ack_d          = 1;
         ack_m_re_count = M_uci_sc;
-        if (G_ack_remainder < M_uci_sc * NOF_BITS_PER_RE) {
-          ack_d          = (M_uci_sc * NOF_BITS_PER_RE) / G_ack_remainder;
-          ack_m_re_count = divide_ceil(G_ack_remainder, NOF_BITS_PER_RE);
+        if (G_ack_remainder < M_uci_sc * nof_bits_per_re) {
+          ack_d          = (M_uci_sc * nof_bits_per_re) / G_ack_remainder;
+          ack_m_re_count = divide_ceil(G_ack_remainder, nof_bits_per_re);
         }
         M_uci_sc -= ack_m_re_count;
       }
@@ -176,9 +178,9 @@ void ulsch_demultiplex_generic(span<log_likelihood_ratio>              sch_data,
       if ((M_uci_sc > M_uci_rvd) && (G_csi1_remainder != 0)) {
         csi1_d          = 1;
         csi1_m_re_count = M_uci_sc - M_uci_rvd;
-        if (G_csi1_remainder < (M_uci_sc - M_uci_rvd) * NOF_BITS_PER_RE) {
-          csi1_d          = ((M_uci_sc - M_uci_rvd) * NOF_BITS_PER_RE) / G_csi1_remainder;
-          csi1_m_re_count = divide_ceil(G_csi1_remainder, NOF_BITS_PER_RE);
+        if (G_csi1_remainder < (M_uci_sc - M_uci_rvd) * nof_bits_per_re) {
+          csi1_d          = ((M_uci_sc - M_uci_rvd) * nof_bits_per_re) / G_csi1_remainder;
+          csi1_m_re_count = divide_ceil(G_csi1_remainder, nof_bits_per_re);
         }
         M_uci_sc -= csi1_m_re_count;
       }
@@ -187,9 +189,9 @@ void ulsch_demultiplex_generic(span<log_likelihood_ratio>              sch_data,
       if ((M_uci_sc > M_uci_rvd) && (G_csi2_remainder != 0)) {
         csi2_d          = 1;
         csi2_m_re_count = M_uci_sc - M_uci_rvd;
-        if (G_csi2_remainder < (M_uci_sc - M_uci_rvd) * NOF_BITS_PER_RE) {
-          csi2_d          = ((M_uci_sc - M_uci_rvd) * NOF_BITS_PER_RE) / G_csi2_remainder;
-          csi2_m_re_count = divide_ceil(G_csi2_remainder, NOF_BITS_PER_RE);
+        if (G_csi2_remainder < (M_uci_sc - M_uci_rvd) * nof_bits_per_re) {
+          csi2_d          = ((M_uci_sc - M_uci_rvd) * nof_bits_per_re) / G_csi2_remainder;
+          csi2_m_re_count = divide_ceil(G_csi2_remainder, nof_bits_per_re);
         }
         M_uci_sc -= csi2_m_re_count;
       }
@@ -205,25 +207,25 @@ void ulsch_demultiplex_generic(span<log_likelihood_ratio>              sch_data,
         // Process HARQ-ACK.
         if ((ack_m_re_count != 0) && ((i_rvd++) % ack_d == 0) && !harq_ack.empty()) {
           // Multiplex HARQ-ACK.
-          srsvec::copy(harq_ack.first(NOF_BITS_PER_RE), input.first(NOF_BITS_PER_RE));
-          harq_ack = harq_ack.last(harq_ack.size() - NOF_BITS_PER_RE);
+          srsvec::copy(harq_ack.first(nof_bits_per_re), input.first(nof_bits_per_re));
+          harq_ack = harq_ack.last(harq_ack.size() - nof_bits_per_re);
 
           // Set SCH bits to zero.
-          srsvec::zero(sch_data.first(NOF_BITS_PER_RE));
+          srsvec::zero(sch_data.first(nof_bits_per_re));
 
           // Decrement number of pending HARQ-ACK bits RE for the symbol.
           --ack_m_re_count;
         } else {
           // Multiplex SCH data.
-          srsvec::copy(sch_data.first(NOF_BITS_PER_RE), input.first(NOF_BITS_PER_RE));
+          srsvec::copy(sch_data.first(nof_bits_per_re), input.first(nof_bits_per_re));
         }
 
         // Advance input and SCH data buffers.
-        input    = input.last(input.size() - NOF_BITS_PER_RE);
-        sch_data = sch_data.last(sch_data.size() - NOF_BITS_PER_RE);
+        input    = input.last(input.size() - nof_bits_per_re);
+        sch_data = sch_data.last(sch_data.size() - nof_bits_per_re);
 
         // Increment reserved bits count.
-        m_rvd_count += NOF_BITS_PER_RE;
+        m_rvd_count += nof_bits_per_re;
 
         // Decrement number of pending RE for reserved HARQ-ACK.
         --rvd_m_re_count;
@@ -237,9 +239,9 @@ void ulsch_demultiplex_generic(span<log_likelihood_ratio>              sch_data,
       // Check if the RE is for HARQ-ACK if no reserved bits.
       if ((G_ack_rvd == 0) && (ack_m_re_count != 0) && (i_subcarrier % ack_d == 0) && !harq_ack.empty()) {
         // Multiplex HARQ-ACK.
-        srsvec::copy(harq_ack.first(NOF_BITS_PER_RE), input.first(NOF_BITS_PER_RE));
-        harq_ack = harq_ack.last(harq_ack.size() - NOF_BITS_PER_RE);
-        input    = input.last(input.size() - NOF_BITS_PER_RE);
+        srsvec::copy(harq_ack.first(nof_bits_per_re), input.first(nof_bits_per_re));
+        harq_ack = harq_ack.last(harq_ack.size() - nof_bits_per_re);
+        input    = input.last(input.size() - nof_bits_per_re);
 
         // Decrement number of pending HARQ-ACK RE for the symbol.
         --ack_m_re_count;
@@ -250,9 +252,9 @@ void ulsch_demultiplex_generic(span<log_likelihood_ratio>              sch_data,
       // Process CSI-Part1.
       if ((csi1_m_re_count != 0) && ((i_csi1++) % csi1_d == 0) && !csi_part1.empty()) {
         // Multiplex CSI-Part1.
-        srsvec::copy(csi_part1.first(NOF_BITS_PER_RE), input.first(NOF_BITS_PER_RE));
-        csi_part1 = csi_part1.last(csi_part1.size() - NOF_BITS_PER_RE);
-        input     = input.last(input.size() - NOF_BITS_PER_RE);
+        srsvec::copy(csi_part1.first(nof_bits_per_re), input.first(nof_bits_per_re));
+        csi_part1 = csi_part1.last(csi_part1.size() - nof_bits_per_re);
+        input     = input.last(input.size() - nof_bits_per_re);
 
         // Decrement number of pending CSI-Part1 RE for the symbol.
         --csi1_m_re_count;
@@ -263,9 +265,9 @@ void ulsch_demultiplex_generic(span<log_likelihood_ratio>              sch_data,
       // Process CSI-Part2.
       if ((csi2_m_re_count != 0) && ((i_csi2++) % csi2_d == 0) && !csi_part2.empty()) {
         // Multiplex CSI-Part2.
-        srsvec::copy(csi_part2.first(NOF_BITS_PER_RE), input.first(NOF_BITS_PER_RE));
-        csi_part2 = csi_part2.last(csi_part2.size() - NOF_BITS_PER_RE);
-        input     = input.last(input.size() - NOF_BITS_PER_RE);
+        srsvec::copy(csi_part2.first(nof_bits_per_re), input.first(nof_bits_per_re));
+        csi_part2 = csi_part2.last(csi_part2.size() - nof_bits_per_re);
+        input     = input.last(input.size() - nof_bits_per_re);
 
         // Decrement number of pending CSI-Part2 RE for the symbol.
         --csi2_m_re_count;
@@ -274,9 +276,9 @@ void ulsch_demultiplex_generic(span<log_likelihood_ratio>              sch_data,
       }
 
       // Multiplex SCH data.
-      srsvec::copy(sch_data.first(NOF_BITS_PER_RE), input.first(NOF_BITS_PER_RE));
-      sch_data = sch_data.last(sch_data.size() - NOF_BITS_PER_RE);
-      input    = input.last(input.size() - NOF_BITS_PER_RE);
+      srsvec::copy(sch_data.first(nof_bits_per_re), input.first(nof_bits_per_re));
+      sch_data = sch_data.last(sch_data.size() - nof_bits_per_re);
+      input    = input.last(input.size() - nof_bits_per_re);
 
       // Decrement number of pending SCH data RE for the symbol.
       --ulsch_m_re_count;
@@ -297,32 +299,6 @@ void ulsch_demultiplex_generic(span<log_likelihood_ratio>              sch_data,
   srsgnb_assert(input.empty(), "{} input soft bits have not been multiplexed.", input.size());
 }
 
-template <unsigned NOF_BITS_PER_RE>
-void ulsch_demultiplex_template(span<log_likelihood_ratio>              sch_data,
-                                span<log_likelihood_ratio>              harq_ack,
-                                span<log_likelihood_ratio>              csi_part1,
-                                span<log_likelihood_ratio>              csi_part2,
-                                span<const log_likelihood_ratio>        input,
-                                const ulsch_demultiplex::configuration& config)
-{
-  if (NOF_BITS_PER_RE != config.nof_layers * get_bits_per_symbol(config.modulation)) {
-    ulsch_demultiplex_template<NOF_BITS_PER_RE - 1>(sch_data, harq_ack, csi_part1, csi_part2, input, config);
-    return;
-  }
-  ulsch_demultiplex_generic<NOF_BITS_PER_RE>(sch_data, harq_ack, csi_part1, csi_part2, input, config);
-}
-
-template <>
-void ulsch_demultiplex_template<1>(span<log_likelihood_ratio>              sch_data,
-                                   span<log_likelihood_ratio>              harq_ack,
-                                   span<log_likelihood_ratio>              csi_part1,
-                                   span<log_likelihood_ratio>              csi_part2,
-                                   span<const log_likelihood_ratio>        input,
-                                   const ulsch_demultiplex::configuration& config)
-{
-  ulsch_demultiplex_generic<1>(sch_data, harq_ack, csi_part1, csi_part2, input, config);
-}
-
 } // namespace
 
 void ulsch_demultiplex_impl::demultiplex(span<log_likelihood_ratio>              sch_data,
@@ -332,6 +308,5 @@ void ulsch_demultiplex_impl::demultiplex(span<log_likelihood_ratio>             
                                          span<const log_likelihood_ratio>        input,
                                          const ulsch_demultiplex::configuration& config)
 {
-  ulsch_demultiplex_template<pusch_constants::MAX_NOF_LAYERS * MODULATION_MAX_BITS_PER_SYMBOL>(
-      sch_data, harq_ack, csi_part1, csi_part2, input, config);
+  ulsch_demultiplex_generic(sch_data, harq_ack, csi_part1, csi_part2, input, config);
 }
