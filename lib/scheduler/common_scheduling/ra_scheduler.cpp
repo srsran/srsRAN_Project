@@ -13,6 +13,7 @@
 #include "../pdcch_scheduling/pdcch_config_helpers.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/tbs_calculator.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 
 using namespace srsgnb;
@@ -201,13 +202,12 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
   }
 
   // Allocate pending Msg3 retransmissions.
-  slot_point sl_rx = res_alloc.slot_tx() - 4U;
+  slot_point sl_rx = res_alloc.slot_tx() - 4U; // TODO: configurable tx_gnb_delay.
   for (auto& pending_msg3 : pending_msg3s) {
     if (not pending_msg3.harq.empty()) {
       pending_msg3.harq.slot_indication(sl_rx);
       if (pending_msg3.harq.has_pending_retx()) {
-        // TODO: Support Msg3 retransmissions.
-        pending_msg3.harq.reset();
+        schedule_msg3_retx(res_alloc, pending_msg3);
       }
     }
   }
@@ -517,6 +517,119 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     bool success = pending_msg3.harq.new_tx(msg3_alloc.slot, prbs, msg3_info.mcs, max_msg3_retxs);
     srsgnb_sanity_check(success, "Unexpected HARQ allocation return");
   }
+}
+
+void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3& msg3_ctx)
+{
+  cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
+  cell_slot_resource_allocator& pusch_alloc = res_alloc[4]; // TODO: Derive k2.
+
+  // Verify there is space in PUSCH and PDCCH result lists for new allocations.
+  if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.ul_pdcchs.full()) {
+    logger.warning("Failed to allocate PUSCH. Cause: No space available in scheduler output list");
+    return;
+  }
+
+  const bwp_configuration& bwp_ul_cmn = cfg.ul_cfg_common.init_ul_bwp.generic_params;
+
+  // Try to reuse previous HARQ PRBs.
+  grant_info grant;
+  grant.scs                   = bwp_ul_cmn.scs;
+  unsigned pusch_td_res_index = 0; // TODO: Derive PUSCH TD res index.
+  grant.symbols               = get_pusch_cfg().pusch_td_alloc_list[pusch_td_res_index].symbols;
+  grant.crbs                  = prb_to_crb(bwp_ul_cmn, msg3_ctx.harq.prbs().prbs());
+  if (pusch_alloc.ul_res_grid.collides(grant)) {
+    // Find available symbol x RB resources.
+    // TODO
+    return;
+  }
+
+  // > Find space in PDCCH for Msg3 DCI.
+  // [3GPP TS 38.213, clause 10.1] a UE monitors PDCCH candidates in one or more of the following search spaces sets
+  //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
+  //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
+  search_space_id       ss_id = cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
+  pdcch_ul_information* pdcch =
+      pdcch_sch.alloc_ul_pdcch_common(pdcch_alloc, msg3_ctx.preamble.tc_rnti, ss_id, aggregation_level::n4);
+  if (pdcch == nullptr) {
+    logger.warning("SCHED: Failed to schedule PDCCH for Msg3 retx");
+    return;
+  }
+
+  // Mark resources as occupied in the ResourceGrid.
+  pusch_alloc.ul_res_grid.fill(grant);
+
+  // Allocate new retx in the HARQ.
+  prb_interval prbs = crb_to_prb(bwp_ul_cmn, grant.crbs);
+  if (not msg3_ctx.harq.new_retx(res_alloc.slot_tx(), prbs)) {
+    logger.warning("SCHED: Failed to schedule Msg3 retx");
+    msg3_ctx.harq.reset();
+    return;
+  }
+
+  // Fill DCI.
+  pdcch->dci.type         = dci_ul_rnti_config_type::tc_rnti_f0_0;
+  pdcch->dci.tc_rnti_f0_0 = {};
+  dci_sizes dci_sz        = get_dci_sizes(dci_size_config{cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
+                                                   cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
+                                                   bwp_ul_cmn.crbs.length(),
+                                                   bwp_ul_cmn.crbs.length()});
+  pdcch->dci.tc_rnti_f0_0.payload_size       = dci_sz.format0_0_common_size;
+  pdcch->dci.tc_rnti_f0_0.N_rb_ul_bwp        = bwp_ul_cmn.crbs.length();
+  pdcch->dci.tc_rnti_f0_0.N_ul_hop           = 0; // TODO.
+  pdcch->dci.tc_rnti_f0_0.hopping_offset     = 0; // TODO.
+  pdcch->dci.tc_rnti_f0_0.frequency_resource = ra_frequency_type1_get_riv(
+      ra_frequency_type1_configuration{bwp_ul_cmn.crbs.length(), prbs.start(), prbs.length()});
+  pdcch->dci.tc_rnti_f0_0.time_resource            = pusch_td_res_index;
+  pdcch->dci.tc_rnti_f0_0.frequency_hopping_flag   = 0; // TODO.
+  pdcch->dci.tc_rnti_f0_0.modulation_coding_scheme = 0; // TODO.
+  static constexpr std::array<unsigned, 4> rv_idx  = {0, 2, 3, 1};
+  pdcch->dci.tc_rnti_f0_0.redundancy_version       = rv_idx[msg3_ctx.harq.nof_retx() % rv_idx.size()];
+  pdcch->dci.tc_rnti_f0_0.tpc_command              = 0;
+
+  // Fill PUSCH.
+  pusch_alloc.result.ul.puschs.emplace_back();
+  ul_sched_info& ul_info                       = pusch_alloc.result.ul.puschs.back();
+  ul_info.pusch_cfg.rnti                       = msg3_ctx.preamble.tc_rnti;
+  ul_info.pusch_cfg.bwp_cfg                    = &bwp_ul_cmn;
+  ul_info.pusch_cfg.prbs                       = prbs;
+  ul_info.pusch_cfg.symbols                    = grant.symbols;
+  ul_info.pusch_cfg.intra_slot_freq_hopping    = false; // TODO.
+  ul_info.pusch_cfg.pusch_second_hop_prb       = 0;
+  ul_info.pusch_cfg.tx_direct_current_location = 0; // TODO.
+  ul_info.pusch_cfg.ul_freq_shift_7p5khz       = false;
+  ul_info.pusch_cfg.mcs_table                  = pusch_mcs_table::qam64;
+  ul_info.pusch_cfg.mcs_index                  = msg3_ctx.harq.mcs(0);
+  sch_mcs_description mcs_config =
+      pusch_mcs_get_config(ul_info.pusch_cfg.mcs_table, ul_info.pusch_cfg.mcs_index, false);
+  ul_info.pusch_cfg.target_code_rate          = mcs_config.target_code_rate;
+  ul_info.pusch_cfg.qam_mod                   = mcs_config.modulation;
+  ul_info.pusch_cfg.transform_precoding       = cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->msg3_transform_precoder;
+  ul_info.pusch_cfg.n_id                      = cfg.pci;
+  ul_info.pusch_cfg.nof_layers                = 1;
+  ul_info.pusch_cfg.dmrs                      = msg3_data[pusch_td_res_index].dmrs_info;
+  ul_info.pusch_cfg.pusch_dmrs_id             = cfg.pci;
+  ul_info.pusch_cfg.dmrs_hopping_mode         = pusch_information::dmrs_hopping_mode::no_hopping; // TODO.
+  ul_info.pusch_cfg.rv_index                  = rv_idx[msg3_ctx.harq.nof_retx() % rv_idx.size()];
+  ul_info.pusch_cfg.harq_id                   = msg3_ctx.harq.pid;
+  ul_info.pusch_cfg.new_data                  = false;
+  unsigned                  nof_oh_prb        = 0; // TODO.
+  unsigned                  tb_scaling_field  = 0; // TODO.
+  constexpr static unsigned nof_bits_per_byte = 8U;
+  ul_info.pusch_cfg.tb_size_bytes =
+      tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)grant.symbols.length(),
+                                                            calculate_nof_dmrs_per_rb(ul_info.pusch_cfg.dmrs),
+                                                            nof_oh_prb,
+                                                            ul_info.pusch_cfg.target_code_rate / 1024.0F,
+                                                            ul_info.pusch_cfg.qam_mod,
+                                                            ul_info.pusch_cfg.nof_layers,
+                                                            tb_scaling_field,
+                                                            grant.crbs.length()}) /
+      nof_bits_per_byte;
+  ul_info.pusch_cfg.num_cb = 0;
+
+  // Set the number of bytes of the TB.
+  msg3_ctx.harq.set_tbs(ul_info.pusch_cfg.tb_size_bytes);
 }
 
 void ra_scheduler::log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const

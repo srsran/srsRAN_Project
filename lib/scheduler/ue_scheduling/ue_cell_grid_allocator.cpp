@@ -76,8 +76,7 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   // Allocate PDCCH position.
   pdcch_dl_information* pdcch =
       get_pdcch_sched(grant.cell_index)
-          .alloc_dl_pdcch_ue(
-              pdcch_alloc, u.crnti, ue_cell_cfg, ue_cc->active_bwp_id(), ss_cfg->id, grant.aggr_lvl, grant.dci_fmt);
+          .alloc_dl_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ue_cc->active_bwp_id(), ss_cfg->id, grant.aggr_lvl);
   if (pdcch == nullptr) {
     logger.warning("Failed to allocate PDSCH. Cause: No space in PDCCH.");
     return false;
@@ -274,7 +273,7 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
   f0_0.modulation_coding_scheme                   = h_ul.mcs(0).to_uint();
   f0_0.new_data_indicator                         = h_ul.ndi(0);
   static constexpr std::array<unsigned, 4> rv_idx = {0, 2, 3, 1};
-  f0_0.redundancy_version                         = h_ul.nof_retx() % rv_idx.size();
+  f0_0.redundancy_version                         = rv_idx[h_ul.nof_retx() % rv_idx.size()];
   f0_0.harq_process_number                        = h_ul.pid;
   f0_0.tpc_command                                = 0;
   f0_0.ul_sul_indicator                           = {};

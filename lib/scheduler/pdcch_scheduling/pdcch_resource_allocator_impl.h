@@ -30,13 +30,17 @@ public:
                                            search_space_id               ss_id,
                                            aggregation_level             aggr_lvl) override;
 
+  pdcch_ul_information* alloc_ul_pdcch_common(cell_slot_resource_allocator& slot_alloc,
+                                              rnti_t                        rnti,
+                                              search_space_id               ss_id,
+                                              aggregation_level             aggr_lvl) override;
+
   pdcch_dl_information* alloc_dl_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
                                           rnti_t                        rnti,
                                           const ue_cell_configuration&  user,
                                           bwp_id_t                      bwpid,
                                           search_space_id               ss_id,
-                                          aggregation_level             aggr_lvl,
-                                          dci_dl_format                 dci_fmt) override;
+                                          aggregation_level             aggr_lvl) override;
 
   pdcch_ul_information* alloc_ul_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
                                           rnti_t                        rnti,
@@ -53,13 +57,20 @@ private:
   static const size_t SLOT_ALLOCATOR_RING_SIZE = 10;
 
   pdcch_slot_allocator& get_pdcch_slot_alloc(slot_point sl);
+
   pdcch_dl_information* alloc_dl_pdcch_helper(cell_slot_resource_allocator&     slot_alloc,
                                               rnti_t                            rnti,
                                               const bwp_configuration&          bwp_cfg,
                                               const coreset_configuration&      cs_cfg,
                                               const search_space_configuration& ss_cfg,
-                                              aggregation_level                 L,
-                                              dci_dl_format                     dci_fmt);
+                                              aggregation_level                 aggr_lvl);
+
+  pdcch_ul_information* alloc_ul_pdcch_helper(cell_slot_resource_allocator&     slot_alloc,
+                                              rnti_t                            rnti,
+                                              const bwp_configuration&          bwp_cfg,
+                                              const coreset_configuration&      cs_cfg,
+                                              const search_space_configuration& ss_cfg,
+                                              aggregation_level                 aggr_lvl);
 
   const cell_configuration& cell_cfg;
 

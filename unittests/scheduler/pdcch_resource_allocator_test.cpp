@@ -96,9 +96,9 @@ void test_pdcch_sched_ue()
   pdcch_sch.slot_indication(sl_tx);
 
   // Action: Allocate one UE.
-  rnti_t                rnti  = to_rnti(0x4601);
-  pdcch_dl_information* pdcch = pdcch_sch.alloc_dl_pdcch_ue(
-      res_grid[0], rnti, ue_cfg, bwpid, to_search_space_id(2), aggregation_level::n4, dci_dl_format::f1_0);
+  rnti_t                rnti = to_rnti(0x4601);
+  pdcch_dl_information* pdcch =
+      pdcch_sch.alloc_dl_pdcch_ue(res_grid[0], rnti, ue_cfg, bwpid, to_search_space_id(2), aggregation_level::n4);
 
   // TEST: UE allocation should be successful and the PDCCH contents valid.
   TESTASSERT_EQ(1, res_grid[0].result.dl.dl_pdcchs.size());
@@ -110,8 +110,7 @@ void test_pdcch_sched_ue()
 
   // Action: Try allocate an DL PDCCH for another UE that fails due to lack of PDCCH resources.
   rnti  = to_rnti(0x4602);
-  pdcch = pdcch_sch.alloc_dl_pdcch_ue(
-      res_grid[0], rnti, ue_cfg, bwpid, to_search_space_id(2), aggregation_level::n4, dci_dl_format::f1_0);
+  pdcch = pdcch_sch.alloc_dl_pdcch_ue(res_grid[0], rnti, ue_cfg, bwpid, to_search_space_id(2), aggregation_level::n4);
 
   // TEST: RAR allocation should fail.
   TESTASSERT_EQ(1, res_grid[0].result.dl.dl_pdcchs.size());

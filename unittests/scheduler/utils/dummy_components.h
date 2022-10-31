@@ -38,10 +38,9 @@ public:
                                           const ue_cell_configuration&  user,
                                           bwp_id_t                      bwp_id,
                                           search_space_id               ss_id,
-                                          aggregation_level             aggr_lvl,
-                                          dci_dl_format                 dci_fmt) override
+                                          aggregation_level             aggr_lvl) override
   {
-    srsgnb_terminate("UE-dedicated PDCCHs not supported yet");
+    srsgnb_terminate("UE-dedicated PDCCHs not supported");
     return nullptr;
   }
 
@@ -52,7 +51,16 @@ public:
                                           search_space_id               ss_id,
                                           aggregation_level             aggr_lvl) override
   {
-    srsgnb_terminate("UE-dedicated PDCCHs not supported yet");
+    srsgnb_terminate("UE-dedicated PDCCHs not supported");
+    return nullptr;
+  }
+
+  pdcch_ul_information* alloc_ul_pdcch_common(cell_slot_resource_allocator& slot_alloc,
+                                              rnti_t                        rnti,
+                                              search_space_id               ss_id,
+                                              aggregation_level             aggr_lvl) override
+  {
+    srsgnb_terminate("Common UL PDCCHs not supported");
     return nullptr;
   }
 

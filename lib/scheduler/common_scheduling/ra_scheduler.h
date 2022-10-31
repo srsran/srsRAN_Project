@@ -99,6 +99,9 @@ private:
                       crb_interval                     rar_crbs,
                       span<const msg3_alloc_candidate> msg3_candidates);
 
+  /// Schedule retransmission of Msg3.
+  void schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3& msg3_ctx);
+
   // args
   const cell_configuration& cfg;
   pdcch_resource_allocator& pdcch_sch;
