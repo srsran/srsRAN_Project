@@ -9,6 +9,7 @@
  */
 
 #include "gtpu_pdu_test.h"
+#include "../../lib/gtpu/gtpu.h"
 #include "srsgnb/support/test_utils.h"
 #include "srsgnb/support/timers.h"
 #include <gtest/gtest.h>
@@ -19,8 +20,11 @@ using namespace srsgnb;
 /// \brief Test correct creation of PDCP TX  entity
 TEST_F(gtpu_test, pack_unpack)
 {
-  logger.info("asdfsdafdfsa");
-  FAIL();
+  srsgnb::test_delimit_logger delimiter("GTP-U unpack/pack test");
+  byte_buffer                 tst_vec{gtpu_ping_vec};
+  gtpu_header                 hdr;
+  bool                        read_ok = gtpu_read_header(hdr, tst_vec, logger);
+  ASSERT_EQ(read_ok, true);
 }
 
 int main(int argc, char** argv)

@@ -59,7 +59,13 @@ constexpr unsigned GTPU_EXT_HEADER_PDU_SESSION_CONTAINER     = 0x85;
 constexpr unsigned GTPU_EXT_HEADER_PDU_SESSION_CONTAINER_LEN = 4;
 
 struct gtpu_header {
-  uint8_t              flags             = 0;
+  struct gtpu_flags {
+    uint8_t version       = 1;
+    uint8_t protocol_type = 0;
+    bool    ext_hdr       = false;
+    bool    seq_number    = false;
+    bool    n_pdu         = false;
+  } flags;
   uint8_t              message_type      = 0;
   uint16_t             length            = 0;
   uint32_t             teid              = 0;
@@ -69,22 +75,22 @@ struct gtpu_header {
   std::vector<uint8_t> ext_buffer;
 };
 
-bool gtpu_read_header(const byte_buffer& pdu, gtpu_header& header, srslog::basic_logger& logger);
+bool gtpu_read_header(gtpu_header& header, const byte_buffer& pdu, srslog::basic_logger& logger);
 bool gtpu_write_header(const gtpu_header& header, byte_buffer& pdu, srslog::basic_logger& logger);
 
 inline bool gtpu_supported_flags_check(const gtpu_header& header, srslog::basic_logger& logger)
 {
   // flags
-  if ((header.flags & GTPU_FLAGS_VERSION_MASK) != GTPU_FLAGS_VERSION_V1) {
-    logger.error("gtpu_header - Unhandled GTP-U Version. Flags: 0x%x", header.flags);
+  if (header.flags.version != GTPU_FLAGS_VERSION_V1) {
+    logger.error("gtpu_header - Unhandled GTP-U Version. Flags: {}", header.flags);
     return false;
   }
-  if (!(header.flags & GTPU_FLAGS_GTP_PROTOCOL)) {
-    logger.error("gtpu_header - Unhandled Protocol Type. Flags: 0x%x", header.flags);
+  if (!(header.flags.protocol_type & GTPU_FLAGS_GTP_PROTOCOL)) {
+    logger.error("gtpu_header - Unhandled Protocol Type. Flags: {}", header.flags);
     return false;
   }
-  if (header.flags & GTPU_FLAGS_PACKET_NUM) {
-    logger.error("gtpu_header - Unhandled Packet Number. Flags: 0x%x", header.flags);
+  if (header.flags.n_pdu & GTPU_FLAGS_PACKET_NUM) {
+    logger.error("gtpu_header - Unhandled Packet Number. Flags: {}", header.flags);
     return false;
   }
   return true;
@@ -103,3 +109,24 @@ inline bool gtpu_supported_msg_type_check(const gtpu_header& header, srslog::bas
 }
 
 } // namespace srsgnb
+
+// Formatters
+namespace fmt {
+
+// SN size
+template <>
+struct formatter<srsgnb::gtpu_header::gtpu_flags> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::gtpu_header::gtpu_flags flags, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "GTP-U version={} bit", flags.version);
+  }
+};
+} // namespace fmt
