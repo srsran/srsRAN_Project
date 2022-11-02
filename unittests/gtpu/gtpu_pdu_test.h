@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../../lib/gtpu/gtpu.h"
+#include "../../lib/gtpu/gtpu_pdu.h"
 #include "srsgnb/support/timers.h"
 #include <gtest/gtest.h>
 

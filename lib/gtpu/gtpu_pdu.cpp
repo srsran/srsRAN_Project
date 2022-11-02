@@ -7,7 +7,7 @@
  * the distribution.
  *
  */
-#include "gtpu.h"
+#include "gtpu_pdu.h"
 #include "srsgnb/support/bit_encoding.h"
 
 namespace srsgnb {

@@ -9,7 +9,6 @@
  */
 
 #include "gtpu_pdu_test.h"
-#include "../../lib/gtpu/gtpu.h"
 #include "srsgnb/support/test_utils.h"
 #include "srsgnb/support/timers.h"
 #include <gtest/gtest.h>

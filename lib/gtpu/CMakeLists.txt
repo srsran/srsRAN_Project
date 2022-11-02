@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-set(SOURCES gtpu.cpp)
+set(SOURCES gtpu_pdu.cpp)
 
 add_library(srsgnb_gtpu STATIC ${SOURCES})
 target_link_libraries(srsgnb_gtpu srsgnb_support)
