@@ -38,6 +38,10 @@ public:
     logger.log_info("PDCP TX configured: {}", config.tx);
     rx = std::make_unique<pdcp_entity_rx>(ue_index, lcid, config.rx, rx_upper_dn, rx_upper_cn, timers);
     logger.log_info("PDCP RX configured: {}", config.rx);
+
+    // Tx/Rx interconnect
+    tx->set_status_provider(rx.get());
+    rx->set_status_handler(tx.get());
   }
   ~pdcp_entity_impl() override = default;
   pdcp_tx_upper_control_interface& get_tx_upper_control_interface() final { return (*tx); };

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "pdcp_entity_tx_rx_base.h"
+#include "pdcp_interconnect.h"
 #include "pdcp_pdu.h"
 #include "pdcp_tx_metrics_impl.h"
 #include "srsgnb/adt/byte_buffer.h"
@@ -35,6 +36,7 @@ struct pdcp_tx_state {
 /// Base class used for transmitting PDCP bearers.
 /// It provides interfaces for the PDCP bearers, for the higher and lower layers
 class pdcp_entity_tx : public pdcp_entity_tx_rx_base,
+                       public pdcp_tx_status_handler,
                        public pdcp_tx_upper_data_interface,
                        public pdcp_tx_upper_control_interface,
                        public pdcp_tx_lower_interface,
@@ -64,6 +66,9 @@ public:
     logger.log_info("PDCP TX entity configured. Configuration: {}", cfg);
   }
 
+  // Tx/Rx interconnect
+  void set_status_provider(pdcp_rx_status_provider* status_provider_) { status_provider = status_provider_; }
+
   /*
    * SDU/PDU handlers
    */
@@ -76,9 +81,15 @@ public:
     discard_timers_map.erase(count);
   }
 
-  /// \brief Evaluates a status report
+  /// \brief Evaluates a PDCP status report
+  ///
+  /// Ref: Ref: TS 38.323, Sec. 5.4.2, Sec. 6.2.3.1 and Sec. 6.3.{9,10}
+  ///
   /// \param status The status report
   void handle_status_report(byte_buffer_slice_chain status);
+
+  // Status handler interface
+  void on_status_report(byte_buffer_slice_chain status) final { handle_status_report(std::move(status)); }
 
   /*
    * Header helpers
@@ -118,6 +129,7 @@ private:
   bearer_logger               logger;
   pdcp_config::pdcp_tx_config cfg;
 
+  pdcp_rx_status_provider*        status_provider = nullptr;
   pdcp_tx_lower_notifier&         lower_dn;
   pdcp_tx_upper_control_notifier& upper_cn;
   timer_manager&                  timers;

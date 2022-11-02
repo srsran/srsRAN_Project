@@ -11,6 +11,7 @@
 #pragma once
 
 #include "pdcp_entity_tx_rx_base.h"
+#include "pdcp_interconnect.h"
 #include "pdcp_pdu.h"
 #include "pdcp_rx_metrics_impl.h"
 #include "srsgnb/adt/byte_buffer.h"
@@ -39,6 +40,7 @@ struct pdcp_rx_state {
 /// Base class used for receiving RLC bearers.
 /// It provides interfaces for the RLC bearers, for the lower layers
 class pdcp_entity_rx : public pdcp_entity_tx_rx_base,
+                       public pdcp_rx_status_provider,
                        public pdcp_rx_lower_interface,
                        public pdcp_rx_upper_control_interface,
                        public pdcp_rx_metrics
@@ -51,6 +53,9 @@ public:
                  pdcp_rx_upper_control_notifier& upper_cn_,
                  timer_manager&                  timers);
 
+  // Rx/Tx interconnect
+  void set_status_handler(pdcp_tx_status_handler* status_handler_) { status_handler = status_handler_; }
+
   void handle_pdu(byte_buffer_slice_chain buf) final;
 
   /// \brief Compiles a PDCP status report
@@ -58,7 +63,7 @@ public:
   /// Ref: TS 38.323, Sec. 5.4.1, Sec. 6.2.3.1 and Sec. 6.3.{9,10}
   ///
   /// \return Control PDU for PDCP status report as a byte_buffer
-  byte_buffer compile_status_report();
+  byte_buffer compile_status_report() final;
 
   /*
    * Header helpers
@@ -129,8 +134,9 @@ private:
                              uint32_t                                count);
 
   /*
-   * Notifiers
+   * Notifiers and handlers
    */
+  pdcp_tx_status_handler*         status_handler = nullptr;
   pdcp_rx_upper_data_notifier&    upper_dn;
   pdcp_rx_upper_control_notifier& upper_cn;
 

@@ -236,13 +236,26 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
 
 void pdcp_entity_rx::handle_control_pdu(byte_buffer_slice_chain pdu)
 {
-  // FIXME
-  logger.log_error(pdu.begin(),
-                   pdu.end(),
-                   "Received control PDU, however PDCP does not support this yet ({} B), integrity={}, ciphering={}",
-                   pdu.length(),
-                   integrity_enabled,
-                   ciphering_enabled);
+  // Read and verify PDU header (first byte)
+  uint8_t hdr_byte = *pdu.begin();
+
+  // Assert control PDU
+  pdcp_dc_field dc = pdcp_pdu_get_dc(hdr_byte);
+  srsgnb_assert(dc == pdcp_dc_field::control,
+                "Cannot handle status report due to invalid D/C field: Expected {}, Got {}",
+                pdcp_dc_field::control,
+                dc);
+
+  // Switch control PDU type (CPT)
+  pdcp_control_pdu_header control_hdr = {};
+  control_hdr.cpt                     = pdcp_control_pdu_get_cpt(hdr_byte);
+  switch (control_hdr.cpt) {
+    case pdcp_control_pdu_type::status_report:
+      status_handler->on_status_report(std::move(pdu));
+      break;
+    default:
+      logger.log_error(pdu.begin(), pdu.end(), "Received unsupported control PDU: {}", control_hdr);
+  }
 }
 
 // Deliver all consecutively associated COUNTs.

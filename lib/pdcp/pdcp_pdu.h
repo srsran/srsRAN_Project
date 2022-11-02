@@ -36,6 +36,14 @@ constexpr unsigned to_number(pdcp_dc_field dc)
   return static_cast<unsigned>(dc);
 }
 
+/// \brief Reads the D/C field from the first (header) byte of a PDCP PDU
+/// \param first_byte First byte of the PDU (passed by value)
+/// \return Value of the D/C field
+constexpr pdcp_dc_field pdcp_pdu_get_dc(uint8_t first_byte)
+{
+  return static_cast<pdcp_dc_field>((first_byte >> 7U) & 0x01U);
+}
+
 /// PDCP Control PDU type
 /// Ref: TS 38.323 Sec. 6.3.8
 enum class pdcp_control_pdu_type : unsigned {
@@ -46,6 +54,14 @@ enum class pdcp_control_pdu_type : unsigned {
 constexpr uint16_t to_number(pdcp_control_pdu_type type)
 {
   return static_cast<uint16_t>(type);
+}
+
+/// \brief Reads the CPT field from the first (header) byte of a PDCP control PDU
+/// \param first_byte First byte of the PDU (passed by value)
+/// \return Value of the CPT field
+constexpr pdcp_control_pdu_type pdcp_control_pdu_get_cpt(uint8_t first_byte)
+{
+  return static_cast<pdcp_control_pdu_type>((first_byte >> 4U) & 0x07U);
 }
 
 /// PDCP Data PDU header
@@ -59,19 +75,6 @@ struct pdcp_data_pdu_header {
 struct pdcp_control_pdu_header {
   pdcp_control_pdu_type cpt; ///< Control PDU type (control PDU only, ignored for data PDUs)
 };
-
-/// PDCP Status Report
-/// Ref: TS 38.323 Sec. 5.4
-class pdcp_status_report
-{};
-
-/// \brief Reads the D/C field from the first (header) byte of a PDCP PDU
-/// \param first_byte First byte of the PDU (passed by value)
-/// \return Value of the D/C field
-constexpr pdcp_dc_field pdcp_pdu_get_dc(uint8_t first_byte)
-{
-  return static_cast<pdcp_dc_field>((first_byte >> 7U) & 0x01U);
-}
 
 } // namespace srsgnb
 

@@ -153,6 +153,41 @@ TEST_P(pdcp_rx_status_report_test, build_truncated_status_report)
   }
 }
 
+/// Test reception and forwarding of PDCP status report
+TEST_P(pdcp_rx_status_report_test, rx_status_report)
+{
+  init(GetParam());
+
+  pdcp_rx->set_as_security_config(sec_cfg);
+  pdcp_rx->enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+
+  ASSERT_TRUE(test_frame->status_report_queue.empty());
+
+  // Build status report dummy to be forwarded to the TX entity (i.e. the test_frame)
+  byte_buffer buf = {};
+  bit_encoder enc(buf);
+
+  // Pack PDU header
+  enc.pack(to_number(pdcp_dc_field::control), 1);
+  enc.pack(to_number(pdcp_control_pdu_type::status_report), 3);
+  enc.pack(0b0000, 4);
+
+  // Pack something into FMC field
+  enc.pack(0xc0cac01a, 32);
+
+  // Pack some bitmap
+  enc.pack(0xcafe, 16);
+
+  // Put into PDCP Rx entity
+  pdcp_rx->handle_pdu(byte_buffer_slice_chain{buf.deep_copy()});
+
+  // Check the status report was forwared to the Tx entity
+  ASSERT_FALSE(test_frame->status_report_queue.empty());
+  ASSERT_EQ(test_frame->status_report_queue.front(), buf);
+  test_frame->status_report_queue.pop();
+  ASSERT_TRUE(test_frame->status_report_queue.empty());
+}
+
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////

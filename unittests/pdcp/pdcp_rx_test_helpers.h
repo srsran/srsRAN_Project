@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../../lib/pdcp/pdcp_entity_rx.h"
+#include "../../lib/pdcp/pdcp_interconnect.h"
 #include "pdcp_test_vectors.h"
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/support/timers.h"
@@ -20,14 +21,20 @@
 namespace srsgnb {
 
 /// Mocking class of the surrounding layers invoked by the PDCP.
-class pdcp_rx_test_frame : public pdcp_rx_upper_data_notifier, public pdcp_rx_upper_control_notifier
+class pdcp_rx_test_frame : public pdcp_tx_status_handler,
+                           public pdcp_rx_upper_data_notifier,
+                           public pdcp_rx_upper_control_notifier
 {
 public:
-  std::queue<byte_buffer> sdu_queue              = {};
-  uint32_t                sdu_counter            = 0;
-  uint32_t                integrity_fail_counter = 0;
-  uint32_t                nof_max_count_reached  = 0;
-  uint32_t                nof_protocol_failure   = 0;
+  std::queue<byte_buffer>             sdu_queue              = {};
+  uint32_t                            sdu_counter            = 0;
+  uint32_t                            integrity_fail_counter = 0;
+  uint32_t                            nof_max_count_reached  = 0;
+  uint32_t                            nof_protocol_failure   = 0;
+  std::queue<byte_buffer_slice_chain> status_report_queue    = {};
+
+  /// PDCP TX status handler
+  void on_status_report(byte_buffer_slice_chain status) override { status_report_queue.push(std::move(status)); }
 
   /// PDCP RX upper layer data notifier
   void on_new_sdu(byte_buffer sdu) override
@@ -78,6 +85,8 @@ protected:
     // Create PDCP RX entity
     test_frame = std::make_unique<pdcp_rx_test_frame>();
     pdcp_rx    = std::make_unique<pdcp_entity_rx>(0, LCID_SRB1, config, *test_frame, *test_frame, timers);
+    pdcp_rx->set_status_handler(test_frame.get());
+
     srslog::flush();
   }
 
