@@ -232,14 +232,14 @@ build alt [ubuntu 22.04 amd64]:
     OS: ubuntu-22.04
   cache: []
 
-# build alt [ubuntu 22.04 arm64v8]:
-#   extends: .build_and_unit_alt
-#   rules:
-#     - if: $CI_DESCRIPTION =~ /Weekly/
-#   variables:
-#     OS: ubuntu-22.04
-#     TAG_EXTENSION: "-pi4"
-#   cache: []
+build alt [ubuntu 22.04 arm64v8]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: ubuntu-22.04
+    ARCHITECTURE: "arm64"
+  cache: []
 
 build alt [archlinux-latest amd64]:
   extends: .build_and_unit_alt
@@ -257,14 +257,14 @@ build alt [ubuntu-20.04 amd64]:
     OS: ubuntu-20.04
   cache: []
 
-# build alt [ubuntu-20.04 arm64v8]:
-#   extends: .build_and_unit_alt
-#   rules:
-#     - if: $CI_DESCRIPTION =~ /Weekly/
-#   variables:
-#     OS: ubuntu-20.04
-#     TAG_EXTENSION: "-pi4"
-#   cache: []
+build alt [ubuntu-20.04 arm64v8]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: ubuntu-20.04
+    ARCHITECTURE: "arm64"
+  cache: []
 
 # UHD
 
