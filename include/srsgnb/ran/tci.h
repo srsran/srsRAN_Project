@@ -47,7 +47,14 @@ struct qcl_info {
 
     bool operator==(const reference_signal& rhs) const
     {
-      return type == rhs.type && csi_rs == rhs.csi_rs && ssb == rhs.ssb;
+      bool ret = type == rhs.type;
+      switch (type) {
+        case reference_signal_type::csi_rs:
+          return ret && csi_rs == rhs.csi_rs;
+        case reference_signal_type::ssb:
+          return ret && ssb == rhs.ssb;
+      }
+      return false;
     }
     bool operator!=(const reference_signal& rhs) const { return !(rhs == *this); }
 

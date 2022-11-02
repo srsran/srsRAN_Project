@@ -44,7 +44,14 @@ struct prb_bundling {
 
   bool operator==(const prb_bundling& rhs) const
   {
-    return type == rhs.type && st_bundling == rhs.st_bundling && dy_bundling == rhs.dy_bundling;
+    bool ret = type == rhs.type;
+    switch (type) {
+      case prb_bundling_type::static_bundling:
+        return ret && st_bundling == rhs.st_bundling;
+      case prb_bundling_type::dynamic_bundling:
+        return ret && dy_bundling == rhs.dy_bundling;
+    }
+    return false;
   }
   bool operator!=(const prb_bundling& rhs) const { return !(rhs == *this); }
 
