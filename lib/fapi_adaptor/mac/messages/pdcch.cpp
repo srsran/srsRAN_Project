@@ -79,11 +79,11 @@ void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
   for (const auto& dci : dcis) {
     fapi::dl_dci_pdu_builder dci_builder = builder.add_dl_dci();
 
-    dci_builder.set_basic_parameters(dci.parameters->rnti,
-                                     dci.parameters->n_id_pdcch_data,
-                                     dci.parameters->n_rnti_pdcch_data,
-                                     dci.parameters->cces.ncce,
-                                     to_nof_cces(dci.parameters->cces.aggr_lvl));
+    dci_builder.set_basic_parameters(dci.info->rnti,
+                                     dci.info->n_id_pdcch_data,
+                                     dci.info->n_rnti_pdcch_data,
+                                     dci.info->cces.ncce,
+                                     to_nof_cces(dci.info->cces.aggr_lvl));
 
     // This parameter is not passed by the MAC, set it to zero.
     dci_builder.set_tx_power_info_parameter(0.F);

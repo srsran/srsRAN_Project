@@ -59,15 +59,16 @@ static void test_conversion_ok()
   }
 
   // DCIs.
-  TESTASSERT_EQ(mac_pdu.dcis.front().parameters->rnti, fapi_pdu.dl_dci.front().rnti);
-  TESTASSERT_EQ(mac_pdu.dcis.front().parameters->n_id_pdcch_data, fapi_pdu.dl_dci.front().nid_pdcch_data);
-  TESTASSERT_EQ(mac_pdu.dcis.front().parameters->n_rnti_pdcch_data, fapi_pdu.dl_dci.front().nrnti_pdcch_data);
-  TESTASSERT_EQ(mac_pdu.dcis.front().parameters->cces.ncce, fapi_pdu.dl_dci.front().cce_index);
-  TESTASSERT_EQ(to_nof_cces(mac_pdu.dcis.front().parameters->cces.aggr_lvl), fapi_pdu.dl_dci.front().aggregation_level);
+  TESTASSERT_EQ(mac_pdu.dcis.front().info->rnti, fapi_pdu.dl_dci.front().rnti);
+  TESTASSERT_EQ(mac_pdu.dcis.front().info->n_id_pdcch_data, fapi_pdu.dl_dci.front().nid_pdcch_data);
+  TESTASSERT_EQ(mac_pdu.dcis.front().info->n_rnti_pdcch_data, fapi_pdu.dl_dci.front().nrnti_pdcch_data);
+  TESTASSERT_EQ(mac_pdu.dcis.front().info->cces.ncce, fapi_pdu.dl_dci.front().cce_index);
+  TESTASSERT_EQ(to_nof_cces(mac_pdu.dcis.front().info->cces.aggr_lvl), fapi_pdu.dl_dci.front().aggregation_level);
   TESTASSERT_EQ(mac_pdu.coreset_cfg->pdcch_dmrs_scrambling_id.has_value()
                     ? mac_pdu.coreset_cfg->pdcch_dmrs_scrambling_id.value()
                     : 0,
                 fapi_pdu.parameters_v4.params.front().nid_pdcch_dmrs);
+
   TESTASSERT_EQ(*mac_pdu.dcis.front().payload, fapi_pdu.dl_dci.front().payload);
 }
 

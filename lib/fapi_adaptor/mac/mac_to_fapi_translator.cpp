@@ -44,8 +44,9 @@ struct pdcch_group {
 
 } // namespace
 
-template <typename T, typename P>
-static void add_pdcch_pdus_to_builder(T& builder, span<const P> pdcch_info, span<const dci_payload> payloads)
+template <typename builder_type, typename pdu_type>
+static void
+add_pdcch_pdus_to_builder(builder_type& builder, span<const pdu_type> pdcch_info, span<const dci_payload> payloads)
 {
   srsgnb_assert(pdcch_info.size() == payloads.size(), "Size mismatch");
 
@@ -138,8 +139,7 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   builder.set_basic_parameters(dl_res.slot.sfn(), dl_res.slot.slot_index(), num_pdu_groups);
 
   // Add PDCCH PDUs to the DL_TTI.request message.
-  add_pdcch_pdus_to_builder<fapi::dl_tti_request_message_builder, pdcch_dl_information>(
-      builder, dl_res.dl_res->dl_pdcchs, dl_res.dl_pdcch_pdus);
+  add_pdcch_pdus_to_builder(builder, span<const pdcch_dl_information>(dl_res.dl_res->dl_pdcchs), dl_res.dl_pdcch_pdus);
 
   // Add SSB PDUs to the DL_TTI.request message.
   add_ssb_pdus_to_dl_request(builder, dl_res.ssb_pdus);
@@ -163,7 +163,7 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   // Send the message.
   msg_gw.dl_tti_request(msg);
 
-  on_new_uplink_dci(dl_res.dl_res->ul_pdcchs, dl_res.ul_pdcch_pdus, dl_res.slot);
+  add_pdcch_pdus_to_ul_dci_request(dl_res.dl_res->ul_pdcchs, dl_res.ul_pdcch_pdus, dl_res.slot);
 }
 
 void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_data)
@@ -266,17 +266,22 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
   msg_gw.ul_tti_request(msg);
 }
 
-void mac_to_fapi_translator::on_new_uplink_dci(span<const pdcch_ul_information> ul_pdcchs,
-                                               span<const dci_payload>          payload,
-                                               slot_point                       slot)
+void mac_to_fapi_translator::add_pdcch_pdus_to_ul_dci_request(span<const pdcch_ul_information> ul_pdcchs,
+                                                              span<const dci_payload>          payload,
+                                                              slot_point                       slot)
 {
+  // This message is optional, do not send it empty.
+  if (ul_pdcchs.empty()) {
+    return;
+  }
+
   fapi::ul_dci_request_message         msg;
   fapi::ul_dci_request_message_builder builder(msg);
 
   builder.set_basic_parameters(slot.sfn(), slot.slot_index());
-  add_pdcch_pdus_to_builder<fapi::ul_dci_request_message_builder, pdcch_ul_information>(builder, ul_pdcchs, payload);
+  add_pdcch_pdus_to_builder(builder, ul_pdcchs, payload);
 
-  // Validate the UL_TTI.request message.
+  // Validate the UL_DCI.request message.
   error_type<fapi::validator_report> result = validate_ul_dci_request(msg);
   if (!result) {
     log_validator_report(result.error());
