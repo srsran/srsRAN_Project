@@ -274,7 +274,7 @@ public:
   using value_type = T;
 
   constexpr optional() = default;
-  constexpr optional(nullopt_t /**/) : storage() {}
+  constexpr optional(nullopt_t /**/) : optional() {}
   template <typename U = T, std::enable_if_t<not is_self<U>::value, int> = 0>
   constexpr optional(U&& u) : storage(in_place_t{}, std::forward<U>(u))
   {

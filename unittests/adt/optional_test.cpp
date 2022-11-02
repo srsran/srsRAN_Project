@@ -13,6 +13,8 @@
 #include <gtest/gtest.h>
 #include <random>
 
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+
 using namespace srsgnb;
 
 std::random_device rd;
