@@ -39,12 +39,9 @@ constexpr unsigned GTPU_BASE_HEADER_LEN     = 8;
 constexpr unsigned GTPU_EXTENDED_HEADER_LEN = 12;
 
 constexpr unsigned GTPU_FLAGS_VERSION_MASK       = 0xe0;
-constexpr unsigned GTPU_FLAGS_VERSION_V1         = 0x20;
+constexpr unsigned GTPU_FLAGS_VERSION_V1         = 0x01;
 constexpr unsigned GTPU_FLAGS_GTP_PRIME_PROTOCOL = 0x00;
-constexpr unsigned GTPU_FLAGS_GTP_PROTOCOL       = 0x10;
-constexpr unsigned GTPU_FLAGS_EXTENDED_HDR       = 0x04;
-constexpr unsigned GTPU_FLAGS_SEQUENCE           = 0x02;
-constexpr unsigned GTPU_FLAGS_PACKET_NUM         = 0x01;
+constexpr unsigned GTPU_FLAGS_GTP_PROTOCOL       = 0x01;
 
 constexpr unsigned GTPU_MSG_ECHO_REQUEST                             = 1;
 constexpr unsigned GTPU_MSG_ECHO_RESPONSE                            = 2;
@@ -75,7 +72,7 @@ struct gtpu_header {
   std::vector<uint8_t> ext_buffer;
 };
 
-bool gtpu_read_header(gtpu_header& header, const byte_buffer& pdu, srslog::basic_logger& logger);
+bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::basic_logger& logger);
 bool gtpu_write_header(const gtpu_header& header, byte_buffer& pdu, srslog::basic_logger& logger);
 
 inline bool gtpu_supported_flags_check(const gtpu_header& header, srslog::basic_logger& logger)
@@ -85,11 +82,11 @@ inline bool gtpu_supported_flags_check(const gtpu_header& header, srslog::basic_
     logger.error("gtpu_header - Unhandled GTP-U Version. Flags: {}", header.flags);
     return false;
   }
-  if (!(header.flags.protocol_type & GTPU_FLAGS_GTP_PROTOCOL)) {
+  if (header.flags.protocol_type != GTPU_FLAGS_GTP_PROTOCOL) {
     logger.error("gtpu_header - Unhandled Protocol Type. Flags: {}", header.flags);
     return false;
   }
-  if (header.flags.n_pdu & GTPU_FLAGS_PACKET_NUM) {
+  if (header.flags.n_pdu) {
     logger.error("gtpu_header - Unhandled Packet Number. Flags: {}", header.flags);
     return false;
   }
@@ -113,7 +110,7 @@ inline bool gtpu_supported_msg_type_check(const gtpu_header& header, srslog::bas
 // Formatters
 namespace fmt {
 
-// SN size
+// GTP-U flags
 template <>
 struct formatter<srsgnb::gtpu_header::gtpu_flags> {
   template <typename ParseContext>
@@ -126,7 +123,28 @@ struct formatter<srsgnb::gtpu_header::gtpu_flags> {
   auto format(srsgnb::gtpu_header::gtpu_flags flags, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "GTP-U version={} bit", flags.version);
+    return format_to(ctx.out(),
+                     "GTP-U version={} bit, PT={}, E={}, S={}, PN={}",
+                     flags.version,
+                     flags.protocol_type,
+                     flags.ext_hdr,
+                     flags.seq_number,
+                     flags.n_pdu);
+  }
+};
+
+template <>
+struct formatter<srsgnb::gtpu_header> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::gtpu_header hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "Flags[{}], Length={}, TEID={}", hdr.flags, hdr.length, hdr.teid);
   }
 };
 } // namespace fmt

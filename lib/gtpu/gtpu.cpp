@@ -98,7 +98,7 @@ bool gtpu_write_header(const gtpu_header& header, byte_buffer& pdu, srslog::basi
   return true;
 }
 
-bool gtpu_read_header(gtpu_header& header, const byte_buffer& pdu, srslog::basic_logger& logger)
+bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::basic_logger& logger)
 {
   bit_decoder decoder{pdu};
 
@@ -149,17 +149,41 @@ bool gtpu_read_header(gtpu_header& header, const byte_buffer& pdu, srslog::basic
   }
   header.flags.n_pdu = pn_flag == 1;
 
-  // flags
+  // Check supported flags
   if (!gtpu_supported_flags_check(header, logger)) {
     logger.error("gtpu_read_header - Unhandled GTP-U Flags. Flags: {}", header.flags);
     return false;
   }
+  pdu.trim_head(1);
 
-  // message_type
+  // Message type
+  header.message_type = *pdu.begin();
   if (!gtpu_supported_msg_type_check(header, logger)) {
     logger.error("gtpu_read_header - Unhandled GTP-U Message Type. Flags: {}", header.flags);
     return false;
   }
+  pdu.trim_head(1);
+
+  {
+    header.length = {};
+    auto it       = pdu.begin();
+    for (uint32_t i = 0; i < 2; ++i) {
+      header.length |= (uint32_t)(*it) << ((2 - 1) - i) * 8;
+      ++it;
+    }
+    pdu.trim_head(2);
+  }
+  {
+    uint32_t teid = {};
+    auto     it   = pdu.begin();
+    for (uint32_t i = 0; i < 4; ++i) {
+      teid |= (uint32_t)(*it) << ((4 - 1) - i) * 8;
+      ++it;
+    }
+    header.teid = teid;
+    pdu.trim_head(4);
+  }
+  // TODO handle extended headers
   /*
   // If E, S or PN are set, header is longer
   if (header->flags & (GTPU_FLAGS_EXTENDED_HDR | GTPU_FLAGS_SEQUENCE | GTPU_FLAGS_PACKET_NUM)) {
