@@ -84,9 +84,9 @@ pucch_allocator_impl::pucch_allocator_impl(const cell_configuration& cell_cfg_) 
 pucch_allocator_impl::~pucch_allocator_impl() = default;
 
 pucch_allocator_impl::pucch_res_alloc_cfg
-pucch_allocator_impl::alloc_pucch_common_res_harq(unsigned&                         pucch_res_indicator,
-                                                  cell_slot_resource_allocator&     pucch_alloc,
-                                                  const dci_dl_context_information& dci_info)
+pucch_allocator_impl::alloc_pucch_common_res_harq(unsigned&                      pucch_res_indicator,
+                                                  cell_slot_resource_allocator&  pucch_alloc,
+                                                  const dci_context_information& dci_info)
 {
   // This is the max value of \f$\Delta_{PRI}\f$, which is a 3-bit unsigned.
   const unsigned max_d_pri = 7;

@@ -22,7 +22,7 @@ public:
   /// PDCCH grant allocation in a given slot.
   struct alloc_record {
     bool                              is_dl;
-    dci_dl_context_information*       pdcch_ctx;
+    dci_context_information*          pdcch_ctx;
     const search_space_configuration* ss_cfg;
   };
 
@@ -38,7 +38,7 @@ public:
 
   void clear();
 
-  bool alloc_pdcch(dci_dl_context_information&       pdcch_ctx,
+  bool alloc_pdcch(dci_context_information&          pdcch_ctx,
                    cell_slot_resource_allocator&     slot_alloc,
                    const search_space_configuration& ss_cfg);
 
@@ -75,7 +75,7 @@ void pdcch_resource_allocator_impl::pdcch_slot_allocator::clear()
   saved_dfs_tree.clear();
 }
 
-bool pdcch_resource_allocator_impl::pdcch_slot_allocator::alloc_pdcch(dci_dl_context_information&       pdcch_ctx,
+bool pdcch_resource_allocator_impl::pdcch_slot_allocator::alloc_pdcch(dci_context_information&          pdcch_ctx,
                                                                       cell_slot_resource_allocator&     slot_alloc,
                                                                       const search_space_configuration& ss_cfg)
 {

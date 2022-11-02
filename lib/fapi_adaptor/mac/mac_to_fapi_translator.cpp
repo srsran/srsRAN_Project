@@ -25,10 +25,10 @@ namespace {
 
 /// Helper struct to group DCIs into FAPI PDCCH PDUs.
 struct pdcch_group {
-  const dci_dl_context_information* info;
-  const dci_payload*                payload;
+  const dci_context_information* info;
+  const dci_payload*             payload;
 
-  pdcch_group(const dci_dl_context_information* info, const dci_payload* payload) : info(info), payload(payload) {}
+  pdcch_group(const dci_context_information* info, const dci_payload* payload) : info(info), payload(payload) {}
 
   bool operator==(const pdcch_group& other) const
   {

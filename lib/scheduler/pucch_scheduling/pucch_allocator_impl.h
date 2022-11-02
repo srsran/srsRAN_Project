@@ -104,9 +104,9 @@ private:
   };
 
   // Allocates the PUCCH (common) resource for HARQ-(N)-ACK.
-  pucch_res_alloc_cfg alloc_pucch_common_res_harq(unsigned&                         pucch_res_indicator,
-                                                  cell_slot_resource_allocator&     pucch_alloc,
-                                                  const dci_dl_context_information& dci_info);
+  pucch_res_alloc_cfg alloc_pucch_common_res_harq(unsigned&                      pucch_res_indicator,
+                                                  cell_slot_resource_allocator&  pucch_alloc,
+                                                  const dci_context_information& dci_info);
 
   // Fills the PUCCH HARQ grant for common resources.
   void fill_pucch_harq_grant(pucch_info& pucch_info, rnti_t rnti, const pucch_res_alloc_cfg& pucch_res);

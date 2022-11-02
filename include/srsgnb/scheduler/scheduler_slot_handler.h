@@ -64,7 +64,7 @@ struct dmrs_information {
   bounded_bitset<12> dmrs_ports;
 };
 
-struct dci_dl_context_information {
+struct dci_context_information {
   const bwp_configuration*     bwp_cfg;
   const coreset_configuration* coreset_cfg;
   /// RNTI used to identify the destination of this DCI (e.g. UE, RA-RNTI, SI, Paging).
@@ -90,7 +90,7 @@ struct dci_dl_context_information {
 /// PDCCH DL allocation.
 struct pdcch_dl_information {
   /// Context associated with PDCCH allocation.
-  dci_dl_context_information ctx;
+  dci_context_information ctx;
   /// DL DCI unpacked content.
   dci_dl_info dci;
 };
@@ -98,7 +98,7 @@ struct pdcch_dl_information {
 /// PDCCH UL allocation.
 struct pdcch_ul_information {
   /// Context associated with PDCCH allocation.
-  dci_dl_context_information ctx;
+  dci_context_information ctx;
   /// UL DCI unpacked content.
   dci_ul_info dci;
 };

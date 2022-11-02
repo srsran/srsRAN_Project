@@ -210,10 +210,9 @@ static rnti_t generate_rnti()
   return to_rnti(dist(gen));
 }
 
-static dci_dl_context_information generate_dci_context(const bwp_configuration&     bwp,
-                                                       const coreset_configuration& coreset)
+static dci_context_information generate_dci_context(const bwp_configuration& bwp, const coreset_configuration& coreset)
 {
-  dci_dl_context_information info{};
+  dci_context_information info{};
   info.bwp_cfg     = &bwp;
   info.coreset_cfg = &coreset;
 
