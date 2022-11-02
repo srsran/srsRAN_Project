@@ -20,7 +20,7 @@ namespace srsgnb {
 /// Labels that code how many bits are used for SR.
 /// For PUCCH Format 0-1, valid values: no_sr = no SR occasion; one = SR occasion.
 /// For PUCCH Format 2-3-4, all possible values are valid.
-enum class sr_nof_bits { no_sr, one, two, three, four };
+enum class sr_nof_bits : unsigned { no_sr, one, two, three, four };
 
 /// PUCCH Format 4 spreading factor.
 enum class pucch_format_4_sf { sf2, sf4 };
