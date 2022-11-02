@@ -48,6 +48,9 @@ void rar_pdu_encoder::encode(span<uint8_t> output_buf)
     encode_rar_subpdu(rar_info.grants[i], i == rar_info.grants.size() - 1);
   }
   srsgnb_sanity_check(ptr <= output_buf.data() + output_buf.size(), "Encoded RAR PDU length differs from expected");
+
+  // Pad with zeros.
+  std::fill(ptr, output_buf.data() + output_buf.size(), 0);
 }
 
 void rar_pdu_encoder::encode_rar_subpdu(const rar_ul_grant& grant, bool is_last_subpdu)
@@ -107,30 +110,18 @@ void rar_pdu_encoder::encode_rar_grant_payload(const rar_ul_grant& grant)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-rar_pdu_assembler::rar_pdu_assembler(const mac_cell_creation_request& cell_cfg_) : cell_cfg(cell_cfg_)
-{
-  // Pre-reserve a pool of byte vectors, where RAR PDUs will be encoded in a round-robin fashion.
-  // Note: The ring has to be large enough to accommodate all the RARs in a given slot, for a sufficiently large
-  // number of slots.
-  static const size_t GRID_NOF_SUBFRAMES = 20;
-  rar_payload_ring_buffer.resize(GRID_NOF_SUBFRAMES * get_nof_slots_per_subframe(cell_cfg.scs_common) *
-                                 MAX_RAR_PDUS_PER_SLOT);
-}
+rar_pdu_assembler::rar_pdu_assembler(ticking_ring_buffer_pool& pdu_pool_) : pdu_pool(pdu_pool_) {}
 
 span<const uint8_t> rar_pdu_assembler::encode_rar_pdu(const rar_information& rar)
 {
   srsgnb_assert(not rar.grants.empty(), "Cannot encode RAR without UL grants");
 
-  // Fetch output vector where RAR grant payload is going to be encoded.
-  std::vector<uint8_t>& payload = rar_payload_ring_buffer[next_index];
-  next_index                    = (next_index + 1) % rar_payload_ring_buffer.size();
-
-  // Dimension output buffer to accommodate RAR and padding bits.
-  payload.resize(rar.pdsch_cfg.codewords[0].tb_size_bytes, 0);
+  // Fetch PDU buffer where RAR grant payload is going to be encoded.
+  span<uint8_t> pdu_bytes = pdu_pool.allocate_buffer(rar.pdsch_cfg.codewords[0].tb_size_bytes);
 
   // Encode RAR PDU.
   rar_pdu_encoder pdu_encoder{rar};
-  pdu_encoder.encode(payload);
+  pdu_encoder.encode(pdu_bytes);
 
-  return {payload};
+  return pdu_bytes;
 }

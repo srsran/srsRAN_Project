@@ -12,21 +12,20 @@
 
 #include "srsgnb/mac/cell_configuration.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
+#include "srsgnb/support/memory_pool/ring_buffer_pool.h"
 
 namespace srsgnb {
 
+/// Encodes RAR PDUs based on RAR information provided by the scheduler.
 class rar_pdu_assembler
 {
 public:
-  explicit rar_pdu_assembler(const mac_cell_creation_request& cell_cfg_);
+  explicit rar_pdu_assembler(ticking_ring_buffer_pool& pdu_pool);
 
   span<const uint8_t> encode_rar_pdu(const rar_information& rar);
 
 private:
-  const mac_cell_creation_request& cell_cfg;
-
-  unsigned                          next_index = 0;
-  std::vector<std::vector<uint8_t>> rar_payload_ring_buffer;
+  ticking_ring_buffer_pool& pdu_pool;
 };
 
 } // namespace srsgnb

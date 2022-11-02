@@ -126,11 +126,7 @@ public:
   span<const uint8_t> assemble_pdu(rnti_t rnti, const dl_msg_tb_info& tb_info, unsigned tb_size_bytes)
   {
     span<uint8_t> pdu_bytes = pdu_pool.allocate_buffer(tb_size_bytes);
-    if (pdu_bytes.empty()) {
-      logger.warning("SCHED: Unable to allocate DL MAC PDU for rnti={:#x}.", rnti);
-      return {};
-    }
-    dl_sch_pdu ue_pdu(pdu_bytes);
+    dl_sch_pdu    ue_pdu(pdu_bytes);
 
     // Encode added subPDUs.
     for (const dl_msg_lc_info& subpdu : tb_info.subpdus) {

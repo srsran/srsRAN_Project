@@ -126,12 +126,14 @@ void test_encoded_rar(const rar_information& original_rar, span<const uint8_t> r
 
 void test_rar_assembler_multiple_random_ul_grants()
 {
-  test_delimit_logger test_delim{"MAC assembler for multiple UL grants"};
+  constexpr static size_t MAX_RAR_GRANT_SIZE = 64;
+  test_delimit_logger     test_delim{"MAC assembler for multiple UL grants"};
 
   mac_cell_creation_request cell_cfg = test_helpers::make_default_mac_cell_config();
   rar_information           rar_info = make_random_rar_info(nof_ul_grants_per_rar(gen));
+  ticking_ring_buffer_pool  pdu_pool(MAX_DL_PDUS_PER_SLOT * MAX_GRANTS_PER_RAR * MAX_RAR_GRANT_SIZE, 1);
 
-  rar_pdu_assembler   assembler(cell_cfg);
+  rar_pdu_assembler   assembler(pdu_pool);
   span<const uint8_t> bytes = assembler.encode_rar_pdu(rar_info);
 
   test_encoded_rar(rar_info, bytes);
@@ -141,10 +143,14 @@ void test_rar_assembler_multiple_random_ul_grants()
 /// so that the output PDUs can be referenced by lower layers without risking dangling pointers.
 void test_rar_assembler_maintains_old_results()
 {
+  constexpr static size_t MAX_RAR_GRANT_SIZE = 64;
+
   test_delimit_logger test_delim{"MAC assembler maintains previous results"};
 
   mac_cell_creation_request cell_cfg = test_helpers::make_default_mac_cell_config();
-  rar_pdu_assembler         assembler(cell_cfg);
+  ticking_ring_buffer_pool  pdu_pool(MAX_DL_PDUS_PER_SLOT * MAX_GRANTS_PER_RAR * MAX_RAR_GRANT_SIZE,
+                                    NOF_SUBFRAMES_PER_FRAME);
+  rar_pdu_assembler         assembler(pdu_pool);
 
   // The RAR assembler has to internally store previous slot results. This variable defines a reasonable slot duration
   // that the RAR assembler has to keep these results stored.
@@ -155,6 +161,7 @@ void test_rar_assembler_maintains_old_results()
 
   unsigned nof_slots_tests = MEMORY_RESULT_IN_SLOTS * 64;
   for (unsigned i = 0; i < nof_slots_tests; ++i) {
+    pdu_pool.tick(i);
     if (i >= MEMORY_RESULT_IN_SLOTS) {
       // Test old results to check if they are still valid.
       test_encoded_rar(previous_rars[i], previous_pdus[i]);

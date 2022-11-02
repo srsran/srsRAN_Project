@@ -101,6 +101,7 @@ public:
 
   /// \brief Allocate span of contiguous bytes of size \c sz. Overflows may be detected, depending on the overflow
   /// detection policy defined.
+  /// \return span of bytes pointing at allocated memory region.
   span<uint8_t> allocate_buffer(size_t sz) noexcept
   {
     overflow_detector.register_alloc(sz);
