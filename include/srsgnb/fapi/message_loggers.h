@@ -22,6 +22,7 @@ struct rx_data_indication_message;
 struct tx_data_request_message;
 struct slot_indication_message;
 struct uci_indication_message;
+struct ul_dci_request_message;
 struct ul_tti_request_message;
 
 /// Logs the given CRC.indication message in the given logger.
@@ -44,6 +45,9 @@ void log_tx_data_request(const tx_data_request_message& msg, srslog::basic_logge
 
 /// Logs the given UCI.indication message in the given logger.
 void log_uci_indication(const uci_indication_message& msg, srslog::basic_logger& logger);
+
+/// Logs the given UL_DCI.request message in the given logger.
+void log_ul_dci_request(const ul_dci_request_message& msg, srslog::basic_logger& logger);
 
 /// Logs the given UL_TTI.request message in the given logger.
 void log_ul_tti_request(const ul_tti_request_message& msg, srslog::basic_logger& logger);

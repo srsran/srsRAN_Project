@@ -30,6 +30,8 @@ void logging_slot_gateway_decorator::ul_tti_request(const ul_tti_request_message
 
 void logging_slot_gateway_decorator::ul_dci_request(const ul_dci_request_message& msg)
 {
+  log_ul_dci_request(msg, logger);
+
   gateway.ul_dci_request(msg);
 }
 

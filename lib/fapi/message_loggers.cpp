@@ -309,3 +309,21 @@ void srsgnb::fapi::log_slot_indication(const slot_indication_message& msg, srslo
 {
   logger.debug("Slot.indication slot={}.{}", msg.sfn, msg.slot);
 }
+
+void srsgnb::fapi::log_ul_dci_request(const ul_dci_request_message& msg, srslog::basic_logger& logger)
+{
+  fmt::memory_buffer buffer;
+  fmt::format_to(buffer, "UL_DCI.request slot={}.{}", msg.sfn, msg.slot);
+
+  for (const auto& pdu : msg.pdus) {
+    switch (pdu.pdu_type) {
+      case fapi::ul_dci_pdu_type::PDCCH:
+        log_pdcch_pdu(pdu.pdu, buffer);
+        break;
+      default:
+        srsgnb_assert(0, "UL_DCI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
+    }
+  }
+
+  logger.debug("{}", to_c_str(buffer));
+}
