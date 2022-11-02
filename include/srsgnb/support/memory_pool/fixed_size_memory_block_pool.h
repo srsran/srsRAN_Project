@@ -26,7 +26,7 @@ namespace srsgnb {
  * When the local cache gets depleted, the worker tries to obtain segments from a central memory block cache.
  * Since there is no stealing of segments between workers, it is possible that a worker cannot allocate while another
  * worker still has blocks in its own cache. To minimize the impact of this event, an upper bound is place on a worker
- * worker cache size. Once a worker reaches that upper bound, it sends half of its stored blocks to the central cache.
+ * cache size. Once a worker reaches that upper bound, it sends half of its stored blocks to the central cache.
  * Note: Taking into account the usage of thread_local, this class is made a singleton. To be able to instantiate
  *       different pools, the user should use different IdTag types.
  * Note2: No considerations were made regarding false sharing between workers. It is assumed that the blocks are big
@@ -84,7 +84,7 @@ public:
     return pool;
   }
 
-  /// Number of memory blocks contained in this memory pool.
+  /// Memory block size in bytes.
   size_t memory_block_size() const { return mblock_size; }
 
   /// Number of memory blocks contained in this memory pool.
