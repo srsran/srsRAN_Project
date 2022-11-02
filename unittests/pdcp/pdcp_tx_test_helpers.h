@@ -13,6 +13,7 @@
 #include "../../lib/pdcp/pdcp_entity_tx.h"
 #include "pdcp_test_vectors.h"
 #include "srsgnb/pdcp/pdcp_config.h"
+#include "srsgnb/support/bit_encoding.h"
 #include "srsgnb/support/timers.h"
 #include <gtest/gtest.h>
 #include <queue>
@@ -20,7 +21,9 @@
 namespace srsgnb {
 
 /// Mocking class of the surrounding layers invoked by the PDCP.
-class pdcp_tx_test_frame : public pdcp_tx_lower_notifier, public pdcp_tx_upper_control_notifier
+class pdcp_tx_test_frame : public pdcp_rx_status_provider,
+                           public pdcp_tx_lower_notifier,
+                           public pdcp_tx_upper_control_notifier
 {
 public:
   std::queue<byte_buffer> pdu_queue             = {};
@@ -28,11 +31,32 @@ public:
   uint32_t                nof_protocol_failure  = 0;
   std::queue<uint32_t>    sdu_discard_queue     = {};
 
-  /// PDCP TX upper layer control notifier
+  // PDCP RX status provider
+  byte_buffer compile_status_report() final
+  {
+    // Build status report dummy to be picked by the TX entity
+    byte_buffer buf = {};
+    bit_encoder enc(buf);
+
+    // Pack PDU header
+    enc.pack(to_number(pdcp_dc_field::control), 1);
+    enc.pack(to_number(pdcp_control_pdu_type::status_report), 3);
+    enc.pack(0b0000, 4);
+
+    // Pack something into FMC field
+    enc.pack(0xc0cac01a, 32);
+
+    // Pack some bitmap
+    enc.pack(0xcafe, 16);
+
+    return buf;
+  }
+
+  // PDCP TX upper layer control notifier
   void on_max_count_reached() final { nof_max_count_reached++; }
   void on_protocol_failure() final { nof_protocol_failure++; }
 
-  /// PDCP TX lower layer data notifier
+  // PDCP TX lower layer data notifier
   void on_new_pdu(byte_buffer pdu) final { pdu_queue.push(std::move(pdu)); }
   void on_discard_pdu(uint32_t count) final { sdu_discard_queue.push(count); }
 };
@@ -54,12 +78,13 @@ protected:
     pdu_hdr_len = pdcp_data_pdu_header_size(sn_size); // Round up division
 
     // Set TX config
-    config.sn_size       = sn_size;
-    config.rb_type       = pdcp_rb_type::drb;
-    config.rlc_mode      = pdcp_rlc_mode::am;
-    config.direction     = pdcp_security_direction::downlink;
-    config.discard_timer = discard_timer;
-    config.max_count     = max_count;
+    config.sn_size                = sn_size;
+    config.rb_type                = pdcp_rb_type::drb;
+    config.rlc_mode               = pdcp_rlc_mode::am;
+    config.direction              = pdcp_security_direction::downlink;
+    config.discard_timer          = discard_timer;
+    config.max_count              = max_count;
+    config.status_report_required = true;
 
     // Set security keys
     sec_cfg.k_128_rrc_int = k_128_int;
@@ -73,6 +98,7 @@ protected:
 
     // Create RLC entities
     pdcp_tx = std::make_unique<pdcp_entity_tx>(0, LCID_SRB1, config, test_frame, test_frame, timers);
+    pdcp_tx->set_status_provider(&test_frame);
   }
 
   /// \brief Gets expected PDU based on the COUNT being tested

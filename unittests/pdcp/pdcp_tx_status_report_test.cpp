@@ -71,7 +71,7 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
     enc.pack(0b10100000, 8);
 
     // Handle this status report
-    pdcp_tx->handle_status_report(byte_buffer_slice_chain{std::move(buf)});
+    pdcp_tx->on_status_report(byte_buffer_slice_chain{std::move(buf)});
 
     // Verify discard
     {
@@ -114,6 +114,25 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
   }
 }
 
+/// Test triggering, picking and transmission of PDCP status report
+TEST_P(pdcp_tx_status_report_test, trigger_status_report)
+{
+  init(GetParam());
+
+  pdcp_tx->set_as_security_config(sec_cfg);
+  pdcp_tx->enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+
+  ASSERT_EQ(test_frame.pdu_queue.size(), 0);
+
+  // Trigger status report
+  pdcp_tx->send_status_report();
+
+  // Get the forwared status report that was passed to lower layers
+  ASSERT_EQ(test_frame.pdu_queue.size(), 1);
+  // Check content
+  ASSERT_EQ(test_frame.pdu_queue.front(), test_frame.compile_status_report());
+}
+
 /// \brief Test basic data recovery functionality
 TEST_P(pdcp_tx_status_report_test, data_recovery)
 {
@@ -138,11 +157,19 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
       ASSERT_EQ(test_frame.pdu_queue.size(), 0);
     }
     pdcp_tx->data_recovery();
-    for (uint32_t count = tx_next; count < tx_next + n_sdus; ++count) {
+    constexpr uint32_t n_status_reports = 1;
+    for (uint32_t count = tx_next; count < tx_next + n_sdus + n_status_reports; ++count) {
       byte_buffer pdu = std::move(test_frame.pdu_queue.front());
       test_frame.pdu_queue.pop();
-      byte_buffer exp_pdu = std::move(exp_pdu_list.front());
-      exp_pdu_list.pop();
+      byte_buffer exp_pdu = {};
+      if (count == tx_next) {
+        // read status report
+        exp_pdu = test_frame.compile_status_report();
+      } else {
+        // read data PDUs
+        exp_pdu = std::move(exp_pdu_list.front());
+        exp_pdu_list.pop();
+      }
       ASSERT_EQ(pdu.length(), exp_pdu.length());
       ASSERT_EQ(pdu, exp_pdu);
     }

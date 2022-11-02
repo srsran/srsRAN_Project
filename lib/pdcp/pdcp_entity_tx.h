@@ -122,7 +122,10 @@ public:
     logger.log_info("Enabled/disabled TX security integrity={}, ciphering={}", integ, cipher);
   }
 
-  /// Performs data recovery, as specified as in TS 38.323, section 5.5.
+  /// Triggers a status report, as specified in TS 38.323, Sec. 5.4.
+  void send_status_report() final;
+
+  /// Performs data recovery, as specified in TS 38.323, Sec. 5.5.
   void data_recovery() final;
 
 private:
@@ -141,7 +144,8 @@ private:
   pdcp_integrity_enabled      integrity_enabled = pdcp_integrity_enabled::no;
   pdcp_ciphering_enabled      ciphering_enabled = pdcp_ciphering_enabled::no;
 
-  void write_to_lower_layers(uint32_t count, byte_buffer buf);
+  void write_data_pdu_to_lower_layers(uint32_t count, byte_buffer buf);
+  void write_control_pdu_to_lower_layers(byte_buffer buf);
 
   /// Apply ciphering and integrity protection to the payload
   byte_buffer apply_ciphering_and_integrity_protection(byte_buffer hdr, byte_buffer buf, uint32_t count);

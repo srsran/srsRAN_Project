@@ -82,23 +82,30 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
   }
 
   // Write to lower layers
-  write_to_lower_layers(st.tx_next, std::move(protected_buf));
+  write_data_pdu_to_lower_layers(st.tx_next, std::move(protected_buf));
 
   // Increment TX_NEXT
   st.tx_next++;
 }
 
-void pdcp_entity_tx::write_to_lower_layers(uint32_t count, byte_buffer buf)
+void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer buf)
 {
   logger.log_info(buf.begin(),
                   buf.end(),
-                  "TX PDU ({}B), COUNT={}, HFN={}, SN={}, integrity={}, encryption={}",
+                  "TX Data PDU ({}B), COUNT={}, HFN={}, SN={}, integrity={}, encryption={}",
                   buf.length(),
                   count,
                   HFN(count),
                   SN(count),
                   integrity_enabled,
                   ciphering_enabled);
+  metrics_add_pdus(1, buf.length());
+  lower_dn.on_new_pdu(std::move(buf));
+}
+
+void pdcp_entity_tx::write_control_pdu_to_lower_layers(byte_buffer buf)
+{
+  logger.log_info(buf.begin(), buf.end(), "TX Control PDU ({}B)", buf.length());
   metrics_add_pdus(1, buf.length());
   lower_dn.on_new_pdu(std::move(buf));
 }
@@ -271,12 +278,32 @@ byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
 /*
  * Status report and data recovery
  */
+void pdcp_entity_tx::send_status_report()
+{
+  if (cfg.status_report_required) {
+    logger.log_info("Status report triggered");
+    byte_buffer status_report = status_provider->compile_status_report();
+    write_control_pdu_to_lower_layers(std::move(status_report));
+  } else {
+    logger.log_warning("Status report triggered but not configured");
+  }
+}
+
 void pdcp_entity_tx::data_recovery()
 {
   srsgnb_assert(is_drb() && cfg.rlc_mode == pdcp_rlc_mode::am, "Invalid bearer type for data recovery.");
   logger.log_info("Data recovery requested");
+
+  /*
+   * TS 38.323 Sec. 5.4.1:
+   * [...] the receiving PDCP entity shall trigger a PDCP status report when:
+   * [...] -upper layer requests a PDCP data recovery; [...]
+   */
+  if (cfg.status_report_required) {
+    send_status_report();
+  }
   for (const auto& info : discard_timers_map) {
-    write_to_lower_layers(info.first, info.second.buf.copy());
+    write_data_pdu_to_lower_layers(info.first, info.second.buf.copy());
   }
 }
 /*
