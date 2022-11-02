@@ -24,9 +24,6 @@ namespace srsgnb {
 /// Bytes can be added in the HEADROOM region via prepend() or in the TAILROOM via append()
 class byte_buffer_segment
 {
-  struct pool_tag {};
-  using pool_singleton = fixed_size_memory_block_pool<pool_tag>;
-
 public:
   constexpr static size_t SEGMENT_SIZE     = 1024;
   constexpr static size_t DEFAULT_HEADROOM = 16;
@@ -208,20 +205,10 @@ public:
   }
 
   /// Byte_buffer_segments are allocated using a pre-allocated segment memory pool.
-  void* operator new(size_t sz, const std::nothrow_t& nothrow_value) noexcept
-  {
-    constexpr static size_t byte_buffer_segment_pool_size = 8192;
-    static auto& pool = pool_singleton::get_instance(byte_buffer_segment_pool_size, sizeof(byte_buffer_segment));
-
-    return pool.allocate_node(sz);
-  }
+  void* operator new(size_t sz, const std::nothrow_t& nothrow_value) noexcept;
 
   /// Byte_buffer_segments are deallocated back to the global segment memory pool.
-  void operator delete(void* p)
-  {
-    static auto& pool = pool_singleton::get_instance();
-    pool.deallocate_node(p);
-  }
+  void operator delete(void* p);
 
 private:
   size_t tailroom_start() const { return headroom() + length(); }
@@ -231,6 +218,36 @@ private:
   uint8_t*                          payload_data_;
   uint8_t*                          payload_data_end_;
 };
+
+/// Pool of byte buffer segments.
+struct byte_buffer_pool_tag {};
+using byte_buffer_segment_pool = fixed_size_memory_block_pool<byte_buffer_pool_tag>;
+
+/// Initialize pool of byte buffer segments with specific number of segments. Assert if the pool was already initialized
+/// with a different number of segments.
+inline void init_byte_buffer_segment_pool(std::size_t nof_segments)
+{
+  auto& pool = byte_buffer_segment_pool::get_instance(nof_segments, sizeof(byte_buffer_segment));
+  srsgnb_assert(nof_segments == pool.nof_memory_blocks(),
+                "The pool was already initialized with a different number of segments ({} != {})",
+                nof_segments,
+                pool.nof_memory_blocks());
+}
+
+inline void* byte_buffer_segment::operator new(size_t sz, const std::nothrow_t& nothrow_value) noexcept
+{
+  // Initialize byte buffer segment pool, if not yet initialized.
+  constexpr static size_t default_byte_buffer_segment_pool_size = 8192;
+  static auto&            pool =
+      byte_buffer_segment_pool::get_instance(default_byte_buffer_segment_pool_size, sizeof(byte_buffer_segment));
+  return pool.allocate_node(sz);
+}
+
+inline void byte_buffer_segment::operator delete(void* p)
+{
+  static auto& pool = byte_buffer_segment_pool::get_instance();
+  pool.deallocate_node(p);
+}
 
 namespace detail {
 

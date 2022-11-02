@@ -48,8 +48,13 @@ class fixed_size_memory_block_pool
     mblock_size(align_next(memory_block_size_, alignof(std::max_align_t))), nof_blocks(nof_blocks_)
   {
     srsgnb_assert(nof_blocks > batch_steal_size,
-                  "The number of segments in the pool must be larger than the thread cache size");
-    srsgnb_assert(mblock_size > free_memory_block_list::min_memory_block_align(), "Segment size is too small");
+                  "The number of segments in the pool must be larger than the thread cache size ({} <= {})",
+                  nof_blocks,
+                  (size_t)batch_steal_size);
+    srsgnb_assert(mblock_size > free_memory_block_list::min_memory_block_align(),
+                  "Segment size is too small ({} <= {})",
+                  mblock_size,
+                  free_memory_block_list::min_memory_block_align());
 
     // Allocate the required memory for the given number of segments and segment size.
     size_t total_mem = mblock_size * nof_blocks;
@@ -76,7 +81,7 @@ public:
     allocated_memory.clear();
   }
 
-  /// \brief Instantiation of memory pool singleton.
+  /// \brief Get instance of a memory pool singleton.
   static fixed_size_memory_block_pool<IdTag, DebugSanitizeAddress>& get_instance(size_t nof_blocks     = 0,
                                                                                  size_t mem_block_size = 0)
   {

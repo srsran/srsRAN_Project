@@ -27,7 +27,6 @@ TEST(fixed_memory_block_pool_test, correct_instantiation)
 TEST(fixed_memory_block_pool_test, allocated_block_is_valid)
 {
   struct test_tag_id {};
-
   auto& pool  = fixed_size_memory_block_pool<test_tag_id, true>::get_instance(32, 256);
   void* block = pool.allocate_node(256);
   ASSERT_NE(block, nullptr);
