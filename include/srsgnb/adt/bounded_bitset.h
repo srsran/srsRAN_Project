@@ -186,6 +186,7 @@ Integer find_first_lsb_one(Integer value)
   return detail::bitset_builtin_helper<Integer>::zero_lsb_count(value);
 }
 
+/// \brief Counts the number of bits set to one in an integer.
 template <typename Integer>
 int count_ones(Integer value)
 {
@@ -197,10 +198,21 @@ int count_ones(Integer value)
 /// The bounded_bitset is represented internally via an array of unsigned integers, with each integer storing a bitmap.
 /// This class also offers many standard logic manipulation methods, like ::any(), operators &=, &, |=, |, etc. and
 /// utility methods to convert the bitset into strings or integers.
+///
+/// Depending on the passed \c FirstBitIsRightmost template argument, this class can represent the bits of the bitset in
+/// different orders.
+/// E.g. bounded_bitset<4, false> a;
+/// a.set(1);
+/// fmt::print("{:b}", a); // prints "0001".
+/// bounded_bitset<4, true> b;
+/// b.set(1);
+/// fmt::print("{:b}", b); // prints "1000".
+///
 /// \tparam N Upper bound for bitset size in number of bits.
-/// \tparam reversed Bit index order in memory. If set to false, the LSB of the first word corresponds to bit index 0.
-/// If set to true, the MSB of the last word corresponds to bit index 0.
-template <size_t N, bool reversed = false>
+/// \tparam FirstBitIsRightmost Bit index order in memory. If set to (false / true), the bit index 0 corresponds to the
+/// (right-most / left-most) index of the bitset. Note that this argument has an effect on the underlying bitset memory
+/// layout.
+template <size_t N, bool FirstBitIsRightmost = false>
 class bounded_bitset
 {
   using word_t                      = uint64_t;
@@ -240,7 +252,7 @@ public:
     std::for_each(values.begin(), values.end(), [this, n = 0](bool value) mutable { set(n++, value); });
   }
 
-  static constexpr bool bit_order() noexcept { return reversed; }
+  static constexpr bool bit_order() noexcept { return FirstBitIsRightmost; }
 
   static constexpr size_t max_size() noexcept { return N; }
 
@@ -376,7 +388,7 @@ public:
 
   /// \brief Toggle values of bits in bitset.
   /// \return Returns this object.
-  bounded_bitset<N, reversed>& flip() noexcept
+  bounded_bitset<N, FirstBitIsRightmost>& flip() noexcept
   {
     for (size_t i = 0; i < nof_words_(); ++i) {
       buffer[i] = ~buffer[i];
@@ -390,7 +402,7 @@ public:
   /// \param[in] endpos End bit index (excluding) where the bits stop being set.
   /// \param[in] value Set bit range values to either true or false.
   /// \return Returns a reference to this object.
-  bounded_bitset<N, reversed>& fill(size_t startpos, size_t endpos, bool value = true)
+  bounded_bitset<N, FirstBitIsRightmost>& fill(size_t startpos, size_t endpos, bool value = true)
   {
     find_first_word_(startpos, endpos, [this, value](size_t word_idx, const word_t& mask) {
       if (value) {
@@ -404,15 +416,15 @@ public:
   }
 
   /// \brief Returns bounded_bitset<> that represents a slice or subview of the original bounded_bitset. Unless
-  /// it is specified, the returned slice has the same template parameters "N" and "reversed" of "this".
+  /// it is specified, the returned slice has the same template parameters "N" and "FirstBitIsRightmost" of "this".
   ///
   /// \param[in] startpos The bit index where the subview starts.
   /// \param[in] endpos The bit index where the subview stops.
   template <size_t N2 = N>
-  bounded_bitset<N2, reversed> slice(size_t startpos, size_t endpos) const
+  bounded_bitset<N2, FirstBitIsRightmost> slice(size_t startpos, size_t endpos) const
   {
-    bounded_bitset<N2, reversed> sliced(endpos - startpos);
-    if (reversed) {
+    bounded_bitset<N2, FirstBitIsRightmost> sliced(endpos - startpos);
+    if (FirstBitIsRightmost) {
       std::swap(startpos, endpos);
       startpos = get_bitidx_(startpos) + 1;
       endpos   = get_bitidx_(endpos) + 1;
@@ -455,7 +467,7 @@ public:
       return -1;
     }
 
-    if (not reversed) {
+    if (not FirstBitIsRightmost) {
       return find_first_(startpos, endpos, value);
     }
     return find_first_reversed_(startpos, endpos, value);
@@ -609,7 +621,7 @@ public:
   {
     assert_range_bounds_(startpos, endpos);
 
-    if (reversed) {
+    if (FirstBitIsRightmost) {
       int ret = find_first_(startpos, endpos, value);
       if (ret == -1) {
         return ret;
@@ -697,7 +709,7 @@ public:
 
   /// \brief Compares two bitsets.
   /// \return Returns true if both bitsets are equal in size and values of bits.
-  bool operator==(const bounded_bitset<N, reversed>& other) const noexcept
+  bool operator==(const bounded_bitset<N, FirstBitIsRightmost>& other) const noexcept
   {
     if (size() != other.size()) {
       return false;
@@ -710,12 +722,12 @@ public:
     return true;
   }
 
-  bool operator!=(const bounded_bitset<N, reversed>& other) const noexcept { return not(*this == other); }
+  bool operator!=(const bounded_bitset<N, FirstBitIsRightmost>& other) const noexcept { return not(*this == other); }
 
   /// \brief Applies bitwise OR operation lhs |= rhs.
   /// \param[in] other Bitset which corresponds to the rhs of the operation.
   /// \return This object updated after the bitwise OR operation.
-  bounded_bitset<N, reversed>& operator|=(const bounded_bitset<N, reversed>& other)
+  bounded_bitset<N, FirstBitIsRightmost>& operator|=(const bounded_bitset<N, FirstBitIsRightmost>& other)
   {
     srsgnb_assert(other.size() == size(),
                   "ERROR: operator|= called for bitsets of different sizes ('{}'!='{}')",
@@ -730,7 +742,7 @@ public:
   /// \brief Applies bitwise AND operation lhs &= rhs.
   /// \param[in] other Bitset which corresponds to the rhs of the operation.
   /// \return This object updated after the bitwise AND operation.
-  bounded_bitset<N, reversed>& operator&=(const bounded_bitset<N, reversed>& other)
+  bounded_bitset<N, FirstBitIsRightmost>& operator&=(const bounded_bitset<N, FirstBitIsRightmost>& other)
   {
     srsgnb_assert(other.size() == size(),
                   "ERROR: operator&= called for bitsets of different sizes ('{}'!='{}')",
@@ -744,9 +756,9 @@ public:
 
   /// \brief Flips values of bits in the bitset.
   /// \return Returns reference to this object, updated after the flip operation.
-  bounded_bitset<N, reversed> operator~() const noexcept
+  bounded_bitset<N, FirstBitIsRightmost> operator~() const noexcept
   {
-    bounded_bitset<N, reversed> ret(*this);
+    bounded_bitset<N, FirstBitIsRightmost> ret(*this);
     ret.flip();
     return ret;
   }
@@ -764,7 +776,7 @@ public:
 
     std::string s;
     s.assign(size(), '0');
-    if (not reversed) {
+    if (not FirstBitIsRightmost) {
       for (size_t i = size(); i > 0; --i) {
         fmt::format_to(mem_buffer, "{}", test(i - 1) ? '1' : '0');
       }
@@ -832,7 +844,7 @@ private:
     }
   }
 
-  size_t get_bitidx_(size_t bitpos) const noexcept { return reversed ? size() - 1 - bitpos : bitpos; }
+  size_t get_bitidx_(size_t bitpos) const noexcept { return FirstBitIsRightmost ? size() - 1 - bitpos : bitpos; }
 
   bool test_(size_t bitpos) const noexcept
   {
@@ -894,11 +906,11 @@ private:
 
       if (i == startword) {
         size_t offset = startpos % bits_per_word;
-        w &= (reversed) ? mask_msb_zeros<word_t>(offset) : mask_lsb_zeros<word_t>(offset);
+        w &= (FirstBitIsRightmost) ? mask_msb_zeros<word_t>(offset) : mask_lsb_zeros<word_t>(offset);
       }
       if (i == lastword) {
         size_t offset = (endpos - 1) % bits_per_word;
-        w &= (reversed) ? mask_msb_ones<word_t>(offset + 1) : mask_lsb_ones<word_t>(offset + 1);
+        w &= (FirstBitIsRightmost) ? mask_msb_ones<word_t>(offset + 1) : mask_lsb_ones<word_t>(offset + 1);
       }
       if (w != 0) {
         return static_cast<int>(i * bits_per_word + find_first_msb_one(w));
@@ -978,7 +990,7 @@ private:
   bool find_first_word_(size_t start, size_t stop, const C& c) const
   {
     assert_range_bounds_(start, stop);
-    return find_first_word_(start, stop, c, std::integral_constant<bool, reversed>{});
+    return find_first_word_(start, stop, c, std::integral_constant<bool, FirstBitIsRightmost>{});
   }
 
   template <typename C>
@@ -1013,32 +1025,32 @@ private:
 
 /// \brief Bitwise AND operation result = lhs & rhs.
 /// \return new bounded_bitset that results from the Bitwise AND operation.
-template <size_t N, bool reversed>
-inline bounded_bitset<N, reversed> operator&(const bounded_bitset<N, reversed>& lhs,
-                                             const bounded_bitset<N, reversed>& rhs) noexcept
+template <size_t N, bool FirstBitIsRightmost>
+inline bounded_bitset<N, FirstBitIsRightmost> operator&(const bounded_bitset<N, FirstBitIsRightmost>& lhs,
+                                                        const bounded_bitset<N, FirstBitIsRightmost>& rhs) noexcept
 {
-  bounded_bitset<N, reversed> res(lhs);
+  bounded_bitset<N, FirstBitIsRightmost> res(lhs);
   res &= rhs;
   return res;
 }
 
 /// \brief Bitwise AND operation result = lhs | rhs.
 /// \return new bounded_bitset that results from the Bitwise OR operation.
-template <size_t N, bool reversed>
-inline bounded_bitset<N, reversed> operator|(const bounded_bitset<N, reversed>& lhs,
-                                             const bounded_bitset<N, reversed>& rhs) noexcept
+template <size_t N, bool FirstBitIsRightmost>
+inline bounded_bitset<N, FirstBitIsRightmost> operator|(const bounded_bitset<N, FirstBitIsRightmost>& lhs,
+                                                        const bounded_bitset<N, FirstBitIsRightmost>& rhs) noexcept
 {
-  bounded_bitset<N, reversed> res(lhs);
+  bounded_bitset<N, FirstBitIsRightmost> res(lhs);
   res |= rhs;
   return res;
 }
 
 /// \brief Flip bits from left to right.
 /// \return new bounded_bitset that results from the fliplr operation.
-template <size_t N, bool reversed>
-inline bounded_bitset<N, reversed> fliplr(const bounded_bitset<N, reversed>& other) noexcept
+template <size_t N, bool FirstBitIsRightmost>
+inline bounded_bitset<N, FirstBitIsRightmost> fliplr(const bounded_bitset<N, FirstBitIsRightmost>& other) noexcept
 {
-  bounded_bitset<N, reversed> ret(other.size());
+  bounded_bitset<N, FirstBitIsRightmost> ret(other.size());
   for (uint32_t i = 0; i < ret.size(); ++i) {
     if (other.test(i)) {
       ret.set(ret.size() - 1 - i);
@@ -1065,15 +1077,15 @@ inline bounded_bitset<N, reversed> fliplr(const bounded_bitset<N, reversed>& oth
 /// \param[in] slice_offset offset from where to slice each fold "O".
 /// \param[in] slice_length length of the slice taken from each fold "K".
 /// \return bitset of size slice_length with the or-accumulated folds.
-template <size_t N2, size_t N, bool reversed>
-inline bounded_bitset<N2, reversed> fold_and_accumulate(const bounded_bitset<N, reversed>& other,
-                                                        size_t                             fold_length,
-                                                        size_t                             slice_offset,
-                                                        size_t                             slice_length) noexcept
+template <size_t N2, size_t N, bool FirstBitIsRightmost>
+inline bounded_bitset<N2, FirstBitIsRightmost> fold_and_accumulate(const bounded_bitset<N, FirstBitIsRightmost>& other,
+                                                                   size_t fold_length,
+                                                                   size_t slice_offset,
+                                                                   size_t slice_length) noexcept
 {
   srsgnb_assert(
       other.size() % fold_length == 0, "Invalid fold length={} for bitset of size={}", fold_length, other.size());
-  bounded_bitset<N2, reversed> ret(slice_length);
+  bounded_bitset<N2, FirstBitIsRightmost> ret(slice_length);
   for (size_t i = 0; i != other.size(); i += fold_length) {
     ret |= other.template slice<N2>(i + slice_offset, i + slice_offset + slice_length);
   }
@@ -1083,24 +1095,24 @@ inline bounded_bitset<N2, reversed> fold_and_accumulate(const bounded_bitset<N, 
 /// \brief Performs the fold and accumulate operation, but without slicing at the end.
 ///
 /// \tparam N2 maximum bitset size for returned bitset.
-/// \tparam reversed internal bit order representation of returned bitset.
+/// \tparam FirstBitIsRightmost internal bit order representation of returned bitset.
 /// \param[in] other original bitset from where folds are generated.
 /// \param[in] fold_length length of each fold bitset.
 /// \return bitset of size fold_length with the accumulated folds.
-template <size_t N2, size_t N, bool reversed>
-inline bounded_bitset<N2, reversed> fold_and_accumulate(const bounded_bitset<N, reversed>& other,
-                                                        size_t                             fold_length) noexcept
+template <size_t N2, size_t N, bool FirstBitIsRightmost>
+inline bounded_bitset<N2, FirstBitIsRightmost> fold_and_accumulate(const bounded_bitset<N, FirstBitIsRightmost>& other,
+                                                                   size_t fold_length) noexcept
 {
-  return fold_and_accumulate<N2, N, reversed>(other, fold_length, 0, fold_length);
+  return fold_and_accumulate<N2, N, FirstBitIsRightmost>(other, fold_length, 0, fold_length);
 }
 
 } // namespace srsgnb
 
 namespace fmt {
 
-/// \brief Custom formatter for bounded_bitset<N, reversed>
-template <size_t N, bool reversed>
-struct formatter<srsgnb::bounded_bitset<N, reversed>> {
+/// \brief Custom formatter for bounded_bitset<N, FirstBitIsRightmost>
+template <size_t N, bool FirstBitIsRightmost>
+struct formatter<srsgnb::bounded_bitset<N, FirstBitIsRightmost>> {
   enum { hexadecimal, binary } mode = binary;
 
   template <typename ParseContext>
@@ -1118,7 +1130,7 @@ struct formatter<srsgnb::bounded_bitset<N, reversed>> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::bounded_bitset<N, reversed>& s, FormatContext& ctx)
+  auto format(const srsgnb::bounded_bitset<N, FirstBitIsRightmost>& s, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     if (mode == hexadecimal) {

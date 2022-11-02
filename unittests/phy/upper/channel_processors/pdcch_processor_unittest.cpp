@@ -85,7 +85,7 @@ int main()
                 unsigned E =
                     aggregation_level * pdcch_constants::NOF_REG_PER_CCE * pdcch_constants::NOF_RE_PDCCH_PER_RB * 2;
 
-                bounded_bitset<pdcch_constants::MAX_NOF_FREQ_RESOURCES> frequency_resources(
+                bounded_bitset<pdcch_constants::MAX_NOF_FREQ_RESOURCES, true> frequency_resources(
                     pdcch_constants::MAX_NOF_FREQ_RESOURCES);
                 frequency_resources.fill(0, (12 * (bwp_size_rb / 12)) / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE);
 

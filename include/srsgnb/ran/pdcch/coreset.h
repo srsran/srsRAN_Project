@@ -23,7 +23,7 @@ constexpr size_t MAX_NOF_CORESETS_PER_BWP = 3;
 
 /// Describes a frequency resource bitmap for CORESET allocation. Each resource represents a group of 6 PRBs.
 /// \remark See TS 38.331, "ControlResourceSet"
-using freq_resource_bitmap = bounded_bitset<pdcch_constants::MAX_NOF_FREQ_RESOURCES>;
+using freq_resource_bitmap = bounded_bitset<pdcch_constants::MAX_NOF_FREQ_RESOURCES, true>;
 
 /// \brief CORESET identifier. This value is UE-specific, which means that a UE can have up to
 /// "maxNrofControlResourceSets" CORESETS configured.
