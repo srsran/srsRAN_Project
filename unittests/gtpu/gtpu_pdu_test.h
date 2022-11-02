@@ -27,7 +27,10 @@ const uint8_t gtpu_ping_vec[] = {
 class gtpu_test : public ::testing::Test
 {
 public:
-  gtpu_test() : logger(srslog::fetch_basic_logger("TEST", false)) {}
+  gtpu_test() :
+    logger(srslog::fetch_basic_logger("TEST", false)), gtpu_logger(srslog::fetch_basic_logger("GTPU", false))
+  {
+  }
 
 protected:
   void SetUp() override
@@ -49,5 +52,8 @@ protected:
 
   // Test logger
   srslog::basic_logger& logger;
+
+  // GTP-U logger
+  srslog::basic_logger& gtpu_logger;
 };
 } // namespace srsgnb

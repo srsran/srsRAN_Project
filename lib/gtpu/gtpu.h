@@ -73,7 +73,7 @@ struct gtpu_header {
 };
 
 bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::basic_logger& logger);
-bool gtpu_write_header(const gtpu_header& header, byte_buffer& pdu, srslog::basic_logger& logger);
+bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, srslog::basic_logger& logger);
 
 inline bool gtpu_supported_flags_check(const gtpu_header& header, srslog::basic_logger& logger)
 {

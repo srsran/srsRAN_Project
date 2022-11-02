@@ -16,7 +16,7 @@ namespace srsgnb {
  * Header pack/unpack helper functions
  * Ref: 3GPP TS 29.281 v10.1.0 Section 5
  ***************************************************************************/
-bool gtpu_write_header(const gtpu_header& header, byte_buffer& pdu, srslog::basic_logger& logger)
+bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, srslog::basic_logger& logger)
 {
   // flags
   if (!gtpu_supported_flags_check(header, logger)) {
@@ -30,71 +30,29 @@ bool gtpu_write_header(const gtpu_header& header, byte_buffer& pdu, srslog::basi
     return false;
   }
 
-  // If E, S or PN are set, the header is longer
-  /*
-  if (header.flags & (GTPU_FLAGS_EXTENDED_HDR | GTPU_FLAGS_SEQUENCE | GTPU_FLAGS_PACKET_NUM)) {
-    if (pdu.get_headroom() < GTPU_EXTENDED_HEADER_LEN) {
-      logger.error("gtpu_write_header - No room in PDU for header");
-      return false;
-    }
-    pdu->msg -= GTPU_EXTENDED_HEADER_LEN;
-    pdu->N_bytes += GTPU_EXTENDED_HEADER_LEN;
-    header->length += GTPU_EXTENDED_HEADER_LEN - GTPU_BASE_HEADER_LEN;
-    if (header->next_ext_hdr_type > 0) {
-      pdu->msg -= header->ext_buffer.size();
-      pdu->N_bytes += header->ext_buffer.size();
-      header->length += header->ext_buffer.size();
-    }
-  } else {
-    if (pdu->get_headroom() < GTPU_BASE_HEADER_LEN) {
-      logger.error("gtpu_write_header - No room in PDU for header");
-      return false;
-    }
-    pdu->msg -= GTPU_BASE_HEADER_LEN;
-    pdu->N_bytes += GTPU_BASE_HEADER_LEN;
-  }
+  byte_buffer hdr_buf;
+  bit_encoder encoder{hdr_buf};
 
-  // write mandatory fields
-  uint8_t* ptr = pdu->msg;
-  *ptr         = header->flags;
-  ptr++;
-  *ptr = header->message_type;
-  ptr++;
-  uint16_to_uint8(header->length, ptr);
-  ptr += 2;
-  uint32_to_uint8(header->teid, ptr);
-  ptr += 4;
-  // write optional fields, if E, S or PN are set.
-  if (header->flags & (GTPU_FLAGS_EXTENDED_HDR | GTPU_FLAGS_SEQUENCE | GTPU_FLAGS_PACKET_NUM)) {
-    // S
-    if (header->flags & GTPU_FLAGS_SEQUENCE) {
-      uint16_to_uint8(header->seq_number, ptr);
-    } else {
-      uint16_to_uint8(0, ptr);
-    }
-    ptr += 2;
-    // PN
-    if (header->flags & GTPU_FLAGS_PACKET_NUM) {
-      *ptr = header->n_pdu;
-    } else {
-      header->n_pdu = 0;
-      *ptr          = 0;
-    }
-    ptr++;
-    // E
-    if (header->flags & GTPU_FLAGS_EXTENDED_HDR) {
-      *ptr = header->next_ext_hdr_type;
-      ptr++;
-      for (size_t i = 0; i < header->ext_buffer.size(); ++i) {
-        *ptr = header->ext_buffer[i];
-        ptr++;
-      }
-    } else {
-      *ptr = 0;
-      ptr++;
-    }
-  }
-  */
+  // Flags
+  encoder.pack(header.flags.version, 3);
+  encoder.pack(header.flags.protocol_type, 1);
+  encoder.pack(0, 1);                               // Reserved
+  encoder.pack(header.flags.ext_hdr ? 1 : 0, 1);    // E
+  encoder.pack(header.flags.seq_number ? 1 : 0, 1); // S
+  encoder.pack(header.flags.n_pdu ? 1 : 0, 1);      // PN
+
+  // Message type
+  encoder.pack(header.message_type, 8);
+
+  // Length
+  encoder.pack(header.length, 16);
+
+  // TEID
+  encoder.pack(header.teid, 32);
+
+  // TODO write header extensions
+
+  pdu.chain_before(std::move(hdr_buf));
   return true;
 }
 
@@ -184,29 +142,6 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
     pdu.trim_head(4);
   }
   // TODO handle extended headers
-  /*
-  // If E, S or PN are set, header is longer
-  if (header->flags & (GTPU_FLAGS_EXTENDED_HDR | GTPU_FLAGS_SEQUENCE | GTPU_FLAGS_PACKET_NUM)) {
-    pdu->msg += GTPU_EXTENDED_HEADER_LEN;
-    pdu->N_bytes -= GTPU_EXTENDED_HEADER_LEN;
-
-    uint8_to_uint16(ptr, &header->seq_number);
-    ptr += 2;
-
-    header->n_pdu = *ptr;
-    ptr++;
-
-    header->next_ext_hdr_type = *ptr;
-    ptr++;
-
-    if (not gtpu_read_ext_header(pdu, &ptr, header, logger)) {
-      return false;
-    }
-  } else {
-    pdu->msg += GTPU_BASE_HEADER_LEN;
-    pdu->N_bytes -= GTPU_BASE_HEADER_LEN;
-  }
-  */
   return true;
 }
 
