@@ -24,6 +24,10 @@ public:
                    span<log_likelihood_ratio>       csi_part2,
                    span<const log_likelihood_ratio> input,
                    const configuration&             config) override;
+
+  // See interface for documentation.
+  ulsch_placeholder_list get_placeholders(const message_information& uci_message_info,
+                                          const configuration&       config) override;
 };
 
 } // namespace srsgnb

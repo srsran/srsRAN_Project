@@ -10,10 +10,12 @@
 
 #pragma once
 
+#include "srsgnb/phy/upper/channel_processors/ulsch_placeholder_list.h"
 #include "srsgnb/phy/upper/dmrs_mapping.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/modulation_scheme.h"
+#include "srsgnb/ran/pusch/pusch_constants.h"
 
 /// \file
 /// \brief Uplink Shared Channel demultiplexer interface declaration.
@@ -48,6 +50,22 @@ public:
     unsigned nof_cdm_groups_without_data;
   };
 
+  /// Collects message payload information parameters.
+  struct message_information {
+    /// Number of HARQ-ACK information bits multiplexed in the PUSCH message. Parameter \f$O_\textup{HARQ-ACK}\f$.
+    unsigned nof_harq_ack_bits;
+    /// Number of encoded and rate-matched HARQ-ACK data bits. Parameter \f$G^\textup{HARQ-ACK}\f$.
+    unsigned nof_enc_harq_ack_bits;
+    /// Number of CSI-Part1 information bits multiplexed in the PUSCH message. Parameter \f$O_\textup{CSI-1}\f$.
+    unsigned nof_csi_part1_bits;
+    /// Number of encoded and rate-matched CSI-Part1 data bits. Parameter \f$G^\textup{HARQ-ACK}\f$.
+    unsigned nof_enc_csi_part1_bits;
+    /// Number of CSI-Part2 information bits multiplexed in the PUSCH message. Parameter \f$O_\textup{CSI-1}\f$.
+    unsigned nof_csi_part2_bits;
+    /// Number of encoded and rate-matched CSI-Part2 data bits. Parameter \f$G^\textup{HARQ-ACK}\f$.
+    unsigned nof_enc_csi_part2_bits;
+  };
+
   /// Default destructor.
   virtual ~ulsch_demultiplex() = default;
 
@@ -67,6 +85,13 @@ public:
                            span<log_likelihood_ratio>       csi_part2,
                            span<const log_likelihood_ratio> input,
                            const configuration&             config) = 0;
+
+  /// \brief Gets the list of indexes where the repetition placeholders \f$y\f$ are.
+  /// \param[in] uci_message_info UCI message information.
+  /// \param[in] config           UL-SCH multiplex configuration.
+  /// \return A UL-SCH placeholder list (see \ref ulsch_placeholder_list for more information).
+  virtual ulsch_placeholder_list get_placeholders(const message_information& uci_message_info,
+                                                  const configuration&       config) = 0;
 };
 
 } // namespace srsgnb

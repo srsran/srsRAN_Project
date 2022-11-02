@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include "srsgnb/phy/constants.h"
+
 namespace srsgnb {
 
 namespace pusch_constants {

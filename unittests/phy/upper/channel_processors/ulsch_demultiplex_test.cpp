@@ -34,11 +34,17 @@ std::ostream& operator<<(std::ostream& os, const ulsch_demultiplex::configuratio
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
-  fmt::print(os, "{}", test_case.config);
+  fmt::print(os, "{}", test_case.context.config);
   return os;
 }
 
 std::ostream& operator<<(std::ostream& os, span<const log_likelihood_ratio> data)
+{
+  fmt::print(os, "{}", data);
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, span<const uint16_t> data)
 {
   fmt::print(os, "{}", data);
   return os;
@@ -98,13 +104,29 @@ TEST_P(UlschDemultiplexFixture, FromVector)
   std::vector<log_likelihood_ratio> csi_part2(expected_csi_part2.size());
 
   // Demultiplex.
-  demultiplexer->demultiplex(sch_data, harq_ack, csi_part1, csi_part2, input, test_case.config);
+  demultiplexer->demultiplex(sch_data, harq_ack, csi_part1, csi_part2, input, test_case.context.config);
 
   // Verify results.
   ASSERT_EQ(span<const log_likelihood_ratio>(sch_data), span<const log_likelihood_ratio>(expected_sch_data));
   ASSERT_EQ(span<const log_likelihood_ratio>(harq_ack), span<const log_likelihood_ratio>(expected_harq_ack));
   ASSERT_EQ(span<const log_likelihood_ratio>(csi_part1), span<const log_likelihood_ratio>(expected_csi_part1));
   ASSERT_EQ(span<const log_likelihood_ratio>(csi_part2), span<const log_likelihood_ratio>(expected_csi_part2));
+
+  // Generate repetition placeholder list.
+  ulsch_placeholder_list placeholders =
+      demultiplexer->get_placeholders(test_case.context.msg_info, test_case.context.config);
+
+  // Convert placeholders to vector.
+  std::vector<uint16_t> placeholders_list;
+  placeholders.for_each(test_case.context.config.modulation,
+                        test_case.context.config.nof_layers,
+                        [&placeholders_list](unsigned i_bit) { placeholders_list.emplace_back(i_bit); });
+
+  // Load placeholder list from file.
+  std::vector<uint16_t> expected_placeholders_list = test_case.placeholders.read();
+
+  // Verify.
+  ASSERT_EQ(span<const uint16_t>(placeholders_list), span<const uint16_t>(expected_placeholders_list));
 }
 
 // Creates test suite that combines all possible parameters. Denote zero_correlation_zone exceeds the maximum by one.

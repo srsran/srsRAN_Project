@@ -87,17 +87,11 @@ inline modulation_scheme modulation_scheme_from_string(const std::string& mod_sc
 /// \returns The number of bits per modulated symbol (sometimes referred to as modulation order).
 inline constexpr unsigned get_bits_per_symbol(modulation_scheme mod)
 {
-  unsigned ret = static_cast<unsigned>(mod);
   if (mod == modulation_scheme::PI_2_BPSK) {
-    ret = 1;
+    return 1;
   }
 
-  // Give a hint to the compiler that the returned bits per symbol will not be greater than 8 under any circumstance.
-  if (ret > MODULATION_MAX_BITS_PER_SYMBOL) {
-    __builtin_unreachable();
-  }
-
-  return ret;
+  return static_cast<unsigned>(mod);
 }
 
 } // namespace srsgnb
