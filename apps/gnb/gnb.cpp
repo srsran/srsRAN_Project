@@ -8,6 +8,20 @@
  *
  */
 
+#include "CLI/CLI11.hpp"
+
+#include "srsgnb/cu_cp/cu_cp_configuration.h"
+#include "srsgnb/cu_cp/cu_cp_configuration_helpers.h"
+#include "srsgnb/cu_cp/cu_cp_factory.h"
+#include "srsgnb/cu_cp/cu_cp_types.h"
+
+#include "adapters/ngap_adapter.h"
+#include "srsgnb/io_broker/io_broker_factory.h"
+
+#include "adapters/f1_adapter.h"
+
+#include "gnb_appconfig.h"
+
 #include "fapi_factory.h"
 #include "lib/du_high/du_high.h"
 #include "lib/du_high/du_high_executor_strategies.h"
@@ -30,17 +44,15 @@
 #include <getopt.h>
 
 using namespace srsgnb;
-using namespace fapi_adaptor;
-using namespace srs_du;
 
 /// \file
-/// \brief Example application of a distributed unit (DU) transmitting SIB1 over a radio interface.
+/// \brief Application of a co-located gNB with combined distributed unit (DU) and centralized unit (CU).
 ///
-/// This example runs a DU without an F1 connection to a CU. It integrates the DU high and DU low subcomponents and
-/// connects them through the FAPI interface, the DU low is then connected to the lower PHY and a real-time radio
-/// interface. The example transmits SIB1 messages.
+/// This application runs a gNB without the the F1 connection between CU and DU and without the E1 connection
+/// between the CU-CP and CU-UP going over a real SCTP connection. However, its does expose the N2 and N3 interface
+/// to the AMF and UPF over the standard SCTP ports.
+/// The app serves as an example for a all-integrated, small-cell-style gNB.
 ///
-/// The application supports different working profiles, run <tt> du_example -h </tt> for usage details.
 /// \cond
 
 namespace {
@@ -53,7 +65,7 @@ struct configuration_profile {
 
 } // namespace
 
-/// Program parameters.
+/// The below parameters will be derived from the appconfig.
 static const pci_t              pci         = 55;
 static nr_band                  band        = nr_band::n3;
 static const subcarrier_spacing scs         = subcarrier_spacing::kHz15;
@@ -88,7 +100,7 @@ static unsigned       K_ssb            = 6;
 static const unsigned coreset0_index   = 6;
 
 static std::string           log_level  = "info";
-static srslog::basic_logger& du_logger  = srslog::fetch_basic_logger("DU_APP");
+static srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
 static std::atomic<bool>     is_running = {true};
 
 /// PRACH params
@@ -108,6 +120,9 @@ static float baseband_gain_dB       = -2.5F;
 static bool  enable_clipping        = false;
 static float full_scale_amplitude   = 1.0F;
 static float amplitude_ceiling_dBFS = -0.1F;
+
+// NGAP configuration.
+static srsgnb::network_gateway_config ngap_nw_config;
 
 /// Defines a set of configuration profiles.
 static const std::vector<configuration_profile> profiles = {
@@ -165,66 +180,54 @@ static const std::vector<configuration_profile> profiles = {
        }
      }}};
 
-namespace {
+const std::string srsgnb_version = "0.1";
 
-/// This implementation returns back to the F1 interface a fake F1 Setup Response message upon the receival of the F1
-/// Setup Request message.
-class fake_cucp_handler : public f1c_message_notifier
+static void populate_gnb_args(CLI::App& app, srsgnb::gnb_appconfig& gnb_params)
 {
-public:
-  explicit fake_cucp_handler(f1c_message_handler* handler_ = nullptr) : handler(handler_) {}
+  app.set_version_flag("-v,--version", srsgnb_version);
+  app.add_option("-P,--profile", gnb_params.selected_profile_name, "Profile name")
+      ->capture_default_str()
+      ->check([](const std::string& str) {
+        for (const auto& profile : profiles) {
+          if (str == profile.name) {
+            return std::string();
+          }
+        }
+        fmt::memory_buffer buffer;
+        fmt::format_to(buffer, "\nValid profile names:\n");
+        for (const configuration_profile& profile : profiles) {
+          fmt::format_to(buffer, "\t {:<30}{}\n", profile.name, profile.description);
+        }
+        throw CLI::ValidationError(to_string(buffer));
+      });
+  app.add_option("-l", gnb_params.log_level, "Logging level")->capture_default_str();
+  app.add_option("-e", gnb_params.enable_clipping, "Enable amplitude clipping")->capture_default_str();
+  app.add_option("-b", gnb_params.baseband_gain_dB, "Baseband gain prior to clipping (in dB)")->capture_default_str();
+  app.set_config("-c,", gnb_params.config_file, "Read config from file", false);
+  app.add_flag("--printconfig", gnb_params.printconfig, "Print configuration and exit");
+}
 
-  void attach_handler(f1c_message_handler* handler_) { handler = handler_; };
+static void populate_cu_args(CLI::App& app, srsgnb::gnb_appconfig& gnb_params)
+{
+  app.add_option("--amf_addr", gnb_params.cu.amf_addr, "AMF IP address")->check(CLI::ValidIPV4)->required();
+  app.add_option("--amf_port", gnb_params.cu.amf_port, "AMF port")->capture_default_str();
+  app.add_option("--amf_bind_addr", gnb_params.cu.amf_bind_addr, "Local IP IP address to bind for AMF connection")
+      ->check(CLI::ValidIPV4);
+}
 
-  void on_new_message(const f1c_message& msg) override
-  {
-    if (msg.pdu.type() != asn1::f1ap::f1_ap_pdu_c::types::init_msg) {
-      return;
-    }
+/// This function takes the populated appconfig and generates (sub)-component configurations.
+static void compute_derived_args(const gnb_appconfig& gnb_params)
+{
+  /// Simply set the respective values in the appconfig.
+  enable_clipping                = gnb_params.enable_clipping;
+  baseband_gain_dB               = gnb_params.baseband_gain_dB;
+  log_level                      = gnb_params.log_level;
+  ngap_nw_config.connect_address = gnb_params.cu.amf_addr;
+  ngap_nw_config.connect_port    = gnb_params.cu.amf_port;
+  ngap_nw_config.bind_address    = gnb_params.cu.amf_bind_addr;
+}
 
-    f1c_message response;
-    if (msg.pdu.init_msg().value.type().value ==
-        asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::init_ulrrc_msg_transfer) {
-      // Generate a fake DL RRC Message transfer message and pass it back to the DU.
-      response.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DLRRC_MSG_TRANSFER);
-
-      auto& resp                      = response.pdu.init_msg().value.dlrrc_msg_transfer();
-      resp->gnb_du_ue_f1_ap_id->value = msg.pdu.init_msg().value.init_ulrrc_msg_transfer()->gnb_du_ue_f1_ap_id->value;
-      resp->gnb_cu_ue_f1_ap_id->value = 0;
-      resp->srbid->value              = srb_id_to_uint(srb_id_t::srb0);
-      static constexpr uint8_t msg4[] = {
-          0x20, 0x40, 0x03, 0x82, 0xe0, 0x05, 0x80, 0x08, 0x8b, 0xd7, 0x63, 0x80, 0x83, 0x0f, 0x00, 0x03, 0xe1,
-          0x02, 0x04, 0x68, 0x3c, 0x08, 0x01, 0x05, 0x10, 0x48, 0x24, 0x06, 0x54, 0x00, 0x07, 0xc0, 0x00, 0x00,
-          0x00, 0x00, 0x04, 0x1b, 0x84, 0x21, 0x00, 0x00, 0x44, 0x0b, 0x28, 0x00, 0x02, 0x41, 0x00, 0x00, 0x10,
-          0x34, 0xd0, 0x35, 0x52, 0x4c, 0x40, 0x00, 0x10, 0x01, 0x02, 0x00, 0x02, 0x00, 0x68, 0x04, 0x00, 0x9d,
-          0xb2, 0x58, 0xc0, 0xa2, 0x00, 0x72, 0x34, 0x56, 0x78, 0x90, 0x00, 0x00, 0x4b, 0x03, 0x84, 0x10, 0x78,
-          0xbb, 0xf0, 0x30, 0x43, 0x80, 0x00, 0x00, 0x07, 0x12, 0x81, 0xc0, 0x00, 0x02, 0x05, 0xef, 0x40, 0x10,
-          0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x14, 0x10, 0x0c, 0xa8, 0x18, 0x06, 0x20, 0x00};
-
-      resp->rrc_container.value.resize(sizeof(msg4));
-      std::copy(msg4, msg4 + sizeof(msg4), resp->rrc_container.value.begin());
-    } else if (msg.pdu.init_msg().value.type().value ==
-               asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request) {
-      // Generate a fake F1 Setup response message and pass it back to the DU.
-      response.pdu.set_successful_outcome();
-      response.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-
-      auto& setup_res = response.pdu.successful_outcome().value.f1_setup_resp();
-      // Use the same transaction ID as in the request message.
-      setup_res->transaction_id.value = msg.pdu.init_msg().value.f1_setup_request()->transaction_id.value;
-      setup_res->gnb_cu_name_present  = true;
-      setup_res->gnb_cu_name.value.from_string("srsCU");
-      setup_res->gnb_cu_rrc_version.value.latest_rrc_version.from_number(2);
-    } else {
-      return;
-    }
-
-    handler->handle_message(response);
-  }
-
-private:
-  f1c_message_handler* handler = nullptr;
-};
+namespace {
 
 /// Dummy implementation of the mac_result_notifier.
 class phy_dummy : public mac_result_notifier
@@ -243,6 +246,7 @@ struct worker_manager {
 
   void stop()
   {
+    cu_ctrl_worker.stop();
     dl_workers.stop();
     ul_workers.stop();
     ctrl_worker.stop();
@@ -253,6 +257,10 @@ struct worker_manager {
     radio_worker.stop();
   }
 
+  // CU worker and executers.
+  task_worker                            cu_ctrl_worker{"CU Ctrl", task_worker_queue_size};
+  static_vector<task_worker_executor, 1> cu_exec{{cu_ctrl_worker}};
+  // DU workers and executers.
   task_worker              ctrl_worker{"Crtl-DU_UL", task_worker_queue_size};
   task_worker              dl_workers{"DU-DL#0", task_worker_queue_size};
   task_worker              ul_workers{"DU-UL#0", task_worker_queue_size};
@@ -333,74 +341,6 @@ static void signal_handler(int sig)
   is_running = false;
 }
 
-static void usage(std::string prog)
-{
-  fmt::print("Usage: {} [-P profile] [-D duration] [-v level] \n", prog);
-  fmt::print("\t-P Profile. [Default {}]\n", profiles.front().name);
-  for (const configuration_profile& profile : profiles) {
-    fmt::print("\t\t {:<30}{}\n", profile.name, profile.description);
-  }
-  fmt::print("\t-v Logging level. [Default {}]\n", log_level);
-  fmt::print("\t-c Enable amplitude clipping. [Default {}]\n", enable_clipping);
-  fmt::print("\t-b Baseband gain prior to clipping (in dB). [Default {}]\n", baseband_gain_dB);
-  fmt::print("\t-h print this message.\n");
-}
-
-static int parse_args(int argc, char** argv)
-{
-  std::string profile_name;
-
-  int opt = 0;
-  while ((opt = ::getopt(argc, argv, "D:P:L:v:b:ch")) != -1) {
-    switch (opt) {
-      case 'P':
-        if (optarg != nullptr) {
-          profile_name = std::string(optarg);
-        }
-        break;
-      case 'v':
-        log_level = std::string(optarg);
-        break;
-      case 'c':
-        enable_clipping = true;
-        break;
-      case 'b':
-        if (optarg != nullptr) {
-          baseband_gain_dB = std::strtof(optarg, nullptr);
-        }
-        break;
-      case 'h':
-      default:
-        usage(argv[0]);
-        return -1;
-    }
-  }
-
-  // Search profile if set.
-  if (!profile_name.empty()) {
-    bool found = false;
-    for (const auto& profile : profiles) {
-      if (profile_name == profile.name) {
-        profile.function();
-        du_logger.info("Loading profile: '{}'", profile.name);
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
-      usage(argv[0]);
-      du_logger.error("Invalid profile: '{}'", profile_name);
-      return -1;
-    }
-  } else {
-    const configuration_profile& default_profile = profiles.front();
-    du_logger.info("Loading '{}' as the default profile", default_profile.name);
-    default_profile.function();
-  }
-
-  return 0;
-}
-
 static fapi::prach_config generate_prach_config_tlv()
 {
   fapi::prach_config config = {};
@@ -469,36 +409,85 @@ static void fill_cell_prach_cfg(du_cell_config& cell_cfg)
 
 int main(int argc, char** argv)
 {
-  srslog::init();
-  srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);
-  du_logger.set_level(srslog::basic_levels::info);
+  // Setup and configure config parsing.
+  CLI::App app("srsGNB application");
+
+  // This variable is filled by the command line parser.
+  gnb_appconfig gnb_params;
+  populate_gnb_args(app, gnb_params);
+  auto cu_app = app.add_subcommand("cu", "CU parameters");
+  populate_cu_args(*cu_app, gnb_params);
 
   // Parse arguments.
-  int ret = parse_args(argc, argv);
-  if (ret < 0) {
-    return ret;
+  CLI11_PARSE(app, argc, argv);
+
+  // Compute derived parameters.
+  compute_derived_args(gnb_params);
+
+  if (gnb_params.printconfig) {
+    // TODO: remove printconfig option before dumping.
+    fmt::print("{}\n", app.config_to_str(true, true));
+    return 0;
+  }
+
+  srslog::init();
+  srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);
+  gnb_logger.set_level(srslog::basic_levels::info);
+
+  // Load selected profile.
+  const auto& profile = std::find_if(begin(profiles), end(profiles), [gnb_params](configuration_profile profile) {
+    return profile.name == gnb_params.selected_profile_name;
+  });
+  if (profile != end(profiles)) {
+    srslog::fetch_basic_logger("TEST").info("Loading profile: {}", profile->name);
+    profile->function();
+  } else {
+    report_fatal_error("Invalid profile");
   }
 
   worker_manager workers;
+
+  f1c_local_adapter f1c_cu_to_du_adapter("f1-cu2du"), f1c_du_to_cu_adapter("f1-du2cu");
+
+  // Create IO broker.
+  std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll);
+
+  // Create NGAP adapter, NGC and connect them with one another.
+  std::unique_ptr<srsgnb::srs_cu_cp::ngap_network_adapter> ngap_adapter =
+      std::make_unique<srsgnb::srs_cu_cp::ngap_network_adapter>(*epoll_broker, ngap_nw_config);
+
+  // Create CU-CP config.
+  srs_cu_cp::cu_cp_configuration cu_cfg = {config_helpers::make_default_cu_cp_config()};
+  cu_cfg.cu_executor                    = &workers.cu_exec.front();
+  cu_cfg.f1c_notifier                   = &f1c_cu_to_du_adapter;
+  cu_cfg.ngc_notifier                   = ngap_adapter.get();
+
+  // create and start CU.
+  std::unique_ptr<srsgnb::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(std::move(cu_cfg));
+  cu_cp_obj->on_new_connection(); // trigger DU addition
+
+  // Connect NGAP adpter to CU-CP to pass NGC messages.
+  ngap_adapter->connect_ngc(&cu_cp_obj->get_ngc_message_handler(), &cu_cp_obj->get_ngc_event_handler());
 
   // Calculate derived frequency parameters.
   dl_center_freq = band_helper::nr_arfcn_to_freq(dl_arfcn);
   ul_arfcn       = band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn);
   ul_center_freq = band_helper::nr_arfcn_to_freq(ul_arfcn);
-  du_logger.info("Starting du_example with DL_ARFCN={}, UL_ARFCN={}, DL center frequency {} Hz, UL center frequency {} "
-                 "Hz, tx_gain={} dB, rx_gain={} dB",
-                 dl_arfcn,
-                 ul_arfcn,
-                 dl_center_freq,
-                 ul_center_freq,
-                 tx_gain,
-                 rx_gain);
+  gnb_logger.info(
+      "Starting du_example with DL_ARFCN={}, UL_ARFCN={}, DL center frequency {} Hz, UL center frequency {} "
+      "Hz, tx_gain={} dB, rx_gain={} dB",
+      dl_arfcn,
+      ul_arfcn,
+      dl_center_freq,
+      ul_center_freq,
+      tx_gain,
+      rx_gain);
 
   // Create radio.
   radio_notification_handler_printer radio_event_printer;
   auto                               radio = build_radio(workers.radio_executor, radio_event_printer);
   report_fatal_error_if_not(radio, "Unable to create radio session.");
-  du_logger.info("Radio driver '{}' created successfully", driver_name);
+  gnb_logger.info("Radio driver '{}' created successfully", driver_name);
 
   // Create lower and upper PHY adapters.
   phy_error_adapter             phy_err_printer(log_level);
@@ -515,7 +504,7 @@ int main(int argc, char** argv)
                                                                             workers.lower_prach_executor);
   auto                    lower            = create_lower_phy(lower_phy_config, max_nof_concurrent_requests);
   report_fatal_error_if_not(lower, "Unable to create lower PHY.");
-  du_logger.info("Lower PHY created successfully");
+  gnb_logger.info("Lower PHY created successfully");
 
   // Create upper PHY.
   upper_phy_params upper_params;
@@ -531,7 +520,7 @@ int main(int argc, char** argv)
                                 &workers.upper_ul_executor,
                                 &phy_rx_symbol_req_adapter);
   report_fatal_error_if_not(upper, "Unable to create upper PHY.");
-  du_logger.info("Upper PHY created successfully");
+  gnb_logger.info("Upper PHY created successfully");
 
   // Make connections between upper and lower PHYs.
   phy_rx_adapter.connect(&upper->get_rx_symbol_handler());
@@ -558,7 +547,7 @@ int main(int argc, char** argv)
   phy_adaptor->set_slot_time_message_notifier(mac_adaptor->get_slot_time_notifier());
   phy_adaptor->set_slot_data_message_notifier(mac_adaptor->get_slot_data_notifier());
   upper->set_timing_notifier(phy_adaptor->get_timing_notifier());
-  du_logger.info("FAPI adaptors created successfully");
+  gnb_logger.info("FAPI adaptors created successfully");
 
   // Cell configuration.
   struct du_cell_config_master_params cell_config;
@@ -570,16 +559,15 @@ int main(int argc, char** argv)
   cell_config.offset_to_point_a = offset_to_pointA;
   cell_config.coreset0_index    = coreset0_index;
 
-  fake_cucp_handler f1c_notifier;
-  phy_dummy         phy(mac_adaptor->get_cell_result_notifier());
+  phy_dummy phy(mac_adaptor->get_cell_result_notifier());
 
-  du_high_configuration du_hi_cfg = {};
-  du_hi_cfg.du_mng_executor       = &workers.ctrl_exec;
-  du_hi_cfg.ul_executors          = &workers.ul_exec_mapper;
-  du_hi_cfg.dl_executors          = &workers.dl_exec_mapper;
-  du_hi_cfg.f1c_notifier          = &f1c_notifier;
-  du_hi_cfg.phy_adapter           = &phy;
-  du_hi_cfg.cells                 = {config_helpers::make_default_du_cell_config(cell_config)};
+  srs_du::du_high_configuration du_hi_cfg = {};
+  du_hi_cfg.du_mng_executor               = &workers.ctrl_exec;
+  du_hi_cfg.ul_executors                  = &workers.ul_exec_mapper;
+  du_hi_cfg.dl_executors                  = &workers.dl_exec_mapper;
+  du_hi_cfg.f1c_notifier                  = &f1c_du_to_cu_adapter;
+  du_hi_cfg.phy_adapter                   = &phy;
+  du_hi_cfg.cells                         = {config_helpers::make_default_du_cell_config(cell_config)};
 
   du_cell_config& cell_cfg = du_hi_cfg.cells.front();
   cell_cfg.ssb_cfg.k_ssb   = K_ssb;
@@ -587,9 +575,8 @@ int main(int argc, char** argv)
   // Fill cell specific PRACH configuration.
   fill_cell_prach_cfg(cell_cfg);
 
-  du_high du_obj(du_hi_cfg);
-  f1c_notifier.attach_handler(&du_obj.get_f1c_message_handler());
-  du_logger.info("DU-High created successfully");
+  srs_du::du_high du_obj(du_hi_cfg);
+  gnb_logger.info("DU-High created successfully");
 
   // Set signal handler.
   ::signal(SIGINT, signal_handler);
@@ -598,10 +585,14 @@ int main(int argc, char** argv)
   ::signal(SIGQUIT, signal_handler);
   ::signal(SIGKILL, signal_handler);
 
+  // attach F1C adapter to DU and CU-CP
+  f1c_du_to_cu_adapter.attach_handler(&cu_cp_obj->get_f1c_message_handler(srsgnb::srs_cu_cp::int_to_du_index(0)));
+  f1c_cu_to_du_adapter.attach_handler(&du_obj.get_f1c_message_handler());
+
   // Start execution.
-  du_logger.info("Starting DU-High...");
+  gnb_logger.info("Starting DU-High...");
   du_obj.start();
-  du_logger.info("DU-High started successfully");
+  gnb_logger.info("DU-High started successfully");
 
   // Give some time to the MAC to start.
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -614,21 +605,21 @@ int main(int argc, char** argv)
   mac_adaptor->set_cell_crc_handler(du_obj.get_control_information_handler(cell_id));
 
   // Start processing.
-  du_logger.info("Starting lower PHY...");
+  gnb_logger.info("Starting lower PHY...");
   lower->get_controller().start(workers.rt_task_executor);
-  du_logger.info("Lower PHY started successfully");
+  gnb_logger.info("Lower PHY started successfully");
 
   while (is_running) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
-  du_logger.info("Stopping lower PHY...");
+  gnb_logger.info("Stopping lower PHY...");
   lower->get_controller().stop();
-  du_logger.info("Lower PHY stopped successfully");
+  gnb_logger.info("Lower PHY stopped successfully");
 
-  du_logger.info("Stopping executors...");
+  gnb_logger.info("Stopping executors...");
   workers.stop();
-  du_logger.info("Executors stopped successfully");
+  gnb_logger.info("Executors stopped successfully");
 
   srslog::flush();
 

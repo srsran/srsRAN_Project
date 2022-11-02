@@ -13,6 +13,10 @@ add_executable(gnb
         radio_factory.cpp)
 
 target_link_libraries(gnb
+        srsgnb_cu_cp
+        srsgnb_io_broker
+        srsgnb_ngap
+        ngap_asn1 
         srsgnb_du_high
         srsgnb_gateway
         mac_fapi_adaptor_factory
@@ -23,6 +27,8 @@ target_link_libraries(gnb
         srsgnb_channel_processors
         srsgnb_channel_equalizer
         srsgnb_lower_phy
-        srsgnb_radio)
+        srsgnb_radio
+)
 
 target_include_directories(gnb PRIVATE ${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/external)
