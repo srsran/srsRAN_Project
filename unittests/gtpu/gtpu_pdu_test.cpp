@@ -25,8 +25,12 @@ TEST_F(gtpu_test, pack_unpack)
   byte_buffer                 tst_vec{gtpu_ping_vec};
   byte_buffer                 tst_vec_no_header{tst_vec.begin() + 8, tst_vec.end()};
   gtpu_header                 hdr;
-  bool                        read_ok = gtpu_read_and_strip_header(hdr, tst_vec, gtpu_logger);
+
+  // Unpack SDU
+  logger.info(orig_vec.begin(), orig_vec.end(), "Original SDU");
+  bool read_ok = gtpu_read_and_strip_header(hdr, tst_vec, gtpu_logger);
   ASSERT_EQ(read_ok, true);
+  logger.info(tst_vec.begin(), tst_vec.end(), "Unpacked PDU");
 
   // Check flags
   ASSERT_EQ(hdr.flags.version, GTPU_FLAGS_VERSION_V1);

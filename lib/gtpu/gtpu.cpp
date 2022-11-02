@@ -112,67 +112,26 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
     logger.error("gtpu_read_header - Unhandled GTP-U Flags. Flags: {}", header.flags);
     return false;
   }
-  pdu.trim_head(1);
 
   // Message type
-  header.message_type = *pdu.begin();
-  if (!gtpu_supported_msg_type_check(header, logger)) {
-    logger.error("gtpu_read_header - Unhandled GTP-U Message Type. Flags: {}", header.flags);
-    return false;
-  }
-  pdu.trim_head(1);
+  decoder.unpack(header.message_type, 8);
 
-  {
-    header.length = {};
-    auto it       = pdu.begin();
-    for (uint32_t i = 0; i < 2; ++i) {
-      header.length |= (uint32_t)(*it) << ((2 - 1) - i) * 8;
-      ++it;
-    }
-    pdu.trim_head(2);
-  }
-  {
-    uint32_t teid = {};
-    auto     it   = pdu.begin();
-    for (uint32_t i = 0; i < 4; ++i) {
-      teid |= (uint32_t)(*it) << ((4 - 1) - i) * 8;
-      ++it;
-    }
-    header.teid = teid;
-    pdu.trim_head(4);
-  }
+  // Length
+  decoder.unpack(header.length, 16);
+
+  // TEID
+  decoder.unpack(header.teid, 32);
+
+  // Trim header
+  pdu.trim_head(decoder.nof_bytes());
+
   // TODO handle extended headers
   return true;
 }
 
 bool gtpu_read_ext_header(const byte_buffer& pdu, uint8_t** ptr, gtpu_header& header, srslog::basic_logger& logger)
 {
-  /*
-  if ((header->flags & GTPU_FLAGS_EXTENDED_HDR) == 0 or header->next_ext_hdr_type == 0) {
-    return true;
-  }
-
-  // TODO: Iterate over next headers until no more extension headers
-  switch (header->next_ext_hdr_type) {
-    case GTPU_EXT_HEADER_PDCP_PDU_NUMBER:
-      pdu->msg += HEADER_PDCP_PDU_NUMBER_SIZE;
-      pdu->N_bytes -= HEADER_PDCP_PDU_NUMBER_SIZE;
-      header->ext_buffer.resize(HEADER_PDCP_PDU_NUMBER_SIZE);
-      for (size_t i = 0; i < HEADER_PDCP_PDU_NUMBER_SIZE; ++i) {
-        header->ext_buffer[i] = **ptr;
-        (*ptr)++;
-      }
-      break;
-    case GTPU_EXT_HEADER_PDU_SESSION_CONTAINER:
-      pdu->msg += GTPU_EXT_HEADER_PDU_SESSION_CONTAINER_LEN;
-      pdu->N_bytes -= GTPU_EXT_HEADER_PDU_SESSION_CONTAINER_LEN;
-      // TODO: Save Header Extension
-      break;
-    default:
-      logger.error("gtpu_read_header - Unhandled GTP-U Extension Header Type: 0x%x", header->next_ext_hdr_type);
-      return false;
-  }
-  */
+  // TODO
   return true;
 }
 } // namespace srsgnb
