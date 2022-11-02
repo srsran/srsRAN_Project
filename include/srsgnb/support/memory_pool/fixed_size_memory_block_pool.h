@@ -44,7 +44,7 @@ class fixed_size_memory_block_pool
   constexpr static size_t batch_steal_size = 16;
 
   /// Ctor of the memory pool. It is set as private because the class works as a singleton.
-  explicit fixed_size_memory_block_pool(size_t memory_block_size_, size_t nof_blocks_) :
+  explicit fixed_size_memory_block_pool(size_t nof_blocks_, size_t memory_block_size_) :
     mblock_size(align_next(memory_block_size_, alignof(std::max_align_t))), nof_blocks(nof_blocks_)
   {
     srsgnb_assert(nof_blocks > batch_steal_size,
@@ -61,7 +61,7 @@ class fixed_size_memory_block_pool
     }
 
     local_growth_thres = nof_blocks / 16;
-    local_growth_thres = local_growth_thres < batch_steal_size ? batch_steal_size : local_growth_thres;
+    local_growth_thres = std::max((size_t)local_growth_thres, (size_t)batch_steal_size);
   }
 
 public:
@@ -77,10 +77,10 @@ public:
   }
 
   /// \brief Instantiation of memory pool singleton.
-  static fixed_size_memory_block_pool<IdTag, DebugSanitizeAddress>& get_instance(size_t mem_block_size = 0,
-                                                                                 size_t nof_blocks     = 0)
+  static fixed_size_memory_block_pool<IdTag, DebugSanitizeAddress>& get_instance(size_t nof_blocks     = 0,
+                                                                                 size_t mem_block_size = 0)
   {
-    static fixed_size_memory_block_pool<IdTag, DebugSanitizeAddress> pool(mem_block_size, nof_blocks);
+    static fixed_size_memory_block_pool<IdTag, DebugSanitizeAddress> pool(nof_blocks, mem_block_size);
     return pool;
   }
 

@@ -19,6 +19,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <functional>
+#include <future>
 #include <memory>
 #include <mutex>
 #include <stack>
@@ -60,6 +61,16 @@ public:
                    uint32_t(pending_tasks.max_size()));
       return;
     }
+  }
+
+  /// \brief Wait for all the currently enqueued tasks to complete.
+  void wait_pending_tasks()
+  {
+    std::packaged_task<void()> pkg_task([]() { /* do nothing */ });
+    std::future<void>          fut = pkg_task.get_future();
+    push_task(std::move(pkg_task));
+    // blocks for enqueued task to complete.
+    fut.get();
   }
 
   uint32_t nof_pending_tasks() const { return pending_tasks.size(); }

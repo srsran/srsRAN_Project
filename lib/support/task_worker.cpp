@@ -24,10 +24,11 @@ task_worker::task_worker(std::string                      thread_name_,
   worker_name(std::move(thread_name_)),
   prio(prio_),
   mask(mask_),
-  logger(srslog::fetch_basic_logger("POOL")),
+  logger(srslog::fetch_basic_logger("ALL")),
   pending_tasks(queue_size),
   t_handle(start_postponed ? unique_thread{} : make_thread())
-{}
+{
+}
 
 task_worker::~task_worker()
 {

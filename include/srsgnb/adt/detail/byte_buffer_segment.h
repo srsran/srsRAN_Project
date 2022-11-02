@@ -211,7 +211,7 @@ public:
   void* operator new(size_t sz, const std::nothrow_t& nothrow_value) noexcept
   {
     constexpr static size_t byte_buffer_segment_pool_size = 8192;
-    static auto& pool = pool_singleton::get_instance(sizeof(byte_buffer_segment), byte_buffer_segment_pool_size);
+    static auto& pool = pool_singleton::get_instance(byte_buffer_segment_pool_size, sizeof(byte_buffer_segment));
 
     return pool.allocate_node(sz);
   }
