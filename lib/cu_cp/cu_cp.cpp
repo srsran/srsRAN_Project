@@ -38,6 +38,8 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   // connect event notifier to layers
   f1c_ev_notifier.connect_cu_cp(*this);
+
+  start();
 }
 
 cu_cp::~cu_cp()
@@ -51,7 +53,7 @@ void cu_cp::start()
   ngc_configuration ngc_cfg = {};
 
   // start NG setup procedure.
-  main_ctrl_loop.schedule<initial_cu_cp_setup_procedure>(*ngc_entity, *this, ngc_cfg);
+  main_ctrl_loop.schedule<initial_cu_cp_setup_procedure>(cfg.ngc_config, *ngc_entity, *this);
 }
 
 void cu_cp::stop() {}

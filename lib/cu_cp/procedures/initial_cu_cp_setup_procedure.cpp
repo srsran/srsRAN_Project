@@ -15,10 +15,10 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-initial_cu_cp_setup_procedure::initial_cu_cp_setup_procedure(ngc_connection_manager&        ngc_conn_mng_,
-                                                             cu_cp_ngc_connection_notifier& cu_cp_ngc_ev_notifier_,
-                                                             ngc_configuration&             ngc_cfg_) :
-  ngc_conn_mng(ngc_conn_mng_), cu_cp_ngc_ev_notifier(cu_cp_ngc_ev_notifier_), ngc_cfg(ngc_cfg_)
+initial_cu_cp_setup_procedure::initial_cu_cp_setup_procedure(const ngc_configuration&       ngc_config_,
+                                                             ngc_connection_manager&        ngc_conn_mng_,
+                                                             cu_cp_ngc_connection_notifier& cu_cp_ngc_ev_notifier_) :
+  ngc_cfg(ngc_config_), ngc_conn_mng(ngc_conn_mng_), cu_cp_ngc_ev_notifier(cu_cp_ngc_ev_notifier_)
 {
 }
 
