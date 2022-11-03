@@ -293,8 +293,10 @@ void rlc_rx_am_entity::handle_full_data_sdu(const rlc_am_pdu_header& header, byt
     return;
   }
 
-  // Full SDU received. Add to Rx window and use full payload as SDU.
-  rlc_rx_am_sdu_info& rx_sdu = rx_window->add_sn(header.sn);
+  // Add new SN to RX window if no segments have been received yet
+  rlc_rx_am_sdu_info& rx_sdu = rx_window->has_sn(header.sn) ? (*rx_window)[header.sn] : rx_window->add_sn(header.sn);
+
+  // Full SDU received. Clear segments and use full payload as SDU.
   rx_sdu.segments.clear();
   rx_sdu.sdu            = std::move(payload);
   rx_sdu.fully_received = true;
@@ -311,7 +313,7 @@ void rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
   // Log SDU segment reception
   logger.log_debug("PDU SI: {}", header.sn);
 
-  // Add a new SDU segment to the RX window if necessary
+  // Add new SN to RX window if no segments have been received yet
   rlc_rx_am_sdu_info& rx_sdu = rx_window->has_sn(header.sn) ? (*rx_window)[header.sn] : rx_window->add_sn(header.sn);
 
   // Create SDU segment, to be stored later
