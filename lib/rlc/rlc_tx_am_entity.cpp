@@ -628,7 +628,7 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
   if (!retx_queue.has_sn(nack.nack_sn, nack.so_start, nack.so_end - nack.so_start + 1)) {
     rlc_tx_amd_retx retx = {};
     retx.so              = nack.so_start;
-    retx.sn              = st.tx_next_ack;
+    retx.sn              = nack.nack_sn;
     retx.length          = nack.so_end - nack.so_start + 1;
     retx_queue.push(retx);
     logger.log_debug("Scheduled ReTx=[{}]. NACK={}", retx, nack);
