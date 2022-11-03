@@ -10,10 +10,6 @@
 
 #pragma once
 
-#include "srsgnb/adt/optional.h"
-#include <new>
-#include <utility>
-
 namespace srsgnb {
 
 /// \brief Indicates the PRB bundle type and bundle size(s).
