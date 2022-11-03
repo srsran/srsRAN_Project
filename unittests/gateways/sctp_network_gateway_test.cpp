@@ -141,7 +141,7 @@ private:
   std::atomic<bool> stop_token = {false};
 };
 
-TEST_F(sctp_network_gateway_tester, bind_fails_on_bogus_address)
+TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_address_then_bind_fails)
 {
   network_gateway_config config;
   config.bind_address = "1.1.1.1";
@@ -151,7 +151,7 @@ TEST_F(sctp_network_gateway_tester, bind_fails_on_bogus_address)
   ASSERT_FALSE(bind_and_listen());
 }
 
-TEST_F(sctp_network_gateway_tester, bind_fails_on_bogus_v6_address)
+TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_v6_address_then_bind_fails)
 {
   network_gateway_config config;
   config.bind_address = "1:1::";
@@ -161,7 +161,7 @@ TEST_F(sctp_network_gateway_tester, bind_fails_on_bogus_v6_address)
   ASSERT_FALSE(bind_and_listen());
 }
 
-TEST_F(sctp_network_gateway_tester, bind_succeeds_on_localhost)
+TEST_F(sctp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds)
 {
   network_gateway_config config;
   config.bind_address = "127.0.0.1";
@@ -171,7 +171,7 @@ TEST_F(sctp_network_gateway_tester, bind_succeeds_on_localhost)
   ASSERT_TRUE(bind_and_listen());
 }
 
-TEST_F(sctp_network_gateway_tester, bind_succeeds_on_v6_localhost)
+TEST_F(sctp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succeeds)
 {
   network_gateway_config config;
   config.bind_address = "::1";
@@ -181,7 +181,7 @@ TEST_F(sctp_network_gateway_tester, bind_succeeds_on_v6_localhost)
   ASSERT_TRUE(bind_and_listen());
 }
 
-TEST_F(sctp_network_gateway_tester, connect_fails_on_unexisting_socket)
+TEST_F(sctp_network_gateway_tester, when_socket_not_exists_then_connect_fails)
 {
   ASSERT_FALSE(client_control_notifier.get_connection_dropped());
 
@@ -195,7 +195,7 @@ TEST_F(sctp_network_gateway_tester, connect_fails_on_unexisting_socket)
   ASSERT_FALSE(connect());
 }
 
-TEST_F(sctp_network_gateway_tester, connect_fails_on_unexisting_socket_v6)
+TEST_F(sctp_network_gateway_tester, when_v6_socket_not_exists_then_connect_fails)
 {
   ASSERT_FALSE(client_control_notifier.get_connection_dropped());
 
@@ -209,7 +209,7 @@ TEST_F(sctp_network_gateway_tester, connect_fails_on_unexisting_socket_v6)
   ASSERT_FALSE(connect());
 }
 
-TEST_F(sctp_network_gateway_tester, basic_trx_test)
+TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 {
   network_gateway_config server_config;
   server_config.bind_address = "127.0.0.1";
@@ -235,7 +235,7 @@ TEST_F(sctp_network_gateway_tester, basic_trx_test)
   ASSERT_EQ(server_data_notifier.get_rx_bytes(), tx_buf.size());
 }
 
-TEST_F(sctp_network_gateway_tester, basic_trx_test_v6)
+TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 {
   network_gateway_config server_config;
   server_config.bind_address = "::1";
@@ -261,7 +261,7 @@ TEST_F(sctp_network_gateway_tester, basic_trx_test_v6)
   ASSERT_EQ(server_data_notifier.get_rx_bytes(), tx_buf.size());
 }
 
-TEST_F(sctp_network_gateway_tester, basic_trx_test_hostnames)
+TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
 {
   network_gateway_config server_config;
   server_config.bind_address = "localhost";
