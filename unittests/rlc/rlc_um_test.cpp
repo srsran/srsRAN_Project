@@ -120,6 +120,22 @@ protected:
     rlc2_tx_lower = rlc2->get_tx_lower_layer_interface();
   }
 
+  /// \brief Constructs a SDU with deterministic content.
+  ///
+  /// The constructed SDU contains a contiguous sequence of @length bytes starting with the value of @first_byte.
+  ///
+  /// \param first_byte Value of the first byte in the sequence.
+  /// \param length Total length of the sequence in bytes.
+  /// \return The constructed byte_buffer object
+  byte_buffer construct_sdu(uint8_t first_byte, uint32_t length)
+  {
+    byte_buffer sdu = {};
+    for (uint32_t k = 0; k < length; ++k) {
+      sdu.append(first_byte + k);
+    }
+    return sdu;
+  }
+
   void tx_with_pdu_duplicates(uint32_t hold_back_pdu)
   {
     uint32_t buffer_state = 0;
@@ -574,22 +590,15 @@ TEST_P(rlc_um_test, reassembly_window_wrap_around)
   const uint32_t num_sdus = cardinality(to_number(sn_size)); // 2 * UM_Window_Size
   const uint32_t sdu_size = 10;
 
-  const uint32_t          payload_len  = 8;
-  const uint32_t          max_num_pdus = num_sdus * 2; // we need 2 PDUs for each SDU
-  uint32_t                num_pdus     = 0;
-  byte_buffer_slice_chain pdu_bufs[max_num_pdus];
+  const uint32_t payload_len  = 8;
+  const uint32_t max_num_pdus = num_sdus * 2; // we need 2 PDUs for each SDU
+  uint32_t       num_pdus     = 0;
 
   // Push SDUs into RLC1 and read PDUs from RLC1 with grant of 8 Bytes each
-  byte_buffer sdu_bufs[num_sdus];
+  uint32_t rx_sdu_idx = 0;
   for (uint32_t i = 0; i < num_sdus; i++) {
-    sdu_bufs[i] = byte_buffer();
-    // Write the index into the buffer
-    for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i + k);
-    }
-
-    // write SDU into upper end
-    rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+    // create and write SDU into upper end
+    rlc_sdu sdu = {0, construct_sdu(i, sdu_size)};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
 
     // check buffer state
@@ -597,40 +606,35 @@ TEST_P(rlc_um_test, reassembly_window_wrap_around)
     EXPECT_EQ(tester1.bsr, sdu_size + 1);
     EXPECT_EQ(tester1.bsr_count, i + 1 + num_pdus);
 
-    // read PDUs from lower end
+    // read PDUs from lower end of RLC1 and write into lower end of RLC2
     while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
-      pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
-
-      if (pdu_bufs[num_pdus].empty()) {
+      byte_buffer_slice_chain tx_pdu = rlc1_tx_lower->pull_pdu(payload_len);
+      if (tx_pdu.empty()) {
         break;
       }
+
+      byte_buffer rx_pdu;
+      for (const byte_buffer_slice& slice : tx_pdu.slices()) {
+        rx_pdu.append(slice);
+      }
+      rlc2_rx_lower->handle_pdu(std::move(rx_pdu));
+
       // TODO: write PCAP
       num_pdus++;
+
+      // Check upper layer of RLC2 for new SDUs and validate the content
+      while (!tester2.sdu_queue.empty() && rx_sdu_idx < num_sdus) {
+        byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
+        EXPECT_EQ(sdu_size, rx_sdu.length());
+        EXPECT_TRUE(rx_sdu == construct_sdu(rx_sdu_idx, sdu_size));
+        tester2.sdu_queue.pop();
+        rx_sdu_idx++;
+      }
     }
   }
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
   EXPECT_EQ(tester1.bsr, 0);
   EXPECT_EQ(tester1.bsr_count, num_sdus + num_pdus);
-
-  // Write PDUs into RLC2 and read SDUs from RLC2's upper layer
-  uint32_t rx_sdu_idx = 0;
-  for (uint32_t i = 0; i < num_pdus; i++) {
-    // Prepare and write PDU
-    byte_buffer pdu;
-    for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
-      pdu.append(slice);
-    }
-    rlc2_rx_lower->handle_pdu(std::move(pdu));
-
-    // Read SDU and check content
-    while (!tester2.sdu_queue.empty() && rx_sdu_idx < num_sdus) {
-      byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
-      EXPECT_EQ(sdu_size, rx_sdu.length());
-      EXPECT_TRUE(sdu_bufs[rx_sdu_idx] == rx_sdu);
-      tester2.sdu_queue.pop();
-      rx_sdu_idx++;
-    }
-  }
 
   // Check number of received SDUs
   EXPECT_EQ(num_sdus, tester2.sdu_counter);
@@ -647,22 +651,15 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
   const uint32_t num_sdus = cardinality(to_number(sn_size)); // 2 * UM_Window_Size
   const uint32_t sdu_size = 10;
 
-  const uint32_t          payload_len  = 8;
-  const uint32_t          max_num_pdus = num_sdus * 2; // we need 2 PDUs for each SDU
-  uint32_t                num_pdus     = 0;
-  byte_buffer_slice_chain pdu_bufs[max_num_pdus];
+  const uint32_t payload_len  = 8;
+  const uint32_t max_num_pdus = num_sdus * 2; // we need 2 PDUs for each SDU
+  uint32_t       num_pdus     = 0;
 
   // Push SDUs into RLC1 and read PDUs from RLC1 with grant of 8 Bytes each
-  byte_buffer sdu_bufs[num_sdus];
+  uint32_t rx_sdu_idx = 0;
   for (uint32_t i = 0; i < num_sdus; i++) {
-    sdu_bufs[i] = byte_buffer();
-    // Write the index into the buffer
-    for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i + k);
-    }
-
-    // write SDU into upper end
-    rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+    // create and write SDU into upper end
+    rlc_sdu sdu = {0, construct_sdu(i, sdu_size)};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
 
     // check buffer state
@@ -670,45 +667,40 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
     EXPECT_EQ(tester1.bsr, sdu_size + 1);
     EXPECT_EQ(tester1.bsr_count, i + 1 + num_pdus);
 
-    // read PDUs from lower end
+    // read PDUs from lower end of RLC1 and write into lower end of RLC2 (except 11th)
     while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
-      pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
-
-      if (pdu_bufs[num_pdus].empty()) {
+      byte_buffer_slice_chain tx_pdu = rlc1_tx_lower->pull_pdu(payload_len);
+      if (tx_pdu.empty()) {
         break;
       }
+
+      if (num_pdus != 10) {
+        byte_buffer rx_pdu;
+        for (const byte_buffer_slice& slice : tx_pdu.slices()) {
+          rx_pdu.append(slice);
+        }
+        rlc2_rx_lower->handle_pdu(std::move(rx_pdu));
+      } else {
+        // increment rx_sdu_idx to skip content check of the SDU that will be lost
+        rx_sdu_idx++;
+      }
+
       // TODO: write PCAP
       num_pdus++;
+
+      // Check upper layer of RLC2 for new SDUs and validate the content
+      while (!tester2.sdu_queue.empty() && rx_sdu_idx < num_sdus) {
+        byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
+        EXPECT_EQ(sdu_size, rx_sdu.length());
+        EXPECT_TRUE(rx_sdu == construct_sdu(rx_sdu_idx, sdu_size));
+        tester2.sdu_queue.pop();
+        rx_sdu_idx++;
+      }
     }
   }
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
   EXPECT_EQ(tester1.bsr, 0);
   EXPECT_EQ(tester1.bsr_count, num_sdus + num_pdus);
-
-  // Write PDUs into RLC2 (except 11th) and read SDUs from RLC2's upper layer
-  uint32_t rx_sdu_idx = 0;
-  for (uint32_t i = 0; i < num_pdus; i++) {
-    if (i != 10) {
-      // Prepare and write PDU
-      byte_buffer pdu;
-      for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
-        pdu.append(slice);
-      }
-      rlc2_rx_lower->handle_pdu(std::move(pdu));
-    } else {
-      // increment rx_sdu_idx to skip content check of the SDU that will be lost
-      rx_sdu_idx++;
-    }
-
-    // Read SDU and check content
-    while (!tester2.sdu_queue.empty() && rx_sdu_idx < num_sdus) {
-      byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
-      EXPECT_EQ(sdu_size, rx_sdu.length());
-      EXPECT_TRUE(sdu_bufs[rx_sdu_idx] == rx_sdu);
-      tester2.sdu_queue.pop();
-      rx_sdu_idx++;
-    }
-  }
 
   // Check number of received SDUs
   EXPECT_EQ(num_sdus - 1, tester2.sdu_counter);
