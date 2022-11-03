@@ -106,14 +106,13 @@ int main(int argc, char** argv)
     for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
       // Generate Rx symbols.
       span<cf_t> symbols = rx_symbols.get_view<>({i_rx_port});
-      std::generate(symbols.begin(), symbols.end(), [&rgen = rgen, &symbol_dist]() {
-        return cf_t(symbol_dist(rgen), symbol_dist(rgen));
-      });
+      std::generate(
+          symbols.begin(), symbols.end(), [&symbol_dist]() { return cf_t(symbol_dist(rgen), symbol_dist(rgen)); });
 
       for (unsigned i_tx_layer = 0; i_tx_layer != nof_tx_layers; ++i_tx_layer) {
         // Generate estimates.
         span<cf_t> ests = channel_ests.get_view<>({i_rx_port, i_tx_layer});
-        std::generate(ests.begin(), ests.end(), [&rgen = rgen, &ch_mag_dist, &ch_phase_dist]() {
+        std::generate(ests.begin(), ests.end(), [&ch_mag_dist, &ch_phase_dist]() {
           return std::polar(ch_mag_dist(rgen), ch_phase_dist(rgen));
         });
       }
