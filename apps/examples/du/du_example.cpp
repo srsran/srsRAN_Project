@@ -231,7 +231,17 @@ public:
       setup_res->gnb_cu_name.value.from_string("srsCU");
       setup_res->gnb_cu_rrc_version.value.latest_rrc_version.from_number(2);
     } else {
-      du_logger.info("Ignoring unhandled F1AP message '{}'", msg.pdu.init_msg().value.type().to_string());
+      srsgnb::byte_buffer buffer;
+      asn1::bit_ref       bref(buffer);
+      if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
+        du_logger.info("The contents of the received Msg5 are invalid");
+      } else {
+        std::vector<uint8_t> v(buffer.begin(), buffer.end());
+        du_logger.info(v.data(), v.size(), "Msg5 successfully received");
+      }
+
+      // Terminate the application once we reach this point.
+      is_running = false;
       return;
     }
 
