@@ -103,8 +103,8 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   slot_point       uci_slot = pdsch_alloc.slot + k1; // TODO.
   if (h_dl.empty()) {
     // It is a new tx.
-    const static unsigned mcs      = 1; // TODO.
-    const static unsigned max_retx = 4; // TODO.
+    const static unsigned mcs      = 10; // TODO.
+    const static unsigned max_retx = 4;  // TODO.
     bool                  success  = h_dl.new_tx(pdsch_alloc.slot, uci_slot, prbs, mcs, max_retx);
     srsgnb_assert(success, "Failed to allocate DL HARQ newtx");
   } else {
@@ -241,8 +241,8 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
   ul_harq_process& h_ul = ue_cc->harqs.ul_harq(grant.h_id);
   if (h_ul.empty()) {
     // It is a new tx.
-    const static unsigned mcs      = 1; // TODO.
-    const static unsigned max_retx = 4; // TODO.
+    const static unsigned mcs      = 10; // TODO.
+    const static unsigned max_retx = 4;  // TODO.
     bool                  success  = h_ul.new_tx(pusch_alloc.slot, prbs, mcs, max_retx);
     srsgnb_assert(success, "Failed to allocate UL HARQ newtx");
   } else {
