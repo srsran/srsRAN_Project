@@ -163,7 +163,7 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   // Send the message.
   msg_gw.dl_tti_request(msg);
 
-  add_pdcch_pdus_to_ul_dci_request(dl_res.dl_res->ul_pdcchs, dl_res.ul_pdcch_pdus, dl_res.slot);
+  handle_ul_dci_request(dl_res.dl_res->ul_pdcchs, dl_res.ul_pdcch_pdus, dl_res.slot);
 }
 
 void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_data)
@@ -266,9 +266,9 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
   msg_gw.ul_tti_request(msg);
 }
 
-void mac_to_fapi_translator::add_pdcch_pdus_to_ul_dci_request(span<const pdcch_ul_information> ul_pdcchs,
-                                                              span<const dci_payload>          payload,
-                                                              slot_point                       slot)
+void mac_to_fapi_translator::handle_ul_dci_request(span<const pdcch_ul_information> ul_pdcchs,
+                                                   span<const dci_payload>          payload,
+                                                   slot_point                       slot)
 {
   // This message is optional, do not send it empty.
   if (ul_pdcchs.empty()) {

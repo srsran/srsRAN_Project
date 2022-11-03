@@ -115,10 +115,9 @@ public:
   }
 
 private:
-  /// Adds the given PDCCH PDUS to the uplink DCI request.
-  void add_pdcch_pdus_to_ul_dci_request(span<const pdcch_ul_information> ul_pdcch,
-                                        span<const dci_payload>          payload,
-                                        slot_point                       slot);
+  /// Handles the UL_DCI.request message.
+  void
+  handle_ul_dci_request(span<const pdcch_ul_information> ul_pdcch, span<const dci_payload> payload, slot_point slot);
 
 private:
   /// FAPI message gateway to the outside world.
