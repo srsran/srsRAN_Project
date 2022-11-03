@@ -111,21 +111,28 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_slice_chain status)
   // Unpack and check PDU header
   uint32_t dc;
   dec.unpack(dc, 1);
-  srsgnb_assert(dc == to_number(pdcp_dc_field::control),
-                "Cannot handle status report due to invalid D/C field: Expected {}, Got {}",
-                to_number(pdcp_dc_field::control),
-                dc);
+  if (dc != to_number(pdcp_dc_field::control)) {
+    logger.log_warning(buf.begin(),
+                       buf.end(),
+                       "Cannot handle status report due to invalid D/C field: Expected {}, Got {}",
+                       to_number(pdcp_dc_field::control),
+                       dc);
+    return;
+  }
   uint32_t cpt;
   dec.unpack(cpt, 3);
-  srsgnb_assert(cpt == to_number(pdcp_control_pdu_type::status_report),
-                "Cannot handle status report due to invalid control PDU type: Expected {}, Got {}",
-                to_number(pdcp_control_pdu_type::status_report),
-                cpt);
+  if (cpt != to_number(pdcp_control_pdu_type::status_report)) {
+    logger.log_warning(buf.begin(),
+                       buf.end(),
+                       "Cannot handle status report due to invalid control PDU type: Expected {}, Got {}",
+                       to_number(pdcp_control_pdu_type::status_report),
+                       cpt);
+    return;
+  }
   uint32_t reserved;
   dec.unpack(reserved, 4);
   if (reserved != 0) {
-    logger.log_warning("Ignoring status report because reserved bits are set: {}", reserved);
-    logger.log_debug(buf.begin(), buf.end(), "Ignored status report");
+    logger.log_warning(buf.begin(), buf.end(), "Ignoring status report because reserved bits are set: {}", reserved);
     return;
   }
 
