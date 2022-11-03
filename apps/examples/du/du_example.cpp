@@ -112,6 +112,10 @@ static bool  enable_clipping        = false;
 static float full_scale_amplitude   = 1.0F;
 static float amplitude_ceiling_dBFS = -0.1F;
 
+/// ZMQ configuration parameters.
+static std::string rx_address = "tcp://localhost:6000";
+static std::string tx_address = "tcp://*:5000";
+
 /// Defines a set of configuration profiles.
 static const std::vector<configuration_profile> profiles = {
     {"zmq_20MHz_n7",
@@ -126,14 +130,8 @@ static const std::vector<configuration_profile> profiles = {
        offset_to_pointA         = 40;
        band                     = nr_band::n7;
        otw_format               = radio_configuration::over_the_wire_format::DEFAULT;
-       // Prepare ZMQ addresses using TCP. Transmitter ports start at 5000+channel_id while receivers connect to
-       // 6000+channel_id.
-       unsigned port_base   = 5000;
-       unsigned port_offset = 1000;
-       for (unsigned channel_id = 0; channel_id != nof_ports * nof_sectors; ++channel_id) {
-         tx_channel_args.emplace_back("tcp://*:" + std::to_string(port_base + channel_id));
-         rx_channel_args.emplace_back("tcp://localhost:" + std::to_string(port_base + channel_id + port_offset));
-       }
+       tx_channel_args.emplace_back(tx_address);
+       rx_channel_args.emplace_back(rx_address);
      }},
     {"uhd_20MHz_n7",
      "Single 20MHz FDD in band n7 using UHD.",
@@ -158,14 +156,8 @@ static const std::vector<configuration_profile> profiles = {
        offset_to_pointA = 69;
        band             = nr_band::n41;
        otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
-       // Prepare ZMQ addresses using TCP. Transmitter ports start at 5000+channel_id while receivers connect to
-       // 6000+channel_id.
-       unsigned port_base   = 5000;
-       unsigned port_offset = 1000;
-       for (unsigned channel_id = 0; channel_id != nof_ports * nof_sectors; ++channel_id) {
-         tx_channel_args.emplace_back("tcp://*:" + std::to_string(port_base + channel_id));
-         rx_channel_args.emplace_back("tcp://localhost:" + std::to_string(port_base + channel_id + port_offset));
-       }
+       tx_channel_args.emplace_back(tx_address);
+       rx_channel_args.emplace_back(rx_address);
      }}};
 
 namespace {
@@ -367,6 +359,8 @@ static void usage(std::string prog)
   fmt::print("\t-c Enable amplitude clipping. [Default {}]\n", enable_clipping);
   fmt::print("\t-b Baseband gain prior to clipping (in dB). [Default {}]\n", baseband_gain_dB);
   fmt::print("\t-z Enable FAPI logs. [Default {}]\n", enable_fapi_logs);
+  fmt::print("\t-r ZMQ rx address. [Default {}]\n", rx_address);
+  fmt::print("\t-t ZMQ tx address. [Default {}]\n", tx_address);
   fmt::print("\t-h print this message.\n");
 }
 
@@ -375,11 +369,21 @@ static int parse_args(int argc, char** argv)
   std::string profile_name;
 
   int opt = 0;
-  while ((opt = ::getopt(argc, argv, "D:P:L:v:b:czh")) != -1) {
+  while ((opt = ::getopt(argc, argv, "P:v:b:r:t:czh")) != -1) {
     switch (opt) {
       case 'P':
         if (optarg != nullptr) {
           profile_name = std::string(optarg);
+        }
+        break;
+      case 'r':
+        if (optarg != nullptr) {
+          rx_address = std::string(optarg);
+        }
+        break;
+      case 't':
+        if (optarg != nullptr) {
+          tx_address = std::string(optarg);
         }
         break;
       case 'v':
