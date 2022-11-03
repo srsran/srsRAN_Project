@@ -37,11 +37,13 @@ public:
   dummy_network_gateway_control_notifier() = default;
 
   void on_connection_loss() override { conn_dropped = true; }
-  void on_connection_established() override { conn_dropped = false; }
+  void on_connection_established() override { conn_established = true; }
   bool get_connection_dropped() { return conn_dropped; }
+  bool get_connection_established() { return conn_established; }
 
 private:
-  bool conn_dropped = false;
+  bool conn_established = false;
+  bool conn_dropped     = false;
 };
 
 class dummy_network_gateway_data_notifier : public network_gateway_data_notifier
@@ -120,8 +122,6 @@ protected:
   }
 
   bool connect() { return client->create_and_connect(); }
-
-  bool reconnect() { return client->recreate_and_reconnect(); }
 
   void run_client_receive() { client->receive(); }
 
@@ -285,4 +285,9 @@ TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
   std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
   ASSERT_EQ(server_data_notifier.get_rx_bytes(), tx_buf.size());
+}
+
+TEST_F(sctp_network_gateway_tester, when_connection_loss_then_reconnect)
+{
+  // TODO: Add test for reconnect
 }
