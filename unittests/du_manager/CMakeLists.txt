@@ -17,3 +17,7 @@ add_test(ue_manager_test ue_manager_test)
 add_executable(test_du_config_generator test_ssb_coreset0_freq_pos_generator.cpp)
 target_link_libraries(test_du_config_generator srsgnb_du_manager srsgnb_support du_test_suite gtest gtest_main)
 add_test(test_du_config_generator test_du_config_generator)
+
+add_executable(serving_cell_config_converter_test ../du_manager/serving_cell_config_converter_test.cpp)
+target_link_libraries(serving_cell_config_converter_test srsgnb_du_manager srsgnb_support asn1_utils rrc_nr_asn1 srslog gtest gtest_main)
+gtest_discover_tests(serving_cell_config_converter_test)
