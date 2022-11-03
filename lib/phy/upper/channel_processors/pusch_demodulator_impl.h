@@ -65,15 +65,12 @@ private:
                   "Only DM-RS type 1 with a number of CDM groups equal to 2 is implemented.");
 
     // Prepare RE mask.
-    std::array<bool, MAX_RB* NRE> tmp_re_mask = {};
-    span<bool>                    re_mask     = span<bool>(tmp_re_mask).first(config.rb_mask.size() * NRE);
-    config.rb_mask.for_each(0, config.rb_mask.size(), [&](unsigned i_prb) {
-      span<bool> re_view = re_mask.subspan(i_prb * NRE, NRE);
-      std::fill(re_view.begin(), re_view.end(), true);
-    });
+    bounded_bitset<NRE> prb_re_mask(NRE);
+    prb_re_mask.fill(0, NRE, true);
+    bounded_bitset<MAX_RB* NRE> re_mask = config.rb_mask.kronecker_product<NRE>(prb_re_mask);
 
     // Number of subcarriers.
-    unsigned nof_subcs = config.rb_mask.size() * NRE;
+    unsigned nof_subcs = config.rb_mask.count() * NRE;
 
     // Extract RE for each port and symbol.
     for (unsigned i_port = 0, i_port_end = config.rx_ports.size(); i_port != i_port_end; ++i_port) {

@@ -39,16 +39,11 @@ private:
                               span<const dmrs_pattern>    pattern,
                               const configuration&        cfg);
 
-  /// \brief Interpolates the least-square estimates in frequency and time domain.
-  /// \param[out] estimate     Channel estimates.
-  /// \param[in] lse           Least-square estimates.
-  /// \param[in] port          Port index to interpolate.
-  /// \param[in] nof_tx_layers Number of transmit layers.
-  static void
-  interpolate(channel_estimate& estimate, const dmrs_symbol_list& lse, unsigned port, unsigned nof_tx_layers);
-
   /// Temporary storage of symbols.
   dmrs_symbol_list temp_symbols;
+
+  /// Temporary frequency response.
+  std::array<cf_t, MAX_RB * NRE> temp_ce_freq;
 };
 
 } // namespace srsgnb

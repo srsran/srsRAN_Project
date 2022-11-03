@@ -9,8 +9,10 @@
  */
 
 #include "port_channel_estimator_average_impl.h"
+#include "srsgnb/srsvec/add.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/prod.h"
+#include "srsgnb/srsvec/zero.h"
 
 using namespace srsgnb;
 
@@ -18,24 +20,71 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
                                                   const resource_grid_reader& grid,
                                                   unsigned                    port,
                                                   const dmrs_symbol_list&     symbols,
-                                                  span<const dmrs_pattern>    pattern,
+                                                  span<const dmrs_pattern>    patterns,
                                                   const configuration&        cfg)
 {
   // Prepare symbol destination.
   temp_symbols.resize(symbols.size());
 
   // Extract symbols from resource grid.
-  extract_symbols(temp_symbols, grid, port, pattern, cfg);
+  extract_symbols(temp_symbols, grid, port, patterns, cfg);
 
   // Compute least-square estimates and store in them in temp_symbols.
   for (unsigned i_layer = 0; i_layer != cfg.nof_tx_layers; ++i_layer) {
     srsvec::prod_conj(temp_symbols.get_slice(i_layer), symbols.get_slice(i_layer), temp_symbols.get_slice(i_layer));
-    // TODO: Set the noise variance to a fixed value until it is properly calculated.
     estimate.set_noise_variance(1e-5F, port, i_layer);
   }
 
-  // Interpolate.
-  interpolate(estimate, temp_symbols, port, cfg.nof_tx_layers);
+  // For each layer...
+  for (unsigned i_layer = 0; i_layer != cfg.nof_tx_layers; ++i_layer) {
+    // Select first DM-RS symbol LSE.
+    span<cf_t> symbol_lse_0 = temp_symbols.get_symbol(0, i_layer);
+
+    // Accumulate all symbols frequency domain response.
+    for (unsigned i_dmrs_symbol = 1, i_dmrs_symbol_end = symbols.size().nof_symbols; i_dmrs_symbol != i_dmrs_symbol_end;
+         ++i_dmrs_symbol) {
+      span<cf_t> symbol_lse = temp_symbols.get_symbol(i_dmrs_symbol, i_layer);
+      srsvec::add(symbol_lse_0, symbol_lse, symbol_lse_0);
+    }
+
+    // Average.
+    for (cf_t& value : symbol_lse_0) {
+      value /= static_cast<float>(symbols.size().nof_symbols);
+      value /= 0.70794576;
+    }
+
+    // Interpolate frequency domain.
+    span<cf_t> ce_freq = span<cf_t>(temp_ce_freq).first(cfg.rb_mask.count() * NRE);
+    for (unsigned i_subc = 0, i_subc_end = ce_freq.size(); i_subc != i_subc_end; ++i_subc) {
+      // Channel is equal to the LSE on DM-RS positions.
+      if (i_subc % 2 == 0) {
+        ce_freq[i_subc] = symbol_lse_0[i_subc / 2];
+        continue;
+      }
+
+      // Repeat last value.
+      if (i_subc == i_subc_end - 1) {
+        ce_freq[i_subc] = symbol_lse_0[i_subc / 2];
+        continue;
+      }
+
+      // Average LSE.
+      ce_freq[i_subc] = (symbol_lse_0[i_subc / 2] + symbol_lse_0[i_subc / 2 + 1]) / 2.0F;
+    }
+
+    // Map frequency response to channel estimates.
+    for (unsigned i_symbol = cfg.first_symbol, i_symbol_end = cfg.first_symbol + cfg.nof_symbols;
+         i_symbol != i_symbol_end;
+         ++i_symbol) {
+      span<cf_t> symbol_ce = estimate.get_symbol_ch_estimate(i_symbol, port, i_layer);
+
+      unsigned i_prb_ce = 0;
+      cfg.rb_mask.for_each(0, cfg.rb_mask.size(), [&](unsigned i_prb) {
+        srsvec::copy(symbol_ce.subspan(i_prb * NRE, NRE), ce_freq.subspan(i_prb_ce * NRE, NRE));
+        ++i_prb_ce;
+      });
+    }
+  }
 }
 
 void port_channel_estimator_average_impl::extract_symbols(dmrs_symbol_list&           symbol_buffer,
@@ -77,27 +126,5 @@ void port_channel_estimator_average_impl::extract_symbols(dmrs_symbol_list&     
                     "The DMRS buffer is not completed. {} samples have not been read.",
                     dmrs_symbols_layer.size());
     }
-  }
-}
-
-void port_channel_estimator_average_impl::interpolate(channel_estimate&       estimate,
-                                                      const dmrs_symbol_list& lse,
-                                                      unsigned                port,
-                                                      unsigned                nof_tx_layers)
-{
-  // For each layer...
-  for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
-    // Select layer LSE.
-    span<const cf_t> lse_layer = lse.get_slice(i_layer);
-
-    // Average LSE.
-    cf_t average =
-        std::accumulate(lse_layer.begin(), lse_layer.end(), cf_t(0.0)) / static_cast<float>(lse_layer.size());
-
-    // Get channel estimates view for the port and layer.
-    span<cf_t> ch_estimate = estimate.get_path_ch_estimate(port, i_layer);
-
-    // Fill the channel estimates with the average estimated channel.
-    std::fill(ch_estimate.begin(), ch_estimate.end(), average);
   }
 }
