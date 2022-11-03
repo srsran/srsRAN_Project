@@ -30,7 +30,7 @@ public:
           const serving_cell_ue_configuration_request& ue_serv_cell) :
     ue_index(ue_index),
     cell_index(ue_serv_cell.cell_index),
-    harqs(crnti_val, 52, 16),
+    harqs(crnti_val, 8),
     crnti_(crnti_val),
     ue_cfg(cell_cfg_common_, *ue_serv_cell.serv_cell_cfg)
   {

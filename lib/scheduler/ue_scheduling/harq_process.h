@@ -142,7 +142,7 @@ public:
 class harq_entity
 {
 public:
-  explicit harq_entity(rnti_t rnti, uint32_t nprb, uint32_t nof_harq_procs, unsigned max_ack_wait_in_slots = 4);
+  explicit harq_entity(rnti_t rnti, uint32_t nof_harq_procs, unsigned max_ack_wait_in_slots = 4);
 
   /// Update slot, and checks if there are HARQ processes that have reached maxReTx with no ACK
   void slot_indication(slot_point slot_tx_);

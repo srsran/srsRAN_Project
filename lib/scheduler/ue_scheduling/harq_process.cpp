@@ -31,7 +31,7 @@ void harq_process::slot_indication(slot_point slot_tx_)
   }
 }
 
-int harq_process::ack_info(uint32_t tb_idx, bool ack)
+int harq_process::ack_info(unsigned tb_idx, bool ack)
 {
   if (empty(tb_idx)) {
     return -1;
@@ -58,7 +58,7 @@ bool harq_process::new_tx_common(slot_point       slot_tx_,
                                  slot_point       slot_ack_,
                                  const prb_grant& grant,
                                  sch_mcs_index    mcs,
-                                 uint32_t         max_retx_)
+                                 unsigned         max_retx_)
 {
   if (not empty()) {
     return false;
@@ -75,7 +75,7 @@ bool harq_process::new_tx_common(slot_point       slot_tx_,
   return true;
 }
 
-bool harq_process::set_tbs(uint32_t tbs)
+bool harq_process::set_tbs(unsigned tbs)
 {
   if (empty() or nof_retx() > 0) {
     return false;
@@ -115,7 +115,7 @@ bool dl_harq_process::new_tx(slot_point       slot_tx,
                              slot_point       slot_ack,
                              const prb_grant& grant,
                              sch_mcs_index    mcs,
-                             uint32_t         max_retx)
+                             unsigned         max_retx)
 {
   return harq_process::new_tx_common(slot_tx, slot_ack, grant, mcs, max_retx);
 }
@@ -125,7 +125,7 @@ bool dl_harq_process::new_retx(slot_point slot_tx, slot_point slot_ack, const pr
   return harq_process::new_retx_common(slot_tx, slot_ack, grant);
 }
 
-bool ul_harq_process::new_tx(slot_point slot_tx, const prb_grant& grant, sch_mcs_index mcs, uint32_t max_retx)
+bool ul_harq_process::new_tx(slot_point slot_tx, const prb_grant& grant, sch_mcs_index mcs, unsigned max_retx)
 {
   return harq_process::new_tx_common(slot_tx, slot_tx, grant, mcs, max_retx);
 }
@@ -135,13 +135,13 @@ bool ul_harq_process::new_retx(slot_point slot_tx, const prb_grant& grant)
   return harq_process::new_retx_common(slot_tx, slot_tx, grant);
 }
 
-harq_entity::harq_entity(rnti_t rnti_, uint32_t nprb, uint32_t nof_harq_procs, unsigned max_ack_wait_in_slots) :
+harq_entity::harq_entity(rnti_t rnti_, unsigned nof_harq_procs, unsigned max_ack_wait_in_slots) :
   rnti(rnti_), logger(srslog::fetch_basic_logger("MAC"))
 {
   // Create HARQs
   dl_harqs.reserve(nof_harq_procs);
   ul_harqs.reserve(nof_harq_procs);
-  for (uint32_t pid = 0; pid < nof_harq_procs; ++pid) {
+  for (unsigned pid = 0; pid < nof_harq_procs; ++pid) {
     dl_harqs.emplace_back(to_harq_id(pid), max_ack_wait_in_slots);
     ul_harqs.emplace_back(to_harq_id(pid), max_ack_wait_in_slots);
   }

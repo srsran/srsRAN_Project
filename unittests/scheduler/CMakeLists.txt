@@ -60,9 +60,9 @@ add_executable(harq_process_test ue_scheduling/harq_process_test.cpp)
 target_link_libraries(harq_process_test srsgnb_sched srslog gtest gtest_main)
 gtest_discover_tests(harq_process_test)
 
-add_executable(sched_harq_test ue_scheduling/sched_harq_test.cpp)
-target_link_libraries(sched_harq_test srsgnb_sched srslog)
-add_test(sched_harq_test sched_prb_test)
+add_executable(harq_entity_test ue_scheduling/harq_entity_test.cpp)
+target_link_libraries(harq_entity_test srsgnb_sched srslog gtest gtest_main)
+gtest_discover_tests(harq_entity_test)
 
 add_executable(dl_logical_channel_test ue_scheduling/dl_logical_channel_test.cpp)
 target_link_libraries(dl_logical_channel_test srsgnb_sched srslog gtest gtest_main)
