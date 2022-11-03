@@ -266,12 +266,12 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
   msg_gw.ul_tti_request(msg);
 }
 
-void mac_to_fapi_translator::handle_ul_dci_request(span<const pdcch_ul_information> ul_pdcchs,
-                                                   span<const dci_payload>          payload,
+void mac_to_fapi_translator::handle_ul_dci_request(span<const pdcch_ul_information> pdcch_info,
+                                                   span<const dci_payload>          payloads,
                                                    slot_point                       slot)
 {
   // This message is optional, do not send it empty.
-  if (ul_pdcchs.empty()) {
+  if (pdcch_info.empty()) {
     return;
   }
 
@@ -279,7 +279,7 @@ void mac_to_fapi_translator::handle_ul_dci_request(span<const pdcch_ul_informati
   fapi::ul_dci_request_message_builder builder(msg);
 
   builder.set_basic_parameters(slot.sfn(), slot.slot_index());
-  add_pdcch_pdus_to_builder(builder, ul_pdcchs, payload);
+  add_pdcch_pdus_to_builder(builder, pdcch_info, payloads);
 
   // Validate the UL_DCI.request message.
   error_type<fapi::validator_report> result = validate_ul_dci_request(msg);
