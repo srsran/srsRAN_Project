@@ -187,13 +187,13 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
                        crc.harq_id);
         continue;
       }
-      if (pending_msg3.harq.pid != crc.harq_id) {
+      if (pending_msg3.harq.id != crc.harq_id) {
         logger.warning("Invalid UL CRC, cell={}, rnti={:#x}, h_id={}. Cause: HARQ-Ids do not match ({} != {})",
                        cfg.cell_index,
                        crc.rnti,
                        crc.harq_id,
                        crc.harq_id,
-                       pending_msg3.harq.pid);
+                       pending_msg3.harq.id);
         continue;
       }
       // TODO: Fetch TB.
@@ -202,10 +202,9 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
   }
 
   // Allocate pending Msg3 retransmissions.
-  slot_point sl_rx = res_alloc.slot_tx() - 4U; // TODO: configurable tx_gnb_delay.
   for (auto& pending_msg3 : pending_msg3s) {
     if (not pending_msg3.harq.empty()) {
-      pending_msg3.harq.slot_indication(sl_rx);
+      pending_msg3.harq.slot_indication(res_alloc.slot_tx());
       if (pending_msg3.harq.has_pending_retx()) {
         schedule_msg3_retx(res_alloc, pending_msg3);
       }
@@ -508,7 +507,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     pusch.pusch_cfg.pusch_dmrs_id              = 0;
     pusch.pusch_cfg.pusch_second_hop_prb       = 0;
     pusch.pusch_cfg.rv_index                   = 0;
-    pusch.pusch_cfg.harq_id                    = pending_msg3.harq.pid;
+    pusch.pusch_cfg.harq_id                    = pending_msg3.harq.id;
     pusch.pusch_cfg.new_data                   = true;
     pusch.pusch_cfg.tb_size_bytes              = msg3_data[msg3_info.time_resource_assignment].prbs_tbs.tbs_bytes;
     pusch.pusch_cfg.num_cb                     = 0;
@@ -614,7 +613,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   ul_info.pusch_cfg.pusch_dmrs_id             = cfg.pci;
   ul_info.pusch_cfg.dmrs_hopping_mode         = pusch_information::dmrs_hopping_mode::no_hopping; // TODO.
   ul_info.pusch_cfg.rv_index                  = rv_idx[msg3_ctx.harq.nof_retx() % rv_idx.size()];
-  ul_info.pusch_cfg.harq_id                   = msg3_ctx.harq.pid;
+  ul_info.pusch_cfg.harq_id                   = msg3_ctx.harq.id;
   ul_info.pusch_cfg.new_data                  = false;
   unsigned                  nof_oh_prb        = 0; // TODO.
   unsigned                  tb_scaling_field  = 0; // TODO.

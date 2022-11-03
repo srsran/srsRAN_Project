@@ -25,10 +25,16 @@ namespace srsgnb {
 class harq_process
 {
 public:
-  explicit harq_process(harq_id_t id_) : pid(id_) {}
+  /// \brief HARQ process constructor.
+  /// \param h_id HARQ process ID.
+  /// \param max_ack_wait_in_slots_ number of slots above which the scheduler considers that the ACK/CRC went missing.
+  explicit harq_process(harq_id_t h_id, unsigned max_ack_wait_in_slots_ = 4) :
+    id(h_id), max_ack_wait_in_slots(max_ack_wait_in_slots_)
+  {
+  }
 
   /// \brief Indicate the beginning of a new slot.
-  void slot_indication(slot_point slot_rx);
+  void slot_indication(slot_point slot_tx);
 
   /// \brief Clear the contents of this HARQ process and reset it back to empty state.
   void reset();
@@ -74,7 +80,8 @@ public:
   /// \return The number of bytes of the TB in case of ack==true, zero in case ack==false, and -1 if HARQ is inactive.
   int ack_info(uint32_t tb_idx, bool ack);
 
-  const harq_id_t pid;
+  /// HARQ process id.
+  const harq_id_t id;
 
 protected:
   bool
@@ -91,6 +98,8 @@ protected:
     uint32_t      tbs                                             = 0;
   };
 
+  const unsigned max_ack_wait_in_slots;
+
   uint32_t max_retx = 1;
   /// For DL, slot_tx corresponds to the slot when the TB in the HARQ process is going to be transmitted by the gNB.
   /// For UL, slot_tx corresponds to the slot when the TB in the HARQ process is going to be transmitted by the UE.
@@ -105,7 +114,7 @@ protected:
 class dl_harq_process : public harq_process
 {
 public:
-  explicit dl_harq_process(harq_id_t id_);
+  using harq_process::harq_process;
 
   /// \brief Called on every new transmission. It marks this HARQ process as busy and stores respective TB
   /// information.
@@ -118,7 +127,7 @@ public:
 class ul_harq_process : public harq_process
 {
 public:
-  explicit ul_harq_process(harq_id_t id_) : harq_process(id_) {}
+  using harq_process::harq_process;
 
   /// \brief Called on every new transmission. It marks this HARQ process as busy and stores respective TB
   /// information.
@@ -133,10 +142,10 @@ public:
 class harq_entity
 {
 public:
-  explicit harq_entity(rnti_t rnti, uint32_t nprb, uint32_t nof_harq_procs, srslog::basic_logger& logger);
+  explicit harq_entity(rnti_t rnti, uint32_t nprb, uint32_t nof_harq_procs, unsigned max_ack_wait_in_slots = 4);
 
   /// Update slot, and checks if there are HARQ processes that have reached maxReTx with no ACK
-  void slot_indication(slot_point slot_rx_);
+  void slot_indication(slot_point slot_tx_);
 
   int dl_ack_info(uint32_t pid, uint32_t tb_idx, bool ack) { return dl_harqs[pid].ack_info(tb_idx, ack); }
   int ul_crc_info(uint32_t pid, bool ack) { return ul_harqs[pid].ack_info(0, ack); }
@@ -211,7 +220,7 @@ private:
   srslog::basic_logger& logger;
 
   // slot_rx is the slot index at which the scheduler is currently working
-  slot_point                   slot_rx;
+  slot_point                   slot_tx;
   std::vector<dl_harq_process> dl_harqs;
   std::vector<ul_harq_process> ul_harqs;
 };

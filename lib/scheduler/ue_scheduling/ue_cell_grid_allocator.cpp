@@ -274,7 +274,7 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
   f0_0.new_data_indicator                         = h_ul.ndi(0);
   static constexpr std::array<unsigned, 4> rv_idx = {0, 2, 3, 1};
   f0_0.redundancy_version                         = rv_idx[h_ul.nof_retx() % rv_idx.size()];
-  f0_0.harq_process_number                        = h_ul.pid;
+  f0_0.harq_process_number                        = h_ul.id;
   f0_0.tpc_command                                = 0;
   f0_0.ul_sul_indicator                           = {};
 
@@ -301,7 +301,7 @@ bool ue_cell_grid_allocator::allocate_pusch(const ue_pusch_grant& grant)
   msg.pusch_cfg.pusch_dmrs_id                 = cell_cfg.pci;
   msg.pusch_cfg.dmrs_hopping_mode             = pusch_information::dmrs_hopping_mode::no_hopping; // TODO.
   msg.pusch_cfg.rv_index                      = rv_idx[h_ul.nof_retx() % rv_idx.size()];
-  msg.pusch_cfg.harq_id                       = h_ul.pid;
+  msg.pusch_cfg.harq_id                       = h_ul.id;
   msg.pusch_cfg.new_data                      = h_ul.nof_retx() == 0;
   unsigned                  nof_oh_prb        = 0; // TODO.
   unsigned                  tb_scaling_field  = 0; // TODO.

@@ -65,7 +65,7 @@ bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
         if (not ue_grant_crbs.empty()) {
           pdsch_alloc.allocate_pdsch(ue_pdsch_grant{&u,
                                                     ue_cc.cell_index,
-                                                    h->pid,
+                                                    h->id,
                                                     ss_cfg->id,
                                                     time_res,
                                                     ue_grant_crbs,
@@ -110,14 +110,8 @@ bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_retx)
     prb_bitmap                     used_crbs = grid.used_crbs(bwp_ul.generic_params, pusch_symbols);
     crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, bwp_ul.generic_params.crbs.length(), 0);
     if (not ue_grant_crbs.empty()) {
-      pusch_alloc.allocate_pusch(ue_pusch_grant{&u,
-                                                ue_cc.cell_index,
-                                                h->pid,
-                                                ue_grant_crbs,
-                                                pusch_symbols,
-                                                k2,
-                                                to_search_space_id(1),
-                                                aggregation_level::n4});
+      pusch_alloc.allocate_pusch(ue_pusch_grant{
+          &u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, k2, to_search_space_id(1), aggregation_level::n4});
     }
   }
   return false;

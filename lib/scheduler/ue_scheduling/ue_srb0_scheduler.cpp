@@ -231,7 +231,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
   dci.modulation_coding_scheme = h_dl.mcs(0).to_uint();
   dci.new_data_indicator       = 1;
   dci.redundancy_version       = 0;
-  dci.harq_process_number      = h_dl.pid;
+  dci.harq_process_number      = h_dl.id;
   // TODO.
   dci.tpc_command              = 0;
   dci.pucch_resource_indicator = pucch.pucch_res_indicator;

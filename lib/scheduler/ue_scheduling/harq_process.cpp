@@ -12,12 +12,12 @@
 
 namespace srsgnb {
 
-void harq_process::slot_indication(slot_point slot_rx)
+void harq_process::slot_indication(slot_point slot_tx_)
 {
   if (empty()) {
     return;
   }
-  if (slot_rx < slot_ack) {
+  if (slot_ack + max_ack_wait_in_slots > slot_tx_) {
     // Wait more slots for ACK/NACK to arrive.
     return;
   }
@@ -51,7 +51,7 @@ void harq_process::reset()
   tb[0].state     = tb_t::state_t::empty;
   tb[0].n_rtx     = 0;
   tb[0].mcs       = 31;
-  tb[0].tbs       = std::numeric_limits<uint32_t>::max();
+  tb[0].tbs       = 0;
 }
 
 bool harq_process::new_tx_common(slot_point       slot_tx_,
@@ -111,8 +111,6 @@ bool harq_process::new_retx_common(slot_point slot_tx_, slot_point slot_ack_)
   return true;
 }
 
-dl_harq_process::dl_harq_process(harq_id_t id_) : harq_process(id_) {}
-
 bool dl_harq_process::new_tx(slot_point       slot_tx,
                              slot_point       slot_ack,
                              const prb_grant& grant,
@@ -137,40 +135,40 @@ bool ul_harq_process::new_retx(slot_point slot_tx, const prb_grant& grant)
   return harq_process::new_retx_common(slot_tx, slot_tx, grant);
 }
 
-harq_entity::harq_entity(rnti_t rnti_, uint32_t nprb, uint32_t nof_harq_procs, srslog::basic_logger& logger_) :
-  rnti(rnti_), logger(logger_)
+harq_entity::harq_entity(rnti_t rnti_, uint32_t nprb, uint32_t nof_harq_procs, unsigned max_ack_wait_in_slots) :
+  rnti(rnti_), logger(srslog::fetch_basic_logger("MAC"))
 {
   // Create HARQs
   dl_harqs.reserve(nof_harq_procs);
   ul_harqs.reserve(nof_harq_procs);
   for (uint32_t pid = 0; pid < nof_harq_procs; ++pid) {
-    dl_harqs.emplace_back(to_harq_id(pid));
-    ul_harqs.emplace_back(to_harq_id(pid));
+    dl_harqs.emplace_back(to_harq_id(pid), max_ack_wait_in_slots);
+    ul_harqs.emplace_back(to_harq_id(pid), max_ack_wait_in_slots);
   }
 }
 
-void harq_entity::slot_indication(slot_point slot_rx_)
+void harq_entity::slot_indication(slot_point slot_tx_)
 {
-  slot_rx = slot_rx_;
+  slot_tx = slot_tx_;
   for (harq_process& dl_h : dl_harqs) {
     bool was_empty = dl_h.empty();
-    dl_h.slot_indication(slot_rx);
+    dl_h.slot_indication(slot_tx);
     if (not was_empty and dl_h.empty()) {
       // Toggle in HARQ state means that the HARQ was discarded
       logger.info("SCHED: discarding rnti=0x{:x}, DL TB pid={}. Cause: Maximum number of retx exceeded ({})",
                   rnti,
-                  dl_h.pid,
+                  dl_h.id,
                   dl_h.max_nof_retx());
     }
   }
   for (harq_process& ul_h : ul_harqs) {
     bool was_empty = ul_h.empty();
-    ul_h.slot_indication(slot_rx);
+    ul_h.slot_indication(slot_tx);
     if (not was_empty and ul_h.empty()) {
       // Toggle in HARQ state means that the HARQ was discarded
       logger.info("SCHED: discarding rnti=0x{:x}, UL TB pid={}. Cause: Maximum number of retx exceeded ({})",
                   rnti,
-                  ul_h.pid,
+                  ul_h.id,
                   ul_h.max_nof_retx());
     }
   }
