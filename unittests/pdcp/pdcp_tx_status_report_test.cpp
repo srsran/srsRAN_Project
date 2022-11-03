@@ -25,7 +25,7 @@ using namespace srsgnb;
 /// Test correct handling of PDCP status report
 TEST_P(pdcp_tx_status_report_test, handle_status_report)
 {
-  auto test_hdr_writer = [this](uint32_t tx_next) {
+  auto test_with_count = [this](uint32_t tx_next) {
     // clear queue from previous runs
     test_frame.sdu_discard_queue = {};
     init(sn_size);
@@ -102,13 +102,13 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
   };
 
   if (sn_size == pdcp_sn_size::size12bits) {
-    test_hdr_writer(0);
-    test_hdr_writer(2048);
-    test_hdr_writer(4096);
+    test_with_count(0);
+    test_with_count(2048);
+    test_with_count(4096);
   } else if (sn_size == pdcp_sn_size::size18bits) {
-    test_hdr_writer(0);
-    test_hdr_writer(131072);
-    test_hdr_writer(262144);
+    test_with_count(0);
+    test_with_count(131072);
+    test_with_count(262144);
   } else {
     FAIL();
   }
@@ -117,7 +117,7 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
 /// \brief Test basic data recovery functionality
 TEST_P(pdcp_tx_status_report_test, data_recovery)
 {
-  auto test_hdr_writer = [this](uint32_t tx_next) {
+  auto test_with_count = [this](uint32_t tx_next) {
     init(sn_size);
     unsigned                n_sdus = 5;
     std::queue<byte_buffer> exp_pdu_list;
@@ -153,13 +153,13 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
   };
 
   if (sn_size == pdcp_sn_size::size12bits) {
-    test_hdr_writer(0);
-    test_hdr_writer(2048);
-    test_hdr_writer(4096);
+    test_with_count(0);
+    test_with_count(2048);
+    test_with_count(4096);
   } else if (sn_size == pdcp_sn_size::size18bits) {
-    test_hdr_writer(0);
-    test_hdr_writer(131072);
-    test_hdr_writer(262144);
+    test_with_count(0);
+    test_with_count(131072);
+    test_with_count(262144);
   } else {
     FAIL();
   }
