@@ -1,6 +1,6 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "33"
+    ref: "34"
     file: .gitlab/ci-shared/setup/all.yml
 
 stages:
@@ -11,10 +11,9 @@ stages:
 .build_and_unit:
   image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-builder-gnb-${OS}:${DOCKER_BUILDER_VERSION}
   tags:
-    - ${SRS_INFRASTRUCTURE_TAG}-${ARCHITECTURE}
+    - ${SRS_INFRASTRUCTURE_TAG}-${SRS_ARCHITECTURE_TAG}
   stage: build and unit tests
   variables:
-    ARCHITECTURE: "amd64"
     # General
     OS: ubuntu-22.04
     # Build
@@ -169,6 +168,10 @@ stages:
         TEST_MODE: default
         COMPILER: gcc
         BUILD_TYPE: Release
+      - OS: ubuntu-20.04
+        TEST_MODE: default
+        COMPILER: gcc
+        BUILD_TYPE: Release
       - OS: ubuntu-22.04
         TEST_MODE: asan
         COMPILER: gcc
@@ -235,10 +238,10 @@ build alt [ubuntu 22.04 amd64]:
 build alt [ubuntu 22.04 arm64v8]:
   extends: .build_and_unit_alt
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: ubuntu-22.04
-    ARCHITECTURE: "arm64"
+    SRS_ARCHITECTURE_TAG: "arm64"
   cache: []
 
 build alt [archlinux-latest amd64]:
@@ -260,10 +263,10 @@ build alt [ubuntu-20.04 amd64]:
 build alt [ubuntu-20.04 arm64v8]:
   extends: .build_and_unit_alt
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: ubuntu-20.04
-    ARCHITECTURE: "arm64"
+    SRS_ARCHITECTURE_TAG: "arm64"
   cache: []
 
 # UHD
@@ -323,4 +326,4 @@ custom build [amd64]:
 custom build [arm64v8]:
   extends: custom build [amd64]
   variables:
-    TAG_EXTENSION: "-pi4"
+    SRS_ARCHITECTURE_TAG: "arm64"

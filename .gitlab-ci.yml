@@ -5,10 +5,10 @@
 
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "33"
+    ref: "34"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/testing-tools
-    ref: "33"
+    ref: "34"
     file: .gitlab/ci-shared/features/all.yml
   - local: .gitlab/ci/build.yml
 
@@ -35,11 +35,10 @@ include-guards:
   stage: static
   needs: []
   tags:
-    - ${SRS_INFRASTRUCTURE_TAG}-${ARCHITECTURE}
+    - ${SRS_INFRASTRUCTURE_TAG}-${SRS_ARCHITECTURE_TAG}
   variables:
     ANALYZER: ""
     ANALYZER_ARGS: ""
-    ARCHITECTURE: "amd64"
   before_script:
     - |
       echo "
