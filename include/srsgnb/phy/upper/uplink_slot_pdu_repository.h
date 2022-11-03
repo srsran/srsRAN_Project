@@ -12,6 +12,7 @@
 
 #include "srsgnb/adt/circular_array.h"
 #include "srsgnb/phy/upper/uplink_processor.h"
+#include "srsgnb/ran/slot_pdu_capacity_contants.h"
 
 namespace srsgnb {
 
@@ -35,16 +36,12 @@ struct uplink_slot_pdu_entry {
 // :TODO: move this class to private when the uplink processor gets refactorized.
 class uplink_slot_pdu_repository
 {
-  /// \brief Maximum number of PDUs per slot.
-  // :TODO: Use the RAN constants here when the PR is merged.
-  static constexpr unsigned MAX_NUM_PDUS = 1024;
-
   /// \brief Maximum number of slots supported by the registry.
   ///
-  /// In the worst case (subcarrier spacing of 240kHz), this number should be equivalent to 20ms.
-  static constexpr unsigned MAX_NUM_SLOTS = 320;
+  /// \note This value equals 2ms for the subcarrier spacing of 240kHz.
+  static constexpr unsigned MAX_NUM_SLOTS = get_nof_slots_per_subframe(subcarrier_spacing::kHz240) * 2;
 
-  using slot_entry = static_vector<uplink_slot_pdu_entry, MAX_NUM_PDUS>;
+  using slot_entry = static_vector<uplink_slot_pdu_entry, MAX_UL_PDUS_PER_SLOT>;
 
 public:
   /// Adds the given PUSCH PDU to the repository at the given slot.
