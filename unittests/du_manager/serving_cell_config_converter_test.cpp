@@ -52,6 +52,25 @@ TEST(serving_cell_config_converter_test, test_default_initial_ue_pdcch_cfg_conve
   }
 }
 
+TEST(serving_cell_config_converter_test, test_ue_pdcch_cfg_release_conversion)
+{
+  auto                           src_cell_grp_cfg = make_initial_cell_group_config();
+  srs_du::cell_group_config      dest_cell_grp_cfg{};
+  asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cell_grp_cfg, {});
+
+  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg_present);
+  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded_present);
+
+  auto rrc_sp_cell_cfg_ded  = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
+  auto dest_sp_cell_cfg_ded = dest_cell_grp_cfg.spcell_cfg.spcell_cfg_ded;
+
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp_present);
+  ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdcch_cfg_present, dest_sp_cell_cfg_ded.init_dl_bwp.pdcch_cfg.has_value());
+  // PDCCH Config is released due to absence in dest cell group config.
+  ASSERT_FALSE(rrc_sp_cell_cfg_ded.init_dl_bwp.pdcch_cfg.is_setup());
+}
+
 TEST(serving_cell_config_converter_test, test_default_initial_ue_pdsch_cfg_conversion)
 {
   auto                           dest_cell_grp_cfg = make_initial_cell_group_config();
@@ -90,6 +109,25 @@ TEST(serving_cell_config_converter_test, test_default_initial_ue_pdsch_cfg_conve
               dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.value().rate_match_pattrn.size());
     ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().rate_match_pattern_to_release_list.size(), 0);
   }
+}
+
+TEST(serving_cell_config_converter_test, test_ue_pdsch_cfg_release_conversion)
+{
+  auto                           src_cell_grp_cfg = make_initial_cell_group_config();
+  srs_du::cell_group_config      dest_cell_grp_cfg{};
+  asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cell_grp_cfg, {});
+
+  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg_present);
+  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded_present);
+
+  auto rrc_sp_cell_cfg_ded  = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
+  auto dest_sp_cell_cfg_ded = dest_cell_grp_cfg.spcell_cfg.spcell_cfg_ded;
+
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp_present);
+  ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg_present, dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.has_value());
+  // PDSCH Config is released due to absence in dest cell group config.
+  ASSERT_FALSE(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.is_setup());
 }
 
 TEST(serving_cell_config_converter_test, test_default_initial_ue_uplink_cfg_conversion)
