@@ -70,6 +70,9 @@ public:
   /// \brief Create and connect to the configured address and port.
   virtual bool create_and_connect() = 0;
 
+  /// \brief Recreate a formerly closed socket and reconnect to a known address and port.
+  virtual bool recreate_and_reconnect() = 0;
+
   /// \brief Trigger receive call on socket.
   virtual void receive() = 0;
 

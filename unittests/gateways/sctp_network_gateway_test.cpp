@@ -121,6 +121,8 @@ protected:
 
   bool connect() { return client->create_and_connect(); }
 
+  bool reconnect() { return client->recreate_and_reconnect(); }
+
   void run_client_receive() { client->receive(); }
 
   void send_to_server(const byte_buffer& pdu) { client->handle_pdu(pdu); }

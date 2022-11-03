@@ -44,6 +44,9 @@ private:
   /// \brief Create and connect socket to given address.
   bool create_and_connect() override;
 
+  /// \brief Rereate and reconnect socket to given address.
+  bool recreate_and_reconnect() override;
+
   /// \brief Trigger receive call on socket.
   void receive() override;
 
@@ -69,11 +72,17 @@ private:
 
   int sock_fd = -1;
 
-  struct sockaddr_storage client_addr    = {}; // the local address
-  socklen_t               client_addrlen = 0;
+  struct sockaddr_storage client_addr        = {}; // the local address
+  socklen_t               client_addrlen     = 0;
+  int                     client_ai_family   = 0;
+  int                     client_ai_socktype = 0;
+  int                     client_ai_protocol = 0;
 
-  struct sockaddr_storage server_addr    = {}; // the server address when operating as client
-  socklen_t               server_addrlen = 0;
+  struct sockaddr_storage server_addr        = {}; // the server address when operating as client
+  socklen_t               server_addrlen     = 0;
+  int                     server_ai_family   = 0;
+  int                     server_ai_socktype = 0;
+  int                     server_ai_protocol = 0;
 
   unsigned ppi       = 0; /// the Payload Protocol Identifier (e.g. 18 for S1AP)
   unsigned stream_no = 0; /// the stream number to use for sending

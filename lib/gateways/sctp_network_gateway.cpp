@@ -148,7 +148,10 @@ bool sctp_network_gateway::create_and_bind()
 
     // store client address
     memcpy(&client_addr, result->ai_addr, result->ai_addrlen);
-    client_addrlen = result->ai_addrlen;
+    client_addrlen     = result->ai_addrlen;
+    client_ai_family   = result->ai_family;
+    client_ai_socktype = result->ai_socktype;
+    client_ai_protocol = result->ai_protocol;
 
     // set socket to non-blocking after bind is successful
     if (config.non_blocking_mode) {
@@ -246,7 +249,10 @@ bool sctp_network_gateway::create_and_connect()
 
     // store server address
     memcpy(&server_addr, result->ai_addr, result->ai_addrlen);
-    server_addrlen = result->ai_addrlen;
+    server_addrlen     = result->ai_addrlen;
+    server_ai_family   = result->ai_family;
+    server_ai_socktype = result->ai_socktype;
+    server_ai_protocol = result->ai_protocol;
 
     // set socket to non-blocking after connect is established
     if (config.non_blocking_mode) {
@@ -266,6 +272,54 @@ bool sctp_network_gateway::create_and_connect()
 
   if (sock_fd == -1) {
     logger.error("Error connecting to {}:{} - {}", config.connect_address, config.connect_port, strerror(ret));
+    return false;
+  }
+
+  return true;
+}
+
+bool sctp_network_gateway::recreate_and_reconnect()
+{
+  // Recreate socket
+  sock_fd = ::socket(server_ai_family, server_ai_socktype, server_ai_protocol);
+  if (sock_fd == -1) {
+    logger.error("Failed to recreate socket: {}", strerror(errno));
+    return false;
+  }
+
+  if (not set_sockopts()) {
+    close_socket();
+  }
+
+  // set socket to non-blocking before reconnecting
+  if (config.non_blocking_mode) {
+    if (not set_non_blocking()) {
+      logger.error("Socket not non-blocking");
+      close_socket();
+      return false;
+    }
+  }
+
+  char ip_addr[NI_MAXHOST], port_nr[NI_MAXSERV];
+  getnameinfo((sockaddr*)&server_addr,
+              server_addrlen,
+              ip_addr,
+              NI_MAXHOST,
+              port_nr,
+              NI_MAXSERV,
+              NI_NUMERICHOST | NI_NUMERICSERV);
+
+  // rebind to address/port
+  if (::bind(sock_fd, (sockaddr*)&server_addr, server_addrlen) == -1) {
+    logger.error("Failed to bind to {}:{} - {}", ip_addr, port_nr, strerror(errno));
+    close_socket();
+    return false;
+  }
+
+  // reconnect to address/port
+  if (::connect(sock_fd, (sockaddr*)&server_addr, server_addrlen) == -1 && errno != EINPROGRESS) {
+    logger.error("Failed to connect to {}:{} - {}", ip_addr, port_nr, strerror(errno));
+    close_socket();
     return false;
   }
 
