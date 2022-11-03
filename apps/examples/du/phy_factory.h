@@ -30,6 +30,7 @@ struct upper_phy_params {
   unsigned             dl_pipeline_depth;
   unsigned             dl_bw_rb;
   unsigned             ul_bw_rb;
+  subcarrier_spacing   scs;
 };
 
 std::unique_ptr<upper_phy> create_upper_phy(const upper_phy_params&               params,

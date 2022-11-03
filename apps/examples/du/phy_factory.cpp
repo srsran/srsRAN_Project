@@ -89,11 +89,10 @@ std::unique_ptr<upper_phy> srsgnb::create_upper_phy(const upper_phy_params&     
   upper_config.ul_executor             = ul_executor;
   upper_config.symbol_request_notifier = rx_symbol_request_notifier;
 
-  // :TODO: check this configuration.
   upper_config.softbuffer_config.max_softbuffers      = 4 * upper_config.nof_ul_processors;
   upper_config.softbuffer_config.max_nof_codeblocks   = 128;
-  upper_config.softbuffer_config.max_codeblock_size   = (1U << 12);
-  upper_config.softbuffer_config.expire_timeout_slots = 20;
+  upper_config.softbuffer_config.max_codeblock_size   = (1U << 18);
+  upper_config.softbuffer_config.expire_timeout_slots = 100 * get_nof_slots_per_subframe(params.scs);
 
   return upper_phy_factory->create(upper_config);
 }

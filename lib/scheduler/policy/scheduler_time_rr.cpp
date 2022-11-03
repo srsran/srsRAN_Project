@@ -36,7 +36,7 @@ bool round_robin_apply(const ue_list& ue_db, uint32_t rr_count, const Predicate&
 }
 
 /// Allocate UE PDSCH grant.
-bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
+static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
 {
   if (not is_retx and not u.has_pending_dl_newtx_bytes()) {
     return false;
@@ -79,8 +79,8 @@ bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
   return false;
 }
 
-/// Allocate UE PDSCH grant.
-bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_retx)
+/// Allocate UE PUSCH grant.
+static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_retx)
 {
   ofdm_symbol_range pusch_symbols{2, 14};
 

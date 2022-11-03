@@ -231,6 +231,7 @@ public:
       setup_res->gnb_cu_name.value.from_string("srsCU");
       setup_res->gnb_cu_rrc_version.value.latest_rrc_version.from_number(2);
     } else {
+      du_logger.info("Ignoring unhandled F1AP message '{}'", msg.pdu.init_msg().value.type().to_string());
       return;
     }
 
@@ -555,6 +556,7 @@ int main(int argc, char** argv)
   upper_params.dl_pipeline_depth = max_processing_delay_slots;
   upper_params.dl_bw_rb          = nof_prb_dl_grid[to_numerology_value(scs)];
   upper_params.ul_bw_rb          = nof_prb_ul_grid[to_numerology_value(scs)];
+  upper_params.scs               = scs;
 
   auto upper = create_upper_phy(upper_params,
                                 &rg_gateway_adapter,
