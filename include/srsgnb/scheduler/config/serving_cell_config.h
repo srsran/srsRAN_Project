@@ -138,9 +138,23 @@ struct bwp_uplink_dedicated {
   optional<pucch_config> pucch_cfg;
 };
 
+/// \brief Used to configure UE specific PUSCH parameters that are common across the UE's BWPs of one serving cell.
+/// \remark See TS 38.331, PUSCH-ServingCellConfig.
+struct pusch_serving_cell_config {
+  struct pusch_code_block_group_transmission {
+    /// Maximum number of code-block-groups (CBGs) per TB. See TS 38.213, clause 9.1.
+    enum class max_code_block_groups_per_transport_block { n2, n4, n6, n8 };
+
+    max_code_block_groups_per_transport_block max_cgb_per_tb;
+  };
+
+  optional<pusch_code_block_group_transmission> cbg_tx;
+};
+
 /// Uplink configuration, as per \c UplinkConfig, in \c ServingCellConfig, TS 38.331.
 struct uplink_config {
-  bwp_uplink_dedicated init_ul_bwp;
+  bwp_uplink_dedicated                init_ul_bwp;
+  optional<pusch_serving_cell_config> pusch_scell_cfg;
   // TODO: add remaining fields.
 };
 
