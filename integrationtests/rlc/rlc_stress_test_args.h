@@ -305,13 +305,23 @@ inline rlc_config get_rlc_config_from_args(const stress_test_args& args)
     cnfg.um.rx.sn_field_length = rlc_um_sn_size::size12bits;
     cnfg.um.tx.sn_field_length = rlc_um_sn_size::size12bits;
   } else if (args.mode == "AM12") {
-    cnfg.mode                  = srsgnb::rlc_mode::am;
-    cnfg.am.rx.sn_field_length = rlc_am_sn_size::size12bits;
-    cnfg.am.tx.sn_field_length = rlc_am_sn_size::size12bits;
+    cnfg.mode                    = srsgnb::rlc_mode::am;
+    cnfg.am.rx.sn_field_length   = rlc_am_sn_size::size12bits;
+    cnfg.am.tx.sn_field_length   = rlc_am_sn_size::size12bits;
+    cnfg.am.tx.t_poll_retx       = 50;
+    cnfg.am.tx.poll_pdu          = 10;
+    cnfg.am.tx.poll_byte         = 5000;
+    cnfg.am.rx.t_reassembly      = 40;
+    cnfg.am.rx.t_status_prohibit = 8;
   } else if (args.mode == "AM18") {
-    cnfg.mode                  = srsgnb::rlc_mode::am;
-    cnfg.am.rx.sn_field_length = rlc_am_sn_size::size18bits;
-    cnfg.am.tx.sn_field_length = rlc_am_sn_size::size18bits;
+    cnfg.mode                    = srsgnb::rlc_mode::am;
+    cnfg.am.rx.sn_field_length   = rlc_am_sn_size::size18bits;
+    cnfg.am.tx.sn_field_length   = rlc_am_sn_size::size18bits;
+    cnfg.am.tx.t_poll_retx       = 50;
+    cnfg.am.tx.poll_pdu          = 10;
+    cnfg.am.tx.poll_byte         = 5000;
+    cnfg.am.rx.t_reassembly      = 40;
+    cnfg.am.rx.t_status_prohibit = 8;
   } else {
     fprintf(stderr, "Unsupported RLC mode %s, exiting.\n", args.mode.c_str());
     exit(-1);
