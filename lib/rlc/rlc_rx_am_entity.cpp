@@ -452,7 +452,7 @@ void rlc_rx_am_entity::refresh_status_report()
 rlc_am_status_pdu rlc_rx_am_entity::get_status_pdu()
 {
   do_status.store(false, std::memory_order_relaxed);
-  if (status_prohibit_timer.is_valid()) {
+  if (status_prohibit_timer.is_valid() && cfg.t_status_prohibit > 0) {
     status_prohibit_timer.run();
   }
   std::unique_lock<std::mutex> lock(status_report_mutex);
