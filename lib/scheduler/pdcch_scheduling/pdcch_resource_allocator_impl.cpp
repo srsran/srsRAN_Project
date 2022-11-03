@@ -10,6 +10,7 @@
 
 #include "pdcch_resource_allocator_impl.h"
 #include "../support/config_helpers.h"
+#include "../support/pdcch/pdcch_pdu_parameters.h"
 #include "pdcch_config_helpers.h"
 #include "srsgnb/ran/pdcch/cce_to_prb_mapping.h"
 #include "srsgnb/ran/pdcch/pdcch_candidates.h"
@@ -322,6 +323,7 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
   pdcch.ctx.cces.aggr_lvl     = aggr_lvl;
   pdcch.ctx.n_id_pdcch_data   = get_scrambling_n_ID(cell_cfg, cs_cfg, ss_cfg);
   pdcch.ctx.n_rnti_pdcch_data = get_scrambling_n_RNTI(rnti, cs_cfg, ss_cfg);
+  pdcch.ctx.n_id_pdcch_dmrs   = get_N_ID_dmrs(cell_cfg, cs_cfg);
 
   // Allocate a position for DL PDCCH in CORESET.
   if (not pdcch_alloc.alloc_pdcch(pdcch.ctx, slot_alloc, ss_cfg)) {

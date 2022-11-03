@@ -85,6 +85,8 @@ struct dci_context_information {
   beamforming_info bf;
   /// Transmission power information used for this DCI.
   tx_power_pdcch_information tx_pwr;
+  /// Parameter \f$N_{ID}\f$ used for PDCCH DMRS scrambling as per TS38.211, 7.4.1.3.1. Values: {0, ..., 65535}.
+  unsigned n_id_pdcch_dmrs;
 };
 
 /// PDCCH DL allocation.
