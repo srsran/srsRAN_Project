@@ -8,6 +8,8 @@
  *
  */
 
+#pragma once
+
 #include "srsgnb/scheduler/scheduler_feedback_handler.h"
 
 namespace srsgnb {

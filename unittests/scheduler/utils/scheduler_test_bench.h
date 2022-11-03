@@ -8,6 +8,8 @@
  *
  */
 
+#pragma once
+
 #include "../scheduler_test_suite.h"
 #include "lib/scheduler/cell/cell_configuration.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
