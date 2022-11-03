@@ -36,7 +36,7 @@ pucch_resource_manager::get_next_harq_res_available(slot_point slot_harq, rnti_t
   const auto&            pucch_res_list = pucch_cfg.pucch_res_list;
   slot_resource_counter& res_counter    = get_slot_resource_counter(slot_harq);
   if (res_counter.next_pucch_harq_res_idx < pucch_res_list.size()) {
-    res_counter.rnti_records[res_counter.next_pucch_harq_res_idx] = crnti;
+    res_counter.rnti_records.emplace_back(crnti);
     return pucch_resource_alloc_record{.pucch_res           = &pucch_res_list[res_counter.next_pucch_harq_res_idx],
                                        .pucch_res_indicator = res_counter.next_pucch_harq_res_idx++};
   } else {
@@ -443,6 +443,7 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_pucch_harq_grant(cell_sl
   }
 
   if (existing_sr_grant != nullptr) {
+    srsgnb_sanity_check(existing_sr_grant->format == pucch_format::FORMAT_1, "Only PUCCH format 1 expected for SR.");
     existing_sr_grant->format_1.harq_ack_nof_bits++;
   }
 
@@ -477,10 +478,14 @@ pucch_harq_ack_grant pucch_allocator_impl::update_existing_pucch_harq_grant(pucc
     srsgnb_assert(false, "This should not happen");
     return output;
   }
-  existing_harq_grant.format_1.harq_ack_nof_bits++;
+  srsgnb_sanity_check(existing_harq_grant.format == pucch_format::FORMAT_1, "Only PUCCH format 1 expected for HARQ.");
+  // Update the SR, if present.
   if (existing_sr_grant != nullptr) {
+    srsgnb_sanity_check(existing_sr_grant->format == pucch_format::FORMAT_1, "Only PUCCH format 1 expected for SR.");
     existing_sr_grant->format_1.harq_ack_nof_bits++;
   }
+  // Update the HARQ, if present.
+  existing_harq_grant.format_1.harq_ack_nof_bits++;
   output.pucch_pdu           = &existing_harq_grant;
   output.pucch_res_indicator = pucch_res_idx;
   return output;
