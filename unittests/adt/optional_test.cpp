@@ -13,7 +13,12 @@
 #include <gtest/gtest.h>
 #include <random>
 
+// Disable GCC 5's -Wsuggest-override warnings in gtest.
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wall"
+#else // __clang__
 #pragma GCC diagnostic ignored "-Wsuggest-override"
+#endif // __clang__
 
 using namespace srsgnb;
 
