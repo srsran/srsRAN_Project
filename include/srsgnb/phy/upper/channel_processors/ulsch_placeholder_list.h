@@ -18,7 +18,7 @@ namespace srsgnb {
 
 /// \brief Abstracts a list of UL-SCH repetition placeholders \f$y\f$.
 ///
-/// The process of descrambling inverses the effect of the repetition placeholders \f$y\f$ when one bit of information
+/// The process of descrambling reverses the effect of the repetition placeholders \f$y\f$ when one bit of information
 /// is encoded in one of the Uplink Control Information (UCI) fields. The encoding is described in TS38.212
 /// Section 5.3.3.1 and the scrambling in TS38.211 Section 6.3.1.1.
 class ulsch_placeholder_list
@@ -46,7 +46,7 @@ public:
   /// \tparam Func     Lambda function with <tt>void (unsigned)</tt> signature.
   /// \param func[in]  Lambda function to apply for each placeholder.
   template <typename Func>
-  void for_each(modulation_scheme modulation, unsigned nof_layers, const Func& func) const
+  void for_each(modulation_scheme modulation, unsigned nof_layers, Func&& func) const
   {
     static_assert(std::is_convertible<Func, std::function<void(unsigned)>>::value,
                   "The function signature must be \"void () (unsigned)\"");
@@ -56,7 +56,8 @@ public:
     for (uint16_t i_re : re_indexes) {
       // For each layer...
       for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
-        // Calculate the soft bit index that contains a placeholder within the RE.
+        // Calculate the soft bit index that contains a placeholder within the RE as described in TS38.212
+        // Table 5.3.3.1-1, where the repetition placeholder `y` is placed always on the second bit.
         unsigned i_bit = bits_per_symbol * (nof_layers * static_cast<unsigned>(i_re) + i_layer) + 1;
 
         // Call the lambda function.
@@ -67,7 +68,7 @@ public:
 
 private:
   /// List of RE indexes.
-  static_vector<index_type, MAX_NOF_PLACEHOLDERS> re_indexes = static_vector<index_type, MAX_NOF_PLACEHOLDERS>(0);
+  static_vector<index_type, MAX_NOF_PLACEHOLDERS> re_indexes;
 };
 
 } // namespace srsgnb

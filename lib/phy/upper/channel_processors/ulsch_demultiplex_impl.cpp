@@ -58,17 +58,21 @@ unsigned get_ulsch_demultiplex_nof_re_prb_dmrs(dmrs_type dmrs_, unsigned nof_cdm
   return (NRE - nof_re_dmrs_per_rb) * nof_prb;
 }
 
+// Calculates the UCI fields multiplexing on PUSCH. The functions passed as parameters provide the multiplexing actions
+// for each specific field. This allows reusing the same function for demultiplexing and calculating the placeholder
+// positions.
 template <typename FuncSchData, typename FuncRvd, typename FuncHarqAck, typename FuncCsiPart1, typename FuncCsiPart2>
-void ulsch_demultiplex_generic(const FuncSchData&                      func_sch_data,
-                               const FuncRvd&                          func_rvd,
-                               const FuncHarqAck&                      func_harq_ack,
-                               const FuncCsiPart1&                     func_csi_part1,
-                               const FuncCsiPart2&                     func_csi_part2,
+void ulsch_demultiplex_generic(FuncSchData&                            func_sch_data,
+                               FuncRvd&                                func_rvd,
+                               FuncHarqAck&                            func_harq_ack,
+                               FuncCsiPart1&                           func_csi_part1,
+                               FuncCsiPart2&                           func_csi_part2,
                                unsigned                                G_harq_ack,
                                unsigned                                G_csi_part1,
                                unsigned                                G_csi_part2,
                                const ulsch_demultiplex::configuration& config)
 {
+  // Make sure the functions provided as parameters have a valid signature.
   static_assert(std::is_convertible<FuncSchData, std::function<void()>>::value,
                 "The function for multiplexing SCH signature must be \"void () ()\"");
   static_assert(std::is_convertible<FuncRvd, std::function<void()>>::value,
@@ -282,12 +286,21 @@ void ulsch_demultiplex_generic(const FuncSchData&                      func_sch_
       --ulsch_m_re_count;
     }
 
-    // Assert that all RE have been allocated
+    // Assert that all RE have been allocated.
     srsgnb_assert(ack_m_re_count == 0, "{} RE for HARQ-ACK are not processed.", ack_m_re_count);
     srsgnb_assert(csi1_m_re_count == 0, "{} RE for CSI-Part1 are not processed.", csi1_m_re_count);
     srsgnb_assert(csi2_m_re_count == 0, "{} RE for CSI-Part2 are not processed.", csi2_m_re_count);
     srsgnb_assert(ulsch_m_re_count == 0, "{} RE for SCH data are not processed.", ulsch_m_re_count);
   }
+
+  // Assert all bits have been processed.
+  srsgnb_assert(m_rvd_count == G_ack_rvd, "Only {} of {} reserved elements processed.", m_rvd_count, G_ack_rvd);
+  srsgnb_assert(
+      m_harq_ack_count == G_harq_ack, "Only {} of {} HARQ-ACK elements processed.", m_harq_ack_count, G_harq_ack);
+  srsgnb_assert(
+      m_csi_part1_count == G_csi_part1, "Only {} of {} CSI-Part1 elements processed.", m_csi_part1_count, G_csi_part1);
+  srsgnb_assert(
+      m_csi_part2_count == G_csi_part2, "Only {} of {} CSI-Part2 elements processed.", m_csi_part2_count, G_csi_part2);
 }
 
 } // namespace
