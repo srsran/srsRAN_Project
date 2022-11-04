@@ -198,7 +198,7 @@ struct pdsch_serving_cell_config {
   optional<x_overhead>                          x_ov_head;
   optional<nof_harq_proc_for_pdsch>             nof_harq_proc;
   optional<serv_cell_index>                     pucch_cell;
-  /// Possible values {1, ..., 8};
+  /// Values {1,...,8};
   unsigned       max_mimo_layers;
   optional<bool> processing_type_2_enabled;
 };

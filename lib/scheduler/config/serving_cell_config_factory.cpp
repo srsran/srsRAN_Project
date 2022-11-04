@@ -44,9 +44,7 @@ coreset_configuration srsgnb::config_helpers::make_default_coreset_config(const 
   cfg.id = to_coreset_id(1);
   freq_resource_bitmap freq_resources(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
   const size_t         NOF_PRBS_CORESET1 = 6;
-  for (size_t i = 0; i < NOF_PRBS_CORESET1; ++i) {
-    freq_resources.set(freq_resources.max_size() - i - 1, true);
-  }
+  freq_resources.fill(0, NOF_PRBS_CORESET1, true);
   cfg.set_freq_domain_resources(freq_resources);
   cfg.duration             = 1;
   cfg.precoder_granurality = coreset_configuration::precoder_granularity_type::same_as_reg_bundle;
@@ -289,7 +287,7 @@ serving_cell_config srsgnb::config_helpers::make_default_initial_ue_serving_cell
 
   // > PDSCH-Config.
   serv_cell.init_dl_bwp.pdsch_cfg.emplace();
-  pdsch_config& pdsch_cfg            = serv_cell.init_dl_bwp.pdsch_cfg.value();
+  pdsch_config& pdsch_cfg = serv_cell.init_dl_bwp.pdsch_cfg.value();
   pdsch_cfg.data_scrambling_id_pdsch.emplace(0);
   pdsch_cfg.pdsch_mapping_type_a_dmrs.emplace();
   dmrs_downlink_config& dmrs_type_a = pdsch_cfg.pdsch_mapping_type_a_dmrs.value();
