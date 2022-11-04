@@ -13,6 +13,7 @@
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/ran/dmrs.h"
+#include "srsgnb/ran/ptrs.h"
 
 namespace srsgnb {
 
@@ -35,10 +36,56 @@ struct dmrs_downlink_config {
   /// The maximum number of OFDM symbols for DL front loaded DMRS. If the field is absent, the UE applies value len1. If
   /// set to len2, the UE determines the actual number of DM-RS symbols by the associated DCI.
   optional<dmrs_max_length> max_length;
-  /// \brief DL DMRS scrambling initialization (see TS 38.211, clause 7.4.1.1.1).
+  /// DL DMRS scrambling initialization (see TS 38.211, clause 7.4.1.1.1).
   /// When the field is absent the UE applies the value Physical cell ID (physCellId) configured for this serving cell.
   optional<uint16_t> scrambling_id0;
   optional<uint16_t> scrambling_id1;
+  // TODO: Remaining
+};
+
+/// Used to configure uplink demodulation reference signals for PUSCH.
+/// \remark See TS 38.331, DMRS-UplinkConfig.
+struct dmrs_uplink_config {
+  /// \brief DMRS related parameters for Cyclic Prefix OFDM.
+  struct transform_precoder_disabled {
+    /// UL DMRS scrambling initialization for CP-OFDM. When the field is absent the UE applies the value Physical cell
+    /// ID. See TS 38.211, clause 6.4.1.1.1.1.
+    optional<uint16_t> scrambling_id0;
+    optional<uint16_t> scrambling_id1;
+  };
+
+  /// \brief DMRS related parameters for DFT-s-OFDM (Transform Precoding).
+  struct transform_precoder_enabled {
+    /// For DMRS transmission with transform precoder the NW may configure group hopping by the cell-specific parameter
+    /// groupHoppingEnabledTransformPrecoding in PUSCH-ConfigCommon. In this case, the NW may include this UE specific
+    /// field to disable group hopping for PUSCH transmission except for Msg3.
+    enum class sequence_group_hopping { disabled };
+    /// Determines if sequence hopping is enabled for DMRS transmission with transform precoder for PUSCH transmission
+    /// other than Msg3 (sequence hopping is always disabled for Msg3).
+    enum class sequence_hopping { enabled };
+
+    /// Values {0..1007}.
+    optional<uint16_t> n_pusch_id;
+    /// Override the configuration in PUSCH-ConfigCommon. If the field is absent, the UE uses the same hopping mode as
+    /// for Msg3.
+    optional<sequence_group_hopping> seq_grp_hopping;
+    /// If the field is absent, the UE uses the same hopping mode as for msg3.
+    /// Note: The network does not configure simultaneous group hopping and sequence hopping.
+    optional<sequence_hopping> seq_hopping;
+  };
+
+  /// Selection of the DMRS type to be used for UL. If the field is absent, the UE uses DMRS type 1.
+  optional<dmrs_config_type> type;
+  /// Position for additional DM-RS in UL (see TS 38.211, clause 6.4.1.1.3). If the field is absent, the UE applies the
+  /// value pos2.
+  optional<dmrs_additional_positions> additional_positions;
+  /// Configures uplink PTRS.
+  optional<ptrs_uplink_config> ptrs;
+  /// The maximum number of OFDM symbols for UL front loaded DMRS. If the field is absent, the UE applies value len1. If
+  /// set to len2, the UE determines the actual number of DM-RS symbols by the associated DCI.
+  optional<dmrs_max_length>             max_length;
+  optional<transform_precoder_disabled> trans_precoder_disabled;
+  optional<transform_precoder_enabled>  trans_precoder_enabled;
   // TODO: Remaining
 };
 

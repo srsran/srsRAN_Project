@@ -18,6 +18,7 @@
 #include "srsgnb/ran/pdsch/pdsch_rate_match_pattern.h"
 #include "srsgnb/ran/pucch/pucch_tpc.h"
 #include "srsgnb/ran/pucch/srs_tpc.h"
+#include "srsgnb/ran/pusch/pusch_configuration.h"
 #include "srsgnb/ran/pusch/pusch_tpc.h"
 #include "srsgnb/ran/ssb_configuration.h"
 #include "srsgnb/ran/tci.h"
@@ -157,6 +158,7 @@ struct bwp_downlink {
 /// \remark See TS 38.331, BWP-UplinkDedicated.
 struct bwp_uplink_dedicated {
   optional<pucch_config> pucch_cfg;
+  optional<pusch_config> pusch_cfg;
 };
 
 /// \brief Used to configure UE specific PUSCH parameters that are common across the UE's BWPs of one serving cell.

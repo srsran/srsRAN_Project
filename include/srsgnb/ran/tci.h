@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "csi_rs.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/scheduler/config/bwp_configuration.h"
@@ -21,14 +22,6 @@ namespace srsgnb {
 /// \brief TCI-State id used to identify a TCI-State configuration.
 /// \remark See TS 38.331, "TCI-StateId" and "maxNrofTCI".
 enum tci_state_id_t : uint8_t { MIN_TCI_STATE_ID = 0, MAX_TCI_STATE_ID = 127, MAX_NOF_TCI_STATES = 128 };
-
-/// \brief NZP-CSI-RS-ResourceId is used to identify one NZP-CSI-RS-Resource.
-/// \remark See TS 38.331, "NZP-CSI-RS-ResourceId" and "maxNrofNZP-CSI-RS-Resources".
-enum nzp_csi_rs_res_id_t : uint8_t {
-  MIN_NZP_CSI_RS_RESOURCE_ID   = 0,
-  MAX_NZP_CSI_RS_RESOURCE_ID   = 191,
-  MAX_NOF_NZP_CSI_RS_RESOURCES = 192
-};
 
 /// \brief Associates one or two DL reference signals with a corresponding quasi-colocation (QCL) type.
 /// \remark See TS 38.331, TCI-State.
