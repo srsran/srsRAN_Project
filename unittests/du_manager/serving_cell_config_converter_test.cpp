@@ -9,6 +9,7 @@
  */
 
 #include "../../lib/du_manager/converters/asn1_cell_group_config_helpers.h"
+#include "srsgnb/asn1/asn1_utils.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 #include <gtest/gtest.h>
@@ -66,9 +67,10 @@ TEST(serving_cell_config_converter_test, test_ue_pdcch_cfg_release_conversion)
   auto dest_sp_cell_cfg_ded = dest_cell_grp_cfg.spcell_cfg.spcell_cfg_ded;
 
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp_present);
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdcch_cfg_present, dest_sp_cell_cfg_ded.init_dl_bwp.pdcch_cfg.has_value());
+  ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdcch_cfg_present,
+            not dest_sp_cell_cfg_ded.init_dl_bwp.pdcch_cfg.has_value());
   // PDCCH Config is released due to absence in dest cell group config.
-  ASSERT_FALSE(rrc_sp_cell_cfg_ded.init_dl_bwp.pdcch_cfg.is_setup());
+  ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdcch_cfg.type(), asn1::setup_release_opts::release);
 }
 
 TEST(serving_cell_config_converter_test, test_default_initial_ue_pdsch_cfg_conversion)
@@ -125,9 +127,10 @@ TEST(serving_cell_config_converter_test, test_ue_pdsch_cfg_release_conversion)
   auto dest_sp_cell_cfg_ded = dest_cell_grp_cfg.spcell_cfg.spcell_cfg_ded;
 
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp_present);
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg_present, dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.has_value());
+  ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg_present,
+            not dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.has_value());
   // PDSCH Config is released due to absence in dest cell group config.
-  ASSERT_FALSE(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.is_setup());
+  ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.type(), asn1::setup_release_opts::release);
 }
 
 TEST(serving_cell_config_converter_test, test_default_initial_ue_uplink_cfg_conversion)
