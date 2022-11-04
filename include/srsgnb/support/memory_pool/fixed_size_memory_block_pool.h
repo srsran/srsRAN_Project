@@ -20,17 +20,28 @@
 namespace srsgnb {
 
 /**
- * Concurrent memory pool of memory blocks of equal size.
+ * Concurrent memory pool of memory blocks of equal size. This pool is thread-safe.
  * Each worker keeps a separate thread-local memory block cache that it uses for fast, uncontended allocation and
  * deallocation. When accessing a thread-local cache, no locks are required.
- * When the local cache gets depleted, the worker tries to obtain segments from a central memory block cache.
- * Since there is no stealing of segments between workers, it is possible that a worker cannot allocate while another
- * worker still has blocks in its own cache. To minimize the impact of this event, an upper bound is place on a worker
- * cache size. Once a worker reaches that upper bound, it sends half of its stored blocks to the central cache.
- * Note: Taking into account the usage of thread_local, this class is made a singleton. To be able to instantiate
+ *
+ * When the local cache gets depleted, the worker tries to obtain a batch of segments from a central memory block cache.
+ * If the central cache is also depleted, the allocation fails.
+ *
+ * Since there is no stealing of segments between workers' local caches, it is possible that a worker cannot allocate
+ * while another worker still has blocks in its own cache. To minimize the impact of this event, an upper bound is
+ * placed on a worker local cache size. Once a worker reaches that upper bound, it sends half of its stored blocks to
+ * the central cache.
+ *
+ * Note1: Notice that the same memory block might be allocated and deallocated in different workers. So, it can happen
+ * that a worker is allocating many blocks and another worker just deallocating. The latter worker has to keep
+ * returning blocks back to the central cache every time its local cache grows beyond a given upper bound.
+ *
+ * Note2: Taking into account the usage of thread_local, this class is made a singleton. To be able to instantiate
  *       different pools, the user should use different IdTag types.
- * Note2: No considerations were made regarding false sharing between workers. It is assumed that the blocks are big
+ *
+ * Note3: No considerations were made regarding false sharing between workers. It is assumed that the blocks are big
  *        enough to fill a cache line.
+ *
  * \tparam IdTag We use a ID type tag to be able to intantiate different pool objects.
  * \tparam DebugSanitizeAddress when set to true, the pool verifies that the addresses allocated and deallocated are
  * valid.
