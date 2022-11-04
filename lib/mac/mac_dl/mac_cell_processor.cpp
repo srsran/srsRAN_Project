@@ -62,6 +62,7 @@ void mac_cell_processor::handle_crc(const mac_crc_indication_message& msg)
   ind.crcs.resize(msg.crcs.size());
   for (unsigned i = 0; i != ind.crcs.size(); ++i) {
     // Note: UE index is invalid for Msg3 CRCs because no UE has been allocated yet.
+    ind.crcs[i].rnti           = msg.crcs[i].rnti;
     ind.crcs[i].ue_index       = ue_mng.get_ue_index(msg.crcs[i].rnti);
     ind.crcs[i].harq_id        = msg.crcs[i].harq_id;
     ind.crcs[i].tb_crc_success = msg.crcs[i].tb_crc_success;

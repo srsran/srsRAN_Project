@@ -28,7 +28,7 @@ public:
   /// \brief HARQ process constructor.
   /// \param h_id HARQ process ID.
   /// \param max_ack_wait_in_slots_ number of slots above which the scheduler considers that the ACK/CRC went missing.
-  explicit harq_process(harq_id_t h_id, unsigned max_ack_wait_in_slots_ = 4) :
+  explicit harq_process(harq_id_t h_id, unsigned max_ack_wait_in_slots_ = 8) :
     id(h_id), max_ack_wait_in_slots(max_ack_wait_in_slots_)
   {
   }
@@ -142,7 +142,7 @@ public:
 class harq_entity
 {
 public:
-  explicit harq_entity(rnti_t rnti, uint32_t nof_harq_procs, unsigned max_ack_wait_in_slots = 4);
+  explicit harq_entity(rnti_t rnti, uint32_t nof_harq_procs, unsigned max_ack_wait_in_slots = 8);
 
   /// Update slot, and checks if there are HARQ processes that have reached maxReTx with no ACK
   void slot_indication(slot_point slot_tx_);
