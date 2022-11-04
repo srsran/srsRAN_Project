@@ -66,7 +66,10 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
   temp_symbols.resize(dims);
 
   // Resize channel estimate.
-  estimate.resize({static_cast<unsigned>(config.rb_mask.size()), config.nof_symbols, nof_rx_ports, nof_tx_layers});
+  estimate.resize({static_cast<unsigned>(config.rb_mask.size()),
+                   config.first_symbol + config.nof_symbols,
+                   nof_rx_ports,
+                   nof_tx_layers});
 
   // Generate symbols and allocation patterns.
   generate(temp_symbols, coordinates, config);
