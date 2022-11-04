@@ -10,10 +10,23 @@
 
 #pragma once
 
+#include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/srslog/srslog.h"
 #include <mutex>
 
 namespace srsgnb {
+
+struct rlc_tm_bearer_tx_metrics_container {
+  uint32_t num_small_allocs; ///< Number of allocations that are too small to TX PDU
+};
+
+struct rlc_um_bearer_tx_metrics_container {
+  uint32_t num_sdu_segments; ///< Number of SDU segments TX'ed
+};
+
+struct rlc_am_bearer_tx_metrics_container {
+  uint32_t num_retx_pdus; ///< Number of RETX'ed PDUs
+};
 
 struct rlc_bearer_tx_metrics_container {
   // SDU metrics
@@ -24,6 +37,13 @@ struct rlc_bearer_tx_metrics_container {
   // PDU metrics
   uint32_t num_pdus;      ///< Number of PDUs
   size_t   num_pdu_bytes; ///< Number of PDU bytes
+
+  rlc_mode mode;
+  union {
+    rlc_tm_bearer_tx_metrics_container tm;
+    rlc_um_bearer_tx_metrics_container um;
+    rlc_am_bearer_tx_metrics_container am;
+  } mode_specific;
 };
 
 class rlc_tx_metrics_interface
@@ -51,6 +71,8 @@ struct rlc_bearer_rx_metrics_container {
   size_t   num_pdu_bytes;      ///< Number of PDU bytes
   uint32_t num_lost_pdus;      ///< Number of dropped PDUs (reassembly timeout expiry or out of rx window)
   uint32_t num_malformed_pdus; ///< Number of malformed PDUs
+
+  rlc_mode mode;
 };
 
 class rlc_rx_metrics_interface

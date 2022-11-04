@@ -22,6 +22,8 @@ class rlc_tx_metrics : rlc_tx_metrics_interface
   std::mutex                      metrics_mutex;
 
 public:
+  void metrics_set_mode(rlc_mode mode) { metrics.mode = mode; }
+
   void metrics_add_sdus(uint32_t num_sdus_, size_t num_sdu_bytes_)
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
@@ -42,6 +44,15 @@ public:
     metrics.num_pdu_bytes += num_pdu_bytes_;
   }
 
+  // TM specific metrics
+  void metrics_add_small_alloc(uint32_t num_allocs_)
+  {
+    srsgnb_assert(metrics.mode == rlc_mode::tm, "Wrong mode for TM specific metrics");
+    std::lock_guard<std::mutex> lock(metrics_mutex);
+    metrics.mode_specific.tm.num_small_allocs += num_allocs_;
+  }
+
+  // Metrics getters and setters
   rlc_bearer_tx_metrics_container get_metrics() final
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
@@ -69,6 +80,8 @@ class rlc_rx_metrics : rlc_rx_metrics_interface
   std::mutex                      metrics_mutex;
 
 public:
+  void set_mode(rlc_mode mode) { metrics.mode = mode; }
+
   void metrics_add_sdus(uint32_t num_sdus_, size_t num_sdu_bytes_)
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);

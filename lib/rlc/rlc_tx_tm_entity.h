@@ -30,6 +30,7 @@ public:
                    rlc_tx_lower_layer_notifier&         lower_dn) :
     rlc_tx_entity(du_index, lcid, upper_dn, upper_cn, lower_dn)
   {
+    metrics_set_mode(rlc_mode::tm);
   }
 
   // Interfaces for higher layers
@@ -66,6 +67,7 @@ public:
 
     if (front_size > nof_bytes) {
       logger.log_info("Tx PDU size larger than provided space ({} > {})", front_size, nof_bytes);
+      metrics_add_small_alloc(1);
       return {};
     }
 
