@@ -13,9 +13,6 @@
 #include "srsgnb/phy/upper/channel_processors/ulsch_placeholder_list.h"
 #include "srsgnb/phy/upper/dmrs_mapping.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
-#include "srsgnb/ran/cyclic_prefix.h"
-#include "srsgnb/ran/modulation_scheme.h"
-#include "srsgnb/ran/pusch/pusch_constants.h"
 
 /// \file
 /// \brief Uplink Shared Channel demultiplexer interface declaration.
