@@ -47,7 +47,6 @@ void f1c_cu_impl::handle_f1_setup_response(const f1_setup_response_message& msg)
   // Pack message into PDU
   f1c_message f1c_msg;
   if (msg.success) {
-    // TODO send response
     logger.info("Transmitting F1SetupResponse message");
 
     f1c_msg.pdu.set_successful_outcome();
