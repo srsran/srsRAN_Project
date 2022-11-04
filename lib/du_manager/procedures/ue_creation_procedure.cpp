@@ -106,25 +106,30 @@ void ue_creation_procedure::create_rlc_srbs()
   // Create SRB0 RLC entity.
   du_bearer&                  srb0 = ue_ctx->bearers[LCID_SRB0];
   rlc_entity_creation_message rlc_msg{};
-  rlc_msg.ue_index    = ue_ctx->ue_index;
-  rlc_msg.lcid        = LCID_SRB0;
-  rlc_msg.rx_upper_dn = &srb0.bearer_connector.rlc_rx_sdu_notif;
-  rlc_msg.tx_upper_dn = &srb0.bearer_connector.rlc_tx_data_notif;
-  rlc_msg.tx_upper_cn = &srb0.bearer_connector.rlc_tx_ctrl_notif;
-  rlc_msg.tx_lower_dn = &srb0.bearer_connector.rlc_tx_buffer_state_notif;
-  rlc_msg.config.mode = rlc_mode::tm;
-  srb0.rlc_bearer     = create_rlc_entity(rlc_msg);
+  rlc_msg.ue_index       = ue_ctx->ue_index;
+  rlc_msg.lcid           = LCID_SRB0;
+  rlc_msg.rx_upper_dn    = &srb0.bearer_connector.rlc_rx_sdu_notif;
+  rlc_msg.tx_upper_dn    = &srb0.bearer_connector.rlc_tx_data_notif;
+  rlc_msg.tx_upper_cn    = &srb0.bearer_connector.rlc_tx_ctrl_notif;
+  rlc_msg.tx_lower_dn    = &srb0.bearer_connector.rlc_tx_buffer_state_notif;
+  rlc_msg.config.mode    = rlc_mode::tm;
+  rlc_msg.timers         = &services.timers;
+  rlc_msg.pcell_executor = &services.cell_execs.executor(ue_ctx->pcell_index);
+  rlc_msg.ue_executor    = &services.ue_execs.executor(ue_ctx->ue_index);
+  srb0.rlc_bearer        = create_rlc_entity(rlc_msg);
 
   // Create SRB1 RLC entity.
-  du_bearer& srb1     = ue_ctx->bearers[LCID_SRB1];
-  rlc_msg.lcid        = LCID_SRB1;
-  rlc_msg.rx_upper_dn = &srb1.bearer_connector.rlc_rx_sdu_notif;
-  rlc_msg.tx_upper_dn = &srb1.bearer_connector.rlc_tx_data_notif;
-  rlc_msg.tx_upper_cn = &srb1.bearer_connector.rlc_tx_ctrl_notif;
-  rlc_msg.tx_lower_dn = &srb1.bearer_connector.rlc_tx_buffer_state_notif;
-  rlc_msg.config      = ue_ctx->cells[0].rlc_bearers[0].rlc_cfg;
-  rlc_msg.timers      = &services.timers;
-  srb1.rlc_bearer     = create_rlc_entity(rlc_msg);
+  du_bearer& srb1        = ue_ctx->bearers[LCID_SRB1];
+  rlc_msg.lcid           = LCID_SRB1;
+  rlc_msg.rx_upper_dn    = &srb1.bearer_connector.rlc_rx_sdu_notif;
+  rlc_msg.tx_upper_dn    = &srb1.bearer_connector.rlc_tx_data_notif;
+  rlc_msg.tx_upper_cn    = &srb1.bearer_connector.rlc_tx_ctrl_notif;
+  rlc_msg.tx_lower_dn    = &srb1.bearer_connector.rlc_tx_buffer_state_notif;
+  rlc_msg.config         = ue_ctx->cells[0].rlc_bearers[0].rlc_cfg;
+  rlc_msg.timers         = &services.timers;
+  rlc_msg.pcell_executor = &services.cell_execs.executor(ue_ctx->pcell_index);
+  rlc_msg.ue_executor    = &services.ue_execs.executor(ue_ctx->ue_index);
+  srb1.rlc_bearer        = create_rlc_entity(rlc_msg);
 }
 
 async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_create_req()
