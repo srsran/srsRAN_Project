@@ -36,6 +36,12 @@ struct rate_match_pattern {
     /// \brief Type of symbols in resource block.
     enum class symbols_in_resource_blocks_type { one_slot, two_slot };
 
+    symbols_in_resource_blocks_type type;
+    union {
+      bounded_bitset<14> one_slot;
+      bounded_bitset<28> two_slot;
+    };
+
     bool operator==(const symbols_in_resource_blocks& rhs) const
     {
       bool ret = type == rhs.type;
@@ -48,12 +54,6 @@ struct rate_match_pattern {
       return false;
     }
     bool operator!=(const symbols_in_resource_blocks& rhs) const { return !(rhs == *this); }
-
-    symbols_in_resource_blocks_type type;
-    union {
-      bounded_bitset<14> one_slot;
-      bounded_bitset<28> two_slot;
-    };
   };
 
   /// A time domain repetition pattern at which the pattern defined by symbolsInResourceBlock and resourceBlocks
@@ -63,6 +63,17 @@ struct rate_match_pattern {
   struct periodicity_and_pattern {
     /// \brief Type of periodicity and pattern.
     enum class periodicity_and_pattern_type { n2, n4, n5, n8, n10, n20, n40 };
+
+    periodicity_and_pattern_type type;
+    union {
+      bounded_bitset<2>  n2;
+      bounded_bitset<4>  n4;
+      bounded_bitset<5>  n5;
+      bounded_bitset<8>  n8;
+      bounded_bitset<10> n10;
+      bounded_bitset<20> n20;
+      bounded_bitset<40> n40;
+    };
 
     bool operator==(const periodicity_and_pattern& rhs) const
     {
@@ -86,29 +97,12 @@ struct rate_match_pattern {
       return false;
     }
     bool operator!=(const periodicity_and_pattern& rhs) const { return !(rhs == *this); }
-
-    periodicity_and_pattern_type type;
-    union {
-      bounded_bitset<2>  n2;
-      bounded_bitset<4>  n4;
-      bounded_bitset<5>  n5;
-      bounded_bitset<8>  n8;
-      bounded_bitset<10> n10;
-      bounded_bitset<20> n20;
-      bounded_bitset<40> n40;
-    };
   };
 
   /// Indicates rate matching pattern by a pair of bitmaps resourceBlocks and symbolsInResourceBlock to define
   /// the rate match pattern within one or two slots, and a third bitmap periodicityAndPattern to define the repetition
   /// pattern with which the pattern defined by the above bitmap pair occurs.
   struct bitmaps {
-    bool operator==(const bitmaps& rhs) const
-    {
-      return rb == rhs.rb && sym_in_rb == rhs.sym_in_rb && repeat_pattern == rhs.repeat_pattern;
-    }
-    bool operator!=(const bitmaps& rhs) const { return !(rhs == *this); }
-
     /// A resource block level bitmap in the frequency domain. A bit in the bitmap set to 1 indicates that the UE shall
     /// apply rate matching in the corresponding resource block in accordance with the symbolsInResourceBlock bitmap. If
     /// used as cell-level rate matching pattern, the bitmap identifies "common resource blocks (CRB)". If used as
@@ -117,23 +111,16 @@ struct rate_match_pattern {
     bounded_bitset<MAX_RB>            rb;
     symbols_in_resource_blocks        sym_in_rb;
     optional<periodicity_and_pattern> repeat_pattern;
+
+    bool operator==(const bitmaps& rhs) const
+    {
+      return rb == rhs.rb && sym_in_rb == rhs.sym_in_rb && repeat_pattern == rhs.repeat_pattern;
+    }
+    bool operator!=(const bitmaps& rhs) const { return !(rhs == *this); }
   };
 
   /// \brief Rate matching pattern type.
   enum class pattern_type { bitmaps, coreset };
-
-  bool operator==(const rate_match_pattern& rhs) const
-  {
-    bool ret = pattern_id == rhs.pattern_id && type == rhs.type;
-    switch (type) {
-      case pattern_type::bitmaps:
-        return ret && bmaps == rhs.bmaps;
-      case pattern_type::coreset:
-        return ret && scs == rhs.scs;
-    }
-    return false;
-  }
-  bool operator!=(const rate_match_pattern& rhs) const { return !(rhs == *this); }
 
   rate_match_pattern_id_t pattern_id;
   pattern_type            type;
@@ -151,6 +138,19 @@ struct rate_match_pattern {
   optional<subcarrier_spacing> scs;
 
   // TODO: Remaining
+
+  bool operator==(const rate_match_pattern& rhs) const
+  {
+    bool ret = pattern_id == rhs.pattern_id && type == rhs.type;
+    switch (type) {
+      case pattern_type::bitmaps:
+        return ret && bmaps == rhs.bmaps;
+      case pattern_type::coreset:
+        return ret && scs == rhs.scs;
+    }
+    return false;
+  }
+  bool operator!=(const rate_match_pattern& rhs) const { return !(rhs == *this); }
 };
 
 } // namespace srsgnb

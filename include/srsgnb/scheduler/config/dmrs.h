@@ -20,13 +20,6 @@ namespace srsgnb {
 /// Used to configure downlink demodulation reference signals for PDSCH.
 /// \remark See TS 38.331, DMRS-DownlinkConfig.
 struct dmrs_downlink_config {
-  bool operator==(const dmrs_downlink_config& rhs) const
-  {
-    return type == rhs.type && additional_positions == rhs.additional_positions && max_length == rhs.max_length &&
-           scrambling_id0 == rhs.scrambling_id0 && scrambling_id1 == rhs.scrambling_id1;
-  }
-  bool operator!=(const dmrs_downlink_config& rhs) const { return !(rhs == *this); }
-
   /// Selection of the DMRS type to be used for DL (see TS 38.211, clause 7.4.1.1.1). If the field is absent, the
   /// UE uses DMRS type 1.
   optional<dmrs_config_type> type;
@@ -41,6 +34,13 @@ struct dmrs_downlink_config {
   optional<uint16_t> scrambling_id0;
   optional<uint16_t> scrambling_id1;
   // TODO: Remaining
+
+  bool operator==(const dmrs_downlink_config& rhs) const
+  {
+    return type == rhs.type && additional_positions == rhs.additional_positions && max_length == rhs.max_length &&
+           scrambling_id0 == rhs.scrambling_id0 && scrambling_id1 == rhs.scrambling_id1;
+  }
+  bool operator!=(const dmrs_downlink_config& rhs) const { return !(rhs == *this); }
 };
 
 /// Used to configure uplink demodulation reference signals for PUSCH.

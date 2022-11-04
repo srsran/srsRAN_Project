@@ -44,14 +44,6 @@ struct pucch_common_all_formats {
   enum class max_code_rate { not_set = 0, dot_08, dot_15, dot_25, dot_35, dot_45, dot_60, dot_80 };
   enum class num_of_slots { not_set = 0, n2, n4, n8 };
 
-  bool operator==(const pucch_common_all_formats& rhs) const
-  {
-    return interslot_freq_hop == rhs.interslot_freq_hop && additional_dmrs == rhs.additional_dmrs &&
-           max_c_rate == rhs.max_c_rate && nof_slots == rhs.nof_slots && pi_2_bpsk == rhs.pi_2_bpsk &&
-           simultaneous_harq_ack_csi == rhs.simultaneous_harq_ack_csi;
-  }
-  bool operator!=(const pucch_common_all_formats& rhs) const { return !(rhs == *this); }
-
   // The false or not_set value indicates that the field is optional and not set.
   bool          interslot_freq_hop{false};
   bool          additional_dmrs{false};
@@ -59,75 +51,75 @@ struct pucch_common_all_formats {
   num_of_slots  nof_slots{num_of_slots::not_set};
   bool          pi_2_bpsk{false};
   bool          simultaneous_harq_ack_csi{false};
+
+  bool operator==(const pucch_common_all_formats& rhs) const
+  {
+    return interslot_freq_hop == rhs.interslot_freq_hop && additional_dmrs == rhs.additional_dmrs &&
+           max_c_rate == rhs.max_c_rate && nof_slots == rhs.nof_slots && pi_2_bpsk == rhs.pi_2_bpsk &&
+           simultaneous_harq_ack_csi == rhs.simultaneous_harq_ack_csi;
+  }
+  bool operator!=(const pucch_common_all_formats& rhs) const { return !(rhs == *this); }
 };
 
 /// Configuration for \c PUCCH-format0, in \c PUCCH-Config, TS 38.331.
 struct pucch_format_0_cfg {
+  uint8_t initial_cyclic_shift;
+  uint8_t nof_symbols;
+  uint8_t starting_sym_idx;
+
   bool operator==(const pucch_format_0_cfg& rhs) const
   {
     return initial_cyclic_shift == rhs.initial_cyclic_shift && nof_symbols == rhs.nof_symbols &&
            starting_sym_idx == rhs.starting_sym_idx;
   }
   bool operator!=(const pucch_format_0_cfg& rhs) const { return !(rhs == *this); }
-
-  uint8_t initial_cyclic_shift;
-  uint8_t nof_symbols;
-  uint8_t starting_sym_idx;
 };
 
 /// Configuration for \c PUCCH-format1, in \c PUCCH-Config, TS 38.331.
 struct pucch_format_1_cfg {
+  uint8_t initial_cyclic_shift;
+  uint8_t nof_symbols;
+  uint8_t starting_sym_idx;
+  uint8_t time_domain_occ;
+
   bool operator==(const pucch_format_1_cfg& rhs) const
   {
     return initial_cyclic_shift == rhs.initial_cyclic_shift && nof_symbols == rhs.nof_symbols &&
            starting_sym_idx == rhs.starting_sym_idx && time_domain_occ == rhs.time_domain_occ;
   }
   bool operator!=(const pucch_format_1_cfg& rhs) const { return !(rhs == *this); }
-
-  uint8_t initial_cyclic_shift;
-  uint8_t nof_symbols;
-  uint8_t starting_sym_idx;
-  uint8_t time_domain_occ;
 };
 
 /// Configuration for \c PUCCH-format2, in \c PUCCH-Config, TS 38.331.
 struct pucch_format_2_3_cfg {
+  uint8_t nof_prbs;
+  uint8_t nof_symbols;
+  uint8_t starting_sym_idx;
+
   bool operator==(const pucch_format_2_3_cfg& rhs) const
   {
     return nof_prbs == rhs.nof_prbs && nof_symbols == rhs.nof_symbols && starting_sym_idx == rhs.starting_sym_idx;
   }
   bool operator!=(const pucch_format_2_3_cfg& rhs) const { return !(rhs == *this); }
-
-  uint8_t nof_prbs;
-  uint8_t nof_symbols;
-  uint8_t starting_sym_idx;
 };
 
 /// Configuration for \c PUCCH-format4, in \c PUCCH-Config, TS 38.331.
 struct pucch_format_4_cfg {
+  uint8_t          nof_symbols;
+  pucch_f4_occ_len occ_length;
+  pucch_f4_occ_idx occ_index;
+  uint8_t          starting_sym_idx;
+
   bool operator==(const pucch_format_4_cfg& rhs) const
   {
     return nof_symbols == rhs.nof_symbols && occ_length == rhs.occ_length && occ_index == rhs.occ_index &&
            starting_sym_idx == rhs.starting_sym_idx;
   }
   bool operator!=(const pucch_format_4_cfg& rhs) const { return !(rhs == *this); }
-
-  uint8_t          nof_symbols;
-  pucch_f4_occ_len occ_length;
-  pucch_f4_occ_idx occ_index;
-  uint8_t          starting_sym_idx;
 };
 
 /// \c PUCCH-Resource, in \c PUCCH-Config, TS 38.331.
 struct pucch_resource {
-  bool operator==(const pucch_resource& rhs) const
-  {
-    return res_id == rhs.res_id && starting_prb == rhs.starting_prb && second_hop_prb == rhs.second_hop_prb &&
-           intraslot_freq_hopping == rhs.intraslot_freq_hopping && format == rhs.format && format_0 == rhs.format_0 &&
-           format_1 == rhs.format_1 && format_2 == rhs.format_2 && format_3 == rhs.format_3 && format_4 == rhs.format_4;
-  }
-  bool operator!=(const pucch_resource& rhs) const { return !(rhs == *this); }
-
   unsigned     res_id;
   unsigned     starting_prb;
   unsigned     second_hop_prb;
@@ -140,38 +132,37 @@ struct pucch_resource {
     pucch_format_2_3_cfg format_3;
     pucch_format_4_cfg   format_4;
   };
+
+  bool operator==(const pucch_resource& rhs) const
+  {
+    return res_id == rhs.res_id && starting_prb == rhs.starting_prb && second_hop_prb == rhs.second_hop_prb &&
+           intraslot_freq_hopping == rhs.intraslot_freq_hopping && format == rhs.format && format_0 == rhs.format_0 &&
+           format_1 == rhs.format_1 && format_2 == rhs.format_2 && format_3 == rhs.format_3 && format_4 == rhs.format_4;
+  }
+  bool operator!=(const pucch_resource& rhs) const { return !(rhs == *this); }
 };
 
 /// \c PUCCH-ResourceSet, in \c PUCCH-Config, TS 38.331.
 /// \remark The field \c pucch-ResourceSetId is not included, as we reference the resource set ID explicitly in
 /// \ref pucch_config.
 struct pucch_resource_set {
-  bool operator==(const pucch_resource_set& rhs) const
-  {
-    return pucch_res_set_id == rhs.pucch_res_set_id && pucch_res_id_list == rhs.pucch_res_id_list &&
-           max_payload_size == rhs.max_payload_size;
-  }
-  bool operator!=(const pucch_resource_set& rhs) const { return !(rhs == *this); }
-
   /// \c PUCCH-ResourceSetId.
   uint8_t pucch_res_set_id;
   /// \c resourceList.
   static_vector<unsigned, MAX_NOF_PUCCH_RESOURCES_PER_PUCCH_RESOURCE_SET> pucch_res_id_list;
   /// \c maxPayloadSize.
   optional<unsigned> max_payload_size;
+
+  bool operator==(const pucch_resource_set& rhs) const
+  {
+    return pucch_res_set_id == rhs.pucch_res_set_id && pucch_res_id_list == rhs.pucch_res_id_list &&
+           max_payload_size == rhs.max_payload_size;
+  }
+  bool operator!=(const pucch_resource_set& rhs) const { return !(rhs == *this); }
 };
 
 /// \c PUCCH-Config, TS 38.311.
 struct pucch_config {
-  bool operator==(const pucch_config& rhs) const
-  {
-    return pucch_res_set == rhs.pucch_res_set && pucch_res_list == rhs.pucch_res_list &&
-           format_1_common_param == rhs.format_1_common_param && format_2_common_param == rhs.format_2_common_param &&
-           format_3_common_param == rhs.format_3_common_param && format_4_common_param == rhs.format_4_common_param &&
-           sr_res_list == rhs.sr_res_list && dl_data_to_ul_ack == rhs.dl_data_to_ul_ack;
-  }
-  bool operator!=(const pucch_config& rhs) const { return !(rhs == *this); }
-
   /// \c PUCCH-ResourceSet, from 0 to 3.
   // NOTE: PUCCH resource set ID 0 can only contain PUCCH format 0 and 1.
   static_vector<pucch_resource_set, MAX_NOF_PUCCH_RESOURCE_SETS> pucch_res_set;
@@ -188,6 +179,15 @@ struct pucch_config {
 
   /// \c dl-DataToUL-ACK. Values {0..15}.
   static_vector<uint8_t, 8> dl_data_to_ul_ack;
+
+  bool operator==(const pucch_config& rhs) const
+  {
+    return pucch_res_set == rhs.pucch_res_set && pucch_res_list == rhs.pucch_res_list &&
+           format_1_common_param == rhs.format_1_common_param && format_2_common_param == rhs.format_2_common_param &&
+           format_3_common_param == rhs.format_3_common_param && format_4_common_param == rhs.format_4_common_param &&
+           sr_res_list == rhs.sr_res_list && dl_data_to_ul_ack == rhs.dl_data_to_ul_ack;
+  }
+  bool operator!=(const pucch_config& rhs) const { return !(rhs == *this); }
 };
 
 } // namespace srsgnb

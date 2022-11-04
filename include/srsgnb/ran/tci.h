@@ -26,12 +26,6 @@ enum tci_state_id_t : uint8_t { MIN_TCI_STATE_ID = 0, MAX_TCI_STATE_ID = 127, MA
 /// \brief Associates one or two DL reference signals with a corresponding quasi-colocation (QCL) type.
 /// \remark See TS 38.331, TCI-State.
 struct qcl_info {
-  bool operator==(const qcl_info& rhs) const
-  {
-    return cell == rhs.cell && bwp_id == rhs.bwp_id && ref_sig == rhs.ref_sig && qcl_type == rhs.qcl_type;
-  }
-  bool operator!=(const qcl_info& rhs) const { return !(rhs == *this); }
-
   /// \brief Reference signal with which quasi-collocation information is provided as specified in TS 38.214,
   /// subclause 5.1.5.
   struct reference_signal {
@@ -69,20 +63,26 @@ struct qcl_info {
   optional<bwp_id_t> bwp_id;
   reference_signal   ref_sig;
   qcl_type           qcl_type;
+
+  bool operator==(const qcl_info& rhs) const
+  {
+    return cell == rhs.cell && bwp_id == rhs.bwp_id && ref_sig == rhs.ref_sig && qcl_type == rhs.qcl_type;
+  }
+  bool operator!=(const qcl_info& rhs) const { return !(rhs == *this); }
 };
 
 /// \brief Associates one or two DL reference signals with a corresponding quasi-colocation (QCL) type.
 /// \remark See TS 38.331, TCI-State.
 struct tci_state {
+  tci_state_id_t     state_id;
+  qcl_info           qcl_type1;
+  optional<qcl_info> qcl_type2;
+
   bool operator==(const tci_state& rhs) const
   {
     return state_id == rhs.state_id && qcl_type1 == rhs.qcl_type1 && qcl_type2 == rhs.qcl_type2;
   }
   bool operator!=(const tci_state& rhs) const { return !(rhs == *this); }
-
-  tci_state_id_t     state_id;
-  qcl_info           qcl_type1;
-  optional<qcl_info> qcl_type2;
 };
 
 } // namespace srsgnb

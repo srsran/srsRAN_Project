@@ -40,14 +40,6 @@ inline serv_cell_index uint_to_serv_cell_index(unsigned idx)
 
 /// "PDCCH-Config" - UE-dedicated PDCCH configuration as per TS 38.331.
 struct pdcch_config {
-  bool operator==(const pdcch_config& rhs) const
-  {
-    return coresets == rhs.coresets && search_spaces == rhs.search_spaces && dl_preemption == rhs.dl_preemption &&
-           pusch_tpc_cmd_cfg == rhs.pusch_tpc_cmd_cfg && pucch_tpc_cmd_cfg == rhs.pucch_tpc_cmd_cfg &&
-           srs_tpc_cmd_cfg == rhs.srs_tpc_cmd_cfg;
-  }
-  bool operator!=(const pdcch_config& rhs) const { return !(rhs == *this); }
-
   /// List of CORESETs to be used by the UE. In case of CORESET Id overlaps with commonControlResourceSet,
   /// the CORESET in this list takes precedence. The network configures at most 3 CORESETs per BWP per cell (including
   /// UE-specific and common CORESETs).
@@ -64,6 +56,14 @@ struct pdcch_config {
   /// TPC Commands Configuration to configure UE for extracting TPC commands for SRS from a group-TPC messages on DCI.
   optional<srs_tpc_command_config> srs_tpc_cmd_cfg;
   // TODO: add remaining fields.
+
+  bool operator==(const pdcch_config& rhs) const
+  {
+    return coresets == rhs.coresets && search_spaces == rhs.search_spaces && dl_preemption == rhs.dl_preemption &&
+           pusch_tpc_cmd_cfg == rhs.pusch_tpc_cmd_cfg && pucch_tpc_cmd_cfg == rhs.pucch_tpc_cmd_cfg &&
+           srs_tpc_cmd_cfg == rhs.srs_tpc_cmd_cfg;
+  }
+  bool operator!=(const pdcch_config& rhs) const { return !(rhs == *this); }
 };
 
 /// "PDSCH-Config" - UE-dedicated PDSCH Configuration as per TS38.331.
@@ -83,18 +83,6 @@ struct pdsch_config {
   /// \brief Maximum number of code words a single DCI may schedule.
   /// \remark See TS 38.331, "maxNrofCodeWordsScheduledByDCI".
   enum class max_no_codeword_scheduled_by_dci { n1, n2 };
-
-  bool operator==(const pdsch_config& rhs) const
-  {
-    return data_scrambling_id_pdsch == rhs.data_scrambling_id_pdsch &&
-           pdsch_mapping_type_a_dmrs == rhs.pdsch_mapping_type_a_dmrs &&
-           pdsch_mapping_type_b_dmrs == rhs.pdsch_mapping_type_b_dmrs && vrb_to_prb_itlvr == rhs.vrb_to_prb_itlvr &&
-           tci_states == rhs.tci_states && res_alloc == rhs.res_alloc && aggr_factor == rhs.aggr_factor &&
-           pdsch_td_alloc_list == rhs.pdsch_td_alloc_list && rate_match_pattrn == rhs.rate_match_pattrn &&
-           rbg_sz == rhs.rbg_sz && mcs_table == rhs.mcs_table && nof_cw_sched_by_dci == rhs.nof_cw_sched_by_dci &&
-           prb_bndlg == rhs.prb_bndlg;
-  }
-  bool operator!=(const pdsch_config& rhs) const { return !(rhs == *this); }
 
   /// Identifier used to initialize data scrambling (c_init) for PDSCH. If the field is absent, the UE applies the PCI.
   /// See TS38.331, \e dataScramblingIdentityPDSCH, and TS38.211, 7.3.1.1. Values: {0,...,1023}.
@@ -138,6 +126,18 @@ struct pdsch_config {
   prb_bundling prb_bndlg;
 
   // TODO: Remaining.
+
+  bool operator==(const pdsch_config& rhs) const
+  {
+    return data_scrambling_id_pdsch == rhs.data_scrambling_id_pdsch &&
+           pdsch_mapping_type_a_dmrs == rhs.pdsch_mapping_type_a_dmrs &&
+           pdsch_mapping_type_b_dmrs == rhs.pdsch_mapping_type_b_dmrs && vrb_to_prb_itlvr == rhs.vrb_to_prb_itlvr &&
+           tci_states == rhs.tci_states && res_alloc == rhs.res_alloc && aggr_factor == rhs.aggr_factor &&
+           pdsch_td_alloc_list == rhs.pdsch_td_alloc_list && rate_match_pattrn == rhs.rate_match_pattrn &&
+           rbg_sz == rhs.rbg_sz && mcs_table == rhs.mcs_table && nof_cw_sched_by_dci == rhs.nof_cw_sched_by_dci &&
+           prb_bndlg == rhs.prb_bndlg;
+  }
+  bool operator!=(const pdsch_config& rhs) const { return !(rhs == *this); }
 };
 
 /// "BWP-DownlinkDedicated" as per TS 38.331.

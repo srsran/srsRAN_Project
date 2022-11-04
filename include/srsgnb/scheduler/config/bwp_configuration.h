@@ -79,16 +79,16 @@ enum class sch_mapping_type {
 };
 
 struct pdsch_time_domain_resource_allocation {
+  /// Values: (0..32).
+  unsigned          k0;
+  sch_mapping_type  map_type;
+  ofdm_symbol_range symbols;
+
   bool operator==(const pdsch_time_domain_resource_allocation& rhs) const
   {
     return k0 == rhs.k0 && map_type == rhs.map_type && symbols == rhs.symbols;
   }
   bool operator!=(const pdsch_time_domain_resource_allocation& rhs) const { return !(rhs == *this); }
-
-  /// Values: (0..32).
-  unsigned          k0;
-  sch_mapping_type  map_type;
-  ofdm_symbol_range symbols;
 };
 
 struct pdsch_config_common {
