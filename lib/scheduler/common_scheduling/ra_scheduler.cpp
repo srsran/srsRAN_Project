@@ -629,6 +629,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
                                                             tb_scaling_field,
                                                             grant.crbs.length()}) /
       nof_bits_per_byte;
+  // Set number of CB to zero if no CBs are being used.
   ul_info.pusch_cfg.num_cb = 0;
 
   // Set the number of bytes of the TB.
