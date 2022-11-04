@@ -26,6 +26,14 @@ namespace srsgnb {
 
 /// "PDCCH-Config" - UE-dedicated PDCCH configuration as per TS 38.331.
 struct pdcch_config {
+  bool operator==(const pdcch_config& rhs) const
+  {
+    return coresets == rhs.coresets && search_spaces == rhs.search_spaces && dl_preemption == rhs.dl_preemption &&
+           pusch_tpc_cmd_cfg == rhs.pusch_tpc_cmd_cfg && pucch_tpc_cmd_cfg == rhs.pucch_tpc_cmd_cfg &&
+           srs_tpc_cmd_cfg == rhs.srs_tpc_cmd_cfg;
+  }
+  bool operator!=(const pdcch_config& rhs) const { return !(rhs == *this); }
+
   /// List of CORESETs to be used by the UE. In case of CORESET Id overlaps with commonControlResourceSet,
   /// the CORESET in this list takes precedence. The network configures at most 3 CORESETs per BWP per cell (including
   /// UE-specific and common CORESETs).

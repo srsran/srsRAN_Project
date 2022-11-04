@@ -346,6 +346,9 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
     out.dmrs_dl_for_pdsch_map_type_a_present = true;
     make_asn1_rrc_dmrs_dl_for_pdsch(out.dmrs_dl_for_pdsch_map_type_a.set_setup(),
                                     dest.pdsch_mapping_type_a_dmrs.value());
+  } else if (src.pdsch_mapping_type_a_dmrs.has_value() && not dest.pdsch_mapping_type_a_dmrs.has_value()) {
+    out.dmrs_dl_for_pdsch_map_type_a_present = true;
+    out.dmrs_dl_for_pdsch_map_type_a.set_release();
   }
 
   // DMRS Type B.
@@ -355,6 +358,9 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
     out.dmrs_dl_for_pdsch_map_type_b_present = true;
     make_asn1_rrc_dmrs_dl_for_pdsch(out.dmrs_dl_for_pdsch_map_type_b.set_setup(),
                                     dest.pdsch_mapping_type_b_dmrs.value());
+  } else if (src.pdsch_mapping_type_b_dmrs.has_value() && not dest.pdsch_mapping_type_b_dmrs.has_value()) {
+    out.dmrs_dl_for_pdsch_map_type_b_present = true;
+    out.dmrs_dl_for_pdsch_map_type_b.set_release();
   }
 
   // TCI states.
@@ -405,6 +411,9 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
     for (const auto& td_alloc : dest.pdsch_td_alloc_list) {
       alloc_list.push_back(make_asn1_rrc_pdsch_time_domain_alloc_list(td_alloc));
     }
+  } else if (not src.pdsch_td_alloc_list.empty() && dest.pdsch_td_alloc_list.empty()) {
+    out.pdsch_time_domain_alloc_list_present = true;
+    out.pdsch_time_domain_alloc_list.set_release();
   }
 
   // RBG Size.
@@ -479,11 +488,15 @@ void calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
                                      const bwp_downlink_dedicated& src,
                                      const bwp_downlink_dedicated& dest)
 {
-  if (dest.pdcch_cfg.has_value()) {
+  if ((dest.pdcch_cfg.has_value() && not src.pdcch_cfg.has_value()) ||
+      (dest.pdcch_cfg.has_value() && src.pdcch_cfg.has_value() && dest.pdcch_cfg != src.pdcch_cfg)) {
     out.pdcch_cfg_present = true;
     calculate_pdcch_config_diff(out.pdcch_cfg.set_setup(),
                                 src.pdcch_cfg.has_value() ? src.pdcch_cfg.value() : pdcch_config{},
                                 dest.pdcch_cfg.value());
+  } else if (src.pdcch_cfg.has_value() && not dest.pdcch_cfg.has_value()) {
+    out.pdcch_cfg_present = true;
+    out.pdcch_cfg.set_release();
   }
 
   if ((dest.pdsch_cfg.has_value() && not src.pdsch_cfg.has_value()) ||
@@ -492,6 +505,9 @@ void calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
     calculate_pdsch_config_diff(out.pdsch_cfg.set_setup(),
                                 src.pdsch_cfg.has_value() ? src.pdsch_cfg.value() : pdsch_config{},
                                 dest.pdsch_cfg.value());
+  } else if (src.pdsch_cfg.has_value() && not dest.pdsch_cfg.has_value()) {
+    out.pdsch_cfg_present = true;
+    out.pdsch_cfg.set_release();
   }
   // TODO: sps-Config and radioLinkMonitoringConfig.
 }
@@ -734,24 +750,36 @@ void calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_con
        dest.format_1_common_param != src.format_1_common_param)) {
     out.format1_present = true;
     make_asn1_rrc_pucch_formats_common_param(out.format1.set_setup(), dest.format_1_common_param.value());
+  } else if (src.format_1_common_param.has_value() && not dest.format_1_common_param.has_value()) {
+    out.format1_present = true;
+    out.format1.set_release();
   }
   if ((dest.format_2_common_param.has_value() && not src.format_2_common_param.has_value()) ||
       (dest.format_2_common_param.has_value() && src.format_2_common_param.has_value() &&
        dest.format_2_common_param != src.format_2_common_param)) {
     out.format2_present = true;
     make_asn1_rrc_pucch_formats_common_param(out.format2.set_setup(), dest.format_2_common_param.value());
+  } else if (src.format_2_common_param.has_value() && not dest.format_2_common_param.has_value()) {
+    out.format2_present = true;
+    out.format2.set_release();
   }
   if ((dest.format_3_common_param.has_value() && not src.format_3_common_param.has_value()) ||
       (dest.format_3_common_param.has_value() && src.format_3_common_param.has_value() &&
        dest.format_3_common_param != src.format_3_common_param)) {
     out.format3_present = true;
     make_asn1_rrc_pucch_formats_common_param(out.format3.set_setup(), dest.format_3_common_param.value());
+  } else if (src.format_3_common_param.has_value() && not dest.format_3_common_param.has_value()) {
+    out.format3_present = true;
+    out.format3.set_release();
   }
   if ((dest.format_4_common_param.has_value() && not src.format_4_common_param.has_value()) ||
       (dest.format_4_common_param.has_value() && src.format_4_common_param.has_value() &&
        dest.format_4_common_param != src.format_4_common_param)) {
     out.format4_present = true;
     make_asn1_rrc_pucch_formats_common_param(out.format4.set_setup(), dest.format_4_common_param.value());
+  } else if (src.format_4_common_param.has_value() && not dest.format_4_common_param.has_value()) {
+    out.format4_present = true;
+    out.format4.set_release();
   }
 
   // SR Resource.
@@ -779,6 +807,9 @@ void calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,
     calculate_pucch_config_diff(out.pucch_cfg.set_setup(),
                                 src.pucch_cfg.has_value() ? src.pucch_cfg.value() : pucch_config{},
                                 dest.pucch_cfg.value());
+  } else if (src.pucch_cfg.has_value() && not dest.pucch_cfg.has_value()) {
+    out.pucch_cfg_present = true;
+    out.pucch_cfg.set_release();
   }
   // TODO: Remaining.
 }
