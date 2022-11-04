@@ -118,6 +118,11 @@ TEST_P(DmrsPuschEstimatorFixture, Average)
 {
   dmrs_pusch_estimator::configuration config = GetParam().config;
 
+  // The current estimator does not support Type2 DM-RS.
+  if (config.type == dmrs_type::TYPE2) {
+    GTEST_SKIP();
+  }
+
   // Prepare channel estimate.
   channel_estimate::channel_estimate_dimensions ch_estimate_dims;
   ch_estimate_dims.nof_prb       = config.rb_mask.count();
@@ -131,7 +136,7 @@ TEST_P(DmrsPuschEstimatorFixture, Average)
 
   // Current estimator is provisional.
   GTEST_SKIP();
-  
+
   // Check the results. The dummy channel estimator sets all RE elements corresponding to one TX-RX path to a number
   // equal to 10 * Rx port index + layer index.
   for (unsigned i_layer = 0; i_layer != config.nof_tx_layers; ++i_layer) {
