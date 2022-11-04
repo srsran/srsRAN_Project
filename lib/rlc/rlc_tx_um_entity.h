@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "rlc_metrics_impl.h"
 #include "rlc_sdu_queue.h"
 #include "rlc_tx_entity.h"
 #include "rlc_um_pdu.h"

@@ -13,6 +13,7 @@
 #include "rlc_am_interconnect.h"
 #include "rlc_am_pdu.h"
 #include "rlc_am_window.h"
+#include "rlc_metrics_impl.h"
 #include "rlc_rx_entity.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"

@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "rlc_metrics_impl.h"
 #include "srsgnb/ran/bearer_logger.h"
-#include "srsgnb/rlc/rlc_metrics.h"
 #include "srsgnb/rlc/rlc_tx.h"
 
 namespace srsgnb {
@@ -22,7 +22,7 @@ namespace srsgnb {
 /// and the control plane.
 class rlc_tx_entity : public rlc_tx_upper_layer_data_interface,
                       public rlc_tx_lower_layer_interface,
-                      public rlc_bearer_tx_metrics
+                      public rlc_tx_metrics
 {
 protected:
   rlc_tx_entity(du_ue_index_t                        du_index,

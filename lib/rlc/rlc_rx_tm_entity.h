@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "rlc_metrics_impl.h"
 #include "rlc_rx_entity.h"
 
 namespace srsgnb {
