@@ -16,8 +16,8 @@ using namespace cu_up;
 
 namespace {
 
-/// This class creates fake data packets and routes them to the F1u interface through the F1u_input_gateway interface.
-/// No concrete class dependencies.
+/// This class creates fake data packets and routes them to the F1u interface through the F1u_input_gateway
+/// interface. No concrete class dependencies.
 class fake_receiver
 {
   srsgnb::pdcp_rx_lower_interface& pdcp_if;
