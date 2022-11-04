@@ -280,7 +280,7 @@ serving_cell_config srsgnb::config_helpers::make_default_initial_ue_serving_cell
   pdsch_config& pdsch_cfg            = serv_cell.init_dl_bwp.pdsch_cfg.value();
   pdsch_cfg.data_scrambling_id_pdsch = 0;
   pdsch_cfg.pdsch_mapping_type_a_dmrs.emplace();
-  dmrs_downlink_config dmrs_type_a = pdsch_cfg.pdsch_mapping_type_a_dmrs.value();
+  dmrs_downlink_config& dmrs_type_a = pdsch_cfg.pdsch_mapping_type_a_dmrs.value();
   dmrs_type_a.additional_positions.emplace(dmrs_additional_positions::pos1);
   pdsch_cfg.tci_states.push_back(tci_state{
       .state_id  = static_cast<tci_state_id_t>(0),

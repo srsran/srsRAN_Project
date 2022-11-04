@@ -133,6 +133,46 @@ TEST(serving_cell_config_converter_test, test_ue_pdsch_cfg_release_conversion)
   ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.type(), asn1::setup_release_opts::release);
 }
 
+TEST(serving_cell_config_converter_test, test_ue_custom_pdsch_cfg_conversion)
+{
+  auto                      src_cell_grp_cfg = make_initial_cell_group_config();
+  srs_du::cell_group_config dest_cell_grp_cfg{src_cell_grp_cfg};
+  // Add new configuration to be setup.
+  auto& dest_pdsch_cfg = dest_cell_grp_cfg.spcell_cfg.spcell_cfg_ded.init_dl_bwp.pdsch_cfg.value();
+  dest_pdsch_cfg.tci_states.push_back(tci_state{
+      .state_id  = static_cast<tci_state_id_t>(1),
+      .qcl_type1 = {.ref_sig  = {.type   = qcl_info::reference_signal::reference_signal_type::csi_rs,
+                                 .csi_rs = static_cast<nzp_csi_rs_res_id_t>(0)},
+                    .qcl_type = qcl_info::qcl_type::type_a},
+  });
+  dest_pdsch_cfg.tci_states.erase(dest_pdsch_cfg.tci_states.begin());
+
+  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().additional_positions.value() =
+      srsgnb::dmrs_additional_positions::pos0;
+  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().scrambling_id0 = 10;
+  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().scrambling_id1 = 20;
+
+  asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cell_grp_cfg, dest_cell_grp_cfg);
+
+  auto rrc_sp_cell_cfg_ded  = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
+  auto dest_sp_cell_cfg_ded = dest_cell_grp_cfg.spcell_cfg.spcell_cfg_ded;
+
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp_present);
+  ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg_present, dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.has_value());
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.is_setup());
+
+  if (dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.has_value()) {
+    if (dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.value().pdsch_mapping_type_a_dmrs.has_value()) {
+      ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().dmrs_dl_for_pdsch_map_type_a_present);
+      ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().dmrs_dl_for_pdsch_map_type_a.is_setup());
+    }
+
+    ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().tci_states_to_add_mod_list.size(), 1);
+    ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().tci_states_to_release_list.size(), 1);
+  }
+}
+
 TEST(serving_cell_config_converter_test, test_default_initial_ue_uplink_cfg_conversion)
 {
   auto                           dest_cell_grp_cfg = make_initial_cell_group_config();
