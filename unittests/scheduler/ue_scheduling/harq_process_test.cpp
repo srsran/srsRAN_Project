@@ -68,9 +68,25 @@ TEST(dl_harq_process, retx_of_empty_harq_is_noop)
 TEST(dl_harq_process, ack_of_empty_harq_is_noop)
 {
   dl_harq_process h_dl(to_harq_id(0));
-  slot_point      sl_tx{0, 0};
 
   ASSERT_TRUE(h_dl.ack_info(0, true) < 0) << "ACK of empty HARQ should fail";
+}
+
+TEST(dl_harq_process, when_max_retx_exceeded_and_nack_is_received_harq_becomes_empty)
+{
+  unsigned        max_ack_wait_slots = 1, k1 = 1, max_harq_retxs = 1;
+  dl_harq_process h_dl(to_harq_id(0), max_ack_wait_slots);
+  slot_point      sl_tx{0, 0};
+
+  ASSERT_TRUE(h_dl.new_tx(sl_tx, sl_tx + k1, prb_interval{0, 1}, 1, max_harq_retxs));
+  h_dl.slot_indication(++sl_tx);
+  ASSERT_FALSE(h_dl.has_pending_retx());
+  h_dl.ack_info(0, false);
+  ASSERT_TRUE(h_dl.new_retx(sl_tx, sl_tx + k1, prb_interval{0, 1}));
+  h_dl.slot_indication(++sl_tx);
+  ASSERT_TRUE(h_dl.ack_info(0, false) >= 0);
+  ASSERT_TRUE(h_dl.empty());
+  ASSERT_FALSE(h_dl.has_pending_retx());
 }
 
 TEST(dl_harq_process, harq_retx_shall_not_change_nof_prbs)

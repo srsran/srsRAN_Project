@@ -40,7 +40,7 @@ int harq_process::ack_info(unsigned tb_idx, bool ack)
   if (ack) {
     tb[tb_idx].state = tb_t::state_t::empty;
   } else {
-    tb[tb_idx].state = tb_t::state_t::pending_retx;
+    tb[tb_idx].state = (nof_retx() < max_nof_retx()) ? tb_t::state_t::pending_retx : tb_t::state_t::empty;
   }
   return ack ? tb[tb_idx].tbs : 0;
 }
