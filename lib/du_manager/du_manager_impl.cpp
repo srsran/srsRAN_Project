@@ -14,8 +14,17 @@
 using namespace srsgnb;
 using namespace srs_du;
 
-du_manager_impl::du_manager_impl(const du_manager_config_t& cfg_) :
-  cfg(cfg_), cell_mng(cfg), ue_mng(cfg), main_ctrl_loop(128)
+du_manager_impl::du_manager_impl(const du_manager_params& params) :
+  cfg{srslog::fetch_basic_logger("DU-MNG"),
+      {},
+      {params.ran.cells.begin(), params.ran.cells.end()},
+      params.services,
+      params.f1ap,
+      params.rlc,
+      params.mac},
+  cell_mng(cfg),
+  ue_mng(cfg),
+  main_ctrl_loop(128)
 {
 }
 
@@ -33,7 +42,7 @@ void du_manager_impl::stop()
 void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message& msg)
 {
   // Switch DU Manager exec context
-  cfg.du_mng_exec->execute([this, msg = std::move(msg)]() {
+  cfg.services.du_mng_exec.execute([this, msg = std::move(msg)]() {
     // Start UE create procedure
     ue_mng.handle_ue_create_request(msg);
   });
@@ -56,7 +65,7 @@ size_t du_manager_impl::nof_ues()
   static std::mutex              mutex;
   static std::condition_variable cvar;
   size_t                         result = MAX_NOF_DU_UES;
-  cfg.du_mng_exec->execute([this, &result]() {
+  cfg.services.du_mng_exec.execute([this, &result]() {
     std::unique_lock<std::mutex> lock(mutex);
     result = ue_mng.get_ues().size();
     cvar.notify_one();

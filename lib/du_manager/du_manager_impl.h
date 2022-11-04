@@ -13,11 +13,9 @@
 #include "du_cell_manager.h"
 #include "du_ue_manager.h"
 #include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/f1_interface/du/f1ap_du.h"
-#include "srsgnb/mac/mac.h"
+#include "srsgnb/du_manager/du_manager_params.h"
 #include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/rlc/rlc_tx.h"
-#include "srsgnb/support/executors/task_executor.h"
 #include <memory>
 
 namespace srsgnb {
@@ -26,7 +24,7 @@ namespace srs_du {
 class du_manager_impl final : public du_manager_interface
 {
 public:
-  du_manager_impl(const du_manager_config_t& cfg);
+  du_manager_impl(const du_manager_params& cfg);
 
   // Controller interface.
   void start() override;

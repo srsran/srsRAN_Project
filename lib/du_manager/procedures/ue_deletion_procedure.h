@@ -24,9 +24,9 @@ class ue_deletion_procedure
 {
 public:
   ue_deletion_procedure(const f1ap_ue_delete_request& msg_,
-                        const du_manager_config_t&    cfg_,
+                        mac_ue_configurator&          mac_ue_mng_,
                         ue_manager_ctrl_configurator& ue_mng_) :
-    msg(msg_), cfg(cfg_), logger(cfg.logger), ue_mng(ue_mng_)
+    msg(msg_), mac_ue_mng(mac_ue_mng_), ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("DU-MNG"))
   {
   }
 
@@ -67,13 +67,13 @@ private:
     mac_msg.ue_index   = ue->ue_index;
     mac_msg.rnti       = ue->rnti;
     mac_msg.cell_index = ue->pcell_index;
-    return cfg.mac_ue_mng->handle_ue_delete_request(mac_msg);
+    return mac_ue_mng.handle_ue_delete_request(mac_msg);
   }
 
   const f1ap_ue_delete_request  msg;
-  const du_manager_config_t&    cfg;
-  srslog::basic_logger&         logger;
+  mac_ue_configurator&          mac_ue_mng;
   ue_manager_ctrl_configurator& ue_mng;
+  srslog::basic_logger&         logger;
 
   du_ue* ue = nullptr;
 };

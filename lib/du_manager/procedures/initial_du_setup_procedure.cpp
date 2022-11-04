@@ -38,11 +38,11 @@ void initial_du_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
   // Configure DU Cells.
   for (unsigned idx = 0; idx < cell_mng.nof_cells(); ++idx) {
     du_cell_index_t cell_index = to_du_cell_index(idx);
-    cfg.mac_cell_mng->add_cell(make_mac_cell_config(cell_index, cell_mng.get_cell_cfg(cell_index)));
+    cfg.mac.cell_mng.add_cell(make_mac_cell_config(cell_index, cell_mng.get_cell_cfg(cell_index)));
   }
 
   // Activate DU Cells.
-  cfg.mac_cell_mng->get_cell_controller(to_du_cell_index(0)).start();
+  cfg.mac.cell_mng.get_cell_controller(to_du_cell_index(0)).start();
 
   CORO_RETURN();
 }
@@ -58,7 +58,7 @@ async_task<f1_setup_response_message> initial_du_setup_procedure::start_f1_setup
   fill_asn1_f1_setup_request(request_msg.msg, cfg.setup_params, cells_to_add);
 
   // Initiate F1 Setup Request.
-  return cfg.f1ap_conn_mng->handle_f1ap_setup_request(request_msg);
+  return cfg.f1ap.conn_mng.handle_f1ap_setup_request(request_msg);
 }
 
 void initial_du_setup_procedure::handle_f1_setup_response(const asn1::f1ap::f1_setup_resp_s& resp)

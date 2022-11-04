@@ -18,14 +18,20 @@
 using namespace srsgnb;
 using namespace srsgnb::srs_du;
 
-ue_creation_procedure::ue_creation_procedure(du_ue_index_t                     ue_index,
-                                             const ul_ccch_indication_message& ccch_ind_msg,
-                                             const du_manager_config_t&        cfg_,
-                                             ue_manager_ctrl_configurator&     ue_mng_) :
+ue_creation_procedure::ue_creation_procedure(du_ue_index_t                                ue_index,
+                                             const ul_ccch_indication_message&            ccch_ind_msg,
+                                             ue_manager_ctrl_configurator&                ue_mng_,
+                                             const du_manager_params::service_params&     du_services_,
+                                             const du_manager_params::mac_config_params&  mac_mng_,
+                                             const du_manager_params::rlc_config_params&  rlc_params_,
+                                             const du_manager_params::f1ap_config_params& f1ap_mng_) :
   msg(ccch_ind_msg),
-  cfg(cfg_),
-  logger(cfg.logger),
   ue_mng(ue_mng_),
+  services(du_services_),
+  mac_mng(mac_mng_),
+  rlc_cfg(rlc_params_),
+  f1ap_mng(f1ap_mng_),
+  logger(srslog::fetch_basic_logger("DU-MNG")),
   ue_ctx(std::make_unique<du_ue>(ue_index, ccch_ind_msg.cell_index, ccch_ind_msg.crnti))
 {
   ue_ctx->bearers.emplace(LCID_SRB0);
@@ -88,7 +94,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   // > Start Initial UL RRC Message Transfer by signalling MAC to notify CCCH to upper layers.
   if (not msg.subpdu.empty()) {
-    cfg.mac_ue_mng->handle_ul_ccch_msg(ue_index, std::move(msg.subpdu));
+    mac_mng.ue_cfg.handle_ul_ccch_msg(ue_index, std::move(msg.subpdu));
   }
 
   log_proc_completed(logger, ue_index, msg.crnti, "UE Create");
@@ -117,7 +123,7 @@ void ue_creation_procedure::create_rlc_srbs()
   rlc_msg.tx_upper_cn = &srb1.bearer_connector.rlc_tx_ctrl_notif;
   rlc_msg.tx_lower_dn = &srb1.bearer_connector.rlc_tx_buffer_state_notif;
   rlc_msg.config      = ue_ctx->cells[0].rlc_bearers[0].rlc_cfg;
-  rlc_msg.timers      = cfg.timers;
+  rlc_msg.timers      = &services.timers;
   srb1.rlc_bearer     = create_rlc_entity(rlc_msg);
 }
 
@@ -143,7 +149,7 @@ async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_cr
     lc.lc_config.sr_id.emplace(mac_ue_create_msg.mac_cell_group_cfg.scheduling_request_config.back().sr_id);
   }
   mac_ue_create_msg.ul_ccch_msg = &msg.subpdu;
-  return cfg.mac_ue_mng->handle_ue_create_request(mac_ue_create_msg);
+  return mac_mng.ue_cfg.handle_ue_create_request(mac_ue_create_msg);
 }
 
 void ue_creation_procedure::create_f1_ue()
@@ -190,7 +196,7 @@ void ue_creation_procedure::create_f1_ue()
     srsgnb_assert(result == asn1::SRSASN_SUCCESS, "Failed to generate CellConfigGroup");
   }
 
-  f1_resp = cfg.f1ap_ue_ctx_mng->handle_ue_creation_request(f1_msg);
+  f1_resp = f1ap_mng.ue_mng.handle_ue_creation_request(f1_msg);
 }
 
 void ue_creation_procedure::connect_layer_bearers()
@@ -207,8 +213,8 @@ void ue_creation_procedure::connect_layer_bearers()
   srb1.bearer_connector.rlc_rx_sdu_notif.connect(*f1_resp.bearers_added[1]);
 
   // Connect RLC BSR update notifier -> MAC Control Info Handler.
-  srb0.bearer_connector.rlc_tx_buffer_state_notif.connect(ue_ctx->ue_index, LCID_SRB0, *cfg.mac_ue_ctrl);
-  srb1.bearer_connector.rlc_tx_buffer_state_notif.connect(ue_ctx->ue_index, LCID_SRB1, *cfg.mac_ue_ctrl);
+  srb0.bearer_connector.rlc_tx_buffer_state_notif.connect(ue_ctx->ue_index, LCID_SRB0, rlc_cfg.mac_ue_info_handler);
+  srb1.bearer_connector.rlc_tx_buffer_state_notif.connect(ue_ctx->ue_index, LCID_SRB1, rlc_cfg.mac_ue_info_handler);
 
   // Connect MAC Rx SDU notifier -> RLC Rx PDU.
   srb0.bearer_connector.mac_rx_notif.connect(*srb0.rlc_bearer->get_rx_lower_layer_interface());

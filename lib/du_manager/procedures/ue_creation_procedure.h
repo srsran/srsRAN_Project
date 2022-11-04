@@ -45,10 +45,13 @@ namespace srs_du {
 class ue_creation_procedure
 {
 public:
-  ue_creation_procedure(du_ue_index_t                     ue_index,
-                        const ul_ccch_indication_message& ccch_ind_msg,
-                        const du_manager_config_t&        cfg_,
-                        ue_manager_ctrl_configurator&     ue_mng_);
+  ue_creation_procedure(du_ue_index_t                                ue_index,
+                        const ul_ccch_indication_message&            ccch_ind_msg,
+                        ue_manager_ctrl_configurator&                ue_mng_,
+                        const du_manager_params::service_params&     du_services_,
+                        const du_manager_params::mac_config_params&  mac_mng_,
+                        const du_manager_params::rlc_config_params&  rlc_params_,
+                        const du_manager_params::f1ap_config_params& f1ap_mng_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -73,10 +76,13 @@ private:
 
   void connect_layer_bearers();
 
-  ul_ccch_indication_message    msg;
-  const du_manager_config_t&    cfg;
-  srslog::basic_logger&         logger;
-  ue_manager_ctrl_configurator& ue_mng;
+  ul_ccch_indication_message                   msg;
+  ue_manager_ctrl_configurator&                ue_mng;
+  const du_manager_params::service_params&     services;
+  const du_manager_params::mac_config_params&  mac_mng;
+  const du_manager_params::rlc_config_params&  rlc_cfg;
+  const du_manager_params::f1ap_config_params& f1ap_mng;
+  srslog::basic_logger&                        logger;
 
   std::unique_ptr<du_ue>         ue_ctx;
   mac_ue_create_response_message mac_resp{};

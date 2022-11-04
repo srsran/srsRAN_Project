@@ -16,7 +16,7 @@
 using namespace srsgnb;
 using namespace srs_du;
 
-du_ue_manager::du_ue_manager(du_manager_config_t& cfg_) : cfg(cfg_), logger(cfg.logger)
+du_ue_manager::du_ue_manager(du_manager_config_t& cfg_) : cfg(cfg_), logger(srslog::fetch_basic_logger("DU-MNG"))
 {
   std::fill(rnti_to_ue_index.begin(), rnti_to_ue_index.end(), du_ue_index_t::INVALID_DU_UE_INDEX);
 
@@ -39,19 +39,20 @@ void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& m
   }
 
   // Enqueue UE creation procedure
-  ue_ctrl_loop[ue_idx_candidate].schedule<ue_creation_procedure>(ue_idx_candidate, msg, cfg, *this);
+  ue_ctrl_loop[ue_idx_candidate].schedule<ue_creation_procedure>(
+      ue_idx_candidate, msg, *this, cfg.services, cfg.mac, cfg.rlc, cfg.f1ap);
 }
 
 async_task<f1ap_ue_config_update_response>
 du_ue_manager::handle_ue_config_request(const f1ap_ue_config_update_request& msg)
 {
-  return launch_async<ue_configuration_procedure>(msg, *this, *cfg.mac_ue_mng);
+  return launch_async<ue_configuration_procedure>(msg, *this, cfg.mac.ue_cfg);
 }
 
 async_task<void> du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_request& msg)
 {
   // Enqueue UE deletion procedure
-  return launch_async<ue_deletion_procedure>(msg, cfg, *this);
+  return launch_async<ue_deletion_procedure>(msg, cfg.mac.ue_cfg, *this);
 }
 
 du_ue* du_ue_manager::find_ue(du_ue_index_t ue_index)
