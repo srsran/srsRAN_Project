@@ -24,6 +24,19 @@
 
 namespace srsgnb {
 
+/// \c maxNrofServingCells, TS 38.331.
+const unsigned MAX_NOF_SERVING_CELLS = 32;
+
+/// \c ServCellIndex, TS 38.331.
+enum serv_cell_index { MAX_SERVING_CELL_IDX = 31, SERVING_CELL_INVALID = MAX_NOF_SERVING_CELLS };
+
+/// Converts a uint into a \ref serv_cell_index.
+inline serv_cell_index uint_to_serv_cell_index(unsigned idx)
+{
+  return idx < MAX_NOF_SERVING_CELLS ? static_cast<serv_cell_index>(idx)
+                                     : static_cast<serv_cell_index>(MAX_NOF_SERVING_CELLS);
+}
+
 /// "PDCCH-Config" - UE-dedicated PDCCH configuration as per TS 38.331.
 struct pdcch_config {
   bool operator==(const pdcch_config& rhs) const
@@ -166,6 +179,30 @@ struct uplink_config {
   // TODO: add remaining fields.
 };
 
+/// \c PDSCH-CodeBlockGroupTransmission, as per TS38.331.
+struct pdsch_code_block_group_transmission {
+  /// \c maxCodeBlockGroupsPerTransportBlock.
+  enum class max_code_block_groups_per_tb { n1, n2, n6, n8 };
+
+  max_code_block_groups_per_tb max_cbg_per_tb;
+  bool                         code_block_group_flush_indicator;
+};
+
+/// \c PDSCH-ServingCellConfig, as per TS38.331.
+struct pdsch_serving_cell_config {
+  enum class x_overhead { xoh6, xoh12, xoh18 };
+  /// \c nrofHARQ-ProcessesForPDSCH.
+  enum class nof_harq_proc_for_pdsch { n2, n4, n6, n10, n12, n16 };
+
+  optional<pdsch_code_block_group_transmission> code_block_group_tx;
+  optional<x_overhead>                          x_ov_head;
+  optional<nof_harq_proc_for_pdsch>             nof_harq_proc;
+  optional<serv_cell_index>                     pucch_cell;
+  /// Possible values {1, ..., 8};
+  unsigned       max_mimo_layers;
+  optional<bool> processing_type_2_enabled;
+};
+
 /// \c ServingCellConfig, as per TS38.331.
 struct serving_cell_config {
   /// Initial Downlink BWP.
@@ -174,6 +211,8 @@ struct serving_cell_config {
   static_vector<bwp_downlink, MAX_NOF_BWPS> dl_bwps;
   /// \c uplinkConfig, containing the UL configuration.
   optional<uplink_config> ul_config;
+  /// \c pdsch-ServingCellConfig.
+  optional<pdsch_serving_cell_config> pdsch_serv_cell_cfg;
 };
 
 } // namespace srsgnb

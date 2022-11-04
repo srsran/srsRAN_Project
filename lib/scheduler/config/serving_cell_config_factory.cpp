@@ -43,8 +43,9 @@ coreset_configuration srsgnb::config_helpers::make_default_coreset_config(const 
   coreset_configuration cfg{};
   cfg.id = to_coreset_id(1);
   freq_resource_bitmap freq_resources(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
-  for (size_t i = 0; i < 6; ++i) {
-    freq_resources.set(i);
+  const size_t         NOF_PRBS_CORESET1 = 6;
+  for (size_t i = 0; i < NOF_PRBS_CORESET1; ++i) {
+    freq_resources.set(freq_resources.max_size() - i - 1, true);
   }
   cfg.set_freq_domain_resources(freq_resources);
   cfg.duration             = 1;
@@ -101,7 +102,7 @@ search_space_configuration srsgnb::config_helpers::make_default_common_search_sp
 {
   search_space_configuration cfg = make_default_search_space_zero_config();
   cfg.id                         = to_search_space_id(1);
-  cfg.nof_candidates             = {1, 1, 1, 0, 0};
+  cfg.nof_candidates             = {0, 2, 1, 0, 0};
   cfg.monitoring_symbols_within_slot.emplace();
   cfg.monitoring_symbols_within_slot->set(cfg.monitoring_symbols_within_slot->size() - 1, true);
   return cfg;
@@ -226,7 +227,7 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config()
   pucch_cfg.pucch_res_set.emplace_back();
   pucch_cfg.pucch_res_set.back().pucch_res_set_id = 0;
   pucch_cfg.pucch_res_set.back().pucch_res_id_list.emplace_back(0);
-  pucch_cfg.pucch_res_set.back().pucch_res_id_list.emplace_back(1);
+
   // >>> PUCCH resource 0.
   pucch_resource res_basic{.res_id                 = 0,
                            .starting_prb           = 51,
@@ -262,6 +263,15 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config()
   return ul_config;
 }
 
+pdsch_serving_cell_config srsgnb::config_helpers::make_default_pdsch_serving_cell_config()
+{
+  pdsch_serving_cell_config serv_cell;
+  serv_cell.nof_harq_proc   = pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n16;
+  serv_cell.max_mimo_layers = 2;
+
+  return serv_cell;
+}
+
 serving_cell_config srsgnb::config_helpers::make_default_initial_ue_serving_cell_config()
 {
   serving_cell_config serv_cell;
@@ -272,13 +282,15 @@ serving_cell_config srsgnb::config_helpers::make_default_initial_ue_serving_cell
   // >> Add CORESET#1.
   pdcch_cfg.coresets.push_back(make_default_coreset_config());
   pdcch_cfg.coresets[0].id = to_coreset_id(1);
+  pdcch_cfg.coresets[0].pdcch_dmrs_scrambling_id.emplace();
+  pdcch_cfg.coresets[0].pdcch_dmrs_scrambling_id.value() = 0;
   // >> Add SearchSpace#2.
   pdcch_cfg.search_spaces.push_back(make_default_ue_search_space_config());
 
   // > PDSCH-Config.
   serv_cell.init_dl_bwp.pdsch_cfg.emplace();
   pdsch_config& pdsch_cfg            = serv_cell.init_dl_bwp.pdsch_cfg.value();
-  pdsch_cfg.data_scrambling_id_pdsch = 0;
+  pdsch_cfg.data_scrambling_id_pdsch.emplace(0);
   pdsch_cfg.pdsch_mapping_type_a_dmrs.emplace();
   dmrs_downlink_config& dmrs_type_a = pdsch_cfg.pdsch_mapping_type_a_dmrs.value();
   dmrs_type_a.additional_positions.emplace(dmrs_additional_positions::pos1);
@@ -295,6 +307,9 @@ serving_cell_config srsgnb::config_helpers::make_default_initial_ue_serving_cell
 
   // > UL Config.
   serv_cell.ul_config.emplace(make_default_ue_uplink_config());
+
+  // > pdsch-ServingCellConfig.
+  serv_cell.pdsch_serv_cell_cfg.emplace(make_default_pdsch_serving_cell_config());
 
   return serv_cell;
 }

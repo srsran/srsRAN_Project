@@ -40,6 +40,8 @@ ssb_configuration make_default_ssb_config(const du_cell_config_master_params& pa
 
 uplink_config make_default_ue_uplink_config();
 
+pdsch_serving_cell_config make_default_pdsch_serving_cell_config();
+
 serving_cell_config make_default_initial_ue_serving_cell_config();
 
 } // namespace config_helpers
