@@ -42,10 +42,7 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   unsigned nof_pusch_symbols = pdu.freq_alloc.get_nof_rb() * nof_re_per_prb * pdu.nof_tx_layers;
 
   // Calculate number of LLR.
-  unsigned nof_codeword_llr  = nof_pusch_symbols * get_bits_per_symbol(pdu.modulation);
-  unsigned nof_harq_ack_llr  = 0;
-  unsigned nof_csi_part1_llr = 0;
-  unsigned nof_csi_part2_llr = 0;
+  unsigned nof_codeword_llr = nof_pusch_symbols * get_bits_per_symbol(pdu.modulation);
 
   // Get RB mask relative to Point A. It assumes PUSCH is never interleaved.
   bounded_bitset<MAX_RB> rb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
@@ -70,10 +67,7 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   result.csi = ch_estimate.get_channel_state_information();
 
   // Prepare LLR buffers.
-  span<log_likelihood_ratio> codeword_llr  = span<log_likelihood_ratio>(temp_codeword_llr).first(nof_codeword_llr);
-  span<log_likelihood_ratio> harq_ack_llr  = span<log_likelihood_ratio>(temp_harq_ack_llr).first(nof_harq_ack_llr);
-  span<log_likelihood_ratio> csi_part1_llr = span<log_likelihood_ratio>(temp_csi_part1_llr).first(nof_csi_part1_llr);
-  span<log_likelihood_ratio> csi_part2_llr = span<log_likelihood_ratio>(temp_csi_part2_llr).first(nof_csi_part2_llr);
+  span<log_likelihood_ratio> codeword_llr = span<log_likelihood_ratio>(temp_codeword_llr).first(nof_codeword_llr);
 
   // Demodulate.
   pusch_demodulator::configuration demod_config;
@@ -88,7 +82,7 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   demod_config.n_id                        = pdu.n_id;
   demod_config.nof_tx_layers               = pdu.nof_tx_layers;
   demod_config.rx_ports                    = pdu.rx_ports;
-  demodulator->demodulate(codeword_llr, harq_ack_llr, csi_part1_llr, csi_part2_llr, grid, ch_estimate, demod_config);
+  demodulator->demodulate(codeword_llr, grid, ch_estimate, demod_config);
 
   // Decode codeword if present.
   if (pdu.codeword) {

@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "srsgnb/phy/upper/channel_modulation/demodulation_mapper.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_demodulator.h"
 #include "srsgnb/phy/upper/equalization/channel_equalizer.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
@@ -42,9 +43,6 @@ public:
 
   // See interface for the documentation.
   void demodulate(span<log_likelihood_ratio>  data,
-                  span<log_likelihood_ratio>  harq_ack,
-                  span<log_likelihood_ratio>  csi_part1,
-                  span<log_likelihood_ratio>  csi_part2,
                   const resource_grid_reader& grid,
                   const channel_estimate&     estimates,
                   const configuration&        config) override;
@@ -121,9 +119,12 @@ private:
         // Get a view of the channel estimates buffer for a single Rx port.
         span<cf_t> ch_port_buffer = data_estimates.get_view<>({i_port, i_layer});
 
-        for (unsigned i_symbol = 0; i_symbol != config.nof_symbols; ++i_symbol) {
+        for (unsigned i_symbol     = config.start_symbol_index,
+                      i_symbol_end = config.start_symbol_index + config.nof_symbols;
+             i_symbol != i_symbol_end;
+             ++i_symbol) {
           // Skip DM-RS estimates.
-          if (config.dmrs_symb_pos[i_symbol + config.start_symbol_index]) {
+          if (config.dmrs_symb_pos[i_symbol]) {
             continue;
           }
 
@@ -152,48 +153,11 @@ private:
     }
   }
 
-  /// \brief Extracts HARQ-ACK soft bits from the sequence of multiplexed data and control bits.
-  ///
-  /// See TS38.212 Section 6.2.7.
-  /// \param[out]    harq_ack Sequence of HARQ-ACK soft bits.
-  /// \param[in/out] data     Sequence of data soft bits (possibly multiplexed with control ones).
-  /// \param[in]     config   Configuration parameters.
-  /// \remark The elements of \c data corresponding to HARQ-ACK bits will be set to zero (i.e., fully indeterminate data
-  /// soft bit).
-  void
-  extract_harq_ack(span<log_likelihood_ratio> harq_ack, span<log_likelihood_ratio> data, const configuration& config)
-  {
-    // For now, do nothing.
-  }
-
-  /// \brief Extracts CSI Part1 soft bits from the sequence of multiplexed data and control bits.
-  ///
-  /// See TS38.212 Section 6.2.7.
-  /// \param[out]    csi_part1 Sequence of CSI Part1 soft bits.
-  /// \param[in/out] data      Sequence of data soft bits (possibly multiplexed with control ones).
-  /// \param[in]     config    Configuration parameters.
-  /// \remark The elements of \c data corresponding to CSI Part1 bits will be set to zero (i.e., fully indeterminate
-  /// data soft bit).
-  void extract_csi_part1(span<log_likelihood_ratio>& csi_part1,
-                         span<log_likelihood_ratio>& data,
-                         const configuration&        config)
-  {
-    // For now, do nothing.
-  }
-
-  /// \brief Extracts CSI Part2 soft bits from the sequence of multiplexed data and control bits.
-  ///
-  /// See TS38.212 Section 6.2.7.
-  /// \param[out]    csi_part1 Sequence of CSI Part2 soft bits.
-  /// \param[in/out] data      Sequence of data soft bits (possibly multiplexed with control ones).
-  /// \param[in]     config    Configuration parameters.
-  /// \remark The elements of \c data corresponding to CSI Part2 bits will be set to zero (i.e., fully indeterminate
-  /// data soft bit).
-  void
-  extract_csi_part2(span<log_likelihood_ratio> csi_part2, span<log_likelihood_ratio> data, const configuration& config)
-  {
-    // For now, do nothing.
-  }
+  /// \brief Reverses the scrambling of the received soft bits described by TS38.211 Section 6.3.1.1.
+  /// \param[out] out   Result of the process or reversing the scrambling.
+  /// \param[in] in     Input soft bits to descramble.
+  /// \param[in] config PUSCH demodulator configuration.
+  void descramble(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in, const configuration& config);
 
   /// Channel equalization component, also in charge of combining contributions of all receive antenna ports.
   std::unique_ptr<channel_equalizer> equalizer;

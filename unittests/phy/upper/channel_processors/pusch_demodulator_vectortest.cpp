@@ -42,6 +42,12 @@ std::ostream& operator<<(std::ostream& os, test_case_t test_case)
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, span<const log_likelihood_ratio> llr)
+{
+  fmt::print(os, "{}", llr);
+  return os;
+}
+
 } // namespace srsgnb
 
 class PuschDemodulatorFixture : public ::testing::TestWithParam<PuschDemodulatorParams>
@@ -51,9 +57,6 @@ protected:
   std::unique_ptr<resource_grid>     grid;
   pusch_demodulator::configuration   config;
   std::vector<log_likelihood_ratio>  sch_expected;
-  std::vector<log_likelihood_ratio>  harq_ack_expected;
-  std::vector<log_likelihood_ratio>  csi_part1_expected;
-  std::vector<log_likelihood_ratio>  csi_part2_expected;
 
   void SetUp() override
   {
@@ -115,15 +118,6 @@ protected:
 
     // Prepare SCH.
     sch_expected = test_case.sch_data.read();
-
-    // Prepare SCH data.
-    // harq_ack_expected = test_case.harq_ack.read();
-
-    // Prepare CSI part 1 data.
-    // csi_part1_expected = test_case.csi_part1.read();
-
-    // Prepare CSI part 2 data.
-    // csi_part2_expected = test_case.csi_part2.read();
   }
 
   ~PuschDemodulatorFixture() = default;
@@ -133,10 +127,14 @@ TEST_P(PuschDemodulatorFixture, PuschProcessorUnittest)
 {
   const test_case_t& test_case = GetParam();
 
+  if ((config.dmrs_config_type != dmrs_type::TYPE1) || (config.nof_cdm_groups_without_data != 2)) {
+    GTEST_SKIP();
+  }
+
   // Prepare channel estimates.
   channel_estimate::channel_estimate_dimensions ce_dims;
-  ce_dims.nof_prb       = config.rb_mask.count();
-  ce_dims.nof_symbols   = config.nof_symbols;
+  ce_dims.nof_prb       = config.rb_mask.size();
+  ce_dims.nof_symbols   = MAX_NSYMB_PER_SLOT;
   ce_dims.nof_rx_ports  = config.rx_ports.size();
   ce_dims.nof_tx_layers = config.nof_tx_layers;
   channel_estimate chan_estimates(ce_dims);
@@ -149,16 +147,11 @@ TEST_P(PuschDemodulatorFixture, PuschProcessorUnittest)
   chan_estimates.set_noise_variance(test_case.context.noise_var, 0, 0);
 
   std::vector<log_likelihood_ratio> sch_data(sch_expected.size());
-  std::vector<log_likelihood_ratio> harq_ack(harq_ack_expected.size());
-  std::vector<log_likelihood_ratio> csi_part1(csi_part1_expected.size());
-  std::vector<log_likelihood_ratio> csi_part2(csi_part2_expected.size());
 
-  demodulator->demodulate(sch_data, harq_ack, csi_part1, csi_part2, *grid, chan_estimates, config);
+  demodulator->demodulate(sch_data, *grid, chan_estimates, config);
 
   // Assert shared channel data matches.
-  for (unsigned i_sch_data = 0, i_sch_data_end = sch_expected.size(); i_sch_data != i_sch_data_end; ++i_sch_data) {
-    ASSERT_EQ(sch_expected[i_sch_data], sch_data[i_sch_data]);
-  }
+  ASSERT_EQ(span<const log_likelihood_ratio>(sch_expected), span<const log_likelihood_ratio>(sch_data));
 }
 
 // Creates test suite that combines all possible parameters.

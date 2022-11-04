@@ -29,19 +29,13 @@ public:
   };
 
   void demodulate(span<log_likelihood_ratio>  data,
-                  span<log_likelihood_ratio>  harq_ack,
-                  span<log_likelihood_ratio>  csi_part1,
-                  span<log_likelihood_ratio>  csi_part2,
                   const resource_grid_reader& grid,
                   const channel_estimate&     estimates,
                   const configuration&        config) override
   {
     entries.emplace_back();
-    entry_t& entry = entries.back();
-    entry.data     = data;
-    entry.harq_ack.resize(harq_ack.size());
-    entry.csi_part1.resize(csi_part1.size());
-    entry.csi_part2.resize(csi_part2.size());
+    entry_t& entry  = entries.back();
+    entry.data      = data;
     entry.grid      = &grid;
     entry.estimates = &estimates;
     entry.config    = config;

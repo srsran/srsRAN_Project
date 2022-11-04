@@ -33,9 +33,11 @@ public:
 
   /// Comparison to value.
   constexpr bool operator==(options opt) const { return value == opt; }
+  constexpr bool operator!=(options opt) const { return value != opt; }
 
   /// Comparison to other instance.
   constexpr bool operator==(const dmrs_type& other) const { return value == other.value; }
+  constexpr bool operator!=(const dmrs_type& other) const { return value != other.value; }
 
   /// \brief Calculates the number of resource elements that carry DMRS for PDSCH or PUSCH per resource block and
   /// symbol.

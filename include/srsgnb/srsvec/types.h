@@ -12,18 +12,18 @@
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <cstdint>
 
-/**
- * The supported vector data types are:
- * - srsgnb::span<cf_t>: For complex float vectors
- * - srsgnb::span<float>: For float vectors
- * - srsgnb::span<int16_t>: For signed 16 bit integer vectors
- * - srsgnb::span<int8_t>: For signed 8 bit integer vectors
- * - srsgnb::span<uint8_t>: For unsigned 8 bit integer vectors
- *
- * To make the span constant follow srsgnb::span<const T>
- *
- */
+// The supported vector data types are:
+// - srsgnb::span<cf_t>: For complex float vectors
+// - srsgnb::span<float>: For float vectors
+// - srsgnb::span<int16_t>: For signed 16 bit integer vectors
+// - srsgnb::span<int8_t>: For signed 8 bit integer vectors
+// - srsgnb::span<uint8_t>: For unsigned 8 bit integer vectors
+//
+// To make the span constant follow srsgnb::span<const T>
 
-#define srsgnb_srsvec_assert_size(X, Y) assert(X.size() == Y.size())
+#define srsgnb_srsvec_assert_size(X, Y)                                                                                \
+  srsgnb_assert(                                                                                                       \
+      X.size() == Y.size(), "The size " #X " (i.e., {}) and " #Y " (i.e., {}) must be equal.", X.size(), Y.size())

@@ -17,9 +17,6 @@
 using namespace srsgnb;
 
 void pusch_demodulator_impl::demodulate(span<log_likelihood_ratio>  data,
-                                        span<log_likelihood_ratio>  harq_ack,
-                                        span<log_likelihood_ratio>  csi_part1,
-                                        span<log_likelihood_ratio>  csi_part2,
                                         const resource_grid_reader& grid,
                                         const channel_estimate&     estimates,
                                         const configuration&        config)
@@ -50,12 +47,9 @@ void pusch_demodulator_impl::demodulate(span<log_likelihood_ratio>  data,
     noise_var_estimates[i_port] = estimates.get_noise_variance(i_port, 0);
   }
 
-  // Get PUSCH data to DM-RS scaling ratio in linear.
-  float scaling = convert_dB_to_amplitude(get_sch_to_dmrs_ratio_dB(config.nof_cdm_groups_without_data));
-
   // Equalize channels and, for each Tx layer, combine contribution from all Rx antenna ports.
   equalizer->equalize(
-      eq_re, eq_noise_vars, ch_re, ch_estimates, span<float>(noise_var_estimates).first(nof_rx_ports), scaling);
+      eq_re, eq_noise_vars, ch_re, ch_estimates, span<float>(noise_var_estimates).first(nof_rx_ports), 1.0F);
 
   // Assert that the number of RE returned by the channel equalizer matches the expected number of LLR.
   srsgnb_assert(nof_re_port * config.nof_tx_layers == data.size() / get_bits_per_symbol(config.modulation),
@@ -74,17 +68,54 @@ void pusch_demodulator_impl::demodulate(span<log_likelihood_ratio>  data,
   demapper->demodulate_soft(data, eq_re_flat, eq_vars_flat, config.modulation);
 
   // Descramble.
+  descramble(data, data, config);
+}
+
+void pusch_demodulator_impl::descramble(span<srsgnb::log_likelihood_ratio>              out,
+                                        span<const srsgnb::log_likelihood_ratio>        in,
+                                        const srsgnb::pusch_demodulator::configuration& config)
+{
+  // Initialise sequence.
   unsigned c_init = config.rnti * pow2(15) + config.n_id;
   descrambler->init(c_init);
-  // Temporarily, UCI placeholders for 1-bit HARQ-ACK transmissions are not considered.
-  descrambler->apply_xor(data, data);
 
-  // Extract HARQ ACK soft bits.
-  extract_harq_ack(harq_ack, data, config);
+  // Keeps the index of the previous placeholder.
+  unsigned last_placeholder = 0;
 
-  // Extract CSI Part1 soft bits.
-  extract_csi_part1(csi_part1, data, config);
+  // For each placeholder...
+  config.placeholders.for_each(config.modulation, config.nof_tx_layers, [&](unsigned placeholder) {
+    // A repetition placeholder index must be greater than 1 index greater than the previous one.
+    srsgnb_assert(placeholder > last_placeholder + 1,
+                  "Placeholder must be in ascending order with steps greater than 1.");
 
-  // Extract CSI Part2 soft bits.
-  extract_csi_part2(csi_part2, data, config);
+    // Calculate the number of elements to process, exclude the element before the placeholder.
+    unsigned nof_elements = placeholder - last_placeholder - 1;
+
+    // Update last placeholder.
+    last_placeholder = placeholder + 1;
+
+    // Applies XOR until the element before the placeholder.
+    descrambler->apply_xor(out.first(nof_elements), in.first(nof_elements));
+    out = out.last(out.size() - nof_elements);
+    in  = in.last(in.size() - nof_elements);
+
+    // Extracts the mask of the next element.
+    std::array<uint8_t, 1> temp_in  = {};
+    std::array<uint8_t, 1> temp_out = {};
+    descrambler->apply_xor_bit(temp_out, temp_in);
+    bool toggle = (temp_in.front() != temp_out.front());
+
+    // Discards scrambling chip.
+    descrambler->advance(1);
+
+    // Process repetition placeholder.
+    for (unsigned i_llr = 0; i_llr != 2; ++i_llr) {
+      out.front() = toggle ? -in.front() : in.front();
+      out         = out.last(out.size() - 1);
+      in          = in.last(in.size() - 1);
+    }
+  });
+
+  // Process remaining data.
+  descrambler->apply_xor(out, in);
 }

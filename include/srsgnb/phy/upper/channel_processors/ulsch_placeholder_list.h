@@ -32,6 +32,15 @@ public:
   /// transmission.
   static constexpr unsigned MAX_NOF_PLACEHOLDERS = pusch_constants::MAX_NRE_PER_RB * MAX_RB;
 
+  /// Default constructor: builds an empty placeholder list.
+  ulsch_placeholder_list() = default;
+
+  /// Construct a list from a list containing RE indexes.
+  ulsch_placeholder_list(const std::initializer_list<unsigned>& list)
+  {
+    std::copy_n(list.begin(), list.size(), std::back_inserter(re_indexes));
+  }
+
   /// Appends a resource element index that contains a repetition placeholder.
   void push_back(unsigned re_index)
   {

@@ -13,16 +13,12 @@
 
 #pragma once
 
-#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/upper/channel_estimation.h"
-#include "srsgnb/phy/upper/channel_modulation/demodulation_mapper.h"
+#include "srsgnb/phy/upper/channel_processors/ulsch_placeholder_list.h"
 #include "srsgnb/phy/upper/dmrs_mapping.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/phy/upper/rb_allocation.h"
-#include "srsgnb/phy/upper/re_pattern.h"
-#include "srsgnb/ran/pusch/pusch_constants.h"
-#include "srsgnb/ran/uci/uci_constants.h"
 
 namespace srsgnb {
 
@@ -93,6 +89,8 @@ public:
     unsigned n_id;
     /// Number of transmit layers.
     unsigned nof_tx_layers;
+    /// UL-SCH Scrambling placeholder list (See \ref ulsch_placeholder_list for more information).
+    ulsch_placeholder_list placeholders;
     /// Receive antenna port indices the PUSCH transmission is mapped to.
     static_vector<uint8_t, MAX_PORTS> rx_ports;
   };
@@ -103,26 +101,17 @@ public:
   /// \brief Demodulates a PUSCH transmission.
   ///
   /// Computes log-likelihood ratios from channel samples by reversing all the operations described in TS38.211 Section
-  /// 6.3.1. The method also extracts control bits that were multiplexed with PUSCH data as per TS38.212 Section 6.2.7.
+  /// 6.3.1.
   ///
   /// \remarks
-  /// - The size of \c data determines the codeword size in LLR.
-  /// - The size of \c harq_ack determines the number of LLR for HARQ-ACK.
-  /// - The size of \c csi_part1 determines the number of LLR for CSI Part1.
-  /// - The size of \c csi_part2 determines the number of LLR for CSI Part2.
+  /// - The size of \c data determines the codeword size in soft bits.
   /// - The total number of LLR must be consistent with the number of RE allocated to the transmission.
   ///
-  /// \param[out] data      Codeword LLR destination buffer.
-  /// \param[out] harq_ack  HARQ-ACK LLR destination buffer.
-  /// \param[out] csi_part1 CSI Part1 LLR destination buffer.
-  /// \param[out] csi_part2 CSI Part2 LLR destination buffer.
+  /// \param[out] codeword  Codeword soft bits destination buffer.
   /// \param[in]  grid      Resource grid for the current slot.
   /// \param[in]  estimates Channel estimates for the REs allocated to the PUSCH transmission.
   /// \param[in]  config    Configuration parameters.
-  virtual void demodulate(span<log_likelihood_ratio>  data,
-                          span<log_likelihood_ratio>  harq_ack,
-                          span<log_likelihood_ratio>  csi_part1,
-                          span<log_likelihood_ratio>  csi_part2,
+  virtual void demodulate(span<log_likelihood_ratio>  codeword,
                           const resource_grid_reader& grid,
                           const channel_estimate&     estimates,
                           const configuration&        config) = 0;
