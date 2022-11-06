@@ -36,7 +36,7 @@ TEST(harq_entity, when_all_harqs_are_allocated_harq_entity_cannot_find_empty_har
 
   for (unsigned i = 0; i != nof_harqs; ++i) {
     ASSERT_NE(harq_ent.find_empty_dl_harq()->new_tx(0, sl_tx, ack_delay, 4), nullptr);
-    ASSERT_NE(harq_ent.find_empty_ul_harq()->new_tx(0, sl_tx, 4), nullptr);
+    ASSERT_NE(harq_ent.find_empty_ul_harq()->new_tx(sl_tx, 4), nullptr);
   }
   ASSERT_EQ(harq_ent.find_empty_dl_harq(), nullptr);
   ASSERT_EQ(harq_ent.find_empty_ul_harq(), nullptr);

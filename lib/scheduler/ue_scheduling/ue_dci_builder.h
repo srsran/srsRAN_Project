@@ -53,7 +53,6 @@ void build_dci_f0_0_c_rnti(dci_ul_info&                       dci,
                            search_space_configuration::type_t ss_type,
                            const prb_interval&                prbs,
                            unsigned                           time_resource,
-                           const ul_harq_process&             h_ul,
-                           unsigned                           tb_idx);
+                           const ul_harq_process&             h_ul);
 
 } // namespace srsgnb

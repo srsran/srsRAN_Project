@@ -198,7 +198,7 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
         continue;
       }
       // TODO: Fetch TB.
-      pending_msg3.harq.ack_info(0, crc.tb_crc_success);
+      pending_msg3.harq.crc_info(crc.tb_crc_success);
     }
   }
 
@@ -514,7 +514,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     pusch.pusch_cfg.num_cb                     = 0;
 
     // Allocate Msg3 UL HARQ
-    ul_harq_info_params* h_grant = pending_msg3.harq.new_tx(0, msg3_alloc.slot, max_msg3_retxs);
+    ul_harq_info_params* h_grant = pending_msg3.harq.new_tx(msg3_alloc.slot, max_msg3_retxs);
     srsgnb_sanity_check(h_grant != nullptr, "Unexpected HARQ allocation return");
     h_grant->dci_cfg_type = dci_ul_rnti_config_type::tc_rnti_f0_0;
     h_grant->bwp_id       = to_bwp_id(0);
@@ -542,7 +542,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   grant.scs                   = bwp_ul_cmn.scs;
   unsigned pusch_td_res_index = 0; // TODO: Derive PUSCH TD res index.
   grant.symbols               = get_pusch_cfg().pusch_td_alloc_list[pusch_td_res_index].symbols;
-  grant.crbs                  = prb_to_crb(bwp_ul_cmn, msg3_ctx.harq.last_tx_params(0).prbs.prbs());
+  grant.crbs                  = prb_to_crb(bwp_ul_cmn, msg3_ctx.harq.last_tx_params().prbs.prbs());
   if (pusch_alloc.ul_res_grid.collides(grant)) {
     // Find available symbol x RB resources.
     // TODO
@@ -566,7 +566,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
 
   // Allocate new retx in the HARQ.
   prb_interval         prbs    = crb_to_prb(bwp_ul_cmn, grant.crbs);
-  ul_harq_info_params* h_grant = msg3_ctx.harq.new_retx(0, pusch_alloc.slot);
+  ul_harq_info_params* h_grant = msg3_ctx.harq.new_retx(pusch_alloc.slot);
   if (h_grant == nullptr) {
     logger.warning("SCHED: Failed to schedule Msg3 retx");
     msg3_ctx.harq.reset();
@@ -594,7 +594,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   ul_info.pusch_cfg.tx_direct_current_location = 0; // TODO.
   ul_info.pusch_cfg.ul_freq_shift_7p5khz       = false;
   ul_info.pusch_cfg.mcs_table                  = pusch_mcs_table::qam64;
-  ul_info.pusch_cfg.mcs_index                  = msg3_ctx.harq.last_tx_params(0).mcs;
+  ul_info.pusch_cfg.mcs_index                  = msg3_ctx.harq.last_tx_params().mcs;
   sch_mcs_description mcs_config =
       pusch_mcs_get_config(ul_info.pusch_cfg.mcs_table, ul_info.pusch_cfg.mcs_index, false);
   ul_info.pusch_cfg.target_code_rate = mcs_config.target_code_rate;
@@ -646,7 +646,7 @@ void ra_scheduler::log_rar_helper(fmt::memory_buffer& fmtbuf, const rar_informat
                    prefix,
                    msg3.temp_crnti,
                    msg3.rapid,
-                   pending_msg3s[msg3.temp_crnti % MAX_NOF_MSG3].harq.last_tx_params(0).prbs.prbs(),
+                   pending_msg3s[msg3.temp_crnti % MAX_NOF_MSG3].harq.last_tx_params().prbs.prbs(),
                    msg3.ta);
     prefix = ", ";
   }

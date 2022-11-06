@@ -21,13 +21,35 @@
 
 namespace srsgnb {
 
+/// PDSCH-specific parameters stored in DL HARQ process.
+struct dl_harq_info_params {
+  dci_dl_rnti_config_type dci_cfg_type;
+  bwp_id_t                bwp_id;
+  prb_grant               prbs;
+  sch_mcs_index           mcs;
+  unsigned                tbs_bytes;
+};
+
+/// PUSCH-specific parameters stored in UL HARQ process.
+struct ul_harq_info_params {
+  dci_ul_rnti_config_type dci_cfg_type;
+  bwp_id_t                bwp_id;
+  prb_grant               prbs;
+  sch_mcs_index           mcs;
+  unsigned                tbs_bytes;
+};
+
 namespace detail {
 
 /// Basic class for HARQ processes: will be extended by DL and UL HARQ process classes
-template <typename GrantParams>
+template <bool IsDownlink>
 class harq_process
 {
-  constexpr static size_t MAX_NOF_TBS = 2;
+  /// Maximum number of Transport Blocks as per TS38.321, 5.3.2.1 and 5.4.2.1.
+  constexpr static size_t MAX_NOF_TBS = IsDownlink ? 2 : 1;
+
+  /// Parameters that can be stored in the HARQ process and used across retxs.
+  using grant_params = std::conditional_t<IsDownlink, dl_harq_info_params, ul_harq_info_params>;
 
 public:
   struct base_transport_block {
@@ -58,8 +80,11 @@ public:
     using state_t = typename base_transport_block::state_t;
 
     /// Grant parameters used for the last transport block transmission.
-    GrantParams grant = {};
+    grant_params grant = {};
   };
+
+  /// HARQ process id.
+  const harq_id_t id;
 
   /// \brief HARQ process constructor.
   /// \param h_id HARQ process ID.
@@ -73,33 +98,24 @@ public:
   void slot_indication(slot_point slot_tx);
 
   /// \brief Checks whether a specified TB is empty.
-  bool empty(unsigned tb_idx) const { return tb_array[tb_idx].empty(); }
-
-  /// \brief Checks whether the HARQ process has no TBs currently active.
-  bool empty() const
+  bool empty(unsigned tb_idx) const
   {
-    return std::all_of(tb_array.begin(), tb_array.end(), [](const transport_block& t) { return t.empty(); });
+    srsgnb_assert(tb_idx < tb_array.size(), "Invalid TB index={}", tb_idx);
+    return tb_array[tb_idx].empty();
   }
 
   /// \brief Checks whether specified TB has pending retx.
   bool has_pending_retx(unsigned tb_idx) const
   {
+    srsgnb_assert(tb_idx < tb_array.size(), "Invalid TB index ({} >= {})", tb_idx, tb_array.size());
     return tb_array[tb_idx].state == transport_block::state_t::pending_retx;
-  }
-
-  /// \brief Checks whether there is at least one TB with pending retx.
-  bool has_pending_retx() const
-  {
-    return std::any_of(tb_array.begin(), tb_array.end(), [](const transport_block& t) {
-      return t.state == transport_block::state_t::pending_retx;
-    });
   }
 
   /// \brief Current maximum value of retransmissions of a single TB.
   uint32_t max_nof_retxs() const { return max_retx; }
 
   /// \brief Access to the parameters used for the last TB transmission.
-  const GrantParams& last_tx_params(unsigned tb_idx) const
+  const grant_params& last_tx_params(unsigned tb_idx) const
   {
     srsgnb_assert(not empty(tb_idx), "TB {} is not active", tb_idx);
     return tb_array[tb_idx].grant;
@@ -134,42 +150,49 @@ public:
   }
 
   /// \brief Clear the contents of this HARQ process and reset it back to empty state.
-  void reset();
   void reset(unsigned tb_idx);
 
   /// \brief Updates the ACK state of the HARQ process.
   /// \return The number of bytes of the TB in case of ack==true, zero in case ack==false, and -1 if HARQ is inactive.
   int ack_info(uint32_t tb_idx, bool ack);
 
-  /// HARQ process id.
-  const harq_id_t id;
-
 protected:
-  GrantParams* new_tx_common(unsigned tb_idx, slot_point slot_tx, slot_point slot_ack, unsigned max_harq_retxs);
-  GrantParams* new_retx_common(unsigned tb_idx, slot_point slot_tx, slot_point slot_ack);
+  grant_params* new_tx_common(unsigned tb_idx, slot_point slot_tx, slot_point slot_ack, unsigned max_harq_retxs);
+  grant_params* new_retx_common(unsigned tb_idx, slot_point slot_tx, slot_point slot_ack);
 
-private:
-  const unsigned                           max_ack_wait_in_slots;
-  unsigned                                 max_retx = 1;
+  const unsigned max_ack_wait_in_slots;
+
+  /// Maximum number of retxs for the current TB.
+  unsigned max_retx = 1;
+
   std::array<transport_block, MAX_NOF_TBS> tb_array;
 };
 
 } // namespace detail
 
-/// PDSCH-specific parameters stored in DL HARQ process.
-struct dl_harq_info_params {
-  dci_dl_rnti_config_type dci_cfg_type;
-  bwp_id_t                bwp_id;
-  prb_grant               prbs;
-  sch_mcs_index           mcs;
-  unsigned                tbs_bytes;
-};
-
-class dl_harq_process : public detail::harq_process<dl_harq_info_params>
+class dl_harq_process : public detail::harq_process<true>
 {
+  using base_type = detail::harq_process<true>;
+
 public:
-  using harq_process<dl_harq_info_params>::transport_block;
-  using harq_process<dl_harq_info_params>::harq_process;
+  using base_type::transport_block;
+
+  using base_type::empty;
+  using base_type::harq_process;
+  using base_type::has_pending_retx;
+
+  /// \brief Checks whether the HARQ process has no TBs currently active.
+  bool empty() const { return base_type::empty(0) and base_type::empty(1); }
+
+  /// \brief Checks whether there is at least one TB with pending retx.
+  bool has_pending_retx() const { return base_type::has_pending_retx(0) or base_type::has_pending_retx(1); }
+
+  /// \brief Clear the contents of all TBs of this HARQ process and reset it back to empty state.
+  void reset()
+  {
+    base_type::reset(0);
+    base_type::reset(1);
+  }
 
   /// \brief Called on every new transmission. It marks this HARQ process as busy and stores respective TB
   /// information.
@@ -179,27 +202,53 @@ public:
   dl_harq_info_params* new_retx(unsigned tb_idx, slot_point pdsch_slot, unsigned k1);
 };
 
-/// PUSCH-specific parameters stored in UL HARQ process.
-struct ul_harq_info_params {
-  dci_ul_rnti_config_type dci_cfg_type;
-  bwp_id_t                bwp_id;
-  prb_grant               prbs;
-  sch_mcs_index           mcs;
-  unsigned                tbs_bytes;
-};
-
-class ul_harq_process : public detail::harq_process<ul_harq_info_params>
+class ul_harq_process : private detail::harq_process<false>
 {
+  using base_type = detail::harq_process<false>;
+
 public:
-  using detail::harq_process<ul_harq_info_params>::transport_block;
-  using detail::harq_process<ul_harq_info_params>::harq_process;
+  using base_type::transport_block;
+
+  using base_type::harq_process;
+  using base_type::id;
+  using base_type::max_nof_retxs;
+  using base_type::slot_indication;
+
+  /// \brief Checks whether the HARQ process is inactive.
+  bool empty() const { return base_type::empty(0); }
+
+  /// \brief Checks whether the UL HARQ process has a pending retx.
+  bool has_pending_retx() const { return base_type::has_pending_retx(0); }
+
+  /// \brief Number of ReTxs performed for the UL HARQ process.
+  unsigned nof_retxs() const { return base_type::nof_retxs(0); }
+
+  /// \brief Access to the parameters used for the last TB transmission.
+  const ul_harq_info_params& last_tx_params() const { return base_type::last_tx_params(0); }
+
+  /// \brief New Data Indication for the UL HARQ.
+  bool ndi() const { return base_type::ndi(0); }
+
+  /// \brief Last slot when PUSCH grant was scheduled.
+  slot_point slot_tx() const { return base_type::slot_tx(0); }
+
+  /// \brief Last slot when PUSCH grant was scheduled.
+  slot_point slot_ack() const { return base_type::slot_ack(0); }
+
+  /// \brief Processes CRC info for the UL HARQ process.
+  /// \return The number of bytes of the TB in case of ack==true, zero in case ack==false, and -1 if HARQ is inactive.
+  int crc_info(bool ack) { return base_type::ack_info(0, ack); }
+
+  /// \brief Processes CRC info for the UL HARQ process.
+  /// \return The number of bytes of the TB in case of ack==true, zero in case ack==false, and -1 if HARQ is inactive.
+  void reset() { base_type::reset(0); }
 
   /// \brief Called on every new transmission. It marks this HARQ process as busy and stores respective TB
   /// information.
-  ul_harq_info_params* new_tx(unsigned tb_idx, slot_point pusch_slot, unsigned max_harq_retxs);
+  ul_harq_info_params* new_tx(slot_point pusch_slot, unsigned max_harq_retxs);
 
   /// \brief Called on every HARQ retransmission. It updates the HARQ internal state accordingly.
-  ul_harq_info_params* new_retx(unsigned tb_idx, slot_point pusch_slot);
+  ul_harq_info_params* new_retx(slot_point pusch_slot);
 };
 
 /// This object handles the DL and UL HARQ processes for each UE's Component Carrier; therefore, for each UE, we
@@ -213,7 +262,7 @@ public:
   void slot_indication(slot_point slot_tx_);
 
   int dl_ack_info(uint32_t pid, uint32_t tb_idx, bool ack) { return dl_harqs[pid].ack_info(tb_idx, ack); }
-  int ul_crc_info(uint32_t pid, bool ack) { return ul_harqs[pid].ack_info(0, ack); }
+  int ul_crc_info(uint32_t pid, bool ack) { return ul_harqs[pid].crc_info(ack); }
 
   uint32_t               nof_dl_harqs() const { return dl_harqs.size(); }
   uint32_t               nof_ul_harqs() const { return ul_harqs.size(); }

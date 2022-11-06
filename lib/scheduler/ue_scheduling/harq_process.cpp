@@ -12,8 +12,8 @@
 
 namespace srsgnb {
 
-template <typename GrantParams>
-void detail::harq_process<GrantParams>::slot_indication(slot_point slot_tx)
+template <bool IsDownlink>
+void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
 {
   for (transport_block& tb : tb_array) {
     if (tb.state == transport_block::state_t::empty) {
@@ -34,8 +34,8 @@ void detail::harq_process<GrantParams>::slot_indication(slot_point slot_tx)
   }
 }
 
-template <typename GrantParams>
-int detail::harq_process<GrantParams>::ack_info(unsigned tb_idx, bool ack)
+template <bool IsDownlink>
+int detail::harq_process<IsDownlink>::ack_info(unsigned tb_idx, bool ack)
 {
   if (empty(tb_idx)) {
     return -1;
@@ -50,8 +50,8 @@ int detail::harq_process<GrantParams>::ack_info(unsigned tb_idx, bool ack)
   return ack ? tb_array[tb_idx].grant.tbs_bytes : 0;
 }
 
-template <typename GrantParams>
-void detail::harq_process<GrantParams>::reset(unsigned tb_idx)
+template <bool IsDownlink>
+void detail::harq_process<IsDownlink>::reset(unsigned tb_idx)
 {
   tb_array[tb_idx].ack_state = false;
   tb_array[tb_idx].state     = transport_block::state_t::empty;
@@ -59,19 +59,11 @@ void detail::harq_process<GrantParams>::reset(unsigned tb_idx)
   tb_array[tb_idx].grant     = {};
 }
 
-template <typename GrantParams>
-void detail::harq_process<GrantParams>::reset()
-{
-  for (unsigned i = 0; i != tb_array.size(); ++i) {
-    reset(i);
-  }
-}
-
-template <typename GrantParams>
-GrantParams* detail::harq_process<GrantParams>::new_tx_common(unsigned   tb_idx,
-                                                              slot_point slot_tx_,
-                                                              slot_point slot_ack_,
-                                                              unsigned   max_harq_retxs_)
+template <bool IsDownlink>
+auto detail::harq_process<IsDownlink>::new_tx_common(unsigned   tb_idx,
+                                                     slot_point slot_tx_,
+                                                     slot_point slot_ack_,
+                                                     unsigned   max_harq_retxs_) -> grant_params*
 {
   if (not empty(tb_idx)) {
     return nullptr;
@@ -85,9 +77,9 @@ GrantParams* detail::harq_process<GrantParams>::new_tx_common(unsigned   tb_idx,
   return &tb_array[tb_idx].grant;
 }
 
-template <typename GrantParams>
-GrantParams*
-detail::harq_process<GrantParams>::new_retx_common(unsigned tb_idx, slot_point slot_tx_, slot_point slot_ack_)
+template <bool IsDownlink>
+auto detail::harq_process<IsDownlink>::new_retx_common(unsigned tb_idx, slot_point slot_tx_, slot_point slot_ack_)
+    -> grant_params*
 {
   if (tb_array[tb_idx].state != transport_block::state_t::pending_retx) {
     return nullptr;
@@ -100,8 +92,9 @@ detail::harq_process<GrantParams>::new_retx_common(unsigned tb_idx, slot_point s
   return &tb_array[tb_idx].grant;
 }
 
-template class detail::harq_process<dl_harq_info_params>;
-template class detail::harq_process<ul_harq_info_params>;
+// Explicit template instantiation.
+template class detail::harq_process<true>;
+template class detail::harq_process<false>;
 
 dl_harq_info_params*
 dl_harq_process::new_tx(unsigned tb_idx, slot_point pdsch_slot, unsigned k1, unsigned max_harq_retxs)
@@ -114,14 +107,14 @@ dl_harq_info_params* dl_harq_process::new_retx(unsigned tb_idx, slot_point pdsch
   return harq_process::new_retx_common(tb_idx, pdsch_slot, pdsch_slot + k1);
 }
 
-ul_harq_info_params* ul_harq_process::new_tx(unsigned tb_idx, slot_point pusch_slot, unsigned max_harq_retxs)
+ul_harq_info_params* ul_harq_process::new_tx(slot_point pusch_slot, unsigned max_harq_retxs)
 {
-  return harq_process::new_tx_common(tb_idx, pusch_slot, pusch_slot, max_harq_retxs);
+  return harq_process::new_tx_common(0, pusch_slot, pusch_slot, max_harq_retxs);
 }
 
-ul_harq_info_params* ul_harq_process::new_retx(unsigned tb_idx, slot_point pusch_slot)
+ul_harq_info_params* ul_harq_process::new_retx(slot_point pusch_slot)
 {
-  return harq_process::new_retx_common(tb_idx, pusch_slot, pusch_slot);
+  return harq_process::new_retx_common(0, pusch_slot, pusch_slot);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

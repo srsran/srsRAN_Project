@@ -267,7 +267,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   if (h_ul.empty()) {
     // It is a new tx.
     const static unsigned max_retx = 4; // TODO: Parameterize
-    h_params                       = h_ul.new_tx(0, pusch_alloc.slot, max_retx);
+    h_params                       = h_ul.new_tx(pusch_alloc.slot, max_retx);
     srsgnb_assert(h_params != nullptr, "Failed to allocate UL HARQ newtx");
     h_params->dci_cfg_type = dci_ul_rnti_config_type::c_rnti_f0_0;
     h_params->bwp_id       = ue_cc->active_bwp_id();
@@ -275,7 +275,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
     h_params->mcs          = 10; // TODO: Parameterize
   } else {
     // It is a retx.
-    h_params       = h_ul.new_retx(0, pusch_alloc.slot);
+    h_params       = h_ul.new_retx(pusch_alloc.slot);
     h_params->prbs = prbs;
     srsgnb_assert(h_params != nullptr, "Failed to allocate UL HARQ retx");
   }
@@ -289,8 +289,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                         ss_cfg->type,
                         prbs,
                         time_resource,
-                        h_ul,
-                        0);
+                        h_ul);
 
   // Fill PUSCH.
   pusch_alloc.result.ul.puschs.emplace_back();
@@ -303,7 +302,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   msg.pusch_cfg.tx_direct_current_location = 0;     // TODO.
   msg.pusch_cfg.ul_freq_shift_7p5khz       = false;
   msg.pusch_cfg.mcs_table                  = pusch_mcs_table::qam64;
-  msg.pusch_cfg.mcs_index                  = h_ul.last_tx_params(0).mcs;
+  msg.pusch_cfg.mcs_index                  = h_ul.last_tx_params().mcs;
   sch_mcs_description mcs_config    = pusch_mcs_get_config(msg.pusch_cfg.mcs_table, msg.pusch_cfg.mcs_index, false);
   msg.pusch_cfg.qam_mod             = mcs_config.modulation;
   msg.pusch_cfg.target_code_rate    = mcs_config.target_code_rate;
@@ -316,7 +315,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   msg.pusch_cfg.dmrs_hopping_mode             = pusch_information::dmrs_hopping_mode::no_hopping; // TODO.
   msg.pusch_cfg.rv_index                      = pdcch->dci.c_rnti_f0_0.redundancy_version;
   msg.pusch_cfg.harq_id                       = h_ul.id;
-  msg.pusch_cfg.new_data                      = h_ul.nof_retxs(0) == 0;
+  msg.pusch_cfg.new_data                      = h_ul.nof_retxs() == 0;
   unsigned                  nof_oh_prb        = 0; // TODO.
   unsigned                  tb_scaling_field  = 0; // TODO.
   constexpr static unsigned nof_bits_per_byte = 8U;

@@ -132,7 +132,7 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
         crc_ind.crcs[i].ue_index, [this, crc = crc_ind.crcs[i]](ue_cell& ue_cc, event_logger& ev_logger) {
           ev_logger.enqueue("crc(ueId={},h_id={},value={})", crc.ue_index, crc.harq_id, crc.tb_crc_success);
           // TODO: Derive TB.
-          int tbs = ue_cc.harqs.ul_harq(crc.harq_id).ack_info(0, crc.tb_crc_success);
+          int tbs = ue_cc.harqs.ul_harq(crc.harq_id).crc_info(crc.tb_crc_success);
           if (tbs < 0) {
             logger.warning("SCHED: ACK for h_id={} that is inactive", crc.harq_id);
           }
