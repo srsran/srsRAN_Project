@@ -44,7 +44,9 @@ unsigned ue::pending_ul_newtx_bytes() const
     unsigned harq_bytes = 0;
     for (unsigned i = 0; i != ue_cc->harqs.nof_ul_harqs(); ++i) {
       const ul_harq_process& h_ul = ue_cc->harqs.ul_harq(i);
-      harq_bytes += h_ul.tbs();
+      if (not h_ul.empty(0)) {
+        harq_bytes += h_ul.last_tx_params(0).tbs_bytes;
+      }
     }
     pending_bytes -= std::min(pending_bytes, harq_bytes);
   }

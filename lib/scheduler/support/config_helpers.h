@@ -63,7 +63,7 @@ inline unsigned get_coreset_nof_cces(const coreset_configuration& cs_cfg)
 
 inline bool search_space_supports_dl_dci_format(const search_space_configuration& ss_cfg, dci_dl_format dci_fmt)
 {
-  if (ss_cfg.type == search_space_configuration::type::common) {
+  if (ss_cfg.type == search_space_configuration::type_t::common) {
     switch (dci_fmt) {
       case dci_dl_format::f1_0:
         return ss_cfg.common.f0_0_and_f1_0;

@@ -14,6 +14,7 @@
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/tbs_calculator.h"
+#include "../ue_scheduling/ue_dci_builder.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 
 using namespace srsgnb;
@@ -513,8 +514,12 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     pusch.pusch_cfg.num_cb                     = 0;
 
     // Allocate Msg3 UL HARQ
-    bool success = pending_msg3.harq.new_tx(msg3_alloc.slot, prbs, msg3_info.mcs, max_msg3_retxs);
-    srsgnb_sanity_check(success, "Unexpected HARQ allocation return");
+    ul_harq_info_params* h_grant = pending_msg3.harq.new_tx(0, msg3_alloc.slot, max_msg3_retxs);
+    srsgnb_sanity_check(h_grant != nullptr, "Unexpected HARQ allocation return");
+    h_grant->dci_cfg_type = dci_ul_rnti_config_type::tc_rnti_f0_0;
+    h_grant->bwp_id       = to_bwp_id(0);
+    h_grant->mcs          = msg3_info.mcs;
+    h_grant->prbs         = prbs;
   }
 }
 
@@ -537,7 +542,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   grant.scs                   = bwp_ul_cmn.scs;
   unsigned pusch_td_res_index = 0; // TODO: Derive PUSCH TD res index.
   grant.symbols               = get_pusch_cfg().pusch_td_alloc_list[pusch_td_res_index].symbols;
-  grant.crbs                  = prb_to_crb(bwp_ul_cmn, msg3_ctx.harq.prbs().prbs());
+  grant.crbs                  = prb_to_crb(bwp_ul_cmn, msg3_ctx.harq.last_tx_params(0).prbs.prbs());
   if (pusch_alloc.ul_res_grid.collides(grant)) {
     // Find available symbol x RB resources.
     // TODO
@@ -560,32 +565,22 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   pusch_alloc.ul_res_grid.fill(grant);
 
   // Allocate new retx in the HARQ.
-  prb_interval prbs = crb_to_prb(bwp_ul_cmn, grant.crbs);
-  if (not msg3_ctx.harq.new_retx(pusch_alloc.slot, prbs)) {
+  prb_interval         prbs    = crb_to_prb(bwp_ul_cmn, grant.crbs);
+  ul_harq_info_params* h_grant = msg3_ctx.harq.new_retx(0, pusch_alloc.slot);
+  if (h_grant == nullptr) {
     logger.warning("SCHED: Failed to schedule Msg3 retx");
     msg3_ctx.harq.reset();
     return;
   }
+  h_grant->prbs = prbs;
 
   // Fill DCI.
-  pdcch->dci.type         = dci_ul_rnti_config_type::tc_rnti_f0_0;
-  pdcch->dci.tc_rnti_f0_0 = {};
-  dci_sizes dci_sz        = get_dci_sizes(dci_size_config{cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
-                                                   cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
-                                                   bwp_ul_cmn.crbs.length(),
-                                                   bwp_ul_cmn.crbs.length()});
-  pdcch->dci.tc_rnti_f0_0.payload_size       = dci_sz.format0_0_common_size;
-  pdcch->dci.tc_rnti_f0_0.N_rb_ul_bwp        = bwp_ul_cmn.crbs.length();
-  pdcch->dci.tc_rnti_f0_0.N_ul_hop           = 0; // TODO.
-  pdcch->dci.tc_rnti_f0_0.hopping_offset     = 0; // TODO.
-  pdcch->dci.tc_rnti_f0_0.frequency_resource = ra_frequency_type1_get_riv(
-      ra_frequency_type1_configuration{bwp_ul_cmn.crbs.length(), prbs.start(), prbs.length()});
-  pdcch->dci.tc_rnti_f0_0.time_resource            = pusch_td_res_index;
-  pdcch->dci.tc_rnti_f0_0.frequency_hopping_flag   = 0; // TODO.
-  pdcch->dci.tc_rnti_f0_0.modulation_coding_scheme = 0; // TODO.
-  static constexpr std::array<unsigned, 4> rv_idx  = {0, 2, 3, 1};
-  pdcch->dci.tc_rnti_f0_0.redundancy_version       = rv_idx[msg3_ctx.harq.nof_retx() % rv_idx.size()];
-  pdcch->dci.tc_rnti_f0_0.tpc_command              = 0;
+  build_dci_f0_0_tc_rnti(pdcch->dci,
+                         cfg.dl_cfg_common.init_dl_bwp,
+                         cfg.ul_cfg_common.init_ul_bwp.generic_params,
+                         prbs,
+                         pusch_td_res_index,
+                         msg3_ctx.harq);
 
   // Fill PUSCH.
   pusch_alloc.result.ul.puschs.emplace_back();
@@ -599,7 +594,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   ul_info.pusch_cfg.tx_direct_current_location = 0; // TODO.
   ul_info.pusch_cfg.ul_freq_shift_7p5khz       = false;
   ul_info.pusch_cfg.mcs_table                  = pusch_mcs_table::qam64;
-  ul_info.pusch_cfg.mcs_index                  = msg3_ctx.harq.mcs(0);
+  ul_info.pusch_cfg.mcs_index                  = msg3_ctx.harq.last_tx_params(0).mcs;
   sch_mcs_description mcs_config =
       pusch_mcs_get_config(ul_info.pusch_cfg.mcs_table, ul_info.pusch_cfg.mcs_index, false);
   ul_info.pusch_cfg.target_code_rate = mcs_config.target_code_rate;
@@ -612,7 +607,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   ul_info.pusch_cfg.dmrs                      = msg3_data[pusch_td_res_index].dmrs_info;
   ul_info.pusch_cfg.pusch_dmrs_id             = cfg.pci;
   ul_info.pusch_cfg.dmrs_hopping_mode         = pusch_information::dmrs_hopping_mode::no_hopping; // TODO.
-  ul_info.pusch_cfg.rv_index                  = rv_idx[msg3_ctx.harq.nof_retx() % rv_idx.size()];
+  ul_info.pusch_cfg.rv_index                  = pdcch->dci.tc_rnti_f0_0.redundancy_version;
   ul_info.pusch_cfg.harq_id                   = msg3_ctx.harq.id;
   ul_info.pusch_cfg.new_data                  = false;
   unsigned                  nof_oh_prb        = 0; // TODO.
@@ -632,7 +627,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   ul_info.pusch_cfg.num_cb = 0;
 
   // Set the number of bytes of the TB.
-  msg3_ctx.harq.set_tbs(ul_info.pusch_cfg.tb_size_bytes);
+  h_grant->tbs_bytes = ul_info.pusch_cfg.tb_size_bytes;
 }
 
 void ra_scheduler::log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const
@@ -651,7 +646,7 @@ void ra_scheduler::log_rar_helper(fmt::memory_buffer& fmtbuf, const rar_informat
                    prefix,
                    msg3.temp_crnti,
                    msg3.rapid,
-                   pending_msg3s[msg3.temp_crnti % MAX_NOF_MSG3].harq.prbs().prbs(),
+                   pending_msg3s[msg3.temp_crnti % MAX_NOF_MSG3].harq.last_tx_params(0).prbs.prbs(),
                    msg3.ta);
     prefix = ", ";
   }

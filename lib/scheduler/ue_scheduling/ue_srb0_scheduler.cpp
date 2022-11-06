@@ -13,7 +13,7 @@
 #include "../support/dmrs_helpers.h"
 #include "../support/prbs_calculator.h"
 #include "../support/tbs_calculator.h"
-#include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
+#include "ue_dci_builder.h"
 
 using namespace srsgnb;
 
@@ -191,64 +191,65 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   // Add new DL UE Grant.
   pdsch_alloc.result.dl.ue_grants.emplace_back();
 
-  // Allocate UE DL HARQ.
-  slot_point uci_slot = pdsch_alloc.slot + k1;
-
-  // TODO: Parameterize.
-  const static unsigned max_retx = 4;
-  bool                  success  = h_dl->new_tx(pdsch_alloc.slot, uci_slot, ue_grant_prbs, mcs_idx, max_retx);
-  srsgnb_assert(success, "Failed to allocate DL HARQ newtx");
-
-  fill_srb0_grant(
-      u, *h_dl, *pdcch, pdsch_alloc.result.dl.ue_grants.back(), pucch_grant, pdsch_time_res, k1, ue_grant_prbs);
+  fill_srb0_grant(u,
+                  pdsch_alloc.slot,
+                  *h_dl,
+                  *pdcch,
+                  pdsch_alloc.result.dl.ue_grants.back(),
+                  pucch_grant,
+                  pdsch_time_res,
+                  k1,
+                  mcs_idx,
+                  ue_grant_prbs);
 
   return true;
 }
 
 void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
-                                        harq_process&         h_dl,
+                                        slot_point            pdsch_slot,
+                                        dl_harq_process&      h_dl,
                                         pdcch_dl_information& pdcch,
                                         dl_msg_alloc&         msg,
                                         pucch_harq_ack_grant& pucch,
                                         unsigned              pdsch_time_res,
                                         unsigned              k1,
+                                        sch_mcs_index         mcs_idx,
                                         const prb_interval&   ue_grant_prbs)
 {
   constexpr static unsigned nof_layers = 1;
 
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(pdsch_time_res);
 
+  // Allocate DL HARQ.
+  // TODO: Parameterize.
+  const static unsigned max_retx = 4;
+  dl_harq_info_params*  h_grant  = h_dl.new_tx(0, pdsch_slot, k1, max_retx);
+  srsgnb_assert(h_grant != nullptr, "Failed to allocate DL HARQ newtx");
+  h_grant->dci_cfg_type = dci_dl_rnti_config_type::tc_rnti_f1_0;
+  h_grant->prbs         = ue_grant_prbs;
+  h_grant->mcs          = mcs_idx;
+  h_grant->bwp_id       = to_bwp_id(0);
+
   // Fill DL PDCCH DCI.
-  pdcch.dci.type                     = dci_dl_rnti_config_type::tc_rnti_f1_0;
-  pdcch.dci.tc_rnti_f1_0             = {};
-  dci_1_0_tc_rnti_configuration& dci = pdcch.dci.tc_rnti_f1_0;
-  dci.N_rb_dl_bwp                    = initial_active_dl_bwp.crbs.length();
-  dci.frequency_resource             = ra_frequency_type1_get_riv(
-      ra_frequency_type1_configuration{dci.N_rb_dl_bwp, ue_grant_prbs.start(), ue_grant_prbs.length()});
-  dci.time_resource = pdsch_time_res;
-  // TODO.
-  dci.vrb_to_prb_mapping       = 0;
-  dci.modulation_coding_scheme = h_dl.mcs(0).to_uint();
-  dci.new_data_indicator       = 1;
-  dci.redundancy_version       = 0;
-  dci.harq_process_number      = h_dl.id;
-  // TODO.
-  dci.tpc_command              = 0;
-  dci.pucch_resource_indicator = pucch.pucch_res_indicator;
-  // As per TS 38.213, Section 9.2.3, the harq_feedback_timing_indicator maps to {1, 2, 3, 4, 5, 6, 7, 8} for DCI 1_0.
-  dci.pdsch_harq_fb_timing_indicator = k1 - 1;
+  build_dci_f1_0_tc_rnti(pdcch.dci,
+                         cell_cfg.dl_cfg_common.init_dl_bwp,
+                         ue_grant_prbs,
+                         pdsch_time_res,
+                         k1,
+                         pucch.pucch_res_indicator,
+                         h_dl);
 
   // Fill PDSCH.
   msg.pdsch_cfg.rnti        = u.crnti;
   msg.pdsch_cfg.bwp_cfg     = pdcch.ctx.bwp_cfg;
   msg.pdsch_cfg.coreset_cfg = pdcch.ctx.coreset_cfg;
-  msg.pdsch_cfg.prbs        = h_dl.prbs();
+  msg.pdsch_cfg.prbs        = ue_grant_prbs;
   msg.pdsch_cfg.symbols     = pdsch_td_cfg.symbols;
   msg.pdsch_cfg.dmrs        = make_dmrs_info_common(
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
   // See TS 38.211, 7.3.1.1. - Scrambling.
   msg.pdsch_cfg.n_id           = cell_cfg.pci;
-  msg.pdsch_cfg.is_interleaved = dci.vrb_to_prb_mapping > 0;
+  msg.pdsch_cfg.is_interleaved = pdcch.dci.tc_rnti_f1_0.vrb_to_prb_mapping > 0;
   // See TS38.213, 10.1. - Type1-PDCCH CSS set for CRC scrambled by a TC-RNTI on the PCell.
   msg.pdsch_cfg.ss_set_type = search_space_set_type::type1;
   msg.pdsch_cfg.dci_fmt     = dci_dl_format::f1_0;
@@ -258,7 +259,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
   pdsch_codeword&           cw        = msg.pdsch_cfg.codewords.back();
   static constexpr unsigned new_tx_rv = 0;
   cw.rv_index                         = new_tx_rv;
-  cw.mcs_index                        = h_dl.mcs(0);
+  cw.mcs_index                        = h_dl.last_tx_params(0).mcs;
   cw.mcs_table                        = pdsch_mcs_table::qam64;
   sch_mcs_description mcs_config      = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
   cw.qam_mod                          = mcs_config.modulation;
@@ -281,7 +282,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
       nof_bits_per_byte;
 
   // Set the number of bytes of the TB.
-  h_dl.set_tbs(cw.tb_size_bytes);
+  h_grant->tbs_bytes = cw.tb_size_bytes;
 
   // Set MAC logical channels to schedule in this PDU.
   msg.tb_list.emplace_back();

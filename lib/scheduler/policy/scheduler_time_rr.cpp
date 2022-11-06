@@ -63,14 +63,14 @@ static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_re
         prb_bitmap                                   used_crbs = grid.used_crbs(bwp_cfg, pdsch.symbols);
         crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, bwp_cfg.crbs.length(), 0);
         if (not ue_grant_crbs.empty()) {
-          pdsch_alloc.allocate_pdsch(ue_pdsch_grant{&u,
-                                                    ue_cc.cell_index,
-                                                    h->id,
-                                                    ss_cfg->id,
-                                                    time_res,
-                                                    ue_grant_crbs,
-                                                    dci_dl_format::f1_0,
-                                                    aggregation_level::n4});
+          pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
+                                                       ue_cc.cell_index,
+                                                       h->id,
+                                                       ss_cfg->id,
+                                                       time_res,
+                                                       ue_grant_crbs,
+                                                       dci_dl_format::f1_0,
+                                                       aggregation_level::n4});
           return true;
         }
       }
@@ -110,7 +110,7 @@ static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_re
     prb_bitmap                     used_crbs = grid.used_crbs(bwp_ul.generic_params, pusch_symbols);
     crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, bwp_ul.generic_params.crbs.length(), 0);
     if (not ue_grant_crbs.empty()) {
-      pusch_alloc.allocate_pusch(ue_pusch_grant{
+      pusch_alloc.allocate_ul_grant(ue_pusch_grant{
           &u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, k2, to_search_space_id(2), aggregation_level::n4});
     }
   }

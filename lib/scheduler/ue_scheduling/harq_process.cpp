@@ -12,128 +12,119 @@
 
 namespace srsgnb {
 
-void harq_process::slot_indication(slot_point slot_tx_)
+template <typename GrantParams>
+void detail::harq_process<GrantParams>::slot_indication(slot_point slot_tx)
 {
-  if (empty()) {
-    return;
-  }
-  if (slot_ack + max_ack_wait_in_slots > slot_tx_) {
-    // Wait more slots for ACK/NACK to arrive.
-    return;
-  }
-  if (tb[0].state == tb_t::state_t::waiting_ack) {
-    // ACK went missing.
-    tb[0].state = tb_t::state_t::pending_retx;
-  }
-  if (nof_retx() + 1 > max_nof_retx()) {
-    // Max number of reTxs was exceeded. Clear HARQ process
-    tb[0].state = tb_t::state_t::empty;
+  for (transport_block& tb : tb_array) {
+    if (tb.state == transport_block::state_t::empty) {
+      continue;
+    }
+    if (tb.slot_ack + max_ack_wait_in_slots > slot_tx) {
+      // Wait more slots for ACK/NACK to arrive.
+      return;
+    }
+    if (tb.state == transport_block::state_t::waiting_ack) {
+      // ACK went missing.
+      tb.state = transport_block::state_t::pending_retx;
+    }
+    if (tb.nof_retxs + 1 > max_nof_retxs()) {
+      // Max number of reTxs was exceeded. Clear HARQ process
+      tb.state = transport_block::state_t::empty;
+    }
   }
 }
 
-int harq_process::ack_info(unsigned tb_idx, bool ack)
+template <typename GrantParams>
+int detail::harq_process<GrantParams>::ack_info(unsigned tb_idx, bool ack)
 {
   if (empty(tb_idx)) {
     return -1;
   }
-  tb[tb_idx].ack_state = ack;
+  tb_array[tb_idx].ack_state = ack;
   if (ack) {
-    tb[tb_idx].state = tb_t::state_t::empty;
+    tb_array[tb_idx].state = transport_block::state_t::empty;
   } else {
-    tb[tb_idx].state = (nof_retx() < max_nof_retx()) ? tb_t::state_t::pending_retx : tb_t::state_t::empty;
+    tb_array[tb_idx].state = (tb_array[tb_idx].nof_retxs < max_nof_retxs()) ? transport_block::state_t::pending_retx
+                                                                            : transport_block::state_t::empty;
   }
-  return ack ? tb[tb_idx].tbs : 0;
+  return ack ? tb_array[tb_idx].grant.tbs_bytes : 0;
 }
 
-void harq_process::reset()
+template <typename GrantParams>
+void detail::harq_process<GrantParams>::reset(unsigned tb_idx)
 {
-  tb[0].ack_state = false;
-  tb[0].state     = tb_t::state_t::empty;
-  tb[0].n_rtx     = 0;
-  tb[0].mcs       = 31;
-  tb[0].tbs       = 0;
+  tb_array[tb_idx].ack_state = false;
+  tb_array[tb_idx].state     = transport_block::state_t::empty;
+  tb_array[tb_idx].nof_retxs = 0;
+  tb_array[tb_idx].grant     = {};
 }
 
-bool harq_process::new_tx_common(slot_point       slot_tx_,
-                                 slot_point       slot_ack_,
-                                 const prb_grant& grant,
-                                 sch_mcs_index    mcs,
-                                 unsigned         max_retx_)
+template <typename GrantParams>
+void detail::harq_process<GrantParams>::reset()
 {
-  if (not empty()) {
-    return false;
+  for (unsigned i = 0; i != tb_array.size(); ++i) {
+    reset(i);
   }
-  reset();
-  max_retx    = max_retx_;
-  slot_tx     = slot_tx_;
-  slot_ack    = slot_ack_;
-  prbs_       = grant;
-  tb[0].ndi   = !tb[0].ndi;
-  tb[0].mcs   = mcs;
-  tb[0].tbs   = 0;
-  tb[0].state = tb_t::state_t::waiting_ack;
-  return true;
 }
 
-bool harq_process::set_tbs(unsigned tbs)
+template <typename GrantParams>
+GrantParams* detail::harq_process<GrantParams>::new_tx_common(unsigned   tb_idx,
+                                                              slot_point slot_tx_,
+                                                              slot_point slot_ack_,
+                                                              unsigned   max_harq_retxs_)
 {
-  if (empty() or nof_retx() > 0) {
-    return false;
+  if (not empty(tb_idx)) {
+    return nullptr;
   }
-  tb[0].tbs = tbs;
-  return true;
+  reset(tb_idx);
+  max_retx                  = max_harq_retxs_;
+  tb_array[tb_idx].slot_tx  = slot_tx_;
+  tb_array[tb_idx].slot_ack = slot_ack_;
+  tb_array[tb_idx].ndi      = !tb_array[tb_idx].ndi;
+  tb_array[tb_idx].state    = transport_block::state_t::waiting_ack;
+  return &tb_array[tb_idx].grant;
 }
 
-bool harq_process::new_retx_common(slot_point slot_tx_, slot_point slot_ack_, const prb_grant& grant)
+template <typename GrantParams>
+GrantParams*
+detail::harq_process<GrantParams>::new_retx_common(unsigned tb_idx, slot_point slot_tx_, slot_point slot_ack_)
 {
-  if (grant.is_alloc_type0() != prbs_.is_alloc_type0() or
-      (grant.is_alloc_type0() and grant.rbgs().count() != prbs_.rbgs().count()) or
-      (grant.is_alloc_type1() and grant.prbs().length() != prbs_.prbs().length())) {
-    return false;
+  if (tb_array[tb_idx].state != transport_block::state_t::pending_retx) {
+    return nullptr;
   }
-  if (new_retx_common(slot_tx_, slot_ack_)) {
-    prbs_ = grant;
-    return true;
-  }
-  return false;
+  tb_array[tb_idx].slot_tx   = slot_tx_;
+  tb_array[tb_idx].slot_ack  = slot_ack_;
+  tb_array[tb_idx].state     = transport_block::state_t::waiting_ack;
+  tb_array[tb_idx].ack_state = false;
+  tb_array[tb_idx].nof_retxs++;
+  return &tb_array[tb_idx].grant;
 }
 
-bool harq_process::new_retx_common(slot_point slot_tx_, slot_point slot_ack_)
+template class detail::harq_process<dl_harq_info_params>;
+template class detail::harq_process<ul_harq_info_params>;
+
+dl_harq_info_params*
+dl_harq_process::new_tx(unsigned tb_idx, slot_point pdsch_slot, unsigned k1, unsigned max_harq_retxs)
 {
-  if (tb[0].state != tb_t::state_t::pending_retx) {
-    return false;
-  }
-  slot_tx         = slot_tx_;
-  slot_ack        = slot_ack_;
-  tb[0].state     = tb_t::state_t::waiting_ack;
-  tb[0].ack_state = false;
-  tb[0].n_rtx++;
-  return true;
+  return harq_process::new_tx_common(tb_idx, pdsch_slot, pdsch_slot + k1, max_harq_retxs);
 }
 
-bool dl_harq_process::new_tx(slot_point       slot_tx,
-                             slot_point       slot_ack,
-                             const prb_grant& grant,
-                             sch_mcs_index    mcs,
-                             unsigned         max_retx)
+dl_harq_info_params* dl_harq_process::new_retx(unsigned tb_idx, slot_point pdsch_slot, unsigned k1)
 {
-  return harq_process::new_tx_common(slot_tx, slot_ack, grant, mcs, max_retx);
+  return harq_process::new_retx_common(tb_idx, pdsch_slot, pdsch_slot + k1);
 }
 
-bool dl_harq_process::new_retx(slot_point slot_tx, slot_point slot_ack, const prb_grant& grant)
+ul_harq_info_params* ul_harq_process::new_tx(unsigned tb_idx, slot_point pusch_slot, unsigned max_harq_retxs)
 {
-  return harq_process::new_retx_common(slot_tx, slot_ack, grant);
+  return harq_process::new_tx_common(tb_idx, pusch_slot, pusch_slot, max_harq_retxs);
 }
 
-bool ul_harq_process::new_tx(slot_point slot_tx, const prb_grant& grant, sch_mcs_index mcs, unsigned max_retx)
+ul_harq_info_params* ul_harq_process::new_retx(unsigned tb_idx, slot_point pusch_slot)
 {
-  return harq_process::new_tx_common(slot_tx, slot_tx, grant, mcs, max_retx);
+  return harq_process::new_retx_common(tb_idx, pusch_slot, pusch_slot);
 }
 
-bool ul_harq_process::new_retx(slot_point slot_tx, const prb_grant& grant)
-{
-  return harq_process::new_retx_common(slot_tx, slot_tx, grant);
-}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 harq_entity::harq_entity(rnti_t rnti_, unsigned nof_harq_procs, unsigned max_ack_wait_in_slots) :
   rnti(rnti_), logger(srslog::fetch_basic_logger("MAC"))
@@ -150,7 +141,7 @@ harq_entity::harq_entity(rnti_t rnti_, unsigned nof_harq_procs, unsigned max_ack
 void harq_entity::slot_indication(slot_point slot_tx_)
 {
   slot_tx = slot_tx_;
-  for (harq_process& dl_h : dl_harqs) {
+  for (dl_harq_process& dl_h : dl_harqs) {
     bool was_empty = dl_h.empty();
     dl_h.slot_indication(slot_tx);
     if (not was_empty and dl_h.empty()) {
@@ -158,10 +149,10 @@ void harq_entity::slot_indication(slot_point slot_tx_)
       logger.info("SCHED: discarding rnti=0x{:x}, DL TB pid={}. Cause: Maximum number of retx exceeded ({})",
                   rnti,
                   dl_h.id,
-                  dl_h.max_nof_retx());
+                  dl_h.max_nof_retxs());
     }
   }
-  for (harq_process& ul_h : ul_harqs) {
+  for (ul_harq_process& ul_h : ul_harqs) {
     bool was_empty = ul_h.empty();
     ul_h.slot_indication(slot_tx);
     if (not was_empty and ul_h.empty()) {
@@ -169,7 +160,7 @@ void harq_entity::slot_indication(slot_point slot_tx_)
       logger.info("SCHED: discarding rnti=0x{:x}, UL TB pid={}. Cause: Maximum number of retx exceeded ({})",
                   rnti,
                   ul_h.id,
-                  ul_h.max_nof_retx());
+                  ul_h.max_nof_retxs());
     }
   }
 }

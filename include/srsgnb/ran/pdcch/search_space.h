@@ -45,7 +45,7 @@ inline bool is_common_search_space(search_space_set_type ss_set)
 /// SearchSpace configuration as per TS38.331, "SearchSpace".
 struct search_space_configuration {
   /// SearchSpace Type.
-  enum class type { common, ue_dedicated };
+  enum class type_t { common, ue_dedicated };
   /// SearchSpace Common Type DCI Formats.
   struct common_dci_format {
     bool f0_0_and_f1_0;
@@ -78,7 +78,7 @@ struct search_space_configuration {
   /// Number of PDCCH candidates per aggregation level. The aggregation level for the array element with index "x"
   /// is L=1U << x. The possible values for each element are {0, 1, 2, 3, 4, 5, 6, 8}.
   std::array<uint8_t, 5> nof_candidates;
-  type                   type;
+  type_t                 type;
   union {
     common_dci_format      common;
     ue_specific_dci_format ue_specific;
@@ -90,8 +90,8 @@ struct search_space_configuration {
            monitoring_slot_offset == rhs.monitoring_slot_offset and duration == rhs.duration and
            monitoring_symbols_within_slot == rhs.monitoring_symbols_within_slot and
            nof_candidates == rhs.nof_candidates and type == rhs.type and
-           ((type == type::common and common == rhs.common) or
-            (type == type::ue_dedicated and ue_specific == rhs.ue_specific));
+           ((type == type_t::common and common == rhs.common) or
+            (type == type_t::ue_dedicated and ue_specific == rhs.ue_specific));
   }
 };
 

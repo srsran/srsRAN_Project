@@ -91,7 +91,7 @@ search_space_configuration srsgnb::config_helpers::make_default_search_space_zer
   cfg.duration               = 1;
   // TODO: Use TS38.213, Table 10.1-1.
   cfg.nof_candidates       = {0, 0, 1, 0, 0};
-  cfg.type                 = search_space_configuration::type::common;
+  cfg.type                 = search_space_configuration::type_t::common;
   cfg.common.f0_0_and_f1_0 = true;
   return cfg;
 }

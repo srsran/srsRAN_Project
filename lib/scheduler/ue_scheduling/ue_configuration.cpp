@@ -116,7 +116,7 @@ ue_cell_configuration::get_pdsch_time_domain_list(search_space_id ss_id) const
   const search_space_configuration& ss_cfg  = *search_spaces[ss_id];
   const bwp_params&                 bwp_row = bwp_table[coreset_id_to_bwp_id[ss_cfg.cs_id]];
 
-  if (ss_cfg.type != search_space_configuration::type::common or ss_cfg.cs_id != to_coreset_id(0)) {
+  if (ss_cfg.type != search_space_configuration::type_t::common or ss_cfg.cs_id != to_coreset_id(0)) {
     if (not bwp_row.dl_bwp_ded->pdsch_cfg->pdsch_td_alloc_list.empty()) {
       // UE dedicated pdsch-TimeDomain list.
       return bwp_row.dl_bwp_ded->pdsch_cfg->pdsch_td_alloc_list;

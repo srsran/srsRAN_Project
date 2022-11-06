@@ -23,7 +23,7 @@ inline unsigned get_scrambling_n_ID(const cell_configuration&         cell_cfg,
                                     const search_space_configuration& ss_cfg)
 {
   // For a UE-specific search space [...] equals the higher-layer parameter pdcch-DMRS-ScramblingID if configured,
-  if (ss_cfg.type == search_space_configuration::type::ue_dedicated and cs_cfg.pdcch_dmrs_scrambling_id.has_value()) {
+  if (ss_cfg.type == search_space_configuration::type_t::ue_dedicated and cs_cfg.pdcch_dmrs_scrambling_id.has_value()) {
     return *cs_cfg.pdcch_dmrs_scrambling_id;
   }
   // \f$n_id = N_{ID}^{cell}\f$ otherwise.
@@ -37,7 +37,7 @@ get_scrambling_n_RNTI(rnti_t rnti, const coreset_configuration& cs_cfg, const se
 {
   // \f$n_{RNTI}\f$ is given by the C-RNTI for a PDCCH in a UE-speicfic search space if the higher-layer parameter
   // pdcch-DMRS-ScramblingID is configured.
-  if (ss_cfg.type == search_space_configuration::type::ue_dedicated and cs_cfg.pdcch_dmrs_scrambling_id.has_value()) {
+  if (ss_cfg.type == search_space_configuration::type_t::ue_dedicated and cs_cfg.pdcch_dmrs_scrambling_id.has_value()) {
     return rnti;
   }
   return 0;

@@ -1,0 +1,187 @@
+/*
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#include "ue_dci_builder.h"
+
+using namespace srsgnb;
+
+/// Get PDSCH-to-HARQ-timing-indicator field as per TS38.213, 9.2.3.
+static unsigned get_dci_1_0_pdsch_to_harq_timing_indicator(unsigned k1)
+{
+  // PDSCH-to-HARQ-timing-indicator maps to {1,2,3,4,5,6,7,8} for DCI 1_0.
+  srsgnb_assert(k1 <= 8, "Invalid k1 value");
+  return k1 - 1;
+}
+
+/// Get redundancy version.
+static unsigned get_redundancy_version(unsigned nof_retxs)
+{
+  static constexpr std::array<unsigned, 4> rv_idx = {0, 2, 3, 1};
+  return rv_idx[nof_retxs % rv_idx.size()];
+}
+
+void srsgnb::build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
+                                    const bwp_downlink_common& init_dl_bwp,
+                                    prb_interval               prbs,
+                                    unsigned                   time_resource,
+                                    unsigned                   k1,
+                                    unsigned                   pucch_res_indicator,
+                                    const dl_harq_process&     h_dl)
+{
+  static constexpr unsigned tb_idx = 0;
+
+  dci.type                            = srsgnb::dci_dl_rnti_config_type::tc_rnti_f1_0;
+  dci.tc_rnti_f1_0                    = {};
+  dci_1_0_tc_rnti_configuration& f1_0 = dci.tc_rnti_f1_0;
+
+  f1_0.tpc_command        = 0;
+  f1_0.vrb_to_prb_mapping = 0;
+
+  // PDSCH resources.
+  // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB is the size of CORESET 0 for TC-RNTI.
+  f1_0.N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length();
+  f1_0.frequency_resource =
+      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{f1_0.N_rb_dl_bwp, prbs.start(), prbs.length()});
+  f1_0.time_resource = time_resource;
+
+  // UCI resources.
+  f1_0.pucch_resource_indicator       = pucch_res_indicator;
+  f1_0.pdsch_harq_fb_timing_indicator = get_dci_1_0_pdsch_to_harq_timing_indicator(k1);
+
+  // HARQ params.
+  f1_0.harq_process_number      = h_dl.id;
+  f1_0.new_data_indicator       = h_dl.ndi(tb_idx);
+  f1_0.redundancy_version       = get_redundancy_version(h_dl.nof_retxs(tb_idx));
+  f1_0.modulation_coding_scheme = h_dl.last_tx_params(tb_idx).mcs.to_uint();
+}
+
+void srsgnb::build_dci_f1_0_c_rnti(dci_dl_info&                       dci,
+                                   const bwp_downlink_common&         init_dl_bwp,
+                                   const bwp_configuration&           active_dl_bwp,
+                                   search_space_configuration::type_t ss_type,
+                                   prb_interval                       prbs,
+                                   unsigned                           time_resource,
+                                   unsigned                           k1,
+                                   unsigned                           pucch_res_indicator,
+                                   const dl_harq_process&             h_dl,
+                                   unsigned                           tb_idx)
+{
+  dci.type                           = srsgnb::dci_dl_rnti_config_type::c_rnti_f1_0;
+  dci.c_rnti_f1_0                    = {};
+  dci_1_0_c_rnti_configuration& f1_0 = dci.c_rnti_f1_0;
+
+  f1_0.tpc_command        = 0;
+  f1_0.vrb_to_prb_mapping = 0;
+
+  // PDSCH resources.
+  // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB for C-RNTI.
+  if (ss_type == srsgnb::search_space_configuration::type_t::common) {
+    f1_0.N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0.has_value()
+                           ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()
+                           : init_dl_bwp.generic_params.crbs.length();
+  } else {
+    f1_0.N_rb_dl_bwp = active_dl_bwp.crbs.length();
+  }
+  f1_0.frequency_resource =
+      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{f1_0.N_rb_dl_bwp, prbs.start(), prbs.length()});
+  f1_0.time_resource = time_resource;
+
+  // UCI resources.
+  f1_0.pucch_resource_indicator       = pucch_res_indicator;
+  f1_0.pdsch_harq_fb_timing_indicator = get_dci_1_0_pdsch_to_harq_timing_indicator(k1);
+
+  // HARQ params.
+  f1_0.harq_process_number      = h_dl.id;
+  f1_0.new_data_indicator       = h_dl.ndi(tb_idx);
+  f1_0.redundancy_version       = get_redundancy_version(h_dl.nof_retxs(tb_idx));
+  f1_0.modulation_coding_scheme = h_dl.last_tx_params(tb_idx).mcs.to_uint();
+}
+
+void srsgnb::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
+                                    const bwp_downlink_common& init_dl_bwp,
+                                    const bwp_configuration&   ul_bwp,
+                                    const prb_interval&        prbs,
+                                    unsigned                   time_resource,
+                                    const ul_harq_process&     h_ul)
+{
+  static constexpr unsigned tb_idx = 0;
+
+  // See TS38.321, 5.4.2.1 - "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is used."
+  srsgnb_assert(h_ul.id == 0, "UL HARQ process used for Msg3 must have id=0");
+
+  dci.type                            = srsgnb::dci_ul_rnti_config_type::tc_rnti_f0_0;
+  dci.tc_rnti_f0_0                    = {};
+  dci_0_0_tc_rnti_configuration& f0_0 = dci.tc_rnti_f0_0;
+
+  // TODO.
+  f0_0.N_ul_hop               = 0;
+  f0_0.hopping_offset         = 0;
+  f0_0.frequency_hopping_flag = 0;
+  f0_0.tpc_command            = 0;
+
+  // PUSCH params.
+  dci_sizes dci_sz  = get_dci_sizes(dci_size_config{
+      init_dl_bwp.generic_params.crbs.length(),
+      init_dl_bwp.generic_params.crbs.length(),
+      ul_bwp.crbs.length(),
+      ul_bwp.crbs.length(),
+      init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0});
+  f0_0.payload_size = dci_sz.format0_0_common_size;
+  f0_0.N_rb_ul_bwp  = ul_bwp.crbs.length();
+  f0_0.frequency_resource =
+      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{ul_bwp.crbs.length(), prbs.start(), prbs.length()});
+  f0_0.time_resource = time_resource;
+
+  // HARQ params.
+  f0_0.redundancy_version       = get_redundancy_version(h_ul.nof_retxs(tb_idx));
+  f0_0.modulation_coding_scheme = h_ul.last_tx_params(0).mcs.to_uint();
+}
+
+void srsgnb::build_dci_f0_0_c_rnti(dci_ul_info&                       dci,
+                                   const bwp_downlink_common&         init_dl_bwp,
+                                   const bwp_configuration&           active_dl_bwp,
+                                   const bwp_configuration&           init_ul_bwp,
+                                   const bwp_configuration&           active_ul_bwp,
+                                   search_space_configuration::type_t ss_type,
+                                   const prb_interval&                prbs,
+                                   unsigned                           time_resource,
+                                   const ul_harq_process&             h_ul,
+                                   unsigned                           tb_idx)
+{
+  dci.type                           = dci_ul_rnti_config_type::c_rnti_f0_0;
+  dci.c_rnti_f0_0                    = {};
+  dci_0_0_c_rnti_configuration& f0_0 = dci.c_rnti_f0_0;
+
+  // TODO.
+  f0_0.N_ul_hop               = 0;
+  f0_0.hopping_offset         = 0;
+  f0_0.frequency_hopping_flag = 0;
+  f0_0.tpc_command            = 0;
+  f0_0.ul_sul_indicator       = {};
+
+  // PUSCH params.
+  dci_sizes dci_sz  = get_dci_sizes(dci_size_config{
+      init_dl_bwp.generic_params.crbs.length(),
+      active_dl_bwp.crbs.length(),
+      init_ul_bwp.crbs.length(),
+      active_ul_bwp.crbs.length(),
+      init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0});
+  f0_0.payload_size = ss_type == search_space_configuration::type_t::ue_dedicated ? dci_sz.format0_0_ue_size
+                                                                                  : dci_sz.format0_0_common_size;
+  f0_0.N_rb_ul_bwp  = active_ul_bwp.crbs.length();
+  f0_0.frequency_resource =
+      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{f0_0.N_rb_ul_bwp, prbs.start(), prbs.length()});
+  f0_0.time_resource = time_resource;
+
+  // HARQ params.
+  f0_0.harq_process_number      = h_ul.id;
+  f0_0.new_data_indicator       = h_ul.ndi(tb_idx);
+  f0_0.redundancy_version       = get_redundancy_version(h_ul.nof_retxs(tb_idx));
+  f0_0.modulation_coding_scheme = h_ul.last_tx_params(tb_idx).mcs.to_uint();
+}

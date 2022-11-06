@@ -45,7 +45,7 @@ class ue_pdsch_allocator
 public:
   virtual ~ue_pdsch_allocator() = default;
 
-  virtual bool allocate_pdsch(const ue_pdsch_grant& grant) = 0;
+  virtual bool allocate_dl_grant(const ue_pdsch_grant& grant) = 0;
 
   virtual const cell_slot_resource_grid& dl_resource_grid(du_cell_index_t cell_index, unsigned k0) const = 0;
 };
@@ -56,7 +56,7 @@ class ue_pusch_allocator
 public:
   virtual ~ue_pusch_allocator() = default;
 
-  virtual bool allocate_pusch(const ue_pusch_grant& grant) = 0;
+  virtual bool allocate_ul_grant(const ue_pusch_grant& grant) = 0;
 
   virtual const cell_slot_resource_grid& ul_resource_grid(du_cell_index_t cell_index, unsigned k2) const = 0;
 };

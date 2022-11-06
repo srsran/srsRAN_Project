@@ -116,7 +116,7 @@ asn1::rrc_nr::search_space_s srsgnb::srs_du::make_asn1_rrc_search_space(const se
   asn1::number_to_enum(ss.nrof_candidates.aggregation_level8, cfg.nof_candidates[3]);
   asn1::number_to_enum(ss.nrof_candidates.aggregation_level16, cfg.nof_candidates[4]);
   ss.search_space_type_present = true;
-  if (cfg.type == search_space_configuration::type::common) {
+  if (cfg.type == search_space_configuration::type_t::common) {
     ss.search_space_type.set_common();
     ss.search_space_type.common().dci_format0_minus0_and_format1_minus0_present = cfg.common.f0_0_and_f1_0;
     ss.search_space_type.common().dci_format2_minus0_present                    = cfg.common.f2_0;

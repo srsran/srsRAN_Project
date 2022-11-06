@@ -47,12 +47,14 @@ private:
                      const search_space_configuration& ss_cfg);
 
   void fill_srb0_grant(ue&                   u,
-                       harq_process&         h_dl,
+                       slot_point            pdsch_slot,
+                       dl_harq_process&      h_dl,
                        pdcch_dl_information& pdcch,
                        dl_msg_alloc&         msg,
                        pucch_harq_ack_grant& pucch,
                        unsigned              pdsch_time_res,
                        unsigned              k1,
+                       sch_mcs_index         mcs_idx,
                        const prb_interval&   ue_grant_prbs);
 
   const pdsch_time_domain_resource_allocation& get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const;
