@@ -37,6 +37,7 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   results_notifier_proxy(std::move(config.notifier_proxy)),
   ul_request_processor(*config.symbol_request_notifier, *prach_pool),
   soft_pool(std::move(config.soft_pool)),
+  pdu_repository(config.nof_slots_ul_pdu_repository),
   symbol_handler(*ul_processor_pool, pdu_repository, *soft_pool, logger),
   timing_handler(notifier_dummy, *soft_pool)
 {

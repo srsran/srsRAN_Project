@@ -25,17 +25,18 @@ protected:
   std::unique_ptr<rx_softbuffer_pool>    soft_pool;
   uplink_processor_spy*                  ul_proc_spy;
   std::unique_ptr<uplink_processor_pool> ul_processor_pool;
+  uplink_slot_pdu_repository             pdu_repo;
   upper_phy_rx_symbol_handler_impl       rx_handler;
   prach_buffer_context                   context;
   prach_buffer_spy                       buffer_dummy;
   prach_detector::configuration          config;
-  uplink_slot_pdu_repository             pdu_repo;
 
   void handle_prach_symbol() { rx_handler.handle_rx_prach_window(context, buffer_dummy); }
 
   UpperPhyRxSymbolHandlerFixture() :
     soft_pool(create_rx_softbuffer_pool(rx_softbuffer_pool_config())),
     ul_processor_pool(create_ul_processor_pool()),
+    pdu_repo(2),
     rx_handler(*ul_processor_pool, pdu_repo, *soft_pool, srslog::fetch_basic_logger("TEST"))
   {
     context.sector = 0;

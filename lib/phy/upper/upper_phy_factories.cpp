@@ -285,9 +285,10 @@ public:
   std::unique_ptr<upper_phy> create(const upper_phy_config& config) override
   {
     upper_phy_impl_config phy_config;
-    phy_config.sector_id               = config.sector_id;
-    phy_config.log_level               = config.log_level;
-    phy_config.symbol_request_notifier = config.symbol_request_notifier;
+    phy_config.sector_id                   = config.sector_id;
+    phy_config.log_level                   = config.log_level;
+    phy_config.symbol_request_notifier     = config.symbol_request_notifier;
+    phy_config.nof_slots_ul_pdu_repository = config.nof_ul_processors * 2;
 
     phy_config.dl_rg_pool = create_dl_resource_grid_pool(config);
     report_fatal_error_if_not(phy_config.dl_rg_pool, "Invalid downlink resource grid pool.");

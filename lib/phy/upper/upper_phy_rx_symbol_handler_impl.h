@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/adt/circular_array.h"
 #include "srsgnb/phy/upper/channel_processors/prach_detector.h"
 #include "srsgnb/phy/upper/rx_softbuffer_pool.h"
 #include "srsgnb/phy/upper/uplink_slot_pdu_repository.h"

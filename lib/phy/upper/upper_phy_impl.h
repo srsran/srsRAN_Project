@@ -47,6 +47,8 @@ struct upper_phy_impl_config {
   upper_phy_rx_symbol_request_notifier* symbol_request_notifier;
   /// Log level.
   srslog::basic_levels log_level;
+  /// Number of slots supported by the uplink PDU repository.
+  size_t nof_slots_ul_pdu_repository;
 };
 
 /// \brief Implementation of the upper PHY interface.
