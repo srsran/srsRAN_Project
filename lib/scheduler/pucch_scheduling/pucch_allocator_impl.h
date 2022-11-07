@@ -17,9 +17,12 @@
 
 namespace srsgnb {
 
-struct pucch_resource_alloc_record {
+/// Containers used to return the output of the PUCCH resource manager.
+struct pucch_harq_resource_alloc_record {
+  /// Pointer to PUCCH resource configuration to be used.
   const pucch_resource* pucch_res;
-  unsigned              pucch_res_indicator;
+  /// PUCCH resource indicator corresponding to the resource that will be used by the UE.
+  unsigned pucch_res_indicator;
 };
 
 /// Class that is in charge of providing the scheduler an available PUCCH resource to be used, either for HARQ or SR.
@@ -30,43 +33,40 @@ public:
   void slot_indication(slot_point slot_tx);
 
   /// Returns the index of the PUCCH resource to be used for HARQ-ACK.
-  /// \remark: This index refers to the \c pucch-ResourceId of the \c PUCCH-Resource, as per TS 38.331.
-  /// \return The \c pucch-ResourceId of the resource to be used by the scheduler for HARQ-ACK, if available;
-  ///         else, returns \c nullptr.
-  const pucch_resource_alloc_record
+  /// \remark This index refers to the \c pucch-ResourceId of the \c PUCCH-Resource, as per TS 38.331.
+  /// \return The (i) pointer to the configuration and (ii) the PUCCH resource indicator corresponding to the PUCCH
+  /// resource that will be used by the UE, if any PUCCH resource available; else, returns \c nullptr.
+  const pucch_harq_resource_alloc_record
   get_next_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
-  /// Returns the index of the PUCCH resource to be used for SR.
-  /// \remark This index refers to the \c pucch-ResourceId of the \c PUCCH-Resource, as per TS 38.331.
+  /// Returns the pointer to the configuration of the PUCCH resource to be used for SR.
   /// \remark There is only one resource used for SR.
-  /// \return The \c pucch-ResourceId of the resource to be used by the scheduler for SR, if available; else, returns
-  ///         \c nullptr.
+  /// \return the pointer to the configuration of the PUCCH resource to be used for SR, if available; else, it returns
+  /// \c nullptr.
   const pucch_resource* get_next_sr_res_available(slot_point slot_sr, const pucch_config& pucch_cfg);
 
+  /// Returns the PUCCH resource indicator used for a given RNTI at a given slot; if not present, returns -1.
   int get_pucch_res_indicator(slot_point slot_tx, rnti_t crnti);
 
 private:
-  static const size_t SLOT_RES_COUNTER_RING_SIZE = 20;
-  static const size_t MAX_PUCCH_RESOURCES        = 8;
+  static const size_t RES_MANAGER_RING_BUFFER_SIZE = 20;
+  static const size_t MAX_HARQ_PUCCH_RESOURCES     = 8;
 
-  // Keeps track of whether the PUCCH resource is used alread (SR) or of how many times the resource has been used
-  // (HARQ).
-  struct ue_res_record {
-    rnti_t crnti;
-    int    pucch_res_indicator;
+  // Record for the RNTI and PUCCH resource indicator used for a given resource at a given slot.
+  struct rnti_pucch_res_id_slot_record {
+    // Indicates whether the PUCCH resource for SR is currently available.
+    bool sr_resource_available{true};
+    // Keeps track of the next PUCCH resource (indexed by the PUCCH resource indicator) to be allocated.
+    unsigned next_pucch_harq_res_idx{0};
+    // Keeps track of the RNTI of the UE using a given PUCCH resource (indexed by the PUCCH resource indicator).
+    static_vector<rnti_t, MAX_HARQ_PUCCH_RESOURCES> rnti_records;
   };
 
-  struct slot_resource_counter {
-    bool                                       sr_resource_available{true};
-    unsigned                                   next_pucch_harq_res_idx{0};
-    static_vector<rnti_t, MAX_PUCCH_RESOURCES> rnti_records;
-  };
+  // Returns the resource manager allocation record for a given slot.
+  rnti_pucch_res_id_slot_record& get_slot_resource_counter(slot_point sl);
 
-  // Size of the ring buffer of slot_resource_counter.
-  slot_resource_counter& get_slot_resource_counter(slot_point sl);
-
-  // Ring buffer of slot_resource_counter for PUCCH resources.
-  std::array<slot_resource_counter, SLOT_RES_COUNTER_RING_SIZE> resource_slots;
+  // Ring buffer of rnti_pucch_res_id_slot_record for PUCCH resources.
+  std::array<rnti_pucch_res_id_slot_record, RES_MANAGER_RING_BUFFER_SIZE> resource_slots;
 
   // Keeps track of the last slot_point used by the resource manager.
   slot_point last_sl_ind;
@@ -80,23 +80,12 @@ public:
 
   ~pucch_allocator_impl() override;
 
-  /// Allocate the PUCCH resource for HARQ-ACK for a given UE.
-  /// \param[out,in] slot_alloc struct with scheduling results.
-  /// \param[in] tcrnti temporary RNTI  of the UE.
-  /// \param[in] pdsch_time_domain_resource k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
-  /// \param[in] k1 delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
-  /// \param[in] dci_info information with DL DCI, needed for HARQ-(N)-ACK scheduling info.
-  /// \return The grant for the UE's PUCCH HARQ-(N)-ACK report.
-  pucch_harq_ack_grant alloc_common_pucch_harq_ack_ue(cell_resource_allocator&    slot_alloc,
+  pucch_harq_ack_grant alloc_common_pucch_harq_ack_ue(cell_resource_allocator&    res_alloc,
                                                       rnti_t                      tcrnti,
                                                       unsigned                    pdsch_time_domain_resource,
                                                       unsigned                    k1,
                                                       const pdcch_dl_information& dci_info) override;
 
-  /// Allocate the PUCCH resource for a SR's opportunity for a given UE.
-  /// \param[out,in] slot_alloc struct with scheduling results.
-  /// \param[in] crnti C-RNTI  of the UE.
-  /// \param[in] ue_cell_cfg user configuration.
   void pucch_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
                                      rnti_t                        crnti,
                                      const ue_cell_configuration&  ue_cell_cfg) override;
@@ -105,12 +94,10 @@ public:
                                                    rnti_t                       crnti,
                                                    const ue_cell_configuration& ue_cell_cfg,
                                                    unsigned                     pdsch_time_domain_resource,
-                                                   unsigned                     k1);
+                                                   unsigned                     k1) override;
 
   /// Updates the internal slot_point and tracking of PUCCH resource usage over time.
   void slot_indication(slot_point sl_tx);
-
-  bool has_pusch_grant_allocated(unsigned crnti, span<const ul_sched_info> puschs);
 
 private:
   // Structs with the info about the PUCCH resources.
@@ -137,11 +124,13 @@ private:
   // Allocates the PUCCH SR resource on grid.
   void allocate_pucch_ded_res_on_grid(cell_slot_resource_allocator& pucch_slot_alloc, const pucch_resource& pucch_res);
 
+  // Helper that allocates a NEW PUCCH HARQ grant.
   pucch_harq_ack_grant allocate_new_pucch_harq_grant(cell_slot_resource_allocator& pucch_slot_alloc,
                                                      rnti_t                        crnti,
                                                      const ue_cell_configuration&  ue_cell_cfg,
                                                      pucch_info*                   existing_sr_grant);
 
+  // Helper that updates an existing PUCCH HARQ grant.
   pucch_harq_ack_grant update_existing_pucch_harq_grant(pucch_info& existing_harq_grant,
                                                         pucch_info* existing_sr_grant,
                                                         rnti_t      rnti,
@@ -153,6 +142,9 @@ private:
                                 const pucch_resource& pucch_ded_res_cfg,
                                 unsigned              harq_ack_bits,
                                 sr_nof_bits           sr_bits);
+
+  // Verifies if there are PUSCH grants already allocated.
+  bool has_pusch_grant_allocated(unsigned crnti, span<const ul_sched_info> puschs);
 
   const unsigned            PUCCH_FORMAT_1_NOF_PRBS{1};
   const cell_configuration& cell_cfg;

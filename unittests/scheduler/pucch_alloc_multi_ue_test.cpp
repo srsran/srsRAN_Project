@@ -156,7 +156,7 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_pucch_pdu)
   t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
 
-  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  auto&          slot_grid            = t_bench.res_grid[t_bench.k0 + t_bench.k1];
   const unsigned EXPECTED_HARQ_GRANTS = 1;
   ASSERT_EQ(EXPECTED_HARQ_GRANTS, slot_grid.result.ul.pucchs.size());
   ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, slot_grid.result.ul.pucchs.back()));

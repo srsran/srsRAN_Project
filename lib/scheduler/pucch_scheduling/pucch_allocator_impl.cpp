@@ -20,34 +20,34 @@ void pucch_resource_manager::slot_indication(slot_point slot_tx)
   // Update Slot.
   last_sl_ind = slot_tx;
 
-  slot_resource_counter& res_counter = get_slot_resource_counter(last_sl_ind - 1);
+  rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(last_sl_ind - 1);
 
   res_counter.sr_resource_available   = true;
   res_counter.next_pucch_harq_res_idx = 0;
   res_counter.rnti_records.clear();
 }
 
-const pucch_resource_alloc_record
+const pucch_harq_resource_alloc_record
 pucch_resource_manager::get_next_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg)
 {
-  srsgnb_sanity_check(slot_harq < last_sl_ind + SLOT_RES_COUNTER_RING_SIZE,
+  srsgnb_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PDCCH being allocated to far into the future");
 
-  const auto&            pucch_res_list = pucch_cfg.pucch_res_list;
-  slot_resource_counter& res_counter    = get_slot_resource_counter(slot_harq);
+  const auto&                    pucch_res_list = pucch_cfg.pucch_res_list;
+  rnti_pucch_res_id_slot_record& res_counter    = get_slot_resource_counter(slot_harq);
   if (res_counter.next_pucch_harq_res_idx < pucch_res_list.size()) {
     res_counter.rnti_records.emplace_back(crnti);
-    return pucch_resource_alloc_record{.pucch_res           = &pucch_res_list[res_counter.next_pucch_harq_res_idx],
-                                       .pucch_res_indicator = res_counter.next_pucch_harq_res_idx++};
+    return pucch_harq_resource_alloc_record{.pucch_res           = &pucch_res_list[res_counter.next_pucch_harq_res_idx],
+                                            .pucch_res_indicator = res_counter.next_pucch_harq_res_idx++};
   } else {
-    return pucch_resource_alloc_record{.pucch_res = nullptr};
+    return pucch_harq_resource_alloc_record{.pucch_res = nullptr};
   }
 };
 
 const pucch_resource* pucch_resource_manager::get_next_sr_res_available(slot_point          slot_sr,
                                                                         const pucch_config& pucch_cfg)
 {
-  srsgnb_sanity_check(slot_sr < last_sl_ind + SLOT_RES_COUNTER_RING_SIZE,
+  srsgnb_sanity_check(slot_sr < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PDCCH being allocated to far into the future");
   srsgnb_sanity_check(pucch_cfg.sr_res_list.size() == 1, "UE SR resource list must have size 1.");
 
@@ -63,7 +63,7 @@ const pucch_resource* pucch_resource_manager::get_next_sr_res_available(slot_poi
                        return static_cast<unsigned>(sr_res_idx) == pucch_sr_res_cfg.res_id;
                      });
 
-    // If there is no such PUCCH resource, skip to the next SR resource.
+    // If there is no such PUCCH resource, return \c nullptr.
     if (sr_pucch_resource_cfg == pucch_res_list.end()) {
       // TODO: Add information about the LC which this SR is for.
       return nullptr;
@@ -88,11 +88,11 @@ int pucch_resource_manager::get_pucch_res_indicator(slot_point slot_tx, rnti_t c
   return -1;
 }
 
-pucch_resource_manager::slot_resource_counter& pucch_resource_manager::get_slot_resource_counter(slot_point sl)
+pucch_resource_manager::rnti_pucch_res_id_slot_record& pucch_resource_manager::get_slot_resource_counter(slot_point sl)
 {
-  srsgnb_sanity_check(sl < last_sl_ind + SLOT_RES_COUNTER_RING_SIZE,
+  srsgnb_sanity_check(sl < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PUCCH resource ring-buffer accessed too far into the future");
-  return resource_slots[sl.to_uint() % SLOT_RES_COUNTER_RING_SIZE];
+  return resource_slots[sl.to_uint() % RES_MANAGER_RING_BUFFER_SIZE];
 }
 
 /////////////     PUCCH ALLOCATOR     /////////////
@@ -406,6 +406,7 @@ struct existing_pucch_grants {
   pucch_info* harq_grant{nullptr};
 };
 
+// Retrieve the existing PUCCH grants for the current RNTI.
 existing_pucch_grants get_existing_pucch_grants(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs, rnti_t rnti)
 {
   existing_pucch_grants grants;
@@ -435,7 +436,7 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_pucch_harq_grant(cell_sl
     return pucch_harq_ack_output;
   }
 
-  pucch_resource_alloc_record pucch_harq_res_info = resource_manager.get_next_harq_res_available(
+  pucch_harq_resource_alloc_record pucch_harq_res_info = resource_manager.get_next_harq_res_available(
       pucch_slot_alloc.slot, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
   if (pucch_harq_res_info.pucch_res == nullptr) {
     logger.warning(
