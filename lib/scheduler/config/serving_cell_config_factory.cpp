@@ -15,7 +15,7 @@ using namespace srsgnb;
 using namespace srsgnb::config_helpers;
 
 carrier_configuration
-srsgnb::config_helpers::make_default_carrier_configuration(const du_cell_config_master_params& params)
+srsgnb::config_helpers::make_default_carrier_configuration(const cell_config_builder_params& params)
 {
   carrier_configuration cfg;
   cfg.carrier_bw_mhz = bs_channel_bandwidth_to_MHz(params.channel_bw_mhz);
@@ -26,7 +26,7 @@ srsgnb::config_helpers::make_default_carrier_configuration(const du_cell_config_
 }
 
 tdd_ul_dl_config_common
-srsgnb::config_helpers::make_default_tdd_ul_dl_config_common(const du_cell_config_master_params& params)
+srsgnb::config_helpers::make_default_tdd_ul_dl_config_common(const cell_config_builder_params& params)
 {
   tdd_ul_dl_config_common cfg{};
   cfg.ref_scs                            = params.scs_common;
@@ -38,7 +38,7 @@ srsgnb::config_helpers::make_default_tdd_ul_dl_config_common(const du_cell_confi
   return cfg;
 }
 
-coreset_configuration srsgnb::config_helpers::make_default_coreset_config(const du_cell_config_master_params& params)
+coreset_configuration srsgnb::config_helpers::make_default_coreset_config(const cell_config_builder_params& params)
 {
   coreset_configuration cfg{};
   cfg.id = to_coreset_id(1);
@@ -53,7 +53,7 @@ coreset_configuration srsgnb::config_helpers::make_default_coreset_config(const 
 
 /// Generates a default CORESET#0 configuration. The default CORESET#0 table index value used is equal to 6.
 /// \remark See TS 38.213, Table 13-1.
-coreset_configuration srsgnb::config_helpers::make_default_coreset0_config(const du_cell_config_master_params& params)
+coreset_configuration srsgnb::config_helpers::make_default_coreset0_config(const cell_config_builder_params& params)
 {
   coreset_configuration cfg = make_default_coreset_config(params);
   cfg.id                    = to_coreset_id(0);
@@ -114,7 +114,7 @@ search_space_configuration srsgnb::config_helpers::make_default_ue_search_space_
   return cfg;
 }
 
-bwp_configuration srsgnb::config_helpers::make_default_init_bwp(const du_cell_config_master_params& params)
+bwp_configuration srsgnb::config_helpers::make_default_init_bwp(const cell_config_builder_params& params)
 {
   bwp_configuration cfg{};
   cfg.scs         = params.scs_common;
@@ -123,7 +123,7 @@ bwp_configuration srsgnb::config_helpers::make_default_init_bwp(const du_cell_co
   return cfg;
 }
 
-dl_config_common srsgnb::config_helpers::make_default_dl_config_common(const du_cell_config_master_params& params)
+dl_config_common srsgnb::config_helpers::make_default_dl_config_common(const cell_config_builder_params& params)
 {
   dl_config_common cfg{};
 
@@ -151,7 +151,7 @@ dl_config_common srsgnb::config_helpers::make_default_dl_config_common(const du_
   return cfg;
 }
 
-ul_config_common srsgnb::config_helpers::make_default_ul_config_common(const du_cell_config_master_params& params)
+ul_config_common srsgnb::config_helpers::make_default_ul_config_common(const cell_config_builder_params& params)
 {
   ul_config_common cfg{};
   // This is the ARFCN of the UL f_ref, as per TS 38.104, Section 5.4.2.1.
@@ -194,14 +194,14 @@ ul_config_common srsgnb::config_helpers::make_default_ul_config_common(const du_
   return cfg;
 }
 
-ssb_configuration srsgnb::config_helpers::make_default_ssb_config(const du_cell_config_master_params& params)
+ssb_configuration srsgnb::config_helpers::make_default_ssb_config(const cell_config_builder_params& params)
 {
   ssb_configuration cfg{};
 
   cfg.scs               = band_helper::get_lowest_ssb_scs(band_helper::get_band_from_dl_arfcn(params.dl_arfcn));
   cfg.offset_to_point_A = ssb_offset_to_pointA{params.offset_to_point_a};
   cfg.ssb_period        = ssb_periodicity::ms10;
-  cfg.k_ssb             = 0;
+  cfg.k_ssb             = params.k_ssb;
 
   const unsigned beam_index = 63;
   cfg.ssb_bitmap            = uint64_t(1) << beam_index;

@@ -677,7 +677,7 @@ int main(int argc, char** argv)
   du_logger.info("FAPI adaptors created successfully");
 
   // Cell configuration.
-  struct du_cell_config_master_params cell_config;
+  struct cell_config_builder_params cell_config;
   cell_config.pci               = pci;
   cell_config.scs_common        = scs_common;
   cell_config.nof_crbs          = nof_prb_dl_grid[to_numerology_value(scs)];

@@ -8,15 +8,18 @@
 
 add_executable(gnb
         gnb.cpp
+        gnb_appconfig_builders.cpp
+        gnb_appconfig_validators.cpp
+        gnb_appconfig_translators.cpp
         fapi_factory.cpp
         phy_factory.cpp
-        radio_factory.cpp)
+        )
 
 target_link_libraries(gnb
         srsgnb_cu_cp
         srsgnb_io_broker
         srsgnb_ngap
-        ngap_asn1 
+        ngap_asn1
         srsgnb_du_high
         srsgnb_gateway
         mac_fapi_adaptor_factory
@@ -28,7 +31,7 @@ target_link_libraries(gnb
         srsgnb_channel_equalizer
         srsgnb_lower_phy
         srsgnb_radio
-)
+        )
 
 target_include_directories(gnb PRIVATE ${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/external)

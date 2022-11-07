@@ -15,8 +15,9 @@
 #include "srsgnb/ran/bs_channel_bandwidth.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
-#include "srsgnb/scheduler/config/du_cell_config_master_params.h"
+#include "srsgnb/scheduler/config/cell_config_builder_params.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
+
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 #include "srsgnb/support/error_handling.h"
 
@@ -46,7 +47,7 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
 }
 
 /// Generates default cell configuration used by gNB DU. The default configuration should be valid.
-inline du_cell_config make_default_du_cell_config(const du_cell_config_master_params& params = {})
+inline du_cell_config make_default_du_cell_config(const cell_config_builder_params& params = {})
 {
   du_cell_config cfg{};
   cfg.pci     = params.pci;

@@ -9,6 +9,8 @@
  */
 
 #include "phy_factory.h"
+#include "gnb_appconfig.h"
+#include "gnb_appconfig_translators.h"
 #include "srsgnb/phy/lower/lower_phy_factory.h"
 #include "srsgnb/phy/upper/upper_phy_factories.h"
 
@@ -58,7 +60,7 @@ std::unique_ptr<lower_phy> srsgnb::create_lower_phy(lower_phy_configuration& con
   return lphy_factory->create(config);
 }
 
-std::unique_ptr<upper_phy> srsgnb::create_upper_phy(const upper_phy_params&               params,
+std::unique_ptr<upper_phy> srsgnb::create_upper_phy(const gnb_appconfig&                  params,
                                                     upper_phy_rg_gateway*                 rg_gateway,
                                                     task_executor*                        dl_executor,
                                                     task_executor*                        ul_executor,
@@ -75,25 +77,14 @@ std::unique_ptr<upper_phy> srsgnb::create_upper_phy(const upper_phy_params&     
   std::unique_ptr<upper_phy_factory> upper_phy_factory = create_upper_phy_factory(dl_proc_factory);
   report_fatal_error_if_not(upper_phy_factory, "Invalid upper PHY factory.");
 
-  upper_phy_config upper_config;
-  upper_config.log_level               = params.log_level;
-  upper_config.sector_id               = 0;
-  upper_config.nof_ports               = 1;
-  upper_config.nof_slots_dl_rg         = 2 * params.dl_pipeline_depth;
-  upper_config.nof_dl_processors       = 2 * params.dl_pipeline_depth;
-  upper_config.dl_bw_rb                = params.dl_bw_rb;
-  upper_config.ul_bw_rb                = params.ul_bw_rb;
-  upper_config.gateway                 = rg_gateway;
-  upper_config.dl_executor             = dl_executor;
-  upper_config.nof_ul_processors       = 8 * params.dl_pipeline_depth;
-  upper_config.ul_executor             = ul_executor;
-  upper_config.symbol_request_notifier = rx_symbol_request_notifier;
+  std::vector<upper_phy_config> config = generate_du_low_config(params);
 
-  // :TODO: check this configuration.
-  upper_config.softbuffer_config.max_softbuffers      = 4 * upper_config.nof_ul_processors;
-  upper_config.softbuffer_config.max_nof_codeblocks   = 128;
-  upper_config.softbuffer_config.max_codeblock_size   = (1U << 12);
-  upper_config.softbuffer_config.expire_timeout_slots = 20;
+  // Fill the rest of the parameters.
+  upper_phy_config& cfg       = config.front();
+  cfg.gateway                 = rg_gateway;
+  cfg.dl_executor             = dl_executor;
+  cfg.ul_executor             = ul_executor;
+  cfg.symbol_request_notifier = rx_symbol_request_notifier;
 
-  return upper_phy_factory->create(upper_config);
+  return upper_phy_factory->create(cfg);
 }

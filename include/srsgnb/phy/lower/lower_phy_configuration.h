@@ -21,6 +21,7 @@
 #include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
+#include "srsgnb/support/executors/task_executor.h"
 
 namespace srsgnb {
 

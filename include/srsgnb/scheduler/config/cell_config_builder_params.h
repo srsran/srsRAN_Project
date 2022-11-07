@@ -21,7 +21,7 @@ namespace srsgnb {
 /// \brief Main cell parameters from which other cell parameters (e.g. coreset0, BWP RBs) will be derived.
 /// \remark Only fields that may affect many different fields in du_cell_config (e.g. number of PRBs) should be added
 /// in this struct.
-struct du_cell_config_master_params {
+struct cell_config_builder_params {
   /// Physical Cell Identity.
   pci_t pci = 1;
   /// subCarrierSpacingCommon, as per \c MIB, TS 38.311.
@@ -39,6 +39,8 @@ struct du_cell_config_master_params {
   ssb_offset_to_pointA offset_to_point_a{12};
   /// This is \c controlResourceSetZero, as per TS38.213, Section 13.
   unsigned coreset0_index = 6;
+  /// k_ssb or SSB SubcarrierOffest, as per TS38.211 Section 7.4.3.1. Possible values: {0, ..., 23}.
+  ssb_subcarrier_offset k_ssb = 0;
 };
 
 } // namespace srsgnb
