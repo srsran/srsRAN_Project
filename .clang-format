@@ -21,7 +21,7 @@ AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: true #Changed
 BinPackArguments: false
 BinPackParameters: false
-BraceWrapping:   
+BraceWrapping:
   AfterClass:      true #Changed
   AfterControlStatement: false
   AfterEnum:       false
@@ -39,16 +39,16 @@ BraceWrapping:
   SplitEmptyNamespace: true
 BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Custom #Changed
-BreakBeforeInheritanceComma: false 
+BreakBeforeInheritanceComma: false
 BreakBeforeTernaryOperators: true
-BreakConstructorInitializersBeforeComma: false 
+BreakConstructorInitializersBeforeComma: false
 BreakConstructorInitializers: AfterColon      #Changed
 BreakAfterJavaFieldAnnotations: false
 BreakStringLiterals: true
 ColumnLimit:     120 #Changed
 CommentPragmas:  '^ IWYU pragma:'
 CompactNamespaces: false
-ConstructorInitializerAllOnOneLineOrOnePerLine: true #Changed 
+ConstructorInitializerAllOnOneLineOrOnePerLine: true #Changed
 ConstructorInitializerIndentWidth: 2 #Changed
 ContinuationIndentWidth: 4
 Cpp11BracedListStyle: true
@@ -56,15 +56,15 @@ DerivePointerAlignment: false
 DisableFormat:   false
 ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: true
-ForEachMacros:   
+ForEachMacros:
   - foreach
   - Q_FOREACH
   - BOOST_FOREACH
 IncludeBlocks:   Preserve
-IncludeCategories: 
-  - Regex:           '^"(llvm|llvm-c|clang|clang-c)/'
+IncludeCategories: #Changed
+  - Regex:           '^"(srsgnb|llvm|llvm-c|clang|clang-c)/'
     Priority:        2
-  - Regex:           '^(<|"(gtest|gmock|isl|json)/)'
+  - Regex:           '^(<|"(CLI|fmt|gtest|gmock|isl|json|variant)/)'
     Priority:        3
   - Regex:           '.*'
     Priority:        1
