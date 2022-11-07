@@ -220,6 +220,7 @@ static dci_context_information generate_dci_context(const bwp_configuration& bwp
   info.n_id_pdcch_data   = 2;
   info.n_rnti_pdcch_data = 4;
   info.cces.ncce         = 2;
+  info.n_id_pdcch_dmrs   = 8;
   info.cces.aggr_lvl     = static_cast<aggregation_level>(generate_case_pattern());
 
   return info;
