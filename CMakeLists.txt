@@ -220,6 +220,7 @@ endif ()
 include(CTest)
 
 include_directories(include)
+include_directories(external/fmt/include)
 include_directories(external)
 
 ########################################################################
@@ -246,6 +247,7 @@ add_custom_target(all_srsgnb_headers SOURCES ${ALL_HEADER_FILES})
 
 add_subdirectory(apps)
 add_subdirectory(docs)
+add_subdirectory(external)
 add_subdirectory(lib)
 
 if (BUILD_TESTS)

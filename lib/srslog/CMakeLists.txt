@@ -17,16 +17,11 @@ include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/srslog/formatters)
 
 set(SOURCES
     ${SOURCES}
-        ${CMAKE_CURRENT_SOURCE_DIR}/bundled/fmt/format.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/bundled/fmt/os.cc)
-
-set(SOURCES
-    ${SOURCES}
     ${CMAKE_CURRENT_SOURCE_DIR}/formatters/json_formatter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/formatters/text_formatter.cpp)
 
 
 add_library(srslog STATIC ${SOURCES})
-target_link_libraries(srslog ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(srslog fmt ${CMAKE_THREAD_LIBS_INIT})
 
 install(TARGETS srslog EXPORT srsgnb_export)
