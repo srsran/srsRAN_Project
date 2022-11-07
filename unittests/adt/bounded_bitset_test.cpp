@@ -744,3 +744,26 @@ TEST(BoundedBitset, fold_and_accumulate)
   ASSERT_TRUE(fold_bitset.is_contiguous());
   ASSERT_EQ(0, fold_bitset.find_lowest());
 }
+
+TEST(BoundedBitset, for_each)
+{
+  bounded_bitset<10>  mask   = {false, true, false, true, false, true, false, true, false, true};
+  std::array<int, 10> values = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+  std::vector<int>    output;
+
+  mask.for_each(0, mask.size(), [&output, &values](int n) { output.emplace_back(values[n]); });
+  ASSERT_EQ(output, std::vector<int>({2, 4, 6, 8, 10}));
+
+  output.resize(0);
+  mask.for_each(
+      0, mask.size(), [&output, &values](int n) { output.emplace_back(values[n]); }, false);
+  ASSERT_EQ(output, std::vector<int>({1, 3, 5, 7, 9}));
+
+  output.resize(0);
+  mask.for_each(2, mask.size(), [&output, &values](int n) { output.emplace_back(values[n]); });
+  ASSERT_EQ(output, std::vector<int>({4, 6, 8, 10}));
+
+  output.resize(0);
+  mask.for_each(0, 9, [&output, &values](int n) { output.emplace_back(values[n]); });
+  ASSERT_EQ(output, std::vector<int>({2, 4, 6, 8}));
+}

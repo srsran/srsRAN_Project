@@ -473,12 +473,24 @@ public:
     return find_first_reversed_(startpos, endpos, value);
   }
 
+  /// \brief Executes a function for all \c true (or all \c false) bits in the given bitset interval.
+  ///
+  /// \param[in] startpos Smallest bit index considered for the function execution (included).
+  /// \param[in] endpos   Largest bit index considered for the function execution (excluded).
+  /// \param[in] function Function to execute - the signature should be compatible with <tt>void ()(unsigned)</tt>.
+  /// \param[in] value    Bit value that triggers the function execution.
   template <class T>
   inline void for_each(size_t startpos, size_t endpos, const T&& function, bool value = true) const noexcept
   {
+    static_assert(!FirstBitIsLeftmost, "The for_each method is not yet available for reversed bitsets.");
+
     assert_range_bounds_(startpos, endpos);
 
-    if (all()) {
+    if (startpos == endpos) {
+      return;
+    }
+
+    if (all(startpos, endpos)) {
       for (size_t bitpos = startpos; bitpos != endpos; ++bitpos) {
         function(bitpos);
       }
@@ -498,11 +510,11 @@ public:
       }
 
       if (i == startword) {
-        w &= mask_msb_zeros<word_t>(startpos % bits_per_word);
+        w &= mask_lsb_zeros<word_t>(startpos % bits_per_word);
       }
 
-      if (i == lastword) {
-        w &= mask_lsb_zeros<word_t>(endpos % bits_per_word);
+      if ((i == lastword - 1) && (endpos % bits_per_word != 0)) {
+        w &= mask_lsb_ones<word_t>(endpos % bits_per_word);
       }
 
       // Process presets of 4 bits.
