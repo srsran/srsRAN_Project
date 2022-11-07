@@ -17,9 +17,9 @@
 #pragma once
 
 #include "srsgnb/adt/span.h"
-#include "srsgnb/srslog/bundled/fmt/format.h"
 #include "srsgnb/srsvec/detail/traits.h"
 #include "srsgnb/support/srsgnb_assert.h"
+#include "fmt/format.h"
 
 #include <numeric>
 

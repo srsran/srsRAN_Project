@@ -9,7 +9,7 @@
  */
 
 #include "srsgnb/ran/prach/prach_frequency_mapping.h"
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
+#include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {

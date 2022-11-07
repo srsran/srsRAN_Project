@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/srslog/bundled/fmt/core.h"
 #include "srsgnb/srslog/detail/support/backend_capacity.h"
+#include "fmt/core.h"
 
 namespace srslog {
 

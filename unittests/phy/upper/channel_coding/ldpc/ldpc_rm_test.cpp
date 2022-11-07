@@ -18,8 +18,7 @@
 
 #include "ldpc_rate_matcher_test_data.h"
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
-
+#include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;

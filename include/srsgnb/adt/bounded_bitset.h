@@ -1,9 +1,9 @@
 
 #pragma once
 
-#include "srsgnb/srslog/bundled/fmt/format.h"
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsgnb_assert.h"
+#include "fmt/format.h"
 #include <cstdint>
 #include <inttypes.h>
 #include <string>

@@ -11,7 +11,7 @@
 #pragma once
 
 #include "detail/byte_buffer_segment.h"
-#include "srsgnb/srslog/bundled/fmt/format.h"
+#include "fmt/format.h"
 #include <vector>
 
 namespace srsgnb {

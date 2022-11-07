@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
 #include "srsgnb/support/test_utils.h"
 #include "srsgnb/support/unique_thread.h"
+#include "fmt/ostream.h"
 #include <mutex>
 #include <unistd.h>
 

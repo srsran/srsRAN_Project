@@ -20,8 +20,7 @@
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
-
+#include "fmt/ostream.h"
 #include <gtest/gtest.h>
 #include <random>
 #include <string>

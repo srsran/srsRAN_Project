@@ -13,8 +13,8 @@
 #include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/equalization/equalization_factories.h"
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
 #include "srsgnb/srsvec/compare.h"
+#include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;

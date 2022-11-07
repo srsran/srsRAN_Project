@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/srslog/bundled/fmt/format.h"
+#include "fmt/format.h"
 #include <algorithm>
 #include <array>
 #include <cassert>

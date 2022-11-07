@@ -9,7 +9,7 @@
  */
 
 #include "lib/scheduler/support/pusch/pusch_default_time_allocation.h"
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
+#include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {

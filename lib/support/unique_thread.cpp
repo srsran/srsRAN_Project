@@ -9,7 +9,7 @@
  */
 
 #include "srsgnb/support/unique_thread.h"
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
+#include "fmt/ostream.h"
 #include <cstdio>
 #include <pthread.h>
 #include <sys/types.h>

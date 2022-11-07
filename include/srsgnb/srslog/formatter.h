@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/srslog/bundled/fmt/format.h"
 #include "srsgnb/srslog/context.h"
+#include "fmt/format.h"
 
 namespace srslog {
 

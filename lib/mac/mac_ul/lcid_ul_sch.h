@@ -11,8 +11,8 @@
 #pragma once
 
 #include "srsgnb/ran/lcid.h"
-#include "srsgnb/srslog/bundled/fmt/format.h"
 #include "srsgnb/support/srsgnb_assert.h"
+#include "fmt/format.h"
 
 namespace srsgnb {
 

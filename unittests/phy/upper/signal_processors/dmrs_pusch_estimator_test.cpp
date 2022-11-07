@@ -12,7 +12,7 @@
 #include "dmrs_pusch_estimator_test_data.h"
 #include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
+#include "fmt/ostream.h"
 #include "gtest/gtest.h"
 
 using namespace srsgnb;

@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/radio/radio_notification_handler.h"
-#include "srsgnb/srslog/bundled/fmt/format.h"
+#include "fmt/format.h"
 
 namespace srsgnb {
 

@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/srslog/bundled/fmt/format.h"
 #include "srsgnb/support/srsgnb_assert.h"
+#include "fmt/format.h"
 #include <cassert>
 #include <string>
 #include <type_traits>

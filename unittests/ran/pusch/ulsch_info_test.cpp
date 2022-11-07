@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/ran/pusch/ulsch_info.h"
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
 #include "ulsch_info_test_data.h"
+#include "srsgnb/ran/pusch/ulsch_info.h"
+#include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/srslog/bundled/fmt/format.h"
+#include "fmt/format.h"
 
 /*
  * This file will hold the interfaces and structures for the

@@ -10,7 +10,7 @@
 
 #include "channel_equalizer_test_data.h"
 #include "srsgnb/phy/upper/equalization/equalization_factories.h"
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
+#include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;

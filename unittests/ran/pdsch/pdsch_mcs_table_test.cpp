@@ -9,7 +9,7 @@
  */
 
 #include "srsgnb/ran/pdsch/pdsch_mcs.h"
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
+#include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {

@@ -13,9 +13,9 @@
 #include "prach_generator_test_doubles.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/ran/prach/prach_cyclic_shifts.h"
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
 #include "srsgnb/srsvec/add.h"
 #include "srsgnb/srsvec/prod.h"
+#include "fmt/ostream.h"
 #include <gtest/gtest.h>
 #include <random>
 

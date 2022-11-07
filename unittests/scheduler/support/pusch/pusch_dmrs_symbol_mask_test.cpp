@@ -10,7 +10,7 @@
 
 #include "lib/scheduler/support/pusch/pusch_dmrs_symbol_mask.h"
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
+#include "fmt/ostream.h"
 #include <gtest/gtest.h>
 #include <map>
 

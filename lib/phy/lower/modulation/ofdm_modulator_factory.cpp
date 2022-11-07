@@ -1,7 +1,7 @@
 
 
 #include "ofdm_modulator_factory_impl.h"
-#include "srsgnb/srslog/bundled/fmt/core.h"
+#include "fmt/core.h"
 #include <functional>
 
 using namespace srsgnb;
