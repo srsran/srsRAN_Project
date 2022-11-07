@@ -154,7 +154,7 @@ private:
   }
 
   /// \brief Reverses the scrambling of the received soft bits described by TS38.211 Section 6.3.1.1.
-  /// \param[out] out   Result of the process or reversing the scrambling.
+  /// \param[out] out   Result of the process of reversing the scrambling.
   /// \param[in] in     Input soft bits to descramble.
   /// \param[in] config PUSCH demodulator configuration.
   void descramble(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in, const configuration& config);

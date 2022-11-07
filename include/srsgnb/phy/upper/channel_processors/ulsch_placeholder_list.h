@@ -35,7 +35,7 @@ public:
   /// Default constructor: builds an empty placeholder list.
   ulsch_placeholder_list() = default;
 
-  /// Construct a list from a list containing RE indexes.
+  /// Constructor: Initializes the list of RE indexes with the provided values.
   ulsch_placeholder_list(const std::initializer_list<unsigned>& list)
   {
     std::copy_n(list.begin(), list.size(), std::back_inserter(re_indexes));
