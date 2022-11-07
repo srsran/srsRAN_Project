@@ -10,23 +10,11 @@
 
 #pragma once
 
-#include "e1_common.h"
 #include "srsgnb/asn1/e1ap.h"
+#include "srsgnb/e1_interface/common/e1_common.h"
 
 namespace srsgnb {
 namespace srs_cu_up {
-
-/// \brief CU-CP initiated E1 setup request.
-struct cu_cp_e1_setup_request_message {
-  asn1::e1ap::gnb_cu_cp_e1_setup_request_s request;
-};
-
-/// \brief Response to CU-CP initiated E1 setup request.
-struct cu_cp_e1_setup_response_message {
-  bool                                  success;
-  asn1::e1ap::gnb_cu_cp_e1_setup_resp_s response;
-  asn1::e1ap::gnb_cu_cp_e1_setup_fail_s failure;
-};
 
 /// Handle E1 interface management procedures as defined in TS 38.463 section 8.2.4.
 class e1_connection_manager

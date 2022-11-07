@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/e1_interface/e1_common.h"
+#include "srsgnb/e1_interface/common/e1_common.h"
 
 #include <string>
 
