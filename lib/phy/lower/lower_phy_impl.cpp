@@ -95,12 +95,6 @@ baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
 
       // Demodulate the baseband signal if it has been requested.
       if (ul_rg) {
-        for (unsigned i = 0; i != buffer.size(); ++i) {
-          if (std::abs(buffer[i]) > 0.00001) {
-            fmt::print("First sample at i={}\n", i);
-            break;
-          }
-        }
         demodulators[sector_id]->demodulate(*ul_rg, buffer, port_id, symbol_id);
       }
     }

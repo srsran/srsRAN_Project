@@ -50,7 +50,6 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
     // Average.
     for (cf_t& value : symbol_lse_0) {
       value /= static_cast<float>(symbols.size().nof_symbols);
-      value /= 0.70794576;
     }
 
     // Interpolate frequency domain.
