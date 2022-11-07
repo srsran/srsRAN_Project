@@ -60,6 +60,8 @@ target_link_libraries(srsgnb_uci_decoder srsgnb_channel_coding srsvec)
 
 add_library(srsgnb_ulsch_demux STATIC ulsch_demultiplex_impl.cpp)
 
+add_library(srsgnb_pucch_demodulator STATIC pucch_demodulator_impl.cpp)
+
 add_library(srsgnb_channel_processors STATIC channel_processor_factories.cpp)
 target_link_libraries(srsgnb_channel_processors
         srsgnb_pbch_encoder
@@ -71,8 +73,9 @@ target_link_libraries(srsgnb_channel_processors
         srsgnb_pdsch_modulator
         srsgnb_pdsch_processor
         srsgnb_prach_detector
-        srsgnb_pucch_processor
+        srsgnb_pucch_demodulator
         srsgnb_pucch_detector
+        srsgnb_pucch_processor
         srsgnb_pusch_decoder
         srsgnb_pusch_demodulator
         srsgnb_pusch_processor
@@ -90,6 +93,7 @@ install(TARGETS srsgnb_channel_processors
         srsgnb_pdsch_modulator
         srsgnb_pdsch_processor
         srsgnb_prach_detector
+        srsgnb_pucch_demodulator
         srsgnb_pucch_detector
         srsgnb_pucch_processor
         srsgnb_pusch_decoder

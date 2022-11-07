@@ -86,7 +86,7 @@ private:
             grid.get(re_port_buffer.first(nof_subcs), i_port, i_symbol + config.start_symbol_index, 0, re_mask);
 
         srsgnb_assert(
-            unread_re.empty(), "Invalid number of RE read from the grid. {} RE have not been read", unread_re.size());
+            unread_re.empty(), "Invalid number of RE read from the grid. {} RE are missing.", unread_re.size());
 
         // Advance buffers.
         re_port_buffer = re_port_buffer.subspan(nof_subcs, re_port_buffer.size() - nof_subcs);
@@ -192,7 +192,7 @@ private:
       ch_estimates;
 
   /// Buffer used to transfer noise variance estimates from the channel estimate to the equalizer.
-  std::array<float, pusch_constants::MAX_NOF_LAYERS> noise_var_estimates;
+  std::array<float, MAX_PORTS> noise_var_estimates;
 };
 
 } // namespace srsgnb

@@ -84,12 +84,14 @@ public:
   struct format2_configuration {
     /// Slot and numerology.
     slot_point slot;
+    /// Cyclic prefix configuration for the slot.
+    cyclic_prefix cp;
+    /// Port indexes used for the PUCCH reception.
+    static_vector<uint8_t, MAX_PORTS> ports;
     /// Number of contiguous PRBs allocated to the BWP {1, ..., 275}.
     unsigned bwp_size_rb;
     /// BWP start RB index from Point A {0, ..., 274}.
     unsigned bwp_start_rb;
-    /// Cyclic prefix configuration for the slot.
-    cyclic_prefix cp;
     /// \brief Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274}.
     ///
     /// Index of the first PRB prior to frequency hopping or for no frequency hopping as per TS38.213 Section 9.2.1.
@@ -99,6 +101,16 @@ public:
     /// Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274} if intra-slot frequency hopping is
     /// enabled, empty otherwise.
     optional<unsigned> second_hop_prb;
+    /// Number of PRB {1, ..., 16}.
+    unsigned nof_prb;
+    /// Start symbol index {0, ..., 12}.
+    unsigned start_symbol_index;
+    /// Number of symbols for the PUCCH transmission {1, 2}.
+    unsigned nof_symbols;
+    /// Radio Network Temporary Identifier, see parameter \f$n_{RNTI}\f$ in TS38.211 Section 6.3.2.5.1.
+    uint16_t rnti;
+    /// Scrambling identifier, see parameter \f$n_{ID}\f$ in TS38.211 Section 6.3.2.5.1. Range is {0, ..., 1023}.
+    unsigned n_id;
     /// \brief DM-RS scrambling identity {0, ..., 65535}.
     ///
     /// Corresponds to parameter \f$N_{\textup{ID}}^0\f$ in TS38.211 Section 6.4.1.3.2.1.
@@ -115,14 +127,6 @@ public:
     unsigned nof_csi_part1;
     /// Number of expected CSI part 2 bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
     unsigned nof_csi_part2;
-    /// Port indexes used for the PUCCH reception.
-    static_vector<uint8_t, MAX_PORTS> ports;
-    /// Number of PRB {1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 15, 16}.
-    unsigned nof_prb;
-    /// Number of symbols for the PUCCH transmission {4, ..., 14}.
-    unsigned nof_symbols;
-    /// Start symbol index {0, ..., 10}.
-    unsigned start_symbol_index;
   };
 
   /// Collects specific PUCCH Format 3 parameters.

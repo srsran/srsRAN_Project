@@ -8,6 +8,8 @@
  *
  */
 
+#include "srsgnb/phy/constants.h"
+
 #pragma once
 
 namespace srsgnb {
@@ -22,14 +24,14 @@ enum class pucch_group_hopping {
   DISABLE
 };
 
-/// \brief PUCCH Formats as described in TS 38.213 clause 9.2.
+/// \brief PUCCH Formats as described in TS38.213 Section 9.2.
 enum class pucch_format { FORMAT_0, FORMAT_1, FORMAT_2, FORMAT_3, FORMAT_4, NOF_FORMATS };
 
-/// Defines whether the PUCCH within the current slot belongs to a PUCCH repetition. For more details, ref. to
-/// TS 38.213, Section 9.2.6.
+/// Defines whether the PUCCH within the current slot belongs to a PUCCH repetition. For more details, refer to
+/// TS38.213, Section 9.2.6.
 enum class pucch_repetition_tx_slot { no_multi_slot, starts, continues, ends };
 
-/// Maximum number of symbols (without DMRS) that NR-PUCCH Format 1 can transmit.
+/// Maximum number of symbols (without DM-RS) that NR-PUCCH Format 1 can transmit.
 static constexpr unsigned PUCCH_FORMAT1_N_MAX = 7;
 
 /// Minimum number of symbols that NR-PUCCH Format 2 can transmit.
@@ -41,11 +43,14 @@ static constexpr unsigned PUCCH_FORMAT2_MAX_NSYMB = 2;
 /// Maximum number of PRBs allocated for NR-PUCCH Format 2.
 static constexpr unsigned PUCCH_FORMAT2_MAX_NPRB = 16;
 
+/// Number of control data subcarriers per Resource Block for PUCCH Format 2, as per TS38.213 Section 9.1.5.2.
+static constexpr unsigned PUCCH_FORMAT2_NOF_DATA_SC = 8;
+
 /// \brief Maximum number of resource elements used by PUCCH.
 ///
 /// It corresponds to PUCCH Format 3 with a bandwidth of 16 PRBs and a duration of 14 symbols, two of which are occupied
 /// by the DM-RS.
-static constexpr unsigned PUCCH_MAX_NOF_RE = 16 * (14 - 2);
+static constexpr unsigned PUCCH_MAX_NOF_RE = NRE * 16 * (14 - 2);
 
 /// \brief Maximum number of LLRs corresponding to a PUCCH.
 ///

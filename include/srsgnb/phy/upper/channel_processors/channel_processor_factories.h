@@ -24,6 +24,7 @@
 #include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/prach_detector.h"
 #include "srsgnb/phy/upper/channel_processors/prach_generator.h"
+#include "srsgnb/phy/upper/channel_processors/pucch_demodulator.h"
 #include "srsgnb/phy/upper/channel_processors/pucch_detector.h"
 #include "srsgnb/phy/upper/channel_processors/pucch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_decoder.h"
@@ -263,5 +264,17 @@ public:
 };
 
 std::shared_ptr<ulsch_demultiplex_factory> create_ulsch_demultiplex_factory_sw();
+
+class pucch_demodulator_factory
+{
+public:
+  virtual ~pucch_demodulator_factory()                = default;
+  virtual std::unique_ptr<pucch_demodulator> create() = 0;
+};
+
+std::shared_ptr<pucch_demodulator_factory>
+create_pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
+                                    std::shared_ptr<channel_modulation_factory>      demodulation_factory,
+                                    std::shared_ptr<pseudo_random_generator_factory> prg_factory);
 
 } // namespace srsgnb

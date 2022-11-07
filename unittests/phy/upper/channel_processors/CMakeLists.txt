@@ -232,3 +232,22 @@ add_custom_command(
         VERBATIM
 )
 add_test(ulsch_demultiplex_test ulsch_demultiplex_test)
+
+add_executable(pucch_demodulator_format2_test pucch_demodulator_format2_test.cpp)
+target_link_libraries(pucch_demodulator_format2_test
+        srsgnb_channel_processors
+        srsgnb_channel_equalizer
+        srsgnb_phy_support
+        srslog
+        srsgnb_upper_phy_support
+        gtest
+        gtest_main)
+add_test(pucch_demodulator_format2_test pucch_demodulator_format2_test)
+
+add_custom_command(
+        TARGET pucch_demodulator_format2_test
+        POST_BUILD
+        WORKING_DIRECTORY ${TEST_DATA_DIR}
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pucch_demodulator_format2_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pucch_demodulator_format2_test_data.tar.gz
+        VERBATIM)

@@ -19,6 +19,7 @@
 #include "pdsch_processor_impl.h"
 #include "prach_detector_simple_impl.h"
 #include "prach_generator_impl.h"
+#include "pucch_demodulator_impl.h"
 #include "pucch_detector_impl.h"
 #include "pucch_processor_impl.h"
 #include "pusch_decoder_impl.h"
@@ -490,6 +491,33 @@ public:
   std::unique_ptr<ulsch_demultiplex> create() override { return std::make_unique<ulsch_demultiplex_impl>(); }
 };
 
+class pucch_demodulator_factory_sw : public pucch_demodulator_factory
+{
+public:
+  std::unique_ptr<pucch_demodulator> create() override
+  {
+    return std::make_unique<pucch_demodulator_impl>(
+        equalizer_factory->create(), demodulation_factory->create_demodulation_mapper(), prg_factory->create());
+  }
+
+  pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory_,
+                               std::shared_ptr<channel_modulation_factory>      demodulation_factory_,
+                               std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
+    equalizer_factory(std::move(equalizer_factory_)),
+    demodulation_factory(std::move(demodulation_factory_)),
+    prg_factory(std::move(prg_factory_))
+  {
+    srsgnb_assert(equalizer_factory, "Invalid equalizer factory.");
+    srsgnb_assert(demodulation_factory, "Invalid demodulation factory.");
+    srsgnb_assert(prg_factory, "Invalid PRG factory.");
+  }
+
+private:
+  std::shared_ptr<channel_equalizer_factory>       equalizer_factory;
+  std::shared_ptr<channel_modulation_factory>      demodulation_factory;
+  std::shared_ptr<pseudo_random_generator_factory> prg_factory;
+};
+
 } // namespace
 
 std::shared_ptr<pbch_encoder_factory>
@@ -618,4 +646,13 @@ std::shared_ptr<uci_decoder_factory> srsgnb::create_uci_decoder_factory_sw(uci_d
 std::shared_ptr<ulsch_demultiplex_factory> srsgnb::create_ulsch_demultiplex_factory_sw()
 {
   return std::make_shared<ulsch_demultiplex_factory_sw>();
+}
+
+std::shared_ptr<pucch_demodulator_factory>
+srsgnb::create_pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
+                                            std::shared_ptr<channel_modulation_factory>      demodulation_factory,
+                                            std::shared_ptr<pseudo_random_generator_factory> prg_factory)
+{
+  return std::make_shared<pucch_demodulator_factory_sw>(
+      std::move(equalizer_factory), std::move(demodulation_factory), std::move(prg_factory));
 }

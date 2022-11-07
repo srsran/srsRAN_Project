@@ -13,6 +13,7 @@
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/upper/channel_estimation.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
+#include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
 
@@ -22,7 +23,20 @@ class pucch_demodulator
 public:
   /// Collects PUCCH Format 2 demodulation parameters.
   struct format2_configuration {
-    // Add here PUCCH demodulator parameters...
+    /// Port indexes used for the PUCCH reception.
+    static_vector<uint8_t, MAX_PORTS> rx_ports;
+    /// Lowest PRB index used for the PUCCH transmission within the resource grid {0, ..., 274}.
+    unsigned first_prb;
+    /// Number of PRB allocated to PUCCH Format 2 {1, ..., 16}.
+    unsigned nof_prb;
+    /// Start symbol index within the slot {0, ..., 13}.
+    unsigned start_symbol_index;
+    /// Number of symbols for the PUCCH transmission {1, 2}.
+    unsigned nof_symbols;
+    /// Radio Network Temporary Identifier, see parameter \f$n_{RNTI}\f$ in TS38.211 Section 6.3.2.5.1.
+    uint16_t rnti;
+    /// Scrambling identifier, see parameter \f$n_{ID}\f$ in TS38.211 Section 6.3.2.5.1. Range is {0, ..., 1023}.
+    unsigned n_id;
   };
 
   /// Collects PUCCH Format 3 demodulation parameters.
