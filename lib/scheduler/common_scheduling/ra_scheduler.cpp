@@ -59,6 +59,8 @@ ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_resource_alloca
 {
   // RAR payload size in bytes as per TS38.321, 6.1.5 and 6.2.3.
   static const unsigned rar_payload_size_bytes = 7, rar_subheader_size_bytes = 1;
+  // Msg3 UL CCCH message size is up to 64bits (8 octets), and its subheader has 1 octet as per TS38.321.
+  static constexpr unsigned max_msg3_sdu_payload_size_bytes = 8, msg3_subheader_size_bytes = 1;
   // As per TS 38.214, Section 5.1.3.2, nof_oh_prb = 0 if PDSCH is scheduled by PDCCH with a CRC scrambled by RA-RNTI.
   static const unsigned nof_oh_prb = 0;
   static const unsigned nof_layers = 1;
@@ -81,7 +83,7 @@ ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_resource_alloca
                                                                      nof_symb_sh,
                                                                      calculate_nof_dmrs_per_rb(rar_data[i].dmrs_info),
                                                                      nof_oh_prb,
-                                                                     modulation_scheme::QPSK,
+                                                                     rar_mcs_config.modulation,
                                                                      rar_mcs_config.target_code_rate / 1024.0F,
                                                                      nof_layers});
   }
@@ -92,8 +94,15 @@ ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_resource_alloca
   for (unsigned i = 0; i != msg3_data.size(); ++i) {
     msg3_data[i].dmrs_info = make_dmrs_info_common(get_pusch_cfg(), i, cfg.pci, cfg.dmrs_typeA_pos);
 
-    msg3_data[i].prbs_tbs.nof_prbs  = 3;  // TODO: Derive Msg3 size in PRBs.
-    msg3_data[i].prbs_tbs.tbs_bytes = 11; // TODO: Derive Msg3 TB size (bytes).
+    unsigned nof_symb_sh = get_pusch_cfg().pusch_td_alloc_list[i].symbols.length();
+    msg3_data[i].prbs_tbs =
+        get_nof_prbs(prbs_calculator_pdsch_config{max_msg3_sdu_payload_size_bytes + msg3_subheader_size_bytes,
+                                                  nof_symb_sh,
+                                                  calculate_nof_dmrs_per_rb(msg3_data[i].dmrs_info),
+                                                  nof_oh_prb,
+                                                  msg3_mcs_config.modulation,
+                                                  msg3_mcs_config.target_code_rate / 1024.0F,
+                                                  nof_layers});
   }
 }
 
@@ -590,35 +599,20 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   ul_info.pusch_cfg.ul_freq_shift_7p5khz       = false;
   ul_info.pusch_cfg.mcs_table                  = pusch_mcs_table::qam64;
   ul_info.pusch_cfg.mcs_index                  = msg3_ctx.harq.tb().mcs;
-  sch_mcs_description mcs_config =
-      pusch_mcs_get_config(ul_info.pusch_cfg.mcs_table, ul_info.pusch_cfg.mcs_index, false);
-  ul_info.pusch_cfg.target_code_rate = mcs_config.target_code_rate;
-  ul_info.pusch_cfg.qam_mod          = mcs_config.modulation;
+  ul_info.pusch_cfg.target_code_rate           = msg3_mcs_config.target_code_rate;
+  ul_info.pusch_cfg.qam_mod                    = msg3_mcs_config.modulation;
   // TS 38.214, 6.1.3. - "transform precoding either 'enabled' or 'disabled' according to the higher layer configured
   // parameter msg3-transformPrecoder".
-  ul_info.pusch_cfg.transform_precoding       = get_rach_cfg().msg3_transform_precoder;
-  ul_info.pusch_cfg.n_id                      = cfg.pci;
-  ul_info.pusch_cfg.nof_layers                = 1;
-  ul_info.pusch_cfg.dmrs                      = msg3_data[pusch_td_res_index].dmrs_info;
-  ul_info.pusch_cfg.pusch_dmrs_id             = cfg.pci;
-  ul_info.pusch_cfg.dmrs_hopping_mode         = pusch_information::dmrs_hopping_mode::no_hopping; // TODO.
-  ul_info.pusch_cfg.rv_index                  = pdcch->dci.tc_rnti_f0_0.redundancy_version;
-  ul_info.pusch_cfg.harq_id                   = msg3_ctx.harq.id;
-  ul_info.pusch_cfg.new_data                  = false;
-  unsigned                  nof_oh_prb        = 0; // TODO.
-  unsigned                  tb_scaling_field  = 0; // TODO.
-  constexpr static unsigned nof_bits_per_byte = 8U;
-  ul_info.pusch_cfg.tb_size_bytes =
-      tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)grant.symbols.length(),
-                                                            calculate_nof_dmrs_per_rb(ul_info.pusch_cfg.dmrs),
-                                                            nof_oh_prb,
-                                                            ul_info.pusch_cfg.target_code_rate / 1024.0F,
-                                                            ul_info.pusch_cfg.qam_mod,
-                                                            ul_info.pusch_cfg.nof_layers,
-                                                            tb_scaling_field,
-                                                            grant.crbs.length()}) /
-      nof_bits_per_byte;
-  srsgnb_assert(ul_info.pusch_cfg.tb_size_bytes == msg3_ctx.harq.tb().tbs_bytes, "TBS should not change for reTxs");
+  ul_info.pusch_cfg.transform_precoding = get_rach_cfg().msg3_transform_precoder;
+  ul_info.pusch_cfg.n_id                = cfg.pci;
+  ul_info.pusch_cfg.nof_layers          = 1;
+  ul_info.pusch_cfg.dmrs                = msg3_data[pusch_td_res_index].dmrs_info;
+  ul_info.pusch_cfg.pusch_dmrs_id       = cfg.pci;
+  ul_info.pusch_cfg.dmrs_hopping_mode   = pusch_information::dmrs_hopping_mode::no_hopping; // TODO.
+  ul_info.pusch_cfg.rv_index            = pdcch->dci.tc_rnti_f0_0.redundancy_version;
+  ul_info.pusch_cfg.harq_id             = msg3_ctx.harq.id;
+  ul_info.pusch_cfg.new_data            = false;
+  ul_info.pusch_cfg.tb_size_bytes       = msg3_ctx.harq.tb().tbs_bytes;
   // Set number of CB to zero if no CBs are being used.
   ul_info.pusch_cfg.num_cb = 0;
 }
