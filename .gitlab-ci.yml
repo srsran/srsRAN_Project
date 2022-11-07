@@ -301,15 +301,15 @@ promote code:
   stage: .post
   rules:
     - if: $GRADUATION_BRANCH
+  variables:
+    GIT_STRATEGY: none
   image: alpine:3.16.0 # sh entrypoint
   before_script:
     - apk add git git-lfs
+    - git lfs install
   script:
-    - git config user.email "${CODEBOT_USERNAME}@srs.io"
-    - git config user.name ${CODEBOT_USERNAME}
-    - git remote remove origin
-    - git remote add origin https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git
-    - git fetch origin $GRADUATION_BRANCH
+    - git clone https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git /${CI_PROJECT_NAME}
+    - cd /${CI_PROJECT_NAME}
     - git checkout -t origin/$GRADUATION_BRANCH
     - git rebase ${CI_COMMIT_SHA}
     - git push

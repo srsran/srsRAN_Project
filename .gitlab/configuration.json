@@ -74,46 +74,49 @@
             "allow_force_push": false,
             "allowed_to_merge": [
                 {
-                    "access_level": 40,
-                    "access_level_description": "Maintainers",
-                    "group_id": null,
-                    "user_id": null
-                }
-            ],
-            "allowed_to_push": [
-                {
                     "access_level": 0,
                     "access_level_description": "No one",
                     "group_id": null,
                     "user_id": null
                 }
             ],
+            "allowed_to_push": [
+                {
+                    "access_level": 40,
+                    "access_level_description": "codebot",
+                    "group_id": null,
+                    "user_id": 11604565
+                }
+            ],
             "code_owner_approval_required": false,
-            "name": "main"
+            "name": "next"
         },
         {
             "allow_force_push": false,
             "allowed_to_merge": [
                 {
-                    "access_level": 40,
-                    "access_level_description": "Maintainers",
-                    "group_id": null,
-                    "user_id": null
-                }
-            ],
-            "allowed_to_push": [
-                {
                     "access_level": 0,
                     "access_level_description": "No one",
                     "group_id": null,
                     "user_id": null
                 }
             ],
+            "allowed_to_push": [
+                {
+                    "access_level": 40,
+                    "access_level_description": "codebot",
+                    "group_id": null,
+                    "user_id": 11604565
+                }
+            ],
             "code_owner_approval_required": false,
-            "name": "next"
+            "name": "main"
         }
     ],
     "protectedtags": [],
+    "pushrules": {
+        "prevent_secrets": true
+    },
     "releases_access_level": "enabled",
     "remove_source_branch_after_merge": true,
     "repository_access_level": "enabled",
