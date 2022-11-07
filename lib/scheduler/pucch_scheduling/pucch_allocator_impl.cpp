@@ -373,6 +373,11 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   const pucch_info* existing_pucch_harq_grant =
       pucch_harq_it != pucch_slot_alloc.result.ul.pucchs.end() ? pucch_harq_it : nullptr;
 
+  if (existing_pucch_harq_grant != nullptr and existing_pucch_harq_grant->format_1.harq_ack_nof_bits > 2) {
+    logger.warning("SCHED: SR occasion allocation for RNTI {:#x} skipped. CAUSE: max HARQ-ACK bits reached.", crnti);
+    return;
+  }
+
   // Allocate PUCCH SR grant only.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
     logger.warning("SCHED: SR occasion allocation for RNTI {:#x} skipped. CAUSE: no more PUCCH grants available.",
@@ -381,12 +386,9 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   }
 
   const unsigned HARQ_BITS_WITH_NO_HARQ_REPORTING = 0;
-  // [Implementation-defined] We assume only 1 HARQ-ACK process needs to be reported.
-  // TODO: extend this to the more general case of >1 HARQ bits.
-  const unsigned HARQ_BITS_WITH_HARQ_REPORTING = 1;
-
-  unsigned nof_harq_ack_bits =
-      existing_pucch_harq_grant != nullptr ? HARQ_BITS_WITH_HARQ_REPORTING : HARQ_BITS_WITH_NO_HARQ_REPORTING;
+  unsigned       nof_harq_ack_bits                = existing_pucch_harq_grant != nullptr
+                                                        ? existing_pucch_harq_grant->format_1.harq_ack_nof_bits
+                                                        : HARQ_BITS_WITH_NO_HARQ_REPORTING;
 
   // NOTE: We do not check for collision in the grid, as it is assumed the PUCCH gets allocated in its reserved
   // resources.
