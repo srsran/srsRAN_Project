@@ -9,6 +9,7 @@
  */
 
 #include "srsgnb/phy/support/support_factories.h"
+#include "interpolator/interpolator_linear_impl.h"
 #include "prach_buffer_impl.h"
 #include "prach_buffer_pool_impl.h"
 #include "resource_grid_impl.h"
@@ -46,4 +47,9 @@ std::unique_ptr<prach_buffer> srsgnb::create_prach_buffer_short()
 {
   return std::make_unique<
       prach_buffer_static<prach_constants::SHORT_SEQUENCE_LENGTH, prach_constants::SHORT_SEQUENCE_MAX_NOF_SYMBOLS>>();
+}
+
+std::unique_ptr<srsgnb::interpolator> srsgnb::create_interpolator()
+{
+  return std::make_unique<interpolator_linear_impl>();
 }

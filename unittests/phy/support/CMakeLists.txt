@@ -15,3 +15,8 @@ add_test(resource_grid_pool_test resource_grid_pool_test)
 add_executable(resource_grid_test resource_grid_test.cpp)
 target_link_libraries(resource_grid_test srsvec srsgnb_phy_support srslog)
 add_test(resource_grid_test resource_grid_test)
+
+add_executable(interpolator_test interpolator_test.cpp)
+target_link_libraries(interpolator_test srsgnb_phy_support srslog gtest gtest_main)
+add_test(interpolator_test interpolator_test)
+

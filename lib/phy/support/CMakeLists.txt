@@ -7,6 +7,7 @@
 #
 
 add_library(srsgnb_phy_support STATIC
+        interpolator/interpolator_linear_impl.cpp
         prach_buffer_pool_impl.cpp
         resource_grid_pool_impl.cpp
         resource_grid_impl.cpp
