@@ -20,7 +20,7 @@ TEST_F(f1ap_du_test, when_f1_setup_response_received_then_du_connected)
 {
   // Action 1: Launch F1 setup procedure
   f1_setup_request_message request_msg = generate_f1_setup_request_message();
-  test_logger.info("Lauch f1 setup request procedure...");
+  test_logger.info("Launch f1 setup request procedure...");
   async_task<f1_setup_response_message>         t = f1ap->handle_f1ap_setup_request(request_msg);
   lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 
@@ -48,7 +48,7 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
 {
   // Action 1: Launch F1 setup procedure
   f1_setup_request_message request_msg = generate_f1_setup_request_message();
-  test_logger.info("Lauch f1 setup request procedure...");
+  test_logger.info("Launch f1 setup request procedure...");
   async_task<f1_setup_response_message>         t = f1ap->handle_f1ap_setup_request(request_msg);
   lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 
@@ -99,7 +99,7 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
 {
   // Action 1: Launch F1 setup procedure
   f1_setup_request_message request_msg = generate_f1_setup_request_message();
-  test_logger.info("Lauch f1 setup request procedure...");
+  test_logger.info("Launch f1 setup request procedure...");
   async_task<f1_setup_response_message>         t = f1ap->handle_f1ap_setup_request(request_msg);
   lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 
@@ -149,7 +149,7 @@ TEST_F(f1ap_du_test, when_retry_limit_reached_then_du_not_connected)
 {
   // Action 1: Launch F1 setup procedure
   f1_setup_request_message request_msg = generate_f1_setup_request_message();
-  test_logger.info("Lauch f1 setup request procedure...");
+  test_logger.info("Launch f1 setup request procedure...");
   async_task<f1_setup_response_message>         t = f1ap->handle_f1ap_setup_request(request_msg);
   lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 

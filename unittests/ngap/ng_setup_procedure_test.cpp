@@ -20,7 +20,7 @@ TEST_F(ngc_test, when_ng_setup_response_received_then_amf_connected)
 {
   // Action 1: Launch NG setup procedure
   ng_setup_request_message request_msg = generate_ng_setup_request_message();
-  test_logger.info("Lauch ng setup request procedure...");
+  test_logger.info("Launch ng setup request procedure...");
   async_task<ng_setup_response_message>         t = ngc->handle_ng_setup_request(request_msg);
   lazy_task_launcher<ng_setup_response_message> t_launcher(t);
 
@@ -47,7 +47,7 @@ TEST_F(ngc_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wit
 {
   // Action 1: Launch NG setup procedure
   ng_setup_request_message request_msg = generate_ng_setup_request_message();
-  test_logger.info("Lauch ng setup request procedure...");
+  test_logger.info("Launch ng setup request procedure...");
   async_task<ng_setup_response_message>         t = ngc->handle_ng_setup_request(request_msg);
   lazy_task_launcher<ng_setup_response_message> t_launcher(t);
 
@@ -85,7 +85,7 @@ TEST_F(ngc_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wit
 {
   // Action 1: Launch NG setup procedure
   ng_setup_request_message request_msg = generate_ng_setup_request_message();
-  test_logger.info("Lauch ng setup request procedure...");
+  test_logger.info("Launch ng setup request procedure...");
   async_task<ng_setup_response_message>         t = ngc->handle_ng_setup_request(request_msg);
   lazy_task_launcher<ng_setup_response_message> t_launcher(t);
 
@@ -122,7 +122,7 @@ TEST_F(ngc_test, when_retry_limit_reached_then_amf_not_connected)
 {
   // Action 1: Launch NG setup procedure
   ng_setup_request_message request_msg = generate_ng_setup_request_message();
-  test_logger.info("Lauch f1 setup request procedure...");
+  test_logger.info("Launch f1 setup request procedure...");
   async_task<ng_setup_response_message>         t = ngc->handle_ng_setup_request(request_msg);
   lazy_task_launcher<ng_setup_response_message> t_launcher(t);
 

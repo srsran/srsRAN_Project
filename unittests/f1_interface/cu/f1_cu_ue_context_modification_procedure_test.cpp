@@ -20,7 +20,7 @@ TEST_F(f1c_cu_test, when_ue_modification_response_received_then_procedure_succes
 {
   // Action 1: Launch UE Context modification procedure
   f1ap_ue_context_modification_request_message request_msg = {};
-  test_logger.info("Lauch ue context modification procedure...");
+  test_logger.info("Launch ue context modification procedure...");
   async_task<f1ap_ue_context_modification_response_message> t =
       f1c->handle_ue_context_modification_request(request_msg);
   lazy_task_launcher<f1ap_ue_context_modification_response_message> t_launcher(t);
@@ -48,7 +48,7 @@ TEST_F(f1c_cu_test, when_ue_modification_failure_received_then_procedure_unsucce
 {
   // Action 1: Launch UE Context modification procedure
   f1ap_ue_context_modification_request_message request_msg = {};
-  test_logger.info("Lauch ue context modification procedure...");
+  test_logger.info("Launch ue context modification procedure...");
   async_task<f1ap_ue_context_modification_response_message> t =
       f1c->handle_ue_context_modification_request(request_msg);
   lazy_task_launcher<f1ap_ue_context_modification_response_message> t_launcher(t);

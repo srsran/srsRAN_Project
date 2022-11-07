@@ -114,7 +114,7 @@ TEST_F(ngap_integration_test, when_ng_setup_response_received_then_amf_connected
   ngc_cfg.tac           = 7;
 
   ng_setup_request_message request_msg = generate_ng_setup_request_message(ngc_cfg);
-  test_logger.info("Lauching NG setup procedure...");
+  test_logger.info("Launching NG setup procedure...");
   async_task<ng_setup_response_message>         t = ngc->handle_ng_setup_request(request_msg);
   lazy_task_launcher<ng_setup_response_message> t_launcher(t);
 
