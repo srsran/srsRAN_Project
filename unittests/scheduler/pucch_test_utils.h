@@ -65,7 +65,12 @@ public:
                       sr_periodicity period           = sr_periodicity::sl_40,
                       unsigned       offset           = 0);
 
-  const ue& get_ue() const;
+  // Return the main UE, which has RNTI 0x4601.
+  const ue& get_main_ue() const;
+  const ue& get_ue(du_ue_index_t ue_idx) const;
+
+  // Add an extra UE, whose RNTI will have RNTI +1 with respect to the last_allocated_rnti.
+  void add_ue();
 
   void slot_indication(slot_point slot_tx);
 
@@ -74,13 +79,16 @@ public:
   pdcch_dl_information    dci_info;
   const unsigned          k0;
   const unsigned          k1{4};
-  du_ue_index_t           ue_idx{du_ue_index_t::MIN_DU_UE_INDEX};
+  du_ue_index_t           main_ue_idx{du_ue_index_t::MIN_DU_UE_INDEX};
   ue_list                 ues;
-  pucch_allocator_impl    pucch_alloc;
-  pucch_scheduler_impl    pucch_sched;
-  slot_point              sl_tx;
-  srslog::basic_logger&   mac_logger  = srslog::fetch_basic_logger("MAC");
-  srslog::basic_logger&   test_logger = srslog::fetch_basic_logger("TEST");
+  // last_allocated_rnti keeps track of the last RNTI allocated.
+  rnti_t                last_allocated_rnti;
+  du_ue_index_t         last_allocated_ue_idx;
+  pucch_allocator_impl  pucch_alloc;
+  pucch_scheduler_impl  pucch_sched;
+  slot_point            sl_tx;
+  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
+  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
 } // namespace srsgnb

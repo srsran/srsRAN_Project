@@ -116,20 +116,38 @@ test_bench::test_bench(unsigned pucch_res_common, unsigned n_cces, sr_periodicit
           ue_req.cells.back().serv_cell_cfg.value().ul_config.has_value() and
           ue_req.cells.back().serv_cell_cfg.value().ul_config.value().init_ul_bwp.pucch_cfg.has_value() and
           ue_req.cells.back().serv_cell_cfg.value().ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list.size() == 1,
-      "Hello");
+      "sched_ue_creation_request_message initialization is not complete.");
 
   ue_req.cells.back().serv_cell_cfg.value().ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].period = period;
   ue_req.cells.back().serv_cell_cfg.value().ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].offset = offset;
 
-  ues.insert(ue_idx, std::make_unique<ue>(cell_cfg, ue_req));
+  ues.insert(main_ue_idx, std::make_unique<ue>(cell_cfg, ue_req));
+  last_allocated_rnti   = ue_req.crnti;
+  last_allocated_ue_idx = main_ue_idx;
   slot_indication(sl_tx);
 }
 
-const ue& test_bench::get_ue() const
+const ue& test_bench::get_main_ue() const
+{
+  return get_ue(main_ue_idx);
+}
+
+const ue& test_bench::get_ue(du_ue_index_t ue_idx) const
 {
   auto user = ues.find(ue_idx);
   srsgnb_assert(user != ues.end(), "User not found");
   return *user;
+}
+
+void test_bench::add_ue()
+{
+  sched_ue_creation_request_message ue_req =
+      make_scheduler_ue_creation_request(test_helpers::make_default_ue_creation_request());
+  ue_req.crnti = to_rnti(static_cast<std::underlying_type<rnti_t>::type>(last_allocated_rnti) + 1);
+  last_allocated_ue_idx =
+      to_du_ue_index(static_cast<std::underlying_type<du_ue_index_t>::type>(last_allocated_ue_idx) + 1);
+  ues.insert(last_allocated_ue_idx, std::make_unique<ue>(cell_cfg, ue_req));
+  last_allocated_rnti = ue_req.crnti;
 }
 
 void test_bench::slot_indication(slot_point slot_tx)

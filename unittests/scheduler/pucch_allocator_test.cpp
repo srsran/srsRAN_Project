@@ -93,7 +93,7 @@ protected:
 TEST_P(test_pucch_harq_common_output, test_pucch_output_info)
 {
   pucch_harq_ack_grant pucch_test = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
 
   ASSERT_TRUE(pucch_test.pucch_pdu != nullptr);
   ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, *pucch_test.pucch_pdu));
@@ -103,7 +103,7 @@ TEST_P(test_pucch_harq_common_output, test_pucch_output_info)
 TEST_P(test_pucch_harq_common_output, test_pucch_grid_filling)
 {
   t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
 
   ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, t_bench.k1, true));
 }
@@ -112,7 +112,7 @@ TEST_P(test_pucch_harq_common_output, test_pucch_grid_filling)
 TEST_P(test_pucch_harq_common_output, test_pucch_output_for_dci)
 {
   pucch_harq_ack_grant pucch_test = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
 
   ASSERT_EQ(GetParam().dci_pucch_res_indicator, pucch_test.pucch_res_indicator);
 }
@@ -247,9 +247,9 @@ protected:
 // Tests whether PUCCH.
 TEST_F(test_pucch_sr_allocator, test_pucch_sr_only_output_info)
 {
-  ASSERT_EQ(1, t_bench.get_ue().nof_cells());
+  ASSERT_EQ(1, t_bench.get_main_ue().nof_cells());
   t_bench.pucch_alloc.pucch_allocate_sr_opportunity(
-      t_bench.res_grid[0], t_bench.get_ue().crnti, t_bench.get_ue().get_pcell().cfg());
+      t_bench.res_grid[0], t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
 
   ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
   ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, t_bench.res_grid[0].result.ul.pucchs.back()));
@@ -258,9 +258,9 @@ TEST_F(test_pucch_sr_allocator, test_pucch_sr_only_output_info)
 // Tests whether PUCCH allocator returns the correct values for the DCI.
 TEST_F(test_pucch_sr_allocator, test_pucch_sr_only_grid_filled)
 {
-  ASSERT_EQ(1, t_bench.get_ue().nof_cells());
+  ASSERT_EQ(1, t_bench.get_main_ue().nof_cells());
   t_bench.pucch_alloc.pucch_allocate_sr_opportunity(
-      t_bench.res_grid[0], t_bench.get_ue().crnti, t_bench.get_ue().get_pcell().cfg());
+      t_bench.res_grid[0], t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
 
   ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
   ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, sl_point_harq_delay, true));
@@ -293,11 +293,11 @@ protected:
 // Tests whether PUCCH.
 TEST_F(test_pucch_sr_allocator_with_harq, test_pucch_sr_harq_output_info)
 {
-  ASSERT_EQ(1, t_bench.get_ue().nof_cells());
+  ASSERT_EQ(1, t_bench.get_main_ue().nof_cells());
   t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_ue().crnti, t_bench.k0, sl_point_harq_delay, t_bench.dci_info);
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, sl_point_harq_delay, t_bench.dci_info);
   t_bench.pucch_alloc.pucch_allocate_sr_opportunity(
-      t_bench.res_grid[0], t_bench.get_ue().crnti, t_bench.get_ue().get_pcell().cfg());
+      t_bench.res_grid[0], t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
 
   ASSERT_EQ(2, t_bench.res_grid[0].result.ul.pucchs.size());
   ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, t_bench.res_grid[0].result.ul.pucchs.back()));
@@ -306,11 +306,11 @@ TEST_F(test_pucch_sr_allocator_with_harq, test_pucch_sr_harq_output_info)
 // Tests whether PUCCH allocator returns the correct values for the DCI.
 TEST_F(test_pucch_sr_allocator_with_harq, test_pucch_sr_harq_grid_filled)
 {
-  ASSERT_EQ(1, t_bench.get_ue().nof_cells());
+  ASSERT_EQ(1, t_bench.get_main_ue().nof_cells());
   t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_ue().crnti, t_bench.k0, sl_point_harq_delay, t_bench.dci_info);
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, sl_point_harq_delay, t_bench.dci_info);
   t_bench.pucch_alloc.pucch_allocate_sr_opportunity(
-      t_bench.res_grid[0], t_bench.get_ue().crnti, t_bench.get_ue().get_pcell().cfg());
+      t_bench.res_grid[0], t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
 
   ASSERT_EQ(2, t_bench.res_grid[0].result.ul.pucchs.size());
   ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, sl_point_harq_delay, true));
