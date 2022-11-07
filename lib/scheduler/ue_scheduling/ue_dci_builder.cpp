@@ -56,9 +56,9 @@ void srsgnb::build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
 
   // HARQ params.
   f1_0.harq_process_number      = h_dl.id;
-  f1_0.new_data_indicator       = h_dl.ndi(tb_idx);
-  f1_0.redundancy_version       = get_redundancy_version(h_dl.nof_retxs(tb_idx));
-  f1_0.modulation_coding_scheme = h_dl.last_tx_params(tb_idx).mcs.to_uint();
+  f1_0.new_data_indicator       = h_dl.tb(tb_idx).ndi;
+  f1_0.redundancy_version       = get_redundancy_version(h_dl.tb(tb_idx).nof_retxs);
+  f1_0.modulation_coding_scheme = h_dl.tb(tb_idx).mcs.to_uint();
 }
 
 void srsgnb::build_dci_f1_0_c_rnti(dci_dl_info&                       dci,
@@ -98,9 +98,9 @@ void srsgnb::build_dci_f1_0_c_rnti(dci_dl_info&                       dci,
 
   // HARQ params.
   f1_0.harq_process_number      = h_dl.id;
-  f1_0.new_data_indicator       = h_dl.ndi(tb_idx);
-  f1_0.redundancy_version       = get_redundancy_version(h_dl.nof_retxs(tb_idx));
-  f1_0.modulation_coding_scheme = h_dl.last_tx_params(tb_idx).mcs.to_uint();
+  f1_0.new_data_indicator       = h_dl.tb(tb_idx).ndi;
+  f1_0.redundancy_version       = get_redundancy_version(h_dl.tb(tb_idx).nof_retxs);
+  f1_0.modulation_coding_scheme = h_dl.tb(tb_idx).mcs.to_uint();
 }
 
 void srsgnb::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
@@ -137,8 +137,8 @@ void srsgnb::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
   f0_0.time_resource = time_resource;
 
   // HARQ params.
-  f0_0.redundancy_version       = get_redundancy_version(h_ul.nof_retxs());
-  f0_0.modulation_coding_scheme = h_ul.last_tx_params().mcs.to_uint();
+  f0_0.redundancy_version       = get_redundancy_version(h_ul.tb().nof_retxs);
+  f0_0.modulation_coding_scheme = h_ul.tb().mcs.to_uint();
 }
 
 void srsgnb::build_dci_f0_0_c_rnti(dci_ul_info&                       dci,
@@ -178,7 +178,7 @@ void srsgnb::build_dci_f0_0_c_rnti(dci_ul_info&                       dci,
 
   // HARQ params.
   f0_0.harq_process_number      = h_ul.id;
-  f0_0.new_data_indicator       = h_ul.ndi();
-  f0_0.redundancy_version       = get_redundancy_version(h_ul.nof_retxs());
-  f0_0.modulation_coding_scheme = h_ul.last_tx_params().mcs.to_uint();
+  f0_0.new_data_indicator       = h_ul.tb().ndi;
+  f0_0.redundancy_version       = get_redundancy_version(h_ul.tb().nof_retxs);
+  f0_0.modulation_coding_scheme = h_ul.tb().mcs.to_uint();
 }

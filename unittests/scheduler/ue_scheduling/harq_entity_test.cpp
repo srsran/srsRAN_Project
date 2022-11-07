@@ -35,8 +35,10 @@ TEST(harq_entity, when_all_harqs_are_allocated_harq_entity_cannot_find_empty_har
   unsigned    ack_delay = 4;
 
   for (unsigned i = 0; i != nof_harqs; ++i) {
-    ASSERT_NE(harq_ent.find_empty_dl_harq()->new_tx(0, sl_tx, ack_delay, 4), nullptr);
-    ASSERT_NE(harq_ent.find_empty_ul_harq()->new_tx(sl_tx, 4), nullptr);
+    harq_ent.find_empty_dl_harq()->new_tx(
+        dci_dl_rnti_config_type::c_rnti_f1_0, to_bwp_id(0), sl_tx, ack_delay, prb_interval{1, 5}, 10, 100, 4);
+    harq_ent.find_empty_ul_harq()->new_tx(
+        dci_ul_rnti_config_type::c_rnti_f0_0, to_bwp_id(0), sl_tx, prb_interval{1, 5}, 10, 100, 4);
   }
   ASSERT_EQ(harq_ent.find_empty_dl_harq(), nullptr);
   ASSERT_EQ(harq_ent.find_empty_ul_harq(), nullptr);
@@ -50,7 +52,8 @@ TEST(harq_entity, after_max_ack_wait_timeout_dl_harqs_are_available_for_retx)
   unsigned    ack_delay = 4;
 
   for (unsigned i = 0; i != nof_harqs; ++i) {
-    ASSERT_NE(harq_ent.find_empty_dl_harq()->new_tx(0, sl_tx, ack_delay, 4), nullptr);
+    harq_ent.find_empty_dl_harq()->new_tx(
+        dci_dl_rnti_config_type::c_rnti_f1_0, to_bwp_id(0), sl_tx, ack_delay, prb_interval{1, 10}, 10, 100, 4);
   }
   for (unsigned i = 0; i != max_ack_wait_slots + ack_delay; ++i) {
     ASSERT_EQ(harq_ent.find_empty_dl_harq(), nullptr);

@@ -145,7 +145,7 @@ void ue_event_manager::handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<c
   for (unsigned bit_idx = 0; bit_idx != harq_bits.size(); ++bit_idx) {
     int tbs = -1;
     for (unsigned h_id = 0; h_id != ue_cc.harqs.nof_dl_harqs(); ++h_id) {
-      if (ue_cc.harqs.dl_harq(h_id).slot_ack(0) == uci_sl) {
+      if (ue_cc.harqs.dl_harq(h_id).slot_ack() == uci_sl) {
         // TODO: Fetch the right HARQ id, TB, CBG.
         tbs = ue_cc.harqs.dl_harq(h_id).ack_info(0, harq_bits[bit_idx]);
         if (tbs > 0) {

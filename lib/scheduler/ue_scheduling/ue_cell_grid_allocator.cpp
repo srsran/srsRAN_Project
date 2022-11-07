@@ -99,28 +99,48 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   // Mark resources as occupied in the ResourceGrid.
   pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, grant.crbs});
 
+  // Compute TBS.
+  unsigned                   tb_scaling_field  = 0;  // TODO.
+  unsigned                   nof_oh_prb        = 0;  // TODO: ue_cell_cfg.cfg_ded().pdsch_serv_cell_cfg;
+  const static sch_mcs_index mcs               = 10; // TODO.
+  constexpr static unsigned  nof_bits_per_byte = 8U;
+  // TODO: DM-RS for UE-dedicated.
+  dmrs_information dmrs = make_dmrs_info_common(
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, grant.time_res_index, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_mcs_table::qam64, mcs);
+  unsigned            tb_size_bytes =
+      tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pdsch_td_cfg.symbols.length(),
+                                                            calculate_nof_dmrs_per_rb(dmrs),
+                                                            nof_oh_prb,
+                                                            mcs_config.target_code_rate / 1024.0F,
+                                                            mcs_config.modulation,
+                                                            nof_layers,
+                                                            tb_scaling_field,
+                                                            grant.crbs.length()}) /
+      nof_bits_per_byte;
+
   // Allocate UE DL HARQ.
-  prb_interval         prbs     = crb_to_prb(*pdcch->ctx.bwp_cfg, grant.crbs);
-  dl_harq_process&     h_dl     = ue_cc->harqs.dl_harq(grant.h_id);
-  dl_harq_info_params* h_params = nullptr;
+  prb_interval     prbs = crb_to_prb(*pdcch->ctx.bwp_cfg, grant.crbs);
+  dl_harq_process& h_dl = ue_cc->harqs.dl_harq(grant.h_id);
   if (h_dl.empty()) {
     // It is a new tx.
-    const static unsigned max_retx = 4; // TODO.
-    h_params                       = h_dl.new_tx(0, pdsch_alloc.slot, k1, max_retx);
-    srsgnb_assert(h_params != nullptr, "Failed to allocate DL HARQ newtx");
-    h_params->dci_cfg_type = dci_dl_rnti_config_type::c_rnti_f1_0;
-    h_params->bwp_id       = ue_cc->active_bwp_id();
-    h_params->prbs         = prbs;
-    h_params->mcs          = 10; // TODO.
+    const static unsigned      max_retx = 4;  // TODO.
+    const static sch_mcs_index mcs      = 10; // TODO.
+    h_dl.new_tx(dci_dl_rnti_config_type::c_rnti_f1_0,
+                ue_cc->active_bwp_id(),
+                pdsch_alloc.slot,
+                k1,
+                prbs,
+                mcs,
+                tb_size_bytes,
+                max_retx);
   } else {
     // It is a retx.
-    h_params = h_dl.new_retx(0, pdsch_alloc.slot, k1);
-    srsgnb_assert(h_params != nullptr, "Failed to allocate DL HARQ retx");
-    h_params->prbs = prbs;
+    h_dl.new_retx(ue_cc->active_bwp_id(), pdsch_alloc.slot, k1, prbs, h_dl.tb(0).mcs);
   }
 
   // Fill DL PDCCH DCI.
-  switch (h_dl.last_tx_params(tb_idx).dci_cfg_type) {
+  switch (h_dl.dci_config_type()) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
       build_dci_f1_0_tc_rnti(pdcch->dci, bwp_dl_cmn, prbs, grant.time_res_index, k1, pucch.pucch_res_indicator, h_dl);
       break;
@@ -149,8 +169,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   msg.pdsch_cfg.prbs        = prbs;
   msg.pdsch_cfg.symbols     = pdsch_td_cfg.symbols;
   // TODO: Use UE-dedicated DMRS info.
-  msg.pdsch_cfg.dmrs = make_dmrs_info_common(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, grant.time_res_index, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  msg.pdsch_cfg.dmrs           = dmrs;
   msg.pdsch_cfg.is_interleaved = pdcch->dci.c_rnti_f1_0.vrb_to_prb_mapping > 0;
   // See TS38.213, 10.1.
   msg.pdsch_cfg.ss_set_type = ss_cfg->type == search_space_configuration::type_t::ue_dedicated
@@ -170,29 +189,12 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   msg.pdsch_cfg.codewords.emplace_back();
   pdsch_codeword&                          cw     = msg.pdsch_cfg.codewords.back();
   static constexpr std::array<unsigned, 4> rv_idx = {0, 2, 3, 1};
-  cw.rv_index                                     = rv_idx[h_dl.nof_retxs(0) % rv_idx.size()];
-  cw.mcs_index                                    = h_dl.last_tx_params(0).mcs;
+  cw.rv_index                                     = rv_idx[h_dl.tb(tb_idx).nof_retxs % rv_idx.size()];
+  cw.mcs_index                                    = h_dl.tb(tb_idx).mcs;
   cw.mcs_table                                    = pdsch_mcs_table::qam64;
-  sch_mcs_description mcs_config                  = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
   cw.qam_mod                                      = mcs_config.modulation;
   cw.target_code_rate                             = mcs_config.target_code_rate;
-  unsigned                  nof_symb_sh           = pdsch_td_cfg.symbols.length();
-  unsigned                  tb_scaling_field      = 0; // TODO.
-  unsigned                  nof_oh_prb            = 0; // TODO: ue_cell_cfg.cfg_ded().pdsch_serv_cell_cfg;
-  constexpr static unsigned nof_bits_per_byte     = 8U;
-  cw.tb_size_bytes =
-      tbs_calculator_calculate(tbs_calculator_configuration{nof_symb_sh,
-                                                            calculate_nof_dmrs_per_rb(msg.pdsch_cfg.dmrs),
-                                                            nof_oh_prb,
-                                                            cw.target_code_rate / 1024.0F,
-                                                            cw.qam_mod,
-                                                            nof_layers,
-                                                            tb_scaling_field,
-                                                            grant.crbs.length()}) /
-      nof_bits_per_byte;
-
-  // Set the number of bytes of the TB.
-  h_params->tbs_bytes = cw.tb_size_bytes;
+  cw.tb_size_bytes                                = tb_size_bytes;
 
   // Set MAC logical channels to schedule in this PDU.
   msg.tb_list.emplace_back();
@@ -207,6 +209,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   srsgnb_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
   constexpr static unsigned time_resource        = 0; // TODO: Support other time resources.
   constexpr static unsigned pdcch_delay_in_slots = 0;
+  constexpr static unsigned nof_layers           = 1;
 
   ue& u = ues[grant.user->ue_index];
 
@@ -261,23 +264,33 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   pusch_alloc.ul_res_grid.fill(grant_info{scs, pusch_td_cfg.symbols, grant.crbs});
 
   // Allocate UE UL HARQ.
-  prb_interval         prbs     = crb_to_prb(*pdcch->ctx.bwp_cfg, grant.crbs);
-  ul_harq_process&     h_ul     = ue_cc->harqs.ul_harq(grant.h_id);
-  ul_harq_info_params* h_params = nullptr;
+  ul_harq_process&           h_ul = ue_cc->harqs.ul_harq(grant.h_id);
+  prb_interval               prbs = crb_to_prb(*pdcch->ctx.bwp_cfg, grant.crbs);
+  const static sch_mcs_index mcs  = 10; // TODO: Parameterize.
+  dmrs_information           dmrs = make_dmrs_info_common(
+      *cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  sch_mcs_description mcs_config = pusch_mcs_get_config(pusch_mcs_table::qam64, mcs, false);
   if (h_ul.empty()) {
     // It is a new tx.
-    const static unsigned max_retx = 4; // TODO: Parameterize
-    h_params                       = h_ul.new_tx(pusch_alloc.slot, max_retx);
-    srsgnb_assert(h_params != nullptr, "Failed to allocate UL HARQ newtx");
-    h_params->dci_cfg_type = dci_ul_rnti_config_type::c_rnti_f0_0;
-    h_params->bwp_id       = ue_cc->active_bwp_id();
-    h_params->prbs         = prbs;
-    h_params->mcs          = 10; // TODO: Parameterize
+    const static unsigned     max_retx          = 4; // TODO: Parameterize
+    unsigned                  nof_oh_prb        = 0; // TODO.
+    unsigned                  tb_scaling_field  = 0; // TODO.
+    constexpr static unsigned nof_bits_per_byte = 8U;
+    // Calculate TBS
+    unsigned tbs_bytes = tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pusch_td_cfg.symbols.length(),
+                                                                               calculate_nof_dmrs_per_rb(dmrs),
+                                                                               nof_oh_prb,
+                                                                               mcs_config.target_code_rate / 1024.0F,
+                                                                               mcs_config.modulation,
+                                                                               nof_layers,
+                                                                               tb_scaling_field,
+                                                                               grant.crbs.length()}) /
+                         nof_bits_per_byte;
+    h_ul.new_tx(
+        dci_ul_rnti_config_type::c_rnti_f0_0, ue_cc->active_bwp_id(), pusch_alloc.slot, prbs, mcs, tbs_bytes, max_retx);
   } else {
     // It is a retx.
-    h_params       = h_ul.new_retx(pusch_alloc.slot);
-    h_params->prbs = prbs;
-    srsgnb_assert(h_params != nullptr, "Failed to allocate UL HARQ retx");
+    h_ul.new_retx(ue_cc->active_bwp_id(), pusch_alloc.slot, prbs, h_ul.tb().mcs);
   }
 
   // Fill UL PDCCH DCI.
@@ -302,37 +315,21 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   msg.pusch_cfg.tx_direct_current_location = 0;     // TODO.
   msg.pusch_cfg.ul_freq_shift_7p5khz       = false;
   msg.pusch_cfg.mcs_table                  = pusch_mcs_table::qam64;
-  msg.pusch_cfg.mcs_index                  = h_ul.last_tx_params().mcs;
-  sch_mcs_description mcs_config    = pusch_mcs_get_config(msg.pusch_cfg.mcs_table, msg.pusch_cfg.mcs_index, false);
-  msg.pusch_cfg.qam_mod             = mcs_config.modulation;
-  msg.pusch_cfg.target_code_rate    = mcs_config.target_code_rate;
+  msg.pusch_cfg.mcs_index                  = h_ul.tb().mcs;
+  msg.pusch_cfg.qam_mod                    = mcs_config.modulation;
+  msg.pusch_cfg.target_code_rate           = mcs_config.target_code_rate;
   msg.pusch_cfg.transform_precoding = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->msg3_transform_precoder;
   msg.pusch_cfg.n_id                = cell_cfg.pci;
-  msg.pusch_cfg.nof_layers          = 1;
-  msg.pusch_cfg.dmrs                = make_dmrs_info_common(
-      *cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
-  msg.pusch_cfg.pusch_dmrs_id                 = cell_cfg.pci;
-  msg.pusch_cfg.dmrs_hopping_mode             = pusch_information::dmrs_hopping_mode::no_hopping; // TODO.
-  msg.pusch_cfg.rv_index                      = pdcch->dci.c_rnti_f0_0.redundancy_version;
-  msg.pusch_cfg.harq_id                       = h_ul.id;
-  msg.pusch_cfg.new_data                      = h_ul.nof_retxs() == 0;
-  unsigned                  nof_oh_prb        = 0; // TODO.
-  unsigned                  tb_scaling_field  = 0; // TODO.
-  constexpr static unsigned nof_bits_per_byte = 8U;
-  msg.pusch_cfg.tb_size_bytes =
-      tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pusch_td_cfg.symbols.length(),
-                                                            calculate_nof_dmrs_per_rb(msg.pusch_cfg.dmrs),
-                                                            nof_oh_prb,
-                                                            msg.pusch_cfg.target_code_rate / 1024.0F,
-                                                            msg.pusch_cfg.qam_mod,
-                                                            msg.pusch_cfg.nof_layers,
-                                                            tb_scaling_field,
-                                                            grant.crbs.length()}) /
-      nof_bits_per_byte;
-  msg.pusch_cfg.num_cb = 0;
-
-  // Set the number of bytes of the TB.
-  h_params->tbs_bytes = msg.pusch_cfg.tb_size_bytes;
+  msg.pusch_cfg.nof_layers          = nof_layers;
+  msg.pusch_cfg.dmrs                = dmrs;
+  msg.pusch_cfg.pusch_dmrs_id       = cell_cfg.pci;
+  msg.pusch_cfg.dmrs_hopping_mode   = pusch_information::dmrs_hopping_mode::no_hopping; // TODO.
+  static constexpr std::array<unsigned, 4> rv_idx = {0, 2, 3, 1};
+  msg.pusch_cfg.rv_index                          = rv_idx[h_ul.tb().nof_retxs % rv_idx.size()];
+  msg.pusch_cfg.harq_id                           = h_ul.id;
+  msg.pusch_cfg.new_data                          = h_ul.tb().nof_retxs == 0;
+  msg.pusch_cfg.tb_size_bytes                     = h_ul.tb().tbs_bytes;
+  msg.pusch_cfg.num_cb                            = 0;
 
   // In case there is a SR pending. Reset it.
   u.reset_sr_indication();

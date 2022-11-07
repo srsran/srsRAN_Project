@@ -216,19 +216,37 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
                                         sch_mcs_index         mcs_idx,
                                         const prb_interval&   ue_grant_prbs)
 {
-  constexpr static unsigned nof_layers = 1;
+  constexpr static unsigned        nof_layers        = 1;
+  constexpr static pdsch_mcs_table mcs_table         = pdsch_mcs_table::qam64;
+  constexpr static unsigned        nof_bits_per_byte = 8U;
 
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(pdsch_time_res);
 
   // Allocate DL HARQ.
-  // TODO: Parameterize.
-  const static unsigned max_retx = 4;
-  dl_harq_info_params*  h_grant  = h_dl.new_tx(0, pdsch_slot, k1, max_retx);
-  srsgnb_assert(h_grant != nullptr, "Failed to allocate DL HARQ newtx");
-  h_grant->dci_cfg_type = dci_dl_rnti_config_type::tc_rnti_f1_0;
-  h_grant->prbs         = ue_grant_prbs;
-  h_grant->mcs          = mcs_idx;
-  h_grant->bwp_id       = to_bwp_id(0);
+  const static unsigned max_retx         = 4; // TODO: Parameterize.
+  unsigned              tb_scaling_field = 0; // TODO: Parameterize.
+  unsigned              nof_oh_prb       = 0; // TODO: Parameterize.
+  sch_mcs_description   mcs_config       = pdsch_mcs_get_config(mcs_table, mcs_idx);
+  dmrs_information      dmrs             = make_dmrs_info_common(
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  unsigned tb_size_bytes =
+      tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pdsch_td_cfg.symbols.length(),
+                                                            calculate_nof_dmrs_per_rb(dmrs),
+                                                            nof_oh_prb,
+                                                            mcs_config.target_code_rate / 1024.0F,
+                                                            mcs_config.modulation,
+                                                            nof_layers,
+                                                            tb_scaling_field,
+                                                            ue_grant_prbs.length()}) /
+      nof_bits_per_byte;
+  h_dl.new_tx(dci_dl_rnti_config_type::tc_rnti_f1_0,
+              to_bwp_id(0),
+              pdsch_slot,
+              k1,
+              ue_grant_prbs,
+              mcs_idx,
+              tb_size_bytes,
+              max_retx);
 
   // Fill DL PDCCH DCI.
   build_dci_f1_0_tc_rnti(pdcch.dci,
@@ -245,8 +263,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
   msg.pdsch_cfg.coreset_cfg = pdcch.ctx.coreset_cfg;
   msg.pdsch_cfg.prbs        = ue_grant_prbs;
   msg.pdsch_cfg.symbols     = pdsch_td_cfg.symbols;
-  msg.pdsch_cfg.dmrs        = make_dmrs_info_common(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  msg.pdsch_cfg.dmrs        = dmrs;
   // See TS 38.211, 7.3.1.1. - Scrambling.
   msg.pdsch_cfg.n_id           = cell_cfg.pci;
   msg.pdsch_cfg.is_interleaved = pdcch.dci.tc_rnti_f1_0.vrb_to_prb_mapping > 0;
@@ -256,33 +273,13 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
 
   // Add codeword.
   msg.pdsch_cfg.codewords.emplace_back();
-  pdsch_codeword&           cw        = msg.pdsch_cfg.codewords.back();
-  static constexpr unsigned new_tx_rv = 0;
-  cw.rv_index                         = new_tx_rv;
-  cw.mcs_index                        = h_dl.last_tx_params(0).mcs;
-  cw.mcs_table                        = pdsch_mcs_table::qam64;
-  sch_mcs_description mcs_config      = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
-  cw.qam_mod                          = mcs_config.modulation;
-  cw.target_code_rate                 = mcs_config.target_code_rate;
-  unsigned nof_symb_sh                = pdsch_td_cfg.symbols.length();
-  // TODO.
-  unsigned tb_scaling_field = 0;
-  // TODO.
-  unsigned                  nof_oh_prb        = 0;
-  constexpr static unsigned nof_bits_per_byte = 8U;
-  cw.tb_size_bytes =
-      tbs_calculator_calculate(tbs_calculator_configuration{nof_symb_sh,
-                                                            calculate_nof_dmrs_per_rb(msg.pdsch_cfg.dmrs),
-                                                            nof_oh_prb,
-                                                            cw.target_code_rate / 1024.0F,
-                                                            cw.qam_mod,
-                                                            nof_layers,
-                                                            tb_scaling_field,
-                                                            ue_grant_prbs.length()}) /
-      nof_bits_per_byte;
-
-  // Set the number of bytes of the TB.
-  h_grant->tbs_bytes = cw.tb_size_bytes;
+  pdsch_codeword& cw  = msg.pdsch_cfg.codewords.back();
+  cw.rv_index         = pdcch.dci.tc_rnti_f1_0.redundancy_version;
+  cw.mcs_index        = h_dl.tb(0).mcs;
+  cw.mcs_table        = mcs_table;
+  cw.qam_mod          = mcs_config.modulation;
+  cw.target_code_rate = mcs_config.target_code_rate;
+  cw.tb_size_bytes    = tb_size_bytes;
 
   // Set MAC logical channels to schedule in this PDU.
   msg.tb_list.emplace_back();
