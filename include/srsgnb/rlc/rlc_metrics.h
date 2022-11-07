@@ -21,11 +21,16 @@ struct rlc_tm_bearer_tx_metrics_container {
 };
 
 struct rlc_um_bearer_tx_metrics_container {
-  uint32_t num_sdu_segments; ///< Number of SDU segments TX'ed
+  uint32_t num_sdu_segments;      ///< Number of SDU segments TX'ed
+  uint32_t num_sdu_segment_bytes; ///< Number of SDU segments Bytes
 };
 
 struct rlc_am_bearer_tx_metrics_container {
-  uint32_t num_retx_pdus; ///< Number of RETX'ed PDUs
+  uint32_t num_retx_pdus;         ///< Number of RETX'ed PDUs
+  uint32_t num_sdu_segments;      ///< Number of SDU segments TX'ed
+  uint32_t num_sdu_segment_bytes; ///< Number of SDU segments bytes
+  uint32_t num_ctrl_pdus;         ///< Number of control PDUs
+  uint32_t num_ctrl_pdu_bytes;    ///< Number of control PDUs bytes
 };
 
 struct rlc_bearer_tx_metrics_container {
@@ -44,6 +49,20 @@ struct rlc_bearer_tx_metrics_container {
     rlc_um_bearer_tx_metrics_container um;
     rlc_am_bearer_tx_metrics_container am;
   } mode_specific;
+};
+
+struct rlc_tm_bearer_rx_metrics_container {};
+
+struct rlc_um_bearer_rx_metrics_container {
+  uint32_t num_sdu_segments;      ///< Number of SDU segments TX'ed
+  uint32_t num_sdu_segment_bytes; ///< Number of SDU segments Bytes
+};
+
+struct rlc_am_bearer_rx_metrics_container {
+  uint32_t num_sdu_segments;      ///< Number of SDU segments TX'ed
+  uint32_t num_sdu_segment_bytes; ///< Number of SDU segments bytes
+  uint32_t num_ctrl_pdus;         ///< Number of control PDUs
+  uint32_t num_ctrl_pdu_bytes;    ///< Number of control PDUs bytes
 };
 
 class rlc_tx_metrics_interface
@@ -73,6 +92,11 @@ struct rlc_bearer_rx_metrics_container {
   uint32_t num_malformed_pdus; ///< Number of malformed PDUs
 
   rlc_mode mode;
+  union {
+    rlc_tm_bearer_rx_metrics_container tm;
+    rlc_um_bearer_rx_metrics_container um;
+    rlc_am_bearer_rx_metrics_container am;
+  } mode_specific;
 };
 
 class rlc_rx_metrics_interface

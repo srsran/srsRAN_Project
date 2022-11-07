@@ -445,6 +445,9 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
   // Log state
   log_state(srslog::basic_levels::debug);
 
+  // Log metrics
+  metrics_add_retx_pdus(1);
+
   return pdu_buf;
 }
 

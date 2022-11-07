@@ -52,6 +52,22 @@ public:
     metrics.mode_specific.tm.num_small_allocs += num_allocs_;
   }
 
+  // UM specific metrics
+  void metrics_add_sement(uint32_t num_segments_)
+  {
+    srsgnb_assert(metrics.mode == rlc_mode::um_bidir, "Wrong mode for UM specific metrics");
+    std::lock_guard<std::mutex> lock(metrics_mutex);
+    metrics.mode_specific.um.num_sdu_segments += num_segments_;
+  }
+
+  // AM specific metrics
+  void metrics_add_retx_pdus(uint32_t num_retx_)
+  {
+    srsgnb_assert(metrics.mode == rlc_mode::am, "Wrong mode for UM specific metrics");
+    std::lock_guard<std::mutex> lock(metrics_mutex);
+    metrics.mode_specific.am.num_retx_pdus += num_retx_;
+  }
+
   // Metrics getters and setters
   rlc_bearer_tx_metrics_container get_metrics() final
   {
