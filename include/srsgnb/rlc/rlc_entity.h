@@ -10,11 +10,18 @@
 
 #pragma once
 
-#include "srsgnb/rlc/rlc_metrics.h"
 #include "srsgnb/rlc/rlc_rx.h"
+#include "srsgnb/rlc/rlc_rx_metrics.h"
 #include "srsgnb/rlc/rlc_tx.h"
+#include "srsgnb/rlc/rlc_tx_metrics.h"
 
 namespace srsgnb {
+
+/// Container to hold TX/RX metrics
+struct rlc_bearer_metrics_container {
+  rlc_bearer_tx_metrics_container tx;
+  rlc_bearer_rx_metrics_container rx;
+};
 
 /// Class used to interface with an RLC entity.
 /// It will contain getters for the TX and RX entities interfaces.

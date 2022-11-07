@@ -14,7 +14,6 @@
 #include "rlc_tx_entity.h"
 #include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/rlc/rlc_entity.h"
-#include "srsgnb/rlc/rlc_metrics.h"
 
 namespace srsgnb {
 
