@@ -12,6 +12,7 @@
 
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/ran/alpha.h"
+#include "srsgnb/ran/csi_rs.h"
 
 namespace srsgnb {
 
@@ -40,6 +41,45 @@ struct pusch_config {
       optional<alpha> p0_pusch_alpha;
     };
 
+    enum pusch_pathloss_ref_rs_id : uint8_t {
+      MIN_PUSCH_PATHLOSS_REF_RS_ID  = 0,
+      MAX_PUSCH_PATHLOSS_REF_RS_ID  = 3,
+      MAX_NOF_PUSCH_PATHLOSS_REF_RS = 4
+    };
+
+    /// \brief Reference Signals (e.g. a CSI-RS config or a SS block) to be used for PUSCH path loss estimation.
+    /// \remark See TS 38.213, clause 7.1 and TS 38.331, "PUSCH-PathlossReferenceRS".
+    struct pusch_pathloss_ref_rs {
+      pusch_pathloss_ref_rs_id id;
+      union {
+        nzp_csi_rs_res_id_t csi_rs;
+        ssb_id_t            ssb;
+      };
+    };
+
+    enum sri_pusch_pwr_ctrl_id : uint8_t {
+      MIN_SRI_PUSCH_PWR_CTRL_ID  = 0,
+      MAX_SRI_PUSCH_PWR_CTRL_ID  = 15,
+      MAX_NOF_SRI_PUSCH_MAPPINGS = 16
+    };
+
+    /// \brief SRI-PUSCH-PowerControl elements.
+    /// \remark See TS 38.331, "SRI-PUSCH-PowerControl".
+    struct sri_pusch_pwr_ctrl {
+      /// \brief The index of the closed power control loop associated with this SRI-PUSCH-PowerControl.
+      enum class sri_pusch_closed_loop_index { i0, i1 };
+
+      /// The ID of this SRI-PUSCH-PowerControl configuration. It is used as the codepoint (payload) in the SRI DCI
+      /// field.
+      sri_pusch_pwr_ctrl_id id;
+      /// The ID of PUSCH-PathlossReferenceRS as configured in the pathlossReferenceRSToAddModList in
+      /// PUSCH-PowerControl.
+      pusch_pathloss_ref_rs_id sri_pusch_pathloss_ref_rs_id;
+      /// The ID of a P0-PUSCH-AlphaSet as configured in p0-AlphaSets in PUSCH-PowerControl.
+      p0_pusch_alphaset_id        sri_p0_pusch_alphaset_id;
+      sri_pusch_closed_loop_index closed_loop_idx;
+    };
+
     /// If enabled, UE applies TPC commands via accumulation. If not enabled, UE applies the TPC command without
     /// accumulation. If the field is absent, TPC accumulation is enabled.
     optional<tpc_accumulation> tpc_accum;
@@ -52,7 +92,27 @@ struct pusch_config {
     /// When no set is configured, the UE uses the P0-nominal for msg3 PUSCH, P0-UE is set to 0 and alpha is set
     /// according to msg3-Alpha configured for msg3 PUSCH.
     static_vector<p0_pusch_alphaset, p0_pusch_alphaset_id::MAX_NOF_P0_PUSCH_ALPHASETS> p0_alphasets;
+    /// Set of Reference Signals (e.g. a CSI-RS config or a SS block) to be used for PUSCH path loss estimation.
+    static_vector<pusch_pathloss_ref_rs, pusch_pathloss_ref_rs_id::MAX_NOF_PUSCH_PATHLOSS_REF_RS> pathloss_ref_rs;
+    /// A list of SRI-PUSCH-PowerControl elements among which one is selected by the SRI field in DCI (see TS 38.213,
+    /// clause 7.1).
+    static_vector<sri_pusch_pwr_ctrl, sri_pusch_pwr_ctrl_id::MAX_NOF_SRI_PUSCH_MAPPINGS> sri_pusch_mapping;
+
+    // TODO: Remaining.
   };
+
+  /// \brief Resource allocation type of to DCI format 0_1.
+  /// \remark See TS 38.214, clause 6.1.2.
+  enum class resource_allocation { resource_allocation_type_0, resource_allocation_type_1, dynamic_switch };
+
+  /// \brief Transformer precoder for PUSCH.
+  /// \remark See TS 38.214, clause 6.1.3.
+  enum class transform_precoder { enabled, disabled };
+
+  /// Subset of PMIs addressed by TPMI, where PMIs are those supported by UEs with maximum coherence capabilities.
+  /// Applicable to DCI format 0_1.
+  /// \remark See TS 38.214, clause 6.1.1.1.
+  enum class codebook_subset { fully_and_partial_and_non_coherent, partial_and_non_coherent, non_coherent };
 
   /// Identifier used to initalite data scrambling (c_init) for PUSCH. If the field is absent, the UE applies the
   /// physical cell ID. See TS 38.211, clause 6.3.1.1.
@@ -63,8 +123,18 @@ struct pusch_config {
   /// DMRS configuration for PUSCH transmissions using PUSCH (chosen dynamically via
   /// PUSCH-TimeDomainResourceAllocation). Only the fields dmrs-Type, dmrs-AdditionalPosition and maxLength may be set
   /// differently for mapping type A and B. The field dmrs-UplinkForPUSCH-MappingTypeA applies to DCI format 0_1.
-  optional<dmrs_uplink_config> pusch_mapping_type_a_dmrs;
-  optional<dmrs_uplink_config> pusch_mapping_type_b_dmrs;
+  optional<dmrs_uplink_config>  pusch_mapping_type_a_dmrs;
+  optional<dmrs_uplink_config>  pusch_mapping_type_b_dmrs;
+  optional<pusch_power_control> pusch_pwr_ctrl;
+  resource_allocation           res_alloc;
+  /// The UE specific selection of transformer precoder for PUSCH. When the field is absent the UE applies the value of
+  /// the field msg3-transformPrecoder.
+  optional<transform_precoder> trans_precoder;
+  /// The field is mandatory present if txConfig is set to codebook and absent otherwise.
+  optional<codebook_subset> cb_subset;
+  /// Subset of PMIs addressed by TRIs from 1 to ULmaxRank. The field maxRank applies to DCI format 0_1.
+  /// The field is mandatory present if txConfig is set to codebook and absent otherwise. Values {1..4}.
+  optional<uint8_t> max_rank;
 };
 
 } // namespace srsgnb
