@@ -52,14 +52,21 @@ public:
   ///
   /// The bit index is passed as an argument to the function.
   ///
-  /// \tparam Func     Lambda function with <tt>void (unsigned)</tt> signature.
+  /// \tparam Func     Lambda function to process \f$x\f$ and \f$y\f$ placeholders.
   /// \param func[in]  Lambda function to apply for each placeholder.
+  /// \remark The function \c Func shall have the signature <tt>void ()(unsigned, unsigned)</tt>, where:
+  /// - The first argument is the bit position of a \f$y\f$ placeholder; and
+  /// - The second argument is the number of \f$x\f$ placeholders that follow.
   template <typename Func>
   void for_each(modulation_scheme modulation, unsigned nof_layers, Func&& func) const
   {
-    static_assert(std::is_convertible<Func, std::function<void(unsigned)>>::value,
-                  "The function signature must be \"void () (unsigned)\"");
+    static_assert(std::is_convertible<Func, std::function<void(unsigned, unsigned)>>::value,
+                  "The function signature must be \"void () (unsigned, unsigned)\"");
     unsigned bits_per_symbol = get_bits_per_symbol(modulation);
+
+    // According to TS38.212 Tables 5.3.3.1-1, and 5.3.3.2-1, x placeholders are placed after the first two bits for
+    // modulation orders larger than 2.
+    unsigned nof_trailing_x_placeholders = (bits_per_symbol > 2) ? (bits_per_symbol - 2) : 0;
 
     // For each RE index in the list...
     for (uint16_t i_re : re_indexes) {
@@ -70,7 +77,7 @@ public:
         unsigned i_bit = bits_per_symbol * (nof_layers * static_cast<unsigned>(i_re) + i_layer) + 1;
 
         // Call the lambda function.
-        func(i_bit);
+        func(i_bit, nof_trailing_x_placeholders);
       }
     }
   }

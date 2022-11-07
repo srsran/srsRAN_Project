@@ -215,5 +215,7 @@ void pusch_decoder_impl::decode(span<uint8_t>                    transport_block
       soft_codeword->reset_codeblocks_crc();
     }
   }
+
+  fmt::print("PUSCH decode crc={} iter={}\n", stats.tb_crc_ok ? "OK" : "KO", stats.ldpc_decoder_stats.get_mean());
   // In case there are multiple codeblocks and at least one has a corrupted codeblock CRC, nothing to do.
 }

@@ -23,6 +23,9 @@ using PuschDemodulatorParams = test_case_t;
 
 namespace srsgnb {
 
+// Maximum allowed error.
+constexpr log_likelihood_ratio::value_type LLR_MAX_ERROR = 1;
+
 std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 {
   fmt::print(os,
@@ -46,6 +49,14 @@ std::ostream& operator<<(std::ostream& os, span<const log_likelihood_ratio> llr)
 {
   fmt::print(os, "{}", llr);
   return os;
+}
+
+bool operator==(span<const log_likelihood_ratio> lhs, span<const log_likelihood_ratio> rhs)
+{
+  return std::equal(
+      lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](log_likelihood_ratio lhs, log_likelihood_ratio rhs) {
+        return log_likelihood_ratio::abs(lhs - rhs) <= LLR_MAX_ERROR;
+      });
 }
 
 } // namespace srsgnb

@@ -83,38 +83,44 @@ void pusch_demodulator_impl::descramble(span<srsgnb::log_likelihood_ratio>      
   unsigned last_placeholder = 0;
 
   // For each placeholder...
-  config.placeholders.for_each(config.modulation, config.nof_tx_layers, [&](unsigned placeholder) {
-    // The distance between two repetition placeholders must be larger than 1.
-    srsgnb_assert(placeholder > last_placeholder + 1,
-                  "Placeholder must be in ascending order with steps greater than 1.");
+  config.placeholders.for_each(
+      config.modulation, config.nof_tx_layers, [&](unsigned y_placeholder, unsigned nof_x_placeholders) {
+        // The distance between two repetition placeholders must be larger than 1.
+        srsgnb_assert(y_placeholder > last_placeholder + 1,
+                      "Placeholder must be in ascending order with steps greater than 1.");
 
-    // Calculate the number of elements to process, exclude the element before the placeholder.
-    unsigned nof_elements = placeholder - last_placeholder - 1;
+        // Calculate the number of elements to process, exclude the element before the placeholder.
+        unsigned nof_elements = y_placeholder - last_placeholder - 1;
 
-    // Update last placeholder.
-    last_placeholder = placeholder + 1;
+        // Update last placeholder.
+        last_placeholder = y_placeholder + 1 + nof_x_placeholders;
 
-    // Applies XOR until the element before the placeholder.
-    descrambler->apply_xor(out.first(nof_elements), in.first(nof_elements));
-    out = out.last(out.size() - nof_elements);
-    in  = in.last(in.size() - nof_elements);
+        // Applies XOR until the element before the placeholder.
+        descrambler->apply_xor(out.first(nof_elements), in.first(nof_elements));
+        out = out.last(out.size() - nof_elements);
+        in  = in.last(in.size() - nof_elements);
 
-    // Extracts the mask of the next element.
-    std::array<uint8_t, 1> temp_in  = {};
-    std::array<uint8_t, 1> temp_out = {};
-    descrambler->apply_xor_bit(temp_out, temp_in);
-    bool toggle = (temp_in.front() != temp_out.front());
+        // Extracts the mask of the next element.
+        std::array<uint8_t, 1> temp_in  = {};
+        std::array<uint8_t, 1> temp_out = {};
+        descrambler->apply_xor_bit(temp_out, temp_in);
+        bool toggle = (temp_in.front() != temp_out.front());
 
-    // Discards scrambling chip.
-    descrambler->advance(1);
+        // Discards scrambling chip.
+        descrambler->advance(1 + nof_x_placeholders);
 
-    // Process repetition placeholder.
-    for (unsigned i_llr = 0; i_llr != 2; ++i_llr) {
-      out.front() = toggle ? -in.front() : in.front();
-      out         = out.last(out.size() - 1);
-      in          = in.last(in.size() - 1);
-    }
-  });
+        // Process repetition placeholder.
+        for (unsigned i_llr = 0; i_llr != 2; ++i_llr) {
+          out.front() = toggle ? -in.front() : in.front();
+          out         = out.last(out.size() - 1);
+          in          = in.last(in.size() - 1);
+        }
+
+        // Process x placeholders.
+        srsvec::copy(out.first(nof_x_placeholders), in.first(nof_x_placeholders));
+        out = out.last(out.size() - nof_x_placeholders);
+        in  = in.last(in.size() - nof_x_placeholders);
+      });
 
   // Process remaining data.
   descrambler->apply_xor(out, in);

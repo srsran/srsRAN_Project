@@ -116,17 +116,32 @@ TEST_P(UlschDemultiplexFixture, FromVector)
   ulsch_placeholder_list placeholders =
       demultiplexer->get_placeholders(test_case.context.msg_info, test_case.context.config);
 
+  bool expect_placeholders = (test_case.context.msg_info.nof_harq_ack_bits == 1) ||
+                             (test_case.context.msg_info.nof_csi_part1_bits == 1) ||
+                             (test_case.context.msg_info.nof_csi_part2_bits == 1);
+  unsigned nof_bits_per_symbol = get_bits_per_symbol(test_case.context.config.modulation);
+  unsigned expected_nof_x_placeholders =
+      (expect_placeholders && (nof_bits_per_symbol > 2)) ? (nof_bits_per_symbol - 2) : 0;
+  unsigned nof_x_placeholders_max = std::numeric_limits<unsigned>::min();
+
   // Convert placeholders to vector.
   std::vector<uint16_t> placeholders_list;
-  placeholders.for_each(test_case.context.config.modulation,
-                        test_case.context.config.nof_layers,
-                        [&placeholders_list](unsigned i_bit) { placeholders_list.emplace_back(i_bit); });
+  placeholders.for_each(
+      test_case.context.config.modulation,
+      test_case.context.config.nof_layers,
+      [&placeholders_list, &nof_x_placeholders_max](unsigned y_placeholder, unsigned nof_x_placeholders) {
+        placeholders_list.emplace_back(y_placeholder);
+        nof_x_placeholders_max = std::max(nof_x_placeholders_max, nof_x_placeholders);
+      });
 
   // Load placeholder list from file.
   std::vector<uint16_t> expected_placeholders_list = test_case.placeholders.read();
 
-  // Verify.
+  // Verify that the y placeholder positions match..
   ASSERT_EQ(span<const uint16_t>(placeholders_list), span<const uint16_t>(expected_placeholders_list));
+
+  // Verify that the number of trailing x placeholders is equal to the expected.
+  ASSERT_EQ(nof_x_placeholders_max, expected_nof_x_placeholders);
 }
 
 // Creates test suite that combines all possible parameters. Denote zero_correlation_zone exceeds the maximum by one.
