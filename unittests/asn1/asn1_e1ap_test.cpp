@@ -48,7 +48,7 @@ protected:
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
-TEST_F(asn1_e1ap_test, when_gnb_du_up_e1_setup_correct_then_packing_successful)
+TEST_F(asn1_e1ap_test, when_gnb_cu_up_e1_setup_correct_then_packing_successful)
 {
   auto& logger = srslog::fetch_basic_logger("ASN1", false);
   logger.set_level(srslog::basic_levels::debug);
