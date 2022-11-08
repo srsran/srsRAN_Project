@@ -15,6 +15,183 @@
 
 using namespace srsgnb;
 
+////////////    Test the PUCCH resource manager class     ////////////
+
+class test_pucch_resource_manager : public ::testing::Test
+{
+public:
+  test_pucch_resource_manager() :
+    pucch_cfg{config_helpers::make_default_ue_uplink_config().init_ul_bwp.pucch_cfg.value()}, sl_tx(slot_point(0, 0))
+  {
+    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id                 = 2,
+                                                         .starting_prb           = 1,
+                                                         .second_hop_prb         = 7,
+                                                         .intraslot_freq_hopping = true,
+                                                         .format                 = pucch_format::FORMAT_1});
+    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id                 = 3,
+                                                         .starting_prb           = 2,
+                                                         .second_hop_prb         = 8,
+                                                         .intraslot_freq_hopping = true,
+                                                         .format                 = pucch_format::FORMAT_1});
+    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id                 = 4,
+                                                         .starting_prb           = 3,
+                                                         .second_hop_prb         = 9,
+                                                         .intraslot_freq_hopping = true,
+                                                         .format                 = pucch_format::FORMAT_1});
+    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id                 = 5,
+                                                         .starting_prb           = 4,
+                                                         .second_hop_prb         = 10,
+                                                         .intraslot_freq_hopping = true,
+                                                         .format                 = pucch_format::FORMAT_1});
+    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id                 = 6,
+                                                         .starting_prb           = 5,
+                                                         .second_hop_prb         = 11,
+                                                         .intraslot_freq_hopping = true,
+                                                         .format                 = pucch_format::FORMAT_1});
+    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id                 = 7,
+                                                         .starting_prb           = 6,
+                                                         .second_hop_prb         = 12,
+                                                         .intraslot_freq_hopping = true,
+                                                         .format                 = pucch_format::FORMAT_1});
+    res_manager.slot_indication(sl_tx);
+  };
+
+protected:
+  pucch_config           pucch_cfg;
+  pucch_resource_manager res_manager;
+  slot_point             sl_tx;
+
+  // Allocate PUCCH for a given number of UEs, in increasing order of RNTI.
+  void allocate_ues(unsigned nof_ues_to_allocate)
+  {
+    for (size_t n = 0; n != nof_ues_to_allocate; ++n) {
+      rnti_t rnti = to_rnti(0x4601 + n);
+      res_manager.get_next_harq_res_available(sl_tx, rnti, pucch_cfg);
+    }
+  };
+};
+
+// Tests whether PUCCH HARQ grant is allocated with correct PUCCH RESOURCE Indicator; for 1 UE only.
+TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_1)
+{
+  const pucch_harq_resource_alloc_record record =
+      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
+
+  ASSERT_EQ(0, record.pucch_res_indicator);
+  ASSERT_EQ(&pucch_cfg.pucch_res_list[0], record.pucch_res);
+}
+
+// Tests whether PUCCH HARQ grant is allocated with correct PUCCH RESOURCE Indicator; for n UEs.
+TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_2)
+{
+  allocate_ues(1);
+  const pucch_harq_resource_alloc_record record =
+      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4602), pucch_cfg);
+
+  ASSERT_EQ(1, record.pucch_res_indicator);
+  ASSERT_EQ(&pucch_cfg.pucch_res_list[1], record.pucch_res);
+}
+
+TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_3)
+{
+  allocate_ues(2);
+  const pucch_harq_resource_alloc_record record =
+      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4603), pucch_cfg);
+
+  ASSERT_EQ(2, record.pucch_res_indicator);
+  ASSERT_EQ(&pucch_cfg.pucch_res_list[2], record.pucch_res);
+}
+
+TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_4)
+{
+  allocate_ues(3);
+  const pucch_harq_resource_alloc_record record =
+      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4604), pucch_cfg);
+
+  ASSERT_EQ(3, record.pucch_res_indicator);
+  ASSERT_EQ(&pucch_cfg.pucch_res_list[3], record.pucch_res);
+}
+
+TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_5)
+{
+  allocate_ues(4);
+  const pucch_harq_resource_alloc_record record =
+      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4605), pucch_cfg);
+
+  ASSERT_EQ(4, record.pucch_res_indicator);
+  ASSERT_EQ(&pucch_cfg.pucch_res_list[4], record.pucch_res);
+}
+
+TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_6)
+{
+  allocate_ues(5);
+  const pucch_harq_resource_alloc_record record =
+      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4606), pucch_cfg);
+
+  ASSERT_EQ(5, record.pucch_res_indicator);
+  ASSERT_EQ(&pucch_cfg.pucch_res_list[5], record.pucch_res);
+}
+
+TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_7)
+{
+  allocate_ues(6);
+  const pucch_harq_resource_alloc_record record =
+      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4607), pucch_cfg);
+
+  ASSERT_EQ(6, record.pucch_res_indicator);
+  ASSERT_EQ(&pucch_cfg.pucch_res_list[6], record.pucch_res);
+}
+
+TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_8)
+{
+  allocate_ues(7);
+  const pucch_harq_resource_alloc_record record =
+      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4608), pucch_cfg);
+
+  ASSERT_EQ(7, record.pucch_res_indicator);
+  ASSERT_EQ(&pucch_cfg.pucch_res_list[7], record.pucch_res);
+}
+
+TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_9)
+{
+  allocate_ues(8);
+  const pucch_harq_resource_alloc_record record =
+      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4609), pucch_cfg);
+
+  ASSERT_EQ(nullptr, record.pucch_res);
+}
+
+// Tests whether PUCCH HARQ grant is allocated with correct PUCCH RESOURCE Indicator; for 1 UE only.
+TEST_F(test_pucch_resource_manager, get_next_harq_different_slot)
+{
+  allocate_ues(1);
+  ++sl_tx;
+  const pucch_harq_resource_alloc_record record =
+      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4602), pucch_cfg);
+
+  // Expect that pucch_res_indicator = 0 is returned, as the UE 0x4602 is allocated in a different slot to UE 0x4601.
+  ASSERT_EQ(0, record.pucch_res_indicator);
+  ASSERT_EQ(&pucch_cfg.pucch_res_list[0], record.pucch_res);
+}
+
+// Tests whether PUCCH HARQ grant is allocated with correct PUCCH RESOURCE Indicator; for 1 UE only.
+TEST_F(test_pucch_resource_manager, slot_indication)
+{
+  res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
+
+  // Increment slot point and invoke slot_indication(), which should reset the previous UE's resource allocation.
+  ++sl_tx;
+  res_manager.slot_indication(sl_tx);
+
+  // Slot point pointing at the last slot, that has been cleared by that slot_indication().
+  slot_point old_slot{0, sl_tx.to_uint() - 1};
+  int        res_id = res_manager.get_pucch_res_indicator(old_slot, to_rnti(0x4601));
+
+  // Expect that pucch_res_indicator = -1 is returned (due to the slot_indication() resetting the resource records for
+  // old slots).
+  ASSERT_EQ(-1, res_id);
+}
+
 ////////////    Structs with expected parameters and PUCCH sched INPUT     ////////////
 
 // Expected results parameters.
@@ -97,7 +274,6 @@ public:
 protected:
   // Parameters that are passed by the routing to run the tests.
   expected_output_params harq_expected_params;
-  const unsigned         sl_point_harq_delay{0};
   test_bench             t_bench;
   pucch_info             pucch_expected;
   const unsigned         pucch_res_idx{0};
