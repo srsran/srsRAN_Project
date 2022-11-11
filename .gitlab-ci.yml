@@ -5,10 +5,10 @@
 
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "34"
+    ref: "35"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/testing-tools
-    ref: "34"
+    ref: "35"
     file: .gitlab/ci-shared/features/all.yml
   - local: .gitlab/ci/build.yml
 
@@ -28,7 +28,7 @@ include-guards:
       - INPUT_PATH: "include/srsgnb"
         INPUT_IGNORE: "/bundled/"
       - INPUT_PATH: "."
-        INPUT_IGNORE: "^\\(include\\|docs\\)/.*"
+        INPUT_IGNORE: "^\\(include\\|docs\\|external\\)/.*"
 
 .codechecker:
   image: registry.gitlab.com/softwareradiosystems/testing-tools/codechecker-gnb:$DOCKER_CODECHECKER_VERSION
