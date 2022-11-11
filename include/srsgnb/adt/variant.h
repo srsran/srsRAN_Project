@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "external/variant/variant.hpp"
+#include "variant/variant.hpp"
 
 namespace srsgnb {
 
