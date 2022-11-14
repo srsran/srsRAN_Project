@@ -122,8 +122,8 @@ public:
     logger.log_info("Enabled/disabled TX security integrity={}, ciphering={}", integ, cipher);
   }
 
-  /// Triggers a status report, as specified in TS 38.323, Sec. 5.4.
-  void send_status_report() final;
+  /// Sends a status report, as specified in TS 38.323, Sec. 5.4.
+  void send_status_report();
 
   /// Performs data recovery, as specified in TS 38.323, Sec. 5.5.
   void data_recovery() final;

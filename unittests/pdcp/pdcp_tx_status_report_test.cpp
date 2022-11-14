@@ -114,8 +114,8 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
   }
 }
 
-/// Test triggering, picking and transmission of PDCP status report
-TEST_P(pdcp_tx_status_report_test, trigger_status_report)
+/// Test sending of a PDCP status report
+TEST_P(pdcp_tx_status_report_test, send_status_report)
 {
   init(GetParam());
 
@@ -124,7 +124,7 @@ TEST_P(pdcp_tx_status_report_test, trigger_status_report)
 
   ASSERT_EQ(test_frame.pdu_queue.size(), 0);
 
-  // Trigger status report
+  // Send status report
   pdcp_tx->send_status_report();
 
   // Get the forwared status report that was passed to lower layers
