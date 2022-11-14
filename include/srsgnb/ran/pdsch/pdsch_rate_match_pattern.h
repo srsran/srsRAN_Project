@@ -99,7 +99,7 @@ struct rate_match_pattern {
   };
 
   /// \brief Rate matching pattern type.
-  enum class pattern_type { bitmaps, coreset };
+  enum class pattern_type : unsigned { bitmaps, coreset };
 
   rate_match_pattern_id_t pattern_id;
   pattern_type            type;

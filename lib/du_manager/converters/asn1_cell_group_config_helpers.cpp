@@ -224,9 +224,8 @@ void calculate_pdcch_config_diff(asn1::rrc_nr::pdcch_cfg_s& out, const pdcch_con
 
 void make_asn1_rrc_dmrs_dl_for_pdsch(asn1::rrc_nr::dmrs_dl_cfg_s& out, const dmrs_downlink_config& cfg)
 {
-  if (cfg.type.has_value() && cfg.type.value() != dmrs_config_type::type2) {
-    // Note: Strange ASN1 generated code where there is no type field.
-    srsgnb_assertion_failure("Invalid DMRS DL Config type={}", cfg.type.value());
+  if (cfg.type.has_value() && cfg.type.value() == dmrs_config_type::type2) {
+    out.dmrs_type_present = true;
   }
 
   if (cfg.additional_positions.has_value()) {
@@ -799,6 +798,206 @@ void calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_con
   }
 }
 
+void make_asn1_rrc_ptrs_ul_cfg(asn1::rrc_nr::ptrs_ul_cfg_s& out, const ptrs_uplink_config& cfg)
+{
+  if (cfg.trans_precoder_disabled.has_value()) {
+    out.transform_precoder_disabled_present = true;
+
+    const auto& cfg_trans_preco_dis = cfg.trans_precoder_disabled.value();
+    auto&       out_trans_preco_dis = out.transform_precoder_disabled;
+
+    for (unsigned idx = 0; idx < cfg_trans_preco_dis.t_density.size(); idx++) {
+      out_trans_preco_dis.time_density[idx] = cfg_trans_preco_dis.t_density[idx];
+    }
+
+    for (unsigned idx = 0; idx < cfg_trans_preco_dis.f_density.size(); idx++) {
+      out_trans_preco_dis.freq_density[idx] = cfg_trans_preco_dis.f_density[idx];
+    }
+
+    switch (cfg_trans_preco_dis.max_ports) {
+      case ptrs_uplink_config::transform_precoder_disabled::max_nof_ports::n1:
+        out_trans_preco_dis.max_nrof_ports = ptrs_ul_cfg_s::transform_precoder_disabled_s_::max_nrof_ports_opts::n1;
+        break;
+      case ptrs_uplink_config::transform_precoder_disabled::max_nof_ports::n2:
+        out_trans_preco_dis.max_nrof_ports = ptrs_ul_cfg_s::transform_precoder_disabled_s_::max_nrof_ports_opts::n2;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid PTRS UL Cfg Max. Ports={}", cfg_trans_preco_dis.max_ports);
+    }
+
+    if (cfg_trans_preco_dis.res_elem_offset.has_value()) {
+      switch (cfg_trans_preco_dis.res_elem_offset.value()) {
+        case ptrs_uplink_config::transform_precoder_disabled::resource_element_offset::offset01:
+          out_trans_preco_dis.res_elem_offset =
+              ptrs_ul_cfg_s::transform_precoder_disabled_s_::res_elem_offset_opts::offset01;
+          break;
+        case ptrs_uplink_config::transform_precoder_disabled::resource_element_offset::offset10:
+          out_trans_preco_dis.res_elem_offset =
+              ptrs_ul_cfg_s::transform_precoder_disabled_s_::res_elem_offset_opts::offset10;
+          break;
+        case ptrs_uplink_config::transform_precoder_disabled::resource_element_offset::offset11:
+          out_trans_preco_dis.res_elem_offset =
+              ptrs_ul_cfg_s::transform_precoder_disabled_s_::res_elem_offset_opts::offset11;
+          break;
+        default:
+          srsgnb_assertion_failure("Invalid PTRS UL Cfg Max. Ports={}", cfg_trans_preco_dis.res_elem_offset.value());
+      }
+    }
+
+    switch (cfg_trans_preco_dis.power) {
+      case ptrs_uplink_config::transform_precoder_disabled::ptrs_power::p00:
+        out_trans_preco_dis.ptrs_pwr = ptrs_ul_cfg_s::transform_precoder_disabled_s_::ptrs_pwr_opts::p00;
+        break;
+      case ptrs_uplink_config::transform_precoder_disabled::ptrs_power::p01:
+        out_trans_preco_dis.ptrs_pwr = ptrs_ul_cfg_s::transform_precoder_disabled_s_::ptrs_pwr_opts::p01;
+        break;
+      case ptrs_uplink_config::transform_precoder_disabled::ptrs_power::p10:
+        out_trans_preco_dis.ptrs_pwr = ptrs_ul_cfg_s::transform_precoder_disabled_s_::ptrs_pwr_opts::p10;
+        break;
+      case ptrs_uplink_config::transform_precoder_disabled::ptrs_power::p11:
+        out_trans_preco_dis.ptrs_pwr = ptrs_ul_cfg_s::transform_precoder_disabled_s_::ptrs_pwr_opts::p11;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid PTRS UL Cfg Power={}", cfg_trans_preco_dis.power);
+    }
+  }
+
+  if (cfg.trans_precoder_enabled.has_value()) {
+    out.transform_precoder_enabled_present = true;
+
+    const auto& cfg_trans_preco_enbl = cfg.trans_precoder_enabled.value();
+    auto&       out_trans_preco_enbl = out.transform_precoder_enabled;
+
+    for (unsigned idx = 0; idx < cfg_trans_preco_enbl.sampl_density.size(); idx++) {
+      out_trans_preco_enbl.sample_density[idx] = cfg_trans_preco_enbl.sampl_density[idx];
+    }
+    if (cfg_trans_preco_enbl.t_density_trans_precoding.has_value() &&
+        cfg_trans_preco_enbl.t_density_trans_precoding.value() ==
+            ptrs_uplink_config::transform_precoder_enabled::time_density_transform_precoding::d2) {
+      out_trans_preco_enbl.time_density_transform_precoding_present = true;
+    }
+  }
+}
+
+void make_asn1_rrc_dmrs_ul_for_pusch(asn1::rrc_nr::dmrs_ul_cfg_s& out,
+                                     const dmrs_uplink_config&    src,
+                                     const dmrs_uplink_config&    dest)
+{
+  if (dest.type.has_value() && dest.type.value() == dmrs_config_type::type2) {
+    out.dmrs_type_present = true;
+  }
+
+  if (dest.additional_positions.has_value()) {
+    out.dmrs_add_position_present = true;
+    switch (dest.additional_positions.value()) {
+      case dmrs_additional_positions::pos0:
+        out.dmrs_add_position = dmrs_ul_cfg_s::dmrs_add_position_opts::pos0;
+        break;
+      case dmrs_additional_positions::pos1:
+        out.dmrs_add_position = dmrs_ul_cfg_s::dmrs_add_position_opts::pos1;
+        break;
+      case dmrs_additional_positions::pos3:
+        out.dmrs_add_position = dmrs_ul_cfg_s::dmrs_add_position_opts::pos3;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid UL DMRS Add. pos={}", dest.additional_positions.value());
+    }
+  }
+
+  if ((dest.ptrs.has_value() && not src.ptrs.has_value()) ||
+      (dest.ptrs.has_value() && src.ptrs.has_value() && dest.ptrs != src.ptrs)) {
+    out.phase_tracking_rs_present = true;
+    make_asn1_rrc_ptrs_ul_cfg(out.phase_tracking_rs.set_setup(), dest.ptrs.value());
+  } else if (src.ptrs.has_value() && not dest.ptrs.has_value()) {
+    out.phase_tracking_rs_present = true;
+    out.phase_tracking_rs.set_release();
+  }
+
+  if (dest.max_length.has_value() && dest.max_length.value() == dmrs_max_length::len2) {
+    out.max_len_present = true;
+  }
+
+  if (dest.trans_precoder_disabled.has_value()) {
+    out.transform_precoding_disabled_present = true;
+
+    if (dest.trans_precoder_disabled.value().scrambling_id0.has_value()) {
+      out.transform_precoding_disabled.scrambling_id0_present = true;
+      out.transform_precoding_disabled.scrambling_id0 = dest.trans_precoder_disabled.value().scrambling_id0.value();
+    }
+
+    if (dest.trans_precoder_disabled.value().scrambling_id1.has_value()) {
+      out.transform_precoding_disabled.scrambling_id1_present = true;
+      out.transform_precoding_disabled.scrambling_id1 = dest.trans_precoder_disabled.value().scrambling_id1.value();
+    }
+  }
+
+  if (dest.trans_precoder_enabled.has_value()) {
+    out.transform_precoding_enabled_present = true;
+
+    if (dest.trans_precoder_enabled.value().n_pusch_id.has_value()) {
+      out.transform_precoding_enabled.npusch_id_present = true;
+      out.transform_precoding_enabled.npusch_id         = dest.trans_precoder_enabled.value().n_pusch_id.value();
+    }
+
+    if (dest.trans_precoder_enabled.value().seq_grp_hopping.has_value() &&
+        dest.trans_precoder_enabled.value().seq_grp_hopping.value() ==
+            dmrs_uplink_config::transform_precoder_enabled::sequence_group_hopping::disabled) {
+      out.transform_precoding_enabled.seq_group_hop_present = true;
+    }
+
+    if (dest.trans_precoder_enabled.value().seq_hopping.has_value() &&
+        dest.trans_precoder_enabled.value().seq_hopping.value() ==
+            dmrs_uplink_config::transform_precoder_enabled::sequence_hopping::enabled) {
+      out.transform_precoding_enabled.seq_hop_present = true;
+    }
+  }
+}
+
+void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_config& src, const pusch_config& dest)
+{
+  if (dest.data_scrambling_id_pusch.has_value()) {
+    out.data_scrambling_id_pusch_present = true;
+    out.data_scrambling_id_pusch         = dest.data_scrambling_id_pusch.value();
+  }
+  if (dest.tx_cfg.has_value()) {
+    out.tx_cfg_present = true;
+    switch (dest.tx_cfg.value()) {
+      case pusch_config::tx_config::codebook:
+        out.tx_cfg = pusch_cfg_s::tx_cfg_opts::codebook;
+        break;
+      case pusch_config::tx_config::non_codebook:
+        out.tx_cfg = pusch_cfg_s::tx_cfg_opts::non_codebook;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid PUSCH Tx cfg={}", dest.tx_cfg.value());
+    }
+  }
+
+  if ((dest.pusch_mapping_type_a_dmrs.has_value() && not src.pusch_mapping_type_a_dmrs.has_value()) ||
+      (dest.pusch_mapping_type_a_dmrs.has_value() && src.pusch_mapping_type_a_dmrs.has_value() &&
+       dest.pusch_mapping_type_a_dmrs != src.pusch_mapping_type_a_dmrs)) {
+    out.dmrs_ul_for_pusch_map_type_a_present = true;
+    make_asn1_rrc_dmrs_ul_for_pusch(out.dmrs_ul_for_pusch_map_type_a.set_setup(),
+                                    src.pusch_mapping_type_a_dmrs.value(),
+                                    dest.pusch_mapping_type_a_dmrs.value());
+  } else if (src.pusch_mapping_type_a_dmrs.has_value() && not dest.pusch_mapping_type_a_dmrs.has_value()) {
+    out.dmrs_ul_for_pusch_map_type_a_present = true;
+    out.dmrs_ul_for_pusch_map_type_a.set_release();
+  }
+
+  if ((dest.pusch_mapping_type_b_dmrs.has_value() && not src.pusch_mapping_type_b_dmrs.has_value()) ||
+      (dest.pusch_mapping_type_b_dmrs.has_value() && src.pusch_mapping_type_b_dmrs.has_value() &&
+       dest.pusch_mapping_type_b_dmrs != src.pusch_mapping_type_b_dmrs)) {
+    out.dmrs_ul_for_pusch_map_type_b_present = true;
+    make_asn1_rrc_dmrs_ul_for_pusch(out.dmrs_ul_for_pusch_map_type_b.set_setup(),
+                                    src.pusch_mapping_type_b_dmrs.value(),
+                                    dest.pusch_mapping_type_b_dmrs.value());
+  } else if (src.pusch_mapping_type_b_dmrs.has_value() && not dest.pusch_mapping_type_b_dmrs.has_value()) {
+    out.dmrs_ul_for_pusch_map_type_b_present = true;
+    out.dmrs_ul_for_pusch_map_type_b.set_release();
+  }
+}
+
 void calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,
                                      const bwp_uplink_dedicated& src,
                                      const bwp_uplink_dedicated& dest)
@@ -812,6 +1011,17 @@ void calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,
   } else if (src.pucch_cfg.has_value() && not dest.pucch_cfg.has_value()) {
     out.pucch_cfg_present = true;
     out.pucch_cfg.set_release();
+  }
+
+  if ((dest.pusch_cfg.has_value() && not src.pusch_cfg.has_value()) ||
+      (dest.pusch_cfg.has_value() && src.pusch_cfg.has_value() && dest.pusch_cfg != src.pusch_cfg)) {
+    out.pusch_cfg_present = true;
+    calculate_pusch_config_diff(out.pusch_cfg.set_setup(),
+                                src.pusch_cfg.has_value() ? src.pusch_cfg.value() : pusch_config{},
+                                dest.pusch_cfg.value());
+  } else if (src.pusch_cfg.has_value() && not dest.pusch_cfg.has_value()) {
+    out.pusch_cfg_present = true;
+    out.pusch_cfg.set_release();
   }
   // TODO: Remaining.
 }

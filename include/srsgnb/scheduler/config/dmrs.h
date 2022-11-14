@@ -52,6 +52,12 @@ struct dmrs_uplink_config {
     /// ID. See TS 38.211, clause 6.4.1.1.1.1.
     optional<uint16_t> scrambling_id0;
     optional<uint16_t> scrambling_id1;
+
+    bool operator==(const transform_precoder_disabled& rhs) const
+    {
+      return scrambling_id0 == rhs.scrambling_id0 && scrambling_id1 == rhs.scrambling_id1;
+    }
+    bool operator!=(const transform_precoder_disabled& rhs) const { return !(rhs == *this); }
   };
 
   /// \brief DMRS related parameters for DFT-s-OFDM (Transform Precoding).
@@ -72,6 +78,12 @@ struct dmrs_uplink_config {
     /// If the field is absent, the UE uses the same hopping mode as for msg3.
     /// Note: The network does not configure simultaneous group hopping and sequence hopping.
     optional<sequence_hopping> seq_hopping;
+
+    bool operator==(const transform_precoder_enabled& rhs) const
+    {
+      return n_pusch_id == rhs.n_pusch_id && seq_grp_hopping == rhs.seq_grp_hopping && seq_hopping == rhs.seq_hopping;
+    }
+    bool operator!=(const transform_precoder_enabled& rhs) const { return !(rhs == *this); }
   };
 
   /// Selection of the DMRS type to be used for UL. If the field is absent, the UE uses DMRS type 1.
@@ -87,6 +99,14 @@ struct dmrs_uplink_config {
   optional<transform_precoder_disabled> trans_precoder_disabled;
   optional<transform_precoder_enabled>  trans_precoder_enabled;
   // TODO: Remaining
+
+  bool operator==(const dmrs_uplink_config& rhs) const
+  {
+    return type == rhs.type && additional_positions == rhs.additional_positions && ptrs == rhs.ptrs &&
+           max_length == rhs.max_length && trans_precoder_disabled == rhs.trans_precoder_disabled &&
+           trans_precoder_enabled == rhs.trans_precoder_enabled;
+  }
+  bool operator!=(const dmrs_uplink_config& rhs) const { return !(rhs == *this); }
 };
 
 /// \brief Data type used to represent a DMRS symbol mask for PDSCH and PUSCH transmissions.

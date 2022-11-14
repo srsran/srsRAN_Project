@@ -39,6 +39,12 @@ struct pusch_config {
       /// alpha value for PUSCH with grant (except msg3). When the field is absent the UE applies the value 1. See
       /// TS 38.213, clause 7.1.
       optional<alpha> p0_pusch_alpha;
+
+      bool operator==(const p0_pusch_alphaset& rhs) const
+      {
+        return id == rhs.id && p0 == rhs.p0 && p0_pusch_alpha == rhs.p0_pusch_alpha;
+      }
+      bool operator!=(const p0_pusch_alphaset& rhs) const { return !(rhs == *this); }
     };
 
     enum pusch_pathloss_ref_rs_id : uint8_t {
@@ -52,6 +58,9 @@ struct pusch_config {
     struct pusch_pathloss_ref_rs {
       pusch_pathloss_ref_rs_id               id;
       variant<nzp_csi_rs_res_id_t, ssb_id_t> rs;
+
+      bool operator==(const pusch_pathloss_ref_rs& rhs) const { return id == rhs.id && rs == rhs.rs; }
+      bool operator!=(const pusch_pathloss_ref_rs& rhs) const { return !(rhs == *this); }
     };
 
     enum sri_pusch_pwr_ctrl_id : uint8_t {
@@ -64,7 +73,7 @@ struct pusch_config {
     /// \remark See TS 38.331, "SRI-PUSCH-PowerControl".
     struct sri_pusch_pwr_ctrl {
       /// \brief The index of the closed power control loop associated with this SRI-PUSCH-PowerControl.
-      enum class sri_pusch_closed_loop_index { i0, i1 };
+      enum class sri_pusch_closed_loop_index : unsigned { i0, i1 };
 
       /// The ID of this SRI-PUSCH-PowerControl configuration. It is used as the codepoint (payload) in the SRI DCI
       /// field.
@@ -75,6 +84,13 @@ struct pusch_config {
       /// The ID of a P0-PUSCH-AlphaSet as configured in p0-AlphaSets in PUSCH-PowerControl.
       p0_pusch_alphaset_id        sri_p0_pusch_alphaset_id;
       sri_pusch_closed_loop_index closed_loop_idx;
+
+      bool operator==(const sri_pusch_pwr_ctrl& rhs) const
+      {
+        return id == rhs.id && sri_pusch_pathloss_ref_rs_id == rhs.sri_pusch_pathloss_ref_rs_id &&
+               sri_p0_pusch_alphaset_id == rhs.sri_p0_pusch_alphaset_id && closed_loop_idx == rhs.closed_loop_idx;
+      }
+      bool operator!=(const sri_pusch_pwr_ctrl& rhs) const { return !(rhs == *this); }
     };
 
     /// If enabled, UE applies TPC commands via accumulation. If not enabled, UE applies the TPC command without
@@ -96,20 +112,28 @@ struct pusch_config {
     static_vector<sri_pusch_pwr_ctrl, sri_pusch_pwr_ctrl_id::MAX_NOF_SRI_PUSCH_MAPPINGS> sri_pusch_mapping;
 
     // TODO: Remaining.
+
+    bool operator==(const pusch_power_control& rhs) const
+    {
+      return tpc_accum == rhs.tpc_accum && msg3_alpha == rhs.msg3_alpha &&
+             p0_nominal_without_grant == rhs.p0_nominal_without_grant && p0_alphasets == rhs.p0_alphasets &&
+             pathloss_ref_rs == rhs.pathloss_ref_rs && sri_pusch_mapping == rhs.sri_pusch_mapping;
+    }
+    bool operator!=(const pusch_power_control& rhs) const { return !(rhs == *this); }
   };
 
   /// \brief Resource allocation type of to DCI format 0_1.
   /// \remark See TS 38.214, clause 6.1.2.
-  enum class resource_allocation { resource_allocation_type_0, resource_allocation_type_1, dynamic_switch };
+  enum class resource_allocation : unsigned { resource_allocation_type_0, resource_allocation_type_1, dynamic_switch };
 
   /// \brief Transformer precoder for PUSCH.
   /// \remark See TS 38.214, clause 6.1.3.
-  enum class transform_precoder { enabled, disabled };
+  enum class transform_precoder : unsigned { enabled, disabled };
 
   /// Subset of PMIs addressed by TPMI, where PMIs are those supported by UEs with maximum coherence capabilities.
   /// Applicable to DCI format 0_1.
   /// \remark See TS 38.214, clause 6.1.1.1.
-  enum class codebook_subset { fully_and_partial_and_non_coherent, partial_and_non_coherent, non_coherent };
+  enum class codebook_subset : unsigned { fully_and_partial_and_non_coherent, partial_and_non_coherent, non_coherent };
 
   /// Identifier used to initalite data scrambling (c_init) for PUSCH. If the field is absent, the UE applies the
   /// physical cell ID. See TS 38.211, clause 6.3.1.1.
@@ -132,6 +156,16 @@ struct pusch_config {
   /// Subset of PMIs addressed by TRIs from 1 to ULmaxRank. The field maxRank applies to DCI format 0_1.
   /// The field is mandatory present if txConfig is set to codebook and absent otherwise. Values {1,..,4}.
   optional<uint8_t> max_rank;
+
+  bool operator==(const pusch_config& rhs) const
+  {
+    return data_scrambling_id_pusch == rhs.data_scrambling_id_pusch && tx_cfg == rhs.tx_cfg &&
+           pusch_mapping_type_a_dmrs == rhs.pusch_mapping_type_a_dmrs &&
+           pusch_mapping_type_b_dmrs == rhs.pusch_mapping_type_b_dmrs && pusch_pwr_ctrl == rhs.pusch_pwr_ctrl &&
+           res_alloc == rhs.res_alloc && trans_precoder == rhs.trans_precoder && cb_subset == rhs.cb_subset &&
+           max_rank == rhs.max_rank;
+  }
+  bool operator!=(const pusch_config& rhs) const { return !(rhs == *this); }
 };
 
 } // namespace srsgnb

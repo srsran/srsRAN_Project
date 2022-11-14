@@ -41,6 +41,13 @@ struct ptrs_uplink_config {
     /// If the field is absent, the UE applies the value offset00.
     optional<resource_element_offset> res_elem_offset;
     ptrs_power                        power;
+
+    bool operator==(const transform_precoder_disabled& rhs) const
+    {
+      return f_density == rhs.f_density && t_density == rhs.t_density && max_ports == rhs.max_ports &&
+             res_elem_offset == rhs.res_elem_offset && power == rhs.power;
+    }
+    bool operator!=(const transform_precoder_disabled& rhs) const { return !(rhs == *this); }
   };
 
   /// \brief Configuration of UL PTRS with transform precoder (DFT-S-OFDM).
@@ -51,13 +58,26 @@ struct ptrs_uplink_config {
     /// Sample density of PT-RS for DFT-s-OFDM, pre-DFT, indicating a set of thresholds T={NRBn, n=0,1,2,3,4}, that
     /// indicates dependency between presence of PT-RS and scheduled BW and the values of X and K the UE should use
     /// depending on the scheduled BW. See TS 38.214, clause 6.1, table 6.2.3.2-1. Value {1..276}.
-    uint16_t sampl_density;
+    static_vector<uint16_t, 5> sampl_density;
     /// If the field is absent, the UE applies value d1.
     optional<time_density_transform_precoding> t_density_trans_precoding;
+
+    bool operator==(const transform_precoder_enabled& rhs) const
+    {
+      return sampl_density == rhs.sampl_density && t_density_trans_precoding == rhs.t_density_trans_precoding;
+    }
+    bool operator!=(const transform_precoder_enabled& rhs) const { return !(rhs == *this); }
   };
 
   optional<transform_precoder_disabled> trans_precoder_disabled;
   optional<transform_precoder_enabled>  trans_precoder_enabled;
+
+  bool operator==(const ptrs_uplink_config& rhs) const
+  {
+    return trans_precoder_disabled == rhs.trans_precoder_disabled &&
+           trans_precoder_enabled == rhs.trans_precoder_enabled;
+  }
+  bool operator!=(const ptrs_uplink_config& rhs) const { return !(rhs == *this); }
 };
 
 } // namespace srsgnb
