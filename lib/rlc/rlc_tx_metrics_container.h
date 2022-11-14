@@ -16,10 +16,10 @@
 
 namespace srsgnb {
 
-class rlc_tx_metrics : rlc_tx_metrics_interface
+class rlc_tx_metrics_container
 {
-  rlc_bearer_tx_metrics_container metrics = {};
-  std::mutex                      metrics_mutex;
+  rlc_tx_metrics metrics = {};
+  std::mutex     metrics_mutex;
 
 public:
   void metrics_set_mode(rlc_mode mode) { metrics.mode = mode; }
@@ -69,24 +69,27 @@ public:
   }
 
   // Metrics getters and setters
-  rlc_bearer_tx_metrics_container get_metrics() final
+  rlc_tx_metrics get_metrics()
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
     return metrics;
   }
 
-  rlc_bearer_tx_metrics_container get_and_reset_metrics() final
+  rlc_tx_metrics get_and_reset_metrics()
   {
-    std::lock_guard<std::mutex>     lock(metrics_mutex);
-    rlc_bearer_tx_metrics_container ret = metrics;
-    metrics                             = {};
+    std::lock_guard<std::mutex> lock(metrics_mutex);
+    rlc_tx_metrics              ret = metrics;
+    metrics                         = {};
+    metrics.mode                    = ret.mode;
     return ret;
   }
 
-  void reset_metrics() final
+  void reset_metrics()
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
-    metrics = {};
+    rlc_mode                    tmp_mode = metrics.mode;
+    metrics                              = {};
+    metrics.mode                         = tmp_mode;
   }
 };
 } // namespace srsgnb

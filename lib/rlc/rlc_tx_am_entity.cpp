@@ -55,14 +55,14 @@ void rlc_tx_am_entity::handle_sdu(rlc_sdu sdu)
                   sdu.pdcp_count,
                   sdu_queue.size_sdus());
   if (sdu_queue.write(sdu)) {
-    metrics_add_sdus(1, sdu_length);
+    metrics.metrics_add_sdus(1, sdu_length);
     handle_buffer_state_update(); // take lock
   } else {
     logger.log_info("Dropped Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}",
                     sdu_length,
                     sdu.pdcp_count,
                     sdu_queue.size_sdus());
-    metrics_add_lost_sdus(1);
+    metrics.metrics_add_lost_sdus(1);
   }
 }
 
@@ -446,7 +446,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
   log_state(srslog::basic_levels::debug);
 
   // Log metrics
-  metrics_add_retx_pdus(1);
+  metrics.metrics_add_retx_pdus(1);
 
   return pdu_buf;
 }

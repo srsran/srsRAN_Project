@@ -714,7 +714,7 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
     timers.tick_all();
   }
 
-  rlc_bearer_metrics_container rlc2_metrics = rlc2->get_metrics();
+  rlc_metrics rlc2_metrics = rlc2->get_metrics();
   EXPECT_TRUE(rlc2_metrics.rx.num_lost_pdus == 1);
 }
 
@@ -792,7 +792,7 @@ TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
     }
   }
 
-  rlc_bearer_metrics_container rlc2_metrics = rlc2->get_metrics();
+  rlc_metrics rlc2_metrics = rlc2->get_metrics();
   EXPECT_TRUE(rlc2_metrics.rx.num_lost_pdus == 1);
 }
 
@@ -869,7 +869,7 @@ TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
     tester2.sdu_queue.pop();
   }
 
-  rlc_bearer_metrics_container rlc2_metrics = rlc2->get_metrics();
+  rlc_metrics rlc2_metrics = rlc2->get_metrics();
   EXPECT_TRUE(rlc2_metrics.rx.num_lost_pdus == 0);
 
   EXPECT_EQ(0, timers.nof_running_timers());

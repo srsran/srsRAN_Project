@@ -46,8 +46,8 @@ public:
 
   void set_peer_stack(stress_stack* peer_stack_) { peer_stack = peer_stack_; }
 
-  pdcp_metrics_container       get_pdcp_metrics() { return pdcp->get_metrics(); }
-  rlc_bearer_metrics_container get_rlc_metrics() { return rlc->get_metrics(); }
+  pdcp_metrics_container get_pdcp_metrics() { return pdcp->get_metrics(); }
+  rlc_metrics            get_rlc_metrics() { return rlc->get_metrics(); }
 
   // Mutex and condition variables for stopping workers
   std::mutex              mutex_pcell;

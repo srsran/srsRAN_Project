@@ -186,7 +186,7 @@ TEST_F(rlc_tx_tm_test, test_tx_metrics)
   byte_buffer_slice_chain pdu;
   pdu = rlc->pull_pdu(sdu_size - 1);
 
-  rlc_bearer_tx_metrics_container m = rlc->get_metrics();
+  rlc_tx_metrics m = rlc->get_metrics();
   ASSERT_EQ(m.mode, rlc_mode::tm);
   ASSERT_EQ(m.mode_specific.tm.num_small_allocs, 1);
 }

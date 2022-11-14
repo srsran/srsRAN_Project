@@ -29,7 +29,7 @@ public:
                    rlc_tx_lower_layer_notifier&         lower_dn) :
     rlc_tx_entity(du_index, lcid, upper_dn, upper_cn, lower_dn)
   {
-    metrics_set_mode(rlc_mode::tm);
+    metrics.metrics_set_mode(rlc_mode::tm);
   }
 
   // Interfaces for higher layers
@@ -42,11 +42,11 @@ public:
                     sdu.buf.length(),
                     sdu_queue.size_sdus());
     if (sdu_queue.write(sdu)) {
-      metrics_add_sdus(1, sdu_length);
+      metrics.metrics_add_sdus(1, sdu_length);
       handle_buffer_state_update();
     } else {
       logger.log_info("Dropped Tx SDU (length: {} B, enqueued SDUs: {})", sdu.buf.length(), sdu_queue.size_sdus());
-      metrics_add_lost_sdus(1);
+      metrics.metrics_add_lost_sdus(1);
     }
   }
 
@@ -66,7 +66,7 @@ public:
 
     if (front_size > nof_bytes) {
       logger.log_info("Tx PDU size larger than provided space ({} > {})", front_size, nof_bytes);
-      metrics_add_small_alloc(1);
+      metrics.metrics_add_small_alloc(1);
       return {};
     }
 
@@ -84,7 +84,7 @@ public:
     byte_buffer_slice_chain pdu = {};
     pdu.push_back(std::move(sdu.buf));
     logger.log_info("Tx PDU ({} B). Provided space ({} B)", sdu_size, nof_bytes);
-    metrics_add_pdus(1, pdu.length());
+    metrics.metrics_add_pdus(1, pdu.length());
     handle_buffer_state_update();
 
     return pdu;

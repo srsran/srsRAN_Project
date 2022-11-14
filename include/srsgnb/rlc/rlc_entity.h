@@ -18,8 +18,8 @@
 namespace srsgnb {
 
 /// Container to hold TX/RX metrics
-struct rlc_bearer_metrics_container {
-  rlc_bearer_tx_metrics_container tx;
+struct rlc_metrics {
+  rlc_tx_metrics                  tx;
   rlc_bearer_rx_metrics_container rx;
 };
 
@@ -38,7 +38,7 @@ public:
   virtual rlc_tx_upper_layer_data_interface* get_tx_upper_layer_data_interface() = 0;
   virtual rlc_tx_lower_layer_interface*      get_tx_lower_layer_interface()      = 0;
   virtual rlc_rx_lower_layer_interface*      get_rx_lower_layer_interface()      = 0;
-  virtual rlc_bearer_metrics_container       get_metrics()                       = 0;
+  virtual rlc_metrics                        get_metrics()                       = 0;
 };
 
 } // namespace srsgnb

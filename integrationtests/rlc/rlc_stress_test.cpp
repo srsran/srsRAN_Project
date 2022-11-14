@@ -185,10 +185,10 @@ void stress_test(const stress_test_args& args)
   stack_emulator_1.wait_for_finish();
 
   // Print and analyse metrics
-  pdcp_metrics_container       stack0_pdcp_metrics = stack_emulator_0.get_pdcp_metrics();
-  pdcp_metrics_container       stack1_pdcp_metrics = stack_emulator_1.get_pdcp_metrics();
-  rlc_bearer_metrics_container stack0_rlc_metrics  = stack_emulator_0.get_rlc_metrics();
-  rlc_bearer_metrics_container stack1_rlc_metrics  = stack_emulator_1.get_rlc_metrics();
+  pdcp_metrics_container stack0_pdcp_metrics = stack_emulator_0.get_pdcp_metrics();
+  pdcp_metrics_container stack1_pdcp_metrics = stack_emulator_1.get_pdcp_metrics();
+  rlc_metrics            stack0_rlc_metrics  = stack_emulator_0.get_rlc_metrics();
+  rlc_metrics            stack1_rlc_metrics  = stack_emulator_1.get_rlc_metrics();
 
   // Print PDCP metrics
   log_stack.info("STACK 0 emulator PDCP TX metrics: {}", stack0_pdcp_metrics.tx);

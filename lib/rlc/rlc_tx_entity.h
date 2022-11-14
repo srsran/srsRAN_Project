@@ -35,9 +35,14 @@ protected:
   }
 
   bearer_logger                        logger;
+  rlc_tx_metrics_container             metrics;
   rlc_tx_upper_layer_data_notifier&    upper_dn;
   rlc_tx_upper_layer_control_notifier& upper_cn;
   rlc_tx_lower_layer_notifier&         lower_dn;
+
+public:
+  rlc_tx_metrics get_metrics() { return metrics.get_metrics(); }
+  void           reset_metrics() { return metrics.reset_metrics(); }
 };
 
 } // namespace srsgnb

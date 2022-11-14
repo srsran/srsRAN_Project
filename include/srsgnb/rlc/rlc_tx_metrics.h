@@ -16,16 +16,16 @@
 
 namespace srsgnb {
 
-struct rlc_tm_bearer_tx_metrics_container {
+struct rlc_tm_tx_metrics {
   uint32_t num_small_allocs; ///< Number of allocations that are too small to TX PDU
 };
 
-struct rlc_um_bearer_tx_metrics_container {
+struct rlc_um_tx_metrics {
   uint32_t num_sdu_segments;      ///< Number of SDU segments TX'ed
   uint32_t num_sdu_segment_bytes; ///< Number of SDU segments Bytes
 };
 
-struct rlc_am_bearer_tx_metrics_container {
+struct rlc_am_tx_metrics {
   uint32_t num_retx_pdus;         ///< Number of RETX'ed PDUs
   uint32_t num_sdu_segments;      ///< Number of SDU segments TX'ed
   uint32_t num_sdu_segment_bytes; ///< Number of SDU segments bytes
@@ -33,7 +33,7 @@ struct rlc_am_bearer_tx_metrics_container {
   uint32_t num_ctrl_pdu_bytes;    ///< Number of control PDUs bytes
 };
 
-struct rlc_bearer_tx_metrics_container {
+struct rlc_tx_metrics {
   // SDU metrics
   uint32_t num_sdus;         ///< Number of SDUs
   size_t   num_sdu_bytes;    ///< Number of SDU bytes
@@ -45,9 +45,9 @@ struct rlc_bearer_tx_metrics_container {
 
   rlc_mode mode;
   union {
-    rlc_tm_bearer_tx_metrics_container tm;
-    rlc_um_bearer_tx_metrics_container um;
-    rlc_am_bearer_tx_metrics_container am;
+    rlc_tm_tx_metrics tm;
+    rlc_um_tx_metrics um;
+    rlc_am_tx_metrics am;
   } mode_specific;
 };
 
@@ -61,16 +61,16 @@ public:
   rlc_tx_metrics_interface(const rlc_tx_metrics_interface&&)            = delete;
   rlc_tx_metrics_interface& operator=(const rlc_tx_metrics_interface&&) = delete;
 
-  virtual rlc_bearer_tx_metrics_container get_metrics()           = 0;
-  virtual rlc_bearer_tx_metrics_container get_and_reset_metrics() = 0;
-  virtual void                            reset_metrics()         = 0;
+  virtual rlc_tx_metrics get_metrics()           = 0;
+  virtual rlc_tx_metrics get_and_reset_metrics() = 0;
+  virtual void           reset_metrics()         = 0;
 };
 } // namespace srsgnb
 
 namespace fmt {
 // RLC TX metrics formatter
 template <>
-struct formatter<srsgnb::rlc_bearer_tx_metrics_container> {
+struct formatter<srsgnb::rlc_tx_metrics> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -78,8 +78,7 @@ struct formatter<srsgnb::rlc_bearer_tx_metrics_container> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_bearer_tx_metrics_container m, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+  auto format(srsgnb::rlc_tx_metrics m, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
                      "num_sdus={}, num_sdu_bytes={}, num_dropped_sdus={}, num_pdus={}, num_pdu_bytes={}",
