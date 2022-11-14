@@ -298,10 +298,11 @@ serving_cell_config srsgnb::config_helpers::make_default_initial_ue_serving_cell
                                  .ssb  = static_cast<ssb_id_t>(0)},
                     .qcl_type = qcl_info::qcl_type::type_d},
   });
-  pdsch_cfg.res_alloc                = pdsch_config::resource_allocation::resource_allocation_type_1;
-  pdsch_cfg.rbg_sz                   = rbg_size::config1;
-  pdsch_cfg.prb_bndlg.type           = prb_bundling::prb_bundling_type::static_bundling;
-  pdsch_cfg.prb_bndlg.st_bundling.sz = prb_bundling::static_bundling::bundling_size::wideband;
+  pdsch_cfg.res_alloc      = pdsch_config::resource_allocation::resource_allocation_type_1;
+  pdsch_cfg.rbg_sz         = rbg_size::config1;
+  pdsch_cfg.prb_bndlg.type = prb_bundling::prb_bundling_type::static_bundling;
+  pdsch_cfg.prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
+      prb_bundling::static_bundling({.sz = prb_bundling::static_bundling::bundling_size::wideband}));
 
   // > UL Config.
   serv_cell.ul_config.emplace(make_default_ue_uplink_config());

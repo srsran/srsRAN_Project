@@ -34,7 +34,7 @@ struct pusch_config {
     struct p0_pusch_alphaset {
       p0_pusch_alphaset_id id;
       /// P0 value for PUSCH with grant (except msg3) in steps of 1dB. When the field is absent the UE applies the value
-      /// 0. See TS 38.213, clause 7.1. Values {-16..15}.
+      /// 0. See TS 38.213, clause 7.1. Values {-16,..,15}.
       optional<int> p0;
       /// alpha value for PUSCH with grant (except msg3). When the field is absent the UE applies the value 1. See
       /// TS 38.213, clause 7.1.
@@ -50,11 +50,8 @@ struct pusch_config {
     /// \brief Reference Signals (e.g. a CSI-RS config or a SS block) to be used for PUSCH path loss estimation.
     /// \remark See TS 38.213, clause 7.1 and TS 38.331, "PUSCH-PathlossReferenceRS".
     struct pusch_pathloss_ref_rs {
-      pusch_pathloss_ref_rs_id id;
-      union {
-        nzp_csi_rs_res_id_t csi_rs;
-        ssb_id_t            ssb;
-      };
+      pusch_pathloss_ref_rs_id               id;
+      variant<nzp_csi_rs_res_id_t, ssb_id_t> rs;
     };
 
     enum sri_pusch_pwr_ctrl_id : uint8_t {
@@ -86,7 +83,7 @@ struct pusch_config {
     /// Dedicated alpha value for msg3 PUSCH. When the field is absent the UE applies the value 1.
     optional<alpha> msg3_alpha;
     /// P0 value for UL grant-free/SPS based PUSCH. Value in dBm. Only even values (step size 2) allowed. See TS 38.213,
-    /// clause 7.1. Values {-202..24}.
+    /// clause 7.1. Values {-202,..,24}.
     optional<int> p0_nominal_without_grant;
     /// Configuration {p0-pusch, alpha} sets for PUSCH (except msg3), i.e. { {p0,alpha,index1}, {p0,alpha,index2},...}.
     /// When no set is configured, the UE uses the P0-nominal for msg3 PUSCH, P0-UE is set to 0 and alpha is set
@@ -133,7 +130,7 @@ struct pusch_config {
   /// The field is mandatory present if txConfig is set to codebook and absent otherwise.
   optional<codebook_subset> cb_subset;
   /// Subset of PMIs addressed by TRIs from 1 to ULmaxRank. The field maxRank applies to DCI format 0_1.
-  /// The field is mandatory present if txConfig is set to codebook and absent otherwise. Values {1..4}.
+  /// The field is mandatory present if txConfig is set to codebook and absent otherwise. Values {1,..,4}.
   optional<uint8_t> max_rank;
 };
 

@@ -17,4 +17,16 @@ namespace srsgnb {
 template <typename... Types>
 using variant = mpark::variant<Types...>;
 
+template <typename T, typename... Types>
+inline constexpr T& variant_get(variant<Types...>& v)
+{
+  return mpark::get<T, Types...>(v);
+}
+
+template <typename T, typename... Types>
+inline constexpr const T& variant_get(const variant<Types...>& v)
+{
+  return mpark::get<T, Types...>(v);
+}
+
 } // namespace srsgnb

@@ -432,7 +432,8 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
   if (dest.prb_bndlg.type == srsgnb::prb_bundling::prb_bundling_type::static_bundling) {
     auto& st_bundling               = out.prb_bundling_type.set_static_bundling();
     st_bundling.bundle_size_present = true;
-    switch (dest.prb_bndlg.st_bundling.sz) {
+    const auto& bdlng               = variant_get<prb_bundling::static_bundling>(dest.prb_bndlg.bundling);
+    switch (bdlng.sz.value()) {
       case prb_bundling::static_bundling::bundling_size::n4:
         st_bundling.bundle_size = pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::n4;
         break;
@@ -440,13 +441,14 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
         st_bundling.bundle_size = pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::wideband;
         break;
       default:
-        srsgnb_assertion_failure("Invalid static PRB bundling size={}", dest.prb_bndlg.st_bundling.sz);
+        srsgnb_assertion_failure("Invalid static PRB bundling size={}", bdlng.sz.value());
     }
   } else {
     // Dynamic bundling.
     auto& dy_bundling                    = out.prb_bundling_type.set_dynamic_bundling();
     dy_bundling.bundle_size_set1_present = true;
-    switch (dest.prb_bndlg.dy_bundling.sz_set1) {
+    const auto& bdlng                    = variant_get<prb_bundling::dynamic_bundling>(dest.prb_bndlg.bundling);
+    switch (bdlng.sz_set1.value()) {
       case prb_bundling::dynamic_bundling::bundling_size_set1::n4:
         dy_bundling.bundle_size_set1 =
             pdsch_cfg_s::prb_bundling_type_c_::dynamic_bundling_s_::bundle_size_set1_opts::n4;
@@ -464,10 +466,10 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
             pdsch_cfg_s::prb_bundling_type_c_::dynamic_bundling_s_::bundle_size_set1_opts::n4_wideband;
         break;
       default:
-        srsgnb_assertion_failure("Invalid dynamic PRB bundling set 1 size={}", dest.prb_bndlg.dy_bundling.sz_set1);
+        srsgnb_assertion_failure("Invalid dynamic PRB bundling set 1 size={}", bdlng.sz_set1.value());
     }
     dy_bundling.bundle_size_set2_present = true;
-    switch (dest.prb_bndlg.dy_bundling.sz_set2) {
+    switch (bdlng.sz_set2.value()) {
       case prb_bundling::dynamic_bundling::bundling_size_set2::n4:
         dy_bundling.bundle_size_set2 =
             pdsch_cfg_s::prb_bundling_type_c_::dynamic_bundling_s_::bundle_size_set2_opts::n4;
@@ -477,7 +479,7 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
             pdsch_cfg_s::prb_bundling_type_c_::dynamic_bundling_s_::bundle_size_set2_opts::wideband;
         break;
       default:
-        srsgnb_assertion_failure("Invalid dynamic PRB bundling set 2 size={}", dest.prb_bndlg.dy_bundling.sz_set2);
+        srsgnb_assertion_failure("Invalid dynamic PRB bundling set 2 size={}", bdlng.sz_set2.value());
     }
   }
 
