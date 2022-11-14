@@ -49,7 +49,7 @@ private:
 
   // Components
   std::unique_ptr<e1_interface> e1;
-  std::atomic<bool>             e1_connected = {false};
+  std::atomic<bool> e1_connected = {false};
 };
 
 } // namespace srs_cu_up
