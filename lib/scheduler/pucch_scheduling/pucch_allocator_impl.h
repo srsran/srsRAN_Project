@@ -34,9 +34,10 @@ public:
 
   /// Returns the index of the PUCCH resource to be used for HARQ-ACK.
   /// \remark This index refers to the \c pucch-ResourceId of the \c PUCCH-Resource, as per TS 38.331.
-  /// \return The (i) pointer to the configuration and (ii) the PUCCH resource indicator corresponding to the PUCCH
-  /// resource that will be used by the UE, if any PUCCH resource available; else, returns \c nullptr.
-  const pucch_harq_resource_alloc_record
+  /// \return If any PUCCH resource available, it returns (i) the pointer to the configuration and (ii) the PUCCH
+  /// resource indicator corresponding to the PUCCH resource that will be used by the UE. If there are no PUCCH
+  /// resources available, the pointer passed will be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
+  pucch_harq_resource_alloc_record
   get_next_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// Returns the pointer to the configuration of the PUCCH resource to be used for SR.

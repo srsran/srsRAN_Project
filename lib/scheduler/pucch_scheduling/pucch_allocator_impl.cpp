@@ -27,7 +27,7 @@ void pucch_resource_manager::slot_indication(slot_point slot_tx)
   res_counter.rnti_records.clear();
 }
 
-const pucch_harq_resource_alloc_record
+pucch_harq_resource_alloc_record
 pucch_resource_manager::get_next_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg)
 {
   srsgnb_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
@@ -500,6 +500,17 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_reso
                                                                        unsigned pdsch_time_domain_resource,
                                                                        unsigned k1)
 {
+  // TS 38.213, Section 9.2.3, explains the UE's procedure to multiplex HARQ-ACK reporting of multiple slot and for
+  // different cells.
+  // "The PUCCH resource determination is based on a PUCCH resource indicator field [5, TS 38.212] in a last DCI format
+  // 1_0 or DCI format 1_1, among the DCI formats 1_0 or DCI formats 1_1 that have a value of a PDSCH-to-HARQ_feedback
+  // timing indicator field indicating a same slot for the PUCCH transmission, that the UE detects and for which the UE
+  // transmits corresponding HARQ-ACK information in the PUCCH where, for PUCCH resource determination, detected DCI
+  // formats are first indexed in an ascending order across serving cells indexes for a same PDCCH monitoring occasion
+  // and are then indexed in an ascending order across PDCCH monitoring occasion indexes".
+  // As a result of this, and depending on whethere there is any scheduled SRs, the PUCCH allocator can either allocate
+  // a new PUCCH grant or update an existing one by changing the number of HARQ-ACK bits to be reported.
+
   // PUCCH output.
   pucch_harq_ack_grant pucch_harq_ack_output{};
 
