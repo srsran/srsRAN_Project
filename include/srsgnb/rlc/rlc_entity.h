@@ -19,8 +19,8 @@ namespace srsgnb {
 
 /// Container to hold TX/RX metrics
 struct rlc_metrics {
-  rlc_tx_metrics                  tx;
-  rlc_bearer_rx_metrics_container rx;
+  rlc_tx_metrics tx;
+  rlc_rx_metrics rx;
 };
 
 /// Class used to interface with an RLC entity.

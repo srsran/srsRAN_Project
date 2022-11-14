@@ -38,13 +38,13 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
 // TS 38.322 v16.2.0 Sec. 5.2.3.2.2
 void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
 {
-  metrics_add_pdus(1, buf.length());
+  metrics.metrics_add_pdus(1, buf.length());
 
   logger.log_debug(buf.begin(), buf.end(), "Rx data PDU ({} B)", buf.length());
   rlc_um_pdu_header header = {};
   if (not rlc_um_read_data_pdu_header(buf.view(), cfg.sn_field_length, &header)) {
     logger.log_warning("Failed to unpack header of RLC PDU");
-    metrics_add_malformed_pdus(1);
+    metrics.metrics_add_malformed_pdus(1);
     return;
   }
   logger.log_debug("PDU header: {}", header);
@@ -57,7 +57,7 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
   if (header.si == rlc_si_field::full_sdu) {
     // deliver to upper layer
     logger.log_info("Rx SDU ({} B)", payload.length());
-    metrics_add_sdus(1, payload.length());
+    metrics.metrics_add_sdus(1, payload.length());
     upper_dn.on_new_sdu(std::move(payload));
   } else if (sn_invalid_for_rx_buffer(header.sn)) {
     logger.log_info("Discarding SN={}", header.sn);
@@ -154,7 +154,7 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
     if (sdu_complete) {
       // deliver full SDU to upper layers
       logger.log_info("Rx SDU ({} B)", sdu_info.sdu.length());
-      metrics_add_sdus(1, sdu_info.sdu.length());
+      metrics.metrics_add_sdus(1, sdu_info.sdu.length());
       upper_dn.on_new_sdu(std::move(sdu_info.sdu));
 
       // delete PDU from rx_window
@@ -189,7 +189,7 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
                           st.rx_next_highest - um_window_size,
                           st.rx_next_highest);
           it = rx_window.erase(it);
-          metrics_add_lost_pdus(1);
+          metrics.metrics_add_lost_pdus(1);
         } else {
           ++it;
         }
@@ -244,7 +244,7 @@ void rlc_rx_um_entity::on_expired_status_prohibit_timer(uint32_t timeout_id)
   if (reassembly_timer.id() == timeout_id) {
     logger.log_debug("reassembly timeout expiry for SN={} - updating rx_next_reassembly and reassembling",
                      st.rx_next_reassembly);
-    metrics_add_lost_pdus(1);
+    metrics.metrics_add_lost_pdus(1);
 
     // update RX_Next_Reassembly to the next SN that has not been reassembled yet
     st.rx_next_reassembly = st.rx_timer_trigger;

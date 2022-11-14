@@ -53,9 +53,9 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
 // Interfaces for lower layers
 void rlc_rx_am_entity::handle_pdu(byte_buffer_slice buf)
 {
-  metrics_add_pdus(1, buf.length());
+  metrics.metrics_add_pdus(1, buf.length());
   logger.log_info("Rx PDU ({} B)", buf.length());
-  metrics_add_sdus(1, buf.length());
+  metrics.metrics_add_sdus(1, buf.length());
   if (rlc_am_status_pdu::is_control_pdu(buf.view())) {
     handle_control_pdu(std::move(buf));
   } else {
@@ -96,7 +96,7 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
   rlc_am_pdu_header header = {};
   if (not rlc_am_read_data_pdu_header(buf.view(), cfg.sn_field_length, &header)) {
     logger.log_warning("Failed to unpack header of RLC PDU");
-    metrics_add_malformed_pdus(1);
+    metrics.metrics_add_malformed_pdus(1);
     return;
   }
   logger.log_debug("PDU header: {}", header);
@@ -183,7 +183,7 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
      */
     rlc_rx_am_sdu_info& rx_sdu = (*rx_window)[header.sn];
     logger.log_info("Rx SDU ({} B)", rx_sdu.sdu.length());
-    metrics_add_sdus(1, rx_sdu.sdu.length());
+    metrics.metrics_add_sdus(1, rx_sdu.sdu.length());
     upper_dn.on_new_sdu(std::move(rx_sdu.sdu));
 
     /*

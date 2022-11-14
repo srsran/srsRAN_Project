@@ -16,10 +16,10 @@
 
 namespace srsgnb {
 
-class rlc_rx_metrics : rlc_rx_metrics_interface
+class rlc_rx_metrics_container
 {
-  rlc_bearer_rx_metrics_container metrics = {};
-  std::mutex                      metrics_mutex;
+  rlc_rx_metrics metrics = {};
+  std::mutex     metrics_mutex;
 
 public:
   void set_mode(rlc_mode mode) { metrics.mode = mode; }
@@ -50,21 +50,21 @@ public:
     metrics.num_malformed_pdus += num_pdus_;
   }
 
-  rlc_bearer_rx_metrics_container get_metrics() final
+  rlc_rx_metrics get_metrics()
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
     return metrics;
   }
 
-  rlc_bearer_rx_metrics_container get_and_reset_metrics() final
+  rlc_rx_metrics get_and_reset_metrics()
   {
-    std::lock_guard<std::mutex>     lock(metrics_mutex);
-    rlc_bearer_rx_metrics_container ret = metrics;
-    metrics                             = {};
+    std::lock_guard<std::mutex> lock(metrics_mutex);
+    rlc_rx_metrics              ret = metrics;
+    metrics                         = {};
     return ret;
   }
 
-  void reset_metrics() final
+  void reset_metrics()
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics = {};

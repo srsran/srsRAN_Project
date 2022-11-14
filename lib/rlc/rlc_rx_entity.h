@@ -28,7 +28,12 @@ protected:
   }
 
   bearer_logger                     logger;
+  rlc_rx_metrics_container          metrics;
   rlc_rx_upper_layer_data_notifier& upper_dn;
+
+public:
+  rlc_rx_metrics get_metrics() { return metrics.get_metrics(); }
+  void           reset_metrics() { return metrics.reset_metrics(); }
 };
 
 } // namespace srsgnb
