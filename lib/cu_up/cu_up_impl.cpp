@@ -37,12 +37,12 @@ e1_message_handler& cu_up::get_e1_message_handler()
 
 void cu_up::on_e1_connection_establish()
 {
-  // handle event appropiatly
+  e1_connected = true;
 }
 
 void cu_up::on_e1_connection_drop()
 {
-  // handle event appropiatly
+  e1_connected = false;
 }
 
 // private

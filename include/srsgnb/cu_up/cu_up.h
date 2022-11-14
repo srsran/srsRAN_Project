@@ -37,6 +37,10 @@ public:
 
   /// \brief Get the E1 message handler interface.
   virtual e1_message_handler& get_e1_message_handler() = 0;
+
+  /// \brief Get the state of the E1 connection.
+  /// \return True if E1 is connected, false otherwise.
+  virtual bool e1_is_connected() = 0;
 };
 
 class cu_up_interface : public cu_up_e1_connection_notifier, public cu_up_e1_interface

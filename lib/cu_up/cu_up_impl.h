@@ -35,6 +35,8 @@ public:
   void on_e1_connection_establish() override;
   void on_e1_connection_drop() override;
 
+  bool e1_is_connected() override { return e1_connected; };
+
 private:
   cu_up_configuration cfg;
   timer_manager       timers;
@@ -47,6 +49,7 @@ private:
 
   // Components
   std::unique_ptr<e1_interface> e1;
+  std::atomic<bool>             e1_connected = {false};
 };
 
 } // namespace srs_cu_up
