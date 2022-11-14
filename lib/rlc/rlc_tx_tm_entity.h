@@ -12,7 +12,6 @@
 
 #include "rlc_sdu_queue.h"
 #include "rlc_tx_entity.h"
-#include "rlc_tx_metrics_impl.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
 namespace srsgnb {

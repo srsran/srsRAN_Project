@@ -11,7 +11,6 @@
 #pragma once
 
 #include "rlc_rx_entity.h"
-#include "rlc_rx_metrics_impl.h"
 #include "rlc_sdu_queue.h"
 #include "rlc_um_pdu.h"
 #include "srsgnb/support/executors/task_executor.h"

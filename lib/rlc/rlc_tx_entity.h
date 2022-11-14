@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "rlc_tx_metrics_impl.h"
+#include "rlc_tx_metrics_container.h"
 #include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/rlc/rlc_tx.h"
 
