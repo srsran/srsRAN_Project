@@ -20,7 +20,7 @@ bool pcap_file_base::dlt_pcap_open(uint32_t dlt_, const char* filename_)
     return false;
   }
 
-  dlt = dlt_;
+  dlt      = dlt_;
   filename = filename_;
 
   pcap_hdr_t file_header = {

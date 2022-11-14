@@ -22,10 +22,10 @@ int main()
   std::uniform_int_distribution<unsigned> sfn_dist(0, 1023);
   std::uniform_int_distribution<unsigned> slot_dist(0, 159);
 
-  unsigned sfn = sfn_dist(gen);
+  unsigned sfn  = sfn_dist(gen);
   unsigned slot = slot_dist(gen);
 
-  const auto &msg = build_slot_indication_message(sfn, slot);
+  const auto& msg = build_slot_indication_message(sfn, slot);
 
   TESTASSERT_EQ(sfn, msg.sfn);
   TESTASSERT_EQ(slot, msg.slot);

@@ -75,7 +75,7 @@ public:
   intrusive_forward_list(const intrusive_forward_list&) = default;
   intrusive_forward_list(intrusive_forward_list&& other) noexcept : node(other.node) { other.node = nullptr; }
   intrusive_forward_list& operator=(const intrusive_forward_list&) = default;
-  intrusive_forward_list& operator                                 =(intrusive_forward_list&& other) noexcept
+  intrusive_forward_list& operator=(intrusive_forward_list&& other) noexcept
   {
     node       = other.node;
     other.node = nullptr;

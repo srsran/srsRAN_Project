@@ -261,7 +261,7 @@ struct activity_info_c {
   protocol_ie_single_container_s<activity_info_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "ActivityInformation");
-    return c.get<protocol_ie_single_container_s<activity_info_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<activity_info_ext_ies_o>>();
   }
   const drb_activity_list_l& drb_activity_list() const
   {
@@ -281,7 +281,7 @@ struct activity_info_c {
   const protocol_ie_single_container_s<activity_info_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "ActivityInformation");
-    return c.get<protocol_ie_single_container_s<activity_info_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<activity_info_ext_ies_o>>();
   }
   drb_activity_list_l&                                     set_drb_activity_list();
   pdu_session_res_activity_list_l&                         set_pdu_session_res_activity_list();
@@ -292,7 +292,7 @@ private:
   types type_;
   choice_buffer_t<drb_activity_list_l,
                   pdu_session_res_activity_list_l,
-                  protocol_ie_single_container_s<activity_info_ext_ies_o> >
+                  protocol_ie_single_container_s<activity_info_ext_ies_o>>
       c;
 
   void destroy_();
@@ -347,9 +347,9 @@ struct bearer_context_inactivity_notif_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<activity_info_c>                                activity_info;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<activity_info_c>                               activity_info;
 
   // sequence methods
   bearer_context_inactivity_notif_ies_container();
@@ -572,32 +572,32 @@ struct sys_bearer_context_mod_confirm_c {
   protocol_ie_container_l<eutran_bearer_context_mod_confirm_o>& e_utran_bearer_context_mod_confirm()
   {
     assert_choice_type(types::e_utran_bearer_context_mod_confirm, type_, "System-BearerContextModificationConfirm");
-    return c.get<protocol_ie_container_l<eutran_bearer_context_mod_confirm_o> >();
+    return c.get<protocol_ie_container_l<eutran_bearer_context_mod_confirm_o>>();
   }
   protocol_ie_container_l<ng_ran_bearer_context_mod_confirm_o>& ng_ran_bearer_context_mod_confirm()
   {
     assert_choice_type(types::ng_ran_bearer_context_mod_confirm, type_, "System-BearerContextModificationConfirm");
-    return c.get<protocol_ie_container_l<ng_ran_bearer_context_mod_confirm_o> >();
+    return c.get<protocol_ie_container_l<ng_ran_bearer_context_mod_confirm_o>>();
   }
   protocol_ie_single_container_s<sys_bearer_context_mod_confirm_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "System-BearerContextModificationConfirm");
-    return c.get<protocol_ie_single_container_s<sys_bearer_context_mod_confirm_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<sys_bearer_context_mod_confirm_ext_ies_o>>();
   }
   const protocol_ie_container_l<eutran_bearer_context_mod_confirm_o>& e_utran_bearer_context_mod_confirm() const
   {
     assert_choice_type(types::e_utran_bearer_context_mod_confirm, type_, "System-BearerContextModificationConfirm");
-    return c.get<protocol_ie_container_l<eutran_bearer_context_mod_confirm_o> >();
+    return c.get<protocol_ie_container_l<eutran_bearer_context_mod_confirm_o>>();
   }
   const protocol_ie_container_l<ng_ran_bearer_context_mod_confirm_o>& ng_ran_bearer_context_mod_confirm() const
   {
     assert_choice_type(types::ng_ran_bearer_context_mod_confirm, type_, "System-BearerContextModificationConfirm");
-    return c.get<protocol_ie_container_l<ng_ran_bearer_context_mod_confirm_o> >();
+    return c.get<protocol_ie_container_l<ng_ran_bearer_context_mod_confirm_o>>();
   }
   const protocol_ie_single_container_s<sys_bearer_context_mod_confirm_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "System-BearerContextModificationConfirm");
-    return c.get<protocol_ie_single_container_s<sys_bearer_context_mod_confirm_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<sys_bearer_context_mod_confirm_ext_ies_o>>();
   }
   protocol_ie_container_l<eutran_bearer_context_mod_confirm_o>&             set_e_utran_bearer_context_mod_confirm();
   protocol_ie_container_l<ng_ran_bearer_context_mod_confirm_o>&             set_ng_ran_bearer_context_mod_confirm();
@@ -607,7 +607,7 @@ private:
   types type_;
   choice_buffer_t<protocol_ie_container_l<eutran_bearer_context_mod_confirm_o>,
                   protocol_ie_container_l<ng_ran_bearer_context_mod_confirm_o>,
-                  protocol_ie_single_container_s<sys_bearer_context_mod_confirm_ext_ies_o> >
+                  protocol_ie_single_container_s<sys_bearer_context_mod_confirm_ext_ies_o>>
       c;
 
   void destroy_();
@@ -662,10 +662,10 @@ struct bearer_context_mod_confirm_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       sys_bearer_context_mod_confirm_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<sys_bearer_context_mod_confirm_c>               sys_bearer_context_mod_confirm;
+  bool                                                      sys_bearer_context_mod_confirm_present = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<sys_bearer_context_mod_confirm_c>              sys_bearer_context_mod_confirm;
 
   // sequence methods
   bearer_context_mod_confirm_ies_container();
@@ -848,7 +848,7 @@ struct cause_c {
   protocol_ie_single_container_s<cause_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "Cause");
-    return c.get<protocol_ie_single_container_s<cause_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<cause_ext_ies_o>>();
   }
   const cause_radio_network_e& radio_network() const
   {
@@ -873,7 +873,7 @@ struct cause_c {
   const protocol_ie_single_container_s<cause_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "Cause");
-    return c.get<protocol_ie_single_container_s<cause_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<cause_ext_ies_o>>();
   }
   cause_radio_network_e&                           set_radio_network();
   cause_transport_e&                               set_transport();
@@ -882,8 +882,8 @@ struct cause_c {
   protocol_ie_single_container_s<cause_ext_ies_o>& set_choice_ext();
 
 private:
-  types                                                             type_;
-  choice_buffer_t<protocol_ie_single_container_s<cause_ext_ies_o> > c;
+  types                                                            type_;
+  choice_buffer_t<protocol_ie_single_container_s<cause_ext_ies_o>> c;
 
   void destroy_();
 };
@@ -963,11 +963,11 @@ struct bearer_context_mod_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<cause_c>                                        cause;
-  ie_field_s<crit_diagnostics_s>                             crit_diagnostics;
+  bool                                                      crit_diagnostics_present = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<cause_c>                                       cause;
+  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
 
   // sequence methods
   bearer_context_mod_fail_ies_container();
@@ -1185,7 +1185,7 @@ struct qo_s_characteristics_c {
   protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "QoS-Characteristics");
-    return c.get<protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o>>();
   }
   const non_dynamic5_qi_descriptor_s& non_dynamic_minus5_qi() const
   {
@@ -1200,7 +1200,7 @@ struct qo_s_characteristics_c {
   const protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "QoS-Characteristics");
-    return c.get<protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o>>();
   }
   non_dynamic5_qi_descriptor_s&                                   set_non_dynamic_minus5_qi();
   dynamic5_qi_descriptor_s&                                       set_dynamic_minus5_qi();
@@ -1210,7 +1210,7 @@ private:
   types type_;
   choice_buffer_t<dynamic5_qi_descriptor_s,
                   non_dynamic5_qi_descriptor_s,
-                  protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o> >
+                  protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o>>
       c;
 
   void destroy_();
@@ -1473,7 +1473,7 @@ struct up_tnl_info_c {
   protocol_ie_single_container_s<up_tnl_info_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "UP-TNL-Information");
-    return c.get<protocol_ie_single_container_s<up_tnl_info_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<up_tnl_info_ext_ies_o>>();
   }
   const gtp_tunnel_s& gtp_tunnel() const
   {
@@ -1483,14 +1483,14 @@ struct up_tnl_info_c {
   const protocol_ie_single_container_s<up_tnl_info_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "UP-TNL-Information");
-    return c.get<protocol_ie_single_container_s<up_tnl_info_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<up_tnl_info_ext_ies_o>>();
   }
   gtp_tunnel_s&                                          set_gtp_tunnel();
   protocol_ie_single_container_s<up_tnl_info_ext_ies_o>& set_choice_ext();
 
 private:
-  types                                                                                 type_;
-  choice_buffer_t<gtp_tunnel_s, protocol_ie_single_container_s<up_tnl_info_ext_ies_o> > c;
+  types                                                                                type_;
+  choice_buffer_t<gtp_tunnel_s, protocol_ie_single_container_s<up_tnl_info_ext_ies_o>> c;
 
   void destroy_();
 };
@@ -1717,7 +1717,7 @@ struct rohc_params_c {
   protocol_ie_single_container_s<rohc_params_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "ROHC-Parameters");
-    return c.get<protocol_ie_single_container_s<rohc_params_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<rohc_params_ext_ies_o>>();
   }
   const rohc_s& rohc() const
   {
@@ -1732,7 +1732,7 @@ struct rohc_params_c {
   const protocol_ie_single_container_s<rohc_params_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "ROHC-Parameters");
-    return c.get<protocol_ie_single_container_s<rohc_params_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<rohc_params_ext_ies_o>>();
   }
   rohc_s&                                                set_rohc();
   ul_only_rohc_s&                                        set_ul_only_rohc();
@@ -2099,10 +2099,10 @@ struct drb_to_modify_item_ng_ran_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                   old_qosflow_map_ulendmarkerexpected_present = false;
-  bool                                                   drb_qos_present                             = false;
-  ie_field_s<dyn_seq_of<qo_s_flow_item_s, 1, 64, true> > old_qosflow_map_ulendmarkerexpected;
-  ie_field_s<qo_sflow_level_qos_params_s>                drb_qos;
+  bool                                                  old_qosflow_map_ulendmarkerexpected_present = false;
+  bool                                                  drb_qos_present                             = false;
+  ie_field_s<dyn_seq_of<qo_s_flow_item_s, 1, 64, true>> old_qosflow_map_ulendmarkerexpected;
+  ie_field_s<qo_sflow_level_qos_params_s>               drb_qos;
 
   // sequence methods
   drb_to_modify_item_ng_ran_ext_ies_container();
@@ -2357,8 +2357,8 @@ struct pdu_session_res_to_modify_item_ext_ies_o {
     const unbounded_octstring<true>& common_network_instance() const;
 
   private:
-    types                                                 type_;
-    choice_buffer_t<snssai_s, unbounded_octstring<true> > c;
+    types                                                type_;
+    choice_buffer_t<snssai_s, unbounded_octstring<true>> c;
 
     void destroy_();
   };
@@ -2433,8 +2433,8 @@ struct pdu_session_res_to_setup_mod_item_ext_ies_o {
     const unbounded_octstring<true>& common_network_instance() const;
 
   private:
-    types                                       type_;
-    choice_buffer_t<unbounded_octstring<true> > c;
+    types                                      type_;
+    choice_buffer_t<unbounded_octstring<true>> c;
 
     void destroy_();
   };
@@ -2554,10 +2554,10 @@ struct pdu_session_res_to_modify_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                   snssai_present                  = false;
-  bool                                   common_network_instance_present = false;
-  ie_field_s<snssai_s>                   snssai;
-  ie_field_s<unbounded_octstring<true> > common_network_instance;
+  bool                                  snssai_present                  = false;
+  bool                                  common_network_instance_present = false;
+  ie_field_s<snssai_s>                  snssai;
+  ie_field_s<unbounded_octstring<true>> common_network_instance;
 
   // sequence methods
   pdu_session_res_to_modify_item_ext_ies_container();
@@ -2615,10 +2615,10 @@ struct pdu_session_res_to_setup_mod_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                               network_instance_present        = false;
-  bool                                               common_network_instance_present = false;
-  ie_field_s<integer<uint16_t, 1, 256, true, true> > network_instance;
-  ie_field_s<unbounded_octstring<true> >             common_network_instance;
+  bool                                              network_instance_present        = false;
+  bool                                              common_network_instance_present = false;
+  ie_field_s<integer<uint16_t, 1, 256, true, true>> network_instance;
+  ie_field_s<unbounded_octstring<true>>             common_network_instance;
 
   // sequence methods
   pdu_session_res_to_setup_mod_item_ext_ies_container();
@@ -2883,12 +2883,12 @@ struct eutran_bearer_context_mod_request_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                                 drb_to_setup_mod_list_eutran_present = false;
-  bool                                                                 drb_to_modify_list_eutran_present    = false;
-  bool                                                                 drb_to_rem_list_eutran_present       = false;
-  ie_field_s<dyn_seq_of<drb_to_setup_mod_item_eutran_s, 1, 32, true> > drb_to_setup_mod_list_eutran;
-  ie_field_s<dyn_seq_of<drb_to_modify_item_eutran_s, 1, 32, true> >    drb_to_modify_list_eutran;
-  ie_field_s<dyn_seq_of<drb_to_rem_item_eutran_s, 1, 32, true> >       drb_to_rem_list_eutran;
+  bool                                                                drb_to_setup_mod_list_eutran_present = false;
+  bool                                                                drb_to_modify_list_eutran_present    = false;
+  bool                                                                drb_to_rem_list_eutran_present       = false;
+  ie_field_s<dyn_seq_of<drb_to_setup_mod_item_eutran_s, 1, 32, true>> drb_to_setup_mod_list_eutran;
+  ie_field_s<dyn_seq_of<drb_to_modify_item_eutran_s, 1, 32, true>>    drb_to_modify_list_eutran;
+  ie_field_s<dyn_seq_of<drb_to_rem_item_eutran_s, 1, 32, true>>       drb_to_rem_list_eutran;
 
   // sequence methods
   eutran_bearer_context_mod_request_container();
@@ -2905,9 +2905,9 @@ struct ng_ran_bearer_context_mod_request_container {
   bool pdu_session_res_to_setup_mod_list_present = false;
   bool pdu_session_res_to_modify_list_present    = false;
   bool pdu_session_res_to_rem_list_present       = false;
-  ie_field_s<dyn_seq_of<pdu_session_res_to_setup_mod_item_s, 1, 256, true> > pdu_session_res_to_setup_mod_list;
-  ie_field_s<dyn_seq_of<pdu_session_res_to_modify_item_s, 1, 256, true> >    pdu_session_res_to_modify_list;
-  ie_field_s<dyn_seq_of<pdu_session_res_to_rem_item_s, 1, 256, true> >       pdu_session_res_to_rem_list;
+  ie_field_s<dyn_seq_of<pdu_session_res_to_setup_mod_item_s, 1, 256, true>> pdu_session_res_to_setup_mod_list;
+  ie_field_s<dyn_seq_of<pdu_session_res_to_modify_item_s, 1, 256, true>>    pdu_session_res_to_modify_list;
+  ie_field_s<dyn_seq_of<pdu_session_res_to_rem_item_s, 1, 256, true>>       pdu_session_res_to_rem_list;
 
   // sequence methods
   ng_ran_bearer_context_mod_request_container();
@@ -2949,7 +2949,7 @@ struct sys_bearer_context_mod_request_c {
   protocol_ie_single_container_s<sys_bearer_context_mod_request_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "System-BearerContextModificationRequest");
-    return c.get<protocol_ie_single_container_s<sys_bearer_context_mod_request_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<sys_bearer_context_mod_request_ext_ies_o>>();
   }
   const eutran_bearer_context_mod_request_container& e_utran_bearer_context_mod_request() const
   {
@@ -2964,7 +2964,7 @@ struct sys_bearer_context_mod_request_c {
   const protocol_ie_single_container_s<sys_bearer_context_mod_request_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "System-BearerContextModificationRequest");
-    return c.get<protocol_ie_single_container_s<sys_bearer_context_mod_request_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<sys_bearer_context_mod_request_ext_ies_o>>();
   }
   eutran_bearer_context_mod_request_container&                              set_e_utran_bearer_context_mod_request();
   ng_ran_bearer_context_mod_request_container&                              set_ng_ran_bearer_context_mod_request();
@@ -2974,7 +2974,7 @@ private:
   types type_;
   choice_buffer_t<eutran_bearer_context_mod_request_container,
                   ng_ran_bearer_context_mod_request_container,
-                  protocol_ie_single_container_s<sys_bearer_context_mod_request_ext_ies_o> >
+                  protocol_ie_single_container_s<sys_bearer_context_mod_request_ext_ies_o>>
       c;
 
   void destroy_();
@@ -3064,30 +3064,30 @@ struct bearer_context_mod_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       security_info_present                              = false;
-  bool                                                       uedl_aggregate_maximum_bit_rate_present            = false;
-  bool                                                       uedl_maximum_integrity_protected_data_rate_present = false;
-  bool                                                       bearer_context_status_change_present               = false;
-  bool                                                       new_ul_tnl_info_required_present                   = false;
-  bool                                                       ue_inactivity_timer_present                        = false;
-  bool                                                       data_discard_required_present                      = false;
-  bool                                                       sys_bearer_context_mod_request_present             = false;
-  bool                                                       ranueid_present                                    = false;
-  bool                                                       gnb_du_id_present                                  = false;
-  bool                                                       activity_notif_level_present                       = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<security_info_s>                                security_info;
-  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true> > uedl_aggregate_maximum_bit_rate;
-  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true> > uedl_maximum_integrity_protected_data_rate;
-  ie_field_s<bearer_context_status_change_e>                   bearer_context_status_change;
-  ie_field_s<new_ul_tnl_info_required_e>                       new_ul_tnl_info_required;
-  ie_field_s<integer<uint16_t, 1, 7200, true, true> >          ue_inactivity_timer;
-  ie_field_s<data_discard_required_e>                          data_discard_required;
-  ie_field_s<sys_bearer_context_mod_request_c>                 sys_bearer_context_mod_request;
-  ie_field_s<fixed_octstring<8, true> >                        ranueid;
-  ie_field_s<integer<uint64_t, 0, 68719476735, false, true> >  gnb_du_id;
-  ie_field_s<activity_notif_level_e>                           activity_notif_level;
+  bool                                                      security_info_present                              = false;
+  bool                                                      uedl_aggregate_maximum_bit_rate_present            = false;
+  bool                                                      uedl_maximum_integrity_protected_data_rate_present = false;
+  bool                                                      bearer_context_status_change_present               = false;
+  bool                                                      new_ul_tnl_info_required_present                   = false;
+  bool                                                      ue_inactivity_timer_present                        = false;
+  bool                                                      data_discard_required_present                      = false;
+  bool                                                      sys_bearer_context_mod_request_present             = false;
+  bool                                                      ranueid_present                                    = false;
+  bool                                                      gnb_du_id_present                                  = false;
+  bool                                                      activity_notif_level_present                       = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<security_info_s>                               security_info;
+  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true>> uedl_aggregate_maximum_bit_rate;
+  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true>> uedl_maximum_integrity_protected_data_rate;
+  ie_field_s<bearer_context_status_change_e>                  bearer_context_status_change;
+  ie_field_s<new_ul_tnl_info_required_e>                      new_ul_tnl_info_required;
+  ie_field_s<integer<uint16_t, 1, 7200, true, true>>          ue_inactivity_timer;
+  ie_field_s<data_discard_required_e>                         data_discard_required;
+  ie_field_s<sys_bearer_context_mod_request_c>                sys_bearer_context_mod_request;
+  ie_field_s<fixed_octstring<8, true>>                        ranueid;
+  ie_field_s<integer<uint64_t, 0, 68719476735, false, true>>  gnb_du_id;
+  ie_field_s<activity_notif_level_e>                          activity_notif_level;
 
   // sequence methods
   bearer_context_mod_request_ies_container();
@@ -3342,8 +3342,8 @@ struct eutran_bearer_context_mod_required_container {
   // member variables
   bool drb_required_to_modify_list_eutran_present = false;
   bool drb_required_to_rem_list_eutran_present    = false;
-  ie_field_s<dyn_seq_of<drb_required_to_modify_item_eutran_s, 1, 32, true> > drb_required_to_modify_list_eutran;
-  ie_field_s<dyn_seq_of<drb_required_to_rem_item_eutran_s, 1, 32, true> >    drb_required_to_rem_list_eutran;
+  ie_field_s<dyn_seq_of<drb_required_to_modify_item_eutran_s, 1, 32, true>> drb_required_to_modify_list_eutran;
+  ie_field_s<dyn_seq_of<drb_required_to_rem_item_eutran_s, 1, 32, true>>    drb_required_to_rem_list_eutran;
 
   // sequence methods
   eutran_bearer_context_mod_required_container();
@@ -3359,9 +3359,9 @@ struct ng_ran_bearer_context_mod_required_container {
   // member variables
   bool pdu_session_res_required_to_modify_list_present = false;
   bool pdu_session_res_to_rem_list_present             = false;
-  ie_field_s<dyn_seq_of<pdu_session_res_required_to_modify_item_s, 1, 256, true> >
-                                                                       pdu_session_res_required_to_modify_list;
-  ie_field_s<dyn_seq_of<pdu_session_res_to_rem_item_s, 1, 256, true> > pdu_session_res_to_rem_list;
+  ie_field_s<dyn_seq_of<pdu_session_res_required_to_modify_item_s, 1, 256, true>>
+                                                                      pdu_session_res_required_to_modify_list;
+  ie_field_s<dyn_seq_of<pdu_session_res_to_rem_item_s, 1, 256, true>> pdu_session_res_to_rem_list;
 
   // sequence methods
   ng_ran_bearer_context_mod_required_container();
@@ -3408,7 +3408,7 @@ struct sys_bearer_context_mod_required_c {
   protocol_ie_single_container_s<sys_bearer_context_mod_required_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "System-BearerContextModificationRequired");
-    return c.get<protocol_ie_single_container_s<sys_bearer_context_mod_required_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<sys_bearer_context_mod_required_ext_ies_o>>();
   }
   const eutran_bearer_context_mod_required_container& e_utran_bearer_context_mod_required() const
   {
@@ -3423,7 +3423,7 @@ struct sys_bearer_context_mod_required_c {
   const protocol_ie_single_container_s<sys_bearer_context_mod_required_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "System-BearerContextModificationRequired");
-    return c.get<protocol_ie_single_container_s<sys_bearer_context_mod_required_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<sys_bearer_context_mod_required_ext_ies_o>>();
   }
   eutran_bearer_context_mod_required_container&                              set_e_utran_bearer_context_mod_required();
   ng_ran_bearer_context_mod_required_container&                              set_ng_ran_bearer_context_mod_required();
@@ -3433,7 +3433,7 @@ private:
   types type_;
   choice_buffer_t<eutran_bearer_context_mod_required_container,
                   ng_ran_bearer_context_mod_required_container,
-                  protocol_ie_single_container_s<sys_bearer_context_mod_required_ext_ies_o> >
+                  protocol_ie_single_container_s<sys_bearer_context_mod_required_ext_ies_o>>
       c;
 
   void destroy_();
@@ -3488,9 +3488,9 @@ struct bearer_context_mod_required_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<sys_bearer_context_mod_required_c>              sys_bearer_context_mod_required;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<sys_bearer_context_mod_required_c>             sys_bearer_context_mod_required;
 
   // sequence methods
   bearer_context_mod_required_ies_container();
@@ -4037,14 +4037,14 @@ struct eutran_bearer_context_mod_resp_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                               drb_setup_mod_list_eutran_present        = false;
-  bool                                                               drb_failed_mod_list_eutran_present       = false;
-  bool                                                               drb_modified_list_eutran_present         = false;
-  bool                                                               drb_failed_to_modify_list_eutran_present = false;
-  ie_field_s<dyn_seq_of<drb_setup_mod_item_eutran_s, 1, 32, true> >  drb_setup_mod_list_eutran;
-  ie_field_s<dyn_seq_of<drb_failed_mod_item_eutran_s, 1, 32, true> > drb_failed_mod_list_eutran;
-  ie_field_s<dyn_seq_of<drb_modified_item_eutran_s, 1, 32, true> >   drb_modified_list_eutran;
-  ie_field_s<dyn_seq_of<drb_failed_to_modify_item_eutran_s, 1, 32, true> > drb_failed_to_modify_list_eutran;
+  bool                                                              drb_setup_mod_list_eutran_present        = false;
+  bool                                                              drb_failed_mod_list_eutran_present       = false;
+  bool                                                              drb_modified_list_eutran_present         = false;
+  bool                                                              drb_failed_to_modify_list_eutran_present = false;
+  ie_field_s<dyn_seq_of<drb_setup_mod_item_eutran_s, 1, 32, true>>  drb_setup_mod_list_eutran;
+  ie_field_s<dyn_seq_of<drb_failed_mod_item_eutran_s, 1, 32, true>> drb_failed_mod_list_eutran;
+  ie_field_s<dyn_seq_of<drb_modified_item_eutran_s, 1, 32, true>>   drb_modified_list_eutran;
+  ie_field_s<dyn_seq_of<drb_failed_to_modify_item_eutran_s, 1, 32, true>> drb_failed_to_modify_list_eutran;
 
   // sequence methods
   eutran_bearer_context_mod_resp_container();
@@ -4062,10 +4062,10 @@ struct ng_ran_bearer_context_mod_resp_container {
   bool pdu_session_res_failed_mod_list_present       = false;
   bool pdu_session_res_modified_list_present         = false;
   bool pdu_session_res_failed_to_modify_list_present = false;
-  ie_field_s<dyn_seq_of<pdu_session_res_setup_mod_item_s, 1, 256, true> >        pdu_session_res_setup_mod_list;
-  ie_field_s<dyn_seq_of<pdu_session_res_failed_mod_item_s, 1, 256, true> >       pdu_session_res_failed_mod_list;
-  ie_field_s<dyn_seq_of<pdu_session_res_modified_item_s, 1, 256, true> >         pdu_session_res_modified_list;
-  ie_field_s<dyn_seq_of<pdu_session_res_failed_to_modify_item_s, 1, 256, true> > pdu_session_res_failed_to_modify_list;
+  ie_field_s<dyn_seq_of<pdu_session_res_setup_mod_item_s, 1, 256, true>>        pdu_session_res_setup_mod_list;
+  ie_field_s<dyn_seq_of<pdu_session_res_failed_mod_item_s, 1, 256, true>>       pdu_session_res_failed_mod_list;
+  ie_field_s<dyn_seq_of<pdu_session_res_modified_item_s, 1, 256, true>>         pdu_session_res_modified_list;
+  ie_field_s<dyn_seq_of<pdu_session_res_failed_to_modify_item_s, 1, 256, true>> pdu_session_res_failed_to_modify_list;
 
   // sequence methods
   ng_ran_bearer_context_mod_resp_container();
@@ -4107,7 +4107,7 @@ struct sys_bearer_context_mod_resp_c {
   protocol_ie_single_container_s<sys_bearer_context_mod_resp_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "System-BearerContextModificationResponse");
-    return c.get<protocol_ie_single_container_s<sys_bearer_context_mod_resp_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<sys_bearer_context_mod_resp_ext_ies_o>>();
   }
   const eutran_bearer_context_mod_resp_container& e_utran_bearer_context_mod_resp() const
   {
@@ -4122,7 +4122,7 @@ struct sys_bearer_context_mod_resp_c {
   const protocol_ie_single_container_s<sys_bearer_context_mod_resp_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "System-BearerContextModificationResponse");
-    return c.get<protocol_ie_single_container_s<sys_bearer_context_mod_resp_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<sys_bearer_context_mod_resp_ext_ies_o>>();
   }
   eutran_bearer_context_mod_resp_container&                              set_e_utran_bearer_context_mod_resp();
   ng_ran_bearer_context_mod_resp_container&                              set_ng_ran_bearer_context_mod_resp();
@@ -4132,7 +4132,7 @@ private:
   types type_;
   choice_buffer_t<eutran_bearer_context_mod_resp_container,
                   ng_ran_bearer_context_mod_resp_container,
-                  protocol_ie_single_container_s<sys_bearer_context_mod_resp_ext_ies_o> >
+                  protocol_ie_single_container_s<sys_bearer_context_mod_resp_ext_ies_o>>
       c;
 
   void destroy_();
@@ -4187,10 +4187,10 @@ struct bearer_context_mod_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       sys_bearer_context_mod_resp_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<sys_bearer_context_mod_resp_c>                  sys_bearer_context_mod_resp;
+  bool                                                      sys_bearer_context_mod_resp_present = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<sys_bearer_context_mod_resp_c>                 sys_bearer_context_mod_resp;
 
   // sequence methods
   bearer_context_mod_resp_ies_container();
@@ -4251,9 +4251,9 @@ struct bearer_context_release_cmd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<cause_c>                                        cause;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<cause_c>                                       cause;
 
   // sequence methods
   bearer_context_release_cmd_ies_container();
@@ -4314,10 +4314,10 @@ struct bearer_context_release_complete_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<crit_diagnostics_s>                             crit_diagnostics;
+  bool                                                      crit_diagnostics_present = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
 
   // sequence methods
   bearer_context_release_complete_ies_container();
@@ -4406,11 +4406,11 @@ struct bearer_context_release_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       drb_status_list_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<dyn_seq_of<drb_status_item_s, 1, 32, true> >    drb_status_list;
-  ie_field_s<cause_c>                                        cause;
+  bool                                                      drb_status_list_present = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<dyn_seq_of<drb_status_item_s, 1, 32, true>>    drb_status_list;
+  ie_field_s<cause_c>                                       cause;
 
   // sequence methods
   bearer_context_release_request_ies_container();
@@ -4473,12 +4473,12 @@ struct bearer_context_setup_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       gnb_cu_up_ue_e1_ap_id_present = false;
-  bool                                                       crit_diagnostics_present      = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<cause_c>                                        cause;
-  ie_field_s<crit_diagnostics_s>                             crit_diagnostics;
+  bool                                                      gnb_cu_up_ue_e1_ap_id_present = false;
+  bool                                                      crit_diagnostics_present      = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<cause_c>                                       cause;
+  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
 
   // sequence methods
   bearer_context_setup_fail_ies_container();
@@ -4681,32 +4681,32 @@ struct sys_bearer_context_setup_request_c {
   protocol_ie_container_l<eutran_bearer_context_setup_request_o>& e_utran_bearer_context_setup_request()
   {
     assert_choice_type(types::e_utran_bearer_context_setup_request, type_, "System-BearerContextSetupRequest");
-    return c.get<protocol_ie_container_l<eutran_bearer_context_setup_request_o> >();
+    return c.get<protocol_ie_container_l<eutran_bearer_context_setup_request_o>>();
   }
   protocol_ie_container_l<ng_ran_bearer_context_setup_request_o>& ng_ran_bearer_context_setup_request()
   {
     assert_choice_type(types::ng_ran_bearer_context_setup_request, type_, "System-BearerContextSetupRequest");
-    return c.get<protocol_ie_container_l<ng_ran_bearer_context_setup_request_o> >();
+    return c.get<protocol_ie_container_l<ng_ran_bearer_context_setup_request_o>>();
   }
   protocol_ie_single_container_s<sys_bearer_context_setup_request_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "System-BearerContextSetupRequest");
-    return c.get<protocol_ie_single_container_s<sys_bearer_context_setup_request_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<sys_bearer_context_setup_request_ext_ies_o>>();
   }
   const protocol_ie_container_l<eutran_bearer_context_setup_request_o>& e_utran_bearer_context_setup_request() const
   {
     assert_choice_type(types::e_utran_bearer_context_setup_request, type_, "System-BearerContextSetupRequest");
-    return c.get<protocol_ie_container_l<eutran_bearer_context_setup_request_o> >();
+    return c.get<protocol_ie_container_l<eutran_bearer_context_setup_request_o>>();
   }
   const protocol_ie_container_l<ng_ran_bearer_context_setup_request_o>& ng_ran_bearer_context_setup_request() const
   {
     assert_choice_type(types::ng_ran_bearer_context_setup_request, type_, "System-BearerContextSetupRequest");
-    return c.get<protocol_ie_container_l<ng_ran_bearer_context_setup_request_o> >();
+    return c.get<protocol_ie_container_l<ng_ran_bearer_context_setup_request_o>>();
   }
   const protocol_ie_single_container_s<sys_bearer_context_setup_request_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "System-BearerContextSetupRequest");
-    return c.get<protocol_ie_single_container_s<sys_bearer_context_setup_request_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<sys_bearer_context_setup_request_ext_ies_o>>();
   }
   protocol_ie_container_l<eutran_bearer_context_setup_request_o>& set_e_utran_bearer_context_setup_request();
   protocol_ie_container_l<ng_ran_bearer_context_setup_request_o>& set_ng_ran_bearer_context_setup_request();
@@ -4716,7 +4716,7 @@ private:
   types type_;
   choice_buffer_t<protocol_ie_container_l<eutran_bearer_context_setup_request_o>,
                   protocol_ie_container_l<ng_ran_bearer_context_setup_request_o>,
-                  protocol_ie_single_container_s<sys_bearer_context_setup_request_ext_ies_o> >
+                  protocol_ie_single_container_s<sys_bearer_context_setup_request_ext_ies_o>>
       c;
 
   void destroy_();
@@ -4804,22 +4804,22 @@ struct bearer_context_setup_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       uedl_maximum_integrity_protected_data_rate_present = false;
-  bool                                                       ue_inactivity_timer_present                        = false;
-  bool                                                       bearer_context_status_change_present               = false;
-  bool                                                       ranueid_present                                    = false;
-  bool                                                       gnb_du_id_present                                  = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<security_info_s>                                security_info;
-  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true> > uedl_aggregate_maximum_bit_rate;
-  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true> > uedl_maximum_integrity_protected_data_rate;
-  ie_field_s<fixed_octstring<3, true> >                        serving_plmn;
-  ie_field_s<activity_notif_level_e>                           activity_notif_level;
-  ie_field_s<integer<uint16_t, 1, 7200, true, true> >          ue_inactivity_timer;
-  ie_field_s<bearer_context_status_change_e>                   bearer_context_status_change;
-  ie_field_s<sys_bearer_context_setup_request_c>               sys_bearer_context_setup_request;
-  ie_field_s<fixed_octstring<8, true> >                        ranueid;
-  ie_field_s<integer<uint64_t, 0, 68719476735, false, true> >  gnb_du_id;
+  bool                                                      uedl_maximum_integrity_protected_data_rate_present = false;
+  bool                                                      ue_inactivity_timer_present                        = false;
+  bool                                                      bearer_context_status_change_present               = false;
+  bool                                                      ranueid_present                                    = false;
+  bool                                                      gnb_du_id_present                                  = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<security_info_s>                               security_info;
+  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true>> uedl_aggregate_maximum_bit_rate;
+  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true>> uedl_maximum_integrity_protected_data_rate;
+  ie_field_s<fixed_octstring<3, true>>                        serving_plmn;
+  ie_field_s<activity_notif_level_e>                          activity_notif_level;
+  ie_field_s<integer<uint16_t, 1, 7200, true, true>>          ue_inactivity_timer;
+  ie_field_s<bearer_context_status_change_e>                  bearer_context_status_change;
+  ie_field_s<sys_bearer_context_setup_request_c>              sys_bearer_context_setup_request;
+  ie_field_s<fixed_octstring<8, true>>                        ranueid;
+  ie_field_s<integer<uint64_t, 0, 68719476735, false, true>>  gnb_du_id;
 
   // sequence methods
   bearer_context_setup_request_ies_container();
@@ -5044,9 +5044,9 @@ struct eutran_bearer_context_setup_resp_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                           drb_failed_list_eutran_present = false;
-  ie_field_s<dyn_seq_of<drb_setup_item_eutran_s, 1, 32, true> >  drb_setup_list_eutran;
-  ie_field_s<dyn_seq_of<drb_failed_item_eutran_s, 1, 32, true> > drb_failed_list_eutran;
+  bool                                                          drb_failed_list_eutran_present = false;
+  ie_field_s<dyn_seq_of<drb_setup_item_eutran_s, 1, 32, true>>  drb_setup_list_eutran;
+  ie_field_s<dyn_seq_of<drb_failed_item_eutran_s, 1, 32, true>> drb_failed_list_eutran;
 
   // sequence methods
   eutran_bearer_context_setup_resp_container();
@@ -5060,9 +5060,9 @@ struct ng_ran_bearer_context_setup_resp_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                                 pdu_session_res_failed_list_present = false;
-  ie_field_s<dyn_seq_of<pdu_session_res_setup_item_s, 1, 256, true> >  pdu_session_res_setup_list;
-  ie_field_s<dyn_seq_of<pdu_session_res_failed_item_s, 1, 256, true> > pdu_session_res_failed_list;
+  bool                                                                pdu_session_res_failed_list_present = false;
+  ie_field_s<dyn_seq_of<pdu_session_res_setup_item_s, 1, 256, true>>  pdu_session_res_setup_list;
+  ie_field_s<dyn_seq_of<pdu_session_res_failed_item_s, 1, 256, true>> pdu_session_res_failed_list;
 
   // sequence methods
   ng_ran_bearer_context_setup_resp_container();
@@ -5104,7 +5104,7 @@ struct sys_bearer_context_setup_resp_c {
   protocol_ie_single_container_s<sys_bearer_context_setup_resp_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "System-BearerContextSetupResponse");
-    return c.get<protocol_ie_single_container_s<sys_bearer_context_setup_resp_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<sys_bearer_context_setup_resp_ext_ies_o>>();
   }
   const eutran_bearer_context_setup_resp_container& e_utran_bearer_context_setup_resp() const
   {
@@ -5119,7 +5119,7 @@ struct sys_bearer_context_setup_resp_c {
   const protocol_ie_single_container_s<sys_bearer_context_setup_resp_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "System-BearerContextSetupResponse");
-    return c.get<protocol_ie_single_container_s<sys_bearer_context_setup_resp_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<sys_bearer_context_setup_resp_ext_ies_o>>();
   }
   eutran_bearer_context_setup_resp_container&                              set_e_utran_bearer_context_setup_resp();
   ng_ran_bearer_context_setup_resp_container&                              set_ng_ran_bearer_context_setup_resp();
@@ -5129,7 +5129,7 @@ private:
   types type_;
   choice_buffer_t<eutran_bearer_context_setup_resp_container,
                   ng_ran_bearer_context_setup_resp_container,
-                  protocol_ie_single_container_s<sys_bearer_context_setup_resp_ext_ies_o> >
+                  protocol_ie_single_container_s<sys_bearer_context_setup_resp_ext_ies_o>>
       c;
 
   void destroy_();
@@ -5184,9 +5184,9 @@ struct bearer_context_setup_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<sys_bearer_context_setup_resp_c>                sys_bearer_context_setup_resp;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<sys_bearer_context_setup_resp_c>               sys_bearer_context_setup_resp;
 
   // sequence methods
   bearer_context_setup_resp_ies_container();
@@ -5271,29 +5271,29 @@ struct cp_tnl_info_c {
   bounded_bitstring<1, 160, true, true>& endpoint_ip_address()
   {
     assert_choice_type(types::endpoint_ip_address, type_, "CP-TNL-Information");
-    return c.get<bounded_bitstring<1, 160, true, true> >();
+    return c.get<bounded_bitstring<1, 160, true, true>>();
   }
   protocol_ie_single_container_s<cp_tnl_info_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "CP-TNL-Information");
-    return c.get<protocol_ie_single_container_s<cp_tnl_info_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<cp_tnl_info_ext_ies_o>>();
   }
   const bounded_bitstring<1, 160, true, true>& endpoint_ip_address() const
   {
     assert_choice_type(types::endpoint_ip_address, type_, "CP-TNL-Information");
-    return c.get<bounded_bitstring<1, 160, true, true> >();
+    return c.get<bounded_bitstring<1, 160, true, true>>();
   }
   const protocol_ie_single_container_s<cp_tnl_info_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "CP-TNL-Information");
-    return c.get<protocol_ie_single_container_s<cp_tnl_info_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<cp_tnl_info_ext_ies_o>>();
   }
   bounded_bitstring<1, 160, true, true>&                 set_endpoint_ip_address();
   protocol_ie_single_container_s<cp_tnl_info_ext_ies_o>& set_choice_ext();
 
 private:
-  types                                                                                                          type_;
-  choice_buffer_t<bounded_bitstring<1, 160, true, true>, protocol_ie_single_container_s<cp_tnl_info_ext_ies_o> > c;
+  types                                                                                                         type_;
+  choice_buffer_t<bounded_bitstring<1, 160, true, true>, protocol_ie_single_container_s<cp_tnl_info_ext_ies_o>> c;
 
   void destroy_();
 };
@@ -5347,10 +5347,10 @@ struct dl_data_notif_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       ppi_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<integer<uint8_t, 0, 7, true, true> >            ppi;
+  bool                                                      ppi_present = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<integer<uint8_t, 0, 7, true, true>>            ppi;
 
   // sequence methods
   dl_data_notif_ies_container();
@@ -5593,9 +5593,9 @@ struct data_usage_report_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> >     gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> >     gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<dyn_seq_of<data_usage_report_item_s, 1, 32, true> > data_usage_report_list;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>     gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>     gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<dyn_seq_of<data_usage_report_item_s, 1, 32, true>> data_usage_report_list;
 
   // sequence methods
   data_usage_report_ies_container();
@@ -6159,7 +6159,7 @@ struct ue_associated_lc_e1_conn_item_res_ack_o {
 // UE-associatedLogicalE1-ConnectionListRes ::= SEQUENCE (SIZE (1..65536)) OF
 // ProtocolIE-SingleContainer{E1AP-PROTOCOL-IES : IEsSetParam}
 using ue_associated_lc_e1_conn_list_res_l =
-    dyn_array<protocol_ie_single_container_s<ue_associated_lc_e1_conn_item_res_o> >;
+    dyn_array<protocol_ie_single_container_s<ue_associated_lc_e1_conn_item_res_o>>;
 
 // CNSupport ::= ENUMERATED
 struct cn_support_opts {
@@ -6248,7 +6248,7 @@ struct reset_type_c {
   protocol_ie_single_container_s<reset_type_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "ResetType");
-    return c.get<protocol_ie_single_container_s<reset_type_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<reset_type_ext_ies_o>>();
   }
   const reset_all_e& e1_interface() const
   {
@@ -6263,7 +6263,7 @@ struct reset_type_c {
   const protocol_ie_single_container_s<reset_type_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "ResetType");
-    return c.get<protocol_ie_single_container_s<reset_type_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<reset_type_ext_ies_o>>();
   }
   reset_all_e&                                          set_e1_interface();
   ue_associated_lc_e1_conn_list_res_l&                  set_part_of_e1_interface();
@@ -6307,34 +6307,34 @@ struct sys_gnb_cu_up_counter_check_request_c {
   protocol_ie_container_l<eutran_gnb_cu_up_counter_check_request_o>& e_utran_gnb_cu_up_counter_check_request()
   {
     assert_choice_type(types::e_utran_gnb_cu_up_counter_check_request, type_, "System-GNB-CU-UP-CounterCheckRequest");
-    return c.get<protocol_ie_container_l<eutran_gnb_cu_up_counter_check_request_o> >();
+    return c.get<protocol_ie_container_l<eutran_gnb_cu_up_counter_check_request_o>>();
   }
   protocol_ie_container_l<ng_ran_gnb_cu_up_counter_check_request_o>& ng_ran_gnb_cu_up_counter_check_request()
   {
     assert_choice_type(types::ng_ran_gnb_cu_up_counter_check_request, type_, "System-GNB-CU-UP-CounterCheckRequest");
-    return c.get<protocol_ie_container_l<ng_ran_gnb_cu_up_counter_check_request_o> >();
+    return c.get<protocol_ie_container_l<ng_ran_gnb_cu_up_counter_check_request_o>>();
   }
   protocol_ie_single_container_s<sys_gnb_cu_up_counter_check_request_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "System-GNB-CU-UP-CounterCheckRequest");
-    return c.get<protocol_ie_single_container_s<sys_gnb_cu_up_counter_check_request_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<sys_gnb_cu_up_counter_check_request_ext_ies_o>>();
   }
   const protocol_ie_container_l<eutran_gnb_cu_up_counter_check_request_o>&
   e_utran_gnb_cu_up_counter_check_request() const
   {
     assert_choice_type(types::e_utran_gnb_cu_up_counter_check_request, type_, "System-GNB-CU-UP-CounterCheckRequest");
-    return c.get<protocol_ie_container_l<eutran_gnb_cu_up_counter_check_request_o> >();
+    return c.get<protocol_ie_container_l<eutran_gnb_cu_up_counter_check_request_o>>();
   }
   const protocol_ie_container_l<ng_ran_gnb_cu_up_counter_check_request_o>&
   ng_ran_gnb_cu_up_counter_check_request() const
   {
     assert_choice_type(types::ng_ran_gnb_cu_up_counter_check_request, type_, "System-GNB-CU-UP-CounterCheckRequest");
-    return c.get<protocol_ie_container_l<ng_ran_gnb_cu_up_counter_check_request_o> >();
+    return c.get<protocol_ie_container_l<ng_ran_gnb_cu_up_counter_check_request_o>>();
   }
   const protocol_ie_single_container_s<sys_gnb_cu_up_counter_check_request_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "System-GNB-CU-UP-CounterCheckRequest");
-    return c.get<protocol_ie_single_container_s<sys_gnb_cu_up_counter_check_request_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<sys_gnb_cu_up_counter_check_request_ext_ies_o>>();
   }
   protocol_ie_container_l<eutran_gnb_cu_up_counter_check_request_o>& set_e_utran_gnb_cu_up_counter_check_request();
   protocol_ie_container_l<ng_ran_gnb_cu_up_counter_check_request_o>& set_ng_ran_gnb_cu_up_counter_check_request();
@@ -6344,7 +6344,7 @@ private:
   types type_;
   choice_buffer_t<protocol_ie_container_l<eutran_gnb_cu_up_counter_check_request_o>,
                   protocol_ie_container_l<ng_ran_gnb_cu_up_counter_check_request_o>,
-                  protocol_ie_single_container_s<sys_gnb_cu_up_counter_check_request_ext_ies_o> >
+                  protocol_ie_single_container_s<sys_gnb_cu_up_counter_check_request_ext_ies_o>>
       c;
 
   void destroy_();
@@ -6363,7 +6363,7 @@ typedef enumerated<time_to_wait_opts, true> time_to_wait_e;
 // UE-associatedLogicalE1-ConnectionListResAck ::= SEQUENCE (SIZE (1..65536)) OF
 // ProtocolIE-SingleContainer{E1AP-PROTOCOL-IES : IEsSetParam}
 using ue_associated_lc_e1_conn_list_res_ack_l =
-    dyn_array<protocol_ie_single_container_s<ue_associated_lc_e1_conn_item_res_ack_o> >;
+    dyn_array<protocol_ie_single_container_s<ue_associated_lc_e1_conn_item_res_ack_o>>;
 
 // E1ReleaseRequestIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 struct e1_release_request_ies_o {
@@ -6647,7 +6647,7 @@ struct gnb_cu_cp_cfg_upd_ies_o {
     choice_buffer_t<gnb_cu_cp_tnla_to_add_list_l,
                     gnb_cu_cp_tnla_to_rem_list_l,
                     gnb_cu_cp_tnla_to_upd_list_l,
-                    printable_string<1, 150, true, true> >
+                    printable_string<1, 150, true, true>>
         c;
 
     void destroy_();
@@ -6739,8 +6739,8 @@ struct gnb_cu_cp_e1_setup_request_ies_o {
     const printable_string<1, 150, true, true>& gnb_cu_cp_name() const;
 
   private:
-    types                                                  type_;
-    choice_buffer_t<printable_string<1, 150, true, true> > c;
+    types                                                 type_;
+    choice_buffer_t<printable_string<1, 150, true, true>> c;
 
     void destroy_();
   };
@@ -7146,8 +7146,8 @@ struct gnb_cu_up_e1_setup_resp_ies_o {
     const printable_string<1, 150, true, true>& gnb_cu_cp_name() const;
 
   private:
-    types                                                  type_;
-    choice_buffer_t<printable_string<1, 150, true, true> > c;
+    types                                                 type_;
+    choice_buffer_t<printable_string<1, 150, true, true>> c;
 
     void destroy_();
   };
@@ -7413,8 +7413,8 @@ struct e1_release_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<cause_c>                                cause;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<cause_c>                               cause;
 
   // sequence methods
   e1_release_request_ies_container();
@@ -7427,22 +7427,22 @@ struct e1_release_request_ies_container {
 using e1_release_request_s = elementary_procedure_option<e1_release_request_ies_container>;
 
 // E1ReleaseResponse ::= SEQUENCE
-using e1_release_resp_s = elementary_procedure_option<protocol_ie_container_l<e1_release_resp_ies_o> >;
+using e1_release_resp_s = elementary_procedure_option<protocol_ie_container_l<e1_release_resp_ies_o>>;
 
 struct error_ind_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       gnb_cu_cp_ue_e1_ap_id_present = false;
-  bool                                                       gnb_cu_up_ue_e1_ap_id_present = false;
-  bool                                                       cause_present                 = false;
-  bool                                                       crit_diagnostics_present      = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> >         transaction_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<cause_c>                                        cause;
-  ie_field_s<crit_diagnostics_s>                             crit_diagnostics;
+  bool                                                      gnb_cu_cp_ue_e1_ap_id_present = false;
+  bool                                                      gnb_cu_up_ue_e1_ap_id_present = false;
+  bool                                                      cause_present                 = false;
+  bool                                                      crit_diagnostics_present      = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>>         transaction_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<cause_c>                                       cause;
+  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
 
   // sequence methods
   error_ind_ies_container();
@@ -7459,15 +7459,15 @@ struct gnb_cu_cp_cfg_upd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                               gnb_cu_cp_name_present             = false;
-  bool                                                               gnb_cu_cp_tnla_to_add_list_present = false;
-  bool                                                               gnb_cu_cp_tnla_to_rem_list_present = false;
-  bool                                                               gnb_cu_cp_tnla_to_upd_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> >                 transaction_id;
-  ie_field_s<printable_string<1, 150, true, true> >                  gnb_cu_cp_name;
-  ie_field_s<dyn_seq_of<gnb_cu_cp_tnla_to_add_item_s, 1, 32, true> > gnb_cu_cp_tnla_to_add_list;
-  ie_field_s<dyn_seq_of<gnb_cu_cp_tnla_to_rem_item_s, 1, 32, true> > gnb_cu_cp_tnla_to_rem_list;
-  ie_field_s<dyn_seq_of<gnb_cu_cp_tnla_to_upd_item_s, 1, 32, true> > gnb_cu_cp_tnla_to_upd_list;
+  bool                                                              gnb_cu_cp_name_present             = false;
+  bool                                                              gnb_cu_cp_tnla_to_add_list_present = false;
+  bool                                                              gnb_cu_cp_tnla_to_rem_list_present = false;
+  bool                                                              gnb_cu_cp_tnla_to_upd_list_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>>                 transaction_id;
+  ie_field_s<printable_string<1, 150, true, true>>                  gnb_cu_cp_name;
+  ie_field_s<dyn_seq_of<gnb_cu_cp_tnla_to_add_item_s, 1, 32, true>> gnb_cu_cp_tnla_to_add_list;
+  ie_field_s<dyn_seq_of<gnb_cu_cp_tnla_to_rem_item_s, 1, 32, true>> gnb_cu_cp_tnla_to_rem_list;
+  ie_field_s<dyn_seq_of<gnb_cu_cp_tnla_to_upd_item_s, 1, 32, true>> gnb_cu_cp_tnla_to_upd_list;
 
   // sequence methods
   gnb_cu_cp_cfg_upd_ies_container();
@@ -7484,13 +7484,13 @@ struct gnb_cu_cp_cfg_upd_ack_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                              crit_diagnostics_present                    = false;
-  bool                                                              gnb_cu_cp_tnla_setup_list_present           = false;
-  bool                                                              gnb_cu_cp_tnla_failed_to_setup_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> >                transaction_id;
-  ie_field_s<crit_diagnostics_s>                                    crit_diagnostics;
-  ie_field_s<dyn_seq_of<gnb_cu_cp_tnla_setup_item_s, 1, 32, true> > gnb_cu_cp_tnla_setup_list;
-  ie_field_s<dyn_seq_of<gnb_cu_cp_tnla_failed_to_setup_item_s, 1, 32, true> > gnb_cu_cp_tnla_failed_to_setup_list;
+  bool                                                             crit_diagnostics_present                    = false;
+  bool                                                             gnb_cu_cp_tnla_setup_list_present           = false;
+  bool                                                             gnb_cu_cp_tnla_failed_to_setup_list_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>>                transaction_id;
+  ie_field_s<crit_diagnostics_s>                                   crit_diagnostics;
+  ie_field_s<dyn_seq_of<gnb_cu_cp_tnla_setup_item_s, 1, 32, true>> gnb_cu_cp_tnla_setup_list;
+  ie_field_s<dyn_seq_of<gnb_cu_cp_tnla_failed_to_setup_item_s, 1, 32, true>> gnb_cu_cp_tnla_failed_to_setup_list;
 
   // sequence methods
   gnb_cu_cp_cfg_upd_ack_ies_container();
@@ -7507,12 +7507,12 @@ struct gnb_cu_cp_cfg_upd_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               time_to_wait_present     = false;
-  bool                                               crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<cause_c>                                cause;
-  ie_field_s<time_to_wait_e>                         time_to_wait;
-  ie_field_s<crit_diagnostics_s>                     crit_diagnostics;
+  bool                                              time_to_wait_present     = false;
+  bool                                              crit_diagnostics_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<cause_c>                               cause;
+  ie_field_s<time_to_wait_e>                        time_to_wait;
+  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
 
   // sequence methods
   gnb_cu_cp_cfg_upd_fail_ies_container();
@@ -7529,12 +7529,12 @@ struct gnb_cu_cp_e1_setup_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               time_to_wait_present     = false;
-  bool                                               crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<cause_c>                                cause;
-  ie_field_s<time_to_wait_e>                         time_to_wait;
-  ie_field_s<crit_diagnostics_s>                     crit_diagnostics;
+  bool                                              time_to_wait_present     = false;
+  bool                                              crit_diagnostics_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<cause_c>                               cause;
+  ie_field_s<time_to_wait_e>                        time_to_wait;
+  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
 
   // sequence methods
   gnb_cu_cp_e1_setup_fail_ies_container();
@@ -7551,9 +7551,9 @@ struct gnb_cu_cp_e1_setup_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               gnb_cu_cp_name_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<printable_string<1, 150, true, true> >  gnb_cu_cp_name;
+  bool                                              gnb_cu_cp_name_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<printable_string<1, 150, true, true>>  gnb_cu_cp_name;
 
   // sequence methods
   gnb_cu_cp_e1_setup_request_ies_container();
@@ -7570,14 +7570,14 @@ struct gnb_cu_cp_e1_setup_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                         gnb_cu_up_name_present     = false;
-  bool                                                         gnb_cu_up_capacity_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> >           transaction_id;
-  ie_field_s<integer<uint64_t, 0, 68719476735, false, true> >  gnb_cu_up_id;
-  ie_field_s<printable_string<1, 150, true, true> >            gnb_cu_up_name;
-  ie_field_s<cn_support_e>                                     cn_support;
-  ie_field_s<dyn_seq_of<supported_plmns_item_s, 1, 12, true> > supported_plmns;
-  ie_field_s<integer<uint16_t, 0, 255, false, true> >          gnb_cu_up_capacity;
+  bool                                                        gnb_cu_up_name_present     = false;
+  bool                                                        gnb_cu_up_capacity_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>>           transaction_id;
+  ie_field_s<integer<uint64_t, 0, 68719476735, false, true>>  gnb_cu_up_id;
+  ie_field_s<printable_string<1, 150, true, true>>            gnb_cu_up_name;
+  ie_field_s<cn_support_e>                                    cn_support;
+  ie_field_s<dyn_seq_of<supported_plmns_item_s, 1, 12, true>> supported_plmns;
+  ie_field_s<integer<uint16_t, 0, 255, false, true>>          gnb_cu_up_capacity;
 
   // sequence methods
   gnb_cu_cp_e1_setup_resp_ies_container();
@@ -7594,16 +7594,16 @@ struct gnb_cu_up_cfg_upd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                               gnb_cu_up_name_present             = false;
-  bool                                                               supported_plmns_present            = false;
-  bool                                                               gnb_cu_up_capacity_present         = false;
-  bool                                                               gnb_cu_up_tnla_to_rem_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> >                 transaction_id;
-  ie_field_s<integer<uint64_t, 0, 68719476735, false, true> >        gnb_cu_up_id;
-  ie_field_s<printable_string<1, 150, true, true> >                  gnb_cu_up_name;
-  ie_field_s<dyn_seq_of<supported_plmns_item_s, 1, 12, true> >       supported_plmns;
-  ie_field_s<integer<uint16_t, 0, 255, false, true> >                gnb_cu_up_capacity;
-  ie_field_s<dyn_seq_of<gnb_cu_up_tnla_to_rem_item_s, 1, 32, true> > gnb_cu_up_tnla_to_rem_list;
+  bool                                                              gnb_cu_up_name_present             = false;
+  bool                                                              supported_plmns_present            = false;
+  bool                                                              gnb_cu_up_capacity_present         = false;
+  bool                                                              gnb_cu_up_tnla_to_rem_list_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>>                 transaction_id;
+  ie_field_s<integer<uint64_t, 0, 68719476735, false, true>>        gnb_cu_up_id;
+  ie_field_s<printable_string<1, 150, true, true>>                  gnb_cu_up_name;
+  ie_field_s<dyn_seq_of<supported_plmns_item_s, 1, 12, true>>       supported_plmns;
+  ie_field_s<integer<uint16_t, 0, 255, false, true>>                gnb_cu_up_capacity;
+  ie_field_s<dyn_seq_of<gnb_cu_up_tnla_to_rem_item_s, 1, 32, true>> gnb_cu_up_tnla_to_rem_list;
 
   // sequence methods
   gnb_cu_up_cfg_upd_ies_container();
@@ -7620,9 +7620,9 @@ struct gnb_cu_up_cfg_upd_ack_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<crit_diagnostics_s>                     crit_diagnostics;
+  bool                                              crit_diagnostics_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
 
   // sequence methods
   gnb_cu_up_cfg_upd_ack_ies_container();
@@ -7639,12 +7639,12 @@ struct gnb_cu_up_cfg_upd_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               time_to_wait_present     = false;
-  bool                                               crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<cause_c>                                cause;
-  ie_field_s<time_to_wait_e>                         time_to_wait;
-  ie_field_s<crit_diagnostics_s>                     crit_diagnostics;
+  bool                                              time_to_wait_present     = false;
+  bool                                              crit_diagnostics_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<cause_c>                               cause;
+  ie_field_s<time_to_wait_e>                        time_to_wait;
+  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
 
   // sequence methods
   gnb_cu_up_cfg_upd_fail_ies_container();
@@ -7661,9 +7661,9 @@ struct gnb_cu_up_counter_check_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<sys_gnb_cu_up_counter_check_request_c>          sys_gnb_cu_up_counter_check_request;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<sys_gnb_cu_up_counter_check_request_c>         sys_gnb_cu_up_counter_check_request;
 
   // sequence methods
   gnb_cu_up_counter_check_request_ies_container();
@@ -7680,12 +7680,12 @@ struct gnb_cu_up_e1_setup_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               time_to_wait_present     = false;
-  bool                                               crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<cause_c>                                cause;
-  ie_field_s<time_to_wait_e>                         time_to_wait;
-  ie_field_s<crit_diagnostics_s>                     crit_diagnostics;
+  bool                                              time_to_wait_present     = false;
+  bool                                              crit_diagnostics_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<cause_c>                               cause;
+  ie_field_s<time_to_wait_e>                        time_to_wait;
+  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
 
   // sequence methods
   gnb_cu_up_e1_setup_fail_ies_container();
@@ -7702,14 +7702,14 @@ struct gnb_cu_up_e1_setup_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                         gnb_cu_up_name_present     = false;
-  bool                                                         gnb_cu_up_capacity_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> >           transaction_id;
-  ie_field_s<integer<uint64_t, 0, 68719476735, false, true> >  gnb_cu_up_id;
-  ie_field_s<printable_string<1, 150, true, true> >            gnb_cu_up_name;
-  ie_field_s<cn_support_e>                                     cn_support;
-  ie_field_s<dyn_seq_of<supported_plmns_item_s, 1, 12, true> > supported_plmns;
-  ie_field_s<integer<uint16_t, 0, 255, false, true> >          gnb_cu_up_capacity;
+  bool                                                        gnb_cu_up_name_present     = false;
+  bool                                                        gnb_cu_up_capacity_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>>           transaction_id;
+  ie_field_s<integer<uint64_t, 0, 68719476735, false, true>>  gnb_cu_up_id;
+  ie_field_s<printable_string<1, 150, true, true>>            gnb_cu_up_name;
+  ie_field_s<cn_support_e>                                    cn_support;
+  ie_field_s<dyn_seq_of<supported_plmns_item_s, 1, 12, true>> supported_plmns;
+  ie_field_s<integer<uint16_t, 0, 255, false, true>>          gnb_cu_up_capacity;
 
   // sequence methods
   gnb_cu_up_e1_setup_request_ies_container();
@@ -7726,9 +7726,9 @@ struct gnb_cu_up_e1_setup_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               gnb_cu_cp_name_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<printable_string<1, 150, true, true> >  gnb_cu_cp_name;
+  bool                                              gnb_cu_cp_name_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<printable_string<1, 150, true, true>>  gnb_cu_cp_name;
 
   // sequence methods
   gnb_cu_up_e1_setup_resp_ies_container();
@@ -7745,8 +7745,8 @@ struct gnb_cu_up_status_ind_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<gnb_cu_up_overload_info_e>              gnb_cu_up_overload_info;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<gnb_cu_up_overload_info_e>             gnb_cu_up_overload_info;
 
   // sequence methods
   gnb_cu_up_status_ind_ies_container();
@@ -7763,9 +7763,9 @@ struct mrdc_data_usage_report_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> >               gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> >               gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<dyn_seq_of<pdu_session_res_data_usage_item_s, 1, 256, true> > pdu_session_res_data_usage_list;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>               gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>               gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<dyn_seq_of<pdu_session_res_data_usage_item_s, 1, 256, true>> pdu_session_res_data_usage_list;
 
   // sequence methods
   mrdc_data_usage_report_ies_container();
@@ -7818,9 +7818,9 @@ struct reset_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<cause_c>                                cause;
-  ie_field_s<reset_type_c>                           reset_type;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<cause_c>                               cause;
+  ie_field_s<reset_type_c>                          reset_type;
 
   // sequence methods
   reset_ies_container();
@@ -7837,10 +7837,10 @@ struct reset_ack_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               ue_associated_lc_e1_conn_list_res_ack_present = false;
-  bool                                               crit_diagnostics_present                      = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ue_associated_lc_e1_conn_item_res_ack_o>, 1, 65536, true> >
+  bool                                              ue_associated_lc_e1_conn_list_res_ack_present = false;
+  bool                                              crit_diagnostics_present                      = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ue_associated_lc_e1_conn_item_res_ack_o>, 1, 65536, true>>
                                  ue_associated_lc_e1_conn_list_res_ack;
   ie_field_s<crit_diagnostics_s> crit_diagnostics;
 
@@ -7859,9 +7859,9 @@ struct ul_data_notif_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> >          gnb_cu_cp_ue_e1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> >          gnb_cu_up_ue_e1_ap_id;
-  ie_field_s<dyn_seq_of<pdu_session_to_notify_item_s, 1, 256, true> > pdu_session_to_notify_list;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>          gnb_cu_cp_ue_e1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>          gnb_cu_up_ue_e1_ap_id;
+  ie_field_s<dyn_seq_of<pdu_session_to_notify_item_s, 1, 256, true>> pdu_session_to_notify_list;
 
   // sequence methods
   ul_data_notif_ies_container();

@@ -17,12 +17,12 @@ namespace srsgnb {
 class f1ap_pcap : pcap_file_base
 {
 public:
-  f1ap_pcap()= default;
+  f1ap_pcap() = default;
   ~f1ap_pcap();
-  f1ap_pcap(const f1ap_pcap& other) = delete;
+  f1ap_pcap(const f1ap_pcap& other)            = delete;
   f1ap_pcap& operator=(const f1ap_pcap& other) = delete;
   f1ap_pcap(f1ap_pcap&& other)                 = delete;
-  f1ap_pcap& operator=(f1ap_pcap&& other) = delete;
+  f1ap_pcap& operator=(f1ap_pcap&& other)      = delete;
 
   void enable();
   void open(const char* filename_);

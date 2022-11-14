@@ -63,7 +63,7 @@ void text_formatter::format(detail::log_entry_metadata&& metadata, fmt::memory_b
   // Message formatting.
   if (metadata.fmtstring) {
     if (metadata.store) {
-      fmt::basic_format_args<fmt::buffer_context<char> > args(*metadata.store);
+      fmt::basic_format_args<fmt::buffer_context<char>> args(*metadata.store);
       try {
         fmt::vformat_to(buffer, fmt::to_string_view(metadata.fmtstring), args);
       } catch (...) {
@@ -111,7 +111,7 @@ void text_formatter::format_context_end(const detail::log_entry_metadata& md,
 
   if (md.store) {
     fmt::format_to(buffer, "]: ");
-    fmt::basic_format_args<fmt::buffer_context<char> > args(*md.store);
+    fmt::basic_format_args<fmt::buffer_context<char>> args(*md.store);
     try {
       fmt::vformat_to(buffer, fmt::to_string_view(md.fmtstring), args);
     } catch (...) {

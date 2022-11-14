@@ -78,7 +78,8 @@ public:
                         const char*               n,
                         std::chrono::microseconds threshold = std::chrono::microseconds::zero()) :
     category(cat), name(n), start(std::chrono::steady_clock::now()), threshold(threshold)
-  {}
+  {
+  }
 
   ~scoped_complete_event();
 

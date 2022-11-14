@@ -30,8 +30,8 @@ void test_unique_function()
   unique_function<void()> t{l0};
   unique_function<void()> t2{[v]() mutable { v = 2; }};
   // sanity static checks
-  static_assert(task_details::is_unique_function<std::decay_t<decltype(t)> >::value, "failed check\n");
-  static_assert(std::is_base_of<std::false_type, task_details::is_unique_function<std::decay_t<decltype(l0)> > >::value,
+  static_assert(task_details::is_unique_function<std::decay_t<decltype(t)>>::value, "failed check\n");
+  static_assert(std::is_base_of<std::false_type, task_details::is_unique_function<std::decay_t<decltype(l0)>>>::value,
                 "failed check\n");
 
   t();

@@ -36,7 +36,7 @@ public:
     static_assert(sizeof...(args) == size, "Number of levels in enum does not match number of log channels");
   }
 
-  logger_impl(const logger_impl& other) = delete;
+  logger_impl(const logger_impl& other)            = delete;
   logger_impl& operator=(const logger_impl& other) = delete;
 
   /// Returns the id string of the logger.
@@ -95,9 +95,11 @@ private:
 
 /// Type trait to detect if T is a logger.
 template <typename T>
-struct is_logger : std::false_type {};
+struct is_logger : std::false_type {
+};
 template <typename T, typename Enum>
-struct is_logger<logger_impl<T, Enum> > : std::true_type {};
+struct is_logger<logger_impl<T, Enum>> : std::true_type {
+};
 
 } // namespace detail
 

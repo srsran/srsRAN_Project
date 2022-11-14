@@ -31,7 +31,7 @@ class work_queue
 public:
   work_queue() : queue(capacity) {}
 
-  work_queue(const work_queue&) = delete;
+  work_queue(const work_queue&)            = delete;
   work_queue& operator=(const work_queue&) = delete;
 
   /// Inserts a new element into the back of the queue. Returns false when the

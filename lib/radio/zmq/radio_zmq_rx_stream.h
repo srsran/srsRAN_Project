@@ -21,7 +21,7 @@ private:
   /// Indicates whether the class was initialized successfully.
   bool successful = false;
   /// Stores independent channels.
-  std::vector<std::unique_ptr<radio_zmq_rx_channel> > channels;
+  std::vector<std::unique_ptr<radio_zmq_rx_channel>> channels;
   /// Counts the number of received samples.
   uint64_t sample_count = 0;
 

@@ -28,7 +28,7 @@ public:
 
   async_task<Result> launch()
   {
-    return launch_async([this](coro_context<async_task<Result> >& ctx) {
+    return launch_async([this](coro_context<async_task<Result>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_AWAIT(ready_ev);
       CORO_RETURN(result);
@@ -46,7 +46,7 @@ class wait_manual_event_tester<void>
 public:
   async_task<void> launch()
   {
-    return launch_async([this](coro_context<async_task<void> >& ctx) {
+    return launch_async([this](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_AWAIT(ready_ev);
       CORO_RETURN();
@@ -59,7 +59,7 @@ template <typename R>
 struct lazy_task_launcher : public eager_async_task<R> {
   lazy_task_launcher(async_task<R>& t_) : t(t_)
   {
-    *static_cast<eager_async_task<R>*>(this) = launch_async([this](coro_context<eager_async_task<R> >& ctx) {
+    *static_cast<eager_async_task<R>*>(this) = launch_async([this](coro_context<eager_async_task<R>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_AWAIT_VALUE(result, t);
       CORO_RETURN(result.value());

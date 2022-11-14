@@ -26,9 +26,10 @@ public:
                                             mac_dl_configurator&                          mac_dl_,
                                             mac_scheduler_configurator&                   sched_cfg_) :
     req(req_), cfg(cfg_), logger(cfg.logger), ul_unit(mac_ul_), dl_unit(mac_dl_), sched_cfg(sched_cfg_)
-  {}
+  {
+  }
 
-  void operator()(coro_context<async_task<mac_ue_reconfiguration_response_message> >& ctx)
+  void operator()(coro_context<async_task<mac_ue_reconfiguration_response_message>>& ctx)
   {
     CORO_BEGIN(ctx);
     log_proc_started(logger, req.ue_index, req.crnti, "UE Create Request");

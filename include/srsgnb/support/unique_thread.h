@@ -58,26 +58,30 @@ public:
                 const os_sched_affinity_bitmask& cpu_mask,
                 Callable&&                       c) :
     name(std::move(name_)), thread_handle(make_thread(name, std::forward<Callable>(c), prio, cpu_mask))
-  {}
+  {
+  }
 
   /// Creates a unique_thread object with an associated OS thread with custom scheduling priority.
   template <typename Callable>
   unique_thread(std::string name_, os_thread_realtime_priority prio, Callable&& c) :
     name(std::move(name_)), thread_handle(make_thread(name, std::forward<Callable>(c), prio))
-  {}
+  {
+  }
 
   /// Creates a unique_thread object with an associated OS thread with custom cpu affinity.
   template <typename Callable>
   unique_thread(std::string name_, const os_sched_affinity_bitmask& cpu_mask, Callable&& c) :
     name(std::move(name_)),
     thread_handle(make_thread(name, std::forward<Callable>(c), os_thread_realtime_priority::NO_REALTIME, cpu_mask))
-  {}
+  {
+  }
 
   /// Creates a unique_thread object with an associated OS thread with default attributes.
   template <typename Callable>
   unique_thread(std::string name_, Callable&& c) :
     name(std::move(name_)), thread_handle(make_thread(name, std::forward<Callable>(c)))
-  {}
+  {
+  }
 
   unique_thread(const unique_thread&) = delete;
 

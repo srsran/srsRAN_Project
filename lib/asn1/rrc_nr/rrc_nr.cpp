@@ -843,13 +843,13 @@ void ssb_to_measure_c::destroy_()
 {
   switch (type_) {
     case types::short_bitmap:
-      c.destroy<fixed_bitstring<4> >();
+      c.destroy<fixed_bitstring<4>>();
       break;
     case types::medium_bitmap:
-      c.destroy<fixed_bitstring<8> >();
+      c.destroy<fixed_bitstring<8>>();
       break;
     case types::long_bitmap:
-      c.destroy<fixed_bitstring<64> >();
+      c.destroy<fixed_bitstring<64>>();
       break;
     default:
       break;
@@ -861,13 +861,13 @@ void ssb_to_measure_c::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::short_bitmap:
-      c.init<fixed_bitstring<4> >();
+      c.init<fixed_bitstring<4>>();
       break;
     case types::medium_bitmap:
-      c.init<fixed_bitstring<8> >();
+      c.init<fixed_bitstring<8>>();
       break;
     case types::long_bitmap:
-      c.init<fixed_bitstring<64> >();
+      c.init<fixed_bitstring<64>>();
       break;
     case types::nulltype:
       break;
@@ -880,13 +880,13 @@ ssb_to_measure_c::ssb_to_measure_c(const ssb_to_measure_c& other)
   type_ = other.type();
   switch (type_) {
     case types::short_bitmap:
-      c.init(other.c.get<fixed_bitstring<4> >());
+      c.init(other.c.get<fixed_bitstring<4>>());
       break;
     case types::medium_bitmap:
-      c.init(other.c.get<fixed_bitstring<8> >());
+      c.init(other.c.get<fixed_bitstring<8>>());
       break;
     case types::long_bitmap:
-      c.init(other.c.get<fixed_bitstring<64> >());
+      c.init(other.c.get<fixed_bitstring<64>>());
       break;
     case types::nulltype:
       break;
@@ -902,13 +902,13 @@ ssb_to_measure_c& ssb_to_measure_c::operator=(const ssb_to_measure_c& other)
   set(other.type());
   switch (type_) {
     case types::short_bitmap:
-      c.set(other.c.get<fixed_bitstring<4> >());
+      c.set(other.c.get<fixed_bitstring<4>>());
       break;
     case types::medium_bitmap:
-      c.set(other.c.get<fixed_bitstring<8> >());
+      c.set(other.c.get<fixed_bitstring<8>>());
       break;
     case types::long_bitmap:
-      c.set(other.c.get<fixed_bitstring<64> >());
+      c.set(other.c.get<fixed_bitstring<64>>());
       break;
     case types::nulltype:
       break;
@@ -921,30 +921,30 @@ ssb_to_measure_c& ssb_to_measure_c::operator=(const ssb_to_measure_c& other)
 fixed_bitstring<4>& ssb_to_measure_c::set_short_bitmap()
 {
   set(types::short_bitmap);
-  return c.get<fixed_bitstring<4> >();
+  return c.get<fixed_bitstring<4>>();
 }
 fixed_bitstring<8>& ssb_to_measure_c::set_medium_bitmap()
 {
   set(types::medium_bitmap);
-  return c.get<fixed_bitstring<8> >();
+  return c.get<fixed_bitstring<8>>();
 }
 fixed_bitstring<64>& ssb_to_measure_c::set_long_bitmap()
 {
   set(types::long_bitmap);
-  return c.get<fixed_bitstring<64> >();
+  return c.get<fixed_bitstring<64>>();
 }
 void ssb_to_measure_c::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
     case types::short_bitmap:
-      j.write_str("shortBitmap", c.get<fixed_bitstring<4> >().to_string());
+      j.write_str("shortBitmap", c.get<fixed_bitstring<4>>().to_string());
       break;
     case types::medium_bitmap:
-      j.write_str("mediumBitmap", c.get<fixed_bitstring<8> >().to_string());
+      j.write_str("mediumBitmap", c.get<fixed_bitstring<8>>().to_string());
       break;
     case types::long_bitmap:
-      j.write_str("longBitmap", c.get<fixed_bitstring<64> >().to_string());
+      j.write_str("longBitmap", c.get<fixed_bitstring<64>>().to_string());
       break;
     default:
       log_invalid_choice_id(type_, "ssb_to_measure_c");
@@ -956,13 +956,13 @@ SRSASN_CODE ssb_to_measure_c::pack(bit_ref& bref) const
   type_.pack(bref);
   switch (type_) {
     case types::short_bitmap:
-      HANDLE_CODE(c.get<fixed_bitstring<4> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<4>>().pack(bref));
       break;
     case types::medium_bitmap:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().pack(bref));
       break;
     case types::long_bitmap:
-      HANDLE_CODE(c.get<fixed_bitstring<64> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<64>>().pack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "ssb_to_measure_c");
@@ -977,13 +977,13 @@ SRSASN_CODE ssb_to_measure_c::unpack(cbit_ref& bref)
   set(e);
   switch (type_) {
     case types::short_bitmap:
-      HANDLE_CODE(c.get<fixed_bitstring<4> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<4>>().unpack(bref));
       break;
     case types::medium_bitmap:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().unpack(bref));
       break;
     case types::long_bitmap:
-      HANDLE_CODE(c.get<fixed_bitstring<64> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<64>>().unpack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "ssb_to_measure_c");
@@ -6217,10 +6217,10 @@ void csi_rs_res_mob_s::freq_domain_alloc_c_::destroy_()
 {
   switch (type_) {
     case types::row1:
-      c.destroy<fixed_bitstring<4> >();
+      c.destroy<fixed_bitstring<4>>();
       break;
     case types::row2:
-      c.destroy<fixed_bitstring<12> >();
+      c.destroy<fixed_bitstring<12>>();
       break;
     default:
       break;
@@ -6232,10 +6232,10 @@ void csi_rs_res_mob_s::freq_domain_alloc_c_::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::row1:
-      c.init<fixed_bitstring<4> >();
+      c.init<fixed_bitstring<4>>();
       break;
     case types::row2:
-      c.init<fixed_bitstring<12> >();
+      c.init<fixed_bitstring<12>>();
       break;
     case types::nulltype:
       break;
@@ -6248,10 +6248,10 @@ csi_rs_res_mob_s::freq_domain_alloc_c_::freq_domain_alloc_c_(const csi_rs_res_mo
   type_ = other.type();
   switch (type_) {
     case types::row1:
-      c.init(other.c.get<fixed_bitstring<4> >());
+      c.init(other.c.get<fixed_bitstring<4>>());
       break;
     case types::row2:
-      c.init(other.c.get<fixed_bitstring<12> >());
+      c.init(other.c.get<fixed_bitstring<12>>());
       break;
     case types::nulltype:
       break;
@@ -6268,10 +6268,10 @@ csi_rs_res_mob_s::freq_domain_alloc_c_::operator=(const csi_rs_res_mob_s::freq_d
   set(other.type());
   switch (type_) {
     case types::row1:
-      c.set(other.c.get<fixed_bitstring<4> >());
+      c.set(other.c.get<fixed_bitstring<4>>());
       break;
     case types::row2:
-      c.set(other.c.get<fixed_bitstring<12> >());
+      c.set(other.c.get<fixed_bitstring<12>>());
       break;
     case types::nulltype:
       break;
@@ -6284,22 +6284,22 @@ csi_rs_res_mob_s::freq_domain_alloc_c_::operator=(const csi_rs_res_mob_s::freq_d
 fixed_bitstring<4>& csi_rs_res_mob_s::freq_domain_alloc_c_::set_row1()
 {
   set(types::row1);
-  return c.get<fixed_bitstring<4> >();
+  return c.get<fixed_bitstring<4>>();
 }
 fixed_bitstring<12>& csi_rs_res_mob_s::freq_domain_alloc_c_::set_row2()
 {
   set(types::row2);
-  return c.get<fixed_bitstring<12> >();
+  return c.get<fixed_bitstring<12>>();
 }
 void csi_rs_res_mob_s::freq_domain_alloc_c_::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
     case types::row1:
-      j.write_str("row1", c.get<fixed_bitstring<4> >().to_string());
+      j.write_str("row1", c.get<fixed_bitstring<4>>().to_string());
       break;
     case types::row2:
-      j.write_str("row2", c.get<fixed_bitstring<12> >().to_string());
+      j.write_str("row2", c.get<fixed_bitstring<12>>().to_string());
       break;
     default:
       log_invalid_choice_id(type_, "csi_rs_res_mob_s::freq_domain_alloc_c_");
@@ -6311,10 +6311,10 @@ SRSASN_CODE csi_rs_res_mob_s::freq_domain_alloc_c_::pack(bit_ref& bref) const
   type_.pack(bref);
   switch (type_) {
     case types::row1:
-      HANDLE_CODE(c.get<fixed_bitstring<4> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<4>>().pack(bref));
       break;
     case types::row2:
-      HANDLE_CODE(c.get<fixed_bitstring<12> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<12>>().pack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "csi_rs_res_mob_s::freq_domain_alloc_c_");
@@ -6329,10 +6329,10 @@ SRSASN_CODE csi_rs_res_mob_s::freq_domain_alloc_c_::unpack(cbit_ref& bref)
   set(e);
   switch (type_) {
     case types::row1:
-      HANDLE_CODE(c.get<fixed_bitstring<4> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<4>>().unpack(bref));
       break;
     case types::row2:
-      HANDLE_CODE(c.get<fixed_bitstring<12> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<12>>().unpack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "csi_rs_res_mob_s::freq_domain_alloc_c_");
@@ -13587,10 +13587,10 @@ void paging_ue_id_c::destroy_()
 {
   switch (type_) {
     case types::ng_minus5_g_s_tmsi:
-      c.destroy<fixed_bitstring<48> >();
+      c.destroy<fixed_bitstring<48>>();
       break;
     case types::full_i_rnti:
-      c.destroy<fixed_bitstring<40> >();
+      c.destroy<fixed_bitstring<40>>();
       break;
     default:
       break;
@@ -13602,10 +13602,10 @@ void paging_ue_id_c::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::ng_minus5_g_s_tmsi:
-      c.init<fixed_bitstring<48> >();
+      c.init<fixed_bitstring<48>>();
       break;
     case types::full_i_rnti:
-      c.init<fixed_bitstring<40> >();
+      c.init<fixed_bitstring<40>>();
       break;
     case types::nulltype:
       break;
@@ -13618,10 +13618,10 @@ paging_ue_id_c::paging_ue_id_c(const paging_ue_id_c& other)
   type_ = other.type();
   switch (type_) {
     case types::ng_minus5_g_s_tmsi:
-      c.init(other.c.get<fixed_bitstring<48> >());
+      c.init(other.c.get<fixed_bitstring<48>>());
       break;
     case types::full_i_rnti:
-      c.init(other.c.get<fixed_bitstring<40> >());
+      c.init(other.c.get<fixed_bitstring<40>>());
       break;
     case types::nulltype:
       break;
@@ -13637,10 +13637,10 @@ paging_ue_id_c& paging_ue_id_c::operator=(const paging_ue_id_c& other)
   set(other.type());
   switch (type_) {
     case types::ng_minus5_g_s_tmsi:
-      c.set(other.c.get<fixed_bitstring<48> >());
+      c.set(other.c.get<fixed_bitstring<48>>());
       break;
     case types::full_i_rnti:
-      c.set(other.c.get<fixed_bitstring<40> >());
+      c.set(other.c.get<fixed_bitstring<40>>());
       break;
     case types::nulltype:
       break;
@@ -13653,22 +13653,22 @@ paging_ue_id_c& paging_ue_id_c::operator=(const paging_ue_id_c& other)
 fixed_bitstring<48>& paging_ue_id_c::set_ng_minus5_g_s_tmsi()
 {
   set(types::ng_minus5_g_s_tmsi);
-  return c.get<fixed_bitstring<48> >();
+  return c.get<fixed_bitstring<48>>();
 }
 fixed_bitstring<40>& paging_ue_id_c::set_full_i_rnti()
 {
   set(types::full_i_rnti);
-  return c.get<fixed_bitstring<40> >();
+  return c.get<fixed_bitstring<40>>();
 }
 void paging_ue_id_c::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
     case types::ng_minus5_g_s_tmsi:
-      j.write_str("ng-5G-S-TMSI", c.get<fixed_bitstring<48> >().to_string());
+      j.write_str("ng-5G-S-TMSI", c.get<fixed_bitstring<48>>().to_string());
       break;
     case types::full_i_rnti:
-      j.write_str("fullI-RNTI", c.get<fixed_bitstring<40> >().to_string());
+      j.write_str("fullI-RNTI", c.get<fixed_bitstring<40>>().to_string());
       break;
     default:
       log_invalid_choice_id(type_, "paging_ue_id_c");
@@ -13680,10 +13680,10 @@ SRSASN_CODE paging_ue_id_c::pack(bit_ref& bref) const
   type_.pack(bref);
   switch (type_) {
     case types::ng_minus5_g_s_tmsi:
-      HANDLE_CODE(c.get<fixed_bitstring<48> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<48>>().pack(bref));
       break;
     case types::full_i_rnti:
-      HANDLE_CODE(c.get<fixed_bitstring<40> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<40>>().pack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "paging_ue_id_c");
@@ -13698,10 +13698,10 @@ SRSASN_CODE paging_ue_id_c::unpack(cbit_ref& bref)
   set(e);
   switch (type_) {
     case types::ng_minus5_g_s_tmsi:
-      HANDLE_CODE(c.get<fixed_bitstring<48> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<48>>().unpack(bref));
       break;
     case types::full_i_rnti:
-      HANDLE_CODE(c.get<fixed_bitstring<40> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<40>>().unpack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "paging_ue_id_c");
@@ -14001,10 +14001,10 @@ void init_ue_id_c::destroy_()
 {
   switch (type_) {
     case types::ng_minus5_g_s_tmsi_part1:
-      c.destroy<fixed_bitstring<39> >();
+      c.destroy<fixed_bitstring<39>>();
       break;
     case types::random_value:
-      c.destroy<fixed_bitstring<39> >();
+      c.destroy<fixed_bitstring<39>>();
       break;
     default:
       break;
@@ -14016,10 +14016,10 @@ void init_ue_id_c::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::ng_minus5_g_s_tmsi_part1:
-      c.init<fixed_bitstring<39> >();
+      c.init<fixed_bitstring<39>>();
       break;
     case types::random_value:
-      c.init<fixed_bitstring<39> >();
+      c.init<fixed_bitstring<39>>();
       break;
     case types::nulltype:
       break;
@@ -14032,10 +14032,10 @@ init_ue_id_c::init_ue_id_c(const init_ue_id_c& other)
   type_ = other.type();
   switch (type_) {
     case types::ng_minus5_g_s_tmsi_part1:
-      c.init(other.c.get<fixed_bitstring<39> >());
+      c.init(other.c.get<fixed_bitstring<39>>());
       break;
     case types::random_value:
-      c.init(other.c.get<fixed_bitstring<39> >());
+      c.init(other.c.get<fixed_bitstring<39>>());
       break;
     case types::nulltype:
       break;
@@ -14051,10 +14051,10 @@ init_ue_id_c& init_ue_id_c::operator=(const init_ue_id_c& other)
   set(other.type());
   switch (type_) {
     case types::ng_minus5_g_s_tmsi_part1:
-      c.set(other.c.get<fixed_bitstring<39> >());
+      c.set(other.c.get<fixed_bitstring<39>>());
       break;
     case types::random_value:
-      c.set(other.c.get<fixed_bitstring<39> >());
+      c.set(other.c.get<fixed_bitstring<39>>());
       break;
     case types::nulltype:
       break;
@@ -14067,22 +14067,22 @@ init_ue_id_c& init_ue_id_c::operator=(const init_ue_id_c& other)
 fixed_bitstring<39>& init_ue_id_c::set_ng_minus5_g_s_tmsi_part1()
 {
   set(types::ng_minus5_g_s_tmsi_part1);
-  return c.get<fixed_bitstring<39> >();
+  return c.get<fixed_bitstring<39>>();
 }
 fixed_bitstring<39>& init_ue_id_c::set_random_value()
 {
   set(types::random_value);
-  return c.get<fixed_bitstring<39> >();
+  return c.get<fixed_bitstring<39>>();
 }
 void init_ue_id_c::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
     case types::ng_minus5_g_s_tmsi_part1:
-      j.write_str("ng-5G-S-TMSI-Part1", c.get<fixed_bitstring<39> >().to_string());
+      j.write_str("ng-5G-S-TMSI-Part1", c.get<fixed_bitstring<39>>().to_string());
       break;
     case types::random_value:
-      j.write_str("randomValue", c.get<fixed_bitstring<39> >().to_string());
+      j.write_str("randomValue", c.get<fixed_bitstring<39>>().to_string());
       break;
     default:
       log_invalid_choice_id(type_, "init_ue_id_c");
@@ -14094,10 +14094,10 @@ SRSASN_CODE init_ue_id_c::pack(bit_ref& bref) const
   type_.pack(bref);
   switch (type_) {
     case types::ng_minus5_g_s_tmsi_part1:
-      HANDLE_CODE(c.get<fixed_bitstring<39> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<39>>().pack(bref));
       break;
     case types::random_value:
-      HANDLE_CODE(c.get<fixed_bitstring<39> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<39>>().pack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "init_ue_id_c");
@@ -14112,10 +14112,10 @@ SRSASN_CODE init_ue_id_c::unpack(cbit_ref& bref)
   set(e);
   switch (type_) {
     case types::ng_minus5_g_s_tmsi_part1:
-      HANDLE_CODE(c.get<fixed_bitstring<39> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<39>>().unpack(bref));
       break;
     case types::random_value:
-      HANDLE_CODE(c.get<fixed_bitstring<39> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<39>>().unpack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "init_ue_id_c");
@@ -15176,7 +15176,7 @@ void cell_id_eutra_minus5_gc_c::destroy_()
 {
   switch (type_) {
     case types::cell_id_eutra:
-      c.destroy<fixed_bitstring<28> >();
+      c.destroy<fixed_bitstring<28>>();
       break;
     default:
       break;
@@ -15188,7 +15188,7 @@ void cell_id_eutra_minus5_gc_c::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::cell_id_eutra:
-      c.init<fixed_bitstring<28> >();
+      c.init<fixed_bitstring<28>>();
       break;
     case types::cell_id_idx:
       break;
@@ -15203,7 +15203,7 @@ cell_id_eutra_minus5_gc_c::cell_id_eutra_minus5_gc_c(const cell_id_eutra_minus5_
   type_ = other.type();
   switch (type_) {
     case types::cell_id_eutra:
-      c.init(other.c.get<fixed_bitstring<28> >());
+      c.init(other.c.get<fixed_bitstring<28>>());
       break;
     case types::cell_id_idx:
       c.init(other.c.get<uint8_t>());
@@ -15222,7 +15222,7 @@ cell_id_eutra_minus5_gc_c& cell_id_eutra_minus5_gc_c::operator=(const cell_id_eu
   set(other.type());
   switch (type_) {
     case types::cell_id_eutra:
-      c.set(other.c.get<fixed_bitstring<28> >());
+      c.set(other.c.get<fixed_bitstring<28>>());
       break;
     case types::cell_id_idx:
       c.set(other.c.get<uint8_t>());
@@ -15238,7 +15238,7 @@ cell_id_eutra_minus5_gc_c& cell_id_eutra_minus5_gc_c::operator=(const cell_id_eu
 fixed_bitstring<28>& cell_id_eutra_minus5_gc_c::set_cell_id_eutra()
 {
   set(types::cell_id_eutra);
-  return c.get<fixed_bitstring<28> >();
+  return c.get<fixed_bitstring<28>>();
 }
 uint8_t& cell_id_eutra_minus5_gc_c::set_cell_id_idx()
 {
@@ -15250,7 +15250,7 @@ void cell_id_eutra_minus5_gc_c::to_json(json_writer& j) const
   j.start_obj();
   switch (type_) {
     case types::cell_id_eutra:
-      j.write_str("cellIdentity-EUTRA", c.get<fixed_bitstring<28> >().to_string());
+      j.write_str("cellIdentity-EUTRA", c.get<fixed_bitstring<28>>().to_string());
       break;
     case types::cell_id_idx:
       j.write_int("cellId-index", c.get<uint8_t>());
@@ -15265,7 +15265,7 @@ SRSASN_CODE cell_id_eutra_minus5_gc_c::pack(bit_ref& bref) const
   type_.pack(bref);
   switch (type_) {
     case types::cell_id_eutra:
-      HANDLE_CODE(c.get<fixed_bitstring<28> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<28>>().pack(bref));
       break;
     case types::cell_id_idx:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)1u, (uint8_t)12u));
@@ -15283,7 +15283,7 @@ SRSASN_CODE cell_id_eutra_minus5_gc_c::unpack(cbit_ref& bref)
   set(e);
   switch (type_) {
     case types::cell_id_eutra:
-      HANDLE_CODE(c.get<fixed_bitstring<28> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<28>>().unpack(bref));
       break;
     case types::cell_id_idx:
       HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)1u, (uint8_t)12u));
@@ -17229,10 +17229,10 @@ void s_nssai_c::destroy_()
 {
   switch (type_) {
     case types::sst:
-      c.destroy<fixed_bitstring<8> >();
+      c.destroy<fixed_bitstring<8>>();
       break;
     case types::sst_sd:
-      c.destroy<fixed_bitstring<32> >();
+      c.destroy<fixed_bitstring<32>>();
       break;
     default:
       break;
@@ -17244,10 +17244,10 @@ void s_nssai_c::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::sst:
-      c.init<fixed_bitstring<8> >();
+      c.init<fixed_bitstring<8>>();
       break;
     case types::sst_sd:
-      c.init<fixed_bitstring<32> >();
+      c.init<fixed_bitstring<32>>();
       break;
     case types::nulltype:
       break;
@@ -17260,10 +17260,10 @@ s_nssai_c::s_nssai_c(const s_nssai_c& other)
   type_ = other.type();
   switch (type_) {
     case types::sst:
-      c.init(other.c.get<fixed_bitstring<8> >());
+      c.init(other.c.get<fixed_bitstring<8>>());
       break;
     case types::sst_sd:
-      c.init(other.c.get<fixed_bitstring<32> >());
+      c.init(other.c.get<fixed_bitstring<32>>());
       break;
     case types::nulltype:
       break;
@@ -17279,10 +17279,10 @@ s_nssai_c& s_nssai_c::operator=(const s_nssai_c& other)
   set(other.type());
   switch (type_) {
     case types::sst:
-      c.set(other.c.get<fixed_bitstring<8> >());
+      c.set(other.c.get<fixed_bitstring<8>>());
       break;
     case types::sst_sd:
-      c.set(other.c.get<fixed_bitstring<32> >());
+      c.set(other.c.get<fixed_bitstring<32>>());
       break;
     case types::nulltype:
       break;
@@ -17295,22 +17295,22 @@ s_nssai_c& s_nssai_c::operator=(const s_nssai_c& other)
 fixed_bitstring<8>& s_nssai_c::set_sst()
 {
   set(types::sst);
-  return c.get<fixed_bitstring<8> >();
+  return c.get<fixed_bitstring<8>>();
 }
 fixed_bitstring<32>& s_nssai_c::set_sst_sd()
 {
   set(types::sst_sd);
-  return c.get<fixed_bitstring<32> >();
+  return c.get<fixed_bitstring<32>>();
 }
 void s_nssai_c::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
     case types::sst:
-      j.write_str("sst", c.get<fixed_bitstring<8> >().to_string());
+      j.write_str("sst", c.get<fixed_bitstring<8>>().to_string());
       break;
     case types::sst_sd:
-      j.write_str("sst-SD", c.get<fixed_bitstring<32> >().to_string());
+      j.write_str("sst-SD", c.get<fixed_bitstring<32>>().to_string());
       break;
     default:
       log_invalid_choice_id(type_, "s_nssai_c");
@@ -17322,10 +17322,10 @@ SRSASN_CODE s_nssai_c::pack(bit_ref& bref) const
   type_.pack(bref);
   switch (type_) {
     case types::sst:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().pack(bref));
       break;
     case types::sst_sd:
-      HANDLE_CODE(c.get<fixed_bitstring<32> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<32>>().pack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "s_nssai_c");
@@ -17340,10 +17340,10 @@ SRSASN_CODE s_nssai_c::unpack(cbit_ref& bref)
   set(e);
   switch (type_) {
     case types::sst:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().unpack(bref));
       break;
     case types::sst_sd:
-      HANDLE_CODE(c.get<fixed_bitstring<32> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<32>>().unpack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "s_nssai_c");
@@ -17914,10 +17914,10 @@ void rrc_setup_complete_ies_s::ng_minus5_g_s_tmsi_value_c_::destroy_()
 {
   switch (type_) {
     case types::ng_minus5_g_s_tmsi:
-      c.destroy<fixed_bitstring<48> >();
+      c.destroy<fixed_bitstring<48>>();
       break;
     case types::ng_minus5_g_s_tmsi_part2:
-      c.destroy<fixed_bitstring<9> >();
+      c.destroy<fixed_bitstring<9>>();
       break;
     default:
       break;
@@ -17929,10 +17929,10 @@ void rrc_setup_complete_ies_s::ng_minus5_g_s_tmsi_value_c_::set(types::options e
   type_ = e;
   switch (type_) {
     case types::ng_minus5_g_s_tmsi:
-      c.init<fixed_bitstring<48> >();
+      c.init<fixed_bitstring<48>>();
       break;
     case types::ng_minus5_g_s_tmsi_part2:
-      c.init<fixed_bitstring<9> >();
+      c.init<fixed_bitstring<9>>();
       break;
     case types::nulltype:
       break;
@@ -17946,10 +17946,10 @@ rrc_setup_complete_ies_s::ng_minus5_g_s_tmsi_value_c_::ng_minus5_g_s_tmsi_value_
   type_ = other.type();
   switch (type_) {
     case types::ng_minus5_g_s_tmsi:
-      c.init(other.c.get<fixed_bitstring<48> >());
+      c.init(other.c.get<fixed_bitstring<48>>());
       break;
     case types::ng_minus5_g_s_tmsi_part2:
-      c.init(other.c.get<fixed_bitstring<9> >());
+      c.init(other.c.get<fixed_bitstring<9>>());
       break;
     case types::nulltype:
       break;
@@ -17966,10 +17966,10 @@ rrc_setup_complete_ies_s::ng_minus5_g_s_tmsi_value_c_& rrc_setup_complete_ies_s:
   set(other.type());
   switch (type_) {
     case types::ng_minus5_g_s_tmsi:
-      c.set(other.c.get<fixed_bitstring<48> >());
+      c.set(other.c.get<fixed_bitstring<48>>());
       break;
     case types::ng_minus5_g_s_tmsi_part2:
-      c.set(other.c.get<fixed_bitstring<9> >());
+      c.set(other.c.get<fixed_bitstring<9>>());
       break;
     case types::nulltype:
       break;
@@ -17982,22 +17982,22 @@ rrc_setup_complete_ies_s::ng_minus5_g_s_tmsi_value_c_& rrc_setup_complete_ies_s:
 fixed_bitstring<48>& rrc_setup_complete_ies_s::ng_minus5_g_s_tmsi_value_c_::set_ng_minus5_g_s_tmsi()
 {
   set(types::ng_minus5_g_s_tmsi);
-  return c.get<fixed_bitstring<48> >();
+  return c.get<fixed_bitstring<48>>();
 }
 fixed_bitstring<9>& rrc_setup_complete_ies_s::ng_minus5_g_s_tmsi_value_c_::set_ng_minus5_g_s_tmsi_part2()
 {
   set(types::ng_minus5_g_s_tmsi_part2);
-  return c.get<fixed_bitstring<9> >();
+  return c.get<fixed_bitstring<9>>();
 }
 void rrc_setup_complete_ies_s::ng_minus5_g_s_tmsi_value_c_::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
     case types::ng_minus5_g_s_tmsi:
-      j.write_str("ng-5G-S-TMSI", c.get<fixed_bitstring<48> >().to_string());
+      j.write_str("ng-5G-S-TMSI", c.get<fixed_bitstring<48>>().to_string());
       break;
     case types::ng_minus5_g_s_tmsi_part2:
-      j.write_str("ng-5G-S-TMSI-Part2", c.get<fixed_bitstring<9> >().to_string());
+      j.write_str("ng-5G-S-TMSI-Part2", c.get<fixed_bitstring<9>>().to_string());
       break;
     default:
       log_invalid_choice_id(type_, "rrc_setup_complete_ies_s::ng_minus5_g_s_tmsi_value_c_");
@@ -18009,10 +18009,10 @@ SRSASN_CODE rrc_setup_complete_ies_s::ng_minus5_g_s_tmsi_value_c_::pack(bit_ref&
   type_.pack(bref);
   switch (type_) {
     case types::ng_minus5_g_s_tmsi:
-      HANDLE_CODE(c.get<fixed_bitstring<48> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<48>>().pack(bref));
       break;
     case types::ng_minus5_g_s_tmsi_part2:
-      HANDLE_CODE(c.get<fixed_bitstring<9> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<9>>().pack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "rrc_setup_complete_ies_s::ng_minus5_g_s_tmsi_value_c_");
@@ -18027,10 +18027,10 @@ SRSASN_CODE rrc_setup_complete_ies_s::ng_minus5_g_s_tmsi_value_c_::unpack(cbit_r
   set(e);
   switch (type_) {
     case types::ng_minus5_g_s_tmsi:
-      HANDLE_CODE(c.get<fixed_bitstring<48> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<48>>().unpack(bref));
       break;
     case types::ng_minus5_g_s_tmsi_part2:
-      HANDLE_CODE(c.get<fixed_bitstring<9> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<9>>().unpack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "rrc_setup_complete_ies_s::ng_minus5_g_s_tmsi_value_c_");
@@ -22277,13 +22277,13 @@ void serving_cell_cfg_common_s::ssb_positions_in_burst_c_::destroy_()
 {
   switch (type_) {
     case types::short_bitmap:
-      c.destroy<fixed_bitstring<4> >();
+      c.destroy<fixed_bitstring<4>>();
       break;
     case types::medium_bitmap:
-      c.destroy<fixed_bitstring<8> >();
+      c.destroy<fixed_bitstring<8>>();
       break;
     case types::long_bitmap:
-      c.destroy<fixed_bitstring<64> >();
+      c.destroy<fixed_bitstring<64>>();
       break;
     default:
       break;
@@ -22295,13 +22295,13 @@ void serving_cell_cfg_common_s::ssb_positions_in_burst_c_::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::short_bitmap:
-      c.init<fixed_bitstring<4> >();
+      c.init<fixed_bitstring<4>>();
       break;
     case types::medium_bitmap:
-      c.init<fixed_bitstring<8> >();
+      c.init<fixed_bitstring<8>>();
       break;
     case types::long_bitmap:
-      c.init<fixed_bitstring<64> >();
+      c.init<fixed_bitstring<64>>();
       break;
     case types::nulltype:
       break;
@@ -22315,13 +22315,13 @@ serving_cell_cfg_common_s::ssb_positions_in_burst_c_::ssb_positions_in_burst_c_(
   type_ = other.type();
   switch (type_) {
     case types::short_bitmap:
-      c.init(other.c.get<fixed_bitstring<4> >());
+      c.init(other.c.get<fixed_bitstring<4>>());
       break;
     case types::medium_bitmap:
-      c.init(other.c.get<fixed_bitstring<8> >());
+      c.init(other.c.get<fixed_bitstring<8>>());
       break;
     case types::long_bitmap:
-      c.init(other.c.get<fixed_bitstring<64> >());
+      c.init(other.c.get<fixed_bitstring<64>>());
       break;
     case types::nulltype:
       break;
@@ -22338,13 +22338,13 @@ serving_cell_cfg_common_s::ssb_positions_in_burst_c_& serving_cell_cfg_common_s:
   set(other.type());
   switch (type_) {
     case types::short_bitmap:
-      c.set(other.c.get<fixed_bitstring<4> >());
+      c.set(other.c.get<fixed_bitstring<4>>());
       break;
     case types::medium_bitmap:
-      c.set(other.c.get<fixed_bitstring<8> >());
+      c.set(other.c.get<fixed_bitstring<8>>());
       break;
     case types::long_bitmap:
-      c.set(other.c.get<fixed_bitstring<64> >());
+      c.set(other.c.get<fixed_bitstring<64>>());
       break;
     case types::nulltype:
       break;
@@ -22357,30 +22357,30 @@ serving_cell_cfg_common_s::ssb_positions_in_burst_c_& serving_cell_cfg_common_s:
 fixed_bitstring<4>& serving_cell_cfg_common_s::ssb_positions_in_burst_c_::set_short_bitmap()
 {
   set(types::short_bitmap);
-  return c.get<fixed_bitstring<4> >();
+  return c.get<fixed_bitstring<4>>();
 }
 fixed_bitstring<8>& serving_cell_cfg_common_s::ssb_positions_in_burst_c_::set_medium_bitmap()
 {
   set(types::medium_bitmap);
-  return c.get<fixed_bitstring<8> >();
+  return c.get<fixed_bitstring<8>>();
 }
 fixed_bitstring<64>& serving_cell_cfg_common_s::ssb_positions_in_burst_c_::set_long_bitmap()
 {
   set(types::long_bitmap);
-  return c.get<fixed_bitstring<64> >();
+  return c.get<fixed_bitstring<64>>();
 }
 void serving_cell_cfg_common_s::ssb_positions_in_burst_c_::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
     case types::short_bitmap:
-      j.write_str("shortBitmap", c.get<fixed_bitstring<4> >().to_string());
+      j.write_str("shortBitmap", c.get<fixed_bitstring<4>>().to_string());
       break;
     case types::medium_bitmap:
-      j.write_str("mediumBitmap", c.get<fixed_bitstring<8> >().to_string());
+      j.write_str("mediumBitmap", c.get<fixed_bitstring<8>>().to_string());
       break;
     case types::long_bitmap:
-      j.write_str("longBitmap", c.get<fixed_bitstring<64> >().to_string());
+      j.write_str("longBitmap", c.get<fixed_bitstring<64>>().to_string());
       break;
     default:
       log_invalid_choice_id(type_, "serving_cell_cfg_common_s::ssb_positions_in_burst_c_");
@@ -22392,13 +22392,13 @@ SRSASN_CODE serving_cell_cfg_common_s::ssb_positions_in_burst_c_::pack(bit_ref& 
   type_.pack(bref);
   switch (type_) {
     case types::short_bitmap:
-      HANDLE_CODE(c.get<fixed_bitstring<4> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<4>>().pack(bref));
       break;
     case types::medium_bitmap:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().pack(bref));
       break;
     case types::long_bitmap:
-      HANDLE_CODE(c.get<fixed_bitstring<64> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<64>>().pack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "serving_cell_cfg_common_s::ssb_positions_in_burst_c_");
@@ -22413,13 +22413,13 @@ SRSASN_CODE serving_cell_cfg_common_s::ssb_positions_in_burst_c_::unpack(cbit_re
   set(e);
   switch (type_) {
     case types::short_bitmap:
-      HANDLE_CODE(c.get<fixed_bitstring<4> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<4>>().unpack(bref));
       break;
     case types::medium_bitmap:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().unpack(bref));
       break;
     case types::long_bitmap:
-      HANDLE_CODE(c.get<fixed_bitstring<64> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<64>>().unpack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "serving_cell_cfg_common_s::ssb_positions_in_burst_c_");
@@ -26007,7 +26007,7 @@ SRSASN_CODE ue_mrdc_cap_s::pack(bit_ref& bref) const
                                 feature_set_combinations,
                                 1,
                                 1024,
-                                SeqOfPacker<SeqOfPacker<Packer> >(1, 32, SeqOfPacker<Packer>(1, 128, Packer()))));
+                                SeqOfPacker<SeqOfPacker<Packer>>(1, 32, SeqOfPacker<Packer>(1, 128, Packer()))));
   }
   if (pdcp_params_mrdc_v1530_present) {
     HANDLE_CODE(pdcp_params_mrdc_v1530.pack(bref));
@@ -26064,7 +26064,7 @@ SRSASN_CODE ue_mrdc_cap_s::unpack(cbit_ref& bref)
                                   bref,
                                   1,
                                   1024,
-                                  SeqOfPacker<SeqOfPacker<Packer> >(1, 32, SeqOfPacker<Packer>(1, 128, Packer()))));
+                                  SeqOfPacker<SeqOfPacker<Packer>>(1, 32, SeqOfPacker<Packer>(1, 128, Packer()))));
   }
   if (pdcp_params_mrdc_v1530_present) {
     HANDLE_CODE(pdcp_params_mrdc_v1530.unpack(bref));
@@ -26454,7 +26454,7 @@ SRSASN_CODE cfg_restrict_info_scg_s::pack(bit_ref& bref) const
                                     *sel_band_entries_mn_list,
                                     1,
                                     65536,
-                                    SeqOfPacker<integer_packer<uint8_t> >(1, 32, integer_packer<uint8_t>(0, 32))));
+                                    SeqOfPacker<integer_packer<uint8_t>>(1, 32, integer_packer<uint8_t>(0, 32))));
       }
       if (pdcch_blind_detection_scg_present) {
         HANDLE_CODE(pack_integer(bref, pdcch_blind_detection_scg, (uint8_t)1u, (uint8_t)15u));
@@ -26533,7 +26533,7 @@ SRSASN_CODE cfg_restrict_info_scg_s::unpack(cbit_ref& bref)
                                       bref,
                                       1,
                                       65536,
-                                      SeqOfPacker<integer_packer<uint8_t> >(1, 32, integer_packer<uint8_t>(0, 32))));
+                                      SeqOfPacker<integer_packer<uint8_t>>(1, 32, integer_packer<uint8_t>(0, 32))));
       }
       if (pdcch_blind_detection_scg_present) {
         HANDLE_CODE(unpack_integer(pdcch_blind_detection_scg, bref, (uint8_t)1u, (uint8_t)15u));

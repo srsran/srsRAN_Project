@@ -28,7 +28,7 @@ public:
 
   ~buffered_file_sink() override { flush_buffer(); }
 
-  buffered_file_sink(const buffered_file_sink& other) = delete;
+  buffered_file_sink(const buffered_file_sink& other)            = delete;
   buffered_file_sink& operator=(const buffered_file_sink& other) = delete;
 
   detail::error_string write(detail::memory_buffer input_buffer) override

@@ -21,7 +21,7 @@ private:
   /// Indicates whether the class was initialized successfully.
   bool successful = false;
   /// Stores independent channels.
-  std::vector<std::unique_ptr<radio_zmq_tx_channel> > channels;
+  std::vector<std::unique_ptr<radio_zmq_tx_channel>> channels;
 
 public:
   /// Describes the necessary parameters to create a ZMQ Tx stream.

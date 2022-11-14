@@ -21,7 +21,7 @@ class async_task_sequencer
 {
 public:
   async_task_sequencer(size_t queue_size) : queue(queue_size) { run(); }
-  async_task_sequencer(const async_task_sequencer&) = delete;
+  async_task_sequencer(const async_task_sequencer&)            = delete;
   async_task_sequencer& operator=(const async_task_sequencer&) = delete;
 
   template <typename R>
@@ -46,7 +46,7 @@ public:
   {
     // Enqueue task in case main loop is waiting for new procedure
     running = false;
-    queue.try_push(launch_async([](coro_context<async_task<void> >& ctx) {
+    queue.try_push(launch_async([](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN();
     }));
@@ -60,7 +60,7 @@ public:
 private:
   void run()
   {
-    loop_task = launch_async([this](coro_context<eager_async_task<void> >& ctx) {
+    loop_task = launch_async([this](coro_context<eager_async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
 
       // runs until requested to stop.
@@ -76,10 +76,10 @@ private:
     });
   }
 
-  bool                           running = true;
-  async_queue<async_task<void> > queue;
-  eager_async_task<void>         loop_task;
-  async_task<void>               next_task;
+  bool                          running = true;
+  async_queue<async_task<void>> queue;
+  eager_async_task<void>        loop_task;
+  async_task<void>              next_task;
 };
 
 } // namespace srsgnb

@@ -31,7 +31,7 @@ struct metric_value_formatter {
 /// Default metric value formatter. Users that want to override this behaviour
 /// should add an specialization of the metric they want to customize.
 template <typename Ty, typename Name, typename Units>
-struct metric_value_formatter<metric<Ty, Name, Units> > {
+struct metric_value_formatter<metric<Ty, Name, Units>> {
   template <typename T>
   void format(const T& v, fmt::memory_buffer& buffer)
   {

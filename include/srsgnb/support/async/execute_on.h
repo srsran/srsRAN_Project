@@ -83,7 +83,8 @@ auto offload_to_executor(DispatchTaskExecutor& dispatch_exec, ResumeTaskExecutor
                             ResumeTaskExecutor&   resume_exec_,
                             Callable              callable_) :
       dispatch_exec(dispatch_exec_), resume_exec(resume_exec_), task(std::forward<Callable>(callable_))
-    {}
+    {
+    }
 
     bool await_ready() noexcept { return false; }
 
@@ -122,7 +123,8 @@ auto offload_to_executor(DispatchTaskExecutor& dispatch_exec, ResumeTaskExecutor
                             ResumeTaskExecutor&   resume_exec_,
                             Callable              callable_) :
       dispatch_exec(dispatch_exec_), resume_exec(resume_exec_), task(std::forward<Callable>(callable_))
-    {}
+    {
+    }
 
     bool await_ready() noexcept { return false; }
 
@@ -152,12 +154,12 @@ auto offload_to_executor(DispatchTaskExecutor& dispatch_exec, ResumeTaskExecutor
 template <typename DispatchTaskExecutor,
           typename CurrentTaskExecutor,
           typename Callable,
-          typename ReturnType = detail::function_return_t<decltype(&Callable::operator())> >
-std::enable_if_t<std::is_same<ReturnType, void>::value, async_task<void> >
+          typename ReturnType = detail::function_return_t<decltype(&Callable::operator())>>
+std::enable_if_t<std::is_same<ReturnType, void>::value, async_task<void>>
 dispatch_and_resume_on(DispatchTaskExecutor& dispatch_exec, CurrentTaskExecutor& return_exec, Callable&& callable)
 {
   return launch_async(
-      [&return_exec, &dispatch_exec, task = std::forward<Callable>(callable)](coro_context<async_task<void> >& ctx) {
+      [&return_exec, &dispatch_exec, task = std::forward<Callable>(callable)](coro_context<async_task<void>>& ctx) {
         CORO_BEGIN(ctx);
         CORO_AWAIT(execute_on(dispatch_exec));
         task();
@@ -169,13 +171,13 @@ dispatch_and_resume_on(DispatchTaskExecutor& dispatch_exec, CurrentTaskExecutor&
 template <typename DispatchTaskExecutor,
           typename CurrentTaskExecutor,
           typename Callable,
-          typename ReturnType = detail::function_return_t<decltype(&Callable::operator())> >
-std::enable_if_t<not std::is_same<ReturnType, void>::value, async_task<ReturnType> >
+          typename ReturnType = detail::function_return_t<decltype(&Callable::operator())>>
+std::enable_if_t<not std::is_same<ReturnType, void>::value, async_task<ReturnType>>
 dispatch_and_resume_on(DispatchTaskExecutor& dispatch_exec, CurrentTaskExecutor& return_exec, Callable&& callable)
 {
   ReturnType ret{};
   return launch_async([&return_exec, &dispatch_exec, task = std::forward<Callable>(callable), ret](
-                          coro_context<async_task<ReturnType> >& ctx) mutable {
+                          coro_context<async_task<ReturnType>>& ctx) mutable {
     CORO_BEGIN(ctx);
     CORO_AWAIT(execute_on(dispatch_exec));
     ret = task();

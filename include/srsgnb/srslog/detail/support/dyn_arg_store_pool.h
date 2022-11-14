@@ -63,7 +63,7 @@ public:
   }
 
 private:
-  std::vector<fmt::dynamic_format_arg_store<fmt::format_context> > pool;
+  std::vector<fmt::dynamic_format_arg_store<fmt::format_context>>  pool;
   std::vector<fmt::dynamic_format_arg_store<fmt::format_context>*> free_list;
   mutable mutex                                                    m;
 };

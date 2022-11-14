@@ -25,9 +25,9 @@ public:
   /// \param[in] task_executor Provides a task executor for executing asynchronous tasks.
   /// \param[in] notifier Provides radio event notifier interface.
   /// \return The ownership to a radio session if the session was successfully created.
-  virtual std::unique_ptr<radio_session>
-  create(const radio_configuration::radio& config, task_executor& async_task_executor,
-                                                radio_notification_handler& notifier) = 0;
+  virtual std::unique_ptr<radio_session> create(const radio_configuration::radio& config,
+                                                task_executor&                    async_task_executor,
+                                                radio_notification_handler&       notifier) = 0;
 };
 
 std::unique_ptr<radio_factory> create_radio_factory(std::string driver_name);

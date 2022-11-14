@@ -4081,16 +4081,16 @@ void csi_rs_res_map_s::freq_domain_alloc_c_::destroy_()
 {
   switch (type_) {
     case types::row1:
-      c.destroy<fixed_bitstring<4> >();
+      c.destroy<fixed_bitstring<4>>();
       break;
     case types::row2:
-      c.destroy<fixed_bitstring<12> >();
+      c.destroy<fixed_bitstring<12>>();
       break;
     case types::row4:
-      c.destroy<fixed_bitstring<3> >();
+      c.destroy<fixed_bitstring<3>>();
       break;
     case types::other:
-      c.destroy<fixed_bitstring<6> >();
+      c.destroy<fixed_bitstring<6>>();
       break;
     default:
       break;
@@ -4102,16 +4102,16 @@ void csi_rs_res_map_s::freq_domain_alloc_c_::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::row1:
-      c.init<fixed_bitstring<4> >();
+      c.init<fixed_bitstring<4>>();
       break;
     case types::row2:
-      c.init<fixed_bitstring<12> >();
+      c.init<fixed_bitstring<12>>();
       break;
     case types::row4:
-      c.init<fixed_bitstring<3> >();
+      c.init<fixed_bitstring<3>>();
       break;
     case types::other:
-      c.init<fixed_bitstring<6> >();
+      c.init<fixed_bitstring<6>>();
       break;
     case types::nulltype:
       break;
@@ -4124,16 +4124,16 @@ csi_rs_res_map_s::freq_domain_alloc_c_::freq_domain_alloc_c_(const csi_rs_res_ma
   type_ = other.type();
   switch (type_) {
     case types::row1:
-      c.init(other.c.get<fixed_bitstring<4> >());
+      c.init(other.c.get<fixed_bitstring<4>>());
       break;
     case types::row2:
-      c.init(other.c.get<fixed_bitstring<12> >());
+      c.init(other.c.get<fixed_bitstring<12>>());
       break;
     case types::row4:
-      c.init(other.c.get<fixed_bitstring<3> >());
+      c.init(other.c.get<fixed_bitstring<3>>());
       break;
     case types::other:
-      c.init(other.c.get<fixed_bitstring<6> >());
+      c.init(other.c.get<fixed_bitstring<6>>());
       break;
     case types::nulltype:
       break;
@@ -4150,16 +4150,16 @@ csi_rs_res_map_s::freq_domain_alloc_c_::operator=(const csi_rs_res_map_s::freq_d
   set(other.type());
   switch (type_) {
     case types::row1:
-      c.set(other.c.get<fixed_bitstring<4> >());
+      c.set(other.c.get<fixed_bitstring<4>>());
       break;
     case types::row2:
-      c.set(other.c.get<fixed_bitstring<12> >());
+      c.set(other.c.get<fixed_bitstring<12>>());
       break;
     case types::row4:
-      c.set(other.c.get<fixed_bitstring<3> >());
+      c.set(other.c.get<fixed_bitstring<3>>());
       break;
     case types::other:
-      c.set(other.c.get<fixed_bitstring<6> >());
+      c.set(other.c.get<fixed_bitstring<6>>());
       break;
     case types::nulltype:
       break;
@@ -4172,38 +4172,38 @@ csi_rs_res_map_s::freq_domain_alloc_c_::operator=(const csi_rs_res_map_s::freq_d
 fixed_bitstring<4>& csi_rs_res_map_s::freq_domain_alloc_c_::set_row1()
 {
   set(types::row1);
-  return c.get<fixed_bitstring<4> >();
+  return c.get<fixed_bitstring<4>>();
 }
 fixed_bitstring<12>& csi_rs_res_map_s::freq_domain_alloc_c_::set_row2()
 {
   set(types::row2);
-  return c.get<fixed_bitstring<12> >();
+  return c.get<fixed_bitstring<12>>();
 }
 fixed_bitstring<3>& csi_rs_res_map_s::freq_domain_alloc_c_::set_row4()
 {
   set(types::row4);
-  return c.get<fixed_bitstring<3> >();
+  return c.get<fixed_bitstring<3>>();
 }
 fixed_bitstring<6>& csi_rs_res_map_s::freq_domain_alloc_c_::set_other()
 {
   set(types::other);
-  return c.get<fixed_bitstring<6> >();
+  return c.get<fixed_bitstring<6>>();
 }
 void csi_rs_res_map_s::freq_domain_alloc_c_::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
     case types::row1:
-      j.write_str("row1", c.get<fixed_bitstring<4> >().to_string());
+      j.write_str("row1", c.get<fixed_bitstring<4>>().to_string());
       break;
     case types::row2:
-      j.write_str("row2", c.get<fixed_bitstring<12> >().to_string());
+      j.write_str("row2", c.get<fixed_bitstring<12>>().to_string());
       break;
     case types::row4:
-      j.write_str("row4", c.get<fixed_bitstring<3> >().to_string());
+      j.write_str("row4", c.get<fixed_bitstring<3>>().to_string());
       break;
     case types::other:
-      j.write_str("other", c.get<fixed_bitstring<6> >().to_string());
+      j.write_str("other", c.get<fixed_bitstring<6>>().to_string());
       break;
     default:
       log_invalid_choice_id(type_, "csi_rs_res_map_s::freq_domain_alloc_c_");
@@ -4215,16 +4215,16 @@ SRSASN_CODE csi_rs_res_map_s::freq_domain_alloc_c_::pack(bit_ref& bref) const
   type_.pack(bref);
   switch (type_) {
     case types::row1:
-      HANDLE_CODE(c.get<fixed_bitstring<4> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<4>>().pack(bref));
       break;
     case types::row2:
-      HANDLE_CODE(c.get<fixed_bitstring<12> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<12>>().pack(bref));
       break;
     case types::row4:
-      HANDLE_CODE(c.get<fixed_bitstring<3> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<3>>().pack(bref));
       break;
     case types::other:
-      HANDLE_CODE(c.get<fixed_bitstring<6> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<6>>().pack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "csi_rs_res_map_s::freq_domain_alloc_c_");
@@ -4239,16 +4239,16 @@ SRSASN_CODE csi_rs_res_map_s::freq_domain_alloc_c_::unpack(cbit_ref& bref)
   set(e);
   switch (type_) {
     case types::row1:
-      HANDLE_CODE(c.get<fixed_bitstring<4> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<4>>().unpack(bref));
       break;
     case types::row2:
-      HANDLE_CODE(c.get<fixed_bitstring<12> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<12>>().unpack(bref));
       break;
     case types::row4:
-      HANDLE_CODE(c.get<fixed_bitstring<3> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<3>>().unpack(bref));
       break;
     case types::other:
-      HANDLE_CODE(c.get<fixed_bitstring<6> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<6>>().unpack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "csi_rs_res_map_s::freq_domain_alloc_c_");
@@ -5531,10 +5531,10 @@ void rate_match_pattern_s::pattern_type_c_::bitmaps_s_::symbols_in_res_block_c_:
 {
   switch (type_) {
     case types::one_slot:
-      c.destroy<fixed_bitstring<14> >();
+      c.destroy<fixed_bitstring<14>>();
       break;
     case types::two_slots:
-      c.destroy<fixed_bitstring<28> >();
+      c.destroy<fixed_bitstring<28>>();
       break;
     default:
       break;
@@ -5546,10 +5546,10 @@ void rate_match_pattern_s::pattern_type_c_::bitmaps_s_::symbols_in_res_block_c_:
   type_ = e;
   switch (type_) {
     case types::one_slot:
-      c.init<fixed_bitstring<14> >();
+      c.init<fixed_bitstring<14>>();
       break;
     case types::two_slots:
-      c.init<fixed_bitstring<28> >();
+      c.init<fixed_bitstring<28>>();
       break;
     case types::nulltype:
       break;
@@ -5563,10 +5563,10 @@ rate_match_pattern_s::pattern_type_c_::bitmaps_s_::symbols_in_res_block_c_::symb
   type_ = other.type();
   switch (type_) {
     case types::one_slot:
-      c.init(other.c.get<fixed_bitstring<14> >());
+      c.init(other.c.get<fixed_bitstring<14>>());
       break;
     case types::two_slots:
-      c.init(other.c.get<fixed_bitstring<28> >());
+      c.init(other.c.get<fixed_bitstring<28>>());
       break;
     case types::nulltype:
       break;
@@ -5584,10 +5584,10 @@ rate_match_pattern_s::pattern_type_c_::bitmaps_s_::symbols_in_res_block_c_::oper
   set(other.type());
   switch (type_) {
     case types::one_slot:
-      c.set(other.c.get<fixed_bitstring<14> >());
+      c.set(other.c.get<fixed_bitstring<14>>());
       break;
     case types::two_slots:
-      c.set(other.c.get<fixed_bitstring<28> >());
+      c.set(other.c.get<fixed_bitstring<28>>());
       break;
     case types::nulltype:
       break;
@@ -5600,22 +5600,22 @@ rate_match_pattern_s::pattern_type_c_::bitmaps_s_::symbols_in_res_block_c_::oper
 fixed_bitstring<14>& rate_match_pattern_s::pattern_type_c_::bitmaps_s_::symbols_in_res_block_c_::set_one_slot()
 {
   set(types::one_slot);
-  return c.get<fixed_bitstring<14> >();
+  return c.get<fixed_bitstring<14>>();
 }
 fixed_bitstring<28>& rate_match_pattern_s::pattern_type_c_::bitmaps_s_::symbols_in_res_block_c_::set_two_slots()
 {
   set(types::two_slots);
-  return c.get<fixed_bitstring<28> >();
+  return c.get<fixed_bitstring<28>>();
 }
 void rate_match_pattern_s::pattern_type_c_::bitmaps_s_::symbols_in_res_block_c_::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
     case types::one_slot:
-      j.write_str("oneSlot", c.get<fixed_bitstring<14> >().to_string());
+      j.write_str("oneSlot", c.get<fixed_bitstring<14>>().to_string());
       break;
     case types::two_slots:
-      j.write_str("twoSlots", c.get<fixed_bitstring<28> >().to_string());
+      j.write_str("twoSlots", c.get<fixed_bitstring<28>>().to_string());
       break;
     default:
       log_invalid_choice_id(type_, "rate_match_pattern_s::pattern_type_c_::bitmaps_s_::symbols_in_res_block_c_");
@@ -5627,10 +5627,10 @@ SRSASN_CODE rate_match_pattern_s::pattern_type_c_::bitmaps_s_::symbols_in_res_bl
   type_.pack(bref);
   switch (type_) {
     case types::one_slot:
-      HANDLE_CODE(c.get<fixed_bitstring<14> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<14>>().pack(bref));
       break;
     case types::two_slots:
-      HANDLE_CODE(c.get<fixed_bitstring<28> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<28>>().pack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "rate_match_pattern_s::pattern_type_c_::bitmaps_s_::symbols_in_res_block_c_");
@@ -5645,10 +5645,10 @@ SRSASN_CODE rate_match_pattern_s::pattern_type_c_::bitmaps_s_::symbols_in_res_bl
   set(e);
   switch (type_) {
     case types::one_slot:
-      HANDLE_CODE(c.get<fixed_bitstring<14> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<14>>().unpack(bref));
       break;
     case types::two_slots:
-      HANDLE_CODE(c.get<fixed_bitstring<28> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<28>>().unpack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "rate_match_pattern_s::pattern_type_c_::bitmaps_s_::symbols_in_res_block_c_");
@@ -5661,25 +5661,25 @@ void rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_pattern_
 {
   switch (type_) {
     case types::n2:
-      c.destroy<fixed_bitstring<2> >();
+      c.destroy<fixed_bitstring<2>>();
       break;
     case types::n4:
-      c.destroy<fixed_bitstring<4> >();
+      c.destroy<fixed_bitstring<4>>();
       break;
     case types::n5:
-      c.destroy<fixed_bitstring<5> >();
+      c.destroy<fixed_bitstring<5>>();
       break;
     case types::n8:
-      c.destroy<fixed_bitstring<8> >();
+      c.destroy<fixed_bitstring<8>>();
       break;
     case types::n10:
-      c.destroy<fixed_bitstring<10> >();
+      c.destroy<fixed_bitstring<10>>();
       break;
     case types::n20:
-      c.destroy<fixed_bitstring<20> >();
+      c.destroy<fixed_bitstring<20>>();
       break;
     case types::n40:
-      c.destroy<fixed_bitstring<40> >();
+      c.destroy<fixed_bitstring<40>>();
       break;
     default:
       break;
@@ -5691,25 +5691,25 @@ void rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_pattern_
   type_ = e;
   switch (type_) {
     case types::n2:
-      c.init<fixed_bitstring<2> >();
+      c.init<fixed_bitstring<2>>();
       break;
     case types::n4:
-      c.init<fixed_bitstring<4> >();
+      c.init<fixed_bitstring<4>>();
       break;
     case types::n5:
-      c.init<fixed_bitstring<5> >();
+      c.init<fixed_bitstring<5>>();
       break;
     case types::n8:
-      c.init<fixed_bitstring<8> >();
+      c.init<fixed_bitstring<8>>();
       break;
     case types::n10:
-      c.init<fixed_bitstring<10> >();
+      c.init<fixed_bitstring<10>>();
       break;
     case types::n20:
-      c.init<fixed_bitstring<20> >();
+      c.init<fixed_bitstring<20>>();
       break;
     case types::n40:
-      c.init<fixed_bitstring<40> >();
+      c.init<fixed_bitstring<40>>();
       break;
     case types::nulltype:
       break;
@@ -5723,25 +5723,25 @@ rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_pattern_c_::p
   type_ = other.type();
   switch (type_) {
     case types::n2:
-      c.init(other.c.get<fixed_bitstring<2> >());
+      c.init(other.c.get<fixed_bitstring<2>>());
       break;
     case types::n4:
-      c.init(other.c.get<fixed_bitstring<4> >());
+      c.init(other.c.get<fixed_bitstring<4>>());
       break;
     case types::n5:
-      c.init(other.c.get<fixed_bitstring<5> >());
+      c.init(other.c.get<fixed_bitstring<5>>());
       break;
     case types::n8:
-      c.init(other.c.get<fixed_bitstring<8> >());
+      c.init(other.c.get<fixed_bitstring<8>>());
       break;
     case types::n10:
-      c.init(other.c.get<fixed_bitstring<10> >());
+      c.init(other.c.get<fixed_bitstring<10>>());
       break;
     case types::n20:
-      c.init(other.c.get<fixed_bitstring<20> >());
+      c.init(other.c.get<fixed_bitstring<20>>());
       break;
     case types::n40:
-      c.init(other.c.get<fixed_bitstring<40> >());
+      c.init(other.c.get<fixed_bitstring<40>>());
       break;
     case types::nulltype:
       break;
@@ -5759,25 +5759,25 @@ rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_pattern_c_::o
   set(other.type());
   switch (type_) {
     case types::n2:
-      c.set(other.c.get<fixed_bitstring<2> >());
+      c.set(other.c.get<fixed_bitstring<2>>());
       break;
     case types::n4:
-      c.set(other.c.get<fixed_bitstring<4> >());
+      c.set(other.c.get<fixed_bitstring<4>>());
       break;
     case types::n5:
-      c.set(other.c.get<fixed_bitstring<5> >());
+      c.set(other.c.get<fixed_bitstring<5>>());
       break;
     case types::n8:
-      c.set(other.c.get<fixed_bitstring<8> >());
+      c.set(other.c.get<fixed_bitstring<8>>());
       break;
     case types::n10:
-      c.set(other.c.get<fixed_bitstring<10> >());
+      c.set(other.c.get<fixed_bitstring<10>>());
       break;
     case types::n20:
-      c.set(other.c.get<fixed_bitstring<20> >());
+      c.set(other.c.get<fixed_bitstring<20>>());
       break;
     case types::n40:
-      c.set(other.c.get<fixed_bitstring<40> >());
+      c.set(other.c.get<fixed_bitstring<40>>());
       break;
     case types::nulltype:
       break;
@@ -5790,62 +5790,62 @@ rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_pattern_c_::o
 fixed_bitstring<2>& rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_pattern_c_::set_n2()
 {
   set(types::n2);
-  return c.get<fixed_bitstring<2> >();
+  return c.get<fixed_bitstring<2>>();
 }
 fixed_bitstring<4>& rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_pattern_c_::set_n4()
 {
   set(types::n4);
-  return c.get<fixed_bitstring<4> >();
+  return c.get<fixed_bitstring<4>>();
 }
 fixed_bitstring<5>& rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_pattern_c_::set_n5()
 {
   set(types::n5);
-  return c.get<fixed_bitstring<5> >();
+  return c.get<fixed_bitstring<5>>();
 }
 fixed_bitstring<8>& rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_pattern_c_::set_n8()
 {
   set(types::n8);
-  return c.get<fixed_bitstring<8> >();
+  return c.get<fixed_bitstring<8>>();
 }
 fixed_bitstring<10>& rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_pattern_c_::set_n10()
 {
   set(types::n10);
-  return c.get<fixed_bitstring<10> >();
+  return c.get<fixed_bitstring<10>>();
 }
 fixed_bitstring<20>& rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_pattern_c_::set_n20()
 {
   set(types::n20);
-  return c.get<fixed_bitstring<20> >();
+  return c.get<fixed_bitstring<20>>();
 }
 fixed_bitstring<40>& rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_pattern_c_::set_n40()
 {
   set(types::n40);
-  return c.get<fixed_bitstring<40> >();
+  return c.get<fixed_bitstring<40>>();
 }
 void rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_pattern_c_::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
     case types::n2:
-      j.write_str("n2", c.get<fixed_bitstring<2> >().to_string());
+      j.write_str("n2", c.get<fixed_bitstring<2>>().to_string());
       break;
     case types::n4:
-      j.write_str("n4", c.get<fixed_bitstring<4> >().to_string());
+      j.write_str("n4", c.get<fixed_bitstring<4>>().to_string());
       break;
     case types::n5:
-      j.write_str("n5", c.get<fixed_bitstring<5> >().to_string());
+      j.write_str("n5", c.get<fixed_bitstring<5>>().to_string());
       break;
     case types::n8:
-      j.write_str("n8", c.get<fixed_bitstring<8> >().to_string());
+      j.write_str("n8", c.get<fixed_bitstring<8>>().to_string());
       break;
     case types::n10:
-      j.write_str("n10", c.get<fixed_bitstring<10> >().to_string());
+      j.write_str("n10", c.get<fixed_bitstring<10>>().to_string());
       break;
     case types::n20:
-      j.write_str("n20", c.get<fixed_bitstring<20> >().to_string());
+      j.write_str("n20", c.get<fixed_bitstring<20>>().to_string());
       break;
     case types::n40:
-      j.write_str("n40", c.get<fixed_bitstring<40> >().to_string());
+      j.write_str("n40", c.get<fixed_bitstring<40>>().to_string());
       break;
     default:
       log_invalid_choice_id(type_, "rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_pattern_c_");
@@ -5857,25 +5857,25 @@ SRSASN_CODE rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_p
   type_.pack(bref);
   switch (type_) {
     case types::n2:
-      HANDLE_CODE(c.get<fixed_bitstring<2> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<2>>().pack(bref));
       break;
     case types::n4:
-      HANDLE_CODE(c.get<fixed_bitstring<4> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<4>>().pack(bref));
       break;
     case types::n5:
-      HANDLE_CODE(c.get<fixed_bitstring<5> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<5>>().pack(bref));
       break;
     case types::n8:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().pack(bref));
       break;
     case types::n10:
-      HANDLE_CODE(c.get<fixed_bitstring<10> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<10>>().pack(bref));
       break;
     case types::n20:
-      HANDLE_CODE(c.get<fixed_bitstring<20> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<20>>().pack(bref));
       break;
     case types::n40:
-      HANDLE_CODE(c.get<fixed_bitstring<40> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<40>>().pack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_pattern_c_");
@@ -5890,25 +5890,25 @@ SRSASN_CODE rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_p
   set(e);
   switch (type_) {
     case types::n2:
-      HANDLE_CODE(c.get<fixed_bitstring<2> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<2>>().unpack(bref));
       break;
     case types::n4:
-      HANDLE_CODE(c.get<fixed_bitstring<4> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<4>>().unpack(bref));
       break;
     case types::n5:
-      HANDLE_CODE(c.get<fixed_bitstring<5> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<5>>().unpack(bref));
       break;
     case types::n8:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().unpack(bref));
       break;
     case types::n10:
-      HANDLE_CODE(c.get<fixed_bitstring<10> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<10>>().unpack(bref));
       break;
     case types::n20:
-      HANDLE_CODE(c.get<fixed_bitstring<20> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<20>>().unpack(bref));
       break;
     case types::n40:
-      HANDLE_CODE(c.get<fixed_bitstring<40> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<40>>().unpack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "rate_match_pattern_s::pattern_type_c_::bitmaps_s_::periodicity_and_pattern_c_");
@@ -12804,43 +12804,43 @@ void codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_pane
 {
   switch (type_) {
     case types::two_one_type_i_single_panel_restrict:
-      c.destroy<fixed_bitstring<8> >();
+      c.destroy<fixed_bitstring<8>>();
       break;
     case types::two_two_type_i_single_panel_restrict:
-      c.destroy<fixed_bitstring<64> >();
+      c.destroy<fixed_bitstring<64>>();
       break;
     case types::four_one_type_i_single_panel_restrict:
-      c.destroy<fixed_bitstring<16> >();
+      c.destroy<fixed_bitstring<16>>();
       break;
     case types::three_two_type_i_single_panel_restrict:
-      c.destroy<fixed_bitstring<96> >();
+      c.destroy<fixed_bitstring<96>>();
       break;
     case types::six_one_type_i_single_panel_restrict:
-      c.destroy<fixed_bitstring<24> >();
+      c.destroy<fixed_bitstring<24>>();
       break;
     case types::four_two_type_i_single_panel_restrict:
-      c.destroy<fixed_bitstring<128> >();
+      c.destroy<fixed_bitstring<128>>();
       break;
     case types::eight_one_type_i_single_panel_restrict:
-      c.destroy<fixed_bitstring<32> >();
+      c.destroy<fixed_bitstring<32>>();
       break;
     case types::four_three_type_i_single_panel_restrict:
-      c.destroy<fixed_bitstring<192> >();
+      c.destroy<fixed_bitstring<192>>();
       break;
     case types::six_two_type_i_single_panel_restrict:
-      c.destroy<fixed_bitstring<192> >();
+      c.destroy<fixed_bitstring<192>>();
       break;
     case types::twelve_one_type_i_single_panel_restrict:
-      c.destroy<fixed_bitstring<48> >();
+      c.destroy<fixed_bitstring<48>>();
       break;
     case types::four_four_type_i_single_panel_restrict:
-      c.destroy<fixed_bitstring<256> >();
+      c.destroy<fixed_bitstring<256>>();
       break;
     case types::eight_two_type_i_single_panel_restrict:
-      c.destroy<fixed_bitstring<256> >();
+      c.destroy<fixed_bitstring<256>>();
       break;
     case types::sixteen_one_type_i_single_panel_restrict:
-      c.destroy<fixed_bitstring<64> >();
+      c.destroy<fixed_bitstring<64>>();
       break;
     default:
       break;
@@ -12853,43 +12853,43 @@ void codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_pane
   type_ = e;
   switch (type_) {
     case types::two_one_type_i_single_panel_restrict:
-      c.init<fixed_bitstring<8> >();
+      c.init<fixed_bitstring<8>>();
       break;
     case types::two_two_type_i_single_panel_restrict:
-      c.init<fixed_bitstring<64> >();
+      c.init<fixed_bitstring<64>>();
       break;
     case types::four_one_type_i_single_panel_restrict:
-      c.init<fixed_bitstring<16> >();
+      c.init<fixed_bitstring<16>>();
       break;
     case types::three_two_type_i_single_panel_restrict:
-      c.init<fixed_bitstring<96> >();
+      c.init<fixed_bitstring<96>>();
       break;
     case types::six_one_type_i_single_panel_restrict:
-      c.init<fixed_bitstring<24> >();
+      c.init<fixed_bitstring<24>>();
       break;
     case types::four_two_type_i_single_panel_restrict:
-      c.init<fixed_bitstring<128> >();
+      c.init<fixed_bitstring<128>>();
       break;
     case types::eight_one_type_i_single_panel_restrict:
-      c.init<fixed_bitstring<32> >();
+      c.init<fixed_bitstring<32>>();
       break;
     case types::four_three_type_i_single_panel_restrict:
-      c.init<fixed_bitstring<192> >();
+      c.init<fixed_bitstring<192>>();
       break;
     case types::six_two_type_i_single_panel_restrict:
-      c.init<fixed_bitstring<192> >();
+      c.init<fixed_bitstring<192>>();
       break;
     case types::twelve_one_type_i_single_panel_restrict:
-      c.init<fixed_bitstring<48> >();
+      c.init<fixed_bitstring<48>>();
       break;
     case types::four_four_type_i_single_panel_restrict:
-      c.init<fixed_bitstring<256> >();
+      c.init<fixed_bitstring<256>>();
       break;
     case types::eight_two_type_i_single_panel_restrict:
-      c.init<fixed_bitstring<256> >();
+      c.init<fixed_bitstring<256>>();
       break;
     case types::sixteen_one_type_i_single_panel_restrict:
-      c.init<fixed_bitstring<64> >();
+      c.init<fixed_bitstring<64>>();
       break;
     case types::nulltype:
       break;
@@ -12906,43 +12906,43 @@ codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_:
   type_ = other.type();
   switch (type_) {
     case types::two_one_type_i_single_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<8> >());
+      c.init(other.c.get<fixed_bitstring<8>>());
       break;
     case types::two_two_type_i_single_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<64> >());
+      c.init(other.c.get<fixed_bitstring<64>>());
       break;
     case types::four_one_type_i_single_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<16> >());
+      c.init(other.c.get<fixed_bitstring<16>>());
       break;
     case types::three_two_type_i_single_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<96> >());
+      c.init(other.c.get<fixed_bitstring<96>>());
       break;
     case types::six_one_type_i_single_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<24> >());
+      c.init(other.c.get<fixed_bitstring<24>>());
       break;
     case types::four_two_type_i_single_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<128> >());
+      c.init(other.c.get<fixed_bitstring<128>>());
       break;
     case types::eight_one_type_i_single_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<32> >());
+      c.init(other.c.get<fixed_bitstring<32>>());
       break;
     case types::four_three_type_i_single_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<192> >());
+      c.init(other.c.get<fixed_bitstring<192>>());
       break;
     case types::six_two_type_i_single_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<192> >());
+      c.init(other.c.get<fixed_bitstring<192>>());
       break;
     case types::twelve_one_type_i_single_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<48> >());
+      c.init(other.c.get<fixed_bitstring<48>>());
       break;
     case types::four_four_type_i_single_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<256> >());
+      c.init(other.c.get<fixed_bitstring<256>>());
       break;
     case types::eight_two_type_i_single_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<256> >());
+      c.init(other.c.get<fixed_bitstring<256>>());
       break;
     case types::sixteen_one_type_i_single_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<64> >());
+      c.init(other.c.get<fixed_bitstring<64>>());
       break;
     case types::nulltype:
       break;
@@ -12954,7 +12954,7 @@ codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_:
 }
 codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::nr_of_ant_ports_c_::more_than_two_s_::
     n1_n2_c_&
-                                    codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::nr_of_ant_ports_c_::
+    codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::nr_of_ant_ports_c_::
         more_than_two_s_::n1_n2_c_::operator=(
             const codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::nr_of_ant_ports_c_::
                 more_than_two_s_::n1_n2_c_& other)
@@ -12965,43 +12965,43 @@ codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_:
   set(other.type());
   switch (type_) {
     case types::two_one_type_i_single_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<8> >());
+      c.set(other.c.get<fixed_bitstring<8>>());
       break;
     case types::two_two_type_i_single_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<64> >());
+      c.set(other.c.get<fixed_bitstring<64>>());
       break;
     case types::four_one_type_i_single_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<16> >());
+      c.set(other.c.get<fixed_bitstring<16>>());
       break;
     case types::three_two_type_i_single_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<96> >());
+      c.set(other.c.get<fixed_bitstring<96>>());
       break;
     case types::six_one_type_i_single_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<24> >());
+      c.set(other.c.get<fixed_bitstring<24>>());
       break;
     case types::four_two_type_i_single_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<128> >());
+      c.set(other.c.get<fixed_bitstring<128>>());
       break;
     case types::eight_one_type_i_single_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<32> >());
+      c.set(other.c.get<fixed_bitstring<32>>());
       break;
     case types::four_three_type_i_single_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<192> >());
+      c.set(other.c.get<fixed_bitstring<192>>());
       break;
     case types::six_two_type_i_single_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<192> >());
+      c.set(other.c.get<fixed_bitstring<192>>());
       break;
     case types::twelve_one_type_i_single_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<48> >());
+      c.set(other.c.get<fixed_bitstring<48>>());
       break;
     case types::four_four_type_i_single_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<256> >());
+      c.set(other.c.get<fixed_bitstring<256>>());
       break;
     case types::eight_two_type_i_single_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<256> >());
+      c.set(other.c.get<fixed_bitstring<256>>());
       break;
     case types::sixteen_one_type_i_single_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<64> >());
+      c.set(other.c.get<fixed_bitstring<64>>());
       break;
     case types::nulltype:
       break;
@@ -13017,79 +13017,79 @@ fixed_bitstring<8>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::typ
     nr_of_ant_ports_c_::more_than_two_s_::n1_n2_c_::set_two_one_type_i_single_panel_restrict()
 {
   set(types::two_one_type_i_single_panel_restrict);
-  return c.get<fixed_bitstring<8> >();
+  return c.get<fixed_bitstring<8>>();
 }
 fixed_bitstring<64>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::
     nr_of_ant_ports_c_::more_than_two_s_::n1_n2_c_::set_two_two_type_i_single_panel_restrict()
 {
   set(types::two_two_type_i_single_panel_restrict);
-  return c.get<fixed_bitstring<64> >();
+  return c.get<fixed_bitstring<64>>();
 }
 fixed_bitstring<16>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::
     nr_of_ant_ports_c_::more_than_two_s_::n1_n2_c_::set_four_one_type_i_single_panel_restrict()
 {
   set(types::four_one_type_i_single_panel_restrict);
-  return c.get<fixed_bitstring<16> >();
+  return c.get<fixed_bitstring<16>>();
 }
 fixed_bitstring<96>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::
     nr_of_ant_ports_c_::more_than_two_s_::n1_n2_c_::set_three_two_type_i_single_panel_restrict()
 {
   set(types::three_two_type_i_single_panel_restrict);
-  return c.get<fixed_bitstring<96> >();
+  return c.get<fixed_bitstring<96>>();
 }
 fixed_bitstring<24>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::
     nr_of_ant_ports_c_::more_than_two_s_::n1_n2_c_::set_six_one_type_i_single_panel_restrict()
 {
   set(types::six_one_type_i_single_panel_restrict);
-  return c.get<fixed_bitstring<24> >();
+  return c.get<fixed_bitstring<24>>();
 }
 fixed_bitstring<128>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::
     nr_of_ant_ports_c_::more_than_two_s_::n1_n2_c_::set_four_two_type_i_single_panel_restrict()
 {
   set(types::four_two_type_i_single_panel_restrict);
-  return c.get<fixed_bitstring<128> >();
+  return c.get<fixed_bitstring<128>>();
 }
 fixed_bitstring<32>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::
     nr_of_ant_ports_c_::more_than_two_s_::n1_n2_c_::set_eight_one_type_i_single_panel_restrict()
 {
   set(types::eight_one_type_i_single_panel_restrict);
-  return c.get<fixed_bitstring<32> >();
+  return c.get<fixed_bitstring<32>>();
 }
 fixed_bitstring<192>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::
     nr_of_ant_ports_c_::more_than_two_s_::n1_n2_c_::set_four_three_type_i_single_panel_restrict()
 {
   set(types::four_three_type_i_single_panel_restrict);
-  return c.get<fixed_bitstring<192> >();
+  return c.get<fixed_bitstring<192>>();
 }
 fixed_bitstring<192>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::
     nr_of_ant_ports_c_::more_than_two_s_::n1_n2_c_::set_six_two_type_i_single_panel_restrict()
 {
   set(types::six_two_type_i_single_panel_restrict);
-  return c.get<fixed_bitstring<192> >();
+  return c.get<fixed_bitstring<192>>();
 }
 fixed_bitstring<48>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::
     nr_of_ant_ports_c_::more_than_two_s_::n1_n2_c_::set_twelve_one_type_i_single_panel_restrict()
 {
   set(types::twelve_one_type_i_single_panel_restrict);
-  return c.get<fixed_bitstring<48> >();
+  return c.get<fixed_bitstring<48>>();
 }
 fixed_bitstring<256>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::
     nr_of_ant_ports_c_::more_than_two_s_::n1_n2_c_::set_four_four_type_i_single_panel_restrict()
 {
   set(types::four_four_type_i_single_panel_restrict);
-  return c.get<fixed_bitstring<256> >();
+  return c.get<fixed_bitstring<256>>();
 }
 fixed_bitstring<256>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::
     nr_of_ant_ports_c_::more_than_two_s_::n1_n2_c_::set_eight_two_type_i_single_panel_restrict()
 {
   set(types::eight_two_type_i_single_panel_restrict);
-  return c.get<fixed_bitstring<256> >();
+  return c.get<fixed_bitstring<256>>();
 }
 fixed_bitstring<64>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::
     nr_of_ant_ports_c_::more_than_two_s_::n1_n2_c_::set_sixteen_one_type_i_single_panel_restrict()
 {
   set(types::sixteen_one_type_i_single_panel_restrict);
-  return c.get<fixed_bitstring<64> >();
+  return c.get<fixed_bitstring<64>>();
 }
 void codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_panel_s_::nr_of_ant_ports_c_::
     more_than_two_s_::n1_n2_c_::to_json(json_writer& j) const
@@ -13097,43 +13097,43 @@ void codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_single_pane
   j.start_obj();
   switch (type_) {
     case types::two_one_type_i_single_panel_restrict:
-      j.write_str("two-one-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<8> >().to_string());
+      j.write_str("two-one-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<8>>().to_string());
       break;
     case types::two_two_type_i_single_panel_restrict:
-      j.write_str("two-two-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<64> >().to_string());
+      j.write_str("two-two-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<64>>().to_string());
       break;
     case types::four_one_type_i_single_panel_restrict:
-      j.write_str("four-one-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<16> >().to_string());
+      j.write_str("four-one-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<16>>().to_string());
       break;
     case types::three_two_type_i_single_panel_restrict:
-      j.write_str("three-two-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<96> >().to_string());
+      j.write_str("three-two-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<96>>().to_string());
       break;
     case types::six_one_type_i_single_panel_restrict:
-      j.write_str("six-one-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<24> >().to_string());
+      j.write_str("six-one-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<24>>().to_string());
       break;
     case types::four_two_type_i_single_panel_restrict:
-      j.write_str("four-two-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<128> >().to_string());
+      j.write_str("four-two-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<128>>().to_string());
       break;
     case types::eight_one_type_i_single_panel_restrict:
-      j.write_str("eight-one-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<32> >().to_string());
+      j.write_str("eight-one-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<32>>().to_string());
       break;
     case types::four_three_type_i_single_panel_restrict:
-      j.write_str("four-three-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<192> >().to_string());
+      j.write_str("four-three-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<192>>().to_string());
       break;
     case types::six_two_type_i_single_panel_restrict:
-      j.write_str("six-two-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<192> >().to_string());
+      j.write_str("six-two-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<192>>().to_string());
       break;
     case types::twelve_one_type_i_single_panel_restrict:
-      j.write_str("twelve-one-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<48> >().to_string());
+      j.write_str("twelve-one-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<48>>().to_string());
       break;
     case types::four_four_type_i_single_panel_restrict:
-      j.write_str("four-four-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<256> >().to_string());
+      j.write_str("four-four-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<256>>().to_string());
       break;
     case types::eight_two_type_i_single_panel_restrict:
-      j.write_str("eight-two-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<256> >().to_string());
+      j.write_str("eight-two-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<256>>().to_string());
       break;
     case types::sixteen_one_type_i_single_panel_restrict:
-      j.write_str("sixteen-one-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<64> >().to_string());
+      j.write_str("sixteen-one-TypeI-SinglePanel-Restriction", c.get<fixed_bitstring<64>>().to_string());
       break;
     default:
       log_invalid_choice_id(type_,
@@ -13148,43 +13148,43 @@ SRSASN_CODE codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_sing
   type_.pack(bref);
   switch (type_) {
     case types::two_one_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().pack(bref));
       break;
     case types::two_two_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<64> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<64>>().pack(bref));
       break;
     case types::four_one_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<16> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<16>>().pack(bref));
       break;
     case types::three_two_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<96> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<96>>().pack(bref));
       break;
     case types::six_one_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<24> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<24>>().pack(bref));
       break;
     case types::four_two_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<128> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<128>>().pack(bref));
       break;
     case types::eight_one_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<32> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<32>>().pack(bref));
       break;
     case types::four_three_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<192> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<192>>().pack(bref));
       break;
     case types::six_two_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<192> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<192>>().pack(bref));
       break;
     case types::twelve_one_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<48> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<48>>().pack(bref));
       break;
     case types::four_four_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<256> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<256>>().pack(bref));
       break;
     case types::eight_two_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<256> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<256>>().pack(bref));
       break;
     case types::sixteen_one_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<64> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<64>>().pack(bref));
       break;
     default:
       log_invalid_choice_id(type_,
@@ -13202,43 +13202,43 @@ SRSASN_CODE codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_sing
   set(e);
   switch (type_) {
     case types::two_one_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().unpack(bref));
       break;
     case types::two_two_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<64> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<64>>().unpack(bref));
       break;
     case types::four_one_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<16> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<16>>().unpack(bref));
       break;
     case types::three_two_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<96> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<96>>().unpack(bref));
       break;
     case types::six_one_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<24> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<24>>().unpack(bref));
       break;
     case types::four_two_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<128> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<128>>().unpack(bref));
       break;
     case types::eight_one_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<32> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<32>>().unpack(bref));
       break;
     case types::four_three_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<192> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<192>>().unpack(bref));
       break;
     case types::six_two_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<192> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<192>>().unpack(bref));
       break;
     case types::twelve_one_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<48> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<48>>().unpack(bref));
       break;
     case types::four_four_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<256> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<256>>().unpack(bref));
       break;
     case types::eight_two_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<256> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<256>>().unpack(bref));
       break;
     case types::sixteen_one_type_i_single_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<64> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<64>>().unpack(bref));
       break;
     default:
       log_invalid_choice_id(type_,
@@ -13253,28 +13253,28 @@ void codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_multi_panel
 {
   switch (type_) {
     case types::two_two_one_type_i_multi_panel_restrict:
-      c.destroy<fixed_bitstring<8> >();
+      c.destroy<fixed_bitstring<8>>();
       break;
     case types::two_four_one_type_i_multi_panel_restrict:
-      c.destroy<fixed_bitstring<16> >();
+      c.destroy<fixed_bitstring<16>>();
       break;
     case types::four_two_one_type_i_multi_panel_restrict:
-      c.destroy<fixed_bitstring<8> >();
+      c.destroy<fixed_bitstring<8>>();
       break;
     case types::two_two_two_type_i_multi_panel_restrict:
-      c.destroy<fixed_bitstring<64> >();
+      c.destroy<fixed_bitstring<64>>();
       break;
     case types::two_eight_one_type_i_multi_panel_restrict:
-      c.destroy<fixed_bitstring<32> >();
+      c.destroy<fixed_bitstring<32>>();
       break;
     case types::four_four_one_type_i_multi_panel_restrict:
-      c.destroy<fixed_bitstring<16> >();
+      c.destroy<fixed_bitstring<16>>();
       break;
     case types::two_four_two_type_i_multi_panel_restrict:
-      c.destroy<fixed_bitstring<128> >();
+      c.destroy<fixed_bitstring<128>>();
       break;
     case types::four_two_two_type_i_multi_panel_restrict:
-      c.destroy<fixed_bitstring<64> >();
+      c.destroy<fixed_bitstring<64>>();
       break;
     default:
       break;
@@ -13286,28 +13286,28 @@ void codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_multi_panel
   type_ = e;
   switch (type_) {
     case types::two_two_one_type_i_multi_panel_restrict:
-      c.init<fixed_bitstring<8> >();
+      c.init<fixed_bitstring<8>>();
       break;
     case types::two_four_one_type_i_multi_panel_restrict:
-      c.init<fixed_bitstring<16> >();
+      c.init<fixed_bitstring<16>>();
       break;
     case types::four_two_one_type_i_multi_panel_restrict:
-      c.init<fixed_bitstring<8> >();
+      c.init<fixed_bitstring<8>>();
       break;
     case types::two_two_two_type_i_multi_panel_restrict:
-      c.init<fixed_bitstring<64> >();
+      c.init<fixed_bitstring<64>>();
       break;
     case types::two_eight_one_type_i_multi_panel_restrict:
-      c.init<fixed_bitstring<32> >();
+      c.init<fixed_bitstring<32>>();
       break;
     case types::four_four_one_type_i_multi_panel_restrict:
-      c.init<fixed_bitstring<16> >();
+      c.init<fixed_bitstring<16>>();
       break;
     case types::two_four_two_type_i_multi_panel_restrict:
-      c.init<fixed_bitstring<128> >();
+      c.init<fixed_bitstring<128>>();
       break;
     case types::four_two_two_type_i_multi_panel_restrict:
-      c.init<fixed_bitstring<64> >();
+      c.init<fixed_bitstring<64>>();
       break;
     case types::nulltype:
       break;
@@ -13322,28 +13322,28 @@ codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_multi_panel_s_::
   type_ = other.type();
   switch (type_) {
     case types::two_two_one_type_i_multi_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<8> >());
+      c.init(other.c.get<fixed_bitstring<8>>());
       break;
     case types::two_four_one_type_i_multi_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<16> >());
+      c.init(other.c.get<fixed_bitstring<16>>());
       break;
     case types::four_two_one_type_i_multi_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<8> >());
+      c.init(other.c.get<fixed_bitstring<8>>());
       break;
     case types::two_two_two_type_i_multi_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<64> >());
+      c.init(other.c.get<fixed_bitstring<64>>());
       break;
     case types::two_eight_one_type_i_multi_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<32> >());
+      c.init(other.c.get<fixed_bitstring<32>>());
       break;
     case types::four_four_one_type_i_multi_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<16> >());
+      c.init(other.c.get<fixed_bitstring<16>>());
       break;
     case types::two_four_two_type_i_multi_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<128> >());
+      c.init(other.c.get<fixed_bitstring<128>>());
       break;
     case types::four_two_two_type_i_multi_panel_restrict:
-      c.init(other.c.get<fixed_bitstring<64> >());
+      c.init(other.c.get<fixed_bitstring<64>>());
       break;
     case types::nulltype:
       break;
@@ -13362,28 +13362,28 @@ codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_multi_panel_s_::
   set(other.type());
   switch (type_) {
     case types::two_two_one_type_i_multi_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<8> >());
+      c.set(other.c.get<fixed_bitstring<8>>());
       break;
     case types::two_four_one_type_i_multi_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<16> >());
+      c.set(other.c.get<fixed_bitstring<16>>());
       break;
     case types::four_two_one_type_i_multi_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<8> >());
+      c.set(other.c.get<fixed_bitstring<8>>());
       break;
     case types::two_two_two_type_i_multi_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<64> >());
+      c.set(other.c.get<fixed_bitstring<64>>());
       break;
     case types::two_eight_one_type_i_multi_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<32> >());
+      c.set(other.c.get<fixed_bitstring<32>>());
       break;
     case types::four_four_one_type_i_multi_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<16> >());
+      c.set(other.c.get<fixed_bitstring<16>>());
       break;
     case types::two_four_two_type_i_multi_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<128> >());
+      c.set(other.c.get<fixed_bitstring<128>>());
       break;
     case types::four_two_two_type_i_multi_panel_restrict:
-      c.set(other.c.get<fixed_bitstring<64> >());
+      c.set(other.c.get<fixed_bitstring<64>>());
       break;
     case types::nulltype:
       break;
@@ -13398,49 +13398,49 @@ fixed_bitstring<8>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::typ
     set_two_two_one_type_i_multi_panel_restrict()
 {
   set(types::two_two_one_type_i_multi_panel_restrict);
-  return c.get<fixed_bitstring<8> >();
+  return c.get<fixed_bitstring<8>>();
 }
 fixed_bitstring<16>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_multi_panel_s_::ng_n1_n2_c_::
     set_two_four_one_type_i_multi_panel_restrict()
 {
   set(types::two_four_one_type_i_multi_panel_restrict);
-  return c.get<fixed_bitstring<16> >();
+  return c.get<fixed_bitstring<16>>();
 }
 fixed_bitstring<8>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_multi_panel_s_::ng_n1_n2_c_::
     set_four_two_one_type_i_multi_panel_restrict()
 {
   set(types::four_two_one_type_i_multi_panel_restrict);
-  return c.get<fixed_bitstring<8> >();
+  return c.get<fixed_bitstring<8>>();
 }
 fixed_bitstring<64>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_multi_panel_s_::ng_n1_n2_c_::
     set_two_two_two_type_i_multi_panel_restrict()
 {
   set(types::two_two_two_type_i_multi_panel_restrict);
-  return c.get<fixed_bitstring<64> >();
+  return c.get<fixed_bitstring<64>>();
 }
 fixed_bitstring<32>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_multi_panel_s_::ng_n1_n2_c_::
     set_two_eight_one_type_i_multi_panel_restrict()
 {
   set(types::two_eight_one_type_i_multi_panel_restrict);
-  return c.get<fixed_bitstring<32> >();
+  return c.get<fixed_bitstring<32>>();
 }
 fixed_bitstring<16>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_multi_panel_s_::ng_n1_n2_c_::
     set_four_four_one_type_i_multi_panel_restrict()
 {
   set(types::four_four_one_type_i_multi_panel_restrict);
-  return c.get<fixed_bitstring<16> >();
+  return c.get<fixed_bitstring<16>>();
 }
 fixed_bitstring<128>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_multi_panel_s_::ng_n1_n2_c_::
     set_two_four_two_type_i_multi_panel_restrict()
 {
   set(types::two_four_two_type_i_multi_panel_restrict);
-  return c.get<fixed_bitstring<128> >();
+  return c.get<fixed_bitstring<128>>();
 }
 fixed_bitstring<64>& codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_multi_panel_s_::ng_n1_n2_c_::
     set_four_two_two_type_i_multi_panel_restrict()
 {
   set(types::four_two_two_type_i_multi_panel_restrict);
-  return c.get<fixed_bitstring<64> >();
+  return c.get<fixed_bitstring<64>>();
 }
 void codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_multi_panel_s_::ng_n1_n2_c_::to_json(
     json_writer& j) const
@@ -13448,28 +13448,28 @@ void codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_multi_panel
   j.start_obj();
   switch (type_) {
     case types::two_two_one_type_i_multi_panel_restrict:
-      j.write_str("two-two-one-TypeI-MultiPanel-Restriction", c.get<fixed_bitstring<8> >().to_string());
+      j.write_str("two-two-one-TypeI-MultiPanel-Restriction", c.get<fixed_bitstring<8>>().to_string());
       break;
     case types::two_four_one_type_i_multi_panel_restrict:
-      j.write_str("two-four-one-TypeI-MultiPanel-Restriction", c.get<fixed_bitstring<16> >().to_string());
+      j.write_str("two-four-one-TypeI-MultiPanel-Restriction", c.get<fixed_bitstring<16>>().to_string());
       break;
     case types::four_two_one_type_i_multi_panel_restrict:
-      j.write_str("four-two-one-TypeI-MultiPanel-Restriction", c.get<fixed_bitstring<8> >().to_string());
+      j.write_str("four-two-one-TypeI-MultiPanel-Restriction", c.get<fixed_bitstring<8>>().to_string());
       break;
     case types::two_two_two_type_i_multi_panel_restrict:
-      j.write_str("two-two-two-TypeI-MultiPanel-Restriction", c.get<fixed_bitstring<64> >().to_string());
+      j.write_str("two-two-two-TypeI-MultiPanel-Restriction", c.get<fixed_bitstring<64>>().to_string());
       break;
     case types::two_eight_one_type_i_multi_panel_restrict:
-      j.write_str("two-eight-one-TypeI-MultiPanel-Restriction", c.get<fixed_bitstring<32> >().to_string());
+      j.write_str("two-eight-one-TypeI-MultiPanel-Restriction", c.get<fixed_bitstring<32>>().to_string());
       break;
     case types::four_four_one_type_i_multi_panel_restrict:
-      j.write_str("four-four-one-TypeI-MultiPanel-Restriction", c.get<fixed_bitstring<16> >().to_string());
+      j.write_str("four-four-one-TypeI-MultiPanel-Restriction", c.get<fixed_bitstring<16>>().to_string());
       break;
     case types::two_four_two_type_i_multi_panel_restrict:
-      j.write_str("two-four-two-TypeI-MultiPanel-Restriction", c.get<fixed_bitstring<128> >().to_string());
+      j.write_str("two-four-two-TypeI-MultiPanel-Restriction", c.get<fixed_bitstring<128>>().to_string());
       break;
     case types::four_two_two_type_i_multi_panel_restrict:
-      j.write_str("four-two-two-TypeI-MultiPanel-Restriction", c.get<fixed_bitstring<64> >().to_string());
+      j.write_str("four-two-two-TypeI-MultiPanel-Restriction", c.get<fixed_bitstring<64>>().to_string());
       break;
     default:
       log_invalid_choice_id(
@@ -13483,28 +13483,28 @@ codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_multi_panel_s_::
   type_.pack(bref);
   switch (type_) {
     case types::two_two_one_type_i_multi_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().pack(bref));
       break;
     case types::two_four_one_type_i_multi_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<16> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<16>>().pack(bref));
       break;
     case types::four_two_one_type_i_multi_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().pack(bref));
       break;
     case types::two_two_two_type_i_multi_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<64> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<64>>().pack(bref));
       break;
     case types::two_eight_one_type_i_multi_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<32> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<32>>().pack(bref));
       break;
     case types::four_four_one_type_i_multi_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<16> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<16>>().pack(bref));
       break;
     case types::two_four_two_type_i_multi_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<128> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<128>>().pack(bref));
       break;
     case types::four_two_two_type_i_multi_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<64> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<64>>().pack(bref));
       break;
     default:
       log_invalid_choice_id(
@@ -13521,28 +13521,28 @@ codebook_cfg_s::codebook_type_c_::type1_s_::sub_type_c_::type_i_multi_panel_s_::
   set(e);
   switch (type_) {
     case types::two_two_one_type_i_multi_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().unpack(bref));
       break;
     case types::two_four_one_type_i_multi_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<16> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<16>>().unpack(bref));
       break;
     case types::four_two_one_type_i_multi_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().unpack(bref));
       break;
     case types::two_two_two_type_i_multi_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<64> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<64>>().unpack(bref));
       break;
     case types::two_eight_one_type_i_multi_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<32> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<32>>().unpack(bref));
       break;
     case types::four_four_one_type_i_multi_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<16> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<16>>().unpack(bref));
       break;
     case types::two_four_two_type_i_multi_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<128> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<128>>().unpack(bref));
       break;
     case types::four_two_two_type_i_multi_panel_restrict:
-      HANDLE_CODE(c.get<fixed_bitstring<64> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<64>>().unpack(bref));
       break;
     default:
       log_invalid_choice_id(
@@ -13710,43 +13710,43 @@ void codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_
 {
   switch (type_) {
     case types::two_one:
-      c.destroy<fixed_bitstring<16> >();
+      c.destroy<fixed_bitstring<16>>();
       break;
     case types::two_two:
-      c.destroy<fixed_bitstring<43> >();
+      c.destroy<fixed_bitstring<43>>();
       break;
     case types::four_one:
-      c.destroy<fixed_bitstring<32> >();
+      c.destroy<fixed_bitstring<32>>();
       break;
     case types::three_two:
-      c.destroy<fixed_bitstring<59> >();
+      c.destroy<fixed_bitstring<59>>();
       break;
     case types::six_one:
-      c.destroy<fixed_bitstring<48> >();
+      c.destroy<fixed_bitstring<48>>();
       break;
     case types::four_two:
-      c.destroy<fixed_bitstring<75> >();
+      c.destroy<fixed_bitstring<75>>();
       break;
     case types::eight_one:
-      c.destroy<fixed_bitstring<64> >();
+      c.destroy<fixed_bitstring<64>>();
       break;
     case types::four_three:
-      c.destroy<fixed_bitstring<107> >();
+      c.destroy<fixed_bitstring<107>>();
       break;
     case types::six_two:
-      c.destroy<fixed_bitstring<107> >();
+      c.destroy<fixed_bitstring<107>>();
       break;
     case types::twelve_one:
-      c.destroy<fixed_bitstring<96> >();
+      c.destroy<fixed_bitstring<96>>();
       break;
     case types::four_four:
-      c.destroy<fixed_bitstring<139> >();
+      c.destroy<fixed_bitstring<139>>();
       break;
     case types::eight_two:
-      c.destroy<fixed_bitstring<139> >();
+      c.destroy<fixed_bitstring<139>>();
       break;
     case types::sixteen_one:
-      c.destroy<fixed_bitstring<128> >();
+      c.destroy<fixed_bitstring<128>>();
       break;
     default:
       break;
@@ -13759,43 +13759,43 @@ void codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_
   type_ = e;
   switch (type_) {
     case types::two_one:
-      c.init<fixed_bitstring<16> >();
+      c.init<fixed_bitstring<16>>();
       break;
     case types::two_two:
-      c.init<fixed_bitstring<43> >();
+      c.init<fixed_bitstring<43>>();
       break;
     case types::four_one:
-      c.init<fixed_bitstring<32> >();
+      c.init<fixed_bitstring<32>>();
       break;
     case types::three_two:
-      c.init<fixed_bitstring<59> >();
+      c.init<fixed_bitstring<59>>();
       break;
     case types::six_one:
-      c.init<fixed_bitstring<48> >();
+      c.init<fixed_bitstring<48>>();
       break;
     case types::four_two:
-      c.init<fixed_bitstring<75> >();
+      c.init<fixed_bitstring<75>>();
       break;
     case types::eight_one:
-      c.init<fixed_bitstring<64> >();
+      c.init<fixed_bitstring<64>>();
       break;
     case types::four_three:
-      c.init<fixed_bitstring<107> >();
+      c.init<fixed_bitstring<107>>();
       break;
     case types::six_two:
-      c.init<fixed_bitstring<107> >();
+      c.init<fixed_bitstring<107>>();
       break;
     case types::twelve_one:
-      c.init<fixed_bitstring<96> >();
+      c.init<fixed_bitstring<96>>();
       break;
     case types::four_four:
-      c.init<fixed_bitstring<139> >();
+      c.init<fixed_bitstring<139>>();
       break;
     case types::eight_two:
-      c.init<fixed_bitstring<139> >();
+      c.init<fixed_bitstring<139>>();
       break;
     case types::sixteen_one:
-      c.init<fixed_bitstring<128> >();
+      c.init<fixed_bitstring<128>>();
       break;
     case types::nulltype:
       break;
@@ -13813,43 +13813,43 @@ codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codeb
   type_ = other.type();
   switch (type_) {
     case types::two_one:
-      c.init(other.c.get<fixed_bitstring<16> >());
+      c.init(other.c.get<fixed_bitstring<16>>());
       break;
     case types::two_two:
-      c.init(other.c.get<fixed_bitstring<43> >());
+      c.init(other.c.get<fixed_bitstring<43>>());
       break;
     case types::four_one:
-      c.init(other.c.get<fixed_bitstring<32> >());
+      c.init(other.c.get<fixed_bitstring<32>>());
       break;
     case types::three_two:
-      c.init(other.c.get<fixed_bitstring<59> >());
+      c.init(other.c.get<fixed_bitstring<59>>());
       break;
     case types::six_one:
-      c.init(other.c.get<fixed_bitstring<48> >());
+      c.init(other.c.get<fixed_bitstring<48>>());
       break;
     case types::four_two:
-      c.init(other.c.get<fixed_bitstring<75> >());
+      c.init(other.c.get<fixed_bitstring<75>>());
       break;
     case types::eight_one:
-      c.init(other.c.get<fixed_bitstring<64> >());
+      c.init(other.c.get<fixed_bitstring<64>>());
       break;
     case types::four_three:
-      c.init(other.c.get<fixed_bitstring<107> >());
+      c.init(other.c.get<fixed_bitstring<107>>());
       break;
     case types::six_two:
-      c.init(other.c.get<fixed_bitstring<107> >());
+      c.init(other.c.get<fixed_bitstring<107>>());
       break;
     case types::twelve_one:
-      c.init(other.c.get<fixed_bitstring<96> >());
+      c.init(other.c.get<fixed_bitstring<96>>());
       break;
     case types::four_four:
-      c.init(other.c.get<fixed_bitstring<139> >());
+      c.init(other.c.get<fixed_bitstring<139>>());
       break;
     case types::eight_two:
-      c.init(other.c.get<fixed_bitstring<139> >());
+      c.init(other.c.get<fixed_bitstring<139>>());
       break;
     case types::sixteen_one:
-      c.init(other.c.get<fixed_bitstring<128> >());
+      c.init(other.c.get<fixed_bitstring<128>>());
       break;
     case types::nulltype:
       break;
@@ -13869,43 +13869,43 @@ codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codeb
   set(other.type());
   switch (type_) {
     case types::two_one:
-      c.set(other.c.get<fixed_bitstring<16> >());
+      c.set(other.c.get<fixed_bitstring<16>>());
       break;
     case types::two_two:
-      c.set(other.c.get<fixed_bitstring<43> >());
+      c.set(other.c.get<fixed_bitstring<43>>());
       break;
     case types::four_one:
-      c.set(other.c.get<fixed_bitstring<32> >());
+      c.set(other.c.get<fixed_bitstring<32>>());
       break;
     case types::three_two:
-      c.set(other.c.get<fixed_bitstring<59> >());
+      c.set(other.c.get<fixed_bitstring<59>>());
       break;
     case types::six_one:
-      c.set(other.c.get<fixed_bitstring<48> >());
+      c.set(other.c.get<fixed_bitstring<48>>());
       break;
     case types::four_two:
-      c.set(other.c.get<fixed_bitstring<75> >());
+      c.set(other.c.get<fixed_bitstring<75>>());
       break;
     case types::eight_one:
-      c.set(other.c.get<fixed_bitstring<64> >());
+      c.set(other.c.get<fixed_bitstring<64>>());
       break;
     case types::four_three:
-      c.set(other.c.get<fixed_bitstring<107> >());
+      c.set(other.c.get<fixed_bitstring<107>>());
       break;
     case types::six_two:
-      c.set(other.c.get<fixed_bitstring<107> >());
+      c.set(other.c.get<fixed_bitstring<107>>());
       break;
     case types::twelve_one:
-      c.set(other.c.get<fixed_bitstring<96> >());
+      c.set(other.c.get<fixed_bitstring<96>>());
       break;
     case types::four_four:
-      c.set(other.c.get<fixed_bitstring<139> >());
+      c.set(other.c.get<fixed_bitstring<139>>());
       break;
     case types::eight_two:
-      c.set(other.c.get<fixed_bitstring<139> >());
+      c.set(other.c.get<fixed_bitstring<139>>());
       break;
     case types::sixteen_one:
-      c.set(other.c.get<fixed_bitstring<128> >());
+      c.set(other.c.get<fixed_bitstring<128>>());
       break;
     case types::nulltype:
       break;
@@ -13921,79 +13921,79 @@ fixed_bitstring<16>&
 codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codebook_subset_restrict_c_::set_two_one()
 {
   set(types::two_one);
-  return c.get<fixed_bitstring<16> >();
+  return c.get<fixed_bitstring<16>>();
 }
 fixed_bitstring<43>&
 codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codebook_subset_restrict_c_::set_two_two()
 {
   set(types::two_two);
-  return c.get<fixed_bitstring<43> >();
+  return c.get<fixed_bitstring<43>>();
 }
 fixed_bitstring<32>&
 codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codebook_subset_restrict_c_::set_four_one()
 {
   set(types::four_one);
-  return c.get<fixed_bitstring<32> >();
+  return c.get<fixed_bitstring<32>>();
 }
 fixed_bitstring<59>&
 codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codebook_subset_restrict_c_::set_three_two()
 {
   set(types::three_two);
-  return c.get<fixed_bitstring<59> >();
+  return c.get<fixed_bitstring<59>>();
 }
 fixed_bitstring<48>&
 codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codebook_subset_restrict_c_::set_six_one()
 {
   set(types::six_one);
-  return c.get<fixed_bitstring<48> >();
+  return c.get<fixed_bitstring<48>>();
 }
 fixed_bitstring<75>&
 codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codebook_subset_restrict_c_::set_four_two()
 {
   set(types::four_two);
-  return c.get<fixed_bitstring<75> >();
+  return c.get<fixed_bitstring<75>>();
 }
 fixed_bitstring<64>&
 codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codebook_subset_restrict_c_::set_eight_one()
 {
   set(types::eight_one);
-  return c.get<fixed_bitstring<64> >();
+  return c.get<fixed_bitstring<64>>();
 }
 fixed_bitstring<107>&
 codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codebook_subset_restrict_c_::set_four_three()
 {
   set(types::four_three);
-  return c.get<fixed_bitstring<107> >();
+  return c.get<fixed_bitstring<107>>();
 }
 fixed_bitstring<107>&
 codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codebook_subset_restrict_c_::set_six_two()
 {
   set(types::six_two);
-  return c.get<fixed_bitstring<107> >();
+  return c.get<fixed_bitstring<107>>();
 }
 fixed_bitstring<96>&
 codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codebook_subset_restrict_c_::set_twelve_one()
 {
   set(types::twelve_one);
-  return c.get<fixed_bitstring<96> >();
+  return c.get<fixed_bitstring<96>>();
 }
 fixed_bitstring<139>&
 codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codebook_subset_restrict_c_::set_four_four()
 {
   set(types::four_four);
-  return c.get<fixed_bitstring<139> >();
+  return c.get<fixed_bitstring<139>>();
 }
 fixed_bitstring<139>&
 codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codebook_subset_restrict_c_::set_eight_two()
 {
   set(types::eight_two);
-  return c.get<fixed_bitstring<139> >();
+  return c.get<fixed_bitstring<139>>();
 }
 fixed_bitstring<128>& codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::
     n1_n2_codebook_subset_restrict_c_::set_sixteen_one()
 {
   set(types::sixteen_one);
-  return c.get<fixed_bitstring<128> >();
+  return c.get<fixed_bitstring<128>>();
 }
 void codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codebook_subset_restrict_c_::to_json(
     json_writer& j) const
@@ -14001,43 +14001,43 @@ void codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_
   j.start_obj();
   switch (type_) {
     case types::two_one:
-      j.write_str("two-one", c.get<fixed_bitstring<16> >().to_string());
+      j.write_str("two-one", c.get<fixed_bitstring<16>>().to_string());
       break;
     case types::two_two:
-      j.write_str("two-two", c.get<fixed_bitstring<43> >().to_string());
+      j.write_str("two-two", c.get<fixed_bitstring<43>>().to_string());
       break;
     case types::four_one:
-      j.write_str("four-one", c.get<fixed_bitstring<32> >().to_string());
+      j.write_str("four-one", c.get<fixed_bitstring<32>>().to_string());
       break;
     case types::three_two:
-      j.write_str("three-two", c.get<fixed_bitstring<59> >().to_string());
+      j.write_str("three-two", c.get<fixed_bitstring<59>>().to_string());
       break;
     case types::six_one:
-      j.write_str("six-one", c.get<fixed_bitstring<48> >().to_string());
+      j.write_str("six-one", c.get<fixed_bitstring<48>>().to_string());
       break;
     case types::four_two:
-      j.write_str("four-two", c.get<fixed_bitstring<75> >().to_string());
+      j.write_str("four-two", c.get<fixed_bitstring<75>>().to_string());
       break;
     case types::eight_one:
-      j.write_str("eight-one", c.get<fixed_bitstring<64> >().to_string());
+      j.write_str("eight-one", c.get<fixed_bitstring<64>>().to_string());
       break;
     case types::four_three:
-      j.write_str("four-three", c.get<fixed_bitstring<107> >().to_string());
+      j.write_str("four-three", c.get<fixed_bitstring<107>>().to_string());
       break;
     case types::six_two:
-      j.write_str("six-two", c.get<fixed_bitstring<107> >().to_string());
+      j.write_str("six-two", c.get<fixed_bitstring<107>>().to_string());
       break;
     case types::twelve_one:
-      j.write_str("twelve-one", c.get<fixed_bitstring<96> >().to_string());
+      j.write_str("twelve-one", c.get<fixed_bitstring<96>>().to_string());
       break;
     case types::four_four:
-      j.write_str("four-four", c.get<fixed_bitstring<139> >().to_string());
+      j.write_str("four-four", c.get<fixed_bitstring<139>>().to_string());
       break;
     case types::eight_two:
-      j.write_str("eight-two", c.get<fixed_bitstring<139> >().to_string());
+      j.write_str("eight-two", c.get<fixed_bitstring<139>>().to_string());
       break;
     case types::sixteen_one:
-      j.write_str("sixteen-one", c.get<fixed_bitstring<128> >().to_string());
+      j.write_str("sixteen-one", c.get<fixed_bitstring<128>>().to_string());
       break;
     default:
       log_invalid_choice_id(
@@ -14053,43 +14053,43 @@ codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codeb
   type_.pack(bref);
   switch (type_) {
     case types::two_one:
-      HANDLE_CODE(c.get<fixed_bitstring<16> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<16>>().pack(bref));
       break;
     case types::two_two:
-      HANDLE_CODE(c.get<fixed_bitstring<43> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<43>>().pack(bref));
       break;
     case types::four_one:
-      HANDLE_CODE(c.get<fixed_bitstring<32> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<32>>().pack(bref));
       break;
     case types::three_two:
-      HANDLE_CODE(c.get<fixed_bitstring<59> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<59>>().pack(bref));
       break;
     case types::six_one:
-      HANDLE_CODE(c.get<fixed_bitstring<48> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<48>>().pack(bref));
       break;
     case types::four_two:
-      HANDLE_CODE(c.get<fixed_bitstring<75> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<75>>().pack(bref));
       break;
     case types::eight_one:
-      HANDLE_CODE(c.get<fixed_bitstring<64> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<64>>().pack(bref));
       break;
     case types::four_three:
-      HANDLE_CODE(c.get<fixed_bitstring<107> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<107>>().pack(bref));
       break;
     case types::six_two:
-      HANDLE_CODE(c.get<fixed_bitstring<107> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<107>>().pack(bref));
       break;
     case types::twelve_one:
-      HANDLE_CODE(c.get<fixed_bitstring<96> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<96>>().pack(bref));
       break;
     case types::four_four:
-      HANDLE_CODE(c.get<fixed_bitstring<139> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<139>>().pack(bref));
       break;
     case types::eight_two:
-      HANDLE_CODE(c.get<fixed_bitstring<139> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<139>>().pack(bref));
       break;
     case types::sixteen_one:
-      HANDLE_CODE(c.get<fixed_bitstring<128> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<128>>().pack(bref));
       break;
     default:
       log_invalid_choice_id(
@@ -14108,43 +14108,43 @@ codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::type_ii_s_::n1_n2_codeb
   set(e);
   switch (type_) {
     case types::two_one:
-      HANDLE_CODE(c.get<fixed_bitstring<16> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<16>>().unpack(bref));
       break;
     case types::two_two:
-      HANDLE_CODE(c.get<fixed_bitstring<43> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<43>>().unpack(bref));
       break;
     case types::four_one:
-      HANDLE_CODE(c.get<fixed_bitstring<32> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<32>>().unpack(bref));
       break;
     case types::three_two:
-      HANDLE_CODE(c.get<fixed_bitstring<59> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<59>>().unpack(bref));
       break;
     case types::six_one:
-      HANDLE_CODE(c.get<fixed_bitstring<48> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<48>>().unpack(bref));
       break;
     case types::four_two:
-      HANDLE_CODE(c.get<fixed_bitstring<75> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<75>>().unpack(bref));
       break;
     case types::eight_one:
-      HANDLE_CODE(c.get<fixed_bitstring<64> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<64>>().unpack(bref));
       break;
     case types::four_three:
-      HANDLE_CODE(c.get<fixed_bitstring<107> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<107>>().unpack(bref));
       break;
     case types::six_two:
-      HANDLE_CODE(c.get<fixed_bitstring<107> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<107>>().unpack(bref));
       break;
     case types::twelve_one:
-      HANDLE_CODE(c.get<fixed_bitstring<96> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<96>>().unpack(bref));
       break;
     case types::four_four:
-      HANDLE_CODE(c.get<fixed_bitstring<139> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<139>>().unpack(bref));
       break;
     case types::eight_two:
-      HANDLE_CODE(c.get<fixed_bitstring<139> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<139>>().unpack(bref));
       break;
     case types::sixteen_one:
-      HANDLE_CODE(c.get<fixed_bitstring<128> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<128>>().unpack(bref));
       break;
     default:
       log_invalid_choice_id(
@@ -15271,55 +15271,55 @@ void csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::destroy_()
 {
   switch (type_) {
     case types::subbands3:
-      c.destroy<fixed_bitstring<3> >();
+      c.destroy<fixed_bitstring<3>>();
       break;
     case types::subbands4:
-      c.destroy<fixed_bitstring<4> >();
+      c.destroy<fixed_bitstring<4>>();
       break;
     case types::subbands5:
-      c.destroy<fixed_bitstring<5> >();
+      c.destroy<fixed_bitstring<5>>();
       break;
     case types::subbands6:
-      c.destroy<fixed_bitstring<6> >();
+      c.destroy<fixed_bitstring<6>>();
       break;
     case types::subbands7:
-      c.destroy<fixed_bitstring<7> >();
+      c.destroy<fixed_bitstring<7>>();
       break;
     case types::subbands8:
-      c.destroy<fixed_bitstring<8> >();
+      c.destroy<fixed_bitstring<8>>();
       break;
     case types::subbands9:
-      c.destroy<fixed_bitstring<9> >();
+      c.destroy<fixed_bitstring<9>>();
       break;
     case types::subbands10:
-      c.destroy<fixed_bitstring<10> >();
+      c.destroy<fixed_bitstring<10>>();
       break;
     case types::subbands11:
-      c.destroy<fixed_bitstring<11> >();
+      c.destroy<fixed_bitstring<11>>();
       break;
     case types::subbands12:
-      c.destroy<fixed_bitstring<12> >();
+      c.destroy<fixed_bitstring<12>>();
       break;
     case types::subbands13:
-      c.destroy<fixed_bitstring<13> >();
+      c.destroy<fixed_bitstring<13>>();
       break;
     case types::subbands14:
-      c.destroy<fixed_bitstring<14> >();
+      c.destroy<fixed_bitstring<14>>();
       break;
     case types::subbands15:
-      c.destroy<fixed_bitstring<15> >();
+      c.destroy<fixed_bitstring<15>>();
       break;
     case types::subbands16:
-      c.destroy<fixed_bitstring<16> >();
+      c.destroy<fixed_bitstring<16>>();
       break;
     case types::subbands17:
-      c.destroy<fixed_bitstring<17> >();
+      c.destroy<fixed_bitstring<17>>();
       break;
     case types::subbands18:
-      c.destroy<fixed_bitstring<18> >();
+      c.destroy<fixed_bitstring<18>>();
       break;
     case types::subbands19_v1530:
-      c.destroy<fixed_bitstring<19> >();
+      c.destroy<fixed_bitstring<19>>();
       break;
     default:
       break;
@@ -15331,55 +15331,55 @@ void csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set(types::option
   type_ = e;
   switch (type_) {
     case types::subbands3:
-      c.init<fixed_bitstring<3> >();
+      c.init<fixed_bitstring<3>>();
       break;
     case types::subbands4:
-      c.init<fixed_bitstring<4> >();
+      c.init<fixed_bitstring<4>>();
       break;
     case types::subbands5:
-      c.init<fixed_bitstring<5> >();
+      c.init<fixed_bitstring<5>>();
       break;
     case types::subbands6:
-      c.init<fixed_bitstring<6> >();
+      c.init<fixed_bitstring<6>>();
       break;
     case types::subbands7:
-      c.init<fixed_bitstring<7> >();
+      c.init<fixed_bitstring<7>>();
       break;
     case types::subbands8:
-      c.init<fixed_bitstring<8> >();
+      c.init<fixed_bitstring<8>>();
       break;
     case types::subbands9:
-      c.init<fixed_bitstring<9> >();
+      c.init<fixed_bitstring<9>>();
       break;
     case types::subbands10:
-      c.init<fixed_bitstring<10> >();
+      c.init<fixed_bitstring<10>>();
       break;
     case types::subbands11:
-      c.init<fixed_bitstring<11> >();
+      c.init<fixed_bitstring<11>>();
       break;
     case types::subbands12:
-      c.init<fixed_bitstring<12> >();
+      c.init<fixed_bitstring<12>>();
       break;
     case types::subbands13:
-      c.init<fixed_bitstring<13> >();
+      c.init<fixed_bitstring<13>>();
       break;
     case types::subbands14:
-      c.init<fixed_bitstring<14> >();
+      c.init<fixed_bitstring<14>>();
       break;
     case types::subbands15:
-      c.init<fixed_bitstring<15> >();
+      c.init<fixed_bitstring<15>>();
       break;
     case types::subbands16:
-      c.init<fixed_bitstring<16> >();
+      c.init<fixed_bitstring<16>>();
       break;
     case types::subbands17:
-      c.init<fixed_bitstring<17> >();
+      c.init<fixed_bitstring<17>>();
       break;
     case types::subbands18:
-      c.init<fixed_bitstring<18> >();
+      c.init<fixed_bitstring<18>>();
       break;
     case types::subbands19_v1530:
-      c.init<fixed_bitstring<19> >();
+      c.init<fixed_bitstring<19>>();
       break;
     case types::nulltype:
       break;
@@ -15393,55 +15393,55 @@ csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::csi_report_band_c_(
   type_ = other.type();
   switch (type_) {
     case types::subbands3:
-      c.init(other.c.get<fixed_bitstring<3> >());
+      c.init(other.c.get<fixed_bitstring<3>>());
       break;
     case types::subbands4:
-      c.init(other.c.get<fixed_bitstring<4> >());
+      c.init(other.c.get<fixed_bitstring<4>>());
       break;
     case types::subbands5:
-      c.init(other.c.get<fixed_bitstring<5> >());
+      c.init(other.c.get<fixed_bitstring<5>>());
       break;
     case types::subbands6:
-      c.init(other.c.get<fixed_bitstring<6> >());
+      c.init(other.c.get<fixed_bitstring<6>>());
       break;
     case types::subbands7:
-      c.init(other.c.get<fixed_bitstring<7> >());
+      c.init(other.c.get<fixed_bitstring<7>>());
       break;
     case types::subbands8:
-      c.init(other.c.get<fixed_bitstring<8> >());
+      c.init(other.c.get<fixed_bitstring<8>>());
       break;
     case types::subbands9:
-      c.init(other.c.get<fixed_bitstring<9> >());
+      c.init(other.c.get<fixed_bitstring<9>>());
       break;
     case types::subbands10:
-      c.init(other.c.get<fixed_bitstring<10> >());
+      c.init(other.c.get<fixed_bitstring<10>>());
       break;
     case types::subbands11:
-      c.init(other.c.get<fixed_bitstring<11> >());
+      c.init(other.c.get<fixed_bitstring<11>>());
       break;
     case types::subbands12:
-      c.init(other.c.get<fixed_bitstring<12> >());
+      c.init(other.c.get<fixed_bitstring<12>>());
       break;
     case types::subbands13:
-      c.init(other.c.get<fixed_bitstring<13> >());
+      c.init(other.c.get<fixed_bitstring<13>>());
       break;
     case types::subbands14:
-      c.init(other.c.get<fixed_bitstring<14> >());
+      c.init(other.c.get<fixed_bitstring<14>>());
       break;
     case types::subbands15:
-      c.init(other.c.get<fixed_bitstring<15> >());
+      c.init(other.c.get<fixed_bitstring<15>>());
       break;
     case types::subbands16:
-      c.init(other.c.get<fixed_bitstring<16> >());
+      c.init(other.c.get<fixed_bitstring<16>>());
       break;
     case types::subbands17:
-      c.init(other.c.get<fixed_bitstring<17> >());
+      c.init(other.c.get<fixed_bitstring<17>>());
       break;
     case types::subbands18:
-      c.init(other.c.get<fixed_bitstring<18> >());
+      c.init(other.c.get<fixed_bitstring<18>>());
       break;
     case types::subbands19_v1530:
-      c.init(other.c.get<fixed_bitstring<19> >());
+      c.init(other.c.get<fixed_bitstring<19>>());
       break;
     case types::nulltype:
       break;
@@ -15459,55 +15459,55 @@ csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::operator=(
   set(other.type());
   switch (type_) {
     case types::subbands3:
-      c.set(other.c.get<fixed_bitstring<3> >());
+      c.set(other.c.get<fixed_bitstring<3>>());
       break;
     case types::subbands4:
-      c.set(other.c.get<fixed_bitstring<4> >());
+      c.set(other.c.get<fixed_bitstring<4>>());
       break;
     case types::subbands5:
-      c.set(other.c.get<fixed_bitstring<5> >());
+      c.set(other.c.get<fixed_bitstring<5>>());
       break;
     case types::subbands6:
-      c.set(other.c.get<fixed_bitstring<6> >());
+      c.set(other.c.get<fixed_bitstring<6>>());
       break;
     case types::subbands7:
-      c.set(other.c.get<fixed_bitstring<7> >());
+      c.set(other.c.get<fixed_bitstring<7>>());
       break;
     case types::subbands8:
-      c.set(other.c.get<fixed_bitstring<8> >());
+      c.set(other.c.get<fixed_bitstring<8>>());
       break;
     case types::subbands9:
-      c.set(other.c.get<fixed_bitstring<9> >());
+      c.set(other.c.get<fixed_bitstring<9>>());
       break;
     case types::subbands10:
-      c.set(other.c.get<fixed_bitstring<10> >());
+      c.set(other.c.get<fixed_bitstring<10>>());
       break;
     case types::subbands11:
-      c.set(other.c.get<fixed_bitstring<11> >());
+      c.set(other.c.get<fixed_bitstring<11>>());
       break;
     case types::subbands12:
-      c.set(other.c.get<fixed_bitstring<12> >());
+      c.set(other.c.get<fixed_bitstring<12>>());
       break;
     case types::subbands13:
-      c.set(other.c.get<fixed_bitstring<13> >());
+      c.set(other.c.get<fixed_bitstring<13>>());
       break;
     case types::subbands14:
-      c.set(other.c.get<fixed_bitstring<14> >());
+      c.set(other.c.get<fixed_bitstring<14>>());
       break;
     case types::subbands15:
-      c.set(other.c.get<fixed_bitstring<15> >());
+      c.set(other.c.get<fixed_bitstring<15>>());
       break;
     case types::subbands16:
-      c.set(other.c.get<fixed_bitstring<16> >());
+      c.set(other.c.get<fixed_bitstring<16>>());
       break;
     case types::subbands17:
-      c.set(other.c.get<fixed_bitstring<17> >());
+      c.set(other.c.get<fixed_bitstring<17>>());
       break;
     case types::subbands18:
-      c.set(other.c.get<fixed_bitstring<18> >());
+      c.set(other.c.get<fixed_bitstring<18>>());
       break;
     case types::subbands19_v1530:
-      c.set(other.c.get<fixed_bitstring<19> >());
+      c.set(other.c.get<fixed_bitstring<19>>());
       break;
     case types::nulltype:
       break;
@@ -15520,142 +15520,142 @@ csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::operator=(
 fixed_bitstring<3>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands3()
 {
   set(types::subbands3);
-  return c.get<fixed_bitstring<3> >();
+  return c.get<fixed_bitstring<3>>();
 }
 fixed_bitstring<4>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands4()
 {
   set(types::subbands4);
-  return c.get<fixed_bitstring<4> >();
+  return c.get<fixed_bitstring<4>>();
 }
 fixed_bitstring<5>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands5()
 {
   set(types::subbands5);
-  return c.get<fixed_bitstring<5> >();
+  return c.get<fixed_bitstring<5>>();
 }
 fixed_bitstring<6>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands6()
 {
   set(types::subbands6);
-  return c.get<fixed_bitstring<6> >();
+  return c.get<fixed_bitstring<6>>();
 }
 fixed_bitstring<7>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands7()
 {
   set(types::subbands7);
-  return c.get<fixed_bitstring<7> >();
+  return c.get<fixed_bitstring<7>>();
 }
 fixed_bitstring<8>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands8()
 {
   set(types::subbands8);
-  return c.get<fixed_bitstring<8> >();
+  return c.get<fixed_bitstring<8>>();
 }
 fixed_bitstring<9>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands9()
 {
   set(types::subbands9);
-  return c.get<fixed_bitstring<9> >();
+  return c.get<fixed_bitstring<9>>();
 }
 fixed_bitstring<10>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands10()
 {
   set(types::subbands10);
-  return c.get<fixed_bitstring<10> >();
+  return c.get<fixed_bitstring<10>>();
 }
 fixed_bitstring<11>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands11()
 {
   set(types::subbands11);
-  return c.get<fixed_bitstring<11> >();
+  return c.get<fixed_bitstring<11>>();
 }
 fixed_bitstring<12>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands12()
 {
   set(types::subbands12);
-  return c.get<fixed_bitstring<12> >();
+  return c.get<fixed_bitstring<12>>();
 }
 fixed_bitstring<13>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands13()
 {
   set(types::subbands13);
-  return c.get<fixed_bitstring<13> >();
+  return c.get<fixed_bitstring<13>>();
 }
 fixed_bitstring<14>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands14()
 {
   set(types::subbands14);
-  return c.get<fixed_bitstring<14> >();
+  return c.get<fixed_bitstring<14>>();
 }
 fixed_bitstring<15>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands15()
 {
   set(types::subbands15);
-  return c.get<fixed_bitstring<15> >();
+  return c.get<fixed_bitstring<15>>();
 }
 fixed_bitstring<16>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands16()
 {
   set(types::subbands16);
-  return c.get<fixed_bitstring<16> >();
+  return c.get<fixed_bitstring<16>>();
 }
 fixed_bitstring<17>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands17()
 {
   set(types::subbands17);
-  return c.get<fixed_bitstring<17> >();
+  return c.get<fixed_bitstring<17>>();
 }
 fixed_bitstring<18>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands18()
 {
   set(types::subbands18);
-  return c.get<fixed_bitstring<18> >();
+  return c.get<fixed_bitstring<18>>();
 }
 fixed_bitstring<19>& csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::set_subbands19_v1530()
 {
   set(types::subbands19_v1530);
-  return c.get<fixed_bitstring<19> >();
+  return c.get<fixed_bitstring<19>>();
 }
 void csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
     case types::subbands3:
-      j.write_str("subbands3", c.get<fixed_bitstring<3> >().to_string());
+      j.write_str("subbands3", c.get<fixed_bitstring<3>>().to_string());
       break;
     case types::subbands4:
-      j.write_str("subbands4", c.get<fixed_bitstring<4> >().to_string());
+      j.write_str("subbands4", c.get<fixed_bitstring<4>>().to_string());
       break;
     case types::subbands5:
-      j.write_str("subbands5", c.get<fixed_bitstring<5> >().to_string());
+      j.write_str("subbands5", c.get<fixed_bitstring<5>>().to_string());
       break;
     case types::subbands6:
-      j.write_str("subbands6", c.get<fixed_bitstring<6> >().to_string());
+      j.write_str("subbands6", c.get<fixed_bitstring<6>>().to_string());
       break;
     case types::subbands7:
-      j.write_str("subbands7", c.get<fixed_bitstring<7> >().to_string());
+      j.write_str("subbands7", c.get<fixed_bitstring<7>>().to_string());
       break;
     case types::subbands8:
-      j.write_str("subbands8", c.get<fixed_bitstring<8> >().to_string());
+      j.write_str("subbands8", c.get<fixed_bitstring<8>>().to_string());
       break;
     case types::subbands9:
-      j.write_str("subbands9", c.get<fixed_bitstring<9> >().to_string());
+      j.write_str("subbands9", c.get<fixed_bitstring<9>>().to_string());
       break;
     case types::subbands10:
-      j.write_str("subbands10", c.get<fixed_bitstring<10> >().to_string());
+      j.write_str("subbands10", c.get<fixed_bitstring<10>>().to_string());
       break;
     case types::subbands11:
-      j.write_str("subbands11", c.get<fixed_bitstring<11> >().to_string());
+      j.write_str("subbands11", c.get<fixed_bitstring<11>>().to_string());
       break;
     case types::subbands12:
-      j.write_str("subbands12", c.get<fixed_bitstring<12> >().to_string());
+      j.write_str("subbands12", c.get<fixed_bitstring<12>>().to_string());
       break;
     case types::subbands13:
-      j.write_str("subbands13", c.get<fixed_bitstring<13> >().to_string());
+      j.write_str("subbands13", c.get<fixed_bitstring<13>>().to_string());
       break;
     case types::subbands14:
-      j.write_str("subbands14", c.get<fixed_bitstring<14> >().to_string());
+      j.write_str("subbands14", c.get<fixed_bitstring<14>>().to_string());
       break;
     case types::subbands15:
-      j.write_str("subbands15", c.get<fixed_bitstring<15> >().to_string());
+      j.write_str("subbands15", c.get<fixed_bitstring<15>>().to_string());
       break;
     case types::subbands16:
-      j.write_str("subbands16", c.get<fixed_bitstring<16> >().to_string());
+      j.write_str("subbands16", c.get<fixed_bitstring<16>>().to_string());
       break;
     case types::subbands17:
-      j.write_str("subbands17", c.get<fixed_bitstring<17> >().to_string());
+      j.write_str("subbands17", c.get<fixed_bitstring<17>>().to_string());
       break;
     case types::subbands18:
-      j.write_str("subbands18", c.get<fixed_bitstring<18> >().to_string());
+      j.write_str("subbands18", c.get<fixed_bitstring<18>>().to_string());
       break;
     case types::subbands19_v1530:
-      j.write_str("subbands19-v1530", c.get<fixed_bitstring<19> >().to_string());
+      j.write_str("subbands19-v1530", c.get<fixed_bitstring<19>>().to_string());
       break;
     default:
       log_invalid_choice_id(type_, "csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_");
@@ -15667,56 +15667,56 @@ SRSASN_CODE csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::pack(bit_r
   type_.pack(bref);
   switch (type_) {
     case types::subbands3:
-      HANDLE_CODE(c.get<fixed_bitstring<3> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<3>>().pack(bref));
       break;
     case types::subbands4:
-      HANDLE_CODE(c.get<fixed_bitstring<4> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<4>>().pack(bref));
       break;
     case types::subbands5:
-      HANDLE_CODE(c.get<fixed_bitstring<5> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<5>>().pack(bref));
       break;
     case types::subbands6:
-      HANDLE_CODE(c.get<fixed_bitstring<6> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<6>>().pack(bref));
       break;
     case types::subbands7:
-      HANDLE_CODE(c.get<fixed_bitstring<7> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<7>>().pack(bref));
       break;
     case types::subbands8:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().pack(bref));
       break;
     case types::subbands9:
-      HANDLE_CODE(c.get<fixed_bitstring<9> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<9>>().pack(bref));
       break;
     case types::subbands10:
-      HANDLE_CODE(c.get<fixed_bitstring<10> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<10>>().pack(bref));
       break;
     case types::subbands11:
-      HANDLE_CODE(c.get<fixed_bitstring<11> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<11>>().pack(bref));
       break;
     case types::subbands12:
-      HANDLE_CODE(c.get<fixed_bitstring<12> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<12>>().pack(bref));
       break;
     case types::subbands13:
-      HANDLE_CODE(c.get<fixed_bitstring<13> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<13>>().pack(bref));
       break;
     case types::subbands14:
-      HANDLE_CODE(c.get<fixed_bitstring<14> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<14>>().pack(bref));
       break;
     case types::subbands15:
-      HANDLE_CODE(c.get<fixed_bitstring<15> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<15>>().pack(bref));
       break;
     case types::subbands16:
-      HANDLE_CODE(c.get<fixed_bitstring<16> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<16>>().pack(bref));
       break;
     case types::subbands17:
-      HANDLE_CODE(c.get<fixed_bitstring<17> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<17>>().pack(bref));
       break;
     case types::subbands18:
-      HANDLE_CODE(c.get<fixed_bitstring<18> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<18>>().pack(bref));
       break;
     case types::subbands19_v1530: {
       varlength_field_pack_guard varlen_scope(bref, false);
-      HANDLE_CODE(c.get<fixed_bitstring<19> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<19>>().pack(bref));
     } break;
     default:
       log_invalid_choice_id(type_, "csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_");
@@ -15731,56 +15731,56 @@ SRSASN_CODE csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_::unpack(cbi
   set(e);
   switch (type_) {
     case types::subbands3:
-      HANDLE_CODE(c.get<fixed_bitstring<3> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<3>>().unpack(bref));
       break;
     case types::subbands4:
-      HANDLE_CODE(c.get<fixed_bitstring<4> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<4>>().unpack(bref));
       break;
     case types::subbands5:
-      HANDLE_CODE(c.get<fixed_bitstring<5> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<5>>().unpack(bref));
       break;
     case types::subbands6:
-      HANDLE_CODE(c.get<fixed_bitstring<6> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<6>>().unpack(bref));
       break;
     case types::subbands7:
-      HANDLE_CODE(c.get<fixed_bitstring<7> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<7>>().unpack(bref));
       break;
     case types::subbands8:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().unpack(bref));
       break;
     case types::subbands9:
-      HANDLE_CODE(c.get<fixed_bitstring<9> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<9>>().unpack(bref));
       break;
     case types::subbands10:
-      HANDLE_CODE(c.get<fixed_bitstring<10> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<10>>().unpack(bref));
       break;
     case types::subbands11:
-      HANDLE_CODE(c.get<fixed_bitstring<11> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<11>>().unpack(bref));
       break;
     case types::subbands12:
-      HANDLE_CODE(c.get<fixed_bitstring<12> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<12>>().unpack(bref));
       break;
     case types::subbands13:
-      HANDLE_CODE(c.get<fixed_bitstring<13> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<13>>().unpack(bref));
       break;
     case types::subbands14:
-      HANDLE_CODE(c.get<fixed_bitstring<14> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<14>>().unpack(bref));
       break;
     case types::subbands15:
-      HANDLE_CODE(c.get<fixed_bitstring<15> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<15>>().unpack(bref));
       break;
     case types::subbands16:
-      HANDLE_CODE(c.get<fixed_bitstring<16> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<16>>().unpack(bref));
       break;
     case types::subbands17:
-      HANDLE_CODE(c.get<fixed_bitstring<17> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<17>>().unpack(bref));
       break;
     case types::subbands18:
-      HANDLE_CODE(c.get<fixed_bitstring<18> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<18>>().unpack(bref));
       break;
     case types::subbands19_v1530: {
       varlength_field_unpack_guard varlen_scope(bref, false);
-      HANDLE_CODE(c.get<fixed_bitstring<19> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<19>>().unpack(bref));
     } break;
     default:
       log_invalid_choice_id(type_, "csi_report_cfg_s::report_freq_cfg_s_::csi_report_band_c_");
@@ -16651,10 +16651,10 @@ void eutra_mbsfn_sf_cfg_s::sf_alloc1_c_::destroy_()
 {
   switch (type_) {
     case types::one_frame:
-      c.destroy<fixed_bitstring<6> >();
+      c.destroy<fixed_bitstring<6>>();
       break;
     case types::four_frames:
-      c.destroy<fixed_bitstring<24> >();
+      c.destroy<fixed_bitstring<24>>();
       break;
     default:
       break;
@@ -16666,10 +16666,10 @@ void eutra_mbsfn_sf_cfg_s::sf_alloc1_c_::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::one_frame:
-      c.init<fixed_bitstring<6> >();
+      c.init<fixed_bitstring<6>>();
       break;
     case types::four_frames:
-      c.init<fixed_bitstring<24> >();
+      c.init<fixed_bitstring<24>>();
       break;
     case types::nulltype:
       break;
@@ -16682,10 +16682,10 @@ eutra_mbsfn_sf_cfg_s::sf_alloc1_c_::sf_alloc1_c_(const eutra_mbsfn_sf_cfg_s::sf_
   type_ = other.type();
   switch (type_) {
     case types::one_frame:
-      c.init(other.c.get<fixed_bitstring<6> >());
+      c.init(other.c.get<fixed_bitstring<6>>());
       break;
     case types::four_frames:
-      c.init(other.c.get<fixed_bitstring<24> >());
+      c.init(other.c.get<fixed_bitstring<24>>());
       break;
     case types::nulltype:
       break;
@@ -16702,10 +16702,10 @@ eutra_mbsfn_sf_cfg_s::sf_alloc1_c_::operator=(const eutra_mbsfn_sf_cfg_s::sf_all
   set(other.type());
   switch (type_) {
     case types::one_frame:
-      c.set(other.c.get<fixed_bitstring<6> >());
+      c.set(other.c.get<fixed_bitstring<6>>());
       break;
     case types::four_frames:
-      c.set(other.c.get<fixed_bitstring<24> >());
+      c.set(other.c.get<fixed_bitstring<24>>());
       break;
     case types::nulltype:
       break;
@@ -16718,22 +16718,22 @@ eutra_mbsfn_sf_cfg_s::sf_alloc1_c_::operator=(const eutra_mbsfn_sf_cfg_s::sf_all
 fixed_bitstring<6>& eutra_mbsfn_sf_cfg_s::sf_alloc1_c_::set_one_frame()
 {
   set(types::one_frame);
-  return c.get<fixed_bitstring<6> >();
+  return c.get<fixed_bitstring<6>>();
 }
 fixed_bitstring<24>& eutra_mbsfn_sf_cfg_s::sf_alloc1_c_::set_four_frames()
 {
   set(types::four_frames);
-  return c.get<fixed_bitstring<24> >();
+  return c.get<fixed_bitstring<24>>();
 }
 void eutra_mbsfn_sf_cfg_s::sf_alloc1_c_::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
     case types::one_frame:
-      j.write_str("oneFrame", c.get<fixed_bitstring<6> >().to_string());
+      j.write_str("oneFrame", c.get<fixed_bitstring<6>>().to_string());
       break;
     case types::four_frames:
-      j.write_str("fourFrames", c.get<fixed_bitstring<24> >().to_string());
+      j.write_str("fourFrames", c.get<fixed_bitstring<24>>().to_string());
       break;
     default:
       log_invalid_choice_id(type_, "eutra_mbsfn_sf_cfg_s::sf_alloc1_c_");
@@ -16745,10 +16745,10 @@ SRSASN_CODE eutra_mbsfn_sf_cfg_s::sf_alloc1_c_::pack(bit_ref& bref) const
   type_.pack(bref);
   switch (type_) {
     case types::one_frame:
-      HANDLE_CODE(c.get<fixed_bitstring<6> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<6>>().pack(bref));
       break;
     case types::four_frames:
-      HANDLE_CODE(c.get<fixed_bitstring<24> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<24>>().pack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "eutra_mbsfn_sf_cfg_s::sf_alloc1_c_");
@@ -16763,10 +16763,10 @@ SRSASN_CODE eutra_mbsfn_sf_cfg_s::sf_alloc1_c_::unpack(cbit_ref& bref)
   set(e);
   switch (type_) {
     case types::one_frame:
-      HANDLE_CODE(c.get<fixed_bitstring<6> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<6>>().unpack(bref));
       break;
     case types::four_frames:
-      HANDLE_CODE(c.get<fixed_bitstring<24> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<24>>().unpack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "eutra_mbsfn_sf_cfg_s::sf_alloc1_c_");
@@ -16779,10 +16779,10 @@ void eutra_mbsfn_sf_cfg_s::sf_alloc2_c_::destroy_()
 {
   switch (type_) {
     case types::one_frame:
-      c.destroy<fixed_bitstring<2> >();
+      c.destroy<fixed_bitstring<2>>();
       break;
     case types::four_frames:
-      c.destroy<fixed_bitstring<8> >();
+      c.destroy<fixed_bitstring<8>>();
       break;
     default:
       break;
@@ -16794,10 +16794,10 @@ void eutra_mbsfn_sf_cfg_s::sf_alloc2_c_::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::one_frame:
-      c.init<fixed_bitstring<2> >();
+      c.init<fixed_bitstring<2>>();
       break;
     case types::four_frames:
-      c.init<fixed_bitstring<8> >();
+      c.init<fixed_bitstring<8>>();
       break;
     case types::nulltype:
       break;
@@ -16810,10 +16810,10 @@ eutra_mbsfn_sf_cfg_s::sf_alloc2_c_::sf_alloc2_c_(const eutra_mbsfn_sf_cfg_s::sf_
   type_ = other.type();
   switch (type_) {
     case types::one_frame:
-      c.init(other.c.get<fixed_bitstring<2> >());
+      c.init(other.c.get<fixed_bitstring<2>>());
       break;
     case types::four_frames:
-      c.init(other.c.get<fixed_bitstring<8> >());
+      c.init(other.c.get<fixed_bitstring<8>>());
       break;
     case types::nulltype:
       break;
@@ -16830,10 +16830,10 @@ eutra_mbsfn_sf_cfg_s::sf_alloc2_c_::operator=(const eutra_mbsfn_sf_cfg_s::sf_all
   set(other.type());
   switch (type_) {
     case types::one_frame:
-      c.set(other.c.get<fixed_bitstring<2> >());
+      c.set(other.c.get<fixed_bitstring<2>>());
       break;
     case types::four_frames:
-      c.set(other.c.get<fixed_bitstring<8> >());
+      c.set(other.c.get<fixed_bitstring<8>>());
       break;
     case types::nulltype:
       break;
@@ -16846,22 +16846,22 @@ eutra_mbsfn_sf_cfg_s::sf_alloc2_c_::operator=(const eutra_mbsfn_sf_cfg_s::sf_all
 fixed_bitstring<2>& eutra_mbsfn_sf_cfg_s::sf_alloc2_c_::set_one_frame()
 {
   set(types::one_frame);
-  return c.get<fixed_bitstring<2> >();
+  return c.get<fixed_bitstring<2>>();
 }
 fixed_bitstring<8>& eutra_mbsfn_sf_cfg_s::sf_alloc2_c_::set_four_frames()
 {
   set(types::four_frames);
-  return c.get<fixed_bitstring<8> >();
+  return c.get<fixed_bitstring<8>>();
 }
 void eutra_mbsfn_sf_cfg_s::sf_alloc2_c_::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
     case types::one_frame:
-      j.write_str("oneFrame", c.get<fixed_bitstring<2> >().to_string());
+      j.write_str("oneFrame", c.get<fixed_bitstring<2>>().to_string());
       break;
     case types::four_frames:
-      j.write_str("fourFrames", c.get<fixed_bitstring<8> >().to_string());
+      j.write_str("fourFrames", c.get<fixed_bitstring<8>>().to_string());
       break;
     default:
       log_invalid_choice_id(type_, "eutra_mbsfn_sf_cfg_s::sf_alloc2_c_");
@@ -16873,10 +16873,10 @@ SRSASN_CODE eutra_mbsfn_sf_cfg_s::sf_alloc2_c_::pack(bit_ref& bref) const
   type_.pack(bref);
   switch (type_) {
     case types::one_frame:
-      HANDLE_CODE(c.get<fixed_bitstring<2> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<2>>().pack(bref));
       break;
     case types::four_frames:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().pack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().pack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "eutra_mbsfn_sf_cfg_s::sf_alloc2_c_");
@@ -16891,10 +16891,10 @@ SRSASN_CODE eutra_mbsfn_sf_cfg_s::sf_alloc2_c_::unpack(cbit_ref& bref)
   set(e);
   switch (type_) {
     case types::one_frame:
-      HANDLE_CODE(c.get<fixed_bitstring<2> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<2>>().unpack(bref));
       break;
     case types::four_frames:
-      HANDLE_CODE(c.get<fixed_bitstring<8> >().unpack(bref));
+      HANDLE_CODE(c.get<fixed_bitstring<8>>().unpack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "eutra_mbsfn_sf_cfg_s::sf_alloc2_c_");

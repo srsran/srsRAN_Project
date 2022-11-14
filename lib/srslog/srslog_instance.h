@@ -44,7 +44,7 @@ class srslog_instance
   }
 
 public:
-  srslog_instance(const srslog_instance& other) = delete;
+  srslog_instance(const srslog_instance& other)            = delete;
   srslog_instance& operator=(const srslog_instance& other) = delete;
 
   /// Access function to the singleton instance.
@@ -65,7 +65,7 @@ public:
   const channel_repo_type& get_channel_repo() const { return channel_repo; }
 
   /// Sink repository accessor.
-  using sink_repo_type = object_repository<std::string, std::unique_ptr<sink> >;
+  using sink_repo_type = object_repository<std::string, std::unique_ptr<sink>>;
   sink_repo_type&       get_sink_repo() { return sink_repo; }
   const sink_repo_type& get_sink_repo() const { return sink_repo; }
 

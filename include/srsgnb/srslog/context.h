@@ -38,7 +38,7 @@ struct metrics_container {
 
   /// Returns the value of metric T.
   template <typename T>
-  auto read() const -> const decltype(T::value) &
+  auto read() const -> const decltype(T::value)&
   {
     constexpr std::size_t index = detail::get_type_index_in_tuple<T, Ts...>();
     return std::get<index>(metrics).value;
@@ -121,7 +121,7 @@ struct metric {
   static const char* units() { return Units::units(); }
 
   /// Returns the formatting kind of the metric.
-  static metric_kind kind() { return metric_kind_selector<metric<Ty, Name, Units> >::kind; }
+  static metric_kind kind() { return metric_kind_selector<metric<Ty, Name, Units>>::kind; }
 };
 
 /// Template specialization that tags metrics with arithmetic values (integers

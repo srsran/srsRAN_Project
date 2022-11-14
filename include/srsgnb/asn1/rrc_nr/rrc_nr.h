@@ -547,40 +547,40 @@ struct ssb_to_measure_c {
   fixed_bitstring<4>& short_bitmap()
   {
     assert_choice_type(types::short_bitmap, type_, "SSB-ToMeasure");
-    return c.get<fixed_bitstring<4> >();
+    return c.get<fixed_bitstring<4>>();
   }
   fixed_bitstring<8>& medium_bitmap()
   {
     assert_choice_type(types::medium_bitmap, type_, "SSB-ToMeasure");
-    return c.get<fixed_bitstring<8> >();
+    return c.get<fixed_bitstring<8>>();
   }
   fixed_bitstring<64>& long_bitmap()
   {
     assert_choice_type(types::long_bitmap, type_, "SSB-ToMeasure");
-    return c.get<fixed_bitstring<64> >();
+    return c.get<fixed_bitstring<64>>();
   }
   const fixed_bitstring<4>& short_bitmap() const
   {
     assert_choice_type(types::short_bitmap, type_, "SSB-ToMeasure");
-    return c.get<fixed_bitstring<4> >();
+    return c.get<fixed_bitstring<4>>();
   }
   const fixed_bitstring<8>& medium_bitmap() const
   {
     assert_choice_type(types::medium_bitmap, type_, "SSB-ToMeasure");
-    return c.get<fixed_bitstring<8> >();
+    return c.get<fixed_bitstring<8>>();
   }
   const fixed_bitstring<64>& long_bitmap() const
   {
     assert_choice_type(types::long_bitmap, type_, "SSB-ToMeasure");
-    return c.get<fixed_bitstring<64> >();
+    return c.get<fixed_bitstring<64>>();
   }
   fixed_bitstring<4>&  set_short_bitmap();
   fixed_bitstring<8>&  set_medium_bitmap();
   fixed_bitstring<64>& set_long_bitmap();
 
 private:
-  types                                 type_;
-  choice_buffer_t<fixed_bitstring<64> > c;
+  types                                type_;
+  choice_buffer_t<fixed_bitstring<64>> c;
 
   void destroy_();
 };
@@ -2676,29 +2676,29 @@ struct csi_rs_res_mob_s {
     fixed_bitstring<4>& row1()
     {
       assert_choice_type(types::row1, type_, "frequencyDomainAllocation");
-      return c.get<fixed_bitstring<4> >();
+      return c.get<fixed_bitstring<4>>();
     }
     fixed_bitstring<12>& row2()
     {
       assert_choice_type(types::row2, type_, "frequencyDomainAllocation");
-      return c.get<fixed_bitstring<12> >();
+      return c.get<fixed_bitstring<12>>();
     }
     const fixed_bitstring<4>& row1() const
     {
       assert_choice_type(types::row1, type_, "frequencyDomainAllocation");
-      return c.get<fixed_bitstring<4> >();
+      return c.get<fixed_bitstring<4>>();
     }
     const fixed_bitstring<12>& row2() const
     {
       assert_choice_type(types::row2, type_, "frequencyDomainAllocation");
-      return c.get<fixed_bitstring<12> >();
+      return c.get<fixed_bitstring<12>>();
     }
     fixed_bitstring<4>&  set_row1();
     fixed_bitstring<12>& set_row2();
 
   private:
-    types                                 type_;
-    choice_buffer_t<fixed_bitstring<12> > c;
+    types                                type_;
+    choice_buffer_t<fixed_bitstring<12>> c;
 
     void destroy_();
   };
@@ -4319,8 +4319,8 @@ struct meas_gap_cfg_s {
   setup_release_c<gap_cfg_s> gap_fr2;
   // ...
   // group 0
-  copy_ptr<setup_release_c<gap_cfg_s> > gap_fr1;
-  copy_ptr<setup_release_c<gap_cfg_s> > gap_ue;
+  copy_ptr<setup_release_c<gap_cfg_s>> gap_fr1;
+  copy_ptr<setup_release_c<gap_cfg_s>> gap_ue;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -4335,8 +4335,8 @@ struct meas_gap_sharing_cfg_s {
   setup_release_c<meas_gap_sharing_scheme_e> gap_sharing_fr2;
   // ...
   // group 0
-  copy_ptr<setup_release_c<meas_gap_sharing_scheme_e> > gap_sharing_fr1;
-  copy_ptr<setup_release_c<meas_gap_sharing_scheme_e> > gap_sharing_ue;
+  copy_ptr<setup_release_c<meas_gap_sharing_scheme_e>> gap_sharing_fr1;
+  copy_ptr<setup_release_c<meas_gap_sharing_scheme_e>> gap_sharing_ue;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -5586,29 +5586,29 @@ struct paging_ue_id_c {
   fixed_bitstring<48>& ng_minus5_g_s_tmsi()
   {
     assert_choice_type(types::ng_minus5_g_s_tmsi, type_, "PagingUE-Identity");
-    return c.get<fixed_bitstring<48> >();
+    return c.get<fixed_bitstring<48>>();
   }
   fixed_bitstring<40>& full_i_rnti()
   {
     assert_choice_type(types::full_i_rnti, type_, "PagingUE-Identity");
-    return c.get<fixed_bitstring<40> >();
+    return c.get<fixed_bitstring<40>>();
   }
   const fixed_bitstring<48>& ng_minus5_g_s_tmsi() const
   {
     assert_choice_type(types::ng_minus5_g_s_tmsi, type_, "PagingUE-Identity");
-    return c.get<fixed_bitstring<48> >();
+    return c.get<fixed_bitstring<48>>();
   }
   const fixed_bitstring<40>& full_i_rnti() const
   {
     assert_choice_type(types::full_i_rnti, type_, "PagingUE-Identity");
-    return c.get<fixed_bitstring<40> >();
+    return c.get<fixed_bitstring<40>>();
   }
   fixed_bitstring<48>& set_ng_minus5_g_s_tmsi();
   fixed_bitstring<40>& set_full_i_rnti();
 
 private:
-  types                                 type_;
-  choice_buffer_t<fixed_bitstring<48> > c;
+  types                                type_;
+  choice_buffer_t<fixed_bitstring<48>> c;
 
   void destroy_();
 };
@@ -5772,29 +5772,29 @@ struct init_ue_id_c {
   fixed_bitstring<39>& ng_minus5_g_s_tmsi_part1()
   {
     assert_choice_type(types::ng_minus5_g_s_tmsi_part1, type_, "InitialUE-Identity");
-    return c.get<fixed_bitstring<39> >();
+    return c.get<fixed_bitstring<39>>();
   }
   fixed_bitstring<39>& random_value()
   {
     assert_choice_type(types::random_value, type_, "InitialUE-Identity");
-    return c.get<fixed_bitstring<39> >();
+    return c.get<fixed_bitstring<39>>();
   }
   const fixed_bitstring<39>& ng_minus5_g_s_tmsi_part1() const
   {
     assert_choice_type(types::ng_minus5_g_s_tmsi_part1, type_, "InitialUE-Identity");
-    return c.get<fixed_bitstring<39> >();
+    return c.get<fixed_bitstring<39>>();
   }
   const fixed_bitstring<39>& random_value() const
   {
     assert_choice_type(types::random_value, type_, "InitialUE-Identity");
-    return c.get<fixed_bitstring<39> >();
+    return c.get<fixed_bitstring<39>>();
   }
   fixed_bitstring<39>& set_ng_minus5_g_s_tmsi_part1();
   fixed_bitstring<39>& set_random_value();
 
 private:
-  types                                 type_;
-  choice_buffer_t<fixed_bitstring<39> > c;
+  types                                type_;
+  choice_buffer_t<fixed_bitstring<39>> c;
 
   void destroy_();
 };
@@ -6282,7 +6282,7 @@ struct cell_id_eutra_minus5_gc_c {
   fixed_bitstring<28>& cell_id_eutra()
   {
     assert_choice_type(types::cell_id_eutra, type_, "CellIdentity-EUTRA-5GC");
-    return c.get<fixed_bitstring<28> >();
+    return c.get<fixed_bitstring<28>>();
   }
   uint8_t& cell_id_idx()
   {
@@ -6292,7 +6292,7 @@ struct cell_id_eutra_minus5_gc_c {
   const fixed_bitstring<28>& cell_id_eutra() const
   {
     assert_choice_type(types::cell_id_eutra, type_, "CellIdentity-EUTRA-5GC");
-    return c.get<fixed_bitstring<28> >();
+    return c.get<fixed_bitstring<28>>();
   }
   const uint8_t& cell_id_idx() const
   {
@@ -6303,8 +6303,8 @@ struct cell_id_eutra_minus5_gc_c {
   uint8_t&             set_cell_id_idx();
 
 private:
-  types                                 type_;
-  choice_buffer_t<fixed_bitstring<28> > c;
+  types                                type_;
+  choice_buffer_t<fixed_bitstring<28>> c;
 
   void destroy_();
 };
@@ -7085,29 +7085,29 @@ struct s_nssai_c {
   fixed_bitstring<8>& sst()
   {
     assert_choice_type(types::sst, type_, "S-NSSAI");
-    return c.get<fixed_bitstring<8> >();
+    return c.get<fixed_bitstring<8>>();
   }
   fixed_bitstring<32>& sst_sd()
   {
     assert_choice_type(types::sst_sd, type_, "S-NSSAI");
-    return c.get<fixed_bitstring<32> >();
+    return c.get<fixed_bitstring<32>>();
   }
   const fixed_bitstring<8>& sst() const
   {
     assert_choice_type(types::sst, type_, "S-NSSAI");
-    return c.get<fixed_bitstring<8> >();
+    return c.get<fixed_bitstring<8>>();
   }
   const fixed_bitstring<32>& sst_sd() const
   {
     assert_choice_type(types::sst_sd, type_, "S-NSSAI");
-    return c.get<fixed_bitstring<32> >();
+    return c.get<fixed_bitstring<32>>();
   }
   fixed_bitstring<8>&  set_sst();
   fixed_bitstring<32>& set_sst_sd();
 
 private:
-  types                                 type_;
-  choice_buffer_t<fixed_bitstring<32> > c;
+  types                                type_;
+  choice_buffer_t<fixed_bitstring<32>> c;
 
   void destroy_();
 };
@@ -7267,29 +7267,29 @@ struct rrc_setup_complete_ies_s {
     fixed_bitstring<48>& ng_minus5_g_s_tmsi()
     {
       assert_choice_type(types::ng_minus5_g_s_tmsi, type_, "ng-5G-S-TMSI-Value");
-      return c.get<fixed_bitstring<48> >();
+      return c.get<fixed_bitstring<48>>();
     }
     fixed_bitstring<9>& ng_minus5_g_s_tmsi_part2()
     {
       assert_choice_type(types::ng_minus5_g_s_tmsi_part2, type_, "ng-5G-S-TMSI-Value");
-      return c.get<fixed_bitstring<9> >();
+      return c.get<fixed_bitstring<9>>();
     }
     const fixed_bitstring<48>& ng_minus5_g_s_tmsi() const
     {
       assert_choice_type(types::ng_minus5_g_s_tmsi, type_, "ng-5G-S-TMSI-Value");
-      return c.get<fixed_bitstring<48> >();
+      return c.get<fixed_bitstring<48>>();
     }
     const fixed_bitstring<9>& ng_minus5_g_s_tmsi_part2() const
     {
       assert_choice_type(types::ng_minus5_g_s_tmsi_part2, type_, "ng-5G-S-TMSI-Value");
-      return c.get<fixed_bitstring<9> >();
+      return c.get<fixed_bitstring<9>>();
     }
     fixed_bitstring<48>& set_ng_minus5_g_s_tmsi();
     fixed_bitstring<9>&  set_ng_minus5_g_s_tmsi_part2();
 
   private:
-    types                                 type_;
-    choice_buffer_t<fixed_bitstring<48> > c;
+    types                                type_;
+    choice_buffer_t<fixed_bitstring<48>> c;
 
     void destroy_();
   };
@@ -9170,40 +9170,40 @@ struct serving_cell_cfg_common_s {
     fixed_bitstring<4>& short_bitmap()
     {
       assert_choice_type(types::short_bitmap, type_, "ssb-PositionsInBurst");
-      return c.get<fixed_bitstring<4> >();
+      return c.get<fixed_bitstring<4>>();
     }
     fixed_bitstring<8>& medium_bitmap()
     {
       assert_choice_type(types::medium_bitmap, type_, "ssb-PositionsInBurst");
-      return c.get<fixed_bitstring<8> >();
+      return c.get<fixed_bitstring<8>>();
     }
     fixed_bitstring<64>& long_bitmap()
     {
       assert_choice_type(types::long_bitmap, type_, "ssb-PositionsInBurst");
-      return c.get<fixed_bitstring<64> >();
+      return c.get<fixed_bitstring<64>>();
     }
     const fixed_bitstring<4>& short_bitmap() const
     {
       assert_choice_type(types::short_bitmap, type_, "ssb-PositionsInBurst");
-      return c.get<fixed_bitstring<4> >();
+      return c.get<fixed_bitstring<4>>();
     }
     const fixed_bitstring<8>& medium_bitmap() const
     {
       assert_choice_type(types::medium_bitmap, type_, "ssb-PositionsInBurst");
-      return c.get<fixed_bitstring<8> >();
+      return c.get<fixed_bitstring<8>>();
     }
     const fixed_bitstring<64>& long_bitmap() const
     {
       assert_choice_type(types::long_bitmap, type_, "ssb-PositionsInBurst");
-      return c.get<fixed_bitstring<64> >();
+      return c.get<fixed_bitstring<64>>();
     }
     fixed_bitstring<4>&  set_short_bitmap();
     fixed_bitstring<8>&  set_medium_bitmap();
     fixed_bitstring<64>& set_long_bitmap();
 
   private:
-    types                                 type_;
-    choice_buffer_t<fixed_bitstring<64> > c;
+    types                                type_;
+    choice_buffer_t<fixed_bitstring<64>> c;
 
     void destroy_();
   };
@@ -10371,9 +10371,9 @@ struct mac_cell_group_cfg_s {
   bool                       skip_ul_tx_dynamic = false;
   // ...
   // group 0
-  bool                                                csi_mask_present = false;
-  bool                                                csi_mask         = false;
-  copy_ptr<setup_release_c<data_inactivity_timer_e> > data_inactivity_timer;
+  bool                                               csi_mask_present = false;
+  bool                                               csi_mask         = false;
+  copy_ptr<setup_release_c<data_inactivity_timer_e>> data_inactivity_timer;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -10399,22 +10399,22 @@ struct phys_cell_group_cfg_s {
   typedef enumerated<xscale_opts> xscale_e_;
 
   // member variables
-  bool                                          ext                                     = false;
-  bool                                          harq_ack_spatial_bundling_pucch_present = false;
-  bool                                          harq_ack_spatial_bundling_pusch_present = false;
-  bool                                          p_nr_fr1_present                        = false;
-  bool                                          tpc_srs_rnti_present                    = false;
-  bool                                          tpc_pucch_rnti_present                  = false;
-  bool                                          tpc_pusch_rnti_present                  = false;
-  bool                                          sp_csi_rnti_present                     = false;
-  bool                                          cs_rnti_present                         = false;
-  int8_t                                        p_nr_fr1                                = -30;
-  pdsch_harq_ack_codebook_e_                    pdsch_harq_ack_codebook;
-  uint32_t                                      tpc_srs_rnti   = 0;
-  uint32_t                                      tpc_pucch_rnti = 0;
-  uint32_t                                      tpc_pusch_rnti = 0;
-  uint32_t                                      sp_csi_rnti    = 0;
-  setup_release_c<integer<uint32_t, 0, 65535> > cs_rnti;
+  bool                                         ext                                     = false;
+  bool                                         harq_ack_spatial_bundling_pucch_present = false;
+  bool                                         harq_ack_spatial_bundling_pusch_present = false;
+  bool                                         p_nr_fr1_present                        = false;
+  bool                                         tpc_srs_rnti_present                    = false;
+  bool                                         tpc_pucch_rnti_present                  = false;
+  bool                                         tpc_pusch_rnti_present                  = false;
+  bool                                         sp_csi_rnti_present                     = false;
+  bool                                         cs_rnti_present                         = false;
+  int8_t                                       p_nr_fr1                                = -30;
+  pdsch_harq_ack_codebook_e_                   pdsch_harq_ack_codebook;
+  uint32_t                                     tpc_srs_rnti   = 0;
+  uint32_t                                     tpc_pucch_rnti = 0;
+  uint32_t                                     tpc_pusch_rnti = 0;
+  uint32_t                                     sp_csi_rnti    = 0;
+  setup_release_c<integer<uint32_t, 0, 65535>> cs_rnti;
   // ...
   // group 0
   bool     mcs_c_rnti_present = false;
@@ -10425,7 +10425,7 @@ struct phys_cell_group_cfg_s {
   bool      xscale_present = false;
   xscale_e_ xscale;
   // group 2
-  copy_ptr<setup_release_c<integer<uint8_t, 1, 15> > > pdcch_blind_detection;
+  copy_ptr<setup_release_c<integer<uint8_t, 1, 15>>> pdcch_blind_detection;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -11827,7 +11827,7 @@ struct meas_cfg_mn_s {
   gap_purpose_e_             gap_purpose;
   // ...
   // group 0
-  copy_ptr<setup_release_c<gap_cfg_s> > meas_gap_cfg_fr2;
+  copy_ptr<setup_release_c<gap_cfg_s>> meas_gap_cfg_fr2;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;

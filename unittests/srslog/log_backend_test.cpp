@@ -140,7 +140,8 @@ class sink_error_stub : public sink
 public:
   explicit sink_error_stub(std::string err) :
     sink(std::unique_ptr<log_formatter>(new test_dummies::log_formatter_dummy)), err(std::move(err))
-  {}
+  {
+  }
 
   detail::error_string write(detail::memory_buffer buffer) override { return err; }
 

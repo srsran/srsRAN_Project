@@ -572,7 +572,7 @@ struct broadcast_to_be_cancelled_list_item_ies_o {
 // Broadcast-To-Be-Cancelled-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
 using broadcast_to_be_cancelled_list_l =
-    dyn_array<protocol_ie_single_container_s<broadcast_to_be_cancelled_list_item_ies_o> >;
+    dyn_array<protocol_ie_single_container_s<broadcast_to_be_cancelled_list_item_ies_o>>;
 
 // CNUEPagingIdentity-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 using cnue_paging_id_ext_ies_o = protocol_ies_empty_o;
@@ -602,29 +602,29 @@ struct cnue_paging_id_c {
   fixed_bitstring<48, false, true>& five_g_s_tmsi()
   {
     assert_choice_type(types::five_g_s_tmsi, type_, "CNUEPagingIdentity");
-    return c.get<fixed_bitstring<48, false, true> >();
+    return c.get<fixed_bitstring<48, false, true>>();
   }
   protocol_ie_single_container_s<cnue_paging_id_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "CNUEPagingIdentity");
-    return c.get<protocol_ie_single_container_s<cnue_paging_id_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<cnue_paging_id_ext_ies_o>>();
   }
   const fixed_bitstring<48, false, true>& five_g_s_tmsi() const
   {
     assert_choice_type(types::five_g_s_tmsi, type_, "CNUEPagingIdentity");
-    return c.get<fixed_bitstring<48, false, true> >();
+    return c.get<fixed_bitstring<48, false, true>>();
   }
   const protocol_ie_single_container_s<cnue_paging_id_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "CNUEPagingIdentity");
-    return c.get<protocol_ie_single_container_s<cnue_paging_id_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<cnue_paging_id_ext_ies_o>>();
   }
   fixed_bitstring<48, false, true>&                         set_five_g_s_tmsi();
   protocol_ie_single_container_s<cnue_paging_id_ext_ies_o>& set_choice_ext();
 
 private:
-  types                                                                                                        type_;
-  choice_buffer_t<fixed_bitstring<48, false, true>, protocol_ie_single_container_s<cnue_paging_id_ext_ies_o> > c;
+  types                                                                                                       type_;
+  choice_buffer_t<fixed_bitstring<48, false, true>, protocol_ie_single_container_s<cnue_paging_id_ext_ies_o>> c;
 
   void destroy_();
 };
@@ -698,7 +698,7 @@ struct cp_transport_layer_address_c {
   bounded_bitstring<1, 160, true, true>& endpoint_ip_address()
   {
     assert_choice_type(types::endpoint_ip_address, type_, "CP-TransportLayerAddress");
-    return c.get<bounded_bitstring<1, 160, true, true> >();
+    return c.get<bounded_bitstring<1, 160, true, true>>();
   }
   endpoint_ip_address_and_port_s& endpoint_ip_address_and_port()
   {
@@ -708,12 +708,12 @@ struct cp_transport_layer_address_c {
   protocol_ie_single_container_s<cp_transport_layer_address_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "CP-TransportLayerAddress");
-    return c.get<protocol_ie_single_container_s<cp_transport_layer_address_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<cp_transport_layer_address_ext_ies_o>>();
   }
   const bounded_bitstring<1, 160, true, true>& endpoint_ip_address() const
   {
     assert_choice_type(types::endpoint_ip_address, type_, "CP-TransportLayerAddress");
-    return c.get<bounded_bitstring<1, 160, true, true> >();
+    return c.get<bounded_bitstring<1, 160, true, true>>();
   }
   const endpoint_ip_address_and_port_s& endpoint_ip_address_and_port() const
   {
@@ -723,7 +723,7 @@ struct cp_transport_layer_address_c {
   const protocol_ie_single_container_s<cp_transport_layer_address_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "CP-TransportLayerAddress");
-    return c.get<protocol_ie_single_container_s<cp_transport_layer_address_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<cp_transport_layer_address_ext_ies_o>>();
   }
   bounded_bitstring<1, 160, true, true>&                                set_endpoint_ip_address();
   endpoint_ip_address_and_port_s&                                       set_endpoint_ip_address_and_port();
@@ -733,7 +733,7 @@ private:
   types type_;
   choice_buffer_t<bounded_bitstring<1, 160, true, true>,
                   endpoint_ip_address_and_port_s,
-                  protocol_ie_single_container_s<cp_transport_layer_address_ext_ies_o> >
+                  protocol_ie_single_container_s<cp_transport_layer_address_ext_ies_o>>
       c;
 
   void destroy_();
@@ -773,8 +773,8 @@ struct cuto_durrc_info_ext_ies_o {
     const unbounded_octstring<true>& cg_cfg() const;
 
   private:
-    types                                       type_;
-    choice_buffer_t<unbounded_octstring<true> > c;
+    types                                      type_;
+    choice_buffer_t<unbounded_octstring<true>> c;
 
     void destroy_();
   };
@@ -792,16 +792,16 @@ struct cuto_durrc_info_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                   ho_prep_info_present    = false;
-  bool                                   cell_group_cfg_present  = false;
-  bool                                   meas_timing_cfg_present = false;
-  bool                                   ueassist_info_present   = false;
-  bool                                   cg_cfg_present          = false;
-  ie_field_s<unbounded_octstring<true> > ho_prep_info;
-  ie_field_s<unbounded_octstring<true> > cell_group_cfg;
-  ie_field_s<unbounded_octstring<true> > meas_timing_cfg;
-  ie_field_s<unbounded_octstring<true> > ueassist_info;
-  ie_field_s<unbounded_octstring<true> > cg_cfg;
+  bool                                  ho_prep_info_present    = false;
+  bool                                  cell_group_cfg_present  = false;
+  bool                                  meas_timing_cfg_present = false;
+  bool                                  ueassist_info_present   = false;
+  bool                                  cg_cfg_present          = false;
+  ie_field_s<unbounded_octstring<true>> ho_prep_info;
+  ie_field_s<unbounded_octstring<true>> cell_group_cfg;
+  ie_field_s<unbounded_octstring<true>> meas_timing_cfg;
+  ie_field_s<unbounded_octstring<true>> ueassist_info;
+  ie_field_s<unbounded_octstring<true>> cg_cfg;
 
   // sequence methods
   cuto_durrc_info_ext_ies_container();
@@ -878,7 +878,7 @@ struct candidate_sp_cell_item_ies_o {
 };
 
 // Candidate-SpCell-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using candidate_sp_cell_list_l = dyn_array<protocol_ie_single_container_s<candidate_sp_cell_item_ies_o> >;
+using candidate_sp_cell_list_l = dyn_array<protocol_ie_single_container_s<candidate_sp_cell_item_ies_o>>;
 
 // Cause-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 using cause_ext_ies_o = protocol_ies_empty_o;
@@ -1001,7 +1001,7 @@ struct cause_c {
   protocol_ie_single_container_s<cause_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "Cause");
-    return c.get<protocol_ie_single_container_s<cause_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<cause_ext_ies_o>>();
   }
   const cause_radio_network_e& radio_network() const
   {
@@ -1026,7 +1026,7 @@ struct cause_c {
   const protocol_ie_single_container_s<cause_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "Cause");
-    return c.get<protocol_ie_single_container_s<cause_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<cause_ext_ies_o>>();
   }
   cause_radio_network_e&                           set_radio_network();
   cause_transport_e&                               set_transport();
@@ -1035,8 +1035,8 @@ struct cause_c {
   protocol_ie_single_container_s<cause_ext_ies_o>& set_choice_ext();
 
 private:
-  types                                                             type_;
-  choice_buffer_t<protocol_ie_single_container_s<cause_ext_ies_o> > c;
+  types                                                            type_;
+  choice_buffer_t<protocol_ie_single_container_s<cause_ext_ies_o>> c;
 
   void destroy_();
 };
@@ -1123,7 +1123,7 @@ struct cells_broadcast_cancelled_list_item_ies_o {
 // Cells-Broadcast-Cancelled-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
 using cells_broadcast_cancelled_list_l =
-    dyn_array<protocol_ie_single_container_s<cells_broadcast_cancelled_list_item_ies_o> >;
+    dyn_array<protocol_ie_single_container_s<cells_broadcast_cancelled_list_item_ies_o>>;
 
 // Cells-Broadcast-Completed-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using cells_broadcast_completed_item_ext_ies_o = protocol_ext_empty_o;
@@ -1179,7 +1179,7 @@ struct cells_broadcast_completed_list_item_ies_o {
 // Cells-Broadcast-Completed-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
 using cells_broadcast_completed_list_l =
-    dyn_array<protocol_ie_single_container_s<cells_broadcast_completed_list_item_ies_o> >;
+    dyn_array<protocol_ie_single_container_s<cells_broadcast_completed_list_item_ies_o>>;
 
 // Cells-Failed-to-be-Activated-List-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using cells_failed_to_be_activ_list_item_ext_ies_o = protocol_ext_empty_o;
@@ -1236,7 +1236,7 @@ struct cells_failed_to_be_activ_list_item_ies_o {
 // Cells-Failed-to-be-Activated-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
 using cells_failed_to_be_activ_list_l =
-    dyn_array<protocol_ie_single_container_s<cells_failed_to_be_activ_list_item_ies_o> >;
+    dyn_array<protocol_ie_single_container_s<cells_failed_to_be_activ_list_item_ies_o>>;
 
 // Service-State ::= ENUMERATED
 struct service_state_opts {
@@ -1328,7 +1328,7 @@ struct cells_status_item_ies_o {
 };
 
 // Cells-Status-List ::= SEQUENCE (SIZE (0..512)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using cells_status_list_l = dyn_array<protocol_ie_single_container_s<cells_status_item_ies_o> >;
+using cells_status_list_l = dyn_array<protocol_ie_single_container_s<cells_status_item_ies_o>>;
 
 // Cells-To-Be-Broadcast-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using cells_to_be_broadcast_item_ext_ies_o = protocol_ext_empty_o;
@@ -1383,7 +1383,7 @@ struct cells_to_be_broadcast_list_item_ies_o {
 
 // Cells-To-Be-Broadcast-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
-using cells_to_be_broadcast_list_l = dyn_array<protocol_ie_single_container_s<cells_to_be_broadcast_list_item_ies_o> >;
+using cells_to_be_broadcast_list_l = dyn_array<protocol_ie_single_container_s<cells_to_be_broadcast_list_item_ies_o>>;
 
 // AreaScope ::= ENUMERATED
 struct area_scope_opts {
@@ -1537,12 +1537,12 @@ struct cells_to_be_activ_list_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                                gnb_cu_sys_info_present              = false;
-  bool                                                                available_plmn_list_present          = false;
-  bool                                                                extended_available_plmn_list_present = false;
-  ie_field_s<gnb_cu_sys_info_s>                                       gnb_cu_sys_info;
-  ie_field_s<dyn_seq_of<available_plmn_list_item_s, 1, 6, true> >     available_plmn_list;
-  ie_field_s<dyn_seq_of<extended_available_plmn_item_s, 1, 6, true> > extended_available_plmn_list;
+  bool                                                               gnb_cu_sys_info_present              = false;
+  bool                                                               available_plmn_list_present          = false;
+  bool                                                               extended_available_plmn_list_present = false;
+  ie_field_s<gnb_cu_sys_info_s>                                      gnb_cu_sys_info;
+  ie_field_s<dyn_seq_of<available_plmn_list_item_s, 1, 6, true>>     available_plmn_list;
+  ie_field_s<dyn_seq_of<extended_available_plmn_item_s, 1, 6, true>> extended_available_plmn_list;
 
   // sequence methods
   cells_to_be_activ_list_item_ext_ies_container();
@@ -1601,7 +1601,7 @@ struct cells_to_be_activ_list_item_ies_o {
 
 // Cells-to-be-Activated-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
-using cells_to_be_activ_list_l = dyn_array<protocol_ie_single_container_s<cells_to_be_activ_list_item_ies_o> >;
+using cells_to_be_activ_list_l = dyn_array<protocol_ie_single_container_s<cells_to_be_activ_list_item_ies_o>>;
 
 // CellBarred ::= ENUMERATED
 struct cell_barred_opts {
@@ -1662,7 +1662,7 @@ struct cells_to_be_barred_item_ies_o {
 };
 
 // Cells-to-be-Barred-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using cells_to_be_barred_list_l = dyn_array<protocol_ie_single_container_s<cells_to_be_barred_item_ies_o> >;
+using cells_to_be_barred_list_l = dyn_array<protocol_ie_single_container_s<cells_to_be_barred_item_ies_o>>;
 
 // Cells-to-be-Deactivated-List-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using cells_to_be_deactiv_list_item_ext_ies_o = protocol_ext_empty_o;
@@ -1717,7 +1717,7 @@ struct cells_to_be_deactiv_list_item_ies_o {
 
 // Cells-to-be-Deactivated-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
-using cells_to_be_deactiv_list_l = dyn_array<protocol_ie_single_container_s<cells_to_be_deactiv_list_item_ies_o> >;
+using cells_to_be_deactiv_list_l = dyn_array<protocol_ie_single_container_s<cells_to_be_deactiv_list_item_ies_o>>;
 
 // CriticalityDiagnostics-IE-Item-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using crit_diagnostics_ie_item_ext_ies_o = protocol_ext_empty_o;
@@ -1830,7 +1830,7 @@ struct rat_freq_prio_info_c {
   protocol_ie_single_container_s<rat_freq_prio_info_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "RAT-FrequencyPriorityInformation");
-    return c.get<protocol_ie_single_container_s<rat_freq_prio_info_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<rat_freq_prio_info_ext_ies_o>>();
   }
   const uint16_t& endc() const
   {
@@ -1845,15 +1845,15 @@ struct rat_freq_prio_info_c {
   const protocol_ie_single_container_s<rat_freq_prio_info_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "RAT-FrequencyPriorityInformation");
-    return c.get<protocol_ie_single_container_s<rat_freq_prio_info_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<rat_freq_prio_info_ext_ies_o>>();
   }
   uint16_t&                                                     set_endc();
   uint16_t&                                                     set_ngran();
   protocol_ie_single_container_s<rat_freq_prio_info_ext_ies_o>& set_choice_ext();
 
 private:
-  types                                                                          type_;
-  choice_buffer_t<protocol_ie_single_container_s<rat_freq_prio_info_ext_ies_o> > c;
+  types                                                                         type_;
+  choice_buffer_t<protocol_ie_single_container_s<rat_freq_prio_info_ext_ies_o>> c;
 
   void destroy_();
 };
@@ -1936,8 +1936,8 @@ struct dlrrc_msg_transfer_ies_o {
     const uint64_t&                      new_g_nb_cu_ue_f1_ap_id() const;
 
   private:
-    types                                                                                       type_;
-    choice_buffer_t<fixed_octstring<3, true>, rat_freq_prio_info_c, unbounded_octstring<true> > c;
+    types                                                                                      type_;
+    choice_buffer_t<fixed_octstring<3, true>, rat_freq_prio_info_c, unbounded_octstring<true>> c;
 
     void destroy_();
   };
@@ -1955,26 +1955,26 @@ struct dlrrc_msg_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       oldg_nb_du_ue_f1_ap_id_present       = false;
-  bool                                                       execute_dupl_present                 = false;
-  bool                                                       rat_freq_prio_info_present           = false;
-  bool                                                       rrc_delivery_status_request_present  = false;
-  bool                                                       ue_context_not_retrievable_present   = false;
-  bool                                                       redirected_rr_cmsg_present           = false;
-  bool                                                       plmnassist_info_for_net_shar_present = false;
-  bool                                                       new_g_nb_cu_ue_f1_ap_id_present      = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > oldg_nb_du_ue_f1_ap_id;
-  ie_field_s<integer<uint8_t, 0, 3, true, true> >            srbid;
-  ie_field_s<execute_dupl_e>                                 execute_dupl;
-  ie_field_s<unbounded_octstring<true> >                     rrc_container;
-  ie_field_s<rat_freq_prio_info_c>                           rat_freq_prio_info;
-  ie_field_s<rrc_delivery_status_request_e>                  rrc_delivery_status_request;
-  ie_field_s<ue_context_not_retrievable_e>                   ue_context_not_retrievable;
-  ie_field_s<unbounded_octstring<true> >                     redirected_rr_cmsg;
-  ie_field_s<fixed_octstring<3, true> >                      plmnassist_info_for_net_shar;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > new_g_nb_cu_ue_f1_ap_id;
+  bool                                                      oldg_nb_du_ue_f1_ap_id_present       = false;
+  bool                                                      execute_dupl_present                 = false;
+  bool                                                      rat_freq_prio_info_present           = false;
+  bool                                                      rrc_delivery_status_request_present  = false;
+  bool                                                      ue_context_not_retrievable_present   = false;
+  bool                                                      redirected_rr_cmsg_present           = false;
+  bool                                                      plmnassist_info_for_net_shar_present = false;
+  bool                                                      new_g_nb_cu_ue_f1_ap_id_present      = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> oldg_nb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint8_t, 0, 3, true, true>>            srbid;
+  ie_field_s<execute_dupl_e>                                execute_dupl;
+  ie_field_s<unbounded_octstring<true>>                     rrc_container;
+  ie_field_s<rat_freq_prio_info_c>                          rat_freq_prio_info;
+  ie_field_s<rrc_delivery_status_request_e>                 rrc_delivery_status_request;
+  ie_field_s<ue_context_not_retrievable_e>                  ue_context_not_retrievable;
+  ie_field_s<unbounded_octstring<true>>                     redirected_rr_cmsg;
+  ie_field_s<fixed_octstring<3, true>>                      plmnassist_info_for_net_shar;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> new_g_nb_cu_ue_f1_ap_id;
 
   // sequence methods
   dlrrc_msg_transfer_ies_container();
@@ -2040,7 +2040,7 @@ struct up_transport_layer_info_c {
   protocol_ie_single_container_s<up_transport_layer_info_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "UPTransportLayerInformation");
-    return c.get<protocol_ie_single_container_s<up_transport_layer_info_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<up_transport_layer_info_ext_ies_o>>();
   }
   const gtp_tunnel_s& gtp_tunnel() const
   {
@@ -2050,14 +2050,14 @@ struct up_transport_layer_info_c {
   const protocol_ie_single_container_s<up_transport_layer_info_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "UPTransportLayerInformation");
-    return c.get<protocol_ie_single_container_s<up_transport_layer_info_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<up_transport_layer_info_ext_ies_o>>();
   }
   gtp_tunnel_s&                                                      set_gtp_tunnel();
   protocol_ie_single_container_s<up_transport_layer_info_ext_ies_o>& set_choice_ext();
 
 private:
-  types                                                                                             type_;
-  choice_buffer_t<gtp_tunnel_s, protocol_ie_single_container_s<up_transport_layer_info_ext_ies_o> > c;
+  types                                                                                            type_;
+  choice_buffer_t<gtp_tunnel_s, protocol_ie_single_container_s<up_transport_layer_info_ext_ies_o>> c;
 
   void destroy_();
 };
@@ -2143,7 +2143,7 @@ struct drb_activity_item_ies_o {
 };
 
 // DRB-Activity-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using drb_activity_list_l = dyn_array<protocol_ie_single_container_s<drb_activity_item_ies_o> >;
+using drb_activity_list_l = dyn_array<protocol_ie_single_container_s<drb_activity_item_ies_o>>;
 
 // PacketErrorRate-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using packet_error_rate_ext_ies_o = protocol_ext_empty_o;
@@ -2304,7 +2304,7 @@ struct qo_s_characteristics_c {
   protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "QoS-Characteristics");
-    return c.get<protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o>>();
   }
   const non_dynamic5_qi_descriptor_s& non_dynamic_minus5_qi() const
   {
@@ -2319,7 +2319,7 @@ struct qo_s_characteristics_c {
   const protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "QoS-Characteristics");
-    return c.get<protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o>>();
   }
   non_dynamic5_qi_descriptor_s&                                   set_non_dynamic_minus5_qi();
   dynamic5_qi_descriptor_s&                                       set_dynamic_minus5_qi();
@@ -2329,7 +2329,7 @@ private:
   types type_;
   choice_buffer_t<dynamic5_qi_descriptor_s,
                   non_dynamic5_qi_descriptor_s,
-                  protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o> >
+                  protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o>>
       c;
 
   void destroy_();
@@ -2422,10 +2422,10 @@ struct qo_sflow_level_qos_params_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                         pdu_session_id_present                           = false;
-  bool                                                         ulpdu_session_aggregate_maximum_bit_rate_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, false, true> >          pdu_session_id;
-  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true> > ulpdu_session_aggregate_maximum_bit_rate;
+  bool                                                        pdu_session_id_present                           = false;
+  bool                                                        ulpdu_session_aggregate_maximum_bit_rate_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, false, true>>          pdu_session_id;
+  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true>> ulpdu_session_aggregate_maximum_bit_rate;
 
   // sequence methods
   qo_sflow_level_qos_params_ext_ies_container();
@@ -2583,7 +2583,7 @@ struct drb_notify_item_ies_o {
 };
 
 // DRB-Notify-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using drb_notify_list_l = dyn_array<protocol_ie_single_container_s<drb_notify_item_ies_o> >;
+using drb_notify_list_l = dyn_array<protocol_ie_single_container_s<drb_notify_item_ies_o>>;
 
 // DRBs-FailedToBeModified-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using drbs_failed_to_be_modified_item_ext_ies_o = protocol_ext_empty_o;
@@ -2641,7 +2641,7 @@ struct drbs_failed_to_be_modified_item_ies_o {
 // DRBs-FailedToBeModified-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
 using drbs_failed_to_be_modified_list_l =
-    dyn_array<protocol_ie_single_container_s<drbs_failed_to_be_modified_item_ies_o> >;
+    dyn_array<protocol_ie_single_container_s<drbs_failed_to_be_modified_item_ies_o>>;
 
 // DRBs-FailedToBeSetup-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using drbs_failed_to_be_setup_item_ext_ies_o = protocol_ext_empty_o;
@@ -2697,7 +2697,7 @@ struct drbs_failed_to_be_setup_item_ies_o {
 };
 
 // DRBs-FailedToBeSetup-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using drbs_failed_to_be_setup_list_l = dyn_array<protocol_ie_single_container_s<drbs_failed_to_be_setup_item_ies_o> >;
+using drbs_failed_to_be_setup_list_l = dyn_array<protocol_ie_single_container_s<drbs_failed_to_be_setup_item_ies_o>>;
 
 // DRBs-FailedToBeSetupMod-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using drbs_failed_to_be_setup_mod_item_ext_ies_o = protocol_ext_empty_o;
@@ -2755,7 +2755,7 @@ struct drbs_failed_to_be_setup_mod_item_ies_o {
 // DRBs-FailedToBeSetupMod-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
 using drbs_failed_to_be_setup_mod_list_l =
-    dyn_array<protocol_ie_single_container_s<drbs_failed_to_be_setup_mod_item_ies_o> >;
+    dyn_array<protocol_ie_single_container_s<drbs_failed_to_be_setup_mod_item_ies_o>>;
 
 // RLC-Status-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using rlc_status_ext_ies_o = protocol_ext_empty_o;
@@ -2865,7 +2865,7 @@ struct drbs_modified_item_ies_o {
 };
 
 // DRBs-Modified-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using drbs_modified_list_l = dyn_array<protocol_ie_single_container_s<drbs_modified_item_ies_o> >;
+using drbs_modified_list_l = dyn_array<protocol_ie_single_container_s<drbs_modified_item_ies_o>>;
 
 // ULUPTNLInformation-ToBeSetup-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using uluptnl_info_to_be_setup_item_ext_ies_o = protocol_ext_empty_o;
@@ -2942,7 +2942,7 @@ struct drbs_modified_conf_item_ies_o {
 };
 
 // DRBs-ModifiedConf-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using drbs_modified_conf_list_l = dyn_array<protocol_ie_single_container_s<drbs_modified_conf_item_ies_o> >;
+using drbs_modified_conf_list_l = dyn_array<protocol_ie_single_container_s<drbs_modified_conf_item_ies_o>>;
 
 // DRBs-Required-ToBeModified-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 struct drbs_required_to_be_modified_item_ext_ies_o {
@@ -3025,7 +3025,7 @@ struct drbs_required_to_be_modified_item_ies_o {
 // DRBs-Required-ToBeModified-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
 using drbs_required_to_be_modified_list_l =
-    dyn_array<protocol_ie_single_container_s<drbs_required_to_be_modified_item_ies_o> >;
+    dyn_array<protocol_ie_single_container_s<drbs_required_to_be_modified_item_ies_o>>;
 
 // DRBs-Required-ToBeReleased-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using drbs_required_to_be_released_item_ext_ies_o = protocol_ext_empty_o;
@@ -3081,7 +3081,7 @@ struct drbs_required_to_be_released_item_ies_o {
 // DRBs-Required-ToBeReleased-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
 using drbs_required_to_be_released_list_l =
-    dyn_array<protocol_ie_single_container_s<drbs_required_to_be_released_item_ies_o> >;
+    dyn_array<protocol_ie_single_container_s<drbs_required_to_be_released_item_ies_o>>;
 
 // DRBs-Setup-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using drbs_setup_item_ext_ies_o = protocol_ext_empty_o;
@@ -3138,7 +3138,7 @@ struct drbs_setup_item_ies_o {
 };
 
 // DRBs-Setup-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using drbs_setup_list_l = dyn_array<protocol_ie_single_container_s<drbs_setup_item_ies_o> >;
+using drbs_setup_list_l = dyn_array<protocol_ie_single_container_s<drbs_setup_item_ies_o>>;
 
 // DRBs-SetupMod-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using drbs_setup_mod_item_ext_ies_o = protocol_ext_empty_o;
@@ -3195,7 +3195,7 @@ struct drbs_setup_mod_item_ies_o {
 };
 
 // DRBs-SetupMod-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using drbs_setup_mod_list_l = dyn_array<protocol_ie_single_container_s<drbs_setup_mod_item_ies_o> >;
+using drbs_setup_mod_list_l = dyn_array<protocol_ie_single_container_s<drbs_setup_mod_item_ies_o>>;
 
 // GBR-QosInformation-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using gbr_qos_info_ext_ies_o = protocol_ext_empty_o;
@@ -3421,7 +3421,7 @@ struct qo_sinfo_c {
   protocol_ie_single_container_s<qo_sinfo_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "QoSInformation");
-    return c.get<protocol_ie_single_container_s<qo_sinfo_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<qo_sinfo_ext_ies_o>>();
   }
   const eutran_qos_s& eutran_qos() const
   {
@@ -3431,14 +3431,14 @@ struct qo_sinfo_c {
   const protocol_ie_single_container_s<qo_sinfo_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "QoSInformation");
-    return c.get<protocol_ie_single_container_s<qo_sinfo_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<qo_sinfo_ext_ies_o>>();
   }
   eutran_qos_s&                                       set_eutran_qos();
   protocol_ie_single_container_s<qo_sinfo_ext_ies_o>& set_choice_ext();
 
 private:
-  types                                                                              type_;
-  choice_buffer_t<eutran_qos_s, protocol_ie_single_container_s<qo_sinfo_ext_ies_o> > c;
+  types                                                                             type_;
+  choice_buffer_t<eutran_qos_s, protocol_ie_single_container_s<qo_sinfo_ext_ies_o>> c;
 
   void destroy_();
 };
@@ -3538,7 +3538,7 @@ struct drbs_to_be_modified_item_ies_o {
 };
 
 // DRBs-ToBeModified-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using drbs_to_be_modified_list_l = dyn_array<protocol_ie_single_container_s<drbs_to_be_modified_item_ies_o> >;
+using drbs_to_be_modified_list_l = dyn_array<protocol_ie_single_container_s<drbs_to_be_modified_item_ies_o>>;
 
 // DRBs-ToBeReleased-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using drbs_to_be_released_item_ext_ies_o = protocol_ext_empty_o;
@@ -3592,7 +3592,7 @@ struct drbs_to_be_released_item_ies_o {
 };
 
 // DRBs-ToBeReleased-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using drbs_to_be_released_list_l = dyn_array<protocol_ie_single_container_s<drbs_to_be_released_item_ies_o> >;
+using drbs_to_be_released_list_l = dyn_array<protocol_ie_single_container_s<drbs_to_be_released_item_ies_o>>;
 
 // DRBs-ToBeSetup-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 struct drbs_to_be_setup_item_ext_ies_o {
@@ -3714,7 +3714,7 @@ struct drbs_to_be_setup_item_ies_o {
 };
 
 // DRBs-ToBeSetup-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using drbs_to_be_setup_list_l = dyn_array<protocol_ie_single_container_s<drbs_to_be_setup_item_ies_o> >;
+using drbs_to_be_setup_list_l = dyn_array<protocol_ie_single_container_s<drbs_to_be_setup_item_ies_o>>;
 
 // DRBs-ToBeSetupMod-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 struct drbs_to_be_setup_mod_item_ext_ies_o {
@@ -3837,7 +3837,7 @@ struct drbs_to_be_setup_mod_item_ies_o {
 };
 
 // DRBs-ToBeSetupMod-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using drbs_to_be_setup_mod_list_l = dyn_array<protocol_ie_single_container_s<drbs_to_be_setup_mod_item_ies_o> >;
+using drbs_to_be_setup_mod_list_l = dyn_array<protocol_ie_single_container_s<drbs_to_be_setup_mod_item_ies_o>>;
 
 // DRXCycle-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using drx_cycle_ext_ies_o = protocol_ext_empty_o;
@@ -3995,8 +3995,8 @@ struct duto_currc_info_ext_ies_o {
     const unbounded_octstring<true>& meas_gap_sharing_cfg() const;
 
   private:
-    types                                       type_;
-    choice_buffer_t<unbounded_octstring<true> > c;
+    types                                      type_;
+    choice_buffer_t<unbounded_octstring<true>> c;
 
     void destroy_();
   };
@@ -4014,30 +4014,30 @@ struct duto_currc_info_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                  drx_long_cycle_start_offset_present         = false;
-  bool                                                  sel_band_combination_idx_present            = false;
-  bool                                                  sel_feature_set_entry_idx_present           = false;
-  bool                                                  ph_info_scg_present                         = false;
-  bool                                                  requested_band_combination_idx_present      = false;
-  bool                                                  requested_feature_set_entry_idx_present     = false;
-  bool                                                  requested_p_max_fr2_present                 = false;
-  bool                                                  drx_cfg_present                             = false;
-  bool                                                  pdcch_blind_detection_scg_present           = false;
-  bool                                                  requested_pdcch_blind_detection_scg_present = false;
-  bool                                                  ph_info_mcg_present                         = false;
-  bool                                                  meas_gap_sharing_cfg_present                = false;
-  ie_field_s<integer<uint16_t, 0, 10239, false, true> > drx_long_cycle_start_offset;
-  ie_field_s<unbounded_octstring<true> >                sel_band_combination_idx;
-  ie_field_s<unbounded_octstring<true> >                sel_feature_set_entry_idx;
-  ie_field_s<unbounded_octstring<true> >                ph_info_scg;
-  ie_field_s<unbounded_octstring<true> >                requested_band_combination_idx;
-  ie_field_s<unbounded_octstring<true> >                requested_feature_set_entry_idx;
-  ie_field_s<unbounded_octstring<true> >                requested_p_max_fr2;
-  ie_field_s<unbounded_octstring<true> >                drx_cfg;
-  ie_field_s<unbounded_octstring<true> >                pdcch_blind_detection_scg;
-  ie_field_s<unbounded_octstring<true> >                requested_pdcch_blind_detection_scg;
-  ie_field_s<unbounded_octstring<true> >                ph_info_mcg;
-  ie_field_s<unbounded_octstring<true> >                meas_gap_sharing_cfg;
+  bool                                                 drx_long_cycle_start_offset_present         = false;
+  bool                                                 sel_band_combination_idx_present            = false;
+  bool                                                 sel_feature_set_entry_idx_present           = false;
+  bool                                                 ph_info_scg_present                         = false;
+  bool                                                 requested_band_combination_idx_present      = false;
+  bool                                                 requested_feature_set_entry_idx_present     = false;
+  bool                                                 requested_p_max_fr2_present                 = false;
+  bool                                                 drx_cfg_present                             = false;
+  bool                                                 pdcch_blind_detection_scg_present           = false;
+  bool                                                 requested_pdcch_blind_detection_scg_present = false;
+  bool                                                 ph_info_mcg_present                         = false;
+  bool                                                 meas_gap_sharing_cfg_present                = false;
+  ie_field_s<integer<uint16_t, 0, 10239, false, true>> drx_long_cycle_start_offset;
+  ie_field_s<unbounded_octstring<true>>                sel_band_combination_idx;
+  ie_field_s<unbounded_octstring<true>>                sel_feature_set_entry_idx;
+  ie_field_s<unbounded_octstring<true>>                ph_info_scg;
+  ie_field_s<unbounded_octstring<true>>                requested_band_combination_idx;
+  ie_field_s<unbounded_octstring<true>>                requested_feature_set_entry_idx;
+  ie_field_s<unbounded_octstring<true>>                requested_p_max_fr2;
+  ie_field_s<unbounded_octstring<true>>                drx_cfg;
+  ie_field_s<unbounded_octstring<true>>                pdcch_blind_detection_scg;
+  ie_field_s<unbounded_octstring<true>>                requested_pdcch_blind_detection_scg;
+  ie_field_s<unbounded_octstring<true>>                ph_info_mcg;
+  ie_field_s<unbounded_octstring<true>>                meas_gap_sharing_cfg;
 
   // sequence methods
   duto_currc_info_ext_ies_container();
@@ -4117,7 +4117,7 @@ struct ded_si_delivery_needed_ue_item_ies_o {
 // Dedicated-SIDelivery-NeededUE-List ::= SEQUENCE (SIZE (1..65536)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
 using ded_si_delivery_needed_ue_list_l =
-    dyn_array<protocol_ie_single_container_s<ded_si_delivery_needed_ue_item_ies_o> >;
+    dyn_array<protocol_ie_single_container_s<ded_si_delivery_needed_ue_item_ies_o>>;
 
 // EUTRA-Coex-FDD-Info-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using eutra_coex_fdd_info_ext_ies_o = protocol_ext_empty_o;
@@ -4357,7 +4357,7 @@ struct eutra_mode_info_c {
   protocol_ie_single_container_s<eutra_mode_info_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "EUTRA-Mode-Info");
-    return c.get<protocol_ie_single_container_s<eutra_mode_info_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<eutra_mode_info_ext_ies_o>>();
   }
   const eutra_fdd_info_s& eutrafdd() const
   {
@@ -4372,15 +4372,15 @@ struct eutra_mode_info_c {
   const protocol_ie_single_container_s<eutra_mode_info_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "EUTRA-Mode-Info");
-    return c.get<protocol_ie_single_container_s<eutra_mode_info_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<eutra_mode_info_ext_ies_o>>();
   }
   eutra_fdd_info_s&                                          set_eutrafdd();
   eutra_tdd_info_s&                                          set_eutratdd();
   protocol_ie_single_container_s<eutra_mode_info_ext_ies_o>& set_choice_ext();
 
 private:
-  types                                                                                                           type_;
-  choice_buffer_t<eutra_fdd_info_s, eutra_tdd_info_s, protocol_ie_single_container_s<eutra_mode_info_ext_ies_o> > c;
+  types                                                                                                          type_;
+  choice_buffer_t<eutra_fdd_info_s, eutra_tdd_info_s, protocol_ie_single_container_s<eutra_mode_info_ext_ies_o>> c;
 
   void destroy_();
 };
@@ -4503,15 +4503,15 @@ struct error_ind_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       gnb_cu_ue_f1_ap_id_present = false;
-  bool                                                       gnb_du_ue_f1_ap_id_present = false;
-  bool                                                       cause_present              = false;
-  bool                                                       crit_diagnostics_present   = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> >         transaction_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<cause_c>                                        cause;
-  ie_field_s<crit_diagnostics_s>                             crit_diagnostics;
+  bool                                                      gnb_cu_ue_f1_ap_id_present = false;
+  bool                                                      gnb_du_ue_f1_ap_id_present = false;
+  bool                                                      cause_present              = false;
+  bool                                                      crit_diagnostics_present   = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>>         transaction_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<cause_c>                                       cause;
+  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
 
   // sequence methods
   error_ind_ies_container();
@@ -4892,7 +4892,7 @@ struct uac_category_type_c {
   protocol_ie_single_container_s<uac_category_type_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "UACCategoryType");
-    return c.get<protocol_ie_single_container_s<uac_category_type_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<uac_category_type_ext_ies_o>>();
   }
   const uac_action_e& uacstandardized() const
   {
@@ -4907,7 +4907,7 @@ struct uac_category_type_c {
   const protocol_ie_single_container_s<uac_category_type_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "UACCategoryType");
-    return c.get<protocol_ie_single_container_s<uac_category_type_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<uac_category_type_ext_ies_o>>();
   }
   uac_action_e&                                                set_uacstandardized();
   uac_operator_defined_s&                                      set_uac_operator_defined();
@@ -4959,7 +4959,7 @@ struct nr_mode_info_c {
   protocol_ie_single_container_s<nr_mode_info_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "NR-Mode-Info");
-    return c.get<protocol_ie_single_container_s<nr_mode_info_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<nr_mode_info_ext_ies_o>>();
   }
   const fdd_info_s& fdd() const
   {
@@ -4974,7 +4974,7 @@ struct nr_mode_info_c {
   const protocol_ie_single_container_s<nr_mode_info_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "NR-Mode-Info");
-    return c.get<protocol_ie_single_container_s<nr_mode_info_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<nr_mode_info_ext_ies_o>>();
   }
   fdd_info_s&                                             set_fdd();
   tdd_info_s&                                             set_tdd();
@@ -5278,16 +5278,16 @@ struct served_cell_info_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                              ranac_present                      = false;
-  bool                                                              extended_served_plmns_list_present = false;
-  bool                                                              cell_direction_present             = false;
-  bool                                                              bplmn_id_info_list_present         = false;
-  bool                                                              cell_type_present                  = false;
-  ie_field_s<integer<uint16_t, 0, 255, false, true> >               ranac;
-  ie_field_s<dyn_seq_of<extended_served_plmns_item_s, 1, 6, true> > extended_served_plmns_list;
-  ie_field_s<cell_direction_e>                                      cell_direction;
-  ie_field_s<dyn_seq_of<bplmn_id_info_item_s, 1, 11, true> >        bplmn_id_info_list;
-  ie_field_s<cell_type_s>                                           cell_type;
+  bool                                                             ranac_present                      = false;
+  bool                                                             extended_served_plmns_list_present = false;
+  bool                                                             cell_direction_present             = false;
+  bool                                                             bplmn_id_info_list_present         = false;
+  bool                                                             cell_type_present                  = false;
+  ie_field_s<integer<uint16_t, 0, 255, false, true>>               ranac;
+  ie_field_s<dyn_seq_of<extended_served_plmns_item_s, 1, 6, true>> extended_served_plmns_list;
+  ie_field_s<cell_direction_e>                                     cell_direction;
+  ie_field_s<dyn_seq_of<bplmn_id_info_item_s, 1, 11, true>>        bplmn_id_info_list;
+  ie_field_s<cell_type_s>                                          cell_type;
 
   // sequence methods
   served_cell_info_ext_ies_container();
@@ -7084,7 +7084,7 @@ struct ue_associated_lc_f1_conn_item_res_ack_o {
 // UE-associatedLogicalF1-ConnectionListRes ::= SEQUENCE (SIZE (1..65536)) OF
 // ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
 using ue_associated_lc_f1_conn_list_res_l =
-    dyn_array<protocol_ie_single_container_s<ue_associated_lc_f1_conn_item_res_o> >;
+    dyn_array<protocol_ie_single_container_s<ue_associated_lc_f1_conn_item_res_o>>;
 
 // UEIdentityIndexValueChoice-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 using ue_id_idx_value_choice_ext_ies_o = protocol_ies_empty_o;
@@ -7139,7 +7139,7 @@ using gnb_cu_tnl_assoc_to_upd_list_l =
     bounded_array<protocol_ie_single_container_s<gnb_cu_tnl_assoc_to_upd_item_ies_o>, 32>;
 
 // GNB-DU-Served-Cells-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using gnb_du_served_cells_list_l = dyn_array<protocol_ie_single_container_s<gnb_du_served_cells_item_ies_o> >;
+using gnb_du_served_cells_list_l = dyn_array<protocol_ie_single_container_s<gnb_du_served_cells_item_ies_o>>;
 
 // GNB-DU-TNL-Association-To-Remove-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
@@ -7189,7 +7189,7 @@ typedef enumerated<inactivity_monitoring_resp_opts, true> inactivity_monitoring_
 // NR-CGI-List-For-Restart-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
 using nr_cgi_list_for_restart_list_l =
-    dyn_array<protocol_ie_single_container_s<nr_cgi_list_for_restart_list_item_ies_o> >;
+    dyn_array<protocol_ie_single_container_s<nr_cgi_list_for_restart_list_item_ies_o>>;
 
 // NeedforGap ::= ENUMERATED
 struct needfor_gap_opts {
@@ -7200,17 +7200,17 @@ struct needfor_gap_opts {
 typedef enumerated<needfor_gap_opts, true> needfor_gap_e;
 
 // PWS-Failed-NR-CGI-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using pws_failed_nr_cgi_list_l = dyn_array<protocol_ie_single_container_s<pws_failed_nr_cgi_list_item_ies_o> >;
+using pws_failed_nr_cgi_list_l = dyn_array<protocol_ie_single_container_s<pws_failed_nr_cgi_list_item_ies_o>>;
 
 struct pws_sys_info_ext_ies_container {
   template <class extT_>
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                          notif_info_present       = false;
-  bool                                                          add_sib_msg_list_present = false;
-  ie_field_s<notif_info_s>                                      notif_info;
-  ie_field_s<dyn_seq_of<add_sib_msg_list_item_s, 1, 63, true> > add_sib_msg_list;
+  bool                                                         notif_info_present       = false;
+  bool                                                         add_sib_msg_list_present = false;
+  ie_field_s<notif_info_s>                                     notif_info;
+  ie_field_s<dyn_seq_of<add_sib_msg_list_item_s, 1, 63, true>> add_sib_msg_list;
 
   // sequence methods
   pws_sys_info_ext_ies_container();
@@ -7235,7 +7235,7 @@ struct pws_sys_info_s {
 };
 
 // PagingCell-list ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using paging_cell_list_l = dyn_array<protocol_ie_single_container_s<paging_cell_item_ies_o> >;
+using paging_cell_list_l = dyn_array<protocol_ie_single_container_s<paging_cell_item_ies_o>>;
 
 // PagingDRX ::= ENUMERATED
 struct paging_drx_opts {
@@ -7280,7 +7280,7 @@ struct paging_id_c {
   protocol_ie_single_container_s<paging_id_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "PagingIdentity");
-    return c.get<protocol_ie_single_container_s<paging_id_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<paging_id_ext_ies_o>>();
   }
   const ranue_paging_id_s& ranue_paging_id() const
   {
@@ -7295,7 +7295,7 @@ struct paging_id_c {
   const protocol_ie_single_container_s<paging_id_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "PagingIdentity");
-    return c.get<protocol_ie_single_container_s<paging_id_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<paging_id_ext_ies_o>>();
   }
   ranue_paging_id_s&                                   set_ranue_paging_id();
   cnue_paging_id_c&                                    set_cnue_paging_id();
@@ -7340,7 +7340,7 @@ struct paging_prio_opts {
 typedef enumerated<paging_prio_opts, true> paging_prio_e;
 
 // Potential-SpCell-List ::= SEQUENCE (SIZE (0..64)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using potential_sp_cell_list_l = dyn_array<protocol_ie_single_container_s<potential_sp_cell_item_ies_o> >;
+using potential_sp_cell_list_l = dyn_array<protocol_ie_single_container_s<potential_sp_cell_item_ies_o>>;
 
 // PrivateIE-Field{F1AP-PRIVATE-IES : IEsSetParam} ::= SEQUENCE{{F1AP-PRIVATE-IES}}
 template <class ies_set_paramT_>
@@ -7356,7 +7356,7 @@ struct private_ie_field_s {
 
 // Protected-EUTRA-Resources-List ::= SEQUENCE (SIZE (1..256)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
-using protected_eutra_res_list_l = dyn_array<protocol_ie_single_container_s<protected_eutra_res_item_ies_o> >;
+using protected_eutra_res_list_l = dyn_array<protocol_ie_single_container_s<protected_eutra_res_item_ies_o>>;
 
 using rlc_fail_ind_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -7447,7 +7447,7 @@ struct reset_type_c {
   protocol_ie_single_container_s<reset_type_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "ResetType");
-    return c.get<protocol_ie_single_container_s<reset_type_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<reset_type_ext_ies_o>>();
   }
   const reset_all_e& f1_interface() const
   {
@@ -7462,7 +7462,7 @@ struct reset_type_c {
   const protocol_ie_single_container_s<reset_type_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "ResetType");
-    return c.get<protocol_ie_single_container_s<reset_type_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<reset_type_ext_ies_o>>();
   }
   reset_all_e&                                          set_f1_interface();
   ue_associated_lc_f1_conn_list_res_l&                  set_part_of_f1_interface();
@@ -7555,15 +7555,15 @@ struct sul_access_ind_opts {
 typedef enumerated<sul_access_ind_opts, true> sul_access_ind_e;
 
 // Served-Cells-To-Add-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
-using served_cells_to_add_list_l = dyn_array<protocol_ie_single_container_s<served_cells_to_add_item_ies_o> >;
+using served_cells_to_add_list_l = dyn_array<protocol_ie_single_container_s<served_cells_to_add_item_ies_o>>;
 
 // Served-Cells-To-Delete-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
-using served_cells_to_delete_list_l = dyn_array<protocol_ie_single_container_s<served_cells_to_delete_item_ies_o> >;
+using served_cells_to_delete_list_l = dyn_array<protocol_ie_single_container_s<served_cells_to_delete_item_ies_o>>;
 
 // Served-Cells-To-Modify-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES :
 // IEsSetParam}
-using served_cells_to_modify_list_l = dyn_array<protocol_ie_single_container_s<served_cells_to_modify_item_ies_o> >;
+using served_cells_to_modify_list_l = dyn_array<protocol_ie_single_container_s<served_cells_to_modify_item_ies_o>>;
 
 // TimeToWait ::= ENUMERATED
 struct time_to_wait_opts {
@@ -7600,7 +7600,7 @@ struct uac_assist_info_s {
 // UE-associatedLogicalF1-ConnectionListResAck ::= SEQUENCE (SIZE (1..65536)) OF
 // ProtocolIE-SingleContainer{F1AP-PROTOCOL-IES : IEsSetParam}
 using ue_associated_lc_f1_conn_list_res_ack_l =
-    dyn_array<protocol_ie_single_container_s<ue_associated_lc_f1_conn_item_res_ack_o> >;
+    dyn_array<protocol_ie_single_container_s<ue_associated_lc_f1_conn_item_res_ack_o>>;
 
 // UEIdentityIndexValue ::= CHOICE
 struct ue_id_idx_value_c {
@@ -7627,30 +7627,29 @@ struct ue_id_idx_value_c {
   fixed_bitstring<10, false, true>& idx_len10()
   {
     assert_choice_type(types::idx_len10, type_, "UEIdentityIndexValue");
-    return c.get<fixed_bitstring<10, false, true> >();
+    return c.get<fixed_bitstring<10, false, true>>();
   }
   protocol_ie_single_container_s<ue_id_idx_value_choice_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "UEIdentityIndexValue");
-    return c.get<protocol_ie_single_container_s<ue_id_idx_value_choice_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<ue_id_idx_value_choice_ext_ies_o>>();
   }
   const fixed_bitstring<10, false, true>& idx_len10() const
   {
     assert_choice_type(types::idx_len10, type_, "UEIdentityIndexValue");
-    return c.get<fixed_bitstring<10, false, true> >();
+    return c.get<fixed_bitstring<10, false, true>>();
   }
   const protocol_ie_single_container_s<ue_id_idx_value_choice_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "UEIdentityIndexValue");
-    return c.get<protocol_ie_single_container_s<ue_id_idx_value_choice_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<ue_id_idx_value_choice_ext_ies_o>>();
   }
   fixed_bitstring<10, false, true>&                                 set_idx_len10();
   protocol_ie_single_container_s<ue_id_idx_value_choice_ext_ies_o>& set_choice_ext();
 
 private:
   types type_;
-  choice_buffer_t<fixed_bitstring<10, false, true>, protocol_ie_single_container_s<ue_id_idx_value_choice_ext_ies_o> >
-      c;
+  choice_buffer_t<fixed_bitstring<10, false, true>, protocol_ie_single_container_s<ue_id_idx_value_choice_ext_ies_o>> c;
 
   void destroy_();
 };
@@ -8328,8 +8327,8 @@ struct gnbdu_res_coordination_request_ies_o {
     const ignore_res_coordination_container_e& ignore_res_coordination_container() const;
 
   private:
-    types                                       type_;
-    choice_buffer_t<unbounded_octstring<true> > c;
+    types                                      type_;
+    choice_buffer_t<unbounded_octstring<true>> c;
 
     void destroy_();
   };
@@ -8372,8 +8371,8 @@ struct gnbdu_res_coordination_resp_ies_o {
     const unbounded_octstring<true>& eutra_nr_cell_res_coordination_req_ack_container() const;
 
   private:
-    types                                       type_;
-    choice_buffer_t<unbounded_octstring<true> > c;
+    types                                      type_;
+    choice_buffer_t<unbounded_octstring<true>> c;
 
     void destroy_();
   };
@@ -8483,8 +8482,8 @@ struct init_ulrrc_msg_transfer_ies_o {
     const unbounded_octstring<true>& rrc_container_rrc_setup_complete() const;
 
   private:
-    types                                                                          type_;
-    choice_buffer_t<fixed_octstring<8, true>, nrcgi_s, unbounded_octstring<true> > c;
+    types                                                                         type_;
+    choice_buffer_t<fixed_octstring<8, true>, nrcgi_s, unbounded_octstring<true>> c;
 
     void destroy_();
   };
@@ -9094,7 +9093,7 @@ struct ue_context_mod_confirm_ies_o {
     choice_buffer_t<crit_diagnostics_s,
                     drbs_modified_conf_list_l,
                     res_coordination_transfer_info_s,
-                    unbounded_octstring<true> >
+                    unbounded_octstring<true>>
         c;
 
     void destroy_();
@@ -9333,7 +9332,7 @@ struct ue_context_mod_request_ies_o {
                     scell_to_be_setup_mod_list_l,
                     srbs_to_be_released_list_l,
                     srbs_to_be_setup_mod_list_l,
-                    unbounded_octstring<true> >
+                    unbounded_octstring<true>>
         c;
 
     void destroy_();
@@ -9403,7 +9402,7 @@ struct ue_context_mod_required_ies_o {
                     drbs_required_to_be_released_list_l,
                     duto_currc_info_s,
                     srbs_required_to_be_released_list_l,
-                    unbounded_octstring<true> >
+                    unbounded_octstring<true>>
         c;
 
     void destroy_();
@@ -9506,7 +9505,7 @@ struct ue_context_mod_resp_ies_o {
                     srbs_failed_to_be_setup_mod_list_l,
                     srbs_modified_list_l,
                     srbs_setup_mod_list_l,
-                    unbounded_octstring<true> >
+                    unbounded_octstring<true>>
         c;
 
     void destroy_();
@@ -9570,8 +9569,8 @@ struct ue_context_release_cmd_ies_o {
     const rrc_delivery_status_request_e& rrc_delivery_status_request() const;
 
   private:
-    types                                                type_;
-    choice_buffer_t<cause_c, unbounded_octstring<true> > c;
+    types                                               type_;
+    choice_buffer_t<cause_c, unbounded_octstring<true>> c;
 
     void destroy_();
   };
@@ -9835,7 +9834,7 @@ struct ue_context_setup_request_ies_o {
                     res_coordination_transfer_info_s,
                     scell_to_be_setup_list_l,
                     srbs_to_be_setup_list_l,
-                    unbounded_octstring<true> >
+                    unbounded_octstring<true>>
         c;
 
     void destroy_();
@@ -9922,7 +9921,7 @@ struct ue_context_setup_resp_ies_o {
                     scell_failedto_setup_list_l,
                     srbs_failed_to_be_setup_list_l,
                     srbs_setup_list_l,
-                    unbounded_octstring<true> >
+                    unbounded_octstring<true>>
         c;
 
     void destroy_();
@@ -10024,8 +10023,8 @@ struct ulrrc_msg_transfer_ies_o {
     const uint64_t&                  new_g_nb_du_ue_f1_ap_id() const;
 
   private:
-    types                                                                 type_;
-    choice_buffer_t<fixed_octstring<3, true>, unbounded_octstring<true> > c;
+    types                                                                type_;
+    choice_buffer_t<fixed_octstring<3, true>, unbounded_octstring<true>> c;
 
     void destroy_();
   };
@@ -10152,10 +10151,10 @@ struct f1_removal_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<cause_c>                                cause;
-  ie_field_s<crit_diagnostics_s>                     crit_diagnostics;
+  bool                                              crit_diagnostics_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<cause_c>                               cause;
+  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
 
   // sequence methods
   f1_removal_fail_ies_container();
@@ -10168,16 +10167,16 @@ struct f1_removal_fail_ies_container {
 using f1_removal_fail_s = elementary_procedure_option<f1_removal_fail_ies_container>;
 
 // F1RemovalRequest ::= SEQUENCE
-using f1_removal_request_s = elementary_procedure_option<protocol_ie_container_l<f1_removal_request_ies_o> >;
+using f1_removal_request_s = elementary_procedure_option<protocol_ie_container_l<f1_removal_request_ies_o>>;
 
 struct f1_removal_resp_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<crit_diagnostics_s>                     crit_diagnostics;
+  bool                                              crit_diagnostics_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
 
   // sequence methods
   f1_removal_resp_ies_container();
@@ -10194,12 +10193,12 @@ struct f1_setup_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               time_to_wait_present     = false;
-  bool                                               crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<cause_c>                                cause;
-  ie_field_s<time_to_wait_e>                         time_to_wait;
-  ie_field_s<crit_diagnostics_s>                     crit_diagnostics;
+  bool                                              time_to_wait_present     = false;
+  bool                                              crit_diagnostics_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<cause_c>                               cause;
+  ie_field_s<time_to_wait_e>                        time_to_wait;
+  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
 
   // sequence methods
   f1_setup_fail_ies_container();
@@ -10216,12 +10215,12 @@ struct f1_setup_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                        gnb_du_name_present              = false;
-  bool                                                        gnb_du_served_cells_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> >          transaction_id;
-  ie_field_s<integer<uint64_t, 0, 68719476735, false, true> > gnb_du_id;
-  ie_field_s<printable_string<1, 150, true, true> >           gnb_du_name;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_du_served_cells_item_ies_o>, 1, 512, true> >
+  bool                                                       gnb_du_name_present              = false;
+  bool                                                       gnb_du_served_cells_list_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>>          transaction_id;
+  ie_field_s<integer<uint64_t, 0, 68719476735, false, true>> gnb_du_id;
+  ie_field_s<printable_string<1, 150, true, true>>           gnb_du_name;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_du_served_cells_item_ies_o>, 1, 512, true>>
                             gnb_du_served_cells_list;
   ie_field_s<rrc_version_s> gnb_du_rrc_version;
 
@@ -10240,11 +10239,11 @@ struct f1_setup_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               gnb_cu_name_present            = false;
-  bool                                               cells_to_be_activ_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<printable_string<1, 150, true, true> >  gnb_cu_name;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_activ_list_item_ies_o>, 1, 512, true> >
+  bool                                              gnb_cu_name_present            = false;
+  bool                                              cells_to_be_activ_list_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<printable_string<1, 150, true, true>>  gnb_cu_name;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_activ_list_item_ies_o>, 1, 512, true>>
                             cells_to_be_activ_list;
   ie_field_s<rrc_version_s> gnb_cu_rrc_version;
 
@@ -10263,27 +10262,27 @@ struct gnbcu_cfg_upd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               cells_to_be_activ_list_present       = false;
-  bool                                               cells_to_be_deactiv_list_present     = false;
-  bool                                               gnb_cu_tnl_assoc_to_add_list_present = false;
-  bool                                               gnb_cu_tnl_assoc_to_rem_list_present = false;
-  bool                                               gnb_cu_tnl_assoc_to_upd_list_present = false;
-  bool                                               cells_to_be_barred_list_present      = false;
-  bool                                               protected_eutra_res_list_present     = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_activ_list_item_ies_o>, 1, 512, true> >
+  bool                                              cells_to_be_activ_list_present       = false;
+  bool                                              cells_to_be_deactiv_list_present     = false;
+  bool                                              gnb_cu_tnl_assoc_to_add_list_present = false;
+  bool                                              gnb_cu_tnl_assoc_to_rem_list_present = false;
+  bool                                              gnb_cu_tnl_assoc_to_upd_list_present = false;
+  bool                                              cells_to_be_barred_list_present      = false;
+  bool                                              protected_eutra_res_list_present     = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_activ_list_item_ies_o>, 1, 512, true>>
       cells_to_be_activ_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_deactiv_list_item_ies_o>, 1, 512, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_deactiv_list_item_ies_o>, 1, 512, true>>
       cells_to_be_deactiv_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_cu_tnl_assoc_to_add_item_ies_o>, 1, 32, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_cu_tnl_assoc_to_add_item_ies_o>, 1, 32, true>>
       gnb_cu_tnl_assoc_to_add_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_cu_tnl_assoc_to_rem_item_ies_o>, 1, 32, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_cu_tnl_assoc_to_rem_item_ies_o>, 1, 32, true>>
       gnb_cu_tnl_assoc_to_rem_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_cu_tnl_assoc_to_upd_item_ies_o>, 1, 32, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_cu_tnl_assoc_to_upd_item_ies_o>, 1, 32, true>>
       gnb_cu_tnl_assoc_to_upd_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_barred_item_ies_o>, 1, 512, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_barred_item_ies_o>, 1, 512, true>>
       cells_to_be_barred_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<protected_eutra_res_item_ies_o>, 1, 256, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<protected_eutra_res_item_ies_o>, 1, 256, true>>
       protected_eutra_res_list;
 
   // sequence methods
@@ -10301,20 +10300,20 @@ struct gnbcu_cfg_upd_ack_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               cells_failed_to_be_activ_list_present         = false;
-  bool                                               crit_diagnostics_present                      = false;
-  bool                                               gnb_cu_tnl_assoc_setup_list_present           = false;
-  bool                                               gnb_cu_tnl_assoc_failed_to_setup_list_present = false;
-  bool                                               ded_si_delivery_needed_ue_list_present        = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_failed_to_be_activ_list_item_ies_o>, 1, 512, true> >
+  bool                                              cells_failed_to_be_activ_list_present         = false;
+  bool                                              crit_diagnostics_present                      = false;
+  bool                                              gnb_cu_tnl_assoc_setup_list_present           = false;
+  bool                                              gnb_cu_tnl_assoc_failed_to_setup_list_present = false;
+  bool                                              ded_si_delivery_needed_ue_list_present        = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_failed_to_be_activ_list_item_ies_o>, 1, 512, true>>
                                  cells_failed_to_be_activ_list;
   ie_field_s<crit_diagnostics_s> crit_diagnostics;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_cu_tnl_assoc_setup_item_ies_o>, 1, 32, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_cu_tnl_assoc_setup_item_ies_o>, 1, 32, true>>
       gnb_cu_tnl_assoc_setup_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_cu_tnl_assoc_failed_to_setup_item_ies_o>, 1, 32, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_cu_tnl_assoc_failed_to_setup_item_ies_o>, 1, 32, true>>
       gnb_cu_tnl_assoc_failed_to_setup_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ded_si_delivery_needed_ue_item_ies_o>, 1, 65536, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ded_si_delivery_needed_ue_item_ies_o>, 1, 65536, true>>
       ded_si_delivery_needed_ue_list;
 
   // sequence methods
@@ -10332,12 +10331,12 @@ struct gnbcu_cfg_upd_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               time_to_wait_present     = false;
-  bool                                               crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<cause_c>                                cause;
-  ie_field_s<time_to_wait_e>                         time_to_wait;
-  ie_field_s<crit_diagnostics_s>                     crit_diagnostics;
+  bool                                              time_to_wait_present     = false;
+  bool                                              crit_diagnostics_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<cause_c>                               cause;
+  ie_field_s<time_to_wait_e>                        time_to_wait;
+  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
 
   // sequence methods
   gnbcu_cfg_upd_fail_ies_container();
@@ -10354,25 +10353,25 @@ struct gnbdu_cfg_upd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               served_cells_to_add_list_present       = false;
-  bool                                               served_cells_to_modify_list_present    = false;
-  bool                                               served_cells_to_delete_list_present    = false;
-  bool                                               cells_status_list_present              = false;
-  bool                                               ded_si_delivery_needed_ue_list_present = false;
-  bool                                               gnb_du_id_present                      = false;
-  bool                                               gnb_du_tnl_assoc_to_rem_list_present   = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<served_cells_to_add_item_ies_o>, 1, 512, true> >
+  bool                                              served_cells_to_add_list_present       = false;
+  bool                                              served_cells_to_modify_list_present    = false;
+  bool                                              served_cells_to_delete_list_present    = false;
+  bool                                              cells_status_list_present              = false;
+  bool                                              ded_si_delivery_needed_ue_list_present = false;
+  bool                                              gnb_du_id_present                      = false;
+  bool                                              gnb_du_tnl_assoc_to_rem_list_present   = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<served_cells_to_add_item_ies_o>, 1, 512, true>>
       served_cells_to_add_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<served_cells_to_modify_item_ies_o>, 1, 512, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<served_cells_to_modify_item_ies_o>, 1, 512, true>>
       served_cells_to_modify_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<served_cells_to_delete_item_ies_o>, 1, 512, true> >
-                                                                                                 served_cells_to_delete_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_status_item_ies_o>, 0, 512, true> > cells_status_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ded_si_delivery_needed_ue_item_ies_o>, 1, 65536, true> >
-                                                              ded_si_delivery_needed_ue_list;
-  ie_field_s<integer<uint64_t, 0, 68719476735, false, true> > gnb_du_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_du_tnl_assoc_to_rem_item_ies_o>, 1, 32, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<served_cells_to_delete_item_ies_o>, 1, 512, true>>
+      served_cells_to_delete_list;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_status_item_ies_o>, 0, 512, true>> cells_status_list;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ded_si_delivery_needed_ue_item_ies_o>, 1, 65536, true>>
+                                                             ded_si_delivery_needed_ue_list;
+  ie_field_s<integer<uint64_t, 0, 68719476735, false, true>> gnb_du_id;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_du_tnl_assoc_to_rem_item_ies_o>, 1, 32, true>>
       gnb_du_tnl_assoc_to_rem_list;
 
   // sequence methods
@@ -10390,14 +10389,14 @@ struct gnbdu_cfg_upd_ack_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               cells_to_be_activ_list_present   = false;
-  bool                                               crit_diagnostics_present         = false;
-  bool                                               cells_to_be_deactiv_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_activ_list_item_ies_o>, 1, 512, true> >
+  bool                                              cells_to_be_activ_list_present   = false;
+  bool                                              crit_diagnostics_present         = false;
+  bool                                              cells_to_be_deactiv_list_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_activ_list_item_ies_o>, 1, 512, true>>
                                  cells_to_be_activ_list;
   ie_field_s<crit_diagnostics_s> crit_diagnostics;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_deactiv_list_item_ies_o>, 1, 512, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_deactiv_list_item_ies_o>, 1, 512, true>>
       cells_to_be_deactiv_list;
 
   // sequence methods
@@ -10415,12 +10414,12 @@ struct gnbdu_cfg_upd_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               time_to_wait_present     = false;
-  bool                                               crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<cause_c>                                cause;
-  ie_field_s<time_to_wait_e>                         time_to_wait;
-  ie_field_s<crit_diagnostics_s>                     crit_diagnostics;
+  bool                                              time_to_wait_present     = false;
+  bool                                              crit_diagnostics_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<cause_c>                               cause;
+  ie_field_s<time_to_wait_e>                        time_to_wait;
+  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
 
   // sequence methods
   gnbdu_cfg_upd_fail_ies_container();
@@ -10437,11 +10436,11 @@ struct gnbdu_res_coordination_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               ignore_res_coordination_container_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<request_type_e>                         request_type;
-  ie_field_s<unbounded_octstring<true> >             eutra_nr_cell_res_coordination_req_container;
-  ie_field_s<ignore_res_coordination_container_e>    ignore_res_coordination_container;
+  bool                                              ignore_res_coordination_container_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<request_type_e>                        request_type;
+  ie_field_s<unbounded_octstring<true>>             eutra_nr_cell_res_coordination_req_container;
+  ie_field_s<ignore_res_coordination_container_e>   ignore_res_coordination_container;
 
   // sequence methods
   gnbdu_res_coordination_request_ies_container();
@@ -10458,8 +10457,8 @@ struct gnbdu_res_coordination_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<unbounded_octstring<true> >             eutra_nr_cell_res_coordination_req_ack_container;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<unbounded_octstring<true>>             eutra_nr_cell_res_coordination_req_ack_container;
 
   // sequence methods
   gnbdu_res_coordination_resp_ies_container();
@@ -10476,8 +10475,8 @@ struct gnbdu_status_ind_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<gnbdu_overload_info_e>                  gnbdu_overload_info;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<gnbdu_overload_info_e>                 gnbdu_overload_info;
 
   // sequence methods
   gnbdu_status_ind_ies_container();
@@ -10494,19 +10493,19 @@ struct init_ulrrc_msg_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       duto_currc_container_present             = false;
-  bool                                                       sul_access_ind_present                   = false;
-  bool                                                       ranueid_present                          = false;
-  bool                                                       rrc_container_rrc_setup_complete_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<nrcgi_s>                                        nrcgi;
-  ie_field_s<integer<uint32_t, 0, 65535, true, true> >       c_rnti;
-  ie_field_s<unbounded_octstring<true> >                     rrc_container;
-  ie_field_s<unbounded_octstring<true> >                     duto_currc_container;
-  ie_field_s<sul_access_ind_e>                               sul_access_ind;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> >         transaction_id;
-  ie_field_s<fixed_octstring<8, true> >                      ranueid;
-  ie_field_s<unbounded_octstring<true> >                     rrc_container_rrc_setup_complete;
+  bool                                                      duto_currc_container_present             = false;
+  bool                                                      sul_access_ind_present                   = false;
+  bool                                                      ranueid_present                          = false;
+  bool                                                      rrc_container_rrc_setup_complete_present = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<nrcgi_s>                                       nrcgi;
+  ie_field_s<integer<uint32_t, 0, 65535, true, true>>       c_rnti;
+  ie_field_s<unbounded_octstring<true>>                     rrc_container;
+  ie_field_s<unbounded_octstring<true>>                     duto_currc_container;
+  ie_field_s<sul_access_ind_e>                              sul_access_ind;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>>         transaction_id;
+  ie_field_s<fixed_octstring<8, true>>                      ranueid;
+  ie_field_s<unbounded_octstring<true>>                     rrc_container_rrc_setup_complete;
 
   // sequence methods
   init_ulrrc_msg_transfer_ies_container();
@@ -10523,8 +10522,8 @@ struct network_access_rate_reduction_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<uac_assist_info_s>                      uac_assist_info;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<uac_assist_info_s>                     uac_assist_info;
 
   // sequence methods
   network_access_rate_reduction_ies_container();
@@ -10541,9 +10540,9 @@ struct notify_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> >                                  gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> >                                  gnb_du_ue_f1_ap_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drb_notify_item_ies_o>, 1, 64, true> > drb_notify_list;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>                                  gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>                                  gnb_du_ue_f1_ap_id;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drb_notify_item_ies_o>, 1, 64, true>> drb_notify_list;
 
   // sequence methods
   notify_ies_container();
@@ -10560,12 +10559,12 @@ struct pws_cancel_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                  broadcast_to_be_cancelled_list_present = false;
-  bool                                                  cancel_all_warning_msgs_ind_present    = false;
-  bool                                                  notif_info_present                     = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> >    transaction_id;
-  ie_field_s<integer<uint32_t, 0, 65535, false, true> > numof_broadcast_request;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<broadcast_to_be_cancelled_list_item_ies_o>, 1, 512, true> >
+  bool                                                 broadcast_to_be_cancelled_list_present = false;
+  bool                                                 cancel_all_warning_msgs_ind_present    = false;
+  bool                                                 notif_info_present                     = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>>    transaction_id;
+  ie_field_s<integer<uint32_t, 0, 65535, false, true>> numof_broadcast_request;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<broadcast_to_be_cancelled_list_item_ies_o>, 1, 512, true>>
                                             broadcast_to_be_cancelled_list;
   ie_field_s<cancel_all_warning_msgs_ind_e> cancel_all_warning_msgs_ind;
   ie_field_s<notif_info_s>                  notif_info;
@@ -10585,10 +10584,10 @@ struct pws_cancel_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               cells_broadcast_cancelled_list_present = false;
-  bool                                               crit_diagnostics_present               = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_broadcast_cancelled_list_item_ies_o>, 1, 512, true> >
+  bool                                              cells_broadcast_cancelled_list_present = false;
+  bool                                              crit_diagnostics_present               = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_broadcast_cancelled_list_item_ies_o>, 1, 512, true>>
                                  cells_broadcast_cancelled_list;
   ie_field_s<crit_diagnostics_s> crit_diagnostics;
 
@@ -10607,9 +10606,9 @@ struct pws_fail_ind_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               pws_failed_nr_cgi_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<pws_failed_nr_cgi_list_item_ies_o>, 1, 512, true> >
+  bool                                              pws_failed_nr_cgi_list_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<pws_failed_nr_cgi_list_item_ies_o>, 1, 512, true>>
       pws_failed_nr_cgi_list;
 
   // sequence methods
@@ -10627,8 +10626,8 @@ struct pws_restart_ind_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<nr_cgi_list_for_restart_list_item_ies_o>, 1, 512, true> >
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<nr_cgi_list_for_restart_list_item_ies_o>, 1, 512, true>>
       nr_cgi_list_for_restart_list;
 
   // sequence methods
@@ -10653,8 +10652,8 @@ struct paging_ies_container {
   ie_field_s<paging_id_c>       paging_id;
   ie_field_s<paging_drx_e>      paging_drx;
   ie_field_s<paging_prio_e>     paging_prio;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<paging_cell_item_ies_o>, 1, 512, true> > paging_cell_list;
-  ie_field_s<paging_origin_e>                                                                   paging_origin;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<paging_cell_item_ies_o>, 1, 512, true>> paging_cell_list;
+  ie_field_s<paging_origin_e>                                                                  paging_origin;
 
   // sequence methods
   paging_ies_container();
@@ -10707,10 +10706,10 @@ struct rrc_delivery_report_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<rrc_delivery_status_s>                          rrc_delivery_status;
-  ie_field_s<integer<uint8_t, 0, 3, true, true> >            srbid;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<rrc_delivery_status_s>                         rrc_delivery_status;
+  ie_field_s<integer<uint8_t, 0, 3, true, true>>            srbid;
 
   // sequence methods
   rrc_delivery_report_ies_container();
@@ -10727,9 +10726,9 @@ struct reset_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<cause_c>                                cause;
-  ie_field_s<reset_type_c>                           reset_type;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<cause_c>                               cause;
+  ie_field_s<reset_type_c>                          reset_type;
 
   // sequence methods
   reset_ies_container();
@@ -10746,10 +10745,10 @@ struct reset_ack_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               ue_associated_lc_f1_conn_list_res_ack_present = false;
-  bool                                               crit_diagnostics_present                      = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ue_associated_lc_f1_conn_item_res_ack_o>, 1, 65536, true> >
+  bool                                              ue_associated_lc_f1_conn_list_res_ack_present = false;
+  bool                                              crit_diagnostics_present                      = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ue_associated_lc_f1_conn_item_res_ack_o>, 1, 65536, true>>
                                  ue_associated_lc_f1_conn_list_res_ack;
   ie_field_s<crit_diagnostics_s> crit_diagnostics;
 
@@ -10768,10 +10767,10 @@ struct sys_info_delivery_cmd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true> >         transaction_id;
-  ie_field_s<nrcgi_s>                                        nrcgi;
-  ie_field_s<dyn_seq_of<sitype_item_s, 1, 32, true> >        sitype_list;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > confirmed_ueid;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>>         transaction_id;
+  ie_field_s<nrcgi_s>                                       nrcgi;
+  ie_field_s<dyn_seq_of<sitype_item_s, 1, 32, true>>        sitype_list;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> confirmed_ueid;
 
   // sequence methods
   sys_info_delivery_cmd_ies_container();
@@ -10788,18 +10787,18 @@ struct ue_context_mod_confirm_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       res_coordination_transfer_container_present = false;
-  bool                                                       drbs_modified_conf_list_present             = false;
-  bool                                                       rrc_container_present                       = false;
-  bool                                                       crit_diagnostics_present                    = false;
-  bool                                                       execute_dupl_present                        = false;
-  bool                                                       res_coordination_transfer_info_present      = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<unbounded_octstring<true> >                     res_coordination_transfer_container;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_modified_conf_item_ies_o>, 1, 64, true> >
+  bool                                                      res_coordination_transfer_container_present = false;
+  bool                                                      drbs_modified_conf_list_present             = false;
+  bool                                                      rrc_container_present                       = false;
+  bool                                                      crit_diagnostics_present                    = false;
+  bool                                                      execute_dupl_present                        = false;
+  bool                                                      res_coordination_transfer_info_present      = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<unbounded_octstring<true>>                     res_coordination_transfer_container;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_modified_conf_item_ies_o>, 1, 64, true>>
                                                drbs_modified_conf_list;
-  ie_field_s<unbounded_octstring<true> >       rrc_container;
+  ie_field_s<unbounded_octstring<true>>        rrc_container;
   ie_field_s<crit_diagnostics_s>               crit_diagnostics;
   ie_field_s<execute_dupl_e>                   execute_dupl;
   ie_field_s<res_coordination_transfer_info_s> res_coordination_transfer_info;
@@ -10819,11 +10818,11 @@ struct ue_context_mod_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<cause_c>                                        cause;
-  ie_field_s<crit_diagnostics_s>                             crit_diagnostics;
+  bool                                                      crit_diagnostics_present = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<cause_c>                                       cause;
+  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
 
   // sequence methods
   ue_context_mod_fail_ies_container();
@@ -10840,11 +10839,11 @@ struct ue_context_mod_refuse_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<cause_c>                                        cause;
-  ie_field_s<crit_diagnostics_s>                             crit_diagnostics;
+  bool                                                      crit_diagnostics_present = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<cause_c>                                       cause;
+  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
 
   // sequence methods
   ue_context_mod_refuse_ies_container();
@@ -10861,73 +10860,73 @@ struct ue_context_mod_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       sp_cell_id_present                          = false;
-  bool                                                       serv_cell_idx_present                       = false;
-  bool                                                       sp_cell_ul_cfgured_present                  = false;
-  bool                                                       drx_cycle_present                           = false;
-  bool                                                       cuto_durrc_info_present                     = false;
-  bool                                                       tx_action_ind_present                       = false;
-  bool                                                       res_coordination_transfer_container_present = false;
-  bool                                                       rrc_recfg_complete_ind_present              = false;
-  bool                                                       rrc_container_present                       = false;
-  bool                                                       scell_to_be_setup_mod_list_present          = false;
-  bool                                                       scell_to_be_remd_list_present               = false;
-  bool                                                       srbs_to_be_setup_mod_list_present           = false;
-  bool                                                       drbs_to_be_setup_mod_list_present           = false;
-  bool                                                       drbs_to_be_modified_list_present            = false;
-  bool                                                       srbs_to_be_released_list_present            = false;
-  bool                                                       drbs_to_be_released_list_present            = false;
-  bool                                                       inactivity_monitoring_request_present       = false;
-  bool                                                       rat_freq_prio_info_present                  = false;
-  bool                                                       drx_cfg_ind_present                         = false;
-  bool                                                       rlc_fail_ind_present                        = false;
-  bool                                                       ul_tx_direct_current_list_info_present      = false;
-  bool                                                       gnb_du_cfg_query_present                    = false;
-  bool                                                       gnb_du_ue_ambr_ul_present                   = false;
-  bool                                                       execute_dupl_present                        = false;
-  bool                                                       rrc_delivery_status_request_present         = false;
-  bool                                                       res_coordination_transfer_info_present      = false;
-  bool                                                       serving_cell_mo_present                     = false;
-  bool                                                       needfor_gap_present                         = false;
-  bool                                                       full_cfg_present                            = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<nrcgi_s>                                        sp_cell_id;
-  ie_field_s<integer<uint8_t, 0, 31, true, true> >           serv_cell_idx;
-  ie_field_s<cell_ul_cfgured_e>                              sp_cell_ul_cfgured;
-  ie_field_s<drx_cycle_s>                                    drx_cycle;
-  ie_field_s<cuto_durrc_info_s>                              cuto_durrc_info;
-  ie_field_s<tx_action_ind_e>                                tx_action_ind;
-  ie_field_s<unbounded_octstring<true> >                     res_coordination_transfer_container;
-  ie_field_s<rrc_recfg_complete_ind_e>                       rrc_recfg_complete_ind;
-  ie_field_s<unbounded_octstring<true> >                     rrc_container;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<scell_to_be_setup_mod_item_ies_o>, 1, 32, true> >
+  bool                                                      sp_cell_id_present                          = false;
+  bool                                                      serv_cell_idx_present                       = false;
+  bool                                                      sp_cell_ul_cfgured_present                  = false;
+  bool                                                      drx_cycle_present                           = false;
+  bool                                                      cuto_durrc_info_present                     = false;
+  bool                                                      tx_action_ind_present                       = false;
+  bool                                                      res_coordination_transfer_container_present = false;
+  bool                                                      rrc_recfg_complete_ind_present              = false;
+  bool                                                      rrc_container_present                       = false;
+  bool                                                      scell_to_be_setup_mod_list_present          = false;
+  bool                                                      scell_to_be_remd_list_present               = false;
+  bool                                                      srbs_to_be_setup_mod_list_present           = false;
+  bool                                                      drbs_to_be_setup_mod_list_present           = false;
+  bool                                                      drbs_to_be_modified_list_present            = false;
+  bool                                                      srbs_to_be_released_list_present            = false;
+  bool                                                      drbs_to_be_released_list_present            = false;
+  bool                                                      inactivity_monitoring_request_present       = false;
+  bool                                                      rat_freq_prio_info_present                  = false;
+  bool                                                      drx_cfg_ind_present                         = false;
+  bool                                                      rlc_fail_ind_present                        = false;
+  bool                                                      ul_tx_direct_current_list_info_present      = false;
+  bool                                                      gnb_du_cfg_query_present                    = false;
+  bool                                                      gnb_du_ue_ambr_ul_present                   = false;
+  bool                                                      execute_dupl_present                        = false;
+  bool                                                      rrc_delivery_status_request_present         = false;
+  bool                                                      res_coordination_transfer_info_present      = false;
+  bool                                                      serving_cell_mo_present                     = false;
+  bool                                                      needfor_gap_present                         = false;
+  bool                                                      full_cfg_present                            = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<nrcgi_s>                                       sp_cell_id;
+  ie_field_s<integer<uint8_t, 0, 31, true, true>>           serv_cell_idx;
+  ie_field_s<cell_ul_cfgured_e>                             sp_cell_ul_cfgured;
+  ie_field_s<drx_cycle_s>                                   drx_cycle;
+  ie_field_s<cuto_durrc_info_s>                             cuto_durrc_info;
+  ie_field_s<tx_action_ind_e>                               tx_action_ind;
+  ie_field_s<unbounded_octstring<true>>                     res_coordination_transfer_container;
+  ie_field_s<rrc_recfg_complete_ind_e>                      rrc_recfg_complete_ind;
+  ie_field_s<unbounded_octstring<true>>                     rrc_container;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<scell_to_be_setup_mod_item_ies_o>, 1, 32, true>>
       scell_to_be_setup_mod_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<scell_to_be_remd_item_ies_o>, 1, 32, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<scell_to_be_remd_item_ies_o>, 1, 32, true>>
       scell_to_be_remd_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_to_be_setup_mod_item_ies_o>, 1, 8, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_to_be_setup_mod_item_ies_o>, 1, 8, true>>
       srbs_to_be_setup_mod_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_to_be_setup_mod_item_ies_o>, 1, 64, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_to_be_setup_mod_item_ies_o>, 1, 64, true>>
       drbs_to_be_setup_mod_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_to_be_modified_item_ies_o>, 1, 64, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_to_be_modified_item_ies_o>, 1, 64, true>>
       drbs_to_be_modified_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_to_be_released_item_ies_o>, 1, 8, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_to_be_released_item_ies_o>, 1, 8, true>>
       srbs_to_be_released_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_to_be_released_item_ies_o>, 1, 64, true> >
-                                                               drbs_to_be_released_list;
-  ie_field_s<inactivity_monitoring_request_e>                  inactivity_monitoring_request;
-  ie_field_s<rat_freq_prio_info_c>                             rat_freq_prio_info;
-  ie_field_s<drx_cfg_ind_e>                                    drx_cfg_ind;
-  ie_field_s<rlc_fail_ind_s>                                   rlc_fail_ind;
-  ie_field_s<unbounded_octstring<true> >                       ul_tx_direct_current_list_info;
-  ie_field_s<gnb_du_cfg_query_e>                               gnb_du_cfg_query;
-  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true> > gnb_du_ue_ambr_ul;
-  ie_field_s<execute_dupl_e>                                   execute_dupl;
-  ie_field_s<rrc_delivery_status_request_e>                    rrc_delivery_status_request;
-  ie_field_s<res_coordination_transfer_info_s>                 res_coordination_transfer_info;
-  ie_field_s<integer<uint8_t, 1, 64, true, true> >             serving_cell_mo;
-  ie_field_s<needfor_gap_e>                                    needfor_gap;
-  ie_field_s<full_cfg_e>                                       full_cfg;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_to_be_released_item_ies_o>, 1, 64, true>>
+                                                              drbs_to_be_released_list;
+  ie_field_s<inactivity_monitoring_request_e>                 inactivity_monitoring_request;
+  ie_field_s<rat_freq_prio_info_c>                            rat_freq_prio_info;
+  ie_field_s<drx_cfg_ind_e>                                   drx_cfg_ind;
+  ie_field_s<rlc_fail_ind_s>                                  rlc_fail_ind;
+  ie_field_s<unbounded_octstring<true>>                       ul_tx_direct_current_list_info;
+  ie_field_s<gnb_du_cfg_query_e>                              gnb_du_cfg_query;
+  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true>> gnb_du_ue_ambr_ul;
+  ie_field_s<execute_dupl_e>                                  execute_dupl;
+  ie_field_s<rrc_delivery_status_request_e>                   rrc_delivery_status_request;
+  ie_field_s<res_coordination_transfer_info_s>                res_coordination_transfer_info;
+  ie_field_s<integer<uint8_t, 1, 64, true, true>>             serving_cell_mo;
+  ie_field_s<needfor_gap_e>                                   needfor_gap;
+  ie_field_s<full_cfg_e>                                      full_cfg;
 
   // sequence methods
   ue_context_mod_request_ies_container();
@@ -10944,20 +10943,20 @@ struct ue_context_mod_required_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       res_coordination_transfer_container_present = false;
-  bool                                                       duto_currc_info_present                     = false;
-  bool                                                       drbs_required_to_be_modified_list_present   = false;
-  bool                                                       srbs_required_to_be_released_list_present   = false;
-  bool                                                       drbs_required_to_be_released_list_present   = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<unbounded_octstring<true> >                     res_coordination_transfer_container;
-  ie_field_s<duto_currc_info_s>                              duto_currc_info;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_required_to_be_modified_item_ies_o>, 1, 64, true> >
+  bool                                                      res_coordination_transfer_container_present = false;
+  bool                                                      duto_currc_info_present                     = false;
+  bool                                                      drbs_required_to_be_modified_list_present   = false;
+  bool                                                      srbs_required_to_be_released_list_present   = false;
+  bool                                                      drbs_required_to_be_released_list_present   = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<unbounded_octstring<true>>                     res_coordination_transfer_container;
+  ie_field_s<duto_currc_info_s>                             duto_currc_info;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_required_to_be_modified_item_ies_o>, 1, 64, true>>
       drbs_required_to_be_modified_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_required_to_be_released_item_ies_o>, 1, 8, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_required_to_be_released_item_ies_o>, 1, 8, true>>
       srbs_required_to_be_released_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_required_to_be_released_item_ies_o>, 1, 64, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_required_to_be_released_item_ies_o>, 1, 64, true>>
                       drbs_required_to_be_released_list;
   ie_field_s<cause_c> cause;
 
@@ -10976,43 +10975,43 @@ struct ue_context_mod_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       res_coordination_transfer_container_present = false;
-  bool                                                       duto_currc_info_present                     = false;
-  bool                                                       drbs_setup_mod_list_present                 = false;
-  bool                                                       drbs_modified_list_present                  = false;
-  bool                                                       srbs_failed_to_be_setup_mod_list_present    = false;
-  bool                                                       drbs_failed_to_be_setup_mod_list_present    = false;
-  bool                                                       scell_failedto_setup_mod_list_present       = false;
-  bool                                                       drbs_failed_to_be_modified_list_present     = false;
-  bool                                                       inactivity_monitoring_resp_present          = false;
-  bool                                                       crit_diagnostics_present                    = false;
-  bool                                                       c_rnti_present                              = false;
-  bool                                                       associated_scell_list_present               = false;
-  bool                                                       srbs_setup_mod_list_present                 = false;
-  bool                                                       srbs_modified_list_present                  = false;
-  bool                                                       full_cfg_present                            = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<unbounded_octstring<true> >                     res_coordination_transfer_container;
-  ie_field_s<duto_currc_info_s>                              duto_currc_info;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_setup_mod_item_ies_o>, 1, 64, true> > drbs_setup_mod_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_modified_item_ies_o>, 1, 64, true> >  drbs_modified_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_failed_to_be_setup_mod_item_ies_o>, 1, 8, true> >
+  bool                                                      res_coordination_transfer_container_present = false;
+  bool                                                      duto_currc_info_present                     = false;
+  bool                                                      drbs_setup_mod_list_present                 = false;
+  bool                                                      drbs_modified_list_present                  = false;
+  bool                                                      srbs_failed_to_be_setup_mod_list_present    = false;
+  bool                                                      drbs_failed_to_be_setup_mod_list_present    = false;
+  bool                                                      scell_failedto_setup_mod_list_present       = false;
+  bool                                                      drbs_failed_to_be_modified_list_present     = false;
+  bool                                                      inactivity_monitoring_resp_present          = false;
+  bool                                                      crit_diagnostics_present                    = false;
+  bool                                                      c_rnti_present                              = false;
+  bool                                                      associated_scell_list_present               = false;
+  bool                                                      srbs_setup_mod_list_present                 = false;
+  bool                                                      srbs_modified_list_present                  = false;
+  bool                                                      full_cfg_present                            = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<unbounded_octstring<true>>                     res_coordination_transfer_container;
+  ie_field_s<duto_currc_info_s>                             duto_currc_info;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_setup_mod_item_ies_o>, 1, 64, true>> drbs_setup_mod_list;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_modified_item_ies_o>, 1, 64, true>>  drbs_modified_list;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_failed_to_be_setup_mod_item_ies_o>, 1, 8, true>>
       srbs_failed_to_be_setup_mod_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_failed_to_be_setup_mod_item_ies_o>, 1, 64, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_failed_to_be_setup_mod_item_ies_o>, 1, 64, true>>
       drbs_failed_to_be_setup_mod_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<scell_failedto_setup_mod_item_ies_o>, 1, 32, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<scell_failedto_setup_mod_item_ies_o>, 1, 32, true>>
       scell_failedto_setup_mod_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_failed_to_be_modified_item_ies_o>, 1, 64, true> >
-                                                       drbs_failed_to_be_modified_list;
-  ie_field_s<inactivity_monitoring_resp_e>             inactivity_monitoring_resp;
-  ie_field_s<crit_diagnostics_s>                       crit_diagnostics;
-  ie_field_s<integer<uint32_t, 0, 65535, true, true> > c_rnti;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<associated_scell_item_ies_o>, 1, 32, true> >
-                                                                                                 associated_scell_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_setup_mod_item_ies_o>, 1, 8, true> > srbs_setup_mod_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_modified_item_ies_o>, 1, 8, true> >  srbs_modified_list;
-  ie_field_s<full_cfg_e>                                                                         full_cfg;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_failed_to_be_modified_item_ies_o>, 1, 64, true>>
+                                                      drbs_failed_to_be_modified_list;
+  ie_field_s<inactivity_monitoring_resp_e>            inactivity_monitoring_resp;
+  ie_field_s<crit_diagnostics_s>                      crit_diagnostics;
+  ie_field_s<integer<uint32_t, 0, 65535, true, true>> c_rnti;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<associated_scell_item_ies_o>, 1, 32, true>>
+                                                                                                associated_scell_list;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_setup_mod_item_ies_o>, 1, 8, true>> srbs_setup_mod_list;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_modified_item_ies_o>, 1, 8, true>>  srbs_modified_list;
+  ie_field_s<full_cfg_e>                                                                        full_cfg;
 
   // sequence methods
   ue_context_mod_resp_ies_container();
@@ -11029,19 +11028,19 @@ struct ue_context_release_cmd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       rrc_container_present               = false;
-  bool                                                       srbid_present                       = false;
-  bool                                                       oldg_nb_du_ue_f1_ap_id_present      = false;
-  bool                                                       execute_dupl_present                = false;
-  bool                                                       rrc_delivery_status_request_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<cause_c>                                        cause;
-  ie_field_s<unbounded_octstring<true> >                     rrc_container;
-  ie_field_s<integer<uint8_t, 0, 3, true, true> >            srbid;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > oldg_nb_du_ue_f1_ap_id;
-  ie_field_s<execute_dupl_e>                                 execute_dupl;
-  ie_field_s<rrc_delivery_status_request_e>                  rrc_delivery_status_request;
+  bool                                                      rrc_container_present               = false;
+  bool                                                      srbid_present                       = false;
+  bool                                                      oldg_nb_du_ue_f1_ap_id_present      = false;
+  bool                                                      execute_dupl_present                = false;
+  bool                                                      rrc_delivery_status_request_present = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<cause_c>                                       cause;
+  ie_field_s<unbounded_octstring<true>>                     rrc_container;
+  ie_field_s<integer<uint8_t, 0, 3, true, true>>            srbid;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> oldg_nb_du_ue_f1_ap_id;
+  ie_field_s<execute_dupl_e>                                execute_dupl;
+  ie_field_s<rrc_delivery_status_request_e>                 rrc_delivery_status_request;
 
   // sequence methods
   ue_context_release_cmd_ies_container();
@@ -11058,10 +11057,10 @@ struct ue_context_release_complete_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<crit_diagnostics_s>                             crit_diagnostics;
+  bool                                                      crit_diagnostics_present = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
 
   // sequence methods
   ue_context_release_complete_ies_container();
@@ -11078,9 +11077,9 @@ struct ue_context_release_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<cause_c>                                        cause;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<cause_c>                                       cause;
 
   // sequence methods
   ue_context_release_request_ies_container();
@@ -11097,14 +11096,14 @@ struct ue_context_setup_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       gnb_du_ue_f1_ap_id_present     = false;
-  bool                                                       crit_diagnostics_present       = false;
-  bool                                                       potential_sp_cell_list_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<cause_c>                                        cause;
-  ie_field_s<crit_diagnostics_s>                             crit_diagnostics;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<potential_sp_cell_item_ies_o>, 0, 64, true> >
+  bool                                                      gnb_du_ue_f1_ap_id_present     = false;
+  bool                                                      crit_diagnostics_present       = false;
+  bool                                                      potential_sp_cell_list_present = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<cause_c>                                       cause;
+  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<potential_sp_cell_item_ies_o>, 0, 64, true>>
       potential_sp_cell_list;
 
   // sequence methods
@@ -11122,52 +11121,51 @@ struct ue_context_setup_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       gnb_du_ue_f1_ap_id_present                  = false;
-  bool                                                       sp_cell_ul_cfgured_present                  = false;
-  bool                                                       candidate_sp_cell_list_present              = false;
-  bool                                                       drx_cycle_present                           = false;
-  bool                                                       res_coordination_transfer_container_present = false;
-  bool                                                       scell_to_be_setup_list_present              = false;
-  bool                                                       srbs_to_be_setup_list_present               = false;
-  bool                                                       drbs_to_be_setup_list_present               = false;
-  bool                                                       inactivity_monitoring_request_present       = false;
-  bool                                                       rat_freq_prio_info_present                  = false;
-  bool                                                       rrc_container_present                       = false;
-  bool                                                       masked_imeisv_present                       = false;
-  bool                                                       serving_plmn_present                        = false;
-  bool                                                       gnb_du_ue_ambr_ul_present                   = false;
-  bool                                                       rrc_delivery_status_request_present         = false;
-  bool                                                       res_coordination_transfer_info_present      = false;
-  bool                                                       serving_cell_mo_present                     = false;
-  bool                                                       new_g_nb_cu_ue_f1_ap_id_present             = false;
-  bool                                                       ranueid_present                             = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<nrcgi_s>                                        sp_cell_id;
-  ie_field_s<integer<uint8_t, 0, 31, true, true> >           serv_cell_idx;
-  ie_field_s<cell_ul_cfgured_e>                              sp_cell_ul_cfgured;
-  ie_field_s<cuto_durrc_info_s>                              cuto_durrc_info;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<candidate_sp_cell_item_ies_o>, 1, 64, true> >
-                                         candidate_sp_cell_list;
-  ie_field_s<drx_cycle_s>                drx_cycle;
-  ie_field_s<unbounded_octstring<true> > res_coordination_transfer_container;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<scell_to_be_setup_item_ies_o>, 1, 32, true> >
+  bool                                                      gnb_du_ue_f1_ap_id_present                  = false;
+  bool                                                      sp_cell_ul_cfgured_present                  = false;
+  bool                                                      candidate_sp_cell_list_present              = false;
+  bool                                                      drx_cycle_present                           = false;
+  bool                                                      res_coordination_transfer_container_present = false;
+  bool                                                      scell_to_be_setup_list_present              = false;
+  bool                                                      srbs_to_be_setup_list_present               = false;
+  bool                                                      drbs_to_be_setup_list_present               = false;
+  bool                                                      inactivity_monitoring_request_present       = false;
+  bool                                                      rat_freq_prio_info_present                  = false;
+  bool                                                      rrc_container_present                       = false;
+  bool                                                      masked_imeisv_present                       = false;
+  bool                                                      serving_plmn_present                        = false;
+  bool                                                      gnb_du_ue_ambr_ul_present                   = false;
+  bool                                                      rrc_delivery_status_request_present         = false;
+  bool                                                      res_coordination_transfer_info_present      = false;
+  bool                                                      serving_cell_mo_present                     = false;
+  bool                                                      new_g_nb_cu_ue_f1_ap_id_present             = false;
+  bool                                                      ranueid_present                             = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<nrcgi_s>                                       sp_cell_id;
+  ie_field_s<integer<uint8_t, 0, 31, true, true>>           serv_cell_idx;
+  ie_field_s<cell_ul_cfgured_e>                             sp_cell_ul_cfgured;
+  ie_field_s<cuto_durrc_info_s>                             cuto_durrc_info;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<candidate_sp_cell_item_ies_o>, 1, 64, true>>
+                                        candidate_sp_cell_list;
+  ie_field_s<drx_cycle_s>               drx_cycle;
+  ie_field_s<unbounded_octstring<true>> res_coordination_transfer_container;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<scell_to_be_setup_item_ies_o>, 1, 32, true>>
       scell_to_be_setup_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_to_be_setup_item_ies_o>, 1, 8, true> >
-      srbs_to_be_setup_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_to_be_setup_item_ies_o>, 1, 64, true> >
-                                                               drbs_to_be_setup_list;
-  ie_field_s<inactivity_monitoring_request_e>                  inactivity_monitoring_request;
-  ie_field_s<rat_freq_prio_info_c>                             rat_freq_prio_info;
-  ie_field_s<unbounded_octstring<true> >                       rrc_container;
-  ie_field_s<fixed_bitstring<64, false, true> >                masked_imeisv;
-  ie_field_s<fixed_octstring<3, true> >                        serving_plmn;
-  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true> > gnb_du_ue_ambr_ul;
-  ie_field_s<rrc_delivery_status_request_e>                    rrc_delivery_status_request;
-  ie_field_s<res_coordination_transfer_info_s>                 res_coordination_transfer_info;
-  ie_field_s<integer<uint8_t, 1, 64, true, true> >             serving_cell_mo;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> >   new_g_nb_cu_ue_f1_ap_id;
-  ie_field_s<fixed_octstring<8, true> >                        ranueid;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_to_be_setup_item_ies_o>, 1, 8, true>> srbs_to_be_setup_list;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_to_be_setup_item_ies_o>, 1, 64, true>>
+                                                              drbs_to_be_setup_list;
+  ie_field_s<inactivity_monitoring_request_e>                 inactivity_monitoring_request;
+  ie_field_s<rat_freq_prio_info_c>                            rat_freq_prio_info;
+  ie_field_s<unbounded_octstring<true>>                       rrc_container;
+  ie_field_s<fixed_bitstring<64, false, true>>                masked_imeisv;
+  ie_field_s<fixed_octstring<3, true>>                        serving_plmn;
+  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true>> gnb_du_ue_ambr_ul;
+  ie_field_s<rrc_delivery_status_request_e>                   rrc_delivery_status_request;
+  ie_field_s<res_coordination_transfer_info_s>                res_coordination_transfer_info;
+  ie_field_s<integer<uint8_t, 1, 64, true, true>>             serving_cell_mo;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>   new_g_nb_cu_ue_f1_ap_id;
+  ie_field_s<fixed_octstring<8, true>>                        ranueid;
 
   // sequence methods
   ue_context_setup_request_ies_container();
@@ -11184,32 +11182,32 @@ struct ue_context_setup_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       c_rnti_present                              = false;
-  bool                                                       res_coordination_transfer_container_present = false;
-  bool                                                       full_cfg_present                            = false;
-  bool                                                       drbs_setup_list_present                     = false;
-  bool                                                       srbs_failed_to_be_setup_list_present        = false;
-  bool                                                       drbs_failed_to_be_setup_list_present        = false;
-  bool                                                       scell_failedto_setup_list_present           = false;
-  bool                                                       inactivity_monitoring_resp_present          = false;
-  bool                                                       crit_diagnostics_present                    = false;
-  bool                                                       srbs_setup_list_present                     = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<duto_currc_info_s>                              duto_currc_info;
-  ie_field_s<integer<uint32_t, 0, 65535, true, true> >       c_rnti;
-  ie_field_s<unbounded_octstring<true> >                     res_coordination_transfer_container;
-  ie_field_s<full_cfg_e>                                     full_cfg;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_setup_item_ies_o>, 1, 64, true> > drbs_setup_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_failed_to_be_setup_item_ies_o>, 1, 8, true> >
+  bool                                                      c_rnti_present                              = false;
+  bool                                                      res_coordination_transfer_container_present = false;
+  bool                                                      full_cfg_present                            = false;
+  bool                                                      drbs_setup_list_present                     = false;
+  bool                                                      srbs_failed_to_be_setup_list_present        = false;
+  bool                                                      drbs_failed_to_be_setup_list_present        = false;
+  bool                                                      scell_failedto_setup_list_present           = false;
+  bool                                                      inactivity_monitoring_resp_present          = false;
+  bool                                                      crit_diagnostics_present                    = false;
+  bool                                                      srbs_setup_list_present                     = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<duto_currc_info_s>                             duto_currc_info;
+  ie_field_s<integer<uint32_t, 0, 65535, true, true>>       c_rnti;
+  ie_field_s<unbounded_octstring<true>>                     res_coordination_transfer_container;
+  ie_field_s<full_cfg_e>                                    full_cfg;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_setup_item_ies_o>, 1, 64, true>> drbs_setup_list;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_failed_to_be_setup_item_ies_o>, 1, 8, true>>
       srbs_failed_to_be_setup_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_failed_to_be_setup_item_ies_o>, 1, 64, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_failed_to_be_setup_item_ies_o>, 1, 64, true>>
       drbs_failed_to_be_setup_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<scell_failedto_setup_item_ies_o>, 1, 32, true> >
-                                                                                             scell_failedto_setup_list;
-  ie_field_s<inactivity_monitoring_resp_e>                                                   inactivity_monitoring_resp;
-  ie_field_s<crit_diagnostics_s>                                                             crit_diagnostics;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_setup_item_ies_o>, 1, 8, true> > srbs_setup_list;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<scell_failedto_setup_item_ies_o>, 1, 32, true>>
+                                                                                            scell_failedto_setup_list;
+  ie_field_s<inactivity_monitoring_resp_e>                                                  inactivity_monitoring_resp;
+  ie_field_s<crit_diagnostics_s>                                                            crit_diagnostics;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_setup_item_ies_o>, 1, 8, true>> srbs_setup_list;
 
   // sequence methods
   ue_context_setup_resp_ies_container();
@@ -11226,9 +11224,9 @@ struct ue_inactivity_notif_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> >                                    gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> >                                    gnb_du_ue_f1_ap_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drb_activity_item_ies_o>, 1, 64, true> > drb_activity_list;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>                                    gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>                                    gnb_du_ue_f1_ap_id;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drb_activity_item_ies_o>, 1, 64, true>> drb_activity_list;
 
   // sequence methods
   ue_inactivity_notif_ies_container();
@@ -11245,14 +11243,14 @@ struct ulrrc_msg_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       sel_plmnid_present              = false;
-  bool                                                       new_g_nb_du_ue_f1_ap_id_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > gnb_du_ue_f1_ap_id;
-  ie_field_s<integer<uint8_t, 0, 3, true, true> >            srbid;
-  ie_field_s<unbounded_octstring<true> >                     rrc_container;
-  ie_field_s<fixed_octstring<3, true> >                      sel_plmnid;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true> > new_g_nb_du_ue_f1_ap_id;
+  bool                                                      sel_plmnid_present              = false;
+  bool                                                      new_g_nb_du_ue_f1_ap_id_present = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint8_t, 0, 3, true, true>>            srbid;
+  ie_field_s<unbounded_octstring<true>>                     rrc_container;
+  ie_field_s<fixed_octstring<3, true>>                      sel_plmnid;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> new_g_nb_du_ue_f1_ap_id;
 
   // sequence methods
   ulrrc_msg_transfer_ies_container();
@@ -11269,12 +11267,12 @@ struct write_replace_warning_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                  cells_to_be_broadcast_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> >    transaction_id;
-  ie_field_s<pws_sys_info_s>                            pws_sys_info;
-  ie_field_s<integer<uint32_t, 0, 131071, true, true> > repeat_period;
-  ie_field_s<integer<uint32_t, 0, 65535, false, true> > numof_broadcast_request;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_broadcast_list_item_ies_o>, 1, 512, true> >
+  bool                                                 cells_to_be_broadcast_list_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>>    transaction_id;
+  ie_field_s<pws_sys_info_s>                           pws_sys_info;
+  ie_field_s<integer<uint32_t, 0, 131071, true, true>> repeat_period;
+  ie_field_s<integer<uint32_t, 0, 65535, false, true>> numof_broadcast_request;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_broadcast_list_item_ies_o>, 1, 512, true>>
       cells_to_be_broadcast_list;
 
   // sequence methods
@@ -11292,14 +11290,14 @@ struct write_replace_warning_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               cells_broadcast_completed_list_present = false;
-  bool                                               crit_diagnostics_present               = false;
-  bool                                               ded_si_delivery_needed_ue_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true> > transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_broadcast_completed_list_item_ies_o>, 1, 512, true> >
+  bool                                              cells_broadcast_completed_list_present = false;
+  bool                                              crit_diagnostics_present               = false;
+  bool                                              ded_si_delivery_needed_ue_list_present = false;
+  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_broadcast_completed_list_item_ies_o>, 1, 512, true>>
                                  cells_broadcast_completed_list;
   ie_field_s<crit_diagnostics_s> crit_diagnostics;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ded_si_delivery_needed_ue_item_ies_o>, 1, 65536, true> >
+  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ded_si_delivery_needed_ue_item_ies_o>, 1, 65536, true>>
       ded_si_delivery_needed_ue_list;
 
   // sequence methods
@@ -11672,7 +11670,7 @@ struct f1_ap_pdu_c {
   protocol_ie_single_container_s<f1_ap_pdu_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "F1AP-PDU");
-    return c.get<protocol_ie_single_container_s<f1_ap_pdu_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<f1_ap_pdu_ext_ies_o>>();
   }
   const init_msg_s& init_msg() const
   {
@@ -11692,7 +11690,7 @@ struct f1_ap_pdu_c {
   const protocol_ie_single_container_s<f1_ap_pdu_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "F1AP-PDU");
-    return c.get<protocol_ie_single_container_s<f1_ap_pdu_ext_ies_o> >();
+    return c.get<protocol_ie_single_container_s<f1_ap_pdu_ext_ies_o>>();
   }
   init_msg_s&                                          set_init_msg();
   successful_outcome_s&                                set_successful_outcome();

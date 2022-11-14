@@ -41,8 +41,8 @@ public:
     coro_handle<>        suspended_handle;
   };
 
-  signal_event_common()                                  = default;
-  signal_event_common(const signal_event_common& event_) = delete;
+  signal_event_common()                                             = default;
+  signal_event_common(const signal_event_common& event_)            = delete;
   signal_event_common& operator=(const signal_event_common& event_) = delete;
   ~signal_event_common() {}
 

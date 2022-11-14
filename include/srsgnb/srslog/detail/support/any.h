@@ -25,9 +25,11 @@ struct in_place_type_t {
 
 /// Type trait to detect if T is a in_place_type_t tag.
 template <typename T>
-struct is_in_place_type_t : std::false_type {};
+struct is_in_place_type_t : std::false_type {
+};
 template <typename T>
-struct is_in_place_type_t<in_place_type_t<T> > : std::true_type {};
+struct is_in_place_type_t<in_place_type_t<T>> : std::true_type {
+};
 
 /// This is a very minimalist and non compliant implementation of std::any which
 /// is included in C++17.
@@ -41,7 +43,7 @@ public:
   any();
 
   /// Disallow copies for simplicity.
-  any(const any& other) = delete;
+  any(const any& other)            = delete;
   any& operator=(const any& other) = delete;
 
   /// Constructs an object of type decayed T with the provided argument.
@@ -57,7 +59,8 @@ public:
                                         !is_in_place_type_t<typename std::decay<T>::type>{},
                                     int>::type = 0>
   explicit any(T&& t) : storage(new storage_impl<typename std::decay<T>::type>(std::forward<T>(t)))
-  {}
+  {
+  }
 
   /// Constructs an object of type decayed T directly into the internal storage
   /// forwarding the provided arguments.
@@ -70,7 +73,8 @@ public:
             typename std::enable_if<std::is_constructible<typename std::decay<T>::type, Args...>{}, int>::type = 0>
   explicit any(in_place_type_t<T>, Args&&... args) :
     storage(new storage_impl<typename std::decay<T>::type>(std::forward<Args>(args)...))
-  {}
+  {
+  }
 
   any(any&& other) : storage(std::move(other.storage)) {}
 
@@ -111,9 +115,10 @@ private:
   struct storage_impl : public type_interface {
     template <typename... Args>
     explicit storage_impl(Args&&... args) : data(std::forward<Args>(args)...)
-    {}
+    {
+    }
 
-    storage_impl(const storage_impl& other) = delete;
+    storage_impl(const storage_impl& other)            = delete;
     storage_impl& operator=(const storage_impl& other) = delete;
 
     const void* type() const override { return &type_tag<T>::tag; }

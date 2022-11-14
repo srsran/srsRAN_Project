@@ -22,7 +22,7 @@ namespace detail {
 class mutex
 {
 public:
-  mutex(const mutex&) = delete;
+  mutex(const mutex&)            = delete;
   mutex& operator=(const mutex&) = delete;
 
   mutex()
@@ -60,7 +60,7 @@ class scoped_lock
 public:
   explicit scoped_lock(mutex& m) : m(m) { m.lock(); }
 
-  scoped_lock(const scoped_lock&) = delete;
+  scoped_lock(const scoped_lock&)            = delete;
   scoped_lock& operator=(const scoped_lock&) = delete;
 
   ~scoped_lock() { m.unlock(); }
@@ -76,7 +76,7 @@ class shared_variable
 public:
   shared_variable(const T& value) : value(value) {}
 
-  shared_variable(const shared_variable&) = delete;
+  shared_variable(const shared_variable&)            = delete;
   shared_variable& operator=(const shared_variable&) = delete;
 
   /// Set this shared variable to a new value guarded by the associated mutex.
@@ -101,7 +101,7 @@ class condition_variable
 public:
   condition_variable() { ::pthread_cond_init(&cond_var, nullptr); }
 
-  condition_variable(const condition_variable&) = delete;
+  condition_variable(const condition_variable&)            = delete;
   condition_variable& operator=(const condition_variable&) = delete;
 
   ~condition_variable() { ::pthread_cond_destroy(&cond_var); }
@@ -155,7 +155,7 @@ class cond_var_scoped_lock
 public:
   explicit cond_var_scoped_lock(condition_variable& cond_var) : cond_var(cond_var) { cond_var.lock(); }
 
-  cond_var_scoped_lock(const cond_var_scoped_lock&) = delete;
+  cond_var_scoped_lock(const cond_var_scoped_lock&)            = delete;
   cond_var_scoped_lock& operator=(const cond_var_scoped_lock&) = delete;
 
   ~cond_var_scoped_lock() { cond_var.unlock(); }

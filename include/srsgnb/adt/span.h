@@ -36,20 +36,25 @@ template <typename... Ts>
 using void_t = typename make_void<Ts...>::type;
 
 template <typename U>
-struct is_span : std::false_type {};
+struct is_span : std::false_type {
+};
 template <typename U>
-struct is_span<span<U> > : std::true_type {};
+struct is_span<span<U>> : std::true_type {
+};
 
 template <typename U>
-struct is_std_array : std::false_type {};
+struct is_std_array : std::false_type {
+};
 template <typename U, std::size_t N>
-struct is_std_array<std::array<U, N> > : std::true_type {};
+struct is_std_array<std::array<U, N>> : std::true_type {
+};
 
 template <typename U>
 using remove_cvref_t = typename std::remove_cv<typename std::remove_reference<U>::type>::type;
 
 template <class Container, class U, class = void>
-struct is_container_compatible : public std::false_type {};
+struct is_container_compatible : public std::false_type {
+};
 template <class Container, class U>
 struct is_container_compatible<
     Container,
@@ -59,16 +64,17 @@ struct is_container_compatible<
         decltype(std::declval<Container>().data()),
         decltype(std::declval<Container>().size()),
         // Container should not be a span.
-        typename std::enable_if<!is_span<remove_cvref_t<Container> >::value, int>::type,
+        typename std::enable_if<!is_span<remove_cvref_t<Container>>::value, int>::type,
         // Container should not be a std::array.
-        typename std::enable_if<!is_std_array<remove_cvref_t<Container> >::value, int>::type,
+        typename std::enable_if<!is_std_array<remove_cvref_t<Container>>::value, int>::type,
         // Container should not be an array.
-        typename std::enable_if<!std::is_array<remove_cvref_t<Container> >::value, int>::type,
+        typename std::enable_if<!std::is_array<remove_cvref_t<Container>>::value, int>::type,
         // Check type compatibility between the contained type and the span type.
         typename std::enable_if<
             std::is_convertible<typename std::remove_pointer<decltype(std::declval<Container>().data())>::type (*)[],
                                 U (*)[]>::value,
-            int>::type> > : public std::true_type {};
+            int>::type>> : public std::true_type {
+};
 
 } // namespace detail
 
@@ -102,38 +108,44 @@ public:
   /// Constructs a span that is a view over the array arr.
   template <std::size_t N>
   constexpr span(element_type (&arr)[N]) noexcept : ptr(arr), len(N)
-  {}
+  {
+  }
 
   /// Constructs a span that is a view over the array arr.
   template <typename U,
             std::size_t N,
             typename std::enable_if<std::is_convertible<U (*)[], element_type (*)[]>::value, int>::type = 0>
   constexpr span(std::array<U, N>& arr) noexcept : ptr(arr.data()), len(N)
-  {}
+  {
+  }
 
   /// Constructs a span that is a view over the array arr.
   template <typename U,
             std::size_t N,
             typename std::enable_if<std::is_convertible<const U (*)[], element_type (*)[]>::value, int>::type = 0>
   constexpr span(const std::array<U, N>& arr) noexcept : ptr(arr.data()), len(N)
-  {}
+  {
+  }
 
   /// Constructs a span that is a view over the container c.
   template <typename Container,
             typename std::enable_if<detail::is_container_compatible<Container, element_type>::value, int>::type = 0>
   constexpr span(Container& c) noexcept : ptr(c.data()), len(c.size())
-  {}
+  {
+  }
 
   /// Constructs a span that is a view over the container c.
   template <
       typename Container,
       typename std::enable_if<detail::is_container_compatible<const Container, element_type>::value, int>::type = 0>
   constexpr span(const Container& c) noexcept : ptr(c.data()), len(c.size())
-  {}
+  {
+  }
 
   template <typename U, typename std::enable_if<std::is_convertible<U (*)[], element_type (*)[]>::value, int>::type = 0>
   constexpr span(const span<U>& other) noexcept : ptr(other.data()), len(other.size())
-  {}
+  {
+  }
 
   span& operator=(const span& other) noexcept = default;
 
@@ -239,7 +251,7 @@ namespace fmt {
 
 /// \brief Custom formatter for span<T>.
 template <typename T>
-struct formatter<srsgnb::span<T> > {
+struct formatter<srsgnb::span<T>> {
   // Stores parsed format string.
   memory_buffer format_buffer;
 

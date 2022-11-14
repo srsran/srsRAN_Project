@@ -114,7 +114,7 @@ void test_expected_struct()
 
 void test_unique_ptr()
 {
-  expected<std::unique_ptr<C> > exp;
+  expected<std::unique_ptr<C>> exp;
   TESTASSERT(exp);
   exp.value().reset(new C{2});
   TESTASSERT(exp.value()->val == 2);

@@ -23,7 +23,7 @@ class log_backend_impl : public detail::log_backend
 public:
   log_backend_impl() = default;
 
-  log_backend_impl(const log_backend_impl& other) = delete;
+  log_backend_impl(const log_backend_impl& other)            = delete;
   log_backend_impl& operator=(const log_backend_impl& other) = delete;
 
   void start(backend_priority priority = backend_priority::normal) override { worker.start(priority); }

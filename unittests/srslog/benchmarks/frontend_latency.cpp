@@ -79,7 +79,7 @@ static void run_thread(log_channel& c, std::vector<uint64_t>& results, std::atom
 /// This function runs the latency benchmark generating log entries using the specified number of threads.
 static void benchmark(unsigned num_threads)
 {
-  std::vector<std::vector<uint64_t> > thread_results;
+  std::vector<std::vector<uint64_t>> thread_results;
   thread_results.resize(num_threads);
   for (auto& v : thread_results) {
     v.reserve(num_iterations);

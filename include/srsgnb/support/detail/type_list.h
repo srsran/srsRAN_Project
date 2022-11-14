@@ -31,7 +31,8 @@ struct get_type_from_index_helper<I, I, T, Types...> {
 
 /// List of types
 template <typename... Args>
-struct type_list {};
+struct type_list {
+};
 
 /// Get size of type_list
 template <typename... Args>
@@ -52,7 +53,7 @@ public:
 
 /// Specialization when argument is a type_list
 template <std::size_t Index, class... Types>
-class get_type_from_index<Index, type_list<Types...> >
+class get_type_from_index<Index, type_list<Types...>>
 {
 public:
   using type = typename get_type_from_index<Index, Types...>::type;

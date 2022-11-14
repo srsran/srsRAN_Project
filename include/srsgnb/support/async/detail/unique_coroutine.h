@@ -24,7 +24,7 @@ public:
 
   unique_coroutine() = default;
   explicit unique_coroutine(coro_handle<promise_type> cb) : handle(cb) {}
-  unique_coroutine(const unique_coroutine&) = delete;
+  unique_coroutine(const unique_coroutine&)            = delete;
   unique_coroutine& operator=(const unique_coroutine&) = delete;
   unique_coroutine(unique_coroutine&& other) noexcept : handle(std::exchange(other.handle, nullptr)) {}
   unique_coroutine& operator=(unique_coroutine&& other) noexcept

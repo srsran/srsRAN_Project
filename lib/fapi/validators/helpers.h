@@ -47,7 +47,7 @@ inline bool validate_field(Integer           min,
                            validator_report& report)
 {
   static_assert(std::is_integral<Integer>::value, "Integral required");
-  
+
   if (min <= value && value <= max) {
     return true;
   }

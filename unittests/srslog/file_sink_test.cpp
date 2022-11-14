@@ -44,7 +44,8 @@ class file_sink_subclass : public file_sink
 public:
   file_sink_subclass(std::string name, size_t max_size) :
     file_sink(std::move(name), max_size, false, std::unique_ptr<log_formatter>(new test_dummies::log_formatter_dummy))
-  {}
+  {
+  }
 
   uint32_t get_num_of_files() const { return get_file_index(); }
 };

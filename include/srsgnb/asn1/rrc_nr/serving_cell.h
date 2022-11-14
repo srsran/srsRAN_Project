@@ -855,7 +855,7 @@ struct pdcch_cfg_common_s {
     scs120_kh_zhalf_t_scs60_kh_zquarter_t_scs30_kh_zone_eighth_t_scs15_kh_zone_sixteenth_t_l_&
     set_scs120_kh_zhalf_t_scs60_kh_zquarter_t_scs30_kh_zone_eighth_t_scs15_kh_zone_sixteenth_t();
     scs120_kh_zquarter_t_scs60_kh_zone_eighth_t_scs30_kh_zone_sixteenth_t_l_&
-                                                          set_scs120_kh_zquarter_t_scs60_kh_zone_eighth_t_scs30_kh_zone_sixteenth_t();
+    set_scs120_kh_zquarter_t_scs60_kh_zone_eighth_t_scs30_kh_zone_sixteenth_t();
     scs120_kh_zone_eighth_t_scs60_kh_zone_sixteenth_t_l_& set_scs120_kh_zone_eighth_t_scs60_kh_zone_sixteenth_t();
     scs120_kh_zone_sixteenth_t_l_&                        set_scs120_kh_zone_sixteenth_t();
 
@@ -1602,7 +1602,7 @@ struct pcch_cfg_s {
     scs120_kh_zhalf_t_scs60_kh_zquarter_t_scs30_kh_zone_eighth_t_scs15_kh_zone_sixteenth_t_l_&
     set_scs120_kh_zhalf_t_scs60_kh_zquarter_t_scs30_kh_zone_eighth_t_scs15_kh_zone_sixteenth_t();
     scs120_kh_zquarter_t_scs60_kh_zone_eighth_t_scs30_kh_zone_sixteenth_t_l_&
-                                                          set_scs120_kh_zquarter_t_scs60_kh_zone_eighth_t_scs30_kh_zone_sixteenth_t();
+    set_scs120_kh_zquarter_t_scs60_kh_zone_eighth_t_scs30_kh_zone_sixteenth_t();
     scs120_kh_zone_eighth_t_scs60_kh_zone_sixteenth_t_l_& set_scs120_kh_zone_eighth_t_scs60_kh_zone_sixteenth_t();
     scs120_kh_zone_sixteenth_t_l_&                        set_scs120_kh_zone_sixteenth_t();
 
@@ -1839,42 +1839,42 @@ struct csi_rs_res_map_s {
     fixed_bitstring<4>& row1()
     {
       assert_choice_type(types::row1, type_, "frequencyDomainAllocation");
-      return c.get<fixed_bitstring<4> >();
+      return c.get<fixed_bitstring<4>>();
     }
     fixed_bitstring<12>& row2()
     {
       assert_choice_type(types::row2, type_, "frequencyDomainAllocation");
-      return c.get<fixed_bitstring<12> >();
+      return c.get<fixed_bitstring<12>>();
     }
     fixed_bitstring<3>& row4()
     {
       assert_choice_type(types::row4, type_, "frequencyDomainAllocation");
-      return c.get<fixed_bitstring<3> >();
+      return c.get<fixed_bitstring<3>>();
     }
     fixed_bitstring<6>& other()
     {
       assert_choice_type(types::other, type_, "frequencyDomainAllocation");
-      return c.get<fixed_bitstring<6> >();
+      return c.get<fixed_bitstring<6>>();
     }
     const fixed_bitstring<4>& row1() const
     {
       assert_choice_type(types::row1, type_, "frequencyDomainAllocation");
-      return c.get<fixed_bitstring<4> >();
+      return c.get<fixed_bitstring<4>>();
     }
     const fixed_bitstring<12>& row2() const
     {
       assert_choice_type(types::row2, type_, "frequencyDomainAllocation");
-      return c.get<fixed_bitstring<12> >();
+      return c.get<fixed_bitstring<12>>();
     }
     const fixed_bitstring<3>& row4() const
     {
       assert_choice_type(types::row4, type_, "frequencyDomainAllocation");
-      return c.get<fixed_bitstring<3> >();
+      return c.get<fixed_bitstring<3>>();
     }
     const fixed_bitstring<6>& other() const
     {
       assert_choice_type(types::other, type_, "frequencyDomainAllocation");
-      return c.get<fixed_bitstring<6> >();
+      return c.get<fixed_bitstring<6>>();
     }
     fixed_bitstring<4>&  set_row1();
     fixed_bitstring<12>& set_row2();
@@ -1882,8 +1882,8 @@ struct csi_rs_res_map_s {
     fixed_bitstring<6>&  set_other();
 
   private:
-    types                                 type_;
-    choice_buffer_t<fixed_bitstring<12> > c;
+    types                                type_;
+    choice_buffer_t<fixed_bitstring<12>> c;
 
     void destroy_();
   };
@@ -2456,29 +2456,29 @@ struct rate_match_pattern_s {
         fixed_bitstring<14>& one_slot()
         {
           assert_choice_type(types::one_slot, type_, "symbolsInResourceBlock");
-          return c.get<fixed_bitstring<14> >();
+          return c.get<fixed_bitstring<14>>();
         }
         fixed_bitstring<28>& two_slots()
         {
           assert_choice_type(types::two_slots, type_, "symbolsInResourceBlock");
-          return c.get<fixed_bitstring<28> >();
+          return c.get<fixed_bitstring<28>>();
         }
         const fixed_bitstring<14>& one_slot() const
         {
           assert_choice_type(types::one_slot, type_, "symbolsInResourceBlock");
-          return c.get<fixed_bitstring<14> >();
+          return c.get<fixed_bitstring<14>>();
         }
         const fixed_bitstring<28>& two_slots() const
         {
           assert_choice_type(types::two_slots, type_, "symbolsInResourceBlock");
-          return c.get<fixed_bitstring<28> >();
+          return c.get<fixed_bitstring<28>>();
         }
         fixed_bitstring<14>& set_one_slot();
         fixed_bitstring<28>& set_two_slots();
 
       private:
-        types                                 type_;
-        choice_buffer_t<fixed_bitstring<28> > c;
+        types                                type_;
+        choice_buffer_t<fixed_bitstring<28>> c;
 
         void destroy_();
       };
@@ -2506,72 +2506,72 @@ struct rate_match_pattern_s {
         fixed_bitstring<2>& n2()
         {
           assert_choice_type(types::n2, type_, "periodicityAndPattern");
-          return c.get<fixed_bitstring<2> >();
+          return c.get<fixed_bitstring<2>>();
         }
         fixed_bitstring<4>& n4()
         {
           assert_choice_type(types::n4, type_, "periodicityAndPattern");
-          return c.get<fixed_bitstring<4> >();
+          return c.get<fixed_bitstring<4>>();
         }
         fixed_bitstring<5>& n5()
         {
           assert_choice_type(types::n5, type_, "periodicityAndPattern");
-          return c.get<fixed_bitstring<5> >();
+          return c.get<fixed_bitstring<5>>();
         }
         fixed_bitstring<8>& n8()
         {
           assert_choice_type(types::n8, type_, "periodicityAndPattern");
-          return c.get<fixed_bitstring<8> >();
+          return c.get<fixed_bitstring<8>>();
         }
         fixed_bitstring<10>& n10()
         {
           assert_choice_type(types::n10, type_, "periodicityAndPattern");
-          return c.get<fixed_bitstring<10> >();
+          return c.get<fixed_bitstring<10>>();
         }
         fixed_bitstring<20>& n20()
         {
           assert_choice_type(types::n20, type_, "periodicityAndPattern");
-          return c.get<fixed_bitstring<20> >();
+          return c.get<fixed_bitstring<20>>();
         }
         fixed_bitstring<40>& n40()
         {
           assert_choice_type(types::n40, type_, "periodicityAndPattern");
-          return c.get<fixed_bitstring<40> >();
+          return c.get<fixed_bitstring<40>>();
         }
         const fixed_bitstring<2>& n2() const
         {
           assert_choice_type(types::n2, type_, "periodicityAndPattern");
-          return c.get<fixed_bitstring<2> >();
+          return c.get<fixed_bitstring<2>>();
         }
         const fixed_bitstring<4>& n4() const
         {
           assert_choice_type(types::n4, type_, "periodicityAndPattern");
-          return c.get<fixed_bitstring<4> >();
+          return c.get<fixed_bitstring<4>>();
         }
         const fixed_bitstring<5>& n5() const
         {
           assert_choice_type(types::n5, type_, "periodicityAndPattern");
-          return c.get<fixed_bitstring<5> >();
+          return c.get<fixed_bitstring<5>>();
         }
         const fixed_bitstring<8>& n8() const
         {
           assert_choice_type(types::n8, type_, "periodicityAndPattern");
-          return c.get<fixed_bitstring<8> >();
+          return c.get<fixed_bitstring<8>>();
         }
         const fixed_bitstring<10>& n10() const
         {
           assert_choice_type(types::n10, type_, "periodicityAndPattern");
-          return c.get<fixed_bitstring<10> >();
+          return c.get<fixed_bitstring<10>>();
         }
         const fixed_bitstring<20>& n20() const
         {
           assert_choice_type(types::n20, type_, "periodicityAndPattern");
-          return c.get<fixed_bitstring<20> >();
+          return c.get<fixed_bitstring<20>>();
         }
         const fixed_bitstring<40>& n40() const
         {
           assert_choice_type(types::n40, type_, "periodicityAndPattern");
-          return c.get<fixed_bitstring<40> >();
+          return c.get<fixed_bitstring<40>>();
         }
         fixed_bitstring<2>&  set_n2();
         fixed_bitstring<4>&  set_n4();
@@ -2582,8 +2582,8 @@ struct rate_match_pattern_s {
         fixed_bitstring<40>& set_n40();
 
       private:
-        types                                 type_;
-        choice_buffer_t<fixed_bitstring<40> > c;
+        types                                type_;
+        choice_buffer_t<fixed_bitstring<40>> c;
 
         void destroy_();
       };
@@ -2956,40 +2956,40 @@ struct pdsch_cfg_s {
   using sp_zp_csi_rs_res_sets_to_release_list_l_        = bounded_array<uint8_t, 16>;
 
   // member variables
-  bool                                                               ext                                      = false;
-  bool                                                               data_scrambling_id_pdsch_present         = false;
-  bool                                                               dmrs_dl_for_pdsch_map_type_a_present     = false;
-  bool                                                               dmrs_dl_for_pdsch_map_type_b_present     = false;
-  bool                                                               vrb_to_prb_interleaver_present           = false;
-  bool                                                               pdsch_time_domain_alloc_list_present     = false;
-  bool                                                               pdsch_aggregation_factor_present         = false;
-  bool                                                               mcs_table_present                        = false;
-  bool                                                               max_nrof_code_words_sched_by_dci_present = false;
-  bool                                                               p_zp_csi_rs_res_set_present              = false;
-  uint16_t                                                           data_scrambling_id_pdsch                 = 0;
-  setup_release_c<dmrs_dl_cfg_s>                                     dmrs_dl_for_pdsch_map_type_a;
-  setup_release_c<dmrs_dl_cfg_s>                                     dmrs_dl_for_pdsch_map_type_b;
-  tci_states_to_add_mod_list_l_                                      tci_states_to_add_mod_list;
-  tci_states_to_release_list_l_                                      tci_states_to_release_list;
-  vrb_to_prb_interleaver_e_                                          vrb_to_prb_interleaver;
-  res_alloc_e_                                                       res_alloc;
-  setup_release_c<dyn_seq_of<pdsch_time_domain_res_alloc_s, 1, 16> > pdsch_time_domain_alloc_list;
-  pdsch_aggregation_factor_e_                                        pdsch_aggregation_factor;
-  rate_match_pattern_to_add_mod_list_l_                              rate_match_pattern_to_add_mod_list;
-  rate_match_pattern_to_release_list_l_                              rate_match_pattern_to_release_list;
-  rate_match_pattern_group_l                                         rate_match_pattern_group1;
-  rate_match_pattern_group_l                                         rate_match_pattern_group2;
-  rbg_size_e_                                                        rbg_size;
-  mcs_table_e_                                                       mcs_table;
-  max_nrof_code_words_sched_by_dci_e_                                max_nrof_code_words_sched_by_dci;
-  prb_bundling_type_c_                                               prb_bundling_type;
-  zp_csi_rs_res_to_add_mod_list_l_                                   zp_csi_rs_res_to_add_mod_list;
-  zp_csi_rs_res_to_release_list_l_                                   zp_csi_rs_res_to_release_list;
-  aperiodic_zp_csi_rs_res_sets_to_add_mod_list_l_                    aperiodic_zp_csi_rs_res_sets_to_add_mod_list;
-  aperiodic_zp_csi_rs_res_sets_to_release_list_l_                    aperiodic_zp_csi_rs_res_sets_to_release_list;
-  sp_zp_csi_rs_res_sets_to_add_mod_list_l_                           sp_zp_csi_rs_res_sets_to_add_mod_list;
-  sp_zp_csi_rs_res_sets_to_release_list_l_                           sp_zp_csi_rs_res_sets_to_release_list;
-  setup_release_c<zp_csi_rs_res_set_s>                               p_zp_csi_rs_res_set;
+  bool                                                              ext                                      = false;
+  bool                                                              data_scrambling_id_pdsch_present         = false;
+  bool                                                              dmrs_dl_for_pdsch_map_type_a_present     = false;
+  bool                                                              dmrs_dl_for_pdsch_map_type_b_present     = false;
+  bool                                                              vrb_to_prb_interleaver_present           = false;
+  bool                                                              pdsch_time_domain_alloc_list_present     = false;
+  bool                                                              pdsch_aggregation_factor_present         = false;
+  bool                                                              mcs_table_present                        = false;
+  bool                                                              max_nrof_code_words_sched_by_dci_present = false;
+  bool                                                              p_zp_csi_rs_res_set_present              = false;
+  uint16_t                                                          data_scrambling_id_pdsch                 = 0;
+  setup_release_c<dmrs_dl_cfg_s>                                    dmrs_dl_for_pdsch_map_type_a;
+  setup_release_c<dmrs_dl_cfg_s>                                    dmrs_dl_for_pdsch_map_type_b;
+  tci_states_to_add_mod_list_l_                                     tci_states_to_add_mod_list;
+  tci_states_to_release_list_l_                                     tci_states_to_release_list;
+  vrb_to_prb_interleaver_e_                                         vrb_to_prb_interleaver;
+  res_alloc_e_                                                      res_alloc;
+  setup_release_c<dyn_seq_of<pdsch_time_domain_res_alloc_s, 1, 16>> pdsch_time_domain_alloc_list;
+  pdsch_aggregation_factor_e_                                       pdsch_aggregation_factor;
+  rate_match_pattern_to_add_mod_list_l_                             rate_match_pattern_to_add_mod_list;
+  rate_match_pattern_to_release_list_l_                             rate_match_pattern_to_release_list;
+  rate_match_pattern_group_l                                        rate_match_pattern_group1;
+  rate_match_pattern_group_l                                        rate_match_pattern_group2;
+  rbg_size_e_                                                       rbg_size;
+  mcs_table_e_                                                      mcs_table;
+  max_nrof_code_words_sched_by_dci_e_                               max_nrof_code_words_sched_by_dci;
+  prb_bundling_type_c_                                              prb_bundling_type;
+  zp_csi_rs_res_to_add_mod_list_l_                                  zp_csi_rs_res_to_add_mod_list;
+  zp_csi_rs_res_to_release_list_l_                                  zp_csi_rs_res_to_release_list;
+  aperiodic_zp_csi_rs_res_sets_to_add_mod_list_l_                   aperiodic_zp_csi_rs_res_sets_to_add_mod_list;
+  aperiodic_zp_csi_rs_res_sets_to_release_list_l_                   aperiodic_zp_csi_rs_res_sets_to_release_list;
+  sp_zp_csi_rs_res_sets_to_add_mod_list_l_                          sp_zp_csi_rs_res_sets_to_add_mod_list;
+  sp_zp_csi_rs_res_sets_to_release_list_l_                          sp_zp_csi_rs_res_sets_to_release_list;
+  setup_release_c<zp_csi_rs_res_set_s>                              p_zp_csi_rs_res_set;
   // ...
 
   // sequence methods
@@ -4705,39 +4705,39 @@ struct pusch_cfg_s {
   typedef enumerated<codebook_subset_opts> codebook_subset_e_;
 
   // member variables
-  bool                                                               ext                                  = false;
-  bool                                                               data_scrambling_id_pusch_present     = false;
-  bool                                                               tx_cfg_present                       = false;
-  bool                                                               dmrs_ul_for_pusch_map_type_a_present = false;
-  bool                                                               dmrs_ul_for_pusch_map_type_b_present = false;
-  bool                                                               pusch_pwr_ctrl_present               = false;
-  bool                                                               freq_hop_present                     = false;
-  bool                                                               pusch_time_domain_alloc_list_present = false;
-  bool                                                               pusch_aggregation_factor_present     = false;
-  bool                                                               mcs_table_present                    = false;
-  bool                                                               mcs_table_transform_precoder_present = false;
-  bool                                                               transform_precoder_present           = false;
-  bool                                                               codebook_subset_present              = false;
-  bool                                                               max_rank_present                     = false;
-  bool                                                               rbg_size_present                     = false;
-  bool                                                               uci_on_pusch_present                 = false;
-  bool                                                               tp_pi2_bpsk_present                  = false;
-  uint16_t                                                           data_scrambling_id_pusch             = 0;
-  tx_cfg_e_                                                          tx_cfg;
-  setup_release_c<dmrs_ul_cfg_s>                                     dmrs_ul_for_pusch_map_type_a;
-  setup_release_c<dmrs_ul_cfg_s>                                     dmrs_ul_for_pusch_map_type_b;
-  pusch_pwr_ctrl_s                                                   pusch_pwr_ctrl;
-  freq_hop_e_                                                        freq_hop;
-  freq_hop_offset_lists_l_                                           freq_hop_offset_lists;
-  res_alloc_e_                                                       res_alloc;
-  setup_release_c<dyn_seq_of<pusch_time_domain_res_alloc_s, 1, 16> > pusch_time_domain_alloc_list;
-  pusch_aggregation_factor_e_                                        pusch_aggregation_factor;
-  mcs_table_e_                                                       mcs_table;
-  mcs_table_transform_precoder_e_                                    mcs_table_transform_precoder;
-  transform_precoder_e_                                              transform_precoder;
-  codebook_subset_e_                                                 codebook_subset;
-  uint8_t                                                            max_rank = 1;
-  setup_release_c<uci_on_pusch_s>                                    uci_on_pusch;
+  bool                                                              ext                                  = false;
+  bool                                                              data_scrambling_id_pusch_present     = false;
+  bool                                                              tx_cfg_present                       = false;
+  bool                                                              dmrs_ul_for_pusch_map_type_a_present = false;
+  bool                                                              dmrs_ul_for_pusch_map_type_b_present = false;
+  bool                                                              pusch_pwr_ctrl_present               = false;
+  bool                                                              freq_hop_present                     = false;
+  bool                                                              pusch_time_domain_alloc_list_present = false;
+  bool                                                              pusch_aggregation_factor_present     = false;
+  bool                                                              mcs_table_present                    = false;
+  bool                                                              mcs_table_transform_precoder_present = false;
+  bool                                                              transform_precoder_present           = false;
+  bool                                                              codebook_subset_present              = false;
+  bool                                                              max_rank_present                     = false;
+  bool                                                              rbg_size_present                     = false;
+  bool                                                              uci_on_pusch_present                 = false;
+  bool                                                              tp_pi2_bpsk_present                  = false;
+  uint16_t                                                          data_scrambling_id_pusch             = 0;
+  tx_cfg_e_                                                         tx_cfg;
+  setup_release_c<dmrs_ul_cfg_s>                                    dmrs_ul_for_pusch_map_type_a;
+  setup_release_c<dmrs_ul_cfg_s>                                    dmrs_ul_for_pusch_map_type_b;
+  pusch_pwr_ctrl_s                                                  pusch_pwr_ctrl;
+  freq_hop_e_                                                       freq_hop;
+  freq_hop_offset_lists_l_                                          freq_hop_offset_lists;
+  res_alloc_e_                                                      res_alloc;
+  setup_release_c<dyn_seq_of<pusch_time_domain_res_alloc_s, 1, 16>> pusch_time_domain_alloc_list;
+  pusch_aggregation_factor_e_                                       pusch_aggregation_factor;
+  mcs_table_e_                                                      mcs_table;
+  mcs_table_transform_precoder_e_                                   mcs_table_transform_precoder;
+  transform_precoder_e_                                             transform_precoder;
+  codebook_subset_e_                                                codebook_subset;
+  uint8_t                                                           max_rank = 1;
+  setup_release_c<uci_on_pusch_s>                                   uci_on_pusch;
   // ...
 
   // sequence methods
@@ -5223,132 +5223,132 @@ struct codebook_cfg_s {
                 fixed_bitstring<8>& two_one_type_i_single_panel_restrict()
                 {
                   assert_choice_type(types::two_one_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<8> >();
+                  return c.get<fixed_bitstring<8>>();
                 }
                 fixed_bitstring<64>& two_two_type_i_single_panel_restrict()
                 {
                   assert_choice_type(types::two_two_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<64> >();
+                  return c.get<fixed_bitstring<64>>();
                 }
                 fixed_bitstring<16>& four_one_type_i_single_panel_restrict()
                 {
                   assert_choice_type(types::four_one_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<16> >();
+                  return c.get<fixed_bitstring<16>>();
                 }
                 fixed_bitstring<96>& three_two_type_i_single_panel_restrict()
                 {
                   assert_choice_type(types::three_two_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<96> >();
+                  return c.get<fixed_bitstring<96>>();
                 }
                 fixed_bitstring<24>& six_one_type_i_single_panel_restrict()
                 {
                   assert_choice_type(types::six_one_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<24> >();
+                  return c.get<fixed_bitstring<24>>();
                 }
                 fixed_bitstring<128>& four_two_type_i_single_panel_restrict()
                 {
                   assert_choice_type(types::four_two_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<128> >();
+                  return c.get<fixed_bitstring<128>>();
                 }
                 fixed_bitstring<32>& eight_one_type_i_single_panel_restrict()
                 {
                   assert_choice_type(types::eight_one_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<32> >();
+                  return c.get<fixed_bitstring<32>>();
                 }
                 fixed_bitstring<192>& four_three_type_i_single_panel_restrict()
                 {
                   assert_choice_type(types::four_three_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<192> >();
+                  return c.get<fixed_bitstring<192>>();
                 }
                 fixed_bitstring<192>& six_two_type_i_single_panel_restrict()
                 {
                   assert_choice_type(types::six_two_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<192> >();
+                  return c.get<fixed_bitstring<192>>();
                 }
                 fixed_bitstring<48>& twelve_one_type_i_single_panel_restrict()
                 {
                   assert_choice_type(types::twelve_one_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<48> >();
+                  return c.get<fixed_bitstring<48>>();
                 }
                 fixed_bitstring<256>& four_four_type_i_single_panel_restrict()
                 {
                   assert_choice_type(types::four_four_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<256> >();
+                  return c.get<fixed_bitstring<256>>();
                 }
                 fixed_bitstring<256>& eight_two_type_i_single_panel_restrict()
                 {
                   assert_choice_type(types::eight_two_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<256> >();
+                  return c.get<fixed_bitstring<256>>();
                 }
                 fixed_bitstring<64>& sixteen_one_type_i_single_panel_restrict()
                 {
                   assert_choice_type(types::sixteen_one_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<64> >();
+                  return c.get<fixed_bitstring<64>>();
                 }
                 const fixed_bitstring<8>& two_one_type_i_single_panel_restrict() const
                 {
                   assert_choice_type(types::two_one_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<8> >();
+                  return c.get<fixed_bitstring<8>>();
                 }
                 const fixed_bitstring<64>& two_two_type_i_single_panel_restrict() const
                 {
                   assert_choice_type(types::two_two_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<64> >();
+                  return c.get<fixed_bitstring<64>>();
                 }
                 const fixed_bitstring<16>& four_one_type_i_single_panel_restrict() const
                 {
                   assert_choice_type(types::four_one_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<16> >();
+                  return c.get<fixed_bitstring<16>>();
                 }
                 const fixed_bitstring<96>& three_two_type_i_single_panel_restrict() const
                 {
                   assert_choice_type(types::three_two_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<96> >();
+                  return c.get<fixed_bitstring<96>>();
                 }
                 const fixed_bitstring<24>& six_one_type_i_single_panel_restrict() const
                 {
                   assert_choice_type(types::six_one_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<24> >();
+                  return c.get<fixed_bitstring<24>>();
                 }
                 const fixed_bitstring<128>& four_two_type_i_single_panel_restrict() const
                 {
                   assert_choice_type(types::four_two_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<128> >();
+                  return c.get<fixed_bitstring<128>>();
                 }
                 const fixed_bitstring<32>& eight_one_type_i_single_panel_restrict() const
                 {
                   assert_choice_type(types::eight_one_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<32> >();
+                  return c.get<fixed_bitstring<32>>();
                 }
                 const fixed_bitstring<192>& four_three_type_i_single_panel_restrict() const
                 {
                   assert_choice_type(types::four_three_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<192> >();
+                  return c.get<fixed_bitstring<192>>();
                 }
                 const fixed_bitstring<192>& six_two_type_i_single_panel_restrict() const
                 {
                   assert_choice_type(types::six_two_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<192> >();
+                  return c.get<fixed_bitstring<192>>();
                 }
                 const fixed_bitstring<48>& twelve_one_type_i_single_panel_restrict() const
                 {
                   assert_choice_type(types::twelve_one_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<48> >();
+                  return c.get<fixed_bitstring<48>>();
                 }
                 const fixed_bitstring<256>& four_four_type_i_single_panel_restrict() const
                 {
                   assert_choice_type(types::four_four_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<256> >();
+                  return c.get<fixed_bitstring<256>>();
                 }
                 const fixed_bitstring<256>& eight_two_type_i_single_panel_restrict() const
                 {
                   assert_choice_type(types::eight_two_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<256> >();
+                  return c.get<fixed_bitstring<256>>();
                 }
                 const fixed_bitstring<64>& sixteen_one_type_i_single_panel_restrict() const
                 {
                   assert_choice_type(types::sixteen_one_type_i_single_panel_restrict, type_, "n1-n2");
-                  return c.get<fixed_bitstring<64> >();
+                  return c.get<fixed_bitstring<64>>();
                 }
                 fixed_bitstring<8>&   set_two_one_type_i_single_panel_restrict();
                 fixed_bitstring<64>&  set_two_two_type_i_single_panel_restrict();
@@ -5365,8 +5365,8 @@ struct codebook_cfg_s {
                 fixed_bitstring<64>&  set_sixteen_one_type_i_single_panel_restrict();
 
               private:
-                types                                  type_;
-                choice_buffer_t<fixed_bitstring<256> > c;
+                types                                 type_;
+                choice_buffer_t<fixed_bitstring<256>> c;
 
                 void destroy_();
               };
@@ -5463,82 +5463,82 @@ struct codebook_cfg_s {
             fixed_bitstring<8>& two_two_one_type_i_multi_panel_restrict()
             {
               assert_choice_type(types::two_two_one_type_i_multi_panel_restrict, type_, "ng-n1-n2");
-              return c.get<fixed_bitstring<8> >();
+              return c.get<fixed_bitstring<8>>();
             }
             fixed_bitstring<16>& two_four_one_type_i_multi_panel_restrict()
             {
               assert_choice_type(types::two_four_one_type_i_multi_panel_restrict, type_, "ng-n1-n2");
-              return c.get<fixed_bitstring<16> >();
+              return c.get<fixed_bitstring<16>>();
             }
             fixed_bitstring<8>& four_two_one_type_i_multi_panel_restrict()
             {
               assert_choice_type(types::four_two_one_type_i_multi_panel_restrict, type_, "ng-n1-n2");
-              return c.get<fixed_bitstring<8> >();
+              return c.get<fixed_bitstring<8>>();
             }
             fixed_bitstring<64>& two_two_two_type_i_multi_panel_restrict()
             {
               assert_choice_type(types::two_two_two_type_i_multi_panel_restrict, type_, "ng-n1-n2");
-              return c.get<fixed_bitstring<64> >();
+              return c.get<fixed_bitstring<64>>();
             }
             fixed_bitstring<32>& two_eight_one_type_i_multi_panel_restrict()
             {
               assert_choice_type(types::two_eight_one_type_i_multi_panel_restrict, type_, "ng-n1-n2");
-              return c.get<fixed_bitstring<32> >();
+              return c.get<fixed_bitstring<32>>();
             }
             fixed_bitstring<16>& four_four_one_type_i_multi_panel_restrict()
             {
               assert_choice_type(types::four_four_one_type_i_multi_panel_restrict, type_, "ng-n1-n2");
-              return c.get<fixed_bitstring<16> >();
+              return c.get<fixed_bitstring<16>>();
             }
             fixed_bitstring<128>& two_four_two_type_i_multi_panel_restrict()
             {
               assert_choice_type(types::two_four_two_type_i_multi_panel_restrict, type_, "ng-n1-n2");
-              return c.get<fixed_bitstring<128> >();
+              return c.get<fixed_bitstring<128>>();
             }
             fixed_bitstring<64>& four_two_two_type_i_multi_panel_restrict()
             {
               assert_choice_type(types::four_two_two_type_i_multi_panel_restrict, type_, "ng-n1-n2");
-              return c.get<fixed_bitstring<64> >();
+              return c.get<fixed_bitstring<64>>();
             }
             const fixed_bitstring<8>& two_two_one_type_i_multi_panel_restrict() const
             {
               assert_choice_type(types::two_two_one_type_i_multi_panel_restrict, type_, "ng-n1-n2");
-              return c.get<fixed_bitstring<8> >();
+              return c.get<fixed_bitstring<8>>();
             }
             const fixed_bitstring<16>& two_four_one_type_i_multi_panel_restrict() const
             {
               assert_choice_type(types::two_four_one_type_i_multi_panel_restrict, type_, "ng-n1-n2");
-              return c.get<fixed_bitstring<16> >();
+              return c.get<fixed_bitstring<16>>();
             }
             const fixed_bitstring<8>& four_two_one_type_i_multi_panel_restrict() const
             {
               assert_choice_type(types::four_two_one_type_i_multi_panel_restrict, type_, "ng-n1-n2");
-              return c.get<fixed_bitstring<8> >();
+              return c.get<fixed_bitstring<8>>();
             }
             const fixed_bitstring<64>& two_two_two_type_i_multi_panel_restrict() const
             {
               assert_choice_type(types::two_two_two_type_i_multi_panel_restrict, type_, "ng-n1-n2");
-              return c.get<fixed_bitstring<64> >();
+              return c.get<fixed_bitstring<64>>();
             }
             const fixed_bitstring<32>& two_eight_one_type_i_multi_panel_restrict() const
             {
               assert_choice_type(types::two_eight_one_type_i_multi_panel_restrict, type_, "ng-n1-n2");
-              return c.get<fixed_bitstring<32> >();
+              return c.get<fixed_bitstring<32>>();
             }
             const fixed_bitstring<16>& four_four_one_type_i_multi_panel_restrict() const
             {
               assert_choice_type(types::four_four_one_type_i_multi_panel_restrict, type_, "ng-n1-n2");
-              return c.get<fixed_bitstring<16> >();
+              return c.get<fixed_bitstring<16>>();
             }
             const fixed_bitstring<128>& two_four_two_type_i_multi_panel_restrict() const
             {
               assert_choice_type(types::two_four_two_type_i_multi_panel_restrict, type_, "ng-n1-n2");
-              return c.get<fixed_bitstring<128> >();
+              return c.get<fixed_bitstring<128>>();
             }
             const fixed_bitstring<64>& four_two_two_type_i_multi_panel_restrict() const
             {
               assert_choice_type(types::four_two_two_type_i_multi_panel_restrict, type_, "ng-n1-n2");
-              return c.get<fixed_bitstring<64> >();
+              return c.get<fixed_bitstring<64>>();
             }
             fixed_bitstring<8>&   set_two_two_one_type_i_multi_panel_restrict();
             fixed_bitstring<16>&  set_two_four_one_type_i_multi_panel_restrict();
@@ -5550,8 +5550,8 @@ struct codebook_cfg_s {
             fixed_bitstring<64>&  set_four_two_two_type_i_multi_panel_restrict();
 
           private:
-            types                                  type_;
-            choice_buffer_t<fixed_bitstring<128> > c;
+            types                                 type_;
+            choice_buffer_t<fixed_bitstring<128>> c;
 
             void destroy_();
           };
@@ -5652,132 +5652,132 @@ struct codebook_cfg_s {
             fixed_bitstring<16>& two_one()
             {
               assert_choice_type(types::two_one, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<16> >();
+              return c.get<fixed_bitstring<16>>();
             }
             fixed_bitstring<43>& two_two()
             {
               assert_choice_type(types::two_two, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<43> >();
+              return c.get<fixed_bitstring<43>>();
             }
             fixed_bitstring<32>& four_one()
             {
               assert_choice_type(types::four_one, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<32> >();
+              return c.get<fixed_bitstring<32>>();
             }
             fixed_bitstring<59>& three_two()
             {
               assert_choice_type(types::three_two, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<59> >();
+              return c.get<fixed_bitstring<59>>();
             }
             fixed_bitstring<48>& six_one()
             {
               assert_choice_type(types::six_one, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<48> >();
+              return c.get<fixed_bitstring<48>>();
             }
             fixed_bitstring<75>& four_two()
             {
               assert_choice_type(types::four_two, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<75> >();
+              return c.get<fixed_bitstring<75>>();
             }
             fixed_bitstring<64>& eight_one()
             {
               assert_choice_type(types::eight_one, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<64> >();
+              return c.get<fixed_bitstring<64>>();
             }
             fixed_bitstring<107>& four_three()
             {
               assert_choice_type(types::four_three, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<107> >();
+              return c.get<fixed_bitstring<107>>();
             }
             fixed_bitstring<107>& six_two()
             {
               assert_choice_type(types::six_two, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<107> >();
+              return c.get<fixed_bitstring<107>>();
             }
             fixed_bitstring<96>& twelve_one()
             {
               assert_choice_type(types::twelve_one, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<96> >();
+              return c.get<fixed_bitstring<96>>();
             }
             fixed_bitstring<139>& four_four()
             {
               assert_choice_type(types::four_four, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<139> >();
+              return c.get<fixed_bitstring<139>>();
             }
             fixed_bitstring<139>& eight_two()
             {
               assert_choice_type(types::eight_two, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<139> >();
+              return c.get<fixed_bitstring<139>>();
             }
             fixed_bitstring<128>& sixteen_one()
             {
               assert_choice_type(types::sixteen_one, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<128> >();
+              return c.get<fixed_bitstring<128>>();
             }
             const fixed_bitstring<16>& two_one() const
             {
               assert_choice_type(types::two_one, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<16> >();
+              return c.get<fixed_bitstring<16>>();
             }
             const fixed_bitstring<43>& two_two() const
             {
               assert_choice_type(types::two_two, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<43> >();
+              return c.get<fixed_bitstring<43>>();
             }
             const fixed_bitstring<32>& four_one() const
             {
               assert_choice_type(types::four_one, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<32> >();
+              return c.get<fixed_bitstring<32>>();
             }
             const fixed_bitstring<59>& three_two() const
             {
               assert_choice_type(types::three_two, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<59> >();
+              return c.get<fixed_bitstring<59>>();
             }
             const fixed_bitstring<48>& six_one() const
             {
               assert_choice_type(types::six_one, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<48> >();
+              return c.get<fixed_bitstring<48>>();
             }
             const fixed_bitstring<75>& four_two() const
             {
               assert_choice_type(types::four_two, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<75> >();
+              return c.get<fixed_bitstring<75>>();
             }
             const fixed_bitstring<64>& eight_one() const
             {
               assert_choice_type(types::eight_one, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<64> >();
+              return c.get<fixed_bitstring<64>>();
             }
             const fixed_bitstring<107>& four_three() const
             {
               assert_choice_type(types::four_three, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<107> >();
+              return c.get<fixed_bitstring<107>>();
             }
             const fixed_bitstring<107>& six_two() const
             {
               assert_choice_type(types::six_two, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<107> >();
+              return c.get<fixed_bitstring<107>>();
             }
             const fixed_bitstring<96>& twelve_one() const
             {
               assert_choice_type(types::twelve_one, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<96> >();
+              return c.get<fixed_bitstring<96>>();
             }
             const fixed_bitstring<139>& four_four() const
             {
               assert_choice_type(types::four_four, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<139> >();
+              return c.get<fixed_bitstring<139>>();
             }
             const fixed_bitstring<139>& eight_two() const
             {
               assert_choice_type(types::eight_two, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<139> >();
+              return c.get<fixed_bitstring<139>>();
             }
             const fixed_bitstring<128>& sixteen_one() const
             {
               assert_choice_type(types::sixteen_one, type_, "n1-n2-codebookSubsetRestriction");
-              return c.get<fixed_bitstring<128> >();
+              return c.get<fixed_bitstring<128>>();
             }
             fixed_bitstring<16>&  set_two_one();
             fixed_bitstring<43>&  set_two_two();
@@ -5794,8 +5794,8 @@ struct codebook_cfg_s {
             fixed_bitstring<128>& set_sixteen_one();
 
           private:
-            types                                  type_;
-            choice_buffer_t<fixed_bitstring<139> > c;
+            types                                 type_;
+            choice_buffer_t<fixed_bitstring<139>> c;
 
             void destroy_();
           };
@@ -6302,172 +6302,172 @@ struct csi_report_cfg_s {
       fixed_bitstring<3>& subbands3()
       {
         assert_choice_type(types::subbands3, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<3> >();
+        return c.get<fixed_bitstring<3>>();
       }
       fixed_bitstring<4>& subbands4()
       {
         assert_choice_type(types::subbands4, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<4> >();
+        return c.get<fixed_bitstring<4>>();
       }
       fixed_bitstring<5>& subbands5()
       {
         assert_choice_type(types::subbands5, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<5> >();
+        return c.get<fixed_bitstring<5>>();
       }
       fixed_bitstring<6>& subbands6()
       {
         assert_choice_type(types::subbands6, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<6> >();
+        return c.get<fixed_bitstring<6>>();
       }
       fixed_bitstring<7>& subbands7()
       {
         assert_choice_type(types::subbands7, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<7> >();
+        return c.get<fixed_bitstring<7>>();
       }
       fixed_bitstring<8>& subbands8()
       {
         assert_choice_type(types::subbands8, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<8> >();
+        return c.get<fixed_bitstring<8>>();
       }
       fixed_bitstring<9>& subbands9()
       {
         assert_choice_type(types::subbands9, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<9> >();
+        return c.get<fixed_bitstring<9>>();
       }
       fixed_bitstring<10>& subbands10()
       {
         assert_choice_type(types::subbands10, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<10> >();
+        return c.get<fixed_bitstring<10>>();
       }
       fixed_bitstring<11>& subbands11()
       {
         assert_choice_type(types::subbands11, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<11> >();
+        return c.get<fixed_bitstring<11>>();
       }
       fixed_bitstring<12>& subbands12()
       {
         assert_choice_type(types::subbands12, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<12> >();
+        return c.get<fixed_bitstring<12>>();
       }
       fixed_bitstring<13>& subbands13()
       {
         assert_choice_type(types::subbands13, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<13> >();
+        return c.get<fixed_bitstring<13>>();
       }
       fixed_bitstring<14>& subbands14()
       {
         assert_choice_type(types::subbands14, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<14> >();
+        return c.get<fixed_bitstring<14>>();
       }
       fixed_bitstring<15>& subbands15()
       {
         assert_choice_type(types::subbands15, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<15> >();
+        return c.get<fixed_bitstring<15>>();
       }
       fixed_bitstring<16>& subbands16()
       {
         assert_choice_type(types::subbands16, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<16> >();
+        return c.get<fixed_bitstring<16>>();
       }
       fixed_bitstring<17>& subbands17()
       {
         assert_choice_type(types::subbands17, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<17> >();
+        return c.get<fixed_bitstring<17>>();
       }
       fixed_bitstring<18>& subbands18()
       {
         assert_choice_type(types::subbands18, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<18> >();
+        return c.get<fixed_bitstring<18>>();
       }
       fixed_bitstring<19>& subbands19_v1530()
       {
         assert_choice_type(types::subbands19_v1530, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<19> >();
+        return c.get<fixed_bitstring<19>>();
       }
       const fixed_bitstring<3>& subbands3() const
       {
         assert_choice_type(types::subbands3, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<3> >();
+        return c.get<fixed_bitstring<3>>();
       }
       const fixed_bitstring<4>& subbands4() const
       {
         assert_choice_type(types::subbands4, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<4> >();
+        return c.get<fixed_bitstring<4>>();
       }
       const fixed_bitstring<5>& subbands5() const
       {
         assert_choice_type(types::subbands5, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<5> >();
+        return c.get<fixed_bitstring<5>>();
       }
       const fixed_bitstring<6>& subbands6() const
       {
         assert_choice_type(types::subbands6, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<6> >();
+        return c.get<fixed_bitstring<6>>();
       }
       const fixed_bitstring<7>& subbands7() const
       {
         assert_choice_type(types::subbands7, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<7> >();
+        return c.get<fixed_bitstring<7>>();
       }
       const fixed_bitstring<8>& subbands8() const
       {
         assert_choice_type(types::subbands8, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<8> >();
+        return c.get<fixed_bitstring<8>>();
       }
       const fixed_bitstring<9>& subbands9() const
       {
         assert_choice_type(types::subbands9, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<9> >();
+        return c.get<fixed_bitstring<9>>();
       }
       const fixed_bitstring<10>& subbands10() const
       {
         assert_choice_type(types::subbands10, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<10> >();
+        return c.get<fixed_bitstring<10>>();
       }
       const fixed_bitstring<11>& subbands11() const
       {
         assert_choice_type(types::subbands11, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<11> >();
+        return c.get<fixed_bitstring<11>>();
       }
       const fixed_bitstring<12>& subbands12() const
       {
         assert_choice_type(types::subbands12, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<12> >();
+        return c.get<fixed_bitstring<12>>();
       }
       const fixed_bitstring<13>& subbands13() const
       {
         assert_choice_type(types::subbands13, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<13> >();
+        return c.get<fixed_bitstring<13>>();
       }
       const fixed_bitstring<14>& subbands14() const
       {
         assert_choice_type(types::subbands14, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<14> >();
+        return c.get<fixed_bitstring<14>>();
       }
       const fixed_bitstring<15>& subbands15() const
       {
         assert_choice_type(types::subbands15, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<15> >();
+        return c.get<fixed_bitstring<15>>();
       }
       const fixed_bitstring<16>& subbands16() const
       {
         assert_choice_type(types::subbands16, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<16> >();
+        return c.get<fixed_bitstring<16>>();
       }
       const fixed_bitstring<17>& subbands17() const
       {
         assert_choice_type(types::subbands17, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<17> >();
+        return c.get<fixed_bitstring<17>>();
       }
       const fixed_bitstring<18>& subbands18() const
       {
         assert_choice_type(types::subbands18, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<18> >();
+        return c.get<fixed_bitstring<18>>();
       }
       const fixed_bitstring<19>& subbands19_v1530() const
       {
         assert_choice_type(types::subbands19_v1530, type_, "csi-ReportingBand");
-        return c.get<fixed_bitstring<19> >();
+        return c.get<fixed_bitstring<19>>();
       }
       fixed_bitstring<3>&  set_subbands3();
       fixed_bitstring<4>&  set_subbands4();
@@ -6488,8 +6488,8 @@ struct csi_report_cfg_s {
       fixed_bitstring<19>& set_subbands19_v1530();
 
     private:
-      types                                 type_;
-      choice_buffer_t<fixed_bitstring<19> > c;
+      types                                type_;
+      choice_buffer_t<fixed_bitstring<19>> c;
 
       void destroy_();
     };
@@ -6830,8 +6830,8 @@ struct csi_meas_cfg_s {
   csi_report_cfg_to_add_mod_list_l_     csi_report_cfg_to_add_mod_list;
   csi_report_cfg_to_release_list_l_     csi_report_cfg_to_release_list;
   uint8_t                               report_trigger_size = 0;
-  setup_release_c<dyn_seq_of<csi_aperiodic_trigger_state_s, 1, 128> > aperiodic_trigger_state_list;
-  setup_release_c<dyn_seq_of<csi_semi_persistent_on_pusch_trigger_state_s, 1, 64> >
+  setup_release_c<dyn_seq_of<csi_aperiodic_trigger_state_s, 1, 128>> aperiodic_trigger_state_list;
+  setup_release_c<dyn_seq_of<csi_semi_persistent_on_pusch_trigger_state_s, 1, 64>>
       semi_persistent_on_pusch_trigger_state_list;
   // ...
 
@@ -6875,29 +6875,29 @@ struct eutra_mbsfn_sf_cfg_s {
     fixed_bitstring<6>& one_frame()
     {
       assert_choice_type(types::one_frame, type_, "subframeAllocation1");
-      return c.get<fixed_bitstring<6> >();
+      return c.get<fixed_bitstring<6>>();
     }
     fixed_bitstring<24>& four_frames()
     {
       assert_choice_type(types::four_frames, type_, "subframeAllocation1");
-      return c.get<fixed_bitstring<24> >();
+      return c.get<fixed_bitstring<24>>();
     }
     const fixed_bitstring<6>& one_frame() const
     {
       assert_choice_type(types::one_frame, type_, "subframeAllocation1");
-      return c.get<fixed_bitstring<6> >();
+      return c.get<fixed_bitstring<6>>();
     }
     const fixed_bitstring<24>& four_frames() const
     {
       assert_choice_type(types::four_frames, type_, "subframeAllocation1");
-      return c.get<fixed_bitstring<24> >();
+      return c.get<fixed_bitstring<24>>();
     }
     fixed_bitstring<6>&  set_one_frame();
     fixed_bitstring<24>& set_four_frames();
 
   private:
-    types                                 type_;
-    choice_buffer_t<fixed_bitstring<24> > c;
+    types                                type_;
+    choice_buffer_t<fixed_bitstring<24>> c;
 
     void destroy_();
   };
@@ -6925,29 +6925,29 @@ struct eutra_mbsfn_sf_cfg_s {
     fixed_bitstring<2>& one_frame()
     {
       assert_choice_type(types::one_frame, type_, "subframeAllocation2");
-      return c.get<fixed_bitstring<2> >();
+      return c.get<fixed_bitstring<2>>();
     }
     fixed_bitstring<8>& four_frames()
     {
       assert_choice_type(types::four_frames, type_, "subframeAllocation2");
-      return c.get<fixed_bitstring<8> >();
+      return c.get<fixed_bitstring<8>>();
     }
     const fixed_bitstring<2>& one_frame() const
     {
       assert_choice_type(types::one_frame, type_, "subframeAllocation2");
-      return c.get<fixed_bitstring<2> >();
+      return c.get<fixed_bitstring<2>>();
     }
     const fixed_bitstring<8>& four_frames() const
     {
       assert_choice_type(types::four_frames, type_, "subframeAllocation2");
-      return c.get<fixed_bitstring<8> >();
+      return c.get<fixed_bitstring<8>>();
     }
     fixed_bitstring<2>& set_one_frame();
     fixed_bitstring<8>& set_four_frames();
 
   private:
-    types                                type_;
-    choice_buffer_t<fixed_bitstring<8> > c;
+    types                               type_;
+    choice_buffer_t<fixed_bitstring<8>> c;
 
     void destroy_();
   };
@@ -7582,10 +7582,10 @@ struct serving_cell_cfg_s {
   uint8_t                                   serving_cell_mo = 1;
   // ...
   // group 0
-  copy_ptr<setup_release_c<rate_match_pattern_lte_crs_s> > lte_crs_to_match_around;
-  copy_ptr<rate_match_pattern_to_add_mod_list_l_>          rate_match_pattern_to_add_mod_list;
-  copy_ptr<rate_match_pattern_to_release_list_l_>          rate_match_pattern_to_release_list;
-  copy_ptr<dl_ch_bw_per_scs_list_l_>                       dl_ch_bw_per_scs_list;
+  copy_ptr<setup_release_c<rate_match_pattern_lte_crs_s>> lte_crs_to_match_around;
+  copy_ptr<rate_match_pattern_to_add_mod_list_l_>         rate_match_pattern_to_add_mod_list;
+  copy_ptr<rate_match_pattern_to_release_list_l_>         rate_match_pattern_to_release_list;
+  copy_ptr<dl_ch_bw_per_scs_list_l_>                      dl_ch_bw_per_scs_list;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;

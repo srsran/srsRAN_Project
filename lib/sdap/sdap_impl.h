@@ -27,7 +27,8 @@ class sdap_procedure_dispatcher : public sdap_pdu_handler
 public:
   explicit sdap_procedure_dispatcher(std::unique_ptr<sdap_packet_procedures> procedure) :
     procedure(std::move(procedure))
-  {}
+  {
+  }
 
   void handle_pdu(byte_buffer data) override
   {

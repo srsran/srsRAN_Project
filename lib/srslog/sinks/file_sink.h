@@ -26,9 +26,10 @@ public:
     max_size((max_size == 0) ? 0 : std::max<size_t>(max_size, 4 * 1024)),
     force_flush(force_flush),
     base_filename(std::move(name))
-  {}
+  {
+  }
 
-  file_sink(const file_sink& other) = delete;
+  file_sink(const file_sink& other)            = delete;
   file_sink& operator=(const file_sink& other) = delete;
 
   detail::error_string write(detail::memory_buffer buffer) override

@@ -31,7 +31,7 @@ class radio_uhd_device : public uhd_exception_handler
 private:
   uhd::usrp::multi_usrp::sptr usrp = nullptr;
   task_executor&              async_executor;
-  radio_notification_handler&             notifier;
+  radio_notification_handler& notifier;
 
 public:
   radio_uhd_device(task_executor& async_executor_, radio_notification_handler& notifier_) :

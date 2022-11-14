@@ -18,14 +18,12 @@ namespace srsgnb {
 class ssb_processor_spy : public ssb_processor
 {
   bool process_method_called = false;
+
 public:
-  void process(const pdu_t& pdu, resource_grid_writer& grid) override
-  {
-    process_method_called = true;
-  }
+  void process(const pdu_t& pdu, resource_grid_writer& grid) override { process_method_called = true; }
 
   /// Returns true if the process method has been called, false otherwise.
-  bool is_process_called()const{return process_method_called;}
+  bool is_process_called() const { return process_method_called; }
 };
 
 } // namespace srsgnb

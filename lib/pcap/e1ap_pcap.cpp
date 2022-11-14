@@ -43,16 +43,16 @@ void e1ap_pcap::write_pdu(srsgnb::const_span<uint8_t> pdu)
     // skip
     return;
   }
-  
+
   // write packet header
   write_pcap_header(pdu.size_bytes());
 
   // E1AP context currently not required for Wireshark
-  //e1ap_context_info_t context = {};
-  //fwrite(&context, 1, sizeof(context), pcap_file);
+  // e1ap_context_info_t context = {};
+  // fwrite(&context, 1, sizeof(context), pcap_file);
 
   // write PDU payload
-  write_pcap_pdu(pdu); 
+  write_pcap_pdu(pdu);
 }
 
-} // namespace srsran
+} // namespace srsgnb

@@ -24,7 +24,7 @@ struct wait_event_coroutine {
 public:
   explicit wait_event_coroutine(manual_event<int>& ev) : event(ev) {}
 
-  void operator()(coro_context<async_task<int> >& ctx)
+  void operator()(coro_context<async_task<int>>& ctx)
   {
     CORO_BEGIN(ctx);
     CORO_AWAIT_VALUE(int v, event);
@@ -56,7 +56,7 @@ class passthrough_coroutine
 
 public:
   explicit passthrough_coroutine(async_task<int>& t_) : t(t_) {}
-  void operator()(coro_context<async_task<int> >& ctx)
+  void operator()(coro_context<async_task<int>>& ctx)
   {
     CORO_BEGIN(ctx);
     CORO_AWAIT_VALUE(int v, t);
@@ -70,7 +70,7 @@ public:
 void test_eager_task_start()
 {
   int                   value = 2;
-  eager_async_task<int> t     = launch_async([&value](coro_context<eager_async_task<int> >& ctx) mutable {
+  eager_async_task<int> t     = launch_async([&value](coro_context<eager_async_task<int>>& ctx) mutable {
     CORO_BEGIN(ctx);
     value += 4;
     CORO_RETURN(value * 2);
@@ -83,7 +83,7 @@ void test_eager_task_start()
 void test_lazy_task_start()
 {
   int             value = 2;
-  async_task<int> t     = launch_async([&value](coro_context<async_task<int> >& ctx) mutable {
+  async_task<int> t     = launch_async([&value](coro_context<async_task<int>>& ctx) mutable {
     CORO_BEGIN(ctx);
     value += 4;
     CORO_RETURN(value * 2);
@@ -93,7 +93,7 @@ void test_lazy_task_start()
   TESTASSERT_EQ(2, value);
 
   // Action: Start an eager passthrough coroutine that awaits on the lazy coroutine.
-  eager_async_task<int> t2 = launch_async([&t](coro_context<eager_async_task<int> >& ctx) {
+  eager_async_task<int> t2 = launch_async([&t](coro_context<eager_async_task<int>>& ctx) {
     CORO_BEGIN(ctx);
     CORO_AWAIT_VALUE(int res, t);
     CORO_RETURN(res + 1);
@@ -138,7 +138,7 @@ void run()
 
   // Run test with lambda coroutine object
   auto lambda_coro_factory = [](async_task<int>& prev) {
-    return launch_async([&prev](coro_context<async_task<int> >& ctx) {
+    return launch_async([&prev](coro_context<async_task<int>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_AWAIT_VALUE(int v, prev);
       CORO_RETURN(v);
@@ -159,12 +159,12 @@ void run_lambda()
   {
     moveonly_test_object  to_destroy(5);
     manual_event<int>     ev;
-    async_task<int>       t  = launch_async([&ev, u = std::move(to_destroy)](coro_context<async_task<int> >& ctx) {
+    async_task<int>       t  = launch_async([&ev, u = std::move(to_destroy)](coro_context<async_task<int>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_AWAIT_VALUE(int obj, ev);
       CORO_RETURN(obj);
     });
-    eager_async_task<int> t2 = launch_async([&t](coro_context<eager_async_task<int> >& ctx) {
+    eager_async_task<int> t2 = launch_async([&t](coro_context<eager_async_task<int>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_AWAIT_VALUE(int obj, t);
       CORO_RETURN(obj);

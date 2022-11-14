@@ -28,7 +28,7 @@ struct C {
   }
   ~C() { nof_dtor++; }
   C& operator=(const C&) = default;
-  C& operator            =(C&& other)
+  C& operator=(C&& other)
   {
     val       = other.val;
     other.val = 0;
@@ -45,8 +45,8 @@ unsigned C::nof_move_ctor  = 0;
 unsigned C::nof_dtor       = 0;
 
 struct moveonly {
-  moveonly()                    = default;
-  moveonly(moveonly&&) noexcept = default;
+  moveonly()                               = default;
+  moveonly(moveonly&&) noexcept            = default;
   moveonly& operator=(moveonly&&) noexcept = default;
 };
 

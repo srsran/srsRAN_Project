@@ -27,7 +27,7 @@ class aligned_vec : public span<T>
   void dealloc() { detail::mem_free(this->data()); }
 
 public:
-  aligned_vec<T>& operator=(aligned_vec<T>&& other) = delete;
+  aligned_vec<T>& operator=(aligned_vec<T>&& other)      = delete;
   aligned_vec<T>& operator=(const aligned_vec<T>& other) = delete;
   aligned_vec(const aligned_vec<T>& other)               = delete;
   aligned_vec(aligned_vec<T>&& other) noexcept           = delete;

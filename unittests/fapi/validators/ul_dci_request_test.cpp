@@ -16,7 +16,7 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-static const std::vector<test_group<ul_dci_request_message> > vector_test = {
+static const std::vector<test_group<ul_dci_request_message>> vector_test = {
     {[](ul_dci_request_message& msg, int value) { msg.sfn = value; },
      "sfn",
      {{0, true}, {511, true}, {1023, true}, {1024, false}}},

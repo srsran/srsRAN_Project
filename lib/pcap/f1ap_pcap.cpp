@@ -36,12 +36,12 @@ void f1ap_pcap::write_pdu(srsgnb::const_span<uint8_t> pdu)
     // skip
     return;
   }
-  
+
   // write packet header
   write_pcap_header(pdu.size_bytes());
 
   // write PDU payload
-  write_pcap_pdu(pdu); 
+  write_pcap_pdu(pdu);
 }
 
 } // namespace srsgnb

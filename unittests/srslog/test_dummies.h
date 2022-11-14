@@ -29,17 +29,21 @@ private:
                             fmt::string_view                          ctx_name,
                             unsigned                                  size,
                             fmt::memory_buffer&                       buffer) override
-  {}
+  {
+  }
   void format_context_end(const srslog::detail::log_entry_metadata& md,
                           fmt::string_view                          ctx_name,
                           fmt::memory_buffer&                       buffer) override
-  {}
+  {
+  }
   void
   format_metric_set_begin(fmt::string_view set_name, unsigned size, unsigned level, fmt::memory_buffer& buffer) override
-  {}
+  {
+  }
   void format_metric_set_end(fmt::string_view set_name, unsigned level, fmt::memory_buffer& buffer) override {}
   void format_list_begin(fmt::string_view list_name, unsigned size, unsigned level, fmt::memory_buffer& buffer) override
-  {}
+  {
+  }
   void format_list_end(fmt::string_view list_name, unsigned level, fmt::memory_buffer& buffer) override {}
   void format_metric(fmt::string_view    metric_name,
                      fmt::string_view    metric_value,
@@ -47,7 +51,8 @@ private:
                      srslog::metric_kind kind,
                      unsigned            level,
                      fmt::memory_buffer& buffer) override
-  {}
+  {
+  }
 };
 
 /// A Dummy implementation of a sink.

@@ -25,7 +25,7 @@ void json_formatter::format(detail::log_entry_metadata&& metadata, fmt::memory_b
                  "  \"log_entry\": \"");
   if (metadata.fmtstring) {
     if (metadata.store) {
-      fmt::basic_format_args<fmt::buffer_context<char> > args(*metadata.store);
+      fmt::basic_format_args<fmt::buffer_context<char>> args(*metadata.store);
       try {
         fmt::vformat_to(buffer, fmt::to_string_view(metadata.fmtstring), args);
       } catch (...) {
@@ -63,7 +63,7 @@ void json_formatter::format_context_begin(const detail::log_entry_metadata& md,
   if (md.fmtstring) {
     if (md.store) {
       fmt::format_to(buffer, "  \"log_entry\": \"");
-      fmt::basic_format_args<fmt::buffer_context<char> > args(*md.store);
+      fmt::basic_format_args<fmt::buffer_context<char>> args(*md.store);
       try {
         fmt::vformat_to(buffer, fmt::to_string_view(md.fmtstring), args);
       } catch (...) {

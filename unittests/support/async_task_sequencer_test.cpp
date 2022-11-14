@@ -23,7 +23,7 @@ void test_async_loop_empty_tasks()
 
   // Action: Run a lot of empty async tasks.
   for (size_t i = 0; i < nof_tasks; ++i) {
-    loop.schedule([](coro_context<async_task<void> >& ctx) {
+    loop.schedule([](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN();
     });

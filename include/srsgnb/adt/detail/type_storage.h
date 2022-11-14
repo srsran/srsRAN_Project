@@ -45,11 +45,11 @@ struct type_storage {
 
 /// Helper method to copy optional object from rhs to lhs
 template <typename T, size_t MinSize, size_t AlignSize>
-void copy_if_present_helper(type_storage<T, MinSize, AlignSize>&       lhs,
-                            const type_storage<T, MinSize, AlignSize>& rhs,
-                            bool                                       lhs_present,
-                            bool                                       rhs_present)
-    noexcept(std::is_nothrow_copy_constructible<T>::value&& std::is_nothrow_copy_assignable<T>::value)
+void copy_if_present_helper(
+    type_storage<T, MinSize, AlignSize>&       lhs,
+    const type_storage<T, MinSize, AlignSize>& rhs,
+    bool                                       lhs_present,
+    bool rhs_present) noexcept(std::is_nothrow_copy_constructible<T>::value&& std::is_nothrow_copy_assignable<T>::value)
 {
   if (lhs_present and rhs_present) {
     lhs.get() = rhs.get();
@@ -62,11 +62,11 @@ void copy_if_present_helper(type_storage<T, MinSize, AlignSize>&       lhs,
 
 /// Helper method to move optional object from rhs to lhs
 template <typename T, size_t MinSize, size_t AlignSize>
-void move_if_present_helper(type_storage<T, MinSize, AlignSize>& lhs,
-                            type_storage<T, MinSize, AlignSize>& rhs,
-                            bool                                 lhs_present,
-                            bool                                 rhs_present)
-    noexcept(std::is_nothrow_move_constructible<T>::value&& std::is_nothrow_move_assignable<T>::value)
+void move_if_present_helper(
+    type_storage<T, MinSize, AlignSize>& lhs,
+    type_storage<T, MinSize, AlignSize>& rhs,
+    bool                                 lhs_present,
+    bool rhs_present) noexcept(std::is_nothrow_move_constructible<T>::value&& std::is_nothrow_move_assignable<T>::value)
 {
   if (lhs_present and rhs_present) {
     lhs.get() = std::move(rhs.get());

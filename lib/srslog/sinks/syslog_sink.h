@@ -28,7 +28,7 @@ public:
     create_syslog(preamble_, syslog_translate(log_local_));
   }
 
-  syslog_sink(const syslog_sink& other) = delete;
+  syslog_sink(const syslog_sink& other)            = delete;
   syslog_sink& operator=(const syslog_sink& other) = delete;
 
   detail::error_string write(detail::memory_buffer buffer) override

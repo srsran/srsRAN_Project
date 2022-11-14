@@ -9528,7 +9528,7 @@ SRSASN_CODE ue_nr_cap_s::pack(bit_ref& bref) const
                                 feature_set_combinations,
                                 1,
                                 1024,
-                                SeqOfPacker<SeqOfPacker<Packer> >(1, 32, SeqOfPacker<Packer>(1, 128, Packer()))));
+                                SeqOfPacker<SeqOfPacker<Packer>>(1, 32, SeqOfPacker<Packer>(1, 128, Packer()))));
   }
   if (late_non_crit_ext.size() > 0) {
     HANDLE_CODE(late_non_crit_ext.pack(bref));
@@ -9588,7 +9588,7 @@ SRSASN_CODE ue_nr_cap_s::unpack(cbit_ref& bref)
                                   bref,
                                   1,
                                   1024,
-                                  SeqOfPacker<SeqOfPacker<Packer> >(1, 32, SeqOfPacker<Packer>(1, 128, Packer()))));
+                                  SeqOfPacker<SeqOfPacker<Packer>>(1, 32, SeqOfPacker<Packer>(1, 128, Packer()))));
   }
   if (late_non_crit_ext_present) {
     HANDLE_CODE(late_non_crit_ext.unpack(bref));

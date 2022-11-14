@@ -31,9 +31,10 @@ public:
     ul_mac(mac_ul_),
     dl_mac(mac_dl_),
     sched_configurator(sched_configurator_)
-  {}
+  {
+  }
 
-  void operator()(coro_context<async_task<mac_ue_delete_response_message> >& ctx)
+  void operator()(coro_context<async_task<mac_ue_delete_response_message>>& ctx)
   {
     CORO_BEGIN(ctx);
 
