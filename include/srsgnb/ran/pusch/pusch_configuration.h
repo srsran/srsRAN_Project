@@ -23,8 +23,6 @@ struct pusch_config {
   enum class tx_config { codebook, non_codebook };
 
   struct pusch_power_control {
-    enum class tpc_accumulation { disabled };
-
     enum p0_pusch_alphaset_id : uint8_t {
       MIN_P0_PUSCH_ALPHASET_ID   = 0,
       MAX_P0_PUSCH_ALPHASET_ID   = 29,
@@ -94,8 +92,10 @@ struct pusch_config {
     };
 
     /// If enabled, UE applies TPC commands via accumulation. If not enabled, UE applies the TPC command without
-    /// accumulation. If the field is absent, TPC accumulation is enabled.
-    optional<tpc_accumulation> tpc_accum;
+    /// accumulation.
+    /// Mapping to NR RRC: If true, the field is present in NR RRC indicating value disabled to UE. If false, the field
+    /// is absent in NR RRC and TPC accumulation is enabled.
+    bool is_tpc_accumulation_disabled{false};
     /// Dedicated alpha value for msg3 PUSCH. When the field is absent the UE applies the value 1.
     optional<alpha> msg3_alpha;
     /// P0 value for UL grant-free/SPS based PUSCH. Value in dBm. Only even values (step size 2) allowed. See TS 38.213,
@@ -115,7 +115,7 @@ struct pusch_config {
 
     bool operator==(const pusch_power_control& rhs) const
     {
-      return tpc_accum == rhs.tpc_accum && msg3_alpha == rhs.msg3_alpha &&
+      return is_tpc_accumulation_disabled == rhs.is_tpc_accumulation_disabled && msg3_alpha == rhs.msg3_alpha &&
              p0_nominal_without_grant == rhs.p0_nominal_without_grant && p0_alphasets == rhs.p0_alphasets &&
              pathloss_ref_rs == rhs.pathloss_ref_rs && sri_pusch_mapping == rhs.sri_pusch_mapping;
     }

@@ -840,7 +840,7 @@ void make_asn1_rrc_ptrs_ul_cfg(asn1::rrc_nr::ptrs_ul_cfg_s& out, const ptrs_upli
               ptrs_ul_cfg_s::transform_precoder_disabled_s_::res_elem_offset_opts::offset11;
           break;
         default:
-          srsgnb_assertion_failure("Invalid PTRS UL Cfg Max. Ports={}", cfg_trans_preco_dis.res_elem_offset.value());
+          srsgnb_assertion_failure("Invalid Resource Element Offset={}", cfg_trans_preco_dis.res_elem_offset.value());
       }
     }
 
@@ -871,9 +871,7 @@ void make_asn1_rrc_ptrs_ul_cfg(asn1::rrc_nr::ptrs_ul_cfg_s& out, const ptrs_upli
     for (unsigned idx = 0; idx < cfg_trans_preco_enbl.sampl_density.size(); idx++) {
       out_trans_preco_enbl.sample_density[idx] = cfg_trans_preco_enbl.sampl_density[idx];
     }
-    if (cfg_trans_preco_enbl.t_density_trans_precoding.has_value() &&
-        cfg_trans_preco_enbl.t_density_trans_precoding.value() ==
-            ptrs_uplink_config::transform_precoder_enabled::time_density_transform_precoding::d2) {
+    if (cfg_trans_preco_enbl.is_t_density_trans_precoding_d2) {
       out_trans_preco_enbl.time_density_transform_precoding_present = true;
     }
   }
@@ -992,8 +990,7 @@ void make_asn1_rrc_pusch_pwr_ctrl(asn1::rrc_nr::pusch_pwr_ctrl_s&          out,
                                   const pusch_config::pusch_power_control& src,
                                   const pusch_config::pusch_power_control& dest)
 {
-  if (dest.tpc_accum.has_value() &&
-      dest.tpc_accum.value() == pusch_config::pusch_power_control::tpc_accumulation::disabled) {
+  if (dest.is_tpc_accumulation_disabled) {
     out.tpc_accumulation_present = true;
   }
 
