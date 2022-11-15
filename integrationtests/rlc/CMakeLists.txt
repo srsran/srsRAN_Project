@@ -6,6 +6,8 @@
 # the distribution.
 #
 
+set_directory_properties(PROPERTIES LABELS "rlc")
+
 add_library(rlc_stress_test_mac rlc_stress_test_mac.cpp)
 add_library(rlc_stress_test_traffic rlc_stress_test_traffic.cpp)
 add_executable(rlc_stress_test rlc_stress_test.cpp)
