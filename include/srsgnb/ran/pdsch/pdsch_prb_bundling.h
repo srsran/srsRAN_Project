@@ -17,9 +17,6 @@ namespace srsgnb {
 /// \brief Indicates the PRB bundle type and bundle size(s).
 /// \remark See TS 38.214, clause 5.1.2.3.
 struct prb_bundling {
-  /// \brief PRB bundle type.
-  enum class prb_bundling_type { static_bundling, dynamic_bundling };
-
   struct static_bundling {
     enum class bundling_size { n4, wideband };
 
@@ -40,10 +37,9 @@ struct prb_bundling {
     bool operator!=(const dynamic_bundling& rhs) const { return !(rhs == *this); }
   };
 
-  prb_bundling_type                          type;
   variant<static_bundling, dynamic_bundling> bundling;
 
-  bool operator==(const prb_bundling& rhs) const { return type == rhs.type && bundling == rhs.bundling; }
+  bool operator==(const prb_bundling& rhs) const { return bundling == rhs.bundling; }
   bool operator!=(const prb_bundling& rhs) const { return !(rhs == *this); }
 };
 

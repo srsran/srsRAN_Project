@@ -428,7 +428,7 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
   }
 
   // PRB Bundling.
-  if (dest.prb_bndlg.type == srsgnb::prb_bundling::prb_bundling_type::static_bundling) {
+  if (variant_holds_alternative<prb_bundling::static_bundling>(dest.prb_bndlg.bundling)) {
     auto& st_bundling               = out.prb_bundling_type.set_static_bundling();
     st_bundling.bundle_size_present = true;
     const auto& bdlng               = variant_get<prb_bundling::static_bundling>(dest.prb_bndlg.bundling);

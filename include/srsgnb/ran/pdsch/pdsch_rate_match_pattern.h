@@ -98,16 +98,12 @@ struct rate_match_pattern {
     bool operator!=(const bitmaps& rhs) const { return !(rhs == *this); }
   };
 
-  /// \brief Rate matching pattern type.
-  enum class pattern_type : unsigned { bitmaps, coreset };
-
   rate_match_pattern_id_t pattern_id;
-  pattern_type            type;
   /// This ControlResourceSet is used as a PDSCH rate matching pattern, i.e., PDSCH reception rate matches around it.
   /// In frequency domain, the resource is determined by the frequency domain resource of the CORESET with the
   /// corresponding CORESET ID. Time domain resource is determined by the parameters of the associated search space of
   /// the CORESET.
-  variant<bitmaps, coreset_id> pattern;
+  variant<bitmaps, coreset_id> pattern_type;
   /// The field is mandatory present if the RateMatchPattern is defined on cell level. The field is absent when the
   /// RateMatchPattern is defined on BWP level. If the RateMatchPattern is defined on BWP level, the UE applies the SCS
   /// of the BWP.
@@ -117,7 +113,7 @@ struct rate_match_pattern {
 
   bool operator==(const rate_match_pattern& rhs) const
   {
-    return pattern_id == rhs.pattern_id && type == rhs.type && pattern == rhs.pattern;
+    return pattern_id == rhs.pattern_id && pattern_type == rhs.pattern_type;
   }
   bool operator!=(const rate_match_pattern& rhs) const { return !(rhs == *this); }
 };
