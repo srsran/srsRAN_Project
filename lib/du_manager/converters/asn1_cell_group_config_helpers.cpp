@@ -986,6 +986,38 @@ srsgnb::srs_du::make_asn1_rrc_sri_pusch_pwr_ctrl(const pusch_config::pusch_power
   return sri_pwr_ctl;
 }
 
+void make_asn1_rrc_alpha(asn1::rrc_nr::alpha_e& out, const alpha& cfg)
+{
+  switch (cfg) {
+    case alpha::alpha0:
+      out = alpha_opts::alpha0;
+      break;
+    case alpha::alpha04:
+      out = alpha_opts::alpha04;
+      break;
+    case alpha::alpha05:
+      out = alpha_opts::alpha05;
+      break;
+    case alpha::alpha06:
+      out = alpha_opts::alpha06;
+      break;
+    case alpha::alpha07:
+      out = alpha_opts::alpha07;
+      break;
+    case alpha::alpha08:
+      out = alpha_opts::alpha08;
+      break;
+    case alpha::alpha09:
+      out = alpha_opts::alpha09;
+      break;
+    case alpha::alpha1:
+      out = alpha_opts::alpha1;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid alpha={}", cfg);
+  }
+}
+
 void make_asn1_rrc_pusch_pwr_ctrl(asn1::rrc_nr::pusch_pwr_ctrl_s&          out,
                                   const pusch_config::pusch_power_control& src,
                                   const pusch_config::pusch_power_control& dest)
@@ -996,34 +1028,7 @@ void make_asn1_rrc_pusch_pwr_ctrl(asn1::rrc_nr::pusch_pwr_ctrl_s&          out,
 
   if (dest.msg3_alpha.has_value()) {
     out.msg3_alpha_present = true;
-    switch (dest.msg3_alpha.value()) {
-      case alpha::alpha0:
-        out.msg3_alpha = alpha_opts::alpha0;
-        break;
-      case alpha::alpha04:
-        out.msg3_alpha = alpha_opts::alpha04;
-        break;
-      case alpha::alpha05:
-        out.msg3_alpha = alpha_opts::alpha05;
-        break;
-      case alpha::alpha06:
-        out.msg3_alpha = alpha_opts::alpha06;
-        break;
-      case alpha::alpha07:
-        out.msg3_alpha = alpha_opts::alpha07;
-        break;
-      case alpha::alpha08:
-        out.msg3_alpha = alpha_opts::alpha08;
-        break;
-      case alpha::alpha09:
-        out.msg3_alpha = alpha_opts::alpha09;
-        break;
-      case alpha::alpha1:
-        out.msg3_alpha = alpha_opts::alpha1;
-        break;
-      default:
-        srsgnb_assertion_failure("Invalid Msg3 alpha={}", dest.msg3_alpha.value());
-    }
+    make_asn1_rrc_alpha(out.msg3_alpha, dest.msg3_alpha.value());
   }
 
   if (dest.p0_nominal_without_grant.has_value()) {
@@ -1040,34 +1045,7 @@ void make_asn1_rrc_pusch_pwr_ctrl(asn1::rrc_nr::pusch_pwr_ctrl_s&          out,
     }
     if (dest.p0_alphasets[idx].p0_pusch_alpha.has_value()) {
       p0_alphaset.alpha_present = true;
-      switch (dest.p0_alphasets[idx].p0_pusch_alpha.value()) {
-        case alpha::alpha0:
-          p0_alphaset.alpha = alpha_opts::alpha0;
-          break;
-        case alpha::alpha04:
-          p0_alphaset.alpha = alpha_opts::alpha04;
-          break;
-        case alpha::alpha05:
-          p0_alphaset.alpha = alpha_opts::alpha05;
-          break;
-        case alpha::alpha06:
-          p0_alphaset.alpha = alpha_opts::alpha06;
-          break;
-        case alpha::alpha07:
-          p0_alphaset.alpha = alpha_opts::alpha07;
-          break;
-        case alpha::alpha08:
-          p0_alphaset.alpha = alpha_opts::alpha08;
-          break;
-        case alpha::alpha09:
-          p0_alphaset.alpha = alpha_opts::alpha09;
-          break;
-        case alpha::alpha1:
-          p0_alphaset.alpha = alpha_opts::alpha1;
-          break;
-        default:
-          srsgnb_assertion_failure("Invalid P0 PUSCH alpha={}", dest.p0_alphasets[idx].p0_pusch_alpha.value());
-      }
+      make_asn1_rrc_alpha(p0_alphaset.alpha, dest.p0_alphasets[idx].p0_pusch_alpha.value());
     }
   }
 
@@ -1259,34 +1237,7 @@ asn1::rrc_nr::srs_res_set_s srsgnb::srs_du::make_asn1_rrc_srs_res_set(const srs_
 
   if (cfg.srs_pwr_ctrl_alpha.has_value()) {
     srs_res_set.alpha_present = true;
-    switch (cfg.srs_pwr_ctrl_alpha.value()) {
-      case alpha::alpha0:
-        srs_res_set.alpha = alpha_opts::alpha0;
-        break;
-      case alpha::alpha04:
-        srs_res_set.alpha = alpha_opts::alpha04;
-        break;
-      case alpha::alpha05:
-        srs_res_set.alpha = alpha_opts::alpha05;
-        break;
-      case alpha::alpha06:
-        srs_res_set.alpha = alpha_opts::alpha06;
-        break;
-      case alpha::alpha07:
-        srs_res_set.alpha = alpha_opts::alpha07;
-        break;
-      case alpha::alpha08:
-        srs_res_set.alpha = alpha_opts::alpha08;
-        break;
-      case alpha::alpha09:
-        srs_res_set.alpha = alpha_opts::alpha09;
-        break;
-      case alpha::alpha1:
-        srs_res_set.alpha = alpha_opts::alpha1;
-        break;
-      default:
-        srsgnb_assertion_failure("Invalid SRS Power Control alpha={}", cfg.srs_pwr_ctrl_alpha.value());
-    }
+    make_asn1_rrc_alpha(srs_res_set.alpha, cfg.srs_pwr_ctrl_alpha.value());
   }
 
   if (cfg.p0.has_value()) {
