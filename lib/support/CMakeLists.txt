@@ -13,7 +13,8 @@ set(SOURCES
         task_worker.cpp
         unique_thread.cpp
         timers.cpp
-        bit_encoding.cpp)
+        bit_encoding.cpp
+        config_json.cpp)
 
 add_library(srsgnb_support STATIC ${SOURCES})
 target_link_libraries(srsgnb_support srsgnb_io_broker ${CMAKE_THREAD_LIBS_INIT} srslog)

@@ -19,6 +19,7 @@
 #include "srsgnb/support/io_broker/io_broker_factory.h"
 
 #include "adapters/f1_adapter.h"
+#include "srsgnb/support/config_json.h"
 
 #include "gnb_appconfig.h"
 
@@ -121,6 +122,8 @@ static bool  enable_clipping        = false;
 static float full_scale_amplitude   = 1.0F;
 static float amplitude_ceiling_dBFS = -0.1F;
 
+static bool printconfig = false;
+
 // NGAP configuration.
 static srsgnb::network_gateway_config ngap_nw_config;
 
@@ -204,7 +207,7 @@ static void populate_gnb_args(CLI::App& app, srsgnb::gnb_appconfig& gnb_params)
   app.add_option("-e", gnb_params.enable_clipping, "Enable amplitude clipping")->capture_default_str();
   app.add_option("-b", gnb_params.baseband_gain_dB, "Baseband gain prior to clipping (in dB)")->capture_default_str();
   app.set_config("-c,", gnb_params.config_file, "Read config from file", false);
-  app.add_flag("--printconfig", gnb_params.printconfig, "Print configuration and exit");
+  app.add_flag("--printconfig", printconfig, "Print configuration and exit")->configurable(false);
 }
 
 static void populate_cu_args(CLI::App& app, srsgnb::gnb_appconfig& gnb_params)
@@ -411,6 +414,7 @@ int main(int argc, char** argv)
 {
   // Setup and configure config parsing.
   CLI::App app("srsGNB application");
+  app.config_formatter(create_json_config_parser());
 
   // This variable is filled by the command line parser.
   gnb_appconfig gnb_params;
@@ -424,8 +428,7 @@ int main(int argc, char** argv)
   // Compute derived parameters.
   compute_derived_args(gnb_params);
 
-  if (gnb_params.printconfig) {
-    // TODO: remove printconfig option before dumping.
+  if (printconfig) {
     fmt::print("{}\n", app.config_to_str(true, true));
     return 0;
   }

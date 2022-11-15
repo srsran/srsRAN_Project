@@ -27,7 +27,6 @@ struct gnb_appconfig {
   std::string log_level             = "info";
   float       baseband_gain_dB      = -2.5F;
   bool        enable_clipping       = false;
-  bool        printconfig           = false;
 
   cu_appconfig cu;
 };
