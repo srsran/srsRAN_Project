@@ -7,4 +7,4 @@
 #
 
 add_executable(cu-up main.cpp)
-target_link_libraries(cu-up srsgnb_f1 srsgnb_security srsgnb_pdcp  srsran_sdap srsgnb_support)
+target_link_libraries(cu-up srsgnb_f1c srsgnb_security srsgnb_pdcp  srsran_sdap srsgnb_support)

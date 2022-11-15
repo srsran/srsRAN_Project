@@ -23,7 +23,7 @@ set(SOURCES
         du/f1ap_du_ue.cpp
     )
 
-add_library(srsgnb_f1 STATIC ${SOURCES})
-target_link_libraries(srsgnb_f1 f1ap_asn1 srsgnb_f1c_du_procedures)
+add_library(srsgnb_f1c STATIC ${SOURCES})
+target_link_libraries(srsgnb_f1c f1ap_asn1 srsgnb_f1c_du_procedures)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

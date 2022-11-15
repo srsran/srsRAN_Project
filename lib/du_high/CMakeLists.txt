@@ -7,4 +7,4 @@
 #
 
 add_library(srsgnb_du_high du_high.cpp)
-target_link_libraries(srsgnb_du_high srslog srsgnb_support srsgnb_du_manager srsgnb_mac srsgnb_f1)
+target_link_libraries(srsgnb_du_high srslog srsgnb_support srsgnb_du_manager srsgnb_mac srsgnb_f1c)
