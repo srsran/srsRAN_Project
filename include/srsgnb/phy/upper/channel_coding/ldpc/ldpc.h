@@ -93,8 +93,20 @@ static constexpr std::array<lifting_size_t, NOF_LIFTING_SIZES> all_lifting_sizes
 /// Filler bit identifier
 static constexpr uint8_t FILLER_BIT = 254;
 
+/// Maximum LDPC message size in bits.
+static constexpr unsigned MAX_MESSAGE_SIZE = all_lifting_sizes.back() * 22;
+
 /// Maximum LDPC encoded codeblock size in bits.
 static constexpr unsigned MAX_CODEBLOCK_SIZE = all_lifting_sizes.back() * 66;
+
+/// \brief Maximum LDPC rate-matched codeblock size in bits.
+///
+/// The minimum code rate (after rate matching) is \f$30 / 1024\f$, as per TS38.214 Table 5.1.3.1-3. Therefore, the
+/// maximum rate-matched codeblock length can be computed as
+/// \f[
+/// \textup{MAX_MESSAGE_SIZE} \times \lceil 1024 / 30 \rceil = \textup{MAX_MESSAGE_SIZE} \times 35.
+/// \f]
+static constexpr unsigned MAX_CODEBLOCK_RM_SIZE = MAX_MESSAGE_SIZE * 35;
 
 /// \brief Computes the transport block CRC size from the transport block size.
 ///

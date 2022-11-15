@@ -39,6 +39,12 @@ void ldpc_rate_matcher_impl::rate_match(span<uint8_t>                           
     buffer_length = block_length;
   }
 
+  // The output size cannot be larger than the maximum rate-matched codeblock length.
+  srsgnb_assert(output.size() <= MAX_CODEBLOCK_RM_SIZE,
+                "The length of the rate-matched codeblock is {} but it shouldn't be more than {}.",
+                output.size(),
+                MAX_CODEBLOCK_RM_SIZE);
+
   // The output size must be a multiple of the modulation order.
   srsgnb_assert(output.size() % modulation_order == 0,
                 "The output length should be a multiple of the modulation order.");

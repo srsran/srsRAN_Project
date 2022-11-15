@@ -48,6 +48,12 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       out
     buffer_length = block_length;
   }
 
+  // The input size cannot be larger than the maximum rate-matched codeblock length.
+  srsgnb_assert(input.size() <= MAX_CODEBLOCK_RM_SIZE,
+                "The length of the rate-matched codeblock is {} but it shouldn't be more than {}.",
+                input.size(),
+                MAX_CODEBLOCK_RM_SIZE);
+
   // The input size must be a multiple of the modulation order.
   srsgnb_assert(input.size() % modulation_order == 0, "The input length should be a multiple of the modulation order.");
 
