@@ -20,7 +20,7 @@ namespace srsgnb {
 /// \remark See TS 38.311, PUSCH-Config.
 struct pusch_config {
   /// Type of transmission schemes for PUSCH.
-  enum class tx_config { codebook, non_codebook };
+  enum class tx_config { codebook, non_codebook, not_set };
 
   struct pusch_power_control {
     enum p0_pusch_alphaset_id : uint8_t {
@@ -34,9 +34,9 @@ struct pusch_config {
       /// P0 value for PUSCH with grant (except msg3) in steps of 1dB. When the field is absent the UE applies the value
       /// 0. See TS 38.213, clause 7.1. Values {-16,..,15}.
       optional<int8_t> p0;
-      /// alpha value for PUSCH with grant (except msg3). When the field is absent the UE applies the value 1. See
+      /// alpha value for PUSCH with grant (except msg3). When the field is not set the UE applies the value 1. See
       /// TS 38.213, clause 7.1.
-      optional<alpha> p0_pusch_alpha;
+      alpha p0_pusch_alpha{alpha::not_set};
 
       bool operator==(const p0_pusch_alphaset& rhs) const
       {
@@ -96,8 +96,8 @@ struct pusch_config {
     /// Mapping to NR RRC: If true, the field is present in NR RRC indicating value disabled to UE. If false, the field
     /// is absent in NR RRC and TPC accumulation is enabled.
     bool is_tpc_accumulation_disabled{false};
-    /// Dedicated alpha value for msg3 PUSCH. When the field is absent the UE applies the value 1.
-    optional<alpha> msg3_alpha;
+    /// Dedicated alpha value for msg3 PUSCH. When the field is not set the UE applies the value 1.
+    alpha msg3_alpha{alpha::not_set};
     /// P0 value for UL grant-free/SPS based PUSCH. Value in dBm. Only even values (step size 2) allowed. See TS 38.213,
     /// clause 7.1. Values {-202,..,24}.
     optional<int16_t> p0_nominal_without_grant;
@@ -128,19 +128,24 @@ struct pusch_config {
 
   /// \brief Transformer precoder for PUSCH.
   /// \remark See TS 38.214, clause 6.1.3.
-  enum class transform_precoder : unsigned { enabled, disabled };
+  enum class transform_precoder : unsigned { enabled, disabled, not_set };
 
   /// Subset of PMIs addressed by TPMI, where PMIs are those supported by UEs with maximum coherence capabilities.
   /// Applicable to DCI format 0_1.
   /// \remark See TS 38.214, clause 6.1.1.1.
-  enum class codebook_subset : unsigned { fully_and_partial_and_non_coherent, partial_and_non_coherent, non_coherent };
+  enum class codebook_subset : unsigned {
+    fully_and_partial_and_non_coherent,
+    partial_and_non_coherent,
+    non_coherent,
+    not_set
+  };
 
   /// Identifier used to initalite data scrambling (c_init) for PUSCH. If the field is absent, the UE applies the
   /// physical cell ID. See TS 38.211, clause 6.3.1.1.
   optional<uint16_t> data_scrambling_id_pusch;
   /// UE uses codebook based or non-codebook based transmission (see TS 38.214, clause 6.1.1). If the field is
-  /// absent, the UE transmits PUSCH on one antenna port.
-  optional<tx_config> tx_cfg;
+  /// not set, the UE transmits PUSCH on one antenna port.
+  tx_config tx_cfg{tx_config::not_set};
   /// DMRS configuration for PUSCH transmissions using PUSCH (chosen dynamically via
   /// PUSCH-TimeDomainResourceAllocation). Only the fields dmrs-Type, dmrs-AdditionalPosition and maxLength may be set
   /// differently for mapping type A and B. The field dmrs-UplinkForPUSCH-MappingTypeA applies to DCI format 0_1.
@@ -148,11 +153,11 @@ struct pusch_config {
   optional<dmrs_uplink_config>  pusch_mapping_type_b_dmrs;
   optional<pusch_power_control> pusch_pwr_ctrl;
   resource_allocation           res_alloc;
-  /// The UE specific selection of transformer precoder for PUSCH. When the field is absent the UE applies the value of
+  /// The UE specific selection of transformer precoder for PUSCH. When the field is not set the UE applies the value of
   /// the field msg3-transformPrecoder.
-  optional<transform_precoder> trans_precoder;
+  transform_precoder trans_precoder{transform_precoder::not_set};
   /// The field is mandatory present if txConfig is set to codebook and absent otherwise.
-  optional<codebook_subset> cb_subset;
+  codebook_subset cb_subset{codebook_subset::not_set};
   /// Subset of PMIs addressed by TRIs from 1 to ULmaxRank. The field maxRank applies to DCI format 0_1.
   /// The field is mandatory present if txConfig is set to codebook and absent otherwise. Values {1,..,4}.
   optional<uint8_t> max_rank;

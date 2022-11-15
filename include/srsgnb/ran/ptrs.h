@@ -30,7 +30,7 @@ struct ptrs_uplink_config {
     /// \brief The maximum number of UL PTRS ports for CP-OFDM. See TS 38.214, clause 6.2.3.1.
     enum class max_nof_ports { n1, n2 };
     /// \brief Indicates the subcarrier offset for UL PTRS for CP-OFDM. See TS 38.211, clause 6.4.1.2.2.
-    enum class resource_element_offset { offset01, offset10, offset11 };
+    enum class resource_element_offset { offset01, offset10, offset11, not_set };
     /// \brief UL PTRS power boosting factor per PTRS port. See TS 38.214, clause 6.1, table 6.2.3.1.3.
     enum class ptrs_power { p00, p01, p10, p11 };
 
@@ -42,8 +42,8 @@ struct ptrs_uplink_config {
     static_vector<uint8_t, max_nof_ul_ptrs_time_density> t_density;
     max_nof_ports                                        max_ports;
     /// If the field is absent, the UE applies the value offset00.
-    optional<resource_element_offset> res_elem_offset;
-    ptrs_power                        power;
+    resource_element_offset res_elem_offset{resource_element_offset::not_set};
+    ptrs_power              power;
 
     bool operator==(const transform_precoder_disabled& rhs) const
     {

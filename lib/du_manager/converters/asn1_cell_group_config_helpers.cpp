@@ -825,8 +825,9 @@ void make_asn1_rrc_ptrs_ul_cfg(asn1::rrc_nr::ptrs_ul_cfg_s& out, const ptrs_upli
         srsgnb_assertion_failure("Invalid PTRS UL Cfg Max. Ports={}", cfg_trans_preco_dis.max_ports);
     }
 
-    if (cfg_trans_preco_dis.res_elem_offset.has_value()) {
-      switch (cfg_trans_preco_dis.res_elem_offset.value()) {
+    if (cfg_trans_preco_dis.res_elem_offset !=
+        srsgnb::ptrs_uplink_config::transform_precoder_disabled::resource_element_offset::not_set) {
+      switch (cfg_trans_preco_dis.res_elem_offset) {
         case ptrs_uplink_config::transform_precoder_disabled::resource_element_offset::offset01:
           out_trans_preco_dis.res_elem_offset =
               ptrs_ul_cfg_s::transform_precoder_disabled_s_::res_elem_offset_opts::offset01;
@@ -840,7 +841,7 @@ void make_asn1_rrc_ptrs_ul_cfg(asn1::rrc_nr::ptrs_ul_cfg_s& out, const ptrs_upli
               ptrs_ul_cfg_s::transform_precoder_disabled_s_::res_elem_offset_opts::offset11;
           break;
         default:
-          srsgnb_assertion_failure("Invalid Resource Element Offset={}", cfg_trans_preco_dis.res_elem_offset.value());
+          srsgnb_assertion_failure("Invalid Resource Element Offset={}", cfg_trans_preco_dis.res_elem_offset);
       }
     }
 
@@ -881,13 +882,13 @@ void make_asn1_rrc_dmrs_ul_for_pusch(asn1::rrc_nr::dmrs_ul_cfg_s& out,
                                      const dmrs_uplink_config&    src,
                                      const dmrs_uplink_config&    dest)
 {
-  if (dest.type.has_value() && dest.type.value() == dmrs_config_type::type2) {
+  if (dest.is_dmrs_type2) {
     out.dmrs_type_present = true;
   }
 
-  if (dest.additional_positions.has_value()) {
+  if (dest.additional_positions != srsgnb::dmrs_additional_positions::not_set) {
     out.dmrs_add_position_present = true;
-    switch (dest.additional_positions.value()) {
+    switch (dest.additional_positions) {
       case dmrs_additional_positions::pos0:
         out.dmrs_add_position = dmrs_ul_cfg_s::dmrs_add_position_opts::pos0;
         break;
@@ -898,7 +899,7 @@ void make_asn1_rrc_dmrs_ul_for_pusch(asn1::rrc_nr::dmrs_ul_cfg_s& out,
         out.dmrs_add_position = dmrs_ul_cfg_s::dmrs_add_position_opts::pos3;
         break;
       default:
-        srsgnb_assertion_failure("Invalid UL DMRS Add. pos={}", dest.additional_positions.value());
+        srsgnb_assertion_failure("Invalid UL DMRS Add. pos={}", dest.additional_positions);
     }
   }
 
@@ -911,7 +912,7 @@ void make_asn1_rrc_dmrs_ul_for_pusch(asn1::rrc_nr::dmrs_ul_cfg_s& out,
     out.phase_tracking_rs.set_release();
   }
 
-  if (dest.max_length.has_value() && dest.max_length.value() == dmrs_max_length::len2) {
+  if (dest.is_max_length_len2) {
     out.max_len_present = true;
   }
 
@@ -937,15 +938,11 @@ void make_asn1_rrc_dmrs_ul_for_pusch(asn1::rrc_nr::dmrs_ul_cfg_s& out,
       out.transform_precoding_enabled.npusch_id         = dest.trans_precoder_enabled.value().n_pusch_id.value();
     }
 
-    if (dest.trans_precoder_enabled.value().seq_grp_hopping.has_value() &&
-        dest.trans_precoder_enabled.value().seq_grp_hopping.value() ==
-            dmrs_uplink_config::transform_precoder_enabled::sequence_group_hopping::disabled) {
+    if (dest.trans_precoder_enabled.value().is_seq_grp_hopping_disabled) {
       out.transform_precoding_enabled.seq_group_hop_present = true;
     }
 
-    if (dest.trans_precoder_enabled.value().seq_hopping.has_value() &&
-        dest.trans_precoder_enabled.value().seq_hopping.value() ==
-            dmrs_uplink_config::transform_precoder_enabled::sequence_hopping::enabled) {
+    if (dest.trans_precoder_enabled.value().is_seq_hopping_enabled) {
       out.transform_precoding_enabled.seq_hop_present = true;
     }
   }
@@ -1026,9 +1023,9 @@ void make_asn1_rrc_pusch_pwr_ctrl(asn1::rrc_nr::pusch_pwr_ctrl_s&          out,
     out.tpc_accumulation_present = true;
   }
 
-  if (dest.msg3_alpha.has_value()) {
+  if (dest.msg3_alpha != srsgnb::alpha::not_set) {
     out.msg3_alpha_present = true;
-    make_asn1_rrc_alpha(out.msg3_alpha, dest.msg3_alpha.value());
+    make_asn1_rrc_alpha(out.msg3_alpha, dest.msg3_alpha);
   }
 
   if (dest.p0_nominal_without_grant.has_value()) {
@@ -1043,9 +1040,9 @@ void make_asn1_rrc_pusch_pwr_ctrl(asn1::rrc_nr::pusch_pwr_ctrl_s&          out,
       p0_alphaset.p0_present = true;
       p0_alphaset.p0         = dest.p0_alphasets[idx].p0.value();
     }
-    if (dest.p0_alphasets[idx].p0_pusch_alpha.has_value()) {
+    if (dest.p0_alphasets[idx].p0_pusch_alpha != srsgnb::alpha::not_set) {
       p0_alphaset.alpha_present = true;
-      make_asn1_rrc_alpha(p0_alphaset.alpha, dest.p0_alphasets[idx].p0_pusch_alpha.value());
+      make_asn1_rrc_alpha(p0_alphaset.alpha, dest.p0_alphasets[idx].p0_pusch_alpha);
     }
   }
 
@@ -1076,9 +1073,9 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
     out.data_scrambling_id_pusch_present = true;
     out.data_scrambling_id_pusch         = dest.data_scrambling_id_pusch.value();
   }
-  if (dest.tx_cfg.has_value()) {
+  if (dest.tx_cfg != srsgnb::pusch_config::tx_config::not_set) {
     out.tx_cfg_present = true;
-    switch (dest.tx_cfg.value()) {
+    switch (dest.tx_cfg) {
       case pusch_config::tx_config::codebook:
         out.tx_cfg = pusch_cfg_s::tx_cfg_opts::codebook;
         break;
@@ -1086,7 +1083,7 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
         out.tx_cfg = pusch_cfg_s::tx_cfg_opts::non_codebook;
         break;
       default:
-        srsgnb_assertion_failure("Invalid PUSCH Tx cfg={}", dest.tx_cfg.value());
+        srsgnb_assertion_failure("Invalid PUSCH Tx cfg={}", dest.tx_cfg);
     }
   }
 
@@ -1138,9 +1135,9 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
       srsgnb_assertion_failure("Invalid PUSCH Resource Allocation={}", dest.res_alloc);
   }
 
-  if (dest.trans_precoder.has_value()) {
+  if (dest.trans_precoder != srsgnb::pusch_config::transform_precoder::not_set) {
     out.transform_precoder_present = true;
-    switch (dest.trans_precoder.value()) {
+    switch (dest.trans_precoder) {
       case pusch_config::transform_precoder::enabled:
         out.transform_precoder = pusch_cfg_s::transform_precoder_opts::enabled;
         break;
@@ -1148,13 +1145,13 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
         out.transform_precoder = pusch_cfg_s::transform_precoder_opts::disabled;
         break;
       default:
-        srsgnb_assertion_failure("Invalid PUSCH Transform Precoder={}", dest.trans_precoder.value());
+        srsgnb_assertion_failure("Invalid PUSCH Transform Precoder={}", dest.trans_precoder);
     }
   }
 
-  if (dest.cb_subset.has_value()) {
+  if (dest.cb_subset != srsgnb::pusch_config::codebook_subset::not_set) {
     out.codebook_subset_present = true;
-    switch (dest.cb_subset.value()) {
+    switch (dest.cb_subset) {
       case pusch_config::codebook_subset::fully_and_partial_and_non_coherent:
         out.codebook_subset = pusch_cfg_s::codebook_subset_opts::fully_and_partial_and_non_coherent;
         break;
@@ -1165,7 +1162,7 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
         out.codebook_subset = pusch_cfg_s::codebook_subset_opts::non_coherent;
         break;
       default:
-        srsgnb_assertion_failure("Invalid Codebook subset={}", dest.cb_subset.value());
+        srsgnb_assertion_failure("Invalid Codebook subset={}", dest.cb_subset);
     }
   }
 
@@ -1235,9 +1232,9 @@ asn1::rrc_nr::srs_res_set_s srsgnb::srs_du::make_asn1_rrc_srs_res_set(const srs_
       srsgnb_assertion_failure("Invalid SRS resource set usage={}", cfg.srs_res_set_usage);
   }
 
-  if (cfg.srs_pwr_ctrl_alpha.has_value()) {
+  if (cfg.srs_pwr_ctrl_alpha != alpha::not_set) {
     srs_res_set.alpha_present = true;
-    make_asn1_rrc_alpha(srs_res_set.alpha, cfg.srs_pwr_ctrl_alpha.value());
+    make_asn1_rrc_alpha(srs_res_set.alpha, cfg.srs_pwr_ctrl_alpha);
   }
 
   if (cfg.p0.has_value()) {
@@ -1245,9 +1242,9 @@ asn1::rrc_nr::srs_res_set_s srsgnb::srs_du::make_asn1_rrc_srs_res_set(const srs_
     srs_res_set.p0         = cfg.p0.value();
   }
 
-  if (cfg.pwr_ctrl_adj_states.has_value()) {
+  if (cfg.pwr_ctrl_adj_states != srs_config::srs_resource_set::srs_pwr_ctrl_adjustment_states::not_set) {
     srs_res_set.srs_pwr_ctrl_adjustment_states_present = true;
-    switch (cfg.pwr_ctrl_adj_states.value()) {
+    switch (cfg.pwr_ctrl_adj_states) {
       case srs_config::srs_resource_set::srs_pwr_ctrl_adjustment_states::same_as_fci2:
         srs_res_set.srs_pwr_ctrl_adjustment_states = srs_res_set_s::srs_pwr_ctrl_adjustment_states_opts::same_as_fci2;
         break;
@@ -1256,7 +1253,7 @@ asn1::rrc_nr::srs_res_set_s srsgnb::srs_du::make_asn1_rrc_srs_res_set(const srs_
             srs_res_set_s::srs_pwr_ctrl_adjustment_states_opts::separate_closed_loop;
         break;
       default:
-        srsgnb_assertion_failure("Invalid Power Control Adj. state={}", cfg.pwr_ctrl_adj_states.value());
+        srsgnb_assertion_failure("Invalid Power Control Adj. state={}", cfg.pwr_ctrl_adj_states);
     }
   }
 
