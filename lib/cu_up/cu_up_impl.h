@@ -17,6 +17,7 @@
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/timers.h"
+#include "ue_manager.h"
 #include <memory>
 #include <unordered_map>
 
@@ -30,6 +31,8 @@ public:
   ~cu_up() = default;
 
   e1_message_handler& get_e1_message_handler() override;
+  bearer_context_setup_response_message
+  handle_bearer_context_setup_request(const bearer_context_setup_request_message& msg) override;
 
   // cu_up_e1_connection_notifier
   void on_e1_connection_establish() override;
@@ -45,11 +48,12 @@ private:
   async_task_sequencer main_ctrl_loop;
 
   // logger
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UP");
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UP", false);
 
   // Components
   std::unique_ptr<e1_interface> e1;
-  std::atomic<bool> e1_connected = {false};
+  std::atomic<bool>             e1_connected = {false};
+  ue_manager                    ue_mng;
 };
 
 } // namespace srs_cu_up

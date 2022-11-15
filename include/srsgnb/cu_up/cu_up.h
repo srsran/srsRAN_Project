@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/e1_interface/common/e1_common.h"
+#include "srsgnb/e1_interface/cu_up/e1_cu_up.h"
 
 #include <string>
 
@@ -34,6 +35,12 @@ class cu_up_e1_interface
 {
 public:
   virtual ~cu_up_e1_interface() = default;
+
+  /// \brief Create a new UE context and handle bearer setup request.
+  /// \param[in] msg The original bearer setup request.
+  /// \return Returns message containing the index of the created UE and all response/failure message.
+  virtual bearer_context_setup_response_message
+  handle_bearer_context_setup_request(const bearer_context_setup_request_message& msg) = 0;
 
   /// \brief Get the E1 message handler interface.
   virtual e1_message_handler& get_e1_message_handler() = 0;

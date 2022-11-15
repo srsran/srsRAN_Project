@@ -11,10 +11,25 @@
 #pragma once
 
 #include "srsgnb/asn1/e1ap.h"
+#include "srsgnb/cu_up/cu_up_types.h"
 #include "srsgnb/e1_interface/common/e1_common.h"
 
 namespace srsgnb {
 namespace srs_cu_up {
+
+/// \brief Request to create a new UE and bearer context.
+struct bearer_context_setup_request_message {
+  asn1::e1ap::ng_ran_bearer_context_setup_request_o request;
+  // TODO: add optional fields like DU-ID, etc
+};
+
+/// \brief Response to an bearer context setup request including UE index for E1 map.
+struct bearer_context_setup_response_message {
+  bool                                        success;
+  ue_index_t                                  ue_index; // Valid UE index if setup was successful.
+  asn1::e1ap::sys_bearer_context_setup_resp_c response;
+  asn1::e1ap::cause_c                         cause; // Cause if setup was unsuccessful.
+};
 
 /// Handle E1 interface management procedures as defined in TS 38.463 section 8.2.4.
 class e1_connection_manager

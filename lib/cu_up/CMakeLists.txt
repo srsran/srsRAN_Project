@@ -9,6 +9,7 @@
 set(SOURCES
       cu_up_factory.cpp
       cu_up_impl.cpp
+      ue_manager.cpp
 )
 
 add_library(srsgnb_cu_up STATIC ${SOURCES})

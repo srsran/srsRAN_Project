@@ -19,7 +19,7 @@ void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
   srsgnb_assert(cfg.e1_notifier != nullptr, "Invalid E1 notifier");
 }
 
-cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128)
+cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128), ue_mng(logger)
 {
   assert_cu_up_configuration_valid(cfg);
 
@@ -33,6 +33,35 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 e1_message_handler& cu_up::get_e1_message_handler()
 {
   return *e1;
+}
+
+bearer_context_setup_response_message
+cu_up::handle_bearer_context_setup_request(const bearer_context_setup_request_message& msg)
+{
+  bearer_context_setup_response_message response = {};
+  response.ue_index                              = INVALID_UE_INDEX;
+  response.success                               = false;
+
+  // 1. Create new UE context
+  ue_context* ue_ctxt = ue_mng.add_ue();
+  if (ue_ctxt == nullptr) {
+    logger.error("Could not create UE context");
+    return response;
+  }
+  logger.info("UE Created (ue_index={})", ue_ctxt->get_index());
+
+  // 2. Handle bearer context setup request
+  if (msg.request.is_id_valid(0)) {
+    const auto& pdu_session_list = msg.request.get_value(0).pdu_session_res_to_setup_list();
+    for (size_t i = 0; i < pdu_session_list.size(); ++i) {
+      // TODO: call handle_pdu_session_setup_request()
+    }
+  }
+
+  // 3. Create response
+  response.ue_index = ue_ctxt->get_index();
+
+  return response;
 }
 
 void cu_up::on_e1_connection_establish()
