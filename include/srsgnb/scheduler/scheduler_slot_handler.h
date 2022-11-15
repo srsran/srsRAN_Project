@@ -28,6 +28,7 @@
 #include "srsgnb/ran/slot_pdu_capacity_contants.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
+#include "srsgnb/ran/uci/uci_configuration.h"
 #include "srsgnb/scheduler/config/bwp_configuration.h"
 #include "srsgnb/scheduler/config/dmrs.h"
 #include "srsgnb/scheduler/scheduler_pucch_format.h"
@@ -211,6 +212,27 @@ struct pusch_information {
   uint16_t num_cb;
 };
 
+struct uci_info {
+  /// As the UCI is optional in the PDU, \c uci_present tells whether this struct should be consider for UCI as part of
+  /// the PUSCH PDU.
+  bool uci_present;
+  /// Number of bits of ACK to be reported.
+  uint16_t harq_ack_nof_bits;
+  /// Number of bits of CSI part 1 to be reported.
+  uint16_t csi_part1_nof_bits;
+  /// Number of bits of CSI part 2 to be reported.
+  uint16_t csi_part2_nof_bits;
+
+  /// \f$\alpha\f$ parameter, as per Section 6.3.2.4.1.1-3, TS 38.212.
+  alpha_scaling_opt alpha;
+  /// \f$\beta^{HARQ-ACK}_{offset}\f$ parameter, as per Section 9.3, TS 38.213.
+  uint8_t beta_offset_harq_ack;
+  /// \f$\beta^{CSI-1}_{offset}\f$ parameter, as per Section 9.3, TS 38.213.
+  uint8_t beta_offset_csi_1;
+  /// \f$\beta^{CSI-2}_{offset}\f$ parameter, as per Section 9.3, TS 38.213.
+  uint8_t beta_offset_csi_2;
+};
+
 /// \brief RAR grant composed of subheader as per TS38.321 6.2.2, payload as per TS38.321 6.2.3,
 /// with UL grant as per TS38.213, Table 8.2-1.
 struct rar_ul_grant {
@@ -275,6 +297,7 @@ struct dl_sched_result {
 
 struct ul_sched_info {
   pusch_information pusch_cfg;
+  uci_info          uci;
 };
 
 struct prach_occasion_info {
