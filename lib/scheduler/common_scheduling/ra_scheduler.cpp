@@ -15,6 +15,7 @@
 #include "../support/dmrs_helpers.h"
 #include "../support/tbs_calculator.h"
 #include "../ue_scheduling/ue_dci_builder.h"
+#include "../ue_scheduling/ue_sch_pdu_builder.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 
 using namespace srsgnb;
@@ -59,8 +60,6 @@ ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_resource_alloca
 {
   // RAR payload size in bytes as per TS38.321, 6.1.5 and 6.2.3.
   static const unsigned rar_payload_size_bytes = 7, rar_subheader_size_bytes = 1;
-  // Msg3 UL CCCH message size is up to 64bits (8 octets), and its subheader has 1 octet as per TS38.321.
-  static constexpr unsigned max_msg3_sdu_payload_size_bytes = 8, msg3_subheader_size_bytes = 1;
   // As per TS 38.214, Section 5.1.3.2, nof_oh_prb = 0 if PDSCH is scheduled by PDCCH with a CRC scrambled by RA-RNTI.
   static const unsigned nof_oh_prb = 0;
   static const unsigned nof_layers = 1;
@@ -88,21 +87,49 @@ ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_resource_alloca
                                                                      nof_layers});
   }
 
-  // Cache PUSCH DM-RS information and Msg3 required TBS and number of PRBs.
-  msg3_data.resize(get_pusch_cfg().pusch_td_alloc_list.size());
-  msg3_mcs_config = pusch_mcs_get_config(pusch_mcs_table::qam64, msg3_mcs_index, false);
-  for (unsigned i = 0; i != msg3_data.size(); ++i) {
-    msg3_data[i].dmrs_info = make_dmrs_info_common(get_pusch_cfg(), i, cfg.pci, cfg.dmrs_typeA_pos);
+  // Precompute Msg3 PUSCH and DCI PDUs.
+  precompute_msg3_pdus();
+}
 
-    unsigned nof_symb_sh = get_pusch_cfg().pusch_td_alloc_list[i].symbols.length();
-    msg3_data[i].prbs_tbs =
+void ra_scheduler::precompute_msg3_pdus()
+{
+  // Msg3 UL CCCH message size is up to 64bits (8 octets), and its subheader has 1 octet as per TS38.321.
+  static constexpr unsigned max_msg3_sdu_payload_size_bytes = 8, msg3_subheader_size_bytes = 1;
+  // As per TS 38.214, Section 5.1.3.2, nof_oh_prb = 0 if PDSCH is scheduled by PDCCH with a CRC scrambled by RA-RNTI.
+  static const unsigned nof_oh_prb = 0;
+  static const unsigned nof_layers = 1;
+
+  msg3_mcs_config = pusch_mcs_get_config(pusch_mcs_table::qam64, msg3_mcs_index, false);
+
+  // One position per time resource.
+  msg3_data.resize(get_pusch_cfg().pusch_td_alloc_list.size());
+
+  for (unsigned i = 0; i != msg3_data.size(); ++i) {
+    // Create a dummy HARQ used to fill DCI and PUSCH.
+    ul_harq_process dummy_h_ul(to_harq_id(0));
+    slot_point      dummy_slot{to_numerology_value(get_ul_bwp_cfg().scs), 0};
+    dummy_h_ul.new_tx(dummy_slot, 4);
+
+    // Compute the required PRBs and TBS for Msg3.
+    dmrs_information dmrs_info = make_dmrs_info_common(get_pusch_cfg(), i, cfg.pci, cfg.dmrs_typeA_pos);
+    pdsch_prbs_tbs   prbs_tbs =
         get_nof_prbs(prbs_calculator_pdsch_config{max_msg3_sdu_payload_size_bytes + msg3_subheader_size_bytes,
-                                                  nof_symb_sh,
-                                                  calculate_nof_dmrs_per_rb(msg3_data[i].dmrs_info),
+                                                  (unsigned)get_pusch_cfg().pusch_td_alloc_list[i].symbols.length(),
+                                                  calculate_nof_dmrs_per_rb(dmrs_info),
                                                   nof_oh_prb,
                                                   msg3_mcs_config.modulation,
                                                   msg3_mcs_config.target_code_rate / 1024.0F,
                                                   nof_layers});
+
+    // Generate DCI and PUSCH PDUs.
+    build_dci_f0_0_tc_rnti(msg3_data[i].dci,
+                           cfg.dl_cfg_common.init_dl_bwp,
+                           cfg.ul_cfg_common.init_ul_bwp.generic_params,
+                           prb_interval{0, prbs_tbs.nof_prbs},
+                           i,
+                           msg3_mcs_index,
+                           dummy_h_ul);
+    build_pusch_f0_0_tc_rnti(msg3_data[i].pusch, to_rnti(0x4601), cfg, msg3_data[i].dci.tc_rnti_f0_0, true);
   }
 }
 
@@ -206,7 +233,6 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
                        pending_msg3.harq.id);
         continue;
       }
-      // TODO: Fetch TB.
       pending_msg3.harq.crc_info(crc.tb_crc_success);
     }
   }
@@ -377,7 +403,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     }
 
     // 5. Check CRBs available in PUSCH for Msg3.
-    unsigned     nof_prbs_per_msg3 = msg3_data[puschidx].prbs_tbs.nof_prbs;
+    unsigned     nof_prbs_per_msg3 = msg3_data[puschidx].pusch.prbs.prbs().length();
     unsigned     nof_msg3_prbs     = nof_prbs_per_msg3 * pusch_res_max_allocs;
     prb_bitmap   used_ul_crbs      = msg3_alloc.ul_res_grid.used_crbs(get_ul_bwp_cfg(), pusch_list[puschidx].symbols);
     crb_interval msg3_crbs         = find_empty_interval_of_length(used_ul_crbs, nof_msg3_prbs, 0);
@@ -477,6 +503,9 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     auto& pending_msg3 = pending_msg3s[rar_request.tc_rntis[i] % MAX_NOF_MSG3];
     srsgnb_sanity_check(pending_msg3.harq.empty(), "Pending Msg3 should not have been added if HARQ is busy.");
 
+    // Allocate Msg3 UL HARQ
+    ul_harq_process::alloc_params* h_params = pending_msg3.harq.new_tx(msg3_alloc.slot, max_msg3_retxs);
+
     // Add MAC SDU with UL grant (Msg3) in RAR PDU.
     rar.grants.emplace_back();
     rar_ul_grant& msg3_info            = rar.grants.back();
@@ -493,43 +522,22 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     // Allocate Msg3 RBs.
     const ofdm_symbol_range& symbols = get_pusch_cfg().pusch_td_alloc_list[msg3_candidate.pusch_td_res_index].symbols;
     msg3_alloc.ul_res_grid.fill(grant_info{get_dl_bwp_cfg().scs, symbols, msg3_candidate.crbs});
-    msg3_alloc.result.ul.puschs.emplace_back();
 
     // Fill PUSCH for Msg3.
-    ul_sched_info& pusch                = msg3_alloc.result.ul.puschs.back();
-    pusch.pusch_cfg.bwp_cfg             = &get_ul_bwp_cfg();
-    pusch.pusch_cfg.prbs                = prbs;
-    pusch.pusch_cfg.symbols             = symbols;
-    pusch.pusch_cfg.rnti                = pending_msg3.preamble.tc_rnti;
-    pusch.pusch_cfg.mcs_table           = pusch_mcs_table::qam64;
-    pusch.pusch_cfg.mcs_index           = msg3_info.mcs;
-    pusch.pusch_cfg.qam_mod             = msg3_mcs_config.modulation;
-    pusch.pusch_cfg.target_code_rate    = msg3_mcs_config.target_code_rate;
-    pusch.pusch_cfg.transform_precoding = get_rach_cfg().msg3_transform_precoder;
-    // As per TS 38.211, Section 6.3.1.1, n_ID is set to Physical Cell ID for TC-RNTI.
-    pusch.pusch_cfg.n_id                       = cfg.pci;
-    pusch.pusch_cfg.nof_layers                 = 1;
-    pusch.pusch_cfg.intra_slot_freq_hopping    = false;
-    pusch.pusch_cfg.tx_direct_current_location = 0;
-    pusch.pusch_cfg.ul_freq_shift_7p5khz       = false;
-    pusch.pusch_cfg.dmrs                       = msg3_data[msg3_info.time_resource_assignment].dmrs_info;
-    pusch.pusch_cfg.dmrs_hopping_mode          = pusch_information::dmrs_hopping_mode::no_hopping;
-    pusch.pusch_cfg.pusch_dmrs_id              = 0;
-    pusch.pusch_cfg.pusch_second_hop_prb       = 0;
-    pusch.pusch_cfg.rv_index                   = 0;
-    pusch.pusch_cfg.harq_id                    = pending_msg3.harq.id;
-    pusch.pusch_cfg.new_data                   = true;
-    pusch.pusch_cfg.tb_size_bytes              = msg3_data[msg3_info.time_resource_assignment].prbs_tbs.tbs_bytes;
-    pusch.pusch_cfg.num_cb                     = 0;
+    msg3_alloc.result.ul.puschs.emplace_back();
+    ul_sched_info& pusch     = msg3_alloc.result.ul.puschs.back();
+    pusch.pusch_cfg          = msg3_data[msg3_candidate.pusch_td_res_index].pusch;
+    pusch.pusch_cfg.rnti     = pending_msg3.preamble.tc_rnti;
+    pusch.pusch_cfg.prbs     = prbs;
+    pusch.pusch_cfg.rv_index = 0;
+    pusch.pusch_cfg.new_data = true;
 
-    // Allocate Msg3 UL HARQ
-    pending_msg3.harq.new_tx(dci_ul_rnti_config_type::tc_rnti_f0_0,
-                             to_bwp_id(0),
-                             msg3_alloc.slot,
-                             prbs,
-                             msg3_info.mcs,
-                             msg3_data[msg3_info.time_resource_assignment].prbs_tbs.tbs_bytes,
-                             max_msg3_retxs);
+    // Store parameters used in HARQ.
+    save_harq_alloc_params(*h_params,
+                           to_bwp_id(0),
+                           dci_ul_rnti_config_type::tc_rnti_f0_0,
+                           msg3_candidate.pusch_td_res_index,
+                           pusch.pusch_cfg);
   }
 }
 
@@ -548,11 +556,12 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   const bwp_configuration& bwp_ul_cmn = cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
   // Try to reuse previous HARQ PRBs.
-  grant_info grant;
+  prb_interval prbs = msg3_ctx.harq.last_tx_params().prbs.prbs();
+  grant_info   grant;
   grant.scs                   = bwp_ul_cmn.scs;
   unsigned pusch_td_res_index = 0; // TODO: Derive PUSCH TD res index.
   grant.symbols               = get_pusch_cfg().pusch_td_alloc_list[pusch_td_res_index].symbols;
-  grant.crbs                  = prb_to_crb(bwp_ul_cmn, msg3_ctx.harq.freq_ra().prbs());
+  grant.crbs                  = prb_to_crb(bwp_ul_cmn, prbs);
   if (pusch_alloc.ul_res_grid.collides(grant)) {
     // Find available symbol x RB resources.
     // TODO
@@ -575,8 +584,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   pusch_alloc.ul_res_grid.fill(grant);
 
   // Allocate new retx in the HARQ.
-  prb_interval prbs = crb_to_prb(bwp_ul_cmn, grant.crbs);
-  msg3_ctx.harq.new_retx(to_bwp_id(0), pusch_alloc.slot, prbs, msg3_ctx.harq.tb().mcs);
+  ul_harq_process::alloc_params* h_params = msg3_ctx.harq.new_retx(pusch_alloc.slot);
 
   // Fill DCI.
   build_dci_f0_0_tc_rnti(pdcch->dci,
@@ -584,37 +592,21 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
                          cfg.ul_cfg_common.init_ul_bwp.generic_params,
                          prbs,
                          pusch_td_res_index,
+                         msg3_ctx.harq.last_tx_params().mcs,
                          msg3_ctx.harq);
 
   // Fill PUSCH.
   pusch_alloc.result.ul.puschs.emplace_back();
-  ul_sched_info& ul_info                       = pusch_alloc.result.ul.puschs.back();
-  ul_info.pusch_cfg.rnti                       = msg3_ctx.preamble.tc_rnti;
-  ul_info.pusch_cfg.bwp_cfg                    = &bwp_ul_cmn;
-  ul_info.pusch_cfg.prbs                       = prbs;
-  ul_info.pusch_cfg.symbols                    = grant.symbols;
-  ul_info.pusch_cfg.intra_slot_freq_hopping    = false; // TODO.
-  ul_info.pusch_cfg.pusch_second_hop_prb       = 0;
-  ul_info.pusch_cfg.tx_direct_current_location = 0; // TODO.
-  ul_info.pusch_cfg.ul_freq_shift_7p5khz       = false;
-  ul_info.pusch_cfg.mcs_table                  = pusch_mcs_table::qam64;
-  ul_info.pusch_cfg.mcs_index                  = msg3_ctx.harq.tb().mcs;
-  ul_info.pusch_cfg.target_code_rate           = msg3_mcs_config.target_code_rate;
-  ul_info.pusch_cfg.qam_mod                    = msg3_mcs_config.modulation;
-  // TS 38.214, 6.1.3. - "transform precoding either 'enabled' or 'disabled' according to the higher layer configured
-  // parameter msg3-transformPrecoder".
-  ul_info.pusch_cfg.transform_precoding = get_rach_cfg().msg3_transform_precoder;
-  ul_info.pusch_cfg.n_id                = cfg.pci;
-  ul_info.pusch_cfg.nof_layers          = 1;
-  ul_info.pusch_cfg.dmrs                = msg3_data[pusch_td_res_index].dmrs_info;
-  ul_info.pusch_cfg.pusch_dmrs_id       = cfg.pci;
-  ul_info.pusch_cfg.dmrs_hopping_mode   = pusch_information::dmrs_hopping_mode::no_hopping; // TODO.
-  ul_info.pusch_cfg.rv_index            = pdcch->dci.tc_rnti_f0_0.redundancy_version;
-  ul_info.pusch_cfg.harq_id             = msg3_ctx.harq.id;
-  ul_info.pusch_cfg.new_data            = false;
-  ul_info.pusch_cfg.tb_size_bytes       = msg3_ctx.harq.tb().tbs_bytes;
-  // Set number of CB to zero if no CBs are being used.
-  ul_info.pusch_cfg.num_cb = 0;
+  ul_sched_info& ul_info     = pusch_alloc.result.ul.puschs.back();
+  ul_info.pusch_cfg          = msg3_data[pusch_td_res_index].pusch;
+  ul_info.pusch_cfg.rnti     = msg3_ctx.preamble.tc_rnti;
+  ul_info.pusch_cfg.prbs     = prbs;
+  ul_info.pusch_cfg.rv_index = pdcch->dci.tc_rnti_f0_0.redundancy_version;
+  ul_info.pusch_cfg.new_data = false;
+
+  // Store parameters used in HARQ.
+  save_harq_alloc_params(
+      *h_params, to_bwp_id(0), dci_ul_rnti_config_type::tc_rnti_f0_0, pusch_td_res_index, ul_info.pusch_cfg);
 }
 
 void ra_scheduler::log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const
@@ -633,7 +625,7 @@ void ra_scheduler::log_rar_helper(fmt::memory_buffer& fmtbuf, const rar_informat
                    prefix,
                    msg3.temp_crnti,
                    msg3.rapid,
-                   pending_msg3s[msg3.temp_crnti % MAX_NOF_MSG3].harq.freq_ra().prbs(),
+                   pending_msg3s[msg3.temp_crnti % MAX_NOF_MSG3].harq.last_tx_params().prbs.prbs(),
                    msg3.ta);
     prefix = ", ";
   }

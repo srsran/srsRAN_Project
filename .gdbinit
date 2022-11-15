@@ -49,7 +49,7 @@ class BoundedBitsetPrinter(object):
   def to_string(self):
       length = int(self.val['cur_size'])
       capacity = int(self.val.type.template_argument(0))
-      buffer = self.val['buffer']
+      buffer = self.val['buffer']['_M_elems']
       bitstring = ''
       nof_words = (length + 63) // 64
       nof_bits_in_word = 64

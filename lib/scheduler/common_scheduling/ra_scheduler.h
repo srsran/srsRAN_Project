@@ -79,6 +79,9 @@ private:
   const pusch_config_common& get_pusch_cfg() const { return *cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common; }
   const rach_config_common&  get_rach_cfg() const { return *cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common; }
 
+  /// Pre-compute invariant fields of Msg3 PDUs (PUSCH, DCI, etc.) for faster scheduling.
+  void precompute_msg3_pdus();
+
   void handle_rach_indication_impl(const rach_indication_message& msg);
 
   void handle_pending_crc_indications_impl(cell_resource_allocator& res_alloc);
@@ -123,8 +126,8 @@ private:
 
   /// Pre-cached information related to Msg3 for different PUSCH time resources.
   struct msg3_param_cached_data {
-    dmrs_information dmrs_info;
-    pdsch_prbs_tbs   prbs_tbs;
+    dci_ul_info       dci;
+    pusch_information pusch;
   };
   std::vector<msg3_param_cached_data> msg3_data;
   sch_mcs_description                 msg3_mcs_config;

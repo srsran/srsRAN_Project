@@ -14,6 +14,7 @@
 #include "../support/prbs_calculator.h"
 #include "../support/tbs_calculator.h"
 #include "ue_dci_builder.h"
+#include "ue_sch_pdu_builder.h"
 
 using namespace srsgnb;
 
@@ -216,37 +217,9 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
                                         sch_mcs_index         mcs_idx,
                                         const prb_interval&   ue_grant_prbs)
 {
-  constexpr static unsigned        nof_layers        = 1;
-  constexpr static pdsch_mcs_table mcs_table         = pdsch_mcs_table::qam64;
-  constexpr static unsigned        nof_bits_per_byte = 8U;
-
-  const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(pdsch_time_res);
-
   // Allocate DL HARQ.
-  const static unsigned max_retx         = 4; // TODO: Parameterize.
-  unsigned              tb_scaling_field = 0; // TODO: Parameterize.
-  unsigned              nof_oh_prb       = 0; // TODO: Parameterize.
-  sch_mcs_description   mcs_config       = pdsch_mcs_get_config(mcs_table, mcs_idx);
-  dmrs_information      dmrs             = make_dmrs_info_common(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
-  unsigned tb_size_bytes =
-      tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pdsch_td_cfg.symbols.length(),
-                                                            calculate_nof_dmrs_per_rb(dmrs),
-                                                            nof_oh_prb,
-                                                            mcs_config.target_code_rate / 1024.0F,
-                                                            mcs_config.modulation,
-                                                            nof_layers,
-                                                            tb_scaling_field,
-                                                            ue_grant_prbs.length()}) /
-      nof_bits_per_byte;
-  h_dl.new_tx(dci_dl_rnti_config_type::tc_rnti_f1_0,
-              to_bwp_id(0),
-              pdsch_slot,
-              k1,
-              ue_grant_prbs,
-              mcs_idx,
-              tb_size_bytes,
-              max_retx);
+  const static unsigned          max_retx = 4; // TODO: Parameterize.
+  dl_harq_process::alloc_params* h_params = h_dl.new_tx(pdsch_slot, k1, max_retx);
 
   // Fill DL PDCCH DCI.
   build_dci_f1_0_tc_rnti(pdcch.dci,
@@ -255,35 +228,18 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
                          pdsch_time_res,
                          k1,
                          pucch.pucch_res_indicator,
+                         mcs_idx,
                          h_dl);
 
-  // Fill PDSCH.
-  msg.pdsch_cfg.rnti        = u.crnti;
-  msg.pdsch_cfg.bwp_cfg     = pdcch.ctx.bwp_cfg;
-  msg.pdsch_cfg.coreset_cfg = pdcch.ctx.coreset_cfg;
-  msg.pdsch_cfg.prbs        = ue_grant_prbs;
-  msg.pdsch_cfg.symbols     = pdsch_td_cfg.symbols;
-  msg.pdsch_cfg.dmrs        = dmrs;
-  // See TS 38.211, 7.3.1.1. - Scrambling.
-  msg.pdsch_cfg.n_id           = cell_cfg.pci;
-  msg.pdsch_cfg.is_interleaved = pdcch.dci.tc_rnti_f1_0.vrb_to_prb_mapping > 0;
-  // See TS38.213, 10.1. - Type1-PDCCH CSS set for CRC scrambled by a TC-RNTI on the PCell.
-  msg.pdsch_cfg.ss_set_type = search_space_set_type::type1;
-  msg.pdsch_cfg.dci_fmt     = dci_dl_format::f1_0;
-
-  // Add codeword.
-  msg.pdsch_cfg.codewords.emplace_back();
-  pdsch_codeword& cw  = msg.pdsch_cfg.codewords.back();
-  cw.rv_index         = pdcch.dci.tc_rnti_f1_0.redundancy_version;
-  cw.mcs_index        = h_dl.tb(0).mcs;
-  cw.mcs_table        = mcs_table;
-  cw.qam_mod          = mcs_config.modulation;
-  cw.target_code_rate = mcs_config.target_code_rate;
-  cw.tb_size_bytes    = tb_size_bytes;
+  // Fill PDSCH PDU.
+  build_pdsch_f1_0_tc_rnti(msg.pdsch_cfg, u.crnti, cell_cfg, pdcch.dci.tc_rnti_f1_0);
 
   // Set MAC logical channels to schedule in this PDU.
   msg.tb_list.emplace_back();
-  u.build_dl_transport_block_info(msg.tb_list.back(), cw.tb_size_bytes);
+  u.build_dl_transport_block_info(msg.tb_list.back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
+
+  // Save in HARQ the parameters set for this PDCCH and PDSCH PDUs.
+  save_harq_alloc_params(*h_params, to_bwp_id(0), pdcch.dci.type, pdsch_time_res, msg.pdsch_cfg);
 }
 
 const pdsch_time_domain_resource_allocation& ue_srb0_scheduler::get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const

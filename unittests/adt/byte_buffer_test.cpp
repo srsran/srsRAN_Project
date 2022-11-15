@@ -328,7 +328,7 @@ TEST(byte_buffer, formatter)
 
   fmt::print("PDU: {}\n", pdu);
   std::string result = fmt::format("{}", pdu);
-  TESTASSERT(result == "01 02 03 04 0f 10 ff");
+  ASSERT_EQ(result, "01 02 03 04 0f 10 ff");
 }
 
 TEST(byte_buffer, trim)

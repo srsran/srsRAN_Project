@@ -13,18 +13,6 @@
 
 using namespace srsgnb;
 
-void set_dl_newtx(dl_harq_process& h_dl, slot_point sl_tx, unsigned k1, unsigned max_harq_retx)
-{
-  h_dl.new_tx(dci_dl_rnti_config_type::c_rnti_f1_0,
-              to_bwp_id(0),
-              sl_tx,
-              k1,
-              prb_interval{5, 10},
-              sch_mcs_index{5},
-              100,
-              max_harq_retx);
-}
-
 TEST(dl_harq_process, harq_starts_empty)
 {
   dl_harq_process h_dl(to_harq_id(0));
@@ -53,24 +41,34 @@ TEST(dl_harq_process, newtx_set_harq_to_not_empty)
   unsigned        k1 = 4, max_harq_retxs = 5, tbs_bytes = 1000;
   sch_mcs_index   mcs = 10;
 
-  h_dl.new_tx(dci_dl_rnti_config_type::c_rnti_f1_0, to_bwp_id(0), sl_tx, k1, prbs, mcs, tbs_bytes, max_harq_retxs);
+  dl_harq_process::alloc_params* h_params = h_dl.new_tx(sl_tx, k1, max_harq_retxs);
   ASSERT_FALSE(h_dl.empty());
   ASSERT_FALSE(h_dl.empty(0));
   ASSERT_TRUE(h_dl.empty(1));
   ASSERT_EQ(h_dl.slot_tx(), sl_tx);
   ASSERT_EQ(h_dl.slot_ack(), sl_tx + k1);
-  ASSERT_EQ(h_dl.freq_ra().prbs(), prbs);
-  ASSERT_EQ(h_dl.tb(0).max_nof_harq_retxs, max_harq_retxs);
-  ASSERT_EQ(h_dl.tb(0).mcs, mcs);
-  ASSERT_EQ(h_dl.tb(0).tbs_bytes, tbs_bytes);
   ASSERT_EQ(h_dl.tb(0).nof_retxs, 0);
+  ASSERT_EQ(h_dl.tb(0).max_nof_harq_retxs, max_harq_retxs);
+
+  h_params->dci_cfg_type    = srsgnb::dci_dl_rnti_config_type::c_rnti_f1_0;
+  h_params->bwp_id          = to_bwp_id(0);
+  h_params->prbs            = prbs;
+  h_params->time_resource   = 0;
+  h_params->tb[0].mcs       = mcs;
+  h_params->tb[0].mcs_table = srsgnb::pdsch_mcs_table::qam64;
+  h_params->tb[0].tbs_bytes = tbs_bytes;
+  ASSERT_EQ(h_dl.last_alloc_params().bwp_id, to_bwp_id(0));
+  ASSERT_EQ(h_dl.last_alloc_params().dci_cfg_type, dci_dl_rnti_config_type::c_rnti_f1_0);
+  ASSERT_EQ(h_dl.last_alloc_params().prbs.prbs(), prbs);
+  ASSERT_EQ(h_dl.last_alloc_params().tb[0].mcs, mcs);
+  ASSERT_EQ(h_dl.last_alloc_params().tb[0].tbs_bytes, tbs_bytes);
 }
 
 TEST(dl_harq_process, retx_of_empty_harq_asserts)
 {
   dl_harq_process h_dl(to_harq_id(0));
   slot_point      sl_tx{0, 0};
-  ASSERT_DEATH(h_dl.new_retx(to_bwp_id(0), sl_tx, 4, prb_interval{5, 10}, 5), ".*");
+  ASSERT_DEATH(h_dl.new_retx(sl_tx, 4), ".*");
 }
 
 TEST(dl_harq_process, ack_of_empty_harq_is_noop)
@@ -86,11 +84,11 @@ TEST(dl_harq_process, when_max_retx_exceeded_and_nack_is_received_harq_becomes_e
   dl_harq_process h_dl(to_harq_id(0), max_ack_wait_slots);
   slot_point      sl_tx{0, 0};
 
-  set_dl_newtx(h_dl, sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
   h_dl.slot_indication(++sl_tx);
   ASSERT_FALSE(h_dl.has_pending_retx(0));
   ASSERT_EQ(h_dl.ack_info(0, false), 0);
-  h_dl.new_retx(to_bwp_id(0), sl_tx, k1, prb_interval{4, 6}, 5);
+  h_dl.new_retx(sl_tx, k1);
   h_dl.slot_indication(++sl_tx);
   ASSERT_EQ(h_dl.ack_info(0, false), 0);
   ASSERT_TRUE(h_dl.empty());
@@ -103,10 +101,10 @@ TEST(dl_harq_process, when_harq_has_no_pending_retx_calling_newtx_or_retx_assert
   dl_harq_process h_dl(to_harq_id(0), max_ack_wait_slots);
   slot_point      sl_tx{0, 0};
 
-  set_dl_newtx(h_dl, sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
   ASSERT_TRUE(not h_dl.empty(0) and not h_dl.has_pending_retx(0));
-  ASSERT_DEATH(set_dl_newtx(h_dl, sl_tx, k1, max_harq_retxs), ".*");
-  ASSERT_DEATH(h_dl.new_retx(to_bwp_id(0), sl_tx, k1, h_dl.freq_ra(), h_dl.tb(0).mcs), ".*");
+  ASSERT_DEATH(h_dl.new_tx(sl_tx, k1, max_harq_retxs), ".*");
+  ASSERT_DEATH(h_dl.new_retx(sl_tx, k1), ".*");
 }
 
 /// Tester for different combinations of max HARQ retxs, ack wait timeouts, and k1s.
@@ -131,7 +129,7 @@ protected:
 
 TEST_P(dl_harq_process_tester, when_ack_is_received_harq_is_set_as_empty)
 {
-  set_dl_newtx(h_dl, sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
   for (unsigned i = 0; i != max_ack_wait_slots + k1 - 1; ++i) {
     ASSERT_FALSE(h_dl.empty());
     ASSERT_FALSE(h_dl.has_pending_retx());
@@ -144,7 +142,7 @@ TEST_P(dl_harq_process_tester, when_ack_is_received_harq_is_set_as_empty)
 
 TEST_P(dl_harq_process_tester, when_ack_rx_wait_time_elapsed_harq_is_available_for_retx)
 {
-  set_dl_newtx(h_dl, sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
   bool ndi = h_dl.tb(0).ndi;
   for (unsigned i = 0; i != this->max_ack_wait_slots + this->k1; ++i) {
     ASSERT_FALSE(h_dl.empty()) << "It is too early for HARQ to be reset";
@@ -157,7 +155,7 @@ TEST_P(dl_harq_process_tester, when_ack_rx_wait_time_elapsed_harq_is_available_f
     ASSERT_FALSE(h_dl.empty()) << "It is too early for HARQ to be reset";
     ASSERT_TRUE(h_dl.has_pending_retx()) << "It is too early for HARQ to be available for retx";
 
-    h_dl.new_retx(to_bwp_id(0), sl_tx, this->k1, h_dl.freq_ra(), h_dl.tb(0).mcs);
+    h_dl.new_retx(sl_tx, this->k1);
     ASSERT_EQ(h_dl.tb(0).ndi, ndi) << "NDI should not change during retxs";
     for (unsigned j = 0; j != max_ack_wait_slots + this->k1; ++j) {
       ASSERT_FALSE(h_dl.empty()) << "It is too early for HARQ to be reset";
@@ -172,7 +170,7 @@ TEST_P(dl_harq_process_tester, when_ack_rx_wait_time_elapsed_harq_is_available_f
 
 TEST_P(dl_harq_process_tester, harq_newtxs_flip_ndi)
 {
-  set_dl_newtx(h_dl, sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
   for (unsigned i = 0; i != this->max_ack_wait_slots + k1 - 1; ++i) {
     ASSERT_FALSE(h_dl.empty());
     ASSERT_FALSE(h_dl.has_pending_retx());
@@ -180,8 +178,8 @@ TEST_P(dl_harq_process_tester, harq_newtxs_flip_ndi)
   }
 
   bool prev_ndi = h_dl.tb(0).ndi;
-  ASSERT_TRUE(h_dl.ack_info(0, true) > 0);
-  set_dl_newtx(h_dl, sl_tx, k1, max_harq_retxs);
+  ASSERT_TRUE(h_dl.ack_info(0, true) >= 0);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
   ASSERT_NE(prev_ndi, h_dl.tb(0).ndi);
 }
 
