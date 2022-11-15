@@ -39,6 +39,8 @@ public:
   const du_ue_index_t   ue_index;
   const du_cell_index_t cell_index;
 
+  harq_entity harqs;
+
   rnti_t rnti() const { return crnti_; }
 
   bwp_id_t active_bwp_id() const { return to_bwp_id(0); }
@@ -46,7 +48,11 @@ public:
 
   const ue_cell_configuration& cfg() const { return ue_cfg; }
 
-  harq_entity harqs;
+  /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
+  unsigned required_dl_prbs(unsigned time_resource, unsigned pending_bytes) const;
+
+  /// \brief Estimate the number of required UL PRBs to allocate the given number of bytes.
+  unsigned required_ul_prbs(unsigned time_resource, unsigned pending_bytes) const;
 
 private:
   rnti_t                crnti_;

@@ -61,7 +61,9 @@ static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_re
         const cell_slot_resource_grid&               grid    = pdsch_alloc.dl_resource_grid(ue_cc.cell_index, pdsch.k0);
         const bwp_configuration&                     bwp_cfg = bwp_dl.generic_params;
         prb_bitmap                                   used_crbs = grid.used_crbs(bwp_cfg, pdsch.symbols);
-        crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, bwp_cfg.crbs.length(), 0);
+        unsigned     nof_req_prbs                              = is_retx ? h->last_alloc_params().prbs.prbs().length()
+                                                                         : ue_cc.required_dl_prbs(time_res, u.pending_dl_newtx_bytes());
+        crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
         if (not ue_grant_crbs.empty()) {
           pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
                                                        ue_cc.cell_index,
@@ -82,8 +84,6 @@ static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_re
 /// Allocate UE PUSCH grant.
 static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_retx)
 {
-  ofdm_symbol_range pusch_symbols{2, 14};
-
   unsigned pending_newtx_bytes = 0;
   if (not is_retx) {
     pending_newtx_bytes = u.pending_ul_newtx_bytes();
@@ -104,11 +104,16 @@ static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_re
     if (h == nullptr) {
       continue;
     }
-    unsigned                       k2        = 4; // TODO: Take from config.
-    const cell_slot_resource_grid& grid      = pusch_alloc.ul_resource_grid(ue_cc.cell_index, k2);
-    const bwp_uplink_common&       bwp_ul    = ue_cc.cfg().ul_bwp_common(ue_cc.active_bwp_id());
-    prb_bitmap                     used_crbs = grid.used_crbs(bwp_ul.generic_params, pusch_symbols);
-    crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, bwp_ul.generic_params.crbs.length(), 0);
+
+    const bwp_uplink_common& bwp_ul   = ue_cc.cfg().ul_bwp_common(ue_cc.active_bwp_id());
+    unsigned                 time_res = 0; // TODO: Find best candidate.
+    unsigned                 k2 = bwp_ul.pusch_cfg_common->pusch_td_alloc_list[time_res].k2; // TODO: Take from config.
+    ofdm_symbol_range        pusch_symbols       = bwp_ul.pusch_cfg_common->pusch_td_alloc_list[time_res].symbols;
+    const cell_slot_resource_grid& grid          = pusch_alloc.ul_resource_grid(ue_cc.cell_index, k2);
+    prb_bitmap                     used_crbs     = grid.used_crbs(bwp_ul.generic_params, pusch_symbols);
+    unsigned                       nof_req_prbs  = is_retx ? h->last_tx_params().prbs.prbs().length()
+                                                           : ue_cc.required_dl_prbs(time_res, u.pending_dl_newtx_bytes());
+    crb_interval                   ue_grant_crbs = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
     if (not ue_grant_crbs.empty()) {
       pusch_alloc.allocate_ul_grant(ue_pusch_grant{
           &u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, k2, to_search_space_id(2), aggregation_level::n4});
