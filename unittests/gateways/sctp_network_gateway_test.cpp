@@ -145,7 +145,7 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_address_then_bind_fail
 {
   network_gateway_config config;
   config.bind_address = "1.1.1.1";
-  config.connect_port = 8888;
+  config.bind_port    = 8888;
   config.reuse_addr   = true;
   set_config(config, config);
   ASSERT_FALSE(bind_and_listen());
@@ -155,7 +155,7 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_v6_address_then_bind_f
 {
   network_gateway_config config;
   config.bind_address = "1:1::";
-  config.connect_port = 8888;
+  config.bind_port    = 8888;
   config.reuse_addr   = true;
   set_config(config, config);
   ASSERT_FALSE(bind_and_listen());
@@ -165,7 +165,7 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds
 {
   network_gateway_config config;
   config.bind_address = "127.0.0.1";
-  config.connect_port = 8888;
+  config.bind_port    = 8888;
   config.reuse_addr   = true;
   set_config(config, config);
   ASSERT_TRUE(bind_and_listen());
@@ -175,7 +175,7 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succe
 {
   network_gateway_config config;
   config.bind_address = "::1";
-  config.connect_port = 8888;
+  config.bind_port    = 8888;
   config.reuse_addr   = true;
   set_config(config, config);
   ASSERT_TRUE(bind_and_listen());
