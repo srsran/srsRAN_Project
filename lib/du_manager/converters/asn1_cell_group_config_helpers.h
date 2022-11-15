@@ -28,6 +28,12 @@ asn1::rrc_nr::pucch_res_s make_asn1_rrc_pucch_resource(const pucch_resource& cfg
 
 asn1::rrc_nr::tci_state_s make_asn1_rrc_tci_state(const tci_state& cfg);
 
+asn1::rrc_nr::pusch_pathloss_ref_rs_s
+make_asn1_rrc_pusch_pathloss_ref_rs(const pusch_config::pusch_power_control::pusch_pathloss_ref_rs& cfg);
+
+asn1::rrc_nr::sri_pusch_pwr_ctrl_s
+make_asn1_rrc_sri_pusch_pwr_ctrl(const pusch_config::pusch_power_control::sri_pusch_pwr_ctrl& cfg);
+
 /// \brief Fills ASN.1 CellGroupConfig struct.
 /// \param[out] out The ASN.1 CellGroupConfig struct to fill.
 /// \param[in] src Previous cell group configuration of UE.

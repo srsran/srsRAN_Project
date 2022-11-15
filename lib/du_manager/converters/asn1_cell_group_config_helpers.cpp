@@ -953,6 +953,148 @@ void make_asn1_rrc_dmrs_ul_for_pusch(asn1::rrc_nr::dmrs_ul_cfg_s& out,
   }
 }
 
+asn1::rrc_nr::pusch_pathloss_ref_rs_s
+srsgnb::srs_du::make_asn1_rrc_pusch_pathloss_ref_rs(const pusch_config::pusch_power_control::pusch_pathloss_ref_rs& cfg)
+{
+  pusch_pathloss_ref_rs_s ploss_ref_rs;
+  ploss_ref_rs.pusch_pathloss_ref_rs_id = cfg.id;
+  if (variant_holds_alternative<nzp_csi_rs_res_id_t>(cfg.rs)) {
+    auto& csi_rs_idx = ploss_ref_rs.ref_sig.set_csi_rs_idx();
+    csi_rs_idx       = variant_get<nzp_csi_rs_res_id_t>(cfg.rs);
+  } else if (variant_holds_alternative<ssb_id_t>(cfg.rs)) {
+    auto& ssb_idx = ploss_ref_rs.ref_sig.set_ssb_idx();
+    ssb_idx       = variant_get<ssb_id_t>(cfg.rs);
+  }
+  return ploss_ref_rs;
+}
+
+asn1::rrc_nr::sri_pusch_pwr_ctrl_s
+srsgnb::srs_du::make_asn1_rrc_sri_pusch_pwr_ctrl(const pusch_config::pusch_power_control::sri_pusch_pwr_ctrl& cfg)
+{
+  sri_pusch_pwr_ctrl_s sri_pwr_ctl;
+  sri_pwr_ctl.sri_pusch_pwr_ctrl_id        = cfg.id;
+  sri_pwr_ctl.sri_p0_pusch_alpha_set_id    = cfg.sri_p0_pusch_alphaset_id;
+  sri_pwr_ctl.sri_pusch_pathloss_ref_rs_id = cfg.sri_pusch_pathloss_ref_rs_id;
+  switch (cfg.closed_loop_idx) {
+    case pusch_config::pusch_power_control::sri_pusch_pwr_ctrl::sri_pusch_closed_loop_index::i0:
+      sri_pwr_ctl.sri_pusch_closed_loop_idx = sri_pusch_pwr_ctrl_s::sri_pusch_closed_loop_idx_opts::i0;
+      break;
+    case pusch_config::pusch_power_control::sri_pusch_pwr_ctrl::sri_pusch_closed_loop_index::i1:
+      sri_pwr_ctl.sri_pusch_closed_loop_idx = sri_pusch_pwr_ctrl_s::sri_pusch_closed_loop_idx_opts::i1;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid SRI Closed loop idx={}", cfg.closed_loop_idx);
+  }
+  return sri_pwr_ctl;
+}
+
+void make_asn1_rrc_pusch_pwr_ctrl(asn1::rrc_nr::pusch_pwr_ctrl_s&          out,
+                                  const pusch_config::pusch_power_control& src,
+                                  const pusch_config::pusch_power_control& dest)
+{
+  if (dest.tpc_accum.has_value() &&
+      dest.tpc_accum.value() == pusch_config::pusch_power_control::tpc_accumulation::disabled) {
+    out.tpc_accumulation_present = true;
+  }
+
+  if (dest.msg3_alpha.has_value()) {
+    out.msg3_alpha_present = true;
+    switch (dest.msg3_alpha.value()) {
+      case alpha::alpha0:
+        out.msg3_alpha = alpha_opts::alpha0;
+        break;
+      case alpha::alpha04:
+        out.msg3_alpha = alpha_opts::alpha04;
+        break;
+      case alpha::alpha05:
+        out.msg3_alpha = alpha_opts::alpha05;
+        break;
+      case alpha::alpha06:
+        out.msg3_alpha = alpha_opts::alpha06;
+        break;
+      case alpha::alpha07:
+        out.msg3_alpha = alpha_opts::alpha07;
+        break;
+      case alpha::alpha08:
+        out.msg3_alpha = alpha_opts::alpha08;
+        break;
+      case alpha::alpha09:
+        out.msg3_alpha = alpha_opts::alpha09;
+        break;
+      case alpha::alpha1:
+        out.msg3_alpha = alpha_opts::alpha1;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid Msg3 alpha={}", dest.msg3_alpha.value());
+    }
+  }
+
+  if (dest.p0_nominal_without_grant.has_value()) {
+    out.p0_nominal_without_grant_present = true;
+    out.p0_nominal_without_grant         = dest.p0_nominal_without_grant.value();
+  }
+
+  for (unsigned idx = 0; idx < dest.p0_alphasets.size(); idx++) {
+    auto& p0_alphaset                 = out.p0_alpha_sets[idx];
+    p0_alphaset.p0_pusch_alpha_set_id = dest.p0_alphasets[idx].id;
+    if (dest.p0_alphasets[idx].p0.has_value()) {
+      p0_alphaset.p0_present = true;
+      p0_alphaset.p0         = dest.p0_alphasets[idx].p0.value();
+    }
+    if (dest.p0_alphasets[idx].p0_pusch_alpha.has_value()) {
+      p0_alphaset.alpha_present = true;
+      switch (dest.p0_alphasets[idx].p0_pusch_alpha.value()) {
+        case alpha::alpha0:
+          p0_alphaset.alpha = alpha_opts::alpha0;
+          break;
+        case alpha::alpha04:
+          p0_alphaset.alpha = alpha_opts::alpha04;
+          break;
+        case alpha::alpha05:
+          p0_alphaset.alpha = alpha_opts::alpha05;
+          break;
+        case alpha::alpha06:
+          p0_alphaset.alpha = alpha_opts::alpha06;
+          break;
+        case alpha::alpha07:
+          p0_alphaset.alpha = alpha_opts::alpha07;
+          break;
+        case alpha::alpha08:
+          p0_alphaset.alpha = alpha_opts::alpha08;
+          break;
+        case alpha::alpha09:
+          p0_alphaset.alpha = alpha_opts::alpha09;
+          break;
+        case alpha::alpha1:
+          p0_alphaset.alpha = alpha_opts::alpha1;
+          break;
+        default:
+          srsgnb_assertion_failure("Invalid P0 PUSCH alpha={}", dest.p0_alphasets[idx].p0_pusch_alpha.value());
+      }
+    }
+  }
+
+  calculate_addmodremlist_diff(
+      out.pathloss_ref_rs_to_add_mod_list,
+      out.pathloss_ref_rs_to_release_list,
+      src.pathloss_ref_rs,
+      dest.pathloss_ref_rs,
+      [](const pusch_config::pusch_power_control::pusch_pathloss_ref_rs& res) {
+        return make_asn1_rrc_pusch_pathloss_ref_rs(res);
+      },
+      [](const pusch_config::pusch_power_control::pusch_pathloss_ref_rs& res) { return res.id; });
+
+  calculate_addmodremlist_diff(
+      out.sri_pusch_map_to_add_mod_list,
+      out.sri_pusch_map_to_release_list,
+      src.sri_pusch_mapping,
+      dest.sri_pusch_mapping,
+      [](const pusch_config::pusch_power_control::sri_pusch_pwr_ctrl& res) {
+        return make_asn1_rrc_sri_pusch_pwr_ctrl(res);
+      },
+      [](const pusch_config::pusch_power_control::sri_pusch_pwr_ctrl& res) { return res.id; });
+}
+
 void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_config& src, const pusch_config& dest)
 {
   if (dest.data_scrambling_id_pusch.has_value()) {
@@ -978,7 +1120,8 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
        dest.pusch_mapping_type_a_dmrs != src.pusch_mapping_type_a_dmrs)) {
     out.dmrs_ul_for_pusch_map_type_a_present = true;
     make_asn1_rrc_dmrs_ul_for_pusch(out.dmrs_ul_for_pusch_map_type_a.set_setup(),
-                                    src.pusch_mapping_type_a_dmrs.value(),
+                                    src.pusch_mapping_type_a_dmrs.has_value() ? src.pusch_mapping_type_a_dmrs.value()
+                                                                              : dmrs_uplink_config{},
                                     dest.pusch_mapping_type_a_dmrs.value());
   } else if (src.pusch_mapping_type_a_dmrs.has_value() && not dest.pusch_mapping_type_a_dmrs.has_value()) {
     out.dmrs_ul_for_pusch_map_type_a_present = true;
@@ -990,11 +1133,20 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
        dest.pusch_mapping_type_b_dmrs != src.pusch_mapping_type_b_dmrs)) {
     out.dmrs_ul_for_pusch_map_type_b_present = true;
     make_asn1_rrc_dmrs_ul_for_pusch(out.dmrs_ul_for_pusch_map_type_b.set_setup(),
-                                    src.pusch_mapping_type_b_dmrs.value(),
+                                    src.pusch_mapping_type_b_dmrs.has_value() ? src.pusch_mapping_type_b_dmrs.value()
+                                                                              : dmrs_uplink_config{},
                                     dest.pusch_mapping_type_b_dmrs.value());
   } else if (src.pusch_mapping_type_b_dmrs.has_value() && not dest.pusch_mapping_type_b_dmrs.has_value()) {
     out.dmrs_ul_for_pusch_map_type_b_present = true;
     out.dmrs_ul_for_pusch_map_type_b.set_release();
+  }
+
+  if (dest.pusch_pwr_ctrl.has_value()) {
+    out.pusch_pwr_ctrl_present = true;
+    make_asn1_rrc_pusch_pwr_ctrl(out.pusch_pwr_ctrl,
+                                 src.pusch_pwr_ctrl.has_value() ? src.pusch_pwr_ctrl.value()
+                                                                : pusch_config::pusch_power_control{},
+                                 dest.pusch_pwr_ctrl.value());
   }
 }
 

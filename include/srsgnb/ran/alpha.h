@@ -16,6 +16,6 @@ namespace srsgnb {
 /// alpha0 corresponds to the value 0, Value alpha04 corresponds to the value 0.4, and so on. Value alpha1 corresponds
 /// to value 1.
 /// \remark See TS 38.331, Alpha. Also, see clause 7.1 of TS 38.213.
-enum class alpha { alpha0, alpha04, alpha05, alpha06, alpha07, alpha08, alpha09, alpha1 };
+enum class alpha : unsigned { alpha0, alpha04, alpha05, alpha06, alpha07, alpha08, alpha09, alpha1 };
 
 } // namespace srsgnb

@@ -35,7 +35,7 @@ struct pusch_config {
       p0_pusch_alphaset_id id;
       /// P0 value for PUSCH with grant (except msg3) in steps of 1dB. When the field is absent the UE applies the value
       /// 0. See TS 38.213, clause 7.1. Values {-16,..,15}.
-      optional<int> p0;
+      optional<int8_t> p0;
       /// alpha value for PUSCH with grant (except msg3). When the field is absent the UE applies the value 1. See
       /// TS 38.213, clause 7.1.
       optional<alpha> p0_pusch_alpha;
@@ -100,7 +100,7 @@ struct pusch_config {
     optional<alpha> msg3_alpha;
     /// P0 value for UL grant-free/SPS based PUSCH. Value in dBm. Only even values (step size 2) allowed. See TS 38.213,
     /// clause 7.1. Values {-202,..,24}.
-    optional<int> p0_nominal_without_grant;
+    optional<int16_t> p0_nominal_without_grant;
     /// Configuration {p0-pusch, alpha} sets for PUSCH (except msg3), i.e. { {p0,alpha,index1}, {p0,alpha,index2},...}.
     /// When no set is configured, the UE uses the P0-nominal for msg3 PUSCH, P0-UE is set to 0 and alpha is set
     /// according to msg3-Alpha configured for msg3 PUSCH.
