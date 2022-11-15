@@ -44,7 +44,7 @@ void e1_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response
     e1_msg.pdu.successful_outcome().value.gnb_cu_up_e1_setup_resp() = msg.response;
 
     // set values handled by E1
-    e1_msg.pdu.successful_outcome().value.gnb_cu_up_e1_setup_resp()->transaction_id.value = 99;
+    e1_msg.pdu.successful_outcome().value.gnb_cu_up_e1_setup_resp()->transaction_id.value = current_transaction_id;
 
     // send response
     pdu_notifier.on_new_message(e1_msg);
@@ -56,7 +56,7 @@ void e1_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response
     auto& setup_fail = e1_msg.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail();
 
     // set values handled by E1
-    setup_fail->transaction_id.value = 99;
+    setup_fail->transaction_id.value = current_transaction_id;
     setup_fail->cause.value.set_radio_network();
     setup_fail->cause.value.radio_network() = asn1::e1ap::cause_radio_network_opts::options::no_radio_res_available;
 
@@ -131,6 +131,7 @@ void e1_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
   switch (msg.value.type().value) {
     case asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts::options::gnb_cu_up_e1_setup_request: {
       cu_up_e1_setup_request_message req_msg = {};
+      current_transaction_id                 = msg.value.gnb_cu_up_e1_setup_request()->transaction_id.value;
       req_msg.request                        = msg.value.gnb_cu_up_e1_setup_request();
       du_processor_notifier.on_e1_setup_request_received(req_msg);
     } break;

@@ -94,6 +94,8 @@ private:
   e1_du_processor_notifier& du_processor_notifier;
 
   std::unique_ptr<e1_event_manager> events;
+
+  unsigned current_transaction_id = 0; // store current E1AP transaction id
 };
 
 } // namespace srs_cu_cp
