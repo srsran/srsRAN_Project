@@ -1148,6 +1148,56 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
                                                                 : pusch_config::pusch_power_control{},
                                  dest.pusch_pwr_ctrl.value());
   }
+
+  switch (dest.res_alloc) {
+    case pusch_config::resource_allocation::resource_allocation_type_0:
+      out.res_alloc = pusch_cfg_s::res_alloc_opts::res_alloc_type0;
+      break;
+    case pusch_config::resource_allocation::resource_allocation_type_1:
+      out.res_alloc = pusch_cfg_s::res_alloc_opts::res_alloc_type1;
+      break;
+    case pusch_config::resource_allocation::dynamic_switch:
+      out.res_alloc = pusch_cfg_s::res_alloc_opts::dynamic_switch;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid PUSCH Resource Allocation={}", dest.res_alloc);
+  }
+
+  if (dest.trans_precoder.has_value()) {
+    out.transform_precoder_present = true;
+    switch (dest.trans_precoder.value()) {
+      case pusch_config::transform_precoder::enabled:
+        out.transform_precoder = pusch_cfg_s::transform_precoder_opts::enabled;
+        break;
+      case pusch_config::transform_precoder::disabled:
+        out.transform_precoder = pusch_cfg_s::transform_precoder_opts::disabled;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid PUSCH Transform Precoder={}", dest.trans_precoder.value());
+    }
+  }
+
+  if (dest.cb_subset.has_value()) {
+    out.codebook_subset_present = true;
+    switch (dest.cb_subset.value()) {
+      case pusch_config::codebook_subset::fully_and_partial_and_non_coherent:
+        out.codebook_subset = pusch_cfg_s::codebook_subset_opts::fully_and_partial_and_non_coherent;
+        break;
+      case pusch_config::codebook_subset::partial_and_non_coherent:
+        out.codebook_subset = pusch_cfg_s::codebook_subset_opts::partial_and_non_coherent;
+        break;
+      case pusch_config::codebook_subset::non_coherent:
+        out.codebook_subset = pusch_cfg_s::codebook_subset_opts::non_coherent;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid Codebook subset={}", dest.cb_subset.value());
+    }
+  }
+
+  if (dest.max_rank.has_value()) {
+    out.max_rank_present = true;
+    out.max_rank         = dest.max_rank.value();
+  }
 }
 
 void calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,
