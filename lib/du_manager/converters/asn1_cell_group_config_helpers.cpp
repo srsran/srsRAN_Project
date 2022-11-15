@@ -1200,6 +1200,143 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
   }
 }
 
+asn1::rrc_nr::srs_res_set_s srsgnb::srs_du::make_asn1_rrc_srs_res_set(const srs_config::srs_resource_set& cfg)
+{
+  srs_res_set_s srs_res_set;
+  srs_res_set.srs_res_set_id = cfg.id;
+  for (const auto& res_id : cfg.srs_res_id_list) {
+    srs_res_set.srs_res_id_list.push_back(res_id);
+  }
+
+  if (variant_holds_alternative<srs_config::srs_resource_set::aperiodic_resource_type>(cfg.res_type)) {
+    auto&       aper_res     = srs_res_set.res_type.set_aperiodic();
+    const auto& cfg_aper_res = variant_get<srs_config::srs_resource_set::aperiodic_resource_type>(cfg.res_type);
+    aper_res.aperiodic_srs_res_trigger = cfg_aper_res.aperiodic_srs_res_trigger;
+    if (cfg_aper_res.csi_rs.has_value()) {
+      aper_res.csi_rs_present = true;
+      aper_res.csi_rs         = cfg_aper_res.csi_rs.value();
+    }
+    if (cfg_aper_res.slot_offset.has_value()) {
+      aper_res.slot_offset_present = true;
+      aper_res.slot_offset         = cfg_aper_res.slot_offset.value();
+    }
+    if (not cfg_aper_res.aperiodic_srs_res_trigger_list.empty()) {
+      aper_res.aperiodic_srs_res_trigger_list.set_present();
+      auto* aper_res_trig_list = aper_res.aperiodic_srs_res_trigger_list.get();
+      for (const auto& ap_res_trig : cfg_aper_res.aperiodic_srs_res_trigger_list) {
+        aper_res_trig_list->push_back(ap_res_trig);
+      }
+    }
+  } else if (variant_holds_alternative<srs_config::srs_resource_set::semi_persistent_resource_type>(cfg.res_type)) {
+    auto&       semi_p_res     = srs_res_set.res_type.set_semi_persistent();
+    const auto& cfg_semi_p_res = variant_get<srs_config::srs_resource_set::semi_persistent_resource_type>(cfg.res_type);
+    if (cfg_semi_p_res.associated_csi_rs.has_value()) {
+      semi_p_res.associated_csi_rs_present = true;
+      semi_p_res.associated_csi_rs         = cfg_semi_p_res.associated_csi_rs.value();
+    }
+  } else if (variant_holds_alternative<srs_config::srs_resource_set::periodic_resource_type>(cfg.res_type)) {
+    auto&       per_res     = srs_res_set.res_type.set_periodic();
+    const auto& cfg_per_res = variant_get<srs_config::srs_resource_set::periodic_resource_type>(cfg.res_type);
+    if (cfg_per_res.associated_csi_rs.has_value()) {
+      per_res.associated_csi_rs_present = true;
+      per_res.associated_csi_rs         = cfg_per_res.associated_csi_rs.value();
+    }
+  }
+
+  switch (cfg.srs_res_set_usage) {
+    case srs_config::srs_resource_set::usage::beam_management:
+      srs_res_set.usage = srs_res_set_s::usage_opts::beam_management;
+      break;
+    case srs_config::srs_resource_set::usage::codebook:
+      srs_res_set.usage = srs_res_set_s::usage_opts::codebook;
+      break;
+    case srs_config::srs_resource_set::usage::non_codebook:
+      srs_res_set.usage = srs_res_set_s::usage_opts::non_codebook;
+      break;
+    case srs_config::srs_resource_set::usage::antenna_switching:
+      srs_res_set.usage = srs_res_set_s::usage_opts::ant_switching;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid SRS resource set usage={}", cfg.srs_res_set_usage);
+  }
+
+  if (cfg.srs_pwr_ctrl_alpha.has_value()) {
+    srs_res_set.alpha_present = true;
+    switch (cfg.srs_pwr_ctrl_alpha.value()) {
+      case alpha::alpha0:
+        srs_res_set.alpha = alpha_opts::alpha0;
+        break;
+      case alpha::alpha04:
+        srs_res_set.alpha = alpha_opts::alpha04;
+        break;
+      case alpha::alpha05:
+        srs_res_set.alpha = alpha_opts::alpha05;
+        break;
+      case alpha::alpha06:
+        srs_res_set.alpha = alpha_opts::alpha06;
+        break;
+      case alpha::alpha07:
+        srs_res_set.alpha = alpha_opts::alpha07;
+        break;
+      case alpha::alpha08:
+        srs_res_set.alpha = alpha_opts::alpha08;
+        break;
+      case alpha::alpha09:
+        srs_res_set.alpha = alpha_opts::alpha09;
+        break;
+      case alpha::alpha1:
+        srs_res_set.alpha = alpha_opts::alpha1;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid SRS Power Control alpha={}", cfg.srs_pwr_ctrl_alpha.value());
+    }
+  }
+
+  if (cfg.p0.has_value()) {
+    srs_res_set.p0_present = true;
+    srs_res_set.p0         = cfg.p0.value();
+  }
+
+  if (cfg.pwr_ctrl_adj_states.has_value()) {
+    srs_res_set.srs_pwr_ctrl_adjustment_states_present = true;
+    switch (cfg.pwr_ctrl_adj_states.value()) {
+      case srs_config::srs_resource_set::srs_pwr_ctrl_adjustment_states::same_as_fci2:
+        srs_res_set.srs_pwr_ctrl_adjustment_states = srs_res_set_s::srs_pwr_ctrl_adjustment_states_opts::same_as_fci2;
+        break;
+      case srs_config::srs_resource_set::srs_pwr_ctrl_adjustment_states::separate_closed_loop:
+        srs_res_set.srs_pwr_ctrl_adjustment_states =
+            srs_res_set_s::srs_pwr_ctrl_adjustment_states_opts::separate_closed_loop;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid Power Control Adj. state={}", cfg.pwr_ctrl_adj_states.value());
+    }
+  }
+
+  if (cfg.pathloss_ref_rs.has_value()) {
+    srs_res_set.pathloss_ref_rs_present = true;
+    if (variant_holds_alternative<ssb_id_t>(cfg.pathloss_ref_rs.value())) {
+      auto& ssb_idx = srs_res_set.pathloss_ref_rs.set_ssb_idx();
+      ssb_idx       = variant_get<ssb_id_t>(cfg.pathloss_ref_rs.value());
+    } else if (variant_holds_alternative<nzp_csi_rs_res_id_t>(cfg.pathloss_ref_rs.value())) {
+      auto& csi_res_idx = srs_res_set.pathloss_ref_rs.set_csi_rs_idx();
+      csi_res_idx       = variant_get<nzp_csi_rs_res_id_t>(cfg.pathloss_ref_rs.value());
+    }
+  }
+
+  return srs_res_set;
+}
+
+void calculate_srs_config_diff(asn1::rrc_nr::srs_cfg_s& out, const srs_config& src, const srs_config& dest)
+{
+  calculate_addmodremlist_diff(
+      out.srs_res_set_to_add_mod_list,
+      out.srs_res_set_to_release_list,
+      src.srs_res_set,
+      dest.srs_res_set,
+      [](const srs_config::srs_resource_set& res) { return make_asn1_rrc_srs_res_set(res); },
+      [](const srs_config::srs_resource_set& res) { return res.id; });
+}
+
 void calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,
                                      const bwp_uplink_dedicated& src,
                                      const bwp_uplink_dedicated& dest)
@@ -1224,6 +1361,16 @@ void calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,
   } else if (src.pusch_cfg.has_value() && not dest.pusch_cfg.has_value()) {
     out.pusch_cfg_present = true;
     out.pusch_cfg.set_release();
+  }
+
+  if ((dest.srs_cfg.has_value() && not src.srs_cfg.has_value()) ||
+      (dest.srs_cfg.has_value() && src.srs_cfg.has_value() && dest.srs_cfg != src.srs_cfg)) {
+    out.srs_cfg_present = true;
+    calculate_srs_config_diff(
+        out.srs_cfg.set_setup(), src.srs_cfg.has_value() ? src.srs_cfg.value() : srs_config{}, dest.srs_cfg.value());
+  } else if (src.srs_cfg.has_value() && not dest.srs_cfg.has_value()) {
+    out.srs_cfg_present = true;
+    out.srs_cfg.set_release();
   }
   // TODO: Remaining.
 }
