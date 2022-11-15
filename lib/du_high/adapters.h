@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/f1_interface/du/f1ap_du.h"
+#include "srsgnb/f1c/du/f1ap_du.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/rlc/rlc_tx.h"

@@ -11,7 +11,7 @@
 #pragma once
 
 #include "cu_cp_types.h"
-#include "srsgnb/f1_interface/cu/f1c_cu.h"
+#include "srsgnb/f1c/cu_cp/f1c_cu.h"
 #include "srsgnb/ngap/ngc.h"
 #include <string>
 

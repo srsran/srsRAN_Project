@@ -9,11 +9,11 @@
  */
 
 #include "du_processor_impl.h"
-#include "../lib/f1_interface/common/asn1_helpers.h"
+#include "../lib/f1c/common/asn1_helpers.h"
 #include "adapters/pdcp_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "f1c_asn1_helpers.h"
-#include "srsgnb/f1_interface/cu/f1c_cu_factory.h"
+#include "srsgnb/f1c/cu_cp/f1c_cu_factory.h"
 #include "srsgnb/pdcp/pdcp_factory.h"
 
 using namespace srsgnb;

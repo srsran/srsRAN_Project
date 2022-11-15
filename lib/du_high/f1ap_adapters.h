@@ -12,7 +12,7 @@
 
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/f1_interface/du/f1ap_du.h"
+#include "srsgnb/f1c/du/f1ap_du.h"
 #include "srsgnb/support/async/execute_on.h"
 
 namespace srsgnb {

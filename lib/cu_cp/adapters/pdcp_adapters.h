@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/cu_cp/du_processor.h"
-#include "srsgnb/f1_interface/cu/f1c_cu.h"
+#include "srsgnb/f1c/cu_cp/f1c_cu.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/rrc/rrc.h"
 

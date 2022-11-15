@@ -12,7 +12,7 @@
 
 #include "du_processor.h"
 #include "du_processor_config.h"
-#include "srsgnb/f1_interface/common/f1c_common.h"
+#include "srsgnb/f1c/common/f1c_common.h"
 #include "srsgnb/rrc/rrc_ue.h"
 #include <memory>
 

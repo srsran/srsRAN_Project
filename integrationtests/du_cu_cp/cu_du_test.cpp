@@ -17,7 +17,7 @@
 #include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/test_utils.h"
-#include "unittests/f1_interface/common/test_helpers.h"
+#include "unittests/f1c/common/test_helpers.h"
 #include "unittests/ngap/test_helpers.h"
 #include <gtest/gtest.h>
 

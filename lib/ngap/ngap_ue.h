@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/f1_interface/common/f1c_types.h"
+#include "srsgnb/f1c/common/f1c_types.h"
 #include "srsgnb/ngap/ngc_types.h"
 #include <unordered_map>
 

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/f1_interface/du/f1_bearer.h"
+#include "srsgnb/f1c/du/f1_bearer.h"
 #include "srsgnb/rlc/rlc_entity.h"
 
 namespace srsgnb {

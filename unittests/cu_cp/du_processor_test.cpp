@@ -13,7 +13,7 @@
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/du_processor_factory.h"
 #include "srsgnb/support/test_utils.h"
-#include "unittests/f1_interface/common/test_helpers.h"
+#include "unittests/f1c/common/test_helpers.h"
 #include "unittests/rrc/test_helpers.h"
 #include <gtest/gtest.h>
 

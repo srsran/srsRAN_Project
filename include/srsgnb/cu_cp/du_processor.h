@@ -13,7 +13,7 @@
 #include "cu_cp_types.h"
 #include "du_processor_context.h"
 #include "srsgnb/adt/optional.h"
-#include "srsgnb/f1_interface/cu/f1c_cu.h"
+#include "srsgnb/f1c/cu_cp/f1c_cu.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/rrc/rrc.h"
