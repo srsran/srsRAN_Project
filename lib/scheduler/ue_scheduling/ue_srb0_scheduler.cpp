@@ -218,8 +218,8 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
                                         const prb_interval&   ue_grant_prbs)
 {
   // Allocate DL HARQ.
-  const static unsigned          max_retx = 4; // TODO: Parameterize.
-  dl_harq_process::alloc_params* h_params = h_dl.new_tx(pdsch_slot, k1, max_retx);
+  const static unsigned max_retx = 4; // TODO: Parameterize.
+  h_dl.new_tx(pdsch_slot, k1, max_retx);
 
   // Fill DL PDCCH DCI.
   build_dci_f1_0_tc_rnti(pdcch.dci,
@@ -239,7 +239,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
   u.build_dl_transport_block_info(msg.tb_list.back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
 
   // Save in HARQ the parameters set for this PDCCH and PDSCH PDUs.
-  save_harq_alloc_params(*h_params, to_bwp_id(0), pdcch.dci.type, pdsch_time_res, msg.pdsch_cfg);
+  h_dl.save_alloc_params(pdcch.dci.type, msg.pdsch_cfg);
 }
 
 const pdsch_time_domain_resource_allocation& ue_srb0_scheduler::get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const

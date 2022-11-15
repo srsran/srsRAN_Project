@@ -32,9 +32,6 @@ namespace detail {
 template <bool IsDownlink>
 class harq_process
 {
-  /// Maximum number of Transport Blocks as per TS38.321, 5.3.2.1 and 5.4.2.1.
-  constexpr static size_t MAX_NOF_TBS = IsDownlink ? 2 : 1;
-
   /// Default timeout in slots after which the HARQ process assumes that the CRC/ACK went missing.
   constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 8U;
 
@@ -42,6 +39,9 @@ class harq_process
   using dci_rnti_config_type = std::conditional_t<IsDownlink, dci_dl_rnti_config_type, dci_ul_rnti_config_type>;
 
 public:
+  /// Maximum number of Transport Blocks as per TS38.321, 5.3.2.1 and 5.4.2.1.
+  constexpr static size_t MAX_NOF_TBS = IsDownlink ? 2 : 1;
+
   struct transport_block {
     /// State of the Transport Block.
     enum class state_t { empty, pending_retx, waiting_ack } state = state_t::empty;
@@ -138,43 +138,23 @@ protected:
 
 } // namespace detail
 
-/// Grant parameters that get stored in DL HARQ process.
-struct dl_harq_tx_params {
-  constexpr static size_t MAX_NOF_TBS = 2;
-
-  struct tb_params {
-    bool            enabled;
-    pdsch_mcs_table mcs_table;
-    sch_mcs_index   mcs;
-    unsigned        tbs_bytes;
-  };
-
-  dci_dl_rnti_config_type            dci_cfg_type;
-  bwp_id_t                           bwp_id;
-  prb_grant                          prbs;
-  unsigned                           time_resource;
-  std::array<tb_params, MAX_NOF_TBS> tb;
-};
-
-/// Grant parameters that get stored in DL HARQ process.
-struct ul_harq_tx_params {
-  dci_ul_rnti_config_type dci_cfg_type;
-  bwp_id_t                bwp_id;
-  prb_grant               prbs;
-  unsigned                time_resource;
-  pusch_mcs_table         mcs_table;
-  sch_mcs_index           mcs;
-  unsigned                tbs_bytes;
-};
-
 class dl_harq_process : public detail::harq_process<true>
 {
   using base_type = detail::harq_process<true>;
 
 public:
-  /// \brief Parameters relative to the last used PDSCH PDU, PDCCH PDU and UCI PDU that get stored in the HARQ process
-  /// for future reuse.
-  using alloc_params = dl_harq_tx_params;
+  /// \brief Parameters relative to the last used PDSCH PDU that get stored in the HARQ process for future reuse.
+  struct alloc_params {
+    struct tb_params {
+      pdsch_mcs_table mcs_table;
+      sch_mcs_index   mcs;
+      unsigned        tbs_bytes;
+    };
+
+    dci_dl_rnti_config_type                                 dci_cfg_type;
+    prb_grant                                               prbs;
+    std::array<optional<tb_params>, base_type::MAX_NOF_TBS> tb;
+  };
 
   using base_type::transport_block;
 
@@ -193,20 +173,23 @@ public:
 
   /// \brief Called on every new TB transmission, when only one TB is active. It marks this HARQ process as busy and
   /// stores respective TB information.
-  alloc_params* new_tx(slot_point pdsch_slot, unsigned k1, unsigned max_harq_nof_retxs);
+  void new_tx(slot_point pdsch_slot, unsigned k1, unsigned max_harq_nof_retxs);
 
   /// \brief Called on every TB retransmission, when only one TB is active. This function assumes that the HARQ TB is
   /// in pending new_retx state.
-  alloc_params* new_retx(slot_point pdsch_slot, unsigned k1);
+  void new_retx(slot_point pdsch_slot, unsigned k1);
 
   /// \brief Called on every new TB transmission/retransmission, when 2 TBs are used.
   enum class tb_tx_request { newtx, retx, disabled };
-  alloc_params*
-  tx_2_tb(slot_point pdsch_slot, unsigned k1, span<const tb_tx_request> tb_tx_req, unsigned max_harq_nof_retxs);
+  void tx_2_tb(slot_point pdsch_slot, unsigned k1, span<const tb_tx_request> tb_tx_req, unsigned max_harq_nof_retxs);
 
   /// \brief Updates the ACK state of the HARQ process.
   /// \return The number of bytes of the TB in case of ack==true, zero in case ack==false, and -1 if HARQ is inactive.
   int ack_info(uint32_t tb_idx, bool ack);
+
+  /// \brief Stores grant parameters that are associated with the HARQ allocation (e.g. DCI format, PRBs, MCS) so that
+  /// they can be later fetched and optionally reused.
+  void save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, const pdsch_information& pdsch);
 
 private:
   /// Parameters used for the last Tx of this HARQ process.
@@ -218,8 +201,14 @@ class ul_harq_process : private detail::harq_process<false>
   using base_type = detail::harq_process<false>;
 
 public:
-  /// \brief Parameters relative to the last allocated PUSCH PDU, PDCCH PDU for this HARQ process.
-  using alloc_params = ul_harq_tx_params;
+  /// \brief Parameters relative to the last allocated PUSCH PDU for this HARQ process.
+  struct alloc_params {
+    dci_ul_rnti_config_type dci_cfg_type;
+    prb_grant               prbs;
+    pusch_mcs_table         mcs_table;
+    sch_mcs_index           mcs;
+    unsigned                tbs_bytes;
+  };
 
   using base_type::transport_block;
 
@@ -243,29 +232,26 @@ public:
   const transport_block& tb() const { return base_type::tb(0); }
 
   /// \brief Getter of the PDCCH/PDSCH parameters used in the last Tx.
-  const ul_harq_tx_params& last_tx_params() const { return prev_tx_params; }
+  const alloc_params& last_tx_params() const { return prev_tx_params; }
 
   /// \brief Processes CRC info for the UL HARQ process.
   /// \return The number of bytes of the TB in case of ack==true, zero in case ack==false, and -1 if HARQ is inactive.
   int crc_info(bool ack);
 
   /// \brief Called on every new transmission. It marks this HARQ process as busy and stores respective TB information.
-  ul_harq_tx_params* new_tx(slot_point pusch_slot, unsigned max_harq_retxs);
+  void new_tx(slot_point pusch_slot, unsigned max_harq_retxs);
 
   /// \brief Called on every TB retransmission. This function assumes that the HARQ TB is in pending new_retx state.
-  ul_harq_tx_params* new_retx(slot_point pusch_slot);
+  void new_retx(slot_point pusch_slot);
+
+  /// \brief Stores grant parameters that are associated with the HARQ allocation (e.g. DCI format, PRBs, MCS) so that
+  /// they can be later fetched and optionally reused.
+  void save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, const pusch_information& pusch);
 
 private:
   /// Parameters used for the last Tx of this HARQ process.
-  ul_harq_tx_params prev_tx_params;
+  alloc_params prev_tx_params;
 };
-
-/// \brief Helper function to fill HARQ allocation grant parameters.
-void save_harq_alloc_params(dl_harq_process::alloc_params& dl_alloc,
-                            bwp_id_t                       bwp_id,
-                            dci_dl_rnti_config_type        dci_cfg_type,
-                            unsigned                       time_resource,
-                            const pdsch_information&       pdsch);
 
 /// \brief Helper function to fill HARQ allocation grant parameters.
 void save_harq_alloc_params(ul_harq_process::alloc_params& ul_alloc,

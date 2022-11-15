@@ -504,7 +504,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     srsgnb_sanity_check(pending_msg3.harq.empty(), "Pending Msg3 should not have been added if HARQ is busy.");
 
     // Allocate Msg3 UL HARQ
-    ul_harq_process::alloc_params* h_params = pending_msg3.harq.new_tx(msg3_alloc.slot, max_msg3_retxs);
+    pending_msg3.harq.new_tx(msg3_alloc.slot, max_msg3_retxs);
 
     // Add MAC SDU with UL grant (Msg3) in RAR PDU.
     rar.grants.emplace_back();
@@ -533,11 +533,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     pusch.pusch_cfg.new_data = true;
 
     // Store parameters used in HARQ.
-    save_harq_alloc_params(*h_params,
-                           to_bwp_id(0),
-                           dci_ul_rnti_config_type::tc_rnti_f0_0,
-                           msg3_candidate.pusch_td_res_index,
-                           pusch.pusch_cfg);
+    pending_msg3.harq.save_alloc_params(dci_ul_rnti_config_type::tc_rnti_f0_0, pusch.pusch_cfg);
   }
 }
 
@@ -584,7 +580,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   pusch_alloc.ul_res_grid.fill(grant);
 
   // Allocate new retx in the HARQ.
-  ul_harq_process::alloc_params* h_params = msg3_ctx.harq.new_retx(pusch_alloc.slot);
+  msg3_ctx.harq.new_retx(pusch_alloc.slot);
 
   // Fill DCI.
   build_dci_f0_0_tc_rnti(pdcch->dci,
@@ -605,8 +601,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   ul_info.pusch_cfg.new_data = false;
 
   // Store parameters used in HARQ.
-  save_harq_alloc_params(
-      *h_params, to_bwp_id(0), dci_ul_rnti_config_type::tc_rnti_f0_0, pusch_td_res_index, ul_info.pusch_cfg);
+  msg3_ctx.harq.save_alloc_params(dci_ul_rnti_config_type::tc_rnti_f0_0, ul_info.pusch_cfg);
 }
 
 void ra_scheduler::log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const

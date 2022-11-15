@@ -103,27 +103,25 @@ void detail::harq_process<IsDownlink>::new_retx_tb_common(unsigned tb_idx)
 template class detail::harq_process<true>;
 template class detail::harq_process<false>;
 
-dl_harq_tx_params* dl_harq_process::new_tx(slot_point pdsch_slot, unsigned k1, unsigned max_harq_nof_retxs)
+void dl_harq_process::new_tx(slot_point pdsch_slot, unsigned k1, unsigned max_harq_nof_retxs)
 {
   base_type::tx_common(pdsch_slot, pdsch_slot + k1);
   base_type::new_tx_tb_common(0, max_harq_nof_retxs);
-  prev_tx_params               = {};
-  prev_tx_params.tb[0].enabled = true;
-  prev_tx_params.tb[1].enabled = false;
-  return &prev_tx_params;
+  prev_tx_params = {};
+  prev_tx_params.tb[0].emplace();
+  prev_tx_params.tb[1].reset();
 }
 
-dl_harq_tx_params* dl_harq_process::new_retx(slot_point pdsch_slot, unsigned k1)
+void dl_harq_process::new_retx(slot_point pdsch_slot, unsigned k1)
 {
   base_type::tx_common(pdsch_slot, pdsch_slot + k1);
   base_type::new_retx_tb_common(0);
-  return &prev_tx_params;
 }
 
-dl_harq_tx_params* dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
-                                            unsigned                  k1,
-                                            span<const tb_tx_request> tb_tx_req,
-                                            unsigned                  max_harq_nof_retxs)
+void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
+                              unsigned                  k1,
+                              span<const tb_tx_request> tb_tx_req,
+                              unsigned                  max_harq_nof_retxs)
 {
   srsgnb_assert(tb_tx_req.size() == 2, "This function should only be called when 2 TBs are active");
   srsgnb_assert(
@@ -133,37 +131,51 @@ dl_harq_tx_params* dl_harq_process::tx_2_tb(slot_point                pdsch_slot
   for (unsigned i = 0; i != tb_tx_req.size(); ++i) {
     if (tb_tx_req[i] == tb_tx_request::newtx) {
       base_type::new_tx_tb_common(i, max_harq_nof_retxs);
-      prev_tx_params.tb[i].enabled = true;
+      prev_tx_params.tb[i].emplace();
     } else if (tb_tx_req[i] == tb_tx_request::retx) {
       base_type::new_retx_tb_common(i);
     } else {
-      prev_tx_params.tb[i].enabled = false;
+      prev_tx_params.tb[i].reset();
     }
   }
-  return &prev_tx_params;
 }
 
 int dl_harq_process::ack_info(uint32_t tb_idx, bool ack)
 {
   if (base_type::ack_info_common(tb_idx, ack)) {
-    return ack ? (int)prev_tx_params.tb[tb_idx].tbs_bytes : 0;
+    return ack ? (int)prev_tx_params.tb[tb_idx]->tbs_bytes : 0;
   }
   return -1;
 }
 
-ul_harq_tx_params* ul_harq_process::new_tx(slot_point pusch_slot, unsigned max_harq_retxs)
+void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, const pdsch_information& pdsch)
+{
+  unsigned tb_idx = empty(0) ? 1 : 0;
+  for (const pdsch_codeword& cw : pdsch.codewords) {
+    srsgnb_assert(not empty(tb_idx), "Setting allocation parameters for empty DL HARQ process id={} TB", id);
+    srsgnb_assert(tb(tb_idx).nof_retxs == 0 or dci_cfg_type == prev_tx_params.dci_cfg_type,
+                  "DCI format and RNTI type cannot change during DL HARQ retxs");
+    srsgnb_assert(tb(tb_idx).nof_retxs == 0 or prev_tx_params.tb[tb_idx]->tbs_bytes == cw.tb_size_bytes,
+                  "TBS cannot change during DL HARQ retxs");
+    prev_tx_params.tb[tb_idx]->mcs_table = cw.mcs_table;
+    prev_tx_params.tb[tb_idx]->mcs       = cw.mcs_index;
+    prev_tx_params.tb[tb_idx]->tbs_bytes = cw.tb_size_bytes;
+    ++tb_idx;
+  }
+  prev_tx_params.dci_cfg_type = dci_cfg_type;
+  prev_tx_params.prbs         = pdsch.prbs;
+}
+
+void ul_harq_process::new_tx(slot_point pusch_slot, unsigned max_harq_retxs)
 {
   harq_process::tx_common(pusch_slot, pusch_slot);
   base_type::new_tx_tb_common(0, max_harq_retxs);
-  prev_tx_params = {};
-  return &prev_tx_params;
 }
 
-ul_harq_tx_params* ul_harq_process::new_retx(slot_point pusch_slot)
+void ul_harq_process::new_retx(slot_point pusch_slot)
 {
   harq_process::tx_common(pusch_slot, pusch_slot);
   base_type::new_retx_tb_common(0);
-  return &prev_tx_params;
 }
 
 int ul_harq_process::crc_info(bool ack)
@@ -174,44 +186,20 @@ int ul_harq_process::crc_info(bool ack)
   return -1;
 }
 
-void srsgnb::save_harq_alloc_params(dl_harq_process::alloc_params& dl_alloc,
-                                    bwp_id_t                       bwp_id,
-                                    dci_dl_rnti_config_type        dci_cfg_type,
-                                    unsigned                       time_resource,
-                                    const pdsch_information&       pdsch)
+void ul_harq_process::save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, const pusch_information& pusch)
 {
-  dl_alloc               = {};
-  dl_alloc.bwp_id        = bwp_id;
-  dl_alloc.prbs          = pdsch.prbs;
-  dl_alloc.dci_cfg_type  = dci_cfg_type;
-  dl_alloc.time_resource = time_resource;
-  for (unsigned i = 0; i != pdsch.codewords.size(); ++i) {
-    dl_alloc.tb[i].enabled   = true;
-    dl_alloc.tb[i].mcs_table = pdsch.codewords[i].mcs_table;
-    dl_alloc.tb[i].mcs       = pdsch.codewords[i].mcs_index;
-    dl_alloc.tb[i].tbs_bytes = pdsch.codewords[i].tb_size_bytes;
-  }
+  srsgnb_assert(not empty(), "Setting allocation parameters for empty DL HARQ process id={} TB", id);
+  srsgnb_assert(tb().nof_retxs == 0 or dci_cfg_type == prev_tx_params.dci_cfg_type,
+                "DCI format and RNTI type cannot change during DL HARQ retxs");
+  srsgnb_assert(tb().nof_retxs == 0 or prev_tx_params.tbs_bytes == pusch.tb_size_bytes,
+                "TBS cannot change during DL HARQ retxs");
+
+  prev_tx_params.mcs_table    = pusch.mcs_table;
+  prev_tx_params.mcs          = pusch.mcs_index;
+  prev_tx_params.tbs_bytes    = pusch.tb_size_bytes;
+  prev_tx_params.dci_cfg_type = dci_cfg_type;
+  prev_tx_params.prbs         = pusch.prbs;
 }
-
-void srsgnb::save_harq_alloc_params(ul_harq_process::alloc_params& ul_alloc,
-                                    bwp_id_t                       bwp_id,
-                                    dci_ul_rnti_config_type        dci_cfg_type,
-                                    unsigned                       time_resource,
-                                    const pusch_information&       pusch)
-{
-  ul_alloc               = {};
-  ul_alloc.bwp_id        = bwp_id;
-  ul_alloc.prbs          = pusch.prbs;
-  ul_alloc.dci_cfg_type  = dci_cfg_type;
-  ul_alloc.time_resource = time_resource;
-  ul_alloc.mcs_table     = pusch.mcs_table;
-  ul_alloc.mcs           = pusch.mcs_index;
-  ul_alloc.tbs_bytes     = pusch.tb_size_bytes;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void store_tx_params(dl_harq_tx_params& params, dci_dl_info& dci_pdu, pdsch_information& pdsch_pdu);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

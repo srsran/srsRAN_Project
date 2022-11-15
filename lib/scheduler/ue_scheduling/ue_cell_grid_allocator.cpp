@@ -100,24 +100,23 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, grant.crbs});
 
   // Allocate UE DL HARQ.
-  prb_interval                   prbs = crb_to_prb(*pdcch->ctx.bwp_cfg, grant.crbs);
-  dl_harq_process&               h_dl = ue_cc->harqs.dl_harq(grant.h_id);
-  sch_mcs_index                  mcs;
-  dci_dl_rnti_config_type        dci_cfg_type;
-  dl_harq_process::alloc_params* h_params = nullptr;
+  prb_interval            prbs = crb_to_prb(*pdcch->ctx.bwp_cfg, grant.crbs);
+  dl_harq_process&        h_dl = ue_cc->harqs.dl_harq(grant.h_id);
+  sch_mcs_index           mcs;
+  dci_dl_rnti_config_type dci_cfg_type;
   if (h_dl.empty()) {
     // It is a new tx.
     const static unsigned max_retx = 4;  // TODO.
     mcs                            = 10; // TODO: Parameterize.
     dci_cfg_type                   = dci_dl_rnti_config_type::c_rnti_f1_0;
 
-    h_params = h_dl.new_tx(pdsch_alloc.slot, k1, max_retx);
+    h_dl.new_tx(pdsch_alloc.slot, k1, max_retx);
   } else {
     // It is a retx.
-    mcs          = h_dl.last_alloc_params().tb[0].mcs;
+    mcs          = h_dl.last_alloc_params().tb[0]->mcs;
     dci_cfg_type = h_dl.last_alloc_params().dci_cfg_type;
 
-    h_params = h_dl.new_retx(pdsch_alloc.slot, k1);
+    h_dl.new_retx(pdsch_alloc.slot, k1);
   }
 
   // Fill DL PDCCH DCI PDU.
@@ -158,7 +157,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
 
   // Save set PDCCH and PDSCH PDU parameters in HARQ process.
-  save_harq_alloc_params(*h_params, ue_cc->active_bwp_id(), pdcch->dci.type, grant.time_res_index, msg.pdsch_cfg);
+  h_dl.save_alloc_params(pdcch->dci.type, msg.pdsch_cfg);
 
   // Set MAC logical channels to schedule in this PDU.
   msg.tb_list.emplace_back();
@@ -236,14 +235,13 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // Allocate UE UL HARQ.
-  ul_harq_process::alloc_params* h_params = nullptr;
   if (h_ul.empty()) {
     // It is a new tx.
     const static unsigned max_retx = 4; // TODO: Parameterize
-    h_params                       = h_ul.new_tx(pusch_alloc.slot, max_retx);
+    h_ul.new_tx(pusch_alloc.slot, max_retx);
   } else {
     // It is a retx.
-    h_params = h_ul.new_retx(pusch_alloc.slot);
+    h_ul.new_retx(pusch_alloc.slot);
   }
 
   // Fill UL PDCCH DCI.
@@ -275,7 +273,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // Save set PDCCH and PUSCH PDU parameters in HARQ process.
-  save_harq_alloc_params(*h_params, ue_cc->active_bwp_id(), pdcch->dci.type, time_resource, msg.pusch_cfg);
+  h_ul.save_alloc_params(pdcch->dci.type, msg.pusch_cfg);
 
   // In case there is a SR pending. Reset it.
   u.reset_sr_indication();
