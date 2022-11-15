@@ -20,13 +20,13 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, srslog::basi
 {
   // flags
   if (!gtpu_supported_flags_check(header, logger)) {
-    logger.error("gtpu_write_header - Unhandled GTP-U Flags. Flags: 0x%x", header.flags);
+    logger.error("gtpu_write_header - Unhandled GTP-U Flags. Flags: 0x{:x}", header.flags);
     return false;
   }
 
   // msg type
   if (!gtpu_supported_msg_type_check(header, logger)) {
-    logger.error("gtpu_write_header - Unhandled GTP-U Message Type. Message Type: 0x%x", header.message_type);
+    logger.error("gtpu_write_header - Unhandled GTP-U Message Type. Message Type: 0x{:x}", header.message_type);
     return false;
   }
 
@@ -58,54 +58,21 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, srslog::basi
 
 bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::basic_logger& logger)
 {
+  if (pdu.length() < GTPU_BASE_HEADER_LEN) {
+    logger.error(pdu.begin(), pdu.end(), "Error GTP-U PDU is too small. Length={}", pdu.length());
+    return false;
+  }
+
   bit_decoder decoder{pdu};
 
-  // Version
-  uint8_t version = {};
-  if (not decoder.unpack(version, 3)) {
-    logger.error(pdu.begin(), pdu.end(), "Error reading GTP-U version. Flags: {}", header.flags);
-    return false;
-  }
-  header.flags.version = version;
-
-  // PT
-  uint8_t pt = {};
-  if (not decoder.unpack(pt, 1)) {
-    logger.error(pdu.begin(), pdu.end(), "Error reading GTP-U protocol type. Flags: {}", header.flags);
-    return false;
-  }
-  header.flags.protocol_type = pt;
-
-  // Spare
+  // Flags
+  decoder.unpack(header.flags.version, 3);
+  decoder.unpack(header.flags.protocol_type, 1);
   uint8_t spare = {};
-  if (not decoder.unpack(spare, 1)) {
-    logger.error(pdu.begin(), pdu.end(), "Error reading GTP-U spare bit. Flags: {}", header.flags);
-    return false;
-  }
-
-  // E
-  uint8_t ext_flag = {};
-  if (not decoder.unpack(ext_flag, 1)) {
-    logger.error(pdu.begin(), pdu.end(), "Error reading GTP-U extension flag. Flags: {}", header.flags);
-    return false;
-  }
-  header.flags.ext_hdr = ext_flag == 1;
-
-  // S
-  uint8_t sn_flag = {};
-  if (not decoder.unpack(sn_flag, 1)) {
-    logger.error(pdu.begin(), pdu.end(), "Error reading GTP-U SN flag. Flags: {}", header.flags);
-    return false;
-  }
-  header.flags.seq_number = sn_flag == 1;
-
-  // PN
-  uint8_t pn_flag = {};
-  if (not decoder.unpack(pn_flag, 1)) {
-    logger.error(pdu.begin(), pdu.end(), "Error reading GTP-U N-PDU flag. Flags: {}", header.flags);
-    return false;
-  }
-  header.flags.n_pdu = pn_flag == 1;
+  decoder.unpack(spare, 1);                   // Reserved
+  decoder.unpack(header.flags.ext_hdr, 1);    // E
+  decoder.unpack(header.flags.seq_number, 1); // S
+  decoder.unpack(header.flags.n_pdu, 1);      // PN
 
   // Check supported flags
   if (!gtpu_supported_flags_check(header, logger)) {

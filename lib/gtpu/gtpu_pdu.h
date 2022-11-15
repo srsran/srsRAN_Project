@@ -120,7 +120,7 @@ struct formatter<srsgnb::gtpu_header::gtpu_flags> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::gtpu_header::gtpu_flags flags, FormatContext& ctx)
+  auto format(const srsgnb::gtpu_header::gtpu_flags& flags, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
@@ -142,7 +142,7 @@ struct formatter<srsgnb::gtpu_header> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::gtpu_header hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsgnb::gtpu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "Flags[{}], Length={}, TEID={}", hdr.flags, hdr.length, hdr.teid);
   }
