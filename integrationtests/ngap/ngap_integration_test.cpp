@@ -11,9 +11,9 @@
 #include "lib/cu_cp/ngc_asn1_helpers.h"
 #include "lib/ngap/ngc_asn1_packer.h"
 #include "srsgnb/gateways/network_gateway_factory.h"
-#include "srsgnb/io_broker/io_broker_factory.h"
 #include "srsgnb/ngap/ngc_factory.h"
 #include "srsgnb/support/async/async_test_utils.h"
+#include "srsgnb/support/io_broker/io_broker_factory.h"
 #include "srsgnb/support/test_utils.h"
 #include "srsgnb/support/timers.h"
 #include <gtest/gtest.h>

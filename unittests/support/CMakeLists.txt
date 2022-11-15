@@ -8,6 +8,8 @@
 
 set_directory_properties(PROPERTIES LABELS "support")
 
+add_subdirectory(io_broker)
+
 add_executable(timer_test timer_test.cpp)
 target_link_libraries(timer_test srslog srsgnb_support pthread)
 add_test(timer_test timer_test)

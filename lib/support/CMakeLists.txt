@@ -6,6 +6,8 @@
 # the distribution.
 #
 
+add_subdirectory(io_broker)
+
 set(SOURCES
         math_utils.cpp
         task_worker.cpp
@@ -14,6 +16,6 @@ set(SOURCES
         bit_encoding.cpp)
 
 add_library(srsgnb_support STATIC ${SOURCES})
-target_link_libraries(srsgnb_support ${CMAKE_THREAD_LIBS_INIT} srslog)
+target_link_libraries(srsgnb_support srsgnb_io_broker ${CMAKE_THREAD_LIBS_INIT} srslog)
 
 install(TARGETS srsgnb_support EXPORT srsgnb_export)

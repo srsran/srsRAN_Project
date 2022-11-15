@@ -16,7 +16,7 @@
 #include "srsgnb/cu_cp/cu_cp_types.h"
 
 #include "adapters/ngap_adapter.h"
-#include "srsgnb/io_broker/io_broker_factory.h"
+#include "srsgnb/support/io_broker/io_broker_factory.h"
 
 #include "adapters/f1_adapter.h"
 

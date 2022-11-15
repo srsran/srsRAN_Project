@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/io_broker/io_broker_factory.h"
+#include "srsgnb/support/io_broker/io_broker_factory.h"
 #include <functional> // for std::function/std::bind
 #include <gtest/gtest.h>
 #include <netinet/in.h>

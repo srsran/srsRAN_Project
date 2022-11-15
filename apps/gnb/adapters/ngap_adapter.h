@@ -12,7 +12,7 @@
 
 #include "lib/ngap/ngc_asn1_packer.h"
 #include "srsgnb/gateways/network_gateway_factory.h"
-#include "srsgnb/io_broker/io_broker.h"
+#include "srsgnb/support/io_broker/io_broker.h"
 
 namespace srsgnb {
 
