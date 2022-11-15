@@ -1,6 +1,6 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "35"
+    ref: "36"
     file: .gitlab/ci-shared/setup/all.yml
 
 stages:
@@ -14,6 +14,7 @@ stages:
     - ${SRS_INFRASTRUCTURE_TAG}-${SRS_ARCHITECTURE_TAG}
   stage: build and unit tests
   variables:
+    DOCKER_BUILDER_VERSION: "1.7.1"
     # General
     OS: ubuntu-22.04
     # Build
@@ -107,6 +108,7 @@ stages:
             --exclude-directories integrationtests  \
             --exclude-directories benchmarks \
             --exclude-directories apps/examples \
+            --exclude-directories external \
             --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/e1ap.h" \
             --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/f1ap.h" \
             --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/rrc_nr/.*" \
@@ -129,9 +131,9 @@ stages:
     - build_srsgnb
     - launch_tests
   after_script:
-    - mv ${CI_PROJECT_DIR}/build/xunit.xml         ${CI_PROJECT_DIR}/${CI_JOB_ID}_xunit.xml
-    - mv ${CI_PROJECT_DIR}/build/coverage.xml      ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage.xml
-    - mv ${CI_PROJECT_DIR}/build/Testing/Temporary ${CI_PROJECT_DIR}/build/Testing/Temporary_${CI_JOB_ID}
+    - mv ${CI_PROJECT_DIR}/build/xunit.xml         ${CI_PROJECT_DIR}/${CI_JOB_ID}_xunit.xml               || true
+    - mv ${CI_PROJECT_DIR}/build/coverage.xml      ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage.xml            || true
+    - mv ${CI_PROJECT_DIR}/build/Testing/Temporary ${CI_PROJECT_DIR}/build/Testing/Temporary_${CI_JOB_ID} || true
   artifacts:
     when: always
     reports:
@@ -318,10 +320,12 @@ custom build [amd64]:
     COMPILER: ""
     # must be one of default, coverage, asan, tsan, valgrind, none
     TEST_MODE: ""
-    # it will be pased to cmake
+    # it will be passed to cmake
     BUILD_ARGS: ""
-
+    # must be one version supported in the specified OS
+    UHD_VERSION: ""
   cache: []
+  timeout: 4 hours # valgrind mode
 
 custom build [arm64v8]:
   extends: custom build [amd64]

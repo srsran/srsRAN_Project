@@ -25,13 +25,16 @@
     "auto_cancel_pending_pipelines": "enabled",
     "auto_devops_enabled": false,
     "autoclose_referenced_issues": true,
+    "build_git_strategy": "fetch",
+    "build_timeout": 3600,
     "can_create_merge_request_in": true,
     "ci_allow_fork_pipelines_to_run_in_parent_project": false,
+    "ci_default_git_depth": 1,
     "ci_separated_caches": false,
     "container_expiration_policy_attributes": {
         "enabled": false
     },
-    "container_registry_access_level": "enabled",
+    "container_registry_access_level": "disabled",
     "default_branch": "dev",
     "enforce_auth_checks_on_uploads": true,
     "forking_access_level": "disabled",

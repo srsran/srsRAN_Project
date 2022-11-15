@@ -5,11 +5,14 @@
 
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "35"
+    ref: "36"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/testing-tools
-    ref: "35"
+    ref: "36"
     file: .gitlab/ci-shared/features/all.yml
+  - project: softwareradiosystems/testing-tools
+    ref: "36"
+    file: .gitlab/ci-shared/tools/test_reporter.yml
   - local: .gitlab/ci/build.yml
 
 stages:
@@ -31,7 +34,7 @@ include-guards:
         INPUT_IGNORE: "^\\(include\\|docs\\|external\\)/.*"
 
 .codechecker:
-  image: registry.gitlab.com/softwareradiosystems/testing-tools/codechecker-gnb:$DOCKER_CODECHECKER_VERSION
+  image: registry.gitlab.com/softwareradiosystems/testing-tools/codechecker-gnb:1.0.2
   stage: static
   needs: []
   tags:
@@ -132,7 +135,7 @@ intermediate commits:
     - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git git-lfs
     - git lfs install
     - git config advice.detachedHead false
-    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
     - |
       for rev in $(git rev-list --reverse origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME..origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME^1)
       do
@@ -169,20 +172,16 @@ unit requirements:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: always # Even if previous stages/required jobs fail
-  image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-tools:$SRS_TOOLS_VERSION
-  script:
-    - test-reporter --input unittests --output ./requirement_report.html
+  extends: .test_reporter
+  variables:
+    TEST_FOLDER: unittests
   needs: []
-  artifacts:
-    paths:
-      - requirement_report.html
-    expire_in: 10 minutes
 
 unit coverage:
   stage: documentation
   extends: .depends on unit test jobs
   image:
-    name: registry.gitlab.com/softwareradiosystems/testing-tools/report_generator:$DOCKER_REPORT_GEN_VERSION
+    name: registry.gitlab.com/softwareradiosystems/testing-tools/report-generator:5.1.10
     entrypoint: ["/bin/sh", "-c"]
   rules:
     - if: $ON_MR
@@ -262,7 +261,7 @@ pages:
   rules:
     - if: $CI_DESCRIPTION == "Nightly"
       when: always # Even if previous stages/required jobs fail
-  image: registry.gitlab.com/softwareradiosystems/testing-tools/doxygen:$DOCKER_DOXYGEN_VERSION
+  image: registry.gitlab.com/softwareradiosystems/testing-tools/doxygen:1.4.0
   script:
     - doxygen_generator.sh
     - mv build/public .
