@@ -33,6 +33,8 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   is_poll_retransmit_timer_expired(false),
   pcell_executor(pcell_executor)
 {
+  metrics.metrics_set_mode(rlc_mode::am);
+
   // check timer t_poll_retransmission timer
   srsgnb_assert(poll_retransmit_timer.is_valid(), "Cannot create RLC RX AM: timers not configured");
 

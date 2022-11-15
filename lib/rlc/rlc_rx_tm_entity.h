@@ -20,6 +20,7 @@ public:
   rlc_rx_tm_entity(du_ue_index_t du_index, lcid_t lcid, rlc_rx_upper_layer_data_notifier& upper_dn) :
     rlc_rx_entity(du_index, lcid, upper_dn)
   {
+    metrics.metrics_set_mode(rlc_mode::tm);
   }
 
   void handle_pdu(byte_buffer_slice buf) override

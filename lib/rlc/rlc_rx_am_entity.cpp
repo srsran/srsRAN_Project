@@ -28,6 +28,8 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
   status_prohibit_timer(timers.create_unique_timer()),
   reassembly_timer(timers.create_unique_timer())
 {
+  metrics.metrics_set_mode(rlc_mode::am);
+
   // check status_prohibit_timer
   srsgnb_assert(status_prohibit_timer.is_valid(), "Cannot create RLC RX AM: status_prohibit_timer not configured");
   // check reassembly_timer

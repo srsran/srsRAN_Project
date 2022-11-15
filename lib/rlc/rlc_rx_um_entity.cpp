@@ -24,6 +24,8 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
   um_window_size(window_size(to_number(cfg.sn_field_length))),
   reassembly_timer(timers.create_unique_timer())
 {
+  metrics.metrics_set_mode(rlc_mode::um_bidir);
+
   // check reassembly_timer
   srsgnb_assert(reassembly_timer.is_valid(), "Cannot create RLC RX UM: reassembly_timer not configured");
 

@@ -22,7 +22,7 @@ class rlc_rx_metrics_container
   std::mutex     metrics_mutex;
 
 public:
-  void set_mode(rlc_mode mode) { metrics.mode = mode; }
+  void metrics_set_mode(rlc_mode mode) { metrics.mode = mode; }
 
   void metrics_add_sdus(uint32_t num_sdus_, size_t num_sdu_bytes_)
   {
