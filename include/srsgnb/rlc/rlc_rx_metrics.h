@@ -19,12 +19,12 @@ namespace srsgnb {
 struct rlc_tm_rx_metrics {};
 
 struct rlc_um_rx_metrics {
-  uint32_t num_sdu_segments;      ///< Number of SDU segments TX'ed
+  uint32_t num_sdu_segments;      ///< Number of SDU segments RX'ed
   uint32_t num_sdu_segment_bytes; ///< Number of SDU segments Bytes
 };
 
 struct rlc_am_rx_metrics {
-  uint32_t num_sdu_segments;      ///< Number of SDU segments TX'ed
+  uint32_t num_sdu_segments;      ///< Number of SDU segments RX'ed
   uint32_t num_sdu_segment_bytes; ///< Number of SDU segments bytes
   uint32_t num_ctrl_pdus;         ///< Number of control PDUs
   uint32_t num_ctrl_pdu_bytes;    ///< Number of control PDUs bytes
@@ -41,7 +41,13 @@ struct rlc_rx_metrics {
   uint32_t num_lost_pdus;      ///< Number of dropped PDUs (reassembly timeout expiry or out of rx window)
   uint32_t num_malformed_pdus; ///< Number of malformed PDUs
 
+  /// RLC mode of the entity
   rlc_mode mode;
+
+  /// Mode-specific metrics
+  ///
+  /// The associated union member is indicated by \c mode.
+  /// Contents of the other fields are undefined.
   union {
     rlc_tm_rx_metrics tm;
     rlc_um_rx_metrics um;
@@ -68,6 +74,7 @@ public:
 namespace fmt {
 
 // RLC RX metrics formatter
+// TODO print mode-specific metrics
 template <>
 struct formatter<srsgnb::rlc_rx_metrics> {
   template <typename ParseContext>

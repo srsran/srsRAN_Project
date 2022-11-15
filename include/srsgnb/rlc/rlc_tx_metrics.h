@@ -43,7 +43,13 @@ struct rlc_tx_metrics {
   uint32_t num_pdus;      ///< Number of PDUs
   size_t   num_pdu_bytes; ///< Number of PDU bytes
 
+  /// RLC mode of the entity
   rlc_mode mode;
+
+  /// Mode-specific metrics
+  ///
+  /// The associated union member is indicated by \c mode.
+  /// Contents of the other fields are undefined.
   union {
     rlc_tm_tx_metrics tm;
     rlc_um_tx_metrics um;
@@ -68,7 +74,9 @@ public:
 } // namespace srsgnb
 
 namespace fmt {
+
 // RLC TX metrics formatter
+// TODO print mode-specific metrics
 template <>
 struct formatter<srsgnb::rlc_tx_metrics> {
   template <typename ParseContext>

@@ -53,7 +53,7 @@ public:
   }
 
   // UM specific metrics
-  void metrics_add_sement(uint32_t num_segments_)
+  void metrics_add_segment(uint32_t num_segments_)
   {
     srsgnb_assert(metrics.mode == rlc_mode::um_bidir, "Wrong mode for UM specific metrics");
     std::lock_guard<std::mutex> lock(metrics_mutex);
