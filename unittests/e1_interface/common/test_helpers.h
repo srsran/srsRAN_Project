@@ -13,8 +13,11 @@
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/ue_context.h"
+#include "srsgnb/cu_up/cu_up.h"
+#include "srsgnb/cu_up/cu_up_types.h"
 #include "srsgnb/e1_interface/common/e1_common.h"
 #include "srsgnb/e1_interface/cu_cp/e1_cu_cp.h"
+#include "srsgnb/e1_interface/cu_up/e1_cu_up.h"
 #include "srsgnb/gateways/network_gateway.h"
 
 namespace srsgnb {
@@ -37,6 +40,39 @@ public:
 private:
   srslog::basic_logger& logger;
   uint16_t              ue_index = srs_cu_cp::MIN_UE_INDEX;
+};
+
+class dummy_e1_ue_manager_notifier : public srs_cu_up::e1_ue_manager_notifier
+{
+public:
+  dummy_e1_ue_manager_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
+
+  void on_cu_cp_e1_setup_request_received(const cu_cp_e1_setup_request_message& msg) override
+  {
+    logger.info("Received E1SetupRequest message.");
+    last_cu_cp_e1_setup_request_msg = msg;
+  }
+
+  srs_cu_up::e1ap_bearer_context_setup_response_message
+  on_bearer_context_setup_request_received(const srs_cu_up::e1ap_bearer_context_setup_request_message& msg) override
+  {
+    logger.info("Received Bearer Context Setup Request message.");
+    last_bearer_context_setup_request_msg                          = msg;
+    srs_cu_up::e1ap_bearer_context_setup_response_message response = {};
+    response.ue_index                                              = ue_index;
+    response.success                                               = true;
+
+    return response;
+  }
+
+  void set_ue_index(uint16_t ue_index_) { ue_index = srs_cu_up::int_to_ue_index(ue_index_); }
+
+  srs_cu_up::e1ap_bearer_context_setup_request_message last_bearer_context_setup_request_msg;
+  cu_cp_e1_setup_request_message                       last_cu_cp_e1_setup_request_msg;
+
+private:
+  srslog::basic_logger& logger;
+  srs_cu_up::ue_index_t ue_index = srs_cu_up::MIN_UE_INDEX;
 };
 
 /// Reusable class implementing the notifier interface.

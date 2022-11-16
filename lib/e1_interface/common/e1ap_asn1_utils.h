@@ -177,4 +177,54 @@ inline expected<gnb_cu_cp_ue_e1ap_id_t> get_gnb_cu_cp_ue_e1ap_id(const asn1::e1a
   return {default_error_t{}};
 }
 
+//////////////////////////////////
+
+inline expected<gnb_cu_up_ue_e1ap_id_t> get_gnb_cu_up_ue_e1ap_id(const asn1::e1ap::init_msg_s& init_msg)
+{
+  using init_msg_type = asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts;
+  switch (init_msg.value.type()) {
+    case init_msg_type::bearer_context_setup_request:
+      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_setup_request()->gnb_cu_cp_ue_e1_ap_id->value;
+    case init_msg_type::bearer_context_release_cmd:
+      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_release_cmd()->gnb_cu_cp_ue_e1_ap_id->value;
+    case init_msg_type::bearer_context_mod_request:
+      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_mod_request()->gnb_cu_cp_ue_e1_ap_id->value;
+    case init_msg_type::bearer_context_mod_required:
+      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_mod_required()->gnb_cu_cp_ue_e1_ap_id->value;
+    case init_msg_type::bearer_context_release_request:
+      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_release_request()->gnb_cu_cp_ue_e1_ap_id->value;
+    default:
+      break;
+  }
+  return {default_error_t{}};
+}
+
+inline expected<gnb_cu_up_ue_e1ap_id_t>
+get_gnb_cu_up_ue_e1ap_id(const asn1::e1ap::successful_outcome_s& success_outcome)
+{
+  return {default_error_t{}};
+}
+
+inline expected<gnb_cu_up_ue_e1ap_id_t>
+get_gnb_cu_up_ue_e1ap_id(const asn1::e1ap::unsuccessful_outcome_s& unsuccessful_outcome)
+{
+  return {default_error_t{}};
+}
+
+inline expected<gnb_cu_up_ue_e1ap_id_t> get_gnb_cu_up_ue_e1ap_id(const asn1::e1ap::e1_ap_pdu_c& pdu)
+{
+  using namespace asn1::e1ap;
+  switch (pdu.type().value) {
+    case e1_ap_pdu_c::types_opts::init_msg:
+      return get_gnb_cu_up_ue_e1ap_id(pdu.init_msg());
+    case e1_ap_pdu_c::types_opts::successful_outcome:
+      return get_gnb_cu_up_ue_e1ap_id(pdu.successful_outcome());
+    case e1_ap_pdu_c::types_opts::unsuccessful_outcome:
+      return get_gnb_cu_up_ue_e1ap_id(pdu.unsuccessful_outcome());
+    default:
+      break;
+  }
+  return {default_error_t{}};
+}
+
 } // namespace srsgnb
