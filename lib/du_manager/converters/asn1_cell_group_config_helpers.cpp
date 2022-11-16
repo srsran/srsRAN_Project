@@ -1034,7 +1034,7 @@ void make_asn1_rrc_pusch_pwr_ctrl(asn1::rrc_nr::pusch_pwr_ctrl_s&          out,
   }
 
   for (unsigned idx = 0; idx < dest.p0_alphasets.size(); idx++) {
-    auto& p0_alphaset                 = out.p0_alpha_sets[idx];
+    p0_pusch_alpha_set_s p0_alphaset{};
     p0_alphaset.p0_pusch_alpha_set_id = dest.p0_alphasets[idx].id;
     if (dest.p0_alphasets[idx].p0.has_value()) {
       p0_alphaset.p0_present = true;
@@ -1044,6 +1044,7 @@ void make_asn1_rrc_pusch_pwr_ctrl(asn1::rrc_nr::pusch_pwr_ctrl_s&          out,
       p0_alphaset.alpha_present = true;
       make_asn1_rrc_alpha(p0_alphaset.alpha, dest.p0_alphasets[idx].p0_pusch_alpha);
     }
+    out.p0_alpha_sets.push_back(p0_alphaset);
   }
 
   calculate_addmodremlist_diff(
