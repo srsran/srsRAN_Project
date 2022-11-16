@@ -1281,6 +1281,12 @@ void calculate_srs_config_diff(asn1::rrc_nr::srs_cfg_s& out, const srs_config& s
       dest.srs_res_set,
       [](const srs_config::srs_resource_set& res) { return make_asn1_rrc_srs_res_set(res); },
       [](const srs_config::srs_resource_set& res) { return res.id; });
+
+  // TODO SRS Resource
+
+  if (dest.is_tpc_accum_disabled) {
+    out.tpc_accumulation_present = true;
+  }
 }
 
 void calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,
