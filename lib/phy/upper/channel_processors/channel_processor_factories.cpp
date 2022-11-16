@@ -24,11 +24,11 @@
 #include "pusch_decoder_impl.h"
 #include "pusch_demodulator_impl.h"
 #include "pusch_processor_impl.h"
-#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
-#include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "ssb_processor_impl.h"
 #include "uci_decoder_impl.h"
 #include "ulsch_demultiplex_impl.h"
+#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 
 using namespace srsgnb;
 

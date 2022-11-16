@@ -10,11 +10,11 @@
 
 #pragma once
 
+#include "test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/e1_interface/common/e1_common.h"
 #include "srsgnb/e1_interface/cu_cp/e1_cu_cp.h"
 #include "srsgnb/e1_interface/cu_cp/e1_cu_cp_factory.h"
-#include "test_helpers.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {

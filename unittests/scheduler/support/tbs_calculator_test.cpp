@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/support/srsgnb_test.h"
 #include "tbs_calculator_test_data.h"
+#include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;
 

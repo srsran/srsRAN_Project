@@ -10,9 +10,9 @@
 #pragma once
 
 #include "../cell/cell_configuration.h"
+#include "ue_configuration.h"
 #include "srsgnb/scheduler/harq_id.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
-#include "ue_configuration.h"
 
 namespace srsgnb {
 

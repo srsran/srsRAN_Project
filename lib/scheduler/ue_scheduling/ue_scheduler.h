@@ -11,8 +11,8 @@
 #pragma once
 
 #include "../pucch_scheduling/pucch_allocator.h"
-#include "srsgnb/scheduler/scheduler_configurator.h"
 #include "ue.h" // TEMP
+#include "srsgnb/scheduler/scheduler_configurator.h"
 
 namespace srsgnb {
 

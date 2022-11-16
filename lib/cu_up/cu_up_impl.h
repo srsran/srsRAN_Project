@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "ue_manager.h"
 #include "srsgnb/cu_up/cu_up.h"
 #include "srsgnb/cu_up/cu_up_configuration.h"
 #include "srsgnb/e1_interface/cu_up/e1_cu_up.h"
@@ -17,7 +18,6 @@
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/timers.h"
-#include "ue_manager.h"
 #include <memory>
 #include <unordered_map>
 

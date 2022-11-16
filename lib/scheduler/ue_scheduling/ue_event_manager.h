@@ -12,10 +12,10 @@
 
 #include "../policy/scheduler_policy.h"
 #include "../support/slot_event_list.h"
-#include "srsgnb/adt/unique_function.h"
-#include "srsgnb/ran/du_types.h"
 #include "ue.h"
 #include "ue_srb0_scheduler.h"
+#include "srsgnb/adt/unique_function.h"
+#include "srsgnb/ran/du_types.h"
 
 namespace srsgnb {
 

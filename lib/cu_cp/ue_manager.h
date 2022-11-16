@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/adt/slot_array.h"
 #include "ue_manager_interfaces.h"
+#include "srsgnb/adt/slot_array.h"
 
 namespace srsgnb {
 

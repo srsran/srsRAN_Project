@@ -11,9 +11,9 @@
 #include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/tbs_calculator.h"
-#include "srsgnb/support/error_handling.h"
 #include "ue_dci_builder.h"
 #include "ue_sch_pdu_builder.h"
+#include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
 

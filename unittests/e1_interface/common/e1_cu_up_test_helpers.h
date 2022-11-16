@@ -10,10 +10,10 @@
 
 #pragma once
 
+#include "test_helpers.h"
 #include "srsgnb/e1_interface/common/e1_common.h"
 #include "srsgnb/e1_interface/cu_up/e1_cu_up.h"
 #include "srsgnb/e1_interface/cu_up/e1_cu_up_factory.h"
-#include "test_helpers.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {

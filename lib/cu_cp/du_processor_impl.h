@@ -12,6 +12,7 @@
 
 #include "adapters/f1c_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
+#include "ue_manager.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
@@ -20,7 +21,6 @@
 #include "srsgnb/ran/nr_cgi.h"
 #include "srsgnb/rrc/rrc_du_factory.h"
 #include "srsgnb/support/async/async_task_loop.h"
-#include "ue_manager.h"
 #include <string>
 
 namespace srsgnb {

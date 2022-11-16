@@ -11,6 +11,7 @@
 #pragma once
 
 #include "ue_context.h"
+#include <cstddef>
 
 namespace srsgnb {
 

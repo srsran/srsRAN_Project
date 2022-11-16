@@ -14,9 +14,9 @@
 
 #include "s3g.h"
 #include "security.h"
-#include "srsgnb/adt/byte_buffer.h"
 #include "ssl.h"
 #include "zuc.h"
+#include "srsgnb/adt/byte_buffer.h"
 
 namespace srsgnb {
 namespace security {

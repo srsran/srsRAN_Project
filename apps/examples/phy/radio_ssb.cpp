@@ -21,6 +21,7 @@
 #include "../radio/radio_notifier_sample.h"
 #include "lower_phy_example_factory.h"
 #include "rx_symbol_handler_example.h"
+#include "upper_phy_ssb_example.h"
 #include "srsgnb/phy/adapters/phy_error_adapter.h"
 #include "srsgnb/phy/adapters/phy_rg_gateway_adapter.h"
 #include "srsgnb/phy/adapters/phy_rx_symbol_adapter.h"
@@ -29,7 +30,6 @@
 #include "srsgnb/radio/radio_factory.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/math_utils.h"
-#include "upper_phy_ssb_example.h"
 #include <atomic>
 #include <csignal>
 #include <getopt.h>

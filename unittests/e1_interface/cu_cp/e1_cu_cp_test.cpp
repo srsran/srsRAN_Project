@@ -8,11 +8,11 @@
  *
  */
 
+#include "unittests/e1_interface/common/e1_cu_cp_test_helpers.h"
+#include "unittests/e1_interface/common/test_helpers.h"
 #include "srsgnb/e1_interface/cu_cp/e1_cu_cp.h"
 #include "srsgnb/e1_interface/cu_cp/e1_cu_cp_factory.h"
 #include "srsgnb/support/test_utils.h"
-#include "unittests/e1_interface/common/e1_cu_cp_test_helpers.h"
-#include "unittests/e1_interface/common/test_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;

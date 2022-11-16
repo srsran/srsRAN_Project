@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/support/async/async_test_utils.h"
 #include "unittests/e1_interface/common/e1_cu_cp_test_helpers.h"
+#include "srsgnb/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;

@@ -10,9 +10,9 @@
 
 #include "lib/scheduler/common_scheduling/ra_scheduler.h"
 #include "scheduler_test_suite.h"
-#include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 #include "unittests/scheduler/utils/config_generators.h"
 #include "unittests/scheduler/utils/dummy_components.h"
+#include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 #include <gtest/gtest.h>
 #include <random>
 

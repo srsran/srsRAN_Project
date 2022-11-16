@@ -10,6 +10,8 @@
 
 #include "../../lib/du_high/du_high.h"
 #include "../../lib/du_high/du_high_executor_strategies.h"
+#include "unittests/f1c/common/test_helpers.h"
+#include "unittests/ngap/test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_factory.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
@@ -17,8 +19,6 @@
 #include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/test_utils.h"
-#include "unittests/f1c/common/test_helpers.h"
-#include "unittests/ngap/test_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;

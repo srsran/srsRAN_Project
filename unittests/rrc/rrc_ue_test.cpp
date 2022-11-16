@@ -8,11 +8,11 @@
  *
  */
 
+#include "test_helpers.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/rrc/rrc_du_factory.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/test_utils.h"
-#include "test_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;

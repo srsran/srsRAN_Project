@@ -10,10 +10,10 @@
 
 #pragma once
 
+#include "test_helpers.h"
 #include "srsgnb/asn1/asn1_utils.h"
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/ngap/ngc_factory.h"
-#include "test_helpers.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {

@@ -11,8 +11,8 @@
 #pragma once
 
 #include "cell/scheduler_cell_manager.h"
-#include "srsgnb/scheduler/mac_scheduler.h"
 #include "ue_scheduling/ue_scheduler.h"
+#include "srsgnb/scheduler/mac_scheduler.h"
 
 namespace srsgnb {
 

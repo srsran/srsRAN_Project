@@ -10,14 +10,14 @@
 
 #pragma once
 
+#include "uplink_request_processor_impl.h"
+#include "upper_phy_rx_results_notifier_proxy.h"
+#include "upper_phy_rx_symbol_handler_impl.h"
 #include "srsgnb/phy/support/prach_buffer_pool.h"
 #include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
 #include "srsgnb/phy/upper/uplink_processor.h"
 #include "srsgnb/phy/upper/upper_phy.h"
-#include "uplink_request_processor_impl.h"
-#include "upper_phy_rx_results_notifier_proxy.h"
-#include "upper_phy_rx_symbol_handler_impl.h"
 
 // :TODO: remove these includes when the objects are created.
 #include "srsgnb/phy/upper/upper_phy_timing_handler.h"

@@ -9,9 +9,9 @@
  */
 
 #include "lib/scheduler/cell/cell_configuration.h"
+#include "unittests/scheduler/utils/config_generators.h"
 #include "srsgnb/scheduler/scheduler_factory.h"
 #include "srsgnb/support/benchmark_utils.h"
-#include "unittests/scheduler/utils/config_generators.h"
 #include <getopt.h>
 
 using namespace srsgnb;

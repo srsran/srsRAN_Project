@@ -1,8 +1,8 @@
 
 #include "../../lib/scheduler/ue_scheduling/ue_configuration.h"
+#include "unittests/scheduler/utils/config_generators.h"
 #include "srsgnb/mac/mac_configuration_helpers.h"
 #include "srsgnb/support/srsgnb_test.h"
-#include "unittests/scheduler/utils/config_generators.h"
 
 using namespace srsgnb;
 

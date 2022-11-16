@@ -11,13 +11,13 @@
 #include "srsgnb/phy/upper/upper_phy_factories.h"
 #include "downlink_processor_pool_impl.h"
 #include "downlink_processor_single_executor_impl.h"
-#include "srsgnb/phy/support/support_factories.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsgnb/support/error_handling.h"
 #include "uplink_processor_pool_impl.h"
 #include "uplink_processor_single_executor_impl.h"
 #include "upper_phy_impl.h"
 #include "upper_phy_rx_results_notifier_proxy.h"
+#include "srsgnb/phy/support/support_factories.h"
+#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
 

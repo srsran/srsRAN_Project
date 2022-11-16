@@ -11,13 +11,13 @@
 #pragma once
 
 #include "lcid_ul_sch.h"
+#include "ul_bsr.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/support/srsgnb_assert.h"
-#include "ul_bsr.h"
 
 namespace srsgnb {
 

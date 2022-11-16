@@ -12,11 +12,11 @@
 
 #include "dl_logical_channel_manager.h"
 #include "harq_process.h"
+#include "ue_configuration.h"
+#include "ul_logical_channel_manager.h"
 #include "srsgnb/adt/stable_id_map.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
-#include "ue_configuration.h"
-#include "ul_logical_channel_manager.h"
 
 namespace srsgnb {
 

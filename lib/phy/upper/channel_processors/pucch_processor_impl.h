@@ -15,7 +15,6 @@
 #include "srsgnb/phy/upper/channel_processors/pucch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/uci_decoder.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
-#include "uci_decoder.h"
 
 namespace srsgnb {
 

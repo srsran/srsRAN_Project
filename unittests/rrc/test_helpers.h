@@ -14,6 +14,7 @@
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/ue_context.h"
 #include "srsgnb/rrc/rrc_ue.h"
+#include "srsgnb/support/async/async_task_loop.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {

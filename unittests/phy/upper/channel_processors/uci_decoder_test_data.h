@@ -13,6 +13,7 @@
 // This file was generated using the following MATLAB class on 22-Sep-2022:
 //   + "srsUCIDecoderUnittest.m"
 
+#include "srsgnb/phy/upper/channel_processors/uci_decoder.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/ran/modulation_scheme.h"
 #include "srsgnb/support/file_vector.h"

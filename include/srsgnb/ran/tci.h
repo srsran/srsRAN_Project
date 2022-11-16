@@ -11,10 +11,10 @@
 #pragma once
 
 #include "csi_rs.h"
+#include "ssb_configuration.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/scheduler/config/bwp_configuration.h"
-#include "ssb_configuration.h"
 #include <cstdint>
 
 namespace srsgnb {

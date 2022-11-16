@@ -14,8 +14,8 @@
 #include "channel_processors/prach_detector_test_doubles.h"
 #include "channel_processors/pucch_processor_test_doubles.h"
 #include "channel_processors/pusch_processor_test_doubles.h"
-#include "srsgnb/phy/support/prach_buffer_context.h"
 #include "upper_phy_rx_results_notifier_test_doubles.h"
+#include "srsgnb/phy/support/prach_buffer_context.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;

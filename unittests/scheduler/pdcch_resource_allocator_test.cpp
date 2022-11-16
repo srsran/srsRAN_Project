@@ -1,8 +1,8 @@
 
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
+#include "unittests/scheduler/utils/config_generators.h"
 #include "srsgnb/mac/mac_configuration_helpers.h"
 #include "srsgnb/support/test_utils.h"
-#include "unittests/scheduler/utils/config_generators.h"
 #include <random>
 
 using namespace srsgnb;

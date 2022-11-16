@@ -10,10 +10,10 @@
 
 #pragma once
 
+#include "unittests/f1c/common/f1_cu_test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/rrc/rrc.h"
-#include "unittests/f1c/common/f1_cu_test_helpers.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {

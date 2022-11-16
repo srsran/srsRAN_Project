@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/adt/circular_buffer.h"
 #include "task_executor.h"
+#include "srsgnb/adt/circular_buffer.h"
 
 namespace srsgnb {
 

@@ -12,13 +12,13 @@
 
 #include "lib/du_manager/converters/f1c_configuration_helpers.h"
 #include "lib/f1c/common/f1ap_asn1_utils.h"
+#include "unittests/f1c/common/test_helpers.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/f1c/common/f1c_common.h"
 #include "srsgnb/f1c/du/f1ap_du.h"
 #include "srsgnb/f1c/du/f1ap_du_factory.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
-#include "unittests/f1c/common/test_helpers.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {

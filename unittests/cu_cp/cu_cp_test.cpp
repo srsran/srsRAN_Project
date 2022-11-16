@@ -9,12 +9,12 @@
  */
 
 #include "../../lib/cu_cp/cu_cp.h"
-#include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/support/test_utils.h"
 #include "unittests/f1c/common/f1_cu_test_helpers.h"
 #include "unittests/f1c/common/test_helpers.h"
 #include "unittests/ngap/ngc_test_helpers.h"
 #include "unittests/ngap/test_helpers.h"
+#include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;

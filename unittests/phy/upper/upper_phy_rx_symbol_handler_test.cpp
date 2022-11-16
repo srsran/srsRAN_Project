@@ -10,9 +10,9 @@
 
 #include "../../../lib/phy/upper/upper_phy_rx_symbol_handler_impl.h"
 #include "../support/prach_buffer_test_doubles.h"
+#include "uplink_processor_test_doubles.h"
 #include "srsgnb/phy/support/prach_buffer_context.h"
 #include "srsgnb/phy/upper/upper_phy_factories.h"
-#include "uplink_processor_test_doubles.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;

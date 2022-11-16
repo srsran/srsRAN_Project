@@ -10,10 +10,10 @@
 
 #include "lib/scheduler/cell/cell_configuration.h"
 #include "scheduler_test_suite.h"
-#include "srsgnb/scheduler/scheduler_factory.h"
-#include "srsgnb/support/test_utils.h"
 #include "unittests/scheduler/utils/config_generators.h"
 #include "utils/scheduler_test_bench.h"
+#include "srsgnb/scheduler/scheduler_factory.h"
+#include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;

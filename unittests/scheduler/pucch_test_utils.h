@@ -15,8 +15,8 @@
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_scheduler_impl.h"
 #include "scheduler_test_suite.h"
-#include "srsgnb/du/du_cell_config_helpers.h"
 #include "unittests/scheduler/utils/config_generators.h"
+#include "srsgnb/du/du_cell_config_helpers.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {

@@ -15,10 +15,10 @@
 #include "mac_dl_ue_manager.h"
 #include "rar_pdu_assembler.h"
 #include "sib_pdu_assembler.h"
+#include "ssb_assembler.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
 #include "srsgnb/support/memory_pool/ring_buffer_pool.h"
-#include "ssb_assembler.h"
 
 namespace srsgnb {
 

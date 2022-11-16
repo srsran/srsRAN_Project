@@ -12,8 +12,8 @@
 
 #include "../policy/ue_allocator.h"
 #include "../support/slot_event_list.h"
-#include "srsgnb/scheduler/scheduler_configurator.h"
 #include "ue.h"
+#include "srsgnb/scheduler/scheduler_configurator.h"
 #include <queue>
 
 namespace srsgnb {

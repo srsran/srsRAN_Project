@@ -14,13 +14,13 @@
 #include "../pucch_scheduling/pucch_scheduler_impl.h"
 #include "../support/slot_event_list.h"
 #include "../support/slot_sync_point.h"
-#include "srsgnb/adt/slot_array.h"
-#include "srsgnb/adt/unique_function.h"
-#include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 #include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
 #include "ue_scheduler.h"
 #include "ue_srb0_scheduler.h"
+#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/unique_function.h"
+#include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 
 namespace srsgnb {
 
