@@ -20,4 +20,5 @@ add_test(test_du_config_generator test_du_config_generator)
 
 add_executable(serving_cell_config_converter_test ../du_manager/serving_cell_config_converter_test.cpp)
 target_link_libraries(serving_cell_config_converter_test srsgnb_du_manager srsgnb_support asn1_utils rrc_nr_asn1 srslog gtest gtest_main)
+add_test(serving_cell_config_converter_test serving_cell_config_converter_test)
 gtest_discover_tests(serving_cell_config_converter_test)
