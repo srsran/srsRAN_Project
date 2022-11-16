@@ -32,7 +32,8 @@ namespace detail {
 template <bool IsDownlink>
 class harq_process
 {
-  /// Default timeout in slots after which the HARQ process assumes that the CRC/ACK went missing.
+  /// \brief Default timeout in slots after which the HARQ process assumes that the CRC/ACK went missing
+  /// (implementation-defined).
   constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 8U;
 
   /// Type used to store the DCI format and RNTI type of the TB stored in the HARQ.
@@ -75,10 +76,10 @@ public:
   /// \brief Indicate the beginning of a new slot.
   void slot_indication(slot_point slot_tx);
 
-  /// \brief Last slot when SCH grant is scheduled for a given TB.
+  /// \brief Last slot when a SCH grant was scheduled for this HARQ process.
   slot_point slot_tx() const { return last_slot_tx; }
 
-  /// \brief Last slot when SCH grant is scheduled for a given TB.
+  /// \brief Slot when the last SCH grant of this HARQ process is supposed to be ACKed.
   slot_point slot_ack() const { return last_slot_ack; }
 
   /// \brief Checks whether a specified TB is empty.
@@ -130,7 +131,7 @@ protected:
   slot_point last_slot_tx;
 
   /// For DL, slot_ack is the slot at which gNB is expected to receive the ACK via UCI.
-  /// For UL, slot_ack is the slot when the PUSCH CRC will be processed. It coincides with slot_tx.
+  /// For UL, slot_ack is the slot when the PUSCH CRC will be received by the gNB. It coincides with slot_tx of UL.
   slot_point last_slot_ack;
 
   std::array<transport_block, MAX_NOF_TBS> tb_array;
