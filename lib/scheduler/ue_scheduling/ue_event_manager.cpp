@@ -56,15 +56,17 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ue_event_manager::ue_event_manager(ue_list& ue_db, sched_configuration_notifier& mac_notifier) :
-  ue_db(ue_db), mac_notifier(mac_notifier), logger(srslog::fetch_basic_logger("MAC"))
+ue_event_manager::ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
+                                   ue_list&                          ue_db,
+                                   sched_configuration_notifier&     mac_notifier) :
+  expert_cfg(expert_cfg_), ue_db(ue_db), mac_notifier(mac_notifier), logger(srslog::fetch_basic_logger("MAC"))
 {
 }
 
 void ue_event_manager::handle_add_ue_request(const sched_ue_creation_request_message& ue_request)
 {
   // Create UE object outside the scheduler slot indication handler to minimize latency.
-  std::unique_ptr<ue> u = std::make_unique<ue>(*du_cells[ue_request.cells[0].cell_index].cfg, ue_request);
+  std::unique_ptr<ue> u = std::make_unique<ue>(expert_cfg, *du_cells[ue_request.cells[0].cell_index].cfg, ue_request);
 
   // Defer UE object addition to ue list to the slot indication handler.
   common_events.emplace(MAX_NOF_DU_UES, [this, u = std::move(u)](event_logger& ev_logger) mutable {

@@ -17,8 +17,10 @@
 
 using namespace srsgnb;
 
-ue_cell_grid_allocator::ue_cell_grid_allocator(ue_list& ues_, srslog::basic_logger& logger_) :
-  ues(ues_), logger(logger_)
+ue_cell_grid_allocator::ue_cell_grid_allocator(const scheduler_ue_expert_config& expert_cfg_,
+                                               ue_list&                          ues_,
+                                               srslog::basic_logger&             logger_) :
+  expert_cfg(expert_cfg_), ues(ues_), logger(logger_)
 {
 }
 
@@ -106,11 +108,10 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   dci_dl_rnti_config_type dci_cfg_type;
   if (h_dl.empty()) {
     // It is a new tx.
-    const static unsigned max_retx = 4;  // TODO.
-    mcs                            = 10; // TODO: Parameterize.
-    dci_cfg_type                   = dci_dl_rnti_config_type::c_rnti_f1_0;
+    mcs          = *expert_cfg.fixed_dl_mcs; // TODO: Support dynamic MCS.
+    dci_cfg_type = dci_dl_rnti_config_type::c_rnti_f1_0;
 
-    h_dl.new_tx(pdsch_alloc.slot, k1, max_retx);
+    h_dl.new_tx(pdsch_alloc.slot, k1, expert_cfg.max_nof_harq_retxs);
   } else {
     // It is a retx.
     mcs          = h_dl.last_alloc_params().tb[0]->mcs;
@@ -229,7 +230,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   sch_mcs_index    mcs;
   ul_harq_process& h_ul = ue_cc->harqs.ul_harq(grant.h_id);
   if (h_ul.empty()) {
-    mcs = 3; // TODO: Parameterize.
+    mcs = expert_cfg.fixed_ul_mcs.value(); // TODO: Support dynamic MCS.
   } else {
     mcs = h_ul.last_tx_params().mcs;
   }
@@ -237,8 +238,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // Allocate UE UL HARQ.
   if (h_ul.empty()) {
     // It is a new tx.
-    const static unsigned max_retx = 4; // TODO: Parameterize
-    h_ul.new_tx(pusch_alloc.slot, max_retx);
+    h_ul.new_tx(pusch_alloc.slot, expert_cfg.max_nof_harq_retxs);
   } else {
     // It is a retx.
     h_ul.new_retx(pusch_alloc.slot);

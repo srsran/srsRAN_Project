@@ -29,7 +29,9 @@ class ue_event_manager : public scheduler_ue_configurator,
                          public scheduler_dl_buffer_state_indication_handler
 {
 public:
-  ue_event_manager(ue_list& ue_db, sched_configuration_notifier& mac_notifier);
+  ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
+                   ue_list&                          ue_db,
+                   sched_configuration_notifier&     mac_notifier);
 
   void add_cell(const cell_configuration& cell_cfg_, ue_srb0_scheduler& srb0_sched);
 
@@ -79,9 +81,10 @@ private:
 
   void handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<const bool> harq_bits);
 
-  ue_list&                      ue_db;
-  sched_configuration_notifier& mac_notifier;
-  srslog::basic_logger&         logger;
+  const scheduler_ue_expert_config& expert_cfg;
+  ue_list&                          ue_db;
+  sched_configuration_notifier&     mac_notifier;
+  srslog::basic_logger&             logger;
 
   /// List of added and configured cells.
   struct du_cell {

@@ -37,7 +37,7 @@ struct test_bench {
 
   test_bench(
       const sched_cell_configuration_request_message& cell_req = make_default_sched_cell_configuration_request()) :
-    sched_cfg(config_helpers::make_default_scheduler_config()), cell_cfg(cell_req)
+    sched_cfg(config_helpers::make_default_scheduler_expert_config()), cell_cfg(cell_req)
   {
   }
 };

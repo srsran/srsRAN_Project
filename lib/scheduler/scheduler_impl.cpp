@@ -18,7 +18,7 @@ scheduler_impl::scheduler_impl(const scheduler_expert_config& sched_cfg_, sched_
   sched_cfg(sched_cfg_),
   mac_notifier(notifier),
   logger(srslog::fetch_basic_logger("MAC")),
-  ue_sched(std::make_unique<ue_scheduler_impl>(notifier)),
+  ue_sched(std::make_unique<ue_scheduler_impl>(sched_cfg.ue, notifier)),
   ue_cfg_handler(ue_sched->get_ue_configurator()),
   feedback_handler(ue_sched->get_feedback_handler()),
   dl_bs_handler(ue_sched->get_dl_buffer_state_indication_handler()),

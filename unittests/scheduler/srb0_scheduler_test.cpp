@@ -36,6 +36,7 @@ struct srb0_test_params {
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
 struct test_bench {
+  scheduler_expert_config       expert_cfg;
   cell_configuration            cell_cfg;
   cell_resource_allocator       res_grid;
   pdcch_resource_allocator_impl pdcch_sch;
@@ -46,11 +47,12 @@ struct test_bench {
 
   explicit test_bench(
       const sched_cell_configuration_request_message& cell_req = make_default_sched_cell_configuration_request()) :
+    expert_cfg{config_helpers::make_default_scheduler_expert_config()},
     cell_cfg{cell_req},
     res_grid{cell_cfg},
     pdcch_sch{cell_cfg},
     pucch_alloc{cell_cfg},
-    ue_alloc(ue_db, srslog::fetch_basic_logger("MAC")),
+    ue_alloc(expert_cfg.ue, ue_db, srslog::fetch_basic_logger("MAC")),
     srb0_sched(cell_cfg, pdcch_sch, pucch_alloc, ue_db, cell_req.max_msg4_mcs_index)
   {
   }
@@ -214,7 +216,7 @@ protected:
     ue_create_req.ue_index = ue_index;
     // Add UE to UE DB.
     auto ue_creation_msg = make_scheduler_ue_creation_request(ue_create_req);
-    auto u               = std::make_unique<ue>(bench->cell_cfg, ue_creation_msg);
+    auto u               = std::make_unique<ue>(bench->expert_cfg.ue, bench->cell_cfg, ue_creation_msg);
     if (bench->ue_db.contains(ue_index)) {
       // UE already exists.
       return false;

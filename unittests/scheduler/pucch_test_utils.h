@@ -74,6 +74,7 @@ public:
 
   void slot_indication(slot_point slot_tx);
 
+  scheduler_expert_config expert_cfg;
   cell_configuration      cell_cfg;
   cell_resource_allocator res_grid{cell_cfg};
   pdcch_dl_information    dci_info;

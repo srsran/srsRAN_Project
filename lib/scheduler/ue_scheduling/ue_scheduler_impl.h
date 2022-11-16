@@ -14,6 +14,10 @@
 #include "../pucch_scheduling/pucch_scheduler_impl.h"
 #include "../support/slot_event_list.h"
 #include "../support/slot_sync_point.h"
+#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/unique_function.h"
+#include "srsgnb/scheduler/config/scheduler_expert_config.h"
+#include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 #include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
 #include "ue_scheduler.h"
@@ -29,7 +33,7 @@ namespace srsgnb {
 class ue_scheduler_impl final : public ue_scheduler
 {
 public:
-  explicit ue_scheduler_impl(sched_configuration_notifier& mac_notif);
+  explicit ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_, sched_configuration_notifier& mac_notif);
 
   void add_cell(const ue_scheduler_cell_params& params) override;
 
@@ -61,6 +65,8 @@ private:
     {
     }
   };
+
+  const scheduler_ue_expert_config& expert_cfg;
 
   std::array<std::unique_ptr<cell>, MAX_NOF_DU_CELLS> cells;
 

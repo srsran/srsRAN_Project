@@ -25,7 +25,7 @@
 namespace srsgnb {
 namespace config_helpers {
 
-inline scheduler_expert_config make_default_scheduler_config()
+inline scheduler_expert_config make_default_scheduler_expert_config()
 {
   scheduler_expert_config cfg;
   cfg.ra.max_nof_msg3_harq_retxs = 4;

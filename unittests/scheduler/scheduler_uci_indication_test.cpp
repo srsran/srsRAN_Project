@@ -21,7 +21,7 @@ using namespace srsgnb;
 class uci_sched_tester : public ::testing::Test
 {
 protected:
-  uci_sched_tester() : sched(create_scheduler(config_helpers::make_default_scheduler_config(), notif))
+  uci_sched_tester() : sched(create_scheduler(config_helpers::make_default_scheduler_expert_config(), notif))
   {
     add_cell();
     add_ue();

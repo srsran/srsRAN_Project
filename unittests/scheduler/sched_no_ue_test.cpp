@@ -24,7 +24,7 @@ public:
 
 void test_no_ues()
 {
-  scheduler_expert_config  sched_cfg = config_helpers::make_default_scheduler_config();
+  scheduler_expert_config  sched_cfg = config_helpers::make_default_scheduler_expert_config();
   sched_cfg_dummy_notifier cfg_notif;
   scheduler_impl           sch{sched_cfg, cfg_notif};
 
@@ -45,7 +45,7 @@ void test_no_ues()
 
 void test_rach_indication()
 {
-  scheduler_expert_config  sched_cfg = config_helpers::make_default_scheduler_config();
+  scheduler_expert_config  sched_cfg = config_helpers::make_default_scheduler_expert_config();
   sched_cfg_dummy_notifier cfg_notif;
   scheduler_impl           sch{sched_cfg, cfg_notif};
 

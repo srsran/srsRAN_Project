@@ -26,7 +26,7 @@ unsigned ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_byte
     return cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
   }
 
-  sch_mcs_index       mcs        = 5; // TODO: Parameterize.
+  sch_mcs_index       mcs        = expert_cfg.fixed_dl_mcs.value(); // TODO: Support dynamic MCS.
   sch_mcs_description mcs_config = pdsch_mcs_get_config(mcs_table, mcs);
 
   dmrs_information dmrs_info = make_dmrs_info_common(
@@ -54,7 +54,7 @@ unsigned ue_cell::required_ul_prbs(unsigned time_resource, unsigned pending_byte
     return cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
   }
 
-  sch_mcs_index       mcs        = 5; // TODO: Parameterize.
+  sch_mcs_index       mcs        = expert_cfg.fixed_ul_mcs.value(); // TODO: Support dynamic MCS.
   sch_mcs_description mcs_config = pusch_mcs_get_config(mcs_table, mcs, false);
 
   dmrs_information dmrs_info = make_dmrs_info_common(

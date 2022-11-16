@@ -13,6 +13,7 @@
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../policy/ue_allocator.h"
 #include "../pucch_scheduling/pucch_scheduler.h"
+#include "srsgnb/scheduler/config/scheduler_expert_config.h"
 
 namespace srsgnb {
 
@@ -21,7 +22,7 @@ namespace srsgnb {
 class ue_cell_grid_allocator : public ue_pdsch_allocator, public ue_pusch_allocator
 {
 public:
-  ue_cell_grid_allocator(ue_list& ues_, srslog::basic_logger& logger_);
+  ue_cell_grid_allocator(const scheduler_ue_expert_config& expert_cfg_, ue_list& ues_, srslog::basic_logger& logger_);
 
   /// Adds a new cell to the UE allocator.
   void add_cell(du_cell_index_t           cell_index,
@@ -64,6 +65,8 @@ private:
   {
     return *cells[cell_index].cell_alloc;
   }
+
+  const scheduler_ue_expert_config& expert_cfg;
 
   ue_list&              ues;
   srslog::basic_logger& logger;

@@ -16,6 +16,7 @@
 #include "ul_logical_channel_manager.h"
 #include "srsgnb/adt/stable_id_map.h"
 #include "srsgnb/ran/du_types.h"
+#include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
 
 namespace srsgnb {
@@ -26,12 +27,14 @@ class ue_cell
 public:
   ue_cell(du_ue_index_t                                ue_index,
           rnti_t                                       crnti_val,
+          const scheduler_ue_expert_config&            expert_cfg_,
           const cell_configuration&                    cell_cfg_common_,
           const serving_cell_ue_configuration_request& ue_serv_cell) :
     ue_index(ue_index),
     cell_index(ue_serv_cell.cell_index),
     harqs(crnti_val, 8),
     crnti_(crnti_val),
+    expert_cfg(expert_cfg_),
     ue_cfg(cell_cfg_common_, *ue_serv_cell.serv_cell_cfg)
   {
   }
@@ -55,22 +58,26 @@ public:
   unsigned required_ul_prbs(unsigned time_resource, unsigned pending_bytes) const;
 
 private:
-  rnti_t                crnti_;
-  ue_cell_configuration ue_cfg;
+  rnti_t                            crnti_;
+  const scheduler_ue_expert_config& expert_cfg;
+  ue_cell_configuration             ue_cfg;
 };
 
 class ue
 {
 public:
-  ue(const cell_configuration& cell_cfg_common_, const sched_ue_creation_request_message& req) :
+  ue(const scheduler_ue_expert_config&        expert_cfg_,
+     const cell_configuration&                cell_cfg_common_,
+     const sched_ue_creation_request_message& req) :
     ue_index(req.ue_index),
     crnti(req.crnti),
+    expert_cfg(expert_cfg_),
     cell_cfg_common(cell_cfg_common_),
     log_channels_configs(req.lc_config_list),
     sched_request_configs(req.sched_request_config_list)
   {
     for (unsigned i = 0; i != req.cells.size(); ++i) {
-      du_cells[i] = std::make_unique<ue_cell>(ue_index, req.crnti, cell_cfg_common, req.cells[i]);
+      du_cells[i] = std::make_unique<ue_cell>(ue_index, req.crnti, expert_cfg, cell_cfg_common, req.cells[i]);
       ue_cells.push_back(du_cells[i].get());
     }
   }
@@ -165,6 +172,9 @@ public:
   unsigned build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes);
 
 private:
+  /// Expert config parameters used for UE scheduler.
+  const scheduler_ue_expert_config& expert_cfg;
+
   /// Cell configuration. This is common to all UEs within the same cell.
   const cell_configuration& cell_cfg_common;
 

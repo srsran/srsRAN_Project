@@ -571,7 +571,7 @@ int main(int argc, char** argv)
   du_hi_cfg.f1c_notifier                  = &f1c_du_to_cu_adapter;
   du_hi_cfg.phy_adapter                   = &phy;
   du_hi_cfg.cells                         = {config_helpers::make_default_du_cell_config(cell_config)};
-  du_hi_cfg.sched_cfg                     = config_helpers::make_default_scheduler_config();
+  du_hi_cfg.sched_cfg                     = config_helpers::make_default_scheduler_expert_config();
 
   du_cell_config& cell_cfg = du_hi_cfg.cells.front();
   cell_cfg.ssb_cfg.k_ssb   = K_ssb;
