@@ -146,6 +146,9 @@ struct srs_config {
     type_t type;
     /// If type is slX, then valid values are {0,..,X-1}.
     uint16_t value;
+
+    bool operator==(const srs_periodicity_and_offset& rhs) const { return type == rhs.type && value == rhs.value; }
+    bool operator!=(const srs_periodicity_and_offset& rhs) const { return !(rhs == *this); }
   };
 
   struct srs_resource {
@@ -158,6 +161,12 @@ struct srs_config {
       uint8_t comb_offset_n2;
       /// Cyclic shift configuration. Values {0,...,7}. See TS 38.214, clause 6.2.1.
       uint8_t cyclic_shift_n2;
+
+      bool operator==(const n2_transmission_comb& rhs) const
+      {
+        return comb_offset_n2 == rhs.comb_offset_n2 && cyclic_shift_n2 == rhs.cyclic_shift_n2;
+      }
+      bool operator!=(const n2_transmission_comb& rhs) const { return !(rhs == *this); }
     };
 
     struct n4_transmission_comb {
@@ -165,6 +174,12 @@ struct srs_config {
       uint8_t comb_offset_n4;
       /// Cyclic shift configuration. Values {0,...,11}. See TS 38.214, clause 6.2.1.
       uint8_t cyclic_shift_n4;
+
+      bool operator==(const n4_transmission_comb& rhs) const
+      {
+        return comb_offset_n4 == rhs.comb_offset_n4 && cyclic_shift_n4 == rhs.cyclic_shift_n4;
+      }
+      bool operator!=(const n4_transmission_comb& rhs) const { return !(rhs == *this); }
     };
 
     struct resource_mapping {
@@ -175,6 +190,12 @@ struct srs_config {
       uint8_t           start_pos;
       nof_symbols       nof_symb;
       repetition_factor re_factor;
+
+      bool operator==(const resource_mapping& rhs) const
+      {
+        return start_pos == rhs.start_pos && nof_symb == rhs.nof_symb && re_factor == rhs.re_factor;
+      }
+      bool operator!=(const resource_mapping& rhs) const { return !(rhs == *this); }
     };
 
     /// \brief Includes parameters capturing SRS frequency hopping.
@@ -186,21 +207,19 @@ struct srs_config {
       uint8_t b_srs;
       /// Values {0,...,3}.
       uint8_t b_hop;
+
+      bool operator==(const frequency_hopping& rhs) const
+      {
+        return c_srs == rhs.c_srs && b_srs == rhs.b_srs && b_hop == rhs.b_hop;
+      }
+      bool operator!=(const frequency_hopping& rhs) const { return !(rhs == *this); }
     };
 
     /// \brief Parameter(s) for configuring group or sequence hopping.
     /// \remark See TS 38.211, clause 6.4.1.4.2
     enum class group_or_sequence_hopping { neither, groupHopping, sequenceHopping };
 
-    struct aperiodic_resource_type {};
-
-    struct semi_persistent_resource_type {
-      srs_periodicity_and_offset periodicity_and_offset_sp;
-    };
-
-    struct periodic_resource_type {
-      srs_periodicity_and_offset periodicity_and_offset_p;
-    };
+    enum resource_type { aperiodic, semi_persistent, periodic };
 
     struct srs_spatial_relation_info {
       optional<du_cell_index_t> serv_cell_id;
@@ -208,9 +227,18 @@ struct srs_config {
       struct srs_ref_signal {
         srs_res_id res_id;
         bwp_id_t   ul_bwp;
+
+        bool operator==(const srs_ref_signal& rhs) const { return res_id == rhs.res_id && ul_bwp == rhs.ul_bwp; }
+        bool operator!=(const srs_ref_signal& rhs) const { return !(rhs == *this); }
       };
 
       variant<ssb_id_t, nzp_csi_rs_res_id_t, srs_ref_signal> reference_signal;
+
+      bool operator==(const srs_spatial_relation_info& rhs) const
+      {
+        return serv_cell_id == rhs.serv_cell_id && reference_signal == rhs.reference_signal;
+      }
+      bool operator!=(const srs_spatial_relation_info& rhs) const { return !(rhs == *this); }
     };
 
     srs_res_id      id;
@@ -222,18 +250,40 @@ struct srs_config {
     /// Values {0,...,67}.
     uint8_t fre_domain_pos;
     /// Values {0,...,268}.
-    uint16_t                                                                                fre_domain_shift;
-    frequency_hopping                                                                       fre_hop;
-    group_or_sequence_hopping                                                               grp_or_seq_hop;
-    variant<aperiodic_resource_type, semi_persistent_resource_type, periodic_resource_type> res_type;
+    uint16_t                  fre_domain_shift;
+    frequency_hopping         fre_hop;
+    group_or_sequence_hopping grp_or_seq_hop;
+    resource_type             res_type;
+    /// Set/Valid only if resource type is semi-persistent.
+    srs_periodicity_and_offset semi_pers_res_type_periodicity_and_offset;
+    /// Set/Valid only if resource type is periodic.
+    srs_periodicity_and_offset per_res_type_periodicity_and_offset;
     /// Values {0,...,1023}.
     uint16_t                            sequence_id;
     optional<srs_spatial_relation_info> spatial_relation_info;
+
+    bool operator==(const srs_resource& rhs) const
+    {
+      return id == rhs.id && nof_ports == rhs.nof_ports && ptrs_port == rhs.ptrs_port && trans_comb == rhs.trans_comb &&
+             res_mapping == rhs.res_mapping && fre_domain_pos == rhs.fre_domain_pos &&
+             fre_domain_shift == rhs.fre_domain_shift && fre_hop == rhs.fre_hop &&
+             grp_or_seq_hop == rhs.grp_or_seq_hop && res_type == rhs.res_type &&
+             semi_pers_res_type_periodicity_and_offset == rhs.semi_pers_res_type_periodicity_and_offset &&
+             per_res_type_periodicity_and_offset == rhs.per_res_type_periodicity_and_offset &&
+             sequence_id == rhs.sequence_id && spatial_relation_info == rhs.spatial_relation_info;
+    }
+    bool operator!=(const srs_resource& rhs) const { return !(rhs == *this); }
   };
 
   static_vector<srs_resource_set, srs_res_set_id::MAX_NOF_SRS_RES_SETS> srs_res_set;
+  static_vector<srs_resource, srs_res_id::MAX_NOF_SRS_RES>              srs_res;
+  bool                                                                  is_tpc_accum_disabled{false};
 
-  bool operator==(const srs_config& rhs) const { return srs_res_set == rhs.srs_res_set; }
+  bool operator==(const srs_config& rhs) const
+  {
+    return srs_res_set == rhs.srs_res_set && srs_res == rhs.srs_res &&
+           is_tpc_accum_disabled == rhs.is_tpc_accum_disabled;
+  }
   bool operator!=(const srs_config& rhs) const { return !(rhs == *this); }
 };
 
