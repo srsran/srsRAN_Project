@@ -44,7 +44,6 @@ public:
 };
 
 struct e1ap_bearer_context_setup_request_message {
-  // TODO: replace asn1 by necessary containers
   asn1::e1ap::bearer_context_setup_request_s msg;
 };
 
@@ -108,19 +107,15 @@ struct bearer_creation_complete_message {
   ue_index_t ue_index;
 };
 
-/// Methods used by E1 to notify the DU processor.
-class e1_du_processor_notifier
+/// Methods used by E1 to notify the NGAP.
+class e1_ngap_notifier
 {
 public:
-  virtual ~e1_du_processor_notifier() = default;
+  virtual ~e1_ngap_notifier() = default;
 
   /// \brief Notifies about the reception of a E1 Setup Request message.
   /// \param[in] msg The received E1 Setup Request message.
   virtual void on_e1_setup_request_received(const cu_up_e1_setup_request_message& msg) = 0;
-
-  /// \brief Get the DU index.
-  /// \return The DU index.
-  virtual du_index_t get_du_index() = 0;
 };
 
 /// Combined entry point for E1 handling.

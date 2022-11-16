@@ -30,8 +30,7 @@ constexpr inline uint64_t gnb_cu_cp_ue_e1ap_id_to_uint(gnb_cu_cp_ue_e1ap_id_t id
 }
 
 /// Convert integer to GNB-CU-CP-UE-E1AP-ID type.
-constexpr inline gnb_cu_cp_ue_e1ap_id_t
-int_to_gnb_cu_cp_ue_e1ap_id_t(std::underlying_type_t<gnb_cu_cp_ue_e1ap_id_t> idx)
+constexpr inline gnb_cu_cp_ue_e1ap_id_t int_to_gnb_cu_cp_ue_e1ap_id(std::underlying_type_t<gnb_cu_cp_ue_e1ap_id_t> idx)
 {
   return static_cast<gnb_cu_cp_ue_e1ap_id_t>(idx);
 }
@@ -50,8 +49,7 @@ constexpr inline uint64_t gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t id
 }
 
 /// Convert integer to GNB-DU-UE-E1AP-ID type.
-constexpr inline gnb_cu_up_ue_e1ap_id_t
-int_to_gnb_cu_up_ue_e1ap_id_t(std::underlying_type_t<gnb_cu_up_ue_e1ap_id_t> idx)
+constexpr inline gnb_cu_up_ue_e1ap_id_t int_to_gnb_cu_up_ue_e1ap_id(std::underlying_type_t<gnb_cu_up_ue_e1ap_id_t> idx)
 {
   return static_cast<gnb_cu_up_ue_e1ap_id_t>(idx);
 }

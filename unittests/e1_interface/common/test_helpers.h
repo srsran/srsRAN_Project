@@ -19,12 +19,10 @@
 
 namespace srsgnb {
 
-class dummy_e1_du_processor_notifier : public srs_cu_cp::e1_du_processor_notifier
+class dummy_e1_ngap_notifier : public srs_cu_cp::e1_ngap_notifier
 {
 public:
-  dummy_e1_du_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
-
-  srs_cu_cp::du_index_t get_du_index() override { return srs_cu_cp::MIN_DU_INDEX; }
+  dummy_e1_ngap_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
   void on_e1_setup_request_received(const cu_up_e1_setup_request_message& msg) override
   {

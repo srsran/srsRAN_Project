@@ -16,13 +16,13 @@ using namespace srsgnb;
 using namespace asn1::e1ap;
 using namespace srs_cu_cp;
 
-e1_cu_cp_impl::e1_cu_cp_impl(timer_manager&            timers_,
-                             e1_message_notifier&      e1_pdu_notifier_,
-                             e1_du_processor_notifier& e1_du_processor_notifier_) :
+e1_cu_cp_impl::e1_cu_cp_impl(timer_manager&       timers_,
+                             e1_message_notifier& e1_pdu_notifier_,
+                             e1_ngap_notifier&    e1_ngap_notifier_) :
   logger(srslog::fetch_basic_logger("CU-CP-E1")),
   timers(timers_),
   pdu_notifier(e1_pdu_notifier_),
-  du_processor_notifier(e1_du_processor_notifier_),
+  ngap_notifier(e1_ngap_notifier_),
   events(std::make_unique<e1_event_manager>(timers))
 {
   e1ap_ue_context empty_context = {};
@@ -133,7 +133,7 @@ void e1_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
       cu_up_e1_setup_request_message req_msg = {};
       current_transaction_id                 = msg.value.gnb_cu_up_e1_setup_request()->transaction_id.value;
       req_msg.request                        = msg.value.gnb_cu_up_e1_setup_request();
-      du_processor_notifier.on_e1_setup_request_received(req_msg);
+      ngap_notifier.on_e1_setup_request_received(req_msg);
     } break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
@@ -191,7 +191,7 @@ gnb_cu_cp_ue_e1ap_id_t e1_cu_cp_impl::get_next_cu_cp_ue_id()
 {
   for (int cu_cp_ue_id = MIN_UE_INDEX; cu_cp_ue_id < MAX_NOF_UES; cu_cp_ue_id++) {
     if (cu_cp_ue_id_to_e1ap_ue_context[cu_cp_ue_id].ue_index == INVALID_UE_INDEX) {
-      return int_to_gnb_cu_cp_ue_e1ap_id_t(cu_cp_ue_id);
+      return int_to_gnb_cu_cp_ue_e1ap_id(cu_cp_ue_id);
     }
   }
   logger.error("No CU-CP UE ID available");
@@ -202,7 +202,7 @@ gnb_cu_cp_ue_e1ap_id_t e1_cu_cp_impl::find_cu_cp_ue_id(ue_index_t ue_index)
 {
   for (int cu_cp_ue_id = MIN_UE_INDEX; cu_cp_ue_id < MAX_NOF_UES; cu_cp_ue_id++) {
     if (cu_cp_ue_id_to_e1ap_ue_context[cu_cp_ue_id].ue_index == ue_index) {
-      return int_to_gnb_cu_cp_ue_e1ap_id_t(cu_cp_ue_id);
+      return int_to_gnb_cu_cp_ue_e1ap_id(cu_cp_ue_id);
     }
   }
   logger.error("CU-CP UE ID for ue_index={} not found", ue_index);

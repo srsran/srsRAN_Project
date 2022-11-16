@@ -26,7 +26,7 @@ using namespace asn1::e1ap;
 TEST_F(e1_cu_cp_test, when_unsupported_init_msg_received_then_message_ignored)
 {
   // Set last message of PDU notifier to successful outcome
-  msg_notifier->last_e1_msg.pdu.set_successful_outcome();
+  msg_notifier->last_e1_msg.pdu.set_init_msg();
 
   // Generate unupported E1AP PDU
   e1_message unsupported_msg = {};
@@ -34,8 +34,8 @@ TEST_F(e1_cu_cp_test, when_unsupported_init_msg_received_then_message_ignored)
 
   e1->handle_message(unsupported_msg);
 
-  // Check that PDU has not been forwarded (last PDU is still successful_outcome)
-  EXPECT_EQ(msg_notifier->last_e1_msg.pdu.type(), asn1::e1ap::e1_ap_pdu_c::types_opts::options::successful_outcome);
+  // Check that PDU has not been forwarded (last PDU is still init_msg)
+  EXPECT_EQ(msg_notifier->last_e1_msg.pdu.type(), asn1::e1ap::e1_ap_pdu_c::types_opts::options::init_msg);
 }
 
 TEST_F(e1_cu_cp_test, when_unsupported_successful_outcome_received_then_message_ignored)
