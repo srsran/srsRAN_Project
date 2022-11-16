@@ -31,8 +31,8 @@ public:
   ~cu_up() = default;
 
   e1_message_handler& get_e1_message_handler() override;
-  bearer_context_setup_response_message
-  handle_bearer_context_setup_request(const bearer_context_setup_request_message& msg) override;
+  e1ap_bearer_context_setup_response_message
+  handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request_message& msg) override;
 
   // cu_up_e1_connection_notifier
   void on_e1_connection_establish() override;

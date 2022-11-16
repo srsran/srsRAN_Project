@@ -35,12 +35,12 @@ e1_message_handler& cu_up::get_e1_message_handler()
   return *e1;
 }
 
-bearer_context_setup_response_message
-cu_up::handle_bearer_context_setup_request(const bearer_context_setup_request_message& msg)
+e1ap_bearer_context_setup_response_message
+cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request_message& msg)
 {
-  bearer_context_setup_response_message response = {};
-  response.ue_index                              = INVALID_UE_INDEX;
-  response.success                               = false;
+  e1ap_bearer_context_setup_response_message response = {};
+  response.ue_index                                   = INVALID_UE_INDEX;
+  response.success                                    = false;
 
   // 1. Create new UE context
   ue_context* ue_ctxt = ue_mng.add_ue();
@@ -51,8 +51,10 @@ cu_up::handle_bearer_context_setup_request(const bearer_context_setup_request_me
   logger.info("UE Created (ue_index={})", ue_ctxt->get_index());
 
   // 2. Handle bearer context setup request
-  if (msg.request.is_id_valid(0)) {
-    const auto& pdu_session_list = msg.request.get_value(0).pdu_session_res_to_setup_list();
+  for (auto it = msg.request.ng_ran_bearer_context_setup_request().begin();
+       it != msg.request.ng_ran_bearer_context_setup_request().end();
+       ++it) {
+    const auto& pdu_session_list = it->value().pdu_session_res_to_setup_list();
     for (size_t i = 0; i < pdu_session_list.size(); ++i) {
       // TODO: call handle_pdu_session_setup_request()
     }
