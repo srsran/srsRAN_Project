@@ -236,10 +236,10 @@ struct srs_config {
     uint8_t          trans_comb_cyclic_shift;
     resource_mapping res_mapping;
     /// Values {0,...,67}.
-    uint8_t fre_domain_pos;
+    uint8_t freq_domain_pos;
     /// Values {0,...,268}.
-    uint16_t                  fre_domain_shift;
-    frequency_hopping         fre_hop;
+    uint16_t                  freq_domain_shift;
+    frequency_hopping         freq_hop;
     group_or_sequence_hopping grp_or_seq_hop;
     resource_type             res_type;
     /// Set/Valid only if resource type is semi-persistent.
@@ -255,8 +255,8 @@ struct srs_config {
       return id == rhs.id && nof_ports == rhs.nof_ports && ptrs_port == rhs.ptrs_port &&
              trans_comb_value == rhs.trans_comb_value && trans_comb_offset == rhs.trans_comb_offset &&
              trans_comb_cyclic_shift == rhs.trans_comb_cyclic_shift && res_mapping == rhs.res_mapping &&
-             fre_domain_pos == rhs.fre_domain_pos && fre_domain_shift == rhs.fre_domain_shift &&
-             fre_hop == rhs.fre_hop && grp_or_seq_hop == rhs.grp_or_seq_hop && res_type == rhs.res_type &&
+             freq_domain_pos == rhs.freq_domain_pos && freq_domain_shift == rhs.freq_domain_shift &&
+             freq_hop == rhs.freq_hop && grp_or_seq_hop == rhs.grp_or_seq_hop && res_type == rhs.res_type &&
              semi_pers_res_type_periodicity_and_offset == rhs.semi_pers_res_type_periodicity_and_offset &&
              per_res_type_periodicity_and_offset == rhs.per_res_type_periodicity_and_offset &&
              sequence_id == rhs.sequence_id && spatial_relation_info == rhs.spatial_relation_info;

@@ -1419,12 +1419,12 @@ asn1::rrc_nr::srs_res_s srsgnb::srs_du::make_asn1_rrc_srs_res(const srs_config::
       srsgnb_assertion_failure("Invalid repetition factor={}", cfg.res_mapping.re_factor);
   }
 
-  res.freq_domain_position = cfg.fre_domain_pos;
-  res.freq_domain_shift    = cfg.fre_domain_shift;
+  res.freq_domain_position = cfg.freq_domain_pos;
+  res.freq_domain_shift    = cfg.freq_domain_shift;
 
-  res.freq_hop.b_hop = cfg.fre_hop.b_hop;
-  res.freq_hop.b_srs = cfg.fre_hop.b_srs;
-  res.freq_hop.c_srs = cfg.fre_hop.c_srs;
+  res.freq_hop.b_hop = cfg.freq_hop.b_hop;
+  res.freq_hop.b_srs = cfg.freq_hop.b_srs;
+  res.freq_hop.c_srs = cfg.freq_hop.c_srs;
 
   switch (cfg.grp_or_seq_hop) {
     case srs_config::srs_resource::group_or_sequence_hopping::neither:
