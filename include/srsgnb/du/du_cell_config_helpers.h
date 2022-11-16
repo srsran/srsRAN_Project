@@ -16,7 +16,7 @@
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
 #include "srsgnb/scheduler/config/du_cell_config_master_params.h"
-#include "srsgnb/scheduler/config/scheduler_config.h"
+#include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 #include "srsgnb/support/error_handling.h"
 
@@ -25,9 +25,9 @@
 namespace srsgnb {
 namespace config_helpers {
 
-inline scheduler_config make_default_scheduler_config()
+inline scheduler_expert_config make_default_scheduler_config()
 {
-  scheduler_config cfg;
+  scheduler_expert_config cfg;
   cfg.ra.max_nof_msg3_harq_retxs = 4;
   cfg.ra.msg3_mcs_index          = 0;
   cfg.ra.rar_mcs_index           = 0;

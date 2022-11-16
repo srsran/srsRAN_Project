@@ -51,9 +51,9 @@ uint16_t srsgnb::get_ra_rnti(slot_point sl_rx, unsigned symbol_index, unsigned f
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ra_scheduler::ra_scheduler(const scheduler_ra_config& sched_cfg_,
-                           const cell_configuration&  cellcfg_,
-                           pdcch_resource_allocator&  pdcch_sch_) :
+ra_scheduler::ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
+                           const cell_configuration&         cellcfg_,
+                           pdcch_resource_allocator&         pdcch_sch_) :
   sched_cfg(sched_cfg_),
   cell_cfg(cellcfg_),
   pdcch_sch(pdcch_sch_),

@@ -25,7 +25,8 @@ namespace srsgnb {
 class scheduler_cell
 {
 public:
-  explicit scheduler_cell(const scheduler_config& sched_cfg, const sched_cell_configuration_request_message& msg) :
+  explicit scheduler_cell(const scheduler_expert_config&                  sched_cfg,
+                          const sched_cell_configuration_request_message& msg) :
     cell_cfg(msg),
     res_grid(cell_cfg),
     pdcch_sch(cell_cfg),
@@ -56,7 +57,7 @@ public:
 class scheduler_cell_manager
 {
 public:
-  explicit scheduler_cell_manager(const scheduler_config& sched_cfg_) : sched_cfg(sched_cfg_) {}
+  explicit scheduler_cell_manager(const scheduler_expert_config& sched_cfg_) : sched_cfg(sched_cfg_) {}
 
   /// Verifies if cell with provided index exists in the scheduler.
   bool cell_exists(du_cell_index_t cell_index) const
@@ -91,7 +92,7 @@ public:
   size_t nof_cells() const { return nof_cells_; }
 
 private:
-  const scheduler_config& sched_cfg;
+  const scheduler_expert_config& sched_cfg;
 
   size_t                                                        nof_cells_ = 0;
   std::array<std::unique_ptr<scheduler_cell>, MAX_NOF_DU_CELLS> cells;

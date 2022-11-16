@@ -29,7 +29,7 @@ unsigned get_random_uint(unsigned min, unsigned max)
 }
 
 struct test_bench {
-  scheduler_config               sched_cfg;
+  scheduler_expert_config        sched_cfg;
   cell_configuration             cell_cfg;
   cell_resource_allocator        res_grid{cell_cfg};
   dummy_pdcch_resource_allocator pdcch_sch;

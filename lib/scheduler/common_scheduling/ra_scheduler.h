@@ -16,7 +16,7 @@
 #include "../support/slot_event_list.h"
 #include "../ue_scheduling/harq_process.h"
 #include "srsgnb/ran/prach/prach_configuration.h"
-#include "srsgnb/scheduler/config/scheduler_config.h"
+#include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include <deque>
 
 namespace srsgnb {
@@ -40,9 +40,9 @@ class ra_scheduler
   static constexpr size_t MAX_NOF_MSG3 = 1024;
 
 public:
-  explicit ra_scheduler(const scheduler_ra_config& sched_cfg_,
-                        const cell_configuration&  cfg_,
-                        pdcch_resource_allocator&  pdcch_sched_);
+  explicit ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
+                        const cell_configuration&         cfg_,
+                        pdcch_resource_allocator&         pdcch_sched_);
 
   /// Enqueue RACH indication
   /// \remark See TS 38.321, 5.1.3 - RAP transmission.
@@ -112,9 +112,9 @@ private:
   void schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3& msg3_ctx);
 
   // args
-  const scheduler_ra_config& sched_cfg;
-  const cell_configuration&  cell_cfg;
-  pdcch_resource_allocator&  pdcch_sch;
+  const scheduler_ra_expert_config& sched_cfg;
+  const cell_configuration&         cell_cfg;
+  pdcch_resource_allocator&         pdcch_sch;
 
   // derived from args
   srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");

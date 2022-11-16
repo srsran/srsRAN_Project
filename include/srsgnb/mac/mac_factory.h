@@ -15,7 +15,7 @@
 #include "srsgnb/du_high/du_high_cell_executor_mapper.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/mac/mac_config.h"
-#include "srsgnb/scheduler/config/scheduler_config.h"
+#include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include <memory>
 
 namespace srsgnb {

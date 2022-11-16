@@ -12,7 +12,7 @@
 
 #include "srsgnb/du_high/du_high_cell_executor_mapper.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
-#include "srsgnb/scheduler/config/scheduler_config.h"
+#include "srsgnb/scheduler/config/scheduler_expert_config.h"
 
 namespace srsgnb {
 
@@ -22,7 +22,7 @@ struct mac_config {
   du_high_cell_executor_mapper& dl_exec_mapper;
   task_executor&                ctrl_exec;
   mac_result_notifier&          phy_notifier;
-  scheduler_config              sched_cfg;
+  scheduler_expert_config       sched_cfg;
 };
 
 } // namespace srsgnb

@@ -14,7 +14,7 @@
 
 using namespace srsgnb;
 
-scheduler_impl::scheduler_impl(const scheduler_config& sched_cfg_, sched_configuration_notifier& notifier) :
+scheduler_impl::scheduler_impl(const scheduler_expert_config& sched_cfg_, sched_configuration_notifier& notifier) :
   sched_cfg(sched_cfg_),
   mac_notifier(notifier),
   logger(srslog::fetch_basic_logger("MAC")),

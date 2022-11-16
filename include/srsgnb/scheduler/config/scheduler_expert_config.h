@@ -18,21 +18,24 @@
 
 namespace srsgnb {
 
-struct scheduler_ue_config {
+/// \brief UE scheduling statically configurable expert parameters.
+struct scheduler_ue_expert_config {
   optional<sch_mcs_index> fixed_dl_mcs;
   optional<sch_mcs_index> fixed_ul_mcs;
   unsigned                max_nof_harq_retxs;
 };
 
-struct scheduler_ra_config {
+/// \brief Random Access scheduling statically configurable expert parameters.
+struct scheduler_ra_expert_config {
   sch_mcs_index rar_mcs_index;
   sch_mcs_index msg3_mcs_index;
   unsigned      max_nof_msg3_harq_retxs;
 };
 
-struct scheduler_config {
-  scheduler_ra_config ra;
-  scheduler_ue_config ue;
+/// \brief Scheduling statically configurable expert parameters.
+struct scheduler_expert_config {
+  scheduler_ra_expert_config ra;
+  scheduler_ue_expert_config ue;
 };
 
 } // namespace srsgnb
