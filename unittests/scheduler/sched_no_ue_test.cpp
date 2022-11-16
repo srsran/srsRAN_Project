@@ -24,8 +24,9 @@ public:
 
 void test_no_ues()
 {
+  scheduler_config         sched_cfg = config_helpers::make_default_scheduler_config();
   sched_cfg_dummy_notifier cfg_notif;
-  scheduler_impl           sch{cfg_notif};
+  scheduler_impl           sch{sched_cfg, cfg_notif};
 
   // Action 1: Add Cell.
   sched_cell_configuration_request_message cell_cfg_msg = make_default_sched_cell_configuration_request();
@@ -44,8 +45,9 @@ void test_no_ues()
 
 void test_rach_indication()
 {
+  scheduler_config         sched_cfg = config_helpers::make_default_scheduler_config();
   sched_cfg_dummy_notifier cfg_notif;
-  scheduler_impl           sch{cfg_notif};
+  scheduler_impl           sch{sched_cfg, cfg_notif};
 
   // Action 1: Add Cell.
   sched_cell_configuration_request_message cell_cfg_msg = make_default_sched_cell_configuration_request();

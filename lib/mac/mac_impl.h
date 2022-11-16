@@ -17,6 +17,7 @@
 #include "mac_ul/mac_ul_processor.h"
 #include "rach_handler.h"
 #include "srsgnb/mac/mac.h"
+#include "srsgnb/mac/mac_config.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
 #include "srsgnb/srslog/srslog.h"
 
@@ -25,11 +26,7 @@ namespace srsgnb {
 class mac_impl : public mac_interface, public mac_ue_control_information_handler
 {
 public:
-  explicit mac_impl(mac_ul_ccch_notifier&         event_notifier,
-                    du_high_ue_executor_mapper&   ul_exec_mapper,
-                    du_high_cell_executor_mapper& dl_exec_mapper,
-                    task_executor&                ctrl_exec,
-                    mac_result_notifier&          phy_notifier_);
+  explicit mac_impl(const mac_config& mac_cfg);
 
   mac_cell_rach_handler& get_rach_handler(du_cell_index_t cell_index) override { return rach_hdl.get_cell(cell_index); }
 

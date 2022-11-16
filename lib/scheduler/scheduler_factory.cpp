@@ -13,7 +13,8 @@
 
 using namespace srsgnb;
 
-std::unique_ptr<mac_scheduler> srsgnb::create_scheduler(sched_configuration_notifier& config_notifier)
+std::unique_ptr<mac_scheduler> srsgnb::create_scheduler(const scheduler_config&       sched_cfg,
+                                                        sched_configuration_notifier& config_notifier)
 {
-  return std::make_unique<scheduler_impl>(config_notifier);
+  return std::make_unique<scheduler_impl>(sched_cfg, config_notifier);
 }

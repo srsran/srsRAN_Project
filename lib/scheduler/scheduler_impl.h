@@ -11,15 +11,16 @@
 #pragma once
 
 #include "cell/scheduler_cell_manager.h"
-#include "ue_scheduling/ue_scheduler.h"
+#include "srsgnb/scheduler/config/scheduler_config.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
+#include "ue_scheduling/ue_scheduler.h"
 
 namespace srsgnb {
 
 class scheduler_impl final : public mac_scheduler
 {
 public:
-  explicit scheduler_impl(sched_configuration_notifier& notifier);
+  explicit scheduler_impl(const scheduler_config& sched_cfg, sched_configuration_notifier& notifier);
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override;
 
@@ -60,6 +61,7 @@ public:
   }
 
 private:
+  const scheduler_config        sched_cfg;
   sched_configuration_notifier& mac_notifier;
   srslog::basic_logger&         logger;
 

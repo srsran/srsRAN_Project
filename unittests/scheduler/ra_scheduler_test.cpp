@@ -29,14 +29,15 @@ unsigned get_random_uint(unsigned min, unsigned max)
 }
 
 struct test_bench {
+  scheduler_config               sched_cfg;
   cell_configuration             cell_cfg;
   cell_resource_allocator        res_grid{cell_cfg};
   dummy_pdcch_resource_allocator pdcch_sch;
-  ra_scheduler                   ra_sch{cell_cfg, pdcch_sch};
+  ra_scheduler                   ra_sch{sched_cfg.ra, cell_cfg, pdcch_sch};
 
   test_bench(
       const sched_cell_configuration_request_message& cell_req = make_default_sched_cell_configuration_request()) :
-    cell_cfg(cell_req)
+    sched_cfg(config_helpers::make_default_scheduler_config()), cell_cfg(cell_req)
   {
   }
 };

@@ -16,6 +16,7 @@
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
 #include "srsgnb/scheduler/config/du_cell_config_master_params.h"
+#include "srsgnb/scheduler/config/scheduler_config.h"
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 #include "srsgnb/support/error_handling.h"
 
@@ -23,6 +24,20 @@
 
 namespace srsgnb {
 namespace config_helpers {
+
+inline scheduler_config make_default_scheduler_config()
+{
+  scheduler_config cfg;
+  cfg.ra.max_nof_msg3_harq_retxs = 4;
+  cfg.ra.msg3_mcs_index          = 0;
+  cfg.ra.rar_mcs_index           = 0;
+
+  cfg.ue.max_nof_harq_retxs = 4;
+  cfg.ue.fixed_dl_mcs       = 10;
+  cfg.ue.fixed_ul_mcs       = 10;
+
+  return cfg;
+}
 
 /// Generates default cell configuration used by gNB DU. The default configuration should be valid.
 inline du_cell_config make_default_du_cell_config(const du_cell_config_master_params& params = {})

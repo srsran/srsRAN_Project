@@ -52,8 +52,9 @@ du_high::du_high(const du_high_configuration& config_) : cfg(config_), timers(12
   assert_du_high_configuration_valid(cfg);
 
   // Create layers
-  mac  = create_mac(mac_ev_notifier, *cfg.ul_executors, *cfg.dl_executors, *cfg.du_mng_executor, *cfg.phy_adapter);
-  f1ap = create_f1ap(*cfg.f1c_notifier, f1c_du_cfg_handler, *cfg.du_mng_executor, *cfg.ul_executors);
+  mac        = create_mac(mac_config{
+      mac_ev_notifier, *cfg.ul_executors, *cfg.dl_executors, *cfg.du_mng_executor, *cfg.phy_adapter, cfg.sched_cfg});
+  f1ap       = create_f1ap(*cfg.f1c_notifier, f1c_du_cfg_handler, *cfg.du_mng_executor, *cfg.ul_executors);
   du_manager = create_du_manager(du_manager_params{{cfg.cells},
                                                    {timers, *cfg.du_mng_executor, *cfg.ul_executors, *cfg.dl_executors},
                                                    {*f1ap, *f1ap},

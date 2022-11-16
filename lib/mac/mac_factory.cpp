@@ -15,13 +15,8 @@
 
 using namespace srsgnb;
 
-std::unique_ptr<mac_interface> srsgnb::create_mac(mac_ul_ccch_notifier&         event_notifier,
-                                                  du_high_ue_executor_mapper&   ul_exec_mapper,
-                                                  du_high_cell_executor_mapper& dl_exec_mapper,
-                                                  task_executor&                ctrl_exec,
-                                                  mac_result_notifier&          phy_notifier)
+std::unique_ptr<mac_interface> srsgnb::create_mac(const mac_config& mac_cfg)
 {
-  std::unique_ptr<mac_interface> macobj =
-      std::make_unique<mac_impl>(event_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_exec, phy_notifier);
+  std::unique_ptr<mac_interface> macobj = std::make_unique<mac_impl>(mac_cfg);
   return macobj;
 }

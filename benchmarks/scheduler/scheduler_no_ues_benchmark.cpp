@@ -55,7 +55,7 @@ std::unique_ptr<benchmarker> bm;
 void benchmark_sib_scheduling()
 {
   sched_cfg_dummy_notifier       cfg_notif;
-  std::unique_ptr<mac_scheduler> sch = create_scheduler(cfg_notif);
+  std::unique_ptr<mac_scheduler> sch = create_scheduler(config_helpers::make_default_scheduler_config(), cfg_notif);
 
   // Add Cell.
   sched_cell_configuration_request_message cell_cfg_msg = make_default_sched_cell_configuration_request();
@@ -76,7 +76,7 @@ void benchmark_sib_scheduling()
 void benchmark_rach_scheduling()
 {
   sched_cfg_dummy_notifier       cfg_notif;
-  std::unique_ptr<mac_scheduler> sch = create_scheduler(cfg_notif);
+  std::unique_ptr<mac_scheduler> sch = create_scheduler(config_helpers::make_default_scheduler_config(), cfg_notif);
 
   // Add Cell.
   sched_cell_configuration_request_message cell_cfg_msg = make_default_sched_cell_configuration_request();
@@ -94,7 +94,20 @@ void benchmark_rach_scheduling()
       // Avoid slots with SIB1, otherwise there might not be space in PDCCH.
       sch->handle_rach_indication(rach_ind);
     }
-    sch->slot_indication(sl_tx, to_du_cell_index(0));
+    const sched_result* res = sch->slot_indication(sl_tx, to_du_cell_index(0));
+
+    // ack msg3s.
+    if (not res->ul.puschs.empty()) {
+      ul_crc_indication crc;
+      crc.cell_index = to_du_cell_index(0);
+      for (const ul_sched_info& ulinfo : res->ul.puschs) {
+        crc.crcs.push_back(
+            ul_crc_pdu_indication{ulinfo.pusch_cfg.rnti, INVALID_DU_UE_INDEX, ulinfo.pusch_cfg.harq_id, true});
+      }
+      sch->handle_crc_indication(crc);
+    }
+
+    // update slot.
     ++sl_tx;
     rach_ind.slot_rx++;
     rach_ind.occasions.back().preambles.back().tc_rnti =

@@ -14,14 +14,14 @@
 
 namespace srsgnb {
 
-mac_impl::mac_impl(mac_ul_ccch_notifier&         event_notifier,
-                   du_high_ue_executor_mapper&   ul_exec_mapper_,
-                   du_high_cell_executor_mapper& dl_exec_mapper_,
-                   task_executor&                ctrl_exec_,
-                   mac_result_notifier&          phy_notifier_) :
-  cfg(event_notifier, ul_exec_mapper_, dl_exec_mapper_, ctrl_exec_, phy_notifier_),
+mac_impl::mac_impl(const mac_config& mac_cfg) :
+  cfg(mac_cfg.ul_ccch_notifier,
+      mac_cfg.ul_exec_mapper,
+      mac_cfg.dl_exec_mapper,
+      mac_cfg.ctrl_exec,
+      mac_cfg.phy_notifier),
   sched_cfg_adapter(cfg),
-  sched_obj(create_scheduler(sched_cfg_adapter.get_sched_notifier())),
+  sched_obj(create_scheduler(mac_cfg.sched_cfg, sched_cfg_adapter.get_sched_notifier())),
   dl_unit(cfg, *sched_obj, rnti_table),
   ul_unit(cfg, *sched_obj, rnti_table),
   rach_hdl(*sched_obj, rnti_table),

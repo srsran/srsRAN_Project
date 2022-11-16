@@ -16,6 +16,7 @@
 #include "../support/slot_event_list.h"
 #include "../ue_scheduling/harq_process.h"
 #include "srsgnb/ran/prach/prach_configuration.h"
+#include "srsgnb/scheduler/config/scheduler_config.h"
 #include <deque>
 
 namespace srsgnb {
@@ -39,7 +40,9 @@ class ra_scheduler
   static constexpr size_t MAX_NOF_MSG3 = 1024;
 
 public:
-  explicit ra_scheduler(const cell_configuration& cfg_, pdcch_resource_allocator& pdcch_sched_);
+  explicit ra_scheduler(const scheduler_ra_config& sched_cfg_,
+                        const cell_configuration&  cfg_,
+                        pdcch_resource_allocator&  pdcch_sched_);
 
   /// Enqueue RACH indication
   /// \remark See TS 38.321, 5.1.3 - RAP transmission.
@@ -52,8 +55,6 @@ public:
   void run_slot(cell_resource_allocator& res_alloc);
 
 private:
-  static constexpr unsigned rar_mcs_index = 0, msg3_mcs_index = 0; // TODO: Parameterize.
-
   struct pending_rar_t {
     rnti_t                                                  ra_rnti = INVALID_RNTI;
     slot_point                                              prach_slot_rx;
@@ -73,11 +74,14 @@ private:
     crb_interval crbs;
   };
 
-  const bwp_configuration&   get_dl_bwp_cfg() const { return cfg.dl_cfg_common.init_dl_bwp.generic_params; }
-  const pdsch_config_common& get_pdsch_cfg() const { return cfg.dl_cfg_common.init_dl_bwp.pdsch_common; }
-  const bwp_configuration&   get_ul_bwp_cfg() const { return cfg.ul_cfg_common.init_ul_bwp.generic_params; }
-  const pusch_config_common& get_pusch_cfg() const { return *cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common; }
-  const rach_config_common&  get_rach_cfg() const { return *cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common; }
+  const bwp_configuration&   get_dl_bwp_cfg() const { return cell_cfg.dl_cfg_common.init_dl_bwp.generic_params; }
+  const pdsch_config_common& get_pdsch_cfg() const { return cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common; }
+  const bwp_configuration&   get_ul_bwp_cfg() const { return cell_cfg.ul_cfg_common.init_ul_bwp.generic_params; }
+  const pusch_config_common& get_pusch_cfg() const { return *cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common; }
+  const rach_config_common&  get_rach_cfg() const { return *cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common; }
+
+  /// Pre-compute invariant fields of RAR PDUs (PDSCH, DCI, etc.) for faster scheduling.
+  void precompute_rar_fields();
 
   /// Pre-compute invariant fields of Msg3 PDUs (PUSCH, DCI, etc.) for faster scheduling.
   void precompute_msg3_pdus();
@@ -108,13 +112,15 @@ private:
   void schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3& msg3_ctx);
 
   // args
-  const cell_configuration& cfg;
-  pdcch_resource_allocator& pdcch_sch;
+  const scheduler_ra_config& sched_cfg;
+  const cell_configuration&  cell_cfg;
+  pdcch_resource_allocator&  pdcch_sch;
 
   // derived from args
   srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");
-  const unsigned        ra_win_nof_slots;
-  bwp_configuration     initial_active_dl_bwp;
+  /// RA window size in number of slots.
+  const unsigned    ra_win_nof_slots;
+  bwp_configuration initial_active_dl_bwp;
 
   /// Pre-cached information related to RAR for a given PDSCH time resource.
   struct rar_param_cached_data {
