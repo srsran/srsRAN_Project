@@ -36,6 +36,8 @@ make_asn1_rrc_sri_pusch_pwr_ctrl(const pusch_config::pusch_power_control::sri_pu
 
 asn1::rrc_nr::srs_res_set_s make_asn1_rrc_srs_res_set(const srs_config::srs_resource_set& cfg);
 
+asn1::rrc_nr::srs_res_s make_asn1_rrc_srs_res(const srs_config::srs_resource& cfg);
+
 /// \brief Fills ASN.1 CellGroupConfig struct.
 /// \param[out] out The ASN.1 CellGroupConfig struct to fill.
 /// \param[in] src Previous cell group configuration of UE.

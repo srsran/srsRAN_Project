@@ -1272,6 +1272,219 @@ asn1::rrc_nr::srs_res_set_s srsgnb::srs_du::make_asn1_rrc_srs_res_set(const srs_
   return srs_res_set;
 }
 
+void make_asn1_rrc_srs_config_perioidicity_and_offset(asn1::rrc_nr::srs_periodicity_and_offset_c&   out,
+                                                      const srs_config::srs_periodicity_and_offset& cfg)
+{
+  switch (cfg.type) {
+    case srs_config::srs_periodicity_and_offset::type_t::sl1:
+      out.set_sl1();
+      break;
+    case srs_config::srs_periodicity_and_offset::type_t::sl2: {
+      auto& p_and_o = out.set_sl2();
+      p_and_o       = cfg.value;
+    } break;
+    case srs_config::srs_periodicity_and_offset::type_t::sl4: {
+      auto& p_and_o = out.set_sl4();
+      p_and_o       = cfg.value;
+    } break;
+    case srs_config::srs_periodicity_and_offset::type_t::sl5: {
+      auto& p_and_o = out.set_sl5();
+      p_and_o       = cfg.value;
+    } break;
+    case srs_config::srs_periodicity_and_offset::type_t::sl8: {
+      auto& p_and_o = out.set_sl8();
+      p_and_o       = cfg.value;
+    } break;
+    case srs_config::srs_periodicity_and_offset::type_t::sl10: {
+      auto& p_and_o = out.set_sl10();
+      p_and_o       = cfg.value;
+    } break;
+    case srs_config::srs_periodicity_and_offset::type_t::sl16: {
+      auto& p_and_o = out.set_sl16();
+      p_and_o       = cfg.value;
+    } break;
+    case srs_config::srs_periodicity_and_offset::type_t::sl20: {
+      auto& p_and_o = out.set_sl20();
+      p_and_o       = cfg.value;
+    } break;
+    case srs_config::srs_periodicity_and_offset::type_t::sl32: {
+      auto& p_and_o = out.set_sl32();
+      p_and_o       = cfg.value;
+    } break;
+    case srs_config::srs_periodicity_and_offset::type_t::sl40: {
+      auto& p_and_o = out.set_sl40();
+      p_and_o       = cfg.value;
+    } break;
+    case srs_config::srs_periodicity_and_offset::type_t::sl64: {
+      auto& p_and_o = out.set_sl64();
+      p_and_o       = cfg.value;
+    } break;
+    case srs_config::srs_periodicity_and_offset::type_t::sl80: {
+      auto& p_and_o = out.set_sl80();
+      p_and_o       = cfg.value;
+    } break;
+    case srs_config::srs_periodicity_and_offset::type_t::sl160: {
+      auto& p_and_o = out.set_sl160();
+      p_and_o       = cfg.value;
+    } break;
+    case srs_config::srs_periodicity_and_offset::type_t::sl320: {
+      auto& p_and_o = out.set_sl320();
+      p_and_o       = cfg.value;
+    } break;
+    case srs_config::srs_periodicity_and_offset::type_t::sl640: {
+      auto& p_and_o = out.set_sl640();
+      p_and_o       = cfg.value;
+    } break;
+    case srs_config::srs_periodicity_and_offset::type_t::sl1280: {
+      auto& p_and_o = out.set_sl1280();
+      p_and_o       = cfg.value;
+    } break;
+    case srs_config::srs_periodicity_and_offset::type_t::sl2560: {
+      auto& p_and_o = out.set_sl2560();
+      p_and_o       = cfg.value;
+    } break;
+    default:
+      srsgnb_assertion_failure("Invalid periodicity and offset={}", cfg.type);
+  }
+}
+
+asn1::rrc_nr::srs_res_s srsgnb::srs_du::make_asn1_rrc_srs_res(const srs_config::srs_resource& cfg)
+{
+  srs_res_s res;
+  res.srs_res_id = cfg.id;
+
+  switch (cfg.nof_ports) {
+    case srs_config::srs_resource::nof_srs_ports::port1:
+      res.nrof_srs_ports = srs_res_s::nrof_srs_ports_opts::port1;
+      break;
+    case srs_config::srs_resource::nof_srs_ports::ports2:
+      res.nrof_srs_ports = srs_res_s::nrof_srs_ports_opts::ports2;
+      break;
+    case srs_config::srs_resource::nof_srs_ports::ports4:
+      res.nrof_srs_ports = srs_res_s::nrof_srs_ports_opts::ports4;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid number of SRS ports={}", cfg.nof_ports);
+  }
+
+  if (cfg.ptrs_port != srs_config::srs_resource::ptrs_port_index::not_set) {
+    res.ptrs_port_idx_present = true;
+    switch (cfg.ptrs_port) {
+      case srs_config::srs_resource::ptrs_port_index::n0:
+        res.ptrs_port_idx = srs_res_s::ptrs_port_idx_opts::n0;
+        break;
+      case srs_config::srs_resource::ptrs_port_index::n1:
+        res.ptrs_port_idx = srs_res_s::ptrs_port_idx_opts::n1;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid PTRS port={}", cfg.ptrs_port);
+    }
+  }
+
+  if (cfg.trans_comb_value == 2) {
+    auto& n2           = res.tx_comb.set_n2();
+    n2.comb_offset_n2  = cfg.trans_comb_offset;
+    n2.cyclic_shift_n2 = cfg.trans_comb_cyclic_shift;
+  } else if (cfg.trans_comb_value == 4) {
+    auto& n4           = res.tx_comb.set_n4();
+    n4.comb_offset_n4  = cfg.trans_comb_offset;
+    n4.cyclic_shift_n4 = cfg.trans_comb_cyclic_shift;
+  }
+
+  res.res_map.start_position = cfg.res_mapping.start_pos;
+  switch (cfg.res_mapping.nof_symb) {
+    case srs_config::srs_resource::resource_mapping::nof_symbols::n1:
+      res.res_map.nrof_symbols = srs_res_s::res_map_s_::nrof_symbols_opts::n1;
+      break;
+    case srs_config::srs_resource::resource_mapping::nof_symbols::n2:
+      res.res_map.nrof_symbols = srs_res_s::res_map_s_::nrof_symbols_opts::n2;
+      break;
+    case srs_config::srs_resource::resource_mapping::nof_symbols::n4:
+      res.res_map.nrof_symbols = srs_res_s::res_map_s_::nrof_symbols_opts::n4;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid number of OFDM symb={}", cfg.res_mapping.nof_symb);
+  }
+  switch (cfg.res_mapping.re_factor) {
+    case srs_config::srs_resource::resource_mapping::repetition_factor::n1:
+      res.res_map.repeat_factor = srs_res_s::res_map_s_::repeat_factor_opts::n1;
+      break;
+    case srs_config::srs_resource::resource_mapping::repetition_factor::n2:
+      res.res_map.repeat_factor = srs_res_s::res_map_s_::repeat_factor_opts::n2;
+      break;
+    case srs_config::srs_resource::resource_mapping::repetition_factor::n4:
+      res.res_map.repeat_factor = srs_res_s::res_map_s_::repeat_factor_opts::n4;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid repetition factor={}", cfg.res_mapping.re_factor);
+  }
+
+  res.freq_domain_position = cfg.fre_domain_pos;
+  res.freq_domain_shift    = cfg.fre_domain_shift;
+
+  res.freq_hop.b_hop = cfg.fre_hop.b_hop;
+  res.freq_hop.b_srs = cfg.fre_hop.b_srs;
+  res.freq_hop.c_srs = cfg.fre_hop.c_srs;
+
+  switch (cfg.grp_or_seq_hop) {
+    case srs_config::srs_resource::group_or_sequence_hopping::neither:
+      res.group_or_seq_hop = srs_res_s::group_or_seq_hop_opts::neither;
+      break;
+    case srs_config::srs_resource::group_or_sequence_hopping::groupHopping:
+      res.group_or_seq_hop = srs_res_s::group_or_seq_hop_opts::group_hop;
+      break;
+    case srs_config::srs_resource::group_or_sequence_hopping::sequenceHopping:
+      res.group_or_seq_hop = srs_res_s::group_or_seq_hop_opts::seq_hop;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid grp or seq hop={}", cfg.grp_or_seq_hop);
+  }
+
+  switch (cfg.res_type) {
+    case srs_config::srs_resource::resource_type::aperiodic: {
+      res.res_type.set_aperiodic();
+    } break;
+    case srs_config::srs_resource::resource_type::semi_persistent: {
+      auto& sp_res = res.res_type.set_semi_persistent();
+      make_asn1_rrc_srs_config_perioidicity_and_offset(sp_res.periodicity_and_offset_sp,
+                                                       cfg.semi_pers_res_type_periodicity_and_offset);
+    } break;
+    case srs_config::srs_resource::resource_type::periodic: {
+      auto& p_res = res.res_type.set_semi_persistent();
+      make_asn1_rrc_srs_config_perioidicity_and_offset(p_res.periodicity_and_offset_sp,
+                                                       cfg.semi_pers_res_type_periodicity_and_offset);
+    } break;
+    default:
+      srsgnb_assertion_failure("Invalid resource type={}", cfg.res_type);
+  }
+
+  res.seq_id = cfg.sequence_id;
+
+  if (cfg.spatial_relation_info.has_value()) {
+    res.spatial_relation_info_present = true;
+    if (cfg.spatial_relation_info.value().serv_cell_id.has_value()) {
+      res.spatial_relation_info.serving_cell_id_present = true;
+      res.spatial_relation_info.serving_cell_id         = cfg.spatial_relation_info.value().serv_cell_id.value();
+    }
+    if (variant_holds_alternative<ssb_id_t>(cfg.spatial_relation_info.value().reference_signal)) {
+      auto& ssb_idx = res.spatial_relation_info.ref_sig.set_ssb_idx();
+      ssb_idx       = variant_get<ssb_id_t>(cfg.spatial_relation_info.value().reference_signal);
+    } else if (variant_holds_alternative<nzp_csi_rs_res_id_t>(cfg.spatial_relation_info.value().reference_signal)) {
+      auto& csi_rs_idx = res.spatial_relation_info.ref_sig.set_csi_rs_idx();
+      csi_rs_idx       = variant_get<nzp_csi_rs_res_id_t>(cfg.spatial_relation_info.value().reference_signal);
+    } else if (variant_holds_alternative<srs_config::srs_resource::srs_spatial_relation_info::srs_ref_signal>(
+                   cfg.spatial_relation_info.value().reference_signal)) {
+      auto&       srs_ref_sig     = res.spatial_relation_info.ref_sig.set_srs();
+      const auto& cfg_srs_ref_sig = variant_get<srs_config::srs_resource::srs_spatial_relation_info::srs_ref_signal>(
+          cfg.spatial_relation_info.value().reference_signal);
+      srs_ref_sig.res_id = cfg_srs_ref_sig.res_id;
+      srs_ref_sig.ul_bwp = cfg_srs_ref_sig.ul_bwp;
+    }
+  }
+
+  return res;
+}
+
 void calculate_srs_config_diff(asn1::rrc_nr::srs_cfg_s& out, const srs_config& src, const srs_config& dest)
 {
   calculate_addmodremlist_diff(
@@ -1282,7 +1495,13 @@ void calculate_srs_config_diff(asn1::rrc_nr::srs_cfg_s& out, const srs_config& s
       [](const srs_config::srs_resource_set& res) { return make_asn1_rrc_srs_res_set(res); },
       [](const srs_config::srs_resource_set& res) { return res.id; });
 
-  // TODO SRS Resource
+  calculate_addmodremlist_diff(
+      out.srs_res_to_add_mod_list,
+      out.srs_res_to_release_list,
+      src.srs_res,
+      dest.srs_res,
+      [](const srs_config::srs_resource& res) { return make_asn1_rrc_srs_res(res); },
+      [](const srs_config::srs_resource& res) { return res.id; });
 
   if (dest.is_tpc_accum_disabled) {
     out.tpc_accumulation_present = true;
