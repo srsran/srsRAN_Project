@@ -122,6 +122,7 @@ struct srs_config {
     bool operator!=(const srs_resource_set& rhs) const { return !(rhs == *this); }
   };
 
+  /// \brief Periodicity and slot offset for a SRS resource.
   struct srs_periodicity_and_offset {
     enum class type_t {
       sl1,
@@ -152,41 +153,19 @@ struct srs_config {
   };
 
   struct srs_resource {
+    /// \brief Number of ports for SRS.
     enum class nof_srs_ports { port1, ports2, ports4 };
 
+    /// \brief The PTRS port index for a SRS resource for non-codebook based UL MIMO.
     enum class ptrs_port_index { n0, n1, not_set };
 
-    struct n2_transmission_comb {
-      /// Values {0,...,1}.
-      uint8_t comb_offset_n2;
-      /// Cyclic shift configuration. Values {0,...,7}. See TS 38.214, clause 6.2.1.
-      uint8_t cyclic_shift_n2;
-
-      bool operator==(const n2_transmission_comb& rhs) const
-      {
-        return comb_offset_n2 == rhs.comb_offset_n2 && cyclic_shift_n2 == rhs.cyclic_shift_n2;
-      }
-      bool operator!=(const n2_transmission_comb& rhs) const { return !(rhs == *this); }
-    };
-
-    struct n4_transmission_comb {
-      /// Values {0,...,3}.
-      uint8_t comb_offset_n4;
-      /// Cyclic shift configuration. Values {0,...,11}. See TS 38.214, clause 6.2.1.
-      uint8_t cyclic_shift_n4;
-
-      bool operator==(const n4_transmission_comb& rhs) const
-      {
-        return comb_offset_n4 == rhs.comb_offset_n4 && cyclic_shift_n4 == rhs.cyclic_shift_n4;
-      }
-      bool operator!=(const n4_transmission_comb& rhs) const { return !(rhs == *this); }
-    };
-
+    /// \brief OFDM symbol location of the SRS resource.
     struct resource_mapping {
+      /// \brief Number of OFDM symbols.
       enum class nof_symbols { n1, n2, n4 };
       enum class repetition_factor { n1, n2, n4 };
 
-      /// Values {0,...,5}.
+      /// Values {0,...,5}. Value 0 refers to the last symbol, value 1 refers to the second last symbol.
       uint8_t           start_pos;
       nof_symbols       nof_symb;
       repetition_factor re_factor;
@@ -221,6 +200,7 @@ struct srs_config {
 
     enum resource_type { aperiodic, semi_persistent, periodic };
 
+    /// \brief Configuration of the spatial relation between a reference RS and the target SRS.
     struct srs_spatial_relation_info {
       optional<du_cell_index_t> serv_cell_id;
 
@@ -245,8 +225,16 @@ struct srs_config {
     nof_srs_ports   nof_ports;
     ptrs_port_index ptrs_port{ptrs_port_index::not_set};
 
-    variant<n2_transmission_comb, n4_transmission_comb> trans_comb;
-    resource_mapping                                    res_mapping;
+    /// Values {2,4,8}. See 3GPP TS 38.331, "SRS-Resource".
+    uint8_t trans_comb_value;
+    /// Values {0,...,trans_comb_value-1}. See 3GPP TS 38.331, "SRS-Resource".
+    uint8_t trans_comb_offset;
+    /// For Transmission Comb value:
+    ///  2 => Cyclic shift configuration. Values {0,...,7}.
+    ///  4 => Cyclic shift configuration. Values {0,...,11}.
+    /// See TS 38.214, clause 6.2.1.
+    uint8_t          trans_comb_cyclic_shift;
+    resource_mapping res_mapping;
     /// Values {0,...,67}.
     uint8_t fre_domain_pos;
     /// Values {0,...,268}.
@@ -258,16 +246,17 @@ struct srs_config {
     srs_periodicity_and_offset semi_pers_res_type_periodicity_and_offset;
     /// Set/Valid only if resource type is periodic.
     srs_periodicity_and_offset per_res_type_periodicity_and_offset;
-    /// Values {0,...,1023}.
+    /// Sequence ID used to initialize pseudo random group and sequence hopping. Values {0,...,1023}.
     uint16_t                            sequence_id;
     optional<srs_spatial_relation_info> spatial_relation_info;
 
     bool operator==(const srs_resource& rhs) const
     {
-      return id == rhs.id && nof_ports == rhs.nof_ports && ptrs_port == rhs.ptrs_port && trans_comb == rhs.trans_comb &&
-             res_mapping == rhs.res_mapping && fre_domain_pos == rhs.fre_domain_pos &&
-             fre_domain_shift == rhs.fre_domain_shift && fre_hop == rhs.fre_hop &&
-             grp_or_seq_hop == rhs.grp_or_seq_hop && res_type == rhs.res_type &&
+      return id == rhs.id && nof_ports == rhs.nof_ports && ptrs_port == rhs.ptrs_port &&
+             trans_comb_value == rhs.trans_comb_value && trans_comb_offset == rhs.trans_comb_offset &&
+             trans_comb_cyclic_shift == rhs.trans_comb_cyclic_shift && res_mapping == rhs.res_mapping &&
+             fre_domain_pos == rhs.fre_domain_pos && fre_domain_shift == rhs.fre_domain_shift &&
+             fre_hop == rhs.fre_hop && grp_or_seq_hop == rhs.grp_or_seq_hop && res_type == rhs.res_type &&
              semi_pers_res_type_periodicity_and_offset == rhs.semi_pers_res_type_periodicity_and_offset &&
              per_res_type_periodicity_and_offset == rhs.per_res_type_periodicity_and_offset &&
              sequence_id == rhs.sequence_id && spatial_relation_info == rhs.spatial_relation_info;
@@ -277,7 +266,10 @@ struct srs_config {
 
   static_vector<srs_resource_set, srs_res_set_id::MAX_NOF_SRS_RES_SETS> srs_res_set;
   static_vector<srs_resource, srs_res_id::MAX_NOF_SRS_RES>              srs_res;
-  bool                                                                  is_tpc_accum_disabled{false};
+  /// Mapping to NR RRC: If true, the field is present in NR RRC indicating value disabled and UE applies the TPC
+  /// command without accumulation (this applies to SRS when a separate closed loop is configured for SRS). If false,
+  /// the field is absent in NR RRC and UE applies TPC commands via accumulation.
+  bool is_tpc_accum_disabled{false};
 
   bool operator==(const srs_config& rhs) const
   {
