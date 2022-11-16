@@ -26,7 +26,7 @@ public:
   f1u_du_rx_lower_data_interface(const f1u_du_rx_lower_data_interface&&)            = delete;
   f1u_du_rx_lower_data_interface& operator=(const f1u_du_rx_lower_data_interface&&) = delete;
 
-  virtual void handle_pdu(byte_buffer_slice_chain pdu) = 0;
+  virtual void handle_pdcp_pdu(byte_buffer_slice_chain pdu) = 0;
 };
 
 } // namespace srsgnb

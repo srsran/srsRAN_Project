@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/f1u/f1u_du_rx.h"
+#include "srsgnb/f1u/f1u_du_transport.h"
 #include "srsgnb/f1u/f1u_du_tx.h"
 
 namespace srsgnb {
@@ -25,8 +26,9 @@ public:
   f1u_du_entity(const f1u_du_entity&&)            = delete;
   f1u_du_entity& operator=(const f1u_du_entity&&) = delete;
 
-  virtual f1u_du_tx_lower_data_interface& get_tx_lower_data_interface() = 0;
-  virtual f1u_du_rx_lower_data_interface& get_rx_lower_data_interface() = 0;
+  virtual f1u_du_tx_lower_data_interface&   get_tx_lower_data_interface()   = 0;
+  virtual f1u_du_rx_lower_data_interface&   get_rx_lower_data_interface()   = 0;
+  virtual f1u_du_upper_transport_interface& get_upper_transport_interface() = 0;
 };
 
 } // namespace srsgnb

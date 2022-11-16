@@ -29,8 +29,8 @@ public:
 
   /// \brief Interface for higher layers to pass PDCP PDUs to lower layers
   /// \param pdu PDCP PDU to be handled
-  virtual void handle_pdu(byte_buffer pdu, uint32_t count) = 0;
-  virtual void discard_pdu(uint32_t count)                 = 0;
+  virtual void handle_pdcp_pdu(byte_buffer pdu, uint32_t count) = 0;
+  virtual void discard_pdcp_pdu(uint32_t count)                 = 0;
 };
 
 /// This interface represents the notification exit point of the transmitting side of a F1-U entity
@@ -45,7 +45,7 @@ public:
   f1u_cu_up_tx_upper_data_notifier(const f1u_cu_up_tx_upper_data_notifier&&)            = delete;
   f1u_cu_up_tx_upper_data_notifier& operator=(const f1u_cu_up_tx_upper_data_notifier&&) = delete;
 
-  virtual void on_delivered_pdu(uint32_t count) = 0;
+  virtual void on_delivered_pdcp_pdu(uint32_t count) = 0;
 };
 
 } // namespace srsgnb
