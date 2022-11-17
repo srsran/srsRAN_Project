@@ -12,6 +12,7 @@
 
 #include "gtpu_entity_dl.h"
 #include "gtpu_entity_ul.h"
+#include "srsgnb/gtpu/gtpu_config.h"
 #include "srsgnb/gtpu/gtpu_entity.h"
 #include "srsgnb/srslog/logger.h"
 
@@ -21,16 +22,15 @@ class gtpu_entity_impl : public gtpu_entity
 {
 public:
   gtpu_entity_impl(uint32_t                      ue_index,
-                   uint32_t                      src_teid,
-                   uint32_t                      dst_teid,
+                   gtpu_config                   cfg,
                    gtpu_dl_lower_layer_notifier& dl_lower,
                    gtpu_ul_upper_layer_notifier& ul_upper) :
     logger(srslog::fetch_basic_logger("GTPU"))
   {
     dl = std::make_unique<gtpu_entity_dl>(ue_index);
-    logger.info("GTP-U DL configured"); // TODO print config
+    logger.info("GTP-U DL configured: {}", cfg.dl);
     ul = std::make_unique<gtpu_entity_ul>(ue_index);
-    logger.info("GTP-U UL configured"); // TODO print config
+    logger.info("GTP-U UL configured: {}", cfg.ul);
   }
   ~gtpu_entity_impl() override = default;
 

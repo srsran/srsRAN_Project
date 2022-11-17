@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/gtpu/gtpu_config.h"
 #include "srsgnb/gtpu/gtpu_entity.h"
 #include <memory>
 
@@ -19,13 +20,12 @@ namespace srsgnb {
 
 struct gtpu_entity_creation_message {
   uint32_t                      ue_index;
-  uint32_t                      src_teid;
-  uint32_t                      dst_teid;
+  gtpu_config                   cfg;
   gtpu_dl_lower_layer_notifier* dl_lower;
   gtpu_ul_upper_layer_notifier* ul_upper;
 };
 
-/// Creates an instance of a PDCP entity.
+/// Creates an instance of a GTP-U entity.
 std::unique_ptr<gtpu_entity> create_gtpu_entity(gtpu_entity_creation_message& msg);
 
 } // namespace srsgnb
