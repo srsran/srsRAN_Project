@@ -196,28 +196,75 @@ public:
           0xbb, 0xf0, 0x30, 0x43, 0x80, 0x00, 0x00, 0x07, 0x12, 0x81, 0xc0, 0x00, 0x02, 0x05, 0xef, 0x40, 0x10,
           0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x14, 0x10, 0x0c, 0xa8, 0x18, 0x06, 0x20, 0x00};
 
-      // Unpack the pre-canned Msg4, that contains the DL-CCCH RRC setup message.
-      byte_buffer                 msg4_pdu(span<const uint8_t>{msg4, sizeof(msg4)});
-      asn1::cbit_ref              r_bref{msg4_pdu};
-      asn1::rrc_nr::dl_ccch_msg_s msg4_rrc;
-      msg4_rrc.unpack(r_bref);
+      {
+        byte_buffer                 msg4_pdu(span<const uint8_t>{msg4, sizeof(msg4)});
+        asn1::cbit_ref              bref{msg4_pdu};
+        asn1::rrc_nr::dl_ccch_msg_s msg4_rrc;
+        msg4_rrc.unpack(bref);
+        asn1::rrc_nr::rrc_setup_ies_s& ies = msg4_rrc.msg.c1().rrc_setup().crit_exts.rrc_setup();
 
-      // Copy DU-to-CU RRC container stored in the F1AP "INITIAL UL RRC MESSAGE TRANSFER" to masterCellGroup field of
-      // the unpacked RRC Setup message.
-      const auto& src  = msg.pdu.init_msg().value.init_ulrrc_msg_transfer()->duto_currc_container.value;
-      auto&       dest = msg4_rrc.msg.c1().rrc_setup().crit_exts.rrc_setup().master_cell_group;
-      dest.resize(src.size());
-      std::copy(src.begin(), src.end(), dest.begin());
+        byte_buffer msg4_pdu2{span<const uint8_t>{ies.master_cell_group.data(), ies.master_cell_group.size()}};
+        bref = asn1::cbit_ref{msg4_pdu2};
+        asn1::rrc_nr::cell_group_cfg_s msg4_cell_group;
+        msg4_cell_group.unpack(bref);
 
-      // Pack the updated RRC setup message.
-      msg4_pdu.clear();
-      asn1::bit_ref w_bref{msg4_pdu};
-      msg4_rrc.pack(w_bref);
+        auto& pucch_cfg = msg4_cell_group.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup();
+        pucch_cfg.res_set_to_add_mod_list.resize(1);
+        pucch_cfg.res_set_to_add_mod_list[0].pucch_res_set_id = 0;
+        pucch_cfg.res_set_to_add_mod_list[0].res_list.resize(2);
+        pucch_cfg.res_set_to_add_mod_list[0].res_list[0]                                 = 0;
+        pucch_cfg.res_set_to_add_mod_list[0].res_list[1]                                 = 1;
+        pucch_cfg.sched_request_res_to_add_mod_list[0].periodicity_and_offset.set_sl40() = 0;
+        pucch_cfg.sched_request_res_to_add_mod_list[0].res                               = 1;
+        pucch_cfg.res_to_add_mod_list[0].pucch_res_id                                    = 0;
+        pucch_cfg.res_to_add_mod_list[0].start_prb                                       = 51;
+        pucch_cfg.res_to_add_mod_list[0].intra_slot_freq_hop_present                     = true;
+        pucch_cfg.res_to_add_mod_list[0].second_hop_prb_present                          = true;
+        pucch_cfg.res_to_add_mod_list[0].second_hop_prb                                  = 0;
+        pucch_cfg.res_to_add_mod_list[0].format.set_format1()                            = {};
+        pucch_cfg.res_to_add_mod_list[0].format.format1().nrof_symbols                   = 14;
+        pucch_cfg.res_to_add_mod_list[1].pucch_res_id                                    = 1;
+        pucch_cfg.res_to_add_mod_list[1].start_prb                                       = 0;
+        pucch_cfg.res_to_add_mod_list[1].intra_slot_freq_hop_present                     = true;
+        pucch_cfg.res_to_add_mod_list[1].second_hop_prb_present                          = true;
+        pucch_cfg.res_to_add_mod_list[1].second_hop_prb                                  = 51;
+        pucch_cfg.res_to_add_mod_list[1].format.set_format1()                            = {};
+        pucch_cfg.res_to_add_mod_list[1].format.format1().nrof_symbols                   = 14;
+        pucch_cfg.format2_present                                                        = false;
+        pucch_cfg.format1_present                                                        = true;
+        pucch_cfg.format1.set_setup();
 
-      // Store the packed RRC setup message in the RRC container field of the F1 DL RRC Message that is sent to the DU.
-      resp->rrc_container.value.resize(msg4_pdu.length());
-      std::copy(msg4_pdu.begin(), msg4_pdu.end(), resp->rrc_container.value.begin());
+        auto& ss_cmn = msg4_cell_group.sp_cell_cfg.sp_cell_cfg_ded.init_dl_bwp.pdcch_cfg.setup()
+                           .search_spaces_to_add_mod_list[0]
+                           .search_space_type.set_common();
+        ss_cmn.dci_format0_minus0_and_format1_minus0_present = true;
 
+        auto& freqres = msg4_cell_group.sp_cell_cfg.sp_cell_cfg_ded.init_dl_bwp.pdcch_cfg.setup()
+                            .coreset_to_add_mod_list[0]
+                            .freq_domain_res;
+        for (unsigned i = 0; i != 6; ++i) {
+          freqres.set(45 - i - 1, true);
+        }
+
+        auto& cs_common =
+            msg4_cell_group.sp_cell_cfg.sp_cell_cfg_ded.init_dl_bwp.pdcch_cfg.setup().coreset_to_add_mod_list[0];
+        cs_common.pdcch_dmrs_scrambling_id_present = true;
+        cs_common.pdcch_dmrs_scrambling_id         = 0;
+        auto& pdsc_cfg = msg4_cell_group.sp_cell_cfg.sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup();
+        pdsc_cfg.data_scrambling_id_pdsch_present = true;
+        pdsc_cfg.data_scrambling_id_pdsch         = 0;
+
+        msg4_pdu2.clear();
+        asn1::bit_ref bref2{msg4_pdu2};
+        msg4_cell_group.pack(bref2);
+        ies.master_cell_group.resize(msg4_pdu2.length());
+        std::copy(msg4_pdu2.begin(), msg4_pdu2.end(), ies.master_cell_group.begin());
+        msg4_pdu.clear();
+        bref2 = asn1::bit_ref{msg4_pdu};
+        msg4_rrc.pack(bref2);
+        resp->rrc_container.value.resize(msg4_pdu.length());
+        std::copy(msg4_pdu.begin(), msg4_pdu.end(), resp->rrc_container.value.begin());
+      }
     } else if (msg.pdu.init_msg().value.type().value ==
                asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request) {
       // Generate a fake F1 Setup response message and pass it back to the DU.

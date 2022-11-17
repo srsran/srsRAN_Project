@@ -229,7 +229,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   sch_mcs_index    mcs;
   ul_harq_process& h_ul = ue_cc->harqs.ul_harq(grant.h_id);
   if (h_ul.empty()) {
-    mcs = 10; // TODO: Parameterize.
+    mcs = 3; // TODO: Parameterize.
   } else {
     mcs = h_ul.last_tx_params().mcs;
   }
