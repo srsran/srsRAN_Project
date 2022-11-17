@@ -6,7 +6,12 @@ namespace srsgnb {
 
 /// \brief Generic network gateway interfaces to connect components to the outside world.
 
-enum class network_gateway_type { sctp };
+enum class network_gateway_type {
+  sctp, ///< SCTP gateway
+  udp   ///< UDP gateway
+};
+
+constexpr uint32_t network_gateway_udp_max_len = 9100;
 
 struct network_gateway_config {
   network_gateway_type type = network_gateway_type::sctp;
