@@ -64,12 +64,14 @@ TEST(dl_harq_process, newtx_set_harq_to_not_empty)
   ASSERT_EQ(h_dl.last_alloc_params().tb[0]->tbs_bytes, tbs_bytes);
 }
 
+#ifdef ASSERTS_ENABLED
 TEST(dl_harq_process, retx_of_empty_harq_asserts)
 {
   dl_harq_process h_dl(to_harq_id(0));
   slot_point      sl_tx{0, 0};
-  ASSERT_DEATH(h_dl.new_retx(sl_tx, 4), ".*");
+  ASSERT_DEATH(h_dl.new_retx(sl_tx, 4), ".*") << "Retxing an empty HARQ should assert";
 }
+#endif
 
 TEST(dl_harq_process, ack_of_empty_harq_is_noop)
 {
@@ -95,6 +97,7 @@ TEST(dl_harq_process, when_max_retx_exceeded_and_nack_is_received_harq_becomes_e
   ASSERT_FALSE(h_dl.has_pending_retx());
 }
 
+#ifdef ASSERTS_ENABLED
 TEST(dl_harq_process, when_harq_has_no_pending_retx_calling_newtx_or_retx_asserts)
 {
   unsigned        max_ack_wait_slots = 1, k1 = 1, max_harq_retxs = 1;
@@ -106,6 +109,7 @@ TEST(dl_harq_process, when_harq_has_no_pending_retx_calling_newtx_or_retx_assert
   ASSERT_DEATH(h_dl.new_tx(sl_tx, k1, max_harq_retxs), ".*");
   ASSERT_DEATH(h_dl.new_retx(sl_tx, k1), ".*");
 }
+#endif
 
 /// Tester for different combinations of max HARQ retxs, ack wait timeouts, and k1s.
 class dl_harq_process_tester : public ::testing::TestWithParam<std::tuple<unsigned, unsigned, unsigned>>
