@@ -20,13 +20,13 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, srslog::basi
 {
   // flags
   if (!gtpu_supported_flags_check(header, logger)) {
-    logger.error("gtpu_write_header - Unhandled GTP-U Flags. Flags: 0x{:x}", header.flags);
+    logger.error("gtpu_write_header - Unhandled GTP-U Flags. Flags: {}", header.flags);
     return false;
   }
 
   // msg type
   if (!gtpu_supported_msg_type_check(header, logger)) {
-    logger.error("gtpu_write_header - Unhandled GTP-U Message Type. Message Type: 0x{:x}", header.message_type);
+    logger.error("gtpu_write_header - Unhandled GTP-U Message Type. Message Type: {}", header.message_type);
     return false;
   }
 

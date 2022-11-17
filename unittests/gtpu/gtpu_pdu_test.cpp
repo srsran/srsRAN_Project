@@ -16,7 +16,7 @@
 
 using namespace srsgnb;
 
-/// \brief Test correct creation of PDCP TX  entity
+/// \brief Test correct packing/unpacking of GTPU PDU
 TEST_F(gtpu_test, pack_unpack)
 {
   srsgnb::test_delimit_logger delimiter("GTP-U unpack/pack test");

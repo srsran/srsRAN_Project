@@ -17,12 +17,7 @@
 
 namespace srsgnb {
 
-/// \brief Configurable parameters for PDCP
-///
-/// Parameters and valid values for them are taken from
-/// the RRC-NR PDCP-Config Information Element.
-///
-/// Ref: 3GPP TS 38.331 version 15.2.1
+/// \brief Configurable parameters for the GTP-U
 struct gtpu_config {
   struct gtpu_dl_config {
     uint32_t src_teid;

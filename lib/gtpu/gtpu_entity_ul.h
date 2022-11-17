@@ -34,9 +34,12 @@ public:
    */
   void handle_pdu(byte_buffer buf) final
   {
-    gtpu_header hdr = {};
-    hdr.teid        = cfg.dst_teid;
-    bool write_ok   = gtpu_write_header(buf, hdr, logger);
+    gtpu_header hdr         = {};
+    hdr.flags.version       = GTPU_FLAGS_VERSION_V1;
+    hdr.flags.protocol_type = GTPU_FLAGS_GTP_PROTOCOL;
+    hdr.message_type        = GTPU_MSG_DATA_PDU;
+    hdr.teid                = cfg.dst_teid;
+    bool write_ok           = gtpu_write_header(buf, hdr, logger);
     if (!write_ok) {
       logger.error("Error writing GTP-U header, discarding.");
       return;

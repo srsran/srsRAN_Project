@@ -18,8 +18,7 @@
 
 namespace srsgnb {
 
-/// Base class used for transmitting PDCP bearers.
-/// It provides interfaces for the PDCP bearers, for the higher and lower layers
+/// Class used for receiving GTP-U bearers.
 class gtpu_entity_dl : public gtpu_dl_upper_layer_interface
 {
 public:

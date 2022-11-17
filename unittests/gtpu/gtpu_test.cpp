@@ -41,8 +41,25 @@ TEST_F(gtpu_test, rx_sdu)
   byte_buffer                    orig_vec{gtpu_ping_vec};
   gtpu_dl_upper_layer_interface* tx = gtpu->get_dl_upper_layer_interface();
   tx->handle_sdu(std::move(orig_vec));
+};
 
-  ASSERT_NE(gtpu, nullptr);
+TEST_F(gtpu_test, tx_pdu)
+{
+  srsgnb::test_delimit_logger delimiter("GTP-U entity creation test");
+
+  gtpu_test_dl                 gtpu_dl = {};
+  gtpu_test_ul                 gtpu_ul = {};
+  gtpu_entity_creation_message msg     = {};
+  msg.cfg.ul.dst_teid                  = 0x1;
+  msg.dl_lower                         = &gtpu_dl;
+  msg.ul_upper                         = &gtpu_ul;
+  std::unique_ptr<gtpu_entity> gtpu    = create_gtpu_entity(msg);
+  byte_buffer                  vec{gtpu_ping_vec};
+  gtpu_header                  tmp;
+  bool                         read_ok = gtpu_read_and_strip_header(tmp, vec, gtpu_logger);
+  ASSERT_EQ(read_ok, true);
+  gtpu_ul_lower_layer_interface* rx = gtpu->get_ul_lower_layer_interface();
+  rx->handle_pdu(std::move(vec));
 };
 
 int main(int argc, char** argv)
