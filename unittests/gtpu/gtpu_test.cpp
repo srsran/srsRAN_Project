@@ -17,7 +17,7 @@
 
 using namespace srsgnb;
 
-/// \brief Test correct creation of PDCP TX  entity
+/// \brief Test correct creation of GTP-U entity
 TEST_F(gtpu_test, entity_creation)
 {
   srsgnb::test_delimit_logger  delimiter("GTP-U entity creation test");

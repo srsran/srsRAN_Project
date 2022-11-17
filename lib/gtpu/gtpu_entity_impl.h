@@ -27,9 +27,9 @@ public:
                    gtpu_ul_upper_layer_notifier& ul_upper) :
     logger(srslog::fetch_basic_logger("GTPU"))
   {
-    dl = std::make_unique<gtpu_entity_dl>(ue_index);
+    dl = std::make_unique<gtpu_entity_dl>(ue_index, cfg.dl, dl_lower);
     logger.info("GTP-U DL configured: {}", cfg.dl);
-    ul = std::make_unique<gtpu_entity_ul>(ue_index);
+    ul = std::make_unique<gtpu_entity_ul>(ue_index, cfg.ul, ul_upper);
     logger.info("GTP-U UL configured: {}", cfg.ul);
   }
   ~gtpu_entity_impl() override = default;
