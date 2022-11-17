@@ -30,7 +30,7 @@ public:
   /*
    * SDU/PDU handlers
    */
-  void handle_sdu(byte_buffer sdu) final;
+  void handle_sdu(byte_buffer sdu) final {}
 
 private:
   srslog::basic_logger& logger;

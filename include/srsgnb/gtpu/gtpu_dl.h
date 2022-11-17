@@ -50,4 +50,21 @@ public:
   virtual void handle_sdu(byte_buffer sdu) = 0;
 };
 
+/// This interface represents the data entry point of the transmitting side of a GTP-U entity.
+/// The upper-layers will use this call to pass GTP-U SDUs into the TX entity.
+class gtpu_dl_lower_layer_notifier
+{
+public:
+  gtpu_dl_lower_layer_notifier()                                                = default;
+  virtual ~gtpu_dl_lower_layer_notifier()                                       = default;
+  gtpu_dl_lower_layer_notifier(const gtpu_dl_lower_layer_notifier&)             = delete;
+  gtpu_dl_lower_layer_notifier& operator=(const gtpu_dl_lower_layer_notifier&)  = delete;
+  gtpu_dl_lower_layer_notifier(const gtpu_dl_lower_layer_notifier&&)            = delete;
+  gtpu_dl_lower_layer_notifier& operator=(const gtpu_dl_lower_layer_notifier&&) = delete;
+
+  /// \brief Interface for the IO gateway to pass SDUs into the GTP-U
+  /// \param sdu SDU to be handled
+  virtual void on_new_pdu(byte_buffer pdu) = 0;
+};
+
 } // namespace srsgnb
