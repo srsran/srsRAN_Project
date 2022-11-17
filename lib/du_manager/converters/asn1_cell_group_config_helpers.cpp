@@ -589,7 +589,10 @@ asn1::rrc_nr::pucch_res_s srsgnb::srs_du::make_asn1_rrc_pucch_resource(const puc
   pucch_res.pucch_res_id                = cfg.res_id;
   pucch_res.start_prb                   = cfg.starting_prb;
   pucch_res.intra_slot_freq_hop_present = cfg.intraslot_freq_hopping;
-  pucch_res.second_hop_prb              = cfg.second_hop_prb;
+  if (pucch_res.intra_slot_freq_hop_present) {
+    pucch_res.second_hop_prb         = cfg.second_hop_prb;
+    pucch_res.second_hop_prb_present = true;
+  }
   switch (cfg.format) {
     case pucch_format::FORMAT_0: {
       auto& format0             = pucch_res.format.set_format0();
