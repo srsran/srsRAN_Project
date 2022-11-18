@@ -11,7 +11,8 @@ enum class network_gateway_type {
   udp   ///< UDP gateway
 };
 
-constexpr uint32_t network_gateway_udp_max_len = 9100;
+constexpr uint32_t network_gateway_sctp_max_len = 9100;
+constexpr uint32_t network_gateway_udp_max_len  = 9100;
 
 struct network_gateway_config {
   network_gateway_type type = network_gateway_type::sctp;

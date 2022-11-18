@@ -349,8 +349,16 @@ void sctp_network_gateway::receive()
   struct sctp_sndrcvinfo sri       = {};
   int                    msg_flags = 0;
 
-  int rx_bytes = ::sctp_recvmsg(
-      sock_fd, rx_buffer.data(), rx_buffer.size(), (struct sockaddr*)&client_addr, &client_addrlen, &sri, &msg_flags);
+  // Fixme: consider class member on heap when sequential access is guaranteed
+  std::array<uint8_t, network_gateway_sctp_max_len> contiguous_buf; // no init
+
+  int rx_bytes = ::sctp_recvmsg(sock_fd,
+                                contiguous_buf.data(),
+                                network_gateway_udp_max_len,
+                                (struct sockaddr*)&client_addr,
+                                &client_addrlen,
+                                &sri,
+                                &msg_flags);
 
   if (rx_bytes == -1 && errno != EAGAIN) {
     logger.error("Error reading from SCTP socket: {}", strerror(errno));
@@ -358,7 +366,7 @@ void sctp_network_gateway::receive()
     logger.debug("Socket timeout reached");
   } else {
     logger.debug("Received {} bytes on SCTP socket", rx_bytes);
-    span<socket_buffer_type> payload(rx_buffer.data(), rx_bytes);
+    span<socket_buffer_type> payload(contiguous_buf.data(), rx_bytes);
     if (msg_flags & MSG_NOTIFICATION) {
       // Received notification
       handle_notification(payload);
@@ -460,22 +468,30 @@ void sctp_network_gateway::handle_pdu(const byte_buffer& pdu)
     return;
   }
 
-  // send segment by segment over socket
-  for (const auto& segment : pdu.segments()) {
-    int bytes_sent = sctp_sendmsg(sock_fd,
-                                  segment.data(),
-                                  segment.size_bytes(),
-                                  (struct sockaddr*)&server_addr,
-                                  server_addrlen,
-                                  ppi,
-                                  0,
-                                  stream_no,
-                                  0,
-                                  0);
-    if (bytes_sent == -1) {
-      logger.error("Couldn't send {} B of data on SCTP socket: {}", pdu.length(), strerror(errno));
-      return;
+  if (pdu.length() > network_gateway_sctp_max_len) {
+    logger.error("PDU of {} bytes exceeds maximum length of {} bytes", pdu.length(), network_gateway_sctp_max_len);
+    return;
+  }
+
+  // Fixme: consider class member on heap when sequential access is guaranteed
+  std::array<uint8_t, network_gateway_sctp_max_len> contiguous_buf; // no init
+  const uint8_t*                                    payload = nullptr;
+  if (pdu.is_contiguous()) {
+    payload = pdu.segments().begin()->data();
+  } else {
+    payload      = contiguous_buf.data();
+    uint8_t* pos = contiguous_buf.data();
+    for (const auto& segment : pdu.segments()) {
+      memcpy(pos, segment.data(), segment.size_bytes());
+      pos += segment.size_bytes();
     }
+  }
+
+  int bytes_sent = sctp_sendmsg(
+      sock_fd, payload, pdu.length(), (struct sockaddr*)&server_addr, server_addrlen, ppi, 0, stream_no, 0, 0);
+  if (bytes_sent == -1) {
+    logger.error("Couldn't send {} B of data on SCTP socket: {}", pdu.length(), strerror(errno));
+    return;
   }
 }
 

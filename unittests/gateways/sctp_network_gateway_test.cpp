@@ -11,6 +11,7 @@
 #include <functional> // for std::function/std::bind
 #include <gtest/gtest.h>
 #include <netinet/in.h>
+#include <queue>
 #include <stdio.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -20,15 +21,28 @@
 
 using namespace srsgnb;
 
-static const std::string tx_buf = "Hello World!";
-
-byte_buffer make_tx_byte_buffer()
+byte_buffer make_tx_byte_buffer(uint32_t length)
 {
   byte_buffer pdu{};
-  for (unsigned i = 0; i != tx_buf.size(); ++i) {
-    pdu.append((uint8_t)tx_buf[i]);
+  for (uint32_t i = 0; i < length; ++i) {
+    pdu.append((uint8_t)i);
   }
   return pdu;
+}
+
+byte_buffer make_small_tx_byte_buffer()
+{
+  return make_tx_byte_buffer(15);
+}
+
+byte_buffer make_large_tx_byte_buffer()
+{
+  return make_tx_byte_buffer(9000);
+}
+
+byte_buffer make_oversized_tx_byte_buffer()
+{
+  return make_tx_byte_buffer(9500);
 }
 
 class dummy_network_gateway_control_notifier : public network_gateway_control_notifier
@@ -54,9 +68,12 @@ public:
   {
     // printf("Received PDU\n");
     rx_bytes += pdu.length();
+    pdu_queue.push(std::move(pdu));
   }
 
   unsigned get_rx_bytes() { return rx_bytes; }
+
+  std::queue<byte_buffer> pdu_queue;
 
 private:
   unsigned rx_bytes = 0;
@@ -226,13 +243,26 @@ TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
   start_receive_thread();
   ASSERT_TRUE(connect());
 
-  byte_buffer pdu(make_tx_byte_buffer());
-  send_to_server(pdu);
+  byte_buffer pdu_small(make_small_tx_byte_buffer());
+  send_to_server(pdu_small);
+  byte_buffer pdu_large(make_large_tx_byte_buffer());
+  send_to_server(pdu_large);
+  byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
+  send_to_server(pdu_oversized);
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
-  ASSERT_EQ(server_data_notifier.get_rx_bytes(), tx_buf.size());
+  // check reception of small PDU
+  ASSERT_FALSE(server_data_notifier.pdu_queue.empty());
+  ASSERT_EQ(server_data_notifier.pdu_queue.front(), pdu_small);
+  server_data_notifier.pdu_queue.pop();
+  // check reception of large PDU
+  ASSERT_FALSE(server_data_notifier.pdu_queue.empty());
+  ASSERT_EQ(server_data_notifier.pdu_queue.front(), pdu_large);
+  server_data_notifier.pdu_queue.pop();
+  // oversized PDU not expected to be received
+  ASSERT_TRUE(server_data_notifier.pdu_queue.empty());
 }
 
 TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
@@ -252,13 +282,26 @@ TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
   start_receive_thread();
   ASSERT_TRUE(connect());
 
-  byte_buffer pdu(make_tx_byte_buffer());
-  send_to_server(pdu);
+  byte_buffer pdu_small(make_small_tx_byte_buffer());
+  send_to_server(pdu_small);
+  byte_buffer pdu_large(make_large_tx_byte_buffer());
+  send_to_server(pdu_large);
+  byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
+  send_to_server(pdu_oversized);
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
-  ASSERT_EQ(server_data_notifier.get_rx_bytes(), tx_buf.size());
+  // check reception of small PDU
+  ASSERT_FALSE(server_data_notifier.pdu_queue.empty());
+  ASSERT_EQ(server_data_notifier.pdu_queue.front(), pdu_small);
+  server_data_notifier.pdu_queue.pop();
+  // check reception of large PDU
+  ASSERT_FALSE(server_data_notifier.pdu_queue.empty());
+  ASSERT_EQ(server_data_notifier.pdu_queue.front(), pdu_large);
+  server_data_notifier.pdu_queue.pop();
+  // oversized PDU not expected to be received
+  ASSERT_TRUE(server_data_notifier.pdu_queue.empty());
 }
 
 TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
@@ -278,13 +321,26 @@ TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
   start_receive_thread();
   ASSERT_TRUE(connect());
 
-  byte_buffer pdu(make_tx_byte_buffer());
-  send_to_server(pdu);
+  byte_buffer pdu_small(make_small_tx_byte_buffer());
+  send_to_server(pdu_small);
+  byte_buffer pdu_large(make_large_tx_byte_buffer());
+  send_to_server(pdu_large);
+  byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
+  send_to_server(pdu_oversized);
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
-  ASSERT_EQ(server_data_notifier.get_rx_bytes(), tx_buf.size());
+  // check reception of small PDU
+  ASSERT_FALSE(server_data_notifier.pdu_queue.empty());
+  ASSERT_EQ(server_data_notifier.pdu_queue.front(), pdu_small);
+  server_data_notifier.pdu_queue.pop();
+  // check reception of large PDU
+  ASSERT_FALSE(server_data_notifier.pdu_queue.empty());
+  ASSERT_EQ(server_data_notifier.pdu_queue.front(), pdu_large);
+  server_data_notifier.pdu_queue.pop();
+  // oversized PDU not expected to be received
+  ASSERT_TRUE(server_data_notifier.pdu_queue.empty());
 }
 
 TEST_F(sctp_network_gateway_tester, when_connection_loss_then_reconnect)

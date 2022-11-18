@@ -86,8 +86,6 @@ private:
 
   unsigned ppi       = 0; /// the Payload Protocol Identifier (e.g. 18 for S1AP)
   unsigned stream_no = 0; /// the stream number to use for sending
-
-  std::array<uint8_t, 1024> rx_buffer = {}; /// temporary Rx buffer for sctp_recv() operation
 };
 
 } // namespace srsgnb
