@@ -43,6 +43,7 @@ void udp_network_gateway::handle_pdu(const byte_buffer& pdu)
     return;
   }
 
+  // Fixme: consider class member on heap when sequential access is guaranteed
   std::array<uint8_t, network_gateway_udp_max_len> contiguous_buf; // no init
   const uint8_t*                                   payload = nullptr;
   if (pdu.is_contiguous()) {
@@ -251,6 +252,7 @@ bool udp_network_gateway::recreate_and_reconnect()
 
 void udp_network_gateway::receive()
 {
+  // Fixme: consider class member on heap when sequential access is guaranteed
   std::array<uint8_t, network_gateway_udp_max_len> contiguous_buf; // no init
 
   int rx_bytes = recv(sock_fd, contiguous_buf.data(), network_gateway_udp_max_len, 0);
