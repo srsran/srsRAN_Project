@@ -19,15 +19,15 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-du_processor_impl::du_processor_impl(const du_processor_config_t cfg_,
+du_processor_impl::du_processor_impl(const du_processor_config_t du_processor_config_,
                                      f1c_du_management_notifier& f1c_du_mgmt_notifier_,
                                      f1c_message_notifier&       f1c_notifier_,
                                      rrc_ue_nas_notifier&        rrc_ue_ngc_ev_notifier_) :
-  cfg(cfg_),
+  cfg(du_processor_config_),
   f1c_du_mgmt_notifier(f1c_du_mgmt_notifier_),
   f1c_notifier(f1c_notifier_),
   rrc_ue_ngc_ev_notifier(rrc_ue_ngc_ev_notifier_),
-  ue_mng(cfg_.logger)
+  ue_mng(du_processor_config_.logger)
 {
   const size_t number_of_pending_procedures = 16;
   for (size_t i = 0; i < MAX_NOF_UES; ++i) {
