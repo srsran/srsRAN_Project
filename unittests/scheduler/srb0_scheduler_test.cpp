@@ -36,7 +36,7 @@ struct srb0_test_params {
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
 struct test_bench {
-  scheduler_expert_config       expert_cfg;
+  scheduler_ue_expert_config    expert_cfg;
   cell_configuration            cell_cfg;
   cell_resource_allocator       res_grid;
   pdcch_resource_allocator_impl pdcch_sch;
@@ -46,14 +46,15 @@ struct test_bench {
   ue_srb0_scheduler             srb0_sched;
 
   explicit test_bench(
+      const scheduler_ue_expert_config&               expert_cfg_,
       const sched_cell_configuration_request_message& cell_req = make_default_sched_cell_configuration_request()) :
-    expert_cfg{config_helpers::make_default_scheduler_expert_config()},
+    expert_cfg{expert_cfg_},
     cell_cfg{cell_req},
     res_grid{cell_cfg},
     pdcch_sch{cell_cfg},
     pucch_alloc{cell_cfg},
-    ue_alloc(expert_cfg.ue, ue_db, srslog::fetch_basic_logger("MAC")),
-    srb0_sched(cell_cfg, pdcch_sch, pucch_alloc, ue_db, cell_req.max_msg4_mcs_index)
+    ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("MAC")),
+    srb0_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, ue_db)
   {
   }
 };
@@ -81,9 +82,10 @@ protected:
   }
 
   void
-  setup_sched(const sched_cell_configuration_request_message& msg = make_default_sched_cell_configuration_request())
+  setup_sched(const scheduler_ue_expert_config&               expert_cfg,
+              const sched_cell_configuration_request_message& msg = make_default_sched_cell_configuration_request())
   {
-    bench.emplace(msg);
+    bench.emplace(expert_cfg, msg);
 
     const auto& dl_lst = bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
     for (const auto& pdsch : dl_lst) {
@@ -114,12 +116,15 @@ protected:
     test_scheduler_result_consistency(bench->cell_cfg, bench->res_grid);
   }
 
-  sched_cell_configuration_request_message create_random_cell_config_request(duplex_mode mode,
-                                                                             unsigned    max_msg4_mcs_index_) const
+  scheduler_ue_expert_config create_expert_config(sch_mcs_index max_msg4_mcs_index) const
+  {
+    return scheduler_ue_expert_config{10, 10, 4, max_msg4_mcs_index};
+  }
+
+  sched_cell_configuration_request_message create_random_cell_config_request(duplex_mode mode) const
   {
     sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
     msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = params.k0;
-    msg.max_msg4_mcs_index                                               = max_msg4_mcs_index_;
 
     if (mode == duplex_mode::TDD) {
       msg.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common();
@@ -216,7 +221,7 @@ protected:
     ue_create_req.ue_index = ue_index;
     // Add UE to UE DB.
     auto ue_creation_msg = make_scheduler_ue_creation_request(ue_create_req);
-    auto u               = std::make_unique<ue>(bench->expert_cfg.ue, bench->cell_cfg, ue_creation_msg);
+    auto u               = std::make_unique<ue>(bench->expert_cfg, bench->cell_cfg, ue_creation_msg);
     if (bench->ue_db.contains(ue_index)) {
       // UE already exists.
       return false;
@@ -242,7 +247,8 @@ protected:
 
 TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
 {
-  setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD, 1));
+  setup_sched(create_expert_config(1),
+              create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 101 bytes.
@@ -264,7 +270,8 @@ TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
 
 TEST_P(srb0_scheduler_tester, failed_allocating_resources)
 {
-  setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD, 2));
+  setup_sched(create_expert_config(2),
+              create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
 
   // Add UE 1.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
@@ -288,7 +295,8 @@ TEST_P(srb0_scheduler_tester, failed_allocating_resources)
 
 TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
 {
-  setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD, 27));
+  setup_sched(create_expert_config(27),
+              create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 458 bytes.
@@ -306,7 +314,8 @@ TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
 
 TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index)
 {
-  setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD, 3));
+  setup_sched(create_expert_config(3),
+              create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 360 bytes which requires MCS index > 3.
@@ -322,9 +331,9 @@ TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index
 
 TEST_P(srb0_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_size)
 {
-  const auto max_msg4_mcs = get_random_uint(0, 27);
-  setup_sched(create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD,
-                                                max_msg4_mcs));
+  const sch_mcs_index max_msg4_mcs = get_random_uint(0, 27);
+  setup_sched(create_expert_config(max_msg4_mcs),
+              create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Random payload size.
@@ -339,8 +348,7 @@ TEST_P(srb0_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_size)
 
 TEST_P(srb0_scheduler_tester, test_msg4_successful_allocation_with_custom_cell_config)
 {
-  auto cell_cfg =
-      create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD, 0);
+  auto cell_cfg = create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD);
 
   // Modify cell configuration (reproducing msg4 crash scenario in du_example)
   cell_cfg.pci                          = 69;
@@ -349,7 +357,7 @@ TEST_P(srb0_scheduler_tester, test_msg4_successful_allocation_with_custom_cell_c
   cell_cfg.ssb_config.k_ssb             = 6;
   cell_cfg.coreset0                     = 9;
 
-  setup_sched(cell_cfg);
+  setup_sched(create_expert_config(0), cell_cfg);
 
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));

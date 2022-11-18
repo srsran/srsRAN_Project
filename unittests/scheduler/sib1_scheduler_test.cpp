@@ -73,6 +73,7 @@ struct test_bench {
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
+  scheduler_si_expert_config               si_cfg;
   sched_cell_configuration_request_message cfg_msg;
   cell_configuration                       cfg;
   cell_resource_allocator                  res_grid;
@@ -85,7 +86,8 @@ struct test_bench {
              uint8_t              ssb_bitmap,
              sib1_rtx_periodicity sib1_rtx_period = sib1_rtx_periodicity::ms160,
              ssb_periodicity      ssb_period      = ssb_periodicity::ms5) :
-    cfg_msg{make_cell_cfg_req_for_sib_sched(init_bwp_scs, pdcch_config_sib1, ssb_bitmap, sib1_rtx_period, ssb_period)},
+    si_cfg{10, aggregation_level::n4, sib1_rtx_period},
+    cfg_msg{make_cell_cfg_req_for_sib_sched(init_bwp_scs, pdcch_config_sib1, ssb_bitmap, ssb_period)},
     cfg{cfg_msg},
     res_grid{cfg},
     sl_tx{to_numerology_value(cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
@@ -100,6 +102,7 @@ struct test_bench {
              uint8_t            ssb_bitmap,
              subcarrier_spacing init_bwp_scs,
              uint8_t            pdcch_config_sib1) :
+    si_cfg{10, aggregation_level::n4, sib1_rtx_periodicity::ms10},
     cfg_msg{make_cell_cfg_req_for_sib_sched(freq_arfcn,
                                             offset_to_point_A,
                                             k_ssb,
@@ -117,11 +120,10 @@ struct test_bench {
   cell_slot_resource_allocator& get_slot_res_grid() { return res_grid[0]; };
 
   // Create default configuration and change specific parameters based on input args.
-  sched_cell_configuration_request_message make_cell_cfg_req_for_sib_sched(subcarrier_spacing   init_bwp_scs,
-                                                                           uint8_t              pdcch_config_sib1,
-                                                                           uint8_t              ssb_bitmap,
-                                                                           sib1_rtx_periodicity sib1_rtx_period,
-                                                                           ssb_periodicity      ssb_period)
+  sched_cell_configuration_request_message make_cell_cfg_req_for_sib_sched(subcarrier_spacing init_bwp_scs,
+                                                                           uint8_t            pdcch_config_sib1,
+                                                                           uint8_t            ssb_bitmap,
+                                                                           ssb_periodicity    ssb_period)
   {
     sched_cell_configuration_request_message msg     = make_default_sched_cell_configuration_request();
     msg.dl_cfg_common.init_dl_bwp.generic_params.scs = init_bwp_scs;
@@ -146,7 +148,6 @@ struct test_bench {
     }
     msg.coreset0              = (pdcch_config_sib1 >> 4U) & 0b00001111;
     msg.searchspace0          = pdcch_config_sib1 & 0b00001111;
-    msg.sib1_retx_period      = sib1_rtx_period;
     msg.ssb_config.ssb_bitmap = static_cast<uint64_t>(ssb_bitmap) << static_cast<uint64_t>(56U);
     msg.ssb_config.ssb_period = ssb_period;
     return msg;
@@ -170,7 +171,6 @@ struct test_bench {
     msg.ssb_config.ssb_period                        = ssb_periodicity::ms10;
     msg.ssb_config.offset_to_point_A                 = ssb_offset_to_pointA{offset_to_point_A};
     msg.ssb_config.k_ssb                             = k_ssb;
-    msg.sib1_retx_period                             = sib1_rtx_periodicity::ms10;
     // Change Carrier parameters when SCS is 15kHz.
     if (init_bwp_scs == subcarrier_spacing::kHz15) {
       msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth = 106;
@@ -215,8 +215,8 @@ struct test_bench {
                                                      [](const auto& pdcch) { return pdcch.ctx.rnti == SI_RNTI; });
     TESTASSERT(pdcch != nullptr);
     TESTASSERT_EQ(dci_dl_rnti_config_type::si_f1_0, pdcch->dci.type);
-    TESTASSERT_EQ(cfg_msg.sib1_mcs, pdcch->dci.si_f1_0.modulation_coding_scheme);
-    TESTASSERT_EQ(cfg_msg.sib1_rv, pdcch->dci.si_f1_0.redundancy_version);
+    TESTASSERT_EQ(si_cfg.sib1_mcs_index, pdcch->dci.si_f1_0.modulation_coding_scheme);
+    TESTASSERT_EQ(0, pdcch->dci.si_f1_0.redundancy_version);
   }
 
   /// Tests if PRBs have been set as used in the resource grid for the current slot.
@@ -244,7 +244,7 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
 {
   // Instantiate the test_bench and the SIB1 scheduler.
   test_bench     t_bench{scs_common, pdcch_config_sib1, ssb_beam_bitmap};
-  sib1_scheduler sib1_sched{t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
+  sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
 
   // SIB1 periodicity in slots.
   unsigned sib1_period_slots = SIB1_PERIODICITY * t_bench.sl_tx.nof_slots_per_subframe();
@@ -297,7 +297,7 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
 {
   // Instantiate the test_bench and the SIB1 scheduler.
   test_bench     t_bench{subcarrier_spacing::kHz15, 9U, 0b10000000, sib1_rtx_period, ssb_period};
-  sib1_scheduler sib1_sched{t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
+  sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
 
   // Determine the expected SIB1 retx periodicity.
   unsigned expected_sib1_period_ms;
@@ -354,7 +354,7 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
 {
   // Instantiate the test_bench and the SIB1 scheduler.
   test_bench     t_bench{freq_arfcn, offset_to_point_A, k_ssb, ssb_bitmap, scs, pdcch_config_sib1};
-  sib1_scheduler sib1_sched{t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
+  sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
 
   // Run the test for 10000 slots.
   const size_t test_length_slots = 100;

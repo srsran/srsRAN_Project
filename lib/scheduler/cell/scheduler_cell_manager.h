@@ -33,7 +33,7 @@ public:
     ra_sch(sched_cfg.ra, cell_cfg, pdcch_sch),
     prach_sch(cell_cfg),
     pucch_alloc(cell_cfg),
-    sib1_sch(cell_cfg, pdcch_sch, msg)
+    sib1_sch(sched_cfg.si, cell_cfg, pdcch_sch, msg)
   {
   }
 

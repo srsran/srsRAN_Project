@@ -18,16 +18,16 @@
 
 using namespace srsgnb;
 
-ue_srb0_scheduler::ue_srb0_scheduler(const cell_configuration& cell_cfg_,
-                                     pdcch_resource_allocator& pdcch_sch_,
-                                     pucch_allocator&          pucch_alloc_,
-                                     ue_list&                  ues_,
-                                     unsigned                  max_msg4_mcs_index_) :
+ue_srb0_scheduler::ue_srb0_scheduler(const scheduler_ue_expert_config& expert_cfg_,
+                                     const cell_configuration&         cell_cfg_,
+                                     pdcch_resource_allocator&         pdcch_sch_,
+                                     pucch_allocator&                  pucch_alloc_,
+                                     ue_list&                          ues_) :
+  expert_cfg(expert_cfg_),
   cell_cfg(cell_cfg_),
   pdcch_sch(pdcch_sch_),
   pucch_alloc(pucch_alloc_),
   ues(ues_),
-  max_msg4_mcs_index(max_msg4_mcs_index_),
   initial_active_dl_bwp(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params),
   logger(srslog::fetch_basic_logger("MAC"))
 {
@@ -121,14 +121,14 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   crb_interval   unused_crbs = find_next_empty_interval(used_crbs, 0, used_crbs.size());
   // Try to find least MCS to fit SRB0 message.
   // See 38.214, table 5.1.3.1-1: MCS index table 1 for PDSCH.
-  unsigned mcs_idx = 0;
+  sch_mcs_index mcs_idx = 0;
   // Assumption.
   static const unsigned nof_layers = 1;
   // TODO: As per Section 5.1.3.2, TS 38.214, need to derive xOverhead from PDSCH-ServingCellconfig.
   // Assumed to be not configured hence set to 0 as per spec.
   static const unsigned nof_oh_prb = 0;
   pdsch_prbs_tbs        prbs_tbs{};
-  while (mcs_idx <= max_msg4_mcs_index) {
+  while (mcs_idx <= expert_cfg.max_msg4_mcs) {
     // See 38.214, clause 5.1.3.1 - the UE shall use I_MCS and Table 5.1.3.1-1 to determine the modulation order (Qm)
     // and Target code rate (R) used in the physical downlink shared channel.
     sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_mcs_table::qam64, mcs_idx);
@@ -151,10 +151,10 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
     return false;
   }
 
-  if (mcs_idx > max_msg4_mcs_index) {
+  if (mcs_idx > expert_cfg.max_msg4_mcs) {
     logger.warning("SCHED: MCS index chosen ({}) exceeds maximum allowed MCS index ({}) for rnti={:#x}.",
                    mcs_idx,
-                   max_msg4_mcs_index,
+                   expert_cfg.max_msg4_mcs,
                    u.crnti);
     return false;
   }
@@ -218,8 +218,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
                                         const prb_interval&   ue_grant_prbs)
 {
   // Allocate DL HARQ.
-  const static unsigned max_retx = 4; // TODO: Parameterize.
-  h_dl.new_tx(pdsch_slot, k1, max_retx);
+  h_dl.new_tx(pdsch_slot, k1, expert_cfg.max_nof_harq_retxs);
 
   // Fill DL PDCCH DCI.
   build_dci_f1_0_tc_rnti(pdcch.dci,

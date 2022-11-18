@@ -32,9 +32,15 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
   cfg.ra.msg3_mcs_index          = 0;
   cfg.ra.rar_mcs_index           = 0;
 
+  cfg.si.sib1_mcs_index    = 5;
+  cfg.si.sib1_retx_period  = sib1_rtx_periodicity::ms160;
+  cfg.si.sib1_dci_aggr_lev = aggregation_level::n4;
+
   cfg.ue.max_nof_harq_retxs = 4;
   cfg.ue.fixed_dl_mcs       = 10;
   cfg.ue.fixed_ul_mcs       = 10;
+  /// Note: A MCS index of 7 can handle Msg4 of size 458 bytes.
+  cfg.ue.max_msg4_mcs = 7;
 
   return cfg;
 }

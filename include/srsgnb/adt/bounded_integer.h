@@ -69,6 +69,12 @@ public:
     return val;
   }
 
+  bounded_integer& operator++()
+  {
+    ++val;
+    return *this;
+  }
+
   constexpr bool operator==(bounded_integer other) const { return val == other.val; }
   constexpr bool operator!=(bounded_integer other) const { return val != other.val; }
   constexpr bool operator<(bounded_integer other) const { return val < other.val; }

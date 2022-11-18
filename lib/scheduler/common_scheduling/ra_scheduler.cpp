@@ -138,6 +138,7 @@ void ra_scheduler::precompute_msg3_pdus()
                            i,
                            sched_cfg.msg3_mcs_index,
                            dummy_h_ul);
+    // Note: RNTI will be overwritten later.
     build_pusch_f0_0_tc_rnti(msg3_data[i].pusch, to_rnti(0x4601), cell_cfg, msg3_data[i].dci.tc_rnti_f0_0, true);
   }
 }

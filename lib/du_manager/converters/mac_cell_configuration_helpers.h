@@ -66,17 +66,9 @@ make_sched_cell_config_req(du_cell_index_t cell_index, const du_cell_config& du_
   sched_req.nof_ant_ports = 1;
   sched_req.nof_ant_ports = 1;
 
-  /// Msg4 parameters.
-  /// Note: A MCS index of 7 can handle Msg4 of size 458 bytes.
-  sched_req.max_msg4_mcs_index = 7;
-
   /// SIB1 parameters.
   sched_req.coreset0          = du_cfg.coreset0_idx;
   sched_req.searchspace0      = du_cfg.searchspace0_idx;
-  sched_req.sib1_mcs          = 5;
-  sched_req.sib1_rv           = 0;
-  sched_req.sib1_dci_aggr_lev = aggregation_level::n4;
-  sched_req.sib1_retx_period  = sib1_rtx_periodicity::ms160;
   sched_req.sib1_payload_size = sib1_payload_size;
 
   return sched_req;

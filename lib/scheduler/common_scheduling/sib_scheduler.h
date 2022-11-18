@@ -13,6 +13,7 @@
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include "srsgnb/scheduler/sched_consts.h"
 
 namespace srsgnb {
@@ -24,7 +25,8 @@ enum class ssb_pattern_case;
 class sib1_scheduler
 {
 public:
-  sib1_scheduler(const cell_configuration&                       cfg_,
+  sib1_scheduler(const scheduler_si_expert_config&               expert_cfg_,
+                 const cell_configuration&                       cfg_,
                  pdcch_resource_allocator&                       pdcch_sch,
                  const sched_cell_configuration_request_message& msg);
 
@@ -64,15 +66,13 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");
 
   /// Parameters for SIB1 scheduling.
-  const cell_configuration& cell_cfg;
-  pdcch_resource_allocator& pdcch_sched;
+  const scheduler_si_expert_config& expert_cfg;
+  const cell_configuration&         cell_cfg;
+  pdcch_resource_allocator&         pdcch_sched;
 
   /// Parameters for SIB1 scheduling.
-  uint8_t           coreset0;
-  uint8_t           searchspace0;
-  uint8_t           sib1_mcs;
-  uint8_t           sib1_rv;
-  aggregation_level sib1_dci_aggr_lev;
+  uint8_t coreset0;
+  uint8_t searchspace0;
   /// The SIB1 payload is in bytes.
   unsigned sib1_payload_size;
   /// This is a derived parameters, that depends on the SSB periodicity, SIB1 periodicity and SIB1 re-tx periodicity.

@@ -22,11 +22,11 @@ namespace srsgnb {
 class ue_srb0_scheduler
 {
 public:
-  explicit ue_srb0_scheduler(const cell_configuration& cell_cfg_,
-                             pdcch_resource_allocator& pdcch_sch_,
-                             pucch_allocator&          pucch_alloc_,
-                             ue_list&                  ues_,
-                             unsigned                  max_msg4_mcs_index_);
+  explicit ue_srb0_scheduler(const scheduler_ue_expert_config& expert_cfg_,
+                             const cell_configuration&         cell_cfg_,
+                             pdcch_resource_allocator&         pdcch_sch_,
+                             pucch_allocator&                  pucch_alloc_,
+                             ue_list&                          ues_);
 
   /// Handles DL buffer state reported by upper layers.
   /// \param[in] ue_index UE's DU Index for which SRB0 message needs to be scheduled.
@@ -59,13 +59,11 @@ private:
 
   const pdsch_time_domain_resource_allocation& get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const;
 
-  const cell_configuration& cell_cfg;
-  pdcch_resource_allocator& pdcch_sch;
-  pucch_allocator&          pucch_alloc;
-  ue_list&                  ues;
-
-  /// Maximum MCS index that can be assigned when scheduling MSG4.
-  unsigned max_msg4_mcs_index;
+  const scheduler_ue_expert_config& expert_cfg;
+  const cell_configuration&         cell_cfg;
+  pdcch_resource_allocator&         pdcch_sch;
+  pucch_allocator&                  pucch_alloc;
+  ue_list&                          ues;
 
   bwp_configuration initial_active_dl_bwp;
 

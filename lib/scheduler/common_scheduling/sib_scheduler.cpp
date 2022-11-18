@@ -59,21 +59,20 @@ static slot_point get_sib1_n0(unsigned sib1_offset, double sib1_M, subcarrier_sp
 
 //  ------   Public methods   ------ .
 
-sib1_scheduler::sib1_scheduler(const cell_configuration&                       cfg_,
+sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               expert_cfg_,
+                               const cell_configuration&                       cfg_,
                                pdcch_resource_allocator&                       pdcch_sch,
                                const sched_cell_configuration_request_message& msg) :
+  expert_cfg{expert_cfg_},
   cell_cfg{cfg_},
   pdcch_sched{pdcch_sch},
   coreset0{msg.coreset0},
   searchspace0{msg.searchspace0},
-  sib1_mcs{msg.sib1_mcs},
-  sib1_rv{msg.sib1_rv},
-  sib1_dci_aggr_lev{msg.sib1_dci_aggr_lev},
   sib1_payload_size{msg.sib1_payload_size}
 {
   // Compute derived SIB1 parameters.
-  sib1_period =
-      std::max(ssb_periodicity_to_value(cfg_.ssb_cfg.ssb_period), sib1_rtx_periodicity_to_value(msg.sib1_retx_period));
+  sib1_period = std::max(ssb_periodicity_to_value(cfg_.ssb_cfg.ssb_period),
+                         sib1_rtx_periodicity_to_value(expert_cfg.sib1_retx_period));
 
   precompute_sib1_n0(msg.scs_common);
 
@@ -198,7 +197,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
       pdcch_sched.alloc_pdcch_common(res_grid,
                                      rnti_t::SI_RNTI,
                                      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id,
-                                     sib1_dci_aggr_lev);
+                                     expert_cfg.sib1_dci_aggr_lev);
   if (pdcch == nullptr) {
     logger.warning("SCHED: Could not allocated SIB1's DCI in PDCCH for beam idx: {}", beam_idx);
     return false;
@@ -241,8 +240,8 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   // TODO: compute time_domain_assigment from OFDM symbols (WIP).
   dci.time_resource                = time_resource;
   dci.vrb_to_prb_mapping           = 0; // TODO.
-  dci.modulation_coding_scheme     = sib1_mcs;
-  dci.redundancy_version           = sib1_rv;
+  dci.modulation_coding_scheme     = expert_cfg.sib1_mcs_index.to_uint();
+  dci.redundancy_version           = 0;
   dci.system_information_indicator = sib1_si_indicator;
 
   // Add SIB1 to list of SIB1 information to pass to lower layers.
