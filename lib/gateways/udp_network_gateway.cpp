@@ -145,6 +145,7 @@ bool udp_network_gateway::create_and_bind()
 bool udp_network_gateway::listen()
 {
   // UDP does not listen for connections
+  logger.info("Ignoring unnecessary call of `listen()` on UDP gateway.");
   return true;
 }
 
@@ -238,50 +239,14 @@ bool udp_network_gateway::create_and_connect()
 
 bool udp_network_gateway::recreate_and_reconnect()
 {
-  // Recreate socket
-  sock_fd = socket(server_ai_family, server_ai_socktype, server_ai_protocol);
-  if (sock_fd == -1) {
-    logger.error("Failed to recreate socket: {}", strerror(errno));
-    return false;
+  if (is_initialized()) {
+    // Continue using existing socket
+    logger.info("Called `recreate_and_reconnect()` on initialized UDP gateway: keep using previous connection.");
+    return true;
   }
 
-  if (not set_sockopts()) {
-    close_socket();
-  }
-
-  // set socket to non-blocking before reconnecting
-  if (config.non_blocking_mode) {
-    if (not set_non_blocking()) {
-      logger.error("Socket not non-blocking");
-      close_socket();
-      return false;
-    }
-  }
-
-  char ip_addr[NI_MAXHOST], port_nr[NI_MAXSERV];
-  getnameinfo((sockaddr*)&server_addr,
-              server_addrlen,
-              ip_addr,
-              NI_MAXHOST,
-              port_nr,
-              NI_MAXSERV,
-              NI_NUMERICHOST | NI_NUMERICSERV);
-
-  // rebind to address/port
-  if (bind(sock_fd, (sockaddr*)&server_addr, server_addrlen) == -1) {
-    logger.error("Failed to bind to {}:{} - {}", ip_addr, port_nr, strerror(errno));
-    close_socket();
-    return false;
-  }
-
-  // reconnect to address/port
-  if (connect(sock_fd, (sockaddr*)&server_addr, server_addrlen) == -1 && errno != EINPROGRESS) {
-    logger.error("Failed to connect to {}:{} - {}", ip_addr, port_nr, strerror(errno));
-    close_socket();
-    return false;
-  }
-
-  return true;
+  logger.warning("Called `recreate_and_reconnect()` on uninitialized UDP gateway: establishing new connection.");
+  return create_and_connect();
 }
 
 void udp_network_gateway::receive()
