@@ -419,6 +419,84 @@ TEST(byte_buffer, hexdump)
   TESTASSERT(pdu == bytes);
 }
 
+TEST(byte_buffer, copy_to_span)
+{
+  byte_buffer          pdu;
+  std::vector<uint8_t> bytes        = make_small_vec();
+  std::vector<uint8_t> bytes2       = make_large_vec();
+  auto                 bytes_concat = concat_vec(bytes, bytes2);
+
+  std::vector<uint8_t> dst_vec(bytes_concat.size(), 0xfe);
+  dst_vec.reserve(bytes_concat.size());
+  span<uint8_t> dst_span = {dst_vec};
+  size_t        len      = 0;
+
+  // test copy of empty buffer
+  len = copy_segments(pdu, dst_span);
+  ASSERT_EQ(len, pdu.length());
+  ASSERT_TRUE(std::equal(pdu.begin(), pdu.end(), dst_span.begin()));
+  ASSERT_EQ(dst_span.data()[len], 0xfe);
+
+  // test copy of small buffer
+  pdu.append(bytes);
+  len = copy_segments(pdu, dst_span);
+  ASSERT_EQ(len, pdu.length());
+  ASSERT_TRUE(std::equal(pdu.begin(), pdu.end(), dst_span.begin()));
+  ASSERT_EQ(dst_span.data()[len], 0xfe);
+
+  // test copy of large buffer
+  pdu.append(bytes2);
+  len = copy_segments(pdu, dst_span);
+  ASSERT_EQ(len, pdu.length());
+  ASSERT_EQ(dst_span, pdu);
+
+  // test copy to short span
+  std::fill(dst_span.begin(), dst_span.end(), 0xfe);
+  ASSERT_EQ(dst_span.back(), 0xfe);
+  span<uint8_t> dst_subspan = dst_span.subspan(0, pdu.length() - 1);
+  len                       = copy_segments(pdu, dst_subspan);
+  ASSERT_EQ(len, pdu.length() - 1);
+  ASSERT_TRUE(std::equal(dst_subspan.begin(), dst_subspan.end(), pdu.begin()));
+  ASSERT_EQ(dst_span.data()[len], 0xfe);
+
+  // test copy to very short span
+  std::fill(dst_span.begin(), dst_span.end(), 0xfe);
+  dst_subspan = dst_span.subspan(0, 1);
+  len         = copy_segments(pdu, dst_subspan);
+  ASSERT_EQ(len, 1);
+  ASSERT_TRUE(std::equal(dst_subspan.begin(), dst_subspan.end(), pdu.begin()));
+  ASSERT_EQ(dst_span.data()[len], 0xfe);
+}
+
+TEST(byte_buffer, copy_to_iterator)
+{
+  byte_buffer          pdu;
+  std::vector<uint8_t> bytes        = make_small_vec();
+  std::vector<uint8_t> bytes2       = make_large_vec();
+  auto                 bytes_concat = concat_vec(bytes, bytes2);
+
+  std::vector<uint8_t> dst_vec(bytes_concat.size(), 0);
+  dst_vec.reserve(bytes_concat.size());
+  span<uint8_t> dst_span = {dst_vec};
+
+  // test copy of empty buffer
+  span<uint8_t> dst_subspan = dst_span.subspan(0, pdu.length());
+  copy_segments(pdu, dst_subspan.begin());
+  ASSERT_EQ(pdu, dst_subspan);
+
+  // test copy of small buffer
+  pdu.append(bytes);
+  dst_subspan = dst_span.subspan(0, pdu.length());
+  copy_segments(pdu, dst_subspan.begin());
+  ASSERT_EQ(pdu, dst_subspan);
+
+  // test copy of large buffer
+  pdu.append(bytes2);
+  dst_subspan = dst_span.subspan(0, pdu.length());
+  copy_segments(pdu, dst_subspan.begin());
+  ASSERT_EQ(pdu, dst_subspan);
+}
+
 TEST(byte_buffer, iterator_plus_equal_op)
 {
   // Test with small vector of bytes

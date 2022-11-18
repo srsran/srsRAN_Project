@@ -737,6 +737,43 @@ inline byte_buffer make_byte_buffer(const std::string& hex_str)
   return ret;
 }
 
+/// Perfoms a segment-wise copy of the byte_buffer into a span<uint8_t> object.
+/// The length is limited by the length of src and dst, whichever is smaller.
+///
+/// \param src Source byte_buffer.
+/// \param dst Destination span<uint8_t>.
+/// \return Number of bytes copied.
+inline size_t copy_segments(const byte_buffer& src, span<uint8_t> dst)
+{
+  size_t bytes_copied    = 0;
+  size_t bytes_remaining = std::min(src.length(), dst.size_bytes());
+  for (const auto& src_segment : src.segments()) {
+    size_t        block_size  = std::min(bytes_remaining, src_segment.size());
+    span<uint8_t> dst_segment = dst.subspan(bytes_copied, block_size);
+    std::copy(src_segment.begin(), src_segment.begin() + block_size, dst_segment.begin());
+    bytes_copied += block_size;
+    bytes_remaining -= block_size;
+    if (bytes_remaining == 0) {
+      break;
+    }
+  }
+  return bytes_copied;
+}
+
+/// Perfoms a segment-wise copy of the byte_buffer to a generic iterator over uint8_t.
+/// The destination must have sufficient space to fit the whole byte_buffer's length.
+///
+/// \param src Source byte_buffer.
+/// \param dst_begin Destination iterator over uint8_t.
+template <typename It>
+void copy_segments(const byte_buffer& src, It dst_begin)
+{
+  static_assert(std::is_same<std::decay_t<decltype(*dst_begin)>, uint8_t>::value, "Iterator value type is not uint8_t");
+  for (const auto& src_segment : src.segments()) {
+    dst_begin = std::copy(src_segment.begin(), src_segment.end(), dst_begin);
+  }
+}
+
 } // namespace srsgnb
 
 namespace fmt {
