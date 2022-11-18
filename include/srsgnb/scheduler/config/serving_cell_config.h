@@ -115,9 +115,9 @@ struct pdsch_config {
   /// Selection between config 1 and config 2 for RBG size for PDSCH. The UE ignores this field if resourceAllocation is
   /// set to resourceAllocationType1.
   rbg_size rbg_sz;
-  /// Indicates which MCS table the UE shall use for PDSCH. (see TS 38.214 [19], clause 5.1.3.1). If the field is absent
-  /// the UE applies the value 64QAM. The field mcs-Table mcs-Table applies to DCI format 1_0 and DCI format 1_1.
-  optional<pdsch_mcs_table> mcs_table;
+  /// Indicates which MCS table the UE shall use for PDSCH. (see TS 38.214 [19], clause 5.1.3.1). The field mcs-Table
+  /// applies to DCI format 1_0 and DCI format 1_1.
+  pdsch_mcs_table mcs_table{pdsch_mcs_table::qam64};
   /// This changes the number of MCS/RV/NDI bits in the DCI message from 1 to 2.
   optional<max_no_codeword_scheduled_by_dci> nof_cw_sched_by_dci;
   /// Indicates the PRB bundle type and bundle size(s). If dynamic is chosen, the actual bundleSizeSet1 or

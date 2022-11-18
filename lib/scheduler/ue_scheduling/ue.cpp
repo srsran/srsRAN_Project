@@ -16,10 +16,9 @@ using namespace srsgnb;
 
 unsigned ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_bytes) const
 {
-  static const unsigned        nof_oh_prb = 0; // TODO
-  static const unsigned        nof_layers = 1;
-  static const pdsch_mcs_table mcs_table  = pdsch_mcs_table::qam64;
-  const cell_configuration&    cell_cfg   = cfg().cell_cfg_common;
+  static const unsigned     nof_oh_prb = 0; // TODO
+  static const unsigned     nof_layers = 1;
+  const cell_configuration& cell_cfg   = cfg().cell_cfg_common;
 
   if (pending_bytes * 8U > 3824) {
     // TODO: support get_nof_prbs higher than 3824 bits.
@@ -27,7 +26,7 @@ unsigned ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_byte
   }
 
   sch_mcs_index       mcs        = expert_cfg.fixed_dl_mcs.value(); // TODO: Support dynamic MCS.
-  sch_mcs_description mcs_config = pdsch_mcs_get_config(mcs_table, mcs);
+  sch_mcs_description mcs_config = pdsch_mcs_get_config(cfg().cfg_dedicated().init_dl_bwp.pdsch_cfg->mcs_table, mcs);
 
   dmrs_information dmrs_info = make_dmrs_info_common(
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
@@ -44,18 +43,18 @@ unsigned ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_byte
 
 unsigned ue_cell::required_ul_prbs(unsigned time_resource, unsigned pending_bytes) const
 {
-  static const unsigned        nof_oh_prb = 0; // TODO
-  static const unsigned        nof_layers = 1;
-  static const pusch_mcs_table mcs_table  = pusch_mcs_table::qam64;
-  const cell_configuration&    cell_cfg   = cfg().cell_cfg_common;
+  static const unsigned     nof_oh_prb = 0; // TODO
+  static const unsigned     nof_layers = 1;
+  const cell_configuration& cell_cfg   = cfg().cell_cfg_common;
 
   if (pending_bytes * 8U > 3824) {
     // TODO: support get_nof_prbs higher than 3824 bits.
     return cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
   }
 
-  sch_mcs_index       mcs        = expert_cfg.fixed_ul_mcs.value(); // TODO: Support dynamic MCS.
-  sch_mcs_description mcs_config = pusch_mcs_get_config(mcs_table, mcs, false);
+  sch_mcs_index       mcs = expert_cfg.fixed_ul_mcs.value(); // TODO: Support dynamic MCS.
+  sch_mcs_description mcs_config =
+      pusch_mcs_get_config(cfg().cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->mcs_table, mcs, false);
 
   dmrs_information dmrs_info = make_dmrs_info_common(
       *cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);

@@ -13,6 +13,7 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/ran/alpha.h"
 #include "srsgnb/ran/csi_rs.h"
+#include "srsgnb/ran/pusch/pusch_mcs.h"
 
 namespace srsgnb {
 
@@ -153,6 +154,8 @@ struct pusch_config {
   optional<dmrs_uplink_config>  pusch_mapping_type_b_dmrs;
   optional<pusch_power_control> pusch_pwr_ctrl;
   resource_allocation           res_alloc;
+  /// Indicates which MCS table the UE shall use for PUSCH.
+  pusch_mcs_table mcs_table{pusch_mcs_table::qam64};
   /// The UE specific selection of transformer precoder for PUSCH. When the field is not set the UE applies the value of
   /// the field msg3-transformPrecoder.
   transform_precoder trans_precoder{transform_precoder::not_set};
