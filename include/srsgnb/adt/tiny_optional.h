@@ -107,6 +107,14 @@ public:
   constexpr T&&       operator*() && noexcept { return value(); }
   constexpr const T&  operator*() const& noexcept { return value(); }
   constexpr const T&& operator*() const&& noexcept { return value(); }
+
+  /// Constructs a new object of type T inside the optional<T>'s storage, and sets the optional state to not empty.
+  template <typename... Args2>
+  constexpr T& emplace(Args2&&... args) noexcept(std::is_nothrow_constructible<T, Args2...>::value)
+  {
+    this->val = T(std::forward<Args2>(args)...);
+    return value();
+  }
 };
 
 } // namespace detail

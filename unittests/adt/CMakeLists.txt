@@ -49,7 +49,7 @@ target_link_libraries(tiny_optional_test srslog gtest gtest_main)
 add_test(tiny_optional_test tiny_optional_test)
 
 add_executable(slot_array_test slot_array_test.cpp)
-target_link_libraries(slot_array_test srslog)
+target_link_libraries(slot_array_test srslog gtest gtest_main)
 add_test(slot_array_test slot_array_test)
 
 add_executable(span_formatter_test span_formatter_test.cpp)
