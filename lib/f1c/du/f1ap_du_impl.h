@@ -80,6 +80,10 @@ private:
   /// \brief Handle DL RRC Message Transfer as per TS38.473, Section 8.4.2.2.
   void handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg);
 
+  bool handle_rx_message_gnb_cu_ue_f1ap_id(f1ap_du_ue& ue, gnb_cu_ue_f1ap_id_t cu_ue_id);
+
+  void send_error_indication(const asn1::f1ap::cause_c& cause);
+
   srslog::basic_logger&       logger;
   f1c_message_notifier&       f1c_notifier;
   task_executor&              ctrl_exec;

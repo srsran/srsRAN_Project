@@ -109,6 +109,14 @@ public:
     auto                        it = f1ap_ue_id_to_du_ue_id_map.find(du_ue_f1ap_id);
     return it != f1ap_ue_id_to_du_ue_id_map.end() ? find(it->second) : nullptr;
   }
+  const f1ap_du_ue* find(gnb_cu_ue_f1ap_id_t ue_cu_f1ap_id) const
+  {
+    std::lock_guard<std::mutex> lock(map_mutex);
+    auto                        it = std::find_if(ues.begin(), ues.end(), [ue_cu_f1ap_id](const f1ap_du_ue& e) {
+      return e.context.gnb_cu_ue_f1ap_id == ue_cu_f1ap_id;
+    });
+    return it != ues.end() ? &*it : nullptr;
+  }
 
   bool contains(du_ue_index_t ue_index) const { return find(ue_index) != nullptr; }
   bool contains(gnb_du_ue_f1ap_id_t du_ue_f1ap_id) const { return find(du_ue_f1ap_id) != nullptr; }

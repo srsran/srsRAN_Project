@@ -13,11 +13,13 @@
 #include "lib/du_manager/converters/f1c_configuration_helpers.h"
 #include "lib/f1c/common/f1ap_asn1_utils.h"
 #include "unittests/f1c/common/test_helpers.h"
+#include "srsgnb/adt/slot_array.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/f1c/common/f1c_common.h"
 #include "srsgnb/f1c/du/f1ap_du.h"
 #include "srsgnb/f1c/du/f1ap_du_factory.h"
 #include "srsgnb/support/async/async_task_loop.h"
+#include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
@@ -83,34 +85,6 @@ public:
   task_executor& exec;
 };
 
-/// Fixture class for F1AP
-class f1ap_du_test : public ::testing::Test
-{
-protected:
-  void SetUp() override
-  {
-    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
-    srslog::init();
-
-    f1ap = create_f1ap(msg_notifier, f1c_du_cfg_handler, ctrl_worker, ue_exec_mapper);
-  }
-
-  void TearDown() override
-  {
-    // flush logger after each test
-    srslog::flush();
-  }
-
-  f1c_null_notifier             msg_notifier = {};
-  timer_manager                 timers;
-  dummy_f1c_du_configurator     f1c_du_cfg_handler{timers};
-  manual_task_worker            ctrl_worker{128};
-  dummy_ue_executor_mapper      ue_exec_mapper{ctrl_worker};
-  std::unique_ptr<f1_interface> f1ap;
-
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
-};
-
 f1_setup_request_message generate_f1_setup_request_message()
 {
   f1_setup_request_message           request_msg  = {};
@@ -168,6 +142,104 @@ f1c_message generate_f1_setup_failure_message_with_time_to_wait(unsigned        
 
   return f1_setup_failure;
 }
+
+f1c_message generate_f1_dl_rrc_message_transfer(const byte_buffer& rrc_container)
+{
+  f1c_message msg;
+
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DLRRC_MSG_TRANSFER);
+  auto& dl_msg                      = msg.pdu.init_msg().value.dlrrc_msg_transfer();
+  dl_msg->gnb_cu_ue_f1_ap_id->value = 0;
+  dl_msg->gnb_du_ue_f1_ap_id->value = 0;
+  dl_msg->srbid->value              = 1;
+  dl_msg->rrc_container->resize(rrc_container.length());
+  std::copy(rrc_container.begin(), rrc_container.end(), dl_msg->rrc_container->begin());
+
+  return msg;
+}
+
+class dummy_f1_tx_pdu_notifier : public f1_tx_pdu_notifier
+{
+public:
+  byte_buffer last_pdu;
+
+  void on_tx_pdu(byte_buffer pdu) override { last_pdu = std::move(pdu); }
+};
+
+/// Fixture class for F1AP
+class f1ap_du_test : public ::testing::Test
+{
+protected:
+  struct ue_test_context {
+    std::unique_ptr<dummy_f1_tx_pdu_notifier> tx_pdu_notif;
+    std::vector<f1_bearer*>                   bearers;
+  };
+
+  f1ap_du_test()
+  {
+    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
+    srslog::init();
+
+    f1ap = create_f1ap(msg_notifier, f1c_du_cfg_handler, ctrl_worker, ue_exec_mapper);
+  }
+
+  ~f1ap_du_test()
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
+
+  void run_f1_setup_procedure()
+  {
+    // Action 1: Launch F1 setup procedure
+    f1_setup_request_message request_msg = generate_f1_setup_request_message();
+    test_logger.info("Launch f1 setup request procedure...");
+    async_task<f1_setup_response_message>         t = f1ap->handle_f1ap_setup_request(request_msg);
+    lazy_task_launcher<f1_setup_response_message> t_launcher(t);
+
+    // Action 2: F1 setup response received.
+    unsigned    transaction_id    = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
+    f1c_message f1_setup_response = generate_f1_setup_response_message(transaction_id);
+    test_logger.info("Injecting F1SetupResponse");
+    f1ap->handle_message(f1_setup_response);
+  }
+
+  ue_test_context* run_f1_ue_create(du_ue_index_t ue_index)
+  {
+    auto                                   notif = std::make_unique<dummy_f1_tx_pdu_notifier>();
+    srsgnb::srs_du::f1ap_ue_create_request msg;
+    msg.ue_index   = ue_index;
+    msg.cell_index = to_du_cell_index(0);
+    msg.c_rnti     = to_rnti(0x4601 + ue_index);
+    msg.du_cu_rrc_container.append({0x1, 0x2, 0x3});
+    msg.srbs_to_add.resize(1);
+    msg.srbs_to_add[0].srb_id          = srb_id_t::srb1;
+    msg.srbs_to_add[0].f1_tx_pdu_notif = notif.get();
+    test_logger.info("Creating ueId={}", msg.ue_index);
+    f1ap_ue_create_response resp = f1ap->handle_ue_creation_request(msg);
+    if (resp.result) {
+      test_ues.emplace(ue_index);
+      test_ues[ue_index].bearers      = resp.bearers_added;
+      test_ues[ue_index].tx_pdu_notif = std::move(notif);
+      return &test_ues[ue_index];
+    }
+    return nullptr;
+  }
+
+  /// Notifier for messages coming out from F1c to Gateway.
+  f1c_null_notifier msg_notifier = {};
+
+  timer_manager                 timers;
+  dummy_f1c_du_configurator     f1c_du_cfg_handler{timers};
+  manual_task_worker            ctrl_worker{128};
+  dummy_ue_executor_mapper      ue_exec_mapper{ctrl_worker};
+  std::unique_ptr<f1_interface> f1ap;
+
+  /// Storage of UE context related to the current unit test.
+  slot_array<ue_test_context, MAX_NOF_DU_UES> test_ues;
+
+  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+};
 
 } // namespace srs_du
 } // namespace srsgnb

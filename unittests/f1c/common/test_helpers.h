@@ -84,7 +84,7 @@ public:
   void on_new_message(const f1c_message& msg) override
   {
     srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
-    test_logger.info("Received F1 AP PDU");
+    test_logger.info("Received F1AP PDU");
     last_f1c_msg = msg;
   }
 };
