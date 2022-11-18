@@ -38,12 +38,14 @@ public:
     hdr.flags.version       = GTPU_FLAGS_VERSION_V1;
     hdr.flags.protocol_type = GTPU_FLAGS_GTP_PROTOCOL;
     hdr.message_type        = GTPU_MSG_DATA_PDU;
+    hdr.length              = buf.length();
     hdr.teid                = cfg.peer_teid;
     bool write_ok           = gtpu_write_header(buf, hdr, logger);
     if (!write_ok) {
       logger.error("Error writing GTP-U header, discarding.");
       return;
     }
+    logger.debug(buf.begin(), buf.end(), "TX GTP-U SDU");
     upper_dn.on_new_sdu(std::move(buf));
   }
 

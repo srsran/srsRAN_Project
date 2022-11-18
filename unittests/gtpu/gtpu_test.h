@@ -27,11 +27,17 @@ const uint8_t gtpu_ping_vec[] = {
 
 class gtpu_test_rx_lower : public gtpu_rx_lower_layer_notifier
 {
-  void on_new_pdu(byte_buffer buf) final {}
+  void on_new_pdu(byte_buffer buf) final { last_rx = std::move(buf); }
+
+public:
+  byte_buffer last_rx;
 };
 class gtpu_test_tx_upper : public gtpu_tx_upper_layer_notifier
 {
-  void on_new_sdu(byte_buffer buf) final {}
+  void on_new_sdu(byte_buffer buf) final { last_tx = std::move(buf); }
+
+public:
+  byte_buffer last_tx;
 };
 
 /// Fixture class for GTP-U PDU tests

@@ -82,10 +82,17 @@ TEST_F(gtpu_test, rx_sdu)
   msg.cfg.rx.local_teid                = 0x1;
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
-  std::unique_ptr<gtpu_entity>   gtpu  = create_gtpu_entity(msg);
-  byte_buffer                    orig_vec{gtpu_ping_vec};
+  std::unique_ptr<gtpu_entity> gtpu    = create_gtpu_entity(msg);
+
+  byte_buffer orig_vec{gtpu_ping_vec};
+  byte_buffer strip_vec{gtpu_ping_vec};
+  gtpu_header tmp;
+  bool        read_ok = gtpu_read_and_strip_header(tmp, strip_vec, gtpu_logger);
+  ASSERT_EQ(read_ok, true);
+
   gtpu_rx_upper_layer_interface* rx = gtpu->get_rx_upper_layer_interface();
   rx->handle_sdu(std::move(orig_vec));
+  ASSERT_EQ(strip_vec, gtpu_rx.last_rx);
 };
 
 /// \brief Test correct transmission of GTP-U packet
@@ -100,12 +107,16 @@ TEST_F(gtpu_test, tx_pdu)
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
   std::unique_ptr<gtpu_entity> gtpu    = create_gtpu_entity(msg);
-  byte_buffer                  vec{gtpu_ping_vec};
-  gtpu_header                  tmp;
-  bool                         read_ok = gtpu_read_and_strip_header(tmp, vec, gtpu_logger);
+
+  byte_buffer orig_vec{gtpu_ping_vec};
+  byte_buffer strip_vec{gtpu_ping_vec};
+  gtpu_header tmp;
+  bool        read_ok = gtpu_read_and_strip_header(tmp, strip_vec, gtpu_logger);
   ASSERT_EQ(read_ok, true);
+
   gtpu_tx_lower_layer_interface* tx = gtpu->get_tx_lower_layer_interface();
-  tx->handle_pdu(std::move(vec));
+  tx->handle_pdu(std::move(strip_vec));
+  ASSERT_EQ(orig_vec, gtpu_tx.last_tx);
 };
 
 int main(int argc, char** argv)
