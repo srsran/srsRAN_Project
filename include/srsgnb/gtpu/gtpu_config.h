@@ -19,12 +19,12 @@ namespace srsgnb {
 
 /// \brief Configurable parameters for the GTP-U
 struct gtpu_config {
-  struct gtpu_dl_config {
-    uint32_t src_teid;
-  } dl;
-  struct gtpu_ul_config {
-    uint32_t dst_teid;
-  } ul;
+  struct gtpu_rx_config {
+    uint32_t local_teid;
+  } rx;
+  struct gtpu_tx_config {
+    uint32_t peer_teid;
+  } tx;
 };
 } // namespace srsgnb
 
@@ -33,9 +33,9 @@ struct gtpu_config {
 //
 namespace fmt {
 
-// DL config
+// RX config
 template <>
-struct formatter<srsgnb::gtpu_config::gtpu_dl_config> {
+struct formatter<srsgnb::gtpu_config::gtpu_rx_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -43,16 +43,16 @@ struct formatter<srsgnb::gtpu_config::gtpu_dl_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::gtpu_config::gtpu_dl_config& cfg, FormatContext& ctx)
+  auto format(const srsgnb::gtpu_config::gtpu_rx_config& cfg, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "src_teid={}", cfg.src_teid);
+    return format_to(ctx.out(), "local teid={}", cfg.local_teid);
   }
 };
 
-// UL config
+// TX config
 template <>
-struct formatter<srsgnb::gtpu_config::gtpu_ul_config> {
+struct formatter<srsgnb::gtpu_config::gtpu_tx_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -60,10 +60,10 @@ struct formatter<srsgnb::gtpu_config::gtpu_ul_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::gtpu_config::gtpu_ul_config& cfg, FormatContext& ctx)
+  auto format(const srsgnb::gtpu_config::gtpu_tx_config& cfg, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "dst_teid={}", cfg.dst_teid);
+    return format_to(ctx.out(), "peer teid={}", cfg.peer_teid);
   }
 };
 
@@ -79,7 +79,7 @@ struct formatter<srsgnb::gtpu_config> {
   template <typename FormatContext>
   auto format(const srsgnb::gtpu_config& cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "dl=[{}], ul=[{}]", cfg.dl, cfg.ul);
+    return format_to(ctx.out(), "rx=[{}], tx=[{}]", cfg.rx, cfg.tx);
   }
 };
 } // namespace fmt

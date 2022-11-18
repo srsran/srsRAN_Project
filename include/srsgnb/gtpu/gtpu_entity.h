@@ -10,13 +10,14 @@
 
 #pragma once
 
-#include "srsgnb/gtpu/gtpu_dl.h"
-#include "srsgnb/gtpu/gtpu_ul.h"
+#include "srsgnb/gtpu/gtpu_rx.h"
+#include "srsgnb/gtpu/gtpu_tx.h"
 
 namespace srsgnb {
 
-/// Class used to interface with an RLC entity.
+/// Class used to interface with an GTP-U entity.
 /// It will contain getters for the TX and RX entities interfaces.
+/// TX and RX is considered from the perspective of the GTP-U.
 class gtpu_entity
 {
 public:
@@ -27,8 +28,8 @@ public:
   gtpu_entity(const gtpu_entity&&)            = delete;
   gtpu_entity& operator=(const gtpu_entity&&) = delete;
 
-  virtual gtpu_dl_upper_layer_interface* get_dl_upper_layer_interface() = 0;
-  virtual gtpu_ul_lower_layer_interface* get_ul_lower_layer_interface() = 0;
+  virtual gtpu_rx_upper_layer_interface* get_rx_upper_layer_interface() = 0;
+  virtual gtpu_tx_lower_layer_interface* get_tx_lower_layer_interface() = 0;
 };
 
 } // namespace srsgnb

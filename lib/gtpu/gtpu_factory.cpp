@@ -17,5 +17,5 @@ using namespace srsgnb;
 
 std::unique_ptr<gtpu_entity> srsgnb::create_gtpu_entity(gtpu_entity_creation_message& msg)
 {
-  return std::make_unique<gtpu_entity_impl>(msg.ue_index, msg.cfg, *msg.dl_lower, *msg.ul_upper);
+  return std::make_unique<gtpu_entity_impl>(msg.ue_index, msg.cfg, *msg.rx_lower, *msg.tx_upper);
 }
