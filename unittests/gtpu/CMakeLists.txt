@@ -8,10 +8,6 @@
 
 set_directory_properties(PROPERTIES LABELS "gtpu")
 
-add_executable(gtpu_pdu_test gtpu_pdu_test.cpp)
-target_link_libraries(gtpu_pdu_test srsgnb_gtpu srsgnb_support srslog gtest gtest_main)
-gtest_discover_tests(gtpu_pdu_test)
-
 add_executable(gtpu_test gtpu_test.cpp)
 target_link_libraries(gtpu_test srsgnb_gtpu srsgnb_support srslog gtest gtest_main)
 gtest_discover_tests(gtpu_test)
