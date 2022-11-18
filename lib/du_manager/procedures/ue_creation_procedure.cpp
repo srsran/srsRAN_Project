@@ -13,6 +13,7 @@
 #include "../adapters/rlc_adapters.h"
 #include "../converters/asn1_cell_group_config_helpers.h"
 #include "../du_ue/cell_group_config.h"
+#include "srsgnb/mac/config/mac_cell_group_config_factory.h"
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 
 using namespace srsgnb;
@@ -44,6 +45,12 @@ ue_creation_procedure::ue_creation_procedure(du_ue_index_t                      
   pcell.rlc_bearers.push_back(make_default_srb(LCID_SRB1));
   pcell.spcell_cfg.serv_cell_idx  = msg.cell_index;
   pcell.spcell_cfg.spcell_cfg_ded = config_helpers::make_default_initial_ue_serving_cell_config();
+  pcell.mcg_cfg                   = config_helpers::make_initial_mac_cell_group_config();
+
+  // TODO: Move to helper.
+  physical_cell_group_config& pcg_cfg = pcell.pcg_cfg;
+  pcg_cfg.p_nr_fr1                    = 10;
+  pcg_cfg.pdsch_harq_codebook         = pdsch_harq_ack_codebook::dynamic;
 }
 
 void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
@@ -135,10 +142,13 @@ void ue_creation_procedure::create_rlc_srbs()
 async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_create_req()
 {
   // Request MAC to create new UE.
-  mac_ue_create_request_message mac_ue_create_msg = test_helpers::make_default_ue_creation_request(); // TODO: TEMP.
-  mac_ue_create_msg.ue_index                      = ue_ctx->ue_index;
-  mac_ue_create_msg.crnti                         = msg.crnti;
-  mac_ue_create_msg.cell_index                    = msg.cell_index;
+  mac_ue_create_request_message mac_ue_create_msg{};
+  mac_ue_create_msg.ue_index           = ue_ctx->ue_index;
+  mac_ue_create_msg.crnti              = msg.crnti;
+  mac_ue_create_msg.cell_index         = msg.cell_index;
+  mac_ue_create_msg.serv_cell_cfg      = ue_ctx->cells[ue_ctx->pcell_index].spcell_cfg.spcell_cfg_ded;
+  mac_ue_create_msg.mac_cell_group_cfg = ue_ctx->cells[ue_ctx->pcell_index].mcg_cfg;
+  mac_ue_create_msg.phy_cell_group_cfg = ue_ctx->cells[ue_ctx->pcell_index].pcg_cfg;
   for (du_bearer& bearer : ue_ctx->bearers) {
     mac_ue_create_msg.bearers.emplace_back();
     auto& lc     = mac_ue_create_msg.bearers.back();
@@ -154,6 +164,7 @@ async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_cr
     lc.lc_config.sr_id.emplace(mac_ue_create_msg.mac_cell_group_cfg.scheduling_request_config.back().sr_id);
   }
   mac_ue_create_msg.ul_ccch_msg = &msg.subpdu;
+
   return mac_mng.ue_cfg.handle_ue_create_request(mac_ue_create_msg);
 }
 

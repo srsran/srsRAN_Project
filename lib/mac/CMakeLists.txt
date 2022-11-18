@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-set(SOURCES mac_ctrl/mac_configuration_helpers.cpp)
+set(SOURCES mac_ctrl/mac_configuration_helpers.cpp mac_config/mac_cell_group_config_factory.cpp)
 add_library(mac_configuration_helpers STATIC ${SOURCES})
 target_link_libraries(mac_configuration_helpers srsgnb_support srsgnb_ran rrc_nr_asn1)
 

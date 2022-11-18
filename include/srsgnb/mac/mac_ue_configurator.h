@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "mac_cell_group_config.h"
 #include "srsgnb/mac/bsr_format.h"
 #include "srsgnb/mac/mac_sdu_handler.h"
 #include "srsgnb/mac/phr_config.h"
@@ -13,21 +14,6 @@
 #include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {
-
-/// \c MAC-CellGroupConfig, TS 38.331.
-struct mac_cell_group_config {
-  /// \c schedulingRequestConfig.
-  std::vector<scheduling_request_to_addmod> scheduling_request_config;
-  /// \c bsr-Config.
-  optional<bsr_config> bsr_cfg;
-  /// \c tag-Config.
-  static_vector<tag, MAX_NOF_TAGS> tag_config;
-  /// \c phr-Config.
-  optional<phr_config> phr_cfg;
-  /// \c skipUplinkTxDynamic.
-  bool skip_uplink_tx_dynamic;
-  // TODO: add remaining fields.
-};
 
 /// Parameters passed to MAC concerning a created logical channel.
 struct mac_logical_channel_addmod {

@@ -11,6 +11,7 @@
 #include "../../lib/du_manager/converters/asn1_cell_group_config_helpers.h"
 #include "srsgnb/asn1/asn1_utils.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
+#include "srsgnb/mac/config/mac_cell_group_config_factory.h"
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 #include <gtest/gtest.h>
 
@@ -21,6 +22,7 @@ srs_du::cell_group_config make_initial_cell_group_config()
   srs_du::cell_group_config dest_cell_grp_cfg{};
   dest_cell_grp_cfg.spcell_cfg.serv_cell_idx  = to_du_cell_index(0);
   dest_cell_grp_cfg.spcell_cfg.spcell_cfg_ded = config_helpers::make_default_initial_ue_serving_cell_config();
+  dest_cell_grp_cfg.mcg_cfg                   = config_helpers::make_initial_mac_cell_group_config();
 
   return dest_cell_grp_cfg;
 }

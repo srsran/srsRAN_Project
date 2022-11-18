@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "rnti.h"
+
 namespace srsgnb {
 
 /// Options for \c pdsch-HARQ-ACK-Codebook, in \c PhysicalCellGroupConfig, TS 38.331.

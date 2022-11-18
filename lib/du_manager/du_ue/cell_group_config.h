@@ -11,8 +11,10 @@
 #pragma once
 
 #include "rlc_config_helpers.h"
+#include "srsgnb/mac/mac_cell_group_config.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
+#include "srsgnb/ran/physical_cell_group.h"
 #include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/scheduler/config/serving_cell_config.h"
 
@@ -29,6 +31,8 @@ struct spcell_config {
 struct cell_group_config {
   std::vector<rlc_bearer_config> rlc_bearers;
   spcell_config                  spcell_cfg;
+  mac_cell_group_config          mcg_cfg;
+  physical_cell_group_config     pcg_cfg;
 };
 
 } // namespace srs_du
