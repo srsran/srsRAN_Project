@@ -53,6 +53,7 @@ private:
   // Components
   std::unique_ptr<e1_interface> e1;
   std::atomic<bool>             e1_connected = {false};
+  timer_manager                 timer_db;
   ue_manager                    ue_mng;
 };
 

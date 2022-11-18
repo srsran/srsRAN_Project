@@ -12,6 +12,7 @@
 
 #include "ue_manager_interfaces.h"
 #include "srsgnb/adt/slot_array.h"
+#include "srsgnb/support/timers.h"
 #include <unordered_map>
 
 namespace srsgnb {
@@ -21,7 +22,7 @@ namespace srs_cu_up {
 class ue_manager : public ue_manager_ctrl
 {
 public:
-  explicit ue_manager(srslog::basic_logger& logger_);
+  explicit ue_manager(srslog::basic_logger& logger_, timer_manager& timers_);
 
   using ue_db_t = slot_array<std::unique_ptr<ue_context>, MAX_NOF_UES>;
   const ue_db_t& get_ues() const { return ue_db; }
@@ -37,6 +38,7 @@ private:
   ue_index_t get_next_ue_index();
 
   srslog::basic_logger&                    logger;
+  timer_manager&                           timers;
   ue_db_t                                  ue_db;
   std::unordered_map<uint16_t, ue_index_t> n3_teid_to_ue_index; // Map TEID on NG-u (N3) to UE index
 };

@@ -13,7 +13,7 @@
 using namespace srsgnb;
 using namespace srs_cu_up;
 
-ue_manager::ue_manager(srslog::basic_logger& logger_) : logger(logger_) {}
+ue_manager::ue_manager(srslog::basic_logger& logger_, timer_manager& timers_) : logger(logger_), timers(timers_) {}
 
 ue_context* ue_manager::find_ue(ue_index_t ue_index)
 {
@@ -35,7 +35,7 @@ ue_context* ue_manager::add_ue()
   }
 
   // Create UE object
-  std::unique_ptr<ue_context> new_ctx = std::make_unique<ue_context>(new_idx);
+  std::unique_ptr<ue_context> new_ctx = std::make_unique<ue_context>(new_idx, logger, timers);
 
   // add to DB
   ue_db.emplace(new_idx, std::move(new_ctx));

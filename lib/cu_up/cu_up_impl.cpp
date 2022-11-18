@@ -19,7 +19,7 @@ void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
   srsgnb_assert(cfg.e1_notifier != nullptr, "Invalid E1 notifier");
 }
 
-cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128), ue_mng(logger)
+cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128), ue_mng(logger, timers)
 {
   assert_cu_up_configuration_valid(cfg);
 
@@ -55,8 +55,9 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
        it != msg.request.ng_ran_bearer_context_setup_request().end();
        ++it) {
     const auto& pdu_session_list = it->value().pdu_session_res_to_setup_list();
-    for (size_t i = 0; i < pdu_session_list.size(); ++i) {
-      // TODO: call handle_pdu_session_setup_request()
+
+    for (const auto& pdu_session : pdu_session_list) {
+      pdu_session_setup_result result = ue_ctxt->setup_pdu_session(pdu_session);
     }
   }
 

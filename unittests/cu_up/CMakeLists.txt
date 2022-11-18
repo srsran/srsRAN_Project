@@ -15,3 +15,8 @@ add_executable(cu_up_ue_manager_test ue_manager_test.cpp)
 target_link_libraries(cu_up_ue_manager_test srsgnb_cu_up srsgnb_support srslog gtest gtest_main)
 target_include_directories(cu_up_ue_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(cu_up_ue_manager_test)
+
+add_executable(pdu_session_manager_test pdu_session_manager_test.cpp)
+target_link_libraries(pdu_session_manager_test srsgnb_cu_up srsgnb_support e1ap_asn1 srslog gtest gtest_main)
+target_include_directories(pdu_session_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(pdu_session_manager_test)

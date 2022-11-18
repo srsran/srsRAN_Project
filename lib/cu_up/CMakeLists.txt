@@ -10,8 +10,9 @@ set(SOURCES
       cu_up_factory.cpp
       cu_up_impl.cpp
       ue_manager.cpp
+      pdu_session_manager_impl.cpp
 )
 
 add_library(srsgnb_cu_up STATIC ${SOURCES})
 
-target_link_libraries(srsgnb_cu_up srslog srsgnb_support srsgnb_pdcp srsgnb_security)
+target_link_libraries(srsgnb_cu_up srslog srsgnb_support srsgnb_pdcp e1ap_asn1 srsran_sdap srsgnb_security)

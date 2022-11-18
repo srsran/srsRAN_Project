@@ -9,9 +9,8 @@
  */
 
 #include "lib/cu_up/ue_manager.h"
-#include <gtest/gtest.h>
-//#include "srsgnb/cu_up/ue_context.h"
 #include "srsgnb/cu_up/cu_up_types.h"
+#include <gtest/gtest.h>
 
 using namespace srsgnb;
 using namespace srs_cu_up;
@@ -26,7 +25,7 @@ protected:
     srslog::init();
 
     // create DUT object
-    ue_mng = std::make_unique<ue_manager>(test_logger);
+    ue_mng = std::make_unique<ue_manager>(test_logger, timers);
   }
 
   void TearDown() override
@@ -37,6 +36,7 @@ protected:
 
   std::unique_ptr<ue_manager_ctrl> ue_mng;
   srslog::basic_logger&            test_logger = srslog::fetch_basic_logger("TEST", false);
+  timer_manager                    timers;
 };
 
 /// UE object handling tests (creation/deletion)
