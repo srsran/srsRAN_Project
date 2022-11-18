@@ -10,8 +10,10 @@
 
 #pragma once
 
+#include "adapters/du_processor_adapters.h"
 #include "adapters/f1c_adapters.h"
 #include "adapters/ngc_adapters.h"
+#include "cu_cp_ue_task_scheduler.h"
 #include "du_processor_impl.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
@@ -35,16 +37,20 @@ public:
   void start();
   void stop();
 
-  f1c_message_handler& get_f1c_message_handler(du_index_t du_index) override;
-
+  // DU interface
+  f1c_message_handler&    get_f1c_message_handler(du_index_t du_index) override;
   f1c_statistics_handler& get_f1c_statistics_handler(du_index_t du_index) override;
 
+  // NG interface
   ngc_message_handler& get_ngc_message_handler() override;
   ngc_event_handler&   get_ngc_event_handler() override;
 
   bool amf_is_connected() override { return amf_connected; };
 
+  // DU connection notifier
   void on_new_connection() override;
+
+  // DU handler
   void handle_du_remove_request(const du_index_t du_index) override;
 
   // ngc_connection_notifier
@@ -89,6 +95,12 @@ private:
 
   // task event loops indexed by du_index
   slot_array<async_task_sequencer, MAX_NOF_DUS> du_ctrl_loop;
+
+  // CU-CP task scheduler
+  cu_cp_ue_task_scheduler ue_task_scheduler;
+
+  // DU processor to CU-CP adapter
+  du_processor_to_cu_cp_task_scheduler du_processor_task_sched;
 
   // F1C to CU-CP adapter
   f1c_cu_cp_adapter f1c_ev_notifier;

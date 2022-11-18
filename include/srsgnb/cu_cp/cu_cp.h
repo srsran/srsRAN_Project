@@ -13,6 +13,7 @@
 #include "cu_cp_types.h"
 #include "srsgnb/f1c/cu_cp/f1c_cu.h"
 #include "srsgnb/ngap/ngc.h"
+#include "srsgnb/support/timers.h"
 #include <string>
 
 namespace srsgnb {

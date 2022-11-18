@@ -19,21 +19,18 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-du_processor_impl::du_processor_impl(const du_processor_config_t du_processor_config_,
-                                     f1c_du_management_notifier& f1c_du_mgmt_notifier_,
-                                     f1c_message_notifier&       f1c_notifier_,
-                                     rrc_ue_nas_notifier&        rrc_ue_ngc_ev_notifier_) :
+du_processor_impl::du_processor_impl(const du_processor_config_t     du_processor_config_,
+                                     f1c_du_management_notifier&     f1c_du_mgmt_notifier_,
+                                     f1c_message_notifier&           f1c_notifier_,
+                                     rrc_ue_nas_notifier&            rrc_ue_ngc_ev_notifier_,
+                                     du_processor_ue_task_scheduler& task_sched_) :
   cfg(du_processor_config_),
   f1c_du_mgmt_notifier(f1c_du_mgmt_notifier_),
   f1c_notifier(f1c_notifier_),
   rrc_ue_ngc_ev_notifier(rrc_ue_ngc_ev_notifier_),
+  task_sched(task_sched_),
   ue_mng(du_processor_config_.logger)
 {
-  const size_t number_of_pending_procedures = 16;
-  for (size_t i = 0; i < MAX_NOF_UES; ++i) {
-    ue_ctrl_loop.emplace(i, number_of_pending_procedures);
-  }
-
   // create f1c
   f1c = create_f1c(f1c_notifier, f1c_ev_notifier, f1c_du_mgmt_notifier);
   f1c_ev_notifier.connect_du_processor(*this);
@@ -267,19 +264,20 @@ void du_processor_impl::handle_ue_context_release_command(const ue_context_relea
   f1ap_msg.ue_index                                = msg.ue_index;
   f1ap_msg.cause.set_radio_network();
 
-  ue_ctrl_loop[msg.ue_index].schedule([this, f1ap_msg](coro_context<async_task<void>>& ctx) {
-    CORO_BEGIN(ctx);
+  task_sched.schedule_async_task(
+      context.du_index, msg.ue_index, launch_async([this, f1ap_msg](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
 
-    ue_index_t result_idx;
+        ue_index_t result_idx;
 
-    CORO_AWAIT_VALUE(result_idx, f1c->handle_ue_context_release_command(f1ap_msg));
+        CORO_AWAIT_VALUE(result_idx, f1c->handle_ue_context_release_command(f1ap_msg));
 
-    if (result_idx == f1ap_msg.ue_index) {
-      logger.info("Removed UE(ue_index={}) from F1C.", f1ap_msg.ue_index);
-    }
+        if (result_idx == f1ap_msg.ue_index) {
+          logger.info("Removed UE(ue_index={}) from F1C.", f1ap_msg.ue_index);
+        }
 
-    CORO_RETURN();
-  });
+        CORO_RETURN();
+      }));
 
   // Remove UE from RRC
   rrc->remove_ue(msg.ue_index);

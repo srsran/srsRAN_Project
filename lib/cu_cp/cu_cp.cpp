@@ -24,13 +24,14 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
   srsgnb_assert(cfg.ngc_notifier != nullptr, "Invalid NGC notifier");
 }
 
-cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_), main_ctrl_loop(128)
+cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_), main_ctrl_loop(128), ue_task_scheduler(timers)
 {
   assert_cu_cp_configuration_valid(cfg);
 
-  const size_t number_of_pending_procedures = 16;
+  // init du control loops
+  const size_t number_of_pending_du_procedures = 16;
   for (size_t i = 0; i < MAX_NOF_DUS; ++i) {
-    du_ctrl_loop.emplace(i, number_of_pending_procedures);
+    du_ctrl_loop.emplace(i, number_of_pending_du_procedures);
   }
 
   // Create layers
@@ -136,19 +137,20 @@ void cu_cp::on_amf_connection_drop()
 /// Create DU object with valid index
 du_index_t cu_cp::add_du()
 {
-  // TODO: use real config
-  du_processor_config_t du_cfg = {};
-
-  std::unique_ptr<du_processor_interface> du =
-      create_du_processor(std::move(du_cfg), f1c_ev_notifier, *cfg.f1c_notifier, rrc_ue_ngc_ev_notifier);
-
-  rrc_ue_ngc_ev_notifier.connect_ngc(*ngc_entity);
-
   du_index_t du_index = get_next_du_index();
   if (du_index == INVALID_DU_INDEX) {
     logger.error("DU connection failed - maximum number of DUs connected ({})", MAX_NOF_DUS);
     return INVALID_DU_INDEX;
   }
+
+  // TODO: use real config
+  du_processor_config_t du_cfg = {};
+
+  std::unique_ptr<du_processor_interface> du = create_du_processor(
+      std::move(du_cfg), f1c_ev_notifier, *cfg.f1c_notifier, rrc_ue_ngc_ev_notifier, du_processor_task_sched);
+
+  rrc_ue_ngc_ev_notifier.connect_ngc(*ngc_entity);
+  du_processor_task_sched.connect_cu_cp(ue_task_scheduler);
 
   // Add DU index to adapter
   rrc_ue_ngc_ev_notifier.set_du_index(du_index);

@@ -10,6 +10,7 @@
 
 #include "../../lib/cu_cp/cu_cp.h"
 #include "du_processor_test_helpers.h"
+#include "test_helpers.h"
 #include "unittests/f1c/common/test_helpers.h"
 #include "unittests/rrc/test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
@@ -33,12 +34,13 @@ protected:
     f1c_pdu_notifier       = std::make_unique<dummy_f1c_pdu_notifier>(nullptr);
     f1c_du_mgmt_notifier   = std::make_unique<dummy_f1c_du_management_notifier>(nullptr);
     rrc_ue_ngc_ev_notifier = std::make_unique<dummy_rrc_ue_nas_notifier>();
+    ue_task_sched          = std::make_unique<dummy_du_processor_to_cu_cp_task_scheduler>(timers);
 
     // create and start DU processor
     du_processor_config_t du_cfg = {};
 
-    du_processor_obj =
-        create_du_processor(std::move(du_cfg), *f1c_du_mgmt_notifier, *f1c_pdu_notifier, *rrc_ue_ngc_ev_notifier);
+    du_processor_obj = create_du_processor(
+        std::move(du_cfg), *f1c_du_mgmt_notifier, *f1c_pdu_notifier, *rrc_ue_ngc_ev_notifier, *ue_task_sched);
   }
 
   void TearDown() override
@@ -47,11 +49,13 @@ protected:
     srslog::flush();
   }
 
-  std::unique_ptr<du_processor_interface>           du_processor_obj;
-  std::unique_ptr<dummy_f1c_pdu_notifier>           f1c_pdu_notifier;
-  std::unique_ptr<dummy_f1c_du_management_notifier> f1c_du_mgmt_notifier;
-  std::unique_ptr<dummy_rrc_ue_nas_notifier>        rrc_ue_ngc_ev_notifier;
-  srslog::basic_logger&                             test_logger = srslog::fetch_basic_logger("TEST");
+  std::unique_ptr<du_processor_interface>                     du_processor_obj;
+  std::unique_ptr<dummy_f1c_pdu_notifier>                     f1c_pdu_notifier;
+  std::unique_ptr<dummy_f1c_du_management_notifier>           f1c_du_mgmt_notifier;
+  std::unique_ptr<dummy_rrc_ue_nas_notifier>                  rrc_ue_ngc_ev_notifier;
+  timer_manager                                               timers;
+  std::unique_ptr<dummy_du_processor_to_cu_cp_task_scheduler> ue_task_sched;
+  srslog::basic_logger&                                       test_logger = srslog::fetch_basic_logger("TEST");
 };
 
 //////////////////////////////////////////////////////////////////////////////////////

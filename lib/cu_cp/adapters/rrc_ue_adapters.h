@@ -67,22 +67,22 @@ private:
 class rrc_to_du_ue_task_scheduler : public rrc_ue_task_scheduler
 {
 public:
-  rrc_to_du_ue_task_scheduler(ue_index_t ue_index_, du_processor_ue_task_scheduler& du_processor_task_sched_) :
-    ue_index(ue_index_), du_processor_task_sched(du_processor_task_sched_)
+  rrc_to_du_ue_task_scheduler(ue_index_t ue_index_, du_processor_ue_task_handler& du_processor_task_handler_) :
+    ue_index(ue_index_), du_processor_task_handler(du_processor_task_handler_)
   {
   }
 
   void schedule_async_task(async_task<void>&& task) override
   {
-    du_processor_task_sched.handle_ue_async_task(ue_index, std::move(task));
+    du_processor_task_handler.handle_ue_async_task(ue_index, std::move(task));
   }
 
-  unique_timer   make_unique_timer() override { return du_processor_task_sched.make_unique_timer(); }
-  timer_manager& get_timer_manager() override { return du_processor_task_sched.get_timer_manager(); }
+  unique_timer   make_unique_timer() override { return du_processor_task_handler.make_unique_timer(); }
+  timer_manager& get_timer_manager() override { return du_processor_task_handler.get_timer_manager(); }
 
 private:
-  ue_index_t                      ue_index;
-  du_processor_ue_task_scheduler& du_processor_task_sched;
+  ue_index_t                    ue_index;
+  du_processor_ue_task_handler& du_processor_task_handler;
 };
 
 /// Adapter between RRC and PDCP in DL direction (Tx)

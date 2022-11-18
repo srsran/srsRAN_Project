@@ -9,6 +9,7 @@
 set(SOURCES
       cu_cp_factory.cpp
       cu_cp.cpp
+      cu_cp_ue_task_scheduler.cpp
       cu_up_processor_impl.cpp
       cu_up_processor_factory.cpp
       du_processor_impl.cpp
