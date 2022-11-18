@@ -164,7 +164,6 @@ stages:
         TEST_MODE: coverage
         COMPILER: gcc
         BUILD_TYPE: Release
-        ENABLE_EXPORT: "False"
         ENABLE_GCOV: "True"
       - OS: archlinux-latest
         TEST_MODE: default
@@ -174,11 +173,11 @@ stages:
         TEST_MODE: default
         COMPILER: gcc
         BUILD_TYPE: Release
+        ENABLE_EXPORT: "True"
       - OS: ubuntu-22.04
         TEST_MODE: asan
         COMPILER: gcc
         BUILD_TYPE: Debug
-        ENABLE_EXPORT: "False"
         ENABLE_ASAN: "True"
       - OS: ubuntu-22.04
         TEST_MODE: tsan
