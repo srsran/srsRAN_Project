@@ -27,9 +27,8 @@ namespace srsgnb {
 /// The demodulation of a PUSCH consists of:
 /// - extracting allocated REs from the resource grid,
 /// - equalizing of the extracted RE,
-/// - soft-demodulation of the complex data,
-/// - descrambling, and
-/// - demultiplexing data and control.
+/// - soft-demodulation of the complex data, and
+/// - descrambling.
 class pusch_demodulator
 {
 public:
@@ -39,33 +38,6 @@ public:
 
   /// Maximum number of LLRs per codeword in a single transmission.
   static constexpr unsigned MAX_NOF_DATA_LLR = MAX_CODEWORD_SIZE * pusch_constants::MAX_MODULATION_ORDER;
-
-  /// Maximum UCI scaling \f$\alpha\f$ as per TS38.331 UCI-OnPUSCH.
-  static constexpr unsigned UCI_ON_PUSCH_MAX_ALPHA = 1;
-
-  /// \brief Maximum number of LLRs for HARQ-ACK in a single transmission.
-  ///
-  /// As per TS38.212 Section 6.3.2.4.1.1, \f$Q_{ACK}'\f$ formula. Ceiling the value of \f$\sum
-  /// ^{N_{symb,all}^{PUSCH}-1}_{l=l_0}M_{sc}^{UCI}(l)\f$ to the maximum number of resource elements in a PUSCH
-  /// transmission.
-  static constexpr unsigned MAX_NOF_HARQ_ACK_LLR =
-      MAX_RB * pusch_constants::MAX_NRE_PER_RB * UCI_ON_PUSCH_MAX_ALPHA * pusch_constants::MAX_MODULATION_ORDER;
-
-  /// \brief Maximum number of LLRs for CSI Part1 in a single transmission.
-  ///
-  /// As per TS38.212 Section 6.3.2.4.1.1 in \f$Q_{CSI-1}'\f$ formula. Ceiling the value of \f$\sum
-  /// ^{N_{symb,all}^{PUSCH}-1}_{l=l_0}M_{sc}^{UCI}(l)\f$ to the maximum number of resource elements in a PUSCH
-  /// transmission.
-  static constexpr unsigned MAX_NOF_CSI_PART1_LLR =
-      MAX_RB * pusch_constants::MAX_NRE_PER_RB * UCI_ON_PUSCH_MAX_ALPHA * pusch_constants::MAX_MODULATION_ORDER;
-
-  /// \brief Maximum number of LLRs for CSI Part2 in a single transmission.
-  ///
-  /// As per TS38.212 Section 6.3.2.4.1.1 in \f$Q_{CSI-2}'\f$ formula. Ceiling the value of \f$\sum
-  /// ^{N_{symb,all}^{PUSCH}-1}_{l=l_0}M_{sc}^{UCI}(l)\f$ to the maximum number of resource elements in a PUSCH
-  /// transmission.
-  static constexpr unsigned MAX_NOF_CSI_PART2_LLR =
-      MAX_RB * pusch_constants::MAX_NRE_PER_RB * UCI_ON_PUSCH_MAX_ALPHA * pusch_constants::MAX_MODULATION_ORDER;
 
   /// Parameters defining the demodulation procedure of a PUSCH transmission.
   struct configuration {

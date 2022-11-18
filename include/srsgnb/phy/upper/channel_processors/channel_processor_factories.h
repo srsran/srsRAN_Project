@@ -40,6 +40,7 @@
 namespace srsgnb {
 
 class prach_generator_factory;
+class ulsch_demultiplex_factory;
 
 class pbch_encoder_factory
 {
@@ -219,6 +220,7 @@ public:
 struct pusch_processor_factory_sw_configuration {
   std::shared_ptr<dmrs_pusch_estimator_factory> estimator_factory;
   std::shared_ptr<pusch_demodulator_factory>    demodulator_factory;
+  std::shared_ptr<ulsch_demultiplex_factory>    demux_factory;
   std::shared_ptr<pusch_decoder_factory>        decoder_factory;
   channel_estimate::channel_estimate_dimensions ch_estimate_dimensions;
 };

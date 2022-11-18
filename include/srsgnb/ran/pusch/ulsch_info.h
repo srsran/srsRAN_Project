@@ -41,11 +41,11 @@ struct ulsch_configuration {
   /// Provided by the higher layer parameter \e scaling in TS38.331 Section 6.3.2, Information Element \e UCI-OnPUSCH.
   float alpha_scaling;
   /// Parameter \f$\beta _\textup{offset} ^\textup{HARQ-ACK}\f$.
-  float harq_ack_beta_offset;
+  float beta_offset_harq_ack;
   /// Parameter \f$\beta _\textup{offset} ^\textup{CSI-1}\f$.
-  float harq_csi_part1_offset;
+  float beta_offset_csi_part1;
   /// Parameter \f$\beta _\textup{offset} ^\textup{CSI-2}\f$.
-  float harq_csi_part2_offset;
+  float beta_offset_csi_part2;
   /// Transmission bandwidth in resource blocks.
   unsigned nof_rb;
   /// First OFDM index for the transmission within the slot.

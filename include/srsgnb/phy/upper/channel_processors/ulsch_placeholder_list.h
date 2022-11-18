@@ -82,6 +82,14 @@ public:
     }
   }
 
+  /// \brief Compares two placeholder lists.
+  /// \return Returns true if the two lists are equal to one another.
+  bool operator==(const ulsch_placeholder_list& other) const noexcept { return re_indexes == other.re_indexes; }
+
+  /// \brief Compares two placeholder lists.
+  /// \return Returns true if the two lists are different.
+  bool operator!=(const ulsch_placeholder_list& other) const noexcept { return re_indexes != other.re_indexes; }
+
 private:
   /// List of RE indexes.
   static_vector<index_type, MAX_NOF_PLACEHOLDERS> re_indexes;

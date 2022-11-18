@@ -117,7 +117,7 @@ private:
     for (unsigned i_layer = 0, i_layer_end = config.nof_tx_layers; i_layer != i_layer_end; ++i_layer) {
       for (unsigned i_port = 0, i_port_end = config.rx_ports.size(); i_port != i_port_end; ++i_port) {
         // Get a view of the channel estimates buffer for a single Rx port.
-        span<cf_t> ch_port_buffer = data_estimates.get_view<>({i_port, i_layer});
+        span<cf_t> ch_port_buffer = data_estimates.get_view({i_port, i_layer});
 
         for (unsigned i_symbol     = config.start_symbol_index,
                       i_symbol_end = config.start_symbol_index + config.nof_symbols;

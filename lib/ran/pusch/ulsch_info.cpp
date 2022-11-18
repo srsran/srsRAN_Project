@@ -100,8 +100,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
   // Count the number of resource elements that can potentially carry UCI after the first burst of OFDM symbols that
   // contain DM-RS.
   unsigned nof_re_uci_l0 = 0;
-  for (unsigned i_symbol     = config.dmrs_symbol_mask.find_lowest(),
-                i_symbol_end = config.start_symbol_index + config.nof_symbols;
+  for (unsigned i_symbol = config.start_symbol_index, i_symbol_end = config.start_symbol_index + config.nof_symbols;
        i_symbol != i_symbol_end;
        ++i_symbol) {
     // Skip if the OFDM symbol contains DM-RS.
@@ -117,7 +116,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
   if (config.tbs > 0) {
     // In case of PUSCH multiplexing SCH.
     result.nof_harq_ack_re = calculate_nof_re_harq_ack(config.nof_harq_ack_bits,
-                                                       config.harq_ack_beta_offset,
+                                                       config.beta_offset_harq_ack,
                                                        nof_re_uci,
                                                        result.sch.nof_cb * result.sch.nof_bits_per_cb,
                                                        config.alpha_scaling,
@@ -125,7 +124,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
   } else {
     // In case of PUSCH NOT multiplexing SCH.
     result.nof_harq_ack_re = calculate_nof_re_harq_ack_without_sch(config.nof_harq_ack_bits,
-                                                                   config.harq_ack_beta_offset,
+                                                                   config.beta_offset_harq_ack,
                                                                    config.target_code_rate,
                                                                    modulation_order,
                                                                    config.alpha_scaling,
@@ -139,7 +138,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
     if (config.tbs > 0) {
       // In case of PUSCH multiplexing SCH.
       nof_harq_ack_rvd_re = calculate_nof_re_harq_ack(2,
-                                                      config.harq_ack_beta_offset,
+                                                      config.beta_offset_harq_ack,
                                                       nof_re_uci,
                                                       result.sch.nof_cb * result.sch.nof_bits_per_cb,
                                                       config.alpha_scaling,
@@ -147,7 +146,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
     } else {
       // In case of PUSCH NOT multiplexing SCH.
       nof_harq_ack_rvd_re = calculate_nof_re_harq_ack_without_sch(2,
-                                                                  config.harq_ack_beta_offset,
+                                                                  config.beta_offset_harq_ack,
                                                                   config.target_code_rate,
                                                                   modulation_order,
                                                                   config.alpha_scaling,

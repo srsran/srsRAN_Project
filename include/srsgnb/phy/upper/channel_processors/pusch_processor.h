@@ -45,25 +45,24 @@ public:
     bool new_data;
   };
 
-  /// Describes UCI transmission parameters.
+  /// Collects Uplink Control Information parameters.
   struct uci_description {
-    /// HARQ-ACK payload.
-    bounded_bitset<uci_constants::MAX_NOF_HARQ_ACK_BITS> harq_ack;
-    /// CSI Part1 payload.
-    bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_BITS> csi_part1;
-    /// CSI Part2 payload.
-    bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_BITS> csi_part2;
-    /// Parameter \f$\alpha\f$ as per TS38.212 Section 6.3.2.4.
-    float scaling;
-    /// Beta offset index for HARQ-ACK bits to derive the parameter \f$O_{ACK}\f$ in TS38.212 Section 6.3.2.4.1.1 from
-    /// TS38.213 Table 9.3-1.
-    unsigned beta_offset_harq_ack;
-    /// Beta offset index for CSI Part 1 bits to derive the parameter \f$O_{CSI-1}\f$ in TS38.212 Section 6.3.2.4.1.2
-    /// from TS38.213 Table 9.3-2.
-    unsigned beta_offset_csi_part1;
-    /// Beta offset index for CSI Part 2 bits to derive the parameter \f$O_{CSI-2}\f$ in TS38.212 Section 6.3.2.4.1.2
-    /// from TS38.213 Table 9.3-2.
-    unsigned beta_offset_csi_part2;
+    /// Number of HARQ-ACK information bits.
+    unsigned nof_harq_ack;
+    /// Number of CSI-Part1 information bits.
+    unsigned nof_csi_part1;
+    /// Number of CSI-Part2 information bits.
+    unsigned nof_csi_part2;
+    /// \brief Parameter \f$\alpha\f$ as per TS38.212 Section 6.3.2.4.
+    ///
+    /// Provided by the higher layer parameter \e scaling in TS38.331 Section 6.3.2, Information Element \e UCI-OnPUSCH.
+    float alpha_scaling;
+    /// Parameter \f$\beta _\textup{offset} ^\textup{HARQ-ACK}\f$ derived from TS38.213 Table 9.3-1.
+    float beta_offset_harq_ack;
+    /// Parameter \f$\beta _\textup{offset} ^\textup{CSI-1}\f$ derived from TS38.213 Table 9.3-2.
+    float beta_offset_csi_part1;
+    /// Parameter \f$\beta _\textup{offset} ^\textup{CSI-2}\f$ derived from TS38.213 Table 9.3-2.
+    float beta_offset_csi_part2;
   };
 
   /// \brief Describes the PUSCH processing parameters.
@@ -82,10 +81,12 @@ public:
     cyclic_prefix cp;
     /// Modulation scheme, common for data and UCI.
     modulation_scheme modulation;
+    /// Target code rate, parameter \f$R\f$. Determined according to TS38.214 Section 6.1.4.1.
+    float target_code_rate;
     /// Provides codeword description if present.
     optional<codeword_description> codeword;
-    /// Provides UCI if present.
-    optional<uci_description> uci;
+    /// Uplink control information parameters.
+    uci_description uci;
     /// \brief Parameter \f$n_{ID}\f$ from TS 38.211 section 6.3.1.1.
     ///
     /// It is equal to:
@@ -96,8 +97,6 @@ public:
     unsigned nof_tx_layers;
     /// Port indexes the PUSCH reception is mapped to.
     static_vector<uint8_t, MAX_PORTS> rx_ports;
-    // Ignores the transmission scheme.
-    // ...
     /// Indicates which symbol in the slot transmit DMRS.
     std::array<bool, MAX_NSYMB_PER_SLOT> dmrs_symbol_mask;
     /// Indicates the DMRS type.

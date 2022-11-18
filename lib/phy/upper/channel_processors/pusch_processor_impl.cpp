@@ -9,6 +9,7 @@
  */
 
 #include "pusch_processor_impl.h"
+#include "srsgnb/ran/pusch/ulsch_info.h"
 #include "srsgnb/ran/sch_dmrs_power.h"
 
 using namespace srsgnb;
@@ -16,12 +17,14 @@ using namespace srsgnb;
 pusch_processor_impl::pusch_processor_impl(pusch_processor_configuration& config) :
   estimator(std::move(config.estimator)),
   demodulator(std::move(config.demodulator)),
+  demultiplex(std::move(config.demultiplex)),
   decoder(std::move(config.decoder)),
   ch_estimate(config.ce_dims)
 {
   srsgnb_assert(estimator, "Invalid estimator.");
-  srsgnb_assert(demodulator, "Invalid estimator.");
-  srsgnb_assert(decoder, "Invalid estimator.");
+  srsgnb_assert(demodulator, "Invalid demodulator.");
+  srsgnb_assert(demultiplex, "Invalid demultiplex.");
+  srsgnb_assert(decoder, "Invalid decoder.");
 }
 
 pusch_processor_result pusch_processor_impl::process(span<uint8_t>                 data,
@@ -31,6 +34,9 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
 {
   pusch_processor_result result;
 
+  // Number of RB used by this transmission.
+  unsigned nof_rb = pdu.freq_alloc.get_nof_rb();
+
   // Calculate the total number of DM-RS per PRB.
   unsigned nof_dmrs_per_prb = pdu.dmrs.nof_dmrs_per_rb() * pdu.nof_cdm_groups_without_data *
                               std::count(pdu.dmrs_symbol_mask.begin(), pdu.dmrs_symbol_mask.end(), true);
@@ -39,10 +45,10 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   unsigned nof_re_per_prb = NRE * pdu.nof_symbols - nof_dmrs_per_prb;
 
   // Calculate the number of PUSCH symbols.
-  unsigned nof_pusch_symbols = pdu.freq_alloc.get_nof_rb() * nof_re_per_prb * pdu.nof_tx_layers;
+  unsigned nof_pusch_re = nof_rb * nof_re_per_prb;
 
   // Calculate number of LLR.
-  unsigned nof_codeword_llr = nof_pusch_symbols * get_bits_per_symbol(pdu.modulation);
+  unsigned nof_codeword_llr = nof_pusch_re * get_bits_per_symbol(pdu.modulation) * pdu.nof_tx_layers;
 
   // Get RB mask relative to Point A. It assumes PUSCH is never interleaved.
   bounded_bitset<MAX_RB> rb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
@@ -66,8 +72,48 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   // Fill result channel state information.
   result.csi = ch_estimate.get_channel_state_information();
 
-  // Prepare LLR buffers.
-  span<log_likelihood_ratio> codeword_llr = span<log_likelihood_ratio>(temp_codeword_llr).first(nof_codeword_llr);
+  // Get UL-SCH information.
+  ulsch_configuration ulsch_config;
+  ulsch_config.tbs                   = data.size() * 8;
+  ulsch_config.modulation            = pdu.modulation;
+  ulsch_config.target_code_rate      = pdu.target_code_rate;
+  ulsch_config.nof_harq_ack_bits     = pdu.uci.nof_harq_ack;
+  ulsch_config.nof_csi_part1_bits    = pdu.uci.nof_csi_part1;
+  ulsch_config.nof_csi_part2_bits    = pdu.uci.nof_csi_part2;
+  ulsch_config.alpha_scaling         = pdu.uci.alpha_scaling;
+  ulsch_config.beta_offset_harq_ack  = pdu.uci.beta_offset_harq_ack;
+  ulsch_config.beta_offset_csi_part1 = pdu.uci.beta_offset_csi_part1;
+  ulsch_config.beta_offset_csi_part2 = pdu.uci.beta_offset_csi_part2;
+  ulsch_config.nof_rb                = nof_rb;
+  ulsch_config.start_symbol_index    = pdu.start_symbol_index;
+  ulsch_config.nof_symbols           = pdu.nof_symbols;
+  ulsch_config.dmrs_type             = pdu.dmrs == dmrs_type::TYPE1 ? dmrs_config_type::type1 : dmrs_config_type::type2;
+  ulsch_config.dmrs_symbol_mask =
+      bounded_bitset<MAX_NSYMB_PER_SLOT>(pdu.dmrs_symbol_mask.begin(), pdu.dmrs_symbol_mask.end());
+  ulsch_config.nof_cdm_groups_without_data = pdu.nof_cdm_groups_without_data;
+  ulsch_config.nof_layers                  = pdu.nof_tx_layers;
+  ulsch_information info                   = get_ulsch_information(ulsch_config);
+
+  // Prepare demultiplex message information.
+  ulsch_demultiplex::message_information demux_msg_info;
+  demux_msg_info.nof_harq_ack_bits      = pdu.uci.nof_harq_ack;
+  demux_msg_info.nof_enc_harq_ack_bits  = info.nof_harq_ack_bits;
+  demux_msg_info.nof_csi_part1_bits     = pdu.uci.nof_csi_part1;
+  demux_msg_info.nof_enc_csi_part1_bits = info.nof_csi_part1_bits;
+  demux_msg_info.nof_csi_part2_bits     = pdu.uci.nof_csi_part2;
+  demux_msg_info.nof_enc_csi_part2_bits = info.nof_csi_part2_bits;
+
+  // Prepare demultiplex configuration.
+  ulsch_demultiplex::configuration demux_config;
+  demux_config.modulation                  = pdu.modulation;
+  demux_config.nof_layers                  = pdu.nof_tx_layers;
+  demux_config.nof_prb                     = nof_rb;
+  demux_config.start_symbol_index          = pdu.start_symbol_index;
+  demux_config.nof_symbols                 = pdu.nof_symbols;
+  demux_config.nof_harq_ack_rvd            = info.nof_harq_ack_rvd;
+  demux_config.dmrs                        = pdu.dmrs;
+  demux_config.dmrs_symbol_mask            = ulsch_config.dmrs_symbol_mask;
+  demux_config.nof_cdm_groups_without_data = ulsch_config.nof_cdm_groups_without_data;
 
   // Demodulate.
   pusch_demodulator::configuration demod_config;
@@ -82,7 +128,27 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   demod_config.n_id                        = pdu.n_id;
   demod_config.nof_tx_layers               = pdu.nof_tx_layers;
   demod_config.rx_ports                    = pdu.rx_ports;
+  demod_config.placeholders                = demultiplex->get_placeholders(demux_msg_info, demux_config);
+  span<log_likelihood_ratio> codeword_llr  = span<log_likelihood_ratio>(temp_codeword_llr).first(nof_codeword_llr);
   demodulator->demodulate(codeword_llr, grid, ch_estimate, demod_config);
+
+  // Demultiplex UL-SCH if any of UCI field is present.
+  if ((pdu.uci.nof_harq_ack > 0) || (pdu.uci.nof_csi_part1 > 0) || (pdu.uci.nof_csi_part2 > 0)) {
+    // Prepare buffers.
+    span<log_likelihood_ratio> sch_llr = span<log_likelihood_ratio>(temp_sch_llr).first(info.nof_ul_sch_bits);
+    span<log_likelihood_ratio> harq_ack_llr =
+        span<log_likelihood_ratio>(temp_harq_ack_llr).first(info.nof_harq_ack_bits);
+    span<log_likelihood_ratio> csi_part1_llr =
+        span<log_likelihood_ratio>(temp_csi_part1_llr).first(info.nof_csi_part1_bits);
+    span<log_likelihood_ratio> csi_part2_llr =
+        span<log_likelihood_ratio>(temp_csi_part2_llr).first(info.nof_csi_part2_bits);
+
+    // Demultiplexes UL-SCH codeword.
+    demultiplex->demultiplex(sch_llr, harq_ack_llr, csi_part1_llr, csi_part2_llr, codeword_llr, demux_config);
+
+    // Overwrite the view of the codeword.
+    codeword_llr = sch_llr;
+  }
 
   // Decode codeword if present.
   if (pdu.codeword) {
@@ -96,7 +162,7 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
     decoder_config.segmenter_cfg.mod            = pdu.modulation;
     decoder_config.segmenter_cfg.Nref           = pdu.tbs_lbrm_bytes * 8;
     decoder_config.segmenter_cfg.nof_layers     = pdu.nof_tx_layers;
-    decoder_config.segmenter_cfg.nof_ch_symbols = nof_pusch_symbols;
+    decoder_config.segmenter_cfg.nof_ch_symbols = info.nof_ul_sch_bits / get_bits_per_symbol(pdu.modulation);
     decoder_config.nof_ldpc_iterations          = 10;
     decoder_config.use_early_stop               = true;
     decoder_config.new_data                     = pdu.codeword.value().new_data;
@@ -106,9 +172,7 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   }
 
   // Decode UCI if present.
-  if (pdu.uci) {
-    // TBD.
-  }
+  // TBD.
 
   return result;
 }

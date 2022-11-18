@@ -173,6 +173,7 @@ add_custom_command(
 
 add_executable(pusch_processor_vectortest pusch_processor_vectortest.cpp)
 target_link_libraries(pusch_processor_vectortest
+        srsgnb_channel_equalizer
         srsgnb_channel_processors
         srsgnb_phy_support
         srslog

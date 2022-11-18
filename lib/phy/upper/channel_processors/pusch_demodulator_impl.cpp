@@ -86,7 +86,7 @@ void pusch_demodulator_impl::descramble(span<srsgnb::log_likelihood_ratio>      
   config.placeholders.for_each(
       config.modulation, config.nof_tx_layers, [&](unsigned y_placeholder, unsigned nof_x_placeholders) {
         // The distance between two repetition placeholders must be larger than 1.
-        srsgnb_assert(y_placeholder > last_placeholder + 1,
+        srsgnb_assert(y_placeholder > last_placeholder,
                       "Placeholder must be in ascending order with steps greater than 1.");
 
         // Calculate the number of elements to process, exclude the element before the placeholder.

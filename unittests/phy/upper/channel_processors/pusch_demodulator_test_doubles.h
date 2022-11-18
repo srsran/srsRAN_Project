@@ -19,13 +19,10 @@ class pusch_demodulator_spy : public pusch_demodulator
 {
 public:
   struct entry_t {
-    span<log_likelihood_ratio>        data;
-    std::vector<log_likelihood_ratio> harq_ack;
-    std::vector<log_likelihood_ratio> csi_part1;
-    std::vector<log_likelihood_ratio> csi_part2;
-    const resource_grid_reader*       grid;
-    const channel_estimate*           estimates;
-    configuration                     config;
+    span<log_likelihood_ratio>  data;
+    const resource_grid_reader* grid;
+    const channel_estimate*     estimates;
+    configuration               config;
   };
 
   void demodulate(span<log_likelihood_ratio>  data,

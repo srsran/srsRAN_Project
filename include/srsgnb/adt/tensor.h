@@ -179,7 +179,6 @@ public:
   // See interface for documentation.
   const dimensions_size_type& get_dimensions_size() const override { return dimensions_size; }
 
-protected:
   // See interface for documentation.
   span<Type> get_data() override { return elements; }
 
@@ -241,7 +240,7 @@ public:
   void resize(const dimensions_size_type& dimensions) override
   {
     dimensions_size     = dimensions;
-    unsigned total_size = std::accumulate(begin(dimensions_size), end(dimensions_size), 1, std::multiplies<>());
+    unsigned total_size = size();
     if (total_size > elements.size()) {
       elements.resize(total_size);
     }
@@ -250,12 +249,17 @@ public:
   // See interface for documentation.
   const dimensions_size_type& get_dimensions_size() const override { return dimensions_size; }
 
-protected:
   // See interface for documentation.
-  span<Type> get_data() override { return elements; }
+  span<Type> get_data() override { return span<Type>(elements).first(size()); }
 
   // See interface for documentation.
   span<const Type> get_data() const override { return elements; }
+
+  /// \brief Current tensor size in number of elements across all dimensions.
+  constexpr unsigned size() const
+  {
+    return std::accumulate(begin(dimensions_size), end(dimensions_size), 1, std::multiplies<>());
+  }
 
 private:
   /// Tensor actual dimensions.
