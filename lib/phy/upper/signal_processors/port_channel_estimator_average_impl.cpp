@@ -20,23 +20,23 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
                                                   const resource_grid_reader& grid,
                                                   unsigned                    port,
                                                   const dmrs_symbol_list&     symbols,
-                                                  span<const dmrs_pattern>    patterns,
                                                   const configuration&        cfg)
 {
   // Prepare symbol destination.
   temp_symbols.resize(symbols.size());
 
   // Extract symbols from resource grid.
-  extract_symbols(temp_symbols, grid, port, patterns, cfg);
+  extract_symbols(temp_symbols, grid, port, cfg);
 
   // Compute least-square estimates and store in them in temp_symbols.
-  for (unsigned i_layer = 0; i_layer != cfg.nof_tx_layers; ++i_layer) {
+  for (unsigned i_layer = 0, i_layer_end = cfg.dmrs_pattern.size(); i_layer != i_layer_end; ++i_layer) {
     srsvec::prod_conj(temp_symbols.get_slice(i_layer), symbols.get_slice(i_layer), temp_symbols.get_slice(i_layer));
     estimate.set_noise_variance(convert_dB_to_power(-30), port, i_layer);
   }
 
   // For each layer...
-  for (unsigned i_layer = 0; i_layer != cfg.nof_tx_layers; ++i_layer) {
+  unsigned nof_tx_layers = cfg.dmrs_pattern.size();
+  for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
     // Select first DM-RS symbol LSE.
     span<cf_t> symbol_lse_0 = temp_symbols.get_symbol(0, i_layer);
 
@@ -53,7 +53,7 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
     }
 
     // Interpolate frequency domain.
-    span<cf_t> ce_freq = span<cf_t>(temp_ce_freq).first(cfg.rb_mask.count() * NRE);
+    span<cf_t> ce_freq = span<cf_t>(temp_ce_freq).first(cfg.dmrs_pattern[0].rb_mask.count() * NRE);
     for (unsigned i_subc = 0, i_subc_end = ce_freq.size(); i_subc != i_subc_end; ++i_subc) {
       // Channel is equal to the LSE on DM-RS positions.
       if (i_subc % 2 == 0) {
@@ -78,7 +78,7 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
       span<cf_t> symbol_ce = estimate.get_symbol_ch_estimate(i_symbol, port, i_layer);
 
       unsigned i_prb_ce = 0;
-      cfg.rb_mask.for_each(0, cfg.rb_mask.size(), [&](unsigned i_prb) {
+      cfg.dmrs_pattern[0].rb_mask.for_each(0, cfg.dmrs_pattern[0].rb_mask.size(), [&](unsigned i_prb) {
         srsvec::copy(symbol_ce.subspan(i_prb * NRE, NRE), ce_freq.subspan(i_prb_ce * NRE, NRE));
         ++i_prb_ce;
       });
@@ -89,18 +89,29 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
 void port_channel_estimator_average_impl::extract_symbols(dmrs_symbol_list&           symbol_buffer,
                                                           const resource_grid_reader& grid,
                                                           unsigned                    port,
-                                                          span<const dmrs_pattern>    pattern,
                                                           const configuration&        cfg)
 {
   // For each layer...
-  for (unsigned i_layer = 0; i_layer != cfg.nof_tx_layers; ++i_layer) {
+  for (unsigned i_layer = 0, i_layer_end = cfg.dmrs_pattern.size(); i_layer != i_layer_end; ++i_layer) {
+    // Select DM-RS pattern.
+    const layer_dmrs_pattern& pattern = cfg.dmrs_pattern[i_layer];
+
     // Prepare RE mask, common for all symbols carrying DM-RS.
     std::array<bool, MAX_RB* NRE> temp_re_mask = {};
-    span<bool>                    re_mask      = span<bool>(temp_re_mask).first(cfg.rb_mask.size() * NRE);
+    span<bool>                    re_mask      = span<bool>(temp_re_mask).first(pattern.rb_mask.size() * NRE);
 
     // For each RB, copy RE pattern mask.
-    pattern[i_layer].rb_mask.for_each(0, pattern[i_layer].rb_mask.size(), [&](unsigned rb_index) {
-      srsvec::copy(re_mask.subspan(rb_index * NRE, NRE), pattern[i_layer].re_pattern);
+    pattern.rb_mask.for_each(0, pattern.rb_mask.size(), [&](unsigned rb_index) {
+      srsvec::copy(re_mask.subspan(rb_index * NRE, NRE), pattern.re_pattern);
+    });
+
+    // Prepare RE mask, common for all symbols carrying DM-RS after the first hop.
+    std::array<bool, MAX_RB* NRE> temp_re_mask2 = {};
+    span<bool>                    re_mask2      = span<bool>(temp_re_mask2).first(pattern.rb_mask2.size() * NRE);
+
+    // For each RB, copy RE pattern mask after the first hop.
+    pattern.rb_mask.for_each(0, pattern.rb_mask.size(), [&](unsigned rb_index) {
+      srsvec::copy(re_mask.subspan(rb_index * NRE, NRE), pattern.re_pattern);
     });
 
     // For each OFDM symbol in the transmission...
@@ -109,8 +120,8 @@ void port_channel_estimator_average_impl::extract_symbols(dmrs_symbol_list&     
                   dmrs_symbol_index = 0;
          symbol_index != symbol_index_end;
          ++symbol_index) {
-      // Skip if the symbol does not carry DMRS.
-      if (!pattern[i_layer].symbols[symbol_index]) {
+      // Skip if the symbol does not carry DM-RS.
+      if (!pattern.symbols[symbol_index]) {
         continue;
       }
 

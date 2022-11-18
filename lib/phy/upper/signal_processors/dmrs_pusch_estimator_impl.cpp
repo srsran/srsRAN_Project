@@ -54,7 +54,7 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
   unsigned nof_rx_ports  = config.rx_ports.size();
 
   // Select the DM-RS pattern for this PUSCH transmission.
-  span<dmrs_pattern> coordinates = span<dmrs_pattern>(temp_coordinates).first(nof_tx_layers);
+  span<layer_dmrs_pattern> coordinates = span<layer_dmrs_pattern>(temp_coordinates).first(nof_tx_layers);
 
   // Prepare DM-RS symbol buffer dimensions.
   re_measurement_dimensions dims;
@@ -75,15 +75,15 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
   generate(temp_symbols, coordinates, config);
 
   port_channel_estimator::configuration est_cfg = {};
-  est_cfg.rb_mask                               = config.rb_mask;
-  est_cfg.scs                                   = to_subcarrier_spacing(config.slot.numerology());
-  est_cfg.nof_tx_layers                         = nof_tx_layers;
-  est_cfg.first_symbol                          = config.first_symbol;
-  est_cfg.nof_symbols                           = config.nof_symbols;
-  est_cfg.rx_ports                              = config.rx_ports;
+  est_cfg.dmrs_pattern.resize(nof_tx_layers);
+  est_cfg.dmrs_pattern[0] = coordinates[0];
+  est_cfg.scs             = to_subcarrier_spacing(config.slot.numerology());
+  est_cfg.first_symbol    = config.first_symbol;
+  est_cfg.nof_symbols     = config.nof_symbols;
+  est_cfg.rx_ports        = config.rx_ports;
 
   for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-    ch_estimator->compute(estimate, grid, i_port, temp_symbols, coordinates, est_cfg);
+    ch_estimator->compute(estimate, grid, i_port, temp_symbols, est_cfg);
   }
 }
 
@@ -111,9 +111,9 @@ void dmrs_pusch_estimator_impl::sequence_generation(span<cf_t>           sequenc
       sequence, *prg, amplitude, DMRS_REF_POINT_K_TO_POINT_A, config.type.nof_dmrs_per_rb(), config.rb_mask);
 }
 
-void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&    dmrs_symbol_buffer,
-                                         span<dmrs_pattern>   mask,
-                                         const configuration& cfg)
+void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&        dmrs_symbol_buffer,
+                                         span<layer_dmrs_pattern> mask,
+                                         const configuration&     cfg)
 {
   // For each symbol in the transmission generate DMRS for layer 0.
   for (unsigned ofdm_symbol_index = cfg.first_symbol,

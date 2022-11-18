@@ -22,6 +22,8 @@ namespace srsgnb {
 class dmrs_pusch_estimator_impl : public dmrs_pusch_estimator
 {
 public:
+  using layer_dmrs_pattern = port_channel_estimator::layer_dmrs_pattern;
+
   /// Constructor - sets the channel estimator.
   explicit dmrs_pusch_estimator_impl(std::unique_ptr<pseudo_random_generator> prg_,
                                      std::unique_ptr<port_channel_estimator>  ch_est) :
@@ -60,7 +62,7 @@ private:
   /// Buffer for DM-RS symbols.
   dmrs_symbol_list temp_symbols;
   /// Buffer for DM-RS symbol coordinates.
-  std::array<dmrs_pattern, MAX_TX_LAYERS> temp_coordinates;
+  std::array<layer_dmrs_pattern, MAX_TX_LAYERS> temp_coordinates;
 
   /// \brief Generates the sequence described in TS 38.211 section 6.4.1.1.1, considering the only values required
   /// in TS38.211 section 6.4.1.1.2.
@@ -77,7 +79,7 @@ private:
   /// \param[out] pattern Lists of DM-RS patterns representing the REs the DM-RS symbols should be mapped to, one per
   ///                     transmission layer.
   /// \param[in]  cfg     Configuration parameters.
-  void generate(dmrs_symbol_list& symbols, span<dmrs_pattern> mask, const configuration& cfg);
+  void generate(dmrs_symbol_list& symbols, span<layer_dmrs_pattern> mask, const configuration& cfg);
 };
 
 } // namespace srsgnb

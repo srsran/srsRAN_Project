@@ -322,18 +322,4 @@ private:
   }
 };
 
-/// \brief DM-RS pattern to specify the position of DM-RS symbols in the resource grid.
-///
-/// DM-RS symbols are transmitted with a specific subcarrier pattern that repeats at specific OFDM symbols within the
-/// slot. Therefore, the position of the DM-RS symbols can be univocally characterized by a time mask and a frequency
-/// mask: Resource element \f$(k, l)\f$ contains a DM-RS symbol only if element \f$k\f$ of the frequency mask and
-/// element \f$l\f$ of the time mask are set to true.
-struct dmrs_pattern {
-  /// Boolean mask to specify the OFDM symbols carrying DM-RS symbols.
-  std::array<bool, MAX_NSYMB_PER_SLOT> symbols;
-  /// Boolean mask to specify the resource blocks carrying DM-RS symbols.
-  bounded_bitset<MAX_RB> rb_mask;
-  /// Boolean mask to specify the resource elements within the resource blocks carrying DM-RS symbols.
-  std::array<bool, NRE> re_pattern;
-};
 } // namespace srsgnb

@@ -23,7 +23,6 @@ public:
                const resource_grid_reader& grid,
                unsigned                    port,
                const dmrs_symbol_list&     symbols,
-               span<const dmrs_pattern>    pattern,
                const configuration&        cfg) override;
 
 private:
@@ -33,11 +32,8 @@ private:
   /// \param[in] port     Port index.
   /// \param[in] pattern  DM-RS pattern for each layer.
   /// \param[in] cfg      Configuration parameters of the current context.
-  static void extract_symbols(dmrs_symbol_list&           symbols,
-                              const resource_grid_reader& grid,
-                              unsigned                    port,
-                              span<const dmrs_pattern>    pattern,
-                              const configuration&        cfg);
+  static void
+  extract_symbols(dmrs_symbol_list& symbols, const resource_grid_reader& grid, unsigned port, const configuration& cfg);
 
   /// Temporary storage of symbols.
   dmrs_symbol_list temp_symbols;
