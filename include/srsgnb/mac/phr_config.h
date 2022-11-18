@@ -70,6 +70,14 @@ struct phr_config {
   bool                       dummy;
   bool                       phr_type_to_other_cell;
   phr_mode_other_cg          phr_mode;
+
+  bool operator==(const phr_config& rhs) const
+  {
+    return periodic_timer == rhs.periodic_timer && prohibit_timer == rhs.prohibit_timer &&
+           power_factor_change == rhs.power_factor_change && multiple_phr == rhs.multiple_phr && dummy == rhs.dummy &&
+           phr_type_to_other_cell == rhs.phr_type_to_other_cell && phr_mode == rhs.phr_mode;
+  }
+  bool operator!=(const phr_config& rhs) const { return !(rhs == *this); }
 };
 
 } // namespace srsgnb

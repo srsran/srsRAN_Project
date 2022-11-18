@@ -8,9 +8,8 @@
  *
  */
 
-#include "srsgnb/du/du_cell_config_helpers.h"
-#include "srsgnb/mac/bsr_format.h"
 #include "srsgnb/mac/config/mac_cell_group_config_factory.h"
+#include "srsgnb/mac/bsr_format.h"
 #include "srsgnb/mac/mac_cell_group_config.h"
 #include "srsgnb/mac/phr_config.h"
 #include "srsgnb/mac/time_alignment_group_config.h"

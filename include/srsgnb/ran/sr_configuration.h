@@ -68,6 +68,12 @@ struct scheduling_request_to_addmod {
   scheduling_request_id     sr_id;
   optional<sr_prohib_timer> prohibit_timer;
   sr_max_tx                 max_tx;
+
+  bool operator==(const scheduling_request_to_addmod& rhs) const
+  {
+    return sr_id == rhs.sr_id && prohibit_timer == rhs.prohibit_timer && max_tx == rhs.max_tx;
+  }
+  bool operator!=(const scheduling_request_to_addmod& rhs) const { return !(rhs == *this); }
 };
 
 /// SR Configuration, as per \c SchedulingRequestResourceConfig, TS 38.331.

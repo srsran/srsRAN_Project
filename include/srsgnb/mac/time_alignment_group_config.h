@@ -46,6 +46,9 @@ inline std::underlying_type<time_alignment_timer>::type time_alignemnt_timer_to_
 struct tag {
   tag_id_t             tag_id;
   time_alignment_timer ta_timer;
+
+  bool operator==(const tag& rhs) const { return tag_id == rhs.tag_id && ta_timer == rhs.ta_timer; }
+  bool operator!=(const tag& rhs) const { return !(rhs == *this); }
 };
 
 } // namespace srsgnb

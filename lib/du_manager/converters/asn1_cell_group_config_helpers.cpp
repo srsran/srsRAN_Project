@@ -1555,9 +1555,9 @@ void calculate_uplink_config_diff(asn1::rrc_nr::ul_cfg_s& out, const uplink_conf
   // TODO: Remaining.
 }
 
-void calculate_serving_cell_config_diff(const serving_cell_config&        src,
-                                        const serving_cell_config&        dest,
-                                        asn1::rrc_nr::serving_cell_cfg_s& out)
+void calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s& out,
+                                        const serving_cell_config&        src,
+                                        const serving_cell_config&        dest)
 {
   out.init_dl_bwp_present = true;
   calculate_bwp_dl_dedicated_diff(out.init_dl_bwp, src.init_dl_bwp, dest.init_dl_bwp);
@@ -1566,6 +1566,363 @@ void calculate_serving_cell_config_diff(const serving_cell_config&        src,
     calculate_uplink_config_diff(
         out.ul_cfg, src.ul_config.has_value() ? src.ul_config.value() : uplink_config{}, dest.ul_config.value());
   }
+}
+
+asn1::rrc_nr::sched_request_to_add_mod_s
+srsgnb::srs_du::make_asn1_rrc_scheduling_request(const scheduling_request_to_addmod& cfg)
+{
+  sched_request_to_add_mod_s req{};
+  req.sched_request_id = cfg.sr_id;
+  if (cfg.prohibit_timer.has_value()) {
+    req.sr_prohibit_timer_present = true;
+    switch (cfg.prohibit_timer.value()) {
+      case sr_prohib_timer::ms1:
+        req.sr_prohibit_timer = sched_request_to_add_mod_s::sr_prohibit_timer_opts::ms1;
+        break;
+      case sr_prohib_timer::ms2:
+        req.sr_prohibit_timer = sched_request_to_add_mod_s::sr_prohibit_timer_opts::ms2;
+        break;
+      case sr_prohib_timer::ms4:
+        req.sr_prohibit_timer = sched_request_to_add_mod_s::sr_prohibit_timer_opts::ms4;
+        break;
+      case sr_prohib_timer::ms8:
+        req.sr_prohibit_timer = sched_request_to_add_mod_s::sr_prohibit_timer_opts::ms8;
+        break;
+      case sr_prohib_timer::ms16:
+        req.sr_prohibit_timer = sched_request_to_add_mod_s::sr_prohibit_timer_opts::ms16;
+        break;
+      case sr_prohib_timer::ms32:
+        req.sr_prohibit_timer = sched_request_to_add_mod_s::sr_prohibit_timer_opts::ms32;
+        break;
+      case sr_prohib_timer::ms64:
+        req.sr_prohibit_timer = sched_request_to_add_mod_s::sr_prohibit_timer_opts::ms64;
+        break;
+      case sr_prohib_timer::ms128:
+        req.sr_prohibit_timer = sched_request_to_add_mod_s::sr_prohibit_timer_opts::ms128;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid SR prohibit timer={}", cfg.prohibit_timer.value());
+    }
+  }
+
+  switch (cfg.max_tx) {
+    case sr_max_tx::n4:
+      req.sr_trans_max = sched_request_to_add_mod_s::sr_trans_max_opts::n4;
+      break;
+    case sr_max_tx::n8:
+      req.sr_trans_max = sched_request_to_add_mod_s::sr_trans_max_opts::n8;
+      break;
+    case sr_max_tx::n16:
+      req.sr_trans_max = sched_request_to_add_mod_s::sr_trans_max_opts::n16;
+      break;
+    case sr_max_tx::n32:
+      req.sr_trans_max = sched_request_to_add_mod_s::sr_trans_max_opts::n32;
+      break;
+    case sr_max_tx::n64:
+      req.sr_trans_max = sched_request_to_add_mod_s::sr_trans_max_opts::n64;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid SR trans. max={}", cfg.max_tx);
+  }
+
+  return req;
+}
+
+void make_asn1_rrc_bsr_config(asn1::rrc_nr::bsr_cfg_s& out, const bsr_config& cfg)
+{
+  switch (cfg.retx_timer) {
+    case retx_bsr_timer::sf10:
+      out.retx_bsr_timer = bsr_cfg_s::retx_bsr_timer_opts::sf10;
+      break;
+    case retx_bsr_timer::sf20:
+      out.retx_bsr_timer = bsr_cfg_s::retx_bsr_timer_opts::sf20;
+      break;
+    case retx_bsr_timer::sf40:
+      out.retx_bsr_timer = bsr_cfg_s::retx_bsr_timer_opts::sf40;
+      break;
+    case retx_bsr_timer::sf80:
+      out.retx_bsr_timer = bsr_cfg_s::retx_bsr_timer_opts::sf80;
+      break;
+    case retx_bsr_timer::sf160:
+      out.retx_bsr_timer = bsr_cfg_s::retx_bsr_timer_opts::sf160;
+      break;
+    case retx_bsr_timer::sf320:
+      out.retx_bsr_timer = bsr_cfg_s::retx_bsr_timer_opts::sf320;
+      break;
+    case retx_bsr_timer::sf640:
+      out.retx_bsr_timer = bsr_cfg_s::retx_bsr_timer_opts::sf640;
+      break;
+    case retx_bsr_timer::sf1280:
+      out.retx_bsr_timer = bsr_cfg_s::retx_bsr_timer_opts::sf1280;
+      break;
+    case retx_bsr_timer::sf2560:
+      out.retx_bsr_timer = bsr_cfg_s::retx_bsr_timer_opts::sf2560;
+      break;
+    case retx_bsr_timer::sf5120:
+      out.retx_bsr_timer = bsr_cfg_s::retx_bsr_timer_opts::sf5120;
+      break;
+    case retx_bsr_timer::sf10240:
+      out.retx_bsr_timer = bsr_cfg_s::retx_bsr_timer_opts::sf10240;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid BSR Retx. Timer={}", cfg.retx_timer);
+  }
+
+  switch (cfg.periodic_timer) {
+    case periodic_bsr_timer::sf1:
+      out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::sf1;
+      break;
+    case periodic_bsr_timer::sf5:
+      out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::sf5;
+      break;
+    case periodic_bsr_timer::sf10:
+      out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::sf10;
+      break;
+    case periodic_bsr_timer::sf16:
+      out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::sf16;
+      break;
+    case periodic_bsr_timer::sf20:
+      out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::sf20;
+      break;
+    case periodic_bsr_timer::sf32:
+      out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::sf32;
+      break;
+    case periodic_bsr_timer::sf40:
+      out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::sf40;
+      break;
+    case periodic_bsr_timer::sf64:
+      out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::sf64;
+      break;
+    case periodic_bsr_timer::sf80:
+      out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::sf80;
+      break;
+    case periodic_bsr_timer::sf128:
+      out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::sf128;
+      break;
+    case periodic_bsr_timer::sf160:
+      out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::sf160;
+      break;
+    case periodic_bsr_timer::sf320:
+      out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::sf320;
+      break;
+    case periodic_bsr_timer::sf640:
+      out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::sf640;
+      break;
+    case periodic_bsr_timer::sf1280:
+      out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::sf1280;
+      break;
+    case periodic_bsr_timer::sf2560:
+      out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::sf2560;
+      break;
+    case periodic_bsr_timer::infinity:
+      out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::infinity;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid Periodic BSR Timer={}", cfg.periodic_timer);
+  }
+
+  if (cfg.lc_sr_delay_timer.has_value()) {
+    out.lc_ch_sr_delay_timer_present = true;
+    switch (cfg.lc_sr_delay_timer.value()) {
+      case logical_channel_sr_delay_timer::sf20:
+        out.lc_ch_sr_delay_timer = bsr_cfg_s::lc_ch_sr_delay_timer_opts::sf20;
+        break;
+      case logical_channel_sr_delay_timer::sf40:
+        out.lc_ch_sr_delay_timer = bsr_cfg_s::lc_ch_sr_delay_timer_opts::sf40;
+        break;
+      case logical_channel_sr_delay_timer::sf64:
+        out.lc_ch_sr_delay_timer = bsr_cfg_s::lc_ch_sr_delay_timer_opts::sf64;
+        break;
+      case logical_channel_sr_delay_timer::sf128:
+        out.lc_ch_sr_delay_timer = bsr_cfg_s::lc_ch_sr_delay_timer_opts::sf128;
+        break;
+      case logical_channel_sr_delay_timer::sf512:
+        out.lc_ch_sr_delay_timer = bsr_cfg_s::lc_ch_sr_delay_timer_opts::sf512;
+        break;
+      case logical_channel_sr_delay_timer::sf1024:
+        out.lc_ch_sr_delay_timer = bsr_cfg_s::lc_ch_sr_delay_timer_opts::sf1024;
+        break;
+      case logical_channel_sr_delay_timer::sf2560:
+        out.lc_ch_sr_delay_timer = bsr_cfg_s::lc_ch_sr_delay_timer_opts::sf2560;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid BSR LC SR Delay Timer={}", cfg.lc_sr_delay_timer.value());
+    }
+  }
+}
+
+asn1::rrc_nr::tag_s srsgnb::srs_du::make_asn1_rrc_tag_config(const tag& cfg)
+{
+  tag_s tag_cfg{};
+
+  tag_cfg.tag_id = cfg.tag_id;
+  switch (cfg.ta_timer) {
+    case time_alignment_timer::ms500:
+      tag_cfg.time_align_timer = time_align_timer_opts::ms500;
+      break;
+    case time_alignment_timer::ms750:
+      tag_cfg.time_align_timer = time_align_timer_opts::ms750;
+      break;
+    case time_alignment_timer::ms1280:
+      tag_cfg.time_align_timer = time_align_timer_opts::ms1280;
+      break;
+    case time_alignment_timer::ms1920:
+      tag_cfg.time_align_timer = time_align_timer_opts::ms1920;
+      break;
+    case time_alignment_timer::ms2560:
+      tag_cfg.time_align_timer = time_align_timer_opts::ms2560;
+      break;
+    case time_alignment_timer::ms5120:
+      tag_cfg.time_align_timer = time_align_timer_opts::ms5120;
+      break;
+    case time_alignment_timer::ms10240:
+      tag_cfg.time_align_timer = time_align_timer_opts::ms10240;
+      break;
+    case time_alignment_timer::infinity:
+      tag_cfg.time_align_timer = time_align_timer_opts::infinity;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid Time Align. Timer={}", cfg.ta_timer);
+  }
+
+  return tag_cfg;
+}
+
+void make_asn1_rrc_phr_config(asn1::rrc_nr::phr_cfg_s& out, const phr_config& cfg)
+{
+  switch (cfg.periodic_timer) {
+    case phr_periodic_timer::sf10:
+      out.phr_periodic_timer = phr_cfg_s::phr_periodic_timer_opts::sf10;
+      break;
+    case phr_periodic_timer::sf20:
+      out.phr_periodic_timer = phr_cfg_s::phr_periodic_timer_opts::sf20;
+      break;
+    case phr_periodic_timer::sf50:
+      out.phr_periodic_timer = phr_cfg_s::phr_periodic_timer_opts::sf50;
+      break;
+    case phr_periodic_timer::sf100:
+      out.phr_periodic_timer = phr_cfg_s::phr_periodic_timer_opts::sf100;
+      break;
+    case phr_periodic_timer::sf200:
+      out.phr_periodic_timer = phr_cfg_s::phr_periodic_timer_opts::sf200;
+      break;
+    case phr_periodic_timer::sf500:
+      out.phr_periodic_timer = phr_cfg_s::phr_periodic_timer_opts::sf500;
+      break;
+    case phr_periodic_timer::sf1000:
+      out.phr_periodic_timer = phr_cfg_s::phr_periodic_timer_opts::sf1000;
+      break;
+    case phr_periodic_timer::infinity:
+      out.phr_periodic_timer = phr_cfg_s::phr_periodic_timer_opts::infinity;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid PHR Periodic Timer={}", cfg.periodic_timer);
+  }
+
+  switch (cfg.prohibit_timer) {
+    case phr_prohibit_timer::sf0:
+      out.phr_prohibit_timer = phr_cfg_s::phr_prohibit_timer_opts::sf0;
+      break;
+    case phr_prohibit_timer::sf10:
+      out.phr_prohibit_timer = phr_cfg_s::phr_prohibit_timer_opts::sf10;
+      break;
+    case phr_prohibit_timer::sf20:
+      out.phr_prohibit_timer = phr_cfg_s::phr_prohibit_timer_opts::sf20;
+      break;
+    case phr_prohibit_timer::sf50:
+      out.phr_prohibit_timer = phr_cfg_s::phr_prohibit_timer_opts::sf50;
+      break;
+    case phr_prohibit_timer::sf100:
+      out.phr_prohibit_timer = phr_cfg_s::phr_prohibit_timer_opts::sf100;
+      break;
+    case phr_prohibit_timer::sf200:
+      out.phr_prohibit_timer = phr_cfg_s::phr_prohibit_timer_opts::sf200;
+      break;
+    case phr_prohibit_timer::sf500:
+      out.phr_prohibit_timer = phr_cfg_s::phr_prohibit_timer_opts::sf500;
+      break;
+    case phr_prohibit_timer::sf1000:
+      out.phr_prohibit_timer = phr_cfg_s::phr_prohibit_timer_opts::sf1000;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid PHR Prohibit Timer={}", cfg.prohibit_timer);
+  }
+
+  switch (cfg.power_factor_change) {
+    case phr_tx_power_factor_change::db1:
+      out.phr_tx_pwr_factor_change = phr_cfg_s::phr_tx_pwr_factor_change_opts::db1;
+      break;
+    case phr_tx_power_factor_change::db3:
+      out.phr_tx_pwr_factor_change = phr_cfg_s::phr_tx_pwr_factor_change_opts::db3;
+      break;
+    case phr_tx_power_factor_change::db6:
+      out.phr_tx_pwr_factor_change = phr_cfg_s::phr_tx_pwr_factor_change_opts::db6;
+      break;
+    case phr_tx_power_factor_change::infinity:
+      out.phr_tx_pwr_factor_change = phr_cfg_s::phr_tx_pwr_factor_change_opts::infinity;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid PHR Prohibit Timer={}", cfg.power_factor_change);
+  }
+
+  out.multiple_phr         = cfg.multiple_phr;
+  out.dummy                = cfg.dummy;
+  out.phr_type2_other_cell = cfg.phr_type_to_other_cell;
+
+  switch (cfg.phr_mode) {
+    case phr_mode_other_cg::real:
+      out.phr_mode_other_cg = phr_cfg_s::phr_mode_other_cg_opts::real;
+      break;
+    case phr_mode_other_cg::virtual_:
+      out.phr_mode_other_cg = phr_cfg_s::phr_mode_other_cg_opts::virtual_value;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid PHR Mode={}", cfg.phr_mode);
+  }
+}
+
+void calculate_mac_cell_group_config_diff(asn1::rrc_nr::mac_cell_group_cfg_s& out,
+                                          const mac_cell_group_config&        src,
+                                          const mac_cell_group_config&        dest)
+{
+  calculate_addmodremlist_diff(
+      out.sched_request_cfg.sched_request_to_add_mod_list,
+      out.sched_request_cfg.sched_request_to_release_list,
+      src.scheduling_request_config,
+      dest.scheduling_request_config,
+      [](const scheduling_request_to_addmod& req) { return make_asn1_rrc_scheduling_request(req); },
+      [](const scheduling_request_to_addmod& req) { return req.sr_id; });
+  if (out.sched_request_cfg.sched_request_to_add_mod_list.size() > 0 ||
+      out.sched_request_cfg.sched_request_to_release_list.size() > 0) {
+    out.sched_request_cfg_present = true;
+  }
+
+  if (dest.bsr_cfg.has_value()) {
+    out.bsr_cfg_present = true;
+    make_asn1_rrc_bsr_config(out.bsr_cfg, dest.bsr_cfg.value());
+  }
+
+  calculate_addmodremlist_diff(
+      out.tag_cfg.tag_to_add_mod_list,
+      out.tag_cfg.tag_to_release_list,
+      src.tag_config,
+      dest.tag_config,
+      [](const tag& t) { return make_asn1_rrc_tag_config(t); },
+      [](const tag& t) { return t.tag_id; });
+  if (out.tag_cfg.tag_to_add_mod_list.size() > 0 || out.tag_cfg.tag_to_release_list.size() > 0) {
+    out.tag_cfg_present = true;
+  }
+
+  if ((dest.phr_cfg.has_value() && not src.phr_cfg.has_value()) ||
+      (dest.phr_cfg.has_value() && src.phr_cfg.has_value() && dest.phr_cfg != src.phr_cfg)) {
+    out.phr_cfg_present = true;
+    make_asn1_rrc_phr_config(out.phr_cfg.set_setup(), dest.phr_cfg.value());
+  } else if (src.phr_cfg.has_value() && not dest.phr_cfg.has_value()) {
+    out.phr_cfg_present = true;
+    out.phr_cfg.set_release();
+  }
+
+  out.skip_ul_tx_dynamic = dest.skip_uplink_tx_dynamic;
 }
 
 void srsgnb::srs_du::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_cfg_s& out,
@@ -1585,5 +1942,8 @@ void srsgnb::srs_du::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_c
   out.sp_cell_cfg.serv_cell_idx           = dest.spcell_cfg.serv_cell_idx;
   out.sp_cell_cfg.sp_cell_cfg_ded_present = true;
   calculate_serving_cell_config_diff(
-      src.spcell_cfg.spcell_cfg_ded, dest.spcell_cfg.spcell_cfg_ded, out.sp_cell_cfg.sp_cell_cfg_ded);
+      out.sp_cell_cfg.sp_cell_cfg_ded, src.spcell_cfg.spcell_cfg_ded, dest.spcell_cfg.spcell_cfg_ded);
+
+  out.mac_cell_group_cfg_present = true;
+  calculate_mac_cell_group_config_diff(out.mac_cell_group_cfg, src.mcg_cfg, dest.mcg_cfg);
 }

@@ -38,6 +38,10 @@ asn1::rrc_nr::srs_res_set_s make_asn1_rrc_srs_res_set(const srs_config::srs_reso
 
 asn1::rrc_nr::srs_res_s make_asn1_rrc_srs_res(const srs_config::srs_resource& cfg);
 
+asn1::rrc_nr::sched_request_to_add_mod_s make_asn1_rrc_scheduling_request(const scheduling_request_to_addmod& cfg);
+
+asn1::rrc_nr::tag_s make_asn1_rrc_tag_config(const tag& cfg);
+
 /// \brief Fills ASN.1 CellGroupConfig struct.
 /// \param[out] out The ASN.1 CellGroupConfig struct to fill.
 /// \param[in] src Previous cell group configuration of UE.
