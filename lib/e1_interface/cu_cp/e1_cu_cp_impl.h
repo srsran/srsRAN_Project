@@ -28,9 +28,9 @@ class e1_event_manager;
 class e1_cu_cp_impl final : public e1_interface
 {
 public:
-  e1_cu_cp_impl(srsgnb::timer_manager& timers_,
-                e1_message_notifier&   e1_pdu_notifier_,
-                e1_ngap_notifier&      e1_ngap_notifier_);
+  e1_cu_cp_impl(srsgnb::timer_manager&       timers_,
+                e1_message_notifier&         e1_pdu_notifier_,
+                e1_cu_up_processor_notifier& e1_cu_up_processor_notifier_);
   ~e1_cu_cp_impl();
 
   // e1 connection manager functions
@@ -85,9 +85,9 @@ private:
 
   // nofifiers and handles
 
-  timer_manager&       timers;
-  e1_message_notifier& pdu_notifier;
-  e1_ngap_notifier&    ngap_notifier;
+  timer_manager&               timers;
+  e1_message_notifier&         pdu_notifier;
+  e1_cu_up_processor_notifier& cu_up_notifier;
 
   std::unique_ptr<e1_event_manager> events;
 

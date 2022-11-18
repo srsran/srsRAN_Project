@@ -107,6 +107,17 @@ struct bearer_creation_complete_message {
   ue_index_t ue_index;
 };
 
+/// Methods used by E1 to notify the CU-UP processor.
+class e1_cu_up_processor_notifier
+{
+public:
+  virtual ~e1_cu_up_processor_notifier() = default;
+
+  /// \brief Notifies about the reception of a GNB-CU-UP E1 Setup Request message.
+  /// \param[in] msg The received GNB-CU-UP E1 Setup Request message.
+  virtual void on_cu_up_e1_setup_request_received(const cu_up_e1_setup_request_message& msg) = 0;
+};
+
 /// Methods used by E1 to notify the NGAP.
 class e1_ngap_notifier
 {

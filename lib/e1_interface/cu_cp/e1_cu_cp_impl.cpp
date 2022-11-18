@@ -16,13 +16,13 @@ using namespace srsgnb;
 using namespace asn1::e1ap;
 using namespace srs_cu_cp;
 
-e1_cu_cp_impl::e1_cu_cp_impl(timer_manager&       timers_,
-                             e1_message_notifier& e1_pdu_notifier_,
-                             e1_ngap_notifier&    e1_ngap_notifier_) :
+e1_cu_cp_impl::e1_cu_cp_impl(timer_manager&               timers_,
+                             e1_message_notifier&         e1_pdu_notifier_,
+                             e1_cu_up_processor_notifier& e1_cu_up_processor_notifier_) :
   logger(srslog::fetch_basic_logger("CU-CP-E1")),
   timers(timers_),
   pdu_notifier(e1_pdu_notifier_),
-  ngap_notifier(e1_ngap_notifier_),
+  cu_up_notifier(e1_cu_up_processor_notifier_),
   events(std::make_unique<e1_event_manager>(timers))
 {
   e1ap_ue_context empty_context = {};
@@ -133,7 +133,7 @@ void e1_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
       cu_up_e1_setup_request_message req_msg = {};
       current_transaction_id                 = msg.value.gnb_cu_up_e1_setup_request()->transaction_id.value;
       req_msg.request                        = msg.value.gnb_cu_up_e1_setup_request();
-      ngap_notifier.on_e1_setup_request_received(req_msg);
+      cu_up_notifier.on_cu_up_e1_setup_request_received(req_msg);
     } break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());

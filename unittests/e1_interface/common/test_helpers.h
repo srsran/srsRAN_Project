@@ -22,12 +22,12 @@
 
 namespace srsgnb {
 
-class dummy_e1_ngap_notifier : public srs_cu_cp::e1_ngap_notifier
+class dummy_e1_cu_up_processor_notifier : public srs_cu_cp::e1_cu_up_processor_notifier
 {
 public:
-  dummy_e1_ngap_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
+  dummy_e1_cu_up_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
-  void on_e1_setup_request_received(const cu_up_e1_setup_request_message& msg) override
+  void on_cu_up_e1_setup_request_received(const cu_up_e1_setup_request_message& msg) override
   {
     logger.info("Received E1SetupRequest message.");
     last_cu_up_e1_setup_request_msg = msg;

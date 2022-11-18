@@ -9,6 +9,8 @@
 set(SOURCES
       cu_cp_factory.cpp
       cu_cp.cpp
+      cu_up_processor_impl.cpp
+      cu_up_processor_factory.cpp
       du_processor_impl.cpp
       du_processor_factory.cpp
       ue_manager.cpp
@@ -17,4 +19,4 @@ set(SOURCES
 
 add_library(srsgnb_cu_cp STATIC ${SOURCES})
 
-target_link_libraries(srsgnb_cu_cp srslog srsgnb_support srsgnb_f1c srsgnb_pdcp srsgnb_ngap srsgnb_rrc srsgnb_security rrc_nr_asn1)
+target_link_libraries(srsgnb_cu_cp srslog srsgnb_support srsgnb_e1 srsgnb_f1c srsgnb_pdcp srsgnb_ngap srsgnb_rrc srsgnb_security rrc_nr_asn1)

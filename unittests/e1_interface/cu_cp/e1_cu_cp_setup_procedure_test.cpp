@@ -214,7 +214,8 @@ TEST_F(e1_cu_cp_test, when_received_e1_setup_request_valid_then_connect_cu_up)
   e1->handle_message(e1_setup_msg);
 
   // Action 2: Check if CuUpE1SetupRequest was forwarded to NGAP
-  ASSERT_EQ(ngap_notifier->last_cu_up_e1_setup_request_msg.request->gnb_cu_up_name.value.to_string(), "srsCU-UP");
+  ASSERT_EQ(cu_up_processor_notifier->last_cu_up_e1_setup_request_msg.request->gnb_cu_up_name.value.to_string(),
+            "srsCU-UP");
 
   // Action 3: Transmit CuUpE1SetupResponse message
   test_logger.info("TEST: Transmit CuUpE1SetupResponse message...");
@@ -239,7 +240,8 @@ TEST_F(e1_cu_cp_test, when_received_e1_setup_request_invalid_then_reject_cu_up)
   e1->handle_message(e1_setup_msg);
 
   // Action 2 : Check if E1SetupRequest was forwarded to NGAP
-  ASSERT_EQ(ngap_notifier->last_cu_up_e1_setup_request_msg.request->gnb_cu_up_name.value.to_string(), "srsCU-UP");
+  ASSERT_EQ(cu_up_processor_notifier->last_cu_up_e1_setup_request_msg.request->gnb_cu_up_name.value.to_string(),
+            "srsCU-UP");
 
   // Action 3: Transmit E1SetupFailure message
   test_logger.info("TEST: Transmit CuUpE1SetupFailure message...");
