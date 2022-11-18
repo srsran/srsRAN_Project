@@ -14,6 +14,7 @@
 #include "../pucch_scheduling/pucch_scheduler_impl.h"
 #include "../support/slot_event_list.h"
 #include "../support/slot_sync_point.h"
+#include "../uci_scheduling/uci_allocator_impl.h"
 #include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
 #include "ue_scheduler.h"

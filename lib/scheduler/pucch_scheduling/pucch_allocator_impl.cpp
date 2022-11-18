@@ -550,6 +550,49 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_reso
   return pucch_harq_ack_output;
 }
 
+static unsigned get_harq_ack_bits(const pucch_info& pucch)
+{
+  switch (pucch.format) {
+    case srsgnb::pucch_format::FORMAT_1:
+      return pucch.format_1.harq_ack_nof_bits;
+      // TODO: add remaining Formats.
+    default:
+      srsgnb_assert(pucch.format == srsgnb::pucch_format::FORMAT_1, "Only PUCCH Format 1 supported.");
+      return 0;
+  }
+}
+
+pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc, rnti_t crnti)
+{
+  pucch_uci_bits removed_uci_info;
+
+  auto& pucchs = slot_alloc.result.ul.pucchs;
+
+  // Remove HARQ-ACK grant first.
+  auto it = std::find_if(pucchs.begin(), pucchs.end(), [crnti](pucch_info& pucch) {
+    return pucch.crnti == crnti and pucch.format_1.sr_bits == sr_nof_bits::no_sr and
+           pucch.format_1.harq_ack_nof_bits > 0;
+  });
+
+  if (it != pucchs.end()) {
+    removed_uci_info.harq_ack_nof_bits = get_harq_ack_bits(*it);
+    pucchs.erase(it);
+    // TODO: set the PUCCH resource as not used; this requires a redesign of the PUCCH resource manager.
+  }
+
+  // Remove SR grant, if any.
+  it = std::find_if(pucchs.begin(), pucchs.end(), [crnti](pucch_info& pucch) {
+    return pucch.crnti == crnti and pucch.format_1.sr_bits == sr_nof_bits::one;
+  });
+
+  if (it != pucchs.end()) {
+    pucchs.erase(it);
+    // TODO: set the PUCCH resource as not used; this requires a redesign of the PUCCH resource manager.
+  }
+
+  return removed_uci_info;
+}
+
 void pucch_allocator_impl::slot_indication(slot_point sl_tx)
 {
   // If last_sl_ind is not valid (not initialized), then the check sl_tx == last_sl_ind + 1 does not matter.

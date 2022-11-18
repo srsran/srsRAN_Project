@@ -27,9 +27,10 @@ ue_cell_grid_allocator::ue_cell_grid_allocator(const scheduler_ue_expert_config&
 void ue_cell_grid_allocator::add_cell(du_cell_index_t           cell_index,
                                       pdcch_resource_allocator& pdcch_sched,
                                       pucch_allocator&          pucch_alloc,
+                                      uci_allocator&            uci_alloc,
                                       cell_resource_allocator&  cell_alloc)
 {
-  cells.emplace(cell_index, cell_t{cell_index, &pdcch_sched, &pucch_alloc, &cell_alloc});
+  cells.emplace(cell_index, cell_t{cell_index, &pdcch_sched, &pucch_alloc, &uci_alloc, &cell_alloc});
 }
 
 bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
@@ -92,18 +93,16 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     return false;
   }
 
-  // Allocate PUCCH.
-  const unsigned       k1 = 4;
-  pucch_harq_ack_grant pucch =
-      get_pucch_alloc(grant.cell_index)
-          .alloc_ded_pucch_harq_ack_ue(
-              get_res_alloc(grant.cell_index), u.crnti, u.get_pcell().cfg(), pdsch_td_cfg.k0, k1);
-  if (pucch.pucch_pdu == nullptr) {
+  // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
+  const unsigned k1 = 4;
+  uci_allocation uci =
+      get_uci_alloc(grant.cell_index)
+          .alloc_uci_harq_ue(get_res_alloc(grant.cell_index), u.crnti, u.get_pcell().cfg(), pdsch_td_cfg.k0, k1);
+  if (not uci.alloc_successful) {
     logger.warning("Failed to allocate PDSCH. Cause: No space in PUCCH.");
     // TODO: remove PDCCH allocation.
     return false;
   }
-  // TODO: fills DCI with PUCCH info.
 
   // Mark resources as occupied in the ResourceGrid.
   pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, grant.crbs});
@@ -131,7 +130,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   switch (dci_cfg_type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
       build_dci_f1_0_tc_rnti(
-          pdcch->dci, init_dl_bwp, prbs, grant.time_res_index, k1, pucch.pucch_res_indicator, mcs, h_dl);
+          pdcch->dci, init_dl_bwp, prbs, grant.time_res_index, k1, uci.pucch_grant.pucch_res_indicator, mcs, h_dl);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_0:
       build_dci_f1_0_c_rnti(pdcch->dci,
@@ -141,7 +140,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                             prbs,
                             grant.time_res_index,
                             k1,
-                            pucch.pucch_res_indicator,
+                            uci.pucch_grant.pucch_res_indicator,
                             mcs,
                             h_dl);
       break;
@@ -284,6 +283,9 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
     default:
       report_fatal_error("Unsupported PDCCH DCI format");
   }
+
+  // Check if there is any UCI grant allocated on the PUCCH that can be moved to the PUSCH.
+  get_uci_alloc(grant.cell_index).move_uci_from_pucch_to_pusch(msg, pusch_alloc, ue_cell_cfg, u.crnti);
 
   // Save set PDCCH and PUSCH PDU parameters in HARQ process.
   h_ul.save_alloc_params(pdcch->dci.type, msg.pusch_cfg);

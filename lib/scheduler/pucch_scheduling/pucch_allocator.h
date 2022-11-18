@@ -23,9 +23,18 @@ struct pucch_harq_ack_grant {
   /// as per TS 38.213, Section 9.2.1. It indicates the UE which PUCCH resource should be used for HACK-(N)ACK
   /// reporting.
   /// \remark This is valid only if \c pucch is NOT nullptr.
-  unsigned pucch_res_indicator;
+  unsigned pucch_res_indicator{0};
   /// Pointer of the allocated PUCCH PDU; if \c nullptr, the allocation wasn't successful.
   pucch_info* pucch_pdu{nullptr};
+};
+
+/// Contains the number of UCI HARQ-ACK and CSI information bits of a removed PUCCH grant.
+struct pucch_uci_bits {
+  /// Number of HARQ-ACK info bits that should have been reported in the removed PUCCH grant.
+  unsigned harq_ack_nof_bits{0};
+  /// Number of CSI-part1 info bits that should have been reported in the removed PUCCH grant.
+  unsigned csi_part1_bits{0};
+  // TODO: add extra bits for CSI part 2.
 };
 
 /// PUCCH scheduling interface.
@@ -67,6 +76,13 @@ public:
                                                            const ue_cell_configuration& ue_cell_cfg,
                                                            unsigned                     pdsch_time_domain_resource,
                                                            unsigned                     k1) = 0;
+
+  /// Remove UCI allocations on PUCCH for a given UE.
+  /// \param[out,in] slot_alloc struct with scheduling results.
+  /// \param[in] crnti RNTI of the UE.
+  /// \return struct with the number of HARQ-ACK and CSI info bits from the removed PUCCH grants. If there was no PUCCH
+  /// to be removed, return 0 for both HARQ-ACK and CSI info bits.
+  virtual pucch_uci_bits remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc, rnti_t crnti) = 0;
 };
 
 } // namespace srsgnb

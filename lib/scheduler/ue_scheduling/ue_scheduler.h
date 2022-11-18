@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../pucch_scheduling/pucch_allocator.h"
+#include "../uci_scheduling/uci_allocator.h"
 #include "ue.h" // TEMP
 #include "srsgnb/scheduler/scheduler_configurator.h"
 
@@ -23,6 +24,7 @@ struct ue_scheduler_cell_params {
   du_cell_index_t           cell_index;
   pdcch_resource_allocator* pdcch_sched;
   pucch_allocator*          pucch_alloc;
+  uci_allocator*            uci_alloc;
   cell_resource_allocator*  cell_res_alloc;
 };
 

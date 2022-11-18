@@ -97,6 +97,8 @@ public:
                                                    unsigned                     pdsch_time_domain_resource,
                                                    unsigned                     k1) override;
 
+  pucch_uci_bits remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc, rnti_t crnti) override;
+
   /// Updates the internal slot_point and tracking of PUCCH resource usage over time.
   void slot_indication(slot_point sl_tx);
 
