@@ -350,10 +350,10 @@ void sctp_network_gateway::receive()
   int                    msg_flags = 0;
 
   // Fixme: consider class member on heap when sequential access is guaranteed
-  std::array<uint8_t, network_gateway_sctp_max_len> contiguous_buf; // no init
+  std::array<uint8_t, network_gateway_sctp_max_len> tmp_mem; // no init
 
   int rx_bytes = ::sctp_recvmsg(sock_fd,
-                                contiguous_buf.data(),
+                                tmp_mem.data(),
                                 network_gateway_udp_max_len,
                                 (struct sockaddr*)&client_addr,
                                 &client_addrlen,
@@ -366,7 +366,7 @@ void sctp_network_gateway::receive()
     logger.debug("Socket timeout reached");
   } else {
     logger.debug("Received {} bytes on SCTP socket", rx_bytes);
-    span<socket_buffer_type> payload(contiguous_buf.data(), rx_bytes);
+    span<socket_buffer_type> payload(tmp_mem.data(), rx_bytes);
     if (msg_flags & MSG_NOTIFICATION) {
       // Received notification
       handle_notification(payload);
@@ -474,23 +474,22 @@ void sctp_network_gateway::handle_pdu(const byte_buffer& pdu)
   }
 
   // Fixme: consider class member on heap when sequential access is guaranteed
-  std::array<uint8_t, network_gateway_sctp_max_len> contiguous_buf; // no init
-  const uint8_t*                                    payload = nullptr;
-  if (pdu.is_contiguous()) {
-    payload = pdu.segments().begin()->data();
-  } else {
-    payload      = contiguous_buf.data();
-    uint8_t* pos = contiguous_buf.data();
-    for (const auto& segment : pdu.segments()) {
-      memcpy(pos, segment.data(), segment.size_bytes());
-      pos += segment.size_bytes();
-    }
-  }
+  std::array<uint8_t, network_gateway_udp_max_len> tmp_mem; // no init
 
-  int bytes_sent = sctp_sendmsg(
-      sock_fd, payload, pdu.length(), (struct sockaddr*)&server_addr, server_addrlen, ppi, 0, stream_no, 0, 0);
+  span<const uint8_t> pdu_span = to_span(pdu, tmp_mem);
+
+  int bytes_sent = sctp_sendmsg(sock_fd,
+                                pdu_span.data(),
+                                pdu_span.size_bytes(),
+                                (struct sockaddr*)&server_addr,
+                                server_addrlen,
+                                ppi,
+                                0,
+                                stream_no,
+                                0,
+                                0);
   if (bytes_sent == -1) {
-    logger.error("Couldn't send {} B of data on SCTP socket: {}", pdu.length(), strerror(errno));
+    logger.error("Couldn't send {} B of data on SCTP socket: {}", pdu_span.size_bytes(), strerror(errno));
     return;
   }
 }

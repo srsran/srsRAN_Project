@@ -9,6 +9,7 @@
  */
 
 #include "udp_network_gateway.h"
+#include "srsgnb/adt/span.h"
 #include "srsgnb/srslog/srslog.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -44,22 +45,13 @@ void udp_network_gateway::handle_pdu(const byte_buffer& pdu)
   }
 
   // Fixme: consider class member on heap when sequential access is guaranteed
-  std::array<uint8_t, network_gateway_udp_max_len> contiguous_buf; // no init
-  const uint8_t*                                   payload = nullptr;
-  if (pdu.is_contiguous()) {
-    payload = pdu.segments().begin()->data();
-  } else {
-    payload      = contiguous_buf.data();
-    uint8_t* pos = contiguous_buf.data();
-    for (const auto& segment : pdu.segments()) {
-      memcpy(pos, segment.data(), segment.size_bytes());
-      pos += segment.size_bytes();
-    }
-  }
+  std::array<uint8_t, network_gateway_udp_max_len> tmp_mem; // no init
 
-  int bytes_sent = send(sock_fd, payload, pdu.length(), 0);
+  span<const uint8_t> pdu_span = to_span(pdu, tmp_mem);
+
+  int bytes_sent = send(sock_fd, pdu_span.data(), pdu_span.size_bytes(), 0);
   if (bytes_sent == -1) {
-    logger.error("Couldn't send {} B of data on UDP socket: {}", pdu.length(), strerror(errno));
+    logger.error("Couldn't send {} B of data on UDP socket: {}", pdu_span.size_bytes(), strerror(errno));
     return;
   }
 }
@@ -253,9 +245,9 @@ bool udp_network_gateway::recreate_and_reconnect()
 void udp_network_gateway::receive()
 {
   // Fixme: consider class member on heap when sequential access is guaranteed
-  std::array<uint8_t, network_gateway_udp_max_len> contiguous_buf; // no init
+  std::array<uint8_t, network_gateway_udp_max_len> tmp_mem; // no init
 
-  int rx_bytes = recv(sock_fd, contiguous_buf.data(), network_gateway_udp_max_len, 0);
+  int rx_bytes = recv(sock_fd, tmp_mem.data(), network_gateway_udp_max_len, 0);
 
   if (rx_bytes == -1 && errno != EAGAIN) {
     logger.error("Error reading from UDP socket: {}", strerror(errno));
@@ -263,7 +255,7 @@ void udp_network_gateway::receive()
     logger.debug("Socket timeout reached");
   } else {
     logger.debug("Received {} bytes on UDP socket", rx_bytes);
-    span<uint8_t> payload(contiguous_buf.data(), rx_bytes);
+    span<uint8_t> payload(tmp_mem.data(), rx_bytes);
     byte_buffer   pdu = {payload};
     data_notifier.on_new_pdu(std::move(pdu));
   }
