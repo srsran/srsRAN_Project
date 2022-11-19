@@ -774,6 +774,35 @@ void copy_segments(const byte_buffer& src, It dst_begin)
   }
 }
 
+/// Provides a contiguous view of a byte_buffer.
+/// It is bound to the lifetime of the byte_buffer \p src and the temporary buffer \p tmp_mem, whichever is shorter.
+/// Important: \p tmp_mem must be at least as large as \p src.
+///
+/// The memory used for the result and the complexity depends on whether \p src is contiguous or not:
+/// - Contiguous: Result is a view of the first and only segment of \p src.
+/// - Non-Contiguous: Result is a view of \p tmp_mem in which all segments of \p src are copied.
+///
+/// \param src Source byte_buffer.
+/// \param tmp_mem Temporary memory for a possible copy. Must be at least as large as \p src.
+/// \return A contiguous view of the byte_buffer
+inline span<const uint8_t> to_span(const byte_buffer& src, span<uint8_t> tmp_mem)
+{
+  // empty buffer
+  if (src.empty()) {
+    return {};
+  }
+
+  // is contiguous: shortcut without copy
+  if (src.is_contiguous()) {
+    return *src.segments().begin();
+  }
+  // non-contiguous: copy required
+  srsgnb_assert(src.length() <= tmp_mem.size_bytes(), "Insufficient temporary memory to fit the byte_buffer.");
+  span<uint8_t> result = {tmp_mem.data(), src.length()};
+  copy_segments(src, result);
+  return result;
+}
+
 } // namespace srsgnb
 
 namespace fmt {

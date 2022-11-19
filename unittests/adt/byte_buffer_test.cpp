@@ -497,6 +497,34 @@ TEST(byte_buffer, copy_to_iterator)
   ASSERT_EQ(pdu, dst_subspan);
 }
 
+TEST(byte_buffer, to_span)
+{
+  byte_buffer          pdu;
+  std::vector<uint8_t> bytes        = make_small_vec();
+  std::vector<uint8_t> bytes2       = make_large_vec();
+  auto                 bytes_concat = concat_vec(bytes, bytes2);
+
+  std::vector<uint8_t> tmp_mem(bytes_concat.size(), 0);
+  tmp_mem.reserve(bytes_concat.size());
+
+  // test view of empty buffer
+  span<const uint8_t> dst = to_span(pdu, tmp_mem);
+  ASSERT_TRUE(dst.empty());
+  ASSERT_EQ(dst, pdu);
+
+  // test view of small buffer (no copy)
+  pdu.append(bytes);
+  dst = to_span(pdu, tmp_mem);
+  ASSERT_EQ(pdu, dst);
+  ASSERT_EQ(dst, span<const uint8_t>{*pdu.segments().begin()});
+
+  // test copy of large buffer (with copy)
+  pdu.append(bytes2);
+  dst = to_span(pdu, tmp_mem);
+  ASSERT_EQ(pdu, dst);
+  ASSERT_EQ(dst, span<const uint8_t>{tmp_mem});
+}
+
 TEST(byte_buffer, iterator_plus_equal_op)
 {
   // Test with small vector of bytes
