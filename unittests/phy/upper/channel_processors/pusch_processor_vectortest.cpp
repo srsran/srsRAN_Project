@@ -65,6 +65,9 @@ protected:
     std::shared_ptr<ldpc_segmenter_rx_factory> ldpc_segm_rx_factory = create_ldpc_segmenter_rx_factory_sw();
     ASSERT_NE(ldpc_segm_rx_factory, nullptr);
 
+    std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
+    ASSERT_NE(short_block_det_factory, nullptr);
+
     // Create port channel estimator factory.
     std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
         create_port_channel_estimator_factory_sw();
@@ -88,7 +91,7 @@ protected:
     std::shared_ptr<ulsch_demultiplex_factory> demux_factory = create_ulsch_demultiplex_factory_sw();
     ASSERT_NE(demux_factory, nullptr);
 
-    // Create PUSCH decoder.
+    // Create PUSCH decoder factory.
     pusch_decoder_factory_sw_configuration pusch_dec_config;
     pusch_dec_config.crc_factory                             = crc_calc_factory;
     pusch_dec_config.decoder_factory                         = ldpc_dec_factory;
@@ -97,12 +100,18 @@ protected:
     std::shared_ptr<pusch_decoder_factory> pusch_dec_factory = create_pusch_decoder_factory_sw(pusch_dec_config);
     ASSERT_NE(pusch_dec_factory, nullptr);
 
+    // Create UCI decoder factory.
+    uci_decoder_factory_sw_configuration uci_dec_factory_config;
+    uci_dec_factory_config.decoder_factory               = short_block_det_factory;
+    std::shared_ptr<uci_decoder_factory> uci_dec_factory = create_uci_decoder_factory_sw(uci_dec_factory_config);
+
     // Create PUSCH processor.
     pusch_processor_factory_sw_configuration pusch_proc_factory_config;
     pusch_proc_factory_config.estimator_factory                    = dmrs_pusch_chan_estimator_factory;
     pusch_proc_factory_config.demodulator_factory                  = pusch_demod_factory;
-    pusch_proc_factory_config.decoder_factory                      = pusch_dec_factory;
     pusch_proc_factory_config.demux_factory                        = demux_factory;
+    pusch_proc_factory_config.decoder_factory                      = pusch_dec_factory;
+    pusch_proc_factory_config.uci_dec_factory                      = uci_dec_factory;
     pusch_proc_factory_config.ch_estimate_dimensions.nof_prb       = context.rg_nof_rb;
     pusch_proc_factory_config.ch_estimate_dimensions.nof_symbols   = context.rg_nof_symb;
     pusch_proc_factory_config.ch_estimate_dimensions.nof_rx_ports  = context.config.rx_ports.size();
@@ -140,10 +149,21 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   // Process PUSCH PDU.
   pusch_processor_result result = pusch_proc->process(data, softbuffer, grid, config);
 
-  // Verify results.
+  // Verify UL-SCH decode results.
   ASSERT_TRUE(result.data.has_value());
   ASSERT_TRUE(result.data.value().tb_crc_ok);
   ASSERT_EQ(expected_data, data);
+
+  // Verify HARQ-ACK result.
+  if (config.uci.nof_harq_ack > 0) {
+    std::vector<uint8_t> expected_harq_ack = test_case.harq_ack.read();
+
+    ASSERT_EQ(span<const uint8_t>(result.harq_ack.payload), span<const uint8_t>(expected_harq_ack));
+    ASSERT_EQ(result.harq_ack.status, uci_status::valid);
+  } else {
+    ASSERT_TRUE(result.harq_ack.payload.empty());
+    ASSERT_EQ(result.harq_ack.status, uci_status::unknown);
+  }
 }
 
 // Creates test suite that combines all possible parameters.

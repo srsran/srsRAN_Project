@@ -13,6 +13,7 @@
 #include "../signal_processors/dmrs_pusch_estimator_test_doubles.h"
 #include "pusch_decoder_test_doubles.h"
 #include "pusch_demodulator_test_doubles.h"
+#include "uci_decoder_test_doubles.h"
 #include "ulsch_demultiplex_test_doubles.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/ran/pusch/ulsch_info.h"
@@ -54,6 +55,7 @@ protected:
   std::shared_ptr<pusch_demodulator_factory_spy>    demodulator_factory_spy;
   std::shared_ptr<ulsch_demultiplex_factory_spy>    demux_factory_spy;
   std::shared_ptr<pusch_decoder_factory_spy>        decoder_factory_spy;
+  std::shared_ptr<uci_decoder_factory_spy>          uci_dec_factory_spy;
   std::shared_ptr<pusch_processor_factory>          pusch_proc_factory;
 
   std::unique_ptr<pusch_processor> pusch_proc;
@@ -65,6 +67,7 @@ protected:
     demodulator_factory_spy = std::make_shared<pusch_demodulator_factory_spy>();
     demux_factory_spy       = std::make_shared<ulsch_demultiplex_factory_spy>();
     decoder_factory_spy     = std::make_shared<pusch_decoder_factory_spy>();
+    uci_dec_factory_spy     = std::make_shared<uci_decoder_factory_spy>();
 
     // Create PUSCH processor factory.
     pusch_processor_factory_sw_configuration proc_factory_config;
@@ -72,6 +75,7 @@ protected:
     proc_factory_config.demodulator_factory                  = demodulator_factory_spy;
     proc_factory_config.demux_factory                        = demux_factory_spy;
     proc_factory_config.decoder_factory                      = decoder_factory_spy;
+    proc_factory_config.uci_dec_factory                      = uci_dec_factory_spy;
     proc_factory_config.ch_estimate_dimensions.nof_prb       = MAX_RB;
     proc_factory_config.ch_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
     proc_factory_config.ch_estimate_dimensions.nof_rx_ports  = 1;
@@ -96,6 +100,8 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_NE(demux_spy, nullptr);
   pusch_decoder_spy* decoder_spy = decoder_factory_spy->get_entries().front();
   ASSERT_NE(decoder_spy, nullptr);
+  uci_decoder_spy* uci_dec_spy = uci_dec_factory_spy->get_entries().front();
+  ASSERT_NE(uci_dec_spy, nullptr);
 
   subcarrier_spacing scs                = std::get<0>(GetParam());
   cyclic_prefix      cyclic_prefix_conf = std::get<1>(GetParam());
@@ -201,7 +207,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   resource_grid_spy rg_spy;
 
   // Process PDU.
-  pusch_proc->process(transport_block, softbuffer_spy, rg_spy, pdu);
+  pusch_processor_result result = pusch_proc->process(transport_block, softbuffer_spy, rg_spy, pdu);
 
   // Calling resource grid and softbuffer methods are not permitted.
   ASSERT_EQ(0, rg_spy.get_total_count());
@@ -265,6 +271,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
 
   // Select codeword LLR view.
   span<const log_likelihood_ratio> sch_data_llr = demodulator_entry.data;
+  span<const log_likelihood_ratio> harq_ack_llr = {};
 
   // Assert demux if UCI is multiplexed.
   if ((pdu.uci.nof_harq_ack > 0) || (pdu.uci.nof_csi_part1 > 0) || (pdu.uci.nof_csi_part2)) {
@@ -284,6 +291,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
 
     // Switch actual codeword data to the SCH demultiplexed data.
     sch_data_llr = demux_entry.sch_data;
+    harq_ack_llr = demux_entry.harq_ack;
   } else {
     ASSERT_EQ(0, demux_spy->get_demultiplex_entries().size());
   }
@@ -306,13 +314,27 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
     ASSERT_EQ(10, decoder_entry.config.nof_ldpc_iterations);
     ASSERT_EQ(true, decoder_entry.config.use_early_stop);
     ASSERT_EQ(pdu.codeword.value().new_data, decoder_entry.config.new_data);
+
+    ASSERT_TRUE(result.data.has_value());
+    ASSERT_EQ(decoder_entry.stats.tb_crc_ok, result.data.value().tb_crc_ok);
+    ASSERT_EQ(decoder_entry.stats.nof_codeblocks_total, result.data.value().nof_codeblocks_total);
   } else {
     ASSERT_EQ(0, decoder_spy->get_entries().size());
+    ASSERT_FALSE(result.data.has_value());
   }
 
-  // Assert data decoder inputs if enabled.
-  if (codeword_present) {
-    // ...
+  // Assert UCI decoder inputs.
+  if (pdu.uci.nof_harq_ack > 0) {
+    ASSERT_EQ(1, uci_dec_spy->get_entries().size());
+    const uci_decoder_spy::entry_t& uci_dec_entry = uci_dec_spy->get_entries().front();
+    ASSERT_EQ(span<const log_likelihood_ratio>(harq_ack_llr), span<const log_likelihood_ratio>(uci_dec_entry.llr));
+    ASSERT_EQ(pdu.modulation, uci_dec_entry.config.modulation);
+    ASSERT_EQ(span<const uint8_t>(result.harq_ack.payload), span<const uint8_t>(uci_dec_entry.message));
+    ASSERT_EQ(result.harq_ack.status, uci_dec_entry.status);
+  } else {
+    ASSERT_EQ(0, uci_dec_spy->get_entries().size());
+    ASSERT_EQ(uci_status::unknown, result.harq_ack.status);
+    ASSERT_TRUE(result.harq_ack.payload.empty());
   }
 }
 

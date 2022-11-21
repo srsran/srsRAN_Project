@@ -19,12 +19,14 @@ pusch_processor_impl::pusch_processor_impl(pusch_processor_configuration& config
   demodulator(std::move(config.demodulator)),
   demultiplex(std::move(config.demultiplex)),
   decoder(std::move(config.decoder)),
+  uci_dec(std::move(config.uci_dec)),
   ch_estimate(config.ce_dims)
 {
   srsgnb_assert(estimator, "Invalid estimator.");
   srsgnb_assert(demodulator, "Invalid demodulator.");
   srsgnb_assert(demultiplex, "Invalid demultiplex.");
   srsgnb_assert(decoder, "Invalid decoder.");
+  srsgnb_assert(uci_dec, "Invalid UCI decoder.");
 }
 
 pusch_processor_result pusch_processor_impl::process(span<uint8_t>                 data,
@@ -132,23 +134,35 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   span<log_likelihood_ratio> codeword_llr  = span<log_likelihood_ratio>(temp_codeword_llr).first(nof_codeword_llr);
   demodulator->demodulate(codeword_llr, grid, ch_estimate, demod_config);
 
+  // Prepare buffers.
+  span<log_likelihood_ratio> sch_llr      = span<log_likelihood_ratio>(temp_sch_llr).first(info.nof_ul_sch_bits);
+  span<log_likelihood_ratio> harq_ack_llr = span<log_likelihood_ratio>(temp_harq_ack_llr).first(info.nof_harq_ack_bits);
+  span<log_likelihood_ratio> csi_part1_llr =
+      span<log_likelihood_ratio>(temp_csi_part1_llr).first(info.nof_csi_part1_bits);
+  span<log_likelihood_ratio> csi_part2_llr =
+      span<log_likelihood_ratio>(temp_csi_part2_llr).first(info.nof_csi_part2_bits);
+
   // Demultiplex UL-SCH if any of UCI field is present.
   if ((pdu.uci.nof_harq_ack > 0) || (pdu.uci.nof_csi_part1 > 0) || (pdu.uci.nof_csi_part2 > 0)) {
-    // Prepare buffers.
-    span<log_likelihood_ratio> sch_llr = span<log_likelihood_ratio>(temp_sch_llr).first(info.nof_ul_sch_bits);
-    span<log_likelihood_ratio> harq_ack_llr =
-        span<log_likelihood_ratio>(temp_harq_ack_llr).first(info.nof_harq_ack_bits);
-    span<log_likelihood_ratio> csi_part1_llr =
-        span<log_likelihood_ratio>(temp_csi_part1_llr).first(info.nof_csi_part1_bits);
-    span<log_likelihood_ratio> csi_part2_llr =
-        span<log_likelihood_ratio>(temp_csi_part2_llr).first(info.nof_csi_part2_bits);
-
     // Demultiplexes UL-SCH codeword.
     demultiplex->demultiplex(sch_llr, harq_ack_llr, csi_part1_llr, csi_part2_llr, codeword_llr, demux_config);
-
+  } else {
     // Overwrite the view of the codeword.
-    codeword_llr = sch_llr;
+    sch_llr = codeword_llr;
   }
+
+  // Prepare UCI decoder configuration.
+  uci_decoder::configuration uci_dec_config;
+  uci_dec_config.modulation = pdu.modulation;
+
+  // Decode HARQ-ACK.
+  result.harq_ack = decode_uci_field(harq_ack_llr, pdu.uci.nof_harq_ack, uci_dec_config);
+
+  // Decode CSI-Part1.
+  result.csi_part1 = decode_uci_field(csi_part1_llr, pdu.uci.nof_csi_part1, uci_dec_config);
+
+  // Decode HARQ-ACK.
+  result.csi_part2 = decode_uci_field(csi_part2_llr, pdu.uci.nof_csi_part2, uci_dec_config);
 
   // Decode codeword if present.
   if (pdu.codeword) {
@@ -168,11 +182,30 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
     decoder_config.new_data                     = pdu.codeword.value().new_data;
 
     // Decode.
-    decoder->decode(data, result.data.value(), &softbuffer, codeword_llr, decoder_config);
+    decoder->decode(data, result.data.value(), &softbuffer, sch_llr, decoder_config);
   }
 
-  // Decode UCI if present.
-  // TBD.
+  return result;
+}
+
+pusch_uci_field pusch_processor_impl::decode_uci_field(span<const log_likelihood_ratio>  llr,
+                                                       unsigned                          nof_bits,
+                                                       const uci_decoder::configuration& uci_dec_config)
+{
+  pusch_uci_field result;
+
+  // If the UCI field is not present.
+  if (nof_bits == 0) {
+    result.payload.clear();
+    result.status = uci_status::unknown;
+    return result;
+  }
+
+  // Prepare payload.
+  result.payload.resize(nof_bits);
+
+  // Actual decoding.
+  result.status = uci_dec->decode(result.payload, llr, uci_dec_config);
 
   return result;
 }

@@ -407,21 +407,24 @@ public:
     demodulator_factory(config.demodulator_factory),
     demux_factory(config.demux_factory),
     decoder_factory(config.decoder_factory),
+    uci_dec_factory(config.uci_dec_factory),
     ch_estimate_dimensions(config.ch_estimate_dimensions)
   {
     srsgnb_assert(estimator_factory, "Invalid channel estimation factory.");
     srsgnb_assert(demodulator_factory, "Invalid demodulation factory.");
     srsgnb_assert(demux_factory, "Invalid demux factory.");
     srsgnb_assert(decoder_factory, "Invalid decoder factory.");
+    srsgnb_assert(uci_dec_factory, "Invalid UCI decoder factory.");
   }
 
   std::unique_ptr<pusch_processor> create() override
   {
     pusch_processor_configuration config;
     config.estimator   = estimator_factory->create();
-    config.decoder     = decoder_factory->create();
-    config.demultiplex = demux_factory->create();
     config.demodulator = demodulator_factory->create();
+    config.demultiplex = demux_factory->create();
+    config.decoder     = decoder_factory->create();
+    config.uci_dec     = uci_dec_factory->create();
     config.ce_dims     = ch_estimate_dimensions;
     return std::make_unique<pusch_processor_impl>(config);
   }
@@ -431,6 +434,7 @@ private:
   std::shared_ptr<pusch_demodulator_factory>    demodulator_factory;
   std::shared_ptr<ulsch_demultiplex_factory>    demux_factory;
   std::shared_ptr<pusch_decoder_factory>        decoder_factory;
+  std::shared_ptr<uci_decoder_factory>          uci_dec_factory;
   channel_estimate::channel_estimate_dimensions ch_estimate_dimensions;
 };
 
@@ -473,9 +477,6 @@ private:
 
 class uci_decoder_factory_sw : public uci_decoder_factory
 {
-private:
-  std::shared_ptr<short_block_detector_factory> decoder_factory;
-
 public:
   explicit uci_decoder_factory_sw(uci_decoder_factory_sw_configuration& config) :
     decoder_factory(std::move(config.decoder_factory))
@@ -487,6 +488,9 @@ public:
   {
     return std::make_unique<uci_decoder_impl>(decoder_factory->create());
   }
+
+private:
+  std::shared_ptr<short_block_detector_factory> decoder_factory;
 };
 
 class ulsch_demultiplex_factory_sw : public ulsch_demultiplex_factory

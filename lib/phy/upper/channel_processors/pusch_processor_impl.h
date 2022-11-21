@@ -13,6 +13,7 @@
 #include "srsgnb/phy/upper/channel_processors/pusch_decoder.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_demodulator.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_processor.h"
+#include "srsgnb/phy/upper/channel_processors/uci_decoder.h"
 #include "srsgnb/phy/upper/channel_processors/ulsch_demultiplex.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pusch_estimator.h"
 #include <memory>
@@ -29,6 +30,8 @@ struct pusch_processor_configuration {
   std::unique_ptr<ulsch_demultiplex> demultiplex;
   /// Decoder instance. Ownership is transferred to the processor.
   std::unique_ptr<pusch_decoder> decoder;
+  /// UCI Decoder instance. Ownership is transferred to the processor.
+  std::unique_ptr<uci_decoder> uci_dec;
   /// Channel estimate dimensions.
   channel_estimate::channel_estimate_dimensions ce_dims;
 };
@@ -73,14 +76,28 @@ private:
   static constexpr unsigned MAX_NOF_CSI_PART2_LLR =
       MAX_RB * pusch_constants::MAX_NRE_PER_RB * UCI_ON_PUSCH_MAX_ALPHA * pusch_constants::MAX_MODULATION_ORDER;
 
+  /// \brief Decodes a UCI field by reversing the channel coding steps described by TS38.212
+  /// Sections 6.3.2.2, 6.3.2.3, 6.3.2.4, and 6.3.2.5.
+  ///
+  /// \param[in] llr            Input soft bits to decode.
+  /// \param[in] nof_bits       Number of information bits to decode.
+  /// \param[in] uci_dec_config UCI decoder configuration.
+  /// \return The UCI field decoding result if the field is present. Otherwise, a UCI field with empty payload and
+  /// unknown status.
+  pusch_uci_field decode_uci_field(span<const log_likelihood_ratio>  llr,
+                                   unsigned                          nof_bits,
+                                   const uci_decoder::configuration& uci_dec_config);
+
   /// Channel estimator.
   std::unique_ptr<dmrs_pusch_estimator> estimator;
   /// PUSCH demodulator.
   std::unique_ptr<pusch_demodulator> demodulator;
   /// UL-SCH demultiplexer.
   std::unique_ptr<ulsch_demultiplex> demultiplex;
-  /// PUSCH decoder.
+  /// UL-SCH transport block decoder.
   std::unique_ptr<pusch_decoder> decoder;
+  /// UCI decoder.
+  std::unique_ptr<uci_decoder> uci_dec;
   /// Temporal channel estimate.
   channel_estimate ch_estimate;
   /// Codeword LLR buffer.
