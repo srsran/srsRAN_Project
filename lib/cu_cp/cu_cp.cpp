@@ -59,17 +59,29 @@ void cu_cp::start()
 
 void cu_cp::stop() {}
 
+size_t cu_cp::get_nof_dus() const
+{
+  return du_db.size();
+}
+
+size_t cu_cp::get_nof_ues() const
+{
+  size_t nof_ues = 0;
+  for (auto& du : du_db) {
+    nof_ues += du->get_nof_ues();
+  }
+  return nof_ues;
+}
+
 f1c_message_handler& cu_cp::get_f1c_message_handler(du_index_t du_index)
 {
   auto& du_it = find_du(du_index);
-
   return du_it.get_f1c_message_handler();
 }
 
 f1c_statistics_handler& cu_cp::get_f1c_statistics_handler(du_index_t du_index)
 {
   auto& du_it = find_du(du_index);
-
   return du_it.get_f1c_statistics_handler();
 }
 
@@ -83,7 +95,7 @@ ngc_event_handler& cu_cp::get_ngc_event_handler()
   return *ngc_entity;
 }
 
-void cu_cp::on_new_connection()
+void cu_cp::on_new_du_connection()
 {
   du_index_t du_index = add_du();
   logger.info("Added DU {}", du_index);
@@ -96,20 +108,6 @@ void cu_cp::handle_du_remove_request(const du_index_t du_index)
 {
   logger.info("removing DU {}", du_index);
   remove_du(du_index);
-}
-
-size_t cu_cp::get_nof_dus() const
-{
-  return du_db.size();
-}
-
-size_t cu_cp::get_nof_ues() const
-{
-  size_t nof_ues = 0;
-  for (auto& du : du_db) {
-    nof_ues += du->get_nof_ues();
-  }
-  return nof_ues;
 }
 
 void cu_cp::on_amf_connection()

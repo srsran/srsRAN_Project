@@ -39,7 +39,7 @@ public:
   virtual ~cu_cp_du_connection_notifier() = default;
 
   /// \brief Notifies the CU-CP about a new DU connection.
-  virtual void on_new_connection() = 0;
+  virtual void on_new_du_connection() = 0;
 };
 
 /// Interface used to handle DU specific F1C procedure outcomes (e.g. F1 removal request)

@@ -38,6 +38,8 @@ public:
   void stop();
 
   // DU interface
+  size_t                  get_nof_dus() const override;
+  size_t                  get_nof_ues() const override;
   f1c_message_handler&    get_f1c_message_handler(du_index_t du_index) override;
   f1c_statistics_handler& get_f1c_statistics_handler(du_index_t du_index) override;
 
@@ -48,7 +50,7 @@ public:
   bool amf_is_connected() override { return amf_connected; };
 
   // DU connection notifier
-  void on_new_connection() override;
+  void on_new_du_connection() override;
 
   // DU handler
   void handle_du_remove_request(const du_index_t du_index) override;
@@ -56,10 +58,6 @@ public:
   // ngc_connection_notifier
   void on_amf_connection() override;
   void on_amf_connection_drop() override;
-
-  // CU-CP statistics
-  size_t get_nof_dus() const override;
-  size_t get_nof_ues() const override;
 
 private:
   /// \brief Adds a DU processor object to the CU-CP.

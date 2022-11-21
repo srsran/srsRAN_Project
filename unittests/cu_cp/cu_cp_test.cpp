@@ -67,10 +67,10 @@ protected:
 //////////////////////////////////////////////////////////////////////////////////////
 
 /// Test the DU connection
-TEST_F(cu_cp_test, when_new_connection_then_du_added)
+TEST_F(cu_cp_test, when_new_du_connection_then_du_added)
 {
   // Connect DU
-  cu_cp_obj->on_new_connection();
+  cu_cp_obj->on_new_du_connection();
 
   // check that DU has been added
   ASSERT_EQ(cu_cp_obj->get_nof_dus(), 1U);
@@ -80,7 +80,7 @@ TEST_F(cu_cp_test, when_new_connection_then_du_added)
 TEST_F(cu_cp_test, when_du_remove_request_received_then_du_removed)
 {
   // Connect DU
-  cu_cp_obj->on_new_connection();
+  cu_cp_obj->on_new_du_connection();
 
   // Check that DU has been added
   ASSERT_EQ(cu_cp_obj->get_nof_dus(), 1U);
@@ -96,13 +96,13 @@ TEST_F(cu_cp_test, when_du_remove_request_received_then_du_removed)
 TEST_F(cu_cp_test, when_max_nof_dus_connected_then_reject_new_connection)
 {
   for (int it = MIN_DU_INDEX; it < MAX_NOF_DUS; it++) {
-    cu_cp_obj->on_new_connection();
+    cu_cp_obj->on_new_du_connection();
   }
 
   // Check that MAX_NOF_DUS are connected
   ASSERT_EQ(cu_cp_obj->get_nof_dus(), MAX_NOF_DUS);
 
-  cu_cp_obj->on_new_connection();
+  cu_cp_obj->on_new_du_connection();
 
   // Check that MAX_NOF_DUS are connected
   ASSERT_EQ(cu_cp_obj->get_nof_dus(), MAX_NOF_DUS);
@@ -130,7 +130,7 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());
 
   // Connect DU
-  cu_cp_obj->on_new_connection();
+  cu_cp_obj->on_new_du_connection();
 
   // Generate F1SetupRequest
   f1c_message f1setup_msg = generate_valid_f1_setup_request();
@@ -161,7 +161,7 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
 TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
 {
   // Connect DU
-  cu_cp_obj->on_new_connection();
+  cu_cp_obj->on_new_du_connection();
 
   // Generate F1SetupRequest
   f1c_message f1setup_msg = generate_valid_f1_setup_request();
@@ -192,7 +192,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());
 
   // Connect DU
-  cu_cp_obj->on_new_connection();
+  cu_cp_obj->on_new_du_connection();
 
   // Generate F1SetupRequest
   f1c_message f1setup_msg = generate_valid_f1_setup_request();
