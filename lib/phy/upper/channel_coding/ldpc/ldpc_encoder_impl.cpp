@@ -20,7 +20,7 @@ using namespace srsgnb::ldpc;
 void ldpc_encoder_impl::init(const codeblock_metadata::tb_common_metadata& cfg)
 {
   uint8_t  pos  = get_lifting_size_position(cfg.lifting_size);
-  unsigned skip = cfg.base_graph == ldpc_base_graph_type::BG2 ? NOF_LIFTING_SIZES : 0;
+  unsigned skip = (cfg.base_graph == ldpc_base_graph_type::BG2) ? NOF_LIFTING_SIZES : 0;
   current_graph = &graph_array[skip + pos];
   bg_N_full     = current_graph->get_nof_BG_var_nodes_full();
   bg_N_short    = current_graph->get_nof_BG_var_nodes_short();

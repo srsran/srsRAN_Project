@@ -149,7 +149,7 @@ public:
 
 namespace fmt {
 
-/// \brief Custom formatter for oprtional<pusch_processor::codeword_description>.
+/// \brief Custom formatter for optional<pusch_processor::codeword_description>.
 template <>
 struct formatter<srsgnb::optional<srsgnb::pusch_processor::codeword_description>> {
   template <typename ParseContext>
