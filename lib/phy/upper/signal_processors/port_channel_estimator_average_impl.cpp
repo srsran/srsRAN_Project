@@ -16,6 +16,16 @@
 
 using namespace srsgnb;
 
+static interpolator::configuration set_interpolator_cfg(span<const bool> re_mask)
+{
+  span<const bool>::iterator offset_it = std::find(re_mask.begin(), re_mask.end(), true);
+  srsgnb_assert(offset_it != re_mask.end(), "re_mask seems to have no active entries.");
+  span<const bool>::iterator stride_it = std::find(offset_it + 1, re_mask.end(), true);
+  srsgnb_assert(stride_it != re_mask.end(), "re_mask seems to have only one active entry.");
+
+  return {static_cast<unsigned>(offset_it - re_mask.begin()), static_cast<unsigned>(stride_it - offset_it)};
+}
+
 void port_channel_estimator_average_impl::compute(channel_estimate&           estimate,
                                                   const resource_grid_reader& grid,
                                                   unsigned                    port,
@@ -53,23 +63,10 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
     }
 
     // Interpolate frequency domain.
-    span<cf_t> ce_freq = span<cf_t>(temp_ce_freq).first(cfg.dmrs_pattern[0].rb_mask.count() * NRE);
-    for (unsigned i_subc = 0, i_subc_end = ce_freq.size(); i_subc != i_subc_end; ++i_subc) {
-      // Channel is equal to the LSE on DM-RS positions.
-      if (i_subc % 2 == 0) {
-        ce_freq[i_subc] = symbol_lse_0[i_subc / 2];
-        continue;
-      }
+    span<cf_t>                  ce_freq = span<cf_t>(temp_ce_freq).first(cfg.dmrs_pattern[0].rb_mask.count() * NRE);
+    interpolator::configuration interpolator_cfg = set_interpolator_cfg(cfg.dmrs_pattern[0].re_pattern);
 
-      // Repeat last value.
-      if (i_subc == i_subc_end - 1) {
-        ce_freq[i_subc] = symbol_lse_0[i_subc / 2];
-        continue;
-      }
-
-      // Average LSE.
-      ce_freq[i_subc] = (symbol_lse_0[i_subc / 2] + symbol_lse_0[i_subc / 2 + 1]) / 2.0F;
-    }
+    freq_interpolator->interpolate(ce_freq, symbol_lse_0, interpolator_cfg);
 
     // Map frequency response to channel estimates.
     for (unsigned i_symbol = cfg.first_symbol, i_symbol_end = cfg.first_symbol + cfg.nof_symbols;

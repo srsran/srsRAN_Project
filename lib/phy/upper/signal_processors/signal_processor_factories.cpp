@@ -18,6 +18,7 @@
 #include "pucch/dmrs_pucch_processor_format1_impl.h"
 #include "pucch/dmrs_pucch_processor_format2_impl.h"
 #include "sss_processor_impl.h"
+#include "srsgnb/phy/support/support_factories.h"
 
 using namespace srsgnb;
 
@@ -138,7 +139,8 @@ class port_channel_estimator_factory_sw : public port_channel_estimator_factory
 public:
   std::unique_ptr<port_channel_estimator> create() override
   {
-    return std::make_unique<port_channel_estimator_average_impl>();
+    std::unique_ptr<interpolator> interp = create_interpolator();
+    return std::make_unique<port_channel_estimator_average_impl>(std::move(interp));
   }
 };
 
