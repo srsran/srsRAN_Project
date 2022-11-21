@@ -443,7 +443,7 @@ void srsgnb::polar_code_impl::set(uint16_t K_, uint16_t E_, uint8_t nMax, polar_
   int tmp_K = setdiff_stable(mother_code.data(), F_set.data(), tmp_K_set.data(), T, N, tmp_F_set_size);
 
   // Select only the most reliable (message and parity)
-  K_set = tmp_K_set.subspan(tmp_K - K - nPC, K + nPC + 1);
+  span<const uint16_t> K_set = tmp_K_set.subspan(tmp_K - K - nPC, K + nPC + 1);
 
   // take the nPC - nWmPC less reliable
   for (int i = 0; i < nPC - nWmPC; i++) {
@@ -460,31 +460,23 @@ void srsgnb::polar_code_impl::set(uint16_t K_, uint16_t E_, uint8_t nMax, polar_
     }
   }
 
-  // sorted K_set (includes parity bits)
-  std::sort(K_set.begin(), K_set.end() - 1, cmpfunc);
+  // Sort K_set (includes parity bits) using a mask.
+  K_set_mask.resize(N);
+  K_set_mask.fill(0, N, false);
 
-  // sorted PC_set
+  // Write the K_set in a mask.
+  std::for_each(K_set.begin(), K_set.end() - 1, [this](uint16_t index) { K_set_mask.set(static_cast<size_t>(index)); });
+
+  // Create the frozen set F_set as the complement of sorted K_set.
+  F_set_mask = ~K_set_mask;
+
+  // Sorted PC_set.
   if (nPC > 0) {
     std::sort(PC_set.begin(), PC_set.begin() + nPC, cmpfunc);
   }
 
-  // create the sorted frozen set as the complement of sorted K_set
-  uint16_t i_k    = 0;
-  uint16_t fvalue = 0;
-  uint16_t i_f    = 0;
-  while (i_f < F_set_size) {
-    if (K_set[i_k] != fvalue) {
-      F_set[i_f] = fvalue;
-      i_f++;
-    } else if (i_k < K + nPC - 1) {
-      i_k++; // skip
-    }
-    fvalue++;
-  }
-
-  // mark the end of the sets (useful at subchannel allocation)
-  K_set[K + nPC] = 1024;
-  PC_set[nPC]    = 1024;
+  // Mark the end of the sets (useful at subchannel allocation).
+  PC_set[nPC] = NMAX;
 }
 
 uint16_t polar_code_impl::get_n() const
@@ -509,9 +501,9 @@ uint16_t polar_code_impl::get_nPC() const
   return nPC;
 }
 
-span<const uint16_t> polar_code_impl::get_K_set() const
+const bounded_bitset<polar_code::NMAX>& polar_code_impl::get_K_set() const
 {
-  return K_set;
+  return K_set_mask;
 }
 
 span<const uint16_t> polar_code_impl::get_PC_set() const
@@ -519,9 +511,9 @@ span<const uint16_t> polar_code_impl::get_PC_set() const
   return PC_set;
 }
 
-span<const uint16_t> polar_code_impl::get_F_set() const
+const bounded_bitset<polar_code::NMAX>& polar_code_impl::get_F_set() const
 {
-  return F_set.first(F_set_size);
+  return F_set_mask;
 }
 
 span<const uint16_t> polar_code_impl::get_mother_code() const

@@ -324,7 +324,13 @@ void polar_decoder_impl::decode(span<uint8_t>                    data_decoded,
                                 span<const log_likelihood_ratio> input_llr,
                                 const polar_code&                code)
 {
-  span<const uint16_t> frozen_set = code.get_F_set();
+  const bounded_bitset<polar_code::NMAX>& frozen_set_mask = code.get_F_set();
+
+  std::array<uint16_t, polar_code::NMAX> temp_frozen_set;
+  span<uint16_t>                         frozen_set = span<uint16_t>(temp_frozen_set).first(frozen_set_mask.count());
+
+  frozen_set_mask.for_each(
+      0, frozen_set_mask.size(), [&frozen_set, n = 0](uint16_t index) mutable { frozen_set[n++] = index; });
 
   init(data_decoded, input_llr, code.get_n(), frozen_set);
 

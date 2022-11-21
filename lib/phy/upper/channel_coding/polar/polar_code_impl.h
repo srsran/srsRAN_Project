@@ -88,13 +88,14 @@ private:
   /// Number of frozen bits.
   uint16_t F_set_size = 0;
   /// Set of indices corresponding to the positions occupied by message bits at the encoder input.
-  span<uint16_t> K_set;
+  bounded_bitset<NMAX> K_set_mask;
   /// Temporal set ot message bit indices.
   srsvec::aligned_vec<uint16_t> tmp_K_set;
   /// Set of indices corresponding to the positions occupied by parity-check bits at the encoder input.
   std::array<uint16_t, 4> PC_set;
   /// Set of indices corresponding to the positions occupied by frozen bits at the encoder input.
   srsvec::aligned_vec<uint16_t> F_set;
+  bounded_bitset<NMAX>          F_set_mask;
   /// Status of the internal bit interleaver.
   polar_code_ibil ibil;
 
@@ -108,17 +109,17 @@ public:
   ~polar_code_impl() = default;
 
   // See interface for the documentation of public methods.
-  uint16_t             get_n() const override;
-  uint16_t             get_N() const override;
-  uint16_t             get_K() const override;
-  uint16_t             get_E() const override;
-  uint16_t             get_nPC() const override;
-  span<const uint16_t> get_K_set() const override;
-  span<const uint16_t> get_PC_set() const override;
-  span<const uint16_t> get_F_set() const override;
-  span<const uint16_t> get_mother_code() const override;
-  span<const uint16_t> get_blk_interleaver() const override;
-  polar_code_ibil      get_ibil() const override;
+  uint16_t                    get_n() const override;
+  uint16_t                    get_N() const override;
+  uint16_t                    get_K() const override;
+  uint16_t                    get_E() const override;
+  uint16_t                    get_nPC() const override;
+  const bounded_bitset<NMAX>& get_K_set() const override;
+  span<const uint16_t>        get_PC_set() const override;
+  const bounded_bitset<NMAX>& get_F_set() const override;
+  span<const uint16_t>        get_mother_code() const override;
+  span<const uint16_t>        get_blk_interleaver() const override;
+  polar_code_ibil             get_ibil() const override;
 
   void set(uint16_t K, uint16_t E, uint8_t nMax, polar_code_ibil ibil) override;
 };

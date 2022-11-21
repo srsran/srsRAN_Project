@@ -480,8 +480,10 @@ public:
   /// \param[in] function Function to execute - the signature should be compatible with <tt>void ()(unsigned)</tt>.
   /// \param[in] value    Bit value that triggers the function execution.
   template <class T>
-  inline void for_each(size_t startpos, size_t endpos, const T&& function, bool value = true) const noexcept
+  inline void for_each(size_t startpos, size_t endpos, T&& function, bool value = true) const noexcept
   {
+    static_assert(std::is_convertible<T, std::function<void(size_t)>>::value,
+                  "The function must have void(size_t) signature.");
     static_assert(!FirstBitIsLeftmost, "The for_each method is not yet available for reversed bitsets.");
 
     assert_range_bounds_(startpos, endpos);

@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/span.h"
 #include <cstdint>
 
@@ -67,7 +68,7 @@ public:
   ///
   /// The message set is the set of indices corresponding to the position of message bits (data and CRC) at the encoder
   /// input.
-  virtual span<const uint16_t> get_K_set() const = 0;
+  virtual const bounded_bitset<NMAX>& get_K_set() const = 0;
 
   /// \brief Returns the parity-check set.
   ///
@@ -78,7 +79,7 @@ public:
   /// \brief Returns the frozen set.
   ///
   /// The frozen set is the set of indices corresponding to the frozen bits at the encoder input.
-  virtual span<const uint16_t> get_F_set() const = 0;
+  virtual const bounded_bitset<NMAX>& get_F_set() const = 0;
 
   /// \brief Returns the code description as a sequence of indices.
   ///
