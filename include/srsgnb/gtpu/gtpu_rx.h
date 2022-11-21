@@ -35,7 +35,7 @@ namespace srsgnb {
  * Interfaces/notifiers for the gateway
  ****************************************/
 /// This interface represents the data entry point of the receiving side of a GTP-U entity.
-/// The IO gateway will use this call to pass GTP-U SDUs into the RX entity.
+/// The IO gateway will use this call to pass GTP-U PDUs into the RX entity.
 class gtpu_rx_upper_layer_interface
 {
 public:
@@ -46,9 +46,9 @@ public:
   gtpu_rx_upper_layer_interface(const gtpu_rx_upper_layer_interface&&)            = delete;
   gtpu_rx_upper_layer_interface& operator=(const gtpu_rx_upper_layer_interface&&) = delete;
 
-  /// \brief Interface for the IO gateway to pass SDUs into the GTP-U
-  /// \param sdu SDU to be handled
-  virtual void handle_sdu(byte_buffer sdu) = 0;
+  /// \brief Interface for the IO gateway to pass PDUs into the GTP-U
+  /// \param pdu PDU to be handled
+  virtual void handle_pdu(byte_buffer pdu) = 0;
 };
 
 /// This interface represents the data exit point of the receiving side of a GTP-U entity.
@@ -63,9 +63,9 @@ public:
   gtpu_rx_lower_layer_notifier(const gtpu_rx_lower_layer_notifier&&)            = delete;
   gtpu_rx_lower_layer_notifier& operator=(const gtpu_rx_lower_layer_notifier&&) = delete;
 
-  /// \brief Interface for the IO gateway to pass SDUs into the GTP-U
-  /// \param sdu SDU to be hanrxed
-  virtual void on_new_pdu(byte_buffer pdu) = 0;
+  /// \brief Interface for the GTP-U to pass SDUs into the lower layer
+  /// \param sdu SDU to be passed down.
+  virtual void on_new_sdu(byte_buffer sdu) = 0;
 };
 
 } // namespace srsgnb

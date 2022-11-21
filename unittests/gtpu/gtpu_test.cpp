@@ -91,7 +91,7 @@ TEST_F(gtpu_test, rx_sdu)
   ASSERT_EQ(read_ok, true);
 
   gtpu_rx_upper_layer_interface* rx = gtpu->get_rx_upper_layer_interface();
-  rx->handle_sdu(std::move(orig_vec));
+  rx->handle_pdu(std::move(orig_vec));
   ASSERT_EQ(strip_vec, gtpu_rx.last_rx);
 };
 
@@ -115,7 +115,7 @@ TEST_F(gtpu_test, tx_pdu)
   ASSERT_EQ(read_ok, true);
 
   gtpu_tx_lower_layer_interface* tx = gtpu->get_tx_lower_layer_interface();
-  tx->handle_pdu(std::move(strip_vec));
+  tx->handle_sdu(std::move(strip_vec));
   ASSERT_EQ(orig_vec, gtpu_tx.last_tx);
 };
 

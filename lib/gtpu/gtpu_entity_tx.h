@@ -32,7 +32,7 @@ public:
   /*
    * SDU/PDU handlers
    */
-  void handle_pdu(byte_buffer buf) final
+  void handle_sdu(byte_buffer buf) final
   {
     gtpu_header hdr         = {};
     hdr.flags.version       = GTPU_FLAGS_VERSION_V1;
@@ -46,7 +46,7 @@ public:
       return;
     }
     logger.debug(buf.begin(), buf.end(), "TX GTP-U SDU");
-    upper_dn.on_new_sdu(std::move(buf));
+    upper_dn.on_new_pdu(std::move(buf));
   }
 
 private:

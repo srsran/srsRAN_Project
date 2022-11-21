@@ -32,7 +32,7 @@ public:
   /*
    * SDU/PDU handlers
    */
-  void handle_sdu(byte_buffer buf) final
+  void handle_pdu(byte_buffer buf) final
   {
     gtpu_header hdr;
     bool        read_ok = gtpu_read_and_strip_header(hdr, buf, logger);
@@ -44,7 +44,7 @@ public:
       logger.error("Mismatched TEID, discarding. Header TEID={}, local TEID={}", hdr.teid, cfg.local_teid);
       return;
     }
-    lower_dn.on_new_pdu(std::move(buf));
+    lower_dn.on_new_sdu(std::move(buf));
   }
 
 private:

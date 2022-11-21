@@ -46,9 +46,9 @@ public:
   gtpu_tx_lower_layer_interface(const gtpu_tx_lower_layer_interface&&)            = delete;
   gtpu_tx_lower_layer_interface& operator=(const gtpu_tx_lower_layer_interface&&) = delete;
 
-  /// \brief Interface for the IO gateway to pass SDUs into the GTP-U
+  /// \brief Interface for the lower layers to pass SDUs into the GTP-U
   /// \param sdu SDU to be handled
-  virtual void handle_pdu(byte_buffer sdu) = 0;
+  virtual void handle_sdu(byte_buffer sdu) = 0;
 };
 
 /// This interface represents the data exit point of the transmitting side of a GTP-U entity.
@@ -63,9 +63,9 @@ public:
   gtpu_tx_upper_layer_notifier(const gtpu_tx_upper_layer_notifier&&)            = delete;
   gtpu_tx_upper_layer_notifier& operator=(const gtpu_tx_upper_layer_notifier&&) = delete;
 
-  /// \brief Interface for the IO gateway to pass SDUs into the GTP-U
-  /// \param sdu SDU to be handled
-  virtual void on_new_sdu(byte_buffer buf) = 0;
+  /// \brief Interface for the GTP-U to pass PDUs to the IO gateway
+  /// \param sdu PDU to be transmitted.
+  virtual void on_new_pdu(byte_buffer buf) = 0;
 };
 
 } // namespace srsgnb
