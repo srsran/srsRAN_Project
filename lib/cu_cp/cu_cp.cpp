@@ -24,7 +24,7 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
   srsgnb_assert(cfg.ngc_notifier != nullptr, "Invalid NGC notifier");
 }
 
-cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_), main_ctrl_loop(128), ue_task_scheduler(timers)
+cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_), main_ctrl_loop(128), ue_task_sched(timers)
 {
   assert_cu_cp_configuration_valid(cfg);
 
@@ -148,7 +148,7 @@ du_index_t cu_cp::add_du()
       std::move(du_cfg), f1c_ev_notifier, *cfg.f1c_notifier, rrc_ue_ngc_ev_notifier, du_processor_task_sched);
 
   rrc_ue_ngc_ev_notifier.connect_ngc(*ngc_entity);
-  du_processor_task_sched.connect_cu_cp(ue_task_scheduler);
+  du_processor_task_sched.connect_cu_cp(ue_task_sched);
 
   // Add DU index to adapter
   rrc_ue_ngc_ev_notifier.set_du_index(du_index);

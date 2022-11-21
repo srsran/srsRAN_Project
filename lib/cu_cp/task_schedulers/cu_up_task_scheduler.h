@@ -20,15 +20,15 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// \brief Service provided by CU-CP to schedule async tasks for a given UE.
-class cu_cp_ue_task_scheduler
+/// \brief Service provided by CU-CP to schedule async tasks for a given CU-UP.
+class cu_up_task_scheduler
 {
 public:
-  explicit cu_cp_ue_task_scheduler(timer_manager& timers_);
-  ~cu_cp_ue_task_scheduler() = default;
+  explicit cu_up_task_scheduler(timer_manager& timers_);
+  ~cu_up_task_scheduler() = default;
 
-  // UE task scheduler
-  void handle_ue_async_task(du_index_t du_index, ue_index_t ue_index, async_task<void>&& task);
+  // CU-UP task scheduler
+  void handle_cu_up_async_task(cu_up_index_t cu_up_index, async_task<void>&& task);
 
   unique_timer   make_unique_timer();
   timer_manager& get_timer_manager();
@@ -36,8 +36,8 @@ public:
 private:
   timer_manager& timers;
 
-  // task event loops indexed by ue_index
-  slot_array<async_task_sequencer, MAX_NOF_CU_UES> ue_ctrl_loop;
+  // task event loops indexed by cu_up_index
+  slot_array<async_task_sequencer, MAX_NOF_CU_UPS> cu_up_ctrl_loop;
 };
 
 } // namespace srs_cu_cp

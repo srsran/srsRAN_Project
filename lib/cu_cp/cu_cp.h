@@ -13,8 +13,8 @@
 #include "adapters/du_processor_adapters.h"
 #include "adapters/f1c_adapters.h"
 #include "adapters/ngc_adapters.h"
-#include "cu_cp_ue_task_scheduler.h"
 #include "du_processor_impl.h"
+#include "task_schedulers/ue_task_scheduler.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
 #include "srsgnb/f1c/cu_cp/f1c_cu.h"
@@ -94,8 +94,8 @@ private:
   // task event loops indexed by du_index
   slot_array<async_task_sequencer, MAX_NOF_DUS> du_ctrl_loop;
 
-  // CU-CP task scheduler
-  cu_cp_ue_task_scheduler ue_task_scheduler;
+  // UE task scheduler
+  ue_task_scheduler ue_task_sched;
 
   // DU processor to CU-CP adapter
   du_processor_to_cu_cp_task_scheduler du_processor_task_sched;
