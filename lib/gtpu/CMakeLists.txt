@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-set(SOURCES gtpu_factory.cpp
+set(SOURCES gtpu_tunnel_factory.cpp
             gtpu_pdu.cpp
             gtpu_demux_impl.cpp
             gtpu_demux_factory.cpp)

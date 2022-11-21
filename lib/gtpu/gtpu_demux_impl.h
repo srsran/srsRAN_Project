@@ -26,14 +26,14 @@ public:
   void handle_pdu(byte_buffer pdu) override;
 
   // gtpu_demux_ctrl
-  bool add_tunnel(uint32_t teid, gtpu_rx_upper_layer_interface* tunnel) override;
+  bool add_tunnel(uint32_t teid, gtpu_tunnel_rx_upper_layer_interface* tunnel) override;
   bool remove_tunnel(uint32_t teid) override;
 
 private:
   srslog::basic_logger& logger;
 
   ///< TODO: revisit mutexing for protecting the tunnels map (this should be a shared mutex)
-  std::unordered_map<uint16_t, gtpu_rx_upper_layer_interface*> teid_to_tunnel; ///< Map TEID on GTP-U entity.
+  std::unordered_map<uint16_t, gtpu_tunnel_rx_upper_layer_interface*> teid_to_tunnel; ///< Map TEID on GTP-U entity.
 };
 
 } // namespace srsgnb

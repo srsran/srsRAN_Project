@@ -16,7 +16,7 @@ using namespace srsgnb;
 
 gtpu_demux_impl::gtpu_demux_impl() : logger(srslog::fetch_basic_logger("GTPU")) {}
 
-bool gtpu_demux_impl::add_tunnel(uint32_t teid, gtpu_rx_upper_layer_interface* tunnel)
+bool gtpu_demux_impl::add_tunnel(uint32_t teid, gtpu_tunnel_rx_upper_layer_interface* tunnel)
 {
   if (teid_to_tunnel.find(teid) != teid_to_tunnel.end()) {
     logger.error("Tunnel with TEID %d already exists", teid);

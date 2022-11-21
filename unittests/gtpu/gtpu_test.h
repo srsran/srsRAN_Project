@@ -11,8 +11,8 @@
 #pragma once
 
 #include "../../lib/gtpu/gtpu_pdu.h"
-#include "srsgnb/gtpu/gtpu_rx.h"
-#include "srsgnb/gtpu/gtpu_tx.h"
+#include "srsgnb/gtpu/gtpu_tunnel_rx.h"
+#include "srsgnb/gtpu/gtpu_tunnel_tx.h"
 #include "srsgnb/support/timers.h"
 #include <gtest/gtest.h>
 
@@ -25,14 +25,14 @@ const uint8_t gtpu_ping_vec[] = {
     0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
     0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
 
-class gtpu_test_rx_lower : public gtpu_rx_lower_layer_notifier
+class gtpu_test_rx_lower : public gtpu_tunnel_rx_lower_layer_notifier
 {
   void on_new_sdu(byte_buffer buf) final { last_rx = std::move(buf); }
 
 public:
   byte_buffer last_rx;
 };
-class gtpu_test_tx_upper : public gtpu_tx_upper_layer_notifier
+class gtpu_test_tx_upper : public gtpu_tunnel_tx_upper_layer_notifier
 {
   void on_new_pdu(byte_buffer buf) final { last_tx = std::move(buf); }
 
@@ -40,7 +40,7 @@ public:
   byte_buffer last_tx;
 };
 
-class gtpu_test_rx_upper : public gtpu_rx_upper_layer_interface
+class gtpu_test_rx_upper : public gtpu_tunnel_rx_upper_layer_interface
 {
 public:
   void handle_pdu(byte_buffer pdu) final { last_rx = std::move(pdu); }

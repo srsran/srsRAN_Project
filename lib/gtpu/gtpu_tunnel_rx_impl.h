@@ -13,16 +13,16 @@
 #include "gtpu_pdu.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/gtpu/gtpu_config.h"
-#include "srsgnb/gtpu/gtpu_rx.h"
+#include "srsgnb/gtpu/gtpu_tunnel_rx.h"
 #include <cstdint>
 
 namespace srsgnb {
 
 /// Class used for receiving GTP-U bearers.
-class gtpu_entity_rx : public gtpu_rx_upper_layer_interface
+class gtpu_tunnel_rx : public gtpu_tunnel_rx_upper_layer_interface
 {
 public:
-  gtpu_entity_rx(gtpu_config::gtpu_rx_config cfg_, gtpu_rx_lower_layer_notifier& rx_lower_) :
+  gtpu_tunnel_rx(gtpu_config::gtpu_rx_config cfg_, gtpu_tunnel_rx_lower_layer_notifier& rx_lower_) :
     logger(srslog::fetch_basic_logger("GTPU")), cfg(cfg_), lower_dn(rx_lower_)
   {
     // Validate configuration
@@ -48,8 +48,8 @@ public:
   }
 
 private:
-  srslog::basic_logger&             logger;
-  const gtpu_config::gtpu_rx_config cfg;
-  gtpu_rx_lower_layer_notifier&     lower_dn;
+  srslog::basic_logger&                logger;
+  const gtpu_config::gtpu_rx_config    cfg;
+  gtpu_tunnel_rx_lower_layer_notifier& lower_dn;
 };
 } // namespace srsgnb

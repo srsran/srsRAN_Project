@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/gtpu/gtpu_rx.h"
+#include "srsgnb/gtpu/gtpu_tunnel_rx.h"
 
 namespace srsgnb {
 
@@ -36,7 +36,7 @@ public:
   virtual ~gtpu_demux_ctrl() = default;
 
   /// Add a new TEID to GTP-U tunnel mapping.
-  virtual bool add_tunnel(uint32_t teid, gtpu_rx_upper_layer_interface* tunnel) = 0;
+  virtual bool add_tunnel(uint32_t teid, gtpu_tunnel_rx_upper_layer_interface* tunnel) = 0;
 
   /// \brief Remove TEID from mapping.
   virtual bool remove_tunnel(uint32_t teid) = 0;

@@ -8,14 +8,14 @@
  *
  */
 
-#include "srsgnb/gtpu/gtpu_factory.h"
-#include "gtpu_entity_impl.h"
+#include "srsgnb/gtpu/gtpu_tunnel_factory.h"
+#include "gtpu_tunnel_impl.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.
 
 using namespace srsgnb;
 
-std::unique_ptr<gtpu_entity> srsgnb::create_gtpu_entity(gtpu_entity_creation_message& msg)
+std::unique_ptr<gtpu_tunnel> srsgnb::create_gtpu_tunnel(gtpu_tunnel_creation_message& msg)
 {
-  return std::make_unique<gtpu_entity_impl>(msg.cfg, *msg.rx_lower, *msg.tx_upper);
+  return std::make_unique<gtpu_tunnel_impl>(msg.cfg, *msg.rx_lower, *msg.tx_upper);
 }
