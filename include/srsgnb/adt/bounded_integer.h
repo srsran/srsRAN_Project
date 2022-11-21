@@ -72,6 +72,7 @@ public:
   bounded_integer& operator++()
   {
     ++val;
+    assert_bounds(val);
     return *this;
   }
 

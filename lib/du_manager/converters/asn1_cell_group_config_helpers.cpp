@@ -482,6 +482,20 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
     }
   }
 
+  if (dest.mcs_table != pdsch_mcs_table::qam64) {
+    out.mcs_table_present = true;
+    switch (dest.mcs_table) {
+      case pdsch_mcs_table::qam64LowSe:
+        out.mcs_table.value = pdsch_cfg_s::mcs_table_opts::qam64_low_se;
+        break;
+      case pdsch_mcs_table::qam256:
+        out.mcs_table.value = pdsch_cfg_s::mcs_table_opts::qam256;
+        break;
+      default:
+        report_fatal_error("Invalid PDSCH MCS Table={}", dest.mcs_table);
+    }
+  }
+
   // TODO: Remaining.
 }
 
@@ -1135,6 +1149,20 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
       break;
     default:
       srsgnb_assertion_failure("Invalid PUSCH Resource Allocation={}", dest.res_alloc);
+  }
+
+  if (dest.mcs_table != srsgnb::pusch_mcs_table::qam64) {
+    out.mcs_table_present = true;
+    switch (dest.mcs_table) {
+      case pusch_mcs_table::qam64LowSe:
+        out.mcs_table.value = pusch_cfg_s::mcs_table_opts::qam64_low_se;
+        break;
+      case pusch_mcs_table::qam256:
+        out.mcs_table.value = pusch_cfg_s::mcs_table_opts::qam256;
+        break;
+      default:
+        report_fatal_error("Invalid PUSCH MCS Table={}", dest.mcs_table);
+    }
   }
 
   if (dest.trans_precoder != srsgnb::pusch_config::transform_precoder::not_set) {
