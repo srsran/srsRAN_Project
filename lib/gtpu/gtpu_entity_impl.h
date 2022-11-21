@@ -21,16 +21,11 @@ namespace srsgnb {
 class gtpu_entity_impl : public gtpu_entity
 {
 public:
-  gtpu_entity_impl(uint32_t                      ue_index,
-                   gtpu_config                   cfg,
-                   gtpu_rx_lower_layer_notifier& rx_lower,
-                   gtpu_tx_upper_layer_notifier& tx_upper) :
+  gtpu_entity_impl(gtpu_config cfg, gtpu_rx_lower_layer_notifier& rx_lower, gtpu_tx_upper_layer_notifier& tx_upper) :
     logger(srslog::fetch_basic_logger("GTPU"))
   {
-    rx = std::make_unique<gtpu_entity_rx>(ue_index, cfg.rx, rx_lower);
-    logger.info("GTP-U RX configured: {}", cfg.rx);
-    tx = std::make_unique<gtpu_entity_tx>(ue_index, cfg.tx, tx_upper);
-    logger.info("GTP-U TX configured: {}", cfg.tx);
+    rx = std::make_unique<gtpu_entity_rx>(cfg.rx, rx_lower);
+    tx = std::make_unique<gtpu_entity_tx>(cfg.tx, tx_upper);
   }
   ~gtpu_entity_impl() override = default;
 

@@ -22,11 +22,11 @@ namespace srsgnb {
 class gtpu_entity_rx : public gtpu_rx_upper_layer_interface
 {
 public:
-  gtpu_entity_rx(uint32_t ue_index, gtpu_config::gtpu_rx_config cfg_, gtpu_rx_lower_layer_notifier& rx_lower_) :
+  gtpu_entity_rx(gtpu_config::gtpu_rx_config cfg_, gtpu_rx_lower_layer_notifier& rx_lower_) :
     logger(srslog::fetch_basic_logger("GTPU")), cfg(cfg_), lower_dn(rx_lower_)
   {
     // Validate configuration
-    logger.info("GTPU DL entity configured.");
+    logger.info("GTPU DL entity configured. Configuration={}", cfg);
   }
 
   /*

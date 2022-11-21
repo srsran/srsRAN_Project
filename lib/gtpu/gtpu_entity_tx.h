@@ -22,7 +22,7 @@ namespace srsgnb {
 class gtpu_entity_tx : public gtpu_tx_lower_layer_interface
 {
 public:
-  gtpu_entity_tx(uint32_t ue_index, gtpu_config::gtpu_tx_config cfg_, gtpu_tx_upper_layer_notifier& upper_dn_) :
+  gtpu_entity_tx(gtpu_config::gtpu_tx_config cfg_, gtpu_tx_upper_layer_notifier& upper_dn_) :
     logger(srslog::fetch_basic_logger("GTPU")), cfg(cfg_), upper_dn(upper_dn_)
   {
     // Validate configuration

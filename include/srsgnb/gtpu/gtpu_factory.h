@@ -19,7 +19,6 @@
 namespace srsgnb {
 
 struct gtpu_entity_creation_message {
-  uint32_t                      ue_index;
   gtpu_config                   cfg;
   gtpu_rx_lower_layer_notifier* rx_lower;
   gtpu_tx_upper_layer_notifier* tx_upper;
