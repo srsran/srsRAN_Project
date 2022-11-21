@@ -67,8 +67,37 @@ class BoundedBitsetPrinter(object):
 def make_bounded_bitset(val):
     if 'bounded_bitset<' in str(val.type) and str(val.type).endswith('>'):
       return BoundedBitsetPrinter(val)
+
 gdb.pretty_printers.append(make_bounded_bitset)
 
+###### optional<T> #######
+
+class OptionalPrinter(object):
+  def __init__(self, val):
+      self.val = val
+      self.value_type = self.val.type.template_argument(0)
+
+  def children(self):
+      has_val = bool(self.val['storage']['has_val'])
+      if has_val:
+          payload = self.val['storage']['payload']['val'].cast(self.value_type)
+          yield '[0]', payload
+
+  def to_string(self):
+      has_val = bool(self.val['storage']['has_val'])
+      if has_val:
+          return 'optional (present)'
+      return 'optional (empty)'
+
+  def display_hint(self):
+      return 'string'
+
+
+def make_optional(val):
+    if 'srsgnb::optional<' in str(val.type):
+      return OptionalPrinter(val)
+
+gdb.pretty_printers.append(make_optional)
 
 end
 
