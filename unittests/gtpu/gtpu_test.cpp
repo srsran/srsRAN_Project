@@ -17,6 +17,24 @@
 
 using namespace srsgnb;
 
+/// \brief Test correct read TEID helper function
+TEST_F(gtpu_test, read_teid)
+{
+  srsgnb::test_delimit_logger delimiter("GTP-U read TEID test");
+  byte_buffer                 orig_vec{gtpu_ping_vec};
+  byte_buffer                 test_vec{gtpu_ping_vec};
+  uint32_t                    teid = {};
+
+  // Unpack SDU
+  logger.info(orig_vec.begin(), orig_vec.end(), "Original SDU");
+  bool read_ok = gtpu_read_teid(teid, test_vec, gtpu_logger);
+  ASSERT_EQ(read_ok, true);
+
+  // Check TEID
+  ASSERT_EQ(teid, 1);
+  ASSERT_EQ(orig_vec, test_vec);
+}
+
 /// \brief Test correct packing/unpacking of GTPU PDU
 TEST_F(gtpu_test, pack_unpack)
 {

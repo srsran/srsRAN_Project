@@ -56,6 +56,22 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, srslog::basi
   return true;
 }
 
+bool gtpu_read_teid(uint32_t& teid, const byte_buffer& pdu, srslog::basic_logger& logger)
+{
+  if (pdu.length() < GTPU_BASE_HEADER_LEN) {
+    logger.error(pdu.begin(), pdu.end(), "Error GTP-U PDU is too small. Length={}", pdu.length());
+    return false;
+  }
+  teid                          = {};
+  byte_buffer_reader pdu_reader = pdu;
+  pdu_reader += 4;
+  for (int i = 3; i >= 0; --i) {
+    teid |= (*pdu_reader << (i * 8U));
+    ++pdu_reader;
+  }
+  return true;
+}
+
 bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::basic_logger& logger)
 {
   if (pdu.length() < GTPU_BASE_HEADER_LEN) {

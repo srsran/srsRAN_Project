@@ -72,6 +72,7 @@ struct gtpu_header {
   std::vector<uint8_t> ext_buffer;
 };
 
+bool gtpu_read_teid(uint32_t& teid, const byte_buffer& pdu, srslog::basic_logger& logger);
 bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::basic_logger& logger);
 bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, srslog::basic_logger& logger);
 
