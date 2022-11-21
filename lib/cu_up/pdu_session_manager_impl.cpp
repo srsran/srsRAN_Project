@@ -10,6 +10,7 @@
 
 #include "pdu_session_manager_impl.h"
 #include "ue_context.h"
+#include "srsgnb/e1/cu_up/e1_config_converters.h"
 #include "srsgnb/pdcp/pdcp_factory.h"
 #include "srsgnb/sdap/sdap_factory.h"
 
@@ -94,25 +95,21 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
     drb_result.drb_id = session.drb_to_setup_list_ng_ran[i].drb_id;
 
     // get DRB from list and create context
-    auto& drb                     = session.drb_to_setup_list_ng_ran[i];
-    new_session->drbs[drb.drb_id] = std::make_unique<drb_context>(drb);
-    auto& new_drb                 = new_session->drbs[drb.drb_id];
+    const asn1::e1ap::drb_to_setup_item_ng_ran_s& drb = session.drb_to_setup_list_ng_ran[i];
+    new_session->drbs[drb.drb_id]                     = std::make_unique<drb_context>(drb);
+    auto& new_drb                                     = new_session->drbs[drb.drb_id];
 
     // Create PDCP entity
     srsgnb::pdcp_entity_creation_message pdcp_msg = {};
     pdcp_msg.ue_index                             = ue_index;
-    pdcp_msg.lcid               = lcid_t(LCID_MIN_DRB); // What do we use here? There is no LCID in the CU-UP
-    pdcp_msg.config             = {};                   // TODO: writer converter from ASN1 for msg.pdcp_cfg;
-    pdcp_msg.config.tx.rb_type  = pdcp_rb_type::drb;
-    pdcp_msg.config.tx.rlc_mode = pdcp_rlc_mode::am;
-    pdcp_msg.config.rx.rb_type  = pdcp_rb_type::drb;
-    pdcp_msg.config.rx.rlc_mode = pdcp_rlc_mode::am;
-    pdcp_msg.tx_lower           = &new_drb->pdcp_to_f1u_adapter;
-    pdcp_msg.tx_upper_cn        = nullptr; // TODO: add adapter towards RRC
-    pdcp_msg.rx_upper_dn        = &new_drb->pdcp_to_sdap_adapter;
-    pdcp_msg.rx_upper_cn        = nullptr; // TODO: add adapter towards RRC
-    pdcp_msg.timers             = &timers;
-    new_drb->pdcp_bearer        = srsgnb::create_pdcp_entity(pdcp_msg);
+    pdcp_msg.lcid        = lcid_t(LCID_MIN_DRB); // What do we use here? There is no LCID in the CU-UP
+    pdcp_msg.config      = make_pdcp_drb_config(drb.pdcp_cfg);
+    pdcp_msg.tx_lower    = &new_drb->pdcp_to_f1u_adapter;
+    pdcp_msg.tx_upper_cn = nullptr; // TODO: add adapter towards RRC
+    pdcp_msg.rx_upper_dn = &new_drb->pdcp_to_sdap_adapter;
+    pdcp_msg.rx_upper_cn = nullptr; // TODO: add adapter towards RRC
+    pdcp_msg.timers      = &timers;
+    new_drb->pdcp_bearer = srsgnb::create_pdcp_entity(pdcp_msg);
 
     // Create  F1-U bearer
     uint32_t    dl_f1u_teid = allocate_local_f1u_teid(new_session->pdu_session_id, drb.drb_id);

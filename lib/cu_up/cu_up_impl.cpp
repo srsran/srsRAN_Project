@@ -9,6 +9,7 @@
  */
 
 #include "cu_up_impl.h"
+#include "srsgnb/e1/cu_up/e1_config_converters.h"
 #include "srsgnb/e1/cu_up/e1_cu_up_factory.h"
 #include "srsgnb/gateways/network_gateway_factory.h"
 #include "srsgnb/gtpu/gtpu_demux_factory.h"
