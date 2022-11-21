@@ -18,7 +18,7 @@
 #include "srsgnb/phy/upper/rb_allocation.h"
 #include "srsgnb/phy/upper/re_pattern.h"
 #include "srsgnb/phy/upper/rx_softbuffer.h"
-#include "srsgnb/ran/modulation_scheme.h"
+#include "srsgnb/ran/sch_mcs.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/uci/uci_constants.h"
 
@@ -79,10 +79,8 @@ public:
     unsigned bwp_start_rb;
     /// Cyclic prefix type.
     cyclic_prefix cp;
-    /// Modulation scheme, common for data and UCI.
-    modulation_scheme modulation;
-    /// Target code rate, parameter \f$R\f$. Determined according to TS38.214 Section 6.1.4.1.
-    float target_code_rate;
+    /// Modulation and coding scheme.
+    sch_mcs_description mcs_descr;
     /// Provides codeword description if present.
     optional<codeword_description> codeword;
     /// Uplink control information parameters.
@@ -219,8 +217,8 @@ struct formatter<srsgnb::pusch_processor::pdu_t> {
                      pdu.bwp_start_rb,
                      pdu.bwp_size_rb,
                      pdu.cp.to_string(),
-                     to_string(pdu.modulation),
-                     pdu.target_code_rate,
+                     to_string(pdu.mcs_descr.modulation),
+                     pdu.mcs_descr.target_code_rate,
                      pdu.codeword,
                      pdu.uci,
                      pdu.n_id,

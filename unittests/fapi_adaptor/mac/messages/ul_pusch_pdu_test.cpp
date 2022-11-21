@@ -31,8 +31,8 @@ TEST(ULPUSCHPDUTest, ValidPUSCHShouldPass)
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.length(), fapi_pdu.bwp_size);
 
   // Information parameters.
-  ASSERT_EQ(static_cast<unsigned>(mac_pdu.target_code_rate * 10.F / 1024.F), fapi_pdu.target_code_rate);
-  ASSERT_EQ(mac_pdu.qam_mod, fapi_pdu.qam_mod_order);
+  ASSERT_EQ(static_cast<unsigned>(mac_pdu.mcs_descr.target_code_rate * 10.F), fapi_pdu.target_code_rate);
+  ASSERT_EQ(mac_pdu.mcs_descr.modulation, fapi_pdu.qam_mod_order);
   ASSERT_EQ(mac_pdu.mcs_index.to_uint(), fapi_pdu.mcs_index);
   ASSERT_EQ(mac_pdu.mcs_table, fapi_pdu.mcs_table);
   ASSERT_EQ(mac_pdu.transform_precoding, fapi_pdu.transform_precoding);
@@ -72,7 +72,7 @@ TEST(ULPUSCHPDUTest, ValidPUSCHShouldPass)
   // Maintenance v3.
   ASSERT_EQ(ldpc::MAX_CODEBLOCK_SIZE / 8, fapi_pdu.pusch_maintenance_v3.tb_size_lbrm_bytes);
   ASSERT_EQ(mac_pdu.pusch_second_hop_prb, fapi_pdu.pusch_maintenance_v3.pusch_second_hop_prb);
-  ASSERT_EQ(get_ldpc_base_graph(mac_pdu.target_code_rate * (1.F / 1024), mac_pdu.tb_size_bytes),
+  ASSERT_EQ(get_ldpc_base_graph(mac_pdu.mcs_descr.get_normalised_target_code_rate(), mac_pdu.tb_size_bytes),
             fapi_pdu.pusch_maintenance_v3.ldpc_base_graph);
   ASSERT_EQ(static_cast<unsigned>(mac_pdu.dmrs_hopping_mode), fapi_pdu.pusch_maintenance_v3.group_or_sequence_hopping);
 

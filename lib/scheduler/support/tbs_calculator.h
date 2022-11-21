@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "srsgnb/ran/modulation_scheme.h"
+#include "srsgnb/ran/sch_mcs.h"
 
 #include <array>
 
@@ -49,11 +49,7 @@ struct tbs_calculator_configuration {
   ///
   /// Otherwise, the value is provided by the parameter \e xOverhead in \e PUSCH-ServingCellConfig.
   unsigned nof_oh_prb;
-  /// \brief Target Code Rate
-  ///
-  /// Parameter \f$R\f$ for both PDSCH and PUSCH.
-  float tcr;
-  /// \brief Modulation scheme for the SCH transmission.
+  /// \brief Modulation and coding scheme for the SCH transmission.
   ///
   /// The modulation scheme yields the number of bits per RE, parameter \f$Q_m\f$ for both PDSCH and PUSCH. Possible
   /// values are:
@@ -61,7 +57,7 @@ struct tbs_calculator_configuration {
   /// - QAM-16,
   /// - QAM-64, and
   /// - 256-QAM.
-  modulation_scheme mod_scheme;
+  sch_mcs_description mcs_descr;
   /// \brief Number of layers.
   ///
   /// Parameter \f$\nu\f$. For PDSCH, the possible values are:

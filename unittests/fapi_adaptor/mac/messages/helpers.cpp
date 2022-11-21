@@ -271,7 +271,8 @@ sib_information unittests::build_valid_sib1_information_pdu()
   info.pdsch_cfg.dmrs = {dmrs_symbol_mask(14), dmrs_config_type::type1, 2, 3, false, 0, 2, bounded_bitset<12>(12)};
   info.pdsch_cfg.n_id = generate_nid_pdsch();
   info.pdsch_cfg.is_interleaved = false;
-  info.pdsch_cfg.codewords.push_back(pdsch_codeword{3, modulation_scheme::QAM16, 5, pdsch_mcs_table::qam64, 2, 128});
+  info.pdsch_cfg.codewords.push_back(
+      pdsch_codeword{{modulation_scheme::QAM16, 220.F}, 5, pdsch_mcs_table::qam64, 2, 128});
 
   return info;
 }
@@ -319,15 +320,15 @@ pusch_information unittests::build_valid_pusch_pdu()
 
   static bwp_configuration bwp_cfg = {false, subcarrier_spacing::kHz15, {10, 10}};
 
-  pusch.rnti             = to_rnti(29);
-  pusch.bwp_cfg          = &bwp_cfg;
-  pusch.prbs             = {prb_interval(10, 20)};
-  pusch.symbols          = {2, 12};
-  pusch.target_code_rate = 193;
-  pusch.qam_mod          = modulation_scheme::QAM256;
-  pusch.mcs_index        = {3};
-  pusch.mcs_table        = pusch_mcs_table::qam256;
-  pusch.dmrs             = {dmrs_symbol_mask(14), dmrs_config_type::type1, 2, 3, false, 0, 2, bounded_bitset<12>(12)};
+  pusch.rnti                       = to_rnti(29);
+  pusch.bwp_cfg                    = &bwp_cfg;
+  pusch.prbs                       = {prb_interval(10, 20)};
+  pusch.symbols                    = {2, 12};
+  pusch.mcs_descr.target_code_rate = 193;
+  pusch.mcs_descr.modulation       = modulation_scheme::QAM256;
+  pusch.mcs_index                  = {3};
+  pusch.mcs_table                  = pusch_mcs_table::qam256;
+  pusch.dmrs = {dmrs_symbol_mask(14), dmrs_config_type::type1, 2, 3, false, 0, 2, bounded_bitset<12>(12)};
   pusch.intra_slot_freq_hopping    = false;
   pusch.pusch_second_hop_prb       = 3;
   pusch.tx_direct_current_location = 1;

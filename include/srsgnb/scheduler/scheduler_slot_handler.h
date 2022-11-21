@@ -108,10 +108,8 @@ struct pdcch_ul_information {
 /// PDSCH codeword.
 /// \remark See FAPI PDSCH PDU.
 struct pdsch_codeword {
-  /// Target code rate, normalized to 1024 (see TS38.214 Tables 5.1.3.1-1, 5.1.3.1-2, 5.1.3.1-3).
-  float target_code_rate;
-  /// Subcarrier modulation scheme, as per TS38.211 Section 5.1.
-  modulation_scheme qam_mod;
+  /// Modulation and coding scheme.
+  sch_mcs_description mcs_descr;
   /// \brief MCS index, range {0, ..., 31} (See TS38.214 Section 5.1.3.1).
   /// \note Should match value sent in DCI.
   sch_mcs_index mcs_index;
@@ -176,10 +174,8 @@ struct pusch_information {
   uint16_t tx_direct_current_location;
   /// Indicates whether there is 7.5 kHz shift or not.
   bool ul_freq_shift_7p5khz;
-  /// Target code rate, normalized to 1024 (see TS38.214 Table 6.1.4.1).
-  float target_code_rate;
-  /// Subcarrier modulation scheme, as per TS38.211 Section 6.1.
-  modulation_scheme qam_mod;
+  /// Modulation and coding scheme.
+  sch_mcs_description mcs_descr;
   /// \brief MCS index, range {0, ..., 31} (See TS38.214 Section 5.1.4.1).
   /// \note Should match value sent in DCI.
   sch_mcs_index mcs_index;

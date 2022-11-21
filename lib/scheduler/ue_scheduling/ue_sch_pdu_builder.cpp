@@ -79,13 +79,11 @@ void srsgnb::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
   cw.mcs_index                   = dci_cfg.modulation_coding_scheme;
   cw.mcs_table                   = mcs_table;
   sch_mcs_description mcs_config = pdsch_mcs_get_config(mcs_table, cw.mcs_index);
-  cw.qam_mod                     = mcs_config.modulation;
-  cw.target_code_rate            = mcs_config.target_code_rate;
+  cw.mcs_descr                   = mcs_config;
   cw.tb_size_bytes = tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pdsch.symbols.length(),
                                                                            calculate_nof_dmrs_per_rb(pdsch.dmrs),
                                                                            nof_oh_prb,
-                                                                           mcs_config.target_code_rate / 1024.0F,
-                                                                           mcs_config.modulation,
+                                                                           mcs_config,
                                                                            nof_layers,
                                                                            tb_scaling_field,
                                                                            pdsch.prbs.prbs().length()}) /
@@ -133,13 +131,11 @@ void srsgnb::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   cw.mcs_index                   = dci_cfg.modulation_coding_scheme;
   cw.mcs_table                   = mcs_table;
   sch_mcs_description mcs_config = pdsch_mcs_get_config(mcs_table, cw.mcs_index);
-  cw.qam_mod                     = mcs_config.modulation;
-  cw.target_code_rate            = mcs_config.target_code_rate;
+  cw.mcs_descr                   = mcs_config;
   cw.tb_size_bytes = tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pdsch.symbols.length(),
                                                                            calculate_nof_dmrs_per_rb(pdsch.dmrs),
                                                                            nof_oh_prb,
-                                                                           mcs_config.target_code_rate / 1024.0F,
-                                                                           mcs_config.modulation,
+                                                                           mcs_config,
                                                                            nof_layers,
                                                                            tb_scaling_field,
                                                                            pdsch.prbs.prbs().length()}) /
@@ -173,11 +169,9 @@ void srsgnb::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
       cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[dci_cfg.time_resource].symbols;
 
   // MCS.
-  pusch.mcs_table                     = mcs_table;
-  pusch.mcs_index                     = dci_cfg.modulation_coding_scheme;
-  sch_mcs_description msg3_mcs_config = pusch_mcs_get_config(pusch.mcs_table, pusch.mcs_index, false);
-  pusch.target_code_rate              = msg3_mcs_config.target_code_rate;
-  pusch.qam_mod                       = msg3_mcs_config.modulation;
+  pusch.mcs_table = mcs_table;
+  pusch.mcs_index = dci_cfg.modulation_coding_scheme;
+  pusch.mcs_descr = pusch_mcs_get_config(pusch.mcs_table, pusch.mcs_index, false);
 
   // TS 38.214, 6.1.3. - "transform precoding either 'enabled' or 'disabled' according to the higher layer configured
   // parameter msg3-transformPrecoder".
@@ -199,8 +193,7 @@ void srsgnb::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
   unsigned tbs_bytes = tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pusch.symbols.length(),
                                                                              calculate_nof_dmrs_per_rb(pusch.dmrs),
                                                                              nof_oh_prb,
-                                                                             pusch.target_code_rate / 1024.0F,
-                                                                             pusch.qam_mod,
+                                                                             pusch.mcs_descr,
                                                                              nof_layers,
                                                                              tb_scaling_field,
                                                                              pusch.prbs.prbs().length()}) /
@@ -240,8 +233,7 @@ void srsgnb::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
   pusch.mcs_table                = mcs_table;
   pusch.mcs_index                = dci_cfg.modulation_coding_scheme;
   sch_mcs_description mcs_config = pusch_mcs_get_config(pusch.mcs_table, pusch.mcs_index, false);
-  pusch.qam_mod                  = mcs_config.modulation;
-  pusch.target_code_rate         = mcs_config.target_code_rate;
+  pusch.mcs_descr                = mcs_config;
 
   pusch.transform_precoding = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->msg3_transform_precoder;
   pusch.n_id                = cell_cfg.pci;
@@ -256,8 +248,7 @@ void srsgnb::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
   pusch.tb_size_bytes = tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pusch.symbols.length(),
                                                                               calculate_nof_dmrs_per_rb(pusch.dmrs),
                                                                               nof_oh_prb,
-                                                                              mcs_config.target_code_rate / 1024.0F,
-                                                                              mcs_config.modulation,
+                                                                              mcs_config,
                                                                               nof_layers,
                                                                               tb_scaling_field,
                                                                               pusch.prbs.prbs().length()}) /

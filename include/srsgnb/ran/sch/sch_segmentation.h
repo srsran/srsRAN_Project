@@ -32,7 +32,8 @@ struct sch_information {
   unsigned nof_bits_per_cb;
 };
 
-/// Gets the Shared Channel (SCH) derived parameters from the transport block size and target code rate.
+/// Gets the Shared Channel (SCH) derived parameters from the transport block size and target code rate, expressed as
+/// \f$R\f$.
 sch_information get_sch_segmentation_info(unsigned tbs, float target_code_rate);
 
 } // namespace srsgnb

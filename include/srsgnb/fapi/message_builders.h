@@ -357,14 +357,14 @@ public:
 
   /// Sets the codeword basic parameters.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
-  dl_pdsch_codeword_builder& set_basic_parameters(float    target_code,
+  dl_pdsch_codeword_builder& set_basic_parameters(float    target_code_rate,
                                                   uint8_t  qam_mod,
                                                   uint8_t  mcs_index,
                                                   uint8_t  mcs_table,
                                                   uint8_t  rv_index,
                                                   uint32_t tb_size)
   {
-    cw.target_code_rate = target_code * 10U;
+    cw.target_code_rate = target_code_rate * 10.F;
     cw.qam_mod_order    = qam_mod;
     cw.mcs_index        = mcs_index;
     cw.mcs_table        = mcs_table;
@@ -2170,7 +2170,7 @@ public:
                                                    uint16_t          nid_pusch,
                                                    uint8_t           num_layers)
   {
-    pdu.target_code_rate    = static_cast<uint16_t>(target_code_rate * 10.F);
+    pdu.target_code_rate    = target_code_rate * 10.F;
     pdu.qam_mod_order       = qam_mod_order;
     pdu.mcs_index           = mcs_index;
     pdu.mcs_table           = mcs_table;

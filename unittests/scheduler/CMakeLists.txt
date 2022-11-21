@@ -40,9 +40,9 @@ add_executable(pusch_dmrs_symbol_mask_test support/pusch/pusch_dmrs_symbol_mask_
 target_link_libraries(pusch_dmrs_symbol_mask_test srsgnb_sched srslog gtest gtest_main)
 add_test(pusch_dmrs_symbol_mask_test pusch_dmrs_symbol_mask_test)
 
-add_executable(tbs_calculator_test support/tbs_calculator_test.cpp)
-target_link_libraries(tbs_calculator_test srsgnb_sched srslog)
-add_test(tbs_calculator_test tbs_calculator_test)
+#add_executable(tbs_calculator_test support/tbs_calculator_test.cpp)
+#target_link_libraries(tbs_calculator_test srsgnb_sched srslog)
+#add_test(tbs_calculator_test tbs_calculator_test)
 
 add_executable(prbs_calculator_test support/prbs_calculator_test.cpp)
 target_link_libraries(prbs_calculator_test srsgnb_sched srslog)

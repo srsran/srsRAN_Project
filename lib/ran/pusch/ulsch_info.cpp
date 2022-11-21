@@ -72,7 +72,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
   ulsch_information result = {};
 
   // Get shared channel parameters.
-  result.sch = get_sch_segmentation_info(config.tbs, config.target_code_rate);
+  result.sch = get_sch_segmentation_info(config.tbs, config.mcs_descr.get_normalised_target_code_rate());
 
   // Check DM-RS number of CDM groups without data is valid.
   srsgnb_assert(config.nof_cdm_groups_without_data >= 1 &&
@@ -95,7 +95,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
   unsigned nof_re_uci = (config.nof_symbols - nof_symbols_dmrs) * config.nof_rb * NRE;
 
   // Retrieve the modulation order.
-  unsigned modulation_order = get_bits_per_symbol(config.modulation);
+  unsigned modulation_order = get_bits_per_symbol(config.mcs_descr.modulation);
 
   // Count the number of resource elements that can potentially carry UCI after the first burst of OFDM symbols that
   // contain DM-RS.
@@ -125,7 +125,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
     // In case of PUSCH NOT multiplexing SCH.
     result.nof_harq_ack_re = calculate_nof_re_harq_ack_without_sch(config.nof_harq_ack_bits,
                                                                    config.beta_offset_harq_ack,
-                                                                   config.target_code_rate,
+                                                                   config.mcs_descr.get_normalised_target_code_rate(),
                                                                    modulation_order,
                                                                    config.alpha_scaling,
                                                                    nof_re_uci_l0);
@@ -147,7 +147,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
       // In case of PUSCH NOT multiplexing SCH.
       nof_harq_ack_rvd_re = calculate_nof_re_harq_ack_without_sch(2,
                                                                   config.beta_offset_harq_ack,
-                                                                  config.target_code_rate,
+                                                                  config.mcs_descr.get_normalised_target_code_rate(),
                                                                   modulation_order,
                                                                   config.alpha_scaling,
                                                                   nof_re_uci_l0);

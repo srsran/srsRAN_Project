@@ -119,10 +119,14 @@ unsigned srsgnb::tbs_calculator_calculate(const tbs_calculator_configuration& co
 
   float scaling = tbs_calculator_pdsch_get_scaling_factor(config.tb_scaling_field);
 
-  srsgnb_assert(config.mod_scheme > modulation_scheme::BPSK,
+  srsgnb_assert(config.mcs_descr.modulation > modulation_scheme::BPSK,
                 "Modulation scheme should be QPSK or higher, provided {}.",
-                config.mod_scheme);
+                config.mcs_descr.modulation);
 
   // Step 2. Intermediate number of information bits.
-  return tbs_calculator_step2(scaling, nof_re, config.tcr, get_bits_per_symbol(config.mod_scheme), config.nof_layers);
+  return tbs_calculator_step2(scaling,
+                              nof_re,
+                              config.mcs_descr.get_normalised_target_code_rate(),
+                              get_bits_per_symbol(config.mcs_descr.modulation),
+                              config.nof_layers);
 }

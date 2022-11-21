@@ -94,8 +94,7 @@ void ra_scheduler::precompute_rar_fields()
                                                                      nof_symb_sh,
                                                                      calculate_nof_dmrs_per_rb(rar_data[i].dmrs_info),
                                                                      nof_oh_prb,
-                                                                     rar_mcs_config.modulation,
-                                                                     rar_mcs_config.target_code_rate / 1024.0F,
+                                                                     rar_mcs_config,
                                                                      nof_layers});
   }
 }
@@ -126,8 +125,7 @@ void ra_scheduler::precompute_msg3_pdus()
                                                   (unsigned)get_pusch_cfg().pusch_td_alloc_list[i].symbols.length(),
                                                   calculate_nof_dmrs_per_rb(dmrs_info),
                                                   nof_oh_prb,
-                                                  msg3_mcs_config.modulation,
-                                                  msg3_mcs_config.target_code_rate / 1024.0F,
+                                                  msg3_mcs_config,
                                                   nof_layers});
 
     // Generate DCI and PUSCH PDUs.
@@ -488,15 +486,13 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   rar.pdsch_cfg.prbs        = rar_prbs;
   rar.pdsch_cfg.symbols     = get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols;
   rar.pdsch_cfg.codewords.emplace_back();
-  pdsch_codeword& cw             = rar.pdsch_cfg.codewords.back();
-  cw.mcs_table                   = pdsch_mcs_table::qam64;
-  cw.mcs_index                   = dci.modulation_coding_scheme;
-  cw.rv_index                    = 0;
-  sch_mcs_description mcs_config = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
-  cw.qam_mod                     = mcs_config.modulation;
-  cw.target_code_rate            = mcs_config.target_code_rate;
-  cw.tb_size_bytes               = rar_data[dci.time_resource].prbs_tbs.tbs_bytes;
-  rar.pdsch_cfg.dmrs             = rar_data[dci.time_resource].dmrs_info;
+  pdsch_codeword& cw = rar.pdsch_cfg.codewords.back();
+  cw.mcs_table       = pdsch_mcs_table::qam64;
+  cw.mcs_index       = dci.modulation_coding_scheme;
+  cw.rv_index        = 0;
+  cw.mcs_descr       = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
+  cw.tb_size_bytes   = rar_data[dci.time_resource].prbs_tbs.tbs_bytes;
+  rar.pdsch_cfg.dmrs = rar_data[dci.time_resource].dmrs_info;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for RA-RNTI.
   rar.pdsch_cfg.n_id           = cell_cfg.pci;
   rar.pdsch_cfg.is_interleaved = dci.vrb_to_prb_mapping > 0;

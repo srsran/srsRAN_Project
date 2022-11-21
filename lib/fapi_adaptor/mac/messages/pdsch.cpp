@@ -28,8 +28,8 @@ static void fill_codewords(fapi::dl_pdsch_pdu_builder&                          
   srsgnb_assert(codewords.size() == 1, "Current FAPI implementation only supports 1 transport block per PDU");
   for (const auto& cw : codewords) {
     fapi::dl_pdsch_codeword_builder cw_builder = builder.add_codeword();
-    cw_builder.set_basic_parameters(cw.target_code_rate,
-                                    get_bits_per_symbol(cw.qam_mod),
+    cw_builder.set_basic_parameters(cw.mcs_descr.target_code_rate,
+                                    get_bits_per_symbol(cw.mcs_descr.modulation),
                                     cw.mcs_index.to_uint(),
                                     static_cast<unsigned>(cw.mcs_table),
                                     cw.rv_index,
@@ -42,7 +42,7 @@ static void fill_codewords(fapi::dl_pdsch_pdu_builder&                          
   static const bool     is_tb_crc_second_tb_required = false;
 
   // NOTE: MAC uses the value of the target code rate x[1024], as per TS 38.214, Section 5.1.3.1, table 5.1.3.1-1.
-  float R = cw.target_code_rate * (1.F / 1024);
+  float R = cw.mcs_descr.get_normalised_target_code_rate();
   builder.set_maintenance_v3_codeword_parameters(get_ldpc_base_graph(R, cw.tb_size_bytes * 8),
                                                  tb_size_lbrm_bytes,
                                                  is_tb_crc_first_tb_required,

@@ -34,11 +34,11 @@ static void test_conversion_ok()
   // Codewords.
   const auto& fapi_cw = fapi_pdu.cws.front();
   const auto& mac_cw  = pdu.pdsch_cfg.codewords.front();
-  TESTASSERT_EQ(mac_cw.target_code_rate * 10, fapi_cw.target_code_rate);
+  TESTASSERT_EQ(mac_cw.mcs_descr.target_code_rate * 10, fapi_cw.target_code_rate);
   TESTASSERT_EQ(mac_cw.rv_index, fapi_cw.rv_index);
   TESTASSERT_EQ(static_cast<unsigned>(mac_cw.mcs_table), fapi_cw.mcs_table);
   TESTASSERT_EQ(mac_cw.mcs_index, fapi_cw.mcs_index);
-  TESTASSERT_EQ(get_bits_per_symbol(mac_cw.qam_mod), fapi_cw.qam_mod_order);
+  TESTASSERT_EQ(get_bits_per_symbol(mac_cw.mcs_descr.modulation), fapi_cw.qam_mod_order);
   TESTASSERT_EQ(mac_cw.tb_size_bytes, fapi_cw.tb_size);
 
   // DMRS.

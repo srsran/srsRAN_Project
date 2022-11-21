@@ -12,6 +12,7 @@
 
 #include "srsgnb/ran/modulation_scheme.h"
 #include "srsgnb/ran/resource_block.h"
+#include "srsgnb/ran/sch_mcs.h"
 #include "srsgnb/support/math_utils.h"
 
 namespace srsgnb {
@@ -36,15 +37,11 @@ struct prbs_calculator_pdsch_config {
   ///
   /// Otherwise, it must be set to the higher layer parameter \c xOverhead in \c PDSCH-ServingCellconfig.
   unsigned nof_oh_prb;
-  /// \brief Modulation scheme.
+  /// \brief Modulation and coding scheme.
   ///
-  /// Translates to the number of bits per RE, parameter \f$Q_m\f$, as per TS38.214,
-  /// Tables 5.1.3.1-1, 5.1.3.1-2, 5.1.3.1-3.
-  ///
-  /// Possible values are {QPSK, QAM-16, QAM-64, QAM-256}.
-  modulation_scheme mod_scheme;
-  /// Target Code Rate, parameter \f$R\f$, as per Tables 5.1.3.1-1, 5.1.3.1-2, 5.1.3.1-3, in TS 38.214.
-  float target_code_rate;
+  /// The modulation scheme translates to the number of bits per RE, parameter \f$Q_m\f$, as per TS38.214,
+  /// Tables 5.1.3.1-1, 5.1.3.1-2, 5.1.3.1-3. Possible values are {QPSK, QAM-16, QAM-64, QAM-256}.
+  sch_mcs_description mcs_descr;
   /// \brief Number of layers, parameter \f$\nu\f$.
   ///
   /// Possible values are:

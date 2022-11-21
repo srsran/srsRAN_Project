@@ -34,7 +34,7 @@ TEST(FapiPhyULPUSCHAdaptorTest, ValidPDUPass)
   ASSERT_EQ(fapi_pdu.bwp_start, phy_pdu.bwp_start_rb);
   ASSERT_EQ(fapi_pdu.bwp_size, phy_pdu.bwp_size_rb);
   ASSERT_EQ(fapi_pdu.cp, phy_pdu.cp);
-  ASSERT_EQ(fapi_pdu.qam_mod_order, phy_pdu.modulation);
+  ASSERT_EQ(fapi_pdu.qam_mod_order, phy_pdu.mcs_descr.modulation);
   ASSERT_EQ(fapi_pdu.nid_pusch, phy_pdu.n_id);
   ASSERT_EQ(fapi_pdu.num_layers, phy_pdu.nof_tx_layers);
 

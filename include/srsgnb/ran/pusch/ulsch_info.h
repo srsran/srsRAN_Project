@@ -14,8 +14,8 @@
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/dmrs.h"
 #include "srsgnb/ran/ldpc_base_graph.h"
-#include "srsgnb/ran/modulation_scheme.h"
 #include "srsgnb/ran/sch/sch_segmentation.h"
+#include "srsgnb/ran/sch_mcs.h"
 #include <array>
 
 namespace srsgnb {
@@ -26,10 +26,8 @@ namespace srsgnb {
 struct ulsch_configuration {
   /// Transport block size. Set to zero if no shared channel is multiplexed.
   unsigned tbs;
-  /// Modulation scheme.
-  modulation_scheme modulation;
-  /// Target code rate, parameter \f$R\f$. Determined according to TS38.214 Section 6.1.4.1.
-  float target_code_rate;
+  /// Modulation and coding scheme.
+  sch_mcs_description mcs_descr;
   /// Number of HARQ-ACK bits to multiplex in the transmission. Parameter \f$O_\textup{ACK}\f$.
   unsigned nof_harq_ack_bits;
   /// Number of CSI Part 1 bits to multiplex in the transmission. Parameter \f$O_\textup{CSI-1}\f$.

@@ -132,13 +132,8 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
     // See 38.214, clause 5.1.3.1 - the UE shall use I_MCS and Table 5.1.3.1-1 to determine the modulation order (Qm)
     // and Target code rate (R) used in the physical downlink shared channel.
     sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_mcs_table::qam64, mcs_idx);
-    prbs_tbs                       = get_nof_prbs(prbs_calculator_pdsch_config{pending_bytes,
-                                                         nof_symb_sh,
-                                                         calculate_nof_dmrs_per_rb(dmrs_info),
-                                                         nof_oh_prb,
-                                                         mcs_config.modulation,
-                                                         mcs_config.target_code_rate / 1024.0F,
-                                                         nof_layers});
+    prbs_tbs                       = get_nof_prbs(prbs_calculator_pdsch_config{
+        pending_bytes, nof_symb_sh, calculate_nof_dmrs_per_rb(dmrs_info), nof_oh_prb, mcs_config, nof_layers});
     if (unused_crbs.length() >= prbs_tbs.nof_prbs) {
       break;
     }

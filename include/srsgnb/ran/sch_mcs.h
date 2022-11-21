@@ -25,14 +25,19 @@ using sch_mcs_index = bounded_integer<uint8_t, 0, 31>;
 struct sch_mcs_description {
   /// Subcarrier modulation scheme.
   modulation_scheme modulation;
+
   /// Target code rate, expressed as \f$R\times 1024\f$, range (0, ..., 1024).
   float target_code_rate;
+
   /// \brief Returns the target spectral efficiency, in bits per subcarrier access.
   /// \note The spectral efficiency is given by the target code rate times the number of bits per modulation symbol.
   constexpr float get_spectral_efficiency() const
   {
-    return get_bits_per_symbol(modulation) * target_code_rate / 1024.0F;
+    return get_bits_per_symbol(modulation) * get_normalised_target_code_rate();
   }
+
+  /// \brief Returns the target code rate normalised betewen 0 and 1.
+  constexpr float get_normalised_target_code_rate() const { return target_code_rate * (1.F / 1024); }
 };
 
 } // namespace srsgnb

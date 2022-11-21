@@ -128,7 +128,9 @@ private:
     pdsch_prbs_tbs   prbs_tbs;
   };
   std::vector<rar_param_cached_data> rar_data;
-  sch_mcs_description                rar_mcs_config;
+
+  /// Modulation and coding scheme.
+  sch_mcs_description rar_mcs_config;
 
   /// Pre-cached information related to Msg3 for different PUSCH time resources.
   struct msg3_param_cached_data {

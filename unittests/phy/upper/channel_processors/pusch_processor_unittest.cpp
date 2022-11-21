@@ -42,7 +42,7 @@ static std::uniform_int_distribution<unsigned> start_symbol_index_dist(0, MAX_NS
 static std::uniform_int_distribution<unsigned> nof_symbols_dist(1, MAX_NSYMB_PER_SLOT);
 static std::uniform_int_distribution<unsigned> tbs_lbrm_bytes_dist(1, ldpc::MAX_CODEBLOCK_SIZE / 8);
 static std::uniform_int_distribution<unsigned> tbs_dist(1, 1024);
-static std::uniform_real_distribution<float>   target_code_rate_dist(0.1F, 0.9F);
+static std::uniform_real_distribution<float>   target_code_rate_dist(30.F, 772.F);
 
 namespace {
 
@@ -112,11 +112,11 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   pusch_processor::pdu_t pdu;
   pdu.slot = slot_point(to_numerology_value(scs), slot_count_dist(rgen) % (10240 * get_nof_slots_per_subframe(scs)));
   pdu.rnti = rnti_dist(rgen);
-  pdu.bwp_start_rb     = bwp_start_dist(rgen);
-  pdu.bwp_size_rb      = std::min(MAX_RB - pdu.bwp_start_rb, bwp_size_dist(rgen));
-  pdu.cp               = cyclic_prefix_conf;
-  pdu.modulation       = modulation;
-  pdu.target_code_rate = target_code_rate_dist(rgen);
+  pdu.bwp_start_rb               = bwp_start_dist(rgen);
+  pdu.bwp_size_rb                = std::min(MAX_RB - pdu.bwp_start_rb, bwp_size_dist(rgen));
+  pdu.cp                         = cyclic_prefix_conf;
+  pdu.mcs_descr.modulation       = modulation;
+  pdu.mcs_descr.target_code_rate = target_code_rate_dist(rgen);
 
   if (codeword_present) {
     pdu.codeword.emplace();
@@ -166,7 +166,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   unsigned nof_re = pdu.freq_alloc.get_nof_rb() * nof_re_per_prb;
 
   // Calculate the number of LLR.
-  unsigned nof_codeword_llr = nof_re * get_bits_per_symbol(pdu.modulation) * pdu.nof_tx_layers;
+  unsigned nof_codeword_llr = nof_re * get_bits_per_symbol(pdu.mcs_descr.modulation) * pdu.nof_tx_layers;
 
   // Generate resource block mask.
   bounded_bitset<MAX_RB> rb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
@@ -181,8 +181,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   // Get UL-SCH information.
   ulsch_configuration ulsch_config;
   ulsch_config.tbs                   = transport_block.size() * 8;
-  ulsch_config.modulation            = pdu.modulation;
-  ulsch_config.target_code_rate      = pdu.target_code_rate;
+  ulsch_config.mcs_descr             = pdu.mcs_descr;
   ulsch_config.nof_harq_ack_bits     = pdu.uci.nof_harq_ack;
   ulsch_config.nof_csi_part1_bits    = pdu.uci.nof_csi_part1;
   ulsch_config.nof_csi_part2_bits    = pdu.uci.nof_csi_part2;
@@ -240,7 +239,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_EQ(ulsch_info.nof_csi_part1_bits, placeholder_entry.msg_info.nof_enc_csi_part1_bits);
   ASSERT_EQ(pdu.uci.nof_csi_part2, placeholder_entry.msg_info.nof_csi_part2_bits);
   ASSERT_EQ(ulsch_info.nof_csi_part2_bits, placeholder_entry.msg_info.nof_enc_csi_part2_bits);
-  ASSERT_EQ(pdu.modulation, placeholder_entry.config.modulation);
+  ASSERT_EQ(pdu.mcs_descr.modulation, placeholder_entry.config.modulation);
   ASSERT_EQ(pdu.nof_tx_layers, placeholder_entry.config.nof_layers);
   ASSERT_EQ(pdu.freq_alloc.get_nof_rb(), placeholder_entry.config.nof_prb);
   ASSERT_EQ(pdu.start_symbol_index, placeholder_entry.config.start_symbol_index);
@@ -258,7 +257,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_EQ(estimator_entry.estimate, demodulator_entry.estimates);
   ASSERT_EQ(pdu.rnti, demodulator_entry.config.rnti);
   ASSERT_EQ(rb_mask, demodulator_entry.config.rb_mask);
-  ASSERT_EQ(pdu.modulation, demodulator_entry.config.modulation);
+  ASSERT_EQ(pdu.mcs_descr.modulation, demodulator_entry.config.modulation);
   ASSERT_EQ(pdu.start_symbol_index, demodulator_entry.config.start_symbol_index);
   ASSERT_EQ(pdu.nof_symbols, demodulator_entry.config.nof_symbols);
   ASSERT_EQ(pdu.dmrs_symbol_mask, demodulator_entry.config.dmrs_symb_pos);
@@ -279,7 +278,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
     const ulsch_demultiplex_spy::demultiplex_entry& demux_entry = demux_spy->get_demultiplex_entries().front();
     ASSERT_EQ(sch_data_llr.data(), demux_entry.input.data());
     ASSERT_EQ(sch_data_llr.size(), demux_entry.input.size());
-    ASSERT_EQ(pdu.modulation, demux_entry.config.modulation);
+    ASSERT_EQ(pdu.mcs_descr.modulation, demux_entry.config.modulation);
     ASSERT_EQ(pdu.nof_tx_layers, demux_entry.config.nof_layers);
     ASSERT_EQ(pdu.freq_alloc.get_nof_rb(), demux_entry.config.nof_prb);
     ASSERT_EQ(pdu.start_symbol_index, demux_entry.config.start_symbol_index);
@@ -306,7 +305,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
     ASSERT_EQ(sch_data_llr.data(), decoder_entry.llrs.data());
     ASSERT_EQ(sch_data_llr.size(), decoder_entry.llrs.size());
     ASSERT_EQ(pdu.codeword.value().ldpc_base_graph, decoder_entry.config.segmenter_cfg.base_graph);
-    ASSERT_EQ(pdu.modulation, decoder_entry.config.segmenter_cfg.mod);
+    ASSERT_EQ(pdu.mcs_descr.modulation, decoder_entry.config.segmenter_cfg.mod);
     ASSERT_EQ(pdu.tbs_lbrm_bytes * 8, decoder_entry.config.segmenter_cfg.Nref);
     ASSERT_EQ(pdu.nof_tx_layers, decoder_entry.config.segmenter_cfg.nof_layers);
     ASSERT_EQ(ulsch_info.nof_ul_sch_bits / get_bits_per_symbol(modulation),
@@ -328,7 +327,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
     ASSERT_EQ(1, uci_dec_spy->get_entries().size());
     const uci_decoder_spy::entry_t& uci_dec_entry = uci_dec_spy->get_entries().front();
     ASSERT_EQ(span<const log_likelihood_ratio>(harq_ack_llr), span<const log_likelihood_ratio>(uci_dec_entry.llr));
-    ASSERT_EQ(pdu.modulation, uci_dec_entry.config.modulation);
+    ASSERT_EQ(pdu.mcs_descr.modulation, uci_dec_entry.config.modulation);
     ASSERT_EQ(span<const uint8_t>(result.harq_ack.payload), span<const uint8_t>(uci_dec_entry.message));
     ASSERT_EQ(result.harq_ack.status, uci_dec_entry.status);
   } else {

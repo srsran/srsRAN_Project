@@ -57,18 +57,16 @@ void srsgnb::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu
                                                      uint16_t                     slot)
 {
   // Fill the PUSCH processor parameters.
-  pusch_processor::pdu_t& proc_pdu = pdu.pdu;
-  proc_pdu.slot                    = slot_point(fapi_pdu.scs, sfn, slot);
-  proc_pdu.rnti                    = fapi_pdu.rnti;
-  proc_pdu.bwp_start_rb            = fapi_pdu.bwp_start;
-  proc_pdu.bwp_size_rb             = fapi_pdu.bwp_size;
-
-  proc_pdu.cp               = fapi_pdu.cp;
-  proc_pdu.modulation       = fapi_pdu.qam_mod_order;
-  proc_pdu.n_id             = fapi_pdu.nid_pusch;
-  proc_pdu.nof_tx_layers    = fapi_pdu.num_layers;
-  proc_pdu.target_code_rate = static_cast<float>(fapi_pdu.target_code_rate) / 10.0F;
-
+  pusch_processor::pdu_t& proc_pdu    = pdu.pdu;
+  proc_pdu.slot                       = slot_point(fapi_pdu.scs, sfn, slot);
+  proc_pdu.rnti                       = fapi_pdu.rnti;
+  proc_pdu.bwp_start_rb               = fapi_pdu.bwp_start;
+  proc_pdu.bwp_size_rb                = fapi_pdu.bwp_size;
+  proc_pdu.cp                         = fapi_pdu.cp;
+  proc_pdu.mcs_descr.modulation       = fapi_pdu.qam_mod_order;
+  proc_pdu.mcs_descr.target_code_rate = fapi_pdu.target_code_rate * 0.1F;
+  proc_pdu.n_id                       = fapi_pdu.nid_pusch;
+  proc_pdu.nof_tx_layers              = fapi_pdu.num_layers;
   // This value is defined in field DL DMRS symbol position in SCF-222 v4.0 Section 3.4.3.2, in table PUSCH PDU, DMRS
   // subsection.
   static constexpr unsigned DL_DMRS_SYMBOL_POS_SIZE = 14U;

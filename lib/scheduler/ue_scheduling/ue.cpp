@@ -35,8 +35,7 @@ unsigned ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_byte
       (unsigned)cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols.length(),
       calculate_nof_dmrs_per_rb(dmrs_info),
       nof_oh_prb,
-      mcs_config.modulation,
-      mcs_config.target_code_rate / 1024.0F,
+      mcs_config,
       nof_layers});
   return prbs_tbs.nof_prbs;
 }
@@ -64,8 +63,7 @@ unsigned ue_cell::required_ul_prbs(unsigned time_resource, unsigned pending_byte
           .symbols.length(),
       calculate_nof_dmrs_per_rb(dmrs_info),
       nof_oh_prb,
-      mcs_config.modulation,
-      mcs_config.target_code_rate / 1024.0F,
+      mcs_config,
       nof_layers});
   return prbs_tbs.nof_prbs;
 }
