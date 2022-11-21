@@ -6,7 +6,10 @@
 # the distribution.
 #
 
-set(SOURCES gtpu_factory.cpp gtpu_pdu.cpp)
+set(SOURCES gtpu_factory.cpp
+            gtpu_pdu.cpp
+            gtpu_demux_impl.cpp
+            gtpu_demux_factory.cpp)
 
 add_library(srsgnb_gtpu STATIC ${SOURCES})
 target_link_libraries(srsgnb_gtpu srsgnb_support)

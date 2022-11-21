@@ -40,6 +40,14 @@ public:
   byte_buffer last_tx;
 };
 
+class gtpu_test_rx_upper : public gtpu_rx_upper_layer_interface
+{
+public:
+  void handle_pdu(byte_buffer pdu) final { last_rx = std::move(pdu); }
+
+  byte_buffer last_rx;
+};
+
 /// Fixture class for GTP-U PDU tests
 class gtpu_test : public ::testing::Test
 {
