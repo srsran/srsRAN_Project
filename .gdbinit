@@ -65,8 +65,9 @@ class BoundedBitsetPrinter(object):
 
 
 def make_bounded_bitset(val):
-    if 'bounded_bitset<' in str(val.type) and str(val.type).endswith('>'):
-      return BoundedBitsetPrinter(val)
+    s = str(val.type.strip_typedefs())
+    if 'bounded_bitset<' in s and s.endswith('>'):
+        return BoundedBitsetPrinter(val)
 
 gdb.pretty_printers.append(make_bounded_bitset)
 
@@ -80,7 +81,7 @@ class OptionalPrinter(object):
   def children(self):
       has_val = bool(self.val['storage']['has_val'])
       if has_val:
-          payload = self.val['storage']['payload']['val'].cast(self.value_type)
+          payload = self.val['storage']['payload']['val']
           yield '[0]', payload
 
   def to_string(self):
@@ -100,6 +101,57 @@ def make_optional(val):
 
 gdb.pretty_printers.append(make_optional)
 
+
+###### tiny_optional<T> #######
+
+class TinyOptionalPrinter(object):
+    def __init__(self, val):
+        self.val = val
+        self.has_val = TinyOptionalPrinter.get_has_value(self.val)
+
+    def children(self):
+        if self.has_val:
+            yield '[0]', TinyOptionalPrinter.get_value(self.val)
+
+    def to_string(self):
+        if self.has_val:
+            return 'tiny_optional (present)'
+        return 'tiny_optional (empty)'
+
+    def display_hint(self):
+        return 'string'
+
+    @staticmethod
+    def get_has_value(gdb_val):
+        fields = gdb_val.type.strip_typedefs().fields()
+        assert len(fields) > 0
+        f_type_str = str(fields[0].type.strip_typedefs())
+        if f_type_str.startswith('srsgnb::optional<'):
+            return bool(gdb_val['storage']['has_val'])
+        if 'std::unique_ptr<' in str(gdb_val['val'].type):
+            val_str = str(gdb_val['val'])
+            val_str = val_str[val_str.find('get() = ') + len('get() = ')::]
+            val_str = val_str[0:val_str.find('}')]
+            val_int = int(val_str, 16)
+            return val_int != 0
+        return True #TODO: tiny_optional with flag
+
+    @staticmethod
+    def get_value(gdb_val):
+        fields = gdb_val.type.strip_typedefs().fields()
+        f_type_str = str(fields[0].type.strip_typedefs())
+        if f_type_str.startswith('srsgnb::optional<'):
+            return gdb_val['storage']['payload']['val']
+        return gdb_val['val']
+
+
+def make_tiny_optional(val):
+    s = str(val.type.strip_typedefs())
+    if s.startswith('srsgnb::tiny_optional<') and s.endswith('>'):
+        return TinyOptionalPrinter(val)
+
+gdb.pretty_printers.append(make_tiny_optional)
+
 ###### slot_array<T, N> #######
 
 class SlotArrayPrinter(object):
@@ -107,18 +159,16 @@ class SlotArrayPrinter(object):
       self.val = val
       self.value_type = self.val.type.strip_typedefs().template_argument(0)
       self.capacity = int(self.val.type.strip_typedefs().template_argument(1))
+      self.nof_elems = int(self.val['nof_elems'])
 
   def children(self):
-      count = 0
-      vec = self.val['vec']['_M_elems'].cast(self.value_type.pointer())
+      vec = self.val['vec']['_M_elems']
       for idx in range(self.capacity):
-          if bool(vec[idx]):
-              yield f'[{idx}]', vec[idx]
-              count += 1
+          if TinyOptionalPrinter.get_has_value(vec[idx]):
+              yield f'[{idx}]', TinyOptionalPrinter.get_value(vec[idx])
 
   def to_string(self):
-      nof_elems = int(self.val['nof_elems'])
-      return f'slot_array of {nof_elems} elements'
+      return f'slot_array of {self.nof_elems} elements, capacity {self.capacity}'
 
   def display_hint(self):
       return 'string'
@@ -129,6 +179,38 @@ def make_slot_array(val):
         return SlotArrayPrinter(val)
 
 gdb.pretty_printers.append(make_slot_array)
+
+###### slot_vector<T> #######
+
+class SlotVectorPrinter(object):
+    def __init__(self, val):
+        self.val = val
+        self.value_type = self.val.type.strip_typedefs().template_argument(0)
+        self.objects = self.val['objects']
+        self.nof_elems = int(self.objects['_M_impl']['_M_finish'] - self.objects['_M_impl']['_M_start'])
+
+    def children(self):
+        indexmapper = self.val['index_mapper']
+        nof_idxs = int(indexmapper['_M_impl']['_M_finish'] - indexmapper['_M_impl']['_M_start'])
+        max_int = 2**64 - 1
+        indexmapper_ptr = indexmapper['_M_impl']['_M_start']
+        object_ptr = self.objects['_M_impl']['_M_start']
+        for idx in range(nof_idxs):
+            if int(indexmapper_ptr[idx]) != max_int:
+                yield f'[{idx}]', object_ptr[indexmapper_ptr[idx]]
+
+    def to_string(self):
+        return f'slot_vector of {self.nof_elems} elements'
+
+    def display_hint(self):
+        return 'string'
+
+def make_slot_vector(val):
+    s = str(val.type.strip_typedefs())
+    if s.startswith('srsgnb::slot_vector<') and s.endswith('>'):
+        return SlotVectorPrinter(val)
+
+gdb.pretty_printers.append(make_slot_vector)
 
 end
 
