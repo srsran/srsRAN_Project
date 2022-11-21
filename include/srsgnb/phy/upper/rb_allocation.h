@@ -183,3 +183,27 @@ public:
 };
 
 } // namespace srsgnb
+
+namespace fmt {
+
+/// \brief Custom formatter for pusch_processor::rb_allocation.
+template <>
+struct formatter<srsgnb::rb_allocation> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::rb_allocation& rb_alloc, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    if (rb_alloc.is_contiguous()) {
+      return format_to(ctx.out(), "{}:{}", rb_alloc.get_prb_begin(0), rb_alloc.get_nof_rb());
+    }
+
+    return format_to(ctx.out(), "non-contiguous");
+  }
+};
+} // namespace fmt

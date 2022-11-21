@@ -67,9 +67,6 @@ private:
     prb_re_mask.fill(0, NRE, true);
     bounded_bitset<MAX_RB* NRE> re_mask = config.rb_mask.kronecker_product<NRE>(prb_re_mask);
 
-    // Number of subcarriers.
-    unsigned nof_subcs = config.rb_mask.count() * NRE;
-
     // Extract RE for each port and symbol.
     for (unsigned i_port = 0, i_port_end = config.rx_ports.size(); i_port != i_port_end; ++i_port) {
       // Get a view of the port data RE.
@@ -82,15 +79,11 @@ private:
         }
 
         // Copy grid data resource elements into the buffer.
-        span<cf_t> unread_re =
-            grid.get(re_port_buffer.first(nof_subcs), i_port, i_symbol + config.start_symbol_index, 0, re_mask);
-
-        srsgnb_assert(
-            unread_re.empty(), "Invalid number of RE read from the grid. {} RE are missing.", unread_re.size());
-
-        // Advance buffers.
-        re_port_buffer = re_port_buffer.subspan(nof_subcs, re_port_buffer.size() - nof_subcs);
+        re_port_buffer = grid.get(re_port_buffer, i_port, i_symbol + config.start_symbol_index, 0, re_mask);
       }
+
+      srsgnb_assert(
+          re_port_buffer.empty(), "Invalid number of RE read from the grid. {} RE are missing.", re_port_buffer.size());
     }
   }
 

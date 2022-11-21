@@ -15,14 +15,13 @@
 namespace srsgnb {
 
 /// LDPC Base graph types.
-enum class ldpc_base_graph_type : uint8_t { BG1, BG2 };
+enum class ldpc_base_graph_type : uint8_t { BG1 = 1, BG2 = 2 };
 
-/// \brief Returns the LDPC base graph based on the given code rate and transport block size in bytes, as per TS 38.212
+/// \brief Returns the LDPC base graph based on the given code rate and transport block size in bits, as per TS 38.212
 /// section 7.2.2.
 ///
-/// \param R Target code rate.
-/// \param A Size in bytes of the payload.
-/// \return
+/// \param R Target code rate, parameter \f$R\f$.
+/// \param A Size in bits of the payload \f$A\f$.
 constexpr ldpc_base_graph_type get_ldpc_base_graph(float R, unsigned A)
 {
   if (A <= 292U || R <= 0.25F || (A <= 3824U && R <= 0.67F)) {

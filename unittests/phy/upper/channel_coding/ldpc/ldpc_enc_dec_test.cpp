@@ -75,7 +75,7 @@ protected:
   {
     test_case_t test_data = std::get<1>(GetParam());
 
-    ldpc_base_graph_type bg = static_cast<ldpc_base_graph_type>(test_data.bg - 1);
+    ldpc_base_graph_type bg = static_cast<ldpc_base_graph_type>(test_data.bg);
     lifting_size_t       ls = static_cast<lifting_size_t>(test_data.ls);
 
     // Set base-graph message and codeblock lengths.

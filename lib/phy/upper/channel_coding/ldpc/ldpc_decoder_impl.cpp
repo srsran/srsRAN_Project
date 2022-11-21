@@ -19,7 +19,7 @@ using namespace srsgnb::ldpc;
 void ldpc_decoder_impl::init(const configuration& cfg)
 {
   uint8_t  pos   = get_lifting_size_position(cfg.block_conf.tb_common.lifting_size);
-  unsigned skip  = static_cast<unsigned>(cfg.block_conf.tb_common.base_graph) * NOF_LIFTING_SIZES;
+  unsigned skip  = cfg.block_conf.tb_common.base_graph == ldpc_base_graph_type::BG2 ? NOF_LIFTING_SIZES : 0;
   current_graph  = &graph_array[skip + pos];
   bg_N_full      = current_graph->get_nof_BG_var_nodes_full();
   bg_N_short     = current_graph->get_nof_BG_var_nodes_short();

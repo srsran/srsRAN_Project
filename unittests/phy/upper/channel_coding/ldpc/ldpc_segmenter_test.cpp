@@ -83,7 +83,7 @@ TEST_P(LDPCSegmenterFixture, LDPCSegmenterTest)
 {
   LDPCSegmenterParams test_data = GetParam();
   segmenter_config    seg_cfg{};
-  seg_cfg.base_graph     = static_cast<ldpc_base_graph_type>(test_data.bg - 1);
+  seg_cfg.base_graph     = static_cast<ldpc_base_graph_type>(test_data.bg);
   seg_cfg.mod            = modulation_scheme::QPSK;
   seg_cfg.rv             = 0;
   seg_cfg.nof_layers     = 1;

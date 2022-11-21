@@ -63,10 +63,11 @@ void srsgnb::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu
   proc_pdu.bwp_start_rb            = fapi_pdu.bwp_start;
   proc_pdu.bwp_size_rb             = fapi_pdu.bwp_size;
 
-  proc_pdu.cp            = fapi_pdu.cp;
-  proc_pdu.modulation    = fapi_pdu.qam_mod_order;
-  proc_pdu.n_id          = fapi_pdu.nid_pusch;
-  proc_pdu.nof_tx_layers = fapi_pdu.num_layers;
+  proc_pdu.cp               = fapi_pdu.cp;
+  proc_pdu.modulation       = fapi_pdu.qam_mod_order;
+  proc_pdu.n_id             = fapi_pdu.nid_pusch;
+  proc_pdu.nof_tx_layers    = fapi_pdu.num_layers;
+  proc_pdu.target_code_rate = static_cast<float>(fapi_pdu.target_code_rate) / 10.0F;
 
   // This value is defined in field DL DMRS symbol position in SCF-222 v4.0 Section 3.4.3.2, in table PUSCH PDU, DMRS
   // subsection.
@@ -87,6 +88,9 @@ void srsgnb::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu
   fill_rb_allocation(proc_pdu, fapi_pdu);
 
   fill_codeword(pdu, fapi_pdu);
+
+  // :TODO: Fill UCI.
+  proc_pdu.uci = {};
 
   // :TODO: Check the ports.
   proc_pdu.rx_ports = {0};

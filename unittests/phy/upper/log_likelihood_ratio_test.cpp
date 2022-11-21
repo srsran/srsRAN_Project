@@ -71,5 +71,5 @@ int main()
 
   fmt::memory_buffer buf;
   fmt::format_to(buf, "{}", log_likelihood_ratio(1));
-  TESTASSERT_EQ(to_string(buf), "LLR(1)");
+  TESTASSERT_EQ(to_string(buf), "1");
 }

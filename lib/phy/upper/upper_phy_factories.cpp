@@ -208,6 +208,7 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(const upp
   pusch_config.estimator_factory = create_dmrs_pusch_estimator_factory_sw(prg_factory, ch_estimator_factory);
   pusch_config.demodulator_factory =
       create_pusch_demodulator_factory_sw(equalizer_factory, demodulation_factory, prg_factory);
+  pusch_config.demux_factory   = create_ulsch_demultiplex_factory_sw();
   pusch_config.decoder_factory = create_pusch_decoder_factory_sw(decoder_config);
   // :TODO: check these values in the future. Extract them to more public config.
   pusch_config.ch_estimate_dimensions.nof_symbols   = 14;

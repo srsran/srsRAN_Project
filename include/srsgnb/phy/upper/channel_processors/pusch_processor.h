@@ -146,3 +146,91 @@ public:
 };
 
 } // namespace srsgnb
+
+namespace fmt {
+
+/// \brief Custom formatter for oprtional<pusch_processor::codeword_description>.
+template <>
+struct formatter<srsgnb::optional<srsgnb::pusch_processor::codeword_description>> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::optional<srsgnb::pusch_processor::codeword_description>& codeword, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    if (!codeword.has_value()) {
+      return format_to(ctx.out(), "{{na}}");
+    }
+    return format_to(ctx.out(),
+                     "{{rv={} bg={} ndi={}}}",
+                     codeword.value().rv,
+                     codeword.value().ldpc_base_graph,
+                     codeword.value().new_data);
+  }
+};
+
+/// \brief Custom formatter for pusch_processor::uci_description.
+template <>
+struct formatter<srsgnb::pusch_processor::uci_description> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::pusch_processor::uci_description& uci_desc, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "oack={} ocsi1={} ocsi2={} alpha={} betas=[{}, {}, {}]",
+                     uci_desc.nof_harq_ack,
+                     uci_desc.nof_csi_part1,
+                     uci_desc.nof_csi_part2,
+                     uci_desc.alpha_scaling,
+                     uci_desc.beta_offset_harq_ack,
+                     uci_desc.beta_offset_csi_part1,
+                     uci_desc.beta_offset_csi_part2);
+  }
+};
+
+/// \brief Custom formatter for pusch_processor::pdu_t.
+template <>
+struct formatter<srsgnb::pusch_processor::pdu_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::pusch_processor::pdu_t& pdu, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "slot={} rnti=0x{:04x} bwp={}:{} cp={} mod={} tcr={} cw={} uci={} n_id={} dmrs=[{}] n_scidid={} "
+                     "n_scid={} ncgwd={} f_alloc={} t_alloc={}:{} ",
+                     pdu.slot,
+                     pdu.rnti,
+                     pdu.bwp_start_rb,
+                     pdu.bwp_size_rb,
+                     pdu.cp.to_string(),
+                     to_string(pdu.modulation),
+                     pdu.target_code_rate,
+                     pdu.codeword,
+                     pdu.uci,
+                     pdu.n_id,
+                     srsgnb::span<const bool>(pdu.dmrs_symbol_mask),
+                     pdu.scrambling_id,
+                     pdu.n_scid,
+                     pdu.nof_cdm_groups_without_data,
+                     pdu.freq_alloc,
+                     pdu.start_symbol_index,
+                     pdu.nof_symbols);
+  }
+};
+} // namespace fmt

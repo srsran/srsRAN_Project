@@ -253,7 +253,7 @@ public:
   span<Type> get_data() override { return span<Type>(elements).first(size()); }
 
   // See interface for documentation.
-  span<const Type> get_data() const override { return elements; }
+  span<const Type> get_data() const override { return span<const Type>(elements).first(size()); }
 
   /// \brief Current tensor size in number of elements across all dimensions.
   constexpr unsigned size() const

@@ -320,7 +320,7 @@ struct formatter<srsgnb::log_likelihood_ratio> {
   template <typename FormatContext>
   auto format(srsgnb::log_likelihood_ratio llr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "LLR({})", static_cast<srsgnb::log_likelihood_ratio::value_type>(llr));
+    return format_to(ctx.out(), "{}", static_cast<srsgnb::log_likelihood_ratio::value_type>(llr));
   }
 };
 
