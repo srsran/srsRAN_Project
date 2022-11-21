@@ -165,6 +165,36 @@ TYPED_TEST(slot_array_tester, iterator_converts_to_const_iterator)
   ASSERT_EQ(it, it2);
 }
 
+TYPED_TEST(slot_array_tester, removed_last_index_becomes_available_for_reuse)
+{
+  int    value     = get_random_int();
+  size_t first_idx = get_random_int(0, 1), second_idx = first_idx == 1 ? 0 : 1;
+
+  this->vec.insert(first_idx, this->create_elem(value));
+  this->vec.insert(second_idx, this->create_elem(value + 1));
+  ASSERT_EQ(this->vec.size(), 2);
+
+  ASSERT_TRUE(this->vec.erase(second_idx));
+  ASSERT_EQ(this->vec.size(), 1);
+  ASSERT_EQ(this->vec[first_idx], this->create_elem(value));
+  ASSERT_EQ(this->vec.find_first_empty(), second_idx);
+}
+
+TYPED_TEST(slot_array_tester, removed_first_index_becomes_available_for_reuse)
+{
+  int    value     = get_random_int();
+  size_t first_idx = get_random_int(0, 1), second_idx = first_idx == 1 ? 0 : 1;
+
+  this->vec.insert(first_idx, this->create_elem(value));
+  this->vec.insert(second_idx, this->create_elem(value + 1));
+  ASSERT_EQ(this->vec.size(), 2);
+
+  ASSERT_TRUE(this->vec.erase(first_idx));
+  ASSERT_EQ(this->vec.size(), 1);
+  ASSERT_EQ(this->vec[second_idx], this->create_elem(value + 1));
+  ASSERT_EQ(this->vec.find_first_empty(), first_idx);
+}
+
 /// Test confirms that the slot_array uses nullptr instead of an extra boolean to represent an empty entry in the
 /// slot_array/slot_vector.
 TEST(detail_slot_array_of_unique_ptrs, slot_array_leverages_null_to_represent_empty_state)

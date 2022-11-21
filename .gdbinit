@@ -75,7 +75,7 @@ gdb.pretty_printers.append(make_bounded_bitset)
 class OptionalPrinter(object):
   def __init__(self, val):
       self.val = val
-      self.value_type = self.val.type.template_argument(0)
+      self.value_type = self.val.type.strip_typedefs().template_argument(0)
 
   def children(self):
       has_val = bool(self.val['storage']['has_val'])
@@ -94,10 +94,41 @@ class OptionalPrinter(object):
 
 
 def make_optional(val):
-    if 'srsgnb::optional<' in str(val.type):
-      return OptionalPrinter(val)
+    s = str(val.type.strip_typedefs())
+    if s.startswith('srsgnb::optional<') and s.endswith('>'):
+        return OptionalPrinter(val)
 
 gdb.pretty_printers.append(make_optional)
+
+###### slot_array<T, N> #######
+
+class SlotArrayPrinter(object):
+  def __init__(self, val):
+      self.val = val
+      self.value_type = self.val.type.strip_typedefs().template_argument(0)
+      self.capacity = int(self.val.type.strip_typedefs().template_argument(1))
+
+  def children(self):
+      count = 0
+      vec = self.val['vec']['_M_elems'].cast(self.value_type.pointer())
+      for idx in range(self.capacity):
+          if bool(vec[idx]):
+              yield f'[{idx}]', vec[idx]
+              count += 1
+
+  def to_string(self):
+      nof_elems = int(self.val['nof_elems'])
+      return f'slot_array of {nof_elems} elements'
+
+  def display_hint(self):
+      return 'string'
+
+def make_slot_array(val):
+    s = str(val.type.strip_typedefs())
+    if s.startswith('srsgnb::slot_array<') and s.endswith('>'):
+        return SlotArrayPrinter(val)
+
+gdb.pretty_printers.append(make_slot_array)
 
 end
 
