@@ -204,12 +204,16 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(const upp
   decoder_config.dematcher_factory = create_ldpc_rate_dematcher_factory_sw();
   decoder_config.segmenter_factory = create_ldpc_segmenter_rx_factory_sw();
 
+  uci_decoder_factory_sw_configuration uci_dec_config;
+  uci_dec_config.decoder_factory = create_short_block_detector_factory_sw();
+
   pusch_processor_factory_sw_configuration pusch_config;
   pusch_config.estimator_factory = create_dmrs_pusch_estimator_factory_sw(prg_factory, ch_estimator_factory);
   pusch_config.demodulator_factory =
       create_pusch_demodulator_factory_sw(equalizer_factory, demodulation_factory, prg_factory);
   pusch_config.demux_factory   = create_ulsch_demultiplex_factory_sw();
   pusch_config.decoder_factory = create_pusch_decoder_factory_sw(decoder_config);
+  pusch_config.uci_dec_factory = create_uci_decoder_factory_sw(uci_dec_config);
   // :TODO: check these values in the future. Extract them to more public config.
   pusch_config.ch_estimate_dimensions.nof_symbols   = 14;
   pusch_config.ch_estimate_dimensions.nof_tx_layers = 1;
