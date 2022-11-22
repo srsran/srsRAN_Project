@@ -13,7 +13,7 @@
 #include "procedures/f1_ue_context_modification_procedure.h"
 #include "procedures/f1_ue_context_release_procedure.h"
 #include "procedures/f1_ue_context_setup_procedure.h"
-#include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/f1c/cu_cp/f1c_cu.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include <memory>

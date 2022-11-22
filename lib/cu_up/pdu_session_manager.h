@@ -11,7 +11,7 @@
 #pragma once
 
 #include "pdu_session.h"
-#include "srsgnb/asn1/e1ap.h"
+#include "srsgnb/asn1/e1ap/e1ap.h"
 
 namespace srsgnb {
 

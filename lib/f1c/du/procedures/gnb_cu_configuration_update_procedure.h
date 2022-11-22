@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/f1c/common/f1c_common.h"
 #include "srsgnb/support/async/async_task.h"
 

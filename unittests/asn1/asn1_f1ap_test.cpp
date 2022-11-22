@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/pcap/f1ap_pcap.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>

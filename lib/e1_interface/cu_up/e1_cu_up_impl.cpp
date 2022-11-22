@@ -10,7 +10,7 @@
 
 #include "e1_cu_up_impl.h"
 #include "../../ran/gnb_format.h"
-#include "srsgnb/asn1/e1ap.h"
+#include "srsgnb/asn1/e1ap/e1ap.h"
 
 using namespace srsgnb;
 using namespace asn1::e1ap;

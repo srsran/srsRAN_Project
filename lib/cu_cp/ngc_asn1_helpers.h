@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/asn1/ngap.h"
+#include "srsgnb/asn1/ngap/ngap.h"
 
 namespace srsgnb {
 

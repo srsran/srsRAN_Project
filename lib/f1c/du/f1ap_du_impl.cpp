@@ -15,7 +15,7 @@
 #include "du/procedures/f1ap_du_ue_release_procedure.h"
 #include "du/procedures/gnb_cu_configuration_update_procedure.h"
 #include "f1c_du_bearer_impl.h"
-#include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/support/async/event_signal.h"
 
 using namespace srsgnb;

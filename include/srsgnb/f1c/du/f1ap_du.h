@@ -13,7 +13,7 @@
 #include "f1_bearer.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/adt/expected.h"
-#include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/f1c/common/f1c_common.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"

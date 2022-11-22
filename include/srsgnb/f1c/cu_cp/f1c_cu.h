@@ -13,7 +13,7 @@
 #include "../common/f1c_types.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/expected.h"
-#include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/f1c/common/f1c_common.h"
 #include "srsgnb/ran/lcid.h"

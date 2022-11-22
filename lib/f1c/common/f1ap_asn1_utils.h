@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/expected.h"
-#include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/f1c/common/f1c_types.h"
 #include "srsgnb/support/error_handling.h"
 

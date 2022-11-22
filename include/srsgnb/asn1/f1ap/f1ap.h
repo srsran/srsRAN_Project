@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "asn1_utils.h"
+#include "srsgnb/asn1/asn1_utils.h"
 #include <cstdio>
 #include <stdarg.h>
 

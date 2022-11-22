@@ -12,7 +12,7 @@
 
 #include "ngc_types.h"
 #include "srsgnb/adt/optional.h"
-#include "srsgnb/asn1/ngap.h"
+#include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {

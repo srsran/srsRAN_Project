@@ -12,7 +12,7 @@
 #include "../converters/f1c_configuration_helpers.h"
 #include "../converters/mac_cell_configuration_helpers.h"
 #include "../du_cell_manager.h"
-#include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/asn1/f1ap/f1ap.h"
 
 using namespace srsgnb;
 using namespace srs_du;

@@ -12,7 +12,7 @@
 
 #include "../../common/e1ap_asn1_utils.h"
 #include "e1_cu_cp_event_manager.h"
-#include "srsgnb/asn1/e1ap.h"
+#include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/e1_interface/cu_cp/e1_cu_cp.h"
 #include "srsgnb/support/async/async_task.h"
 

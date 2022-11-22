@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/expected.h"
-#include "srsgnb/asn1/ngap.h"
+#include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/support/async/event_signal.h"
 
 namespace srsgnb {

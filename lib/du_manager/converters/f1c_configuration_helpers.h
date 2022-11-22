@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/du/du_cell_config.h"
 #include "srsgnb/f1c/du/f1ap_du.h"
 

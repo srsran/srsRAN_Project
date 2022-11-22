@@ -9,7 +9,7 @@
  */
 
 #include "lib/f1c/common/asn1_helpers.h"
-#include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include <gtest/gtest.h>
 

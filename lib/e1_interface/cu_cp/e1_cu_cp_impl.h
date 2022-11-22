@@ -14,7 +14,7 @@
 #include "procedures/e1_bearer_context_modification_procedure.h"
 #include "procedures/e1_bearer_context_release_procedure.h"
 #include "procedures/e1_bearer_context_setup_procedure.h"
-#include "srsgnb/asn1/e1ap.h"
+#include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/e1_interface/cu_cp/e1_cu_cp.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include "srsgnb/support/timers.h"

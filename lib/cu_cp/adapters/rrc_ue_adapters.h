@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/f1c/cu_cp/f1c_cu.h"
 #include "srsgnb/ngap/ngc.h"

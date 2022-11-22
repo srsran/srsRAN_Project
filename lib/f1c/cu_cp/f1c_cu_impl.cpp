@@ -11,7 +11,7 @@
 #include "f1c_cu_impl.h"
 #include "../../ran/gnb_format.h"
 #include "../lib/f1c/common/asn1_helpers.h"
-#include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/asn1/f1ap/f1ap.h"
 
 using namespace srsgnb;
 using namespace asn1::f1ap;
