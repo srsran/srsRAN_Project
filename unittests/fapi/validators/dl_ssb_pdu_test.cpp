@@ -17,80 +17,144 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-static const std::vector<test_group<dl_ssb_pdu>> vector_test = {
-    {[](dl_ssb_pdu& msg, int value) { msg.phys_cell_id = value; },
-     "Physical cell ID",
-     {{0, true}, {511, true}, {1007, true}, {1008, false}}},
-    {[](dl_ssb_pdu& msg, int value) {
-       msg.beta_pss_profile_nr                     = static_cast<beta_pss_profile_type>(value);
-       msg.ssb_maintenance_v3.beta_pss_profile_sss = (value == 255) ? 0 : std::numeric_limits<int16_t>::min();
-     },
-     "Beta PSS profile NR",
-     {{0, true}, {1, true}, {2, false}, {254, false}, {255, true}}},
-    {[](dl_ssb_pdu& msg, int value) { msg.ssb_block_index = value; },
-     "SS/PBCH block index",
-     {{0, true}, {32, true}, {63, true}, {64, false}}},
-    {[](dl_ssb_pdu& msg, int value) { msg.ssb_subcarrier_offset = value; },
-     "Subcarrier offset",
-     {{0, true}, {16, true}, {31, true}, {32, false}}},
-    {[](dl_ssb_pdu& msg, int value) { msg.ssb_offset_pointA = value; },
-     "Offset point A",
-     // TODO: the 2200 case is caught by the bounded integer class with an assertion. Convert this to a death test once
-     // ported to gtest.
-     {{0, true}, {1100, true}, {2199, true} /*, {2200, false}*/}},
-    {[](dl_ssb_pdu& msg, int value) { msg.ssb_maintenance_v3.case_type = static_cast<ssb_pattern_case>(value); },
-     "SSB Case type",
-     {{0, true}, {2, true}, {4, true}, {5, false}}},
-    {[](dl_ssb_pdu& msg, int value) { msg.ssb_maintenance_v3.scs = static_cast<subcarrier_spacing>(value); },
-     "Subcarrier spacing",
-     {{0, true}, {2, true}, {4, true}, {5, false}}},
-    {[](dl_ssb_pdu& msg, int value) { msg.ssb_maintenance_v3.L_max = value; },
-     "L_max",
-     {{3, false}, {4, true}, {5, false}, {7, false}, {8, true}, {9, false}, {63, false}, {64, true}, {65, false}}},
-    {[](dl_ssb_pdu& msg, int value) { msg.ssb_maintenance_v3.ss_pbch_block_power_scaling = value; },
-     "Baseband power scaling applied to SS-PBCH",
-     {{static_cast<unsigned>(int16_t(-32768)), true},
-      {static_cast<unsigned>(int16_t(-32767)), false},
-      {static_cast<unsigned>(int16_t(-11001)), false},
-      {static_cast<unsigned>(int16_t(-11000)), true},
-      {0, true},
-      {12000, true},
-      {12001, false}}}};
+class validate_ssb_pdu_field : public ValidateFAPIPDU<dl_ssb_pdu, dl_pdu_type>,
+                               public testing::TestWithParam<std::tuple<pdu_field_data<dl_ssb_pdu>, test_case_data>>
+{};
 
-static void test_validate_each_field_error()
+TEST_P(validate_ssb_pdu_field, WithValue)
 {
-  for (const auto& group : vector_test) {
-    for (const auto& test_case : group) {
-      auto msg = build_valid_dl_ssb_pdu();
-      group.update_msg(msg, test_case.value);
-      validator_report report(0, 0);
-      auto             result = validate_dl_ssb_pdu(msg, report);
+  auto params = GetParam();
 
-      TESTASSERT_EQ(result, test_case.result);
-      if (!result) {
-        TESTASSERT_EQ(1U, report.reports.size());
-        const auto& rep = report.reports.back();
-        TESTASSERT_EQ(std::strcmp(group.property(), rep.property_name), 0);
-        TESTASSERT_EQ(message_type_id::dl_tti_request, rep.message_type);
-        TESTASSERT_EQ(dl_pdu_type::SSB, static_cast<dl_pdu_type>(rep.pdu_type.value()));
-      }
-    }
-  }
-}
+  execute_test(std::get<0>(params),
+               std::get<1>(params),
+               build_valid_dl_ssb_pdu,
+               validate_dl_ssb_pdu,
+               srsgnb::fapi::message_type_id::dl_tti_request,
+               dl_pdu_type::SSB);
+};
 
-/// Tests that a valid SSB pdu validates correctly.
-static void test_dl_ssb_pdu_ok()
+INSTANTIATE_TEST_SUITE_P(pci,
+                         validate_ssb_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<dl_ssb_pdu>{
+                                              "Physical cell ID",
+                                              [](dl_ssb_pdu& pdu, int value) { pdu.phys_cell_id = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{511, true},
+                                                          test_case_data{1007, true},
+                                                          test_case_data{1008, false})));
+
+INSTANTIATE_TEST_SUITE_P(pss,
+                         validate_ssb_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<dl_ssb_pdu>{
+                                              "Beta PSS profile NR",
+                                              [](dl_ssb_pdu& pdu, int value) {
+                                                pdu.beta_pss_profile_nr = static_cast<beta_pss_profile_type>(value);
+                                                pdu.ssb_maintenance_v3.beta_pss_profile_sss =
+                                                    (value == 255) ? 0 : std::numeric_limits<int16_t>::min();
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{1, true},
+                                                          test_case_data{2, false},
+                                                          test_case_data{254, false},
+                                                          test_case_data{255, true})));
+
+INSTANTIATE_TEST_SUITE_P(pbch_block_index,
+                         validate_ssb_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<dl_ssb_pdu>{
+                                              "SS/PBCH block index",
+                                              [](dl_ssb_pdu& pdu, int value) { pdu.ssb_block_index = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{32, true},
+                                                          test_case_data{63, true},
+                                                          test_case_data{64, false})));
+
+INSTANTIATE_TEST_SUITE_P(k_ssb,
+                         validate_ssb_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<dl_ssb_pdu>{
+                                              "Subcarrier offset",
+                                              [](dl_ssb_pdu& pdu, int value) { pdu.ssb_subcarrier_offset = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{16, true},
+                                                          test_case_data{31, true},
+                                                          test_case_data{32, false})));
+
+INSTANTIATE_TEST_SUITE_P(
+    offset_pointA,
+    validate_ssb_pdu_field,
+    testing::Combine(testing::Values(pdu_field_data<dl_ssb_pdu>{
+                         "Offset point A",
+                         [](dl_ssb_pdu& pdu, int value) { pdu.ssb_offset_pointA = value; }}),
+                     testing::Values(test_case_data{0, true}, test_case_data{1100, true}, test_case_data{2199, true})));
+
+INSTANTIATE_TEST_SUITE_P(ssb_case,
+                         validate_ssb_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<dl_ssb_pdu>{
+                                              "SSB Case type",
+                                              [](dl_ssb_pdu& pdu, int value) {
+                                                pdu.ssb_maintenance_v3.case_type = static_cast<ssb_pattern_case>(value);
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{4, true},
+                                                          test_case_data{5, false})));
+
+INSTANTIATE_TEST_SUITE_P(scs,
+                         validate_ssb_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<dl_ssb_pdu>{
+                                              "Subcarrier spacing",
+                                              [](dl_ssb_pdu& pdu, int value) {
+                                                pdu.ssb_maintenance_v3.scs = static_cast<subcarrier_spacing>(value);
+                                              }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{2, true},
+                                                          test_case_data{4, true},
+                                                          test_case_data{5, false})));
+
+INSTANTIATE_TEST_SUITE_P(L_max,
+                         validate_ssb_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<dl_ssb_pdu>{"L_max",
+                                                                                     [](dl_ssb_pdu& pdu, int value) {
+                                                                                       pdu.ssb_maintenance_v3.L_max =
+                                                                                           value;
+                                                                                     }}),
+                                          testing::Values(test_case_data{3, false},
+                                                          test_case_data{4, true},
+                                                          test_case_data{5, false},
+                                                          test_case_data{7, false},
+                                                          test_case_data{8, true},
+                                                          test_case_data{9, false},
+                                                          test_case_data{63, false},
+                                                          test_case_data{64, true},
+                                                          test_case_data{65, false})));
+
+INSTANTIATE_TEST_SUITE_P(scaling_power,
+                         validate_ssb_pdu_field,
+                         testing::Combine(testing::Values(pdu_field_data<dl_ssb_pdu>{
+                                              "Baseband power scaling applied to SS-PBCH",
+                                              [](dl_ssb_pdu& pdu, int value) {
+                                                pdu.ssb_maintenance_v3.ss_pbch_block_power_scaling = value;
+                                              }}),
+                                          testing::Values(test_case_data{static_cast<unsigned>(int16_t(-32768)), true},
+                                                          test_case_data{static_cast<unsigned>(int16_t(-32767)), false},
+                                                          test_case_data{static_cast<unsigned>(int16_t(-11001)), false},
+                                                          test_case_data{static_cast<unsigned>(int16_t(-11000)), true},
+                                                          test_case_data{0, true},
+                                                          test_case_data{12000, true},
+                                                          test_case_data{12001, false})));
+
+/// Valid PDU should pass.
+TEST(validate_ssb_pdu, valid_pdu_passes)
 {
   dl_ssb_pdu pdu = build_valid_dl_ssb_pdu();
 
   validator_report report(0, 0);
-  TESTASSERT(validate_dl_ssb_pdu(pdu, report));
+  EXPECT_TRUE(validate_dl_ssb_pdu(pdu, report));
   // Assert no reports were generated.
-  TESTASSERT(report.reports.empty());
+  EXPECT_TRUE(report.reports.empty());
 }
 
-/// Tests that a SSB pdu that contains errors fails to validate.
-static void test_dl_ssb_pdu_error()
+/// Add 3 errors and check that validation fails with 3 errors.
+TEST(validate_ssb_pdu, invalid_pdu_fails)
 {
   dl_ssb_pdu pdu = build_valid_dl_ssb_pdu();
 
@@ -100,15 +164,20 @@ static void test_dl_ssb_pdu_error()
   pdu.ssb_maintenance_v3.ss_pbch_block_power_scaling = -12000;
 
   validator_report report(0, 0);
-  TESTASSERT(!validate_dl_ssb_pdu(pdu, report));
+  EXPECT_FALSE(validate_dl_ssb_pdu(pdu, report));
   // Assert 3 reports were generated.
-  TESTASSERT_EQ(report.reports.size(), 3u);
+  EXPECT_EQ(report.reports.size(), 3u);
 }
 
-int main()
+/// Assert death test.
+TEST(validate_ssb_pdu_death, invalid_point_A_death_test)
 {
-  test_dl_ssb_pdu_ok();
-  test_dl_ssb_pdu_error();
-  test_validate_each_field_error();
-  fmt::print("DL SSB PDU validator -> Ok\n");
+  EXPECT_DEATH(
+      {
+        dl_ssb_pdu pdu        = build_valid_dl_ssb_pdu();
+        pdu.ssb_offset_pointA = 2200;
+        validator_report report(0, 0);
+        validate_dl_ssb_pdu(pdu, report);
+      },
+      ".*");
 }
