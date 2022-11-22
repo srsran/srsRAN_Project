@@ -17,6 +17,7 @@
  *****************************************************************************/
 
 #include "srsgnb/adt/span.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include "fmt/format.h"
 #include <array>
 #include <cstdint>
@@ -39,6 +40,15 @@ enum class ciphering_algorithm {
   nea2,
   nea3,
 };
+inline unsigned to_number(ciphering_algorithm ciph_algo)
+{
+  return static_cast<unsigned>(ciph_algo);
+}
+inline ciphering_algorithm ciphering_algorithm_from_number(unsigned ciph_algo)
+{
+  srsgnb_assert(ciph_algo < 4, "Error converting ciphering algorithm");
+  return static_cast<ciphering_algorithm>(ciph_algo);
+}
 
 enum class integrity_algorithm {
   nia0 = 0,
@@ -46,6 +56,15 @@ enum class integrity_algorithm {
   nia2,
   nia3,
 };
+inline unsigned to_number(integrity_algorithm int_algo)
+{
+  return static_cast<unsigned>(int_algo);
+}
+inline integrity_algorithm integrity_algorithm_from_number(unsigned int_algo)
+{
+  srsgnb_assert(int_algo < 4, "Error converting integrity algorithm");
+  return static_cast<integrity_algorithm>(int_algo);
+}
 
 /// FC Values
 /// Ref: TS 33.501 Sec. A.1.2
