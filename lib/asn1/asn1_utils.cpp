@@ -928,7 +928,7 @@ void octet_string_helper::to_octet_string(srsgnb::span<uint8_t> buf, uint64_t nu
     return;
   }
   for (uint32_t i = 0; i < nbytes; ++i) {
-    buf[nbytes - 1 - i] = (number >> (uint64_t)(i * 8U)) & 0xFFu;
+    buf[nbytes - 1 - i] = (number >> (uint64_t)(i * 8U)) & 0xffu;
   }
 }
 
@@ -937,7 +937,7 @@ void octet_string_helper::to_octet_string(srsgnb::byte_buffer& buf, uint64_t num
   buf.clear();
   size_t nbytes = sizeof(number);
   for (uint32_t i = 0; i < nbytes; ++i) {
-    buf.append((number >> (uint64_t)((nbytes - 1 - i) * 8U)) & 0xFFu);
+    buf.append((number >> (uint64_t)((nbytes - 1 - i) * 8U)) & 0xffu);
   }
 }
 
@@ -1216,7 +1216,7 @@ void from_number(uint8_t* ptr, uint64_t number, uint32_t nbits)
   }
   uint32_t nof_bytes = ceil_frac(nbits, 8u);
   for (uint32_t i = 0; i < nof_bytes; ++i) {
-    ptr[i] = (number >> (i * 8u)) & 0xFFu;
+    ptr[i] = (number >> (i * 8u)) & 0xffu;
   }
   uint32_t offset = nbits % 8; // clean up any extra set bit
   if (offset > 0) {
