@@ -38,10 +38,9 @@ public:
   // message handlers
   void handle_f1_setup_request(const f1_setup_request_message& msg) override;
 
-  du_index_t get_du_index() override;
-
   // getter functions
 
+  du_index_t              get_du_index() override { return context.du_index; };
   du_processor_context&   get_context() override { return context; };
   f1c_message_handler&    get_f1c_message_handler() override { return *f1c; };
   f1c_statistics_handler& get_f1c_statistics_handler() override { return *f1c; };

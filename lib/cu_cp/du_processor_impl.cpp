@@ -111,11 +111,6 @@ du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
   return INVALID_DU_CELL_INDEX;
 }
 
-du_index_t du_processor_impl::get_du_index()
-{
-  return context.du_index;
-};
-
 /// Sender for F1C messages
 void du_processor_impl::send_f1_setup_response(const du_processor_context& du_ctxt)
 {
