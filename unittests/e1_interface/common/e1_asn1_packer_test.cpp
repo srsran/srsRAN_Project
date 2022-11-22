@@ -11,6 +11,7 @@
 #include "e1_cu_cp_test_helpers.h"
 #include "lib/e1_interface/common/e1ap_asn1_packer.h"
 #include "test_helpers.h"
+#include "unittests/gateways/test_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;

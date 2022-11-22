@@ -89,19 +89,6 @@ public:
   }
 };
 
-class dummy_network_gateway_notifier : public network_gateway_control_notifier, public network_gateway_data_notifier
-{
-public:
-  dummy_network_gateway_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
-
-  void on_connection_loss() override { logger.info("Connection loss"); }
-  void on_connection_established() override { logger.info("Connection established"); }
-  void on_new_pdu(byte_buffer pdu) override { logger.info("Received PDU"); }
-
-private:
-  srslog::basic_logger& logger;
-};
-
 /// Reusable notifier class that a) stores the received PDU for test inspection and b)
 /// calls the registered PDU handler (if any). The handler can be added upon construction
 /// or later via the attach_handler() method.
@@ -204,16 +191,6 @@ public:
 
 private:
   srslog::basic_logger& logger;
-};
-
-/// Dummy PDU handler
-class dummy_network_gateway_data_handler : public srsgnb::network_gateway_data_handler
-{
-public:
-  dummy_network_gateway_data_handler(){};
-  void handle_pdu(const byte_buffer& pdu) override { last_pdu = pdu.copy(); }
-
-  byte_buffer last_pdu;
 };
 
 } // namespace srsgnb

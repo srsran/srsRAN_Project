@@ -11,6 +11,7 @@
 #include "f1_cu_test_helpers.h"
 #include "lib/f1c/common/f1ap_asn1_packer.h"
 #include "test_helpers.h"
+#include "unittests/gateways/test_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
