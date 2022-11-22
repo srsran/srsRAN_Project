@@ -54,7 +54,7 @@ void cu_cp_e1_setup_procedure::operator()(coro_context<async_task<cu_cp_e1_setup
     CORO_AWAIT(async_wait_for(e1_setup_wait_timer, time_to_wait * 1000));
   }
 
-  // Forward procedure result to DU manager.
+  // Forward procedure result
   CORO_RETURN(create_e1_setup_result());
 }
 
