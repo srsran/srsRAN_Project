@@ -17,10 +17,10 @@ namespace srsgnb {
 std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
   fmt::print(os,
-             "tbs={}; modulation={}; TCR={}; Oack={}; Ocsi1={}; Ocsi2={};",
+             "tbs={}; modulation={}; R={}; Oack={}; Ocsi1={}; Ocsi2={};",
              test_case.config.tbs,
-             test_case.config.modulation,
-             test_case.config.target_code_rate,
+             test_case.config.mcs_descr.modulation,
+             test_case.config.mcs_descr.get_normalised_target_code_rate(),
              test_case.config.nof_harq_ack_bits,
              test_case.config.nof_csi_part1_bits,
              test_case.config.nof_csi_part2_bits);

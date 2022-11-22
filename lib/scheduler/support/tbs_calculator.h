@@ -77,7 +77,7 @@ struct tbs_calculator_configuration {
   unsigned tb_scaling_field;
   /// \brief Total number of PRBs allocated to the UE.
   ///
-  /// Prameter \f$n_{PRB}\f$. Possibles values are {1, ..., 275}.
+  /// Parameter \f$n_{PRB}\f$. Possibles values are {1, ..., 275}.
   unsigned n_prb;
 };
 

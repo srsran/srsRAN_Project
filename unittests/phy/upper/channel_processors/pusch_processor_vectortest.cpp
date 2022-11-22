@@ -133,7 +133,8 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   const pusch_processor::pdu_t& config    = context.config;
 
   // Prepare resource grid.
-  file_resource_grid_reader grid(test_case.grid, context.rg_nof_rb, context.rg_nof_symb, config.rx_ports.size());
+  resource_grid_reader_spy grid;
+  grid.write(test_case.grid.read());
 
   // Read expected data.
   std::vector<uint8_t> expected_data = test_case.sch_data.read();
