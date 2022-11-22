@@ -15,7 +15,8 @@
 #include "srsgnb/sdap/sdap.h"
 #include <cstdio>
 
-namespace cu_up {
+namespace srsgnb {
+namespace srs_cu_up {
 
 /// These adapters glue two network layers to establish a communication between them. With this pattern, each layer is
 /// decoupled from the other.
@@ -26,10 +27,10 @@ namespace cu_up {
 /// Adapter interface from PDCP to SDAP.
 class sdap_packet_handler : public srsgnb::pdcp_rx_upper_data_notifier
 {
-  srsgnb::sdap_pdu_handler& sdap;
+  srsgnb::srs_cu_up::sdap_pdu_handler& sdap;
 
 public:
-  explicit sdap_packet_handler(srsgnb::sdap_pdu_handler& sdap) : sdap(sdap) {}
+  explicit sdap_packet_handler(srsgnb::srs_cu_up::sdap_pdu_handler& sdap) : sdap(sdap) {}
 
   void on_new_sdu(srsgnb::byte_buffer sdu) override
   {
@@ -40,4 +41,6 @@ public:
   }
 };
 
-} // namespace cu_up
+} // namespace srs_cu_up
+
+} // namespace srsgnb

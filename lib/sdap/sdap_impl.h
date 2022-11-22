@@ -16,6 +16,8 @@
 
 namespace srsgnb {
 
+namespace srs_cu_up {
+
 class sdap_procedure_dispatcher : public sdap_pdu_handler
 {
   /// In reality, as the interfaces grow, this would become a reference or ptr and ownership would be managed from a
@@ -39,5 +41,7 @@ public:
     procedure->handle_ul_data_packet(data);
   }
 };
+
+} // namespace srs_cu_up
 
 } // namespace srsgnb

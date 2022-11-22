@@ -17,6 +17,8 @@
 
 namespace srsgnb {
 
+namespace srs_cu_up {
+
 /// The idea is to have an object to handle each specific procedure specified in the TS.
 /// This class would implement the Receive operation procedure of the data transfer category (TS 38.323 5.2.2).
 class sdap_ul_packet_procedure : public sdap_packet_procedures
@@ -47,5 +49,7 @@ public:
     listener.on_new_sdu(std::move(data));
   }
 };
+
+} // namespace srs_cu_up
 
 } // namespace srsgnb
