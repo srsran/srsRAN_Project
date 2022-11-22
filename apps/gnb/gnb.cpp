@@ -21,7 +21,6 @@
 #include "srsgnb/support/config_json.h"
 
 #include "gnb_appconfig.h"
-#include "gnb_appconfig_builders.h"
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig_validators.h"
 
@@ -58,7 +57,6 @@ using namespace srsgnb;
 /// From TS38.104 Section 5.3.2 Table 5.3.2-1. Default 20MHz FR1.
 static const std::array<uint16_t, NOF_NUMEROLOGIES> nof_prb_ul_grid = {106, 51, 24, 0, 0};
 static bool                                         printconfig     = false;
-static std::string                                  profile_name;
 static std::string                                  config_file;
 
 static srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
@@ -70,22 +68,6 @@ const std::string                     srsgnb_version = "0.1";
 static void populate_cli11_gnb_args(CLI::App& app, srsgnb::gnb_appconfig& gnb_params)
 {
   app.set_version_flag("-v,--version", srsgnb_version);
-  // Add the profile option.
-  app.add_option("-P,--profile", profile_name, "Profile name")
-      ->capture_default_str()
-      ->check([](const std::string& str) {
-        for (const auto& profile : supported_profiles) {
-          if (str.empty() || str == profile.name) {
-            return std::string();
-          }
-        }
-        fmt::memory_buffer buffer;
-        fmt::format_to(buffer, "\nValid profile names:\n");
-        for (const configuration_profile& profile : supported_profiles) {
-          fmt::format_to(buffer, "\t {:<30}{}\n", profile.name, profile.description);
-        }
-        throw CLI::ValidationError(to_string(buffer));
-      });
   app.set_config("-c,", config_file, "Read config from file", false);
   app.add_flag("--printconfig", printconfig, "Print configuration and exit")->configurable(false);
   app.add_flag("-d", gnb_params.debug_logger, "Enable debug logger");
@@ -266,13 +248,6 @@ int main(int argc, char** argv)
     srsgnb_terminate("Invalid configuration detected");
   }
 
-  // If a profile is selected, dump it to a file and exit.
-  if (printconfig) {
-    gnb_cfg = build_profile_gnb_appconfig(profile_name);
-    // TODO: remove printconfig option before dumping.
-    fmt::print("{}\n", app.config_to_str(true, true));
-    return 0;
-  }
   // Compute derived parameters.
   compute_derived_args(gnb_cfg);
 

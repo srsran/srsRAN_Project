@@ -1,4 +1,4 @@
-#include "gnb_appconfig_builders.h"
+#include "gnb_appconfig_profiles.h"
 #include "srsgnb/phy/lower/sampling_rate.h"
 #include "srsgnb/radio/radio_configuration.h"
 

@@ -8,7 +8,6 @@
 
 add_executable(gnb
         gnb.cpp
-        gnb_appconfig_builders.cpp
         gnb_appconfig_validators.cpp
         gnb_appconfig_translators.cpp
         fapi_factory.cpp
