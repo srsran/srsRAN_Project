@@ -10,6 +10,9 @@
 
 #include "srsgnb/asn1/asn1_utils.h"
 
+using srsgnb::byte_buffer;
+using srsgnb::span;
+
 namespace asn1 {
 
 /************************
@@ -887,57 +890,111 @@ template struct integer_packer<uint64_t>;
     common octstring
 ************************/
 
-uint64_t octstring_to_number(const uint8_t* ptr, uint32_t nbytes)
+uint64_t octet_string_helper::to_uint(srsgnb::span<const uint8_t> buf)
 {
-  if (nbytes > 8) {
-    log_error("octstring of size={} does not fit in an uint64_t", nbytes);
+  size_t nbytes = buf.size();
+  if (nbytes > 8U) {
+    log_error("OCTET STRING of size={} does not fit in an uint64_t", nbytes);
     return 0;
   }
   uint64_t val = 0;
-  for (uint32_t i = 0; i < nbytes; ++i) {
-    val += ((uint64_t)ptr[nbytes - 1 - i]) << (uint64_t)(i * 8);
+  for (unsigned i = 0; i < nbytes; ++i) {
+    val += ((uint64_t)buf[nbytes - 1 - i]) << (uint64_t)(i * 8U);
   }
   return val;
 }
 
-void number_to_octstring(uint8_t* ptr, uint64_t number, uint32_t nbytes)
+uint64_t octet_string_helper::to_uint(const byte_buffer& buf)
 {
+  size_t nbytes = buf.length();
   if (nbytes > 8) {
-    log_error("octstring of size={} does not fit in an uint64_t", nbytes);
+    log_error("OCTET STRING with size={} does not fit in an uint64_t", nbytes);
+    return 0;
+  }
+  uint64_t val = 0;
+  auto     it  = buf.begin();
+  for (unsigned i = 0; i < nbytes; ++i) {
+    val += static_cast<uint64_t>(*it) << static_cast<uint64_t>((nbytes - 1 - i) * 8U);
+    ++it;
+  }
+  return val;
+}
+
+void octet_string_helper::to_octet_string(srsgnb::span<uint8_t> buf, uint64_t number)
+{
+  size_t nbytes = buf.size();
+  if (nbytes < sizeof(number)) {
+    log_error("uint64_t does not fit in an OCTET STRING of size={}", nbytes);
     return;
   }
   for (uint32_t i = 0; i < nbytes; ++i) {
-    ptr[nbytes - 1 - i] = (number >> (uint64_t)(i * 8u)) & 0xffu;
+    buf[nbytes - 1 - i] = (number >> (uint64_t)(i * 8U)) & 0xFFu;
   }
 }
 
-void to_hex(char* cstr, uint8_t val)
+void octet_string_helper::to_octet_string(srsgnb::byte_buffer& buf, uint64_t number)
+{
+  buf.clear();
+  size_t nbytes = sizeof(number);
+  for (uint32_t i = 0; i < nbytes; ++i) {
+    buf.append((number >> (uint64_t)((nbytes - 1 - i) * 8U)) & 0xFFu);
+  }
+}
+
+static void to_hex(char* cstr, uint8_t val)
 {
   sprintf(cstr, "%02x", val);
 }
 
-// helper functions
-std::string octstring_to_string(const uint8_t* ptr, uint32_t N)
+std::string octet_string_helper::to_hex_string(srsgnb::span<const uint8_t> buf)
 {
   std::string s;
-  s.resize(N * 2);
+  s.resize(buf.size() * 2);
   char cstr[3];
-  for (uint32_t i = 0; i < N; i++) {
-    to_hex(cstr, ptr[i]);
+  for (uint32_t i = 0; i < buf.size(); i++) {
+    to_hex(cstr, buf[i]);
     s.replace(i * 2, 2, cstr);
   }
   return s;
 }
 
-void string_to_octstring(uint8_t* ptr, const std::string& str)
+std::string octet_string_helper::to_hex_string(const byte_buffer& buf)
+{
+  std::string s;
+  s.resize(buf.length() * 2);
+  char     cstr[3];
+  unsigned i = 0;
+  for (uint8_t b : buf) {
+    to_hex(cstr, b);
+    s.replace(i * 2, 2, cstr);
+    ++i;
+  }
+  return s;
+}
+
+unsigned octet_string_helper::hex_string_to_octets(srsgnb::span<uint8_t> buf, const std::string& str)
+{
+  srsgnb_assert(buf.size() >= ceil_frac(str.size(), (size_t)2U), "out-of-bounds access");
+  if (str.size() % 2 != 0) {
+    log_warning("The provided hex string size={} is not a multiple of 2.", str.size());
+  }
+  char cstr[] = "\0\0\0";
+  for (unsigned i = 0; i < str.size(); i += 2) {
+    memcpy(&cstr[0], &str[i], 2);
+    buf[i / 2] = strtoul(cstr, nullptr, 16);
+  }
+  return (str.size() + 1) / 2;
+}
+
+void octet_string_helper::append_hex_string(byte_buffer& buf, const std::string& str)
 {
   if (str.size() % 2 != 0) {
     log_warning("The provided hex string size={} is not a multiple of 2.", str.size());
   }
   char cstr[] = "\0\0\0";
-  for (uint32_t i = 0; i < str.size(); i += 2) {
+  for (unsigned i = 0; i < str.size(); i += 2) {
     memcpy(&cstr[0], &str[i], 2);
-    ptr[i / 2] = strtoul(cstr, nullptr, 16);
+    buf.append(strtoul(cstr, nullptr, 16));
   }
 }
 
@@ -946,11 +1003,27 @@ void string_to_octstring(uint8_t* ptr, const std::string& str)
 ************************/
 
 template <bool Al>
+unbounded_octstring<Al>& unbounded_octstring<Al>::operator=(const unbounded_octstring& other) noexcept
+{
+  if (this != &other) {
+    *static_cast<byte_buffer*>(this) = other.deep_copy();
+  }
+  return *this;
+}
+
+template <bool Al>
+unbounded_octstring<Al>& unbounded_octstring<Al>::operator=(unbounded_octstring&& other) noexcept
+{
+  *static_cast<byte_buffer*>(this) = std::move(other);
+  return *this;
+}
+
+template <bool Al>
 SRSASN_CODE unbounded_octstring<Al>::pack(bit_ref& bref) const
 {
-  HANDLE_CODE(pack_length(bref, size(), aligned));
-  for (uint32_t i = 0; i < size(); ++i) {
-    HANDLE_CODE(bref.pack(octets_[i], 8));
+  HANDLE_CODE(pack_length(bref, length(), aligned));
+  for (uint8_t b : *this) {
+    bref.pack(b, 8);
   }
   return SRSASN_SUCCESS;
 }
@@ -958,11 +1031,13 @@ SRSASN_CODE unbounded_octstring<Al>::pack(bit_ref& bref) const
 template <bool Al>
 SRSASN_CODE unbounded_octstring<Al>::unpack(cbit_ref& bref)
 {
-  uint32_t len;
+  unsigned len;
   HANDLE_CODE(unpack_length(len, bref, aligned));
-  resize(len);
-  for (uint32_t i = 0; i < size(); ++i) {
-    HANDLE_CODE(bref.unpack(octets_[i], 8));
+  clear();
+  for (unsigned i = 0; i != len; ++i) {
+    uint8_t b;
+    HANDLE_CODE(bref.unpack(b, 8));
+    append(b);
   }
   return SRSASN_SUCCESS;
 }
@@ -970,14 +1045,27 @@ SRSASN_CODE unbounded_octstring<Al>::unpack(cbit_ref& bref)
 template <bool Al>
 std::string unbounded_octstring<Al>::to_string() const
 {
-  return octstring_to_string(&octets_[0], size());
+  return octet_string_helper::to_hex_string(*this);
 }
 
 template <bool Al>
 unbounded_octstring<Al>& unbounded_octstring<Al>::from_string(const std::string& hexstr)
 {
-  resize(hexstr.size() / 2);
-  string_to_octstring(&octets_[0], hexstr);
+  this->clear();
+  octet_string_helper::append_hex_string(*this, hexstr);
+  return *this;
+}
+
+template <bool Al>
+uint64_t unbounded_octstring<Al>::to_number() const
+{
+  return octet_string_helper::to_uint(*this);
+}
+
+template <bool Al>
+unbounded_octstring<Al>& unbounded_octstring<Al>::from_number(uint64_t val)
+{
+  octet_string_helper::to_octet_string(*this, val);
   return *this;
 }
 
@@ -1128,7 +1216,7 @@ void from_number(uint8_t* ptr, uint64_t number, uint32_t nbits)
   }
   uint32_t nof_bytes = ceil_frac(nbits, 8u);
   for (uint32_t i = 0; i < nof_bytes; ++i) {
-    ptr[i] = (number >> (i * 8u)) & 0xffu;
+    ptr[i] = (number >> (i * 8u)) & 0xFFu;
   }
   uint32_t offset = nbits % 8; // clean up any extra set bit
   if (offset > 0) {

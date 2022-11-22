@@ -181,6 +181,9 @@ void test_oct_string()
   dynstr.from_number(dynstr.to_number());
   TESTASSERT(dynstr.to_number() == 5443660543);
 
+  statstr.from_string(hexstr);
+  dynstr.from_string(hexstr);
+
   srsgnb::byte_buffer buf;
   bit_ref             b{buf};
   statstr.pack(b);
@@ -213,7 +216,7 @@ void test_oct_string()
   }
 
   b.pack(1, 1);
-  TESTASSERT(b.distance() == (int)(hexstr.size() * 8 / 2 + 9));
+  TESTASSERT_EQ(b.distance(), (int)(hexstr.size() * 8 / 2 + 9));
   b.align_bytes_zero();
   TESTASSERT(b.distance() == (int)(hexstr.size() * 8 / 2 + 16));
 }
@@ -592,7 +595,7 @@ void test_big_integers()
   bit_ref             bref(buffer);
   TESTASSERT(big_integer.pack(bref) == 0);
 
-  std::array<uint8_t, 5> bytes{0xc0, 0xbd, 0x12, 0x00, 0x3f};
+  std::array<uint8_t, 5> bytes{0xC0, 0xBD, 0x12, 0x00, 0x3F};
   TESTASSERT(std::equal(buffer.begin(), buffer.end(), bytes.begin(), bytes.end()));
 
   integer<uint64_t, 0, 4294967295, false, true> big_integer2;

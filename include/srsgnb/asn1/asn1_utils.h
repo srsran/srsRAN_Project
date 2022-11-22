@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/adt/span.h"
 #include "srsgnb/srslog/srslog.h"
 #include "srsgnb/support/srsgnb_assert.h"
 #include <array>
@@ -628,14 +629,30 @@ struct Packer {
 };
 
 /*********************
- common octstring
+    OCTET STRING
 *********************/
 
-// helper functions common to all octstring implementations
-uint64_t    octstring_to_number(const uint8_t* ptr, uint32_t nbytes);
-void        number_to_octstring(uint8_t* ptr, uint64_t number, uint32_t nbytes);
-std::string octstring_to_string(const uint8_t* ptr, uint32_t N);
-void        string_to_octstring(uint8_t* ptr, const std::string& str);
+namespace octet_string_helper {
+
+/// Convert octet string to an integer.
+uint64_t to_uint(srsgnb::span<const uint8_t> buf);
+uint64_t to_uint(const srsgnb::byte_buffer& buf);
+
+/// Convert unsigned integer to span of octets.
+void to_octet_string(srsgnb::span<uint8_t> buf, uint64_t number);
+void to_octet_string(srsgnb::byte_buffer& buf, uint64_t number);
+
+/// Convert octets into hex string.
+std::string to_hex_string(srsgnb::span<const uint8_t> buf);
+std::string to_hex_string(const srsgnb::byte_buffer& buf);
+
+/// Convert std::string of hexadecimal numbers to span of bytes.
+unsigned hex_string_to_octets(srsgnb::span<uint8_t> buf, const std::string& str);
+
+/// Append std::string of hexadecimal numbers to byte_buffer.
+void append_hex_string(srsgnb::byte_buffer& buf, const std::string& str);
+
+} // namespace octet_string_helper
 
 /************************
     fixed_octstring
@@ -655,63 +672,57 @@ public:
   const uint8_t* data() const { return &octets_[0]; }
 
   static uint32_t              size() { return N; }
-  std::string                  to_string() const { return octstring_to_string(&octets_[0], N); }
+  std::string                  to_string() const { return octet_string_helper::to_hex_string(octets_); }
   fixed_octstring<N, aligned>& from_string(const std::string& hexstr)
   {
     if (hexstr.size() != 2 * N) {
       log_error("The provided hex string size is not valid ({}!=2*{}).", hexstr.size(), (size_t)N);
     } else {
-      string_to_octstring(&octets_[0], hexstr);
+      octet_string_helper::hex_string_to_octets(octets_, hexstr);
     }
     return *this;
   }
-  uint64_t                     to_number() const { return octstring_to_number(&octets_[0], size()); }
+  uint64_t                     to_number() const { return octet_string_helper::to_uint(octets_); }
   fixed_octstring<N, aligned>& from_number(uint64_t val)
   {
-    number_to_octstring(&octets_[0], val, size());
+    octet_string_helper::to_octet_string(octets_, val);
     return *this;
   }
 
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
+  /// Pack fixed-size octet string as per X.691 Section 16 - Encoding the octetstring type.
+  /// \tparam N - number of items
+  /// \tparam ext - aligned variant
+  /// \param bref
+  /// \return
+  SRSASN_CODE pack(bit_ref& bref) const
+  {
+    if (aligned and N > 2) {
+      bref.align_bytes_zero();
+    }
+    for (uint32_t i = 0; i < size(); ++i) {
+      bref.pack(octets_[i], 8);
+    }
+    return SRSASN_SUCCESS;
+  }
+  SRSASN_CODE unpack(cbit_ref& bref)
+  {
+    if (aligned and N > 2) {
+      bref.align_bytes();
+    }
+    for (uint32_t i = 0; i < size(); ++i) {
+      HANDLE_CODE(bref.unpack(octets_[i], 8));
+    }
+    return SRSASN_SUCCESS;
+  }
 
-  iterator begin() { return octets_.begin(); }
-  iterator end() { return octets_.end(); }
+  iterator       begin() { return octets_.begin(); }
+  const_iterator begin() const { return octets_.begin(); }
+  iterator       end() { return octets_.end(); }
+  const_iterator end() const { return octets_.end(); }
 
 private:
   std::array<uint8_t, N> octets_;
 };
-
-/**
- * X.691 Section 16 - Encoding the octetstring type
- * @tparam N - number of items
- * @tparam ext - aligned variant
- * @param bref
- * @return
- */
-template <uint32_t N, bool aligned>
-SRSASN_CODE fixed_octstring<N, aligned>::pack(bit_ref& bref) const
-{
-  if (aligned and N > 2) {
-    bref.align_bytes_zero();
-  }
-  for (uint32_t i = 0; i < size(); ++i) {
-    HANDLE_CODE(bref.pack(octets_[i], 8));
-  }
-  return SRSASN_SUCCESS;
-}
-
-template <uint32_t N, bool aligned>
-SRSASN_CODE fixed_octstring<N, aligned>::unpack(cbit_ref& bref)
-{
-  if (aligned and N > 2) {
-    bref.align_bytes();
-  }
-  for (uint32_t i = 0; i < size(); ++i) {
-    HANDLE_CODE(bref.unpack(octets_[i], 8));
-  }
-  return SRSASN_SUCCESS;
-}
 
 /************************
   constrained_octstring
@@ -727,24 +738,25 @@ public:
   uint8_t*       data() { return &octets_[0]; }
   const uint8_t* data() const { return &octets_[0]; }
 
-  void                                resize(uint32_t new_size) { octets_.resize(new_size); }
-  uint32_t                            size() const { return octets_.size(); }
-  std::string                         to_string() const { return octstring_to_string(data(), size()); }
+  void        resize(uint32_t new_size) { octets_.resize(new_size); }
+  uint32_t    size() const { return octets_.size(); }
+  std::string to_string() const
+  {
+    return octet_string_helper::to_hex_string(srsgnb::span<const uint8_t>{data(), size()});
+  }
   bounded_octstring<LB, UB, aligned>& from_string(const std::string& hexstr)
   {
     if (hexstr.size() > 2 * UB) {
       log_error("The provided hex string size is not valid ({}>2*{}).", hexstr.size(), (size_t)UB);
     } else {
       resize(hexstr.size() / 2);
-      string_to_octstring(&octets_[0], hexstr);
+      octet_string_helper::hex_string_to_octets(srsgnb::span<uint8_t>{octets_.data(), octets_.size()}, hexstr);
     }
     return *this;
   }
-  uint64_t                            to_number() const { return octstring_to_number(&octets_[0], size()); }
-  bounded_octstring<LB, UB, aligned>& from_number(uint64_t val)
+  uint64_t to_number() const
   {
-    number_to_octstring(&octets_[0], val, size());
-    return *this;
+    return octet_string_helper::to_uint(srsgnb::span<const uint8_t>{octets_.data(), size()});
   }
 
   SRSASN_CODE pack(bit_ref& bref) const
@@ -777,46 +789,41 @@ private:
 };
 
 /************************
-     dyn_octstring
+ unbounded OCTET STRING
 ************************/
 
 template <bool Al = false>
-class unbounded_octstring
+class unbounded_octstring : public srsgnb::byte_buffer
 {
 public:
   static const bool aligned = Al;
-  using iterator            = dyn_array<uint8_t>::iterator;
-  using const_iterator      = dyn_array<uint8_t>::const_iterator;
+  using value_type          = byte_buffer::value_type;
+  using iterator            = byte_buffer::iterator;
+  using const_iterator      = byte_buffer::const_iterator;
 
-  unbounded_octstring() = default;
-  explicit unbounded_octstring(uint32_t new_size) : octets_(new_size) {}
+  using srsgnb::byte_buffer::byte_buffer;
+  unbounded_octstring(byte_buffer other) noexcept : srsgnb::byte_buffer(std::move(other)) {}
+  unbounded_octstring(const unbounded_octstring& other) noexcept : srsgnb::byte_buffer(other.deep_copy()) {}
+  unbounded_octstring(unbounded_octstring&& other) noexcept : srsgnb::byte_buffer(std::move(other)) {}
 
-  const uint8_t& operator[](uint32_t idx) const { return octets_[idx]; }
-  uint8_t&       operator[](uint32_t idx) { return octets_[idx]; }
-  bool           operator==(const unbounded_octstring<Al>& other) const { return octets_ == other.octets_; }
-  void           resize(uint32_t new_size) { octets_.resize(new_size); }
-  uint32_t       size() const { return octets_.size(); }
-  uint8_t*       data() { return &octets_[0]; }
-  const uint8_t* data() const { return &octets_[0]; }
-
-  SRSASN_CODE              pack(bit_ref& ie_ref) const;
-  SRSASN_CODE              unpack(cbit_ref& ie_ref);
-  std::string              to_string() const;
-  unbounded_octstring<Al>& from_string(const std::string& hexstr);
-  uint64_t                 to_number() const { return octstring_to_number(&octets_[0], size()); }
-  unbounded_octstring<Al>& from_number(uint64_t val)
+  unbounded_octstring& operator=(byte_buffer other) noexcept
   {
-    number_to_octstring(&octets_[0], val, size());
+    *static_cast<srsgnb::byte_buffer*>(this) = std::move(other);
     return *this;
   }
+  unbounded_octstring& operator=(const unbounded_octstring& other) noexcept;
+  unbounded_octstring& operator=(unbounded_octstring&& other) noexcept;
 
-  iterator       begin() { return octets_.begin(); }
-  iterator       end() { return octets_.end(); }
-  const_iterator begin() const { return octets_.begin(); }
-  const_iterator end() const { return octets_.end(); }
+  size_t size() const { return this->length(); }
 
-private:
-  dyn_array<uint8_t> octets_;
+  std::string              to_string() const;
+  unbounded_octstring<Al>& from_string(const std::string& hexstr);
+
+  uint64_t                 to_number() const;
+  unbounded_octstring<Al>& from_number(uint64_t val);
+
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
 };
 
 using dyn_octstring = unbounded_octstring<false>;

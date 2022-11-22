@@ -21,7 +21,7 @@ using namespace asn1::rrc_nr;
 class asn1_rrc_nr_test : public ::testing::Test
 {
 protected:
-  void SetUp() override
+  asn1_rrc_nr_test()
   {
     srslog::fetch_basic_logger("ASN1").set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("ASN1").set_hex_dump_max_size(-1);
@@ -36,7 +36,7 @@ protected:
     srslog::init();
   }
 
-  void TearDown() override
+  ~asn1_rrc_nr_test()
   {
     // flush logger after each test
     srslog::flush();
@@ -204,10 +204,8 @@ TEST_F(asn1_rrc_nr_test, when_ue_rrc_reconfiguration_correct_then_unpacking_succ
   ASSERT_EQ(rrc_recfg.crit_exts.type(), asn1::rrc_nr::rrc_recfg_s::crit_exts_c_::types::rrc_recfg);
   ASSERT_TRUE(rrc_recfg.crit_exts.rrc_recfg().secondary_cell_group.size() > 0);
 
-  cell_group_cfg_s    cell_group_cfg;
-  srsgnb::byte_buffer pdu2{srsgnb::span<const uint8_t>{rrc_recfg.crit_exts.rrc_recfg().secondary_cell_group.data(),
-                                                       rrc_recfg.crit_exts.rrc_recfg().secondary_cell_group.size()}};
-  cbit_ref            bref0(pdu2);
+  cell_group_cfg_s cell_group_cfg;
+  cbit_ref         bref0(rrc_recfg.crit_exts.rrc_recfg().secondary_cell_group);
   ASSERT_EQ(cell_group_cfg.unpack(bref0), SRSASN_SUCCESS);
 
 #if JSON_OUTPUT

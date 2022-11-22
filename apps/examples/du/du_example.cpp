@@ -204,10 +204,9 @@ public:
 
       // Copy DU-to-CU RRC container stored in the F1AP "INITIAL UL RRC MESSAGE TRANSFER" to masterCellGroup field of
       // the unpacked RRC Setup message.
-      const auto& src  = msg.pdu.init_msg().value.init_ulrrc_msg_transfer()->duto_currc_container.value;
-      auto&       dest = msg4_rrc.msg.c1().rrc_setup().crit_exts.rrc_setup().master_cell_group;
-      dest.resize(src.size());
-      std::copy(src.begin(), src.end(), dest.begin());
+      const auto&          src  = msg.pdu.init_msg().value.init_ulrrc_msg_transfer()->duto_currc_container.value;
+      asn1::dyn_octstring& dest = msg4_rrc.msg.c1().rrc_setup().crit_exts.rrc_setup().master_cell_group;
+      dest                      = src.copy();
 
       // Pack the updated RRC setup message.
       msg4_pdu.clear();
