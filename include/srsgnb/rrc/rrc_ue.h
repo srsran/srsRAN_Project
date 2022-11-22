@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/rrc/rrc.h"
 
 namespace srsgnb {
@@ -71,6 +72,21 @@ struct srb_creation_message {
   ue_index_t               ue_index;
   srb_id_t                 srb_id;
   asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
+};
+
+/// Interface used by the RRC Setup procedure to notifiy the RRC UE.
+class rrc_ue_security_mode_command_proc_notifier
+{
+public:
+  rrc_ue_security_mode_command_proc_notifier()          = default;
+  virtual ~rrc_ue_security_mode_command_proc_notifier() = default;
+
+  /// \brief Notify about a DL DCCH message.
+  /// \param[in] dl_ccch_msg The DL DCCH message.
+  virtual void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
+
+  /// \brief Notify about the need to delete a UE.
+  virtual void on_ue_delete_request() = 0;
 };
 
 /// Interface to notify about RRC UE Context messages.
