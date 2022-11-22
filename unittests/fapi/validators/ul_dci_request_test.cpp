@@ -16,45 +16,54 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-static const std::vector<test_group<ul_dci_request_message>> vector_test = {
-    {[](ul_dci_request_message& msg, int value) { msg.sfn = value; },
-     "sfn",
-     {{0, true}, {511, true}, {1023, true}, {1024, false}}},
-    {[](ul_dci_request_message& msg, int value) { msg.slot = value; },
-     "slot",
-     {{0, true}, {79, true}, {159, true}, {160, false}}}};
+class validate_ul_dci_request_field
+  : public ValidateFAPIMessage<ul_dci_request_message>,
+    public testing::TestWithParam<std::tuple<pdu_field_data<ul_dci_request_message>, test_case_data>>
+{};
 
-static void test_validate_each_field_error()
+TEST_P(validate_ul_dci_request_field, with_value)
 {
-  for (const auto& group : vector_test) {
-    for (const auto& test_case : group) {
-      auto msg = build_valid_ul_dci_request();
-      group.update_msg(msg, test_case.value);
-      auto result = validate_ul_dci_request(msg);
+  auto params = GetParam();
 
-      TESTASSERT_EQ(result.operator bool(), test_case.result);
-      if (!result) {
-        const auto& report = result.error();
-        TESTASSERT_EQ(1U, report.reports.size());
-        const auto& rep = report.reports.back();
-        TESTASSERT_EQ(std::strcmp(group.property(), rep.property_name), 0);
-        TESTASSERT_EQ(message_type_id::ul_dci_request, rep.message_type);
-        TESTASSERT(!rep.pdu_type);
-      }
-    }
-  }
-}
+  execute_test(std::get<0>(params),
+               std::get<1>(params),
+               build_valid_ul_dci_request,
+               validate_ul_dci_request,
+               srsgnb::fapi::message_type_id::ul_dci_request);
+};
 
-static void test_ul_dci_request_ok()
+INSTANTIATE_TEST_SUITE_P(sfn,
+                         validate_ul_dci_request_field,
+                         testing::Combine(testing::Values(pdu_field_data<ul_dci_request_message>{
+                                              "sfn",
+                                              [](ul_dci_request_message& msg, int value) { msg.sfn = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{512, true},
+                                                          test_case_data{1023, true},
+                                                          test_case_data{1024, false})));
+
+INSTANTIATE_TEST_SUITE_P(slot,
+                         validate_ul_dci_request_field,
+                         testing::Combine(testing::Values(pdu_field_data<ul_dci_request_message>{
+                                              "slot",
+                                              [](ul_dci_request_message& msg, int value) { msg.slot = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{80, true},
+                                                          test_case_data{159, true},
+                                                          test_case_data{160, false})));
+
+/// Tests that a valid UL_DCI.request message validates correctly.
+TEST(validate_ul_tti_request, valid_request_passes)
 {
-  auto msg = build_valid_ul_dci_request();
+  const auto& msg = build_valid_ul_dci_request();
 
   const auto& result = validate_ul_dci_request(msg);
 
-  TESTASSERT(result);
+  ASSERT_TRUE(result);
 }
 
-static void test_ul_dci_request_error()
+/// Tests that a UL_TTI.request message which contains errors in some properties fails to validate.
+TEST(validate_ul_tti_request, invalid_request_fails)
 {
   auto msg = build_valid_ul_dci_request();
 
@@ -65,17 +74,9 @@ static void test_ul_dci_request_error()
 
   const auto& result = validate_ul_dci_request(msg);
 
-  TESTASSERT(!result);
+  ASSERT_FALSE(result);
 
   const auto& report = result.error();
   // Check that the 3 errors are reported.
-  TESTASSERT_EQ(report.reports.size(), 3U);
-}
-
-int main()
-{
-  test_ul_dci_request_ok();
-  test_ul_dci_request_error();
-  test_validate_each_field_error();
-  fmt::print("UL_DCI.request validator -> Ok\n");
+  ASSERT_EQ(report.reports.size(), 3u);
 }
