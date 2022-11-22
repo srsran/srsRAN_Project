@@ -10,10 +10,13 @@
 
 #pragma once
 
+#include "adapters/cu_up_processor_adapters.h"
 #include "adapters/du_processor_adapters.h"
 #include "adapters/f1c_adapters.h"
 #include "adapters/ngc_adapters.h"
+#include "cu_up_processor_impl.h"
 #include "du_processor_impl.h"
+#include "task_schedulers/cu_up_task_scheduler.h"
 #include "task_schedulers/ue_task_scheduler.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
@@ -43,6 +46,10 @@ public:
   f1c_message_handler&    get_f1c_message_handler(du_index_t du_index) override;
   f1c_statistics_handler& get_f1c_statistics_handler(du_index_t du_index) override;
 
+  // CU-CP CU-UP interface
+  size_t              get_nof_cu_ups() const override;
+  e1_message_handler& get_e1_message_handler(cu_up_index_t cu_up_index) override;
+
   // NG interface
   ngc_message_handler& get_ngc_message_handler() override;
   ngc_event_handler&   get_ngc_event_handler() override;
@@ -54,6 +61,12 @@ public:
 
   // DU handler
   void handle_du_remove_request(const du_index_t du_index) override;
+
+  // CU-UP connection notifier
+  void on_new_cu_up_connection() override;
+
+  // CU-UP handler
+  void handle_cu_up_remove_request(const cu_up_index_t cu_up_index) override;
 
   // ngc_connection_notifier
   void on_amf_connection() override;
@@ -77,6 +90,23 @@ private:
   /// \return The DU index.
   du_index_t get_next_du_index();
 
+  /// \brief Adds a CU-UP processor object to the CU-CP.
+  /// \return The CU-UP index of the added CU-UP processor object.
+  cu_up_index_t add_cu_up();
+
+  /// \brief Removes the specified CU-UP processor object from the CU-CP.
+  /// \param[in] cu_up_index The index of the CU-UP processor to delete.
+  void remove_cu_up(cu_up_index_t cu_up_index);
+
+  /// \brief Find a CU-UP object.
+  /// \param[in] cu_up_index The index of the CU-UP processor object.
+  /// \return The CU-UP processor object.
+  cu_up_processor_interface& find_cu_up(cu_up_index_t cu_up_index);
+
+  /// \brief Get the next available index from the CU-UP processor database.
+  /// \return The CU-UP index.
+  cu_up_index_t get_next_cu_up_index();
+
   cu_cp_configuration cfg;
   timer_manager       timers;
 
@@ -89,7 +119,8 @@ private:
   // Components
   std::unique_ptr<ngc_interface> ngc_entity;
 
-  slot_array<std::unique_ptr<du_processor_interface>, MAX_NOF_DUS> du_db;
+  slot_array<std::unique_ptr<du_processor_interface>, MAX_NOF_DUS>       du_db;
+  slot_array<std::unique_ptr<cu_up_processor_interface>, MAX_NOF_CU_UPS> cu_up_db;
 
   // task event loops indexed by du_index
   slot_array<async_task_sequencer, MAX_NOF_DUS> du_ctrl_loop;
@@ -97,11 +128,20 @@ private:
   // UE task scheduler
   ue_task_scheduler ue_task_sched;
 
+  // CU-UP task scheduler
+  cu_up_task_scheduler cu_up_task_sched;
+
   // DU processor to CU-CP adapter
   du_processor_to_cu_cp_task_scheduler du_processor_task_sched;
 
+  // CU-UP processor to CU-CP adapter
+  cu_up_processor_to_cu_cp_task_scheduler cu_up_processor_task_sched;
+
   // F1C to CU-CP adapter
   f1c_cu_cp_adapter f1c_ev_notifier;
+
+  // CU-UP processor to CU-CP adapter
+  cu_up_processor_cu_cp_adapter cu_up_processor_ev_notifier;
 
   // RRC UE to NGC adapter
   rrc_ue_ngc_adapter rrc_ue_ngc_ev_notifier;

@@ -16,14 +16,20 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t cu_up_processor_config_,
-                                           e1_message_notifier&           e1_notifier_) :
-  cfg(cu_up_processor_config_), e1_notifier(e1_notifier_)
+cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t             cu_up_processor_config_,
+                                           cu_up_processor_cu_up_management_notifier& cu_cp_notifier_,
+                                           e1_message_notifier&                       e1_notifier_,
+                                           cu_up_processor_task_scheduler&            task_sched_) :
+  cfg(cu_up_processor_config_), cu_cp_notifier(cu_cp_notifier_), e1_notifier(e1_notifier_), task_sched(task_sched_)
 {
   // create e1
   e1 = create_e1(timer_db, e1_notifier, e1_ev_notifier);
   e1_ev_notifier.connect_cu_up_processor(*this);
 }
+
+void cu_up_processor_impl::start() {}
+
+void cu_up_processor_impl::stop() {}
 
 void cu_up_processor_impl::handle_cu_up_e1_setup_request(const srsgnb::cu_up_e1_setup_request_message& msg)
 {

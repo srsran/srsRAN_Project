@@ -17,9 +17,12 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 
 std::unique_ptr<cu_up_processor_interface>
-srsgnb::srs_cu_cp::create_cu_up_processor(const cu_up_processor_config_t cu_up_processor_config_,
-                                          e1_message_notifier&           e1_notifier_)
+srsgnb::srs_cu_cp::create_cu_up_processor(const cu_up_processor_config_t             cu_up_processor_config_,
+                                          cu_up_processor_cu_up_management_notifier& cu_cp_notifier_,
+                                          e1_message_notifier&                       e1_notifier_,
+                                          cu_up_processor_task_scheduler&            task_sched_)
 {
-  auto cu_up_processor = std::make_unique<cu_up_processor_impl>(cu_up_processor_config_, e1_notifier_);
+  auto cu_up_processor =
+      std::make_unique<cu_up_processor_impl>(cu_up_processor_config_, cu_cp_notifier_, e1_notifier_, task_sched_);
   return cu_up_processor;
 }

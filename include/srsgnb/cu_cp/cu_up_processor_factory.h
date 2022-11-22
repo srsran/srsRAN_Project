@@ -13,7 +13,6 @@
 #include "cu_up_processor.h"
 #include "cu_up_processor_config.h"
 #include "srsgnb/e1_interface/common/e1_common.h"
-#include "srsgnb/ngap/ngc.h"
 #include <memory>
 
 namespace srsgnb {
@@ -21,7 +20,10 @@ namespace srs_cu_cp {
 
 /// Creates an instance of an CU-UP processor interface
 std::unique_ptr<cu_up_processor_interface>
-create_cu_up_processor(const cu_up_processor_config_t cu_up_processor_config_, e1_message_notifier& e1_notifier_);
+create_cu_up_processor(const cu_up_processor_config_t             cu_up_processor_config_,
+                       cu_up_processor_cu_up_management_notifier& cu_cp_notifier_,
+                       e1_message_notifier&                       e1_notifier_,
+                       cu_up_processor_task_scheduler&            task_sched_);
 
 } // namespace srs_cu_cp
 } // namespace srsgnb

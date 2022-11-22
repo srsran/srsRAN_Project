@@ -141,6 +141,7 @@ public:
   {
     cu_cp   = cu_cp_;
     handler = handler_;
+    cu_cp->on_new_cu_up_connection();
   };
   void on_new_message(const e1_message& msg) override
   {

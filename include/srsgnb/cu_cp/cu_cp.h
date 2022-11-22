@@ -11,6 +11,7 @@
 #pragma once
 
 #include "cu_cp_types.h"
+#include "srsgnb/e1_interface/common/e1_common.h"
 #include "srsgnb/f1c/cu_cp/f1c_cu.h"
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/support/timers.h"
@@ -77,6 +78,42 @@ public:
   virtual f1c_statistics_handler& get_f1c_statistics_handler(du_index_t du_index) = 0;
 };
 
+/// Interface to notify about CU-UP connections to the CU-CP
+class cu_cp_cu_up_connection_notifier
+{
+public:
+  virtual ~cu_cp_cu_up_connection_notifier() = default;
+
+  /// \brief Notifies the CU-CP about a new CU-UP connection.
+  virtual void on_new_cu_up_connection() = 0;
+};
+
+/// Interface used to handle CU-UP specific E1 procedure outcomes (e.g. E1 removal request)
+class cu_cp_cu_up_handler
+{
+public:
+  virtual ~cu_cp_cu_up_handler() = default;
+
+  /// \brief Handles a remove request. The corresponding CU-UP processor object will be removed.
+  /// \param[in] cu_up_index The index of the CU-UP processor object to delete.
+  virtual void handle_cu_up_remove_request(const cu_up_index_t cu_up_index) = 0;
+};
+
+class cu_cp_cu_up_interface
+{
+public:
+  virtual ~cu_cp_cu_up_interface() = default;
+
+  /// \brief Get the number of CU-UPs connected to the CU-CP.
+  /// \return The number of CU-UPs.
+  virtual size_t get_nof_cu_ups() const = 0;
+
+  /// \brief Get the E1 message handler interface of the CU-UP processor object.
+  /// \param[in] cu_up_index The index of the CU-UP processor object.
+  /// \return The E1 message handler interface of the CU-UP processor object.
+  virtual e1_message_handler& get_e1_message_handler(const cu_up_index_t cu_up_index) = 0;
+};
+
 class cu_cp_ng_interface
 {
 public:
@@ -98,6 +135,9 @@ public:
 class cu_cp_interface : public cu_cp_du_connection_notifier,
                         public cu_cp_du_handler,
                         public cu_cp_du_interface,
+                        public cu_cp_cu_up_connection_notifier,
+                        public cu_cp_cu_up_handler,
+                        public cu_cp_cu_up_interface,
                         public cu_cp_ng_interface,
                         public cu_cp_ngc_connection_notifier
 {
