@@ -11,6 +11,7 @@
 #include "cu_up_processor_impl.h"
 #include "adapters/e1_adapters.h"
 #include "adapters/ngc_adapters.h"
+#include "procedures/initial_cu_up_processor_setup_procedure.h"
 #include "srsgnb/e1_interface/cu_cp/e1_cu_cp_factory.h"
 
 using namespace srsgnb;
@@ -27,7 +28,16 @@ cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t       
   e1_ev_notifier.connect_cu_up_processor(*this);
 }
 
-void cu_up_processor_impl::start() {}
+void cu_up_processor_impl::start()
+{
+  // Start E1 setup procedure
+  cu_cp_e1_setup_request_message e1_setup_msg  = {};
+  e1_setup_msg.request->gnb_cu_cp_name_present = true;
+  e1_setup_msg.request->gnb_cu_cp_name.value.from_string(cfg.name);
+
+  task_sched.schedule_async_task(context.cu_up_index,
+                                 launch_async<initial_cu_up_processor_setup_procedure>(context, *e1, cu_cp_notifier));
+}
 
 void cu_up_processor_impl::stop() {}
 

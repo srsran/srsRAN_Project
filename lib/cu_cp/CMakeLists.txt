@@ -15,6 +15,7 @@ set(SOURCES
       du_processor_factory.cpp
       ue_manager.cpp
       procedures/initial_cu_cp_setup_procedure.cpp
+      procedures/initial_cu_up_processor_setup_procedure.cpp
       task_schedulers/ue_task_scheduler.cpp
       task_schedulers/cu_up_task_scheduler.cpp
 )
