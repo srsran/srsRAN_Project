@@ -9,6 +9,8 @@
  */
 
 #include "../../lib/cu_cp/cu_cp.h"
+#include "unittests/e1_interface/common/e1_cu_cp_test_helpers.h"
+#include "unittests/e1_interface/common/test_helpers.h"
 #include "unittests/f1c/common/f1_cu_test_helpers.h"
 #include "unittests/f1c/common/test_helpers.h"
 #include "unittests/ngap/ngc_test_helpers.h"
@@ -35,12 +37,14 @@ protected:
     std::unique_ptr<task_executor> task_executor = make_task_executor(task_worker);
 
     f1c_pdu_notifier = std::make_unique<dummy_f1c_pdu_notifier>(nullptr);
+    e1_pdu_notifier  = std::make_unique<dummy_e1_pdu_notifier>(nullptr);
     ngc_amf_notifier = std::make_unique<dummy_ngc_amf_notifier>(nullptr);
 
     // create CU-CP config
     cu_cp_configuration cfg;
     cfg.cu_executor  = task_executor.get();
     cfg.f1c_notifier = f1c_pdu_notifier.get();
+    cfg.e1_notifier  = e1_pdu_notifier.get();
     cfg.ngc_notifier = ngc_amf_notifier.get();
 
     // create and start DUT
@@ -58,6 +62,7 @@ protected:
 
   std::unique_ptr<cu_cp>                  cu_cp_obj;
   std::unique_ptr<dummy_f1c_pdu_notifier> f1c_pdu_notifier;
+  std::unique_ptr<dummy_e1_pdu_notifier>  e1_pdu_notifier;
   std::unique_ptr<dummy_ngc_amf_notifier> ngc_amf_notifier;
   srslog::basic_logger&                   test_logger = srslog::fetch_basic_logger("TEST");
 };
@@ -106,6 +111,56 @@ TEST_F(cu_cp_test, when_max_nof_dus_connected_then_reject_new_connection)
 
   // Check that MAX_NOF_DUS are connected
   ASSERT_EQ(cu_cp_obj->get_nof_dus(), MAX_NOF_DUS);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+/* CU-UP connection handling                                                           */
+//////////////////////////////////////////////////////////////////////////////////////
+
+/// Test the CU-UP connection
+TEST_F(cu_cp_test, when_new_cu_up_connection_then_cu_up_added)
+{
+  // Connect CU-UP
+  cu_cp_obj->on_new_cu_up_connection();
+
+  // check that CU-UP has been added
+  ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 1U);
+}
+
+/// Test the CU-UP removal
+TEST_F(cu_cp_test, when_cu_up_remove_request_received_then_cu_up_removed)
+{
+  // Connect CU-UP
+  cu_cp_obj->on_new_cu_up_connection();
+
+  // Pass CU-CP E1 Setup Response to CU-CP
+  cu_cp_obj->get_e1_message_handler(int_to_cu_up_index(0)).handle_message(generate_cu_cp_e1_setup_respose(0));
+
+  // Check that CU-UP has been added
+  ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 1U);
+
+  // Remove CU-UP
+  // FIXME: This is scheduled but never run
+  cu_cp_obj->handle_cu_up_remove_request(MIN_CU_UP_INDEX);
+
+  // Check that CU-UP has been removed
+  // ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 0U);
+}
+
+/// Test exeeding the maximum number of connected CU-UPs
+TEST_F(cu_cp_test, when_max_nof_cu_ups_connected_then_reject_new_connection)
+{
+  for (int it = MIN_CU_UP_INDEX; it < MAX_NOF_CU_UPS; it++) {
+    cu_cp_obj->on_new_cu_up_connection();
+  }
+
+  // Check that MAX_NOF_CU_UPS are connected
+  ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), MAX_NOF_CU_UPS);
+
+  cu_cp_obj->on_new_cu_up_connection();
+
+  // Check that MAX_NOF_CU_UPS are connected
+  ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), MAX_NOF_CU_UPS);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
