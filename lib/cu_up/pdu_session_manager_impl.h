@@ -11,6 +11,7 @@
 #pragma once
 
 #include "pdu_session_manager.h"
+#include "srsgnb/cu_up/cu_up_types.h"
 #include "srsgnb/gtpu/gtpu_demux.h"
 #include "srsgnb/support/timers.h"
 #include <map>
@@ -22,18 +23,24 @@ namespace srs_cu_up {
 class pdu_session_manager_impl : public pdu_session_manager_ctrl
 {
 public:
-  pdu_session_manager_impl(srslog::basic_logger& logger_, timer_manager& timers_, gtpu_demux_ctrl& ngu_demux_);
+  pdu_session_manager_impl(ue_index_t            ue_index_,
+                           srslog::basic_logger& logger_,
+                           timer_manager&        timers_,
+                           gtpu_demux_ctrl&      ngu_demux_);
   ~pdu_session_manager_impl() = default;
 
   pdu_session_setup_result setup_pdu_session(const asn1::e1ap::pdu_session_res_to_setup_item_s& session) override;
-  void                     remove_pdu_session(uint16_t pdu_session_id) override;
+  void                     remove_pdu_session(uint8_t pdu_session_id) override;
   size_t                   get_nof_pdu_sessions() override;
 
 private:
-  srslog::basic_logger&                            logger;
-  timer_manager&                                   timers;
-  gtpu_demux_ctrl&                                 ngu_demux;
-  std::map<uint16_t, std::unique_ptr<pdu_session>> pdu_sessions; // key is pdu_session_id
+  uint32_t allocate_local_teid(uint8_t pdu_session_id);
+
+  ue_index_t                                      ue_index;
+  srslog::basic_logger&                           logger;
+  timer_manager&                                  timers;
+  gtpu_demux_ctrl&                                ngu_demux;
+  std::map<uint8_t, std::unique_ptr<pdu_session>> pdu_sessions; // key is pdu_session_id
 };
 
 } // namespace srs_cu_up

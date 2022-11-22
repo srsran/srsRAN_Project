@@ -35,7 +35,7 @@ struct drb_setup_result {
 // Final result when creating a PDU session with all DRBs and QoS flow results.
 struct pdu_session_setup_result {
   bool                          success;        // True if PDU session could be set up.
-  uint16_t                      pdu_session_id; // The PDU session ID.
+  uint8_t                       pdu_session_id; // The PDU session ID.
   asn1::e1ap::cause_c           cause;          // Cause if setup was unsuccessful.
   std::vector<drb_setup_result> drb_setup_results;
 };
@@ -46,7 +46,7 @@ public:
   virtual ~pdu_session_manager_ctrl() = default;
 
   virtual pdu_session_setup_result setup_pdu_session(const asn1::e1ap::pdu_session_res_to_setup_item_s& session) = 0;
-  virtual void                     remove_pdu_session(uint16_t pdu_session_id)                                   = 0;
+  virtual void                     remove_pdu_session(uint8_t pdu_session_id)                                    = 0;
   virtual size_t                   get_nof_pdu_sessions()                                                        = 0;
 };
 

@@ -16,10 +16,11 @@
 using namespace srsgnb;
 using namespace srs_cu_up;
 
-pdu_session_manager_impl::pdu_session_manager_impl(srslog::basic_logger& logger_,
+pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t            ue_index_,
+                                                   srslog::basic_logger& logger_,
                                                    timer_manager&        timers_,
                                                    gtpu_demux_ctrl&      ngu_demux_) :
-  logger(logger_), timers(timers_), ngu_demux(ngu_demux_)
+  ue_index(ue_index_), logger(logger_), timers(timers_), ngu_demux(ngu_demux_)
 {
 }
 
@@ -44,6 +45,9 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
   pdu_sessions[session.pdu_session_id] = std::make_unique<pdu_session>(session);
   auto&       new_session              = pdu_sessions[session.pdu_session_id];
   const auto& peer_teid                = new_session->tunnel_info.gtp_tunnel().gtp_teid.to_number();
+
+  // Allocate local TEID
+  new_session->local_teid = allocate_local_teid(new_session->pdu_session_id);
 
   // Create SDAP
   new_session->sdap = create_sdap(new_session->sdap_to_gtpu_adapter);
@@ -126,7 +130,7 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
   return pdu_session_result;
 }
 
-void pdu_session_manager_impl::remove_pdu_session(uint16_t pdu_session_id)
+void pdu_session_manager_impl::remove_pdu_session(uint8_t pdu_session_id)
 {
   if (pdu_sessions.find(pdu_session_id) == pdu_sessions.end()) {
     logger.error("PDU session {} not found", pdu_session_id);
@@ -140,4 +144,13 @@ void pdu_session_manager_impl::remove_pdu_session(uint16_t pdu_session_id)
 size_t pdu_session_manager_impl::get_nof_pdu_sessions()
 {
   return pdu_sessions.size();
+}
+
+uint32_t pdu_session_manager_impl::allocate_local_teid(uint8_t pdu_session_id)
+{
+  // Local TEID is the concatenation of the unique UE index and the PDU session ID
+  uint32_t local_teid = ue_index;
+  local_teid <<= 8;
+  local_teid |= pdu_session_id;
+  return local_teid;
 }

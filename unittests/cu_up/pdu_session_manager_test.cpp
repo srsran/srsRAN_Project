@@ -28,7 +28,7 @@ protected:
     ngu_demux = std::make_unique<dummy_ngu>();
 
     // create DUT object
-    pdu_session_mng = std::make_unique<pdu_session_manager_impl>(logger, timers, *ngu_demux);
+    pdu_session_mng = std::make_unique<pdu_session_manager_impl>(MIN_UE_INDEX, logger, timers, *ngu_demux);
   }
 
   void TearDown() override
