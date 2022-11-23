@@ -14,7 +14,7 @@
 #include "uplink_processor_pool_impl.h"
 #include "uplink_processor_single_executor_impl.h"
 #include "upper_phy_impl.h"
-#include "upper_phy_rx_results_notifier_proxy.h"
+#include "upper_phy_rx_results_notifier_wrapper.h"
 #include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/support/error_handling.h"
@@ -37,13 +37,8 @@ public:
   uplink_processor_single_executor_factory(std::shared_ptr<prach_detector_factory>  prach_factory_,
                                            std::shared_ptr<pusch_processor_factory> pusch_factory_,
                                            std::shared_ptr<pucch_processor_factory> pucch_factory_,
-                                           task_executor&                           executor,
-                                           upper_phy_rx_results_notifier&           results_notifier) :
-    prach_factory(prach_factory_),
-    pusch_factory(pusch_factory_),
-    pucch_factory(pucch_factory_),
-    executor(executor),
-    results_notifier(results_notifier)
+                                           task_executor&                           executor) :
+    prach_factory(prach_factory_), pusch_factory(pusch_factory_), pucch_factory(pucch_factory_), executor(executor)
   {
     report_fatal_error_if_not(prach_factory, "Invalid PRACH factory.");
     report_fatal_error_if_not(pusch_factory, "Invalid PUSCH factory.");
@@ -63,7 +58,7 @@ public:
     report_fatal_error_if_not(pucch_proc, "Invalid PUCCH processor.");
 
     return std::make_unique<uplink_processor_single_executor_impl>(
-        std::move(detector), std::move(pusch_proc), std::move(pucch_proc), executor, results_notifier);
+        std::move(detector), std::move(pusch_proc), std::move(pucch_proc), executor);
   }
 
 private:
@@ -71,7 +66,6 @@ private:
   std::shared_ptr<pusch_processor_factory> pusch_factory;
   std::shared_ptr<pucch_processor_factory> pucch_factory;
   task_executor&                           executor;
-  upper_phy_rx_results_notifier&           results_notifier;
 };
 
 /// \brief Factory to create single executor downlink processors.
@@ -124,7 +118,7 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
   for (unsigned i = 0, e = config.nof_dl_processors; i != e; ++i) {
     downlink_processor_config processor_config;
     processor_config.id                         = i;
-    processor_config.gateway                    = config.gateway;
+    processor_config.gateway                    = config.rg_gateway;
     processor_config.executor                   = config.dl_executor;
     std::unique_ptr<downlink_processor> dl_proc = factory->create(processor_config);
     report_fatal_error_if_not(dl_proc, "Invalid downlink processor.");
@@ -174,8 +168,7 @@ static std::unique_ptr<resource_grid_pool> create_ul_resource_grid_pool(const up
   return create_resource_grid_pool(nof_sectors, nof_slots, std::move(grids));
 }
 
-static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(const upper_phy_config&        config,
-                                                                       upper_phy_rx_results_notifier& notifier)
+static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(const upper_phy_config& config)
 {
   std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
   if (!dft_factory) {
@@ -244,8 +237,7 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(const upp
       create_pucch_processor_factory_sw(pucch_dmrs_factory, pucch_detector_fact, channel_estimate_dimensions);
   report_fatal_error_if_not(pucch_factory, "Invalid PUCCH processor factory.");
 
-  uplink_processor_single_executor_factory factory(
-      prach_factory, pusch_factory, pucch_factory, *config.ul_executor, notifier);
+  uplink_processor_single_executor_factory factory(prach_factory, pusch_factory, pucch_factory, *config.ul_executor);
 
   uplink_processor_pool_config config_pool;
   config_pool.num_sectors = 1;
@@ -292,7 +284,7 @@ public:
     upper_phy_impl_config phy_config;
     phy_config.sector_id                   = config.sector_id;
     phy_config.log_level                   = config.log_level;
-    phy_config.symbol_request_notifier     = config.symbol_request_notifier;
+    phy_config.rx_symbol_request_notifier  = config.rx_symbol_request_notifier;
     phy_config.nof_slots_ul_pdu_repository = config.nof_ul_processors * 2;
 
     phy_config.dl_rg_pool = create_dl_resource_grid_pool(config);
@@ -304,15 +296,14 @@ public:
     phy_config.dl_processor_pool = create_downlink_processor_pool(downlink_proc_factory, config);
     report_fatal_error_if_not(phy_config.dl_processor_pool, "Invalid downlink processor pool.");
 
-    phy_config.notifier_proxy = std::make_unique<upper_phy_rx_results_notifier_proxy>();
+    phy_config.softbuffer_pool = create_rx_softbuffer_pool(config.softbuffer_config);
+    report_fatal_error_if_not(phy_config.softbuffer_pool, "Invalid softbuffer processor pool.");
 
-    phy_config.ul_processor_pool = create_ul_processor_pool(config, *phy_config.notifier_proxy);
+    phy_config.ul_processor_pool = create_ul_processor_pool(config);
     report_fatal_error_if_not(phy_config.ul_processor_pool, "Invalid uplink processor pool.");
 
     phy_config.prach_pool = create_prach_pool(config);
     report_fatal_error_if_not(phy_config.prach_pool, "Invalid PRACH buffer pool.");
-
-    phy_config.soft_pool = create_rx_softbuffer_pool(config.softbuffer_config);
 
     return std::make_unique<upper_phy_impl>(std::move(phy_config));
   }

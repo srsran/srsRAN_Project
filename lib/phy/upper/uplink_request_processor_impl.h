@@ -22,12 +22,12 @@ class upper_phy_rx_symbol_request_notifier;
 /// This implementation processes uplink data requests according to the following steps.
 ///     1. It resolves all the dependencies.
 ///     2. It calls a method from the internal upper_phy_rx_symbol_request_notifier object. This will produce and notify
-///     an event that requests the capture of slot symbol data.
+///        an event that requests the capture of slot symbol data.
 class uplink_request_processor_impl : public uplink_request_processor
 {
 public:
-  uplink_request_processor_impl(upper_phy_rx_symbol_request_notifier& symbol_request_notifier,
-                                prach_buffer_pool&                    prach_memory_pool);
+  uplink_request_processor_impl(upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
+                                prach_buffer_pool&                    prach_pool);
 
   // See interface for documentation.
   void process_prach_request(const prach_buffer_context& context) override;
@@ -37,9 +37,9 @@ public:
 
 private:
   /// Symbol request notifier.
-  upper_phy_rx_symbol_request_notifier& symbol_request_notifier;
+  upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier;
   /// PRACH buffer pool.
-  prach_buffer_pool& prach_memory_pool;
+  prach_buffer_pool& prach_pool;
 };
 
 } // namespace srsgnb

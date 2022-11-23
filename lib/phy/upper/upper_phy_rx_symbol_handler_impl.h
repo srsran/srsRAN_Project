@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsgnb/adt/circular_array.h"
-#include "srsgnb/phy/upper/channel_processors/prach_detector.h"
 #include "srsgnb/phy/upper/rx_softbuffer_pool.h"
 #include "srsgnb/phy/upper/uplink_slot_pdu_repository.h"
 #include "srsgnb/phy/upper/upper_phy_rx_symbol_handler.h"
@@ -20,21 +19,22 @@
 
 namespace srsgnb {
 
-class task_executor;
 class uplink_processor;
 class uplink_processor_pool;
+class upper_phy_rx_results_notifier;
 
-/// Payload buffer pool.
-class payload_buffer_pool
+/// Payload buffer pool for received data.
+class rx_payload_buffer_pool
 {
   /// Maximum number of payloads contained by the pool.
   static const size_t MAX_NUM_PAYLOAD = 4096U;
 
 public:
   /// Returns the next available buffer from the pool.
-  std::vector<uint8_t>& acquire_payload_buffer()
+  span<uint8_t> acquire_payload_buffer(size_t size)
   {
     unsigned i = index++ % MAX_NUM_PAYLOAD;
+    pool[i].resize(size);
     return pool[i];
   }
 
@@ -50,14 +50,15 @@ private:
 /// In this implementation, handling the newly received symbol event takes the following steps.
 ///     1. Get an uplink processor from the pool.
 ///     2. Call the corresponding method from the uplink processor based on the type of the received symbol (PRACH, SRS,
-///     PUSCH).
+///        PUSCH).
 class upper_phy_rx_symbol_handler_impl : public upper_phy_rx_symbol_handler
 {
 public:
-  upper_phy_rx_symbol_handler_impl(uplink_processor_pool&      ul_processor_pool,
-                                   uplink_slot_pdu_repository& pdu_registry,
-                                   rx_softbuffer_pool&         soft_pool,
-                                   srslog::basic_logger&       logger);
+  upper_phy_rx_symbol_handler_impl(uplink_processor_pool&         ul_processor_pool,
+                                   uplink_slot_pdu_repository&    ul_pdu_repository,
+                                   rx_softbuffer_pool&            softbuffer_pool,
+                                   upper_phy_rx_results_notifier& rx_results_notifier,
+                                   srslog::basic_logger&          logger);
 
   // See interface for documentation.
   void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) override;
@@ -79,13 +80,15 @@ private:
   /// Uplink processor pool.
   uplink_processor_pool& ul_processor_pool;
   /// Uplink slot PDU registry.
-  uplink_slot_pdu_repository& pdu_repository;
+  uplink_slot_pdu_repository& ul_pdu_repository;
   /// Softbuffer pool.
-  rx_softbuffer_pool& soft_pool;
-  /// Pool of containers for the payload.
-  payload_buffer_pool payload_pool;
+  rx_softbuffer_pool& softbuffer_pool;
+  /// Upper PHY results notifier.
+  upper_phy_rx_results_notifier& rx_results_notifier;
   /// Upper PHY logger.
   srslog::basic_logger& logger;
+  /// Pool of containers for the payload.
+  rx_payload_buffer_pool rx_payload_pool;
 };
 
 } // namespace srsgnb

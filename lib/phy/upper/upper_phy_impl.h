@@ -11,15 +11,13 @@
 #pragma once
 
 #include "uplink_request_processor_impl.h"
-#include "upper_phy_rx_results_notifier_proxy.h"
+#include "upper_phy_rx_results_notifier_wrapper.h"
 #include "upper_phy_rx_symbol_handler_impl.h"
 #include "srsgnb/phy/support/prach_buffer_pool.h"
 #include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
 #include "srsgnb/phy/upper/uplink_processor.h"
 #include "srsgnb/phy/upper/upper_phy.h"
-
-// :TODO: remove these includes when the objects are created.
 #include "srsgnb/phy/upper/upper_phy_timing_handler.h"
 #include "srsgnb/phy/upper/upper_phy_timing_notifier.h"
 
@@ -39,12 +37,10 @@ struct upper_phy_impl_config {
   std::unique_ptr<uplink_processor_pool> ul_processor_pool;
   /// PRACH buffer pool.
   std::unique_ptr<prach_buffer_pool> prach_pool;
-  /// Upper PHY uplink results notifier.
-  std::unique_ptr<upper_phy_rx_results_notifier_proxy> notifier_proxy;
   /// Softbuffer pool.
-  std::unique_ptr<rx_softbuffer_pool> soft_pool;
+  std::unique_ptr<rx_softbuffer_pool> softbuffer_pool;
   /// Symbol request notifier.
-  upper_phy_rx_symbol_request_notifier* symbol_request_notifier;
+  upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier;
   /// Log level.
   srslog::basic_levels log_level;
   /// Number of slots supported by the uplink PDU repository.
@@ -56,15 +52,14 @@ struct upper_phy_impl_config {
 /// Instances of this class will handle the ownership of the upper PHY components.
 class upper_phy_impl : public upper_phy
 {
-  // :TODO: remove this dummy when the implementations are created.
-  /// Dummy Upper PHY timing handler.
-  class upper_phy_timing_handler_dummy : public upper_phy_timing_handler
+  /// Upper PHY timing handler implementation class.
+  class upper_phy_timing_handler_impl : public upper_phy_timing_handler
   {
     std::reference_wrapper<upper_phy_timing_notifier> notifier;
     rx_softbuffer_pool&                               softbuffer_pool;
 
   public:
-    upper_phy_timing_handler_dummy(upper_phy_timing_notifier& notifier, rx_softbuffer_pool& softbuffer_pool) :
+    upper_phy_timing_handler_impl(upper_phy_timing_notifier& notifier, rx_softbuffer_pool& softbuffer_pool) :
       notifier(notifier), softbuffer_pool(softbuffer_pool)
     {
     }
@@ -73,14 +68,14 @@ class upper_phy_impl : public upper_phy
     {
       // Advance the timing in the softbuffer pool.
       softbuffer_pool.run_slot(context.slot);
-
+      // Propagate the event.
       notifier.get().on_tti_boundary(context.slot);
     }
 
     void handle_ul_half_slot_boundary(const upper_phy_timing_context& context) override {}
     void handle_ul_full_slot_boundary(const upper_phy_timing_context& context) override {}
 
-    void set_upper_phy_notifier(upper_phy_timing_notifier& notif) { notifier = std::ref(notif); }
+    void set_upper_phy_notifier(upper_phy_timing_notifier& n) { notifier = std::ref(n); }
   };
 
 public:
@@ -112,7 +107,7 @@ public:
   void set_timing_notifier(upper_phy_timing_notifier& notifier) override;
 
   // See interface for documentation.
-  void set_results_notifier(upper_phy_rx_results_notifier& notifier) override;
+  void set_rx_results_notifier(upper_phy_rx_results_notifier& notifier) override;
 
 private:
   /// Upper PHY logger.
@@ -129,19 +124,18 @@ private:
   std::unique_ptr<uplink_processor_pool> ul_processor_pool;
   /// PRACH buffer pool.
   std::unique_ptr<prach_buffer_pool> prach_pool;
-  /// Upper PHY results notifier.
-  std::unique_ptr<upper_phy_rx_results_notifier_proxy> results_notifier_proxy;
+  /// Softbuffer pool.
+  std::unique_ptr<rx_softbuffer_pool> softbuffer_pool;
   /// Uplink request processor.
   uplink_request_processor_impl ul_request_processor;
-  /// Softbuffer pool.
-  std::unique_ptr<rx_softbuffer_pool> soft_pool;
   /// Uplink slot PDU registry.
   uplink_slot_pdu_repository pdu_repository;
+  /// Upper PHY results notifier.
+  upper_phy_rx_results_notifier_wrapper rx_results_notifier;
   /// Received symbols handler.
-  upper_phy_rx_symbol_handler_impl symbol_handler;
-
-  // :TODO: Create implementation for this handler.
-  upper_phy_timing_handler_dummy timing_handler;
+  upper_phy_rx_symbol_handler_impl rx_symbol_handler;
+  /// Timing events handler.
+  upper_phy_timing_handler_impl timing_handler;
 };
 
 } // namespace srsgnb

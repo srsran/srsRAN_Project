@@ -23,6 +23,7 @@ namespace srsgnb {
 class prach_buffer;
 struct prach_buffer_context;
 class slot_point;
+class upper_phy_rx_results_notifier;
 
 /// \brief Uplink processor interface.
 ///
@@ -68,28 +69,41 @@ public:
   /// The PRACH detection results will be notified by the upper_phy_rx_results_notifier with event \ref
   /// upper_phy_rx_results_notifier::on_new_prach_results "on_new_prach_results".
   ///
-  /// \param[in] buffer        Channel symbols the PRACH detection is performed on.
-  /// \param[in] context       Context used by the underlying PRACH detector.
-  virtual void process_prach(const prach_buffer& buffer, const prach_buffer_context& context) = 0;
+  /// \param[in] notifier Event notification interface.
+  /// \param[in] buffer   Channel symbols the PRACH detection is performed on.
+  /// \param[in] context  Context used by the underlying PRACH detector.
+  virtual void process_prach(upper_phy_rx_results_notifier& notifier,
+                             const prach_buffer&            buffer,
+                             const prach_buffer_context&    context) = 0;
 
   /// \brief Processes a PUSCH transmission.
   ///
   /// The size of each transport block is determined by <tt>data[TB index].size()</tt>.
   ///
+  /// The PUSCH results will be notified by the upper_phy_rx_results_notifier with event \ref
+  /// upper_phy_rx_results_notifier::on_new_pusch_results "on_new_pusch_results".
+  ///
   /// \param[out]    data       Received transport block.
   /// \param[in,out] softbuffer Data reception softbuffer.
+  /// \param[in]     notifier   Event notification interface.
   /// \param[in]     grid       Grid the capture data is stored in.
   /// \param[in]     pdu        PUSCH transmission parameters.
   virtual void process_pusch(span<uint8_t>                      data,
                              rx_softbuffer&                     softbuffer,
+                             upper_phy_rx_results_notifier&     notifier,
                              const resource_grid_reader&        grid,
                              const uplink_processor::pusch_pdu& pdu) = 0;
 
   /// \brief Processes a PUCCH transmission.
   ///
-  /// \param[in] grid Resource grid.
-  /// \param[in] pdu  PUCCH transmission parameters.
-  virtual void process_pucch(const resource_grid_reader& grid, const pucch_pdu& pdu) = 0;
+  /// The PUCCH results will be notified by the upper_phy_rx_results_notifier with event \ref
+  /// upper_phy_rx_results_notifier::on_new_pucch_results "on_new_pucch_results".
+  ///
+  /// \param[in] notifier Event notification interface.
+  /// \param[in] grid     Resource grid.
+  /// \param[in] pdu      PUCCH transmission parameters.
+  virtual void
+  process_pucch(upper_phy_rx_results_notifier& notifier, const resource_grid_reader& grid, const pucch_pdu& pdu) = 0;
 };
 
 /// \brief Pool of uplink processors.

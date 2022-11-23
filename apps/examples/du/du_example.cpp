@@ -593,7 +593,7 @@ int main(int argc, char** argv)
                                             generate_prach_config_tlv(),
                                             generate_carrier_config_tlv());
   report_fatal_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
-  upper->set_results_notifier(phy_adaptor->get_rx_results_notifier());
+  upper->set_rx_results_notifier(phy_adaptor->get_rx_results_notifier());
   upper->set_timing_notifier(phy_adaptor->get_timing_notifier());
 
   std::unique_ptr<fapi::slot_message_gateway>       logging_slot_gateway;

@@ -9,17 +9,24 @@
  */
 
 #include "upper_phy_rx_symbol_handler_impl.h"
+#include "upper_phy_rx_results_notifier_wrapper.h"
 #include "srsgnb/phy/support/prach_buffer_context.h"
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/upper/uplink_processor.h"
+#include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
 
-upper_phy_rx_symbol_handler_impl::upper_phy_rx_symbol_handler_impl(uplink_processor_pool&      ul_processor_pool,
-                                                                   uplink_slot_pdu_repository& pdu_registry,
-                                                                   rx_softbuffer_pool&         soft_pool,
-                                                                   srslog::basic_logger&       logger) :
-  ul_processor_pool(ul_processor_pool), pdu_repository(pdu_registry), soft_pool(soft_pool), logger(logger)
+upper_phy_rx_symbol_handler_impl::upper_phy_rx_symbol_handler_impl(uplink_processor_pool&         ul_processor_pool,
+                                                                   uplink_slot_pdu_repository&    ul_pdu_repository,
+                                                                   rx_softbuffer_pool&            softbuffer_pool,
+                                                                   upper_phy_rx_results_notifier& rx_results_notifier,
+                                                                   srslog::basic_logger&          logger) :
+  ul_processor_pool(ul_processor_pool),
+  ul_pdu_repository(ul_pdu_repository),
+  softbuffer_pool(softbuffer_pool),
+  rx_results_notifier(rx_results_notifier),
+  logger(logger)
 {
 }
 
@@ -49,7 +56,7 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
                                                         const resource_grid_reader&        grid)
 {
   // Check if all the symbols are present in the grid.
-  span<const uplink_slot_pdu_entry> pdus = pdu_repository.get_pdus(context.slot);
+  span<const uplink_slot_pdu_entry> pdus = ul_pdu_repository.get_pdus(context.slot);
 
   srsgnb_assert(!pdus.empty(),
                 "Received notification for processing an uplink slot, but no PUSCH/PUCCH PDUs are expected to be "
@@ -77,13 +84,28 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
         process_pusch(pdu.pusch, ul_processor, grid, context.slot);
         break;
       case uplink_slot_pdu_entry::pdu_type::PUCCH:
-        ul_processor.process_pucch(grid, pdu.pucch);
+        ul_processor.process_pucch(rx_results_notifier, grid, pdu.pucch);
         break;
     }
   }
 
   // Clear the PDUs from the repository once they are processed.
-  pdu_repository.clear_slot(context.slot);
+  ul_pdu_repository.clear_slot(context.slot);
+}
+
+void upper_phy_rx_symbol_handler_impl::handle_rx_prach_window(const prach_buffer_context& context,
+                                                              const prach_buffer&         buffer)
+{
+  // Get uplink processor.
+  uplink_processor& ul_processor = ul_processor_pool.get_processor(context.slot, context.sector);
+
+  // Process PRACH.
+  ul_processor.process_prach(rx_results_notifier, buffer, context);
+}
+
+void upper_phy_rx_symbol_handler_impl::handle_rx_srs_symbol(const upper_phy_rx_symbol_context& context)
+{
+  report_fatal_error("upper_phy_rx_symbol_handler_impl::handle_rx_srs_symbol not yet implemented");
 }
 
 void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pusch_pdu& pdu,
@@ -104,32 +126,14 @@ void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pus
   unsigned       nof_codeblocks =
       ldpc::compute_nof_codeblocks(pdu.tb_size * BITS_PER_BYTE, proc_pdu.codeword->ldpc_base_graph);
 
-  rx_softbuffer* buffer = soft_pool.reserve_softbuffer(slot, id, nof_codeblocks);
-  if (!buffer) {
-    logger.warning("Could not reserve a softbuffer for PUSCH PDU with RNTI={}, HARQ={} and slot={}",
-                   id.rnti,
-                   id.harq_ack_id,
-                   proc_pdu.slot);
+  if (rx_softbuffer* buffer = softbuffer_pool.reserve_softbuffer(slot, id, nof_codeblocks)) {
+    auto payload = rx_payload_pool.acquire_payload_buffer(pdu.tb_size);
+    ul_processor.process_pusch(payload, *buffer, rx_results_notifier, grid, pdu);
     return;
   }
 
-  std::vector<uint8_t>& payload = payload_pool.acquire_payload_buffer();
-  payload.resize(pdu.tb_size);
-
-  ul_processor.process_pusch(payload, *buffer, grid, pdu);
-}
-
-void upper_phy_rx_symbol_handler_impl::handle_rx_prach_window(const prach_buffer_context& context,
-                                                              const prach_buffer&         buffer)
-{
-  // Get uplink processor.
-  uplink_processor& ul_processor = ul_processor_pool.get_processor(context.slot, context.sector);
-
-  // Process PRACH.
-  ul_processor.process_prach(buffer, context);
-}
-
-void upper_phy_rx_symbol_handler_impl::handle_rx_srs_symbol(const upper_phy_rx_symbol_context& context)
-{
-  // :TODO: Implement me!!!
+  logger.warning("Could not reserve a softbuffer for PUSCH PDU with RNTI={}, HARQ={} and slot={}",
+                 id.rnti,
+                 id.harq_ack_id,
+                 proc_pdu.slot);
 }

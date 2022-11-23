@@ -16,24 +16,39 @@ namespace srsgnb {
 
 class uplink_processor_spy : public uplink_processor
 {
-  bool has_proces_prach_method_called = false;
+  bool has_process_prach_method_called = false;
+  bool has_process_pusch_method_called = false;
+  bool has_process_pucch_method_called = false;
 
 public:
-  void process_prach(const prach_buffer& buffer, const prach_buffer_context& context) override
+  void process_prach(upper_phy_rx_results_notifier& notifier,
+                     const prach_buffer&            buffer,
+                     const prach_buffer_context&    context) override
   {
-    has_proces_prach_method_called = true;
+    has_process_prach_method_called = true;
   }
 
   void process_pusch(span<uint8_t>                      data,
                      rx_softbuffer&                     softbuffer,
+                     upper_phy_rx_results_notifier&     notifier,
                      const resource_grid_reader&        grid,
                      const uplink_processor::pusch_pdu& pdu) override
   {
+    has_process_pusch_method_called = true;
   }
 
-  void process_pucch(const resource_grid_reader& grid, const pucch_pdu& config) override {}
+  void process_pucch(upper_phy_rx_results_notifier& notifier,
+                     const resource_grid_reader&    grid,
+                     const pucch_pdu&               config) override
+  {
+    has_process_pucch_method_called = true;
+  }
 
-  bool has_process_prach_method_called() const { return has_proces_prach_method_called; }
+  bool is_process_prach_method_called() const { return has_process_prach_method_called; }
+
+  bool is_process_pusch_method_called() const { return has_process_pusch_method_called; }
+
+  bool is_process_pucch_method_called() const { return has_process_pucch_method_called; }
 };
 
 } // namespace srsgnb

@@ -331,7 +331,7 @@ int main(int argc, char** argv)
                                             generate_prach_config_tlv(gnb_cfg),
                                             generate_carrier_config_tlv());
   report_fatal_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
-  upper->set_results_notifier(phy_adaptor->get_rx_results_notifier());
+  upper->set_rx_results_notifier(phy_adaptor->get_rx_results_notifier());
   auto mac_adaptor = build_mac_fapi_adaptor(0, cell.scs_common, phy_adaptor->get_slot_message_gateway());
   report_fatal_error_if_not(mac_adaptor, "Unable to create MAC adaptor.");
   phy_adaptor->set_slot_time_message_notifier(mac_adaptor->get_slot_time_notifier());

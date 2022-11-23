@@ -80,11 +80,11 @@ std::unique_ptr<upper_phy> srsgnb::create_upper_phy(const gnb_appconfig&        
   std::vector<upper_phy_config> config = generate_du_low_config(params);
 
   // Fill the rest of the parameters.
-  upper_phy_config& cfg       = config.front();
-  cfg.gateway                 = rg_gateway;
-  cfg.dl_executor             = dl_executor;
-  cfg.ul_executor             = ul_executor;
-  cfg.symbol_request_notifier = rx_symbol_request_notifier;
+  upper_phy_config& cfg          = config.front();
+  cfg.rg_gateway                 = rg_gateway;
+  cfg.dl_executor                = dl_executor;
+  cfg.ul_executor                = ul_executor;
+  cfg.rx_symbol_request_notifier = rx_symbol_request_notifier;
 
   return upper_phy_factory->create(cfg);
 }

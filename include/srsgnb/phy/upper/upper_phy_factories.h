@@ -137,7 +137,7 @@ struct upper_phy_config {
   /// Number of RBs for uplink.
   unsigned ul_bw_rb;
   /// Upper PHY resource grid gateway.
-  upper_phy_rg_gateway* gateway;
+  upper_phy_rg_gateway* rg_gateway;
   /// Downlink task executor.
   task_executor* dl_executor;
   /// Maximum number of concurrent uplink processes.
@@ -145,7 +145,7 @@ struct upper_phy_config {
   /// Uplink task executor.
   task_executor* ul_executor;
   /// Received symbol request notifier.
-  upper_phy_rx_symbol_request_notifier* symbol_request_notifier;
+  upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier;
   /// Softbuffer pool configuration.
   rx_softbuffer_pool_config softbuffer_config;
 };

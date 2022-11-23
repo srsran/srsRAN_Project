@@ -34,19 +34,19 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   ul_rg_pool(std::move(config.ul_rg_pool)),
   ul_processor_pool(std::move(config.ul_processor_pool)),
   prach_pool(std::move(config.prach_pool)),
-  results_notifier_proxy(std::move(config.notifier_proxy)),
-  ul_request_processor(*config.symbol_request_notifier, *prach_pool),
-  soft_pool(std::move(config.soft_pool)),
+  softbuffer_pool(std::move(config.softbuffer_pool)),
+  ul_request_processor(*config.rx_symbol_request_notifier, *prach_pool),
   pdu_repository(config.nof_slots_ul_pdu_repository),
-  symbol_handler(*ul_processor_pool, pdu_repository, *soft_pool, logger),
-  timing_handler(notifier_dummy, *soft_pool)
+  rx_results_notifier(*softbuffer_pool),
+  rx_symbol_handler(*ul_processor_pool, pdu_repository, *softbuffer_pool, rx_results_notifier, logger),
+  timing_handler(notifier_dummy, *softbuffer_pool)
 {
   srsgnb_assert(dl_processor_pool, "Invalid downlink processor pool");
   srsgnb_assert(dl_rg_pool, "Invalid downlink resource grid pool");
   srsgnb_assert(ul_rg_pool, "Invalid uplink resource grid pool");
   srsgnb_assert(ul_processor_pool, "Invalid uplink processor pool");
   srsgnb_assert(prach_pool, "Invalid PRACH buffer pool");
-  srsgnb_assert(results_notifier_proxy, "Invalid rx results notifier");
+  srsgnb_assert(softbuffer_pool, "Invalid softbuffer pool");
 
   logger.set_level(config.log_level);
 
@@ -56,7 +56,7 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
 
 upper_phy_rx_symbol_handler& upper_phy_impl::get_rx_symbol_handler()
 {
-  return symbol_handler;
+  return rx_symbol_handler;
 }
 
 upper_phy_timing_handler& upper_phy_impl::get_timing_handler()
@@ -94,7 +94,7 @@ void upper_phy_impl::set_timing_notifier(srsgnb::upper_phy_timing_notifier& noti
   timing_handler.set_upper_phy_notifier(notifier);
 }
 
-void upper_phy_impl::set_results_notifier(upper_phy_rx_results_notifier& notifier)
+void upper_phy_impl::set_rx_results_notifier(upper_phy_rx_results_notifier& notifier)
 {
-  results_notifier_proxy->connect(notifier);
+  rx_results_notifier.connect(notifier);
 }

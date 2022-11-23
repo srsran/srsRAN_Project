@@ -76,18 +76,18 @@ std::unique_ptr<upper_phy> srsgnb::create_upper_phy(const upper_phy_params&     
   report_fatal_error_if_not(upper_phy_factory, "Invalid upper PHY factory.");
 
   upper_phy_config upper_config;
-  upper_config.log_level               = params.log_level;
-  upper_config.sector_id               = 0;
-  upper_config.nof_ports               = 1;
-  upper_config.nof_slots_dl_rg         = 2 * params.dl_pipeline_depth;
-  upper_config.nof_dl_processors       = 2 * params.dl_pipeline_depth;
-  upper_config.dl_bw_rb                = params.dl_bw_rb;
-  upper_config.ul_bw_rb                = params.ul_bw_rb;
-  upper_config.gateway                 = rg_gateway;
-  upper_config.dl_executor             = dl_executor;
-  upper_config.nof_ul_processors       = 8 * params.dl_pipeline_depth;
-  upper_config.ul_executor             = ul_executor;
-  upper_config.symbol_request_notifier = rx_symbol_request_notifier;
+  upper_config.log_level                  = params.log_level;
+  upper_config.sector_id                  = 0;
+  upper_config.nof_ports                  = 1;
+  upper_config.nof_slots_dl_rg            = 2 * params.dl_pipeline_depth;
+  upper_config.nof_dl_processors          = 2 * params.dl_pipeline_depth;
+  upper_config.dl_bw_rb                   = params.dl_bw_rb;
+  upper_config.ul_bw_rb                   = params.ul_bw_rb;
+  upper_config.rg_gateway                 = rg_gateway;
+  upper_config.dl_executor                = dl_executor;
+  upper_config.nof_ul_processors          = 8 * params.dl_pipeline_depth;
+  upper_config.ul_executor                = ul_executor;
+  upper_config.rx_symbol_request_notifier = rx_symbol_request_notifier;
 
   upper_config.softbuffer_config.max_softbuffers      = 4 * upper_config.nof_ul_processors;
   upper_config.softbuffer_config.max_nof_codeblocks   = 128;

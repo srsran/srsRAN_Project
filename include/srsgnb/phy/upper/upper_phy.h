@@ -65,7 +65,7 @@ public:
   /// \brief \brief Sets the receive result notifier for this upper PHY.
   ///
   /// \param[in] notifier Notifier assigned to this upper PHY.
-  virtual void set_results_notifier(upper_phy_rx_results_notifier& notifier) = 0;
+  virtual void set_rx_results_notifier(upper_phy_rx_results_notifier& notifier) = 0;
 };
 
 } // namespace srsgnb

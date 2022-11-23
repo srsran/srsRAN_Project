@@ -8,8 +8,10 @@
  *
  */
 
+#include "../../../lib/phy/upper/upper_phy_rx_results_notifier_wrapper.h"
 #include "../../../lib/phy/upper/upper_phy_rx_symbol_handler_impl.h"
 #include "../support/prach_buffer_test_doubles.h"
+#include "../support/resource_grid_test_doubles.h"
 #include "uplink_processor_test_doubles.h"
 #include "srsgnb/phy/support/prach_buffer_context.h"
 #include "srsgnb/phy/upper/upper_phy_factories.h"
@@ -22,25 +24,64 @@ namespace {
 class UpperPhyRxSymbolHandlerFixture : public ::testing::Test
 {
 protected:
-  std::unique_ptr<rx_softbuffer_pool>    soft_pool;
+  std::unique_ptr<rx_softbuffer_pool>    softbuffer_pool;
   uplink_processor_spy*                  ul_proc_spy;
   std::unique_ptr<uplink_processor_pool> ul_processor_pool;
   uplink_slot_pdu_repository             pdu_repo;
+  upper_phy_rx_results_notifier_wrapper  rx_results_wrapper{*softbuffer_pool};
   upper_phy_rx_symbol_handler_impl       rx_handler;
-  prach_buffer_context                   context;
   prach_buffer_spy                       buffer_dummy;
   prach_detector::configuration          config;
+  resource_grid_dummy                    rg;
 
-  void handle_prach_symbol() { rx_handler.handle_rx_prach_window(context, buffer_dummy); }
+  void handle_prach_symbol()
+  {
+    prach_buffer_context prach_context;
+    prach_context.sector = 0;
+    prach_context.slot   = slot_point(0, 0, 0);
+
+    rx_handler.handle_rx_prach_window(prach_context, buffer_dummy);
+  }
+
+  void handle_pusch_pdu()
+  {
+    uplink_processor::pusch_pdu pdu = {};
+    pdu.pdu.cp                      = cyclic_prefix::NORMAL;
+    pdu.pdu.codeword.emplace(pusch_processor::codeword_description{0, ldpc_base_graph_type::BG1, true});
+
+    pdu_repo.add_pusch_pdu(slot_point(0, 0, 0), pdu);
+
+    // Uplink processor gets called when all symbols have been received.
+    for (unsigned i = 0, e = get_nsymb_per_slot(pdu.pdu.cp); i != e; ++i) {
+      upper_phy_rx_symbol_context ctx = {};
+      ctx.symbol                      = i;
+      ctx.slot                        = slot_point(0, 0, 0);
+      rx_handler.handle_rx_symbol(ctx, rg);
+    }
+  }
+
+  void handle_pucch_pdu()
+  {
+    uplink_processor::pucch_pdu pdu = {};
+    pdu.format0.cp                  = cyclic_prefix::NORMAL;
+
+    pdu_repo.add_pucch_pdu(slot_point(0, 0, 0), pdu);
+
+    // Uplink processor gets called when all symbols have been received.
+    for (unsigned i = 0, e = get_nsymb_per_slot(pdu.format0.cp); i != e; ++i) {
+      upper_phy_rx_symbol_context ctx = {};
+      ctx.symbol                      = i;
+      ctx.slot                        = slot_point(0, 0, 0);
+      rx_handler.handle_rx_symbol(ctx, rg);
+    }
+  }
 
   UpperPhyRxSymbolHandlerFixture() :
-    soft_pool(create_rx_softbuffer_pool(rx_softbuffer_pool_config())),
+    softbuffer_pool(create_rx_softbuffer_pool(rx_softbuffer_pool_config{16, 2, 2, 16})),
     ul_processor_pool(create_ul_processor_pool()),
     pdu_repo(2),
-    rx_handler(*ul_processor_pool, pdu_repo, *soft_pool, srslog::fetch_basic_logger("TEST"))
+    rx_handler(*ul_processor_pool, pdu_repo, *softbuffer_pool, rx_results_wrapper, srslog::fetch_basic_logger("TEST"))
   {
-    context.sector = 0;
-    context.slot   = slot_point(0, 0, 0);
   }
 
   std::unique_ptr<uplink_processor_pool> create_ul_processor_pool()
@@ -61,11 +102,29 @@ protected:
 
 TEST_F(UpperPhyRxSymbolHandlerFixture, handling_valid_prach_calls_uplink_processor)
 {
-  ASSERT_FALSE(ul_proc_spy->has_process_prach_method_called());
+  ASSERT_FALSE(ul_proc_spy->is_process_prach_method_called());
 
   handle_prach_symbol();
 
-  ASSERT_TRUE(ul_proc_spy->has_process_prach_method_called());
+  ASSERT_TRUE(ul_proc_spy->is_process_prach_method_called());
+}
+
+TEST_F(UpperPhyRxSymbolHandlerFixture, handling_valid_pusch_pdu_calls_uplink_processor)
+{
+  ASSERT_FALSE(ul_proc_spy->is_process_pusch_method_called());
+
+  handle_pusch_pdu();
+
+  ASSERT_TRUE(ul_proc_spy->is_process_pusch_method_called());
+}
+
+TEST_F(UpperPhyRxSymbolHandlerFixture, handling_valid_pucch_pdu_calls_uplink_processor)
+{
+  ASSERT_FALSE(ul_proc_spy->is_process_pucch_method_called());
+
+  handle_pucch_pdu();
+
+  ASSERT_TRUE(ul_proc_spy->is_process_pucch_method_called());
 }
 
 } // namespace
