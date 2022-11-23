@@ -63,15 +63,15 @@ private:
 
   cu_up_processor_context context;
 
-  // timers associated with a given DU.
-  timer_manager timer_db;
-
   // Components
   std::unique_ptr<e1_interface>  e1;
   std::unique_ptr<ngc_interface> ngc;
 
   // E1 to CU-UP processor adapter
   e1_cu_up_processor_adapter e1_ev_notifier;
+
+  // Handler for CU-UP processor tasks.
+  async_task_sequencer main_ctrl_loop;
 };
 
 } // namespace srs_cu_cp

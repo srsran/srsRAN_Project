@@ -133,9 +133,6 @@ TEST_F(cu_cp_test, when_cu_up_remove_request_received_then_cu_up_removed)
   // Connect CU-UP
   cu_cp_obj->on_new_cu_up_connection();
 
-  // Pass CU-CP E1 Setup Response to CU-CP
-  cu_cp_obj->get_e1_message_handler(int_to_cu_up_index(0)).handle_message(generate_cu_cp_e1_setup_respose(0));
-
   // Check that CU-UP has been added
   ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 1U);
 
@@ -144,7 +141,7 @@ TEST_F(cu_cp_test, when_cu_up_remove_request_received_then_cu_up_removed)
   cu_cp_obj->handle_cu_up_remove_request(MIN_CU_UP_INDEX);
 
   // Check that CU-UP has been removed
-  // ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 0U);
+  ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 0U);
 }
 
 /// Test exeeding the maximum number of connected CU-UPs
