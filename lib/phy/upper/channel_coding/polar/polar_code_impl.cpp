@@ -280,21 +280,21 @@ span<const uint16_t> srsgnb::polar_code_impl::get_blk_interleaver(uint8_t n_)
   return {};
 }
 
-uint16_t srsgnb::polar_code_impl::setdiff_stable(const uint16_t* x,
+unsigned srsgnb::polar_code_impl::setdiff_stable(const uint16_t* x,
                                                  const uint16_t* y,
                                                  uint16_t*       z,
-                                                 int             T,
+                                                 uint16_t        T,
                                                  uint16_t        len1,
                                                  uint16_t        len2)
 {
   uint16_t o = 0;
-  for (int i = 0; i < len1; i++) {
+  for (uint16_t i = 0; i < len1; i++) {
     // is x[i] in y ?
     unsigned flag = 0;
     if (x[i] <= T) {
       flag = 1;
     } else {
-      for (int j = 0; j < len2; j++) {
+      for (uint16_t j = 0; j < len2; j++) {
         if (x[i] == y[j]) {
           flag = 1;
           break;
@@ -310,7 +310,7 @@ uint16_t srsgnb::polar_code_impl::setdiff_stable(const uint16_t* x,
   return o;
 }
 
-void srsgnb::polar_code_impl::set_code_params(uint16_t K_, uint16_t E_, uint8_t nMax)
+void srsgnb::polar_code_impl::set_code_params(unsigned K_, unsigned E_, uint8_t nMax)
 {
   // Set internal K
   K = K_;
@@ -354,7 +354,7 @@ void srsgnb::polar_code_impl::set_code_params(uint16_t K_, uint16_t E_, uint8_t 
   // ceil(log2(E))
   uint8_t e = 1;
   for (; e <= eMAX; e++) {
-    uint16_t tmpE = 1U << e; // 2^e
+    unsigned tmpE = 1U << e; // 2^e
     if (tmpE >= E) {
       break;
     }
@@ -371,7 +371,7 @@ void srsgnb::polar_code_impl::set_code_params(uint16_t K_, uint16_t E_, uint8_t 
   // ceil(log2(K))
   uint8_t k = 0;
   for (; k <= 10; k++) {
-    uint16_t tmpK = 1U << k; // 2^e
+    unsigned tmpK = 1U << k; // 2^e
     if (tmpK >= K) {
       break;
     }
@@ -395,34 +395,36 @@ void srsgnb::polar_code_impl::set_code_params(uint16_t K_, uint16_t E_, uint8_t 
   assert(K < N);
 }
 
-srsgnb::polar_code_impl::polar_code_impl() : tmp_K_set(NMAX + 1), F_set(NMAX)
+srsgnb::polar_code_impl::polar_code_impl()
 {
   // Do nothing
 }
 
-// Compares two uint16_t
-bool cmpfunc(uint16_t ai, uint16_t bi)
+// Compares two unsigned
+bool cmpfunc(unsigned ai, unsigned bi)
 {
   return (ai < bi);
 }
 
-void srsgnb::polar_code_impl::set(uint16_t K_, uint16_t E_, uint8_t nMax, polar_code_ibil ibil_)
+void srsgnb::polar_code_impl::set(unsigned K_, unsigned E_, uint8_t nMax, polar_code_ibil ibil_)
 {
-  // check polar code parameters
+  // Check polar code parameters.
   set_code_params(K_, E_, nMax);
 
   span<const uint16_t> blk_interleaver = get_blk_interleaver(n);
   span<const uint16_t> mother_code     = get_mother_code(n);
 
-  ibil       = ibil_;
-  F_set_size = N - K - nPC;
+  ibil = ibil_;
 
-  // Frozen bits due to Puncturing and Shortening.
-  int T              = -1;
-  int tmp_F_set_size = N - E;
-  int N_th           = 3 * N / 4;
+  // Select only the most reliable (message and parity).
+  span<const uint16_t> K_set = mother_code.last(K + nPC);
+  if (N > E) {
+    // Frozen bits due to Puncturing and Shortening.
+    unsigned       T              = 0;
+    unsigned       tmp_F_set_size = N - E;
+    unsigned       N_th           = 3 * N / 4;
+    span<uint16_t> F_set          = span<uint16_t>(tmp_F_set);
 
-  if (tmp_F_set_size > 0) {
     if (16 * K <= 7 * E) { // Puncturing
       if (E >= N_th) {
         T = N_th - (E >> 1U) - 1;
@@ -436,22 +438,18 @@ void srsgnb::polar_code_impl::set(uint16_t K_, uint16_t E_, uint8_t nMax, polar_
       srsvec::copy(F_set.first(tmp_F_set_size),
                    blk_interleaver.subspan(E, tmp_F_set_size)); // The first (less reliable) after interleaving
     }
-  } else {
-    tmp_F_set_size = 0;
+
+    unsigned tmp_K = setdiff_stable(mother_code.data(), F_set.data(), tmp_K_set.data(), T, N, tmp_F_set_size);
+    K_set          = span<const uint16_t>(tmp_K_set).subspan(tmp_K - K - nPC, K + nPC);
   }
 
-  int tmp_K = setdiff_stable(mother_code.data(), F_set.data(), tmp_K_set.data(), T, N, tmp_F_set_size);
-
-  // Select only the most reliable (message and parity)
-  span<const uint16_t> K_set = tmp_K_set.subspan(tmp_K - K - nPC, K + nPC + 1);
-
-  // take the nPC - nWmPC less reliable
-  for (int i = 0; i < nPC - nWmPC; i++) {
+  // Take the nPC - nWmPC less reliable.
+  for (unsigned i = 0, i_end = (nPC > nWmPC) ? (nPC - nWmPC) : 0; i != i_end; ++i) {
     PC_set[i] = K_set[i];
   }
 
-  // This only happens if K=18:25 and E=E+189+1:8192
-  // In these cases, there is no puncturing or shortening
+  // This only happens if K=18:25 and E=E+189+1:8192.
+  // In these cases, there is no puncturing or shortening.
   if (nWmPC == 1) {
     if (K <= 21) {
       PC_set[nPC - 1] = 252;
@@ -465,7 +463,7 @@ void srsgnb::polar_code_impl::set(uint16_t K_, uint16_t E_, uint8_t nMax, polar_
   K_set_mask.fill(0, N, false);
 
   // Write the K_set in a mask.
-  std::for_each(K_set.begin(), K_set.end() - 1, [this](uint16_t index) { K_set_mask.set(static_cast<size_t>(index)); });
+  std::for_each(K_set.begin(), K_set.end(), [this](unsigned index) { K_set_mask.set(index); });
 
   // Create the frozen set F_set as the complement of sorted K_set.
   F_set_mask = ~K_set_mask;
@@ -479,24 +477,27 @@ void srsgnb::polar_code_impl::set(uint16_t K_, uint16_t E_, uint8_t nMax, polar_
   PC_set[nPC] = NMAX;
 }
 
-uint16_t polar_code_impl::get_n() const
+unsigned polar_code_impl::get_n() const
 {
   return n;
 }
 
-uint16_t polar_code_impl::get_N() const
+unsigned polar_code_impl::get_N() const
 {
   return N;
 }
-uint16_t polar_code_impl::get_K() const
+
+unsigned polar_code_impl::get_K() const
 {
   return K;
 }
-uint16_t polar_code_impl::get_E() const
+
+unsigned polar_code_impl::get_E() const
 {
   return E;
 }
-uint16_t polar_code_impl::get_nPC() const
+
+unsigned polar_code_impl::get_nPC() const
 {
   return nPC;
 }
@@ -516,15 +517,11 @@ const bounded_bitset<polar_code::NMAX>& polar_code_impl::get_F_set() const
   return F_set_mask;
 }
 
-span<const uint16_t> polar_code_impl::get_mother_code() const
-{
-  return get_mother_code(n);
-}
-
 span<const uint16_t> polar_code_impl::get_blk_interleaver() const
 {
   return get_blk_interleaver(n);
 }
+
 polar_code_ibil polar_code_impl::get_ibil() const
 {
   return ibil;

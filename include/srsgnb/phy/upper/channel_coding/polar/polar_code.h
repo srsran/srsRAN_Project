@@ -37,32 +37,32 @@ class polar_code
 {
 public:
   /// \brief Maximum rate-matched codeword length.
-  static const uint16_t EMAX = 8192;
+  static const unsigned EMAX = 8192;
 
   /// \brief Maximum codeword length.
-  static const uint16_t NMAX = 1024;
+  static const unsigned NMAX = 1024;
 
   /// \brief Base-2 logarithm of the maximum codeword length.
   static const unsigned NMAX_LOG = 10U;
 
   /// \brief Base-2 logarithm of the maximum rate-matched codeword length.
-  static const uint16_t eMAX = 13;
+  static const unsigned eMAX = 13;
 
   virtual ~polar_code() = default;
 
   /// Returns the base-2 logarithm of the codeword length.
-  virtual uint16_t get_n() const = 0;
+  virtual unsigned get_n() const = 0;
 
   /// Returns the codeword length.
-  virtual uint16_t get_N() const = 0;
+  virtual unsigned get_N() const = 0;
 
   /// Returns the message (data bits and CRC) length.
-  virtual uint16_t get_K() const = 0;
+  virtual unsigned get_K() const = 0;
 
   /// Returns the codeword length after rate matching.
-  virtual uint16_t get_E() const = 0;
+  virtual unsigned get_E() const = 0;
   /// Returns the number of parity check bits.
-  virtual uint16_t get_nPC() const = 0;
+  virtual unsigned get_nPC() const = 0;
 
   /// \brief Returns the message set.
   ///
@@ -81,11 +81,6 @@ public:
   /// The frozen set is the set of indices corresponding to the frozen bits at the encoder input.
   virtual const bounded_bitset<NMAX>& get_F_set() const = 0;
 
-  /// \brief Returns the code description as a sequence of indices.
-  ///
-  /// See sequence \f$\mathbm{Q}_0^{N}\f$ in TS 38.212 Section 5.3.1.2).
-  virtual span<const uint16_t> get_mother_code() const = 0;
-
   /// Returns the permutation describing the block interleaver.
   virtual span<const uint16_t> get_blk_interleaver() const = 0;
 
@@ -100,7 +95,7 @@ public:
   /// \param[in] nMax Base-2 logarithm of the maximum codeword length before rate matching. Possible values are 9 (for
   ///                 downlink) and 10 (for uplink).
   /// \param[in] ibil Bit interleaver (set to not_present to disable).
-  virtual void set(uint16_t K, uint16_t E, uint8_t nMax, polar_code_ibil ibil) = 0;
+  virtual void set(unsigned K, unsigned E, uint8_t nMax, polar_code_ibil ibil) = 0;
 };
 
 } // namespace srsgnb

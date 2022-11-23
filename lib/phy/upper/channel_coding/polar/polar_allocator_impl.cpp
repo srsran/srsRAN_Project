@@ -15,8 +15,8 @@ using namespace srsgnb;
 
 void polar_allocator_impl::allocate(span<uint8_t> input_encoder, span<const uint8_t> message, const polar_code& code)
 {
-  uint16_t                                N          = code.get_N();
-  uint16_t                                nPC        = code.get_nPC();
+  unsigned                                N          = code.get_N();
+  unsigned                                nPC        = code.get_nPC();
   span<const uint16_t>                    PC_set     = code.get_PC_set();
   const bounded_bitset<polar_code::NMAX>& K_set_mask = code.get_K_set();
 
@@ -28,16 +28,16 @@ void polar_allocator_impl::allocate(span<uint8_t> input_encoder, span<const uint
       input_encoder[i_o] = message[i++];
     });
   } else {
-    uint16_t y0  = 0;
-    uint16_t y1  = 0;
-    uint16_t y2  = 0;
-    uint16_t y3  = 0;
-    uint16_t y4  = 0;
-    uint16_t iPC = 0;
-    uint16_t iK  = 0;
-    for (uint16_t i_o = 0; i_o < N; i_o++) {
-      // circ. shift register
-      uint16_t tmpy0 = y0;
+    unsigned y0  = 0;
+    unsigned y1  = 0;
+    unsigned y2  = 0;
+    unsigned y3  = 0;
+    unsigned y4  = 0;
+    unsigned iPC = 0;
+    unsigned iK  = 0;
+    for (unsigned i_o = 0; i_o != N; ++i_o) {
+      // Circ. shift register.
+      unsigned tmpy0 = y0;
       y0             = y1;
       y1             = y2;
       y2             = y3;
