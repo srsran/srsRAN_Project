@@ -17,6 +17,7 @@
 #include "cu_up_processor_impl.h"
 #include "du_processor_impl.h"
 #include "task_schedulers/cu_up_task_scheduler.h"
+#include "task_schedulers/du_task_scheduler.h"
 #include "task_schedulers/ue_task_scheduler.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
@@ -122,11 +123,11 @@ private:
   slot_array<std::unique_ptr<du_processor_interface>, MAX_NOF_DUS>       du_db;
   slot_array<std::unique_ptr<cu_up_processor_interface>, MAX_NOF_CU_UPS> cu_up_db;
 
-  // task event loops indexed by du_index
-  slot_array<async_task_sequencer, MAX_NOF_DUS> du_ctrl_loop;
-
   // UE task scheduler
   ue_task_scheduler ue_task_sched;
+
+  // DU task scheduler
+  du_task_scheduler du_task_sched;
 
   // CU-UP task scheduler
   cu_up_task_scheduler cu_up_task_sched;

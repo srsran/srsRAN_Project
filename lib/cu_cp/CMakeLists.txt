@@ -18,6 +18,7 @@ set(SOURCES
       procedures/initial_cu_up_processor_setup_procedure.cpp
       task_schedulers/ue_task_scheduler.cpp
       task_schedulers/cu_up_task_scheduler.cpp
+      task_schedulers/du_task_scheduler.cpp
 )
 
 add_library(srsgnb_cu_cp STATIC ${SOURCES})

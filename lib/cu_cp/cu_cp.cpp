@@ -26,15 +26,9 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 }
 
 cu_cp::cu_cp(const cu_cp_configuration& config_) :
-  cfg(config_), main_ctrl_loop(128), ue_task_sched(timers), cu_up_task_sched(timers)
+  cfg(config_), main_ctrl_loop(128), ue_task_sched(timers), du_task_sched(timers), cu_up_task_sched(timers)
 {
   assert_cu_cp_configuration_valid(cfg);
-
-  // init du control loops
-  const size_t number_of_pending_du_procedures = 16;
-  for (size_t i = 0; i < MAX_NOF_DUS; ++i) {
-    du_ctrl_loop.emplace(i, number_of_pending_du_procedures);
-  }
 
   // Create layers
   ngc_entity = create_ngc(timers, *cfg.ngc_notifier);
@@ -198,13 +192,14 @@ void cu_cp::remove_du(du_index_t du_index)
   logger.debug("Scheduling du_index={} deletion", du_index);
 
   // Schedule DU removal task
-  du_ctrl_loop[du_index].schedule([this, du_index](coro_context<async_task<void>>& ctx) {
-    CORO_BEGIN(ctx);
-    srsgnb_assert(du_db.contains(du_index), "Remove DU called for inexistent du_index={}", du_index);
-    du_db.erase(du_index);
-    logger.info("Removed du_index={}", du_index);
-    CORO_RETURN();
-  });
+  du_task_sched.handle_du_async_task(
+      du_index, launch_async([this, du_index](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
+        srsgnb_assert(du_db.contains(du_index), "Remove DU called for inexistent du_index={}", du_index);
+        du_db.erase(du_index);
+        logger.info("Removed du_index={}", du_index);
+        CORO_RETURN();
+      }));
 }
 
 du_processor_interface& cu_cp::find_du(du_index_t du_index)
