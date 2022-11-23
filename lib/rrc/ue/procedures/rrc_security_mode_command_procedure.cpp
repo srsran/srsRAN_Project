@@ -112,8 +112,8 @@ void rrc_security_mode_command_procedure::send_rrc_security_mode_command()
 {
   dl_dcch_msg_s dl_dcch_msg;
   dl_dcch_msg.msg.set_c1().set_security_mode_cmd();
-  // security_mode_cmd_s& rrc_smc = dl_dcch_msg.msg.c1().security_mode_cmd();
-  // fill_asn1_rrc_smc_msg(rrc_smc, du_to_cu_container, transaction.id());
+  security_mode_cmd_s& rrc_smc = dl_dcch_msg.msg.c1().security_mode_cmd();
+  fill_asn1_rrc_smc_msg(rrc_smc, int_algo, ciph_algo, transaction.id());
   rrc_ue.on_new_dl_dcch(dl_dcch_msg);
 }
 
