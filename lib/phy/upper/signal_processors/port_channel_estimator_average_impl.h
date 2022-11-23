@@ -34,14 +34,14 @@ public:
                const configuration&        cfg) override;
 
 private:
-  /// \brief Extract DM-RS symbols from the resource grid for each layer from a selected port.
-  /// \param[out] symbols Symbol buffer destination.
-  /// \param[in] grid     Resource grid.
-  /// \param[in] port     Port index.
-  /// \param[in] pattern  DM-RS pattern for each layer.
-  /// \param[in] cfg      Configuration parameters of the current context.
-  static void
-  extract_symbols(dmrs_symbol_list& symbols, const resource_grid_reader& grid, unsigned port, const configuration& cfg);
+  /// Specializes \ref compute for one layer and one hop.
+  void compute_layer_hop(channel_estimate&           estimate,
+                         const resource_grid_reader& grid,
+                         unsigned                    port,
+                         const dmrs_symbol_list&     symbols,
+                         const configuration&        cfg,
+                         unsigned                    layer,
+                         unsigned                    hop);
 
   /// \brief Interpolator.
   ///
@@ -54,6 +54,9 @@ private:
 
   /// Temporary frequency response.
   std::array<cf_t, MAX_RB * NRE> temp_ce_freq;
+
+  /// Temporary RSRP value.
+  float rsrp_tmp = 0;
 };
 
 } // namespace srsgnb
