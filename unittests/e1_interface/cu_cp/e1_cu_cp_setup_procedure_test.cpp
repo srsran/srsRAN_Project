@@ -25,7 +25,7 @@ using namespace srs_cu_cp;
 ///////////////////////////////////////
 
 /// Test successful cu-cp initiated e1 setup procedure
-TEST_F(e1_cu_cp_test, when_e1_setup_response_received_then_cu_cp_connected)
+TEST_F(e1_cu_cp_test, when_cu_cp_e1_setup_response_received_then_cu_cp_connected)
 {
   // Action 1: Launch E1 setup procedure
   cu_cp_e1_setup_request_message request_msg = generate_cu_cp_e1_setup_request_message();
@@ -53,7 +53,7 @@ TEST_F(e1_cu_cp_test, when_e1_setup_response_received_then_cu_cp_connected)
 }
 
 /// Test unsuccessful f1 setup procedure with time to wait and successful retry
-TEST_F(e1_cu_cp_test, when_e1_setup_failure_with_time_to_wait_received_then_retry_with_success)
+TEST_F(e1_cu_cp_test, when_cu_cp_e1_setup_failure_with_time_to_wait_received_then_retry_with_success)
 {
   // Action 1: Launch E1 setup procedure
   cu_cp_e1_setup_request_message request_msg = generate_cu_cp_e1_setup_request_message();
@@ -104,7 +104,7 @@ TEST_F(e1_cu_cp_test, when_e1_setup_failure_with_time_to_wait_received_then_retr
 }
 
 /// Test unsuccessful e1 setup procedure with time to wait and unsuccessful retry
-TEST_F(e1_cu_cp_test, when_e1_setup_failure_with_time_to_wait_received_then_retry_without_success)
+TEST_F(e1_cu_cp_test, when_cu_cp_e1_setup_failure_with_time_to_wait_received_then_retry_without_success)
 {
   // Action 1: Launch E1 setup procedure
   cu_cp_e1_setup_request_message request_msg = generate_cu_cp_e1_setup_request_message();
@@ -204,7 +204,7 @@ TEST_F(e1_cu_cp_test, when_retry_limit_reached_then_cu_cp_not_connected)
 /////////////////////////////////////
 
 /// Test the successful CU-UP initiated e1 setup procedure
-TEST_F(e1_cu_cp_test, when_received_e1_setup_request_valid_then_connect_cu_up)
+TEST_F(e1_cu_cp_test, when_received_cu_up_e1_setup_request_valid_then_connect_cu_up)
 {
   // Action 1: Receive CuUpE1SetupRequest message
   test_logger.info("TEST: Receive CuUpE1SetupRequest message...");
@@ -230,7 +230,7 @@ TEST_F(e1_cu_cp_test, when_received_e1_setup_request_valid_then_connect_cu_up)
 }
 
 /// Test the e1 setup failure
-TEST_F(e1_cu_cp_test, when_received_e1_setup_request_invalid_then_reject_cu_up)
+TEST_F(e1_cu_cp_test, when_received_cu_up_e1_setup_request_invalid_then_reject_cu_up)
 {
   // Generate CuUpE1SetupRequest
   e1_message e1_setup_msg         = generate_cu_up_e1_setup_request_base();
