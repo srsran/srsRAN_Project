@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "procedures/rrc_security_mode_command_procedure.h"
 #include "procedures/rrc_setup_procedure.h"
 #include "procedures/rrc_ue_event_manager.h"
 #include "rrc_ue_context.h"
@@ -66,11 +67,18 @@ private:
   void send_srb_pdu(srb_id_t srb_id, byte_buffer pdu);
 
   // rrc_ue_setup_proc_notifier
-  void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) override;
-  void on_ue_delete_request() override;
+  void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) final;
+  void on_ue_delete_request() final;
+
+  // rrc_ue_security_mode_command_proc_notifier
+  void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_ccch_msg) final;
 
   /// allocates PUCCH resources at the cell resource manager
   bool init_pucch();
+
+  // initializes the security context and triggers the SMC procedure
+  // TODO: this should be an interface for the NGAP
+  void handle_init_security_context(const rrc_init_security_context& sec_ctx) final;
 
   // Helper to create PDU from RRC message
   template <class T>

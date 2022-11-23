@@ -17,17 +17,11 @@ using namespace asn1::rrc_nr;
 
 rrc_security_mode_command_procedure::rrc_security_mode_command_procedure(
     rrc_ue_context_t&                           context_,
-    rrc_security_context                        sec_ctx_,
-    const byte_buffer&                          du_to_cu_container_,
+    rrc_init_security_context                   sec_ctx_,
     rrc_ue_security_mode_command_proc_notifier& rrc_ue_notifier_,
     rrc_ue_event_manager&                       event_mng_,
     srslog::basic_logger&                       logger_) :
-  context(context_),
-  sec_ctx(sec_ctx_),
-  du_to_cu_container(du_to_cu_container_),
-  rrc_ue(rrc_ue_notifier_),
-  event_mng(event_mng_),
-  logger(logger_)
+  context(context_), sec_ctx(sec_ctx_), rrc_ue(rrc_ue_notifier_), event_mng(event_mng_), logger(logger_)
 {
 }
 
@@ -35,6 +29,7 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<voi
 {
   CORO_BEGIN(ctx);
 
+  logger.debug("rnti=0x{:x}: \"{}\" initialized.", context.c_rnti, name());
   // create new transaction for RRCSecurityModeCommand
   transaction = event_mng.transactions.create_transaction(rrc_smc_timeout_ms);
 

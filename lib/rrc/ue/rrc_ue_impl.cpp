@@ -62,6 +62,18 @@ void rrc_ue_impl::on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg)
   send_dl_ccch(dl_ccch_msg);
 }
 
+void rrc_ue_impl::on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_ccch_msg)
+{
+  send_dl_dcch(dl_ccch_msg);
+}
+
+void rrc_ue_impl::handle_init_security_context(const rrc_init_security_context& sec_ctx)
+{
+  //  Launch RRC security mode procedure
+  task_sched.schedule_async_task(
+      launch_async<rrc_security_mode_command_procedure>(context, sec_ctx, *this, *event_mng, logger));
+}
+
 template <class T>
 void rrc_ue_impl::log_rrc_message(const char*       source,
                                   const direction_t dir,

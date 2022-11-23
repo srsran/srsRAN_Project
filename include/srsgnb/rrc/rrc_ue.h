@@ -13,6 +13,9 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/rrc/rrc.h"
+#include "srsgnb/security/security.h"
+#include "srsgnb/support/async/async_task.h"
+#include "srsgnb/support/timers.h"
 
 namespace srsgnb {
 
@@ -157,12 +160,31 @@ public:
   virtual void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) = 0;
 };
 
+// TODO put this somewhere else
+struct rrc_init_security_context {
+  security::sec_as_key k;
+  std::array<bool, 3>  supported_int_algos;
+  std::array<bool, 3>  supported_enc_algos;
+};
+/// Handle order to initialize NAS transport messages.
+class rrc_ue_init_security_context_handler
+{
+public:
+  virtual ~rrc_ue_init_security_context_handler() = default;
+
+  /// \brief Handle the received Downlink NAS Transport message.
+  /// \param[in] msg The Downlink NAS Transport message.
+  virtual void handle_init_security_context(const rrc_init_security_context& msg) = 0;
+};
+
 /// Combined entry point for the RRC UE handling.
 /// It will contain getters for the interfaces for the various logical channels handled by RRC.
 class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
                          public rrc_ul_dcch_pdu_handler,
                          public rrc_ue_dl_nas_message_handler,
-                         public rrc_ue_setup_proc_notifier
+                         public rrc_ue_init_security_context_handler,
+                         public rrc_ue_setup_proc_notifier,
+                         public rrc_ue_security_mode_command_proc_notifier
 {
 public:
   rrc_ue_interface()          = default;
