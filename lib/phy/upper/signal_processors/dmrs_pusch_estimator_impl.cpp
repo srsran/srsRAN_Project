@@ -76,11 +76,13 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
 
   port_channel_estimator::configuration est_cfg = {};
   est_cfg.dmrs_pattern.resize(nof_tx_layers);
-  est_cfg.dmrs_pattern[0] = coordinates[0];
-  est_cfg.scs             = to_subcarrier_spacing(config.slot.numerology());
-  est_cfg.first_symbol    = config.first_symbol;
-  est_cfg.nof_symbols     = config.nof_symbols;
-  est_cfg.rx_ports        = config.rx_ports;
+  for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
+    est_cfg.dmrs_pattern[i_layer] = coordinates[i_layer];
+  }
+  est_cfg.scs          = to_subcarrier_spacing(config.slot.numerology());
+  est_cfg.first_symbol = config.first_symbol;
+  est_cfg.nof_symbols  = config.nof_symbols;
+  est_cfg.rx_ports     = config.rx_ports;
 
   for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
     ch_estimator->compute(estimate, grid, i_port, temp_symbols, est_cfg);
