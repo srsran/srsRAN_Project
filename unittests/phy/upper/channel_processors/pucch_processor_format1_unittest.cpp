@@ -8,10 +8,10 @@
  *
  */
 
+#include "../../support/resource_grid_test_doubles.h"
 #include "../signal_processors/dmrs_pucch_processor_test_doubles.h"
 #include "pucch_detector_test_doubles.h"
-#include "pucch_processor_format1_test_data.h"
-#include "srsgnb/srsvec/compare.h"
+#include "uci_decoder_test_doubles.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
@@ -23,32 +23,74 @@ namespace {
 class PucchProcessorFormat1Fixture : public ::testing::TestWithParam<unsigned>
 {
 protected:
+  /// PUCCH Processor factory.
+  static std::shared_ptr<pucch_processor_factory> processor_factory;
+  /// Channel estimator spy factory.
+  static std::shared_ptr<dmrs_pucch_estimator_factory_spy> dmrs_factory_spy;
+  /// PUCCH detector spy factory.
+  static std::shared_ptr<pucch_detector_factory_spy> detector_factory_spy;
+
+  static void SetUpTestSuite()
+  {
+    if (!processor_factory) {
+      // Create spy factories.
+      dmrs_factory_spy     = std::make_shared<dmrs_pucch_estimator_factory_spy>();
+      detector_factory_spy = std::make_shared<pucch_detector_factory_spy>();
+
+      // Create factories required by the PUCCH demodulator factory.
+      std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_factory_zf();
+      ASSERT_NE(equalizer_factory, nullptr) << "Cannot create equalizer factory.";
+
+      std::shared_ptr<channel_modulation_factory> demod_factory = create_channel_modulation_sw_factory();
+      ASSERT_NE(demod_factory, nullptr) << "Cannot create channel modulation factory.";
+
+      std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
+      ASSERT_NE(prg_factory, nullptr) << "Cannot create pseudo random generator factory.";
+
+      // Create PUCCH demodulator factory.
+      std::shared_ptr<pucch_demodulator_factory> pucch_demod_factory =
+          create_pucch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory);
+      ASSERT_NE(pucch_demod_factory, nullptr) << "Cannot create PUCCH demodulator factory.";
+
+      // Create UCI decoder factory.
+      std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
+      ASSERT_NE(short_block_det_factory, nullptr) << "Cannot create short block detector factory.";
+
+      uci_decoder_factory_sw_configuration decoder_factory_config = {};
+      decoder_factory_config.decoder_factory                      = short_block_det_factory;
+
+      std::shared_ptr<uci_decoder_factory_spy> decoder_factory = std::make_shared<uci_decoder_factory_spy>();
+      ASSERT_NE(decoder_factory, nullptr) << "Cannot create UCI decoder factory.";
+
+      // Prepare Channel dimensions.
+      channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
+      channel_estimate_dimensions.nof_tx_layers = 1;
+      channel_estimate_dimensions.nof_rx_ports  = 1;
+      channel_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
+      channel_estimate_dimensions.nof_prb       = MAX_RB;
+
+      // Create PUCCH processor factory.
+      processor_factory = create_pucch_processor_factory_sw(
+          dmrs_factory_spy, detector_factory_spy, pucch_demod_factory, decoder_factory, channel_estimate_dimensions);
+      ASSERT_NE(processor_factory, nullptr) << "Cannot create PUCCH processor factory.";
+    }
+  }
+
   void SetUp() override
   {
-    // Create spy factories.
-    std::shared_ptr<dmrs_pucch_estimator_factory_spy> dmrs_factory_spy =
-        std::make_shared<dmrs_pucch_estimator_factory_spy>();
-    std::shared_ptr<pucch_detector_factory_spy> detector_factory_spy = std::make_shared<pucch_detector_factory_spy>();
-
-    // Prepare Channel dimensions.
-    channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
-    channel_estimate_dimensions.nof_tx_layers = 1;
-    channel_estimate_dimensions.nof_rx_ports  = 1;
-    channel_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
-    channel_estimate_dimensions.nof_prb       = MAX_RB;
-
-    // Create PUCCH processor factory.
-    std::shared_ptr<pucch_processor_factory> factory =
-        create_pucch_processor_factory_sw(dmrs_factory_spy, detector_factory_spy, channel_estimate_dimensions);
-    ASSERT_NE(factory, nullptr);
+    // Assert PUCCH Processor factory.
+    ASSERT_NE(processor_factory, nullptr) << "Cannot create PUCCH processor factory.";
 
     // Create PUCCH processor.
-    processor = factory->create();
-    ASSERT_NE(processor, nullptr);
+    processor = processor_factory->create();
+    ASSERT_NE(processor, nullptr) << "Cannot create PUCCH processor.";
 
     // Select spies.
-    dmrs_spy     = dmrs_factory_spy->get_entries().front();
-    detector_spy = detector_factory_spy->get_entries().front();
+    dmrs_spy = dmrs_factory_spy->get_entries().back();
+    ASSERT_NE(dmrs_spy, nullptr);
+
+    detector_spy = detector_factory_spy->get_entries().back();
+    ASSERT_NE(detector_spy, nullptr);
   }
 
   pucch_processor::format1_configuration GetConfig()
@@ -97,6 +139,10 @@ protected:
   dmrs_pucch_processor_spy*        dmrs_spy;
   pucch_detector_spy*              detector_spy;
 };
+
+std::shared_ptr<pucch_processor_factory>          PucchProcessorFormat1Fixture::processor_factory    = nullptr;
+std::shared_ptr<dmrs_pucch_estimator_factory_spy> PucchProcessorFormat1Fixture::dmrs_factory_spy     = nullptr;
+std::shared_ptr<pucch_detector_factory_spy>       PucchProcessorFormat1Fixture::detector_factory_spy = nullptr;
 
 TEST_P(PucchProcessorFormat1Fixture, UnitTest)
 {

@@ -160,6 +160,18 @@ public:
 std::shared_ptr<prach_generator_factory>
 create_prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory);
 
+class pucch_demodulator_factory
+{
+public:
+  virtual ~pucch_demodulator_factory()                = default;
+  virtual std::unique_ptr<pucch_demodulator> create() = 0;
+};
+
+std::shared_ptr<pucch_demodulator_factory>
+create_pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
+                                    std::shared_ptr<channel_modulation_factory>      demodulation_factory,
+                                    std::shared_ptr<pseudo_random_generator_factory> prg_factory);
+
 class pucch_detector_factory
 {
 public:
@@ -181,6 +193,8 @@ public:
 std::shared_ptr<pucch_processor_factory>
 create_pucch_processor_factory_sw(std::shared_ptr<dmrs_pucch_estimator_factory>        dmrs_factory,
                                   std::shared_ptr<pucch_detector_factory>              detector_factory,
+                                  std::shared_ptr<pucch_demodulator_factory>           demodulator_factory,
+                                  std::shared_ptr<uci_decoder_factory>                 decoder_factory,
                                   const channel_estimate::channel_estimate_dimensions& channel_estimate_dimensions);
 
 class pusch_decoder_factory
@@ -268,17 +282,5 @@ public:
 };
 
 std::shared_ptr<ulsch_demultiplex_factory> create_ulsch_demultiplex_factory_sw();
-
-class pucch_demodulator_factory
-{
-public:
-  virtual ~pucch_demodulator_factory()                = default;
-  virtual std::unique_ptr<pucch_demodulator> create() = 0;
-};
-
-std::shared_ptr<pucch_demodulator_factory>
-create_pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
-                                    std::shared_ptr<channel_modulation_factory>      demodulation_factory,
-                                    std::shared_ptr<pseudo_random_generator_factory> prg_factory);
 
 } // namespace srsgnb

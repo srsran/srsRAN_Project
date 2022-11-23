@@ -227,14 +227,29 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(const upp
       create_pucch_detector_factory_sw(lpc_factory, pseudorandom);
   report_fatal_error_if_not(pucch_detector_fact, "Invalid PUCCH detector factory.");
 
+  // Create PUCCH demodulator factory.
+  std::shared_ptr<pucch_demodulator_factory> pucch_demod_factory =
+      create_pucch_demodulator_factory_sw(equalizer_factory, demodulation_factory, prg_factory);
+  report_fatal_error_if_not(pucch_demod_factory, "Invalid PUCCH demodulator factory.");
+
+  // Create UCI decoder factory.
+  std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
+  report_fatal_error_if_not(pucch_demod_factory, "Invalid short block detector factory.");
+
+  uci_decoder_factory_sw_configuration decoder_factory_config = {};
+  decoder_factory_config.decoder_factory                      = short_block_det_factory;
+
+  std::shared_ptr<uci_decoder_factory> uci_decoder_factory = create_uci_decoder_factory_sw(decoder_factory_config);
+  report_fatal_error_if_not(pucch_demod_factory, "Invalid UCI decoder factory.");
+
   channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
   channel_estimate_dimensions.nof_tx_layers = 1;
   channel_estimate_dimensions.nof_rx_ports  = 1;
   channel_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
   channel_estimate_dimensions.nof_prb       = config.ul_bw_rb;
 
-  std::shared_ptr<pucch_processor_factory> pucch_factory =
-      create_pucch_processor_factory_sw(pucch_dmrs_factory, pucch_detector_fact, channel_estimate_dimensions);
+  std::shared_ptr<pucch_processor_factory> pucch_factory = create_pucch_processor_factory_sw(
+      pucch_dmrs_factory, pucch_detector_fact, pucch_demod_factory, uci_decoder_factory, channel_estimate_dimensions);
   report_fatal_error_if_not(pucch_factory, "Invalid PUCCH processor factory.");
 
   uplink_processor_single_executor_factory factory(prach_factory, pusch_factory, pucch_factory, *config.ul_executor);

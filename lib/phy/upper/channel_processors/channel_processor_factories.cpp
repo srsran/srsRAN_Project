@@ -319,24 +319,36 @@ class pucch_processor_factory_sw : public pucch_processor_factory
 public:
   pucch_processor_factory_sw(std::shared_ptr<dmrs_pucch_estimator_factory>&       dmrs_factory_,
                              std::shared_ptr<pucch_detector_factory>&             detector_factory_,
+                             std::shared_ptr<pucch_demodulator_factory>           demodulator_factory_,
+                             std::shared_ptr<uci_decoder_factory>                 decoder_factory_,
                              const channel_estimate::channel_estimate_dimensions& channel_estimate_dimensions_) :
     dmrs_factory(std::move(dmrs_factory_)),
     detector_factory(std::move(detector_factory_)),
+    demodulator_factory(std::move(demodulator_factory_)),
+    decoder_factory(std::move(decoder_factory_)),
     channel_estimate_dimensions(channel_estimate_dimensions_)
   {
     srsgnb_assert(dmrs_factory, "Invalid DM-RS estimator factory.");
     srsgnb_assert(detector_factory, "Invalid detector factory.");
+    srsgnb_assert(demodulator_factory, "Invalid PUCCH demodulator factory.");
+    srsgnb_assert(decoder_factory, "Invalid UCI decoder factory.");
   }
 
   std::unique_ptr<pucch_processor> create() override
   {
-    return std::make_unique<pucch_processor_impl>(
-        dmrs_factory->create_format1(), detector_factory->create(), channel_estimate_dimensions);
+    return std::make_unique<pucch_processor_impl>(dmrs_factory->create_format1(),
+                                                  dmrs_factory->create_format2(),
+                                                  detector_factory->create(),
+                                                  demodulator_factory->create(),
+                                                  decoder_factory->create(),
+                                                  channel_estimate_dimensions);
   }
 
 private:
   std::shared_ptr<dmrs_pucch_estimator_factory> dmrs_factory;
   std::shared_ptr<pucch_detector_factory>       detector_factory;
+  std::shared_ptr<pucch_demodulator_factory>    demodulator_factory;
+  std::shared_ptr<uci_decoder_factory>          decoder_factory;
   channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
 };
 
@@ -601,15 +613,27 @@ srsgnb::create_prach_detector_factory_simple(std::shared_ptr<dft_processor_facto
 std::shared_ptr<pucch_processor_factory> srsgnb::create_pucch_processor_factory_sw(
     std::shared_ptr<dmrs_pucch_estimator_factory>        dmrs_factory,
     std::shared_ptr<pucch_detector_factory>              detector_factory,
+    std::shared_ptr<pucch_demodulator_factory>           demodulator_factory,
+    std::shared_ptr<uci_decoder_factory>                 decoder_factory,
     const channel_estimate::channel_estimate_dimensions& channel_estimate_dimensions)
 {
-  return std::make_shared<pucch_processor_factory_sw>(dmrs_factory, detector_factory, channel_estimate_dimensions);
+  return std::make_shared<pucch_processor_factory_sw>(
+      dmrs_factory, detector_factory, demodulator_factory, decoder_factory, channel_estimate_dimensions);
 }
 
 std::shared_ptr<prach_generator_factory>
 srsgnb::create_prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory)
 {
   return std::make_shared<prach_generator_factory_sw>(std::move(dft_factory));
+}
+
+std::shared_ptr<pucch_demodulator_factory>
+srsgnb::create_pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
+                                            std::shared_ptr<channel_modulation_factory>      demodulation_factory,
+                                            std::shared_ptr<pseudo_random_generator_factory> prg_factory)
+{
+  return std::make_shared<pucch_demodulator_factory_sw>(
+      std::move(equalizer_factory), std::move(demodulation_factory), std::move(prg_factory));
 }
 
 std::shared_ptr<pucch_detector_factory>
@@ -654,13 +678,4 @@ std::shared_ptr<uci_decoder_factory> srsgnb::create_uci_decoder_factory_sw(uci_d
 std::shared_ptr<ulsch_demultiplex_factory> srsgnb::create_ulsch_demultiplex_factory_sw()
 {
   return std::make_shared<ulsch_demultiplex_factory_sw>();
-}
-
-std::shared_ptr<pucch_demodulator_factory>
-srsgnb::create_pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
-                                            std::shared_ptr<channel_modulation_factory>      demodulation_factory,
-                                            std::shared_ptr<pseudo_random_generator_factory> prg_factory)
-{
-  return std::make_shared<pucch_demodulator_factory_sw>(
-      std::move(equalizer_factory), std::move(demodulation_factory), std::move(prg_factory));
 }

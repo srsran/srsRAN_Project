@@ -64,32 +64,31 @@ public:
   /// Gets the message status.
   uci_status get_status() const { return status; }
 
-  /// Gets a read-write view of the full payload.
+  /// \brief Gets a read-write view of the full payload.
+  /// \note The UCI payload fields are arranged following TS38.212 Section 6.3.1.1.3.
   span<uint8_t> get_full_payload()
   {
     return span<uint8_t>(data).first(nof_sr_bits + nof_harq_ack_bits + nof_csi_part1_bits + nof_csi_part2_bits);
   }
 
-  /// Gets a read-only view of the full payload.
+  /// \brief Gets a read-only view of the full payload.
+  /// \note The UCI payload fields are arranged following TS38.212 Section 6.3.1.1.3.
   span<const uint8_t> get_full_payload() const
   {
     return span<const uint8_t>(data).first(nof_sr_bits + nof_harq_ack_bits + nof_csi_part1_bits + nof_csi_part2_bits);
   }
 
   /// Gets a read-write view of the SR bits.
-  span<uint8_t> get_sr_bits() { return span<uint8_t>(data).subspan(0, nof_sr_bits); }
+  span<uint8_t> get_sr_bits() { return span<uint8_t>(data).subspan(nof_harq_ack_bits, nof_sr_bits); }
 
   /// Gets a read-only view of the SR bits.
-  span<const uint8_t> get_sr_bits() const { return span<const uint8_t>(data).subspan(0, nof_sr_bits); }
+  span<const uint8_t> get_sr_bits() const { return span<const uint8_t>(data).subspan(nof_harq_ack_bits, nof_sr_bits); }
 
   /// Gets a read-write view of the HARQ-ACK bits.
-  span<uint8_t> get_harq_ack_bits() { return span<uint8_t>(data).subspan(nof_sr_bits, nof_harq_ack_bits); }
+  span<uint8_t> get_harq_ack_bits() { return span<uint8_t>(data).subspan(0, nof_harq_ack_bits); }
 
   /// Gets a read-only view of the HARQ-ACK bits.
-  span<const uint8_t> get_harq_ack_bits() const
-  {
-    return span<const uint8_t>(data).subspan(nof_sr_bits, nof_harq_ack_bits);
-  }
+  span<const uint8_t> get_harq_ack_bits() const { return span<const uint8_t>(data).subspan(0, nof_harq_ack_bits); }
 
   /// Gets a read-write view of the CSI-Part1 bits.
   span<uint8_t> get_csi_part1_bits()
@@ -100,19 +99,19 @@ public:
   /// Gets a read-only view of the CSI-Part1 bits.
   span<const uint8_t> get_csi_part1_bits() const
   {
-    return span<const uint8_t>(data).subspan(nof_sr_bits + nof_harq_ack_bits, nof_csi_part1_bits);
+    return span<const uint8_t>(data).subspan(nof_harq_ack_bits + nof_sr_bits, nof_csi_part1_bits);
   }
 
   /// Gets a read-write view of the CSI-Part1 bits.
   span<uint8_t> get_csi_part2_bits()
   {
-    return span<uint8_t>(data).subspan(nof_sr_bits + nof_harq_ack_bits + nof_csi_part1_bits, nof_csi_part2_bits);
+    return span<uint8_t>(data).subspan(nof_harq_ack_bits + nof_sr_bits + nof_csi_part1_bits, nof_csi_part2_bits);
   }
 
   /// Gets a read-only view of the CSI-Part1 bits.
   span<const uint8_t> get_csi_part2_bits() const
   {
-    return span<const uint8_t>(data).subspan(nof_sr_bits + nof_harq_ack_bits + nof_csi_part1_bits, nof_csi_part2_bits);
+    return span<const uint8_t>(data).subspan(nof_harq_ack_bits + nof_sr_bits + nof_csi_part1_bits, nof_csi_part2_bits);
   }
 
 private:

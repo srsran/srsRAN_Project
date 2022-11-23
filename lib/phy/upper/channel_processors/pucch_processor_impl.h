@@ -56,18 +56,37 @@ public:
   }
 
   /// PUCCH processor constructor.
-  pucch_processor_impl(std::unique_ptr<dmrs_pucch_processor>                channel_estimator_,
+  pucch_processor_impl(std::unique_ptr<dmrs_pucch_processor>                channel_estimator_format_1_,
+                       std::unique_ptr<dmrs_pucch_processor>                channel_estimator_format_2_,
                        std::unique_ptr<pucch_detector>                      detector_,
+                       std::unique_ptr<pucch_demodulator>                   demodulator_,
+                       std::unique_ptr<uci_decoder>                         decoder_,
                        const channel_estimate::channel_estimate_dimensions& estimates_dimensions) :
-    channel_estimator(std::move(channel_estimator_)), detector(std::move(detector_)), estimates(estimates_dimensions)
+    channel_estimator_format_1(std::move(channel_estimator_format_1_)),
+    channel_estimator_format_2(std::move(channel_estimator_format_2_)),
+    detector(std::move(detector_)),
+    demodulator(std::move(demodulator_)),
+    decoder(std::move(decoder_)),
+    estimates(estimates_dimensions)
   {
-    srsgnb_assert(channel_estimator, "Invalid channel estimator.");
+    srsgnb_assert(channel_estimator_format_1, "Invalid channel estimator for PUCCH Format 1.");
+    srsgnb_assert(channel_estimator_format_2, "Invalid channel estimator for PUCCH Format 2.");
     srsgnb_assert(detector, "Invalid detector.");
+    srsgnb_assert(demodulator, "Invalid PUCCH demodulator.");
+    srsgnb_assert(decoder, "Invalid UCI decoder.");
   }
 
 private:
-  /// Channel estimator.
-  std::unique_ptr<dmrs_pucch_processor> channel_estimator;
+  /// Maximum supported UCI payload length in number of bits.
+  static constexpr unsigned PUCCH_FORMAT2_MAX_UCI_LEN = 11;
+
+  /// Validates PUCCH Format 2 configuration.
+  static void assert_format2_config(const pucch_processor::format2_configuration& config);
+
+  /// Channel estimator for PUCCH Format 1.
+  std::unique_ptr<dmrs_pucch_processor> channel_estimator_format_1;
+  /// Channel estimator for PUCCH Format 2.
+  std::unique_ptr<dmrs_pucch_processor> channel_estimator_format_2;
   /// PUCCH detector for 1 or 2 bits, using format 0 and 1.
   std::unique_ptr<pucch_detector> detector;
   /// PUCCH demodulator for more than 2 bits, using formats 2, 3 and 4.

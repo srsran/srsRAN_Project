@@ -119,10 +119,10 @@ public:
     /// Element \e DMRS-UplinkConfig, if it is configured. Otherwise, it must be equal to the physical cell identifier
     /// \f$N_{\textup{ID}}^{\textup{cell}}\f$.
     unsigned n_id_0;
-    /// Number of expected SR bits {0, ..., 4}.
-    unsigned nof_sr;
     /// Number of expected HARQ-ACK bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
     unsigned nof_harq_ack;
+    /// Number of expected SR bits {0, ..., 4}.
+    unsigned nof_sr;
     /// Number of expected CSI part 1 bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
     unsigned nof_csi_part1;
     /// Number of expected CSI part 2 bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
@@ -176,3 +176,42 @@ public:
 };
 
 } // namespace srsgnb
+
+namespace fmt {
+
+/// \brief Custom formatter for pusch_processor::format2_configuration.
+template <>
+struct formatter<srsgnb::pucch_processor::format2_configuration> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::pucch_processor::format2_configuration& config, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(
+        ctx.out(),
+        "slot={} cp={} ports=[{}] bwp_size_rb={} bwp_start_rb={} starting_prb={} nof_prb={} start_symbol_index={} "
+        "nof_symbols={} rnti={} n_id={} n_id0={} nof_harq_ack={} nof_sr={} nof_csi_part1={} nof_csi_part2={}",
+        config.slot,
+        config.cp.to_string(),
+        srsgnb::span<const uint8_t>(config.ports),
+        config.bwp_size_rb,
+        config.bwp_start_rb,
+        config.starting_prb,
+        config.nof_prb,
+        config.start_symbol_index,
+        config.nof_symbols,
+        config.rnti,
+        config.n_id,
+        config.n_id_0,
+        config.nof_harq_ack,
+        config.nof_sr,
+        config.nof_csi_part1,
+        config.nof_csi_part2);
+  }
+};
+} // namespace fmt

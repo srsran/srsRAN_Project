@@ -87,13 +87,36 @@ protected:
         create_pucch_detector_factory_sw(lpc_factory, prg_factory);
     ASSERT_NE(detector_factory, nullptr);
 
+    // Create factories required by the PUCCH demodulator factory.
+    std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_factory_zf();
+    ASSERT_NE(equalizer_factory, nullptr) << "Cannot create equalizer factory.";
+
+    std::shared_ptr<channel_modulation_factory> demod_factory = create_channel_modulation_sw_factory();
+    ASSERT_NE(demod_factory, nullptr) << "Cannot create channel modulation factory.";
+
+    // Create PUCCH demodulator factory.
+    std::shared_ptr<pucch_demodulator_factory> pucch_demod_factory =
+        create_pucch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory);
+    ASSERT_NE(pucch_demod_factory, nullptr) << "Cannot create PUCCH demodulator factory.";
+
+    // Create UCI decoder factory.
+    std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
+    ASSERT_NE(short_block_det_factory, nullptr) << "Cannot create short block detector factory.";
+
+    uci_decoder_factory_sw_configuration decoder_factory_config = {};
+    decoder_factory_config.decoder_factory                      = short_block_det_factory;
+
+    std::shared_ptr<uci_decoder_factory> decoder_factory = create_uci_decoder_factory_sw(decoder_factory_config);
+    ASSERT_NE(decoder_factory, nullptr) << "Cannot create UCI decoder factory.";
+
     channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
     channel_estimate_dimensions.nof_tx_layers = 1;
     channel_estimate_dimensions.nof_rx_ports  = 1;
     channel_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
     channel_estimate_dimensions.nof_prb       = MAX_RB;
 
-    factory = create_pucch_processor_factory_sw(dmrs_factory, detector_factory, channel_estimate_dimensions);
+    factory = create_pucch_processor_factory_sw(
+        dmrs_factory, detector_factory, pucch_demod_factory, decoder_factory, channel_estimate_dimensions);
     ASSERT_NE(factory, nullptr);
   }
 

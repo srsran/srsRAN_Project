@@ -111,6 +111,25 @@ add_custom_command(
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/prach_generator_test_data.tar.gz
         VERBATIM)
 
+add_executable(pucch_demodulator_format2_test pucch_demodulator_format2_test.cpp)
+target_link_libraries(pucch_demodulator_format2_test
+        srsgnb_channel_processors
+        srsgnb_channel_equalizer
+        srsgnb_phy_support
+        srslog
+        srsgnb_upper_phy_support
+        gtest
+        gtest_main)
+add_test(pucch_demodulator_format2_test pucch_demodulator_format2_test)
+
+add_custom_command(
+        TARGET pucch_demodulator_format2_test
+        POST_BUILD
+        WORKING_DIRECTORY ${TEST_DATA_DIR}
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pucch_demodulator_format2_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pucch_demodulator_format2_test_data.tar.gz
+        VERBATIM)
+
 add_executable(pucch_detector_test pucch_detector_test.cpp)
 target_link_libraries(pucch_detector_test srsgnb_channel_processors srslog gtest gtest_main)
 add_custom_command(
@@ -124,11 +143,22 @@ add_custom_command(
 add_test(pucch_detector_test pucch_detector_test)
 
 add_executable(pucch_processor_format1_unittest pucch_processor_format1_unittest.cpp)
-target_link_libraries(pucch_processor_format1_unittest srsgnb_channel_processors srslog gtest gtest_main)
+target_link_libraries(pucch_processor_format1_unittest
+        srsgnb_channel_equalizer
+        srsgnb_channel_processors
+        srslog
+        gtest
+        gtest_main)
 add_test(pucch_processor_format1_unittest pucch_processor_format1_unittest)
 
 add_executable(pucch_processor_format1_vectortest pucch_processor_format1_vectortest.cpp)
-target_link_libraries(pucch_processor_format1_vectortest srsgnb_phy_support srsgnb_channel_processors srslog gtest gtest_main)
+target_link_libraries(pucch_processor_format1_vectortest
+        srsgnb_channel_equalizer
+        srsgnb_phy_support
+        srsgnb_channel_processors
+        srslog
+        gtest
+        gtest_main)
 add_test(pucch_processor_format1_vectortest pucch_processor_format1_vectortest)
 
 add_custom_command(
@@ -137,6 +167,23 @@ add_custom_command(
         WORKING_DIRECTORY ${TEST_DATA_DIR}
         COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pucch_processor_format1_test_data.tar.gz
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pucch_processor_format1_test_data.tar.gz
+        VERBATIM)
+
+add_executable(pucch_processor_format2_vectortest pucch_processor_format2_vectortest.cpp)
+target_link_libraries(pucch_processor_format2_vectortest
+        srsgnb_channel_processors
+        srsgnb_channel_equalizer
+        srsgnb_phy_support
+        gtest
+        gtest_main)
+add_test(pucch_processor_format2_vectortest pucch_processor_format2_vectortest)
+
+add_custom_command(
+        TARGET pucch_processor_format2_vectortest
+        POST_BUILD
+        WORKING_DIRECTORY ${TEST_DATA_DIR}
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pucch_processor_format2_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pucch_processor_format2_test_data.tar.gz
         VERBATIM)
 
 add_executable(pusch_decoder_test pusch_decoder_test.cpp)
@@ -233,22 +280,3 @@ add_custom_command(
         VERBATIM
 )
 add_test(ulsch_demultiplex_test ulsch_demultiplex_test)
-
-add_executable(pucch_demodulator_format2_test pucch_demodulator_format2_test.cpp)
-target_link_libraries(pucch_demodulator_format2_test
-        srsgnb_channel_processors
-        srsgnb_channel_equalizer
-        srsgnb_phy_support
-        srslog
-        srsgnb_upper_phy_support
-        gtest
-        gtest_main)
-add_test(pucch_demodulator_format2_test pucch_demodulator_format2_test)
-
-add_custom_command(
-        TARGET pucch_demodulator_format2_test
-        POST_BUILD
-        WORKING_DIRECTORY ${TEST_DATA_DIR}
-        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pucch_demodulator_format2_test_data.tar.gz
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pucch_demodulator_format2_test_data.tar.gz
-        VERBATIM)
