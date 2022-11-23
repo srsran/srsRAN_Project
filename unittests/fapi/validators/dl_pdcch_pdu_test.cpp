@@ -17,7 +17,7 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-class validate_pdcch_pdu_field : public ValidateFAPIPDU<dl_pdcch_pdu, dl_pdu_type>,
+class validate_pdcch_pdu_field : public validate_fapi_pdu<dl_pdcch_pdu, dl_pdu_type>,
                                  public testing::TestWithParam<std::tuple<pdu_field_data<dl_pdcch_pdu>, test_case_data>>
 {};
 

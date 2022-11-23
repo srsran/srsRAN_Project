@@ -16,7 +16,7 @@ using namespace fapi;
 using namespace unittest;
 
 class validate_rach_indication_field
-  : public ValidateFAPIMessage<rach_indication_message>,
+  : public validate_fapi_message<rach_indication_message>,
     public testing::TestWithParam<std::tuple<pdu_field_data<rach_indication_message>, test_case_data>>
 {};
 

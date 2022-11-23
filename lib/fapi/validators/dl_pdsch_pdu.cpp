@@ -167,8 +167,7 @@ static bool validate_nscid(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 1;
 
-  return validate_field(
-      MIN_VALUE, MAX_VALUE, value, "NSCID (DMRS sequence initialization)", msg_type, pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "NSCID", msg_type, pdu_type, report);
 }
 
 /// Validates the number of DMRS CDM groups without data property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -426,7 +425,12 @@ bool srsgnb::fapi::validate_dl_pdsch_pdu(const dl_pdsch_pdu& pdu, validator_repo
   result &=
       validate_maintenance_v3_pdsch_trans_type(static_cast<unsigned>(pdu.pdsch_maintenance_v3.trans_type), report);
 
-  if (pdu.pdsch_maintenance_v3.trans_type == pdsch_trans_type::non_interleaved_other) {
+  if (pdu.pdsch_maintenance_v3.trans_type == pdsch_trans_type::non_interleaved_common_ss) {
+    result &= validate_maintenance_v3_coreset_start_point(pdu.pdsch_maintenance_v3.coreset_start_point, report);
+  }
+
+  if (pdu.pdsch_maintenance_v3.trans_type == pdsch_trans_type::interleaved_common_any_coreset0_present ||
+      pdu.pdsch_maintenance_v3.trans_type == pdsch_trans_type::interleaved_common_any_coreset0_not_present) {
     result &= validate_maintenance_v3_coreset_start_point(pdu.pdsch_maintenance_v3.coreset_start_point, report);
     result &= validate_maintenance_v3_initial_dl_bwp_size(pdu.pdsch_maintenance_v3.initial_dl_bwp_size, report);
   }

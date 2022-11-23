@@ -16,7 +16,7 @@ using namespace fapi;
 using namespace unittest;
 
 class validate_tx_data_request_field
-  : public ValidateFAPIMessage<tx_data_request_message>,
+  : public validate_fapi_message<tx_data_request_message>,
     public testing::TestWithParam<std::tuple<pdu_field_data<tx_data_request_message>, test_case_data>>
 {};
 

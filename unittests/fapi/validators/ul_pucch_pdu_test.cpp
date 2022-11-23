@@ -17,7 +17,7 @@ using namespace fapi;
 using namespace unittest;
 
 class validate_pucch_pdu_common_field
-  : public ValidateFAPIPDU<ul_pucch_pdu, ul_pdu_type>,
+  : public validate_fapi_pdu<ul_pucch_pdu, ul_pdu_type>,
     public testing::TestWithParam<
         std::tuple<pdu_field_data<ul_pucch_pdu>, test_case_data, std::function<ul_pucch_pdu()>>>
 {};
@@ -203,7 +203,7 @@ INSTANTIATE_TEST_SUITE_P(
                                      build_valid_ul_pucch_f4_pdu)));
 
 class validate_pucch_f0_pdu_field
-  : public ValidateFAPIPDU<ul_pucch_pdu, ul_pdu_type>,
+  : public validate_fapi_pdu<ul_pucch_pdu, ul_pdu_type>,
     public testing::TestWithParam<std::tuple<pdu_field_data<ul_pucch_pdu>, test_case_data>>
 {};
 
@@ -278,7 +278,7 @@ INSTANTIATE_TEST_SUITE_P(harq_bit_length,
                                                           test_case_data{3, false})));
 
 class validate_pucch_f1_pdu_field
-  : public ValidateFAPIPDU<ul_pucch_pdu, ul_pdu_type>,
+  : public validate_fapi_pdu<ul_pucch_pdu, ul_pdu_type>,
     public testing::TestWithParam<std::tuple<pdu_field_data<ul_pucch_pdu>, test_case_data>>
 {};
 
@@ -362,7 +362,7 @@ INSTANTIATE_TEST_SUITE_P(
                      testing::Values(test_case_data{0, true}, test_case_data{6, true}, test_case_data{7, false})));
 
 class validate_pucch_f2_pdu_field
-  : public ValidateFAPIPDU<ul_pucch_pdu, ul_pdu_type>,
+  : public validate_fapi_pdu<ul_pucch_pdu, ul_pdu_type>,
     public testing::TestWithParam<std::tuple<pdu_field_data<ul_pucch_pdu>, test_case_data>>
 {};
 
@@ -440,7 +440,7 @@ INSTANTIATE_TEST_SUITE_P(max_code_rate,
                                                           test_case_data{8, false})));
 
 class validate_pucch_f3_pdu_field
-  : public ValidateFAPIPDU<ul_pucch_pdu, ul_pdu_type>,
+  : public validate_fapi_pdu<ul_pucch_pdu, ul_pdu_type>,
     public testing::TestWithParam<std::tuple<pdu_field_data<ul_pucch_pdu>, test_case_data>>
 {};
 
@@ -561,7 +561,7 @@ INSTANTIATE_TEST_SUITE_P(max_code_rate,
                                                           test_case_data{8, false})));
 
 class validate_pucch_f4_pdu_field
-  : public ValidateFAPIPDU<ul_pucch_pdu, ul_pdu_type>,
+  : public validate_fapi_pdu<ul_pucch_pdu, ul_pdu_type>,
     public testing::TestWithParam<std::tuple<pdu_field_data<ul_pucch_pdu>, test_case_data>>
 {};
 

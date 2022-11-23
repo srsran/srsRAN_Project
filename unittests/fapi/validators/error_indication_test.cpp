@@ -15,12 +15,12 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-class ValidateErrorIndicationField
-  : public ValidateFAPIMessage<error_indication_message>,
+class validate_error_indication_field
+  : public validate_fapi_message<error_indication_message>,
     public testing::TestWithParam<std::tuple<pdu_field_data<error_indication_message>, test_case_data>>
 {};
 
-TEST_P(ValidateErrorIndicationField, WithValue)
+TEST_P(validate_error_indication_field, WithValue)
 {
   auto params = GetParam();
 
@@ -32,7 +32,7 @@ TEST_P(ValidateErrorIndicationField, WithValue)
 };
 
 INSTANTIATE_TEST_SUITE_P(SFN,
-                         ValidateErrorIndicationField,
+                         validate_error_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<error_indication_message>{
                                               "sfn",
                                               [](error_indication_message& msg, int value) { msg.sfn = value; }}),
@@ -42,7 +42,7 @@ INSTANTIATE_TEST_SUITE_P(SFN,
                                                           test_case_data{1024, false})));
 
 INSTANTIATE_TEST_SUITE_P(slot,
-                         ValidateErrorIndicationField,
+                         validate_error_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<error_indication_message>{
                                               "slot",
                                               [](error_indication_message& msg, int value) { msg.slot = value; }}),
@@ -52,7 +52,7 @@ INSTANTIATE_TEST_SUITE_P(slot,
                                                           test_case_data{160, false})));
 
 INSTANTIATE_TEST_SUITE_P(MessageID,
-                         ValidateErrorIndicationField,
+                         validate_error_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<error_indication_message>{
                                               "Message ID",
                                               [](error_indication_message& msg, int value) {
@@ -74,7 +74,7 @@ INSTANTIATE_TEST_SUITE_P(MessageID,
                                                           test_case_data{0x183, false})));
 
 INSTANTIATE_TEST_SUITE_P(ErrorCodeID,
-                         ValidateErrorIndicationField,
+                         validate_error_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<error_indication_message>{
                                               "Error code",
                                               [](error_indication_message& msg, int value) {
@@ -86,7 +86,7 @@ INSTANTIATE_TEST_SUITE_P(ErrorCodeID,
                                                           test_case_data{0xd, false})));
 
 INSTANTIATE_TEST_SUITE_P(ExpectedSFN,
-                         ValidateErrorIndicationField,
+                         validate_error_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<error_indication_message>{
                                               "Expected SFN",
                                               [](error_indication_message& msg, int value) {
@@ -100,7 +100,7 @@ INSTANTIATE_TEST_SUITE_P(ExpectedSFN,
                                                           test_case_data{1024, false})));
 
 INSTANTIATE_TEST_SUITE_P(ExpectedSFNNoValue,
-                         ValidateErrorIndicationField,
+                         validate_error_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<error_indication_message>{
                                               "Expected SFN",
                                               [](error_indication_message& msg, int value) {
@@ -113,7 +113,7 @@ INSTANTIATE_TEST_SUITE_P(ExpectedSFNNoValue,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(ExpectedSlot,
-                         ValidateErrorIndicationField,
+                         validate_error_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<error_indication_message>{
                                               "Expected slot",
                                               [](error_indication_message& msg, int value) {
@@ -127,7 +127,7 @@ INSTANTIATE_TEST_SUITE_P(ExpectedSlot,
                                                           test_case_data{160, false})));
 
 INSTANTIATE_TEST_SUITE_P(ExpectedSlotNoValue,
-                         ValidateErrorIndicationField,
+                         validate_error_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<error_indication_message>{
                                               "Expected slot",
                                               [](error_indication_message& msg, int value) {
@@ -139,7 +139,7 @@ INSTANTIATE_TEST_SUITE_P(ExpectedSlotNoValue,
                                                           test_case_data{32768, false},
                                                           test_case_data{65535, true})));
 
-TEST(ValidateErrorIndication, ValidMessagePasses)
+TEST(validate_error_indication, valid_message_passes)
 {
   const auto& msg = build_valid_error_indication();
 
@@ -148,7 +148,7 @@ TEST(ValidateErrorIndication, ValidMessagePasses)
   ASSERT_TRUE(result);
 }
 
-TEST(ValidateErrorIndication, InvalidMessageFails)
+TEST(validate_error_indication, invalid_message_fails)
 {
   auto msg = build_valid_error_indication();
 
@@ -164,7 +164,7 @@ TEST(ValidateErrorIndication, InvalidMessageFails)
   ASSERT_EQ(report.reports.size(), 2U);
 }
 
-TEST(ValidateOutOfSyncErrorIndication, ValidMessagePasses)
+TEST(validate_out_of_sync_error_indication, valid_message_passes)
 {
   const auto& msg = build_valid_out_of_sync_error_indication();
 
@@ -173,7 +173,7 @@ TEST(ValidateOutOfSyncErrorIndication, ValidMessagePasses)
   ASSERT_TRUE(result);
 }
 
-TEST(ValidateOutOfSyncErrorIndication, InvalidMessageFails)
+TEST(validate_out_of_sync_error_indication, invalid_message_fails)
 {
   auto msg = build_valid_out_of_sync_error_indication();
 

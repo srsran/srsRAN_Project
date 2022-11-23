@@ -15,45 +15,6 @@
 #include <gtest/gtest.h>
 
 namespace unittest {
-
-/// Class that defines the vector test for the validators.
-template <typename T>
-class test_group
-{
-public:
-  // Auxiliary struct.
-  struct data {
-    unsigned value;
-    bool     result;
-  };
-
-  // Aliases for the iterators.
-  using iterator       = data*;
-  using const_iterator = const data*;
-
-  // Iterators.
-  iterator       begin() { return &*values.begin(); }
-  iterator       end() { return &*values.end(); }
-  const_iterator begin() const { return &*values.cbegin(); }
-  const_iterator end() const { return &*values.cend(); }
-
-  test_group(std::function<void(T& pdu, int value)> f, const char* prop, std::vector<data> values) :
-    f(std::move(f)), prop(prop), values(std::move(values))
-  {
-  }
-
-  /// Configure the Next case of the test case. Returns the test result.
-  void update_msg(T& pdu, int value) const { f(pdu, value); }
-
-  /// Returns the property name.
-  const char* property() const { return prop; }
-
-private:
-  std::function<void(T& pdu, int value)> f;
-  const char*                            prop = "";
-  std::vector<data>                      values;
-};
-
 /// Builds and returns a valid CRC.indication message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.8.
 srsgnb::fapi::crc_indication_message build_valid_crc_indication();
@@ -185,10 +146,10 @@ inline std::ostream& operator<<(std::ostream& os, const test_case_data& arg)
 };
 
 template <typename T, typename F>
-class ValidateFAPIField
+class validate_fapi_field
 {
 public:
-  virtual ~ValidateFAPIField() = default;
+  virtual ~validate_fapi_field() = default;
 
 protected:
   void execute_test(pdu_field_data<T> property, test_case_data params, std::function<T()> builder, F validator)
@@ -227,9 +188,9 @@ protected:
 using fapi_error = srsgnb::error_type<validator_report>;
 
 template <typename T>
-class ValidateFAPIMessage : public ValidateFAPIField<T, std::function<fapi_error(T& pdu)>>
+class validate_fapi_message : public validate_fapi_field<T, std::function<fapi_error(T& pdu)>>
 {
-  using base = ValidateFAPIField<T, std::function<fapi_error(T& pdu)>>;
+  using base = validate_fapi_field<T, std::function<fapi_error(T& pdu)>>;
 
 public:
   void execute_test(pdu_field_data<T>                 property,
@@ -267,9 +228,10 @@ private:
 };
 
 template <typename T, typename U>
-class ValidateFAPIPDU : public ValidateFAPIField<T, std::function<bool(T& pdu, srsgnb::fapi::validator_report& report)>>
+class validate_fapi_pdu
+  : public validate_fapi_field<T, std::function<bool(T& pdu, srsgnb::fapi::validator_report& report)>>
 {
-  using base = ValidateFAPIField<T, std::function<bool(T& pdu, srsgnb::fapi::validator_report& report)>>;
+  using base = validate_fapi_field<T, std::function<bool(T& pdu, srsgnb::fapi::validator_report& report)>>;
 
 public:
   void execute_test(pdu_field_data<T>                                                   property,

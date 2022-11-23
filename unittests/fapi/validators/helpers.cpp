@@ -10,7 +10,6 @@
 
 #include "helpers.h"
 #include "srsgnb/adt/bitmap_utils.h"
-#include "srsgnb/fapi/message_builders.h"
 #include <random>
 
 static std::mt19937 gen(0);
@@ -212,113 +211,52 @@ dl_pdcch_pdu unittest::build_valid_dl_pdcch_pdu()
 
 dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
 {
-  static constexpr unsigned iterations = 10000;
-  std::vector<unsigned>     results;
-  results.reserve(iterations);
+  dl_pdsch_pdu pdu;
+  pdu.pdu_bitmap.set(1);
+  pdu.rnti                               = to_rnti(3);
+  pdu.pdu_index                          = 2;
+  pdu.bwp_size                           = 3;
+  pdu.bwp_start                          = 4;
+  pdu.scs                                = subcarrier_spacing::kHz15;
+  pdu.cp                                 = cyclic_prefix::NORMAL;
+  pdu.cws                                = {{10, 2, 3, 1, 3, 12}};
+  pdu.nid_pdsch                          = 65;
+  pdu.num_layers                         = 6;
+  pdu.transmission_scheme                = 0;
+  pdu.ref_point                          = pdsch_ref_point_type::point_a;
+  pdu.pdsch_dmrs_scrambling_id           = 31;
+  pdu.dmrs_type                          = dmrs_cfg_type::type_1;
+  pdu.pdsch_dmrs_scrambling_id_compl     = 42;
+  pdu.low_papr_dmrs                      = low_papr_dmrs_type::dependent_cdm_group;
+  pdu.nscid                              = 0;
+  pdu.num_dmrs_cdm_grps_no_data          = 2;
+  pdu.resource_alloc                     = resource_allocation_type::type_1;
+  pdu.rb_start                           = 42;
+  pdu.rb_size                            = 89;
+  pdu.vrb_to_prb_mapping                 = fapi::vrb_to_prb_mapping_type::interleaved_rb_size2;
+  pdu.start_symbol_index                 = 3;
+  pdu.nr_of_symbols                      = 5;
+  pdu.power_control_offset_profile_nr    = 6;
+  pdu.power_control_offset_ss_profile_nr = fapi::nzp_csi_rs_epre_to_ssb::dB3;
+  pdu.is_inline_tb_crc                   = fapi::inline_tb_crc_type::control_message;
 
-  // Random generators.
-  std::uniform_int_distribution<unsigned> rnti_dist(1, 65535);
-  std::uniform_int_distribution<unsigned> bwp_size_dist(1, 275);
-  std::uniform_int_distribution<unsigned> bwp_start_dist(0, 274);
-  std::uniform_int_distribution<unsigned> nid_pdsch_dist(0, 1023);
-  std::uniform_int_distribution<unsigned> dmrs_scrambling_dist(0, 65535);
-  std::uniform_int_distribution<unsigned> binary_dist(0, 1);
-  std::uniform_int_distribution<unsigned> dmrs_cdm_grps_no_data_dist(1, 3);
-  std::uniform_int_distribution<unsigned> nr_of_symbols_dist(1, 14);
-  std::uniform_int_distribution<unsigned> start_symbol_index_dist(0, 13);
-  std::uniform_real_distribution<float>   power_dist(-32, 32.0);
+  // Maintenance v3.
+  pdu.pdsch_maintenance_v3.trans_type = srsgnb::fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present;
+  pdu.pdsch_maintenance_v3.coreset_start_point                  = 2;
+  pdu.pdsch_maintenance_v3.initial_dl_bwp_size                  = 3;
+  pdu.pdsch_maintenance_v3.ldpc_base_graph                      = srsgnb::ldpc_base_graph_type::BG1;
+  pdu.pdsch_maintenance_v3.tb_size_lbrm_bytes                   = 12;
+  pdu.pdsch_maintenance_v3.prb_sym_rm_pattern_bitmap_size_byref = 0;
+  pdu.pdsch_maintenance_v3.num_prb_sym_rm_patts_by_value        = 0;
+  pdu.pdsch_maintenance_v3.num_coreset_rm_patterns              = 0;
+  pdu.pdsch_maintenance_v3.pdcch_pdu_index                      = 4;
+  pdu.pdsch_maintenance_v3.dci_index                            = 3;
+  pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss  = -32768;
+  pdu.pdsch_maintenance_v3.pdsch_data_power_offset_profile_sss  = -32768;
+  pdu.pdsch_maintenance_v3.max_num_cbg_per_tb                   = 4;
 
-  unsigned                 pdu_bitmap          = 0;
-  cyclic_prefix            cyclic_p            = cyclic_prefix::NORMAL;
-  pdsch_ref_point_type     ref_point           = pdsch_ref_point_type::point_a;
-  dmrs_config_type         config_type         = dmrs_config_type::type1;
-  low_papr_dmrs_type       low_papr            = low_papr_dmrs_type::independent_cdm_group;
-  resource_allocation_type resource_alloc      = resource_allocation_type::type_0;
-  vrb_to_prb_mapping_type  vrb_prb_mapping     = vrb_to_prb_mapping_type::non_interleaved;
-  nzp_csi_rs_epre_to_ssb   power_ss_profile_nr = nzp_csi_rs_epre_to_ssb::dB_minus_3;
-  int                      power_nr            = -7;
-  int                      power               = -30;
-  pdsch_trans_type         trasn_type          = pdsch_trans_type::non_interleaved_other;
-  ldpc_base_graph_type     ldpc_graph          = ldpc_base_graph_type::BG1;
-
-  rnti_t   rnti                     = to_rnti(rnti_dist(gen));
-  unsigned bwp_size                 = bwp_size_dist(gen);
-  unsigned bwp_start                = bwp_start_dist(gen);
-  unsigned nid_pdsch                = nid_pdsch_dist(gen);
-  unsigned scrambling_id            = dmrs_scrambling_dist(gen);
-  unsigned scrambling_id_complement = dmrs_scrambling_dist(gen);
-  bool     n_scid                   = binary_dist(gen);
-  unsigned dmrs_cdm_grps_no_data    = dmrs_cdm_grps_no_data_dist(gen);
-  unsigned start_symbol_index       = start_symbol_index_dist(gen);
-  unsigned nr_of_symbols            = nr_of_symbols_dist(gen);
-  unsigned coreset_start            = bwp_size_dist(gen);
-  unsigned initial_bwp_size         = bwp_size_dist(gen);
-  unsigned tb_size_lbrm_bytes       = bwp_size_dist(gen);
-  unsigned dl_dmrs_symbol           = rnti_dist(gen);
-  unsigned rb_size                  = nr_of_symbols_dist(gen);
-  unsigned rb_start                 = start_symbol_index_dist(gen);
-  float    profile_sss              = power_dist(gen);
-
-  std::array<uint8_t, 36> rb_bitmap = {};
-
-  dl_pdsch_pdu         pdu;
-  dl_pdsch_pdu_builder builder_pdsch(pdu);
-
-  builder_pdsch.set_basic_parameters(rnti);
-
-  builder_pdsch.set_ptrs_params();
-
-  // Always work with the biggest numerology.
-  builder_pdsch.set_bwp_parameters(bwp_size, bwp_start, subcarrier_spacing::kHz240, cyclic_p);
-  builder_pdsch.set_codeword_information_parameters(nid_pdsch, 1, 0, ref_point);
-  builder_pdsch.set_dmrs_parameters(
-      dl_dmrs_symbol, config_type, scrambling_id, scrambling_id_complement, low_papr, n_scid, dmrs_cdm_grps_no_data, 0);
-
-  auto builder_cw = builder_pdsch.add_codeword();
-
-  unsigned target_code = 2;
-  unsigned qam_mod     = 2;
-  unsigned mcs         = 20;
-  unsigned mcs_table   = 1;
-  unsigned rv_index    = 0;
-  unsigned tb_size     = 42;
-
-  builder_cw.set_basic_parameters(target_code, qam_mod, mcs, mcs_table, rv_index, tb_size);
-
-  if (resource_alloc == resource_allocation_type::type_0) {
-    builder_pdsch.set_pdsch_allocation_in_frequency_type_0({rb_bitmap}, vrb_prb_mapping);
-  } else {
-    builder_pdsch.set_pdsch_allocation_in_frequency_type_1(rb_start, rb_size, vrb_prb_mapping);
-  }
-
-  builder_pdsch.set_pdsch_allocation_in_time_parameters(start_symbol_index, nr_of_symbols);
-
-  optional<int>   profile_nr;
-  optional<float> dmrs_profile;
-  if (power_nr != -9) {
-    profile_nr.emplace(power_nr);
-  } else {
-    dmrs_profile.emplace(profile_sss);
-  }
-
-  builder_pdsch.set_tx_power_info_parameters(profile_nr, power_ss_profile_nr);
-
-  // :TODO: not filling CBG to retx control parameters.
-
-  builder_pdsch.set_maintenance_v3_bwp_parameters(trasn_type, coreset_start, initial_bwp_size);
-  builder_pdsch.set_maintenance_v3_codeword_parameters(
-      ldpc_graph, tb_size_lbrm_bytes, pdu_bitmap & 1U, (pdu_bitmap >> 1) & 1U);
-
-  optional<float> data_profile;
-  if (power != -33) {
-    data_profile.emplace(power);
-  }
-
-  builder_pdsch.set_maintenance_v3_tx_power_info_parameters(dmrs_profile, data_profile);
-
-  std::vector<uint8_t> rm_vector;
-
-  builder_pdsch.set_maintenance_v4_basic_parameters(3, {rm_vector}, binary_dist(gen), {rm_vector});
+  // Maintenance v4
+  pdu.pdsch_parameters_v4.lte_crs_mbsfn_derivation_method = 0;
 
   return pdu;
 }
@@ -347,14 +285,11 @@ dl_csi_rs_pdu unittest::build_valid_dl_csi_pdu()
 
 dl_tti_request_message unittest::build_valid_dl_tti_request()
 {
-  dl_tti_request_message         msg;
-  dl_tti_request_message_builder builder(msg);
+  dl_tti_request_message msg;
 
-  std::uniform_int_distribution<unsigned> sfn_dist(0, 1023);
-  std::uniform_int_distribution<unsigned> slot_dist(0, 159);
-
-  // :TODO: at this moment code does not support groups, the number of groups is set to 0.
-  builder.set_basic_parameters(sfn_dist(gen), slot_dist(gen), 0);
+  msg.sfn        = 4;
+  msg.slot       = 0;
+  msg.num_groups = 0;
 
   // Manually add the SSB PDU to reuse the functions above.
   msg.pdus.emplace_back();

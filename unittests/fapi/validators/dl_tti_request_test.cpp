@@ -16,18 +16,63 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-/// Tests that a valid DL TTI request message validates correctly.
-static void test_dl_tti_request_ok()
+class validate_dl_tti_request_field
+  : public validate_fapi_message<dl_tti_request_message>,
+    public testing::TestWithParam<std::tuple<pdu_field_data<dl_tti_request_message>, test_case_data>>
+{};
+
+TEST_P(validate_dl_tti_request_field, with_value)
+{
+  auto params = GetParam();
+
+  execute_test(std::get<0>(params),
+               std::get<1>(params),
+               build_valid_dl_tti_request,
+               validate_dl_tti_request,
+               srsgnb::fapi::message_type_id::dl_tti_request);
+};
+
+INSTANTIATE_TEST_SUITE_P(sfn,
+                         validate_dl_tti_request_field,
+                         testing::Combine(testing::Values(pdu_field_data<dl_tti_request_message>{
+                                              "sfn",
+                                              [](dl_tti_request_message& msg, int value) { msg.sfn = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{512, true},
+                                                          test_case_data{1023, true},
+                                                          test_case_data{1024, false})));
+
+INSTANTIATE_TEST_SUITE_P(slot,
+                         validate_dl_tti_request_field,
+                         testing::Combine(testing::Values(pdu_field_data<dl_tti_request_message>{
+                                              "slot",
+                                              [](dl_tti_request_message& msg, int value) { msg.slot = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{80, true},
+                                                          test_case_data{159, true},
+                                                          test_case_data{160, false})));
+
+INSTANTIATE_TEST_SUITE_P(nof_pdu_grps,
+                         validate_dl_tti_request_field,
+                         testing::Combine(testing::Values(pdu_field_data<dl_tti_request_message>{
+                                              "Number of PDU groups",
+                                              [](dl_tti_request_message& msg, int value) { msg.num_groups = value; }}),
+                                          testing::Values(test_case_data{0, true},
+                                                          test_case_data{1902, true},
+                                                          test_case_data{3823, false})));
+
+/// Tests that a valid UL_TTI.request message validates correctly.
+TEST(validate_dl_tti_request, valid_request_passes)
 {
   dl_tti_request_message msg = build_valid_dl_tti_request();
 
   const auto& result = validate_dl_tti_request(msg);
 
-  TESTASSERT(result);
+  ASSERT_TRUE(result);
 }
 
-/// Tests that a DL TTI request message which contains errors in some properties fails to validate.
-static void test_dl_tti_request_error()
+/// Tests that a UL_TTI.request message which contains errors in some properties fails to validate.
+TEST(validate_dl_tti_request, invalid_request_fails)
 {
   dl_tti_request_message msg = build_valid_dl_tti_request();
 
@@ -39,15 +84,9 @@ static void test_dl_tti_request_error()
 
   const auto& result = validate_dl_tti_request(msg);
 
-  TESTASSERT(!result);
+  ASSERT_FALSE(result);
 
   const auto& report = result.error();
   // Check that the 4 errors are reported.
-  TESTASSERT_EQ(report.reports.size(), 4u);
-}
-
-int main()
-{
-  test_dl_tti_request_ok();
-  test_dl_tti_request_error();
+  ASSERT_EQ(report.reports.size(), 4u);
 }

@@ -16,11 +16,11 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-class ValidatePUSCHPDUField : public ValidateFAPIPDU<ul_pusch_pdu, ul_pdu_type>,
-                              public testing::TestWithParam<std::tuple<pdu_field_data<ul_pusch_pdu>, test_case_data>>
+class validate_pusch_pdu_field : public validate_fapi_pdu<ul_pusch_pdu, ul_pdu_type>,
+                                 public testing::TestWithParam<std::tuple<pdu_field_data<ul_pusch_pdu>, test_case_data>>
 {};
 
-TEST_P(ValidatePUSCHPDUField, WithValue)
+TEST_P(validate_pusch_pdu_field, WithValue)
 {
   auto params = GetParam();
 
@@ -33,7 +33,7 @@ TEST_P(ValidatePUSCHPDUField, WithValue)
 };
 
 INSTANTIATE_TEST_SUITE_P(RNTI,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "RNTI",
                                               [](ul_pusch_pdu& pdu, int value) { pdu.rnti = to_rnti(value); }}),
@@ -43,7 +43,7 @@ INSTANTIATE_TEST_SUITE_P(RNTI,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(BWP_Size,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "BWP size",
                                               [](ul_pusch_pdu& pdu, int value) { pdu.bwp_size = value; }}),
@@ -54,7 +54,7 @@ INSTANTIATE_TEST_SUITE_P(BWP_Size,
                                                           test_case_data{276, false})));
 
 INSTANTIATE_TEST_SUITE_P(BWP_Start,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "BWP start",
                                               [](ul_pusch_pdu& pdu, int value) { pdu.bwp_start = value; }}),
@@ -64,7 +64,7 @@ INSTANTIATE_TEST_SUITE_P(BWP_Start,
                                                           test_case_data{275, false})));
 
 INSTANTIATE_TEST_SUITE_P(Subcarrier_spacing,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "Subcarrier spacing",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -77,14 +77,14 @@ INSTANTIATE_TEST_SUITE_P(Subcarrier_spacing,
 
 INSTANTIATE_TEST_SUITE_P(
     Cyclic_prefix,
-    ValidatePUSCHPDUField,
+    validate_pusch_pdu_field,
     testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                          "Cyclic prefix",
                          [](ul_pusch_pdu& pdu, int value) { pdu.cp = static_cast<cyclic_prefix::options>(value); }}),
                      testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
 
 INSTANTIATE_TEST_SUITE_P(Modulation_order_tp_disabled,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "QAM modulation order",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -101,7 +101,7 @@ INSTANTIATE_TEST_SUITE_P(Modulation_order_tp_disabled,
                                                           test_case_data{8, true})));
 
 INSTANTIATE_TEST_SUITE_P(Modulation_order_tp_enabled,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "QAM modulation order",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -118,7 +118,7 @@ INSTANTIATE_TEST_SUITE_P(Modulation_order_tp_enabled,
                                                           test_case_data{8, true})));
 
 INSTANTIATE_TEST_SUITE_P(MCS_index,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "MCS index",
                                               [](ul_pusch_pdu& pdu, int value) { pdu.mcs_index = value; }}),
@@ -128,7 +128,7 @@ INSTANTIATE_TEST_SUITE_P(MCS_index,
                                                           test_case_data{32, false})));
 
 INSTANTIATE_TEST_SUITE_P(MCS_table,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "MCS table",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -140,7 +140,7 @@ INSTANTIATE_TEST_SUITE_P(MCS_table,
                                                           test_case_data{5, false})));
 
 INSTANTIATE_TEST_SUITE_P(NID_PUSCH,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "NID PUSCH",
                                               [](ul_pusch_pdu& pdu, int value) { pdu.nid_pusch = value; }}),
@@ -150,7 +150,7 @@ INSTANTIATE_TEST_SUITE_P(NID_PUSCH,
                                                           test_case_data{1024, false})));
 
 INSTANTIATE_TEST_SUITE_P(Layers,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "Number of layers",
                                               [](ul_pusch_pdu& pdu, int value) { pdu.num_layers = value; }}),
@@ -161,7 +161,7 @@ INSTANTIATE_TEST_SUITE_P(Layers,
 
 INSTANTIATE_TEST_SUITE_P(
     DMRS_type,
-    ValidatePUSCHPDUField,
+    validate_pusch_pdu_field,
     testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                          "DMRS config type",
                          [](ul_pusch_pdu& pdu, int value) { pdu.dmrs_type = static_cast<dmrs_cfg_type>(value); }}),
@@ -169,7 +169,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 INSTANTIATE_TEST_SUITE_P(
     Low_PAPR_DMRS,
-    ValidatePUSCHPDUField,
+    validate_pusch_pdu_field,
     testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{"Low PAPR DMRS",
                                                                   [](ul_pusch_pdu& pdu, int value) {
                                                                     pdu.low_papr_dmrs =
@@ -178,7 +178,7 @@ INSTANTIATE_TEST_SUITE_P(
                      testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
 
 INSTANTIATE_TEST_SUITE_P(DMRS_identity,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "PUSCH DMRS identity",
                                               [](ul_pusch_pdu& pdu, int value) { pdu.pusch_dmrs_identity = value; }}),
@@ -189,13 +189,13 @@ INSTANTIATE_TEST_SUITE_P(DMRS_identity,
 
 INSTANTIATE_TEST_SUITE_P(
     NSCID,
-    ValidatePUSCHPDUField,
+    validate_pusch_pdu_field,
     testing::Combine(
         testing::Values(pdu_field_data<ul_pusch_pdu>{"NSCID", [](ul_pusch_pdu& pdu, int value) { pdu.nscid = value; }}),
         testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
 
 INSTANTIATE_TEST_SUITE_P(DMRS_groups_no_data,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "Number of DMRS CDM groups without data",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -209,7 +209,7 @@ INSTANTIATE_TEST_SUITE_P(DMRS_groups_no_data,
 
 INSTANTIATE_TEST_SUITE_P(
     Resource_allocation_type,
-    ValidatePUSCHPDUField,
+    validate_pusch_pdu_field,
     testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{"Resource allocation type",
                                                                   [](ul_pusch_pdu& pdu, int value) {
                                                                     pdu.resource_alloc =
@@ -218,7 +218,7 @@ INSTANTIATE_TEST_SUITE_P(
                      testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
 
 INSTANTIATE_TEST_SUITE_P(RB_start,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "RB start",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -232,7 +232,7 @@ INSTANTIATE_TEST_SUITE_P(RB_start,
                                                           test_case_data{275, false})));
 
 INSTANTIATE_TEST_SUITE_P(RB_size,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "RB size",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -248,7 +248,7 @@ INSTANTIATE_TEST_SUITE_P(RB_size,
 
 INSTANTIATE_TEST_SUITE_P(
     VRB_mapping,
-    ValidatePUSCHPDUField,
+    validate_pusch_pdu_field,
     testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{"VRB-to-PRB mapping",
                                                                   [](ul_pusch_pdu& pdu, int value) {
                                                                     pdu.vrb_to_prb_mapping =
@@ -257,7 +257,7 @@ INSTANTIATE_TEST_SUITE_P(
                      testing::Values(test_case_data{0, true}, test_case_data{1, false}, test_case_data{2, false})));
 
 INSTANTIATE_TEST_SUITE_P(Tx_direct_current_location,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "Tx direct current location",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -270,7 +270,7 @@ INSTANTIATE_TEST_SUITE_P(Tx_direct_current_location,
                                                           test_case_data{4096, false})));
 
 INSTANTIATE_TEST_SUITE_P(Symbol_start,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "Start symbol index",
                                               [](ul_pusch_pdu& pdu, int value) { pdu.start_symbol_index = value; }}),
@@ -281,7 +281,7 @@ INSTANTIATE_TEST_SUITE_P(Symbol_start,
                                                           test_case_data{14, false})));
 
 INSTANTIATE_TEST_SUITE_P(Num_symbols,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "Number of symbols",
                                               [](ul_pusch_pdu& pdu, int value) { pdu.nr_of_symbols = value; }}),
@@ -292,7 +292,7 @@ INSTANTIATE_TEST_SUITE_P(Num_symbols,
                                                           test_case_data{15, false})));
 
 INSTANTIATE_TEST_SUITE_P(RV_index,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "RV index",
                                               [](ul_pusch_pdu& pdu, int value) { pdu.pusch_data.rv_index = value; }}),
@@ -303,7 +303,7 @@ INSTANTIATE_TEST_SUITE_P(RV_index,
                                                           test_case_data{4, false})));
 
 INSTANTIATE_TEST_SUITE_P(HARQ_index,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "HARQ process id",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -316,7 +316,7 @@ INSTANTIATE_TEST_SUITE_P(HARQ_index,
                                                           test_case_data{16, false})));
 
 INSTANTIATE_TEST_SUITE_P(HARQ_ack_bitlen,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "HARQ ACK bit length",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -329,7 +329,7 @@ INSTANTIATE_TEST_SUITE_P(HARQ_ack_bitlen,
                                                           test_case_data{1707, false})));
 
 INSTANTIATE_TEST_SUITE_P(CSI_part1_bitlen,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "CSI part1 bit length",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -342,7 +342,7 @@ INSTANTIATE_TEST_SUITE_P(CSI_part1_bitlen,
                                                           test_case_data{1707, false})));
 
 INSTANTIATE_TEST_SUITE_P(CSI_part2_bitlen,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "Flag CSI part2",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -354,7 +354,7 @@ INSTANTIATE_TEST_SUITE_P(CSI_part2_bitlen,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(alpha_scaling,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "Alpha scaling",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -367,7 +367,7 @@ INSTANTIATE_TEST_SUITE_P(alpha_scaling,
                                                           test_case_data{4, false})));
 
 INSTANTIATE_TEST_SUITE_P(beta_offset_HARQ,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "Beta offset HARQ ACK",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -379,7 +379,7 @@ INSTANTIATE_TEST_SUITE_P(beta_offset_HARQ,
                                                           test_case_data{16, false})));
 
 INSTANTIATE_TEST_SUITE_P(beta_offset_CSI1,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "Beta offset CSI Part1",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -391,7 +391,7 @@ INSTANTIATE_TEST_SUITE_P(beta_offset_CSI1,
                                                           test_case_data{19, false})));
 
 INSTANTIATE_TEST_SUITE_P(beta_offset_CSI2,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "Beta offset CSI Part2",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -403,7 +403,7 @@ INSTANTIATE_TEST_SUITE_P(beta_offset_CSI2,
                                                           test_case_data{19, false})));
 
 INSTANTIATE_TEST_SUITE_P(PTRS_port,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "PTRS DMRS port",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -415,7 +415,7 @@ INSTANTIATE_TEST_SUITE_P(PTRS_port,
                                                           test_case_data{12, false})));
 
 INSTANTIATE_TEST_SUITE_P(PTRS_RE_offset,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "PTRS RE offset",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -427,7 +427,7 @@ INSTANTIATE_TEST_SUITE_P(PTRS_RE_offset,
                                                           test_case_data{12, false})));
 
 INSTANTIATE_TEST_SUITE_P(PTRS_time_density,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "PTRS time density",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -440,14 +440,14 @@ INSTANTIATE_TEST_SUITE_P(PTRS_time_density,
 
 INSTANTIATE_TEST_SUITE_P(
     PTRS_freq_density,
-    ValidatePUSCHPDUField,
+    validate_pusch_pdu_field,
     testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                          "PTRS frequency density",
                          [](ul_pusch_pdu& pdu, int value) { pdu.pusch_ptrs.ptrs_freq_density = value; }}),
                      testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
 
 INSTANTIATE_TEST_SUITE_P(UL_PTRS_power,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "UL PTRS power",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -459,7 +459,7 @@ INSTANTIATE_TEST_SUITE_P(UL_PTRS_power,
                                                           test_case_data{4, false})));
 
 INSTANTIATE_TEST_SUITE_P(low_PAPR_group,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "Low PAPR group number",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -471,7 +471,7 @@ INSTANTIATE_TEST_SUITE_P(low_PAPR_group,
                                                           test_case_data{30, false})));
 
 INSTANTIATE_TEST_SUITE_P(UL_PTRS_sample_density,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "UL PTRS sample density",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -484,7 +484,7 @@ INSTANTIATE_TEST_SUITE_P(UL_PTRS_sample_density,
                                                           test_case_data{9, false})));
 
 INSTANTIATE_TEST_SUITE_P(UL_PTRS_time_density,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "UL PTRS time density transform precoding",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -497,7 +497,7 @@ INSTANTIATE_TEST_SUITE_P(UL_PTRS_time_density,
                                                           test_case_data{5, false})));
 
 INSTANTIATE_TEST_SUITE_P(trans_type,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "PUSCH trans type",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -509,7 +509,7 @@ INSTANTIATE_TEST_SUITE_P(trans_type,
                                                           test_case_data{3, false})));
 
 INSTANTIATE_TEST_SUITE_P(delta_BWP0_to_active_BWP,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "Delta BWP0 start from active BWP",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -521,7 +521,7 @@ INSTANTIATE_TEST_SUITE_P(delta_BWP0_to_active_BWP,
                                                           test_case_data{275, false})));
 
 INSTANTIATE_TEST_SUITE_P(initial_BWP_size,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "Initial UL BWP size",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -533,7 +533,7 @@ INSTANTIATE_TEST_SUITE_P(initial_BWP_size,
                                                           test_case_data{275, false})));
 
 INSTANTIATE_TEST_SUITE_P(group_seq_hopping,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "Group or sequence hopping",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -545,7 +545,7 @@ INSTANTIATE_TEST_SUITE_P(group_seq_hopping,
                                                           test_case_data{3, false})));
 
 INSTANTIATE_TEST_SUITE_P(second_hop_PRB,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "PUSCH second hop PRB",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -557,7 +557,7 @@ INSTANTIATE_TEST_SUITE_P(second_hop_PRB,
                                                           test_case_data{275, false})));
 
 INSTANTIATE_TEST_SUITE_P(LDPC_graph,
-                         ValidatePUSCHPDUField,
+                         validate_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "LDPC base graph",
                                               [](ul_pusch_pdu& pdu, int value) {
@@ -571,7 +571,7 @@ INSTANTIATE_TEST_SUITE_P(LDPC_graph,
 
 INSTANTIATE_TEST_SUITE_P(
     part2_size_map,
-    ValidatePUSCHPDUField,
+    validate_pusch_pdu_field,
     testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                          "Part2 size map scope",
                          [](ul_pusch_pdu& pdu, int value) {
@@ -581,7 +581,7 @@ INSTANTIATE_TEST_SUITE_P(
                      testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
 
 /// Valid PDU should pass.
-TEST(ValidatePUSCHPDU, ValidPDUPasses)
+TEST(validate_pusch_pdu, valid_pdu_passes)
 {
   validator_report report(0, 0);
   const auto&      pdu = build_valid_ul_pusch_pdu();
@@ -591,7 +591,7 @@ TEST(ValidatePUSCHPDU, ValidPDUPasses)
 }
 
 /// Add 3 errors and check that validation fails with 3 errors.
-TEST(ValidatePUSCHPDU, InvalidPDUFails)
+TEST(validate_pusch_pdu, invalid_pdu_fails)
 {
   validator_report report(0, 0);
   auto             pdu = build_valid_ul_pusch_pdu();

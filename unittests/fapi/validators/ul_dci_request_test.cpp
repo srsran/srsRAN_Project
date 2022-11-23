@@ -17,7 +17,7 @@ using namespace fapi;
 using namespace unittest;
 
 class validate_ul_dci_request_field
-  : public ValidateFAPIMessage<ul_dci_request_message>,
+  : public validate_fapi_message<ul_dci_request_message>,
     public testing::TestWithParam<std::tuple<pdu_field_data<ul_dci_request_message>, test_case_data>>
 {};
 

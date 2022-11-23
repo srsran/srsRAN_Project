@@ -16,12 +16,12 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-class ValidateSlotIndicationField
-  : public ValidateFAPIMessage<slot_indication_message>,
+class validate_slot_indication_field
+  : public validate_fapi_message<slot_indication_message>,
     public testing::TestWithParam<std::tuple<pdu_field_data<slot_indication_message>, test_case_data>>
 {};
 
-TEST_P(ValidateSlotIndicationField, WithValue)
+TEST_P(validate_slot_indication_field, WithValue)
 {
   auto params = GetParam();
 
@@ -33,7 +33,7 @@ TEST_P(ValidateSlotIndicationField, WithValue)
 };
 
 INSTANTIATE_TEST_SUITE_P(SFN,
-                         ValidateSlotIndicationField,
+                         validate_slot_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<slot_indication_message>{
                                               "sfn",
                                               [](slot_indication_message& msg, int value) { msg.sfn = value; }}),
@@ -43,7 +43,7 @@ INSTANTIATE_TEST_SUITE_P(SFN,
                                                           test_case_data{1024, false})));
 
 INSTANTIATE_TEST_SUITE_P(slot,
-                         ValidateSlotIndicationField,
+                         validate_slot_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<slot_indication_message>{
                                               "slot",
                                               [](slot_indication_message& msg, int value) { msg.slot = value; }}),
@@ -52,7 +52,7 @@ INSTANTIATE_TEST_SUITE_P(slot,
                                                           test_case_data{159, true},
                                                           test_case_data{160, false})));
 
-TEST(ValidateSlotIndication, ValidMessagePasses)
+TEST(validate_slot_indication, valid_message_passes)
 {
   const auto& msg = build_valid_slot_indication();
 
@@ -61,7 +61,7 @@ TEST(ValidateSlotIndication, ValidMessagePasses)
   ASSERT_TRUE(result);
 }
 
-TEST(ValidateSlotIndication, InvalidMessageFails)
+TEST(validate_slot_indication, invalid_message_fails)
 {
   auto msg = build_valid_slot_indication();
 

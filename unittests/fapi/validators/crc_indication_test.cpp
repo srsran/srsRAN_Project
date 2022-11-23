@@ -15,12 +15,12 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-class ValidateCRCMessageField
-  : public ValidateFAPIMessage<crc_indication_message>,
+class validate_crc_message_field
+  : public validate_fapi_message<crc_indication_message>,
     public testing::TestWithParam<std::tuple<pdu_field_data<crc_indication_message>, test_case_data>>
 {};
 
-TEST_P(ValidateCRCMessageField, WithValue)
+TEST_P(validate_crc_message_field, WithValue)
 {
   auto params = GetParam();
 
@@ -32,7 +32,7 @@ TEST_P(ValidateCRCMessageField, WithValue)
 };
 
 INSTANTIATE_TEST_SUITE_P(SFN,
-                         ValidateCRCMessageField,
+                         validate_crc_message_field,
                          testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
                                               "sfn",
                                               [](crc_indication_message& msg, int value) { msg.sfn = value; }}),
@@ -42,7 +42,7 @@ INSTANTIATE_TEST_SUITE_P(SFN,
                                                           test_case_data{1024, false})));
 
 INSTANTIATE_TEST_SUITE_P(slot,
-                         ValidateCRCMessageField,
+                         validate_crc_message_field,
                          testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
                                               "slot",
                                               [](crc_indication_message& msg, int value) { msg.slot = value; }}),
@@ -53,14 +53,14 @@ INSTANTIATE_TEST_SUITE_P(slot,
 
 INSTANTIATE_TEST_SUITE_P(
     RNTI,
-    ValidateCRCMessageField,
+    validate_crc_message_field,
     testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
                          "RNTI",
                          [](crc_indication_message& msg, int value) { msg.pdus.front().rnti = to_rnti(value); }}),
                      testing::Values(test_case_data{0, false}, test_case_data{1, true}, test_case_data{159, true})));
 
 INSTANTIATE_TEST_SUITE_P(RAPID,
-                         ValidateCRCMessageField,
+                         validate_crc_message_field,
                          testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
                                               "RAPID",
                                               [](crc_indication_message& msg, int value) {
@@ -74,7 +74,7 @@ INSTANTIATE_TEST_SUITE_P(RAPID,
                                                           test_case_data{255, true})));
 
 INSTANTIATE_TEST_SUITE_P(HARQ,
-                         ValidateCRCMessageField,
+                         validate_crc_message_field,
                          testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
                                               "HARQ ID",
                                               [](crc_indication_message& msg, int value) {
@@ -86,7 +86,7 @@ INSTANTIATE_TEST_SUITE_P(HARQ,
                                                           test_case_data{16, false})));
 
 INSTANTIATE_TEST_SUITE_P(TA,
-                         ValidateCRCMessageField,
+                         validate_crc_message_field,
                          testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
                                               "Timing advance offset",
                                               [](crc_indication_message& msg, int value) {
@@ -100,7 +100,7 @@ INSTANTIATE_TEST_SUITE_P(TA,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(TA_ns,
-                         ValidateCRCMessageField,
+                         validate_crc_message_field,
                          testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
                                               "Timing advance offset in nanoseconds",
                                               [](crc_indication_message& msg, int value) {
@@ -115,7 +115,7 @@ INSTANTIATE_TEST_SUITE_P(TA_ns,
                                                           test_case_data{16801, false})));
 
 INSTANTIATE_TEST_SUITE_P(RSSI,
-                         ValidateCRCMessageField,
+                         validate_crc_message_field,
                          testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
                                               "RSSI",
                                               [](crc_indication_message& msg, int value) {
@@ -129,7 +129,7 @@ INSTANTIATE_TEST_SUITE_P(RSSI,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(RSRP,
-                         ValidateCRCMessageField,
+                         validate_crc_message_field,
                          testing::Combine(testing::Values(pdu_field_data<crc_indication_message>{
                                               "RSRP",
                                               [](crc_indication_message& msg, int value) {
@@ -143,7 +143,7 @@ INSTANTIATE_TEST_SUITE_P(RSRP,
                                                           test_case_data{65535, true})));
 
 /// Valid Message should pass.
-TEST(ValidateCRCIndication, ValidMessagePasses)
+TEST(validate_crc_indication, valid_message_passes)
 {
   const crc_indication_message& msg    = build_valid_crc_indication();
   const auto&                   result = validate_crc_indication(msg);
@@ -152,7 +152,7 @@ TEST(ValidateCRCIndication, ValidMessagePasses)
 }
 
 /// Add 3 errors and check that validation fails with 3 errors.
-TEST(ValidateCRCIndication, InvalidMessageFails)
+TEST(validate_crc_indication, invalid_message_fails)
 {
   crc_indication_message msg = build_valid_crc_indication();
 

@@ -16,7 +16,7 @@ using namespace fapi;
 using namespace unittest;
 
 class validate_ul_tti_request_field
-  : public ValidateFAPIMessage<ul_tti_request_message>,
+  : public validate_fapi_message<ul_tti_request_message>,
     public testing::TestWithParam<std::tuple<pdu_field_data<ul_tti_request_message>, test_case_data>>
 {};
 
@@ -61,7 +61,7 @@ INSTANTIATE_TEST_SUITE_P(nof_pdu_grps,
                                                           test_case_data{3823, false})));
 
 /// Tests that a valid UL_TTI.request message validates correctly.
-TEST(validate_ul_tti_request, valid_indication_passes)
+TEST(validate_ul_tti_request, valid_request_passes)
 {
   const auto& msg = build_valid_ul_tti_request();
 

@@ -17,12 +17,12 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-class ValidateUCIPUSCHPDUField
-  : public ValidateFAPIPDU<uci_pusch_pdu, uci_pdu_type>,
+class validate_uci_pusch_pdu_field
+  : public validate_fapi_pdu<uci_pusch_pdu, uci_pdu_type>,
     public testing::TestWithParam<std::tuple<pdu_field_data<uci_pusch_pdu>, test_case_data>>
 {};
 
-TEST_P(ValidateUCIPUSCHPDUField, WithValue)
+TEST_P(validate_uci_pusch_pdu_field, WithValue)
 {
   auto params = GetParam();
 
@@ -35,7 +35,7 @@ TEST_P(ValidateUCIPUSCHPDUField, WithValue)
 }
 
 INSTANTIATE_TEST_SUITE_P(RNTI,
-                         ValidateUCIPUSCHPDUField,
+                         validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
                                               "RNTI",
                                               [](uci_pusch_pdu& pdu, int value) { pdu.rnti = to_rnti(value); }}),
@@ -45,7 +45,7 @@ INSTANTIATE_TEST_SUITE_P(RNTI,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(TA,
-                         ValidateUCIPUSCHPDUField,
+                         validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
                                               "Timing advance offset",
                                               [](uci_pusch_pdu& pdu, int value) {
@@ -59,7 +59,7 @@ INSTANTIATE_TEST_SUITE_P(TA,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(TA_ns,
-                         ValidateUCIPUSCHPDUField,
+                         validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
                                               "Timing advance offset in nanoseconds",
                                               [](uci_pusch_pdu& pdu, int value) {
@@ -74,7 +74,7 @@ INSTANTIATE_TEST_SUITE_P(TA_ns,
                                                           test_case_data{16801, false})));
 
 INSTANTIATE_TEST_SUITE_P(RSSI,
-                         ValidateUCIPUSCHPDUField,
+                         validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
                                               "RSSI",
                                               [](uci_pusch_pdu& pdu, int value) { pdu.rssi = value; }}),
@@ -86,7 +86,7 @@ INSTANTIATE_TEST_SUITE_P(RSSI,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(RSRP,
-                         ValidateUCIPUSCHPDUField,
+                         validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
                                               "RSRP",
                                               [](uci_pusch_pdu& pdu, int value) { pdu.rsrp = value; }}),
@@ -98,7 +98,7 @@ INSTANTIATE_TEST_SUITE_P(RSRP,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(HARQDetection,
-                         ValidateUCIPUSCHPDUField,
+                         validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
                                               "HARQ detection status",
                                               [](uci_pusch_pdu& pdu, int value) {
@@ -113,7 +113,7 @@ INSTANTIATE_TEST_SUITE_P(HARQDetection,
                                                           test_case_data{6, false})));
 
 INSTANTIATE_TEST_SUITE_P(HARQBitLength,
-                         ValidateUCIPUSCHPDUField,
+                         validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
                                               "Expected HARQ bit length",
                                               [](uci_pusch_pdu& pdu, int value) {
@@ -128,7 +128,7 @@ INSTANTIATE_TEST_SUITE_P(HARQBitLength,
                                                           test_case_data{1707, false})));
 
 INSTANTIATE_TEST_SUITE_P(CSIPart1Detection,
-                         ValidateUCIPUSCHPDUField,
+                         validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
                                               "CSI Part 1 detection status",
                                               [](uci_pusch_pdu& pdu, int value) {
@@ -144,7 +144,7 @@ INSTANTIATE_TEST_SUITE_P(CSIPart1Detection,
                                                           test_case_data{6, false})));
 
 INSTANTIATE_TEST_SUITE_P(CSIPart1BitLength,
-                         ValidateUCIPUSCHPDUField,
+                         validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
                                               "Expected CSI part1 bit length",
                                               [](uci_pusch_pdu& pdu, int value) {
@@ -159,7 +159,7 @@ INSTANTIATE_TEST_SUITE_P(CSIPart1BitLength,
                                                           test_case_data{1707, false})));
 
 INSTANTIATE_TEST_SUITE_P(CSIPart2Detection,
-                         ValidateUCIPUSCHPDUField,
+                         validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
                                               "CSI Part 2 detection status",
                                               [](uci_pusch_pdu& pdu, int value) {
@@ -175,7 +175,7 @@ INSTANTIATE_TEST_SUITE_P(CSIPart2Detection,
                                                           test_case_data{6, false})));
 
 INSTANTIATE_TEST_SUITE_P(CSIPart2BitLength,
-                         ValidateUCIPUSCHPDUField,
+                         validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
                                               "Expected CSI part2 bit length",
                                               [](uci_pusch_pdu& pdu, int value) {
@@ -189,7 +189,7 @@ INSTANTIATE_TEST_SUITE_P(CSIPart2BitLength,
                                                           test_case_data{1706, true},
                                                           test_case_data{1707, false})));
 
-TEST(ValidateUCIPUSCHPDU, ValidPDUPasses)
+TEST(validate_uci_pusch_pdu_field, valid_pdu_passes)
 {
   auto pdu = build_valid_uci_pusch_pdu();
 
@@ -199,7 +199,7 @@ TEST(ValidateUCIPUSCHPDU, ValidPDUPasses)
   ASSERT_TRUE(report.reports.empty());
 }
 
-TEST(ValidateUCIPUSCHPDU, InvalidPDUFails)
+TEST(validate_uci_pusch_pdu_field, invalid_pdu_fails)
 {
   auto pdu = build_valid_uci_pusch_pdu();
 
@@ -215,12 +215,12 @@ TEST(ValidateUCIPUSCHPDU, InvalidPDUFails)
   ASSERT_EQ(report.reports.size(), 4u);
 }
 
-class ValidateUCIPUCCHFormat01PDUField
-  : public ValidateFAPIPDU<uci_pucch_pdu_format_0_1, uci_pdu_type>,
+class validate_uci_pucch_format01_pdu_field
+  : public validate_fapi_pdu<uci_pucch_pdu_format_0_1, uci_pdu_type>,
     public testing::TestWithParam<std::tuple<pdu_field_data<uci_pucch_pdu_format_0_1>, test_case_data>>
 {};
 
-TEST_P(ValidateUCIPUCCHFormat01PDUField, WithValue)
+TEST_P(validate_uci_pucch_format01_pdu_field, WithValue)
 {
   auto params = GetParam();
 
@@ -233,7 +233,7 @@ TEST_P(ValidateUCIPUCCHFormat01PDUField, WithValue)
 };
 
 INSTANTIATE_TEST_SUITE_P(RNTI,
-                         ValidateUCIPUCCHFormat01PDUField,
+                         validate_uci_pucch_format01_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_0_1>{
                                               "RNTI",
                                               [](uci_pucch_pdu_format_0_1& pdu, int value) {
@@ -246,7 +246,7 @@ INSTANTIATE_TEST_SUITE_P(RNTI,
 
 INSTANTIATE_TEST_SUITE_P(
     Format,
-    ValidateUCIPUCCHFormat01PDUField,
+    validate_uci_pucch_format01_pdu_field,
     testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_0_1>{
                          "PUCCH format",
                          [](uci_pucch_pdu_format_0_1& pdu, int value) {
@@ -255,7 +255,7 @@ INSTANTIATE_TEST_SUITE_P(
                      testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
 
 INSTANTIATE_TEST_SUITE_P(TA,
-                         ValidateUCIPUCCHFormat01PDUField,
+                         validate_uci_pucch_format01_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_0_1>{
                                               "Timing advance offset",
                                               [](uci_pucch_pdu_format_0_1& pdu, int value) {
@@ -269,7 +269,7 @@ INSTANTIATE_TEST_SUITE_P(TA,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(TA_ns,
-                         ValidateUCIPUCCHFormat01PDUField,
+                         validate_uci_pucch_format01_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_0_1>{
                                               "Timing advance offset in nanoseconds",
                                               [](uci_pucch_pdu_format_0_1& pdu, int value) {
@@ -284,7 +284,7 @@ INSTANTIATE_TEST_SUITE_P(TA_ns,
                                                           test_case_data{16801, false})));
 
 INSTANTIATE_TEST_SUITE_P(RSSI,
-                         ValidateUCIPUCCHFormat01PDUField,
+                         validate_uci_pucch_format01_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_0_1>{
                                               "RSSI",
                                               [](uci_pucch_pdu_format_0_1& pdu, int value) { pdu.rssi = value; }}),
@@ -296,7 +296,7 @@ INSTANTIATE_TEST_SUITE_P(RSSI,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(RSRP,
-                         ValidateUCIPUCCHFormat01PDUField,
+                         validate_uci_pucch_format01_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_0_1>{
                                               "RSRP",
                                               [](uci_pucch_pdu_format_0_1& pdu, int value) { pdu.rsrp = value; }}),
@@ -308,7 +308,7 @@ INSTANTIATE_TEST_SUITE_P(RSRP,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(SRConfidenceLevel,
-                         ValidateUCIPUCCHFormat01PDUField,
+                         validate_uci_pucch_format01_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_0_1>{
                                               "SR confidence level",
                                               [](uci_pucch_pdu_format_0_1& pdu, int value) {
@@ -322,7 +322,7 @@ INSTANTIATE_TEST_SUITE_P(SRConfidenceLevel,
                                                           test_case_data{255, true})));
 
 INSTANTIATE_TEST_SUITE_P(HARQConfidence,
-                         ValidateUCIPUCCHFormat01PDUField,
+                         validate_uci_pucch_format01_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_0_1>{
                                               "HARQ confidence level",
                                               [](uci_pucch_pdu_format_0_1& pdu, int value) {
@@ -338,7 +338,7 @@ INSTANTIATE_TEST_SUITE_P(HARQConfidence,
 
 INSTANTIATE_TEST_SUITE_P(
     HARQNumber,
-    ValidateUCIPUCCHFormat01PDUField,
+    validate_uci_pucch_format01_pdu_field,
     testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_0_1>{
                          "Number of HARQ bits",
                          [](uci_pucch_pdu_format_0_1& pdu, int value) {
@@ -349,7 +349,7 @@ INSTANTIATE_TEST_SUITE_P(
                      testing::Values(test_case_data{0, false}, test_case_data{1, true}, test_case_data{2, true})));
 
 INSTANTIATE_TEST_SUITE_P(HARQValue,
-                         ValidateUCIPUCCHFormat01PDUField,
+                         validate_uci_pucch_format01_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_0_1>{
                                               "HARQ value",
                                               [](uci_pucch_pdu_format_0_1& pdu, int value) {
@@ -364,7 +364,7 @@ INSTANTIATE_TEST_SUITE_P(HARQValue,
                                                           test_case_data{2, true},
                                                           test_case_data{3, false})));
 
-TEST(ValidateUCIPUCCHFormat01PDU, ValidPDUPasses)
+TEST(validate_uci_pucch_format01_pdu, valid_pdu_passes)
 {
   auto pdu = build_valid_uci_pucch_format01_pdu();
 
@@ -374,7 +374,7 @@ TEST(ValidateUCIPUCCHFormat01PDU, ValidPDUPasses)
   ASSERT_TRUE(report.reports.empty());
 }
 
-TEST(ValidateUCIPUCCHFormat01PDU, InvalidPDUFails)
+TEST(validate_uci_pucch_format01_pdu, invalid_pdu_fails)
 {
   auto pdu = build_valid_uci_pucch_format01_pdu();
 
@@ -389,12 +389,12 @@ TEST(ValidateUCIPUCCHFormat01PDU, InvalidPDUFails)
   ASSERT_EQ(report.reports.size(), 3u);
 }
 
-class ValidateUCIPUCCHFormat234PDUField
-  : public ValidateFAPIPDU<uci_pucch_pdu_format_2_3_4, uci_pdu_type>,
+class validate_uci_pucch_format234_pdu_field
+  : public validate_fapi_pdu<uci_pucch_pdu_format_2_3_4, uci_pdu_type>,
     public testing::TestWithParam<std::tuple<pdu_field_data<uci_pucch_pdu_format_2_3_4>, test_case_data>>
 {};
 
-TEST_P(ValidateUCIPUCCHFormat234PDUField, WithValue)
+TEST_P(validate_uci_pucch_format234_pdu_field, WithValue)
 {
   auto params = GetParam();
 
@@ -407,7 +407,7 @@ TEST_P(ValidateUCIPUCCHFormat234PDUField, WithValue)
 };
 
 INSTANTIATE_TEST_SUITE_P(RNTI,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "RNTI",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
@@ -419,7 +419,7 @@ INSTANTIATE_TEST_SUITE_P(RNTI,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(Format,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "PUCCH format",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
@@ -432,7 +432,7 @@ INSTANTIATE_TEST_SUITE_P(Format,
                                                           test_case_data{3, false})));
 
 INSTANTIATE_TEST_SUITE_P(TA,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "Timing advance offset",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
@@ -446,7 +446,7 @@ INSTANTIATE_TEST_SUITE_P(TA,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(TA_ns,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "Timing advance offset in nanoseconds",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
@@ -461,7 +461,7 @@ INSTANTIATE_TEST_SUITE_P(TA_ns,
                                                           test_case_data{16801, false})));
 
 INSTANTIATE_TEST_SUITE_P(RSSI,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "RSSI",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) { pdu.rssi = value; }}),
@@ -473,7 +473,7 @@ INSTANTIATE_TEST_SUITE_P(RSSI,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(RSRP,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "RSRP",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) { pdu.rsrp = value; }}),
@@ -485,7 +485,7 @@ INSTANTIATE_TEST_SUITE_P(RSRP,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(SRBitlength,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "SR bit length",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
@@ -499,7 +499,7 @@ INSTANTIATE_TEST_SUITE_P(SRBitlength,
                                                           test_case_data{5, false})));
 
 INSTANTIATE_TEST_SUITE_P(HARQDetection,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "HARQ detection status",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
@@ -514,7 +514,7 @@ INSTANTIATE_TEST_SUITE_P(HARQDetection,
                                                           test_case_data{6, false})));
 
 INSTANTIATE_TEST_SUITE_P(HARQBitLength,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "Expected HARQ bit length",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
@@ -529,7 +529,7 @@ INSTANTIATE_TEST_SUITE_P(HARQBitLength,
                                                           test_case_data{1707, false})));
 
 INSTANTIATE_TEST_SUITE_P(CSIPart1Detection,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "CSI Part 1 detection status",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
@@ -547,7 +547,7 @@ INSTANTIATE_TEST_SUITE_P(CSIPart1Detection,
                                                           test_case_data{6, false})));
 
 INSTANTIATE_TEST_SUITE_P(CSIPart1BitLength,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "Expected CSI part1 bit length",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
@@ -564,7 +564,7 @@ INSTANTIATE_TEST_SUITE_P(CSIPart1BitLength,
                                                           test_case_data{1707, false})));
 
 INSTANTIATE_TEST_SUITE_P(CSIPart2Detection,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "CSI Part 2 detection status",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
@@ -582,7 +582,7 @@ INSTANTIATE_TEST_SUITE_P(CSIPart2Detection,
                                                           test_case_data{6, false})));
 
 INSTANTIATE_TEST_SUITE_P(CSIPart2BitLength,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "Expected CSI part2 bit length",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
@@ -599,7 +599,7 @@ INSTANTIATE_TEST_SUITE_P(CSIPart2BitLength,
                                                           test_case_data{1707, false})));
 
 INSTANTIATE_TEST_SUITE_P(UCIPart1Detection,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "UCI detection status",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
@@ -617,7 +617,7 @@ INSTANTIATE_TEST_SUITE_P(UCIPart1Detection,
                                                           test_case_data{6, false})));
 
 INSTANTIATE_TEST_SUITE_P(UCIPart1BitLength,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "Expected UCI payload size",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
@@ -634,7 +634,7 @@ INSTANTIATE_TEST_SUITE_P(UCIPart1BitLength,
                                                           test_case_data{1707, false})));
 
 INSTANTIATE_TEST_SUITE_P(UCIPart2Detection,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "UCI detection status",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
@@ -652,7 +652,7 @@ INSTANTIATE_TEST_SUITE_P(UCIPart2Detection,
                                                           test_case_data{6, false})));
 
 INSTANTIATE_TEST_SUITE_P(UCIPart2BitLength,
-                         ValidateUCIPUCCHFormat234PDUField,
+                         validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "Expected UCI payload size",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
@@ -668,7 +668,7 @@ INSTANTIATE_TEST_SUITE_P(UCIPart2BitLength,
                                                           test_case_data{1706, true},
                                                           test_case_data{1707, false})));
 
-TEST(ValidateUCIPUCCHFormat234PDU, ValidPDUPasses)
+TEST(validate_uci_pucch_format234_pdu, valid_pdu_passes)
 {
   auto pdu = build_valid_uci_pucch_format234_pdu();
 
@@ -678,7 +678,7 @@ TEST(ValidateUCIPUCCHFormat234PDU, ValidPDUPasses)
   ASSERT_TRUE(report.reports.empty());
 }
 
-TEST(ValidateUCIPUCCHFormat234PDU, InvalidPDUFails)
+TEST(validate_uci_pucch_format234_pdu, invalid_pdu_fails)
 {
   auto pdu = build_valid_uci_pucch_format234_pdu();
 
@@ -694,12 +694,12 @@ TEST(ValidateUCIPUCCHFormat234PDU, InvalidPDUFails)
   ASSERT_EQ(report.reports.size(), 4u);
 }
 
-class ValidateUCIIndicationField
-  : public ValidateFAPIMessage<uci_indication_message>,
+class validate_uci_indication_field
+  : public validate_fapi_message<uci_indication_message>,
     public testing::TestWithParam<std::tuple<pdu_field_data<uci_indication_message>, test_case_data>>
 {};
 
-TEST_P(ValidateUCIIndicationField, WithValue)
+TEST_P(validate_uci_indication_field, WithValue)
 {
   auto params = GetParam();
 
@@ -711,7 +711,7 @@ TEST_P(ValidateUCIIndicationField, WithValue)
 };
 
 INSTANTIATE_TEST_SUITE_P(SFN,
-                         ValidateUCIIndicationField,
+                         validate_uci_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_indication_message>{
                                               "sfn",
                                               [](uci_indication_message& msg, int value) { msg.sfn = value; }}),
@@ -721,7 +721,7 @@ INSTANTIATE_TEST_SUITE_P(SFN,
                                                           test_case_data{1024, false})));
 
 INSTANTIATE_TEST_SUITE_P(slot,
-                         ValidateUCIIndicationField,
+                         validate_uci_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_indication_message>{
                                               "slot",
                                               [](uci_indication_message& msg, int value) { msg.slot = value; }}),
@@ -730,7 +730,7 @@ INSTANTIATE_TEST_SUITE_P(slot,
                                                           test_case_data{159, true},
                                                           test_case_data{160, false})));
 
-TEST(ValidateUCIIndication, ValidIndicationPasses)
+TEST(validate_uci_indication_field, valid_indication_passes)
 {
   auto msg = build_valid_uci_indication();
 
@@ -738,7 +738,7 @@ TEST(ValidateUCIIndication, ValidIndicationPasses)
   ASSERT_TRUE(result);
 }
 
-TEST(ValidateUCIIndication, InvalidIndicationFails)
+TEST(validate_uci_indication_field, invalid_indication_fails)
 {
   auto msg = build_valid_uci_indication();
 

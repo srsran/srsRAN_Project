@@ -16,11 +16,11 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-class ValidateCSIPDUField : public ValidateFAPIPDU<dl_csi_rs_pdu, dl_pdu_type>,
-                            public testing::TestWithParam<std::tuple<pdu_field_data<dl_csi_rs_pdu>, test_case_data>>
+class validate_csi_pdu_field : public validate_fapi_pdu<dl_csi_rs_pdu, dl_pdu_type>,
+                               public testing::TestWithParam<std::tuple<pdu_field_data<dl_csi_rs_pdu>, test_case_data>>
 {};
 
-TEST_P(ValidateCSIPDUField, WithValue)
+TEST_P(validate_csi_pdu_field, WithValue)
 {
   auto params = GetParam();
 
@@ -33,7 +33,7 @@ TEST_P(ValidateCSIPDUField, WithValue)
 };
 
 INSTANTIATE_TEST_SUITE_P(Subcarrier_spacing,
-                         ValidateCSIPDUField,
+                         validate_csi_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "Subcarrier spacing",
                                               [](dl_csi_rs_pdu& pdu, int value) {
@@ -46,14 +46,14 @@ INSTANTIATE_TEST_SUITE_P(Subcarrier_spacing,
 
 INSTANTIATE_TEST_SUITE_P(
     Cyclic_prefix,
-    ValidateCSIPDUField,
+    validate_csi_pdu_field,
     testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                          "Cyclic prefix",
                          [](dl_csi_rs_pdu& pdu, int value) { pdu.cp = static_cast<cyclic_prefix::options>(value); }}),
                      testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
 
 INSTANTIATE_TEST_SUITE_P(Start_RB,
-                         ValidateCSIPDUField,
+                         validate_csi_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "Start RB",
                                               [](dl_csi_rs_pdu& pdu, int value) { pdu.start_rb = value; }}),
@@ -63,7 +63,7 @@ INSTANTIATE_TEST_SUITE_P(Start_RB,
                                                           test_case_data{275, false})));
 
 INSTANTIATE_TEST_SUITE_P(Number_of_RBs,
-                         ValidateCSIPDUField,
+                         validate_csi_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "Number of RBs",
                                               [](dl_csi_rs_pdu& pdu, int value) { pdu.num_rbs = value; }}),
@@ -74,7 +74,7 @@ INSTANTIATE_TEST_SUITE_P(Number_of_RBs,
                                                           test_case_data{277, false})));
 
 INSTANTIATE_TEST_SUITE_P(CSI_type,
-                         ValidateCSIPDUField,
+                         validate_csi_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "CSI type",
                                               [](dl_csi_rs_pdu& pdu, int value) {
@@ -86,7 +86,7 @@ INSTANTIATE_TEST_SUITE_P(CSI_type,
                                                           test_case_data{3, false})));
 
 INSTANTIATE_TEST_SUITE_P(Row,
-                         ValidateCSIPDUField,
+                         validate_csi_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "Row",
                                               [](dl_csi_rs_pdu& pdu, int value) { pdu.row = value; }}),
@@ -97,7 +97,7 @@ INSTANTIATE_TEST_SUITE_P(Row,
                                                           test_case_data{19, false})));
 
 INSTANTIATE_TEST_SUITE_P(Symbol_L0,
-                         ValidateCSIPDUField,
+                         validate_csi_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "Symbol L0",
                                               [](dl_csi_rs_pdu& pdu, int value) { pdu.symb_L0 = value; }}),
@@ -107,7 +107,7 @@ INSTANTIATE_TEST_SUITE_P(Symbol_L0,
                                                           test_case_data{14, false})));
 
 INSTANTIATE_TEST_SUITE_P(Symbol_L1,
-                         ValidateCSIPDUField,
+                         validate_csi_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "Symbol L1",
                                               [](dl_csi_rs_pdu& pdu, int value) { pdu.symb_L1 = value; }}),
@@ -118,7 +118,7 @@ INSTANTIATE_TEST_SUITE_P(Symbol_L1,
                                                           test_case_data{13, false})));
 
 INSTANTIATE_TEST_SUITE_P(CDM_type,
-                         ValidateCSIPDUField,
+                         validate_csi_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "CDM type",
                                               [](dl_csi_rs_pdu& pdu, int value) {
@@ -130,7 +130,7 @@ INSTANTIATE_TEST_SUITE_P(CDM_type,
                                                           test_case_data{4, false})));
 
 INSTANTIATE_TEST_SUITE_P(Freq_density,
-                         ValidateCSIPDUField,
+                         validate_csi_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "Freq density",
                                               [](dl_csi_rs_pdu& pdu, int value) {
@@ -142,7 +142,7 @@ INSTANTIATE_TEST_SUITE_P(Freq_density,
                                                           test_case_data{4, false})));
 
 INSTANTIATE_TEST_SUITE_P(Scrambling_ID,
-                         ValidateCSIPDUField,
+                         validate_csi_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "Scrambling ID",
                                               [](dl_csi_rs_pdu& pdu, int value) { pdu.scramb_id = value; }}),
@@ -152,7 +152,7 @@ INSTANTIATE_TEST_SUITE_P(Scrambling_ID,
                                                           test_case_data{1024, false})));
 
 INSTANTIATE_TEST_SUITE_P(Power_control_offset,
-                         ValidateCSIPDUField,
+                         validate_csi_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "Power control offset",
                                               [](dl_csi_rs_pdu& pdu, int value) {
@@ -165,7 +165,7 @@ INSTANTIATE_TEST_SUITE_P(Power_control_offset,
                                                           test_case_data{24, false})));
 
 INSTANTIATE_TEST_SUITE_P(Power_control_offset_v3,
-                         ValidateCSIPDUField,
+                         validate_csi_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "Power control offset",
                                               [](dl_csi_rs_pdu& pdu, int value) {
@@ -179,7 +179,7 @@ INSTANTIATE_TEST_SUITE_P(Power_control_offset_v3,
                                                                          false})));
 
 INSTANTIATE_TEST_SUITE_P(Power_control_offset_SS_profile_NR,
-                         ValidateCSIPDUField,
+                         validate_csi_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "Power control offset SS profile NR",
                                               [](dl_csi_rs_pdu& pdu, int value) {
@@ -195,7 +195,7 @@ INSTANTIATE_TEST_SUITE_P(Power_control_offset_SS_profile_NR,
                                                           test_case_data{255, true})));
 
 /// Valid PDU should pass.
-TEST(ValidateCSIPDU, ValidPDUPasses)
+TEST(validate_csi_pdu, valid_pdu_passes)
 {
   dl_csi_rs_pdu pdu = build_valid_dl_csi_pdu();
 
@@ -206,7 +206,7 @@ TEST(ValidateCSIPDU, ValidPDUPasses)
 }
 
 /// Add 3 errors and check that validation fails with 3 errors.
-TEST(ValidateCSIPDU, InvalidPDUFails)
+TEST(validate_csi_pdu, invalid_pdu_fails)
 {
   dl_csi_rs_pdu pdu = build_valid_dl_csi_pdu();
 

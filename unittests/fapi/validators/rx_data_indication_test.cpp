@@ -16,12 +16,12 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-class ValidateRXDataIndicationField
-  : public ValidateFAPIMessage<rx_data_indication_message>,
+class validate_rx_data_indication_field
+  : public validate_fapi_message<rx_data_indication_message>,
     public testing::TestWithParam<std::tuple<pdu_field_data<rx_data_indication_message>, test_case_data>>
 {};
 
-TEST_P(ValidateRXDataIndicationField, WithValue)
+TEST_P(validate_rx_data_indication_field, WithValue)
 {
   auto params = GetParam();
 
@@ -33,7 +33,7 @@ TEST_P(ValidateRXDataIndicationField, WithValue)
 };
 
 INSTANTIATE_TEST_SUITE_P(sfn,
-                         ValidateRXDataIndicationField,
+                         validate_rx_data_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<rx_data_indication_message>{
                                               "sfn",
                                               [](rx_data_indication_message& pdu, int value) { pdu.sfn = value; }}),
@@ -43,7 +43,7 @@ INSTANTIATE_TEST_SUITE_P(sfn,
                                                           test_case_data{1024, false})));
 
 INSTANTIATE_TEST_SUITE_P(slot,
-                         ValidateRXDataIndicationField,
+                         validate_rx_data_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<rx_data_indication_message>{
                                               "slot",
                                               [](rx_data_indication_message& pdu, int value) { pdu.slot = value; }}),
@@ -53,7 +53,7 @@ INSTANTIATE_TEST_SUITE_P(slot,
                                                           test_case_data{160, false})));
 
 INSTANTIATE_TEST_SUITE_P(RNTI,
-                         ValidateRXDataIndicationField,
+                         validate_rx_data_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<rx_data_indication_message>{
                                               "RNTI",
                                               [](rx_data_indication_message& pdu, int value) {
@@ -65,7 +65,7 @@ INSTANTIATE_TEST_SUITE_P(RNTI,
                                                           test_case_data{65535, true})));
 
 INSTANTIATE_TEST_SUITE_P(RAPID,
-                         ValidateRXDataIndicationField,
+                         validate_rx_data_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<rx_data_indication_message>{
                                               "RAPID",
                                               [](rx_data_indication_message& pdu, int value) {
@@ -79,7 +79,7 @@ INSTANTIATE_TEST_SUITE_P(RAPID,
                                                           test_case_data{255, true})));
 
 INSTANTIATE_TEST_SUITE_P(HarqID,
-                         ValidateRXDataIndicationField,
+                         validate_rx_data_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<rx_data_indication_message>{
                                               "HARQ ID",
                                               [](rx_data_indication_message& pdu, int value) {
@@ -91,7 +91,7 @@ INSTANTIATE_TEST_SUITE_P(HarqID,
                                                           test_case_data{16, false})));
 
 INSTANTIATE_TEST_SUITE_P(PDUTag,
-                         ValidateRXDataIndicationField,
+                         validate_rx_data_indication_field,
                          testing::Combine(testing::Values(pdu_field_data<rx_data_indication_message>{
                                               "PDU tag",
                                               [](rx_data_indication_message& pdu, int value) {
@@ -113,8 +113,7 @@ TEST(ValidateRxDataIndication, ValidIndicationPasses)
   EXPECT_TRUE(result);
 }
 
-/// Valid Message with a PDU that was not successfully decoded should pass.
-TEST(ValidateRxDataIndication, ValidIndicationPassesWithInvalidPDU)
+TEST(validate_rx_data_indication, valid_indication_passes)
 {
   auto msg = build_valid_rx_data_indication();
 
@@ -130,7 +129,7 @@ TEST(ValidateRxDataIndication, ValidIndicationPassesWithInvalidPDU)
 }
 
 /// Add 3 errors and check that validation fails with 3 errors.
-TEST(ValidateRxDataIndication, InvalidIndicationPasses)
+TEST(validate_rx_data_indication, invalid_indication_fails)
 {
   auto msg = build_valid_rx_data_indication();
 
