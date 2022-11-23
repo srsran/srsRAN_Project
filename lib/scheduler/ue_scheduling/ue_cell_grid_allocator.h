@@ -12,7 +12,7 @@
 #include "../cell/resource_grid.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../policy/ue_allocator.h"
-#include "../pucch_scheduling/pucch_scheduler.h"
+#include "../uci_scheduling/uci_scheduler.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 
 namespace srsgnb {

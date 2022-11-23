@@ -285,7 +285,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // Check if there is any UCI grant allocated on the PUCCH that can be moved to the PUSCH.
-  get_uci_alloc(grant.cell_index).move_uci_from_pucch_to_pusch(msg, pusch_alloc, ue_cell_cfg, u.crnti);
+  get_uci_alloc(grant.cell_index).multiplex_uci_on_pusch(msg, pusch_alloc, ue_cell_cfg, u.crnti);
 
   // Save set PDCCH and PUSCH PDU parameters in HARQ process.
   h_ul.save_alloc_params(pdcch->dci.type, msg.pusch_cfg);

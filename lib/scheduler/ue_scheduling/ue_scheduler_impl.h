@@ -11,10 +11,9 @@
 #pragma once
 
 #include "../policy/scheduler_policy.h"
-#include "../pucch_scheduling/pucch_scheduler_impl.h"
 #include "../support/slot_event_list.h"
 #include "../support/slot_sync_point.h"
-#include "../uci_scheduling/uci_allocator_impl.h"
+#include "../uci_scheduling/uci_scheduler_impl.h"
 #include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
 #include "ue_scheduler.h"
@@ -51,14 +50,14 @@ private:
     cell_resource_allocator* cell_res_alloc;
 
     /// PUCCH scheduler.
-    pucch_scheduler_impl pucch_sched;
+    uci_scheduler_impl uci_sched;
 
     /// SRB0 scheduler.
     ue_srb0_scheduler srb0_sched;
 
     cell(const scheduler_ue_expert_config& expert_cfg, const ue_scheduler_cell_params& params, ue_list& ues) :
       cell_res_alloc(params.cell_res_alloc),
-      pucch_sched(params.cell_res_alloc->cfg, *params.pucch_alloc, ues),
+      uci_sched(params.cell_res_alloc->cfg, *params.uci_alloc, ues),
       srb0_sched(expert_cfg, params.cell_res_alloc->cfg, *params.pdcch_sched, *params.pucch_alloc, ues)
     {
     }

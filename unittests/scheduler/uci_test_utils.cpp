@@ -8,7 +8,7 @@
  *
  */
 
-#include "pucch_test_utils.h"
+#include "uci_test_utils.h"
 
 using namespace srsgnb;
 
@@ -106,7 +106,8 @@ test_bench::test_bench(unsigned pucch_res_common, unsigned n_cces, sr_periodicit
   dci_info{make_default_dci(n_cces, &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value())},
   k0(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0),
   pucch_alloc{cell_cfg},
-  pucch_sched{cell_cfg, pucch_alloc, ues},
+  uci_alloc(pucch_alloc),
+  uci_sched{cell_cfg, uci_alloc, ues},
   sl_tx{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
 {
   sched_ue_creation_request_message ue_req =

@@ -13,7 +13,8 @@
 #include "lib/du_manager/converters/mac_cell_configuration_helpers.h"
 #include "lib/mac/mac_ctrl/sched_config_helpers.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
-#include "lib/scheduler/pucch_scheduling/pucch_scheduler_impl.h"
+#include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
+#include "lib/scheduler/uci_scheduling/uci_scheduler_impl.h"
 #include "unittests/scheduler/test_utils/config_generators.h"
 #include "unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
@@ -86,7 +87,8 @@ public:
   rnti_t                last_allocated_rnti;
   du_ue_index_t         last_allocated_ue_idx;
   pucch_allocator_impl  pucch_alloc;
-  pucch_scheduler_impl  pucch_sched;
+  uci_allocator_impl    uci_alloc;
+  uci_scheduler_impl    uci_sched;
   slot_point            sl_tx;
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");

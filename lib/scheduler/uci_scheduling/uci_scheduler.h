@@ -10,20 +10,17 @@
 
 #pragma once
 
-#include "../cell/resource_grid.h"
-#include "../ue_scheduling/ue.h"
-#include "../ue_scheduling/ue_configuration.h"
-#include "srsgnb/scheduler/scheduler_slot_handler.h"
-
 namespace srsgnb {
 
-/// PUCCH scheduling interface.
-class pucch_scheduler
+struct cell_resource_allocator;
+
+/// UCI scheduling interface, which handles the scheduling of SR and CSI opportunities.
+class uci_scheduler
 {
 public:
-  virtual ~pucch_scheduler() = default;
+  virtual ~uci_scheduler() = default;
 
-  /// Allocate the PUCCH resource all UEs's SR opportunities.
+  /// Schedules the SR opportunities and CSI occasions.
   /// \param[out,in] res_alloc struct with scheduling results.
   /// \param[in] sl_tx slot for which the SR should be allocated.
   virtual void run_slot(cell_resource_allocator& res_alloc, slot_point sl_tx) = 0;

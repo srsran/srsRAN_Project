@@ -65,6 +65,10 @@ public:
                                              const ue_cell_configuration&  ue_cell_cfg) = 0;
 
   /// Allocate a PUCCH HARQ-ACK grant for a given UE using dedicated resources.
+  ///
+  /// \remark This function does not check whether there are PUSCH grants allocated for the same UE. The check needs to
+  /// be performed by the caller.
+  ///
   /// \param[out,in] res_alloc struct with scheduling results.
   /// \param[in] crnti RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.

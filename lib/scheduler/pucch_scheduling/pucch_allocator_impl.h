@@ -146,9 +146,6 @@ private:
                                 unsigned              harq_ack_bits,
                                 sr_nof_bits           sr_bits);
 
-  // Verifies if there are PUSCH grants already allocated.
-  bool has_pusch_grant_allocated(unsigned crnti, span<const ul_sched_info> puschs);
-
   const unsigned            PUCCH_FORMAT_1_NOF_PRBS{1};
   const cell_configuration& cell_cfg;
   slot_point                last_sl_ind;

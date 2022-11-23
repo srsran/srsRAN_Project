@@ -8,30 +8,22 @@
  *
  */
 
-#include "pucch_scheduler_impl.h"
-#include "../support/pucch/pucch_default_resource.h"
+#include "uci_scheduler_impl.h"
+#include "../cell/resource_grid.h"
+#include "uci_allocator_impl.h"
 
 using namespace srsgnb;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-pucch_scheduler_impl::pucch_scheduler_impl(const cell_configuration& cell_cfg_,
-                                           pucch_allocator&          pucch_alloc_,
-                                           ue_list&                  ues_) :
-  cell_cfg(cell_cfg_), pucch_alloc(pucch_alloc_), ues(ues_), logger(srslog::fetch_basic_logger("MAC"))
+uci_scheduler_impl::uci_scheduler_impl(const cell_configuration& cell_cfg_, uci_allocator& uci_alloc_, ue_list& ues_) :
+  cell_cfg(cell_cfg_), uci_alloc(uci_alloc_), ues(ues_), logger(srslog::fetch_basic_logger("MAC"))
 {
 }
 
-pucch_scheduler_impl::~pucch_scheduler_impl() = default;
+uci_scheduler_impl::~uci_scheduler_impl() = default;
 
-static bool has_pusch_grant_allocated(unsigned crnti, span<const ul_sched_info> puschs)
-{
-  const auto it = std::find_if(
-      puschs.begin(), puschs.end(), [crnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == crnti; });
-  return it != puschs.end();
-}
-
-void pucch_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_point sl_tx)
+void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_point sl_tx)
 {
   // Iterate over the users to check for SR opportunities.
   for (auto& user : ues) {
@@ -55,13 +47,9 @@ void pucch_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_po
       if ((sl_tx - sr_res.offset).to_uint() % sr_periodicity_to_slot(sr_res.period) == 0) {
         const unsigned SR_SLOT_DELAY = 0;
         auto&          slot_alloc    = cell_alloc[SR_SLOT_DELAY];
-        // If there is a PUSCH allocated for this UE, do not allocate any PUCCH SR grants.
-        if (has_pusch_grant_allocated(user.crnti, slot_alloc.result.ul.puschs)) {
-          logger.debug("SCHED: SR allocation skipped for RNTI {:#x} due to PUSCH grant allocated.", user.crnti);
-          return;
-        }
 
-        pucch_alloc.pucch_allocate_sr_opportunity(slot_alloc, user.crnti, ue_cell.cfg());
+        // It is up to the UCI allocator to verify whether SR allocation can be skipped due to an existing PUCCH grant.
+        uci_alloc.uci_allocate_sr_opportunity(slot_alloc, user.crnti, ue_cell.cfg());
       }
     }
   }

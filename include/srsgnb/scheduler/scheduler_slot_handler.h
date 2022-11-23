@@ -213,9 +213,6 @@ struct pusch_information {
 };
 
 struct uci_info {
-  /// As the UCI is optional in the PDU, \c uci_present tells whether this struct should be consider for UCI as part of
-  /// the PUSCH PDU.
-  bool uci_present;
   /// Number of bits of ACK to be reported.
   uint16_t harq_ack_nof_bits;
   /// Number of bits of CSI part 1 to be reported.
@@ -296,8 +293,8 @@ struct dl_sched_result {
 };
 
 struct ul_sched_info {
-  pusch_information pusch_cfg;
-  uci_info          uci;
+  pusch_information  pusch_cfg;
+  optional<uci_info> uci;
 };
 
 struct prach_occasion_info {

@@ -10,21 +10,22 @@
 
 #pragma once
 
-#include "../cell/resource_grid.h"
-#include "../ue_scheduling/ue_configuration.h"
-#include "pucch_allocator.h"
-#include "pucch_scheduler.h"
-#include "srsgnb/scheduler/scheduler_dci.h"
+#include "../ue_scheduling/ue.h"
+#include "uci_scheduler.h"
 
 namespace srsgnb {
 
-/// Implementation of the PUCCH scheduler interface.
-class pucch_scheduler_impl final : public pucch_scheduler
+class cell_configuration;
+class uci_allocator;
+struct cell_resource_allocator;
+
+/// Implementation of the UCI scheduler interface.
+class uci_scheduler_impl final : public uci_scheduler
 {
 public:
-  explicit pucch_scheduler_impl(const cell_configuration& cell_cfg_, pucch_allocator& pucch_alloc_, ue_list& ues_);
+  explicit uci_scheduler_impl(const cell_configuration& cell_cfg_, uci_allocator& uci_alloc_, ue_list& ues_);
 
-  ~pucch_scheduler_impl() override;
+  ~uci_scheduler_impl() override;
 
   /// Allocate the PUCCH resource for CSI or SR opportunities.
   /// \param[out,in] res_alloc struct with scheduling results.
@@ -35,8 +36,8 @@ private:
   // Cell configuration.
   const cell_configuration& cell_cfg;
   // Ref to PUCCH resource allocator object.
-  pucch_allocator& pucch_alloc;
-  ue_list&         ues;
+  uci_allocator& uci_alloc;
+  ue_list&       ues;
 
   srslog::basic_logger& logger;
 };

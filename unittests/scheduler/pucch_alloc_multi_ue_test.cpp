@@ -8,8 +8,8 @@
  *
  */
 
-#include "lib/scheduler/pucch_scheduling/pucch_scheduler_impl.h"
-#include "pucch_test_utils.h"
+#include "lib/scheduler/uci_scheduling/uci_scheduler_impl.h"
+#include "uci_test_utils.h"
 #include "unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include <gtest/gtest.h>
 

@@ -8,7 +8,7 @@
  *
  */
 
-#include "pucch_test_utils.h"
+#include "uci_test_utils.h"
 #include "unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include <gtest/gtest.h>
 #include <random>
@@ -104,7 +104,7 @@ TEST_P(test_pucch_output_sr_only, test_pucch_sr_only)
   if (sr_periodicity_to_slot(sr_period) > sr_offset) {
     for (; t_bench.sl_tx.to_uint() < NOF_SLOTS_TO_TEST; t_bench.slot_indication(++t_bench.sl_tx)) {
       // t_bench.pucch_alloc.slot_indication(t_bench.sl_tx);
-      t_bench.pucch_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
+      t_bench.uci_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
 
       if ((t_bench.sl_tx - sr_offset).to_uint() % sr_periodicity_to_slot(sr_period) == 0) {
         ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
@@ -129,7 +129,7 @@ TEST_P(test_pucch_output_sr_harq, test_pucch_sr_harq)
     for (; t_bench.sl_tx.to_uint() < NOF_SLOTS_TO_TEST; t_bench.slot_indication(++t_bench.sl_tx)) {
       t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
           t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, sl_point_harq_delay, t_bench.dci_info);
-      t_bench.pucch_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
+      t_bench.uci_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
 
       if ((t_bench.sl_tx - sr_offset).to_uint() % sr_periodicity_to_slot(sr_period) == 0) {
         ASSERT_EQ(2, t_bench.res_grid[0].result.ul.pucchs.size());

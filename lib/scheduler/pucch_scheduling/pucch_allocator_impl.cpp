@@ -344,13 +344,6 @@ void pucch_allocator_impl::allocate_pucch_ded_res_on_grid(cell_slot_resource_all
   }
 }
 
-bool pucch_allocator_impl::has_pusch_grant_allocated(unsigned crnti, span<const ul_sched_info> puschs)
-{
-  const auto it = std::find_if(
-      puschs.begin(), puschs.end(), [crnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == crnti; });
-  return it != puschs.end();
-}
-
 void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                                                          rnti_t                        crnti,
                                                          const ue_cell_configuration&  ue_cell_cfg)
@@ -508,19 +501,17 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_reso
   // transmits corresponding HARQ-ACK information in the PUCCH where, for PUCCH resource determination, detected DCI
   // formats are first indexed in an ascending order across serving cells indexes for a same PDCCH monitoring occasion
   // and are then indexed in an ascending order across PDCCH monitoring occasion indexes".
-  // As a result of this, and depending on whethere there is any scheduled SRs, the PUCCH allocator can either allocate
+  // As a result of this, and depending on whether there is any scheduled SRs, the PUCCH allocator can either allocate
   // a new PUCCH grant or update an existing one by changing the number of HARQ-ACK bits to be reported.
+
+  // NOTE: This function does not check whether there are PUSCH grants allocated for the same UE. The check needs to
+  // be performed by the caller.
 
   // PUCCH output.
   pucch_harq_ack_grant pucch_harq_ack_output{};
 
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
   cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[pdsch_time_domain_resource + k1];
-
-  if (has_pusch_grant_allocated(crnti, pucch_slot_alloc.result.ul.puschs)) {
-    logger.debug("SCHED: PUCCH HARQ-ACK grant allocation skipped for RNTI {:#x} due to PUSCH grant allocated.", crnti);
-    return pucch_harq_ack_output;
-  }
 
   auto& pucchs = pucch_slot_alloc.result.ul.pucchs;
 
