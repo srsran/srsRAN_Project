@@ -27,7 +27,7 @@ struct re_pattern {
   /// Resource block index jump.
   unsigned rb_stride{1};
   /// Resource element mask per resource block. True entries indicate the resource elements affected by the pattern.
-  std::array<bool, NRE> re_mask{};
+  bounded_bitset<NRE> re_mask{};
   /// Symbol mask. True entries indicate the symbols affected by the pattern.
   std::array<bool, MAX_NSYMB_PER_SLOT> symbols{};
 
@@ -46,7 +46,11 @@ struct re_pattern {
              unsigned                             rb_stride_,
              std::array<bool, NRE>                re_mask_,
              std::array<bool, MAX_NSYMB_PER_SLOT> symbols_) :
-    rb_begin(rb_begin_), rb_end(rb_end_), rb_stride(rb_stride_), re_mask(re_mask_), symbols(symbols_)
+    rb_begin(rb_begin_),
+    rb_end(rb_end_),
+    rb_stride(rb_stride_),
+    re_mask(re_mask_.begin(), re_mask_.end()),
+    symbols(symbols_)
   {
     // Do nothing.
   }
@@ -72,7 +76,7 @@ struct re_pattern {
   /// \param[in,out] mask Provides a mask representing an entire symbol in a resource grid.
   /// \param[in] symbol Indicates the symbol index for the mask to be included.
   /// \note This method expects that the number of elements of \c mask is equal to or greater than \c rb_end
-  void get_inclusion_mask(span<bool> mask, unsigned symbol) const;
+  void get_inclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const;
 
   /// \brief Exclude the described resource element pattern in a resource grid symbol mask.
   ///
@@ -82,7 +86,7 @@ struct re_pattern {
   /// \param[in,out] mask Provides a mask representing an entire symbol in a resource grid.
   /// \param[in] symbol Indicates the symbol index for the mask to be excluded.
   /// \note This method expects that the number of elements of \c mask is equal to or greater than \c rb_end
-  void get_exclusion_mask(span<bool> mask, unsigned symbol) const;
+  void get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const;
 };
 
 /// Describes a resource element pattern list.
@@ -162,7 +166,7 @@ public:
   /// \param[in,out] mask   Provides a mask representing an entire symbol in a resource grid.
   /// \param[in]     symbol Indicates the symbol index for the mask to be included.
   /// \note This method expects that the number of elements of \c mask is equal to or greater than \c rb_end.
-  void get_inclusion_mask(span<bool> mask, unsigned symbol) const;
+  void get_inclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const;
 
   /// \brief Counts the number of elements included in the described pattern.
   ///
@@ -183,7 +187,7 @@ public:
   /// \param[in,out] mask   Provides a mask representing an entire symbol in a resource grid.
   /// \param[in]     symbol Indicates the symbol index for the mask to be excluded.
   /// \note This method expects that the number of elements of \c mask is equal to or greater than \c rb_end.
-  void get_exclusion_mask(span<bool> mask, unsigned symbol) const;
+  void get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const;
 };
 
 } // namespace srsgnb

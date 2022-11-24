@@ -33,8 +33,9 @@ void test_merge_even()
   pattern_1.rb_begin   = rb_begin;
   pattern_1.rb_end     = rb_end;
   pattern_1.rb_stride  = rb_stride;
+  pattern_1.re_mask    = bounded_bitset<NRE>(NRE);
   for (unsigned k = 0; k != NRE; ++k) {
-    pattern_1.re_mask[k] = (k % 2 == 0);
+    pattern_1.re_mask.set(k, k % 2 == 0);
   }
   for (unsigned l = 0; l != MAX_NSYMB_PER_SLOT; ++l) {
     pattern_1.symbols[l] = (l % 2 == 0);
@@ -55,7 +56,7 @@ void test_merge_even()
   // The pattern should be repeated for each symbol.
   for (unsigned l = 0; l != MAX_NSYMB_PER_SLOT; ++l) {
     // Create mask with all entries to false
-    std::array<bool, MAX_RB* NRE> mask = {};
+    bounded_bitset<MAX_RB * NRE> mask(MAX_RB * NRE);
 
     // Set include mask.
     list.get_inclusion_mask(mask, l);
@@ -69,7 +70,7 @@ void test_merge_even()
         // Even subcarrier
         gold = (k % 2 == 0);
       }
-      TESTASSERT_EQ(mask[k], gold);
+      TESTASSERT_EQ(mask.test(k), gold);
     }
 
     // Set exclude.
@@ -77,7 +78,7 @@ void test_merge_even()
 
     // All the subcarriers shall be false.
     for (unsigned k = 0; k != MAX_RB * NRE; ++k) {
-      TESTASSERT(!mask[k]);
+      TESTASSERT(!mask.test(k));
     }
   }
 }
@@ -101,8 +102,9 @@ void test_merge_odd()
   pattern_1.rb_begin   = rb_begin;
   pattern_1.rb_end     = rb_end;
   pattern_1.rb_stride  = rb_stride;
+  pattern_1.re_mask    = bounded_bitset<NRE>(NRE);
   for (unsigned k = 0; k != NRE; ++k) {
-    pattern_1.re_mask[k] = (k % 2 == 0);
+    pattern_1.re_mask.set(k, k % 2 == 0);
   }
   for (unsigned l = 0; l != MAX_NSYMB_PER_SLOT; ++l) {
     pattern_1.symbols[l] = (l % 2 == 0);
@@ -114,8 +116,9 @@ void test_merge_odd()
   // - odd subcarrier indexes, and
   // - even symbol indexes.
   re_pattern pattern_2 = pattern_1;
+  pattern_2.re_mask    = bounded_bitset<NRE>(NRE);
   for (unsigned k = 0; k != NRE; ++k) {
-    pattern_2.re_mask[k] = (k % 2 == 1);
+    pattern_2.re_mask.set(k, k % 2 == 1);
   }
   list.merge(pattern_2);
   TESTASSERT(list.get_nof_entries() == 1);
@@ -123,7 +126,7 @@ void test_merge_odd()
   // The pattern should be repeated for each symbol.
   for (unsigned l = 0; l != MAX_NSYMB_PER_SLOT; ++l) {
     // Create mask with all entries to false
-    std::array<bool, MAX_RB* NRE> mask = {};
+    bounded_bitset<MAX_RB * NRE> mask(MAX_RB * NRE);
 
     // Set include mask.
     list.get_inclusion_mask(mask, l);
@@ -137,7 +140,7 @@ void test_merge_odd()
         // Even symbol
         gold = (l % 2 == 0);
       }
-      TESTASSERT_EQ(mask[k], gold);
+      TESTASSERT_EQ(mask.test(k), gold);
     }
 
     // Set exclude.
@@ -145,7 +148,7 @@ void test_merge_odd()
 
     // All the subcarriers shall be false.
     for (unsigned k = 0; k != MAX_RB * NRE; ++k) {
-      TESTASSERT(!mask[k]);
+      TESTASSERT(!mask.test(k));
     }
   }
 }
@@ -155,11 +158,11 @@ void test_merge_same()
 {
   // Create a pattern.
   re_pattern pattern;
-  pattern.rb_begin   = 0;
-  pattern.rb_end     = 1;
-  pattern.rb_stride  = 1;
-  pattern.re_mask    = {};
-  pattern.re_mask[0] = true;
+  pattern.rb_begin  = 0;
+  pattern.rb_end    = 1;
+  pattern.rb_stride = 1;
+  pattern.re_mask   = bounded_bitset<NRE>(NRE);
+  pattern.re_mask.set(0);
   pattern.symbols    = {};
   pattern.symbols[0] = true;
 
@@ -177,23 +180,23 @@ void test_merge_diff_rb()
 {
   // Create pattern 1.
   re_pattern pattern1;
-  pattern1.rb_begin   = 0;
-  pattern1.rb_end     = 1;
-  pattern1.rb_stride  = 1;
-  pattern1.re_mask    = {};
-  pattern1.re_mask[0] = true;
+  pattern1.rb_begin  = 0;
+  pattern1.rb_end    = 1;
+  pattern1.rb_stride = 1;
+  pattern1.re_mask   = bounded_bitset<NRE>(NRE);
+  pattern1.re_mask.set(0);
   pattern1.symbols    = {};
   pattern1.symbols[0] = true;
 
   // Create a pattern 2.
   re_pattern pattern2;
-  pattern1.rb_begin   = 1;
-  pattern1.rb_end     = 2;
-  pattern1.rb_stride  = 1;
-  pattern1.re_mask    = {};
-  pattern1.re_mask[0] = true;
-  pattern1.symbols    = {};
-  pattern1.symbols[0] = true;
+  pattern2.rb_begin  = 1;
+  pattern2.rb_end    = 2;
+  pattern2.rb_stride = 1;
+  pattern2.re_mask   = bounded_bitset<NRE>(NRE);
+  pattern2.re_mask.set(0);
+  pattern2.symbols    = {};
+  pattern2.symbols[0] = true;
 
   // Add the pattern to the list.
   re_pattern_list list;
@@ -208,11 +211,11 @@ void test_inclusion_count()
 {
   // Create a pattern.
   re_pattern pattern;
-  pattern.rb_begin   = 0;
-  pattern.rb_end     = 1;
-  pattern.rb_stride  = 1;
-  pattern.re_mask    = {};
-  pattern.re_mask[0] = true;
+  pattern.rb_begin  = 0;
+  pattern.rb_end    = 1;
+  pattern.rb_stride = 1;
+  pattern.re_mask   = bounded_bitset<NRE>(NRE);
+  pattern.re_mask.set(0);
   pattern.symbols    = {};
   pattern.symbols[0] = true;
 
@@ -236,11 +239,11 @@ void test_equal()
 {
   // Create a pattern.
   re_pattern pattern;
-  pattern.rb_begin   = 0;
-  pattern.rb_end     = 1;
-  pattern.rb_stride  = 1;
-  pattern.re_mask    = {};
-  pattern.re_mask[0] = true;
+  pattern.rb_begin  = 0;
+  pattern.rb_end    = 1;
+  pattern.rb_stride = 1;
+  pattern.re_mask   = bounded_bitset<NRE>(NRE);
+  pattern.re_mask.set(0);
   pattern.symbols    = {};
   pattern.symbols[0] = true;
 
@@ -273,13 +276,13 @@ void test_bracket_initializer()
 
   // Create same pattern using parameters.
   re_pattern pattern;
-  pattern.rb_begin    = 0;
-  pattern.rb_end      = 52;
-  pattern.rb_stride   = 1;
-  pattern.re_mask     = {};
-  pattern.re_mask[0]  = true;
-  pattern.re_mask[4]  = true;
-  pattern.re_mask[8]  = true;
+  pattern.rb_begin  = 0;
+  pattern.rb_end    = 52;
+  pattern.rb_stride = 1;
+  pattern.re_mask   = bounded_bitset<NRE>(NRE);
+  pattern.re_mask.set(0);
+  pattern.re_mask.set(4);
+  pattern.re_mask.set(8);
   pattern.symbols     = {};
   pattern.symbols[6]  = true;
   pattern.symbols[10] = true;

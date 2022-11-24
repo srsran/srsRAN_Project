@@ -20,31 +20,40 @@ using namespace srsgnb;
     srsgnb_assert(rb_stride > 0, "RB stride ({}) is out-of-range", rb_stride);                                         \
   } while (false)
 
-void re_pattern::get_inclusion_mask(span<bool> mask, unsigned symbol) const
+void re_pattern::get_inclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const
 {
   // Verify attributes and inputs.
   re_pattern_assert();
   srsgnb_assert(
-      mask.size() >= rb_end, "Provided mask size (%d) is too small. The minimum is %d.", (unsigned)mask.size(), rb_end);
+      mask.size() >= rb_end, "Provided mask size ({}) is too small. The minimum is {}.", (unsigned)mask.size(), rb_end);
 
   // Skip if the symbol is not set to true.
   if (!symbols[symbol]) {
     return;
   }
 
-  // For each resource block within the pattern.
-  for (unsigned rb = rb_begin; rb < rb_end; rb += rb_stride) {
-    // For each subcarrier in the resource block, apply the inclusion operation.
-    for (unsigned k = 0; k != NRE; ++k) {
-      // The following logical operation shall result in:
-      // - true if mask is true or re_mask is true,
-      // - otherwise false.
-      mask[k + rb * NRE] |= re_mask[k];
+  // Create a mask for the maximum bandwidth.
+  bounded_bitset<MAX_RB> rb_mask(mask.size() / NRE);
+
+  // Fill RB mask.
+  if (rb_stride == 1) {
+    rb_mask.fill(rb_begin, rb_end);
+  } else {
+    for (unsigned i_rb = rb_begin; i_rb < rb_end; i_rb += rb_stride) {
+      rb_mask.set(i_rb);
     }
   }
+
+  // Apply the RE mask to all.
+  bounded_bitset<MAX_RB* NRE> pattern_re_mask = rb_mask.kronecker_product<NRE>(re_mask);
+
+  // The following logical operation shall result in:
+  // - true if mask is true or re_mask is true,
+  // - otherwise false.
+  mask |= pattern_re_mask;
 }
 
-void re_pattern::get_exclusion_mask(span<bool> mask, unsigned symbol) const
+void re_pattern::get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const
 {
   // Verify attributes and inputs.
   re_pattern_assert();
@@ -56,16 +65,19 @@ void re_pattern::get_exclusion_mask(span<bool> mask, unsigned symbol) const
     return;
   }
 
-  // For each resource block within the pattern.
-  for (unsigned rb = rb_begin; rb < rb_end; rb += rb_stride) {
-    // For each subcarrier in the resource block, apply the exclusion operation
-    for (unsigned k = 0; k != NRE; ++k) {
-      // The following logical operation shall result in:
-      // - true if mask is true and re_mask is false,
-      // - otherwise false.
-      mask[k + rb * NRE] &= (!re_mask[k]);
-    }
-  }
+  // Create a mask for the maximum bandwidth.
+  bounded_bitset<MAX_RB> rb_mask(mask.size() / NRE);
+
+  // Fill RB mask.
+  rb_mask.fill(rb_begin, rb_end);
+
+  // Apply the RE mask to all.
+  bounded_bitset<MAX_RB* NRE> pattern_re_mask = rb_mask.kronecker_product<NRE>(re_mask);
+
+  // The following logical operation shall result in:
+  // - true if mask is true and re_mask is false,
+  // - otherwise false.
+  mask &= (~pattern_re_mask);
 }
 
 void re_pattern_list::merge(const re_pattern& pattern)
@@ -81,7 +93,7 @@ void re_pattern_list::merge(const re_pattern& pattern)
     bool lmatch = std::equal(pattern.symbols.begin(), pattern.symbols.end(), p.symbols.begin(), p.symbols.end());
 
     // Check if RE mask matches.
-    bool kmatch = std::equal(pattern.re_mask.begin(), pattern.re_mask.end(), p.re_mask.begin(), p.re_mask.end());
+    bool kmatch = (pattern.re_mask == p.re_mask);
 
     // If OFDM symbols and subcarriers mask match, it means that the patterns are completely overlapped and no merging
     // is required.
@@ -91,9 +103,7 @@ void re_pattern_list::merge(const re_pattern& pattern)
 
     // If OFDM symbols mask matches, combine subcarrier mask.
     if (lmatch) {
-      for (unsigned k = 0; k != NRE; ++k) {
-        p.re_mask[k] |= pattern.re_mask[k];
-      }
+      p.re_mask |= pattern.re_mask;
       return;
     }
 
@@ -118,10 +128,10 @@ bool re_pattern_list::operator==(const re_pattern_list& other) const
 {
   // Generates the inclusion mask for each symbol and compare if they are equal.
   for (unsigned symbol = 0; symbol != MAX_NSYMB_PER_SLOT; ++symbol) {
-    std::array<bool, MAX_RB* NRE> inclusion_mask = {};
+    bounded_bitset<MAX_RB * NRE> inclusion_mask(MAX_RB * NRE);
     get_inclusion_mask(inclusion_mask, symbol);
 
-    std::array<bool, MAX_RB* NRE> inclusion_mask_other = {};
+    bounded_bitset<MAX_RB * NRE> inclusion_mask_other(MAX_RB * NRE);
     other.get_inclusion_mask(inclusion_mask_other, symbol);
 
     // Early return false if they are not equal for this symbol.
@@ -133,7 +143,7 @@ bool re_pattern_list::operator==(const re_pattern_list& other) const
   return true;
 }
 
-void re_pattern_list::get_inclusion_mask(span<bool> mask, unsigned symbol) const
+void re_pattern_list::get_inclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const
 {
   // Iterate all given patterns.
   for (const re_pattern& p : list) {
@@ -147,32 +157,28 @@ unsigned re_pattern_list::get_inclusion_count(unsigned                      star
 {
   unsigned count = 0;
 
-  for (unsigned symbol_idx = start_symbol; symbol_idx != start_symbol + nof_symbols; ++symbol_idx) {
-    std::array<bool, MAX_RB* NRE> inclusion_mask = {};
+  bounded_bitset<NRE>         base_re_mask   = ~bounded_bitset<NRE>(NRE);
+  bounded_bitset<MAX_RB* NRE> active_re_mask = rb_mask.kronecker_product<NRE>(base_re_mask);
 
-    // Iterate all patterns.
+  for (unsigned symbol_idx = start_symbol; symbol_idx != start_symbol + nof_symbols; ++symbol_idx) {
+    bounded_bitset<MAX_RB * NRE> inclusion_mask(active_re_mask.size());
+
+    // Iterate all patterns to get a wideband inclusion mask.
     for (const re_pattern& p : list) {
       p.get_inclusion_mask(inclusion_mask, symbol_idx);
     }
 
-    // Count all the included elements.
-    for (unsigned rb_idx = 0; rb_idx != rb_mask.size(); ++rb_idx) {
-      // Skip RB if it is not selected.
-      if (!rb_mask.test(rb_idx)) {
-        continue;
-      }
+    // Apply the mask to the active RE.
+    inclusion_mask &= active_re_mask;
 
-      // Count each positive element in the inclusion mask.
-      for (unsigned re_idx = rb_idx * NRE, re_idx_end = (rb_idx + 1) * NRE; re_idx != re_idx_end; ++re_idx) {
-        count += inclusion_mask[re_idx] ? 1 : 0;
-      }
-    }
+    // Count all the included elements.
+    count += inclusion_mask.count();
   }
 
   return count;
 }
 
-void re_pattern_list::get_exclusion_mask(span<bool> mask, unsigned symbol) const
+void re_pattern_list::get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const
 {
   // Iterate all given patterns.
   for (const re_pattern& p : list) {

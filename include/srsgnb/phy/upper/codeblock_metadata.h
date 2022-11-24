@@ -74,23 +74,24 @@ static constexpr unsigned MAX_SEG_LENGTH = 22 * 384;
 /// Maximum number of segments per transport block.
 static constexpr unsigned MAX_NOF_SEGMENTS = 52;
 
-/// Alias for the segment data container.
-using segment_data = static_vector<uint8_t, MAX_SEG_LENGTH>;
-
-/// \brief Alias for the full segment characterization.
+/// \brief Describes an LDPC segment or codeblock.
 ///
-///   - \c described_segment.first()   Contains the segment data, including CRC, in unpacked format (each bit is
-///                                      represented by a \c uint8_t entry).
-///   - \c described_segment.second()  Contains the segment metadata, useful for processing the corresponding
-///                                      segment (e.g., encoding, rate-matching).
+/// The segment description consists of a set of parameters contained in metadata attribute and a data storage for the
+/// segment.
+///
+/// If the object is created with the default constructor, the \c get_data() methods trigger an assertion.
 class described_segment
 {
 public:
-  /// Default constructor - Sets the codeblock size to zero to indicate it is invalid.
-  described_segment() = default;
-
-  /// Create segment.
-  described_segment(codeblock_metadata metadata_, unsigned cb_size_) : metadata(metadata_), cb_size(cb_size_)
+  /// \brief Creates a description for a segment of length \c cb_size with the given metadata.
+  ///
+  /// This constructor does not initialise the codeblock data. It is up to the class client to fill the codeblock data
+  /// after its creation.
+  ///
+  /// \param[in] metadata_ Codeword parameters.
+  /// \param[in] cb_size_  Codeword size in bits.
+  /// \remark Throws an assertion if \c cb_size is higher than the maximum supported length.
+  described_segment(const codeblock_metadata& metadata_, unsigned cb_size_) : metadata(metadata_), cb_size(cb_size_)
   {
     srsgnb_assert((cb_size > 0) && (cb_size <= MAX_SEG_LENGTH),
                   "The codeblock size (i.e., {}) is invalid (max. {}).",
@@ -98,7 +99,7 @@ public:
                   MAX_SEG_LENGTH);
   }
 
-  /// \brief Gets a read-write view of the segment data.
+  /// \brief Gets a read&ndash;write view of the segment data.
   /// \remark An assertion is triggered if the segment has not been created with parameter.
   span<uint8_t> get_data()
   {
@@ -106,7 +107,7 @@ public:
     return span<uint8_t>(data).first(cb_size);
   }
 
-  /// \brief Gets a read-only view of the segment data.
+  /// \brief Gets a read&ndash;only view of the segment data.
   /// \remark An assertion is triggered if the segment has not been created with parameter.
   span<const uint8_t> get_data() const
   {
@@ -118,8 +119,11 @@ public:
   const codeblock_metadata& get_metadata() const { return metadata; }
 
 private:
-  codeblock_metadata                  metadata;
-  unsigned                            cb_size = 0;
+  /// Codeblock configuration.
+  codeblock_metadata metadata;
+  /// Codeblock size.
+  unsigned cb_size = 0;
+  /// Codeblock data storage.
   std::array<uint8_t, MAX_SEG_LENGTH> data;
 };
 

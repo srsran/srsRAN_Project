@@ -89,17 +89,24 @@ span<const cf_t> resource_grid_impl::put(unsigned                            por
   // Get view of the OFDM symbol subcarriers.
   span<cf_t> symb = rg_buffer.get_view<dimensions::symbol>({l, port_});
 
-  srsgnb_assert(mask.count() <= symbols.size(),
-                "The number ones in mask {} exceeds the number of symbols {}.",
+  empty[port] = false;
+
+  unsigned mask_count = mask.count();
+  srsgnb_assert(mask_count <= symbols.size(),
+                "The number of actibe subcarriers (i.e., {}) exceeds the number of symbols (i.e., {}).",
                 mask.count(),
                 symbols.size());
+
+  // Do a straight copy if the elements of the mask are all contiguous.
+  if (mask.is_contiguous()) {
+    srsvec::copy(symb.subspan(mask.find_lowest(), mask_count), symbols.first(mask_count));
+    return symbols.last(symbols.size() - mask_count);
+  }
 
   mask.for_each(0, mask.size(), [&](unsigned i_subc) {
     symb[i_subc + k_init] = symbols.front();
     symbols               = symbols.last(symbols.size() - 1);
   });
-
-  empty[port_] = false;
 
   return symbols;
 }

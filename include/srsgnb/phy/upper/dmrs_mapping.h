@@ -86,13 +86,17 @@ public:
     dmrs_pattern.rb_end    = bwp_start_rb + bwp_size_rb;
     dmrs_pattern.rb_stride = 1;
     if (value == TYPE1) {
-      for (unsigned re_idx = 0; re_idx != NRE; ++re_idx) {
-        dmrs_pattern.re_mask[re_idx] = ((re_idx % 2) < nof_cdm_groups_without_data);
-      }
+      bounded_bitset<2> cdm_groups_pattern(2);
+      cdm_groups_pattern.fill(0, nof_cdm_groups_without_data);
+      bounded_bitset<6> groups(6);
+      groups.fill(0, 6, true);
+      dmrs_pattern.re_mask = groups.kronecker_product<2>(cdm_groups_pattern);
     } else {
-      for (unsigned re_idx = 0; re_idx != NRE; ++re_idx) {
-        dmrs_pattern.re_mask[re_idx] = (((re_idx / 2) % 3) < nof_cdm_groups_without_data);
-      }
+      bounded_bitset<6> cdm_groups_pattern(6);
+      cdm_groups_pattern.fill(0, 2 * nof_cdm_groups_without_data);
+      bounded_bitset<2> groups(2);
+      groups.fill(0, 2, true);
+      dmrs_pattern.re_mask = groups.kronecker_product<6>(cdm_groups_pattern);
     }
     std::copy(symbol_mask.begin(), symbol_mask.end(), dmrs_pattern.symbols.begin());
 
@@ -100,11 +104,11 @@ public:
   }
 
 private:
-  /// Indicates the cyclic prefix type.
+  /// Indicates the DM-RS type.
   options value = TYPE1;
 };
 
-/// Defines the maximum number of ports DMRS can be mapped to.
+/// Defines the maximum number of ports the DM-RS can be mapped to.
 static constexpr unsigned DMRS_MAX_NPORTS =
     std::max(dmrs_type(dmrs_type::TYPE1).dmrs_max_ports_type(), dmrs_type(dmrs_type::TYPE2).dmrs_max_ports_type());
 

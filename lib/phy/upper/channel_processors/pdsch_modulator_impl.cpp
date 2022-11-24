@@ -88,7 +88,13 @@ void pdsch_modulator_impl::map_to_contiguous_prb(resource_grid_writer&          
                                                  const config_t&                      config)
 {
   // Stores the resource grid allocation mask, common for all ports.
-  std::array<std::array<bool, NRE * MAX_RB>, MAX_NSYMB_PER_SLOT> allocation_mask;
+  std::array<bounded_bitset<MAX_RB * NRE>, MAX_NSYMB_PER_SLOT> allocation_mask;
+
+  // Get the PRB allocation mask.
+  const bounded_bitset<MAX_RB> prb_allocation_mask =
+      config.freq_allocation.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb);
+  const bounded_bitset<MAX_RB* NRE> re_allocation_mask =
+      prb_allocation_mask.kronecker_product<NRE>(~bounded_bitset<NRE>(NRE));
 
   // First symbol used in this transmission.
   unsigned start_symbol_index = config.start_symbol_index;
@@ -100,10 +106,6 @@ void pdsch_modulator_impl::map_to_contiguous_prb(resource_grid_writer&          
                 start_symbol_index,
                 end_symbol_index);
 
-  // Get the contiguous allocation parameters in the overall grid.
-  unsigned re_index_begin = config.freq_allocation.get_prb_begin(config.bwp_start_rb) * NRE;
-  unsigned re_index_end   = config.freq_allocation.get_prb_end(config.bwp_start_rb) * NRE;
-
   // Get DMRS RE pattern.
   re_pattern dmrs_pattern = config.dmrs_config_type.get_dmrs_pattern(
       config.bwp_start_rb, config.bwp_size_rb, config.nof_cdm_groups_without_data, config.dmrs_symb_pos);
@@ -111,16 +113,12 @@ void pdsch_modulator_impl::map_to_contiguous_prb(resource_grid_writer&          
   // Generate frequency allocation mask for each symbol in the transmission.
   for (unsigned symbol_idx = start_symbol_index; symbol_idx != end_symbol_index; ++symbol_idx) {
     // Create mask, skip initialization.
-    span<bool> symbol_mask = allocation_mask[symbol_idx];
+    bounded_bitset<NRE* MAX_RB>& symbol_mask = allocation_mask[symbol_idx];
 
-    // Populate unused region.
-    std::fill(symbol_mask.begin(), symbol_mask.begin() + re_index_begin, false);
-    std::fill(symbol_mask.begin() + re_index_end, symbol_mask.end(), false);
+    // Copy base RE allocation mask.
+    symbol_mask = re_allocation_mask;
 
-    // Populate allocated mask.
-    std::fill(symbol_mask.begin() + re_index_begin, symbol_mask.begin() + re_index_end, true);
-
-    // Exclude DMRS.
+    // Exclude DM-RS.
     dmrs_pattern.get_exclusion_mask(symbol_mask, symbol_idx);
 
     // Exclude reserved RE.
@@ -141,14 +139,10 @@ void pdsch_modulator_impl::map_to_contiguous_prb(resource_grid_writer&          
     // Iterate for each symbol.
     for (unsigned symbol_idx = start_symbol_index; symbol_idx != end_symbol_index; ++symbol_idx) {
       // Select mask for the OFDM symbol.
-      span<const bool> mask = allocation_mask[symbol_idx];
+      const bounded_bitset<MAX_RB* NRE>& mask = allocation_mask[symbol_idx];
 
       // Write RE in resource grid.
-      x_buffer = grid.put(port_idx,
-                          symbol_idx,
-                          config.bwp_start_rb * NRE,
-                          mask.subspan(config.bwp_start_rb * NRE, config.bwp_size_rb * NRE),
-                          x_buffer);
+      x_buffer = grid.put(port_idx, symbol_idx, 0, mask, x_buffer);
     }
 
     // Verify all the resource elements for the layer have been mapped.
@@ -165,7 +159,7 @@ void pdsch_modulator_impl::map_to_prb_other(resource_grid_writer&               
       config.freq_allocation.get_prb_indices(config.bwp_start_rb, config.bwp_size_rb);
 
   // Stores the resource grid allocation mask, common for all ports.
-  std::array<std::array<bool, NRE * MAX_RB>, MAX_NSYMB_PER_SLOT> allocation_mask = {};
+  std::array<bounded_bitset<NRE * MAX_RB>, MAX_NSYMB_PER_SLOT> allocation_mask = {};
 
   // First symbol used in this transmission.
   unsigned start_symbol_index = config.start_symbol_index;
@@ -184,18 +178,13 @@ void pdsch_modulator_impl::map_to_prb_other(resource_grid_writer&               
   // Generate frequency allocation mask for each symbol in the transmission.
   for (unsigned symbol_idx = start_symbol_index; symbol_idx != end_symbol_index; ++symbol_idx) {
     // Create mask, skip initialization.
-    span<bool> symbol_mask = allocation_mask[symbol_idx];
+    bounded_bitset<NRE* MAX_RB>& symbol_mask = allocation_mask[symbol_idx];
 
-    // Populate all the subcarriers as false.
-    std::fill(symbol_mask.begin(), symbol_mask.end(), false);
+    // Fill symbol mask.
+    symbol_mask = config.freq_allocation.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb)
+                      .kronecker_product<NRE>(~bounded_bitset<NRE>(NRE));
 
-    // Iterate all the PRB used in this transmission.
-    for (unsigned prb_idx : prb_indices) {
-      // Set all the RE in the PRB to active.
-      std::fill(symbol_mask.begin() + prb_idx * NRE, symbol_mask.begin() + (prb_idx + 1) * NRE, true);
-    }
-
-    // Exclude DMRS.
+    // Exclude DM-RS.
     dmrs_pattern.get_exclusion_mask(symbol_mask, symbol_idx);
 
     // Exclude reserved RE.
@@ -216,12 +205,12 @@ void pdsch_modulator_impl::map_to_prb_other(resource_grid_writer&               
     // Map the REs for each symbol in the layer.
     for (unsigned symbol_idx = start_symbol_index; symbol_idx != end_symbol_index; ++symbol_idx) {
       // Get whole symbol allocation mask.
-      span<const bool> rb_mask_symbol = allocation_mask[symbol_idx];
+      const bounded_bitset<NRE* MAX_RB>& rb_mask_symbol = allocation_mask[symbol_idx];
 
-      // Perform 7.3.1.5 Mapping to VRB and 7.3.1.6 Mapping VRB-to-PRB.
+      // Mapping to VRB and, from there, to PRB according to TS38.211 Sections 7.3.1.5 and 7.3.1.6.
       for (unsigned prb_idx : prb_indices) {
         // Select RB mask for the PRB.
-        span<const bool> rb_mask = rb_mask_symbol.subspan(prb_idx * NRE, NRE);
+        const bounded_bitset<NRE* MAX_RB> rb_mask = rb_mask_symbol.slice(prb_idx * NRE, (prb_idx + 1) * NRE);
 
         // Write PRB in resource grid.
         x_buffer = grid.put(port_idx, symbol_idx, prb_idx * NRE, rb_mask, x_buffer);
@@ -255,16 +244,16 @@ void pdsch_modulator_impl::modulate(srsgnb::resource_grid_writer&               
     unsigned nof_re   = nof_bits / Qm;
 
     // Create temporal storage for scrambled bits.
-    static_vector<uint8_t, MAX_CODEWORD_SIZE> d(nof_bits);
+    span<uint8_t> b_hat = span<uint8_t>(temp_b_hat).first(nof_bits);
 
     // Scramble.
-    scramble(d, codewords[cw_idx], cw_idx, config);
+    scramble(b_hat, codewords[cw_idx], cw_idx, config);
 
     // Prepare destination buffer view.
     d_pdsch[cw_idx] = span<cf_t>(temp_d[cw_idx].data(), nof_re);
 
     // Modulate codeword.
-    modulate(d_pdsch[cw_idx], d, mod, config.scaling);
+    modulate(d_pdsch[cw_idx], b_hat, mod, config.scaling);
   }
 
   // Perform layer mapping.
