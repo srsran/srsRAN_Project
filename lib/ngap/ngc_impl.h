@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "ngap_ue.h"
+#include "ngc_ue_manager.h"
 #include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/support/timers.h"
@@ -65,9 +65,7 @@ private:
 
   unique_timer ng_setup_timer;
 
-  ngap_ue_manager ues;
-
-  std::array<ngc_ue_context, MAX_NOF_CU_UES> ue_ngap_id_to_ngc_ue_context;
+  ngc_ue_manager ue_manager;
 
   std::unique_ptr<ngc_event_manager> events;
 };
