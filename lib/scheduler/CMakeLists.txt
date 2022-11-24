@@ -33,4 +33,4 @@ set(SOURCES
         cell/scheduler_prb.cpp)
 
 add_library(srsgnb_sched STATIC ${SOURCES} $<TARGET_OBJECTS:common_sched> $<TARGET_OBJECTS:ue_sched>)
-target_link_libraries(srsgnb_sched srsgnb_ran rrc_nr_asn1_helpers)
+target_link_libraries(srsgnb_sched srsgnb_ran)

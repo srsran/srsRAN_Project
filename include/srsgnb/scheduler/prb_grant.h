@@ -141,10 +141,10 @@ private:
   } alloc;
 };
 
-inline prb_bitmap& operator|=(prb_bitmap& prb_bitmap, const prb_interval& grant)
+inline prb_bitmap& operator|=(prb_bitmap& prb_bits, const prb_interval& grant)
 {
-  prb_bitmap.fill(grant.start(), grant.stop());
-  return prb_bitmap;
+  prb_bits.fill(grant.start(), grant.stop());
+  return prb_bits;
 }
 
 /// Converts RBG bitmap to PRB bitmap given a BWP PRB dimensions and the nominal RBG-size.

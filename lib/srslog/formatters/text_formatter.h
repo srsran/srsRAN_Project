@@ -81,7 +81,7 @@ private:
 private:
   /// Keeps track of some state required for formatting.
   struct scope {
-    scope(unsigned size, std::string set_name) : size(size), set_name(std::move(set_name)) {}
+    scope(unsigned size_, std::string set_name_) : size(size_), set_name(std::move(set_name_)) {}
     /// Number of elements this scope holds.
     unsigned size;
     /// Set name in this scope.

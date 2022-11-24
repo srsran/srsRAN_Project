@@ -110,17 +110,17 @@ public:
   void* allocate_node(size_t sz) noexcept
   {
     srsgnb_assert(sz <= mblock_size, "Allocated node size={} exceeds max object size={}", sz, mblock_size);
-    worker_ctxt* worker_ctxt = get_worker_cache();
+    worker_ctxt* w_ctx = get_worker_cache();
 
-    void* node = worker_ctxt->local_cache.try_pop();
+    void* node = w_ctx->local_cache.try_pop();
     if (node == nullptr) {
       // fill the thread local cache enough for this and next allocations
       std::array<void*, batch_steal_size> popped_blocks;
       size_t                              n = central_mem_cache.try_pop(popped_blocks);
       for (size_t i = 0; i < n; ++i) {
-        worker_ctxt->local_cache.push(static_cast<void*>(popped_blocks[i]));
+        w_ctx->local_cache.push(static_cast<void*>(popped_blocks[i]));
       }
-      node = worker_ctxt->local_cache.try_pop();
+      node = w_ctx->local_cache.try_pop();
     }
 
     return node;
@@ -131,7 +131,7 @@ public:
   {
     srsgnb_assert(p != nullptr, "Deallocated nodes must have valid address");
 
-    worker_ctxt* worker_ctxt = get_worker_cache();
+    worker_ctxt* w_ctx = get_worker_cache();
 
     if (DebugSanitizeAddress) {
       // For debug purposes.
@@ -148,11 +148,11 @@ public:
     }
 
     // push to local memory block cache.
-    worker_ctxt->local_cache.push(p);
+    w_ctx->local_cache.push(p);
 
-    if (worker_ctxt->local_cache.size() >= local_growth_thres) {
+    if (w_ctx->local_cache.size() >= local_growth_thres) {
       // if local cache reached max capacity, send half of the blocks to central cache
-      central_mem_cache.steal_blocks(worker_ctxt->local_cache, worker_ctxt->local_cache.size() / 2);
+      central_mem_cache.steal_blocks(w_ctx->local_cache, w_ctx->local_cache.size() / 2);
     }
   }
 

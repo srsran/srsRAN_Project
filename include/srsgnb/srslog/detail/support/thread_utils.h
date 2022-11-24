@@ -58,7 +58,7 @@ class scoped_lock
   mutex& m;
 
 public:
-  explicit scoped_lock(mutex& m) : m(m) { m.lock(); }
+  explicit scoped_lock(mutex& m_) : m(m_) { m.lock(); }
 
   scoped_lock(const scoped_lock&)            = delete;
   scoped_lock& operator=(const scoped_lock&) = delete;
@@ -74,7 +74,7 @@ class shared_variable
   mutable mutex m;
 
 public:
-  shared_variable(const T& value) : value(value) {}
+  shared_variable(const T& value_) : value(value_) {}
 
   shared_variable(const shared_variable&)            = delete;
   shared_variable& operator=(const shared_variable&) = delete;
@@ -153,7 +153,7 @@ class cond_var_scoped_lock
   condition_variable& cond_var;
 
 public:
-  explicit cond_var_scoped_lock(condition_variable& cond_var) : cond_var(cond_var) { cond_var.lock(); }
+  explicit cond_var_scoped_lock(condition_variable& cond_var_) : cond_var(cond_var_) { cond_var.lock(); }
 
   cond_var_scoped_lock(const cond_var_scoped_lock&)            = delete;
   cond_var_scoped_lock& operator=(const cond_var_scoped_lock&) = delete;

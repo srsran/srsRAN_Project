@@ -108,7 +108,7 @@ private:
 private:
   /// Keeps track of some information about a JSON scope.
   struct scope {
-    scope(unsigned size, bool inside_list) : size(size), inside_list(inside_list) {}
+    scope(unsigned size_, bool inside_list_) : size(size_), inside_list(inside_list_) {}
     /// Number of elements this scope holds.
     unsigned size;
     /// If true, indicates this scope belongs to a list.

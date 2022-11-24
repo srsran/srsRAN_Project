@@ -7,10 +7,6 @@
 
 namespace srsgnb {
 
-/// Convert a cell configuration request to the MAC into a cell configuration request of the scheduler.
-sched_cell_configuration_request_message
-make_scheduler_cell_configuration_request(const mac_cell_creation_request& request);
-
 /// Convert a UE creation request for the MAC into a UE creation request of the scheduler.
 sched_ue_creation_request_message make_scheduler_ue_creation_request(const mac_ue_create_request_message& request);
 

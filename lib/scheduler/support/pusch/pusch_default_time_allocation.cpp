@@ -112,10 +112,10 @@ srsgnb::pusch_default_time_allocations_default_A_table(cyclic_prefix cp, subcarr
   static constexpr size_t PUSCH_TD_RES_ALLOC_TABLE_SIZE = 16;
 
   // Build PUSCH-TimeDomain tables statically.
-  auto table_builder = [](cyclic_prefix cp, subcarrier_spacing scs) {
+  auto table_builder = [](cyclic_prefix cp_, subcarrier_spacing scs_) {
     std::array<pusch_time_domain_resource_allocation, PUSCH_TD_RES_ALLOC_TABLE_SIZE> table;
     for (unsigned i = 0; i < PUSCH_TD_RES_ALLOC_TABLE_SIZE; ++i) {
-      pusch_default_time_allocation_config cfg = pusch_default_time_allocation_default_A_get(cp, i, scs);
+      pusch_default_time_allocation_config cfg = pusch_default_time_allocation_default_A_get(cp_, i, scs_);
       table[i].k2                              = cfg.k2;
       table[i].map_type                        = cfg.mapping_type;
       table[i].symbols                         = {cfg.start_symbol, cfg.duration};

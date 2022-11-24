@@ -21,10 +21,10 @@ namespace srslog {
 class file_sink : public sink
 {
 public:
-  file_sink(std::string name, size_t max_size, bool force_flush, std::unique_ptr<log_formatter> f) :
+  file_sink(std::string name, size_t max_size_, bool force_flush_, std::unique_ptr<log_formatter> f) :
     sink(std::move(f)),
-    max_size((max_size == 0) ? 0 : std::max<size_t>(max_size, 4 * 1024)),
-    force_flush(force_flush),
+    max_size((max_size_ == 0) ? 0 : std::max<size_t>(max_size_, 4 * 1024)),
+    force_flush(force_flush_),
     base_filename(std::move(name))
   {
   }

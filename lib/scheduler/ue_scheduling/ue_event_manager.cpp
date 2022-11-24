@@ -57,9 +57,9 @@ private:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ue_event_manager::ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
-                                   ue_list&                          ue_db,
-                                   sched_configuration_notifier&     mac_notifier) :
-  expert_cfg(expert_cfg_), ue_db(ue_db), mac_notifier(mac_notifier), logger(srslog::fetch_basic_logger("MAC"))
+                                   ue_list&                          ue_db_,
+                                   sched_configuration_notifier&     mac_notifier_) :
+  expert_cfg(expert_cfg_), ue_db(ue_db_), mac_notifier(mac_notifier_), logger(srslog::fetch_basic_logger("MAC"))
 {
 }
 

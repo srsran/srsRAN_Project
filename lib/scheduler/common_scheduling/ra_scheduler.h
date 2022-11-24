@@ -61,7 +61,7 @@ private:
     slot_interval                                           rar_window;
     static_vector<rnti_t, MAX_PREAMBLES_PER_PRACH_OCCASION> tc_rntis;
   };
-  struct pending_msg3 {
+  struct pending_msg3_t {
     /// Detected PRACH Preamble associated to this Msg3.
     rach_indication_message::preamble preamble{};
     /// UL Harq used to schedule Msg3.
@@ -109,7 +109,7 @@ private:
                       span<const msg3_alloc_candidate> msg3_candidates);
 
   /// Schedule retransmission of Msg3.
-  void schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3& msg3_ctx);
+  void schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3_t& msg3_ctx);
 
   // args
   const scheduler_ra_expert_config& sched_cfg;
@@ -142,7 +142,7 @@ private:
   slot_event_list<rach_indication_message> pending_rachs;
   slot_event_list<ul_crc_indication>       pending_crcs;
   std::deque<pending_rar_t>                pending_rars;
-  std::vector<pending_msg3>                pending_msg3s;
+  std::vector<pending_msg3_t>              pending_msg3s;
 };
 
 } // namespace srsgnb

@@ -23,7 +23,7 @@ class fake_receiver
   srsgnb::pdcp_rx_lower_interface& pdcp_if;
 
 public:
-  explicit fake_receiver(srsgnb::pdcp_rx_lower_interface& pdcp_if) : pdcp_if(pdcp_if) {}
+  explicit fake_receiver(srsgnb::pdcp_rx_lower_interface& pdcp_if_) : pdcp_if(pdcp_if_) {}
 
   void receive()
   {

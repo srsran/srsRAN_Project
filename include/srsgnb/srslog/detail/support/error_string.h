@@ -25,8 +25,8 @@ class error_string
 public:
   error_string() = default;
 
-  /*implicit*/ error_string(std::string error) : error(std::move(error)) {}
-  /*implicit*/ error_string(const char* error) : error(error) {}
+  /*implicit*/ error_string(std::string error_) : error(std::move(error_)) {}
+  /*implicit*/ error_string(const char* error_) : error(error_) {}
 
   /// Returns the error string.
   const std::string& get_error() const { return error; }

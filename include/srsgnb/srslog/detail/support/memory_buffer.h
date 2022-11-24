@@ -24,7 +24,7 @@ class memory_buffer
   const size_t      length;
 
 public:
-  memory_buffer(const char* buffer, size_t length) : buffer(buffer), length(length) {}
+  memory_buffer(const char* buffer_, size_t length_) : buffer(buffer_), length(length_) {}
 
   explicit memory_buffer(const std::string& s) : buffer(s.data()), length(s.size()) {}
 

@@ -82,7 +82,7 @@ class timer_manager
     unique_function<void(timer_id_t)> callback;
 
   public:
-    explicit timer_handle(timer_manager& parent, timer_id_t id) : parent(parent), id(id) {}
+    explicit timer_handle(timer_manager& parent_, timer_id_t id_) : parent(parent_), id(id_) {}
     timer_handle(const timer_handle&)            = delete;
     timer_handle(timer_handle&&)                 = delete;
     timer_handle& operator=(const timer_handle&) = delete;

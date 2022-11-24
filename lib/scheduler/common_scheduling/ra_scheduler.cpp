@@ -547,7 +547,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   }
 }
 
-void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3& msg3_ctx)
+void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3_t& msg3_ctx)
 {
   unsigned                      pusch_td_res_index = 0; // TODO: Derive PUSCH TD res index.
   const unsigned                k2                 = get_pusch_cfg().pusch_td_alloc_list[pusch_td_res_index].k2;

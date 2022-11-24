@@ -68,20 +68,20 @@ struct base_optional_storage {
     payload(tag, std::forward<Args>(args)...), has_val(true)
   {
   }
-  explicit base_optional_storage(bool has_val_, const storage_type<storageT>& payload) noexcept(
+  explicit base_optional_storage(bool has_val_, const storage_type<storageT>& payload_) noexcept(
       std::is_nothrow_copy_constructible<T>::value) :
     has_val(has_val_)
   {
     if (has_val_) {
-      construct_(payload.val);
+      construct_(payload_.val);
     }
   }
-  explicit base_optional_storage(bool has_val_, storage_type<storageT>&& payload) noexcept(
+  explicit base_optional_storage(bool has_val_, storage_type<storageT>&& payload_) noexcept(
       std::is_nothrow_move_constructible<T>::value) :
     has_val(has_val_)
   {
     if (has_val_) {
-      construct_(std::move(payload.val));
+      construct_(std::move(payload_.val));
     }
   }
   base_optional_storage(const base_optional_storage<T>&)                = default;

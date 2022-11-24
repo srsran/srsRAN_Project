@@ -20,8 +20,8 @@ namespace srslog {
 class buffered_file_sink : public sink
 {
 public:
-  buffered_file_sink(std::string filename, std::size_t capacity, std::unique_ptr<log_formatter> f) :
-    sink(std::move(f)), filename(std::move(filename))
+  buffered_file_sink(std::string filename_, std::size_t capacity, std::unique_ptr<log_formatter> f) :
+    sink(std::move(f)), filename(std::move(filename_))
   {
     buffer.reserve(capacity);
   }

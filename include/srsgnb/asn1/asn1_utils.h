@@ -932,13 +932,13 @@ public:
     return *this;
   }
 
-  this_type& from_number(uint64_t val, uint32_t nof_bits)
+  this_type& from_number(uint64_t val, uint32_t nof_bits_)
   {
-    if (nof_bits > UB) {
+    if (nof_bits_ > UB) {
       log_error("The provided bitstring value {} does not fit the bounds [{}, {}]", val, uint32_t(lb), uint32_t(ub));
       return *this;
     }
-    resize(nof_bits);
+    resize(nof_bits_);
     bitstring_utils::from_number(data(), val, length());
     return *this;
   }

@@ -24,8 +24,8 @@ namespace srslog {
 class backend_worker
 {
 public:
-  backend_worker(detail::work_queue<detail::log_entry>& queue, detail::dyn_arg_store_pool& arg_pool) :
-    queue(queue), arg_pool(arg_pool), running_flag(false)
+  backend_worker(detail::work_queue<detail::log_entry>& queue_, detail::dyn_arg_store_pool& arg_pool_) :
+    queue(queue_), arg_pool(arg_pool_), running_flag(false)
   {
   }
 

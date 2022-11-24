@@ -20,8 +20,8 @@ namespace srslog {
 /// Log channel configuration settings.
 struct log_channel_config {
   log_channel_config() = default;
-  log_channel_config(std::string n, char tag, bool should_print_context) :
-    name(std::move(n)), tag(tag), should_print_context(should_print_context)
+  log_channel_config(std::string n, char tag_, bool should_print_context_) :
+    name(std::move(n)), tag(tag_), should_print_context(should_print_context_)
   {
   }
 
@@ -46,12 +46,12 @@ struct log_channel_config {
 class log_channel
 {
 public:
-  log_channel(std::string id, sink& s, detail::log_backend& backend) : log_channel(std::move(id), s, backend, {}) {}
+  log_channel(std::string id, sink& s, detail::log_backend& backend_) : log_channel(std::move(id), s, backend_, {}) {}
 
-  log_channel(std::string id, sink& s, detail::log_backend& backend, log_channel_config config) :
+  log_channel(std::string id, sink& s, detail::log_backend& backend_, log_channel_config config) :
     log_id(std::move(id)),
     log_sink(s),
-    backend(backend),
+    backend(backend_),
     log_name(std::move(config.name)),
     log_tag(config.tag),
     should_print_context(config.should_print_context),
@@ -136,8 +136,8 @@ public:
     // Send the log entry to the backend.
     log_formatter&    formatter = log_sink.get_formatter();
     detail::log_entry entry     = {&log_sink,
-                                   [&formatter](detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer) {
-                                 formatter.format(std::move(metadata), buffer);
+                                   [&formatter](detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer_) {
+                                 formatter.format(std::move(metadata), buffer_);
                                },
                                    {std::chrono::high_resolution_clock::now(),
                                     {ctx_value, should_print_context},

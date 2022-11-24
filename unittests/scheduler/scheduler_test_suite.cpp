@@ -76,7 +76,7 @@ void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
         const auto&     sibs = cell_res_grid[0].result.dl.bc.sibs;
         sib_information sib;
         auto            it = std::find_if(
-            sibs.begin(), sibs.end(), [&pdcch](const auto& sib) { return sib.pdsch_cfg.rnti == pdcch.ctx.rnti; });
+            sibs.begin(), sibs.end(), [&pdcch](const auto& sib_) { return sib_.pdsch_cfg.rnti == pdcch.ctx.rnti; });
         TESTASSERT(it != sibs.end());
         assert_pdcch_pdsch_common_consistency(cell_cfg, pdcch, it->pdsch_cfg);
       } break;

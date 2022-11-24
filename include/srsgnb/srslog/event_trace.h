@@ -76,8 +76,8 @@ class scoped_complete_event
 public:
   scoped_complete_event(const char*               cat,
                         const char*               n,
-                        std::chrono::microseconds threshold = std::chrono::microseconds::zero()) :
-    category(cat), name(n), start(std::chrono::steady_clock::now()), threshold(threshold)
+                        std::chrono::microseconds threshold_ = std::chrono::microseconds::zero()) :
+    category(cat), name(n), start(std::chrono::steady_clock::now()), threshold(threshold_)
   {
   }
 

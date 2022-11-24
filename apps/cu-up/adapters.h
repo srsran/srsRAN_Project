@@ -30,7 +30,7 @@ class sdap_packet_handler : public srsgnb::pdcp_rx_upper_data_notifier
   srsgnb::srs_cu_up::sdap_pdu_handler& sdap;
 
 public:
-  explicit sdap_packet_handler(srsgnb::srs_cu_up::sdap_pdu_handler& sdap) : sdap(sdap) {}
+  explicit sdap_packet_handler(srsgnb::srs_cu_up::sdap_pdu_handler& sdap_) : sdap(sdap_) {}
 
   void on_new_sdu(srsgnb::byte_buffer sdu) override
   {

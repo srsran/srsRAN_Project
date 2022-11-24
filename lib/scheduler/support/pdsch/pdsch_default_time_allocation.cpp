@@ -112,10 +112,10 @@ srsgnb::pdsch_default_time_allocations_default_A_table(cyclic_prefix cp, dmrs_ty
   static constexpr size_t PDSCH_TD_RES_ALLOC_TABLE_SIZE = 16;
 
   // Build PDSCH-TimeDomain tables statically.
-  auto table_builder = [](cyclic_prefix cp, dmrs_typeA_position dmrs_pos) {
+  auto table_builder = [](cyclic_prefix cp_, dmrs_typeA_position dmrs_pos_) {
     std::array<pdsch_time_domain_resource_allocation, PDSCH_TD_RES_ALLOC_TABLE_SIZE> table;
     for (unsigned i = 0; i < PDSCH_TD_RES_ALLOC_TABLE_SIZE; ++i) {
-      pdsch_default_time_allocation_config cfg = pdsch_default_time_allocation_default_A_get(cp, i, dmrs_pos);
+      pdsch_default_time_allocation_config cfg = pdsch_default_time_allocation_default_A_get(cp_, i, dmrs_pos_);
       table[i].k0                              = cfg.pdcch_to_pdsch_delay;
       table[i].map_type                        = cfg.mapping_type;
       table[i].symbols                         = {cfg.start_symbol, cfg.duration};
