@@ -219,6 +219,12 @@ void test_oct_string()
   TESTASSERT_EQ(b.distance(), (int)(hexstr.size() * 8 / 2 + 9));
   b.align_bytes_zero();
   TESTASSERT(b.distance() == (int)(hexstr.size() * 8 / 2 + 16));
+
+  {
+    fixed_octstring<1> small_octet_str;
+    small_octet_str.from_number(255); // It should not assert.
+    TESTASSERT_EQ(small_octet_str.to_number(), 255);
+  }
 }
 
 void test_bitstring()

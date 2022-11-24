@@ -923,8 +923,8 @@ uint64_t octet_string_helper::to_uint(const byte_buffer& buf)
 void octet_string_helper::to_octet_string(srsgnb::span<uint8_t> buf, uint64_t number)
 {
   size_t nbytes = buf.size();
-  if (nbytes < sizeof(number)) {
-    log_error("uint64_t does not fit in an OCTET STRING of size={}", nbytes);
+  if ((1U << (8U * nbytes)) <= number) {
+    log_error("Integer={} does not fit in an OCTET STRING of size={}", number, nbytes);
     return;
   }
   for (uint32_t i = 0; i < nbytes; ++i) {
