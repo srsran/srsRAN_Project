@@ -349,6 +349,7 @@ int main(int argc, char** argv)
   du_hi_cfg.f1c_notifier                  = &f1c_du_to_cu_adapter;
   du_hi_cfg.phy_adapter                   = &phy;
   du_hi_cfg.cells                         = generate_du_cell_config(gnb_cfg);
+  du_hi_cfg.sched_cfg                     = config_helpers::make_default_scheduler_expert_config();
 
   srs_du::du_high du_obj(du_hi_cfg);
   gnb_logger.info("DU-High created successfully");
