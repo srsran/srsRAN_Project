@@ -147,6 +147,15 @@ else(MBEDTLS_FOUND)
   message(FATAL_ERROR "mbedTLS is required to build ${CMAKE_PROJECT_NAME}")
 endif (MBEDTLS_FOUND)
 
+# Yaml-cpp
+find_package(YAMLCPP)
+if (YAMLCPP_FOUND)
+    include_directories(${YAMLCPP_INCLUDE_DIR})
+    link_directories(${YAMLCPP_LIBRARY})
+else (YAMLCPP_FOUND)
+    message(FATAL_ERROR "yaml-cpp is required to build ${CMAKE_PROJECT_NAME}")
+endif (YAMLCPP_FOUND)
+
 # UHD
 if (ENABLE_UHD)
     find_package(UHD)
