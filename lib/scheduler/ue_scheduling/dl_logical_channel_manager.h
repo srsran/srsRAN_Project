@@ -81,11 +81,10 @@ public:
   unsigned pending_ue_con_res_id_ce_bytes() const
   {
     unsigned bytes = 0;
-    for (const lcid_dl_sch_t& ce : pending_ces) {
-      if (ce == lcid_dl_sch_t::UE_CON_RES_ID) {
-        bytes += FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + ce.sizeof_ce();
-        break;
-      }
+    // UE Contention Resolution Identity is always first in the queue.
+    const auto& ce = pending_ces.front();
+    if (ce == lcid_dl_sch_t::UE_CON_RES_ID) {
+      bytes += FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + ce.sizeof_ce();
     }
     return bytes;
   }
