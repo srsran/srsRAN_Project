@@ -16,6 +16,7 @@ using namespace srsgnb;
 /// \brief Estimation of the N_info for payloads above 3824 bits.
 static float estimate_nof_info_payload_higher_3824_bits(unsigned payload_bits, float tcr)
 {
+  // TODO: Improve this estimation algorithm.
   unsigned nof_info_prime_estim = std::max(3840U, payload_bits + 24);
 
   unsigned C = 1;

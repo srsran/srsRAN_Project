@@ -132,7 +132,9 @@ TEST(estimate_nof_prbs, distance_from_actual_solution)
       double diff              = nof_prbs_estimate - nof_prbs_solution;
       tbs_diff += diff;
       tbs_abs += std::abs(diff);
-      tbs_max = std::max(diff, tbs_max);
+      if (std::abs(diff) > tbs_max) {
+        tbs_max = diff;
+      }
     }
     return std::make_tuple(tbs_diff / configs.size(), tbs_abs / configs.size(), tbs_max);
   };
