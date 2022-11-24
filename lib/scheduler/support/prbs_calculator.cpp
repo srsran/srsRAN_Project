@@ -32,7 +32,7 @@ static float estimate_nof_info_payload_higher_3824_bits(unsigned payload_bits, f
 unsigned srsgnb::estimate_required_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cfg)
 {
   // Convert size into bits, as per TS procedures for TBS.
-  unsigned payload_size = pdsch_cfg.payload_size_bytes * 8;
+  unsigned payload_size = pdsch_cfg.payload_size_bytes * 8U;
 
   float                 nof_info_estimate;
   static const unsigned payload_step_threshold = 3824;
@@ -61,7 +61,9 @@ unsigned srsgnb::estimate_required_nof_prbs(const prbs_calculator_pdsch_config& 
   return divide_ceil(nof_re, std::min(nof_re_prime, 156U));
 }
 
-/// \brief Linearly searches an upper-bound for the number of PRBs, such that the TBS >= payload size.
+/// \brief Linearly searches an upper-bound for the number of PRBs, such that the TBS >= payload size, starting from
+/// an initial estimate \c nof_prbs_estimate.
+///
 /// \param pdsch_cfg Configuration received for PRB calculation.
 /// \param nof_prbs_estimate Initial estimate for the number PRBs. The algorithm searches for the actual solution using
 /// this value as a starting point.
@@ -76,41 +78,32 @@ static pdsch_prbs_tbs linear_search_nof_prbs_upper_bound(const prbs_calculator_p
                                        pdsch_cfg.mcs_descr,
                                        pdsch_cfg.nof_layers,
                                        pdsch_cfg.tb_scaling_field,
-                                       nof_prbs_estimate - 1};
-  unsigned                     tbs_bits_lb = tbs_calculator_calculate(tbs_cfg);
+                                       nof_prbs_estimate};
+  unsigned                     tbs_bits_ub = tbs_calculator_calculate(tbs_cfg);
 
-  if (tbs_bits_lb > payload_size_bits) {
-    // Due to the way "nof_prb_estimate" is derived (inversion of non-invertible functions), it can be larger than the
-    // required number to fit the payload size. In such case, linearly search for x >= 0, such that
-    // TBS(nof_prbs_estimate - x) >= payload_size.
-    for (unsigned num_prb_dec = 2; nof_prbs_estimate > num_prb_dec; ++num_prb_dec) {
-      unsigned tbs_bits_ub = tbs_bits_lb;
-      tbs_cfg.n_prb        = nof_prbs_estimate - num_prb_dec;
-      tbs_bits_lb          = tbs_calculator_calculate(tbs_cfg);
+  // Linearly searches for an "nof_prb_dec" integer value so that TBS(nof_prbs_estimate - nof_prb_dec) < payload size.
+  // Once an "nof_prb_dec" is found, the function will return "nof_prbs_estimate - nof_prb_dec + 1" as the solution.
+  unsigned tbs_bits_lb = tbs_bits_ub;
+  for (unsigned nof_prb_dec = 1; nof_prb_dec < tbs_cfg.n_prb and tbs_bits_lb >= payload_size_bits; ++nof_prb_dec) {
+    tbs_cfg.n_prb = nof_prbs_estimate - nof_prb_dec;
+    tbs_bits_lb   = tbs_calculator_calculate(tbs_cfg);
 
-      // If TBS(nof_prbs_estimate - x) is lower than the payload_size, return the previous iteration solution.
-      if (tbs_bits_lb < payload_size_bits) {
-        return {nof_prbs_estimate - num_prb_dec + 1, tbs_bits_ub / 8U};
-      }
+    // if tbs_bits_lb < payload_size, return the previous iteration as the solution.
+    if (tbs_bits_lb < payload_size_bits) {
+      return {tbs_cfg.n_prb + 1, tbs_bits_ub / 8U};
     }
-    return {1, tbs_bits_lb / 8U};
+    tbs_bits_ub = tbs_bits_lb;
   }
 
-  // Search for x>=0 such that TBS(nof_prbs_estimate + x) >= payload.
-  unsigned num_prb_inc = 0;
+  // Linearly searches for an "nof_prb_inc" so that TBS(nof_prb_estimate + nof_prb_inc) >= payload_size.
   // Implementation-defined value to avoid too many iterations in the search for the optimal TBS.
-  static const unsigned MAX_INC_ITERATIONS = 3;
-  for (; tbs_bits_lb < payload_size_bits and num_prb_inc < MAX_INC_ITERATIONS; num_prb_inc++) {
-    tbs_cfg.n_prb        = nof_prbs_estimate + num_prb_inc;
-    unsigned tbs_bits_ub = tbs_calculator_calculate(tbs_cfg);
-
-    // If TBS(nof_prbs_estimate + x) is higher than the payload_size, return.
-    if (tbs_bits_ub >= payload_size_bits) {
-      return {nof_prbs_estimate + num_prb_inc, tbs_bits_ub / 8U};
-    }
-    tbs_bits_lb = tbs_bits_ub;
+  static const unsigned MAX_INC_ITERATIONS = 5;
+  for (unsigned nof_prb_inc = 1; nof_prb_inc < MAX_INC_ITERATIONS and tbs_bits_ub < payload_size_bits; ++nof_prb_inc) {
+    tbs_cfg.n_prb = nof_prbs_estimate + nof_prb_inc;
+    tbs_bits_ub   = tbs_calculator_calculate(tbs_cfg);
   }
-  return {nof_prbs_estimate + num_prb_inc - 1, tbs_bits_lb / 8U};
+
+  return {tbs_cfg.n_prb, tbs_bits_ub / 8U};
 }
 
 pdsch_prbs_tbs srsgnb::get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cfg)
