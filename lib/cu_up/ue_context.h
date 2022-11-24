@@ -22,8 +22,8 @@ namespace srs_cu_up {
 class ue_context : public pdu_session_manager_ctrl
 {
 public:
-  ue_context(ue_index_t index_, srslog::basic_logger& logger_, timer_manager& timers_) :
-    index(index_), pdu_session_manager(logger_, timers_){};
+  ue_context(ue_index_t index_, srslog::basic_logger& logger_, timer_manager& timers_, gtpu_demux_ctrl& ngu_) :
+    index(index_), pdu_session_manager(logger_, timers_, ngu_){};
   ~ue_context() = default;
 
   // pdu_session_manager_ctrl

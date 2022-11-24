@@ -8,6 +8,7 @@
  *
  */
 
+#include "cu_up_test_helpers.h"
 #include "srsgnb/cu_up/cu_up_factory.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/test_utils.h"

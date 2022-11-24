@@ -11,6 +11,7 @@
 #pragma once
 
 #include "pdu_session_manager.h"
+#include "srsgnb/gtpu/gtpu_demux.h"
 #include "srsgnb/support/timers.h"
 #include <map>
 
@@ -21,7 +22,7 @@ namespace srs_cu_up {
 class pdu_session_manager_impl : public pdu_session_manager_ctrl
 {
 public:
-  pdu_session_manager_impl(srslog::basic_logger& logger_, timer_manager& timers_);
+  pdu_session_manager_impl(srslog::basic_logger& logger_, timer_manager& timers_, gtpu_demux_ctrl& ngu_demux_);
   ~pdu_session_manager_impl() = default;
 
   pdu_session_setup_result setup_pdu_session(const asn1::e1ap::pdu_session_res_to_setup_item_s& session) override;
@@ -31,6 +32,7 @@ public:
 private:
   srslog::basic_logger&                            logger;
   timer_manager&                                   timers;
+  gtpu_demux_ctrl&                                 ngu_demux;
   std::map<uint16_t, std::unique_ptr<pdu_session>> pdu_sessions; // key is pdu_session_id
 };
 

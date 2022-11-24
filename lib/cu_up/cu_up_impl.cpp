@@ -9,6 +9,7 @@
  */
 
 #include "cu_up_impl.h"
+#include "srsgnb/gtpu/gtpu_demux_factory.h"
 
 using namespace srsgnb;
 using namespace srs_cu_up;
@@ -19,20 +20,16 @@ void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
   srsgnb_assert(cfg.e1_notifier != nullptr, "Invalid E1 notifier");
 }
 
-cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128), ue_mng(logger, timers)
+cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128)
 {
   assert_cu_up_configuration_valid(cfg);
 
   // Create layers
-  // .. todo ..
+  ngu_demux = create_gtpu_demux();
+  ue_mng    = std::make_unique<ue_manager>(logger, timers, *ngu_demux);
 
   // connect event notifier to layers
   // f1c_ev_notifier.connect_cu_cp(*this);
-}
-
-e1_message_handler& cu_up::get_e1_message_handler()
-{
-  return *e1;
 }
 
 e1ap_bearer_context_setup_response_message
@@ -43,7 +40,7 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
   response.success                                    = false;
 
   // 1. Create new UE context
-  ue_context* ue_ctxt = ue_mng.add_ue();
+  ue_context* ue_ctxt = ue_mng->add_ue();
   if (ue_ctxt == nullptr) {
     logger.error("Could not create UE context");
     return response;
@@ -76,5 +73,3 @@ void cu_up::on_e1_connection_drop()
 {
   e1_connected = false;
 }
-
-// private

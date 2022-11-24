@@ -8,6 +8,7 @@
  *
  */
 
+#include "cu_up_test_helpers.h"
 #include "lib/cu_up/pdu_session_manager_impl.h"
 #include <gtest/gtest.h>
 
@@ -23,8 +24,11 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
+    // create required objects
+    ngu_demux = std::make_unique<dummy_ngu>();
+
     // create DUT object
-    pdu_session_mng = std::make_unique<pdu_session_manager_impl>(logger, timers);
+    pdu_session_mng = std::make_unique<pdu_session_manager_impl>(logger, timers, *ngu_demux);
   }
 
   void TearDown() override
@@ -33,6 +37,7 @@ protected:
     srslog::flush();
   }
 
+  std::unique_ptr<gtpu_demux_ctrl>          ngu_demux;
   std::unique_ptr<pdu_session_manager_ctrl> pdu_session_mng;
   srslog::basic_logger&                     logger = srslog::fetch_basic_logger("TEST", false);
   timer_manager                             timers;
@@ -47,6 +52,7 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
   // prepare request
   asn1::e1ap::pdu_session_res_to_setup_item_s pdu_session_setup_item;
   pdu_session_setup_item.pdu_session_id = 1;
+  pdu_session_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel().gtp_teid.from_number(0x12345678);
 
   // attempt to add session
   pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
@@ -64,6 +70,7 @@ TEST_F(pdu_session_manager_test, when_pdu_session_with_same_id_is_setup_session_
   // prepare request
   asn1::e1ap::pdu_session_res_to_setup_item_s pdu_session_setup_item;
   pdu_session_setup_item.pdu_session_id = 1;
+  pdu_session_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel().gtp_teid.from_number(0x12345678);
 
   // attempt to add session
   pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);

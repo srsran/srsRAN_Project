@@ -11,13 +11,15 @@
 #include "pdu_session_manager_impl.h"
 #include "ue_context.h"
 #include "srsgnb/pdcp/pdcp_factory.h"
-#include "srsgnb/sdap/sdap_entity_factory.h"
+#include "srsgnb/sdap/sdap_factory.h"
 
 using namespace srsgnb;
 using namespace srs_cu_up;
 
-pdu_session_manager_impl::pdu_session_manager_impl(srslog::basic_logger& logger_, timer_manager& timers_) :
-  logger(logger_), timers(timers_)
+pdu_session_manager_impl::pdu_session_manager_impl(srslog::basic_logger& logger_,
+                                                   timer_manager&        timers_,
+                                                   gtpu_demux_ctrl&      ngu_demux_) :
+  logger(logger_), timers(timers_), ngu_demux(ngu_demux_)
 {
 }
 
@@ -40,10 +42,29 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
   }
 
   pdu_sessions[session.pdu_session_id] = std::make_unique<pdu_session>(session);
-  auto& new_session                    = pdu_sessions[session.pdu_session_id];
+  auto&       new_session              = pdu_sessions[session.pdu_session_id];
+  const auto& peer_teid                = new_session->tunnel_info.gtp_tunnel().gtp_teid.to_number();
 
-  // Create SDAP entity
-  new_session->sdap = srsgnb::create_sdap_entity();
+  // Create SDAP
+  new_session->sdap = create_sdap(new_session->sdap_to_gtpu_adapter);
+
+  // Create GTPU entity
+  gtpu_tunnel_creation_message msg = {};
+  msg.cfg.tx.peer_teid             = peer_teid;
+  msg.cfg.rx.local_teid            = new_session->local_teid;
+  msg.rx_lower                     = &new_session->gtpu_to_sdap_adapter;
+  // msg.tx_upper                         = &gtpu_tx; // TODO: register UDP gateway
+  new_session->gtpu = create_gtpu_tunnel(msg);
+
+  // Connect adapters
+  new_session->sdap_to_gtpu_adapter.connect_gtpu(*new_session->gtpu->get_tx_lower_layer_interface());
+  new_session->gtpu_to_sdap_adapter.connect_sdap(*new_session->sdap.get());
+
+  // Register tunnel at demux
+  if (ngu_demux.add_tunnel(peer_teid, new_session->gtpu->get_rx_upper_layer_interface()) == false) {
+    logger.error("PDU Session {} cannot be created. TEID {} already exists", session.pdu_session_id, peer_teid);
+    return pdu_session_result;
+  }
 
   // Handle DRB setup
   for (size_t i = 0; i < session.drb_to_setup_list_ng_ran.size(); ++i) {

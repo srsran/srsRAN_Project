@@ -30,15 +30,18 @@ public:
   explicit cu_up(const cu_up_configuration& cfg_);
   ~cu_up() = default;
 
-  e1_message_handler& get_e1_message_handler() override;
+  // cu_up_e1_interface
+  e1_message_handler& get_e1_message_handler() override { return *e1; };
   e1ap_bearer_context_setup_response_message
   handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request_message& msg) override;
 
   // cu_up_e1_connection_notifier
   void on_e1_connection_establish() override;
   void on_e1_connection_drop() override;
+  bool e1_is_connected() override { return e1_connected; }
 
-  bool e1_is_connected() override { return e1_connected; };
+  // cu_up_ngu_interface
+  gtpu_demux_rx_upper_layer_interface& get_ngu_pdu_handler() override { return *ngu_demux; }
 
 private:
   cu_up_configuration cfg;
@@ -51,10 +54,11 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UP", false);
 
   // Components
-  std::unique_ptr<e1_interface> e1;
   std::atomic<bool>             e1_connected = {false};
+  std::unique_ptr<e1_interface> e1;
+  std::unique_ptr<gtpu_demux>   ngu_demux;
   timer_manager                 timer_db;
-  ue_manager                    ue_mng;
+  std::unique_ptr<ue_manager>   ue_mng;
 };
 
 } // namespace srs_cu_up

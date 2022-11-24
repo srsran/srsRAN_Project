@@ -8,6 +8,7 @@
  *
  */
 
+#include "cu_up_test_helpers.h"
 #include "lib/cu_up/ue_manager.h"
 #include "srsgnb/cu_up/cu_up_types.h"
 #include <gtest/gtest.h>
@@ -24,8 +25,11 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
+    // create required objects
+    ngu_demux = std::make_unique<dummy_ngu>();
+
     // create DUT object
-    ue_mng = std::make_unique<ue_manager>(test_logger, timers);
+    ue_mng = std::make_unique<ue_manager>(test_logger, timers, *ngu_demux);
   }
 
   void TearDown() override
@@ -34,6 +38,7 @@ protected:
     srslog::flush();
   }
 
+  std::unique_ptr<gtpu_demux_ctrl> ngu_demux;
   std::unique_ptr<ue_manager_ctrl> ue_mng;
   srslog::basic_logger&            test_logger = srslog::fetch_basic_logger("TEST", false);
   timer_manager                    timers;

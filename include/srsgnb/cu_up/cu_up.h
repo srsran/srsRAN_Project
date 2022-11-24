@@ -12,6 +12,7 @@
 
 #include "srsgnb/e1_interface/common/e1_common.h"
 #include "srsgnb/e1_interface/cu_up/e1_cu_up.h"
+#include "srsgnb/gtpu/gtpu_demux.h"
 
 #include <string>
 
@@ -50,7 +51,18 @@ public:
   virtual bool e1_is_connected() = 0;
 };
 
-class cu_up_interface : public cu_up_e1_connection_notifier, public cu_up_e1_interface
+/// Interface to notify about GTP-U packets (from the NGU) to the CU-UP
+class cu_up_ngu_interface
+{
+public:
+  virtual ~cu_up_ngu_interface() = default;
+
+  /// \brief Get the NGu PDU handler interface.
+  /// \return The NGu PDU handler interface.
+  virtual gtpu_demux_rx_upper_layer_interface& get_ngu_pdu_handler() = 0;
+};
+
+class cu_up_interface : public cu_up_e1_connection_notifier, public cu_up_e1_interface, public cu_up_ngu_interface
 {
 public:
   virtual ~cu_up_interface() = default;
