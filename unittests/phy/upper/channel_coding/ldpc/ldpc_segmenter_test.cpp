@@ -99,13 +99,13 @@ TEST_P(LDPCSegmenterFixture, LDPCSegmenterTest)
 
   unsigned seg_offset = 0;
   for (const auto& seg : segments) {
-    EXPECT_EQ(seg.first.size(), test_data.segment_length) << "Wrong segment length.";
-    EXPECT_TRUE(std::equal(seg.first.begin(), seg.first.end(), segments_check.cbegin() + seg_offset))
+    EXPECT_EQ(seg.get_data().size(), test_data.segment_length) << "Wrong segment length.";
+    EXPECT_TRUE(std::equal(seg.get_data().begin(), seg.get_data().end(), segments_check.cbegin() + seg_offset))
         << "Wrong segment content.";
     seg_offset += test_data.segment_length;
   }
 
-  std::vector<log_likelihood_ratio> cw_llrs(segments[0].second.tb_common.cw_length);
+  std::vector<log_likelihood_ratio> cw_llrs(segments[0].get_metadata().tb_common.cw_length);
   std::generate(cw_llrs.begin(), cw_llrs.end(), [n = static_cast<int8_t>(-127)]() mutable {
     int8_t r = clamp(n, LLR_MIN.to_value_type(), LLR_MAX.to_value_type());
     ++n;

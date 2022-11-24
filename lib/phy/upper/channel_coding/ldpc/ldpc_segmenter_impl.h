@@ -94,7 +94,7 @@ private:
 
   // Data members.
   /// Internal temporary buffer.
-  static_vector<uint8_t, MAX_TBS> buffer;
+  std::array<uint8_t, MAX_TBS> temp_buffer;
 
   /// Base graph used for encoding/decoding the current transport block.
   ldpc_base_graph_type base_graph = ldpc_base_graph_type::BG1;

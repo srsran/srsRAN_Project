@@ -12,6 +12,8 @@
 #include "../crc_calculator_impl.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
 #include "srsgnb/srsvec/bit.h"
+#include "srsgnb/srsvec/copy.h"
+#include "srsgnb/srsvec/zero.h"
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
@@ -111,11 +113,6 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
 
   nof_tb_bits_in = nof_tb_bits_tmp + nof_tb_crc_bits;
 
-  buffer.resize(nof_tb_bits_in);
-  srsvec::bit_unpack(span<uint8_t>(buffer).first(nof_tb_bits_tmp), transport_block);
-  unsigned tb_checksum = tb_crc.calculate_byte(transport_block);
-  srsvec::bit_unpack(span<uint8_t>(buffer).last(nof_tb_crc_bits), tb_checksum, nof_tb_crc_bits);
-
   nof_segments    = ldpc::compute_nof_codeblocks(nof_tb_bits_tmp, base_graph);
   nof_tb_bits_out = nof_tb_bits_in;
   if (nof_segments > 1) {
@@ -128,14 +125,24 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   if (nof_segments > 1) {
     nof_crc_bits = SEG_CRC_LENGTH;
   }
-  // Compute the maximum number of information bits that can be assigned to a segment.
-  unsigned max_info_bits = divide_ceil(nof_tb_bits_out, nof_segments) - nof_crc_bits;
+  // Compute the number of information bits that is assigned to a segment.
+  unsigned cb_info_bits = divide_ceil(nof_tb_bits_out, nof_segments) - nof_crc_bits;
 
   // Zero-padding if necessary.
-  unsigned zero_pad = (max_info_bits + nof_crc_bits) * nof_segments - nof_tb_bits_out;
-  if (zero_pad > 0) {
-    buffer.resize(nof_tb_bits_in + zero_pad, 0);
-  }
+  unsigned zero_pad = (cb_info_bits + nof_crc_bits) * nof_segments - nof_tb_bits_out;
+
+  // Get the buffer for the entire transport block.
+  span<uint8_t> buffer = span<uint8_t>(temp_buffer).first(nof_tb_bits_tmp + nof_tb_crc_bits + zero_pad);
+
+  // Unpack the input data.
+  srsvec::bit_unpack(buffer.first(nof_tb_bits_tmp), transport_block);
+
+  // Append TB CRC.
+  unsigned tb_checksum = tb_crc.calculate_byte(transport_block);
+  srsvec::bit_unpack(buffer.subspan(nof_tb_bits_tmp, nof_tb_crc_bits), tb_checksum, nof_tb_crc_bits);
+
+  // Set zero padding.
+  srsvec::zero(buffer.last(zero_pad));
 
   // Number of channel symbols assigned to a transmission layer.
   nof_symbols_per_layer = cfg.nof_ch_symbols / cfg.nof_layers;
@@ -147,32 +154,28 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   // Codeword length (after concatenation of codeblocks).
   unsigned cw_length = cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod);
 
-  unsigned input_idx = 0;
+  // Number of filler bits in this segment.
+  unsigned nof_filler_bits = segment_length - cb_info_bits - nof_crc_bits;
+
   unsigned cw_offset = 0;
   for (unsigned i_segment = 0; i_segment != nof_segments; ++i_segment) {
-    described_segments.emplace_back();
-    segment_data&       tmp_data        = described_segments[i_segment].first;
-    codeblock_metadata& tmp_description = described_segments[i_segment].second;
-
-    // Number of filler bits in this segment.
-    unsigned nof_filler_bits = segment_length - max_info_bits - nof_crc_bits;
-
-    // Prepare segment temporal buffer.
-    tmp_data.resize(segment_length);
-
-    // Fill the segment.
-    fill_segment(tmp_data,
-                 span<uint8_t>(buffer).subspan(input_idx, max_info_bits),
-                 crc_set.crc24B,
-                 nof_crc_bits,
-                 nof_filler_bits);
-    input_idx += max_info_bits;
-
-    tmp_description =
+    // Generate metadata for this segment.
+    codeblock_metadata cb_metadata =
         generate_cb_metadata({i_segment, cw_length, cw_offset, nof_filler_bits, nof_crc_bits, nof_tb_crc_bits}, cfg);
 
-    cw_offset += tmp_description.cb_specific.rm_length;
+    described_segments.push_back(described_segment(cb_metadata, segment_length));
+    described_segment& segment = described_segments.back();
+
+    // Fill the segment.
+    fill_segment(segment.get_data(), buffer.first(cb_info_bits), crc_set.crc24B, nof_crc_bits, nof_filler_bits);
+    buffer = buffer.last(buffer.size() - cb_info_bits);
+
+    cw_offset += cb_metadata.cb_specific.rm_length;
   }
+
+  // After segmenting no bits should be left in the buffer.
+  srsgnb_assert(buffer.empty(), "The segmentation process did not use {} bits.", buffer.size());
+
   // After accumulating all codeblock rate-matched lengths, cw_offset should be the same as cw_length.
   srsgnb_assert(
       cw_length == cw_offset, "Codeblock offset ({}) must be equal to the codeword size ({}).", cw_offset, cw_length);

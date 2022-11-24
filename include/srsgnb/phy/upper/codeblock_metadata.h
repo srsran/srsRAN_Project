@@ -83,7 +83,45 @@ using segment_data = static_vector<uint8_t, MAX_SEG_LENGTH>;
 ///                                      represented by a \c uint8_t entry).
 ///   - \c described_segment.second()  Contains the segment metadata, useful for processing the corresponding
 ///                                      segment (e.g., encoding, rate-matching).
-using described_segment = std::pair<segment_data, codeblock_metadata>;
+class described_segment
+{
+public:
+  /// Default constructor - Sets the codeblock size to zero to indicate it is invalid.
+  described_segment() = default;
+
+  /// Create segment.
+  described_segment(codeblock_metadata metadata_, unsigned cb_size_) : metadata(metadata_), cb_size(cb_size_)
+  {
+    srsgnb_assert((cb_size > 0) && (cb_size <= MAX_SEG_LENGTH),
+                  "The codeblock size (i.e., {}) is invalid (max. {}).",
+                  cb_size,
+                  MAX_SEG_LENGTH);
+  }
+
+  /// \brief Gets a read-write view of the segment data.
+  /// \remark An assertion is triggered if the segment has not been created with parameter.
+  span<uint8_t> get_data()
+  {
+    srsgnb_assert(cb_size != 0, "The segment has not been constructed.");
+    return span<uint8_t>(data).first(cb_size);
+  }
+
+  /// \brief Gets a read-only view of the segment data.
+  /// \remark An assertion is triggered if the segment has not been created with parameter.
+  span<const uint8_t> get_data() const
+  {
+    srsgnb_assert(cb_size != 0, "The segment has not been constructed.");
+    return span<const uint8_t>(data).first(cb_size);
+  }
+
+  /// Gets the segment metadata.
+  const codeblock_metadata& get_metadata() const { return metadata; }
+
+private:
+  codeblock_metadata                  metadata;
+  unsigned                            cb_size = 0;
+  std::array<uint8_t, MAX_SEG_LENGTH> data;
+};
 
 /// \brief Alias for the full codeblock characterization at the receiver.
 ///
