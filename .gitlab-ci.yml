@@ -34,7 +34,7 @@ include-guards:
         INPUT_IGNORE: "^\\(include\\|docs\\|external\\)/.*"
 
 .codechecker:
-  image: registry.gitlab.com/softwareradiosystems/testing-tools/codechecker-gnb:1.0.2
+  image: $CR_REGISTRY_URI/testing-tools/codechecker-gnb:1.0.2
   stage: static
   needs: []
   tags:
@@ -181,7 +181,7 @@ unit coverage:
   stage: documentation
   extends: .depends on unit test jobs
   image:
-    name: registry.gitlab.com/softwareradiosystems/testing-tools/report-generator:5.1.10
+    name: $CR_REGISTRY_URI/testing-tools/report-generator:5.1.10
     entrypoint: ["/bin/sh", "-c"]
   rules:
     - if: $ON_MR
@@ -261,7 +261,7 @@ pages:
   rules:
     - if: $CI_DESCRIPTION == "Nightly"
       when: always # Even if previous stages/required jobs fail
-  image: registry.gitlab.com/softwareradiosystems/testing-tools/doxygen:1.4.0
+  image: $CR_REGISTRY_URI/testing-tools/doxygen:1.4.0
   script:
     - doxygen_generator.sh
     - mv build/public .

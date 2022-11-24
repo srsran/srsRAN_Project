@@ -9,7 +9,7 @@ stages:
 # Template job
 
 .build_and_unit:
-  image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-builder-gnb-${OS}:${DOCKER_BUILDER_VERSION}
+  image: $CR_REGISTRY_URI/testing-tools/srs-builder-gnb-${OS}:${DOCKER_BUILDER_VERSION}
   tags:
     - ${SRS_INFRASTRUCTURE_TAG}-${SRS_ARCHITECTURE_TAG}
   stage: build and unit tests
