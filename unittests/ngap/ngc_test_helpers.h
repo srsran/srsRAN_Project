@@ -40,6 +40,64 @@ protected:
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
+// NG Application Protocol (NGSetupRequest)
+//     NGAP-PDU: initiatingMessage (0)
+//         initiatingMessage
+//             procedureCode: id-NGSetup (21)
+//             criticality: reject (0)
+//             value
+//                 NGSetupRequest
+//                     protocolIEs: 4 items
+//                         Item 0: id-GlobalRANNodeID
+//                             ProtocolIE-Field
+//                                 id: id-GlobalRANNodeID (27)
+//                                 criticality: reject (0)
+//                                 value
+//                                     GlobalRANNodeID: globalGNB-ID (0)
+//                                         globalGNB-ID
+//                                             pLMNIdentity: 00f110
+//                                                 Mobile Country Code (MCC): Unknown (1)
+//                                                 Mobile Network Code (MNC): Unknown (01)
+//                                             gNB-ID: gNB-ID (0)
+//                                                 gNB-ID: 00066c [bit length 22, 2 LSB pad bits, 0000 0000  0000 0110
+//                                                 0110 11.. decimal value 411]
+//                         Item 1: id-RANNodeName
+//                             ProtocolIE-Field
+//                                 id: id-RANNodeName (82)
+//                                 criticality: ignore (1)
+//                                 value
+//                                     RANNodeName: srsgnb01
+//                         Item 2: id-SupportedTAList
+//                             ProtocolIE-Field
+//                                 id: id-SupportedTAList (102)
+//                                 criticality: reject (0)
+//                                 value
+//                                     SupportedTAList: 1 item
+//                                         Item 0
+//                                             SupportedTAItem
+//                                                 tAC: 7 (0x000007)
+//                                                 broadcastPLMNList: 1 item
+//                                                     Item 0
+//                                                         BroadcastPLMNItem
+//                                                             pLMNIdentity: 00f110
+//                                                                 Mobile Country Code (MCC): Unknown (1)
+//                                                                 Mobile Network Code (MNC): Unknown (01)
+//                                                             tAISliceSupportList: 1 item
+//                                                                 Item 0
+//                                                                     SliceSupportItem
+//                                                                         s-NSSAI
+//                                                                             sST: 01
+//                         Item 3: id-DefaultPagingDRX
+//                             ProtocolIE-Field
+//                                 id: id-DefaultPagingDRX (21)
+//                                 criticality: ignore (1)
+//                                 value
+//                                     PagingDRX: v256 (3)
+const static uint8_t ng_setup_request_packed[] = {
+    0x00, 0x15, 0x00, 0x33, 0x00, 0x00, 0x04, 0x00, 0x1b, 0x00, 0x08, 0x00, 0x00, 0xf1, 0x10, 0x00, 0x00, 0x06, 0x6c,
+    0x00, 0x52, 0x40, 0x0a, 0x03, 0x80, 0x73, 0x72, 0x73, 0x67, 0x6e, 0x62, 0x30, 0x31, 0x00, 0x66, 0x00, 0x0d, 0x00,
+    0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0xf1, 0x10, 0x00, 0x00, 0x00, 0x08, 0x00, 0x15, 0x40, 0x01, 0x60};
+
 ng_setup_request_message generate_ng_setup_request_message()
 {
   ng_setup_request_message request_msg = {};
@@ -55,7 +113,8 @@ ng_setup_request_message generate_ng_setup_request_message()
   request_msg.msg->supported_ta_list.id   = ASN1_NGAP_ID_SUPPORTED_TA_LIST;
   request_msg.msg->supported_ta_list.crit = asn1::crit_opts::reject;
 
-  asn1::ngap::supported_ta_item_s   supported_ta_item   = {};
+  asn1::ngap::supported_ta_item_s supported_ta_item = {};
+  supported_ta_item.tac.from_number(7);
   asn1::ngap::broadcast_plmn_item_s broadcast_plmn_item = {};
   broadcast_plmn_item.plmn_id.from_string("00f110");
   asn1::ngap::slice_support_item_s slice_support_item = {};

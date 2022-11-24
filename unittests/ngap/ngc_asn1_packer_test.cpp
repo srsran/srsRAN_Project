@@ -43,6 +43,28 @@ protected:
   srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
 };
 
+/// Test successful packing and compare with captured test vector
+TEST_F(ngc_asn1_packer_test, when_packing_successful_then_pdu_matches_tv)
+{
+  // Populate message
+  ngc_message ngc_msg = {};
+  ngc_msg.pdu.set_init_msg();
+  ngc_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_NG_SETUP);
+  ngc_msg.pdu.init_msg().value.ng_setup_request() = generate_ng_setup_request_message().msg;
+
+  // Pack message and forward to gateway
+  packer->handle_message(ngc_msg);
+
+  // print packed message and TV
+  byte_buffer tv({ng_setup_request_packed, sizeof(ng_setup_request_packed)});
+  test_logger.debug(tv.begin(), tv.end(), "Test vector ({} bytes):", tv.length());
+  test_logger.debug(gw->last_pdu.begin(), gw->last_pdu.end(), "Packed PDU ({} bytes):", gw->last_pdu.length());
+
+  // Compare packed message with captured test vector
+  ASSERT_EQ(gw->last_pdu.length(), sizeof(ng_setup_request_packed));
+  ASSERT_TRUE(std::equal(gw->last_pdu.begin(), gw->last_pdu.end(), ng_setup_request_packed));
+}
+
 /// Test successful packing and unpacking
 TEST_F(ngc_asn1_packer_test, when_packing_successful_then_unpacking_successful)
 {
