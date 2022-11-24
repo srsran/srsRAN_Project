@@ -44,12 +44,9 @@ void ngc_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
   logger.info("Handling Initial UE Message");
 
   // Create UE context and store it
-  ngc_ue_context ue_ctxt = {};
-  ue_ctxt.du_index       = get_du_index_from_ue_ngap_id(msg.ue_ngap_id);
-  ue_ctxt.ue_index       = get_ue_index_from_ue_ngap_id(msg.ue_ngap_id);
+  auto& ue = ues.add_ue(get_du_index_from_ue_ngap_id(msg.ue_ngap_id), get_ue_index_from_ue_ngap_id(msg.ue_ngap_id));
 
-  logger.debug(
-      "Created NGAP UE (ue_ngap_id={}, du_index={}, ue_index={}).", msg.ue_ngap_id, ue_ctxt.du_index, ue_ctxt.ue_index);
+  logger.debug("Created NGAP UE (ue_ngap_id={}, du_index={}, ue_index={}).", ue.ue_ngap_id, ue.du_index, ue.ue_index);
 
   ngc_message ngc_msg = {};
   ngc_msg.pdu.set_init_msg();
