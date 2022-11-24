@@ -63,15 +63,5 @@ private:
   srslog::basic_logger& logger;
 };
 
-/// Dummy PDU handler
-class dummy_network_gateway_data_handler : public srsgnb::network_gateway_data_handler
-{
-public:
-  dummy_network_gateway_data_handler(){};
-  void handle_pdu(const byte_buffer& pdu) override { last_pdu = pdu.copy(); }
-
-  byte_buffer last_pdu;
-};
-
 } // namespace srs_cu_cp
 } // namespace srsgnb

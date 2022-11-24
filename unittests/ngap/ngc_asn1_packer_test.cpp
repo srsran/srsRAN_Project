@@ -11,6 +11,7 @@
 #include "lib/ngap/ngc_asn1_packer.h"
 #include "ngc_test_helpers.h"
 #include "test_helpers.h"
+#include "unittests/gateways/test_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
