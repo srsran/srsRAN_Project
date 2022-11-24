@@ -240,7 +240,7 @@ protected:
     bench->srb0_sched.handle_dl_buffer_state_indication(ue_idx);
   }
 
-  unsigned get_pending_bytes(du_ue_index_t ue_idx) { return bench->ue_db[ue_idx].pending_dl_newtx_bytes(); }
+  unsigned get_pending_bytes(du_ue_index_t ue_idx) { return bench->ue_db[ue_idx].pending_dl_srb0_newtx_bytes(); }
 
   const ue& get_ue(du_ue_index_t ue_idx) { return bench->ue_db[ue_idx]; }
 };

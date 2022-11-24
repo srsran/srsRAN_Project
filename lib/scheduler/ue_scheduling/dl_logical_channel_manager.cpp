@@ -154,3 +154,52 @@ unsigned srsgnb::allocate_mac_ces(dl_msg_tb_info& tb_info, dl_logical_channel_ma
   }
   return total_tbs - rem_tbs;
 }
+
+unsigned dl_logical_channel_manager::allocate_ue_con_res_id_mac_ce(dl_msg_lc_info& subpdu, unsigned rem_bytes)
+{
+  subpdu.lcid        = lcid_dl_sch_t::MIN_RESERVED;
+  subpdu.sched_bytes = 0;
+  if (pending_ces.empty()) {
+    return 0;
+  }
+
+  lcid_dl_sch_t lcid = pending_ces.front();
+  if (lcid != lcid_dl_sch_t::UE_CON_RES_ID) {
+    return 0;
+  }
+  unsigned ce_size     = lcid.sizeof_ce();
+  unsigned alloc_bytes = ce_size + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE;
+
+  // Verify there is space for both MAC CE and subheader.
+  if (rem_bytes < alloc_bytes) {
+    alloc_bytes = 0;
+  }
+
+  if (alloc_bytes > 0) {
+    pending_ces.pop_front();
+
+    subpdu.lcid        = lcid;
+    subpdu.sched_bytes = ce_size;
+  }
+
+  return alloc_bytes;
+}
+
+unsigned
+srsgnb::allocate_ue_con_res_id_mac_ce(dl_msg_tb_info& tb_info, dl_logical_channel_manager& lch_mng, unsigned total_tbs)
+{
+  unsigned rem_tbs = total_tbs;
+
+  if (not tb_info.subpdus.full()) {
+    dl_msg_lc_info subpdu;
+    unsigned       alloc_bytes = lch_mng.allocate_ue_con_res_id_mac_ce(subpdu, rem_tbs);
+    if (alloc_bytes != 0) {
+      // add new subPDU.
+      tb_info.subpdus.push_back(subpdu);
+
+      // update remaining space taking into account the MAC CE subheader.
+      rem_tbs -= alloc_bytes;
+    }
+  }
+  return total_tbs - rem_tbs;
+}

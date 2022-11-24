@@ -32,35 +32,60 @@ public:
   bool is_active(lcid_t lcid) const { return channels[lcid].active; }
 
   /// \brief Checks whether the UE has pending data.
+  /// \remark Excludes data for SRB0 and UE Contention Resolution Identity CE.
   bool has_pending_bytes() const
   {
-    return not pending_ces.empty() or
-           std::any_of(channels.begin(), channels.end(), [](const auto& ch) { return ch.active and ch.buf_st > 0; });
+    return has_pending_ces() or std::any_of(channels.begin() + 1, channels.end(), [](const auto& ch) {
+             return ch.active and ch.buf_st > 0;
+           });
   }
 
   /// \brief Checks whether a logical channel has pending data.
   bool has_pending_bytes(lcid_t lcid) const { return pending_bytes(lcid) > 0; }
 
   /// \brief Checks whether UE has pending CEs to be scheduled.
-  bool has_pending_ces() const { return not pending_ces.empty(); }
+  /// \remark Excludes UE Contention Resolution Identity CE.
+  bool has_pending_ces() const
+  {
+    return std::any_of(
+        pending_ces.begin(), pending_ces.end(), [](const auto& ce) { return ce != lcid_dl_sch_t::UE_CON_RES_ID; });
+  }
 
   /// \brief Calculates total number of DL bytes, including MAC header overhead.
+  /// \remark Excludes data for SRB0 and UE Contention Resolution Identity CE.
   unsigned pending_bytes() const
   {
     unsigned bytes = pending_ce_bytes();
-    for (unsigned i = 0; i <= MAX_LCID; ++i) {
+    // Skip index 0 ==> SRB0.
+    for (unsigned i = 1; i <= MAX_LCID; ++i) {
       bytes += pending_bytes((lcid_t)i);
     }
     return bytes;
   }
 
   /// \brief Checks whether UE has pending CEs to be scheduled.
+  /// \remark Excludes UE Contention Resolution Identity CE.
   unsigned pending_ce_bytes() const
   {
     unsigned bytes = 0;
     for (const lcid_dl_sch_t& ce : pending_ces) {
-      bytes += ce.is_var_len_ce() ? get_mac_sdu_required_bytes(ce.sizeof_ce())
-                                  : FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + ce.sizeof_ce();
+      if (ce != lcid_dl_sch_t::UE_CON_RES_ID) {
+        bytes += ce.is_var_len_ce() ? get_mac_sdu_required_bytes(ce.sizeof_ce())
+                                    : FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + ce.sizeof_ce();
+      }
+    }
+    return bytes;
+  }
+
+  /// \brief Checks whether UE has pending UE Contention Resolution Identity CE to be scheduled.
+  unsigned pending_ue_con_res_id_ce_bytes() const
+  {
+    unsigned bytes = 0;
+    for (const lcid_dl_sch_t& ce : pending_ces) {
+      if (ce == lcid_dl_sch_t::UE_CON_RES_ID) {
+        bytes += FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + ce.sizeof_ce();
+        break;
+      }
     }
     return bytes;
   }
@@ -96,7 +121,13 @@ public:
   /// \brief Allocates next MAC CE within space of \c rem_bytes bytes. Updates \c lch_info with allocated bytes for the
   /// MAC CE.
   /// \return Allocated bytes for MAC CE (with subheader).
+  /// \remark Excludes UE Contention Resolution Identity CE.
   unsigned allocate_mac_ce(dl_msg_lc_info& lch_info, unsigned rem_bytes);
+
+  /// \brief Allocates UE Contention Resolution Identity MAC CE within space of \c rem_bytes bytes. Updates \c lch_info
+  /// with allocated bytes for the MAC CE.
+  /// \return Allocated bytes for UE Contention Resolution Identity MAC CE (with subheader).
+  unsigned allocate_ue_con_res_id_mac_ce(dl_msg_lc_info& lch_info, unsigned rem_bytes);
 
 private:
   struct channel_context {
@@ -128,6 +159,15 @@ unsigned allocate_mac_sdus(dl_msg_tb_info& tb_info, dl_logical_channel_manager& 
 /// \param[in] lch_mng UE DL logical channel manager.
 /// \param[in] total_tbs available space in bytes for subPDUs.
 /// \return Total number of bytes allocated (including MAC subheaders).
+/// \remark Excludes UE Contention Resolution Identity CE.
 unsigned allocate_mac_ces(dl_msg_tb_info& tb_info, dl_logical_channel_manager& lch_mng, unsigned total_tbs);
+
+/// \brief Allocate MAC subPDUs for pending UE Contention Resolution Identity MAC CE.
+/// \param[in] tb_info TB on which MAC subPDUs will be stored.
+/// \param[in] lch_mng UE DL logical channel manager.
+/// \param[in] total_tbs available space in bytes for subPDUs.
+/// \return Total number of bytes allocated (including MAC subheaders).
+unsigned
+allocate_ue_con_res_id_mac_ce(dl_msg_tb_info& tb_info, dl_logical_channel_manager& lch_mng, unsigned total_tbs);
 
 } // namespace srsgnb

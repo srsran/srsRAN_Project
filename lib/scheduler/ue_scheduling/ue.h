@@ -154,6 +154,7 @@ public:
 
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
+  /// \remark Excludes SRB0 and UE Contention Resolution Identity CE.
   bool has_pending_dl_newtx_bytes() const { return dl_lc_ch_mgr.has_pending_bytes(); }
 
   /// \brief Checks if there are DL pending bytes for a specific LCID that are yet to be allocated in a DL HARQ.
@@ -161,7 +162,12 @@ public:
 
   /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ. The value is used
   /// to derive the required transport block size for an DL grant.
+  /// \remark Excludes SRB0 and UE Contention Resolution Identity CE.
   unsigned pending_dl_newtx_bytes() const;
+
+  /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ for SRB0. The value is
+  /// used to derive the required transport block size for an DL grant.
+  unsigned pending_dl_srb0_newtx_bytes() const;
 
   /// \brief Computes the number of UL pending bytes that are not already allocated in a UL HARQ. The value is used
   /// to derive the required transport block size for an UL grant.
@@ -169,7 +175,13 @@ public:
 
   /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block.
   /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
+  /// \remark Excludes SRB0 and UE Contention Resolution Identity CE.
   unsigned build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes);
+
+  /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block for
+  /// SRB0.
+  /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
+  unsigned build_dl_srb0_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes);
 
 private:
   /// Expert config parameters used for UE scheduler.

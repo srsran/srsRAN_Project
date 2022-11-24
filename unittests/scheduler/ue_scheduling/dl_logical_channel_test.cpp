@@ -100,7 +100,8 @@ TEST(dl_logical_channel_test, total_pending_bytes_equal_sum_of_logical_channel_p
     lch_mng.handle_dl_buffer_status_indication(lcid, dl_bs);
   }
 
-  ASSERT_EQ(lch_mng.pending_bytes(), std::accumulate(buf_st_inds.begin(), buf_st_inds.end(), 0));
+  ASSERT_EQ(lch_mng.pending_bytes() + lch_mng.pending_bytes(LCID_SRB0),
+            std::accumulate(buf_st_inds.begin(), buf_st_inds.end(), 0));
   ASSERT_FALSE(lch_mng.has_pending_ces());
   for (unsigned i = 0; i != lcids.size(); ++i) {
     ASSERT_EQ(lch_mng.pending_bytes(lcids[i]), buf_st_inds[i]);
@@ -111,12 +112,12 @@ TEST(dl_logical_channel_test, mac_ce_indication_updates_tx_pending_bytes)
 {
   dl_logical_channel_manager lch_mng;
 
-  lch_mng.handle_mac_ce_indication(lcid_dl_sch_t::UE_CON_RES_ID);
+  lch_mng.handle_mac_ce_indication(lcid_dl_sch_t::TA_CMD);
 
   ASSERT_TRUE(lch_mng.has_pending_bytes());
   ASSERT_TRUE(lch_mng.has_pending_ces());
   ASSERT_EQ(lch_mng.pending_bytes(),
-            lcid_dl_sch_t{lcid_dl_sch_t::UE_CON_RES_ID}.sizeof_ce() + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE);
+            lcid_dl_sch_t{lcid_dl_sch_t::TA_CMD}.sizeof_ce() + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE);
 }
 
 TEST(dl_mac_ce_test, derivation_of_mac_ce_size)
@@ -199,4 +200,41 @@ TEST(dl_logical_channel_test, mac_sdu_is_scheduled_if_tb_has_space)
 
     rem_bytes -= allocated_bytes;
   } while (lch_mng.has_pending_bytes());
+}
+
+TEST(dl_logical_channel_test, check_scheduling_of_ue_con_res_id_mac_ce)
+{
+  dl_logical_channel_manager lch_mng;
+
+  lcid_dl_sch_t ce_lcid = lcid_dl_sch_t::UE_CON_RES_ID;
+  lch_mng.handle_mac_ce_indication(ce_lcid);
+  unsigned mac_ce_required_bytes = lcid_dl_sch_t{ce_lcid}.sizeof_ce() + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE;
+  unsigned tb_size               = 10;
+
+  dl_msg_lc_info subpdu;
+  unsigned       allocated_bytes = lch_mng.allocate_ue_con_res_id_mac_ce(subpdu, tb_size);
+
+  ASSERT_EQ(allocated_bytes, mac_ce_required_bytes);
+  ASSERT_EQ(subpdu.lcid, ce_lcid);
+  ASSERT_EQ(subpdu.sched_bytes, lcid_dl_sch_t{ce_lcid}.sizeof_ce());
+}
+
+TEST(dl_logical_channel_test, pending_bytes_does_not_include_ue_con_res_id_mac_ce)
+{
+  dl_logical_channel_manager lch_mng;
+
+  lcid_dl_sch_t ce_lcid = lcid_dl_sch_t::UE_CON_RES_ID;
+  lch_mng.handle_mac_ce_indication(ce_lcid);
+
+  ASSERT_EQ(lch_mng.pending_bytes(), 0);
+}
+
+TEST(dl_logical_channel_test, pending_ue_con_res_id_ce_bytes_does_not_other_mac_ce)
+{
+  dl_logical_channel_manager lch_mng;
+
+  lcid_dl_sch_t ce_lcid = lcid_dl_sch_t::LONG_DRX_CMD;
+  lch_mng.handle_mac_ce_indication(ce_lcid);
+
+  ASSERT_EQ(lch_mng.pending_ue_con_res_id_ce_bytes(), 0);
 }
