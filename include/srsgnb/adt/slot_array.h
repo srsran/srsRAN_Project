@@ -246,15 +246,14 @@ public:
   {
     this->nof_elems = 0;
     for (auto& e : this->vec) {
-      if (e.has_value()) {
-        e.reset();
-      }
+      e.reset();
     }
   }
 
   /// Find first position that is empty
-  size_t find_first_empty(size_t start_guess = 0)
+  size_t find_first_empty(size_t start_guess = 0) const
   {
+    srsgnb_assert(start_guess < vec.size(), "invalid first guess array index");
     if (nof_elems == vec.size()) {
       return vec.size();
     }
@@ -383,8 +382,8 @@ public:
     index_mapper.clear();
   }
 
-  /// Find first position that is empty
-  size_t find_first_empty(size_t start_guess = 0)
+  /// Find first position that is empty in slot_vector.
+  size_t find_first_empty(size_t start_guess = 0) const
   {
     if (objects.size() == index_mapper.size()) {
       return index_mapper.size();
