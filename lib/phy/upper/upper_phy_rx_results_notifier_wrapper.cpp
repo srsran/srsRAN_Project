@@ -9,6 +9,7 @@
  */
 
 #include "upper_phy_rx_results_notifier_wrapper.h"
+#include "srsgnb/phy/upper/rx_softbuffer_pool.h"
 #include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
@@ -23,7 +24,7 @@ void upper_phy_rx_results_notifier_wrapper::on_new_pusch_results(const ul_pusch_
 {
   report_fatal_error_if_not(rx_results_notifier, "Invalid results notifier object.");
 
-  // Free the soft buffer when the PUSCH is successfully decoded.
+  // Free the soft buffer in the pool when the PUSCH PDU is successfully decoded.
   if (result.data && result.data->decoder_result.tb_crc_ok) {
     rx_softbuffer_identifier id;
     id.rnti        = result.data->rnti;

@@ -23,7 +23,7 @@ class task_executor;
 class uplink_processor_single_executor_impl : public uplink_processor
 {
 public:
-  uplink_processor_single_executor_impl(std::unique_ptr<prach_detector>  prach_detctor_,
+  uplink_processor_single_executor_impl(std::unique_ptr<prach_detector>  prach_,
                                         std::unique_ptr<pusch_processor> pusch_proc_,
                                         std::unique_ptr<pucch_processor> pucch_proc_,
                                         task_executor&                   executor);
@@ -47,7 +47,7 @@ public:
 
 private:
   /// PRACH detector.
-  std::unique_ptr<prach_detector> prach_detctor;
+  std::unique_ptr<prach_detector> prach;
   /// PUSCH processor.
   std::unique_ptr<pusch_processor> pusch_proc;
   /// PUCCH processor.

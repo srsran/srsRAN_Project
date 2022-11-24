@@ -10,10 +10,11 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/rx_softbuffer_pool.h"
 #include "srsgnb/phy/upper/upper_phy_rx_results_notifier.h"
 
 namespace srsgnb {
+
+class rx_softbuffer_pool;
 
 /// \brief Wrapper class of the upper PHY receive results notifier.
 ///
@@ -37,7 +38,7 @@ public:
 
   /// Connects this wrapper to the notifier the notifications of new upper PHY receive results are forwarded to.
   ///
-  /// \param n RX results notifier to which the notifications will be forwarded.
+  /// \param[in] n RX results notifier to which the notifications will be forwarded.
   void connect(upper_phy_rx_results_notifier& n);
 
 private:

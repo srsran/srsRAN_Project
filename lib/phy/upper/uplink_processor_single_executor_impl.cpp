@@ -36,16 +36,13 @@ static prach_detector::configuration get_prach_dectector_config_from_prach_conte
 }
 
 uplink_processor_single_executor_impl::uplink_processor_single_executor_impl(
-    std::unique_ptr<prach_detector>  prach_detctor_,
+    std::unique_ptr<prach_detector>  prach_,
     std::unique_ptr<pusch_processor> pusch_proc_,
     std::unique_ptr<pucch_processor> pucch_proc_,
     task_executor&                   executor) :
-  prach_detctor(std::move(prach_detctor_)),
-  pusch_proc(std::move(pusch_proc_)),
-  pucch_proc(std::move(pucch_proc_)),
-  executor(executor)
+  prach(std::move(prach_)), pusch_proc(std::move(pusch_proc_)), pucch_proc(std::move(pucch_proc_)), executor(executor)
 {
-  srsgnb_assert(prach_detctor, "A valid PRACH detector must be provided");
+  srsgnb_assert(prach, "A valid PRACH detector must be provided");
   srsgnb_assert(pusch_proc, "A valid PUSCH processor must be provided");
   srsgnb_assert(pucch_proc, "A valid PUCCH processor must be provided");
 }
@@ -57,7 +54,7 @@ void uplink_processor_single_executor_impl::process_prach(upper_phy_rx_results_n
   executor.execute([&notifier, &buffer, context, this]() {
     ul_prach_results ul_results;
     ul_results.context = context;
-    ul_results.result  = prach_detctor->detect(buffer, get_prach_dectector_config_from_prach_context(context));
+    ul_results.result  = prach->detect(buffer, get_prach_dectector_config_from_prach_context(context));
 
     // Notify the PRACH results.
     notifier.on_new_prach_results(ul_results);

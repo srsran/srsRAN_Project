@@ -48,8 +48,8 @@ public:
   // See interface for documentation.
   std::unique_ptr<uplink_processor> create(const uplink_processor_config& config) override
   {
-    std::unique_ptr<prach_detector> detector = prach_factory->create();
-    report_fatal_error_if_not(detector, "Invalid PRACH detector.");
+    std::unique_ptr<prach_detector> prach = prach_factory->create();
+    report_fatal_error_if_not(prach, "Invalid PRACH detector.");
 
     std::unique_ptr<pusch_processor> pusch_proc = pusch_factory->create();
     report_fatal_error_if_not(pusch_proc, "Invalid PUSCH processor.");
@@ -58,7 +58,7 @@ public:
     report_fatal_error_if_not(pucch_proc, "Invalid PUCCH processor.");
 
     return std::make_unique<uplink_processor_single_executor_impl>(
-        std::move(detector), std::move(pusch_proc), std::move(pucch_proc), executor);
+        std::move(prach), std::move(pusch_proc), std::move(pucch_proc), executor);
   }
 
 private:
