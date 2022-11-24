@@ -39,6 +39,9 @@ public:
   void handle_message(const ngc_message& msg) override;
   void handle_connection_loss() override {}
 
+  // ngc_statistic_interface
+  size_t get_nof_ues() const override;
+
 private:
   /// \brief Notify about the reception of an initiating message.
   /// \param[in] msg The received initiating message.

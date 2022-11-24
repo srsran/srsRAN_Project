@@ -187,3 +187,8 @@ void ngc_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcome
       logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
   }
 }
+
+size_t ngc_impl::get_nof_ues() const 
+{
+  return ues.size();
+}

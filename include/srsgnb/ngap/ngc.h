@@ -118,11 +118,23 @@ public:
   virtual void handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg) = 0;
 };
 
+/// \brief Interface to query statistics from the NGC interface.
+class ngc_statistic_interface
+{
+public:
+  virtual ~ngc_statistic_interface() = default;
+
+  /// \brief Get the number of UEs registered at the NGC.
+  /// \return The number of UEs.
+  virtual size_t get_nof_ues() const = 0;
+};
+
 /// Combined entry point for the NGC object.
 class ngc_interface : public ngc_message_handler,
                       public ngc_event_handler,
                       public ngc_connection_manager,
-                      public ngc_nas_message_handler
+                      public ngc_nas_message_handler,
+                      public ngc_statistic_interface
 {
 public:
   virtual ~ngc_interface() = default;

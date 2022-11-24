@@ -70,6 +70,8 @@ public:
     return int_to_ue_index(ue_id % MAX_NOF_UES);
   }
 
+  size_t size() const { return ues.size(); }
+
 private:
   slot_array<ngap_ue, MAX_NOF_CU_UES> ues;
 };
