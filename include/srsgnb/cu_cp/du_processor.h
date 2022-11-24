@@ -18,6 +18,7 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/rrc/rrc.h"
 #include "srsgnb/rrc/rrc_config.h"
+#include "srsgnb/rrc/rrc_ue.h"
 #include "srsgnb/support/timers.h"
 #include <string>
 
@@ -26,12 +27,6 @@ namespace srs_cu_cp {
 
 /// Forward declared messages.
 struct f1_setup_request_message;
-
-struct srb_creation_message {
-  ue_index_t               ue_index;
-  srb_id_t                 srb_id;
-  asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
-};
 
 /// Interface to request SRB creations at the DU processor.
 class du_processor_srb_interface
@@ -123,6 +118,19 @@ public:
   virtual void           handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) = 0;
   virtual unique_timer   make_unique_timer()                                                = 0;
   virtual timer_manager& get_timer_manager()                                                = 0;
+};
+
+/// Methods used by F1C to notify about DU specific events.
+class du_processor_cu_cp_notifier
+{
+public:
+  virtual ~du_processor_cu_cp_notifier() = default;
+
+  /// \brief Notifies about a successful RRC UE creation.
+  /// \param[in] du_index The index of the DU the UE is connected to.
+  /// \param[in] ue_index The index of the UE.
+  /// \param[in] rrc_ue_msg_handler The created RRC UE.
+  virtual void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) = 0;
 };
 
 /// Methods to get statistics of the DU processor.

@@ -20,11 +20,13 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 
 du_processor_impl::du_processor_impl(const du_processor_config_t     du_processor_config_,
+                                     du_processor_cu_cp_notifier&    cu_cp_notifier_,
                                      f1c_du_management_notifier&     f1c_du_mgmt_notifier_,
                                      f1c_message_notifier&           f1c_notifier_,
                                      rrc_ue_nas_notifier&            rrc_ue_ngc_ev_notifier_,
                                      du_processor_ue_task_scheduler& task_sched_) :
   cfg(du_processor_config_),
+  cu_cp_notifier(cu_cp_notifier_),
   f1c_du_mgmt_notifier(f1c_du_mgmt_notifier_),
   f1c_notifier(f1c_notifier_),
   rrc_ue_ngc_ev_notifier(rrc_ue_ngc_ev_notifier_),
@@ -177,6 +179,9 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   rrc_ue_create_msg.du_to_cu_container = std::move(msg.du_to_cu_rrc_container);
   rrc_ue_create_msg.ue_task_sched      = ue_ctxt->task_sched.get();
   ue_ctxt->rrc                         = rrc->add_ue(std::move(rrc_ue_create_msg));
+
+  // Notifiy CU-CP about the creation of the RRC UE
+  cu_cp_notifier.on_rrc_ue_created(context.du_index, ue_ctxt->ue_index, ue_ctxt->rrc);
 
   // 6. Create SRB0 bearer and notifier
   srb_creation_message srb0_msg{};

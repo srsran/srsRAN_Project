@@ -67,6 +67,12 @@ public:
   virtual void on_ue_delete_request() = 0;
 };
 
+struct srb_creation_message {
+  ue_index_t               ue_index;
+  srb_id_t                 srb_id;
+  asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
+};
+
 /// Interface to notify about RRC UE Context messages.
 class rrc_ue_du_processor_notifier
 {

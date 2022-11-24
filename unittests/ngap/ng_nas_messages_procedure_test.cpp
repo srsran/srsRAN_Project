@@ -19,6 +19,9 @@ TEST_F(ngc_test, when_initial_ue_message_is_received_then_ngap_ue_is_created)
 {
   ASSERT_EQ(ngc->get_nof_ues(), 0);
 
+  // Inject UE creation at NGC
+  ngc->create_ngc_ue(MIN_DU_INDEX, MIN_UE_INDEX, *rrc_ue_notifier);
+
   // generate and inject valid initial ue message
   ngap_initial_ue_message msg = generate_initial_ue_message();
   ngc->handle_initial_ue_message(msg);
@@ -39,6 +42,9 @@ TEST_F(ngc_test, when_no_ue_present_dl_nas_transport_is_dropped)
 
 TEST_F(ngc_test, when_ue_present_dl_nas_transport_is_forwarded)
 {
+  // Inject UE creation at NGC
+  ngc->create_ngc_ue(MIN_DU_INDEX, MIN_UE_INDEX, *rrc_ue_notifier);
+
   ngc_message dl_nas_transport = generate_downlink_nas_transport_message();
   ngc->handle_message(dl_nas_transport);
 

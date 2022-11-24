@@ -118,6 +118,30 @@ public:
   virtual void handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg) = 0;
 };
 
+/// Interface to notify about NAS messages.
+class ngc_rrc_ue_notifier
+{
+public:
+  virtual ~ngc_rrc_ue_notifier() = default;
+
+  /// \brief Notify about the a new nas message.
+  /// \param [in] ded_nas_msg The dedicated nas message.
+  virtual void on_dl_nas_transport_message(asn1::dyn_octstring ded_nas_msg) = 0;
+};
+
+/// Interface to control the NGC.
+class ngc_ue_control_manager
+{
+public:
+  virtual ~ngc_ue_control_manager() = default;
+
+  /// \brief Creates a NGC UE.
+  /// \param[in] du_index The index of the DU the UE is connected to.
+  /// \param[in] ue_index The index of the UE.
+  /// \param[in] ngc_rrc_ue_ev_notifier The notifier to the RRC UE.
+  virtual void create_ngc_ue(du_index_t du_index, ue_index_t ue_index, ngc_rrc_ue_notifier& ngc_rrc_ue_ev_notifier) = 0;
+};
+
 /// \brief Interface to query statistics from the NGC interface.
 class ngc_statistic_interface
 {
@@ -134,6 +158,7 @@ class ngc_interface : public ngc_message_handler,
                       public ngc_event_handler,
                       public ngc_connection_manager,
                       public ngc_nas_message_handler,
+                      public ngc_ue_control_manager,
                       public ngc_statistic_interface
 {
 public:

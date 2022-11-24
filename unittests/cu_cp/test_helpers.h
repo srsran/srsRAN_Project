@@ -35,5 +35,28 @@ private:
   timer_manager&       timer_db;
 };
 
+struct dummy_du_processor_cu_cp_notifier : public du_processor_cu_cp_notifier {
+public:
+  dummy_du_processor_cu_cp_notifier(cu_cp_du_handler* cu_cp_handler_) :
+    logger(srslog::fetch_basic_logger("TEST")), cu_cp_handler(cu_cp_handler_)
+  {
+  }
+
+  void attach_handler(cu_cp_du_handler* cu_cp_handler_) { cu_cp_handler = cu_cp_handler_; }
+
+  void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) override
+  {
+    logger.info("Received a RRC UE creation notification");
+
+    if (cu_cp_handler != nullptr) {
+      cu_cp_handler->handle_rrc_ue_creation(du_index, ue_index, rrc_ue);
+    }
+  }
+
+private:
+  srslog::basic_logger& logger;
+  cu_cp_du_handler*     cu_cp_handler = nullptr;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

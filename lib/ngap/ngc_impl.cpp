@@ -31,6 +31,16 @@ ngc_impl::ngc_impl(timer_manager& timers_, ngc_message_notifier& ngc_notifier_) 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 ngc_impl::~ngc_impl() {}
 
+void ngc_impl::create_ngc_ue(du_index_t du_index, ue_index_t ue_index, ngc_rrc_ue_notifier& ngc_rrc_ue_ev_notifier)
+{
+  // Create UE context and store it
+  ue_ngap_id_t    ue_ngap_id = get_ue_ngap_id(du_index, ue_index);
+  ngc_ue_context& ue_ctxt    = ue_manager.add_ue(ue_ngap_id, ngc_rrc_ue_ev_notifier);
+
+  logger.debug(
+      "Created NGAP UE (ue_ngap_id={}, du_index={}, ue_index={})", ue_ngap_id, ue_ctxt.du_index, ue_ctxt.ue_index);
+}
+
 async_task<ng_setup_response_message> ngc_impl::handle_ng_setup_request(const ng_setup_request_message& request)
 {
   return launch_async<ng_setup_procedure>(request, ngc_notifier, *events, logger);
@@ -39,12 +49,6 @@ async_task<ng_setup_response_message> ngc_impl::handle_ng_setup_request(const ng
 void ngc_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
 {
   logger.info("Handling Initial UE Message");
-
-  // Create UE context and store it
-  ngc_ue_context ue_ctxt = ue_manager.add_ue(msg.ue_ngap_id);
-
-  logger.debug(
-      "Created NGAP UE (ue_ngap_id={}, du_index={}, ue_index={}).", msg.ue_ngap_id, ue_ctxt.du_index, ue_ctxt.ue_index);
 
   ngc_message ngc_msg = {};
   ngc_msg.pdu.set_init_msg();
@@ -162,11 +166,11 @@ void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpor
     ue_manager.set_amf_ue_id(ue_ngap_id_uint, uint_to_ue_amf_id(msg->amf_ue_ngap_id.value.value));
   }
 
-  // TODO: create NGC to RRC UE adapter and forward message
-  byte_buffer nas_pdu;
-  nas_pdu.resize(msg->nas_pdu.value.size());
-  std::copy(msg->nas_pdu.value.begin(), msg->nas_pdu.value.end(), nas_pdu.begin());
-  // nas_notifier.on_new_pdu(std::move(nas_pdu));
+  asn1::dyn_octstring ded_nas_msg = {};
+  ded_nas_msg.resize(msg->nas_pdu->size());
+  std::copy(msg->nas_pdu->begin(), msg->nas_pdu->end(), ded_nas_msg.begin());
+
+  ue_manager[uint_to_ue_ngap_id(ue_ngap_id_uint)].rrc_ue_notifier.on_dl_nas_transport_message(ded_nas_msg);
 }
 
 void ngc_impl::handle_successful_outcome(const successful_outcome_s& outcome)

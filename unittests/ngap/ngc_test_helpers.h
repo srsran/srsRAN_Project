@@ -28,14 +28,22 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    msg_notifier = std::make_unique<dummy_ngc_amf_notifier>(nullptr);
+    msg_notifier    = std::make_unique<dummy_ngc_amf_notifier>(nullptr);
+    rrc_ue_notifier = std::make_unique<dummy_ngc_rrc_ue_notifier>();
 
     ngc = create_ngc(timers, *msg_notifier);
   }
 
-  timer_manager                           timers;
-  std::unique_ptr<dummy_ngc_amf_notifier> msg_notifier;
-  std::unique_ptr<ngc_interface>          ngc;
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
+
+  timer_manager                              timers;
+  std::unique_ptr<dummy_ngc_amf_notifier>    msg_notifier;
+  std::unique_ptr<dummy_ngc_rrc_ue_notifier> rrc_ue_notifier;
+  std::unique_ptr<ngc_interface>             ngc;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };

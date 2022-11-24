@@ -20,23 +20,24 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class ngap_ue
+class ngc_ue
 {
 public:
-  ngap_ue(ue_ngap_id_t ue_ngap_id)
+  ngc_ue(ue_ngap_id_t ue_ngap_id, ngc_rrc_ue_notifier& rrc_ue_notifier_) : rrc_ue_notifier(rrc_ue_notifier_)
   {
     ue_ctxt.du_index = get_du_index_from_ue_ngap_id(ue_ngap_id);
     ue_ctxt.ue_index = get_ue_index_from_ue_ngap_id(ue_ngap_id);
   }
 
-  ngc_ue_context ue_ctxt;
+  ngc_ue_context       ue_ctxt;
+  ngc_rrc_ue_notifier& rrc_ue_notifier;
 };
 
 /// \brief Stores the list of UE contexts currently registered in the NGC.
 class ngc_ue_manager
 {
 public:
-  ngc_ue_context& add_ue(ue_ngap_id_t ue_ngap_id);
+  ngc_ue_context& add_ue(ue_ngap_id_t ue_ngap_id, ngc_rrc_ue_notifier& rrc_ue_notifier);
 
   void remove_ue(ue_ngap_id_t ue_ngap_id);
 
@@ -68,14 +69,11 @@ public:
 
   ue_amf_id_t get_amf_ue_id(ue_ngap_id_t ue_ngap_id) { return ues[ue_ngap_id_to_uint(ue_ngap_id)].ue_ctxt.amf_ue_id; };
 
-  ngc_ue_context&       operator[](ue_ngap_id_t ue_ngap_id) { return ues[ue_ngap_id_to_uint(ue_ngap_id)].ue_ctxt; }
-  const ngc_ue_context& operator[](ue_ngap_id_t ue_ngap_id) const
-  {
-    return ues[ue_ngap_id_to_uint(ue_ngap_id)].ue_ctxt;
-  }
+  ngc_ue&       operator[](ue_ngap_id_t ue_ngap_id) { return ues[ue_ngap_id_to_uint(ue_ngap_id)]; }
+  const ngc_ue& operator[](ue_ngap_id_t ue_ngap_id) const { return ues[ue_ngap_id_to_uint(ue_ngap_id)]; }
 
 private:
-  slot_array<ngap_ue, MAX_NOF_CU_UES> ues;
+  slot_array<ngc_ue, MAX_NOF_CU_UES> ues;
 };
 
 } // namespace srs_cu_cp

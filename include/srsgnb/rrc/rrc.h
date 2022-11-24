@@ -11,8 +11,11 @@
 #pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/ran/lcid.h"
+#include "srsgnb/ran/nr_cgi.h"
+#include "srsgnb/support/timers.h"
 
 namespace srsgnb {
 

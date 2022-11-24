@@ -63,5 +63,23 @@ private:
   srslog::basic_logger& logger;
 };
 
+/// Dummy NGC to RRC UE notifier
+class dummy_ngc_rrc_ue_notifier : public ngc_rrc_ue_notifier
+{
+public:
+  dummy_ngc_rrc_ue_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+
+  void on_dl_nas_transport_message(asn1::dyn_octstring ded_nas_msg) override
+  {
+    last_ded_nas_msg = ded_nas_msg;
+    logger.info("Received a DL NAS Transport message");
+  }
+
+  asn1::dyn_octstring last_ded_nas_msg;
+
+private:
+  srslog::basic_logger& logger;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

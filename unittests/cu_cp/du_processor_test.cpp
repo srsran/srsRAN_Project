@@ -31,6 +31,7 @@ protected:
     srslog::init();
     test_logger.set_level(srslog::basic_levels::debug);
 
+    cu_cp_notifier         = std::make_unique<dummy_du_processor_cu_cp_notifier>(nullptr);
     f1c_pdu_notifier       = std::make_unique<dummy_f1c_pdu_notifier>(nullptr);
     f1c_du_mgmt_notifier   = std::make_unique<dummy_f1c_du_management_notifier>(nullptr);
     rrc_ue_ngc_ev_notifier = std::make_unique<dummy_rrc_ue_nas_notifier>();
@@ -39,8 +40,12 @@ protected:
     // create and start DU processor
     du_processor_config_t du_cfg = {};
 
-    du_processor_obj = create_du_processor(
-        std::move(du_cfg), *f1c_du_mgmt_notifier, *f1c_pdu_notifier, *rrc_ue_ngc_ev_notifier, *ue_task_sched);
+    du_processor_obj = create_du_processor(std::move(du_cfg),
+                                           *cu_cp_notifier,
+                                           *f1c_du_mgmt_notifier,
+                                           *f1c_pdu_notifier,
+                                           *rrc_ue_ngc_ev_notifier,
+                                           *ue_task_sched);
   }
 
   void TearDown() override
@@ -50,6 +55,7 @@ protected:
   }
 
   std::unique_ptr<du_processor_interface>                     du_processor_obj;
+  std::unique_ptr<dummy_du_processor_cu_cp_notifier>          cu_cp_notifier;
   std::unique_ptr<dummy_f1c_pdu_notifier>                     f1c_pdu_notifier;
   std::unique_ptr<dummy_f1c_du_management_notifier>           f1c_du_mgmt_notifier;
   std::unique_ptr<dummy_rrc_ue_nas_notifier>                  rrc_ue_ngc_ev_notifier;

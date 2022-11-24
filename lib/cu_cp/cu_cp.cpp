@@ -118,6 +118,16 @@ void cu_cp::handle_du_remove_request(const du_index_t du_index)
   remove_du(du_index);
 }
 
+void cu_cp::handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue)
+{
+  std::underlying_type_t<ue_ngap_id_t> ue_ngap_id_uint = ue_ngap_id_to_uint(get_ue_ngap_id(du_index, ue_index));
+  ngc_rrc_ue_ev_notifiers.emplace(ue_ngap_id_uint);
+
+  ngc_rrc_ue_adapter& rrc_ue_adapter = ngc_rrc_ue_ev_notifiers[ue_ngap_id_uint];
+  ngc_entity->create_ngc_ue(du_index, ue_index, rrc_ue_adapter);
+  rrc_ue_adapter.connect_rrc_ue(rrc_ue);
+}
+
 void cu_cp::on_new_cu_up_connection()
 {
   cu_up_index_t cu_up_index = add_cu_up();
@@ -164,9 +174,14 @@ du_index_t cu_cp::add_du()
   // TODO: use real config
   du_processor_config_t du_cfg = {};
 
-  std::unique_ptr<du_processor_interface> du = create_du_processor(
-      std::move(du_cfg), f1c_ev_notifier, *cfg.f1c_notifier, rrc_ue_ngc_ev_notifier, du_processor_task_sched);
+  std::unique_ptr<du_processor_interface> du = create_du_processor(std::move(du_cfg),
+                                                                   du_processor_ev_notifier,
+                                                                   f1c_ev_notifier,
+                                                                   *cfg.f1c_notifier,
+                                                                   rrc_ue_ngc_ev_notifier,
+                                                                   du_processor_task_sched);
 
+  du_processor_ev_notifier.connect_cu_cp(*this);
   rrc_ue_ngc_ev_notifier.connect_ngc(*ngc_entity);
   du_processor_task_sched.connect_cu_cp(ue_task_sched);
 

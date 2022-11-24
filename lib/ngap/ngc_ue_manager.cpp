@@ -13,13 +13,13 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-ngc_ue_context& ngc_ue_manager::add_ue(ue_ngap_id_t ue_ngap_id)
+ngc_ue_context& ngc_ue_manager::add_ue(ue_ngap_id_t ue_ngap_id, ngc_rrc_ue_notifier& rrc_ue_notifier)
 {
   uint64_t ue_id = ue_ngap_id_to_uint(ue_ngap_id);
 
   srsgnb_assert(not ues.contains(ue_id), "Duplicate ue_ngap_id={} detected", ue_id);
 
-  ues.emplace(ue_id, ue_ngap_id);
+  ues.emplace(ue_id, ue_ngap_id, rrc_ue_notifier);
 
   return ues[ue_id].ue_ctxt;
 }

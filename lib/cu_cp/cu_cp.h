@@ -62,6 +62,7 @@ public:
 
   // DU handler
   void handle_du_remove_request(const du_index_t du_index) override;
+  void handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) override;
 
   // CU-UP connection notifier
   void on_new_cu_up_connection() override;
@@ -132,8 +133,9 @@ private:
   // CU-UP task scheduler
   cu_up_task_scheduler cu_up_task_sched;
 
-  // DU processor to CU-CP adapter
+  // DU processor to CU-CP adapters
   du_processor_to_cu_cp_task_scheduler du_processor_task_sched;
+  du_processor_cu_cp_adapter           du_processor_ev_notifier;
 
   // CU-UP processor to CU-CP adapter
   cu_up_processor_to_cu_cp_task_scheduler cu_up_processor_task_sched;
@@ -146,6 +148,9 @@ private:
 
   // RRC UE to NGC adapter
   rrc_ue_ngc_adapter rrc_ue_ngc_ev_notifier;
+
+  // NGC to RRC UE adapter array
+  slot_array<ngc_rrc_ue_adapter, MAX_NOF_CU_UES> ngc_rrc_ue_ev_notifiers;
 
   std::atomic<bool> amf_connected = {false};
 };

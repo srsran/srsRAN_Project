@@ -12,6 +12,7 @@
 
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/ngap/ngc.h"
+#include "srsgnb/rrc/rrc_ue.h"
 #include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {
@@ -21,9 +22,30 @@ namespace srs_cu_cp {
 class ngc_amf_adapter : public ngc_message_notifier
 {
 public:
-  void on_new_message(const ngc_message& msg) override{
-      // TODO: Add network socket transmit messages to AMF
-  };
+  void on_new_message(const ngc_message& msg) override
+  {
+    // TODO: Add network socket transmit messages to AMF
+  }
+};
+
+// Adapter between NGC and RRC UE
+class ngc_rrc_ue_adapter : public ngc_rrc_ue_notifier
+{
+public:
+  void connect_rrc_ue(rrc_ue_dl_nas_message_handler* rrc_ue_msg_handler_) { rrc_ue_msg_handler = rrc_ue_msg_handler_; }
+
+  void on_dl_nas_transport_message(asn1::dyn_octstring ded_nas_msg) override
+  {
+    srsgnb_assert(rrc_ue_msg_handler != nullptr, "rrc_ue_msg_handler must not be nullptr");
+
+    dl_nas_transport_message dl_nas_msg = {};
+    dl_nas_msg.ded_nas_msg              = ded_nas_msg;
+
+    rrc_ue_msg_handler->handle_dl_nas_transport_message(dl_nas_msg);
+  }
+
+private:
+  rrc_ue_dl_nas_message_handler* rrc_ue_msg_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

@@ -14,6 +14,7 @@
 #include "srsgnb/e1_interface/common/e1_common.h"
 #include "srsgnb/f1c/cu_cp/f1c_cu.h"
 #include "srsgnb/ngap/ngc.h"
+#include "srsgnb/rrc/rrc_ue.h"
 #include "srsgnb/support/timers.h"
 #include <string>
 
@@ -43,7 +44,7 @@ public:
   virtual void on_new_du_connection() = 0;
 };
 
-/// Interface used to handle DU specific F1C procedure outcomes (e.g. F1 removal request)
+/// Interface used to handle DU specific procedure outcomes
 class cu_cp_du_handler
 {
 public:
@@ -52,6 +53,12 @@ public:
   /// \brief Handles a remove request. The corresponding DU processor object will be removed.
   /// \param[in] du_index The index of the DU processor object to delete.
   virtual void handle_du_remove_request(const du_index_t du_index) = 0;
+
+  /// \brief Handle a RRC UE creation notification from the DU processor.
+  /// \param[in] du_index The index of the DU the UE is connected to.
+  /// \param[in] ue_index The index of the UE.
+  /// \param[in] rrc_ue_msg_handler The rrc_ue_dl_nas_message_handler of the created RRC UE.
+  virtual void handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) = 0;
 };
 
 class cu_cp_du_interface
