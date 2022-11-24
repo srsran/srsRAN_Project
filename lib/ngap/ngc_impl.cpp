@@ -161,6 +161,10 @@ void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpor
   }
 
   // TODO: create NGC to RRC UE adapter and forward message
+  byte_buffer nas_pdu;
+  nas_pdu.resize(msg->nas_pdu.value.size());
+  std::copy(msg->nas_pdu.value.begin(), msg->nas_pdu.value.end(), nas_pdu.begin());
+  // nas_notifier.on_new_pdu(std::move(nas_pdu));
 }
 
 void ngc_impl::handle_successful_outcome(const successful_outcome_s& outcome)
@@ -185,7 +189,7 @@ void ngc_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcome
   }
 }
 
-size_t ngc_impl::get_nof_ues() const 
+size_t ngc_impl::get_nof_ues() const
 {
   return ues.size();
 }
