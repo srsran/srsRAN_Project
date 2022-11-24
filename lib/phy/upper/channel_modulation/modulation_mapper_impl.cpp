@@ -66,8 +66,8 @@ struct modulator_table_s {
         // Set all ones if greater than 0.
         mask = _mm_cmpgt_pi8(mask, _mm_setzero_si64());
 
-        // Pack all bytes MSB into a single byte.
-        unsigned index = _mm_movemask_pi8(mask);
+        // Pack all bytes MSB into a single byte. Use auto to avoid automatic casting to any integer type.
+        auto index = _mm_movemask_pi8(mask);
 
         // Reverse bits.
         index = reverse_byte(index);

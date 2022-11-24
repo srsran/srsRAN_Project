@@ -113,9 +113,12 @@ unsigned prime_greater_than(unsigned n);
 unsigned prime_lower_than(unsigned n);
 
 /// Reverses the bits of a given byte.
-inline uint8_t reverse_byte(uint8_t byte)
+template <typename Integer>
+inline Integer reverse_byte(Integer byte)
 {
-  static const std::array<uint8_t, 256> reverse_lut = {
+  static_assert(std::is_convertible<Integer, uint8_t>::value,
+                "The input type must be convertible to an unsigned integer of eight bits");
+  static const std::array<Integer, 256> reverse_lut = {
       0b00000000, 0b10000000, 0b01000000, 0b11000000, 0b00100000, 0b10100000, 0b01100000, 0b11100000, 0b00010000,
       0b10010000, 0b01010000, 0b11010000, 0b00110000, 0b10110000, 0b01110000, 0b11110000, 0b00001000, 0b10001000,
       0b01001000, 0b11001000, 0b00101000, 0b10101000, 0b01101000, 0b11101000, 0b00011000, 0b10011000, 0b01011000,
