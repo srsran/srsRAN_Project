@@ -10,59 +10,37 @@
 
 #pragma once
 
+/// \file
+/// \brief Implementation of tiny_optional<T> class as a more memory-efficient alternative to optional<T>.
+
 #include "srsgnb/adt/optional.h"
 
 namespace srsgnb {
 
+/// \brief Metafunction used to derive the specialization of tiny_optional<T> based on "T" and "T...".
+template <typename T, T...>
+struct tiny_optional_traits;
+
+/// \brief Specialization for tiny_optional<T, AbsentValue>, where an instance of T equal to AbsentValue corresponds
+/// to an empty optional.
+template <typename T, T AbsentValue>
+struct tiny_optional_traits<T, AbsentValue> {
+  constexpr static T empty_value() noexcept { return AbsentValue; }
+};
+
+/// \brief Specialization for tiny_optional for unique_ptr<T>, where nullptr corresponds to an empty optional.
+template <typename T>
+struct tiny_optional_traits<std::unique_ptr<T>> {
+  constexpr static std::unique_ptr<T> empty_value() noexcept { return nullptr; }
+};
+
 namespace detail {
 
-template <typename T, T...>
-class tiny_optional_container;
-
-template <typename T>
-class tiny_optional_container<std::unique_ptr<T>>
-{
-  // SFINAE helpers.
-  template <typename U>
-  using is_self = std::is_same<tiny_optional_container<std::unique_ptr<T>>, std::remove_const_t<std::decay_t<U>>>;
-
-public:
-  constexpr tiny_optional_container() = default;
-  template <typename U = T, std::enable_if_t<not is_self<U>::value, int> = 0>
-  constexpr tiny_optional_container(U&& u) : val(std::forward<U>(u))
-  {
-  }
-  void           reset() { val = nullptr; }
-  constexpr bool has_value() const noexcept { return val != nullptr; }
-
-protected:
-  std::unique_ptr<T> val;
-};
-
-template <typename T, T AbsentValue>
-class tiny_optional_container<T, AbsentValue>
-{
-  // SFINAE helpers.
-  template <typename U>
-  using is_self = std::is_same<tiny_optional_container<T, AbsentValue>, std::remove_const_t<std::decay_t<U>>>;
-
-public:
-  constexpr tiny_optional_container() = default;
-  template <typename U = T, std::enable_if_t<not is_self<U>::value, int> = 0>
-  constexpr tiny_optional_container(U&& u) : val(std::forward<U>(u))
-  {
-  }
-  void           reset() { val = AbsentValue; }
-  constexpr bool has_value() const noexcept { return val != AbsentValue; }
-
-protected:
-  T val = AbsentValue;
-};
-
+/// \brief Base class for tiny_optional<T> when tiny_optional_traits<T, T...> is defined.
 template <typename T, T... Args>
-class base_tiny_optional : public tiny_optional_container<T, Args...>
+class base_tiny_optional
 {
-  using base_type = tiny_optional_container<T, Args...>;
+  using traits = tiny_optional_traits<T, Args...>;
 
   // SFINAE helpers.
   template <typename U>
@@ -72,14 +50,16 @@ public:
   constexpr base_tiny_optional() = default;
   constexpr base_tiny_optional(nullopt_t /**/) : base_tiny_optional() {}
   template <typename U = T, std::enable_if_t<not is_self<U>::value, int> = 0>
-  constexpr base_tiny_optional(U&& u) : base_type(std::forward<U>(u))
+  constexpr base_tiny_optional(U&& u) : val(std::forward<U>(u))
   {
   }
 
-  using base_type::has_value;
-  using base_type::reset;
-
+  /// \brief Checks whether tiny_optional has value.
+  constexpr bool     has_value() const noexcept { return val != traits::empty_value(); }
   constexpr explicit operator bool() const noexcept { return has_value(); }
+
+  /// \brief Resets the tiny_optional to empty state.
+  void reset() { val = traits::empty_value(); }
 
   constexpr T& value() & noexcept
   {
@@ -115,40 +95,39 @@ public:
     this->val = T(std::forward<Args2>(args)...);
     return value();
   }
+
+private:
+  T val = traits::empty_value();
+};
+
+template <typename First, std::size_t>
+using first_t = First;
+
+/// Metafunction to check whether a certain T is complete.
+template <typename T>
+struct is_complete_type : std::false_type {
+};
+
+template <typename T>
+struct is_complete_type<first_t<T, sizeof(T)>> : std::true_type {
 };
 
 } // namespace detail
 
-template <typename T, T...>
-class tiny_optional;
-
-/// \brief Specialization when no AbsentValue is defined.
-template <typename T>
-class tiny_optional<T> : public optional<T>
+/// \brief Tiny optional class. When a specialization of tiny_optional_traits<T, Flags...> is provided, tiny_optional
+/// will have detail::base_tiny_optional<T, Flags...> as its base class. Otherwise, optional<T> is used as base class.
+template <typename T, T... Flags>
+class tiny_optional : public std::conditional_t<detail::is_complete_type<tiny_optional_traits<T, Flags...>>::value,
+                                                detail::base_tiny_optional<T, Flags...>,
+                                                optional<T>>
 {
-public:
-  using value_type = typename optional<T>::value_type;
-  using optional<T>::optional;
-};
+  using base_type = typename std::conditional_t<detail::is_complete_type<tiny_optional_traits<T, Flags...>>::value,
+                                                detail::base_tiny_optional<T, Flags...>,
+                                                optional<T>>;
 
-/// \brief Specialization of tiny_optional<T> where a value==\c AbsentValue is defined as equivalent to the object
-/// having no value set.
-template <typename T, T AbsentValue>
-class tiny_optional<T, AbsentValue> : public detail::base_tiny_optional<T, AbsentValue>
-{
 public:
   using value_type = T;
-  using detail::base_tiny_optional<T, AbsentValue>::base_tiny_optional;
-};
-
-/// \brief Specialization of tiny_optional<T> when T is a unique_ptr. In this case, we use the value nullptr to
-/// mark the absence of a value.
-template <typename T>
-class tiny_optional<std::unique_ptr<T>> : public detail::base_tiny_optional<std::unique_ptr<T>>
-{
-public:
-  using value_type = std::unique_ptr<T>;
-  using detail::base_tiny_optional<std::unique_ptr<T>>::base_tiny_optional;
+  using base_type::base_type;
 };
 
 } // namespace srsgnb
