@@ -16,10 +16,10 @@ using namespace srsgnb;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
-ngc_impl::ngc_impl(timer_manager& timers_, ngc_message_notifier& message_notifier_) :
+ngc_impl::ngc_impl(timer_manager& timers_, ngc_message_notifier& ngc_notifier_) :
   logger(srslog::fetch_basic_logger("NGC")),
   timers(timers_),
-  ngc_notifier(message_notifier_),
+  ngc_notifier(ngc_notifier_),
   events(std::make_unique<ngc_event_manager>())
 {
   ng_setup_timer = timers.create_unique_timer();

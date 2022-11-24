@@ -19,7 +19,7 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Creates an instance of an NGC interface, notifying outgoing packets on the specified listener object.
-std::unique_ptr<ngc_interface> create_ngc(timer_manager& timer_db, ngc_message_notifier& event_notifier);
+std::unique_ptr<ngc_interface> create_ngc(timer_manager& timers_, ngc_message_notifier& ngc_notifier_);
 
 } // namespace srs_cu_cp
 

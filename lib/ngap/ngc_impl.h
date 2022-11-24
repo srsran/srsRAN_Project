@@ -25,7 +25,7 @@ class ngc_event_manager;
 class ngc_impl final : public ngc_interface
 {
 public:
-  ngc_impl(timer_manager& timers_, ngc_message_notifier& event_notifier_);
+  ngc_impl(timer_manager& timers_, ngc_message_notifier& ngc_notifier_);
   ~ngc_impl();
 
   // ngc connection manager functions
