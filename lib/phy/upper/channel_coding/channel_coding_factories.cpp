@@ -72,14 +72,14 @@ public:
 
   std::unique_ptr<ldpc_encoder> create() override
   {
-    if (enc_type == "generic") {
-      return std::make_unique<ldpc_encoder_generic>();
-    }
 #ifdef HAVE_AVX2
-    if (enc_type == "avx2") {
+    if ((enc_type == "avx2") || (enc_type == "auto")) {
       return std::make_unique<ldpc_encoder_avx2>();
     }
 #endif // HAVE_AVX2
+    if ((enc_type == "generic") || (enc_type == "auto")) {
+      return std::make_unique<ldpc_encoder_generic>();
+    }
     return {};
   }
 };

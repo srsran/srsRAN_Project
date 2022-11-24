@@ -25,7 +25,7 @@ static std::mt19937 rgen(0);
 // General parameters.
 static unsigned           nof_repetitions   = 1000;
 static bool               silent            = false;
-static std::string        ldpc_encoder_type = "generic";
+static std::string        ldpc_encoder_type = "auto";
 static std::string        benchmark_profile = "default";
 static unsigned           rg_nof_ports      = 1;
 static unsigned           rg_nof_symbols    = srsgnb::MAX_NSYMB_PER_SLOT;
