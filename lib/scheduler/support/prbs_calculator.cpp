@@ -13,6 +13,7 @@
 
 using namespace srsgnb;
 
+/// \brief Estimation of the N_info for payloads above 3824 bits.
 static float estimate_nof_info_payload_higher_3824_bits(unsigned payload_bits, float tcr)
 {
   unsigned nof_info_prime_estim = std::max(3840U, payload_bits + 24);
@@ -28,7 +29,7 @@ static float estimate_nof_info_payload_higher_3824_bits(unsigned payload_bits, f
 }
 
 /// \brief Obtain an initial estimate for the minimum number of PRBs needed so that the TBS >= payload size.
-static unsigned get_initial_nof_prbs_estimate(const prbs_calculator_pdsch_config& pdsch_cfg)
+unsigned srsgnb::estimate_required_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cfg)
 {
   // Convert size into bits, as per TS procedures for TBS.
   unsigned payload_size = pdsch_cfg.payload_size_bytes * 8;
@@ -115,7 +116,7 @@ static pdsch_prbs_tbs linear_search_nof_prbs_upper_bound(const prbs_calculator_p
 pdsch_prbs_tbs srsgnb::get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cfg)
 {
   // Get a first estimate for the number of PRBs.
-  unsigned nof_prbs_estimate = get_initial_nof_prbs_estimate(pdsch_cfg);
+  unsigned nof_prbs_estimate = estimate_required_nof_prbs(pdsch_cfg);
 
   // Linearly search for the optimal number of PRBs using "nof_prbs_estimate" as initial guess.
   return linear_search_nof_prbs_upper_bound(pdsch_cfg, nof_prbs_estimate);

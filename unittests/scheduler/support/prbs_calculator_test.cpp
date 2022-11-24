@@ -121,3 +121,52 @@ TEST(nof_prb_calculation, test_entries_match)
     ASSERT_EQ(test_entry.tbs, test_results.tbs_bytes);
   }
 }
+
+TEST(estimate_nof_prbs, distance_from_actual_solution)
+{
+  auto compute_nof_prb_estim_err = [](const std::vector<prbs_calculator_pdsch_config>& configs) {
+    double tbs_diff = 0, tbs_abs = 0, tbs_max = 0;
+    for (const auto& test_cfg : configs) {
+      int    nof_prbs_estimate = estimate_required_nof_prbs(test_cfg);
+      int    nof_prbs_solution = get_nof_prbs(test_cfg).nof_prbs;
+      double diff              = nof_prbs_estimate - nof_prbs_solution;
+      tbs_diff += diff;
+      tbs_abs += std::abs(diff);
+      tbs_max = std::max(diff, tbs_max);
+    }
+    return std::make_tuple(tbs_diff / configs.size(), tbs_abs / configs.size(), tbs_max);
+  };
+
+  std::vector<prbs_calculator_pdsch_config> short_tbs_prbs_calc_configs, long_tbs_prbs_calc_configs;
+  for (unsigned mcs = 1; mcs < 25; ++mcs) {
+    // build short TBS table.
+    for (unsigned tbs = 30; tbs < 450; tbs += 5) {
+      short_tbs_prbs_calc_configs.push_back(get_prb_calc_pdsch_config(tbs, sch_mcs_index{mcs}));
+    }
+
+    // build long TBS table.
+    for (unsigned tbs = 450; tbs < 2000; tbs += 20) {
+      long_tbs_prbs_calc_configs.push_back(get_prb_calc_pdsch_config(tbs, sch_mcs_index{mcs}));
+    }
+  }
+
+  // Compute estimation errors.
+  auto   tup           = compute_nof_prb_estim_err(short_tbs_prbs_calc_configs);
+  double short_tbs_err = std::get<0>(tup), short_tbs_err_abs = std::get<1>(tup), short_tbs_err_max = std::get<2>(tup);
+  tup                 = compute_nof_prb_estim_err(long_tbs_prbs_calc_configs);
+  double long_tbs_err = std::get<0>(tup), long_tbs_err_abs = std::get<1>(tup), long_tbs_err_max = std::get<2>(tup);
+
+  fmt::print("NofPRBs estimation error for short TBS: mean={}, abs={}, max={}\n",
+             short_tbs_err,
+             short_tbs_err_abs,
+             short_tbs_err_max);
+  fmt::print("NofPRBs estimation error for long TBS: mean={}, abs={}, max={}\n",
+             long_tbs_err,
+             long_tbs_err_abs,
+             long_tbs_err_max);
+
+  ASSERT_LT(short_tbs_err, 1);
+  ASSERT_LT(short_tbs_err_abs, 1);
+  ASSERT_LT(long_tbs_err, 1);
+  ASSERT_LT(long_tbs_err_abs, 1);
+}

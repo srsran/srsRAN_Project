@@ -67,15 +67,16 @@ struct pdsch_prbs_tbs {
 /// This function implements the inverse procedure of the TBS calculation procedure (as per TS38.214 Section 5.1.3.2) to
 /// derive the number of PRBs from a given payload in bytes.
 ///
-/// \remark This function only works for payload size <= 478 bytes (3824 bits).
-/// \remark If the TBS that corresponds to input payload exceeds the maximum 478 bytes, the function is working outside
-/// its range. In that case, the function returns the max num. of PRBs such that the corresponding TBS won't exceed the
-/// max value of 478 bytes. Note that this value would not be enough to fit the payload. It is up to the caller to
-/// handle this case.
-///
 /// \param[in] pdsch_config is a struct with the PDSCH configuration to compute the num. of PRBs.
 /// \return Returns a struct with the number of PRBs and the corresponding TBS. If the payload_size is greater than 478
 /// bytes (3824 bits), it returns the number of PRBs and TBS corresponding to maximum allowed payload size of 478 bytes.
 pdsch_prbs_tbs get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_config);
+
+/// \brief Computes a coarse estimate of the number of required PRBs to transmit a given payload size. This estimate
+/// might lead to a TBS that is smaller or larger than the given payload size.
+///
+/// \param[in] pdsch_config is a struct with the PDSCH configuration to compute the num. of PRBs.
+/// \return estimate of the number of PRBs.
+unsigned estimate_required_nof_prbs(const prbs_calculator_pdsch_config& pdsch_config);
 
 } // namespace srsgnb
