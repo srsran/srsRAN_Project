@@ -71,33 +71,25 @@ TEST(async_queue_test, async_queue_works_for_consecutive_push_pops)
   }
 }
 
-TEST(async_queue_test, many)
+TEST(async_queue_test, queue_pushes_resumes_awaiting_coroutines_in_fifo_order)
 {
-  async_queue<int>      q{64};
-  eager_async_task<int> t  = launch_async<read_queue_coroutine<int>>(q);
-  eager_async_task<int> t2 = launch_async<read_queue_coroutine<int>>(q);
-  eager_async_task<int> t3 = launch_async<read_queue_coroutine<int>>(q);
+  async_queue<int>                     q{64};
+  std::array<eager_async_task<int>, 3> awaiting_tasks = {launch_async<read_queue_coroutine<int>>(q),
+                                                         launch_async<read_queue_coroutine<int>>(q),
+                                                         launch_async<read_queue_coroutine<int>>(q)};
 
-  TESTASSERT(not t.ready());
-  TESTASSERT(not t2.ready());
-  TESTASSERT(not t3.ready());
-
-  q.try_push(5);
-  TESTASSERT(t.ready());
-  TESTASSERT_EQ(5, t.get());
-  TESTASSERT(not t2.ready());
-  TESTASSERT(not t3.ready());
-
-  q.try_push(6);
-  TESTASSERT(t2.ready());
-  TESTASSERT_EQ(6, t2.get());
-  TESTASSERT(not t3.ready());
-
-  q.try_push(7);
-  TESTASSERT_EQ(7, t3.get());
+  ASSERT_TRUE(std::none_of(awaiting_tasks.begin(), awaiting_tasks.end(), [](const auto& c) { return c.ready(); }));
+  for (unsigned i = 0; i != awaiting_tasks.size(); ++i) {
+    int val = test_rgen::uniform_int<int>();
+    ASSERT_FALSE(awaiting_tasks[i].ready());
+    ASSERT_TRUE(q.try_push(val));
+    ASSERT_TRUE(awaiting_tasks[i].ready());
+    ASSERT_EQ(awaiting_tasks[i].get(), val);
+  }
+  ASSERT_TRUE(std::all_of(awaiting_tasks.begin(), awaiting_tasks.end(), [](const auto& c) { return c.ready(); }));
 }
 
-TEST(async_queue_test, dtor)
+TEST(async_queue_test, harmonious_destruction_of_async_queue_and_awaiting_tasks)
 {
   {
     async_queue<int>      q{64};
@@ -105,24 +97,24 @@ TEST(async_queue_test, dtor)
     eager_async_task<int> t2 = launch_async<read_queue_coroutine<int>>(q);
     eager_async_task<int> t3 = launch_async<read_queue_coroutine<int>>(q);
 
-    TESTASSERT(not t.ready());
-    TESTASSERT(not t2.ready());
-    TESTASSERT(not t3.ready());
-
-    q.try_push(2);
-    TESTASSERT(not t2.ready());
+    ASSERT_TRUE(q.try_push(2));
+    ASSERT_FALSE(t2.ready());
   }
+  // sanitizer should not catch any access to dangling pointer during dtor calls.
 }
 
-TEST(async_queue_test, moveonly)
+TEST(async_queue_test, async_queue_supports_move_only_objects)
 {
-  async_queue<moveonly_test_object> q(64);
+  async_queue<moveonly_test_object>      q(64);
+  eager_async_task<moveonly_test_object> t   = launch_async<read_queue_coroutine<moveonly_test_object>>(q);
+  eager_async_task<moveonly_test_object> t2  = launch_async<read_queue_coroutine<moveonly_test_object>>(q);
+  int                                    val = test_rgen::uniform_int<int>();
 
-  eager_async_task<moveonly_test_object> t  = launch_async<read_queue_coroutine<moveonly_test_object>>(q);
-  eager_async_task<moveonly_test_object> t2 = launch_async<read_queue_coroutine<moveonly_test_object>>(q);
-
-  q.try_push(moveonly_test_object(2));
-  TESTASSERT(t.ready() and t.get().value() == 2);
+  ASSERT_TRUE(q.try_push(moveonly_test_object(val)));
+  ASSERT_TRUE(t.ready());
+  ASSERT_EQ(t.get(), val);
 
   moveonly_test_object obj = std::move(t).get();
+  ASSERT_EQ(obj, val);
+  ASSERT_FALSE(t2.ready());
 }
