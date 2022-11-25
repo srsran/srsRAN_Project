@@ -16,6 +16,7 @@ using namespace srsgnb;
 /// \brief Estimation of the N_info for payloads above 3824 bits.
 static float estimate_nof_info_payload_higher_3824_bits(unsigned payload_bits, float tcr)
 {
+  // Approximation of the inverse of the TBS derivation based on nof_info_prime.
   // TODO: Improve this estimation algorithm.
   unsigned nof_info_prime_estim = std::max(3840U, payload_bits + 24);
 
@@ -70,7 +71,8 @@ unsigned srsgnb::estimate_required_nof_prbs(const prbs_calculator_pdsch_config& 
 /// this value as a starting point.
 /// \return Optimal number of PRBs and TBS.
 static pdsch_prbs_tbs linear_search_nof_prbs_upper_bound(const prbs_calculator_pdsch_config& pdsch_cfg,
-                                                         unsigned                            nof_prbs_estimate)
+                                                         unsigned                            nof_prbs_estimate,
+                                                         unsigned                            max_prb_inc_iterations = 5)
 {
   unsigned                     payload_size_bits = pdsch_cfg.payload_size_bytes * 8U;
   tbs_calculator_configuration tbs_cfg{pdsch_cfg.nof_symb_sh,
@@ -98,8 +100,8 @@ static pdsch_prbs_tbs linear_search_nof_prbs_upper_bound(const prbs_calculator_p
 
   // Linearly searches for an "nof_prb_inc" so that TBS(nof_prb_estimate + nof_prb_inc) >= payload_size.
   // Implementation-defined value to avoid too many iterations in the search for the optimal TBS.
-  static const unsigned MAX_INC_ITERATIONS = 5;
-  for (unsigned nof_prb_inc = 1; nof_prb_inc < MAX_INC_ITERATIONS and tbs_bits_ub < payload_size_bits; ++nof_prb_inc) {
+  for (unsigned nof_prb_inc = 1; nof_prb_inc < max_prb_inc_iterations and tbs_bits_ub < payload_size_bits;
+       ++nof_prb_inc) {
     tbs_cfg.n_prb = nof_prbs_estimate + nof_prb_inc;
     tbs_bits_ub   = tbs_calculator_calculate(tbs_cfg);
   }

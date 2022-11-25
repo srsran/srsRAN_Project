@@ -139,15 +139,21 @@ TEST(estimate_nof_prbs, distance_from_actual_solution)
     return std::make_tuple(tbs_diff / configs.size(), tbs_abs / configs.size(), tbs_max);
   };
 
-  std::vector<prbs_calculator_pdsch_config> short_tbs_prbs_calc_configs, long_tbs_prbs_calc_configs;
+  std::vector<prbs_calculator_pdsch_config> short_tbs_prbs_calc_configs, medium_tbs_prbs_calc_configs,
+      long_tbs_prbs_calc_configs;
   for (unsigned mcs = 1; mcs < 25; ++mcs) {
     // build short TBS table.
     for (unsigned tbs = 30; tbs < 450; tbs += 5) {
       short_tbs_prbs_calc_configs.push_back(get_prb_calc_pdsch_config(tbs, sch_mcs_index{mcs}));
     }
 
+    // build medium size TBS table.
+    for (unsigned tbs = 450; tbs < 2000; tbs += 10) {
+      medium_tbs_prbs_calc_configs.push_back(get_prb_calc_pdsch_config(tbs, sch_mcs_index{mcs}));
+    }
+
     // build long TBS table.
-    for (unsigned tbs = 450; tbs < 2000; tbs += 20) {
+    for (unsigned tbs = 2000; tbs < 100000; tbs += 100) {
       long_tbs_prbs_calc_configs.push_back(get_prb_calc_pdsch_config(tbs, sch_mcs_index{mcs}));
     }
   }
@@ -155,20 +161,29 @@ TEST(estimate_nof_prbs, distance_from_actual_solution)
   // Compute estimation errors.
   auto   tup           = compute_nof_prb_estim_err(short_tbs_prbs_calc_configs);
   double short_tbs_err = std::get<0>(tup), short_tbs_err_abs = std::get<1>(tup), short_tbs_err_max = std::get<2>(tup);
-  tup                 = compute_nof_prb_estim_err(long_tbs_prbs_calc_configs);
+  tup                   = compute_nof_prb_estim_err(medium_tbs_prbs_calc_configs);
+  double medium_tbs_err = std::get<0>(tup), medium_tbs_err_abs = std::get<1>(tup),
+         medium_tbs_err_max = std::get<2>(tup);
+  tup                       = compute_nof_prb_estim_err(long_tbs_prbs_calc_configs);
   double long_tbs_err = std::get<0>(tup), long_tbs_err_abs = std::get<1>(tup), long_tbs_err_max = std::get<2>(tup);
 
   fmt::print("NofPRBs estimation error for short TBS: mean={}, abs={}, max={}\n",
              short_tbs_err,
              short_tbs_err_abs,
              short_tbs_err_max);
-  fmt::print("NofPRBs estimation error for long TBS: mean={}, abs={}, max={}\n",
+  fmt::print("NofPRBs estimation error for medium TBS: mean={}, abs={}, max={}\n",
+             medium_tbs_err,
+             medium_tbs_err_abs,
+             medium_tbs_err_max);
+  fmt::print("NofPRBs estimation error for large TBS: mean={}, abs={}, max={}\n",
              long_tbs_err,
              long_tbs_err_abs,
              long_tbs_err_max);
 
   ASSERT_LT(short_tbs_err, 1);
   ASSERT_LT(short_tbs_err_abs, 1);
-  ASSERT_LT(long_tbs_err, 1);
-  ASSERT_LT(long_tbs_err_abs, 1);
+  ASSERT_LT(medium_tbs_err, 1);
+  ASSERT_LT(medium_tbs_err_abs, 1);
+  //  ASSERT_LT(long_tbs_err, 1);
+  //  ASSERT_LT(long_tbs_err_abs, 1);
 }
