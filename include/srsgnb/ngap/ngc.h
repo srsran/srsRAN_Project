@@ -118,15 +118,15 @@ public:
   virtual void handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg) = 0;
 };
 
-/// Interface to notify about NAS messages.
+/// Interface to notify about NAS PDUs.
 class ngc_rrc_ue_notifier
 {
 public:
   virtual ~ngc_rrc_ue_notifier() = default;
 
-  /// \brief Notify about the a new nas message.
-  /// \param [in] ded_nas_msg The dedicated nas message.
-  virtual void on_dl_nas_transport_message(asn1::dyn_octstring ded_nas_msg) = 0;
+  /// \brief Notify about the a new nas pdu.
+  /// \param [in] nas_pdu The nas pdu.
+  virtual void on_new_pdu(byte_buffer nas_pdu) = 0;
 };
 
 /// Interface to control the NGC.

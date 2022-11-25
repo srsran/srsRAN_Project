@@ -34,12 +34,12 @@ class ngc_rrc_ue_adapter : public ngc_rrc_ue_notifier
 public:
   void connect_rrc_ue(rrc_ue_dl_nas_message_handler* rrc_ue_msg_handler_) { rrc_ue_msg_handler = rrc_ue_msg_handler_; }
 
-  void on_dl_nas_transport_message(asn1::dyn_octstring ded_nas_msg) override
+  void on_new_pdu(byte_buffer nas_pdu) override
   {
     srsgnb_assert(rrc_ue_msg_handler != nullptr, "rrc_ue_msg_handler must not be nullptr");
 
     dl_nas_transport_message dl_nas_msg = {};
-    dl_nas_msg.ded_nas_msg              = ded_nas_msg;
+    dl_nas_msg.nas_pdu                  = std::move(nas_pdu);
 
     rrc_ue_msg_handler->handle_dl_nas_transport_message(dl_nas_msg);
   }

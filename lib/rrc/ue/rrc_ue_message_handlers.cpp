@@ -133,9 +133,10 @@ void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_
 {
   ul_nas_transport_message ul_nas_msg = {};
   ul_nas_msg.ue_index                 = context.ue_index;
-  ul_nas_msg.ded_nas_msg.resize(ul_info_transfer.ded_nas_msg.size());
-  ul_nas_msg.ded_nas_msg = ul_info_transfer.ded_nas_msg;
-  ul_nas_msg.cgi         = context.cgi;
+  ul_nas_msg.cgi                      = context.cgi;
+
+  ul_nas_msg.nas_pdu.resize(ul_info_transfer.ded_nas_msg.size());
+  std::copy(ul_info_transfer.ded_nas_msg.begin(), ul_info_transfer.ded_nas_msg.end(), ul_nas_msg.nas_pdu.begin());
 
   nas_notifier.on_ul_nas_transport_message(ul_nas_msg);
 }
@@ -147,8 +148,8 @@ void rrc_ue_impl::handle_dl_nas_transport_message(const dl_nas_transport_message
   dl_dcch_msg_s           dl_dcch_msg;
   dl_info_transfer_ies_s& dl_info_transfer =
       dl_dcch_msg.msg.set_c1().set_dl_info_transfer().crit_exts.set_dl_info_transfer();
-  dl_info_transfer.ded_nas_msg.resize(msg.ded_nas_msg.size());
-  dl_info_transfer.ded_nas_msg = msg.ded_nas_msg;
+  dl_info_transfer.ded_nas_msg.resize(msg.nas_pdu.length());
+  std::copy(msg.nas_pdu.begin(), msg.nas_pdu.end(), dl_info_transfer.ded_nas_msg.begin());
 
   send_dl_dcch(dl_dcch_msg);
 }

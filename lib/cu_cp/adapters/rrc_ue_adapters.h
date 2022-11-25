@@ -111,8 +111,7 @@ public:
 
     ngap_initial_ue_message ngap_init_ue_msg;
     ngap_init_ue_msg.ue_ngap_id = get_ue_ngap_id(du_index, msg.ue_index);
-    ngap_init_ue_msg.nas_pdu.resize(msg.ded_nas_msg.size());
-    std::copy(msg.ded_nas_msg.begin(), msg.ded_nas_msg.end(), ngap_init_ue_msg.nas_pdu.begin());
+    ngap_init_ue_msg.nas_pdu    = msg.nas_pdu.copy();
 
     ngap_init_ue_msg.establishment_cause.value =
         rrcestablishment_cause_from_establishment_cause(msg.establishment_cause).value;
@@ -129,8 +128,7 @@ public:
 
     ngap_ul_nas_transport_message ngap_ul_nas_msg;
     ngap_ul_nas_msg.ue_ngap_id = get_ue_ngap_id(du_index, msg.ue_index);
-    ngap_ul_nas_msg.nas_pdu.resize(msg.ded_nas_msg.size());
-    std::copy(msg.ded_nas_msg.begin(), msg.ded_nas_msg.end(), ngap_ul_nas_msg.nas_pdu.begin());
+    ngap_ul_nas_msg.nas_pdu    = msg.nas_pdu.copy();
 
     ngap_ul_nas_msg.nr_cgi.nrcell_id.from_number(msg.cgi.nci.packed);
     ngap_ul_nas_msg.nr_cgi.plmn_id.from_string(msg.cgi.plmn_hex);

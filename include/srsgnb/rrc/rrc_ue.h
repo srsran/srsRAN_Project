@@ -100,19 +100,19 @@ public:
 
 struct initial_ue_message {
   ue_index_t                             ue_index;
-  asn1::dyn_octstring                    ded_nas_msg;
+  byte_buffer                            nas_pdu;
   nr_cell_global_identity                cgi;
   asn1::rrc_nr::establishment_cause_opts establishment_cause;
 };
 
 struct ul_nas_transport_message {
   ue_index_t              ue_index;
-  asn1::dyn_octstring     ded_nas_msg;
+  byte_buffer             nas_pdu;
   nr_cell_global_identity cgi;
 };
 
 struct dl_nas_transport_message {
-  asn1::dyn_octstring ded_nas_msg;
+  byte_buffer nas_pdu;
 };
 
 /// Interface to notify about NAS messages.

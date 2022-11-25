@@ -166,11 +166,11 @@ void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpor
     ue_manager.set_amf_ue_id(ue_ngap_id_uint, uint_to_ue_amf_id(msg->amf_ue_ngap_id.value.value));
   }
 
-  asn1::dyn_octstring ded_nas_msg = {};
-  ded_nas_msg.resize(msg->nas_pdu->size());
-  std::copy(msg->nas_pdu->begin(), msg->nas_pdu->end(), ded_nas_msg.begin());
+  byte_buffer nas_pdu;
+  nas_pdu.resize(msg->nas_pdu.value.size());
+  std::copy(msg->nas_pdu.value.begin(), msg->nas_pdu.value.end(), nas_pdu.begin());
 
-  ue_manager[uint_to_ue_ngap_id(ue_ngap_id_uint)].rrc_ue_notifier.on_dl_nas_transport_message(ded_nas_msg);
+  ue_manager[uint_to_ue_ngap_id(ue_ngap_id_uint)].rrc_ue_notifier.on_new_pdu(std::move(nas_pdu));
 }
 
 void ngc_impl::handle_successful_outcome(const successful_outcome_s& outcome)

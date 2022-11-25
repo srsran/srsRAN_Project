@@ -69,13 +69,13 @@ class dummy_ngc_rrc_ue_notifier : public ngc_rrc_ue_notifier
 public:
   dummy_ngc_rrc_ue_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
 
-  void on_dl_nas_transport_message(asn1::dyn_octstring ded_nas_msg) override
+  void on_new_pdu(byte_buffer nas_pdu) override
   {
-    last_ded_nas_msg = ded_nas_msg;
-    logger.info("Received a DL NAS Transport message");
+    last_nas_pdu = std::move(nas_pdu);
+    logger.info("Received a NAS PDU");
   }
 
-  asn1::dyn_octstring last_ded_nas_msg;
+  byte_buffer last_nas_pdu;
 
 private:
   srslog::basic_logger& logger;

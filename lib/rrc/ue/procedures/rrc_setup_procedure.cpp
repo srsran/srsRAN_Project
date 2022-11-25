@@ -85,8 +85,11 @@ void rrc_setup_procedure::send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_comp
 {
   initial_ue_message init_ue_msg = {};
   init_ue_msg.ue_index           = context.ue_index;
-  init_ue_msg.ded_nas_msg.resize(rrc_setup_complete_msg.crit_exts.rrc_setup_complete().ded_nas_msg.size());
-  init_ue_msg.ded_nas_msg         = rrc_setup_complete_msg.crit_exts.rrc_setup_complete().ded_nas_msg;
+
+  auto& ded_nas_msg = rrc_setup_complete_msg.crit_exts.rrc_setup_complete().ded_nas_msg;
+  init_ue_msg.nas_pdu.resize(ded_nas_msg.size());
+  std::copy(ded_nas_msg.begin(), ded_nas_msg.end(), init_ue_msg.nas_pdu.begin());
+
   init_ue_msg.establishment_cause = request.rrc_setup_request.establishment_cause;
   init_ue_msg.cgi                 = context.cgi;
 
