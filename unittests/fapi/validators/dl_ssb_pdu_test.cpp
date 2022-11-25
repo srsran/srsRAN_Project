@@ -169,7 +169,8 @@ TEST(validate_ssb_pdu, invalid_pdu_fails)
   EXPECT_EQ(report.reports.size(), 3u);
 }
 
-/// Assert death test.
+/// Only build and run this test when asserts are available, as the death is caused by an assert.
+#ifdef ASSERTS_ENABLED
 TEST(validate_ssb_pdu_death, invalid_point_A_death_test)
 {
   EXPECT_DEATH(
@@ -181,3 +182,4 @@ TEST(validate_ssb_pdu_death, invalid_point_A_death_test)
       },
       ".*");
 }
+#endif
