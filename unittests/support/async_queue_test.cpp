@@ -44,17 +44,27 @@ TEST(async_queue_test, when_we_push_to_async_queue_awaiting_coroutine_is_resumed
   ASSERT_TRUE(q.try_push(val));
   ASSERT_TRUE(t.ready());
   ASSERT_EQ(t.get(), val);
+  ASSERT_EQ(q.size(), 0);
 }
 
 TEST(async_queue_test, when_coroutine_awaits_non_empty_queue_it_does_not_suspend)
 {
   async_queue<int> q{5};
-  int              val = test_rgen::uniform_int<int>();
+  int              val  = test_rgen::uniform_int<int>();
+  int              val2 = test_rgen::uniform_int<int>();
 
   ASSERT_TRUE(q.try_push(val));
+  ASSERT_TRUE(q.try_push(val2));
+  ASSERT_EQ(q.size(), 2);
+
   eager_async_task<int> t = launch_async<read_queue_coroutine<int>>(q);
   ASSERT_TRUE(t.ready());
   ASSERT_EQ(t.get(), val);
+  ASSERT_EQ(q.size(), 1);
+  eager_async_task<int> t2 = launch_async<read_queue_coroutine<int>>(q);
+  ASSERT_TRUE(t2.ready());
+  ASSERT_EQ(t2.get(), val2);
+  ASSERT_EQ(q.size(), 0);
 }
 
 TEST(async_queue_test, async_queue_works_for_consecutive_push_pops)
@@ -87,6 +97,7 @@ TEST(async_queue_test, queue_pushes_resumes_awaiting_coroutines_in_fifo_order)
     ASSERT_EQ(awaiting_tasks[i].get(), val);
   }
   ASSERT_TRUE(std::all_of(awaiting_tasks.begin(), awaiting_tasks.end(), [](const auto& c) { return c.ready(); }));
+  ASSERT_EQ(q.size(), 0);
 }
 
 TEST(async_queue_test, harmonious_destruction_of_async_queue_and_awaiting_tasks)
