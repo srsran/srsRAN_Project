@@ -13,7 +13,7 @@
 #include "../adapters/du_bearer_adapter.h"
 #include "cell_group_config.h"
 #include "rlc_config_helpers.h"
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/mac/mac_sdu_handler.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/rnti.h"
@@ -38,10 +38,10 @@ struct du_ue {
   {
   }
 
-  const du_ue_index_t                     ue_index;
-  rnti_t                                  rnti;
-  du_cell_index_t                         pcell_index;
-  slot_array<du_bearer, MAX_NOF_RB_LCIDS> bearers;
+  const du_ue_index_t                        ue_index;
+  rnti_t                                     rnti;
+  du_cell_index_t                            pcell_index;
+  slotted_array<du_bearer, MAX_NOF_RB_LCIDS> bearers;
 
   std::vector<cell_group_config> cells;
 };

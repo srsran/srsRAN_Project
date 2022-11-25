@@ -13,7 +13,7 @@
 #include "adapters/f1c_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "ue_manager.h"
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/du_processor_config.h"
@@ -79,7 +79,7 @@ private:
 
   /// \brief Get the DU processor cell database.
   /// \return The DU processor cell database.
-  slot_array<du_cell_context, MAX_NOF_DU_CELLS>& get_cell_db() { return cell_db; };
+  slotted_array<du_cell_context, MAX_NOF_DU_CELLS>& get_cell_db() { return cell_db; };
 
   // F1C senders
 
@@ -100,9 +100,10 @@ private:
   rrc_ue_nas_notifier&            rrc_ue_ngc_ev_notifier;
   du_processor_ue_task_scheduler& task_sched;
 
-  du_processor_context                          context;
-  slot_array<du_cell_context, MAX_NOF_DU_CELLS> cell_db; /// flattened version of served cells list provided by DU/F1C
-  std::atomic<uint16_t>                         next_du_cell_index{0};
+  du_processor_context context;
+  slotted_array<du_cell_context, MAX_NOF_DU_CELLS>
+                        cell_db; /// flattened version of served cells list provided by DU/F1C
+  std::atomic<uint16_t> next_du_cell_index{0};
 
   // timers associated with a given DU.
   timer_manager timer_db;

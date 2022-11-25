@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/f1c/common/f1c_types.h"
 #include "srsgnb/ngap/ngc.h"
@@ -66,7 +66,7 @@ public:
   const ngc_ue& operator[](ue_ngap_id_t ue_ngap_id) const { return ues[ue_ngap_id_to_uint(ue_ngap_id)]; }
 
 private:
-  slot_array<ngc_ue, MAX_NOF_CU_UES> ues;
+  slotted_array<ngc_ue, MAX_NOF_CU_UES> ues;
 };
 
 } // namespace srs_cu_cp

@@ -74,9 +74,9 @@ public:
   }
 
 private:
-  timer_manager&                                            timers;
-  du_manager_configurator*                                  du_mng = nullptr;
-  slot_array<f1c_ue_task_scheduler_adapter, MAX_NOF_DU_UES> ues;
+  timer_manager&                                               timers;
+  du_manager_configurator*                                     du_mng = nullptr;
+  slotted_array<f1c_ue_task_scheduler_adapter, MAX_NOF_DU_UES> ues;
 };
 
 } // namespace srs_du

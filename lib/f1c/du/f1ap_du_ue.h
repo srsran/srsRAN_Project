@@ -12,7 +12,7 @@
 
 #include "f1c_du_bearer_impl.h"
 #include "f1c_ue_context.h"
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/adt/stable_id_map.h"
 #include "srsgnb/f1c/common/f1c_types.h"
 #include "srsgnb/f1c/du/f1ap_du.h"
@@ -134,7 +134,7 @@ private:
 
   uint64_t next_gnb_f1_du_ue_id = 0;
 
-  slot_array<f1ap_du_ue, MAX_NOF_DU_UES> ues;
+  slotted_array<f1ap_du_ue, MAX_NOF_DU_UES> ues;
 
   mutable std::mutex                                     map_mutex;
   std::unordered_map<gnb_du_ue_f1ap_id_t, du_ue_index_t> f1ap_ue_id_to_du_ue_id_map;

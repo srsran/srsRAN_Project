@@ -49,7 +49,7 @@ private:
   rrc_ue_nas_notifier&          nas_notifier;            // notifier to the NGC
 
   // RRC-internal user database indexed by ue_index
-  slot_array<std::unique_ptr<rrc_ue_impl>, MAX_NOF_UES> ue_db;
+  slotted_array<std::unique_ptr<rrc_ue_impl>, MAX_NOF_UES> ue_db;
 };
 
 } // namespace srs_cu_cp

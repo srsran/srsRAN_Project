@@ -12,7 +12,7 @@
 
 #include "../../ran/gnb_format.h"
 #include "../du_rnti_table.h"
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/du_ue_list.h"
@@ -29,7 +29,7 @@ public:
   const rnti_t        rnti     = INVALID_RNTI;
 
   /// List of UL PDU notification endpoints associated to UE's logical channels.
-  slot_vector<mac_sdu_rx_notifier*> ul_bearers;
+  slotted_vector<mac_sdu_rx_notifier*> ul_bearers;
 };
 
 /// Class that manages the creation/reconfiguration/deletion of UEs from the MAC UL

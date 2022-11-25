@@ -15,7 +15,7 @@
 #include "mac_ul_sch_pdu.h"
 #include "mac_ul_ue_manager.h"
 #include "ul_bsr.h"
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/ran/du_types.h"

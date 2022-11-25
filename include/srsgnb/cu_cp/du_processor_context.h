@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/ran/nr_cgi.h"

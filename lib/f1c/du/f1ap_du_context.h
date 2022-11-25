@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/f1c/du/f1ap_du.h"
 

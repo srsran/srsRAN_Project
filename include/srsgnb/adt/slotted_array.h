@@ -6,9 +6,9 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include <array>
 
-/// \file Definitions of slot_array<T, N>, slot_vector<T> used to manage containers with optional elements. All the
-/// defined classes provide methods to access, remove, add elements by index with O(1) complexity, iterators that skip
-/// absent elements, and track number of present elements.
+/// \file Definitions of slotted_array<T, N>, slotted_vector<T> used to manage containers with optional elements. All
+/// the defined classes provide methods to access, remove, add elements by index with O(1) complexity, iterators that
+/// skip absent elements, and track number of present elements.
 
 namespace srsgnb {
 
@@ -16,9 +16,9 @@ namespace detail {
 
 /// Iterator implementation for an array of optional types that automatically skips positions without a value.
 template <typename ArrayOfOpts>
-class slot_array_iter_impl
+class slotted_array_iter_impl
 {
-  using iterator_type = slot_array_iter_impl<ArrayOfOpts>;
+  using iterator_type = slotted_array_iter_impl<ArrayOfOpts>;
 
 public:
   using iterator_category = std::forward_iterator_tag;
@@ -27,20 +27,20 @@ public:
   using reference         = std::conditional_t<std::is_const<ArrayOfOpts>::value, const value_type, value_type>&;
   using pointer           = std::conditional_t<std::is_const<ArrayOfOpts>::value, const value_type, value_type>*;
 
-  slot_array_iter_impl() = default;
-  slot_array_iter_impl(ArrayOfOpts& vec_, size_t idx_) : vec(&vec_), idx(idx_)
+  slotted_array_iter_impl() = default;
+  slotted_array_iter_impl(ArrayOfOpts& vec_, size_t idx_) : vec(&vec_), idx(idx_)
   {
     while (idx < vec->size() and not(*vec)[idx].has_value()) {
       ++idx;
     }
   }
   template <typename U, std::enable_if_t<not std::is_same<ArrayOfOpts, U>::value, int> = 0>
-  slot_array_iter_impl(const slot_array_iter_impl<U>& other) : vec(other.vec), idx(other.idx)
+  slotted_array_iter_impl(const slotted_array_iter_impl<U>& other) : vec(other.vec), idx(other.idx)
   {
   }
 
   template <typename U, std::enable_if_t<not std::is_same<ArrayOfOpts, U>::value, int> = 0>
-  slot_array_iter_impl& operator=(const slot_array_iter_impl<U>& other)
+  slotted_array_iter_impl& operator=(const slotted_array_iter_impl<U>& other)
   {
     vec = other.vec;
     idx = other.idx;
@@ -67,21 +67,21 @@ public:
   }
 
   template <typename U>
-  bool operator==(const slot_array_iter_impl<U>& other) const
+  bool operator==(const slotted_array_iter_impl<U>& other) const
   {
     return idx == other.idx and vec == other.vec;
   }
   template <typename U>
-  bool operator!=(const slot_array_iter_impl<U>& other) const
+  bool operator!=(const slotted_array_iter_impl<U>& other) const
   {
     return not(*this == other);
   }
 
 private:
   template <typename Vec>
-  friend class base_slot_array_view;
+  friend class base_slotted_array_view;
   template <typename U>
-  friend class slot_array_iter_impl;
+  friend class slotted_array_iter_impl;
 
   ArrayOfOpts* vec = nullptr;
   size_t       idx = std::numeric_limits<size_t>::max();
@@ -89,9 +89,9 @@ private:
 
 /// Iterator implementation for a vector of optional types that automatically skips positions without a value.
 template <typename VectorData>
-class slot_vector_iter_impl
+class slotted_vector_iter_impl
 {
-  using iterator_type = slot_vector_iter_impl<VectorData>;
+  using iterator_type = slotted_vector_iter_impl<VectorData>;
   using elem_type     = typename VectorData::value_type;
 
 public:
@@ -101,8 +101,8 @@ public:
   using pointer           = elem_type*;
   using reference         = elem_type&;
 
-  slot_vector_iter_impl() = default;
-  slot_vector_iter_impl(VectorData& vec_, const std::vector<size_t>& index_mapper_, size_t idx_) noexcept :
+  slotted_vector_iter_impl() = default;
+  slotted_vector_iter_impl(VectorData& vec_, const std::vector<size_t>& index_mapper_, size_t idx_) noexcept :
     vec(&vec_), index_mapper(&index_mapper_), idx(idx_)
   {
     while (idx < index_mapper->size() and (*index_mapper)[idx] == std::numeric_limits<size_t>::max()) {
@@ -110,13 +110,13 @@ public:
     }
   }
   template <typename OtherVectorData, std::enable_if_t<not std::is_same<OtherVectorData, VectorData>::value, int> = 0>
-  slot_vector_iter_impl(const slot_vector_iter_impl<OtherVectorData>& other) noexcept :
+  slotted_vector_iter_impl(const slotted_vector_iter_impl<OtherVectorData>& other) noexcept :
     vec(other.vec), index_mapper(other.index_mapper), idx(other.idx)
   {
   }
 
   template <typename OtherVectorData, std::enable_if_t<not std::is_same<OtherVectorData, VectorData>::value, int> = 0>
-  slot_vector_iter_impl& operator=(const slot_vector_iter_impl<OtherVectorData>& other) noexcept
+  slotted_vector_iter_impl& operator=(const slotted_vector_iter_impl<OtherVectorData>& other) noexcept
   {
     vec          = other.vec;
     index_mapper = other.index_mapper;
@@ -142,19 +142,19 @@ public:
   }
 
   template <typename U>
-  bool operator==(const slot_vector_iter_impl<U>& other) const
+  bool operator==(const slotted_vector_iter_impl<U>& other) const
   {
     return idx == other.idx and vec == other.vec and index_mapper == other.index_mapper;
   }
   template <typename U>
-  bool operator!=(const slot_vector_iter_impl<U>& other) const
+  bool operator!=(const slotted_vector_iter_impl<U>& other) const
   {
     return not(*this == other);
   }
 
 private:
   template <typename U>
-  friend class slot_vector_iter_impl;
+  friend class slotted_vector_iter_impl;
 
   VectorData*                vec          = nullptr;
   const std::vector<size_t>* index_mapper = nullptr;
@@ -169,14 +169,14 @@ private:
 /// @tparam T type of objects
 /// @tparam N static size of max nof items
 template <typename T, size_t N>
-class slot_array
+class slotted_array
 {
   using array_type = std::array<tiny_optional<T>, N>;
 
 public:
   using value_type     = T;
-  using iterator       = detail::slot_array_iter_impl<array_type>;
-  using const_iterator = detail::slot_array_iter_impl<const array_type>;
+  using iterator       = detail::slotted_array_iter_impl<array_type>;
+  using const_iterator = detail::slotted_array_iter_impl<const array_type>;
 
   bool contains(size_t idx) const noexcept { return idx < vec.size() and vec[idx].has_value(); }
 
@@ -279,26 +279,26 @@ private:
 /// \brief Container representing a vector of optional elements. The index of an inserted element, remains valid
 /// throughout the element lifetime.
 ///
-/// Contrarily to slot_array, this container may allocate and cause pointer/reference/iterator invalidation. On the
+/// Contrarily to slotted_array, this container may allocate and cause pointer/reference/iterator invalidation. On the
 /// other hand, it has the advantage of providing a more compact representation of its content.
 template <typename T>
-class slot_vector
+class slotted_vector
 {
   constexpr static size_t absent_value = std::numeric_limits<size_t>::max();
 
 public:
   using value_type     = T;
-  using iterator       = detail::slot_vector_iter_impl<std::vector<T>>;
-  using const_iterator = detail::slot_vector_iter_impl<const std::vector<T>>;
+  using iterator       = detail::slotted_vector_iter_impl<std::vector<T>>;
+  using const_iterator = detail::slotted_vector_iter_impl<const std::vector<T>>;
 
-  slot_vector() = default;
-  slot_vector(slot_vector&& other) noexcept :
+  slotted_vector() = default;
+  slotted_vector(slotted_vector&& other) noexcept :
     objects(std::move(other.objects)), index_mapper(std::move(other.index_mapper))
   {
   }
 
-  slot_vector<T>& operator=(const slot_vector<T>&) = default;
-  slot_vector<T>& operator=(slot_vector<T>&& other) noexcept
+  slotted_vector<T>& operator=(const slotted_vector<T>&) = default;
+  slotted_vector<T>& operator=(slotted_vector<T>&& other) noexcept
   {
     objects      = std::move(other.objects);
     index_mapper = std::move(other.index_mapper);
@@ -382,7 +382,7 @@ public:
     index_mapper.clear();
   }
 
-  /// Find first position that is empty in slot_vector.
+  /// Find first position that is empty in slotted_vector.
   size_t find_first_empty(size_t start_guess = 0) const
   {
     if (objects.size() == index_mapper.size()) {

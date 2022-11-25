@@ -11,7 +11,7 @@
 #pragma once
 
 #include "ue_manager_interfaces.h"
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 
 namespace srsgnb {
 
@@ -22,7 +22,7 @@ class ue_manager : public ue_manager_ctrl_configurer
 public:
   explicit ue_manager(srslog::basic_logger& logger_);
 
-  const slot_array<ue_context, MAX_NOF_UES>& get_ues() const { return ue_db; }
+  const slotted_array<ue_context, MAX_NOF_UES>& get_ues() const { return ue_db; }
 
   ue_context* add_ue(rnti_t rnti) override;
   void        remove_ue(ue_index_t ue_index) override;
@@ -44,8 +44,8 @@ private:
 
   srslog::basic_logger& logger;
 
-  slot_array<ue_context, MAX_NOF_UES> ue_db;
-  std::map<rnti_t, ue_index_t>        rnti_to_ue_index;
+  slotted_array<ue_context, MAX_NOF_UES> ue_db;
+  std::map<rnti_t, ue_index_t>           rnti_to_ue_index;
 };
 
 } // namespace srs_cu_cp

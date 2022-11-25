@@ -11,7 +11,7 @@
 #pragma once
 
 #include "ue_manager_interfaces.h"
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/support/timers.h"
 
 namespace srsgnb {
@@ -23,7 +23,7 @@ class ue_manager : public ue_manager_ctrl
 public:
   explicit ue_manager(srslog::basic_logger& logger_, timer_manager& timers_, gtpu_demux_ctrl& ngu_demux_);
 
-  using ue_db_t = slot_array<std::unique_ptr<ue_context>, MAX_NOF_UES>;
+  using ue_db_t = slotted_array<std::unique_ptr<ue_context>, MAX_NOF_UES>;
   const ue_db_t& get_ues() const { return ue_db; }
 
   ue_context* add_ue() override;

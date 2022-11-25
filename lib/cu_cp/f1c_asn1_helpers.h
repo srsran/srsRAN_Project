@@ -22,10 +22,10 @@ namespace srs_cu_cp {
 /// \param[in] name The gNB CU name
 /// \param[in] rrc_version The RRC version
 /// \param[in] du_cell_db An array of DU cells to be activated
-void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&                         response,
-                                 const std::string&                                   name,
-                                 const uint8_t                                        rrc_version,
-                                 const slot_array<du_cell_context, MAX_NOF_DU_CELLS>& du_cell_db)
+void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&                            response,
+                                 const std::string&                                      name,
+                                 const uint8_t                                           rrc_version,
+                                 const slotted_array<du_cell_context, MAX_NOF_DU_CELLS>& du_cell_db)
 {
   // fill CU common info
   response->gnb_cu_name_present = true;

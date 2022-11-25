@@ -152,7 +152,7 @@ def make_tiny_optional(val):
 
 gdb.pretty_printers.append(make_tiny_optional)
 
-###### slot_array<T, N> #######
+###### slotted_array<T, N> #######
 
 class SlotArrayPrinter(object):
   def __init__(self, val):
@@ -168,19 +168,19 @@ class SlotArrayPrinter(object):
               yield f'[{idx}]', TinyOptionalPrinter.get_value(vec[idx])
 
   def to_string(self):
-      return f'slot_array of {self.nof_elems} elements, capacity {self.capacity}'
+      return f'slotted_array of {self.nof_elems} elements, capacity {self.capacity}'
 
   def display_hint(self):
       return 'string'
 
-def make_slot_array(val):
+def make_slotted_array(val):
     s = str(val.type.strip_typedefs())
-    if s.startswith('srsgnb::slot_array<') and s.endswith('>'):
+    if s.startswith('srsgnb::slotted_array<') and s.endswith('>'):
         return SlotArrayPrinter(val)
 
-gdb.pretty_printers.append(make_slot_array)
+gdb.pretty_printers.append(make_slotted_array)
 
-###### slot_vector<T> #######
+###### slotted_vector<T> #######
 
 class SlotVectorPrinter(object):
     def __init__(self, val):
@@ -200,17 +200,17 @@ class SlotVectorPrinter(object):
                 yield f'[{idx}]', object_ptr[indexmapper_ptr[idx]]
 
     def to_string(self):
-        return f'slot_vector of {self.nof_elems} elements'
+        return f'slotted_vector of {self.nof_elems} elements'
 
     def display_hint(self):
         return 'string'
 
-def make_slot_vector(val):
+def make_slotted_vector(val):
     s = str(val.type.strip_typedefs())
-    if s.startswith('srsgnb::slot_vector<') and s.endswith('>'):
+    if s.startswith('srsgnb::slotted_vector<') and s.endswith('>'):
         return SlotVectorPrinter(val)
 
-gdb.pretty_printers.append(make_slot_vector)
+gdb.pretty_printers.append(make_slotted_vector)
 
 end
 

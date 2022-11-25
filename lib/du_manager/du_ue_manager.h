@@ -13,7 +13,7 @@
 #include "du_manager_config.h"
 #include "du_manager_interfaces.h"
 #include "du_ue/du_ue.h"
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/adt/stable_id_map.h"
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/ran/du_types.h"
@@ -51,7 +51,7 @@ private:
   std::array<du_ue_index_t, MAX_NOF_DU_UES>           rnti_to_ue_index;
 
   // task event loops indexed by ue_index
-  slot_array<async_task_sequencer, MAX_NOF_DU_UES> ue_ctrl_loop;
+  slotted_array<async_task_sequencer, MAX_NOF_DU_UES> ue_ctrl_loop;
 };
 
 } // namespace srs_du

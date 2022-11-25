@@ -18,7 +18,7 @@
 #include "ue_event_manager.h"
 #include "ue_scheduler.h"
 #include "ue_srb0_scheduler.h"
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/adt/unique_function.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"

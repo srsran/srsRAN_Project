@@ -121,8 +121,8 @@ private:
   // Components
   std::unique_ptr<ngc_interface> ngc_entity;
 
-  slot_array<std::unique_ptr<du_processor_interface>, MAX_NOF_DUS>       du_db;
-  slot_array<std::unique_ptr<cu_up_processor_interface>, MAX_NOF_CU_UPS> cu_up_db;
+  slotted_array<std::unique_ptr<du_processor_interface>, MAX_NOF_DUS>       du_db;
+  slotted_array<std::unique_ptr<cu_up_processor_interface>, MAX_NOF_CU_UPS> cu_up_db;
 
   // UE task scheduler
   ue_task_scheduler ue_task_sched;
@@ -150,7 +150,7 @@ private:
   rrc_ue_ngc_adapter rrc_ue_ngc_ev_notifier;
 
   // NGC to RRC UE adapter array
-  slot_array<ngc_rrc_ue_adapter, MAX_NOF_CU_UES> ngc_rrc_ue_ev_notifiers;
+  slotted_array<ngc_rrc_ue_adapter, MAX_NOF_CU_UES> ngc_rrc_ue_ev_notifiers;
 
   std::atomic<bool> amf_connected = {false};
 };

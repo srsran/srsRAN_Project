@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <random>
@@ -30,15 +30,17 @@ static unsigned get_random_int(int lb = 0, int ub = std::numeric_limits<int>::ma
   return std::uniform_int_distribution<int>{lb, ub}(g);
 }
 
-static_assert(std::is_same<slot_array<int, 5>::value_type, int>::value, "Invalid container value_type");
-static_assert(std::is_same<slot_array<int, 5>::iterator::value_type, int>::value, "Invalid container value_type");
-static_assert(std::is_same<slot_array<int, 5>::const_iterator::value_type, int>::value, "Invalid container value_type");
-static_assert(std::is_same<slot_vector<int>::value_type, int>::value, "Invalid container value_type");
-static_assert(std::is_same<slot_vector<int>::iterator::value_type, int>::value, "Invalid container value_type");
-static_assert(std::is_same<slot_vector<int>::const_iterator::value_type, int>::value, "Invalid container value_type");
+static_assert(std::is_same<slotted_array<int, 5>::value_type, int>::value, "Invalid container value_type");
+static_assert(std::is_same<slotted_array<int, 5>::iterator::value_type, int>::value, "Invalid container value_type");
+static_assert(std::is_same<slotted_array<int, 5>::const_iterator::value_type, int>::value,
+              "Invalid container value_type");
+static_assert(std::is_same<slotted_vector<int>::value_type, int>::value, "Invalid container value_type");
+static_assert(std::is_same<slotted_vector<int>::iterator::value_type, int>::value, "Invalid container value_type");
+static_assert(std::is_same<slotted_vector<int>::const_iterator::value_type, int>::value,
+              "Invalid container value_type");
 
 template <typename T>
-class slot_array_tester : public ::testing::Test
+class slotted_array_tester : public ::testing::Test
 {
 protected:
   using SlotArrayType = T;
@@ -48,13 +50,13 @@ protected:
 
   SlotArrayType vec;
 };
-using slot_array_types = ::testing::Types<slot_array<int, 20>,
-                                          slot_array<moveonly_test_object, 20>,
-                                          slot_vector<int>,
-                                          slot_vector<moveonly_test_object>>;
-TYPED_TEST_SUITE(slot_array_tester, slot_array_types);
+using slotted_array_types = ::testing::Types<slotted_array<int, 20>,
+                                             slotted_array<moveonly_test_object, 20>,
+                                             slotted_vector<int>,
+                                             slotted_vector<moveonly_test_object>>;
+TYPED_TEST_SUITE(slotted_array_tester, slotted_array_types);
 
-TYPED_TEST(slot_array_tester, default_ctor_creates_empty_array)
+TYPED_TEST(slotted_array_tester, default_ctor_creates_empty_array)
 {
   ASSERT_TRUE(this->vec.empty());
   ASSERT_EQ(this->vec.size(), 0);
@@ -62,7 +64,7 @@ TYPED_TEST(slot_array_tester, default_ctor_creates_empty_array)
   ASSERT_FALSE(this->vec.contains(get_random_int(0, 1000)));
 }
 
-TYPED_TEST(slot_array_tester, insert_creates_entry_in_slot_array)
+TYPED_TEST(slotted_array_tester, insert_creates_entry_in_slotted_array)
 {
   int      value = get_random_int();
   unsigned idx   = get_random_int(0, 19);
@@ -76,7 +78,7 @@ TYPED_TEST(slot_array_tester, insert_creates_entry_in_slot_array)
   ASSERT_EQ(*this->vec.begin(), this->create_elem(value));
 }
 
-TYPED_TEST(slot_array_tester, emplace_constructs_element_in_slot_array)
+TYPED_TEST(slotted_array_tester, emplace_constructs_element_in_slotted_array)
 {
   int      value = get_random_int();
   unsigned idx   = get_random_int(0, 19);
@@ -90,7 +92,7 @@ TYPED_TEST(slot_array_tester, emplace_constructs_element_in_slot_array)
   ASSERT_EQ(*this->vec.begin(), this->create_elem(value));
 }
 
-TYPED_TEST(slot_array_tester, insert_in_already_inserted_position_does_not_alter_slot_array_size)
+TYPED_TEST(slotted_array_tester, insert_in_already_inserted_position_does_not_alter_slotted_array_size)
 {
   int      value = get_random_int(), value2 = get_random_int();
   unsigned idx = get_random_int(0, 19);
@@ -103,7 +105,7 @@ TYPED_TEST(slot_array_tester, insert_in_already_inserted_position_does_not_alter
   ASSERT_EQ(*this->vec.begin(), this->create_elem(value2));
 }
 
-TYPED_TEST(slot_array_tester, iterator_skips_empty_positions)
+TYPED_TEST(slotted_array_tester, iterator_skips_empty_positions)
 {
   std::vector<int> values;
   for (unsigned i = get_random_int(0, 19); i < 20; i += get_random_int(1, 5)) {
@@ -118,7 +120,7 @@ TYPED_TEST(slot_array_tester, iterator_skips_empty_positions)
   }
 }
 
-TYPED_TEST(slot_array_tester, erase_removes_element_from_slot_array_and_updates_size)
+TYPED_TEST(slotted_array_tester, erase_removes_element_from_slotted_array_and_updates_size)
 {
   int      value = get_random_int();
   unsigned idx   = get_random_int(0, 19);
@@ -131,17 +133,17 @@ TYPED_TEST(slot_array_tester, erase_removes_element_from_slot_array_and_updates_
   ASSERT_EQ(this->vec.begin(), this->vec.end());
 }
 
-TYPED_TEST(slot_array_tester, accessing_empty_position_asserts)
+TYPED_TEST(slotted_array_tester, accessing_empty_position_asserts)
 {
   unsigned idx  = get_random_int(0, 19);
   unsigned idx2 = (idx + get_random_int(1, 18)) % 20;
 
   this->vec.insert(idx, this->create_elem(get_random_int()));
   ASSERT_DEATH(this->vec[idx2], ".*") << fmt::format(
-      "Accessing index={} for slot_array with element in index={}", idx2, idx);
+      "Accessing index={} for slotted_array with element in index={}", idx2, idx);
 }
 
-TYPED_TEST(slot_array_tester, find_first_empty_skips_occupied_positions)
+TYPED_TEST(slotted_array_tester, find_first_empty_skips_occupied_positions)
 {
   unsigned nof_inserted = get_random_int(0, 19);
 
@@ -152,7 +154,7 @@ TYPED_TEST(slot_array_tester, find_first_empty_skips_occupied_positions)
   ASSERT_EQ(this->vec.find_first_empty(), nof_inserted);
 }
 
-TYPED_TEST(slot_array_tester, iterator_converts_to_const_iterator)
+TYPED_TEST(slotted_array_tester, iterator_converts_to_const_iterator)
 {
   using SlotArray = typename TestFixture::SlotArrayType;
   this->vec.emplace(get_random_int(0, 19), get_random_int());
@@ -165,7 +167,7 @@ TYPED_TEST(slot_array_tester, iterator_converts_to_const_iterator)
   ASSERT_EQ(it, it2);
 }
 
-TYPED_TEST(slot_array_tester, removed_last_index_becomes_available_for_reuse)
+TYPED_TEST(slotted_array_tester, removed_last_index_becomes_available_for_reuse)
 {
   int    value     = get_random_int();
   size_t first_idx = get_random_int(0, 1), second_idx = first_idx == 1 ? 0 : 1;
@@ -180,7 +182,7 @@ TYPED_TEST(slot_array_tester, removed_last_index_becomes_available_for_reuse)
   ASSERT_EQ(this->vec.find_first_empty(), second_idx);
 }
 
-TYPED_TEST(slot_array_tester, removed_first_index_becomes_available_for_reuse)
+TYPED_TEST(slotted_array_tester, removed_first_index_becomes_available_for_reuse)
 {
   int    value     = get_random_int();
   size_t first_idx = get_random_int(0, 1), second_idx = first_idx == 1 ? 0 : 1;
@@ -195,12 +197,12 @@ TYPED_TEST(slot_array_tester, removed_first_index_becomes_available_for_reuse)
   ASSERT_EQ(this->vec.find_first_empty(), first_idx);
 }
 
-/// Test confirms that the slot_array uses nullptr instead of an extra boolean to represent an empty entry in the
-/// slot_array/slot_vector.
-TEST(detail_slot_array_of_unique_ptrs, slot_array_leverages_null_to_represent_empty_state)
+/// Test confirms that the slotted_array uses nullptr instead of an extra boolean to represent an empty entry in the
+/// slotted_array/slotted_vector.
+TEST(detail_slotted_array_of_unique_ptrs, slotted_array_leverages_null_to_represent_empty_state)
 {
-  slot_array<std::unique_ptr<int>, 5> ar;
-  slot_vector<std::unique_ptr<int>>   vec;
+  slotted_array<std::unique_ptr<int>, 5> ar;
+  slotted_vector<std::unique_ptr<int>>   vec;
 
   ar.insert(0, std::make_unique<int>(4));
   ar.insert(1, std::make_unique<int>(4));
@@ -211,11 +213,11 @@ TEST(detail_slot_array_of_unique_ptrs, slot_array_leverages_null_to_represent_em
   ASSERT_EQ((long unsigned)((char*)&vec[1] - (char*)&vec[0]), sizeof(std::unique_ptr<int>));
 }
 
-TEST(slot_vector, move_ctor_empties_original_vector)
+TEST(slotted_vector, move_ctor_empties_original_vector)
 {
-  slot_vector<moveonly_test_object> vec;
-  int                               value = get_random_int();
-  unsigned                          idx   = get_random_int(0, 19);
+  slotted_vector<moveonly_test_object> vec;
+  int                                  value = get_random_int();
+  unsigned                             idx   = get_random_int(0, 19);
   vec.insert(idx, moveonly_test_object(value));
 
   auto vec2 = std::move(vec);
@@ -225,11 +227,11 @@ TEST(slot_vector, move_ctor_empties_original_vector)
   ASSERT_EQ(vec2[idx], moveonly_test_object(value));
 }
 
-TEST(slot_array, move_ctor_moves_the_value_of_elements)
+TEST(slotted_array, move_ctor_moves_the_value_of_elements)
 {
-  slot_array<moveonly_test_object, 20> vec;
-  int                                  value = get_random_int();
-  unsigned                             idx   = get_random_int(0, 19);
+  slotted_array<moveonly_test_object, 20> vec;
+  int                                     value = get_random_int();
+  unsigned                                idx   = get_random_int(0, 19);
   vec.insert(idx, moveonly_test_object(value));
 
   auto vec2 = std::move(vec);

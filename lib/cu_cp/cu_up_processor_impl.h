@@ -12,7 +12,7 @@
 
 #include "adapters/e1_adapters.h"
 #include "adapters/ngc_adapters.h"
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/cu_up_processor_config.h"
 #include "srsgnb/e1_interface/cu_cp/e1_cu_cp.h"

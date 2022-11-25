@@ -12,7 +12,7 @@
 
 #include "dmrs.h"
 #include "srsgnb/adt/optional.h"
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/ofdm_symbol_range.h"
 #include "srsgnb/ran/pdcch/coreset.h"

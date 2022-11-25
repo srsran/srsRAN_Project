@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/executors/task_executor.h"
@@ -37,7 +37,7 @@ private:
   timer_manager& timers;
 
   // task event loops indexed by du_index
-  slot_array<async_task_sequencer, MAX_NOF_DUS> du_ctrl_loop;
+  slotted_array<async_task_sequencer, MAX_NOF_DUS> du_ctrl_loop;
 };
 
 } // namespace srs_cu_cp

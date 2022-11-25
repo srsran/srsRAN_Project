@@ -71,7 +71,7 @@ public:
   std::unique_ptr<mac_scheduler> sched;
   scheduler_result_logger        result_logger;
 
-  slot_array<cell_configuration, MAX_NOF_DU_CELLS> cell_cfg_list;
+  slotted_array<cell_configuration, MAX_NOF_DU_CELLS> cell_cfg_list;
 
   slot_point          next_slot;
   const sched_result* last_sched_res = nullptr;

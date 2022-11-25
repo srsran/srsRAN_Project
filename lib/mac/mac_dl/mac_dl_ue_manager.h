@@ -121,10 +121,10 @@ public:
 
 private:
   struct ue_item {
-    rnti_t                           rnti     = INVALID_RNTI;
-    du_ue_index_t                    ue_index = MAX_NOF_DU_UES;
-    slot_vector<mac_sdu_tx_builder*> dl_bearers;
-    ue_con_res_id_t                  msg3_subpdu;
+    rnti_t                              rnti     = INVALID_RNTI;
+    du_ue_index_t                       ue_index = MAX_NOF_DU_UES;
+    slotted_vector<mac_sdu_tx_builder*> dl_bearers;
+    ue_con_res_id_t                     msg3_subpdu;
   };
 
   bool add_ue_nolock(du_ue_index_t ue_index, rnti_t crnti, const byte_buffer* ul_ccch_msg)

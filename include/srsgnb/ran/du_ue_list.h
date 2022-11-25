@@ -11,12 +11,12 @@
 #pragma once
 
 #include "du_types.h"
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 
 namespace srsgnb {
 
 /// \brief Representation of a list of UEs indexed by DU UE Index.
 template <typename T>
-using du_ue_list = slot_array<T, MAX_NOF_DU_UES>;
+using du_ue_list = slotted_array<T, MAX_NOF_DU_UES>;
 
 } // namespace srsgnb

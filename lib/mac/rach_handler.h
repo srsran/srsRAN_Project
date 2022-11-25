@@ -129,9 +129,9 @@ public:
   }
 
 private:
-  scheduler_configurator&                         sched;
-  rnti_allocator                                  rnti_alloc;
-  slot_array<cell_rach_handler, MAX_NOF_DU_CELLS> cells;
+  scheduler_configurator&                            sched;
+  rnti_allocator                                     rnti_alloc;
+  slotted_array<cell_rach_handler, MAX_NOF_DU_CELLS> cells;
 };
 
 } // namespace srsgnb

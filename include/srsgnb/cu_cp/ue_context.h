@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/pdcp/pdcp_entity.h"
@@ -48,7 +48,7 @@ struct ue_context {
 
   rrc_ue_interface*                        rrc = nullptr;
   std::array<cu_srb_context, MAX_NOF_SRBS> srbs;
-  slot_vector<cu_drb_context>              drbs;
+  slotted_vector<cu_drb_context>           drbs;
 
   std::unique_ptr<rrc_ue_task_scheduler> task_sched;
 };

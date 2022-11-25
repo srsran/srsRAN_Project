@@ -71,7 +71,7 @@ private:
   ue_list&              ues;
   srslog::basic_logger& logger;
 
-  slot_array<cell_t, MAX_NOF_DU_CELLS> cells;
+  slotted_array<cell_t, MAX_NOF_DU_CELLS> cells;
 };
 
 } // namespace srsgnb

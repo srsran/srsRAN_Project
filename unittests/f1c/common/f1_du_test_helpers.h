@@ -13,7 +13,7 @@
 #include "lib/du_manager/converters/f1c_configuration_helpers.h"
 #include "lib/f1c/common/f1ap_asn1_utils.h"
 #include "unittests/f1c/common/test_helpers.h"
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/f1c/common/f1c_common.h"
 #include "srsgnb/f1c/du/f1ap_du.h"
@@ -236,7 +236,7 @@ protected:
   std::unique_ptr<f1_interface> f1ap;
 
   /// Storage of UE context related to the current unit test.
-  slot_array<ue_test_context, MAX_NOF_DU_UES> test_ues;
+  slotted_array<ue_test_context, MAX_NOF_DU_UES> test_ues;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
