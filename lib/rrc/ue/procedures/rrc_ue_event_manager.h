@@ -19,7 +19,7 @@ namespace srs_cu_cp {
 
 #define RRC_PROC_TIMEOUT (-1)
 
-using rrc_outcome     = expected<asn1::rrc_nr::rrc_setup_complete_s, int8_t>;
+using rrc_outcome     = expected<asn1::rrc_nr::ul_dcch_msg_s, int8_t>;
 using rrc_transaction = protocol_transaction<rrc_outcome>;
 
 /// TODO: Do we need a separate class for each procedure? Note that the outcome's expected only has two choices.

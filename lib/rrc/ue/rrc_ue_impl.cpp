@@ -134,8 +134,7 @@ void rrc_ue_impl::log_rx_pdu_fail(uint16_t         rnti,
 {
   if (log_hex) {
     std::vector<uint8_t> bytes{pdu.begin(), pdu.end()};
-    logger.error(
-        bytes.data(), bytes.size(), "Rx {} PDU, rnti=0x{:x}} - Discarding. Cause: {}", source, rnti, cause_str);
+    logger.error(bytes.data(), bytes.size(), "Rx {} PDU, rnti=0x{:x} - Discarding. Cause: {}", source, rnti, cause_str);
   } else {
     logger.error("Rx {} PDU, rnti=0x{:x} - Discarding. Cause: {}", source, rnti, cause_str);
   }

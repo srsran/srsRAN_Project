@@ -58,6 +58,7 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<voi
       // rrc_ue.on_ue_delete_request();
     }
   }
+  logger.debug("rnti=0x{:x}: \"{}\" finalized.", context.c_rnti, name());
   CORO_RETURN();
 }
 

@@ -108,6 +108,13 @@ void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
       return;
     }
   }
+  /*
+  if (ul_dcch_msg.msg.c1().type().value == ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_complete) {
+    ul_dcch_msg.msg.c1().security_mode_complete().rrc_transaction_id = 1;
+    byte_buffer buf                                                  = pack_into_pdu(ul_dcch_msg);
+    logger.debug(buf.begin(), buf.end(), "modified message to unpack message");
+  }
+  */
 
   // Log Rx message
   fmt::memory_buffer fmtbuf, fmtbuf2;
@@ -120,7 +127,10 @@ void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
       handle_ul_info_transfer(ul_dcch_msg.msg.c1().ul_info_transfer().crit_exts.ul_info_transfer());
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_setup_complete:
-      handle_rrc_setup_complete(ul_dcch_msg.msg.c1().rrc_setup_complete());
+      handle_rrc_setup_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_setup_complete().rrc_transaction_id);
+      break;
+    case ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_complete:
+      handle_security_mode_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().security_mode_complete().rrc_transaction_id);
       break;
     default:
       log_rx_pdu_fail(context.c_rnti, "UL-DCCH", pdu.view(), "Unsupported message type");
@@ -154,10 +164,17 @@ void rrc_ue_impl::handle_dl_nas_transport_message(const dl_nas_transport_message
   send_dl_dcch(dl_dcch_msg);
 }
 
-void rrc_ue_impl::handle_rrc_setup_complete(const rrc_setup_complete_s& msg)
+void rrc_ue_impl::handle_rrc_setup_complete(const ul_dcch_msg_s& msg, uint8_t transaction_id_)
 {
-  expected<uint8_t> transaction_id = msg.rrc_transaction_id;
+  expected<uint8_t> transaction_id = transaction_id_;
 
+  // Set transaction result and resume suspended procedure.
+  event_mng->transactions.set(transaction_id.value(), msg);
+}
+
+void rrc_ue_impl::handle_security_mode_complete(const ul_dcch_msg_s& msg, uint8_t transaction_id_)
+{
+  expected<uint8_t> transaction_id = transaction_id_;
   // Set transaction result and resume suspended procedure.
   event_mng->transactions.set(transaction_id.value(), msg);
 }

@@ -53,7 +53,7 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
   auto coro_res = transaction.result();
   if (coro_res.has_value()) {
     logger.debug("{}: \"{}\" finished successfully.", context.c_rnti, name());
-    send_initial_ue_msg(coro_res.value());
+    send_initial_ue_msg(coro_res.value().msg.c1().rrc_setup_complete());
   } else {
     logger.debug("{}: \"{}\" timed out.", context.c_rnti, name());
     rrc_ue.on_ue_delete_request();
