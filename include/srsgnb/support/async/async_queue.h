@@ -81,7 +81,12 @@ private:
   {
     if (front != nullptr) {
       front->suspended_handle.resume();
-      front = front->next;
+      if (front == last) {
+        front = nullptr;
+        last  = nullptr;
+      } else {
+        front = front->next;
+      }
     }
   }
 

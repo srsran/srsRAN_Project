@@ -34,7 +34,7 @@ TEST(async_queue_test, queue_starts_empty)
   ASSERT_EQ(q.size(), 0);
 }
 
-TEST(async_queue_test, push_resumes_awaiting_coroutine)
+TEST(async_queue_test, when_we_push_to_async_queue_awaiting_coroutine_is_resumed)
 {
   async_queue<int>      q{5};
   eager_async_task<int> t   = launch_async<read_queue_coroutine<int>>(q);
@@ -44,6 +44,31 @@ TEST(async_queue_test, push_resumes_awaiting_coroutine)
   ASSERT_TRUE(q.try_push(val));
   ASSERT_TRUE(t.ready());
   ASSERT_EQ(t.get(), val);
+}
+
+TEST(async_queue_test, when_coroutine_awaits_non_empty_queue_it_does_not_suspend)
+{
+  async_queue<int> q{5};
+  int              val = test_rgen::uniform_int<int>();
+
+  ASSERT_TRUE(q.try_push(val));
+  eager_async_task<int> t = launch_async<read_queue_coroutine<int>>(q);
+  ASSERT_TRUE(t.ready());
+  ASSERT_EQ(t.get(), val);
+}
+
+TEST(async_queue_test, async_queue_works_for_consecutive_push_pops)
+{
+  async_queue<int> q{5};
+  int              val = test_rgen::uniform_int<int>();
+
+  for (unsigned i = 0; i != 5; ++i) {
+    eager_async_task<int> t = launch_async<read_queue_coroutine<int>>(q);
+    ASSERT_FALSE(t.ready());
+    ASSERT_TRUE(q.try_push(val));
+    ASSERT_TRUE(t.ready()) << fmt::format("Failure at iteration: {}", i);
+    ASSERT_EQ(t.get(), val);
+  }
 }
 
 TEST(async_queue_test, many)
