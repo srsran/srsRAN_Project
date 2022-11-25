@@ -25,8 +25,8 @@ namespace srsgnb {
 class rlc_sdu_queue
 {
 public:
-  explicit rlc_sdu_queue(uint16_t capacity = 256) :
-    capacity(capacity), queue(capacity, push_callback(unread_bytes, n_sdus), pop_callback(unread_bytes, n_sdus))
+  explicit rlc_sdu_queue(uint16_t capacity_ = 256) :
+    capacity(capacity_), queue(capacity_, push_callback(unread_bytes, n_sdus), pop_callback(unread_bytes, n_sdus))
   {
   }
 

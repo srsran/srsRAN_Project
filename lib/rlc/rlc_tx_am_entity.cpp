@@ -17,12 +17,12 @@ using namespace srsgnb;
 rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index,
                                    lcid_t                               lcid,
                                    const rlc_tx_am_config&              config,
-                                   rlc_tx_upper_layer_data_notifier&    upper_dn,
-                                   rlc_tx_upper_layer_control_notifier& upper_cn,
-                                   rlc_tx_lower_layer_notifier&         lower_dn,
+                                   rlc_tx_upper_layer_data_notifier&    upper_dn_,
+                                   rlc_tx_upper_layer_control_notifier& upper_cn_,
+                                   rlc_tx_lower_layer_notifier&         lower_dn_,
                                    timer_manager&                       timers,
-                                   task_executor&                       pcell_executor) :
-  rlc_tx_entity(du_index, lcid, upper_dn, upper_cn, lower_dn),
+                                   task_executor&                       pcell_executor_) :
+  rlc_tx_entity(du_index, lcid, upper_dn_, upper_cn_, lower_dn_),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   am_window_size(window_size(to_number(cfg.sn_field_length))),
@@ -31,7 +31,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   head_max_size(rlc_am_pdu_header_max_size(cfg.sn_field_length)),
   poll_retransmit_timer(timers.create_unique_timer()),
   is_poll_retransmit_timer_expired(false),
-  pcell_executor(pcell_executor)
+  pcell_executor(pcell_executor_)
 {
   metrics.metrics_set_mode(rlc_mode::am);
 
@@ -40,8 +40,8 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
 
   //  configure t_poll_retransmission timer
   if (cfg.t_poll_retx > 0) {
-    poll_retransmit_timer.set(static_cast<uint32_t>(cfg.t_poll_retx), [this, &pcell_executor](uint32_t timerid) {
-      pcell_executor.execute([this, timerid]() { on_expired_poll_retransmit_timer(timerid); });
+    poll_retransmit_timer.set(static_cast<uint32_t>(cfg.t_poll_retx), [this, &pcell_executor_](uint32_t timerid) {
+      pcell_executor_.execute([this, timerid]() { on_expired_poll_retransmit_timer(timerid); });
     });
   }
 }
@@ -844,22 +844,22 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer(uint32_t timeout_id)
 
 std::unique_ptr<rlc_am_window_base<rlc_tx_am_sdu_info>> rlc_tx_am_entity::create_tx_window(rlc_am_sn_size sn_size)
 {
-  std::unique_ptr<rlc_am_window_base<rlc_tx_am_sdu_info>> tx_window;
+  std::unique_ptr<rlc_am_window_base<rlc_tx_am_sdu_info>> tx_window_;
   switch (sn_size) {
     case rlc_am_sn_size::size12bits:
-      tx_window =
+      tx_window_ =
           std::make_unique<rlc_am_window<rlc_tx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>(
               logger);
       break;
     case rlc_am_sn_size::size18bits:
-      tx_window =
+      tx_window_ =
           std::make_unique<rlc_am_window<rlc_tx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>(
               logger);
       break;
     default:
       srsgnb_assertion_failure("Cannot create tx_window: unsupported SN field length");
   }
-  return tx_window;
+  return tx_window_;
 }
 
 bool rlc_tx_am_entity::inside_tx_window(uint32_t sn) const

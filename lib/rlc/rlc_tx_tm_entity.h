@@ -24,10 +24,10 @@ private:
 public:
   rlc_tx_tm_entity(du_ue_index_t                        du_index,
                    lcid_t                               lcid,
-                   rlc_tx_upper_layer_data_notifier&    upper_dn,
-                   rlc_tx_upper_layer_control_notifier& upper_cn,
-                   rlc_tx_lower_layer_notifier&         lower_dn) :
-    rlc_tx_entity(du_index, lcid, upper_dn, upper_cn, lower_dn)
+                   rlc_tx_upper_layer_data_notifier&    upper_dn_,
+                   rlc_tx_upper_layer_control_notifier& upper_cn_,
+                   rlc_tx_lower_layer_notifier&         lower_dn_) :
+    rlc_tx_entity(du_index, lcid, upper_dn_, upper_cn_, lower_dn_)
   {
     metrics.metrics_set_mode(rlc_mode::tm);
   }

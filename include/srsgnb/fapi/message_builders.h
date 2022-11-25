@@ -29,7 +29,7 @@ namespace fapi {
 class dl_ssb_pdu_builder
 {
 public:
-  explicit dl_ssb_pdu_builder(dl_ssb_pdu& pdu) : pdu(pdu), v3(pdu.ssb_maintenance_v3)
+  explicit dl_ssb_pdu_builder(dl_ssb_pdu& pdu_) : pdu(pdu_), v3(pdu_.ssb_maintenance_v3)
   {
     v3.ss_pbch_block_power_scaling = std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::min();
     v3.beta_pss_profile_sss        = std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::min();
@@ -158,10 +158,10 @@ private:
 class dl_dci_pdu_builder
 {
 public:
-  dl_dci_pdu_builder(dl_dci_pdu&                                    pdu,
-                     dl_pdcch_pdu_maintenance_v3::maintenance_info& pdu_v3,
-                     dl_pdcch_pdu_parameters_v4::dci_params&        pdu_v4) :
-    pdu(pdu), pdu_v3(pdu_v3), pdu_v4(pdu_v4)
+  dl_dci_pdu_builder(dl_dci_pdu&                                    pdu_,
+                     dl_pdcch_pdu_maintenance_v3::maintenance_info& pdu_v3_,
+                     dl_pdcch_pdu_parameters_v4::dci_params&        pdu_v4_) :
+    pdu(pdu_), pdu_v3(pdu_v3_), pdu_v4(pdu_v4_)
   {
     pdu_v3.pdcch_data_power_offset_profile_sss =
         std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::min();
@@ -282,7 +282,7 @@ private:
 class dl_pdcch_pdu_builder
 {
 public:
-  explicit dl_pdcch_pdu_builder(dl_pdcch_pdu& pdu) : pdu(pdu) {}
+  explicit dl_pdcch_pdu_builder(dl_pdcch_pdu& pdu_) : pdu(pdu_) {}
 
   /// Sets the BWP parameters for the fields of the PDCCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table PDCCH PDU.
@@ -350,8 +350,8 @@ private:
 class dl_pdsch_codeword_builder
 {
 public:
-  dl_pdsch_codeword_builder(dl_pdsch_codeword& cw, uint8_t& cbg_tx_information) :
-    cw(cw), cbg_tx_information(cbg_tx_information)
+  dl_pdsch_codeword_builder(dl_pdsch_codeword& cw_, uint8_t& cbg_tx_information_) :
+    cw(cw_), cbg_tx_information(cbg_tx_information_)
   {
   }
 
@@ -392,7 +392,7 @@ private:
 class dl_pdsch_pdu_builder
 {
 public:
-  explicit dl_pdsch_pdu_builder(dl_pdsch_pdu& pdu) : pdu(pdu)
+  explicit dl_pdsch_pdu_builder(dl_pdsch_pdu& pdu_) : pdu(pdu_)
   {
     pdu.pdu_bitmap                           = 0U;
     pdu.is_last_cb_present                   = 0U;
@@ -752,7 +752,7 @@ class dl_csi_rs_pdu_builder
   dl_csi_rs_pdu& pdu;
 
 public:
-  explicit dl_csi_rs_pdu_builder(dl_csi_rs_pdu& pdu) : pdu(pdu) {}
+  explicit dl_csi_rs_pdu_builder(dl_csi_rs_pdu& pdu_) : pdu(pdu_) {}
 
   /// Sets the CSI-RS PDU basic parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.3 in table CSI-RS PDU.
@@ -840,7 +840,7 @@ class dl_tti_request_message_builder
 {
 public:
   /// Constructs a builder that will help to fill the given DL TTI request message.
-  explicit dl_tti_request_message_builder(dl_tti_request_message& msg) : msg(msg) {}
+  explicit dl_tti_request_message_builder(dl_tti_request_message& msg_) : msg(msg_) {}
 
   /// Sets the DL_TTI.request basic parameters and returns a reference to the builder.
   /// \note nPDUs and nPDUsOfEachType properties are filled by the add_*_pdu() functions.
@@ -995,7 +995,10 @@ class ul_dci_request_message_builder
   ul_dci_request_message& msg;
 
 public:
-  explicit ul_dci_request_message_builder(ul_dci_request_message& msg) : msg(msg) { msg.num_pdus_of_each_type.fill(0); }
+  explicit ul_dci_request_message_builder(ul_dci_request_message& msg_) : msg(msg_)
+  {
+    msg.num_pdus_of_each_type.fill(0);
+  }
 
   /// Sets the UL_DCI.request basic parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.4 in table UL_DCI.request message body.
@@ -1035,7 +1038,7 @@ public:
 class tx_data_request_builder
 {
 public:
-  explicit tx_data_request_builder(tx_data_request_message& msg) : msg(msg) {}
+  explicit tx_data_request_builder(tx_data_request_message& msg_) : msg(msg_) {}
 
   /// Sets the Tx_Data.request basic parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.6 in table Tx_Data.request message body.
@@ -1077,7 +1080,7 @@ class crc_indication_message_builder
   crc_indication_message& msg;
 
 public:
-  explicit crc_indication_message_builder(crc_indication_message& msg) : msg(msg) {}
+  explicit crc_indication_message_builder(crc_indication_message& msg_) : msg(msg_) {}
 
   /// Sets the CRC.indication basic parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.8 in table CRC.indication message body.
@@ -1163,7 +1166,7 @@ class rach_indication_pdu_builder
   rach_indication_pdu& pdu;
 
 public:
-  explicit rach_indication_pdu_builder(rach_indication_pdu& pdu) : pdu(pdu) {}
+  explicit rach_indication_pdu_builder(rach_indication_pdu& pdu_) : pdu(pdu_) {}
 
   /// Sets the basic parameters of the RACH.indication PDU and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.11 in table RACH.indication message body.
@@ -1252,7 +1255,7 @@ class rach_indication_message_builder
   rach_indication_message& msg;
 
 public:
-  explicit rach_indication_message_builder(rach_indication_message& msg) : msg(msg) {}
+  explicit rach_indication_message_builder(rach_indication_message& msg_) : msg(msg_) {}
 
   /// Sets the basic parameters of the RACH.indication message and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.11 in table RACH.indication message body.
@@ -1292,7 +1295,7 @@ class uci_pusch_pdu_builder
   uci_pusch_pdu& pdu;
 
 public:
-  explicit uci_pusch_pdu_builder(uci_pusch_pdu& pdu) : pdu(pdu) { pdu.pdu_bitmap = 0; }
+  explicit uci_pusch_pdu_builder(uci_pusch_pdu& pdu_) : pdu(pdu_) { pdu.pdu_bitmap = 0; }
 
   /// \brief Sets the UCI PUSCH PDU basic parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.1 in Table UCI PUSCH PDU.
@@ -1414,7 +1417,7 @@ class uci_pucch_pdu_format_0_1_builder
   uci_pucch_pdu_format_0_1& pdu;
 
 public:
-  explicit uci_pucch_pdu_format_0_1_builder(uci_pucch_pdu_format_0_1& pdu) : pdu(pdu) { pdu.pdu_bitmap = 0; }
+  explicit uci_pucch_pdu_format_0_1_builder(uci_pucch_pdu_format_0_1& pdu_) : pdu(pdu_) { pdu.pdu_bitmap = 0; }
 
   /// \brief Sets the UCI PUCCH PDU Format 0 and Format 1 basic parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.2 in Table UCI PUCCH Format 0 or Format 1 PDU.
@@ -1530,7 +1533,7 @@ class uci_pucch_pdu_format_2_3_4_builder
   uci_pucch_pdu_format_2_3_4& pdu;
 
 public:
-  explicit uci_pucch_pdu_format_2_3_4_builder(uci_pucch_pdu_format_2_3_4& pdu) : pdu(pdu) { pdu.pdu_bitmap = 0; }
+  explicit uci_pucch_pdu_format_2_3_4_builder(uci_pucch_pdu_format_2_3_4& pdu_) : pdu(pdu_) { pdu.pdu_bitmap = 0; }
 
   /// \brief Sets the UCI PUCCH Format 2, Format 3 and Format 4 PDU basic parameters and returns a reference to the
   /// builder. \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.3 in Table UCI PUCCH Format 2, Format
@@ -1718,7 +1721,7 @@ class uci_indication_message_builder
   uci_indication_message& msg;
 
 public:
-  explicit uci_indication_message_builder(uci_indication_message& msg) : msg(msg) {}
+  explicit uci_indication_message_builder(uci_indication_message& msg_) : msg(msg_) {}
 
   /// \brief Sets the \e UCI.indication basic parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9 in table UCI.indication message body.
@@ -1834,7 +1837,7 @@ class rx_data_indication_message_builder
   rx_data_indication_message& msg;
 
 public:
-  explicit rx_data_indication_message_builder(rx_data_indication_message& msg) : msg(msg) {}
+  explicit rx_data_indication_message_builder(rx_data_indication_message& msg_) : msg(msg_) {}
 
   /// Sets the Rx_Data.indication basic parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.7 in table Rx_Data.indication message body.
@@ -1875,7 +1878,7 @@ class ul_prach_pdu_builder
   ul_prach_pdu& pdu;
 
 public:
-  explicit ul_prach_pdu_builder(ul_prach_pdu& pdu) : pdu(pdu) {}
+  explicit ul_prach_pdu_builder(ul_prach_pdu& pdu_) : pdu(pdu_) {}
 
   /// Sets the PRACH PDU basic parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.1 in table PRACH PDU.
@@ -1929,7 +1932,7 @@ class ul_pucch_pdu_builder
   ul_pucch_pdu& pdu;
 
 public:
-  explicit ul_pucch_pdu_builder(ul_pucch_pdu& pdu) : pdu(pdu) {}
+  explicit ul_pucch_pdu_builder(ul_pucch_pdu& pdu_) : pdu(pdu_) {}
 
   /// Sets the PUCCH PDU basic parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
@@ -2131,7 +2134,7 @@ class ul_pusch_pdu_builder
   }
 
 public:
-  explicit ul_pusch_pdu_builder(ul_pusch_pdu& pdu) : pdu(pdu)
+  explicit ul_pusch_pdu_builder(ul_pusch_pdu& pdu_) : pdu(pdu_)
   {
     pdu.ul_dmrs_symb_pos = 0U;
     pdu.rb_bitmap.fill(0);
@@ -2427,7 +2430,10 @@ class ul_tti_request_message_builder
   using pdu_type = ul_tti_request_message::pdu_type;
 
 public:
-  explicit ul_tti_request_message_builder(ul_tti_request_message& msg) : msg(msg) { msg.num_pdus_of_each_type.fill(0); }
+  explicit ul_tti_request_message_builder(ul_tti_request_message& msg_) : msg(msg_)
+  {
+    msg.num_pdus_of_each_type.fill(0);
+  }
 
   /// Sets the UL_TTI.request basic parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3 in table UL_TTI,request message body.

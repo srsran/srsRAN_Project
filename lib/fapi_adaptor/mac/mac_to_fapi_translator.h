@@ -90,7 +90,7 @@ private:
 class mac_to_fapi_translator : public mac_cell_result_notifier
 {
 public:
-  explicit mac_to_fapi_translator(fapi::slot_message_gateway& msg_gw) : msg_gw(msg_gw) {}
+  explicit mac_to_fapi_translator(fapi::slot_message_gateway& msg_gw_) : msg_gw(msg_gw_) {}
 
   // See interface for documentation.
   void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override;

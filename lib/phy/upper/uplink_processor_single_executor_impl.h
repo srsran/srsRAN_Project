@@ -26,7 +26,7 @@ public:
   uplink_processor_single_executor_impl(std::unique_ptr<prach_detector>  prach_,
                                         std::unique_ptr<pusch_processor> pusch_proc_,
                                         std::unique_ptr<pucch_processor> pucch_proc_,
-                                        task_executor&                   executor);
+                                        task_executor&                   executor_);
 
   // See interface for documentation.
   void process_prach(upper_phy_rx_results_notifier& notifier,

@@ -39,8 +39,8 @@ uplink_processor_single_executor_impl::uplink_processor_single_executor_impl(
     std::unique_ptr<prach_detector>  prach_,
     std::unique_ptr<pusch_processor> pusch_proc_,
     std::unique_ptr<pucch_processor> pucch_proc_,
-    task_executor&                   executor) :
-  prach(std::move(prach_)), pusch_proc(std::move(pusch_proc_)), pucch_proc(std::move(pucch_proc_)), executor(executor)
+    task_executor&                   executor_) :
+  prach(std::move(prach_)), pusch_proc(std::move(pusch_proc_)), pucch_proc(std::move(pucch_proc_)), executor(executor_)
 {
   srsgnb_assert(prach, "A valid PRACH detector must be provided");
   srsgnb_assert(pusch_proc, "A valid PUSCH processor must be provided");

@@ -721,8 +721,8 @@ class container_buffer : public buffer<typename Container::value_type> {
   }
 
  public:
-  explicit container_buffer(Container& c)
-      : buffer<typename Container::value_type>(c.size()), container_(c) {}
+  explicit container_buffer(Container& c_)
+      : buffer<typename Container::value_type>(c_.size()), container_(c_) {}
 };
 
 // Extracts a reference to the container from back_insert_iterator.

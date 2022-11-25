@@ -42,8 +42,8 @@ static bool when_data_is_written_to_file_then_contents_are_valid()
 class file_sink_subclass : public file_sink
 {
 public:
-  file_sink_subclass(std::string name, size_t max_size) :
-    file_sink(std::move(name), max_size, false, std::unique_ptr<log_formatter>(new test_dummies::log_formatter_dummy))
+  file_sink_subclass(std::string name, size_t max_size_) :
+    file_sink(std::move(name), max_size_, false, std::unique_ptr<log_formatter>(new test_dummies::log_formatter_dummy))
   {
   }
 

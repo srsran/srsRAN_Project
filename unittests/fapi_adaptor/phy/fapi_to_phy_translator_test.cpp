@@ -31,7 +31,7 @@ class resource_grid_pool_dummy : public resource_grid_pool
   resource_grid& grid;
 
 public:
-  explicit resource_grid_pool_dummy(resource_grid& grid) : grid(grid) {}
+  explicit resource_grid_pool_dummy(resource_grid& grid_) : grid(grid_) {}
 
   resource_grid& get_resource_grid(const srsgnb::resource_grid_context& context) override { return grid; }
 };

@@ -27,8 +27,8 @@ class sdap_procedure_dispatcher : public sdap_pdu_handler
   std::unique_ptr<sdap_packet_procedures> procedure;
 
 public:
-  explicit sdap_procedure_dispatcher(std::unique_ptr<sdap_packet_procedures> procedure) :
-    procedure(std::move(procedure))
+  explicit sdap_procedure_dispatcher(std::unique_ptr<sdap_packet_procedures> procedure_) :
+    procedure(std::move(procedure_))
   {
   }
 

@@ -19,8 +19,8 @@ namespace fapi {
 class logging_slot_data_notifier_decorator : public slot_data_message_notifier
 {
 public:
-  logging_slot_data_notifier_decorator(srslog::basic_logger& logger, slot_data_message_notifier& notifier) :
-    logger(logger), notifier(notifier)
+  logging_slot_data_notifier_decorator(srslog::basic_logger& logger_, slot_data_message_notifier& notifier_) :
+    logger(logger_), notifier(notifier_)
   {
   }
 

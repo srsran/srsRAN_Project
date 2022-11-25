@@ -75,17 +75,17 @@ TEST_P(prbs_calculator_tester, calculated_nof_prbs_is_upper_bound)
 INSTANTIATE_TEST_SUITE_P(low_tbs_prb_calculation,
                          prbs_calculator_tester,
                          testing::Combine(testing::Range<unsigned>(30, 440, 10), testing::Range<unsigned>(1, 25)),
-                         [](const testing::TestParamInfo<prbs_calculator_tester::ParamType>& info) {
+                         [](const testing::TestParamInfo<prbs_calculator_tester::ParamType>& info_) {
                            return fmt::format(
-                               "payload_{}_and_mcs_{}", std::get<0>(info.param), std::get<1>(info.param));
+                               "payload_{}_and_mcs_{}", std::get<0>(info_.param), std::get<1>(info_.param));
                          });
 
 INSTANTIATE_TEST_SUITE_P(large_tbs_prb_calculation,
                          prbs_calculator_tester,
                          testing::Combine(testing::Range<unsigned>(450, 1000, 50), testing::Range<unsigned>(1, 25)),
-                         [](const testing::TestParamInfo<prbs_calculator_tester::ParamType>& info) {
+                         [](const testing::TestParamInfo<prbs_calculator_tester::ParamType>& info_) {
                            return fmt::format(
-                               "payload_{}_and_mcs_{}", std::get<0>(info.param), std::get<1>(info.param));
+                               "payload_{}_and_mcs_{}", std::get<0>(info_.param), std::get<1>(info_.param));
                          });
 
 TEST(nof_prb_calculation, test_entries_match)

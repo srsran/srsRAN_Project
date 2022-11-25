@@ -34,9 +34,9 @@ public:
   void on_max_retx() override {}
 
   // rlc_tx_buffer_state_update_notifier interface
-  void on_buffer_state_update(unsigned bsr) override
+  void on_buffer_state_update(unsigned bsr_) override
   {
-    this->bsr = bsr;
+    this->bsr = bsr_;
     this->bsr_count++;
   }
 };

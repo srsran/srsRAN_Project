@@ -17,16 +17,16 @@
 
 using namespace srsgnb;
 
-upper_phy_rx_symbol_handler_impl::upper_phy_rx_symbol_handler_impl(uplink_processor_pool&         ul_processor_pool,
-                                                                   uplink_slot_pdu_repository&    ul_pdu_repository,
-                                                                   rx_softbuffer_pool&            softbuffer_pool,
-                                                                   upper_phy_rx_results_notifier& rx_results_notifier,
-                                                                   srslog::basic_logger&          logger) :
-  ul_processor_pool(ul_processor_pool),
-  ul_pdu_repository(ul_pdu_repository),
-  softbuffer_pool(softbuffer_pool),
-  rx_results_notifier(rx_results_notifier),
-  logger(logger)
+upper_phy_rx_symbol_handler_impl::upper_phy_rx_symbol_handler_impl(uplink_processor_pool&         ul_processor_pool_,
+                                                                   uplink_slot_pdu_repository&    ul_pdu_repository_,
+                                                                   rx_softbuffer_pool&            softbuffer_pool_,
+                                                                   upper_phy_rx_results_notifier& rx_results_notifier_,
+                                                                   srslog::basic_logger&          logger_) :
+  ul_processor_pool(ul_processor_pool_),
+  ul_pdu_repository(ul_pdu_repository_),
+  softbuffer_pool(softbuffer_pool_),
+  rx_results_notifier(rx_results_notifier_),
+  logger(logger_)
 {
 }
 

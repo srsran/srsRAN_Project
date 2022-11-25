@@ -41,8 +41,8 @@ class uplink_slot_pdu_repository
 public:
   /// \brief Constructs an uplink slot pdu repository that supports the given number of slots.
   ///
-  /// \param nof_slots[in] Number of slots supported by the repository.
-  explicit uplink_slot_pdu_repository(unsigned nof_slots) : nof_slots(nof_slots), repository(nof_slots) {}
+  /// \param nof_slots_[in] Number of slots supported by the repository.
+  explicit uplink_slot_pdu_repository(unsigned nof_slots_) : nof_slots(nof_slots_), repository(nof_slots_) {}
 
   /// Adds the given PUSCH PDU to the repository at the given slot.
   void add_pusch_pdu(slot_point slot, const uplink_processor::pusch_pdu& pdu)

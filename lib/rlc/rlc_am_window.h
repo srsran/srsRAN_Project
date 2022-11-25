@@ -40,7 +40,7 @@ template <class T, std::size_t WINDOW_SIZE>
 class rlc_am_window final : public rlc_am_window_base<T>
 {
 public:
-  rlc_am_window(bearer_logger& logger) : logger(logger) {}
+  rlc_am_window(bearer_logger& logger_) : logger(logger_) {}
   ~rlc_am_window() = default;
 
   T& add_sn(size_t sn) override

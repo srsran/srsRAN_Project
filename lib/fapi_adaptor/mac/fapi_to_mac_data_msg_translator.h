@@ -25,7 +25,7 @@ namespace fapi_adaptor {
 class fapi_to_mac_data_msg_translator : public fapi::slot_data_message_notifier
 {
 public:
-  explicit fapi_to_mac_data_msg_translator(subcarrier_spacing scs);
+  explicit fapi_to_mac_data_msg_translator(subcarrier_spacing scs_);
 
   // See interface for documentation.
   void on_dl_tti_response(const fapi::dl_tti_response_message& msg) override;

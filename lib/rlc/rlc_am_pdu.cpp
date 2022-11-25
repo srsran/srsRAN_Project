@@ -18,7 +18,8 @@ using namespace srsgnb;
 
 const uint16_t rlc_am_status_nack::so_end_of_sdu = 0xffff;
 
-rlc_am_status_pdu::rlc_am_status_pdu(rlc_am_sn_size sn_size) : sn_size(sn_size), mod_nr(cardinality(to_number(sn_size)))
+rlc_am_status_pdu::rlc_am_status_pdu(rlc_am_sn_size sn_size_) :
+  sn_size(sn_size_), mod_nr(cardinality(to_number(sn_size_)))
 {
   nacks.reserve(RLC_AM_NR_TYP_NACKS);
 }

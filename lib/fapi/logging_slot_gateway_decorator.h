@@ -19,8 +19,8 @@ namespace fapi {
 class logging_slot_gateway_decorator : public slot_message_gateway
 {
 public:
-  logging_slot_gateway_decorator(srslog::basic_logger& logger, slot_message_gateway& gateway) :
-    logger(logger), gateway(gateway)
+  logging_slot_gateway_decorator(srslog::basic_logger& logger_, slot_message_gateway& gateway_) :
+    logger(logger_), gateway(gateway_)
   {
   }
 

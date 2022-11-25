@@ -12,12 +12,12 @@
 
 using namespace srsgnb;
 
-resource_grid_pool_impl::resource_grid_pool_impl(unsigned                                      nof_sectors,
-                                                 unsigned                                      nof_slots,
+resource_grid_pool_impl::resource_grid_pool_impl(unsigned                                      nof_sectors_,
+                                                 unsigned                                      nof_slots_,
                                                  std::vector<std::unique_ptr<resource_grid>>&& grids_) :
-  nof_slots(nof_slots), nof_sectors(nof_sectors), grids(std::move(grids_))
+  nof_slots(nof_slots_), nof_sectors(nof_sectors_), grids(std::move(grids_))
 {
-  assert(nof_slots * nof_sectors == grids.size());
+  assert(nof_slots_ * nof_sectors_ == grids.size());
 }
 
 resource_grid& resource_grid_pool_impl::get_resource_grid(const resource_grid_context& context)

@@ -30,9 +30,9 @@ public:
 /// cell-specific MAC slot handler, which will be later set up through the \ref set_cell_slot_handler() method.
 static mac_cell_slot_handler_dummy mac_dummy_handler;
 
-fapi_to_mac_time_msg_translator::fapi_to_mac_time_msg_translator(mac_to_fapi_translator& translator,
-                                                                 subcarrier_spacing      scs) :
-  scs(scs), mac_slot_handler(mac_dummy_handler), translator(translator)
+fapi_to_mac_time_msg_translator::fapi_to_mac_time_msg_translator(mac_to_fapi_translator& translator_,
+                                                                 subcarrier_spacing      scs_) :
+  scs(scs_), mac_slot_handler(mac_dummy_handler), translator(translator_)
 {
 }
 

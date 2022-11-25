@@ -50,8 +50,8 @@ static mac_pdu_handler_dummy dummy_pdu_handler;
 /// actual, cell-specific MAC CRC handler, which will be later set up through the \ref set_cell_crc_handler() method.
 static mac_cell_control_information_handler_dummy dummy_crc_handler;
 
-fapi_to_mac_data_msg_translator::fapi_to_mac_data_msg_translator(subcarrier_spacing scs) :
-  rach_handler(dummy_mac_rach_handler), pdu_handler(dummy_pdu_handler), crc_handler(dummy_crc_handler), scs(scs)
+fapi_to_mac_data_msg_translator::fapi_to_mac_data_msg_translator(subcarrier_spacing scs_) :
+  rach_handler(dummy_mac_rach_handler), pdu_handler(dummy_pdu_handler), crc_handler(dummy_crc_handler), scs(scs_)
 {
 }
 

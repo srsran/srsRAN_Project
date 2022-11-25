@@ -174,9 +174,9 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
 
     // Compute EPRE.
     cf_t avg_power = 0;
-    std::for_each(std::begin(ce[m]), std::end(ce[m]), [&avg_power](cf_t ce) {
+    std::for_each(std::begin(ce[m]), std::end(ce[m]), [&avg_power](cf_t ce_) {
       // Conjugate dot-product.
-      avg_power += (ce * std::conj(ce));
+      avg_power += (ce_ * std::conj(ce_));
     });
     epre += std::real(avg_power) / static_cast<float>(NRE);
   }

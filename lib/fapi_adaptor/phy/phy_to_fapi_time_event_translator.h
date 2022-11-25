@@ -28,8 +28,8 @@ class phy_to_fapi_time_event_translator : public upper_phy_timing_notifier
 public:
   /// \brief Constructor for the PHY-to-FAPI time event translator.
   ///
-  /// \param[in] translator FAPI-to-PHY translator.
-  explicit phy_to_fapi_time_event_translator(fapi_to_phy_translator& translator);
+  /// \param[in] translator_ FAPI-to-PHY translator.
+  explicit phy_to_fapi_time_event_translator(fapi_to_phy_translator& translator_);
 
   // See interface for documentation.
   void on_tti_boundary(slot_point slot) override;

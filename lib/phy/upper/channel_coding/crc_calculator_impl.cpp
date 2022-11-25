@@ -46,8 +46,8 @@ crc_calculator_impl::crc_table_s::crc_table_s(unsigned polynom_, unsigned order_
   }
 }
 
-crc_calculator_impl::crc_calculator_impl(crc_generator_poly poly) :
-  table(crc_tables.at(poly)), order(table.order), crcmask(table.crcmask), crc(0), poly(poly)
+crc_calculator_impl::crc_calculator_impl(crc_generator_poly poly_) :
+  table(crc_tables.at(poly_)), order(table.order), crcmask(table.crcmask), crc(0), poly(poly_)
 {
   // Do nothing
 }

@@ -23,7 +23,8 @@ class rx_softbuffer_pool;
 class upper_phy_rx_results_notifier_wrapper : public upper_phy_rx_results_notifier
 {
 public:
-  explicit upper_phy_rx_results_notifier_wrapper(rx_softbuffer_pool& softbuffer_pool) : softbuffer_pool(softbuffer_pool)
+  explicit upper_phy_rx_results_notifier_wrapper(rx_softbuffer_pool& softbuffer_pool_) :
+    softbuffer_pool(softbuffer_pool_)
   {
   }
 

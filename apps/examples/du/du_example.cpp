@@ -256,7 +256,7 @@ class phy_dummy : public mac_result_notifier
   mac_cell_result_notifier& cell;
 
 public:
-  explicit phy_dummy(mac_cell_result_notifier& cell) : cell(cell) {}
+  explicit phy_dummy(mac_cell_result_notifier& cell_) : cell(cell_) {}
 
   mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override { return cell; }
 };

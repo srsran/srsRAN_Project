@@ -15,19 +15,19 @@
 using namespace srsgnb;
 
 downlink_processor_single_executor_impl::downlink_processor_single_executor_impl(
-    upper_phy_rg_gateway&             gateway,
+    upper_phy_rg_gateway&             gateway_,
     std::unique_ptr<pdcch_processor>  pdcch_proc_,
     std::unique_ptr<pdsch_processor>  pdsch_proc_,
     std::unique_ptr<ssb_processor>    ssb_proc_,
     std::unique_ptr<csi_rs_processor> csi_rs_proc_,
-    task_executor&                    executor) :
-  gateway(gateway),
+    task_executor&                    executor_) :
+  gateway(gateway_),
   current_grid(nullptr),
   pdcch_proc(std::move(pdcch_proc_)),
   pdsch_proc(std::move(pdsch_proc_)),
   ssb_proc(std::move(ssb_proc_)),
   csi_rs_proc(std::move(csi_rs_proc_)),
-  executor(executor),
+  executor(executor_),
   pending_pdus(0),
   is_send_allowed(false)
 {

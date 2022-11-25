@@ -68,7 +68,7 @@ public:
     srsgnb_assert(sequence_collection, "Invalid sequence collection.");
   }
 
-  void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const config_t& config) override;
+  void estimate(channel_estimate& ce_, const resource_grid_reader& grid, const config_t& config) override;
 };
 
 } // namespace srsgnb

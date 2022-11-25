@@ -130,7 +130,7 @@ public:
   /// Constructs a span that is a view over the container c.
   template <typename Container,
             typename std::enable_if<detail::is_container_compatible<Container, element_type>::value, int>::type = 0>
-  constexpr span(Container& c) noexcept : ptr(c.data()), len(c.size())
+  constexpr span(Container& container) noexcept : ptr(container.data()), len(container.size())
   {
   }
 
@@ -138,7 +138,7 @@ public:
   template <
       typename Container,
       typename std::enable_if<detail::is_container_compatible<const Container, element_type>::value, int>::type = 0>
-  constexpr span(const Container& c) noexcept : ptr(c.data()), len(c.size())
+  constexpr span(const Container& container) noexcept : ptr(container.data()), len(container.size())
   {
   }
 

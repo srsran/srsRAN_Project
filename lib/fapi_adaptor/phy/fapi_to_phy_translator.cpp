@@ -54,11 +54,11 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_co
 fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_controller(
     downlink_processor_pool& dl_processor_pool,
     resource_grid_pool&      rg_pool,
-    slot_point               slot,
+    slot_point               slot_,
     unsigned                 sector_id) :
-  slot(slot), dl_processor(dl_processor_pool.get_processor(slot, sector_id))
+  slot(slot_), dl_processor(dl_processor_pool.get_processor(slot_, sector_id))
 {
-  resource_grid_context context = {slot, sector_id};
+  resource_grid_context context = {slot_, sector_id};
   // Grab the resource grid.
   resource_grid& grid = rg_pool.get_resource_grid(context);
 

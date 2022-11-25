@@ -44,12 +44,12 @@ class stress_traffic_source
   srsgnb::bearer_logger logger;
 
 public:
-  explicit stress_traffic_source(const stress_test_args& args, uint32_t id) :
-    args(args), rgen(args.seed), int_dist(args.min_sdu_size, args.max_sdu_size), logger("TRAFF", id, lcid_t{})
+  explicit stress_traffic_source(const stress_test_args& args_, uint32_t id) :
+    args(args_), rgen(args_.seed), int_dist(args_.min_sdu_size, args_.max_sdu_size), logger("TRAFF", id, lcid_t{})
   {
   }
 
-  void set_pdcp_tx_upper(pdcp_tx_upper_data_interface* pdcp_tx_upper) { this->pdcp_tx_upper = pdcp_tx_upper; }
+  void set_pdcp_tx_upper(pdcp_tx_upper_data_interface* pdcp_tx_upper_) { this->pdcp_tx_upper = pdcp_tx_upper_; }
 
   void send_pdu();
 };

@@ -33,7 +33,7 @@ namespace srsgnb {
 class stress_stack
 {
 public:
-  stress_stack(const stress_test_args& args, uint32_t id);
+  stress_stack(const stress_test_args& args_, uint32_t id);
 
   ~stress_stack() = default;
 

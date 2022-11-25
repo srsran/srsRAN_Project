@@ -30,7 +30,7 @@ public:
   rlc_am_status_pdu                   status;
   uint32_t                            status_trigger_counter = 0;
 
-  rlc_rx_am_test_frame(rlc_am_sn_size sn_size) : sn_size(sn_size), status(sn_size) {}
+  rlc_rx_am_test_frame(rlc_am_sn_size sn_size_) : sn_size(sn_size_), status(sn_size_) {}
 
   // rlc_rx_upper_layer_data_notifier interface
   void on_new_sdu(byte_buffer_slice_chain sdu) override
@@ -40,7 +40,7 @@ public:
   }
 
   // rlc_tx_am_status_handler interface
-  virtual void on_status_pdu(rlc_am_status_pdu status) override { this->status = status; }
+  virtual void on_status_pdu(rlc_am_status_pdu status_) override { this->status = status_; }
   // rlc_tx_am_status_notifier interface
   virtual void on_status_report_changed() override { this->status_trigger_counter++; }
 };
@@ -756,7 +756,7 @@ TEST_P(rlc_rx_am_test, reassembly_timer)
   EXPECT_EQ(tester->sdu_queue.size(), 0);
 
   // Let the reassembly timer expire
-  for (int i = 0; i < config.t_reassembly; i++) {
+  for (int j = 0; j < config.t_reassembly; j++) {
     EXPECT_FALSE(rlc->status_report_required());
     EXPECT_EQ(tester->status_trigger_counter, 0);
     timers.tick_all();

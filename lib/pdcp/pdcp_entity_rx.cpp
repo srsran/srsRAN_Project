@@ -16,13 +16,13 @@
 using namespace srsgnb;
 
 pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
-                               lcid_t                          lcid,
+                               lcid_t                          lcid_,
                                pdcp_config::pdcp_rx_config     cfg_,
                                pdcp_rx_upper_data_notifier&    upper_dn_,
                                pdcp_rx_upper_control_notifier& upper_cn_,
                                timer_manager&                  timers_) :
-  pdcp_entity_tx_rx_base(lcid, cfg_.rb_type, cfg_.sn_size),
-  logger("PDCP", ue_index, lcid),
+  pdcp_entity_tx_rx_base(lcid_, cfg_.rb_type, cfg_.sn_size),
+  logger("PDCP", ue_index, lcid_),
   cfg(cfg_),
   upper_dn(upper_dn_),
   upper_cn(upper_cn_),

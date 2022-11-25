@@ -23,7 +23,7 @@ class downlink_processor_spy : public downlink_processor
   bool     finish_processing_pdus_method_called  = false;
 
 public:
-  explicit downlink_processor_spy(unsigned id) : id(id) {}
+  explicit downlink_processor_spy(unsigned id_) : id(id_) {}
 
   /// Returns the identifier of downlink processor.
   unsigned get_id() const { return id; }

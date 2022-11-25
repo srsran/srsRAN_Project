@@ -26,8 +26,8 @@ TEST_P(validate_pdcch_pdu_field, WithValue)
   auto params = GetParam();
 
   std::function<bool(const dl_pdcch_pdu&, validator_report&)> validator = [](const dl_pdcch_pdu& pdu,
-                                                                             validator_report&   report) {
-    return validate_dl_pdcch_pdu(message_type_id::dl_tti_request, pdu, report);
+                                                                             validator_report&   report_) {
+    return validate_dl_pdcch_pdu(message_type_id::dl_tti_request, pdu, report_);
   };
 
   execute_test(std::get<0>(params),

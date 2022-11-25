@@ -31,13 +31,13 @@ static bool when_default_constructed_then_any_is_empty()
 namespace {
 
 struct copyable_object {
-  explicit copyable_object(int x) : x(x) {}
+  explicit copyable_object(int x_) : x(x_) {}
   copyable_object(const copyable_object&) = default;
   int x;
 };
 
 struct movable_object {
-  explicit movable_object(int x) : x(x) {}
+  explicit movable_object(int x_) : x(x_) {}
   movable_object(movable_object&&) = default;
   int x;
 };

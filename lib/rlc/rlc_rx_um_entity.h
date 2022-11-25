@@ -99,7 +99,7 @@ public:
   rlc_rx_um_entity(du_ue_index_t                     du_index,
                    lcid_t                            lcid,
                    const rlc_rx_um_config&           config,
-                   rlc_rx_upper_layer_data_notifier& upper_dn,
+                   rlc_rx_upper_layer_data_notifier& upper_dn_,
                    timer_manager&                    timers,
                    task_executor&                    ue_executor);
 

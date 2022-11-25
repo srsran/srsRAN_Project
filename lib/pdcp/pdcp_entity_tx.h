@@ -44,17 +44,17 @@ class pdcp_entity_tx : public pdcp_entity_tx_rx_base,
 {
 public:
   pdcp_entity_tx(uint32_t                        ue_index,
-                 lcid_t                          lcid,
+                 lcid_t                          lcid_,
                  pdcp_config::pdcp_tx_config     cfg_,
-                 pdcp_tx_lower_notifier&         lower_dn,
-                 pdcp_tx_upper_control_notifier& upper_cn,
-                 timer_manager&                  timers) :
-    pdcp_entity_tx_rx_base(lcid, cfg_.rb_type, cfg_.sn_size),
-    logger("PDCP", ue_index, lcid),
+                 pdcp_tx_lower_notifier&         lower_dn_,
+                 pdcp_tx_upper_control_notifier& upper_cn_,
+                 timer_manager&                  timers_) :
+    pdcp_entity_tx_rx_base(lcid_, cfg_.rb_type, cfg_.sn_size),
+    logger("PDCP", ue_index, lcid_),
     cfg(cfg_),
-    lower_dn(lower_dn),
-    upper_cn(upper_cn),
-    timers(timers)
+    lower_dn(lower_dn_),
+    upper_cn(upper_cn_),
+    timers(timers_)
   {
     // Validate configuration
     srsgnb_assert((is_um() && cfg.discard_timer == pdcp_discard_timer::not_configured) || is_am(),

@@ -30,36 +30,36 @@ struct validator_report {
     optional<std::pair<int32_t, int32_t>> expected_value_range;
     optional<unsigned>                    pdu_type;
 
-    error_report(int32_t                     value,
+    error_report(int32_t                     value_,
                  std::pair<int32_t, int32_t> range,
                  const char*                 name,
-                 message_type_id             message_type,
-                 unsigned                    pdu_type) :
-      value(value),
+                 message_type_id             message_type_,
+                 unsigned                    pdu_type_) :
+      value(value_),
       property_name(name),
-      message_type(message_type),
+      message_type(message_type_),
       expected_value_range({std::move(range)}),
-      pdu_type(pdu_type)
+      pdu_type(pdu_type_)
     {
     }
 
-    error_report(int32_t value, const char* name, message_type_id message_type, unsigned pdu_type) :
-      value(value), property_name(name), message_type(message_type), pdu_type(pdu_type)
+    error_report(int32_t value_, const char* name, message_type_id message_type_, unsigned pdu_type_) :
+      value(value_), property_name(name), message_type(message_type_), pdu_type(pdu_type_)
     {
     }
 
-    error_report(int32_t value, std::pair<int32_t, int32_t> range, const char* name, message_type_id message_type) :
-      value(value), property_name(name), message_type(message_type), expected_value_range({std::move(range)})
+    error_report(int32_t value_, std::pair<int32_t, int32_t> range, const char* name, message_type_id message_type_) :
+      value(value_), property_name(name), message_type(message_type_), expected_value_range({std::move(range)})
     {
     }
 
-    error_report(int32_t value, const char* name, message_type_id message_type) :
-      value(value), property_name(name), message_type(message_type)
+    error_report(int32_t value_, const char* name, message_type_id message_type_) :
+      value(value_), property_name(name), message_type(message_type_)
     {
     }
   };
 
-  validator_report(uint16_t sfn, uint16_t slot) : sfn(sfn), slot(slot) {}
+  validator_report(uint16_t sfn_, uint16_t slot_) : sfn(sfn_), slot(slot_) {}
 
   /// Appends an error report.
   void append(int32_t                     value,

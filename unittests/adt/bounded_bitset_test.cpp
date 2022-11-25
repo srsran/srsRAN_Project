@@ -37,90 +37,90 @@ TYPED_TEST_SUITE(bitmask_tester, mask_integer_types);
 
 TYPED_TEST(bitmask_tester, lsb_ones)
 {
-  using Integer = typename TestFixture::Integer;
+  using IntegerType = typename TestFixture::Integer;
   // sanity checks.
-  ASSERT_EQ(0, mask_lsb_ones<Integer>(0));
-  ASSERT_EQ(static_cast<Integer>(-1), mask_lsb_ones<Integer>(this->nof_bits))
+  ASSERT_EQ(0, mask_lsb_ones<IntegerType>(0));
+  ASSERT_EQ(static_cast<IntegerType>(-1), mask_lsb_ones<IntegerType>(this->nof_bits))
       << "for nof_bits=" << (unsigned)this->nof_bits;
-  ASSERT_EQ(0b11, mask_lsb_ones<Integer>(2));
+  ASSERT_EQ(0b11, mask_lsb_ones<IntegerType>(2));
 
   // test all combinations.
   for (unsigned nof_ones = 0; nof_ones != this->nof_bits; ++nof_ones) {
-    Integer expected = (static_cast<uint64_t>(1U) << nof_ones) - 1U;
-    ASSERT_EQ(expected, mask_lsb_ones<Integer>(nof_ones)) << "for nof_ones=" << nof_ones;
+    IntegerType expected = (static_cast<uint64_t>(1U) << nof_ones) - 1U;
+    ASSERT_EQ(expected, mask_lsb_ones<IntegerType>(nof_ones)) << "for nof_ones=" << nof_ones;
   }
 }
 
 TYPED_TEST(bitmask_tester, lsb_zeros)
 {
-  using Integer = typename TestFixture::Integer;
+  using IntegerType = typename TestFixture::Integer;
   // sanity checks.
-  ASSERT_EQ((Integer)-1, mask_lsb_zeros<Integer>(0));
-  ASSERT_EQ(0, mask_lsb_zeros<Integer>(this->nof_bits));
+  ASSERT_EQ((IntegerType)-1, mask_lsb_zeros<IntegerType>(0));
+  ASSERT_EQ(0, mask_lsb_zeros<IntegerType>(this->nof_bits));
 
   // test all combinations.
   for (unsigned nof_zeros = 0; nof_zeros != this->nof_bits; ++nof_zeros) {
-    Integer expected = (static_cast<uint64_t>(1U) << nof_zeros) - 1U;
-    expected         = ~expected;
-    ASSERT_EQ(expected, mask_lsb_zeros<Integer>(nof_zeros)) << "for nof_zeros=" << nof_zeros;
-    ASSERT_EQ((Integer)~mask_lsb_ones<Integer>(nof_zeros), mask_lsb_zeros<Integer>(nof_zeros));
+    IntegerType expected = (static_cast<uint64_t>(1U) << nof_zeros) - 1U;
+    expected             = ~expected;
+    ASSERT_EQ(expected, mask_lsb_zeros<IntegerType>(nof_zeros)) << "for nof_zeros=" << nof_zeros;
+    ASSERT_EQ((IntegerType)~mask_lsb_ones<IntegerType>(nof_zeros), mask_lsb_zeros<IntegerType>(nof_zeros));
   }
 }
 
 TYPED_TEST(bitmask_tester, msb_ones)
 {
-  using Integer = typename TestFixture::Integer;
+  using IntegerType = typename TestFixture::Integer;
   // sanity checks.
-  ASSERT_EQ(0, mask_msb_ones<Integer>(0));
-  ASSERT_EQ(static_cast<Integer>(-1), mask_msb_ones<Integer>(this->nof_bits));
+  ASSERT_EQ(0, mask_msb_ones<IntegerType>(0));
+  ASSERT_EQ(static_cast<IntegerType>(-1), mask_msb_ones<IntegerType>(this->nof_bits));
 
   // test all combinations.
   for (unsigned nof_ones = 0; nof_ones != this->nof_bits; ++nof_ones) {
-    Integer expected = 0;
+    IntegerType expected = 0;
     if (nof_ones > 0) {
       unsigned nof_lsb_zeros = this->nof_bits - nof_ones;
-      expected               = ~((static_cast<Integer>(1U) << (nof_lsb_zeros)) - 1U);
+      expected               = ~((static_cast<IntegerType>(1U) << (nof_lsb_zeros)) - 1U);
     }
-    ASSERT_EQ(expected, mask_msb_ones<Integer>(nof_ones)) << "for nof_ones=" << nof_ones;
+    ASSERT_EQ(expected, mask_msb_ones<IntegerType>(nof_ones)) << "for nof_ones=" << nof_ones;
   }
 }
 
 TYPED_TEST(bitmask_tester, msb_zeros)
 {
-  using Integer = typename TestFixture::Integer;
+  using IntegerType = typename TestFixture::Integer;
   // sanity checks.
-  ASSERT_EQ((Integer)-1, mask_msb_zeros<Integer>(0));
-  ASSERT_EQ(0, mask_msb_zeros<Integer>(this->nof_bits));
+  ASSERT_EQ((IntegerType)-1, mask_msb_zeros<IntegerType>(0));
+  ASSERT_EQ(0, mask_msb_zeros<IntegerType>(this->nof_bits));
 
   // test all combinations.
   for (unsigned nof_zeros = 0; nof_zeros != this->nof_bits; ++nof_zeros) {
-    Integer expected = 0;
+    IntegerType expected = 0;
     if (nof_zeros > 0) {
       unsigned nof_lsb_ones = this->nof_bits - nof_zeros;
-      expected              = ~((static_cast<Integer>(1U) << (nof_lsb_ones)) - 1U);
+      expected              = ~((static_cast<IntegerType>(1U) << (nof_lsb_ones)) - 1U);
     }
     expected = ~expected;
-    ASSERT_EQ(expected, mask_msb_zeros<Integer>(nof_zeros)) << "for nof_zeros=" << nof_zeros;
-    ASSERT_EQ((Integer)~mask_lsb_ones<Integer>(nof_zeros), mask_lsb_zeros<Integer>(nof_zeros));
+    ASSERT_EQ(expected, mask_msb_zeros<IntegerType>(nof_zeros)) << "for nof_zeros=" << nof_zeros;
+    ASSERT_EQ((IntegerType)~mask_lsb_ones<IntegerType>(nof_zeros), mask_lsb_zeros<IntegerType>(nof_zeros));
   }
 }
 
 TYPED_TEST(bitmask_tester, first_lsb_one)
 {
-  using Integer = typename TestFixture::Integer;
-  std::uniform_int_distribution<Integer> rd_int{0, std::numeric_limits<Integer>::max()};
+  using IntegerType = typename TestFixture::Integer;
+  std::uniform_int_distribution<IntegerType> rd_int{0, std::numeric_limits<IntegerType>::max()};
 
   // sanity checks.
-  ASSERT_EQ(std::numeric_limits<Integer>::digits, find_first_lsb_one<Integer>(0));
-  ASSERT_EQ(0, find_first_lsb_one<Integer>(-1));
-  ASSERT_EQ(0, find_first_lsb_one<Integer>(0b1));
-  ASSERT_EQ(1, find_first_lsb_one<Integer>(0b10));
-  ASSERT_EQ(0, find_first_lsb_one<Integer>(0b11));
+  ASSERT_EQ(std::numeric_limits<IntegerType>::digits, find_first_lsb_one<IntegerType>(0));
+  ASSERT_EQ(0, find_first_lsb_one<IntegerType>(-1));
+  ASSERT_EQ(0, find_first_lsb_one<IntegerType>(0b1));
+  ASSERT_EQ(1, find_first_lsb_one<IntegerType>(0b10));
+  ASSERT_EQ(0, find_first_lsb_one<IntegerType>(0b11));
 
   // test all combinations.
   for (unsigned one_idx = 0; one_idx != this->nof_bits - 1; ++one_idx) {
-    Integer mask  = mask_lsb_zeros<Integer>(one_idx);
-    Integer value = rd_int(g) & mask;
+    IntegerType mask  = mask_lsb_zeros<IntegerType>(one_idx);
+    IntegerType value = rd_int(g) & mask;
 
     ASSERT_EQ(find_first_lsb_one(mask), one_idx);
     ASSERT_GE(find_first_lsb_one(value), one_idx) << fmt::format("for value {:#b}", value);
@@ -129,20 +129,20 @@ TYPED_TEST(bitmask_tester, first_lsb_one)
 
 TYPED_TEST(bitmask_tester, first_msb_one)
 {
-  using Integer = typename TestFixture::Integer;
-  std::uniform_int_distribution<Integer> rd_int{0, std::numeric_limits<Integer>::max()};
+  using IntegerType = typename TestFixture::Integer;
+  std::uniform_int_distribution<IntegerType> rd_int{0, std::numeric_limits<IntegerType>::max()};
 
   // sanity checks.
-  ASSERT_EQ(std::numeric_limits<Integer>::digits, find_first_msb_one<Integer>(0));
-  ASSERT_EQ(this->nof_bits - 1, find_first_msb_one<Integer>(-1));
-  ASSERT_EQ(0, find_first_msb_one<Integer>(0b1));
-  ASSERT_EQ(1, find_first_msb_one<Integer>(0b10));
-  ASSERT_EQ(1, find_first_msb_one<Integer>(0b11));
+  ASSERT_EQ(std::numeric_limits<IntegerType>::digits, find_first_msb_one<IntegerType>(0));
+  ASSERT_EQ(this->nof_bits - 1, find_first_msb_one<IntegerType>(-1));
+  ASSERT_EQ(0, find_first_msb_one<IntegerType>(0b1));
+  ASSERT_EQ(1, find_first_msb_one<IntegerType>(0b10));
+  ASSERT_EQ(1, find_first_msb_one<IntegerType>(0b11));
 
   // test all combinations.
   for (unsigned one_idx = 0; one_idx != this->nof_bits - 1; ++one_idx) {
-    Integer mask  = mask_lsb_ones<Integer>(one_idx + 1);
-    Integer value = std::max((Integer)(rd_int(g) & mask), (Integer)1U);
+    IntegerType mask  = mask_lsb_ones<IntegerType>(one_idx + 1);
+    IntegerType value = std::max((IntegerType)(rd_int(g) & mask), (IntegerType)1U);
 
     ASSERT_EQ(one_idx, find_first_msb_one(mask));
     ASSERT_LE(find_first_msb_one(value), one_idx) << fmt::format("for value {:#b}", value);

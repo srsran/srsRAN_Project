@@ -82,7 +82,7 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
 
     slot_based_upper_phy_controller(downlink_processor_pool& dl_processor_pool,
                                     resource_grid_pool&      rg_pool,
-                                    slot_point               slot,
+                                    slot_point               slot_,
                                     unsigned                 sector_id);
 
     slot_based_upper_phy_controller(slot_based_upper_phy_controller&& other) = delete;

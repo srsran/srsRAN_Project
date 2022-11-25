@@ -15,10 +15,10 @@ using namespace srsgnb;
 rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index,
                                    lcid_t                               lcid,
                                    const rlc_tx_um_config&              config,
-                                   rlc_tx_upper_layer_data_notifier&    upper_dn,
-                                   rlc_tx_upper_layer_control_notifier& upper_cn,
-                                   rlc_tx_lower_layer_notifier&         lower_dn) :
-  rlc_tx_entity(du_index, lcid, upper_dn, upper_cn, lower_dn),
+                                   rlc_tx_upper_layer_data_notifier&    upper_dn_,
+                                   rlc_tx_upper_layer_control_notifier& upper_cn_,
+                                   rlc_tx_lower_layer_notifier&         lower_dn_) :
+  rlc_tx_entity(du_index, lcid, upper_dn_, upper_cn_, lower_dn_),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   head_len_full(rlc_um_pdu_header_size_complete_sdu),
@@ -28,22 +28,22 @@ rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.2.1
-void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu)
+void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu_)
 {
-  size_t sdu_length = sdu.buf.length();
-  logger.log_info(sdu.buf.begin(),
-                  sdu.buf.end(),
+  size_t sdu_length = sdu_.buf.length();
+  logger.log_info(sdu_.buf.begin(),
+                  sdu_.buf.end(),
                   "Tx SDU (length: {} B, PDCP Count: {}, enqueued SDUs: {}",
-                  sdu.buf.length(),
-                  sdu.pdcp_count,
+                  sdu_.buf.length(),
+                  sdu_.pdcp_count,
                   sdu_queue.size_sdus());
-  if (sdu_queue.write(sdu)) {
+  if (sdu_queue.write(sdu_)) {
     metrics.metrics_add_sdus(1, sdu_length);
     handle_buffer_state_update(); // take lock
   } else {
     logger.log_info("Dropped Tx SDU (length: {} B, PDCP Count: {}, enqueued SDUs: {}",
                     sdu_length,
-                    sdu.pdcp_count,
+                    sdu_.pdcp_count,
                     sdu_queue.size_sdus());
     metrics.metrics_add_lost_sdus(1);
   }

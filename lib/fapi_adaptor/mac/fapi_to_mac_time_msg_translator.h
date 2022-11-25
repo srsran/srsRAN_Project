@@ -29,7 +29,7 @@ class mac_to_fapi_translator;
 class fapi_to_mac_time_msg_translator : public fapi::slot_time_message_notifier
 {
 public:
-  fapi_to_mac_time_msg_translator(mac_to_fapi_translator& translator, subcarrier_spacing scs);
+  fapi_to_mac_time_msg_translator(mac_to_fapi_translator& translator_, subcarrier_spacing scs_);
 
   // See interface for documentation.
   void on_slot_indication(const fapi::slot_indication_message& msg) override;

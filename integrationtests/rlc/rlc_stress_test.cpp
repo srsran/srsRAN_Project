@@ -15,9 +15,9 @@
 
 using namespace srsgnb;
 pthread_barrier_t barrier;
-stress_stack::stress_stack(const stress_test_args& args, uint32_t id) :
+stress_stack::stress_stack(const stress_test_args& args_, uint32_t id) :
   stack_id(id),
-  args(args),
+  args(args_),
   ue_name("UE-Worker-" + std::to_string(id)),
   pcell_name("PCell-Worker-" + std::to_string(id)),
   ue_worker{ue_name, task_worker_queue_size, true},
@@ -28,7 +28,7 @@ stress_stack::stress_stack(const stress_test_args& args, uint32_t id) :
   pcell_executor = make_task_executor(pcell_worker);
 
   // MAC
-  mac = std::make_unique<mac_dummy>(args, id);
+  mac = std::make_unique<mac_dummy>(args_, id);
 
   // F1
   f1 = std::make_unique<f1_dummy>(id);
@@ -38,12 +38,12 @@ stress_stack::stress_stack(const stress_test_args& args, uint32_t id) :
 
   // Trafic generators
   traffic_sink   = std::make_unique<stress_traffic_sink>(id);
-  traffic_source = std::make_unique<stress_traffic_source>(args, id);
+  traffic_source = std::make_unique<stress_traffic_source>(args_, id);
 
-  sec_cfg = get_security_config_from_args(args);
+  sec_cfg = get_security_config_from_args(args_);
 
   // PDCP
-  pdcp_config                  pdcp_cnfg = get_pdcp_config_from_args(id, args);
+  pdcp_config                  pdcp_cnfg = get_pdcp_config_from_args(id, args_);
   pdcp_entity_creation_message pdcp_msg  = {};
   pdcp_msg.config                        = pdcp_cnfg;
   pdcp_msg.tx_lower                      = f1.get();
@@ -62,7 +62,7 @@ stress_stack::stress_stack(const stress_test_args& args, uint32_t id) :
   rrc_rx_if.set_as_security_config(sec_cfg);
 
   // RLC
-  rlc_config                  rlc_cnfg = get_rlc_config_from_args(args);
+  rlc_config                  rlc_cnfg = get_rlc_config_from_args(args_);
   rlc_entity_creation_message rlc_msg  = {};
   rlc_msg.ue_index                     = static_cast<du_ue_index_t>(stack_id);
   rlc_msg.lcid                         = lcid_t{};

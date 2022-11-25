@@ -22,16 +22,16 @@ namespace fapi_adaptor {
 class phy_fapi_adaptor_factory_impl : public phy_fapi_adaptor_factory
 {
 public:
-  phy_fapi_adaptor_factory_impl(downlink_processor_pool&    dl_processor_pool,
+  phy_fapi_adaptor_factory_impl(downlink_processor_pool&    dl_processor_pool_,
                                 resource_grid_pool&         rg_pool,
-                                uplink_request_processor&   ul_request_processor,
-                                resource_grid_pool&         ul_rg_pool,
-                                uplink_slot_pdu_repository& ul_pdu_repository) :
-    dl_processor_pool(dl_processor_pool),
+                                uplink_request_processor&   ul_request_processor_,
+                                resource_grid_pool&         ul_rg_pool_,
+                                uplink_slot_pdu_repository& ul_pdu_repository_) :
+    dl_processor_pool(dl_processor_pool_),
     dl_rg_pool(rg_pool),
-    ul_request_processor(ul_request_processor),
-    ul_rg_pool(ul_rg_pool),
-    ul_pdu_repository(ul_pdu_repository)
+    ul_request_processor(ul_request_processor_),
+    ul_rg_pool(ul_rg_pool_),
+    ul_pdu_repository(ul_pdu_repository_)
   {
   }
 

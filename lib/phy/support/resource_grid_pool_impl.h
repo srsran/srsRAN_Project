@@ -26,8 +26,8 @@ private:
   std::vector<std::unique_ptr<resource_grid>> grids;
 
 public:
-  resource_grid_pool_impl(unsigned                                      nof_sectors,
-                          unsigned                                      nof_slots,
+  resource_grid_pool_impl(unsigned                                      nof_sectors_,
+                          unsigned                                      nof_slots_,
                           std::vector<std::unique_ptr<resource_grid>>&& grids_);
   resource_grid& get_resource_grid(const resource_grid_context& context) override;
 };

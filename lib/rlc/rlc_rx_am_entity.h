@@ -122,7 +122,7 @@ public:
   rlc_rx_am_entity(du_ue_index_t                     du_index,
                    lcid_t                            lcid,
                    const rlc_rx_am_config&           config,
-                   rlc_rx_upper_layer_data_notifier& upper_dn,
+                   rlc_rx_upper_layer_data_notifier& upper_dn_,
                    timer_manager&                    timers,
                    task_executor&                    ue_executor);
 
@@ -190,8 +190,8 @@ public:
   /// Set the internal state variables
   /// Note: This function should only be used for testing
   ///
-  /// \param st The state variables to be set
-  void set_state(const rlc_rx_am_state& st) { this->st = st; }
+  /// \param st_ The state variables to be set
+  void set_state(const rlc_rx_am_state& st_) { this->st = st_; }
 
   /// Get the internal state variables
   /// Note: This function should only be used for testing

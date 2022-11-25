@@ -25,7 +25,7 @@ namespace {
 class context_switch_checker
 {
 public:
-  explicit context_switch_checker(std::atomic<unsigned>& counter) : counter(counter)
+  explicit context_switch_checker(std::atomic<unsigned>& counter_) : counter(counter_)
   {
     ::getrusage(RUSAGE_THREAD, &before);
   }

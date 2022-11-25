@@ -129,7 +129,7 @@ public:
   /// SN of the next not received RLC Data PDU
   uint32_t ack_sn = INVALID_RLC_SN;
 
-  rlc_am_status_pdu(rlc_am_sn_size sn_size);
+  rlc_am_status_pdu(rlc_am_sn_size sn_size_);
   void reset();
   bool is_continuous_sequence(const rlc_am_status_nack& left, const rlc_am_status_nack& right) const;
   void push_nack(const rlc_am_status_nack& nack);

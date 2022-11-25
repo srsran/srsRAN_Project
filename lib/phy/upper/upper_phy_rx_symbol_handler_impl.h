@@ -54,11 +54,11 @@ private:
 class upper_phy_rx_symbol_handler_impl : public upper_phy_rx_symbol_handler
 {
 public:
-  upper_phy_rx_symbol_handler_impl(uplink_processor_pool&         ul_processor_pool,
-                                   uplink_slot_pdu_repository&    ul_pdu_repository,
-                                   rx_softbuffer_pool&            softbuffer_pool,
-                                   upper_phy_rx_results_notifier& rx_results_notifier,
-                                   srslog::basic_logger&          logger);
+  upper_phy_rx_symbol_handler_impl(uplink_processor_pool&         ul_processor_pool_,
+                                   uplink_slot_pdu_repository&    ul_pdu_repository_,
+                                   rx_softbuffer_pool&            softbuffer_pool_,
+                                   upper_phy_rx_results_notifier& rx_results_notifier_,
+                                   srslog::basic_logger&          logger_);
 
   // See interface for documentation.
   void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) override;

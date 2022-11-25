@@ -25,8 +25,8 @@ namespace srsgnb {
 class bearer_logger
 {
 public:
-  bearer_logger(const std::string& log_name, uint32_t ue_index, lcid_t lcid) :
-    ue_index(ue_index), lcid(lcid), logger(srslog::fetch_basic_logger(log_name, false))
+  bearer_logger(const std::string& log_name, uint32_t ue_index_, lcid_t lcid_) :
+    ue_index(ue_index_), lcid(lcid_), logger(srslog::fetch_basic_logger(log_name, false))
   {
   }
 

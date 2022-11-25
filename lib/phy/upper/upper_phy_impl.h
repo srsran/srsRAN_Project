@@ -59,8 +59,8 @@ class upper_phy_impl : public upper_phy
     rx_softbuffer_pool&                               softbuffer_pool;
 
   public:
-    upper_phy_timing_handler_impl(upper_phy_timing_notifier& notifier, rx_softbuffer_pool& softbuffer_pool) :
-      notifier(notifier), softbuffer_pool(softbuffer_pool)
+    upper_phy_timing_handler_impl(upper_phy_timing_notifier& notifier_, rx_softbuffer_pool& softbuffer_pool_) :
+      notifier(notifier_), softbuffer_pool(softbuffer_pool_)
     {
     }
 

@@ -26,8 +26,8 @@ class upper_phy_rx_symbol_request_notifier;
 class uplink_request_processor_impl : public uplink_request_processor
 {
 public:
-  uplink_request_processor_impl(upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
-                                prach_buffer_pool&                    prach_pool);
+  uplink_request_processor_impl(upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier_,
+                                prach_buffer_pool&                    prach_pool_);
 
   // See interface for documentation.
   void process_prach_request(const prach_buffer_context& context) override;

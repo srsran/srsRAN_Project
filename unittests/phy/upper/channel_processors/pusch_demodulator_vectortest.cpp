@@ -54,8 +54,8 @@ std::ostream& operator<<(std::ostream& os, span<const log_likelihood_ratio> llr)
 bool operator==(span<const log_likelihood_ratio> lhs, span<const log_likelihood_ratio> rhs)
 {
   return std::equal(
-      lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](log_likelihood_ratio lhs, log_likelihood_ratio rhs) {
-        return log_likelihood_ratio::abs(lhs - rhs) <= LLR_MAX_ERROR;
+      lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](log_likelihood_ratio lhs_, log_likelihood_ratio rhs_) {
+        return log_likelihood_ratio::abs(lhs_ - rhs_) <= LLR_MAX_ERROR;
       });
 }
 

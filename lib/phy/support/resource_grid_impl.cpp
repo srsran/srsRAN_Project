@@ -23,14 +23,14 @@ resource_grid_impl::resource_grid_impl(unsigned nof_ports_, unsigned nof_symb_, 
   rg_buffer.reserve({nof_subc, nof_symb, nof_ports});
 }
 
-void resource_grid_impl::put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols)
+void resource_grid_impl::put(unsigned port_, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols)
 {
   srsgnb_assert(coordinates.size() == symbols.size(),
                 "The number of coordinates {} is not equal to the number of symbols {}.",
                 coordinates.size(),
                 symbols.size());
 
-  srsgnb_assert(port < nof_ports, "The port index {} is out of range (max {}).", port, nof_ports - 1);
+  srsgnb_assert(port_ < nof_ports, "The port index {} is out of range (max {}).", port_, nof_ports - 1);
 
   unsigned count = 0;
   for (const resource_grid_coordinate& coordinate : coordinates) {
@@ -42,15 +42,15 @@ void resource_grid_impl::put(unsigned port, span<const resource_grid_coordinate>
                   nof_subc);
 
     // Select destination OFDM symbol from the resource grid.
-    span<cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({coordinate.symbol, port});
+    span<cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({coordinate.symbol, port_});
 
     // Write into the desired resource element.
     rg_symbol[coordinate.subcarrier] = symbols[count++];
   }
-  empty[port] = false;
+  empty[port_] = false;
 }
 
-span<const cf_t> resource_grid_impl::put(unsigned         port,
+span<const cf_t> resource_grid_impl::put(unsigned         port_,
                                          unsigned         l,
                                          unsigned         k_init,
                                          span<const bool> mask,
@@ -58,10 +58,10 @@ span<const cf_t> resource_grid_impl::put(unsigned         port,
 {
   assert(l < nof_symb);
   assert(mask.size() <= nof_subc);
-  assert(port < nof_ports);
+  assert(port_ < nof_ports);
 
   // Select destination OFDM symbol from the resource grid.
-  span<cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({l, port});
+  span<cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({l, port_});
 
   // Iterate mask using AVX2 intrinsics and preset groups of 4 subcarriers.
   for (unsigned i_subc = 0, i_subc_end = mask.size(); i_subc < i_subc_end; ++i_subc) {
@@ -70,13 +70,13 @@ span<const cf_t> resource_grid_impl::put(unsigned         port,
       symbol_buffer              = symbol_buffer.last(symbol_buffer.size() - 1);
     }
   }
-  empty[port] = false;
+  empty[port_] = false;
 
   // Update symbol buffer
   return symbol_buffer;
 }
 
-span<const cf_t> resource_grid_impl::put(unsigned                            port,
+span<const cf_t> resource_grid_impl::put(unsigned                            port_,
                                          unsigned                            l,
                                          unsigned                            k_init,
                                          const bounded_bitset<NRE * MAX_RB>& mask,
@@ -84,10 +84,10 @@ span<const cf_t> resource_grid_impl::put(unsigned                            por
 {
   assert(l < nof_symb);
   assert(mask.size() <= nof_subc);
-  assert(port < nof_ports);
+  assert(port_ < nof_ports);
 
   // Get view of the OFDM symbol subcarriers.
-  span<cf_t> symb = rg_buffer.get_view<dimensions::symbol>({l, port});
+  span<cf_t> symb = rg_buffer.get_view<dimensions::symbol>({l, port_});
 
   srsgnb_assert(mask.count() <= symbols.size(),
                 "The number ones in mask {} exceeds the number of symbols {}.",
@@ -99,12 +99,12 @@ span<const cf_t> resource_grid_impl::put(unsigned                            por
     symbols               = symbols.last(symbols.size() - 1);
   });
 
-  empty[port] = false;
+  empty[port_] = false;
 
   return symbols;
 }
 
-void resource_grid_impl::put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols)
+void resource_grid_impl::put(unsigned port_, unsigned l, unsigned k_init, span<const cf_t> symbols)
 {
   srsgnb_assert(
       k_init + symbols.size() <= nof_subc,
@@ -115,32 +115,32 @@ void resource_grid_impl::put(unsigned port, unsigned l, unsigned k_init, span<co
       nof_subc);
   srsgnb_assert(l < nof_symb, "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})", l, nof_symb);
   srsgnb_assert(
-      port < nof_ports, "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})", port, nof_ports);
+      port_ < nof_ports, "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})", port_, nof_ports);
 
   // Select destination OFDM symbol from the resource grid.
-  span<cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({l, port});
+  span<cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({l, port_});
 
   // Copy resource elements.
   srsvec::copy(rg_symbol.subspan(k_init, symbols.size()), symbols);
-  empty[port] = false;
+  empty[port_] = false;
 }
 void resource_grid_impl::set_all_zero()
 {
   // For each non-empty port, set the underlying resource elements to zero.
-  for (unsigned port = 0; port != nof_ports; ++port) {
-    if (!empty[port]) {
-      srsvec::zero(rg_buffer.get_view<dimensions::port>({port}));
-      empty[port] = true;
+  for (unsigned port_ = 0; port_ != nof_ports; ++port_) {
+    if (!empty[port_]) {
+      srsvec::zero(rg_buffer.get_view<dimensions::port>({port_}));
+      empty[port_] = true;
     }
   }
 }
 
-void resource_grid_impl::get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const
+void resource_grid_impl::get(span<cf_t> symbols, unsigned port_, span<const resource_grid_coordinate> coordinates) const
 {
   unsigned nof_re = coordinates.size();
 
   assert(nof_re == symbols.size());
-  assert(port < nof_ports);
+  assert(port_ < nof_ports);
 
   // Iterate through the coordinates and access the desired resource elements.
   for (unsigned i_re = 0; i_re != nof_re; ++i_re) {
@@ -150,13 +150,13 @@ void resource_grid_impl::get(span<cf_t> symbols, unsigned port, span<const resou
     assert(coordinate.subcarrier < nof_subc);
 
     // Access the OFDM symbol from the resource grid.
-    span<const cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({coordinate.symbol, port});
+    span<const cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({coordinate.symbol, port_});
     symbols[i_re]              = rg_symbol[coordinate.subcarrier];
   }
 }
 
 span<cf_t>
-resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const
+resource_grid_impl::get(span<cf_t> symbols, unsigned port_, unsigned l, unsigned k_init, span<const bool> mask) const
 {
   unsigned mask_size = mask.size();
 
@@ -168,10 +168,10 @@ resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsigned 
                 nof_subc);
   srsgnb_assert(l < nof_symb, "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})", l, nof_symb);
   srsgnb_assert(
-      port < nof_ports, "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})", port, nof_ports);
+      port_ < nof_ports, "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})", port_, nof_ports);
 
   // Access the OFDM symbol from the resource grid.
-  span<const cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({l, port});
+  span<const cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({l, port_});
 
   // Iterate mask.
   unsigned count = 0;
@@ -187,7 +187,7 @@ resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsigned 
 }
 
 span<cf_t> resource_grid_impl::get(span<cf_t>                          symbols,
-                                   unsigned                            port,
+                                   unsigned                            port_,
                                    unsigned                            l,
                                    unsigned                            k_init,
                                    const bounded_bitset<MAX_RB * NRE>& mask) const
@@ -200,10 +200,10 @@ span<cf_t> resource_grid_impl::get(span<cf_t>                          symbols,
                 nof_subc);
   srsgnb_assert(l < nof_symb, "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})", l, nof_symb);
   srsgnb_assert(
-      port < nof_ports, "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})", port, nof_ports);
+      port_ < nof_ports, "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})", port_, nof_ports);
 
   // Get view of the OFDM symbol subcarriers.
-  span<const cf_t> symb = rg_buffer.get_view<dimensions::symbol>({l, port});
+  span<const cf_t> symb = rg_buffer.get_view<dimensions::symbol>({l, port_});
 
   srsgnb_assert(mask.count() <= symbols.size(),
                 "The number ones in mask {} exceeds the number of symbols {}.",
@@ -218,7 +218,7 @@ span<cf_t> resource_grid_impl::get(span<cf_t>                          symbols,
   return symbols;
 }
 
-void resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const
+void resource_grid_impl::get(span<cf_t> symbols, unsigned port_, unsigned l, unsigned k_init) const
 {
   srsgnb_assert(
       k_init + symbols.size() <= nof_subc,
@@ -229,17 +229,17 @@ void resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsi
       nof_subc);
   srsgnb_assert(l < nof_symb, "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})", l, nof_symb);
   srsgnb_assert(
-      port < nof_ports, "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})", port, nof_ports);
+      port_ < nof_ports, "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})", port_, nof_ports);
 
   // Access the OFDM symbol from the resource grid.
-  span<const cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({l, port});
+  span<const cf_t> rg_symbol = rg_buffer.get_view<dimensions::symbol>({l, port_});
 
   // Copy resource elements.
   srsvec::copy(symbols, rg_symbol.subspan(k_init, symbols.size()));
 }
 
-bool resource_grid_impl::is_empty(unsigned port) const
+bool resource_grid_impl::is_empty(unsigned port_) const
 {
-  srsgnb_assert(port < empty.size(), "Port index {} is out of range (max {})", port, empty.size());
-  return empty[port];
+  srsgnb_assert(port_ < empty.size(), "Port index {} is out of range (max {})", port_, empty.size());
+  return empty[port_];
 }

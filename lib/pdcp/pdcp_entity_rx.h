@@ -47,7 +47,7 @@ class pdcp_entity_rx : public pdcp_entity_tx_rx_base,
 {
 public:
   pdcp_entity_rx(uint32_t                        ue_index,
-                 lcid_t                          lcid,
+                 lcid_t                          lcid_,
                  pdcp_config::pdcp_rx_config     cfg_,
                  pdcp_rx_upper_data_notifier&    upper_dn_,
                  pdcp_rx_upper_control_notifier& upper_cn_,

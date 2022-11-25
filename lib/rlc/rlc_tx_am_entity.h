@@ -111,11 +111,11 @@ public:
   rlc_tx_am_entity(du_ue_index_t                        du_index,
                    lcid_t                               lcid,
                    const rlc_tx_am_config&              config,
-                   rlc_tx_upper_layer_data_notifier&    upper_dn,
-                   rlc_tx_upper_layer_control_notifier& upper_cn,
-                   rlc_tx_lower_layer_notifier&         lower_dn,
+                   rlc_tx_upper_layer_data_notifier&    upper_dn_,
+                   rlc_tx_upper_layer_control_notifier& upper_cn_,
+                   rlc_tx_lower_layer_notifier&         lower_dn_,
                    timer_manager&                       timers,
-                   task_executor&                       pcell_executor);
+                   task_executor&                       pcell_executor_);
 
   // Tx/Rx interconnect
   void set_status_provider(rlc_rx_am_status_provider* status_provider_) { status_provider = status_provider_; }

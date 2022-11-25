@@ -30,7 +30,7 @@ public:
   uint32_t            bsr             = 0;
   uint32_t            bsr_count       = 0;
 
-  rlc_tx_am_test_frame(rlc_am_sn_size sn_size) : sn_size(sn_size), status(sn_size) {}
+  rlc_tx_am_test_frame(rlc_am_sn_size sn_size_) : sn_size(sn_size_), status(sn_size_) {}
 
   // rlc_tx_upper_layer_data_notifier interface
   void on_delivered_sdu(uint32_t pdcp_count) override
@@ -44,9 +44,9 @@ public:
   void on_max_retx() override {}
 
   // rlc_tx_buffer_state_update_notifier interface
-  void on_buffer_state_update(unsigned bsr) override
+  void on_buffer_state_update(unsigned bsr_) override
   {
-    this->bsr = bsr;
+    this->bsr = bsr_;
     this->bsr_count++;
   }
 

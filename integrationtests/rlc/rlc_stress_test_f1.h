@@ -72,9 +72,9 @@ public:
   void on_protocol_failure() final {}
   void on_max_retx() final {}
 
-  void set_rlc_tx_upper_data(rlc_tx_upper_layer_data_interface* rlc_tx_upper) { this->rlc_tx_upper = rlc_tx_upper; }
+  void set_rlc_tx_upper_data(rlc_tx_upper_layer_data_interface* rlc_tx_upper_) { this->rlc_tx_upper = rlc_tx_upper_; }
 
-  void set_pdcp_rx_lower(pdcp_rx_lower_interface* pdcp_rx_lower) { this->pdcp_rx_lower = pdcp_rx_lower; }
+  void set_pdcp_rx_lower(pdcp_rx_lower_interface* pdcp_rx_lower_) { this->pdcp_rx_lower = pdcp_rx_lower_; }
 };
 
 } // namespace srsgnb

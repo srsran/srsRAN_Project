@@ -34,8 +34,8 @@ class sdap_ul_packet_procedure : public sdap_packet_procedures
   sdap_sdu_rx_notifier&        listener;
 
 public:
-  sdap_ul_packet_procedure(std::unique_ptr<sdap_entity> entity, sdap_sdu_rx_notifier& listener) :
-    entity(std::move(entity)), listener(listener)
+  sdap_ul_packet_procedure(std::unique_ptr<sdap_entity> entity_, sdap_sdu_rx_notifier& listener_) :
+    entity(std::move(entity_)), listener(listener_)
   {
   }
 

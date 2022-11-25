@@ -37,8 +37,8 @@ public:
   uplink_processor_single_executor_factory(std::shared_ptr<prach_detector_factory>  prach_factory_,
                                            std::shared_ptr<pusch_processor_factory> pusch_factory_,
                                            std::shared_ptr<pucch_processor_factory> pucch_factory_,
-                                           task_executor&                           executor) :
-    prach_factory(prach_factory_), pusch_factory(pusch_factory_), pucch_factory(pucch_factory_), executor(executor)
+                                           task_executor&                           executor_) :
+    prach_factory(prach_factory_), pusch_factory(pusch_factory_), pucch_factory(pucch_factory_), executor(executor_)
   {
     report_fatal_error_if_not(prach_factory, "Invalid PRACH factory.");
     report_fatal_error_if_not(pusch_factory, "Invalid PUSCH factory.");

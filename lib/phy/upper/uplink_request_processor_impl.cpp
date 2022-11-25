@@ -15,9 +15,9 @@
 using namespace srsgnb;
 
 uplink_request_processor_impl::uplink_request_processor_impl(
-    upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
-    prach_buffer_pool&                    prach_pool) :
-  rx_symbol_request_notifier(rx_symbol_request_notifier), prach_pool(prach_pool)
+    upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier_,
+    prach_buffer_pool&                    prach_pool_) :
+  rx_symbol_request_notifier(rx_symbol_request_notifier_), prach_pool(prach_pool_)
 {
 }
 

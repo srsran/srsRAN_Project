@@ -212,7 +212,7 @@ struct test_bench {
     // Test PDCCH_grant and DCI
     const pdcch_dl_information* pdcch = std::find_if(res_grid[0].result.dl.dl_pdcchs.begin(),
                                                      res_grid[0].result.dl.dl_pdcchs.end(),
-                                                     [](const auto& pdcch) { return pdcch.ctx.rnti == SI_RNTI; });
+                                                     [](const auto& pdcch_) { return pdcch_.ctx.rnti == SI_RNTI; });
     TESTASSERT(pdcch != nullptr);
     TESTASSERT_EQ(dci_dl_rnti_config_type::si_f1_0, pdcch->dci.type);
     TESTASSERT_EQ(si_cfg.sib1_mcs_index, pdcch->dci.si_f1_0.modulation_coding_scheme);

@@ -16,10 +16,10 @@ using namespace srsgnb;
 rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
                                    lcid_t                            lcid,
                                    const rlc_rx_am_config&           config,
-                                   rlc_rx_upper_layer_data_notifier& upper_dn,
+                                   rlc_rx_upper_layer_data_notifier& upper_dn_,
                                    timer_manager&                    timers,
                                    task_executor&                    ue_executor) :
-  rlc_rx_entity(du_index, lcid, upper_dn),
+  rlc_rx_entity(du_index, lcid, upper_dn_),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   am_window_size(window_size(to_number(cfg.sn_field_length))),
@@ -484,22 +484,22 @@ void rlc_rx_am_entity::notify_status_report_changed()
 
 std::unique_ptr<rlc_am_window_base<rlc_rx_am_sdu_info>> rlc_rx_am_entity::create_rx_window(rlc_am_sn_size sn_size)
 {
-  std::unique_ptr<rlc_am_window_base<rlc_rx_am_sdu_info>> rx_window;
+  std::unique_ptr<rlc_am_window_base<rlc_rx_am_sdu_info>> rx_window_;
   switch (sn_size) {
     case rlc_am_sn_size::size12bits:
-      rx_window =
+      rx_window_ =
           std::make_unique<rlc_am_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>(
               logger);
       break;
     case rlc_am_sn_size::size18bits:
-      rx_window =
+      rx_window_ =
           std::make_unique<rlc_am_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>(
               logger);
       break;
     default:
       srsgnb_assertion_failure("Cannot create rx_window: unsupported SN field length");
   }
-  return rx_window;
+  return rx_window_;
 }
 
 /*
