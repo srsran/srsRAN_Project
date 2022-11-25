@@ -23,23 +23,22 @@ namespace srs_cu_cp {
 class ngc_ue
 {
 public:
-  ngc_ue(ue_ngap_id_t ue_ngap_id, ngc_rrc_ue_notifier& rrc_ue_notifier_) : rrc_ue_notifier(rrc_ue_notifier_)
+  ngc_ue(ue_ngap_id_t ue_ngap_id, ran_ue_id_t ran_ue_id, ngc_rrc_ue_notifier& rrc_ue_notifier_) :
+    rrc_ue_notifier(rrc_ue_notifier_)
   {
-    ue_ctxt.du_index = get_du_index_from_ue_ngap_id(ue_ngap_id);
-    ue_ctxt.ue_index = get_ue_index_from_ue_ngap_id(ue_ngap_id);
+    ue_ctxt.ran_ue_id = ran_ue_id;
   }
-
-  du_index_t get_du_index() { return ue_ctxt.du_index; }
-  ue_index_t get_ue_index() { return ue_ctxt.ue_index; }
 
   ngc_rrc_ue_notifier& get_rrc_ue_notifier() { return rrc_ue_notifier; }
 
-  void set_amf_ue_id(ue_amf_id_t amf_ue_id) { ue_ctxt.amf_ue_id = amf_ue_id; }
-  void set_amf_ue_id(std::underlying_type_t<ue_amf_id_t> amf_ue_id_uint)
+  void set_amf_ue_id(amf_ue_id_t amf_ue_id) { ue_ctxt.amf_ue_id = amf_ue_id; }
+  void set_amf_ue_id(std::underlying_type_t<amf_ue_id_t> amf_ue_id_uint)
   {
-    set_amf_ue_id(uint_to_ue_amf_id(amf_ue_id_uint));
+    set_amf_ue_id(uint_to_amf_ue_id(amf_ue_id_uint));
   }
-  ue_amf_id_t get_amf_ue_id() { return ue_ctxt.amf_ue_id; }
+  amf_ue_id_t get_amf_ue_id() { return ue_ctxt.amf_ue_id; }
+
+  ran_ue_id_t get_ran_ue_id() { return ue_ctxt.ran_ue_id; }
 
 private:
   ngc_ue_context       ue_ctxt;
@@ -50,11 +49,18 @@ private:
 class ngc_ue_manager
 {
 public:
+  ngc_ue_manager();
+  ~ngc_ue_manager() = default;
+
   ngc_ue& add_ue(ue_ngap_id_t ue_ngap_id, ngc_rrc_ue_notifier& rrc_ue_notifier);
 
   void remove_ue(ue_ngap_id_t ue_ngap_id);
 
+  ue_ngap_id_t get_ue_ngap_id(std::underlying_type_t<ran_ue_id_t> ran_ue_id_uint);
+
   size_t get_nof_ues() const { return ues.size(); }
+
+  ue_ngap_id_t get_ue_ngap_id(ran_ue_id_t ran_ue_id) { return get_ue_ngap_id(ran_ue_id_to_uint(ran_ue_id)); }
 
   bool contains(std::underlying_type_t<ue_ngap_id_t> ue_ngap_id_uint) { return ues.contains(ue_ngap_id_uint); }
   bool contains(ue_ngap_id_t ue_ngap_id) { return contains(ue_ngap_id_to_uint(ue_ngap_id)); }
@@ -66,7 +72,18 @@ public:
   const ngc_ue& operator[](ue_ngap_id_t ue_ngap_id) const { return ues[ue_ngap_id_to_uint(ue_ngap_id)]; }
 
 private:
-  slotted_array<ngc_ue, MAX_NOF_CU_UES> ues;
+  /// \brief Get the next available RAN UE ID.
+  /// \return The RAN UE ID.
+  ran_ue_id_t get_next_ran_ue_id();
+
+  /// \brief Find the RAN UE ID by a given UE NGAP ID.
+  /// \param[in] ue_ngap_id The UE NGAP ID used to find the RAN UE ID.
+  /// \return The RAN UE ID.
+  ran_ue_id_t find_ran_ue_id(ue_ngap_id_t ue_ngap_id);
+
+  srslog::basic_logger&                       logger;
+  slotted_array<ngc_ue, MAX_NOF_CU_UES>       ues;
+  slotted_array<ue_ngap_id_t, MAX_NOF_CU_UES> ran_ue_id_to_ue_ngap_id;
 };
 
 } // namespace srs_cu_cp

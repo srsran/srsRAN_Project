@@ -56,37 +56,37 @@ inline const char* get_message_type_str(const asn1::ngap::ngap_pdu_c& pdu)
   report_fatal_error("Invalid NGAP PDU type \"{}\"", pdu.type().to_string());
 }
 
-inline expected<ue_ngap_id_t> get_ue_ngap_id(const asn1::ngap::init_msg_s& init_msg)
+inline expected<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::init_msg_s& init_msg)
 {
   switch (init_msg.value.type()) {
     case asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg:
-      return uint_to_ue_ngap_id(init_msg.value.init_ue_msg()->ran_ue_ngap_id->value);
+      return uint_to_ran_ue_id(init_msg.value.init_ue_msg()->ran_ue_ngap_id->value);
     default:
       break;
   }
   return {default_error_t{}};
 }
 
-inline expected<ue_ngap_id_t> get_ue_ngap_id(const asn1::ngap::successful_outcome_s& success_outcome)
+inline expected<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::successful_outcome_s& success_outcome)
 {
   return {default_error_t{}};
 }
 
-inline expected<ue_ngap_id_t> get_ue_ngap_id(const asn1::ngap::unsuccessful_outcome_s& unsuccessful_outcome)
+inline expected<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::unsuccessful_outcome_s& unsuccessful_outcome)
 {
   return {default_error_t{}};
 }
 
-inline expected<ue_ngap_id_t> get_ue_ngap_id(const asn1::ngap::ngap_pdu_c& pdu)
+inline expected<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::ngap_pdu_c& pdu)
 {
   using namespace asn1::ngap;
   switch (pdu.type().value) {
     case ngap_pdu_c::types_opts::init_msg:
-      return get_ue_ngap_id(pdu.init_msg());
+      return get_ran_ue_id(pdu.init_msg());
     case ngap_pdu_c::types_opts::successful_outcome:
-      return get_ue_ngap_id(pdu.successful_outcome());
+      return get_ran_ue_id(pdu.successful_outcome());
     case ngap_pdu_c::types_opts::unsuccessful_outcome:
-      return get_ue_ngap_id(pdu.unsuccessful_outcome());
+      return get_ran_ue_id(pdu.unsuccessful_outcome());
     default:
       break;
   }

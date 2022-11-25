@@ -200,7 +200,7 @@ const uint32_t          nas_pdu_len = 4; // Dummy length used for testing (conte
 ngap_initial_ue_message generate_initial_ue_message()
 {
   ngap_initial_ue_message msg;
-  msg.ue_ngap_id = uint_to_ue_ngap_id(1);
+  msg.ue_ngap_id = ue_ngap_id_t::min;
   msg.nas_pdu.resize(nas_pdu_len);
   // msg.establishment_cause = asn1::ngap::rrcestablishment_cause_opts::options::mo_sig;
   // msg.nr_cgi = {};
@@ -216,7 +216,7 @@ ngc_message generate_downlink_nas_transport_message()
 
   auto& dl_nas_transport_msg                 = dl_nas_transport.pdu.init_msg().value.dl_nas_transport();
   dl_nas_transport_msg->amf_ue_ngap_id.value = 3;
-  dl_nas_transport_msg->ran_ue_ngap_id.value = 0;
+  dl_nas_transport_msg->ran_ue_ngap_id.value = ue_ngap_id_to_uint(ue_ngap_id_t::min);
   dl_nas_transport_msg->nas_pdu.value.resize(nas_pdu_len);
 
   return dl_nas_transport;

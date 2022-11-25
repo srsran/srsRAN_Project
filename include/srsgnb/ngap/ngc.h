@@ -85,9 +85,8 @@ public:
 };
 
 struct ngc_ue_context {
-  ue_amf_id_t amf_ue_id = ue_amf_id_t::invalid;
-  ue_index_t  ue_index  = INVALID_UE_INDEX;
-  du_index_t  du_index  = INVALID_DU_INDEX;
+  amf_ue_id_t amf_ue_id = amf_ue_id_t::invalid;
+  ran_ue_id_t ran_ue_id = ran_ue_id_t::invalid;
 };
 
 struct ngap_initial_ue_message {
