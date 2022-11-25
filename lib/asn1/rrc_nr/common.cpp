@@ -21,13 +21,13 @@ using namespace asn1::rrc_nr;
 // SubcarrierSpacing ::= ENUMERATED
 const char* subcarrier_spacing_opts::to_string() const
 {
-  static const char* options[] = {"kHz15", "kHz30", "kHz60", "kHz120", "kHz240", "spare3", "spare2", "spare1"};
-  return convert_enum_idx(options, 8, value, "subcarrier_spacing_e");
+  static const char* names[] = {"kHz15", "kHz30", "kHz60", "kHz120", "kHz240", "spare3", "spare2", "spare1"};
+  return convert_enum_idx(names, 8, value, "subcarrier_spacing_e");
 }
 uint8_t subcarrier_spacing_opts::to_number() const
 {
-  static const uint8_t options[] = {15, 30, 60, 120, 240};
-  return map_enum_number(options, 5, value, "subcarrier_spacing_e");
+  static const uint8_t numbers[] = {15, 30, 60, 120, 240};
+  return map_enum_number(numbers, 5, value, "subcarrier_spacing_e");
 }
 
 // SRS-PeriodicityAndOffset ::= CHOICE
@@ -710,24 +710,24 @@ void srs_res_s::to_json(json_writer& j) const
 
 const char* srs_res_s::nrof_srs_ports_opts::to_string() const
 {
-  static const char* options[] = {"port1", "ports2", "ports4"};
-  return convert_enum_idx(options, 3, value, "srs_res_s::nrof_srs_ports_e_");
+  static const char* names[] = {"port1", "ports2", "ports4"};
+  return convert_enum_idx(names, 3, value, "srs_res_s::nrof_srs_ports_e_");
 }
 uint8_t srs_res_s::nrof_srs_ports_opts::to_number() const
 {
-  static const uint8_t options[] = {1, 2, 4};
-  return map_enum_number(options, 3, value, "srs_res_s::nrof_srs_ports_e_");
+  static const uint8_t numbers[] = {1, 2, 4};
+  return map_enum_number(numbers, 3, value, "srs_res_s::nrof_srs_ports_e_");
 }
 
 const char* srs_res_s::ptrs_port_idx_opts::to_string() const
 {
-  static const char* options[] = {"n0", "n1"};
-  return convert_enum_idx(options, 2, value, "srs_res_s::ptrs_port_idx_e_");
+  static const char* names[] = {"n0", "n1"};
+  return convert_enum_idx(names, 2, value, "srs_res_s::ptrs_port_idx_e_");
 }
 uint8_t srs_res_s::ptrs_port_idx_opts::to_number() const
 {
-  static const uint8_t options[] = {0, 1};
-  return map_enum_number(options, 2, value, "srs_res_s::ptrs_port_idx_e_");
+  static const uint8_t numbers[] = {0, 1};
+  return map_enum_number(numbers, 2, value, "srs_res_s::ptrs_port_idx_e_");
 }
 
 void srs_res_s::tx_comb_c_::destroy_()
@@ -871,30 +871,30 @@ SRSASN_CODE srs_res_s::tx_comb_c_::unpack(cbit_ref& bref)
 
 const char* srs_res_s::res_map_s_::nrof_symbols_opts::to_string() const
 {
-  static const char* options[] = {"n1", "n2", "n4"};
-  return convert_enum_idx(options, 3, value, "srs_res_s::res_map_s_::nrof_symbols_e_");
+  static const char* names[] = {"n1", "n2", "n4"};
+  return convert_enum_idx(names, 3, value, "srs_res_s::res_map_s_::nrof_symbols_e_");
 }
 uint8_t srs_res_s::res_map_s_::nrof_symbols_opts::to_number() const
 {
-  static const uint8_t options[] = {1, 2, 4};
-  return map_enum_number(options, 3, value, "srs_res_s::res_map_s_::nrof_symbols_e_");
+  static const uint8_t numbers[] = {1, 2, 4};
+  return map_enum_number(numbers, 3, value, "srs_res_s::res_map_s_::nrof_symbols_e_");
 }
 
 const char* srs_res_s::res_map_s_::repeat_factor_opts::to_string() const
 {
-  static const char* options[] = {"n1", "n2", "n4"};
-  return convert_enum_idx(options, 3, value, "srs_res_s::res_map_s_::repeat_factor_e_");
+  static const char* names[] = {"n1", "n2", "n4"};
+  return convert_enum_idx(names, 3, value, "srs_res_s::res_map_s_::repeat_factor_e_");
 }
 uint8_t srs_res_s::res_map_s_::repeat_factor_opts::to_number() const
 {
-  static const uint8_t options[] = {1, 2, 4};
-  return map_enum_number(options, 3, value, "srs_res_s::res_map_s_::repeat_factor_e_");
+  static const uint8_t numbers[] = {1, 2, 4};
+  return map_enum_number(numbers, 3, value, "srs_res_s::res_map_s_::repeat_factor_e_");
 }
 
 const char* srs_res_s::group_or_seq_hop_opts::to_string() const
 {
-  static const char* options[] = {"neither", "groupHopping", "sequenceHopping"};
-  return convert_enum_idx(options, 3, value, "srs_res_s::group_or_seq_hop_e_");
+  static const char* names[] = {"neither", "groupHopping", "sequenceHopping"};
+  return convert_enum_idx(names, 3, value, "srs_res_s::group_or_seq_hop_e_");
 }
 
 void srs_res_s::res_type_c_::destroy_()

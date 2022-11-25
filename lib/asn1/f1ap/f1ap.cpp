@@ -55,15 +55,15 @@ void add_sib_msg_list_item_s::to_json(json_writer& j) const
 // Pre-emptionCapability ::= ENUMERATED
 const char* pre_emption_cap_opts::to_string() const
 {
-  static const char* options[] = {"shall-not-trigger-pre-emption", "may-trigger-pre-emption"};
-  return convert_enum_idx(options, 2, value, "pre_emption_cap_e");
+  static const char* names[] = {"shall-not-trigger-pre-emption", "may-trigger-pre-emption"};
+  return convert_enum_idx(names, 2, value, "pre_emption_cap_e");
 }
 
 // Pre-emptionVulnerability ::= ENUMERATED
 const char* pre_emption_vulnerability_opts::to_string() const
 {
-  static const char* options[] = {"not-pre-emptable", "pre-emptable"};
-  return convert_enum_idx(options, 2, value, "pre_emption_vulnerability_e");
+  static const char* names[] = {"not-pre-emptable", "pre-emptable"};
+  return convert_enum_idx(names, 2, value, "pre_emption_vulnerability_e");
 }
 
 // AllocationAndRetentionPriority ::= SEQUENCE
@@ -185,8 +185,8 @@ void associated_scell_item_s::to_json(json_writer& j) const
 // Associated-SCell-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t associated_scell_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {200};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {200};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool associated_scell_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -240,8 +240,8 @@ SRSASN_CODE associated_scell_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* associated_scell_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Associated-SCell-Item"};
-  return convert_enum_idx(options, 1, value, "associated_scell_item_ies_o::value_c::types");
+  static const char* names[] = {"Associated-SCell-Item"};
+  return convert_enum_idx(names, 1, value, "associated_scell_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<associated_scell_item_ies_o>;
@@ -435,8 +435,8 @@ void broadcast_to_be_cancelled_item_s::to_json(json_writer& j) const
 // Broadcast-To-Be-Cancelled-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t broadcast_to_be_cancelled_list_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {149};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {149};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool broadcast_to_be_cancelled_list_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -491,8 +491,8 @@ SRSASN_CODE broadcast_to_be_cancelled_list_item_ies_o::value_c::unpack(cbit_ref&
 
 const char* broadcast_to_be_cancelled_list_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Broadcast-To-Be-Cancelled-Item"};
-  return convert_enum_idx(options, 1, value, "broadcast_to_be_cancelled_list_item_ies_o::value_c::types");
+  static const char* names[] = {"Broadcast-To-Be-Cancelled-Item"};
+  return convert_enum_idx(names, 1, value, "broadcast_to_be_cancelled_list_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<broadcast_to_be_cancelled_list_item_ies_o>;
@@ -628,20 +628,20 @@ SRSASN_CODE cnue_paging_id_c::unpack(cbit_ref& bref)
 
 const char* cnue_paging_id_c::types_opts::to_string() const
 {
-  static const char* options[] = {"fiveG-S-TMSI", "choice-extension"};
-  return convert_enum_idx(options, 2, value, "cnue_paging_id_c::types");
+  static const char* names[] = {"fiveG-S-TMSI", "choice-extension"};
+  return convert_enum_idx(names, 2, value, "cnue_paging_id_c::types");
 }
 uint8_t cnue_paging_id_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {5};
-  return map_enum_number(options, 1, value, "cnue_paging_id_c::types");
+  static const uint8_t numbers[] = {5};
+  return map_enum_number(numbers, 1, value, "cnue_paging_id_c::types");
 }
 
 // Endpoint-IP-address-and-port-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t endpoint_ip_address_and_port_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {230};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {230};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool endpoint_ip_address_and_port_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -694,8 +694,8 @@ SRSASN_CODE endpoint_ip_address_and_port_ext_ies_o::ext_c::unpack(cbit_ref& bref
 
 const char* endpoint_ip_address_and_port_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"BIT STRING"};
-  return convert_enum_idx(options, 1, value, "endpoint_ip_address_and_port_ext_ies_o::ext_c::types");
+  static const char* names[] = {"BIT STRING"};
+  return convert_enum_idx(names, 1, value, "endpoint_ip_address_and_port_ext_ies_o::ext_c::types");
 }
 
 // Endpoint-IP-address-and-port ::= SEQUENCE
@@ -890,20 +890,20 @@ SRSASN_CODE cp_transport_layer_address_c::unpack(cbit_ref& bref)
 
 const char* cp_transport_layer_address_c::types_opts::to_string() const
 {
-  static const char* options[] = {"endpoint-IP-address", "endpoint-IP-address-and-port", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "cp_transport_layer_address_c::types");
+  static const char* names[] = {"endpoint-IP-address", "endpoint-IP-address-and-port", "choice-extension"};
+  return convert_enum_idx(names, 3, value, "cp_transport_layer_address_c::types");
 }
 
 // CUtoDURRCInformation-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t cuto_durrc_info_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {119, 173, 163, 214, 234};
-  return map_enum_number(options, 5, idx, "id");
+  static const uint32_t names[] = {119, 173, 163, 214, 234};
+  return map_enum_number(names, 5, idx, "id");
 }
 bool cuto_durrc_info_ext_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {119, 173, 163, 214, 234};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {119, 173, 163, 214, 234};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -1203,8 +1203,8 @@ SRSASN_CODE cuto_durrc_info_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* cuto_durrc_info_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"OCTET STRING", "OCTET STRING", "OCTET STRING", "OCTET STRING", "OCTET STRING"};
-  return convert_enum_idx(options, 5, value, "cuto_durrc_info_ext_ies_o::ext_c::types");
+  static const char* names[] = {"OCTET STRING", "OCTET STRING", "OCTET STRING", "OCTET STRING", "OCTET STRING"};
+  return convert_enum_idx(names, 5, value, "cuto_durrc_info_ext_ies_o::ext_c::types");
 }
 
 template struct asn1::protocol_ext_field_s<cuto_durrc_info_ext_ies_o>;
@@ -1437,8 +1437,8 @@ void candidate_sp_cell_item_s::to_json(json_writer& j) const
 // Candidate-SpCell-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t candidate_sp_cell_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {91};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {91};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool candidate_sp_cell_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -1492,8 +1492,8 @@ SRSASN_CODE candidate_sp_cell_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* candidate_sp_cell_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Candidate-SpCell-Item"};
-  return convert_enum_idx(options, 1, value, "candidate_sp_cell_item_ies_o::value_c::types");
+  static const char* names[] = {"Candidate-SpCell-Item"};
+  return convert_enum_idx(names, 1, value, "candidate_sp_cell_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<candidate_sp_cell_item_ies_o>;
@@ -1501,58 +1501,58 @@ template struct asn1::protocol_ie_single_container_s<candidate_sp_cell_item_ies_
 // CauseMisc ::= ENUMERATED
 const char* cause_misc_opts::to_string() const
 {
-  static const char* options[] = {"control-processing-overload",
-                                  "not-enough-user-plane-processing-resources",
-                                  "hardware-failure",
-                                  "om-intervention",
-                                  "unspecified"};
-  return convert_enum_idx(options, 5, value, "cause_misc_e");
+  static const char* names[] = {"control-processing-overload",
+                                "not-enough-user-plane-processing-resources",
+                                "hardware-failure",
+                                "om-intervention",
+                                "unspecified"};
+  return convert_enum_idx(names, 5, value, "cause_misc_e");
 }
 
 // CauseProtocol ::= ENUMERATED
 const char* cause_protocol_opts::to_string() const
 {
-  static const char* options[] = {"transfer-syntax-error",
-                                  "abstract-syntax-error-reject",
-                                  "abstract-syntax-error-ignore-and-notify",
-                                  "message-not-compatible-with-receiver-state",
-                                  "semantic-error",
-                                  "abstract-syntax-error-falsely-constructed-message",
-                                  "unspecified"};
-  return convert_enum_idx(options, 7, value, "cause_protocol_e");
+  static const char* names[] = {"transfer-syntax-error",
+                                "abstract-syntax-error-reject",
+                                "abstract-syntax-error-ignore-and-notify",
+                                "message-not-compatible-with-receiver-state",
+                                "semantic-error",
+                                "abstract-syntax-error-falsely-constructed-message",
+                                "unspecified"};
+  return convert_enum_idx(names, 7, value, "cause_protocol_e");
 }
 
 // CauseRadioNetwork ::= ENUMERATED
 const char* cause_radio_network_opts::to_string() const
 {
-  static const char* options[] = {"unspecified",
-                                  "rl-failure-rlc",
-                                  "unknown-or-already-allocated-gnb-cu-ue-f1ap-id",
-                                  "unknown-or-already-allocated-gnb-du-ue-f1ap-id",
-                                  "unknown-or-inconsistent-pair-of-ue-f1ap-id",
-                                  "interaction-with-other-procedure",
-                                  "not-supported-qci-Value",
-                                  "action-desirable-for-radio-reasons",
-                                  "no-radio-resources-available",
-                                  "procedure-cancelled",
-                                  "normal-release",
-                                  "cell-not-available",
-                                  "rl-failure-others",
-                                  "ue-rejection",
-                                  "resources-not-available-for-the-slice",
-                                  "amf-initiated-abnormal-release",
-                                  "release-due-to-pre-emption",
-                                  "plmn-not-served-by-the-gNB-CU",
-                                  "multiple-drb-id-instances",
-                                  "unknown-drb-id"};
-  return convert_enum_idx(options, 20, value, "cause_radio_network_e");
+  static const char* names[] = {"unspecified",
+                                "rl-failure-rlc",
+                                "unknown-or-already-allocated-gnb-cu-ue-f1ap-id",
+                                "unknown-or-already-allocated-gnb-du-ue-f1ap-id",
+                                "unknown-or-inconsistent-pair-of-ue-f1ap-id",
+                                "interaction-with-other-procedure",
+                                "not-supported-qci-Value",
+                                "action-desirable-for-radio-reasons",
+                                "no-radio-resources-available",
+                                "procedure-cancelled",
+                                "normal-release",
+                                "cell-not-available",
+                                "rl-failure-others",
+                                "ue-rejection",
+                                "resources-not-available-for-the-slice",
+                                "amf-initiated-abnormal-release",
+                                "release-due-to-pre-emption",
+                                "plmn-not-served-by-the-gNB-CU",
+                                "multiple-drb-id-instances",
+                                "unknown-drb-id"};
+  return convert_enum_idx(names, 20, value, "cause_radio_network_e");
 }
 
 // CauseTransport ::= ENUMERATED
 const char* cause_transport_opts::to_string() const
 {
-  static const char* options[] = {"unspecified", "transport-resource-unavailable"};
-  return convert_enum_idx(options, 2, value, "cause_transport_e");
+  static const char* names[] = {"unspecified", "transport-resource-unavailable"};
+  return convert_enum_idx(names, 2, value, "cause_transport_e");
 }
 
 // Cause ::= CHOICE
@@ -1748,20 +1748,20 @@ SRSASN_CODE cause_c::unpack(cbit_ref& bref)
 
 const char* cause_c::types_opts::to_string() const
 {
-  static const char* options[] = {"radioNetwork", "transport", "protocol", "misc", "choice-extension"};
-  return convert_enum_idx(options, 5, value, "cause_c::types");
+  static const char* names[] = {"radioNetwork", "transport", "protocol", "misc", "choice-extension"};
+  return convert_enum_idx(names, 5, value, "cause_c::types");
 }
 uint8_t cause_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {2};
-  return map_enum_number(options, 1, value, "cause_c::types");
+  static const uint8_t numbers[] = {2};
+  return map_enum_number(numbers, 1, value, "cause_c::types");
 }
 
 // CellSize ::= ENUMERATED
 const char* cell_size_opts::to_string() const
 {
-  static const char* options[] = {"verysmall", "small", "medium", "large"};
-  return convert_enum_idx(options, 4, value, "cell_size_e");
+  static const char* names[] = {"verysmall", "small", "medium", "large"};
+  return convert_enum_idx(names, 4, value, "cell_size_e");
 }
 
 // CellType ::= SEQUENCE
@@ -1843,8 +1843,8 @@ void cells_broadcast_cancelled_item_s::to_json(json_writer& j) const
 // Cells-Broadcast-Cancelled-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t cells_broadcast_cancelled_list_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {151};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {151};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool cells_broadcast_cancelled_list_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -1899,8 +1899,8 @@ SRSASN_CODE cells_broadcast_cancelled_list_item_ies_o::value_c::unpack(cbit_ref&
 
 const char* cells_broadcast_cancelled_list_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Cells-Broadcast-Cancelled-Item"};
-  return convert_enum_idx(options, 1, value, "cells_broadcast_cancelled_list_item_ies_o::value_c::types");
+  static const char* names[] = {"Cells-Broadcast-Cancelled-Item"};
+  return convert_enum_idx(names, 1, value, "cells_broadcast_cancelled_list_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<cells_broadcast_cancelled_list_item_ies_o>;
@@ -1945,8 +1945,8 @@ void cells_broadcast_completed_item_s::to_json(json_writer& j) const
 // Cells-Broadcast-Completed-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t cells_broadcast_completed_list_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {147};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {147};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool cells_broadcast_completed_list_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -2001,8 +2001,8 @@ SRSASN_CODE cells_broadcast_completed_list_item_ies_o::value_c::unpack(cbit_ref&
 
 const char* cells_broadcast_completed_list_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Cells-Broadcast-Completed-Item"};
-  return convert_enum_idx(options, 1, value, "cells_broadcast_completed_list_item_ies_o::value_c::types");
+  static const char* names[] = {"Cells-Broadcast-Completed-Item"};
+  return convert_enum_idx(names, 1, value, "cells_broadcast_completed_list_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<cells_broadcast_completed_list_item_ies_o>;
@@ -2051,8 +2051,8 @@ void cells_failed_to_be_activ_list_item_s::to_json(json_writer& j) const
 // Cells-Failed-to-be-Activated-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t cells_failed_to_be_activ_list_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {2};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool cells_failed_to_be_activ_list_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -2107,8 +2107,8 @@ SRSASN_CODE cells_failed_to_be_activ_list_item_ies_o::value_c::unpack(cbit_ref& 
 
 const char* cells_failed_to_be_activ_list_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Cells-Failed-to-be-Activated-List-Item"};
-  return convert_enum_idx(options, 1, value, "cells_failed_to_be_activ_list_item_ies_o::value_c::types");
+  static const char* names[] = {"Cells-Failed-to-be-Activated-List-Item"};
+  return convert_enum_idx(names, 1, value, "cells_failed_to_be_activ_list_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<cells_failed_to_be_activ_list_item_ies_o>;
@@ -2116,8 +2116,8 @@ template struct asn1::protocol_ie_single_container_s<cells_failed_to_be_activ_li
 // Service-State ::= ENUMERATED
 const char* service_state_opts::to_string() const
 {
-  static const char* options[] = {"in-service", "out-of-service"};
-  return convert_enum_idx(options, 2, value, "service_state_e");
+  static const char* names[] = {"in-service", "out-of-service"};
+  return convert_enum_idx(names, 2, value, "service_state_e");
 }
 
 // Service-Status ::= SEQUENCE
@@ -2169,8 +2169,8 @@ void service_status_s::to_json(json_writer& j) const
 
 const char* service_status_s::switching_off_ongoing_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "service_status_s::switching_off_ongoing_e_");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "service_status_s::switching_off_ongoing_e_");
 }
 
 // Cells-Status-Item ::= SEQUENCE
@@ -2217,8 +2217,8 @@ void cells_status_item_s::to_json(json_writer& j) const
 // Cells-Status-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t cells_status_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {88};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {88};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool cells_status_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -2272,8 +2272,8 @@ SRSASN_CODE cells_status_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* cells_status_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Cells-Status-Item"};
-  return convert_enum_idx(options, 1, value, "cells_status_item_ies_o::value_c::types");
+  static const char* names[] = {"Cells-Status-Item"};
+  return convert_enum_idx(names, 1, value, "cells_status_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<cells_status_item_ies_o>;
@@ -2318,8 +2318,8 @@ void cells_to_be_broadcast_item_s::to_json(json_writer& j) const
 // Cells-To-Be-Broadcast-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t cells_to_be_broadcast_list_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {145};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {145};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool cells_to_be_broadcast_list_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -2373,8 +2373,8 @@ SRSASN_CODE cells_to_be_broadcast_list_item_ies_o::value_c::unpack(cbit_ref& bre
 
 const char* cells_to_be_broadcast_list_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Cells-To-Be-Broadcast-Item"};
-  return convert_enum_idx(options, 1, value, "cells_to_be_broadcast_list_item_ies_o::value_c::types");
+  static const char* names[] = {"Cells-To-Be-Broadcast-Item"};
+  return convert_enum_idx(names, 1, value, "cells_to_be_broadcast_list_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<cells_to_be_broadcast_list_item_ies_o>;
@@ -2382,15 +2382,15 @@ template struct asn1::protocol_ie_single_container_s<cells_to_be_broadcast_list_
 // AreaScope ::= ENUMERATED
 const char* area_scope_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "area_scope_e");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "area_scope_e");
 }
 
 // SibtypetobeupdatedListItem-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t sibtypetobeupd_list_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {240};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {240};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool sibtypetobeupd_list_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -2443,15 +2443,15 @@ SRSASN_CODE sibtypetobeupd_list_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* sibtypetobeupd_list_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"AreaScope"};
-  return convert_enum_idx(options, 1, value, "sibtypetobeupd_list_item_ext_ies_o::ext_c::types");
+  static const char* names[] = {"AreaScope"};
+  return convert_enum_idx(names, 1, value, "sibtypetobeupd_list_item_ext_ies_o::ext_c::types");
 }
 
 // GNB-CUSystemInformation-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t gnb_cu_sys_info_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {239};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {239};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool gnb_cu_sys_info_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -2504,8 +2504,8 @@ SRSASN_CODE gnb_cu_sys_info_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_sys_info_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"BIT STRING"};
-  return convert_enum_idx(options, 1, value, "gnb_cu_sys_info_ext_ies_o::ext_c::types");
+  static const char* names[] = {"BIT STRING"};
+  return convert_enum_idx(names, 1, value, "gnb_cu_sys_info_ext_ies_o::ext_c::types");
 }
 
 // SibtypetobeupdatedListItem ::= SEQUENCE
@@ -2593,13 +2593,13 @@ void gnb_cu_sys_info_s::to_json(json_writer& j) const
 // Cells-to-be-Activated-List-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t cells_to_be_activ_list_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {118, 179, 197};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {118, 179, 197};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool cells_to_be_activ_list_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {118, 179, 197};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {118, 179, 197};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -2832,8 +2832,8 @@ SRSASN_CODE cells_to_be_activ_list_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* cells_to_be_activ_list_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"GNB-CUSystemInformation", "AvailablePLMNList", "ExtendedAvailablePLMN-List"};
-  return convert_enum_idx(options, 3, value, "cells_to_be_activ_list_item_ext_ies_o::ext_c::types");
+  static const char* names[] = {"GNB-CUSystemInformation", "AvailablePLMNList", "ExtendedAvailablePLMN-List"};
+  return convert_enum_idx(names, 3, value, "cells_to_be_activ_list_item_ext_ies_o::ext_c::types");
 }
 
 template struct asn1::protocol_ext_field_s<cells_to_be_activ_list_item_ext_ies_o>;
@@ -2974,8 +2974,8 @@ void cells_to_be_activ_list_item_s::to_json(json_writer& j) const
 // Cells-to-be-Activated-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t cells_to_be_activ_list_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {4};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {4};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool cells_to_be_activ_list_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -3029,8 +3029,8 @@ SRSASN_CODE cells_to_be_activ_list_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* cells_to_be_activ_list_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Cells-to-be-Activated-List-Item"};
-  return convert_enum_idx(options, 1, value, "cells_to_be_activ_list_item_ies_o::value_c::types");
+  static const char* names[] = {"Cells-to-be-Activated-List-Item"};
+  return convert_enum_idx(names, 1, value, "cells_to_be_activ_list_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<cells_to_be_activ_list_item_ies_o>;
@@ -3038,8 +3038,8 @@ template struct asn1::protocol_ie_single_container_s<cells_to_be_activ_list_item
 // CellBarred ::= ENUMERATED
 const char* cell_barred_opts::to_string() const
 {
-  static const char* options[] = {"barred", "not-barred"};
-  return convert_enum_idx(options, 2, value, "cell_barred_e");
+  static const char* names[] = {"barred", "not-barred"};
+  return convert_enum_idx(names, 2, value, "cell_barred_e");
 }
 
 // Cells-to-be-Barred-Item ::= SEQUENCE
@@ -3083,8 +3083,8 @@ void cells_to_be_barred_item_s::to_json(json_writer& j) const
 // Cells-to-be-Barred-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t cells_to_be_barred_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {130};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {130};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool cells_to_be_barred_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -3138,8 +3138,8 @@ SRSASN_CODE cells_to_be_barred_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* cells_to_be_barred_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Cells-to-be-Barred-Item"};
-  return convert_enum_idx(options, 1, value, "cells_to_be_barred_item_ies_o::value_c::types");
+  static const char* names[] = {"Cells-to-be-Barred-Item"};
+  return convert_enum_idx(names, 1, value, "cells_to_be_barred_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<cells_to_be_barred_item_ies_o>;
@@ -3184,8 +3184,8 @@ void cells_to_be_deactiv_list_item_s::to_json(json_writer& j) const
 // Cells-to-be-Deactivated-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t cells_to_be_deactiv_list_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {6};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {6};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool cells_to_be_deactiv_list_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -3239,8 +3239,8 @@ SRSASN_CODE cells_to_be_deactiv_list_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* cells_to_be_deactiv_list_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Cells-to-be-Deactivated-List-Item"};
-  return convert_enum_idx(options, 1, value, "cells_to_be_deactiv_list_item_ies_o::value_c::types");
+  static const char* names[] = {"Cells-to-be-Deactivated-List-Item"};
+  return convert_enum_idx(names, 1, value, "cells_to_be_deactiv_list_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<cells_to_be_deactiv_list_item_ies_o>;
@@ -3248,8 +3248,8 @@ template struct asn1::protocol_ie_single_container_s<cells_to_be_deactiv_list_it
 // TypeOfError ::= ENUMERATED
 const char* type_of_error_opts::to_string() const
 {
-  static const char* options[] = {"not-understood", "missing"};
-  return convert_enum_idx(options, 2, value, "type_of_error_e");
+  static const char* names[] = {"not-understood", "missing"};
+  return convert_enum_idx(names, 2, value, "type_of_error_e");
 }
 
 // CriticalityDiagnostics-IE-Item ::= SEQUENCE
@@ -3297,8 +3297,8 @@ void crit_diagnostics_ie_item_s::to_json(json_writer& j) const
 // TriggeringMessage ::= ENUMERATED
 const char* trigger_msg_opts::to_string() const
 {
-  static const char* options[] = {"initiating-message", "successful-outcome", "unsuccessful-outcome"};
-  return convert_enum_idx(options, 3, value, "trigger_msg_e");
+  static const char* names[] = {"initiating-message", "successful-outcome", "unsuccessful-outcome"};
+  return convert_enum_idx(names, 3, value, "trigger_msg_e");
 }
 
 // CriticalityDiagnostics ::= SEQUENCE
@@ -3397,8 +3397,8 @@ void crit_diagnostics_s::to_json(json_writer& j) const
 // ExecuteDuplication ::= ENUMERATED
 const char* execute_dupl_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "execute_dupl_e");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "execute_dupl_e");
 }
 
 // RAT-FrequencyPriorityInformation ::= CHOICE
@@ -3550,34 +3550,34 @@ SRSASN_CODE rat_freq_prio_info_c::unpack(cbit_ref& bref)
 
 const char* rat_freq_prio_info_c::types_opts::to_string() const
 {
-  static const char* options[] = {"eNDC", "nGRAN", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "rat_freq_prio_info_c::types");
+  static const char* names[] = {"eNDC", "nGRAN", "choice-extension"};
+  return convert_enum_idx(names, 3, value, "rat_freq_prio_info_c::types");
 }
 
 // RRCDeliveryStatusRequest ::= ENUMERATED
 const char* rrc_delivery_status_request_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "rrc_delivery_status_request_e");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "rrc_delivery_status_request_e");
 }
 
 // UEContextNotRetrievable ::= ENUMERATED
 const char* ue_context_not_retrievable_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "ue_context_not_retrievable_e");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "ue_context_not_retrievable_e");
 }
 
 // DLRRCMessageTransferIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t dlrrc_msg_transfer_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41, 47, 64, 109, 50, 108, 184, 222, 218, 221, 217};
-  return map_enum_number(options, 12, idx, "id");
+  static const uint32_t names[] = {40, 41, 47, 64, 109, 50, 108, 184, 222, 218, 221, 217};
+  return map_enum_number(names, 12, idx, "id");
 }
 bool dlrrc_msg_transfer_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41, 47, 64, 109, 50, 108, 184, 222, 218, 221, 217};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41, 47, 64, 109, 50, 108, 184, 222, 218, 221, 217};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -4112,19 +4112,19 @@ SRSASN_CODE dlrrc_msg_transfer_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* dlrrc_msg_transfer_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)",
-                                  "INTEGER (0..4294967295)",
-                                  "INTEGER (0..4294967295)",
-                                  "INTEGER (0..3,...)",
-                                  "ExecuteDuplication",
-                                  "OCTET STRING",
-                                  "RAT-FrequencyPriorityInformation",
-                                  "RRCDeliveryStatusRequest",
-                                  "UEContextNotRetrievable",
-                                  "OCTET STRING",
-                                  "OCTET STRING",
-                                  "INTEGER (0..4294967295)"};
-  return convert_enum_idx(options, 12, value, "dlrrc_msg_transfer_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "INTEGER (0..3,...)",
+                                "ExecuteDuplication",
+                                "OCTET STRING",
+                                "RAT-FrequencyPriorityInformation",
+                                "RRCDeliveryStatusRequest",
+                                "UEContextNotRetrievable",
+                                "OCTET STRING",
+                                "OCTET STRING",
+                                "INTEGER (0..4294967295)"};
+  return convert_enum_idx(names, 12, value, "dlrrc_msg_transfer_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<dlrrc_msg_transfer_ies_o>;
@@ -4524,8 +4524,8 @@ SRSASN_CODE up_transport_layer_info_c::unpack(cbit_ref& bref)
 
 const char* up_transport_layer_info_c::types_opts::to_string() const
 {
-  static const char* options[] = {"gTPTunnel", "choice-extension"};
-  return convert_enum_idx(options, 2, value, "up_transport_layer_info_c::types");
+  static const char* names[] = {"gTPTunnel", "choice-extension"};
+  return convert_enum_idx(names, 2, value, "up_transport_layer_info_c::types");
 }
 
 // DLUPTNLInformation-ToBeSetup-Item ::= SEQUENCE
@@ -4568,8 +4568,8 @@ void dluptnl_info_to_be_setup_item_s::to_json(json_writer& j) const
 // DRB-Activity ::= ENUMERATED
 const char* drb_activity_opts::to_string() const
 {
-  static const char* options[] = {"active", "not-active"};
-  return convert_enum_idx(options, 2, value, "drb_activity_e");
+  static const char* names[] = {"active", "not-active"};
+  return convert_enum_idx(names, 2, value, "drb_activity_e");
 }
 
 // DRB-Activity-Item ::= SEQUENCE
@@ -4622,8 +4622,8 @@ void drb_activity_item_s::to_json(json_writer& j) const
 // DRB-Activity-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t drb_activity_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {99};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {99};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drb_activity_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -4677,8 +4677,8 @@ SRSASN_CODE drb_activity_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* drb_activity_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRB-Activity-Item"};
-  return convert_enum_idx(options, 1, value, "drb_activity_item_ies_o::value_c::types");
+  static const char* names[] = {"DRB-Activity-Item"};
+  return convert_enum_idx(names, 1, value, "drb_activity_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drb_activity_item_ies_o>;
@@ -4809,8 +4809,8 @@ void dynamic5_qi_descriptor_s::to_json(json_writer& j) const
 
 const char* dynamic5_qi_descriptor_s::delay_crit_opts::to_string() const
 {
-  static const char* options[] = {"delay-critical", "non-delay-critical"};
-  return convert_enum_idx(options, 2, value, "dynamic5_qi_descriptor_s::delay_crit_e_");
+  static const char* names[] = {"delay-critical", "non-delay-critical"};
+  return convert_enum_idx(names, 2, value, "dynamic5_qi_descriptor_s::delay_crit_e_");
 }
 
 // NonDynamic5QIDescriptor ::= SEQUENCE
@@ -5146,20 +5146,20 @@ SRSASN_CODE qo_s_characteristics_c::unpack(cbit_ref& bref)
 
 const char* qo_s_characteristics_c::types_opts::to_string() const
 {
-  static const char* options[] = {"non-Dynamic-5QI", "dynamic-5QI", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "qo_s_characteristics_c::types");
+  static const char* names[] = {"non-Dynamic-5QI", "dynamic-5QI", "choice-extension"};
+  return convert_enum_idx(names, 3, value, "qo_s_characteristics_c::types");
 }
 
 // QoSFlowLevelQoSParameters-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t qo_sflow_level_qos_params_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {180, 181};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {180, 181};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool qo_sflow_level_qos_params_ext_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {180, 181};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {180, 181};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -5321,22 +5321,22 @@ SRSASN_CODE qo_sflow_level_qos_params_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* qo_sflow_level_qos_params_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255)", "INTEGER (0..4000000000000,...)"};
-  return convert_enum_idx(options, 2, value, "qo_sflow_level_qos_params_ext_ies_o::ext_c::types");
+  static const char* names[] = {"INTEGER (0..255)", "INTEGER (0..4000000000000,...)"};
+  return convert_enum_idx(names, 2, value, "qo_sflow_level_qos_params_ext_ies_o::ext_c::types");
 }
 
 // QoSFlowMappingIndication ::= ENUMERATED
 const char* qo_sflow_map_ind_opts::to_string() const
 {
-  static const char* options[] = {"ul", "dl"};
-  return convert_enum_idx(options, 2, value, "qo_sflow_map_ind_e");
+  static const char* names[] = {"ul", "dl"};
+  return convert_enum_idx(names, 2, value, "qo_sflow_map_ind_e");
 }
 
 // Flows-Mapped-To-DRB-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t flows_mapped_to_drb_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {183};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {183};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool flows_mapped_to_drb_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -5389,8 +5389,8 @@ SRSASN_CODE flows_mapped_to_drb_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* flows_mapped_to_drb_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"QoSFlowMappingIndication"};
-  return convert_enum_idx(options, 1, value, "flows_mapped_to_drb_item_ext_ies_o::ext_c::types");
+  static const char* names[] = {"QoSFlowMappingIndication"};
+  return convert_enum_idx(names, 1, value, "flows_mapped_to_drb_item_ext_ies_o::ext_c::types");
 }
 
 template struct asn1::protocol_ext_field_s<qo_sflow_level_qos_params_ext_ies_o>;
@@ -5526,8 +5526,8 @@ void qo_sflow_level_qos_params_s::to_json(json_writer& j) const
 
 const char* qo_sflow_level_qos_params_s::reflective_qos_attribute_opts::to_string() const
 {
-  static const char* options[] = {"subject-to"};
-  return convert_enum_idx(options, 1, value, "qo_sflow_level_qos_params_s::reflective_qos_attribute_e_");
+  static const char* names[] = {"subject-to"};
+  return convert_enum_idx(names, 1, value, "qo_sflow_level_qos_params_s::reflective_qos_attribute_e_");
 }
 
 // Flows-Mapped-To-DRB-Item ::= SEQUENCE
@@ -5571,8 +5571,8 @@ void flows_mapped_to_drb_item_s::to_json(json_writer& j) const
 // NotificationControl ::= ENUMERATED
 const char* notif_ctrl_opts::to_string() const
 {
-  static const char* options[] = {"active", "not-active"};
-  return convert_enum_idx(options, 2, value, "notif_ctrl_e");
+  static const char* names[] = {"active", "not-active"};
+  return convert_enum_idx(names, 2, value, "notif_ctrl_e");
 }
 
 // SNSSAI ::= SEQUENCE
@@ -5680,8 +5680,8 @@ void drb_info_s::to_json(json_writer& j) const
 // Notification-Cause ::= ENUMERATED
 const char* notif_cause_opts::to_string() const
 {
-  static const char* options[] = {"fulfilled", "not-fulfilled"};
-  return convert_enum_idx(options, 2, value, "notif_cause_e");
+  static const char* names[] = {"fulfilled", "not-fulfilled"};
+  return convert_enum_idx(names, 2, value, "notif_cause_e");
 }
 
 // DRB-Notify-Item ::= SEQUENCE
@@ -5726,8 +5726,8 @@ void drb_notify_item_s::to_json(json_writer& j) const
 // DRB-Notify-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t drb_notify_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {136};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {136};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drb_notify_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -5781,8 +5781,8 @@ SRSASN_CODE drb_notify_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* drb_notify_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRB-Notify-Item"};
-  return convert_enum_idx(options, 1, value, "drb_notify_item_ies_o::value_c::types");
+  static const char* names[] = {"DRB-Notify-Item"};
+  return convert_enum_idx(names, 1, value, "drb_notify_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drb_notify_item_ies_o>;
@@ -5838,8 +5838,8 @@ void drbs_failed_to_be_modified_item_s::to_json(json_writer& j) const
 // DRBs-FailedToBeModified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t drbs_failed_to_be_modified_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {12};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {12};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drbs_failed_to_be_modified_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -5893,8 +5893,8 @@ SRSASN_CODE drbs_failed_to_be_modified_item_ies_o::value_c::unpack(cbit_ref& bre
 
 const char* drbs_failed_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRBs-FailedToBeModified-Item"};
-  return convert_enum_idx(options, 1, value, "drbs_failed_to_be_modified_item_ies_o::value_c::types");
+  static const char* names[] = {"DRBs-FailedToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_failed_to_be_modified_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_failed_to_be_modified_item_ies_o>;
@@ -5950,8 +5950,8 @@ void drbs_failed_to_be_setup_item_s::to_json(json_writer& j) const
 // DRBs-FailedToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t drbs_failed_to_be_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {14};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {14};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drbs_failed_to_be_setup_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -6005,8 +6005,8 @@ SRSASN_CODE drbs_failed_to_be_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* drbs_failed_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRBs-FailedToBeSetup-Item"};
-  return convert_enum_idx(options, 1, value, "drbs_failed_to_be_setup_item_ies_o::value_c::types");
+  static const char* names[] = {"DRBs-FailedToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_failed_to_be_setup_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_failed_to_be_setup_item_ies_o>;
@@ -6062,8 +6062,8 @@ void drbs_failed_to_be_setup_mod_item_s::to_json(json_writer& j) const
 // DRBs-FailedToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t drbs_failed_to_be_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {16};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {16};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drbs_failed_to_be_setup_mod_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -6117,8 +6117,8 @@ SRSASN_CODE drbs_failed_to_be_setup_mod_item_ies_o::value_c::unpack(cbit_ref& br
 
 const char* drbs_failed_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRBs-FailedToBeSetupMod-Item"};
-  return convert_enum_idx(options, 1, value, "drbs_failed_to_be_setup_mod_item_ies_o::value_c::types");
+  static const char* names[] = {"DRBs-FailedToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_failed_to_be_setup_mod_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_failed_to_be_setup_mod_item_ies_o>;
@@ -6126,8 +6126,8 @@ template struct asn1::protocol_ie_single_container_s<drbs_failed_to_be_setup_mod
 // Reestablishment-Indication ::= ENUMERATED
 const char* reest_ind_opts::to_string() const
 {
-  static const char* options[] = {"reestablished"};
-  return convert_enum_idx(options, 1, value, "reest_ind_e");
+  static const char* names[] = {"reestablished"};
+  return convert_enum_idx(names, 1, value, "reest_ind_e");
 }
 
 // RLC-Status ::= SEQUENCE
@@ -6169,8 +6169,8 @@ void rlc_status_s::to_json(json_writer& j) const
 // DRBs-Modified-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t drbs_modified_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {160};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {160};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drbs_modified_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -6224,8 +6224,8 @@ SRSASN_CODE drbs_modified_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* drbs_modified_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"RLC-Status"};
-  return convert_enum_idx(options, 1, value, "drbs_modified_item_ext_ies_o::ext_c::types");
+  static const char* names[] = {"RLC-Status"};
+  return convert_enum_idx(names, 1, value, "drbs_modified_item_ext_ies_o::ext_c::types");
 }
 
 // DRBs-Modified-Item ::= SEQUENCE
@@ -6285,8 +6285,8 @@ void drbs_modified_item_s::to_json(json_writer& j) const
 // DRBs-Modified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t drbs_modified_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {20};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {20};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drbs_modified_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -6340,8 +6340,8 @@ SRSASN_CODE drbs_modified_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* drbs_modified_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRBs-Modified-Item"};
-  return convert_enum_idx(options, 1, value, "drbs_modified_item_ies_o::value_c::types");
+  static const char* names[] = {"DRBs-Modified-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_modified_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_modified_item_ies_o>;
@@ -6429,8 +6429,8 @@ void drbs_modified_conf_item_s::to_json(json_writer& j) const
 // DRBs-ModifiedConf-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t drbs_modified_conf_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {18};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {18};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drbs_modified_conf_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -6484,8 +6484,8 @@ SRSASN_CODE drbs_modified_conf_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* drbs_modified_conf_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRBs-ModifiedConf-Item"};
-  return convert_enum_idx(options, 1, value, "drbs_modified_conf_item_ies_o::value_c::types");
+  static const char* names[] = {"DRBs-ModifiedConf-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_modified_conf_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_modified_conf_item_ies_o>;
@@ -6493,8 +6493,8 @@ template struct asn1::protocol_ie_single_container_s<drbs_modified_conf_item_ies
 // DRBs-Required-ToBeModified-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t drbs_required_to_be_modified_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {160};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {160};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drbs_required_to_be_modified_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -6549,8 +6549,8 @@ SRSASN_CODE drbs_required_to_be_modified_item_ext_ies_o::ext_c::unpack(cbit_ref&
 
 const char* drbs_required_to_be_modified_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"RLC-Status"};
-  return convert_enum_idx(options, 1, value, "drbs_required_to_be_modified_item_ext_ies_o::ext_c::types");
+  static const char* names[] = {"RLC-Status"};
+  return convert_enum_idx(names, 1, value, "drbs_required_to_be_modified_item_ext_ies_o::ext_c::types");
 }
 
 // DRBs-Required-ToBeModified-Item ::= SEQUENCE
@@ -6599,8 +6599,8 @@ void drbs_required_to_be_modified_item_s::to_json(json_writer& j) const
 // DRBs-Required-ToBeModified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t drbs_required_to_be_modified_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {22};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {22};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drbs_required_to_be_modified_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -6654,8 +6654,8 @@ SRSASN_CODE drbs_required_to_be_modified_item_ies_o::value_c::unpack(cbit_ref& b
 
 const char* drbs_required_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRBs-Required-ToBeModified-Item"};
-  return convert_enum_idx(options, 1, value, "drbs_required_to_be_modified_item_ies_o::value_c::types");
+  static const char* names[] = {"DRBs-Required-ToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_required_to_be_modified_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_required_to_be_modified_item_ies_o>;
@@ -6699,8 +6699,8 @@ void drbs_required_to_be_released_item_s::to_json(json_writer& j) const
 // DRBs-Required-ToBeReleased-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t drbs_required_to_be_released_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {24};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {24};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drbs_required_to_be_released_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -6754,8 +6754,8 @@ SRSASN_CODE drbs_required_to_be_released_item_ies_o::value_c::unpack(cbit_ref& b
 
 const char* drbs_required_to_be_released_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRBs-Required-ToBeReleased-Item"};
-  return convert_enum_idx(options, 1, value, "drbs_required_to_be_released_item_ies_o::value_c::types");
+  static const char* names[] = {"DRBs-Required-ToBeReleased-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_required_to_be_released_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_required_to_be_released_item_ies_o>;
@@ -6817,8 +6817,8 @@ void drbs_setup_item_s::to_json(json_writer& j) const
 // DRBs-Setup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t drbs_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {26};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {26};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drbs_setup_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -6872,8 +6872,8 @@ SRSASN_CODE drbs_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* drbs_setup_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRBs-Setup-Item"};
-  return convert_enum_idx(options, 1, value, "drbs_setup_item_ies_o::value_c::types");
+  static const char* names[] = {"DRBs-Setup-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_setup_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_setup_item_ies_o>;
@@ -6935,8 +6935,8 @@ void drbs_setup_mod_item_s::to_json(json_writer& j) const
 // DRBs-SetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t drbs_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {28};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {28};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drbs_setup_mod_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -6990,8 +6990,8 @@ SRSASN_CODE drbs_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* drbs_setup_mod_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRBs-SetupMod-Item"};
-  return convert_enum_idx(options, 1, value, "drbs_setup_mod_item_ies_o::value_c::types");
+  static const char* names[] = {"DRBs-SetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_setup_mod_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_setup_mod_item_ies_o>;
@@ -7044,22 +7044,22 @@ void gbr_qos_info_s::to_json(json_writer& j) const
 // BearerTypeChange ::= ENUMERATED
 const char* bearer_type_change_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "bearer_type_change_e");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "bearer_type_change_e");
 }
 
 // DCBasedDuplicationConfigured ::= ENUMERATED
 const char* dc_based_dupl_cfgured_opts::to_string() const
 {
-  static const char* options[] = {"true", "false"};
-  return convert_enum_idx(options, 2, value, "dc_based_dupl_cfgured_e");
+  static const char* names[] = {"true", "false"};
+  return convert_enum_idx(names, 2, value, "dc_based_dupl_cfgured_e");
 }
 
 // DuplicationActivation ::= ENUMERATED
 const char* dupl_activation_opts::to_string() const
 {
-  static const char* options[] = {"active", "inactive"};
-  return convert_enum_idx(options, 2, value, "dupl_activation_e");
+  static const char* names[] = {"active", "inactive"};
+  return convert_enum_idx(names, 2, value, "dupl_activation_e");
 }
 
 // EUTRANQoS ::= SEQUENCE
@@ -7117,8 +7117,8 @@ void eutran_qos_s::to_json(json_writer& j) const
 // PDCPSNLength ::= ENUMERATED
 const char* pdcpsn_len_opts::to_string() const
 {
-  static const char* options[] = {"twelve-bits", "eighteen-bits"};
-  return convert_enum_idx(options, 2, value, "pdcpsn_len_e");
+  static const char* names[] = {"twelve-bits", "eighteen-bits"};
+  return convert_enum_idx(names, 2, value, "pdcpsn_len_e");
 }
 uint8_t pdcpsn_len_opts::to_number() const
 {
@@ -7132,8 +7132,8 @@ uint8_t pdcpsn_len_opts::to_number() const
 // QoSInformation-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t qo_sinfo_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {164};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {164};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool qo_sinfo_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -7187,35 +7187,35 @@ SRSASN_CODE qo_sinfo_ext_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* qo_sinfo_ext_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRB-Information"};
-  return convert_enum_idx(options, 1, value, "qo_sinfo_ext_ies_o::value_c::types");
+  static const char* names[] = {"DRB-Information"};
+  return convert_enum_idx(names, 1, value, "qo_sinfo_ext_ies_o::value_c::types");
 }
 
 // RLCMode ::= ENUMERATED
 const char* rlc_mode_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "rlc-am", "rlc-um-bidirectional", "rlc-um-unidirectional-ul", "rlc-um-unidirectional-dl"};
-  return convert_enum_idx(options, 4, value, "rlc_mode_e");
+  return convert_enum_idx(names, 4, value, "rlc_mode_e");
 }
 
 // ULUEConfiguration ::= ENUMERATED
 const char* ulue_cfg_opts::to_string() const
 {
-  static const char* options[] = {"no-data", "shared", "only"};
-  return convert_enum_idx(options, 3, value, "ulue_cfg_e");
+  static const char* names[] = {"no-data", "shared", "only"};
+  return convert_enum_idx(names, 3, value, "ulue_cfg_e");
 }
 
 // DRBs-ToBeModified-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t drbs_to_be_modified_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {161, 192, 186, 187, 188, 176, 177};
-  return map_enum_number(options, 7, idx, "id");
+  static const uint32_t names[] = {161, 192, 186, 187, 188, 176, 177};
+  return map_enum_number(names, 7, idx, "id");
 }
 bool drbs_to_be_modified_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {161, 192, 186, 187, 188, 176, 177};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {161, 192, 186, 187, 188, 176, 177};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -7537,14 +7537,14 @@ SRSASN_CODE drbs_to_be_modified_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* drbs_to_be_modified_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"PDCPSNLength",
-                                  "PDCPSNLength",
-                                  "BearerTypeChange",
-                                  "RLCMode",
-                                  "DuplicationActivation",
-                                  "DCBasedDuplicationConfigured",
-                                  "DuplicationActivation"};
-  return convert_enum_idx(options, 7, value, "drbs_to_be_modified_item_ext_ies_o::ext_c::types");
+  static const char* names[] = {"PDCPSNLength",
+                                "PDCPSNLength",
+                                "BearerTypeChange",
+                                "RLCMode",
+                                "DuplicationActivation",
+                                "DCBasedDuplicationConfigured",
+                                "DuplicationActivation"};
+  return convert_enum_idx(names, 7, value, "drbs_to_be_modified_item_ext_ies_o::ext_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<qo_sinfo_ext_ies_o>;
@@ -7681,8 +7681,8 @@ SRSASN_CODE qo_sinfo_c::unpack(cbit_ref& bref)
 
 const char* qo_sinfo_c::types_opts::to_string() const
 {
-  static const char* options[] = {"eUTRANQoS", "choice-extension"};
-  return convert_enum_idx(options, 2, value, "qo_sinfo_c::types");
+  static const char* names[] = {"eUTRANQoS", "choice-extension"};
+  return convert_enum_idx(names, 2, value, "qo_sinfo_c::types");
 }
 
 // ULConfiguration ::= SEQUENCE
@@ -7946,8 +7946,8 @@ void drbs_to_be_modified_item_s::to_json(json_writer& j) const
 // DRBs-ToBeModified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t drbs_to_be_modified_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {30};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {30};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drbs_to_be_modified_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -8001,8 +8001,8 @@ SRSASN_CODE drbs_to_be_modified_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* drbs_to_be_modified_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRBs-ToBeModified-Item"};
-  return convert_enum_idx(options, 1, value, "drbs_to_be_modified_item_ies_o::value_c::types");
+  static const char* names[] = {"DRBs-ToBeModified-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_to_be_modified_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_to_be_modified_item_ies_o>;
@@ -8046,8 +8046,8 @@ void drbs_to_be_released_item_s::to_json(json_writer& j) const
 // DRBs-ToBeReleased-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t drbs_to_be_released_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {32};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {32};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drbs_to_be_released_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -8101,8 +8101,8 @@ SRSASN_CODE drbs_to_be_released_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* drbs_to_be_released_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRBs-ToBeReleased-Item"};
-  return convert_enum_idx(options, 1, value, "drbs_to_be_released_item_ies_o::value_c::types");
+  static const char* names[] = {"DRBs-ToBeReleased-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_to_be_released_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_to_be_released_item_ies_o>;
@@ -8110,13 +8110,13 @@ template struct asn1::protocol_ie_single_container_s<drbs_to_be_released_item_ie
 // DRBs-ToBeSetup-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t drbs_to_be_setup_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {176, 177, 161, 192};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {176, 177, 161, 192};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool drbs_to_be_setup_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {176, 177, 161, 192};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {176, 177, 161, 192};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -8342,9 +8342,9 @@ SRSASN_CODE drbs_to_be_setup_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* drbs_to_be_setup_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "DCBasedDuplicationConfigured", "DuplicationActivation", "PDCPSNLength", "PDCPSNLength"};
-  return convert_enum_idx(options, 4, value, "drbs_to_be_setup_item_ext_ies_o::ext_c::types");
+  return convert_enum_idx(names, 4, value, "drbs_to_be_setup_item_ext_ies_o::ext_c::types");
 }
 
 template struct asn1::protocol_ext_field_s<drbs_to_be_setup_item_ext_ies_o>;
@@ -8528,8 +8528,8 @@ void drbs_to_be_setup_item_s::to_json(json_writer& j) const
 // DRBs-ToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t drbs_to_be_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {34};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {34};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drbs_to_be_setup_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -8583,8 +8583,8 @@ SRSASN_CODE drbs_to_be_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* drbs_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRBs-ToBeSetup-Item"};
-  return convert_enum_idx(options, 1, value, "drbs_to_be_setup_item_ies_o::value_c::types");
+  static const char* names[] = {"DRBs-ToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_to_be_setup_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_to_be_setup_item_ies_o>;
@@ -8592,13 +8592,13 @@ template struct asn1::protocol_ie_single_container_s<drbs_to_be_setup_item_ies_o
 // DRBs-ToBeSetupMod-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t drbs_to_be_setup_mod_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {176, 177, 161, 192};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {176, 177, 161, 192};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool drbs_to_be_setup_mod_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {176, 177, 161, 192};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {176, 177, 161, 192};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -8824,9 +8824,9 @@ SRSASN_CODE drbs_to_be_setup_mod_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* drbs_to_be_setup_mod_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "DCBasedDuplicationConfigured", "DuplicationActivation", "PDCPSNLength", "PDCPSNLength"};
-  return convert_enum_idx(options, 4, value, "drbs_to_be_setup_mod_item_ext_ies_o::ext_c::types");
+  return convert_enum_idx(names, 4, value, "drbs_to_be_setup_mod_item_ext_ies_o::ext_c::types");
 }
 
 template struct asn1::protocol_ext_field_s<drbs_to_be_setup_mod_item_ext_ies_o>;
@@ -9009,8 +9009,8 @@ void drbs_to_be_setup_mod_item_s::to_json(json_writer& j) const
 // DRBs-ToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t drbs_to_be_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {36};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {36};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drbs_to_be_setup_mod_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -9064,8 +9064,8 @@ SRSASN_CODE drbs_to_be_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* drbs_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRBs-ToBeSetupMod-Item"};
-  return convert_enum_idx(options, 1, value, "drbs_to_be_setup_mod_item_ies_o::value_c::types");
+  static const char* names[] = {"DRBs-ToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "drbs_to_be_setup_mod_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<drbs_to_be_setup_mod_item_ies_o>;
@@ -9073,31 +9073,31 @@ template struct asn1::protocol_ie_single_container_s<drbs_to_be_setup_mod_item_i
 // LongDRXCycleLength ::= ENUMERATED
 const char* long_drx_cycle_len_opts::to_string() const
 {
-  static const char* options[] = {"ms10",   "ms20",   "ms32",   "ms40",   "ms60",   "ms64",   "ms70",
-                                  "ms80",   "ms128",  "ms160",  "ms256",  "ms320",  "ms512",  "ms640",
-                                  "ms1024", "ms1280", "ms2048", "ms2560", "ms5120", "ms10240"};
-  return convert_enum_idx(options, 20, value, "long_drx_cycle_len_e");
+  static const char* names[] = {"ms10",   "ms20",   "ms32",   "ms40",   "ms60",   "ms64",   "ms70",
+                                "ms80",   "ms128",  "ms160",  "ms256",  "ms320",  "ms512",  "ms640",
+                                "ms1024", "ms1280", "ms2048", "ms2560", "ms5120", "ms10240"};
+  return convert_enum_idx(names, 20, value, "long_drx_cycle_len_e");
 }
 uint16_t long_drx_cycle_len_opts::to_number() const
 {
-  static const uint16_t options[] = {10,  20,  32,  40,  60,   64,   70,   80,   128,  160,
+  static const uint16_t numbers[] = {10,  20,  32,  40,  60,   64,   70,   80,   128,  160,
                                      256, 320, 512, 640, 1024, 1280, 2048, 2560, 5120, 10240};
-  return map_enum_number(options, 20, value, "long_drx_cycle_len_e");
+  return map_enum_number(numbers, 20, value, "long_drx_cycle_len_e");
 }
 
 // ShortDRXCycleLength ::= ENUMERATED
 const char* short_drx_cycle_len_opts::to_string() const
 {
-  static const char* options[] = {"ms2",  "ms3",   "ms4",   "ms5",   "ms6",   "ms7",   "ms8",  "ms10",
-                                  "ms14", "ms16",  "ms20",  "ms30",  "ms32",  "ms35",  "ms40", "ms64",
-                                  "ms80", "ms128", "ms160", "ms256", "ms320", "ms512", "ms640"};
-  return convert_enum_idx(options, 23, value, "short_drx_cycle_len_e");
+  static const char* names[] = {"ms2",  "ms3",   "ms4",   "ms5",   "ms6",   "ms7",   "ms8",  "ms10",
+                                "ms14", "ms16",  "ms20",  "ms30",  "ms32",  "ms35",  "ms40", "ms64",
+                                "ms80", "ms128", "ms160", "ms256", "ms320", "ms512", "ms640"};
+  return convert_enum_idx(names, 23, value, "short_drx_cycle_len_e");
 }
 uint16_t short_drx_cycle_len_opts::to_number() const
 {
-  static const uint16_t options[] = {2,  3,  4,  5,  6,  7,   8,   10,  14,  16,  20, 30,
+  static const uint16_t numbers[] = {2,  3,  4,  5,  6,  7,   8,   10,  14,  16,  20, 30,
                                      32, 35, 40, 64, 80, 128, 160, 256, 320, 512, 640};
-  return map_enum_number(options, 23, value, "short_drx_cycle_len_e");
+  return map_enum_number(numbers, 23, value, "short_drx_cycle_len_e");
 }
 
 // DRXCycle ::= SEQUENCE
@@ -9161,13 +9161,13 @@ void drx_cycle_s::to_json(json_writer& j) const
 // DUtoCURRCInformation-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t duto_currc_info_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {191, 193, 194, 208, 209, 210, 211, 212, 235, 236, 237, 238};
-  return map_enum_number(options, 12, idx, "id");
+  static const uint32_t names[] = {191, 193, 194, 208, 209, 210, 211, 212, 235, 236, 237, 238};
+  return map_enum_number(names, 12, idx, "id");
 }
 bool duto_currc_info_ext_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {191, 193, 194, 208, 209, 210, 211, 212, 235, 236, 237, 238};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {191, 193, 194, 208, 209, 210, 211, 212, 235, 236, 237, 238};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -9729,24 +9729,24 @@ SRSASN_CODE duto_currc_info_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* duto_currc_info_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..10239)",
-                                  "OCTET STRING",
-                                  "OCTET STRING",
-                                  "OCTET STRING",
-                                  "OCTET STRING",
-                                  "OCTET STRING",
-                                  "OCTET STRING",
-                                  "OCTET STRING",
-                                  "OCTET STRING",
-                                  "OCTET STRING",
-                                  "OCTET STRING",
-                                  "OCTET STRING"};
-  return convert_enum_idx(options, 12, value, "duto_currc_info_ext_ies_o::ext_c::types");
+  static const char* names[] = {"INTEGER (0..10239)",
+                                "OCTET STRING",
+                                "OCTET STRING",
+                                "OCTET STRING",
+                                "OCTET STRING",
+                                "OCTET STRING",
+                                "OCTET STRING",
+                                "OCTET STRING",
+                                "OCTET STRING",
+                                "OCTET STRING",
+                                "OCTET STRING",
+                                "OCTET STRING"};
+  return convert_enum_idx(names, 12, value, "duto_currc_info_ext_ies_o::ext_c::types");
 }
 uint8_t duto_currc_info_ext_ies_o::ext_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "duto_currc_info_ext_ies_o::ext_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "duto_currc_info_ext_ies_o::ext_c::types");
 }
 
 template struct asn1::protocol_ext_field_s<duto_currc_info_ext_ies_o>;
@@ -10092,8 +10092,8 @@ void ded_si_delivery_needed_ue_item_s::to_json(json_writer& j) const
 // Dedicated-SIDelivery-NeededUE-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ded_si_delivery_needed_ue_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {190};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {190};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool ded_si_delivery_needed_ue_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -10147,8 +10147,8 @@ SRSASN_CODE ded_si_delivery_needed_ue_item_ies_o::value_c::unpack(cbit_ref& bref
 
 const char* ded_si_delivery_needed_ue_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Dedicated-SIDelivery-NeededUE-Item"};
-  return convert_enum_idx(options, 1, value, "ded_si_delivery_needed_ue_item_ies_o::value_c::types");
+  static const char* names[] = {"Dedicated-SIDelivery-NeededUE-Item"};
+  return convert_enum_idx(names, 1, value, "ded_si_delivery_needed_ue_item_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<ded_si_delivery_needed_ue_item_ies_o>;
@@ -10156,13 +10156,13 @@ template struct asn1::protocol_ie_single_container_s<ded_si_delivery_needed_ue_i
 // EUTRA-Transmission-Bandwidth ::= ENUMERATED
 const char* eutra_tx_bw_opts::to_string() const
 {
-  static const char* options[] = {"bw6", "bw15", "bw25", "bw50", "bw75", "bw100"};
-  return convert_enum_idx(options, 6, value, "eutra_tx_bw_e");
+  static const char* names[] = {"bw6", "bw15", "bw25", "bw50", "bw75", "bw100"};
+  return convert_enum_idx(names, 6, value, "eutra_tx_bw_e");
 }
 uint8_t eutra_tx_bw_opts::to_number() const
 {
-  static const uint8_t options[] = {6, 15, 25, 50, 75, 100};
-  return map_enum_number(options, 6, value, "eutra_tx_bw_e");
+  static const uint8_t numbers[] = {6, 15, 25, 50, 75, 100};
+  return map_enum_number(numbers, 6, value, "eutra_tx_bw_e");
 }
 
 // EUTRA-Coex-FDD-Info ::= SEQUENCE
@@ -10229,28 +10229,28 @@ void eutra_coex_fdd_info_s::to_json(json_writer& j) const
 // EUTRA-CyclicPrefixDL ::= ENUMERATED
 const char* eutra_cp_dl_opts::to_string() const
 {
-  static const char* options[] = {"normal", "extended"};
-  return convert_enum_idx(options, 2, value, "eutra_cp_dl_e");
+  static const char* names[] = {"normal", "extended"};
+  return convert_enum_idx(names, 2, value, "eutra_cp_dl_e");
 }
 
 // EUTRA-CyclicPrefixUL ::= ENUMERATED
 const char* eutra_cp_ul_opts::to_string() const
 {
-  static const char* options[] = {"normal", "extended"};
-  return convert_enum_idx(options, 2, value, "eutra_cp_ul_e");
+  static const char* names[] = {"normal", "extended"};
+  return convert_enum_idx(names, 2, value, "eutra_cp_ul_e");
 }
 
 // EUTRA-SpecialSubframePatterns ::= ENUMERATED
 const char* eutra_special_sf_patterns_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "ssp0", "ssp1", "ssp2", "ssp3", "ssp4", "ssp5", "ssp6", "ssp7", "ssp8", "ssp9", "ssp10"};
-  return convert_enum_idx(options, 11, value, "eutra_special_sf_patterns_e");
+  return convert_enum_idx(names, 11, value, "eutra_special_sf_patterns_e");
 }
 uint8_t eutra_special_sf_patterns_opts::to_number() const
 {
-  static const uint8_t options[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-  return map_enum_number(options, 11, value, "eutra_special_sf_patterns_e");
+  static const uint8_t numbers[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+  return map_enum_number(numbers, 11, value, "eutra_special_sf_patterns_e");
 }
 
 // EUTRA-SpecialSubframe-Info ::= SEQUENCE
@@ -10298,13 +10298,13 @@ void eutra_special_sf_info_s::to_json(json_writer& j) const
 // EUTRA-SubframeAssignment ::= ENUMERATED
 const char* eutra_sf_assign_opts::to_string() const
 {
-  static const char* options[] = {"sa0", "sa1", "sa2", "sa3", "sa4", "sa5", "sa6"};
-  return convert_enum_idx(options, 7, value, "eutra_sf_assign_e");
+  static const char* names[] = {"sa0", "sa1", "sa2", "sa3", "sa4", "sa5", "sa6"};
+  return convert_enum_idx(names, 7, value, "eutra_sf_assign_e");
 }
 uint8_t eutra_sf_assign_opts::to_number() const
 {
-  static const uint8_t options[] = {0, 1, 2, 3, 4, 5, 6};
-  return map_enum_number(options, 7, value, "eutra_sf_assign_e");
+  static const uint8_t numbers[] = {0, 1, 2, 3, 4, 5, 6};
+  return map_enum_number(numbers, 7, value, "eutra_sf_assign_e");
 }
 
 // EUTRA-Coex-TDD-Info ::= SEQUENCE
@@ -10485,8 +10485,8 @@ SRSASN_CODE eutra_coex_mode_info_c::unpack(cbit_ref& bref)
 
 const char* eutra_coex_mode_info_c::types_opts::to_string() const
 {
-  static const char* options[] = {"fDD", "tDD"};
-  return convert_enum_idx(options, 2, value, "eutra_coex_mode_info_c::types");
+  static const char* names[] = {"fDD", "tDD"};
+  return convert_enum_idx(names, 2, value, "eutra_coex_mode_info_c::types");
 }
 
 // EUTRA-FDD-Info ::= SEQUENCE
@@ -10723,8 +10723,8 @@ SRSASN_CODE eutra_mode_info_c::unpack(cbit_ref& bref)
 
 const char* eutra_mode_info_c::types_opts::to_string() const
 {
-  static const char* options[] = {"eUTRAFDD", "eUTRATDD", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "eutra_mode_info_c::types");
+  static const char* names[] = {"eUTRAFDD", "eUTRATDD", "choice-extension"};
+  return convert_enum_idx(names, 3, value, "eutra_mode_info_c::types");
 }
 
 // EUTRA-PRACH-Configuration ::= SEQUENCE
@@ -10864,13 +10864,13 @@ void eutra_cells_list_item_s::to_json(json_writer& j) const
 // ErrorIndicationIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t error_ind_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 40, 41, 0, 7};
-  return map_enum_number(options, 5, idx, "id");
+  static const uint32_t names[] = {78, 40, 41, 0, 7};
+  return map_enum_number(names, 5, idx, "id");
 }
 bool error_ind_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 40, 41, 0, 7};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 40, 41, 0, 7};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -11159,9 +11159,9 @@ SRSASN_CODE error_ind_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* error_ind_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..255,...)", "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 5, value, "error_ind_ies_o::value_c::types");
+  return convert_enum_idx(names, 5, value, "error_ind_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<error_ind_ies_o>;
@@ -11376,29 +11376,29 @@ void extended_served_plmns_item_s::to_json(json_writer& j) const
 // NRNRB ::= ENUMERATED
 const char* nrnrb_opts::to_string() const
 {
-  static const char* options[] = {"nrb11",  "nrb18",  "nrb24",  "nrb25",  "nrb31",  "nrb32",  "nrb38",  "nrb51",
-                                  "nrb52",  "nrb65",  "nrb66",  "nrb78",  "nrb79",  "nrb93",  "nrb106", "nrb107",
-                                  "nrb121", "nrb132", "nrb133", "nrb135", "nrb160", "nrb162", "nrb189", "nrb216",
-                                  "nrb217", "nrb245", "nrb264", "nrb270", "nrb273"};
-  return convert_enum_idx(options, 29, value, "nrnrb_e");
+  static const char* names[] = {"nrb11",  "nrb18",  "nrb24",  "nrb25",  "nrb31",  "nrb32",  "nrb38",  "nrb51",
+                                "nrb52",  "nrb65",  "nrb66",  "nrb78",  "nrb79",  "nrb93",  "nrb106", "nrb107",
+                                "nrb121", "nrb132", "nrb133", "nrb135", "nrb160", "nrb162", "nrb189", "nrb216",
+                                "nrb217", "nrb245", "nrb264", "nrb270", "nrb273"};
+  return convert_enum_idx(names, 29, value, "nrnrb_e");
 }
 uint16_t nrnrb_opts::to_number() const
 {
-  static const uint16_t options[] = {11,  18,  24,  25,  31,  32,  38,  51,  52,  65,  66,  78,  79,  93, 106,
+  static const uint16_t numbers[] = {11,  18,  24,  25,  31,  32,  38,  51,  52,  65,  66,  78,  79,  93, 106,
                                      107, 121, 132, 133, 135, 160, 162, 189, 216, 217, 245, 264, 270, 273};
-  return map_enum_number(options, 29, value, "nrnrb_e");
+  return map_enum_number(numbers, 29, value, "nrnrb_e");
 }
 
 // NRSCS ::= ENUMERATED
 const char* nrscs_opts::to_string() const
 {
-  static const char* options[] = {"scs15", "scs30", "scs60", "scs120"};
-  return convert_enum_idx(options, 4, value, "nrscs_e");
+  static const char* names[] = {"scs15", "scs30", "scs60", "scs120"};
+  return convert_enum_idx(names, 4, value, "nrscs_e");
 }
 uint8_t nrscs_opts::to_number() const
 {
-  static const uint8_t options[] = {15, 30, 60, 120};
-  return map_enum_number(options, 4, value, "nrscs_e");
+  static const uint8_t numbers[] = {15, 30, 60, 120};
+  return map_enum_number(numbers, 4, value, "nrscs_e");
 }
 
 // SupportedSULFreqBandItem ::= SEQUENCE
@@ -11617,8 +11617,8 @@ void nr_freq_info_s::to_json(json_writer& j) const
 // ServedPLMNs-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t served_plmns_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {131};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {131};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool served_plmns_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -11675,18 +11675,18 @@ SRSASN_CODE served_plmns_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* served_plmns_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"SliceSupportList"};
-  return convert_enum_idx(options, 1, value, "served_plmns_item_ext_ies_o::ext_c::types");
+  static const char* names[] = {"SliceSupportList"};
+  return convert_enum_idx(names, 1, value, "served_plmns_item_ext_ies_o::ext_c::types");
 }
 
 // UACAction ::= ENUMERATED
 const char* uac_action_opts::to_string() const
 {
-  static const char* options[] = {"reject-non-emergency-mo-dt",
-                                  "reject-rrc-cr-signalling",
-                                  "permit-emergency-sessions-and-mobile-terminated-services-only",
-                                  "permit-high-priority-sessions-and-mobile-terminated-services-only"};
-  return convert_enum_idx(options, 4, value, "uac_action_e");
+  static const char* names[] = {"reject-non-emergency-mo-dt",
+                                "reject-rrc-cr-signalling",
+                                "permit-emergency-sessions-and-mobile-terminated-services-only",
+                                "permit-high-priority-sessions-and-mobile-terminated-services-only"};
+  return convert_enum_idx(names, 4, value, "uac_action_e");
 }
 
 // UACOperatorDefined ::= SEQUENCE
@@ -11729,8 +11729,8 @@ void uac_operator_defined_s::to_json(json_writer& j) const
 // Cell-Direction ::= ENUMERATED
 const char* cell_direction_opts::to_string() const
 {
-  static const char* options[] = {"dl-only", "ul-only"};
-  return convert_enum_idx(options, 2, value, "cell_direction_e");
+  static const char* names[] = {"dl-only", "ul-only"};
+  return convert_enum_idx(names, 2, value, "cell_direction_e");
 }
 
 // FDD-Info ::= SEQUENCE
@@ -12013,8 +12013,8 @@ SRSASN_CODE uac_category_type_c::unpack(cbit_ref& bref)
 
 const char* uac_category_type_c::types_opts::to_string() const
 {
-  static const char* options[] = {"uACstandardized", "uACOperatorDefined", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "uac_category_type_c::types");
+  static const char* names[] = {"uACstandardized", "uACOperatorDefined", "choice-extension"};
+  return convert_enum_idx(names, 3, value, "uac_category_type_c::types");
 }
 
 // NR-Mode-Info ::= CHOICE
@@ -12176,20 +12176,20 @@ SRSASN_CODE nr_mode_info_c::unpack(cbit_ref& bref)
 
 const char* nr_mode_info_c::types_opts::to_string() const
 {
-  static const char* options[] = {"fDD", "tDD", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "nr_mode_info_c::types");
+  static const char* names[] = {"fDD", "tDD", "choice-extension"};
+  return convert_enum_idx(names, 3, value, "nr_mode_info_c::types");
 }
 
 // Served-Cell-Information-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t served_cell_info_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {139, 196, 201, 223, 232};
-  return map_enum_number(options, 5, idx, "id");
+  static const uint32_t names[] = {139, 196, 201, 223, 232};
+  return map_enum_number(names, 5, idx, "id");
 }
 bool served_cell_info_ext_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {139, 196, 201, 223, 232};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {139, 196, 201, 223, 232};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -12490,14 +12490,14 @@ SRSASN_CODE served_cell_info_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* served_cell_info_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..255)", "ExtendedServedPLMNs-List", "Cell-Direction", "BPLMN-ID-Info-List", "CellType"};
-  return convert_enum_idx(options, 5, value, "served_cell_info_ext_ies_o::ext_c::types");
+  return convert_enum_idx(names, 5, value, "served_cell_info_ext_ies_o::ext_c::types");
 }
 uint8_t served_cell_info_ext_ies_o::ext_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "served_cell_info_ext_ies_o::ext_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "served_cell_info_ext_ies_o::ext_c::types");
 }
 
 // UACType-Item ::= SEQUENCE
@@ -12541,27 +12541,27 @@ void uac_type_item_s::to_json(json_writer& j) const
 // CellULConfigured ::= ENUMERATED
 const char* cell_ul_cfgured_opts::to_string() const
 {
-  static const char* options[] = {"none", "ul", "sul", "ul-and-sul"};
-  return convert_enum_idx(options, 4, value, "cell_ul_cfgured_e");
+  static const char* names[] = {"none", "ul", "sul", "ul-and-sul"};
+  return convert_enum_idx(names, 4, value, "cell_ul_cfgured_e");
 }
 uint8_t cell_ul_cfgured_opts::to_number() const
 {
-  static const uint8_t options[] = {1};
-  return map_enum_number(options, 1, value, "cell_ul_cfgured_e");
+  static const uint8_t numbers[] = {1};
+  return map_enum_number(numbers, 1, value, "cell_ul_cfgured_e");
 }
 
 // DuplicationIndication ::= ENUMERATED
 const char* dupl_ind_opts::to_string() const
 {
-  static const char* options[] = {"true", "false"};
-  return convert_enum_idx(options, 2, value, "dupl_ind_e");
+  static const char* names[] = {"true", "false"};
+  return convert_enum_idx(names, 2, value, "dupl_ind_e");
 }
 
 // GNB-CU-TNL-Association-To-Remove-Item-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t gnb_cu_tnl_assoc_to_rem_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {229};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {229};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool gnb_cu_tnl_assoc_to_rem_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -12615,8 +12615,8 @@ SRSASN_CODE gnb_cu_tnl_assoc_to_rem_item_ext_ies_o::ext_c::unpack(cbit_ref& bref
 
 const char* gnb_cu_tnl_assoc_to_rem_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"CP-TransportLayerAddress"};
-  return convert_enum_idx(options, 1, value, "gnb_cu_tnl_assoc_to_rem_item_ext_ies_o::ext_c::types");
+  static const char* names[] = {"CP-TransportLayerAddress"};
+  return convert_enum_idx(names, 1, value, "gnb_cu_tnl_assoc_to_rem_item_ext_ies_o::ext_c::types");
 }
 
 // GNB-DU-System-Information ::= SEQUENCE
@@ -12661,15 +12661,15 @@ void gnb_du_sys_info_s::to_json(json_writer& j) const
 // IgnorePRACHConfiguration ::= ENUMERATED
 const char* ignore_prach_cfg_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "ignore_prach_cfg_e");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "ignore_prach_cfg_e");
 }
 
 // SCell-ToBeSetup-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t scell_to_be_setup_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {182};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {182};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool scell_to_be_setup_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -12722,20 +12722,20 @@ SRSASN_CODE scell_to_be_setup_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* scell_to_be_setup_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (1..64,...)"};
-  return convert_enum_idx(options, 1, value, "scell_to_be_setup_item_ext_ies_o::ext_c::types");
+  static const char* names[] = {"INTEGER (1..64,...)"};
+  return convert_enum_idx(names, 1, value, "scell_to_be_setup_item_ext_ies_o::ext_c::types");
 }
 uint8_t scell_to_be_setup_item_ext_ies_o::ext_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {1};
-  return map_enum_number(options, 1, value, "scell_to_be_setup_item_ext_ies_o::ext_c::types");
+  static const uint8_t numbers[] = {1};
+  return map_enum_number(numbers, 1, value, "scell_to_be_setup_item_ext_ies_o::ext_c::types");
 }
 
 // SCell-ToBeSetupMod-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t scell_to_be_setup_mod_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {182};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {182};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool scell_to_be_setup_mod_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -12788,13 +12788,13 @@ SRSASN_CODE scell_to_be_setup_mod_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* scell_to_be_setup_mod_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (1..64,...)"};
-  return convert_enum_idx(options, 1, value, "scell_to_be_setup_mod_item_ext_ies_o::ext_c::types");
+  static const char* names[] = {"INTEGER (1..64,...)"};
+  return convert_enum_idx(names, 1, value, "scell_to_be_setup_mod_item_ext_ies_o::ext_c::types");
 }
 uint8_t scell_to_be_setup_mod_item_ext_ies_o::ext_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {1};
-  return map_enum_number(options, 1, value, "scell_to_be_setup_mod_item_ext_ies_o::ext_c::types");
+  static const uint8_t numbers[] = {1};
+  return map_enum_number(numbers, 1, value, "scell_to_be_setup_mod_item_ext_ies_o::ext_c::types");
 }
 
 template struct asn1::protocol_ext_field_s<served_cell_info_ext_ies_o>;
@@ -12997,8 +12997,8 @@ void served_cell_info_s::to_json(json_writer& j) const
 // TNLAssociationUsage ::= ENUMERATED
 const char* tnlassoc_usage_opts::to_string() const
 {
-  static const char* options[] = {"ue", "non-ue", "both"};
-  return convert_enum_idx(options, 3, value, "tnlassoc_usage_e");
+  static const char* names[] = {"ue", "non-ue", "both"};
+  return convert_enum_idx(names, 3, value, "tnlassoc_usage_e");
 }
 
 // UE-associatedLogicalF1-ConnectionItem ::= SEQUENCE
@@ -13596,8 +13596,8 @@ SRSASN_CODE private_ie_id_c::unpack(cbit_ref& bref)
 
 const char* private_ie_id_c::types_opts::to_string() const
 {
-  static const char* options[] = {"local", "global"};
-  return convert_enum_idx(options, 2, value, "private_ie_id_c::types");
+  static const char* names[] = {"local", "global"};
+  return convert_enum_idx(names, 2, value, "private_ie_id_c::types");
 }
 
 // Protected-EUTRA-Resources-Item ::= SEQUENCE
@@ -13644,8 +13644,8 @@ void protected_eutra_res_item_s::to_json(json_writer& j) const
 // ResourceCoordinationEUTRACellInfo-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t res_coordination_eutra_cell_info_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {233};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {233};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool res_coordination_eutra_cell_info_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -13699,8 +13699,8 @@ SRSASN_CODE res_coordination_eutra_cell_info_ext_ies_o::ext_c::unpack(cbit_ref& 
 
 const char* res_coordination_eutra_cell_info_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"IgnorePRACHConfiguration"};
-  return convert_enum_idx(options, 1, value, "res_coordination_eutra_cell_info_ext_ies_o::ext_c::types");
+  static const char* names[] = {"IgnorePRACHConfiguration"};
+  return convert_enum_idx(names, 1, value, "res_coordination_eutra_cell_info_ext_ies_o::ext_c::types");
 }
 
 // SCell-FailedtoSetup-Item ::= SEQUENCE
@@ -14502,8 +14502,8 @@ void uacplmn_item_s::to_json(json_writer& j) const
 // UE-associatedLogicalF1-ConnectionItemRes ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_associated_lc_f1_conn_item_res_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {80};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {80};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool ue_associated_lc_f1_conn_item_res_o::is_id_valid(const uint32_t& id)
 {
@@ -14557,20 +14557,20 @@ SRSASN_CODE ue_associated_lc_f1_conn_item_res_o::value_c::unpack(cbit_ref& bref)
 
 const char* ue_associated_lc_f1_conn_item_res_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"UE-associatedLogicalF1-ConnectionItem"};
-  return convert_enum_idx(options, 1, value, "ue_associated_lc_f1_conn_item_res_o::value_c::types");
+  static const char* names[] = {"UE-associatedLogicalF1-ConnectionItem"};
+  return convert_enum_idx(names, 1, value, "ue_associated_lc_f1_conn_item_res_o::value_c::types");
 }
 uint8_t ue_associated_lc_f1_conn_item_res_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {1};
-  return map_enum_number(options, 1, value, "ue_associated_lc_f1_conn_item_res_o::value_c::types");
+  static const uint8_t numbers[] = {1};
+  return map_enum_number(numbers, 1, value, "ue_associated_lc_f1_conn_item_res_o::value_c::types");
 }
 
 // GNB-CU-TNL-Association-Failed-To-Setup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_cu_tnl_assoc_failed_to_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {135};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {135};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool gnb_cu_tnl_assoc_failed_to_setup_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -14625,15 +14625,15 @@ SRSASN_CODE gnb_cu_tnl_assoc_failed_to_setup_item_ies_o::value_c::unpack(cbit_re
 
 const char* gnb_cu_tnl_assoc_failed_to_setup_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"GNB-CU-TNL-Association-Failed-To-Setup-Item"};
-  return convert_enum_idx(options, 1, value, "gnb_cu_tnl_assoc_failed_to_setup_item_ies_o::value_c::types");
+  static const char* names[] = {"GNB-CU-TNL-Association-Failed-To-Setup-Item"};
+  return convert_enum_idx(names, 1, value, "gnb_cu_tnl_assoc_failed_to_setup_item_ies_o::value_c::types");
 }
 
 // GNB-CU-TNL-Association-Setup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_cu_tnl_assoc_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {133};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {133};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool gnb_cu_tnl_assoc_setup_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -14687,15 +14687,15 @@ SRSASN_CODE gnb_cu_tnl_assoc_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_tnl_assoc_setup_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"GNB-CU-TNL-Association-Setup-Item"};
-  return convert_enum_idx(options, 1, value, "gnb_cu_tnl_assoc_setup_item_ies_o::value_c::types");
+  static const char* names[] = {"GNB-CU-TNL-Association-Setup-Item"};
+  return convert_enum_idx(names, 1, value, "gnb_cu_tnl_assoc_setup_item_ies_o::value_c::types");
 }
 
 // GNB-CU-TNL-Association-To-Add-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_cu_tnl_assoc_to_add_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {120};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {120};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool gnb_cu_tnl_assoc_to_add_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -14749,15 +14749,15 @@ SRSASN_CODE gnb_cu_tnl_assoc_to_add_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_tnl_assoc_to_add_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"GNB-CU-TNL-Association-To-Add-Item"};
-  return convert_enum_idx(options, 1, value, "gnb_cu_tnl_assoc_to_add_item_ies_o::value_c::types");
+  static const char* names[] = {"GNB-CU-TNL-Association-To-Add-Item"};
+  return convert_enum_idx(names, 1, value, "gnb_cu_tnl_assoc_to_add_item_ies_o::value_c::types");
 }
 
 // GNB-CU-TNL-Association-To-Remove-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_cu_tnl_assoc_to_rem_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {122};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {122};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool gnb_cu_tnl_assoc_to_rem_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -14811,15 +14811,15 @@ SRSASN_CODE gnb_cu_tnl_assoc_to_rem_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_tnl_assoc_to_rem_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"GNB-CU-TNL-Association-To-Remove-Item"};
-  return convert_enum_idx(options, 1, value, "gnb_cu_tnl_assoc_to_rem_item_ies_o::value_c::types");
+  static const char* names[] = {"GNB-CU-TNL-Association-To-Remove-Item"};
+  return convert_enum_idx(names, 1, value, "gnb_cu_tnl_assoc_to_rem_item_ies_o::value_c::types");
 }
 
 // GNB-CU-TNL-Association-To-Update-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_cu_tnl_assoc_to_upd_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {124};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {124};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool gnb_cu_tnl_assoc_to_upd_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -14873,15 +14873,15 @@ SRSASN_CODE gnb_cu_tnl_assoc_to_upd_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_tnl_assoc_to_upd_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"GNB-CU-TNL-Association-To-Update-Item"};
-  return convert_enum_idx(options, 1, value, "gnb_cu_tnl_assoc_to_upd_item_ies_o::value_c::types");
+  static const char* names[] = {"GNB-CU-TNL-Association-To-Update-Item"};
+  return convert_enum_idx(names, 1, value, "gnb_cu_tnl_assoc_to_upd_item_ies_o::value_c::types");
 }
 
 // GNB-DU-Served-Cells-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_du_served_cells_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {43};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {43};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool gnb_du_served_cells_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -14935,15 +14935,15 @@ SRSASN_CODE gnb_du_served_cells_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_du_served_cells_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"GNB-DU-Served-Cells-Item"};
-  return convert_enum_idx(options, 1, value, "gnb_du_served_cells_item_ies_o::value_c::types");
+  static const char* names[] = {"GNB-DU-Served-Cells-Item"};
+  return convert_enum_idx(names, 1, value, "gnb_du_served_cells_item_ies_o::value_c::types");
 }
 
 // GNB-DU-TNL-Association-To-Remove-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnb_du_tnl_assoc_to_rem_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {227};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {227};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool gnb_du_tnl_assoc_to_rem_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -14997,15 +14997,15 @@ SRSASN_CODE gnb_du_tnl_assoc_to_rem_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_du_tnl_assoc_to_rem_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"GNB-DU-TNL-Association-To-Remove-Item"};
-  return convert_enum_idx(options, 1, value, "gnb_du_tnl_assoc_to_rem_item_ies_o::value_c::types");
+  static const char* names[] = {"GNB-DU-TNL-Association-To-Remove-Item"};
+  return convert_enum_idx(names, 1, value, "gnb_du_tnl_assoc_to_rem_item_ies_o::value_c::types");
 }
 
 // NR-CGI-List-For-Restart-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t nr_cgi_list_for_restart_list_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {153};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {153};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool nr_cgi_list_for_restart_list_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -15059,15 +15059,15 @@ SRSASN_CODE nr_cgi_list_for_restart_list_item_ies_o::value_c::unpack(cbit_ref& b
 
 const char* nr_cgi_list_for_restart_list_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"NR-CGI-List-For-Restart-Item"};
-  return convert_enum_idx(options, 1, value, "nr_cgi_list_for_restart_list_item_ies_o::value_c::types");
+  static const char* names[] = {"NR-CGI-List-For-Restart-Item"};
+  return convert_enum_idx(names, 1, value, "nr_cgi_list_for_restart_list_item_ies_o::value_c::types");
 }
 
 // PWS-Failed-NR-CGI-List-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pws_failed_nr_cgi_list_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {155};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {155};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool pws_failed_nr_cgi_list_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -15121,20 +15121,20 @@ SRSASN_CODE pws_failed_nr_cgi_list_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* pws_failed_nr_cgi_list_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"PWS-Failed-NR-CGI-Item"};
-  return convert_enum_idx(options, 1, value, "pws_failed_nr_cgi_list_item_ies_o::value_c::types");
+  static const char* names[] = {"PWS-Failed-NR-CGI-Item"};
+  return convert_enum_idx(names, 1, value, "pws_failed_nr_cgi_list_item_ies_o::value_c::types");
 }
 
 // PWSSystemInformationExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t pws_sys_info_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {220, 231};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {220, 231};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool pws_sys_info_ext_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {220, 231};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {220, 231};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -15324,15 +15324,15 @@ SRSASN_CODE pws_sys_info_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* pws_sys_info_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"NotificationInformation", "AdditionalSIBMessageList"};
-  return convert_enum_idx(options, 2, value, "pws_sys_info_ext_ies_o::ext_c::types");
+  static const char* names[] = {"NotificationInformation", "AdditionalSIBMessageList"};
+  return convert_enum_idx(names, 2, value, "pws_sys_info_ext_ies_o::ext_c::types");
 }
 
 // PagingCell-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t paging_cell_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {112};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {112};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool paging_cell_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -15386,15 +15386,15 @@ SRSASN_CODE paging_cell_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* paging_cell_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"PagingCell-Item"};
-  return convert_enum_idx(options, 1, value, "paging_cell_item_ies_o::value_c::types");
+  static const char* names[] = {"PagingCell-Item"};
+  return convert_enum_idx(names, 1, value, "paging_cell_item_ies_o::value_c::types");
 }
 
 // Potential-SpCell-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t potential_sp_cell_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {93};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {93};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool potential_sp_cell_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -15448,15 +15448,15 @@ SRSASN_CODE potential_sp_cell_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* potential_sp_cell_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Potential-SpCell-Item"};
-  return convert_enum_idx(options, 1, value, "potential_sp_cell_item_ies_o::value_c::types");
+  static const char* names[] = {"Potential-SpCell-Item"};
+  return convert_enum_idx(names, 1, value, "potential_sp_cell_item_ies_o::value_c::types");
 }
 
 // Protected-EUTRA-Resources-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t protected_eutra_res_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {168};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {168};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool protected_eutra_res_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -15510,8 +15510,8 @@ SRSASN_CODE protected_eutra_res_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* protected_eutra_res_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Protected-EUTRA-Resources-Item"};
-  return convert_enum_idx(options, 1, value, "protected_eutra_res_item_ies_o::value_c::types");
+  static const char* names[] = {"Protected-EUTRA-Resources-Item"};
+  return convert_enum_idx(names, 1, value, "protected_eutra_res_item_ies_o::value_c::types");
 }
 
 // RANUEPagingIdentity ::= SEQUENCE
@@ -15551,8 +15551,8 @@ void ranue_paging_id_s::to_json(json_writer& j) const
 // RRC-Version-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 uint32_t rrc_version_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {199};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {199};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool rrc_version_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -15605,15 +15605,15 @@ SRSASN_CODE rrc_version_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* rrc_version_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"OCTET STRING"};
-  return convert_enum_idx(options, 1, value, "rrc_version_ext_ies_o::ext_c::types");
+  static const char* names[] = {"OCTET STRING"};
+  return convert_enum_idx(names, 1, value, "rrc_version_ext_ies_o::ext_c::types");
 }
 
 // ResetAll ::= ENUMERATED
 const char* reset_all_opts::to_string() const
 {
-  static const char* options[] = {"reset-all"};
-  return convert_enum_idx(options, 1, value, "reset_all_e");
+  static const char* names[] = {"reset-all"};
+  return convert_enum_idx(names, 1, value, "reset_all_e");
 }
 
 // ResourceCoordinationEUTRACellInfo ::= SEQUENCE
@@ -15660,8 +15660,8 @@ void res_coordination_eutra_cell_info_s::to_json(json_writer& j) const
 // SCell-FailedtoSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t scell_failedto_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {84};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {84};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool scell_failedto_setup_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -15715,15 +15715,15 @@ SRSASN_CODE scell_failedto_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* scell_failedto_setup_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"SCell-FailedtoSetup-Item"};
-  return convert_enum_idx(options, 1, value, "scell_failedto_setup_item_ies_o::value_c::types");
+  static const char* names[] = {"SCell-FailedtoSetup-Item"};
+  return convert_enum_idx(names, 1, value, "scell_failedto_setup_item_ies_o::value_c::types");
 }
 
 // SCell-FailedtoSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t scell_failedto_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {86};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {86};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool scell_failedto_setup_mod_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -15777,15 +15777,15 @@ SRSASN_CODE scell_failedto_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* scell_failedto_setup_mod_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"SCell-FailedtoSetupMod-Item"};
-  return convert_enum_idx(options, 1, value, "scell_failedto_setup_mod_item_ies_o::value_c::types");
+  static const char* names[] = {"SCell-FailedtoSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "scell_failedto_setup_mod_item_ies_o::value_c::types");
 }
 
 // SCell-ToBeRemoved-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t scell_to_be_remd_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {51};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {51};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool scell_to_be_remd_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -15839,15 +15839,15 @@ SRSASN_CODE scell_to_be_remd_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* scell_to_be_remd_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"SCell-ToBeRemoved-Item"};
-  return convert_enum_idx(options, 1, value, "scell_to_be_remd_item_ies_o::value_c::types");
+  static const char* names[] = {"SCell-ToBeRemoved-Item"};
+  return convert_enum_idx(names, 1, value, "scell_to_be_remd_item_ies_o::value_c::types");
 }
 
 // SCell-ToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t scell_to_be_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {53};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {53};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool scell_to_be_setup_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -15901,15 +15901,15 @@ SRSASN_CODE scell_to_be_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* scell_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"SCell-ToBeSetup-Item"};
-  return convert_enum_idx(options, 1, value, "scell_to_be_setup_item_ies_o::value_c::types");
+  static const char* names[] = {"SCell-ToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "scell_to_be_setup_item_ies_o::value_c::types");
 }
 
 // SCell-ToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t scell_to_be_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {55};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {55};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool scell_to_be_setup_mod_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -15963,8 +15963,8 @@ SRSASN_CODE scell_to_be_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* scell_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"SCell-ToBeSetupMod-Item"};
-  return convert_enum_idx(options, 1, value, "scell_to_be_setup_mod_item_ies_o::value_c::types");
+  static const char* names[] = {"SCell-ToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "scell_to_be_setup_mod_item_ies_o::value_c::types");
 }
 
 // SItype-Item ::= SEQUENCE
@@ -16004,8 +16004,8 @@ void sitype_item_s::to_json(json_writer& j) const
 // SRBs-FailedToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t srbs_failed_to_be_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {65};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {65};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool srbs_failed_to_be_setup_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -16059,15 +16059,15 @@ SRSASN_CODE srbs_failed_to_be_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* srbs_failed_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"SRBs-FailedToBeSetup-Item"};
-  return convert_enum_idx(options, 1, value, "srbs_failed_to_be_setup_item_ies_o::value_c::types");
+  static const char* names[] = {"SRBs-FailedToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_failed_to_be_setup_item_ies_o::value_c::types");
 }
 
 // SRBs-FailedToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t srbs_failed_to_be_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {67};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {67};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool srbs_failed_to_be_setup_mod_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -16121,15 +16121,15 @@ SRSASN_CODE srbs_failed_to_be_setup_mod_item_ies_o::value_c::unpack(cbit_ref& br
 
 const char* srbs_failed_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"SRBs-FailedToBeSetupMod-Item"};
-  return convert_enum_idx(options, 1, value, "srbs_failed_to_be_setup_mod_item_ies_o::value_c::types");
+  static const char* names[] = {"SRBs-FailedToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_failed_to_be_setup_mod_item_ies_o::value_c::types");
 }
 
 // SRBs-Modified-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t srbs_modified_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {207};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {207};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool srbs_modified_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -16183,15 +16183,15 @@ SRSASN_CODE srbs_modified_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* srbs_modified_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"SRBs-Modified-Item"};
-  return convert_enum_idx(options, 1, value, "srbs_modified_item_ies_o::value_c::types");
+  static const char* names[] = {"SRBs-Modified-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_modified_item_ies_o::value_c::types");
 }
 
 // SRBs-Required-ToBeReleased-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t srbs_required_to_be_released_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {69};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {69};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool srbs_required_to_be_released_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -16245,15 +16245,15 @@ SRSASN_CODE srbs_required_to_be_released_item_ies_o::value_c::unpack(cbit_ref& b
 
 const char* srbs_required_to_be_released_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"SRBs-Required-ToBeReleased-Item"};
-  return convert_enum_idx(options, 1, value, "srbs_required_to_be_released_item_ies_o::value_c::types");
+  static const char* names[] = {"SRBs-Required-ToBeReleased-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_required_to_be_released_item_ies_o::value_c::types");
 }
 
 // SRBs-Setup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t srbs_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {203};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {203};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool srbs_setup_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -16307,15 +16307,15 @@ SRSASN_CODE srbs_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* srbs_setup_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"SRBs-Setup-Item"};
-  return convert_enum_idx(options, 1, value, "srbs_setup_item_ies_o::value_c::types");
+  static const char* names[] = {"SRBs-Setup-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_setup_item_ies_o::value_c::types");
 }
 
 // SRBs-SetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t srbs_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {205};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {205};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool srbs_setup_mod_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -16369,15 +16369,15 @@ SRSASN_CODE srbs_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* srbs_setup_mod_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"SRBs-SetupMod-Item"};
-  return convert_enum_idx(options, 1, value, "srbs_setup_mod_item_ies_o::value_c::types");
+  static const char* names[] = {"SRBs-SetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_setup_mod_item_ies_o::value_c::types");
 }
 
 // SRBs-ToBeReleased-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t srbs_to_be_released_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {71};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {71};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool srbs_to_be_released_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -16431,15 +16431,15 @@ SRSASN_CODE srbs_to_be_released_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* srbs_to_be_released_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"SRBs-ToBeReleased-Item"};
-  return convert_enum_idx(options, 1, value, "srbs_to_be_released_item_ies_o::value_c::types");
+  static const char* names[] = {"SRBs-ToBeReleased-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_to_be_released_item_ies_o::value_c::types");
 }
 
 // SRBs-ToBeSetup-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t srbs_to_be_setup_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {73};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {73};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool srbs_to_be_setup_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -16493,15 +16493,15 @@ SRSASN_CODE srbs_to_be_setup_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* srbs_to_be_setup_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"SRBs-ToBeSetup-Item"};
-  return convert_enum_idx(options, 1, value, "srbs_to_be_setup_item_ies_o::value_c::types");
+  static const char* names[] = {"SRBs-ToBeSetup-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_to_be_setup_item_ies_o::value_c::types");
 }
 
 // SRBs-ToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t srbs_to_be_setup_mod_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {75};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {75};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool srbs_to_be_setup_mod_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -16555,15 +16555,15 @@ SRSASN_CODE srbs_to_be_setup_mod_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* srbs_to_be_setup_mod_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"SRBs-ToBeSetupMod-Item"};
-  return convert_enum_idx(options, 1, value, "srbs_to_be_setup_mod_item_ies_o::value_c::types");
+  static const char* names[] = {"SRBs-ToBeSetupMod-Item"};
+  return convert_enum_idx(names, 1, value, "srbs_to_be_setup_mod_item_ies_o::value_c::types");
 }
 
 // Served-Cells-To-Add-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t served_cells_to_add_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {57};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool served_cells_to_add_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -16617,15 +16617,15 @@ SRSASN_CODE served_cells_to_add_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* served_cells_to_add_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Served-Cells-To-Add-Item"};
-  return convert_enum_idx(options, 1, value, "served_cells_to_add_item_ies_o::value_c::types");
+  static const char* names[] = {"Served-Cells-To-Add-Item"};
+  return convert_enum_idx(names, 1, value, "served_cells_to_add_item_ies_o::value_c::types");
 }
 
 // Served-Cells-To-Delete-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t served_cells_to_delete_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {59};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {59};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool served_cells_to_delete_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -16679,15 +16679,15 @@ SRSASN_CODE served_cells_to_delete_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* served_cells_to_delete_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Served-Cells-To-Delete-Item"};
-  return convert_enum_idx(options, 1, value, "served_cells_to_delete_item_ies_o::value_c::types");
+  static const char* names[] = {"Served-Cells-To-Delete-Item"};
+  return convert_enum_idx(names, 1, value, "served_cells_to_delete_item_ies_o::value_c::types");
 }
 
 // Served-Cells-To-Modify-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t served_cells_to_modify_item_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {61};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {61};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool served_cells_to_modify_item_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -16741,15 +16741,15 @@ SRSASN_CODE served_cells_to_modify_item_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* served_cells_to_modify_item_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Served-Cells-To-Modify-Item"};
-  return convert_enum_idx(options, 1, value, "served_cells_to_modify_item_ies_o::value_c::types");
+  static const char* names[] = {"Served-Cells-To-Modify-Item"};
+  return convert_enum_idx(names, 1, value, "served_cells_to_modify_item_ies_o::value_c::types");
 }
 
 // UE-associatedLogicalF1-ConnectionItemResAck ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_associated_lc_f1_conn_item_res_ack_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {80};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {80};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool ue_associated_lc_f1_conn_item_res_ack_o::is_id_valid(const uint32_t& id)
 {
@@ -16803,13 +16803,13 @@ SRSASN_CODE ue_associated_lc_f1_conn_item_res_ack_o::value_c::unpack(cbit_ref& b
 
 const char* ue_associated_lc_f1_conn_item_res_ack_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"UE-associatedLogicalF1-ConnectionItem"};
-  return convert_enum_idx(options, 1, value, "ue_associated_lc_f1_conn_item_res_ack_o::value_c::types");
+  static const char* names[] = {"UE-associatedLogicalF1-ConnectionItem"};
+  return convert_enum_idx(names, 1, value, "ue_associated_lc_f1_conn_item_res_ack_o::value_c::types");
 }
 uint8_t ue_associated_lc_f1_conn_item_res_ack_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {1};
-  return map_enum_number(options, 1, value, "ue_associated_lc_f1_conn_item_res_ack_o::value_c::types");
+  static const uint8_t numbers[] = {1};
+  return map_enum_number(numbers, 1, value, "ue_associated_lc_f1_conn_item_res_ack_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<ue_associated_lc_f1_conn_item_res_o>;
@@ -16817,22 +16817,22 @@ template struct asn1::protocol_ie_single_container_s<ue_associated_lc_f1_conn_it
 // Cancel-all-Warning-Messages-Indicator ::= ENUMERATED
 const char* cancel_all_warning_msgs_ind_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "cancel_all_warning_msgs_ind_e");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "cancel_all_warning_msgs_ind_e");
 }
 
 // DRXConfigurationIndicator ::= ENUMERATED
 const char* drx_cfg_ind_opts::to_string() const
 {
-  static const char* options[] = {"release"};
-  return convert_enum_idx(options, 1, value, "drx_cfg_ind_e");
+  static const char* names[] = {"release"};
+  return convert_enum_idx(names, 1, value, "drx_cfg_ind_e");
 }
 
 // FullConfiguration ::= ENUMERATED
 const char* full_cfg_opts::to_string() const
 {
-  static const char* options[] = {"full"};
-  return convert_enum_idx(options, 1, value, "full_cfg_e");
+  static const char* names[] = {"full"};
+  return convert_enum_idx(names, 1, value, "full_cfg_e");
 }
 
 template struct asn1::protocol_ie_single_container_s<gnb_cu_tnl_assoc_failed_to_setup_item_ies_o>;
@@ -16852,36 +16852,36 @@ template struct asn1::protocol_ie_single_container_s<gnb_du_tnl_assoc_to_rem_ite
 // GNB-DUConfigurationQuery ::= ENUMERATED
 const char* gnb_du_cfg_query_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "gnb_du_cfg_query_e");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "gnb_du_cfg_query_e");
 }
 
 // GNBDUOverloadInformation ::= ENUMERATED
 const char* gnbdu_overload_info_opts::to_string() const
 {
-  static const char* options[] = {"overloaded", "not-overloaded"};
-  return convert_enum_idx(options, 2, value, "gnbdu_overload_info_e");
+  static const char* names[] = {"overloaded", "not-overloaded"};
+  return convert_enum_idx(names, 2, value, "gnbdu_overload_info_e");
 }
 
 // IgnoreResourceCoordinationContainer ::= ENUMERATED
 const char* ignore_res_coordination_container_opts::to_string() const
 {
-  static const char* options[] = {"yes"};
-  return convert_enum_idx(options, 1, value, "ignore_res_coordination_container_e");
+  static const char* names[] = {"yes"};
+  return convert_enum_idx(names, 1, value, "ignore_res_coordination_container_e");
 }
 
 // InactivityMonitoringRequest ::= ENUMERATED
 const char* inactivity_monitoring_request_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "inactivity_monitoring_request_e");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "inactivity_monitoring_request_e");
 }
 
 // InactivityMonitoringResponse ::= ENUMERATED
 const char* inactivity_monitoring_resp_opts::to_string() const
 {
-  static const char* options[] = {"not-supported"};
-  return convert_enum_idx(options, 1, value, "inactivity_monitoring_resp_e");
+  static const char* names[] = {"not-supported"};
+  return convert_enum_idx(names, 1, value, "inactivity_monitoring_resp_e");
 }
 
 template struct asn1::protocol_ie_single_container_s<nr_cgi_list_for_restart_list_item_ies_o>;
@@ -16889,8 +16889,8 @@ template struct asn1::protocol_ie_single_container_s<nr_cgi_list_for_restart_lis
 // NeedforGap ::= ENUMERATED
 const char* needfor_gap_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "needfor_gap_e");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "needfor_gap_e");
 }
 
 template struct asn1::protocol_ie_single_container_s<pws_failed_nr_cgi_list_item_ies_o>;
@@ -17008,13 +17008,13 @@ template struct asn1::protocol_ie_single_container_s<paging_cell_item_ies_o>;
 // PagingDRX ::= ENUMERATED
 const char* paging_drx_opts::to_string() const
 {
-  static const char* options[] = {"v32", "v64", "v128", "v256"};
-  return convert_enum_idx(options, 4, value, "paging_drx_e");
+  static const char* names[] = {"v32", "v64", "v128", "v256"};
+  return convert_enum_idx(names, 4, value, "paging_drx_e");
 }
 uint16_t paging_drx_opts::to_number() const
 {
-  static const uint16_t options[] = {32, 64, 128, 256};
-  return map_enum_number(options, 4, value, "paging_drx_e");
+  static const uint16_t numbers[] = {32, 64, 128, 256};
+  return map_enum_number(numbers, 4, value, "paging_drx_e");
 }
 
 // PagingIdentity ::= CHOICE
@@ -17176,33 +17176,33 @@ SRSASN_CODE paging_id_c::unpack(cbit_ref& bref)
 
 const char* paging_id_c::types_opts::to_string() const
 {
-  static const char* options[] = {"rANUEPagingIdentity", "cNUEPagingIdentity", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "paging_id_c::types");
+  static const char* names[] = {"rANUEPagingIdentity", "cNUEPagingIdentity", "choice-extension"};
+  return convert_enum_idx(names, 3, value, "paging_id_c::types");
 }
 
 // PagingOrigin ::= ENUMERATED
 const char* paging_origin_opts::to_string() const
 {
-  static const char* options[] = {"non-3gpp"};
-  return convert_enum_idx(options, 1, value, "paging_origin_e");
+  static const char* names[] = {"non-3gpp"};
+  return convert_enum_idx(names, 1, value, "paging_origin_e");
 }
 int8_t paging_origin_opts::to_number() const
 {
-  static const int8_t options[] = {-3};
-  return map_enum_number(options, 1, value, "paging_origin_e");
+  static const int8_t numbers[] = {-3};
+  return map_enum_number(numbers, 1, value, "paging_origin_e");
 }
 
 // PagingPriority ::= ENUMERATED
 const char* paging_prio_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "priolevel1", "priolevel2", "priolevel3", "priolevel4", "priolevel5", "priolevel6", "priolevel7", "priolevel8"};
-  return convert_enum_idx(options, 8, value, "paging_prio_e");
+  return convert_enum_idx(names, 8, value, "paging_prio_e");
 }
 uint8_t paging_prio_opts::to_number() const
 {
-  static const uint8_t options[] = {1, 2, 3, 4, 5, 6, 7, 8};
-  return map_enum_number(options, 8, value, "paging_prio_e");
+  static const uint8_t numbers[] = {1, 2, 3, 4, 5, 6, 7, 8};
+  return map_enum_number(numbers, 8, value, "paging_prio_e");
 }
 
 template struct asn1::protocol_ie_single_container_s<potential_sp_cell_item_ies_o>;
@@ -17346,15 +17346,15 @@ void rrc_delivery_status_s::to_json(json_writer& j) const
 // RRCReconfigurationCompleteIndicator ::= ENUMERATED
 const char* rrc_recfg_complete_ind_opts::to_string() const
 {
-  static const char* options[] = {"true", "failure"};
-  return convert_enum_idx(options, 2, value, "rrc_recfg_complete_ind_e");
+  static const char* names[] = {"true", "failure"};
+  return convert_enum_idx(names, 2, value, "rrc_recfg_complete_ind_e");
 }
 
 // RequestType ::= ENUMERATED
 const char* request_type_opts::to_string() const
 {
-  static const char* options[] = {"offer", "execution"};
-  return convert_enum_idx(options, 2, value, "request_type_e");
+  static const char* names[] = {"offer", "execution"};
+  return convert_enum_idx(names, 2, value, "request_type_e");
 }
 
 // ResetType ::= CHOICE
@@ -17514,8 +17514,8 @@ SRSASN_CODE reset_type_c::unpack(cbit_ref& bref)
 
 const char* reset_type_c::types_opts::to_string() const
 {
-  static const char* options[] = {"f1-Interface", "partOfF1-Interface", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "reset_type_c::types");
+  static const char* names[] = {"f1-Interface", "partOfF1-Interface", "choice-extension"};
+  return convert_enum_idx(names, 3, value, "reset_type_c::types");
 }
 
 // ResourceCoordinationTransferInformation ::= SEQUENCE
@@ -17597,8 +17597,8 @@ template struct asn1::protocol_ie_single_container_s<srbs_to_be_setup_mod_item_i
 // SULAccessIndication ::= ENUMERATED
 const char* sul_access_ind_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "sul_access_ind_e");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "sul_access_ind_e");
 }
 
 template struct asn1::protocol_ie_single_container_s<served_cells_to_add_item_ies_o>;
@@ -17610,20 +17610,20 @@ template struct asn1::protocol_ie_single_container_s<served_cells_to_modify_item
 // TimeToWait ::= ENUMERATED
 const char* time_to_wait_opts::to_string() const
 {
-  static const char* options[] = {"v1s", "v2s", "v5s", "v10s", "v20s", "v60s"};
-  return convert_enum_idx(options, 6, value, "time_to_wait_e");
+  static const char* names[] = {"v1s", "v2s", "v5s", "v10s", "v20s", "v60s"};
+  return convert_enum_idx(names, 6, value, "time_to_wait_e");
 }
 uint8_t time_to_wait_opts::to_number() const
 {
-  static const uint8_t options[] = {1, 2, 5, 10, 20, 60};
-  return map_enum_number(options, 6, value, "time_to_wait_e");
+  static const uint8_t numbers[] = {1, 2, 5, 10, 20, 60};
+  return map_enum_number(numbers, 6, value, "time_to_wait_e");
 }
 
 // TransmissionActionIndicator ::= ENUMERATED
 const char* tx_action_ind_opts::to_string() const
 {
-  static const char* options[] = {"stop", "restart"};
-  return convert_enum_idx(options, 2, value, "tx_action_ind_e");
+  static const char* names[] = {"stop", "restart"};
+  return convert_enum_idx(names, 2, value, "tx_action_ind_e");
 }
 
 // UAC-Assistance-Info ::= SEQUENCE
@@ -17797,25 +17797,25 @@ SRSASN_CODE ue_id_idx_value_c::unpack(cbit_ref& bref)
 
 const char* ue_id_idx_value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"indexLength10", "choice-extension"};
-  return convert_enum_idx(options, 2, value, "ue_id_idx_value_c::types");
+  static const char* names[] = {"indexLength10", "choice-extension"};
+  return convert_enum_idx(names, 2, value, "ue_id_idx_value_c::types");
 }
 uint8_t ue_id_idx_value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {10};
-  return map_enum_number(options, 1, value, "ue_id_idx_value_c::types");
+  static const uint8_t numbers[] = {10};
+  return map_enum_number(numbers, 1, value, "ue_id_idx_value_c::types");
 }
 
 // F1RemovalFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t f1_removal_fail_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 0, 7};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {78, 0, 7};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool f1_removal_fail_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 0, 7};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 0, 7};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -18036,20 +18036,20 @@ SRSASN_CODE f1_removal_fail_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* f1_removal_fail_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "Cause", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 3, value, "f1_removal_fail_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 3, value, "f1_removal_fail_ies_o::value_c::types");
 }
 uint8_t f1_removal_fail_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "f1_removal_fail_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "f1_removal_fail_ies_o::value_c::types");
 }
 
 // F1RemovalRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t f1_removal_request_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {78};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool f1_removal_request_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -18102,25 +18102,25 @@ SRSASN_CODE f1_removal_request_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* f1_removal_request_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)"};
-  return convert_enum_idx(options, 1, value, "f1_removal_request_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)"};
+  return convert_enum_idx(names, 1, value, "f1_removal_request_ies_o::value_c::types");
 }
 uint8_t f1_removal_request_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "f1_removal_request_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "f1_removal_request_ies_o::value_c::types");
 }
 
 // F1RemovalResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t f1_removal_resp_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 7};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {78, 7};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool f1_removal_resp_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 7};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 7};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -18302,25 +18302,25 @@ SRSASN_CODE f1_removal_resp_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* f1_removal_resp_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 2, value, "f1_removal_resp_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 2, value, "f1_removal_resp_ies_o::value_c::types");
 }
 uint8_t f1_removal_resp_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "f1_removal_resp_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "f1_removal_resp_ies_o::value_c::types");
 }
 
 // F1SetupFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t f1_setup_fail_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 0, 77, 7};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {78, 0, 77, 7};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool f1_setup_fail_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 0, 77, 7};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 0, 77, 7};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -18575,25 +18575,25 @@ SRSASN_CODE f1_setup_fail_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* f1_setup_fail_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 4, value, "f1_setup_fail_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "f1_setup_fail_ies_o::value_c::types");
 }
 uint8_t f1_setup_fail_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "f1_setup_fail_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "f1_setup_fail_ies_o::value_c::types");
 }
 
 // F1SetupRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t f1_setup_request_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 42, 45, 44, 171};
-  return map_enum_number(options, 5, idx, "id");
+  static const uint32_t names[] = {78, 42, 45, 44, 171};
+  return map_enum_number(names, 5, idx, "id");
 }
 bool f1_setup_request_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 42, 45, 44, 171};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 42, 45, 44, 171};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -18890,21 +18890,21 @@ SRSASN_CODE f1_setup_request_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* f1_setup_request_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..255,...)", "INTEGER (0..68719476735)", "PrintableString", "GNB-DU-Served-Cells-List", "RRC-Version"};
-  return convert_enum_idx(options, 5, value, "f1_setup_request_ies_o::value_c::types");
+  return convert_enum_idx(names, 5, value, "f1_setup_request_ies_o::value_c::types");
 }
 
 // F1SetupResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t f1_setup_resp_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 82, 3, 170};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {78, 82, 3, 170};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool f1_setup_resp_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 82, 3, 170};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 82, 3, 170};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -19166,26 +19166,25 @@ SRSASN_CODE f1_setup_resp_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* f1_setup_resp_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
-      "INTEGER (0..255,...)", "PrintableString", "Cells-to-be-Activated-List", "RRC-Version"};
-  return convert_enum_idx(options, 4, value, "f1_setup_resp_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "PrintableString", "Cells-to-be-Activated-List", "RRC-Version"};
+  return convert_enum_idx(names, 4, value, "f1_setup_resp_ies_o::value_c::types");
 }
 uint8_t f1_setup_resp_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "f1_setup_resp_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "f1_setup_resp_ies_o::value_c::types");
 }
 
 // GNBCUConfigurationUpdateAcknowledgeIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnbcu_cfg_upd_ack_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 1, 7, 132, 134, 189};
-  return map_enum_number(options, 6, idx, "id");
+  static const uint32_t names[] = {78, 1, 7, 132, 134, 189};
+  return map_enum_number(names, 6, idx, "id");
 }
 bool gnbcu_cfg_upd_ack_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 1, 7, 132, 134, 189};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 1, 7, 132, 134, 189};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -19537,30 +19536,30 @@ SRSASN_CODE gnbcu_cfg_upd_ack_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnbcu_cfg_upd_ack_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)",
-                                  "Cells-Failed-to-be-Activated-List",
-                                  "CriticalityDiagnostics",
-                                  "GNB-CU-TNL-Association-Setup-List",
-                                  "GNB-CU-TNL-Association-Failed-To-Setup-List",
-                                  "Dedicated-SIDelivery-NeededUE-List"};
-  return convert_enum_idx(options, 6, value, "gnbcu_cfg_upd_ack_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "Cells-Failed-to-be-Activated-List",
+                                "CriticalityDiagnostics",
+                                "GNB-CU-TNL-Association-Setup-List",
+                                "GNB-CU-TNL-Association-Failed-To-Setup-List",
+                                "Dedicated-SIDelivery-NeededUE-List"};
+  return convert_enum_idx(names, 6, value, "gnbcu_cfg_upd_ack_ies_o::value_c::types");
 }
 uint8_t gnbcu_cfg_upd_ack_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnbcu_cfg_upd_ack_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnbcu_cfg_upd_ack_ies_o::value_c::types");
 }
 
 // GNBCUConfigurationUpdateFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnbcu_cfg_upd_fail_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 0, 77, 7};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {78, 0, 77, 7};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool gnbcu_cfg_upd_fail_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 0, 77, 7};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 0, 77, 7};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -19816,25 +19815,25 @@ SRSASN_CODE gnbcu_cfg_upd_fail_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnbcu_cfg_upd_fail_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 4, value, "gnbcu_cfg_upd_fail_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "gnbcu_cfg_upd_fail_ies_o::value_c::types");
 }
 uint8_t gnbcu_cfg_upd_fail_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnbcu_cfg_upd_fail_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnbcu_cfg_upd_fail_ies_o::value_c::types");
 }
 
 // GNBCUConfigurationUpdateIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnbcu_cfg_upd_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 3, 5, 121, 123, 125, 129, 105};
-  return map_enum_number(options, 8, idx, "id");
+  static const uint32_t names[] = {78, 3, 5, 121, 123, 125, 129, 105};
+  return map_enum_number(names, 8, idx, "id");
 }
 bool gnbcu_cfg_upd_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 3, 5, 121, 123, 125, 129, 105};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 3, 5, 121, 123, 125, 129, 105};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -20271,32 +20270,32 @@ SRSASN_CODE gnbcu_cfg_upd_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnbcu_cfg_upd_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)",
-                                  "Cells-to-be-Activated-List",
-                                  "Cells-to-be-Deactivated-List",
-                                  "GNB-CU-TNL-Association-To-Add-List",
-                                  "GNB-CU-TNL-Association-To-Remove-List",
-                                  "GNB-CU-TNL-Association-To-Update-List",
-                                  "Cells-to-be-Barred-List",
-                                  "Protected-EUTRA-Resources-List"};
-  return convert_enum_idx(options, 8, value, "gnbcu_cfg_upd_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "Cells-to-be-Activated-List",
+                                "Cells-to-be-Deactivated-List",
+                                "GNB-CU-TNL-Association-To-Add-List",
+                                "GNB-CU-TNL-Association-To-Remove-List",
+                                "GNB-CU-TNL-Association-To-Update-List",
+                                "Cells-to-be-Barred-List",
+                                "Protected-EUTRA-Resources-List"};
+  return convert_enum_idx(names, 8, value, "gnbcu_cfg_upd_ies_o::value_c::types");
 }
 uint8_t gnbcu_cfg_upd_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnbcu_cfg_upd_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnbcu_cfg_upd_ies_o::value_c::types");
 }
 
 // GNBDUConfigurationUpdateAcknowledgeIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnbdu_cfg_upd_ack_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 3, 7, 5};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {78, 3, 7, 5};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool gnbdu_cfg_upd_ack_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 3, 7, 5};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 3, 7, 5};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -20563,26 +20562,26 @@ SRSASN_CODE gnbdu_cfg_upd_ack_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnbdu_cfg_upd_ack_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..255,...)", "Cells-to-be-Activated-List", "CriticalityDiagnostics", "Cells-to-be-Deactivated-List"};
-  return convert_enum_idx(options, 4, value, "gnbdu_cfg_upd_ack_ies_o::value_c::types");
+  return convert_enum_idx(names, 4, value, "gnbdu_cfg_upd_ack_ies_o::value_c::types");
 }
 uint8_t gnbdu_cfg_upd_ack_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnbdu_cfg_upd_ack_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnbdu_cfg_upd_ack_ies_o::value_c::types");
 }
 
 // GNBDUConfigurationUpdateFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnbdu_cfg_upd_fail_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 0, 77, 7};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {78, 0, 77, 7};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool gnbdu_cfg_upd_fail_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 0, 77, 7};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 0, 77, 7};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -20838,25 +20837,25 @@ SRSASN_CODE gnbdu_cfg_upd_fail_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnbdu_cfg_upd_fail_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 4, value, "gnbdu_cfg_upd_fail_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "gnbdu_cfg_upd_fail_ies_o::value_c::types");
 }
 uint8_t gnbdu_cfg_upd_fail_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnbdu_cfg_upd_fail_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnbdu_cfg_upd_fail_ies_o::value_c::types");
 }
 
 // GNBDUConfigurationUpdateIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnbdu_cfg_upd_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 58, 62, 60, 89, 189, 42, 228};
-  return map_enum_number(options, 8, idx, "id");
+  static const uint32_t names[] = {78, 58, 62, 60, 89, 189, 42, 228};
+  return map_enum_number(names, 8, idx, "id");
 }
 bool gnbdu_cfg_upd_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 58, 62, 60, 89, 189, 42, 228};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 58, 62, 60, 89, 189, 42, 228};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -21285,27 +21284,27 @@ SRSASN_CODE gnbdu_cfg_upd_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnbdu_cfg_upd_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)",
-                                  "Served-Cells-To-Add-List",
-                                  "Served-Cells-To-Modify-List",
-                                  "Served-Cells-To-Delete-List",
-                                  "Cells-Status-List",
-                                  "Dedicated-SIDelivery-NeededUE-List",
-                                  "INTEGER (0..68719476735)",
-                                  "GNB-DU-TNL-Association-To-Remove-List"};
-  return convert_enum_idx(options, 8, value, "gnbdu_cfg_upd_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "Served-Cells-To-Add-List",
+                                "Served-Cells-To-Modify-List",
+                                "Served-Cells-To-Delete-List",
+                                "Cells-Status-List",
+                                "Dedicated-SIDelivery-NeededUE-List",
+                                "INTEGER (0..68719476735)",
+                                "GNB-DU-TNL-Association-To-Remove-List"};
+  return convert_enum_idx(names, 8, value, "gnbdu_cfg_upd_ies_o::value_c::types");
 }
 
 // GNBDUResourceCoordinationRequest-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnbdu_res_coordination_request_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 106, 101, 213};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {78, 106, 101, 213};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool gnbdu_res_coordination_request_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 106, 101, 213};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 106, 101, 213};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -21557,26 +21556,26 @@ SRSASN_CODE gnbdu_res_coordination_request_ies_o::value_c::unpack(cbit_ref& bref
 
 const char* gnbdu_res_coordination_request_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..255,...)", "RequestType", "OCTET STRING", "IgnoreResourceCoordinationContainer"};
-  return convert_enum_idx(options, 4, value, "gnbdu_res_coordination_request_ies_o::value_c::types");
+  return convert_enum_idx(names, 4, value, "gnbdu_res_coordination_request_ies_o::value_c::types");
 }
 uint8_t gnbdu_res_coordination_request_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnbdu_res_coordination_request_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnbdu_res_coordination_request_ies_o::value_c::types");
 }
 
 // GNBDUResourceCoordinationResponse-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnbdu_res_coordination_resp_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 102};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {78, 102};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool gnbdu_res_coordination_resp_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 102};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 102};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -21760,25 +21759,25 @@ SRSASN_CODE gnbdu_res_coordination_resp_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnbdu_res_coordination_resp_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "OCTET STRING"};
-  return convert_enum_idx(options, 2, value, "gnbdu_res_coordination_resp_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "OCTET STRING"};
+  return convert_enum_idx(names, 2, value, "gnbdu_res_coordination_resp_ies_o::value_c::types");
 }
 uint8_t gnbdu_res_coordination_resp_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnbdu_res_coordination_resp_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnbdu_res_coordination_resp_ies_o::value_c::types");
 }
 
 // GNBDUStatusIndicationIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t gnbdu_status_ind_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 172};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {78, 172};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool gnbdu_status_ind_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 172};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 172};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -21940,25 +21939,25 @@ SRSASN_CODE gnbdu_status_ind_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnbdu_status_ind_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "GNBDUOverloadInformation"};
-  return convert_enum_idx(options, 2, value, "gnbdu_status_ind_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "GNBDUOverloadInformation"};
+  return convert_enum_idx(names, 2, value, "gnbdu_status_ind_ies_o::value_c::types");
 }
 uint8_t gnbdu_status_ind_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnbdu_status_ind_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnbdu_status_ind_ies_o::value_c::types");
 }
 
 // InitialULRRCMessageTransferIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t init_ulrrc_msg_transfer_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {41, 111, 95, 50, 128, 178, 78, 226, 241};
-  return map_enum_number(options, 9, idx, "id");
+  static const uint32_t names[] = {41, 111, 95, 50, 128, 178, 78, 226, 241};
+  return map_enum_number(names, 9, idx, "id");
 }
 bool init_ulrrc_msg_transfer_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {41, 111, 95, 50, 128, 178, 78, 226, 241};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {41, 111, 95, 50, 128, 178, 78, 226, 241};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -22395,28 +22394,28 @@ SRSASN_CODE init_ulrrc_msg_transfer_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* init_ulrrc_msg_transfer_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)",
-                                  "NRCGI",
-                                  "INTEGER (0..65535,...)",
-                                  "OCTET STRING",
-                                  "OCTET STRING",
-                                  "SULAccessIndication",
-                                  "INTEGER (0..255,...)",
-                                  "OCTET STRING",
-                                  "OCTET STRING"};
-  return convert_enum_idx(options, 9, value, "init_ulrrc_msg_transfer_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "NRCGI",
+                                "INTEGER (0..65535,...)",
+                                "OCTET STRING",
+                                "OCTET STRING",
+                                "SULAccessIndication",
+                                "INTEGER (0..255,...)",
+                                "OCTET STRING",
+                                "OCTET STRING"};
+  return convert_enum_idx(names, 9, value, "init_ulrrc_msg_transfer_ies_o::value_c::types");
 }
 
 // NetworkAccessRateReductionIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t network_access_rate_reduction_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 225};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {78, 225};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool network_access_rate_reduction_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 225};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 225};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -22599,25 +22598,25 @@ SRSASN_CODE network_access_rate_reduction_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* network_access_rate_reduction_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "UAC-Assistance-Info"};
-  return convert_enum_idx(options, 2, value, "network_access_rate_reduction_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "UAC-Assistance-Info"};
+  return convert_enum_idx(names, 2, value, "network_access_rate_reduction_ies_o::value_c::types");
 }
 uint8_t network_access_rate_reduction_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "network_access_rate_reduction_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "network_access_rate_reduction_ies_o::value_c::types");
 }
 
 // NotifyIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t notify_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41, 137};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {40, 41, 137};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool notify_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41, 137};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41, 137};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -22836,20 +22835,20 @@ SRSASN_CODE notify_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* notify_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "DRB-Notify-List"};
-  return convert_enum_idx(options, 3, value, "notify_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "DRB-Notify-List"};
+  return convert_enum_idx(names, 3, value, "notify_ies_o::value_c::types");
 }
 
 // PWSCancelRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pws_cancel_request_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 142, 148, 157, 220};
-  return map_enum_number(options, 5, idx, "id");
+  static const uint32_t names[] = {78, 142, 148, 157, 220};
+  return map_enum_number(names, 5, idx, "id");
 }
 bool pws_cancel_request_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 142, 148, 157, 220};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 142, 148, 157, 220};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -23142,24 +23141,24 @@ SRSASN_CODE pws_cancel_request_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* pws_cancel_request_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)",
-                                  "INTEGER (0..65535)",
-                                  "Broadcast-To-Be-Cancelled-List",
-                                  "Cancel-all-Warning-Messages-Indicator",
-                                  "NotificationInformation"};
-  return convert_enum_idx(options, 5, value, "pws_cancel_request_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "INTEGER (0..65535)",
+                                "Broadcast-To-Be-Cancelled-List",
+                                "Cancel-all-Warning-Messages-Indicator",
+                                "NotificationInformation"};
+  return convert_enum_idx(names, 5, value, "pws_cancel_request_ies_o::value_c::types");
 }
 
 // PWSCancelResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pws_cancel_resp_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 150, 7};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {78, 150, 7};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool pws_cancel_resp_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 150, 7};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 150, 7};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -23383,25 +23382,25 @@ SRSASN_CODE pws_cancel_resp_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* pws_cancel_resp_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "Cells-Broadcast-Cancelled-List", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 3, value, "pws_cancel_resp_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "Cells-Broadcast-Cancelled-List", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 3, value, "pws_cancel_resp_ies_o::value_c::types");
 }
 uint8_t pws_cancel_resp_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "pws_cancel_resp_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "pws_cancel_resp_ies_o::value_c::types");
 }
 
 // PWSFailureIndicationIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pws_fail_ind_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 154};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {78, 154};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool pws_fail_ind_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 154};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 154};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -23586,25 +23585,25 @@ SRSASN_CODE pws_fail_ind_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* pws_fail_ind_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "PWS-Failed-NR-CGI-List"};
-  return convert_enum_idx(options, 2, value, "pws_fail_ind_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "PWS-Failed-NR-CGI-List"};
+  return convert_enum_idx(names, 2, value, "pws_fail_ind_ies_o::value_c::types");
 }
 uint8_t pws_fail_ind_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "pws_fail_ind_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "pws_fail_ind_ies_o::value_c::types");
 }
 
 // PWSRestartIndicationIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t pws_restart_ind_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 152};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {78, 152};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool pws_restart_ind_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 152};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 152};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -23789,25 +23788,25 @@ SRSASN_CODE pws_restart_ind_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* pws_restart_ind_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "NR-CGI-List-For-Restart-List"};
-  return convert_enum_idx(options, 2, value, "pws_restart_ind_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "NR-CGI-List-For-Restart-List"};
+  return convert_enum_idx(names, 2, value, "pws_restart_ind_ies_o::value_c::types");
 }
 uint8_t pws_restart_ind_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "pws_restart_ind_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "pws_restart_ind_ies_o::value_c::types");
 }
 
 // PagingIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t paging_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {117, 127, 114, 115, 113, 216};
-  return map_enum_number(options, 6, idx, "id");
+  static const uint32_t names[] = {117, 127, 114, 115, 113, 216};
+  return map_enum_number(names, 6, idx, "id");
 }
 bool paging_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {117, 127, 114, 115, 113, 216};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {117, 127, 114, 115, 113, 216};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -24138,9 +24137,9 @@ SRSASN_CODE paging_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* paging_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "UEIdentityIndexValue", "PagingIdentity", "PagingDRX", "PagingPriority", "PagingCell-list", "PagingOrigin"};
-  return convert_enum_idx(options, 6, value, "paging_ies_o::value_c::types");
+  return convert_enum_idx(names, 6, value, "paging_ies_o::value_c::types");
 }
 
 // Value ::= OPEN TYPE
@@ -24162,20 +24161,20 @@ SRSASN_CODE f1_ap_private_ies_empty_o::value_c::unpack(cbit_ref& bref)
 
 const char* f1_ap_private_ies_empty_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {};
-  return convert_enum_idx(options, 0, value, "f1_ap_private_ies_empty_o::value_c::types");
+  static const char* names[] = {};
+  return convert_enum_idx(names, 0, value, "f1_ap_private_ies_empty_o::value_c::types");
 }
 
 // RRCDeliveryReportIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t rrc_delivery_report_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41, 185, 64};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {40, 41, 185, 64};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool rrc_delivery_report_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41, 185, 64};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41, 185, 64};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -24426,21 +24425,21 @@ SRSASN_CODE rrc_delivery_report_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* rrc_delivery_report_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "RRCDeliveryStatus", "INTEGER (0..3,...)"};
-  return convert_enum_idx(options, 4, value, "rrc_delivery_report_ies_o::value_c::types");
+  return convert_enum_idx(names, 4, value, "rrc_delivery_report_ies_o::value_c::types");
 }
 
 // ResetAcknowledgeIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t reset_ack_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 81, 7};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {78, 81, 7};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool reset_ack_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 81, 7};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 81, 7};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -24664,26 +24663,26 @@ SRSASN_CODE reset_ack_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* reset_ack_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..255,...)", "UE-associatedLogicalF1-ConnectionListResAck", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 3, value, "reset_ack_ies_o::value_c::types");
+  return convert_enum_idx(names, 3, value, "reset_ack_ies_o::value_c::types");
 }
 uint8_t reset_ack_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0, 1};
-  return map_enum_number(options, 2, value, "reset_ack_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0, 1};
+  return map_enum_number(numbers, 2, value, "reset_ack_ies_o::value_c::types");
 }
 
 // ResetIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t reset_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 0, 48};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {78, 0, 48};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool reset_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 0, 48};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 0, 48};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -24904,25 +24903,25 @@ SRSASN_CODE reset_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* reset_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "Cause", "ResetType"};
-  return convert_enum_idx(options, 3, value, "reset_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "ResetType"};
+  return convert_enum_idx(names, 3, value, "reset_ies_o::value_c::types");
 }
 uint8_t reset_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "reset_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "reset_ies_o::value_c::types");
 }
 
 // SystemInformationDeliveryCommandIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t sys_info_delivery_cmd_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 111, 116, 156};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {78, 111, 116, 156};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool sys_info_delivery_cmd_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 111, 116, 156};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 111, 116, 156};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -25181,20 +25180,20 @@ SRSASN_CODE sys_info_delivery_cmd_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* sys_info_delivery_cmd_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "NRCGI", "SItype-List", "INTEGER (0..4294967295)"};
-  return convert_enum_idx(options, 4, value, "sys_info_delivery_cmd_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "NRCGI", "SItype-List", "INTEGER (0..4294967295)"};
+  return convert_enum_idx(names, 4, value, "sys_info_delivery_cmd_ies_o::value_c::types");
 }
 
 // UEContextModificationConfirmIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_mod_confirm_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41, 49, 19, 50, 7, 109, 195};
-  return map_enum_number(options, 8, idx, "id");
+  static const uint32_t names[] = {40, 41, 49, 19, 50, 7, 109, 195};
+  return map_enum_number(names, 8, idx, "id");
 }
 bool ue_context_mod_confirm_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41, 49, 19, 50, 7, 109, 195};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41, 49, 19, 50, 7, 109, 195};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -25602,27 +25601,27 @@ SRSASN_CODE ue_context_mod_confirm_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* ue_context_mod_confirm_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)",
-                                  "INTEGER (0..4294967295)",
-                                  "OCTET STRING",
-                                  "DRBs-ModifiedConf-List",
-                                  "OCTET STRING",
-                                  "CriticalityDiagnostics",
-                                  "ExecuteDuplication",
-                                  "ResourceCoordinationTransferInformation"};
-  return convert_enum_idx(options, 8, value, "ue_context_mod_confirm_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "OCTET STRING",
+                                "DRBs-ModifiedConf-List",
+                                "OCTET STRING",
+                                "CriticalityDiagnostics",
+                                "ExecuteDuplication",
+                                "ResourceCoordinationTransferInformation"};
+  return convert_enum_idx(names, 8, value, "ue_context_mod_confirm_ies_o::value_c::types");
 }
 
 // UEContextModificationFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_mod_fail_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41, 0, 7};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {40, 41, 0, 7};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool ue_context_mod_fail_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41, 0, 7};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41, 0, 7};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -25878,21 +25877,21 @@ SRSASN_CODE ue_context_mod_fail_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* ue_context_mod_fail_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 4, value, "ue_context_mod_fail_ies_o::value_c::types");
+  return convert_enum_idx(names, 4, value, "ue_context_mod_fail_ies_o::value_c::types");
 }
 
 // UEContextModificationRefuseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_mod_refuse_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41, 0, 7};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {40, 41, 0, 7};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool ue_context_mod_refuse_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41, 0, 7};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41, 0, 7};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -26148,23 +26147,23 @@ SRSASN_CODE ue_context_mod_refuse_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* ue_context_mod_refuse_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 4, value, "ue_context_mod_refuse_ies_o::value_c::types");
+  return convert_enum_idx(names, 4, value, "ue_context_mod_refuse_ies_o::value_c::types");
 }
 
 // UEContextModificationRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_mod_request_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41, 63, 107, 96,  38,  9,   79,  49,  87,  50,  56,  52,  76,  37, 31,
-                                     72, 33, 97, 108, 159, 174, 175, 162, 158, 109, 184, 195, 182, 215, 94};
-  return map_enum_number(options, 31, idx, "id");
+  static const uint32_t names[] = {40, 41, 63, 107, 96,  38,  9,   79,  49,  87,  50,  56,  52,  76,  37, 31,
+                                   72, 33, 97, 108, 159, 174, 175, 162, 158, 109, 184, 195, 182, 215, 94};
+  return map_enum_number(names, 31, idx, "id");
 }
 bool ue_context_mod_request_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41, 63, 107, 96,  38,  9,   79,  49,  87,  50,  56,  52,  76,  37, 31,
-                                     72, 33, 97, 108, 159, 174, 175, 162, 158, 109, 184, 195, 182, 215, 94};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41, 63, 107, 96,  38,  9,   79,  49,  87,  50,  56,  52,  76,  37, 31,
+                                   72, 33, 97, 108, 159, 174, 175, 162, 158, 109, 184, 195, 182, 215, 94};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -27426,50 +27425,50 @@ SRSASN_CODE ue_context_mod_request_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* ue_context_mod_request_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)",
-                                  "INTEGER (0..4294967295)",
-                                  "NRCGI",
-                                  "INTEGER (0..31,...)",
-                                  "CellULConfigured",
-                                  "DRXCycle",
-                                  "CUtoDURRCInformation",
-                                  "TransmissionActionIndicator",
-                                  "OCTET STRING",
-                                  "RRCReconfigurationCompleteIndicator",
-                                  "OCTET STRING",
-                                  "SCell-ToBeSetupMod-List",
-                                  "SCell-ToBeRemoved-List",
-                                  "SRBs-ToBeSetupMod-List",
-                                  "DRBs-ToBeSetupMod-List",
-                                  "DRBs-ToBeModified-List",
-                                  "SRBs-ToBeReleased-List",
-                                  "DRBs-ToBeReleased-List",
-                                  "InactivityMonitoringRequest",
-                                  "RAT-FrequencyPriorityInformation",
-                                  "DRXConfigurationIndicator",
-                                  "RLCFailureIndication",
-                                  "OCTET STRING",
-                                  "GNB-DUConfigurationQuery",
-                                  "INTEGER (0..4000000000000,...)",
-                                  "ExecuteDuplication",
-                                  "RRCDeliveryStatusRequest",
-                                  "ResourceCoordinationTransferInformation",
-                                  "INTEGER (1..64,...)",
-                                  "NeedforGap",
-                                  "FullConfiguration"};
-  return convert_enum_idx(options, 31, value, "ue_context_mod_request_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "NRCGI",
+                                "INTEGER (0..31,...)",
+                                "CellULConfigured",
+                                "DRXCycle",
+                                "CUtoDURRCInformation",
+                                "TransmissionActionIndicator",
+                                "OCTET STRING",
+                                "RRCReconfigurationCompleteIndicator",
+                                "OCTET STRING",
+                                "SCell-ToBeSetupMod-List",
+                                "SCell-ToBeRemoved-List",
+                                "SRBs-ToBeSetupMod-List",
+                                "DRBs-ToBeSetupMod-List",
+                                "DRBs-ToBeModified-List",
+                                "SRBs-ToBeReleased-List",
+                                "DRBs-ToBeReleased-List",
+                                "InactivityMonitoringRequest",
+                                "RAT-FrequencyPriorityInformation",
+                                "DRXConfigurationIndicator",
+                                "RLCFailureIndication",
+                                "OCTET STRING",
+                                "GNB-DUConfigurationQuery",
+                                "INTEGER (0..4000000000000,...)",
+                                "ExecuteDuplication",
+                                "RRCDeliveryStatusRequest",
+                                "ResourceCoordinationTransferInformation",
+                                "INTEGER (1..64,...)",
+                                "NeedforGap",
+                                "FullConfiguration"};
+  return convert_enum_idx(names, 31, value, "ue_context_mod_request_ies_o::value_c::types");
 }
 
 // UEContextModificationRequiredIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_mod_required_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41, 49, 39, 23, 70, 25, 0};
-  return map_enum_number(options, 8, idx, "id");
+  static const uint32_t names[] = {40, 41, 49, 39, 23, 70, 25, 0};
+  return map_enum_number(names, 8, idx, "id");
 }
 bool ue_context_mod_required_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41, 49, 39, 23, 70, 25, 0};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41, 49, 39, 23, 70, 25, 0};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -27892,27 +27891,27 @@ SRSASN_CODE ue_context_mod_required_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* ue_context_mod_required_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)",
-                                  "INTEGER (0..4294967295)",
-                                  "OCTET STRING",
-                                  "DUtoCURRCInformation",
-                                  "DRBs-Required-ToBeModified-List",
-                                  "SRBs-Required-ToBeReleased-List",
-                                  "DRBs-Required-ToBeReleased-List",
-                                  "Cause"};
-  return convert_enum_idx(options, 8, value, "ue_context_mod_required_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "OCTET STRING",
+                                "DUtoCURRCInformation",
+                                "DRBs-Required-ToBeModified-List",
+                                "SRBs-Required-ToBeReleased-List",
+                                "DRBs-Required-ToBeReleased-List",
+                                "Cause"};
+  return convert_enum_idx(names, 8, value, "ue_context_mod_required_ies_o::value_c::types");
 }
 
 // UEContextModificationResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_mod_resp_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41, 49, 39, 29, 21, 68, 17, 85, 13, 98, 7, 95, 198, 204, 206, 94};
-  return map_enum_number(options, 17, idx, "id");
+  static const uint32_t names[] = {40, 41, 49, 39, 29, 21, 68, 17, 85, 13, 98, 7, 95, 198, 204, 206, 94};
+  return map_enum_number(names, 17, idx, "id");
 }
 bool ue_context_mod_resp_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41, 49, 39, 29, 21, 68, 17, 85, 13, 98, 7, 95, 198, 204, 206, 94};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41, 49, 39, 29, 21, 68, 17, 85, 13, 98, 7, 95, 198, 204, 206, 94};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -28686,36 +28685,36 @@ SRSASN_CODE ue_context_mod_resp_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* ue_context_mod_resp_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)",
-                                  "INTEGER (0..4294967295)",
-                                  "OCTET STRING",
-                                  "DUtoCURRCInformation",
-                                  "DRBs-SetupMod-List",
-                                  "DRBs-Modified-List",
-                                  "SRBs-FailedToBeSetupMod-List",
-                                  "DRBs-FailedToBeSetupMod-List",
-                                  "SCell-FailedtoSetupMod-List",
-                                  "DRBs-FailedToBeModified-List",
-                                  "InactivityMonitoringResponse",
-                                  "CriticalityDiagnostics",
-                                  "INTEGER (0..65535,...)",
-                                  "Associated-SCell-List",
-                                  "SRBs-SetupMod-List",
-                                  "SRBs-Modified-List",
-                                  "FullConfiguration"};
-  return convert_enum_idx(options, 17, value, "ue_context_mod_resp_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "OCTET STRING",
+                                "DUtoCURRCInformation",
+                                "DRBs-SetupMod-List",
+                                "DRBs-Modified-List",
+                                "SRBs-FailedToBeSetupMod-List",
+                                "DRBs-FailedToBeSetupMod-List",
+                                "SCell-FailedtoSetupMod-List",
+                                "DRBs-FailedToBeModified-List",
+                                "InactivityMonitoringResponse",
+                                "CriticalityDiagnostics",
+                                "INTEGER (0..65535,...)",
+                                "Associated-SCell-List",
+                                "SRBs-SetupMod-List",
+                                "SRBs-Modified-List",
+                                "FullConfiguration"};
+  return convert_enum_idx(names, 17, value, "ue_context_mod_resp_ies_o::value_c::types");
 }
 
 // UEContextReleaseCommandIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_release_cmd_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41, 0, 50, 64, 47, 109, 184};
-  return map_enum_number(options, 8, idx, "id");
+  static const uint32_t names[] = {40, 41, 0, 50, 64, 47, 109, 184};
+  return map_enum_number(names, 8, idx, "id");
 }
 bool ue_context_release_cmd_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41, 0, 50, 64, 47, 109, 184};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41, 0, 50, 64, 47, 109, 184};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -29106,27 +29105,27 @@ SRSASN_CODE ue_context_release_cmd_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* ue_context_release_cmd_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)",
-                                  "INTEGER (0..4294967295)",
-                                  "Cause",
-                                  "OCTET STRING",
-                                  "INTEGER (0..3,...)",
-                                  "INTEGER (0..4294967295)",
-                                  "ExecuteDuplication",
-                                  "RRCDeliveryStatusRequest"};
-  return convert_enum_idx(options, 8, value, "ue_context_release_cmd_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "Cause",
+                                "OCTET STRING",
+                                "INTEGER (0..3,...)",
+                                "INTEGER (0..4294967295)",
+                                "ExecuteDuplication",
+                                "RRCDeliveryStatusRequest"};
+  return convert_enum_idx(names, 8, value, "ue_context_release_cmd_ies_o::value_c::types");
 }
 
 // UEContextReleaseCompleteIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_release_complete_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41, 7};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {40, 41, 7};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool ue_context_release_complete_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41, 7};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41, 7};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -29343,20 +29342,20 @@ SRSASN_CODE ue_context_release_complete_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* ue_context_release_complete_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 3, value, "ue_context_release_complete_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 3, value, "ue_context_release_complete_ies_o::value_c::types");
 }
 
 // UEContextReleaseRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_release_request_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41, 0};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {40, 41, 0};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool ue_context_release_request_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41, 0};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41, 0};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -29573,20 +29572,20 @@ SRSASN_CODE ue_context_release_request_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* ue_context_release_request_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause"};
-  return convert_enum_idx(options, 3, value, "ue_context_release_request_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause"};
+  return convert_enum_idx(names, 3, value, "ue_context_release_request_ies_o::value_c::types");
 }
 
 // UEContextSetupFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_setup_fail_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41, 0, 7, 92};
-  return map_enum_number(options, 5, idx, "id");
+  static const uint32_t names[] = {40, 41, 0, 7, 92};
+  return map_enum_number(names, 5, idx, "id");
 }
 bool ue_context_setup_fail_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41, 0, 7, 92};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41, 0, 7, 92};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -29884,23 +29883,23 @@ SRSASN_CODE ue_context_setup_fail_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* ue_context_setup_fail_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics", "Potential-SpCell-List"};
-  return convert_enum_idx(options, 5, value, "ue_context_setup_fail_ies_o::value_c::types");
+  return convert_enum_idx(names, 5, value, "ue_context_setup_fail_ies_o::value_c::types");
 }
 
 // UEContextSetupRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_setup_request_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41,  63, 107, 96,  9,   90,  38,  49,  54,  74, 35,
-                                     97, 108, 50, 126, 165, 158, 184, 195, 182, 217, 226};
-  return map_enum_number(options, 23, idx, "id");
+  static const uint32_t names[] = {40, 41,  63, 107, 96,  9,   90,  38,  49,  54,  74, 35,
+                                   97, 108, 50, 126, 165, 158, 184, 195, 182, 217, 226};
+  return map_enum_number(names, 23, idx, "id");
 }
 bool ue_context_setup_request_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41,  63, 107, 96,  9,   90,  38,  49,  54,  74, 35,
-                                     97, 108, 50, 126, 165, 158, 184, 195, 182, 217, 226};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41,  63, 107, 96,  9,   90,  38,  49,  54,  74, 35,
+                                   97, 108, 50, 126, 165, 158, 184, 195, 182, 217, 226};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -30869,42 +30868,42 @@ SRSASN_CODE ue_context_setup_request_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* ue_context_setup_request_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)",
-                                  "INTEGER (0..4294967295)",
-                                  "NRCGI",
-                                  "INTEGER (0..31,...)",
-                                  "CellULConfigured",
-                                  "CUtoDURRCInformation",
-                                  "Candidate-SpCell-List",
-                                  "DRXCycle",
-                                  "OCTET STRING",
-                                  "SCell-ToBeSetup-List",
-                                  "SRBs-ToBeSetup-List",
-                                  "DRBs-ToBeSetup-List",
-                                  "InactivityMonitoringRequest",
-                                  "RAT-FrequencyPriorityInformation",
-                                  "OCTET STRING",
-                                  "BIT STRING",
-                                  "OCTET STRING",
-                                  "INTEGER (0..4000000000000,...)",
-                                  "RRCDeliveryStatusRequest",
-                                  "ResourceCoordinationTransferInformation",
-                                  "INTEGER (1..64,...)",
-                                  "INTEGER (0..4294967295)",
-                                  "OCTET STRING"};
-  return convert_enum_idx(options, 23, value, "ue_context_setup_request_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "NRCGI",
+                                "INTEGER (0..31,...)",
+                                "CellULConfigured",
+                                "CUtoDURRCInformation",
+                                "Candidate-SpCell-List",
+                                "DRXCycle",
+                                "OCTET STRING",
+                                "SCell-ToBeSetup-List",
+                                "SRBs-ToBeSetup-List",
+                                "DRBs-ToBeSetup-List",
+                                "InactivityMonitoringRequest",
+                                "RAT-FrequencyPriorityInformation",
+                                "OCTET STRING",
+                                "BIT STRING",
+                                "OCTET STRING",
+                                "INTEGER (0..4000000000000,...)",
+                                "RRCDeliveryStatusRequest",
+                                "ResourceCoordinationTransferInformation",
+                                "INTEGER (1..64,...)",
+                                "INTEGER (0..4294967295)",
+                                "OCTET STRING"};
+  return convert_enum_idx(names, 23, value, "ue_context_setup_request_ies_o::value_c::types");
 }
 
 // UEContextSetupResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_context_setup_resp_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41, 39, 95, 49, 94, 27, 66, 15, 83, 98, 7, 202};
-  return map_enum_number(options, 13, idx, "id");
+  static const uint32_t names[] = {40, 41, 39, 95, 49, 94, 27, 66, 15, 83, 98, 7, 202};
+  return map_enum_number(names, 13, idx, "id");
 }
 bool ue_context_setup_resp_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41, 39, 95, 49, 94, 27, 66, 15, 83, 98, 7, 202};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41, 39, 95, 49, 94, 27, 66, 15, 83, 98, 7, 202};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -31510,32 +31509,32 @@ SRSASN_CODE ue_context_setup_resp_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* ue_context_setup_resp_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)",
-                                  "INTEGER (0..4294967295)",
-                                  "DUtoCURRCInformation",
-                                  "INTEGER (0..65535,...)",
-                                  "OCTET STRING",
-                                  "FullConfiguration",
-                                  "DRBs-Setup-List",
-                                  "SRBs-FailedToBeSetup-List",
-                                  "DRBs-FailedToBeSetup-List",
-                                  "SCell-FailedtoSetup-List",
-                                  "InactivityMonitoringResponse",
-                                  "CriticalityDiagnostics",
-                                  "SRBs-Setup-List"};
-  return convert_enum_idx(options, 13, value, "ue_context_setup_resp_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "DUtoCURRCInformation",
+                                "INTEGER (0..65535,...)",
+                                "OCTET STRING",
+                                "FullConfiguration",
+                                "DRBs-Setup-List",
+                                "SRBs-FailedToBeSetup-List",
+                                "DRBs-FailedToBeSetup-List",
+                                "SCell-FailedtoSetup-List",
+                                "InactivityMonitoringResponse",
+                                "CriticalityDiagnostics",
+                                "SRBs-Setup-List"};
+  return convert_enum_idx(names, 13, value, "ue_context_setup_resp_ies_o::value_c::types");
 }
 
 // UEInactivityNotificationIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ue_inactivity_notif_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41, 100};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {40, 41, 100};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool ue_inactivity_notif_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41, 100};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41, 100};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -31755,20 +31754,20 @@ SRSASN_CODE ue_inactivity_notif_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* ue_inactivity_notif_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "DRB-Activity-List"};
-  return convert_enum_idx(options, 3, value, "ue_inactivity_notif_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "DRB-Activity-List"};
+  return convert_enum_idx(names, 3, value, "ue_inactivity_notif_ies_o::value_c::types");
 }
 
 // ULRRCMessageTransferIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t ulrrc_msg_transfer_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {40, 41, 64, 50, 224, 219};
-  return map_enum_number(options, 6, idx, "id");
+  static const uint32_t names[] = {40, 41, 64, 50, 224, 219};
+  return map_enum_number(names, 6, idx, "id");
 }
 bool ulrrc_msg_transfer_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {40, 41, 64, 50, 224, 219};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {40, 41, 64, 50, 224, 219};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -32090,25 +32089,25 @@ SRSASN_CODE ulrrc_msg_transfer_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* ulrrc_msg_transfer_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)",
-                                  "INTEGER (0..4294967295)",
-                                  "INTEGER (0..3,...)",
-                                  "OCTET STRING",
-                                  "OCTET STRING",
-                                  "INTEGER (0..4294967295)"};
-  return convert_enum_idx(options, 6, value, "ulrrc_msg_transfer_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "INTEGER (0..3,...)",
+                                "OCTET STRING",
+                                "OCTET STRING",
+                                "INTEGER (0..4294967295)"};
+  return convert_enum_idx(names, 6, value, "ulrrc_msg_transfer_ies_o::value_c::types");
 }
 
 // WriteReplaceWarningRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t write_replace_warning_request_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 140, 141, 142, 144};
-  return map_enum_number(options, 5, idx, "id");
+  static const uint32_t names[] = {78, 140, 141, 142, 144};
+  return map_enum_number(names, 5, idx, "id");
 }
 bool write_replace_warning_request_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 140, 141, 142, 144};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 140, 141, 142, 144};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -32401,24 +32400,24 @@ SRSASN_CODE write_replace_warning_request_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* write_replace_warning_request_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)",
-                                  "PWSSystemInformation",
-                                  "INTEGER (0..131071,...)",
-                                  "INTEGER (0..65535)",
-                                  "Cells-To-Be-Broadcast-List"};
-  return convert_enum_idx(options, 5, value, "write_replace_warning_request_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "PWSSystemInformation",
+                                "INTEGER (0..131071,...)",
+                                "INTEGER (0..65535)",
+                                "Cells-To-Be-Broadcast-List"};
+  return convert_enum_idx(names, 5, value, "write_replace_warning_request_ies_o::value_c::types");
 }
 
 // WriteReplaceWarningResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 uint32_t write_replace_warning_resp_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78, 146, 7, 189};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {78, 146, 7, 189};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool write_replace_warning_resp_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {78, 146, 7, 189};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {78, 146, 7, 189};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -32687,16 +32686,16 @@ SRSASN_CODE write_replace_warning_resp_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* write_replace_warning_resp_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)",
-                                  "Cells-Broadcast-Completed-List",
-                                  "CriticalityDiagnostics",
-                                  "Dedicated-SIDelivery-NeededUE-List"};
-  return convert_enum_idx(options, 4, value, "write_replace_warning_resp_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "Cells-Broadcast-Completed-List",
+                                "CriticalityDiagnostics",
+                                "Dedicated-SIDelivery-NeededUE-List"};
+  return convert_enum_idx(names, 4, value, "write_replace_warning_resp_ies_o::value_c::types");
 }
 uint8_t write_replace_warning_resp_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "write_replace_warning_resp_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "write_replace_warning_resp_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<f1_removal_fail_ies_o>;
@@ -38306,15 +38305,15 @@ void write_replace_warning_resp_ies_container::to_json(json_writer& j) const
 // F1AP-ELEMENTARY-PROCEDURES ::= OBJECT SET OF F1AP-ELEMENTARY-PROCEDURE
 uint16_t f1_ap_elem_procs_o::idx_to_proc_code(uint32_t idx)
 {
-  static const uint16_t options[] = {0,  1,  3,  4,  5,  6,  7,  8,  20, 21, 16, 26, 2, 10,
-                                     12, 13, 15, 14, 11, 17, 18, 19, 22, 23, 24, 25, 27};
-  return map_enum_number(options, 27, idx, "proc_code");
+  static const uint16_t names[] = {0,  1,  3,  4,  5,  6,  7,  8,  20, 21, 16, 26, 2, 10,
+                                   12, 13, 15, 14, 11, 17, 18, 19, 22, 23, 24, 25, 27};
+  return map_enum_number(names, 27, idx, "proc_code");
 }
 bool f1_ap_elem_procs_o::is_proc_code_valid(const uint16_t& proc_code)
 {
-  static const uint16_t options[] = {0,  1,  3,  4,  5,  6,  7,  8,  20, 21, 16, 26, 2, 10,
-                                     12, 13, 15, 14, 11, 17, 18, 19, 22, 23, 24, 25, 27};
-  for (const auto& o : options) {
+  static const uint16_t names[] = {0,  1,  3,  4,  5,  6,  7,  8,  20, 21, 16, 26, 2, 10,
+                                   12, 13, 15, 14, 11, 17, 18, 19, 22, 23, 24, 25, 27};
+  for (const auto& o : names) {
     if (o == proc_code) {
       return true;
     }
@@ -39489,34 +39488,34 @@ SRSASN_CODE f1_ap_elem_procs_o::init_msg_c::unpack(cbit_ref& bref)
 
 const char* f1_ap_elem_procs_o::init_msg_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Reset",
-                                  "F1SetupRequest",
-                                  "GNBDUConfigurationUpdate",
-                                  "GNBCUConfigurationUpdate",
-                                  "UEContextSetupRequest",
-                                  "UEContextReleaseCommand",
-                                  "UEContextModificationRequest",
-                                  "UEContextModificationRequired",
-                                  "WriteReplaceWarningRequest",
-                                  "PWSCancelRequest",
-                                  "GNBDUResourceCoordinationRequest",
-                                  "F1RemovalRequest",
-                                  "ErrorIndication",
-                                  "UEContextReleaseRequest",
-                                  "DLRRCMessageTransfer",
-                                  "ULRRCMessageTransfer",
-                                  "UEInactivityNotification",
-                                  "PrivateMessage",
-                                  "InitialULRRCMessageTransfer",
-                                  "SystemInformationDeliveryCommand",
-                                  "Paging",
-                                  "Notify",
-                                  "PWSRestartIndication",
-                                  "PWSFailureIndication",
-                                  "GNBDUStatusIndication",
-                                  "RRCDeliveryReport",
-                                  "NetworkAccessRateReduction"};
-  return convert_enum_idx(options, 27, value, "f1_ap_elem_procs_o::init_msg_c::types");
+  static const char* names[] = {"Reset",
+                                "F1SetupRequest",
+                                "GNBDUConfigurationUpdate",
+                                "GNBCUConfigurationUpdate",
+                                "UEContextSetupRequest",
+                                "UEContextReleaseCommand",
+                                "UEContextModificationRequest",
+                                "UEContextModificationRequired",
+                                "WriteReplaceWarningRequest",
+                                "PWSCancelRequest",
+                                "GNBDUResourceCoordinationRequest",
+                                "F1RemovalRequest",
+                                "ErrorIndication",
+                                "UEContextReleaseRequest",
+                                "DLRRCMessageTransfer",
+                                "ULRRCMessageTransfer",
+                                "UEInactivityNotification",
+                                "PrivateMessage",
+                                "InitialULRRCMessageTransfer",
+                                "SystemInformationDeliveryCommand",
+                                "Paging",
+                                "Notify",
+                                "PWSRestartIndication",
+                                "PWSFailureIndication",
+                                "GNBDUStatusIndication",
+                                "RRCDeliveryReport",
+                                "NetworkAccessRateReduction"};
+  return convert_enum_idx(names, 27, value, "f1_ap_elem_procs_o::init_msg_c::types");
 }
 
 // SuccessfulOutcome ::= OPEN TYPE
@@ -39980,19 +39979,19 @@ SRSASN_CODE f1_ap_elem_procs_o::successful_outcome_c::unpack(cbit_ref& bref)
 
 const char* f1_ap_elem_procs_o::successful_outcome_c::types_opts::to_string() const
 {
-  static const char* options[] = {"ResetAcknowledge",
-                                  "F1SetupResponse",
-                                  "GNBDUConfigurationUpdateAcknowledge",
-                                  "GNBCUConfigurationUpdateAcknowledge",
-                                  "UEContextSetupResponse",
-                                  "UEContextReleaseComplete",
-                                  "UEContextModificationResponse",
-                                  "UEContextModificationConfirm",
-                                  "WriteReplaceWarningResponse",
-                                  "PWSCancelResponse",
-                                  "GNBDUResourceCoordinationResponse",
-                                  "F1RemovalResponse"};
-  return convert_enum_idx(options, 12, value, "f1_ap_elem_procs_o::successful_outcome_c::types");
+  static const char* names[] = {"ResetAcknowledge",
+                                "F1SetupResponse",
+                                "GNBDUConfigurationUpdateAcknowledge",
+                                "GNBCUConfigurationUpdateAcknowledge",
+                                "UEContextSetupResponse",
+                                "UEContextReleaseComplete",
+                                "UEContextModificationResponse",
+                                "UEContextModificationConfirm",
+                                "WriteReplaceWarningResponse",
+                                "PWSCancelResponse",
+                                "GNBDUResourceCoordinationResponse",
+                                "F1RemovalResponse"};
+  return convert_enum_idx(names, 12, value, "f1_ap_elem_procs_o::successful_outcome_c::types");
 }
 
 // UnsuccessfulOutcome ::= OPEN TYPE
@@ -40297,14 +40296,14 @@ SRSASN_CODE f1_ap_elem_procs_o::unsuccessful_outcome_c::unpack(cbit_ref& bref)
 
 const char* f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::to_string() const
 {
-  static const char* options[] = {"F1SetupFailure",
-                                  "GNBDUConfigurationUpdateFailure",
-                                  "GNBCUConfigurationUpdateFailure",
-                                  "UEContextSetupFailure",
-                                  "UEContextModificationFailure",
-                                  "UEContextModificationRefuse",
-                                  "F1RemovalFailure"};
-  return convert_enum_idx(options, 7, value, "f1_ap_elem_procs_o::unsuccessful_outcome_c::types");
+  static const char* names[] = {"F1SetupFailure",
+                                "GNBDUConfigurationUpdateFailure",
+                                "GNBCUConfigurationUpdateFailure",
+                                "UEContextSetupFailure",
+                                "UEContextModificationFailure",
+                                "UEContextModificationRefuse",
+                                "F1RemovalFailure"};
+  return convert_enum_idx(names, 7, value, "f1_ap_elem_procs_o::unsuccessful_outcome_c::types");
 }
 
 // InitiatingMessage ::= SEQUENCE{{F1AP-ELEMENTARY-PROCEDURE}}
@@ -40610,8 +40609,8 @@ SRSASN_CODE f1_ap_pdu_c::unpack(cbit_ref& bref)
 
 const char* f1_ap_pdu_c::types_opts::to_string() const
 {
-  static const char* options[] = {"initiatingMessage", "successfulOutcome", "unsuccessfulOutcome", "choice-extension"};
-  return convert_enum_idx(options, 4, value, "f1_ap_pdu_c::types");
+  static const char* names[] = {"initiatingMessage", "successfulOutcome", "unsuccessfulOutcome", "choice-extension"};
+  return convert_enum_idx(names, 4, value, "f1_ap_pdu_c::types");
 }
 
 // ProtocolIE-FieldPair{F1AP-PROTOCOL-IES-PAIR : IEsSetParam} ::= SEQUENCE{{F1AP-PROTOCOL-IES-PAIR}}

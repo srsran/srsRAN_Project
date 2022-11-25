@@ -9,7 +9,7 @@
 set_directory_properties(PROPERTIES LABELS "asn1")
 
 add_executable(asn1_utils_test asn1_utils_test.cpp)
-target_link_libraries(asn1_utils_test asn1_utils)
+target_link_libraries(asn1_utils_test asn1_utils gtest gtest_main)
 add_test(asn1_utils_test asn1_utils_test)
 
 add_executable(asn1_rrc_nr_test asn1_rrc_nr_test.cpp)

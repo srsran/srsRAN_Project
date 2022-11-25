@@ -495,7 +495,7 @@ public:
   static const bool     has_ext = E;
 
   enumerated() { EnumType::value = EnumType::nulltype; }
-  enumerated(typename EnumType::options o) { EnumType::value = o; }
+  enumerated(typename EnumType::options enumerated_option_val) { EnumType::value = enumerated_option_val; }
   SRSASN_CODE pack(bit_ref& bref) const { return pack_enum(bref, *this); }
   SRSASN_CODE unpack(cbit_ref& bref) { return unpack_enum(*this, bref); }
   EnumType&   operator=(EnumType v)
@@ -1460,8 +1460,8 @@ struct setup_release_opts {
 
   const char* to_string() const
   {
-    static const char* options[] = {"release", "setup"};
-    return convert_enum_idx(options, 2, value, "setup_release_c::types");
+    static const char* names[] = {"release", "setup"};
+    return convert_enum_idx(names, 2, value, "setup_release_c::types");
   }
 };
 using setup_release_e = enumerated<setup_release_opts>;
@@ -1551,8 +1551,8 @@ struct crit_opts {
   enum options { reject, ignore, notify, nulltype } value;
   const char* to_string() const
   {
-    static const char* options[] = {"reject", "ignore", "notify"};
-    return convert_enum_idx(options, 3, value, "crit_e");
+    static const char* names[] = {"reject", "ignore", "notify"};
+    return convert_enum_idx(names, 3, value, "crit_e");
   }
 };
 typedef enumerated<crit_opts> crit_e;
@@ -1563,8 +1563,8 @@ struct presence_opts {
 
   const char* to_string() const
   {
-    static const char* options[] = {"optional", "conditional", "mandatory"};
-    return convert_enum_idx(options, 3, value, "presence_e");
+    static const char* names[] = {"optional", "conditional", "mandatory"};
+    return convert_enum_idx(names, 3, value, "presence_e");
   }
 };
 typedef enumerated<presence_opts> presence_e;

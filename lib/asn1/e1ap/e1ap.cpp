@@ -21,15 +21,15 @@ using namespace asn1::e1ap;
 // DRB-Activity ::= ENUMERATED
 const char* drb_activity_opts::to_string() const
 {
-  static const char* options[] = {"active", "not-active"};
-  return convert_enum_idx(options, 2, value, "drb_activity_e");
+  static const char* names[] = {"active", "not-active"};
+  return convert_enum_idx(names, 2, value, "drb_activity_e");
 }
 
 // PDU-Session-Resource-Activity ::= ENUMERATED
 const char* pdu_session_res_activity_opts::to_string() const
 {
-  static const char* options[] = {"active", "not-active"};
-  return convert_enum_idx(options, 2, value, "pdu_session_res_activity_e");
+  static const char* names[] = {"active", "not-active"};
+  return convert_enum_idx(names, 2, value, "pdu_session_res_activity_e");
 }
 
 // DRB-Activity-Item ::= SEQUENCE
@@ -113,8 +113,8 @@ void pdu_session_res_activity_item_s::to_json(json_writer& j) const
 // UE-Activity ::= ENUMERATED
 const char* ue_activity_opts::to_string() const
 {
-  static const char* options[] = {"active", "not-active"};
-  return convert_enum_idx(options, 2, value, "ue_activity_e");
+  static const char* names[] = {"active", "not-active"};
+  return convert_enum_idx(names, 2, value, "ue_activity_e");
 }
 
 // ActivityInformation ::= CHOICE
@@ -304,21 +304,21 @@ SRSASN_CODE activity_info_c::unpack(cbit_ref& bref)
 
 const char* activity_info_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "dRB-Activity-List", "pDU-Session-Resource-Activity-List", "uE-Activity", "choice-extension"};
-  return convert_enum_idx(options, 4, value, "activity_info_c::types");
+  return convert_enum_idx(names, 4, value, "activity_info_c::types");
 }
 
 // BearerContextInactivityNotificationIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t bearer_context_inactivity_notif_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 3, 24};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {2, 3, 24};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool bearer_context_inactivity_notif_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 3, 24};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 3, 24};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -535,8 +535,8 @@ SRSASN_CODE bearer_context_inactivity_notif_ies_o::value_c::unpack(cbit_ref& bre
 
 const char* bearer_context_inactivity_notif_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "ActivityInformation"};
-  return convert_enum_idx(options, 3, value, "bearer_context_inactivity_notif_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "ActivityInformation"};
+  return convert_enum_idx(names, 3, value, "bearer_context_inactivity_notif_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<bearer_context_inactivity_notif_ies_o>;
@@ -618,22 +618,22 @@ void bearer_context_inactivity_notif_ies_container::to_json(json_writer& j) cons
 // DL-TX-Stop ::= ENUMERATED
 const char* dl_tx_stop_opts::to_string() const
 {
-  static const char* options[] = {"stop", "resume"};
-  return convert_enum_idx(options, 2, value, "dl_tx_stop_e");
+  static const char* names[] = {"stop", "resume"};
+  return convert_enum_idx(names, 2, value, "dl_tx_stop_e");
 }
 
 // RAT-Type ::= ENUMERATED
 const char* rat_type_opts::to_string() const
 {
-  static const char* options[] = {"e-UTRA", "nR"};
-  return convert_enum_idx(options, 2, value, "rat_type_e");
+  static const char* names[] = {"e-UTRA", "nR"};
+  return convert_enum_idx(names, 2, value, "rat_type_e");
 }
 
 // UL-Configuration ::= ENUMERATED
 const char* ul_cfg_opts::to_string() const
 {
-  static const char* options[] = {"no-data", "shared", "only"};
-  return convert_enum_idx(options, 3, value, "ul_cfg_e");
+  static const char* names[] = {"no-data", "shared", "only"};
+  return convert_enum_idx(names, 3, value, "ul_cfg_e");
 }
 
 // Cell-Group-Information-Item ::= SEQUENCE
@@ -864,8 +864,8 @@ void pdu_session_res_confirm_modified_item_s::to_json(json_writer& j) const
 // EUTRAN-BearerContextModificationConfirm ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t eutran_bearer_context_mod_confirm_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {41};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {41};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool eutran_bearer_context_mod_confirm_o::is_id_valid(const uint32_t& id)
 {
@@ -922,15 +922,15 @@ SRSASN_CODE eutran_bearer_context_mod_confirm_o::value_c::unpack(cbit_ref& bref)
 
 const char* eutran_bearer_context_mod_confirm_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRB-Confirm-Modified-List-EUTRAN"};
-  return convert_enum_idx(options, 1, value, "eutran_bearer_context_mod_confirm_o::value_c::types");
+  static const char* names[] = {"DRB-Confirm-Modified-List-EUTRAN"};
+  return convert_enum_idx(names, 1, value, "eutran_bearer_context_mod_confirm_o::value_c::types");
 }
 
 // NG-RAN-BearerContextModificationConfirm ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t ng_ran_bearer_context_mod_confirm_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {50};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {50};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool ng_ran_bearer_context_mod_confirm_o::is_id_valid(const uint32_t& id)
 {
@@ -987,8 +987,8 @@ SRSASN_CODE ng_ran_bearer_context_mod_confirm_o::value_c::unpack(cbit_ref& bref)
 
 const char* ng_ran_bearer_context_mod_confirm_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"PDU-Session-Resource-Confirm-Modified-List"};
-  return convert_enum_idx(options, 1, value, "ng_ran_bearer_context_mod_confirm_o::value_c::types");
+  static const char* names[] = {"PDU-Session-Resource-Confirm-Modified-List"};
+  return convert_enum_idx(names, 1, value, "ng_ran_bearer_context_mod_confirm_o::value_c::types");
 }
 
 // System-BearerContextModificationConfirm ::= CHOICE
@@ -1156,21 +1156,21 @@ SRSASN_CODE sys_bearer_context_mod_confirm_c::unpack(cbit_ref& bref)
 
 const char* sys_bearer_context_mod_confirm_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "e-UTRAN-BearerContextModificationConfirm", "nG-RAN-BearerContextModificationConfirm", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "sys_bearer_context_mod_confirm_c::types");
+  return convert_enum_idx(names, 3, value, "sys_bearer_context_mod_confirm_c::types");
 }
 
 // BearerContextModificationConfirmIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t bearer_context_mod_confirm_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 3, 20};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {2, 3, 20};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool bearer_context_mod_confirm_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 3, 20};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 3, 20};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -1388,9 +1388,9 @@ SRSASN_CODE bearer_context_mod_confirm_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* bearer_context_mod_confirm_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "System-BearerContextModificationConfirm"};
-  return convert_enum_idx(options, 3, value, "bearer_context_mod_confirm_ies_o::value_c::types");
+  return convert_enum_idx(names, 3, value, "bearer_context_mod_confirm_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<bearer_context_mod_confirm_ies_o>;
@@ -1479,73 +1479,73 @@ void bearer_context_mod_confirm_ies_container::to_json(json_writer& j) const
 // TypeOfError ::= ENUMERATED
 const char* type_of_error_opts::to_string() const
 {
-  static const char* options[] = {"not-understood", "missing"};
-  return convert_enum_idx(options, 2, value, "type_of_error_e");
+  static const char* names[] = {"not-understood", "missing"};
+  return convert_enum_idx(names, 2, value, "type_of_error_e");
 }
 
 // CauseMisc ::= ENUMERATED
 const char* cause_misc_opts::to_string() const
 {
-  static const char* options[] = {"control-processing-overload",
-                                  "not-enough-user-plane-processing-resources",
-                                  "hardware-failure",
-                                  "om-intervention",
-                                  "unspecified"};
-  return convert_enum_idx(options, 5, value, "cause_misc_e");
+  static const char* names[] = {"control-processing-overload",
+                                "not-enough-user-plane-processing-resources",
+                                "hardware-failure",
+                                "om-intervention",
+                                "unspecified"};
+  return convert_enum_idx(names, 5, value, "cause_misc_e");
 }
 
 // CauseProtocol ::= ENUMERATED
 const char* cause_protocol_opts::to_string() const
 {
-  static const char* options[] = {"transfer-syntax-error",
-                                  "abstract-syntax-error-reject",
-                                  "abstract-syntax-error-ignore-and-notify",
-                                  "message-not-compatible-with-receiver-state",
-                                  "semantic-error",
-                                  "abstract-syntax-error-falsely-constructed-message",
-                                  "unspecified"};
-  return convert_enum_idx(options, 7, value, "cause_protocol_e");
+  static const char* names[] = {"transfer-syntax-error",
+                                "abstract-syntax-error-reject",
+                                "abstract-syntax-error-ignore-and-notify",
+                                "message-not-compatible-with-receiver-state",
+                                "semantic-error",
+                                "abstract-syntax-error-falsely-constructed-message",
+                                "unspecified"};
+  return convert_enum_idx(names, 7, value, "cause_protocol_e");
 }
 
 // CauseRadioNetwork ::= ENUMERATED
 const char* cause_radio_network_opts::to_string() const
 {
-  static const char* options[] = {"unspecified",
-                                  "unknown-or-already-allocated-gnb-cu-cp-ue-e1ap-id",
-                                  "unknown-or-already-allocated-gnb-cu-up-ue-e1ap-id",
-                                  "unknown-or-inconsistent-pair-of-ue-e1ap-id",
-                                  "interaction-with-other-procedure",
-                                  "pPDCP-Count-wrap-around",
-                                  "not-supported-QCI-value",
-                                  "not-supported-5QI-value",
-                                  "encryption-algorithms-not-supported",
-                                  "integrity-protection-algorithms-not-supported",
-                                  "uP-integrity-protection-not-possible",
-                                  "uP-confidentiality-protection-not-possible",
-                                  "multiple-PDU-Session-ID-Instances",
-                                  "unknown-PDU-Session-ID",
-                                  "multiple-QoS-Flow-ID-Instances",
-                                  "unknown-QoS-Flow-ID",
-                                  "multiple-DRB-ID-Instances",
-                                  "unknown-DRB-ID",
-                                  "invalid-QoS-combination",
-                                  "procedure-cancelled",
-                                  "normal-release",
-                                  "no-radio-resources-available",
-                                  "action-desirable-for-radio-reasons",
-                                  "resources-not-available-for-the-slice",
-                                  "pDCP-configuration-not-supported",
-                                  "ue-dl-max-IP-data-rate-reason",
-                                  "uP-integrity-protection-failure",
-                                  "release-due-to-pre-emption"};
-  return convert_enum_idx(options, 28, value, "cause_radio_network_e");
+  static const char* names[] = {"unspecified",
+                                "unknown-or-already-allocated-gnb-cu-cp-ue-e1ap-id",
+                                "unknown-or-already-allocated-gnb-cu-up-ue-e1ap-id",
+                                "unknown-or-inconsistent-pair-of-ue-e1ap-id",
+                                "interaction-with-other-procedure",
+                                "pPDCP-Count-wrap-around",
+                                "not-supported-QCI-value",
+                                "not-supported-5QI-value",
+                                "encryption-algorithms-not-supported",
+                                "integrity-protection-algorithms-not-supported",
+                                "uP-integrity-protection-not-possible",
+                                "uP-confidentiality-protection-not-possible",
+                                "multiple-PDU-Session-ID-Instances",
+                                "unknown-PDU-Session-ID",
+                                "multiple-QoS-Flow-ID-Instances",
+                                "unknown-QoS-Flow-ID",
+                                "multiple-DRB-ID-Instances",
+                                "unknown-DRB-ID",
+                                "invalid-QoS-combination",
+                                "procedure-cancelled",
+                                "normal-release",
+                                "no-radio-resources-available",
+                                "action-desirable-for-radio-reasons",
+                                "resources-not-available-for-the-slice",
+                                "pDCP-configuration-not-supported",
+                                "ue-dl-max-IP-data-rate-reason",
+                                "uP-integrity-protection-failure",
+                                "release-due-to-pre-emption"};
+  return convert_enum_idx(names, 28, value, "cause_radio_network_e");
 }
 
 // CauseTransport ::= ENUMERATED
 const char* cause_transport_opts::to_string() const
 {
-  static const char* options[] = {"unspecified", "transport-resource-unavailable"};
-  return convert_enum_idx(options, 2, value, "cause_transport_e");
+  static const char* names[] = {"unspecified", "transport-resource-unavailable"};
+  return convert_enum_idx(names, 2, value, "cause_transport_e");
 }
 
 SRSASN_CODE crit_diagnostics_ie_list_item_s_::pack(bit_ref& bref) const
@@ -1592,8 +1592,8 @@ void crit_diagnostics_ie_list_item_s_::to_json(json_writer& j) const
 // TriggeringMessage ::= ENUMERATED
 const char* trigger_msg_opts::to_string() const
 {
-  static const char* options[] = {"initiating-message", "successful-outcome", "unsuccessful-outcome"};
-  return convert_enum_idx(options, 3, value, "trigger_msg_e");
+  static const char* names[] = {"initiating-message", "successful-outcome", "unsuccessful-outcome"};
+  return convert_enum_idx(names, 3, value, "trigger_msg_e");
 }
 
 // Cause ::= CHOICE
@@ -1789,13 +1789,13 @@ SRSASN_CODE cause_c::unpack(cbit_ref& bref)
 
 const char* cause_c::types_opts::to_string() const
 {
-  static const char* options[] = {"radioNetwork", "transport", "protocol", "misc", "choice-extension"};
-  return convert_enum_idx(options, 5, value, "cause_c::types");
+  static const char* names[] = {"radioNetwork", "transport", "protocol", "misc", "choice-extension"};
+  return convert_enum_idx(names, 5, value, "cause_c::types");
 }
 uint8_t cause_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {2};
-  return map_enum_number(options, 1, value, "cause_c::types");
+  static const uint8_t numbers[] = {2};
+  return map_enum_number(numbers, 1, value, "cause_c::types");
 }
 
 // CriticalityDiagnostics ::= SEQUENCE
@@ -1894,13 +1894,13 @@ void crit_diagnostics_s::to_json(json_writer& j) const
 // BearerContextModificationFailureIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t bearer_context_mod_fail_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 3, 0, 1};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {2, 3, 0, 1};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool bearer_context_mod_fail_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 3, 0, 1};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 3, 0, 1};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -2156,9 +2156,9 @@ SRSASN_CODE bearer_context_mod_fail_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* bearer_context_mod_fail_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 4, value, "bearer_context_mod_fail_ies_o::value_c::types");
+  return convert_enum_idx(names, 4, value, "bearer_context_mod_fail_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<bearer_context_mod_fail_ies_o>;
@@ -2382,8 +2382,8 @@ void dynamic5_qi_descriptor_s::to_json(json_writer& j) const
 
 const char* dynamic5_qi_descriptor_s::delay_crit_opts::to_string() const
 {
-  static const char* options[] = {"delay-critical", "non-delay-critical"};
-  return convert_enum_idx(options, 2, value, "dynamic5_qi_descriptor_s::delay_crit_e_");
+  static const char* names[] = {"delay-critical", "non-delay-critical"};
+  return convert_enum_idx(names, 2, value, "dynamic5_qi_descriptor_s::delay_crit_e_");
 }
 
 // Non-Dynamic5QIDescriptor ::= SEQUENCE
@@ -2456,22 +2456,22 @@ void non_dynamic5_qi_descriptor_s::to_json(json_writer& j) const
 // Pre-emptionCapability ::= ENUMERATED
 const char* pre_emption_cap_opts::to_string() const
 {
-  static const char* options[] = {"shall-not-trigger-pre-emption", "may-trigger-pre-emption"};
-  return convert_enum_idx(options, 2, value, "pre_emption_cap_e");
+  static const char* names[] = {"shall-not-trigger-pre-emption", "may-trigger-pre-emption"};
+  return convert_enum_idx(names, 2, value, "pre_emption_cap_e");
 }
 
 // Pre-emptionVulnerability ::= ENUMERATED
 const char* pre_emption_vulnerability_opts::to_string() const
 {
-  static const char* options[] = {"not-pre-emptable", "pre-emptable"};
-  return convert_enum_idx(options, 2, value, "pre_emption_vulnerability_e");
+  static const char* names[] = {"not-pre-emptable", "pre-emptable"};
+  return convert_enum_idx(names, 2, value, "pre_emption_vulnerability_e");
 }
 
 // QoS-Flow-Mapping-Indication ::= ENUMERATED
 const char* qo_s_flow_map_ind_opts::to_string() const
 {
-  static const char* options[] = {"ul", "dl"};
-  return convert_enum_idx(options, 2, value, "qo_s_flow_map_ind_e");
+  static const char* names[] = {"ul", "dl"};
+  return convert_enum_idx(names, 2, value, "qo_s_flow_map_ind_e");
 }
 
 // GBR-QoSFlowInformation ::= SEQUENCE
@@ -2779,15 +2779,15 @@ SRSASN_CODE qo_s_characteristics_c::unpack(cbit_ref& bref)
 
 const char* qo_s_characteristics_c::types_opts::to_string() const
 {
-  static const char* options[] = {"non-Dynamic-5QI", "dynamic-5QI", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "qo_s_characteristics_c::types");
+  static const char* names[] = {"non-Dynamic-5QI", "dynamic-5QI", "choice-extension"};
+  return convert_enum_idx(names, 3, value, "qo_s_characteristics_c::types");
 }
 
 // QoS-Flow-Item-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 uint32_t qo_s_flow_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {80};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {80};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool qo_s_flow_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -2840,8 +2840,8 @@ SRSASN_CODE qo_s_flow_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* qo_s_flow_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"QoS-Flow-Mapping-Indication"};
-  return convert_enum_idx(options, 1, value, "qo_s_flow_item_ext_ies_o::ext_c::types");
+  static const char* names[] = {"QoS-Flow-Mapping-Indication"};
+  return convert_enum_idx(names, 1, value, "qo_s_flow_item_ext_ies_o::ext_c::types");
 }
 
 // PDCP-Count ::= SEQUENCE
@@ -3063,20 +3063,20 @@ void qo_sflow_level_qos_params_s::to_json(json_writer& j) const
 
 const char* qo_sflow_level_qos_params_s::reflective_qos_attribute_opts::to_string() const
 {
-  static const char* options[] = {"subject-to"};
-  return convert_enum_idx(options, 1, value, "qo_sflow_level_qos_params_s::reflective_qos_attribute_e_");
+  static const char* names[] = {"subject-to"};
+  return convert_enum_idx(names, 1, value, "qo_sflow_level_qos_params_s::reflective_qos_attribute_e_");
 }
 
 const char* qo_sflow_level_qos_params_s::add_qos_info_opts::to_string() const
 {
-  static const char* options[] = {"more-likely"};
-  return convert_enum_idx(options, 1, value, "qo_sflow_level_qos_params_s::add_qos_info_e_");
+  static const char* names[] = {"more-likely"};
+  return convert_enum_idx(names, 1, value, "qo_sflow_level_qos_params_s::add_qos_info_e_");
 }
 
 const char* qo_sflow_level_qos_params_s::reflective_qos_ind_opts::to_string() const
 {
-  static const char* options[] = {"enabled"};
-  return convert_enum_idx(options, 1, value, "qo_sflow_level_qos_params_s::reflective_qos_ind_e_");
+  static const char* names[] = {"enabled"};
+  return convert_enum_idx(names, 1, value, "qo_sflow_level_qos_params_s::reflective_qos_ind_e_");
 }
 
 // ROHC ::= SEQUENCE
@@ -3129,26 +3129,26 @@ void rohc_s::to_json(json_writer& j) const
 
 const char* rohc_s::continue_rohc_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "rohc_s::continue_rohc_e_");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "rohc_s::continue_rohc_e_");
 }
 
 // T-Reordering ::= ENUMERATED
 const char* t_reordering_opts::to_string() const
 {
-  static const char* options[] = {"ms0",    "ms1",    "ms2",    "ms4",    "ms5",    "ms8",    "ms10",   "ms15",
-                                  "ms20",   "ms30",   "ms40",   "ms50",   "ms60",   "ms80",   "ms100",  "ms120",
-                                  "ms140",  "ms160",  "ms180",  "ms200",  "ms220",  "ms240",  "ms260",  "ms280",
-                                  "ms300",  "ms500",  "ms750",  "ms1000", "ms1250", "ms1500", "ms1750", "ms2000",
-                                  "ms2250", "ms2500", "ms2750", "ms3000"};
-  return convert_enum_idx(options, 36, value, "t_reordering_e");
+  static const char* names[] = {"ms0",    "ms1",    "ms2",    "ms4",    "ms5",    "ms8",    "ms10",   "ms15",
+                                "ms20",   "ms30",   "ms40",   "ms50",   "ms60",   "ms80",   "ms100",  "ms120",
+                                "ms140",  "ms160",  "ms180",  "ms200",  "ms220",  "ms240",  "ms260",  "ms280",
+                                "ms300",  "ms500",  "ms750",  "ms1000", "ms1250", "ms1500", "ms1750", "ms2000",
+                                "ms2250", "ms2500", "ms2750", "ms3000"};
+  return convert_enum_idx(names, 36, value, "t_reordering_e");
 }
 uint16_t t_reordering_opts::to_number() const
 {
-  static const uint16_t options[] = {0,   1,   2,   4,    5,    8,    10,   15,   20,   30,   40,   50,
+  static const uint16_t numbers[] = {0,   1,   2,   4,    5,    8,    10,   15,   20,   30,   40,   50,
                                      60,  80,  100, 120,  140,  160,  180,  200,  220,  240,  260,  280,
                                      300, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000};
-  return map_enum_number(options, 36, value, "t_reordering_e");
+  return map_enum_number(numbers, 36, value, "t_reordering_e");
 }
 
 // UP-TNL-Information ::= CHOICE
@@ -3283,8 +3283,8 @@ SRSASN_CODE up_tnl_info_c::unpack(cbit_ref& bref)
 
 const char* up_tnl_info_c::types_opts::to_string() const
 {
-  static const char* options[] = {"gTPTunnel", "choice-extension"};
-  return convert_enum_idx(options, 2, value, "up_tnl_info_c::types");
+  static const char* names[] = {"gTPTunnel", "choice-extension"};
+  return convert_enum_idx(names, 2, value, "up_tnl_info_c::types");
 }
 
 // UplinkOnlyROHC ::= SEQUENCE
@@ -3337,8 +3337,8 @@ void ul_only_rohc_s::to_json(json_writer& j) const
 
 const char* ul_only_rohc_s::continue_rohc_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "ul_only_rohc_s::continue_rohc_e_");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "ul_only_rohc_s::continue_rohc_e_");
 }
 
 // DRBBStatusTransfer ::= SEQUENCE
@@ -3392,89 +3392,89 @@ void drbb_status_transfer_s::to_json(json_writer& j) const
 // Data-Forwarding-Request ::= ENUMERATED
 const char* data_forwarding_request_opts::to_string() const
 {
-  static const char* options[] = {"uL", "dL", "both"};
-  return convert_enum_idx(options, 3, value, "data_forwarding_request_e");
+  static const char* names[] = {"uL", "dL", "both"};
+  return convert_enum_idx(names, 3, value, "data_forwarding_request_e");
 }
 
 // DefaultDRB ::= ENUMERATED
 const char* default_drb_opts::to_string() const
 {
-  static const char* options[] = {"true", "false"};
-  return convert_enum_idx(options, 2, value, "default_drb_e");
+  static const char* names[] = {"true", "false"};
+  return convert_enum_idx(names, 2, value, "default_drb_e");
 }
 
 // DiscardTimer ::= ENUMERATED
 const char* discard_timer_opts::to_string() const
 {
-  static const char* options[] = {"ms10",
-                                  "ms20",
-                                  "ms30",
-                                  "ms40",
-                                  "ms50",
-                                  "ms60",
-                                  "ms75",
-                                  "ms100",
-                                  "ms150",
-                                  "ms200",
-                                  "ms250",
-                                  "ms300",
-                                  "ms500",
-                                  "ms750",
-                                  "ms1500",
-                                  "infinity"};
-  return convert_enum_idx(options, 16, value, "discard_timer_e");
+  static const char* names[] = {"ms10",
+                                "ms20",
+                                "ms30",
+                                "ms40",
+                                "ms50",
+                                "ms60",
+                                "ms75",
+                                "ms100",
+                                "ms150",
+                                "ms200",
+                                "ms250",
+                                "ms300",
+                                "ms500",
+                                "ms750",
+                                "ms1500",
+                                "infinity"};
+  return convert_enum_idx(names, 16, value, "discard_timer_e");
 }
 int16_t discard_timer_opts::to_number() const
 {
-  static const int16_t options[] = {10, 20, 30, 40, 50, 60, 75, 100, 150, 200, 250, 300, 500, 750, 1500, -1};
-  return map_enum_number(options, 16, value, "discard_timer_e");
+  static const int16_t numbers[] = {10, 20, 30, 40, 50, 60, 75, 100, 150, 200, 250, 300, 500, 750, 1500, -1};
+  return map_enum_number(numbers, 16, value, "discard_timer_e");
 }
 
 // Duplication-Activation ::= ENUMERATED
 const char* dupl_activation_opts::to_string() const
 {
-  static const char* options[] = {"active", "inactive"};
-  return convert_enum_idx(options, 2, value, "dupl_activation_e");
+  static const char* names[] = {"active", "inactive"};
+  return convert_enum_idx(names, 2, value, "dupl_activation_e");
 }
 
 // OutOfOrderDelivery ::= ENUMERATED
 const char* out_of_order_delivery_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "out_of_order_delivery_e");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "out_of_order_delivery_e");
 }
 
 // PDCP-DataRecovery ::= ENUMERATED
 const char* pdcp_data_recovery_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "pdcp_data_recovery_e");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "pdcp_data_recovery_e");
 }
 
 // PDCP-Duplication ::= ENUMERATED
 const char* pdcp_dupl_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "pdcp_dupl_e");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "pdcp_dupl_e");
 }
 
 // PDCP-Reestablishment ::= ENUMERATED
 const char* pdcp_reest_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "pdcp_reest_e");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "pdcp_reest_e");
 }
 
 // PDCP-SN-Size ::= ENUMERATED
 const char* pdcp_sn_size_opts::to_string() const
 {
-  static const char* options[] = {"s-12", "s-18"};
-  return convert_enum_idx(options, 2, value, "pdcp_sn_size_e");
+  static const char* names[] = {"s-12", "s-18"};
+  return convert_enum_idx(names, 2, value, "pdcp_sn_size_e");
 }
 int8_t pdcp_sn_size_opts::to_number() const
 {
-  static const int8_t options[] = {-12, -18};
-  return map_enum_number(options, 2, value, "pdcp_sn_size_e");
+  static const int8_t numbers[] = {-12, -18};
+  return map_enum_number(numbers, 2, value, "pdcp_sn_size_e");
 }
 
 // QoS-Flow-QoS-Parameter-Item ::= SEQUENCE
@@ -3531,9 +3531,9 @@ void qo_s_flow_qos_param_item_s::to_json(json_writer& j) const
 // RLC-Mode ::= ENUMERATED
 const char* rlc_mode_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "rlc-tm", "rlc-am", "rlc-um-bidirectional", "rlc-um-unidirectional-ul", "rlc-um-unidirectional-dl"};
-  return convert_enum_idx(options, 5, value, "rlc_mode_e");
+  return convert_enum_idx(names, 5, value, "rlc_mode_e");
 }
 
 // ROHC-Parameters ::= CHOICE
@@ -3695,22 +3695,22 @@ SRSASN_CODE rohc_params_c::unpack(cbit_ref& bref)
 
 const char* rohc_params_c::types_opts::to_string() const
 {
-  static const char* options[] = {"rOHC", "uPlinkOnlyROHC", "choice-Extension"};
-  return convert_enum_idx(options, 3, value, "rohc_params_c::types");
+  static const char* names[] = {"rOHC", "uPlinkOnlyROHC", "choice-Extension"};
+  return convert_enum_idx(names, 3, value, "rohc_params_c::types");
 }
 
 // SDAP-Header-DL ::= ENUMERATED
 const char* sdap_hdr_dl_opts::to_string() const
 {
-  static const char* options[] = {"present", "absent"};
-  return convert_enum_idx(options, 2, value, "sdap_hdr_dl_e");
+  static const char* names[] = {"present", "absent"};
+  return convert_enum_idx(names, 2, value, "sdap_hdr_dl_e");
 }
 
 // SDAP-Header-UL ::= ENUMERATED
 const char* sdap_hdr_ul_opts::to_string() const
 {
-  static const char* options[] = {"present", "absent"};
-  return convert_enum_idx(options, 2, value, "sdap_hdr_ul_e");
+  static const char* names[] = {"present", "absent"};
+  return convert_enum_idx(names, 2, value, "sdap_hdr_ul_e");
 }
 
 // T-ReorderingTimer ::= SEQUENCE
@@ -3752,18 +3752,18 @@ void t_reordering_timer_s::to_json(json_writer& j) const
 // ULDataSplitThreshold ::= ENUMERATED
 const char* ul_data_split_thres_opts::to_string() const
 {
-  static const char* options[] = {"b0",       "b100",     "b200",     "b400",     "b800",     "b1600",
-                                  "b3200",    "b6400",    "b12800",   "b25600",   "b51200",   "b102400",
-                                  "b204800",  "b409600",  "b819200",  "b1228800", "b1638400", "b2457600",
-                                  "b3276800", "b4096000", "b4915200", "b5734400", "b6553600", "infinity"};
-  return convert_enum_idx(options, 24, value, "ul_data_split_thres_e");
+  static const char* names[] = {"b0",       "b100",     "b200",     "b400",     "b800",     "b1600",
+                                "b3200",    "b6400",    "b12800",   "b25600",   "b51200",   "b102400",
+                                "b204800",  "b409600",  "b819200",  "b1228800", "b1638400", "b2457600",
+                                "b3276800", "b4096000", "b4915200", "b5734400", "b6553600", "infinity"};
+  return convert_enum_idx(names, 24, value, "ul_data_split_thres_e");
 }
 int32_t ul_data_split_thres_opts::to_number() const
 {
-  static const int32_t options[] = {0,       100,     200,     400,     800,     1600,    3200,    6400,
+  static const int32_t numbers[] = {0,       100,     200,     400,     800,     1600,    3200,    6400,
                                     12800,   25600,   51200,   102400,  204800,  409600,  819200,  1228800,
                                     1638400, 2457600, 3276800, 4096000, 4915200, 5734400, 6553600, -1};
-  return map_enum_number(options, 24, value, "ul_data_split_thres_e");
+  return map_enum_number(numbers, 24, value, "ul_data_split_thres_e");
 }
 
 // UP-Parameters-Item ::= SEQUENCE
@@ -3809,13 +3809,13 @@ void up_params_item_s::to_json(json_writer& j) const
 // DRB-To-Modify-Item-NG-RAN-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 uint32_t drb_to_modify_item_ng_ran_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {71, 72};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {71, 72};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool drb_to_modify_item_ng_ran_ext_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {71, 72};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {71, 72};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -4006,15 +4006,15 @@ SRSASN_CODE drb_to_modify_item_ng_ran_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* drb_to_modify_item_ng_ran_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"QoS-Flow-List", "QoSFlowLevelQoSParameters"};
-  return convert_enum_idx(options, 2, value, "drb_to_modify_item_ng_ran_ext_ies_o::ext_c::types");
+  static const char* names[] = {"QoS-Flow-List", "QoSFlowLevelQoSParameters"};
+  return convert_enum_idx(names, 2, value, "drb_to_modify_item_ng_ran_ext_ies_o::ext_c::types");
 }
 
 // DRB-To-Setup-Item-NG-RAN-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 uint32_t drb_to_setup_item_ng_ran_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {72};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {72};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drb_to_setup_item_ng_ran_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -4068,15 +4068,15 @@ SRSASN_CODE drb_to_setup_item_ng_ran_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* drb_to_setup_item_ng_ran_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"QoSFlowLevelQoSParameters"};
-  return convert_enum_idx(options, 1, value, "drb_to_setup_item_ng_ran_ext_ies_o::ext_c::types");
+  static const char* names[] = {"QoSFlowLevelQoSParameters"};
+  return convert_enum_idx(names, 1, value, "drb_to_setup_item_ng_ran_ext_ies_o::ext_c::types");
 }
 
 // DRB-To-Setup-Mod-Item-NG-RAN-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 uint32_t drb_to_setup_mod_item_ng_ran_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {72};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {72};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool drb_to_setup_mod_item_ng_ran_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -4130,8 +4130,8 @@ SRSASN_CODE drb_to_setup_mod_item_ng_ran_ext_ies_o::ext_c::unpack(cbit_ref& bref
 
 const char* drb_to_setup_mod_item_ng_ran_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"QoSFlowLevelQoSParameters"};
-  return convert_enum_idx(options, 1, value, "drb_to_setup_mod_item_ng_ran_ext_ies_o::ext_c::types");
+  static const char* names[] = {"QoSFlowLevelQoSParameters"};
+  return convert_enum_idx(names, 1, value, "drb_to_setup_mod_item_ng_ran_ext_ies_o::ext_c::types");
 }
 
 // Data-Forwarding-Information ::= SEQUENCE
@@ -4246,13 +4246,13 @@ void data_forwarding_info_request_s::to_json(json_writer& j) const
 // MaxIPrate ::= ENUMERATED
 const char* max_iprate_opts::to_string() const
 {
-  static const char* options[] = {"bitrate64kbs", "max-UErate"};
-  return convert_enum_idx(options, 2, value, "max_iprate_e");
+  static const char* names[] = {"bitrate64kbs", "max-UErate"};
+  return convert_enum_idx(names, 2, value, "max_iprate_e");
 }
 uint8_t max_iprate_opts::to_number() const
 {
-  static const uint8_t options[] = {64};
-  return map_enum_number(options, 1, value, "max_iprate_e");
+  static const uint8_t numbers[] = {64};
+  return map_enum_number(numbers, 1, value, "max_iprate_e");
 }
 
 // PDCP-Configuration ::= SEQUENCE
@@ -4442,8 +4442,8 @@ void pdcp_sn_status_info_s::to_json(json_writer& j) const
 // PDCP-SN-Status-Request ::= ENUMERATED
 const char* pdcp_sn_status_request_opts::to_string() const
 {
-  static const char* options[] = {"requested"};
-  return convert_enum_idx(options, 1, value, "pdcp_sn_status_request_e");
+  static const char* names[] = {"requested"};
+  return convert_enum_idx(names, 1, value, "pdcp_sn_status_request_e");
 }
 
 // SDAP-Configuration ::= SEQUENCE
@@ -4491,8 +4491,8 @@ void sdap_cfg_s::to_json(json_writer& j) const
 // ConfidentialityProtectionIndication ::= ENUMERATED
 const char* confidentiality_protection_ind_opts::to_string() const
 {
-  static const char* options[] = {"required", "preferred", "not-needed"};
-  return convert_enum_idx(options, 3, value, "confidentiality_protection_ind_e");
+  static const char* names[] = {"required", "preferred", "not-needed"};
+  return convert_enum_idx(names, 3, value, "confidentiality_protection_ind_e");
 }
 
 template struct asn1::protocol_ext_field_s<drb_to_modify_item_ng_ran_ext_ies_o>;
@@ -5062,8 +5062,8 @@ void gbr_qos_info_s::to_json(json_writer& j) const
 // IntegrityProtectionIndication ::= ENUMERATED
 const char* integrity_protection_ind_opts::to_string() const
 {
-  static const char* options[] = {"required", "preferred", "not-needed"};
-  return convert_enum_idx(options, 3, value, "integrity_protection_ind_e");
+  static const char* names[] = {"required", "preferred", "not-needed"};
+  return convert_enum_idx(names, 3, value, "integrity_protection_ind_e");
 }
 
 // MaximumIPdatarate ::= SEQUENCE
@@ -5204,13 +5204,13 @@ void eutran_qos_s::to_json(json_writer& j) const
 // PDU-Session-Resource-To-Modify-Item-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 uint32_t pdu_session_res_to_modify_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {69, 78};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {69, 78};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool pdu_session_res_to_modify_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {69, 78};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {69, 78};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -5397,15 +5397,15 @@ SRSASN_CODE pdu_session_res_to_modify_item_ext_ies_o::ext_c::unpack(cbit_ref& br
 
 const char* pdu_session_res_to_modify_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"SNSSAI", "OCTET STRING"};
-  return convert_enum_idx(options, 2, value, "pdu_session_res_to_modify_item_ext_ies_o::ext_c::types");
+  static const char* names[] = {"SNSSAI", "OCTET STRING"};
+  return convert_enum_idx(names, 2, value, "pdu_session_res_to_modify_item_ext_ies_o::ext_c::types");
 }
 
 // PDU-Session-Resource-To-Remove-Item-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 uint32_t pdu_session_res_to_rem_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {0};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {0};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool pdu_session_res_to_rem_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -5459,20 +5459,20 @@ SRSASN_CODE pdu_session_res_to_rem_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* pdu_session_res_to_rem_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Cause"};
-  return convert_enum_idx(options, 1, value, "pdu_session_res_to_rem_item_ext_ies_o::ext_c::types");
+  static const char* names[] = {"Cause"};
+  return convert_enum_idx(names, 1, value, "pdu_session_res_to_rem_item_ext_ies_o::ext_c::types");
 }
 
 // PDU-Session-Resource-To-Setup-Mod-Item-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 uint32_t pdu_session_res_to_setup_mod_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {79, 78};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {79, 78};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool pdu_session_res_to_setup_mod_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {79, 78};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {79, 78};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -5656,20 +5656,20 @@ SRSASN_CODE pdu_session_res_to_setup_mod_item_ext_ies_o::ext_c::unpack(cbit_ref&
 
 const char* pdu_session_res_to_setup_mod_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (1..256,...)", "OCTET STRING"};
-  return convert_enum_idx(options, 2, value, "pdu_session_res_to_setup_mod_item_ext_ies_o::ext_c::types");
+  static const char* names[] = {"INTEGER (1..256,...)", "OCTET STRING"};
+  return convert_enum_idx(names, 2, value, "pdu_session_res_to_setup_mod_item_ext_ies_o::ext_c::types");
 }
 uint8_t pdu_session_res_to_setup_mod_item_ext_ies_o::ext_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {1};
-  return map_enum_number(options, 1, value, "pdu_session_res_to_setup_mod_item_ext_ies_o::ext_c::types");
+  static const uint8_t numbers[] = {1};
+  return map_enum_number(numbers, 1, value, "pdu_session_res_to_setup_mod_item_ext_ies_o::ext_c::types");
 }
 
 // PDU-Session-Type ::= ENUMERATED
 const char* pdu_session_type_opts::to_string() const
 {
-  static const char* options[] = {"ipv4", "ipv6", "ipv4v6", "ethernet", "unstructured"};
-  return convert_enum_idx(options, 5, value, "pdu_session_type_e");
+  static const char* names[] = {"ipv4", "ipv6", "ipv4v6", "ethernet", "unstructured"};
+  return convert_enum_idx(names, 5, value, "pdu_session_type_e");
 }
 
 // SecurityIndication ::= SEQUENCE
@@ -6469,27 +6469,27 @@ void pdu_session_res_to_setup_mod_item_s::to_json(json_writer& j) const
 // CipheringAlgorithm ::= ENUMERATED
 const char* ciphering_algorithm_opts::to_string() const
 {
-  static const char* options[] = {"nEA0", "c-128-NEA1", "c-128-NEA2", "c-128-NEA3"};
-  return convert_enum_idx(options, 4, value, "ciphering_algorithm_e");
+  static const char* names[] = {"nEA0", "c-128-NEA1", "c-128-NEA2", "c-128-NEA3"};
+  return convert_enum_idx(names, 4, value, "ciphering_algorithm_e");
 }
 
 // IntegrityProtectionAlgorithm ::= ENUMERATED
 const char* integrity_protection_algorithm_opts::to_string() const
 {
-  static const char* options[] = {"nIA0", "i-128-NIA1", "i-128-NIA2", "i-128-NIA3"};
-  return convert_enum_idx(options, 4, value, "integrity_protection_algorithm_e");
+  static const char* names[] = {"nIA0", "i-128-NIA1", "i-128-NIA2", "i-128-NIA3"};
+  return convert_enum_idx(names, 4, value, "integrity_protection_algorithm_e");
 }
 
 // EUTRAN-BearerContextModificationRequest ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t eutran_bearer_context_mod_request_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {51, 33, 34};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {51, 33, 34};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool eutran_bearer_context_mod_request_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {51, 33, 34};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {51, 33, 34};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -6725,21 +6725,21 @@ SRSASN_CODE eutran_bearer_context_mod_request_o::value_c::unpack(cbit_ref& bref)
 
 const char* eutran_bearer_context_mod_request_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "DRB-To-Setup-Mod-List-EUTRAN", "DRB-To-Modify-List-EUTRAN", "DRB-To-Remove-List-EUTRAN"};
-  return convert_enum_idx(options, 3, value, "eutran_bearer_context_mod_request_o::value_c::types");
+  return convert_enum_idx(names, 3, value, "eutran_bearer_context_mod_request_o::value_c::types");
 }
 
 // NG-RAN-BearerContextModificationRequest ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t ng_ran_bearer_context_mod_request_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {56, 43, 44};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {56, 43, 44};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool ng_ran_bearer_context_mod_request_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {56, 43, 44};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {56, 43, 44};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -6977,10 +6977,10 @@ SRSASN_CODE ng_ran_bearer_context_mod_request_o::value_c::unpack(cbit_ref& bref)
 
 const char* ng_ran_bearer_context_mod_request_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"PDU-Session-Resource-To-Setup-Mod-List",
-                                  "PDU-Session-Resource-To-Modify-List",
-                                  "PDU-Session-Resource-To-Remove-List"};
-  return convert_enum_idx(options, 3, value, "ng_ran_bearer_context_mod_request_o::value_c::types");
+  static const char* names[] = {"PDU-Session-Resource-To-Setup-Mod-List",
+                                "PDU-Session-Resource-To-Modify-List",
+                                "PDU-Session-Resource-To-Remove-List"};
+  return convert_enum_idx(names, 3, value, "ng_ran_bearer_context_mod_request_o::value_c::types");
 }
 
 // SecurityAlgorithm ::= SEQUENCE
@@ -7081,29 +7081,29 @@ void up_securitykey_s::to_json(json_writer& j) const
 // ActivityNotificationLevel ::= ENUMERATED
 const char* activity_notif_level_opts::to_string() const
 {
-  static const char* options[] = {"drb", "pdu-session", "ue"};
-  return convert_enum_idx(options, 3, value, "activity_notif_level_e");
+  static const char* names[] = {"drb", "pdu-session", "ue"};
+  return convert_enum_idx(names, 3, value, "activity_notif_level_e");
 }
 
 // BearerContextStatusChange ::= ENUMERATED
 const char* bearer_context_status_change_opts::to_string() const
 {
-  static const char* options[] = {"suspend", "resume"};
-  return convert_enum_idx(options, 2, value, "bearer_context_status_change_e");
+  static const char* names[] = {"suspend", "resume"};
+  return convert_enum_idx(names, 2, value, "bearer_context_status_change_e");
 }
 
 // DataDiscardRequired ::= ENUMERATED
 const char* data_discard_required_opts::to_string() const
 {
-  static const char* options[] = {"required"};
-  return convert_enum_idx(options, 1, value, "data_discard_required_e");
+  static const char* names[] = {"required"};
+  return convert_enum_idx(names, 1, value, "data_discard_required_e");
 }
 
 // New-UL-TNL-Information-Required ::= ENUMERATED
 const char* new_ul_tnl_info_required_opts::to_string() const
 {
-  static const char* options[] = {"required"};
-  return convert_enum_idx(options, 1, value, "new_ul_tnl_info_required_e");
+  static const char* names[] = {"required"};
+  return convert_enum_idx(names, 1, value, "new_ul_tnl_info_required_e");
 }
 
 // SecurityInformation ::= SEQUENCE
@@ -7482,21 +7482,21 @@ SRSASN_CODE sys_bearer_context_mod_request_c::unpack(cbit_ref& bref)
 
 const char* sys_bearer_context_mod_request_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "e-UTRAN-BearerContextModificationRequest", "nG-RAN-BearerContextModificationRequest", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "sys_bearer_context_mod_request_c::types");
+  return convert_enum_idx(names, 3, value, "sys_bearer_context_mod_request_c::types");
 }
 
 // BearerContextModificationRequestIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t bearer_context_mod_request_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 3, 13, 14, 66, 17, 26, 59, 70, 18, 76, 77, 23};
-  return map_enum_number(options, 13, idx, "id");
+  static const uint32_t names[] = {2, 3, 13, 14, 66, 17, 26, 59, 70, 18, 76, 77, 23};
+  return map_enum_number(names, 13, idx, "id");
 }
 bool bearer_context_mod_request_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 3, 13, 14, 66, 17, 26, 59, 70, 18, 76, 77, 23};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 3, 13, 14, 66, 17, 26, 59, 70, 18, 76, 77, 23};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -8063,20 +8063,20 @@ SRSASN_CODE bearer_context_mod_request_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* bearer_context_mod_request_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)",
-                                  "INTEGER (0..4294967295)",
-                                  "SecurityInformation",
-                                  "INTEGER (0..4000000000000,...)",
-                                  "INTEGER (0..4000000000000,...)",
-                                  "BearerContextStatusChange",
-                                  "New-UL-TNL-Information-Required",
-                                  "INTEGER (1..7200,...)",
-                                  "DataDiscardRequired",
-                                  "System-BearerContextModificationRequest",
-                                  "OCTET STRING",
-                                  "INTEGER (0..68719476735)",
-                                  "ActivityNotificationLevel"};
-  return convert_enum_idx(options, 13, value, "bearer_context_mod_request_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "INTEGER (0..4294967295)",
+                                "SecurityInformation",
+                                "INTEGER (0..4000000000000,...)",
+                                "INTEGER (0..4000000000000,...)",
+                                "BearerContextStatusChange",
+                                "New-UL-TNL-Information-Required",
+                                "INTEGER (1..7200,...)",
+                                "DataDiscardRequired",
+                                "System-BearerContextModificationRequest",
+                                "OCTET STRING",
+                                "INTEGER (0..68719476735)",
+                                "ActivityNotificationLevel"};
+  return convert_enum_idx(names, 13, value, "bearer_context_mod_request_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<bearer_context_mod_request_ies_o>;
@@ -8700,13 +8700,13 @@ void pdu_session_res_required_to_modify_item_s::to_json(json_writer& j) const
 // EUTRAN-BearerContextModificationRequired ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t eutran_bearer_context_mod_required_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {35, 36};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {35, 36};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool eutran_bearer_context_mod_required_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {35, 36};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {35, 36};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -8903,20 +8903,20 @@ SRSASN_CODE eutran_bearer_context_mod_required_o::value_c::unpack(cbit_ref& bref
 
 const char* eutran_bearer_context_mod_required_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRB-Required-To-Modify-List-EUTRAN", "DRB-Required-To-Remove-List-EUTRAN"};
-  return convert_enum_idx(options, 2, value, "eutran_bearer_context_mod_required_o::value_c::types");
+  static const char* names[] = {"DRB-Required-To-Modify-List-EUTRAN", "DRB-Required-To-Remove-List-EUTRAN"};
+  return convert_enum_idx(names, 2, value, "eutran_bearer_context_mod_required_o::value_c::types");
 }
 
 // NG-RAN-BearerContextModificationRequired ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t ng_ran_bearer_context_mod_required_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {45, 44};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {45, 44};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool ng_ran_bearer_context_mod_required_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {45, 44};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {45, 44};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -9112,9 +9112,8 @@ SRSASN_CODE ng_ran_bearer_context_mod_required_o::value_c::unpack(cbit_ref& bref
 
 const char* ng_ran_bearer_context_mod_required_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"PDU-Session-Resource-Required-To-Modify-List",
-                                  "PDU-Session-Resource-To-Remove-List"};
-  return convert_enum_idx(options, 2, value, "ng_ran_bearer_context_mod_required_o::value_c::types");
+  static const char* names[] = {"PDU-Session-Resource-Required-To-Modify-List", "PDU-Session-Resource-To-Remove-List"};
+  return convert_enum_idx(names, 2, value, "ng_ran_bearer_context_mod_required_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<eutran_bearer_context_mod_required_o>;
@@ -9418,21 +9417,21 @@ SRSASN_CODE sys_bearer_context_mod_required_c::unpack(cbit_ref& bref)
 
 const char* sys_bearer_context_mod_required_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "e-UTRAN-BearerContextModificationRequired", "nG-RAN-BearerContextModificationRequired", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "sys_bearer_context_mod_required_c::types");
+  return convert_enum_idx(names, 3, value, "sys_bearer_context_mod_required_c::types");
 }
 
 // BearerContextModificationRequiredIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t bearer_context_mod_required_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 3, 21};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {2, 3, 21};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool bearer_context_mod_required_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 3, 21};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 3, 21};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -9650,9 +9649,9 @@ SRSASN_CODE bearer_context_mod_required_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* bearer_context_mod_required_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "System-BearerContextModificationRequired"};
-  return convert_enum_idx(options, 3, value, "bearer_context_mod_required_ies_o::value_c::types");
+  return convert_enum_idx(names, 3, value, "bearer_context_mod_required_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<bearer_context_mod_required_ies_o>;
@@ -9776,8 +9775,8 @@ void qo_s_flow_failed_item_s::to_json(json_writer& j) const
 // ConfidentialityProtectionResult ::= ENUMERATED
 const char* confidentiality_protection_result_opts::to_string() const
 {
-  static const char* options[] = {"performed", "not-performed"};
-  return convert_enum_idx(options, 2, value, "confidentiality_protection_result_e");
+  static const char* names[] = {"performed", "not-performed"};
+  return convert_enum_idx(names, 2, value, "confidentiality_protection_result_e");
 }
 
 // DRB-Failed-Item-NG-RAN ::= SEQUENCE
@@ -10155,8 +10154,8 @@ void drb_setup_mod_item_ng_ran_s::to_json(json_writer& j) const
 // IntegrityProtectionResult ::= ENUMERATED
 const char* integrity_protection_result_opts::to_string() const
 {
-  static const char* options[] = {"performed", "not-performed"};
-  return convert_enum_idx(options, 2, value, "integrity_protection_result_e");
+  static const char* names[] = {"performed", "not-performed"};
+  return convert_enum_idx(names, 2, value, "integrity_protection_result_e");
 }
 
 // SecurityResult ::= SEQUENCE
@@ -10719,13 +10718,13 @@ void pdu_session_res_setup_mod_item_s::to_json(json_writer& j) const
 // EUTRAN-BearerContextModificationResponse ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t eutran_bearer_context_mod_resp_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {52, 53, 39, 40};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {52, 53, 39, 40};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool eutran_bearer_context_mod_resp_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {52, 53, 39, 40};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {52, 53, 39, 40};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -11004,23 +11003,23 @@ SRSASN_CODE eutran_bearer_context_mod_resp_o::value_c::unpack(cbit_ref& bref)
 
 const char* eutran_bearer_context_mod_resp_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRB-Setup-Mod-List-EUTRAN",
-                                  "DRB-Failed-Mod-List-EUTRAN",
-                                  "DRB-Modified-List-EUTRAN",
-                                  "DRB-Failed-To-Modify-List-EUTRAN"};
-  return convert_enum_idx(options, 4, value, "eutran_bearer_context_mod_resp_o::value_c::types");
+  static const char* names[] = {"DRB-Setup-Mod-List-EUTRAN",
+                                "DRB-Failed-Mod-List-EUTRAN",
+                                "DRB-Modified-List-EUTRAN",
+                                "DRB-Failed-To-Modify-List-EUTRAN"};
+  return convert_enum_idx(names, 4, value, "eutran_bearer_context_mod_resp_o::value_c::types");
 }
 
 // NG-RAN-BearerContextModificationResponse ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t ng_ran_bearer_context_mod_resp_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {54, 55, 48, 49};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {54, 55, 48, 49};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool ng_ran_bearer_context_mod_resp_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {54, 55, 48, 49};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {54, 55, 48, 49};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -11302,11 +11301,11 @@ SRSASN_CODE ng_ran_bearer_context_mod_resp_o::value_c::unpack(cbit_ref& bref)
 
 const char* ng_ran_bearer_context_mod_resp_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"PDU-Session-Resource-Setup-Mod-List",
-                                  "PDU-Session-Resource-Failed-Mod-List",
-                                  "PDU-Session-Resource-Modified-List",
-                                  "PDU-Session-Resource-Failed-To-Modify-List"};
-  return convert_enum_idx(options, 4, value, "ng_ran_bearer_context_mod_resp_o::value_c::types");
+  static const char* names[] = {"PDU-Session-Resource-Setup-Mod-List",
+                                "PDU-Session-Resource-Failed-Mod-List",
+                                "PDU-Session-Resource-Modified-List",
+                                "PDU-Session-Resource-Failed-To-Modify-List"};
+  return convert_enum_idx(names, 4, value, "ng_ran_bearer_context_mod_resp_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<eutran_bearer_context_mod_resp_o>;
@@ -11676,21 +11675,21 @@ SRSASN_CODE sys_bearer_context_mod_resp_c::unpack(cbit_ref& bref)
 
 const char* sys_bearer_context_mod_resp_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "e-UTRAN-BearerContextModificationResponse", "nG-RAN-BearerContextModificationResponse", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "sys_bearer_context_mod_resp_c::types");
+  return convert_enum_idx(names, 3, value, "sys_bearer_context_mod_resp_c::types");
 }
 
 // BearerContextModificationResponseIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t bearer_context_mod_resp_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 3, 19};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {2, 3, 19};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool bearer_context_mod_resp_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 3, 19};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 3, 19};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -11907,9 +11906,9 @@ SRSASN_CODE bearer_context_mod_resp_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* bearer_context_mod_resp_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "System-BearerContextModificationResponse"};
-  return convert_enum_idx(options, 3, value, "bearer_context_mod_resp_ies_o::value_c::types");
+  return convert_enum_idx(names, 3, value, "bearer_context_mod_resp_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<bearer_context_mod_resp_ies_o>;
@@ -11998,13 +11997,13 @@ void bearer_context_mod_resp_ies_container::to_json(json_writer& j) const
 // BearerContextReleaseCommandIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t bearer_context_release_cmd_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 3, 0};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {2, 3, 0};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool bearer_context_release_cmd_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 3, 0};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 3, 0};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -12221,8 +12220,8 @@ SRSASN_CODE bearer_context_release_cmd_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* bearer_context_release_cmd_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause"};
-  return convert_enum_idx(options, 3, value, "bearer_context_release_cmd_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause"};
+  return convert_enum_idx(names, 3, value, "bearer_context_release_cmd_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<bearer_context_release_cmd_ies_o>;
@@ -12304,13 +12303,13 @@ void bearer_context_release_cmd_ies_container::to_json(json_writer& j) const
 // BearerContextReleaseCompleteIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t bearer_context_release_complete_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 3, 1};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {2, 3, 1};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool bearer_context_release_complete_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 3, 1};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 3, 1};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -12527,8 +12526,8 @@ SRSASN_CODE bearer_context_release_complete_ies_o::value_c::unpack(cbit_ref& bre
 
 const char* bearer_context_release_complete_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 3, value, "bearer_context_release_complete_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 3, value, "bearer_context_release_complete_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<bearer_context_release_complete_ies_o>;
@@ -12677,13 +12676,13 @@ void drb_status_item_s::to_json(json_writer& j) const
 // BearerContextReleaseRequestIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t bearer_context_release_request_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 3, 22, 0};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {2, 3, 22, 0};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool bearer_context_release_request_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 3, 22, 0};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 3, 22, 0};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -12942,8 +12941,8 @@ SRSASN_CODE bearer_context_release_request_ies_o::value_c::unpack(cbit_ref& bref
 
 const char* bearer_context_release_request_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "DRB-Status-List", "Cause"};
-  return convert_enum_idx(options, 4, value, "bearer_context_release_request_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "DRB-Status-List", "Cause"};
+  return convert_enum_idx(names, 4, value, "bearer_context_release_request_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<bearer_context_release_request_ies_o>;
@@ -13044,13 +13043,13 @@ void bearer_context_release_request_ies_container::to_json(json_writer& j) const
 // BearerContextSetupFailureIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t bearer_context_setup_fail_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 3, 0, 1};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {2, 3, 0, 1};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool bearer_context_setup_fail_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 3, 0, 1};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 3, 0, 1};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -13306,9 +13305,9 @@ SRSASN_CODE bearer_context_setup_fail_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* bearer_context_setup_fail_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 4, value, "bearer_context_setup_fail_ies_o::value_c::types");
+  return convert_enum_idx(names, 4, value, "bearer_context_setup_fail_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<bearer_context_setup_fail_ies_o>;
@@ -13414,8 +13413,8 @@ void bearer_context_setup_fail_ies_container::to_json(json_writer& j) const
 // PDU-Session-Resource-To-Setup-Item-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 uint32_t pdu_session_res_to_setup_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {78};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {78};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool pdu_session_res_to_setup_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -13468,8 +13467,8 @@ SRSASN_CODE pdu_session_res_to_setup_item_ext_ies_o::ext_c::unpack(cbit_ref& bre
 
 const char* pdu_session_res_to_setup_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"OCTET STRING"};
-  return convert_enum_idx(options, 1, value, "pdu_session_res_to_setup_item_ext_ies_o::ext_c::types");
+  static const char* names[] = {"OCTET STRING"};
+  return convert_enum_idx(names, 1, value, "pdu_session_res_to_setup_item_ext_ies_o::ext_c::types");
 }
 
 // DRB-To-Setup-Item-EUTRAN ::= SEQUENCE
@@ -13696,8 +13695,8 @@ void pdu_session_res_to_setup_item_s::to_json(json_writer& j) const
 // EUTRAN-BearerContextSetupRequest ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t eutran_bearer_context_setup_request_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {32};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {32};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool eutran_bearer_context_setup_request_o::is_id_valid(const uint32_t& id)
 {
@@ -13754,15 +13753,15 @@ SRSASN_CODE eutran_bearer_context_setup_request_o::value_c::unpack(cbit_ref& bre
 
 const char* eutran_bearer_context_setup_request_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRB-To-Setup-List-EUTRAN"};
-  return convert_enum_idx(options, 1, value, "eutran_bearer_context_setup_request_o::value_c::types");
+  static const char* names[] = {"DRB-To-Setup-List-EUTRAN"};
+  return convert_enum_idx(names, 1, value, "eutran_bearer_context_setup_request_o::value_c::types");
 }
 
 // NG-RAN-BearerContextSetupRequest ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t ng_ran_bearer_context_setup_request_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {42};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {42};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool ng_ran_bearer_context_setup_request_o::is_id_valid(const uint32_t& id)
 {
@@ -13819,8 +13818,8 @@ SRSASN_CODE ng_ran_bearer_context_setup_request_o::value_c::unpack(cbit_ref& bre
 
 const char* ng_ran_bearer_context_setup_request_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"PDU-Session-Resource-To-Setup-List"};
-  return convert_enum_idx(options, 1, value, "ng_ran_bearer_context_setup_request_o::value_c::types");
+  static const char* names[] = {"PDU-Session-Resource-To-Setup-List"};
+  return convert_enum_idx(names, 1, value, "ng_ran_bearer_context_setup_request_o::value_c::types");
 }
 
 // System-BearerContextSetupRequest ::= CHOICE
@@ -13988,21 +13987,21 @@ SRSASN_CODE sys_bearer_context_setup_request_c::unpack(cbit_ref& bref)
 
 const char* sys_bearer_context_setup_request_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "e-UTRAN-BearerContextSetupRequest", "nG-RAN-BearerContextSetupRequest", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "sys_bearer_context_setup_request_c::types");
+  return convert_enum_idx(names, 3, value, "sys_bearer_context_setup_request_c::types");
 }
 
 // BearerContextSetupRequestIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t bearer_context_setup_request_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 13, 14, 66, 58, 23, 59, 17, 15, 76, 77};
-  return map_enum_number(options, 11, idx, "id");
+  static const uint32_t names[] = {2, 13, 14, 66, 58, 23, 59, 17, 15, 76, 77};
+  return map_enum_number(names, 11, idx, "id");
 }
 bool bearer_context_setup_request_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 13, 14, 66, 58, 23, 59, 17, 15, 76, 77};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 13, 14, 66, 58, 23, 59, 17, 15, 76, 77};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -14505,18 +14504,18 @@ SRSASN_CODE bearer_context_setup_request_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* bearer_context_setup_request_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)",
-                                  "SecurityInformation",
-                                  "INTEGER (0..4000000000000,...)",
-                                  "INTEGER (0..4000000000000,...)",
-                                  "OCTET STRING",
-                                  "ActivityNotificationLevel",
-                                  "INTEGER (1..7200,...)",
-                                  "BearerContextStatusChange",
-                                  "System-BearerContextSetupRequest",
-                                  "OCTET STRING",
-                                  "INTEGER (0..68719476735)"};
-  return convert_enum_idx(options, 11, value, "bearer_context_setup_request_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)",
+                                "SecurityInformation",
+                                "INTEGER (0..4000000000000,...)",
+                                "INTEGER (0..4000000000000,...)",
+                                "OCTET STRING",
+                                "ActivityNotificationLevel",
+                                "INTEGER (1..7200,...)",
+                                "BearerContextStatusChange",
+                                "System-BearerContextSetupRequest",
+                                "OCTET STRING",
+                                "INTEGER (0..68719476735)"};
+  return convert_enum_idx(names, 11, value, "bearer_context_setup_request_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<bearer_context_setup_request_ies_o>;
@@ -14830,8 +14829,8 @@ void drb_setup_item_eutran_s::to_json(json_writer& j) const
 
 const char* drb_setup_item_eutran_s::s1_dl_up_unchanged_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "drb_setup_item_eutran_s::s1_dl_up_unchanged_e_");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "drb_setup_item_eutran_s::s1_dl_up_unchanged_e_");
 }
 
 // PDU-Session-Resource-Failed-Item ::= SEQUENCE
@@ -14974,20 +14973,20 @@ void pdu_session_res_setup_item_s::to_json(json_writer& j) const
 
 const char* pdu_session_res_setup_item_s::ng_dl_up_unchanged_opts::to_string() const
 {
-  static const char* options[] = {"true"};
-  return convert_enum_idx(options, 1, value, "pdu_session_res_setup_item_s::ng_dl_up_unchanged_e_");
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "pdu_session_res_setup_item_s::ng_dl_up_unchanged_e_");
 }
 
 // EUTRAN-BearerContextSetupResponse ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t eutran_bearer_context_setup_resp_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {37, 38};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {37, 38};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool eutran_bearer_context_setup_resp_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {37, 38};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {37, 38};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -15181,20 +15180,20 @@ SRSASN_CODE eutran_bearer_context_setup_resp_o::value_c::unpack(cbit_ref& bref)
 
 const char* eutran_bearer_context_setup_resp_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRB-Setup-List-EUTRAN", "DRB-Failed-List-EUTRAN"};
-  return convert_enum_idx(options, 2, value, "eutran_bearer_context_setup_resp_o::value_c::types");
+  static const char* names[] = {"DRB-Setup-List-EUTRAN", "DRB-Failed-List-EUTRAN"};
+  return convert_enum_idx(names, 2, value, "eutran_bearer_context_setup_resp_o::value_c::types");
 }
 
 // NG-RAN-BearerContextSetupResponse ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t ng_ran_bearer_context_setup_resp_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {46, 47};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {46, 47};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool ng_ran_bearer_context_setup_resp_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {46, 47};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {46, 47};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -15388,8 +15387,8 @@ SRSASN_CODE ng_ran_bearer_context_setup_resp_o::value_c::unpack(cbit_ref& bref)
 
 const char* ng_ran_bearer_context_setup_resp_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"PDU-Session-Resource-Setup-List", "PDU-Session-Resource-Failed-List"};
-  return convert_enum_idx(options, 2, value, "ng_ran_bearer_context_setup_resp_o::value_c::types");
+  static const char* names[] = {"PDU-Session-Resource-Setup-List", "PDU-Session-Resource-Failed-List"};
+  return convert_enum_idx(names, 2, value, "ng_ran_bearer_context_setup_resp_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<eutran_bearer_context_setup_resp_o>;
@@ -15693,21 +15692,21 @@ SRSASN_CODE sys_bearer_context_setup_resp_c::unpack(cbit_ref& bref)
 
 const char* sys_bearer_context_setup_resp_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "e-UTRAN-BearerContextSetupResponse", "nG-RAN-BearerContextSetupResponse", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "sys_bearer_context_setup_resp_c::types");
+  return convert_enum_idx(names, 3, value, "sys_bearer_context_setup_resp_c::types");
 }
 
 // BearerContextSetupResponseIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t bearer_context_setup_resp_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 3, 16};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {2, 3, 16};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool bearer_context_setup_resp_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 3, 16};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 3, 16};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -15924,9 +15923,9 @@ SRSASN_CODE bearer_context_setup_resp_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* bearer_context_setup_resp_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "System-BearerContextSetupResponse"};
-  return convert_enum_idx(options, 3, value, "bearer_context_setup_resp_ies_o::value_c::types");
+  return convert_enum_idx(names, 3, value, "bearer_context_setup_resp_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<bearer_context_setup_resp_ies_o>;
@@ -16047,8 +16046,8 @@ void endpoint_ip_address_and_port_s::to_json(json_writer& j) const
 // CP-TNL-Information-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t cp_tnl_info_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {74};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {74};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool cp_tnl_info_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -16102,8 +16101,8 @@ SRSASN_CODE cp_tnl_info_ext_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* cp_tnl_info_ext_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Endpoint-IP-address-and-port"};
-  return convert_enum_idx(options, 1, value, "cp_tnl_info_ext_ies_o::value_c::types");
+  static const char* names[] = {"Endpoint-IP-address-and-port"};
+  return convert_enum_idx(names, 1, value, "cp_tnl_info_ext_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<cp_tnl_info_ext_ies_o>;
@@ -16239,20 +16238,20 @@ SRSASN_CODE cp_tnl_info_c::unpack(cbit_ref& bref)
 
 const char* cp_tnl_info_c::types_opts::to_string() const
 {
-  static const char* options[] = {"endpoint-IP-Address", "choice-extension"};
-  return convert_enum_idx(options, 2, value, "cp_tnl_info_c::types");
+  static const char* names[] = {"endpoint-IP-Address", "choice-extension"};
+  return convert_enum_idx(names, 2, value, "cp_tnl_info_c::types");
 }
 
 // DLDataNotificationIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t dl_data_notif_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 3, 63};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {2, 3, 63};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool dl_data_notif_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 3, 63};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 3, 63};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -16445,8 +16444,8 @@ SRSASN_CODE dl_data_notif_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* dl_data_notif_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "INTEGER (0..7,...)"};
-  return convert_enum_idx(options, 3, value, "dl_data_notif_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "INTEGER (0..7,...)"};
+  return convert_enum_idx(names, 3, value, "dl_data_notif_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<dl_data_notif_ies_o>;
@@ -16802,8 +16801,8 @@ void data_usage_per_pdu_session_report_s::to_json(json_writer& j) const
 
 const char* data_usage_per_pdu_session_report_s::secondary_rat_type_opts::to_string() const
 {
-  static const char* options[] = {"nR", "e-UTRA"};
-  return convert_enum_idx(options, 2, value, "data_usage_per_pdu_session_report_s::secondary_rat_type_e_");
+  static const char* names[] = {"nR", "e-UTRA"};
+  return convert_enum_idx(names, 2, value, "data_usage_per_pdu_session_report_s::secondary_rat_type_e_");
 }
 
 // Data-Usage-per-QoS-Flow-Item ::= SEQUENCE
@@ -16854,20 +16853,20 @@ void data_usage_per_qos_flow_item_s::to_json(json_writer& j) const
 
 const char* data_usage_per_qos_flow_item_s::secondary_rat_type_opts::to_string() const
 {
-  static const char* options[] = {"nR", "e-UTRA"};
-  return convert_enum_idx(options, 2, value, "data_usage_per_qos_flow_item_s::secondary_rat_type_e_");
+  static const char* names[] = {"nR", "e-UTRA"};
+  return convert_enum_idx(names, 2, value, "data_usage_per_qos_flow_item_s::secondary_rat_type_e_");
 }
 
 // DataUsageReportIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t data_usage_report_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 3, 25};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {2, 3, 25};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool data_usage_report_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 3, 25};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 3, 25};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -17087,8 +17086,8 @@ SRSASN_CODE data_usage_report_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* data_usage_report_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Data-Usage-Report-List"};
-  return convert_enum_idx(options, 3, value, "data_usage_report_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Data-Usage-Report-List"};
+  return convert_enum_idx(names, 3, value, "data_usage_report_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<data_usage_report_ies_o>;
@@ -17404,8 +17403,8 @@ void ue_associated_lc_e1_conn_item_s::to_json(json_writer& j) const
 // GNB-CU-CP-TNLA-To-Remove-Item-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 uint32_t gnb_cu_cp_tnla_to_rem_item_ext_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {75};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {75};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool gnb_cu_cp_tnla_to_rem_item_ext_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -17459,8 +17458,8 @@ SRSASN_CODE gnb_cu_cp_tnla_to_rem_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_cp_tnla_to_rem_item_ext_ies_o::ext_c::types_opts::to_string() const
 {
-  static const char* options[] = {"CP-TNL-Information"};
-  return convert_enum_idx(options, 1, value, "gnb_cu_cp_tnla_to_rem_item_ext_ies_o::ext_c::types");
+  static const char* names[] = {"CP-TNL-Information"};
+  return convert_enum_idx(names, 1, value, "gnb_cu_cp_tnla_to_rem_item_ext_ies_o::ext_c::types");
 }
 
 // MRDC-Usage-Information ::= SEQUENCE
@@ -17587,8 +17586,8 @@ SRSASN_CODE private_ie_id_c::unpack(cbit_ref& bref)
 
 const char* private_ie_id_c::types_opts::to_string() const
 {
-  static const char* options[] = {"local", "global"};
-  return convert_enum_idx(options, 2, value, "private_ie_id_c::types");
+  static const char* names[] = {"local", "global"};
+  return convert_enum_idx(names, 2, value, "private_ie_id_c::types");
 }
 
 // QoS-Parameters-Support-List ::= SEQUENCE
@@ -17659,15 +17658,15 @@ void qo_s_params_support_list_s::to_json(json_writer& j) const
 // TNLAssociationUsage ::= ENUMERATED
 const char* tnlassoc_usage_opts::to_string() const
 {
-  static const char* options[] = {"ue", "non-ue", "both"};
-  return convert_enum_idx(options, 3, value, "tnlassoc_usage_e");
+  static const char* names[] = {"ue", "non-ue", "both"};
+  return convert_enum_idx(names, 3, value, "tnlassoc_usage_e");
 }
 
 // UE-associatedLogicalE1-ConnectionItemRes ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t ue_associated_lc_e1_conn_item_res_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {5};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {5};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool ue_associated_lc_e1_conn_item_res_o::is_id_valid(const uint32_t& id)
 {
@@ -17721,20 +17720,20 @@ SRSASN_CODE ue_associated_lc_e1_conn_item_res_o::value_c::unpack(cbit_ref& bref)
 
 const char* ue_associated_lc_e1_conn_item_res_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"UE-associatedLogicalE1-ConnectionItem"};
-  return convert_enum_idx(options, 1, value, "ue_associated_lc_e1_conn_item_res_o::value_c::types");
+  static const char* names[] = {"UE-associatedLogicalE1-ConnectionItem"};
+  return convert_enum_idx(names, 1, value, "ue_associated_lc_e1_conn_item_res_o::value_c::types");
 }
 uint8_t ue_associated_lc_e1_conn_item_res_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {1};
-  return map_enum_number(options, 1, value, "ue_associated_lc_e1_conn_item_res_o::value_c::types");
+  static const uint8_t numbers[] = {1};
+  return map_enum_number(numbers, 1, value, "ue_associated_lc_e1_conn_item_res_o::value_c::types");
 }
 
 // EUTRAN-GNB-CU-UP-CounterCheckRequest ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t eutran_gnb_cu_up_counter_check_request_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {61};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {61};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool eutran_gnb_cu_up_counter_check_request_o::is_id_valid(const uint32_t& id)
 {
@@ -17792,8 +17791,8 @@ SRSASN_CODE eutran_gnb_cu_up_counter_check_request_o::value_c::unpack(cbit_ref& 
 
 const char* eutran_gnb_cu_up_counter_check_request_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRBs-Subject-To-Counter-Check-List-EUTRAN"};
-  return convert_enum_idx(options, 1, value, "eutran_gnb_cu_up_counter_check_request_o::value_c::types");
+  static const char* names[] = {"DRBs-Subject-To-Counter-Check-List-EUTRAN"};
+  return convert_enum_idx(names, 1, value, "eutran_gnb_cu_up_counter_check_request_o::value_c::types");
 }
 
 // GNB-CU-CP-TNLA-Failed-To-Setup-Item ::= SEQUENCE
@@ -18041,8 +18040,8 @@ void gnb_cu_up_tnla_to_rem_item_s::to_json(json_writer& j) const
 // NG-RAN-GNB-CU-UP-CounterCheckRequest ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t ng_ran_gnb_cu_up_counter_check_request_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {62};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {62};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool ng_ran_gnb_cu_up_counter_check_request_o::is_id_valid(const uint32_t& id)
 {
@@ -18100,8 +18099,8 @@ SRSASN_CODE ng_ran_gnb_cu_up_counter_check_request_o::value_c::unpack(cbit_ref& 
 
 const char* ng_ran_gnb_cu_up_counter_check_request_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"DRBs-Subject-To-Counter-Check-List-NG-RAN"};
-  return convert_enum_idx(options, 1, value, "ng_ran_gnb_cu_up_counter_check_request_o::value_c::types");
+  static const char* names[] = {"DRBs-Subject-To-Counter-Check-List-NG-RAN"};
+  return convert_enum_idx(names, 1, value, "ng_ran_gnb_cu_up_counter_check_request_o::value_c::types");
 }
 
 // PDU-Session-Resource-Data-Usage-Item ::= SEQUENCE
@@ -18190,8 +18189,8 @@ void pdu_session_to_notify_item_s::to_json(json_writer& j) const
 // ResetAll ::= ENUMERATED
 const char* reset_all_opts::to_string() const
 {
-  static const char* options[] = {"reset-all"};
-  return convert_enum_idx(options, 1, value, "reset_all_e");
+  static const char* names[] = {"reset-all"};
+  return convert_enum_idx(names, 1, value, "reset_all_e");
 }
 
 // SupportedPLMNs-Item ::= SEQUENCE
@@ -18277,8 +18276,8 @@ void supported_plmns_item_s::to_json(json_writer& j) const
 // UE-associatedLogicalE1-ConnectionItemResAck ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t ue_associated_lc_e1_conn_item_res_ack_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {5};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {5};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool ue_associated_lc_e1_conn_item_res_ack_o::is_id_valid(const uint32_t& id)
 {
@@ -18332,13 +18331,13 @@ SRSASN_CODE ue_associated_lc_e1_conn_item_res_ack_o::value_c::unpack(cbit_ref& b
 
 const char* ue_associated_lc_e1_conn_item_res_ack_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"UE-associatedLogicalE1-ConnectionItem"};
-  return convert_enum_idx(options, 1, value, "ue_associated_lc_e1_conn_item_res_ack_o::value_c::types");
+  static const char* names[] = {"UE-associatedLogicalE1-ConnectionItem"};
+  return convert_enum_idx(names, 1, value, "ue_associated_lc_e1_conn_item_res_ack_o::value_c::types");
 }
 uint8_t ue_associated_lc_e1_conn_item_res_ack_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {1};
-  return map_enum_number(options, 1, value, "ue_associated_lc_e1_conn_item_res_ack_o::value_c::types");
+  static const uint8_t numbers[] = {1};
+  return map_enum_number(numbers, 1, value, "ue_associated_lc_e1_conn_item_res_ack_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_single_container_s<ue_associated_lc_e1_conn_item_res_o>;
@@ -18346,8 +18345,8 @@ template struct asn1::protocol_ie_single_container_s<ue_associated_lc_e1_conn_it
 // CNSupport ::= ENUMERATED
 const char* cn_support_opts::to_string() const
 {
-  static const char* options[] = {"c-epc", "c-5gc", "both"};
-  return convert_enum_idx(options, 3, value, "cn_support_e");
+  static const char* names[] = {"c-epc", "c-5gc", "both"};
+  return convert_enum_idx(names, 3, value, "cn_support_e");
 }
 int8_t cn_support_opts::to_number() const
 {
@@ -18361,8 +18360,8 @@ int8_t cn_support_opts::to_number() const
 // GNB-CU-UP-OverloadInformation ::= ENUMERATED
 const char* gnb_cu_up_overload_info_opts::to_string() const
 {
-  static const char* options[] = {"overloaded", "not-overloaded"};
-  return convert_enum_idx(options, 2, value, "gnb_cu_up_overload_info_e");
+  static const char* names[] = {"overloaded", "not-overloaded"};
+  return convert_enum_idx(names, 2, value, "gnb_cu_up_overload_info_e");
 }
 
 // PrivateIE-Field{E1AP-PRIVATE-IES : IEsSetParam} ::= SEQUENCE{{E1AP-PRIVATE-IES}}
@@ -18551,8 +18550,8 @@ SRSASN_CODE reset_type_c::unpack(cbit_ref& bref)
 
 const char* reset_type_c::types_opts::to_string() const
 {
-  static const char* options[] = {"e1-Interface", "partOfE1-Interface", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "reset_type_c::types");
+  static const char* names[] = {"e1-Interface", "partOfE1-Interface", "choice-extension"};
+  return convert_enum_idx(names, 3, value, "reset_type_c::types");
 }
 
 // System-GNB-CU-UP-CounterCheckRequest ::= CHOICE
@@ -18721,21 +18720,21 @@ SRSASN_CODE sys_gnb_cu_up_counter_check_request_c::unpack(cbit_ref& bref)
 
 const char* sys_gnb_cu_up_counter_check_request_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "e-UTRAN-GNB-CU-UP-CounterCheckRequest", "nG-RAN-GNB-CU-UP-CounterCheckRequest", "choice-extension"};
-  return convert_enum_idx(options, 3, value, "sys_gnb_cu_up_counter_check_request_c::types");
+  return convert_enum_idx(names, 3, value, "sys_gnb_cu_up_counter_check_request_c::types");
 }
 
 // TimeToWait ::= ENUMERATED
 const char* time_to_wait_opts::to_string() const
 {
-  static const char* options[] = {"v1s", "v2s", "v5s", "v10s", "v20s", "v60s"};
-  return convert_enum_idx(options, 6, value, "time_to_wait_e");
+  static const char* names[] = {"v1s", "v2s", "v5s", "v10s", "v20s", "v60s"};
+  return convert_enum_idx(names, 6, value, "time_to_wait_e");
 }
 uint8_t time_to_wait_opts::to_number() const
 {
-  static const uint8_t options[] = {1, 2, 5, 10, 20, 60};
-  return map_enum_number(options, 6, value, "time_to_wait_e");
+  static const uint8_t numbers[] = {1, 2, 5, 10, 20, 60};
+  return map_enum_number(numbers, 6, value, "time_to_wait_e");
 }
 
 template struct asn1::protocol_ie_single_container_s<ue_associated_lc_e1_conn_item_res_ack_o>;
@@ -18743,13 +18742,13 @@ template struct asn1::protocol_ie_single_container_s<ue_associated_lc_e1_conn_it
 // E1ReleaseRequestIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t e1_release_request_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 0};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {57, 0};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool e1_release_request_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 0};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 0};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -18932,20 +18931,20 @@ SRSASN_CODE e1_release_request_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* e1_release_request_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "Cause"};
-  return convert_enum_idx(options, 2, value, "e1_release_request_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause"};
+  return convert_enum_idx(names, 2, value, "e1_release_request_ies_o::value_c::types");
 }
 uint8_t e1_release_request_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "e1_release_request_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "e1_release_request_ies_o::value_c::types");
 }
 
 // E1ReleaseResponseIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t e1_release_resp_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57};
-  return map_enum_number(options, 1, idx, "id");
+  static const uint32_t names[] = {57};
+  return map_enum_number(names, 1, idx, "id");
 }
 bool e1_release_resp_ies_o::is_id_valid(const uint32_t& id)
 {
@@ -18998,25 +18997,25 @@ SRSASN_CODE e1_release_resp_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* e1_release_resp_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)"};
-  return convert_enum_idx(options, 1, value, "e1_release_resp_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)"};
+  return convert_enum_idx(names, 1, value, "e1_release_resp_ies_o::value_c::types");
 }
 uint8_t e1_release_resp_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "e1_release_resp_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "e1_release_resp_ies_o::value_c::types");
 }
 
 // ErrorIndication-IEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t error_ind_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 2, 3, 0, 1};
-  return map_enum_number(options, 5, idx, "id");
+  static const uint32_t names[] = {57, 2, 3, 0, 1};
+  return map_enum_number(names, 5, idx, "id");
 }
 bool error_ind_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 2, 3, 0, 1};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 2, 3, 0, 1};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -19305,21 +19304,21 @@ SRSASN_CODE error_ind_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* error_ind_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..255,...)", "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "Cause", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 5, value, "error_ind_ies_o::value_c::types");
+  return convert_enum_idx(names, 5, value, "error_ind_ies_o::value_c::types");
 }
 
 // GNB-CU-CP-ConfigurationUpdateAcknowledgeIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t gnb_cu_cp_cfg_upd_ack_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 1, 30, 31};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {57, 1, 30, 31};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool gnb_cu_cp_cfg_upd_ack_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 1, 30, 31};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 1, 30, 31};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -19587,28 +19586,28 @@ SRSASN_CODE gnb_cu_cp_cfg_upd_ack_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_cp_cfg_upd_ack_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)",
-                                  "CriticalityDiagnostics",
-                                  "GNB-CU-CP-TNLA-Setup-List",
-                                  "GNB-CU-CP-TNLA-Failed-To-Setup-List"};
-  return convert_enum_idx(options, 4, value, "gnb_cu_cp_cfg_upd_ack_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "CriticalityDiagnostics",
+                                "GNB-CU-CP-TNLA-Setup-List",
+                                "GNB-CU-CP-TNLA-Failed-To-Setup-List"};
+  return convert_enum_idx(names, 4, value, "gnb_cu_cp_cfg_upd_ack_ies_o::value_c::types");
 }
 uint8_t gnb_cu_cp_cfg_upd_ack_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnb_cu_cp_cfg_upd_ack_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_cu_cp_cfg_upd_ack_ies_o::value_c::types");
 }
 
 // GNB-CU-CP-ConfigurationUpdateFailureIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t gnb_cu_cp_cfg_upd_fail_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 0, 12, 1};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {57, 0, 12, 1};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool gnb_cu_cp_cfg_upd_fail_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 0, 12, 1};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 0, 12, 1};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -19864,25 +19863,25 @@ SRSASN_CODE gnb_cu_cp_cfg_upd_fail_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_cp_cfg_upd_fail_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 4, value, "gnb_cu_cp_cfg_upd_fail_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "gnb_cu_cp_cfg_upd_fail_ies_o::value_c::types");
 }
 uint8_t gnb_cu_cp_cfg_upd_fail_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnb_cu_cp_cfg_upd_fail_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_cu_cp_cfg_upd_fail_ies_o::value_c::types");
 }
 
 // GNB-CU-CP-ConfigurationUpdateIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t gnb_cu_cp_cfg_upd_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 9, 27, 28, 29};
-  return map_enum_number(options, 5, idx, "id");
+  static const uint32_t names[] = {57, 9, 27, 28, 29};
+  return map_enum_number(names, 5, idx, "id");
 }
 bool gnb_cu_cp_cfg_upd_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 9, 27, 28, 29};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 9, 27, 28, 29};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -20190,29 +20189,29 @@ SRSASN_CODE gnb_cu_cp_cfg_upd_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_cp_cfg_upd_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)",
-                                  "PrintableString",
-                                  "GNB-CU-CP-TNLA-To-Add-List",
-                                  "GNB-CU-CP-TNLA-To-Remove-List",
-                                  "GNB-CU-CP-TNLA-To-Update-List"};
-  return convert_enum_idx(options, 5, value, "gnb_cu_cp_cfg_upd_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "PrintableString",
+                                "GNB-CU-CP-TNLA-To-Add-List",
+                                "GNB-CU-CP-TNLA-To-Remove-List",
+                                "GNB-CU-CP-TNLA-To-Update-List"};
+  return convert_enum_idx(names, 5, value, "gnb_cu_cp_cfg_upd_ies_o::value_c::types");
 }
 uint8_t gnb_cu_cp_cfg_upd_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnb_cu_cp_cfg_upd_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_cu_cp_cfg_upd_ies_o::value_c::types");
 }
 
 // GNB-CU-CP-E1SetupFailureIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t gnb_cu_cp_e1_setup_fail_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 0, 12, 1};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {57, 0, 12, 1};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool gnb_cu_cp_e1_setup_fail_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 0, 12, 1};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 0, 12, 1};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -20468,25 +20467,25 @@ SRSASN_CODE gnb_cu_cp_e1_setup_fail_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_cp_e1_setup_fail_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 4, value, "gnb_cu_cp_e1_setup_fail_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "gnb_cu_cp_e1_setup_fail_ies_o::value_c::types");
 }
 uint8_t gnb_cu_cp_e1_setup_fail_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnb_cu_cp_e1_setup_fail_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_cu_cp_e1_setup_fail_ies_o::value_c::types");
 }
 
 // GNB-CU-CP-E1SetupRequestIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t gnb_cu_cp_e1_setup_request_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 9};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {57, 9};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool gnb_cu_cp_e1_setup_request_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 9};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 9};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -20668,25 +20667,25 @@ SRSASN_CODE gnb_cu_cp_e1_setup_request_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_cp_e1_setup_request_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "PrintableString"};
-  return convert_enum_idx(options, 2, value, "gnb_cu_cp_e1_setup_request_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "PrintableString"};
+  return convert_enum_idx(names, 2, value, "gnb_cu_cp_e1_setup_request_ies_o::value_c::types");
 }
 uint8_t gnb_cu_cp_e1_setup_request_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnb_cu_cp_e1_setup_request_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_cu_cp_e1_setup_request_ies_o::value_c::types");
 }
 
 // GNB-CU-CP-E1SetupResponseIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t gnb_cu_cp_e1_setup_resp_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 7, 8, 10, 11, 64};
-  return map_enum_number(options, 6, idx, "id");
+  static const uint32_t names[] = {57, 7, 8, 10, 11, 64};
+  return map_enum_number(names, 6, idx, "id");
 }
 bool gnb_cu_cp_e1_setup_resp_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 7, 8, 10, 11, 64};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 7, 8, 10, 11, 64};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -21012,25 +21011,25 @@ SRSASN_CODE gnb_cu_cp_e1_setup_resp_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_cp_e1_setup_resp_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)",
-                                  "INTEGER (0..68719476735)",
-                                  "PrintableString",
-                                  "CNSupport",
-                                  "SupportedPLMNs-List",
-                                  "INTEGER (0..255)"};
-  return convert_enum_idx(options, 6, value, "gnb_cu_cp_e1_setup_resp_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "INTEGER (0..68719476735)",
+                                "PrintableString",
+                                "CNSupport",
+                                "SupportedPLMNs-List",
+                                "INTEGER (0..255)"};
+  return convert_enum_idx(names, 6, value, "gnb_cu_cp_e1_setup_resp_ies_o::value_c::types");
 }
 
 // GNB-CU-UP-ConfigurationUpdateAcknowledgeIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t gnb_cu_up_cfg_upd_ack_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 1};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {57, 1};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool gnb_cu_up_cfg_upd_ack_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 1};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 1};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -21213,25 +21212,25 @@ SRSASN_CODE gnb_cu_up_cfg_upd_ack_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_up_cfg_upd_ack_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 2, value, "gnb_cu_up_cfg_upd_ack_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 2, value, "gnb_cu_up_cfg_upd_ack_ies_o::value_c::types");
 }
 uint8_t gnb_cu_up_cfg_upd_ack_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnb_cu_up_cfg_upd_ack_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_cu_up_cfg_upd_ack_ies_o::value_c::types");
 }
 
 // GNB-CU-UP-ConfigurationUpdateFailureIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t gnb_cu_up_cfg_upd_fail_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 0, 12, 1};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {57, 0, 12, 1};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool gnb_cu_up_cfg_upd_fail_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 0, 12, 1};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 0, 12, 1};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -21487,25 +21486,25 @@ SRSASN_CODE gnb_cu_up_cfg_upd_fail_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_up_cfg_upd_fail_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 4, value, "gnb_cu_up_cfg_upd_fail_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "gnb_cu_up_cfg_upd_fail_ies_o::value_c::types");
 }
 uint8_t gnb_cu_up_cfg_upd_fail_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnb_cu_up_cfg_upd_fail_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_cu_up_cfg_upd_fail_ies_o::value_c::types");
 }
 
 // GNB-CU-UP-ConfigurationUpdateIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t gnb_cu_up_cfg_upd_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 7, 8, 11, 64, 73};
-  return map_enum_number(options, 6, idx, "id");
+  static const uint32_t names[] = {57, 7, 8, 11, 64, 73};
+  return map_enum_number(names, 6, idx, "id");
 }
 bool gnb_cu_up_cfg_upd_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 7, 8, 11, 64, 73};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 7, 8, 11, 64, 73};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -21839,25 +21838,25 @@ SRSASN_CODE gnb_cu_up_cfg_upd_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_up_cfg_upd_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)",
-                                  "INTEGER (0..68719476735)",
-                                  "PrintableString",
-                                  "SupportedPLMNs-List",
-                                  "INTEGER (0..255)",
-                                  "GNB-CU-UP-TNLA-To-Remove-List"};
-  return convert_enum_idx(options, 6, value, "gnb_cu_up_cfg_upd_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "INTEGER (0..68719476735)",
+                                "PrintableString",
+                                "SupportedPLMNs-List",
+                                "INTEGER (0..255)",
+                                "GNB-CU-UP-TNLA-To-Remove-List"};
+  return convert_enum_idx(names, 6, value, "gnb_cu_up_cfg_upd_ies_o::value_c::types");
 }
 
 // GNB-CU-UP-CounterCheckRequestIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t gnb_cu_up_counter_check_request_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 3, 60};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {2, 3, 60};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool gnb_cu_up_counter_check_request_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 3, 60};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 3, 60};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -22076,21 +22075,21 @@ SRSASN_CODE gnb_cu_up_counter_check_request_ies_o::value_c::unpack(cbit_ref& bre
 
 const char* gnb_cu_up_counter_check_request_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "System-GNB-CU-UP-CounterCheckRequest"};
-  return convert_enum_idx(options, 3, value, "gnb_cu_up_counter_check_request_ies_o::value_c::types");
+  return convert_enum_idx(names, 3, value, "gnb_cu_up_counter_check_request_ies_o::value_c::types");
 }
 
 // GNB-CU-UP-E1SetupFailureIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t gnb_cu_up_e1_setup_fail_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 0, 12, 1};
-  return map_enum_number(options, 4, idx, "id");
+  static const uint32_t names[] = {57, 0, 12, 1};
+  return map_enum_number(names, 4, idx, "id");
 }
 bool gnb_cu_up_e1_setup_fail_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 0, 12, 1};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 0, 12, 1};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -22346,25 +22345,25 @@ SRSASN_CODE gnb_cu_up_e1_setup_fail_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_up_e1_setup_fail_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 4, value, "gnb_cu_up_e1_setup_fail_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "TimeToWait", "CriticalityDiagnostics"};
+  return convert_enum_idx(names, 4, value, "gnb_cu_up_e1_setup_fail_ies_o::value_c::types");
 }
 uint8_t gnb_cu_up_e1_setup_fail_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnb_cu_up_e1_setup_fail_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_cu_up_e1_setup_fail_ies_o::value_c::types");
 }
 
 // GNB-CU-UP-E1SetupRequestIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t gnb_cu_up_e1_setup_request_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 7, 8, 10, 11, 64};
-  return map_enum_number(options, 6, idx, "id");
+  static const uint32_t names[] = {57, 7, 8, 10, 11, 64};
+  return map_enum_number(names, 6, idx, "id");
 }
 bool gnb_cu_up_e1_setup_request_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 7, 8, 10, 11, 64};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 7, 8, 10, 11, 64};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -22690,25 +22689,25 @@ SRSASN_CODE gnb_cu_up_e1_setup_request_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_up_e1_setup_request_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)",
-                                  "INTEGER (0..68719476735)",
-                                  "PrintableString",
-                                  "CNSupport",
-                                  "SupportedPLMNs-List",
-                                  "INTEGER (0..255)"};
-  return convert_enum_idx(options, 6, value, "gnb_cu_up_e1_setup_request_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)",
+                                "INTEGER (0..68719476735)",
+                                "PrintableString",
+                                "CNSupport",
+                                "SupportedPLMNs-List",
+                                "INTEGER (0..255)"};
+  return convert_enum_idx(names, 6, value, "gnb_cu_up_e1_setup_request_ies_o::value_c::types");
 }
 
 // GNB-CU-UP-E1SetupResponseIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t gnb_cu_up_e1_setup_resp_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 9};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {57, 9};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool gnb_cu_up_e1_setup_resp_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 9};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 9};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -22890,25 +22889,25 @@ SRSASN_CODE gnb_cu_up_e1_setup_resp_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_up_e1_setup_resp_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "PrintableString"};
-  return convert_enum_idx(options, 2, value, "gnb_cu_up_e1_setup_resp_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "PrintableString"};
+  return convert_enum_idx(names, 2, value, "gnb_cu_up_e1_setup_resp_ies_o::value_c::types");
 }
 uint8_t gnb_cu_up_e1_setup_resp_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnb_cu_up_e1_setup_resp_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_cu_up_e1_setup_resp_ies_o::value_c::types");
 }
 
 // GNB-CU-UP-StatusIndicationIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t gnb_cu_up_status_ind_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 65};
-  return map_enum_number(options, 2, idx, "id");
+  static const uint32_t names[] = {57, 65};
+  return map_enum_number(names, 2, idx, "id");
 }
 bool gnb_cu_up_status_ind_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 65};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 65};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -23070,25 +23069,25 @@ SRSASN_CODE gnb_cu_up_status_ind_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* gnb_cu_up_status_ind_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "GNB-CU-UP-OverloadInformation"};
-  return convert_enum_idx(options, 2, value, "gnb_cu_up_status_ind_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "GNB-CU-UP-OverloadInformation"};
+  return convert_enum_idx(names, 2, value, "gnb_cu_up_status_ind_ies_o::value_c::types");
 }
 uint8_t gnb_cu_up_status_ind_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "gnb_cu_up_status_ind_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "gnb_cu_up_status_ind_ies_o::value_c::types");
 }
 
 // MRDC-DataUsageReportIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t mrdc_data_usage_report_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 3, 68};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {2, 3, 68};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool mrdc_data_usage_report_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 3, 68};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 3, 68};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -23308,9 +23307,9 @@ SRSASN_CODE mrdc_data_usage_report_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* mrdc_data_usage_report_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "PDU-Session-Resource-Data-Usage-List"};
-  return convert_enum_idx(options, 3, value, "mrdc_data_usage_report_ies_o::value_c::types");
+  return convert_enum_idx(names, 3, value, "mrdc_data_usage_report_ies_o::value_c::types");
 }
 
 // Value ::= OPEN TYPE
@@ -23332,20 +23331,20 @@ SRSASN_CODE e1_ap_private_ies_empty_o::value_c::unpack(cbit_ref& bref)
 
 const char* e1_ap_private_ies_empty_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {};
-  return convert_enum_idx(options, 0, value, "e1_ap_private_ies_empty_o::value_c::types");
+  static const char* names[] = {};
+  return convert_enum_idx(names, 0, value, "e1_ap_private_ies_empty_o::value_c::types");
 }
 
 // ResetAcknowledgeIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t reset_ack_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 6, 1};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {57, 6, 1};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool reset_ack_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 6, 1};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 6, 1};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -23569,26 +23568,26 @@ SRSASN_CODE reset_ack_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* reset_ack_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {
+  static const char* names[] = {
       "INTEGER (0..255,...)", "UE-associatedLogicalE1-ConnectionListResAck", "CriticalityDiagnostics"};
-  return convert_enum_idx(options, 3, value, "reset_ack_ies_o::value_c::types");
+  return convert_enum_idx(names, 3, value, "reset_ack_ies_o::value_c::types");
 }
 uint8_t reset_ack_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0, 1};
-  return map_enum_number(options, 2, value, "reset_ack_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0, 1};
+  return map_enum_number(numbers, 2, value, "reset_ack_ies_o::value_c::types");
 }
 
 // ResetIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t reset_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {57, 0, 4};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {57, 0, 4};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool reset_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {57, 0, 4};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {57, 0, 4};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -23809,25 +23808,25 @@ SRSASN_CODE reset_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* reset_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..255,...)", "Cause", "ResetType"};
-  return convert_enum_idx(options, 3, value, "reset_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..255,...)", "Cause", "ResetType"};
+  return convert_enum_idx(names, 3, value, "reset_ies_o::value_c::types");
 }
 uint8_t reset_ies_o::value_c::types_opts::to_number() const
 {
-  static const uint8_t options[] = {0};
-  return map_enum_number(options, 1, value, "reset_ies_o::value_c::types");
+  static const uint8_t numbers[] = {0};
+  return map_enum_number(numbers, 1, value, "reset_ies_o::value_c::types");
 }
 
 // ULDataNotificationIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 uint32_t ul_data_notif_ies_o::idx_to_id(uint32_t idx)
 {
-  static const uint32_t options[] = {2, 3, 67};
-  return map_enum_number(options, 3, idx, "id");
+  static const uint32_t names[] = {2, 3, 67};
+  return map_enum_number(names, 3, idx, "id");
 }
 bool ul_data_notif_ies_o::is_id_valid(const uint32_t& id)
 {
-  static const uint32_t options[] = {2, 3, 67};
-  for (const auto& o : options) {
+  static const uint32_t names[] = {2, 3, 67};
+  for (const auto& o : names) {
     if (o == id) {
       return true;
     }
@@ -24046,8 +24045,8 @@ SRSASN_CODE ul_data_notif_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* ul_data_notif_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* options[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "PDU-Session-To-Notify-List"};
-  return convert_enum_idx(options, 3, value, "ul_data_notif_ies_o::value_c::types");
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "PDU-Session-To-Notify-List"};
+  return convert_enum_idx(names, 3, value, "ul_data_notif_ies_o::value_c::types");
 }
 
 template struct asn1::protocol_ie_field_s<e1_release_request_ies_o>;
@@ -26013,13 +26012,13 @@ void ul_data_notif_ies_container::to_json(json_writer& j) const
 // E1AP-ELEMENTARY-PROCEDURES ::= OBJECT SET OF E1AP-ELEMENTARY-PROCEDURE
 uint16_t e1_ap_elem_procs_o::idx_to_proc_code(uint32_t idx)
 {
-  static const uint16_t options[] = {0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 1, 12, 13, 14, 18, 15, 16, 17, 19, 2};
-  return map_enum_number(options, 20, idx, "proc_code");
+  static const uint16_t names[] = {0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 1, 12, 13, 14, 18, 15, 16, 17, 19, 2};
+  return map_enum_number(names, 20, idx, "proc_code");
 }
 bool e1_ap_elem_procs_o::is_proc_code_valid(const uint16_t& proc_code)
 {
-  static const uint16_t options[] = {0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 1, 12, 13, 14, 18, 15, 16, 17, 19, 2};
-  for (const auto& o : options) {
+  static const uint16_t names[] = {0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 1, 12, 13, 14, 18, 15, 16, 17, 19, 2};
+  for (const auto& o : names) {
     if (o == proc_code) {
       return true;
     }
@@ -26926,27 +26925,27 @@ SRSASN_CODE e1_ap_elem_procs_o::init_msg_c::unpack(cbit_ref& bref)
 
 const char* e1_ap_elem_procs_o::init_msg_c::types_opts::to_string() const
 {
-  static const char* options[] = {"Reset",
-                                  "GNB-CU-UP-E1SetupRequest",
-                                  "GNB-CU-CP-E1SetupRequest",
-                                  "GNB-CU-UP-ConfigurationUpdate",
-                                  "GNB-CU-CP-ConfigurationUpdate",
-                                  "E1ReleaseRequest",
-                                  "BearerContextSetupRequest",
-                                  "BearerContextModificationRequest",
-                                  "BearerContextModificationRequired",
-                                  "BearerContextReleaseCommand",
-                                  "ErrorIndication",
-                                  "BearerContextReleaseRequest",
-                                  "BearerContextInactivityNotification",
-                                  "DLDataNotification",
-                                  "ULDataNotification",
-                                  "DataUsageReport",
-                                  "GNB-CU-UP-CounterCheckRequest",
-                                  "GNB-CU-UP-StatusIndication",
-                                  "MRDC-DataUsageReport",
-                                  "PrivateMessage"};
-  return convert_enum_idx(options, 20, value, "e1_ap_elem_procs_o::init_msg_c::types");
+  static const char* names[] = {"Reset",
+                                "GNB-CU-UP-E1SetupRequest",
+                                "GNB-CU-CP-E1SetupRequest",
+                                "GNB-CU-UP-ConfigurationUpdate",
+                                "GNB-CU-CP-ConfigurationUpdate",
+                                "E1ReleaseRequest",
+                                "BearerContextSetupRequest",
+                                "BearerContextModificationRequest",
+                                "BearerContextModificationRequired",
+                                "BearerContextReleaseCommand",
+                                "ErrorIndication",
+                                "BearerContextReleaseRequest",
+                                "BearerContextInactivityNotification",
+                                "DLDataNotification",
+                                "ULDataNotification",
+                                "DataUsageReport",
+                                "GNB-CU-UP-CounterCheckRequest",
+                                "GNB-CU-UP-StatusIndication",
+                                "MRDC-DataUsageReport",
+                                "PrivateMessage"};
+  return convert_enum_idx(names, 20, value, "e1_ap_elem_procs_o::init_msg_c::types");
 }
 
 // SuccessfulOutcome ::= OPEN TYPE
@@ -27347,17 +27346,17 @@ SRSASN_CODE e1_ap_elem_procs_o::successful_outcome_c::unpack(cbit_ref& bref)
 
 const char* e1_ap_elem_procs_o::successful_outcome_c::types_opts::to_string() const
 {
-  static const char* options[] = {"ResetAcknowledge",
-                                  "GNB-CU-UP-E1SetupResponse",
-                                  "GNB-CU-CP-E1SetupResponse",
-                                  "GNB-CU-UP-ConfigurationUpdateAcknowledge",
-                                  "GNB-CU-CP-ConfigurationUpdateAcknowledge",
-                                  "E1ReleaseResponse",
-                                  "BearerContextSetupResponse",
-                                  "BearerContextModificationResponse",
-                                  "BearerContextModificationConfirm",
-                                  "BearerContextReleaseComplete"};
-  return convert_enum_idx(options, 10, value, "e1_ap_elem_procs_o::successful_outcome_c::types");
+  static const char* names[] = {"ResetAcknowledge",
+                                "GNB-CU-UP-E1SetupResponse",
+                                "GNB-CU-CP-E1SetupResponse",
+                                "GNB-CU-UP-ConfigurationUpdateAcknowledge",
+                                "GNB-CU-CP-ConfigurationUpdateAcknowledge",
+                                "E1ReleaseResponse",
+                                "BearerContextSetupResponse",
+                                "BearerContextModificationResponse",
+                                "BearerContextModificationConfirm",
+                                "BearerContextReleaseComplete"};
+  return convert_enum_idx(names, 10, value, "e1_ap_elem_procs_o::successful_outcome_c::types");
 }
 
 // UnsuccessfulOutcome ::= OPEN TYPE
@@ -27630,13 +27629,13 @@ SRSASN_CODE e1_ap_elem_procs_o::unsuccessful_outcome_c::unpack(cbit_ref& bref)
 
 const char* e1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::to_string() const
 {
-  static const char* options[] = {"GNB-CU-UP-E1SetupFailure",
-                                  "GNB-CU-CP-E1SetupFailure",
-                                  "GNB-CU-UP-ConfigurationUpdateFailure",
-                                  "GNB-CU-CP-ConfigurationUpdateFailure",
-                                  "BearerContextSetupFailure",
-                                  "BearerContextModificationFailure"};
-  return convert_enum_idx(options, 6, value, "e1_ap_elem_procs_o::unsuccessful_outcome_c::types");
+  static const char* names[] = {"GNB-CU-UP-E1SetupFailure",
+                                "GNB-CU-CP-E1SetupFailure",
+                                "GNB-CU-UP-ConfigurationUpdateFailure",
+                                "GNB-CU-CP-ConfigurationUpdateFailure",
+                                "BearerContextSetupFailure",
+                                "BearerContextModificationFailure"};
+  return convert_enum_idx(names, 6, value, "e1_ap_elem_procs_o::unsuccessful_outcome_c::types");
 }
 
 // InitiatingMessage ::= SEQUENCE{{E1AP-ELEMENTARY-PROCEDURE}}
@@ -27915,6 +27914,6 @@ SRSASN_CODE e1_ap_pdu_c::unpack(cbit_ref& bref)
 
 const char* e1_ap_pdu_c::types_opts::to_string() const
 {
-  static const char* options[] = {"initiatingMessage", "successfulOutcome", "unsuccessfulOutcome"};
-  return convert_enum_idx(options, 3, value, "e1_ap_pdu_c::types");
+  static const char* names[] = {"initiatingMessage", "successfulOutcome", "unsuccessfulOutcome"};
+  return convert_enum_idx(names, 3, value, "e1_ap_pdu_c::types");
 }
