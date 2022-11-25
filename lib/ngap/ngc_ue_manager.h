@@ -29,6 +29,19 @@ public:
     ue_ctxt.ue_index = get_ue_index_from_ue_ngap_id(ue_ngap_id);
   }
 
+  du_index_t get_du_index() { return ue_ctxt.du_index; }
+  ue_index_t get_ue_index() { return ue_ctxt.ue_index; }
+
+  ngc_rrc_ue_notifier& get_rrc_ue_notifier() { return rrc_ue_notifier; }
+
+  void set_amf_ue_id(ue_amf_id_t amf_ue_id) { ue_ctxt.amf_ue_id = amf_ue_id; }
+  void set_amf_ue_id(std::underlying_type_t<ue_amf_id_t> amf_ue_id_uint)
+  {
+    set_amf_ue_id(uint_to_ue_amf_id(amf_ue_id_uint));
+  }
+  ue_amf_id_t get_amf_ue_id() { return ue_ctxt.amf_ue_id; }
+
+private:
   ngc_ue_context       ue_ctxt;
   ngc_rrc_ue_notifier& rrc_ue_notifier;
 };
@@ -37,7 +50,7 @@ public:
 class ngc_ue_manager
 {
 public:
-  ngc_ue_context& add_ue(ue_ngap_id_t ue_ngap_id, ngc_rrc_ue_notifier& rrc_ue_notifier);
+  ngc_ue& add_ue(ue_ngap_id_t ue_ngap_id, ngc_rrc_ue_notifier& rrc_ue_notifier);
 
   void remove_ue(ue_ngap_id_t ue_ngap_id);
 
@@ -46,28 +59,8 @@ public:
   bool contains(std::underlying_type_t<ue_ngap_id_t> ue_ngap_id_uint) { return ues.contains(ue_ngap_id_uint); }
   bool contains(ue_ngap_id_t ue_ngap_id) { return contains(ue_ngap_id_to_uint(ue_ngap_id)); }
 
-  void set_amf_ue_id(std::underlying_type_t<ue_ngap_id_t> ue_ngap_id_uint, ue_amf_id_t amf_ue_id)
-  {
-    ues[ue_ngap_id_uint].ue_ctxt.amf_ue_id = amf_ue_id;
-  };
-
-  void set_amf_ue_id(std::underlying_type_t<ue_ngap_id_t> ue_ngap_id_uint,
-                     std::underlying_type_t<ue_ngap_id_t> amf_ue_id_uint)
-  {
-    set_amf_ue_id(ue_ngap_id_uint, uint_to_ue_amf_id(amf_ue_id_uint));
-  };
-
-  void set_amf_ue_id(ue_ngap_id_t ue_ngap_id, ue_amf_id_t amf_ue_id)
-  {
-    set_amf_ue_id(ue_ngap_id_to_uint(ue_ngap_id), amf_ue_id);
-  };
-
-  ue_amf_id_t get_amf_ue_id(std::underlying_type_t<ue_ngap_id_t> ue_ngap_id_uint)
-  {
-    return ues[ue_ngap_id_uint].ue_ctxt.amf_ue_id;
-  };
-
-  ue_amf_id_t get_amf_ue_id(ue_ngap_id_t ue_ngap_id) { return ues[ue_ngap_id_to_uint(ue_ngap_id)].ue_ctxt.amf_ue_id; };
+  ngc_ue&       operator[](std::underlying_type_t<ue_ngap_id_t> ue_ngap_id_uint) { return ues[ue_ngap_id_uint]; }
+  const ngc_ue& operator[](std::underlying_type_t<ue_ngap_id_t> ue_ngap_id_uint) const { return ues[ue_ngap_id_uint]; }
 
   ngc_ue&       operator[](ue_ngap_id_t ue_ngap_id) { return ues[ue_ngap_id_to_uint(ue_ngap_id)]; }
   const ngc_ue& operator[](ue_ngap_id_t ue_ngap_id) const { return ues[ue_ngap_id_to_uint(ue_ngap_id)]; }

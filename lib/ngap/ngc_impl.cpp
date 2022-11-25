@@ -34,11 +34,11 @@ ngc_impl::~ngc_impl() {}
 void ngc_impl::create_ngc_ue(du_index_t du_index, ue_index_t ue_index, ngc_rrc_ue_notifier& ngc_rrc_ue_ev_notifier)
 {
   // Create UE context and store it
-  ue_ngap_id_t    ue_ngap_id = get_ue_ngap_id(du_index, ue_index);
-  ngc_ue_context& ue_ctxt    = ue_manager.add_ue(ue_ngap_id, ngc_rrc_ue_ev_notifier);
+  ue_ngap_id_t ue_ngap_id = get_ue_ngap_id(du_index, ue_index);
+  auto&        ue         = ue_manager.add_ue(ue_ngap_id, ngc_rrc_ue_ev_notifier);
 
   logger.debug(
-      "Created NGAP UE (ue_ngap_id={}, du_index={}, ue_index={})", ue_ngap_id, ue_ctxt.du_index, ue_ctxt.ue_index);
+      "Created NGAP UE (ue_ngap_id={}, du_index={}, ue_index={})", ue_ngap_id, ue.get_du_index(), ue.get_ue_index());
 }
 
 async_task<ng_setup_response_message> ngc_impl::handle_ng_setup_request(const ng_setup_request_message& request)
@@ -96,7 +96,8 @@ void ngc_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_messa
   std::underlying_type_t<ue_ngap_id_t> ue_ngap_id_uint = ue_ngap_id_to_uint(msg.ue_ngap_id);
   ul_nas_transport_msg->ran_ue_ngap_id.value.value     = ue_ngap_id_uint;
 
-  ue_amf_id_t ue_amf_id = ue_manager.get_amf_ue_id(ue_ngap_id_uint);
+  auto&       ue        = ue_manager[ue_ngap_id_uint];
+  ue_amf_id_t ue_amf_id = ue.get_amf_ue_id();
   if (ue_amf_id == ue_amf_id_t::invalid) {
     logger.error("UE AMF ID for ue_ngap_id={} not found!", ue_ngap_id_uint);
     return;
@@ -161,16 +162,17 @@ void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpor
     return;
   }
 
+  auto& ue = ue_manager[ue_ngap_id_uint];
   // Add AMF UE ID to ue ngap context if it is not set (this is the first DL NAS Transport message)
-  if (ue_manager.get_amf_ue_id(ue_ngap_id_uint) == ue_amf_id_t::invalid) {
-    ue_manager.set_amf_ue_id(ue_ngap_id_uint, uint_to_ue_amf_id(msg->amf_ue_ngap_id.value.value));
+  if (ue.get_amf_ue_id() == ue_amf_id_t::invalid) {
+    ue.set_amf_ue_id(uint_to_ue_amf_id(msg->amf_ue_ngap_id.value.value));
   }
 
   byte_buffer nas_pdu;
   nas_pdu.resize(msg->nas_pdu.value.size());
   std::copy(msg->nas_pdu.value.begin(), msg->nas_pdu.value.end(), nas_pdu.begin());
 
-  ue_manager[uint_to_ue_ngap_id(ue_ngap_id_uint)].rrc_ue_notifier.on_new_pdu(std::move(nas_pdu));
+  ue.get_rrc_ue_notifier().on_new_pdu(std::move(nas_pdu));
 }
 
 void ngc_impl::handle_successful_outcome(const successful_outcome_s& outcome)
