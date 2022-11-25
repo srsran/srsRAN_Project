@@ -46,9 +46,13 @@ public:
 
   void create_srb(const srb_creation_message& msg) override
   {
-    // set notifier to a known value (i.e. nullptr) to be able to check if it was called
-    ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier.reset();
-    last_srb = msg;
+    // connect SRB1 with RRC to "PDCP" adapter
+    ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb1)].rrc_tx_notifier =
+        std::make_unique<dummy_rrc_pdu_notifier>(srb1_tx_pdu_handler);
+    ue_ctxt.rrc->connect_srb_notifier(srb_id_t::srb1,
+                                      *ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb1)].rrc_tx_notifier.get());
+    srb1_created = true;
+    last_srb     = msg;
   }
 
   void handle_ue_context_release_command(const ue_context_release_command_message& msg) override
@@ -58,6 +62,9 @@ public:
 
   ue_context_release_command_message last_ue_ctxt_rel_cmd;
   srb_creation_message               last_srb;
+  dummy_tx_pdu_handler               srb0_tx_pdu_handler; // Object to handle the generated RRC message
+  dummy_tx_pdu_handler               srb1_tx_pdu_handler; // Object to handle the generated RRC message
+  bool                               srb1_created = false;
 
 private:
   ue_context& ue_ctxt;

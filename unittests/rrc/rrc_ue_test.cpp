@@ -46,7 +46,7 @@ protected:
 
     // connect SRB0 with RRC to "F1" adapter
     ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb0)].rrc_tx_notifier =
-        std::make_unique<dummy_rrc_pdu_notifier>(tx_pdu_handler);
+        std::make_unique<dummy_rrc_pdu_notifier>(du_proc_rrc_ue->srb0_tx_pdu_handler);
     ue_ctxt.rrc->connect_srb_notifier(srb_id_t::srb0,
                                       *ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb0)].rrc_tx_notifier.get());
 
@@ -59,8 +59,10 @@ protected:
     srslog::flush();
   }
 
-  asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::options get_pdu_type()
+  asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::options get_srb0_pdu_type()
   {
+    auto& tx_pdu_handler = du_proc_rrc_ue->srb0_tx_pdu_handler;
+
     // generated PDU must not be empty
     EXPECT_GT(tx_pdu_handler.last_pdu.length(), 0);
 
@@ -90,7 +92,7 @@ protected:
     ue_ctxt.rrc->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(byte_buffer{rrc_setup_complete_pdu});
   }
 
-  void check_srb1_exists() { ASSERT_EQ(ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb1)].rrc_tx_notifier, nullptr); }
+  void check_srb1_exists() { ASSERT_EQ(du_proc_rrc_ue->srb1_created, true); }
 
   void tick_timer()
   {
@@ -107,11 +109,27 @@ protected:
 
   void check_ue_release_requested() { ASSERT_EQ(du_proc_rrc_ue->last_ue_ctxt_rel_cmd.ue_index, ALLOCATED_UE_INDEX); }
 
+  void init_security_context(rrc_init_security_context init_sec_ctx)
+  {
+    ue_ctxt.rrc->handle_init_security_context(init_sec_ctx);
+  }
+
+  void receive_smc_complete()
+  {
+    // inject RRC setup into UE object
+    ue_ctxt.rrc->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(byte_buffer{rrc_smc_complete_pdu});
+  }
+
+  void check_smc_pdu()
+  {
+    auto& tx_pdu_handler = du_proc_rrc_ue->srb1_tx_pdu_handler;
+    ASSERT_EQ(tx_pdu_handler.last_pdu, rrc_smc_pdu);
+  }
+
 private:
   const ue_index_t                                     ALLOCATED_UE_INDEX = int_to_ue_index(23);
   rrc_cfg_t                                            cfg{}; // empty config
   ue_context                                           ue_ctxt{};
-  dummy_tx_pdu_handler                                 tx_pdu_handler; // Object to handle the generated RRC message
   std::unique_ptr<dummy_du_processor_rrc_ue_interface> du_proc_rrc_ue;
   dummy_rrc_ue_du_processor_adapter                    rrc_ue_ev_notifier;
   dummy_rrc_ue_ngc_adapter                             rrc_ue_ngc_ev_notifier;
@@ -134,6 +152,12 @@ private:
       0x10, 0x00, 0x00, 0x00, 0x05, 0x20, 0x2f, 0x89, 0x90, 0x00, 0x00, 0x11, 0x70, 0x7f, 0x07, 0x0c, 0x04, 0x01,
       0x98, 0x0b, 0x01, 0x80, 0x10, 0x17, 0x40, 0x00, 0x09, 0x05, 0x30, 0x10, 0x10,
   };
+
+  // DL-DCCH with RRC security mode command
+  std::array<uint8_t, 3> rrc_smc_pdu = {0x22, 0x08, 0x10};
+
+  // UL-DCCH with RRC security mode complete
+  std::array<uint8_t, 2> rrc_smc_complete_pdu = {0x2a, 0x00};
 };
 
 /// Test the RRC setup with disconnected AMF
@@ -142,7 +166,7 @@ TEST_F(rrc_setup, when_amf_disconnected_then_rrc_reject_sent)
   receive_setup_request();
 
   // check if the RRC reject message was generated
-  ASSERT_EQ(get_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_reject);
+  ASSERT_EQ(get_srb0_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_reject);
 }
 
 /// Test the RRC setup with connected AMF
@@ -152,7 +176,7 @@ TEST_F(rrc_setup, when_amf_connected_then_rrc_setup_sent)
   receive_setup_request();
 
   // check if the RRC setup message was generated
-  ASSERT_EQ(get_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_setup);
+  ASSERT_EQ(get_srb0_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_setup);
 
   // check if SRB1 was created
   check_srb1_exists();
@@ -174,4 +198,37 @@ TEST_F(rrc_setup, when_setup_complete_timeout_then_ue_deleted)
 
   // verify that RRC requested UE context release
   check_ue_release_requested();
+}
+
+/// Test the RRC setup with connected AMF
+TEST_F(rrc_setup, when_key_provided_smc_generated)
+{
+  connect_amf();
+  receive_setup_request();
+
+  // check if the RRC setup message was generated
+  ASSERT_EQ(get_srb0_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_setup);
+
+  // check if SRB1 was created
+  check_srb1_exists();
+
+  receive_setup_complete();
+
+  // Initialize security context and capabilities.
+  rrc_init_security_context init_sec_ctx = {};
+  std::fill(init_sec_ctx.supported_int_algos.begin(), init_sec_ctx.supported_int_algos.end(), true);
+  std::fill(init_sec_ctx.supported_enc_algos.begin(), init_sec_ctx.supported_enc_algos.end(), true);
+
+  // Trigger SMC
+  init_security_context(init_sec_ctx);
+  check_smc_pdu();
+
+  // Receive SMC complete
+  receive_smc_complete();
+}
+
+int main(int argc, char** argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
