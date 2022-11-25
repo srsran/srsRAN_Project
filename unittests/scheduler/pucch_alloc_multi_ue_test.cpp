@@ -192,7 +192,7 @@ TEST_F(test_pucch_resource_manager, slot_indication)
   ASSERT_EQ(-1, res_id);
 }
 
-////////////    Structs with expected parameters and PUCCH sched INPUT     ////////////
+///////   Test allocation of dedicated PUCCH resources    ///////
 
 // Expected results parameters.
 struct expected_output_params {
@@ -272,7 +272,7 @@ public:
                                     harq_expected_params.time_domain_occ)} {};
 
 protected:
-  // Parameters that are passed by the routing to run the tests.
+  // Parameters that are passed by the routine to run the tests.
   expected_output_params harq_expected_params;
   test_bench             t_bench;
   pucch_info             pucch_expected;
@@ -294,13 +294,6 @@ protected:
         pucch.format_1.harq_ack_nof_bits = nof_harq_ack_bits;
       }
     }
-  }
-
-  void add_pusch_alloc()
-  {
-    auto& puschs = t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.puschs;
-    puschs.emplace_back(ul_sched_info{});
-    puschs.back().pusch_cfg.rnti = t_bench.get_main_ue().crnti;
   }
 
   void add_ue_with_harq_grant()
@@ -408,18 +401,6 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_skip_alloc_with_2_harq_bits
   ASSERT_EQ(EXPECTED_HARQ_GRANTS, slot_grid.result.ul.pucchs.size());
 }
 
-// Tests whether allocator skips PUCCH HARQ grant due to existing PUSCH grant.
-TEST_F(test_pucch_harq_allocator_ded_resources, test_skip_pucch_with_pusch)
-{
-  add_pusch_alloc();
-  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
-
-  auto&          slot_grid            = t_bench.res_grid[t_bench.k0 + t_bench.k1];
-  const unsigned EXPECTED_HARQ_GRANTS = 0;
-  ASSERT_EQ(EXPECTED_HARQ_GRANTS, slot_grid.result.ul.pucchs.size());
-}
-
 // Tests whether allocator grants PUCCH HARQ for a second UE when another UE's PUCCH grant has already been allocated.
 TEST_F(test_pucch_harq_allocator_ded_resources, test_2_ues)
 {
@@ -450,6 +431,51 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_3_ues)
   ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
   ASSERT_NE(t_bench.get_main_ue().crnti, slot_grid.result.ul.pucchs[0].crnti);
   ASSERT_NE(t_bench.get_main_ue().crnti, slot_grid.result.ul.pucchs[1].crnti);
+}
+
+///////   Test removal of dedicated PUCCH resources    ///////
+
+TEST_F(test_pucch_harq_allocator_ded_resources, test_sr_removal)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  add_sr_grant();
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+
+  pucch_uci_bits removed_bits = t_bench.pucch_alloc.remove_ue_uci_from_pucch(slot_grid, t_bench.get_main_ue().crnti);
+
+  ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(0, removed_bits.harq_ack_nof_bits);
+  ASSERT_EQ(0, removed_bits.csi_part1_bits);
+}
+
+TEST_F(test_pucch_harq_allocator_ded_resources, test_harq_removal)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  add_harq_grant();
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+
+  pucch_uci_bits removed_bits = t_bench.pucch_alloc.remove_ue_uci_from_pucch(slot_grid, t_bench.get_main_ue().crnti);
+
+  ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(1, removed_bits.harq_ack_nof_bits);
+  ASSERT_NE(0, removed_bits.csi_part1_bits);
+}
+
+TEST_F(test_pucch_harq_allocator_ded_resources, test_sr_harq_removal)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  add_sr_grant();
+  add_harq_grant();
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
+
+  pucch_uci_bits removed_bits = t_bench.pucch_alloc.remove_ue_uci_from_pucch(slot_grid, t_bench.get_main_ue().crnti);
+
+  ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(1, removed_bits.harq_ack_nof_bits);
+  ASSERT_NE(0, removed_bits.csi_part1_bits);
 }
 
 int main(int argc, char** argv)

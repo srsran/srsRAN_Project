@@ -65,6 +65,8 @@ expected_output_params make_expected_output_params_sr_harq()
   return out;
 }
 
+///////   Test allocation of PUCCH common resources    ///////
+
 class test_pucch_harq_common_output : public ::testing::TestWithParam<pucch_test_parameters>
 {
 public:
@@ -220,6 +222,8 @@ INSTANTIATE_TEST_SUITE_P(
                                                                                   0},
                                           .pucch_input_params      = pucch_params{15, 6}}));
 
+///////   Test allocation of PUCCH SR resources    ///////
+
 class test_pucch_sr_allocator : public ::testing::Test
 {
 public:
@@ -315,6 +319,8 @@ TEST_F(test_pucch_sr_allocator_with_harq, test_pucch_sr_harq_grid_filled)
   ASSERT_EQ(2, t_bench.res_grid[0].result.ul.pucchs.size());
   ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, sl_point_harq_delay, true));
 }
+
+///
 
 int main(int argc, char** argv)
 {

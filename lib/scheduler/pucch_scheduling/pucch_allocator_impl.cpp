@@ -39,9 +39,8 @@ pucch_resource_manager::get_next_harq_res_available(slot_point slot_harq, rnti_t
     res_counter.rnti_records.emplace_back(crnti);
     return pucch_harq_resource_alloc_record{.pucch_res           = &pucch_res_list[res_counter.next_pucch_harq_res_idx],
                                             .pucch_res_indicator = res_counter.next_pucch_harq_res_idx++};
-  } else {
-    return pucch_harq_resource_alloc_record{.pucch_res = nullptr};
   }
+  return pucch_harq_resource_alloc_record{.pucch_res = nullptr};
 };
 
 const pucch_resource* pucch_resource_manager::get_next_sr_res_available(slot_point          slot_sr,
@@ -56,7 +55,7 @@ const pucch_resource* pucch_resource_manager::get_next_sr_res_available(slot_poi
 
     // Check if the list of PUCCH resources (corresponding to \c resourceToAddModList, as part of \c PUCCH-Config, as
     // per TS 38.331) contains the resource indexed to be used for SR.
-    const auto sr_pucch_resource_cfg =
+    const auto* sr_pucch_resource_cfg =
         std::find_if(pucch_res_list.begin(),
                      pucch_res_list.end(),
                      [sr_res_idx = pucch_cfg.sr_res_list[0].pucch_res_id](const pucch_resource& pucch_sr_res_cfg) {
@@ -523,12 +522,12 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_reso
     return allocate_new_pucch_harq_grant(pucch_slot_alloc, crnti, ue_cell_cfg, nullptr);
   }
   // An SR is already scheduled but no HARQ grants allocated. Update the SR grants and allocate a new HARQ grant.
-  else if (existing_grants.sr_grant != nullptr and existing_grants.harq_grant == nullptr and
-           existing_grants.sr_grant->format_1.harq_ack_nof_bits < 2) {
+  if (existing_grants.sr_grant != nullptr and existing_grants.harq_grant == nullptr and
+      existing_grants.sr_grant->format_1.harq_ack_nof_bits < 2) {
     return allocate_new_pucch_harq_grant(pucch_slot_alloc, crnti, ue_cell_cfg, existing_grants.sr_grant);
   }
   // An HARQ is already scheduled. Update the existing HARQ grant and the SR grant, if present.
-  else if (existing_grants.harq_grant != nullptr and existing_grants.harq_grant->format_1.harq_ack_nof_bits < 2) {
+  if (existing_grants.harq_grant != nullptr and existing_grants.harq_grant->format_1.harq_ack_nof_bits < 2) {
     if (existing_grants.sr_grant != nullptr) {
       srsgnb_sanity_check(existing_grants.harq_grant->format_1.harq_ack_nof_bits ==
                               existing_grants.sr_grant->format_1.harq_ack_nof_bits,
@@ -560,7 +559,7 @@ pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource
   auto& pucchs = slot_alloc.result.ul.pucchs;
 
   // Remove HARQ-ACK grant first.
-  auto it = std::find_if(pucchs.begin(), pucchs.end(), [crnti](pucch_info& pucch) {
+  auto* it = std::find_if(pucchs.begin(), pucchs.end(), [crnti](pucch_info& pucch) {
     return pucch.crnti == crnti and pucch.format_1.sr_bits == sr_nof_bits::no_sr and
            pucch.format_1.harq_ack_nof_bits > 0;
   });
