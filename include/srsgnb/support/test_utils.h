@@ -14,6 +14,7 @@
 
 #include "srsgnb/srslog/srslog.h"
 #include <cstdio>
+#include <random>
 
 namespace srsgnb {
 
@@ -217,6 +218,29 @@ private:
   int val;
 };
 
-#define CONDERROR(cond, fmt, ...) srsgnb_assert(not(cond), fmt, ##__VA_ARGS__)
+/// \brief This class creates a random generation interface that is suitable for unit tests. The user has the
+/// ability to set a different seed to reproduce tests.
+class test_rgen
+{
+public:
+  static std::mt19937& get()
+  {
+    static std::mt19937 random_generator(std::random_device{}());
+    return random_generator;
+  }
+
+  static void set_seed(uint32_t seed)
+  {
+    fmt::print("-- TEST random generator seed: {}\n", seed);
+    get() = std::mt19937(seed);
+  }
+
+  template <typename Integer>
+  static Integer uniform_int(Integer min = std::numeric_limits<Integer>::min(),
+                             Integer max = std::numeric_limits<Integer>::max())
+  {
+    return std::uniform_int_distribution<Integer>{min, max}(get());
+  }
+};
 
 } // namespace srsgnb

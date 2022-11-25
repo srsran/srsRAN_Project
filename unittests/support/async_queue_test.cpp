@@ -11,6 +11,7 @@
 #include "srsgnb/support/async/async_queue.h"
 #include "srsgnb/support/async/eager_async_task.h"
 #include "srsgnb/support/test_utils.h"
+#include <gtest/gtest.h>
 
 using namespace srsgnb;
 
@@ -27,7 +28,25 @@ struct read_queue_coroutine {
   }
 };
 
-void test_async_queue()
+TEST(async_queue_test, queue_starts_empty)
+{
+  async_queue<int> q{64};
+  ASSERT_EQ(q.size(), 0);
+}
+
+TEST(async_queue_test, push_resumes_awaiting_coroutine)
+{
+  async_queue<int>      q{5};
+  eager_async_task<int> t   = launch_async<read_queue_coroutine<int>>(q);
+  int                   val = test_rgen::uniform_int<int>();
+
+  ASSERT_FALSE(t.ready());
+  ASSERT_TRUE(q.try_push(val));
+  ASSERT_TRUE(t.ready());
+  ASSERT_EQ(t.get(), val);
+}
+
+TEST(async_queue_test, many)
 {
   async_queue<int>      q{64};
   eager_async_task<int> t  = launch_async<read_queue_coroutine<int>>(q);
@@ -53,7 +72,7 @@ void test_async_queue()
   TESTASSERT_EQ(7, t3.get());
 }
 
-void test_async_queue_dtor()
+TEST(async_queue_test, dtor)
 {
   {
     async_queue<int>      q{64};
@@ -70,7 +89,7 @@ void test_async_queue_dtor()
   }
 }
 
-void test_async_queue_moveonly()
+TEST(async_queue_test, moveonly)
 {
   async_queue<moveonly_test_object> q(64);
 
@@ -81,11 +100,4 @@ void test_async_queue_moveonly()
   TESTASSERT(t.ready() and t.get().value() == 2);
 
   moveonly_test_object obj = std::move(t).get();
-}
-
-int main()
-{
-  test_async_queue();
-  test_async_queue_dtor();
-  test_async_queue_moveonly();
 }

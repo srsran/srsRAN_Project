@@ -30,7 +30,7 @@ target_link_libraries(async_exec_test srslog srsgnb_support)
 add_test(async_exec_test async_exec_test)
 
 add_executable(async_queue_test async_queue_test.cpp)
-target_link_libraries(async_queue_test srslog srsgnb_support)
+target_link_libraries(async_queue_test srslog srsgnb_support gtest gtest_main)
 add_test(async_queue_test async_queue_test)
 
 add_executable(async_task_sequencer_test async_task_sequencer_test.cpp)
