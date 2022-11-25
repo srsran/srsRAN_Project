@@ -15,7 +15,7 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 
 initial_cu_up_processor_setup_procedure::initial_cu_up_processor_setup_procedure(
-    const cu_up_processor_context              context_,
+    cu_up_processor_context&                   context_,
     e1_connection_manager&                     e1_conn_mng_,
     cu_up_processor_cu_up_management_notifier& cu_cp_notifier_) :
   context(context_), e1_conn_mng(e1_conn_mng_), cu_cp_notifier(cu_cp_notifier_)
@@ -43,7 +43,9 @@ void initial_cu_up_processor_setup_procedure::operator()(coro_context<async_task
 async_task<cu_cp_e1_setup_response_message> initial_cu_up_processor_setup_procedure::start_cu_cp_e1_setup_request()
 {
   // Prepare request to send to CU-CP E1 Setup Request message.
-  cu_cp_e1_setup_request_message request_msg = {};
+  cu_cp_e1_setup_request_message request_msg  = {};
+  request_msg.request->gnb_cu_cp_name_present = true;
+  request_msg.request->gnb_cu_cp_name.value.from_string(context.cu_cp_name);
 
   // Initiate CU-CP E1 Setup Request.
   return e1_conn_mng.handle_cu_cp_e1_setup_request(request_msg);
@@ -52,5 +54,10 @@ async_task<cu_cp_e1_setup_response_message> initial_cu_up_processor_setup_proced
 void initial_cu_up_processor_setup_procedure::handle_cu_cp_e1_setup_response(
     const asn1::e1ap::gnb_cu_cp_e1_setup_resp_s& resp)
 {
+  if (resp->gnb_cu_up_name_present) {
+    context.cu_up_name = resp->gnb_cu_up_name.value.to_string();
+  }
+  context.id = resp->gnb_cu_up_id.value;
+
   // TODO: handle response
 }

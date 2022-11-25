@@ -17,9 +17,10 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 struct cu_up_processor_context {
-  cu_up_index_t cu_up_index;   /// Index assisgned by CU-CP
-  uint64_t      id;            /// the gNB-CU-UP-ID
-  std::string   name = "none"; /// gNB-CU-UP-Name
+  cu_up_index_t cu_up_index;         /// Index assisgned by CU-CP
+  uint64_t      id;                  /// the gNB-CU-UP-ID
+  std::string   cu_up_name = "none"; /// gNB-CU-UP-Name
+  std::string   cu_cp_name = "none"; /// gNB-CU-CP-Name
 };
 
 } // namespace srs_cu_cp

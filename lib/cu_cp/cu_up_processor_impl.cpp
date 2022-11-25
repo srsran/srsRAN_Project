@@ -27,6 +27,7 @@ cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t       
   task_sched(task_sched_),
   main_ctrl_loop(128)
 {
+  context.cu_cp_name = cfg.name;
 }
 
 void cu_up_processor_impl::start()
@@ -36,10 +37,6 @@ void cu_up_processor_impl::start()
   e1_ev_notifier.connect_cu_up_processor(*this);
 
   // Start E1 setup procedure
-  cu_cp_e1_setup_request_message e1_setup_msg  = {};
-  e1_setup_msg.request->gnb_cu_cp_name_present = true;
-  e1_setup_msg.request->gnb_cu_cp_name.value.from_string(cfg.name);
-
   main_ctrl_loop.schedule<initial_cu_up_processor_setup_procedure>(context, *e1, cu_cp_notifier);
 }
 
