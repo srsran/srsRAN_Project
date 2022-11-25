@@ -100,17 +100,12 @@ private:
   T val = traits::empty_value();
 };
 
-template <typename First, std::size_t>
-using first_t = First;
-
 /// Metafunction to check whether a certain T is complete.
+template <typename T, size_t = sizeof(T)>
+std::true_type  is_complete_impl(T*);
+std::false_type is_complete_impl(...);
 template <typename T>
-struct is_complete_type : std::false_type {
-};
-
-template <typename T>
-struct is_complete_type<first_t<T, sizeof(T)>> : std::true_type {
-};
+using is_complete_type = decltype(is_complete_impl(std::declval<T*>()));
 
 } // namespace detail
 
