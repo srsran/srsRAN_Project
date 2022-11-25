@@ -39,29 +39,32 @@ void uci_allocator_impl::allocate_uci_harq_on_pusch(ul_sched_info&      pusch_gr
   // Set parameters of UCI-HARQ.
   uci.alpha = uci_cfg.scaling;
 
-  const auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg);
+  // TODO: Check how to set output in case the configuration does not have any value for beta_offsets
+  if (uci_cfg.beta_offsets_cfg.has_value()) {
+    const auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
 
-  // The values of \c beta_offsets are set according to Section 9.3, TS 38.213.
-  if (uci.harq_ack_nof_bits <= 2) {
-    uci.beta_offset_harq_ack = beta_offsets.beta_offset_ack_idx_1.value;
-  }
-  if (uci.harq_ack_nof_bits > 2 and uci.harq_ack_nof_bits <= 11) {
-    uci.beta_offset_harq_ack = beta_offsets.beta_offset_ack_idx_2.value;
-  } else {
-    uci.beta_offset_harq_ack = beta_offsets.beta_offset_ack_idx_3.value;
-  }
+    // The values of \c beta_offsets are set according to Section 9.3, TS 38.213.
+    if (uci.harq_ack_nof_bits <= 2) {
+      uci.beta_offset_harq_ack = beta_offsets.beta_offset_ack_idx_1.value;
+    }
+    if (uci.harq_ack_nof_bits > 2 and uci.harq_ack_nof_bits <= 11) {
+      uci.beta_offset_harq_ack = beta_offsets.beta_offset_ack_idx_2.value;
+    } else {
+      uci.beta_offset_harq_ack = beta_offsets.beta_offset_ack_idx_3.value;
+    }
 
-  // TODO: verify whether CSI beta offset need to be set for HARQ reporting only.
-  if (uci.csi_part1_nof_bits <= 11) {
-    uci.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_1.value;
-  } else {
-    uci.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_2.value;
-  }
+    // TODO: verify whether CSI beta offset need to be set for HARQ reporting only.
+    if (uci.csi_part1_nof_bits <= 11) {
+      uci.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_1.value;
+    } else {
+      uci.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_2.value;
+    }
 
-  if (uci.csi_part2_nof_bits <= 11) {
-    uci.beta_offset_csi_2 = beta_offsets.beta_offset_csi_p2_idx_1.value;
-  } else {
-    uci.beta_offset_csi_2 = beta_offsets.beta_offset_csi_p2_idx_2.value;
+    if (uci.csi_part2_nof_bits <= 11) {
+      uci.beta_offset_csi_2 = beta_offsets.beta_offset_csi_p2_idx_1.value;
+    } else {
+      uci.beta_offset_csi_2 = beta_offsets.beta_offset_csi_p2_idx_2.value;
+    }
   }
 }
 

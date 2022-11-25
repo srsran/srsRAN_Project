@@ -1083,6 +1083,99 @@ void make_asn1_rrc_pusch_pwr_ctrl(asn1::rrc_nr::pusch_pwr_ctrl_s&          out,
       [](const pusch_config::pusch_power_control::sri_pusch_pwr_ctrl& res) { return res.id; });
 }
 
+void fill_uci_beta_offset(beta_offsets_s& beta_out, const beta_offsets& beta_in)
+{
+  if (beta_in.beta_offset_ack_idx_1.has_value()) {
+    beta_out.beta_offset_ack_idx1_present = true;
+    beta_out.beta_offset_ack_idx1         = beta_in.beta_offset_ack_idx_1.value;
+  } else {
+    beta_out.beta_offset_ack_idx1_present = false;
+  }
+
+  if (beta_in.beta_offset_ack_idx_2.has_value()) {
+    beta_out.beta_offset_ack_idx2_present = true;
+    beta_out.beta_offset_ack_idx2         = beta_in.beta_offset_ack_idx_2.value;
+  } else {
+    beta_out.beta_offset_ack_idx2_present = false;
+  }
+
+  if (beta_in.beta_offset_ack_idx_3.has_value()) {
+    beta_out.beta_offset_ack_idx3_present = true;
+    beta_out.beta_offset_ack_idx3         = beta_in.beta_offset_ack_idx_3.value;
+  } else {
+    beta_out.beta_offset_ack_idx3_present = false;
+  }
+
+  if (beta_in.beta_offset_csi_p1_idx_1.has_value()) {
+    beta_out.beta_offset_csi_part1_idx1_present = true;
+    beta_out.beta_offset_csi_part1_idx1         = beta_in.beta_offset_csi_p1_idx_1.value;
+  } else {
+    beta_out.beta_offset_csi_part1_idx1_present = true;
+  }
+
+  if (beta_in.beta_offset_csi_p1_idx_2.has_value()) {
+    beta_out.beta_offset_csi_part1_idx2_present = true;
+    beta_out.beta_offset_csi_part1_idx2         = beta_in.beta_offset_csi_p1_idx_2.value;
+  } else {
+    beta_out.beta_offset_csi_part1_idx2_present = true;
+  }
+
+  if (beta_in.beta_offset_csi_p2_idx_1.has_value()) {
+    beta_out.beta_offset_csi_part2_idx1_present = true;
+    beta_out.beta_offset_csi_part2_idx1         = beta_in.beta_offset_csi_p2_idx_1.value;
+  } else {
+    beta_out.beta_offset_csi_part2_idx1_present = true;
+  }
+
+  if (beta_in.beta_offset_csi_p2_idx_2.has_value()) {
+    beta_out.beta_offset_csi_part2_idx2_present = true;
+    beta_out.beta_offset_csi_part2_idx2         = beta_in.beta_offset_csi_p2_idx_2.value;
+  } else {
+    beta_out.beta_offset_csi_part2_idx2_present = true;
+  }
+}
+
+void fill_uci_on_pusch(asn1::rrc_nr::uci_on_pusch_s& uci_asn1, const uci_on_pusch& uci_in)
+{
+  switch (uci_in.scaling) {
+    case alpha_scaling_opt::f0p5:
+      uci_asn1.scaling.value = uci_on_pusch_s::scaling_opts::f0p5;
+      break;
+    case alpha_scaling_opt::f0p65:
+      uci_asn1.scaling.value = uci_on_pusch_s::scaling_opts::f0p65;
+      break;
+    case alpha_scaling_opt::f0p8:
+      uci_asn1.scaling.value = uci_on_pusch_s::scaling_opts::f0p8;
+      break;
+    case alpha_scaling_opt::f1:
+      uci_asn1.scaling.value = uci_on_pusch_s::scaling_opts::f1;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid Alpha Value Scaling={}", uci_in.scaling);
+  }
+
+  if (uci_in.beta_offsets_cfg.has_value()) {
+    uci_asn1.beta_offsets_present = true;
+    if (variant_holds_alternative<uci_on_pusch::beta_offsets_semi_static>(uci_in.beta_offsets_cfg.value())) {
+      const auto& in_semi_static = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_in.beta_offsets_cfg.value());
+      auto&       out_semi_static = uci_asn1.beta_offsets.set_semi_static();
+
+      fill_uci_beta_offset(out_semi_static, in_semi_static);
+    } else {
+      auto& input_dynamic = variant_get<uci_on_pusch::beta_offsets_dynamic>(uci_in.beta_offsets_cfg.value());
+      auto& out_dynamic   = uci_asn1.beta_offsets.set_dynamic_type();
+
+      srsgnb_assert(input_dynamic.size() == out_dynamic.max_size(), "Mismatch between input and output vectors");
+
+      for (size_t n = 0; n != input_dynamic.size(); ++n) {
+        fill_uci_beta_offset(out_dynamic[n], input_dynamic[n]);
+      }
+    }
+  } else {
+    uci_asn1.beta_offsets_present = false;
+  }
+}
+
 void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_config& src, const pusch_config& dest)
 {
   if (dest.data_scrambling_id_pusch.has_value()) {
@@ -1199,6 +1292,16 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
   if (dest.max_rank.has_value()) {
     out.max_rank_present = true;
     out.max_rank         = dest.max_rank.value();
+  }
+
+  if ((dest.uci_cfg.has_value() && not src.uci_cfg.has_value()) ||
+      (dest.uci_cfg.has_value() && src.uci_cfg.has_value() && dest.uci_cfg.has_value() != src.uci_cfg.has_value())) {
+    out.uci_on_pusch_present = true;
+    auto& uci                = out.uci_on_pusch.set_setup();
+    fill_uci_on_pusch(uci, dest.uci_cfg.value());
+  } else if (src.uci_cfg.has_value() && not dest.uci_cfg.has_value()) {
+    out.uci_on_pusch_present = true;
+    out.uci_on_pusch.set_release();
   }
 }
 

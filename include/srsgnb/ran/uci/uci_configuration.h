@@ -63,17 +63,19 @@ struct beta_offsets {
   /// \remark Apply to all members. For values larger than 31 mean, treat the parameter as "not present".
   static constexpr uint8_t max_beta_offset_value = 31;
 
+  using uint_opt = uint_optional_t<uint8_t, max_beta_offset_value>;
+
   /// Values {0,...,15}, as per Table 9.3-1, TS 38.213.
   /// \remark As per \c BetaOffsets, TS 38.331, {16,...,31} are accepted but treated as "reserved".
-  uint_optional_t<uint8_t, max_beta_offset_value> beta_offset_ack_idx_1;
-  uint_optional_t<uint8_t, max_beta_offset_value> beta_offset_ack_idx_2;
-  uint_optional_t<uint8_t, max_beta_offset_value> beta_offset_ack_idx_3;
+  uint_opt beta_offset_ack_idx_1;
+  uint_opt beta_offset_ack_idx_2;
+  uint_opt beta_offset_ack_idx_3;
   /// Values {0,...,18}, as per Table 9.3-2, TS 38.213.
   /// \remark As per \c BetaOffsets, TS 38.331, {19,...,31} are accepted but treated as "reserved".
-  uint_optional_t<uint8_t, max_beta_offset_value> beta_offset_csi_p1_idx_1;
-  uint_optional_t<uint8_t, max_beta_offset_value> beta_offset_csi_p1_idx_2;
-  uint_optional_t<uint8_t, max_beta_offset_value> beta_offset_csi_p2_idx_1;
-  uint_optional_t<uint8_t, max_beta_offset_value> beta_offset_csi_p2_idx_2;
+  uint_opt beta_offset_csi_p1_idx_1;
+  uint_opt beta_offset_csi_p1_idx_2;
+  uint_opt beta_offset_csi_p2_idx_1;
+  uint_opt beta_offset_csi_p2_idx_2;
 
   bool operator==(const beta_offsets& rhs) const
   {
@@ -94,8 +96,8 @@ struct uci_on_pusch {
   using beta_offsets_semi_static = beta_offsets;
   using beta_offsets_dynamic     = static_vector<beta_offsets, max_nof_beta_offsets>;
 
-  variant<beta_offsets_dynamic, beta_offsets_semi_static> beta_offsets_cfg;
-  alpha_scaling_opt                                       scaling;
+  optional<variant<beta_offsets_dynamic, beta_offsets_semi_static>> beta_offsets_cfg;
+  alpha_scaling_opt                                                 scaling;
 
   bool operator==(const uci_on_pusch& rhs) const
   {

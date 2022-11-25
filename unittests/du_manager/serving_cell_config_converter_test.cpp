@@ -60,6 +60,19 @@ pusch_config make_initial_pusch_config()
   cfg.cb_subset      = pusch_config::codebook_subset::non_coherent;
   cfg.max_rank       = 1;
 
+  cfg.uci_cfg.emplace();
+  auto& uci_cfg   = cfg.uci_cfg.value();
+  uci_cfg.scaling = alpha_scaling_opt::f1;
+  beta_offsets b_offset{};
+  b_offset.beta_offset_ack_idx_1    = 9;
+  b_offset.beta_offset_ack_idx_2    = 9;
+  b_offset.beta_offset_ack_idx_3    = 9;
+  b_offset.beta_offset_csi_p1_idx_1 = 6;
+  b_offset.beta_offset_csi_p1_idx_2 = 6;
+  b_offset.beta_offset_csi_p2_idx_1 = 6;
+  b_offset.beta_offset_csi_p2_idx_2 = 6;
+  uci_cfg.beta_offsets_cfg          = uci_on_pusch::beta_offsets_semi_static{b_offset};
+
   return cfg;
 }
 
