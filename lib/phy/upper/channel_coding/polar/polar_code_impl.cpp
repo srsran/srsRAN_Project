@@ -288,13 +288,13 @@ unsigned srsgnb::polar_code_impl::setdiff_stable(const uint16_t* x,
                                                  uint16_t        len2)
 {
   uint16_t o = 0;
-  for (uint16_t i = 0; i < len1; i++) {
+  for (uint16_t i = 0; i != len1; ++i) {
     // is x[i] in y ?
     unsigned flag = 0;
     if (x[i] <= T) {
       flag = 1;
     } else {
-      for (uint16_t j = 0; j < len2; j++) {
+      for (uint16_t j = 0; j != len2; ++j) {
         if (x[i] == y[j]) {
           flag = 1;
           break;
@@ -353,7 +353,7 @@ void srsgnb::polar_code_impl::set_code_params(unsigned K_, unsigned E_, uint8_t 
   // determination of the codeword size (N)
   // ceil(log2(E))
   uint8_t e = 1;
-  for (; e <= eMAX; e++) {
+  for (; e <= eMAX; ++e) {
     unsigned tmpE = 1U << e; // 2^e
     if (tmpE >= E) {
       break;
@@ -370,7 +370,7 @@ void srsgnb::polar_code_impl::set_code_params(unsigned K_, unsigned E_, uint8_t 
 
   // ceil(log2(K))
   uint8_t k = 0;
-  for (; k <= 10; k++) {
+  for (; k <= 10; ++k) {
     unsigned tmpK = 1U << k; // 2^e
     if (tmpK >= K) {
       break;
