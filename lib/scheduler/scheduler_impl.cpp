@@ -16,7 +16,6 @@ using namespace srsgnb;
 
 scheduler_impl::scheduler_impl(const scheduler_expert_config& sched_cfg_, sched_configuration_notifier& notifier) :
   sched_cfg(sched_cfg_),
-  mac_notifier(notifier),
   logger(srslog::fetch_basic_logger("MAC")),
   ue_sched(std::make_unique<ue_scheduler_impl>(sched_cfg.ue, notifier)),
   ue_cfg_handler(ue_sched->get_ue_configurator()),

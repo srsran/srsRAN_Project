@@ -62,7 +62,6 @@ public:
 
 private:
   const scheduler_expert_config sched_cfg;
-  sched_configuration_notifier& mac_notifier;
   srslog::basic_logger&         logger;
 
   /// Scheduler for UEs.
