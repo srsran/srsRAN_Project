@@ -56,6 +56,9 @@ public:
 
   void remove_ue(cu_cp_ue_id_t cu_cp_ue_id);
 
+  ngc_ue& get_ue(std::underlying_type_t<cu_cp_ue_id_t> cu_cp_ue_id_uint) { return ues[cu_cp_ue_id_uint]; }
+  ngc_ue& get_ue(cu_cp_ue_id_t cu_cp_ue_id) { return get_ue(cu_cp_ue_id_to_uint(cu_cp_ue_id)); }
+
   size_t get_nof_ues() const { return ues.size(); }
 
   cu_cp_ue_id_t get_cu_cp_ue_id(std::underlying_type_t<ran_ue_id_t> ran_ue_id_uint);
@@ -63,15 +66,6 @@ public:
 
   bool contains(std::underlying_type_t<cu_cp_ue_id_t> cu_cp_ue_id_uint) { return ues.contains(cu_cp_ue_id_uint); }
   bool contains(cu_cp_ue_id_t cu_cp_ue_id) { return contains(cu_cp_ue_id_to_uint(cu_cp_ue_id)); }
-
-  ngc_ue&       operator[](std::underlying_type_t<cu_cp_ue_id_t> cu_cp_ue_id_uint) { return ues[cu_cp_ue_id_uint]; }
-  const ngc_ue& operator[](std::underlying_type_t<cu_cp_ue_id_t> cu_cp_ue_id_uint) const
-  {
-    return ues[cu_cp_ue_id_uint];
-  }
-
-  ngc_ue&       operator[](cu_cp_ue_id_t cu_cp_ue_id) { return ues[cu_cp_ue_id_to_uint(cu_cp_ue_id)]; }
-  const ngc_ue& operator[](cu_cp_ue_id_t cu_cp_ue_id) const { return ues[cu_cp_ue_id_to_uint(cu_cp_ue_id)]; }
 
 private:
   /// \brief Get the next available RAN UE ID.
