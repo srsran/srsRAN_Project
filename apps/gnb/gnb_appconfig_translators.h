@@ -31,6 +31,9 @@ srs_cu_cp::cu_cp_configuration generate_cu_cp_config(const gnb_appconfig& config
 /// Converts and returns the given gnb application configuration to a DU cell configuration.
 std::vector<du_cell_config> generate_du_cell_config(const gnb_appconfig& config);
 
+/// Converts and returns the given gnb application configuration to a scheduler expert configuration.
+scheduler_expert_config generate_scheduler_expert_config(const gnb_appconfig& config);
+
 /// Converts and returns the given gnb application configuration to an upper PHY configuration.
 std::vector<upper_phy_config> generate_du_low_config(const gnb_appconfig& config);
 

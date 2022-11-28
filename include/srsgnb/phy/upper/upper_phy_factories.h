@@ -132,23 +132,30 @@ struct upper_phy_config {
   unsigned nof_slots_dl_rg;
   /// Maximum number of concurrent downlink processes.
   unsigned nof_dl_processors;
+  /// Maximum number of concurrent uplink processes.
+  unsigned nof_ul_processors;
   /// Number of RBs for downlink.
   unsigned dl_bw_rb;
   /// Number of RBs for uplink.
   unsigned ul_bw_rb;
+  /// Softbuffer pool configuration.
+  rx_softbuffer_pool_config softbuffer_config;
   /// Upper PHY resource grid gateway.
   upper_phy_rg_gateway* rg_gateway;
   /// Downlink task executor.
   task_executor* dl_executor;
-  /// Maximum number of concurrent uplink processes.
-  unsigned nof_ul_processors;
   /// Uplink task executor.
   task_executor* ul_executor;
   /// Received symbol request notifier.
   upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier;
-  /// Softbuffer pool configuration.
-  rx_softbuffer_pool_config softbuffer_config;
 };
+
+/// Returns true if the given upper PHY configuration is valid, otherwise false.
+inline bool is_valid_upper_phy_config(const upper_phy_config& config)
+{
+  // :TODO: Implement me!
+  return true;
+}
 
 /// \brief Factory that builds upper PHY objects.
 class upper_phy_factory

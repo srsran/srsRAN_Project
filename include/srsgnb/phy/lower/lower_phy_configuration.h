@@ -65,10 +65,12 @@ enum class lower_phy_ta_offset {
 
 /// Lower physical layer configuration.
 struct lower_phy_configuration {
-  /// Sampling rate.
-  sampling_rate srate;
+  /// Indicates the log level.
+  std::string log_level;
   /// Subcarrier spacing for the overall PHY.
   subcarrier_spacing scs;
+  /// Cyclic prefix.
+  cyclic_prefix cp;
   /// \brief Number of slots the timing handler is notified in advance of the transmission time.
   ///
   /// Sets the maximum allowed processing delay in slots.
@@ -80,16 +82,22 @@ struct lower_phy_configuration {
   ///
   /// An assertion is triggered if it is equal to zero.
   unsigned ul_to_dl_subframe_offset;
+  /// Sampling rate.
+  sampling_rate srate;
+  /// Time alignment offset.
+  lower_phy_ta_offset ta_offset;
   /// \brief Time-advance calibration.
   ///
   /// This time adjustment is subtracted from the UL-to-DL processing time offset for calibrating the baseband device.
   phy_time_unit time_advance_calibration;
-  /// Time alignment offset.
-  lower_phy_ta_offset ta_offset;
   /// OFDM modulator scale.
   float tx_scale;
-  /// Cyclic prefix.
-  cyclic_prefix cp;
+  /// Amplitude control parameters, including baseband gain and clipping.
+  amplitude_controller_clipping_config amplitude_config;
+  /// Provides the sectors configuration.
+  std::vector<lower_phy_sector_description> sectors;
+  /// Indicates the numbers of channels for every baseband stream.
+  std::vector<unsigned> nof_channels_per_stream;
   /// Provides the baseband gateway.
   baseband_gateway* bb_gateway;
   /// Provides a symbol handler to notify the reception of symbols.
@@ -100,14 +108,14 @@ struct lower_phy_configuration {
   lower_phy_error_notifier* error_notifier;
   /// PRACH asynchronous task executor.
   task_executor* prach_async_executor;
-  /// Provides the sectors configuration.
-  std::vector<lower_phy_sector_description> sectors;
-  /// Indicates the numbers of channels for every baseband stream.
-  std::vector<unsigned> nof_channels_per_stream;
-  /// Indicates the log level.
-  std::string log_level;
-  /// Amplitude control parameters, including baseband gain and clipping.
-  amplitude_controller_clipping_config amplitude_config;
 };
+
+/// Returns true if the given lower PHY configuration is valid, otherwise false.
+inline bool is_valid_lower_phy_config(const lower_phy_configuration& config)
+{
+  // :TODO: Implement me!
+
+  return true;
+}
 
 } // namespace srsgnb

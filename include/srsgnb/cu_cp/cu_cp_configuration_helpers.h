@@ -30,5 +30,12 @@ inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
   return cfg;
 }
 
+/// Returns true if the given CU-CP configuration is valid, otherwise false.
+inline bool is_valid_configuration(const srs_cu_cp::cu_cp_configuration& config)
+{
+  // :TODO: implement me!
+  return true;
+}
+
 } // namespace config_helpers
 } // namespace srsgnb

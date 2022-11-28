@@ -70,15 +70,14 @@ static void populate_cli11_gnb_args(CLI::App& app, srsgnb::gnb_appconfig& gnb_pa
   app.set_version_flag("-v,--version", srsgnb_version);
   app.set_config("-c,", config_file, "Read config from file", false);
   app.add_flag("--printconfig", printconfig, "Print configuration and exit")->configurable(false);
-  app.add_flag("-d", gnb_params.debug_logger, "Enable debug logger");
+  app.add_flag("-l", gnb_params.log_level, "Enable debug logger");
 }
 
 static void populate_cli11_cu_args(CLI::App& app, srsgnb::gnb_appconfig& gnb_params)
 {
-  app.add_option("--amf_addr", gnb_params.cu_cfg.amf_cfg.amf_addr, "AMF IP address")->check(CLI::ValidIPV4)->required();
-  app.add_option("--amf_port", gnb_params.cu_cfg.amf_cfg.amf_port, "AMF port")->capture_default_str();
-  app.add_option(
-         "--amf_bind_addr", gnb_params.cu_cfg.amf_cfg.amf_bind_addr, "Local IP IP address to bind for AMF connection")
+  app.add_option("--amf_addr", gnb_params.amf_cfg.ip_addr, "AMF IP address")->check(CLI::ValidIPV4)->required();
+  app.add_option("--amf_port", gnb_params.amf_cfg.port, "AMF port")->capture_default_str();
+  app.add_option("--amf_bind_addr", gnb_params.amf_cfg.bind_addr, "Local IP IP address to bind for AMF connection")
       ->check(CLI::ValidIPV4);
 }
 
@@ -86,9 +85,9 @@ static void populate_cli11_cu_args(CLI::App& app, srsgnb::gnb_appconfig& gnb_par
 static void compute_derived_args(const gnb_appconfig& gnb_params)
 {
   /// Simply set the respective values in the appconfig.
-  ngap_nw_config.connect_address = gnb_params.cu_cfg.amf_cfg.amf_addr;
-  ngap_nw_config.connect_port    = gnb_params.cu_cfg.amf_cfg.amf_port;
-  ngap_nw_config.bind_address    = gnb_params.cu_cfg.amf_cfg.amf_bind_addr;
+  ngap_nw_config.connect_address = gnb_params.amf_cfg.ip_addr;
+  ngap_nw_config.connect_port    = gnb_params.amf_cfg.port;
+  ngap_nw_config.bind_address    = gnb_params.amf_cfg.bind_addr;
 }
 
 namespace {
@@ -316,13 +315,13 @@ int main(int argc, char** argv)
   phy_rx_symbol_req_adapter.connect(&lower->get_request_handler());
 
   // Create FAPI adaptors.
-  srsgnb_assert(gnb_cfg.cells_cfg.size() == 1, "Error, currently supporting one cell");
-  const rf_cell& cell = gnb_cfg.cells_cfg.front().rf;
+  const std::vector<du_cell_config>& du_cfg = generate_du_cell_config(gnb_cfg);
+  unsigned                           sector = du_cfg.size() - 1;
+  subcarrier_spacing                 scs    = du_cfg.front().scs_common;
 
-  const unsigned sector_id   = 0;
-  auto           phy_adaptor = build_phy_fapi_adaptor(sector_id,
-                                            cell.scs_common,
-                                            cell.scs_common,
+  auto phy_adaptor = build_phy_fapi_adaptor(sector,
+                                            scs,
+                                            scs,
                                             upper->get_downlink_processor_pool(),
                                             upper->get_downlink_resource_grid_pool(),
                                             upper->get_uplink_request_processor(),
@@ -332,7 +331,7 @@ int main(int argc, char** argv)
                                             generate_carrier_config_tlv());
   report_fatal_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
   upper->set_rx_results_notifier(phy_adaptor->get_rx_results_notifier());
-  auto mac_adaptor = build_mac_fapi_adaptor(0, cell.scs_common, phy_adaptor->get_slot_message_gateway());
+  auto mac_adaptor = build_mac_fapi_adaptor(0, scs, phy_adaptor->get_slot_message_gateway());
   report_fatal_error_if_not(mac_adaptor, "Unable to create MAC adaptor.");
   phy_adaptor->set_slot_time_message_notifier(mac_adaptor->get_slot_time_notifier());
   phy_adaptor->set_slot_data_message_notifier(mac_adaptor->get_slot_data_notifier());
@@ -348,8 +347,8 @@ int main(int argc, char** argv)
   du_hi_cfg.dl_executors                  = &workers.dl_exec_mapper;
   du_hi_cfg.f1c_notifier                  = &f1c_du_to_cu_adapter;
   du_hi_cfg.phy_adapter                   = &phy;
-  du_hi_cfg.cells                         = generate_du_cell_config(gnb_cfg);
-  du_hi_cfg.sched_cfg                     = config_helpers::make_default_scheduler_expert_config();
+  du_hi_cfg.cells                         = du_cfg;
+  du_hi_cfg.sched_cfg                     = generate_scheduler_expert_config(gnb_cfg);
 
   srs_du::du_high du_obj(du_hi_cfg);
   gnb_logger.info("DU-High created successfully");

@@ -104,5 +104,12 @@ struct radio {
   std::string log_level;
 };
 
+/// Returns true if the given radio configuration is valid, otherwise false.
+inline bool is_valid_radio_config(const radio& config)
+{
+  // :TODO: Implement me!
+  return true;
+}
+
 } // namespace radio_configuration
 } // namespace srsgnb

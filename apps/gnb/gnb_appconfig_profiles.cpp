@@ -34,10 +34,8 @@ rf_driver_appconfig build_profile_rf_driver_appconfig(const std::string& profile
 static std::vector<cell_appconfig> make_zmq_20MHz_n41_cells_appconfig()
 {
   std::vector<cell_appconfig> out_cfg = {{}};
-  rf_cell&                    cell    = out_cfg.front().rf;
+  cell_appconfig&             cell    = out_cfg.front();
   cell.dl_arfcn                       = 520000;
-  cell.offset_to_point_a              = 69;
-  cell.k_ssb                          = 7;
 
   return out_cfg;
 }
