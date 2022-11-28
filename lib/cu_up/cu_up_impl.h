@@ -13,7 +13,7 @@
 #include "ue_manager.h"
 #include "srsgnb/cu_up/cu_up.h"
 #include "srsgnb/cu_up/cu_up_configuration.h"
-#include "srsgnb/e1_interface/cu_up/e1_cu_up.h"
+#include "srsgnb/e1/cu_up/e1_cu_up.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/executors/task_worker.h"

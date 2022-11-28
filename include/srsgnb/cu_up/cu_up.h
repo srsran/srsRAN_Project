@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/e1_interface/common/e1_common.h"
-#include "srsgnb/e1_interface/cu_up/e1_cu_up.h"
+#include "srsgnb/e1/common/e1_common.h"
+#include "srsgnb/e1/cu_up/e1_cu_up.h"
 #include "srsgnb/gtpu/gtpu_demux.h"
 
 #include <string>

@@ -12,7 +12,7 @@
 #include "adapters/e1_adapters.h"
 #include "adapters/ngc_adapters.h"
 #include "procedures/initial_cu_up_processor_setup_procedure.h"
-#include "srsgnb/e1_interface/cu_cp/e1_cu_cp_factory.h"
+#include "srsgnb/e1/cu_cp/e1_cu_cp_factory.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;

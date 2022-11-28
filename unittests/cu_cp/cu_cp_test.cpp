@@ -9,8 +9,8 @@
  */
 
 #include "../../lib/cu_cp/cu_cp.h"
-#include "unittests/e1_interface/common/e1_cu_cp_test_helpers.h"
-#include "unittests/e1_interface/common/test_helpers.h"
+#include "unittests/e1/common/e1_cu_cp_test_helpers.h"
+#include "unittests/e1/common/test_helpers.h"
 #include "unittests/f1c/common/f1_cu_test_helpers.h"
 #include "unittests/f1c/common/test_helpers.h"
 #include "unittests/ngap/ngc_test_helpers.h"

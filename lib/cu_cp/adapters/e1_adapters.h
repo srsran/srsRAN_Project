@@ -12,7 +12,7 @@
 
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_up_processor.h"
-#include "srsgnb/e1_interface/cu_cp/e1_cu_cp.h"
+#include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {

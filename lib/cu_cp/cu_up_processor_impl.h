@@ -15,7 +15,7 @@
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/cu_up_processor_config.h"
-#include "srsgnb/e1_interface/cu_cp/e1_cu_cp.h"
+#include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include <string>
 

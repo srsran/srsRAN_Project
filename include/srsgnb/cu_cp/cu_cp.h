@@ -11,7 +11,7 @@
 #pragma once
 
 #include "cu_cp_types.h"
-#include "srsgnb/e1_interface/common/e1_common.h"
+#include "srsgnb/e1/common/e1_common.h"
 #include "srsgnb/f1c/cu_cp/f1c_cu.h"
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/rrc/rrc_ue.h"
