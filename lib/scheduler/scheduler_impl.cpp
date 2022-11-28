@@ -50,6 +50,11 @@ void scheduler_impl::handle_ue_reconfiguration_request(const sched_ue_reconfigur
   ue_cfg_handler.handle_ue_reconfiguration_request(ue_request);
 }
 
+void scheduler_impl::handle_ue_delete_request(du_ue_index_t ue_index)
+{
+  ue_cfg_handler.handle_ue_delete_request(ue_index);
+}
+
 void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)
 {
   cells[msg.cell_index].ra_sch.handle_rach_indication(msg);
