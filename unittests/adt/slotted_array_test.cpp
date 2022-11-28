@@ -133,6 +133,7 @@ TYPED_TEST(slotted_array_tester, erase_removes_element_from_slotted_array_and_up
   ASSERT_EQ(this->vec.begin(), this->vec.end());
 }
 
+#ifdef ASSERTS_ENABLED
 TYPED_TEST(slotted_array_tester, accessing_empty_position_asserts)
 {
   unsigned idx  = get_random_int(0, 19);
@@ -142,6 +143,7 @@ TYPED_TEST(slotted_array_tester, accessing_empty_position_asserts)
   ASSERT_DEATH(this->vec[idx2], ".*") << fmt::format(
       "Accessing index={} for slotted_array with element in index={}", idx2, idx);
 }
+#endif
 
 TYPED_TEST(slotted_array_tester, find_first_empty_skips_occupied_positions)
 {
