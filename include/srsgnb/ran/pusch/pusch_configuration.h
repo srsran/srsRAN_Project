@@ -14,6 +14,7 @@
 #include "srsgnb/ran/alpha.h"
 #include "srsgnb/ran/csi_rs.h"
 #include "srsgnb/ran/pusch/pusch_mcs.h"
+#include "srsgnb/ran/uci/uci_configuration.h"
 
 namespace srsgnb {
 
@@ -165,13 +166,16 @@ struct pusch_config {
   /// The field is mandatory present if txConfig is set to codebook and absent otherwise. Values {1,..,4}.
   optional<uint8_t> max_rank;
 
+  /// \c uci-OnPUSCH.
+  optional<uci_on_pusch> uci_cfg;
+
   bool operator==(const pusch_config& rhs) const
   {
     return data_scrambling_id_pusch == rhs.data_scrambling_id_pusch && tx_cfg == rhs.tx_cfg &&
            pusch_mapping_type_a_dmrs == rhs.pusch_mapping_type_a_dmrs &&
            pusch_mapping_type_b_dmrs == rhs.pusch_mapping_type_b_dmrs && pusch_pwr_ctrl == rhs.pusch_pwr_ctrl &&
            res_alloc == rhs.res_alloc && trans_precoder == rhs.trans_precoder && cb_subset == rhs.cb_subset &&
-           max_rank == rhs.max_rank;
+           max_rank == rhs.max_rank && uci_cfg == rhs.uci_cfg;
   }
   bool operator!=(const pusch_config& rhs) const { return !(rhs == *this); }
 };

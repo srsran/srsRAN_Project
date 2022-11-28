@@ -14,6 +14,7 @@
 #include "../converters/asn1_cell_group_config_helpers.h"
 #include "../du_ue/cell_group_config.h"
 #include "srsgnb/mac/config/mac_cell_group_config_factory.h"
+#include "srsgnb/scheduler/config/logical_channel_config_factory.h"
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 
 using namespace srsgnb;
@@ -155,12 +156,8 @@ async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_cr
     lc.lcid      = bearer.lcid;
     lc.ul_bearer = &bearer.bearer_connector.mac_rx_notif;
     lc.dl_bearer = &bearer.bearer_connector.mac_tx_notif;
-    // Add MAC-LogicalChannelAddMod.
-    lc.lc_config.lcid                      = lc.lcid;
-    lc.lc_config.lc_group                  = uint_to_lcg_id(0);
-    lc.lc_config.priority                  = 1;
-    lc.lc_config.lc_sr_mask                = false;
-    lc.lc_config.lc_sr_delay_timer_applied = false;
+    // Add MAC-LogicalChannel.
+    lc.lc_config = config_helpers::make_default_logical_channel_config(lc.lcid);
     lc.lc_config.sr_id.emplace(mac_ue_create_msg.mac_cell_group_cfg.scheduling_request_config.back().sr_id);
   }
   mac_ue_create_msg.ul_ccch_msg = &msg.subpdu;

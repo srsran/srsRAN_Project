@@ -12,6 +12,7 @@
 
 #include "lib/du_manager/converters/mac_cell_configuration_helpers.h"
 #include "srsgnb/mac/mac_configuration_helpers.h"
+#include "srsgnb/scheduler/config/logical_channel_config_factory.h"
 #include "srsgnb/scheduler/config/serving_cell_config.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
 
@@ -38,6 +39,10 @@ inline sched_ue_creation_request_message make_default_sched_ue_creation_request(
   msg.cells.resize(1);
   msg.cells[0].cell_index    = to_du_cell_index(0);
   msg.cells[0].serv_cell_cfg = config_helpers::make_default_initial_ue_serving_cell_config();
+
+  msg.lc_config_list.resize(2);
+  msg.lc_config_list[0] = config_helpers::make_default_logical_channel_config(lcid_t::LCID_SRB0);
+  msg.lc_config_list[1] = config_helpers::make_default_logical_channel_config(lcid_t::LCID_SRB1);
 
   return msg;
 }

@@ -214,14 +214,59 @@ ssb_configuration srsgnb::config_helpers::make_default_ssb_config(const cell_con
   return cfg;
 }
 
+pusch_config srsgnb::config_helpers::make_default_pusch_config()
+{
+  pusch_config cfg{};
+  cfg.tx_cfg = pusch_config::tx_config::codebook;
+  cfg.pusch_mapping_type_b_dmrs.emplace();
+  cfg.pusch_mapping_type_b_dmrs.value().trans_precoder_disabled.emplace();
+
+  cfg.pusch_pwr_ctrl = pusch_config::pusch_power_control{.msg3_alpha               = alpha::alpha1,
+                                                         .p0_nominal_without_grant = -76,
+                                                         .p0_alphasets             = {},
+                                                         .pathloss_ref_rs          = {},
+                                                         .sri_pusch_mapping        = {}};
+  cfg.pusch_pwr_ctrl.value().p0_alphasets.push_back(pusch_config::pusch_power_control::p0_pusch_alphaset{
+      .id             = static_cast<pusch_config::pusch_power_control::p0_pusch_alphaset_id>(0),
+      .p0             = 0,
+      .p0_pusch_alpha = alpha::alpha1});
+  cfg.pusch_pwr_ctrl.value().pathloss_ref_rs.push_back(pusch_config::pusch_power_control::pusch_pathloss_ref_rs{
+      .id = static_cast<pusch_config::pusch_power_control::pusch_pathloss_ref_rs_id>(0),
+      .rs = static_cast<ssb_id_t>(0)});
+  cfg.pusch_pwr_ctrl.value().sri_pusch_mapping.push_back(pusch_config::pusch_power_control::sri_pusch_pwr_ctrl{
+      .id                           = static_cast<pusch_config::pusch_power_control::sri_pusch_pwr_ctrl_id>(0),
+      .sri_pusch_pathloss_ref_rs_id = static_cast<pusch_config::pusch_power_control::pusch_pathloss_ref_rs_id>(0),
+      .sri_p0_pusch_alphaset_id     = static_cast<pusch_config::pusch_power_control::p0_pusch_alphaset_id>(0),
+      .closed_loop_idx = pusch_config::pusch_power_control::sri_pusch_pwr_ctrl::sri_pusch_closed_loop_index::i0});
+  cfg.res_alloc      = pusch_config::resource_allocation::resource_allocation_type_1;
+  cfg.trans_precoder = pusch_config::transform_precoder::disabled;
+  cfg.cb_subset      = pusch_config::codebook_subset::non_coherent;
+  cfg.max_rank       = 1;
+
+  cfg.uci_cfg.emplace();
+  auto& uci_cfg   = cfg.uci_cfg.value();
+  uci_cfg.scaling = alpha_scaling_opt::f1;
+  beta_offsets b_offset{};
+  b_offset.beta_offset_ack_idx_1    = 9;
+  b_offset.beta_offset_ack_idx_2    = 9;
+  b_offset.beta_offset_ack_idx_3    = 9;
+  b_offset.beta_offset_csi_p1_idx_1 = 6;
+  b_offset.beta_offset_csi_p1_idx_2 = 6;
+  b_offset.beta_offset_csi_p2_idx_1 = 6;
+  b_offset.beta_offset_csi_p2_idx_2 = 6;
+  uci_cfg.beta_offsets_cfg          = uci_on_pusch::beta_offsets_semi_static{b_offset};
+
+  return cfg;
+}
+
 uplink_config srsgnb::config_helpers::make_default_ue_uplink_config()
 {
   // > UL Config.
   uplink_config ul_config{};
   ul_config.init_ul_bwp.pucch_cfg.emplace();
-  auto& pucch_cfg = ul_config.init_ul_bwp.pucch_cfg.value();
 
   // >> PUCCH.
+  auto& pucch_cfg = ul_config.init_ul_bwp.pucch_cfg.value();
   pucch_cfg.pucch_res_set.emplace_back();
   pucch_cfg.pucch_res_set.back().pucch_res_set_id = 0;
   pucch_cfg.pucch_res_set.back().pucch_res_id_list.emplace_back(0);
@@ -257,6 +302,9 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config()
                                                                      .pucch_res_id = 1});
 
   pucch_cfg.format_1_common_param.emplace();
+
+  // > PUSCH config.
+  ul_config.init_ul_bwp.pusch_cfg.emplace(make_default_pusch_config());
 
   return ul_config;
 }
