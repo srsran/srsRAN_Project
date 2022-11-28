@@ -57,7 +57,7 @@ target_link_libraries(span_formatter_test srslog)
 add_test(span_formatter_test span_formatter_test)
 
 add_executable(static_vector_test static_vector_test.cpp)
-target_link_libraries(static_vector_test srslog)
+target_link_libraries(static_vector_test srslog gtest gtest_main)
 add_test(static_vector_test static_vector_test)
 
 add_executable(unique_function_test unique_function_test.cpp)

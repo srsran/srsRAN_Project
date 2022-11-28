@@ -218,6 +218,16 @@ private:
   int val;
 };
 
+struct nondefault_ctor_test_object {
+  nondefault_ctor_test_object(int val_) : val(val_) {}
+  int  value() const { return val; }
+  bool operator==(const nondefault_ctor_test_object& other) const { return val == other.val; }
+  bool operator!=(const nondefault_ctor_test_object& other) const { return val != other.val; }
+
+private:
+  int val;
+};
+
 /// \brief This class creates a random generation interface that is suitable for unit tests. The user has the
 /// ability to set a different seed to reproduce tests.
 class test_rgen

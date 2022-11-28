@@ -86,3 +86,5 @@ namespace detail {
 /// Specialization of "SRSGNB_ALWAYS_ASSERT_IFDEF__" for the PARANOID_ASSERTS_ENABLED flag.
 #define srsgnb_sanity_check(condition, fmtstr, ...)                                                                    \
   SRSGNB_ALWAYS_ASSERT_IFDEF__(PARANOID_ASSERTS_ENABLED, condition, fmtstr, ##__VA_ARGS__)
+
+#define srsgnb_assume(condition) static_cast<void>((condition) ? void(0) : __builtin_unreachable())
