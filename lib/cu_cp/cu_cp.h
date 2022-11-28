@@ -19,6 +19,7 @@
 #include "task_schedulers/cu_up_task_scheduler.h"
 #include "task_schedulers/du_task_scheduler.h"
 #include "task_schedulers/ue_task_scheduler.h"
+#include "ue_manager.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
 #include "srsgnb/f1c/cu_cp/f1c_cu.h"
@@ -123,6 +124,8 @@ private:
 
   slotted_array<std::unique_ptr<du_processor_interface>, MAX_NOF_DUS>       du_db;
   slotted_array<std::unique_ptr<cu_up_processor_interface>, MAX_NOF_CU_UPS> cu_up_db;
+
+  ue_manager ue_mng;
 
   // UE task scheduler
   ue_task_scheduler ue_task_sched;

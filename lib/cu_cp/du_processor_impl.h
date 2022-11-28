@@ -33,7 +33,8 @@ public:
                     f1c_du_management_notifier&     f1c_du_mgmt_notifier_,
                     f1c_message_notifier&           f1c_notifier_,
                     rrc_ue_nas_notifier&            rrc_ue_ngc_ev_notifier_,
-                    du_processor_ue_task_scheduler& task_sched_);
+                    du_processor_ue_task_scheduler& task_sched_,
+                    du_processor_ue_manager&        ue_manager_);
   ~du_processor_impl() = default;
 
   // message handlers
@@ -46,7 +47,7 @@ public:
   f1c_message_handler&    get_f1c_message_handler() override { return *f1c; };
   f1c_statistics_handler& get_f1c_statistics_handler() override { return *f1c; };
 
-  size_t get_nof_ues() override { return ue_mng.get_nof_ues(); };
+  size_t get_nof_ues() override { return ue_manager.get_nof_ues(); };
 
   // du_processor_rrc_message_handler
   ue_creation_complete_message handle_ue_creation_request(const ue_creation_message& msg) override;
@@ -99,6 +100,7 @@ private:
   f1c_message_notifier&           f1c_notifier;
   rrc_ue_nas_notifier&            rrc_ue_ngc_ev_notifier;
   du_processor_ue_task_scheduler& task_sched;
+  du_processor_ue_manager&        ue_manager;
 
   du_processor_context context;
   slotted_array<du_cell_context, MAX_NOF_DU_CELLS>
@@ -111,8 +113,6 @@ private:
   // Components
   std::unique_ptr<f1c_interface>        f1c;
   std::unique_ptr<rrc_du_ue_repository> rrc;
-
-  ue_manager ue_mng;
 
   // F1C to DU processor adapter
   f1c_du_processor_adapter f1c_ev_notifier;

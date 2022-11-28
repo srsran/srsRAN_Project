@@ -10,23 +10,19 @@
 
 #pragma once
 
-#include "srsgnb/cu_cp/ue_context.h"
+#include "ue_context.h"
 
 namespace srsgnb {
-
 namespace srs_cu_cp {
 
-// Forward declared class
-class du_processor_impl;
-
-class ue_manager_ctrl_configurer
+class du_processor_ue_manager
 {
 public:
-  virtual ~ue_manager_ctrl_configurer() = default;
+  virtual ~du_processor_ue_manager() = default;
 
   /// Allocate new UE context for the given RNTI. A UE index is allocated internally.
   /// If a new UE can't be allocated or if a UE with the same RNTI already exists, nulltpr is returned.
-  /// @param rnti RNTI of the UE to be added.
+  /// \param rnti RNTI of the UE to be added.
   virtual ue_context* add_ue(rnti_t rnti)            = 0;
   virtual void        remove_ue(ue_index_t ue_index) = 0;
   virtual ue_context* find_ue(ue_index_t ue_index)   = 0;

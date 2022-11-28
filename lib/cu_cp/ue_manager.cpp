@@ -14,7 +14,7 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-ue_manager::ue_manager(srslog::basic_logger& logger_) : logger(logger_) {}
+ue_manager::ue_manager() {}
 
 ue_context* ue_manager::find_ue(ue_index_t ue_index)
 {

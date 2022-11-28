@@ -22,13 +22,15 @@ srsgnb::srs_cu_cp::create_du_processor(const du_processor_config_t     du_proces
                                        f1c_du_management_notifier&     f1c_du_mgmt_notifier_,
                                        f1c_message_notifier&           f1c_notifier_,
                                        rrc_ue_nas_notifier&            rrc_ue_ngc_ev_notifier_,
-                                       du_processor_ue_task_scheduler& task_sched_)
+                                       du_processor_ue_task_scheduler& task_sched_,
+                                       du_processor_ue_manager&        ue_manager_)
 {
   auto du_processor = std::make_unique<du_processor_impl>(du_processor_config_,
                                                           cu_cp_notifier_,
                                                           f1c_du_mgmt_notifier_,
                                                           f1c_notifier_,
                                                           rrc_ue_ngc_ev_notifier_,
-                                                          task_sched_);
+                                                          task_sched_,
+                                                          ue_manager_);
   return du_processor;
 }

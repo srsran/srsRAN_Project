@@ -24,14 +24,15 @@ du_processor_impl::du_processor_impl(const du_processor_config_t     du_processo
                                      f1c_du_management_notifier&     f1c_du_mgmt_notifier_,
                                      f1c_message_notifier&           f1c_notifier_,
                                      rrc_ue_nas_notifier&            rrc_ue_ngc_ev_notifier_,
-                                     du_processor_ue_task_scheduler& task_sched_) :
+                                     du_processor_ue_task_scheduler& task_sched_,
+                                     du_processor_ue_manager&        ue_manager_) :
   cfg(du_processor_config_),
   cu_cp_notifier(cu_cp_notifier_),
   f1c_du_mgmt_notifier(f1c_du_mgmt_notifier_),
   f1c_notifier(f1c_notifier_),
   rrc_ue_ngc_ev_notifier(rrc_ue_ngc_ev_notifier_),
   task_sched(task_sched_),
-  ue_mng(du_processor_config_.logger)
+  ue_manager(ue_manager_)
 {
   // create f1c
   f1c = create_f1c(f1c_notifier, f1c_ev_notifier, f1c_du_mgmt_notifier);
@@ -155,7 +156,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   }
 
   // 2. Create new UE context
-  ue_context* ue_ctxt = ue_mng.add_ue(msg.c_rnti);
+  ue_context* ue_ctxt = ue_manager.add_ue(msg.c_rnti);
   if (ue_ctxt == nullptr) {
     logger.error("Could not create UE context");
     return ue_creation_complete_msg;
@@ -201,7 +202,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
 
 void du_processor_impl::create_srb(const srb_creation_message& msg)
 {
-  ue_context* ue_ctxt = ue_mng.find_ue(msg.ue_index);
+  ue_context* ue_ctxt = ue_manager.find_ue(msg.ue_index);
   srsgnb_assert(ue_ctxt != nullptr, "Could not find UE context");
 
   // create entry for SRB
@@ -284,5 +285,5 @@ void du_processor_impl::handle_ue_context_release_command(const ue_context_relea
 
   // Remove UE from UE database
   logger.info("Removing UE (id={})", msg.ue_index);
-  ue_mng.remove_ue(msg.ue_index);
+  ue_manager.remove_ue(msg.ue_index);
 }

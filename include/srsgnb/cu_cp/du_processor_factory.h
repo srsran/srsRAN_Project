@@ -12,6 +12,7 @@
 
 #include "du_processor.h"
 #include "du_processor_config.h"
+#include "ue_manager.h"
 #include "srsgnb/f1c/common/f1c_common.h"
 #include "srsgnb/rrc/rrc_ue.h"
 #include <memory>
@@ -25,7 +26,8 @@ std::unique_ptr<du_processor_interface> create_du_processor(const du_processor_c
                                                             f1c_du_management_notifier&     f1c_du_mgmt_notifier_,
                                                             f1c_message_notifier&           f1c_notifier_,
                                                             rrc_ue_nas_notifier&            rrc_ue_ngc_ev_notifier_,
-                                                            du_processor_ue_task_scheduler& task_sched_);
+                                                            du_processor_ue_task_scheduler& task_sched_,
+                                                            du_processor_ue_manager&        ue_manager_);
 
 } // namespace srs_cu_cp
 } // namespace srsgnb

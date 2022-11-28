@@ -10,6 +10,7 @@
 
 #include "../../lib/cu_cp/cu_cp.h"
 #include "du_processor_test_helpers.h"
+#include "lib/cu_cp/ue_manager.h"
 #include "test_helpers.h"
 #include "unittests/f1c/common/test_helpers.h"
 #include "unittests/rrc/test_helpers.h"
@@ -45,7 +46,8 @@ protected:
                                            *f1c_du_mgmt_notifier,
                                            *f1c_pdu_notifier,
                                            *rrc_ue_ngc_ev_notifier,
-                                           *ue_task_sched);
+                                           *ue_task_sched,
+                                           ue_mng);
   }
 
   void TearDown() override
@@ -61,6 +63,7 @@ protected:
   std::unique_ptr<dummy_rrc_ue_nas_notifier>                  rrc_ue_ngc_ev_notifier;
   timer_manager                                               timers;
   std::unique_ptr<dummy_du_processor_to_cu_cp_task_scheduler> ue_task_sched;
+  ue_manager                                                  ue_mng;
   srslog::basic_logger&                                       test_logger = srslog::fetch_basic_logger("TEST");
 };
 
@@ -226,8 +229,9 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
   // Pass message to DU processor
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 
-  // Reduce cu-cp logger loglevel to warning to reduce console output
+  // Reduce logger loglevel to warning to reduce console output
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("UE-MNG").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
   for (int ue_index = MIN_UE_INDEX; ue_index < MAX_NOF_UES; ue_index++) {
@@ -241,8 +245,9 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
     ASSERT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
   }
 
-  // Reset cu-cp logger loglevel
+  // Reset logger loglevel
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("UE-MNG").set_level(srslog::basic_levels::debug);
 
   ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES);
 
