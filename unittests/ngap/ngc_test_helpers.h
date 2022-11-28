@@ -196,14 +196,12 @@ ngc_message generate_ng_setup_failure_message_with_time_to_wait(asn1::ngap::time
   return ng_setup_failure;
 }
 
+const uint32_t          nas_pdu_len = 4; // Dummy length used for testing (content is not important)
 ngap_initial_ue_message generate_initial_ue_message()
 {
-  uint8_t registration_request[] = {0x7e, 0x00, 0x41, 0x79, 0x00, 0x0d, 0x01, 0x00, 0xf1, 0x10, 0xf0, 0xff,
-                                    0x00, 0x00, 0x10, 0x32, 0x54, 0x76, 0x98, 0x2e, 0x02, 0xe0, 0xe0};
   ngap_initial_ue_message msg;
   msg.ue_ngap_id = uint_to_ue_ngap_id(1);
-  msg.nas_pdu.resize(sizeof(registration_request));
-  std::copy(registration_request, registration_request + sizeof(registration_request), msg.nas_pdu.begin());
+  msg.nas_pdu.resize(nas_pdu_len);
   // msg.establishment_cause = asn1::ngap::rrcestablishment_cause_opts::options::mo_sig;
   // msg.nr_cgi = {};
   return msg;
@@ -219,9 +217,19 @@ ngc_message generate_downlink_nas_transport_message()
   auto& dl_nas_transport_msg                 = dl_nas_transport.pdu.init_msg().value.dl_nas_transport();
   dl_nas_transport_msg->amf_ue_ngap_id.value = 3;
   dl_nas_transport_msg->ran_ue_ngap_id.value = 0;
-  dl_nas_transport_msg->nas_pdu.value.from_string("7e00440c");
+  dl_nas_transport_msg->nas_pdu.value.resize(nas_pdu_len);
 
   return dl_nas_transport;
+}
+
+ngap_ul_nas_transport_message generate_ul_nas_transport_message()
+{
+  ngap_ul_nas_transport_message ul_nas_transport;
+  ul_nas_transport.ue_ngap_id = uint_to_ue_ngap_id(0);
+  ul_nas_transport.nas_pdu.resize(nas_pdu_len);
+  // ul_nas_transport.nr_cgi = {};
+
+  return ul_nas_transport;
 }
 
 } // namespace srs_cu_cp
