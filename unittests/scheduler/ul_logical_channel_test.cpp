@@ -66,7 +66,7 @@ TEST(ul_logical_channel_test, when_bsr_is_zero_no_tx_data_is_pending)
 TEST(ul_logical_channel_test, bsr_has_no_effect_in_inactive_bearer)
 {
   ul_logical_channel_manager lch_mng;
-  lcg_id_t                   lcgid = (lcg_id_t)get_random_uint(0, MAX_LCG_ID);
+  lcg_id_t                   lcgid = (lcg_id_t)get_random_uint(1, MAX_LCG_ID);
 
   lch_mng.handle_bsr_indication(make_sbsr(lcgid, get_random_uint(1, 1000)));
 
