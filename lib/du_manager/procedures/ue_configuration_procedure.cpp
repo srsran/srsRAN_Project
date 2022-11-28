@@ -103,7 +103,7 @@ async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::
   for (srb_id_t srbid : request.srbs_to_addmod) {
     du_bearer& bearer = ue->bearers[srb_id_to_uint(srbid)];
     mac_ue_reconf_req.bearers_to_addmod.emplace_back();
-    mac_logical_channel_addmod& lc_ch = mac_ue_reconf_req.bearers_to_addmod.back();
+    mac_logical_channel& lc_ch = mac_ue_reconf_req.bearers_to_addmod.back();
 
     lc_ch.lcid      = bearer.lcid;
     lc_ch.ul_bearer = &bearer.bearer_connector.mac_rx_notif;
@@ -114,7 +114,7 @@ async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::
   for (const drb_to_addmod& drb : request.drbs_to_addmod) {
     du_bearer& bearer = ue->bearers[drb.lcid];
     mac_ue_reconf_req.bearers_to_addmod.emplace_back();
-    mac_logical_channel_addmod& lc_ch = mac_ue_reconf_req.bearers_to_addmod.back();
+    mac_logical_channel& lc_ch = mac_ue_reconf_req.bearers_to_addmod.back();
 
     lc_ch.lcid      = bearer.lcid;
     lc_ch.ul_bearer = &bearer.bearer_connector.mac_rx_notif;

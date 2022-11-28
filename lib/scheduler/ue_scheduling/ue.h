@@ -29,15 +29,7 @@ public:
           rnti_t                                       crnti_val,
           const scheduler_ue_expert_config&            expert_cfg_,
           const cell_configuration&                    cell_cfg_common_,
-          const serving_cell_ue_configuration_request& ue_serv_cell) :
-    ue_index(ue_index_),
-    cell_index(ue_serv_cell.cell_index),
-    harqs(crnti_val, 8),
-    crnti_(crnti_val),
-    expert_cfg(expert_cfg_),
-    ue_cfg(cell_cfg_common_, *ue_serv_cell.serv_cell_cfg)
-  {
-  }
+          const serving_cell_ue_configuration_request& ue_serv_cell);
 
   const du_ue_index_t   ue_index;
   const du_cell_index_t cell_index;
@@ -68,19 +60,7 @@ class ue
 public:
   ue(const scheduler_ue_expert_config&        expert_cfg_,
      const cell_configuration&                cell_cfg_common_,
-     const sched_ue_creation_request_message& req) :
-    ue_index(req.ue_index),
-    crnti(req.crnti),
-    expert_cfg(expert_cfg_),
-    cell_cfg_common(cell_cfg_common_),
-    log_channels_configs(req.lc_config_list),
-    sched_request_configs(req.sched_request_config_list)
-  {
-    for (unsigned i = 0; i != req.cells.size(); ++i) {
-      du_cells[i] = std::make_unique<ue_cell>(ue_index, req.crnti, expert_cfg, cell_cfg_common, req.cells[i]);
-      ue_cells.push_back(du_cells[i].get());
-    }
-  }
+     const sched_ue_creation_request_message& req);
   ue(const ue&)            = delete;
   ue(ue&&)                 = delete;
   ue& operator=(const ue&) = delete;

@@ -25,6 +25,16 @@ unsigned get_mac_sdu_size(unsigned sdu_and_subheader_bytes)
 
 } // namespace
 
+void dl_logical_channel_manager::configure(span<const logical_channel_config> log_channels_configs)
+{
+  for (unsigned i = 1; i != channels.size(); ++i) {
+    channels[i].active = false;
+  }
+  for (const logical_channel_config& lc_ch : log_channels_configs) {
+    set_status(lc_ch.lcid, true);
+  }
+}
+
 unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, unsigned rem_bytes)
 {
   subpdu.lcid        = lcid_dl_sch_t::MIN_RESERVED;

@@ -156,8 +156,8 @@ async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_cr
     lc.ul_bearer = &bearer.bearer_connector.mac_rx_notif;
     lc.dl_bearer = &bearer.bearer_connector.mac_tx_notif;
     // Add MAC-LogicalChannelAddMod.
-    lc.lc_config.lcid = lc.lcid;
-    lc.lc_config.lc_group.emplace(0);
+    lc.lc_config.lcid                      = lc.lcid;
+    lc.lc_config.lc_group                  = uint_to_lcg_id(0);
     lc.lc_config.priority                  = 1;
     lc.lc_config.lc_sr_mask                = false;
     lc.lc_config.lc_sr_delay_timer_applied = false;

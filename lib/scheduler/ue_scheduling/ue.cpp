@@ -14,6 +14,20 @@
 
 using namespace srsgnb;
 
+ue_cell::ue_cell(du_ue_index_t                                ue_index_,
+                 rnti_t                                       crnti_val,
+                 const scheduler_ue_expert_config&            expert_cfg_,
+                 const cell_configuration&                    cell_cfg_common_,
+                 const serving_cell_ue_configuration_request& ue_serv_cell) :
+  ue_index(ue_index_),
+  cell_index(ue_serv_cell.cell_index),
+  harqs(crnti_val, 8),
+  crnti_(crnti_val),
+  expert_cfg(expert_cfg_),
+  ue_cfg(cell_cfg_common_, *ue_serv_cell.serv_cell_cfg)
+{
+}
+
 unsigned ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_bytes) const
 {
   static const unsigned     nof_oh_prb = 0; // TODO
@@ -66,6 +80,27 @@ unsigned ue_cell::required_ul_prbs(unsigned time_resource, unsigned pending_byte
       mcs_config,
       nof_layers});
   return prbs_tbs.nof_prbs;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
+       const cell_configuration&                cell_cfg_common_,
+       const sched_ue_creation_request_message& req) :
+  ue_index(req.ue_index),
+  crnti(req.crnti),
+  expert_cfg(expert_cfg_),
+  cell_cfg_common(cell_cfg_common_),
+  log_channels_configs(req.lc_config_list),
+  sched_request_configs(req.sched_request_config_list)
+{
+  for (unsigned i = 0; i != req.cells.size(); ++i) {
+    du_cells[i] = std::make_unique<ue_cell>(ue_index, req.crnti, expert_cfg, cell_cfg_common, req.cells[i]);
+    ue_cells.push_back(du_cells[i].get());
+  }
+
+  dl_lc_ch_mgr.configure(log_channels_configs);
+  ul_lc_ch_mgr.configure(log_channels_configs);
 }
 
 void ue::handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg)

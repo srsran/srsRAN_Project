@@ -27,6 +27,7 @@
 #include "srsgnb/ran/tdd_ul_dl_config.h"
 #include "srsgnb/scheduler/config/bwp_configuration.h"
 #include "srsgnb/scheduler/config/dmrs.h"
+#include "srsgnb/scheduler/config/logical_channel_config.h"
 #include "srsgnb/scheduler/config/serving_cell_config.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
 
@@ -60,17 +61,6 @@ struct sched_cell_configuration_request_message {
 
   /// Payload size is in bytes.
   unsigned sib1_payload_size;
-};
-
-/// \c LogicalChannelConfig, TS 38.331.
-struct logical_channel_config {
-  lcid_t  lcid;
-  uint8_t priority;
-  // TODO: add remaining fields;
-  optional<uint8_t>               lc_group;
-  optional<scheduling_request_id> sr_id;
-  bool                            lc_sr_mask;
-  bool                            lc_sr_delay_timer_applied;
 };
 
 /// \remark See TS 38.331, "ServingCellConfig".

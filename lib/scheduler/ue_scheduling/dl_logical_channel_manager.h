@@ -12,6 +12,7 @@
 
 #include "srsgnb/mac/lcid_dl_sch.h"
 #include "srsgnb/mac/mac_pdu_format.h"
+#include "srsgnb/scheduler/config/logical_channel_config.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 #include <queue>
 
@@ -26,7 +27,11 @@ public:
     set_status(LCID_SRB0, true);
   }
 
+  /// \brief Activate/Deactivate Bearer.
   void set_status(lcid_t lcid, bool active) { channels[lcid].active = active; }
+
+  /// \brief Update the configurations of the provided lists of bearers.
+  void configure(span<const logical_channel_config> log_channels_configs);
 
   /// \brief Verifies if logical channel is activated for DL.
   bool is_active(lcid_t lcid) const { return channels[lcid].active; }
