@@ -90,3 +90,16 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pusch_estimator_test_data.tar.gz
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pusch_estimator_test_data.tar.gz
   VERBATIM)
+
+add_executable(port_channel_estimator_test port_channel_estimator_test.cpp)
+target_link_libraries(port_channel_estimator_test srsgnb_signal_processors srslog gtest gtest_main)
+add_test(port_channel_estimator_test port_channel_estimator_test)
+
+add_custom_command(
+  TARGET port_channel_estimator_test
+  POST_BUILD
+  WORKING_DIRECTORY ${TEST_DATA_DIR}
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/port_channel_estimator_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/port_channel_estimator_test_data.tar.gz
+  VERBATIM)
+
