@@ -34,8 +34,6 @@ uint16_t get_ra_rnti(slot_point sl_rx, unsigned symbol_index, unsigned frequency
 /// Scheduler for PRACH occasions, RAR PDSCHs and Msg3 PUSCH grants.
 class ra_scheduler
 {
-  /// Implementation-defined limit for maximum Msg3s to be allocated in a given RAR.
-  static constexpr size_t MAX_MSG3_LIST = 16;
   /// Implementation-defined limit for maximum number of concurrent Msg3s.
   static constexpr size_t MAX_NOF_MSG3 = 1024;
 
@@ -91,8 +89,6 @@ private:
   void handle_pending_crc_indications_impl(cell_resource_allocator& res_alloc);
 
   void log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const;
-  void log_rars(const cell_resource_allocator& res_alloc) const;
-  void log_rar_helper(fmt::memory_buffer& fmtbuf, const rar_information& rar) const;
 
   /// Find and allocate DL and UL resources for pending RAR and associated Msg3 grants.
   /// \return The number of allocated Msg3 grants.

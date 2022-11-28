@@ -7,6 +7,7 @@
 #
 
 add_subdirectory(config)
+add_subdirectory(logging)
 add_subdirectory(common_scheduling)
 add_subdirectory(ue_scheduling)
 
@@ -33,4 +34,4 @@ set(SOURCES
         cell/scheduler_prb.cpp)
 
 add_library(srsgnb_sched STATIC ${SOURCES} $<TARGET_OBJECTS:common_sched> $<TARGET_OBJECTS:ue_sched>)
-target_link_libraries(srsgnb_sched srsgnb_ran)
+target_link_libraries(srsgnb_sched srsgnb_ran scheduler_logger)

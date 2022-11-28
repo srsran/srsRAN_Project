@@ -9,6 +9,7 @@
  */
 
 #include "lib/scheduler/common_scheduling/ra_scheduler.h"
+#include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "scheduler_test_suite.h"
 #include "unittests/scheduler/utils/config_generators.h"
 #include "unittests/scheduler/utils/dummy_components.h"
@@ -34,6 +35,7 @@ struct test_bench {
   cell_resource_allocator        res_grid{cell_cfg};
   dummy_pdcch_resource_allocator pdcch_sch;
   ra_scheduler                   ra_sch{sched_cfg.ra, cell_cfg, pdcch_sch};
+  scheduler_result_logger        result_logger;
 
   test_bench(
       const sched_cell_configuration_request_message& cell_req = make_default_sched_cell_configuration_request()) :
@@ -93,6 +95,8 @@ protected:
     next_slot++;
 
     bench->ra_sch.run_slot(bench->res_grid);
+
+    bench->result_logger.log(bench->res_grid[0].result);
 
     // Check sched result consistency.
     test_result_consistency();

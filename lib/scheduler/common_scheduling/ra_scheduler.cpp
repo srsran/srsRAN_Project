@@ -351,9 +351,6 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
       ++it;
     }
   }
-
-  // Log allocated RARs.
-  log_rars(res_alloc);
 }
 
 unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc)
@@ -613,45 +610,4 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
 void ra_scheduler::log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const
 {
   logger.debug("SCHED: RAR allocation for ra-rnti={:#x} was postponed. Cause: {}", rar.ra_rnti, cause_str);
-}
-
-/// Helper to log single RAR grant.
-void ra_scheduler::log_rar_helper(fmt::memory_buffer& fmtbuf, const rar_information& rar) const
-{
-  const char* prefix = "";
-  fmt::format_to(fmtbuf, "ra-rnti={:#x}, msg3 grants ({} allocated): [", rar.pdsch_cfg.rnti, rar.grants.size());
-  for (const rar_ul_grant& msg3 : rar.grants) {
-    fmt::format_to(fmtbuf,
-                   "{}{{{:#x}: rapid={}, prbs={}, ta={}}}",
-                   prefix,
-                   msg3.temp_crnti,
-                   msg3.rapid,
-                   pending_msg3s[msg3.temp_crnti % MAX_NOF_MSG3].harq.last_tx_params().prbs.prbs(),
-                   msg3.ta);
-    prefix = ", ";
-  }
-  fmt::format_to(fmtbuf, "]");
-}
-
-void ra_scheduler::log_rars(const cell_resource_allocator& res_alloc) const
-{
-  if (not logger.info.enabled()) {
-    return;
-  }
-  const auto&                 rar_alloc = res_alloc[0];
-  span<const rar_information> rars      = rar_alloc.result.dl.rar_grants;
-  if (rars.empty()) {
-    return;
-  }
-
-  fmt::memory_buffer fmtbuf;
-  fmt::format_to(fmtbuf, "SCHED: RAR, cell={} ({} allocated):", cell_cfg.cell_index, rars.size());
-  for (const rar_information& rar : rars) {
-    fmt::format_to(fmtbuf, "\n- ");
-    log_rar_helper(fmtbuf, rar);
-  }
-
-  if (fmtbuf.size() > 0) {
-    logger.info("{}", to_c_str(fmtbuf));
-  }
 }
