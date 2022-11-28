@@ -90,14 +90,14 @@ struct ngc_ue_context {
 };
 
 struct ngap_initial_ue_message {
-  ue_ngap_id_t                            ue_ngap_id;
+  cu_cp_ue_id_t                           cu_cp_ue_id;
   byte_buffer                             nas_pdu;
   asn1::ngap::rrcestablishment_cause_opts establishment_cause;
   asn1::ngap::nr_cgi_s                    nr_cgi;
 };
 
 struct ngap_ul_nas_transport_message {
-  ue_ngap_id_t         ue_ngap_id;
+  cu_cp_ue_id_t        cu_cp_ue_id;
   byte_buffer          nas_pdu;
   asn1::ngap::nr_cgi_s nr_cgi;
 };

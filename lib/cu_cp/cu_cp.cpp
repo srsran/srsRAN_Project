@@ -120,10 +120,10 @@ void cu_cp::handle_du_remove_request(const du_index_t du_index)
 
 void cu_cp::handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue)
 {
-  std::underlying_type_t<ue_ngap_id_t> ue_ngap_id_uint = ue_ngap_id_to_uint(get_ue_ngap_id(du_index, ue_index));
-  ngc_rrc_ue_ev_notifiers.emplace(ue_ngap_id_uint);
+  std::underlying_type_t<cu_cp_ue_id_t> cu_cp_ue_id_uint = cu_cp_ue_id_to_uint(get_cu_cp_ue_id(du_index, ue_index));
+  ngc_rrc_ue_ev_notifiers.emplace(cu_cp_ue_id_uint);
 
-  ngc_rrc_ue_adapter& rrc_ue_adapter = ngc_rrc_ue_ev_notifiers[ue_ngap_id_uint];
+  ngc_rrc_ue_adapter& rrc_ue_adapter = ngc_rrc_ue_ev_notifiers[cu_cp_ue_id_uint];
   ngc_entity->create_ngc_ue(du_index, ue_index, rrc_ue_adapter);
   rrc_ue_adapter.connect_rrc_ue(rrc_ue);
 }

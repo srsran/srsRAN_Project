@@ -74,5 +74,48 @@ inline du_cell_index_t int_to_du_cell_index(std::underlying_type_t<du_cell_index
   return static_cast<du_cell_index_t>(idx);
 }
 
+/// \brief CU_CP_UE_ID internally used to identify the UE CU-CP-wide.
+/// \remark The CU_CP_UE_ID is derived from the DU index and the UE's index at the DU
+/// by (DU_INDEX * MAX_NOF_UES) + UE_INDEX
+enum class cu_cp_ue_id_t : uint64_t {
+  min     = 0,
+  max     = (MAX_NOF_DUS * MAX_NOF_UES) + MAX_NOF_UES,
+  invalid = (MAX_NOF_DUS * MAX_NOF_UES) + MAX_NOF_UES + 1
+};
+
+/// Convert CU_CP_UE_ID  type to integer.
+inline uint64_t cu_cp_ue_id_to_uint(cu_cp_ue_id_t id)
+{
+  return static_cast<uint64_t>(id);
+}
+
+/// Convert integer to CU_CP_UE_ID type.
+inline cu_cp_ue_id_t uint_to_cu_cp_ue_id(std::underlying_type_t<cu_cp_ue_id_t> id)
+{
+  return static_cast<cu_cp_ue_id_t>(id);
+}
+
+inline cu_cp_ue_id_t get_cu_cp_ue_id(du_index_t du_index, ue_index_t ue_index)
+{
+  return uint_to_cu_cp_ue_id((du_index * MAX_NOF_UES) + ue_index);
+}
+
+inline cu_cp_ue_id_t get_cu_cp_ue_id(std::underlying_type_t<du_index_t> du_index,
+                                     std::underlying_type_t<ue_index_t> ue_index)
+{
+  return uint_to_cu_cp_ue_id((du_index * MAX_NOF_UES) + ue_index);
+}
+
+inline ue_index_t get_ue_index_from_cu_cp_ue_id(cu_cp_ue_id_t ngap_id)
+{
+  return int_to_ue_index(cu_cp_ue_id_to_uint(ngap_id) % MAX_NOF_UES);
+}
+
+inline du_index_t get_du_index_from_cu_cp_ue_id(cu_cp_ue_id_t ngap_id)
+{
+  std::underlying_type_t<ue_index_t> ue_idx = get_ue_index_from_cu_cp_ue_id(ngap_id);
+  return int_to_du_index((cu_cp_ue_id_to_uint(ngap_id) - ue_idx) / MAX_NOF_UES);
+}
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

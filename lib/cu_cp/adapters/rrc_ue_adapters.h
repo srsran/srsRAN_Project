@@ -110,8 +110,8 @@ public:
     srsgnb_assert(du_index != INVALID_DU_INDEX, "du_index of rrc_ue_ngc_adapter not set");
 
     ngap_initial_ue_message ngap_init_ue_msg;
-    ngap_init_ue_msg.ue_ngap_id = get_ue_ngap_id(du_index, msg.ue_index);
-    ngap_init_ue_msg.nas_pdu    = msg.nas_pdu.copy();
+    ngap_init_ue_msg.cu_cp_ue_id = get_cu_cp_ue_id(du_index, msg.ue_index);
+    ngap_init_ue_msg.nas_pdu     = msg.nas_pdu.copy();
 
     ngap_init_ue_msg.establishment_cause.value =
         rrcestablishment_cause_from_establishment_cause(msg.establishment_cause).value;
@@ -127,8 +127,8 @@ public:
     srsgnb_assert(du_index != INVALID_DU_INDEX, "du_index of rrc_ue_ngc_adapter not set");
 
     ngap_ul_nas_transport_message ngap_ul_nas_msg;
-    ngap_ul_nas_msg.ue_ngap_id = get_ue_ngap_id(du_index, msg.ue_index);
-    ngap_ul_nas_msg.nas_pdu    = msg.nas_pdu.copy();
+    ngap_ul_nas_msg.cu_cp_ue_id = get_cu_cp_ue_id(du_index, msg.ue_index);
+    ngap_ul_nas_msg.nas_pdu     = msg.nas_pdu.copy();
 
     ngap_ul_nas_msg.nr_cgi.nrcell_id.from_number(msg.cgi.nci.packed);
     ngap_ul_nas_msg.nr_cgi.plmn_id.from_string(msg.cgi.plmn_hex);
