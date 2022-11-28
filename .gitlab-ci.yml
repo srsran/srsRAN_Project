@@ -38,7 +38,7 @@ include-guards:
   stage: static
   needs: []
   tags:
-    - ${SRS_INFRASTRUCTURE_TAG}-${SRS_ARCHITECTURE_TAG}
+    - ${SRS_INFRASTRUCTURE_TAG}-amd64
   variables:
     ANALYZER: ""
     ANALYZER_ARGS: ""
