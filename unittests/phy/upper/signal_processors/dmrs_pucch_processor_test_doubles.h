@@ -48,21 +48,23 @@ public:
   std::unique_ptr<dmrs_pucch_processor> create_format1() override
   {
     std::unique_ptr<dmrs_pucch_processor_spy> spy = std::make_unique<dmrs_pucch_processor_spy>();
-    entries.push_back(spy.get());
+    format1_entries.push_back(spy.get());
     return spy;
   }
 
   std::unique_ptr<dmrs_pucch_processor> create_format2() override
   {
     std::unique_ptr<dmrs_pucch_processor_spy> spy = std::make_unique<dmrs_pucch_processor_spy>();
-    entries.push_back(spy.get());
+    format2_entries.push_back(spy.get());
     return spy;
   }
 
-  std::vector<dmrs_pucch_processor_spy*>& get_entries() { return entries; }
+  std::vector<dmrs_pucch_processor_spy*>& get_format1_entries() { return format1_entries; }
+  std::vector<dmrs_pucch_processor_spy*>& get_format2_entries() { return format2_entries; }
 
 private:
-  std::vector<dmrs_pucch_processor_spy*> entries;
+  std::vector<dmrs_pucch_processor_spy*> format1_entries;
+  std::vector<dmrs_pucch_processor_spy*> format2_entries;
 };
 
 } // namespace srsgnb

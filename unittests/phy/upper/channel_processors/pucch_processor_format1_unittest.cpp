@@ -86,7 +86,7 @@ protected:
     ASSERT_NE(processor, nullptr) << "Cannot create PUCCH processor.";
 
     // Select spies.
-    dmrs_spy = dmrs_factory_spy->get_entries().back();
+    dmrs_spy = dmrs_factory_spy->get_format1_entries().back();
     ASSERT_NE(dmrs_spy, nullptr);
 
     detector_spy = detector_factory_spy->get_entries().back();
