@@ -83,14 +83,14 @@ public:
   ///                      ports and all transmit layers.
   /// \param[in]  grid     The frequency&ndash;time resource grid.
   /// \param[in]  port     Receive antenna port the estimation refers to.
-  /// \param[in]  symbols  DM-RS symbols (a.k.a. pilots). For each layer, symbols are listed by RE first and then by
+  /// \param[in]  pilots   DM-RS symbols (a.k.a. pilots). For each layer, symbols are listed by RE first and then by
   ///                      OFDM symbol.
   /// \param[in]  pattern  Pattern with the positions of the DM-RS symbols.
   /// \param[in]  cfg      Estimator configuration.
   virtual void compute(channel_estimate&           estimate,
                        const resource_grid_reader& grid,
                        unsigned                    port,
-                       const dmrs_symbol_list&     symbols,
+                       const dmrs_symbol_list&     pilots,
                        const configuration&        cfg) = 0;
 };
 

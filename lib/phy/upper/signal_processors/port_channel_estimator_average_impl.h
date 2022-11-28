@@ -15,7 +15,11 @@
 
 namespace srsgnb {
 
-/// Port channel estimator that averages all DM-RS.
+/// \brief Port channel estimator that averages all OFDM symbols containing DM-RS.
+///
+/// This estimator considers the channel constant in time over the entire slot. As for the frequency domain, the channel
+/// coefficients corresponding to subcarriers containing DM-RS pilots are LSE-estimated, while the remaining
+/// coefficients are estimated by interpolating the previous ones.
 class port_channel_estimator_average_impl : public port_channel_estimator
 {
 public:
@@ -30,7 +34,7 @@ public:
   void compute(channel_estimate&           estimate,
                const resource_grid_reader& grid,
                unsigned                    port,
-               const dmrs_symbol_list&     symbols,
+               const dmrs_symbol_list&     pilots,
                const configuration&        cfg) override;
 
 private:
@@ -38,25 +42,28 @@ private:
   void compute_layer_hop(channel_estimate&           estimate,
                          const resource_grid_reader& grid,
                          unsigned                    port,
-                         const dmrs_symbol_list&     symbols,
+                         const dmrs_symbol_list&     pilots,
                          const configuration&        cfg,
-                         unsigned                    layer,
-                         unsigned                    hop);
+                         unsigned                    hop,
+                         unsigned                    layer);
 
   /// \brief Interpolator.
   ///
-  /// When DM-RS pilots do not occupy all REs in an OFDM symbol, the interpolator estimates the channel of the REs
-  /// without pilots.
+  /// When DM-RS pilots do not occupy all REs in an OFDM symbol, the interpolator is used to estimate the channel of the
+  /// REs without pilots.
   std::unique_ptr<interpolator> freq_interpolator;
 
-  /// Temporary storage of symbols.
-  dmrs_symbol_list temp_symbols;
+  /// Buffer of received signal samples corresponding to pilots.
+  dmrs_symbol_list rx_pilots;
 
-  /// Temporary frequency response.
-  std::array<cf_t, MAX_RB * NRE> temp_ce_freq;
+  /// Buffer of frequency response coefficients.
+  std::array<cf_t, MAX_RB * NRE> freq_response;
 
-  /// Temporary RSRP value.
-  float rsrp_tmp = 0;
+  /// Estimated RSRP value (single layer).
+  float rsrp = 0;
+
+  /// Estimated noise variance (single layer).
+  float noise_var = 0;
 };
 
 } // namespace srsgnb
