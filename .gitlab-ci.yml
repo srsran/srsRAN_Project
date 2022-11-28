@@ -5,13 +5,13 @@
 
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "36"
+    ref: "37"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/testing-tools
-    ref: "36"
+    ref: "37"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/testing-tools
-    ref: "36"
+    ref: "37"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - local: .gitlab/ci/build.yml
 
