@@ -10,11 +10,10 @@ set(SOURCES
         ngc_factory.cpp
         ngc_impl.cpp
         ngc_asn1_packer.cpp
-        ngc_ue_manager.cpp
         procedures/ng_setup_procedure.cpp
     )
 
 add_library(srsgnb_ngap STATIC ${SOURCES})
-target_link_libraries(srsgnb_ngap ngap_asn1)
+target_link_libraries(srsgnb_ngap ngap_asn1 srsgnb_cu_cp)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

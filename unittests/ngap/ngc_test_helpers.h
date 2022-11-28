@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "lib/cu_cp/ue_manager.h"
 #include "test_helpers.h"
 #include "srsgnb/asn1/asn1_utils.h"
 #include "srsgnb/ngap/ngc.h"
@@ -31,7 +32,7 @@ protected:
     msg_notifier    = std::make_unique<dummy_ngc_amf_notifier>(nullptr);
     rrc_ue_notifier = std::make_unique<dummy_ngc_rrc_ue_notifier>();
 
-    ngc = create_ngc(timers, *msg_notifier);
+    ngc = create_ngc(timers, *msg_notifier, ue_mng);
   }
 
   void TearDown() override
@@ -41,6 +42,7 @@ protected:
   }
 
   timer_manager                              timers;
+  ue_manager                                 ue_mng;
   std::unique_ptr<dummy_ngc_amf_notifier>    msg_notifier;
   std::unique_ptr<dummy_ngc_rrc_ue_notifier> rrc_ue_notifier;
   std::unique_ptr<ngc_interface>             ngc;

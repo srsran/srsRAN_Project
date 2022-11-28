@@ -16,9 +16,9 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-std::unique_ptr<ngc_interface> srsgnb::srs_cu_cp::create_ngc(timer_manager&        timers_,
-                                                             ngc_message_notifier& ngc_notifier_)
+std::unique_ptr<ngc_interface>
+srsgnb::srs_cu_cp::create_ngc(timer_manager& timers_, ngc_message_notifier& ngc_notifier_, ngc_ue_manager& ue_manager_)
 {
-  auto ngc = std::make_unique<ngc_impl>(timers_, ngc_notifier_);
+  auto ngc = std::make_unique<ngc_impl>(timers_, ngc_notifier_, ue_manager_);
   return ngc;
 }

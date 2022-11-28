@@ -31,7 +31,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   assert_cu_cp_configuration_valid(cfg);
 
   // Create layers
-  ngc_entity = create_ngc(timers, *cfg.ngc_notifier);
+  ngc_entity = create_ngc(timers, *cfg.ngc_notifier, ue_mng);
 
   // connect event notifiers to layers
   f1c_ev_notifier.connect_cu_cp(*this);
