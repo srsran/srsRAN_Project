@@ -22,7 +22,7 @@ class ng_setup_procedure
 {
 public:
   ng_setup_procedure(const ng_setup_request_message& request_,
-                     ngc_message_notifier&           cu_notif_,
+                     ngc_message_notifier&           amf_notif_,
                      ngc_event_manager&              ev_mng_,
                      srslog::basic_logger&           logger_);
 
