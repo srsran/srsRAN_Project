@@ -25,8 +25,8 @@ target_link_libraries(dl_pdsch_builder_test srsgnb_support srslog)
 add_test(dl_pdsch_builder_test dl_pdsch_builder_test)
 
 add_executable(dl_ssb_builder_test dl_ssb_pdu_test.cpp)
-target_link_libraries(dl_ssb_builder_test srsgnb_support srslog)
-add_test(dl_ssb_builder_test dl_ssb_builder_test)
+target_link_libraries(dl_ssb_builder_test srsgnb_support srslog gtest gtest_main)
+gtest_discover_tests(dl_ssb_builder_test)
 
 add_executable(error_indication_builder_test error_indication_test.cpp)
 target_link_libraries(error_indication_builder_test srsgnb_support srslog)

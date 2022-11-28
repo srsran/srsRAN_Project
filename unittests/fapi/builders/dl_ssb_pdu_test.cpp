@@ -9,7 +9,7 @@
  */
 
 #include "srsgnb/fapi/message_builders.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include <gtest/gtest.h>
 #include <random>
 
 using namespace srsgnb;
@@ -17,7 +17,7 @@ using namespace fapi;
 
 static std::mt19937 gen(0);
 
-static void test_basic_params()
+TEST(dl_ssb_pdu_builder, valid_basic_parameters_passes)
 {
   dl_ssb_pdu         pdu;
   dl_ssb_pdu_builder builder(pdu);
@@ -30,14 +30,14 @@ static void test_basic_params()
 
   builder.set_basic_parameters(pci, pss_profile, block_index, subcarrier_offset, offset_pointA);
 
-  TESTASSERT_EQ(pci, pdu.phys_cell_id);
-  TESTASSERT_EQ(pss_profile, pdu.beta_pss_profile_nr);
-  TESTASSERT_EQ(block_index, pdu.ssb_block_index);
-  TESTASSERT_EQ(subcarrier_offset, pdu.ssb_subcarrier_offset);
-  TESTASSERT_EQ(offset_pointA, pdu.ssb_offset_pointA.to_uint());
+  ASSERT_EQ(pci, pdu.phys_cell_id);
+  ASSERT_EQ(pss_profile, pdu.beta_pss_profile_nr);
+  ASSERT_EQ(block_index, pdu.ssb_block_index);
+  ASSERT_EQ(subcarrier_offset, pdu.ssb_subcarrier_offset);
+  ASSERT_EQ(offset_pointA, pdu.ssb_offset_pointA.to_uint());
 }
 
-static void test_maintenance_v3_basic_params()
+TEST(dl_ssb_pdu_builder, valid_maintenance_v3_parameters_passes)
 {
   dl_ssb_pdu         pdu;
   dl_ssb_pdu_builder builder(pdu);
@@ -49,12 +49,12 @@ static void test_maintenance_v3_basic_params()
   builder.set_maintenance_v3_basic_parameters(ssb_case, scs, Lmax);
 
   const dl_ssb_maintenance_v3& v3 = pdu.ssb_maintenance_v3;
-  TESTASSERT_EQ(ssb_case, v3.case_type);
-  TESTASSERT_EQ(scs, v3.scs);
-  TESTASSERT_EQ(Lmax, v3.L_max);
+  ASSERT_EQ(ssb_case, v3.case_type);
+  ASSERT_EQ(scs, v3.scs);
+  ASSERT_EQ(Lmax, v3.L_max);
 }
 
-static void test_maintenance_v3_tx_power_params()
+TEST(dl_ssb_pdu_builder, valid_maintenance_v3_tx_power_parameters_passes)
 {
   for (bool enable : {true, false}) {
     dl_ssb_pdu         pdu;
@@ -71,12 +71,12 @@ static void test_maintenance_v3_tx_power_params()
 
     const dl_ssb_maintenance_v3& v3 = pdu.ssb_maintenance_v3;
 
-    TESTASSERT_EQ(enable ? 18307 : -32768, v3.beta_pss_profile_sss);
-    TESTASSERT_EQ(enable ? -860 : -32768, v3.ss_pbch_block_power_scaling);
+    ASSERT_EQ(enable ? 18307 : -32768, v3.beta_pss_profile_sss);
+    ASSERT_EQ(enable ? -860 : -32768, v3.ss_pbch_block_power_scaling);
   }
 }
 
-static void test_bch_payload_mac()
+TEST(dl_ssb_pdu_builder, valid_bch_payload_passes)
 {
   dl_ssb_pdu         pdu;
   dl_ssb_pdu_builder builder(pdu);
@@ -85,11 +85,11 @@ static void test_bch_payload_mac()
 
   builder.set_bch_payload_mac_full(payload);
 
-  TESTASSERT_EQ(bch_payload_type::mac_full, pdu.bch_payload_flag);
-  TESTASSERT_EQ(payload, pdu.bch_payload.bch_payload);
+  ASSERT_EQ(bch_payload_type::mac_full, pdu.bch_payload_flag);
+  ASSERT_EQ(payload, pdu.bch_payload.bch_payload);
 }
 
-static void test_bch_payload_mixed()
+TEST(dl_ssb_pdu_builder, valid_bch_payload_mixed_passes)
 {
   dl_ssb_pdu         pdu;
   dl_ssb_pdu_builder builder(pdu);
@@ -98,11 +98,11 @@ static void test_bch_payload_mixed()
 
   builder.set_bch_payload_phy_timing_info(payload);
 
-  TESTASSERT_EQ(bch_payload_type::phy_timing_info, pdu.bch_payload_flag);
-  TESTASSERT_EQ(payload, pdu.bch_payload.bch_payload);
+  ASSERT_EQ(bch_payload_type::phy_timing_info, pdu.bch_payload_flag);
+  ASSERT_EQ(payload, pdu.bch_payload.bch_payload);
 }
 
-static void test_bch_payload_phy()
+TEST(dl_ssb_pdu_builder, valid_bch_payload_phy_passes)
 {
   dl_ssb_pdu         pdu;
   dl_ssb_pdu_builder builder(pdu);
@@ -114,23 +114,11 @@ static void test_bch_payload_phy()
 
   builder.set_bch_payload_phy_full(dmrs_typeA_pos, pdcch_sib1, barred, intra_freq_reselection);
 
-  TESTASSERT_EQ(bch_payload_type::phy_full, pdu.bch_payload_flag);
+  ASSERT_EQ(bch_payload_type::phy_full, pdu.bch_payload_flag);
   const dl_ssb_phy_mib_pdu& mib = pdu.bch_payload.phy_mib_pdu;
-  TESTASSERT_EQ((dmrs_typeA_pos == dmrs_typeA_position::pos2) ? dmrs_typeA_pos::pos2 : dmrs_typeA_pos::pos3,
-                mib.dmrs_typeA_position);
-  TESTASSERT_EQ(pdcch_sib1, mib.pdcch_config_sib1);
-  TESTASSERT_EQ(barred, mib.cell_barred);
-  TESTASSERT_EQ(intra_freq_reselection, mib.intrafreq_reselection);
-}
-
-int main()
-{
-  test_basic_params();
-  test_maintenance_v3_basic_params();
-  test_maintenance_v3_tx_power_params();
-  test_bch_payload_mac();
-  test_bch_payload_mixed();
-  test_bch_payload_phy();
-
-  return 0;
+  ASSERT_EQ((dmrs_typeA_pos == dmrs_typeA_position::pos2) ? dmrs_typeA_pos::pos2 : dmrs_typeA_pos::pos3,
+            mib.dmrs_typeA_position);
+  ASSERT_EQ(pdcch_sib1, mib.pdcch_config_sib1);
+  ASSERT_EQ(barred, mib.cell_barred);
+  ASSERT_EQ(intra_freq_reselection, mib.intrafreq_reselection);
 }
