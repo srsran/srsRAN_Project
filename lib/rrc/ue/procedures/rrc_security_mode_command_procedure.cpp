@@ -36,9 +36,9 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<voi
   // select security algorithms to be used
   if (not select_security_algo()) {
     logger.debug("{}: \"{}\" could not select security algorithms.", context.c_rnti, name());
-    rrc_ue.on_ue_delete_request();
+    rrc_ue.on_ue_delete_request(); // delete UE context if SMC fails
   } else {
-    // send RRC setup to UE
+    // send RRC SMC to UE
     send_rrc_security_mode_command();
     logger.debug("rnti=0x{:x}: \"{}\" selected security algorithms. Integrity=NIA{}, Ciphering=NEA{}",
                  context.c_rnti,
@@ -46,16 +46,19 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<voi
                  int_algo,
                  ciph_algo);
 
+    generate_as_keys();
+
+    // TODO activate SRB1 PDCP security
+
     // Await UE response
     CORO_AWAIT(transaction);
 
     auto coro_res = transaction.result();
     if (coro_res.has_value()) {
       logger.debug("{}: \"{}\" finished successfully.", context.c_rnti, name());
-      // send_initial_ue_msg(coro_res.value());
     } else {
       logger.debug("{}: \"{}\" timed out.", context.c_rnti, name());
-      // rrc_ue.on_ue_delete_request();
+      rrc_ue.on_ue_delete_request(); // delete UE context if SMC fails
     }
   }
   logger.debug("rnti=0x{:x}: \"{}\" finalized.", context.c_rnti, name());
@@ -133,4 +136,3 @@ void rrc_security_mode_command_procedure::send_rrc_security_mode_command()
   fill_asn1_rrc_smc_msg(rrc_smc, int_algo, ciph_algo, transaction.id());
   rrc_ue.on_new_dl_dcch(dl_dcch_msg);
 }
-

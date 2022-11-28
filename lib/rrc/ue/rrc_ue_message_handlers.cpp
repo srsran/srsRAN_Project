@@ -108,13 +108,6 @@ void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
       return;
     }
   }
-  /*
-  if (ul_dcch_msg.msg.c1().type().value == ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_complete) {
-    ul_dcch_msg.msg.c1().security_mode_complete().rrc_transaction_id = 1;
-    byte_buffer buf                                                  = pack_into_pdu(ul_dcch_msg);
-    logger.debug(buf.begin(), buf.end(), "modified message to unpack message");
-  }
-  */
 
   // Log Rx message
   fmt::memory_buffer fmtbuf, fmtbuf2;

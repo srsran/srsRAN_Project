@@ -77,7 +77,8 @@ struct srb_creation_message {
   asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
 };
 
-/// Interface used by the RRC Setup procedure to notifiy the RRC UE.
+/// Interface used by the RRC security mode procedure
+/// to notify the RRC UE of the security mode context update.
 class rrc_ue_security_mode_command_proc_notifier
 {
 public:
@@ -160,13 +161,13 @@ public:
   virtual void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) = 0;
 };
 
-// TODO put this somewhere else
 struct rrc_init_security_context {
   security::sec_as_key k;
   std::array<bool, 3>  supported_int_algos;
   std::array<bool, 3>  supported_enc_algos;
 };
-/// Handle order to initialize NAS transport messages.
+
+/// Handler to initialize the security context from NGAP.
 class rrc_ue_init_security_context_handler
 {
 public:
