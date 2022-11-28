@@ -63,10 +63,15 @@ TEST(dl_logical_channel_test, buffer_state_indication_has_no_effect_in_inactive_
   lch_mng.handle_dl_buffer_status_indication(lcid, buf_st);
 
   // SRB0 is active by default.
-  ASSERT_EQ(lch_mng.pending_bytes(), lcid == LCID_SRB0 ? get_mac_sdu_required_bytes(buf_st) : 0);
-  ASSERT_EQ(lch_mng.pending_bytes(lcid), lcid == LCID_SRB0 ? get_mac_sdu_required_bytes(buf_st) : 0);
   if (lcid == LCID_SRB0) {
-    ASSERT_TRUE(lch_mng.has_pending_bytes());
+    ASSERT_EQ(lch_mng.pending_bytes(lcid), get_mac_sdu_required_bytes(buf_st));
+  } else {
+    ASSERT_EQ(lch_mng.pending_bytes(), 0);
+    ASSERT_EQ(lch_mng.pending_bytes(lcid), 0);
+  }
+
+  if (lcid == LCID_SRB0) {
+    ASSERT_TRUE(lch_mng.has_pending_bytes(LCID_SRB0));
   } else {
     ASSERT_FALSE(lch_mng.has_pending_bytes());
   }
@@ -82,9 +87,15 @@ TEST(dl_logical_channel_test, buffer_status_indication_updates_tx_pending_bytes)
   unsigned buf_st = get_random_uint(0, 10000);
   lch_mng.handle_dl_buffer_status_indication(lcid, buf_st);
 
-  ASSERT_EQ(lch_mng.pending_bytes(), get_mac_sdu_required_bytes(buf_st));
+  if (lcid == LCID_SRB0) {
+    // Pending bytes calculation skips SRB0.
+    ASSERT_EQ(lch_mng.pending_bytes(lcid), get_mac_sdu_required_bytes(buf_st));
+    ASSERT_EQ(lch_mng.has_pending_bytes(lcid), buf_st > 0);
+  } else {
+    ASSERT_EQ(lch_mng.pending_bytes(), get_mac_sdu_required_bytes(buf_st));
+    ASSERT_EQ(lch_mng.has_pending_bytes(), buf_st > 0);
+  }
   ASSERT_EQ(lch_mng.pending_bytes(lcid), get_mac_sdu_required_bytes(buf_st));
-  ASSERT_EQ(lch_mng.has_pending_bytes(), buf_st > 0);
   ASSERT_FALSE(lch_mng.has_pending_ces());
 }
 
@@ -152,8 +163,13 @@ TEST(dl_logical_channel_test, mac_ce_is_scheduled_if_tb_has_space)
   unsigned tb_size               = get_random_uint(0, 50);
 
   dl_msg_lc_info subpdu;
-  unsigned       allocated_bytes = lch_mng.allocate_mac_ce(subpdu, tb_size);
 
+  unsigned allocated_bytes = 0;
+  if (ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
+    allocated_bytes = lch_mng.allocate_ue_con_res_id_mac_ce(subpdu, tb_size);
+  } else {
+    allocated_bytes = lch_mng.allocate_mac_ce(subpdu, tb_size);
+  }
   if (mac_ce_required_bytes <= tb_size) {
     ASSERT_EQ(allocated_bytes, mac_ce_required_bytes);
     ASSERT_EQ(subpdu.lcid, ce_lcid);
@@ -229,7 +245,7 @@ TEST(dl_logical_channel_test, pending_bytes_does_not_include_ue_con_res_id_mac_c
   ASSERT_EQ(lch_mng.pending_bytes(), 0);
 }
 
-TEST(dl_logical_channel_test, pending_ue_con_res_id_ce_bytes_does_not_other_mac_ce)
+TEST(dl_logical_channel_test, pending_ue_con_res_id_ce_bytes_does_not_include_other_mac_ce)
 {
   dl_logical_channel_manager lch_mng;
 

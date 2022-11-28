@@ -45,11 +45,7 @@ public:
 
   /// \brief Checks whether UE has pending CEs to be scheduled.
   /// \remark Excludes UE Contention Resolution Identity CE.
-  bool has_pending_ces() const
-  {
-    return std::any_of(
-        pending_ces.begin(), pending_ces.end(), [](const auto& ce) { return ce != lcid_dl_sch_t::UE_CON_RES_ID; });
-  }
+  bool has_pending_ces() const { return not pending_ces.empty(); }
 
   /// \brief Calculates total number of DL bytes, including MAC header overhead.
   /// \remark Excludes data for SRB0 and UE Contention Resolution Identity CE.
@@ -69,10 +65,8 @@ public:
   {
     unsigned bytes = 0;
     for (const lcid_dl_sch_t& ce : pending_ces) {
-      if (ce != lcid_dl_sch_t::UE_CON_RES_ID) {
-        bytes += ce.is_var_len_ce() ? get_mac_sdu_required_bytes(ce.sizeof_ce())
-                                    : FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + ce.sizeof_ce();
-      }
+      bytes += ce.is_var_len_ce() ? get_mac_sdu_required_bytes(ce.sizeof_ce())
+                                  : FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + ce.sizeof_ce();
     }
     return bytes;
   }
@@ -80,11 +74,10 @@ public:
   /// \brief Checks whether UE has pending UE Contention Resolution Identity CE to be scheduled.
   unsigned pending_ue_con_res_id_ce_bytes() const
   {
-    unsigned bytes = 0;
-    // UE Contention Resolution Identity is always first in the queue.
-    const auto& ce = pending_ces.front();
-    if (ce == lcid_dl_sch_t::UE_CON_RES_ID) {
-      bytes += FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + ce.sizeof_ce();
+    unsigned          bytes   = 0;
+    static const auto ce_size = lcid_dl_sch_t{lcid_dl_sch_t::UE_CON_RES_ID}.sizeof_ce();
+    if (pending_con_res_id) {
+      bytes += FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + ce_size;
     }
     return bytes;
   }
@@ -104,9 +97,8 @@ public:
   /// \brief Enqueue new MAC CE to be scheduled.
   void handle_mac_ce_indication(lcid_dl_sch_t ce)
   {
-    // Give priority to CON RES ID over other CEs.
     if (ce == lcid_dl_sch_t::UE_CON_RES_ID) {
-      pending_ces.push_front(ce);
+      pending_con_res_id = true;
     } else {
       pending_ces.push_back(ce);
     }
@@ -143,6 +135,9 @@ private:
 
   std::array<channel_context, MAX_NOF_RB_LCIDS> channels;
 
+  bool pending_con_res_id{false};
+
+  /// \brief List of pending CEs except UE Contention Resolution Identity.
   std::deque<lcid_dl_sch_t> pending_ces;
 };
 
