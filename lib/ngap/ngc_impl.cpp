@@ -139,6 +139,15 @@ void ngc_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_messa
   ngc_notifier.on_new_message(ngc_msg);
 }
 
+void ngc_impl::handle_initial_context_setup_response_message(const ngap_initial_context_setup_response_message& msg)
+{
+  ngc_message ngc_msg = {};
+
+  // TODO: fill message
+
+  ngc_notifier.on_new_message(ngc_msg);
+}
+
 void ngc_impl::handle_message(const ngc_message& msg)
 {
   logger.info("Handling NGAP PDU of type \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
@@ -164,6 +173,9 @@ void ngc_impl::handle_initiating_message(const init_msg_s& msg)
   switch (msg.value.type().value) {
     case ngap_elem_procs_o::init_msg_c::types_opts::dl_nas_transport:
       handle_dl_nas_transport_message(msg.value.dl_nas_transport());
+      break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::init_context_setup_request:
+      handle_initial_context_setup_request(msg.value.init_context_setup_request());
       break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
@@ -194,6 +206,15 @@ void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpor
   std::copy(msg->nas_pdu.value.begin(), msg->nas_pdu.value.end(), nas_pdu.begin());
 
   ue->get_rrc_ue_notifier().on_new_pdu(std::move(nas_pdu));
+}
+
+void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_context_setup_request_s& request)
+{
+  // get cu_cp_ue_id from ran_ue_id
+  // cu_cp_ue_id_t cu_cp_ue_id = get_cu_cp_ue_id(request->ran_ue_ngap_id.value);
+  // auto& ue = ue_manager.get_ue(cu_cp_ue_id);
+
+  // ue.get_rrc_ue_notifier().on_initial_context_setup_received();
 }
 
 void ngc_impl::handle_successful_outcome(const successful_outcome_s& outcome)

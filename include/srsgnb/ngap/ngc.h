@@ -94,6 +94,12 @@ struct ngap_ul_nas_transport_message {
   asn1::ngap::nr_cgi_s nr_cgi;
 };
 
+struct ngap_initial_context_setup_response_message {
+  asn1::ngap::init_context_setup_resp_s response;
+  asn1::ngap::init_context_setup_fail_s failure;
+  bool                                  success;
+};
+
 /// Handle NGC NAS Message procedures as defined in TS 38.413 section 8.6.
 class ngc_nas_message_handler
 {
@@ -107,6 +113,18 @@ public:
   /// \brief Initiates Uplink NAS transport procedure as per TS 38.413 section 8.6.3.
   /// \param[in] msg The ul nas transfer message to transmit.
   virtual void handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg) = 0;
+};
+
+/// Handle NGC UE Context Management procedures as defined in TS 38.413 section 8.3.
+class ngc_ue_context_management_handler
+{
+public:
+  virtual ~ngc_ue_context_management_handler() = default;
+
+  /// \brief Hanlde the initial context setup response message as per TS 38.413 section 8.3.1.
+  /// \param[in] msg The initial context setup response message.
+  virtual void
+  handle_initial_context_setup_response_message(const ngap_initial_context_setup_response_message& msg) = 0;
 };
 
 /// Interface to notify about NAS PDUs.
@@ -149,6 +167,7 @@ class ngc_interface : public ngc_message_handler,
                       public ngc_event_handler,
                       public ngc_connection_manager,
                       public ngc_nas_message_handler,
+                      public ngc_ue_context_management_handler,
                       public ngc_ue_control_manager,
                       public ngc_statistic_interface
 {

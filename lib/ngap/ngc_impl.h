@@ -38,6 +38,9 @@ public:
 
   void handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg) override;
 
+  // ngc ue context manager
+  void handle_initial_context_setup_response_message(const ngap_initial_context_setup_response_message& msg) override;
+
   // ngc message handler functions
   void handle_message(const ngc_message& msg) override;
   void handle_connection_loss() override {}
@@ -53,6 +56,10 @@ private:
   /// \brief Notify about the reception of an DL NAS Transport message.
   /// \param[in] msg The received DL NAS Transport message.
   void handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transport_s& msg);
+
+  /// \brief Notify about the reception of an Initial Context Setup Request.
+  /// \param[in] msg The received Initial Context Setup Request.
+  void handle_initial_context_setup_request(const asn1::ngap::init_context_setup_request_s& request);
 
   /// \brief Notify about the reception of a successful outcome message.
   /// \param[in] outcome The successful outcome message.
