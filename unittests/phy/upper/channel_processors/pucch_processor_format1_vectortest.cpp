@@ -124,12 +124,17 @@ protected:
   {
     ASSERT_NE(factory, nullptr);
     processor = factory->create();
-    ASSERT_NE(processor, nullptr);
+    ASSERT_NE(processor, nullptr) << "Could not create PUCCH Processor.";
+    validator = factory->create_validator();
+    ASSERT_NE(validator, nullptr) << "Could not create PUCCH validator.";
   }
 
   static std::shared_ptr<pucch_processor_factory> factory;
 
+  // PUCCH processor.
   std::unique_ptr<pucch_processor> processor;
+  // PUCCH processor validator.
+  std::unique_ptr<pucch_pdu_validator> validator;
 };
 
 std::shared_ptr<pucch_processor_factory> PucchProcessorFormat1Fixture::factory;
@@ -142,6 +147,9 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
   grid.write(GetParam().dmrs_symbols.read());
 
   const PucchProcessorFormat1Param& param = GetParam();
+
+  // Make sure configuration is valid.
+  ASSERT_TRUE(validator->is_valid(param.config));
 
   pucch_processor_result result = processor->process(grid, param.config);
 

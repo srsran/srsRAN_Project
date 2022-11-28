@@ -40,6 +40,8 @@ protected:
   static std::shared_ptr<pucch_processor_factory> processor_factory;
   // PUCCH processor.
   std::unique_ptr<pucch_processor> processor;
+  // PUCCH processor validator.
+  std::unique_ptr<pucch_pdu_validator> validator;
 
   static void SetUpTestSuite()
   {
@@ -109,6 +111,10 @@ protected:
     // Create PUCCH processor.
     processor = processor_factory->create();
     ASSERT_NE(processor, nullptr) << "Cannot create PUCCH processor.";
+
+    // Create PUCCH validator.
+    validator = processor_factory->create_validator();
+    ASSERT_NE(validator, nullptr) << "Cannot create PUCCH validator.";
   }
 };
 
@@ -129,6 +135,9 @@ TEST_P(PucchProcessorF2Fixture, PucchProcessorF2VectorTest)
   std::vector<uint8_t> expected_sr         = test_case.sr.read();
   std::vector<uint8_t> expected_csi_part_1 = test_case.csi_part_1.read();
   std::vector<uint8_t> expected_csi_part_2 = test_case.csi_part_2.read();
+
+  // Make sure configuration is valid.
+  ASSERT_TRUE(validator->is_valid(config));
 
   // Process PUCCH.
   pucch_processor_result result = processor->process(grid, config);

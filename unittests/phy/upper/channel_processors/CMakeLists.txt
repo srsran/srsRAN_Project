@@ -186,6 +186,28 @@ add_custom_command(
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pucch_processor_format2_test_data.tar.gz
         VERBATIM)
 
+add_executable(pucch_processor_validator_format2_test pucch_processor_validator_format2_test.cpp)
+target_link_libraries(pucch_processor_validator_format2_test
+        srsgnb_channel_equalizer
+        srsgnb_channel_processors
+        srsgnb_phy_support
+        srslog
+        srsgnb_upper_phy_support
+        gtest
+        gtest_main)
+add_test(pucch_processor_validator_format2_test pucch_processor_validator_format2_test)
+
+add_executable(pucch_processor_validator_format1_test pucch_processor_validator_format1_test.cpp)
+target_link_libraries(pucch_processor_validator_format1_test
+        srsgnb_channel_equalizer
+        srsgnb_channel_processors
+        srsgnb_phy_support
+        srslog
+        srsgnb_upper_phy_support
+        gtest
+        gtest_main)
+add_test(pucch_processor_validator_format1_test pucch_processor_validator_format1_test)
+
 add_executable(pusch_decoder_test pusch_decoder_test.cpp)
 target_link_libraries(pusch_decoder_test srsgnb_channel_processors srslog srsgnb_upper_phy_support)
 add_test(pusch_decoder_test pusch_decoder_test -e0 -i2)

@@ -184,30 +184,63 @@ public:
 
   /// \brief Validates PUCCH Format 0 configuration parameters.
   /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const pucch_processor::format0_configuration& config) = 0;
+  virtual bool is_valid(const pucch_processor::format0_configuration& config) const = 0;
 
   /// \brief Validates PUCCH Format 1 configuration parameters.
   /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const pucch_processor::format1_configuration& config) = 0;
+  virtual bool is_valid(const pucch_processor::format1_configuration& config) const = 0;
 
   /// \brief Validates PUCCH Format 2 configuration parameters.
   /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const pucch_processor::format2_configuration& config) = 0;
+  virtual bool is_valid(const pucch_processor::format2_configuration& config) const = 0;
 
   /// \brief Validates PUCCH Format 3 configuration parameters.
   /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const pucch_processor::format3_configuration& config) = 0;
+  virtual bool is_valid(const pucch_processor::format3_configuration& config) const = 0;
 
   /// \brief Validates PUCCH Format 4 configuration parameters.
   /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const pucch_processor::format4_configuration& config) = 0;
+  virtual bool is_valid(const pucch_processor::format4_configuration& config) const = 0;
 };
 
 } // namespace srsgnb
 
 namespace fmt {
 
-/// \brief Custom formatter for pusch_processor::format2_configuration.
+/// \brief Custom formatter for pucch_processor::format1_configuration.
+template <>
+struct formatter<srsgnb::pucch_processor::format1_configuration> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::pucch_processor::format1_configuration& config, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "slot={} bwp_size_rb={} bwp_start_rb={} cp={} starting_prb={} second_hop_prb={} n_id={} "
+                     "nof_harq_ack={} ports=[{}] intial_cyclic_shift={} nof_symbols={} start_symbol_index={} "
+                     "time_domain_occ={}",
+                     config.slot,
+                     config.bwp_size_rb,
+                     config.bwp_start_rb,
+                     config.cp.to_string(),
+                     config.starting_prb,
+                     config.second_hop_prb.has_value() ? config.second_hop_prb.value() : 0,
+                     config.n_id,
+                     config.nof_harq_ack,
+                     srsgnb::span<const uint8_t>(config.ports),
+                     config.initial_cyclic_shift,
+                     config.nof_symbols,
+                     config.start_symbol_index,
+                     config.time_domain_occ);
+  }
+};
+
+/// \brief Custom formatter for pucch_processor::format2_configuration.
 template <>
 struct formatter<srsgnb::pucch_processor::format2_configuration> {
   template <typename ParseContext>

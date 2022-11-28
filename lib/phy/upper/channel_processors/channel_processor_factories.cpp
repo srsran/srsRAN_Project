@@ -347,6 +347,27 @@ public:
     srsgnb_assert(detector_factory, "Invalid detector factory.");
     srsgnb_assert(demodulator_factory, "Invalid PUCCH demodulator factory.");
     srsgnb_assert(decoder_factory, "Invalid UCI decoder factory.");
+    srsgnb_assert((channel_estimate_dimensions.nof_symbols != 0) && (channel_estimate_dimensions.nof_prb != 0) &&
+                      (channel_estimate_dimensions.nof_rx_ports != 0) &&
+                      (channel_estimate_dimensions.nof_tx_layers != 0),
+                  "Channel estimate dimensions cannot be zero.");
+    srsgnb_assert(channel_estimate_dimensions.nof_prb <= MAX_RB,
+                  "Number of RB, i.e., {}, exceeds maximum bandwidth, i.e., {}.",
+                  channel_estimate_dimensions.nof_prb,
+                  MAX_RB);
+    srsgnb_assert(channel_estimate_dimensions.nof_symbols <= MAX_NSYMB_PER_SLOT,
+                  "Number of OFDM symbols, i.e., {}, exceeds maximum slot symbols, i.e., {}.",
+                  channel_estimate_dimensions.nof_symbols,
+                  MAX_NSYMB_PER_SLOT);
+    unsigned max_ports = MAX_PUCCH_RX_PORTS;
+    srsgnb_assert(channel_estimate_dimensions.nof_rx_ports <= max_ports,
+                  "Number of receive ports, i.e., {}, exceeds maximum supported receive ports, i.e, {}.",
+                  channel_estimate_dimensions.nof_rx_ports,
+                  max_ports);
+    srsgnb_assert(channel_estimate_dimensions.nof_tx_layers <= PUCCH_MAX_LAYERS,
+                  "Number of transmit layers, i.e., {}, exceeds maximum PUCCH transmit layers, i.e, {}.",
+                  channel_estimate_dimensions.nof_tx_layers,
+                  PUCCH_MAX_LAYERS);
   }
 
   std::unique_ptr<pucch_processor> create() override
@@ -361,10 +382,11 @@ public:
 
   std::unique_ptr<pucch_pdu_validator> create_validator() override
   {
-    return std::make_unique<pucch_processor_validator_impl>();
+    return std::make_unique<pucch_pdu_validator_impl>(channel_estimate_dimensions);
   }
 
 private:
+  static constexpr unsigned                     MAX_PUCCH_RX_PORTS = 1;
   std::shared_ptr<dmrs_pucch_estimator_factory> dmrs_factory;
   std::shared_ptr<pucch_detector_factory>       detector_factory;
   std::shared_ptr<pucch_demodulator_factory>    demodulator_factory;

@@ -85,6 +85,10 @@ protected:
     processor = processor_factory->create();
     ASSERT_NE(processor, nullptr) << "Cannot create PUCCH processor.";
 
+    // Create PUCCH validator.
+    validator = processor_factory->create_validator();
+    ASSERT_NE(validator, nullptr) << "Cannot create PUCCH processor validator.";
+
     // Select spies.
     dmrs_spy = dmrs_factory_spy->get_format1_entries().back();
     ASSERT_NE(dmrs_spy, nullptr);
@@ -100,24 +104,20 @@ protected:
 
     std::uniform_int_distribution<unsigned> num_dist(0, static_cast<unsigned>(subcarrier_spacing::kHz240));
     std::uniform_int_distribution<unsigned> slot_dist(0, 160 * 1024 - 1);
-    std::uniform_int_distribution<unsigned> bwp_size_dist(1, 275);
-    std::uniform_int_distribution<unsigned> bwp_start_dist(0, 274);
+    std::uniform_int_distribution<unsigned> bwp_size_dist(1, MAX_RB);
     std::uniform_int_distribution<unsigned> bool_dist(0, 1);
     std::uniform_int_distribution<unsigned> starting_prb_dist(0, 274);
     std::uniform_int_distribution<unsigned> n_id_dist(0, 1023);
     std::uniform_int_distribution<unsigned> nof_harq_ack_dist(0, 2);
     std::uniform_int_distribution<uint8_t>  ports_dist(0, 255);
     std::uniform_int_distribution<unsigned> initial_cyclic_shift_dist(0, 11);
-    std::uniform_int_distribution<unsigned> nof_symbols_dist(4, 14);
-    std::uniform_int_distribution<unsigned> start_symbol_index_dist(0, 10);
     std::uniform_int_distribution<unsigned> time_domain_occ_dist(0, 6);
 
-    unsigned numerology = num_dist(rgen);
+    config.cp           = bool_dist(rgen) == 0 ? cyclic_prefix::NORMAL : cyclic_prefix::EXTENDED;
+    unsigned numerology = config.cp == cyclic_prefix::EXTENDED ? 2 : num_dist(rgen);
     unsigned slot       = slot_dist(rgen) % slot_point(numerology, 0).nof_slots_per_system_frame();
     config.slot         = slot_point(numerology, slot);
     config.bwp_size_rb  = bwp_size_dist(rgen);
-    config.bwp_start_rb = bwp_start_dist(rgen);
-    config.cp           = bool_dist(rgen) == 0 ? cyclic_prefix::NORMAL : cyclic_prefix::EXTENDED;
     config.starting_prb = std::min(starting_prb_dist(rgen), config.bwp_size_rb - 1);
     if (bool_dist(rgen)) {
       config.second_hop_prb.emplace((config.starting_prb + config.bwp_size_rb / 2) % config.bwp_size_rb);
@@ -125,19 +125,28 @@ protected:
       config.second_hop_prb = {};
     }
     config.n_id                 = n_id_dist(rgen);
-    config.nof_harq_ack         = n_id_dist(rgen);
+    config.nof_harq_ack         = nof_harq_ack_dist(rgen);
     config.ports                = {ports_dist(rgen)};
     config.initial_cyclic_shift = initial_cyclic_shift_dist(rgen);
-    config.nof_symbols          = nof_symbols_dist(rgen);
-    config.start_symbol_index   = start_symbol_index_dist(rgen);
     config.time_domain_occ      = time_domain_occ_dist(rgen);
+
+    std::uniform_int_distribution<unsigned> nof_symbols_dist(4, get_nsymb_per_slot(config.cp));
+    config.nof_symbols = nof_symbols_dist(rgen);
+
+    std::uniform_int_distribution<unsigned> bwp_start_dist(0, MAX_RB - config.bwp_size_rb);
+    config.bwp_start_rb = bwp_start_dist(rgen);
+
+    std::uniform_int_distribution<unsigned> start_symbol_index_dist(0,
+                                                                    get_nsymb_per_slot(config.cp) - config.nof_symbols);
+    config.start_symbol_index = start_symbol_index_dist(rgen);
 
     return config;
   }
 
-  std::unique_ptr<pucch_processor> processor;
-  dmrs_pucch_processor_spy*        dmrs_spy;
-  pucch_detector_spy*              detector_spy;
+  std::unique_ptr<pucch_processor>     processor;
+  std::unique_ptr<pucch_pdu_validator> validator;
+  dmrs_pucch_processor_spy*            dmrs_spy;
+  pucch_detector_spy*                  detector_spy;
 };
 
 std::shared_ptr<pucch_processor_factory>          PucchProcessorFormat1Fixture::processor_factory    = nullptr;
@@ -151,6 +160,9 @@ TEST_P(PucchProcessorFormat1Fixture, UnitTest)
 
   // Prepare resource grid.
   resource_grid_reader_spy grid;
+
+  // Make sure configuration is valid.
+  ASSERT_TRUE(validator->is_valid(config));
 
   // Process.
   const pucch_processor_result result = processor->process(grid, config);

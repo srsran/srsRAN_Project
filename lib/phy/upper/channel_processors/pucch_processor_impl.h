@@ -19,15 +19,43 @@
 namespace srsgnb {
 
 /// Implements a parameter validator for \ref pucch_processor_impl.
-class pucch_processor_validator_impl : public pucch_pdu_validator
+class pucch_pdu_validator_impl : public pucch_pdu_validator
 {
 public:
+  /// Maximum supported PUCCH Format 2 UCI payload length in number of bits.
+  static constexpr unsigned FORMAT2_MAX_UCI_NBITS = 11;
+  /// Maximum PUCCH Format 1 \ref pucch_processor::format1_configuration.time_domain_occ time dommain OCC index.
+  static constexpr unsigned FORMAT1_MAX_OCC_IDX = 6;
+  /// Maximum PUCCH Format 1 \ref pucch_processor::format1_configuration.initial_cyclic_shift initial cyclic shift.
+  static constexpr unsigned FORMAT1_MAX_CYCLIC_SHIFT = 11;
+  /// Maximum PUCCH Format 1 \ref pucch_processor::format1_configuration.n_id NID value.
+  static constexpr unsigned FORMAT1_MAX_NID = 1023;
+  /// Maximum PUCCH Format 2 \ref pucch_processor::format2_configuration.n_id NID value.
+  static constexpr unsigned FORMAT2_MAX_NID = 1023;
+  /// Maximum PUCCH Format 2 \ref pucch_processor::format2_configuration.n_id_0 NID0 value.
+  static constexpr unsigned FORMAT2_MAX_NID_0 = 65535;
+
+  /// \brief Constructs PUCCH processor validator.
+  ///
+  /// It requires channel estimate dimensions to limit the bandwidth, slot duration, number of receive ports and
+  /// transmit layers.
+  ///
+  /// \param[in] ce_dims_ Provides the channel estimates dimensions.
+  explicit pucch_pdu_validator_impl(const channel_estimate::channel_estimate_dimensions& ce_dims_) : ce_dims(ce_dims_)
+  {
+    // Do nothing.
+  }
+
   // See interface for documentation.
-  bool is_valid(const pucch_processor::format0_configuration& config) override { return true; }
-  bool is_valid(const pucch_processor::format1_configuration& config) override { return true; }
-  bool is_valid(const pucch_processor::format2_configuration& config) override { return true; }
-  bool is_valid(const pucch_processor::format3_configuration& config) override { return true; }
-  bool is_valid(const pucch_processor::format4_configuration& config) override { return true; }
+  bool is_valid(const pucch_processor::format0_configuration& config) const override { return true; };
+  bool is_valid(const pucch_processor::format1_configuration& config) const override;
+  bool is_valid(const pucch_processor::format2_configuration& config) const override;
+  bool is_valid(const pucch_processor::format3_configuration& config) const override { return true; }
+  bool is_valid(const pucch_processor::format4_configuration& config) const override { return true; }
+
+private:
+  /// Maximum transmit and receive resource grid dimensions handled by the PUCCH processor.
+  channel_estimate::channel_estimate_dimensions ce_dims;
 };
 
 /// Implementation of the PUCCH processor interface.
@@ -79,7 +107,8 @@ public:
     detector(std::move(detector_)),
     demodulator(std::move(demodulator_)),
     decoder(std::move(decoder_)),
-    estimates(estimates_dimensions)
+    estimates(estimates_dimensions),
+    max_sizes(estimates_dimensions)
   {
     srsgnb_assert(channel_estimator_format_1, "Invalid channel estimator for PUCCH Format 1.");
     srsgnb_assert(channel_estimator_format_2, "Invalid channel estimator for PUCCH Format 2.");
@@ -89,11 +118,10 @@ public:
   }
 
 private:
-  /// Maximum supported UCI payload length in number of bits.
-  static constexpr unsigned PUCCH_FORMAT2_MAX_UCI_LEN = 11;
-
+  /// Validates PUCCH Format 1 configuration.
+  void assert_format1_config(const pucch_processor::format1_configuration& config);
   /// Validates PUCCH Format 2 configuration.
-  static void assert_format2_config(const pucch_processor::format2_configuration& config);
+  void assert_format2_config(const pucch_processor::format2_configuration& config);
 
   /// Channel estimator for PUCCH Format 1.
   std::unique_ptr<dmrs_pucch_processor> channel_estimator_format_1;
@@ -107,6 +135,8 @@ private:
   std::unique_ptr<uci_decoder> decoder;
   /// Temporal channel estimates.
   channel_estimate estimates;
+  /// Maximum RB, symbol and channel sizes handled by the processor.
+  channel_estimate::channel_estimate_dimensions max_sizes;
   /// Temporal LLR storage.
   std::array<log_likelihood_ratio, PUCCH_MAX_NOF_LLR> temp_llr;
 };
