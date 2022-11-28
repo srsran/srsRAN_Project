@@ -41,6 +41,10 @@ private:
   /// provided by the NGAP.
   bool select_security_algo();
 
+  /// \remark Generate AS keys based on selected algorithms
+  /// and provided K_gNB.
+  void generate_as_keys();
+
   /// \remark Send RRC Security Mode Command, see section 5.3.3 in TS 36.331
   void send_rrc_security_mode_command();
 

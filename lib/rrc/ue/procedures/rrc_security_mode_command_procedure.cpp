@@ -104,6 +104,27 @@ bool rrc_security_mode_command_procedure::select_security_algo()
   return !(not int_algo_found || not ciph_algo_found);
 }
 
+void rrc_security_mode_command_procedure::generate_as_keys()
+{
+  // TODO store these somewhere else
+  security::sec_as_key k_rrc_int;
+  security::sec_as_key k_rrc_enc;
+  security::sec_as_key k_up_int;
+  security::sec_as_key k_up_enc;
+
+  // Generate K_rrc_enc and K_rrc_int
+  security::generate_k_rrc(k_rrc_enc, k_rrc_int, sec_ctx.k, ciph_algo, int_algo);
+
+  // Generate K_up_enc and K_up_int
+  security::generate_k_up(k_up_enc, k_up_int, sec_ctx.k, ciph_algo, int_algo);
+
+  logger.info(sec_ctx.k.data(), 32, "K_gNB (k_gnb)");
+  logger.info(k_rrc_int.data(), 32, "RRC Integrity Key (k_rrc_int)");
+  logger.info(k_rrc_enc.data(), 32, "RRC Encryption Key (k_rrc_enc)");
+  logger.info(k_up_int.data(), 32, "UP Encryption Key (k_up_enc)");
+  logger.info(k_up_enc.data(), 32, "UP Integrity Key (k_up_int)");
+}
+
 void rrc_security_mode_command_procedure::send_rrc_security_mode_command()
 {
   dl_dcch_msg_s dl_dcch_msg;
