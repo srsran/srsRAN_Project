@@ -23,7 +23,7 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Main UE representation in RRC
-class rrc_ue_impl : public rrc_ue_interface
+class rrc_ue_impl final : public rrc_ue_interface
 {
 public:
   rrc_ue_impl(rrc_du_ue_manager&                     parent_,
@@ -68,18 +68,18 @@ private:
   void send_srb_pdu(srb_id_t srb_id, byte_buffer pdu);
 
   // rrc_ue_setup_proc_notifier
-  void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) final;
-  void on_ue_delete_request() final;
+  void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) override;
+  void on_ue_delete_request() override;
 
   // rrc_ue_security_mode_command_proc_notifier
-  void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_ccch_msg) final;
+  void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_ccch_msg) override;
 
   /// allocates PUCCH resources at the cell resource manager
   bool init_pucch();
 
   // initializes the security context and triggers the SMC procedure
   // TODO: this should be an interface for the NGAP
-  void handle_init_security_context(const rrc_init_security_context& sec_ctx) final;
+  void handle_init_security_context(const rrc_init_security_context& sec_ctx) override;
 
   // Helper to create PDU from RRC message
   template <class T>
