@@ -33,6 +33,11 @@ constexpr lcid_t MAX_LCID = LCID_MAX_DRB;
 
 enum class srb_id_t : uint16_t { srb0 = 0, srb1, srb2, srb3, nulltype };
 
+constexpr inline lcid_t uint_to_lcid(std::underlying_type_t<lcid_t> val)
+{
+  return static_cast<lcid_t>(val);
+}
+
 constexpr inline uint16_t srb_id_to_uint(srb_id_t id)
 {
   return static_cast<uint16_t>(id);

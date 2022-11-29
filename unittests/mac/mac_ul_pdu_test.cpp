@@ -9,6 +9,8 @@
  */
 
 #include "lib/mac/mac_ul/mac_ul_sch_pdu.h"
+#include "srsgnb/support/bit_encoding.h"
+#include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
@@ -447,6 +449,79 @@ TEST(mac_ul_pdu, decode_ul_ccch_and_padding)
   ASSERT_EQ(3, subpdus->sdu_length()) << "Wrong padding length (3 bytes)";
   ASSERT_EQ(4, subpdus->total_length()) << "Wrong subPDU length padding (1 B header + 3B padding)";
   fmt::print("PDU:\n  Hex={:X}\n  subPDUs: {}\n", fmt::join(msg.begin(), msg.end(), ""), pdu);
+}
+
+TEST(mac_ul_pdu, decode_short_sdu)
+{
+  // PDU = [ subPDU_1 ]
+  // MAC subPDU_1 with:
+  // - 16-bit R|F|LCID|L MAC subheader (2 octets), with F=0, 1<=LCID<=32, L<256.
+  // - MAC SDU (L octets).
+  //
+  // |   |   |   |   |   |   |   |   |
+  // | R | R |         LCID          |  Octet 1
+  // |              L                |  Octet 2
+  // |            PAYLOAD            |  Octet 3
+  //               ...
+  // |            PAYLOAD            |  Octet L + 2
+
+  size_t      L    = test_rgen::uniform_int<unsigned>(1, 255);
+  lcid_t      lcid = uint_to_lcid(test_rgen::uniform_int<uint8_t>(LCID_SRB1, LCID_MAX_DRB));
+  byte_buffer payload{test_rgen::random_vector<uint8_t>(L)};
+
+  byte_buffer msg;
+  bit_encoder enc(msg);
+  enc.pack(0, 1);    // R.
+  enc.pack(0, 1);    // F.
+  enc.pack(lcid, 6); // LCID.
+  enc.pack(L, 8);    // L.
+  msg.append(payload);
+
+  mac_ul_sch_pdu pdu;
+  ASSERT_TRUE(pdu.unpack(msg));
+  ASSERT_EQ(pdu.nof_subpdus(), 1);
+
+  ASSERT_EQ(pdu.subpdu(0).total_length(), msg.length());
+  ASSERT_EQ(pdu.subpdu(0).lcid(), lcid);
+  ASSERT_EQ(pdu.subpdu(0).sdu_length(), L);
+  ASSERT_EQ(pdu.subpdu(0).payload(), payload);
+}
+
+TEST(mac_ul_pdu, decode_long_sdu)
+{
+  // PDU = [ subPDU_1 ]
+  // MAC subPDU_1 with:
+  // - 16-bit R|F|LCID|L MAC subheader (3 octets), with F=1, 1<=LCID<=32, L>=256.
+  // - MAC SDU (L octets).
+  //
+  // |   |   |   |   |   |   |   |   |
+  // | R | F |         LCID          |  Octet 1
+  // |              L                |  Octet 2
+  // |              L                |  Octet 3
+  // |            PAYLOAD            |  Octet 4
+  //               ...
+  // |            PAYLOAD            |  Octet L + 3
+
+  size_t      L    = test_rgen::uniform_int<unsigned>(256, 1000);
+  lcid_t      lcid = uint_to_lcid(test_rgen::uniform_int<uint8_t>(LCID_SRB1, LCID_MAX_DRB));
+  byte_buffer payload{test_rgen::random_vector<uint8_t>(L)};
+
+  byte_buffer msg;
+  bit_encoder enc(msg);
+  enc.pack(0, 1);    // R.
+  enc.pack(1, 1);    // F.
+  enc.pack(lcid, 6); // LCID.
+  enc.pack(L, 16);   // L (2 octets).
+  msg.append(payload);
+
+  mac_ul_sch_pdu pdu;
+  ASSERT_TRUE(pdu.unpack(msg));
+  ASSERT_EQ(pdu.nof_subpdus(), 1);
+
+  ASSERT_EQ(pdu.subpdu(0).total_length(), msg.length());
+  ASSERT_EQ(pdu.subpdu(0).lcid(), lcid);
+  ASSERT_EQ(pdu.subpdu(0).sdu_length(), L);
+  ASSERT_EQ(pdu.subpdu(0).payload(), payload);
 }
 
 // Test the unpacking of an invalid MAC UL PDU.
