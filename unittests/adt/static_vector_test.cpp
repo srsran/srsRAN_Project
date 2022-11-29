@@ -12,6 +12,13 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
+// Disable GCC 5's -Wsuggest-override warnings in gtest.
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wall"
+#else // __clang__
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#endif // __clang__
+
 using namespace srsgnb;
 
 static_assert(std::is_same<static_vector<int, 5>::value_type, int>::value, "Invalid traits");
