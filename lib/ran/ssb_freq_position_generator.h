@@ -43,6 +43,8 @@ struct ssb_freq_location {
   ssb_offset_to_pointA offset_to_point_A;
   /// \f$k_{SSB}\f$, as per Section 7.4.3.1, TS 38.211.
   ssb_subcarrier_offset k_ssb;
+  /// SSB central frequency, or SS_ref (as per TS 38.104, Section 5.4.3.1.), expressed in Hz.
+  double ss_ref;
 };
 
 /// Class that implements utilities that compute the SSB position within the band.

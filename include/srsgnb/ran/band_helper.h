@@ -202,6 +202,8 @@ struct ssb_coreset0_freq_location {
   ssb_offset_to_pointA offset_to_point_A;
   /// \f$k_{SSB}\f$, as per Section 7.4.3.1, TS 38.211.
   ssb_subcarrier_offset k_ssb;
+  /// NR-ARFCN corresponding to SSB central frequency, or \f$SS_{ref}\f$, as per TS 38.104, Section 5.4.3.1.
+  unsigned ssb_arfcn;
   /// <em>controlResourceSetZero<\em>, as per Section 13, TS 38.213.
   unsigned coreset0_idx;
   /// <em>searchSpaceZero<\em>, as per Section 13, TS 38.213.

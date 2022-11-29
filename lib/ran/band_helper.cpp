@@ -97,7 +97,7 @@ struct nr_operating_band {
 };
 static const uint32_t                                                     nof_nr_operating_band_fr1 = 32;
 static constexpr std::array<nr_operating_band, nof_nr_operating_band_fr1> nr_operating_bands_fr1    = {{
-       // clang-format off
+    // clang-format off
     {nr_band::n1,  duplex_mode::FDD},
     {nr_band::n2,  duplex_mode::FDD},
     {nr_band::n3,  duplex_mode::FDD},
@@ -624,6 +624,7 @@ ssb_coreset0_freq_location srsgnb::band_helper::get_ssb_coreset0_freq_location(u
           results.coreset0_idx      = cset0_idx;
           results.searchspace0_idx  = ss0_idx;
           results.is_valid          = true;
+          results.ssb_arfcn         = freq_to_nr_arfcn(ssb.ss_ref);
           return results;
         }
       }

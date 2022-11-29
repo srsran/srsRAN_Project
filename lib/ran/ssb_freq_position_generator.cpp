@@ -166,6 +166,7 @@ ssb_freq_location ssb_freq_position_generator::get_next_ssb_location()
         ssb.offset_to_point_A = compute_offset_to_pointA(f_ssb_0_hz, point_A_hz, scs_common);
         ssb.k_ssb             = compute_k_ssb(f_ssb_0_hz, point_A_hz, ssb.offset_to_point_A);
         ssb.is_valid          = true;
+        ssb.ss_ref            = f_ssb_N_M_hz;
         N_raster++;
         return ssb;
       }
