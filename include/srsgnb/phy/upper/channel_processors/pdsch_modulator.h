@@ -83,8 +83,7 @@ public:
   /// \note The number of codewords shall be consistent with the number of layers.
   /// \note The codeword length shall be consistent with the resource mapping, considering the reserved resource
   /// elements.
-  virtual void
-  modulate(resource_grid_writer& grid, span<const span<const uint8_t>> codewords, const config_t& config) = 0;
+  virtual void modulate(resource_grid_writer& grid, span<const bit_buffer> codewords, const config_t& config) = 0;
 };
 
 } // namespace srsgnb

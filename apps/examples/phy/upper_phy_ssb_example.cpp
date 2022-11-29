@@ -20,6 +20,7 @@
 #include "srsgnb/phy/upper/signal_processors/pss_processor.h"
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 #include "srsgnb/phy/upper/signal_processors/sss_processor.h"
+#include "srsgnb/srsvec/bit.h"
 #include <condition_variable>
 #include <mutex>
 #include <random>
@@ -48,8 +49,8 @@ private:
 
   // Pseudo-random data and symbol buffers.
   static constexpr unsigned MAX_NRE_PER_SLOT = MAX_NSYMB_PER_SLOT * MAX_RB * NRE;
-  static_vector<uint8_t, MAX_NRE_PER_SLOT * MODULATION_MAX_BITS_PER_SYMBOL> data;
-  static_vector<cf_t, MAX_NRE_PER_SLOT>                                     data_symbols;
+  static_bit_buffer<MAX_NRE_PER_SLOT * MODULATION_MAX_BITS_PER_SYMBOL> data;
+  static_vector<cf_t, MAX_NRE_PER_SLOT>                                data_symbols;
 
 public:
   upper_phy_example_sw(srslog::basic_logger&               logger_,
@@ -142,14 +143,18 @@ public:
     if (rg.is_empty(0) && enable_random_data) {
       unsigned mod_order = get_bits_per_symbol(data_modulation);
 
-      data.resize(MAX_NSYMB_PER_SLOT * nof_subcs * mod_order);
+      unsigned nbits = MAX_NSYMB_PER_SLOT * nof_subcs * mod_order;
       data_symbols.resize(MAX_NSYMB_PER_SLOT * nof_subcs);
 
       // Generate the pseudo-random data bits.
-      std::generate(data.begin(), data.end(), [&rgen = rgen]() { return rgen() & 1; });
+      data.resize(nbits);
+      for (unsigned i_byte = 0, i_byte_end = nbits / 8; i_byte != i_byte_end; ++i_byte) {
+        data.insert(rgen() & mask_lsb_ones<unsigned>(8), i_byte * 8, 8);
+      }
+      data.insert(rgen() & mask_lsb_ones<unsigned>(nbits % 8), (nbits / 8) * 8, nbits % 8);
 
       // Modulate the data into symbols.
-      data_modulator->modulate(data, data_symbols, data_modulation);
+      data_modulator->modulate(data_symbols, data, data_modulation);
 
       span<cf_t> data_span(data_symbols);
       unsigned   offset = 0;

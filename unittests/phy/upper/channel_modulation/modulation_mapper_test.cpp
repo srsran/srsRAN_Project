@@ -11,13 +11,14 @@
 #include "modulation_mapper_test_data.h"
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsgnb/srsvec/aligned_vec.h"
+#include "srsgnb/srsvec/bit.h"
 #include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;
 
 static constexpr float assert_max_err = 1e-6;
 
-static void assert_symbols(const srsgnb::srsvec::aligned_vec<cf_t>& symbols, span<const cf_t>& expected_symbols)
+static void assert_symbols(span<const cf_t> symbols, span<const cf_t> expected_symbols)
 {
   TESTASSERT_EQ(symbols.size(), expected_symbols.size(), "Wrong number of modulated symbols.");
 
@@ -39,9 +40,12 @@ int main()
     // Load input data
     const std::vector<uint8_t> testvector_data = test_case.data.read();
 
+    dynamic_bit_buffer packed_data(testvector_data.size());
+    srsvec::bit_pack(packed_data, testvector_data);
+
     // Modulate
     srsgnb::srsvec::aligned_vec<cf_t> symbols(test_case.nsymbols);
-    modulator->modulate(testvector_data, symbols, test_case.scheme);
+    modulator->modulate(symbols, packed_data, test_case.scheme);
 
     // Load expected symbols and verify the result
     const std::vector<cf_t> testvector_symbols = test_case.symbols.read();

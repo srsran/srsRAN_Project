@@ -9,6 +9,7 @@
  */
 
 #include "pdcch_modulator_impl.h"
+#include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
 using namespace srsgnb;
@@ -22,13 +23,17 @@ void pdcch_modulator_impl::scramble(span<uint8_t> b_hat, span<const uint8_t> b, 
   scrambler->init(c_init);
 
   // Apply sequence as unpacked XOR.
-  scrambler->apply_xor_bit(b_hat, b);
+  scrambler->apply_xor(b_hat, b);
 }
 
 void pdcch_modulator_impl::modulate(span<cf_t> d_pdcch, span<const uint8_t> b_hat, float scaling)
 {
+  // Adapt the bits for the modulator.
+  static_bit_buffer<MAX_BITS> b_hat_packed(b_hat.size());
+  srsvec::bit_pack(b_hat_packed, b_hat);
+
   // Modulate as QPSK.
-  modulator->modulate(b_hat, d_pdcch, modulation_scheme::QPSK);
+  modulator->modulate(d_pdcch, b_hat_packed, modulation_scheme::QPSK);
 
   // Apply scaling to conform power.
   if (std::isnormal(scaling)) {

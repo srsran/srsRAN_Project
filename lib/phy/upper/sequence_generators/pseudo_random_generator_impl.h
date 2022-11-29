@@ -101,16 +101,18 @@ private:
   /// \brief Advances sequence \f$x_1(n)\f$ SEQUENCE_PAR_BITS steps simultaneously.
   /// \param[in] state Current 32-bit long state.
   /// \return New 32-bit long state.
-  static inline uint32_t step_par_x1(uint32_t state)
+  static inline uint32_t step_par_x1(uint32_t state, unsigned par = SEQUENCE_PAR_BITS)
   {
     // Perform XOR
     uint32_t f = state ^ (state >> 3U);
 
+    uint32_t mask = (1U << par) - 1U;
+
     // Prepare feedback
-    f = ((f & SEQUENCE_MASK) << (SEQUENCE_SEED_LEN - SEQUENCE_PAR_BITS));
+    f = ((f & mask) << (SEQUENCE_SEED_LEN - par));
 
     // Insert feedback
-    state = (state >> SEQUENCE_PAR_BITS) ^ f;
+    state = (state >> par) ^ f;
 
     return state;
   }
@@ -135,16 +137,18 @@ private:
   /// \brief Advances sequence \f$x_2(n)\f$ SEQUENCE_PAR_BITS steps simultaneously.
   /// \param[in] state Current 32-bit long state.
   /// \return New 32-bit long state.
-  static inline uint32_t step_par_x2(uint32_t state)
+  static inline uint32_t step_par_x2(uint32_t state, unsigned par = SEQUENCE_PAR_BITS)
   {
     // Perform XOR
     uint32_t f = state ^ (state >> 1U) ^ (state >> 2U) ^ (state >> 3U);
 
+    uint32_t mask = (1U << par) - 1U;
+
     // Prepare feedback
-    f = ((f & SEQUENCE_MASK) << (SEQUENCE_SEED_LEN - SEQUENCE_PAR_BITS));
+    f = ((f & mask) << (SEQUENCE_SEED_LEN - par));
 
     // Insert feedback
-    state = (state >> SEQUENCE_PAR_BITS) ^ f;
+    state = (state >> par) ^ f;
 
     return state;
   }
@@ -183,10 +187,10 @@ public:
   void advance(unsigned count) override;
 
   // See interface for the documentation.
-  void apply_xor_byte(span<uint8_t> out, span<const uint8_t> in) override;
+  void apply_xor(bit_buffer& out, const bit_buffer& in) override;
 
   // See interface for the documentation.
-  void apply_xor_bit(span<uint8_t> out, span<const uint8_t> in) override;
+  void apply_xor(span<uint8_t> out, span<const uint8_t> in) override;
 
   // See interface for the documentation.
   void apply_xor(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) override;

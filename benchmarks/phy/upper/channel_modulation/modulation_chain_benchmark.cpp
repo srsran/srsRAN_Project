@@ -9,6 +9,7 @@
  */
 
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "srsgnb/srsvec/bit.h"
 #include "srsgnb/support/benchmark_utils.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <getopt.h>
@@ -86,9 +87,12 @@ int main(int argc, char** argv)
       std::vector<cf_t>                 symbols(nof_symbols);
       std::vector<log_likelihood_ratio> soft_bits(nof_bits);
 
+      dynamic_bit_buffer packed_data(nof_bits);
+      srsvec::bit_pack(packed_data, data);
+
       // Measure performance of the modulation mapper.
       perf_meas_modulator.new_measure(
-          std::to_string(nof_symbols), nof_bits, [&]() { modulator->modulate(data, symbols, modulation); });
+          std::to_string(nof_symbols), nof_bits, [&]() { modulator->modulate(symbols, packed_data, modulation); });
 
       // Measure performance of the demodulation mapper.
       perf_meas_demodulator.new_measure(std::to_string(nof_symbols), nof_bits, [&]() {

@@ -103,7 +103,7 @@ void pusch_demodulator_impl::descramble(span<srsgnb::log_likelihood_ratio>      
         // Extracts the mask of the next element.
         std::array<uint8_t, 1> temp_in  = {};
         std::array<uint8_t, 1> temp_out = {};
-        descrambler->apply_xor_bit(temp_out, temp_in);
+        descrambler->apply_xor(temp_out, temp_in);
         bool toggle = (temp_in.front() != temp_out.front());
 
         // Discards scrambling chip.

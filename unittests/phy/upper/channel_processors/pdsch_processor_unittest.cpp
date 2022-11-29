@@ -173,7 +173,11 @@ int main()
           TESTASSERT(entry.config.ports == pdu.ports);
           TESTASSERT(entry.grid_ptr == &rg_dummy);
           for (unsigned codeword = 0; codeword != nof_codewords; ++codeword) {
-            TESTASSERT(encoder_spy->get_entries()[codeword].codeword == entry.codewords[codeword]);
+            span<const uint8_t> codeword_encoder   = encoder_spy->get_entries()[codeword].codeword;
+            const bit_buffer    codeword_modulator = entry.codewords[codeword];
+            for (unsigned i_bit = 0, i_bit_end = codeword_encoder.size(); i_bit != i_bit_end; ++i_bit) {
+              TESTASSERT(codeword_encoder[i_bit] == codeword_modulator.extract(i_bit, 1));
+            }
           }
         }
 

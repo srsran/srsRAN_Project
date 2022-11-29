@@ -10,21 +10,19 @@ class pdsch_modulator_spy : public pdsch_modulator
 {
 private:
   struct entry_t {
-    config_t                          config;
-    std::vector<std::vector<uint8_t>> codewords;
-    resource_grid_writer*             grid_ptr;
+    config_t                config;
+    std::vector<bit_buffer> codewords;
+    resource_grid_writer*   grid_ptr;
   };
   std::vector<entry_t> entries;
 
 public:
-  void modulate(resource_grid_writer& grid, span<const span<const uint8_t>> codewords, const config_t& config) override
+  void modulate(resource_grid_writer& grid, span<const bit_buffer> codewords, const config_t& config) override
   {
     entry_t e = {};
     e.config  = config;
-    e.codewords.resize(codewords.size());
     for (unsigned cw = 0; cw != codewords.size(); ++cw) {
-      e.codewords[cw].resize(codewords[cw].size());
-      srsvec::copy(e.codewords[cw], codewords[cw]);
+      e.codewords.emplace_back(codewords[cw]);
     }
     e.grid_ptr = &grid;
     entries.emplace_back(e);

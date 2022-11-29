@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/adt/bit_buffer.h"
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/ran/modulation_scheme.h"
@@ -31,7 +32,7 @@ public:
   /// \param[in]  scheme  The modulation scheme determining the mapping.
   /// \remark The length of \c input should be equal to the length of \c symbols times the modulation order (that is,
   /// the number of bits per modulated symbol).
-  virtual void modulate(span<const uint8_t> input, span<cf_t> symbols, modulation_scheme scheme) = 0;
+  virtual void modulate(span<cf_t> symbols, const bit_buffer& input, modulation_scheme scheme) = 0;
 };
 
 } // namespace srsgnb

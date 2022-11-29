@@ -10,6 +10,7 @@
 
 #include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsgnb/srsvec/aligned_vec.h"
+#include "srsgnb/srsvec/bit.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <random>
 
@@ -84,46 +85,44 @@ static void generate_gold(unsigned c_init, unsigned length, unsigned offset)
   pack_vector(c_unpacked.data(), c_packed.data(), length);
 }
 
-void test_apply_xor_byte(std::shared_ptr<pseudo_random_generator_factory> factory,
-                         unsigned                                         c_init,
-                         unsigned                                         N,
-                         unsigned                                         offset)
+void test_apply_xor_packed(std::shared_ptr<pseudo_random_generator_factory> factory,
+                           unsigned                                         c_init,
+                           unsigned                                         N,
+                           unsigned                                         offset)
 {
-  std::uniform_int_distribution<unsigned char> dist(0, UINT8_MAX);
+  // Create data buffer.
+  dynamic_bit_buffer data(N);
 
-  // Create data buffer
-  std::vector<uint8_t> data(N / 8);
-
-  // Fill buffer with random data
-  for (unsigned char& v : data) {
-    v = dist(rgen);
+  // Fill buffer with random data.
+  for (unsigned i_byte = 0, i_byte_end = N / 8; i_byte != i_byte_end; ++i_byte) {
+    data.insert(rgen() & mask_lsb_ones<unsigned>(8), i_byte * 8, 8);
   }
 
-  // Create sequence generator
+  // Create sequence generator.
   std::unique_ptr<pseudo_random_generator> generator = factory->create();
   TESTASSERT(generator);
 
   // Initialize sequence generator.
   generator->init(c_init);
 
-  // Advance
+  // Advance.
   generator->advance(offset);
 
   // Apply sequence
-  std::vector<uint8_t> data_xor(N / 8);
-  generator->apply_xor_byte(data_xor, data);
+  dynamic_bit_buffer data_xor(N);
+  generator->apply_xor(data_xor, data);
 
-  // Assert
+  // Assert.
   for (unsigned i = 0; i != N / 8; ++i) {
-    uint8_t gold = c_packed[i] ^ data[i];
-    TESTASSERT_EQ(gold, data_xor[i]);
+    uint8_t gold = c_packed[i] ^ data.extract(8 * i, 8);
+    TESTASSERT_EQ(gold, data_xor.extract(8 * i, 8));
   }
 }
 
-void test_apply_xor_bit(std::shared_ptr<pseudo_random_generator_factory> factory,
-                        unsigned                                         c_init,
-                        unsigned                                         N,
-                        unsigned                                         offset)
+void test_apply_xor_unpacked(std::shared_ptr<pseudo_random_generator_factory> factory,
+                             unsigned                                         c_init,
+                             unsigned                                         N,
+                             unsigned                                         offset)
 {
   std::uniform_int_distribution<unsigned char> dist(0, 1);
 
@@ -147,7 +146,7 @@ void test_apply_xor_bit(std::shared_ptr<pseudo_random_generator_factory> factory
 
   // Apply sequence
   srsvec::aligned_vec<uint8_t> data_xor(N);
-  generator->apply_xor_bit(data_xor, data);
+  generator->apply_xor(data_xor, data);
 
   // Assert
   for (unsigned i = 0; i != N; ++i) {
@@ -239,10 +238,10 @@ int main()
       generate_gold(c_init, N, offset);
 
       // Test sequence XOR with byte buffer
-      test_apply_xor_byte(prg_factory, c_init, N, offset);
+      test_apply_xor_packed(prg_factory, c_init, N, offset);
 
       // Test sequence XOR with bit buffer
-      test_apply_xor_bit(prg_factory, c_init, N, offset);
+      test_apply_xor_unpacked(prg_factory, c_init, N, offset);
 
       // Test sequence XOR with 8-bit signed buffer
       test_apply_xor_i8(prg_factory, c_init, N, offset);

@@ -89,7 +89,7 @@ void pbch_encoder_impl::scramble(span<uint8_t>                           a_prime
 
   // Generate actual sequence
   std::array<uint8_t, PAYLOAD_SIZE> c = {};
-  scrambler->apply_xor_bit(c, c);
+  scrambler->apply_xor(c, c);
 
   while (i < PAYLOAD_SIZE) {
     uint8_t s_i = c[j];

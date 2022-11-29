@@ -20,7 +20,7 @@ class modulation_mapper_impl : public modulation_mapper
 {
 public:
   // See interface for the documentation.
-  void modulate(span<const uint8_t> input, span<cf_t> symbols, modulation_scheme scheme) override;
+  void modulate(span<cf_t> symbols, const bit_buffer& input, modulation_scheme scheme) override;
 };
 
 } // namespace srsgnb

@@ -83,7 +83,7 @@ public:
     span<uint8_t> cs_span(cs.data(), sequence_length);
 
     prg->init(cinit);
-    prg->apply_xor_bit(cs_span, cs_span);
+    prg->apply_xor(cs_span, cs_span);
 
     // Slot number
     unsigned n_slot = slot.slot_index();

@@ -10,6 +10,7 @@
 
 #include "pbch_modulator_impl.h"
 #include "srsgnb/phy/constants.h"
+#include "srsgnb/srsvec/bit.h"
 
 using namespace srsgnb;
 
@@ -22,12 +23,17 @@ void pbch_modulator_impl::scramble(span<const uint8_t> b, span<uint8_t> b_hat, c
   scrambler->advance((config.ssb_idx & 0x7) * M_bit);
 
   // Apply XOR
-  scrambler->apply_xor_bit(b_hat, b);
+  scrambler->apply_xor(b_hat, b);
 }
 
 void pbch_modulator_impl::modulate(span<const uint8_t> b_hat, span<cf_t> d_pbch)
 {
-  modulator->modulate(b_hat, d_pbch, modulation_scheme::QPSK);
+  // Adapt the bits for the modulator.
+  static_bit_buffer<M_bit> b_hat_packed(b_hat.size());
+  srsvec::bit_pack(b_hat_packed, b_hat);
+
+  // Modulate as QPSK.
+  modulator->modulate(d_pbch, b_hat_packed, modulation_scheme::QPSK);
 }
 
 void pbch_modulator_impl::map(span<const cf_t> d_pbch, resource_grid_writer& grid, const config_t& config)

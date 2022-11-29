@@ -9,6 +9,7 @@
  */
 
 #include "pdsch_processor_impl.h"
+#include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/copy.h"
 
 using namespace srsgnb;
@@ -37,11 +38,11 @@ unsigned int pdsch_processor_impl::compute_nof_data_re(const pdu_t& pdu)
   return nof_grid_re - nof_reserved_re;
 }
 
-span<const uint8_t> pdsch_processor_impl::encode(span<const uint8_t> data,
-                                                 unsigned            codeword_id,
-                                                 unsigned            nof_layers,
-                                                 unsigned            Nre,
-                                                 const pdu_t&        pdu)
+const bit_buffer& pdsch_processor_impl::encode(span<const uint8_t> data,
+                                               unsigned            codeword_id,
+                                               unsigned            nof_layers,
+                                               unsigned            Nre,
+                                               const pdu_t&        pdu)
 {
   // Select codeword specific parameters.
   unsigned          rv           = pdu.codewords[codeword_id].rv;
@@ -63,13 +64,15 @@ span<const uint8_t> pdsch_processor_impl::encode(span<const uint8_t> data,
   // Encode codeword.
   encoder->encode(codeword, data, encoder_config);
 
+  // Pack encoded bits.
+  temp_packed_codewords[codeword_id].resize(codeword.size());
+  srsvec::bit_pack(temp_packed_codewords[codeword_id], codeword);
+
   // Return the view of the codeword.
-  return codeword;
+  return temp_packed_codewords[codeword_id];
 }
 
-void pdsch_processor_impl::modulate(resource_grid_writer&           grid,
-                                    span<const span<const uint8_t>> codewords,
-                                    const pdu_t&                    pdu)
+void pdsch_processor_impl::modulate(resource_grid_writer& grid, span<const bit_buffer> codewords, const pdu_t& pdu)
 {
   unsigned nof_codewords = codewords.size();
 
@@ -157,12 +160,13 @@ void pdsch_processor_impl::process(resource_grid_writer&                        
   unsigned Nre = compute_nof_data_re(pdu);
 
   // Prepare encoded codewords.
-  static_vector<span<const uint8_t>, pdsch_modulator::MAX_NOF_CODEWORDS> codewords;
+  static_vector<bit_buffer, pdsch_modulator::MAX_NOF_CODEWORDS> codewords;
 
   // Encode each codeword.
   for (unsigned codeword_id = 0; codeword_id != nof_codewords; ++codeword_id) {
-    unsigned            nof_layers_cw = (codeword_id == 0) ? nof_layers_cw0 : nof_layers_cw1;
-    span<const uint8_t> codeword      = encode(data[codeword_id], codeword_id, nof_layers_cw, Nre, pdu);
+    unsigned          nof_layers_cw = (codeword_id == 0) ? nof_layers_cw0 : nof_layers_cw1;
+    const bit_buffer& codeword      = encode(data[codeword_id], codeword_id, nof_layers_cw, Nre, pdu);
+
     codewords.emplace_back(codeword);
   }
 

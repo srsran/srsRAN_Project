@@ -156,87 +156,71 @@ void pseudo_random_generator_impl::generate(span<float> out, float value)
     x2 = step_x2(x2);
   }
 }
-void pseudo_random_generator_impl::apply_xor_byte(span<uint8_t> out, span<const uint8_t> in)
+
+void pseudo_random_generator_impl::apply_xor(bit_buffer& out, const bit_buffer& in)
 {
   assert(in.size() == out.size());
 
-  unsigned i      = 0;
-  unsigned length = in.size() * 8;
+  static constexpr unsigned BITS_PER_BYTE = 8;
+  static constexpr unsigned NOF_PAR_BYTES = 3;
+  static constexpr unsigned NOF_PAR_BITS  = BITS_PER_BYTE * NOF_PAR_BYTES;
 
-#if SEQUENCE_PAR_BITS % 8 != 0
-  uint64_t buffer = 0;
-  uint32_t count  = 0;
+  unsigned i_bit = 0;
 
-  for (; i < length / 8; ++i) {
-    // Generate sequence bits
-    while (count < 8) {
-      uint32_t c = (uint32_t)(x1 ^ x2);
-      buffer     = buffer | ((SEQUENCE_MASK & c) << count);
+  // Processes batches of 24 bits in parallel.
+  for (unsigned i_bit_end = (in.size() / NOF_PAR_BITS) * NOF_PAR_BITS; i_bit != i_bit_end; i_bit += NOF_PAR_BITS) {
+    uint32_t c = x1 ^ x2;
 
-      // Step sequences
-      x1 = step_par_x1(x1);
-      x2 = step_par_x2(x2);
+    // Processes each byte of the batch.
+    for (unsigned bit_offset = 0; bit_offset != NOF_PAR_BITS; bit_offset += BITS_PER_BYTE) {
+      // Extract input byte.
+      uint8_t input_byte = in.extract(i_bit + bit_offset, BITS_PER_BYTE);
 
-      // Increase count
-      count += SEQUENCE_PAR_BITS;
+      // Calculate the output byte.
+      uint8_t output_byte = input_byte ^ reverse_byte(static_cast<uint8_t>(c & mask_lsb_ones<uint32_t>(BITS_PER_BYTE)));
+
+      // Insert the output byte.
+      out.insert(output_byte, i_bit + bit_offset, BITS_PER_BYTE);
+      c = c >> BITS_PER_BYTE;
     }
 
-    // Apply XOR
-    out[i] = in[i] ^ reverse_lut[buffer & 255UL];
-    buffer = buffer >> 8UL;
-    count -= 8;
+    // Step sequences.
+    x1 = step_par_x1(x1, NOF_PAR_BITS);
+    x2 = step_par_x2(x2, NOF_PAR_BITS);
   }
 
-  // Process spare bits
-  uint32_t rem8 = length % 8;
-  if (rem8 != 0) {
-    // Generate sequence bits
-    while (count < rem8) {
-      uint32_t c = (uint32_t)(x1 ^ x2);
-      buffer     = buffer | ((SEQUENCE_MASK & c) << count);
+  // Process spare bits in a batch of the remainder bits.
+  unsigned remainder_offset = (in.size() / SEQUENCE_PAR_BITS) * SEQUENCE_PAR_BITS;
+  unsigned remainder        = in.size() - remainder_offset;
+  uint32_t c                = x1 ^ x2;
+  while (remainder != 0) {
+    // Process per byte basis, ceiling at the remainder.
+    unsigned word_size = std::min(remainder, BITS_PER_BYTE);
 
-      // Step sequences
-      x1 = step_par_x1(x1);
-      x2 = step_par_x2(x2);
+    uint8_t input_word = in.extract(i_bit, word_size);
 
-      // Increase count
-      count += SEQUENCE_PAR_BITS;
-    }
+    // Calculate the output byte.
+    uint8_t output_word = input_word ^ reverse_byte(static_cast<uint8_t>(c & mask_lsb_ones<uint32_t>(BITS_PER_BYTE)));
 
-    out[i] = in[i] ^ reverse_lut[buffer & ((1U << rem8) - 1U) & 255U];
-  }
-#else  // SEQUENCE_PAR_BITS % 8 == 0
-  while (i < (length / 8 - (SEQUENCE_PAR_BITS - 1) / 8)) {
-    uint32_t c = (uint32_t)(x1 ^ x2);
+    // Insert the output byte.
+    out.insert(output_word, i_bit, word_size);
 
-    for (uint32_t j = 0, max_j = SEQUENCE_PAR_BITS / 8; j != max_j; ++j) {
-      out[i] = in[i] ^ reverse_byte(c & 255U);
-      c      = c >> 8U;
-      ++i;
-    }
+    // Advance sequence.
+    c = c >> word_size;
 
-    // Step sequences
-    x1 = step_par_x1(x1);
-    x2 = step_par_x2(x2);
+    // Advance bit index.
+    i_bit += word_size;
+
+    // Decrement remainder.
+    remainder -= word_size;
   }
 
-  // Process spare bytes
-  uint32_t c = (uint32_t)(x1 ^ x2);
-  while (i < length / 8) {
-    out[i] = in[i] ^ reverse_byte(c & 255U);
-    c      = c >> 8U;
-    ++i;
-  }
-
-  // Process spare bits
-  uint32_t rem8 = length % 8;
-  if (rem8 != 0) {
-    out[i] = in[i] ^ reverse_byte(c & ((1U << rem8) - 1U) & 255U);
-  }
-#endif // SEQUENCE_PAR_BITS % 8 == 0
+  // Step sequences.
+  x1 = step_par_x1(x1, remainder);
+  x2 = step_par_x2(x2, remainder);
 }
 
-void pseudo_random_generator_impl::apply_xor_bit(span<uint8_t> out, span<const uint8_t> in)
+void pseudo_random_generator_impl::apply_xor(span<uint8_t> out, span<const uint8_t> in)
 {
   assert(in.size() == out.size());
 
@@ -294,6 +278,7 @@ void pseudo_random_generator_impl::apply_xor_bit(span<uint8_t> out, span<const u
     x2 = step_x2(x2);
   }
 }
+
 void pseudo_random_generator_impl::apply_xor(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in)
 {
   assert(in.size() == out.size());

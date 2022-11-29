@@ -13,10 +13,6 @@
 #include "srsgnb/srsvec/dot_prod.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
-#ifdef HAVE_SSE
-#include <immintrin.h>
-#endif // HAVE_SSE
-
 using namespace srsgnb;
 
 // Generic optimized modulator for any modulation order QM > 2 and QM % 2 == 0.
@@ -54,52 +50,15 @@ struct modulator_table_s {
   }
 
   // Modulates the input bits.
-  constexpr void modulate(span<const uint8_t>& input, span<cf_t> symbols) const
+  constexpr void modulate(span<cf_t> symbols, const bit_buffer& input) const
   {
-#ifdef HAVE_SSE
-    if (symbols.size() > divide_ceil(8, QM)) {
-      unsigned nof_symbols_sse = symbols.size() - divide_ceil(8, QM);
-      for (cf_t& symbol : symbols.first(nof_symbols_sse)) {
-        // Get 8 bytes in an MMX register.
-        __m64 mask = *(reinterpret_cast<const __m64*>(input.data()));
+    for (unsigned i_symbol = 0, i_symbol_end = symbols.size(); i_symbol != i_symbol_end; ++i_symbol) {
+      // Calculate modulation table index.
+      unsigned index = input.extract(QM * i_symbol, QM);
 
-        // Set all ones if greater than 0.
-        mask = _mm_cmpgt_pi8(mask, _mm_setzero_si64());
-
-        // Pack all bytes MSB into a single byte. Use auto to avoid automatic casting to any integer type.
-        int index = _mm_movemask_pi8(mask);
-
-        // Reverse bits.
-        index = reverse_byte(index);
-
-        // Mask the bits of interest.
-        index = index >> (8 - QM);
-
-        // Advance input pointer.
-        input = input.last(input.size() - QM);
-
-        // Assign symbol from table.
-        symbol = table[index];
-      }
-      symbols = symbols.last(symbols.size() - nof_symbols_sse);
+      // Get the symbol from the table.
+      symbols[i_symbol] = table[index];
     }
-#endif // HAVE_SSE
-
-    for (cf_t& symbol : symbols) {
-      // Packs the next QM bits.
-      unsigned index = 0;
-      for (unsigned i = 0; i != QM; ++i) {
-        index |= (unsigned)input[i] << (QM - i - 1U);
-      }
-
-      // Advance input pointer.
-      input = input.last(input.size() - QM);
-
-      // Assign symbol from table.
-      symbol = table[index];
-    }
-
-    srsgnb_assert(input.empty(), "Expected full consumption of the input data.");
   }
 };
 
@@ -109,9 +68,12 @@ struct modulator_table_bpsk {
   const std::array<cf_t, 2> table = {{{M_SQRT1_2, M_SQRT1_2}, {-M_SQRT1_2, -M_SQRT1_2}}};
 
   // Modulates the input bits.
-  void modulate(span<const uint8_t>& input, span<cf_t> symbols) const
+  void modulate(span<cf_t> symbols, const bit_buffer& input) const
   {
-    std::transform(input.begin(), input.end(), symbols.begin(), [this](uint8_t bit) { return table[bit]; });
+    for (unsigned i_bit = 0, i_bit_end = input.size(); i_bit != i_bit_end; ++i_bit) {
+      unsigned index = input.extract<unsigned>(i_bit, 1);
+      symbols[i_bit] = table[index];
+    }
   }
 };
 
@@ -122,11 +84,12 @@ struct modulator_table_pi_2_bpsk {
   const std::array<cf_t, 2> table_odd  = {{{-M_SQRT1_2, M_SQRT1_2}, {M_SQRT1_2, -M_SQRT1_2}}};
 
   // Modulates the input bits.
-  void modulate(span<const uint8_t>& input, span<cf_t> symbols) const
+  void modulate(span<cf_t> symbols, const bit_buffer& input) const
   {
-    std::transform(input.begin(), input.end(), symbols.begin(), [this, n = 0](uint8_t bit) mutable {
-      return (n++ & 1U) ? table_odd[bit] : table_even[bit];
-    });
+    for (unsigned i_bit = 0, i_bit_end = input.size(); i_bit != i_bit_end; ++i_bit) {
+      uint8_t index  = input.extract(i_bit, 1);
+      symbols[i_bit] = (i_bit & 1U) ? table_odd[index] : table_even[index];
+    }
   }
 };
 
@@ -138,9 +101,7 @@ static const modulator_table_s<4>      qam16_modulator;
 static const modulator_table_s<6>      qam64_modulator;
 static const modulator_table_s<8>      qam256_modulator;
 
-void modulation_mapper_impl::modulate(srsgnb::span<const uint8_t> input,
-                                      srsgnb::span<srsgnb::cf_t>  symbols,
-                                      srsgnb::modulation_scheme   scheme)
+void modulation_mapper_impl::modulate(span<cf_t> symbols, const bit_buffer& input, modulation_scheme scheme)
 {
   srsgnb_assert(input.size() == get_bits_per_symbol(scheme) * symbols.size(),
                 "The number of bits {} is not consistent with the number of symbols {} for modulation scheme {}.",
@@ -150,22 +111,22 @@ void modulation_mapper_impl::modulate(srsgnb::span<const uint8_t> input,
 
   switch (scheme) {
     case modulation_scheme::PI_2_BPSK:
-      pi_2_bpsk_modulator.modulate(input, symbols);
+      pi_2_bpsk_modulator.modulate(symbols, input);
       break;
     case modulation_scheme::BPSK:
-      bpsk_modulator.modulate(input, symbols);
+      bpsk_modulator.modulate(symbols, input);
       break;
     case modulation_scheme::QPSK:
-      qpsk_modulator.modulate(input, symbols);
+      qpsk_modulator.modulate(symbols, input);
       break;
     case modulation_scheme::QAM16:
-      qam16_modulator.modulate(input, symbols);
+      qam16_modulator.modulate(symbols, input);
       break;
     case modulation_scheme::QAM64:
-      qam64_modulator.modulate(input, symbols);
+      qam64_modulator.modulate(symbols, input);
       break;
     case modulation_scheme::QAM256:
-      qam256_modulator.modulate(input, symbols);
+      qam256_modulator.modulate(symbols, input);
       break;
     default:
       srsgnb_assertion_failure("Invalid modulation scheme.");

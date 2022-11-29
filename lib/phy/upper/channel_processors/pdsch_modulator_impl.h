@@ -25,11 +25,11 @@ private:
 
   /// \brief Scrambles a codeword. Implements TS 38.211 section 7.3.1.1 Scrambling.
   ///
-  /// \param[out] b_hat Output bits after scrambling.
   /// \param[in] b Inputs bits to scramble.
   /// \param[in] q Codeword index {0,1}.
   /// \param[in] config Provides the scrambler configuration.
-  void scramble(span<uint8_t> b_hat, span<const uint8_t> b, unsigned q, const config_t& config);
+  /// \return Output bits after scrambling.
+  const bit_buffer& scramble(const bit_buffer& b, unsigned q, const config_t& config);
 
   /// \brief Modulates a codeword. Implements TS 38.211 section 7.3.1.2 Modulation.
   ///
@@ -37,7 +37,7 @@ private:
   /// \param[in] b_hat Inputs bits to perform the modulation mapping.
   /// \param[in] modulation Indicates the modulation scheme (QPSK, 16QAM, ...).
   /// \param[in] scaling Indicates the signal scaling if the value is valid (not 0, NAN nor INF).
-  void modulate(span<cf_t> d_pdsch, span<const uint8_t> b_hat, modulation_scheme modulation, float scaling);
+  void modulate(span<cf_t> d_pdsch, const bit_buffer& b_hat, modulation_scheme modulation, float scaling);
 
   /// \brief Maps codewords into layers. Implements TS 38.211 section 7.3.1.3 Layer mapping.
   ///
@@ -70,7 +70,7 @@ private:
   map_to_prb_other(resource_grid_writer& grid, static_vector<span<cf_t>, MAX_PORTS> x_pdsch, const config_t& config);
 
   /// Temporary modulated data.
-  std::array<uint8_t, MAX_CODEWORD_SIZE>                                     temp_b_hat;
+  static_bit_buffer<MAX_CODEWORD_SIZE>                                       temp_b_hat;
   std::array<std::array<cf_t, MAX_CODEWORD_SIZE>, MAX_NOF_CODEWORDS>         temp_d;
   std::array<std::array<cf_t, MAX_RB * NRE * MAX_NSYMB_PER_SLOT>, MAX_PORTS> temp_x;
 
@@ -85,7 +85,7 @@ public:
   }
 
   // See interface for the documentation.
-  void modulate(resource_grid_writer& grid, span<const span<const uint8_t>> codewords, const config_t& config) override;
+  void modulate(resource_grid_writer& grid, srsgnb::span<const bit_buffer> codewords, const config_t& config) override;
 };
 
 } // namespace srsgnb

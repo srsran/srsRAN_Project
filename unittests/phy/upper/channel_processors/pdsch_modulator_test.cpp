@@ -12,6 +12,7 @@
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
+#include "srsgnb/srsvec/bit.h"
 
 using namespace srsgnb;
 
@@ -44,9 +45,13 @@ int main()
     // Read codeword.
     std::vector<uint8_t> data = test_case.data.read();
 
+    // Pack data.
+    dynamic_bit_buffer packed_data(data.size());
+    srsvec::bit_pack(packed_data, data);
+
     // Prepare codewords.
-    static_vector<span<const uint8_t>, pdsch_modulator::MAX_NOF_CODEWORDS> codewords(1);
-    codewords[0] = data;
+    static_vector<bit_buffer, pdsch_modulator::MAX_NOF_CODEWORDS> codewords;
+    codewords.emplace_back(packed_data);
 
     // Modulate.
     pdsch->modulate(grid, codewords, test_case.config);

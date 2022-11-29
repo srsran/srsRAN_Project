@@ -20,10 +20,11 @@ namespace srsgnb {
 class pdsch_processor_impl : public pdsch_processor
 {
 private:
-  std::unique_ptr<pdsch_encoder>                                               encoder;
-  std::unique_ptr<pdsch_modulator>                                             modulator;
-  std::unique_ptr<dmrs_pdsch_processor>                                        dmrs;
-  std::array<std::array<uint8_t, MAX_CODEWORD_SIZE>, MAX_NOF_TRANSPORT_BLOCKS> temp_codewords;
+  std::unique_ptr<pdsch_encoder>                                                              encoder;
+  std::unique_ptr<pdsch_modulator>                                                            modulator;
+  std::unique_ptr<dmrs_pdsch_processor>                                                       dmrs;
+  std::array<std::array<uint8_t, MAX_CODEWORD_SIZE>, MAX_NOF_TRANSPORT_BLOCKS>                temp_codewords;
+  std::array<static_bit_buffer<pdsch_modulator::MAX_CODEWORD_SIZE>, MAX_NOF_TRANSPORT_BLOCKS> temp_packed_codewords;
 
   /// \brief Computes the number of RE used for mapping PDSCH data.
   ///
@@ -41,14 +42,14 @@ private:
   /// \param[in] Nre         Indicates the number of resource elements used for PDSCH mapping.
   /// \param[in] pdu         Provides the PDSCH processor PDU.
   /// \return A view of the encoded codeword.
-  span<const uint8_t>
+  const bit_buffer&
   encode(span<const uint8_t> data, unsigned codeword_id, unsigned nof_layers, unsigned Nre, const pdu_t& pdu);
 
   /// \brief Modulates a PDSCH transmission as per TS 38.211 section 7.3.1.
   /// \param[out] grid          Provides the destination resource grid.
   /// \param[in] temp_codewords Provides the encoded codewords.
   /// \param[in] pdu            Provides the PDSCH processor PDU.
-  void modulate(resource_grid_writer& grid, span<const span<const uint8_t>> temp_codewords, const pdu_t& pdu);
+  void modulate(resource_grid_writer& grid, span<const bit_buffer> temp_codewords, const pdu_t& pdu);
 
   /// \brief Generates and maps DMRS for the PDSCH transmission as per TS 38.211 section 7.4.1.1.
   /// \param[out] grid   Provides the destination resource grid.

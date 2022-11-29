@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/adt/bit_buffer.h"
 #include "srsgnb/adt/span.h"
 #include <cstdint>
 
@@ -47,6 +48,12 @@ unsigned bit_pack(span<const uint8_t>& bits, unsigned nof_bits);
 /// \param[in] unpacked View of unpacked bits.
 /// \remark The number of unpacked elements must be equal to eight times the number packed elements.
 void bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked);
+
+/// \brief Packs a number of bits into a bit buffer.
+/// \param[out] packed   Destination bit buffer.
+/// \param[in]  unpacked View of unpacked bits.
+/// \remark The number of unpacked elements must be equal to the maximum number of bits supported by the bit buffer.
+void bit_pack(bit_buffer& packed, span<const uint8_t> unpacked);
 
 } // namespace srsvec
 } // namespace srsgnb

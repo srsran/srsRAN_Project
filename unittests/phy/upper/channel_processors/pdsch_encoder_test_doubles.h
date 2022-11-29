@@ -16,6 +16,7 @@ private:
     std::vector<uint8_t> codeword;
   };
   std::vector<entry_t> entries;
+  std::mt19937         rgen;
 
 public:
   void encode(span<uint8_t> codeword, span<const uint8_t> transport_block, const segmenter_config& cfg) override
@@ -30,7 +31,7 @@ public:
 
     // Generate encoded message.
     for (unsigned i = 0, len = codeword.size(); i != len; ++i) {
-      codeword[i]       = static_cast<uint8_t>(i & 0xff);
+      codeword[i]       = static_cast<uint8_t>(rgen() & 0x1);
       entry.codeword[i] = codeword[i];
     }
 

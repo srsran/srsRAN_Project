@@ -9,13 +9,16 @@
  */
 
 #include "pdsch_modulator_impl.h"
+#include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/sc_prod.h"
 #include "srsgnb/support/math_utils.h"
 
 using namespace srsgnb;
 
-void pdsch_modulator_impl::scramble(span<uint8_t> b_hat, span<const uint8_t> b, unsigned q, const config_t& config)
+const bit_buffer& pdsch_modulator_impl::scramble(const bit_buffer& b, unsigned q, const config_t& config)
 {
+  temp_b_hat.resize(b.size());
+
   // Calculate initial scrambling state.
   unsigned c_init = (static_cast<unsigned>(config.rnti) << 15U) + (q << 14U) + config.n_id;
 
@@ -23,16 +26,18 @@ void pdsch_modulator_impl::scramble(span<uint8_t> b_hat, span<const uint8_t> b, 
   scrambler->init(c_init);
 
   // Apply scrambling sequence.
-  scrambler->apply_xor_bit(b_hat, b);
+  scrambler->apply_xor(temp_b_hat, b);
+
+  return temp_b_hat;
 }
 
-void pdsch_modulator_impl::modulate(span<cf_t>          d_pdsch,
-                                    span<const uint8_t> b_hat,
-                                    modulation_scheme   modulation,
-                                    float               scaling)
+void pdsch_modulator_impl::modulate(span<cf_t>        d_pdsch,
+                                    const bit_buffer& b_hat,
+                                    modulation_scheme modulation,
+                                    float             scaling)
 {
-  // Modulate.
-  modulator->modulate(b_hat, d_pdsch, modulation);
+  // Actual modulate.
+  modulator->modulate(d_pdsch, b_hat, modulation);
 
   // Apply scaling only if the value is valid.
   if (std::isnormal(scaling)) {
@@ -219,9 +224,9 @@ void pdsch_modulator_impl::map_to_prb_other(resource_grid_writer&               
   }
 }
 
-void pdsch_modulator_impl::modulate(srsgnb::resource_grid_writer&                   grid,
-                                    srsgnb::span<const srsgnb::span<const uint8_t>> codewords,
-                                    const srsgnb::pdsch_modulator::config_t&        config)
+void pdsch_modulator_impl::modulate(resource_grid_writer&            grid,
+                                    span<const bit_buffer>           codewords,
+                                    const pdsch_modulator::config_t& config)
 {
   // Deduce the number of layers from the number of ports
   unsigned nof_layers = config.ports.size();
@@ -243,11 +248,8 @@ void pdsch_modulator_impl::modulate(srsgnb::resource_grid_writer&               
     unsigned nof_bits = codewords[cw_idx].size();
     unsigned nof_re   = nof_bits / Qm;
 
-    // Create temporal storage for scrambled bits.
-    span<uint8_t> b_hat = span<uint8_t>(temp_b_hat).first(nof_bits);
-
     // Scramble.
-    scramble(b_hat, codewords[cw_idx], cw_idx, config);
+    const bit_buffer& b_hat = scramble(codewords[cw_idx], cw_idx, config);
 
     // Prepare destination buffer view.
     d_pdsch[cw_idx] = span<cf_t>(temp_d[cw_idx].data(), nof_re);
