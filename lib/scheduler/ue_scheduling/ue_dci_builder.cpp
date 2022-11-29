@@ -180,7 +180,15 @@ void srsgnb::build_dci_f0_0_c_rnti(dci_ul_info&                       dci,
       init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0});
   f0_0.payload_size = ss_type == search_space_configuration::type_t::ue_dedicated ? dci_sz.format0_0_ue_size
                                                                                   : dci_sz.format0_0_common_size;
-  f0_0.N_rb_ul_bwp  = active_ul_bwp.crbs.length();
+
+  // PUSCH resources.
+  // See 38.212, clause 7.3.1.1.1 - N^{UL,BWP}_RB for C-RNTI.
+  if (ss_type == srsgnb::search_space_configuration::type_t::common) {
+    f0_0.N_rb_ul_bwp = init_ul_bwp.crbs.length();
+  } else {
+    f0_0.N_rb_ul_bwp = active_ul_bwp.crbs.length();
+  }
+
   f0_0.frequency_resource =
       ra_frequency_type1_get_riv(ra_frequency_type1_configuration{f0_0.N_rb_ul_bwp, prbs.start(), prbs.length()});
   f0_0.time_resource = time_resource;
