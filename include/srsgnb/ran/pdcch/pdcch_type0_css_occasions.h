@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../../adt/static_vector.h"
+#include "srsgnb/adt/static_vector.h"
 
 namespace srsgnb {
 

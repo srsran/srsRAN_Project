@@ -26,24 +26,10 @@ srs_cu_cp::cu_cp_configuration srsgnb::generate_cu_cp_config(const gnb_appconfig
   return out_cfg;
 }
 
-static unsigned calculate_offset_pointA_from_dl_arfcn(unsigned dl_arfcn)
+static unsigned get_ssb_arfcn_from_ssb_params(unsigned dl_arfcn, unsigned ssb_offset_pointA, unsigned k_ssb)
 {
-  // :TODO: Implement the functionality.
-  if (dl_arfcn != 536020) {
-    srsgnb_terminate("dl_arfcn not supported");
-  }
-
-  return 40U;
-}
-
-static unsigned calculate_k_ssb_from_dl_arfcn(unsigned dl_arfcn, unsigned offset_pointA)
-{
-  // :TODO: Implement the functionality.
-  if (dl_arfcn != 536020) {
-    srsgnb_terminate("dl_arfcn not supported");
-  }
-
-  return 6U;
+  // :TODO: Implement me!
+  return 0;
 }
 
 std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig& config)
@@ -61,9 +47,38 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
     param.nof_crbs = band_helper::get_n_rbs_from_bw(base_cell.channel_bw_mhz, param.scs_common, frequency_range::FR1);
     param.dl_arfcn = base_cell.dl_arfcn;
     param.band     = band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
-    param.offset_to_point_a = calculate_offset_pointA_from_dl_arfcn(base_cell.dl_arfcn);
-    param.coreset0_index    = 6;
-    param.k_ssb             = calculate_k_ssb_from_dl_arfcn(base_cell.dl_arfcn, param.offset_to_point_a.to_uint());
+
+    band_helper::ssb_coreset0_freq_location ssb_freq_loc =
+        band_helper::get_ssb_coreset0_freq_location(base_cell.dl_arfcn, base_cell.band, param.nof_crbs, scs, scs);
+
+    if (!ssb_freq_loc.is_valid) {
+      srsgnb_terminate("Invalid SSB pointA ({}) and k_SSB ({}) derivation for cell id ({}). Exiting.",
+                       ssb_freq_loc.offset_to_point_A.to_uint(),
+                       ssb_freq_loc.k_ssb.to_uint(),
+                       cell.pci);
+    }
+
+    srslog::basic_logger& logger = srslog::fetch_basic_logger("gNB appconfig translator");
+    logger.set_level(srslog::basic_levels::info);
+
+    logger.info("SSB derived parameters for cell:{}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
+                "pointA: {} \n\t - k_SSB: {} \n\t - SSB arfcn: {}",
+                cell.pci,
+                base_cell.dl_arfcn,
+                param.nof_crbs,
+                scs,
+                scs,
+                ssb_freq_loc.offset_to_point_A.to_uint(),
+                ssb_freq_loc.k_ssb.to_uint(),
+                get_ssb_arfcn_from_ssb_params(
+                    base_cell.dl_arfcn, ssb_freq_loc.offset_to_point_A.to_uint(), ssb_freq_loc.k_ssb.to_uint()));
+
+    //    param.offset_to_point_a = ssb_freq_loc.offset_to_point_A;
+    //    param.k_ssb             = ssb_freq_loc.k_ssb;
+    param.offset_to_point_a = 40;
+    param.k_ssb             = 6;
+
+    param.coreset0_index = 6;
 
     // Create the configuration.
     out_cfg.push_back(config_helpers::make_default_du_cell_config(param));
