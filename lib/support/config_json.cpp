@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/support/config_json.h"
 #include "nlohmann/json.hpp"
+#include "srsgnb/support/config_parsers.h"
 #include "fmt/format.h"
 
 using namespace srsgnb;
@@ -31,13 +31,6 @@ private:
 };
 
 } // namespace
-
-std::vector<CLI::ConfigItem> json_config_parser::from_config(std::istream& input) const
-{
-  nlohmann::json j;
-  input >> j;
-  return from_config_impl(j);
-}
 
 std::string json_config_parser::to_config(const CLI::App* app, bool default_also, bool, std::string) const
 {
@@ -88,6 +81,13 @@ std::string json_config_parser::to_config(const CLI::App* app, bool default_also
   }
 
   return j.dump(4);
+}
+
+std::vector<CLI::ConfigItem> json_config_parser::from_config(std::istream& input) const
+{
+  nlohmann::json j;
+  input >> j;
+  return from_config_impl(j);
 }
 
 std::vector<CLI::ConfigItem> json_config_parser::from_config_impl(const nlohmann::json&           j,

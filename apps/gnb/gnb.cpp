@@ -18,7 +18,7 @@
 #include "srsgnb/support/io_broker/io_broker_factory.h"
 
 #include "adapters/f1_adapter.h"
-#include "srsgnb/support/config_json.h"
+#include "srsgnb/support/config_parsers.h"
 
 #include "gnb_appconfig.h"
 #include "gnb_appconfig_translators.h"
@@ -231,7 +231,7 @@ int main(int argc, char** argv)
 {
   // Setup and configure config parsing.
   CLI::App app("srsGNB application");
-  app.config_formatter(create_json_config_parser());
+  app.config_formatter(create_yaml_config_parser());
 
   gnb_appconfig gnb_cfg;
   // This variable is filled by the command line parser.

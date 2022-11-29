@@ -17,4 +17,7 @@ namespace srsgnb {
 /// Creates an instance of a JSON configuration parser.
 std::unique_ptr<CLI::Config> create_json_config_parser();
 
+/// Creates an instance of a YAML configuration parser.
+std::unique_ptr<CLI::Config> create_yaml_config_parser();
+
 } // namespace srsgnb
