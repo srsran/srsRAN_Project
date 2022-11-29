@@ -57,7 +57,7 @@ struct trivial_storage {
   constexpr const_iterator begin() const noexcept { return data(); }
   constexpr const_iterator end() const noexcept { return begin() + sz; }
 
-  constexpr void construct_(size_t idx) noexcept
+  constexpr void construct_(size_t /**/) noexcept
   {
     // do nothing.
   }
@@ -69,7 +69,11 @@ struct trivial_storage {
     array[idx] = T(std::forward<U>(arg0), std::forward<Args>(args)...);
   }
 
-  constexpr void destroy_(size_t idx) noexcept
+  constexpr void destroy_(size_t /**/) noexcept
+  {
+    // do nothing.
+  }
+  constexpr void destroy_(iterator it) noexcept
   {
     // do nothing.
   }
@@ -84,7 +88,7 @@ struct non_trivial_storage {
 
   using element_storage_t = std::aligned_storage_t<sizeof(T), alignof(T)>;
   using array_type        = std::conditional_t<std::is_const<T>::value,
-                                        const std::array<std::remove_const_t<element_storage_t>, Capacity>,
+                                        const std::array<element_storage_t, Capacity>,
                                         std::array<element_storage_t, Capacity>>;
   using iterator          = T*;
   using const_iterator    = const T*;
@@ -139,7 +143,8 @@ struct non_trivial_storage {
     new (&array[idx]) T(std::forward<Args>(args)...);
   }
 
-  void destroy_(size_t idx) noexcept { reinterpret_cast<T&>(array[idx]).~T(); }
+  void destroy_(size_t idx) noexcept { (*this)[idx].~T(); }
+  void destroy_(iterator it) noexcept { (*it).~T(); }
 
   array_type array;
   size_t     sz = 0;
@@ -152,7 +157,7 @@ using static_vector_storage =
 } // namespace detail
 
 /// Random access, variable-sized container with embedded storage.
-/// Contrarily to std::vector<T>, its size is limited at compile-time, and it does not rely on allocators.
+/// Contrarily to std::vector<T>, its maximum size is limited at compile-time, and it does not rely on allocators.
 /// Contrarily to std::array, the elements are constructed and destructed dynamically when the container size() changes.
 /// @tparam T type of the elements
 /// @tparam MAX_N Maximum number of elements of the static_vector
@@ -180,28 +185,39 @@ public:
   constexpr static_vector() noexcept = default;
   explicit constexpr static_vector(size_type count) noexcept(std::is_nothrow_default_constructible<T>::value)
   {
-    append(count);
+    static_assert(std::is_default_constructible<T>::value, "T must be default-constructible");
+    srsgnb_assert(count <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
+    // Note: Gcc 11 fails compilation without this hint. Potentially a bug.
+    srsgnb_assume(count <= MAX_N);
+    for (size_type i = this->sz; i != count; ++i) {
+      this->construct_(i);
+    }
+    this->sz = count;
   }
   constexpr static_vector(size_type count,
                           const T&  initial_value) noexcept(std::is_nothrow_copy_constructible<T>::value)
   {
-    append(count, initial_value);
+    static_assert(std::is_copy_constructible<T>::value, "T must be copy-constructible");
+    assign_unsafe_(count, initial_value);
   }
-  constexpr static_vector(const static_vector& other) noexcept(noexcept(append(other.begin(), other.end())))
+  constexpr static_vector(const static_vector& other) noexcept(std::is_nothrow_copy_constructible<T>::value)
   {
     static_assert(std::is_copy_constructible<T>::value, "T must be copyable");
-    std::uninitialized_copy(other.begin(), other.end(), end());
-    this->sz = other.size();
+    assign_unsafe_(other.begin(), other.end());
   }
   constexpr static_vector(static_vector&& other) noexcept(std::is_nothrow_move_constructible<value_type>::value)
   {
     static_assert(std::is_move_constructible<T>::value, "T must be move-constructible");
-    std::uninitialized_copy(std::make_move_iterator(other.begin()), std::make_move_iterator(other.end()), end());
-    this->sz = other.size();
+    assign_unsafe_(std::make_move_iterator(other.begin()), std::make_move_iterator(other.end()));
     other.clear();
   }
-  constexpr static_vector(std::initializer_list<T> init) { append(init.begin(), init.end()); }
-  constexpr static_vector(const_iterator it_begin, const_iterator it_end) { append(it_begin, it_end); }
+  template <typename Iterator>
+  constexpr static_vector(Iterator it_begin, Iterator it_end)
+  {
+    static_assert(std::is_constructible<T, decltype(*it_begin)>::value, "Cannot convert Iterator value_type to T");
+    assign_unsafe_(it_begin, it_end);
+  }
+  constexpr static_vector(std::initializer_list<T> init) : static_vector(init.begin(), init.end()) {}
   ~static_vector() = default;
   constexpr static_vector& operator=(const static_vector& other) noexcept(std::is_nothrow_copy_assignable<T>::value)
   {
@@ -258,7 +274,7 @@ public:
   constexpr void pop_back() noexcept
   {
     srsgnb_assert(not empty(), "Trying to erase element from empty vector");
-    this->destroy_(size());
+    this->destroy_(&back());
     this->sz--;
   }
 
@@ -325,14 +341,14 @@ public:
   constexpr void assign(size_type nof_elems, const T& value) noexcept(std::is_nothrow_copy_constructible<T>::value)
   {
     clear();
-    append(nof_elems, value);
+    assign_unsafe_(nof_elems, value);
   }
 
-  constexpr void assign(const_iterator it_start,
-                        const_iterator it_end) noexcept(std::is_nothrow_copy_constructible<T>::value)
+  template <typename Iterator>
+  constexpr void assign(Iterator it_start, Iterator it_end) noexcept(std::is_nothrow_copy_constructible<T>::value)
   {
     clear();
-    append(it_start, it_end);
+    assign_unsafe_(it_start, it_end);
   }
 
   constexpr void assign(std::initializer_list<T> ilist) noexcept(std::is_nothrow_copy_constructible<T>::value)
@@ -369,44 +385,34 @@ public:
 private:
   constexpr void destroy_range_(iterator it_start, iterator it_end) noexcept
   {
-    for (size_t i = it_start - begin(); i != size(); ++i) {
-      this->destroy_(i);
+    for (auto it = it_start; it != it_end; ++it) {
+      this->destroy_(it);
     }
   }
-  constexpr void append(const_iterator it_begin,
-                        const_iterator it_end) noexcept(std::is_nothrow_copy_constructible<T>::value)
+  constexpr void assign_unsafe_(size_t N, const T& val) noexcept(std::is_nothrow_copy_constructible<T>::value)
+  {
+    srsgnb_assert(N <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
+    // Note: Gcc 11 fails compilation without this hint. Potentially a bug.
+    srsgnb_assume(N <= MAX_N);
+    for (size_t i = 0; i != N; ++i) {
+      this->construct_(i, val);
+    }
+    this->sz = N;
+  }
+  template <typename Iterator>
+  constexpr void assign_unsafe_(Iterator it_begin,
+                                Iterator it_end) noexcept(std::is_nothrow_copy_constructible<T>::value)
   {
     size_type N = std::distance(it_begin, it_end);
-    srsgnb_assert(N + this->sz <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
+    srsgnb_assert(N <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
     // Note: Gcc 11 fails compilation without this hint. Potentially a bug.
-    srsgnb_assume(N + this->sz <= MAX_N);
-    std::uninitialized_copy(it_begin, it_end, end());
-    this->sz += N;
-  }
-  constexpr void append(size_type N, const T& element) noexcept(std::is_nothrow_copy_constructible<T>::value)
-  {
-    static_assert(std::is_copy_constructible<T>::value, "T must be copy-constructible");
-    srsgnb_assert(N + this->sz <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
-    // Note: Gcc 11 fails compilation without this hint. Potentially a bug.
-    srsgnb_assume(N + this->sz <= MAX_N);
-    std::uninitialized_fill_n(end(), N, element);
-    this->sz += N;
-  }
-  constexpr void append(size_type N) noexcept(std::is_nothrow_default_constructible<T>::value)
-  {
-    static_assert(std::is_default_constructible<T>::value, "T must be default-constructible");
-    srsgnb_assert(N + this->sz <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
-    // Note: Gcc 11 fails compilation without this hint. Potentially a bug.
-    srsgnb_assume(N + this->sz <= MAX_N);
-    for (size_type i = this->sz; i != this->sz + N; ++i) {
-      this->construct_(i);
+    srsgnb_assume(N <= MAX_N);
+    for (size_t i = 0; i != N; ++i) {
+      this->construct_(i, *it_begin);
+      ++it_begin;
     }
-    this->sz += N;
+    this->sz = N;
   }
-
-  using storage_t = std::conditional_t<std::is_trivial<T>::value,
-                                       detail::trivial_storage<T, MAX_N>,
-                                       detail::non_trivial_storage<T, MAX_N>>;
 };
 
 } // namespace srsgnb

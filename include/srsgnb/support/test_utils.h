@@ -246,10 +246,15 @@ public:
   }
 
   template <typename Integer>
-  static Integer uniform_int(Integer min = std::numeric_limits<Integer>::min(),
-                             Integer max = std::numeric_limits<Integer>::max())
+  static Integer uniform_int(Integer min, Integer max)
   {
     return std::uniform_int_distribution<Integer>{min, max}(get());
+  }
+
+  template <typename Integer>
+  static Integer uniform_int()
+  {
+    return uniform_int(std::numeric_limits<Integer>::min(), std::numeric_limits<Integer>::max());
   }
 };
 
