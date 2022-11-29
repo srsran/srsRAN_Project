@@ -14,7 +14,7 @@ stages:
     - ${SRS_INFRASTRUCTURE_TAG}-${PLATFORM}
   stage: build and unit tests
   variables:
-    DOCKER_BUILDER_VERSION: "1.7.1"
+    DOCKER_BUILDER_VERSION: "1.7.4"
     # General
     OS: ubuntu-22.04
     # Build
@@ -147,6 +147,7 @@ stages:
       - ${CI_JOB_ID}_xunit.xml
       - ${CI_JOB_ID}_coverage.xml
       - build/Testing/Temporary_${CI_JOB_ID}
+      - build/apps/gnb/gnb
     expire_in: 10 minutes
   cache: &build_cache
     key: ${OS}-${DOCKER_BUILDER_VERSION}-${COMPILER}-${TEST_MODE}

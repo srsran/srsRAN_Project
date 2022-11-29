@@ -34,7 +34,7 @@ include-guards:
         INPUT_IGNORE: "^\\(include\\|docs\\|external\\)/.*"
 
 .codechecker:
-  image: $CR_REGISTRY_URI/testing-tools/codechecker-gnb:1.0.2
+  image: $CR_REGISTRY_URI/testing-tools/codechecker-gnb:1.0.3
   stage: static
   needs: []
   tags:
