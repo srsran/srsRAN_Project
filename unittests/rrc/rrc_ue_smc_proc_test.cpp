@@ -63,6 +63,27 @@ TEST_F(rrc_smc, when_key_provided_smc_generated)
   receive_smc_complete();
 }
 
+TEST_F(rrc_smc, when_reply_missing_procedure_timeout)
+{
+  // Initialize security context and capabilities.
+  rrc_init_security_context init_sec_ctx = {};
+  std::fill(init_sec_ctx.supported_int_algos.begin(), init_sec_ctx.supported_int_algos.end(), true);
+  std::fill(init_sec_ctx.supported_enc_algos.begin(), init_sec_ctx.supported_enc_algos.end(), true);
+
+  // Trigger SMC
+  init_security_context(init_sec_ctx);
+  check_smc_pdu();
+
+  // check that UE has been created and was not requested to be released
+  check_ue_release_not_requested();
+
+  // tick timer until RRC setup complete timer fires
+  tick_timer();
+
+  // verify that RRC requested UE context release
+  check_ue_release_requested();
+}
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
