@@ -46,13 +46,22 @@ public:
 
   void create_srb(const srb_creation_message& msg) override
   {
-    // connect SRB1 with RRC to "PDCP" adapter
-    ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb1)].rrc_tx_notifier =
-        std::make_unique<dummy_rrc_pdu_notifier>(srb1_tx_pdu_handler);
-    ue_ctxt.rrc->connect_srb_notifier(srb_id_t::srb1,
-                                      *ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb1)].rrc_tx_notifier.get());
-    srb1_created = true;
-    last_srb     = msg;
+    // create SRB1 or SRB2 PDU handler
+    std::unique_ptr<dummy_rrc_pdu_notifier> tx_pdu_handler = nullptr;
+    if (msg.srb_id == srb_id_t::srb1) {
+      tx_pdu_handler = std::make_unique<dummy_rrc_pdu_notifier>(srb1_tx_pdu_handler);
+      srb1_created   = true;
+    } else if (msg.srb_id == srb_id_t::srb2) {
+      tx_pdu_handler = std::make_unique<dummy_rrc_pdu_notifier>(srb2_tx_pdu_handler);
+      srb2_created   = true;
+    } else {
+      return;
+    }
+
+    // connect SRB with RRC to "PDCP" adapter
+    ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier = std::move(tx_pdu_handler);
+    ue_ctxt.rrc->connect_srb_notifier(msg.srb_id, *ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier);
+    last_srb = msg;
   }
 
   void handle_ue_context_release_command(const ue_context_release_command_message& msg) override
@@ -64,7 +73,9 @@ public:
   srb_creation_message               last_srb;
   dummy_tx_pdu_handler               srb0_tx_pdu_handler; // Object to handle the generated RRC message
   dummy_tx_pdu_handler               srb1_tx_pdu_handler; // Object to handle the generated RRC message
+  dummy_tx_pdu_handler               srb2_tx_pdu_handler; // Object to handle the generated RRC message
   bool                               srb1_created = false;
+  bool                               srb2_created = false;
 
 private:
   ue_context& ue_ctxt;
