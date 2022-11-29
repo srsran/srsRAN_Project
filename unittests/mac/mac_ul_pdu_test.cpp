@@ -25,7 +25,7 @@ TEST(mac_ul_subpdu, decode_ul_ccch_48)
   // - MAC SDU for UL CCCH 48 bits.
   //
   // |   |   |   |   |   |   |   |   |
-  // | R | F |         LCID          |  Octet 1
+  // | R | R |         LCID          |  Octet 1
   // |      MAC SDU for UL CCCH      |  Octet 2
   // |      MAC SDU for UL CCCH      |  Octet 3
   //               ...
@@ -53,7 +53,7 @@ TEST(mac_ul_subpdu, decode_ul_ccch_64)
   // - MAC SDU for UL CCCH 64 bits.
   //
   // |   |   |   |   |   |   |   |   |
-  // | R | F |         LCID          |  Octet 1
+  // | R | R |         LCID          |  Octet 1
   // |      MAC SDU for UL CCCH      |  Octet 2
   // |      MAC SDU for UL CCCH      |  Octet 3
   //               ...
@@ -81,7 +81,7 @@ TEST(mac_ul_subpdu, decode_short_bsr)
   // - MAC CE with Short BSR.
   //
   // |   |   |   |   |   |   |   |   |
-  // | R | F |         LCID          |  Octet 1
+  // | R | R |         LCID          |  Octet 1
   // |  LCG ID   |    Buffer Size    |  Octet 2
 
   // R/LCID MAC subheader = R|R|LCID = 0x3d or LCID=61
@@ -111,7 +111,7 @@ TEST(mac_ul_subpdu, decode_short_trunc_bsr)
   // - MAC CE with Short Truncated BSR.
   //
   // |   |   |   |   |   |   |   |   |
-  // | R | F |         LCID          |  Octet 1
+  // | R | R |         LCID          |  Octet 1
   // |  LCG ID   |    Buffer Size    |  Octet 2
 
   // R/LCID MAC subheader = R|R|LCID = 0x3b or LCID=59
@@ -345,7 +345,7 @@ TEST(mac_ul_subpdu, decode_crnti_ce)
   // - MAC CE with C-RNTI.
   //
   // |   |   |   |   |   |   |   |   |
-  // | R | F |         LCID          |  Octet 1
+  // | R | R |         LCID          |  Octet 1
   // |             RNTI              |  Octet 2
   // |             RNTI              |  Octet 3
 
@@ -375,9 +375,9 @@ TEST(mac_ul_subpdu, decode_se_phr)
   // - MAC CE with Single Entry PHR.
   //
   // |   |   |   |   |   |   |   |   |
-  // | R | F |         LCID          |  Octet 1
-  // | R | F |          PH           |  Octet 2
-  // | R | F |        P_CMAX         |  Octet 3
+  // | R | R |         LCID          |  Octet 1
+  // | R | R |          PH           |  Octet 2
+  // | R | R |        P_CMAX         |  Octet 3
 
   // R/LCID MAC subheader = R|R|LCID = 0x39 or LCID=57
   // MAC CE SE PHR = {0x27, 0x2f}
@@ -408,7 +408,7 @@ TEST(mac_ul_subpdu, decode_subpdu_padding)
   // - MAC CE with padding.
   //
   // |   |   |   |   |   |   |   |   |
-  // | R | F |         LCID          |  Octet 1
+  // | R | R |         LCID          |  Octet 1
   // |             0x00              |  Octet 2
   //               ...
   // |             0x00              |  Octet n
@@ -432,6 +432,35 @@ TEST(mac_ul_subpdu, decode_subpdu_padding)
   fmt::print("subPDU: {}\n", subpdu);
 }
 
+TEST(mac_ul_pdu, decode_crnti_ce_and_sbsr)
+{
+  // PDU = [ subPDU_1 | subPDU_2 ]
+
+  // subPDU_1 = [ R/LCID MAC subheader (1 byte) | MAC CE C-RNTI ]
+  // R/LCID MAC subheader = R|R|LCID = 0x3a or LCID=58
+  byte_buffer msg = {0x3a, 0x46, 0x1};
+
+  // subPDU_2 = [ R/LCID MAC subheader (1 byte) | MAC CE Short BSR ]
+  // R/LCID MAC subheader = R|R|LCID = 0x3d or LCID=63
+  msg.append({0x3d, 0x59});
+
+  mac_ul_sch_pdu pdu;
+  ASSERT_TRUE(pdu.unpack(msg));
+  ASSERT_EQ(pdu.nof_subpdus(), 2);
+
+  // Test expected PDU.
+  byte_buffer_view buf_view(msg);
+  auto             subpdus = pdu.begin();
+  ASSERT_EQ(2, subpdus->sdu_length()) << "Wrong SDU length for MAC CE C-RNTI (2B for payload)";
+  ASSERT_EQ(3, subpdus->total_length()) << "Wrong subPDU length for MAC CE C-RNTI (1 B header + 2B Payload)";
+  ASSERT_EQ(subpdus->payload(), buf_view.view(1, subpdus->sdu_length()));
+  unsigned subpdu2_start = subpdus->total_length();
+  subpdus++;
+  ASSERT_EQ(1, subpdus->sdu_length()) << "Wrong SDU length for MAC CE Short BSR (1B for payload)";
+  ASSERT_EQ(2, subpdus->total_length()) << "Wrong subPDU length for MAC CE Short BSR (1 B header + 1B Payload)";
+  ASSERT_EQ(subpdus->payload(), buf_view.view(subpdu2_start + 1, subpdus->sdu_length()));
+}
+
 // Test the unpacking function for MAC PDU with 2 MAC SDUs: UL CCCH 48 bits and padding.
 TEST(mac_ul_pdu, decode_ul_ccch_and_padding)
 {
@@ -446,7 +475,7 @@ TEST(mac_ul_pdu, decode_ul_ccch_and_padding)
   byte_buffer msg({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00});
   ASSERT_TRUE(pdu.unpack(msg));
 
-  // Test expected PDU length.
+  // Test expected PDU.
   auto subpdus = pdu.begin();
   ASSERT_EQ(6, subpdus->sdu_length()) << "Wrong SDU length for UL CCCH (6 bytes)";
   ASSERT_EQ(7, subpdus->total_length()) << "Wrong subPDU length for UL CCCH (1 B header + 6B SDU)";
