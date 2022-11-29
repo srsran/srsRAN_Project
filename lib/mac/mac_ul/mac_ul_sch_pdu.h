@@ -94,12 +94,16 @@ struct formatter<srsgnb::mac_ul_sch_subpdu> {
   auto format(const srsgnb::mac_ul_sch_subpdu& subpdu, FormatContext& ctx) -> decltype(ctx.out())
   {
     using namespace srsgnb;
+    if (subpdu.lcid().is_sdu()) {
+      format_to(ctx.out(), "LCID={}: len={}", subpdu.lcid(), subpdu.sdu_length());
+      return ctx.out();
+    }
     switch (subpdu.lcid().value()) {
-      case lcid_ul_sch_t::CCCH_SIZE_48:
-        format_to(ctx.out(), "CCCH48: len={}", subpdu.sdu_length());
-        break;
       case lcid_ul_sch_t::CCCH_SIZE_64:
         format_to(ctx.out(), "CCCH64: len={}", subpdu.sdu_length());
+        break;
+      case lcid_ul_sch_t::CCCH_SIZE_48:
+        format_to(ctx.out(), "CCCH48: len={}", subpdu.sdu_length());
         break;
       case lcid_ul_sch_t::CRNTI:
         format_to(ctx.out(), "C-RNTI: {:#04x}", decode_crnti_ce(subpdu.payload()));
@@ -132,7 +136,7 @@ struct formatter<srsgnb::mac_ul_sch_subpdu> {
         format_to(ctx.out(), "PAD: len={}", subpdu.sdu_length());
         break;
       default:
-        format_to(ctx.out(), "CE={} total_len={}", subpdu.lcid(), subpdu.total_length());
+        format_to(ctx.out(), "Unrecognized CE={} total_len={}", subpdu.lcid(), subpdu.total_length());
         break;
     }
     return ctx.out();

@@ -64,7 +64,8 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
     if (subpdu_len < header_length + sdu_length) {
       srslog::fetch_basic_logger("MAC").warning(
           "Invalid MAC PDU. Cause: Not enough bytes remaining in PDU to decode SDU payload ({} < {}).",
-          subpdu_len - header_length < sdu_length);
+          subpdu_len - header_length,
+          sdu_length);
       return false;
     }
     payload_view = subpdu_reader.split_and_advance(sdu_length);

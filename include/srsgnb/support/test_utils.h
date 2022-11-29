@@ -256,6 +256,16 @@ public:
   {
     return uniform_int(std::numeric_limits<Integer>::min(), std::numeric_limits<Integer>::max());
   }
+
+  template <typename Integer>
+  static std::vector<Integer> random_vector(size_t sz)
+  {
+    std::vector<Integer> vec(sz);
+    for (unsigned i = 0; i != sz; ++i) {
+      vec[i] = test_rgen::uniform_int<Integer>();
+    }
+    return vec;
+  }
 };
 
 } // namespace srsgnb

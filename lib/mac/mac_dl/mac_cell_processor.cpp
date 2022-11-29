@@ -104,6 +104,8 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
 
 void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 {
+  // * Start of Critical Path * //
+
   mac_dl_sched_result mac_dl_res{};
 
   // Cleans old MAC DL PDU buffers.
@@ -142,6 +144,8 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   mac_ul_res.slot   = sl_tx;
   mac_ul_res.ul_res = &sl_res->ul;
   phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
+
+  // * End of Critical Path * //
 
   // Update DL buffer state for the allocated logical channels.
   update_logical_channel_dl_buffer_states(sl_res->dl);
@@ -251,6 +255,9 @@ void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_
         bs.lcid     = lc_info.lcid.to_lcid();
         bs.bs       = bearer->on_buffer_state_update();
         sched_obj.handle_dl_buffer_state_indication(bs);
+
+        // Restart UE activity timer.
+        ue_mng.restart_activity_timer(bs.ue_index);
       }
     }
   }

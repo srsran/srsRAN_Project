@@ -12,6 +12,7 @@
 #include "srsgnb/ran/sr_configuration.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include "srsgnb/support/async/async_task.h"
+#include "srsgnb/support/timers.h"
 
 namespace srsgnb {
 
@@ -31,6 +32,7 @@ struct mac_ue_create_request_message {
   rnti_t                           crnti;
   std::vector<mac_logical_channel> bearers;
   const byte_buffer*               ul_ccch_msg;
+  unique_timer*                    ue_activity_timer;
   mac_cell_group_config            mac_cell_group_cfg;
   physical_cell_group_config       phy_cell_group_cfg;
   // Scheduler-only params.

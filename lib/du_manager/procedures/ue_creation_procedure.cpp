@@ -48,6 +48,14 @@ ue_creation_procedure::ue_creation_procedure(du_ue_index_t                      
   pcell.spcell_cfg.spcell_cfg_ded = config_helpers::make_default_initial_ue_serving_cell_config();
   pcell.mcg_cfg                   = config_helpers::make_initial_mac_cell_group_config();
 
+  const static unsigned UE_ACTIVITY_TIMEOUT = 500; // TODO: Parametrize.
+  ue_ctx->activity_timer                    = services.timers.create_unique_timer();
+  ue_ctx->activity_timer.set(UE_ACTIVITY_TIMEOUT,
+                             [&ue_mng = this->ue_mng, ue_index, &logger = this->logger](unsigned tid) {
+                               logger.info("UE Manager: ueId={} activity timeout. Removing UE...", ue_index);
+                               ue_mng.remove_ue(ue_index);
+                             });
+
   // TODO: Move to helper.
   physical_cell_group_config& pcg_cfg = pcell.pcg_cfg;
   pcg_cfg.p_nr_fr1                    = 10;
@@ -91,6 +99,9 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
     clear_ue();
     CORO_EARLY_RETURN();
   }
+
+  // > Start UE activity timer.
+  ue_ctx->activity_timer.run();
 
   // > Create UE context in DU manager.
   du_ue_index_t ue_index = ue_ctx->ue_index;
@@ -160,7 +171,8 @@ async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_cr
     lc.lc_config = config_helpers::make_default_logical_channel_config(lc.lcid);
     lc.lc_config.sr_id.emplace(mac_ue_create_msg.mac_cell_group_cfg.scheduling_request_config.back().sr_id);
   }
-  mac_ue_create_msg.ul_ccch_msg = &msg.subpdu;
+  mac_ue_create_msg.ul_ccch_msg       = &msg.subpdu;
+  mac_ue_create_msg.ue_activity_timer = &ue_ctx->activity_timer;
 
   return mac_mng.ue_cfg.handle_ue_create_request(mac_ue_create_msg);
 }

@@ -76,7 +76,7 @@ public:
   bool add_ue(const mac_ue_create_request_message& request)
   {
     std::lock_guard<std::mutex> lock(ue_mutex[request.ue_index]);
-    return add_ue_nolock(request.ue_index, request.crnti, request.ul_ccch_msg) and
+    return add_ue_nolock(request.ue_index, request.crnti, request.ul_ccch_msg, *request.ue_activity_timer) and
            addmod_bearers_nolock(request.ue_index, request.bearers);
   }
 
@@ -112,11 +112,20 @@ public:
   /// \brief Returns UE Contention Resolution Id, which is derived from Msg3 bytes.
   ue_con_res_id_t get_con_res_id(rnti_t rnti)
   {
-    du_ue_index_t ue_index = rnti_table[rnti];
+    du_ue_index_t               ue_index = rnti_table[rnti];
+    std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
     if (not ue_db.contains(ue_index)) {
       return {};
     }
     return ue_db[ue_index].msg3_subpdu;
+  }
+
+  void restart_activity_timer(du_ue_index_t ue_index)
+  {
+    std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
+    if (ue_db.contains(ue_index)) {
+      ue_db[ue_index].activity_timer->run();
+    }
   }
 
 private:
@@ -125,9 +134,10 @@ private:
     du_ue_index_t                       ue_index = MAX_NOF_DU_UES;
     slotted_vector<mac_sdu_tx_builder*> dl_bearers;
     ue_con_res_id_t                     msg3_subpdu;
+    unique_timer*                       activity_timer;
   };
 
-  bool add_ue_nolock(du_ue_index_t ue_index, rnti_t crnti, const byte_buffer* ul_ccch_msg)
+  bool add_ue_nolock(du_ue_index_t ue_index, rnti_t crnti, const byte_buffer* ul_ccch_msg, unique_timer& activity_timer)
   {
     if (ue_db.contains(ue_index)) {
       return false;
@@ -142,6 +152,7 @@ private:
           ul_ccch_msg->length() >= UE_CON_RES_ID_LEN, "Invalid UL-CCCH message length ({} < 6)", ul_ccch_msg->length());
       std::copy(ul_ccch_msg->begin(), ul_ccch_msg->begin() + UE_CON_RES_ID_LEN, u.msg3_subpdu.begin());
     }
+    u.activity_timer = &activity_timer;
     return true;
   }
 

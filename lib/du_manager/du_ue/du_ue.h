@@ -42,6 +42,7 @@ struct du_ue {
   rnti_t                                     rnti;
   du_cell_index_t                            pcell_index;
   slotted_array<du_bearer, MAX_NOF_RB_LCIDS> bearers;
+  unique_timer                               activity_timer;
 
   std::vector<cell_group_config> cells;
 };
