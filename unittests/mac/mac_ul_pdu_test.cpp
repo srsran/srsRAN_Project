@@ -25,7 +25,7 @@ TEST(mac_ul_subpdu, decode_ul_ccch_48)
   // - MAC SDU for UL CCCH 48 bits.
   //
   // |   |   |   |   |   |   |   |   |
-  // | R | R |         LCID          |  Octet 1
+  // | R | F |         LCID          |  Octet 1
   // |      MAC SDU for UL CCCH      |  Octet 2
   // |      MAC SDU for UL CCCH      |  Octet 3
   //               ...
@@ -36,14 +36,10 @@ TEST(mac_ul_subpdu, decode_ul_ccch_48)
   byte_buffer msg({0x34, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06});
   ASSERT_TRUE(subpdu.unpack(msg));
 
-  // TODO: Fix the == operator for byte_buffer_view, as it gives a SIGSEGV
-  // byte_buffer_view comparison = byte_buffer_view(msg).view(1, 6);
-  // byte_buffer_view original = subpdu.payload();
-  // ASSERT_TRUE(original == comparison);
-
   // Test expected length
   ASSERT_EQ(6, subpdu.sdu_length()) << "Wrong SDU length for UL CCCH (6 bytes)";
   ASSERT_EQ(7, subpdu.total_length()) << "Wrong subPDU length for UL CCCH (1 B header + 6B SDU)";
+  ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(1, subpdu.sdu_length()));
   fmt::print("subPDU: {}\n", subpdu);
 }
 
@@ -57,7 +53,7 @@ TEST(mac_ul_subpdu, decode_ul_ccch_64)
   // - MAC SDU for UL CCCH 64 bits.
   //
   // |   |   |   |   |   |   |   |   |
-  // | R | R |         LCID          |  Octet 1
+  // | R | F |         LCID          |  Octet 1
   // |      MAC SDU for UL CCCH      |  Octet 2
   // |      MAC SDU for UL CCCH      |  Octet 3
   //               ...
@@ -71,6 +67,7 @@ TEST(mac_ul_subpdu, decode_ul_ccch_64)
   // Test expected length.
   ASSERT_EQ(8, subpdu.sdu_length()) << "Wrong SDU length for UL CCCH (8 bytes)";
   ASSERT_EQ(9, subpdu.total_length()) << "Wrong subPDU length for UL CCCH (1 B header + 8B SDU)";
+  ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(1, subpdu.sdu_length()));
   fmt::print("subPDU: {}\n", subpdu);
 }
 
@@ -84,7 +81,7 @@ TEST(mac_ul_subpdu, decode_short_bsr)
   // - MAC CE with Short BSR.
   //
   // |   |   |   |   |   |   |   |   |
-  // | R | R |         LCID          |  Octet 1
+  // | R | F |         LCID          |  Octet 1
   // |  LCG ID   |    Buffer Size    |  Octet 2
 
   // R/LCID MAC subheader = R|R|LCID = 0x3d or LCID=61
@@ -95,6 +92,7 @@ TEST(mac_ul_subpdu, decode_short_bsr)
   // Test expected length.
   ASSERT_EQ(1, subpdu.sdu_length()) << "Wrong MAC CE Long BSR (1 byte)";
   ASSERT_EQ(2, subpdu.total_length()) << "Wrong subPDU length for MAC CE Short BSR (1B header + 1B MAC-CE)";
+  ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(1, subpdu.sdu_length()));
 
   lcg_bsr_report bsr_report = decode_sbsr(subpdu.payload());
   ASSERT_EQ(2U, bsr_report.lcg_id);
@@ -113,7 +111,7 @@ TEST(mac_ul_subpdu, decode_short_trunc_bsr)
   // - MAC CE with Short Truncated BSR.
   //
   // |   |   |   |   |   |   |   |   |
-  // | R | R |         LCID          |  Octet 1
+  // | R | F |         LCID          |  Octet 1
   // |  LCG ID   |    Buffer Size    |  Octet 2
 
   // R/LCID MAC subheader = R|R|LCID = 0x3b or LCID=59
@@ -124,6 +122,7 @@ TEST(mac_ul_subpdu, decode_short_trunc_bsr)
   // Test expected length.
   ASSERT_EQ(1, subpdu.sdu_length()) << "Wrong MAC CE Long BSR (1 byte)";
   ASSERT_EQ(2, subpdu.total_length()) << "Wrong subPDU length for MAC CE Short Trunc. BSR (1B header + 1B MAC-CE)";
+  ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(1, subpdu.sdu_length()));
 
   lcg_bsr_report bsr_report = decode_sbsr(subpdu.payload());
   ASSERT_EQ(5U, bsr_report.lcg_id);
@@ -158,6 +157,7 @@ TEST(mac_ul_subpdu, decode_long_bsr_with_2_lcgs)
   // Test expected length.
   ASSERT_EQ(3, subpdu.sdu_length()) << "Wrong MAC CE Long BSR (3 bytes)";
   ASSERT_EQ(5, subpdu.total_length()) << "Wrong subPDU length for MAC CE Long BSR (2B header + 3B MAC-CE)";
+  ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(2, subpdu.sdu_length()));
 
   long_bsr_report lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
 
@@ -201,6 +201,7 @@ TEST(mac_ul_subpdu, decode_long_bsr_with_4_lcgs)
   // Test expected length.
   ASSERT_EQ(5, subpdu.sdu_length()) << "Wrong MAC CE Long BSR (5 bytes)";
   ASSERT_EQ(7, subpdu.total_length()) << "Wrong subPDU length for MAC CE Long BSR (2B header + 5B MAC-CE)";
+  ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(2, subpdu.sdu_length()));
 
   long_bsr_report lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
 
@@ -252,6 +253,7 @@ TEST(mac_ul_subpdu, decode_long_bsr_with_8_lcgs)
   // Test expected length.
   ASSERT_EQ(9, subpdu.sdu_length()) << "Wrong MAC CE Long BSR (9 bytes)";
   ASSERT_EQ(11, subpdu.total_length()) << "Wrong subPDU length for MAC CE Long BSR (2B header + 9B MAC-CE)";
+  ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(2, subpdu.sdu_length()));
 
   long_bsr_report lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
 
@@ -318,6 +320,7 @@ TEST(mac_ul_subpdu, decode_long_trunc_bsr)
   // Test expected length.
   ASSERT_EQ(3, subpdu.sdu_length()) << "Wrong MAC CE Long Trunc BSR (3 bytes)";
   ASSERT_EQ(5, subpdu.total_length()) << "Wrong subPDU length for MAC CE Long Trunc BSR (2B header + 3B MAC-CE)";
+  ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(2, subpdu.sdu_length()));
 
   unsigned lcg_6_flag = (bool)(subpdu.payload()[0] & 0b01000000U);
   ASSERT_TRUE(lcg_6_flag);
@@ -342,7 +345,7 @@ TEST(mac_ul_subpdu, decode_crnti_ce)
   // - MAC CE with C-RNTI.
   //
   // |   |   |   |   |   |   |   |   |
-  // | R | R |         LCID          |  Octet 1
+  // | R | F |         LCID          |  Octet 1
   // |             RNTI              |  Octet 2
   // |             RNTI              |  Octet 3
 
@@ -354,6 +357,7 @@ TEST(mac_ul_subpdu, decode_crnti_ce)
   // Test expected length.
   ASSERT_EQ(2, subpdu.sdu_length()) << "Wrong MAC CE C-RNTI (2 bytes)";
   ASSERT_EQ(3, subpdu.total_length()) << "Wrong subPDU length for MAC CE C-RNTI (1B header + 2B MAC-CE)";
+  ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(1, subpdu.sdu_length()));
 
   rnti_t rnti = decode_crnti_ce(subpdu.payload());
   ASSERT_EQ(to_rnti(0x4601), rnti);
@@ -371,9 +375,9 @@ TEST(mac_ul_subpdu, decode_se_phr)
   // - MAC CE with Single Entry PHR.
   //
   // |   |   |   |   |   |   |   |   |
-  // | R | R |         LCID          |  Octet 1
-  // | R | R |          PH           |  Octet 2
-  // | R | R |        P_CMAX         |  Octet 3
+  // | R | F |         LCID          |  Octet 1
+  // | R | F |          PH           |  Octet 2
+  // | R | F |        P_CMAX         |  Octet 3
 
   // R/LCID MAC subheader = R|R|LCID = 0x39 or LCID=57
   // MAC CE SE PHR = {0x27, 0x2f}
@@ -384,6 +388,7 @@ TEST(mac_ul_subpdu, decode_se_phr)
   // Test expected length.
   ASSERT_EQ(2, subpdu.sdu_length()) << "Wrong SDU length for MAC CE SE PHR (2 bytes)";
   ASSERT_EQ(3, subpdu.total_length()) << "Wrong subPDU length for MAC CE SE PHR (1 B header + 2B SDU)";
+  ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(1, subpdu.sdu_length()));
 
   // Test Payload.
   unsigned ph = subpdu.payload()[0] & 0b00111111U;
@@ -403,7 +408,7 @@ TEST(mac_ul_subpdu, decode_subpdu_padding)
   // - MAC CE with padding.
   //
   // |   |   |   |   |   |   |   |   |
-  // | R | R |         LCID          |  Octet 1
+  // | R | F |         LCID          |  Octet 1
   // |             0x00              |  Octet 2
   //               ...
   // |             0x00              |  Octet n
@@ -417,6 +422,7 @@ TEST(mac_ul_subpdu, decode_subpdu_padding)
   // Test expected length.
   ASSERT_EQ(2, subpdu.sdu_length()) << "Wrong SDU length for MAC CE SE PHR (2 bytes)";
   ASSERT_EQ(3, subpdu.total_length()) << "Wrong subPDU length for MAC CE SE PHR (1 B header + 2B SDU)";
+  ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(1, subpdu.sdu_length()));
 
   // Test Payload.
   unsigned padding_1 = subpdu.payload()[0];
@@ -444,6 +450,7 @@ TEST(mac_ul_pdu, decode_ul_ccch_and_padding)
   auto subpdus = pdu.begin();
   ASSERT_EQ(6, subpdus->sdu_length()) << "Wrong SDU length for UL CCCH (6 bytes)";
   ASSERT_EQ(7, subpdus->total_length()) << "Wrong subPDU length for UL CCCH (1 B header + 6B SDU)";
+  ASSERT_EQ(subpdus->payload(), byte_buffer_view(msg).view(1, subpdus->sdu_length()));
 
   subpdus++;
   ASSERT_EQ(3, subpdus->sdu_length()) << "Wrong padding length (3 bytes)";
@@ -459,7 +466,7 @@ TEST(mac_ul_pdu, decode_short_sdu)
   // - MAC SDU (L octets).
   //
   // |   |   |   |   |   |   |   |   |
-  // | R | R |         LCID          |  Octet 1
+  // | R | F |         LCID          |  Octet 1
   // |              L                |  Octet 2
   // |            PAYLOAD            |  Octet 3
   //               ...
