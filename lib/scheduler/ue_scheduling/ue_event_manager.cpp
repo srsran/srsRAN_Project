@@ -63,7 +63,7 @@ ue_event_manager::ue_event_manager(const scheduler_ue_expert_config& expert_cfg_
 {
 }
 
-void ue_event_manager::handle_add_ue_request(const sched_ue_creation_request_message& ue_request)
+void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
 {
   // Create UE object outside the scheduler slot indication handler to minimize latency.
   std::unique_ptr<ue> u = std::make_unique<ue>(expert_cfg, *du_cells[ue_request.cells[0].cell_index].cfg, ue_request);
@@ -99,7 +99,7 @@ void ue_event_manager::handle_ue_reconfiguration_request(const sched_ue_reconfig
   });
 }
 
-void ue_event_manager::handle_ue_delete_request(du_ue_index_t ue_index)
+void ue_event_manager::handle_ue_removal_request(du_ue_index_t ue_index)
 {
   common_events.emplace(ue_index, [this, ue_index](event_logger& ev_logger) {
     ev_logger.enqueue("ue_rem(ueId={})", ue_index);

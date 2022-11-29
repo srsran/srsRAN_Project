@@ -215,7 +215,7 @@ public:
     });
   }
 
-  async_task<bool> handle_ue_deletion_request(const mac_ue_delete_request_message& msg) override
+  async_task<bool> handle_ue_removal_request(const mac_ue_delete_request_message& msg) override
   {
     return launch_async([](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);

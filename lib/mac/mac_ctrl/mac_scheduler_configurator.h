@@ -34,7 +34,7 @@ public:
 
   /// \brief Removes UE from MAC scheduler in an asynchronous manner.
   /// The scheduler shouldn't allocate more grants directed at the UE being removed after this procedure is complete.
-  virtual async_task<bool> handle_ue_deletion_request(const mac_ue_delete_request_message& msg) = 0;
+  virtual async_task<bool> handle_ue_removal_request(const mac_ue_delete_request_message& msg) = 0;
 
   virtual sched_configuration_notifier& get_sched_notifier() = 0;
 };

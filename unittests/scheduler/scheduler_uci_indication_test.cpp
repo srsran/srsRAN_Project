@@ -44,7 +44,7 @@ protected:
   {
     sched_ue_creation_request_message ue_cfg_msg = make_default_sched_ue_creation_request();
     ue_cfg_msg.crnti                             = ue_rnti;
-    sched->handle_add_ue_request(ue_cfg_msg);
+    sched->handle_ue_creation_request(ue_cfg_msg);
   }
 
   void run_slot()

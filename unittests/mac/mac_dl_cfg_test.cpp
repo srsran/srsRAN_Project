@@ -31,7 +31,7 @@ public:
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override { return true; }
   void handle_rach_indication(const rach_indication_message& msg) override {}
-  void handle_add_ue_request(const sched_ue_creation_request_message& ue_request) override
+  void handle_ue_creation_request(const sched_ue_creation_request_message& ue_request) override
   {
     logger.info("SCHED: ueId={} Creation", ue_request.ue_index);
     notifier.on_ue_config_complete(ue_request.ue_index);
@@ -41,7 +41,7 @@ public:
     logger.info("SCHED: ueId={} Reconfiguration", ue_request.ue_index);
     notifier.on_ue_config_complete(ue_request.ue_index);
   }
-  void handle_ue_delete_request(du_ue_index_t ue_index) override
+  void handle_ue_removal_request(du_ue_index_t ue_index) override
   {
     logger.info("SCHED: ueId={} Deletion", ue_index);
     notifier.on_ue_delete_response(ue_index);

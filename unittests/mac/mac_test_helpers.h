@@ -34,9 +34,9 @@ public:
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override { return true; }
   void handle_rach_indication(const rach_indication_message& msg) override {}
-  void handle_add_ue_request(const sched_ue_creation_request_message& ue_request) override {}
+  void handle_ue_creation_request(const sched_ue_creation_request_message& ue_request) override {}
   void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) override {}
-  void handle_ue_delete_request(du_ue_index_t ue_index) override {}
+  void handle_ue_removal_request(du_ue_index_t ue_index) override {}
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override {}
   void handle_crc_indication(const ul_crc_indication& crc) override {}
   void handle_uci_indication(const uci_indication& uci) override {}

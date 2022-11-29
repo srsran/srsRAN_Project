@@ -39,9 +39,9 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
   return true;
 }
 
-void scheduler_impl::handle_add_ue_request(const sched_ue_creation_request_message& ue_request)
+void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
 {
-  ue_cfg_handler.handle_add_ue_request(ue_request);
+  ue_cfg_handler.handle_ue_creation_request(ue_request);
 }
 
 void scheduler_impl::handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)
@@ -49,9 +49,9 @@ void scheduler_impl::handle_ue_reconfiguration_request(const sched_ue_reconfigur
   ue_cfg_handler.handle_ue_reconfiguration_request(ue_request);
 }
 
-void scheduler_impl::handle_ue_delete_request(du_ue_index_t ue_index)
+void scheduler_impl::handle_ue_removal_request(du_ue_index_t ue_index)
 {
-  ue_cfg_handler.handle_ue_delete_request(ue_index);
+  ue_cfg_handler.handle_ue_removal_request(ue_index);
 }
 
 void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)

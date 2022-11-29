@@ -24,14 +24,14 @@ public:
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override;
 
-  /// Add UE.
-  void handle_add_ue_request(const sched_ue_creation_request_message& ue_request) override;
+  /// Add new UE to scheduler.
+  void handle_ue_creation_request(const sched_ue_creation_request_message& ue_request) override;
 
   /// Reconfiguration existing UE.
   void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) override;
 
-  /// Delete UE.
-  void handle_ue_delete_request(du_ue_index_t ue_index) override;
+  /// Remove UE from scheduler.
+  void handle_ue_removal_request(du_ue_index_t ue_index) override;
 
   /// Called when RACH is detected.
   void handle_rach_indication(const rach_indication_message& msg) override;

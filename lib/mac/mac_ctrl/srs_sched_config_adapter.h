@@ -45,7 +45,7 @@ public:
       CORO_BEGIN(ctx);
 
       // Create UE in the Scheduler.
-      srs_sched->handle_add_ue_request(make_scheduler_ue_creation_request(msg));
+      srs_sched->handle_ue_creation_request(make_scheduler_ue_creation_request(msg));
 
       // Await Scheduler notification that UE was added.
       CORO_AWAIT(sched_cfg_notif_map[msg.ue_index].ue_config_ready);
@@ -71,13 +71,13 @@ public:
     });
   }
 
-  async_task<bool> handle_ue_deletion_request(const mac_ue_delete_request_message& msg) override
+  async_task<bool> handle_ue_removal_request(const mac_ue_delete_request_message& msg) override
   {
     return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
 
       // Remove UE from the scheduler.
-      srs_sched->handle_ue_delete_request(msg.ue_index);
+      srs_sched->handle_ue_removal_request(msg.ue_index);
 
       // Await Scheduler notification.
       CORO_AWAIT(sched_cfg_notif_map[msg.ue_index].ue_config_ready);

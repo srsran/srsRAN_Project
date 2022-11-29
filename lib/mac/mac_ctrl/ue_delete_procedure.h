@@ -43,7 +43,7 @@ public:
     // 1. Remove UE from scheduler.
     // Note: Removing the UE from the scheduler before the MAC avoids potential race conditions (assuming the scheduler
     // doesn't allocate UEs after being removed).
-    CORO_AWAIT(sched_configurator.handle_ue_deletion_request(req));
+    CORO_AWAIT(sched_configurator.handle_ue_removal_request(req));
 
     // 2. Remove UE and associated DL channels from the MAC DL.
     CORO_AWAIT(dl_mac.remove_ue(req));
