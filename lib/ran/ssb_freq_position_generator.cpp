@@ -1,25 +1,6 @@
-/*
- *
- * Copyright 2013-2022 Software Radio Systems Limited
- *
- * By using this file, you agree to the terms and conditions set
- * forth in the LICENSE file which can be found at the top level of
- * the distribution.
- *
- */
-
-#include "ssb_coreset0_freq_pos_generator.h"
-#include "../../scheduler/support/pdcch/pdcch_type0_css_occasions.h"
-#include "srsgnb/ran/band_helper.h"
-#include "srsgnb/ran/bs_channel_bandwidth.h"
-#include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
-#include <math.h>
+#include "ssb_freq_position_generator.h"
 
 using namespace srsgnb;
-
-using namespace srs_du;
-
-// ------------------ Static functions --------------------.
 
 // Compute the frequency (in Hz) corresponding to the first subcarrier of the SSB.
 static double get_f_ssb_0_hz(double ss_ref, subcarrier_spacing scs_ssb)
@@ -61,32 +42,6 @@ static ssb_subcarrier_offset compute_k_ssb(double f_ssb_0_hz, double point_A_hz,
 
   return k_ssb;
 }
-
-// Compute the maximum value of row index of Table 13-11, TS 38.213 that can be addressed for a specific configuration.
-static unsigned
-get_max_coreset0_index(subcarrier_spacing scs_common, subcarrier_spacing scs_ssb, min_channel_bandwidth min_channel_bw)
-{
-  if (min_channel_bw == min_channel_bandwidth::MHz5 || min_channel_bw == min_channel_bandwidth::MHz10) {
-    if (scs_ssb == subcarrier_spacing::kHz15 and scs_common == subcarrier_spacing::kHz15) {
-      return 14;
-    } else if (scs_ssb == subcarrier_spacing::kHz15 and scs_common == subcarrier_spacing::kHz30) {
-      return 13;
-    } else if (scs_ssb == subcarrier_spacing::kHz30 and scs_common == subcarrier_spacing::kHz15) {
-      return 8;
-    } else if (scs_ssb == subcarrier_spacing::kHz30 and scs_common == subcarrier_spacing::kHz30) {
-      return 15;
-    }
-  } else if (min_channel_bw == min_channel_bandwidth::MHz40) {
-    if (scs_ssb == subcarrier_spacing::kHz30 and scs_common == subcarrier_spacing::kHz15) {
-      return 8;
-    } else if (scs_ssb == subcarrier_spacing::kHz30 and scs_common == subcarrier_spacing::kHz30) {
-      return 9;
-    }
-  }
-  return 0;
-}
-
-// --------------- du_config_generator class functions ----------------.
 
 ssb_freq_position_generator::ssb_freq_position_generator(unsigned           dl_arfcn_,
                                                          nr_band            nr_band_,
@@ -221,68 +176,4 @@ ssb_freq_location ssb_freq_position_generator::get_next_ssb_location()
   }
 
   return ssb;
-}
-
-ssb_coreset0_freq_location srsgnb::srs_du::get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
-                                                                          nr_band            nr_band,
-                                                                          unsigned           n_rbs,
-                                                                          subcarrier_spacing scs_common,
-                                                                          subcarrier_spacing scs_ssb)
-{
-  srsgnb_assert(nr_band != nr_band::n34 && nr_band != nr_band::n38 && nr_band != nr_band::n39 &&
-                    nr_band != nr_band::n41 && nr_band != nr_band::n79,
-                "Bands n34, n38, n39, n41 and n79 not currently supported");
-
-  // Get f_ref, point_A from dl_arfcn, band and bandwidth.
-  ssb_freq_position_generator du_cfg{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
-
-  // Initialized the results.
-  ssb_coreset0_freq_location results{.is_valid = false};
-
-  // Select 1st SSB. Select first searchspace0_idx and find viable coreset0 index.
-  ssb_freq_location ssb = du_cfg.get_next_ssb_location();
-  while (ssb.is_valid) {
-    // CRB index where the first SSB's subcarrier is located.
-    unsigned crbs_ssb =
-        scs_common == subcarrier_spacing::kHz15 ? ssb.offset_to_point_A.to_uint() : ssb.offset_to_point_A.to_uint() / 2;
-
-    // Iterate over the searchSpace0_indices and corresponding configurations.
-    for (uint8_t ss0_idx = 0; ss0_idx <= du_cfg.get_max_ss0_idx(); ++ss0_idx) {
-      pdcch_type0_css_occasion_pattern1_description ss0_config =
-          pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
-              .is_fr2 = false, .ss_zero_index = ss0_idx, .nof_symb_coreset = 1});
-
-      // Get the maximum Coreset0 index that can be used for the Tables 13-[1-6], TS 38.213.
-      unsigned max_cset0_idx =
-          get_max_coreset0_index(scs_common, scs_ssb, band_helper::get_min_channel_bw(nr_band, scs_common));
-
-      // Iterate over the coreset0_indices and corresponding configurations.
-      for (unsigned cset0_idx = 0; cset0_idx <= max_cset0_idx; ++cset0_idx) {
-        auto coreset0_cfg = pdcch_type0_css_coreset_get(
-            band_helper::get_min_channel_bw(nr_band, scs_common), scs_ssb, scs_common, cset0_idx, ssb.k_ssb.to_uint());
-
-        // Verify if the candidate Coreset0 config is correct.
-        bool coreset0_not_below_pointA = crbs_ssb >= static_cast<unsigned>(coreset0_cfg.offset);
-        bool coreset0_not_above_bw_ub =
-            crbs_ssb - static_cast<unsigned>(coreset0_cfg.offset) + coreset0_cfg.nof_rb_coreset <= n_rbs;
-        bool ss0_not_overlapping_with_ssb_symbols =
-            ss0_config.offset == 0 ? coreset0_cfg.nof_symb_coreset <= du_cfg.get_ssb_first_symbol() : true;
-
-        // Return the candidate config, if it passes all the checks.
-        if (coreset0_not_below_pointA && coreset0_not_above_bw_ub && ss0_not_overlapping_with_ssb_symbols) {
-          results.offset_to_point_A = ssb.offset_to_point_A;
-          results.k_ssb             = ssb.k_ssb;
-          results.coreset0_idx      = cset0_idx;
-          results.searchspace0_idx  = ss0_idx;
-          results.is_valid          = true;
-          return results;
-        }
-      }
-    }
-
-    ssb = du_cfg.get_next_ssb_location();
-  }
-
-  // If no configuration is good, then the function returns a configuration with \c .is_valid == false.
-  return results;
 }

@@ -8,7 +8,8 @@
  *
  */
 
-#include "du_test_suite.h"
+#include "ssb_coreset0_freq_pos_checker.h"
+#include "../../lib/ran/ssb_freq_position_generator.h"
 #include "srsgnb/ran/band_helper.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/support/test_utils.h"
@@ -42,12 +43,12 @@ static void test_ssb_belong_to_sync_raster(double ss_ssb_hz)
   }
 }
 
-void srsgnb::test_ssb_coreset0_allocation(unsigned                                  dl_arfcn,
-                                          nr_band                                   nr_band,
-                                          unsigned                                  n_rbs,
-                                          subcarrier_spacing                        scs_common,
-                                          subcarrier_spacing                        scs_ssb,
-                                          const srs_du::ssb_coreset0_freq_location& params)
+void srsgnb::test_ssb_coreset0_allocation(unsigned                                       dl_arfcn,
+                                          nr_band                                        nr_band,
+                                          unsigned                                       n_rbs,
+                                          subcarrier_spacing                             scs_common,
+                                          subcarrier_spacing                             scs_ssb,
+                                          const band_helper::ssb_coreset0_freq_location& params)
 {
   // Position of SSB central carrier, located at the 120th SSB's subcarrier.
   double f_ref_hz   = band_helper::nr_arfcn_to_freq(dl_arfcn);

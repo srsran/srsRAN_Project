@@ -13,6 +13,7 @@
 /// This header is currently used only by the MAC to compute extra SSB parameters (needed for scheduling) from those
 /// provided by DU.
 
+#include "srsgnb/ran/ssb_properties.h"
 #include <stdint.h>
 
 namespace srsgnb {
@@ -192,6 +193,38 @@ unsigned get_n_rbs_from_bw(bs_channel_bandwidth_fr1 bw, subcarrier_spacing scs, 
 /// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1.
 /// \return The minimum BS channel BW for the given band and SCS, as per TS 38.104, Table 5.3.5-1.
 min_channel_bandwidth get_min_channel_bw(nr_band nr_band, subcarrier_spacing scs);
+
+/// Contains the parameters that are returned by the DU config generator.
+struct ssb_coreset0_freq_location {
+  /// Tells whether the set of parameters represent a valid configuration.
+  bool is_valid;
+  /// <em>offsetToPointA<\em>, as per Section 4.4.4.2, TS 38.211.
+  ssb_offset_to_pointA offset_to_point_A;
+  /// \f$k_{SSB}\f$, as per Section 7.4.3.1, TS 38.211.
+  ssb_subcarrier_offset k_ssb;
+  /// <em>controlResourceSetZero<\em>, as per Section 13, TS 38.213.
+  unsigned coreset0_idx;
+  /// <em>searchSpaceZero<\em>, as per Section 13, TS 38.213.
+  unsigned searchspace0_idx;
+};
+
+/// \brief Compute the position of the SSB within the band and the Coreset0/SS0 indices given some initial parameters.
+///
+/// It returns the first valid combination of parameters such that the SSB and CORESET0 get allocated within the band
+/// without overlapping over the same resources.
+///
+/// \param[in] dl_arfcn is <em>DL-ARFCN<\em> corresponding to \f$F_{REF}\f$, as per TS 38.104, Section 5.4.2.1.
+/// \param[in] nr_band is <em>NR operating band<\em>, as per TS 38.104, Table 5.2-1. Only FR1 values are supported.
+/// \param[in] n_rbs is <em>Transmission bandwidth<\em> or \f$N_{RB}\f$ in number of RBs, as per TS 38.104, Table 5.2-1.
+/// \param[in] scs_common is <em>subCarrierSpacingCommon<\em>, as per TS 38.331.
+/// \param[in] scs_ssb is ssb subcarrier spacing.
+/// \return The parameters defining the position of the SSB within the band and Coreset0 and SS0 indices for
+/// Table 13-[1-6] and Table 13-11, respectively, in TS 38.213.
+ssb_coreset0_freq_location get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
+                                                          nr_band            nr_band,
+                                                          unsigned           n_rbs,
+                                                          subcarrier_spacing scs_common,
+                                                          subcarrier_spacing scs_ssb);
 
 } // namespace band_helper
 

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../../lib/du_manager/converters/ssb_coreset0_freq_pos_generator.h"
+#include "srsgnb/ran/band_helper.h"
 
 namespace srsgnb {
 
@@ -23,11 +23,11 @@ namespace srsgnb {
 /// \param[in] scs_ssb is ssb subcarrier spacing.
 /// \param[in] params is set of parameters defining the SSB position within the band and the CORESET0 and
 /// SearchSpaceZero indices.
-void test_ssb_coreset0_allocation(unsigned                                  dl_arfcn,
-                                  nr_band                                   nr_band,
-                                  unsigned                                  n_rbs_,
-                                  subcarrier_spacing                        scs_common,
-                                  subcarrier_spacing                        scs_ssb,
-                                  const srs_du::ssb_coreset0_freq_location& params);
+void test_ssb_coreset0_allocation(unsigned                                       dl_arfcn,
+                                  nr_band                                        nr_band,
+                                  unsigned                                       n_rbs_,
+                                  subcarrier_spacing                             scs_common,
+                                  subcarrier_spacing                             scs_ssb,
+                                  const band_helper::ssb_coreset0_freq_location& params);
 
 } // namespace srsgnb

@@ -10,7 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/du/du_cell_config.h"
+#include "srsgnb/ran/band_helper.h"
+#include "srsgnb/ran/resource_block.h"
+#include "srsgnb/ran/ssb_properties.h"
 
 namespace srsgnb {
 
@@ -32,22 +34,6 @@ const double N_SIZE_SYNC_RASTER_2_HZ = 1440e3;
 const unsigned N_UB_SYNC_RASTER_1 = 2500;
 /// Upper-bound for \f$N\f$ within 3GHz-24.25GHz freq. range, as per Table 5.4.3.1-1, TS 38.104.
 const unsigned N_UB_SYNC_RASTER_2 = 14757;
-
-namespace srs_du {
-
-/// Contains the parameters that are returned by the DU config generator.
-struct ssb_coreset0_freq_location {
-  /// Tells whether the set of parameters represent a valid configuration.
-  bool is_valid;
-  /// <em>offsetToPointA<\em>, as per Section 4.4.4.2, TS 38.211.
-  ssb_offset_to_pointA offset_to_point_A;
-  /// \f$k_{SSB}\f$, as per Section 7.4.3.1, TS 38.211.
-  ssb_subcarrier_offset k_ssb;
-  /// <em>controlResourceSetZero<\em>, as per Section 13, TS 38.213.
-  unsigned coreset0_idx;
-  /// <em>searchSpaceZero<\em>, as per Section 13, TS 38.213.
-  unsigned searchspace0_idx;
-};
 
 /// Contains the parameters defining the SSB position within the band; returned by the DU config generator.
 struct ssb_freq_location {
@@ -107,25 +93,5 @@ private:
   /// This is the \f$M\f$ parameter in the synchronization raster, as per Table 5.4.3.1-1, TS 38.104.
   unsigned M_raster;
 };
-
-/// \brief Compute the position of the SSB within the band and the Coreset0/SS0 indices given some initial parameters.
-///
-/// It returns the first valid combination of parameters such that the SSB and CORESET0 get allocated within the band
-/// without overlapping over the same resources.
-///
-/// \param[in] dl_arfcn is <em>DL-ARFCN<\em> corresponding to \f$F_{REF}\f$, as per TS 38.104, Section 5.4.2.1.
-/// \param[in] nr_band is <em>NR operating band<\em>, as per TS 38.104, Table 5.2-1. Only FR1 values are supported.
-/// \param[in] n_rbs is <em>Transmission bandwidth<\em> or \f$N_{RB}\f$ in number of RBs, as per TS 38.104, Table 5.2-1.
-/// \param[in] scs_common is <em>subCarrierSpacingCommon<\em>, as per TS 38.331.
-/// \param[in] scs_ssb is ssb subcarrier spacing.
-/// \return The parameters defining the position of the SSB within the band and Coreset0 and SS0 indices for
-/// Table 13-[1-6] and Table 13-11, respectively, in TS 38.213.
-ssb_coreset0_freq_location get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
-                                                          nr_band            nr_band,
-                                                          unsigned           n_rbs,
-                                                          subcarrier_spacing scs_common,
-                                                          subcarrier_spacing scs_ssb);
-
-} // namespace srs_du
 
 } // namespace srsgnb

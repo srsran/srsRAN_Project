@@ -8,10 +8,12 @@
 
 add_library(srsgnb_ran band_helper.cpp
         ssb_mapping.cpp
+        ssb_freq_position_generator.cpp
         pdcch/cce_to_prb_mapping.cpp
         pdcch/dci_packing.cpp
         pdcch/pdcch_candidates.cpp
         pdcch/pdcch_type0_css_coreset_config.cpp
+        pdcch/pdcch_type0_css_occasions.cpp
         pdsch/pdsch_mcs.cpp
         prach/prach_configuration.cpp
         prach/prach_cyclic_shifts.cpp

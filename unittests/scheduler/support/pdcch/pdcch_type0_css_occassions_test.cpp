@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/scheduler/support/pdcch/pdcch_type0_css_occasions.h"
+#include "srsgnb/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;

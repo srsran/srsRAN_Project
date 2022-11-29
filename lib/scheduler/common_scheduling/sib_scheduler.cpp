@@ -11,11 +11,11 @@
 #include "sib_scheduler.h"
 #include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
-#include "../support/pdcch/pdcch_type0_css_occasions.h"
 #include "../support/prbs_calculator.h"
 #include "srsgnb/ran/band_helper.h"
 #include "srsgnb/ran/bs_channel_bandwidth.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
+#include "srsgnb/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsgnb/ran/sib_configuration.h"
 

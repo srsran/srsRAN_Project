@@ -8,6 +8,13 @@
 
 set_directory_properties(PROPERTIES LABELS "ran")
 
+add_library(du_test_suite ssb_coreset0_freq_pos_checker.cpp)
+target_link_libraries(du_test_suite srsgnb_ran gtest)
+
+add_executable(test_du_config_generator test_ssb_coreset0_freq_pos_generator.cpp)
+target_link_libraries(test_du_config_generator srsgnb_du_manager srsgnb_support du_test_suite gtest gtest_main)
+add_test(test_du_config_generator test_du_config_generator)
+
 add_executable(dci_packing_test pdcch/dci_packing_test.cpp)
 target_link_libraries(dci_packing_test srsgnb_support srsgnb_ran)
 add_test(dci_packing_test dci_packing_test)
