@@ -73,33 +73,6 @@ TEST_F(rrc_setup, when_setup_complete_timeout_then_ue_deleted)
   check_ue_release_requested();
 }
 
-/// Test the RRC setup with connected AMF
-TEST_F(rrc_setup, when_key_provided_smc_generated)
-{
-  connect_amf();
-  receive_setup_request();
-
-  // check if the RRC setup message was generated
-  ASSERT_EQ(get_srb0_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_setup);
-
-  // check if SRB1 was created
-  check_srb1_exists();
-
-  receive_setup_complete();
-
-  // Initialize security context and capabilities.
-  rrc_init_security_context init_sec_ctx = {};
-  std::fill(init_sec_ctx.supported_int_algos.begin(), init_sec_ctx.supported_int_algos.end(), true);
-  std::fill(init_sec_ctx.supported_enc_algos.begin(), init_sec_ctx.supported_enc_algos.end(), true);
-
-  // Trigger SMC
-  init_security_context(init_sec_ctx);
-  check_smc_pdu();
-
-  // Receive SMC complete
-  receive_smc_complete();
-}
-
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
