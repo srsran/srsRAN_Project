@@ -12,6 +12,7 @@
 #include "lib/cu_cp/ue_manager.h"
 #include "lib/ngap/ngc_asn1_packer.h"
 #include "srsgnb/gateways/network_gateway_factory.h"
+#include "srsgnb/ngap/ngc_configuration_helpers.h"
 #include "srsgnb/ngap/ngc_factory.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/io_broker/io_broker_factory.h"
@@ -101,7 +102,7 @@ protected:
 ng_setup_request_message generate_ng_setup_request_message(ngc_configuration ngc_cfg)
 {
   ng_setup_request_message request_msg = {};
-  fill_asn1_ng_setup_request(request_msg.msg, ngc_cfg.gnb_id, ngc_cfg.ran_node_name, ngc_cfg.plmn_id, ngc_cfg.tac);
+  fill_asn1_ng_setup_request(request_msg.msg, ngc_cfg.gnb_id, ngc_cfg.ran_node_name, ngc_cfg.plmn, ngc_cfg.tac);
   return request_msg;
 }
 
@@ -109,11 +110,7 @@ ng_setup_request_message generate_ng_setup_request_message(ngc_configuration ngc
 TEST_F(ngap_integration_test, when_ng_setup_response_received_then_amf_connected)
 {
   // Action 1: Launch NG setup procedure
-  ngc_configuration ngc_cfg;
-  ngc_cfg.gnb_id        = 411;
-  ngc_cfg.ran_node_name = "srsgnb01";
-  ngc_cfg.plmn_id       = "00f110";
-  ngc_cfg.tac           = 7;
+  ngc_configuration ngc_cfg = srsgnb::config_helpers::make_default_ngc_config();
 
   ng_setup_request_message request_msg = generate_ng_setup_request_message(ngc_cfg);
   test_logger.info("Launching NG setup procedure...");

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "cu_cp_configuration.h"
+#include "srsgnb/ngap/ngc_configuration_helpers.h"
 
 // TODO: This file is temporary. Eventually we will receive cell configurations from the CU config file.
 
@@ -24,7 +25,7 @@ inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
 
   cfg.ngc_config.gnb_id        = 411;
   cfg.ngc_config.ran_node_name = "srsgnb01";
-  cfg.ngc_config.plmn_id       = "00f110";
+  cfg.ngc_config.plmn          = "00f110";
   cfg.ngc_config.tac           = 7;
 
   return cfg;

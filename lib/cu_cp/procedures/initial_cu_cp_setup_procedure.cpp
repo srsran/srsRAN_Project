@@ -45,7 +45,7 @@ async_task<ng_setup_response_message> initial_cu_cp_setup_procedure::start_ng_se
   // Prepare request to send to ng.
   ng_setup_request_message request_msg = {};
 
-  fill_asn1_ng_setup_request(request_msg.msg, ngc_cfg.gnb_id, ngc_cfg.ran_node_name, ngc_cfg.plmn_id, ngc_cfg.tac);
+  fill_asn1_ng_setup_request(request_msg.msg, ngc_cfg.gnb_id, ngc_cfg.ran_node_name, ngc_cfg.plmn, ngc_cfg.tac);
 
   // Initiate NG Setup Request.
   return ngc_conn_mng.handle_ng_setup_request(request_msg);

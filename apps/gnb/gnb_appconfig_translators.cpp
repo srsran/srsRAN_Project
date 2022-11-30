@@ -16,7 +16,7 @@ srs_cu_cp::cu_cp_configuration srsgnb::generate_cu_cp_config(const gnb_appconfig
   srs_cu_cp::cu_cp_configuration out_cfg = config_helpers::make_default_cu_cp_config();
   out_cfg.ngc_config.gnb_id              = config.gnb_id;
   out_cfg.ngc_config.ran_node_name       = config.ran_node_name;
-  out_cfg.ngc_config.plmn_id             = config.common_cell_cfg.plmn_id;
+  out_cfg.ngc_config.plmn                = config.common_cell_cfg.plmn_id;
   out_cfg.ngc_config.tac                 = config.common_cell_cfg.tac;
 
   if (!config_helpers::is_valid_configuration(out_cfg)) {
