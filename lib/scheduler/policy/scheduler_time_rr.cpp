@@ -59,7 +59,7 @@ static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_re
 
       bwp_configuration bwp_cfg = ue_cc.cfg().dl_bwp_common(ue_cc.active_bwp_id()).generic_params;
       if (ss_cfg->type == search_space_configuration::type_t::common) {
-        bwp_cfg = ue_cc.cfg().dl_bwp_common(ue_cc.initial_bwp_id()).generic_params;
+        bwp_cfg = ue_cc.cfg().dl_bwp_common(to_bwp_id(0)).generic_params;
         if (cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
           bwp_cfg.crbs = get_coreset0_crbs(cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdcch_common);
         }
@@ -121,7 +121,7 @@ static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_re
 
     // See TS 38.212, 7.3.1.0 DCI size alignment.
     const bwp_uplink_common& bwp_ul = ue_cell_cfg.ul_bwp_common(
-        ss_cfg->type == search_space_configuration::type_t::common ? ue_cc.initial_bwp_id() : ue_cc.active_bwp_id());
+        ss_cfg->type == search_space_configuration::type_t::common ? to_bwp_id(0) : ue_cc.active_bwp_id());
 
     unsigned          time_res = 0; // TODO: Find best candidate.
     unsigned          k2       = bwp_ul.pusch_cfg_common->pusch_td_alloc_list[time_res].k2; // TODO: Take from config.

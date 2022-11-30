@@ -34,7 +34,6 @@ public:
   rnti_t rnti() const { return crnti_; }
 
   bwp_id_t active_bwp_id() const { return to_bwp_id(0); }
-  bwp_id_t initial_bwp_id() const { return to_bwp_id(0); }
   bool     is_active() const { return true; }
 
   const ue_cell_configuration& cfg() const { return ue_cfg; }
