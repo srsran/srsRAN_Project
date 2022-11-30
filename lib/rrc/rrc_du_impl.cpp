@@ -10,6 +10,7 @@
 
 #include "rrc_du_impl.h"
 #include "../ran/gnb_format.h"
+#include "srsgnb/ran/nr_cgi_helpers.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
@@ -44,7 +45,7 @@ rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
                                               ngc_ctrl_notifier,
                                               msg.ue_index,
                                               msg.c_rnti,
-                                              msg.cgi,
+                                              msg.cell,
                                               cfg.ue_default_cfg,
                                               msg.srbs,
                                               msg.du_to_cu_container,

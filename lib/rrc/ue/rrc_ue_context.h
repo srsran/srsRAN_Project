@@ -12,6 +12,7 @@
 
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/cu_cp/ue_context.h"
+#include "srsgnb/rrc/rrc_cell_context.h"
 
 namespace srsgnb {
 
@@ -21,16 +22,16 @@ namespace srs_cu_cp {
 class rrc_ue_context_t
 {
 public:
-  rrc_ue_context_t(const ue_index_t              ue_index_,
-                   const rnti_t                  c_rnti_,
-                   const nr_cell_global_identity cgi_,
-                   const rrc_ue_cfg_t&           cfg_) :
-    ue_index(ue_index_), c_rnti(c_rnti_), cgi(cgi_), cfg(cfg_)
+  rrc_ue_context_t(const ue_index_t       ue_index_,
+                   const rnti_t           c_rnti_,
+                   const rrc_cell_context cell_,
+                   const rrc_ue_cfg_t&    cfg_) :
+    ue_index(ue_index_), c_rnti(c_rnti_), cell(cell_), cfg(cfg_)
   {
   }
   const ue_index_t                       ue_index; // UE index assigned by the DU processor
   const rnti_t                           c_rnti;   // current C-RNTI
-  nr_cell_global_identity                cgi;      /// global cell ID
+  const rrc_cell_context                 cell;     // current cell
   const rrc_ue_cfg_t&                    cfg;
   uint64_t                               setup_ue_id = -1;
   asn1::rrc_nr::establishment_cause_opts connection_cause;

@@ -80,7 +80,7 @@ void ngc_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
   auto& user_loc_info_nr       = init_ue_msg->user_location_info.value.set_user_location_info_nr();
   user_loc_info_nr.nr_cgi      = msg.nr_cgi;
   user_loc_info_nr.tai.plmn_id = msg.nr_cgi.plmn_id;
-  // TODO: Set tAC
+  user_loc_info_nr.tai.tac.from_number(msg.tac);
 
   init_ue_msg->ue_context_request_present = true;
   init_ue_msg->ue_context_request.value   = asn1::ngap::ue_context_request_opts::options::requested;

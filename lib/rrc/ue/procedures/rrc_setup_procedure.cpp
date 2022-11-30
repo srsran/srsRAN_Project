@@ -91,7 +91,7 @@ void rrc_setup_procedure::send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_comp
   std::copy(ded_nas_msg.begin(), ded_nas_msg.end(), init_ue_msg.nas_pdu.begin());
 
   init_ue_msg.establishment_cause = request.rrc_setup_request.establishment_cause;
-  init_ue_msg.cgi                 = context.cgi;
+  init_ue_msg.cell                = context.cell;
 
   nas_notifier.on_initial_ue_message(init_ue_msg);
 }

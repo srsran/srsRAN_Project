@@ -123,8 +123,9 @@ public:
     ngap_init_ue_msg.establishment_cause.value =
         rrcestablishment_cause_from_establishment_cause(msg.establishment_cause).value;
 
-    ngap_init_ue_msg.nr_cgi.nrcell_id.from_number(msg.cgi.nci.packed);
-    ngap_init_ue_msg.nr_cgi.plmn_id.from_string(msg.cgi.plmn_hex);
+    ngap_init_ue_msg.nr_cgi.nrcell_id.from_number(msg.cell.cgi.nci.packed);
+    ngap_init_ue_msg.nr_cgi.plmn_id.from_string(msg.cell.cgi.plmn_hex);
+    ngap_init_ue_msg.tac = msg.cell.tac;
 
     ngc_nas_msg_handler->handle_initial_ue_message(ngap_init_ue_msg);
   }

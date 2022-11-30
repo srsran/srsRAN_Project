@@ -12,6 +12,7 @@
 #include "../../ran/gnb_format.h"
 #include "../lib/f1c/common/asn1_helpers.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
+#include "srsgnb/ran/nr_cgi_helpers.h"
 
 using namespace srsgnb;
 using namespace asn1::f1ap;
@@ -207,6 +208,10 @@ void f1c_cu_impl::handle_initial_ul_rrc_message(const init_ulrrc_msg_transfer_s&
   }
 
   nr_cell_global_identity cgi = cgi_from_asn1(msg->nrcgi.value);
+  if (not srsgnb::config_helpers::is_valid(cgi)) {
+    logger.error("CGI isn't valid. Dropping Initial UL RRC message.");
+    return;
+  }
 
   logger.info("Received Initial UL RRC message transfer nr_cgi={}, crnti={}", cgi.nci.packed, msg->c_rnti.value);
   logger.debug("plmn={}", cgi.plmn);

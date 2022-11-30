@@ -117,7 +117,7 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
     res.msg     = cu_pdu_response.value().value.f1_setup_resp();
     res.success = true;
 
-    // Update F1 DU Context.
+    // Update F1 DU Context (taking values from request).
     du_ctxt.gnb_du_id   = request.msg->gnb_du_id->value;
     du_ctxt.gnb_du_name = request.msg->gnb_du_name->to_string();
     du_ctxt.served_cells.resize(request.msg->gnb_du_served_cells_list.value.size());

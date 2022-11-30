@@ -86,6 +86,7 @@ struct ngap_initial_ue_message {
   byte_buffer                             nas_pdu;
   asn1::ngap::rrcestablishment_cause_opts establishment_cause;
   asn1::ngap::nr_cgi_s                    nr_cgi;
+  uint32_t                                tac;
 };
 
 struct ngap_ul_nas_transport_message {

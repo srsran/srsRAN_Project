@@ -42,6 +42,7 @@ public:
 
 struct ue_creation_message {
   nr_cell_global_identity         cgi;
+  uint32_t                        tac;
   asn1::unbounded_octstring<true> du_to_cu_rrc_container;
   rnti_t                          c_rnti;
 };

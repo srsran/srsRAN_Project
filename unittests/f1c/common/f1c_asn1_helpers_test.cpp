@@ -11,6 +11,7 @@
 #include "lib/f1c/common/asn1_helpers.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/ran/nr_cgi.h"
+#include "srsgnb/ran/nr_cgi_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
@@ -21,10 +22,12 @@ TEST(f1c_asn1_helpers_test, test_ngi_converter)
   // use known a PLMN
   asn1::f1ap::nrcgi_s asn1_cgi;
   asn1_cgi.plmn_id.from_string("02f899"); // 208.99
+  asn1_cgi.nrcell_id.from_number(0x12345678);
 
   // convert to internal NGI representation
   nr_cell_global_identity ngi = cgi_from_asn1(asn1_cgi);
 
+  ASSERT_TRUE(srsgnb::config_helpers::is_valid(ngi));
   ASSERT_EQ(0xf208, ngi.mcc);        // BCD-encoded MCC
   ASSERT_EQ(0xff99, ngi.mnc);        // BCD-encoded MNC
   ASSERT_EQ("20899", ngi.plmn);      // human-readable PLMN

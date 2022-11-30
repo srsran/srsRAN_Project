@@ -15,6 +15,7 @@
 #include "f1c_asn1_helpers.h"
 #include "srsgnb/f1c/cu_cp/f1c_cu_factory.h"
 #include "srsgnb/pdcp/pdcp_factory.h"
+#include "srsgnb/ran/nr_cgi_helpers.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
@@ -78,6 +79,17 @@ void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& 
 
     du_cell.pci = cell_item.served_cell_info.nrpci;
     du_cell.cgi = cgi_from_asn1(cell_item.served_cell_info.nrcgi);
+    if (not srsgnb::config_helpers::is_valid(du_cell.cgi)) {
+      logger.error("Not handling F1 setup, invalid CGI for cell {}", du_cell.cell_index);
+      send_f1_setup_failure(asn1::f1ap::cause_c::types::options::radio_network);
+      return;
+    }
+    if (not cell_item.served_cell_info.five_gs_tac_present) {
+      logger.error("Not handling F1 setup, missing TAC for cell {}", du_cell.cell_index);
+      send_f1_setup_failure(asn1::f1ap::cause_c::types::options::radio_network);
+      return;
+    }
+    du_cell.tac = cell_item.served_cell_info.five_gs_tac.to_number();
 
     if (not cell_item.gnb_du_sys_info_present) {
       logger.error("Not handling served cells without system information");
@@ -176,7 +188,8 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   rrc_ue_creation_message rrc_ue_create_msg{};
   rrc_ue_create_msg.ue_index = ue_ctxt->ue_index;
   rrc_ue_create_msg.c_rnti   = ue_ctxt->c_rnti;
-  rrc_ue_create_msg.cgi      = msg.cgi;
+  rrc_ue_create_msg.cell.cgi = msg.cgi;
+  rrc_ue_create_msg.cell.tac = cell_db[pcell_index].tac;
   for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
     rrc_ue_create_msg.srbs[i] = ue_ctxt->srbs[i].rrc_tx_notifier.get();
   }

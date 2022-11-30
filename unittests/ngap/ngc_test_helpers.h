@@ -204,8 +204,9 @@ ngap_initial_ue_message generate_initial_ue_message()
   ngap_initial_ue_message msg;
   msg.cu_cp_ue_id = cu_cp_ue_id_t::min;
   msg.nas_pdu.resize(nas_pdu_len);
-  // msg.establishment_cause = asn1::ngap::rrcestablishment_cause_opts::options::mo_sig;
+  msg.establishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mo_sig;
   // msg.nr_cgi = {};
+  msg.tac = 7;
   return msg;
 }
 

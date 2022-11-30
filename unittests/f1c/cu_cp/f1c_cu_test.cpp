@@ -88,6 +88,17 @@ TEST_F(f1c_cu_test, when_unsupported_unsuccessful_outcome_received_then_message_
 /* Initial UL RRC Message handling                                                  */
 //////////////////////////////////////////////////////////////////////////////////////
 
+TEST_F(f1c_cu_test, when_init_ul_rrc_correct_then_ue_added)
+{
+  // Generate F1 Initial UL RRC Message
+  f1c_message init_ul_rrc_msg = generate_valid_init_ul_rrc_msg(41255);
+
+  // Pass message to F1C
+  f1c->handle_message(init_ul_rrc_msg);
+
+  EXPECT_EQ(f1c->get_nof_ues(), 1);
+}
+
 TEST_F(f1c_cu_test, when_duto_currc_container_missing_then_ue_not_added)
 {
   // Generate F1 Initial UL RRC Message without DU to CU RRC Container

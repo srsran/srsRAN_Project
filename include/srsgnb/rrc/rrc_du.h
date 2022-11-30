@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "rrc_cell_context.h"
 #include "srsgnb/cu_cp/ue_context.h"
 
 namespace srsgnb {
@@ -19,7 +20,7 @@ namespace srs_cu_cp {
 struct rrc_ue_creation_message {
   ue_index_t                      ue_index;
   rnti_t                          c_rnti;
-  nr_cell_global_identity         cgi;
+  rrc_cell_context                cell;
   srb_notifiers                   srbs;
   asn1::unbounded_octstring<true> du_to_cu_container;
   rrc_ue_task_scheduler*          ue_task_sched;

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "rrc_cell_context.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/rrc/rrc.h"
@@ -121,7 +122,7 @@ public:
 struct initial_ue_message {
   ue_index_t                             ue_index;
   byte_buffer                            nas_pdu;
-  nr_cell_global_identity                cgi;
+  rrc_cell_context                       cell;
   asn1::rrc_nr::establishment_cause_opts establishment_cause;
 };
 
