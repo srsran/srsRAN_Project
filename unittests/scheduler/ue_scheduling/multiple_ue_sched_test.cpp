@@ -184,7 +184,7 @@ protected:
     });
   }
 
-  unsigned tbs_scheduled_bytes_per_lc(const sched_test_ue& u, lcid_t lcid)
+  unsigned pdsch_tbs_scheduled_bytes_per_lc(const sched_test_ue& u, lcid_t lcid)
   {
     unsigned total_cw_tb_size_bytes = 0;
     for (const auto& grant : bench->sched_res->dl.ue_grants) {
@@ -198,6 +198,18 @@ protected:
           }
         }
       }
+    }
+    return total_cw_tb_size_bytes;
+  }
+
+  unsigned pusch_tbs_scheduled_bytes(const sched_test_ue& u)
+  {
+    unsigned total_cw_tb_size_bytes = 0;
+    for (const auto& grant : bench->sched_res->ul.puschs) {
+      if (grant.pusch_cfg.rnti != u.crnti) {
+        continue;
+      }
+      total_cw_tb_size_bytes += grant.pusch_cfg.tb_size_bytes;
     }
     return total_cw_tb_size_bytes;
   }
@@ -246,7 +258,7 @@ protected:
   }
 };
 
-TEST_P(multiple_ue_sched_tester, two_ues_dl_buffer_state_indication_test)
+TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
 {
   setup_sched(create_expert_config(10),
               create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
@@ -264,7 +276,7 @@ TEST_P(multiple_ue_sched_tester, two_ues_dl_buffer_state_indication_test)
     run_slot();
     for (unsigned idx = 0; idx < params.nof_ues; idx++) {
       auto&    test_ue        = get_ue(to_du_ue_index(idx));
-      unsigned tbs_shed_bytes = tbs_scheduled_bytes_per_lc(test_ue, LCID_MIN_DRB);
+      unsigned tbs_shed_bytes = pdsch_tbs_scheduled_bytes_per_lc(test_ue, LCID_MIN_DRB);
       if (tbs_shed_bytes > test_ue.dl_bsr_list[0].bs) {
         // Accounting for MAC headers.
         test_ue.dl_bsr_list[0].bs = 0;
@@ -280,13 +292,47 @@ TEST_P(multiple_ue_sched_tester, two_ues_dl_buffer_state_indication_test)
   }
 }
 
+TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
+{
+  setup_sched(create_expert_config(10), create_random_cell_config_request(duplex_mode::TDD));
+  // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in params.
+  // Assumption: LCID is DRB0.
+  for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+    add_ue(to_du_ue_index(idx), LCID_MIN_DRB);
+
+    notify_ul_bsr_from_ue(to_du_ue_index(idx),
+                          get_random_uint(params.min_buffer_size_in_bytes, params.max_buffer_size_in_bytes),
+                          static_cast<lcg_id_t>(0));
+  }
+
+  for (unsigned i = 0; i != test_bench::max_test_run_slots; ++i) {
+    run_slot();
+    for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+      auto&    test_ue        = get_ue(to_du_ue_index(idx));
+      unsigned tbs_shed_bytes = pusch_tbs_scheduled_bytes(test_ue);
+      if (tbs_shed_bytes > test_ue.ul_bsr_list[0].nof_bytes) {
+        // Accounting for MAC headers.
+        test_ue.ul_bsr_list[0].nof_bytes = 0;
+      } else {
+        test_ue.ul_bsr_list[0].nof_bytes -= tbs_shed_bytes;
+      }
+    }
+  }
+
+  // for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+  //   const auto& test_ue = get_ue(to_du_ue_index(idx));
+  //   ASSERT_EQ(test_ue.ul_bsr_list[0].nof_bytes, 0);
+  // }
+  ASSERT_TRUE(true);
+}
+
 INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                          multiple_ue_sched_tester,
                          testing::Values(multiple_ue_test_params{.k0                       = 1,
                                                                  .k1                       = 4,
-                                                                 .nof_ues                  = 2,
-                                                                 .min_buffer_size_in_bytes = 700,
-                                                                 .max_buffer_size_in_bytes = 700}));
+                                                                 .nof_ues                  = 1,
+                                                                 .min_buffer_size_in_bytes = 1000,
+                                                                 .max_buffer_size_in_bytes = 3000}));
 
 int main(int argc, char** argv)
 {
