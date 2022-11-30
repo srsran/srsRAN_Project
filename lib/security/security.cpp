@@ -120,3 +120,15 @@ sec_128_as_key srsgnb::security::truncate_key(const sec_as_key& key_in)
   std::copy(key_in.begin() + (sec_key_len - sec_128_key_len), key_in.end(), key_out.begin());
   return key_out;
 }
+
+sec_128_as_config srsgnb::security::truncate_config(const sec_as_config& cfg_in)
+{
+  sec_128_as_config cfg_out = {};
+  cfg_out.k_128_rrc_int     = truncate_key(cfg_in.k_rrc_int);
+  cfg_out.k_128_rrc_enc     = truncate_key(cfg_in.k_rrc_enc);
+  cfg_out.k_128_up_int      = truncate_key(cfg_in.k_up_int);
+  cfg_out.k_128_up_enc      = truncate_key(cfg_in.k_up_enc);
+  cfg_out.integ_algo        = cfg_in.integ_algo;
+  cfg_out.cipher_algo       = cfg_in.cipher_algo;
+  return cfg_out;
+}

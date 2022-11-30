@@ -179,6 +179,10 @@ void generate_k_up(sec_as_key&               k_up_enc,
 /// Ref: TS 33.501 Sec. A.8
 sec_128_as_key truncate_key(const sec_as_key& key_in);
 
+/// Truncate 256-bit keys to 128-bit keys using the least significant bits,
+/// on a given security context.
+sec_128_as_config truncate_config(const sec_as_config& cfg_in);
+
 } // namespace security
 } // namespace srsgnb
 
