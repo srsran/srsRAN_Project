@@ -34,6 +34,7 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
   cfg.ra.rar_mcs_index           = 0;
 
   cfg.si.sib1_mcs_index    = 5;
+  cfg.si.sib1_mcs_table    = pdsch_mcs_table::qam64;
   cfg.si.sib1_retx_period  = sib1_rtx_periodicity::ms160;
   cfg.si.sib1_dci_aggr_lev = aggregation_level::n4;
 

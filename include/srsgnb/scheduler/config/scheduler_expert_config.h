@@ -15,6 +15,7 @@
 
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/ran/pdcch/aggregation_level.h"
+#include "srsgnb/ran/pdsch/pdsch_mcs.h"
 #include "srsgnb/ran/sch_mcs.h"
 #include "srsgnb/ran/sib_configuration.h"
 
@@ -32,6 +33,7 @@ struct scheduler_ue_expert_config {
 /// \brief System Information scheduling statically configurable expert parameters.
 struct scheduler_si_expert_config {
   sch_mcs_index     sib1_mcs_index;
+  pdsch_mcs_table   sib1_mcs_table;
   aggregation_level sib1_dci_aggr_lev;
   /// SIB1 retx period.
   sib1_rtx_periodicity sib1_retx_period;
