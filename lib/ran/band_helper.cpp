@@ -10,6 +10,7 @@
 
 #include "srsgnb/ran/band_helper.h"
 #include "ssb_freq_position_generator.h"
+#include "srsgnb/adt/interval.h"
 #include "srsgnb/ran/bs_channel_bandwidth.h"
 #include "srsgnb/ran/duplex_mode.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
@@ -599,17 +600,19 @@ optional<ssb_coreset0_freq_location> srsgnb::band_helper::get_ssb_coreset0_freq_
   // Iterate over different SSB candidates and select the valid CORESET#0 index with widest bandwidth.
   unsigned          max_cset0_rbs = 0;
   ssb_freq_location ssb           = du_cfg.get_next_ssb_location();
-  while (ssb.is_valid and get_ssb_crb(scs_common, ssb.offset_to_point_A.to_uint()) + ssb_nof_crbs <= n_rbs) {
+  unsigned          crb_ssb       = ssb.is_valid ? get_ssb_crb(scs_common, ssb.offset_to_point_A.to_uint()) : 0;
+  while (ssb.is_valid and crb_ssb + ssb_nof_crbs <= n_rbs) {
     // Iterate over the searchSpace0_indices and corresponding configurations.
     optional<unsigned> cset0_idx = get_coreset0_index(
         band, n_rbs, scs_common, scs_ssb, ssb.offset_to_point_A, ssb.k_ssb, du_cfg.get_ssb_first_symbol(), ss0_idx);
 
     if (cset0_idx.has_value()) {
-      // Save result if the number of RBs for this CORESET#0 index is the highest so far.
-      auto coreset0_cfg = pdcch_type0_css_coreset_get(
-          band_helper::get_min_channel_bw(band, scs_common), scs_ssb, scs_common, *cset0_idx, ssb.k_ssb.to_uint());
-      if (coreset0_cfg.nof_rb_coreset > max_cset0_rbs) {
-        max_cset0_rbs = coreset0_cfg.nof_rb_coreset;
+      unsigned nof_avail_cset0_rbs = get_nof_coreset0_rbs_not_intersecting_ssb(
+          cset0_idx.value(), band, scs_common, scs_ssb, ssb.offset_to_point_A, ssb.k_ssb);
+
+      // If the number of non-intersecting CORESET#0 RBs is the highest so far, save result.
+      if (nof_avail_cset0_rbs > max_cset0_rbs) {
+        max_cset0_rbs = nof_avail_cset0_rbs;
 
         result.emplace();
         result->offset_to_point_A = ssb.offset_to_point_A;
@@ -620,7 +623,8 @@ optional<ssb_coreset0_freq_location> srsgnb::band_helper::get_ssb_coreset0_freq_
       }
     }
 
-    ssb = du_cfg.get_next_ssb_location();
+    ssb     = du_cfg.get_next_ssb_location();
+    crb_ssb = ssb.is_valid ? get_ssb_crb(scs_common, ssb.offset_to_point_A.to_uint()) : 0;
   }
 
   return result;
@@ -645,8 +649,15 @@ optional<unsigned> srsgnb::band_helper::get_coreset0_index(nr_band              
   unsigned max_cset0_idx = get_max_coreset0_index(scs_common, scs_ssb, min_ch_bw);
 
   // Iterate over the coreset0_indices and corresponding configurations.
+  unsigned           max_nof_avail_rbs = 0;
+  optional<unsigned> chosen_cset0_idx;
   for (int cset0_idx = max_cset0_idx; cset0_idx >= 0; --cset0_idx) {
     auto coreset0_cfg = pdcch_type0_css_coreset_get(min_ch_bw, scs_ssb, scs_common, cset0_idx, k_ssb.to_uint());
+    if (max_nof_avail_rbs > coreset0_cfg.nof_rb_coreset) {
+      // No point in continuing search for this and lower CORESET#0s.
+      break;
+    }
+
     pdcch_type0_css_occasion_pattern1_description ss0_config =
         pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
             .is_fr2 = false, .ss_zero_index = ss0_idx, .nof_symb_coreset = coreset0_cfg.nof_symb_coreset});
@@ -664,11 +675,39 @@ optional<unsigned> srsgnb::band_helper::get_coreset0_index(nr_band              
     bool ss0_not_overlapping_with_ssb_symbols =
         ss0_config.offset == 0 ? coreset0_cfg.nof_symb_coreset <= ssb_first_symbol : true;
 
-    // Return the candidate config, if it passes all the checks.
+    // If it passes all the checks.
     if (coreset0_nof_symb_valid and coreset0_not_below_pointA and coreset0_not_above_bw_ub and
         ss0_not_overlapping_with_ssb_symbols) {
-      return cset0_idx;
+      // Compute the number of non-intersecting RBs between CORESET#0 and SSB.
+      unsigned nof_avail_rbs =
+          get_nof_coreset0_rbs_not_intersecting_ssb(cset0_idx, band, scs_common, scs_ssb, offset_to_point_A, k_ssb);
+
+      // If it is the best candidate so far, store it and try the next CORESET#0 index.
+      if (nof_avail_rbs > max_nof_avail_rbs) {
+        max_nof_avail_rbs = nof_avail_rbs;
+        chosen_cset0_idx  = cset0_idx;
+      }
     }
   }
-  return {};
+  return chosen_cset0_idx;
+}
+
+unsigned srsgnb::band_helper::get_nof_coreset0_rbs_not_intersecting_ssb(unsigned              cset0_idx,
+                                                                        nr_band               band,
+                                                                        subcarrier_spacing    scs_common,
+                                                                        subcarrier_spacing    scs_ssb,
+                                                                        ssb_offset_to_pointA  offset_to_point_A,
+                                                                        ssb_subcarrier_offset k_ssb)
+{
+  // Space occupied by SSB in RBs, using SCScommon as reference.
+  const unsigned ssb_nof_crbs = NOF_SSB_PRBS * scs_to_khz(scs_ssb) / scs_to_khz(scs_common);
+  // Start RB for SSB.
+  unsigned crb_ssb = get_ssb_crb(scs_common, offset_to_point_A.to_uint());
+  // Coreset0 configuration for the provided CORESET#0 index.
+  auto cset0_cfg = pdcch_type0_css_coreset_get(
+      band_helper::get_min_channel_bw(band, scs_common), scs_ssb, scs_common, cset0_idx, k_ssb.to_uint());
+
+  interval<unsigned> ssb_prbs   = {crb_ssb, crb_ssb + ssb_nof_crbs};
+  interval<unsigned> cset0_prbs = {crb_ssb - cset0_cfg.offset, crb_ssb - cset0_cfg.offset + cset0_cfg.nof_rb_coreset};
+  return cset0_cfg.nof_rb_coreset - cset0_prbs.intersect(ssb_prbs).length();
 }

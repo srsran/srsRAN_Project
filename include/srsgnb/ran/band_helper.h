@@ -217,10 +217,8 @@ struct ssb_coreset0_freq_location {
   }
 };
 
-/// \brief Compute the position of the SSB within the band and the Coreset0/SS0 indices given some initial parameters.
-///
-/// It returns the first valid combination of parameters such that the SSB and CORESET0 get allocated within the band
-/// without overlapping over the same resources.
+/// \brief Searches for the combination of CORESET#0 Index and SSB parameters that maximizes the number of CORESET#0 RBs
+/// that do not intersect with the SSB.
 ///
 /// \param[in] dl_arfcn is <em>DL-ARFCN<\em> corresponding to \f$F_{REF}\f$, as per TS 38.104, Section 5.4.2.1.
 /// \param[in] nr_band is <em>NR operating band<\em>, as per TS 38.104, Table 5.2-1. Only FR1 values are supported.
@@ -237,8 +235,8 @@ optional<ssb_coreset0_freq_location> get_ssb_coreset0_freq_location(unsigned    
                                                                     subcarrier_spacing scs_ssb,
                                                                     uint8_t            ss0_idx);
 
-/// \brief Compute a valid CORESET#0 index with maximum number of CRBs, given the following
-/// restrictions:
+/// \brief Searches the CORESET#0 index that maximizes the number of CORESET#0 RBs that do not intersect with the SSB,
+/// given an SSB configuration and the following restrictions:
 /// - The CORESET#0 CRBs must fall in between pointA and the cell max CRB.
 /// - The CORESET#0 number of symbols must equal or lower than the SSB first symbol offset.
 /// - The number of symbols of CORESET#0 must match \c nof_coreset0_symb if defined.
@@ -262,6 +260,14 @@ optional<unsigned> get_coreset0_index(nr_band               band,
                                       uint8_t               ssb_first_symbol,
                                       uint8_t               ss0_idx,
                                       optional<unsigned>    nof_coreset0_symb = {});
+
+/// \brief Compute the number of CORESET#0 CRBs that do not intersect with the SSB CRBs.
+unsigned get_nof_coreset0_rbs_not_intersecting_ssb(unsigned              cset0_idx,
+                                                   nr_band               band,
+                                                   subcarrier_spacing    scs_common,
+                                                   subcarrier_spacing    scs_ssb,
+                                                   ssb_offset_to_pointA  offset_to_point_A,
+                                                   ssb_subcarrier_offset k_ssb);
 
 } // namespace band_helper
 
