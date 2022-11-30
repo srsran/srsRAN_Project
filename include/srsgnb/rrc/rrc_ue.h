@@ -93,6 +93,10 @@ public:
 
   /// \brief Notify about the need to delete a UE.
   virtual void on_ue_delete_request() = 0;
+
+  /// \brief Setup security in the UE. This includes storing the K_gNB,
+  /// the AS keys, and configuring the PDCP entity security on SRB1
+  virtual void on_new_security_setup() = 0;
 };
 
 /// Interface to notify about RRC UE Context messages.

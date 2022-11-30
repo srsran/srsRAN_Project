@@ -77,6 +77,7 @@ private:
 
   // rrc_ue_security_mode_command_proc_notifier
   void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_ccch_msg) override;
+  void on_new_security_setup() override;
 
   /// allocates PUCCH resources at the cell resource manager
   bool init_pucch();

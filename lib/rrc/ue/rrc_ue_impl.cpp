@@ -69,6 +69,8 @@ void rrc_ue_impl::on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg)
   send_dl_dcch(dl_dcch_msg);
 }
 
+void rrc_ue_impl::on_new_security_setup() {}
+
 void rrc_ue_impl::handle_init_security_context(const rrc_init_security_context& sec_ctx)
 {
   //  Launch RRC security mode procedure
