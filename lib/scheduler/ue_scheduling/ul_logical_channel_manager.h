@@ -91,7 +91,7 @@ private:
 
     if (payload_bytes == 0 or lcgid == 0) {
       // In case of no payload or LCG-ID == 0, there is no need to account for upper layer header.
-      return 0;
+      return payload_bytes;
     }
     return payload_bytes + RLC_HEADER_SIZE_ESTIMATE;
   }

@@ -39,9 +39,12 @@ unsigned add_header_bytes(lcg_id_t lcgid, unsigned payload_bytes)
 {
   // Estimate of the number of bytes required for the upper layer header.
   constexpr static unsigned RLC_HEADER_SIZE_ESTIMATE = 3U;
-  if (payload_bytes == 0 or lcgid == 0) {
-    // In case of no payload or LCG-ID == 0, there is no need to account for upper layer header.
+  // In case of no payload or LCG-ID == 0, there is no need to account for upper layer header.
+  if (payload_bytes == 0) {
     return 0;
+  }
+  if (lcgid == 0) {
+    return get_mac_sdu_required_bytes(payload_bytes);
   }
   return get_mac_sdu_required_bytes(payload_bytes + RLC_HEADER_SIZE_ESTIMATE);
 }
