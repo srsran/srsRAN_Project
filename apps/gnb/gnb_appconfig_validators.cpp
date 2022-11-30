@@ -111,6 +111,10 @@ static bool validate_cells_appconfig(span<const cell_appconfig> config)
 /// Validates the given CU application configuration. Returns true on success, otherwise false.
 static bool validate_amf_appconfig(const amf_appconfig& config)
 {
+  // only check for non-empty AMF address and default port
+  if (config.ip_addr.empty() or config.port != 38412) {
+    return false;
+  }
   return true;
 }
 
