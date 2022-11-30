@@ -82,8 +82,8 @@ struct base_cell_appconfig {
   unsigned nof_antennas_dl = 1;
   /// Number of antennas in uplink.
   unsigned nof_antennas_ul = 1;
-  /// PLMN id
-  std::string plmn_id = "0x00f110";
+  /// Human readable full PLMN (without possible filler digit).
+  std::string plmn = "00101";
   /// TAC.
   int tac = 7;
   /// PDCCH configuration.

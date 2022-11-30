@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../ran/bcd_helpers.h"
 #include "srsgnb/asn1/ngap/ngap.h"
 
 namespace srsgnb {
@@ -29,11 +30,14 @@ void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& request,
                                 std::string                     plmn_id,
                                 int                             tac)
 {
+  // convert PLMN to BCD
+  uint32_t plmn_bcd = plmn_string_to_bcd(plmn_id);
+
   // fill global ran node id
   request->global_ran_node_id.value.set_global_gnb_id();
   request->global_ran_node_id.value.global_gnb_id().gnb_id.set_gnb_id();
   request->global_ran_node_id.value.global_gnb_id().gnb_id.gnb_id().from_number(global_gnb_id);
-  request->global_ran_node_id.value.global_gnb_id().plmn_id.from_string(plmn_id);
+  request->global_ran_node_id.value.global_gnb_id().plmn_id.from_number(plmn_bcd);
 
   // fill ran node name
   request->ran_node_name_present = true;
@@ -47,7 +51,7 @@ void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& request,
   asn1::ngap::supported_ta_item_s supported_ta_item = {};
 
   asn1::ngap::broadcast_plmn_item_s broadcast_plmn_item = {};
-  broadcast_plmn_item.plmn_id.from_string(plmn_id);
+  broadcast_plmn_item.plmn_id.from_number(plmn_bcd);
 
   asn1::ngap::slice_support_item_s slice_support_item = {};
   slice_support_item.s_nssai.sst.from_number(1);

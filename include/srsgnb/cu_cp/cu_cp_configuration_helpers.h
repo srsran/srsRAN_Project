@@ -22,19 +22,41 @@ namespace config_helpers {
 inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
 {
   srs_cu_cp::cu_cp_configuration cfg{};
-
-  cfg.ngc_config.gnb_id        = 411;
-  cfg.ngc_config.ran_node_name = "srsgnb01";
-  cfg.ngc_config.plmn          = "00f110";
-  cfg.ngc_config.tac           = 7;
-
+  cfg.ngc_config = make_default_ngc_config();
   return cfg;
 }
 
 /// Returns true if the given CU-CP configuration is valid, otherwise false.
 inline bool is_valid_configuration(const srs_cu_cp::cu_cp_configuration& config)
 {
-  // :TODO: implement me!
+  // TODO: do we need to check the notitfiers?
+#if 0
+  if (config.cu_executor == nullptr) {
+    fmt::print("CU executer not set.\n");
+    return false;
+  }
+
+  if (config.f1c_notifier == nullptr) {
+    fmt::print("F1C notifier not set.\n");
+    return false;
+  }
+
+  if (config.e1_notifier == nullptr) {
+    fmt::print("E1 notifier not set.\n");
+    return false;
+  }
+
+  if (config.ngc_notifier == nullptr) {
+    fmt::print("NGC notifier not set.\n");
+    return false;
+  }
+#endif
+
+  if (!is_valid_configuration(config.ngc_config)) {
+    fmt::print("Invalid NGC configuration.\n");
+    return false;
+  }
+
   return true;
 }
 

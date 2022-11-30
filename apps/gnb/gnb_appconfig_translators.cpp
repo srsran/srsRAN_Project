@@ -16,11 +16,11 @@ srs_cu_cp::cu_cp_configuration srsgnb::generate_cu_cp_config(const gnb_appconfig
   srs_cu_cp::cu_cp_configuration out_cfg = config_helpers::make_default_cu_cp_config();
   out_cfg.ngc_config.gnb_id              = config.gnb_id;
   out_cfg.ngc_config.ran_node_name       = config.ran_node_name;
-  out_cfg.ngc_config.plmn                = config.common_cell_cfg.plmn_id;
+  out_cfg.ngc_config.plmn                = config.common_cell_cfg.plmn;
   out_cfg.ngc_config.tac                 = config.common_cell_cfg.tac;
 
   if (!config_helpers::is_valid_configuration(out_cfg)) {
-    srsgnb_terminate("Invalid CU-CP configuration. Exiting.");
+    srsgnb_terminate("Invalid CU-CP configuration. Exiting.\n");
   }
 
   return out_cfg;
@@ -70,7 +70,7 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
 
     // Set the rest of the parameters.
     du_cell_config& out_cell = out_cfg.back();
-    out_cell.plmn            = base_cell.plmn_id;
+    out_cell.plmn            = base_cell.plmn;
     out_cell.tac             = base_cell.tac;
     out_cell.cell_id         = cell_id;
 
