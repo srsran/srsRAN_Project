@@ -169,7 +169,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
   dmrs_information dmrs_info = make_dmrs_info_common(
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
-  sch_mcs_description mcs_descr     = pdsch_mcs_get_config(expert_cfg.sib1_mcs_table, expert_cfg.sib1_mcs_index);
+  sch_mcs_description mcs_descr     = pdsch_mcs_get_config(pdsch_mcs_table::qam64, expert_cfg.sib1_mcs_index);
   pdsch_prbs_tbs      sib1_prbs_tbs = get_nof_prbs(prbs_calculator_pdsch_config{
       sib1_payload_size, nof_symb_sh, calculate_nof_dmrs_per_rb(dmrs_info), nof_oh_prb, mcs_descr, nof_layers});
 
@@ -257,10 +257,10 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for SIB1.
   pdsch.n_id = cell_cfg.pci;
   pdsch.codewords.emplace_back();
-  pdsch_codeword& cw = pdsch.codewords.back();
-  cw.rv_index        = dci.redundancy_version;
-  cw.mcs_index       = dci.modulation_coding_scheme;
-  cw.mcs_table       = expert_cfg.sib1_mcs_table;
+  pdsch_codeword& cw   = pdsch.codewords.back();
+  cw.rv_index          = dci.redundancy_version;
+  cw.mcs_index         = dci.modulation_coding_scheme;
+  cw.mcs_table         = pdsch_mcs_table::qam64;
   cw.mcs_descr         = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
   cw.tb_size_bytes     = static_cast<uint32_t>(tbs);
   pdsch.dmrs           = dmrs_info;

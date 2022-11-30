@@ -33,8 +33,8 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
   cfg.ra.msg3_mcs_index          = 0;
   cfg.ra.rar_mcs_index           = 0;
 
+  /// As per TS 38.214, Section 5.1.3.1, only an MCS with modulation order 2 allowed for SIB1.
   cfg.si.sib1_mcs_index    = 5;
-  cfg.si.sib1_mcs_table    = pdsch_mcs_table::qam64;
   cfg.si.sib1_retx_period  = sib1_rtx_periodicity::ms160;
   cfg.si.sib1_dci_aggr_lev = aggregation_level::n4;
 

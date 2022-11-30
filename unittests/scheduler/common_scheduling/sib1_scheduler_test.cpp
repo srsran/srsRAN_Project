@@ -86,7 +86,7 @@ struct test_bench {
              uint8_t              ssb_bitmap,
              sib1_rtx_periodicity sib1_rtx_period = sib1_rtx_periodicity::ms160,
              ssb_periodicity      ssb_period      = ssb_periodicity::ms5) :
-    si_cfg{10, pdsch_mcs_table::qam64, aggregation_level::n4, sib1_rtx_period},
+    si_cfg{10, aggregation_level::n4, sib1_rtx_period},
     cfg_msg{make_cell_cfg_req_for_sib_sched(init_bwp_scs, pdcch_config_sib1, ssb_bitmap, ssb_period)},
     cfg{cfg_msg},
     res_grid{cfg},
@@ -102,7 +102,7 @@ struct test_bench {
              uint8_t            ssb_bitmap,
              subcarrier_spacing init_bwp_scs,
              uint8_t            pdcch_config_sib1) :
-    si_cfg{10, pdsch_mcs_table::qam64, aggregation_level::n4, sib1_rtx_periodicity::ms10},
+    si_cfg{10, aggregation_level::n4, sib1_rtx_periodicity::ms10},
     cfg_msg{make_cell_cfg_req_for_sib_sched(freq_arfcn,
                                             offset_to_point_A,
                                             k_ssb,
@@ -133,14 +133,14 @@ struct test_bench {
     if (init_bwp_scs == subcarrier_spacing::kHz15) {
       msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth = 106;
       msg.dl_cfg_common.init_dl_bwp.generic_params.crbs                         = {
-          0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth};
+                                  0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth};
     }
     // Change Carrier parameters when SCS is 30kHz.
     else if (init_bwp_scs == subcarrier_spacing::kHz30) {
       msg.dl_cfg_common.freq_info_dl.scs_carrier_list.emplace_back(
           scs_specific_carrier{0, subcarrier_spacing::kHz30, 51});
       msg.dl_cfg_common.init_dl_bwp.generic_params.crbs = {
-          0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list[1].carrier_bandwidth};
+                                  0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list[1].carrier_bandwidth};
       // Random ARFCN that must be in FR1 and > 3GHz.
       msg.dl_carrier.arfcn          = 700000;
       msg.dl_carrier.carrier_bw_mhz = 20;
