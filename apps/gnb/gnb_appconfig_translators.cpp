@@ -42,7 +42,7 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
     param.dl_arfcn = base_cell.dl_arfcn;
     param.band     = band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
 
-    static const uint8_t                              ss0_idx      = 0; // TODO: Parameterize.
+    static const uint8_t                              ss0_idx      = 0;
     optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
         base_cell.dl_arfcn, base_cell.band, param.nof_crbs, scs, scs, ss0_idx);
 
@@ -65,7 +65,6 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
                 (*ssb_freq_loc).ssb_arfcn,
                 (*ssb_freq_loc).coreset0_idx,
                 (*ssb_freq_loc).searchspace0_idx);
-
 
     param.offset_to_point_a = (*ssb_freq_loc).offset_to_point_A;
     param.k_ssb             = (*ssb_freq_loc).k_ssb;

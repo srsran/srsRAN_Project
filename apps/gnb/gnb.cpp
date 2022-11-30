@@ -161,8 +161,7 @@ static void signal_handler(int sig)
   is_running = false;
 }
 
-static fapi::prach_config generate_prach_config_tlv(
-                                                    const std::vector<du_cell_config>& cell_cfg)
+static fapi::prach_config generate_prach_config_tlv(const std::vector<du_cell_config>& cell_cfg)
 {
   srsgnb_assert(cell_cfg.size() == 1, "Currently supporting one cell");
 
