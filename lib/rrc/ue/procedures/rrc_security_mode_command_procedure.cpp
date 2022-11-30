@@ -39,17 +39,18 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<voi
     rrc_ue.on_ue_delete_request(); // delete UE context if SMC fails
   } else {
     // send RRC SMC to UE
-    send_rrc_security_mode_command();
     logger.debug("rnti=0x{:x}: \"{}\" selected security algorithms. Integrity=NIA{}, Ciphering=NEA{}",
                  context.c_rnti,
                  name(),
-                 int_algo,
-                 ciph_algo);
+                 sec_cfg.integ_algo,
+                 sec_cfg.cipher_algo);
 
     generate_as_keys();
 
-    // TODO activate SRB1 PDCP security
+    // activate SRB1 PDCP security
+    rrc_ue.on_new_security_config(sec_cfg);
 
+    send_rrc_security_mode_command();
     // Await UE response
     CORO_AWAIT(transaction);
 
@@ -77,12 +78,12 @@ bool rrc_security_mode_command_procedure::select_security_algo()
   for (unsigned i = 0; i < n_algos_int; ++i) {
     uint16_t algo_id = to_number(inc_algo_pref_list[i]);
     if (sec_ctx.supported_int_algos[algo_id]) {
-      int_algo_found = true;
-      int_algo       = security::integrity_algorithm_from_number(algo_id);
+      int_algo_found     = true;
+      sec_cfg.integ_algo = security::integrity_algorithm_from_number(algo_id);
       break;
     }
   }
-  logger.debug("0x{:x}: \"{}\" selected integrity algorithm NIA{}. ", context.c_rnti, name(), int_algo);
+  logger.debug("0x{:x}: \"{}\" selected integrity algorithm NIA{}. ", context.c_rnti, name(), sec_cfg.integ_algo);
 
   // Select preferred ciphering algorithm.
   std::array<security::ciphering_algorithm, n_algos_ciph> ciph_algo_pref_list = {security::ciphering_algorithm::nea0,
@@ -93,17 +94,17 @@ bool rrc_security_mode_command_procedure::select_security_algo()
   for (unsigned i = 0; i < n_algos_ciph; ++i) {
     uint16_t algo_id = to_number(ciph_algo_pref_list[i]);
     if (algo_id == 0) {
-      ciph_algo_found = true;
-      ciph_algo       = security::ciphering_algorithm::nea0;
+      ciph_algo_found     = true;
+      sec_cfg.cipher_algo = security::ciphering_algorithm::nea0;
       break;
     }
     if (sec_ctx.supported_int_algos[algo_id - 1]) {
-      ciph_algo_found = true;
-      ciph_algo       = security::ciphering_algorithm_from_number(algo_id - 1);
+      ciph_algo_found     = true;
+      sec_cfg.cipher_algo = security::ciphering_algorithm_from_number(algo_id - 1);
       break;
     }
   }
-  logger.debug("0x{:x}: \"{}\" selected ciphering algorithm NEA{}. ", context.c_rnti, name(), ciph_algo);
+  logger.debug("0x{:x}: \"{}\" selected ciphering algorithm NEA{}. ", context.c_rnti, name(), sec_cfg.cipher_algo);
   return !(not int_algo_found || not ciph_algo_found);
 }
 
@@ -116,10 +117,10 @@ void rrc_security_mode_command_procedure::generate_as_keys()
   security::sec_as_key k_up_enc;
 
   // Generate K_rrc_enc and K_rrc_int
-  security::generate_k_rrc(k_rrc_enc, k_rrc_int, sec_ctx.k, ciph_algo, int_algo);
+  security::generate_k_rrc(sec_cfg.k_rrc_enc, sec_cfg.k_rrc_int, sec_ctx.k, sec_cfg.cipher_algo, sec_cfg.integ_algo);
 
   // Generate K_up_enc and K_up_int
-  security::generate_k_up(k_up_enc, k_up_int, sec_ctx.k, ciph_algo, int_algo);
+  security::generate_k_up(sec_cfg.k_up_enc, sec_cfg.k_up_int, sec_ctx.k, sec_cfg.cipher_algo, sec_cfg.integ_algo);
 
   logger.info(sec_ctx.k.data(), 32, "K_gNB (k_gnb)");
   logger.info(k_rrc_int.data(), 32, "RRC Integrity Key (k_rrc_int)");
@@ -133,6 +134,6 @@ void rrc_security_mode_command_procedure::send_rrc_security_mode_command()
   dl_dcch_msg_s dl_dcch_msg;
   dl_dcch_msg.msg.set_c1().set_security_mode_cmd();
   security_mode_cmd_s& rrc_smc = dl_dcch_msg.msg.c1().security_mode_cmd();
-  fill_asn1_rrc_smc_msg(rrc_smc, int_algo, ciph_algo, transaction.id());
+  fill_asn1_rrc_smc_msg(rrc_smc, sec_cfg.integ_algo, sec_cfg.cipher_algo, transaction.id());
   rrc_ue.on_new_dl_dcch(dl_dcch_msg);
 }

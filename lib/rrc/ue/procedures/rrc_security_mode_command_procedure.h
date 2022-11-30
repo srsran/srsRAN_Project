@@ -58,8 +58,7 @@ private:
   rrc_transaction               transaction;
   eager_async_task<rrc_outcome> task;
 
-  security::integrity_algorithm int_algo  = {};
-  security::ciphering_algorithm ciph_algo = {};
+  security::sec_as_config sec_cfg = {};
 
   const unsigned rrc_smc_timeout_ms =
       1000; // arbitrary timeout for RRC SMC procedure, UE will be removed if timer fires

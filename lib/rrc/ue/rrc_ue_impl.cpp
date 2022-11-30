@@ -59,7 +59,9 @@ void rrc_ue_impl::connect_srb_notifier(srb_id_t                  srb_id,
   if (srb_id_to_uint(srb_id) >= MAX_NOF_SRBS) {
     logger.error("Couldn't connect notifier for SRB{}", srb_id);
   }
-  srbs[srb_id_to_uint(srb_id)].pdu_notifier = &notifier;
+  srbs[srb_id_to_uint(srb_id)].pdu_notifier    = &notifier;
+  srbs[srb_id_to_uint(srb_id)].tx_sec_notifier = tx_sec;
+  srbs[srb_id_to_uint(srb_id)].rx_sec_notifier = rx_sec;
 }
 
 void rrc_ue_impl::on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg)
@@ -72,7 +74,13 @@ void rrc_ue_impl::on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg)
   send_dl_dcch(dl_dcch_msg);
 }
 
-void rrc_ue_impl::on_new_security_setup() {}
+void rrc_ue_impl::on_new_security_config(security::sec_as_config sec_cfg)
+{
+  srbs[srb_id_to_uint(srb_id_t::srb1)].tx_sec_notifier->enable_or_disable_security(pdcp_integrity_enabled::enabled,
+                                                                                   pdcp_ciphering_enabled::enabled);
+  srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier->enable_or_disable_security(pdcp_integrity_enabled::enabled,
+                                                                                   pdcp_ciphering_enabled::enabled);
+}
 
 void rrc_ue_impl::handle_init_security_context(const rrc_init_security_context& sec_ctx)
 {

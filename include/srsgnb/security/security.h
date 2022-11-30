@@ -116,6 +116,15 @@ struct sec_128_as_config {
   ciphering_algorithm cipher_algo;
 };
 
+struct sec_as_config {
+  sec_as_key          k_rrc_int;
+  sec_as_key          k_rrc_enc;
+  sec_as_key          k_up_int;
+  sec_as_key          k_up_enc;
+  integrity_algorithm integ_algo;
+  ciphering_algorithm cipher_algo;
+};
+
 /******************************************************************************
  * Helper Functions
  *****************************************************************************/

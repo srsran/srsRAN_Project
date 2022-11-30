@@ -126,7 +126,7 @@ public:
 
   /// \brief Setup security in the UE. This includes storing the K_gNB,
   /// the AS keys, and configuring the PDCP entity security on SRB1
-  virtual void on_new_security_setup() = 0;
+  virtual void on_new_security_config(security::sec_as_config sec_cfg) = 0;
 };
 
 /// Interface to notify about RRC UE Context messages.
