@@ -1,50 +1,26 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
-#include "../../lib/du_high/du_high.h"
-#include "../../lib/du_high/du_high_executor_strategies.h"
-#include "../../lib/gateways/sctp_network_gateway.h"
+#include "lib/du_high/du_high.h"
+#include "lib/du_high/du_high_executor_strategies.h"
 #include "lib/f1c/common/f1ap_asn1_packer.h"
+#include "lib/gateways/sctp_network_gateway.h"
+#include "test_utils/du_high_worker_manager.h"
+#include "test_utils/dummy_test_components.h"
 #include "unittests/f1c/common/test_helpers.h"
 #include "unittests/gateways/test_helpers.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
-#include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
 using namespace srs_du;
-
-struct phy_cell_dummy : public mac_cell_result_notifier {
-  void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override {}
-  void on_new_downlink_data(const mac_dl_data_result& dl_data) override {}
-  void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override {}
-};
-
-struct phy_dummy : public mac_result_notifier {
-public:
-  mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override { return cell; }
-  phy_cell_dummy            cell;
-};
-
-struct du_high_worker_manager {
-  static const uint32_t task_worker_queue_size = 10000;
-
-  void stop()
-  {
-    for (auto& w : dl_workers) {
-      w.stop();
-    }
-    for (auto& w : ul_workers) {
-      w.stop();
-    }
-  }
-
-  manual_task_worker ctrl_worker{task_worker_queue_size};
-  task_worker        dl_workers[2] = {{"DU-DL#0", task_worker_queue_size}, {"DU-DL#1", task_worker_queue_size}};
-  task_worker        ul_workers[2] = {{"DU-UL#0", task_worker_queue_size}, {"DU-UL#1", task_worker_queue_size}};
-  static_vector<task_worker_executor, 2> dl_execs{{dl_workers[0]}, {dl_workers[1]}};
-  static_vector<task_worker_executor, 2> ul_execs{{ul_workers[0]}, {ul_workers[1]}};
-  pcell_ul_executor_mapper               ul_exec_mapper{{&ul_execs[0], &ul_execs[1]}};
-  cell_dl_executor_mapper                dl_exec_mapper{{&dl_execs[0], &dl_execs[1]}};
-};
 
 /// Test F1 setup over "local" connection to DU.
 void test_f1_setup_local()
@@ -55,7 +31,7 @@ void test_f1_setup_local()
   dummy_f1c_message_handler msg_handler;
   dummy_f1c_pdu_notifier    notifier(&msg_handler);
 
-  phy_dummy phy;
+  phy_test_dummy phy;
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
@@ -98,7 +74,7 @@ void test_f1_setup_network()
   du_high_worker_manager workers;
   f1c_network_adapter    pdu_handler;
   dummy_f1c_pdu_notifier notifier(&pdu_handler);
-  phy_dummy              phy;
+  phy_test_dummy         phy;
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
@@ -137,7 +113,7 @@ void test_du_ue_create()
   // Setup F1c PDU handler.
   dummy_f1c_pdu_handler pdu_handler;
   pdu_handler.ctrl_exec = &workers.ctrl_worker;
-  phy_dummy phy;
+  phy_test_dummy phy;
 
   dummy_f1c_pdu_notifier notifier(&pdu_handler);
 
