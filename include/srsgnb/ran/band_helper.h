@@ -13,6 +13,7 @@
 /// This header is currently used only by the MAC to compute extra SSB parameters (needed for scheduling) from those
 /// provided by DU.
 
+#include "srsgnb/adt/optional.h"
 #include "srsgnb/ran/ssb_properties.h"
 #include <stdint.h>
 
@@ -24,6 +25,8 @@ enum class ssb_pattern_case;
 enum class bs_channel_bandwidth_fr1;
 enum class frequency_range;
 enum class min_channel_bandwidth;
+
+struct ssb_freq_location;
 
 const unsigned KHZ_TO_HZ = 1000U;
 const double   HZ_TO_KHZ = 1e-3;
@@ -227,6 +230,30 @@ ssb_coreset0_freq_location get_ssb_coreset0_freq_location(unsigned           dl_
                                                           unsigned           n_rbs,
                                                           subcarrier_spacing scs_common,
                                                           subcarrier_spacing scs_ssb);
+
+/// \brief Compute a valid CORESET#0 index with maximum number of CRBs, given the following
+/// restrictions:
+/// - The CORESET#0 CRBs must fall in between pointA and the cell max CRB.
+/// - The CORESET#0 number of symbols must equal or lower than the SSB first symbol offset.
+/// - The number of symbols of CORESET#0 must match \c nof_coreset0_symb if defined.
+///
+/// \param[in] band is <em>NR operating band<\em>, as per TS 38.104, Table 5.2-1. Only FR1 values are supported.
+/// \param[in] n_rbs is <em>Transmission bandwidth<\em> or \f$N_{RB}\f$ in number of RBs, as per TS 38.104, Table 5.2-1.
+/// \param[in] scs_common is <em>subCarrierSpacingCommon<\em>, as per TS 38.331.
+/// \param[in] scs_ssb is ssb subcarrier spacing.
+/// \param[in] ssb SSB frequency parameters.
+/// \param[in] ssb_first_symbol SSB first symbol.
+/// \param[in] ss0_idx SearchSpace#0 index.
+/// \param[in] nof_coreset0_symb Number of symbols required for returned CORESET#0, if defined.
+/// \return CORESET#0 index if a valid candidate was found. Empty optional otherwise.
+optional<unsigned> get_coreset0_index(nr_band                  band,
+                                      unsigned                 n_rbs,
+                                      subcarrier_spacing       scs_common,
+                                      subcarrier_spacing       scs_ssb,
+                                      const ssb_freq_location& ssb,
+                                      uint8_t                  ssb_first_symbol,
+                                      uint8_t                  ss0_idx,
+                                      optional<unsigned>       nof_coreset0_symb = {});
 
 } // namespace band_helper
 

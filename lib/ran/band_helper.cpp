@@ -97,7 +97,7 @@ struct nr_operating_band {
 };
 static const uint32_t                                                     nof_nr_operating_band_fr1 = 32;
 static constexpr std::array<nr_operating_band, nof_nr_operating_band_fr1> nr_operating_bands_fr1    = {{
-    // clang-format off
+       // clang-format off
     {nr_band::n1,  duplex_mode::FDD},
     {nr_band::n2,  duplex_mode::FDD},
     {nr_band::n3,  duplex_mode::FDD},
@@ -591,42 +591,19 @@ ssb_coreset0_freq_location srsgnb::band_helper::get_ssb_coreset0_freq_location(u
   // Select 1st SSB. Select first searchspace0_idx and find viable coreset0 index.
   ssb_freq_location ssb = du_cfg.get_next_ssb_location();
   while (ssb.is_valid) {
-    // CRB index where the first SSB's subcarrier is located.
-    unsigned crbs_ssb =
-        scs_common == subcarrier_spacing::kHz15 ? ssb.offset_to_point_A.to_uint() : ssb.offset_to_point_A.to_uint() / 2;
-
     // Iterate over the searchSpace0_indices and corresponding configurations.
     for (uint8_t ss0_idx = 0; ss0_idx <= du_cfg.get_max_ss0_idx(); ++ss0_idx) {
-      pdcch_type0_css_occasion_pattern1_description ss0_config =
-          pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
-              .is_fr2 = false, .ss_zero_index = ss0_idx, .nof_symb_coreset = 1});
+      optional<unsigned> cset0_idx =
+          get_coreset0_index(nr_band, n_rbs, scs_common, scs_ssb, ssb, du_cfg.get_ssb_first_symbol(), ss0_idx);
 
-      // Get the maximum Coreset0 index that can be used for the Tables 13-[1-6], TS 38.213.
-      unsigned max_cset0_idx =
-          get_max_coreset0_index(scs_common, scs_ssb, band_helper::get_min_channel_bw(nr_band, scs_common));
-
-      // Iterate over the coreset0_indices and corresponding configurations.
-      for (unsigned cset0_idx = 0; cset0_idx <= max_cset0_idx; ++cset0_idx) {
-        auto coreset0_cfg = pdcch_type0_css_coreset_get(
-            band_helper::get_min_channel_bw(nr_band, scs_common), scs_ssb, scs_common, cset0_idx, ssb.k_ssb.to_uint());
-
-        // Verify if the candidate Coreset0 config is correct.
-        bool coreset0_not_below_pointA = crbs_ssb >= static_cast<unsigned>(coreset0_cfg.offset);
-        bool coreset0_not_above_bw_ub =
-            crbs_ssb - static_cast<unsigned>(coreset0_cfg.offset) + coreset0_cfg.nof_rb_coreset <= n_rbs;
-        bool ss0_not_overlapping_with_ssb_symbols =
-            ss0_config.offset == 0 ? coreset0_cfg.nof_symb_coreset <= du_cfg.get_ssb_first_symbol() : true;
-
-        // Return the candidate config, if it passes all the checks.
-        if (coreset0_not_below_pointA && coreset0_not_above_bw_ub && ss0_not_overlapping_with_ssb_symbols) {
-          results.offset_to_point_A = ssb.offset_to_point_A;
-          results.k_ssb             = ssb.k_ssb;
-          results.coreset0_idx      = cset0_idx;
-          results.searchspace0_idx  = ss0_idx;
-          results.is_valid          = true;
-          results.ssb_arfcn         = freq_to_nr_arfcn(ssb.ss_ref);
-          return results;
-        }
+      if (cset0_idx.has_value()) {
+        results.offset_to_point_A = ssb.offset_to_point_A;
+        results.k_ssb             = ssb.k_ssb;
+        results.coreset0_idx      = cset0_idx.value();
+        results.searchspace0_idx  = ss0_idx;
+        results.is_valid          = true;
+        results.ssb_arfcn         = freq_to_nr_arfcn(ssb.ss_ref);
+        return results;
       }
     }
 
@@ -635,4 +612,50 @@ ssb_coreset0_freq_location srsgnb::band_helper::get_ssb_coreset0_freq_location(u
 
   // If no configuration is good, then the function returns a configuration with \c .is_valid == false.
   return results;
+}
+
+optional<unsigned> srsgnb::band_helper::get_coreset0_index(nr_band                  band,
+                                                           unsigned                 n_rbs,
+                                                           subcarrier_spacing       scs_common,
+                                                           subcarrier_spacing       scs_ssb,
+                                                           const ssb_freq_location& ssb,
+                                                           uint8_t                  ssb_first_symbol,
+                                                           uint8_t                  ss0_idx,
+                                                           optional<unsigned>       nof_coreset0_symb)
+{
+  min_channel_bandwidth min_ch_bw = band_helper::get_min_channel_bw(band, scs_common);
+  // CRB index where the first SSB's subcarrier is located.
+  unsigned crbs_ssb =
+      scs_common == subcarrier_spacing::kHz15 ? ssb.offset_to_point_A.to_uint() : ssb.offset_to_point_A.to_uint() / 2;
+
+  // Get the maximum Coreset0 index that can be used for the Tables 13-[1-6], TS 38.213.
+  unsigned max_cset0_idx = get_max_coreset0_index(scs_common, scs_ssb, min_ch_bw);
+
+  // Iterate over the coreset0_indices and corresponding configurations.
+  for (int cset0_idx = max_cset0_idx; cset0_idx >= 0; --cset0_idx) {
+    auto coreset0_cfg = pdcch_type0_css_coreset_get(min_ch_bw, scs_ssb, scs_common, cset0_idx, ssb.k_ssb.to_uint());
+    pdcch_type0_css_occasion_pattern1_description ss0_config =
+        pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
+            .is_fr2 = false, .ss_zero_index = ss0_idx, .nof_symb_coreset = coreset0_cfg.nof_symb_coreset});
+
+    // Check if the number of symbols of the CORESET#0 is the one we are searching for.
+    bool coreset0_nof_symb_valid =
+        not nof_coreset0_symb.has_value() or coreset0_cfg.nof_symb_coreset == nof_coreset0_symb.value();
+
+    // CORESET#0 offset must be between pointA and max CRB.
+    bool coreset0_not_below_pointA = crbs_ssb >= static_cast<unsigned>(coreset0_cfg.offset);
+    bool coreset0_not_above_bw_ub =
+        crbs_ssb - static_cast<unsigned>(coreset0_cfg.offset) + coreset0_cfg.nof_rb_coreset <= n_rbs;
+
+    // CORESET#0 number of symbols should not overlap with SSB symbols.
+    bool ss0_not_overlapping_with_ssb_symbols =
+        ss0_config.offset == 0 ? coreset0_cfg.nof_symb_coreset <= ssb_first_symbol : true;
+
+    // Return the candidate config, if it passes all the checks.
+    if (coreset0_nof_symb_valid and coreset0_not_below_pointA and coreset0_not_above_bw_ub and
+        ss0_not_overlapping_with_ssb_symbols) {
+      return cset0_idx;
+    }
+  }
+  return {};
 }

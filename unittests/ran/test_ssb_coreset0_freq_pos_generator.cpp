@@ -47,7 +47,7 @@ static bool compare_ssb_coreset0_allocation(const band_helper::ssb_coreset0_freq
  */
 
 // Test all possible SSB position within a given band returned by the config generator.
-TEST(config_generator_tester, band_3)
+TEST(ssb_freq_position_generation_test, band_3)
 {
   ssb_freq_position_generator cfg_generator{/* DL-ARFCN*/ 365000,
                                             /* NR-band*/ nr_band::n3,
@@ -80,7 +80,7 @@ TEST(config_generator_tester, band_3)
 }
 
 // Test all possible SSB position within a given band returned by the config generator.
-TEST(config_generator_tester, band_7)
+TEST(ssb_freq_position_generation_test, band_7)
 {
   ssb_freq_position_generator cfg_generator{/* DL-ARFCN*/ 531720,
                                             /* NR-band*/ nr_band::n7,
@@ -96,7 +96,7 @@ TEST(config_generator_tester, band_7)
 }
 
 // Test all possible SSB position within a given band returned by the config generator.
-TEST(config_generator_tester, band_25)
+TEST(ssb_freq_position_generation_test, band_25)
 {
   ssb_freq_position_generator cfg_generator{/* DL-ARFCN*/ 391180,
                                             /* NR-band*/ nr_band::n25,
@@ -145,7 +145,7 @@ TEST(config_generator_tester, band_25)
 }
 
 // Test all possible SSB position within a given band returned by the config generator.
-TEST(config_generator_tester, band_51)
+TEST(ssb_freq_position_generation_test, band_51)
 {
   ssb_freq_position_generator cfg_generator{/* DL-ARFCN*/ 435740,
                                             /* NR-band*/ nr_band::n66,
