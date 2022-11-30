@@ -60,5 +60,5 @@ void rrc_ue_impl::send_rrc_reject(uint8_t reject_wait_time_secs)
 void rrc_ue_impl::send_srb_pdu(srb_id_t srb_id, byte_buffer pdu)
 {
   logger.debug(pdu.begin(), pdu.end(), "C-RNTI={}, TX SRB{} PDU", context.c_rnti, srb_id);
-  srbs[srb_id_to_uint(srb_id)]->on_new_pdu({std::move(pdu)});
+  srbs[srb_id_to_uint(srb_id)].pdu_notifier->on_new_pdu({std::move(pdu)});
 }

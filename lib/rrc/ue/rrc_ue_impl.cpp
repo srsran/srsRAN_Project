@@ -51,12 +51,15 @@ rrc_ul_dcch_pdu_handler& rrc_ue_impl::get_ul_dcch_pdu_handler()
   return *this;
 }
 
-void rrc_ue_impl::connect_srb_notifier(srb_id_t srb_id, rrc_pdu_notifier& notifier)
+void rrc_ue_impl::connect_srb_notifier(srb_id_t                  srb_id,
+                                       rrc_pdu_notifier&         notifier,
+                                       rrc_tx_security_notifier* tx_sec,
+                                       rrc_rx_security_notifier* rx_sec)
 {
   if (srb_id_to_uint(srb_id) >= MAX_NOF_SRBS) {
     logger.error("Couldn't connect notifier for SRB{}", srb_id);
   }
-  srbs[srb_id_to_uint(srb_id)] = &notifier;
+  srbs[srb_id_to_uint(srb_id)].pdu_notifier = &notifier;
 }
 
 void rrc_ue_impl::on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg)

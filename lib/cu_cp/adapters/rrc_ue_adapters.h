@@ -15,6 +15,8 @@
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/f1c/cu_cp/f1c_cu.h"
 #include "srsgnb/ngap/ngc.h"
+#include "srsgnb/pdcp/pdcp_rx.h"
+#include "srsgnb/pdcp/pdcp_tx.h"
 #include "srsgnb/rrc/rrc.h"
 
 namespace srsgnb {
@@ -86,16 +88,60 @@ private:
   du_processor_ue_task_handler& du_processor_task_handler;
 };
 
-/// Adapter between RRC and PDCP in DL direction (Tx)
-class rrc_ue_pdcp_adapter : public rrc_pdu_notifier
+/// Adapter between RRC and PDCP in DL direction (Tx) for data transfer
+class rrc_ue_pdcp_pdu_adapter : public rrc_pdu_notifier
 {
 public:
-  explicit rrc_ue_pdcp_adapter(pdcp_tx_upper_data_interface& pdcp_handler_) : pdcp_handler(pdcp_handler_) {}
+  explicit rrc_ue_pdcp_pdu_adapter(pdcp_tx_upper_data_interface& pdcp_handler_) : pdcp_handler(pdcp_handler_) {}
 
   void on_new_pdu(const rrc_pdu_message& msg) override { pdcp_handler.handle_sdu({msg.pdu.begin(), msg.pdu.end()}); }
 
 private:
   pdcp_tx_upper_data_interface& pdcp_handler;
+};
+
+/// Adapter between RRC and PDCP in DL direction (Tx) for security configuration
+class rrc_ue_pdcp_tx_security_adapter final : public rrc_tx_security_notifier
+{
+public:
+  explicit rrc_ue_pdcp_tx_security_adapter(pdcp_tx_upper_control_interface& pdcp_handler_) : pdcp_handler(pdcp_handler_)
+  {
+  }
+
+  // Setup security
+  void set_as_security_config(security::sec_128_as_config sec_cfg) override
+  {
+    pdcp_handler.set_as_security_config(sec_cfg);
+  }
+  void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) override
+  {
+    pdcp_handler.enable_or_disable_security(integ, cipher);
+  };
+
+private:
+  pdcp_tx_upper_control_interface& pdcp_handler;
+};
+
+/// Adapter between RRC and PDCP in DL direction (Rx) for security configuration
+class rrc_ue_pdcp_rx_security_adapter final : public rrc_rx_security_notifier
+{
+public:
+  explicit rrc_ue_pdcp_rx_security_adapter(pdcp_rx_upper_control_interface& pdcp_handler_) : pdcp_handler(pdcp_handler_)
+  {
+  }
+
+  // Setup security
+  void set_as_security_config(security::sec_128_as_config sec_cfg) override
+  {
+    pdcp_handler.set_as_security_config(sec_cfg);
+  }
+  void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) override
+  {
+    pdcp_handler.enable_or_disable_security(integ, cipher);
+  };
+
+private:
+  pdcp_rx_upper_control_interface& pdcp_handler;
 };
 
 // Adapter between RRC UE and NGC

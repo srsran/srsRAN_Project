@@ -46,7 +46,10 @@ public:
   // rrc_ue_interface
   rrc_ul_ccch_pdu_handler& get_ul_ccch_pdu_handler() override;
   rrc_ul_dcch_pdu_handler& get_ul_dcch_pdu_handler() override;
-  void                     connect_srb_notifier(srb_id_t srb_id, rrc_pdu_notifier& notifier) override;
+  void                     connect_srb_notifier(srb_id_t                  srb_id,
+                                                rrc_pdu_notifier&         notifier,
+                                                rrc_tx_security_notifier* tx_sec,
+                                                rrc_rx_security_notifier* rx_sec) override;
 
   // rrc_ue_dl_nas_message_handler
   void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) override;

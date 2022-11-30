@@ -60,7 +60,8 @@ public:
 
     // connect SRB with RRC to "PDCP" adapter
     ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier = std::move(tx_pdu_handler);
-    ue_ctxt.rrc->connect_srb_notifier(msg.srb_id, *ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier);
+    ue_ctxt.rrc->connect_srb_notifier(
+        msg.srb_id, *ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier, nullptr, nullptr);
     last_srb = msg;
   }
 

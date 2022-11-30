@@ -14,6 +14,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
+#include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/rrc/rrc.h"
 #include "srsgnb/security/security.h"
 #include "srsgnb/support/async/async_task.h"
@@ -39,8 +40,37 @@ public:
   virtual void on_new_pdu(const rrc_pdu_message& msg) = 0;
 };
 
+/// Interface to configure security in a SRB
+/// TX PDCP entity.
+class rrc_tx_security_notifier
+{
+public:
+  virtual ~rrc_tx_security_notifier() = default;
+
+  virtual void set_as_security_config(security::sec_128_as_config sec_cfg)                             = 0;
+  virtual void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) = 0;
+};
+
+/// Interface to configure security in a SRB.
+/// RX PDCP entity.
+class rrc_rx_security_notifier
+{
+public:
+  virtual ~rrc_rx_security_notifier() = default;
+
+  virtual void set_as_security_config(security::sec_128_as_config sec_cfg)                             = 0;
+  virtual void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) = 0;
+};
+
+/// Struct to hold notifiers for a specific SRB
+struct srb_bearer_notifiers {
+  rrc_pdu_notifier*         pdu_notifier    = nullptr;
+  rrc_tx_security_notifier* tx_sec_notifier = nullptr;
+  rrc_rx_security_notifier* rx_sec_notifier = nullptr;
+};
+
 /// Non-owning handlers to PDU notifiers.
-using srb_notifiers = std::array<rrc_pdu_notifier*, MAX_NOF_SRBS>;
+using srb_notifiers = std::array<srb_bearer_notifiers, MAX_NOF_SRBS>;
 
 /// Dummy notifier that just logs the PDU.
 /// An object of this type is instantiated upon creation of the SRB context to avoid nullptr checks.
@@ -233,9 +263,12 @@ public:
   rrc_ue_interface()          = default;
   virtual ~rrc_ue_interface() = default;
 
-  virtual rrc_ul_ccch_pdu_handler& get_ul_ccch_pdu_handler()                                         = 0;
-  virtual rrc_ul_dcch_pdu_handler& get_ul_dcch_pdu_handler()                                         = 0;
-  virtual void                     connect_srb_notifier(srb_id_t srb_id, rrc_pdu_notifier& notifier) = 0;
+  virtual rrc_ul_ccch_pdu_handler& get_ul_ccch_pdu_handler()                              = 0;
+  virtual rrc_ul_dcch_pdu_handler& get_ul_dcch_pdu_handler()                              = 0;
+  virtual void                     connect_srb_notifier(srb_id_t                  srb_id,
+                                                        rrc_pdu_notifier&         notifier,
+                                                        rrc_tx_security_notifier* tx_sec,
+                                                        rrc_rx_security_notifier* rx_sec) = 0;
 };
 
 } // namespace srs_cu_cp

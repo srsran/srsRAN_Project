@@ -191,7 +191,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   rrc_ue_create_msg.cell.cgi = msg.cgi;
   rrc_ue_create_msg.cell.tac = cell_db[pcell_index].tac;
   for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
-    rrc_ue_create_msg.srbs[i] = ue_ctxt->srbs[i].rrc_tx_notifier.get();
+    rrc_ue_create_msg.srbs[i].pdu_notifier = ue_ctxt->srbs[i].rrc_tx_notifier.get();
   }
   rrc_ue_create_msg.du_to_cu_container = std::move(msg.du_to_cu_rrc_container);
   rrc_ue_create_msg.ue_task_sched      = ue_ctxt->task_sched.get();
@@ -231,7 +231,8 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     srb.rrc_tx_notifier = std::make_unique<rrc_ue_f1ap_adapter>(*f1c, ue_ctxt->ue_index);
 
     // update notifier in RRC
-    ue_ctxt->rrc->connect_srb_notifier(msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier.get());
+    ue_ctxt->rrc->connect_srb_notifier(
+        msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier, nullptr, nullptr);
   } else if (msg.srb_id <= srb_id_t::srb2) {
     // create PDCP context for this SRB
     srb.pdcp_context.emplace();
@@ -262,14 +263,19 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     // created adapters between F1C to PDCP (Rx) and RRC to PDCP (Tx)
     srb.rx_notifier = std::make_unique<f1c_pdcp_adapter>(srb.pdcp_context->pdcp_bearer->get_rx_lower_interface());
     srb.rrc_tx_notifier =
-        std::make_unique<rrc_ue_pdcp_adapter>(srb.pdcp_context->pdcp_bearer->get_tx_upper_data_interface());
+        std::make_unique<rrc_ue_pdcp_pdu_adapter>(srb.pdcp_context->pdcp_bearer->get_tx_upper_data_interface());
+
+    auto test_tx = std::make_unique<rrc_ue_pdcp_tx_security_adapter>(
+        srb.pdcp_context->pdcp_bearer->get_tx_upper_control_interface());
+    auto test_rx = std::make_unique<rrc_ue_pdcp_rx_security_adapter>(
+        srb.pdcp_context->pdcp_bearer->get_rx_upper_control_interface());
 
     // update notifier in RRC
-    ue_ctxt->rrc->connect_srb_notifier(msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier.get());
+    ue_ctxt->rrc->connect_srb_notifier(
+        msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier, test_tx.get(), test_rx.get());
 
     // update notifier in F1C
-    f1c->connect_srb_notifier(
-        ue_ctxt->ue_index, msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rx_notifier.get());
+    f1c->connect_srb_notifier(ue_ctxt->ue_index, msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rx_notifier);
   } else {
     logger.error("Couldn't create SRB{}.", msg.srb_id);
   }

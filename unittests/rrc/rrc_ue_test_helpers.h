@@ -49,8 +49,8 @@ protected:
     // connect SRB0 with RRC to "F1" adapter
     ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb0)].rrc_tx_notifier =
         std::make_unique<dummy_rrc_pdu_notifier>(du_proc_rrc_ue->srb0_tx_pdu_handler);
-    ue_ctxt.rrc->connect_srb_notifier(srb_id_t::srb0,
-                                      *ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb0)].rrc_tx_notifier.get());
+    ue_ctxt.rrc->connect_srb_notifier(
+        srb_id_t::srb0, *ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb0)].rrc_tx_notifier.get(), nullptr, nullptr);
 
     task_sched_handle = static_cast<dummy_ue_task_scheduler*>(ue_ctxt.task_sched.get());
   }
