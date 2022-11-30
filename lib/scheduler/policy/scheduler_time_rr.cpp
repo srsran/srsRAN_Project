@@ -59,7 +59,7 @@ static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_re
 
       bwp_configuration bwp_cfg = ue_cc.cfg().dl_bwp_common(ue_cc.active_bwp_id()).generic_params;
       if (ss_cfg->type == search_space_configuration::type_t::common) {
-        bwp_cfg = cell_cfg_cmn.dl_cfg_common.init_dl_bwp.generic_params;
+        bwp_cfg = ue_cc.cfg().dl_bwp_common(ue_cc.initial_bwp_id()).generic_params;
         if (cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
           bwp_cfg.crbs = get_coreset0_crbs(cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdcch_common);
         }
@@ -104,7 +104,6 @@ static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_re
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell&               ue_cc       = u.get_cell(to_ue_cell_index(i));
     const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
-    const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
     const ul_harq_process*       h           = nullptr;
     if (is_retx) {
       h = ue_cc.harqs.find_pending_ul_retx();
@@ -121,10 +120,8 @@ static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_re
     }
 
     // See TS 38.212, 7.3.1.0 DCI size alignment.
-    bwp_uplink_common bwp_ul = ue_cell_cfg.ul_bwp_common(ue_cc.active_bwp_id());
-    if (ss_cfg->type == search_space_configuration::type_t::common) {
-      bwp_ul = cell_cfg.ul_cfg_common.init_ul_bwp;
-    }
+    const bwp_uplink_common& bwp_ul = ue_cell_cfg.ul_bwp_common(
+        ss_cfg->type == search_space_configuration::type_t::common ? ue_cc.initial_bwp_id() : ue_cc.active_bwp_id());
 
     unsigned          time_res = 0; // TODO: Find best candidate.
     unsigned          k2       = bwp_ul.pusch_cfg_common->pusch_td_alloc_list[time_res].k2; // TODO: Take from config.

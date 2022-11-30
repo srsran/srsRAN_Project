@@ -49,7 +49,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
 
   const ue_cell_configuration& ue_cell_cfg = ue_cc->cfg();
   const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
-  bwp_downlink_common          init_dl_bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
+  bwp_downlink_common          init_dl_bwp = ue_cell_cfg.dl_bwp_common(ue_cc->initial_bwp_id());
   if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
     init_dl_bwp.generic_params.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
   }
@@ -197,7 +197,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   const ue_cell_configuration& ue_cell_cfg = ue_cc->cfg();
   const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
-  const bwp_uplink_common&     init_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp;
+  const bwp_uplink_common&     init_ul_bwp = ue_cell_cfg.ul_bwp_common(ue_cc->initial_bwp_id());
   const bwp_uplink_common&     bwp_ul_cmn  = ue_cell_cfg.ul_bwp_common(ue_cc->active_bwp_id());
 
   // Find a SearchSpace candidate.
