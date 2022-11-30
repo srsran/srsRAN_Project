@@ -30,7 +30,9 @@ public:
   size_t      get_nof_ues() override;
 
   // ngc_ue_manager
-  ngc_ue& add_ue(cu_cp_ue_id_t cu_cp_ue_id, ngc_rrc_ue_notifier& rrc_ue_notifier) override;
+  ngc_ue& add_ue(cu_cp_ue_id_t                cu_cp_ue_id,
+                 ngc_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
+                 ngc_rrc_ue_control_notifier& rrc_ue_ctrl_notifier) override;
   void    remove_ue(cu_cp_ue_id_t cu_cp_ue_id) override;
 
   ngc_ue* find_ue(std::underlying_type_t<cu_cp_ue_id_t> cu_cp_ue_id_uint) override;

@@ -20,7 +20,7 @@ TEST_F(ngc_test, when_initial_ue_message_is_received_then_ngap_ue_is_created)
   ASSERT_EQ(ngc->get_nof_ues(), 0);
 
   // Inject UE creation at NGC
-  ngc->create_ngc_ue(MIN_DU_INDEX, MIN_UE_INDEX, *rrc_ue_notifier);
+  ngc->create_ngc_ue(MIN_DU_INDEX, MIN_UE_INDEX, *rrc_ue_notifier, *rrc_ue_notifier);
 
   // generate and inject valid initial ue message
   ngap_initial_ue_message msg = generate_initial_ue_message();
@@ -35,7 +35,7 @@ TEST_F(ngc_test, when_initial_ue_message_is_received_then_ngap_ue_is_created)
 TEST_F(ngc_test, when_ue_present_dl_nas_transport_is_forwarded)
 {
   // Inject UE creation at NGC
-  ngc->create_ngc_ue(MIN_DU_INDEX, MIN_UE_INDEX, *rrc_ue_notifier);
+  ngc->create_ngc_ue(MIN_DU_INDEX, MIN_UE_INDEX, *rrc_ue_notifier, *rrc_ue_notifier);
 
   // Inject DL NAS transport message from AMF
   ngc_message dl_nas_transport = generate_downlink_nas_transport_message();
@@ -60,7 +60,7 @@ TEST_F(ngc_test, when_ue_present_and_amf_set_ul_nas_transport_is_forwared)
   ASSERT_EQ(ngc->get_nof_ues(), 0);
 
   // Inject UE creation at NGC
-  ngc->create_ngc_ue(MIN_DU_INDEX, MIN_UE_INDEX, *rrc_ue_notifier);
+  ngc->create_ngc_ue(MIN_DU_INDEX, MIN_UE_INDEX, *rrc_ue_notifier, *rrc_ue_notifier);
 
   // generate and inject valid initial ue message to create UE context
   ngap_initial_ue_message msg = generate_initial_ue_message();

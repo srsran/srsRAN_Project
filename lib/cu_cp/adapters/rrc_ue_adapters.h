@@ -64,6 +64,7 @@ private:
   du_processor_rrc_ue_interface* du_processor_rrc_ue_handler = nullptr;
 };
 
+/// Adapter between RRC UE and UE Task Scheduler
 class rrc_to_du_ue_task_scheduler : public rrc_ue_task_scheduler
 {
 public:
@@ -98,16 +99,22 @@ private:
 };
 
 // Adapter between RRC UE and NGC
-class rrc_ue_ngc_adapter : public rrc_ue_nas_notifier
+class rrc_ue_ngc_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
 {
 public:
-  void connect_ngc(ngc_nas_message_handler& ngc_nas_msg_handler_) { ngc_nas_msg_handler = &ngc_nas_msg_handler_; }
+  void connect_ngc(ngc_nas_message_handler&           ngc_nas_msg_handler_,
+                   ngc_ue_context_management_handler& ngc_ue_ctxt_mgmt_handler_)
+  {
+    ngc_nas_msg_handler      = &ngc_nas_msg_handler_;
+    ngc_ue_ctxt_mgmt_handler = &ngc_ue_ctxt_mgmt_handler_;
+  }
 
   void set_du_index(du_index_t du_index_) { du_index = du_index_; }
 
   void on_initial_ue_message(const initial_ue_message& msg) override
   {
     srsgnb_assert(du_index != INVALID_DU_INDEX, "du_index of rrc_ue_ngc_adapter not set");
+    srsgnb_assert(ngc_nas_msg_handler != nullptr, "ngc_nas_msg_handler must not be nullptr");
 
     ngap_initial_ue_message ngap_init_ue_msg;
     ngap_init_ue_msg.cu_cp_ue_id = get_cu_cp_ue_id(du_index, msg.ue_index);
@@ -125,6 +132,7 @@ public:
   void on_ul_nas_transport_message(const ul_nas_transport_message& msg) override
   {
     srsgnb_assert(du_index != INVALID_DU_INDEX, "du_index of rrc_ue_ngc_adapter not set");
+    srsgnb_assert(ngc_nas_msg_handler != nullptr, "ngc_nas_msg_handler must not be nullptr");
 
     ngap_ul_nas_transport_message ngap_ul_nas_msg;
     ngap_ul_nas_msg.cu_cp_ue_id = get_cu_cp_ue_id(du_index, msg.ue_index);
@@ -134,6 +142,20 @@ public:
     ngap_ul_nas_msg.nr_cgi.plmn_id.from_string(msg.cgi.plmn_hex);
 
     ngc_nas_msg_handler->handle_ul_nas_transport_message(ngap_ul_nas_msg);
+  }
+
+  void on_rrc_reconfiguration_complete(const rrc_reconfiguration_response_message& msg) override
+  {
+    srsgnb_assert(du_index != INVALID_DU_INDEX, "du_index of rrc_ue_ngc_adapter not set");
+    srsgnb_assert(ngc_ue_ctxt_mgmt_handler != nullptr, "ngc_ue_ctxt_mgmt_handler must not be nullptr");
+
+    cu_cp_ue_id_t cu_cp_ue_id = get_cu_cp_ue_id(du_index, msg.ue_index);
+
+    ngap_initial_context_setup_response_message init_ctxt_resp_msg = {};
+    init_ctxt_resp_msg.cu_cp_ue_id                                 = cu_cp_ue_id;
+    init_ctxt_resp_msg.success                                     = msg.success;
+
+    ngc_ue_ctxt_mgmt_handler->handle_initial_context_setup_response_message(init_ctxt_resp_msg);
   }
 
 private:
@@ -180,8 +202,9 @@ private:
     return rrcestablishment_cause;
   }
 
-  ngc_nas_message_handler* ngc_nas_msg_handler = nullptr;
-  du_index_t               du_index            = INVALID_DU_INDEX;
+  ngc_nas_message_handler*           ngc_nas_msg_handler      = nullptr;
+  ngc_ue_context_management_handler* ngc_ue_ctxt_mgmt_handler = nullptr;
+  du_index_t                         du_index                 = INVALID_DU_INDEX;
 };
 
 } // namespace srs_cu_cp

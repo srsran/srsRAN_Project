@@ -150,6 +150,22 @@ public:
   virtual void on_ul_nas_transport_message(const ul_nas_transport_message& msg) = 0;
 };
 
+struct rrc_reconfiguration_response_message {
+  ue_index_t ue_index;
+  bool       success;
+};
+
+/// Interface to notify about control messages.
+class rrc_ue_control_notifier
+{
+public:
+  virtual ~rrc_ue_control_notifier() = default;
+
+  /// \brief Notify about the outcome of a RRC Reconfiguration procedure.
+  /// \param[in] msg The rrc reconfiguration response message.
+  virtual void on_rrc_reconfiguration_complete(const rrc_reconfiguration_response_message& msg) = 0;
+};
+
 /// Handle downlink NAS transport messages.
 class rrc_ue_dl_nas_message_handler
 {
@@ -159,6 +175,25 @@ public:
   /// \brief Handle the received Downlink NAS Transport message.
   /// \param[in] msg The Downlink NAS Transport message.
   virtual void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) = 0;
+};
+
+struct rrc_reconfiguration_request_message {
+  cu_cp_ue_id_t cu_cp_ue_id;
+
+  optional<std::string> plmn;
+
+  // TODO: Add other parameters
+};
+
+/// Handle control messages.
+class rrc_ue_control_message_handler
+{
+public:
+  virtual ~rrc_ue_control_message_handler() = default;
+
+  /// \brief Handle the a rrc reconfiguration request message.
+  /// \param[in] msg The rrc reconfiguration request message.
+  virtual void handle_rrc_reconfiguration_request(const rrc_reconfiguration_request_message& msg) = 0;
 };
 
 struct rrc_init_security_context {
@@ -183,6 +218,7 @@ public:
 class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
                          public rrc_ul_dcch_pdu_handler,
                          public rrc_ue_dl_nas_message_handler,
+                         public rrc_ue_control_message_handler,
                          public rrc_ue_init_security_context_handler,
                          public rrc_ue_setup_proc_notifier,
                          public rrc_ue_security_mode_command_proc_notifier

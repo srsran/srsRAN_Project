@@ -121,8 +121,8 @@ void cu_cp::handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc
   ngc_rrc_ue_ev_notifiers.emplace(cu_cp_ue_id_uint);
 
   ngc_rrc_ue_adapter& rrc_ue_adapter = ngc_rrc_ue_ev_notifiers[cu_cp_ue_id_uint];
-  ngc_entity->create_ngc_ue(du_index, ue_index, rrc_ue_adapter);
-  rrc_ue_adapter.connect_rrc_ue(rrc_ue);
+  ngc_entity->create_ngc_ue(du_index, ue_index, rrc_ue_adapter, rrc_ue_adapter);
+  rrc_ue_adapter.connect_rrc_ue(rrc_ue, rrc_ue);
 }
 
 void cu_cp::on_new_cu_up_connection()
@@ -175,16 +175,17 @@ du_index_t cu_cp::add_du()
                                                                    du_processor_ev_notifier,
                                                                    f1c_ev_notifier,
                                                                    *cfg.f1c_notifier,
-                                                                   rrc_ue_ngc_ev_notifier,
+                                                                   rrc_ue_ngc_notifier,
+                                                                   rrc_ue_ngc_notifier,
                                                                    du_processor_task_sched,
                                                                    ue_mng);
 
   du_processor_ev_notifier.connect_cu_cp(*this);
-  rrc_ue_ngc_ev_notifier.connect_ngc(*ngc_entity);
+  rrc_ue_ngc_notifier.connect_ngc(*ngc_entity, *ngc_entity);
   du_processor_task_sched.connect_cu_cp(ue_task_sched);
 
   // Add DU index to adapter
-  rrc_ue_ngc_ev_notifier.set_du_index(du_index);
+  rrc_ue_ngc_notifier.set_du_index(du_index);
 
   du->get_context().du_index = du_index;
 

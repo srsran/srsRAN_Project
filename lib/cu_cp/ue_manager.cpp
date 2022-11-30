@@ -92,14 +92,16 @@ size_t ue_manager::get_nof_ues()
 
 // ngc_ue_manager
 
-ngc_ue& ue_manager::add_ue(cu_cp_ue_id_t cu_cp_ue_id, ngc_rrc_ue_notifier& rrc_ue_notifier)
+ngc_ue& ue_manager::add_ue(cu_cp_ue_id_t                cu_cp_ue_id,
+                           ngc_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
+                           ngc_rrc_ue_control_notifier& rrc_ue_ctrl_notifier)
 {
   uint64_t ue_id = cu_cp_ue_id_to_uint(cu_cp_ue_id);
   srsgnb_assert(not ngc_ues.contains(ue_id), "Duplicate cu_cp_ue_id={} detected", ue_id);
 
   ran_ue_id_t ran_ue_id = get_next_ran_ue_id();
 
-  ngc_ues.emplace(ue_id, cu_cp_ue_id, ran_ue_id, rrc_ue_notifier);
+  ngc_ues.emplace(ue_id, cu_cp_ue_id, ran_ue_id, rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier);
 
   ran_ue_id_to_cu_cp_ue_id.emplace(ran_ue_id_to_uint(ran_ue_id), cu_cp_ue_id);
 

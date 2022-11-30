@@ -29,13 +29,18 @@ struct ue_context;
 struct rrc_du_creation_message {
   rrc_du_creation_message(const rrc_cfg_t&              cfg_,
                           rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_,
-                          rrc_ue_nas_notifier&          nas_notif_) :
-    cfg(cfg_), rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_), nas_notifier(nas_notif_)
+                          rrc_ue_nas_notifier&          nas_notif_,
+                          rrc_ue_control_notifier&      ngc_ctrl_notif_) :
+    cfg(cfg_),
+    rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_),
+    nas_notifier(nas_notif_),
+    ngc_ctrl_notifier(ngc_ctrl_notif_)
   {
   }
   const rrc_cfg_t&              cfg;
   rrc_ue_du_processor_notifier& rrc_ue_du_proc_notifier;
   rrc_ue_nas_notifier&          nas_notifier;
+  rrc_ue_control_notifier&      ngc_ctrl_notifier;
 };
 
 /// Create an instance of an RRC entity

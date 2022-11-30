@@ -150,7 +150,7 @@ private:
   cu_up_processor_cu_cp_adapter cu_up_processor_ev_notifier;
 
   // RRC UE to NGC adapter
-  rrc_ue_ngc_adapter rrc_ue_ngc_ev_notifier;
+  rrc_ue_ngc_adapter rrc_ue_ngc_notifier;
 
   // NGC to RRC UE adapter array
   slotted_array<ngc_rrc_ue_adapter, MAX_NOF_CU_UES> ngc_rrc_ue_ev_notifiers;

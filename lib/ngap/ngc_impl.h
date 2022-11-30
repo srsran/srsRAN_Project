@@ -29,7 +29,10 @@ public:
   ~ngc_impl();
 
   // ngc ue control manager functions
-  void create_ngc_ue(du_index_t du_index, ue_index_t ue_index, ngc_rrc_ue_notifier& ngc_rrc_ue_ev_notifier) override;
+  void create_ngc_ue(du_index_t                   du_index,
+                     ue_index_t                   ue_index,
+                     ngc_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
+                     ngc_rrc_ue_control_notifier& rrc_ue_ctrl_notifier) override;
 
   // ngc connection manager functions
   async_task<ng_setup_response_message> handle_ng_setup_request(const ng_setup_request_message& request) override;

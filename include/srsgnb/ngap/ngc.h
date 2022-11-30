@@ -94,12 +94,6 @@ struct ngap_ul_nas_transport_message {
   asn1::ngap::nr_cgi_s nr_cgi;
 };
 
-struct ngap_initial_context_setup_response_message {
-  asn1::ngap::init_context_setup_resp_s response;
-  asn1::ngap::init_context_setup_fail_s failure;
-  bool                                  success;
-};
-
 /// Handle NGC NAS Message procedures as defined in TS 38.413 section 8.6.
 class ngc_nas_message_handler
 {
@@ -115,6 +109,23 @@ public:
   virtual void handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg) = 0;
 };
 
+struct ngap_pdu_session_res_item {
+  uint16_t    pdu_session_id = 0;
+  byte_buffer pdu_session_res;
+};
+
+struct ngap_initial_context_setup_response_message {
+  cu_cp_ue_id_t cu_cp_ue_id;
+  bool          success;
+  // common
+  optional<asn1::ngap::crit_diagnostics_s> crit_diagnostics;
+  std::vector<ngap_pdu_session_res_item>   failed_to_setup;
+  // failure
+  optional<asn1::ngap::cause_c> cause;
+  // success
+  std::vector<ngap_pdu_session_res_item> succeed_to_setup;
+};
+
 /// Handle NGC UE Context Management procedures as defined in TS 38.413 section 8.3.
 class ngc_ue_context_management_handler
 {
@@ -127,15 +138,32 @@ public:
   handle_initial_context_setup_response_message(const ngap_initial_context_setup_response_message& msg) = 0;
 };
 
-/// Interface to notify about NAS PDUs.
-class ngc_rrc_ue_notifier
+/// Interface to notify about NAS PDUs and messages.
+class ngc_rrc_ue_pdu_notifier
 {
 public:
-  virtual ~ngc_rrc_ue_notifier() = default;
+  virtual ~ngc_rrc_ue_pdu_notifier() = default;
 
   /// \brief Notify about the a new nas pdu.
   /// \param [in] nas_pdu The nas pdu.
   virtual void on_new_pdu(byte_buffer nas_pdu) = 0;
+};
+
+struct ngap_initial_context_setup_request_message {
+  cu_cp_ue_id_t cu_cp_ue_id;
+
+  // TODO: Only add necessary parameters
+  asn1::ngap::init_context_setup_request_s request;
+};
+
+/// Interface to notify the RRC UE about control messages.
+class ngc_rrc_ue_control_notifier
+{
+public:
+  virtual ~ngc_rrc_ue_control_notifier() = default;
+
+  /// \brief Notify about the reception of an initial context setup request.
+  virtual void on_initial_context_setup_request_received(const ngap_initial_context_setup_request_message& msg) = 0;
 };
 
 /// Interface to control the NGC.
@@ -148,7 +176,10 @@ public:
   /// \param[in] du_index The index of the DU the UE is connected to.
   /// \param[in] ue_index The index of the UE.
   /// \param[in] ngc_rrc_ue_ev_notifier The notifier to the RRC UE.
-  virtual void create_ngc_ue(du_index_t du_index, ue_index_t ue_index, ngc_rrc_ue_notifier& ngc_rrc_ue_ev_notifier) = 0;
+  virtual void create_ngc_ue(du_index_t                   du_index,
+                             ue_index_t                   ue_index,
+                             ngc_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
+                             ngc_rrc_ue_control_notifier& rrc_ue_ctrl_notifier) = 0;
 };
 
 /// \brief Interface to query statistics from the NGC interface.

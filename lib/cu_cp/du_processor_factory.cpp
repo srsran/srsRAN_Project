@@ -21,7 +21,8 @@ srsgnb::srs_cu_cp::create_du_processor(const du_processor_config_t     du_proces
                                        du_processor_cu_cp_notifier&    cu_cp_notifier_,
                                        f1c_du_management_notifier&     f1c_du_mgmt_notifier_,
                                        f1c_message_notifier&           f1c_notifier_,
-                                       rrc_ue_nas_notifier&            rrc_ue_ngc_ev_notifier_,
+                                       rrc_ue_nas_notifier&            rrc_ue_nas_pdu_notifier_,
+                                       rrc_ue_control_notifier&        rrc_ue_ngc_ctrl_notifier_,
                                        du_processor_ue_task_scheduler& task_sched_,
                                        du_processor_ue_manager&        ue_manager_)
 {
@@ -29,7 +30,8 @@ srsgnb::srs_cu_cp::create_du_processor(const du_processor_config_t     du_proces
                                                           cu_cp_notifier_,
                                                           f1c_du_mgmt_notifier_,
                                                           f1c_notifier_,
-                                                          rrc_ue_ngc_ev_notifier_,
+                                                          rrc_ue_nas_pdu_notifier_,
+                                                          rrc_ue_ngc_ctrl_notifier_,
                                                           task_sched_,
                                                           ue_manager_);
   return du_processor;

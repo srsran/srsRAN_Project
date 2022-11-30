@@ -100,7 +100,7 @@ private:
   dummy_du_processor_rrc_ue_interface* du_processor_rrc_ue_handler = nullptr;
 };
 
-class dummy_rrc_ue_ngc_adapter : public rrc_ue_nas_notifier
+class dummy_rrc_ue_ngc_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
 {
 public:
   void on_initial_ue_message(const initial_ue_message& msg) override { logger.info("Received Initial UE Message"); }
@@ -108,6 +108,11 @@ public:
   void on_ul_nas_transport_message(const ul_nas_transport_message& msg) override
   {
     logger.info("Received UL NAS Transport message");
+  }
+
+  void on_rrc_reconfiguration_complete(const rrc_reconfiguration_response_message& msg) override
+  {
+    logger.info("Received RRC Reconfiguration Response message");
   }
 
 private:
@@ -126,29 +131,6 @@ public:
 private:
   async_task_sequencer ctrl_loop{16};
   timer_manager&       timer_db;
-};
-
-/// Reusable notifier class that a) stores the received msg for test inspection and b)
-/// calls the registered msg handler (if any). The handler can be added upon construction
-/// or later via the attach_handler() method.
-class dummy_rrc_ue_nas_notifier : public srs_cu_cp::rrc_ue_nas_notifier
-{
-public:
-  // FIXME: Add handler when ngc exists
-  dummy_rrc_ue_nas_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
-
-  void on_initial_ue_message(const srs_cu_cp::initial_ue_message& msg) override
-  {
-    logger.info("Received Initial UE message");
-  };
-
-  void on_ul_nas_transport_message(const srs_cu_cp::ul_nas_transport_message& msg) override
-  {
-    logger.info("Received UL NAS transport message");
-  };
-
-private:
-  srslog::basic_logger& logger;
 };
 
 } // namespace srs_cu_cp

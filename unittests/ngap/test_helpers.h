@@ -63,8 +63,8 @@ private:
   srslog::basic_logger& logger;
 };
 
-/// Dummy NGC to RRC UE notifier
-class dummy_ngc_rrc_ue_notifier : public ngc_rrc_ue_notifier
+/// Dummy NGC to RRC UE PDU notifier
+class dummy_ngc_rrc_ue_notifier : public ngc_rrc_ue_pdu_notifier, public ngc_rrc_ue_control_notifier
 {
 public:
   dummy_ngc_rrc_ue_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
@@ -73,6 +73,11 @@ public:
   {
     last_nas_pdu = std::move(nas_pdu);
     logger.info("Received a NAS PDU");
+  }
+
+  void on_initial_context_setup_request_received(const ngap_initial_context_setup_request_message& msg) override
+  {
+    logger.info("Received an Initial Context Setup Request");
   }
 
   byte_buffer last_nas_pdu;
