@@ -93,6 +93,18 @@ std::vector<CLI::ConfigItem> yaml_config_parser::from_config_impl(const YAML::No
 {
   std::vector<CLI::ConfigItem> results;
 
+  // Opening ConfigItem that enables subcommand callbacks.
+  // This block inserts an especial ConfigItem in CLI that enables the subcommand to execute callbacks (preparse, parse
+  // and finish CLI callbacks). It is done by surrounding the subcommand with an ConfigItem with name '++' before the
+  // subcommand and another ConfigItem with name '--' when the subcommand finishes.
+  {
+    results.emplace_back();
+    CLI::ConfigItem& res = results.back();
+    res.name             = "++";
+    res.parents          = prefix;
+    res.inputs           = {};
+  }
+
   for (const auto& node : config) {
     const auto& key      = node.first;
     const auto& value    = node.second;
@@ -119,6 +131,15 @@ std::vector<CLI::ConfigItem> yaml_config_parser::from_config_impl(const YAML::No
     if (value.IsSequence()) {
       report_fatal_error("YAML sequence parsing not yet implemented");
     }
+  }
+
+  // Closing ConfigItem that enables subcommand callbacks.
+  {
+    results.emplace_back();
+    CLI::ConfigItem& res = results.back();
+    res.name             = "--";
+    res.parents          = prefix;
+    res.inputs           = {};
   }
 
   return results;

@@ -80,8 +80,8 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
 
     // PRACH config.
     rach_config_common& rach_cfg                           = *out_cell.ul_cfg_common.init_ul_bwp.rach_cfg_common;
-    rach_cfg.rach_cfg_generic.prach_config_index           = base_cell.prach_cfg.config_index;
-    rach_cfg.prach_root_seq_index                          = base_cell.prach_cfg.prach_root_sequence;
+    rach_cfg.rach_cfg_generic.prach_config_index           = base_cell.prach_cfg.prach_config_index;
+    rach_cfg.prach_root_seq_index                          = base_cell.prach_cfg.prach_root_sequence_index;
     rach_cfg.rach_cfg_generic.zero_correlation_zone_config = base_cell.prach_cfg.zero_correlation_zone;
 
     error_type<std::string> error = is_du_cell_config_valid(out_cfg.back());

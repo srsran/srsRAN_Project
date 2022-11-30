@@ -7,9 +7,6 @@
  * the distribution.
  *
  */
-
-#include "CLI/CLI11.hpp"
-
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
 #include "srsgnb/cu_cp/cu_cp_factory.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
@@ -21,6 +18,7 @@
 #include "srsgnb/support/config_parsers.h"
 
 #include "gnb_appconfig.h"
+#include "gnb_appconfig_cli11_schema.h"
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig_validators.h"
 
@@ -56,7 +54,6 @@ using namespace srsgnb;
 
 /// From TS38.104 Section 5.3.2 Table 5.3.2-1. Default 20MHz FR1.
 static const std::array<uint16_t, NOF_NUMEROLOGIES> nof_prb_ul_grid = {106, 51, 24, 0, 0};
-static bool                                         printconfig     = false;
 static std::string                                  config_file;
 
 static srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
@@ -65,20 +62,10 @@ static std::atomic<bool>     is_running = {true};
 static srsgnb::network_gateway_config ngap_nw_config;
 const std::string                     srsgnb_version = "0.1";
 
-static void populate_cli11_gnb_args(CLI::App& app, srsgnb::gnb_appconfig& gnb_params)
+static void populate_cli11_generic_args(CLI::App& app)
 {
   app.set_version_flag("-v,--version", srsgnb_version);
   app.set_config("-c,", config_file, "Read config from file", false);
-  app.add_flag("--printconfig", printconfig, "Print configuration and exit")->configurable(false);
-  app.add_flag("-l", gnb_params.log_level, "Enable debug logger");
-}
-
-static void populate_cli11_cu_args(CLI::App& app, srsgnb::gnb_appconfig& gnb_params)
-{
-  app.add_option("--amf_addr", gnb_params.amf_cfg.ip_addr, "AMF IP address")->check(CLI::ValidIPV4)->required();
-  app.add_option("--amf_port", gnb_params.amf_cfg.port, "AMF port")->capture_default_str();
-  app.add_option("--amf_bind_addr", gnb_params.amf_cfg.bind_addr, "Local IP IP address to bind for AMF connection")
-      ->check(CLI::ValidIPV4);
 }
 
 /// This function takes the populated appconfig and generates (sub)-component configurations.
@@ -232,12 +219,12 @@ int main(int argc, char** argv)
   // Setup and configure config parsing.
   CLI::App app("srsGNB application");
   app.config_formatter(create_yaml_config_parser());
+  // Fill the generic application arguments to parse.
+  populate_cli11_generic_args(app);
 
   gnb_appconfig gnb_cfg;
-  // This variable is filled by the command line parser.
-  populate_cli11_gnb_args(app, gnb_cfg);
-  auto cu_app = app.add_subcommand("cu", "CU parameters");
-  populate_cli11_cu_args(*cu_app, gnb_cfg);
+  // Configure CLI11 with the gNB application configuration schema.
+  configure_cli11_with_gnb_appconfig_schema(app, gnb_cfg);
 
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);

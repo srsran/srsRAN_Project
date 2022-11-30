@@ -12,6 +12,7 @@
 
 #include "srsgnb/ran/band_helper.h"
 #include "srsgnb/ran/bs_channel_bandwidth.h"
+#include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/pdcch/aggregation_level.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include <string>
@@ -31,8 +32,11 @@ struct rf_driver_appconfig {
 
 /// PRACH application configuration.
 struct prach_appconfig {
-  unsigned config_index          = 1;
-  unsigned prach_root_sequence   = 1;
+  /// PRACH configuration index.
+  unsigned prach_config_index = 1;
+  /// PRACH root sequence index.
+  unsigned prach_root_sequence_index = 1;
+  /// Zero correlation zone
   unsigned zero_correlation_zone = 2;
   unsigned fixed_msg3_mcs        = 0;
   unsigned max_msg3_harq_retx    = 4;
@@ -85,7 +89,7 @@ struct base_cell_appconfig {
   /// Human readable full PLMN (without possible filler digit).
   std::string plmn = "00101";
   /// TAC.
-  int tac = 7;
+  unsigned tac = 7;
   /// PDCCH configuration.
   pdcch_appconfig pdcch_cfg;
   /// PDSCH configuration.
@@ -103,7 +107,7 @@ struct base_cell_appconfig {
 /// Cell configuration
 struct cell_appconfig {
   /// Physical cell identifier.
-  unsigned pci = 1;
+  pci_t pci = 1;
   /// Cell configuration.
   base_cell_appconfig cell;
 };
@@ -119,7 +123,7 @@ struct gnb_appconfig {
   /// Log level.
   std::string log_level = "info";
   /// gNodeB identifier.
-  int gnb_id = 411;
+  uint32_t gnb_id = 411;
   /// Node name.
   std::string ran_node_name = "srsgnb01";
   /// AMF configuration.
