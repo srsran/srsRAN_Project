@@ -53,8 +53,8 @@ void srsgnb::test_ssb_coreset0_allocation(unsigned                              
   // Position of SSB central carrier, located at the 120th SSB's subcarrier.
   double f_ref_hz   = band_helper::nr_arfcn_to_freq(dl_arfcn);
   double point_A_hz = band_helper::get_abs_freq_point_a_from_f_ref(f_ref_hz, n_rbs, scs_common);
-  double bw_up_hz   = point_A_hz + static_cast<double>(n_rbs * NOF_SUBCARRIERS_PER_RB *
-                                                     scs_to_khz(subcarrier_spacing::kHz15) * KHZ_TO_HZ);
+  double bw_up_hz =
+      point_A_hz + static_cast<double>(n_rbs * NOF_SUBCARRIERS_PER_RB * scs_to_khz(scs_common) * KHZ_TO_HZ);
 
   unsigned crb_ssb    = scs_common == subcarrier_spacing::kHz15 ? params.offset_to_point_A.to_uint()
                                                                 : params.offset_to_point_A.to_uint() / 2;

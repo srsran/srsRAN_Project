@@ -572,43 +572,58 @@ get_max_coreset0_index(subcarrier_spacing scs_common, subcarrier_spacing scs_ssb
   return 0;
 }
 
+// \brief Computes the CRB index where the first SSB's subcarrier is located.
+static unsigned get_ssb_crb(subcarrier_spacing scs_common, ssb_offset_to_pointA offset_to_point_A)
+{
+  return scs_common == subcarrier_spacing::kHz15 ? offset_to_point_A.to_uint() : offset_to_point_A.to_uint() / 2;
+}
+
 optional<ssb_coreset0_freq_location> srsgnb::band_helper::get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
                                                                                          nr_band            band,
                                                                                          unsigned           n_rbs,
                                                                                          subcarrier_spacing scs_common,
-                                                                                         subcarrier_spacing scs_ssb)
+                                                                                         subcarrier_spacing scs_ssb,
+                                                                                         uint8_t            ss0_idx)
 {
   srsgnb_assert(band != nr_band::n34 && band != nr_band::n38 && band != nr_band::n39 && band != nr_band::n41 &&
                     band != nr_band::n79,
                 "Bands n34, n38, n39, n41 and n79 not currently supported");
+  // Space occupied by SSB in RBs, using SCScommon as reference.
+  const unsigned ssb_nof_crbs = NOF_SSB_PRBS * scs_to_khz(scs_ssb) / scs_to_khz(scs_common);
+
+  optional<ssb_coreset0_freq_location> result;
 
   // Get f_ref, point_A from dl_arfcn, band and bandwidth.
   ssb_freq_position_generator du_cfg{dl_arfcn, band, n_rbs, scs_common, scs_ssb};
 
-  // Select 1st SSB. Select first searchspace0_idx and find viable coreset0 index.
-  ssb_freq_location ssb = du_cfg.get_next_ssb_location();
-  while (ssb.is_valid) {
+  // Iterate over different SSB candidates and select the valid CORESET#0 index with widest bandwidth.
+  unsigned          max_cset0_rbs = 0;
+  ssb_freq_location ssb           = du_cfg.get_next_ssb_location();
+  while (ssb.is_valid and get_ssb_crb(scs_common, ssb.offset_to_point_A.to_uint()) + ssb_nof_crbs <= n_rbs) {
     // Iterate over the searchSpace0_indices and corresponding configurations.
-    for (uint8_t ss0_idx = 0; ss0_idx <= du_cfg.get_max_ss0_idx(); ++ss0_idx) {
-      optional<unsigned> cset0_idx = get_coreset0_index(
-          band, n_rbs, scs_common, scs_ssb, ssb.offset_to_point_A, ssb.k_ssb, du_cfg.get_ssb_first_symbol(), ss0_idx);
+    optional<unsigned> cset0_idx = get_coreset0_index(
+        band, n_rbs, scs_common, scs_ssb, ssb.offset_to_point_A, ssb.k_ssb, du_cfg.get_ssb_first_symbol(), ss0_idx);
 
-      if (cset0_idx.has_value()) {
-        ssb_coreset0_freq_location results;
-        results.offset_to_point_A = ssb.offset_to_point_A;
-        results.k_ssb             = ssb.k_ssb;
-        results.coreset0_idx      = cset0_idx.value();
-        results.searchspace0_idx  = ss0_idx;
-        results.ssb_arfcn         = freq_to_nr_arfcn(ssb.ss_ref);
-        return results;
+    if (cset0_idx.has_value()) {
+      // Save result if the number of RBs for this CORESET#0 index is the highest so far.
+      auto coreset0_cfg = pdcch_type0_css_coreset_get(
+          band_helper::get_min_channel_bw(band, scs_common), scs_ssb, scs_common, *cset0_idx, ssb.k_ssb.to_uint());
+      if (coreset0_cfg.nof_rb_coreset > max_cset0_rbs) {
+        max_cset0_rbs = coreset0_cfg.nof_rb_coreset;
+
+        result.emplace();
+        result->offset_to_point_A = ssb.offset_to_point_A;
+        result->k_ssb             = ssb.k_ssb;
+        result->coreset0_idx      = cset0_idx.value();
+        result->searchspace0_idx  = ss0_idx;
+        result->ssb_arfcn         = freq_to_nr_arfcn(ssb.ss_ref);
       }
     }
 
     ssb = du_cfg.get_next_ssb_location();
   }
 
-  // If no configuration is good, then the function returns an empty optional.
-  return {};
+  return result;
 }
 
 optional<unsigned> srsgnb::band_helper::get_coreset0_index(nr_band               band,

@@ -227,13 +227,15 @@ struct ssb_coreset0_freq_location {
 /// \param[in] n_rbs is <em>Transmission bandwidth<\em> or \f$N_{RB}\f$ in number of RBs, as per TS 38.104, Table 5.2-1.
 /// \param[in] scs_common is <em>subCarrierSpacingCommon<\em>, as per TS 38.331.
 /// \param[in] scs_ssb is ssb subcarrier spacing.
+/// \param[in] ss0_idx SearchSpace#0 index.
 /// \return The parameters defining the position of the SSB within the band and Coreset0 and SS0 indices for
 /// Table 13-[1-6] and Table 13-11, respectively, in TS 38.213.
 optional<ssb_coreset0_freq_location> get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
                                                                     nr_band            band,
                                                                     unsigned           n_rbs,
                                                                     subcarrier_spacing scs_common,
-                                                                    subcarrier_spacing scs_ssb);
+                                                                    subcarrier_spacing scs_ssb,
+                                                                    uint8_t            ss0_idx);
 
 /// \brief Compute a valid CORESET#0 index with maximum number of CRBs, given the following
 /// restrictions:

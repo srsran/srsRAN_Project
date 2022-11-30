@@ -42,8 +42,9 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
     param.dl_arfcn = base_cell.dl_arfcn;
     param.band     = band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
 
-    optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
-        band_helper::get_ssb_coreset0_freq_location(base_cell.dl_arfcn, base_cell.band, param.nof_crbs, scs, scs);
+    static const uint8_t                              ss0_idx      = 0; // TODO: Parameterize.
+    optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
+        base_cell.dl_arfcn, base_cell.band, param.nof_crbs, scs, scs, ss0_idx);
 
     if (!ssb_freq_loc.has_value()) {
       srsgnb_terminate("Unable to derive a valid SSB pointA and k_SSB for cell id ({}). Exiting.", cell.pci);

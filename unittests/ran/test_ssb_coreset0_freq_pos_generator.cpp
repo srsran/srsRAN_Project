@@ -22,10 +22,11 @@ struct cfg_gen_input_params {
   unsigned           n_rbs;
   subcarrier_spacing scs_common;
   subcarrier_spacing scs_ssb;
+  uint8_t            ss0_idx;
 
   optional<band_helper::ssb_coreset0_freq_location> generate_ssb_coreset0_location()
   {
-    return band_helper::get_ssb_coreset0_freq_location(dl_arfcn, band, n_rbs, scs_common, scs_ssb);
+    return band_helper::get_ssb_coreset0_freq_location(dl_arfcn, band, n_rbs, scs_common, scs_ssb, ss0_idx);
   }
 };
 
@@ -264,7 +265,7 @@ INSTANTIATE_TEST_SUITE_P(
     ssb_coreset0_param_generator_test,
     testing::Values(
         test_params{
-            band_helper::ssb_coreset0_freq_location{5, 2, 364610, 2, 0},
+            band_helper::ssb_coreset0_freq_location{18, 6, 365090, 9, 0},
             cfg_gen_input_params{365000, nr_band::n3, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15}},
         test_params{
             band_helper::ssb_coreset0_freq_location{0, 0, 531630, 0, 0},
@@ -273,7 +274,7 @@ INSTANTIATE_TEST_SUITE_P(
             band_helper::ssb_coreset0_freq_location{8, 7, 643296, 3, 0},
             cfg_gen_input_params{643265, nr_band::n78, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz30}},
         test_params{
-            band_helper::ssb_coreset0_freq_location{0, 22, 434690, 5, 0},
+            band_helper::ssb_coreset0_freq_location{28, 6, 435650, 14, 0},
             cfg_gen_input_params{435740, nr_band::n66, 51, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30}},
         test_params{
             band_helper::ssb_coreset0_freq_location{14, 18, 390730, 2, 0},
@@ -307,8 +308,8 @@ INSTANTIATE_TEST_SUITE_P(
     ssb_raster_and_cset0_band,
     ssb_coreset0_compatibility_with_raster_and_band,
     testing::Values(
-        cfg_gen_input_params{365000, nr_band::n3, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15},
-        cfg_gen_input_params{531720, nr_band::n7, 25, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15},
-        cfg_gen_input_params{643265, nr_band::n78, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz30},
-        cfg_gen_input_params{435740, nr_band::n66, 51, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30},
-        cfg_gen_input_params{391180, nr_band::n25, 38, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15}));
+        cfg_gen_input_params{365000, nr_band::n3, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15, 0},
+        cfg_gen_input_params{531720, nr_band::n7, 25, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15, 0},
+        cfg_gen_input_params{643265, nr_band::n78, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz30, 0},
+        cfg_gen_input_params{435740, nr_band::n66, 51, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30, 0},
+        cfg_gen_input_params{391180, nr_band::n25, 38, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15, 0}));
