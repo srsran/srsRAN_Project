@@ -161,10 +161,12 @@ static void signal_handler(int sig)
   is_running = false;
 }
 
-static fapi::prach_config generate_prach_config_tlv(const gnb_appconfig& app_config)
+static fapi::prach_config generate_prach_config_tlv(
+                                                    const std::vector<du_cell_config>& cell_cfg)
 {
-  const std::vector<du_cell_config>& cell_cfg = generate_du_cell_config(app_config);
-  const du_cell_config&              cell     = cell_cfg.front();
+  srsgnb_assert(cell_cfg.size() == 1, "Currently supporting one cell");
+
+  const du_cell_config& cell = cell_cfg.front();
 
   fapi::prach_config config     = {};
   config.prach_res_config_index = 0;
@@ -326,7 +328,7 @@ int main(int argc, char** argv)
                                             upper->get_uplink_request_processor(),
                                             upper->get_uplink_resource_grid_pool(),
                                             upper->get_uplink_slot_pdu_repository(),
-                                            generate_prach_config_tlv(gnb_cfg),
+                                            generate_prach_config_tlv(du_cfg),
                                             generate_carrier_config_tlv());
   report_fatal_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
   upper->set_rx_results_notifier(phy_adaptor->get_rx_results_notifier());

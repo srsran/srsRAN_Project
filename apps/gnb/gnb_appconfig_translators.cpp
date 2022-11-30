@@ -26,12 +26,6 @@ srs_cu_cp::cu_cp_configuration srsgnb::generate_cu_cp_config(const gnb_appconfig
   return out_cfg;
 }
 
-static unsigned get_ssb_arfcn_from_ssb_params(unsigned dl_arfcn, unsigned ssb_offset_pointA, unsigned k_ssb)
-{
-  // :TODO: Implement me!
-  return 0;
-}
-
 std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig& config)
 {
   std::vector<du_cell_config> out_cfg;
@@ -58,11 +52,11 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
                        cell.pci);
     }
 
-    srslog::basic_logger& logger = srslog::fetch_basic_logger("gNB appconfig translator");
+    srslog::basic_logger& logger = srslog::fetch_basic_logger("gNB appconfig translator", false);
     logger.set_level(srslog::basic_levels::info);
 
-    logger.info("SSB derived parameters for cell:{}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
-                "pointA: {} \n\t - k_SSB: {} \n\t - SSB arfcn: {}",
+    logger.info("SSB derived parameters for cell: {}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
+                "pointA:{} \n\t - k_SSB:{} \n\t - SSB arfcn:{} \n\t - Coreset index:{} \n\t - Searchspace index:{}",
                 cell.pci,
                 base_cell.dl_arfcn,
                 param.nof_crbs,
@@ -70,15 +64,13 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
                 scs,
                 ssb_freq_loc.offset_to_point_A.to_uint(),
                 ssb_freq_loc.k_ssb.to_uint(),
-                get_ssb_arfcn_from_ssb_params(
-                    base_cell.dl_arfcn, ssb_freq_loc.offset_to_point_A.to_uint(), ssb_freq_loc.k_ssb.to_uint()));
+                ssb_freq_loc.ssb_arfcn,
+                ssb_freq_loc.coreset0_idx,
+                ssb_freq_loc.searchspace0_idx);
 
-    //    param.offset_to_point_a = ssb_freq_loc.offset_to_point_A;
-    //    param.k_ssb             = ssb_freq_loc.k_ssb;
-    param.offset_to_point_a = 40;
-    param.k_ssb             = 6;
-
-    param.coreset0_index = 6;
+    param.offset_to_point_a = ssb_freq_loc.offset_to_point_A;
+    param.k_ssb             = ssb_freq_loc.k_ssb;
+    param.coreset0_index    = ssb_freq_loc.coreset0_idx;
 
     // Create the configuration.
     out_cfg.push_back(config_helpers::make_default_du_cell_config(param));
