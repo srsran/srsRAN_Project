@@ -375,7 +375,10 @@ void srsgnb::srs_du::fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& 
 
     // Fill Served Cell Information.
     f1_cell.served_cell_info.nrpci = cell_cfg->pci;
-    // TODO: Add remaining fields.
+    f1_cell.served_cell_info.nrcgi.plmn_id.from_number(plmn_string_to_bcd(cell_cfg->plmn));
+    f1_cell.served_cell_info.nrcgi.nrcell_id.from_number(cell_cfg->cell_id); // TODO: add gnbID
+    f1_cell.served_cell_info.five_gs_tac_present = true;
+    f1_cell.served_cell_info.five_gs_tac.from_number(cell_cfg->tac);
 
     // Add System Information related to the cell.
     f1_cell.gnb_du_sys_info_present = true;
