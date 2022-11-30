@@ -13,8 +13,6 @@
 #include "cu_cp_configuration.h"
 #include "srsgnb/ngap/ngc_configuration_helpers.h"
 
-// TODO: This file is temporary. Eventually we will receive cell configurations from the CU config file.
-
 namespace srsgnb {
 namespace config_helpers {
 
@@ -29,29 +27,7 @@ inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
 /// Returns true if the given CU-CP configuration is valid, otherwise false.
 inline bool is_valid_configuration(const srs_cu_cp::cu_cp_configuration& config)
 {
-  // TODO: do we need to check the notitfiers?
-#if 0
-  if (config.cu_executor == nullptr) {
-    fmt::print("CU executer not set.\n");
-    return false;
-  }
-
-  if (config.f1c_notifier == nullptr) {
-    fmt::print("F1C notifier not set.\n");
-    return false;
-  }
-
-  if (config.e1_notifier == nullptr) {
-    fmt::print("E1 notifier not set.\n");
-    return false;
-  }
-
-  if (config.ngc_notifier == nullptr) {
-    fmt::print("NGC notifier not set.\n");
-    return false;
-  }
-#endif
-
+  // Notifiers aren't checked here.
   if (!is_valid_configuration(config.ngc_config)) {
     fmt::print("Invalid NGC configuration.\n");
     return false;
