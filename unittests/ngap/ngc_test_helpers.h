@@ -234,5 +234,54 @@ ngap_ul_nas_transport_message generate_ul_nas_transport_message()
   return ul_nas_transport;
 }
 
+ngc_message generate_initial_context_setup_request_message()
+{
+  ngc_message ngc_msg = {};
+
+  ngc_msg.pdu.set_init_msg();
+  ngc_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_INIT_CONTEXT_SETUP);
+
+  auto& init_context_setup_req                 = ngc_msg.pdu.init_msg().value.init_context_setup_request();
+  init_context_setup_req->amf_ue_ngap_id.value = 3;
+  init_context_setup_req->ran_ue_ngap_id.value = cu_cp_ue_id_to_uint(cu_cp_ue_id_t::min);
+
+  init_context_setup_req->guami->plmn_id.from_string("02f899");
+  init_context_setup_req->guami->amf_region_id.from_number(128);
+  init_context_setup_req->guami->amf_set_id.from_number(1);
+  init_context_setup_req->guami->amf_pointer.from_number(1);
+
+  init_context_setup_req->ue_security_cap->nrencryption_algorithms.from_number(57344);
+  init_context_setup_req->ue_security_cap->nrintegrity_protection_algorithms.from_number(57344);
+  init_context_setup_req->ue_security_cap->eutr_aencryption_algorithms.from_number(57344);
+  init_context_setup_req->ue_security_cap->eutr_aintegrity_protection_algorithms.from_number(57344);
+
+  init_context_setup_req->security_key.value.from_string(
+      "6d008a88bca9bb81190ff8c552cf8680069821e3b50f5f29c45d2632323edb2d");
+
+  init_context_setup_req->nas_pdu_present = true;
+  init_context_setup_req->nas_pdu.value.from_string(
+      "7e02c4f6c22f017e0042010177000bf202f8998000410000001054070002f8990000011500210201005e01b6");
+
+  init_context_setup_req->allowed_nssai->resize(1);
+
+  asn1::ngap::allowed_nssai_item_s allowed_nssai;
+  allowed_nssai.s_nssai.sst.from_number(1);
+  allowed_nssai.s_nssai.sd_present = true;
+  allowed_nssai.s_nssai.sd.from_string("db2700");
+
+  init_context_setup_req->allowed_nssai->push_back(allowed_nssai);
+
+  return ngc_msg;
+}
+
+ngap_initial_context_setup_response_message generate_successful_initial_context_setup_response_message()
+{
+  ngap_initial_context_setup_response_message init_ctxt_resp_msg;
+  init_ctxt_resp_msg.cu_cp_ue_id = cu_cp_ue_id_t::min;
+  init_ctxt_resp_msg.success     = true;
+
+  return init_ctxt_resp_msg;
+}
+
 } // namespace srs_cu_cp
 } // namespace srsgnb
