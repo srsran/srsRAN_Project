@@ -11,7 +11,7 @@ set_directory_properties(PROPERTIES LABELS "mac")
 include_directories(../..)
 
 add_library(mac_test_helpers mac_test_helpers.cpp)
-target_link_libraries(mac_test_helpers srsgnb_support srslog)
+target_link_libraries(mac_test_helpers srsgnb_support srslog du_manager_converters sched_config)
 
 add_executable(mac_ue_create_test mac_ue_create_test.cpp)
 target_link_libraries(mac_ue_create_test srsgnb_support srslog gtest gtest_main)
