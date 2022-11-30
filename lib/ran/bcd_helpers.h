@@ -259,4 +259,26 @@ inline void ngap_mccmnc_to_plmn(uint16_t mcc, uint16_t mnc, uint32_t* plmn)
   *plmn |= nibbles[5];
 }
 
+inline uint32_t plmn_string_to_bcd(const std::string& plmn)
+{
+  uint32_t bcd_plmn = 0;
+  if (plmn.length() != 5 and plmn.length() != 6) {
+    return bcd_plmn;
+  }
+
+  uint16_t mcc;
+  if (string_to_mcc(plmn.substr(0, 3), &mcc) == false) {
+    return bcd_plmn;
+  }
+
+  uint16_t mnc;
+  if (string_to_mnc(plmn.substr(3), &mnc) == false) {
+    return bcd_plmn;
+  }
+
+  ngap_mccmnc_to_plmn(mcc, mnc, &bcd_plmn);
+
+  return bcd_plmn;
+}
+
 } // namespace srsgnb

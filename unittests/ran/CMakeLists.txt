@@ -60,3 +60,7 @@ add_test(band_helper_test band_helper_test)
 add_executable(ssb_mapping_test ssb_mapping_test.cpp)
 target_link_libraries(ssb_mapping_test srsgnb_ran srslog)
 add_test(ssb_mapping_test ssb_mapping_test)
+
+add_executable(bcd_helpers_test bcd_helpers_test.cpp)
+target_link_libraries(bcd_helpers_test srsgnb_support gtest gtest_main)
+gtest_discover_tests(bcd_helpers_test)
