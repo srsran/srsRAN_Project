@@ -58,7 +58,7 @@ public:
   /// \brief XOR-applies the generated sequence to a packed bit buffer.
   ///
   /// The generated sequence is used to scramble (bit-wise XOR each element) the input sequence. Both input and output
-  /// sequence are represented in unpacked format (each entry corresponds to 1 bit).
+  /// sequences are represented in unpacked format (each entry corresponds to 1 bit).
   ///
   /// \param[out] out Output data sequence.
   /// \param[in]  in  Input data sequence.

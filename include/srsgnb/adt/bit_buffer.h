@@ -22,20 +22,21 @@ protected:
   /// Internal storage word.
   using word_t = uint8_t;
 
-  /// Specifies the number of bits per word.
+  /// Number of bits in one word.
   static constexpr unsigned bits_per_word = sizeof(word_t) * 8;
 
-  /// Calculate the number of words required for a given number of bits.
+  /// Calculates the number of words required for a given number of bits.
   static constexpr unsigned calculate_nof_words(unsigned nof_bits)
   {
     return (nof_bits + (bits_per_word - 1)) / bits_per_word;
   }
 
   /// \brief Replaces the internal data container and resets the current size to zero.
-  /// \remark Previous contained data are left in the previous storage.
+  /// \remark The previous data container will still contain the data present before calling this method.
   void set_buffer(span<word_t> new_buffer) { buffer = new_buffer; }
 
-  /// \brief Sets the current size of the bit buffer.
+  /// \brief Sets the accessible size of the bit buffer.
+  /// \remark An assertion is thrown if the new size exceeds the maximum allowed size.
   void set_current_size(unsigned new_size)
   {
     srsgnb_assert(new_size <= buffer.size() * bits_per_word,
@@ -168,7 +169,7 @@ public:
   /// Gets the current bit buffer size.
   size_t size() const { return current_size; }
 
-  /// Converts the bit buffer into binary string.
+  /// Converts the bit buffer into a binary string.
   template <typename OutputIt>
   OutputIt to_bin_string(OutputIt&& mem_buffer) const
   {
@@ -182,7 +183,7 @@ public:
     return mem_buffer;
   }
 
-  /// Converts the bit buffer into an hexadecimal string.
+  /// Converts the bit buffer into a hexadecimal string.
   template <typename OutputIt>
   OutputIt to_hex_string(OutputIt&& mem_buffer) const
   {
@@ -196,7 +197,8 @@ public:
   /// Copy assign operator.
   bit_buffer& operator=(const bit_buffer& other)
   {
-    *this = bit_buffer(other);
+    buffer       = other.buffer;
+    current_size = other.current_size;
     return *this;
   }
 
