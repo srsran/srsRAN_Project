@@ -42,14 +42,11 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
     param.dl_arfcn = base_cell.dl_arfcn;
     param.band     = band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
 
-    band_helper::ssb_coreset0_freq_location ssb_freq_loc =
+    optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
         band_helper::get_ssb_coreset0_freq_location(base_cell.dl_arfcn, base_cell.band, param.nof_crbs, scs, scs);
 
-    if (!ssb_freq_loc.is_valid) {
-      srsgnb_terminate("Invalid SSB pointA ({}) and k_SSB ({}) derivation for cell id ({}). Exiting.",
-                       ssb_freq_loc.offset_to_point_A.to_uint(),
-                       ssb_freq_loc.k_ssb.to_uint(),
-                       cell.pci);
+    if (!ssb_freq_loc.has_value()) {
+      srsgnb_terminate("Unable to derive a valid SSB pointA and k_SSB for cell id ({}). Exiting.", cell.pci);
     }
 
     srslog::basic_logger& logger = srslog::fetch_basic_logger("gNB appconfig translator", false);
@@ -62,15 +59,16 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
                 param.nof_crbs,
                 scs,
                 scs,
-                ssb_freq_loc.offset_to_point_A.to_uint(),
-                ssb_freq_loc.k_ssb.to_uint(),
-                ssb_freq_loc.ssb_arfcn,
-                ssb_freq_loc.coreset0_idx,
-                ssb_freq_loc.searchspace0_idx);
+                (*ssb_freq_loc).offset_to_point_A.to_uint(),
+                (*ssb_freq_loc).k_ssb.to_uint(),
+                (*ssb_freq_loc).ssb_arfcn,
+                (*ssb_freq_loc).coreset0_idx,
+                (*ssb_freq_loc).searchspace0_idx);
 
-    param.offset_to_point_a = ssb_freq_loc.offset_to_point_A;
-    param.k_ssb             = ssb_freq_loc.k_ssb;
-    param.coreset0_index    = ssb_freq_loc.coreset0_idx;
+
+    param.offset_to_point_a = (*ssb_freq_loc).offset_to_point_A;
+    param.k_ssb             = (*ssb_freq_loc).k_ssb;
+    param.coreset0_index    = (*ssb_freq_loc).coreset0_idx;
 
     // Create the configuration.
     out_cfg.push_back(config_helpers::make_default_du_cell_config(param));

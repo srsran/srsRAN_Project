@@ -199,8 +199,6 @@ min_channel_bandwidth get_min_channel_bw(nr_band nr_band, subcarrier_spacing scs
 
 /// Contains the parameters that are returned by the DU config generator.
 struct ssb_coreset0_freq_location {
-  /// Tells whether the set of parameters represent a valid configuration.
-  bool is_valid;
   /// <em>offsetToPointA<\em>, as per Section 4.4.4.2, TS 38.211.
   ssb_offset_to_pointA offset_to_point_A;
   /// \f$k_{SSB}\f$, as per Section 7.4.3.1, TS 38.211.
@@ -211,6 +209,12 @@ struct ssb_coreset0_freq_location {
   unsigned coreset0_idx;
   /// <em>searchSpaceZero<\em>, as per Section 13, TS 38.213.
   unsigned searchspace0_idx;
+
+  bool operator==(const ssb_coreset0_freq_location& other) const
+  {
+    return offset_to_point_A == other.offset_to_point_A and k_ssb == other.k_ssb and ssb_arfcn == other.ssb_arfcn and
+           coreset0_idx == other.coreset0_idx and searchspace0_idx == other.searchspace0_idx;
+  }
 };
 
 /// \brief Compute the position of the SSB within the band and the Coreset0/SS0 indices given some initial parameters.
@@ -225,11 +229,11 @@ struct ssb_coreset0_freq_location {
 /// \param[in] scs_ssb is ssb subcarrier spacing.
 /// \return The parameters defining the position of the SSB within the band and Coreset0 and SS0 indices for
 /// Table 13-[1-6] and Table 13-11, respectively, in TS 38.213.
-ssb_coreset0_freq_location get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
-                                                          nr_band            nr_band,
-                                                          unsigned           n_rbs,
-                                                          subcarrier_spacing scs_common,
-                                                          subcarrier_spacing scs_ssb);
+optional<ssb_coreset0_freq_location> get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
+                                                                    nr_band            band,
+                                                                    unsigned           n_rbs,
+                                                                    subcarrier_spacing scs_common,
+                                                                    subcarrier_spacing scs_ssb);
 
 /// \brief Compute a valid CORESET#0 index with maximum number of CRBs, given the following
 /// restrictions:
@@ -241,19 +245,21 @@ ssb_coreset0_freq_location get_ssb_coreset0_freq_location(unsigned           dl_
 /// \param[in] n_rbs is <em>Transmission bandwidth<\em> or \f$N_{RB}\f$ in number of RBs, as per TS 38.104, Table 5.2-1.
 /// \param[in] scs_common is <em>subCarrierSpacingCommon<\em>, as per TS 38.331.
 /// \param[in] scs_ssb is ssb subcarrier spacing.
-/// \param[in] ssb SSB frequency parameters.
+/// \param[in] offset_to_point_A SSB offset to point A.
+/// \param[in] k_ssb k_SSB value.
 /// \param[in] ssb_first_symbol SSB first symbol.
 /// \param[in] ss0_idx SearchSpace#0 index.
 /// \param[in] nof_coreset0_symb Number of symbols required for returned CORESET#0, if defined.
 /// \return CORESET#0 index if a valid candidate was found. Empty optional otherwise.
-optional<unsigned> get_coreset0_index(nr_band                  band,
-                                      unsigned                 n_rbs,
-                                      subcarrier_spacing       scs_common,
-                                      subcarrier_spacing       scs_ssb,
-                                      const ssb_freq_location& ssb,
-                                      uint8_t                  ssb_first_symbol,
-                                      uint8_t                  ss0_idx,
-                                      optional<unsigned>       nof_coreset0_symb = {});
+optional<unsigned> get_coreset0_index(nr_band               band,
+                                      unsigned              n_rbs,
+                                      subcarrier_spacing    scs_common,
+                                      subcarrier_spacing    scs_ssb,
+                                      ssb_offset_to_pointA  offset_to_point_A,
+                                      ssb_subcarrier_offset k_ssb,
+                                      uint8_t               ssb_first_symbol,
+                                      uint8_t               ss0_idx,
+                                      optional<unsigned>    nof_coreset0_symb = {});
 
 } // namespace band_helper
 

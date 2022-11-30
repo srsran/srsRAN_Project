@@ -572,36 +572,33 @@ get_max_coreset0_index(subcarrier_spacing scs_common, subcarrier_spacing scs_ssb
   return 0;
 }
 
-ssb_coreset0_freq_location srsgnb::band_helper::get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
-                                                                               nr_band            nr_band,
-                                                                               unsigned           n_rbs,
-                                                                               subcarrier_spacing scs_common,
-                                                                               subcarrier_spacing scs_ssb)
+optional<ssb_coreset0_freq_location> srsgnb::band_helper::get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
+                                                                                         nr_band            band,
+                                                                                         unsigned           n_rbs,
+                                                                                         subcarrier_spacing scs_common,
+                                                                                         subcarrier_spacing scs_ssb)
 {
-  srsgnb_assert(nr_band != nr_band::n34 && nr_band != nr_band::n38 && nr_band != nr_band::n39 &&
-                    nr_band != nr_band::n41 && nr_band != nr_band::n79,
+  srsgnb_assert(band != nr_band::n34 && band != nr_band::n38 && band != nr_band::n39 && band != nr_band::n41 &&
+                    band != nr_band::n79,
                 "Bands n34, n38, n39, n41 and n79 not currently supported");
 
   // Get f_ref, point_A from dl_arfcn, band and bandwidth.
-  ssb_freq_position_generator du_cfg{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
-
-  // Initialized the results.
-  ssb_coreset0_freq_location results{.is_valid = false};
+  ssb_freq_position_generator du_cfg{dl_arfcn, band, n_rbs, scs_common, scs_ssb};
 
   // Select 1st SSB. Select first searchspace0_idx and find viable coreset0 index.
   ssb_freq_location ssb = du_cfg.get_next_ssb_location();
   while (ssb.is_valid) {
     // Iterate over the searchSpace0_indices and corresponding configurations.
     for (uint8_t ss0_idx = 0; ss0_idx <= du_cfg.get_max_ss0_idx(); ++ss0_idx) {
-      optional<unsigned> cset0_idx =
-          get_coreset0_index(nr_band, n_rbs, scs_common, scs_ssb, ssb, du_cfg.get_ssb_first_symbol(), ss0_idx);
+      optional<unsigned> cset0_idx = get_coreset0_index(
+          band, n_rbs, scs_common, scs_ssb, ssb.offset_to_point_A, ssb.k_ssb, du_cfg.get_ssb_first_symbol(), ss0_idx);
 
       if (cset0_idx.has_value()) {
+        ssb_coreset0_freq_location results;
         results.offset_to_point_A = ssb.offset_to_point_A;
         results.k_ssb             = ssb.k_ssb;
         results.coreset0_idx      = cset0_idx.value();
         results.searchspace0_idx  = ss0_idx;
-        results.is_valid          = true;
         results.ssb_arfcn         = freq_to_nr_arfcn(ssb.ss_ref);
         return results;
       }
@@ -610,30 +607,31 @@ ssb_coreset0_freq_location srsgnb::band_helper::get_ssb_coreset0_freq_location(u
     ssb = du_cfg.get_next_ssb_location();
   }
 
-  // If no configuration is good, then the function returns a configuration with \c .is_valid == false.
-  return results;
+  // If no configuration is good, then the function returns an empty optional.
+  return {};
 }
 
-optional<unsigned> srsgnb::band_helper::get_coreset0_index(nr_band                  band,
-                                                           unsigned                 n_rbs,
-                                                           subcarrier_spacing       scs_common,
-                                                           subcarrier_spacing       scs_ssb,
-                                                           const ssb_freq_location& ssb,
-                                                           uint8_t                  ssb_first_symbol,
-                                                           uint8_t                  ss0_idx,
-                                                           optional<unsigned>       nof_coreset0_symb)
+optional<unsigned> srsgnb::band_helper::get_coreset0_index(nr_band               band,
+                                                           unsigned              n_rbs,
+                                                           subcarrier_spacing    scs_common,
+                                                           subcarrier_spacing    scs_ssb,
+                                                           ssb_offset_to_pointA  offset_to_point_A,
+                                                           ssb_subcarrier_offset k_ssb,
+                                                           uint8_t               ssb_first_symbol,
+                                                           uint8_t               ss0_idx,
+                                                           optional<unsigned>    nof_coreset0_symb)
 {
   min_channel_bandwidth min_ch_bw = band_helper::get_min_channel_bw(band, scs_common);
   // CRB index where the first SSB's subcarrier is located.
   unsigned crbs_ssb =
-      scs_common == subcarrier_spacing::kHz15 ? ssb.offset_to_point_A.to_uint() : ssb.offset_to_point_A.to_uint() / 2;
+      scs_common == subcarrier_spacing::kHz15 ? offset_to_point_A.to_uint() : offset_to_point_A.to_uint() / 2;
 
   // Get the maximum Coreset0 index that can be used for the Tables 13-[1-6], TS 38.213.
   unsigned max_cset0_idx = get_max_coreset0_index(scs_common, scs_ssb, min_ch_bw);
 
   // Iterate over the coreset0_indices and corresponding configurations.
   for (int cset0_idx = max_cset0_idx; cset0_idx >= 0; --cset0_idx) {
-    auto coreset0_cfg = pdcch_type0_css_coreset_get(min_ch_bw, scs_ssb, scs_common, cset0_idx, ssb.k_ssb.to_uint());
+    auto coreset0_cfg = pdcch_type0_css_coreset_get(min_ch_bw, scs_ssb, scs_common, cset0_idx, k_ssb.to_uint());
     pdcch_type0_css_occasion_pattern1_description ss0_config =
         pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
             .is_fr2 = false, .ss_zero_index = ss0_idx, .nof_symb_coreset = coreset0_cfg.nof_symb_coreset});
