@@ -80,6 +80,8 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
     out_cell.tac             = base_cell.tac;
     out_cell.cell_id         = cell_id;
 
+    out_cell.searchspace0_idx = ss0_idx;
+
     // Carrier config.
     out_cell.dl_carrier.nof_ant = base_cell.nof_antennas_dl;
     out_cell.ul_carrier.nof_ant = base_cell.nof_antennas_ul;
