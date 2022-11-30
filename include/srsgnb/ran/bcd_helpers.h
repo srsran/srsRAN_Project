@@ -281,4 +281,14 @@ inline uint32_t plmn_string_to_bcd(const std::string& plmn)
   return bcd_plmn;
 }
 
+inline std::string plmn_bcd_to_string(uint32_t plmn)
+{
+  uint16_t mcc, mnc;
+  ngap_plmn_to_mccmnc(plmn, &mcc, &mnc);
+  std::string mcc_string, mnc_string;
+  mcc_to_string(mcc, &mcc_string);
+  mnc_to_string(mnc, &mnc_string);
+  return mcc_string + mnc_string;
+}
+
 } // namespace srsgnb
