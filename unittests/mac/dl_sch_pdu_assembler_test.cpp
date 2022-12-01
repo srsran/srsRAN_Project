@@ -206,20 +206,32 @@ TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)
 
 TEST_F(mac_dl_sch_assembler_tester, unexpected_rlc_status_pdu_prepended)
 {
-  const unsigned sdu_subheader_size  = 2;
-  const unsigned subpdu_size         = 34;
-  const unsigned tb_size             = subpdu_size + sdu_subheader_size;
-  const unsigned rlc_status_pdu_size = 3;
+  const unsigned rlc_status_pdu_size = 3, status_pdu_mac_size = get_mac_sdu_required_bytes(rlc_status_pdu_size);
+  const unsigned sched_subpdu_size = test_rgen::uniform_int<unsigned>(status_pdu_mac_size + 1, 1000);
+  const unsigned tb_size           = get_mac_sdu_required_bytes(sched_subpdu_size);
 
   // RLC has a pending Status PDU size.
   this->dl_bearers[1].next_rlc_pdu_sizes.push_back(rlc_status_pdu_size);
 
   // MAC schedules one SDU.
   dl_msg_tb_info tb_info;
-  tb_info.subpdus.push_back(dl_msg_lc_info{LCID_SRB1, subpdu_size});
+  tb_info.subpdus.push_back(dl_msg_lc_info{LCID_SRB1, sched_subpdu_size});
 
   span<const uint8_t> result = this->dl_sch_enc.assemble_pdu(this->req.crnti, tb_info, tb_size);
   ASSERT_EQ(result.size(), tb_size);
-  ASSERT_EQ(this->dl_bearers[1].last_sdu.length() + rlc_status_pdu_size + sdu_subheader_size * 2, tb_size)
+  ASSERT_EQ(status_pdu_mac_size + get_mac_sdu_required_bytes(this->dl_bearers[1].last_sdu.length()), tb_size)
       << "Too many bytes from upper layers were injected in the MAC opportunity";
+
+  // Check if MAC PDU contains the data MAC SDU composed by a MAC subheader and the  bearer last SDU.
+  byte_buffer expected_last_sdu;
+  bit_encoder enc(expected_last_sdu);
+  // Last MAC SDU.
+  unsigned actual_second_subpdu_size = this->dl_bearers[1].last_sdu.length();
+  enc.pack(0b0, 1);                                                                                     // R
+  enc.pack(actual_second_subpdu_size >= MAC_SDU_SUBHEADER_LENGTH_THRES, 1);                             // F
+  enc.pack(LCID_SRB1, 6);                                                                               // LCID
+  enc.pack(actual_second_subpdu_size, 8 * (get_mac_sdu_subheader_size(actual_second_subpdu_size) - 1)); // L
+  enc.pack_bytes(dl_bearers[1].last_sdu);                                                               // SDU
+  auto s = result.last(expected_last_sdu.length());
+  ASSERT_EQ(expected_last_sdu, result.last(expected_last_sdu.length()));
 }
