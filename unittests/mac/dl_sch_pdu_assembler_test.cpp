@@ -204,34 +204,37 @@ TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)
   ASSERT_EQ(result, expected);
 }
 
-TEST_F(mac_dl_sch_assembler_tester, unexpected_rlc_status_pdu_prepended)
+TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdu_of_same_lcid)
 {
-  const unsigned rlc_status_pdu_size = 3, status_pdu_mac_size = get_mac_sdu_required_bytes(rlc_status_pdu_size);
-  const unsigned sched_subpdu_size = test_rgen::uniform_int<unsigned>(status_pdu_mac_size + 1, 1000);
-  const unsigned tb_size           = get_mac_sdu_required_bytes(sched_subpdu_size);
+  const unsigned first_sdu_payload = 3, first_sdu_req_size = get_mac_sdu_required_bytes(first_sdu_payload),
+                 second_sdu_payload  = test_rgen::uniform_int<unsigned>(1, 1000),
+                 second_sdu_req_size = get_mac_sdu_required_bytes(second_sdu_payload);
+  const unsigned tb_size             = first_sdu_req_size + second_sdu_req_size;
+  const unsigned lcid_sched_bytes    = get_mac_sdu_payload_size(tb_size);
 
   // RLC has a pending Status PDU size.
-  this->dl_bearers[1].next_rlc_pdu_sizes.push_back(rlc_status_pdu_size);
+  this->dl_bearers[1].next_rlc_pdu_sizes.push_back(first_sdu_payload);
+  this->dl_bearers[1].next_rlc_pdu_sizes.push_back(second_sdu_payload);
 
-  // MAC schedules one SDU.
+  // MAC schedules one TB with one LCID, and size to fill.
   dl_msg_tb_info tb_info;
-  tb_info.subpdus.push_back(dl_msg_lc_info{LCID_SRB1, sched_subpdu_size});
+  tb_info.subpdus.push_back(dl_msg_lc_info{LCID_SRB1, lcid_sched_bytes});
 
   span<const uint8_t> result = this->dl_sch_enc.assemble_pdu(this->req.crnti, tb_info, tb_size);
   ASSERT_EQ(result.size(), tb_size);
-  ASSERT_EQ(status_pdu_mac_size + get_mac_sdu_required_bytes(this->dl_bearers[1].last_sdu.length()), tb_size)
+  ASSERT_EQ(this->dl_bearers[1].last_sdu.length(), second_sdu_payload);
+  ASSERT_EQ(first_sdu_req_size + get_mac_sdu_required_bytes(this->dl_bearers[1].last_sdu.length()), tb_size)
       << "Too many bytes from upper layers were injected in the MAC opportunity";
 
   // Check if MAC PDU contains the data MAC SDU composed by a MAC subheader and the  bearer last SDU.
   byte_buffer expected_last_sdu;
   bit_encoder enc(expected_last_sdu);
   // Last MAC SDU.
-  unsigned actual_second_subpdu_size = this->dl_bearers[1].last_sdu.length();
-  enc.pack(0b0, 1);                                                                                     // R
-  enc.pack(actual_second_subpdu_size >= MAC_SDU_SUBHEADER_LENGTH_THRES, 1);                             // F
-  enc.pack(LCID_SRB1, 6);                                                                               // LCID
-  enc.pack(actual_second_subpdu_size, 8 * (get_mac_sdu_subheader_size(actual_second_subpdu_size) - 1)); // L
-  enc.pack_bytes(dl_bearers[1].last_sdu);                                                               // SDU
+  enc.pack(0b0, 1);                                                                       // R
+  enc.pack(second_sdu_payload >= MAC_SDU_SUBHEADER_LENGTH_THRES, 1);                      // F
+  enc.pack(LCID_SRB1, 6);                                                                 // LCID
+  enc.pack(second_sdu_payload, 8 * (get_mac_sdu_subheader_size(second_sdu_payload) - 1)); // L
+  enc.pack_bytes(dl_bearers[1].last_sdu);                                                 // SDU
   auto s = result.last(expected_last_sdu.length());
   ASSERT_EQ(expected_last_sdu, result.last(expected_last_sdu.length()));
 }
