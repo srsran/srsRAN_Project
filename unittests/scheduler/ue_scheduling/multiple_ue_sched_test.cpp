@@ -65,8 +65,8 @@ public:
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
 struct test_bench {
-  /// Maximum number of slots to run in order to validate the results of scheduler. Implementation defined.
-  static constexpr unsigned max_test_run_slots = 50;
+  /// Maximum number of slots to run per UE in order to validate the results of scheduler. Implementation defined.
+  static constexpr unsigned max_test_run_slots_per_ue = 20;
 
   scheduler_expert_config                          expert_cfg;
   cell_configuration                               cell_cfg;
@@ -156,34 +156,6 @@ protected:
     return msg;
   }
 
-  bool ue_is_allocated_pdcch(const sched_test_ue& u)
-  {
-    return std::any_of(bench->sched_res->dl.dl_pdcchs.begin(),
-                       bench->sched_res->dl.dl_pdcchs.end(),
-                       [&u](const auto& pdcch) { return pdcch.ctx.rnti == u.crnti; });
-  }
-
-  bool ue_is_allocated_pdsch(const sched_test_ue& u)
-  {
-    return std::any_of(bench->sched_res->dl.ue_grants.begin(),
-                       bench->sched_res->dl.ue_grants.end(),
-                       [&u](const auto& grant) { return grant.pdsch_cfg.rnti == u.crnti; });
-  }
-
-  bool ue_is_allocated_pucch(const sched_test_ue& u)
-  {
-    return std::any_of(bench->sched_res->ul.pucchs.begin(), bench->sched_res->ul.pucchs.end(), [&u](const auto& pucch) {
-      return pucch.crnti == u.crnti;
-    });
-  }
-
-  bool ue_is_allocated_pusch(const sched_test_ue& u)
-  {
-    return std::any_of(bench->sched_res->ul.puschs.begin(), bench->sched_res->ul.puschs.end(), [&u](const auto& pusch) {
-      return pusch.pusch_cfg.rnti == u.crnti;
-    });
-  }
-
   unsigned pdsch_tbs_scheduled_bytes_per_lc(const sched_test_ue& u, lcid_t lcid)
   {
     unsigned total_cw_tb_size_bytes = 0;
@@ -214,14 +186,16 @@ protected:
     return total_cw_tb_size_bytes;
   }
 
-  void add_ue(du_ue_index_t ue_index, lcid_t lcid_)
+  void add_ue(du_ue_index_t ue_index, lcid_t lcid_, lcg_id_t lcgid_)
   {
     auto msg     = test_helpers::make_default_ue_creation_request();
     msg.crnti    = to_rnti(allocate_rnti());
     msg.ue_index = ue_index;
 
-    msg.bearers.push_back(
-        mac_logical_channel{.lcid = lcid_, .lc_config = config_helpers::make_default_logical_channel_config(lcid_)});
+    auto lc_cfg     = config_helpers::make_default_logical_channel_config(lcid_);
+    lc_cfg.lc_group = lcgid_;
+
+    msg.bearers.push_back(mac_logical_channel{.lcid = lcid_, .lc_config = lc_cfg});
 
     bench->sch.handle_add_ue_request(make_scheduler_ue_creation_request(msg));
 
@@ -265,18 +239,18 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
   // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in params.
   // Assumption: LCID is DRB0.
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
-    add_ue(to_du_ue_index(idx), LCID_MIN_DRB);
+    add_ue(to_du_ue_index(idx), LCID_MIN_DRB, static_cast<lcg_id_t>(0));
 
     push_buffer_state_to_dl_ue(to_du_ue_index(idx),
                                get_random_uint(params.min_buffer_size_in_bytes, params.max_buffer_size_in_bytes),
                                LCID_MIN_DRB);
   }
 
-  for (unsigned i = 0; i != test_bench::max_test_run_slots; ++i) {
+  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue; ++i) {
     run_slot();
     for (unsigned idx = 0; idx < params.nof_ues; idx++) {
-      auto&    test_ue        = get_ue(to_du_ue_index(idx));
-      unsigned tbs_shed_bytes = pdsch_tbs_scheduled_bytes_per_lc(test_ue, LCID_MIN_DRB);
+      auto&          test_ue        = get_ue(to_du_ue_index(idx));
+      const unsigned tbs_shed_bytes = pdsch_tbs_scheduled_bytes_per_lc(test_ue, LCID_MIN_DRB);
       if (tbs_shed_bytes > test_ue.dl_bsr_list[0].bs) {
         // Accounting for MAC headers.
         test_ue.dl_bsr_list[0].bs = 0;
@@ -294,22 +268,23 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
 
 TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
 {
-  setup_sched(create_expert_config(10), create_random_cell_config_request(duplex_mode::TDD));
+  setup_sched(create_expert_config(10),
+              create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
   // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in params.
   // Assumption: LCID is DRB0.
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
-    add_ue(to_du_ue_index(idx), LCID_MIN_DRB);
+    add_ue(to_du_ue_index(idx), LCID_MIN_DRB, static_cast<lcg_id_t>(0));
 
     notify_ul_bsr_from_ue(to_du_ue_index(idx),
                           get_random_uint(params.min_buffer_size_in_bytes, params.max_buffer_size_in_bytes),
                           static_cast<lcg_id_t>(0));
   }
 
-  for (unsigned i = 0; i != test_bench::max_test_run_slots; ++i) {
+  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue; ++i) {
     run_slot();
     for (unsigned idx = 0; idx < params.nof_ues; idx++) {
-      auto&    test_ue        = get_ue(to_du_ue_index(idx));
-      unsigned tbs_shed_bytes = pusch_tbs_scheduled_bytes(test_ue);
+      auto&          test_ue        = get_ue(to_du_ue_index(idx));
+      const unsigned tbs_shed_bytes = pusch_tbs_scheduled_bytes(test_ue);
       if (tbs_shed_bytes > test_ue.ul_bsr_list[0].nof_bytes) {
         // Accounting for MAC headers.
         test_ue.ul_bsr_list[0].nof_bytes = 0;
@@ -319,20 +294,24 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
     }
   }
 
-  // for (unsigned idx = 0; idx < params.nof_ues; idx++) {
-  //   const auto& test_ue = get_ue(to_du_ue_index(idx));
-  //   ASSERT_EQ(test_ue.ul_bsr_list[0].nof_bytes, 0);
-  // }
-  ASSERT_TRUE(true);
+  for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+    const auto& test_ue = get_ue(to_du_ue_index(idx));
+    ASSERT_EQ(test_ue.ul_bsr_list[0].nof_bytes, 0);
+  }
 }
 
 INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                          multiple_ue_sched_tester,
                          testing::Values(multiple_ue_test_params{.k0                       = 1,
                                                                  .k1                       = 4,
-                                                                 .nof_ues                  = 1,
+                                                                 .nof_ues                  = 2,
                                                                  .min_buffer_size_in_bytes = 1000,
-                                                                 .max_buffer_size_in_bytes = 3000}));
+                                                                 .max_buffer_size_in_bytes = 2500},
+                                         multiple_ue_test_params{.k0                       = 2,
+                                                                 .k1                       = 5,
+                                                                 .nof_ues                  = 2,
+                                                                 .min_buffer_size_in_bytes = 1000,
+                                                                 .max_buffer_size_in_bytes = 2500}));
 
 int main(int argc, char** argv)
 {
