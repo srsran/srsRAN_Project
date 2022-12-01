@@ -113,6 +113,33 @@ clangsa:
     ANALYZER: clangsa
     ANALYZER_ARGS: --ctu
 
+coverity:
+  image: $CR_REGISTRY_URI/coverity_image/2022.6.0:1.0.0
+  stage: static
+  needs: []
+  variables:
+    KUBERNETES_CPU_REQUEST: 7
+    KUBERNETES_MEMORY_REQUEST: 13Gi
+  tags:
+    - ${SRS_INFRASTRUCTURE_TAG}-amd64
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  script:
+    - |
+      mkdir -p build
+      cd build
+      cmake ..
+      cov-build --dir cov-int make -j`nproc`
+      tar czvf srsgnb.tgz cov-int
+      ver=$(git rev-parse HEAD)
+
+      curl --form token=$COVERITY_TOKEN \
+        --form email=nils@srs.io \
+        --form file=@srsgnb.tgz \
+        --form version=$ver \
+        --form description="srsGNB dev build" \
+        https://scan.coverity.com/builds?project=srsRAN_5G
+
 ################################################################################
 ## Build + Unit Tests + Integration tests
 ################################################################################
