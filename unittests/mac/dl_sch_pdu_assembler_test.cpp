@@ -235,6 +235,5 @@ TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdu_of_same_lcid)
   enc.pack(LCID_SRB1, 6);                                                                 // LCID
   enc.pack(second_sdu_payload, 8 * (get_mac_sdu_subheader_size(second_sdu_payload) - 1)); // L
   enc.pack_bytes(dl_bearers[1].last_sdu);                                                 // SDU
-  auto s = result.last(expected_last_sdu.length());
   ASSERT_EQ(expected_last_sdu, result.last(expected_last_sdu.length()));
 }
