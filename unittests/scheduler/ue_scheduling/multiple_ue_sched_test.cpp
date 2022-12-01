@@ -270,7 +270,7 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
 {
   setup_sched(create_expert_config(10),
               create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
-  // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in params.
+  // Add UE(s) and notify UL BSR from UE of random size between min and max defined in params.
   // Assumption: LCID is DRB0.
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
     add_ue(to_du_ue_index(idx), LCID_MIN_DRB, static_cast<lcg_id_t>(0));
