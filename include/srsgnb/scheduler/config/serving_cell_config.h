@@ -32,6 +32,14 @@ const unsigned MAX_NOF_SERVING_CELLS = 32;
 /// \c ServCellIndex, TS 38.331.
 enum serv_cell_index { MAX_SERVING_CELL_IDX = 31, SERVING_CELL_INVALID = MAX_NOF_SERVING_CELLS };
 
+/// \c xOverhead options, as per TS 38.331. Used in \c PDSCH-ServingCellConfig and \c PUSCH-ServingCellConfig.
+enum class x_overhead {
+  not_set = 0,
+  xoh6    = 6,
+  xoh12   = 12,
+  xoh18   = 18,
+};
+
 /// Converts a uint into a \ref serv_cell_index.
 inline serv_cell_index uint_to_serv_cell_index(unsigned idx)
 {
@@ -174,6 +182,7 @@ struct pusch_serving_cell_config {
   };
 
   optional<pusch_code_block_group_transmission> cbg_tx;
+  x_overhead                                    x_ov_head{x_overhead::not_set};
 };
 
 /// Uplink configuration, as per \c UplinkConfig, in \c ServingCellConfig, TS 38.331.
@@ -194,7 +203,6 @@ struct pdsch_code_block_group_transmission {
 
 /// \c PDSCH-ServingCellConfig, as per TS38.331.
 struct pdsch_serving_cell_config {
-  enum class x_overhead { xoh6, xoh12, xoh18, not_set };
   /// \c nrofHARQ-ProcessesForPDSCH.
   enum class nof_harq_proc_for_pdsch { n2, n4, n6, n10, n12, n16, not_set };
 

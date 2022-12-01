@@ -56,8 +56,7 @@ coreset_configuration srsgnb::config_helpers::make_default_coreset_config(const 
 coreset_configuration srsgnb::config_helpers::make_default_coreset0_config(const cell_config_builder_params& params)
 {
   coreset_configuration cfg = make_default_coreset_config(params);
-  cfg.id                    = to_coreset_id(0);
-  // TODO: derive this from some table.
+  cfg.id                                             = to_coreset_id(0);
   min_channel_bandwidth               min_channel_bw = band_helper::get_min_channel_bw(params.band, params.scs_common);
   pdcch_type0_css_coreset_description desc =
       pdcch_type0_css_coreset_get(min_channel_bw, params.scs_common, params.scs_common, params.coreset0_index, 0);
