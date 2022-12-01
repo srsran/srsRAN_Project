@@ -9,7 +9,7 @@
  */
 
 #include "test_utils/scheduler_test_suite.h"
-#include "uci_test_utils.h"
+#include "unittests/scheduler/test_utils/uci_test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;

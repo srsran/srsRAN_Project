@@ -8,7 +8,7 @@
  *
  */
 
-#include "uci_test_utils.h"
+#include "unittests/scheduler/test_utils/uci_test_utils.h"
 
 using namespace srsgnb;
 

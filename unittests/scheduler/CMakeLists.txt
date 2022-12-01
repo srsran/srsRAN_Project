@@ -14,7 +14,7 @@ add_subdirectory(test_utils)
 add_subdirectory(support)
 add_subdirectory(ue_scheduling)
 
-add_library(uci_test_utils uci_test_utils.cpp)
+add_library(uci_test_utils test_utils/uci_test_utils.cpp)
 target_link_libraries(uci_test_utils srslog mac_configuration_helpers sched_config)
 
 add_executable(sched_prb_test cell_resource_grid/sched_prb_test.cpp)
