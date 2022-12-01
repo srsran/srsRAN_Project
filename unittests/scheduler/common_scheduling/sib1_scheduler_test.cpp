@@ -10,8 +10,8 @@
 
 #include "lib/scheduler/common_scheduling/sib_scheduler.h"
 #include "lib/scheduler/common_scheduling/ssb_scheduler.h"
-#include "scheduler_test_suite.h"
-#include "unittests/scheduler/utils/config_generators.h"
+#include "unittests/scheduler/test_utils/config_generators.h"
+#include "unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;

@@ -8,10 +8,14 @@
  *
  */
 
-#include "utils/config_generators.h"
-#include "utils/indication_generators.h"
-#include "utils/result_test_helpers.h"
-#include "utils/scheduler_test_bench.h"
+/// \file
+/// \brief In this file, we verify the correct operation of the MAC scheduler, as a whole, in case of DL/UL HARQ
+/// retransmissions. The objective is to cover and verify the integration of the scheduler building blocks.
+
+#include "test_utils/config_generators.h"
+#include "test_utils/indication_generators.h"
+#include "test_utils/result_test_helpers.h"
+#include "test_utils/scheduler_test_bench.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;

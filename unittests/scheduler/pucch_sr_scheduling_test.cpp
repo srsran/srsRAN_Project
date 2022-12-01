@@ -9,7 +9,7 @@
  */
 
 #include "pucch_test_utils.h"
-#include "scheduler_test_suite.h"
+#include "unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include <gtest/gtest.h>
 #include <random>
 

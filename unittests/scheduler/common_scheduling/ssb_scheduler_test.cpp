@@ -10,7 +10,7 @@
 
 #include "lib/scheduler/cell/resource_grid.h"
 #include "lib/scheduler/common_scheduling/ssb_scheduler.h"
-#include "unittests/scheduler/utils/config_generators.h"
+#include "unittests/scheduler/test_utils/config_generators.h"
 #include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/scheduler/sched_consts.h"

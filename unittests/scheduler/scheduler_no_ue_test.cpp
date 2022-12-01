@@ -8,19 +8,20 @@
  *
  */
 
+/// \file
+/// \brief In this file, we verify the correct operation of the MAC scheduler, as a whole, for basic operations, in
+/// setups without any UEs. The objective is to cover and verify the integration of the scheduler building blocks.
+/// The currently covered operations include:
+/// - run_slot without any event
+/// - handle RACH indication + RAR allocation.
+
 #include "lib/scheduler/scheduler_impl.h"
-#include "scheduler_test_suite.h"
-#include "unittests/scheduler/utils/config_generators.h"
+#include "unittests/scheduler/test_utils/config_generators.h"
+#include "unittests/scheduler/test_utils/dummy_test_components.h"
+#include "unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
-
-class sched_cfg_dummy_notifier : public sched_configuration_notifier
-{
-public:
-  void on_ue_config_complete(du_ue_index_t ue_index) override {}
-  void on_ue_delete_response(du_ue_index_t ue_index) override {}
-};
 
 void test_no_ues()
 {
@@ -33,9 +34,9 @@ void test_no_ues()
   cell_configuration                       cell_cfg{cell_cfg_msg};
   sch.handle_cell_configuration_request(cell_cfg_msg);
 
-  slot_point sl_tx{0, 0};
+  slot_point sl_tx{0, test_rgen::uniform_int<unsigned>(0, 10240)};
 
-  // Action 2: Run slot 0.
+  // Action 2: Run slot.
   const sched_result* res = sch.slot_indication(sl_tx, to_du_cell_index(0));
   TESTASSERT(res != nullptr);
   test_scheduler_result_consistency(cell_cfg, *res);

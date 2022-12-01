@@ -8,7 +8,7 @@
  *
  */
 
-#include "scheduler_test_suite.h"
+#include "unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "lib/scheduler/cell/resource_grid.h"
 #include "lib/scheduler/common_scheduling/ra_scheduler.h"
 #include "lib/scheduler/support/config_helpers.h"
