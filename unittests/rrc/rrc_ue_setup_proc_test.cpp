@@ -73,6 +73,22 @@ TEST_F(rrc_setup, when_setup_complete_timeout_then_ue_deleted)
   check_ue_release_requested();
 }
 
+TEST_F(rrc_setup, when_setup_complete_received_initial_ue_message_sent)
+{
+  connect_amf();
+  receive_setup_request();
+
+  // check if the RRC setup message was generated
+  ASSERT_EQ(get_srb0_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_setup);
+
+  // check if SRB1 was created
+  check_srb1_exists();
+
+  receive_setup_complete();
+
+  check_initial_ue_message_sent();
+}
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);

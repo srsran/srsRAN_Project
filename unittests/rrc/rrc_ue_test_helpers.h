@@ -44,6 +44,7 @@ protected:
     rrc_ue_create_msg.du_to_cu_container.resize(1);
     rrc_ue_create_msg.ue_task_sched = ue_ctxt.task_sched.get();
     ue_ctxt.rrc                     = rrc->add_ue(std::move(rrc_ue_create_msg));
+    ASSERT_NE(ue_ctxt.rrc, nullptr);
 
     // connect SRB0 with RRC to "F1" adapter
     ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb0)].rrc_tx_notifier =
@@ -120,6 +121,8 @@ protected:
     auto& tx_pdu_handler = du_proc_rrc_ue->srb1_tx_pdu_handler;
     ASSERT_EQ(tx_pdu_handler.last_pdu, rrc_smc_pdu);
   }
+
+  void check_initial_ue_message_sent() { ASSERT_TRUE(rrc_ue_ngc_notifier.initial_ue_msg_received); }
 
 private:
   const ue_index_t                                     ALLOCATED_UE_INDEX = int_to_ue_index(23);
