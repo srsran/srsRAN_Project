@@ -261,7 +261,7 @@ pages:
   rules:
     - if: $CI_DESCRIPTION == "Nightly"
       when: always # Even if previous stages/required jobs fail
-  image: $CR_REGISTRY_URI/testing-tools/doxygen:1.4.0
+  image: $CR_REGISTRY_URI/testing-tools/doxygen:1.5.0
   script:
     - doxygen_generator.sh
     - mv build/public .
