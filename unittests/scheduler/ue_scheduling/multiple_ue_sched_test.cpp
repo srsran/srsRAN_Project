@@ -49,11 +49,12 @@ unsigned allocate_rnti()
 
 // Parameters to be passed to test.
 struct multiple_ue_test_params {
-  uint8_t  k0;
-  uint8_t  k1;
-  uint16_t nof_ues;
-  uint16_t min_buffer_size_in_bytes;
-  uint16_t max_buffer_size_in_bytes;
+  uint8_t     k0;
+  uint8_t     k1;
+  uint16_t    nof_ues;
+  uint16_t    min_buffer_size_in_bytes;
+  uint16_t    max_buffer_size_in_bytes;
+  duplex_mode duplx_mode;
 };
 
 class sched_cfg_dummy_notifier : public sched_configuration_notifier
@@ -63,9 +64,9 @@ public:
   void on_ue_delete_response(du_ue_index_t ue_index) override {}
 };
 
-/// Helper class to initialize and store relevant objects for the test and provide helper methods.
+// Helper class to initialize and store relevant objects for the test and provide helper methods.
 struct test_bench {
-  /// Maximum number of slots to run per UE in order to validate the results of scheduler. Implementation defined.
+  // Maximum number of slots to run per UE in order to validate the results of scheduler. Implementation defined.
   static constexpr unsigned max_test_run_slots_per_ue = 20;
 
   scheduler_expert_config                          expert_cfg;
@@ -230,14 +231,27 @@ protected:
 
     bench->sch.handle_ul_bsr_indication(msg);
   }
+
+  bool ue_is_allocated_pdsch(const sched_test_ue& u)
+  {
+    return std::any_of(bench->sched_res->dl.ue_grants.begin(),
+                       bench->sched_res->dl.ue_grants.end(),
+                       [&u](const auto& grant) { return grant.pdsch_cfg.rnti == u.crnti; });
+  }
+
+  bool ue_is_allocated_pusch(const sched_test_ue& u)
+  {
+    return std::any_of(bench->sched_res->ul.puschs.begin(), bench->sched_res->ul.puschs.end(), [&u](const auto& grant) {
+      return grant.pusch_cfg.rnti == u.crnti;
+    });
+  }
 };
 
 TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
 {
-  setup_sched(create_expert_config(10),
-              create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
+  setup_sched(create_expert_config(10), create_random_cell_config_request(params.duplx_mode));
   // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in params.
-  // Assumption: LCID is DRB0.
+  // Assumption: LCID is DRB1.
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
     add_ue(to_du_ue_index(idx), LCID_MIN_DRB, static_cast<lcg_id_t>(0));
 
@@ -249,29 +263,36 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
   for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue; ++i) {
     run_slot();
     for (unsigned idx = 0; idx < params.nof_ues; idx++) {
-      auto&          test_ue        = get_ue(to_du_ue_index(idx));
-      const unsigned tbs_shed_bytes = pdsch_tbs_scheduled_bytes_per_lc(test_ue, LCID_MIN_DRB);
-      if (tbs_shed_bytes > test_ue.dl_bsr_list[0].bs) {
+      auto& test_ue = get_ue(to_du_ue_index(idx));
+      if (test_ue.dl_bsr_list.back().bs == 0) {
+        ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
+        continue;
+      }
+
+      const unsigned tbs_sched_bytes = pdsch_tbs_scheduled_bytes_per_lc(test_ue, LCID_MIN_DRB);
+      if ((tbs_sched_bytes > test_ue.dl_bsr_list.back().bs) ||
+          (tbs_sched_bytes != 0 && tbs_sched_bytes == test_ue.dl_bsr_list.back().bs)) {
         // Accounting for MAC headers.
-        test_ue.dl_bsr_list[0].bs = 0;
+        test_ue.dl_bsr_list.back().bs = 0;
+        // Notify buffer status of 0 to ensure scheduler does not schedule further for this UE.
+        push_buffer_state_to_dl_ue(to_du_ue_index(idx), 0, LCID_MIN_DRB);
       } else {
-        test_ue.dl_bsr_list[0].bs -= tbs_shed_bytes;
+        test_ue.dl_bsr_list.back().bs -= tbs_sched_bytes;
       }
     }
   }
 
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
     const auto& test_ue = get_ue(to_du_ue_index(idx));
-    ASSERT_EQ(test_ue.dl_bsr_list[0].bs, 0);
+    ASSERT_EQ(test_ue.dl_bsr_list.back().bs, 0);
   }
 }
 
 TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
 {
-  setup_sched(create_expert_config(10),
-              create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
+  setup_sched(create_expert_config(10), create_random_cell_config_request(params.duplx_mode));
   // Add UE(s) and notify UL BSR from UE of random size between min and max defined in params.
-  // Assumption: LCID is DRB0.
+  // Assumption: LCID is DRB1.
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
     add_ue(to_du_ue_index(idx), LCID_MIN_DRB, static_cast<lcg_id_t>(0));
 
@@ -283,20 +304,50 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
   for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue; ++i) {
     run_slot();
     for (unsigned idx = 0; idx < params.nof_ues; idx++) {
-      auto&          test_ue        = get_ue(to_du_ue_index(idx));
-      const unsigned tbs_shed_bytes = pusch_tbs_scheduled_bytes(test_ue);
-      if (tbs_shed_bytes > test_ue.ul_bsr_list[0].nof_bytes) {
+      auto& test_ue = get_ue(to_du_ue_index(idx));
+      if (test_ue.ul_bsr_list.back().nof_bytes == 0) {
+        ASSERT_FALSE(ue_is_allocated_pusch(test_ue));
+        continue;
+      }
+
+      const unsigned tbs_sched_bytes = pusch_tbs_scheduled_bytes(test_ue);
+      if ((tbs_sched_bytes > test_ue.ul_bsr_list.back().nof_bytes) ||
+          (tbs_sched_bytes != 0 && tbs_sched_bytes == test_ue.ul_bsr_list.back().nof_bytes)) {
         // Accounting for MAC headers.
-        test_ue.ul_bsr_list[0].nof_bytes = 0;
+        test_ue.ul_bsr_list.back().nof_bytes = 0;
+        // Notify BSR 0 to ensure scheduler does not schedule further for this UE.
+        notify_ul_bsr_from_ue(to_du_ue_index(idx), 0, static_cast<lcg_id_t>(0));
       } else {
-        test_ue.ul_bsr_list[0].nof_bytes -= tbs_shed_bytes;
+        test_ue.ul_bsr_list.back().nof_bytes -= tbs_sched_bytes;
       }
     }
   }
 
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
     const auto& test_ue = get_ue(to_du_ue_index(idx));
-    ASSERT_EQ(test_ue.ul_bsr_list[0].nof_bytes, 0);
+    ASSERT_EQ(test_ue.ul_bsr_list.back().nof_bytes, 0);
+  }
+}
+
+TEST_P(multiple_ue_sched_tester, not_scheduled_when_buffer_status_zero)
+{
+  setup_sched(create_expert_config(10), create_random_cell_config_request(params.duplx_mode));
+  // Add UE(s) and notify UL BSR + DL Buffer status with zero value.
+  // Assumption: LCID is DRB1.
+  for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+    add_ue(to_du_ue_index(idx), LCID_MIN_DRB, static_cast<lcg_id_t>(0));
+
+    notify_ul_bsr_from_ue(to_du_ue_index(idx), 0, static_cast<lcg_id_t>(0));
+    push_buffer_state_to_dl_ue(to_du_ue_index(idx), 0, LCID_MIN_DRB);
+  }
+
+  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue; ++i) {
+    run_slot();
+    for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+      auto& test_ue = get_ue(to_du_ue_index(idx));
+      ASSERT_FALSE(ue_is_allocated_pusch(test_ue));
+      ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
+    }
   }
 }
 
@@ -306,12 +357,26 @@ INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                                                                  .k1                       = 4,
                                                                  .nof_ues                  = 2,
                                                                  .min_buffer_size_in_bytes = 1000,
-                                                                 .max_buffer_size_in_bytes = 2500},
+                                                                 .max_buffer_size_in_bytes = 2500,
+                                                                 .duplx_mode               = duplex_mode::FDD},
                                          multiple_ue_test_params{.k0                       = 2,
                                                                  .k1                       = 5,
                                                                  .nof_ues                  = 2,
                                                                  .min_buffer_size_in_bytes = 1000,
-                                                                 .max_buffer_size_in_bytes = 2500}));
+                                                                 .max_buffer_size_in_bytes = 2500,
+                                                                 .duplx_mode               = duplex_mode::FDD},
+                                         multiple_ue_test_params{.k0                       = 1,
+                                                                 .k1                       = 4,
+                                                                 .nof_ues                  = 2,
+                                                                 .min_buffer_size_in_bytes = 1000,
+                                                                 .max_buffer_size_in_bytes = 2500,
+                                                                 .duplx_mode               = duplex_mode::TDD},
+                                         multiple_ue_test_params{.k0                       = 2,
+                                                                 .k1                       = 5,
+                                                                 .nof_ues                  = 2,
+                                                                 .min_buffer_size_in_bytes = 1000,
+                                                                 .max_buffer_size_in_bytes = 2500,
+                                                                 .duplx_mode               = duplex_mode::TDD}));
 
 int main(int argc, char** argv)
 {
