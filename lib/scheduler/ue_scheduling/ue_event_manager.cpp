@@ -10,7 +10,6 @@
 
 #include "ue_event_manager.h"
 #include "../../../lib/ran/gnb_format.h"
-#include <numeric>
 
 using namespace srsgnb;
 
