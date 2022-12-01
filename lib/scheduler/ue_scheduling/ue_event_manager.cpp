@@ -10,6 +10,7 @@
 
 #include "ue_event_manager.h"
 #include "../../../lib/ran/gnb_format.h"
+#include <numeric>
 
 using namespace srsgnb;
 
@@ -120,7 +121,15 @@ void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message&
   srsgnb_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");
 
   common_events.emplace(bsr_ind.ue_index, [this, bsr_ind](event_logger& ev_logger) {
-    ev_logger.enqueue("ul_bsr(ueId={})", bsr_ind.ue_index);
+    auto lcg_rep_buf = fmt::memory_buffer();
+    std::for_each(bsr_ind.reported_lcgs.begin(), bsr_ind.reported_lcgs.end(), [&lcg_rep_buf](const auto& rep) -> void {
+      if (lcg_rep_buf.size() > 0) {
+        fmt::format_to(lcg_rep_buf, ", ");
+      }
+      fmt::format_to(std::back_inserter(lcg_rep_buf), "(lcg={},bytes={})", rep.lcg_id, rep.nof_bytes);
+    });
+
+    ev_logger.enqueue("ul_bsr(ueId={},bsr=[{}])", bsr_ind.ue_index, to_string(lcg_rep_buf));
     ue_db[bsr_ind.ue_index].handle_bsr_indication(bsr_ind);
   });
 }
