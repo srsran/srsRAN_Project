@@ -81,10 +81,10 @@ void rrc_ue_impl::on_new_security_config(security::sec_as_config sec_cfg)
                       "Attempted to configure security, but there is no interface to PDCP TX");
   srsgnb_sanity_check(srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier != nullptr,
                       "Attempted to configure security, but there is no interface to PDCP RX");
-  srbs[srb_id_to_uint(srb_id_t::srb1)].tx_sec_notifier->enable_or_disable_security(pdcp_integrity_enabled::enabled,
-                                                                                   pdcp_ciphering_enabled::enabled);
-  srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier->enable_or_disable_security(pdcp_integrity_enabled::enabled,
-                                                                                   pdcp_ciphering_enabled::enabled);
+  srbs[srb_id_to_uint(srb_id_t::srb1)].tx_sec_notifier->enable_or_disable_security(
+      security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
+  srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier->enable_or_disable_security(
+      security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
 
   srbs[srb_id_to_uint(srb_id_t::srb1)].tx_sec_notifier->set_as_security_config(security::truncate_config(sec_cfg));
   srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier->set_as_security_config(security::truncate_config(sec_cfg));

@@ -32,16 +32,16 @@ public:
 class dummy_rrc_tx_security_notifier : public rrc_tx_security_notifier
 {
 public:
-  explicit dummy_rrc_tx_security_notifier() {}
+  explicit dummy_rrc_tx_security_notifier() = default;
   void set_as_security_config(security::sec_128_as_config sec_cfg) override
   {
     sec_configured = true;
     last_sec_cfg   = sec_cfg;
   }
-  void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) override
+  void enable_or_disable_security(security::integrity_enabled integ, security::ciphering_enabled cipher) override
   {
-    integ_enabled  = integ == pdcp_integrity_enabled::enabled;
-    cipher_enabled = cipher == pdcp_ciphering_enabled::enabled;
+    integ_enabled  = integ == security::integrity_enabled::enabled;
+    cipher_enabled = cipher == security::ciphering_enabled::enabled;
   }
 
   security::sec_128_as_config last_sec_cfg   = {};
@@ -59,10 +59,10 @@ public:
     sec_configured = true;
     last_sec_cfg   = sec_cfg;
   }
-  void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) override
+  void enable_or_disable_security(security::integrity_enabled integ, security::ciphering_enabled cipher) override
   {
-    integ_enabled  = integ == pdcp_integrity_enabled::enabled;
-    cipher_enabled = cipher == pdcp_ciphering_enabled::enabled;
+    integ_enabled  = integ == security::integrity_enabled::enabled;
+    cipher_enabled = cipher == security::ciphering_enabled::enabled;
   }
 
   security::sec_128_as_config last_sec_cfg   = {};

@@ -36,10 +36,6 @@ constexpr uint16_t pdcp_max_sdu_size = 9000;
 /// PDCP security direction
 enum class pdcp_security_direction { uplink, downlink };
 
-/// PDCP integrity/ciphering enabled
-enum class pdcp_integrity_enabled { no, enabled };
-enum class pdcp_ciphering_enabled { no, enabled };
-
 /// PDCP NR t-Reordering timer values.
 /// This timer is used to detect loss of PDCP Data PDUs.
 /// See TS 38.322 for timer description and TS 38.331 for valid timer durations.

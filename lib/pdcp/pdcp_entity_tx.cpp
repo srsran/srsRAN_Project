@@ -182,7 +182,7 @@ byte_buffer pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer
   // The data unit that is integrity protected is the PDU header
   // and the data part of the PDU before ciphering.
   security::sec_mac mac = {};
-  if (integrity_enabled == pdcp_integrity_enabled::enabled) {
+  if (integrity_enabled == security::integrity_enabled::enabled) {
     byte_buffer buf = {};
     buf.append(hdr);
     buf.append(sdu);
@@ -194,18 +194,18 @@ byte_buffer pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer
   // data part of the PDCP Data PDU except the
   // SDAP header and the SDAP Control PDU if included in the PDCP SDU.
   byte_buffer ct;
-  if (ciphering_enabled == pdcp_ciphering_enabled::enabled) {
+  if (ciphering_enabled == security::ciphering_enabled::enabled) {
     byte_buffer buf = {};
     buf.append(sdu);
     // Append MAC-I
-    if (is_srb() || (is_drb() && (integrity_enabled == pdcp_integrity_enabled::enabled))) {
+    if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::enabled))) {
       buf.append(mac);
     }
     ct = cipher_encrypt(buf, count);
   } else {
     ct.append(sdu);
     // Append MAC-I
-    if (is_srb() || (is_drb() && (integrity_enabled == pdcp_integrity_enabled::enabled))) {
+    if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::enabled))) {
       ct.append(mac);
     }
   }

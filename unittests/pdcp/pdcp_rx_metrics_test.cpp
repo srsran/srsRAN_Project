@@ -29,7 +29,7 @@ TEST_P(pdcp_rx_metrics_test, sdu_pdu_metrics)
     init(GetParam());
 
     pdcp_rx->set_as_security_config(sec_cfg);
-    pdcp_rx->enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+    pdcp_rx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
 
     byte_buffer test_pdu;
     get_test_pdu(count, test_pdu);
@@ -78,7 +78,7 @@ TEST_P(pdcp_rx_metrics_test, integrity_metrics)
     init(GetParam());
 
     pdcp_rx->set_as_security_config(sec_cfg);
-    pdcp_rx->enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+    pdcp_rx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
 
     byte_buffer test_pdu;
     get_test_pdu(count, test_pdu);
@@ -125,7 +125,7 @@ TEST_P(pdcp_rx_metrics_test, rx_reordering_timer)
     init(GetParam(), pdcp_t_reordering::ms10);
 
     pdcp_rx->set_as_security_config(sec_cfg);
-    pdcp_rx->enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+    pdcp_rx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);

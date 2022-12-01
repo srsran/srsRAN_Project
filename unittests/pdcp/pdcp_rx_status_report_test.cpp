@@ -31,7 +31,7 @@ TEST_P(pdcp_rx_status_report_test, build_status_report)
   init(GetParam(), pdcp_t_reordering::ms10);
 
   pdcp_rx->set_as_security_config(sec_cfg);
-  pdcp_rx->enable_or_disable_security(pdcp_integrity_enabled::no, pdcp_ciphering_enabled::enabled);
+  pdcp_rx->enable_or_disable_security(security::integrity_enabled::no, security::ciphering_enabled::enabled);
 
   pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
   pdcp_rx->set_state(init_state);
@@ -104,7 +104,7 @@ TEST_P(pdcp_rx_status_report_test, build_truncated_status_report)
   init(GetParam(), pdcp_t_reordering::ms10);
 
   pdcp_rx->set_as_security_config(sec_cfg);
-  pdcp_rx->enable_or_disable_security(pdcp_integrity_enabled::no, pdcp_ciphering_enabled::enabled);
+  pdcp_rx->enable_or_disable_security(security::integrity_enabled::no, security::ciphering_enabled::enabled);
 
   pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
   pdcp_rx->set_state(init_state);
@@ -159,7 +159,7 @@ TEST_P(pdcp_rx_status_report_test, rx_status_report)
   init(GetParam());
 
   pdcp_rx->set_as_security_config(sec_cfg);
-  pdcp_rx->enable_or_disable_security(pdcp_integrity_enabled::enabled, pdcp_ciphering_enabled::enabled);
+  pdcp_rx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
 
   ASSERT_TRUE(test_frame->status_report_queue.empty());
 

@@ -113,7 +113,7 @@ public:
   {
     pdcp_handler.set_as_security_config(sec_cfg);
   }
-  void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) override
+  void enable_or_disable_security(security::integrity_enabled integ, security::ciphering_enabled cipher) override
   {
     pdcp_handler.enable_or_disable_security(integ, cipher);
   };
@@ -135,7 +135,7 @@ public:
   {
     pdcp_handler.set_as_security_config(sec_cfg);
   }
-  void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) override
+  void enable_or_disable_security(security::integrity_enabled integ, security::ciphering_enabled cipher) override
   {
     pdcp_handler.enable_or_disable_security(integ, cipher);
   };

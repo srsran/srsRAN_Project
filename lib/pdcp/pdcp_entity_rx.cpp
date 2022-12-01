@@ -136,7 +136,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
    * SDAP header and the SDAP Control PDU if included in the PDCP SDU.
    */
   byte_buffer sdu;
-  if (ciphering_enabled == pdcp_ciphering_enabled::enabled) {
+  if (ciphering_enabled == security::ciphering_enabled::enabled) {
     sdu = cipher_decrypt(pdu.begin() + hdr_len_bytes, pdu.end(), rcvd_count);
     std::array<uint8_t, pdcp_data_pdu_header_size_max> header_buf;
     std::copy(pdu.begin(), pdu.begin() + hdr_len_bytes, header_buf.begin());
@@ -151,7 +151,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
    * Always extract from SRBs, only extract from DRBs if integrity is enabled
    */
   security::sec_mac mac = {};
-  if (is_srb() || (is_drb() && (integrity_enabled == pdcp_integrity_enabled::enabled))) {
+  if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::enabled))) {
     extract_mac(sdu, mac);
   }
 
@@ -161,7 +161,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
    * The data unit that is integrity protected is the PDU header
    * and the data part of the PDU before ciphering.
    */
-  if (integrity_enabled == pdcp_integrity_enabled::enabled) {
+  if (integrity_enabled == security::integrity_enabled::enabled) {
     bool is_valid = integrity_verify(sdu, rcvd_count, mac);
     if (!is_valid) {
       logger.log_warning(sdu.begin(), sdu.end(), "Integrity failed. Dropping PDU");

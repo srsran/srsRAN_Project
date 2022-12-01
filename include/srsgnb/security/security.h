@@ -98,6 +98,10 @@ constexpr uint8_t to_number(security_direction direction)
   return static_cast<uint8_t>(direction);
 }
 
+/// integrity/ciphering enabled
+enum class integrity_enabled { no, enabled };
+enum class ciphering_enabled { no, enabled };
+
 using sec_mac = std::array<uint8_t, sec_mac_len>;
 
 using sec_as_key     = std::array<uint8_t, sec_key_len>;

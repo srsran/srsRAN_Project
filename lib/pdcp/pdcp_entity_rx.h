@@ -87,7 +87,7 @@ public:
         "Set RX security configuration, integ=NIA{}, cipher=NEA{}", sec_cfg.integ_algo, sec_cfg.cipher_algo);
   };
 
-  void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) final
+  void enable_or_disable_security(security::integrity_enabled integ, security::ciphering_enabled cipher) final
   {
     integrity_enabled = integ;
     ciphering_enabled = cipher;
@@ -105,8 +105,8 @@ private:
 
   security::sec_128_as_config  sec_cfg           = {};
   security::security_direction direction         = security::security_direction::uplink;
-  pdcp_integrity_enabled       integrity_enabled = pdcp_integrity_enabled::no;
-  pdcp_ciphering_enabled       ciphering_enabled = pdcp_ciphering_enabled::no;
+  security::integrity_enabled  integrity_enabled = security::integrity_enabled::no;
+  security::ciphering_enabled  ciphering_enabled = security::ciphering_enabled::no;
 
   pdcp_rx_state st = {};
 
