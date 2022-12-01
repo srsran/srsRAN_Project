@@ -13,6 +13,7 @@
 #include "mac_dl_ue_manager.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/mac/lcid_dl_sch.h"
+#include "srsgnb/mac/mac_pdu_format.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 #include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/memory_pool/ring_buffer_pool.h"
@@ -33,23 +34,29 @@ public:
   explicit dl_sch_pdu(span<uint8_t> pdu_buffer_) : pdu(pdu_buffer_) {}
 
   /// Adds a MAC SDU as a subPDU.
-  void add_sdu(lcid_t lcid_, byte_buffer_slice_chain&& sdu)
+  unsigned add_sdu(lcid_t lcid_, byte_buffer_slice_chain&& sdu)
   {
-    lcid_dl_sch_t lcid          = lcid_;
-    unsigned      header_length = 2;
-    bool          F_bit         = false;
-    if (sdu.length() >= MAC_SUBHEADER_LEN_THRESHOLD) {
+    lcid_dl_sch_t lcid    = lcid_;
+    size_t        sdu_len = sdu.length();
+
+    unsigned header_length = 2;
+    bool     F_bit         = false;
+    if (sdu_len >= MAC_SUBHEADER_LEN_THRESHOLD) {
       F_bit = true;
       header_length += 1;
     }
 
+    if (byte_offset + sdu_len + header_length > pdu.size()) {
+      return 0;
+    }
+
     // Encode Header.
-    size_t sdu_len = sdu.length();
     encode_subheader(F_bit, lcid, header_length, sdu_len);
 
     // Encode Payload.
     std::copy(sdu.begin(), sdu.end(), pdu.data() + byte_offset);
     byte_offset += sdu_len;
+    return sdu_len + header_length;
   }
 
   /// Adds a UE Contention Resolution CE as a subPDU.
@@ -159,20 +166,28 @@ private:
     mac_sdu_tx_builder* bearer = ue_mng.get_bearer(rnti, subpdu.lcid.to_lcid());
     srsgnb_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
-    unsigned rem_bytes = subpdu.sched_bytes;
+    unsigned rem_bytes = get_mac_sdu_required_bytes(subpdu.sched_bytes);
     while (rem_bytes > MIN_MAC_SDU_SIZE) {
       // Fetch MAC Tx SDU.
-      byte_buffer_slice_chain sdu = bearer->on_new_tx_sdu(subpdu.sched_bytes);
+      byte_buffer_slice_chain sdu = bearer->on_new_tx_sdu(get_mac_sdu_payload_size(rem_bytes));
       if (sdu.empty()) {
         // TODO: Handle.
-        logger.warning("Failed to encode MAC SDU with LCID={}", subpdu.lcid);
+        logger.warning("rnti={:#x}, LCID={}: Failed to encode MAC SDU.", rnti, subpdu.lcid.to_lcid());
         break;
       }
-
-      rem_bytes -= sdu.length();
+      srsgnb_assert(sdu.length() <= get_mac_sdu_payload_size(rem_bytes), "RLC Tx SDU exceeded MAC opportunity size");
 
       // Add SDU as a subPDU.
-      ue_pdu.add_sdu(subpdu.lcid.to_lcid(), std::move(sdu));
+      unsigned nwritten = ue_pdu.add_sdu(subpdu.lcid.to_lcid(), std::move(sdu));
+      if (nwritten == 0) {
+        logger.error("ERROR: rnti={:#x}, LCID={}: Scheduled SubPDU with L={} cannot fit in scheduled DL grant",
+                     rnti,
+                     subpdu.lcid.to_lcid(),
+                     subpdu.sched_bytes);
+        break;
+      }
+      srsgnb_assert(rem_bytes >= nwritten, "Too many bytes were packed in MAC SDU");
+      rem_bytes -= nwritten;
     }
     if (rem_bytes == subpdu.sched_bytes) {
       logger.error("ERROR: Skipping MAC subPDU encoding. Cause: Allocated SDU size={} is too small to fit MAC "

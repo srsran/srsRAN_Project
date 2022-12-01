@@ -11,18 +11,11 @@
 #include "lib/du_manager/converters/mac_cell_configuration_helpers.h"
 #include "lib/mac/mac_dl/dl_sch_pdu_assembler.h"
 #include "srsgnb/support/bit_encoding.h"
+#include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <random>
 
 using namespace srsgnb;
-
-std::random_device rd;
-std::mt19937       g(rd());
-
-unsigned get_random_uint(unsigned min, unsigned max)
-{
-  return std::uniform_int_distribution<unsigned>{min, max}(g);
-}
 
 TEST(mac_dl_sch_pdu, mac_ce_con_res_id_pack)
 {
@@ -38,7 +31,7 @@ TEST(mac_dl_sch_pdu, mac_ce_con_res_id_pack)
   dl_sch_pdu           pdu(bytes);
   ue_con_res_id_t      conres = {};
   for (unsigned i = 0; i != UE_CON_RES_ID_LEN; ++i) {
-    conres[i] = get_random_uint(0, 255);
+    conres[i] = test_rgen::uniform_int<uint8_t>();
   }
   pdu.add_ue_con_res_id(conres);
   span<const uint8_t> result = pdu.get();
@@ -61,12 +54,12 @@ TEST(mac_dl_sch_pdu, mac_sdu_8bit_L_pack)
 
   std::vector<uint8_t> bytes(dl_sch_pdu::MAX_PDU_LENGTH);
   dl_sch_pdu           pdu(bytes);
-  unsigned             payload_len = get_random_uint(0, 255);
+  unsigned             payload_len = test_rgen::uniform_int<unsigned>(0, 255);
   byte_buffer          payload;
   for (unsigned i = 0; i != payload_len; ++i) {
-    payload.append(get_random_uint(0, 255));
+    payload.append(test_rgen::uniform_int<uint8_t>());
   }
-  lcid_t lcid = (lcid_t)get_random_uint(0, MAX_NOF_RB_LCIDS);
+  lcid_t lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_NOF_RB_LCIDS);
   pdu.add_sdu(lcid, byte_buffer_slice_chain{payload.copy()});
   span<const uint8_t> result = pdu.get();
 
@@ -93,12 +86,12 @@ TEST(mac_dl_sch_pdu, mac_sdu_16bit_L_pack)
 
   std::vector<uint8_t> bytes(dl_sch_pdu::MAX_PDU_LENGTH);
   dl_sch_pdu           pdu(bytes);
-  unsigned             payload_len = get_random_uint(256, dl_sch_pdu::MAX_PDU_LENGTH);
+  unsigned             payload_len = test_rgen::uniform_int<unsigned>(256, dl_sch_pdu::MAX_PDU_LENGTH);
   byte_buffer          payload;
   for (unsigned i = 0; i != payload_len; ++i) {
-    payload.append(get_random_uint(0, 255));
+    payload.append(test_rgen::uniform_int<uint8_t>());
   }
-  lcid_t lcid = (lcid_t)get_random_uint(0, MAX_NOF_RB_LCIDS);
+  lcid_t lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_NOF_RB_LCIDS);
   pdu.add_sdu(lcid, byte_buffer_slice_chain{payload.copy()});
   span<const uint8_t> result = pdu.get();
 
@@ -115,13 +108,18 @@ TEST(mac_dl_sch_pdu, mac_sdu_16bit_L_pack)
 class dummy_dl_bearer : public mac_sdu_tx_builder
 {
 public:
-  byte_buffer last_sdu;
+  byte_buffer          last_sdu;
+  std::deque<unsigned> next_rlc_pdu_sizes;
 
   byte_buffer_slice_chain on_new_tx_sdu(unsigned nof_bytes) override
   {
     last_sdu.clear();
+    if (not next_rlc_pdu_sizes.empty()) {
+      nof_bytes = std::min(nof_bytes, next_rlc_pdu_sizes.front());
+      next_rlc_pdu_sizes.pop_front();
+    }
     for (unsigned i = 0; i != nof_bytes; ++i) {
-      last_sdu.append(get_random_uint(0, 255));
+      last_sdu.append(test_rgen::uniform_int<uint8_t>());
     }
     return byte_buffer_slice_chain{last_sdu.copy()};
   }
@@ -133,19 +131,25 @@ class mac_dl_sch_assembler_tester : public testing::Test
 {
 public:
   mac_dl_sch_assembler_tester() :
-    pdu_pool(dl_sch_pdu::MAX_PDU_LENGTH * MAX_DL_PDUS_PER_SLOT, 1), ue_mng(rnti_table), dl_sch_enc(ue_mng, pdu_pool)
+    pdu_pool(dl_sch_pdu::MAX_PDU_LENGTH * MAX_DL_PDUS_PER_SLOT, 1),
+    ue_mng(rnti_table),
+    dl_bearers(2),
+    dl_sch_enc(ue_mng, pdu_pool)
   {
     srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
+    srslog::init();
 
     for (unsigned i = 0; i != UE_CON_RES_ID_LEN; ++i) {
-      msg3_pdu.append(get_random_uint(0, 255));
+      msg3_pdu.append(test_rgen::uniform_int<uint8_t>());
     }
 
     // Create UE.
-    req.bearers.resize(1);
-    req.bearers[0].lcid      = LCID_SRB0;
-    req.bearers[0].dl_bearer = &dl_bearer;
-    req.ul_ccch_msg          = &msg3_pdu;
+    req.bearers.resize(dl_bearers.size());
+    for (unsigned i = 0; i != dl_bearers.size(); ++i) {
+      req.bearers[i].lcid      = (lcid_t)i;
+      req.bearers[i].dl_bearer = &dl_bearers[i];
+    }
+    req.ul_ccch_msg = &msg3_pdu;
     rnti_table.add_ue(req.crnti, req.ue_index);
     ue_mng.add_ue(req);
   }
@@ -158,16 +162,16 @@ protected:
   du_rnti_table                 rnti_table;
   ticking_ring_buffer_pool      pdu_pool;
   mac_dl_ue_manager             ue_mng;
-  dummy_dl_bearer               dl_bearer;
+  std::vector<dummy_dl_bearer>  dl_bearers;
   dl_sch_pdu_assembler          dl_sch_enc;
 };
 
 TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)
 {
   const unsigned sdu_subheader_size = 2;
-  const unsigned sdu_size           = get_random_uint(5, 255);
+  const unsigned sdu_size           = test_rgen::uniform_int<unsigned>(5, 255);
   const unsigned conres_ce_size     = UE_CON_RES_ID_LEN + 1;
-  const unsigned tb_size            = sdu_subheader_size + sdu_size + conres_ce_size + get_random_uint(0, 100);
+  const unsigned tb_size = sdu_subheader_size + sdu_size + conres_ce_size + test_rgen::uniform_int<unsigned>(0, 100);
 
   dl_msg_tb_info tb_info;
   tb_info.subpdus.push_back(dl_msg_lc_info{lcid_dl_sch_t::UE_CON_RES_ID, conres_ce_size});
@@ -181,10 +185,10 @@ TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)
   enc.pack(lcid_dl_sch_t::UE_CON_RES_ID, 6); // LCID
   enc.pack_bytes(this->msg3_pdu);            // UE ConRes Id.
   // MAC SDU.
-  enc.pack(0b00, 2);                  // R | F
-  enc.pack(LCID_SRB0, 6);             // LCID
-  enc.pack(sdu_size, 8);              // L
-  enc.pack_bytes(dl_bearer.last_sdu); // SDU
+  enc.pack(0b00, 2);                      // R | F
+  enc.pack(LCID_SRB0, 6);                 // LCID
+  enc.pack(sdu_size, 8);                  // L
+  enc.pack_bytes(dl_bearers[0].last_sdu); // SDU
   ASSERT_GE(tb_size, expected.length());
   if (expected.length() < tb_size) {
     // Padding.
@@ -196,6 +200,26 @@ TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)
 
   ASSERT_EQ(tb_size, expected.length());
   ASSERT_EQ(tb_size, result.size()) << "PDU was not padded correctly";
-  ASSERT_EQ(dl_bearer.last_sdu.length(), sdu_size);
+  ASSERT_EQ(dl_bearers[0].last_sdu.length(), sdu_size);
   ASSERT_EQ(result, expected);
+}
+
+TEST_F(mac_dl_sch_assembler_tester, unexpected_rlc_status_pdu_prepended)
+{
+  const unsigned sdu_subheader_size  = 2;
+  const unsigned subpdu_size         = 34;
+  const unsigned tb_size             = subpdu_size + sdu_subheader_size;
+  const unsigned rlc_status_pdu_size = 3;
+
+  // RLC has a pending Status PDU size.
+  this->dl_bearers[1].next_rlc_pdu_sizes.push_back(rlc_status_pdu_size);
+
+  // MAC schedules one SDU.
+  dl_msg_tb_info tb_info;
+  tb_info.subpdus.push_back(dl_msg_lc_info{LCID_SRB1, subpdu_size});
+
+  span<const uint8_t> result = this->dl_sch_enc.assemble_pdu(this->req.crnti, tb_info, tb_size);
+  ASSERT_EQ(result.size(), tb_size);
+  ASSERT_EQ(this->dl_bearers[1].last_sdu.length() + rlc_status_pdu_size + sdu_subheader_size * 2, tb_size)
+      << "Too many bytes from upper layers were injected in the MAC opportunity";
 }
