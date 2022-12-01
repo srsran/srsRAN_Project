@@ -31,18 +31,11 @@ protected:
     return (nof_bits + (bits_per_word - 1)) / bits_per_word;
   }
 
-  /// \brief Replaces the internal data container and resets the current size to zero.
+  /// \brief Replaces the internal data container and sets the current size.
   /// \remark The previous data container will still contain the data present before calling this method.
-  void set_buffer(span<word_t> new_buffer) { buffer = new_buffer; }
-
-  /// \brief Sets the accessible size of the bit buffer.
-  /// \remark An assertion is thrown if the new size exceeds the maximum allowed size.
-  void set_current_size(unsigned new_size)
+  void set_buffer(span<word_t> new_buffer, unsigned new_size)
   {
-    srsgnb_assert(new_size <= buffer.size() * bits_per_word,
-                  "The new size (i.e., {}) exceeds the maximum size allowed by the data storage (i.e., {}).",
-                  new_size,
-                  buffer.size() * bits_per_word);
+    buffer       = new_buffer;
     current_size = new_size;
   }
 
@@ -222,7 +215,7 @@ public:
   static_bit_buffer(unsigned nof_bits = 0) : bit_buffer(buffer, nof_bits) {}
 
   /// Resizes the bit buffer.
-  void resize(unsigned new_size) { set_current_size(new_size); }
+  void resize(unsigned new_size) { set_buffer(buffer, new_size); }
 
 private:
   /// Static memory container.
@@ -234,18 +227,13 @@ class dynamic_bit_buffer : public bit_buffer
 {
 public:
   /// Creates a dynamic bit buffer that contains \c nof_bits.
-  dynamic_bit_buffer(unsigned nof_bits) : buffer(calculate_nof_words(nof_bits))
-  {
-    set_buffer(buffer);
-    set_current_size(nof_bits);
-  }
+  dynamic_bit_buffer(unsigned nof_bits) : buffer(calculate_nof_words(nof_bits)) { set_buffer(buffer, nof_bits); }
 
   /// Resizes the bit buffer.
   void resize(unsigned new_size)
   {
-    buffer.resize(new_size);
-    set_buffer(buffer);
-    set_current_size(new_size);
+    buffer.resize(calculate_nof_words(new_size));
+    set_buffer(buffer, new_size);
   }
 
 private:
