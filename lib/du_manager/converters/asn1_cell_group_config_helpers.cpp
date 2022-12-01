@@ -1087,49 +1087,49 @@ void fill_uci_beta_offset(beta_offsets_s& beta_out, const beta_offsets& beta_in)
 {
   if (beta_in.beta_offset_ack_idx_1.has_value()) {
     beta_out.beta_offset_ack_idx1_present = true;
-    beta_out.beta_offset_ack_idx1         = beta_in.beta_offset_ack_idx_1.value;
+    beta_out.beta_offset_ack_idx1         = beta_in.beta_offset_ack_idx_1.value();
   } else {
     beta_out.beta_offset_ack_idx1_present = false;
   }
 
   if (beta_in.beta_offset_ack_idx_2.has_value()) {
     beta_out.beta_offset_ack_idx2_present = true;
-    beta_out.beta_offset_ack_idx2         = beta_in.beta_offset_ack_idx_2.value;
+    beta_out.beta_offset_ack_idx2         = beta_in.beta_offset_ack_idx_2.value();
   } else {
     beta_out.beta_offset_ack_idx2_present = false;
   }
 
   if (beta_in.beta_offset_ack_idx_3.has_value()) {
     beta_out.beta_offset_ack_idx3_present = true;
-    beta_out.beta_offset_ack_idx3         = beta_in.beta_offset_ack_idx_3.value;
+    beta_out.beta_offset_ack_idx3         = beta_in.beta_offset_ack_idx_3.value();
   } else {
     beta_out.beta_offset_ack_idx3_present = false;
   }
 
   if (beta_in.beta_offset_csi_p1_idx_1.has_value()) {
     beta_out.beta_offset_csi_part1_idx1_present = true;
-    beta_out.beta_offset_csi_part1_idx1         = beta_in.beta_offset_csi_p1_idx_1.value;
+    beta_out.beta_offset_csi_part1_idx1         = beta_in.beta_offset_csi_p1_idx_1.value();
   } else {
     beta_out.beta_offset_csi_part1_idx1_present = true;
   }
 
   if (beta_in.beta_offset_csi_p1_idx_2.has_value()) {
     beta_out.beta_offset_csi_part1_idx2_present = true;
-    beta_out.beta_offset_csi_part1_idx2         = beta_in.beta_offset_csi_p1_idx_2.value;
+    beta_out.beta_offset_csi_part1_idx2         = beta_in.beta_offset_csi_p1_idx_2.value();
   } else {
     beta_out.beta_offset_csi_part1_idx2_present = true;
   }
 
   if (beta_in.beta_offset_csi_p2_idx_1.has_value()) {
     beta_out.beta_offset_csi_part2_idx1_present = true;
-    beta_out.beta_offset_csi_part2_idx1         = beta_in.beta_offset_csi_p2_idx_1.value;
+    beta_out.beta_offset_csi_part2_idx1         = beta_in.beta_offset_csi_p2_idx_1.value();
   } else {
     beta_out.beta_offset_csi_part2_idx1_present = true;
   }
 
   if (beta_in.beta_offset_csi_p2_idx_2.has_value()) {
     beta_out.beta_offset_csi_part2_idx2_present = true;
-    beta_out.beta_offset_csi_part2_idx2         = beta_in.beta_offset_csi_p2_idx_2.value;
+    beta_out.beta_offset_csi_part2_idx2         = beta_in.beta_offset_csi_p2_idx_2.value();
   } else {
     beta_out.beta_offset_csi_part2_idx2_present = true;
   }

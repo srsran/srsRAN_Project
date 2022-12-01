@@ -29,7 +29,7 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
   for (auto& user : ues) {
     // Check if the slot is UL enabled.
     if (not cell_cfg.is_ul_enabled(sl_tx)) {
-      logger.warning("SCHED: SR PUCCH occasion not scheduled as current slot is not UL enabled.");
+      logger.debug("SCHED: SR PUCCH occasion not scheduled as current slot is not UL enabled.");
       return;
     }
 

@@ -96,6 +96,13 @@ public:
     return value();
   }
 
+  constexpr bool operator==(const base_tiny_optional& rhs) const
+  {
+    return has_value() == rhs.has_value() and (has_value() ? val == rhs.val : true);
+  }
+
+  constexpr bool operator!=(const base_tiny_optional& rhs) const { return !(rhs == *this); }
+
 private:
   T val = traits::empty_value();
 };
