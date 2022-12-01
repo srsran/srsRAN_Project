@@ -50,11 +50,10 @@ ue_creation_procedure::ue_creation_procedure(du_ue_index_t                      
 
   const static unsigned UE_ACTIVITY_TIMEOUT = 500; // TODO: Parametrize.
   ue_ctx->activity_timer                    = services.timers.create_unique_timer();
-  ue_ctx->activity_timer.set(UE_ACTIVITY_TIMEOUT,
-                             [&ue_mng = this->ue_mng, ue_index, &logger = this->logger](unsigned tid) {
-                               logger.info("UE Manager: ueId={} activity timeout. Removing UE...", ue_index);
-                               ue_mng.remove_ue(ue_index);
-                             });
+  ue_ctx->activity_timer.set(UE_ACTIVITY_TIMEOUT, [ue_index, &logger = this->logger](unsigned tid) {
+    logger.info("UE Manager: UE={} activity timeout.", ue_index);
+    // TODO: Handle.
+  });
 
   // TODO: Move to helper.
   physical_cell_group_config& pcg_cfg = pcell.pcg_cfg;
