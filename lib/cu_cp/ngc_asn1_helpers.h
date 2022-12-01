@@ -12,6 +12,7 @@
 
 #include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/ran/bcd_helpers.h"
+#include "srsgnb/security/security.h"
 
 namespace srsgnb {
 

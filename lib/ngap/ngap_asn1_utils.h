@@ -13,6 +13,7 @@
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/ngap/ngc_types.h"
+#include "srsgnb/security/security.h"
 #include "srsgnb/support/error_handling.h"
 
 namespace srsgnb {
@@ -93,5 +94,25 @@ inline expected<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::ngap_pdu_c& pdu)
   return {default_error_t{}};
 }
 
+inline void copy_asn1_key(security::sec_as_key& key_out, const asn1::fixed_bitstring<256, false, true>& key_in)
+{
+  memcpy(key_out.data(), key_in.data(), security::sec_key_len);
+}
+
+inline void fill_supported_integrity_algorithms(security::supported_integrity_algos&         supported_algos_out,
+                                                const asn1::fixed_bitstring<16, true, true>& supported_algos_in)
+{
+  for (unsigned i = 0; i < 3; ++i) {
+    supported_algos_out[i] = supported_algos_in.get(i);
+  }
+}
+
+inline void fill_supported_ciphering_algorithms(security::supported_ciphering_algos&         supported_algos_out,
+                                                const asn1::fixed_bitstring<16, true, true>& supported_algos_in)
+{
+  for (unsigned i = 0; i < 3; ++i) {
+    supported_algos_out[i] = supported_algos_in.get(i);
+  }
+}
 } // namespace srs_cu_cp
 } // namespace srsgnb

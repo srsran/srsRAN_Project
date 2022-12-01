@@ -9,6 +9,7 @@
  */
 
 #include "ngc_impl.h"
+#include "ngap_asn1_utils.h"
 #include "procedures/ng_setup_procedure.h"
 #include "srsgnb/support/async/event_signal.h"
 
@@ -307,6 +308,12 @@ void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_conte
   ngap_initial_context_setup_request_message init_ctxt_setup_req_msg;
   init_ctxt_setup_req_msg.cu_cp_ue_id = cu_cp_ue_id;
   init_ctxt_setup_req_msg.request     = request;
+
+  rrc_init_security_context sec_ctx = {};
+  copy_asn1_key(sec_ctx.k, *request->security_key);
+  fill_supported_integrity_algorithms(sec_ctx.supported_int_algos,
+                                      request->ue_security_cap->nrintegrity_protection_algorithms);
+  fill_supported_ciphering_algorithms(sec_ctx.supported_int_algos, request->ue_security_cap->nrencryption_algorithms);
 
   ue->get_rrc_ue_control_notifier().on_initial_context_setup_request_received(init_ctxt_setup_req_msg);
 }

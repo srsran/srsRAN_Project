@@ -103,6 +103,10 @@ using sec_mac = std::array<uint8_t, sec_mac_len>;
 using sec_as_key     = std::array<uint8_t, sec_key_len>;
 using sec_128_as_key = std::array<uint8_t, sec_128_key_len>;
 
+/// Helper types to communicate NIA/NEA1...3 support. Support of NEA/NIA0 is implicit.
+using supported_integrity_algos = std::array<bool, 3>;
+using supported_ciphering_algos = std::array<bool, 3>;
+
 struct sec_128_as_config {
   sec_128_as_key      k_128_rrc_int;
   sec_128_as_key      k_128_rrc_enc;

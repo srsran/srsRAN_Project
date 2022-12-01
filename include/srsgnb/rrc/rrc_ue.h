@@ -12,6 +12,7 @@
 
 #include "rrc_cell_context.h"
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/rrc/rrc.h"
 #include "srsgnb/security/security.h"
@@ -198,9 +199,9 @@ public:
 };
 
 struct rrc_init_security_context {
-  security::sec_as_key k;
-  std::array<bool, 3>  supported_int_algos;
-  std::array<bool, 3>  supported_enc_algos;
+  security::sec_as_key                k;
+  security::supported_integrity_algos supported_int_algos;
+  security::supported_ciphering_algos supported_enc_algos;
 };
 
 /// Handler to initialize the security context from NGAP.
