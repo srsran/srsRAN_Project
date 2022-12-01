@@ -265,14 +265,17 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     srb.rrc_tx_notifier =
         std::make_unique<rrc_ue_pdcp_pdu_adapter>(srb.pdcp_context->pdcp_bearer->get_tx_upper_data_interface());
 
-    auto test_tx = std::make_unique<rrc_ue_pdcp_tx_security_adapter>(
+    srb.rrc_tx_sec_notifier = std::make_unique<rrc_ue_pdcp_tx_security_adapter>(
         srb.pdcp_context->pdcp_bearer->get_tx_upper_control_interface());
-    auto test_rx = std::make_unique<rrc_ue_pdcp_rx_security_adapter>(
+
+    srb.rrc_rx_sec_notifier = std::make_unique<rrc_ue_pdcp_rx_security_adapter>(
         srb.pdcp_context->pdcp_bearer->get_rx_upper_control_interface());
 
     // update notifier in RRC
-    ue_ctxt->rrc->connect_srb_notifier(
-        msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier, test_tx.get(), test_rx.get());
+    ue_ctxt->rrc->connect_srb_notifier(msg.srb_id,
+                                       *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier,
+                                       ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_sec_notifier.get(),
+                                       ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_rx_sec_notifier.get());
 
     // update notifier in F1C
     f1c->connect_srb_notifier(ue_ctxt->ue_index, msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rx_notifier);

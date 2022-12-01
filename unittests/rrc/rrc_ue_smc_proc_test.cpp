@@ -55,9 +55,19 @@ TEST_F(rrc_smc, when_key_provided_smc_generated)
   std::fill(init_sec_ctx.supported_int_algos.begin(), init_sec_ctx.supported_int_algos.end(), true);
   std::fill(init_sec_ctx.supported_enc_algos.begin(), init_sec_ctx.supported_enc_algos.end(), true);
 
+  // Make sure SRB1 PDCP is not configured
+  check_integrity_enabled(false);
+  check_ciphering_enabled(false);
+  check_security_configured(false);
+
   // Trigger SMC
   init_security_context(init_sec_ctx);
   check_smc_pdu();
+
+  // Make sure SRB1 PDCP is configured
+  check_integrity_enabled(true);
+  check_ciphering_enabled(true);
+  check_security_configured(true);
 
   // Receive SMC complete
   receive_smc_complete();

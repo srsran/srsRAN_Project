@@ -124,6 +124,30 @@ protected:
 
   void check_initial_ue_message_sent() { ASSERT_TRUE(rrc_ue_ngc_notifier.initial_ue_msg_received); }
 
+  void check_integrity_enabled(bool enabled)
+  {
+    auto& tx_sec_handler = du_proc_rrc_ue->srb1_tx_security_handler;
+    auto& rx_sec_handler = du_proc_rrc_ue->srb1_rx_security_handler;
+    ASSERT_EQ(tx_sec_handler.integ_enabled, enabled);
+    ASSERT_EQ(rx_sec_handler.integ_enabled, enabled);
+  }
+
+  void check_ciphering_enabled(bool enabled)
+  {
+    auto& tx_sec_handler = du_proc_rrc_ue->srb1_tx_security_handler;
+    auto& rx_sec_handler = du_proc_rrc_ue->srb1_rx_security_handler;
+    ASSERT_EQ(tx_sec_handler.cipher_enabled, enabled);
+    ASSERT_EQ(rx_sec_handler.integ_enabled, enabled);
+  }
+
+  void check_security_configured(bool configured)
+  {
+    auto& tx_sec_handler = du_proc_rrc_ue->srb1_tx_security_handler;
+    auto& rx_sec_handler = du_proc_rrc_ue->srb1_rx_security_handler;
+    ASSERT_EQ(tx_sec_handler.sec_configured, configured);
+    ASSERT_EQ(rx_sec_handler.sec_configured, configured);
+  }
+
 private:
   const ue_index_t                                     ALLOCATED_UE_INDEX = int_to_ue_index(23);
   rrc_cfg_t                                            cfg{}; // empty config
