@@ -14,6 +14,7 @@
 #include "../support/pdcch/pdcch_type0_css_occasions.h"
 #include "../support/prbs_calculator.h"
 #include "srsgnb/ran/band_helper.h"
+#include "srsgnb/ran/bs_channel_bandwidth.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsgnb/ran/sib_configuration.h"
@@ -125,22 +126,19 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
 
 void sib1_scheduler::precompute_sib1_n0(subcarrier_spacing scs_common)
 {
-  // TODO: get minimum channel BW from current BW configuration.
-  srsgnb_assert(cell_cfg.dl_carrier.carrier_bw_mhz < 40,
-                "Minimum channel BW '{}'MHz not supported for SIB1 scheduling; scheduler only supports 5MHz or "
-                "10MHz min. channel BW.",
-                cell_cfg.dl_carrier.carrier_bw_mhz);
+  min_channel_bandwidth min_channel_bw = band_helper::get_min_channel_bw(cell_cfg.dl_carrier.band, scs_common);
+  srsgnb_assert(min_channel_bw < min_channel_bandwidth::MHz40,
+                "Bands with minimum channel BW 40MHz not supported for SIB1 scheduling");
   // Get Coreset0 num of symbols from Coreset0 config.
-  min_channel_bandwidth min_channel_bw    = band_helper::get_min_channel_bw(cell_cfg.dl_carrier.band, scs_common);
-  unsigned              nof_symb_coreset0 = pdcch_type0_css_coreset_get(min_channel_bw,
+  unsigned nof_symb_coreset0 = pdcch_type0_css_coreset_get(min_channel_bw,
                                                            cell_cfg.ssb_cfg.scs,
                                                            scs_common,
                                                            coreset0,
                                                            static_cast<uint8_t>(cell_cfg.ssb_cfg.k_ssb.to_uint()))
                                    .nof_rb_coreset;
 
-  // TODO: Extend function to all multiplexing patterns.
-  // TODO: Embed is_fr2 in the scheduler configuration.
+  srsgnb_assert(band_helper::get_freq_range(cell_cfg.dl_carrier.band) == frequency_range::FR1,
+                "SIB1 scheduler only supports FR1.");
   pdcch_type0_css_occasion_pattern1_description ss0_config_occasion_param =
       pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
           .is_fr2 = false, .ss_zero_index = searchspace0, .nof_symb_coreset = nof_symb_coreset0});

@@ -95,7 +95,7 @@ struct nr_operating_band {
 };
 static const uint32_t                                                     nof_nr_operating_band_fr1 = 32;
 static constexpr std::array<nr_operating_band, nof_nr_operating_band_fr1> nr_operating_bands_fr1    = {{
-       // clang-format off
+    // clang-format off
     {nr_band::n1,  duplex_mode::FDD},
     {nr_band::n2,  duplex_mode::FDD},
     {nr_band::n3,  duplex_mode::FDD},
@@ -389,6 +389,12 @@ bool srsgnb::band_helper::is_paired_spectrum(nr_band band)
   duplex_mode mode = get_duplex_mode(band);
   srsgnb_assert(mode < duplex_mode::INVALID, "Returned invalid duplex MODE");
   return mode == duplex_mode::FDD;
+}
+
+frequency_range srsgnb::band_helper::get_freq_range(nr_band band)
+{
+  srsgnb_assert(band != nr_band::invalid, "Band must be a valid NR band.");
+  return band <= nr_band::n86 ? frequency_range::FR1 : frequency_range::FR2;
 }
 
 double srsgnb::band_helper::get_abs_freq_point_a_from_center_freq(uint32_t nof_prb, double center_freq)

@@ -120,8 +120,14 @@ subcarrier_spacing get_lowest_ssb_scs(nr_band band);
 /// \brief     Returns boolean indicating whether the band is in paired spectrum.
 /// \remark    Paired spectrum is FDD, unpaired spectrum is TDD, SUL, SDL.
 /// \param[in] band Given band.
-/// \return    true for paired specrum, false otherwise.
+/// \return    true for paired spectrum, false otherwise.
 bool is_paired_spectrum(nr_band band);
+
+/// \brief     Returns boolean indicating whether the band belongs to FR1 or FR2.
+/// \param[in] band Given band.
+/// \remark    The input band must be a valid NR band; the function does not return an error in case of invalid band.
+/// \return    the FR indicator, i.e., FR1 or FR2.
+frequency_range get_freq_range(nr_band band);
 
 /// @brief Compute the absolute pointA for a NR carrier from its bandwidth and the center frequency.
 ///

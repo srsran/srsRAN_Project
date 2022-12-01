@@ -14,7 +14,7 @@ using namespace srsgnb;
 
 static subcarrier_spacing get_max_scs(const dl_config_common& dl_cfg)
 {
-  // Note: assumes sorted list. TODO: Verify.
+  // Note: assumes sorted list, even though the corresponding TS struct \c scs-SpecificCarrierList might not be.
   return dl_cfg.freq_info_dl.scs_carrier_list.back().scs;
 }
 
