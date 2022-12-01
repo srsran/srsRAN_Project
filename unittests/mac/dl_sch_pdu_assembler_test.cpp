@@ -174,8 +174,8 @@ TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)
   const unsigned tb_size = sdu_subheader_size + sdu_size + conres_ce_size + test_rgen::uniform_int<unsigned>(0, 100);
 
   dl_msg_tb_info tb_info;
-  tb_info.subpdus.push_back(dl_msg_lc_info{lcid_dl_sch_t::UE_CON_RES_ID, conres_ce_size});
-  tb_info.subpdus.push_back(dl_msg_lc_info{LCID_SRB0, sdu_size});
+  tb_info.lc_chs_to_sched.push_back(dl_msg_lc_info{lcid_dl_sch_t::UE_CON_RES_ID, conres_ce_size});
+  tb_info.lc_chs_to_sched.push_back(dl_msg_lc_info{LCID_SRB0, sdu_size});
   span<const uint8_t> result = this->dl_sch_enc.assemble_pdu(this->req.crnti, tb_info, tb_size);
 
   byte_buffer expected;
@@ -218,7 +218,7 @@ TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdu_of_same_lcid)
 
   // MAC schedules one TB with one LCID, and size to fill.
   dl_msg_tb_info tb_info;
-  tb_info.subpdus.push_back(dl_msg_lc_info{LCID_SRB1, lcid_sched_bytes});
+  tb_info.lc_chs_to_sched.push_back(dl_msg_lc_info{LCID_SRB1, lcid_sched_bytes});
 
   span<const uint8_t> result = this->dl_sch_enc.assemble_pdu(this->req.crnti, tb_info, tb_size);
   ASSERT_EQ(result.size(), tb_size);

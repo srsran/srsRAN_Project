@@ -146,8 +146,8 @@ struct dl_msg_lc_info {
 };
 
 struct dl_msg_tb_info {
-  /// List of allocated logical channels.
-  static_vector<dl_msg_lc_info, MAX_LC_PER_TB> subpdus;
+  /// List of logical channels to schedule in this TB.
+  static_vector<dl_msg_lc_info, MAX_LC_PER_TB> lc_chs_to_sched;
 };
 
 /// Dedicated DL Grant for UEs.

@@ -136,11 +136,11 @@ public:
     dl_sch_pdu    ue_pdu(pdu_bytes);
 
     // Encode added subPDUs.
-    for (const dl_msg_lc_info& subpdu : tb_info.subpdus) {
-      if (subpdu.lcid.is_sdu()) {
-        assemble_sdu(ue_pdu, rnti, subpdu);
+    for (const dl_msg_lc_info& sched_lch : tb_info.lc_chs_to_sched) {
+      if (sched_lch.lcid.is_sdu()) {
+        assemble_sdu(ue_pdu, rnti, sched_lch);
       } else {
-        assemble_ce(ue_pdu, rnti, subpdu);
+        assemble_ce(ue_pdu, rnti, sched_lch);
       }
     }
 

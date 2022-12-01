@@ -235,20 +235,20 @@ void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_
 {
   for (const dl_msg_alloc& grant : dl_res.ue_grants) {
     for (const dl_msg_tb_info& tb_info : grant.tb_list) {
-      for (const dl_msg_lc_info& subpdu : tb_info.subpdus) {
-        if (not subpdu.lcid.is_sdu()) {
+      for (const dl_msg_lc_info& lc_info : tb_info.lc_chs_to_sched) {
+        if (not lc_info.lcid.is_sdu()) {
           continue;
         }
 
         // Fetch RLC Bearer.
-        mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.pdsch_cfg.rnti, subpdu.lcid.to_lcid());
+        mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.pdsch_cfg.rnti, lc_info.lcid.to_lcid());
         srsgnb_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
         // Update DL buffer state for the allocated logical channel.
         dl_buffer_state_indication_message bs{};
         bs.ue_index = ue_mng.get_ue_index(grant.pdsch_cfg.rnti);
         bs.rnti     = grant.pdsch_cfg.rnti;
-        bs.lcid     = subpdu.lcid.to_lcid();
+        bs.lcid     = lc_info.lcid.to_lcid();
         bs.bs       = bearer->on_buffer_state_update();
         sched_obj.handle_dl_buffer_state_indication(bs);
       }

@@ -62,12 +62,12 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                      ue_dl_grant.pdsch_cfg.codewords[0].tb_size_bytes,
                      ue_dl_grant.pdsch_cfg.codewords[0].mcs_index,
                      ue_dl_grant.pdsch_cfg.codewords[0].rv_index);
-      for (const dl_msg_lc_info& lc : ue_dl_grant.tb_list[0].subpdus) {
+      for (const dl_msg_lc_info& lc : ue_dl_grant.tb_list[0].lc_chs_to_sched) {
         fmt::format_to(fmtbuf,
                        "{{lcid={}, size={}B}}{}",
                        lc.lcid,
                        lc.sched_bytes,
-                       &lc == &ue_dl_grant.tb_list[0].subpdus.back() ? "]" : ", ");
+                       &lc == &ue_dl_grant.tb_list[0].lc_chs_to_sched.back() ? "]" : ", ");
       }
     }
   }

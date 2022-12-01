@@ -128,7 +128,7 @@ unsigned srsgnb::allocate_mac_sdus(dl_msg_tb_info& tb_info, dl_logical_channel_m
 
   // if we do not have enough bytes to fit MAC subheader, skip MAC SDU allocation.
   // Note: We assume upper layer accounts for its own subheaders when updating the buffer state.
-  while (rem_tbs > MAX_MAC_SDU_SUBHEADER_SIZE and not tb_info.subpdus.full()) {
+  while (rem_tbs > MAX_MAC_SDU_SUBHEADER_SIZE and not tb_info.lc_chs_to_sched.full()) {
     dl_msg_lc_info subpdu;
     unsigned       alloc_bytes = lch_mng.allocate_mac_sdu(subpdu, rem_tbs);
     if (alloc_bytes == 0) {
@@ -136,7 +136,7 @@ unsigned srsgnb::allocate_mac_sdus(dl_msg_tb_info& tb_info, dl_logical_channel_m
     }
 
     // add new subPDU.
-    tb_info.subpdus.push_back(subpdu);
+    tb_info.lc_chs_to_sched.push_back(subpdu);
 
     // update remaining space taking into account the MAC SDU subheader.
     rem_tbs -= alloc_bytes;
@@ -149,7 +149,7 @@ unsigned srsgnb::allocate_mac_ces(dl_msg_tb_info& tb_info, dl_logical_channel_ma
 {
   unsigned rem_tbs = total_tbs;
 
-  while (lch_mng.has_pending_ces() and not tb_info.subpdus.full()) {
+  while (lch_mng.has_pending_ces() and not tb_info.lc_chs_to_sched.full()) {
     dl_msg_lc_info subpdu;
     unsigned       alloc_bytes = lch_mng.allocate_mac_ce(subpdu, rem_tbs);
     if (alloc_bytes == 0) {
@@ -157,7 +157,7 @@ unsigned srsgnb::allocate_mac_ces(dl_msg_tb_info& tb_info, dl_logical_channel_ma
     }
 
     // add new subPDU.
-    tb_info.subpdus.push_back(subpdu);
+    tb_info.lc_chs_to_sched.push_back(subpdu);
 
     // update remaining space taking into account the MAC CE subheader.
     rem_tbs -= alloc_bytes;
@@ -197,12 +197,12 @@ srsgnb::allocate_ue_con_res_id_mac_ce(dl_msg_tb_info& tb_info, dl_logical_channe
 {
   unsigned rem_tbs = total_tbs;
 
-  if (not tb_info.subpdus.full()) {
+  if (not tb_info.lc_chs_to_sched.full()) {
     dl_msg_lc_info subpdu;
     unsigned       alloc_bytes = lch_mng.allocate_ue_con_res_id_mac_ce(subpdu, rem_tbs);
     if (alloc_bytes != 0) {
       // add new subPDU.
-      tb_info.subpdus.push_back(subpdu);
+      tb_info.lc_chs_to_sched.push_back(subpdu);
 
       // update remaining space taking into account the MAC CE subheader.
       rem_tbs -= alloc_bytes;
