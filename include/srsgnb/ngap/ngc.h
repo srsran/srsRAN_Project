@@ -14,6 +14,7 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/support/async/async_task.h"
+#include "srsgnb/support/timers.h"
 
 namespace srsgnb {
 
@@ -181,6 +182,16 @@ public:
                              ue_index_t                   ue_index,
                              ngc_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
                              ngc_rrc_ue_control_notifier& rrc_ue_ctrl_notifier) = 0;
+};
+
+/// \brief Schedules asynchronous tasks associated with an UE.
+class ngc_ue_task_scheduler
+{
+public:
+  virtual ~ngc_ue_task_scheduler()                                                               = default;
+  virtual void           schedule_async_task(cu_cp_ue_id_t cu_cp_ue_id, async_task<void>&& task) = 0;
+  virtual unique_timer   make_unique_timer()                                                     = 0;
+  virtual timer_manager& get_timer_manager()                                                     = 0;
 };
 
 /// \brief Interface to query statistics from the NGC interface.

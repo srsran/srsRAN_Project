@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../task_schedulers/ue_task_scheduler.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/ran/bcd_helpers.h"
@@ -18,6 +19,35 @@
 
 namespace srsgnb {
 namespace srs_cu_cp {
+
+/// Adapter between NGC and Task Scheduler
+class ngc_to_cu_cp_task_scheduler : public ngc_ue_task_scheduler
+{
+public:
+  ngc_to_cu_cp_task_scheduler() {}
+
+  void connect_cu_cp(ue_task_scheduler& cu_cp_task_sched_) { cu_cp_task_sched = &cu_cp_task_sched_; }
+
+  void schedule_async_task(cu_cp_ue_id_t cu_cp_ue_id, async_task<void>&& task) override
+  {
+    srsgnb_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
+    cu_cp_task_sched->handle_ue_async_task(cu_cp_ue_id, std::move(task));
+  }
+
+  unique_timer make_unique_timer() override
+  {
+    srsgnb_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
+    return cu_cp_task_sched->make_unique_timer();
+  }
+  timer_manager& get_timer_manager() override
+  {
+    srsgnb_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
+    return cu_cp_task_sched->get_timer_manager();
+  }
+
+private:
+  ue_task_scheduler* cu_cp_task_sched = nullptr;
+};
 
 /// Adapter between NGC and AMF
 class ngc_amf_adapter : public ngc_message_notifier
@@ -29,7 +59,7 @@ public:
   }
 };
 
-// Adapter between NGC and RRC UE
+/// Adapter between NGC and RRC UE
 class ngc_rrc_ue_adapter : public ngc_rrc_ue_pdu_notifier, public ngc_rrc_ue_control_notifier
 {
 public:

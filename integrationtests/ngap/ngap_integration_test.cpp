@@ -11,6 +11,7 @@
 #include "lib/cu_cp/ngc_asn1_helpers.h"
 #include "lib/cu_cp/ue_manager.h"
 #include "lib/ngap/ngc_asn1_packer.h"
+#include "unittests/ngap/test_helpers.h"
 #include "srsgnb/gateways/network_gateway_factory.h"
 #include "srsgnb/ngap/ngc_configuration_helpers.h"
 #include "srsgnb/ngap/ngc_factory.h"
@@ -87,14 +88,17 @@ protected:
     nw_config.non_blocking_mode = true;
     adapter                     = std::make_unique<ngap_network_adapter>(nw_config);
 
-    ngc = create_ngc(timers, *adapter, ue_mng);
+    ngc_ue_task_scheduler = std::make_unique<dummy_ngc_ue_task_scheduler>(timers);
+
+    ngc = create_ngc(*ngc_ue_task_scheduler, ue_mng, *adapter);
     adapter->connect_ngc(ngc.get());
   }
 
-  timer_manager                         timers;
-  ue_manager                            ue_mng;
-  std::unique_ptr<ngap_network_adapter> adapter;
-  std::unique_ptr<ngc_interface>        ngc;
+  timer_manager                                timers;
+  ue_manager                                   ue_mng;
+  std::unique_ptr<dummy_ngc_ue_task_scheduler> ngc_ue_task_scheduler;
+  std::unique_ptr<ngap_network_adapter>        adapter;
+  std::unique_ptr<ngc_interface>               ngc;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };

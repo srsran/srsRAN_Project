@@ -14,9 +14,27 @@
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/gateways/network_gateway.h"
 #include "srsgnb/ngap/ngc.h"
+#include "srsgnb/support/async/async_task_loop.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
+
+struct dummy_ngc_ue_task_scheduler : public ngc_ue_task_scheduler {
+public:
+  dummy_ngc_ue_task_scheduler(timer_manager& timers_) : timer_db(timers_) {}
+  void schedule_async_task(cu_cp_ue_id_t cu_cp_ue_id, async_task<void>&& task) override
+  {
+    ctrl_loop.schedule(std::move(task));
+  }
+  unique_timer   make_unique_timer() override { return timer_db.create_unique_timer(); }
+  timer_manager& get_timer_manager() override { return timer_db; }
+
+  void tick_timer() { timer_db.tick_all(); }
+
+private:
+  async_task_sequencer ctrl_loop{16};
+  timer_manager&       timer_db;
+};
 
 /// Reusable notifier class that a) stores the received msg for test inspection and b)
 /// calls the registered msg handler (if any). The handler can be added upon construction

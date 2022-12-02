@@ -149,6 +149,9 @@ private:
   // CU-UP processor to CU-CP adapter
   cu_up_processor_cu_cp_adapter cu_up_processor_ev_notifier;
 
+  // NGC to CU-CP adapter
+  ngc_to_cu_cp_task_scheduler ngc_task_sched;
+
   // RRC UE to NGC adapter
   rrc_ue_ngc_adapter rrc_ue_ngc_notifier;
 

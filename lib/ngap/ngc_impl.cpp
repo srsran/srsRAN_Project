@@ -17,17 +17,15 @@ using namespace srsgnb;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
-ngc_impl::ngc_impl(timer_manager& timers_, ngc_message_notifier& ngc_notifier_, ngc_ue_manager& ue_manager_) :
+ngc_impl::ngc_impl(ngc_ue_task_scheduler& task_sched_,
+                   ngc_ue_manager&        ue_manager_,
+                   ngc_message_notifier&  ngc_notifier_) :
   logger(srslog::fetch_basic_logger("NGC")),
-  timers(timers_),
-  ngc_notifier(ngc_notifier_),
+  task_sched(task_sched_),
   ue_manager(ue_manager_),
+  ngc_notifier(ngc_notifier_),
   events(std::make_unique<ngc_event_manager>())
 {
-  ng_setup_timer = timers.create_unique_timer();
-  ng_setup_timer.set(1000, [](uint32_t tid) {
-    // TODO
-  });
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
@@ -313,6 +311,12 @@ void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_conte
   fill_supported_ciphering_algorithms(sec_ctx.supported_int_algos, request->ue_security_cap->nrencryption_algorithms);
 
   ue->get_rrc_ue_control_notifier().on_initial_context_setup_request_received(init_ctxt_setup_req_msg);
+
+  // TODO: Replace with actual task
+  task_sched.schedule_async_task(cu_cp_ue_id, launch_async([](coro_context<async_task<void>>& ctx) {
+                                   CORO_BEGIN(ctx);
+                                   CORO_RETURN();
+                                 }));
 }
 
 void ngc_impl::handle_successful_outcome(const successful_outcome_s& outcome)
