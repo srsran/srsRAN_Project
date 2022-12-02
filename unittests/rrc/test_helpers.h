@@ -28,48 +28,6 @@ public:
   byte_buffer_slice last_pdu;
 };
 
-class dummy_tx_security_handler
-{
-public:
-  dummy_tx_security_handler() = default;
-  void set_as_security_config(security::sec_128_as_config sec_cfg)
-  {
-    sec_configured = true;
-    last_sec_cfg   = sec_cfg;
-  }
-  void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher)
-  {
-    integ_enabled  = integ == pdcp_integrity_enabled::enabled;
-    cipher_enabled = cipher == pdcp_ciphering_enabled::enabled;
-  }
-
-  security::sec_128_as_config last_sec_cfg   = {};
-  bool                        sec_configured = false;
-  bool                        integ_enabled  = false;
-  bool                        cipher_enabled = false;
-};
-
-class dummy_rx_security_handler
-{
-public:
-  dummy_rx_security_handler() = default;
-  void set_as_security_config(security::sec_128_as_config sec_cfg)
-  {
-    sec_configured = true;
-    last_sec_cfg   = sec_cfg;
-  }
-  void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher)
-  {
-    integ_enabled  = integ == pdcp_integrity_enabled::enabled;
-    cipher_enabled = cipher == pdcp_ciphering_enabled::enabled;
-  }
-
-  security::sec_128_as_config last_sec_cfg   = {};
-  bool                        sec_configured = false;
-  bool                        integ_enabled  = false;
-  bool                        cipher_enabled = false;
-};
-
 class dummy_rrc_pdu_notifier : public rrc_pdu_notifier
 {
 public:
@@ -84,29 +42,43 @@ private:
 class dummy_rrc_tx_security_notifier : public rrc_tx_security_notifier
 {
 public:
-  explicit dummy_rrc_tx_security_notifier(dummy_tx_security_handler& handler_) : handler(handler_) {}
-  void set_as_security_config(security::sec_128_as_config sec_cfg) override { handler.set_as_security_config(sec_cfg); }
+  explicit dummy_rrc_tx_security_notifier() {}
+  void set_as_security_config(security::sec_128_as_config sec_cfg) override
+  {
+    sec_configured = true;
+    last_sec_cfg   = sec_cfg;
+  }
   void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) override
   {
-    handler.enable_or_disable_security(integ, cipher);
+    integ_enabled  = integ == pdcp_integrity_enabled::enabled;
+    cipher_enabled = cipher == pdcp_ciphering_enabled::enabled;
   }
 
-private:
-  dummy_tx_security_handler& handler;
+  security::sec_128_as_config last_sec_cfg   = {};
+  bool                        sec_configured = false;
+  bool                        integ_enabled  = false;
+  bool                        cipher_enabled = false;
 };
 
 class dummy_rrc_rx_security_notifier : public rrc_rx_security_notifier
 {
 public:
-  explicit dummy_rrc_rx_security_notifier(dummy_rx_security_handler& handler_) : handler(handler_) {}
-  void set_as_security_config(security::sec_128_as_config sec_cfg) override { handler.set_as_security_config(sec_cfg); }
+  explicit dummy_rrc_rx_security_notifier() {}
+  void set_as_security_config(security::sec_128_as_config sec_cfg) override
+  {
+    sec_configured = true;
+    last_sec_cfg   = sec_cfg;
+  }
   void enable_or_disable_security(pdcp_integrity_enabled integ, pdcp_ciphering_enabled cipher) override
   {
-    handler.enable_or_disable_security(integ, cipher);
+    integ_enabled  = integ == pdcp_integrity_enabled::enabled;
+    cipher_enabled = cipher == pdcp_ciphering_enabled::enabled;
   }
 
-private:
-  dummy_rx_security_handler& handler;
+  security::sec_128_as_config last_sec_cfg   = {};
+  bool                        sec_configured = false;
+  bool                        integ_enabled  = false;
+  bool                        cipher_enabled = false;
 };
 
 class dummy_du_processor_rrc_ue_interface : public du_processor_rrc_ue_interface
@@ -121,15 +93,19 @@ public:
     std::unique_ptr<dummy_rrc_tx_security_notifier> tx_security_notifier = nullptr;
     std::unique_ptr<dummy_rrc_rx_security_notifier> rx_security_notifier = nullptr;
     if (msg.srb_id == srb_id_t::srb1) {
-      tx_pdu_notifier      = std::make_unique<dummy_rrc_pdu_notifier>(srb1_tx_pdu_handler);
-      tx_security_notifier = std::make_unique<dummy_rrc_tx_security_notifier>(srb1_tx_security_handler);
-      rx_security_notifier = std::make_unique<dummy_rrc_rx_security_notifier>(srb1_rx_security_handler);
-      srb1_created         = true;
+      tx_pdu_notifier          = std::make_unique<dummy_rrc_pdu_notifier>(srb1_tx_pdu_handler);
+      tx_security_notifier     = std::make_unique<dummy_rrc_tx_security_notifier>();
+      rx_security_notifier     = std::make_unique<dummy_rrc_rx_security_notifier>();
+      srb1_tx_security_handler = tx_security_notifier.get();
+      srb1_rx_security_handler = rx_security_notifier.get();
+      srb1_created             = true;
     } else if (msg.srb_id == srb_id_t::srb2) {
-      tx_pdu_notifier      = std::make_unique<dummy_rrc_pdu_notifier>(srb2_tx_pdu_handler);
-      tx_security_notifier = std::make_unique<dummy_rrc_tx_security_notifier>(srb2_tx_security_handler);
-      rx_security_notifier = std::make_unique<dummy_rrc_rx_security_notifier>(srb2_rx_security_handler);
-      srb2_created         = true;
+      tx_pdu_notifier          = std::make_unique<dummy_rrc_pdu_notifier>(srb2_tx_pdu_handler);
+      tx_security_notifier     = std::make_unique<dummy_rrc_tx_security_notifier>();
+      rx_security_notifier     = std::make_unique<dummy_rrc_rx_security_notifier>();
+      srb2_tx_security_handler = tx_security_notifier.get();
+      srb2_rx_security_handler = rx_security_notifier.get();
+      srb2_created             = true;
     } else {
       return;
     }
@@ -155,15 +131,15 @@ public:
 
   ue_context_release_command_message last_ue_ctxt_rel_cmd;
   srb_creation_message               last_srb;
-  dummy_tx_pdu_handler               srb0_tx_pdu_handler;      // Object to handle the generated RRC message (SRB0)
-  dummy_tx_pdu_handler               srb1_tx_pdu_handler;      // Object to handle the generated RRC message (SRB1)
-  dummy_tx_pdu_handler               srb2_tx_pdu_handler;      // Object to handle the generated RRC message (SRB2)
-  dummy_tx_security_handler          srb1_tx_security_handler; // Object to handle the tx security control  (SRB1)
-  dummy_rx_security_handler          srb1_rx_security_handler; // Object to handle the tx security control  (SRB1)
-  dummy_tx_security_handler          srb2_tx_security_handler; // Object to handle the tx security control  (SRB2)
-  dummy_rx_security_handler          srb2_rx_security_handler; // Object to handle the tx security control  (SRB2)
-  bool                               srb1_created = false;
-  bool                               srb2_created = false;
+  dummy_tx_pdu_handler               srb0_tx_pdu_handler; // Object to handle the generated RRC message (SRB0)
+  dummy_tx_pdu_handler               srb1_tx_pdu_handler; // Object to handle the generated RRC message (SRB1)
+  dummy_tx_pdu_handler               srb2_tx_pdu_handler; // Object to handle the generated RRC message (SRB2)
+  dummy_rrc_tx_security_notifier* srb1_tx_security_handler = nullptr; // Object to handle the tx security control (SRB2)
+  dummy_rrc_rx_security_notifier* srb1_rx_security_handler = nullptr; // Object to handle the tx security control (SRB2)
+  dummy_rrc_tx_security_notifier* srb2_tx_security_handler = nullptr; // Object to handle the tx security control (SRB2)
+  dummy_rrc_rx_security_notifier* srb2_rx_security_handler = nullptr; // Object to handle the tx security control (SRB2)
+  bool                            srb1_created             = false;
+  bool                            srb2_created             = false;
 
 private:
   ue_context& ue_ctxt;
