@@ -134,14 +134,17 @@ public:
       return;
     }
 
+    // create PDCP context for this SRB
+    ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].pdcp_context.emplace();
+
     // connect SRB with RRC to "PDCP" adapter
-    ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier     = std::move(tx_pdu_notifier);
-    ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_sec_notifier = std::move(tx_security_notifier);
-    ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_rx_sec_notifier = std::move(rx_security_notifier);
+    ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier                   = std::move(tx_pdu_notifier);
+    ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_tx_sec_notifier = std::move(tx_security_notifier);
+    ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_rx_sec_notifier = std::move(rx_security_notifier);
     ue_ctxt.rrc->connect_srb_notifier(msg.srb_id,
                                       *ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier,
-                                      ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_sec_notifier.get(),
-                                      ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_rx_sec_notifier.get());
+                                      ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_tx_sec_notifier.get(),
+                                      ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_rx_sec_notifier.get());
     last_srb = msg;
   }
 
