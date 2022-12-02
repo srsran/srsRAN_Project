@@ -259,6 +259,9 @@ void ngc_impl::handle_initiating_message(const init_msg_s& msg)
     case ngap_elem_procs_o::init_msg_c::types_opts::init_context_setup_request:
       handle_initial_context_setup_request(msg.value.init_context_setup_request());
       break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd:
+      handle_ue_context_release_command(msg.value.ue_context_release_cmd());
+      break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
@@ -317,6 +320,24 @@ void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_conte
                                    CORO_BEGIN(ctx);
                                    CORO_RETURN();
                                  }));
+}
+
+void ngc_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_release_cmd_s& cmd)
+{
+  std::underlying_type_t<amf_ue_id_t> amf_ue_id_uint = 0;
+  if (cmd->ue_ngap_ids.value.type() == asn1::ngap::ue_ngap_ids_c::types_opts::amf_ue_ngap_id) {
+    amf_ue_id_uint = cmd->ue_ngap_ids->amf_ue_ngap_id();
+  } else if (cmd->ue_ngap_ids.value.type() == asn1::ngap::ue_ngap_ids_c::types_opts::ue_ngap_id_pair) {
+    amf_ue_id_uint = cmd->ue_ngap_ids->ue_ngap_id_pair().amf_ue_ngap_id;
+  }
+  cu_cp_ue_id_t cu_cp_ue_id = ue_manager.get_cu_cp_ue_id(uint_to_amf_ue_id(amf_ue_id_uint));
+  auto*         ue          = ue_manager.find_ue(cu_cp_ue_id);
+  if (ue == nullptr) {
+    logger.info("UE with cu_cp_ue_id={} does not exist. Dropping UE Context Release Command", cu_cp_ue_id);
+    return;
+  }
+
+  // TODO: trigger RRC Connection Release and remove UE
 }
 
 void ngc_impl::handle_successful_outcome(const successful_outcome_s& outcome)
