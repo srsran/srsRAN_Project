@@ -19,24 +19,14 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class dummy_tx_pdu_handler
-{
-public:
-  dummy_tx_pdu_handler() = default;
-  void handle_pdu(byte_buffer_slice pdu) { last_pdu = std::move(pdu); }
-
-  byte_buffer_slice last_pdu;
-};
-
 class dummy_rrc_pdu_notifier : public rrc_pdu_notifier
 {
 public:
-  dummy_rrc_pdu_notifier(dummy_tx_pdu_handler& handler_) : handler(handler_) {}
+  dummy_rrc_pdu_notifier() = default;
 
-  void on_new_pdu(const rrc_pdu_message& msg) override { handler.handle_pdu(byte_buffer_slice{std::move(msg.pdu)}); }
+  void on_new_pdu(const rrc_pdu_message& msg) override { last_pdu = byte_buffer_slice{msg.pdu}; }
 
-private:
-  dummy_tx_pdu_handler& handler;
+  byte_buffer_slice last_pdu;
 };
 
 class dummy_rrc_tx_security_notifier : public rrc_tx_security_notifier
@@ -93,16 +83,18 @@ public:
     std::unique_ptr<dummy_rrc_tx_security_notifier> tx_security_notifier = nullptr;
     std::unique_ptr<dummy_rrc_rx_security_notifier> rx_security_notifier = nullptr;
     if (msg.srb_id == srb_id_t::srb1) {
-      tx_pdu_notifier          = std::make_unique<dummy_rrc_pdu_notifier>(srb1_tx_pdu_handler);
+      tx_pdu_notifier          = std::make_unique<dummy_rrc_pdu_notifier>();
       tx_security_notifier     = std::make_unique<dummy_rrc_tx_security_notifier>();
       rx_security_notifier     = std::make_unique<dummy_rrc_rx_security_notifier>();
+      srb1_tx_pdu_handler      = tx_pdu_notifier.get();
       srb1_tx_security_handler = tx_security_notifier.get();
       srb1_rx_security_handler = rx_security_notifier.get();
       srb1_created             = true;
     } else if (msg.srb_id == srb_id_t::srb2) {
-      tx_pdu_notifier          = std::make_unique<dummy_rrc_pdu_notifier>(srb2_tx_pdu_handler);
+      tx_pdu_notifier          = std::make_unique<dummy_rrc_pdu_notifier>();
       tx_security_notifier     = std::make_unique<dummy_rrc_tx_security_notifier>();
       rx_security_notifier     = std::make_unique<dummy_rrc_rx_security_notifier>();
+      srb2_tx_pdu_handler      = tx_pdu_notifier.get();
       srb2_tx_security_handler = tx_security_notifier.get();
       srb2_rx_security_handler = rx_security_notifier.get();
       srb2_created             = true;
@@ -131,9 +123,9 @@ public:
 
   ue_context_release_command_message last_ue_ctxt_rel_cmd;
   srb_creation_message               last_srb;
-  dummy_tx_pdu_handler               srb0_tx_pdu_handler; // Object to handle the generated RRC message (SRB0)
-  dummy_tx_pdu_handler               srb1_tx_pdu_handler; // Object to handle the generated RRC message (SRB1)
-  dummy_tx_pdu_handler               srb2_tx_pdu_handler; // Object to handle the generated RRC message (SRB2)
+  dummy_rrc_pdu_notifier*            srb0_tx_pdu_handler = nullptr; // Object to handle the generated RRC message (SRB0)
+  dummy_rrc_pdu_notifier*            srb1_tx_pdu_handler = nullptr; // Object to handle the generated RRC message (SRB1)
+  dummy_rrc_pdu_notifier*            srb2_tx_pdu_handler = nullptr; // Object to handle the generated RRC message (SRB2)
   dummy_rrc_tx_security_notifier* srb1_tx_security_handler = nullptr; // Object to handle the tx security control (SRB2)
   dummy_rrc_rx_security_notifier* srb1_rx_security_handler = nullptr; // Object to handle the tx security control (SRB2)
   dummy_rrc_tx_security_notifier* srb2_tx_security_handler = nullptr; // Object to handle the tx security control (SRB2)

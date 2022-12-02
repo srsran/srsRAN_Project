@@ -47,8 +47,9 @@ protected:
     ASSERT_NE(ue_ctxt.rrc, nullptr);
 
     // connect SRB0 with RRC to "F1" adapter
-    ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb0)].rrc_tx_notifier =
-        std::make_unique<dummy_rrc_pdu_notifier>(du_proc_rrc_ue->srb0_tx_pdu_handler);
+    auto srb0_pdu_handler                                        = std::make_unique<dummy_rrc_pdu_notifier>();
+    du_proc_rrc_ue->srb0_tx_pdu_handler                          = srb0_pdu_handler.get();
+    ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb0)].rrc_tx_notifier = std::move(srb0_pdu_handler);
     ue_ctxt.rrc->connect_srb_notifier(
         srb_id_t::srb0, *ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb0)].rrc_tx_notifier, nullptr, nullptr);
 
@@ -57,7 +58,7 @@ protected:
 
   asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::options get_srb0_pdu_type()
   {
-    auto& tx_pdu_handler = du_proc_rrc_ue->srb0_tx_pdu_handler;
+    auto& tx_pdu_handler = *du_proc_rrc_ue->srb0_tx_pdu_handler;
 
     // generated PDU must not be empty
     EXPECT_GT(tx_pdu_handler.last_pdu.length(), 0);
@@ -118,7 +119,7 @@ protected:
 
   void check_smc_pdu()
   {
-    auto& tx_pdu_handler = du_proc_rrc_ue->srb1_tx_pdu_handler;
+    auto& tx_pdu_handler = *du_proc_rrc_ue->srb1_tx_pdu_handler;
     ASSERT_EQ(tx_pdu_handler.last_pdu, rrc_smc_pdu);
   }
 
