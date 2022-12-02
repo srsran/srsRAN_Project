@@ -63,14 +63,14 @@ public:
 };
 
 /// Struct to hold notifiers for a specific SRB
-struct srb_bearer_notifiers {
+struct srb_notifiers {
   rrc_pdu_notifier*         pdu_notifier    = nullptr;
   rrc_tx_security_notifier* tx_sec_notifier = nullptr;
   rrc_rx_security_notifier* rx_sec_notifier = nullptr;
 };
 
 /// Non-owning handlers to PDU notifiers.
-using srb_notifiers = std::array<srb_bearer_notifiers, MAX_NOF_SRBS>;
+using srb_notifiers_array = std::array<srb_notifiers, MAX_NOF_SRBS>;
 
 /// Dummy notifier that just logs the PDU.
 /// An object of this type is instantiated upon creation of the SRB context to avoid nullptr checks.

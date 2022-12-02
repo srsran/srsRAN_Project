@@ -21,7 +21,7 @@ struct rrc_ue_creation_message {
   ue_index_t                      ue_index;
   rnti_t                          c_rnti;
   rrc_cell_context                cell;
-  srb_notifiers                   srbs;
+  srb_notifiers_array             srbs;
   asn1::unbounded_octstring<true> du_to_cu_container;
   rrc_ue_task_scheduler*          ue_task_sched;
 };

@@ -24,7 +24,7 @@ rrc_ue_impl::rrc_ue_impl(rrc_du_ue_manager&                     rrc_du_,
                          const rnti_t                           c_rnti_,
                          const rrc_cell_context                 cell_,
                          const rrc_ue_cfg_t&                    cfg_,
-                         const srb_notifiers&                   srbs_,
+                         const srb_notifiers_array&             srbs_,
                          const asn1::unbounded_octstring<true>& du_to_cu_container_,
                          rrc_ue_task_scheduler&                 task_sched_) :
   context(ue_index_, c_rnti_, cell_, cfg_),

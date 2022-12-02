@@ -34,7 +34,7 @@ public:
               const rnti_t                           c_rnti_,
               const rrc_cell_context                 cell_,
               const rrc_ue_cfg_t&                    cfg_,
-              const srb_notifiers&                   srbs_,
+              const srb_notifiers_array&             srbs_,
               const asn1::unbounded_octstring<true>& du_to_cu_container,
               rrc_ue_task_scheduler&                 task_sched);
   ~rrc_ue_impl() = default;
@@ -115,7 +115,7 @@ private:
   rrc_ue_du_processor_notifier& du_processor_notifier; // notifier to the DU processor
   rrc_ue_nas_notifier&          nas_notifier;          // PDU notifier to the NGC
   rrc_ue_control_notifier&      ngc_ctrl_notifier;     // Control message notifier to the NGC
-  srb_notifiers                 srbs;                  // set notifiers for all SRBs
+  srb_notifiers_array           srbs;                  // set notifiers for all SRBs
   byte_buffer                   du_to_cu_container;    // initial RRC message from DU to CU
   rrc_ue_task_scheduler&        task_sched;
   srslog::basic_logger&         logger;
