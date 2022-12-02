@@ -18,7 +18,6 @@ set(SOURCES
         cu_cp/procedures/f1_ue_context_modification_procedure.cpp
         common/f1ap_asn1_packer.cpp
         common/asn1_helpers.cpp
-        du/handlers/f1c_du_packet_handler.cpp
         du/f1c_du_bearer_impl.cpp
         du/f1ap_du_ue.cpp
     )
