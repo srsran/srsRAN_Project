@@ -147,6 +147,36 @@ struct pdcp_config {
     pdcp_max_count    max_count = {pdcp_rx_default_max_count_notify, pdcp_rx_default_max_count_hard};
   } rx;
 };
+
+/// \brief Make default SRB parameters for PDCP
+/// Ref: 3GPP TS 38.331, section 9.2.1
+inline pdcp_config pdcp_make_default_srb_config()
+{
+  pdcp_config config = {};
+  // common TX/RX parameters
+  config.tx.rb_type                       = pdcp_rb_type::srb;
+  config.rx.rb_type                       = pdcp_rb_type::srb;
+  config.tx.rlc_mode                      = pdcp_rlc_mode::am;
+  config.rx.rlc_mode                      = pdcp_rlc_mode::am;
+  config.tx.sn_size                       = pdcp_sn_size::size12bits;
+  config.rx.sn_size                       = pdcp_sn_size::size12bits;
+  config.tx.direction                     = pdcp_security_direction::downlink;
+  config.rx.direction                     = pdcp_security_direction::uplink;
+  config.tx.integrity_protection_required = true;
+  config.rx.integrity_protection_required = true;
+  config.tx.ciphering_required            = true;
+  config.rx.ciphering_required            = true;
+
+  // Tx config
+  config.tx.discard_timer          = pdcp_discard_timer::not_configured;
+  config.tx.status_report_required = false;
+
+  // Tx config
+  config.rx.out_of_order_delivery = false;
+  config.rx.t_reordering          = pdcp_t_reordering::infinity;
+
+  return config;
+}
 } // namespace srsgnb
 
 //
