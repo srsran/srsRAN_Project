@@ -34,3 +34,14 @@ target_link_libraries(f1_du_dl_rrc_message_transfer_test
         gtest
         gtest_main)
 
+add_executable(f1_du_ue_context_setup_test f1_du_ue_context_setup_test.cpp)
+target_link_libraries(f1_du_ue_context_setup_test
+        srsgnb_f1c
+        srsgnb_support
+        srslog
+        f1ap_asn1
+        du_manager_converters
+        srsgnb_ran
+        sched_config
+        gtest
+        gtest_main)
