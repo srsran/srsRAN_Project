@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "du/ue_context/f1ap_du_ue.h"
 #include "f1ap_du_context.h"
-#include "f1ap_du_ue.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/f1c/du/f1ap_du.h"

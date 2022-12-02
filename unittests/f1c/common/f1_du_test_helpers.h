@@ -227,7 +227,7 @@ class f1ap_du_test : public ::testing::Test
 protected:
   struct ue_test_context {
     std::unique_ptr<dummy_f1_tx_pdu_notifier> tx_pdu_notif;
-    std::vector<f1_bearer*>                   bearers;
+    std::vector<f1c_bearer*>                  bearers;
   };
 
   f1ap_du_test()

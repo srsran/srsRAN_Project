@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../f1ap_du_ue.h"
+#include "../ue_context/f1ap_du_ue.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 
 namespace srsgnb {

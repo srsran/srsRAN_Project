@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../f1ap_du_ue.h"
+#include "../ue_context/f1ap_du_ue.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 
 namespace srsgnb {
@@ -24,6 +24,7 @@ public:
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
+  void create_du_request(const asn1::f1ap::ue_context_setup_request_s& msg);
   void send_ue_context_setup_response();
   void send_ue_context_setup_failure();
 

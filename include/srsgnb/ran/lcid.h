@@ -27,16 +27,18 @@ enum lcid_t : uint16_t {
   INVALID_LCID     = 64
 };
 
+constexpr inline lcid_t uint_to_lcid(std::underlying_type_t<lcid_t> val)
+{
+  return static_cast<lcid_t>(val);
+}
+
 /// Maximum value of Logical Channel ID.
 /// \remark See TS 38.331, maxLC-ID.
 constexpr lcid_t MAX_LCID = LCID_MAX_DRB;
 
 enum class srb_id_t : uint16_t { srb0 = 0, srb1, srb2, srb3, nulltype };
 
-constexpr inline lcid_t uint_to_lcid(std::underlying_type_t<lcid_t> val)
-{
-  return static_cast<lcid_t>(val);
-}
+constexpr static std::size_t MAX_NOF_SRBs = 4;
 
 constexpr inline uint16_t srb_id_to_uint(srb_id_t id)
 {
@@ -109,6 +111,8 @@ enum class drb_id_t : uint16_t {
   drb29,
   invalid
 };
+
+constexpr static std::size_t MAX_NOF_DRBS = 29;
 
 constexpr inline uint16_t drb_id_to_uint(drb_id_t id)
 {

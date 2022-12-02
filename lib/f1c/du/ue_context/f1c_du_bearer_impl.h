@@ -12,8 +12,8 @@
 
 #include "f1c_ue_context.h"
 #include "srsgnb/f1c/common/f1c_types.h"
-#include "srsgnb/f1c/du/f1_bearer.h"
 #include "srsgnb/f1c/du/f1ap_du.h"
+#include "srsgnb/f1c/du/f1c_bearer.h"
 #include "srsgnb/ran/rnti.h"
 
 namespace srsgnb {
@@ -21,7 +21,7 @@ namespace srs_du {
 
 class f1ap_event_manager;
 
-class f1c_srb0_du_bearer final : public f1_bearer
+class f1c_srb0_du_bearer final : public f1c_bearer
 {
 public:
   f1c_srb0_du_bearer(f1c_ue_context&            ue_ctxt_,
@@ -48,7 +48,7 @@ private:
   srslog::basic_logger&     logger;
 };
 
-class f1c_other_srb_du_bearer final : public f1_bearer
+class f1c_other_srb_du_bearer final : public f1c_bearer
 {
 public:
   f1c_other_srb_du_bearer(f1c_ue_context&       ue_ctxt_,

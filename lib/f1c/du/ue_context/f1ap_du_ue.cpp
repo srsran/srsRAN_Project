@@ -9,8 +9,8 @@
  */
 
 #include "f1ap_du_ue.h"
-#include "procedures/f1ap_du_ue_context_modification_procedure.h"
-#include "procedures/f1ap_du_ue_context_setup_procedure.h"
+#include "du/procedures/f1ap_du_ue_context_modification_procedure.h"
+#include "du/procedures/f1ap_du_ue_context_setup_procedure.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_du;

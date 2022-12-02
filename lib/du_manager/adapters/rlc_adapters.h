@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/f1c/du/f1_bearer.h"
+#include "srsgnb/f1c/du/f1c_bearer.h"
 #include "srsgnb/rlc/rlc_entity.h"
 
 namespace srsgnb {
@@ -19,7 +19,7 @@ namespace srs_du {
 class rlc_rx_rrc_sdu_adapter : public rlc_rx_upper_layer_data_notifier
 {
 public:
-  void connect(f1_bearer& bearer_) { f1bearer = &bearer_; }
+  void connect(f1c_bearer& bearer_) { f1bearer = &bearer_; }
 
   void on_new_sdu(byte_buffer_slice_chain pdu) override
   {
@@ -28,7 +28,7 @@ public:
   }
 
 private:
-  f1_bearer* f1bearer = nullptr;
+  f1c_bearer* f1bearer = nullptr;
 };
 
 class rlc_tx_data_notifier : public rlc_tx_upper_layer_data_notifier

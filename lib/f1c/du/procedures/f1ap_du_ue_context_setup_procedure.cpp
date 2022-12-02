@@ -19,27 +19,12 @@ f1ap_du_ue_context_setup_procedure::f1ap_du_ue_context_setup_procedure(
     f1ap_du_ue&                                   ue_) :
   ue(ue_)
 {
-  // Construct DU request.
-  du_request.ue_index = ue.context.ue_index;
-  for (const auto& srb : msg->srbs_to_be_setup_list.value) {
-    du_request.srbs_to_addmod.push_back((srb_id_t)srb.value().srbs_to_be_setup_item().srbid);
-  }
-  for (const auto& drb : msg->drbs_to_be_setup_list.value) {
-    const drbs_to_be_setup_item_s& drb_item = drb.value().drbs_to_be_setup_item();
-
-    drb_to_addmod drb_to_add;
-    drb_to_add.drbid = (drb_id_t)drb_item.drbid;
-    drb_to_add.lcid  = lcid_t::INVALID_LCID;
-    du_request.drbs_to_addmod.push_back(drb_to_add);
-  }
+  create_du_request(msg);
 }
 
 void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
-
-  // Create GTPU bearers if there are DRBs to setup.
-  // TODO.
 
   // Setup new UE configuration in DU.
   CORO_AWAIT_VALUE(du_response, ue.du_handler.request_ue_config_update(du_request));
@@ -51,6 +36,25 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
   }
 
   CORO_RETURN();
+}
+
+void f1ap_du_ue_context_setup_procedure::create_du_request(const ue_context_setup_request_s& msg)
+{
+  // > Construct DU request.
+  du_request.ue_index = ue.context.ue_index;
+  for (const auto& srb : msg->srbs_to_be_setup_list.value) {
+    du_request.srbs_to_addmod.push_back((srb_id_t)srb.value().srbs_to_be_setup_item().srbid);
+  }
+
+  // >> Create GTP bearers and send them to DU manager.
+  for (const auto& drb : msg->drbs_to_be_setup_list.value) {
+    const drbs_to_be_setup_item_s& drb_item = drb.value().drbs_to_be_setup_item();
+
+    drb_to_addmod drb_to_add;
+    drb_to_add.drbid = (drb_id_t)drb_item.drbid;
+    drb_to_add.lcid  = lcid_t::INVALID_LCID;
+    du_request.drbs_to_addmod.push_back(drb_to_add);
+  }
 }
 
 void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()

@@ -9,8 +9,8 @@
  */
 
 #include "f1c_du_bearer_impl.h"
-#include "../../ran/gnb_format.h"
-#include "procedures/f1ap_du_event_manager.h"
+#include "../../../ran/gnb_format.h"
+#include "du/procedures/f1ap_du_event_manager.h"
 
 using namespace srsgnb::srs_du;
 

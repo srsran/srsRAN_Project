@@ -10,7 +10,6 @@
 
 #include "f1ap_du_impl.h"
 #include "../../ran/gnb_format.h"
-#include "f1c_du_bearer_impl.h"
 #include "procedures/f1ap_du_setup_procedure.h"
 #include "procedures/f1ap_du_ue_creation_procedure.h"
 #include "procedures/f1ap_du_ue_release_procedure.h"
@@ -154,8 +153,8 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_tr
     }
   }
 
-  srb_id_t   srb_id     = int_to_srb_id(msg->srbid->value);
-  f1_bearer* srb_bearer = ue->find_srb(srb_id);
+  srb_id_t    srb_id     = int_to_srb_id(msg->srbid->value);
+  f1c_bearer* srb_bearer = ue->bearers.find_srb(srb_id);
   if (srb_bearer == nullptr) {
     logger.warning("Discarding DL RRC Message Transfer. Cause: SRB Id={} not found", srb_id);
     // TODO: Handle error.

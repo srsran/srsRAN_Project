@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "f1c_du_bearer_impl.h"
 #include "f1c_ue_context.h"
+#include "ue_bearer_manager.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/adt/stable_id_map.h"
 #include "srsgnb/f1c/common/f1c_types.h"
@@ -30,22 +30,17 @@ public:
              gnb_du_ue_f1ap_id_t   gnb_f1_du_ue_id_,
              f1c_du_configurator&  du_handler_,
              f1c_message_notifier& f1c_msg_notifier_) :
-    context(ue_index_, gnb_f1_du_ue_id_), du_handler(du_handler_), f1c_msg_notifier(f1c_msg_notifier_)
+    context(ue_index_, gnb_f1_du_ue_id_),
+    f1c_msg_notifier(f1c_msg_notifier_),
+    du_handler(du_handler_),
+    bearers(context, f1c_msg_notifier)
   {
   }
-
-  void add_srb(srb_id_t srb_id, std::unique_ptr<f1_bearer> bearer)
-  {
-    srsgnb_assert(not srbs.contains(srb_id), "SRB Id={} already exists", srb_id);
-    srbs.insert(srb_id, std::move(bearer));
-  }
-
-  f1_bearer*       find_srb(srb_id_t srb_id) { return srbs.contains(srb_id) ? &srbs[srb_id] : nullptr; }
-  const f1_bearer* find_srb(srb_id_t srb_id) const { return srbs.contains(srb_id) ? &srbs[srb_id] : nullptr; }
 
   f1c_ue_context        context;
-  f1c_du_configurator&  du_handler;
   f1c_message_notifier& f1c_msg_notifier;
+  f1c_du_configurator&  du_handler;
+  ue_bearer_manager     bearers;
 
   /// \brief Handles UE CONTEXT SETUP REQUEST as per TS38.473, Section 8.3.1.
   void handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg);
@@ -54,7 +49,6 @@ public:
   void handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg);
 
 private:
-  stable_id_map<srb_id_t, f1_bearer, MAX_NOF_RB_LCIDS> srbs;
 };
 
 /// \brief Stores the list of UE contexts currently registered in the F1AP-DU.

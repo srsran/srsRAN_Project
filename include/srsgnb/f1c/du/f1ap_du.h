@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "f1_bearer.h"
+#include "f1c_bearer.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
@@ -38,8 +38,8 @@ struct f1ap_ue_create_request {
 };
 
 struct f1ap_ue_create_response {
-  bool                    result;
-  std::vector<f1_bearer*> bearers_added;
+  bool                     result;
+  std::vector<f1c_bearer*> bearers_added;
 };
 
 struct f1_rx_pdu {

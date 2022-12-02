@@ -35,7 +35,7 @@ public:
   virtual void handle_sdu(byte_buffer sdu) = 0;
 };
 
-class f1_bearer : public f1_pdu_handler, public f1_sdu_handler
+class f1c_bearer : public f1_pdu_handler, public f1_sdu_handler
 {};
 
 /// Interface used by F1 to push PDUs to lower layers.
