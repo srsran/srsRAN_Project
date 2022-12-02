@@ -185,8 +185,9 @@ public:
     ngap_ul_nas_msg.cu_cp_ue_id = get_cu_cp_ue_id(du_index, msg.ue_index);
     ngap_ul_nas_msg.nas_pdu     = msg.nas_pdu.copy();
 
-    ngap_ul_nas_msg.nr_cgi.nrcell_id.from_number(msg.cgi.nci.packed);
-    ngap_ul_nas_msg.nr_cgi.plmn_id.from_string(msg.cgi.plmn_hex);
+    ngap_ul_nas_msg.nr_cgi.nrcell_id.from_number(msg.cell.cgi.nci.packed);
+    ngap_ul_nas_msg.nr_cgi.plmn_id.from_string(msg.cell.cgi.plmn_hex);
+    ngap_ul_nas_msg.tac = msg.cell.tac;
 
     ngc_nas_msg_handler->handle_ul_nas_transport_message(ngap_ul_nas_msg);
   }

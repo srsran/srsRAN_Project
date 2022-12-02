@@ -136,7 +136,7 @@ void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_
 {
   ul_nas_transport_message ul_nas_msg = {};
   ul_nas_msg.ue_index                 = context.ue_index;
-  ul_nas_msg.cgi                      = context.cell.cgi;
+  ul_nas_msg.cell                     = context.cell;
 
   ul_nas_msg.nas_pdu.resize(ul_info_transfer.ded_nas_msg.size());
   std::copy(ul_info_transfer.ded_nas_msg.begin(), ul_info_transfer.ded_nas_msg.end(), ul_nas_msg.nas_pdu.begin());

@@ -94,6 +94,7 @@ struct ngap_ul_nas_transport_message {
   cu_cp_ue_id_t        cu_cp_ue_id;
   byte_buffer          nas_pdu;
   asn1::ngap::nr_cgi_s nr_cgi;
+  uint32_t             tac;
 };
 
 /// Handle NGC NAS Message procedures as defined in TS 38.413 section 8.6.

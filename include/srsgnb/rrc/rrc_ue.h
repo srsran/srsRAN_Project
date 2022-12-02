@@ -162,9 +162,9 @@ struct initial_ue_message {
 };
 
 struct ul_nas_transport_message {
-  ue_index_t              ue_index;
-  byte_buffer             nas_pdu;
-  nr_cell_global_identity cgi;
+  ue_index_t       ue_index;
+  byte_buffer      nas_pdu;
+  rrc_cell_context cell;
 };
 
 struct dl_nas_transport_message {
