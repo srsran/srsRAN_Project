@@ -10,10 +10,8 @@ include_directories(../../..)
 
 add_executable(f1_du_setup_procedure_test f1_du_setup_procedure_test.cpp)
 target_link_libraries(f1_du_setup_procedure_test
-        srsgnb_f1c
+        srsgnb_f1c_du
         srsgnb_support
-        srslog
-        f1ap_asn1
         du_manager_converters
         srsgnb_ran
         sched_config
@@ -24,10 +22,8 @@ gtest_discover_tests(f1_du_setup_procedure_test)
 
 add_executable(f1_du_dl_rrc_message_transfer_test f1_du_dl_rrc_message_transfer_test.cpp)
 target_link_libraries(f1_du_dl_rrc_message_transfer_test
-        srsgnb_f1c
+        srsgnb_f1c_du
         srsgnb_support
-        srslog
-        f1ap_asn1
         du_manager_converters
         srsgnb_ran
         sched_config
@@ -36,10 +32,8 @@ target_link_libraries(f1_du_dl_rrc_message_transfer_test
 
 add_executable(f1_du_ue_context_setup_test f1_du_ue_context_setup_test.cpp)
 target_link_libraries(f1_du_ue_context_setup_test
-        srsgnb_f1c
+        srsgnb_f1c_du
         srsgnb_support
-        srslog
-        f1ap_asn1
         du_manager_converters
         srsgnb_ran
         sched_config

@@ -9,7 +9,6 @@
  */
 
 #include "srsgnb/f1c/du/f1ap_du_factory.h"
-#include "common/f1ap_packet_procedures_impl.h"
 #include "f1ap_du_impl.h"
 #include "srsgnb/du_manager/du_manager.h"
 
