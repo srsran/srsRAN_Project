@@ -56,6 +56,8 @@ private:
   ///
   /// This is the maximum length of an encoded codeblock, achievable with base graph 1 (rate 1/3).
   static constexpr unsigned MAX_CB_LENGTH = 3 * MAX_SEG_LENGTH;
+  /// Buffer for storing temporary unpacked data between LDPC segmenter and the LDPC encoder.
+  std::array<uint8_t, MAX_SEG_LENGTH> temp_unpacked_cb = {};
   /// Buffer for storing temporary, full-length codeblocks, between LDPC encoder and LDPC rate matcher.
   std::array<uint8_t, MAX_CB_LENGTH> buffer_cb = {};
 };

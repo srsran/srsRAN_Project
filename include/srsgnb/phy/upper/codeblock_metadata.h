@@ -13,6 +13,7 @@
 #pragma once
 
 #include "log_likelihood_ratio.h"
+#include "srsgnb/adt/bit_buffer.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
@@ -83,9 +84,12 @@ static constexpr unsigned MAX_NOF_SEGMENTS = 52;
 class described_segment
 {
 public:
+  /// Default constructor - Creates an invalid empty segment.
+  described_segment() : cb_size(0), data(0) {}
+
   /// \brief Creates a description for a segment of length \c cb_size with the given metadata.
   ///
-  /// This constructor does not initialise the codeblock data. It is up to the class client to fill the codeblock data
+  /// This constructor does not initialize the codeblock data. It is up to the class client to fill the codeblock data
   /// after its creation.
   ///
   /// \param[in] metadata_ Codeword parameters.
@@ -95,24 +99,25 @@ public:
   {
     srsgnb_assert((cb_size > 0) && (cb_size <= MAX_SEG_LENGTH),
                   "The codeblock size (i.e., {}) is invalid (max. {}).",
-                  cb_size,
+                  data.size(),
                   MAX_SEG_LENGTH);
+    data.resize(cb_size);
   }
 
   /// \brief Gets a read&ndash;write view of the segment data.
   /// \remark An assertion is triggered if the segment has not been created with parameter.
-  span<uint8_t> get_data()
+  bit_buffer& get_data()
   {
-    srsgnb_assert(cb_size != 0, "The segment has not been constructed.");
-    return span<uint8_t>(data).first(cb_size);
+    srsgnb_assert(!data.is_empty(), "The segment has not been constructed.");
+    return data;
   }
 
-  /// \brief Gets a read&ndash;only view of the segment data.
+  /// \brief Gets a read-only view of the segment data.
   /// \remark An assertion is triggered if the segment has not been created with parameter.
-  span<const uint8_t> get_data() const
+  const bit_buffer& get_data() const
   {
-    srsgnb_assert(cb_size != 0, "The segment has not been constructed.");
-    return span<const uint8_t>(data).first(cb_size);
+    srsgnb_assert(!data.is_empty(), "The segment has not been constructed.");
+    return data;
   }
 
   /// Gets the segment metadata.
@@ -122,9 +127,9 @@ private:
   /// Codeblock configuration.
   codeblock_metadata metadata;
   /// Codeblock size.
-  unsigned cb_size = 0;
+  unsigned cb_size;
   /// Codeblock data storage.
-  std::array<uint8_t, MAX_SEG_LENGTH> data;
+  static_bit_buffer<MAX_SEG_LENGTH> data;
 };
 
 /// \brief Alias for the full codeblock characterization at the receiver.

@@ -57,6 +57,6 @@ int main()
     pdsch_encoder->encode(codeword, transport_block, test_case.config);
 
     // Assert encoded data.
-    TESTASSERT(std::equal(codeword.begin(), codeword.end(), expected_codeword.begin()), "Encoding went wrong.");
+    TESTASSERT_EQ(span<const uint8_t>(codeword), span<const uint8_t>(expected_codeword));
   }
 }

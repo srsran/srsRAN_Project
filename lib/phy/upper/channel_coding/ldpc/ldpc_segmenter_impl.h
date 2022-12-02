@@ -92,10 +92,6 @@ private:
   /// Generates a codeblock metadata structure for the current segment configuration.
   codeblock_metadata generate_cb_metadata(const segment_internal& seg_extra, const segmenter_config& cfg) const;
 
-  // Data members.
-  /// Internal temporary buffer.
-  std::array<uint8_t, MAX_TBS> temp_buffer;
-
   /// Base graph used for encoding/decoding the current transport block.
   ldpc_base_graph_type base_graph = ldpc_base_graph_type::BG1;
   /// Lifting size used for encoding/decoding the current transport block.

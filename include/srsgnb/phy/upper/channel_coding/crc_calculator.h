@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/adt/bit_buffer.h"
 #include "srsgnb/adt/span.h"
 
 namespace srsgnb {
@@ -43,6 +44,11 @@ public:
   ///\param[in] data Provides the byte buffer.
   ///\return The resulting CRC checksum.
   virtual crc_calculator_checksum_t calculate_bit(span<const uint8_t> data) = 0;
+
+  ///\brief Calculates the checksum from a bit buffer.
+  ///\param[in] data Input data.
+  ///\return The resulting CRC checksum.
+  virtual crc_calculator_checksum_t calculate(const bit_buffer& data) = 0;
 
   ///\brief Returns the identifier of the generator polynomial.
   virtual crc_generator_poly get_generator_poly() const = 0;

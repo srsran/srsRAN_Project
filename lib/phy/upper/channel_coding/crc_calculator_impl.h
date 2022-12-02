@@ -75,6 +75,8 @@ public:
   // See interface for the documentation.
   crc_calculator_checksum_t calculate_bit(span<const uint8_t> input) override;
 
+  crc_calculator_checksum_t calculate(const bit_buffer& data) override;
+
   // See interface for the documentation.
   crc_generator_poly get_generator_poly() const override { return poly; }
 };

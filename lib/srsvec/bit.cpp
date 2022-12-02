@@ -23,6 +23,32 @@ using namespace srsvec;
 
 namespace {
 
+template <typename InType = uint8_t>
+void unpack_8bit(span<uint8_t> unpacked, InType value)
+{
+  srsgnb_assert(unpacked.size() == 8, "The amount of data to pack (i.e., {}) must be eight.", unpacked.size());
+#if HAVE_SSE
+  // Broadcast 8 bit value in all 8-bit registers.
+  __m64 mask = _mm_set1_pi8(static_cast<uint8_t>(value));
+
+  // Mask bits of interest for each 8-bit register.
+  mask = _mm_and_si64(mask, _mm_set_pi8(1, 2, 4, 8, 16, 32, 64, -128));
+
+  // Convert to a mask.
+  mask = ~_mm_cmpeq_pi8(mask, _mm_setzero_si64());
+
+  // Select least significant bits.
+  mask = _mm_and_si64(mask, _mm_set1_pi8(1));
+
+  // Get mask and write
+  *reinterpret_cast<__m64*>(unpacked.data()) = mask;
+#else
+  for (unsigned i_bit = 0, i_bit_end = unpacked.size(); i_bit != i_bit_end; ++i_bit) {
+    unpacked[i_bit] = static_cast<uint8_t>(value >> ((i_bit_end - 1) - i_bit)) & 1U;
+  }
+#endif
+}
+
 template <typename RetType = uint8_t>
 RetType pack_8bit(span<const uint8_t> unpacked)
 {
@@ -75,6 +101,94 @@ void srsgnb::srsvec::bit_unpack(span<uint8_t> unpacked, span<const uint8_t> pack
   }
 }
 
+void srsgnb::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed)
+{
+  srsgnb_assert(packed.size() == unpacked.size(),
+                "The packed number of bits (i.e.{}) must be equal to the number of unpacked bits (i.e., {}).",
+                packed.size(),
+                unpacked.size());
+  // Unpack each byte.
+  unsigned bit_offset = 0;
+  unsigned i_byte     = 0;
+
+#ifdef HAVE_AVX2
+  span<const uint8_t> packed_buffer = packed.get_buffer();
+
+  for (unsigned i_byte_end = (packed.size() / 32) * 4; i_byte != i_byte_end; i_byte += 4, bit_offset += 32) {
+    __m256i in = _mm256_setzero_si256();
+
+    in = _mm256_insert_epi8(in, packed_buffer[i_byte + 0], 0);
+    in = _mm256_insert_epi8(in, packed_buffer[i_byte + 1], 8);
+    in = _mm256_insert_epi8(in, packed_buffer[i_byte + 2], 16);
+    in = _mm256_insert_epi8(in, packed_buffer[i_byte + 3], 24);
+
+    in = _mm256_shuffle_epi8(
+        in,
+        _mm256_setr_epi8(
+            0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8));
+
+    __m256i mask = _mm256_set_epi8(1,
+                                   2,
+                                   4,
+                                   8,
+                                   16,
+                                   32,
+                                   64,
+                                   -128,
+                                   1,
+                                   2,
+                                   4,
+                                   8,
+                                   16,
+                                   32,
+                                   64,
+                                   -128,
+                                   1,
+                                   2,
+                                   4,
+                                   8,
+                                   16,
+                                   32,
+                                   64,
+                                   -128,
+                                   1,
+                                   2,
+                                   4,
+                                   8,
+                                   16,
+                                   32,
+                                   64,
+                                   -128);
+
+    mask = _mm256_and_si256(mask, in);
+    mask = ~_mm256_cmpeq_epi8(mask, _mm256_setzero_si256());
+    mask = _mm256_and_si256(mask, _mm256_set1_epi8(1));
+
+    _mm256_storeu_si256(reinterpret_cast<__m256i*>(unpacked.data()), mask);
+
+    // Advance unpacked buffer.
+    unpacked = unpacked.last(unpacked.size() - 32);
+  }
+#endif // HAVE_AVX2
+
+  for (unsigned i_byte_end = packed.size() / 8; i_byte != i_byte_end; ++i_byte, bit_offset += 8) {
+    // Extract byte.
+    uint8_t byte = packed.get_byte(i_byte);
+    // Unpack byte.
+    unpack_8bit(unpacked.first(8), byte);
+    // Advance unpacked buffer.
+    unpacked = unpacked.last(unpacked.size() - 8);
+  }
+
+  // Unpack remainder bits.
+  if (!unpacked.empty()) {
+    std::array<uint8_t, 8> temp_unpacked;
+    span<uint8_t>          unpacked2 = temp_unpacked;
+    unpack_8bit(unpacked2, packed.extract(bit_offset, unpacked.size()));
+    srsvec::copy(unpacked, unpacked2.last(unpacked.size()));
+  }
+}
+
 unsigned srsgnb::srsvec::bit_pack(span<const uint8_t>& bits, unsigned nof_bits)
 {
   srsgnb_assert(nof_bits <= 32U, "Number of bits ({}) exceeds maximum (32).", nof_bits);
@@ -104,17 +218,17 @@ void srsgnb::srsvec::bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked
 void srsgnb::srsvec::bit_pack(bit_buffer& packed, span<const uint8_t> unpacked)
 {
   srsgnb_assert(packed.size() == unpacked.size(),
-                "The packed nuber of bits (i.e.{}) must be equal to the number of unpacked bits (i.e., {})\n",
+                "The packed number of bits (i.e.{}) must be equal to the number of unpacked bits (i.e., {}).",
                 packed.size(),
                 unpacked.size());
-  unsigned bit_offset = 0;
-  for (unsigned i_byte = 0, i_byte_end = unpacked.size() / 8; i_byte != i_byte_end; ++i_byte, bit_offset += 8) {
+  for (unsigned i_byte = 0, i_byte_end = unpacked.size() / 8; i_byte != i_byte_end; ++i_byte) {
     unsigned byte = pack_8bit<unsigned>(unpacked.first(8));
     unpacked      = unpacked.last(unpacked.size() - 8);
-    packed.insert(byte, bit_offset, 8);
+    packed.set_byte(byte, i_byte);
   }
 
   if (!unpacked.empty()) {
+    unsigned               bit_offset = 8 * (packed.size() / 8);
     std::array<uint8_t, 8> temp_unpacked;
     span<uint8_t>          unpacked2 = temp_unpacked;
     srsvec::copy(unpacked2.first(unpacked.size()), unpacked);
@@ -122,5 +236,55 @@ void srsgnb::srsvec::bit_pack(bit_buffer& packed, span<const uint8_t> unpacked)
 
     unsigned byte = pack_8bit<unsigned>(unpacked2) >> (8 - unpacked.size());
     packed.insert(byte, bit_offset, unpacked.size());
+  }
+}
+
+void srsgnb::srsvec::copy_offset(srsgnb::bit_buffer& output, span<const uint8_t> input, unsigned startpos)
+{
+  static constexpr unsigned bits_per_word    = 8;
+  unsigned                  input_start_word = startpos / bits_per_word;
+  unsigned                  input_start_mod  = startpos % bits_per_word;
+
+  using extended_word_t = uint32_t;
+
+  unsigned nof_full_words     = output.size() / bits_per_word;
+  unsigned nof_remainder_bits = output.size() % bits_per_word;
+
+  span<uint8_t> buffer = output.get_buffer();
+
+  if (input_start_mod == 0) {
+    std::copy_n(input.begin() + input_start_word, nof_full_words, buffer.begin());
+  } else {
+    unsigned i_word = 0;
+#ifdef HAVE_AVX2
+    for (unsigned i_word_end = (nof_full_words / 32) * 32; i_word != i_word_end; i_word += 32) {
+      __m256i word0 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&input[input_start_word + i_word]));
+      __m256i word1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&input[input_start_word + i_word + 1]));
+      word0         = _mm256_and_si256(_mm256_slli_epi32(word0, input_start_mod),
+                               _mm256_set1_epi8(mask_msb_ones<uint8_t>(bits_per_word - input_start_mod)));
+      word1         = _mm256_and_si256(_mm256_srli_epi32(word1, bits_per_word - input_start_mod),
+                               _mm256_set1_epi8(mask_lsb_ones<uint8_t>(input_start_mod)));
+      __m256i word  = _mm256_or_si256(word0, word1);
+      _mm256_storeu_si256(reinterpret_cast<__m256i*>(&buffer[i_word]), word);
+    }
+#endif // HAVE_AVX2
+    for (; i_word != nof_full_words; ++i_word) {
+      extended_word_t input_word = static_cast<extended_word_t>(input[input_start_word + i_word]) << bits_per_word;
+      input_word |= static_cast<extended_word_t>(input[input_start_word + i_word + 1]);
+      input_word = input_word >> (bits_per_word - input_start_mod);
+      input_word &= mask_lsb_ones<extended_word_t>(bits_per_word);
+      buffer[i_word] = static_cast<uint8_t>(input_word);
+    }
+  }
+
+  if (nof_remainder_bits != 0) {
+    extended_word_t remainder_bits = static_cast<extended_word_t>(input[input_start_word + nof_full_words])
+                                     << bits_per_word;
+    if (input_start_mod + nof_remainder_bits > bits_per_word) {
+      remainder_bits |= static_cast<extended_word_t>(input[input_start_word + nof_full_words + 1]);
+    }
+    remainder_bits = remainder_bits >> (bits_per_word - input_start_mod);
+    remainder_bits &= remainder_bits & mask_lsb_ones<extended_word_t>(bits_per_word);
+    buffer[nof_full_words] = static_cast<uint8_t>(remainder_bits) & mask_msb_ones<uint8_t>(nof_remainder_bits);
   }
 }

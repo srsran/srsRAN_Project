@@ -34,6 +34,12 @@ span<uint8_t> bit_unpack(span<uint8_t> bits, unsigned value, unsigned nof_bits);
 /// \remark The number of unpacked elements must be equal to eight times the number of packed elements.
 void bit_unpack(span<uint8_t> unpacked, span<const uint8_t> packed);
 
+/// \brief Unpacks a bit buffer into bits.
+/// \param[out] unpacked View of the unpacked bits.
+/// \param[in] packed    Bit buffer to unpack.
+/// \remark The number of unpacked elements must be equal to the packed number of bits.
+void bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed);
+
 /// \brief Packs a number of bits into an integer value.
 /// \param[in,out] bits View of unpacked bits.
 /// \param[in] nof_bits Indicates the number of bits.
@@ -54,6 +60,12 @@ void bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked);
 /// \param[in]  unpacked View of unpacked bits.
 /// \remark The number of unpacked elements must be equal to the maximum number of bits supported by the bit buffer.
 void bit_pack(bit_buffer& packed, span<const uint8_t> unpacked);
+
+/// \brief Copies \c output.size() bits from \c input, starting at \c startpos, into \c output.
+/// \param[out] output   Destination of the copy.
+/// \param[in]  input    Data source to copy.
+/// \param[in]  startpos Bit position index to start the copy.
+void copy_offset(bit_buffer& output, span<const uint8_t> input, unsigned startpos);
 
 } // namespace srsvec
 } // namespace srsgnb

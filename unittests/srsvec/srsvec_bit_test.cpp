@@ -66,7 +66,7 @@ void test_unpack_vector(unsigned N)
   });
 
   // Unpack
-  srsvec::bit_unpack(unpacked, packed);
+  srsvec::bit_unpack(span<uint8_t>(unpacked), span<const uint8_t>(packed));
 
   // Assert each bit
   TESTASSERT_EQ(span<const uint8_t>(expected), span<const uint8_t>(unpacked));

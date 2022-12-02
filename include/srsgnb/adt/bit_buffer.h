@@ -147,16 +147,46 @@ public:
       return (buffer[start_word] >> (bits_per_word - start_mod - count)) & mask_lsb_ones<Integer>(count);
     }
 
-    word_t first_word  = buffer[start_word];
-    word_t second_word = buffer[start_word + 1];
+    // Concatenates two bytes in a 32-bit register and then extracts a word with the requested number of bits.
+    using extended_word_t = uint32_t;
+    extended_word_t word  = static_cast<extended_word_t>(buffer[start_word]) << bits_per_word;
+    word |= static_cast<extended_word_t>(buffer[start_word + 1]);
+    word = word >> (2 * bits_per_word - start_mod - count);
+    word &= mask_lsb_ones<extended_word_t>(count);
 
-    unsigned shift = (start_mod + count) - bits_per_word;
+    return static_cast<Integer>(word);
+  }
 
-    Integer result = static_cast<Integer>(first_word << shift);
-    result |= static_cast<Integer>(second_word >> (bits_per_word - shift));
-    result &= mask_lsb_ones<Integer>(count);
+  /// \brief Gets an entire byte.
+  /// \remark The byte index must not point to a word that is not fully occupied by bits.
+  const uint8_t get_byte(unsigned i_byte) const
+  {
+    srsgnb_assert(i_byte < nof_full_words(),
+                  "The byte index {} exceeds the number of full words (i.e., {}).",
+                  i_byte,
+                  nof_full_words());
+    return buffer[i_byte];
+  }
 
-    return result;
+  /// \brief Sets an entire byte.
+  /// \remark The byte index must not point to a word that is not fully occupied by bits.
+  void set_byte(uint8_t byte, unsigned i_byte)
+  {
+    srsgnb_assert(i_byte < nof_full_words(),
+                  "The byte index {} exceeds the number of full words (i.e., {}).",
+                  i_byte,
+                  nof_full_words());
+    buffer[i_byte] = byte;
+  }
+
+  /// Creates another bit buffer pointing at the first \c count bits.
+  bit_buffer first(unsigned count)
+  {
+    srsgnb_assert(size() >= count,
+                  "The buffer size (i.e., {}) must be greater than or equal to the number of bits (i.e., {}).",
+                  size(),
+                  count);
+    return bit_buffer(buffer, count);
   }
 
   /// Gets the current bit buffer size.
@@ -166,11 +196,15 @@ public:
   template <typename OutputIt>
   OutputIt to_bin_string(OutputIt&& mem_buffer) const
   {
+    unsigned byte_remainder = current_size % bits_per_word;
+    if (byte_remainder == 0) {
+      fmt::format_to(mem_buffer, "{:08B}", buffer.first(nof_words()));
+      return mem_buffer;
+    }
+
     if (nof_words() > 1) {
       fmt::format_to(mem_buffer, "{:08B}", buffer.first(nof_words() - 1));
     }
-
-    unsigned byte_remainder = current_size % bits_per_word;
 
     fmt::format_to(mem_buffer, " {:0{}B}", buffer[nof_words() - 1] >> (bits_per_word - byte_remainder), byte_remainder);
     return mem_buffer;
@@ -195,9 +229,18 @@ public:
     return *this;
   }
 
+  /// Gets the storage read-write buffer view for advanced usage.
+  span<word_t> get_buffer() { return buffer; }
+
+  /// Gets the storage read-only buffer view for advanced usage.
+  span<const word_t> get_buffer() const { return buffer; }
+
 private:
   /// Determines the number of words that are currently used.
   unsigned nof_words() const { return calculate_nof_words(size()); }
+
+  /// Determines the number of words that are fully occupied by bits.
+  unsigned nof_full_words() const { return size() / bits_per_word; }
 
   /// Data storage.
   span<word_t> buffer;
@@ -213,6 +256,10 @@ class static_bit_buffer : public bit_buffer
 public:
   /// Default static bit buffer constructor of size zero.
   static_bit_buffer(unsigned nof_bits = 0) : bit_buffer(buffer, nof_bits) {}
+
+  static_bit_buffer(static_bit_buffer& other) = delete;
+
+  static_bit_buffer(static_bit_buffer&& other) : bit_buffer(buffer, other.size()){};
 
   /// Resizes the bit buffer.
   void resize(unsigned new_size) { set_buffer(buffer, new_size); }

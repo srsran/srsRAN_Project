@@ -16,6 +16,7 @@
 
 #include "ldpc_segmenter_test_data.h"
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsgnb/srsvec/bit.h"
 
 #include <gtest/gtest.h>
 
@@ -28,6 +29,21 @@ std::ostream& operator<<(std::ostream& os, test_case_t tct)
 {
   return os << fmt::format(
              "TBS {}, BG{}, N. Segments {}, Segment length {}", tct.tbs, tct.bg, tct.nof_segments, tct.segment_length);
+}
+
+bool operator==(span<const uint8_t> lhs, span<const uint8_t> rhs)
+{
+  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+}
+
+std::ostream& operator<<(std::ostream& os, span<const uint8_t> data)
+{
+  return os << fmt::format("{}", data);
+}
+
+std::ostream& operator<<(std::ostream& os, span<uint8_t> data)
+{
+  return os << fmt::format("{}", data);
 }
 
 } // namespace srsgnb
@@ -97,11 +113,17 @@ TEST_P(LDPCSegmenterFixture, LDPCSegmenterTest)
 
   EXPECT_EQ(segments.size(), test_data.nof_segments) << "Wrong number of segments.";
 
+  std::vector<uint8_t> segment_data(test_data.segment_length);
+
   unsigned seg_offset = 0;
   for (const auto& seg : segments) {
-    EXPECT_EQ(seg.get_data().size(), test_data.segment_length) << "Wrong segment length.";
-    EXPECT_TRUE(std::equal(seg.get_data().begin(), seg.get_data().end(), segments_check.cbegin() + seg_offset))
-        << "Wrong segment content.";
+    srsvec::bit_unpack(segment_data, seg.get_data());
+    span<uint8_t> filler_bits = span<uint8_t>(segment_data).last(seg.get_metadata().cb_specific.nof_filler_bits);
+    std::fill(filler_bits.begin(), filler_bits.end(), FILLER_BIT);
+
+    EXPECT_EQ(span<const uint8_t>(segment_data),
+              span<const uint8_t>(segments_check).subspan(seg_offset, test_data.segment_length))
+        << "Wrong codeblock content.";
     seg_offset += test_data.segment_length;
   }
 

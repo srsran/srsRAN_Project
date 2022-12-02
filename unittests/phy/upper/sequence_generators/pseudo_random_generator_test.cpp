@@ -93,9 +93,12 @@ void test_apply_xor_packed(std::shared_ptr<pseudo_random_generator_factory> fact
   // Create data buffer.
   dynamic_bit_buffer data(N);
 
-  // Fill buffer with random data.
+  // Fill buffer with random data
   for (unsigned i_byte = 0, i_byte_end = N / 8; i_byte != i_byte_end; ++i_byte) {
-    data.insert(rgen() & mask_lsb_ones<unsigned>(8), i_byte * 8, 8);
+    data.set_byte(rgen() & mask_lsb_ones<unsigned>(8), i_byte);
+  }
+  if (N % 8 != 0) {
+    data.insert((rgen() & mask_lsb_ones<unsigned>(N % 8)), 8 * (N / 8), N % 8);
   }
 
   // Create sequence generator.

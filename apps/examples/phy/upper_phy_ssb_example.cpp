@@ -149,7 +149,7 @@ public:
       // Generate the pseudo-random data bits.
       data.resize(nbits);
       for (unsigned i_byte = 0, i_byte_end = nbits / 8; i_byte != i_byte_end; ++i_byte) {
-        data.insert(rgen() & mask_lsb_ones<unsigned>(8), i_byte * 8, 8);
+        data.set_byte(rgen() & mask_lsb_ones<unsigned>(8), i_byte);
       }
       data.insert(rgen() & mask_lsb_ones<unsigned>(nbits % 8), (nbits / 8) * 8, nbits % 8);
 

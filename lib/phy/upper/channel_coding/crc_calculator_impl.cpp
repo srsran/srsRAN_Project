@@ -149,3 +149,32 @@ crc_calculator_checksum_t crc_calculator_impl::calculate_bit(srsgnb::span<const 
 
   return get_checksum();
 }
+crc_calculator_checksum_t crc_calculator_impl::calculate(const bit_buffer& input)
+{
+  reset();
+
+  // Pack bits into bytes.
+  unsigned nbytes = input.size() / 8;
+  unsigned res8   = input.size() % 8;
+
+  // Extract and calculate CRC for each byte.
+  for (unsigned i_byte = 0; i_byte != nbytes; ++i_byte) {
+    uint8_t byte = input.get_byte(i_byte);
+    put_byte(byte);
+  }
+
+  // Process remainder bits.
+  if (res8 > 0) {
+    uint8_t remainder = input.extract(nbytes * 8, res8);
+    put_byte(remainder << (8 - res8));
+  }
+
+  crc = (uint32_t)get_checksum();
+
+  if (res8 > 0) {
+    // Reverse CRC res8 positions
+    reversecrcbit(8 - res8);
+  }
+
+  return get_checksum();
+}

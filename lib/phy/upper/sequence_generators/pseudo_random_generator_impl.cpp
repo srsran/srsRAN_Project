@@ -165,22 +165,22 @@ void pseudo_random_generator_impl::apply_xor(bit_buffer& out, const bit_buffer& 
   static constexpr unsigned NOF_PAR_BYTES = 3;
   static constexpr unsigned NOF_PAR_BITS  = BITS_PER_BYTE * NOF_PAR_BYTES;
 
-  unsigned i_bit = 0;
-
   // Processes batches of 24 bits in parallel.
-  for (unsigned i_bit_end = (in.size() / NOF_PAR_BITS) * NOF_PAR_BITS; i_bit != i_bit_end; i_bit += NOF_PAR_BITS) {
+  for (unsigned i_byte = 0, i_byte_end = (in.size() / NOF_PAR_BITS) * NOF_PAR_BYTES; i_byte != i_byte_end;) {
     uint32_t c = x1 ^ x2;
 
     // Processes each byte of the batch.
-    for (unsigned bit_offset = 0; bit_offset != NOF_PAR_BITS; bit_offset += BITS_PER_BYTE) {
+    for (unsigned i_byte_batch = 0; i_byte_batch != NOF_PAR_BYTES; ++i_byte, ++i_byte_batch) {
       // Extract input byte.
-      uint8_t input_byte = in.extract(i_bit + bit_offset, BITS_PER_BYTE);
+      uint8_t input_byte = in.get_byte(i_byte);
 
       // Calculate the output byte.
       uint8_t output_byte = input_byte ^ reverse_byte(static_cast<uint8_t>(c & mask_lsb_ones<uint32_t>(BITS_PER_BYTE)));
 
       // Insert the output byte.
-      out.insert(output_byte, i_bit + bit_offset, BITS_PER_BYTE);
+      out.set_byte(output_byte, i_byte);
+
+      // Advance sequence one byte.
       c = c >> BITS_PER_BYTE;
     }
 
@@ -192,6 +192,7 @@ void pseudo_random_generator_impl::apply_xor(bit_buffer& out, const bit_buffer& 
   // Process spare bits in a batch of the remainder bits.
   unsigned remainder_offset = (in.size() / SEQUENCE_PAR_BITS) * SEQUENCE_PAR_BITS;
   unsigned remainder        = in.size() - remainder_offset;
+  unsigned i_bit            = (in.size() / NOF_PAR_BITS) * NOF_PAR_BITS;
   uint32_t c                = x1 ^ x2;
   while (remainder != 0) {
     // Process per byte basis, ceiling at the remainder.
