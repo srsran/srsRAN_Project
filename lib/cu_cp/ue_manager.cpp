@@ -103,6 +103,7 @@ ngc_ue& ue_manager::add_ue(cu_cp_ue_id_t                cu_cp_ue_id,
 
   ngc_ues.emplace(ue_id, cu_cp_ue_id, ran_ue_id, rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier);
 
+  // Add RAN UE ID to lookup
   ran_ue_id_to_cu_cp_ue_id.emplace(ran_ue_id_to_uint(ran_ue_id), cu_cp_ue_id);
 
   return ngc_ues[ue_id];
@@ -113,25 +114,52 @@ void ue_manager::remove_ue(cu_cp_ue_id_t cu_cp_ue_id)
   uint64_t ue_id = cu_cp_ue_id_to_uint(cu_cp_ue_id);
   srsgnb_assert(ngc_ues.contains(ue_id), "cu_cp_ue_id={} does not exist", ue_id);
 
-  // Remove UE from lookup
-  ran_ue_id_to_cu_cp_ue_id.erase(ran_ue_id_to_uint(ngc_ues[ue_id].get_ran_ue_id()));
+  // Remove UE from lookups
+  ran_ue_id_t ran_ue_id = ngc_ues[ue_id].get_ran_ue_id();
+  if (ran_ue_id != ran_ue_id_t::invalid) {
+    ran_ue_id_to_cu_cp_ue_id.erase(ran_ue_id_to_uint(ran_ue_id));
+  }
+
+  amf_ue_id_t amf_ue_id = ngc_ues[ue_id].get_amf_ue_id();
+  if (amf_ue_id != amf_ue_id_t::invalid) {
+    amf_ue_id_to_cu_cp_ue_id.erase(amf_ue_id_to_uint(amf_ue_id));
+  }
 
   ngc_ues.erase(ue_id);
 }
 
-ngc_ue* ue_manager::find_ue(std::underlying_type_t<cu_cp_ue_id_t> cu_cp_ue_id_uint)
+ngc_ue* ue_manager::find_ue(cu_cp_ue_id_t cu_cp_ue_id)
 {
+  std::underlying_type_t<cu_cp_ue_id_t> cu_cp_ue_id_uint = cu_cp_ue_id_to_uint(cu_cp_ue_id);
   srsgnb_assert(cu_cp_ue_id_uint < cu_cp_ue_id_to_uint(cu_cp_ue_id_t::max), "Invalid cu_cp_ue_id={}", cu_cp_ue_id_uint);
   return ngc_ues.contains(cu_cp_ue_id_uint) ? &ngc_ues[cu_cp_ue_id_uint] : nullptr;
 }
 
-cu_cp_ue_id_t ue_manager::get_cu_cp_ue_id(std::underlying_type_t<ran_ue_id_t> ran_ue_id_uint)
+void ue_manager::set_amf_ue_id(cu_cp_ue_id_t cu_cp_ue_id, amf_ue_id_t amf_ue_id)
 {
+  find_ue(cu_cp_ue_id)->_set_amf_ue_id(amf_ue_id);
+  // Add AMF UE ID to lookup
+  amf_ue_id_to_cu_cp_ue_id.emplace(amf_ue_id_to_uint(amf_ue_id), cu_cp_ue_id);
+}
+
+cu_cp_ue_id_t ue_manager::get_cu_cp_ue_id(ran_ue_id_t ran_ue_id)
+{
+  std::underlying_type_t<ran_ue_id_t> ran_ue_id_uint = ran_ue_id_to_uint(ran_ue_id);
   if (not ran_ue_id_to_cu_cp_ue_id.contains(ran_ue_id_uint)) {
     logger.info("UE with ran_ue_id_t={} does not exist. Dropping PDU", ran_ue_id_uint);
     return cu_cp_ue_id_t::invalid;
   }
   return ran_ue_id_to_cu_cp_ue_id[ran_ue_id_uint];
+}
+
+cu_cp_ue_id_t ue_manager::get_cu_cp_ue_id(amf_ue_id_t amf_ue_id)
+{
+  std::underlying_type_t<amf_ue_id_t> amf_ue_id_uint = amf_ue_id_to_uint(amf_ue_id);
+  if (not amf_ue_id_to_cu_cp_ue_id.contains(amf_ue_id_uint)) {
+    logger.info("UE with amf_ue_id_t={} does not exist. Dropping PDU", amf_ue_id);
+    return cu_cp_ue_id_t::invalid;
+  }
+  return amf_ue_id_to_cu_cp_ue_id[amf_ue_id_uint];
 }
 
 // private functions

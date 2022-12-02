@@ -35,22 +35,16 @@ public:
                  ngc_rrc_ue_control_notifier& rrc_ue_ctrl_notifier) override;
   void    remove_ue(cu_cp_ue_id_t cu_cp_ue_id) override;
 
-  ngc_ue* find_ue(std::underlying_type_t<cu_cp_ue_id_t> cu_cp_ue_id_uint) override;
-  ngc_ue* find_ue(cu_cp_ue_id_t cu_cp_ue_id) override { return find_ue(cu_cp_ue_id_to_uint(cu_cp_ue_id)); }
+  ngc_ue* find_ue(cu_cp_ue_id_t cu_cp_ue_id) override;
 
   size_t get_nof_ngc_ues() override { return ngc_ues.size(); }
 
-  cu_cp_ue_id_t get_cu_cp_ue_id(std::underlying_type_t<ran_ue_id_t> ran_ue_id_uint) override;
-  cu_cp_ue_id_t get_cu_cp_ue_id(ran_ue_id_t ran_ue_id) override
-  {
-    return get_cu_cp_ue_id(ran_ue_id_to_uint(ran_ue_id));
-  }
+  void set_amf_ue_id(cu_cp_ue_id_t cu_cp_ue_id, amf_ue_id_t amf_ue_id) override;
 
-  bool contains(std::underlying_type_t<cu_cp_ue_id_t> cu_cp_ue_id_uint) override
-  {
-    return ngc_ues.contains(cu_cp_ue_id_uint);
-  }
-  bool contains(cu_cp_ue_id_t cu_cp_ue_id) override { return contains(cu_cp_ue_id_to_uint(cu_cp_ue_id)); }
+  cu_cp_ue_id_t get_cu_cp_ue_id(ran_ue_id_t ran_ue_id) override;
+  cu_cp_ue_id_t get_cu_cp_ue_id(amf_ue_id_t amf_ue_id) override;
+
+  bool contains(cu_cp_ue_id_t cu_cp_ue_id) override { return ngc_ues.contains(cu_cp_ue_id_to_uint(cu_cp_ue_id)); }
 
 private:
   /// \brief Get the next available UE index.
@@ -76,8 +70,9 @@ private:
   slotted_array<ue_context, MAX_NOF_UES> ue_db;
   std::map<rnti_t, ue_index_t>           rnti_to_ue_index;
 
-  slotted_array<ngc_ue, MAX_NOF_CU_UES>        ngc_ues;
+  slotted_array<ngc_ue, MAX_NOF_CU_UES>        ngc_ues;                  // ngc_ues indexed by cu_cp_ue_id
   slotted_array<cu_cp_ue_id_t, MAX_NOF_CU_UES> ran_ue_id_to_cu_cp_ue_id; // cu_cp_ue_ids indexed by ran_ue_ids
+  slotted_array<cu_cp_ue_id_t, MAX_NOF_CU_UES> amf_ue_id_to_cu_cp_ue_id; // cu_cp_ue_ids indexed by amf_ue_ids
 };
 
 } // namespace srs_cu_cp

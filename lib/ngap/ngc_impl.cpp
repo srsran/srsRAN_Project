@@ -56,11 +56,9 @@ async_task<ng_setup_response_message> ngc_impl::handle_ng_setup_request(const ng
 
 void ngc_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
 {
-  std::underlying_type_t<cu_cp_ue_id_t> cu_cp_ue_id_uint = cu_cp_ue_id_to_uint(msg.cu_cp_ue_id);
-
-  auto* ue = ue_manager.find_ue(cu_cp_ue_id_uint);
+  auto* ue = ue_manager.find_ue(msg.cu_cp_ue_id);
   if (ue == nullptr) {
-    logger.info("UE with cu_cp_ue_id={} does not exist. Dropping Initial UE Message", cu_cp_ue_id_uint);
+    logger.info("UE with cu_cp_ue_id={} does not exist. Dropping Initial UE Message", msg.cu_cp_ue_id);
     return;
   }
 
@@ -100,11 +98,9 @@ void ngc_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
 
 void ngc_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg)
 {
-  std::underlying_type_t<cu_cp_ue_id_t> cu_cp_ue_id_uint = cu_cp_ue_id_to_uint(msg.cu_cp_ue_id);
-
-  auto* ue = ue_manager.find_ue(cu_cp_ue_id_uint);
+  auto* ue = ue_manager.find_ue(msg.cu_cp_ue_id);
   if (ue == nullptr) {
-    logger.info("UE with cu_cp_ue_id={} does not exist. Dropping UL NAS Transport Message", cu_cp_ue_id_uint);
+    logger.info("UE with cu_cp_ue_id={} does not exist. Dropping UL NAS Transport Message", msg.cu_cp_ue_id);
     return;
   }
 
@@ -120,7 +116,7 @@ void ngc_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_messa
 
   amf_ue_id_t amf_ue_id = ue->get_amf_ue_id();
   if (amf_ue_id == amf_ue_id_t::invalid) {
-    logger.error("UE AMF ID for cu_cp_ue_id={} not found!", cu_cp_ue_id_uint);
+    logger.error("UE AMF ID for cu_cp_ue_id={} not found!", msg.cu_cp_ue_id);
     return;
   }
   ul_nas_transport_msg->amf_ue_ngap_id.value.value = amf_ue_id_to_uint(amf_ue_id);
@@ -272,7 +268,7 @@ void ngc_impl::handle_initiating_message(const init_msg_s& msg)
 
 void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transport_s& msg)
 {
-  cu_cp_ue_id_t cu_cp_ue_id = ue_manager.get_cu_cp_ue_id(msg->ran_ue_ngap_id.value.value);
+  cu_cp_ue_id_t cu_cp_ue_id = ue_manager.get_cu_cp_ue_id(uint_to_ran_ue_id(msg->ran_ue_ngap_id.value.value));
   if (cu_cp_ue_id == cu_cp_ue_id_t::invalid) {
     logger.info("UE with cu_cp_ue_id={} does not exist. Dropping PDU", cu_cp_ue_id);
     return;
@@ -286,7 +282,8 @@ void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpor
 
   // Add AMF UE ID to ue ngap context if it is not set (this is the first DL NAS Transport message)
   if (ue->get_amf_ue_id() == amf_ue_id_t::invalid) {
-    ue->set_amf_ue_id(uint_to_amf_ue_id(msg->amf_ue_ngap_id.value.value));
+    // Set AMF UE ID in the UE context and also in the lookup
+    ue_manager.set_amf_ue_id(cu_cp_ue_id, uint_to_amf_ue_id(msg->amf_ue_ngap_id.value.value));
   }
 
   byte_buffer nas_pdu;
@@ -298,7 +295,7 @@ void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpor
 
 void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_context_setup_request_s& request)
 {
-  cu_cp_ue_id_t cu_cp_ue_id = ue_manager.get_cu_cp_ue_id(request->ran_ue_ngap_id.value);
+  cu_cp_ue_id_t cu_cp_ue_id = ue_manager.get_cu_cp_ue_id(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
   auto*         ue          = ue_manager.find_ue(cu_cp_ue_id);
   if (ue == nullptr) {
     logger.info("UE with cu_cp_ue_id={} does not exist. Dropping Initial Context Setup Request", cu_cp_ue_id);
