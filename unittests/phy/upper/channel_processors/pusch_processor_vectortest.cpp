@@ -14,7 +14,6 @@
 #include "srsgnb/phy/upper/equalization/equalization_factories.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
-#include <random>
 
 using namespace srsgnb;
 
@@ -35,7 +34,8 @@ using PuschProcessorParams = test_case_t;
 class PuschProcessorFixture : public ::testing::TestWithParam<PuschProcessorParams>
 {
 protected:
-  std::unique_ptr<pusch_processor> pusch_proc;
+  std::unique_ptr<pusch_processor>     pusch_proc;
+  std::unique_ptr<pusch_pdu_validator> pdu_validator;
 
   void SetUp() override
   {
@@ -87,7 +87,7 @@ protected:
         create_pusch_demodulator_factory_sw(eq_factory, chan_modulation_factory, prg_factory);
     ASSERT_NE(pusch_demod_factory, nullptr);
 
-    // Create PUSCH demux factory.
+    // Create PUSCH demultiplexer factory.
     std::shared_ptr<ulsch_demultiplex_factory> demux_factory = create_ulsch_demultiplex_factory_sw();
     ASSERT_NE(demux_factory, nullptr);
 
@@ -104,6 +104,7 @@ protected:
     uci_decoder_factory_sw_configuration uci_dec_factory_config;
     uci_dec_factory_config.decoder_factory               = short_block_det_factory;
     std::shared_ptr<uci_decoder_factory> uci_dec_factory = create_uci_decoder_factory_sw(uci_dec_factory_config);
+    ASSERT_NE(uci_dec_factory, nullptr);
 
     // Create PUSCH processor.
     pusch_processor_factory_sw_configuration pusch_proc_factory_config;
@@ -123,10 +124,14 @@ protected:
     // Create actual PUSCH processor.
     pusch_proc = pusch_proc_factory->create();
     ASSERT_NE(pusch_proc, nullptr);
+
+    // Create actual PUSCH processor validator.
+    pdu_validator = pusch_proc_factory->create_validator();
+    ASSERT_NE(pdu_validator, nullptr);
   }
 };
 
-TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
+TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
 {
   const test_case_t&            test_case = GetParam();
   const test_case_context&      context   = test_case.context;
@@ -146,6 +151,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   rx_softbuffer_spy softbuffer(
       ldpc::MAX_CODEBLOCK_SIZE,
       ldpc::compute_nof_codeblocks(expected_data.size() * 8, config.codeword.value().ldpc_base_graph));
+
+  // Make sure the configuration is valid.
+  ASSERT_TRUE(pdu_validator->is_valid(config));
 
   // Process PUSCH PDU.
   pusch_processor_result result = pusch_proc->process(data, softbuffer, grid, config);
@@ -168,6 +176,8 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
 }
 
 // Creates test suite that combines all possible parameters.
-INSTANTIATE_TEST_SUITE_P(PuschProcessorUnittest, PuschProcessorFixture, ::testing::ValuesIn(pusch_processor_test_data));
+INSTANTIATE_TEST_SUITE_P(PuschProcessorVectortest,
+                         PuschProcessorFixture,
+                         ::testing::ValuesIn(pusch_processor_test_data));
 
 } // namespace

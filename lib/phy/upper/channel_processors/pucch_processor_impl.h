@@ -18,6 +18,18 @@
 
 namespace srsgnb {
 
+/// Implements a parameter validator for \ref pucch_processor_impl.
+class pucch_processor_validator_impl : public pucch_pdu_validator
+{
+public:
+  // See interface for documentation.
+  bool is_valid(const pucch_processor::format0_configuration& config) override { return true; }
+  bool is_valid(const pucch_processor::format1_configuration& config) override { return true; }
+  bool is_valid(const pucch_processor::format2_configuration& config) override { return true; }
+  bool is_valid(const pucch_processor::format3_configuration& config) override { return true; }
+  bool is_valid(const pucch_processor::format4_configuration& config) override { return true; }
+};
+
 /// Implementation of the PUCCH processor interface.
 class pucch_processor_impl : public pucch_processor
 {

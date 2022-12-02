@@ -218,6 +218,17 @@ add_custom_command(
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pusch_demodulator_test_data.tar.gz
         VERBATIM)
 
+add_executable(pusch_processor_validator_test pusch_processor_validator_test.cpp)
+target_link_libraries(pusch_processor_validator_test
+        srsgnb_channel_equalizer
+        srsgnb_channel_processors
+        srsgnb_phy_support
+        srslog
+        srsgnb_upper_phy_support
+        gtest
+        gtest_main)
+add_test(pusch_processor_validator_test pusch_processor_validator_test)
+
 add_executable(pusch_processor_vectortest pusch_processor_vectortest.cpp)
 target_link_libraries(pusch_processor_vectortest
         srsgnb_channel_equalizer

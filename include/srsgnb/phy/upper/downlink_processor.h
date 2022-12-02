@@ -77,6 +77,26 @@ public:
   virtual void finish_processing_pdus() = 0;
 };
 
+/// Downlink processor validation interface.
+class downlink_pdu_validator
+{
+public:
+  /// Default destructor.
+  virtual ~downlink_pdu_validator() = default;
+
+  /// \brief Validates SSB processor configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const ssb_processor::pdu_t& pdu) = 0;
+
+  /// \brief Validates PDCCH processor configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const pdcch_processor::pdu_t& pdu) = 0;
+
+  /// \brief Validates PDSCH processor configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const pdsch_processor::pdu_t& pdu) = 0;
+};
+
 /// Pool to access a downlink processor.
 class downlink_processor_pool
 {

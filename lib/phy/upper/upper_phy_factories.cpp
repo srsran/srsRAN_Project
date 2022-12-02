@@ -14,6 +14,7 @@
 #include "uplink_processor_pool_impl.h"
 #include "uplink_processor_single_executor_impl.h"
 #include "upper_phy_impl.h"
+#include "upper_phy_pdu_validators.h"
 #include "upper_phy_rx_results_notifier_wrapper.h"
 #include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
@@ -61,6 +62,12 @@ public:
         std::move(prach), std::move(pusch_proc), std::move(pucch_proc), executor);
   }
 
+  std::unique_ptr<uplink_pdu_validator> create_pdu_validator() override
+  {
+    return std::make_unique<uplink_processor_validator_impl>(
+        prach_factory->create_validator(), pucch_factory->create_validator(), pusch_factory->create_validator());
+  }
+
 private:
   std::shared_ptr<prach_detector_factory>  prach_factory;
   std::shared_ptr<pusch_processor_factory> pusch_factory;
@@ -99,6 +106,13 @@ public:
                                                                      std::move(ssb),
                                                                      std::make_unique<csi_rs_processor_dummy>(),
                                                                      *config.executor);
+  }
+
+  std::unique_ptr<downlink_pdu_validator> create_pdu_validator() override
+  {
+    return std::make_unique<downlink_processor_validator_impl>(ssb_proc_factory->create_validator(),
+                                                               pdcch_proc_factory->create_validator(),
+                                                               pdsch_proc_factory->create_validator());
   }
 
 private:

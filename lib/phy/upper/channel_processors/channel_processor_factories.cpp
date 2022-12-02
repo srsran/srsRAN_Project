@@ -160,6 +160,11 @@ public:
     return std::make_unique<pdcch_processor_impl>(
         encoder_factory->create(), modulator_factory->create(), dmrs_factory->create());
   }
+
+  std::unique_ptr<pdcch_pdu_validator> create_validator() override
+  {
+    return std::make_unique<pdcch_processor_validator_impl>();
+  }
 };
 
 class pdsch_encoder_factory_sw : public pdsch_encoder_factory
@@ -233,6 +238,11 @@ public:
     return std::make_unique<pdsch_processor_impl>(
         encoder_factory->create(), modulator_factory->create(), dmrs_factory->create());
   }
+
+  std::unique_ptr<pdsch_pdu_validator> create_validator() override
+  {
+    return std::make_unique<pdsch_processor_validator_impl>();
+  }
 };
 
 class prach_detector_factory_simple : public prach_detector_factory
@@ -261,6 +271,11 @@ public:
     idft_config.size                         = dft_size_detector;
     idft_config.dir                          = dft_processor::direction::INVERSE;
     return std::make_unique<prach_detector_simple_impl>(dft_factory->create(idft_config), prach_gen_factory->create());
+  }
+
+  std::unique_ptr<prach_detector_validator> create_validator() override
+  {
+    return std::make_unique<prach_detector_validator_impl>();
   }
 };
 
@@ -342,6 +357,11 @@ public:
                                                   demodulator_factory->create(),
                                                   decoder_factory->create(),
                                                   channel_estimate_dimensions);
+  }
+
+  std::unique_ptr<pucch_pdu_validator> create_validator() override
+  {
+    return std::make_unique<pucch_processor_validator_impl>();
   }
 
 private:
@@ -441,6 +461,11 @@ public:
     return std::make_unique<pusch_processor_impl>(config);
   }
 
+  std::unique_ptr<pusch_pdu_validator> create_validator() override
+  {
+    return std::make_unique<pusch_processor_validator_impl>(ch_estimate_dimensions);
+  }
+
 private:
   std::shared_ptr<dmrs_pusch_estimator_factory> estimator_factory;
   std::shared_ptr<pusch_demodulator_factory>    demodulator_factory;
@@ -477,6 +502,11 @@ public:
     config.sss       = sss_factory->create();
 
     return std::make_unique<ssb_processor_impl>(std::move(config));
+  }
+
+  std::unique_ptr<ssb_pdu_validator> create_validator() override
+  {
+    return std::make_unique<ssb_processor_validator_impl>();
   }
 
 private:

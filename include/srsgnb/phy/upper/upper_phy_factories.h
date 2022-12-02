@@ -40,6 +40,10 @@ public:
   /// \param[in] config Contains the configuration to create the uplink processor.
   /// \return A unique pointer to the new uplink processor if successful or \c nullptr otherwise.
   virtual std::unique_ptr<uplink_processor> create(const uplink_processor_config& config) = 0;
+
+  /// \brief Creates an uplink PDU validator.
+  /// \return A unique pointer to the new uplink PDU validator if successful or \c nullptr otherwise.
+  virtual std::unique_ptr<uplink_pdu_validator> create_pdu_validator() = 0;
 };
 
 /// Describes all uplink processors in a pool.
@@ -81,6 +85,10 @@ public:
 
   /// \brief Creates a return a downlink processor.
   virtual std::unique_ptr<downlink_processor> create(const downlink_processor_config& config) = 0;
+
+  /// \brief Creates an downlink PDU validator.
+  /// \return A unique pointer to the new downlink PDU validator if successful or \c nullptr otherwise.
+  virtual std::unique_ptr<downlink_pdu_validator> create_pdu_validator() = 0;
 };
 
 /// Downlink processor software factory configuration.

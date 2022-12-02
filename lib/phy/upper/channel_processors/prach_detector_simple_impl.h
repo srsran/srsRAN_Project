@@ -19,6 +19,14 @@
 
 namespace srsgnb {
 
+/// Implements a parameter validator for \ref prach_detector_simple_impl.
+class prach_detector_validator_impl : public prach_detector_validator
+{
+public:
+  // See interface for documentation.
+  bool is_valid(const prach_detector::configuration& config) override { return true; }
+};
+
 /// \brief Implements a simple PRACH detector.
 ///
 /// Detects PRACH sequences in frequency-domain buffers using a matched filter correlation. It determines the detection

@@ -14,6 +14,82 @@
 
 using namespace srsgnb;
 
+bool pusch_processor_validator_impl::is_valid(const pusch_processor::pdu_t& pdu) const
+{
+  unsigned nof_symbols_slot = get_nsymb_per_slot(pdu.cp);
+
+  // The BWP size exceeds the grid size.
+  if ((pdu.bwp_start_rb + pdu.bwp_size_rb) > ce_dims.nof_prb) {
+    return false;
+  }
+
+  // The implementation only works with a single transmit layer.
+  if (pdu.nof_tx_layers > ce_dims.nof_tx_layers) {
+    return false;
+  }
+
+  // The implementation only accepts one receive port.
+  if (pdu.rx_ports.size() > ce_dims.nof_rx_ports) {
+    return false;
+  }
+
+  // The frequency allocation is not compatible with the BWP parameters.
+  if (!pdu.freq_alloc.is_bwp_valid(pdu.bwp_start_rb, pdu.bwp_size_rb)) {
+    return false;
+  }
+
+  // CSI-Part1 multiplexing is not supported.
+  if (pdu.uci.nof_csi_part1 != 0) {
+    return false;
+  }
+
+  // CSI-Part2 multiplexing is not supported.
+  if (pdu.uci.nof_csi_part2 != 0) {
+    return false;
+  }
+
+  // The number of symbols carrying DM-RS must be greater than zero.
+  if (pdu.dmrs_symbol_mask.size() != nof_symbols_slot) {
+    return false;
+  }
+
+  // The number of symbols carrying DM-RS must be greater than zero.
+  if (pdu.dmrs_symbol_mask.count() == 0) {
+    return false;
+  }
+
+  // The index of the first OFDM symbol carrying DM-RS shall be equal to or greater than the first symbol allocated to
+  // transmission.
+  int first_dmrs_symbol_index = pdu.dmrs_symbol_mask.find_lowest(true);
+  if (static_cast<unsigned>(first_dmrs_symbol_index) < pdu.start_symbol_index) {
+    return false;
+  }
+
+  // The index of the last OFDM symbol carrying DM-RS shall not be larger than the last symbol allocated to
+  // transmission.
+  int last_dmrs_symbol_index = pdu.dmrs_symbol_mask.find_highest(true);
+  if (static_cast<unsigned>(last_dmrs_symbol_index) >= (pdu.start_symbol_index + pdu.nof_symbols)) {
+    return false;
+  }
+
+  // None of the occupied symbols must exceed the slot size.
+  if (nof_symbols_slot < (pdu.start_symbol_index + pdu.nof_symbols)) {
+    return false;
+  }
+
+  // Only DM-RS Type 1 is supported.
+  if (pdu.dmrs != dmrs_type::TYPE1) {
+    return false;
+  }
+
+  // Only two CDM groups without data is supported.
+  if (pdu.nof_cdm_groups_without_data != 2) {
+    return false;
+  }
+
+  return true;
+}
+
 pusch_processor_impl::pusch_processor_impl(pusch_processor_configuration& config) :
   estimator(std::move(config.estimator)),
   demodulator(std::move(config.demodulator)),
@@ -34,14 +110,32 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
                                                      const resource_grid_reader&   grid,
                                                      const pusch_processor::pdu_t& pdu)
 {
+  // Make sure the configuration is supported.
+  srsgnb_assert((pdu.bwp_start_rb + pdu.bwp_size_rb) <= ch_estimate.size().nof_prb,
+                "The sum of the BWP start (i.e., {}) and size (i.e., {}) exceeds the maximum grid size (i.e., {} PRB).",
+                pdu.bwp_start_rb,
+                pdu.bwp_size_rb,
+                ch_estimate.size().nof_prb);
+  srsgnb_assert(pdu.dmrs == dmrs_type::TYPE1, "Only DM-RS Type 1 is currently supported.");
+  srsgnb_assert(pdu.nof_cdm_groups_without_data == 2, "Only two CDM groups without data are currently supported.");
+  srsgnb_assert(
+      pdu.nof_tx_layers <= ch_estimate.size().nof_tx_layers,
+      "The number of transmit layers (i.e., {}) exceeds the maximum number of transmission layers (i.e., {}).",
+      pdu.nof_tx_layers,
+      ch_estimate.size().nof_tx_layers);
+  srsgnb_assert(pdu.rx_ports.size() <= ch_estimate.size().nof_rx_ports,
+                "The number of receive ports (i.e., {}) exceeds the maximum number of receive ports (i.e., {}).",
+                pdu.rx_ports.size(),
+                ch_estimate.size().nof_rx_ports);
+
   pusch_processor_result result;
 
   // Number of RB used by this transmission.
   unsigned nof_rb = pdu.freq_alloc.get_nof_rb();
 
   // Calculate the total number of DM-RS per PRB.
-  unsigned nof_dmrs_per_prb = pdu.dmrs.nof_dmrs_per_rb() * pdu.nof_cdm_groups_without_data *
-                              std::count(pdu.dmrs_symbol_mask.begin(), pdu.dmrs_symbol_mask.end(), true);
+  unsigned nof_dmrs_per_prb =
+      pdu.dmrs.nof_dmrs_per_rb() * pdu.nof_cdm_groups_without_data * pdu.dmrs_symbol_mask.count();
 
   // Calculate the number of data RE per PRB.
   unsigned nof_re_per_prb = NRE * pdu.nof_symbols - nof_dmrs_per_prb;
@@ -55,24 +149,10 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   // Get RB mask relative to Point A. It assumes PUSCH is never interleaved.
   bounded_bitset<MAX_RB> rb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
-  // Estimate channel.
-  dmrs_pusch_estimator::configuration ch_est_config;
-  ch_est_config.slot          = pdu.slot;
-  ch_est_config.type          = pdu.dmrs;
-  ch_est_config.scrambling_id = pdu.scrambling_id;
-  ch_est_config.n_scid        = pdu.n_scid;
-  ch_est_config.scaling       = convert_dB_to_amplitude(-get_sch_to_dmrs_ratio_dB(pdu.nof_cdm_groups_without_data));
-  ch_est_config.c_prefix      = pdu.cp;
-  ch_est_config.symbols_mask  = pdu.dmrs_symbol_mask;
-  ch_est_config.rb_mask       = rb_mask;
-  ch_est_config.first_symbol  = pdu.start_symbol_index;
-  ch_est_config.nof_symbols   = pdu.nof_symbols;
-  ch_est_config.nof_tx_layers = pdu.nof_tx_layers;
-  ch_est_config.rx_ports.assign(pdu.rx_ports.begin(), pdu.rx_ports.end());
-  estimator->estimate(ch_estimate, grid, ch_est_config);
-
-  // Fill result channel state information.
-  result.csi = ch_estimate.get_channel_state_information();
+  // Convert DM-RS symbol mask to array.
+  std::array<bool, MAX_NSYMB_PER_SLOT> dmrs_symbol_mask = {};
+  pdu.dmrs_symbol_mask.for_each(
+      0, pdu.dmrs_symbol_mask.size(), [&dmrs_symbol_mask](unsigned i_symb) { dmrs_symbol_mask[i_symb] = true; });
 
   // Get UL-SCH information.
   ulsch_configuration ulsch_config;
@@ -89,11 +169,29 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   ulsch_config.start_symbol_index    = pdu.start_symbol_index;
   ulsch_config.nof_symbols           = pdu.nof_symbols;
   ulsch_config.dmrs_type             = pdu.dmrs == dmrs_type::TYPE1 ? dmrs_config_type::type1 : dmrs_config_type::type2;
-  ulsch_config.dmrs_symbol_mask =
-      bounded_bitset<MAX_NSYMB_PER_SLOT>(pdu.dmrs_symbol_mask.begin(), pdu.dmrs_symbol_mask.end());
+  ulsch_config.dmrs_symbol_mask      = pdu.dmrs_symbol_mask;
   ulsch_config.nof_cdm_groups_without_data = pdu.nof_cdm_groups_without_data;
   ulsch_config.nof_layers                  = pdu.nof_tx_layers;
   ulsch_information info                   = get_ulsch_information(ulsch_config);
+
+  // Estimate channel.
+  dmrs_pusch_estimator::configuration ch_est_config;
+  ch_est_config.slot          = pdu.slot;
+  ch_est_config.type          = pdu.dmrs;
+  ch_est_config.scrambling_id = pdu.scrambling_id;
+  ch_est_config.n_scid        = pdu.n_scid;
+  ch_est_config.scaling       = convert_dB_to_amplitude(-get_sch_to_dmrs_ratio_dB(pdu.nof_cdm_groups_without_data));
+  ch_est_config.c_prefix      = pdu.cp;
+  ch_est_config.symbols_mask  = dmrs_symbol_mask;
+  ch_est_config.rb_mask       = rb_mask;
+  ch_est_config.first_symbol  = pdu.start_symbol_index;
+  ch_est_config.nof_symbols   = pdu.nof_symbols;
+  ch_est_config.nof_tx_layers = pdu.nof_tx_layers;
+  ch_est_config.rx_ports.assign(pdu.rx_ports.begin(), pdu.rx_ports.end());
+  estimator->estimate(ch_estimate, grid, ch_est_config);
+
+  // Fill result channel state information.
+  result.csi = ch_estimate.get_channel_state_information();
 
   // Prepare demultiplex message information.
   ulsch_demultiplex::message_information demux_msg_info;
@@ -123,7 +221,7 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   demod_config.modulation                  = pdu.mcs_descr.modulation;
   demod_config.start_symbol_index          = pdu.start_symbol_index;
   demod_config.nof_symbols                 = pdu.nof_symbols;
-  demod_config.dmrs_symb_pos               = pdu.dmrs_symbol_mask;
+  demod_config.dmrs_symb_pos               = dmrs_symbol_mask;
   demod_config.dmrs_config_type            = pdu.dmrs;
   demod_config.nof_cdm_groups_without_data = pdu.nof_cdm_groups_without_data;
   demod_config.n_id                        = pdu.n_id;

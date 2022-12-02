@@ -36,6 +36,34 @@ struct pusch_processor_configuration {
   channel_estimate::channel_estimate_dimensions ce_dims;
 };
 
+/// Implements a parameter validator for \ref pusch_processor_impl.
+class pusch_processor_validator_impl : public pusch_pdu_validator
+{
+public:
+  /// \brief Constructs PUSCH processor validator.
+  ///
+  /// It requires channel estimate dimensions to limit the bandwidth, slot duration, number of receive ports and
+  /// transmit layers.
+  ///
+  /// \param[in] ce_dims_ Provides the channel estimates dimensions.
+  explicit pusch_processor_validator_impl(const channel_estimate::channel_estimate_dimensions& ce_dims_) :
+    ce_dims(ce_dims_)
+  {
+    srsgnb_assert(
+        (ce_dims.nof_prb > 0) && (ce_dims.nof_prb <= MAX_RB), "Invalid number of PRB (i.e. {}).", ce_dims.nof_prb);
+    srsgnb_assert((ce_dims.nof_symbols > 0) && (ce_dims.nof_symbols <= MAX_NSYMB_PER_SLOT),
+                  "Invalid number of OFDM symbols.");
+    srsgnb_assert(ce_dims.nof_rx_ports == 1, "Only one receive port is currently supported.");
+    srsgnb_assert(ce_dims.nof_tx_layers == 1, "Only one transmit layer is currently supported.");
+  }
+
+  // See interface for documentation.
+  bool is_valid(const pusch_processor::pdu_t& pdu) const override;
+
+private:
+  channel_estimate::channel_estimate_dimensions ce_dims;
+};
+
 /// Implements a generic software PUSCH processor.
 class pusch_processor_impl : public pusch_processor
 {

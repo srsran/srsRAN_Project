@@ -137,4 +137,16 @@ public:
   virtual void process(resource_grid_writer& grid, const pdu_t& pdu) = 0;
 };
 
+/// \brief Describes the PDCCH processor validator interface.
+class pdcch_pdu_validator
+{
+public:
+  /// Default destructor.
+  virtual ~pdcch_pdu_validator() = default;
+
+  /// \brief Validates PDCCH processor configuration parameters.
+  /// \return True if the parameters contained in \c pdu are supported, false otherwise.
+  virtual bool is_valid(const pdcch_processor::pdu_t& pdu) const = 0;
+};
+
 } // namespace srsgnb

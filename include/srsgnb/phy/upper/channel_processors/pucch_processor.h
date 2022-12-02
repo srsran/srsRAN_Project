@@ -175,6 +175,34 @@ public:
   virtual pucch_processor_result process(const resource_grid_reader& grid, const format4_configuration& config) = 0;
 };
 
+/// \brief Describes the PUCCH processor validator interface.
+class pucch_pdu_validator
+{
+public:
+  /// Default destructor.
+  virtual ~pucch_pdu_validator() = default;
+
+  /// \brief Validates PUCCH Format 0 configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const pucch_processor::format0_configuration& config) = 0;
+
+  /// \brief Validates PUCCH Format 1 configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const pucch_processor::format1_configuration& config) = 0;
+
+  /// \brief Validates PUCCH Format 2 configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const pucch_processor::format2_configuration& config) = 0;
+
+  /// \brief Validates PUCCH Format 3 configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const pucch_processor::format3_configuration& config) = 0;
+
+  /// \brief Validates PUCCH Format 4 configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const pucch_processor::format4_configuration& config) = 0;
+};
+
 } // namespace srsgnb
 
 namespace fmt {

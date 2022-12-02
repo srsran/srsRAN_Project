@@ -27,6 +27,14 @@ struct pdcch_processor_config_t {
   std::unique_ptr<dmrs_pdcch_processor> dmrs;
 };
 
+/// Implements a parameter validator for \ref pdcch_processor_impl.
+class pdcch_processor_validator_impl : public pdcch_pdu_validator
+{
+public:
+  // See interface for documentation.
+  bool is_valid(const pdcch_processor::pdu_t& pdu) const override { return true; }
+};
+
 /// Describes a generic PDCCH processor.
 class pdcch_processor_impl : public pdcch_processor
 {

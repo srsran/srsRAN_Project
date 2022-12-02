@@ -96,7 +96,7 @@ public:
     /// Port indexes the PUSCH reception is mapped to.
     static_vector<uint8_t, MAX_PORTS> rx_ports;
     /// Indicates which symbol in the slot transmit DMRS.
-    std::array<bool, MAX_NSYMB_PER_SLOT> dmrs_symbol_mask;
+    bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask;
     /// Indicates the DMRS type.
     dmrs_type dmrs;
     /// \brief Parameter \f$N^{n_{SCID}}_{ID}\f$ TS 38.211 section 6.4.1.1.1.
@@ -141,6 +141,18 @@ public:
   /// \param[in] pdu Provides the necessary parameters to process the PUSCH transmission.
   virtual pusch_processor_result
   process(span<uint8_t> data, rx_softbuffer& softbuffer, const resource_grid_reader& grid, const pdu_t& pdu) = 0;
+};
+
+/// \brief Describes the PUSCH processor validator interface.
+class pusch_pdu_validator
+{
+public:
+  /// Default destructor.
+  virtual ~pusch_pdu_validator() = default;
+
+  /// \brief Validates PUSCH processor configuration parameters.
+  /// \return True if the parameters contained in \c pdu are supported, false otherwise.
+  virtual bool is_valid(const pusch_processor::pdu_t& pdu) const = 0;
 };
 
 } // namespace srsgnb
@@ -222,7 +234,7 @@ struct formatter<srsgnb::pusch_processor::pdu_t> {
                      pdu.codeword,
                      pdu.uci,
                      pdu.n_id,
-                     srsgnb::span<const bool>(pdu.dmrs_symbol_mask),
+                     pdu.dmrs_symbol_mask,
                      pdu.scrambling_id,
                      pdu.n_scid,
                      pdu.nof_cdm_groups_without_data,

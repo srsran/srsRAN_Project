@@ -106,6 +106,42 @@ public:
   process_pucch(upper_phy_rx_results_notifier& notifier, const resource_grid_reader& grid, const pucch_pdu& pdu) = 0;
 };
 
+/// Uplink processor validation interface.
+class uplink_pdu_validator
+{
+public:
+  /// Default destructor.
+  virtual ~uplink_pdu_validator() = default;
+
+  /// \brief Validates PRACH detector configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const prach_detector::configuration& config) = 0;
+
+  /// \brief Validates PUCCH Format 0 configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const pucch_processor::format0_configuration& config) = 0;
+
+  /// \brief Validates PUCCH Format 1 configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const pucch_processor::format1_configuration& config) = 0;
+
+  /// \brief Validates PUCCH Format 2 configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const pucch_processor::format2_configuration& config) = 0;
+
+  /// \brief Validates PUCCH Format 3 configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const pucch_processor::format3_configuration& config) = 0;
+
+  /// \brief Validates PUCCH Format 4 configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const pucch_processor::format4_configuration& config) = 0;
+
+  /// \brief Validates PUSCH configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const pusch_processor::pdu_t& pdu) = 0;
+};
+
 /// \brief Pool of uplink processors.
 ///
 /// This interface manages the access to the available uplink processors.

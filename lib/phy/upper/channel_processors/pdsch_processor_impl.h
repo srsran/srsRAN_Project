@@ -16,6 +16,14 @@
 
 namespace srsgnb {
 
+/// Implements a parameter validator for \ref pdsch_processor_impl.
+class pdsch_processor_validator_impl : public pdsch_pdu_validator
+{
+public:
+  // See interface for documentation.
+  bool is_valid(const pdsch_processor::pdu_t& pdu) const override { return true; }
+};
+
 /// Describes a generic PDSCH processor.
 class pdsch_processor_impl : public pdsch_processor
 {

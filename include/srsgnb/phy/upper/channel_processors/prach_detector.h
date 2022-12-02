@@ -57,4 +57,16 @@ public:
   virtual prach_detection_result detect(const prach_buffer& input, const configuration& config) = 0;
 };
 
+/// \brief Describes the PRACH detector validator interface.
+class prach_detector_validator
+{
+public:
+  /// Default destructor.
+  virtual ~prach_detector_validator() = default;
+
+  /// \brief Validates PRACH detector configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const prach_detector::configuration& config) = 0;
+};
+
 } // namespace srsgnb

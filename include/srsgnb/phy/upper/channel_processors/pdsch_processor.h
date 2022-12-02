@@ -146,4 +146,16 @@ public:
                        const pdu_t&                                                 pdu) = 0;
 };
 
+/// \brief Describes the PDSCH processor validator interface.
+class pdsch_pdu_validator
+{
+public:
+  /// Default destructor.
+  virtual ~pdsch_pdu_validator() = default;
+
+  /// \brief Validates PDSCH processor configuration parameters.
+  /// \return True if the parameters contained in \c pdu are supported, false otherwise.
+  virtual bool is_valid(const pdsch_processor::pdu_t& pdu) const = 0;
+};
+
 } // namespace srsgnb

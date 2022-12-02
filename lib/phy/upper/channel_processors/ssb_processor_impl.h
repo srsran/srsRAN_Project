@@ -27,6 +27,14 @@ struct ssb_processor_config {
   std::unique_ptr<sss_processor>       sss;
 };
 
+/// Implements a parameter validator for \ref ssb_processor_impl.
+class ssb_processor_validator_impl : public ssb_pdu_validator
+{
+public:
+  // See interface for documentation.
+  bool is_valid(const ssb_processor::pdu_t& pdu) const override { return true; }
+};
+
 class ssb_processor_impl : public ssb_processor
 {
 private:

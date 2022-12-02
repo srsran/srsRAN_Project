@@ -68,4 +68,16 @@ public:
   virtual void process(const pdu_t& pdu, resource_grid_writer& grid) = 0;
 };
 
+/// \brief Describes the SSB processor validator interface.
+class ssb_pdu_validator
+{
+public:
+  /// Default destructor.
+  virtual ~ssb_pdu_validator() = default;
+
+  /// \brief Validates SSB processor configuration parameters.
+  /// \return True if the parameters contained in \c pdu are supported, false otherwise.
+  virtual bool is_valid(const ssb_processor::pdu_t& pdu) const = 0;
+};
+
 } // namespace srsgnb

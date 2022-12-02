@@ -91,8 +91,9 @@ create_pdcch_encoder_factory_sw(std::shared_ptr<crc_calculator_factory> crc_fact
 class pdcch_processor_factory
 {
 public:
-  virtual ~pdcch_processor_factory()                = default;
-  virtual std::unique_ptr<pdcch_processor> create() = 0;
+  virtual ~pdcch_processor_factory()                              = default;
+  virtual std::unique_ptr<pdcch_processor>     create()           = 0;
+  virtual std::unique_ptr<pdcch_pdu_validator> create_validator() = 0;
 };
 
 std::shared_ptr<pdcch_processor_factory>
@@ -129,8 +130,9 @@ std::shared_ptr<pdsch_modulator_factory>
 class pdsch_processor_factory
 {
 public:
-  virtual ~pdsch_processor_factory()                = default;
-  virtual std::unique_ptr<pdsch_processor> create() = 0;
+  virtual ~pdsch_processor_factory()                              = default;
+  virtual std::unique_ptr<pdsch_processor>     create()           = 0;
+  virtual std::unique_ptr<pdsch_pdu_validator> create_validator() = 0;
 };
 
 std::shared_ptr<pdsch_processor_factory>
@@ -141,8 +143,9 @@ create_pdsch_processor_factory_sw(std::shared_ptr<pdsch_encoder_factory>        
 class prach_detector_factory
 {
 public:
-  virtual ~prach_detector_factory()                = default;
-  virtual std::unique_ptr<prach_detector> create() = 0;
+  virtual ~prach_detector_factory()                                    = default;
+  virtual std::unique_ptr<prach_detector>           create()           = 0;
+  virtual std::unique_ptr<prach_detector_validator> create_validator() = 0;
 };
 
 std::shared_ptr<prach_detector_factory>
@@ -186,8 +189,9 @@ create_pucch_detector_factory_sw(std::shared_ptr<low_papr_sequence_collection_fa
 class pucch_processor_factory
 {
 public:
-  virtual ~pucch_processor_factory()                = default;
-  virtual std::unique_ptr<pucch_processor> create() = 0;
+  virtual ~pucch_processor_factory()                              = default;
+  virtual std::unique_ptr<pucch_processor>     create()           = 0;
+  virtual std::unique_ptr<pucch_pdu_validator> create_validator() = 0;
 };
 
 std::shared_ptr<pucch_processor_factory>
@@ -228,8 +232,9 @@ create_pusch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>  
 class pusch_processor_factory
 {
 public:
-  virtual ~pusch_processor_factory()                = default;
-  virtual std::unique_ptr<pusch_processor> create() = 0;
+  virtual ~pusch_processor_factory()                              = default;
+  virtual std::unique_ptr<pusch_processor>     create()           = 0;
+  virtual std::unique_ptr<pusch_pdu_validator> create_validator() = 0;
 };
 
 struct pusch_processor_factory_sw_configuration {
@@ -247,8 +252,9 @@ create_pusch_processor_factory_sw(pusch_processor_factory_sw_configuration& conf
 class ssb_processor_factory
 {
 public:
-  virtual ~ssb_processor_factory()                = default;
-  virtual std::unique_ptr<ssb_processor> create() = 0;
+  virtual ~ssb_processor_factory()                              = default;
+  virtual std::unique_ptr<ssb_processor>     create()           = 0;
+  virtual std::unique_ptr<ssb_pdu_validator> create_validator() = 0;
 };
 
 struct ssb_processor_factory_sw_configuration {
