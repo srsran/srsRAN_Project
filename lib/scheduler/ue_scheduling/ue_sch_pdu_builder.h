@@ -41,6 +41,7 @@ void build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,
 void build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
                              rnti_t                              rnti,
                              const cell_configuration&           cell_cfg,
+                             const ue_cell_configuration&        ue_cell_cfg,
                              const bwp_uplink_common&            ul_bwp,
                              const dci_0_0_c_rnti_configuration& dci_cfg,
                              bool                                is_new_data);

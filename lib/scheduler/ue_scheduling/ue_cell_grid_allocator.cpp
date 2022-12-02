@@ -278,7 +278,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
       build_pusch_f0_0_c_rnti(
-          msg.pusch_cfg, u.crnti, cell_cfg, bwp_ul_cmn, pdcch->dci.c_rnti_f0_0, h_ul.tb().nof_retxs == 0);
+          msg.pusch_cfg, u.crnti, cell_cfg, ue_cell_cfg, bwp_ul_cmn, pdcch->dci.c_rnti_f0_0, h_ul.tb().nof_retxs == 0);
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI format");

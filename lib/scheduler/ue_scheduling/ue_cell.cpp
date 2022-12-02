@@ -38,7 +38,7 @@ unsigned ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_byte
 
   dmrs_information dmrs_info = make_dmrs_info_common(
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
-  // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, if this is set; else nof_oh_prb = 0.
+  // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
   unsigned       nof_oh_prb = cfg().cfg_dedicated().pdsch_serv_cell_cfg.has_value()
                                   ? static_cast<unsigned>(cfg().cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
@@ -64,12 +64,12 @@ unsigned ue_cell::required_ul_prbs(unsigned time_resource, unsigned pending_byte
 
   dmrs_information dmrs_info = make_dmrs_info_common(
       *cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
-  // According to TS 38.214, Section 6.1.4.2, nof_oh_prb is set equal to xOverhead, if this is set; else nof_oh_prb = 0.
+  // According to TS 38.214, Section 6.1.4.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
   unsigned       nof_oh_prb = cfg().cfg_dedicated().pdsch_serv_cell_cfg.has_value()
                                   ? static_cast<unsigned>(cfg().cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
                                   : static_cast<unsigned>(x_overhead::not_set);
-  pdsch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_pdsch_config{
+  pdsch_prbs_tbs prbs_tbs   = get_nof_prbs(prbs_calculator_pdsch_config{
       pending_bytes,
       (unsigned)cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[time_resource]
           .symbols.length(),

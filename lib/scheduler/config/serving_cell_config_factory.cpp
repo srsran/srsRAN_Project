@@ -55,7 +55,7 @@ coreset_configuration srsgnb::config_helpers::make_default_coreset_config(const 
 /// \remark See TS 38.213, Table 13-1.
 coreset_configuration srsgnb::config_helpers::make_default_coreset0_config(const cell_config_builder_params& params)
 {
-  coreset_configuration cfg = make_default_coreset_config(params);
+  coreset_configuration cfg                          = make_default_coreset_config(params);
   cfg.id                                             = to_coreset_id(0);
   min_channel_bandwidth               min_channel_bw = band_helper::get_min_channel_bw(params.band, params.scs_common);
   pdcch_type0_css_coreset_description desc =

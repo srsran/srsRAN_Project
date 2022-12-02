@@ -41,10 +41,14 @@ void srsgnb::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
                                       const cell_configuration&            cell_cfg,
                                       const dci_1_0_tc_rnti_configuration& dci_cfg)
 {
-  static constexpr pdsch_mcs_table mcs_table        = pdsch_mcs_table::qam64;
-  static constexpr unsigned        tb_scaling_field = 0; // TODO
-  static constexpr unsigned        nof_oh_prb       = 0; // TODO
-  static constexpr unsigned        nof_layers       = 1;
+  static constexpr pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
+  // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
+  static constexpr unsigned tb_scaling_field = 0;
+  // As per TS 38.214, Section 5.1.3.2, nof_oh_prb by \c xOverhead, defined in \c PDSCH-ServingCellConfig, TS 38.331; it
+  // is in the dedicated resources, configured the after DCI Format 1-0 TC-RNTI is used. Hence, nof_oh_prb is here set
+  // as 0.
+  static constexpr unsigned nof_oh_prb = 0;
+  static constexpr unsigned nof_layers = 1;
 
   pdsch.rnti = rnti;
 
@@ -97,10 +101,10 @@ void srsgnb::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
                                      const search_space_configuration&   ss_cfg,
                                      const dci_1_0_c_rnti_configuration& dci_cfg)
 {
-  static constexpr pdsch_mcs_table mcs_table        = pdsch_mcs_table::qam64;
-  static constexpr unsigned        tb_scaling_field = 0; // TODO.
-  static constexpr unsigned        nof_oh_prb       = 0; // TODO.
-  static constexpr unsigned        nof_layers       = 1;
+  static constexpr pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
+  // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
+  static constexpr unsigned tb_scaling_field = 0;
+  static constexpr unsigned nof_layers       = 1;
 
   const cell_configuration&    cell_cfg = ue_cell_cfg.cell_cfg_common;
   const coreset_configuration& cs_cfg   = ue_cell_cfg.coreset(ss_cfg.cs_id);
@@ -132,7 +136,12 @@ void srsgnb::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   cw.mcs_table                   = mcs_table;
   sch_mcs_description mcs_config = pdsch_mcs_get_config(mcs_table, cw.mcs_index);
   cw.mcs_descr                   = mcs_config;
-  cw.tb_size_bytes = tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pdsch.symbols.length(),
+  // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
+  // NOTE: x_overhead::not_set is mapped to 0.
+  unsigned nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
+                            ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
+                            : static_cast<unsigned>(x_overhead::not_set);
+  cw.tb_size_bytes    = tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pdsch.symbols.length(),
                                                                            calculate_nof_dmrs_per_rb(pdsch.dmrs),
                                                                            nof_oh_prb,
                                                                            mcs_config,
@@ -148,10 +157,13 @@ void srsgnb::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
                                       const dci_0_0_tc_rnti_configuration& dci_cfg,
                                       bool                                 is_new_data)
 {
-  static constexpr pusch_mcs_table mcs_table        = pusch_mcs_table::qam64;
-  static constexpr unsigned        nof_layers       = 1;
-  static constexpr unsigned        nof_oh_prb       = 0;
-  static constexpr unsigned        tb_scaling_field = 0;
+  static constexpr pusch_mcs_table mcs_table  = pusch_mcs_table::qam64;
+  static constexpr unsigned        nof_layers = 1;
+  // As per TS 38.214, Section 6.1.4.2, nof_oh_prb by \c xOverhead, defined in \c PUSCH-ServingCellConfig, TS 38.331; it
+  // is in the dedicated resources, configured the after DCI Format 0-0 TC-RNTI is used. Hence, nof_oh_prb is here set
+  // as 0.
+  static constexpr unsigned nof_oh_prb       = 0;
+  static constexpr unsigned tb_scaling_field = 0;
 
   // TODO.
   pusch.intra_slot_freq_hopping    = false;
@@ -206,14 +218,16 @@ void srsgnb::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
 void srsgnb::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
                                      rnti_t                              rnti,
                                      const cell_configuration&           cell_cfg,
+                                     const ue_cell_configuration&        ue_cell_cfg,
                                      const bwp_uplink_common&            ul_bwp,
                                      const dci_0_0_c_rnti_configuration& dci_cfg,
                                      bool                                is_new_data)
 {
-  static constexpr pusch_mcs_table mcs_table        = pusch_mcs_table::qam64;
-  static constexpr unsigned        nof_layers       = 1;
-  static constexpr unsigned        nof_oh_prb       = 0;
-  static constexpr unsigned        tb_scaling_field = 0;
+  static constexpr pusch_mcs_table mcs_table  = pusch_mcs_table::qam64;
+  static constexpr unsigned        nof_layers = 1;
+  // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
+  // used for DCI Format 1-0.
+  static constexpr unsigned tb_scaling_field = 0;
 
   // TODO.
   pusch.intra_slot_freq_hopping    = false;
@@ -244,7 +258,12 @@ void srsgnb::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
   pusch.pusch_dmrs_id       = cell_cfg.pci;
 
   // TBS.
-  pusch.nof_layers    = nof_layers;
+  pusch.nof_layers = nof_layers;
+  // According to TS 38.214, Section 6.1.4.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
+  // NOTE: x_overhead::not_set is mapped to 0.
+  unsigned nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
+                            ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
+                            : static_cast<unsigned>(x_overhead::not_set);
   pusch.tb_size_bytes = tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pusch.symbols.length(),
                                                                               calculate_nof_dmrs_per_rb(pusch.dmrs),
                                                                               nof_oh_prb,
