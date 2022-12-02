@@ -19,8 +19,6 @@ f1ap_du_ue_context_setup_procedure::f1ap_du_ue_context_setup_procedure(
     f1ap_du_ue&                                   ue_) :
   ue(ue_)
 {
-  using namespace asn1::f1ap;
-
   // Construct DU request.
   du_request.ue_index = ue.context.ue_index;
   for (const auto& srb : msg->srbs_to_be_setup_list.value) {

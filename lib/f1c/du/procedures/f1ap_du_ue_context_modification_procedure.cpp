@@ -19,8 +19,6 @@ f1ap_du_ue_context_modification_procedure::f1ap_du_ue_context_modification_proce
     f1ap_du_ue&                                 ue_) :
   ue(ue_)
 {
-  using namespace asn1::f1ap;
-
   // Construct DU request.
   du_request.ue_index = ue.context.ue_index;
   for (const auto& srb : msg->srbs_to_be_setup_mod_list.value) {
@@ -55,8 +53,6 @@ void f1ap_du_ue_context_modification_procedure::operator()(coro_context<async_ta
 
 void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_response()
 {
-  using namespace asn1::f1ap;
-
   f1c_message f1c_msg;
 
   f1c_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
@@ -107,8 +103,6 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
 
 void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_failure()
 {
-  using namespace asn1::f1ap;
-
   f1c_message f1c_msg;
   f1c_msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
   ue_context_mod_fail_s& resp = f1c_msg.pdu.unsuccessful_outcome().value.ue_context_mod_fail();
