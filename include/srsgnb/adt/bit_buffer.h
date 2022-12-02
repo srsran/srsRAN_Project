@@ -205,7 +205,7 @@ private:
   size_t current_size;
 };
 
-/// \brief Implements a bit buffer that uses dynamic memory.
+/// \brief Implements a bit buffer that uses static memory.
 /// \tparam SizeInBits Maximum size in bits.
 template <unsigned SizeInBits>
 class static_bit_buffer : public bit_buffer
