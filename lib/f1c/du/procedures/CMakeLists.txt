@@ -10,6 +10,7 @@ set(SOURCES
         gnb_cu_configuration_update_procedure.cpp
         f1ap_du_setup_procedure.cpp
         f1ap_du_ue_context_setup_procedure.cpp
+        f1ap_du_ue_context_modification_procedure.cpp
         )
 
 add_library(srsgnb_f1c_du_procedures STATIC ${SOURCES})
