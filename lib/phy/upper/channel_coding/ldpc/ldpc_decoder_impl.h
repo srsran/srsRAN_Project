@@ -152,18 +152,4 @@ class ldpc_decoder_generic : public ldpc_decoder_impl
   ///@}
 };
 
-/// LDPC decoder implementation based on AVX2 intrinsics.
-class ldpc_decoder_avx2 : public ldpc_decoder_impl
-{
-  void        select_strategy() override { not_implemented(__func__); }
-  void        load_soft_bits(span<const log_likelihood_ratio> /*nn*/) override { not_implemented(__func__); }
-  void        update_variable_to_check_messages(unsigned /*nn*/) override { not_implemented(__func__); }
-  void        update_check_to_variable_messages(unsigned /*nn*/) override { not_implemented(__func__); }
-  void        update_soft_bits(unsigned /*nn*/) override { not_implemented(__func__); }
-  void        get_hard_bits(span<uint8_t> /*nn*/) override { not_implemented(__func__); }
-  static void not_implemented(const std::string& fn)
-  {
-    srsgnb_terminate("LDPC AVX2 Decoder -> {} - not implemented yet.", fn);
-  }
-};
 } // namespace srsgnb

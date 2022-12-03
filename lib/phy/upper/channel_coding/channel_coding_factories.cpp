@@ -26,6 +26,7 @@
 #include "short/short_block_detector_impl.h"
 
 #ifdef HAVE_AVX2
+#include "ldpc/ldpc_decoder_avx2.h"
 #include "ldpc/ldpc_encoder_avx2.h"
 #endif // HAVE_AVX2
 
@@ -55,9 +56,9 @@ public:
     if (dec_type == "generic") {
       return std::make_unique<ldpc_decoder_generic>();
     }
-    if (dec_type == "avx2") {
-      return std::make_unique<ldpc_decoder_avx2>();
-    }
+    // if (dec_type == "avx2") {
+    //   return std::make_unique<ldpc_decoder_avx2>();
+    // }
     return {};
   }
 };
