@@ -28,44 +28,35 @@ template <size_t nof_elements>
 class avx2_array
 {
 public:
-  /// Default constructor.
-  avx2_array() = default;
-  /// \brief Constructor: sets an initial margin.
-  ///
-  /// Some operations on the content of the array require that some extra memory is allocated before the start of the
-  /// actual array.
-  /// \param[in] mm Number of guard AVX2 registers allocated before the start of the array.
-  /// \remark The useful size of the array is therefore <tt>nof_elements - mm<\tt>.
-  explicit avx2_array(unsigned mm) : inner_array(), margin(mm)
-  {
-    srsgnb_assert(mm < nof_elements, "The margin must be smaller than the number of elements.");
-  }
-
   /// Returns a pointer to the \c pos AVX2 register inside the array.
   __m256i* data_at(unsigned pos)
   {
-    unsigned index = (pos + margin) * AVX2_SIZE_BYTE;
+    srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
+    unsigned index = pos * AVX2_SIZE_BYTE;
     return reinterpret_cast<__m256i*>(inner_array.data() + index);
   }
 
   /// Returns a read-only pointer to the \c pos AVX2 register inside the array.
   const __m256i* data_at(unsigned pos) const
   {
-    unsigned index = (pos + margin) * AVX2_SIZE_BYTE;
+    srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
+    unsigned index = pos * AVX2_SIZE_BYTE;
     return reinterpret_cast<const __m256i*>(inner_array.data() + index);
   }
 
   /// Returns a pointer to the byte at position <tt>pos * AVX2_SIZE_BYTE + byte</tt> inside the array.
   int8_t* data_at(unsigned pos, unsigned byte)
   {
-    unsigned index = (pos + margin) * AVX2_SIZE_BYTE + byte;
+    unsigned index = pos * AVX2_SIZE_BYTE + byte;
+    srsgnb_assert(index < nof_elements * AVX2_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
     return (inner_array.data() + index);
   }
 
   /// Returns a read-only pointer to the \c pos AVX2 register inside the array.
   const int8_t* data_at(unsigned pos, unsigned byte) const
   {
-    unsigned index = (pos + margin) * AVX2_SIZE_BYTE + byte;
+    unsigned index = pos * AVX2_SIZE_BYTE + byte;
+    srsgnb_assert(index < nof_elements * AVX2_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
     return (inner_array.data() + index);
   }
 
@@ -75,24 +66,52 @@ public:
   /// Sets the \c pos AVX2 register to \c val.
   void set_at(unsigned pos, __m256i val)
   {
-    unsigned index = (pos + margin) * AVX2_SIZE_BYTE;
+    srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
+    unsigned index = pos * AVX2_SIZE_BYTE;
     _mm256_storeu_si256(reinterpret_cast<__m256i*>(inner_array.data() + index), val);
   }
 
   /// Gets the value stored in the \c pos AVX2 register.
   __m256i get_at(unsigned pos) const
   {
-    unsigned index = (pos + margin) * AVX2_SIZE_BYTE;
+    srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
+    unsigned index = pos * AVX2_SIZE_BYTE;
     return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(inner_array.data() + index));
   }
 
 private:
   /// Actual array where the AVX2 registers are stored.
   alignas(32) std::array<int8_t, nof_elements * AVX2_SIZE_BYTE> inner_array;
-  /// Number of guard AVX2 registers at the beginning of the array.
-  unsigned margin = 0;
 };
 
 } // namespace mm256
+
+/// \brief Rotates the contents of a node towards the left by \c steps chars, that is the \c steps * 8 least significant
+/// bits become the most significant ones - for long lifting sizes.
+/// \param[out] out       Pointer to the first AVX2 block of the output rotated node.
+/// \param[in]  in        Pointer to the first AVX2 block of the input node to rotate.
+/// \param[in]  steps     The order of the rotation as a number of chars.
+/// \param[in]  ls        The size of the node (lifting size).
+/// \remark Cannot be used to override memory.
+inline void rotate_node_left(int8_t* out, const int8_t* in, unsigned steps, unsigned ls)
+{
+  srsgnb_assert(std::abs(in - out) >= ls, "Input and output memory overlap.");
+  std::memcpy(out, in + ls - steps, steps);
+  std::memcpy(out + steps, in, ls - steps);
+}
+
+/// \brief Rotates the contents of a node towards the right by \c steps chars, that is the \c steps * 8 most significant
+/// bits become the least significant ones - for long lifting sizes.
+/// \param[out] out       Pointer to the first AVX2 block of the output rotated node.
+/// \param[in]  in        Pointer to the first AVX2 block of the input node to rotate.
+/// \param[in]  steps     The order of the rotation as a number of chars.
+/// \param[in]  ls        The size of the node (lifting size).
+/// \remark Cannot be used to override memory.
+inline void rotate_node_right(int8_t* out, const int8_t* in, unsigned steps, unsigned ls)
+{
+  srsgnb_assert(std::abs(in - out) >= ls, "Input and output memory overlap.");
+  std::memcpy(out, in + steps, ls - steps);
+  std::memcpy(out + ls - steps, in, steps);
+}
 
 } // namespace srsgnb

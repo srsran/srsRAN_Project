@@ -14,22 +14,6 @@
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
 
-/// \brief Rotates the contents of a node towards the left by \c steps chars, that is the \c steps * 8 least significant
-/// bits become the most significant ones - for long lifting sizes.
-/// \param[out] out       Pointer to the first AVX2 block of the output rotated node.
-/// \param[in]  in        Pointer to the first AVX2 block of the input node to rotate.
-/// \param[in]  steps     The order of the rotation as a number of chars.
-/// \param[in]  ls        The size of the node (lifting size).
-static void rotate_node_left(int8_t* out, const int8_t* in, unsigned steps, unsigned ls);
-
-/// \brief Rotates the contents of a node towards the right by \c steps chars, that is the \c steps * 8 most significant
-/// bits become the least significant ones - for long lifting sizes.
-/// \param[out] out       Pointer to the first AVX2 block of the output rotated node.
-/// \param[in]  in        Pointer to the first AVX2 block of the input node to rotate.
-/// \param[in]  steps     The order of the rotation as a number of chars.
-/// \param[in]  ls        The size of the node (lifting size).
-static void rotate_node_right(int8_t* out, const int8_t* in, unsigned steps, unsigned ls);
-
 // Recursively selects the proper strategy for the high-rate region by successively decreasing the value of the template
 // parameter.
 template <unsigned NODE_SIZE_AVX2_PH>
@@ -359,16 +343,4 @@ void ldpc_encoder_avx2::write_codeblock(span<uint8_t> out)
   // Take care of the last node.
   unsigned remainder = out.size() - i_out;
   std::memcpy(out.data() + i_out, codeblock.data_at(i_in), remainder);
-}
-
-static void rotate_node_left(int8_t* out, const int8_t* in, unsigned steps, unsigned ls)
-{
-  std::memcpy(out, in + ls - steps, steps);
-  std::memcpy(out + steps, in, ls - steps);
-}
-
-static void rotate_node_right(int8_t* out, const int8_t* in, unsigned steps, unsigned ls)
-{
-  std::memcpy(out, in + steps, ls - steps);
-  std::memcpy(out + ls - steps, in, steps);
 }
