@@ -8,6 +8,7 @@
  *
  */
 
+#include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/scheduler_impl.h"
@@ -67,7 +68,7 @@ public:
 // Helper class to initialize and store relevant objects for the test and provide helper methods.
 struct test_bench {
   // Maximum number of slots to run per UE in order to validate the results of scheduler. Implementation defined.
-  static constexpr unsigned max_test_run_slots_per_ue = 20;
+  static constexpr unsigned max_test_run_slots_per_ue = 80;
 
   scheduler_expert_config                          expert_cfg;
   cell_configuration                               cell_cfg;
@@ -94,7 +95,8 @@ protected:
   optional<test_bench>    bench;
   multiple_ue_test_params params;
   // We use this value to account for the case when the PDSCH or PUSCH is allocated several slots in advance.
-  unsigned max_k_value = 0;
+  unsigned                max_k_value = 0;
+  scheduler_result_logger sched_res_logger;
 
   multiple_ue_sched_tester() : params{GetParam()} {};
 
@@ -125,15 +127,22 @@ protected:
     }
 
     bench.emplace(expert_cfg, msg);
+
+    // Initialize.
+    mac_logger.set_context(next_slot.to_uint());
+    test_logger.set_context(next_slot.to_uint());
+    bench->sched_res = bench->sch.slot_indication(next_slot, to_du_cell_index(0));
   }
 
   void run_slot()
   {
+    next_slot++;
+
     mac_logger.set_context(next_slot.to_uint());
     test_logger.set_context(next_slot.to_uint());
 
     bench->sched_res = bench->sch.slot_indication(next_slot, to_du_cell_index(0));
-    next_slot++;
+    sched_res_logger.log(*bench->sched_res);
 
     // Check sched result consistency.
     test_scheduler_result_consistency(bench->cell_cfg, *bench->sched_res);
@@ -165,7 +174,7 @@ protected:
         continue;
       }
       for (const auto& tb : grant.tb_list) {
-        for (const auto& s_pdu : tb.subpdus) {
+        for (const auto& s_pdu : tb.lc_chs_to_sched) {
           if (s_pdu.lcid == lcid) {
             total_cw_tb_size_bytes += s_pdu.sched_bytes;
           }
@@ -198,7 +207,7 @@ protected:
 
     msg.bearers.push_back(mac_logical_channel{.lcid = lcid_, .lc_config = lc_cfg});
 
-    bench->sch.handle_add_ue_request(make_scheduler_ue_creation_request(msg));
+    bench->sch.handle_ue_creation_request(make_scheduler_ue_creation_request(msg));
 
     bench->ues[ue_index] = sched_test_ue{msg.crnti, {}};
   }
@@ -249,10 +258,16 @@ protected:
 
 TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
 {
+  // Used to track BSR 0.
+  std::map<unsigned, bool> is_bsr_zero_sent;
+
   setup_sched(create_expert_config(10), create_random_cell_config_request(params.duplx_mode));
   // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in params.
   // Assumption: LCID is DRB1.
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+    // Initialize.
+    is_bsr_zero_sent[idx] = false;
+
     add_ue(to_du_ue_index(idx), LCID_MIN_DRB, static_cast<lcg_id_t>(0));
 
     push_buffer_state_to_dl_ue(to_du_ue_index(idx),
@@ -264,18 +279,22 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
     run_slot();
     for (unsigned idx = 0; idx < params.nof_ues; idx++) {
       auto& test_ue = get_ue(to_du_ue_index(idx));
-      if (test_ue.dl_bsr_list.back().bs == 0) {
-        ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
+      if (is_bsr_zero_sent[idx]) {
+        ASSERT_FALSE(ue_is_allocated_pdsch(test_ue))
+            << fmt::format("Condition failed for UE with CRNTI=0x{:x}", test_ue.crnti);
         continue;
       }
 
       const unsigned tbs_sched_bytes = pdsch_tbs_scheduled_bytes_per_lc(test_ue, LCID_MIN_DRB);
-      if ((tbs_sched_bytes > test_ue.dl_bsr_list.back().bs) ||
-          (tbs_sched_bytes != 0 && tbs_sched_bytes == test_ue.dl_bsr_list.back().bs)) {
-        // Accounting for MAC headers.
-        test_ue.dl_bsr_list.back().bs = 0;
+      if (tbs_sched_bytes == 0 && test_ue.dl_bsr_list.back().bs == 0 && not is_bsr_zero_sent[idx]) {
+        is_bsr_zero_sent[idx] = true;
         // Notify buffer status of 0 to ensure scheduler does not schedule further for this UE.
         push_buffer_state_to_dl_ue(to_du_ue_index(idx), 0, LCID_MIN_DRB);
+      }
+
+      if (tbs_sched_bytes > test_ue.dl_bsr_list.back().bs) {
+        // Accounting for MAC headers.
+        test_ue.dl_bsr_list.back().bs = 0;
       } else {
         test_ue.dl_bsr_list.back().bs -= tbs_sched_bytes;
       }
@@ -290,10 +309,16 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
 
 TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
 {
+  // Used to track BSR 0.
+  std::map<unsigned, bool> is_bsr_zero_sent;
+
   setup_sched(create_expert_config(10), create_random_cell_config_request(params.duplx_mode));
   // Add UE(s) and notify UL BSR from UE of random size between min and max defined in params.
   // Assumption: LCID is DRB1.
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+    // Initialize.
+    is_bsr_zero_sent[idx] = false;
+
     add_ue(to_du_ue_index(idx), LCID_MIN_DRB, static_cast<lcg_id_t>(0));
 
     notify_ul_bsr_from_ue(to_du_ue_index(idx),
@@ -305,18 +330,23 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
     run_slot();
     for (unsigned idx = 0; idx < params.nof_ues; idx++) {
       auto& test_ue = get_ue(to_du_ue_index(idx));
-      if (test_ue.ul_bsr_list.back().nof_bytes == 0) {
-        ASSERT_FALSE(ue_is_allocated_pusch(test_ue));
+
+      if (is_bsr_zero_sent[idx]) {
+        ASSERT_FALSE(ue_is_allocated_pusch(test_ue))
+            << fmt::format("Condition failed for UE with CRNTI=0x{:x}", test_ue.crnti);
         continue;
       }
 
       const unsigned tbs_sched_bytes = pusch_tbs_scheduled_bytes(test_ue);
-      if ((tbs_sched_bytes > test_ue.ul_bsr_list.back().nof_bytes) ||
-          (tbs_sched_bytes != 0 && tbs_sched_bytes == test_ue.ul_bsr_list.back().nof_bytes)) {
-        // Accounting for MAC headers.
-        test_ue.ul_bsr_list.back().nof_bytes = 0;
+      if (tbs_sched_bytes == 0 && test_ue.ul_bsr_list.back().nof_bytes == 0 && not is_bsr_zero_sent[idx]) {
+        is_bsr_zero_sent[idx] = true;
         // Notify BSR 0 to ensure scheduler does not schedule further for this UE.
         notify_ul_bsr_from_ue(to_du_ue_index(idx), 0, static_cast<lcg_id_t>(0));
+      }
+
+      if (tbs_sched_bytes > test_ue.ul_bsr_list.back().nof_bytes) {
+        // Accounting for MAC headers.
+        test_ue.ul_bsr_list.back().nof_bytes = 0;
       } else {
         test_ue.ul_bsr_list.back().nof_bytes -= tbs_sched_bytes;
       }

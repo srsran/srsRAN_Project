@@ -40,3 +40,15 @@ target_link_libraries(srb0_scheduler_test
         gtest
         gtest_main)
 add_test(srb0_scheduler_test srb0_scheduler_test)
+
+add_executable(multiple_ue_sched_test multiple_ue_sched_test.cpp)
+target_link_libraries(multiple_ue_sched_test
+        srsgnb_sched
+        srslog
+        mac_configuration_helpers
+        scheduler_test_suite
+        sched_config
+        gtest
+        gtest_main)
+add_test(multiple_ue_sched_test multiple_ue_sched_test)
+gtest_discover_tests(multiple_ue_sched_test)
