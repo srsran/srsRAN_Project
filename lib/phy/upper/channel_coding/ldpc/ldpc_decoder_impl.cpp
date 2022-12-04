@@ -136,23 +136,23 @@ void ldpc_decoder_generic::update_variable_to_check_messages(unsigned check_node
   span<const log_likelihood_ratio> this_check_to_var(check_to_var[check_node]);
   span<log_likelihood_ratio>       this_var_to_check(var_to_check);
 
-  compute_var_to_check_msgs(this_soft_bits.first(nof_hrr_nodes),
-                            this_check_to_var.first(nof_hrr_nodes),
-                            this_var_to_check.first(nof_hrr_nodes));
+  compute_var_to_check_msgs(this_var_to_check.first(nof_hrr_nodes),
+                            this_soft_bits.first(nof_hrr_nodes),
+                            this_check_to_var.first(nof_hrr_nodes));
 
   // Next, update the messages corresponding to the extension region, if applicable.
   // From layer 4 onwards, each layer is connected to only one consecutive block of lifting_size bits.
   if (check_node >= 4) {
     unsigned skip_soft_bits = nof_hrr_nodes + (check_node - 4) * lifting_size;
-    compute_var_to_check_msgs(this_soft_bits.subspan(skip_soft_bits, lifting_size),
-                              this_check_to_var.subspan(nof_hrr_nodes, lifting_size),
-                              this_var_to_check.subspan(nof_hrr_nodes, lifting_size));
+    compute_var_to_check_msgs(this_var_to_check.subspan(nof_hrr_nodes, lifting_size),
+                              this_soft_bits.subspan(skip_soft_bits, lifting_size),
+                              this_check_to_var.subspan(nof_hrr_nodes, lifting_size));
   }
 }
 
-void ldpc_decoder_generic::compute_var_to_check_msgs(span<const log_likelihood_ratio> soft,
-                                                     span<const log_likelihood_ratio> c2v,
-                                                     span<log_likelihood_ratio>       v2c)
+void ldpc_decoder_generic::compute_var_to_check_msgs(span<log_likelihood_ratio>       v2c,
+                                                     span<const log_likelihood_ratio> soft,
+                                                     span<const log_likelihood_ratio> c2v)
 {
   assert((soft.size() == v2c.size()) && (c2v.size() == v2c.size()));
 
