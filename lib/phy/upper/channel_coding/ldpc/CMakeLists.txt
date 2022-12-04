@@ -19,7 +19,7 @@ set(ldpc_sources
 )
 
 if(HAVE_AVX2)
-  list(APPEND ldpc_sources ldpc_encoder_avx2.cpp)
+  list(APPEND ldpc_sources ldpc_decoder_avx2.cpp ldpc_encoder_avx2.cpp)
 endif(HAVE_AVX2)
 
 add_library(srsgnb_ldpc STATIC ${ldpc_sources})

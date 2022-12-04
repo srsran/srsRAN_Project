@@ -53,12 +53,14 @@ public:
 
   std::unique_ptr<ldpc_decoder> create() override
   {
-    if (dec_type == "generic") {
+#ifdef HAVE_AVX2
+    if ((dec_type == "auto") || (dec_type == "avx2")) {
+      return std::make_unique<ldpc_decoder_avx2>();
+    }
+#endif // HAVE_AVX2
+    if ((dec_type == "auto") || (dec_type == "generic")) {
       return std::make_unique<ldpc_decoder_generic>();
     }
-    // if (dec_type == "avx2") {
-    //   return std::make_unique<ldpc_decoder_avx2>();
-    // }
     return {};
   }
 };

@@ -67,6 +67,10 @@ protected:
       dec_factory_generic = create_ldpc_decoder_factory_sw("generic");
       ASSERT_NE(dec_factory_generic, nullptr);
     }
+    if (!dec_factory_avx2) {
+      dec_factory_avx2 = create_ldpc_decoder_factory_sw("avx2");
+      ASSERT_NE(dec_factory_avx2, nullptr);
+    }
   }
 
   // Carries out most of the parametrized test setup: computes useful quantities (e.g., message and codeblock lengths),
@@ -115,16 +119,17 @@ protected:
     ASSERT_NE(enc_factory_avx2, nullptr);
     ASSERT_NE(dec_factory_generic, nullptr);
 
-    decoder_test = dec_factory_generic->create();
-    ASSERT_NE(decoder_test, nullptr);
-
     std::string implementation = std::get<0>(GetParam());
     if (implementation == "generic") {
       encoder_test = enc_factory_generic->create();
       ASSERT_NE(encoder_test, nullptr);
+      decoder_test = dec_factory_generic->create();
+      ASSERT_NE(decoder_test, nullptr);
     } else if (implementation == "avx2") {
       encoder_test = enc_factory_avx2->create();
       ASSERT_NE(encoder_test, nullptr);
+      decoder_test = dec_factory_avx2->create();
+      ASSERT_NE(decoder_test, nullptr);
     } else {
       FAIL() << fmt::format("Invalid implementation type {}.", implementation);
     }
@@ -138,6 +143,7 @@ protected:
   static std::shared_ptr<ldpc_encoder_factory> enc_factory_generic;
   static std::shared_ptr<ldpc_encoder_factory> enc_factory_avx2;
   static std::shared_ptr<ldpc_decoder_factory> dec_factory_generic;
+  static std::shared_ptr<ldpc_decoder_factory> dec_factory_avx2;
 
   std::unique_ptr<ldpc_encoder>         encoder_test;
   std::unique_ptr<srsgnb::ldpc_decoder> decoder_test;
@@ -157,6 +163,7 @@ protected:
 std::shared_ptr<ldpc_encoder_factory> LDPCEncDecFixture::enc_factory_generic = nullptr;
 std::shared_ptr<ldpc_encoder_factory> LDPCEncDecFixture::enc_factory_avx2    = nullptr;
 std::shared_ptr<ldpc_decoder_factory> LDPCEncDecFixture::dec_factory_generic = nullptr;
+std::shared_ptr<ldpc_decoder_factory> LDPCEncDecFixture::dec_factory_avx2    = nullptr;
 
 // Returns a vector of with values [min_val, min_val + delta, ..., min_val + N * delta, max_val], where N = steps - 1 if
 // max_val - min_val is divisible by steps, and N = steps otherwise.
