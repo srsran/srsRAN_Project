@@ -13,7 +13,6 @@
 #include "srsgnb/support/bit_encoding.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
-#include <random>
 
 using namespace srsgnb;
 
@@ -208,13 +207,14 @@ TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)
 
 TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdus_of_same_lcid)
 {
-  const unsigned nof_sdus = test_rgen::uniform_int<unsigned>(2, 6);
+  const unsigned nof_sdus                = test_rgen::uniform_int<unsigned>(2, 6);
+  const unsigned MIN_LC_SCHED_BYTES_SIZE = 3; // Need to account MAC subheader.
 
   unsigned              tb_size = 0;
   std::vector<unsigned> sdu_payload_sizes(nof_sdus), sdu_req_sizes(nof_sdus);
   for (unsigned i = 0; i != nof_sdus; ++i) {
     // Generate SDU size.
-    sdu_payload_sizes[i] = test_rgen::uniform_int<unsigned>(1, 1000);
+    sdu_payload_sizes[i] = test_rgen::uniform_int<unsigned>(MIN_LC_SCHED_BYTES_SIZE, 1000);
     sdu_req_sizes[i]     = get_mac_sdu_required_bytes(sdu_payload_sizes[i]);
     tb_size += sdu_req_sizes[i];
 

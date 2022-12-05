@@ -24,9 +24,6 @@ namespace srsgnb {
 /// Each subPDU is composed of a MAC subheader and MAC CE or MAC SDU payload.
 class dl_sch_pdu
 {
-  // SDUs up to 256 B can use the short 8-bit L field
-  constexpr static size_t MAC_SUBHEADER_LEN_THRESHOLD = 256;
-
 public:
   /// Maximum size for a MAC PDU (implementation-defined).
   static constexpr size_t MAX_PDU_LENGTH = 32768;
@@ -41,7 +38,7 @@ public:
 
     unsigned header_length = 2;
     bool     F_bit         = false;
-    if (sdu_len >= MAC_SUBHEADER_LEN_THRESHOLD) {
+    if (sdu_len >= MAC_SDU_SUBHEADER_LENGTH_THRES) {
       F_bit = true;
       header_length += 1;
     }
@@ -160,14 +157,15 @@ private:
   /// Assemble MAC subPDU with an SDU.
   void assemble_sdu(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu)
   {
-    static const unsigned MIN_MAC_SDU_SIZE = 3;
+    // Note: Do not attempt to build an SDU if there is not enough space for the MAC subheader and min payload size.
+    static const unsigned MIN_MAC_SDU_SIZE = MIN_MAC_SDU_SUBHEADER_SIZE + 1;
 
     // Fetch RLC Bearer.
     mac_sdu_tx_builder* bearer = ue_mng.get_bearer(rnti, subpdu.lcid.to_lcid());
     srsgnb_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
     unsigned rem_bytes = get_mac_sdu_required_bytes(subpdu.sched_bytes);
-    while (rem_bytes > MIN_MAC_SDU_SIZE) {
+    while (rem_bytes >= MIN_MAC_SDU_SIZE) {
       // Fetch MAC Tx SDU.
       byte_buffer_slice_chain sdu = bearer->on_new_tx_sdu(get_mac_sdu_payload_size(rem_bytes));
       if (sdu.empty()) {
@@ -180,7 +178,7 @@ private:
       // Add SDU as a subPDU.
       unsigned nwritten = ue_pdu.add_sdu(subpdu.lcid.to_lcid(), std::move(sdu));
       if (nwritten == 0) {
-        logger.error("ERROR: rnti={:#x}, LCID={}: Scheduled SubPDU with L={} cannot fit in scheduled DL grant",
+        logger.error("rnti={:#x}, LCID={}: Scheduled SubPDU with L={} cannot fit in scheduled DL grant",
                      rnti,
                      subpdu.lcid.to_lcid(),
                      subpdu.sched_bytes);
@@ -189,9 +187,10 @@ private:
       srsgnb_assert(rem_bytes >= nwritten, "Too many bytes were packed in MAC SDU");
       rem_bytes -= nwritten;
     }
-    if (rem_bytes == subpdu.sched_bytes) {
-      logger.error("ERROR: Skipping MAC subPDU encoding. Cause: Allocated SDU size={} is too small to fit MAC "
+    if (rem_bytes < MIN_MAC_SDU_SIZE and rem_bytes == get_mac_sdu_required_bytes(subpdu.sched_bytes)) {
+      logger.error("rnti={:#x}: Skipping MAC subPDU encoding. Cause: Allocated SDU size={} is too small to fit MAC "
                    "subheader and payload.",
+                   rnti,
                    subpdu.sched_bytes);
     }
   }
