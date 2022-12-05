@@ -291,4 +291,11 @@ private:
   }
 };
 
+/// \brief Helper macro to set test seed without being in a class/function scope.
+#define TEST_RGEN_SET_SEED(seed)                                                                                       \
+  static const bool dummy = []() {                                                                                     \
+    test_rgen::set_seed(seed);                                                                                         \
+    return dummy;                                                                                                      \
+  }();
+
 } // namespace srsgnb

@@ -411,7 +411,7 @@ TEST(mac_ul_processor, ul_sdus_postpone_ue_activity_timeout)
   }
 
   // > Send UL PDU.
-  unsigned    L = test_rgen::uniform_int<unsigned>(0, 64);
+  unsigned    L = test_rgen::uniform_int<unsigned>(1, 64);
   byte_buffer msg{test_rgen::random_vector<uint8_t>(L)};
   // R/LCID MAC subheader = R|R|LCID || L = 0|0|1 || L
   msg.prepend(std::vector<uint8_t>{0x01, static_cast<uint8_t>(L)});
