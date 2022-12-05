@@ -9,3 +9,6 @@
 set(SOURCES serving_cell_config_factory.cpp logical_channel_config_factory.cpp)
 add_library(sched_config STATIC ${SOURCES})
 target_link_libraries(sched_config srsgnb_ran du_manager_converters)
+
+set(SOURCES scheduler_cell_config_validator.cpp scheduler_ue_config_validator.cpp)
+add_library(sched_config_validator STATIC ${SOURCES})
