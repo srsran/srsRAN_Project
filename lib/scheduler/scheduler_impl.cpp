@@ -10,6 +10,8 @@
 
 #include "scheduler_impl.h"
 #include "common_scheduling/ssb_scheduler.h"
+#include "config/scheduler_cell_config_validator.h"
+#include "config/scheduler_ue_config_validator.h"
 #include "ue_scheduling/ue_scheduler_impl.h"
 
 using namespace srsgnb;
@@ -27,6 +29,8 @@ scheduler_impl::scheduler_impl(const scheduler_expert_config& sched_cfg_, sched_
 
 bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configuration_request_message& msg)
 {
+  config_validators::validate_sched_cell_configuration_request_message(msg);
+
   cells.add_cell(msg.cell_index, msg);
 
   ue_sched->add_cell(ue_scheduler_cell_params{msg.cell_index,
@@ -42,6 +46,8 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
 
 void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
 {
+  config_validators::validate_sched_ue_creation_request_message(ue_request);
+
   ue_cfg_handler.handle_ue_creation_request(ue_request);
 }
 
@@ -96,7 +102,7 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   cell.slot_indication(sl_tx);
 
   // > SSB scheduling.
-  schedule_ssb(cell.res_grid[0], sl_tx, cell.cell_cfg);
+  schedule_ssb(cell.res_grid, sl_tx, cell.cell_cfg);
 
   // > Schedule DL signalling.
   cell.sib1_sch.schedule_sib1(cell.res_grid[0], sl_tx);

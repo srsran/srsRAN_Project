@@ -167,15 +167,10 @@ void srsgnb::schedule_ssb(cell_slot_resource_allocator& res_grid,
 {
   ssb_information_list& ssb_list = res_grid.result.dl.bc.ssb_info;
 
-  if (ssb_list.full()) {
-    srslog::fetch_basic_logger("MAC").error("SCHED: Failed to allocate SSB");
+  // SSB already scheduled.
+  if (not ssb_list.empty()) {
     return;
   }
-
-  // Only FR1 are supported in this implementation.
-  uint32_t freq_arfcn = cell_cfg.dl_carrier.arfcn;
-  srsgnb_assert(freq_arfcn < static_cast<uint32_t>(FR1_MAX_FREQUENCY_ARFCN),
-                "Frenquencies in the range FR2 not supported");
 
   // Perform mod operation of slot index by ssb_periodicity;
   // "ssb_periodicity * nof_slots_per_subframe" gives the number of slots in 1 ssb_periodicity time interval.
@@ -204,5 +199,22 @@ void srsgnb::schedule_ssb(cell_slot_resource_allocator& res_grid,
     // of the latter.
     grant_info grant{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, ssb.symbols, ssb.crbs};
     res_grid.dl_res_grid.fill(grant);
+  }
+}
+
+void srsgnb::schedule_ssb(cell_resource_allocator&  res_alloc,
+                          const slot_point&         sl_point,
+                          const cell_configuration& cell_cfg)
+{
+  // Only FR1 are supported in this implementation.
+  const uint32_t freq_arfcn = cell_cfg.dl_carrier.arfcn;
+  srsgnb_assert(freq_arfcn < static_cast<uint32_t>(FR1_MAX_FREQUENCY_ARFCN),
+                "Frenquencies in the range FR2 not supported");
+
+  const uint8_t ssb_period = ssb_periodicity_to_value(cell_cfg.ssb_cfg.ssb_period);
+
+  for (unsigned i = 0; i < cell_resource_allocator::GRID_NOF_SUBFRAMES * sl_point.nof_slots_per_subframe();
+       i += ssb_period) {
+    schedule_ssb(res_alloc[i], sl_point + i, cell_cfg);
   }
 }

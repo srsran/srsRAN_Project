@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../cell/cell_configuration.h"
+#include "../cell/resource_grid.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
@@ -27,7 +28,7 @@ subcarrier_spacing ssb_case_to_scs(ssb_pattern_case ssb_case);
 
 /// @brief Schedule grant for SSB.
 ///
-/// The functions schedules the SSB according to a given periodicity, depending on the frequency and SSB case
+/// The functions schedules the SSB per slot according to a given periodicity, depending on the frequency and SSB case
 ///
 /// @param[out] slot_allocator Slot allocator object with SSB grants and DL PRBs.
 /// @param[in]  sl_point       Slot point carrying information about current slot.
@@ -37,5 +38,19 @@ subcarrier_spacing ssb_case_to_scs(ssb_pattern_case ssb_case);
 void schedule_ssb(cell_slot_resource_allocator& slot_allocator,
                   const slot_point&             sl_point,
                   const cell_configuration&     cell_cfg);
+
+/// @brief Schedule grant for SSB.
+///
+/// The functions schedules the SSB across entire cell grid according to a given periodicity, depending on the frequency
+/// and SSB case. Skips scheduling if SSB is already scheduled in one of the previous slots.
+///
+/// @param[out] res_allocator  Cell resource grid.
+/// @param[in]  sl_point       Slot point carrying information about current slot.
+/// @param[in]  cell_cfg       Reference to scheduler cell configuration.
+///
+/// @remark This function only works for FR1, or L_max = 4 or 8.
+void schedule_ssb(cell_resource_allocator&  res_allocator,
+                  const slot_point&         sl_point,
+                  const cell_configuration& cell_cfg);
 
 } // namespace srsgnb
