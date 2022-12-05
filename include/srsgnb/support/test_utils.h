@@ -11,8 +11,8 @@
 #pragma once
 
 #include "srsgnb_test.h"
-
 #include "srsgnb/srslog/srslog.h"
+#include "srsgnb/support/error_handling.h"
 #include <cstdio>
 #include <random>
 
@@ -229,22 +229,30 @@ private:
 };
 
 /// \brief This class creates a random generation interface that is suitable for unit tests. The user has the
-/// ability to set a different seed to reproduce tests.
+/// ability to set a random seed to reproduce tests.
 class test_rgen
 {
 public:
+  /// \brief Get test pseudo-random generator.
   static std::mt19937& get()
   {
-    static std::mt19937 random_generator(std::random_device{}());
+    static std::mt19937& random_generator = init(std::random_device{}());
     return random_generator;
   }
 
+  /// \brief Set random seed for the test pseudo-random generator.
+  /// If this function is never called, the pseudo-random generator will be initialized with a random seed using
+  /// std::random_device. If it is called once, the seed will be the one passed as an argument. If it is called more
+  /// than once, the test will abort. Thus, there should not be race conditions in seed initialization.
   static void set_seed(uint32_t seed)
   {
-    fmt::print("-- TEST random generator seed: {}\n", seed);
-    get() = std::mt19937(seed);
+    init(seed);
+    if (get_seed() != seed) {
+      report_fatal_error("Trying to set a random seed multiple times (not thread-safe)");
+    }
   }
 
+  /// \brief Return a random integer with uniform distribution within the specified bounds.
   template <typename Integer>
   static Integer uniform_int(Integer min, Integer max)
   {
@@ -257,6 +265,7 @@ public:
     return uniform_int(std::numeric_limits<Integer>::min(), std::numeric_limits<Integer>::max());
   }
 
+  /// \brief Return a vector of integers with specified size filled with random values.
   template <typename Integer>
   static std::vector<Integer> random_vector(size_t sz)
   {
@@ -265,6 +274,20 @@ public:
       vec[i] = test_rgen::uniform_int<Integer>();
     }
     return vec;
+  }
+
+private:
+  static std::mt19937& init(uint32_t seed)
+  {
+    static std::mt19937 random_generator(get_seed(seed));
+    return random_generator;
+  }
+
+  static uint32_t get_seed(uint32_t seed = 0)
+  {
+    static uint32_t locked_seed = seed;
+    fmt::print("-- TEST random generator seed: {}\n", locked_seed);
+    return locked_seed;
   }
 };
 
