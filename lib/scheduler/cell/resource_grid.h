@@ -209,10 +209,7 @@ private:
 /// cell_slot_resource_grid objects, once they become old.
 struct cell_resource_allocator {
   /// Number of subframes managed by this container.
-  static const size_t GRID_NOF_SUBFRAMES = 20;
-
-  /// Highest difference between a slot and the last slot indication that avoids overflowing the ring pool.
-  static const int MAXIMUM_SLOT_DIFF = GRID_NOF_SUBFRAMES / 2;
+  static const size_t GRID_NOF_SUBFRAMES = SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1 + SCHEDULER_MAX_K2;
 
   /// Cell configuration
   const cell_configuration& cfg;
@@ -260,7 +257,10 @@ private:
   /// Ensure we are not overflowing the ring.
   void assert_valid_sl(unsigned slot_delay) const
   {
-    srsgnb_sanity_check(slot_delay < MAXIMUM_SLOT_DIFF,
+    static const subcarrier_spacing max_scs = std::max(cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().scs,
+                                                       cfg.ul_cfg_common.freq_info_ul.scs_carrier_list.back().scs);
+    static const unsigned           nof_slots_per_sf = get_nof_slots_per_subframe(max_scs);
+    srsgnb_sanity_check(slot_delay < GRID_NOF_SUBFRAMES * nof_slots_per_sf,
                         "The cell resource pool is too small for accessing a slot with delay: {}",
                         slot_delay);
   }
