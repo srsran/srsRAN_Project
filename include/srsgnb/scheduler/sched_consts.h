@@ -34,4 +34,13 @@ const unsigned SIB1_PERIODICITY = 160;
 /// NOTE: This is temporary, and valid only for FR1.
 const unsigned MAX_NUM_BEAMS = 8;
 
+/// [Implementation defined] Maximum allowed slot offset between DCI and its scheduled PDSCH. Values {0,..,32}.
+const unsigned SCHEDULER_MAX_K0 = 15;
+
+/// [Implementation defined] Maximum allowed slot offset between PDSCH to the DL ACK/NACK. Values {0,..,15}.
+const unsigned SCHEDULER_MAX_K1 = 10;
+
+/// [Implementation defined] Maximum allowed slot offset between DCI and its scheduled first PUSCH. Values {0,..,32}.
+const unsigned SCHEDULER_MAX_K2 = 15;
+
 } // namespace srsgnb
