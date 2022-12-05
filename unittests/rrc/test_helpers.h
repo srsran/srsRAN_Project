@@ -170,11 +170,6 @@ public:
     logger.info("Received UL NAS Transport message");
   }
 
-  void on_rrc_reconfiguration_complete(const rrc_reconfiguration_response_message& msg) override
-  {
-    logger.info("Received RRC Reconfiguration Response message");
-  }
-
   bool initial_ue_msg_received = false;
 
 private:

@@ -42,7 +42,8 @@ public:
   void handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg) override;
 
   // ngc ue context manager
-  void handle_initial_context_setup_response_message(const ngap_initial_context_setup_response_message& msg) override;
+  // void handle_initial_context_setup_response_message(const ngap_initial_context_setup_response_message& msg)
+  // override;
 
   // ngc message handler functions
   void handle_message(const ngc_message& msg) override;

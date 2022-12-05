@@ -116,30 +116,7 @@ struct ngap_pdu_session_res_item {
   uint16_t    pdu_session_id = 0;
   byte_buffer pdu_session_res;
 };
-
-struct ngap_initial_context_setup_response_message {
-  cu_cp_ue_id_t cu_cp_ue_id;
-  bool          success;
-  // common
-  optional<asn1::ngap::crit_diagnostics_s> crit_diagnostics;
-  std::vector<ngap_pdu_session_res_item>   failed_to_setup;
-  // failure
-  optional<asn1::ngap::cause_c> cause;
-  // success
-  std::vector<ngap_pdu_session_res_item> succeed_to_setup;
-};
-
-/// Handle NGC UE Context Management procedures as defined in TS 38.413 section 8.3.
-class ngc_ue_context_management_handler
-{
-public:
-  virtual ~ngc_ue_context_management_handler() = default;
-
-  /// \brief Hanlde the initial context setup response message as per TS 38.413 section 8.3.1.
-  /// \param[in] msg The initial context setup response message.
-  virtual void
-  handle_initial_context_setup_response_message(const ngap_initial_context_setup_response_message& msg) = 0;
-};
+using ngap_pdu_session_res_list = std::vector<ngap_pdu_session_res_item>;
 
 /// Interface to notify about NAS PDUs and messages.
 class ngc_rrc_ue_pdu_notifier
@@ -152,21 +129,15 @@ public:
   virtual void on_new_pdu(byte_buffer nas_pdu) = 0;
 };
 
-struct ngap_initial_context_setup_request_message {
-  cu_cp_ue_id_t cu_cp_ue_id;
-
-  // TODO: Only add necessary parameters
-  asn1::ngap::init_context_setup_request_s request;
-};
-
 /// Interface to notify the RRC UE about control messages.
 class ngc_rrc_ue_control_notifier
 {
 public:
   virtual ~ngc_rrc_ue_control_notifier() = default;
 
-  /// \brief Notify about the reception of an initial context setup request.
-  virtual void on_initial_context_setup_request_received(const ngap_initial_context_setup_request_message& msg) = 0;
+  /// \brief Notify about the reception of new security capabilities and key.
+  virtual async_task<bool> on_new_sec_context(const asn1::ngap::ue_security_cap_s&           caps,
+                                              const asn1::fixed_bitstring<256, false, true>& key) = 0;
 };
 
 /// Interface to control the NGC.
@@ -211,7 +182,6 @@ class ngc_interface : public ngc_message_handler,
                       public ngc_event_handler,
                       public ngc_connection_manager,
                       public ngc_nas_message_handler,
-                      public ngc_ue_context_management_handler,
                       public ngc_ue_control_manager,
                       public ngc_statistic_interface
 {

@@ -277,14 +277,5 @@ ngc_message generate_initial_context_setup_request_message()
   return ngc_msg;
 }
 
-ngap_initial_context_setup_response_message generate_successful_initial_context_setup_response_message()
-{
-  ngap_initial_context_setup_response_message init_ctxt_resp_msg;
-  init_ctxt_resp_msg.cu_cp_ue_id = cu_cp_ue_id_t::min;
-  init_ctxt_resp_msg.success     = true;
-
-  return init_ctxt_resp_msg;
-}
-
 } // namespace srs_cu_cp
 } // namespace srsgnb

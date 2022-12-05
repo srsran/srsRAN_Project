@@ -55,7 +55,7 @@ public:
   void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) override;
 
   // rrc_ue_control_message_handler
-  void handle_rrc_reconfiguration_request(const rrc_reconfiguration_request_message& msg) override;
+  void handle_new_guami(const guami& msg) override;
 
 private:
   // message handlers
@@ -86,8 +86,7 @@ private:
   bool init_pucch();
 
   // initializes the security context and triggers the SMC procedure
-  // TODO: this should be an interface for the NGAP
-  void handle_init_security_context(const rrc_init_security_context& sec_ctx) override;
+  async_task<bool> handle_init_security_context(const rrc_init_security_context& sec_ctx) override;
 
   // Helper to create PDU from RRC message
   template <class T>

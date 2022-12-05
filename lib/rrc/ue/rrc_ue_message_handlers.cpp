@@ -157,21 +157,6 @@ void rrc_ue_impl::handle_dl_nas_transport_message(const dl_nas_transport_message
   send_dl_dcch(dl_dcch_msg);
 }
 
-void rrc_ue_impl::handle_rrc_reconfiguration_request(const rrc_reconfiguration_request_message& msg)
-{
-  // TODO: Start RRC Reconfiguration procedure
-  // task_sched.schedule_async_task(launch_async<rrc_reconfiguration_procedure>(
-  //     /*params*/, ngc_ctrl_notifier));
-  // Remember to notify ngc about the outcome:
-
-  // Dummy outcome
-  rrc_reconfiguration_response_message resp_msg;
-  resp_msg.ue_index = get_ue_index_from_cu_cp_ue_id(msg.cu_cp_ue_id);
-  resp_msg.success  = true;
-
-  ngc_ctrl_notifier.on_rrc_reconfiguration_complete(resp_msg);
-}
-
 void rrc_ue_impl::handle_rrc_setup_complete(const ul_dcch_msg_s& msg, uint8_t transaction_id_)
 {
   expected<uint8_t> transaction_id = transaction_id_;
@@ -185,4 +170,9 @@ void rrc_ue_impl::handle_security_mode_complete(const ul_dcch_msg_s& msg, uint8_
   expected<uint8_t> transaction_id = transaction_id_;
   // Set transaction result and resume suspended procedure.
   event_mng->transactions.set(transaction_id.value(), msg);
+}
+
+void rrc_ue_impl::handle_new_guami(const guami& msg)
+{
+  context.current_guami = msg;
 }

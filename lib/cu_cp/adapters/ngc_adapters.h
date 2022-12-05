@@ -11,11 +11,14 @@
 #pragma once
 
 #include "../task_schedulers/ue_task_scheduler.h"
+#include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/ran/bcd_helpers.h"
 #include "srsgnb/rrc/rrc_ue.h"
 #include "srsgnb/srslog/srslog.h"
+
+#include "../../ngap/ngap_asn1_utils.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
@@ -63,11 +66,13 @@ public:
 class ngc_rrc_ue_adapter : public ngc_rrc_ue_pdu_notifier, public ngc_rrc_ue_control_notifier
 {
 public:
-  void connect_rrc_ue(rrc_ue_dl_nas_message_handler*  rrc_ue_msg_handler_,
-                      rrc_ue_control_message_handler* rrc_ue_ctrl_handler_)
+  void connect_rrc_ue(rrc_ue_dl_nas_message_handler*        rrc_ue_msg_handler_,
+                      rrc_ue_control_message_handler*       rrc_ue_ctrl_handler_,
+                      rrc_ue_init_security_context_handler* security_handler_)
   {
     rrc_ue_msg_handler  = rrc_ue_msg_handler_;
     rrc_ue_ctrl_handler = rrc_ue_ctrl_handler_;
+    security_handler    = security_handler_;
   }
 
   void on_new_pdu(byte_buffer nas_pdu) override
@@ -80,21 +85,23 @@ public:
     rrc_ue_msg_handler->handle_dl_nas_transport_message(dl_nas_msg);
   }
 
-  void on_initial_context_setup_request_received(const ngap_initial_context_setup_request_message& msg) override
+  async_task<bool> on_new_sec_context(const asn1::ngap::ue_security_cap_s&           caps,
+                                      const asn1::fixed_bitstring<256, false, true>& key) override
   {
-    srsgnb_assert(rrc_ue_ctrl_handler != nullptr, "rrc_ue_ctrl_handler must not be nullptr");
+    srsgnb_assert(security_handler != nullptr, "security_handler must not be nullptr");
 
-    rrc_reconfiguration_request_message rrc_reconf_req_msg = {};
-    rrc_reconf_req_msg.cu_cp_ue_id                         = msg.cu_cp_ue_id;
+    rrc_init_security_context sec_ctxt;
+    copy_asn1_key(sec_ctxt.k, key);
+    fill_supported_integrity_algorithms(sec_ctxt.supported_int_algos, caps.nrintegrity_protection_algorithms);
+    fill_supported_ciphering_algorithms(sec_ctxt.supported_int_algos, caps.nrencryption_algorithms);
 
-    rrc_reconf_req_msg.plmn = plmn_bcd_to_string(msg.request->guami->plmn_id.to_number());
-
-    rrc_ue_ctrl_handler->handle_rrc_reconfiguration_request(rrc_reconf_req_msg);
+    return security_handler->handle_init_security_context(sec_ctxt);
   }
 
 private:
-  rrc_ue_dl_nas_message_handler*  rrc_ue_msg_handler  = nullptr;
-  rrc_ue_control_message_handler* rrc_ue_ctrl_handler = nullptr;
+  rrc_ue_dl_nas_message_handler*        rrc_ue_msg_handler  = nullptr;
+  rrc_ue_control_message_handler*       rrc_ue_ctrl_handler = nullptr;
+  rrc_ue_init_security_context_handler* security_handler    = nullptr;
 };
 
 } // namespace srs_cu_cp

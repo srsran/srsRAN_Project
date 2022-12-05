@@ -41,3 +41,15 @@ target_link_libraries(ng_nas_messages_procedure_test
                       gtest_main)
 target_include_directories(ng_nas_messages_procedure_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(ng_nas_messages_procedure_test)
+
+add_executable(ng_ue_context_management_procedure_test ng_ue_context_management_procedure_test.cpp)
+target_link_libraries(ng_ue_context_management_procedure_test
+                      srsgnb_ngap
+                      srsgnb_support
+                      srslog
+                      ngap_asn1
+                      srsgnb_ran
+                      gtest
+                      gtest_main)
+target_include_directories(ng_ue_context_management_procedure_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(ng_ue_context_management_procedure_test)

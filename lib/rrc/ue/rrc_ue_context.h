@@ -33,6 +33,7 @@ public:
   const rnti_t                           c_rnti;   // current C-RNTI
   const rrc_cell_context                 cell;     // current cell
   const rrc_ue_cfg_t&                    cfg;
+  guami                                  current_guami; // current GUAMI
   uint64_t                               setup_ue_id = -1;
   asn1::rrc_nr::establishment_cause_opts connection_cause;
 };

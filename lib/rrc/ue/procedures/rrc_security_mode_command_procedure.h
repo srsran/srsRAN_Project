@@ -32,7 +32,7 @@ public:
                                       rrc_ue_event_manager&                       ev_mng_,
                                       srslog::basic_logger&                       logger_);
 
-  void operator()(coro_context<async_task<void>>& ctx);
+  void operator()(coro_context<async_task<bool>>& ctx);
 
   static const char* name() { return "RRC Security Mode Command Procedure"; }
 
@@ -62,6 +62,7 @@ private:
 
   const unsigned rrc_smc_timeout_ms =
       1000; // arbitrary timeout for RRC SMC procedure, UE will be removed if timer fires
+  bool procedure_result = false;
 };
 
 /// \brief Fills ASN.1 RRC Setup struct.

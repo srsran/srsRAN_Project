@@ -25,7 +25,7 @@ rrc_security_mode_command_procedure::rrc_security_mode_command_procedure(
 {
 }
 
-void rrc_security_mode_command_procedure::operator()(coro_context<async_task<void>>& ctx)
+void rrc_security_mode_command_procedure::operator()(coro_context<async_task<bool>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -57,13 +57,14 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<voi
     auto coro_res = transaction.result();
     if (coro_res.has_value()) {
       logger.debug("{}: \"{}\" finished successfully.", context.c_rnti, name());
+      procedure_result = true;
     } else {
       logger.debug("{}: \"{}\" timed out.", context.c_rnti, name());
       rrc_ue.on_ue_delete_request(); // delete UE context if SMC fails
     }
   }
   logger.debug("rnti=0x{:x}: \"{}\" finalized.", context.c_rnti, name());
-  CORO_RETURN();
+  CORO_RETURN(procedure_result);
 }
 
 bool rrc_security_mode_command_procedure::select_security_algo()

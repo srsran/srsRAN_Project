@@ -14,6 +14,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/rrc/rrc_du_factory.h"
 #include "srsgnb/support/async/async_task_loop.h"
+#include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -108,12 +109,13 @@ protected:
 
   void init_security_context(rrc_init_security_context init_sec_ctx)
   {
-    ue_ctxt.rrc->handle_init_security_context(init_sec_ctx);
+    async_task<bool>         t = ue_ctxt.rrc->handle_init_security_context(init_sec_ctx);
+    lazy_task_launcher<bool> t_launcher(t);
   }
 
   void receive_smc_complete()
   {
-    // inject RRC setup into UE object
+    // inject RRC SMC complete into UE object
     ue_ctxt.rrc->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(byte_buffer{rrc_smc_complete_pdu});
   }
 

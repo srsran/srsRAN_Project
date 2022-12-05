@@ -93,9 +93,14 @@ public:
     logger.info("Received a NAS PDU");
   }
 
-  void on_initial_context_setup_request_received(const ngap_initial_context_setup_request_message& msg) override
+  async_task<bool> on_new_sec_context(const asn1::ngap::ue_security_cap_s&           caps,
+                                      const asn1::fixed_bitstring<256, false, true>& key) override
   {
-    logger.info("Received an Initial Context Setup Request");
+    logger.info("Received a new security context");
+    return launch_async([this](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
   }
 
   byte_buffer last_nas_pdu;
