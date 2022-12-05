@@ -41,7 +41,7 @@ public:
   /// element \f$l\f$ of the time mask are set to true.
   struct layer_dmrs_pattern {
     /// Boolean mask to specify the OFDM symbols carrying DM-RS.
-    std::array<bool, MAX_NSYMB_PER_SLOT> symbols = {};
+    bounded_bitset<MAX_NSYMB_PER_SLOT> symbols = {};
     /// Boolean mask to specify the resource blocks carrying DM-RS.
     bounded_bitset<MAX_RB> rb_mask;
     /// Boolean mask to specify the resource blocks carrying DM-RS after the frequency hop.
@@ -49,7 +49,7 @@ public:
     /// Symbol index within the slot in which the first hop occurs if it has a value.
     optional<unsigned> hopping_symbol_index;
     /// Boolean mask to specify the resource elements within the resource blocks carrying DM-RS symbols.
-    std::array<bool, NRE> re_pattern = {};
+    bounded_bitset<NRE> re_pattern = {};
   };
 
   /// Estimator configuration parameters.
@@ -70,7 +70,7 @@ public:
     ///
     /// Should be equal to zero for PUCCH and equal to parameter \f$\beta_{\textup{DMRS}}\f$ (see TS38.214
     /// Section 6.2.2) for PUSCH.
-    float beta_dmrs = 0.0F;
+    float beta_dmrs_dB = 0.0F;
   };
 
   /// Default destructor.

@@ -6,15 +6,15 @@
 using namespace srsgnb;
 
 namespace {
-constexpr std::array<bool, NRE> RE_PATTERN_TYPE1_DELTA0 =
+const bounded_bitset<NRE> RE_PATTERN_TYPE1_DELTA0 =
     {true, false, true, false, true, false, true, false, true, false, true, false};
-constexpr std::array<bool, NRE> RE_PATTERN_TYPE1_DELTA1 =
+const bounded_bitset<NRE> RE_PATTERN_TYPE1_DELTA1 =
     {false, true, false, true, false, true, false, true, false, true, false, true};
-constexpr std::array<bool, NRE> RE_PATTERN_TYPE2_DELTA0 =
+const bounded_bitset<NRE> RE_PATTERN_TYPE2_DELTA0 =
     {true, true, false, false, false, false, true, true, false, false, false, false};
-constexpr std::array<bool, NRE> RE_PATTERN_TYPE2_DELTA2 =
+const bounded_bitset<NRE> RE_PATTERN_TYPE2_DELTA2 =
     {false, false, true, true, false, false, false, false, true, true, false, false};
-constexpr std::array<bool, NRE> RE_PATTERN_TYPE2_DELTA4 =
+const bounded_bitset<NRE> RE_PATTERN_TYPE2_DELTA4 =
     {false, false, false, false, true, true, false, false, false, false, true, true};
 } // namespace
 
@@ -54,12 +54,12 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
   unsigned nof_rx_ports  = config.rx_ports.size();
 
   // Select the DM-RS pattern for this PUSCH transmission.
-  span<layer_dmrs_pattern> coordinates = span<layer_dmrs_pattern>(temp_coordinates).first(nof_tx_layers);
+  span<layer_dmrs_pattern> coordinates = span<layer_dmrs_pattern>(temp_pattern).first(nof_tx_layers);
 
   // Prepare DM-RS symbol buffer dimensions.
   re_measurement_dimensions dims;
   dims.nof_subc    = config.rb_mask.count() * config.type.nof_dmrs_per_rb();
-  dims.nof_symbols = std::count(config.symbols_mask.begin(), config.symbols_mask.end(), true);
+  dims.nof_symbols = config.symbols_mask.count();
   dims.nof_slices  = nof_tx_layers;
 
   // Resize DM-RS symbol buffer.
@@ -75,10 +75,7 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
   generate(temp_symbols, coordinates, config);
 
   port_channel_estimator::configuration est_cfg = {};
-  est_cfg.dmrs_pattern.resize(nof_tx_layers);
-  for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
-    est_cfg.dmrs_pattern[i_layer] = coordinates[i_layer];
-  }
+  est_cfg.dmrs_pattern.assign(coordinates.begin(), coordinates.end());
   est_cfg.scs          = to_subcarrier_spacing(config.slot.numerology());
   est_cfg.first_symbol = config.first_symbol;
   est_cfg.nof_symbols  = config.nof_symbols;
@@ -124,7 +121,7 @@ void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&        symbols,
        ofdm_symbol_index != ofdm_symbol_end;
        ++ofdm_symbol_index) {
     // Skip symbol if it does not carry DMRS.
-    if (!cfg.symbols_mask[ofdm_symbol_index]) {
+    if (!cfg.symbols_mask.test(ofdm_symbol_index)) {
       continue;
     }
 
@@ -158,7 +155,7 @@ void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&        symbols,
 
     // Skip copy for layer 0.
     if (i_layer != 0) {
-      // For each symbol containing DMRS...
+      // For each symbol containing DM-RS...
       for (unsigned i_symbol = 0, i_symbol_end = symbols.size().nof_symbols; i_symbol != i_symbol_end; ++i_symbol) {
         // Get a view of the symbols for the current layer.
         span<cf_t> dmrs = symbols.get_symbol(i_symbol, i_layer);

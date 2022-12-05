@@ -49,7 +49,7 @@ public:
     /// Cyclic prefix.
     cyclic_prefix c_prefix = cyclic_prefix::NORMAL;
     /// DM-RS position mask. Indicates the OFDM symbols carrying DM-RS within the slot.
-    std::array<bool, MAX_NSYMB_PER_SLOT> symbols_mask;
+    bounded_bitset<MAX_NSYMB_PER_SLOT> symbols_mask;
     /// Allocation RB list: the entries set to true are used for transmission.
     bounded_bitset<MAX_RB> rb_mask;
     /// First OFDM symbol within the slot for which the channel should be estimated.

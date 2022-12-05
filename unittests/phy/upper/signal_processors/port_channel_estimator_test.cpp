@@ -23,16 +23,6 @@ using namespace srsgnb;
 
 /// \cond
 
-static unsigned count_trues(span<const bool> bits)
-{
-  return std::accumulate(bits.begin(), bits.end(), 0, [](unsigned t, bool a) { return t + (a ? 1 : 0); });
-}
-
-static unsigned to_int(span<const bool> bits)
-{
-  return std::accumulate(bits.begin(), bits.end(), 0, [](unsigned t, bool a) { return (t << 1) + (a ? 1 : 0); });
-}
-
 namespace srsgnb {
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
@@ -40,13 +30,13 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
   const port_channel_estimator::layer_dmrs_pattern& dmrs_pattern = tc.cfg.dmrs_pattern[0];
   std::string                                       hops =
       (dmrs_pattern.hopping_symbol_index.has_value() ? "intraslot frequency hopping" : "no frequency hopping");
-  return os << fmt::format("Symbol allocation [{}, {}], {} allocated PRBs, RE pattern {:#x}, {}, beta_DMRS {} dB",
+  return os << fmt::format("Symbol allocation [{}, {}], {} allocated PRBs, RE pattern 0x{:x}, {}, beta_DMRS {} dB",
                            tc.cfg.first_symbol,
                            tc.cfg.nof_symbols,
                            dmrs_pattern.rb_mask.count(),
-                           to_int(dmrs_pattern.re_pattern),
+                           dmrs_pattern.re_pattern,
                            hops,
-                           tc.cfg.beta_dmrs);
+                           tc.cfg.beta_dmrs_dB);
 }
 
 } // namespace srsgnb
@@ -114,9 +104,9 @@ TEST_P(ChannelEstFixture, test)
 
   port_channel_estimator::layer_dmrs_pattern& dmrs_pattern = cfg.dmrs_pattern[0];
 
-  unsigned nof_dmrs_symbols     = count_trues(dmrs_pattern.symbols);
+  unsigned nof_dmrs_symbols     = dmrs_pattern.symbols.count();
   unsigned nof_allocatd_rblocks = dmrs_pattern.rb_mask.count();
-  unsigned nof_dmrs_scs         = nof_allocatd_rblocks * count_trues(dmrs_pattern.re_pattern);
+  unsigned nof_dmrs_scs         = nof_allocatd_rblocks * dmrs_pattern.re_pattern.count();
   unsigned nof_dmrs_pilots      = nof_dmrs_scs * nof_dmrs_symbols;
 
   std::vector<cf_t> pilots = test_params.pilots.read();

@@ -30,7 +30,7 @@ std::ostream& operator<<(std::ostream& os, dmrs_pusch_estimator::configuration c
              config.n_scid,
              config.scaling,
              config.c_prefix.to_string(),
-             span<const bool>(config.symbols_mask),
+             config.symbols_mask,
              config.rb_mask,
              config.first_symbol,
              config.nof_symbols,

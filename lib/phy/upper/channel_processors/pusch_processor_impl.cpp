@@ -149,11 +149,6 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   // Get RB mask relative to Point A. It assumes PUSCH is never interleaved.
   bounded_bitset<MAX_RB> rb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
-  // Convert DM-RS symbol mask to array.
-  std::array<bool, MAX_NSYMB_PER_SLOT> dmrs_symbol_mask = {};
-  pdu.dmrs_symbol_mask.for_each(
-      0, pdu.dmrs_symbol_mask.size(), [&dmrs_symbol_mask](unsigned i_symb) { dmrs_symbol_mask[i_symb] = true; });
-
   // Get UL-SCH information.
   ulsch_configuration ulsch_config;
   ulsch_config.tbs                   = data.size() * 8;
@@ -182,7 +177,7 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   ch_est_config.n_scid        = pdu.n_scid;
   ch_est_config.scaling       = convert_dB_to_amplitude(-get_sch_to_dmrs_ratio_dB(pdu.nof_cdm_groups_without_data));
   ch_est_config.c_prefix      = pdu.cp;
-  ch_est_config.symbols_mask  = dmrs_symbol_mask;
+  ch_est_config.symbols_mask  = pdu.dmrs_symbol_mask;
   ch_est_config.rb_mask       = rb_mask;
   ch_est_config.first_symbol  = pdu.start_symbol_index;
   ch_est_config.nof_symbols   = pdu.nof_symbols;
@@ -213,6 +208,11 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   demux_config.dmrs                        = pdu.dmrs;
   demux_config.dmrs_symbol_mask            = ulsch_config.dmrs_symbol_mask;
   demux_config.nof_cdm_groups_without_data = ulsch_config.nof_cdm_groups_without_data;
+
+  // Convert DM-RS symbol mask to array.
+  std::array<bool, MAX_NSYMB_PER_SLOT> dmrs_symbol_mask = {};
+  pdu.dmrs_symbol_mask.for_each(
+      0, pdu.dmrs_symbol_mask.size(), [&dmrs_symbol_mask](unsigned i_symb) { dmrs_symbol_mask[i_symb] = true; });
 
   // Demodulate.
   pusch_demodulator::configuration demod_config;

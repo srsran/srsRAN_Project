@@ -39,7 +39,7 @@ public:
 private:
   /// Parameters for PUSCH DM-RS.
   struct parameters {
-    std::array<bool, NRE> re_pattern;
+    bounded_bitset<NRE>   re_pattern;
     std::array<float, 2>  w_f;
     std::array<float, 2>  w_t;
   };
@@ -62,7 +62,7 @@ private:
   /// Buffer for DM-RS symbols.
   dmrs_symbol_list temp_symbols;
   /// Buffer for DM-RS symbol coordinates.
-  std::array<layer_dmrs_pattern, MAX_TX_LAYERS> temp_coordinates;
+  std::array<layer_dmrs_pattern, MAX_TX_LAYERS> temp_pattern;
 
   /// \brief Generates the sequence described in TS 38.211 section 6.4.1.1.1, considering the only values required
   /// in TS38.211 section 6.4.1.1.2.

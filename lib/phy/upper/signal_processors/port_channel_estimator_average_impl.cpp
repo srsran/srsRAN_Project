@@ -21,17 +21,17 @@ using namespace srsgnb;
 // which is 12 (PUCCH F1), 6 (PUSCH) or 4 (PUCCH F2).
 static constexpr unsigned WINDOW_SIZE = 2;
 
-// \brief Extracts channel observations corresponding to DM-RS pilots from the resource grid for one layer, one hop and
-// for the selected port.
-// \param[out] rx_symbols  Symbol buffer destination.
-// \param[in]  grid        Resource grid.
-// \param[in]  port        Port index.
-// \param[in]  pattern     DM-RS pattern for each layer.
-// \param[in]  cfg         Configuration parameters of the current context.
-// \param[in]  hop         Intra-slot frequency hopping index: 0 for first position (before hopping), 1 for second
-//                         position (after hopping).
-// \param[in]  i_layer     Index of the selected layer.
-// \return The number of ODFM symbols containing DM-RS for the given layer and hop.
+/// \brief Extracts channel observations corresponding to DM-RS pilots from the resource grid for one layer, one hop and
+/// for the selected port.
+/// \param[out] rx_symbols  Symbol buffer destination.
+/// \param[in]  grid        Resource grid.
+/// \param[in]  port        Port index.
+/// \param[in]  pattern     DM-RS pattern for each layer.
+/// \param[in]  cfg         Configuration parameters of the current context.
+/// \param[in]  hop         Intra-slot frequency hopping index: 0 for first position (before hopping), 1 for second
+///                         position (after hopping).
+/// \param[in]  i_layer     Index of the selected layer.
+/// \return The number of OFDM symbols containing DM-RS for the given layer and hop.
 static unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                            rx_symbols,
                                             const resource_grid_reader&                  grid,
                                             unsigned                                     port,
@@ -39,17 +39,17 @@ static unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                   
                                             unsigned                                     hop,
                                             unsigned                                     i_layer);
 
-// \brief Estimates the noise energy of one hop.
-// \param[in] pilots      DM-RS pilots.
-// \param[in] rx_pilots   Received samples corresponding to DM-RS pilots.
-// \param[in] estimates   Estimated channel frequency response.
-// \param[in] beta        DM-RS-to-data amplitude gain.
-// \param[in] window_size Size of the averaging window.
-// \param[in] hop_symbols Number of OFDM symbols containing DM-RS pilots in the current hop.
-// \param[in] hop_offset  Number of OFDM symbols containing DM-RS pilots in the previous hop (set to 0 if the current
-//                        hop is the first/only one).
-// \param[in] i_layer     Index of the selected layer.
-// \return The noise energy for the current hop (normalized with respect to the number of averaging windows).
+/// \brief Estimates the noise energy of one hop.
+/// \param[in] pilots      DM-RS pilots.
+/// \param[in] rx_pilots   Received samples corresponding to DM-RS pilots.
+/// \param[in] estimates   Estimated channel frequency response.
+/// \param[in] beta        DM-RS-to-data amplitude gain (linear scale).
+/// \param[in] window_size Size of the averaging window.
+/// \param[in] hop_symbols Number of OFDM symbols containing DM-RS pilots in the current hop.
+/// \param[in] hop_offset  Number of OFDM symbols containing DM-RS pilots in the previous hop (set to 0 if the current
+///                        hop is the first/only one).
+/// \param[in] i_layer     Index of the selected layer.
+/// \return The noise energy for the current hop (normalized with respect to the number of averaging windows).
 static float estimate_noise(const dmrs_symbol_list& pilots,
                             const dmrs_symbol_list& rx_pilots,
                             span<const cf_t>        estimates,
@@ -60,14 +60,15 @@ static float estimate_noise(const dmrs_symbol_list& pilots,
                             unsigned                i_layer);
 
 // Returns the interpolator configuration for the given RE pattern.
-static interpolator::configuration set_interpolator_cfg(span<const bool> re_mask)
+static interpolator::configuration set_interpolator_cfg(const bounded_bitset<NRE>& re_mask)
 {
-  span<const bool>::iterator offset_it = std::find(re_mask.begin(), re_mask.end(), true);
-  srsgnb_assert(offset_it != re_mask.end(), "re_mask seems to have no active entries.");
-  span<const bool>::iterator stride_it = std::find(offset_it + 1, re_mask.end(), true);
-  srsgnb_assert(stride_it != re_mask.end(), "re_mask seems to have only one active entry.");
+  int offset = re_mask.find_lowest();
+  srsgnb_assert(offset != -1, "re_mask seems to have no active entries.");
 
-  return {static_cast<unsigned>(offset_it - re_mask.begin()), static_cast<unsigned>(stride_it - offset_it)};
+  int stride = re_mask.find_lowest(offset + 1, re_mask.size());
+  srsgnb_assert(stride != -1, "re_mask seems to have only one active entry.");
+
+  return {static_cast<unsigned>(offset), static_cast<unsigned>(stride - offset)};
 }
 
 void port_channel_estimator_average_impl::compute(channel_estimate&           estimate,
@@ -94,10 +95,10 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
     rsrp /= static_cast<float>(nof_dmrs_pilots);
     estimate.set_rsrp(rsrp, port, i_layer);
 
-    float epre = rsrp * convert_dB_to_power(cfg.beta_dmrs);
+    float epre = rsrp * convert_dB_to_power(cfg.beta_dmrs_dB);
     estimate.set_epre(epre, port, i_layer);
 
-    noise_var /= static_cast<float>(2 * symbols_size.nof_symbols - 1);
+    noise_var /= static_cast<float>(WINDOW_SIZE * symbols_size.nof_symbols - 1);
     // todo: temporarily commenting this since it causes old tests to fail.
     // estimate.set_noise_variance(noise_var, port, i_layer);
     estimate.set_noise_variance(convert_dB_to_power(-30), port, i_layer);
@@ -117,8 +118,8 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsgnb::channel_esti
                 "Frequency hopping requested but not configured.");
 
   // Auxiliary buffers for pilot computations.
-  static std::array<cf_t, MAX_RB * NRE> aux_pilot_products;
-  static std::array<cf_t, MAX_RB * NRE> aux_pilots_lse;
+  std::array<cf_t, MAX_RB * NRE> aux_pilot_products;
+  std::array<cf_t, MAX_RB * NRE> aux_pilots_lse;
 
   const layer_dmrs_pattern& pattern = cfg.dmrs_pattern[i_layer];
 
@@ -150,7 +151,7 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsgnb::channel_esti
   }
 
   // Average and apply DM-RS-to-data gain.
-  float beta_scaling = convert_dB_to_amplitude(-cfg.beta_dmrs);
+  float beta_scaling = convert_dB_to_amplitude(-cfg.beta_dmrs_dB);
   for (cf_t& value : pilots_lse) {
     rsrp += abs_sq(value) / static_cast<float>(nof_dmrs_symbols);
     value /= (static_cast<float>(nof_dmrs_symbols) * beta_scaling);
@@ -178,25 +179,20 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsgnb::channel_esti
   }
 }
 
-unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                            rx_symbols,
-                                     const resource_grid_reader&                  grid,
-                                     unsigned                                     port,
-                                     const port_channel_estimator::configuration& cfg,
-                                     unsigned                                     hop,
-                                     unsigned                                     i_layer)
+static unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                            rx_symbols,
+                                            const resource_grid_reader&                  grid,
+                                            unsigned                                     port,
+                                            const port_channel_estimator::configuration& cfg,
+                                            unsigned                                     hop,
+                                            unsigned                                     i_layer)
 {
   // Select DM-RS pattern.
   const port_channel_estimator::layer_dmrs_pattern& pattern = cfg.dmrs_pattern[i_layer];
 
-  // Prepare RE mask, common for all symbols carrying DM-RS.
-  std::array<bool, MAX_RB* NRE> temp_re_mask = {};
-  span<bool>                    re_mask      = span<bool>(temp_re_mask).first(pattern.rb_mask.size() * NRE);
-
   const bounded_bitset<MAX_RB>& hop_rb_mask = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
-  // For each RB, copy RE pattern mask.
-  hop_rb_mask.for_each(0, hop_rb_mask.size(), [&](unsigned rb_index) {
-    srsvec::copy(re_mask.subspan(rb_index * NRE, NRE), pattern.re_pattern);
-  });
+
+  // Prepare RE mask, common for all symbols carrying DM-RS.
+  bounded_bitset<MAX_RB* NRE> re_mask = hop_rb_mask.kronecker_product<NRE>(pattern.re_pattern);
 
   unsigned symbol_index      = ((hop == 1) && pattern.hopping_symbol_index.has_value())
                                    ? pattern.hopping_symbol_index.value()
@@ -208,7 +204,7 @@ unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                          
   // For each OFDM symbol in the transmission...
   for (; symbol_index != symbol_index_end; ++symbol_index) {
     // Skip if the symbol does not carry DM-RS.
-    if (!pattern.symbols[symbol_index]) {
+    if (!pattern.symbols.test(symbol_index)) {
       continue;
     }
 
@@ -227,17 +223,17 @@ unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                          
   return dmrs_symbol_index;
 }
 
-float estimate_noise(const dmrs_symbol_list& pilots,
-                     const dmrs_symbol_list& rx_pilots,
-                     span<const cf_t>        estimates,
-                     float                   beta,
-                     unsigned                window_size,
-                     unsigned                hop_symbols,
-                     unsigned                hop_offset,
-                     unsigned                i_layer)
+static float estimate_noise(const dmrs_symbol_list& pilots,
+                            const dmrs_symbol_list& rx_pilots,
+                            span<const cf_t>        estimates,
+                            float                   beta,
+                            unsigned                window_size,
+                            unsigned                hop_symbols,
+                            unsigned                hop_offset,
+                            unsigned                i_layer)
 {
-  static std::array<cf_t, MAX_RB * NRE> avg_estimates_buffer;
-  static std::array<cf_t, MAX_RB * NRE> predicted_obs_buffer;
+  std::array<cf_t, MAX_RB * NRE> avg_estimates_buffer;
+  std::array<cf_t, MAX_RB * NRE> predicted_obs_buffer;
 
   srsgnb_assert((window_size > 0) && (estimates.size() % window_size == 0), "Incompatible window size.");
 
@@ -257,7 +253,6 @@ float estimate_noise(const dmrs_symbol_list& pilots,
 
   span<cf_t> predicted_obs = span<cf_t>(predicted_obs_buffer).first(estimates.size());
   float      noise_energy  = 0.0F;
-  float      normalization = static_cast<float>(estimates.size() / window_size);
   for (unsigned i_symbol = 0; i_symbol != hop_symbols; ++i_symbol) {
     span<const cf_t> symbol_pilots    = pilots.get_symbol(hop_offset + i_symbol, i_layer);
     span<const cf_t> symbol_rx_pilots = rx_pilots.get_symbol(i_symbol, i_layer);
@@ -266,7 +261,7 @@ float estimate_noise(const dmrs_symbol_list& pilots,
         avg_estimates.begin(), avg_estimates.end(), symbol_pilots.begin(), predicted_obs.begin(), std::multiplies<>());
     srsvec::add(predicted_obs, symbol_rx_pilots, predicted_obs);
 
-    noise_energy += srsvec::dot_prod(predicted_obs, predicted_obs).real() / normalization;
+    noise_energy += srsvec::average_power(predicted_obs) * window_size;
   }
   return noise_energy;
 }

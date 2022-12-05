@@ -234,7 +234,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_EQ(convert_dB_to_amplitude(-get_sch_to_dmrs_ratio_dB(pdu.nof_cdm_groups_without_data)),
             estimator_entry.config.scaling);
   ASSERT_EQ(pdu.cp, estimator_entry.config.c_prefix);
-  ASSERT_EQ(dmrs_symbol_mask, estimator_entry.config.symbols_mask);
+  ASSERT_EQ(pdu.dmrs_symbol_mask, estimator_entry.config.symbols_mask);
   ASSERT_EQ(rb_mask, estimator_entry.config.rb_mask);
   ASSERT_EQ(pdu.start_symbol_index, estimator_entry.config.first_symbol);
   ASSERT_EQ(pdu.nof_symbols, estimator_entry.config.nof_symbols);
