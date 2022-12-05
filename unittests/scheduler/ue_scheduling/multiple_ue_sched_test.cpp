@@ -155,12 +155,12 @@ protected:
     return cfg;
   }
 
-  sched_cell_configuration_request_message create_random_cell_config_request(duplex_mode mode) const
+  sched_cell_configuration_request_message create_random_cell_config_request() const
   {
     sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
     msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = params.k0;
 
-    if (mode == duplex_mode::TDD) {
+    if (params.duplx_mode == duplex_mode::TDD) {
       msg.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common();
     }
     return msg;
@@ -201,6 +201,7 @@ protected:
     auto msg     = test_helpers::make_default_ue_creation_request();
     msg.crnti    = to_rnti(allocate_rnti());
     msg.ue_index = ue_index;
+    msg.serv_cell_cfg.value().ul_config.value().init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack[0] = params.k1;
 
     auto lc_cfg     = config_helpers::make_default_logical_channel_config(lcid_);
     lc_cfg.lc_group = lcgid_;
@@ -261,7 +262,7 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
   // Used to track BSR 0.
   std::map<unsigned, bool> is_bsr_zero_sent;
 
-  setup_sched(create_expert_config(10), create_random_cell_config_request(params.duplx_mode));
+  setup_sched(create_expert_config(10), create_random_cell_config_request());
   // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in params.
   // Assumption: LCID is DRB1.
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
@@ -312,7 +313,7 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
   // Used to track BSR 0.
   std::map<unsigned, bool> is_bsr_zero_sent;
 
-  setup_sched(create_expert_config(10), create_random_cell_config_request(params.duplx_mode));
+  setup_sched(create_expert_config(10), create_random_cell_config_request());
   // Add UE(s) and notify UL BSR from UE of random size between min and max defined in params.
   // Assumption: LCID is DRB1.
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
@@ -361,7 +362,7 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
 
 TEST_P(multiple_ue_sched_tester, not_scheduled_when_buffer_status_zero)
 {
-  setup_sched(create_expert_config(10), create_random_cell_config_request(params.duplx_mode));
+  setup_sched(create_expert_config(10), create_random_cell_config_request());
   // Add UE(s) and notify UL BSR + DL Buffer status with zero value.
   // Assumption: LCID is DRB1.
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
@@ -385,27 +386,27 @@ INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                          multiple_ue_sched_tester,
                          testing::Values(multiple_ue_test_params{.k0                       = 1,
                                                                  .k1                       = 4,
-                                                                 .nof_ues                  = 2,
+                                                                 .nof_ues                  = 3,
                                                                  .min_buffer_size_in_bytes = 1000,
-                                                                 .max_buffer_size_in_bytes = 2500,
+                                                                 .max_buffer_size_in_bytes = 3000,
                                                                  .duplx_mode               = duplex_mode::FDD},
                                          multiple_ue_test_params{.k0                       = 2,
                                                                  .k1                       = 5,
-                                                                 .nof_ues                  = 2,
+                                                                 .nof_ues                  = 3,
                                                                  .min_buffer_size_in_bytes = 1000,
-                                                                 .max_buffer_size_in_bytes = 2500,
+                                                                 .max_buffer_size_in_bytes = 3000,
                                                                  .duplx_mode               = duplex_mode::FDD},
-                                         multiple_ue_test_params{.k0                       = 1,
+                                         multiple_ue_test_params{.k0                       = 15,
                                                                  .k1                       = 4,
-                                                                 .nof_ues                  = 2,
-                                                                 .min_buffer_size_in_bytes = 1000,
-                                                                 .max_buffer_size_in_bytes = 2500,
+                                                                 .nof_ues                  = 5,
+                                                                 .min_buffer_size_in_bytes = 2000,
+                                                                 .max_buffer_size_in_bytes = 3000,
                                                                  .duplx_mode               = duplex_mode::TDD},
                                          multiple_ue_test_params{.k0                       = 2,
                                                                  .k1                       = 5,
                                                                  .nof_ues                  = 2,
                                                                  .min_buffer_size_in_bytes = 1000,
-                                                                 .max_buffer_size_in_bytes = 2500,
+                                                                 .max_buffer_size_in_bytes = 3000,
                                                                  .duplx_mode               = duplex_mode::TDD}));
 
 int main(int argc, char** argv)
