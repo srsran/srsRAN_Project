@@ -50,7 +50,7 @@ public:
   int get_pucch_res_indicator(slot_point slot_tx, rnti_t crnti);
 
 private:
-  static const size_t RES_MANAGER_RING_BUFFER_SIZE = 20;
+  static const size_t RES_MANAGER_RING_BUFFER_SIZE = cell_resource_allocator::GRID_NOF_SUBFRAMES;
   static const size_t MAX_HARQ_PUCCH_RESOURCES     = 8;
 
   // Record for the RNTI and PUCCH resource indicator used for a given resource at a given slot.

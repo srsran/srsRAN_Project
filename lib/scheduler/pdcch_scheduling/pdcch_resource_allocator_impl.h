@@ -54,7 +54,7 @@ private:
 
   /// Size of the ring buffer of pdcch_slot_allocator. This size sets a limit on how far in advance a PDCCH can be
   /// allocated.
-  static const size_t SLOT_ALLOCATOR_RING_SIZE = 10;
+  static const size_t SLOT_ALLOCATOR_RING_SIZE = cell_resource_allocator::GRID_NOF_SUBFRAMES;
 
   pdcch_slot_allocator& get_pdcch_slot_alloc(slot_point sl);
 
