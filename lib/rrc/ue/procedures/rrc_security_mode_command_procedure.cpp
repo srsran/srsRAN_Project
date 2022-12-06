@@ -80,7 +80,7 @@ bool rrc_security_mode_command_procedure::select_security_algo()
                                                                   security::ciphering_algorithm::nea3};
   if (not security::select_algorithms(
           sec_cfg, inc_algo_pref_list, ciph_algo_pref_list, sec_ctx.supported_int_algos, sec_ctx.supported_enc_algos)) {
-    logger.error("0x{:x}: \"{}\" could not select security algorithm. ", context.c_rnti, name(), sec_cfg.integ_algo);
+    logger.error("0x{:x}: \"{}\" could not select security algorithm. ", context.c_rnti, name());
     return false;
   }
   logger.debug("0x{:x}: \"{}\" selected security algorithms. NIA=NIA{}, NEA=NEA{}. ",

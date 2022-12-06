@@ -228,7 +228,7 @@ inline bool select_algorithms(sec_as_config&                 sec_cfg,
     }
     if (supp_ciph_list[algo_id - 1]) {
       ciph_algo_found     = true;
-      sec_cfg.cipher_algo = security::ciphering_algorithm_from_number(algo_id - 1);
+      sec_cfg.cipher_algo = security::ciphering_algorithm_from_number(algo_id);
       break;
     }
   }
