@@ -124,7 +124,7 @@ protected:
   {
     ASSERT_NE(factory, nullptr);
     processor = factory->create();
-    ASSERT_NE(processor, nullptr) << "Could not create PUCCH Processor.";
+    ASSERT_NE(processor, nullptr) << "Could not create PUCCH processor.";
     validator = factory->create_validator();
     ASSERT_NE(validator, nullptr) << "Could not create PUCCH validator.";
   }

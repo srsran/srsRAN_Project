@@ -31,20 +31,11 @@ enum class pucch_format { FORMAT_0, FORMAT_1, FORMAT_2, FORMAT_3, FORMAT_4, NOF_
 /// TS38.213, Section 9.2.6.
 enum class pucch_repetition_tx_slot { no_multi_slot, starts, continues, ends };
 
-/// PUCCH does not make use spatial multiplexing.
+/// PUCCH does not make use of spatial multiplexing.
 static constexpr unsigned PUCCH_MAX_LAYERS = 1;
 
 /// Maximum number of symbols (without DM-RS) that NR-PUCCH Format 1 can transmit.
 static constexpr unsigned PUCCH_FORMAT1_N_MAX = 7;
-
-/// Maximum number of HARQ-ACK carried by a PUCCH format 1 resource.
-static constexpr unsigned PUCCH_FORMAT1_MAX_HARQ_ACK = 2;
-
-/// Minimum number of symbols (including DM-RS) that NR-PUCCH Format 1 can transmit.
-static constexpr unsigned PUCCH_FORMAT1_MIN_NSYMB = 4;
-
-/// Maximum number of symbols (including DM-RS) that NR-PUCCH Format 1 can transmit.
-static constexpr unsigned PUCCH_FORMAT1_MAX_NSYMB = 14;
 
 /// Minimum number of symbols that NR-PUCCH Format 2 can transmit.
 static constexpr unsigned PUCCH_FORMAT2_MIN_NSYMB = 1;

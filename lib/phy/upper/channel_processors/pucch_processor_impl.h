@@ -22,23 +22,10 @@ namespace srsgnb {
 class pucch_pdu_validator_impl : public pucch_pdu_validator
 {
 public:
-  /// Maximum supported PUCCH Format 2 UCI payload length in number of bits.
-  static constexpr unsigned FORMAT2_MAX_UCI_NBITS = 11;
-  /// Maximum PUCCH Format 1 \ref pucch_processor::format1_configuration.time_domain_occ time dommain OCC index.
-  static constexpr unsigned FORMAT1_MAX_OCC_IDX = 6;
-  /// Maximum PUCCH Format 1 \ref pucch_processor::format1_configuration.initial_cyclic_shift initial cyclic shift.
-  static constexpr unsigned FORMAT1_MAX_CYCLIC_SHIFT = 11;
-  /// Maximum PUCCH Format 1 \ref pucch_processor::format1_configuration.n_id NID value.
-  static constexpr unsigned FORMAT1_MAX_NID = 1023;
-  /// Maximum PUCCH Format 2 \ref pucch_processor::format2_configuration.n_id NID value.
-  static constexpr unsigned FORMAT2_MAX_NID = 1023;
-  /// Maximum PUCCH Format 2 \ref pucch_processor::format2_configuration.n_id_0 NID0 value.
-  static constexpr unsigned FORMAT2_MAX_NID_0 = 65535;
-
-  /// \brief Constructs PUCCH processor validator.
+  /// \brief Constructs a PUCCH processor validator.
   ///
-  /// It requires channel estimate dimensions to limit the bandwidth, slot duration, number of receive ports and
-  /// transmit layers.
+  /// The channel estimate dimensions are used to set the bandwidth, slot duration, number of receive ports and transmit
+  /// layers.
   ///
   /// \param[in] ce_dims_ Provides the channel estimates dimensions.
   explicit pucch_pdu_validator_impl(const channel_estimate::channel_estimate_dimensions& ce_dims_) : ce_dims(ce_dims_)
@@ -62,6 +49,9 @@ private:
 class pucch_processor_impl : public pucch_processor
 {
 public:
+  /// Maximum supported PUCCH Format 2 UCI payload length in number of bits.
+  static constexpr unsigned FORMAT2_MAX_UCI_NBITS = 11;
+
   // See interface for documentation.
   pucch_processor_result process(const resource_grid_reader& grid, const format0_configuration& config) override
   {

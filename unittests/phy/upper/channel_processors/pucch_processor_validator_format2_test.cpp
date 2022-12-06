@@ -19,18 +19,12 @@ using namespace srsgnb;
 namespace {
 
 // Maximum channel dimensions used to construct the PUCCH processor.
-static channel_estimate::channel_estimate_dimensions max_dimensions = {MAX_RB,
-                                                                       MAX_NSYMB_PER_SLOT - 1,
-                                                                       1,
-                                                                       PUCCH_MAX_LAYERS};
+channel_estimate::channel_estimate_dimensions max_dimensions = {MAX_RB, MAX_NSYMB_PER_SLOT - 1, 1, PUCCH_MAX_LAYERS};
 
 // Maximum number of UCI payload bits supported by the current PUCCH Format 2 implementation.
-static constexpr unsigned PUCCH_F2_IMPL_MAX_NBITS = 11;
+constexpr unsigned PUCCH_F2_IMPL_MAX_NBITS = 11;
 
-// Maximum NID and NID_0 values for PUCCH Format 2.
-static constexpr unsigned PUCCH_F2_MAX_NID   = 1023;
-static constexpr unsigned PUCCH_F2_MAX_NID_0 = 65535;
-
+// Valid PUCCH Format 2 configuration.
 const pucch_processor::format2_configuration base_format_2_config = {
     // Slot.
     {0, 9},
@@ -54,10 +48,10 @@ const pucch_processor::format2_configuration base_format_2_config = {
     1,
     // RNTI.
     65535,
-    // N_ID
-    PUCCH_F2_MAX_NID,
-    // N_ID_0
-    PUCCH_F2_MAX_NID_0,
+    // N_ID.
+    0,
+    // N_ID_0.
+    0,
     // Number of HARQ-ACK bits.
     PUCCH_FORMAT2_MIN_UCI_NBITS,
     // Number of SR bits.
@@ -88,25 +82,6 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 const std::vector<test_case_t> pucch_processor_validator_test_data = {
     {
         [] {
-          test_params entry = {};
-          entry.config      = base_format_2_config;
-          entry.config.cp   = cyclic_prefix::EXTENDED;
-          set_slot_numerology(entry.config.slot, 0);
-          entry.assert_message = R"(Extended CP is only supported for 60 kHz SCS\.)";
-          return entry;
-        },
-    },
-    {
-        [] {
-          test_params entry        = {};
-          entry.config             = base_format_2_config;
-          entry.config.bwp_size_rb = 0;
-          entry.assert_message     = fmt::format(R"(BWP size cannot be zero\.)");
-          return entry;
-        },
-    },
-    {
-        [] {
           test_params entry         = {};
           entry.config              = base_format_2_config;
           entry.config.bwp_start_rb = 10;
@@ -115,18 +90,6 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
               R"(BWP allocation goes up to PRB {}\, exceeding the configured maximum grid RB size\, i\.e\.\, {}\.)",
               entry.config.bwp_start_rb + entry.config.bwp_size_rb,
               MAX_RB);
-          return entry;
-        },
-    },
-    {
-        [] {
-          test_params entry    = {};
-          entry.config         = base_format_2_config;
-          entry.config.nof_prb = PUCCH_FORMAT2_MAX_NPRB + 1;
-          entry.assert_message =
-              fmt::format(R"(Invalid number of PRB\, i\.e\.\, {}\. PUCCH Format 2 occupies 1 to {} PRB\.)",
-                          entry.config.nof_prb,
-                          PUCCH_FORMAT2_MAX_NPRB);
           return entry;
         },
     },
@@ -144,23 +107,11 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
     },
     {
         [] {
-          test_params entry        = {};
-          entry.config             = base_format_2_config;
-          entry.config.nof_symbols = PUCCH_FORMAT2_MAX_NSYMB + 1;
-          entry.assert_message =
-              fmt::format(R"(Invalid number of OFDM Symbols\, i\.e\.\, {}\. PUCCH Format 2 occupies 1 to {} symbols\.)",
-                          entry.config.nof_symbols,
-                          PUCCH_FORMAT2_MAX_NSYMB);
-          return entry;
-        },
-    },
-    {
-        [] {
           test_params entry               = {};
           entry.config                    = base_format_2_config;
           entry.config.start_symbol_index = get_nsymb_per_slot(entry.config.cp) - entry.config.nof_symbols + 1;
           entry.assert_message            = fmt::format(
-              R"(OFDM symbol allocation goes up to symbol {}\, exceeding the number of symbols in the slot given {} CP\, i\.e\.\, {}\.)",
+              R"(OFDM symbol allocation goes up to symbol {}\, exceeding the number of symbols in the given slot with {} CP\, i\.e\.\, {}\.)",
               entry.config.start_symbol_index + entry.config.nof_symbols,
               entry.config.cp.to_string(),
               get_nsymb_per_slot(entry.config.cp));
@@ -186,7 +137,7 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
           test_params entry    = {};
           entry.config         = base_format_2_config;
           entry.config.ports   = {};
-          entry.assert_message = fmt::format(R"(number of receive ports cannot be zero\.)");
+          entry.assert_message = fmt::format(R"(The number of receive ports cannot be zero\.)");
           return entry;
         },
     },
@@ -196,7 +147,7 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
           entry.config         = base_format_2_config;
           entry.config.ports   = {0, 1};
           entry.assert_message = fmt::format(
-              R"(Number of receive ports\, i\.e\. {}\, exceeds the configured maximum number of receive ports\, i\.e\.\, {}\.)",
+              R"(The number of receive ports\, i\.e\. {}\, exceeds the configured maximum number of receive ports\, i\.e\.\, {}\.)",
               entry.config.ports.size(),
               max_dimensions.nof_rx_ports);
           return entry;
@@ -258,28 +209,6 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
               entry.config.nof_harq_ack + entry.config.nof_sr + entry.config.nof_csi_part1 + entry.config.nof_csi_part2,
               PUCCH_FORMAT2_MIN_UCI_NBITS,
               PUCCH_F2_IMPL_MAX_NBITS);
-          return entry;
-        },
-    },
-    {
-        [] {
-          test_params entry    = {};
-          entry.config         = base_format_2_config;
-          entry.config.n_id    = PUCCH_F2_MAX_NID + 1;
-          entry.assert_message = fmt::format(R"(The NID value\, i\.e\.\, {}\, exceeds its maximum value of {}\.)",
-                                             entry.config.n_id,
-                                             PUCCH_F2_MAX_NID);
-          return entry;
-        },
-    },
-    {
-        [] {
-          test_params entry    = {};
-          entry.config         = base_format_2_config;
-          entry.config.n_id_0  = PUCCH_F2_MAX_NID_0 + 1;
-          entry.assert_message = fmt::format(R"(The NID_0 value, i\.e\.\, {}\, exceeds its maximum value of {}\.)",
-                                             entry.config.n_id_0,
-                                             PUCCH_F2_MAX_NID_0);
           return entry;
         },
     },
@@ -349,7 +278,7 @@ protected:
 
       // Create PUCCH processor validator.
       pucch_validator = processor_factory->create_validator();
-      ASSERT_NE(pucch_validator, nullptr) << "Cannot create PUCCH processor validator.";
+      ASSERT_NE(pucch_validator, nullptr) << "Cannot create PUCCH validator.";
     }
   }
 };
@@ -359,6 +288,9 @@ std::unique_ptr<pucch_pdu_validator> PucchProcessorFixture::pucch_validator;
 
 TEST_P(PucchProcessorFixture, PucchProcessorValidatortest)
 {
+  ASSERT_NE(pucch_proc, nullptr) << "PUCCH processor not created.";
+  ASSERT_NE(pucch_validator, nullptr) << "PUCCH validator not created.";
+
   const test_case_t& param = GetParam();
 
   // Make sure the configuration is invalid.

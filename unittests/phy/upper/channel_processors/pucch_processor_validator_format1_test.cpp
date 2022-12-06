@@ -23,13 +23,11 @@ static channel_estimate::channel_estimate_dimensions max_dimensions = {MAX_RB,
                                                                        MAX_NSYMB_PER_SLOT - 1,
                                                                        1,
                                                                        PUCCH_MAX_LAYERS};
-// Maximum NID value for PUCCH Format 1.
-static constexpr unsigned PUCCH_F1_MAX_NID = 1023;
-// Maximum time domain OCC index for PUCCH Format 1.
-static constexpr unsigned PUCCH_F1_MAX_OCC_IDX = 6;
-// Maximum initial cyclic shift for PUCCH Format 1.
-static constexpr unsigned PUCCH_F1_MAX_CYCLIC_SHIFT = 11;
 
+/// Minimum number of symbols (including DM-RS) that NR-PUCCH Format 1 can transmit.
+static constexpr unsigned PUCCH_FORMAT1_MIN_NSYMB = 4;
+
+// Valid PUCCH Format 1 configuration.
 const pucch_processor::format1_configuration base_format_1_config = {
     // Slot.
     {0, 9},
@@ -44,15 +42,15 @@ const pucch_processor::format1_configuration base_format_1_config = {
     // Second hop PRB.
     {},
     // N_ID
-    PUCCH_F1_MAX_NID,
+    0,
     // Number of HARQ-ACK bits.
-    PUCCH_FORMAT1_MAX_HARQ_ACK,
+    1,
     // Rx Ports.
     {0},
     // Initial cyclic shift.
-    PUCCH_F1_MAX_CYCLIC_SHIFT,
+    0,
     // Number of OFDM symbols.
-    PUCCH_FORMAT1_MIN_NSYMB,
+    1,
     // Start symbol index.
     3,
     // Time domain OCC.
@@ -77,25 +75,6 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 // Test cases are implemented as lambda functions that generate and return an invalid PUCCH Format 1 configuration,
 // along with the expected assert message.
 const std::vector<test_case_t> pucch_processor_validator_test_data = {
-    {
-        [] {
-          test_params entry = {};
-          entry.config      = base_format_1_config;
-          entry.config.cp   = cyclic_prefix::EXTENDED;
-          set_slot_numerology(entry.config.slot, 0);
-          entry.assert_message = R"(Extended CP is only supported for 60 kHz SCS\.)";
-          return entry;
-        },
-    },
-    {
-        [] {
-          test_params entry        = {};
-          entry.config             = base_format_1_config;
-          entry.config.bwp_size_rb = 0;
-          entry.assert_message     = fmt::format(R"(BWP size cannot be zero\.)");
-          return entry;
-        },
-    },
     {
         [] {
           test_params entry         = {};
@@ -142,7 +121,7 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
           entry.config.nof_symbols        = PUCCH_FORMAT1_MIN_NSYMB;
           entry.config.start_symbol_index = get_nsymb_per_slot(entry.config.cp) - entry.config.nof_symbols + 1;
           entry.assert_message            = fmt::format(
-              R"(OFDM symbol allocation goes up to symbol {}\, exceeding the number of symbols in the slot given {} CP\, i\.e\.\, {}\.)",
+              R"(OFDM symbol allocation goes up to symbol {}\, exceeding the number of symbols in the given slot with {} CP\, i\.e\.\, {}\.)",
               entry.config.start_symbol_index + entry.config.nof_symbols,
               entry.config.cp.to_string(),
               get_nsymb_per_slot(entry.config.cp));
@@ -165,38 +144,10 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
     },
     {
         [] {
-          test_params entry               = {};
-          entry.config                    = base_format_1_config;
-          entry.config.start_symbol_index = 0;
-          entry.config.nof_symbols        = PUCCH_FORMAT1_MAX_NSYMB + 1;
-          entry.assert_message            = fmt::format(
-              R"(Invalid number of OFDM Symbols\, i\.e\.\, {}\. PUCCH Format 1 occupies {} to {} symbols\.)",
-              entry.config.nof_symbols,
-              PUCCH_FORMAT1_MIN_NSYMB,
-              PUCCH_FORMAT1_MAX_NSYMB);
-          return entry;
-        },
-    },
-    {
-        [] {
-          test_params entry               = {};
-          entry.config                    = base_format_1_config;
-          entry.config.start_symbol_index = 0;
-          entry.config.nof_symbols        = PUCCH_FORMAT1_MIN_NSYMB - 1;
-          entry.assert_message            = fmt::format(
-              R"(Invalid number of OFDM Symbols\, i\.e\.\, {}\. PUCCH Format 1 occupies {} to {} symbols\.)",
-              entry.config.nof_symbols,
-              PUCCH_FORMAT1_MIN_NSYMB,
-              PUCCH_FORMAT1_MAX_NSYMB);
-          return entry;
-        },
-    },
-    {
-        [] {
           test_params entry    = {};
           entry.config         = base_format_1_config;
           entry.config.ports   = {};
-          entry.assert_message = fmt::format(R"(number of receive ports cannot be zero\.)");
+          entry.assert_message = fmt::format(R"(The number of receive ports cannot be zero\.)");
           return entry;
         },
     },
@@ -206,56 +157,9 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
           entry.config         = base_format_1_config;
           entry.config.ports   = {0, 1};
           entry.assert_message = fmt::format(
-              R"(Number of receive ports\, i\.e\. {}\, exceeds the configured maximum number of receive ports\, i\.e\.\, {}\.)",
+              R"(The number of receive ports\, i\.e\. {}\, exceeds the configured maximum number of receive ports\, i\.e\.\, {}\.)",
               entry.config.ports.size(),
               max_dimensions.nof_rx_ports);
-          return entry;
-        },
-    },
-    {
-        [] {
-          test_params entry            = {};
-          entry.config                 = base_format_1_config;
-          entry.config.time_domain_occ = PUCCH_F1_MAX_OCC_IDX + 1;
-          entry.assert_message =
-              fmt::format(R"(The time domain OCC index\, i\.e\.\, {}\, exceeds its maximum value of {}\.)",
-                          entry.config.time_domain_occ,
-                          PUCCH_F1_MAX_OCC_IDX);
-          return entry;
-        },
-    },
-    {
-        [] {
-          test_params entry                 = {};
-          entry.config                      = base_format_1_config;
-          entry.config.initial_cyclic_shift = PUCCH_F1_MAX_CYCLIC_SHIFT + 1;
-          entry.assert_message =
-              fmt::format(R"(The initial cyclic shift\, i\.e\.\, {}\, exceeds its maximum value of {}\.)",
-                          entry.config.initial_cyclic_shift,
-                          PUCCH_F1_MAX_CYCLIC_SHIFT);
-          return entry;
-        },
-    },
-    {
-        [] {
-          test_params entry    = {};
-          entry.config         = base_format_1_config;
-          entry.config.n_id    = PUCCH_F1_MAX_NID + 1;
-          entry.assert_message = fmt::format(R"(The NID value\, i\.e\.\, {}\, exceeds its maximum value of {}\.)",
-                                             entry.config.n_id,
-                                             PUCCH_F1_MAX_NID);
-          return entry;
-        },
-    },
-    {
-        [] {
-          test_params entry         = {};
-          entry.config              = base_format_1_config;
-          entry.config.nof_harq_ack = PUCCH_FORMAT1_MAX_HARQ_ACK + 1;
-          entry.assert_message      = fmt::format(
-              R"(The number of requested HARQ-ACK, i\.e\.\, {}\, exceeds the PUCCH Format 1 number of HARQ-ACK\, i\.e\.\, {}\.)",
-              entry.config.nof_harq_ack,
-              PUCCH_FORMAT1_MAX_HARQ_ACK);
           return entry;
         },
     },
@@ -325,7 +229,7 @@ protected:
 
       // Create PUCCH processor validator.
       pucch_validator = processor_factory->create_validator();
-      ASSERT_NE(pucch_validator, nullptr) << "Cannot create PUCCH processor validator.";
+      ASSERT_NE(pucch_validator, nullptr) << "Cannot create PUCCH validator.";
     }
   }
 };
@@ -335,6 +239,9 @@ std::unique_ptr<pucch_pdu_validator> PucchProcessorFixture::pucch_validator;
 
 TEST_P(PucchProcessorFixture, PucchProcessorValidatortest)
 {
+  ASSERT_NE(pucch_proc, nullptr) << "PUCCH processor not created.";
+  ASSERT_NE(pucch_validator, nullptr) << "PUCCH validator not created.";
+
   const test_case_t& param = GetParam();
 
   // Make sure the configuration is invalid.

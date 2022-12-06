@@ -147,19 +147,13 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
 
 void pucch_processor_impl::assert_format1_config(const pucch_processor::format1_configuration& config)
 {
-  // Extended CP is only for 60 kHz subcarrier spacing, see TS38.211 Section 4.2.
-  srsgnb_assert((config.cp != cyclic_prefix::EXTENDED) || (config.slot.numerology() == 2),
-                "Extended CP is only supported for 60 kHz SCS.");
-
   // Assert BWP allocation.
-  srsgnb_assert(config.bwp_size_rb != 0, "BWP size cannot be zero.");
-
   srsgnb_assert(config.bwp_start_rb + config.bwp_size_rb <= max_sizes.nof_prb,
                 "BWP allocation goes up to PRB {}, exceeding the configured maximum grid RB size, i.e., {}.",
                 config.bwp_start_rb + config.bwp_size_rb,
                 max_sizes.nof_prb);
 
-  // Assert that the PRB allocation is constrained to the BWP.
+  // Assert that the PRB allocation is constrained to the BWP. Recall that PUCCH Format 1 occupies a single PRB.
   srsgnb_assert(config.starting_prb < config.bwp_size_rb,
                 "PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
                 config.starting_prb + 1,
@@ -172,17 +166,10 @@ void pucch_processor_impl::assert_format1_config(const pucch_processor::format1_
                   config.bwp_size_rb);
   }
 
-  // Assert OFDM symbol allocation.
-  srsgnb_assert((config.nof_symbols >= PUCCH_FORMAT1_MIN_NSYMB) && (config.nof_symbols <= PUCCH_FORMAT1_MAX_NSYMB),
-                "Invalid number of OFDM Symbols, i.e., {}. PUCCH Format 1 occupies {} to {} symbols.",
-                config.nof_symbols,
-                PUCCH_FORMAT1_MIN_NSYMB,
-                PUCCH_FORMAT1_MAX_NSYMB);
-
   // Assert that the OFDM symbols are constrained to the slot dimensions given by the CP.
   srsgnb_assert(config.start_symbol_index + config.nof_symbols <= get_nsymb_per_slot(config.cp),
-                "OFDM symbol allocation goes up to symbol {}, exceeding the number of symbols in the slot given {} "
-                "CP, i.e., {}.",
+                "OFDM symbol allocation goes up to symbol {}, exceeding the number of symbols in the given slot with "
+                "{} CP, i.e., {}.",
                 config.start_symbol_index + config.nof_symbols,
                 config.cp.to_string(),
                 get_nsymb_per_slot(config.cp));
@@ -195,57 +182,22 @@ void pucch_processor_impl::assert_format1_config(const pucch_processor::format1_
       max_sizes.nof_symbols);
 
   // Assert the number of receive ports.
-  srsgnb_assert(!config.ports.empty(), "number of receive ports cannot be zero.");
+  srsgnb_assert(!config.ports.empty(), "The number of receive ports cannot be zero.");
 
-  srsgnb_assert(config.ports.size() <= max_sizes.nof_rx_ports,
-                "Number of receive ports, i.e. {}, exceeds the configured maximum number of receive ports, i.e., {}.",
-                config.ports.size(),
-                max_sizes.nof_rx_ports);
-
-  // Assert the time domain OCC index.
-  srsgnb_assert(config.time_domain_occ <= pucch_pdu_validator_impl::FORMAT1_MAX_OCC_IDX,
-                "The time domain OCC index, i.e., {}, exceeds its maximum value of {}.",
-                config.time_domain_occ,
-                static_cast<unsigned>(pucch_pdu_validator_impl::FORMAT1_MAX_OCC_IDX));
-
-  // Assert the initial cyclic shift.
-  srsgnb_assert(config.initial_cyclic_shift <= pucch_pdu_validator_impl::FORMAT1_MAX_CYCLIC_SHIFT,
-                "The initial cyclic shift, i.e., {}, exceeds its maximum value of {}.",
-                config.initial_cyclic_shift,
-                static_cast<unsigned>(pucch_pdu_validator_impl::FORMAT1_MAX_CYCLIC_SHIFT));
-
-  // Assert the NID.
-  srsgnb_assert(config.n_id <= pucch_pdu_validator_impl::FORMAT1_MAX_NID,
-                "The NID value, i.e., {}, exceeds its maximum value of {}.",
-                config.n_id,
-                static_cast<unsigned>(pucch_pdu_validator_impl::FORMAT1_MAX_NID));
-
-  // Assert the number of HARQ-ACK.
-  srsgnb_assert(config.nof_harq_ack <= PUCCH_FORMAT1_MAX_HARQ_ACK,
-                "The number of requested HARQ-ACK, i.e., {}, exceeds the PUCCH Format 1 number of HARQ-ACK, i.e., {}.",
-                config.nof_harq_ack,
-                PUCCH_FORMAT1_MAX_HARQ_ACK);
+  srsgnb_assert(
+      config.ports.size() <= max_sizes.nof_rx_ports,
+      "The number of receive ports, i.e. {}, exceeds the configured maximum number of receive ports, i.e., {}.",
+      config.ports.size(),
+      max_sizes.nof_rx_ports);
 }
 
 void pucch_processor_impl::assert_format2_config(const pucch_processor::format2_configuration& config)
 {
-  // Extended CP is only for 60 kHz subcarrier spacing, see TS38.211 Section 4.2.
-  srsgnb_assert((config.cp != cyclic_prefix::EXTENDED) || (config.slot.numerology() == 2),
-                "Extended CP is only supported for 60 kHz SCS.");
-
   // Assert BWP allocation.
-  srsgnb_assert(config.bwp_size_rb != 0, "BWP size cannot be zero.");
-
   srsgnb_assert(config.bwp_start_rb + config.bwp_size_rb <= max_sizes.nof_prb,
                 "BWP allocation goes up to PRB {}, exceeding the configured maximum grid RB size, i.e., {}.",
                 config.bwp_start_rb + config.bwp_size_rb,
                 max_sizes.nof_prb);
-
-  // Assert PRB allocation.
-  srsgnb_assert((config.nof_prb > 0) && (config.nof_prb <= PUCCH_FORMAT2_MAX_NPRB),
-                "Invalid number of PRB, i.e., {}. PUCCH Format 2 occupies 1 to {} PRB.",
-                config.nof_prb,
-                PUCCH_FORMAT2_MAX_NPRB);
 
   // Assert that the PRB set is constrained to the BWP.
   srsgnb_assert(config.starting_prb + config.nof_prb <= config.bwp_size_rb,
@@ -253,16 +205,10 @@ void pucch_processor_impl::assert_format2_config(const pucch_processor::format2_
                 config.starting_prb + config.nof_prb,
                 config.bwp_size_rb);
 
-  // Assert OFDM symbol allocation.
-  srsgnb_assert((config.nof_symbols > 0) && (config.nof_symbols <= PUCCH_FORMAT2_MAX_NSYMB),
-                "Invalid number of OFDM Symbols, i.e., {}. PUCCH Format 2 occupies 1 to {} symbols.",
-                config.nof_symbols,
-                PUCCH_FORMAT2_MAX_NSYMB);
-
   // Assert that the OFDM symbols are constrained to the slot dimensions given by the CP.
   srsgnb_assert(config.start_symbol_index + config.nof_symbols <= get_nsymb_per_slot(config.cp),
-                "OFDM symbol allocation goes up to symbol {}, exceeding the number of symbols in the slot given {} "
-                "CP, i.e., {}.",
+                "OFDM symbol allocation goes up to symbol {}, exceeding the number of symbols in the given slot with "
+                "{} CP, i.e., {}.",
                 config.start_symbol_index + config.nof_symbols,
                 config.cp.to_string(),
                 get_nsymb_per_slot(config.cp));
@@ -275,12 +221,13 @@ void pucch_processor_impl::assert_format2_config(const pucch_processor::format2_
       max_sizes.nof_symbols);
 
   // Assert the number of receive ports.
-  srsgnb_assert(!config.ports.empty(), "number of receive ports cannot be zero.");
+  srsgnb_assert(!config.ports.empty(), "The number of receive ports cannot be zero.");
 
-  srsgnb_assert(config.ports.size() <= max_sizes.nof_rx_ports,
-                "Number of receive ports, i.e. {}, exceeds the configured maximum number of receive ports, i.e., {}.",
-                config.ports.size(),
-                max_sizes.nof_rx_ports);
+  srsgnb_assert(
+      config.ports.size() <= max_sizes.nof_rx_ports,
+      "The number of receive ports, i.e. {}, exceeds the configured maximum number of receive ports, i.e., {}.",
+      config.ports.size(),
+      max_sizes.nof_rx_ports);
 
   // CSI is not currently supported.
   srsgnb_assert(config.nof_csi_part1 == 0, "CSI Part 1 is not currently supported.");
@@ -292,44 +239,21 @@ void pucch_processor_impl::assert_format2_config(const pucch_processor::format2_
   // Expected UCI payload length.
   unsigned uci_payload_len = config.nof_harq_ack + config.nof_sr + config.nof_csi_part1 + config.nof_csi_part2;
 
-  srsgnb_assert((uci_payload_len >= PUCCH_FORMAT2_MIN_UCI_NBITS) &&
-                    (uci_payload_len <= pucch_pdu_validator_impl::FORMAT2_MAX_UCI_NBITS),
+  srsgnb_assert((uci_payload_len >= PUCCH_FORMAT2_MIN_UCI_NBITS) && (uci_payload_len <= FORMAT2_MAX_UCI_NBITS),
                 "UCI Payload length, i.e., {} is not supported. Payload length must be {} to {} bits.",
                 uci_payload_len,
                 PUCCH_FORMAT2_MIN_UCI_NBITS,
-                static_cast<unsigned>(pucch_pdu_validator_impl::FORMAT2_MAX_UCI_NBITS));
-
-  // Assert the NID.
-  srsgnb_assert(config.n_id <= pucch_pdu_validator_impl::FORMAT2_MAX_NID,
-                "The NID value, i.e., {}, exceeds its maximum value of {}.",
-                config.n_id,
-                static_cast<unsigned>(pucch_pdu_validator_impl::FORMAT2_MAX_NID));
-
-  // Assert the NID_0.
-  srsgnb_assert(config.n_id_0 <= pucch_pdu_validator_impl::FORMAT2_MAX_NID_0,
-                "The NID_0 value, i.e., {}, exceeds its maximum value of {}.",
-                config.n_id_0,
-                static_cast<unsigned>(pucch_pdu_validator_impl::FORMAT2_MAX_NID_0));
+                static_cast<unsigned>(FORMAT2_MAX_UCI_NBITS));
 }
 
 bool pucch_pdu_validator_impl::is_valid(const pucch_processor::format1_configuration& config) const
 {
-  // The configuration structure is not properly initialized.
-  if ((config.bwp_size_rb == 0) || (config.nof_symbols == 0) || config.ports.empty()) {
-    return false;
-  }
-
-  // Extended CP is only for 60 kHz subcarrier spacing, see TS38.211 Section 4.2.
-  if ((config.cp == cyclic_prefix::EXTENDED) && (config.slot.numerology() != 2)) {
-    return false;
-  }
-
-  // The BWP size exceeds the dimensions.
+  // The BWP size exceeds the grid dimensions.
   if ((config.bwp_start_rb + config.bwp_size_rb) > ce_dims.nof_prb) {
     return false;
   }
 
-  // PRB allocation goes beyond the BWP.
+  // PRB allocation goes beyond the BWP. Recall that PUCCH Format 1 occupies a single PRB.
   if (config.starting_prb >= config.bwp_size_rb) {
     return false;
   }
@@ -347,33 +271,8 @@ bool pucch_pdu_validator_impl::is_valid(const pucch_processor::format1_configura
     return false;
   }
 
-  // Number of OFDM symbols lies outside the PUCCH Format 1 range.
-  if ((config.nof_symbols < PUCCH_FORMAT1_MIN_NSYMB) || (config.nof_symbols > PUCCH_FORMAT1_MAX_NSYMB)) {
-    return false;
-  }
-
-  // Time domain OCC index exceeds its maximum value.
-  if (config.time_domain_occ > FORMAT1_MAX_OCC_IDX) {
-    return false;
-  }
-
-  // Initial cyclic shift exceeds its maximum value.
-  if (config.initial_cyclic_shift > FORMAT1_MAX_CYCLIC_SHIFT) {
-    return false;
-  }
-
-  // NID exceeds its maximum value.
-  if (config.n_id > FORMAT1_MAX_NID) {
-    return false;
-  }
-
-  // The number of receive ports exceeds the configured maximum number of receive ports.
-  if (config.ports.size() > ce_dims.nof_rx_ports) {
-    return false;
-  }
-
-  // The number of HARQ-ACK exceeds the maximum HARQ-ACK carried by PUCCH Format 1.
-  if (config.nof_harq_ack > PUCCH_FORMAT1_MAX_HARQ_ACK) {
+  // The number of receive ports is either zero or exceeds the configured maximum number of receive ports.
+  if (config.ports.empty() || (config.ports.size() > ce_dims.nof_rx_ports)) {
     return false;
   }
 
@@ -384,34 +283,13 @@ bool pucch_pdu_validator_impl::is_valid(const pucch_processor::format2_configura
 {
   unsigned nof_uci_bits = config.nof_harq_ack + config.nof_sr + config.nof_csi_part1 + config.nof_csi_part2;
 
-  // The configuration structure is not properly initialized.
-  if ((config.bwp_size_rb == 0) || (config.nof_prb == 0) || (config.nof_symbols == 0) || (nof_uci_bits == 0) ||
-      (config.rnti == 0) || config.ports.empty()) {
-    return false;
-  }
-
-  // Extended CP is only for 60 kHz subcarrier spacing, see TS38.211 Section 4.2.
-  if ((config.cp == cyclic_prefix::EXTENDED) && (config.slot.numerology() != 2)) {
-    return false;
-  }
-
-  // The BWP size exceeds the dimensions.
+  // The BWP size exceeds the grid dimensions.
   if ((config.bwp_start_rb + config.bwp_size_rb) > ce_dims.nof_prb) {
-    return false;
-  }
-
-  // The number of PRB allocated to PUCCH Format 2 exceeds the maximum allocation dimensions.
-  if (config.nof_prb > PUCCH_FORMAT2_MAX_NPRB) {
     return false;
   }
 
   // None of the occupied PRB within the BWP can exceed the BWP dimensions.
   if (config.starting_prb + config.nof_prb > config.bwp_size_rb) {
-    return false;
-  }
-
-  // The number of OFDM symbols allocated to PUCCH Format 2 exceeds the maximum allocation dimensions.
-  if (config.nof_symbols > PUCCH_FORMAT2_MAX_NSYMB) {
     return false;
   }
 
@@ -421,8 +299,8 @@ bool pucch_pdu_validator_impl::is_valid(const pucch_processor::format2_configura
     return false;
   }
 
-  // The number of receive ports exceeds the configured maximum number of receive ports.
-  if (config.ports.size() > ce_dims.nof_rx_ports) {
+  // The number of receive ports is either zero or exceeds the configured maximum number of receive ports.
+  if (config.ports.empty() || (config.ports.size() > ce_dims.nof_rx_ports)) {
     return false;
   }
 
@@ -437,17 +315,7 @@ bool pucch_pdu_validator_impl::is_valid(const pucch_processor::format2_configura
   }
 
   // UCI payload exceeds the UCI payload size boundaries.
-  if (nof_uci_bits < PUCCH_FORMAT2_MIN_UCI_NBITS || nof_uci_bits > FORMAT2_MAX_UCI_NBITS) {
-    return false;
-  }
-
-  // NID exceeds its maximum value.
-  if (config.n_id > FORMAT2_MAX_NID) {
-    return false;
-  }
-
-  // NID_0 exceeds its maximum value.
-  if (config.n_id_0 > FORMAT2_MAX_NID_0) {
+  if (nof_uci_bits < PUCCH_FORMAT2_MIN_UCI_NBITS || nof_uci_bits > pucch_processor_impl::FORMAT2_MAX_UCI_NBITS) {
     return false;
   }
 

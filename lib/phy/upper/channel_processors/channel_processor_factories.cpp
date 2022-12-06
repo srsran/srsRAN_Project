@@ -359,13 +359,12 @@ public:
                   "Number of OFDM symbols, i.e., {}, exceeds maximum slot symbols, i.e., {}.",
                   channel_estimate_dimensions.nof_symbols,
                   MAX_NSYMB_PER_SLOT);
-    unsigned max_ports = MAX_PUCCH_RX_PORTS;
-    srsgnb_assert(channel_estimate_dimensions.nof_rx_ports <= max_ports,
-                  "Number of receive ports, i.e., {}, exceeds maximum supported receive ports, i.e, {}.",
+    srsgnb_assert(channel_estimate_dimensions.nof_rx_ports <= static_cast<unsigned>(MAX_PUCCH_RX_PORTS),
+                  "Number of receive ports, i.e., {}, exceeds maximum supported receive ports, i.e., {}.",
                   channel_estimate_dimensions.nof_rx_ports,
-                  max_ports);
+                  static_cast<unsigned>(MAX_PUCCH_RX_PORTS));
     srsgnb_assert(channel_estimate_dimensions.nof_tx_layers <= PUCCH_MAX_LAYERS,
-                  "Number of transmit layers, i.e., {}, exceeds maximum PUCCH transmit layers, i.e, {}.",
+                  "Number of transmit layers, i.e., {}, exceeds maximum PUCCH transmit layers, i.e., {}.",
                   channel_estimate_dimensions.nof_tx_layers,
                   PUCCH_MAX_LAYERS);
   }
