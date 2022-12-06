@@ -101,12 +101,6 @@ bool rrc_security_mode_command_procedure::select_security_algo()
 
 void rrc_security_mode_command_procedure::generate_as_keys()
 {
-  // TODO store these somewhere else
-  security::sec_as_key k_rrc_int;
-  security::sec_as_key k_rrc_enc;
-  security::sec_as_key k_up_int;
-  security::sec_as_key k_up_enc;
-
   // Generate K_rrc_enc and K_rrc_int
   security::generate_k_rrc(sec_cfg.k_rrc_enc, sec_cfg.k_rrc_int, sec_ctx.k, sec_cfg.cipher_algo, sec_cfg.integ_algo);
 
@@ -114,10 +108,10 @@ void rrc_security_mode_command_procedure::generate_as_keys()
   security::generate_k_up(sec_cfg.k_up_enc, sec_cfg.k_up_int, sec_ctx.k, sec_cfg.cipher_algo, sec_cfg.integ_algo);
 
   logger.info(sec_ctx.k.data(), 32, "K_gNB (k_gnb)");
-  logger.info(k_rrc_int.data(), 32, "RRC Integrity Key (k_rrc_int)");
-  logger.info(k_rrc_enc.data(), 32, "RRC Encryption Key (k_rrc_enc)");
-  logger.info(k_up_int.data(), 32, "UP Encryption Key (k_up_enc)");
-  logger.info(k_up_enc.data(), 32, "UP Integrity Key (k_up_int)");
+  logger.info(sec_cfg.k_rrc_int.data(), 32, "RRC Integrity Key (k_rrc_int)");
+  logger.info(sec_cfg.k_rrc_enc.data(), 32, "RRC Encryption Key (k_rrc_enc)");
+  logger.info(sec_cfg.k_up_int.data(), 32, "UP Encryption Key (k_up_enc)");
+  logger.info(sec_cfg.k_up_enc.data(), 32, "UP Integrity Key (k_up_int)");
 }
 
 void rrc_security_mode_command_procedure::send_rrc_security_mode_command()
