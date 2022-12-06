@@ -61,7 +61,10 @@ TEST_F(rrc_smc, when_key_provided_smc_generated)
   check_security_configured(false);
 
   // Trigger SMC
-  init_security_context(init_sec_ctx);
+  async_task<bool>         t = get_rrc_ue_security_handler()->handle_init_security_context(init_sec_ctx);
+  lazy_task_launcher<bool> t_launcher(t);
+
+  ASSERT_FALSE(t.ready());
   check_smc_pdu();
 
   // Make sure SRB1 PDCP is configured
@@ -71,6 +74,8 @@ TEST_F(rrc_smc, when_key_provided_smc_generated)
 
   // Receive SMC complete
   receive_smc_complete();
+
+  ASSERT_TRUE(t.ready());
 }
 
 TEST_F(rrc_smc, when_reply_missing_procedure_timeout)
@@ -81,7 +86,10 @@ TEST_F(rrc_smc, when_reply_missing_procedure_timeout)
   std::fill(init_sec_ctx.supported_enc_algos.begin(), init_sec_ctx.supported_enc_algos.end(), true);
 
   // Trigger SMC
-  init_security_context(init_sec_ctx);
+  async_task<bool>         t = get_rrc_ue_security_handler()->handle_init_security_context(init_sec_ctx);
+  lazy_task_launcher<bool> t_launcher(t);
+
+  ASSERT_FALSE(t.ready());
   check_smc_pdu();
 
   // check that UE has been created and was not requested to be released
@@ -92,6 +100,8 @@ TEST_F(rrc_smc, when_reply_missing_procedure_timeout)
 
   // verify that RRC requested UE context release
   check_ue_release_requested();
+
+  ASSERT_TRUE(t.ready());
 }
 
 int main(int argc, char** argv)

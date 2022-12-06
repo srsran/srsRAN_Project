@@ -97,7 +97,7 @@ public:
                                            const asn1::fixed_bitstring<256, false, true>& key) override
   {
     logger.info("Received a new security context");
-    return launch_async([this](coro_context<async_task<bool>>& ctx) {
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(true);
     });

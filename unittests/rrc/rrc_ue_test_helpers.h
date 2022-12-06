@@ -72,6 +72,8 @@ protected:
     return dl_ccch.msg.c1().type();
   }
 
+  rrc_ue_init_security_context_handler* get_rrc_ue_security_handler() { return ue_ctxt.rrc; }
+
   void connect_amf()
   {
     // Notify RRC about successful AMF connection
@@ -106,12 +108,6 @@ protected:
   }
 
   void check_ue_release_requested() { ASSERT_EQ(du_proc_rrc_ue->last_ue_ctxt_rel_cmd.ue_index, ALLOCATED_UE_INDEX); }
-
-  void init_security_context(rrc_init_security_context init_sec_ctx)
-  {
-    async_task<bool>         t = ue_ctxt.rrc->handle_init_security_context(init_sec_ctx);
-    lazy_task_launcher<bool> t_launcher(t);
-  }
 
   void receive_smc_complete()
   {
@@ -152,9 +148,10 @@ protected:
   }
 
 private:
-  const ue_index_t                                     ALLOCATED_UE_INDEX = int_to_ue_index(23);
-  rrc_cfg_t                                            cfg{}; // empty config
-  ue_context                                           ue_ctxt{};
+  const ue_index_t ALLOCATED_UE_INDEX = int_to_ue_index(23);
+  rrc_cfg_t        cfg{}; // empty config
+  ue_context       ue_ctxt{};
+
   std::unique_ptr<dummy_du_processor_rrc_ue_interface> du_proc_rrc_ue;
   dummy_rrc_ue_du_processor_adapter                    rrc_ue_ev_notifier;
   dummy_rrc_ue_ngc_adapter                             rrc_ue_ngc_notifier;
