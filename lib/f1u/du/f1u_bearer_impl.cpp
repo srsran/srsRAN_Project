@@ -14,6 +14,13 @@
 using namespace srsgnb;
 using namespace srs_du;
 
+f1u_bearer_impl::f1u_bearer_impl(drb_id_t drb_id_, f1u_tx_pdu_notifier& tx_notifier_) :
+  drb_id(drb_id_), tx_notifier(tx_notifier_)
+{
+  (void)drb_id;
+  (void)tx_notifier;
+}
+
 void f1u_bearer_impl::handle_pdu(byte_buffer_slice_chain pdu)
 {
   // TODO.

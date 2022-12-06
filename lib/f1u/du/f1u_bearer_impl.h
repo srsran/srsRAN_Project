@@ -23,7 +23,7 @@ class f1u_bearer_impl final : public f1u_bearer,
                               public f1u_tx_pdu_delivery_handler
 {
 public:
-  f1u_bearer_impl(drb_id_t drb_id_, f1u_tx_pdu_notifier& tx_notifier_) : drb_id(drb_id_), tx_notifier(tx_notifier_) {}
+  f1u_bearer_impl(drb_id_t drb_id_, f1u_tx_pdu_notifier& tx_notifier_);
 
   virtual f1u_rx_pdu_handler&          get_rx_pdu_handler() override { return *this; }
   virtual f1u_tx_sdu_handler&          get_tx_sdu_handler() override { return *this; }
