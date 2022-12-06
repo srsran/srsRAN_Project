@@ -38,14 +38,12 @@ constexpr lcid_t MAX_LCID = LCID_MAX_DRB;
 
 enum class srb_id_t : uint16_t { srb0 = 0, srb1, srb2, srb3, nulltype };
 
-constexpr static std::size_t MAX_NOF_SRBs = 4;
+constexpr std::size_t MAX_NOF_SRBS = 4;
 
 constexpr inline uint16_t srb_id_to_uint(srb_id_t id)
 {
   return static_cast<uint16_t>(id);
 }
-
-constexpr std::size_t MAX_NOF_SRBS = srb_id_to_uint(srsgnb::srb_id_t::srb3);
 
 inline bool is_srb(lcid_t lcid)
 {

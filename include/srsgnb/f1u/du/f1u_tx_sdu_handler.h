@@ -17,7 +17,7 @@ namespace srsgnb {
 namespace srs_du {
 
 /// \brief This interface represents the NR-U entry point of a F1-U entity.
-/// The upper-layer transport (GTP-U) will use this class to pass NR-U PDUs into F1-U.
+/// The upper-layer transport will use this class to pass NR-U PDUs into F1-U to be sent over-the-air.
 class f1u_tx_sdu_handler
 {
 public:

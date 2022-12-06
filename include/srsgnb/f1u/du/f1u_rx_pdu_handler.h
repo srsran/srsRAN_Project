@@ -17,7 +17,7 @@ namespace srsgnb {
 namespace srs_du {
 
 /// \brief This interface represents the data entry point of the receiving side of a F1-U bearer.
-/// The lower-layers will use this class to pass PDUs into the PDCP.
+/// The lower-layers will use this class to pass PDUs into the F1-U.
 class f1u_rx_pdu_handler
 {
 public:

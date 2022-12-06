@@ -28,5 +28,6 @@ void f1u_bearer_impl::handle_sdu(byte_buffer sdu)
 
 void f1u_bearer_impl::handle_delivered_tx_pdu(uint32_t count)
 {
+  // TODO: Do not forget to switch execution context.
   fmt::print("F1u bearer with DRB id={} delivered Tx PDU with count={}!", count);
 }
