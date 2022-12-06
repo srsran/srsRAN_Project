@@ -230,9 +230,9 @@ public:
 };
 
 struct rrc_init_security_context {
-  security::sec_as_key                k;
-  security::supported_integrity_algos supported_int_algos;
-  security::supported_ciphering_algos supported_enc_algos;
+  security::sec_as_key           k;
+  security::supported_algorithms supported_int_algos;
+  security::supported_algorithms supported_enc_algos;
 };
 
 /// Handler to initialize the security context from NGAP.

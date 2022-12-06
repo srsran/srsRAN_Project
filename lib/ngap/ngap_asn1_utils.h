@@ -99,20 +99,13 @@ inline void copy_asn1_key(security::sec_as_key& key_out, const asn1::fixed_bitst
   memcpy(key_out.data(), key_in.data(), security::sec_key_len);
 }
 
-inline void fill_supported_integrity_algorithms(security::supported_integrity_algos&         supported_algos_out,
-                                                const asn1::fixed_bitstring<16, true, true>& supported_algos_in)
+inline void fill_supported_algorithms(security::supported_algorithms&              supported_algos_out,
+                                      const asn1::fixed_bitstring<16, true, true>& supported_algos_in)
 {
   for (unsigned i = 0; i < 3; ++i) {
     supported_algos_out[i] = supported_algos_in.get(i);
   }
 }
 
-inline void fill_supported_ciphering_algorithms(security::supported_ciphering_algos&         supported_algos_out,
-                                                const asn1::fixed_bitstring<16, true, true>& supported_algos_in)
-{
-  for (unsigned i = 0; i < 3; ++i) {
-    supported_algos_out[i] = supported_algos_in.get(i);
-  }
-}
 } // namespace srs_cu_cp
 } // namespace srsgnb

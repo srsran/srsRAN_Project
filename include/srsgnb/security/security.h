@@ -114,8 +114,7 @@ using preferred_ciphering_algorithms = std::array<ciphering_algorithm, nof_pref_
 
 /// Helper types to communicate NIA/NEA1...3 support. Support of NEA/NIA0 is implicit.
 constexpr uint16_t nof_supported_algos = 3;
-using supported_integrity_algos        = std::array<bool, nof_supported_algos>;
-using supported_ciphering_algos        = std::array<bool, nof_supported_algos>;
+using supported_algorithms             = std::array<bool, nof_supported_algos>;
 
 struct sec_128_as_config {
   sec_128_as_key      k_128_rrc_int;
@@ -197,21 +196,21 @@ sec_128_as_config truncate_config(const sec_as_config& cfg_in);
  * Algorithm selection
  *****************************************************************************/
 inline bool select_algorithms(sec_as_config&                 sec_cfg,
-                              preferred_integrity_algorithms pref_int_list,
+                              preferred_integrity_algorithms pref_inte_list,
                               preferred_ciphering_algorithms pref_ciph_list,
-                              supported_integrity_algos      supp_int_list,
-                              supported_ciphering_algos      supp_ciph_list)
+                              supported_algorithms           supp_inte_list,
+                              supported_algorithms           supp_ciph_list)
 {
   // Select preferred integrity algorithm.
-  bool int_algo_found = false;
+  bool inte_algo_found = false;
   for (unsigned i = 0; i < nof_pref_algos; ++i) {
-    uint16_t algo_id = to_number(pref_int_list[i]);
+    uint16_t algo_id = to_number(pref_inte_list[i]);
     if (algo_id == 0) {
       // Do not allow NIA0
       break;
     }
-    if (supp_int_list[algo_id - 1]) {
-      int_algo_found     = true;
+    if (supp_inte_list[algo_id - 1]) {
+      inte_algo_found    = true;
       sec_cfg.integ_algo = security::integrity_algorithm_from_number(algo_id);
       break;
     }
@@ -232,7 +231,7 @@ inline bool select_algorithms(sec_as_config&                 sec_cfg,
       break;
     }
   }
-  return !(not int_algo_found || not ciph_algo_found);
+  return !(not inte_algo_found || not ciph_algo_found);
 }
 
 } // namespace security

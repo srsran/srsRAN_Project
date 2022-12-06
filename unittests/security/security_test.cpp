@@ -1267,65 +1267,68 @@ TEST(security_truncate_key, testset1)
 /// Selection of first algorithm in list
 TEST(security_select_algo, when_all_supported_first_algo_selected)
 {
-  preferred_integrity_algorithms inc_algo_pref_list = {
+  preferred_integrity_algorithms inte_algo_pref_list = {
       integrity_algorithm::nia2, integrity_algorithm::nia1, integrity_algorithm::nia3, integrity_algorithm::nia0};
   preferred_ciphering_algorithms ciph_algo_pref_list = {
       ciphering_algorithm::nea2, ciphering_algorithm::nea0, ciphering_algorithm::nea1, ciphering_algorithm::nea3};
 
-  supported_integrity_algos supp_inc_list{true, true, true};  // support all algos
-  supported_integrity_algos supp_ciph_list{true, true, true}; // support all algos
+  supported_algorithms supp_inte_list{true, true, true}; // support all algos
+  supported_algorithms supp_ciph_list{true, true, true}; // support all algos
 
   sec_as_config sec_cfg = {};
-  ASSERT_EQ(true, select_algorithms(sec_cfg, inc_algo_pref_list, ciph_algo_pref_list, supp_inc_list, supp_ciph_list));
+  ASSERT_EQ(true, select_algorithms(sec_cfg, inte_algo_pref_list, ciph_algo_pref_list, supp_inte_list, supp_ciph_list));
   ASSERT_EQ(integrity_algorithm::nia2, sec_cfg.integ_algo);
   ASSERT_EQ(ciphering_algorithm::nea2, sec_cfg.cipher_algo);
 }
 
-/// Selection of first algorithm in list
+/// Selection of second algorithm in list
 TEST(security_select_algo, when_first_not_supported_select_second)
 {
-  preferred_integrity_algorithms inc_algo_pref_list = {
+  preferred_integrity_algorithms inte_algo_pref_list = {
       integrity_algorithm::nia2, integrity_algorithm::nia1, integrity_algorithm::nia3, integrity_algorithm::nia0};
   preferred_ciphering_algorithms ciph_algo_pref_list = {
       ciphering_algorithm::nea2, ciphering_algorithm::nea1, ciphering_algorithm::nea0, ciphering_algorithm::nea3};
 
-  supported_integrity_algos supp_inc_list{true, false, true};  // do not support NIA2
-  supported_integrity_algos supp_ciph_list{true, false, true}; // do not support NEA2
+  supported_algorithms supp_inte_list{true, false, true}; // do not support NIA2
+  supported_algorithms supp_ciph_list{true, false, true}; // do not support NEA2
 
   sec_as_config sec_cfg = {};
-  ASSERT_EQ(true, select_algorithms(sec_cfg, inc_algo_pref_list, ciph_algo_pref_list, supp_inc_list, supp_ciph_list));
+  ASSERT_EQ(true, select_algorithms(sec_cfg, inte_algo_pref_list, ciph_algo_pref_list, supp_inte_list, supp_ciph_list));
   ASSERT_EQ(integrity_algorithm::nia1, sec_cfg.integ_algo);
   ASSERT_EQ(ciphering_algorithm::nea1, sec_cfg.cipher_algo);
 }
 
+/// Select NEA0 if preferred
 TEST(security_select_algo, when_all_supported_and_nea0_prefered_select_nea0)
 {
-  preferred_integrity_algorithms inc_algo_pref_list = {
+  preferred_integrity_algorithms inte_algo_pref_list = {
       integrity_algorithm::nia2, integrity_algorithm::nia1, integrity_algorithm::nia3, integrity_algorithm::nia0};
   preferred_ciphering_algorithms ciph_algo_pref_list = {
       ciphering_algorithm::nea0, ciphering_algorithm::nea1, ciphering_algorithm::nea2, ciphering_algorithm::nea3};
 
-  supported_integrity_algos supp_inc_list{true, true, true};  // support all algos
-  supported_integrity_algos supp_ciph_list{true, true, true}; // support all algos
+  supported_algorithms supp_inte_list{true, true, true}; // support all algos
+  supported_algorithms supp_ciph_list{true, true, true}; // support all algos
 
   sec_as_config sec_cfg = {};
-  ASSERT_EQ(true, select_algorithms(sec_cfg, inc_algo_pref_list, ciph_algo_pref_list, supp_inc_list, supp_ciph_list));
+  ASSERT_EQ(true, select_algorithms(sec_cfg, inte_algo_pref_list, ciph_algo_pref_list, supp_inte_list, supp_ciph_list));
   ASSERT_EQ(integrity_algorithm::nia2, sec_cfg.integ_algo);
   ASSERT_EQ(ciphering_algorithm::nea0, sec_cfg.cipher_algo);
 }
 
+/// Do not allow NIA0 selection
 TEST(security_select_algo, do_not_allow_nia0_selection)
 {
-  preferred_integrity_algorithms inc_algo_pref_list = {
+  preferred_integrity_algorithms inte_algo_pref_list = {
       integrity_algorithm::nia0, integrity_algorithm::nia1, integrity_algorithm::nia3, integrity_algorithm::nia2};
   preferred_ciphering_algorithms ciph_algo_pref_list = {
       ciphering_algorithm::nea0, ciphering_algorithm::nea1, ciphering_algorithm::nea2, ciphering_algorithm::nea3};
 
-  supported_integrity_algos supp_inc_list{true, true, true};  // support all algos
-  supported_integrity_algos supp_ciph_list{true, true, true}; // support all algos
+  supported_algorithms supp_inte_list{true, true, true}; // support all algos
+  supported_algorithms supp_ciph_list{true, true, true}; // support all algos
 
   sec_as_config sec_cfg = {};
-  ASSERT_EQ(false, select_algorithms(sec_cfg, inc_algo_pref_list, ciph_algo_pref_list, supp_inc_list, supp_ciph_list));
+  ASSERT_EQ(false,
+            select_algorithms(sec_cfg, inte_algo_pref_list, ciph_algo_pref_list, supp_inte_list, supp_ciph_list));
 }
 
 int main(int argc, char** argv)
