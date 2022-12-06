@@ -39,9 +39,9 @@ public:
 private:
   /// Parameters for PUSCH DM-RS.
   struct parameters {
-    bounded_bitset<NRE>   re_pattern;
-    std::array<float, 2>  w_f;
-    std::array<float, 2>  w_t;
+    bounded_bitset<NRE>  re_pattern;
+    std::array<float, 2> w_f;
+    std::array<float, 2> w_t;
   };
 
   /// Parameters for PUSCH DM-RS configuration type 1 as per TS 38.211 Table 6.4.1.1.3-1.

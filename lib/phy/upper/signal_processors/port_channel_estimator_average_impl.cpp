@@ -245,7 +245,7 @@ static float estimate_noise(const dmrs_symbol_list& pilots,
   for (unsigned i_avg = 0, max_avg = avg_estimates.size(); i_avg != max_avg; i_avg += window_size) {
     span<const cf_t> estimates_block = estimates.subspan(i_avg, window_size);
     cf_t             avg             = srsvec::mean(estimates_block);
-    span<cf_t> avg_block = avg_estimates.subspan(i_avg, window_size);
+    span<cf_t>       avg_block       = avg_estimates.subspan(i_avg, window_size);
     std::fill(avg_block.begin(), avg_block.end(), avg);
   }
 
