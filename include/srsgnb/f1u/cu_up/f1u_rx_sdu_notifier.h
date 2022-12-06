@@ -11,20 +11,20 @@
 
 #pragma once
 
-#include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/adt/byte_buffer_slice_chain.h"
 
 namespace srsgnb {
-namespace srs_du {
+namespace srs_cu_up {
 
-/// \brief This interface represents the NR-U exit point of a F1-U entity.
-/// The F1-U entity will use this notifier to pass NR-U PDUs to upper-layer transport (GTP-U).
+/// \brief This interface represents the data exit point of the receiving side of a F1-U bearer.
+/// The F1-U bearer will use this notifier to pass NR-U SDUs to upper-layer (e.g. PDCP)
 class f1u_rx_sdu_notifier
 {
 public:
   virtual ~f1u_rx_sdu_notifier() = default;
 
-  virtual void on_new_rx_sdu(byte_buffer buf) = 0;
+  virtual void on_new_sdu(byte_buffer_slice_chain sdu) = 0;
 };
 
-} // namespace srs_du
+} // namespace srs_cu_up
 } // namespace srsgnb

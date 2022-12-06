@@ -14,17 +14,17 @@
 #include "srsgnb/adt/byte_buffer.h"
 
 namespace srsgnb {
-namespace srs_du {
+namespace srs_cu_up {
 
-/// \brief This interface represents the NR-U exit point of a F1-U entity.
-/// The F1-U entity will use this notifier to pass NR-U PDUs to upper-layer transport (GTP-U).
-class f1u_rx_sdu_notifier
+/// \brief This interface represents the NR-U exit point of the F1-U bearer
+/// through which it passes NR-U PDUs to lower-layer transport (e.g. GTP-U).
+class f1u_tx_pdu_notifier
 {
 public:
-  virtual ~f1u_rx_sdu_notifier() = default;
+  virtual ~f1u_tx_pdu_notifier() = default;
 
-  virtual void on_new_rx_sdu(byte_buffer buf) = 0;
+  virtual void on_new_pdu(byte_buffer pdu) = 0;
 };
 
-} // namespace srs_du
+} // namespace srs_cu_up
 } // namespace srsgnb
