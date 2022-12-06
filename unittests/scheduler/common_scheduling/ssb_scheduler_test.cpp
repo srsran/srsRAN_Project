@@ -406,7 +406,8 @@ void test_ssb_allocation(ssb_periodicity    ssb_period,
 {
   const size_t NUM_OF_TEST_SLOTS = 1000;
 
-  test_bench bench{ssb_period, freq_arfcn, offset_to_point_A, in_burst_bitmap, ssb_scs, k_ssb};
+  test_bench    bench{ssb_period, freq_arfcn, offset_to_point_A, in_burst_bitmap, ssb_scs, k_ssb};
+  ssb_scheduler ssb_sch{bench.get_cell_sched_config()};
 
   bench.new_slot();
 
@@ -421,7 +422,7 @@ void test_ssb_allocation(ssb_periodicity    ssb_period,
     }
 
     // Schedule the SSB.
-    schedule_ssb(bench.get_slot_allocator(), bench.slot_tx(), bench.get_cell_sched_config());
+    ssb_sch.schedule_ssb(bench.get_slot_allocator(), bench.slot_tx());
 
     // Select SSB case with reference to TS 38.213, Section 4.1.
     ssb_pattern_case ssb_case = bench.get_cell_sched_config().ssb_case;

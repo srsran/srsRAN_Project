@@ -102,7 +102,7 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   cell.slot_indication(sl_tx);
 
   // > SSB scheduling.
-  schedule_ssb(cell.res_grid, sl_tx, cell.cell_cfg);
+  cell.ssb_sch.run_slot(cell.res_grid, sl_tx);
 
   // > Schedule DL signalling.
   cell.sib1_sch.schedule_sib1(cell.res_grid[0], sl_tx);

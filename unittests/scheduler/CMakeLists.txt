@@ -13,6 +13,7 @@ include_directories(../..)
 add_subdirectory(test_utils)
 add_subdirectory(support)
 add_subdirectory(ue_scheduling)
+add_subdirectory(common_scheduling)
 
 add_library(uci_test_utils test_utils/uci_test_utils.cpp)
 target_link_libraries(uci_test_utils srslog mac_configuration_helpers sched_config)

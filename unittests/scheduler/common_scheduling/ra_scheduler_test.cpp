@@ -355,7 +355,7 @@ protected:
 
   slot_point            next_slot{0, 0};
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("MAC");
+  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
   optional<test_bench>  bench;
 };
 

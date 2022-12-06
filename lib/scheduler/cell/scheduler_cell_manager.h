@@ -13,6 +13,7 @@
 #include "../common_scheduling/prach_scheduler.h"
 #include "../common_scheduling/ra_scheduler.h"
 #include "../common_scheduling/sib_scheduler.h"
+#include "../common_scheduling/ssb_scheduler.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "../pucch_scheduling/pucch_allocator_impl.h"
 #include "../uci_scheduling/uci_allocator_impl.h"
@@ -30,6 +31,7 @@ public:
                           const sched_cell_configuration_request_message& msg) :
     cell_cfg(msg),
     res_grid(cell_cfg),
+    ssb_sch(cell_cfg),
     pdcch_sch(cell_cfg),
     ra_sch(sched_cfg.ra, cell_cfg, pdcch_sch),
     prach_sch(cell_cfg),
@@ -49,6 +51,7 @@ public:
   const cell_configuration cell_cfg;
   cell_resource_allocator  res_grid;
 
+  ssb_scheduler                 ssb_sch;
   pdcch_resource_allocator_impl pdcch_sch;
   ra_scheduler                  ra_sch;
   prach_scheduler               prach_sch;

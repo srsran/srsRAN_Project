@@ -355,6 +355,7 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
   // Instantiate the test_bench and the SIB1 scheduler.
   test_bench     t_bench{freq_arfcn, offset_to_point_A, k_ssb, ssb_bitmap, scs, pdcch_config_sib1};
   sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
+  ssb_scheduler  ssb_sched{t_bench.cfg};
 
   // Run the test for 10000 slots.
   const size_t test_length_slots = 100;
@@ -366,7 +367,7 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
     }
 
     // Run SSB scheduler.
-    schedule_ssb(t_bench.get_slot_res_grid(), t_bench.sl_tx, t_bench.cfg);
+    ssb_sched.schedule_ssb(t_bench.get_slot_res_grid(), t_bench.sl_tx);
 
     // Run SIB1 scheduler.
     sib1_sched.schedule_sib1(t_bench.get_slot_res_grid(), t_bench.sl_tx);

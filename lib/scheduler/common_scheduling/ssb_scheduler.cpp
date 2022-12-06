@@ -9,55 +9,78 @@
  */
 
 #include "ssb_scheduler.h"
-#include "../cell/resource_grid.h"
 #include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/ssb_mapping.h"
 
 using namespace srsgnb;
 
-subcarrier_spacing srsgnb::ssb_case_to_scs(ssb_pattern_case ssb_case)
+ssb_scheduler::ssb_scheduler(const cell_configuration& cfg_) : cell_cfg(cfg_), logger(srslog::fetch_basic_logger("MAC"))
 {
-  switch (ssb_case) {
-    case ssb_pattern_case::A:
-      return subcarrier_spacing::kHz15;
-    case ssb_pattern_case::B:
-    case ssb_pattern_case::C:
-      return subcarrier_spacing::kHz30;
-    case ssb_pattern_case::D:
-      return subcarrier_spacing::kHz120;
-    case ssb_pattern_case::E:
-      return subcarrier_spacing::kHz240;
-    default:
-      srsgnb_assertion_failure("Invalid SSB pattern");
+  ssb_period = ssb_periodicity_to_value(cell_cfg.ssb_cfg.ssb_period);
+}
+
+void ssb_scheduler::run_slot(cell_resource_allocator& res_alloc, const slot_point& sl_point)
+{
+  // Only FR1 are supported in this implementation.
+  const uint32_t freq_arfcn = cell_cfg.dl_carrier.arfcn;
+  srsgnb_assert(freq_arfcn < static_cast<uint32_t>(FR1_MAX_FREQUENCY_ARFCN),
+                "Frenquencies in the range FR2 not supported");
+
+  if (first_run_slot) {
+    const unsigned ssb_period_slots = ssb_period * sl_point.nof_slots_per_subframe();
+    // First call to run_slot. Schedule SSBs when relevant across cell resource grid.
+    for (unsigned i = 0; i < RING_ALLOCATOR_SIZE; i += ssb_period_slots) {
+      schedule_ssb(res_alloc[i], sl_point + i);
+    }
+    first_run_slot = false;
+  } else {
+    // Schedule SSB in last scheduled slot + 1 slot if relevant.
+    schedule_ssb(res_alloc[RING_ALLOCATOR_SIZE - 1], sl_point + RING_ALLOCATOR_SIZE - 1);
   }
-  return subcarrier_spacing::invalid;
 }
 
-static void fill_ssb_parameters(ssb_information_list& ssb_list,
-                                ssb_offset_to_pointA  offset_to_point_A,
-                                ssb_subcarrier_offset ssb_subc_offset,
-                                subcarrier_spacing    ssb_scs,
-                                subcarrier_spacing    scs_common,
-                                uint8_t               ssb_burst_symb_idx,
-                                uint8_t               ssb_idx)
+void ssb_scheduler::schedule_ssb(cell_slot_resource_allocator& res_grid, const slot_point& sl_point)
 {
-  ssb_information ssb_msg = {};
+  ssb_information_list& ssb_list = res_grid.result.dl.bc.ssb_info;
 
-  ssb_msg.ssb_index = ssb_idx;
-  // As per TS38.213, Section 4.1, the symbols that are passed refer to SSB burst, and can range from 0 up until 56. We
-  // need to convert these into slot symbols, that range within [0, 14).
-  ssb_msg.symbols.set(ssb_burst_symb_idx % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
-                      (ssb_burst_symb_idx + NOF_SSB_OFDM_SYMBOLS) % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
-  ssb_msg.crbs = get_ssb_crbs(ssb_scs, scs_common, offset_to_point_A, ssb_subc_offset);
-  ssb_list.push_back(ssb_msg);
+  if (ssb_list.full()) {
+    logger.error("SCHED: Failed to allocate SSB");
+    return;
+  }
+
+  // Perform mod operation of slot index by ssb_periodicity;
+  // "ssb_periodicity * nof_slots_per_subframe" gives the number of slots in 1 ssb_periodicity time interval.
+  slot_point sl_point_mod(sl_point.numerology(), sl_point.to_uint() % (ssb_period * sl_point.nof_slots_per_subframe()));
+
+  // Select SSB case with reference to TS 38.213, Section 4.1.
+  switch (cell_cfg.ssb_case) {
+    case ssb_pattern_case::A:
+    case ssb_pattern_case::C: {
+      uint32_t ssb_cut_off_freq =
+          cell_cfg.paired_spectrum ? CUTOFF_FREQ_ARFCN_CASE_A_B_C : CUTOFF_FREQ_ARFCN_CASE_C_UNPAIRED;
+      ssb_alloc_case_A_C(ssb_list, ssb_cut_off_freq, sl_point_mod);
+      break;
+    }
+    case ssb_pattern_case::B:
+      ssb_alloc_case_B(ssb_list, sl_point_mod);
+      break;
+    default:
+      srsgnb_assert(cell_cfg.ssb_case < ssb_pattern_case::invalid, "Only SSB case A, B and C are currently supported");
+  }
+
+  // Update the used DL PRBs with those allocated to the SSBs.
+  for (auto& ssb : ssb_list) {
+    // TODO: In case, SSB SCS != init DL BWP SCS, we should do an adaptation of symbols and CRBs to the numerology
+    // of the latter.
+    grant_info grant{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, ssb.symbols, ssb.crbs};
+    res_grid.dl_res_grid.fill(grant);
+  }
 }
 
-/// Perform allocation for case A and C (both paired and unpaired spectrum) - TS 38.213, Section 4.1.
-static void ssb_alloc_case_A_C(ssb_information_list&     ssb_list,
-                               uint32_t                  freq_arfcn_cut_off,
-                               const slot_point&         sl_point_mod,
-                               const cell_configuration& cell_cfg)
+void ssb_scheduler::ssb_alloc_case_A_C(ssb_information_list& ssb_list,
+                                       uint32_t              freq_arfcn_cut_off,
+                                       const slot_point&     sl_point_mod)
 {
   uint32_t slot_idx = sl_point_mod.to_uint();
 
@@ -98,9 +121,7 @@ static void ssb_alloc_case_A_C(ssb_information_list&     ssb_list,
   }
 }
 
-/// Perform SSB allocation for case B (both paired and unpaired spectrum) - TS 38.213, Section 4.1.
-static void
-ssb_alloc_case_B(ssb_information_list& ssb_list, const slot_point& sl_point_mod, const cell_configuration& cell_cfg)
+void ssb_scheduler::ssb_alloc_case_B(ssb_information_list& ssb_list, const slot_point& sl_point_mod)
 {
   uint32_t slot_idx = sl_point_mod.to_uint();
 
@@ -114,7 +135,7 @@ ssb_alloc_case_B(ssb_information_list& ssb_list, const slot_point& sl_point_mod,
 
   // In case B, the candidate OFDM symbols  (within the SSB burst) where to allocate the SSB within its period are
   // indexed as follows: n = 4, 8, 16, 20  for frequencies <= cutoff frequency n = 4, 8, 16, 20, 32, 36, 44, 48  for
-  // frequencies > cutoff frequency Cutoff frequency is: 3GHz for Case B. TS 38.213 Section 4.1.
+  // frequencies > cutoff frequency, Cutoff frequency is: 3GHz for Case B. TS 38.213 Section 4.1.
 
   // Slot 0 has OFDM symbols 4,8; Slot 2 has symbols 32, 36.
   if (slot_idx == 0 or slot_idx == 2) {
@@ -161,59 +182,21 @@ ssb_alloc_case_B(ssb_information_list& ssb_list, const slot_point& sl_point_mod,
   }
 }
 
-void srsgnb::schedule_ssb(cell_slot_resource_allocator& res_grid,
-                          const slot_point&             sl_point,
-                          const cell_configuration&     cell_cfg)
+void ssb_scheduler::fill_ssb_parameters(ssb_information_list& ssb_list,
+                                        ssb_offset_to_pointA  offset_to_point_A,
+                                        ssb_subcarrier_offset ssb_subc_offset,
+                                        subcarrier_spacing    ssb_scs,
+                                        subcarrier_spacing    scs_common,
+                                        uint8_t               ssb_burst_symb_idx,
+                                        uint8_t               ssb_idx)
 {
-  ssb_information_list& ssb_list = res_grid.result.dl.bc.ssb_info;
+  ssb_information ssb_msg = {};
 
-  // SSB already scheduled.
-  if (not ssb_list.empty()) {
-    return;
-  }
-
-  // Perform mod operation of slot index by ssb_periodicity;
-  // "ssb_periodicity * nof_slots_per_subframe" gives the number of slots in 1 ssb_periodicity time interval.
-  uint8_t    ssb_period = ssb_periodicity_to_value(cell_cfg.ssb_cfg.ssb_period);
-  slot_point sl_point_mod(sl_point.numerology(), sl_point.to_uint() % (ssb_period * sl_point.nof_slots_per_subframe()));
-
-  // Select SSB case with reference to TS 38.213, Section 4.1.
-  switch (cell_cfg.ssb_case) {
-    case ssb_pattern_case::A:
-    case ssb_pattern_case::C: {
-      uint32_t ssb_cut_off_freq =
-          cell_cfg.paired_spectrum ? CUTOFF_FREQ_ARFCN_CASE_A_B_C : CUTOFF_FREQ_ARFCN_CASE_C_UNPAIRED;
-      ssb_alloc_case_A_C(ssb_list, ssb_cut_off_freq, sl_point_mod, cell_cfg);
-      break;
-    }
-    case ssb_pattern_case::B:
-      ssb_alloc_case_B(ssb_list, sl_point_mod, cell_cfg);
-      break;
-    default:
-      srsgnb_assert(cell_cfg.ssb_case < ssb_pattern_case::invalid, "Only SSB case A, B and C are currently supported");
-  }
-
-  // Update the used DL PRBs with those allocated to the SSBs.
-  for (auto& ssb : ssb_list) {
-    // TODO: In case, SSB SCS != init DL BWP SCS, we should do an adaptation of symbols and CRBs to the numerology
-    // of the latter.
-    grant_info grant{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, ssb.symbols, ssb.crbs};
-    res_grid.dl_res_grid.fill(grant);
-  }
-}
-
-void srsgnb::schedule_ssb(cell_resource_allocator&  res_alloc,
-                          const slot_point&         sl_point,
-                          const cell_configuration& cell_cfg)
-{
-  // Only FR1 are supported in this implementation.
-  const uint32_t freq_arfcn = cell_cfg.dl_carrier.arfcn;
-  srsgnb_assert(freq_arfcn < static_cast<uint32_t>(FR1_MAX_FREQUENCY_ARFCN),
-                "Frenquencies in the range FR2 not supported");
-
-  const uint8_t ssb_period = ssb_periodicity_to_value(cell_cfg.ssb_cfg.ssb_period);
-
-  for (unsigned i = 0; i < cell_resource_allocator::RING_ALLOCATOR_SIZE; i += ssb_period) {
-    schedule_ssb(res_alloc[i], sl_point + i, cell_cfg);
-  }
+  ssb_msg.ssb_index = ssb_idx;
+  // As per TS38.213, Section 4.1, the symbols that are passed refer to SSB burst, and can range from 0 up until 56. We
+  // need to convert these into slot symbols, that range within [0, 14).
+  ssb_msg.symbols.set(ssb_burst_symb_idx % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
+                      (ssb_burst_symb_idx + NOF_SSB_OFDM_SYMBOLS) % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
+  ssb_msg.crbs = get_ssb_crbs(ssb_scs, scs_common, offset_to_point_A, ssb_subc_offset);
+  ssb_list.push_back(ssb_msg);
 }
