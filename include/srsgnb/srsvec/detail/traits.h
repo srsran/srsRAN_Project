@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
 
 namespace srsgnb {
@@ -74,6 +75,18 @@ template <typename T>
 struct is_arithmetic_span_compatible<T,
                                      std::enable_if_t<std::is_convertible<T, span<value_type_of_t<T>>>::value &&
                                                       std::is_arithmetic<value_type_of_t<T>>::value>> : std::true_type {
+};
+
+/// Checks if T is compatible with a span of complex floating points (which are not arithmetic types).
+template <typename T, typename = void>
+struct is_complex_span_compatible : std::false_type {
+};
+
+template <typename T>
+struct is_complex_span_compatible<
+    T,
+    std::enable_if_t<std::is_convertible<T, span<value_type_of_t<T>>>::value && is_complex<value_type_of_t<T>>::value>>
+  : std::true_type {
 };
 
 /// Checks if T is compatible with a span.

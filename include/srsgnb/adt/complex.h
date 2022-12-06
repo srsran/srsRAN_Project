@@ -18,6 +18,19 @@ namespace srsgnb {
 /// Type to store complex samples.
 using cf_t = std::complex<float>;
 
+/// Checks if T is compatible with a complex floating point.
+template <typename T>
+struct is_complex : std::false_type {
+};
+
+template <typename T>
+struct is_complex<std::complex<T>> : std::true_type {
+};
+
+template <typename T>
+struct is_complex<const std::complex<T>> : std::true_type {
+};
+
 } // namespace srsgnb
 
 namespace fmt {
