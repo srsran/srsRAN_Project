@@ -9,6 +9,7 @@
  */
 
 #include "f1ap_du_ue_context_modification_procedure.h"
+#include "srsgnb/f1u/du/f1u_bearer_factory.h"
 
 using namespace srsgnb;
 using namespace srs_du;
@@ -19,25 +20,12 @@ f1ap_du_ue_context_modification_procedure::f1ap_du_ue_context_modification_proce
     f1ap_du_ue&                                 ue_) :
   ue(ue_)
 {
-  // Construct DU request.
-  du_request.ue_index = ue.context.ue_index;
-  for (const auto& srb : msg->srbs_to_be_setup_mod_list.value) {
-    du_request.srbs_to_addmod.push_back((srb_id_t)srb.value().srbs_to_be_setup_mod_item().srbid);
-  }
-  for (const auto& drb : msg->drbs_to_be_setup_mod_list.value) {
-    drb_to_addmod drb_to_add;
-    drb_to_add.drbid = (drb_id_t)drb.value().drbs_to_be_setup_mod_item().drbid;
-    drb_to_add.lcid  = lcid_t::INVALID_LCID;
-    du_request.drbs_to_addmod.push_back(drb_to_add);
-  }
+  create_du_request(msg);
 }
 
 void f1ap_du_ue_context_modification_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
-
-  // Create GTPU bearers.
-  // TODO.
 
   // Setup new UE configuration in DU.
   CORO_AWAIT_VALUE(du_response, ue.du_handler.request_ue_config_update(du_request));
@@ -51,6 +39,27 @@ void f1ap_du_ue_context_modification_procedure::operator()(coro_context<async_ta
   CORO_RETURN();
 }
 
+void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1ap::ue_context_mod_request_s& msg)
+{
+  // Construct DU request.
+  du_request.ue_index = ue.context.ue_index;
+
+  // >> Pass SRBs to setup/modify.
+  for (const auto& srb : msg->srbs_to_be_setup_mod_list.value) {
+    du_request.srbs_to_setup.push_back((srb_id_t)srb.value().srbs_to_be_setup_mod_item().srbid);
+  }
+
+  // >> Pass DRBs to setup/modify.
+  for (const auto& drb : msg->drbs_to_be_setup_mod_list.value) {
+    const asn1::f1ap::drbs_to_be_setup_mod_item_s& drb_item = drb.value().drbs_to_be_setup_mod_item();
+
+    drb_to_setup drb_obj;
+    drb_obj.drb_id   = (drb_id_t)drb_item.drbid;
+    drb_obj.rlc_mode = drb_item.rlc_mode;
+    du_request.drbs_to_setup.push_back(drb_obj);
+  }
+}
+
 void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_response()
 {
   f1c_message f1c_msg;
@@ -62,13 +71,13 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   resp->gnb_cu_ue_f1_ap_id->value                   = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
   resp->res_coordination_transfer_container_present = false;
   resp->duto_currc_info_present                     = false;
-  resp->drbs_setup_mod_list_present                 = not du_request.drbs_to_addmod.empty();
+  resp->drbs_setup_mod_list_present                 = not du_request.drbs_to_setup.empty();
   if (resp->drbs_setup_mod_list_present) {
-    resp->drbs_setup_mod_list.value.resize(du_request.drbs_to_addmod.size());
-    for (unsigned i = 0; i != du_request.drbs_to_addmod.size(); ++i) {
+    resp->drbs_setup_mod_list.value.resize(du_request.drbs_to_setup.size());
+    for (unsigned i = 0; i != du_request.drbs_to_setup.size(); ++i) {
       resp->drbs_setup_mod_list.value[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
       drbs_setup_mod_item_s& drb = resp->drbs_setup_mod_list.value[i]->drbs_setup_mod_item();
-      drb.drbid                  = drb_id_to_uint(du_request.drbs_to_addmod[i].drbid);
+      drb.drbid                  = drb_id_to_uint(du_request.drbs_to_setup[i].drb_id);
       drb.lcid_present           = false;
       drb.dluptnl_info_to_be_setup_list.resize(1);
       drb.dluptnl_info_to_be_setup_list[0].dluptnl_info.set_gtp_tunnel();
@@ -85,14 +94,14 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   resp->crit_diagnostics_present                 = false;
   resp->c_rnti_present                           = false;
   resp->associated_scell_list_present            = false;
-  resp->srbs_setup_mod_list_present              = not du_request.srbs_to_addmod.empty();
+  resp->srbs_setup_mod_list_present              = not du_request.srbs_to_setup.empty();
   if (resp->srbs_setup_mod_list_present) {
-    resp->srbs_setup_mod_list.value.resize(du_request.srbs_to_addmod.size());
-    for (unsigned i = 0; i != du_request.srbs_to_addmod.size(); ++i) {
+    resp->srbs_setup_mod_list.value.resize(du_request.srbs_to_setup.size());
+    for (unsigned i = 0; i != du_request.srbs_to_setup.size(); ++i) {
       resp->srbs_setup_mod_list.value[i].load_info_obj(ASN1_F1AP_ID_SRBS_SETUP_MOD_ITEM);
       srbs_setup_mod_item_s& srb = resp->srbs_setup_mod_list.value[i].value().srbs_setup_mod_item();
-      srb.srbid                  = srb_id_to_uint(du_request.srbs_to_addmod[i]);
-      srb.lcid                   = srb_id_to_lcid(du_request.srbs_to_addmod[i]);
+      srb.srbid                  = srb_id_to_uint(du_request.srbs_to_setup[i]);
+      srb.lcid                   = srb_id_to_lcid(du_request.srbs_to_setup[i]);
     }
   }
   resp->srbs_modified_list_present = false;

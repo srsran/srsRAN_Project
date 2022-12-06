@@ -86,7 +86,7 @@ private:
 
   std::unique_ptr<du_ue>         ue_ctx;
   mac_ue_create_response_message mac_resp{};
-  f1ap_ue_create_response        f1_resp{};
+  f1ap_ue_creation_response      f1_resp{};
 };
 
 } // namespace srs_du

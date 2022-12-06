@@ -42,18 +42,20 @@ void f1ap_du_ue_context_setup_procedure::create_du_request(const ue_context_setu
 {
   // > Construct DU request.
   du_request.ue_index = ue.context.ue_index;
+
+  // >> Pass SRBs to setup.
   for (const auto& srb : msg->srbs_to_be_setup_list.value) {
-    du_request.srbs_to_addmod.push_back((srb_id_t)srb.value().srbs_to_be_setup_item().srbid);
+    du_request.srbs_to_setup.push_back((srb_id_t)srb.value().srbs_to_be_setup_item().srbid);
   }
 
-  // >> Create GTP bearers and send them to DU manager.
+  // >> Pass DRBs to setup.
   for (const auto& drb : msg->drbs_to_be_setup_list.value) {
-    const drbs_to_be_setup_item_s& drb_item = drb.value().drbs_to_be_setup_item();
+    const asn1::f1ap::drbs_to_be_setup_item_s& drb_item = drb.value().drbs_to_be_setup_item();
 
-    drb_to_addmod drb_to_add;
-    drb_to_add.drbid = (drb_id_t)drb_item.drbid;
-    drb_to_add.lcid  = lcid_t::INVALID_LCID;
-    du_request.drbs_to_addmod.push_back(drb_to_add);
+    drb_to_setup drb_obj;
+    drb_obj.drb_id   = (drb_id_t)drb_item.drbid;
+    drb_obj.rlc_mode = drb_item.rlc_mode;
+    du_request.drbs_to_setup.push_back(drb_obj);
   }
 }
 
@@ -65,33 +67,38 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
 
   resp->gnb_du_ue_f1_ap_id->value = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
   resp->gnb_cu_ue_f1_ap_id->value = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
-  resp->duto_currc_info.value.cell_group_cfg.resize(du_response.du_to_cu_rrc_container.length());
-  std::copy(du_response.du_to_cu_rrc_container.begin(),
-            du_response.du_to_cu_rrc_container.end(),
-            resp->duto_currc_info.value.cell_group_cfg.begin());
-  resp->drbs_setup_list_present = not du_request.drbs_to_addmod.empty();
+
+  // > DU-to-CU RRC Container.
+  resp->duto_currc_info.value.cell_group_cfg.append(du_response.du_to_cu_rrc_container);
+
+  // > SRBs setup list.
+  resp->srbs_setup_list_present = not du_request.srbs_to_setup.empty();
+  if (resp->srbs_setup_list_present) {
+    resp->srbs_setup_list->resize(du_request.srbs_to_setup.size());
+    for (unsigned i = 0; i != du_request.srbs_to_setup.size(); ++i) {
+      resp->srbs_setup_list.value[i].load_info_obj(ASN1_F1AP_ID_SRBS_SETUP_ITEM);
+      srbs_setup_item_s& srb_item = resp->srbs_setup_list.value[i].value().srbs_setup_item();
+      srb_item.srbid              = srb_id_to_uint(du_request.srbs_to_setup[i]);
+      srb_item.lcid               = srb_id_to_lcid(du_request.srbs_to_setup[i]);
+    }
+  }
+
+  // > DRBs setup List.
+  resp->drbs_setup_list_present = not du_request.drbs_to_setup.empty();
   if (resp->drbs_setup_list_present) {
-    resp->drbs_setup_list->resize(du_request.drbs_to_addmod.size());
-    for (unsigned i = 0; i != du_request.drbs_to_addmod.size(); ++i) {
+    // TODO: Consider that not all DRBs may have been setup.
+    resp->drbs_setup_list->resize(du_request.drbs_to_setup.size());
+    for (unsigned i = 0; i != du_request.drbs_to_setup.size(); ++i) {
       resp->drbs_setup_list.value[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_ITEM);
       drbs_setup_item_s& drb_item = resp->drbs_setup_list.value[i].value().drbs_setup_item();
-      drb_item.drbid              = drb_id_to_uint(du_request.drbs_to_addmod[i].drbid);
+      drb_item.drbid              = drb_id_to_uint(du_request.drbs_to_setup[i].drb_id);
       drb_item.dluptnl_info_to_be_setup_list.resize(1);
       drb_item.dluptnl_info_to_be_setup_list[0].dluptnl_info.set_gtp_tunnel();
       // TODO: GTPU params.
     }
   }
-  resp->srbs_setup_list_present = not du_request.srbs_to_addmod.empty();
-  if (resp->srbs_setup_list_present) {
-    resp->srbs_setup_list->resize(du_request.srbs_to_addmod.size());
-    for (unsigned i = 0; i != du_request.srbs_to_addmod.size(); ++i) {
-      resp->srbs_setup_list.value[i].load_info_obj(ASN1_F1AP_ID_SRBS_SETUP_ITEM);
-      srbs_setup_item_s& srb_item = resp->srbs_setup_list.value[i].value().srbs_setup_item();
-      srb_item.srbid              = srb_id_to_uint(du_request.srbs_to_addmod[i]);
-      srb_item.lcid               = srb_id_to_lcid(du_request.srbs_to_addmod[i]);
-    }
-  }
 
+  // Send Response to CU-CP.
   ue.f1c_msg_notifier.on_new_message(f1c_msg);
 }
 

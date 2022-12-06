@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "rlc_config_helpers.h"
+#include "../converters/rlc_config_helpers.h"
 #include "srsgnb/mac/mac_cell_group_config.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"

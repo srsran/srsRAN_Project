@@ -41,8 +41,8 @@ public:
   virtual void schedule_async_task(du_ue_index_t ue_index, async_task<void>&& task) = 0;
 
   /// \brief Update the UE configuration in the DU, namely its SRBs and DRBs.
-  virtual async_task<f1ap_ue_config_update_response>
-  handle_ue_config_update(const f1ap_ue_config_update_request& request) = 0;
+  virtual async_task<f1ap_ue_context_update_response>
+  handle_ue_config_update(const f1ap_ue_context_update_request& request) = 0;
 
   /// \brief Remove UE context from the DU.
   virtual async_task<void> handle_ue_delete_request(const f1ap_ue_delete_request& request) = 0;

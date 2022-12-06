@@ -44,8 +44,8 @@ public:
   async_task_sequencer task_loop;
   dummy_ue_task_sched  ue_sched;
 
-  optional<f1ap_ue_config_update_request> last_ue_config_update_req;
-  f1ap_ue_config_update_response          next_ue_config_update_response;
+  optional<f1ap_ue_context_update_request> last_ue_config_update_req;
+  f1ap_ue_context_update_response          next_ue_config_update_response;
 
   explicit dummy_f1c_du_configurator(timer_manager& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
 
@@ -53,11 +53,11 @@ public:
 
   void schedule_async_task(async_task<void>&& task) override { task_loop.schedule(std::move(task)); }
 
-  async_task<f1ap_ue_config_update_response>
-  request_ue_config_update(const f1ap_ue_config_update_request& request) override
+  async_task<f1ap_ue_context_update_response>
+  request_ue_config_update(const f1ap_ue_context_update_request& request) override
   {
     last_ue_config_update_req = request;
-    return launch_async([this](coro_context<async_task<f1ap_ue_config_update_response>>& ctx) {
+    return launch_async([this](coro_context<async_task<f1ap_ue_context_update_response>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(next_ue_config_update_response);
     });
@@ -213,7 +213,7 @@ f1c_message generate_f1_ue_context_setup_request(const std::initializer_list<drb
   return msg;
 }
 
-class dummy_f1_tx_pdu_notifier : public f1_tx_pdu_notifier
+class dummy_f1_tx_pdu_notifier : public f1c_tx_pdu_notifier
 {
 public:
   byte_buffer last_pdu;
@@ -261,20 +261,20 @@ protected:
 
   ue_test_context* run_f1_ue_create(du_ue_index_t ue_index)
   {
-    auto                                   notif = std::make_unique<dummy_f1_tx_pdu_notifier>();
-    srsgnb::srs_du::f1ap_ue_create_request msg;
-    msg.ue_index   = ue_index;
-    msg.cell_index = to_du_cell_index(0);
-    msg.c_rnti     = to_rnti(0x4601 + ue_index);
+    auto                                     notif = std::make_unique<dummy_f1_tx_pdu_notifier>();
+    srsgnb::srs_du::f1ap_ue_creation_request msg;
+    msg.ue_index    = ue_index;
+    msg.pcell_index = to_du_cell_index(0);
+    msg.c_rnti      = to_rnti(0x4601 + ue_index);
     msg.du_cu_rrc_container.append({0x1, 0x2, 0x3});
-    msg.srbs_to_add.resize(1);
-    msg.srbs_to_add[0].srb_id          = srb_id_t::srb1;
-    msg.srbs_to_add[0].f1_tx_pdu_notif = notif.get();
+    msg.f1c_bearers_to_add.resize(1);
+    msg.f1c_bearers_to_add[0].srb_id          = srb_id_t::srb1;
+    msg.f1c_bearers_to_add[0].f1_tx_pdu_notif = notif.get();
     test_logger.info("Creating ueId={}", msg.ue_index);
-    f1ap_ue_create_response resp = f1ap->handle_ue_creation_request(msg);
+    f1ap_ue_creation_response resp = f1ap->handle_ue_creation_request(msg);
     if (resp.result) {
       test_ues.emplace(ue_index);
-      test_ues[ue_index].bearers      = resp.bearers_added;
+      test_ues[ue_index].bearers      = resp.f1c_bearers_added;
       test_ues[ue_index].tx_pdu_notif = std::move(notif);
       return &test_ues[ue_index];
     }

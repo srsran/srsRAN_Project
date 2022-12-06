@@ -46,7 +46,7 @@ void test_ue_concurrent_procedures(test_outcome outcome)
 
   test_bench bench;
   bench.f1ap_dummy.next_ue_create_response.result = true;
-  bench.f1ap_dummy.next_ue_create_response.bearers_added.resize(2);
+  bench.f1ap_dummy.next_ue_create_response.f1c_bearers_added.resize(2);
 
   du_ue_manager ue_mng{bench.cfg};
   TESTASSERT(ue_mng.get_ues().empty());
@@ -159,7 +159,7 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
   test_bench bench;
 
   bench.f1ap_dummy.next_ue_create_response.result = true;
-  bench.f1ap_dummy.next_ue_create_response.bearers_added.resize(2);
+  bench.f1ap_dummy.next_ue_create_response.f1c_bearers_added.resize(2);
 
   bench.mac_dummy.wait_ue_create.result.ue_index   = first_ue_index;
   bench.mac_dummy.wait_ue_create.result.cell_index = to_du_cell_index(0);

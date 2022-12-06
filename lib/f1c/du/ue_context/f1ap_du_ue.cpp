@@ -11,6 +11,7 @@
 #include "f1ap_du_ue.h"
 #include "du/procedures/f1ap_du_ue_context_modification_procedure.h"
 #include "du/procedures/f1ap_du_ue_context_setup_procedure.h"
+#include "srsgnb/f1c/du/f1ap_du_ue_config.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_du;

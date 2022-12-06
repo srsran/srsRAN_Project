@@ -28,10 +28,10 @@ private:
   void send_ue_context_setup_response();
   void send_ue_context_setup_failure();
 
-  f1ap_du_ue&                   ue;
-  f1ap_ue_config_update_request du_request;
+  f1ap_du_ue&                    ue;
+  f1ap_ue_context_update_request du_request;
 
-  f1ap_ue_config_update_response du_response;
+  f1ap_ue_context_update_response du_response;
 };
 } // namespace srs_du
 } // namespace srsgnb

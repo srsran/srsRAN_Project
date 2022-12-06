@@ -12,6 +12,7 @@ add_library(srsgnb_f1c_du
         f1ap_du_factory.cpp
         ue_context/f1ap_du_ue.cpp
         ue_context/ue_bearer_manager.cpp
-        ue_context/f1c_du_bearer_impl.cpp)
+        ue_context/f1c_du_bearer_impl.cpp
+        ue_context/f1ap_du_ue_config_update.cpp)
 target_include_directories(srsgnb_f1c_du PRIVATE ..)
 target_link_libraries(srsgnb_f1c_du f1ap_asn1 srsgnb_f1c_common srsgnb_f1c_du_procedures srsgnb_f1u_du)

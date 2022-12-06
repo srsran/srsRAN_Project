@@ -14,11 +14,11 @@
 
 using namespace srsgnb::srs_du;
 
-f1c_srb0_du_bearer::f1c_srb0_du_bearer(f1c_ue_context&            ue_ctxt_,
+f1c_srb0_du_bearer::f1c_srb0_du_bearer(f1ap_ue_context&           ue_ctxt_,
                                        const asn1::f1ap::nrcgi_s& nr_cgi_,
                                        const byte_buffer&         du_cu_rrc_container_,
                                        f1c_message_notifier&      f1c_notifier_,
-                                       f1_tx_pdu_notifier&        f1c_pdu_notifier_,
+                                       f1c_tx_pdu_notifier&       f1c_pdu_notifier_,
                                        f1ap_event_manager&        ev_manager_) :
   ue_ctxt(ue_ctxt_),
   nr_cgi(nr_cgi_),
@@ -70,10 +70,10 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer sdu)
       logger, ue_event_prefix{"DL", ue_ctxt.ue_index}.set_channel("SRB0") | ue_ctxt.rnti, "DL RRC Message Transfer.");
 }
 
-f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1c_ue_context&       ue_ctxt_,
+f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&      ue_ctxt_,
                                                  srb_id_t              srb_id_,
                                                  f1c_message_notifier& f1c_notifier_,
-                                                 f1_tx_pdu_notifier&   f1c_pdu_notifier_) :
+                                                 f1c_tx_pdu_notifier&  f1c_pdu_notifier_) :
   ue_ctxt(ue_ctxt_),
   srb_id(srb_id_),
   f1c_notifier(f1c_notifier_),

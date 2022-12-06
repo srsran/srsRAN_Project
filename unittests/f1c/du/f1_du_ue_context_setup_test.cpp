@@ -29,13 +29,13 @@ TEST_F(f1ap_du_test, when_)
   f1c_message msg = generate_f1_ue_context_setup_request({drb_id_t::drb1});
   f1ap->handle_message(msg);
   ASSERT_TRUE(this->f1c_du_cfg_handler.last_ue_config_update_req.has_value());
-  const f1ap_ue_config_update_request& req = *this->f1c_du_cfg_handler.last_ue_config_update_req;
+  const f1ap_ue_context_update_request& req = *this->f1c_du_cfg_handler.last_ue_config_update_req;
   ASSERT_EQ(req.ue_index, ue_index);
-  ASSERT_EQ(req.srbs_to_addmod.size(), 1);
-  ASSERT_EQ(req.srbs_to_addmod[0], srb_id_t::srb2);
-  ASSERT_EQ(req.drbs_to_addmod.size(), 1);
-  ASSERT_EQ(req.drbs_to_addmod[0].drbid, drb_id_t::drb1);
-  ASSERT_GE(req.drbs_to_addmod[0].lcid, LCID_MIN_DRB);
+  ASSERT_EQ(req.srbs_to_setup.size(), 1);
+  ASSERT_EQ(req.srbs_to_setup[0], srb_id_t::srb2);
+  ASSERT_EQ(req.drbs_to_setup.size(), 1);
+  ASSERT_EQ(req.drbs_to_setup[0].drb_id, drb_id_t::drb1);
+  ASSERT_GE(*req.drbs_to_setup[0].lcid, LCID_MIN_DRB);
   ASSERT_EQ(this->msg_notifier.last_f1c_msg.pdu.type().value, f1_ap_pdu_c::types_opts::successful_outcome);
   ASSERT_EQ(this->msg_notifier.last_f1c_msg.pdu.successful_outcome().value.type().value,
             f1_ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp);

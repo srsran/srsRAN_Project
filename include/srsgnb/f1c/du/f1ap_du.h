@@ -10,11 +10,13 @@
 
 #pragma once
 
+#include "f1ap_du_ue_config.h"
 #include "f1c_bearer.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/f1c/common/f1c_common.h"
+#include "srsgnb/f1u/du/f1u_bearer.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
@@ -23,24 +25,6 @@
 
 namespace srsgnb {
 namespace srs_du {
-
-struct srb_to_addmod {
-  srb_id_t            srb_id;
-  f1_tx_pdu_notifier* f1_tx_pdu_notif;
-};
-
-struct f1ap_ue_create_request {
-  du_ue_index_t              ue_index;
-  du_cell_index_t            cell_index;
-  rnti_t                     c_rnti;
-  byte_buffer                du_cu_rrc_container;
-  std::vector<srb_to_addmod> srbs_to_add;
-};
-
-struct f1ap_ue_create_response {
-  bool                     result;
-  std::vector<f1c_bearer*> bearers_added;
-};
 
 struct f1_rx_pdu {
   du_ue_index_t           ue_index;
@@ -128,23 +112,6 @@ struct f1ap_notify_message {
   asn1::f1ap::notify_s msg;
 };
 
-struct drb_to_addmod {
-  drb_id_t drbid;
-  lcid_t   lcid;
-};
-
-/// F1-c request to modify existing UE configuration.
-struct f1ap_ue_config_update_request {
-  du_ue_index_t              ue_index;
-  std::vector<srb_id_t>      srbs_to_addmod;
-  std::vector<drb_to_addmod> drbs_to_addmod;
-};
-
-struct f1ap_ue_config_update_response {
-  bool        result;
-  byte_buffer du_to_cu_rrc_container;
-};
-
 struct f1ap_ue_delete_request {
   du_ue_index_t ue_index;
 };
@@ -155,8 +122,11 @@ class f1ap_ue_context_manager
 public:
   virtual ~f1ap_ue_context_manager() = default;
 
-  /// Initiates creation of UE context in F1.
-  virtual f1ap_ue_create_response handle_ue_creation_request(const f1ap_ue_create_request& msg) = 0;
+  /// \brief Initiates creation of UE context object in F1AP.
+  virtual f1ap_ue_creation_response handle_ue_creation_request(const f1ap_ue_creation_request& msg) = 0;
+
+  /// \brief Updates the configuration of an existing UE context object in F1AP.
+  virtual f1ap_ue_configuration_response handle_ue_configuration_request(const f1ap_ue_configuration_request& msg) = 0;
 
   /// \brief Initiates UE context release request procedure as per TS 38.473 section 8.3.2.
   /// \param[in] request The UE Context Release Request message to transmit.
@@ -211,8 +181,8 @@ public:
   virtual ~f1c_du_configurator() = default;
 
   /// \brief Request the update of the UE configuration in the DU.
-  virtual async_task<f1ap_ue_config_update_response>
-  request_ue_config_update(const f1ap_ue_config_update_request& request) = 0;
+  virtual async_task<f1ap_ue_context_update_response>
+  request_ue_config_update(const f1ap_ue_context_update_request& request) = 0;
 
   /// \brief Request the update of the UE configuration in the DU.
   virtual async_task<void> request_ue_removal(const f1ap_ue_delete_request& request) = 0;

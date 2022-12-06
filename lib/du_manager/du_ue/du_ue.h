@@ -10,9 +10,8 @@
 
 #pragma once
 
-#include "../adapters/du_bearer_adapter.h"
 #include "cell_group_config.h"
-#include "rlc_config_helpers.h"
+#include "du_bearer.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/mac/mac_sdu_handler.h"
 #include "srsgnb/ran/du_types.h"
@@ -23,14 +22,6 @@
 
 namespace srsgnb {
 namespace srs_du {
-
-struct du_bearer {
-  lcid_t   lcid;
-  drb_id_t drbid; // Valid if DRB.
-
-  std::unique_ptr<rlc_entity> rlc_bearer;
-  du_bearer_adapter           bearer_connector;
-};
 
 struct du_ue {
   explicit du_ue(du_ue_index_t ue_index_, du_cell_index_t pcell_index_, rnti_t rnti_) :

@@ -11,9 +11,9 @@
 #include "f1ap_du_impl.h"
 #include "../../ran/gnb_format.h"
 #include "procedures/f1ap_du_setup_procedure.h"
-#include "procedures/f1ap_du_ue_creation_procedure.h"
 #include "procedures/f1ap_du_ue_release_procedure.h"
 #include "procedures/gnb_cu_configuration_update_procedure.h"
+#include "ue_context/f1ap_du_ue_config_update.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/support/async/event_signal.h"
 
@@ -44,9 +44,14 @@ async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(co
   return launch_async<f1ap_du_setup_procedure>(request, f1c_notifier, *events, du_mng.get_timer_manager(), ctxt);
 }
 
-f1ap_ue_create_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_create_request& msg)
+f1ap_ue_creation_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_creation_request& msg)
 {
-  return create_f1ap_du_ue(msg, ues, ctxt, f1c_notifier, *events);
+  return create_f1ap_ue(msg, ues, ctxt, *events);
+}
+
+f1ap_ue_configuration_response f1ap_du_impl::handle_ue_configuration_request(const f1ap_ue_configuration_request& msg)
+{
+  return update_f1ap_ue_config(msg, ues);
 }
 
 void f1ap_du_impl::handle_gnb_cu_configuration_update(const asn1::f1ap::gnbcu_cfg_upd_s& msg)

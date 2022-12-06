@@ -37,13 +37,17 @@ ue_creation_procedure::ue_creation_procedure(du_ue_index_t                      
   ue_ctx(std::make_unique<du_ue>(ue_index, ccch_ind_msg.cell_index, ccch_ind_msg.crnti))
 {
   ue_ctx->bearers.emplace(LCID_SRB0);
-  ue_ctx->bearers[LCID_SRB0].lcid = LCID_SRB0;
+  ue_ctx->bearers[LCID_SRB0].lcid         = LCID_SRB0;
+  ue_ctx->bearers[LCID_SRB0].rlc_cfg.mode = rlc_mode::tm;
   ue_ctx->bearers.emplace(LCID_SRB1);
-  ue_ctx->bearers[LCID_SRB1].lcid = LCID_SRB1;
+  ue_ctx->bearers[LCID_SRB1].lcid    = LCID_SRB1;
+  ue_ctx->bearers[LCID_SRB1].rlc_cfg = make_default_srb_rlc_config();
 
   ue_ctx->cells.resize(1);
   cell_group_config& pcell = ue_ctx->cells[0];
-  pcell.rlc_bearers.push_back(make_default_srb(LCID_SRB1));
+  pcell.rlc_bearers.emplace_back();
+  pcell.rlc_bearers[0].lcid       = LCID_SRB1;
+  pcell.rlc_bearers[0].rlc_cfg    = ue_ctx->bearers[LCID_SRB1].rlc_cfg;
   pcell.spcell_cfg.serv_cell_idx  = msg.cell_index;
   pcell.spcell_cfg.spcell_cfg_ded = config_helpers::make_default_initial_ue_serving_cell_config();
   pcell.mcg_cfg                   = config_helpers::make_initial_mac_cell_group_config();
@@ -122,32 +126,14 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
 void ue_creation_procedure::create_rlc_srbs()
 {
   // Create SRB0 RLC entity.
-  du_bearer&                  srb0 = ue_ctx->bearers[LCID_SRB0];
-  rlc_entity_creation_message rlc_msg{};
-  rlc_msg.ue_index       = ue_ctx->ue_index;
-  rlc_msg.lcid           = LCID_SRB0;
-  rlc_msg.rx_upper_dn    = &srb0.bearer_connector.rlc_rx_sdu_notif;
-  rlc_msg.tx_upper_dn    = &srb0.bearer_connector.rlc_tx_data_notif;
-  rlc_msg.tx_upper_cn    = &srb0.bearer_connector.rlc_tx_ctrl_notif;
-  rlc_msg.tx_lower_dn    = &srb0.bearer_connector.rlc_tx_buffer_state_notif;
-  rlc_msg.config.mode    = rlc_mode::tm;
-  rlc_msg.timers         = &services.timers;
-  rlc_msg.pcell_executor = &services.cell_execs.executor(ue_ctx->pcell_index);
-  rlc_msg.ue_executor    = &services.ue_execs.executor(ue_ctx->ue_index);
-  srb0.rlc_bearer        = create_rlc_entity(rlc_msg);
+  du_bearer& srb0 = ue_ctx->bearers[LCID_SRB0];
+  srb0.rlc_bearer =
+      create_rlc_entity(make_rlc_entity_creation_message(ue_ctx->ue_index, ue_ctx->pcell_index, srb0, services));
 
   // Create SRB1 RLC entity.
-  du_bearer& srb1        = ue_ctx->bearers[LCID_SRB1];
-  rlc_msg.lcid           = LCID_SRB1;
-  rlc_msg.rx_upper_dn    = &srb1.bearer_connector.rlc_rx_sdu_notif;
-  rlc_msg.tx_upper_dn    = &srb1.bearer_connector.rlc_tx_data_notif;
-  rlc_msg.tx_upper_cn    = &srb1.bearer_connector.rlc_tx_ctrl_notif;
-  rlc_msg.tx_lower_dn    = &srb1.bearer_connector.rlc_tx_buffer_state_notif;
-  rlc_msg.config         = ue_ctx->cells[0].rlc_bearers[0].rlc_cfg;
-  rlc_msg.timers         = &services.timers;
-  rlc_msg.pcell_executor = &services.cell_execs.executor(ue_ctx->pcell_index);
-  rlc_msg.ue_executor    = &services.ue_execs.executor(ue_ctx->ue_index);
-  srb1.rlc_bearer        = create_rlc_entity(rlc_msg);
+  du_bearer& srb1 = ue_ctx->bearers[LCID_SRB1];
+  srb1.rlc_bearer =
+      create_rlc_entity(make_rlc_entity_creation_message(ue_ctx->ue_index, ue_ctx->pcell_index, srb1, services));
 }
 
 async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_create_req()
@@ -180,19 +166,19 @@ void ue_creation_procedure::create_f1_ue()
 {
   using namespace asn1::rrc_nr;
 
-  f1ap_ue_create_request f1_msg{};
-  f1_msg.ue_index   = ue_ctx->ue_index;
-  f1_msg.c_rnti     = ue_ctx->rnti;
-  f1_msg.cell_index = ue_ctx->pcell_index;
-  f1_msg.srbs_to_add.resize(2);
+  f1ap_ue_creation_request f1_msg{};
+  f1_msg.ue_index    = ue_ctx->ue_index;
+  f1_msg.c_rnti      = ue_ctx->rnti;
+  f1_msg.pcell_index = ue_ctx->pcell_index;
+  f1_msg.f1c_bearers_to_add.resize(2);
 
   // Create SRB0 and SRB1.
-  du_bearer& srb0                       = ue_ctx->bearers[LCID_SRB0];
-  f1_msg.srbs_to_add[0].srb_id          = srb_id_t::srb0;
-  f1_msg.srbs_to_add[0].f1_tx_pdu_notif = &srb0.bearer_connector.f1_tx_pdu_notif;
-  du_bearer& srb1                       = ue_ctx->bearers[LCID_SRB1];
-  f1_msg.srbs_to_add[1].srb_id          = srb_id_t::srb1;
-  f1_msg.srbs_to_add[1].f1_tx_pdu_notif = &srb1.bearer_connector.f1_tx_pdu_notif;
+  du_bearer& srb0                              = ue_ctx->bearers[LCID_SRB0];
+  f1_msg.f1c_bearers_to_add[0].srb_id          = srb_id_t::srb0;
+  f1_msg.f1c_bearers_to_add[0].f1_tx_pdu_notif = &srb0.bearer_connector.f1c_tx_pdu_notif;
+  du_bearer& srb1                              = ue_ctx->bearers[LCID_SRB1];
+  f1_msg.f1c_bearers_to_add[1].srb_id          = srb_id_t::srb1;
+  f1_msg.f1c_bearers_to_add[1].f1_tx_pdu_notif = &srb1.bearer_connector.f1c_tx_pdu_notif;
 
   // Pack SRB1 configuration that is going to be passed in the F1AP DU-to-CU-RRC-Container IE to the CU as per TS38.473,
   // Section 8.4.1.2.
@@ -229,12 +215,12 @@ void ue_creation_procedure::connect_layer_bearers()
   du_bearer& srb1 = ue_ctx->bearers[LCID_SRB1];
 
   // Connect F1 Tx PDU -> RLC Tx SDU.
-  srb0.bearer_connector.f1_tx_pdu_notif.connect(*srb0.rlc_bearer->get_tx_upper_layer_data_interface());
-  srb1.bearer_connector.f1_tx_pdu_notif.connect(*srb1.rlc_bearer->get_tx_upper_layer_data_interface());
+  srb0.bearer_connector.f1c_tx_pdu_notif.connect(*srb0.rlc_bearer->get_tx_upper_layer_data_interface());
+  srb1.bearer_connector.f1c_tx_pdu_notif.connect(*srb1.rlc_bearer->get_tx_upper_layer_data_interface());
 
   // Connect RLC RX SDU -> F1AP RX PDU adapter.
-  srb0.bearer_connector.rlc_rx_sdu_notif.connect(*f1_resp.bearers_added[0]);
-  srb1.bearer_connector.rlc_rx_sdu_notif.connect(*f1_resp.bearers_added[1]);
+  srb0.bearer_connector.rlc_rx_f1c_sdu_notif.connect(*f1_resp.f1c_bearers_added[0]);
+  srb1.bearer_connector.rlc_rx_f1c_sdu_notif.connect(*f1_resp.f1c_bearers_added[1]);
 
   // Connect RLC BSR update notifier -> MAC Control Info Handler.
   srb0.bearer_connector.rlc_tx_buffer_state_notif.connect(ue_ctx->ue_index, LCID_SRB0, rlc_cfg.mac_ue_info_handler);

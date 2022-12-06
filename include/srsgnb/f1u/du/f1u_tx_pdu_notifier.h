@@ -24,8 +24,8 @@ class f1u_tx_pdu_notifier
 public:
   virtual ~f1u_tx_pdu_notifier() = default;
 
-  virtual void on_new_tx_pdu(byte_buffer pdu, uint32_t count) = 0;
-  virtual void on_discard_tx_pdu(uint32_t count)              = 0;
+  virtual void on_tx_pdu(byte_buffer pdu, uint32_t count) = 0;
+  virtual void on_discard_tx_pdu(uint32_t count)          = 0;
 };
 
 } // namespace srs_du

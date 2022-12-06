@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "f1c_ue_context.h"
+#include "f1ap_ue_context.h"
 #include "ue_bearer_manager.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/adt/stable_id_map.h"
@@ -37,7 +37,7 @@ public:
   {
   }
 
-  f1c_ue_context        context;
+  f1ap_ue_context       context;
   f1c_message_notifier& f1c_msg_notifier;
   f1c_du_configurator&  du_handler;
   ue_bearer_manager     bearers;

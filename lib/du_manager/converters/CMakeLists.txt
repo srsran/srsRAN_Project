@@ -7,7 +7,7 @@
 #
 
 
-set(SOURCES f1c_configuration_helpers.cpp ssb_coreset0_freq_pos_generator.cpp asn1_cell_group_config_helpers.cpp)
+set(SOURCES f1c_configuration_helpers.cpp ssb_coreset0_freq_pos_generator.cpp asn1_cell_group_config_helpers.cpp rlc_config_helpers.cpp)
 
 add_library(du_manager_converters STATIC ${SOURCES})
 target_link_libraries(du_manager_converters rrc_nr_asn1 srsgnb_support srsgnb_ran srsgnb_sched f1ap_asn1)

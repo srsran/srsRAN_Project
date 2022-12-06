@@ -42,8 +42,10 @@ class f1ap_test_dummy : public f1ap_connection_manager,
 {
 public:
   wait_manual_event_tester<f1_setup_response_message>                     wait_f1_setup;
-  optional<f1ap_ue_create_request>                                        last_ue_create{};
-  f1ap_ue_create_response                                                 next_ue_create_response;
+  optional<f1ap_ue_creation_request>                                      last_ue_create{};
+  f1ap_ue_creation_response                                               next_ue_create_response;
+  optional<f1ap_ue_configuration_request>                                 last_ue_config{};
+  f1ap_ue_configuration_response                                          next_ue_config_response;
   wait_manual_event_tester<f1ap_ue_context_modification_response_message> wait_ue_mod;
 
   async_task<f1_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) override
@@ -52,10 +54,16 @@ public:
   }
 
   /// Initiates creation of UE context in F1.
-  f1ap_ue_create_response handle_ue_creation_request(const f1ap_ue_create_request& msg) override
+  f1ap_ue_creation_response handle_ue_creation_request(const f1ap_ue_creation_request& msg) override
   {
     last_ue_create = msg;
     return next_ue_create_response;
+  }
+
+  f1ap_ue_configuration_response handle_ue_configuration_request(const f1ap_ue_configuration_request& msg) override
+  {
+    last_ue_config = msg;
+    return next_ue_config_response;
   }
 
   void handle_ue_context_release_request(const f1ap_ue_context_release_request_message& request) override {}

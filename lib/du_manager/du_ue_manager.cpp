@@ -43,10 +43,10 @@ void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& m
       ue_idx_candidate, msg, *this, cfg.services, cfg.mac, cfg.rlc, cfg.f1ap);
 }
 
-async_task<f1ap_ue_config_update_response>
-du_ue_manager::handle_ue_config_request(const f1ap_ue_config_update_request& msg)
+async_task<f1ap_ue_context_update_response>
+du_ue_manager::handle_ue_config_request(const f1ap_ue_context_update_request& msg)
 {
-  return launch_async<ue_configuration_procedure>(msg, *this, cfg.mac.ue_cfg);
+  return launch_async<ue_configuration_procedure>(msg, *this, cfg.services, cfg.mac.ue_cfg, cfg.f1ap);
 }
 
 async_task<void> du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_request& msg)

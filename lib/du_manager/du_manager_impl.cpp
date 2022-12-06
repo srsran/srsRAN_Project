@@ -48,8 +48,8 @@ void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message
   });
 }
 
-async_task<f1ap_ue_config_update_response>
-du_manager_impl::handle_ue_config_update(const f1ap_ue_config_update_request& request)
+async_task<f1ap_ue_context_update_response>
+du_manager_impl::handle_ue_config_update(const f1ap_ue_context_update_request& request)
 {
   return ue_mng.handle_ue_config_request(request);
 }

@@ -38,14 +38,5 @@ public:
 class f1c_bearer : public f1_pdu_handler, public f1_sdu_handler
 {};
 
-/// Interface used by F1 to push PDUs to lower layers.
-class f1_tx_pdu_notifier
-{
-public:
-  virtual ~f1_tx_pdu_notifier() = default;
-
-  virtual void on_tx_pdu(byte_buffer pdu) = 0;
-};
-
 } // namespace srs_du
 } // namespace srsgnb

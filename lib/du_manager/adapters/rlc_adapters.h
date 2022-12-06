@@ -11,6 +11,8 @@
 #pragma once
 
 #include "srsgnb/f1c/du/f1c_bearer.h"
+#include "srsgnb/f1u/du/f1u_bearer.h"
+#include "srsgnb/mac/mac_ue_control_information_handler.h"
 #include "srsgnb/rlc/rlc_entity.h"
 
 namespace srsgnb {
@@ -23,12 +25,27 @@ public:
 
   void on_new_sdu(byte_buffer_slice_chain pdu) override
   {
-    srsgnb_assert(f1bearer != nullptr, "RLC Rx Bearer notifier is disconnected");
+    srsgnb_assert(f1bearer != nullptr, "rlc rx bearer notifier is disconnected");
     f1bearer->handle_pdu(std::move(pdu));
   }
 
 private:
   f1c_bearer* f1bearer = nullptr;
+};
+
+class rlc_f1u_rx_sdu_adapter : public rlc_rx_upper_layer_data_notifier
+{
+public:
+  void connect(f1u_rx_pdu_handler& bearer_) { f1bearer = &bearer_; }
+
+  void on_new_sdu(byte_buffer_slice_chain pdu) override
+  {
+    srsgnb_assert(f1bearer != nullptr, "rlc rx bearer notifier is disconnected");
+    f1bearer->handle_pdu(std::move(pdu));
+  }
+
+private:
+  f1u_rx_pdu_handler* f1bearer = nullptr;
 };
 
 class rlc_tx_data_notifier : public rlc_tx_upper_layer_data_notifier
