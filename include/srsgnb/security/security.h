@@ -107,9 +107,15 @@ using sec_mac = std::array<uint8_t, sec_mac_len>;
 using sec_as_key     = std::array<uint8_t, sec_key_len>;
 using sec_128_as_key = std::array<uint8_t, sec_128_key_len>;
 
+/// Helper types to communicate the preferred algorithm list. NIA/NEA0...3.
+constexpr uint16_t nof_pref_algos    = 4;
+using preferred_integrity_algorithms = std::array<integrity_algorithm, nof_pref_algos>;
+using preferred_ciphering_algorithms = std::array<ciphering_algorithm, nof_pref_algos>;
+
 /// Helper types to communicate NIA/NEA1...3 support. Support of NEA/NIA0 is implicit.
-using supported_integrity_algos = std::array<bool, 3>;
-using supported_ciphering_algos = std::array<bool, 3>;
+constexpr uint16_t nof_supported_algos = 3;
+using supported_integrity_algos        = std::array<bool, nof_supported_algos>;
+using supported_ciphering_algos        = std::array<bool, nof_supported_algos>;
 
 struct sec_128_as_config {
   sec_128_as_key      k_128_rrc_int;
@@ -186,6 +192,48 @@ sec_128_as_key truncate_key(const sec_as_key& key_in);
 /// Truncate 256-bit keys to 128-bit keys using the least significant bits,
 /// on a given security context.
 sec_128_as_config truncate_config(const sec_as_config& cfg_in);
+
+/******************************************************************************
+ * Algorithm selection
+ *****************************************************************************/
+inline bool select_algorithms(sec_as_config&                 sec_cfg,
+                              preferred_integrity_algorithms pref_int_list,
+                              preferred_ciphering_algorithms pref_ciph_list,
+                              supported_integrity_algos      supp_int_list,
+                              supported_ciphering_algos      supp_ciph_list)
+{
+  // Select preferred integrity algorithm.
+  bool int_algo_found = false;
+  for (unsigned i = 0; i < nof_pref_algos; ++i) {
+    uint16_t algo_id = to_number(pref_int_list[i]);
+    if (algo_id == 0) {
+      // Do not allow NIA0
+      break;
+    }
+    if (supp_int_list[algo_id - 1]) {
+      int_algo_found     = true;
+      sec_cfg.integ_algo = security::integrity_algorithm_from_number(algo_id);
+      break;
+    }
+  }
+
+  // Select preferred ciphering algorithm.
+  bool ciph_algo_found = false;
+  for (unsigned i = 0; i < nof_pref_algos; ++i) {
+    uint16_t algo_id = to_number(pref_ciph_list[i]);
+    if (algo_id == 0) {
+      ciph_algo_found     = true;
+      sec_cfg.cipher_algo = security::ciphering_algorithm::nea0;
+      break;
+    }
+    if (supp_ciph_list[algo_id - 1]) {
+      ciph_algo_found     = true;
+      sec_cfg.cipher_algo = security::ciphering_algorithm_from_number(algo_id - 1);
+      break;
+    }
+  }
+  return !(not int_algo_found || not ciph_algo_found);
+}
 
 } // namespace security
 } // namespace srsgnb
