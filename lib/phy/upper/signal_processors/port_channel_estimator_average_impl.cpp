@@ -12,6 +12,7 @@
 #include "srsgnb/srsvec/add.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/dot_prod.h"
+#include "srsgnb/srsvec/mean.h"
 #include "srsgnb/srsvec/prod.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
@@ -60,7 +61,7 @@ static float estimate_noise(const dmrs_symbol_list& pilots,
                             unsigned                i_layer);
 
 // Returns the interpolator configuration for the given RE pattern.
-static interpolator::configuration set_interpolator_cfg(const bounded_bitset<NRE>& re_mask)
+static interpolator::configuration configure_interpolator(const bounded_bitset<NRE>& re_mask)
 {
   int offset = re_mask.find_lowest();
   srsgnb_assert(offset != -1, "re_mask seems to have no active entries.");
@@ -163,7 +164,7 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsgnb::channel_esti
   // Interpolate frequency domain.
   const bounded_bitset<MAX_RB>& hop_rb_mask      = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
   span<cf_t>                    ce_freq          = span<cf_t>(freq_response).first(hop_rb_mask.count() * NRE);
-  interpolator::configuration   interpolator_cfg = set_interpolator_cfg(pattern.re_pattern);
+  interpolator::configuration   interpolator_cfg = configure_interpolator(pattern.re_pattern);
 
   freq_interpolator->interpolate(ce_freq, pilots_lse, interpolator_cfg);
 
@@ -243,8 +244,7 @@ static float estimate_noise(const dmrs_symbol_list& pilots,
   // corresponding block of span "estimates."
   for (unsigned i_avg = 0, max_avg = avg_estimates.size(); i_avg != max_avg; i_avg += window_size) {
     span<const cf_t> estimates_block = estimates.subspan(i_avg, window_size);
-    cf_t             avg =
-        std::accumulate(estimates_block.begin(), estimates_block.end(), cf_t(0, 0)) / static_cast<float>(window_size);
+    cf_t             avg             = srsvec::mean(estimates_block);
     span<cf_t> avg_block = avg_estimates.subspan(i_avg, window_size);
     std::fill(avg_block.begin(), avg_block.end(), avg);
   }
@@ -257,8 +257,7 @@ static float estimate_noise(const dmrs_symbol_list& pilots,
     span<const cf_t> symbol_pilots    = pilots.get_symbol(hop_offset + i_symbol, i_layer);
     span<const cf_t> symbol_rx_pilots = rx_pilots.get_symbol(i_symbol, i_layer);
 
-    std::transform(
-        avg_estimates.begin(), avg_estimates.end(), symbol_pilots.begin(), predicted_obs.begin(), std::multiplies<>());
+    srsvec::prod(avg_estimates, symbol_pilots, predicted_obs);
     srsvec::add(predicted_obs, symbol_rx_pilots, predicted_obs);
 
     noise_energy += srsvec::average_power(predicted_obs) * window_size;
