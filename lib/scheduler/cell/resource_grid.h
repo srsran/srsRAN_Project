@@ -16,6 +16,7 @@
 #include "srsgnb/adt/circular_array.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
+#include "srsgnb/scheduler/resource_grid_util.h"
 
 namespace srsgnb {
 
@@ -208,8 +209,9 @@ private:
 /// Circular Ring of cell_slot_resource_grid objects. This class manages the automatic resetting of
 /// cell_slot_resource_grid objects, once they become old.
 struct cell_resource_allocator {
-  /// Number of subframes managed by this container.
-  static const size_t GRID_NOF_SUBFRAMES = SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1 + SCHEDULER_MAX_K2;
+  /// Number of slots managed by this container.
+  static const size_t RING_ALLOCATOR_SIZE =
+      get_allocator_ring_size_gt_min(std::max(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1, SCHEDULER_MAX_K2 + MAX_MSG3_DELTA));
 
   /// Cell configuration
   const cell_configuration& cfg;
@@ -257,10 +259,7 @@ private:
   /// Ensure we are not overflowing the ring.
   void assert_valid_sl(unsigned slot_delay) const
   {
-    static const subcarrier_spacing max_scs = std::max(cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().scs,
-                                                       cfg.ul_cfg_common.freq_info_ul.scs_carrier_list.back().scs);
-    static const unsigned           nof_slots_per_sf = get_nof_slots_per_subframe(max_scs);
-    srsgnb_sanity_check(slot_delay < GRID_NOF_SUBFRAMES * nof_slots_per_sf,
+    srsgnb_sanity_check(slot_delay < RING_ALLOCATOR_SIZE,
                         "The cell resource pool is too small for accessing a slot with delay: {}",
                         slot_delay);
   }

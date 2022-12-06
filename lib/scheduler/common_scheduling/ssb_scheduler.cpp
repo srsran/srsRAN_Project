@@ -213,8 +213,7 @@ void srsgnb::schedule_ssb(cell_resource_allocator&  res_alloc,
 
   const uint8_t ssb_period = ssb_periodicity_to_value(cell_cfg.ssb_cfg.ssb_period);
 
-  for (unsigned i = 0; i < cell_resource_allocator::GRID_NOF_SUBFRAMES * sl_point.nof_slots_per_subframe();
-       i += ssb_period) {
+  for (unsigned i = 0; i < cell_resource_allocator::RING_ALLOCATOR_SIZE; i += ssb_period) {
     schedule_ssb(res_alloc[i], sl_point + i, cell_cfg);
   }
 }

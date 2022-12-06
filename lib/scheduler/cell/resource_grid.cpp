@@ -196,7 +196,7 @@ cell_resource_allocator::cell_resource_allocator(const cell_configuration& cfg_)
   std::vector<scs_specific_carrier> dl_scs_carriers, ul_scs_carriers;
   subcarrier_spacing                max_scs = cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().scs;
   max_scs = std::max(max_scs, cfg.ul_cfg_common.freq_info_ul.scs_carrier_list.back().scs);
-  slots.resize(GRID_NOF_SUBFRAMES * get_nof_slots_per_subframe(max_scs));
+  slots.resize(RING_ALLOCATOR_SIZE);
   unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(max_scs);
   for (unsigned i = 0; i < slots.size(); ++i) {
     for (const auto& carrier : cfg.dl_cfg_common.freq_info_dl.scs_carrier_list) {

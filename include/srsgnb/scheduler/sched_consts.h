@@ -43,4 +43,7 @@ const unsigned SCHEDULER_MAX_K1 = 10;
 /// [Implementation defined] Maximum allowed slot offset between DCI and its scheduled first PUSCH. Values {0,..,32}.
 const unsigned SCHEDULER_MAX_K2 = 15;
 
+/// Maximum value of Msg delta. See table 6.1.2.1.1-5, in TS 38.214.
+const unsigned MAX_MSG3_DELTA = 6;
+
 } // namespace srsgnb

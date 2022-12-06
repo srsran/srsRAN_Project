@@ -111,8 +111,8 @@ private:
     // Change Carrier parameters when SCS is 15kHz.
     if (init_bwp_scs == subcarrier_spacing::kHz15) {
       msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth = 106;
-      msg.dl_cfg_common.init_dl_bwp.generic_params.crbs                         = {
-                                  0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth};
+      msg.dl_cfg_common.init_dl_bwp.generic_params.crbs =
+          crb_interval{0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth};
     }
     // Change Carrier parameters when SCS is 30kHz.
     else if (init_bwp_scs == subcarrier_spacing::kHz30) {
