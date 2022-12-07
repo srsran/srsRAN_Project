@@ -8,7 +8,7 @@
  *
  */
 
-#include "../common/f1_du_test_helpers.h"
+#include "f1_du_test_helpers.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
 
