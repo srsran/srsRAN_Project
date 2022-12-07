@@ -31,6 +31,9 @@ public:
     tx_delivery_notifier(tx_delivery_notifier_),
     rx_sdu_notifier(rx_sdu_notifier_)
   {
+    (void)tx_pdu_notifier;
+    (void)tx_delivery_notifier;
+    (void)rx_sdu_notifier;
   }
 
   virtual f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
