@@ -37,11 +37,8 @@ TEST_F(ngc_test, when_initial_context_setup_request_received_then_response_send)
   ngc_message init_context_setup_request = generate_initial_context_setup_request_message();
   ngc->handle_message(init_context_setup_request);
 
-  // TODO: how can we await here the execution of the coro without handle_message() returning an async_task<>?
-#if 0
   // Check that AMF notifier was called with right type
   ASSERT_EQ(msg_notifier->last_ngc_msg.pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::successful_outcome);
   ASSERT_EQ(msg_notifier->last_ngc_msg.pdu.successful_outcome().value.type(),
             asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::init_context_setup_resp);
-#endif
 }
