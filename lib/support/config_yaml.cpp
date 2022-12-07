@@ -49,7 +49,10 @@ std::string yaml_config_parser::to_config(const CLI::App* app, bool default_also
       if (opt->count() == 1) {
         config[name] = opt->results().front();
       } else if (opt->count() > 1) {
-        config[name] = opt->results();
+        // Recover the items from the string.
+        for (const auto& str : opt->results()) {
+          config[name].push_back(YAML::Load(str));
+        }
       } else if (default_also && !opt->get_default_str().empty()) {
         // If the option has a default and is requested by optional argument.
         config[name] = opt->get_default_str();
@@ -127,9 +130,15 @@ std::vector<CLI::ConfigItem> yaml_config_parser::from_config_impl(const YAML::No
       results.insert(results.end(), sub_results.begin(), sub_results.end());
       continue;
     }
-
+    // Sequences are stored as a vector of strings.
     if (value.IsSequence()) {
-      report_fatal_error("YAML sequence parsing not yet implemented");
+      results.emplace_back();
+      CLI::ConfigItem& res = results.back();
+      res.name             = key_name;
+      res.parents          = prefix;
+      for (const auto& str : value) {
+        res.inputs.push_back(YAML::Dump(str));
+      }
     }
   }
 

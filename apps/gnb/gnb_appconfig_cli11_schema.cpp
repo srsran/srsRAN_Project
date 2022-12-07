@@ -10,6 +10,7 @@
 
 #include "gnb_appconfig_cli11_schema.h"
 #include "gnb_appconfig.h"
+#include "srsgnb/support/config_parsers.h"
 #include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
@@ -235,6 +236,25 @@ void srsgnb::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   });
 
   // Cell parameters.
-  CLI::App* cell_subcmd = app.add_subcommand("cell", "Cell parameters")->configurable();
-  configure_cli11_cells_args(*cell_subcmd, gnb_cfg.cells_cfg.front());
+  app.add_option_function<std::vector<std::string>>(
+      "--cells",
+      [&gnb_cfg](const std::vector<std::string>& values) {
+        // Prepare the cells from the common cell.
+        if (values.size() > gnb_cfg.cells_cfg.size()) {
+          gnb_cfg.cells_cfg.resize(values.size());
+          for (auto& cell : gnb_cfg.cells_cfg) {
+            cell.cell = gnb_cfg.common_cell_cfg;
+          }
+        }
+
+        // Format every cell.
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("srsGNB application");
+          subapp.config_formatter(create_yaml_config_parser());
+          configure_cli11_cells_args(subapp, gnb_cfg.cells_cfg[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "cells");
 }
