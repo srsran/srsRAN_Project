@@ -93,8 +93,8 @@ public:
     logger.info("Received a NAS PDU");
   }
 
-  async_task<bool> on_new_sec_context(const asn1::ngap::ue_security_cap_s&           caps,
-                                      const asn1::fixed_bitstring<256, false, true>& key) override
+  async_task<bool> on_new_security_context(const asn1::ngap::ue_security_cap_s&           caps,
+                                           const asn1::fixed_bitstring<256, false, true>& key) override
   {
     logger.info("Received a new security context");
     return launch_async([this](coro_context<async_task<bool>>& ctx) {

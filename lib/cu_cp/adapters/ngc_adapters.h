@@ -85,8 +85,8 @@ public:
     rrc_ue_msg_handler->handle_dl_nas_transport_message(dl_nas_msg);
   }
 
-  async_task<bool> on_new_sec_context(const asn1::ngap::ue_security_cap_s&           caps,
-                                      const asn1::fixed_bitstring<256, false, true>& key) override
+  async_task<bool> on_new_security_context(const asn1::ngap::ue_security_cap_s&           caps,
+                                           const asn1::fixed_bitstring<256, false, true>& key) override
   {
     srsgnb_assert(security_handler != nullptr, "security_handler must not be nullptr");
 

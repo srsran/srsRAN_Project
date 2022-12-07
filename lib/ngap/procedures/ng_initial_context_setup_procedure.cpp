@@ -29,7 +29,8 @@ void ng_initial_context_setup_procedure::operator()(coro_context<async_task<void
 
   // Handle mendatorty IEs
   CORO_AWAIT_VALUE(
-      success, ue.get_rrc_ue_control_notifier().on_new_sec_context(*request->ue_security_cap, *request->security_key));
+      success,
+      ue.get_rrc_ue_control_notifier().on_new_security_context(*request->ue_security_cap, *request->security_key));
 
   // Handle optional IEs
   handle_nas_pdu();

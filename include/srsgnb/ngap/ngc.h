@@ -136,8 +136,8 @@ public:
   virtual ~ngc_rrc_ue_control_notifier() = default;
 
   /// \brief Notify about the reception of new security capabilities and key.
-  virtual async_task<bool> on_new_sec_context(const asn1::ngap::ue_security_cap_s&           caps,
-                                              const asn1::fixed_bitstring<256, false, true>& key) = 0;
+  virtual async_task<bool> on_new_security_context(const asn1::ngap::ue_security_cap_s&           caps,
+                                                   const asn1::fixed_bitstring<256, false, true>& key) = 0;
 };
 
 /// Interface to control the NGC.
