@@ -19,6 +19,18 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
+struct initial_context_failure_message {
+  asn1::ngap::cause_c                      cause;
+  ngap_pdu_session_res_list                failed_to_setup;
+  optional<asn1::ngap::crit_diagnostics_s> crit_diagnostics;
+};
+
+struct initial_context_response_message {
+  ngap_pdu_session_res_list                succeed_to_setup;
+  ngap_pdu_session_res_list                failed_to_setup;
+  optional<asn1::ngap::crit_diagnostics_s> crit_diagnostics;
+};
+
 class ng_initial_context_setup_procedure
 {
 public:
@@ -34,12 +46,8 @@ private:
   void handle_nas_pdu();
 
   // results senders
-  void send_initial_context_setup_response(const ngap_pdu_session_res_list&                succeed_to_setup,
-                                           const ngap_pdu_session_res_list&                failed_to_setup,
-                                           const optional<asn1::ngap::crit_diagnostics_s>& crit_diagnostic);
-  void send_initial_context_setup_failure(const optional<asn1::ngap::cause_c>&            cause,
-                                          const ngap_pdu_session_res_list&                failed_to_setup,
-                                          const optional<asn1::ngap::crit_diagnostics_s>& crit_diagnostic);
+  void send_initial_context_setup_response(const initial_context_response_message& msg);
+  void send_initial_context_setup_failure(const initial_context_failure_message& msg);
 
   ngc_ue&                                        ue;
   const asn1::ngap::init_context_setup_request_s request;

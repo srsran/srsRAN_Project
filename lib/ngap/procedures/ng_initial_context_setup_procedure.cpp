@@ -27,26 +27,29 @@ void ng_initial_context_setup_procedure::operator()(coro_context<async_task<void
 {
   CORO_BEGIN(ctx);
 
+  logger.debug("Initial Context Setup Procedure started");
+
   // Handle mendatorty IEs
   CORO_AWAIT_VALUE(
       success,
       ue.get_rrc_ue_control_notifier().on_new_security_context(*request->ue_security_cap, *request->security_key));
 
+  if (not success) {
+    initial_context_failure_message fail_msg = {};
+    fail_msg.cause.set_protocol();
+    send_initial_context_setup_failure(fail_msg);
+
+    logger.debug("Initial Context Setup Procedure finished");
+    CORO_EARLY_RETURN();
+  }
+
   // Handle optional IEs
   handle_nas_pdu();
 
-  // prepare response
-  ngap_pdu_session_res_list                succeed_to_setup;
-  ngap_pdu_session_res_list                failed_to_setup;
-  optional<asn1::ngap::crit_diagnostics_s> crit_diagnostics;
-  optional<asn1::ngap::cause_c>            cause;
+  initial_context_response_message resp_msg = {};
+  send_initial_context_setup_response(resp_msg);
 
-  if (success) {
-    send_initial_context_setup_response(succeed_to_setup, failed_to_setup, crit_diagnostics);
-  } else {
-    send_initial_context_setup_failure(cause, failed_to_setup, crit_diagnostics);
-  }
-
+  logger.debug("Initial Context Setup Procedure finished");
   CORO_RETURN();
 }
 
@@ -62,9 +65,7 @@ void ng_initial_context_setup_procedure::handle_nas_pdu()
 }
 
 void ng_initial_context_setup_procedure::send_initial_context_setup_response(
-    const ngap_pdu_session_res_list&                succeed_to_setup,
-    const ngap_pdu_session_res_list&                failed_to_setup,
-    const optional<asn1::ngap::crit_diagnostics_s>& crit_diagnostics)
+    const initial_context_response_message& msg)
 {
   ngc_message ngc_msg = {};
 
@@ -75,10 +76,10 @@ void ng_initial_context_setup_procedure::send_initial_context_setup_response(
   init_ctxt_setup_resp->ran_ue_ngap_id.value = ran_ue_id_to_uint(ue.get_ran_ue_id());
 
   // Fill PDU Session Resource Setup Response List
-  if (!succeed_to_setup.empty()) {
+  if (!msg.succeed_to_setup.empty()) {
     init_ctxt_setup_resp->pdu_session_res_setup_list_cxt_res_present = true;
-    init_ctxt_setup_resp->pdu_session_res_setup_list_cxt_res->resize(succeed_to_setup.size());
-    for (auto& it : succeed_to_setup) {
+    init_ctxt_setup_resp->pdu_session_res_setup_list_cxt_res->resize(msg.succeed_to_setup.size());
+    for (auto& it : msg.succeed_to_setup) {
       asn1::ngap::pdu_session_res_setup_item_cxt_res_s res_item;
       res_item.pdu_session_id = it.pdu_session_id;
       res_item.pdu_session_res_setup_resp_transfer.resize(it.pdu_session_res.length());
@@ -90,10 +91,10 @@ void ng_initial_context_setup_procedure::send_initial_context_setup_response(
   }
 
   // Fill PDU Session Resource Failed to Setup List
-  if (!failed_to_setup.empty()) {
+  if (!msg.failed_to_setup.empty()) {
     init_ctxt_setup_resp->pdu_session_res_failed_to_setup_list_cxt_res_present = true;
-    init_ctxt_setup_resp->pdu_session_res_failed_to_setup_list_cxt_res->resize(failed_to_setup.size());
-    for (auto& it : failed_to_setup) {
+    init_ctxt_setup_resp->pdu_session_res_failed_to_setup_list_cxt_res->resize(msg.failed_to_setup.size());
+    for (auto& it : msg.failed_to_setup) {
       asn1::ngap::pdu_session_res_failed_to_setup_item_cxt_res_s res_item;
       res_item.pdu_session_id = it.pdu_session_id;
       res_item.pdu_session_res_setup_unsuccessful_transfer.resize(it.pdu_session_res.length());
@@ -106,19 +107,16 @@ void ng_initial_context_setup_procedure::send_initial_context_setup_response(
   }
 
   // Fill Criticality Diagnostics
-  if (crit_diagnostics.has_value()) {
+  if (msg.crit_diagnostics.has_value()) {
     init_ctxt_setup_resp->crit_diagnostics_present = true;
-    init_ctxt_setup_resp->crit_diagnostics.value   = crit_diagnostics.value();
+    init_ctxt_setup_resp->crit_diagnostics.value   = msg.crit_diagnostics.value();
   }
 
   logger.info("Sending Initial Context Setup Response to AMF");
   amf_notifier.on_new_message(ngc_msg);
 }
 
-void ng_initial_context_setup_procedure::send_initial_context_setup_failure(
-    const optional<asn1::ngap::cause_c>&            cause,
-    const ngap_pdu_session_res_list&                failed_to_setup,
-    const optional<asn1::ngap::crit_diagnostics_s>& crit_diagnostics)
+void ng_initial_context_setup_procedure::send_initial_context_setup_failure(const initial_context_failure_message& msg)
 {
   ngc_message ngc_msg = {};
 
@@ -128,18 +126,13 @@ void ng_initial_context_setup_procedure::send_initial_context_setup_failure(
   init_ctxt_setup_fail->amf_ue_ngap_id.value = amf_ue_id_to_uint(ue.get_amf_ue_id());
   init_ctxt_setup_fail->ran_ue_ngap_id.value = ran_ue_id_to_uint(ue.get_ran_ue_id());
 
-  // Fill Cause
-  if (!cause.has_value()) {
-    logger.debug("Missing failure cause");
-    return;
-  }
-  init_ctxt_setup_fail->cause.value = cause.value();
+  init_ctxt_setup_fail->cause.value = msg.cause;
 
   // Fill PDU Session Resource Failed to Setup List
-  if (!failed_to_setup.empty()) {
+  if (!msg.failed_to_setup.empty()) {
     init_ctxt_setup_fail->pdu_session_res_failed_to_setup_list_cxt_fail_present = true;
-    init_ctxt_setup_fail->pdu_session_res_failed_to_setup_list_cxt_fail->resize(failed_to_setup.size());
-    for (auto& it : failed_to_setup) {
+    init_ctxt_setup_fail->pdu_session_res_failed_to_setup_list_cxt_fail->resize(msg.failed_to_setup.size());
+    for (auto& it : msg.failed_to_setup) {
       asn1::ngap::pdu_session_res_failed_to_setup_item_cxt_fail_s fail_item;
       fail_item.pdu_session_id = it.pdu_session_id;
       fail_item.pdu_session_res_setup_unsuccessful_transfer.resize(it.pdu_session_res.length());
@@ -152,9 +145,9 @@ void ng_initial_context_setup_procedure::send_initial_context_setup_failure(
   }
 
   // Fill Criticality Diagnostics
-  if (crit_diagnostics.has_value()) {
+  if (msg.crit_diagnostics.has_value()) {
     init_ctxt_setup_fail->crit_diagnostics_present = true;
-    init_ctxt_setup_fail->crit_diagnostics.value   = crit_diagnostics.value();
+    init_ctxt_setup_fail->crit_diagnostics.value   = msg.crit_diagnostics.value();
   }
 
   logger.info("Sending Initial Context Setup Failure to AMF");
