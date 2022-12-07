@@ -9,3 +9,7 @@
 add_executable(ldpc_encoder_benchmark ldpc_encoder_benchmark.cpp)
 target_link_libraries(ldpc_encoder_benchmark srsgnb_channel_coding srslog)
 add_test(ldpc_encoder_benchmark ldpc_encoder_benchmark -s -R 1 -T generic)
+
+add_executable(ldpc_decoder_benchmark ldpc_decoder_benchmark.cpp)
+target_link_libraries(ldpc_decoder_benchmark srsgnb_channel_coding srslog)
+add_test(ldpc_decoder_benchmark ldpc_decoder_benchmark -s -R 1 -I 2 -T generic)
