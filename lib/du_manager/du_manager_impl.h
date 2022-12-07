@@ -41,7 +41,7 @@ public:
   }
 
   async_task<f1ap_ue_context_update_response>
-  handle_ue_config_update(const f1ap_ue_context_update_request& request) override;
+  handle_ue_context_update(const f1ap_ue_context_update_request& request) override;
 
   async_task<void> handle_ue_delete_request(const f1ap_ue_delete_request& request) override;
 
