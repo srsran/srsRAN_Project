@@ -43,23 +43,32 @@ public:
   timer_manager&       timers;
   async_task_sequencer task_loop;
   dummy_ue_task_sched  ue_sched;
+  f1_interface*        f1ap_inst;
 
-  optional<f1ap_ue_context_update_request> last_ue_config_update_req;
-  f1ap_ue_context_update_response          next_ue_config_update_response;
+  // DU manager -> F1AP.
+  f1ap_ue_configuration_request            next_ue_cfg_req;
+  optional<f1ap_ue_configuration_response> last_ue_cfg_response;
+
+  // F1-C procedures.
+  optional<f1ap_ue_context_update_request> last_ue_context_update_req;
+  f1ap_ue_context_update_response          next_ue_context_update_response;
 
   explicit dummy_f1c_du_configurator(timer_manager& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
+
+  void connect(f1_interface& f1ap_inst_) { f1ap_inst = &f1ap_inst_; }
 
   timer_manager& get_timer_manager() override { return timers; }
 
   void schedule_async_task(async_task<void>&& task) override { task_loop.schedule(std::move(task)); }
 
   async_task<f1ap_ue_context_update_response>
-  request_ue_config_update(const f1ap_ue_context_update_request& request) override
+  request_ue_context_update(const f1ap_ue_context_update_request& request) override
   {
-    last_ue_config_update_req = request;
+    last_ue_context_update_req = request;
     return launch_async([this](coro_context<async_task<f1ap_ue_context_update_response>>& ctx) {
       CORO_BEGIN(ctx);
-      CORO_RETURN(next_ue_config_update_response);
+      last_ue_cfg_response = f1ap_inst->handle_ue_configuration_request(next_ue_cfg_req);
+      CORO_RETURN(next_ue_context_update_response);
     });
   }
 
@@ -99,7 +108,7 @@ f1c_message generate_f1_setup_failure_message_with_time_to_wait(unsigned        
                                                                 asn1::f1ap::time_to_wait_e time_to_wait);
 
 /// \brief Generate F1AP DL RRC Message Transfer message.
-f1c_message generate_f1_dl_rrc_message_transfer(const byte_buffer& rrc_container);
+f1c_message generate_f1_dl_rrc_message_transfer(srb_id_t srb_id, const byte_buffer& rrc_container);
 
 /// \brief Generate F1AP ASN.1 DRB AM configuration.
 asn1::f1ap::drbs_to_be_setup_item_s generate_drb_am_config(drb_id_t drbid);
@@ -115,13 +124,39 @@ public:
   void on_tx_pdu(byte_buffer pdu) override { last_pdu = std::move(pdu); }
 };
 
+class dummy_f1u_tx_pdu_notifier : public f1u_tx_pdu_notifier
+{
+public:
+  byte_buffer        last_pdu;
+  optional<uint32_t> last_pdu_count;
+  optional<uint32_t> last_discard_count;
+
+  void on_tx_pdu(byte_buffer pdu, uint32_t count) override
+  {
+    last_pdu       = std::move(pdu);
+    last_pdu_count = count;
+  }
+
+  void on_discard_tx_pdu(uint32_t count) override { last_discard_count = count; }
+};
+
 /// Fixture class for F1AP
 class f1ap_du_test : public ::testing::Test
 {
 protected:
+  struct f1c_test_bearer {
+    srb_id_t                  srb_id = srb_id_t::nulltype;
+    dummy_f1c_tx_pdu_notifier tx_pdu_notifier;
+    f1c_bearer*               bearer = nullptr;
+  };
+  struct f1u_test_bearer {
+    drb_id_t                  drb_id = drb_id_t::invalid;
+    dummy_f1u_tx_pdu_notifier tx_pdu_notifier;
+    f1u_bearer*               bearer = nullptr;
+  };
   struct ue_test_context {
-    std::unique_ptr<dummy_f1c_tx_pdu_notifier> tx_pdu_notif;
-    std::vector<f1c_bearer*>                   bearers;
+    slotted_array<f1c_test_bearer, MAX_NOF_SRBS> f1c_bearers;
+    slotted_array<f1u_test_bearer, MAX_NOF_DRBS> f1u_bearers;
   };
 
   f1ap_du_test();
@@ -132,6 +167,13 @@ protected:
 
   /// \brief Create new UE in F1AP.
   ue_test_context* run_f1_ue_create(du_ue_index_t ue_index);
+
+  void run_ue_context_setup_procedure(du_ue_index_t ue_index, std::initializer_list<drb_id_t> drbs);
+
+  /// \brief Update UE config in F1AP.
+  f1ap_ue_configuration_response update_f1_ue_config(du_ue_index_t                   ue_index,
+                                                     std::initializer_list<srb_id_t> srbs,
+                                                     std::initializer_list<drb_id_t> drbs);
 
   /// Notifier for messages coming out from F1c to Gateway.
   f1c_null_notifier msg_notifier = {};

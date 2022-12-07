@@ -16,26 +16,26 @@ using namespace srsgnb;
 using namespace srs_du;
 using namespace asn1::f1ap;
 
-TEST_F(f1ap_du_test, when_)
+TEST_F(f1ap_du_test, when_f1ap_ue_context_setup_request_is_received_f1ap_notifies_du_of_ue_context_update)
 {
   du_ue_index_t ue_index = to_du_ue_index(0);
   // Run Test Preamble.
   run_f1_setup_procedure();
   run_f1_ue_create(ue_index);
-  this->f1c_du_cfg_handler.next_ue_config_update_response.result                 = true;
-  this->f1c_du_cfg_handler.next_ue_config_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
+  this->f1c_du_cfg_handler.next_ue_context_update_response.result                 = true;
+  this->f1c_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
 
   // Test Section.
   f1c_message msg = generate_f1_ue_context_setup_request({drb_id_t::drb1});
   f1ap->handle_message(msg);
-  ASSERT_TRUE(this->f1c_du_cfg_handler.last_ue_config_update_req.has_value());
-  const f1ap_ue_context_update_request& req = *this->f1c_du_cfg_handler.last_ue_config_update_req;
+  ASSERT_TRUE(this->f1c_du_cfg_handler.last_ue_context_update_req.has_value());
+  const f1ap_ue_context_update_request& req = *this->f1c_du_cfg_handler.last_ue_context_update_req;
   ASSERT_EQ(req.ue_index, ue_index);
   ASSERT_EQ(req.srbs_to_setup.size(), 1);
   ASSERT_EQ(req.srbs_to_setup[0], srb_id_t::srb2);
   ASSERT_EQ(req.drbs_to_setup.size(), 1);
   ASSERT_EQ(req.drbs_to_setup[0].drb_id, drb_id_t::drb1);
-  ASSERT_GE(*req.drbs_to_setup[0].lcid, LCID_MIN_DRB);
+  ASSERT_FALSE(req.drbs_to_setup[0].lcid.has_value());
   ASSERT_EQ(this->msg_notifier.last_f1c_msg.pdu.type().value, f1_ap_pdu_c::types_opts::successful_outcome);
   ASSERT_EQ(this->msg_notifier.last_f1c_msg.pdu.successful_outcome().value.type().value,
             f1_ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp);

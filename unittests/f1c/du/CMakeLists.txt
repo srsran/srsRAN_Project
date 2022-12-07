@@ -35,7 +35,19 @@ target_link_libraries(f1_du_dl_rrc_message_transfer_test
         gtest
         gtest_main)
 
-add_executable(f1_du_ue_context_setup_test f1_du_ue_context_setup_test.cpp)
+add_executable(f1_du_ue_config_test f1_du_ue_config_test.cpp)
+target_link_libraries(f1_du_ue_config_test
+        srsgnb_f1c_du
+        srsgnb_support
+        du_manager_converters
+        srsgnb_ran
+        sched_config
+        f1_du_test_helpers
+        gtest
+        gtest_main)
+gtest_discover_tests(f1_du_ue_config_test)
+
+add_executable(f1_du_ue_context_setup_test f1_du_ue_context_setup_procedure_test.cpp)
 target_link_libraries(f1_du_ue_context_setup_test
         srsgnb_f1c_du
         srsgnb_support

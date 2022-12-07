@@ -182,7 +182,7 @@ public:
 
   /// \brief Request the update of the UE configuration in the DU.
   virtual async_task<f1ap_ue_context_update_response>
-  request_ue_config_update(const f1ap_ue_context_update_request& request) = 0;
+  request_ue_context_update(const f1ap_ue_context_update_request& request) = 0;
 
   /// \brief Request the update of the UE configuration in the DU.
   virtual async_task<void> request_ue_removal(const f1ap_ue_delete_request& request) = 0;

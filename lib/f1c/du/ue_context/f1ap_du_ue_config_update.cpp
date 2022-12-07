@@ -26,9 +26,9 @@ f1ap_ue_creation_response srsgnb::srs_du::create_f1ap_ue(const f1ap_ue_creation_
   for (const f1c_bearer_to_addmod& srb : req.f1c_bearers_to_add) {
     if (srb.srb_id == srb_id_t::srb0) {
       u.bearers.add_srb0_f1c_bearer(
-          *srb.f1_tx_pdu_notif, ue_pcell.served_cell_info.nrcgi, req.du_cu_rrc_container, ev_mng);
+          *srb.tx_pdu_notif, ue_pcell.served_cell_info.nrcgi, req.du_cu_rrc_container, ev_mng);
     } else {
-      u.bearers.add_f1c_bearer(srb.srb_id, *srb.f1_tx_pdu_notif);
+      u.bearers.add_f1c_bearer(srb.srb_id, *srb.tx_pdu_notif);
     }
   }
 
@@ -44,11 +44,11 @@ f1ap_ue_creation_response srsgnb::srs_du::create_f1ap_ue(const f1ap_ue_creation_
 f1ap_ue_configuration_response srsgnb::srs_du::update_f1ap_ue_config(const f1ap_ue_configuration_request& req,
                                                                      f1ap_du_ue_manager&                  ues)
 {
-  f1ap_du_ue& u = ues.add_ue(req.ue_index);
+  f1ap_du_ue& u = ues[req.ue_index];
 
   // Add F1c bearers.
   for (const f1c_bearer_to_addmod& srb : req.f1c_bearers_to_add) {
-    u.bearers.add_f1c_bearer(srb.srb_id, *srb.f1_tx_pdu_notif);
+    u.bearers.add_f1c_bearer(srb.srb_id, *srb.tx_pdu_notif);
   }
 
   // Add F1u bearers.

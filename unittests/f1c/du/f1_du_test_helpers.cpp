@@ -71,7 +71,7 @@ f1c_message srsgnb::srs_du::generate_f1_setup_failure_message_with_time_to_wait(
   return f1_setup_failure;
 }
 
-f1c_message srsgnb::srs_du::generate_f1_dl_rrc_message_transfer(const byte_buffer& rrc_container)
+f1c_message srsgnb::srs_du::generate_f1_dl_rrc_message_transfer(srb_id_t srb_id, const byte_buffer& rrc_container)
 {
   f1c_message msg;
 
@@ -79,7 +79,7 @@ f1c_message srsgnb::srs_du::generate_f1_dl_rrc_message_transfer(const byte_buffe
   auto& dl_msg                      = msg.pdu.init_msg().value.dlrrc_msg_transfer();
   dl_msg->gnb_cu_ue_f1_ap_id->value = 0;
   dl_msg->gnb_du_ue_f1_ap_id->value = 0;
-  dl_msg->srbid->value              = 1;
+  dl_msg->srbid->value              = srb_id_to_uint(srb_id);
   dl_msg->rrc_container->resize(rrc_container.length());
   std::copy(rrc_container.begin(), rrc_container.end(), dl_msg->rrc_container->begin());
 
@@ -145,6 +145,7 @@ f1ap_du_test::f1ap_du_test()
   srslog::init();
 
   f1ap = create_f1ap(msg_notifier, f1c_du_cfg_handler, ctrl_worker, ue_exec_mapper);
+  f1c_du_cfg_handler.connect(*f1ap);
 }
 
 f1ap_du_test::~f1ap_du_test()
@@ -170,22 +171,115 @@ void f1ap_du_test::run_f1_setup_procedure()
 
 f1ap_du_test::ue_test_context* f1ap_du_test::run_f1_ue_create(du_ue_index_t ue_index)
 {
-  auto                                     notif = std::make_unique<dummy_f1c_tx_pdu_notifier>();
-  srsgnb::srs_du::f1ap_ue_creation_request msg;
+  unsigned srb1_idx = srb_id_to_uint(srb_id_t::srb1);
+  test_ues.emplace(ue_index);
+  test_ues[ue_index].f1c_bearers.emplace(srb_id_to_uint(srb_id_t::srb1));
+  test_ues[ue_index].f1c_bearers[srb1_idx].srb_id = srb_id_t::srb1;
+
+  f1ap_ue_creation_request msg;
   msg.ue_index    = ue_index;
   msg.pcell_index = to_du_cell_index(0);
   msg.c_rnti      = to_rnti(0x4601 + ue_index);
   msg.du_cu_rrc_container.append({0x1, 0x2, 0x3});
-  msg.f1c_bearers_to_add.resize(1);
-  msg.f1c_bearers_to_add[0].srb_id          = srb_id_t::srb1;
-  msg.f1c_bearers_to_add[0].f1_tx_pdu_notif = notif.get();
+  for (auto& f1c_bearer : test_ues[ue_index].f1c_bearers) {
+    f1c_bearer_to_addmod b;
+    b.srb_id       = f1c_bearer.srb_id;
+    b.tx_pdu_notif = &f1c_bearer.tx_pdu_notifier;
+    msg.f1c_bearers_to_add.push_back(b);
+  }
   test_logger.info("Creating ueId={}", msg.ue_index);
   f1ap_ue_creation_response resp = f1ap->handle_ue_creation_request(msg);
   if (resp.result) {
-    test_ues.emplace(ue_index);
-    test_ues[ue_index].bearers      = resp.f1c_bearers_added;
-    test_ues[ue_index].tx_pdu_notif = std::move(notif);
+    unsigned count = 0;
+    for (auto& f1c_bearer : test_ues[ue_index].f1c_bearers) {
+      f1c_bearer.bearer = resp.f1c_bearers_added[count++];
+    }
     return &test_ues[ue_index];
   }
+  test_ues.erase(ue_index);
   return nullptr;
+}
+
+void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t                   ue_index,
+                                                  std::initializer_list<drb_id_t> drbs_to_addmod)
+{
+  ue_test_context& ue = test_ues[ue_index];
+
+  f1c_message msg = generate_f1_ue_context_setup_request(drbs_to_addmod);
+
+  // Generate dummy DU manager UE Config Update command to F1AP.
+  const auto& f1c_req                         = msg.pdu.init_msg().value.ue_context_setup_request();
+  f1c_du_cfg_handler.next_ue_cfg_req.ue_index = ue_index;
+  for (const auto& srb : f1c_req->srbs_to_be_setup_list.value) {
+    srb_id_t srb_id = (srb_id_t)srb.value().srbs_to_be_setup_item().srbid;
+
+    // Create F1-C bearer in test ue.
+    ue.f1c_bearers.emplace(srb_id_to_uint(srb_id));
+    ue.f1c_bearers[srb_id_to_uint(srb_id)].srb_id = srb_id;
+
+    f1c_bearer_to_addmod bearer;
+    bearer.srb_id       = srb_id;
+    bearer.tx_pdu_notif = &ue.f1c_bearers[srb_id_to_uint(srb_id)].tx_pdu_notifier;
+    f1c_du_cfg_handler.next_ue_cfg_req.f1c_bearers_to_add.push_back(bearer);
+  }
+  for (const auto& drb : f1c_req->drbs_to_be_setup_list.value) {
+    drb_id_t drb_id = (drb_id_t)drb.value().drbs_to_be_setup_item().drbid;
+    ue.f1u_bearers.emplace(drb_id_to_uint(drb_id) - 1);
+    auto& f1u_bearer  = ue.f1u_bearers[drb_id_to_uint(drb_id) - 1];
+    f1u_bearer.drb_id = drb_id;
+
+    f1u_bearer_to_addmod bearer;
+    bearer.drb_id          = drb_id;
+    bearer.tx_pdu_notifier = &f1u_bearer.tx_pdu_notifier;
+    f1c_du_cfg_handler.next_ue_cfg_req.f1u_bearers_to_add.push_back(bearer);
+  }
+
+  // Generate DU manager response to UE context update.
+  f1c_du_cfg_handler.next_ue_context_update_response.result                 = true;
+  f1c_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
+
+  // Send UE CONTEXT SETUP REQUEST message to F1AP.
+  f1ap->handle_message(msg);
+
+  // Register created F1-C and F1-U bearers in dummy DU manager.
+  for (const auto& created_srb : f1c_du_cfg_handler.last_ue_cfg_response->f1c_bearers_added) {
+    ue.f1c_bearers[srb_id_to_uint(created_srb.srb_id)].bearer = created_srb.bearer;
+  }
+  for (const auto& created_drb : f1c_du_cfg_handler.last_ue_cfg_response->f1u_bearers_added) {
+    ue.f1u_bearers[drb_id_to_uint(created_drb.drb_id) - 1].bearer = created_drb.bearer;
+  }
+}
+
+f1ap_ue_configuration_response f1ap_du_test::update_f1_ue_config(du_ue_index_t                   ue_index,
+                                                                 std::initializer_list<srb_id_t> srbs,
+                                                                 std::initializer_list<drb_id_t> drbs)
+{
+  for (srb_id_t srb_id : srbs) {
+    test_ues[ue_index].f1c_bearers.emplace(srb_id_to_uint(srb_id));
+    test_ues[ue_index].f1c_bearers[srb_id_to_uint(srb_id)].srb_id = srb_id;
+  }
+  for (drb_id_t drb_id : drbs) {
+    test_ues[ue_index].f1u_bearers.emplace(drb_id_to_uint(drb_id) - 1);
+    test_ues[ue_index].f1u_bearers[drb_id_to_uint(drb_id) - 1].drb_id = drb_id;
+  }
+
+  f1ap_ue_configuration_request req;
+  req.ue_index = ue_index;
+  for (srb_id_t srb_id : srbs) {
+    auto&                f1c_bearer = test_ues[ue_index].f1c_bearers[srb_id_to_uint(srb_id)];
+    f1c_bearer_to_addmod b;
+    b.srb_id       = f1c_bearer.srb_id;
+    b.tx_pdu_notif = &f1c_bearer.tx_pdu_notifier;
+    req.f1c_bearers_to_add.push_back(b);
+  }
+  for (drb_id_t drb_id : drbs) {
+    auto&                f1u_bearer = test_ues[ue_index].f1u_bearers[drb_id_to_uint(drb_id) - 1];
+    f1u_bearer_to_addmod b;
+    b.drb_id          = f1u_bearer.drb_id;
+    b.tx_pdu_notifier = &f1u_bearer.tx_pdu_notifier;
+    req.f1u_bearers_to_add.push_back(b);
+  }
+
+  test_logger.info("Configuring UE={}", ue_index);
+  return f1ap->handle_ue_configuration_request(req);
 }

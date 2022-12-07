@@ -27,7 +27,7 @@ namespace srs_du {
 /// \brief F1c bearer to Add or Modify in UE F1 context.
 struct f1c_bearer_to_addmod {
   srb_id_t             srb_id;
-  f1c_tx_pdu_notifier* f1_tx_pdu_notif;
+  f1c_tx_pdu_notifier* tx_pdu_notif;
 };
 
 /// \brief F1u bearer to Add or Modify in UE F1 context.

@@ -28,7 +28,7 @@ void f1ap_du_ue_context_modification_procedure::operator()(coro_context<async_ta
   CORO_BEGIN(ctx);
 
   // Setup new UE configuration in DU.
-  CORO_AWAIT_VALUE(du_response, ue.du_handler.request_ue_config_update(du_request));
+  CORO_AWAIT_VALUE(du_response, ue.du_handler.request_ue_context_update(du_request));
 
   if (du_response.result) {
     send_ue_context_modification_response();
