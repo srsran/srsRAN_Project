@@ -34,7 +34,7 @@ void ue_bearer_manager::add_f1c_bearer(srb_id_t srb_id, f1c_tx_pdu_notifier& f1_
                       std::make_unique<f1c_other_srb_du_bearer>(ue_ctx, srb_id, f1c_notifier, f1_tx_pdu_notif));
 }
 
-void ue_bearer_manager::add_f1u_bearer(drb_id_t drb_id, f1u_tx_pdu_notifier& f1_tx_pdu_notif)
+void ue_bearer_manager::add_f1u_bearer(drb_id_t drb_id, f1u_rx_sdu_notifier& f1u_rx_sdu_notif)
 {
-  f1u_bearers.emplace(drb_id_to_idx(drb_id), create_f1u_bearer(drb_id, f1_tx_pdu_notif));
+  f1u_bearers.emplace(drb_id_to_idx(drb_id), create_f1u_bearer(drb_id, f1u_rx_sdu_notif));
 }

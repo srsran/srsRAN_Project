@@ -230,7 +230,7 @@ void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t                 
 
     f1u_bearer_to_addmod bearer;
     bearer.drb_id          = drb_id;
-    bearer.tx_pdu_notifier = &f1u_bearer.tx_pdu_notifier;
+    bearer.rx_sdu_notifier = &f1u_bearer.rx_sdu_notifier;
     f1c_du_cfg_handler.next_ue_cfg_req.f1u_bearers_to_add.push_back(bearer);
   }
 
@@ -276,7 +276,7 @@ f1ap_ue_configuration_response f1ap_du_test::update_f1_ue_config(du_ue_index_t  
     auto&                f1u_bearer = test_ues[ue_index].f1u_bearers[drb_id_to_uint(drb_id) - 1];
     f1u_bearer_to_addmod b;
     b.drb_id          = f1u_bearer.drb_id;
-    b.tx_pdu_notifier = &f1u_bearer.tx_pdu_notifier;
+    b.rx_sdu_notifier = &f1u_bearer.rx_sdu_notifier;
     req.f1u_bearers_to_add.push_back(b);
   }
 

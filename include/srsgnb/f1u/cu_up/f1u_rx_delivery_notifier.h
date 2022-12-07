@@ -16,12 +16,12 @@
 namespace srsgnb {
 namespace srs_cu_up {
 
-/// \brief This interface represents the notification exit point of the transmitting side of a F1-U bearer
-/// through which the lower layer notifies the PDCP transmitting entity of successful delivery of PDCP PDUs.
-class f1u_tx_delivery_notifier
+/// \brief This interface represents the notification exit point of the receiving side of a F1-U bearer of the CU-UP
+/// through which the lower layer (e.g. RLC in the DU) notifies the PDCP Tx entity of successful delivery of PDCP PDUs.
+class f1u_rx_delivery_notifier
 {
 public:
-  virtual ~f1u_tx_delivery_notifier() = default;
+  virtual ~f1u_rx_delivery_notifier() = default;
 
   virtual void on_delivered_sdu(uint32_t count) = 0;
 };

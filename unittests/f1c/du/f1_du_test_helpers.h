@@ -124,20 +124,20 @@ public:
   void on_tx_pdu(byte_buffer pdu) override { last_pdu = std::move(pdu); }
 };
 
-class dummy_f1u_tx_pdu_notifier : public f1u_tx_pdu_notifier
+class dummy_f1u_rx_sdu_notifier : public f1u_rx_sdu_notifier
 {
 public:
   byte_buffer        last_pdu;
   optional<uint32_t> last_pdu_count;
   optional<uint32_t> last_discard_count;
 
-  void on_tx_pdu(byte_buffer pdu, uint32_t count) override
+  void on_new_sdu(byte_buffer pdu, uint32_t count) override
   {
     last_pdu       = std::move(pdu);
     last_pdu_count = count;
   }
 
-  void on_discard_tx_pdu(uint32_t count) override { last_discard_count = count; }
+  void on_discard_sdu(uint32_t count) override { last_discard_count = count; }
 };
 
 /// Fixture class for F1AP
@@ -151,7 +151,7 @@ protected:
   };
   struct f1u_test_bearer {
     drb_id_t                  drb_id = drb_id_t::invalid;
-    dummy_f1u_tx_pdu_notifier tx_pdu_notifier;
+    dummy_f1u_rx_sdu_notifier rx_sdu_notifier;
     f1u_bearer*               bearer = nullptr;
   };
   struct ue_test_context {

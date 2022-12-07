@@ -16,9 +16,9 @@
 namespace srsgnb {
 namespace srs_cu_up {
 
-/// \brief This interface represents the data entry point of the transmitting side of a F1-U bearer.
-/// The upper-layer (e.g. PDCP) will push SDUs (e.g. PDCP PDUs) to the lower layer using this interface.
-/// The upper-layer (e.g. PDCP) will also inform the lower layer of SDUs (e.g. PDCP PDUs) to be discarded.
+/// \brief This interface represents the data entry point of the transmitting side of a F1-U bearer of the CU-UP.
+/// The upper layer (e.g. PDCP) will push NR-U SDUs (e.g. PDCP PDUs/RLC SDUs) into the F1-U bearer towards the DU.
+/// The upper layer (e.g. PDCP) will also inform the lower layer of SDUs (e.g. PDCP PDUs) to be discarded.
 class f1u_tx_sdu_handler
 {
 public:

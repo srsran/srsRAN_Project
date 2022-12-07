@@ -53,7 +53,7 @@ f1ap_ue_configuration_response srsgnb::srs_du::update_f1ap_ue_config(const f1ap_
 
   // Add F1u bearers.
   for (const f1u_bearer_to_addmod& drb : req.f1u_bearers_to_add) {
-    u.bearers.add_f1u_bearer(drb.drb_id, *drb.tx_pdu_notifier);
+    u.bearers.add_f1u_bearer(drb.drb_id, *drb.rx_sdu_notifier);
   }
 
   // Prepare response.

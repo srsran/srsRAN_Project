@@ -16,7 +16,7 @@
 #include "srsgnb/f1c/du/f1c_bearer.h"
 #include "srsgnb/f1c/du/f1c_tx_pdu_notifier.h"
 #include "srsgnb/f1u/du/f1u_bearer.h"
-#include "srsgnb/f1u/du/f1u_tx_pdu_notifier.h"
+#include "srsgnb/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsgnb/ran/lcid.h"
 
 namespace srsgnb {
@@ -39,7 +39,7 @@ public:
 
   void add_f1c_bearer(srb_id_t srb_id, f1c_tx_pdu_notifier& f1_tx_pdu_notif);
 
-  void add_f1u_bearer(drb_id_t drb_id, f1u_tx_pdu_notifier& f1_tx_pdu_notif);
+  void add_f1u_bearer(drb_id_t drb_id, f1u_rx_sdu_notifier& f1u_rx_sdu_notif);
 
   f1c_bearer* find_srb(srb_id_t srb_id)
   {

@@ -110,7 +110,7 @@ void ue_configuration_procedure::update_f1_bearers()
     du_bearer& bearer = *it;
     req.f1u_bearers_to_add.emplace_back();
     req.f1u_bearers_to_add.back().drb_id          = drb.drb_id;
-    req.f1u_bearers_to_add.back().tx_pdu_notifier = &bearer.bearer_connector.f1u_tx_pdu_notif;
+    req.f1u_bearers_to_add.back().rx_sdu_notifier = &bearer.bearer_connector.f1u_rx_sdu_notif;
   }
 
   f1ap_ue_configuration_response resp = f1ap_mng.ue_mng.handle_ue_configuration_request(req);
@@ -127,7 +127,7 @@ void ue_configuration_procedure::update_f1_bearers()
       return bearer.drbid.has_value() and *bearer.drbid == bearer_added.drb_id;
     });
     du_bearer& bearer = *it;
-    bearer.bearer_connector.rlc_rx_f1u_sdu_notif.connect(bearer_added.bearer->get_rx_pdu_handler());
+    bearer.bearer_connector.rlc_tx_f1u_sdu_notif.connect(bearer_added.bearer->get_tx_sdu_handler());
   }
 }
 

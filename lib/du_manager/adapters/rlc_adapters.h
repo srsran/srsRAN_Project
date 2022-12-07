@@ -33,19 +33,19 @@ private:
   f1c_bearer* f1bearer = nullptr;
 };
 
-class rlc_f1u_rx_sdu_adapter : public rlc_rx_upper_layer_data_notifier
+class rlc_f1u_tx_sdu_adapter : public rlc_rx_upper_layer_data_notifier
 {
 public:
-  void connect(f1u_rx_pdu_handler& bearer_) { f1bearer = &bearer_; }
+  void connect(f1u_tx_sdu_handler& bearer_) { f1bearer = &bearer_; }
 
-  void on_new_sdu(byte_buffer_slice_chain pdu) override
+  void on_new_sdu(byte_buffer_slice_chain sdu) override
   {
-    srsgnb_assert(f1bearer != nullptr, "RLC Rx Bearer notifier is disconnected");
-    f1bearer->handle_pdu(std::move(pdu));
+    srsgnb_assert(f1bearer != nullptr, "RLC Rx bearer notifier is disconnected");
+    f1bearer->handle_sdu(std::move(sdu));
   }
 
 private:
-  f1u_rx_pdu_handler* f1bearer = nullptr;
+  f1u_tx_sdu_handler* f1bearer = nullptr;
 };
 
 class rlc_tx_data_notifier : public rlc_tx_upper_layer_data_notifier

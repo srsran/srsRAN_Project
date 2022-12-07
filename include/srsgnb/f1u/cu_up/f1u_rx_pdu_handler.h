@@ -16,8 +16,8 @@
 namespace srsgnb {
 namespace srs_cu_up {
 
-/// \brief This interface represents the NR-U entry point of a F1-U bearer.
-/// The lower-layer transport (e.g. GTP-U) will use this class to pass NR-U PDUs into the F1-U.
+/// \brief This interface represents the NR-U entry point of a F1-U bearer of the CU-UP.
+/// The lower layer (e.g. GTP-U) will use this class to pass NR-U PDUs (from the DU) into the F1-U.
 class f1u_rx_pdu_handler
 {
 public:

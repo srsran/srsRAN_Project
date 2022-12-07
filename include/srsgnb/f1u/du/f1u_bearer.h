@@ -12,7 +12,7 @@
 #pragma once
 
 #include "f1u_rx_pdu_handler.h"
-#include "f1u_tx_pdu_delivery_handler.h"
+#include "f1u_tx_delivery_handler.h"
 #include "f1u_tx_sdu_handler.h"
 
 namespace srsgnb {
@@ -23,9 +23,9 @@ class f1u_bearer
 public:
   virtual ~f1u_bearer() = default;
 
-  virtual f1u_rx_pdu_handler&          get_rx_pdu_handler()          = 0;
-  virtual f1u_tx_sdu_handler&          get_tx_sdu_handler()          = 0;
-  virtual f1u_tx_pdu_delivery_handler& get_tx_pdu_delivery_handler() = 0;
+  virtual f1u_rx_pdu_handler&      get_rx_pdu_handler()      = 0;
+  virtual f1u_tx_delivery_handler& get_tx_delivery_handler() = 0;
+  virtual f1u_tx_sdu_handler&      get_tx_sdu_handler()      = 0;
 };
 
 } // namespace srs_du

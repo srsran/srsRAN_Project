@@ -16,8 +16,8 @@
 namespace srsgnb {
 namespace srs_cu_up {
 
-/// \brief This interface represents the data exit point of the receiving side of a F1-U bearer.
-/// The F1-U bearer will use this notifier to pass NR-U SDUs to upper-layer (e.g. PDCP)
+/// \brief This interface represents the data exit point of the receiving side of a F1-U bearer of the CU-UP.
+/// The F1-U bearer will use this notifier to pass NR-U SDUs (e.g. PDCP PDUs/RLC SDUs) to upper layer (e.g. PDCP).
 class f1u_rx_sdu_notifier
 {
 public:

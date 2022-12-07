@@ -15,7 +15,7 @@
 #include "srsgnb/f1c/du/f1c_bearer.h"
 #include "srsgnb/f1c/du/f1c_tx_pdu_notifier.h"
 #include "srsgnb/f1u/du/f1u_bearer.h"
-#include "srsgnb/f1u/du/f1u_tx_pdu_notifier.h"
+#include "srsgnb/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
@@ -33,7 +33,7 @@ struct f1c_bearer_to_addmod {
 /// \brief F1u bearer to Add or Modify in UE F1 context.
 struct f1u_bearer_to_addmod {
   drb_id_t             drb_id;
-  f1u_tx_pdu_notifier* tx_pdu_notifier;
+  f1u_rx_sdu_notifier* rx_sdu_notifier;
 };
 
 /// \brief F1c bearer Added or Modified in UE F1 context.

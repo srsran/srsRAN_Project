@@ -18,7 +18,7 @@ class f1ap_du_ue_management_tester : public f1ap_du_test
 {
 protected:
   dummy_f1c_tx_pdu_notifier srb2_tx_pdu_notifier;
-  dummy_f1u_tx_pdu_notifier drb1_tx_pdu_notifier;
+  dummy_f1u_rx_sdu_notifier drb1_tx_pdu_notifier;
 
   f1ap_ue_configuration_request create_ue_config_update_request(du_ue_index_t ue_index)
   {
@@ -31,7 +31,7 @@ protected:
     // > DRB1
     req.f1u_bearers_to_add.emplace_back();
     req.f1u_bearers_to_add[0].drb_id          = drb_id_t::drb1;
-    req.f1u_bearers_to_add[0].tx_pdu_notifier = &drb1_tx_pdu_notifier;
+    req.f1u_bearers_to_add[0].rx_sdu_notifier = &drb1_tx_pdu_notifier;
     return req;
   }
 };
@@ -81,7 +81,7 @@ TEST_F(f1ap_du_ue_management_tester, f1ap_created_bearers_forward_messages_to_no
   // Send DL data through created F1-U bearer.
   byte_buffer dl_drb_buf{test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))};
   ASSERT_TRUE(this->drb1_tx_pdu_notifier.last_pdu.empty());
-  resp.f1u_bearers_added[0].bearer->get_tx_sdu_handler().handle_sdu(dl_drb_buf.copy());
+  resp.f1u_bearers_added[0].bearer->get_rx_pdu_handler().handle_pdu(dl_drb_buf.copy());
   ASSERT_FALSE(this->drb1_tx_pdu_notifier.last_pdu.empty());
   // TODO: Enable this check once F1-U bearer is implemented.
   //  ASSERT_EQ(dl_drb_buf, this->drb1_tx_pdu_notifier.last_pdu);

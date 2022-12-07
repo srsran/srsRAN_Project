@@ -16,16 +16,14 @@
 namespace srsgnb {
 namespace srs_du {
 
-/// \brief This interface represents the data exit point of the transmitting side of a F1-U entity.
-/// The F1-U will push PDUs to the lower layers using this interface.
-/// The F1-U will also inform the lower layers of PDUs to be discarded.
+/// \brief This interface represents the NR-U exit point of a F1-U bearer of the DU.
+/// The F1-U bearer will use this notifier to pass NR-U PDUs to upper layer (e.g. GTP-U) towards CU-UP.
 class f1u_tx_pdu_notifier
 {
 public:
   virtual ~f1u_tx_pdu_notifier() = default;
 
-  virtual void on_tx_pdu(byte_buffer pdu, uint32_t count) = 0;
-  virtual void on_discard_tx_pdu(uint32_t count)          = 0;
+  virtual void on_new_pdu(byte_buffer pdu) = 0;
 };
 
 } // namespace srs_du

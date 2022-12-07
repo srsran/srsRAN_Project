@@ -12,14 +12,14 @@
 #pragma once
 
 #include "f1u_bearer.h"
-#include "f1u_tx_pdu_notifier.h"
+#include "f1u_rx_sdu_notifier.h"
 #include "srsgnb/ran/lcid.h"
 
 namespace srsgnb {
 namespace srs_du {
 
-/// \brief Creates an F1u bearer for the DU.
-std::unique_ptr<f1u_bearer> create_f1u_bearer(drb_id_t drb_id, f1u_tx_pdu_notifier& tx_notifier);
+/// \brief Creates an F1-U bearer for the DU.
+std::unique_ptr<f1u_bearer> create_f1u_bearer(drb_id_t drb_id, f1u_rx_sdu_notifier& rx_sdu_notifier);
 
 } // namespace srs_du
 } // namespace srsgnb

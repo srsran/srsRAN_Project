@@ -11,19 +11,19 @@
 
 #pragma once
 
-#include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/adt/byte_buffer_slice_chain.h"
 
 namespace srsgnb {
 namespace srs_du {
 
-/// \brief This interface represents the NR-U entry point of a F1-U entity.
-/// The upper-layer transport will use this class to pass NR-U PDUs into F1-U to be sent over-the-air.
+/// \brief This interface represents the data entry point of the transmitting side of a F1-U bearer of the DU.
+/// The lower layer will use this class to pass NR-U SDUs (e.g. PDCP PDUs/RLC SDUs) into the F1-U bearer towards CU-UP.
 class f1u_tx_sdu_handler
 {
 public:
   virtual ~f1u_tx_sdu_handler() = default;
 
-  virtual void handle_sdu(byte_buffer pdu) = 0;
+  virtual void handle_sdu(byte_buffer_slice_chain sdu) = 0;
 };
 
 } // namespace srs_du

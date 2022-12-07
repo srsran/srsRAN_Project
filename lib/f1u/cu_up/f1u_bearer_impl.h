@@ -11,8 +11,8 @@
 #pragma once
 
 #include "srsgnb/f1u/cu_up/f1u_bearer.h"
+#include "srsgnb/f1u/cu_up/f1u_rx_delivery_notifier.h"
 #include "srsgnb/f1u/cu_up/f1u_rx_sdu_notifier.h"
-#include "srsgnb/f1u/cu_up/f1u_tx_delivery_notifier.h"
 #include "srsgnb/f1u/cu_up/f1u_tx_pdu_notifier.h"
 #include "srsgnb/ran/lcid.h"
 
@@ -24,15 +24,15 @@ class f1u_bearer_impl final : public f1u_bearer, public f1u_rx_pdu_handler, publ
 public:
   f1u_bearer_impl(drb_id_t                  drb_id_,
                   f1u_tx_pdu_notifier&      tx_pdu_notifier_,
-                  f1u_tx_delivery_notifier& tx_delivery_notifier_,
+                  f1u_rx_delivery_notifier& rx_delivery_notifier_,
                   f1u_rx_sdu_notifier&      rx_sdu_notifier_) :
     drb_id(drb_id_),
     tx_pdu_notifier(tx_pdu_notifier_),
-    tx_delivery_notifier(tx_delivery_notifier_),
+    rx_delivery_notifier(rx_delivery_notifier_),
     rx_sdu_notifier(rx_sdu_notifier_)
   {
     (void)tx_pdu_notifier;
-    (void)tx_delivery_notifier;
+    (void)rx_delivery_notifier;
     (void)rx_sdu_notifier;
   }
 
@@ -46,7 +46,7 @@ public:
 private:
   drb_id_t                  drb_id;
   f1u_tx_pdu_notifier&      tx_pdu_notifier;
-  f1u_tx_delivery_notifier& tx_delivery_notifier;
+  f1u_rx_delivery_notifier& rx_delivery_notifier;
   f1u_rx_sdu_notifier&      rx_sdu_notifier;
 };
 
