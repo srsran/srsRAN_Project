@@ -78,8 +78,16 @@ bool rrc_security_mode_command_procedure::select_security_algo()
                                                                   security::ciphering_algorithm::nea2,
                                                                   security::ciphering_algorithm::nea1,
                                                                   security::ciphering_algorithm::nea3};
-  if (not security::select_algorithms(
-          sec_cfg, inc_algo_pref_list, ciph_algo_pref_list, sec_ctx.supported_int_algos, sec_ctx.supported_enc_algos)) {
+  logger.debug("Integrity protection algorithms preference list: {}", inc_algo_pref_list);
+  logger.debug("Ciphering algorithms preference list: {}", ciph_algo_pref_list);
+  logger.debug("Integrity protection algorithms supported list: {}", sec_ctx.supported_int_algos);
+  logger.debug("Ciphering algorithms preference list: {}", sec_ctx.supported_enc_algos);
+  if (not security::select_algorithms(sec_cfg,
+                                      inc_algo_pref_list,
+                                      ciph_algo_pref_list,
+                                      sec_ctx.supported_int_algos,
+                                      sec_ctx.supported_enc_algos,
+                                      logger)) {
     logger.error("0x{:x}: \"{}\" could not select security algorithm. ", context.c_rnti, name());
     return false;
   }

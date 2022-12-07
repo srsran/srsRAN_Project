@@ -94,6 +94,9 @@ public:
     copy_asn1_key(sec_ctxt.k, key);
     fill_supported_algorithms(sec_ctxt.supported_int_algos, caps.nrintegrity_protection_algorithms);
     fill_supported_algorithms(sec_ctxt.supported_enc_algos, caps.nrencryption_algorithms);
+    logger.debug(key.data(), 32, "K_gnb");
+    logger.debug("Supported integrity algorithms: {}", sec_ctxt.supported_int_algos);
+    logger.debug("Supported ciphering algorithms: {}", sec_ctxt.supported_enc_algos);
 
     return rrc_ue_security_handler->handle_init_security_context(sec_ctxt);
   }
@@ -102,6 +105,7 @@ private:
   rrc_ue_dl_nas_message_handler*        rrc_ue_msg_handler      = nullptr;
   rrc_ue_control_message_handler*       rrc_ue_ctrl_handler     = nullptr;
   rrc_ue_init_security_context_handler* rrc_ue_security_handler = nullptr;
+  srslog::basic_logger&                 logger                  = srslog::fetch_basic_logger("NGC");
 };
 
 } // namespace srs_cu_cp

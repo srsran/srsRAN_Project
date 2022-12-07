@@ -199,7 +199,8 @@ inline bool select_algorithms(sec_as_config&                 sec_cfg,
                               preferred_integrity_algorithms pref_inte_list,
                               preferred_ciphering_algorithms pref_ciph_list,
                               supported_algorithms           supp_inte_list,
-                              supported_algorithms           supp_ciph_list)
+                              supported_algorithms           supp_ciph_list,
+                              const srslog::basic_logger&    logger)
 {
   // Select preferred integrity algorithm.
   bool inte_algo_found = false;
@@ -207,6 +208,7 @@ inline bool select_algorithms(sec_as_config&                 sec_cfg,
     uint16_t algo_id = to_number(pref_inte_list[i]);
     if (algo_id == 0) {
       // Do not allow NIA0
+      logger.error("NIA0 selection not allowed");
       break;
     }
     if (supp_inte_list[algo_id - 1]) {
@@ -214,6 +216,10 @@ inline bool select_algorithms(sec_as_config&                 sec_cfg,
       sec_cfg.integ_algo = security::integrity_algorithm_from_number(algo_id);
       break;
     }
+  }
+  if (not inte_algo_found) {
+    logger.error("Could not select integrity protection algorithm");
+    return false;
   }
 
   // Select preferred ciphering algorithm.
@@ -231,7 +237,11 @@ inline bool select_algorithms(sec_as_config&                 sec_cfg,
       break;
     }
   }
-  return !(not inte_algo_found || not ciph_algo_found);
+  if (not ciph_algo_found) {
+    logger.error("Could not select ciphering algorithm");
+    return false;
+  }
+  return true;
 }
 
 } // namespace security
@@ -257,6 +267,57 @@ struct formatter<srsgnb::security::security_direction> {
   {
     constexpr static const char* options[] = {"Uplink", "Downlink"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(dir)]);
+  }
+};
+
+// Supported algorithms
+template <>
+struct formatter<srsgnb::security::supported_algorithms> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::security::supported_algorithms algos, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "N[I|E]A1={}, N[I|E]A2={}, N[I|E]A3={}", algos[0], algos[1], algos[2]);
+  }
+};
+
+// Preferred integrity protection algorithms list
+template <>
+struct formatter<srsgnb::security::preferred_integrity_algorithms> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::security::preferred_integrity_algorithms algos, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "NIA{}, NIA{}, NIA{}, NIA{}", algos[0], algos[1], algos[2], algos[3]);
+  }
+};
+
+// Preferred ciphering algorithms list
+template <>
+struct formatter<srsgnb::security::preferred_ciphering_algorithms> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::security::preferred_ciphering_algorithms algos, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "NEA{}, NEA{}, NEA{}, NEA{}", algos[0], algos[1], algos[2], algos[3]);
   }
 };
 } // namespace fmt
