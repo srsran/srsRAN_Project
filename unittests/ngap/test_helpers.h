@@ -97,9 +97,17 @@ public:
                                            const asn1::fixed_bitstring<256, false, true>& key) override
   {
     logger.info("Received a new security context");
-    return launch_async([](coro_context<async_task<bool>>& ctx) {
+
+    bool result = true;
+
+    // NIA0 is not allowed
+    if (caps.nrintegrity_protection_algorithms.to_number() == 0) {
+      result = false;
+    }
+
+    return launch_async([result](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
-      CORO_RETURN(true);
+      CORO_RETURN(result);
     });
   }
 

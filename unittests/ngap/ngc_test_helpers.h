@@ -237,7 +237,7 @@ ngap_ul_nas_transport_message generate_ul_nas_transport_message()
   return ul_nas_transport;
 }
 
-ngc_message generate_initial_context_setup_request_message()
+ngc_message generate_initial_context_setup_request_base()
 {
   ngc_message ngc_msg = {};
 
@@ -253,14 +253,6 @@ ngc_message generate_initial_context_setup_request_message()
   init_context_setup_req->guami->amf_set_id.from_number(1);
   init_context_setup_req->guami->amf_pointer.from_number(1);
 
-  init_context_setup_req->ue_security_cap->nrencryption_algorithms.from_number(57344);
-  init_context_setup_req->ue_security_cap->nrintegrity_protection_algorithms.from_number(57344);
-  init_context_setup_req->ue_security_cap->eutr_aencryption_algorithms.from_number(57344);
-  init_context_setup_req->ue_security_cap->eutr_aintegrity_protection_algorithms.from_number(57344);
-
-  init_context_setup_req->security_key.value.from_string(
-      "6d008a88bca9bb81190ff8c552cf8680069821e3b50f5f29c45d2632323edb2d");
-
   init_context_setup_req->nas_pdu_present = true;
   init_context_setup_req->nas_pdu.value.from_string(
       "7e02c4f6c22f017e0042010177000bf202f8998000410000001054070002f8990000011500210201005e01b6");
@@ -273,6 +265,39 @@ ngc_message generate_initial_context_setup_request_message()
   allowed_nssai.s_nssai.sd.from_string("db2700");
 
   init_context_setup_req->allowed_nssai->push_back(allowed_nssai);
+
+  return ngc_msg;
+}
+
+ngc_message generate_valid_initial_context_setup_request_message()
+{
+  ngc_message ngc_msg = generate_initial_context_setup_request_base();
+
+  auto& init_context_setup_req = ngc_msg.pdu.init_msg().value.init_context_setup_request();
+  init_context_setup_req->ue_security_cap->nrencryption_algorithms.from_number(57344);
+  init_context_setup_req->ue_security_cap->nrintegrity_protection_algorithms.from_number(57344);
+  init_context_setup_req->ue_security_cap->eutr_aencryption_algorithms.from_number(57344);
+  init_context_setup_req->ue_security_cap->eutr_aintegrity_protection_algorithms.from_number(57344);
+
+  init_context_setup_req->security_key.value.from_string(
+      "6d008a88bca9bb81190ff8c552cf8680069821e3b50f5f29c45d2632323edb2d");
+
+  return ngc_msg;
+}
+
+ngc_message generate_invalid_initial_context_setup_request_message()
+{
+  ngc_message ngc_msg = generate_initial_context_setup_request_base();
+
+  // NIA0 is not allowed
+  auto& init_context_setup_req = ngc_msg.pdu.init_msg().value.init_context_setup_request();
+  init_context_setup_req->ue_security_cap->nrencryption_algorithms.from_number(0);
+  init_context_setup_req->ue_security_cap->nrintegrity_protection_algorithms.from_number(0);
+  init_context_setup_req->ue_security_cap->eutr_aencryption_algorithms.from_number(0);
+  init_context_setup_req->ue_security_cap->eutr_aintegrity_protection_algorithms.from_number(0);
+
+  init_context_setup_req->security_key.value.from_string(
+      "6d008a88bca9bb81190ff8c552cf8680069821e3b50f5f29c45d2632323edb2d");
 
   return ngc_msg;
 }
