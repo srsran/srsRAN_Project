@@ -103,7 +103,7 @@ inline void fill_supported_algorithms(security::supported_algorithms&           
                                       const asn1::fixed_bitstring<16, true, true>& supported_algos_in)
 {
   for (unsigned i = 0; i < 3; ++i) {
-    supported_algos_out[i] = supported_algos_in.get(i);
+    supported_algos_out[i] = supported_algos_in.get(16 - i);
   }
 }
 

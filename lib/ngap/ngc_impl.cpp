@@ -211,6 +211,12 @@ void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_conte
     return;
   }
 
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    request.to_json(js);
+    logger.debug("Received Initial Context Setup Request Message: {}", js.to_string());
+  }
+
   // start procedure
   task_sched.schedule_async_task(cu_cp_ue_id,
                                  launch_async<ng_initial_context_setup_procedure>(*ue, request, ngc_notifier, logger));

@@ -241,6 +241,18 @@ int main(int argc, char** argv)
   srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);
   gnb_logger.set_level(srslog::basic_levels::info);
 
+  auto& rrc_logger = srslog::fetch_basic_logger("RRC", false);
+  rrc_logger.set_level(srslog::basic_levels::debug);
+  rrc_logger.set_hex_dump_max_size(32);
+
+  auto& pdcp_logger = srslog::fetch_basic_logger("PDCP", false);
+  pdcp_logger.set_level(srslog::basic_levels::debug);
+  pdcp_logger.set_hex_dump_max_size(32);
+
+  auto& ngc_logger = srslog::fetch_basic_logger("NGC", false);
+  ngc_logger.set_level(srslog::basic_levels::debug);
+  ngc_logger.set_hex_dump_max_size(32);
+
   worker_manager workers;
 
   f1c_local_adapter f1c_cu_to_du_adapter("f1-cu2du"), f1c_du_to_cu_adapter("f1-du2cu");
