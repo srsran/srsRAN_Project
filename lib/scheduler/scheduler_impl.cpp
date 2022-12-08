@@ -10,9 +10,9 @@
 
 #include "scheduler_impl.h"
 #include "common_scheduling/ssb_scheduler.h"
-#include "config/scheduler_cell_config_validator.h"
-#include "config/scheduler_ue_config_validator.h"
 #include "ue_scheduling/ue_scheduler_impl.h"
+#include "srsgnb/scheduler/config/scheduler_cell_config_validator.h"
+#include "srsgnb/scheduler/config/scheduler_ue_config_validator.h"
 
 using namespace srsgnb;
 
@@ -29,7 +29,10 @@ scheduler_impl::scheduler_impl(const scheduler_expert_config& sched_cfg_, sched_
 
 bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configuration_request_message& msg)
 {
-  config_validators::validate_sched_cell_configuration_request_message(msg);
+  const error_type<std::string> result = config_validators::validate_sched_cell_configuration_request_message(msg);
+  if (result.is_error()) {
+    srsgnb_assertion_failure("SCHED: Cell configuration request not valid. Cause={}.", result.error().c_str());
+  }
 
   cells.add_cell(msg.cell_index, msg);
 
@@ -46,7 +49,10 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
 
 void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
 {
-  config_validators::validate_sched_ue_creation_request_message(ue_request);
+  const error_type<std::string> result = config_validators::validate_sched_ue_creation_request_message(ue_request);
+  if (result.is_error()) {
+    srsgnb_assertion_failure("SCHED: UE creation request not valid. Cause={}.", result.error().c_str());
+  }
 
   ue_cfg_handler.handle_ue_creation_request(ue_request);
 }
