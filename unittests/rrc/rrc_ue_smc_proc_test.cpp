@@ -72,14 +72,22 @@ protected:
 /// Test the RRC setup with connected AMF
 TEST_F(rrc_smc, when_key_provided_smc_generated)
 {
-  const char* sk_gnb_cstr = "45cbc3f8a81193fd5c5229300d59edf812e998a115ec4e0ce903ba89367e2628";
-  // const char* k_rrc_enc_cstr = "52a995dff89bc294bd89ffb137a29f2466a09e992386c8d1df7892964c6fb522";
-  // const char* k_rrc_int_cstr = "534208f43b924efb677d95f93dbcbcb05c2cc2fda0f318a1e0ce35b9db5e80a5";
+  const char* sk_gnb_cstr    = "45cbc3f8a81193fd5c5229300d59edf812e998a115ec4e0ce903ba89367e2628";
+  const char* k_rrc_enc_cstr = "4ea96992c8c7e82977231ad001309062ae9f31ead90a4d0842af6cd25cb44dc4";
+  const char* k_rrc_int_cstr = "aeeb5e0ae02c6188ecb1625c4a9e022fdfc2a1fc845b44b44443ac9a3bda667c";
 
   // Pack hex strings into srsgnb types
-  security::sec_as_key sk_gnb = make_sec_as_key(sk_gnb_cstr);
-  // security::sec_as_key k_rrc_enc = make_sec_as_key(k_rrc_enc_cstr);
-  // security::sec_as_key k_rrc_int = make_sec_as_key(k_rrc_int_cstr);
+  security::sec_as_key sk_gnb    = make_sec_as_key(sk_gnb_cstr);
+  security::sec_as_key k_rrc_enc = make_sec_as_key(k_rrc_enc_cstr);
+  security::sec_as_key k_rrc_int = make_sec_as_key(k_rrc_int_cstr);
+
+  // Create expected SRB1 sec config
+  security::sec_as_config sec_cfg         = {};
+  sec_cfg.integ_algo                      = security::integrity_algorithm::nia2;
+  sec_cfg.cipher_algo                     = security::ciphering_algorithm::nea0;
+  sec_cfg.k_rrc_enc                       = k_rrc_enc;
+  sec_cfg.k_rrc_int                       = k_rrc_int;
+  security::sec_128_as_config sec_128_cfg = security::truncate_config(sec_cfg);
 
   // Initialize security context and capabilities.
   rrc_init_security_context init_sec_ctx = {};
@@ -90,7 +98,7 @@ TEST_F(rrc_smc, when_key_provided_smc_generated)
   // Make sure SRB1 PDCP is not configured
   check_integrity_enabled(false);
   check_ciphering_enabled(false);
-  check_security_configured(false);
+  check_security_configured(false, {});
 
   // Trigger SMC
   async_task<bool>         t = get_rrc_ue_security_handler()->handle_init_security_context(init_sec_ctx);
@@ -102,7 +110,7 @@ TEST_F(rrc_smc, when_key_provided_smc_generated)
   // Make sure SRB1 PDCP is configured
   check_integrity_enabled(true);
   check_ciphering_enabled(true);
-  check_security_configured(true);
+  check_security_configured(true, sec_128_cfg);
 
   // Receive SMC complete
   receive_smc_complete();

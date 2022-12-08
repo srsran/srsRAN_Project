@@ -133,18 +133,28 @@ protected:
 
   void check_ciphering_enabled(bool enabled)
   {
-    auto tx_sec_handler = du_proc_rrc_ue->srb1_tx_security_handler;
-    auto rx_sec_handler = du_proc_rrc_ue->srb1_rx_security_handler;
+    auto* tx_sec_handler = du_proc_rrc_ue->srb1_tx_security_handler;
+    auto* rx_sec_handler = du_proc_rrc_ue->srb1_rx_security_handler;
     ASSERT_EQ(tx_sec_handler->cipher_enabled, enabled);
     ASSERT_EQ(rx_sec_handler->integ_enabled, enabled);
   }
 
-  void check_security_configured(bool configured)
+  void check_security_configured(bool configured, const security::sec_128_as_config& sec_cfg)
   {
     auto& tx_sec_handler = du_proc_rrc_ue->srb1_tx_security_handler;
     auto& rx_sec_handler = du_proc_rrc_ue->srb1_rx_security_handler;
     ASSERT_EQ(tx_sec_handler->sec_configured, configured);
     ASSERT_EQ(rx_sec_handler->sec_configured, configured);
+    if (configured) {
+      ASSERT_EQ(tx_sec_handler->last_sec_cfg.integ_algo, sec_cfg.integ_algo);
+      ASSERT_EQ(tx_sec_handler->last_sec_cfg.cipher_algo, sec_cfg.cipher_algo);
+      ASSERT_EQ(rx_sec_handler->last_sec_cfg.integ_algo, sec_cfg.integ_algo);
+      ASSERT_EQ(rx_sec_handler->last_sec_cfg.cipher_algo, sec_cfg.cipher_algo);
+      ASSERT_EQ(rx_sec_handler->last_sec_cfg.k_128_rrc_enc, sec_cfg.k_128_rrc_enc);
+      ASSERT_EQ(rx_sec_handler->last_sec_cfg.k_128_rrc_int, sec_cfg.k_128_rrc_int);
+      ASSERT_EQ(tx_sec_handler->last_sec_cfg.k_128_rrc_enc, sec_cfg.k_128_rrc_enc);
+      ASSERT_EQ(tx_sec_handler->last_sec_cfg.k_128_rrc_int, sec_cfg.k_128_rrc_int);
+    }
   }
 
 private:
