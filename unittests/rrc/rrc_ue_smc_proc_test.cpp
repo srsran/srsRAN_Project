@@ -120,18 +120,8 @@ TEST_F(rrc_smc, when_key_provided_smc_generated)
 
 TEST_F(rrc_smc, when_reply_missing_procedure_timeout)
 {
-  const char* sk_gnb_cstr = "45cbc3f8a81193fd5c5229300d59edf812e998a115ec4e0ce903ba89367e2628";
-  // const char* k_rrc_enc_cstr = "52a995dff89bc294bd89ffb137a29f2466a09e992386c8d1df7892964c6fb522";
-  // const char* k_rrc_int_cstr = "534208f43b924efb677d95f93dbcbcb05c2cc2fda0f318a1e0ce35b9db5e80a5";
-
-  // Pack hex strings into srsgnb types
-  security::sec_as_key sk_gnb = make_sec_as_key(sk_gnb_cstr);
-  // security::sec_as_key k_rrc_enc = make_sec_as_key(k_rrc_enc_cstr);
-  // security::sec_as_key k_rrc_int = make_sec_as_key(k_rrc_int_cstr);
-
   // Initialize security context and capabilities.
   rrc_init_security_context init_sec_ctx = {};
-  init_sec_ctx.k                         = sk_gnb;
   std::fill(init_sec_ctx.supported_int_algos.begin(), init_sec_ctx.supported_int_algos.end(), true);
   std::fill(init_sec_ctx.supported_enc_algos.begin(), init_sec_ctx.supported_enc_algos.end(), true);
 

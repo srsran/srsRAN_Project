@@ -18,6 +18,14 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
+security::sec_as_key make_sec_as_key(std::string hex_str)
+{
+  byte_buffer          key_buf = make_byte_buffer(hex_str);
+  security::sec_as_key key     = {};
+  std::copy(key_buf.begin(), key_buf.end(), key.begin());
+  return key;
+}
+
 /// Fixture class for NGAP ASN1 packer
 class ngc_asn1_packer_test : public ::testing::Test
 {
@@ -115,6 +123,10 @@ TEST_F(ngc_asn1_packer_test, when_stuff_do_stuff)
       "6e38151d62356d9a1a0c9f2391885177307ad494be15281dfe5fdac06302002240080123456700ffff010026402f2e7e02cf5b405e017e00"
       "42010177000bf200f110020040dd00b06454072000f11000000715020101210201005e0129";
 
+  // get expected security key
+  const char*          security_key_cstr = "50636e38151d62356d9a1a0c9f2391885177307ad494be15281dfe5fdac06302";
+  security::sec_as_key security_key      = make_sec_as_key(security_key_cstr);
+
   byte_buffer buf = make_byte_buffer(ngap_init_ctx_req);
 
   asn1::cbit_ref         bref(buf);
@@ -124,21 +136,20 @@ TEST_F(ngc_asn1_packer_test, when_stuff_do_stuff)
   const asn1::ngap::ngap_pdu_c&                   pdu     = msg.pdu;
   const asn1::ngap::init_context_setup_request_s& request = pdu.init_msg().value.init_context_setup_request();
 
-  // security::sec_as_key           key;
+  security::sec_as_key           security_key_o;
   security::supported_algorithms inte_algos;
   security::supported_algorithms ciph_algos;
+  copy_asn1_key(security_key_o, *request->security_key);
   fill_supported_algorithms(inte_algos, request->ue_security_cap->nrintegrity_protection_algorithms);
   fill_supported_algorithms(ciph_algos, request->ue_security_cap->nrencryption_algorithms);
   test_logger.debug("{}", inte_algos);
   test_logger.debug("{}", ciph_algos);
 
-  test_logger.debug(request->ue_security_cap->nrintegrity_protection_algorithms.data(), 2, "raw data");
-  uint16_t tmp = (*(uint16_t*)request->ue_security_cap->nrintegrity_protection_algorithms.data());
-  test_logger.debug("raw uint16_t=0x{:x}", tmp);
-  ASSERT_EQ(true, inte_algos[0]);  // NIA1 supported
-  ASSERT_EQ(true, inte_algos[0]);  // NEA1 supported
-  ASSERT_EQ(true, inte_algos[1]);  // NIA1 supported
-  ASSERT_EQ(true, inte_algos[1]);  // NEA1 supported
-  ASSERT_EQ(false, inte_algos[2]); // NIA1 supported
-  ASSERT_EQ(false, inte_algos[2]); // NEA1 supported
+  ASSERT_EQ(true, inte_algos[0]);          // NIA1 supported
+  ASSERT_EQ(true, inte_algos[0]);          // NEA1 supported
+  ASSERT_EQ(true, inte_algos[1]);          // NIA2 supported
+  ASSERT_EQ(true, inte_algos[1]);          // NEA2 supported
+  ASSERT_EQ(false, inte_algos[2]);         // NIA3 not supported
+  ASSERT_EQ(false, inte_algos[2]);         // NEA3 not supported
+  ASSERT_EQ(security_key, security_key_o); // Key was correctly copied
 }
