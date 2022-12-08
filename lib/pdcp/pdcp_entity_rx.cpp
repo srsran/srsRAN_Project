@@ -166,7 +166,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
     if (!is_valid) {
       logger.log_warning(sdu.begin(), sdu.end(), "Integrity failed. Dropping PDU");
       metrics_add_integrity_failed_pdus(1);
-      upper_cn.on_integrity_failure();
+      // upper_cn.on_integrity_failure();
       return; // Invalid packet, drop.
     }
     metrics_add_integrity_verified_pdus(1);
