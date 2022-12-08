@@ -112,8 +112,11 @@ public:
   void set_as_security_config(security::sec_128_as_config sec_cfg_) final
   {
     sec_cfg = sec_cfg_;
-    logger.log_info(
-        "Set TX security configuration, integ=NIA{}, cipher=NEA{}", sec_cfg.integ_algo, sec_cfg.cipher_algo);
+    logger.log_info("Set TX security configuration, {}", sec_cfg.integ_algo, sec_cfg.cipher_algo);
+    logger.log_info(sec_cfg.k_128_rrc_int.data(), 16, "128 K_rrc_int");
+    logger.log_info(sec_cfg.k_128_rrc_enc.data(), 16, "128 K_rrc_enc");
+    logger.log_info(sec_cfg.k_128_up_int.data(), 16, "128 K_up_enc");
+    logger.log_info(sec_cfg.k_128_up_enc.data(), 16, "128 K_up_enc");
   };
 
   void enable_or_disable_security(security::integrity_enabled integ, security::ciphering_enabled cipher) final
