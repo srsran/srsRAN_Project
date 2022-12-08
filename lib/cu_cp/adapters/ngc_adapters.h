@@ -52,16 +52,6 @@ private:
   ue_task_scheduler* cu_cp_task_sched = nullptr;
 };
 
-/// Adapter between NGC and AMF
-class ngc_amf_adapter : public ngc_message_notifier
-{
-public:
-  void on_new_message(const ngc_message& msg) override
-  {
-    // TODO: Add network socket transmit messages to AMF
-  }
-};
-
 /// Adapter between NGC and RRC UE
 class ngc_rrc_ue_adapter : public ngc_rrc_ue_pdu_notifier, public ngc_rrc_ue_control_notifier
 {
