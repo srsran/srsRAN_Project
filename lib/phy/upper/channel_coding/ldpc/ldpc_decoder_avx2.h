@@ -31,11 +31,28 @@ private:
   /// Maximum number of AVX2 vectors needed to represent all messages entering a single check node.
   static constexpr unsigned MAX_CHECK_CONNECTION_SIZE_AVX2 = MAX_NODE_SIZE_AVX2 * (ldpc::MAX_BG_K + 5);
 
-  // See ldpc_decoder_impl for the documentation.
-  void select_strategy() override
-  { /* do nothing */
-  }
+  /// Alias for a pointer to the private method that computes variable-to-check messages.
+  using var_to_check_strategy = std::function<void(mm256::avx2_span, mm256::avx2_const_span, mm256::avx2_const_span)>;
 
+  /// Alias for a pointer to the private method that updates the soft bits.
+  using soft_bit_strategy = std::function<void(mm256::avx2_span, mm256::avx2_const_span, mm256::avx2_const_span)>;
+
+  /// Alias for a pointer to the private method that analyzes the variable-to-check messages at the check nodes.
+  using analyze_var_to_check_strategy = std::function<
+      void(mm256::avx2_span, mm256::avx2_span, mm256::avx2_span, mm256::avx2_span, mm256::avx2_const_span, unsigned)>;
+
+  /// Alias for a pointer to the private method that computes the check-to-variable messages.
+  using check_to_var_strategy = std::function<void(mm256::avx2_span,
+                                                   mm256::avx2_const_span,
+                                                   mm256::avx2_const_span,
+                                                   mm256::avx2_const_span,
+                                                   mm256::avx2_const_span,
+                                                   mm256::avx2_const_span,
+                                                   float,
+                                                   unsigned)>;
+
+  // See ldpc_decoder_impl for the documentation.
+  void select_strategy() override;
   void load_soft_bits(span<const log_likelihood_ratio> llrs) override;
   void update_variable_to_check_messages(unsigned check_node) override;
   void update_check_to_variable_messages(unsigned check_node) override;
@@ -45,13 +62,43 @@ private:
   /// \brief Helper function for update_variable_to_check_messages().
   ///
   /// Computes the exact value of the variable-to-check messages for a specific subset of contiguous variable nodes.
-  /// \param[out] v2c  Resulting variable-to-check messages.
-  /// \param[in]  soft Soft bits at the given nodes.
-  /// \param[in]  c2v  Check-to-variable messages at the given nodes.
+  /// \tparam NOF_NODES      Number of variable nodes the method is applied to.
+  /// \tparam NODE_SIZE_AVX2 Size of a lifted node as a number of AVX2 vectors.
+  /// \param[out] v2c        Resulting variable-to-check messages.
+  /// \param[in]  soft       Soft bits at the given nodes.
+  /// \param[in]  c2v        Check-to-variable messages at the given nodes.
   /// \note The three spans refer to the same set of nodes and, in turn, have the same dimension.
-  void static compute_var_to_check_msgs_avx2(mm256::avx2_span       v2c,
-                                             mm256::avx2_const_span soft,
-                                             mm256::avx2_const_span c2v);
+  template <unsigned NOF_NODES, unsigned NODE_SIZE_AVX2>
+  void static compute_var_to_check_msgs(mm256::avx2_span v2c, mm256::avx2_const_span soft, mm256::avx2_const_span c2v);
+
+  /// Pointer to the specialization of \ref compute_var_to_check_msgs used for the high-rate region.
+  var_to_check_strategy compute_var_to_check_msgs_hr;
+  /// Pointer to the specialization of \ref compute_var_to_check_msgs used for the extended region.
+  var_to_check_strategy compute_var_to_check_msgs_ext;
+  /// Helper function for setting \ref compute_var_to_check_msgs_hr for base graph 1.
+  template <unsigned NODE_SIZE_AVX2_PH>
+  var_to_check_strategy select_var_to_check_strategy_hr_bg1();
+  /// Helper function for setting \ref compute_var_to_check_msgs_hr for base graph 2.
+  template <unsigned NODE_SIZE_AVX2_PH>
+  var_to_check_strategy select_var_to_check_strategy_hr_bg2();
+  /// Helper function for setting \ref compute_var_to_check_msgs_ext (for both base graphs).
+  template <unsigned NODE_SIZE_AVX2_PH>
+  var_to_check_strategy select_var_to_check_strategy_ext();
+  /// Pointer to the function that computes the soft-bit updates.
+  soft_bit_strategy compute_soft_bits;
+  /// Helper function for setting \ref compute_soft_bits.
+  template <unsigned NODE_SIZE_AVX2_PH>
+  soft_bit_strategy select_soft_bits_strategy();
+  /// Pointer to the function that analyzes the variable-to-check messages at the check nodes.
+  analyze_var_to_check_strategy analyze_var_to_check;
+  /// Helper function for setting \ref analyze_var_to_check.
+  template <unsigned NODE_SIZE_AVX2_PH>
+  analyze_var_to_check_strategy select_analyze_var_to_check_strategy();
+  /// Pointer to the function that computes the check-to-variable messages.
+  check_to_var_strategy compute_check_to_var_msgs;
+  /// Helper function for setting \ref compute_check_to_var_msgs.
+  template <unsigned NODE_SIZE_AVX2_PH>
+  check_to_var_strategy select_check_to_var_strategy();
 
   /// Buffer to store the current value of the soft bits.
   mm256::avx2_array<MAX_BLK_SIZE_AVX2> soft_bits = {};

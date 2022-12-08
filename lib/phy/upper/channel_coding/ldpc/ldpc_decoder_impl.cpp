@@ -58,15 +58,15 @@ optional<unsigned> ldpc_decoder_impl::decode(span<uint8_t>                    ou
                 message_length);
   srsgnb_assert(input.size() <= max_input_length,
                 "The input size {} exceeds the maximum message length {}.",
-                output.size(),
-                message_length);
+                input.size(),
+                max_input_length);
 
   // The minimum input length is message_length + two times the lifting size.
   uint16_t min_input_length = message_length + 2 * lifting_size;
   srsgnb_assert(input.size() >= min_input_length,
                 "The input length {} does not reach minimum {}",
                 input.size(),
-                max_input_length);
+                min_input_length);
 
   load_soft_bits(input);
 

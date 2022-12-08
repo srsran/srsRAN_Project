@@ -101,9 +101,9 @@ public:
     srsgnb_assert(offset + view_length <= N, "Cannot take a span longer than the array.");
   }
 
-  /// \brief Constructs a span that is a view over an entire \ref avx2_array.
+  /// \brief Implicitly constructs a span that is a view over an entire \ref avx2_array.
   template <size_t N>
-  explicit avx2_span(avx2_array<N>& arr) : avx2_span(arr, 0, N)
+  avx2_span(avx2_array<N>& arr) : avx2_span(arr, 0, N)
   {
   }
 
@@ -185,11 +185,14 @@ public:
     srsgnb_assert(offset + view_length <= N, "Cannot take a span longer than the array.");
   }
 
-  /// \brief Constructs a span that is a view over an entire \ref avx2_array.
+  /// \brief Implicitly constructs a span that is a view over an entire \ref avx2_array.
   template <size_t N>
-  explicit avx2_const_span(const avx2_array<N>& arr) : avx2_const_span(arr, 0, N)
+  avx2_const_span(const avx2_array<N>& arr) : avx2_const_span(arr, 0, N)
   {
   }
+
+  /// \brief Implicitly constructs a const span from a mutable one.
+  avx2_const_span(avx2_span sp) : array_ptr(sp.data_at(0, 0)), view_length(sp.size()) {}
 
   /// Returns a read-only pointer to the \c pos AVX2 register inside the array.
   const __m256i* data_at(unsigned pos) const
