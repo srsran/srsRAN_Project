@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/f1c/common/f1c_common.h"
 namespace srsgnb {
 
 /// \brief F1C bridge between DU and CU-CP using fast-path message passing.
