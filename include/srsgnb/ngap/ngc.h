@@ -78,8 +78,9 @@ public:
 };
 
 struct ngc_ue_context {
-  amf_ue_id_t amf_ue_id = amf_ue_id_t::invalid;
-  ran_ue_id_t ran_ue_id = ran_ue_id_t::invalid;
+  amf_ue_id_t amf_ue_id                     = amf_ue_id_t::invalid;
+  ran_ue_id_t ran_ue_id                     = ran_ue_id_t::invalid;
+  uint64_t    aggregate_maximum_bit_rate_dl = 0;
 };
 
 struct ngap_initial_ue_message {
@@ -154,6 +155,22 @@ public:
                              ue_index_t                   ue_index,
                              ngc_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
                              ngc_rrc_ue_control_notifier& rrc_ue_ctrl_notifier) = 0;
+};
+
+struct pdu_session_resource_setup_message {
+  cu_cp_pdu_session_res_setup_list pdu_session_res_setup_list;
+  uint64_t                         ue_aggregate_maximum_bit_rate_dl;
+};
+
+/// Interface to notify the E1 about control messages.
+class ngc_e1_control_notifier
+{
+public:
+  virtual ~ngc_e1_control_notifier() = default;
+
+  /// \brief Notify about the reception of a new PDU Session Resource Setup List.
+  virtual async_task<asn1::ngap::pdu_session_res_setup_resp_s>
+  on_new_pdu_session_resource_setup_request(pdu_session_resource_setup_message& msg) = 0;
 };
 
 /// \brief Schedules asynchronous tasks associated with an UE.

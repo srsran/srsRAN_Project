@@ -45,6 +45,10 @@ public:
   /// \brief Get the E1 message handler interface of the CU-UP processor object.
   /// \return The E1 message handler interface of the CU-UP processor object.
   virtual e1_message_handler& get_e1_message_handler() = 0;
+
+  /// \brief Get the E1 bearer context manager interface.
+  /// \return The  E1 bearer context manager interface of the CU-UP processor object.
+  virtual e1_bearer_context_manager& get_e1_bearer_context_manager() = 0;
 };
 
 /// Methods used by CU-UP to notify about CU-UP specific events.

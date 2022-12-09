@@ -72,9 +72,10 @@ e1_cu_cp_impl::handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request_messag
 }
 
 async_task<e1ap_bearer_context_setup_response_message>
-e1_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request_message& request)
+e1_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request_message& msg)
 {
-  return launch_async<e1_bearer_context_setup_procedure>(request.msg, pdu_notifier, *events, logger);
+  asn1::e1ap::bearer_context_setup_request_s request = {};
+  return launch_async<e1_bearer_context_setup_procedure>(request, pdu_notifier, *events, logger);
 }
 
 async_task<e1ap_bearer_context_modification_response_message> e1_cu_cp_impl::handle_bearer_context_modification_request(

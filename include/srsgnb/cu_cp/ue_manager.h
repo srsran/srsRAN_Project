@@ -49,6 +49,12 @@ public:
   amf_ue_id_t get_amf_ue_id() { return ue_ctxt.amf_ue_id; }
   ran_ue_id_t get_ran_ue_id() { return ue_ctxt.ran_ue_id; }
 
+  uint64_t get_aggregate_maximum_bit_rate_dl() { return ue_ctxt.aggregate_maximum_bit_rate_dl; }
+  void     set_aggregate_maximum_bit_rate_dl(uint64_t aggregate_maximum_bit_rate_dl)
+  {
+    ue_ctxt.aggregate_maximum_bit_rate_dl = aggregate_maximum_bit_rate_dl;
+  }
+
   /// \brief Set the AMF UE ID in the NGC UE.
   /// \remark These functions should only be used by the UE manager.
   /// \param amf_ue_id The AMF UE ID to set

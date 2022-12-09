@@ -43,7 +43,7 @@ public:
 
 private:
   // helpers
-  void handle_nas_pdu();
+  // void handle_nas_pdu();
 
   // results senders
   void send_initial_context_setup_response(const initial_context_response_message& msg);

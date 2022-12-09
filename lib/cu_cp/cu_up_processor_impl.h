@@ -39,9 +39,10 @@ public:
 
   // getter functions
 
-  cu_up_index_t            get_cu_up_index() override { return context.cu_up_index; };
-  cu_up_processor_context& get_context() override { return context; };
-  e1_message_handler&      get_e1_message_handler() override { return *e1; };
+  cu_up_index_t              get_cu_up_index() override { return context.cu_up_index; };
+  cu_up_processor_context&   get_context() override { return context; };
+  e1_message_handler&        get_e1_message_handler() override { return *e1; };
+  e1_bearer_context_manager& get_e1_bearer_context_manager() override { return *e1; }
 
 private:
   // E1 senders

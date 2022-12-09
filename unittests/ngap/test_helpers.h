@@ -12,6 +12,7 @@
 
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/gateways/network_gateway.h"
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/support/async/async_task_loop.h"
@@ -112,6 +113,30 @@ public:
   }
 
   byte_buffer last_nas_pdu;
+
+private:
+  srslog::basic_logger& logger;
+};
+
+/// Dummy handler storing and printing the received PDU.
+class dummy_ngc_e1_control_notifier : public ngc_e1_control_notifier
+{
+public:
+  dummy_ngc_e1_control_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+
+  virtual async_task<asn1::ngap::pdu_session_res_setup_resp_s>
+  on_new_pdu_session_resource_setup_request(pdu_session_resource_setup_message& msg) override
+  {
+    last_msg = std::move(msg);
+    logger.info("Received a PDU Session Resource Setup Message");
+
+    return launch_async([res = asn1::ngap::pdu_session_res_setup_resp_s{}](
+                            coro_context<async_task<asn1::ngap::pdu_session_res_setup_resp_s>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(res);
+    });
+  }
+  pdu_session_resource_setup_message last_msg;
 
 private:
   srslog::basic_logger& logger;

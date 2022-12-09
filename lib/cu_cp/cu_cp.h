@@ -158,6 +158,9 @@ private:
   // NGC to RRC UE adapter array
   slotted_array<ngc_rrc_ue_adapter, MAX_NOF_CU_UES> ngc_rrc_ue_ev_notifiers;
 
+  // NGC to E1 adapter
+  ngc_e1_adapter ngc_e1_notifier;
+
   std::atomic<bool> amf_connected = {false};
 };
 

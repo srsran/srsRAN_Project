@@ -13,6 +13,7 @@
 #include "../task_schedulers/ue_task_scheduler.h"
 #include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/cu_cp/cu_cp.h"
+#include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/ran/bcd_helpers.h"
 #include "srsgnb/rrc/rrc_ue.h"
@@ -96,6 +97,45 @@ private:
   rrc_ue_control_message_handler*       rrc_ue_ctrl_handler     = nullptr;
   rrc_ue_init_security_context_handler* rrc_ue_security_handler = nullptr;
   srslog::basic_logger&                 logger                  = srslog::fetch_basic_logger("NGC");
+};
+
+/// Adapter between NGC and E1
+class ngc_e1_adapter : public ngc_e1_control_notifier
+{
+public:
+  void connect_e1(e1_bearer_context_manager* e1_bearer_context_mng_) { e1_bearer_context_mng = e1_bearer_context_mng_; }
+
+  async_task<asn1::ngap::pdu_session_res_setup_resp_s>
+  on_new_pdu_session_resource_setup_request(pdu_session_resource_setup_message& msg) override
+  {
+    srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
+
+    e1ap_bearer_context_setup_request_message e1_request;
+    e1_request.pdu_session_res_setup_list       = std::move(msg.pdu_session_res_setup_list);
+    e1_request.ue_aggregate_maximum_bit_rate_dl = msg.ue_aggregate_maximum_bit_rate_dl;
+
+    e1ap_bearer_context_setup_response_message e1_bearer_context_setup_resp_msg;
+
+    return launch_async(
+        [this, res = asn1::ngap::pdu_session_res_setup_resp_s{}, e1_bearer_context_setup_resp_msg, e1_request](
+            coro_context<async_task<asn1::ngap::pdu_session_res_setup_resp_s>>& ctx) mutable {
+          CORO_BEGIN(ctx);
+
+          CORO_AWAIT_VALUE(e1_bearer_context_setup_resp_msg,
+                           e1_bearer_context_mng->handle_bearer_context_setup_request(e1_request));
+
+          if (e1_bearer_context_setup_resp_msg.success) {
+            // TODO convert E1 response to ngc response
+          } else {
+            res->pdu_session_res_failed_to_setup_list_su_res_present = false;
+            // TODO: Add failed setup items
+          }
+          CORO_RETURN(res);
+        });
+  }
+
+private:
+  e1_bearer_context_manager* e1_bearer_context_mng = nullptr;
 };
 
 } // namespace srs_cu_cp

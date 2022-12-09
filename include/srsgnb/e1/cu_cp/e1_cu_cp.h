@@ -44,7 +44,8 @@ public:
 };
 
 struct e1ap_bearer_context_setup_request_message {
-  asn1::e1ap::bearer_context_setup_request_s msg;
+  cu_cp_pdu_session_res_setup_list pdu_session_res_setup_list;
+  uint64_t                         ue_aggregate_maximum_bit_rate_dl;
 };
 
 struct e1ap_bearer_context_setup_response_message {

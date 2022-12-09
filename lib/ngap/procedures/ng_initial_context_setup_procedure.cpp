@@ -9,6 +9,7 @@
  */
 
 #include "ng_initial_context_setup_procedure.h"
+#include "ng_procedure_helpers.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
@@ -44,24 +45,15 @@ void ng_initial_context_setup_procedure::operator()(coro_context<async_task<void
   }
 
   // Handle optional IEs
-  handle_nas_pdu();
+  if (request->nas_pdu_present) {
+    handle_nas_pdu(logger, request->nas_pdu.value, ue);
+  }
 
   initial_context_response_message resp_msg = {};
   send_initial_context_setup_response(resp_msg);
 
   logger.debug("Initial Context Setup Procedure finished");
   CORO_RETURN();
-}
-
-void ng_initial_context_setup_procedure::handle_nas_pdu()
-{
-  if (request->nas_pdu_present) {
-    logger.info("Forwarding NAS PDU to RRC");
-    byte_buffer nas_pdu;
-    nas_pdu.resize(request->nas_pdu.value.size());
-    std::copy(request->nas_pdu.value.begin(), request->nas_pdu.value.end(), nas_pdu.begin());
-    ue.get_rrc_ue_pdu_notifier().on_new_pdu(std::move(nas_pdu));
-  }
 }
 
 void ng_initial_context_setup_procedure::send_initial_context_setup_response(

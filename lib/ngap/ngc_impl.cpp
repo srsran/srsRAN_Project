@@ -9,8 +9,11 @@
  */
 
 #include "ngc_impl.h"
+#include "../cu_cp/helpers/cu_cp_asn1_helpers.h"
 #include "ngap_asn1_utils.h"
 #include "procedures/ng_initial_context_setup_procedure.h"
+#include "procedures/ng_pdu_session_resource_setup_procedure.h"
+#include "procedures/ng_procedure_helpers.h"
 #include "procedures/ng_setup_procedure.h"
 #include "srsgnb/support/async/event_signal.h"
 
@@ -18,13 +21,15 @@ using namespace srsgnb;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
-ngc_impl::ngc_impl(ngc_ue_task_scheduler& task_sched_,
-                   ngc_ue_manager&        ue_manager_,
-                   ngc_message_notifier&  ngc_notifier_) :
+ngc_impl::ngc_impl(ngc_ue_task_scheduler&   task_sched_,
+                   ngc_ue_manager&          ue_manager_,
+                   ngc_message_notifier&    ngc_notifier_,
+                   ngc_e1_control_notifier& e1_ctrl_notifier_) :
   logger(srslog::fetch_basic_logger("NGC")),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
   ngc_notifier(ngc_notifier_),
+  e1_ctrl_notifier(e1_ctrl_notifier_),
   events(std::make_unique<ngc_event_manager>())
 {
 }
@@ -167,6 +172,9 @@ void ngc_impl::handle_initiating_message(const init_msg_s& msg)
     case ngap_elem_procs_o::init_msg_c::types_opts::init_context_setup_request:
       handle_initial_context_setup_request(msg.value.init_context_setup_request());
       break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::pdu_session_res_setup_request:
+      handle_pdu_session_resource_setup_request(msg.value.pdu_session_res_setup_request());
+      break;
     case ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd:
       handle_ue_context_release_command(msg.value.ue_context_release_cmd());
       break;
@@ -220,6 +228,44 @@ void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_conte
   // start procedure
   task_sched.schedule_async_task(cu_cp_ue_id,
                                  launch_async<ng_initial_context_setup_procedure>(*ue, request, ngc_notifier, logger));
+}
+
+void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request)
+{
+  cu_cp_ue_id_t cu_cp_ue_id = ue_manager.get_cu_cp_ue_id(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
+  auto*         ue          = ue_manager.find_ue(cu_cp_ue_id);
+  if (ue == nullptr) {
+    logger.info("UE with cu_cp_ue_id={} does not exist. Dropping PDU Session Resource Setup Request", cu_cp_ue_id);
+    return;
+  }
+
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    request.to_json(js);
+    logger.debug("Received PDU Session Resource Setup Request Message: {}", js.to_string());
+  }
+
+  // Store information in UE context
+  if (request->ue_aggregate_maximum_bit_rate_present) {
+    ue->set_aggregate_maximum_bit_rate_dl(request->ue_aggregate_maximum_bit_rate.value.ueaggregate_maximum_bit_rate_dl);
+  }
+
+  // Convert ASN1 to common type
+  pdu_session_resource_setup_message msg;
+  pdu_session_resource_setup_list_su_req_to_cu_cp_type(msg.pdu_session_res_setup_list,
+                                                       request->pdu_session_res_setup_list_su_req.value);
+
+  msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
+
+  // start procedure
+  task_sched.schedule_async_task(
+      cu_cp_ue_id,
+      launch_async<ng_pdu_session_resource_setup_procedure>(*ue, msg, e1_ctrl_notifier, ngc_notifier, logger));
+
+  // Handle optional parameters
+  if (request->nas_pdu_present) {
+    handle_nas_pdu(logger, request->nas_pdu.value, *ue);
+  }
 }
 
 void ngc_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_release_cmd_s& cmd)
