@@ -35,9 +35,6 @@ struct rlc_bearer_config {
 
 rlc_mode convert_asn1_f1ap_to_rlc_mode(asn1::f1ap::rlc_mode_e mode);
 
-/// \brief Generates default SRB0 RLC configuration.
-rlc_config make_default_srb0_rlc_config();
-
 /// \brief Generates default SRB RLC configuration for SRBs other than SRB0.
 rlc_config make_default_srb_rlc_config();
 
