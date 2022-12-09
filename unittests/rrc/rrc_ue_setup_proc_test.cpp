@@ -19,7 +19,7 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 
 /// Fixture class RRC Setup tests preparation
-class rrc_setup : public rrc_ue_test_helper, public ::testing::Test
+class rrc_ue_setup : public rrc_ue_test_helper, public ::testing::Test
 {
 protected:
   static void SetUpTestSuite() { srslog::init(); }
@@ -34,7 +34,7 @@ protected:
 };
 
 /// Test the RRC setup with disconnected AMF
-TEST_F(rrc_setup, when_amf_disconnected_then_rrc_reject_sent)
+TEST_F(rrc_ue_setup, when_amf_disconnected_then_rrc_reject_sent)
 {
   receive_setup_request();
 
@@ -43,7 +43,7 @@ TEST_F(rrc_setup, when_amf_disconnected_then_rrc_reject_sent)
 }
 
 /// Test the RRC setup with connected AMF
-TEST_F(rrc_setup, when_amf_connected_then_rrc_setup_sent)
+TEST_F(rrc_ue_setup, when_amf_connected_then_rrc_setup_sent)
 {
   connect_amf();
   receive_setup_request();
@@ -58,7 +58,7 @@ TEST_F(rrc_setup, when_amf_connected_then_rrc_setup_sent)
 }
 
 /// Test the correct handling of missing RRC setup complete message
-TEST_F(rrc_setup, when_setup_complete_timeout_then_ue_deleted)
+TEST_F(rrc_ue_setup, when_setup_complete_timeout_then_ue_deleted)
 {
   connect_amf();
   receive_setup_request();
@@ -73,7 +73,7 @@ TEST_F(rrc_setup, when_setup_complete_timeout_then_ue_deleted)
   check_ue_release_requested();
 }
 
-TEST_F(rrc_setup, when_setup_complete_received_initial_ue_message_sent)
+TEST_F(rrc_ue_setup, when_setup_complete_received_initial_ue_message_sent)
 {
   connect_amf();
   receive_setup_request();

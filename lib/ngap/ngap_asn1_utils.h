@@ -104,7 +104,7 @@ inline void copy_asn1_key(security::sec_as_key& key_out, const asn1::fixed_bitst
 inline void fill_supported_algorithms(security::supported_algorithms&              supported_algos_out,
                                       const asn1::fixed_bitstring<16, true, true>& supported_algos_in)
 {
-  uint16_t tmp = (*(uint16_t*)supported_algos_in.data());
+  uint16_t tmp = *reinterpret_cast<const uint16_t*>(supported_algos_in.data());
   for (uint16_t i = 0; i < 3; ++i) {
     supported_algos_out[i] = ((tmp >> (15 - i)) & 0x01U) == 1; // interesting bits are in the second byte
   }

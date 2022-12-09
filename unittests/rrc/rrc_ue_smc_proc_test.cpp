@@ -37,7 +37,7 @@ security::sec_128_as_key make_sec_128_as_key(std::string hex_str)
 }
 
 /// Fixture class RRC Setup tests preparation
-class rrc_smc : public rrc_ue_test_helper, public ::testing::Test
+class rrc_ue_smc : public rrc_ue_test_helper, public ::testing::Test
 {
 protected:
   static void SetUpTestSuite() { srslog::init(); }
@@ -70,7 +70,7 @@ protected:
 };
 
 /// Test the RRC setup with connected AMF
-TEST_F(rrc_smc, when_key_provided_smc_generated)
+TEST_F(rrc_ue_smc, when_key_provided_smc_generated)
 {
   const char* sk_gnb_cstr    = "45cbc3f8a81193fd5c5229300d59edf812e998a115ec4e0ce903ba89367e2628";
   const char* k_rrc_enc_cstr = "4ea96992c8c7e82977231ad001309062ae9f31ead90a4d0842af6cd25cb44dc4";
@@ -118,7 +118,7 @@ TEST_F(rrc_smc, when_key_provided_smc_generated)
   ASSERT_TRUE(t.ready());
 }
 
-TEST_F(rrc_smc, when_reply_missing_procedure_timeout)
+TEST_F(rrc_ue_smc, when_reply_missing_procedure_timeout)
 {
   // Initialize security context and capabilities.
   rrc_init_security_context init_sec_ctx = {};

@@ -115,8 +115,9 @@ TEST_F(ngc_asn1_packer_test, when_packing_unsuccessful_then_message_not_forwarde
   ASSERT_EQ(gw->last_pdu.length(), valid_pdu_size);
 }
 
-// TODO: test unsuccessful unpacking
-TEST_F(ngc_asn1_packer_test, when_stuff_do_stuff)
+// test unpacking of initial context setup and
+// correct key and algorithm preference list extraction
+TEST_F(ngc_asn1_packer_test, when_unpack_init_ctx_extract_sec_params_correctly)
 {
   std::string ngap_init_ctx_req =
       "000e008090000008000a0002000c005500020000001c00070000f1100200400000000200010077000918000c000000000000005e00205063"
