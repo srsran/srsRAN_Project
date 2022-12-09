@@ -45,10 +45,9 @@ public:
   /// SSB case.
   ///
   /// \param[out] slot_allocator Slot allocator object with SSB grants and DL PRBs.
-  /// \param[in]  sl_point       Slot point carrying information about current slot.
   ///
   /// \remark This function only works for FR1, or L_max = 4 or 8.
-  void schedule_ssb(cell_slot_resource_allocator& slot_allocator, const slot_point& sl_point);
+  void schedule_ssb(cell_slot_resource_allocator& slot_allocator);
 
 private:
   /// Size of the ring buffer of \c cell_slot_resource_allocator. This size sets a limit on how far in advance a SSB can

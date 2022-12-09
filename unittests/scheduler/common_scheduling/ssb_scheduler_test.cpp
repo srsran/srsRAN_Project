@@ -42,8 +42,6 @@ struct test_bench {
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  const slot_difference tx_delay = 4;
-
   test_bench(ssb_periodicity    ssb_period,
              uint32_t           freq_arfcn,
              uint16_t           offset_to_point_A,
@@ -70,12 +68,13 @@ struct test_bench {
     test_logger.set_context(0);
     mac_logger.set_context(0);
     t = slot_point(numerology, 0);
+    cell_res_grid.slot_indication(t);
   }
 
   void new_slot()
   {
     t++;
-    cell_res_grid.slot_indication(t + tx_delay);
+    cell_res_grid.slot_indication(t);
     test_logger.set_context(t.to_uint());
     mac_logger.set_context(t.to_uint());
   }
@@ -422,7 +421,7 @@ void test_ssb_allocation(ssb_periodicity    ssb_period,
     }
 
     // Schedule the SSB.
-    ssb_sch.schedule_ssb(bench.get_slot_allocator(), bench.slot_tx());
+    ssb_sch.schedule_ssb(bench.get_slot_allocator());
 
     // Select SSB case with reference to TS 38.213, Section 4.1.
     ssb_pattern_case ssb_case = bench.get_cell_sched_config().ssb_case;

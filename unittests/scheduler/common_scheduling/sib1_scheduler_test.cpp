@@ -115,6 +115,7 @@ struct test_bench {
   {
     test_logger.set_context(0);
     mac_logger.set_context(0);
+    res_grid.slot_indication(sl_tx);
   }
 
   cell_slot_resource_allocator& get_slot_res_grid() { return res_grid[0]; };
@@ -367,7 +368,7 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
     }
 
     // Run SSB scheduler.
-    ssb_sched.schedule_ssb(t_bench.get_slot_res_grid(), t_bench.sl_tx);
+    ssb_sched.schedule_ssb(t_bench.get_slot_res_grid());
 
     // Run SIB1 scheduler.
     sib1_sched.schedule_sib1(t_bench.get_slot_res_grid(), t_bench.sl_tx);

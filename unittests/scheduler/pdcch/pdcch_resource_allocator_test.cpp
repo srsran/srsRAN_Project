@@ -125,7 +125,7 @@ void test_pdcch_sched_monitoring_period()
   std::random_device rd;
   std::mt19937       rgen(rd());
 
-  for (unsigned period : {5, 10}) {
+  for (unsigned period : {20, 40}) {
     for (unsigned duration = 1; duration < period - 1; ++duration) {
       for (unsigned offset = 0; offset < period - 1; ++offset) {
         // Note: First slot is one slot before the PDCCH monitoring window.
