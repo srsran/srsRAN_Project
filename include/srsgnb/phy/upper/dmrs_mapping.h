@@ -60,17 +60,17 @@ public:
 
   /// \brief Gets a DMRS transmission pattern.
   ///
-  /// It creates a RE pattern that describes the reserved resource elements for DMRS in PDSCH or PUSCH transmissions.
+  /// It creates a RE pattern that describes the reserved resource elements for DM-RS in PDSCH or PUSCH transmissions.
   ///
   /// \param[in] bwp_start_rb                Indicates the start of the BWP.
   /// \param[in] bwp_size_rb                 Indicates the size of the BWP.
   /// \param[in] nof_cdm_groups_without_data Indicates the number of CDM groups without data for the transmission.
-  /// \param[in] symbol_mask                 Indicates, with a mask, the symbols carrying DMRS.
+  /// \param[in] symbol_mask                 Indicates, with a mask, the symbols carrying DM-RS.
   /// \return An RE pattern describing the reserved elements for DMRS.
   re_pattern get_dmrs_pattern(unsigned         bwp_start_rb,
                               unsigned         bwp_size_rb,
                               unsigned         nof_cdm_groups_without_data,
-                              span<const bool> symbol_mask) const
+                              symbol_slot_mask symbol_mask) const
   {
     // Temporal pattern.
     re_pattern dmrs_pattern;
@@ -98,7 +98,7 @@ public:
       groups.fill(0, 2, true);
       dmrs_pattern.re_mask = groups.kronecker_product<6>(cdm_groups_pattern);
     }
-    std::copy(symbol_mask.begin(), symbol_mask.end(), dmrs_pattern.symbols.begin());
+    dmrs_pattern.symbols = symbol_mask;
 
     return dmrs_pattern;
   }

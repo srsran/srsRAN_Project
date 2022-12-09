@@ -104,6 +104,9 @@ private:
   static constexpr unsigned MAX_NOF_CSI_PART2_LLR =
       MAX_RB * pusch_constants::MAX_NRE_PER_RB * UCI_ON_PUSCH_MAX_ALPHA * pusch_constants::MAX_MODULATION_ORDER;
 
+  /// Asserts the PDU. It triggers an assertion upon an invalid value or combination of values.
+  void assert_pdu(const pusch_processor::pdu_t& pdu) const;
+
   /// \brief Decodes a UCI field by reversing the channel coding steps described by TS38.212
   /// Sections 6.3.2.2, 6.3.2.3, 6.3.2.4, and 6.3.2.5.
   ///

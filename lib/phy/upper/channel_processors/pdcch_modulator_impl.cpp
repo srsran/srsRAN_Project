@@ -44,8 +44,7 @@ void pdcch_modulator_impl::modulate(span<cf_t> d_pdcch, span<const uint8_t> b_ha
 void pdcch_modulator_impl::map(resource_grid_writer& grid, span<const cf_t> d_pdcch, const config_t& config)
 {
   // Resource element allocation within a resource block for PDCCH.
-  static const bounded_bitset<NRE> re_mask = {
-      true, false, true, true, true, false, true, true, true, false, true, true};
+  static const re_prb_mask re_mask = {true, false, true, true, true, false, true, true, true, false, true, true};
 
   // Create RG OFDM symbol mask. Identical for all OFDM symbols.
   bounded_bitset<MAX_RB* NRE> rg_subc_mask = config.rb_mask.kronecker_product<NRE>(re_mask);

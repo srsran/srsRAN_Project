@@ -18,7 +18,7 @@ using namespace srsgnb;
 
 namespace {
 
-unsigned get_ulsch_demultiplex_l1(const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_symbol_mask)
+unsigned get_ulsch_demultiplex_l1(const symbol_slot_mask& dmrs_symbol_mask)
 {
   // Find first OFDM symbol that contains DM-RS.
   int first_symbol_dmrs = dmrs_symbol_mask.find_lowest(true);
@@ -32,7 +32,7 @@ unsigned get_ulsch_demultiplex_l1(const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs
   return static_cast<unsigned>(first_symbol_without_dmrs);
 }
 
-unsigned get_ulsch_demultiplex_l1_csi(const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_symbol_mask)
+unsigned get_ulsch_demultiplex_l1_csi(const symbol_slot_mask& dmrs_symbol_mask)
 {
   // Find first OFDM symbol that does not contain DM-RS.
   int first_symbol_without_dmrs = dmrs_symbol_mask.find_lowest(false);

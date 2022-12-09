@@ -75,7 +75,7 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
        pdu.bwp_size_rb            = 1;
        return pdu;
      },
-     R"(The VRB mask \(16\) exceeds the BWP size \(1\)\.)"},
+     R"(Invalid BWP configuration 0:1 for a VRB mask of size 16\.)"},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
        pdu.uci.nof_csi_part1      = 1;
@@ -96,13 +96,13 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
      R"(The DM-RS symbol mask size \(i\.e\., 1\) must be the same as the number of symbols allocated to the transmission within the slot \(i\.e\., 14\)\.)"},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
-       pdu.dmrs_symbol_mask       = bounded_bitset<MAX_NSYMB_PER_SLOT>(get_nsymb_per_slot(pdu.cp));
+       pdu.dmrs_symbol_mask       = symbol_slot_mask(get_nsymb_per_slot(pdu.cp));
        return pdu;
      },
      R"(The number of OFDM symbols carrying DM-RS RE must be greater than zero\.)"},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
-       pdu.dmrs_symbol_mask       = bounded_bitset<MAX_NSYMB_PER_SLOT>(get_nsymb_per_slot(pdu.cp));
+       pdu.dmrs_symbol_mask       = symbol_slot_mask(get_nsymb_per_slot(pdu.cp));
        pdu.dmrs_symbol_mask.set(0);
        pdu.start_symbol_index = 1;
        pdu.nof_symbols        = 13;
@@ -111,7 +111,7 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
      R"(The index of the first OFDM symbol carrying DM-RS \(i\.e\., 0\) must be equal to or greater than the first symbol allocated to transmission \(i\.e\., 1\)\.)"},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
-       pdu.dmrs_symbol_mask       = bounded_bitset<MAX_NSYMB_PER_SLOT>(get_nsymb_per_slot(pdu.cp));
+       pdu.dmrs_symbol_mask       = symbol_slot_mask(get_nsymb_per_slot(pdu.cp));
        pdu.dmrs_symbol_mask.set(13);
        pdu.dmrs_symbol_mask.set(0);
        pdu.start_symbol_index = 0;

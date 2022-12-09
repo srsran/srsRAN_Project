@@ -172,11 +172,12 @@ void srsgnb::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&   p
 
   proc_pdu.n_id = fapi_pdu.nid_pdsch;
 
-  // This value is defined in field DL DMRS symbol position in SCF-222 v4.0 Section 3.4.2.2, in table PDSCH PDU, DMRS
+  // This value is defined in field DL DM-RS symbol position in SCF-222 v4.0 Section 3.4.2.2, in table PDSCH PDU, DM-RS
   // subsection.
   static constexpr unsigned DL_DMRS_SYMBOL_POS_SIZE = 14U;
+  proc_pdu.dmrs_symbol_mask.resize(DL_DMRS_SYMBOL_POS_SIZE);
   for (unsigned i = 0; i != DL_DMRS_SYMBOL_POS_SIZE; ++i) {
-    proc_pdu.dmrs_symbol_mask[i] = ((static_cast<unsigned>(fapi_pdu.dl_dmrs_symb_pos >> i) & 1U) == 1U);
+    proc_pdu.dmrs_symbol_mask.set(i, (static_cast<unsigned>(fapi_pdu.dl_dmrs_symb_pos >> i) & 1U) == 1U);
   }
 
   proc_pdu.ref_point = (fapi_pdu.ref_point == fapi::pdsch_ref_point_type::point_a) ? pdsch_processor::pdu_t::CRB0

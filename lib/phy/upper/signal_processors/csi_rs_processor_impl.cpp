@@ -427,7 +427,7 @@ static void build_re_patterns(span<re_pattern>                  pattern_list,
     // Define the PRB range.
     pattern_list[port].rb_begin = config.start_rb;
     pattern_list[port].rb_end   = config.start_rb + config.nof_rb;
-    pattern_list[port].re_mask  = bounded_bitset<NRE>(NRE);
+    pattern_list[port].re_mask  = re_prb_mask();
 
     // Skip one of every two PRB when the density is 0.5.
     if (config.freq_density == csi_rs_freq_density::DOT5_EVEN_RB ||
@@ -447,31 +447,31 @@ static void build_re_patterns(span<re_pattern>                  pattern_list,
     // k_bar and l_bar values and the CDM type.
     if (config.csi_rs_mapping_table_row == 1) {
       // Define the RE mapping pattern for row 1.
-      pattern_list[port].symbols[l_bar[port]] = true;
+      pattern_list[port].symbols.set(l_bar[port]);
       pattern_list[port].re_mask.set(k_bar[port]);
       pattern_list[port].re_mask.set(k_bar[port] + 4);
       pattern_list[port].re_mask.set(k_bar[port] + 8);
     } else if (config.cdm == csi_rs_cdm_type::NO_CDM) {
       // Define the RE mapping for other rows with no CDM.
-      pattern_list[port].symbols[l_bar[port]] = true;
+      pattern_list[port].symbols.set(l_bar[port]);
       pattern_list[port].re_mask.set(k_bar[port]);
     } else if (config.cdm == csi_rs_cdm_type::FD_CDM2) {
       // Define the RE mapping for other rows with FD-CDM2.
-      pattern_list[port].symbols[l_bar[port]] = true;
+      pattern_list[port].symbols.set(l_bar[port]);
       pattern_list[port].re_mask.set(k_bar[port]);
       pattern_list[port].re_mask.set(k_bar[port] + 1);
     } else if (config.cdm == csi_rs_cdm_type::CDM4_FD2_TD2) {
       // Define the RE mapping for other rows with CDM4-FD2-TD2.
-      pattern_list[port].symbols[l_bar[port]]     = true;
-      pattern_list[port].symbols[l_bar[port] + 1] = true;
+      pattern_list[port].symbols.set(l_bar[port]);
+      pattern_list[port].symbols.set(l_bar[port] + 1);
       pattern_list[port].re_mask.set(k_bar[port]);
       pattern_list[port].re_mask.set(k_bar[port] + 1);
     } else {
       // Define the RE mapping for other rows with CDM8-FD2-TD4.
-      pattern_list[port].symbols[l_bar[port]]     = true;
-      pattern_list[port].symbols[l_bar[port] + 1] = true;
-      pattern_list[port].symbols[l_bar[port] + 2] = true;
-      pattern_list[port].symbols[l_bar[port] + 3] = true;
+      pattern_list[port].symbols.set(l_bar[port]);
+      pattern_list[port].symbols.set(l_bar[port] + 1);
+      pattern_list[port].symbols.set(l_bar[port] + 2);
+      pattern_list[port].symbols.set(l_bar[port] + 3);
       pattern_list[port].re_mask.set(k_bar[port]);
       pattern_list[port].re_mask.set(k_bar[port] + 1);
     }
@@ -676,15 +676,12 @@ void srsgnb::csi_rs_processor_impl::map(resource_grid_writer& grid, const config
     // Use the corresponding RE pattern.
     const re_pattern& pattern = pattern_list[p];
 
-    // Get the symbol utilization mask witin the slot.
-    span<const bool> symbol_mask(pattern.symbols);
-
     // Index within the CDM group for the specified port.
     const unsigned cdm_group_idx = p % cdm_group_size;
     // Symbol index within the CDM table.
     unsigned cdm_l_idx = 0;
     for (unsigned l = 0; l != get_nsymb_per_slot(config.cp); ++l) {
-      if (symbol_mask[l]) {
+      if (pattern.symbols.test(l)) {
         // Create whole OFDM symbol mask.
         bounded_bitset<MAX_RB * NRE> mask(MAX_RB * NRE);
         pattern.get_inclusion_mask(mask, l);

@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "srsgnb/phy/support/mask_types.h"
 #include "srsgnb/phy/upper/channel_modulation/demodulation_mapper.h"
 #include "srsgnb/phy/upper/channel_processors/pucch_demodulator.h"
 #include "srsgnb/phy/upper/equalization/channel_equalizer.h"
@@ -117,8 +118,7 @@ private:
   /// \brief Control data RE allocation pattern for PUCCH Format 2.
   ///
   /// Indicates the Resource Elements containing control data symbols within a PRB, as per TS38.211 Section 6.4.1.3.2.2.
-  const bounded_bitset<NRE> format2_prb_re_mask =
-      {true, false, true, true, false, true, true, false, true, true, false, true};
+  const re_prb_mask format2_prb_re_mask = {true, false, true, true, false, true, true, false, true, true, false, true};
 
   /// PRB mask indicating the used PRB within the resource grid.
   bounded_bitset<MAX_RB> prb_mask = {};

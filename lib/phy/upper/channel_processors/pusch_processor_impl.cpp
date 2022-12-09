@@ -110,23 +110,7 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
                                                      const resource_grid_reader&   grid,
                                                      const pusch_processor::pdu_t& pdu)
 {
-  // Make sure the configuration is supported.
-  srsgnb_assert((pdu.bwp_start_rb + pdu.bwp_size_rb) <= ch_estimate.size().nof_prb,
-                "The sum of the BWP start (i.e., {}) and size (i.e., {}) exceeds the maximum grid size (i.e., {} PRB).",
-                pdu.bwp_start_rb,
-                pdu.bwp_size_rb,
-                ch_estimate.size().nof_prb);
-  srsgnb_assert(pdu.dmrs == dmrs_type::TYPE1, "Only DM-RS Type 1 is currently supported.");
-  srsgnb_assert(pdu.nof_cdm_groups_without_data == 2, "Only two CDM groups without data are currently supported.");
-  srsgnb_assert(
-      pdu.nof_tx_layers <= ch_estimate.size().nof_tx_layers,
-      "The number of transmit layers (i.e., {}) exceeds the maximum number of transmission layers (i.e., {}).",
-      pdu.nof_tx_layers,
-      ch_estimate.size().nof_tx_layers);
-  srsgnb_assert(pdu.rx_ports.size() <= ch_estimate.size().nof_rx_ports,
-                "The number of receive ports (i.e., {}) exceeds the maximum number of receive ports (i.e., {}).",
-                pdu.rx_ports.size(),
-                ch_estimate.size().nof_rx_ports);
+  assert_pdu(pdu);
 
   pusch_processor_result result;
 
@@ -283,6 +267,27 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   }
 
   return result;
+}
+
+void pusch_processor_impl::assert_pdu(const pusch_processor::pdu_t& pdu) const
+{
+  // Make sure the configuration is supported.
+  srsgnb_assert((pdu.bwp_start_rb + pdu.bwp_size_rb) <= ch_estimate.size().nof_prb,
+                "The sum of the BWP start (i.e., {}) and size (i.e., {}) exceeds the maximum grid size (i.e., {} PRB).",
+                pdu.bwp_start_rb,
+                pdu.bwp_size_rb,
+                ch_estimate.size().nof_prb);
+  srsgnb_assert(pdu.dmrs == dmrs_type::TYPE1, "Only DM-RS Type 1 is currently supported.");
+  srsgnb_assert(pdu.nof_cdm_groups_without_data == 2, "Only two CDM groups without data are currently supported.");
+  srsgnb_assert(
+      pdu.nof_tx_layers <= ch_estimate.size().nof_tx_layers,
+      "The number of transmit layers (i.e., {}) exceeds the maximum number of transmission layers (i.e., {}).",
+      pdu.nof_tx_layers,
+      ch_estimate.size().nof_tx_layers);
+  srsgnb_assert(pdu.rx_ports.size() <= ch_estimate.size().nof_rx_ports,
+                "The number of receive ports (i.e., {}) exceeds the maximum number of receive ports (i.e., {}).",
+                pdu.rx_ports.size(),
+                ch_estimate.size().nof_rx_ports);
 }
 
 pusch_uci_field pusch_processor_impl::decode_uci_field(span<const log_likelihood_ratio>  llr,

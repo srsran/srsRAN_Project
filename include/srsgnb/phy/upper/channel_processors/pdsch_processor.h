@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/phy/support/mask_types.h"
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsgnb/phy/upper/dmrs_mapping.h"
@@ -86,7 +87,7 @@ public:
       PRB0
     } ref_point;
     /// Indicates which symbol in the slot transmit DMRS.
-    std::array<bool, MAX_NSYMB_PER_SLOT> dmrs_symbol_mask;
+    symbol_slot_mask dmrs_symbol_mask;
     /// Indicates the DMRS type.
     dmrs_type dmrs;
     /// \brief Parameter \f$N^{n_{SCID}}_{ID}\f$ TS 38.211 section 7.4.1.1.1.
@@ -159,3 +160,60 @@ public:
 };
 
 } // namespace srsgnb
+
+namespace fmt {
+
+/// \brief Custom formatter for pdsch_processor::codeword_description.
+template <>
+struct formatter<srsgnb::pdsch_processor::codeword_description> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::pdsch_processor::codeword_description& codeword_descr, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{{mod={} rv={}}}", to_string(codeword_descr.modulation), codeword_descr.rv);
+  }
+};
+
+/// \brief Custom formatter for pdsch_processor::pdu_t.
+template <>
+struct formatter<srsgnb::pdsch_processor::pdu_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::pdsch_processor::pdu_t& pdu, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "slot={} rnti=0x{:04x} bwp={}:{} cp={} cw=[{}] n_id={} ports=[{}] ref_point={} dmrs_type={} "
+                     "dmrs_mask=[{}] n_scidid={} n_scid={} ncgwd={} f_alloc={} t_alloc={}:{} ",
+                     pdu.slot,
+                     pdu.rnti,
+                     pdu.bwp_start_rb,
+                     pdu.bwp_size_rb,
+                     pdu.cp.to_string(),
+                     srsgnb::span<const srsgnb::pdsch_processor::codeword_description>(pdu.codewords),
+                     pdu.n_id,
+                     srsgnb::span<const uint8_t>(pdu.ports),
+                     pdu.ref_point == srsgnb::pdsch_processor::pdu_t::CRB0 ? "CRB0" : "PRB0",
+                     (pdu.dmrs == srsgnb::dmrs_type::TYPE1) ? 1 : 2,
+                     pdu.dmrs_symbol_mask,
+                     pdu.scrambling_id,
+                     pdu.n_scid,
+                     pdu.nof_cdm_groups_without_data,
+                     pdu.freq_alloc,
+                     pdu.start_symbol_index,
+                     pdu.nof_symbols);
+  }
+};
+
+} // namespace fmt

@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/constants.h"
+#include "srsgnb/phy/support/mask_types.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 
 namespace srsgnb {
@@ -27,9 +27,9 @@ struct re_pattern {
   /// Resource block index jump.
   unsigned rb_stride{1};
   /// Resource element mask per resource block. True entries indicate the resource elements affected by the pattern.
-  bounded_bitset<NRE> re_mask{};
+  re_prb_mask re_mask{};
   /// Symbol mask. True entries indicate the symbols affected by the pattern.
-  std::array<bool, MAX_NSYMB_PER_SLOT> symbols{};
+  symbol_slot_mask symbols{};
 
   /// Default constructor. It allows instantiating the structure without using other constructors.
   re_pattern() = default;
@@ -41,16 +41,12 @@ struct re_pattern {
   /// \param[in] rb_stride_ RB index jump.
   /// \param[in] re_mask_   RE Mask.
   /// \param[in] symbols_   Symbol mask.
-  re_pattern(unsigned                             rb_begin_,
-             unsigned                             rb_end_,
-             unsigned                             rb_stride_,
-             std::array<bool, NRE>                re_mask_,
-             std::array<bool, MAX_NSYMB_PER_SLOT> symbols_) :
-    rb_begin(rb_begin_),
-    rb_end(rb_end_),
-    rb_stride(rb_stride_),
-    re_mask(re_mask_.begin(), re_mask_.end()),
-    symbols(symbols_)
+  re_pattern(unsigned                rb_begin_,
+             unsigned                rb_end_,
+             unsigned                rb_stride_,
+             const re_prb_mask&      re_mask_,
+             const symbol_slot_mask& symbols_) :
+    rb_begin(rb_begin_), rb_end(rb_end_), rb_stride(rb_stride_), re_mask(re_mask_), symbols(symbols_)
   {
     // Do nothing.
   }

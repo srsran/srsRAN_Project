@@ -42,7 +42,7 @@ public:
     /// Transmission DM-RS Type.
     dmrs_type dmrs;
     /// Mask indicating which OFDM symbols in the slot contain DM-RS.
-    bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask;
+    symbol_slot_mask dmrs_symbol_mask;
     /// Number of CDM groups without data.
     unsigned nof_cdm_groups_without_data;
   };

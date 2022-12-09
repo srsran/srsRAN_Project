@@ -63,9 +63,7 @@ private:
                   "Only DM-RS type 1 with a number of CDM groups equal to 2 is implemented.");
 
     // Prepare RE mask.
-    bounded_bitset<NRE> prb_re_mask(NRE);
-    prb_re_mask.fill(0, NRE, true);
-    bounded_bitset<MAX_RB* NRE> re_mask = config.rb_mask.kronecker_product<NRE>(prb_re_mask);
+    bounded_bitset<MAX_RB* NRE> re_mask = config.rb_mask.kronecker_product<NRE>(~re_prb_mask());
 
     // Extract RE for each port and symbol.
     for (unsigned i_port = 0, i_port_end = config.rx_ports.size(); i_port != i_port_end; ++i_port) {

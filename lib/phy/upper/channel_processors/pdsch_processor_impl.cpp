@@ -9,12 +9,184 @@
  */
 
 #include "pdsch_processor_impl.h"
+#include "srsgnb/ran/dmrs.h"
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/copy.h"
 
 using namespace srsgnb;
 
-unsigned int pdsch_processor_impl::compute_nof_data_re(const pdu_t& pdu)
+bool pdsch_processor_validator_impl::is_valid(const pdsch_processor::pdu_t& pdu) const
+{
+  unsigned         nof_symbols_slot = get_nsymb_per_slot(pdu.cp);
+  dmrs_config_type dmrs_config = (pdu.dmrs == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2;
+
+  // The frequency allocation is not compatible with the BWP parameters.
+  if (!pdu.freq_alloc.is_bwp_valid(pdu.bwp_start_rb, pdu.bwp_size_rb)) {
+    return false;
+  }
+
+  // The number of symbols carrying DM-RS must be greater than zero.
+  if (pdu.dmrs_symbol_mask.size() != nof_symbols_slot) {
+    return false;
+  }
+
+  // The number of symbols carrying DM-RS must be greater than zero.
+  if (pdu.dmrs_symbol_mask.count() == 0) {
+    return false;
+  }
+
+  // The index of the first OFDM symbol carrying DM-RS shall be equal to or greater than the first symbol allocated to
+  // transmission.
+  int first_dmrs_symbol_index = pdu.dmrs_symbol_mask.find_lowest(true);
+  if (static_cast<unsigned>(first_dmrs_symbol_index) < pdu.start_symbol_index) {
+    return false;
+  }
+
+  // The index of the last OFDM symbol carrying DM-RS shall not be larger than the last symbol allocated to
+  // transmission.
+  int last_dmrs_symbol_index = pdu.dmrs_symbol_mask.find_highest(true);
+  if (static_cast<unsigned>(last_dmrs_symbol_index) >= (pdu.start_symbol_index + pdu.nof_symbols)) {
+    return false;
+  }
+
+  // None of the occupied symbols must exceed the slot size.
+  if (nof_symbols_slot < (pdu.start_symbol_index + pdu.nof_symbols)) {
+    return false;
+  }
+
+  // Only DM-RS Type 1 is supported.
+  if (pdu.dmrs != dmrs_type::TYPE1) {
+    return false;
+  }
+
+  // Only two CDM groups without data is supported.
+  if (pdu.nof_cdm_groups_without_data > get_max_nof_cdm_groups_without_data(dmrs_config)) {
+    return false;
+  }
+
+  // Only contiguous allocation is currently supported.
+  if (!pdu.freq_alloc.is_contiguous()) {
+    return false;
+  }
+
+  // Only one layer is currently supported.
+  if (pdu.ports.size() != 1) {
+    return false;
+  }
+
+  // Only one codeword is currently supported.
+  if (pdu.codewords.size() != 1) {
+    return false;
+  }
+
+  // The limited buffer for rate matching size must be within limits.
+  if ((pdu.tbs_lbrm_bytes == 0) || (pdu.tbs_lbrm_bytes > ldpc::MAX_CODEBLOCK_SIZE / 8)) {
+    return false;
+  }
+
+  return true;
+}
+
+void pdsch_processor_impl::process(resource_grid_writer&                                        grid,
+                                   static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
+                                   const pdsch_processor::pdu_t&                                pdu)
+{
+  assert_pdu(pdu);
+
+  // Number of codewords.
+  unsigned nof_codewords = (pdu.ports.size() > 4) ? 2 : 1;
+
+  // The number of layers is equal to the number of ports.
+  unsigned nof_layers = pdu.ports.size();
+
+  // Calculate the number of layers the codeword 0 is mapped to. It is the number of layers divided by the number of
+  // codewords, rounding down (floor).
+  unsigned nof_layers_cw0 = nof_layers / nof_codewords;
+
+  // Calculate the number of layers the codeword 1 is mapped. It is the unused number of layers from the previous
+  // codeword.
+  unsigned nof_layers_cw1 = nof_layers - nof_layers_cw0;
+
+  // Calculate the number of resource elements to map. Common for all codewords.
+  unsigned Nre = compute_nof_data_re(pdu);
+
+  // Prepare encoded codewords.
+  static_vector<bit_buffer, pdsch_modulator::MAX_NOF_CODEWORDS> codewords;
+
+  // Encode each codeword.
+  for (unsigned codeword_id = 0; codeword_id != nof_codewords; ++codeword_id) {
+    unsigned          nof_layers_cw = (codeword_id == 0) ? nof_layers_cw0 : nof_layers_cw1;
+    const bit_buffer& codeword      = encode(data[codeword_id], codeword_id, nof_layers_cw, Nre, pdu);
+
+    codewords.emplace_back(codeword);
+  }
+
+  // Modulate codewords.
+  modulate(grid, codewords, pdu);
+
+  // Prepare DMRS configuration and generate.
+  put_dmrs(grid, pdu);
+}
+
+void pdsch_processor_impl::assert_pdu(const pdsch_processor::pdu_t& pdu) const
+{
+  // Deduce parameters from the PDU.
+  unsigned         nof_codewords    = (pdu.ports.size() > 4) ? 2 : 1;
+  unsigned         nof_symbols_slot = get_nsymb_per_slot(pdu.cp);
+  dmrs_config_type dmrs_config = (pdu.dmrs == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2;
+
+  srsgnb_assert(pdu.dmrs_symbol_mask.size() == nof_symbols_slot,
+                "The DM-RS symbol mask size (i.e., {}), must be equal to the number of symbols in the slot (i.e., {}).",
+                pdu.dmrs_symbol_mask.size(),
+                nof_symbols_slot);
+  srsgnb_assert(pdu.dmrs_symbol_mask.count() > 0,
+                "The number of OFDM symbols carrying DM-RS RE must be greater than zero.");
+  srsgnb_assert(
+      static_cast<unsigned>(pdu.dmrs_symbol_mask.find_lowest(true)) >= pdu.start_symbol_index,
+      "The index of the first OFDM symbol carrying DM-RS (i.e., {}) must be equal to or greater than the first symbol "
+      "allocated to transmission (i.e., {}).",
+      pdu.dmrs_symbol_mask.find_lowest(true),
+      pdu.start_symbol_index);
+  srsgnb_assert(static_cast<unsigned>(pdu.dmrs_symbol_mask.find_highest(true)) <
+                    (pdu.start_symbol_index + pdu.nof_symbols),
+                "The index of the last OFDM symbol carrying DM-RS (i.e., {}) must be less than or equal to the last "
+                "symbol allocated to transmission (i.e., {}).",
+                pdu.dmrs_symbol_mask.find_highest(true),
+                pdu.start_symbol_index + pdu.nof_symbols - 1);
+  srsgnb_assert((pdu.start_symbol_index + pdu.nof_symbols) <= nof_symbols_slot,
+                "The transmission with time allocation {}:{} exceeds the slot boundary of {} symbols.",
+                pdu.start_symbol_index,
+                pdu.nof_symbols,
+                nof_symbols_slot);
+  srsgnb_assert(pdu.freq_alloc.is_bwp_valid(pdu.bwp_start_rb, pdu.bwp_size_rb) + pdu.bwp_size_rb,
+                "Invalid BWP configuration {}:{} for the given frequency allocation {}.",
+                pdu.bwp_start_rb,
+                pdu.bwp_size_rb,
+                pdu.freq_alloc);
+  srsgnb_assert(pdu.dmrs == dmrs_type::TYPE1, "Only DM-RS Type 1 is currently supported.");
+  srsgnb_assert(pdu.freq_alloc.is_contiguous(), "Only contiguous allocation is currently supported.");
+
+  srsgnb_assert(pdu.dmrs == dmrs_type::TYPE1, "Only DM-RS Type 1 is currently supported.");
+  srsgnb_assert(
+      pdu.nof_cdm_groups_without_data <= get_max_nof_cdm_groups_without_data(dmrs_config),
+      "The number of CDM groups without data (i.e., {}) must not exceed the maximum given by the type (i.e., {}).",
+      pdu.nof_cdm_groups_without_data,
+      get_max_nof_cdm_groups_without_data(dmrs_config));
+  srsgnb_assert(!pdu.ports.empty(), "No transmit layers are active.");
+  srsgnb_assert(pdu.ports.size() == 1, "Only one layer is currently supported. {} layers requested.", pdu.ports.size());
+
+  srsgnb_assert(pdu.codewords.size() == nof_codewords,
+                "Expected {} codewords and got {} for {} layers.",
+                nof_codewords,
+                pdu.codewords.size(),
+                pdu.ports.size());
+  srsgnb_assert(pdu.tbs_lbrm_bytes > 0 && pdu.tbs_lbrm_bytes <= ldpc::MAX_CODEBLOCK_SIZE / 8,
+                "Invalid LBRM size ({} bytes). It must be non-zero, lesser than or equal to {} bytes",
+                pdu.tbs_lbrm_bytes,
+                ldpc::MAX_CODEBLOCK_SIZE / 8);
+}
+
+unsigned pdsch_processor_impl::compute_nof_data_re(const pdu_t& pdu)
 {
   // Copy reserved RE and merge DMRS pattern.
   re_pattern_list reserved_re = pdu.reserved;
@@ -118,61 +290,4 @@ void pdsch_processor_impl::put_dmrs(resource_grid_writer& grid, const pdu_t& pdu
   srsvec::copy(dmrs_config.ports, pdu.ports);
 
   dmrs->map(grid, dmrs_config);
-}
-
-void pdsch_processor_impl::process(resource_grid_writer&                                        grid,
-                                   static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-                                   const pdsch_processor::pdu_t&                                pdu)
-{
-  // Number of codewords.
-  unsigned nof_codewords = (pdu.ports.size() > 4) ? 2 : 1;
-
-  // Validate configuration.
-  srsgnb_assert(pdu.codewords.size() == nof_codewords,
-                "Expected {} codewords and got {} for {} ports",
-                nof_codewords,
-                pdu.codewords.size(),
-                pdu.ports.size());
-  srsgnb_assert(pdu.codewords.size() == data.size(),
-                "The number of codewords ({}) does not match the number of transport blocks ({})",
-                pdu.codewords.size(),
-                data.size());
-  srsgnb_assert(pdu.tbs_lbrm_bytes > 0 && pdu.tbs_lbrm_bytes <= ldpc::MAX_CODEBLOCK_SIZE / 8,
-                "Invalid LBRM size ({} bytes). It must be non-zero, lesser than or equal to {} bytes",
-                pdu.tbs_lbrm_bytes,
-                ldpc::MAX_CODEBLOCK_SIZE / 8);
-  srsgnb_assert(pdu.nof_cdm_groups_without_data >= 1 && pdu.nof_cdm_groups_without_data <= 3,
-                "Invalid number of CDM groups without data ({})",
-                pdu.nof_cdm_groups_without_data);
-
-  // The number of layers is equal to the number of ports.
-  unsigned nof_layers = pdu.ports.size();
-
-  // Calculate the number of layers the codeword 0 is mapped to. It is the number of layers divided by the number of
-  // codewords, rounding down (floor).
-  unsigned nof_layers_cw0 = nof_layers / nof_codewords;
-
-  // Calculate the number of layers the codeword 1 is mapped. It is the unused number of layers from the previous
-  // codeword.
-  unsigned nof_layers_cw1 = nof_layers - nof_layers_cw0;
-
-  // Calculate the number of resource elements to map. Common for all codewords.
-  unsigned Nre = compute_nof_data_re(pdu);
-
-  // Prepare encoded codewords.
-  static_vector<bit_buffer, pdsch_modulator::MAX_NOF_CODEWORDS> codewords;
-
-  // Encode each codeword.
-  for (unsigned codeword_id = 0; codeword_id != nof_codewords; ++codeword_id) {
-    unsigned          nof_layers_cw = (codeword_id == 0) ? nof_layers_cw0 : nof_layers_cw1;
-    const bit_buffer& codeword      = encode(data[codeword_id], codeword_id, nof_layers_cw, Nre, pdu);
-
-    codewords.emplace_back(codeword);
-  }
-
-  // Modulate codewords.
-  modulate(grid, codewords, pdu);
-
-  // Prepare DMRS configuration and generate.
-  put_dmrs(grid, pdu);
 }

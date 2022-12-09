@@ -28,7 +28,7 @@ void re_pattern::get_inclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned
       mask.size() >= rb_end, "Provided mask size ({}) is too small. The minimum is {}.", (unsigned)mask.size(), rb_end);
 
   // Skip if the symbol is not set to true.
-  if (!symbols[symbol]) {
+  if (!symbols.test(symbol)) {
     return;
   }
 
@@ -61,7 +61,7 @@ void re_pattern::get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned
       mask.size() >= rb_end, "Provided mask size (%d) is too small. The minimum is %d.", (unsigned)mask.size(), rb_end);
 
   // Skip if the symbol is not used.
-  if (!symbols[symbol]) {
+  if (!symbols.test(symbol)) {
     return;
   }
 
@@ -90,7 +90,7 @@ void re_pattern_list::merge(const re_pattern& pattern)
     }
 
     // Check if symbol mask matches.
-    bool lmatch = std::equal(pattern.symbols.begin(), pattern.symbols.end(), p.symbols.begin(), p.symbols.end());
+    bool lmatch = (pattern.symbols == p.symbols);
 
     // Check if RE mask matches.
     bool kmatch = (pattern.re_mask == p.re_mask);
@@ -109,9 +109,7 @@ void re_pattern_list::merge(const re_pattern& pattern)
 
     // If subcarriers mask matches, combine OFDM symbols mask.
     if (kmatch) {
-      for (unsigned l = 0; l != MAX_NSYMB_PER_SLOT; ++l) {
-        p.symbols[l] |= pattern.symbols[l];
-      }
+      p.symbols |= pattern.symbols;
       return;
     }
   }
@@ -157,7 +155,7 @@ unsigned re_pattern_list::get_inclusion_count(unsigned                      star
 {
   unsigned count = 0;
 
-  bounded_bitset<NRE>         base_re_mask   = ~bounded_bitset<NRE>(NRE);
+  re_prb_mask                 base_re_mask   = ~re_prb_mask();
   bounded_bitset<MAX_RB* NRE> active_re_mask = rb_mask.kronecker_product<NRE>(base_re_mask);
 
   for (unsigned symbol_idx = start_symbol; symbol_idx != start_symbol + nof_symbols; ++symbol_idx) {

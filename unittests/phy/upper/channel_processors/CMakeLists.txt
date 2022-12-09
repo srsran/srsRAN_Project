@@ -91,6 +91,17 @@ add_executable(pdsch_processor_unittest pdsch_processor_unittest.cpp)
 target_link_libraries(pdsch_processor_unittest srsgnb_channel_processors srslog)
 add_test(pdsch_processor_unittest pdsch_processor_unittest)
 
+add_executable(pdsch_processor_validator_test pdsch_processor_validator_test.cpp)
+target_link_libraries(pdsch_processor_validator_test
+        srsgnb_channel_equalizer
+        srsgnb_channel_processors
+        srsgnb_phy_support
+        srslog
+        srsgnb_upper_phy_support
+        gtest
+        gtest_main)
+add_test(pdsch_processor_validator_test pdsch_processor_validator_test)
+
 add_executable(prach_detector_unittest prach_detector_unittest.cpp)
 target_link_libraries(prach_detector_unittest srsgnb_channel_processors srsgnb_generic_funcs srslog gtest gtest_main)
 add_test(prach_detector_unittest prach_detector_unittest)

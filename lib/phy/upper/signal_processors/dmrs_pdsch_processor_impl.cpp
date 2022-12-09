@@ -79,7 +79,7 @@ void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer&           
   // Set l_prime to 1 if the symbol follows another one.
   unsigned l_prime = 0;
   if (symbol != 0) {
-    l_prime = (config.symbols_mask[symbol - 1]) ? 1 : 0;
+    l_prime = config.symbols_mask.test(symbol - 1) ? 1 : 0;
   }
 
   // For each port compute the sequence.
@@ -128,9 +128,9 @@ void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer&           
 void srsgnb::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const config_t& config)
 {
   // Resource element allocation within a resource block for PDCCH.
-  static const bounded_bitset<NRE> re_mask_type1 = {
+  static const re_prb_mask re_mask_type1 = {
       true, false, true, false, true, false, true, false, true, false, true, false};
-  static const bounded_bitset<NRE> re_mask_type2 = {
+  static const re_prb_mask re_mask_type2 = {
       true, true, false, false, false, false, true, true, false, false, false, false};
 
   // Count number of RB.
@@ -143,7 +143,7 @@ void srsgnb::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const co
   // For each symbol in the slot....
   for (unsigned symbol = 0; symbol < MAX_NSYMB_PER_SLOT; ++symbol) {
     // Skip symbol if it is not selected.
-    if (!config.symbols_mask[symbol]) {
+    if (!config.symbols_mask.test(symbol)) {
       continue;
     }
 

@@ -112,14 +112,11 @@ rb_allocation srsgnb::rb_allocation::make_custom(std::initializer_list<const uns
 
 bounded_bitset<MAX_RB> rb_allocation::get_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
-  srsgnb_assert(bwp_start_rb + bwp_size_rb <= MAX_RB,
-                "The sum of the BWP start and size ({}+{}={}) exceeds the maximum number RB ({}).",
+  srsgnb_assert(is_bwp_valid(bwp_start_rb, bwp_size_rb),
+                "Invalid BWP configuration {}:{} for a VRB mask of size {}.",
                 bwp_start_rb,
                 bwp_size_rb,
-                bwp_start_rb + bwp_size_rb,
-                MAX_RB);
-  srsgnb_assert(
-      vrb_mask.size() <= bwp_size_rb, "The VRB mask ({}) exceeds the BWP size ({}).", vrb_mask.size(), bwp_size_rb);
+                vrb_mask.size());
 
   if (vrb_mask.is_contiguous() && !vrb_to_prb_map.is_interleaved()) {
     return get_contiguous_prb_mask(bwp_start_rb, bwp_size_rb);
@@ -130,14 +127,11 @@ bounded_bitset<MAX_RB> rb_allocation::get_prb_mask(unsigned bwp_start_rb, unsign
 
 static_vector<uint16_t, MAX_RB> rb_allocation::get_prb_indices(unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
-  srsgnb_assert(bwp_start_rb + bwp_size_rb <= MAX_RB,
-                "The sum of the BWP start and size ({}+{}={}) exceeds the maximum number RB ({}).",
+  srsgnb_assert(is_bwp_valid(bwp_start_rb, bwp_size_rb),
+                "Invalid BWP configuration {}:{} for a VRB mask of size {}.",
                 bwp_start_rb,
                 bwp_size_rb,
-                bwp_start_rb + bwp_size_rb,
-                MAX_RB);
-  srsgnb_assert(
-      vrb_mask.size() <= bwp_size_rb, "The VRB mask ({}) exceeds the BWP size ({}).", vrb_mask.size(), bwp_size_rb);
+                vrb_mask.size());
 
   static_vector<uint16_t, MAX_RB> result;
   static_vector<uint16_t, MAX_RB> vrb_to_prb_indices = vrb_to_prb_map.get_allocation_indices(bwp_size_rb);

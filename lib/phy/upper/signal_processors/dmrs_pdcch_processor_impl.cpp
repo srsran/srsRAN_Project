@@ -10,6 +10,7 @@
 
 #include "dmrs_pdcch_processor_impl.h"
 #include "dmrs_helper.h"
+#include "srsgnb/phy/support/mask_types.h"
 #include "srsgnb/support/math_utils.h"
 
 using namespace srsgnb;
@@ -50,8 +51,7 @@ void dmrs_pdcch_processor_impl::map(srsgnb::resource_grid_writer&               
                                     const srsgnb::dmrs_pdcch_processor::config_t& config)
 {
   // Resource element allocation within a resource block for PDCCH.
-  static const bounded_bitset<NRE> re_mask = {
-      false, true, false, false, false, true, false, false, false, true, false, false};
+  static const re_prb_mask re_mask = {false, true, false, false, false, true, false, false, false, true, false, false};
 
   // Count number of DMRS.
   unsigned count_dmrs = config.rb_mask.count() * NOF_DMRS_PER_RB;

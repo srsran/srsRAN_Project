@@ -54,8 +54,8 @@ public:
     unsigned start_symbol_index;
     /// Time domain allocation within a slot: number of symbols (1...14).
     unsigned nof_symbols;
-    /// DMRS symbol positions as a mask.
-    std::array<bool, MAX_NSYMB_PER_SLOT> dmrs_symb_pos;
+    /// DM-RS symbol positions as a mask.
+    symbol_slot_mask dmrs_symb_pos;
     /// Indicates the DMRS configuration type.
     dmrs_type dmrs_config_type;
     /// Number of DMRS CDM groups without data.

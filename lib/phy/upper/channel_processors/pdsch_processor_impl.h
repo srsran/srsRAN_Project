@@ -21,18 +21,32 @@ class pdsch_processor_validator_impl : public pdsch_pdu_validator
 {
 public:
   // See interface for documentation.
-  bool is_valid(const pdsch_processor::pdu_t& pdu) const override { return true; }
+  bool is_valid(const pdsch_processor::pdu_t& pdu) const override;
 };
 
 /// Describes a generic PDSCH processor.
 class pdsch_processor_impl : public pdsch_processor
 {
+public:
+  /// \brief Creates a generic PDSCH processor.
+  /// \param[in] config Provides the necessary configuration.
+  pdsch_processor_impl(std::unique_ptr<pdsch_encoder>        encoder_,
+                       std::unique_ptr<pdsch_modulator>      modulator_,
+                       std::unique_ptr<dmrs_pdsch_processor> dmrs_) :
+    encoder(std::move(encoder_)), modulator(std::move(modulator_)), dmrs(std::move(dmrs_))
+  {
+    srsgnb_assert(encoder != nullptr, "Invalid encoder pointer.");
+    srsgnb_assert(modulator != nullptr, "Invalid modulator pointer.");
+    srsgnb_assert(dmrs != nullptr, "Invalid dmrs pointer.");
+  }
+
+  // See interface for documentation.
+  void process(resource_grid_writer&                                        grid,
+               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
+               const pdu_t&                                                 pdu) override;
+
 private:
-  std::unique_ptr<pdsch_encoder>                                                              encoder;
-  std::unique_ptr<pdsch_modulator>                                                            modulator;
-  std::unique_ptr<dmrs_pdsch_processor>                                                       dmrs;
-  std::array<std::array<uint8_t, MAX_CODEWORD_SIZE>, MAX_NOF_TRANSPORT_BLOCKS>                temp_codewords;
-  std::array<static_bit_buffer<pdsch_modulator::MAX_CODEWORD_SIZE>, MAX_NOF_TRANSPORT_BLOCKS> temp_packed_codewords;
+  void assert_pdu(const pdu_t& pdu) const;
 
   /// \brief Computes the number of RE used for mapping PDSCH data.
   ///
@@ -64,23 +78,11 @@ private:
   /// \param[in] pdu     Provides the PDSCH processor PDU.
   void put_dmrs(resource_grid_writer& grid, const pdu_t& pdu);
 
-public:
-  /// \brief Creates a generic PDSCH processor.
-  /// \param[in] config Provides the necessary configuration.
-  pdsch_processor_impl(std::unique_ptr<pdsch_encoder>        encoder_,
-                       std::unique_ptr<pdsch_modulator>      modulator_,
-                       std::unique_ptr<dmrs_pdsch_processor> dmrs_) :
-    encoder(std::move(encoder_)), modulator(std::move(modulator_)), dmrs(std::move(dmrs_))
-  {
-    srsgnb_assert(encoder != nullptr, "Invalid encoder pointer.");
-    srsgnb_assert(modulator != nullptr, "Invalid modulator pointer.");
-    srsgnb_assert(dmrs != nullptr, "Invalid dmrs pointer.");
-  }
-
-  // See interface for documentation.
-  void process(resource_grid_writer&                                        grid,
-               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-               const pdu_t&                                                 pdu) override;
+  std::unique_ptr<pdsch_encoder>                                                              encoder;
+  std::unique_ptr<pdsch_modulator>                                                            modulator;
+  std::unique_ptr<dmrs_pdsch_processor>                                                       dmrs;
+  std::array<std::array<uint8_t, MAX_CODEWORD_SIZE>, MAX_NOF_TRANSPORT_BLOCKS>                temp_codewords;
+  std::array<static_bit_buffer<pdsch_modulator::MAX_CODEWORD_SIZE>, MAX_NOF_TRANSPORT_BLOCKS> temp_packed_codewords;
 };
 
 } // namespace srsgnb

@@ -43,17 +43,17 @@ static std::vector<std::pair<modulation_scheme, double>> pdsch_mcs_set = {{modul
                                                                           {modulation_scheme::QAM256, 948.0 / 1024.0}};
 static unsigned                                          pdsch_rv      = 0;
 static unsigned                                          pdsch_n_id    = 0;
-static std::array<bool, MAX_NSYMB_PER_SLOT> pdsch_dmrs_symbol_mask     = {0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0};
-static dmrs_type                            pdsch_dmrs                 = dmrs_type::TYPE1;
-static unsigned                             pdsch_scrambling_id        = 0;
-static bool                                 pdsch_nscid                = false;
-static unsigned                             pdsch_nof_cdm_grps_wo_data = 2;
-static std::vector<rb_allocation>           pdsch_freq_alloc_set       = {rb_allocation::make_type1(0, 26),
+static symbol_slot_mask           pdsch_dmrs_symbol_mask               = {0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0};
+static dmrs_type                  pdsch_dmrs                           = dmrs_type::TYPE1;
+static unsigned                   pdsch_scrambling_id                  = 0;
+static bool                       pdsch_nscid                          = false;
+static unsigned                   pdsch_nof_cdm_grps_wo_data           = 2;
+static std::vector<rb_allocation> pdsch_freq_alloc_set                 = {rb_allocation::make_type1(0, 26),
                                                                           rb_allocation::make_type1(0, 52),
                                                                           rb_allocation::make_type1(0, 102),
                                                                           rb_allocation::make_type1(0, 270)};
-static unsigned                             pdsch_start_symbol         = 2;
-static unsigned                             pdsch_nof_symbols          = 12;
+static unsigned                   pdsch_start_symbol                   = 2;
+static unsigned                   pdsch_nof_symbols                    = 12;
 
 // PDCCH parameters.
 static unsigned                                              pdcch_start_symbol_index     = 0;

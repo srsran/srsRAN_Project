@@ -51,10 +51,11 @@ int main()
   pdsch_modulator_spy*      modulator_spy = modulator_factory_spy->get_entries().front();
   dmrs_pdsch_processor_spy* dmrs_spy      = dmrs_factory_spy->get_entries().front();
 
-  for (unsigned nof_layers : {1, 5, 8}) {
+  for (unsigned nof_layers : {1}) {
     for (cyclic_prefix cp : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {
-      for (dmrs_type dmrs_type_value : {dmrs_type::TYPE1, dmrs_type::TYPE2}) {
-        unsigned nof_codewords = (nof_layers > 4) ? 2 : 1;
+      for (dmrs_type dmrs_type_value : {dmrs_type::TYPE1}) {
+        unsigned nof_codewords    = (nof_layers > 4) ? 2 : 1;
+        unsigned nof_symbols_slot = get_nsymb_per_slot(cp);
 
         // Prepare PDSCH PDU.
         pdsch_processor::pdu_t pdu;
@@ -72,11 +73,11 @@ int main()
         for (unsigned layer = 0; layer != nof_layers; ++layer) {
           pdu.ports.emplace_back(layer);
         }
-        pdu.ref_point                   = dist_bool(rgen) ? pdsch_processor::pdu_t::PRB0 : pdsch_processor::pdu_t::CRB0;
-        pdu.dmrs_symbol_mask            = {};
-        pdu.dmrs_symbol_mask[2]         = static_cast<bool>(dist_bool(rgen));
-        pdu.dmrs_symbol_mask[7]         = static_cast<bool>(dist_bool(rgen));
-        pdu.dmrs_symbol_mask[11]        = static_cast<bool>(dist_bool(rgen));
+        pdu.ref_point        = dist_bool(rgen) ? pdsch_processor::pdu_t::PRB0 : pdsch_processor::pdu_t::CRB0;
+        pdu.dmrs_symbol_mask = symbol_slot_mask(nof_symbols_slot);
+        pdu.dmrs_symbol_mask.set(2, static_cast<bool>(dist_bool(rgen)));
+        pdu.dmrs_symbol_mask.set(7, static_cast<bool>(dist_bool(rgen)));
+        pdu.dmrs_symbol_mask.set(11, static_cast<bool>(dist_bool(rgen)));
         pdu.dmrs                        = dmrs_type_value;
         pdu.scrambling_id               = dist_u16(rgen);
         pdu.n_scid                      = static_cast<bool>(dist_bool(rgen));

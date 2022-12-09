@@ -70,7 +70,6 @@ void srsgnb::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu
   // This value is defined in field DL DMRS symbol position in SCF-222 v4.0 Section 3.4.3.2, in table PUSCH PDU, DMRS
   // subsection.
   static constexpr unsigned DL_DMRS_SYMBOL_POS_SIZE = 14U;
-  proc_pdu.dmrs_symbol_mask                         = bounded_bitset<MAX_NSYMB_PER_SLOT>(DL_DMRS_SYMBOL_POS_SIZE);
   for (unsigned i = 0; i != DL_DMRS_SYMBOL_POS_SIZE; ++i) {
     proc_pdu.dmrs_symbol_mask.set(i, ((static_cast<unsigned>(fapi_pdu.ul_dmrs_symb_pos >> i) & 1U) == 1U));
   }

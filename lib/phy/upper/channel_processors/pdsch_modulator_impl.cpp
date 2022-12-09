@@ -98,8 +98,7 @@ void pdsch_modulator_impl::map_to_contiguous_prb(resource_grid_writer&          
   // Get the PRB allocation mask.
   const bounded_bitset<MAX_RB> prb_allocation_mask =
       config.freq_allocation.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb);
-  const bounded_bitset<MAX_RB* NRE> re_allocation_mask =
-      prb_allocation_mask.kronecker_product<NRE>(~bounded_bitset<NRE>(NRE));
+  const bounded_bitset<MAX_RB* NRE> re_allocation_mask = prb_allocation_mask.kronecker_product<NRE>(~re_prb_mask());
 
   // First symbol used in this transmission.
   unsigned start_symbol_index = config.start_symbol_index;
@@ -187,7 +186,7 @@ void pdsch_modulator_impl::map_to_prb_other(resource_grid_writer&               
 
     // Fill symbol mask.
     symbol_mask = config.freq_allocation.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb)
-                      .kronecker_product<NRE>(~bounded_bitset<NRE>(NRE));
+                      .kronecker_product<NRE>(~re_prb_mask());
 
     // Exclude DM-RS.
     dmrs_pattern.get_exclusion_mask(symbol_mask, symbol_idx);

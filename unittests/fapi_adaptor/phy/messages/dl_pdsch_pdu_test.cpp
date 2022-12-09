@@ -259,7 +259,7 @@ static void pdsch_conversion_test()
                         TESTASSERT_EQ(nid_pdsch, proc_pdu.n_id);
 
                         for (unsigned i = 0; i != 14; ++i) {
-                          TESTASSERT_EQ(((dl_dmrs_symbol >> i) & 1U) == 1U, proc_pdu.dmrs_symbol_mask[i]);
+                          TESTASSERT_EQ(((dl_dmrs_symbol >> i) & 1U) == 1U, proc_pdu.dmrs_symbol_mask.test(i));
                         }
 
                         TESTASSERT_EQ(static_cast<unsigned>(ref_point), static_cast<unsigned>(proc_pdu.ref_point));

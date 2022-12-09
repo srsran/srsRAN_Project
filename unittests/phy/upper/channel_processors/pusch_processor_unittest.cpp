@@ -149,7 +149,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   pdu.start_symbol_index          = start_symbol_index_dist(rgen);
   pdu.nof_symbols                 = nof_symbols_slot - pdu.start_symbol_index;
   pdu.tbs_lbrm_bytes              = tbs_lbrm_bytes_dist(rgen);
-  pdu.dmrs_symbol_mask            = bounded_bitset<MAX_NSYMB_PER_SLOT>(nof_symbols_slot);
+  pdu.dmrs_symbol_mask            = symbol_slot_mask(nof_symbols_slot);
 
   for (unsigned i_symbol = pdu.start_symbol_index, i_symbol_end = pdu.start_symbol_index + pdu.nof_symbols;
        i_symbol != i_symbol_end;

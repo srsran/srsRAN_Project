@@ -96,7 +96,7 @@ public:
     /// Port indexes the PUSCH reception is mapped to.
     static_vector<uint8_t, MAX_PORTS> rx_ports;
     /// Indicates which symbol in the slot transmit DMRS.
-    bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask;
+    symbol_slot_mask dmrs_symbol_mask;
     /// Indicates the DMRS type.
     dmrs_type dmrs;
     /// \brief Parameter \f$N^{n_{SCID}}_{ID}\f$ TS 38.211 section 6.4.1.1.1.
