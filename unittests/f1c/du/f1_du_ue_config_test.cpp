@@ -81,7 +81,10 @@ TEST_F(f1ap_du_ue_management_tester, f1ap_created_bearers_forward_messages_to_no
   // Send DL data through created F1-U bearer.
   byte_buffer dl_drb_buf{test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))};
   ASSERT_TRUE(this->drb1_tx_pdu_notifier.last_pdu.empty());
-  resp.f1u_bearers_added[0].bearer->get_rx_pdu_handler().handle_pdu(dl_drb_buf.copy());
+  nru_dl_message pdu = {};
+  pdu.t_pdu          = dl_drb_buf.copy();
+  pdu.pdcp_count     = 7;
+  resp.f1u_bearers_added[0].bearer->get_rx_pdu_handler().handle_pdu(std::move(pdu));
   ASSERT_FALSE(this->drb1_tx_pdu_notifier.last_pdu.empty());
   // TODO: Enable this check once F1-U bearer is implemented.
   //  ASSERT_EQ(dl_drb_buf, this->drb1_tx_pdu_notifier.last_pdu);

@@ -14,7 +14,7 @@
 using namespace srsgnb;
 using namespace srs_cu_up;
 
-void f1u_bearer_impl::handle_pdu(byte_buffer pdu)
+void f1u_bearer_impl::handle_pdu(nru_ul_message msg)
 {
   // TODO.
   fmt::print("F1-U bearer with DRB id={} received PDU!", drb_id);

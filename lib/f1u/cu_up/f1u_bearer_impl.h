@@ -39,7 +39,7 @@ public:
   virtual f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
   virtual f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
 
-  void handle_pdu(byte_buffer pdu) override;
+  void handle_pdu(nru_ul_message msg) override;
   void handle_sdu(byte_buffer sdu, uint32_t count) override;
   void discard_sdu(uint32_t count) override;
 

@@ -19,17 +19,17 @@ f1u_bearer_impl::f1u_bearer_impl(drb_id_t drb_id_, f1u_rx_sdu_notifier& rx_sdu_n
 {
 }
 
-void f1u_bearer_impl::handle_sdu(byte_buffer_slice_chain pdu)
+void f1u_bearer_impl::handle_sdu(byte_buffer_slice_chain sdu)
 {
   // TODO.
   fmt::print("F1-U bearer with DRB id={} received SDU!\n", drb_id);
 }
 
-void f1u_bearer_impl::handle_pdu(byte_buffer pdu)
+void f1u_bearer_impl::handle_pdu(nru_dl_message msg)
 {
   // TODO.
   fmt::print("F1-U bearer with DRB id={} received PDU!\n", drb_id);
-  rx_sdu_notifier.on_new_sdu(std::move(pdu), 0);
+  rx_sdu_notifier.on_new_sdu(std::move(msg.t_pdu), 0);
 }
 
 void f1u_bearer_impl::handle_delivered_sdu(uint32_t count)

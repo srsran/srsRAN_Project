@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/f1u/common/nru_message.h"
 
 namespace srsgnb {
 namespace srs_du {
@@ -23,7 +23,7 @@ class f1u_rx_pdu_handler
 public:
   virtual ~f1u_rx_pdu_handler() = default;
 
-  virtual void handle_pdu(byte_buffer pdu) = 0;
+  virtual void handle_pdu(nru_dl_message msg) = 0;
 };
 
 } // namespace srs_du
