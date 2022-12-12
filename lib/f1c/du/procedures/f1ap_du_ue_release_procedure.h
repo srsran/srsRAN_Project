@@ -33,7 +33,7 @@ public:
 
       if (srb != nullptr) {
         byte_buffer sdu{msg->rrc_container.value};
-        srb->handle_sdu(std::move(sdu));
+        srb->handle_pdu(std::move(sdu));
 
         // TODO: Await SDU to be transmitted over-the-air.
 

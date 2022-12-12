@@ -18,19 +18,19 @@ f1c_srb0_du_bearer::f1c_srb0_du_bearer(f1ap_ue_context&           ue_ctxt_,
                                        const asn1::f1ap::nrcgi_s& nr_cgi_,
                                        const byte_buffer&         du_cu_rrc_container_,
                                        f1c_message_notifier&      f1c_notifier_,
-                                       f1c_tx_pdu_notifier&       f1c_pdu_notifier_,
+                                       f1c_rx_sdu_notifier&       f1c_rx_sdu_notifier_,
                                        f1ap_event_manager&        ev_manager_) :
   ue_ctxt(ue_ctxt_),
   nr_cgi(nr_cgi_),
   du_cu_rrc_container(du_cu_rrc_container_.copy()),
   f1c_notifier(f1c_notifier_),
-  pdu_notifier(f1c_pdu_notifier_),
+  sdu_notifier(f1c_rx_sdu_notifier_),
   ev_manager(ev_manager_),
   logger(srslog::fetch_basic_logger("F1AP-DU"))
 {
 }
 
-void f1c_srb0_du_bearer::handle_pdu(byte_buffer_slice_chain pdu)
+void f1c_srb0_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
 {
   protocol_transaction<f1ap_outcome> transaction = ev_manager.transactions.create_transaction();
 
@@ -41,8 +41,8 @@ void f1c_srb0_du_bearer::handle_pdu(byte_buffer_slice_chain pdu)
   init_msg->gnb_du_ue_f1_ap_id->value             = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.gnb_du_ue_f1ap_id);
   init_msg->nrcgi.value                           = nr_cgi;
   init_msg->c_rnti->value                         = ue_ctxt.rnti;
-  init_msg->rrc_container.value.resize(pdu.length());
-  std::copy(pdu.begin(), pdu.end(), init_msg->rrc_container->begin());
+  init_msg->rrc_container.value.resize(sdu.length());
+  std::copy(sdu.begin(), sdu.end(), init_msg->rrc_container->begin());
   init_msg->duto_currc_container_present = true;
   init_msg->duto_currc_container->resize(du_cu_rrc_container.length());
   std::copy(du_cu_rrc_container.begin(), du_cu_rrc_container.end(), init_msg->duto_currc_container->begin());
@@ -62,9 +62,9 @@ void f1c_srb0_du_bearer::handle_pdu(byte_buffer_slice_chain pdu)
                "Initial UL RRC Message Transfer.");
 }
 
-void f1c_srb0_du_bearer::handle_sdu(byte_buffer sdu)
+void f1c_srb0_du_bearer::handle_pdu(byte_buffer pdu)
 {
-  pdu_notifier.on_tx_pdu(std::move(sdu));
+  sdu_notifier.on_new_sdu(std::move(pdu));
 
   log_ue_event(
       logger, ue_event_prefix{"DL", ue_ctxt.ue_index}.set_channel("SRB0") | ue_ctxt.rnti, "DL RRC Message Transfer.");
@@ -73,16 +73,16 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer sdu)
 f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&      ue_ctxt_,
                                                  srb_id_t              srb_id_,
                                                  f1c_message_notifier& f1c_notifier_,
-                                                 f1c_tx_pdu_notifier&  f1c_pdu_notifier_) :
+                                                 f1c_rx_sdu_notifier&  f1c_sdu_notifier_) :
   ue_ctxt(ue_ctxt_),
   srb_id(srb_id_),
   f1c_notifier(f1c_notifier_),
-  pdu_notifier(f1c_pdu_notifier_),
+  sdu_notifier(f1c_sdu_notifier_),
   logger(srslog::fetch_basic_logger("F1AP-DU"))
 {
 }
 
-void f1c_other_srb_du_bearer::handle_pdu(byte_buffer_slice_chain pdu)
+void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
 {
   f1c_message msg;
 
@@ -92,8 +92,8 @@ void f1c_other_srb_du_bearer::handle_pdu(byte_buffer_slice_chain pdu)
   ul_msg->gnb_du_ue_f1_ap_id->value        = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.gnb_du_ue_f1ap_id);
   ul_msg->gnb_cu_ue_f1_ap_id->value        = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.gnb_cu_ue_f1ap_id);
   ul_msg->srbid->value                     = srb_id_to_uint(srb_id);
-  ul_msg->rrc_container->resize(pdu.length());
-  std::copy(pdu.begin(), pdu.end(), ul_msg->rrc_container->begin());
+  ul_msg->rrc_container->resize(sdu.length());
+  std::copy(sdu.begin(), sdu.end(), ul_msg->rrc_container->begin());
   ul_msg->sel_plmnid_present              = false;
   ul_msg->new_g_nb_du_ue_f1_ap_id_present = false;
 
@@ -104,9 +104,9 @@ void f1c_other_srb_du_bearer::handle_pdu(byte_buffer_slice_chain pdu)
                "UL RRC Message Transfer.");
 }
 
-void f1c_other_srb_du_bearer::handle_sdu(srsgnb::byte_buffer sdu)
+void f1c_other_srb_du_bearer::handle_pdu(srsgnb::byte_buffer sdu)
 {
-  pdu_notifier.on_tx_pdu(std::move(sdu));
+  sdu_notifier.on_new_sdu(std::move(sdu));
 
   log_ue_event(logger,
                ue_event_prefix{"DL", ue_ctxt.ue_index}.set_channel(srb_id_to_string(srb_id)) | ue_ctxt.rnti,

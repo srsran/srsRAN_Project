@@ -122,12 +122,12 @@ asn1::f1ap::drbs_to_be_setup_mod_item_s generate_drb_am_mod_item(drb_id_t drbid)
 /// \brief Generate an F1AP UE Context Modification Request message with specified list of DRBs.
 f1c_message generate_f1_ue_context_modification_request(const std::initializer_list<drb_id_t> drbs_to_add);
 
-class dummy_f1c_tx_pdu_notifier : public f1c_tx_pdu_notifier
+class dummy_f1c_rx_sdu_notifier : public f1c_rx_sdu_notifier
 {
 public:
   byte_buffer last_pdu;
 
-  void on_tx_pdu(byte_buffer pdu) override { last_pdu = std::move(pdu); }
+  void on_new_sdu(byte_buffer pdu) override { last_pdu = std::move(pdu); }
 };
 
 class dummy_f1u_rx_sdu_notifier : public f1u_rx_sdu_notifier
@@ -152,7 +152,7 @@ class f1ap_du_test : public ::testing::Test
 protected:
   struct f1c_test_bearer {
     srb_id_t                  srb_id = srb_id_t::nulltype;
-    dummy_f1c_tx_pdu_notifier tx_pdu_notifier;
+    dummy_f1c_rx_sdu_notifier rx_sdu_notifier;
     f1c_bearer*               bearer = nullptr;
   };
   struct f1u_test_bearer {

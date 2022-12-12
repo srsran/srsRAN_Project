@@ -15,13 +15,14 @@
 namespace srsgnb {
 namespace srs_du {
 
-/// \brief Interface used by F1 to push PDUs to transmit over-the-air to lower layers.
-class f1c_tx_pdu_notifier
+/// \brief This interface represents the data exit point of the receiving side of a F1-C bearer of the DU.
+/// The F1AP will push F1-C SDUs (e.g. PDCP PDUs/RLC SDUs) to the lower layer (e.g. RLC) using this interface.
+class f1c_rx_sdu_notifier
 {
 public:
-  virtual ~f1c_tx_pdu_notifier() = default;
+  virtual ~f1c_rx_sdu_notifier() = default;
 
-  virtual void on_tx_pdu(byte_buffer pdu) = 0;
+  virtual void on_new_sdu(byte_buffer pdu) = 0;
 };
 
 } // namespace srs_du

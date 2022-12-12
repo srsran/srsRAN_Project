@@ -170,7 +170,7 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_tr
   byte_buffer sdu;
   sdu.append(msg->rrc_container.value);
   ue_exec_mapper.executor(ue->context.ue_index).execute([sdu = std::move(sdu), srb_bearer]() mutable {
-    srb_bearer->handle_sdu(std::move(sdu));
+    srb_bearer->handle_pdu(std::move(sdu));
   });
 }
 

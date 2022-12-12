@@ -71,7 +71,7 @@ void f1ap_du_ue_context_setup_procedure::send_rrc_container()
   if (rrc_container.empty()) {
     return;
   }
-  ue.bearers.find_srb(srb_id_t::srb1)->handle_sdu(std::move(rrc_container));
+  ue.bearers.find_srb(srb_id_t::srb1)->handle_pdu(std::move(rrc_container));
 }
 
 void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()

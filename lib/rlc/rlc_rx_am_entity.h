@@ -233,7 +233,7 @@ private:
 
   /// \brief on_expired_reassembly_timer Handler for expired reassembly timer
   ///
-  /// Note: This function shall be executed by the same executor that calls handle_pdu(), i.e. the ue_executor,
+  /// Note: This function shall be executed by the same executor that calls handle_sdu(), i.e. the ue_executor,
   /// in order to avoid incidential blocking of those critical paths.
   ///
   /// \param timeout_id The timer ID

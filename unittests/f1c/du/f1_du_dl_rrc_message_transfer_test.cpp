@@ -20,14 +20,14 @@ TEST_F(f1ap_du_test, when_dl_rrc_message_transfer_is_received_lower_layer_srb_no
   // Run Test Preamble.
   run_f1_setup_procedure();
   ue_test_context* ue = run_f1_ue_create(to_du_ue_index(0));
-  ASSERT_TRUE(ue->f1c_bearers[1].tx_pdu_notifier.last_pdu.empty());
+  ASSERT_TRUE(ue->f1c_bearers[1].rx_sdu_notifier.last_pdu.empty());
 
   // Test section
   byte_buffer test_rrc_msg = {0x1, 0x2, 0x3};
   f1c_message msg          = generate_f1_dl_rrc_message_transfer(srb_id_t::srb1, test_rrc_msg);
   f1ap->handle_message(msg);
-  ASSERT_FALSE(ue->f1c_bearers[1].tx_pdu_notifier.last_pdu.empty());
-  ASSERT_EQ(ue->f1c_bearers[1].tx_pdu_notifier.last_pdu, test_rrc_msg);
+  ASSERT_FALSE(ue->f1c_bearers[1].rx_sdu_notifier.last_pdu.empty());
+  ASSERT_EQ(ue->f1c_bearers[1].rx_sdu_notifier.last_pdu, test_rrc_msg);
 }
 
 TEST_F(f1ap_du_test, when_dl_rrc_message_transfer_is_received_gnb_cu_ue_f1ap_id_is_updated)
@@ -35,7 +35,7 @@ TEST_F(f1ap_du_test, when_dl_rrc_message_transfer_is_received_gnb_cu_ue_f1ap_id_
   // Run Test Preamble.
   run_f1_setup_procedure();
   ue_test_context* ue = run_f1_ue_create(to_du_ue_index(0));
-  ASSERT_TRUE(ue->f1c_bearers[1].tx_pdu_notifier.last_pdu.empty());
+  ASSERT_TRUE(ue->f1c_bearers[1].rx_sdu_notifier.last_pdu.empty());
 
   // Test Section.
   byte_buffer test_rrc_msg = {0x1, 0x2, 0x3};
@@ -43,7 +43,7 @@ TEST_F(f1ap_du_test, when_dl_rrc_message_transfer_is_received_gnb_cu_ue_f1ap_id_
   msg.pdu.init_msg().value.dlrrc_msg_transfer()->gnb_cu_ue_f1_ap_id->value = 5;
   // The DL RRC Message Transfer should update the gNB-CU UE F1AP ID.
   f1ap->handle_message(msg);
-  test_ues[0].f1c_bearers[1].bearer->handle_pdu(byte_buffer_slice_chain{test_rrc_msg.copy()});
+  test_ues[0].f1c_bearers[1].bearer->handle_sdu(byte_buffer_slice_chain{test_rrc_msg.copy()});
   ASSERT_EQ(msg_notifier.last_f1c_msg.pdu.init_msg().value.ulrrc_msg_transfer()->gnb_cu_ue_f1_ap_id->value,
             msg.pdu.init_msg().value.dlrrc_msg_transfer()->gnb_cu_ue_f1_ap_id->value)
       << "Invalid gNB-CU UE F1AP ID";

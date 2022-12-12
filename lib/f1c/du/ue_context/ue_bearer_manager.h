@@ -14,7 +14,7 @@
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/f1c/common/f1c_common.h"
 #include "srsgnb/f1c/du/f1c_bearer.h"
-#include "srsgnb/f1c/du/f1c_tx_pdu_notifier.h"
+#include "srsgnb/f1c/du/f1c_rx_sdu_notifier.h"
 #include "srsgnb/f1u/du/f1u_bearer.h"
 #include "srsgnb/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsgnb/ran/lcid.h"
@@ -32,14 +32,14 @@ public:
   {
   }
 
-  void add_srb0_f1c_bearer(f1c_tx_pdu_notifier&       f1_tx_pdu_notif,
+  void add_srb0_f1c_bearer(f1c_rx_sdu_notifier&       f1c_rx_sdu_notif,
                            const asn1::f1ap::nrcgi_s& pcell_cgi,
                            const byte_buffer&         du_cu_rrc_container,
                            f1ap_event_manager&        ev_mng);
 
-  void add_f1c_bearer(srb_id_t srb_id, f1c_tx_pdu_notifier& f1_tx_pdu_notif);
+  void add_f1c_bearer(srb_id_t srb_id, f1c_rx_sdu_notifier& rx_sdu_notif);
 
-  void add_f1u_bearer(drb_id_t drb_id, f1u_rx_sdu_notifier& f1u_rx_sdu_notif);
+  void add_f1u_bearer(drb_id_t drb_id, f1u_rx_sdu_notifier& rx_sdu_notif);
 
   f1c_bearer* find_srb(srb_id_t srb_id)
   {

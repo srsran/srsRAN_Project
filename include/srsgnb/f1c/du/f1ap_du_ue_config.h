@@ -13,7 +13,7 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/f1c/du/f1c_bearer.h"
-#include "srsgnb/f1c/du/f1c_tx_pdu_notifier.h"
+#include "srsgnb/f1c/du/f1c_rx_sdu_notifier.h"
 #include "srsgnb/f1u/du/f1u_bearer.h"
 #include "srsgnb/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsgnb/ran/du_types.h"
@@ -24,13 +24,13 @@
 namespace srsgnb {
 namespace srs_du {
 
-/// \brief F1c bearer to Add or Modify in UE F1 context.
+/// \brief F1-C bearer to Add or Modify in UE F1 context.
 struct f1c_bearer_to_addmod {
   srb_id_t             srb_id;
-  f1c_tx_pdu_notifier* tx_pdu_notif;
+  f1c_rx_sdu_notifier* rx_sdu_notifier;
 };
 
-/// \brief F1u bearer to Add or Modify in UE F1 context.
+/// \brief F1-U bearer to Add or Modify in UE F1 context.
 struct f1u_bearer_to_addmod {
   drb_id_t             drb_id;
   f1u_rx_sdu_notifier* rx_sdu_notifier;

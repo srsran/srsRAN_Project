@@ -10,19 +10,19 @@
 
 #pragma once
 
-#include "srsgnb/f1c/du/f1c_tx_pdu_notifier.h"
+#include "srsgnb/f1c/du/f1c_rx_sdu_notifier.h"
 #include "srsgnb/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsgnb/rlc/rlc_tx.h"
 
 namespace srsgnb {
 namespace srs_du {
 
-class f1c_tx_rlc_pdu_adapter final : public f1c_tx_pdu_notifier
+class f1c_tx_rlc_pdu_adapter final : public f1c_rx_sdu_notifier
 {
 public:
   void connect(rlc_tx_upper_layer_data_interface& rlc_tx_) { rlc_tx = &rlc_tx_; }
 
-  void on_tx_pdu(byte_buffer pdu) override
+  void on_new_sdu(byte_buffer pdu) override
   {
     srsgnb_assert(rlc_tx != nullptr, "MAC Tx PDU notifier is disconnected");
     unsigned pdcp_count = 0; // TODO: Remove count.

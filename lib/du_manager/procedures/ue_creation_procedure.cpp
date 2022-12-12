@@ -173,12 +173,12 @@ void ue_creation_procedure::create_f1_ue()
   f1_msg.f1c_bearers_to_add.resize(2);
 
   // Create SRB0 and SRB1.
-  du_bearer& srb0                           = ue_ctx->bearers[LCID_SRB0];
-  f1_msg.f1c_bearers_to_add[0].srb_id       = srb_id_t::srb0;
-  f1_msg.f1c_bearers_to_add[0].tx_pdu_notif = &srb0.bearer_connector.f1c_tx_pdu_notif;
-  du_bearer& srb1                           = ue_ctx->bearers[LCID_SRB1];
-  f1_msg.f1c_bearers_to_add[1].srb_id       = srb_id_t::srb1;
-  f1_msg.f1c_bearers_to_add[1].tx_pdu_notif = &srb1.bearer_connector.f1c_tx_pdu_notif;
+  du_bearer& srb0                              = ue_ctx->bearers[LCID_SRB0];
+  f1_msg.f1c_bearers_to_add[0].srb_id          = srb_id_t::srb0;
+  f1_msg.f1c_bearers_to_add[0].rx_sdu_notifier = &srb0.bearer_connector.f1c_tx_pdu_notif;
+  du_bearer& srb1                              = ue_ctx->bearers[LCID_SRB1];
+  f1_msg.f1c_bearers_to_add[1].srb_id          = srb_id_t::srb1;
+  f1_msg.f1c_bearers_to_add[1].rx_sdu_notifier = &srb1.bearer_connector.f1c_tx_pdu_notif;
 
   // Pack SRB1 configuration that is going to be passed in the F1AP DU-to-CU-RRC-Container IE to the CU as per TS38.473,
   // Section 8.4.1.2.

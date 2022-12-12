@@ -88,7 +88,7 @@ TEST_F(f1ap_du_test, when_f1ap_ue_context_setup_request_is_received_the_rrc_cont
   f1ap->handle_message(msg);
 
   // F1AP sends RRC Container present in UE CONTEXT SETUP REQUEST via SRB1.
-  ASSERT_EQ(test_ues[ue_index].f1c_bearers[1].tx_pdu_notifier.last_pdu,
+  ASSERT_EQ(test_ues[ue_index].f1c_bearers[1].rx_sdu_notifier.last_pdu,
             msg.pdu.init_msg().value.ue_context_setup_request()->rrc_container.value);
 }
 
@@ -104,7 +104,7 @@ TEST_F(f1ap_du_test, when_f1ap_ue_context_setup_request_is_received_new_srbs_bec
   ASSERT_EQ(this->f1c_du_cfg_handler.last_ue_cfg_response->f1c_bearers_added.size(), 1);
   f1c_bearer* srb2 = this->f1c_du_cfg_handler.last_ue_cfg_response->f1c_bearers_added[0].bearer;
   byte_buffer ul_rrc_msg{test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))};
-  srb2->handle_pdu(byte_buffer_slice_chain{ul_rrc_msg.copy()});
+  srb2->handle_sdu(byte_buffer_slice_chain{ul_rrc_msg.copy()});
   ASSERT_EQ(this->msg_notifier.last_f1c_msg.pdu.type().value, f1_ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(this->msg_notifier.last_f1c_msg.pdu.init_msg().value.type().value,
             f1_ap_elem_procs_o::init_msg_c::types_opts::ulrrc_msg_transfer);
