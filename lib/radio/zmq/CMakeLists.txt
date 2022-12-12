@@ -7,6 +7,7 @@
 #
 
 set(SOURCES_ZMQ
+        radio_config_zmq_validator.cpp
         radio_factory_zmq_impl.cpp
         radio_session_zmq_impl.cpp
         radio_zmq_rx_channel.cpp

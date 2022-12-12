@@ -193,7 +193,8 @@ static std::vector<std::string> extract_zmq_ports(const std::string& driver_args
   return ports;
 }
 
-radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig& config)
+radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig&                  config,
+                                                         const radio_configuration::validator& validator)
 {
   radio_configuration::radio out_cfg;
 
@@ -248,7 +249,7 @@ radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig& co
     out_cfg.rx_streams.emplace_back(rx_stream_config);
   }
 
-  if (!radio_configuration::is_valid_radio_config(out_cfg)) {
+  if (!validator.is_configuration_valid(out_cfg)) {
     srsgnb_terminate("Invalid radio configuration. Exiting.");
   }
 

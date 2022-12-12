@@ -40,7 +40,8 @@ std::vector<upper_phy_config> generate_du_low_config(const gnb_appconfig& config
 /// Converts and returns the given gnb application configuration to a lower PHY configuration.
 lower_phy_configuration generate_ru_config(const gnb_appconfig& config);
 
-/// Converts and returns the given gnb application configuration to a radio configuration.
-radio_configuration::radio generate_radio_config(const gnb_appconfig& config);
+/// Converts and returns the given gnb application configuration to a radio configuration and validates it.
+radio_configuration::radio generate_radio_config(const gnb_appconfig&                  config,
+                                                 const radio_configuration::validator& validator);
 
 } // namespace srsgnb

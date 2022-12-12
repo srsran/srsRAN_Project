@@ -20,6 +20,9 @@ namespace srsgnb {
 class radio_factory : public radio_base
 {
 public:
+  /// Returns a reference to .
+  virtual const radio_configuration::validator& get_configuration_validator() = 0;
+
   /// \brief Creates a new radio session with the given configuration parameters.
   /// \param[in] config Provides the configuration parameters.
   /// \param[in] task_executor Provides a task executor for executing asynchronous tasks.

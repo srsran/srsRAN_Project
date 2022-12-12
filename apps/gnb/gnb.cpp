@@ -214,7 +214,7 @@ build_radio(task_executor& executor, radio_notification_handler& radio_handler, 
   report_fatal_error_if_not(factory, "Invalid radio factory.");
 
   // Create radio configuration. Assume 1 sector per stream.
-  radio_configuration::radio radio_config = generate_radio_config(config);
+  radio_configuration::radio radio_config = generate_radio_config(config, factory->get_configuration_validator());
   return factory->create(radio_config, executor, radio_handler);
 }
 

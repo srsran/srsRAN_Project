@@ -104,12 +104,16 @@ struct radio {
   std::string log_level;
 };
 
-/// Returns true if the given radio configuration is valid, otherwise false.
-inline bool is_valid_radio_config(const radio& config)
+/// Interface for validating a given radio configuration.
+class validator
 {
-  // :TODO: Implement me!
-  return true;
-}
+public:
+  /// Default destructor.
+  virtual ~validator() = default;
+
+  /// Returns true if the given radio configuration is valid, otherwise false.
+  virtual bool is_configuration_valid(const radio& config) const = 0;
+};
 
 } // namespace radio_configuration
 } // namespace srsgnb

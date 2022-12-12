@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "radio_config_zmq_validator.h"
 #include "srsgnb/radio/radio_factory.h"
 
 namespace srsgnb {
@@ -21,10 +22,15 @@ public:
   /// Default constructor.
   radio_factory_zmq_impl() = default;
 
+  const radio_configuration::validator& get_configuration_validator() override;
+
   // See interface for documentation.
   std::unique_ptr<radio_session> create(const radio_configuration::radio& config,
                                         task_executor&                    async_task_executor,
                                         radio_notification_handler&       notifier) override;
+
+private:
+  static radio_config_zmq_config_validator config_validator;
 };
 
 } // namespace srsgnb

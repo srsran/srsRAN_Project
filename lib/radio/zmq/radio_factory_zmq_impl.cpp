@@ -9,6 +9,7 @@
  */
 
 #include "radio_factory_zmq_impl.h"
+#include "radio_config_zmq_validator.h"
 #include "radio_session_zmq_impl.h"
 
 using namespace srsgnb;
@@ -28,4 +29,11 @@ std::unique_ptr<radio_session> radio_factory_zmq_impl::create(const radio_config
 
   // Otherwise, return the instance.
   return session;
+}
+
+radio_config_zmq_config_validator srsgnb::radio_factory_zmq_impl::config_validator;
+
+const radio_configuration::validator& radio_factory_zmq_impl::get_configuration_validator()
+{
+  return config_validator;
 }

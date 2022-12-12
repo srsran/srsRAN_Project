@@ -607,3 +607,10 @@ std::unique_ptr<radio_session> radio_factory_uhd_impl::create(const radio_config
 
   return std::move(device);
 }
+
+radio_config_uhd_config_validator srsgnb::radio_factory_uhd_impl::config_validator;
+
+const radio_configuration::validator& radio_factory_uhd_impl::get_configuration_validator()
+{
+  return config_validator;
+}
