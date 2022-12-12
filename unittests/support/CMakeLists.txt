@@ -61,3 +61,7 @@ add_test(ring_buffer_pool_test ring_buffer_pool_test)
 add_executable(fixed_size_memory_pool_test fixed_size_memory_pool_test.cpp)
 target_link_libraries(fixed_size_memory_pool_test srsgnb_support gtest gtest_main)
 add_test(fixed_size_memory_pool_test fixed_size_memory_pool_test)
+
+add_executable(units_test units_test.cpp)
+target_link_libraries(units_test srslog srsgnb_support gtest gtest_main)
+add_test(units_test units_test)
