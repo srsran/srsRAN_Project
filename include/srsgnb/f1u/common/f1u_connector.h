@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/f1u/common/f1u_local_bearer_adapter.h"
 #include "srsgnb/f1u/cu_up/f1u_rx_pdu_handler.h"
 #include "srsgnb/f1u/cu_up/f1u_tx_pdu_notifier.h"
 #include "srsgnb/f1u/du/f1u_rx_pdu_handler.h"
@@ -53,7 +54,7 @@ public:
   f1u_cu_up_connector& operator=(const f1u_cu_up_connector&&) = delete;
 
   virtual void
-  attach_cu_bearer(uint32_t dl_teid, srs_cu_up::f1u_tx_pdu_notifier& cu_tx, srs_cu_up::f1u_rx_pdu_handler& cu_rx) = 0;
+  attach_cu_bearer(uint32_t dl_teid, f1u_dl_local_adapter& cu_tx, srs_cu_up::f1u_rx_pdu_handler& cu_rx) = 0;
 };
 
 /// TODO write docs.

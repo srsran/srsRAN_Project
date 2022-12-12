@@ -9,10 +9,21 @@
  */
 
 #include "srsgnb/f1u/common/f1u_connector_factory.h"
+#include "srsgnb/f1u/common/f1u_local_bearer_adapter.h"
 #include "srsgnb/srslog/srslog.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
+
+// dummy DU RX bearer interface
+struct dummy_f1u_cu_up_rx_pdu_handler final : public srs_cu_up::f1u_rx_pdu_handler {
+  void handle_pdu(nru_ul_message msg) override {}
+};
+
+// dummy DU RX bearer interface
+struct dummy_f1u_du_rx_pdu_handler final : public srs_du::f1u_rx_pdu_handler {
+  void handle_pdu(nru_dl_message pdu_) override {}
+};
 
 /// Fixture class for F1-U connector tests.
 /// It requires TEST_F() to create/spawn tests
@@ -28,9 +39,6 @@ protected:
     // init logger
     f1u_logger.set_level(srslog::basic_levels::debug);
     f1u_logger.set_hex_dump_max_size(100);
-
-    f1u_connector_creation_message msg = {};
-    f1u_conn                           = create_f1u_connector(msg);
   }
 
   void TearDown() override
@@ -44,7 +52,10 @@ protected:
   void init()
   {
     logger.info("Creating F1-U connector");
-    // Create test frame
+
+    // create f1-u connector
+    f1u_connector_creation_message msg = {};
+    f1u_conn                           = create_f1u_connector(msg);
   }
 
   std::unique_ptr<f1u_connector> f1u_conn;
@@ -57,6 +68,24 @@ TEST_F(f1u_connector_test, create_new_connector)
 {
   init();
   EXPECT_NE(f1u_conn, nullptr);
+  EXPECT_NE(f1u_conn->get_f1u_du_connector(), nullptr);
+  EXPECT_NE(f1u_conn->get_f1u_cu_up_connector(), nullptr);
+}
+
+/// Test attaching F1-U bearer at CU-UP and DU
+TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
+{
+  init();
+  f1u_cu_up_connector* cu_conn = f1u_conn->get_f1u_cu_up_connector();
+  f1u_du_connector*    du_conn = f1u_conn->get_f1u_du_connector();
+  // CU TX notifier adapter and RX interface
+  f1u_dl_local_adapter           cu_tx;
+  dummy_f1u_cu_up_rx_pdu_handler cu_rx;
+  cu_conn->attach_cu_bearer(1, cu_tx, cu_rx);
+
+  f1u_ul_local_adapter        du_tx;
+  dummy_f1u_du_rx_pdu_handler du_rx;
+  du_conn->attach_du_bearer(1, 2, du_tx, du_rx);
 }
 
 int main(int argc, char** argv)
