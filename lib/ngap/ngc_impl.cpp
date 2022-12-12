@@ -250,11 +250,10 @@ void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_s
     ue->set_aggregate_maximum_bit_rate_dl(request->ue_aggregate_maximum_bit_rate.value.ueaggregate_maximum_bit_rate_dl);
   }
 
-  // Convert ASN1 to common type
   pdu_session_resource_setup_message msg;
-  pdu_session_resource_setup_list_su_req_to_cu_cp_type(msg.pdu_session_res_setup_list,
-                                                       request->pdu_session_res_setup_list_su_req.value);
-
+  for (auto pdu_session_res_item : request->pdu_session_res_setup_list_su_req.value) {
+    msg.pdu_session_res_setup_items.push_back(pdu_session_res_item);
+  }
   msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
 
   // start procedure

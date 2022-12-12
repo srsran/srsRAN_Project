@@ -106,20 +106,21 @@ class ngc_e1_adapter : public ngc_e1_control_notifier
 public:
   void connect_e1(e1_bearer_context_manager* e1_bearer_context_mng_) { e1_bearer_context_mng = e1_bearer_context_mng_; }
 
-  async_task<cu_cp_pdu_session_res_setup_response>
+  async_task<pdu_session_resource_setup_response_message>
   on_new_pdu_session_resource_setup_request(pdu_session_resource_setup_message& msg) override
   {
     srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
 
     e1ap_bearer_context_setup_request_message e1_request;
-    e1_request.pdu_session_res_setup_list       = std::move(msg.pdu_session_res_setup_list);
-    e1_request.ue_aggregate_maximum_bit_rate_dl = msg.ue_aggregate_maximum_bit_rate_dl;
+
+    // e1_request.pdu_session_res_setup_list      = std::move(msg.pdu_session_res_setup_list);
+    e1_request.uedl_aggregate_maximum_bit_rate = msg.ue_aggregate_maximum_bit_rate_dl;
 
     e1ap_bearer_context_setup_response_message e1_bearer_context_setup_resp_msg;
 
     return launch_async(
-        [this, res = cu_cp_pdu_session_res_setup_response{}, e1_bearer_context_setup_resp_msg, e1_request](
-            coro_context<async_task<cu_cp_pdu_session_res_setup_response>>& ctx) mutable {
+        [this, res = pdu_session_resource_setup_response_message{}, e1_bearer_context_setup_resp_msg, e1_request, msg](
+            coro_context<async_task<pdu_session_resource_setup_response_message>>& ctx) mutable {
           CORO_BEGIN(ctx);
 
           CORO_AWAIT_VALUE(e1_bearer_context_setup_resp_msg,
@@ -136,17 +137,18 @@ public:
             asn1::bit_ref bref(pdu);
             setup_unsuccessful_transfer.pack(bref);
 
-            for (auto it : e1_request.pdu_session_res_setup_list.cu_cp_pdu_session_res_setup_items) {
-              cu_cp_pdu_session_res_setup_failed_item failed_item;
-              failed_item.pdu_session_id                                   = it.pdu_session_id;
-              failed_item.pdu_session_resource_setup_unsuccessful_transfer = std::move(pdu);
-              res.cu_cp_pdu_session_res_setup_failed_items.push_back(failed_item);
+            for (auto e1ap_failed_item : msg.pdu_session_res_setup_items) {
+              asn1::ngap::pdu_session_res_failed_to_setup_item_su_res_s ngap_failed_item;
+              ngap_failed_item.pdu_session_id                              = e1ap_failed_item.pdu_session_id;
+              ngap_failed_item.pdu_session_res_setup_unsuccessful_transfer = std::move(pdu);
+              res.pdu_session_res_failed_to_setup_items.push_back(ngap_failed_item);
             }
+
             CORO_EARLY_RETURN(res);
           }
 
           // Convert E1 response to common type
-          fill_cu_cp_pdu_session_res_setup_response(res, e1_request, e1_bearer_context_setup_resp_msg);
+          fill_cu_cp_pdu_session_res_setup_response(res, msg, e1_bearer_context_setup_resp_msg);
 
           CORO_RETURN(res);
         });

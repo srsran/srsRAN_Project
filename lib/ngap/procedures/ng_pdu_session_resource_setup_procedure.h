@@ -35,12 +35,12 @@ private:
   // results senders
   void send_pdu_session_resource_setup_response();
 
-  ngc_ue&                              ue;
-  pdu_session_resource_setup_message   msg;
-  cu_cp_pdu_session_res_setup_response response;
-  ngc_e1_control_notifier&             e1_notifier;
-  ngc_message_notifier&                amf_notifier;
-  srslog::basic_logger&                logger;
+  ngc_ue&                                     ue;
+  pdu_session_resource_setup_message          msg;
+  pdu_session_resource_setup_response_message response;
+  ngc_e1_control_notifier&                    e1_notifier;
+  ngc_message_notifier&                       amf_notifier;
+  srslog::basic_logger&                       logger;
 };
 
 } // namespace srs_cu_cp

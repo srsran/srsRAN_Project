@@ -158,8 +158,14 @@ public:
 };
 
 struct pdu_session_resource_setup_message {
-  cu_cp_pdu_session_res_setup pdu_session_res_setup_list;
-  uint64_t                    ue_aggregate_maximum_bit_rate_dl;
+  std::vector<asn1::ngap::pdu_session_res_setup_item_su_req_s> pdu_session_res_setup_items;
+  uint64_t                                                     ue_aggregate_maximum_bit_rate_dl;
+};
+
+struct pdu_session_resource_setup_response_message {
+  std::vector<asn1::ngap::pdu_session_res_setup_item_su_res_s>           pdu_session_res_setup_response_items;
+  std::vector<asn1::ngap::pdu_session_res_failed_to_setup_item_su_res_s> pdu_session_res_failed_to_setup_items;
+  optional<asn1::ngap::crit_diagnostics_s>                               crit_diagnostics;
 };
 
 /// Interface to notify the E1 about control messages.
@@ -169,7 +175,7 @@ public:
   virtual ~ngc_e1_control_notifier() = default;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup List.
-  virtual async_task<cu_cp_pdu_session_res_setup_response>
+  virtual async_task<pdu_session_resource_setup_response_message>
   on_new_pdu_session_resource_setup_request(pdu_session_resource_setup_message& msg) = 0;
 };
 
