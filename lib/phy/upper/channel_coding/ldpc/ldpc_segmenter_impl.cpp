@@ -9,11 +9,9 @@
  */
 
 #include "ldpc_segmenter_impl.h"
-#include "../crc_calculator_impl.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/copy.h"
-#include "srsgnb/srsvec/zero.h"
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsgnb_assert.h"
 

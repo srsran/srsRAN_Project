@@ -50,7 +50,7 @@ protected:
     ASSERT_NE(chan_modulation_factory, nullptr);
 
     // Create CRC calculator factory.
-    std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw();
+    std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
     ASSERT_NE(crc_calc_factory, nullptr);
 
     // Create LDPC decoder factory.

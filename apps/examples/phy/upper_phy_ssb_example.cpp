@@ -219,7 +219,7 @@ std::unique_ptr<upper_phy_ssb_example> srsgnb::upper_phy_ssb_example::create(con
   srslog::basic_logger& logger = srslog::fetch_basic_logger("UpperPHY", false);
   logger.set_level(srslog::str_to_basic_level(config.log_level));
 
-  std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw();
+  std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("lut");
   ASSERT_FACTORY(crc_calc_factory);
 
   std::shared_ptr<channel_modulation_factory> modulator_factory = create_channel_modulation_sw_factory();

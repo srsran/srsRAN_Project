@@ -59,7 +59,7 @@ int main(int argc, char** argv)
 {
   parse_args(argc, argv);
 
-  std::shared_ptr<crc_calculator_factory> crc_calculator_factory = create_crc_calculator_factory_sw();
+  std::shared_ptr<crc_calculator_factory> crc_calculator_factory = create_crc_calculator_factory_sw("auto");
   TESTASSERT(crc_calculator_factory);
 
   std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory = create_ldpc_decoder_factory_sw("generic");

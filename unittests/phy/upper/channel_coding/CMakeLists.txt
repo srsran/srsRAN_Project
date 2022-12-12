@@ -11,7 +11,11 @@ set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(crc_calculator_test crc_calculator_test.cpp)
 target_link_libraries(crc_calculator_test srsgnb_channel_coding)
-add_test(crc_calculator_test crc_calculator_test)
+add_test(crc_calculator_test crc_calculator_test -F lut)
+
+if (HAVE_AVX2)
+    add_test(crc_calculator_test crc_calculator_test -F clmul)
+endif(HAVE_AVX2)
 
 add_subdirectory(polar)
 add_subdirectory(ldpc)

@@ -8,7 +8,14 @@
 
 include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/upper/channel_coding)
 
-add_library(srsgnb_crc_calculator STATIC crc_calculator_impl.cpp)
+set(CRC_CALCULATOR_SOURCES crc_calculator_lut_impl.cpp)
+if (${HAVE_AVX2})
+    list(APPEND CRC_CALCULATOR_SOURCES crc_calculator_clmul_impl.cpp)
+    set_source_files_properties(crc_calculator_clmul_impl.cpp PROPERTIES COMPILE_OPTIONS "-mpclmul;")
+endif (${HAVE_AVX2})
+
+
+add_library(srsgnb_crc_calculator STATIC ${CRC_CALCULATOR_SOURCES})
 
 add_subdirectory(polar)
 add_subdirectory(ldpc)
@@ -22,5 +29,5 @@ target_link_libraries(srsgnb_channel_coding
         srsgnb_short_block)
 
 install(TARGETS srsgnb_crc_calculator
-                srsgnb_channel_coding
+        srsgnb_channel_coding
         EXPORT srsgnb_export)

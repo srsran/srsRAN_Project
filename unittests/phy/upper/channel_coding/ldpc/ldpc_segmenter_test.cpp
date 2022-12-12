@@ -59,7 +59,7 @@ protected:
   static void SetUpTestSuite()
   {
     if (!crc_factory) {
-      crc_factory = create_crc_calculator_factory_sw();
+      crc_factory = create_crc_calculator_factory_sw("auto");
       ASSERT_NE(crc_factory, nullptr) << "Cannot create CRC factory";
     }
 

@@ -18,7 +18,7 @@ using namespace srsgnb;
 
 int main()
 {
-  std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw();
+  std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
   TESTASSERT(crc_calc_factory);
 
   std::shared_ptr<channel_modulation_factory> modulator_factory = create_channel_modulation_sw_factory();

@@ -20,7 +20,7 @@ int main()
 
   span<uint8_t> encoded_data_span{encoded_data};
 
-  std::shared_ptr<crc_calculator_factory> crc_factory = create_crc_calculator_factory_sw();
+  std::shared_ptr<crc_calculator_factory> crc_factory = create_crc_calculator_factory_sw("auto");
   TESTASSERT(crc_factory);
 
   std::shared_ptr<polar_factory> encoder_factory = create_polar_factory_sw();

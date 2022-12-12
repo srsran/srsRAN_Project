@@ -206,7 +206,7 @@ static std::unique_ptr<uplink_processor_factory> create_ul_processor_factory(con
   std::shared_ptr<channel_modulation_factory> demodulation_factory = create_channel_modulation_sw_factory();
 
   pusch_decoder_factory_sw_configuration decoder_config;
-  decoder_config.crc_factory       = create_crc_calculator_factory_sw();
+  decoder_config.crc_factory       = create_crc_calculator_factory_sw("auto");
   decoder_config.decoder_factory   = create_ldpc_decoder_factory_sw("generic");
   decoder_config.dematcher_factory = create_ldpc_rate_dematcher_factory_sw();
   decoder_config.segmenter_factory = create_ldpc_segmenter_rx_factory_sw();
@@ -365,7 +365,7 @@ std::shared_ptr<downlink_processor_factory>
 srsgnb::create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config& config)
 {
   // Create channel coding factories - CRC
-  std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw();
+  std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
   report_fatal_error_if_not(crc_calc_factory, "Invalid CRC factory.");
 
   // Create channel coding factories - LDPC

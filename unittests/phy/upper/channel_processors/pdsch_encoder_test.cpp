@@ -17,7 +17,7 @@ using namespace srsgnb::ldpc;
 
 int main()
 {
-  std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw();
+  std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
   TESTASSERT(crc_calc_factory);
 
   std::shared_ptr<ldpc_encoder_factory> ldpc_encoder_factory = create_ldpc_encoder_factory_sw("generic");

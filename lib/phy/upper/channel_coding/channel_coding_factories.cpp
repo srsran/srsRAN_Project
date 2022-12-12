@@ -9,7 +9,7 @@
  */
 
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
-#include "crc_calculator_impl.h"
+#include "crc_calculator_lut_impl.h"
 #include "ldpc/ldpc_decoder_impl.h"
 #include "ldpc/ldpc_encoder_impl.h"
 #include "ldpc/ldpc_rate_dematcher_impl.h"
@@ -24,11 +24,15 @@
 #include "polar/polar_rate_dematcher_impl.h"
 #include "polar/polar_rate_matcher_impl.h"
 #include "short/short_block_detector_impl.h"
+#include "srsgnb/support/cpu_features.h"
 
-#ifdef HAVE_AVX2
+#ifdef __PCLMUL__
+#include "crc_calculator_clmul_impl.h"
+#endif // __PCLMUL__
+#ifdef __AVX2__
 #include "ldpc/ldpc_decoder_avx2.h"
 #include "ldpc/ldpc_encoder_avx2.h"
-#endif // HAVE_AVX2
+#endif // __AVX2__
 #ifdef HAVE_AVX512
 #include "ldpc/ldpc_decoder_avx512.h"
 #endif // HAVE_AVX512
@@ -37,13 +41,28 @@ using namespace srsgnb;
 
 namespace {
 
-class crc_calculator_factory_sw : public crc_calculator_factory
+class crc_calculator_factory_sw_impl : public crc_calculator_factory
 {
 public:
+  crc_calculator_factory_sw_impl(const std::string& type_) : type(type_) {}
+
   std::unique_ptr<crc_calculator> create(crc_generator_poly poly) override
   {
-    return std::make_unique<crc_calculator_impl>(poly);
+#ifdef __PCLMUL__
+    if (((type == "auto") || (type == "clmul")) && cpu_supports_feature(cpu_feature::pclmul)) {
+      return std::make_unique<crc_calculator_clmul_impl>(poly);
+    }
+#endif // __PCLMUL__
+
+    if ((type == "auto") || (type == "lut")) {
+      return std::make_unique<crc_calculator_lut_impl>(poly);
+    }
+
+    return nullptr;
   }
+
+private:
+  std::string type;
 };
 
 class ldpc_decoder_factory_sw : public ldpc_decoder_factory
@@ -83,11 +102,11 @@ public:
 
   std::unique_ptr<ldpc_encoder> create() override
   {
-#ifdef HAVE_AVX2
+#ifdef __AVX2__
     if ((enc_type == "avx2") || (enc_type == "auto")) {
       return std::make_unique<ldpc_encoder_avx2>();
     }
-#endif // HAVE_AVX2
+#endif // __AVX2__
     if ((enc_type == "generic") || (enc_type == "auto")) {
       return std::make_unique<ldpc_encoder_generic>();
     }
@@ -209,9 +228,9 @@ std::shared_ptr<ldpc_segmenter_rx_factory> srsgnb::create_ldpc_segmenter_rx_fact
   return std::make_shared<ldpc_segmenter_rx_factory_sw>();
 }
 
-std::shared_ptr<crc_calculator_factory> srsgnb::create_crc_calculator_factory_sw()
+std::shared_ptr<crc_calculator_factory> srsgnb::create_crc_calculator_factory_sw(const std::string& type)
 {
-  return std::make_shared<crc_calculator_factory_sw>();
+  return std::make_shared<crc_calculator_factory_sw_impl>(type);
 }
 
 std::shared_ptr<polar_factory> srsgnb::create_polar_factory_sw()

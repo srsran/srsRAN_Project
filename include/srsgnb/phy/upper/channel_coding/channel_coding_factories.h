@@ -35,7 +35,7 @@ public:
   virtual std::unique_ptr<crc_calculator> create(crc_generator_poly poly) = 0;
 };
 
-std::shared_ptr<crc_calculator_factory> create_crc_calculator_factory_sw();
+std::shared_ptr<crc_calculator_factory> create_crc_calculator_factory_sw(const std::string& type);
 
 class ldpc_decoder_factory
 {

@@ -237,7 +237,7 @@ static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_va
   TESTASSERT(chan_modulation_factory);
 
   // Create CRC calculator factory.
-  std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw();
+  std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
   TESTASSERT(crc_calc_factory);
 
   // Create LDPC decoder factory.

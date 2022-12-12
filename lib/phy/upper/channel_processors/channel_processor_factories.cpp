@@ -52,13 +52,14 @@ public:
 
   std::unique_ptr<pbch_encoder> create() override
   {
-    return std::make_unique<pbch_encoder_impl>(create_crc_calculator_factory_sw()->create(crc_generator_poly::CRC24C),
-                                               create_pseudo_random_generator_sw_factory()->create(),
-                                               polar_fec_factory->create_interleaver(),
-                                               polar_fec_factory->create_allocator(),
-                                               polar_fec_factory->create_code(),
-                                               polar_fec_factory->create_encoder(),
-                                               polar_fec_factory->create_rate_matcher());
+    return std::make_unique<pbch_encoder_impl>(
+        create_crc_calculator_factory_sw("auto")->create(crc_generator_poly::CRC24C),
+        create_pseudo_random_generator_sw_factory()->create(),
+        polar_fec_factory->create_interleaver(),
+        polar_fec_factory->create_allocator(),
+        polar_fec_factory->create_code(),
+        polar_fec_factory->create_encoder(),
+        polar_fec_factory->create_rate_matcher());
   }
 
 private:

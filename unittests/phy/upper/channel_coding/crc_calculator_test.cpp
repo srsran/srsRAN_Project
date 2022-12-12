@@ -10,6 +10,7 @@
 
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/support/srsgnb_test.h"
+#include <getopt.h>
 #include <random>
 
 static std::mt19937 rgen(0);
@@ -104,8 +105,8 @@ void test_crc_byte(crc_calculator_factory& factory,
   std::vector<uint8_t> data(nbytes);
 
   // Fill buffer with random data.
-  for (unsigned char& v : data) {
-    v = dist(rgen);
+  for (uint8_t& v : data) {
+    v = static_cast<uint8_t>(dist(rgen) & 0xff);
   }
 
   std::unique_ptr<crc_calculator> crc_calculator = factory.create(poly);
@@ -117,7 +118,7 @@ void test_crc_byte(crc_calculator_factory& factory,
   // Calculate ideal CRC24A.
   crc_calculator_checksum_t checksum_gold = crc_generic_calculator_byte(data, polynom, order);
 
-  TESTASSERT_EQ(checksum, checksum_gold, "Byte CRC checksum failed.");
+  TESTASSERT_EQ(checksum, checksum_gold, "Byte CRC checksum failed {:06X}!={:06X}.", checksum, checksum_gold);
 }
 
 void test_crc_bit(crc_calculator_factory& factory,
@@ -174,15 +175,42 @@ void test_crc_bit_buffer(crc_calculator_factory& factory,
   // Calculate ideal CRC24A.
   crc_calculator_checksum_t checksum_gold = crc_generic_calculator(data, polynom, order);
 
-  TESTASSERT_EQ(checksum, checksum_gold, "Bit buffer CRC checksum failed.");
+  TESTASSERT_EQ(checksum, checksum_gold, "Bit buffer CRC checksum failed {:06X}!={:06X}.", checksum, checksum_gold);
 }
 
-int main()
+static std::string preferred_type = "auto";
+
+static void usage(const char* prog)
 {
-  std::shared_ptr<crc_calculator_factory> factory = create_crc_calculator_factory_sw();
+  fmt::print("Usage: {} [-F preferred algo] [-R repetitions]\n", prog);
+  fmt::print("\t-F Select CRC calculator preferred algorithm [Default {}]\n", preferred_type);
+  fmt::print("\t-h Show this message\n");
+}
+
+static void parse_args(int argc, char** argv)
+{
+  int opt = 0;
+  while ((opt = getopt(argc, argv, "F:R:sh")) != -1) {
+    switch (opt) {
+      case 'F':
+        preferred_type = std::string(optarg);
+        break;
+      case 'h':
+      default:
+        usage(argv[0]);
+        exit(0);
+    }
+  }
+}
+
+int main(int argc, char** argv)
+{
+  parse_args(argc, argv);
+
+  std::shared_ptr<crc_calculator_factory> factory = create_crc_calculator_factory_sw(preferred_type);
   TESTASSERT(factory);
 
-  std::vector<std::size_t> sizes = {257, 997, 6012};
+  std::vector<std::size_t> sizes = {8, 16, 32, 257, 997, 6012};
 
   for (std::size_t N : sizes) {
     test_crc_byte(*factory, N, crc_generator_poly::CRC24A, 0x1864cfb, 24);

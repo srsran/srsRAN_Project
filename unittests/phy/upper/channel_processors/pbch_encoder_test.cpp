@@ -17,7 +17,7 @@ using namespace srsgnb;
 
 int main()
 {
-  std::shared_ptr<crc_calculator_factory> crc_factory = create_crc_calculator_factory_sw();
+  std::shared_ptr<crc_calculator_factory> crc_factory = create_crc_calculator_factory_sw("auto");
   TESTASSERT(crc_factory);
 
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
