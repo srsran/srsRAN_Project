@@ -13,7 +13,7 @@
 #include "srsgnb/srslog/srslog.h"
 
 using namespace srsgnb;
-
+/*
 void f1u_connector_impl::attach_cu_bearer(uint32_t                        dl_teid,
                                           srs_cu_up::f1u_tx_pdu_notifier& cu_tx,
                                           srs_cu_up::f1u_rx_pdu_handler&  cu_rx)
@@ -28,3 +28,4 @@ void f1u_connector_impl::attach_du_bearer(uint32_t                     dl_teid,
 {
   logger.info("Connecting CU F1-U bearer. UL-TEID={}", ul_teid);
 }
+*/

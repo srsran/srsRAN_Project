@@ -8,3 +8,13 @@
 
 add_subdirectory(cu_up)
 add_subdirectory(du)
+
+add_executable(f1u_connector_test common/f1u_connector_test.cpp)
+target_link_libraries(f1u_connector_test
+                      srsgnb_f1u_common
+                      srsgnb_support
+                      srslog
+                      gtest
+                      gtest_main)
+target_include_directories(f1u_connector_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(f1u_connector_test)

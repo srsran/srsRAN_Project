@@ -8,9 +8,9 @@
  *
  */
 
+#include "srsgnb/f1u/common/f1u_connector_factory.h"
 #include "srsgnb/srslog/srslog.h"
 #include <gtest/gtest.h>
-#include <srsgnb/f1u/common/f1u_connector_factory.h>
 
 using namespace srsgnb;
 
@@ -25,9 +25,12 @@ protected:
     srslog::init();
     logger.set_level(srslog::basic_levels::debug);
 
-    // init RLC logger
+    // init logger
     f1u_logger.set_level(srslog::basic_levels::debug);
     f1u_logger.set_hex_dump_max_size(100);
+
+    f1u_connector_creation_message msg = {};
+    f1u_conn                           = create_f1u_connector(msg);
   }
 
   void TearDown() override
@@ -44,16 +47,16 @@ protected:
     // Create test frame
   }
 
-  // std::unique_ptr<f1u_connector> f1_conn;
-  srslog::basic_logger& logger     = srslog::fetch_basic_logger("TEST", false);
-  srslog::basic_logger& f1u_logger = srslog::fetch_basic_logger("F1-U", false);
+  std::unique_ptr<f1u_connector> f1u_conn;
+  srslog::basic_logger&          logger     = srslog::fetch_basic_logger("TEST", false);
+  srslog::basic_logger&          f1u_logger = srslog::fetch_basic_logger("F1-U", false);
 };
 
 /// Test the instantiation of a new entity
 TEST_F(f1u_connector_test, create_new_connector)
 {
   init();
-  // EXPECT_NE(f1u_conn, nullptr);
+  EXPECT_NE(f1u_conn, nullptr);
 }
 
 int main(int argc, char** argv)
