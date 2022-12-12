@@ -9,6 +9,7 @@
  */
 
 #include "f1_du_test_helpers.h"
+#include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
 using namespace srs_du;
@@ -134,6 +135,9 @@ f1c_message srsgnb::srs_du::generate_f1_ue_context_setup_request(const std::init
     ++count;
   }
 
+  dl_msg->rrc_container_present = true;
+  dl_msg->rrc_container.value.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100)));
+
   return msg;
 }
 
@@ -173,13 +177,14 @@ f1ap_du_test::ue_test_context* f1ap_du_test::run_f1_ue_create(du_ue_index_t ue_i
 {
   unsigned srb1_idx = srb_id_to_uint(srb_id_t::srb1);
   test_ues.emplace(ue_index);
+  test_ues[ue_index].crnti = to_rnti(0x4601 + ue_index);
   test_ues[ue_index].f1c_bearers.emplace(srb_id_to_uint(srb_id_t::srb1));
   test_ues[ue_index].f1c_bearers[srb1_idx].srb_id = srb_id_t::srb1;
 
   f1ap_ue_creation_request msg;
   msg.ue_index    = ue_index;
   msg.pcell_index = to_du_cell_index(0);
-  msg.c_rnti      = to_rnti(0x4601 + ue_index);
+  msg.c_rnti      = test_ues[ue_index].crnti;
   msg.du_cu_rrc_container.append({0x1, 0x2, 0x3});
   for (auto& f1c_bearer : test_ues[ue_index].f1c_bearers) {
     f1c_bearer_to_addmod b;

@@ -25,11 +25,13 @@ public:
 
 private:
   void create_du_request(const asn1::f1ap::ue_context_setup_request_s& msg);
+  void send_rrc_container();
   void send_ue_context_setup_response();
   void send_ue_context_setup_failure();
 
   f1ap_du_ue&                    ue;
   f1ap_ue_context_update_request du_request;
+  byte_buffer                    rrc_container;
 
   f1ap_ue_context_update_response du_response;
 };

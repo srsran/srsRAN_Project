@@ -155,6 +155,7 @@ protected:
     f1u_bearer*               bearer = nullptr;
   };
   struct ue_test_context {
+    rnti_t                                       crnti;
     slotted_array<f1c_test_bearer, MAX_NOF_SRBS> f1c_bearers;
     slotted_array<f1u_test_bearer, MAX_NOF_DRBS> f1u_bearers;
   };

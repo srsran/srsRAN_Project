@@ -20,6 +20,9 @@ f1ap_du_ue_context_setup_procedure::f1ap_du_ue_context_setup_procedure(
   ue(ue_)
 {
   create_du_request(msg);
+  if (msg->rrc_container_present) {
+    rrc_container = msg->rrc_container.value.copy();
+  }
 }
 
 void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
@@ -28,6 +31,8 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
 
   // Setup new UE configuration in DU.
   CORO_AWAIT_VALUE(du_response, ue.du_handler.request_ue_context_update(du_request));
+
+  send_rrc_container();
 
   if (du_response.result) {
     send_ue_context_setup_response();
@@ -59,6 +64,16 @@ void f1ap_du_ue_context_setup_procedure::create_du_request(const ue_context_setu
   }
 }
 
+void f1ap_du_ue_context_setup_procedure::send_rrc_container()
+{
+  // > If the UE CONTEXT SETUP REQUEST message contains the RRC-Container IE, the gNB-DU shall send the corresponding
+  // RRC message to the UE via SRB1.
+  if (rrc_container.empty()) {
+    return;
+  }
+  ue.bearers.find_srb(srb_id_t::srb1)->handle_sdu(std::move(rrc_container));
+}
+
 void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
 {
   f1c_message f1c_msg;
@@ -70,6 +85,11 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
 
   // > DU-to-CU RRC Container.
   resp->duto_currc_info.value.cell_group_cfg.append(du_response.du_to_cu_rrc_container);
+
+  // > If the C-RNTI IE is included in the UE CONTEXT SETUP RESPONSE, the gNB-CU shall consider that the C-RNTI has
+  // been allocated by the gNB-DU for this UE context.
+  resp->c_rnti_present = true;
+  resp->c_rnti->value  = ue.context.rnti;
 
   // > SRBs setup list.
   resp->srbs_setup_list_present = not du_request.srbs_to_setup.empty();
