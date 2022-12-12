@@ -36,15 +36,13 @@ void ng_pdu_session_resource_setup_procedure::operator()(coro_context<async_task
 
   // TODO: Handle optional IEs
 
-  pdu_session_resource_response_message resp_msg = {};
-  send_pdu_session_resource_setup_response(resp_msg);
+  send_pdu_session_resource_setup_response();
 
   logger.debug("Initial Context Setup Procedure finished");
   CORO_RETURN();
 }
 
-void ng_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_response(
-    const pdu_session_resource_response_message& resp_msg)
+void ng_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_response()
 {
   ngc_message ngc_msg = {};
 
@@ -55,41 +53,46 @@ void ng_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_re
   init_ctxt_setup_resp->ran_ue_ngap_id.value = ran_ue_id_to_uint(ue.get_ran_ue_id());
 
   // Fill PDU Session Resource Setup Response List
-  if (!resp_msg.succeed_to_setup.empty()) {
+  if (!response.cu_cp_pdu_session_res_setup_response_items.empty()) {
     init_ctxt_setup_resp->pdu_session_res_setup_list_cxt_res_present = true;
-    init_ctxt_setup_resp->pdu_session_res_setup_list_cxt_res->resize(resp_msg.succeed_to_setup.size());
-    for (auto& it : resp_msg.succeed_to_setup) {
+    init_ctxt_setup_resp->pdu_session_res_setup_list_cxt_res->resize(
+        response.cu_cp_pdu_session_res_setup_response_items.size());
+    for (auto& cu_cp_resp_item : response.cu_cp_pdu_session_res_setup_response_items) {
       asn1::ngap::pdu_session_res_setup_item_cxt_res_s res_item;
-      res_item.pdu_session_id = it.pdu_session_id;
-      res_item.pdu_session_res_setup_resp_transfer.resize(it.pdu_session_res.length());
-      std::copy(
-          it.pdu_session_res.begin(), it.pdu_session_res.end(), res_item.pdu_session_res_setup_resp_transfer.begin());
+      res_item.pdu_session_id = cu_cp_resp_item.pdu_session_id;
+      res_item.pdu_session_res_setup_resp_transfer.resize(
+          cu_cp_resp_item.pdu_session_resource_setup_response_transfer.length());
+      std::copy(cu_cp_resp_item.pdu_session_resource_setup_response_transfer.begin(),
+                cu_cp_resp_item.pdu_session_resource_setup_response_transfer.end(),
+                res_item.pdu_session_res_setup_resp_transfer.begin());
 
       init_ctxt_setup_resp->pdu_session_res_setup_list_cxt_res->push_back(res_item);
     }
   }
 
   // Fill PDU Session Resource Failed to Setup List
-  if (!resp_msg.failed_to_setup.empty()) {
+  if (!response.cu_cp_pdu_session_res_setup_failed_items.empty()) {
     init_ctxt_setup_resp->pdu_session_res_failed_to_setup_list_cxt_res_present = true;
-    init_ctxt_setup_resp->pdu_session_res_failed_to_setup_list_cxt_res->resize(resp_msg.failed_to_setup.size());
-    for (auto& it : resp_msg.failed_to_setup) {
+    init_ctxt_setup_resp->pdu_session_res_failed_to_setup_list_cxt_res->resize(
+        response.cu_cp_pdu_session_res_setup_failed_items.size());
+    for (auto& cu_cp_setup_failed_item : response.cu_cp_pdu_session_res_setup_failed_items) {
       asn1::ngap::pdu_session_res_failed_to_setup_item_cxt_res_s res_item;
-      res_item.pdu_session_id = it.pdu_session_id;
-      res_item.pdu_session_res_setup_unsuccessful_transfer.resize(it.pdu_session_res.length());
-      std::copy(it.pdu_session_res.begin(),
-                it.pdu_session_res.end(),
+      res_item.pdu_session_id = cu_cp_setup_failed_item.pdu_session_id;
+      res_item.pdu_session_res_setup_unsuccessful_transfer.resize(
+          cu_cp_setup_failed_item.pdu_session_resource_setup_unsuccessful_transfer.length());
+      std::copy(cu_cp_setup_failed_item.pdu_session_resource_setup_unsuccessful_transfer.begin(),
+                cu_cp_setup_failed_item.pdu_session_resource_setup_unsuccessful_transfer.end(),
                 res_item.pdu_session_res_setup_unsuccessful_transfer.begin());
 
       init_ctxt_setup_resp->pdu_session_res_failed_to_setup_list_cxt_res->push_back(res_item);
     }
   }
 
-  // Fill Criticality Diagnostics
-  if (resp_msg.crit_diagnostics.has_value()) {
-    init_ctxt_setup_resp->crit_diagnostics_present = true;
-    init_ctxt_setup_resp->crit_diagnostics.value   = resp_msg.crit_diagnostics.value();
-  }
+  // TODO: Fill Criticality Diagnostics
+  // if (response.crit_diagnostics.has_value()) {
+  //   init_ctxt_setup_resp->crit_diagnostics_present = true;
+  //   init_ctxt_setup_resp->crit_diagnostics.value   = response.crit_diagnostics.value();
+  // }
 
   logger.info("Sending Initial Context Setup Response to AMF");
   amf_notifier.on_new_message(ngc_msg);

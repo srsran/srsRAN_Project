@@ -32,7 +32,7 @@ void e1_bearer_context_modification_procedure::operator()(
   send_bearer_context_modification_request();
 
   // Await CU response.
-  CORO_AWAIT_VALUE(bearer_ctxt_mod_outcome, ev_mng.e1ap_bearer_context_modification_response_message);
+  CORO_AWAIT_VALUE(bearer_ctxt_mod_outcome, ev_mng.e1ap_bearer_context_modification_outcome);
 
   // Handle response from DU and return UE index
   CORO_RETURN(create_bearer_context_modification_result());

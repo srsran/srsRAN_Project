@@ -158,8 +158,24 @@ struct cu_cp_pdu_session_res_setup_item {
   std::vector<qos_flow_setup_request_item> qos_flow_setup_request_items;
 };
 
-struct cu_cp_pdu_session_res_setup_list {
+struct cu_cp_pdu_session_res_setup {
   std::vector<cu_cp_pdu_session_res_setup_item> cu_cp_pdu_session_res_setup_items;
+};
+
+struct cu_cp_pdu_session_res_setup_response_item {
+  uint16_t    pdu_session_id;
+  byte_buffer pdu_session_resource_setup_response_transfer;
+};
+
+struct cu_cp_pdu_session_res_setup_failed_item {
+  uint16_t    pdu_session_id;
+  byte_buffer pdu_session_resource_setup_unsuccessful_transfer;
+};
+
+struct cu_cp_pdu_session_res_setup_response {
+  std::vector<cu_cp_pdu_session_res_setup_response_item> cu_cp_pdu_session_res_setup_response_items;
+  std::vector<cu_cp_pdu_session_res_setup_failed_item>   cu_cp_pdu_session_res_setup_failed_items;
+  // TODO: Add crit diagnostics
 };
 
 } // namespace srs_cu_cp

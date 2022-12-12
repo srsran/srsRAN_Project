@@ -20,12 +20,6 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-struct pdu_session_resource_response_message {
-  ngap_pdu_session_res_list                succeed_to_setup;
-  ngap_pdu_session_res_list                failed_to_setup;
-  optional<asn1::ngap::crit_diagnostics_s> crit_diagnostics;
-};
-
 class ng_pdu_session_resource_setup_procedure
 {
 public:
@@ -39,14 +33,14 @@ public:
 
 private:
   // results senders
-  void send_pdu_session_resource_setup_response(const pdu_session_resource_response_message& resp_msg);
+  void send_pdu_session_resource_setup_response();
 
-  ngc_ue&                                  ue;
-  pdu_session_resource_setup_message       msg;
-  asn1::ngap::pdu_session_res_setup_resp_s response;
-  ngc_e1_control_notifier&                 e1_notifier;
-  ngc_message_notifier&                    amf_notifier;
-  srslog::basic_logger&                    logger;
+  ngc_ue&                              ue;
+  pdu_session_resource_setup_message   msg;
+  cu_cp_pdu_session_res_setup_response response;
+  ngc_e1_control_notifier&             e1_notifier;
+  ngc_message_notifier&                amf_notifier;
+  srslog::basic_logger&                logger;
 };
 
 } // namespace srs_cu_cp

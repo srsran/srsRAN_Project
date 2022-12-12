@@ -31,7 +31,7 @@ void e1_bearer_context_setup_procedure::operator()(
   send_bearer_context_setup_request();
 
   // Await response.
-  CORO_AWAIT_VALUE(e1_bearer_ctxt_setup_outcome, ev_mng.e1ap_bearer_context_setup_response_message);
+  CORO_AWAIT_VALUE(e1_bearer_ctxt_setup_outcome, ev_mng.e1ap_bearer_context_setup_outcome);
 
   // Handle response from CU-UP and return bearer index
   CORO_RETURN(create_bearer_context_setup_result());

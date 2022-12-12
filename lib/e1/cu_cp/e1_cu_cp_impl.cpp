@@ -148,10 +148,10 @@ void e1_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_outco
       events->e1ap_bearer_context_release_complete.set(&outcome.value.bearer_context_release_complete());
     } break;
     case asn1::e1ap::e1_ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_setup_resp: {
-      events->e1ap_bearer_context_setup_response_message.set(&outcome.value.bearer_context_setup_resp());
+      events->e1ap_bearer_context_setup_outcome.set(&outcome.value.bearer_context_setup_resp());
     } break;
     case asn1::e1ap::e1_ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_mod_resp: {
-      events->e1ap_bearer_context_modification_response_message.set(&outcome.value.bearer_context_mod_resp());
+      events->e1ap_bearer_context_modification_outcome.set(&outcome.value.bearer_context_mod_resp());
     } break;
     default:
       // Handle successful outcomes with transaction id
@@ -170,10 +170,10 @@ void e1_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful_o
 {
   switch (outcome.value.type().value) {
     case asn1::e1ap::e1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::bearer_context_setup_fail: {
-      events->e1ap_bearer_context_setup_response_message.set(&outcome.value.bearer_context_setup_fail());
+      events->e1ap_bearer_context_setup_outcome.set(&outcome.value.bearer_context_setup_fail());
     } break;
     case asn1::e1ap::e1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::bearer_context_mod_fail: {
-      events->e1ap_bearer_context_modification_response_message.set(&outcome.value.bearer_context_mod_fail());
+      events->e1ap_bearer_context_modification_outcome.set(&outcome.value.bearer_context_mod_fail());
     } break;
     default:
       // Handle unsuccessful outcomes with transaction id

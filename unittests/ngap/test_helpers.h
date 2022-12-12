@@ -124,14 +124,14 @@ class dummy_ngc_e1_control_notifier : public ngc_e1_control_notifier
 public:
   dummy_ngc_e1_control_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
 
-  virtual async_task<asn1::ngap::pdu_session_res_setup_resp_s>
+  virtual async_task<cu_cp_pdu_session_res_setup_response>
   on_new_pdu_session_resource_setup_request(pdu_session_resource_setup_message& msg) override
   {
     last_msg = std::move(msg);
     logger.info("Received a PDU Session Resource Setup Message");
 
-    return launch_async([res = asn1::ngap::pdu_session_res_setup_resp_s{}](
-                            coro_context<async_task<asn1::ngap::pdu_session_res_setup_resp_s>>& ctx) mutable {
+    return launch_async([res = cu_cp_pdu_session_res_setup_response{}](
+                            coro_context<async_task<cu_cp_pdu_session_res_setup_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN(res);
     });
