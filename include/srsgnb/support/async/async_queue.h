@@ -80,13 +80,14 @@ private:
   void notify_one_awaiter()
   {
     if (front != nullptr) {
-      front->suspended_handle.resume();
+      awaiter_type* to_resume = front;
       if (front == last) {
         front = nullptr;
         last  = nullptr;
       } else {
         front = front->next;
       }
+      to_resume->suspended_handle.resume();
     }
   }
 

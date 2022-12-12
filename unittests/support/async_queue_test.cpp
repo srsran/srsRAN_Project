@@ -9,6 +9,7 @@
  */
 
 #include "srsgnb/support/async/async_queue.h"
+#include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/eager_async_task.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -128,4 +129,32 @@ TEST(async_queue_test, async_queue_supports_move_only_objects)
   moveonly_test_object obj = std::move(t).get();
   ASSERT_EQ(obj, val);
   ASSERT_FALSE(t2.ready());
+}
+
+class simple_task
+{
+public:
+  void operator()(coro_context<async_task<void>>& ctx)
+  {
+    CORO_BEGIN(ctx);
+    CORO_RETURN();
+  }
+};
+
+TEST(async_queue_test, async_queue_supports_reentrant_push)
+{
+  async_queue<int> q(64);
+
+  int                   val = 0, val2 = 0;
+  eager_async_task<int> t = launch_async([&q, &val, &val2](coro_context<eager_async_task<int>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT_VALUE(val, q);
+    CORO_AWAIT(launch_async<simple_task>());
+    CORO_AWAIT_VALUE(val2, q);
+    CORO_RETURN(val + val2);
+  });
+  ASSERT_TRUE(q.try_push(5));
+  ASSERT_TRUE(q.try_push(10));
+
+  ASSERT_EQ(t.get(), 15);
 }
