@@ -31,14 +31,14 @@ void ng_pdu_session_resource_setup_procedure::operator()(coro_context<async_task
 
   logger.debug("PDU Session Resource Setup started");
 
-  // Handle mendatorty IEs
+  // Handle mandatory IEs
   CORO_AWAIT_VALUE(response, e1_notifier.on_new_pdu_session_resource_setup_request(msg));
 
   // TODO: Handle optional IEs
 
   send_pdu_session_resource_setup_response();
 
-  logger.debug("Initial Context Setup Procedure finished");
+  logger.debug("PDU Session Resource Setup finished");
   CORO_RETURN();
 }
 

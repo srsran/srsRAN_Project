@@ -42,9 +42,6 @@ public:
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
-  // helpers
-  // void handle_nas_pdu();
-
   // results senders
   void send_initial_context_setup_response(const initial_context_response_message& msg);
   void send_initial_context_setup_failure(const initial_context_failure_message& msg);
