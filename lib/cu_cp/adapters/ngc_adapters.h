@@ -113,6 +113,63 @@ public:
 
     e1ap_bearer_context_setup_request_message e1_request;
 
+    e1_request.sys_bearer_context_setup_request.set_ng_ran_bearer_context_setup_request();
+    auto& ng_ran_bearer_context_setup_request =
+        e1_request.sys_bearer_context_setup_request.ng_ran_bearer_context_setup_request();
+
+    for (auto ngap_pdu_session_res_item : msg.pdu_session_res_setup_items) {
+      asn1::protocol_ie_field_s<asn1::e1ap::ng_ran_bearer_context_setup_request_o> bearer_request_item;
+      auto& e1ap_pdu_session_res_items = bearer_request_item.value().pdu_session_res_to_setup_list();
+
+      asn1::e1ap::pdu_session_res_to_setup_item_s e1ap_pdu_session_res_item;
+
+      // pdu session id
+      e1ap_pdu_session_res_item.pdu_session_id = ngap_pdu_session_res_item.pdu_session_id;
+
+      // s-NSSAI
+      e1ap_pdu_session_res_item.snssai.sst.from_number(ngap_pdu_session_res_item.s_nssai.sst.to_number());
+      if (ngap_pdu_session_res_item.s_nssai.sd_present) {
+        e1ap_pdu_session_res_item.snssai.sd_present = true;
+        e1ap_pdu_session_res_item.snssai.sd.from_number(ngap_pdu_session_res_item.s_nssai.sd.to_number());
+      }
+
+      asn1::cbit_ref bref(ngap_pdu_session_res_item.pdu_session_res_setup_request_transfer);
+      asn1::ngap::pdu_session_res_setup_request_transfer_s pdu_session_res_setup_request_transfer;
+      // TODO: Check return value
+      pdu_session_res_setup_request_transfer.unpack(bref);
+
+      // pdu session type
+      e1ap_pdu_session_res_item.pdu_session_type = ngap_pdu_session_type_to_e1ap_pdu_session_type(
+          pdu_session_res_setup_request_transfer->pdu_session_type.value);
+
+      // ng ul up transport layer information
+      if (pdu_session_res_setup_request_transfer->ul_ngu_up_tnl_info->type() ==
+          asn1::ngap::up_transport_layer_info_c::types::gtp_tunnel) {
+        e1ap_pdu_session_res_item.ng_ul_up_tnl_info.set_gtp_tunnel();
+        auto& e1ap_gtp_tunnel    = e1ap_pdu_session_res_item.ng_ul_up_tnl_info.gtp_tunnel();
+        e1ap_gtp_tunnel.gtp_teid = pdu_session_res_setup_request_transfer->ul_ngu_up_tnl_info->gtp_tunnel().gtp_teid;
+        e1ap_gtp_tunnel.transport_layer_address.from_number(
+            pdu_session_res_setup_request_transfer->ul_ngu_up_tnl_info->gtp_tunnel()
+                .transport_layer_address.to_number());
+      } else {
+        // TODO: error?
+      }
+
+      // TODO: add optional values
+
+      // pdu session resource dl aggregate maximum bit rate
+      if (pdu_session_res_setup_request_transfer->pdu_session_aggregate_maximum_bit_rate_present) {
+        e1ap_pdu_session_res_item.pdu_session_res_dl_ambr_present = true;
+        e1ap_pdu_session_res_item.pdu_session_res_dl_ambr =
+            pdu_session_res_setup_request_transfer->pdu_session_aggregate_maximum_bit_rate
+                ->pdu_session_aggregate_maximum_bit_rate_dl;
+      }
+
+      e1ap_pdu_session_res_items.push_back(e1ap_pdu_session_res_item);
+
+      ng_ran_bearer_context_setup_request.push_back(bearer_request_item);
+    }
+
     // e1_request.pdu_session_res_setup_list      = std::move(msg.pdu_session_res_setup_list);
     e1_request.uedl_aggregate_maximum_bit_rate = msg.ue_aggregate_maximum_bit_rate_dl;
 

@@ -47,6 +47,33 @@ inline asn1::ngap::cause_c e1ap_cause_to_ngap_cause(asn1::e1ap::cause_c e1ap_cau
   }
 }
 
+inline asn1::e1ap::pdu_session_type_e
+ngap_pdu_session_type_to_e1ap_pdu_session_type(asn1::ngap::pdu_session_type_e ngap_session_type)
+{
+  asn1::e1ap::pdu_session_type_e e1ap_session_type;
+
+  switch (ngap_session_type) {
+    case asn1::ngap::pdu_session_type_opts::options::ethernet:
+      e1ap_session_type = asn1::e1ap::pdu_session_type_opts::options::ethernet;
+      break;
+    case asn1::ngap::pdu_session_type_opts::options::ipv4:
+      e1ap_session_type = asn1::e1ap::pdu_session_type_opts::options::ipv4;
+      break;
+    case asn1::ngap::pdu_session_type_opts::options::ipv4v6:
+      e1ap_session_type = asn1::e1ap::pdu_session_type_opts::options::ipv4v6;
+      break;
+    case asn1::ngap::pdu_session_type_opts::options::ipv6:
+      e1ap_session_type = asn1::e1ap::pdu_session_type_opts::options::ipv6;
+      break;
+
+    default:
+      e1ap_session_type = asn1::e1ap::pdu_session_type_opts::options::nulltype;
+      break;
+  }
+
+  return e1ap_session_type;
+}
+
 inline void fill_cu_cp_pdu_session_res_setup_response(
     pdu_session_resource_setup_response_message&      res,
     pdu_session_resource_setup_message&               msg,
