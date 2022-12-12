@@ -30,7 +30,8 @@ scheduler_impl::scheduler_impl(const scheduler_expert_config& sched_cfg_, sched_
 bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configuration_request_message& msg)
 {
   srsgnb_assert(not config_validators::validate_sched_cell_configuration_request_message(msg).is_error(),
-                "SCHED: Invalid cell configuration request message.");
+                "SCHED: Invalid cell configuration request message. Cause: {}",
+                config_validators::validate_sched_cell_configuration_request_message(msg).error().c_str());
 
   cells.add_cell(msg.cell_index, msg);
 
@@ -48,7 +49,8 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
 void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
 {
   srsgnb_assert(not config_validators::validate_sched_ue_creation_request_message(ue_request).is_error(),
-                "SCHED: Invalid UE creation request message.");
+                "SCHED: Invalid UE creation request message. Cause: {}",
+                config_validators::validate_sched_ue_creation_request_message(ue_request).error().c_str());
 
   ue_cfg_handler.handle_ue_creation_request(ue_request);
 }
