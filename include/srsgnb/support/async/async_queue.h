@@ -50,6 +50,7 @@ public:
     bool await_ready() { return not parent->queue.empty(); }
     void await_suspend(coro_handle<> ch)
     {
+      srsgnb_assert(this->next == nullptr, "Trying to suspend already suspended coroutine");
       suspended_handle = ch;
       // enqueue awaiter
       if (parent->last == nullptr) {

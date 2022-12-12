@@ -87,7 +87,7 @@ f1c_message srsgnb::srs_du::generate_f1_dl_rrc_message_transfer(srb_id_t srb_id,
   return msg;
 }
 
-asn1::f1ap::drbs_to_be_setup_item_s srsgnb::srs_du::generate_drb_am_config(drb_id_t drbid)
+asn1::f1ap::drbs_to_be_setup_item_s srsgnb::srs_du::generate_drb_am_setup_item(drb_id_t drbid)
 {
   using namespace asn1::f1ap;
 
@@ -131,13 +131,60 @@ f1c_message srsgnb::srs_du::generate_f1_ue_context_setup_request(const std::init
   unsigned count = 0;
   for (drb_id_t drbid : drbs_to_add) {
     dl_msg->drbs_to_be_setup_list.value[count].load_info_obj(ASN1_F1AP_ID_DRB_INFO);
-    dl_msg->drbs_to_be_setup_list.value[count]->drbs_to_be_setup_item() = generate_drb_am_config(drbid);
+    dl_msg->drbs_to_be_setup_list.value[count]->drbs_to_be_setup_item() = generate_drb_am_setup_item(drbid);
     ++count;
   }
 
   dl_msg->rrc_container_present = true;
   dl_msg->rrc_container.value.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100)));
 
+  return msg;
+}
+
+asn1::f1ap::drbs_to_be_setup_mod_item_s srsgnb::srs_du::generate_drb_am_mod_item(drb_id_t drbid)
+{
+  using namespace asn1::f1ap;
+  drbs_to_be_setup_mod_item_s drb;
+  drb.drbid = drb_id_to_uint(drbid);
+  drb.qo_sinfo.set_choice_ext().load_info_obj(ASN1_F1AP_ID_DRB_INFO);
+  auto& drb_info                                                            = drb.qo_sinfo.choice_ext()->drb_info();
+  drb_info.drb_qos.qo_s_characteristics.set_non_dynamic_minus5_qi().five_qi = 8;
+  drb_info.drb_qos.ngra_nalloc_retention_prio.prio_level                    = 1;
+  drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_cap.value =
+      pre_emption_cap_opts::shall_not_trigger_pre_emption;
+  drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_vulnerability.value =
+      pre_emption_vulnerability_opts::not_pre_emptable;
+  drb_info.drb_qos.reflective_qos_attribute_present = true;
+  drb_info.drb_qos.reflective_qos_attribute.value =
+      qo_sflow_level_qos_params_s::reflective_qos_attribute_opts::subject_to;
+  drb_info.snssai.sst.from_string("01");
+  drb_info.snssai.sd.from_string("0027db");
+  drb.rlc_mode.value = rlc_mode_opts::rlc_am;
+  return drb;
+}
+
+f1c_message
+srsgnb::srs_du::generate_f1_ue_context_modification_request(const std::initializer_list<drb_id_t> drbs_to_add)
+{
+  using namespace asn1::f1ap;
+  f1c_message msg;
+
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
+  ue_context_mod_request_s& dl_msg  = msg.pdu.init_msg().value.ue_context_mod_request();
+  dl_msg->gnb_cu_ue_f1_ap_id->value = 0;
+  dl_msg->gnb_du_ue_f1_ap_id->value = 0;
+
+  dl_msg->drbs_to_be_setup_mod_list_present = drbs_to_add.size() > 0;
+  dl_msg->drbs_to_be_setup_mod_list.value.resize(drbs_to_add.size());
+  unsigned count = 0;
+  for (drb_id_t drbid : drbs_to_add) {
+    dl_msg->drbs_to_be_setup_mod_list.value[count].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
+    dl_msg->drbs_to_be_setup_mod_list.value[count]->drbs_to_be_setup_mod_item() = generate_drb_am_mod_item(drbid);
+    ++count;
+  }
+
+  dl_msg->rrc_container_present = true;
+  dl_msg->rrc_container.value.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100)));
   return msg;
 }
 

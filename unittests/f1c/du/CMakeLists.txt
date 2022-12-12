@@ -57,3 +57,14 @@ target_link_libraries(f1_du_ue_context_setup_test
         f1_du_test_helpers
         gtest
         gtest_main)
+
+add_executable(f1ap_du_ue_context_modification_test ue_context_modification_test.cpp)
+target_link_libraries(f1ap_du_ue_context_modification_test
+        srsgnb_f1c_du
+        srsgnb_support
+        du_manager_converters
+        srsgnb_ran
+        sched_config
+        f1_du_test_helpers
+        gtest
+        gtest_main)

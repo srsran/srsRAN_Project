@@ -110,11 +110,17 @@ f1c_message generate_f1_setup_failure_message_with_time_to_wait(unsigned        
 /// \brief Generate F1AP DL RRC Message Transfer message.
 f1c_message generate_f1_dl_rrc_message_transfer(srb_id_t srb_id, const byte_buffer& rrc_container);
 
-/// \brief Generate F1AP ASN.1 DRB AM configuration.
-asn1::f1ap::drbs_to_be_setup_item_s generate_drb_am_config(drb_id_t drbid);
+/// \brief Generate F1AP ASN.1 DRB AM Setup configuration.
+asn1::f1ap::drbs_to_be_setup_item_s generate_drb_am_setup_item(drb_id_t drbid);
 
 /// \brief Generate an F1AP UE Context Setup Request message with specified list of DRBs.
 f1c_message generate_f1_ue_context_setup_request(const std::initializer_list<drb_id_t> drbs_to_add);
+
+/// \brief Generate F1AP ASN.1 DRB AM Setup configuration.
+asn1::f1ap::drbs_to_be_setup_mod_item_s generate_drb_am_mod_item(drb_id_t drbid);
+
+/// \brief Generate an F1AP UE Context Modification Request message with specified list of DRBs.
+f1c_message generate_f1_ue_context_modification_request(const std::initializer_list<drb_id_t> drbs_to_add);
 
 class dummy_f1c_tx_pdu_notifier : public f1c_tx_pdu_notifier
 {

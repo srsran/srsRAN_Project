@@ -107,6 +107,12 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   resp->srbs_modified_list_present = false;
   resp->full_cfg_present           = false;
 
+  // > DU-to-CU RRC Container.
+  if (not du_response.du_to_cu_rrc_container.empty()) {
+    resp->duto_currc_info_present = true;
+    resp->duto_currc_info.value.cell_group_cfg.append(du_response.du_to_cu_rrc_container);
+  }
+
   ue.f1c_msg_notifier.on_new_message(f1c_msg);
 }
 
