@@ -24,8 +24,9 @@ du_ue& du_manager_proc_tester::create_ue(du_ue_index_t ue_index)
   ul_ccch_msg.subpdu     = test_rgen::random_vector<uint8_t>(6);
 
   f1ap.next_ue_create_response.result = true;
-  f1ap.next_ue_create_response.f1c_bearers_added.resize(1);
+  f1ap.next_ue_create_response.f1c_bearers_added.resize(2);
   f1ap.next_ue_create_response.f1c_bearers_added[0] = nullptr;
+  f1ap.next_ue_create_response.f1c_bearers_added[1] = nullptr;
   mac.wait_ue_create.result.result                  = true;
   mac.wait_ue_create.result.ue_index                = ue_index;
   mac.wait_ue_create.result.cell_index              = ul_ccch_msg.cell_index;
