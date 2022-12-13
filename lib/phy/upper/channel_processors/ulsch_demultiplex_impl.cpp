@@ -61,9 +61,8 @@ unsigned get_ulsch_demultiplex_nof_re_prb_dmrs(dmrs_type dmrs_, unsigned nof_cdm
 // Calculates the UCI fields multiplexing on PUSCH. The functions passed as parameters provide the multiplexing actions
 // for each specific field. This allows reusing the same function for demultiplexing and calculating the placeholder
 // positions.
-template <typename FuncSchData, typename FuncRvd, typename FuncHarqAck, typename FuncCsiPart1, typename FuncCsiPart2>
+template <typename FuncSchData, typename FuncHarqAck, typename FuncCsiPart1, typename FuncCsiPart2>
 void ulsch_demultiplex_generic(FuncSchData&                            func_sch_data,
-                               FuncRvd&                                func_rvd,
                                FuncHarqAck&                            func_harq_ack,
                                FuncCsiPart1&                           func_csi_part1,
                                FuncCsiPart2&                           func_csi_part2,
@@ -73,15 +72,13 @@ void ulsch_demultiplex_generic(FuncSchData&                            func_sch_
                                const ulsch_demultiplex::configuration& config)
 {
   // Make sure the functions provided as parameters have a valid signature.
-  static_assert(std::is_convertible<FuncSchData, std::function<void()>>::value,
+  static_assert(std::is_convertible<FuncSchData, std::function<void(bool reserved)>>::value,
                 "The function for multiplexing SCH signature must be \"void () ()\"");
-  static_assert(std::is_convertible<FuncRvd, std::function<void()>>::value,
-                "The function for multiplexing reserved RE signature must be \"void () ()\"");
   static_assert(std::is_convertible<FuncHarqAck, std::function<void()>>::value,
                 "The function for multiplexing HARQ-ACK signature must be \"void () ()\"");
   static_assert(std::is_convertible<FuncCsiPart1, std::function<void()>>::value,
                 "The function for multiplexing CSI-Part1 signature must be \"void () ()\"");
-  static_assert(std::is_convertible<FuncCsiPart2, std::function<void()>>::value,
+  static_assert(std::is_convertible<FuncCsiPart2, std::function<void(bool reserved)>>::value,
                 "The function for multiplexing CSI-Part2 signature must be \"void () ()\"");
 
   // Calculates the number of bits per resource element.
@@ -117,7 +114,7 @@ void ulsch_demultiplex_generic(FuncSchData&                            func_sch_
     // If the OFDM symbol carries DM-RS, it multiplexes only SCH data.
     if (config.dmrs_symbol_mask.test(i_symbol)) {
       for (unsigned i = 0; i != nof_re_dmrs; ++i) {
-        func_sch_data();
+        func_sch_data(false);
       }
       continue;
     }
@@ -198,11 +195,11 @@ void ulsch_demultiplex_generic(FuncSchData&                            func_sch_
       }
 
       // Prepare CSI Part 2 bits.
-      if ((M_uci_sc > M_uci_rvd) && (G_csi2_remainder != 0)) {
+      if ((M_uci_sc > 0) && (G_csi2_remainder != 0)) {
         csi2_d          = 1;
-        csi2_m_re_count = M_uci_sc - M_uci_rvd;
-        if (G_csi2_remainder < (M_uci_sc - M_uci_rvd) * nof_bits_per_re) {
-          csi2_d          = ((M_uci_sc - M_uci_rvd) * nof_bits_per_re) / G_csi2_remainder;
+        csi2_m_re_count = M_uci_sc;
+        if (G_csi2_remainder < M_uci_sc * nof_bits_per_re) {
+          csi2_d          = (M_uci_sc * nof_bits_per_re) / G_csi2_remainder;
           csi2_m_re_count = divide_ceil(G_csi2_remainder, nof_bits_per_re);
         }
         M_uci_sc -= csi2_m_re_count;
@@ -219,46 +216,44 @@ void ulsch_demultiplex_generic(FuncSchData&                            func_sch_
     m_csi_part2_count += csi2_m_re_count * nof_bits_per_re;
 
     // Iterate over each subcarrier within the OFDM symbol.
-    for (unsigned i_subcarrier = 0, i_csi1 = 0, i_csi2 = 0, i_rvd = 0; i_subcarrier != M_ulsch_sc; ++i_subcarrier) {
-      // Check if RE is reserved.
-      if ((rvd_m_re_count != 0) && (i_subcarrier % rvd_d == 0)) {
-        // Process HARQ-ACK.
-        if ((ack_m_re_count != 0) && ((i_rvd++) % ack_d == 0)) {
+    for (unsigned i_subcarrier = 0, i_csi1 = 0, i_csi2 = 0, i_ack = 0; i_subcarrier != M_ulsch_sc; ++i_subcarrier) {
+      // Detect if the resource element is reserved.
+      bool is_reserved = ((rvd_m_re_count != 0) && (i_subcarrier % rvd_d == 0));
+
+      // Set to true if a reserved RE is used for HARQ-ACK and either CSI-Part1 or UL-SCH.
+      bool is_zero = false;
+
+      // Decrement number of pending Reserved RE for the symbol.
+      if (is_reserved) {
+        --rvd_m_re_count;
+      }
+
+      // Process HARQ-ACK with reserved elements.
+      if (G_ack_rvd != 0) {
+        if ((is_reserved) && (ack_m_re_count != 0) && ((i_ack++) % ack_d == 0)) {
           // Multiplex HARQ-ACK.
           func_harq_ack();
 
-          // Process reserved data.
-          func_rvd();
+          // Decrement number of pending HARQ-ACK bits RE for the symbol.
+          --ack_m_re_count;
+
+          is_zero = true;
+        }
+      } else {
+        // Process HARQ-ACK without reserved elements.
+        if ((ack_m_re_count != 0) && ((i_ack++) % ack_d == 0)) {
+          // Multiplex HARQ-ACK.
+          func_harq_ack();
 
           // Decrement number of pending HARQ-ACK bits RE for the symbol.
           --ack_m_re_count;
-        } else {
-          // Multiplex SCH data.
-          func_sch_data();
+
+          continue;
         }
-
-        // Decrement number of pending RE for reserved HARQ-ACK.
-        --rvd_m_re_count;
-
-        // Decrement number of pending SCH data RE for the symbol.
-        --ulsch_m_re_count;
-
-        continue;
       }
 
-      // Check if the RE is for HARQ-ACK if no reserved bits.
-      if ((G_ack_rvd == 0) && (ack_m_re_count != 0) && (i_subcarrier % ack_d == 0)) {
-        // Multiplex HARQ-ACK.
-        func_harq_ack();
-
-        // Decrement number of pending HARQ-ACK RE for the symbol.
-        --ack_m_re_count;
-
-        continue;
-      }
-
-      // Process CSI-Part1.
-      if ((csi1_m_re_count != 0) && ((i_csi1++) % csi1_d == 0)) {
+      // Process CSI-Part1. It is not allowed to use reserved RE.
+      if (!is_reserved && (csi1_m_re_count != 0) && ((i_csi1++) % csi1_d == 0)) {
         // Multiplex CSI-Part1.
         func_csi_part1();
 
@@ -271,7 +266,7 @@ void ulsch_demultiplex_generic(FuncSchData&                            func_sch_
       // Process CSI-Part2.
       if ((csi2_m_re_count != 0) && ((i_csi2++) % csi2_d == 0)) {
         // Multiplex CSI-Part2.
-        func_csi_part2();
+        func_csi_part2(is_zero);
 
         // Decrement number of pending CSI-Part2 RE for the symbol.
         --csi2_m_re_count;
@@ -280,9 +275,10 @@ void ulsch_demultiplex_generic(FuncSchData&                            func_sch_
       }
 
       // Multiplex SCH data.
-      func_sch_data();
+      func_sch_data(is_zero);
 
       // Decrement number of pending SCH data RE for the symbol.
+      srsgnb_assert(ulsch_m_re_count > 0, "UL-SCH RE are exhausted.");
       --ulsch_m_re_count;
     }
 
@@ -325,15 +321,15 @@ void ulsch_demultiplex_impl::demultiplex(span<log_likelihood_ratio>             
   unsigned nof_bits_per_re = get_bits_per_symbol(config.modulation) * config.nof_layers;
 
   // Function to demultiplex SCH data.
-  auto func_sch_data = [&sch_data, &input, &nof_bits_per_re]() {
+  auto func_sch_data = [&sch_data, &input, &nof_bits_per_re](bool is_reserved) {
+    if (is_reserved) {
+      srsvec::zero(sch_data.first(nof_bits_per_re));
+      sch_data = sch_data.last(sch_data.size() - nof_bits_per_re);
+      return;
+    }
+
     srsvec::copy(sch_data.first(nof_bits_per_re), input.first(nof_bits_per_re));
     input    = input.last(input.size() - nof_bits_per_re);
-    sch_data = sch_data.last(sch_data.size() - nof_bits_per_re);
-  };
-
-  // Function to handle reserved data.
-  auto func_rvd_data = [&sch_data, &nof_bits_per_re]() {
-    srsvec::zero(sch_data.first(nof_bits_per_re));
     sch_data = sch_data.last(sch_data.size() - nof_bits_per_re);
   };
 
@@ -352,14 +348,19 @@ void ulsch_demultiplex_impl::demultiplex(span<log_likelihood_ratio>             
   };
 
   // Function to demultiplex CSI-Part2 bits.
-  auto func_csi_part2 = [&csi_part2, &input, &nof_bits_per_re]() {
+  auto func_csi_part2 = [&csi_part2, &input, &nof_bits_per_re](bool is_reserved) {
+    if (is_reserved) {
+      srsvec::zero(csi_part2.first(nof_bits_per_re));
+      csi_part2 = csi_part2.last(csi_part2.size() - nof_bits_per_re);
+      return;
+    }
+
     srsvec::copy(csi_part2.first(nof_bits_per_re), input.first(nof_bits_per_re));
     input     = input.last(input.size() - nof_bits_per_re);
     csi_part2 = csi_part2.last(csi_part2.size() - nof_bits_per_re);
   };
 
   ulsch_demultiplex_generic(func_sch_data,
-                            func_rvd_data,
                             func_harq_ack,
                             func_csi_part1,
                             func_csi_part2,
@@ -394,11 +395,11 @@ ulsch_placeholder_list ulsch_demultiplex_impl::get_placeholders(const message_in
   }
 
   // Function to demultiplex SCH data.
-  auto func_sch_data = [&re_counter]() { ++re_counter; };
-
-  // Function to handle reserved data.
-  auto func_rvd_data = []() {
-    // Do nothing.
+  auto func_sch_data = [&re_counter](bool is_reserved) {
+    if (is_reserved) {
+      return;
+    }
+    ++re_counter;
   };
 
   // Function to demultiplex HARQ-ACK bits.
@@ -418,7 +419,10 @@ ulsch_placeholder_list ulsch_demultiplex_impl::get_placeholders(const message_in
   };
 
   // Function to demultiplex CSI-Part2 bits.
-  auto func_csi_part2 = [&re_counter, &message_info, &result]() {
+  auto func_csi_part2 = [&re_counter, &message_info, &result](bool is_reserved) {
+    if (is_reserved) {
+      return;
+    }
     if (message_info.nof_csi_part2_bits == 1) {
       result.push_back(re_counter);
     }
@@ -426,7 +430,6 @@ ulsch_placeholder_list ulsch_demultiplex_impl::get_placeholders(const message_in
   };
 
   ulsch_demultiplex_generic(func_sch_data,
-                            func_rvd_data,
                             func_harq_ack,
                             func_csi_part1,
                             func_csi_part2,
