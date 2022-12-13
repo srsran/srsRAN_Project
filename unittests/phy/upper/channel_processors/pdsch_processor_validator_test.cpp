@@ -19,6 +19,7 @@ using namespace srsgnb;
 
 namespace {
 
+// Valid PDSCH configuration used as a base for the test cases.
 const pdsch_processor::pdu_t base_pdu = {{0, 19},
                                          1,
                                          52,
@@ -195,11 +196,11 @@ protected:
         create_pdsch_processor_factory_sw(pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory);
     ASSERT_NE(pdsch_proc_factory, nullptr);
 
-    // Create actual pdsch processor.
+    // Create actual PDSCH processor.
     pdsch_proc = pdsch_proc_factory->create();
     ASSERT_NE(pdsch_proc, nullptr);
 
-    // Create actual pdsch processor validator.
+    // Create actual PDSCH PDU validator.
     pdu_validator = pdsch_proc_factory->create_validator();
     ASSERT_NE(pdu_validator, nullptr);
   }

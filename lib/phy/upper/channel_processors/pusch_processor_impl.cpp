@@ -54,7 +54,7 @@ bool pusch_processor_validator_impl::is_valid(const pusch_processor::pdu_t& pdu)
   }
 
   // The number of symbols carrying DM-RS must be greater than zero.
-  if (pdu.dmrs_symbol_mask.count() == 0) {
+  if (pdu.dmrs_symbol_mask.none()) {
     return false;
   }
 

@@ -18,7 +18,7 @@ namespace srsgnb {
 
 /// \brief Represents a symbol mask within a slot.
 ///
-/// Inherits from \c bounded_bitset<MAX_NSYMB_PER_SLOT>
+/// Inherits from \c bounded_bitset<MAX_NSYMB_PER_SLOT>.
 class symbol_slot_mask : public bounded_bitset<MAX_NSYMB_PER_SLOT>
 {
 public:
@@ -32,6 +32,9 @@ public:
   symbol_slot_mask(const std::initializer_list<const bool>& list) : bounded_bitset(list) {}
 };
 
+/// \brief Represents a RE mask within a PRB.
+///
+/// Inherits from \c bounded_bitset<NRE>.
 class re_prb_mask : public bounded_bitset<NRE>
 {
 public:
@@ -52,6 +55,11 @@ namespace fmt {
 /// \brief Custom formatter for symbol_slot_mask.
 template <>
 struct formatter<srsgnb::symbol_slot_mask> : public formatter<srsgnb::bounded_bitset<srsgnb::MAX_NSYMB_PER_SLOT>> {
+};
+
+/// \brief Custom formatter for re_prb_mask.
+template <>
+struct formatter<srsgnb::re_prb_mask> : public formatter<srsgnb::bounded_bitset<srsgnb::NRE>> {
 };
 
 } // namespace fmt
