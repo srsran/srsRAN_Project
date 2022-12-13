@@ -142,5 +142,29 @@ private:
   srslog::basic_logger& logger;
 };
 
+/// Dummy handler storing and printing the received PDU.
+class dummy_ngc_f1c_control_notifier : public ngc_f1c_control_notifier
+{
+public:
+  dummy_ngc_f1c_control_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+
+  virtual async_task<pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(pdu_session_resource_setup_message& msg) override
+  {
+    last_msg = std::move(msg);
+    logger.info("Received a PDU Session Resource Setup Message");
+
+    return launch_async([res = pdu_session_resource_setup_response_message{}](
+                            coro_context<async_task<pdu_session_resource_setup_response_message>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(res);
+    });
+  }
+  pdu_session_resource_setup_message last_msg;
+
+private:
+  srslog::basic_logger& logger;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

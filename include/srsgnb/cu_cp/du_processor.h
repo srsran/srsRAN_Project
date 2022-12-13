@@ -74,6 +74,10 @@ public:
   /// \return The F1C message handler interface of the DU processor object.
   virtual f1c_message_handler& get_f1c_message_handler() = 0;
 
+  /// \brief Get the F1C UE context management handler interface of the DU processor object.
+  /// \return The F1C UE context management handler interface of the DU processor object.
+  virtual f1c_ue_context_manager& get_f1c_ue_context_manager() = 0;
+
   /// \brief Get the F1C statistics handler interface of the DU processor object.
   /// \return The F1C statistics handler interface of the DU processor object.
   virtual f1c_statistics_handler& get_f1c_statistics_handler() = 0;

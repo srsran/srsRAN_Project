@@ -170,7 +170,6 @@ public:
       ng_ran_bearer_context_setup_request.push_back(bearer_request_item);
     }
 
-    // e1_request.pdu_session_res_setup_list      = std::move(msg.pdu_session_res_setup_list);
     e1_request.uedl_aggregate_maximum_bit_rate = msg.ue_aggregate_maximum_bit_rate_dl;
 
     e1ap_bearer_context_setup_response_message e1_bearer_context_setup_resp_msg;
@@ -213,6 +212,28 @@ public:
 
 private:
   e1_bearer_context_manager* e1_bearer_context_mng = nullptr;
+};
+
+/// Adapter between NGC and F1C
+class ngc_f1c_adapter : public ngc_f1c_control_notifier
+{
+public:
+  void connect_f1c(f1c_ue_context_manager* f1c_ue_context_mng_) { f1c_ue_context_mng = f1c_ue_context_mng_; }
+
+  async_task<pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(pdu_session_resource_setup_message& msg) override
+  {
+    srsgnb_assert(f1c_ue_context_mng != nullptr, "f1c_ue_context_mng must not be nullptr");
+
+    return launch_async([res = pdu_session_resource_setup_response_message{}](
+                            coro_context<async_task<pdu_session_resource_setup_response_message>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(res);
+    });
+  }
+
+private:
+  f1c_ue_context_manager* f1c_ue_context_mng = nullptr;
 };
 
 } // namespace srs_cu_cp

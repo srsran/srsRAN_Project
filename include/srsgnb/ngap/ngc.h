@@ -179,6 +179,17 @@ public:
   on_new_pdu_session_resource_setup_request(pdu_session_resource_setup_message& msg) = 0;
 };
 
+/// Interface to notify the F1C about control messages.
+class ngc_f1c_control_notifier
+{
+public:
+  virtual ~ngc_f1c_control_notifier() = default;
+
+  /// \brief Notify about the reception of a new PDU Session Resource Setup List.
+  virtual async_task<pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(pdu_session_resource_setup_message& msg) = 0;
+};
+
 /// \brief Schedules asynchronous tasks associated with an UE.
 class ngc_ue_task_scheduler
 {
