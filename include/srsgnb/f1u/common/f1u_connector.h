@@ -36,10 +36,10 @@ public:
   f1u_du_connector(const f1u_du_connector&&)            = delete;
   f1u_du_connector& operator=(const f1u_du_connector&&) = delete;
 
-  virtual void attach_du_bearer(uint32_t                     dl_teid,
-                                uint32_t                     ul_teid,
-                                srs_du::f1u_tx_pdu_notifier& du_tx,
-                                srs_du::f1u_rx_pdu_handler&  du_rx) = 0;
+  virtual void attach_du_bearer(uint32_t                    dl_teid,
+                                uint32_t                    ul_teid,
+                                f1u_ul_local_adapter&       du_tx,
+                                srs_du::f1u_rx_pdu_handler& du_rx) = 0;
 };
 
 /// TODO write docs.

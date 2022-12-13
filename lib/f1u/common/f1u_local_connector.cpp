@@ -21,10 +21,10 @@ void f1u_local_connector::attach_cu_bearer(uint32_t                       dl_tei
   logger.info("Connecting CU F1-U bearer. DL-TEID={}", dl_teid);
 }
 
-void f1u_local_connector::attach_du_bearer(uint32_t                     dl_teid,
-                                           uint32_t                     ul_teid,
-                                           srs_du::f1u_tx_pdu_notifier& du_tx,
-                                           srs_du::f1u_rx_pdu_handler&  du_rx)
+void f1u_local_connector::attach_du_bearer(uint32_t                    dl_teid,
+                                           uint32_t                    ul_teid,
+                                           f1u_ul_local_adapter&       du_tx,
+                                           srs_du::f1u_rx_pdu_handler& du_rx)
 {
   logger.info("Connecting CU F1-U bearer. UL-TEID={}", ul_teid);
 }
