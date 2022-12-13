@@ -98,7 +98,7 @@ TEST_F(f1ap_du_test, when_f1ap_ue_context_setup_request_is_received_new_srbs_bec
   du_ue_index_t ue_index = to_du_ue_index(0);
   run_f1_setup_procedure();
   run_f1_ue_create(ue_index);
-  run_ue_context_setup_procedure(ue_index, {drb_id_t::drb1});
+  run_ue_context_setup_procedure(ue_index, generate_f1_ue_context_setup_request({drb_id_t::drb1}));
 
   // UL data through created SRB2 reaches F1-C.
   ASSERT_EQ(this->f1c_du_cfg_handler.last_ue_cfg_response->f1c_bearers_added.size(), 1);
@@ -110,4 +110,42 @@ TEST_F(f1ap_du_test, when_f1ap_ue_context_setup_request_is_received_new_srbs_bec
             f1_ap_elem_procs_o::init_msg_c::types_opts::ulrrc_msg_transfer);
   const ulrrc_msg_transfer_s& ulmsg = this->msg_notifier.last_f1c_msg.pdu.init_msg().value.ulrrc_msg_transfer();
   ASSERT_EQ(ulmsg->rrc_container.value, ul_rrc_msg);
+}
+
+TEST_F(f1ap_du_test, f1ap_handles_precanned_ue_context_setup_request_correctly)
+{
+  f1c_message ue_ctxt_setup_req;
+  {
+    const uint8_t msg[] = {0x00, 0x05, 0x00, 0x44, 0x00, 0x00, 0x08, 0x00, 0x28, 0x00, 0x02, 0x00, 0x16, 0x00, 0x29,
+                           0x40, 0x03, 0x40, 0x00, 0x00, 0x00, 0x3f, 0x00, 0x09, 0x00, 0x02, 0xf8, 0x99, 0x00, 0x0b,
+                           0xc6, 0x14, 0xe0, 0x00, 0x6b, 0x00, 0x01, 0x00, 0x00, 0x09, 0x00, 0x01, 0x00, 0x00, 0x4a,
+                           0x00, 0x06, 0x00, 0x00, 0x49, 0x00, 0x01, 0x08, 0x00, 0x32, 0x40, 0x0a, 0x09, 0x00, 0x03,
+                           0x20, 0x08, 0x08, 0x95, 0x75, 0x5b, 0x0c, 0x00, 0xb8, 0x40, 0x01, 0x00};
+    // 000500440000080028000200160029400340a127003f00090002f899000bc614e0006b0001000009000100004a00060000490001080032400a09000320080895755b0c00b8400100
+
+    byte_buffer    buf(msg);
+    asn1::cbit_ref bref(buf);
+    ASSERT_EQ(ue_ctxt_setup_req.pdu.unpack(bref), asn1::SRSASN_SUCCESS);
+  }
+
+  // Test Preamble.
+  du_ue_index_t ue_index = to_du_ue_index(0);
+  run_f1_setup_procedure();
+  run_f1_ue_create(ue_index);
+  run_ue_context_setup_procedure(ue_index, ue_ctxt_setup_req);
+
+  // SRB2 created.
+  ue_context_setup_resp_s& resp =
+      this->msg_notifier.last_f1c_msg.pdu.successful_outcome().value.ue_context_setup_resp();
+  ASSERT_TRUE(resp->srbs_setup_list_present);
+  ASSERT_EQ(resp->srbs_setup_list->size(), 1);
+  ASSERT_EQ(resp->srbs_setup_list.value[0]->srbs_setup_item().srbid, 2);
+
+  // DUtoCURRCInformation included in response.
+  ASSERT_EQ(resp->duto_currc_info.value.cell_group_cfg,
+            this->f1c_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
+
+  // F1AP sends RRC Container present in UE CONTEXT SETUP REQUEST via SRB1.
+  ASSERT_EQ(test_ues[ue_index].f1c_bearers[1].rx_sdu_notifier.last_pdu,
+            ue_ctxt_setup_req.pdu.init_msg().value.ue_context_setup_request()->rrc_container.value);
 }

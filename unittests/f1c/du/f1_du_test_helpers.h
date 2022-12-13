@@ -175,7 +175,7 @@ protected:
   /// \brief Create new UE in F1AP.
   ue_test_context* run_f1_ue_create(du_ue_index_t ue_index);
 
-  void run_ue_context_setup_procedure(du_ue_index_t ue_index, std::initializer_list<drb_id_t> drbs);
+  void run_ue_context_setup_procedure(du_ue_index_t ue_index, const f1c_message& msg);
 
   /// \brief Update UE config in F1AP.
   f1ap_ue_configuration_response update_f1_ue_config(du_ue_index_t                   ue_index,

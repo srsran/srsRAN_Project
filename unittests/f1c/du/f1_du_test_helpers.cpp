@@ -252,12 +252,9 @@ f1ap_du_test::ue_test_context* f1ap_du_test::run_f1_ue_create(du_ue_index_t ue_i
   return nullptr;
 }
 
-void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t                   ue_index,
-                                                  std::initializer_list<drb_id_t> drbs_to_addmod)
+void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const f1c_message& msg)
 {
   ue_test_context& ue = test_ues[ue_index];
-
-  f1c_message msg = generate_f1_ue_context_setup_request(drbs_to_addmod);
 
   // Generate dummy DU manager UE Config Update command to F1AP.
   const auto& f1c_req                         = msg.pdu.init_msg().value.ue_context_setup_request();

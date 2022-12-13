@@ -47,8 +47,8 @@ target_link_libraries(f1_du_ue_config_test
         gtest_main)
 gtest_discover_tests(f1_du_ue_config_test)
 
-add_executable(f1_du_ue_context_setup_test f1_du_ue_context_setup_procedure_test.cpp)
-target_link_libraries(f1_du_ue_context_setup_test
+add_executable(f1ap_du_ue_context_setup_test f1_du_ue_context_setup_procedure_test.cpp)
+target_link_libraries(f1ap_du_ue_context_setup_test
         srsgnb_f1c_du
         srsgnb_support
         du_manager_converters
