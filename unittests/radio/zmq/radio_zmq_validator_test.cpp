@@ -237,7 +237,7 @@ const std::vector<test_case_t> radio_zmq_validator_test_data = {
        config.log_level                  = "some invalid log level";
        return config;
      },
-     "Log level SOME INVALID LOG LEVEL does not correspond to an actual logger level.\n"},
+     "Log level some invalid log level does not correspond to an actual logger level.\n"},
 };
 
 class RadioZmqValidatorFixture : public ::testing::TestWithParam<test_case_t>
