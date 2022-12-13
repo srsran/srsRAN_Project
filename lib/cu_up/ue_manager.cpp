@@ -13,8 +13,11 @@
 using namespace srsgnb;
 using namespace srs_cu_up;
 
-ue_manager::ue_manager(srslog::basic_logger& logger_, timer_manager& timers_, gtpu_demux_ctrl& ngu_demux_) :
-  logger(logger_), timers(timers_), ngu_demux(ngu_demux_)
+ue_manager::ue_manager(srslog::basic_logger& logger_,
+                       timer_manager&        timers_,
+                       f1u_cu_up_connector&  f1u_conn_,
+                       gtpu_demux_ctrl&      ngu_demux_) :
+  logger(logger_), timers(timers_), f1u_conn(f1u_conn_), ngu_demux(ngu_demux_)
 {
 }
 

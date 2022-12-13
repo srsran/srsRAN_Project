@@ -18,6 +18,7 @@ void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
 {
   srsgnb_assert(cfg.cu_up_executor != nullptr, "Invalid CU-UP executor");
   srsgnb_assert(cfg.e1_notifier != nullptr, "Invalid E1 notifier");
+  srsgnb_assert(cfg.f1u_connector != nullptr, "Invalid F1-U connector");
 }
 
 cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128)
@@ -26,7 +27,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   // Create layers
   ngu_demux = create_gtpu_demux();
-  ue_mng    = std::make_unique<ue_manager>(logger, timers, *ngu_demux);
+  ue_mng    = std::make_unique<ue_manager>(logger, timers, *cfg.f1u_connector, *ngu_demux);
 
   // connect event notifier to layers
   // f1c_ev_notifier.connect_cu_cp(*this);
@@ -48,11 +49,8 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
   logger.info("UE Created (ue_index={})", ue_ctxt->get_index());
 
   // 2. Handle bearer context setup request
-  for (auto it = msg.request.ng_ran_bearer_context_setup_request().begin();
-       it != msg.request.ng_ran_bearer_context_setup_request().end();
-       ++it) {
-    const auto& pdu_session_list = it->value().pdu_session_res_to_setup_list();
-
+  for (const auto& bearer_ctx_setup_request : msg.request.ng_ran_bearer_context_setup_request()) {
+    const auto& pdu_session_list = bearer_ctx_setup_request->pdu_session_res_to_setup_list();
     for (const auto& pdu_session : pdu_session_list) {
       pdu_session_setup_result result = ue_ctxt->setup_pdu_session(pdu_session);
     }

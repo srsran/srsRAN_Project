@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/f1c/cu_cp/f1c_cu.h"
+#include "srsgnb/e1/common/e1_common.h"
+#include "srsgnb/f1u/common/f1u_connector.h"
 #include "srsgnb/support/executors/task_executor.h"
 
 namespace srsgnb {
@@ -20,6 +21,7 @@ namespace srs_cu_up {
 struct cu_up_configuration {
   task_executor*       cu_up_executor = nullptr;
   e1_message_notifier* e1_notifier    = nullptr; /// Callback for incoming E1 messages.
+  f1u_cu_up_connector* f1u_connector  = nullptr;
 };
 
 } // namespace srs_cu_up
