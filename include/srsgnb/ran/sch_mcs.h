@@ -36,7 +36,7 @@ struct sch_mcs_description {
     return get_bits_per_symbol(modulation) * get_normalised_target_code_rate();
   }
 
-  /// \brief Returns the target code rate normalised betewen 0 and 1.
+  /// \brief Returns the target code rate normalised between 0 and 1.
   constexpr float get_normalised_target_code_rate() const { return target_code_rate * (1.F / 1024); }
 };
 
