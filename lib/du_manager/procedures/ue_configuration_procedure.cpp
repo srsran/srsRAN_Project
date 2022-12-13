@@ -99,7 +99,7 @@ void ue_configuration_procedure::update_f1_bearers()
     du_bearer& bearer = ue->bearers[lcid];
     req.f1c_bearers_to_add.emplace_back();
     req.f1c_bearers_to_add.back().srb_id          = srb_id;
-    req.f1c_bearers_to_add.back().rx_sdu_notifier = &bearer.bearer_connector.f1c_tx_pdu_notif;
+    req.f1c_bearers_to_add.back().rx_sdu_notifier = &bearer.bearer_connector.f1c_rx_sdu_notif;
   }
 
   for (const drb_to_setup& drb : request.drbs_to_setup) {

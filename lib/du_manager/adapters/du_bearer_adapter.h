@@ -25,7 +25,7 @@ struct du_bearer_adapter {
   rlc_tx_data_notifier            rlc_tx_data_notif;
   rlc_tx_control_notifier         rlc_tx_ctrl_notif;
   rlc_tx_mac_buffer_state_updater rlc_tx_buffer_state_notif;
-  f1c_tx_rlc_pdu_adapter          f1c_tx_pdu_notif;
+  f1c_rx_sdu_rlc_adapter          f1c_rx_sdu_notif;
   f1u_rx_rlc_sdu_adapter          f1u_rx_sdu_notif; // TODO: Rename to f1u_rx_rlc_tx_sdu_notif
 };
 

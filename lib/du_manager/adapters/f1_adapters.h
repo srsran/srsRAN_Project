@@ -17,7 +17,7 @@
 namespace srsgnb {
 namespace srs_du {
 
-class f1c_tx_rlc_pdu_adapter final : public f1c_rx_sdu_notifier
+class f1c_rx_sdu_rlc_adapter final : public f1c_rx_sdu_notifier
 {
 public:
   void connect(rlc_tx_upper_layer_data_interface& rlc_tx_) { rlc_tx = &rlc_tx_; }

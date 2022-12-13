@@ -175,10 +175,10 @@ void ue_creation_procedure::create_f1_ue()
   // Create SRB0 and SRB1.
   du_bearer& srb0                              = ue_ctx->bearers[LCID_SRB0];
   f1_msg.f1c_bearers_to_add[0].srb_id          = srb_id_t::srb0;
-  f1_msg.f1c_bearers_to_add[0].rx_sdu_notifier = &srb0.bearer_connector.f1c_tx_pdu_notif;
+  f1_msg.f1c_bearers_to_add[0].rx_sdu_notifier = &srb0.bearer_connector.f1c_rx_sdu_notif;
   du_bearer& srb1                              = ue_ctx->bearers[LCID_SRB1];
   f1_msg.f1c_bearers_to_add[1].srb_id          = srb_id_t::srb1;
-  f1_msg.f1c_bearers_to_add[1].rx_sdu_notifier = &srb1.bearer_connector.f1c_tx_pdu_notif;
+  f1_msg.f1c_bearers_to_add[1].rx_sdu_notifier = &srb1.bearer_connector.f1c_rx_sdu_notif;
 
   // Pack SRB1 configuration that is going to be passed in the F1AP DU-to-CU-RRC-Container IE to the CU as per TS38.473,
   // Section 8.4.1.2.
@@ -215,8 +215,8 @@ void ue_creation_procedure::connect_layer_bearers()
   du_bearer& srb1 = ue_ctx->bearers[LCID_SRB1];
 
   // Connect F1 Tx PDU -> RLC Tx SDU.
-  srb0.bearer_connector.f1c_tx_pdu_notif.connect(*srb0.rlc_bearer->get_tx_upper_layer_data_interface());
-  srb1.bearer_connector.f1c_tx_pdu_notif.connect(*srb1.rlc_bearer->get_tx_upper_layer_data_interface());
+  srb0.bearer_connector.f1c_rx_sdu_notif.connect(*srb0.rlc_bearer->get_tx_upper_layer_data_interface());
+  srb1.bearer_connector.f1c_rx_sdu_notif.connect(*srb1.rlc_bearer->get_tx_upper_layer_data_interface());
 
   // Connect RLC RX SDU -> F1AP RX PDU adapter.
   srb0.bearer_connector.rlc_rx_f1c_sdu_notif.connect(*f1_resp.f1c_bearers_added[0]);
