@@ -117,7 +117,7 @@ public:
 
   /// \brief Initiates the UE Context Modification procedure as per TS 38.473 section 8.3.4.
   /// \param[in] request The UE Context Modification message to transmit.
-  /// \return Returns a f1ap_ue_context_modification_response_message struct struct with the success member set to
+  /// \return Returns a f1ap_ue_context_modification_response_message struct with the success member set to
   /// 'true' in case of a successful outcome, 'false' otherwise.
   virtual async_task<f1ap_ue_context_modification_response_message>
   handle_ue_context_modification_request(const f1ap_ue_context_modification_request_message& request) = 0;

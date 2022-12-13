@@ -9,7 +9,7 @@
  */
 
 #include "ngc_impl.h"
-#include "../cu_cp/helpers/cu_cp_asn1_helpers.h"
+#include "../cu_cp/helpers/ngap_e1ap_asn1_helpers.h"
 #include "ngap_asn1_utils.h"
 #include "procedures/ng_initial_context_setup_procedure.h"
 #include "procedures/ng_pdu_session_resource_setup_procedure.h"

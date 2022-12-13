@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../helpers/cu_cp_asn1_helpers.h"
+#include "../helpers/ngap_e1ap_asn1_helpers.h"
 #include "../task_schedulers/ue_task_scheduler.h"
 #include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/cu_cp/cu_cp.h"
@@ -112,65 +112,7 @@ public:
     srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
 
     e1ap_bearer_context_setup_request_message e1_request;
-
-    e1_request.sys_bearer_context_setup_request.set_ng_ran_bearer_context_setup_request();
-    auto& ng_ran_bearer_context_setup_request =
-        e1_request.sys_bearer_context_setup_request.ng_ran_bearer_context_setup_request();
-
-    for (auto ngap_pdu_session_res_item : msg.pdu_session_res_setup_items) {
-      asn1::protocol_ie_field_s<asn1::e1ap::ng_ran_bearer_context_setup_request_o> bearer_request_item;
-      auto& e1ap_pdu_session_res_items = bearer_request_item.value().pdu_session_res_to_setup_list();
-
-      asn1::e1ap::pdu_session_res_to_setup_item_s e1ap_pdu_session_res_item;
-
-      // pdu session id
-      e1ap_pdu_session_res_item.pdu_session_id = ngap_pdu_session_res_item.pdu_session_id;
-
-      // s-NSSAI
-      e1ap_pdu_session_res_item.snssai.sst.from_number(ngap_pdu_session_res_item.s_nssai.sst.to_number());
-      if (ngap_pdu_session_res_item.s_nssai.sd_present) {
-        e1ap_pdu_session_res_item.snssai.sd_present = true;
-        e1ap_pdu_session_res_item.snssai.sd.from_number(ngap_pdu_session_res_item.s_nssai.sd.to_number());
-      }
-
-      asn1::cbit_ref bref(ngap_pdu_session_res_item.pdu_session_res_setup_request_transfer);
-      asn1::ngap::pdu_session_res_setup_request_transfer_s pdu_session_res_setup_request_transfer;
-      // TODO: Check return value
-      pdu_session_res_setup_request_transfer.unpack(bref);
-
-      // pdu session type
-      e1ap_pdu_session_res_item.pdu_session_type = ngap_pdu_session_type_to_e1ap_pdu_session_type(
-          pdu_session_res_setup_request_transfer->pdu_session_type.value);
-
-      // ng ul up transport layer information
-      if (pdu_session_res_setup_request_transfer->ul_ngu_up_tnl_info->type() ==
-          asn1::ngap::up_transport_layer_info_c::types::gtp_tunnel) {
-        e1ap_pdu_session_res_item.ng_ul_up_tnl_info.set_gtp_tunnel();
-        auto& e1ap_gtp_tunnel    = e1ap_pdu_session_res_item.ng_ul_up_tnl_info.gtp_tunnel();
-        e1ap_gtp_tunnel.gtp_teid = pdu_session_res_setup_request_transfer->ul_ngu_up_tnl_info->gtp_tunnel().gtp_teid;
-        e1ap_gtp_tunnel.transport_layer_address.from_number(
-            pdu_session_res_setup_request_transfer->ul_ngu_up_tnl_info->gtp_tunnel()
-                .transport_layer_address.to_number());
-      } else {
-        // TODO: error?
-      }
-
-      // TODO: add optional values
-
-      // pdu session resource dl aggregate maximum bit rate
-      if (pdu_session_res_setup_request_transfer->pdu_session_aggregate_maximum_bit_rate_present) {
-        e1ap_pdu_session_res_item.pdu_session_res_dl_ambr_present = true;
-        e1ap_pdu_session_res_item.pdu_session_res_dl_ambr =
-            pdu_session_res_setup_request_transfer->pdu_session_aggregate_maximum_bit_rate
-                ->pdu_session_aggregate_maximum_bit_rate_dl;
-      }
-
-      e1ap_pdu_session_res_items.push_back(e1ap_pdu_session_res_item);
-
-      ng_ran_bearer_context_setup_request.push_back(bearer_request_item);
-    }
-
-    e1_request.uedl_aggregate_maximum_bit_rate = msg.ue_aggregate_maximum_bit_rate_dl;
+    fill_e1ap_bearer_context_setup_request(e1_request, msg);
 
     e1ap_bearer_context_setup_response_message e1_bearer_context_setup_resp_msg;
 
@@ -185,26 +127,15 @@ public:
           // Fail if E-UTRAN bearer context setup is returned
           if (e1_bearer_context_setup_resp_msg.response->sys_bearer_context_setup_resp->type() ==
               asn1::e1ap::sys_bearer_context_setup_resp_c::types::e_utran_bearer_context_setup_resp) {
-            asn1::ngap::pdu_session_res_setup_unsuccessful_transfer_s setup_unsuccessful_transfer;
-            setup_unsuccessful_transfer.cause.set_protocol();
-
-            // Pack pdu_session_res_setup_unsuccessful_transfer_s
-            byte_buffer   pdu;
-            asn1::bit_ref bref(pdu);
-            setup_unsuccessful_transfer.pack(bref);
-
-            for (auto e1ap_failed_item : msg.pdu_session_res_setup_items) {
-              asn1::ngap::pdu_session_res_failed_to_setup_item_su_res_s ngap_failed_item;
-              ngap_failed_item.pdu_session_id                              = e1ap_failed_item.pdu_session_id;
-              ngap_failed_item.pdu_session_res_setup_unsuccessful_transfer = std::move(pdu);
-              res.pdu_session_res_failed_to_setup_items.push_back(ngap_failed_item);
-            }
+            asn1::ngap::cause_c cause;
+            cause.set(asn1::ngap::cause_c::types_opts::options::protocol);
+            fill_failed_ngap_pdu_session_res_setup_response(res, msg, e1_bearer_context_setup_resp_msg, cause);
 
             CORO_EARLY_RETURN(res);
           }
 
-          // Convert E1 response to common type
-          fill_cu_cp_pdu_session_res_setup_response(res, msg, e1_bearer_context_setup_resp_msg);
+          // Convert E1 response to NGAP response
+          fill_ngap_pdu_session_res_setup_response(res, msg, e1_bearer_context_setup_resp_msg);
 
           CORO_RETURN(res);
         });
@@ -225,11 +156,20 @@ public:
   {
     srsgnb_assert(f1c_ue_context_mng != nullptr, "f1c_ue_context_mng must not be nullptr");
 
-    return launch_async([res = pdu_session_resource_setup_response_message{}](
-                            coro_context<async_task<pdu_session_resource_setup_response_message>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-      CORO_RETURN(res);
-    });
+    f1ap_ue_context_modification_request_message f1c_ue_ctxt_mod_req;
+
+    f1ap_ue_context_modification_response_message f1c_ue_ctxt_mod_resp;
+
+    return launch_async(
+        [this, res = pdu_session_resource_setup_response_message{}, f1c_ue_ctxt_mod_resp, f1c_ue_ctxt_mod_req](
+            coro_context<async_task<pdu_session_resource_setup_response_message>>& ctx) mutable {
+          CORO_BEGIN(ctx);
+
+          CORO_AWAIT_VALUE(f1c_ue_ctxt_mod_resp,
+                           f1c_ue_context_mng->handle_ue_context_modification_request(f1c_ue_ctxt_mod_req));
+
+          CORO_RETURN(res);
+        });
   }
 
 private:
