@@ -9,12 +9,12 @@
  */
 
 #include "srsgnb/fapi/message_builders.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include <gtest/gtest.h>
 
 using namespace srsgnb;
 using namespace fapi;
 
-static void test_bwp_params()
+TEST(dl_pdcch_pdu_builder, valid_bwp_parameters_passes)
 {
   dl_pdcch_pdu         pdu;
   dl_pdcch_pdu_builder builder(pdu);
@@ -26,13 +26,13 @@ static void test_bwp_params()
 
   builder.set_bwp_parameters(bwp_size, bwp_start, scs, cp);
 
-  TESTASSERT_EQ(bwp_size, pdu.coreset_bwp_size);
-  TESTASSERT_EQ(bwp_start, pdu.coreset_bwp_start);
-  TESTASSERT_EQ(scs, pdu.scs);
-  TESTASSERT_EQ(cp, pdu.cp);
+  ASSERT_EQ(bwp_size, pdu.coreset_bwp_size);
+  ASSERT_EQ(bwp_start, pdu.coreset_bwp_start);
+  ASSERT_EQ(scs, pdu.scs);
+  ASSERT_EQ(cp, pdu.cp);
 }
 
-static void test_coreset_params()
+TEST(dl_pdcch_pdu_builder, valid_coreset_parameters_passes)
 {
   dl_pdcch_pdu         pdu;
   dl_pdcch_pdu_builder builder(pdu);
@@ -60,34 +60,32 @@ static void test_coreset_params()
                                  shift_index,
                                  granularity);
 
-  TESTASSERT_EQ(start_symb_id, pdu.start_symbol_index);
-  TESTASSERT_EQ(symb_duration, pdu.duration_symbols);
-  TESTASSERT_EQ(mapping_type, pdu.cce_reg_mapping_type);
-  TESTASSERT_EQ(reg_size, pdu.reg_bundle_size);
-  TESTASSERT_EQ(interleaver_size, pdu.interleaver_size);
-  TESTASSERT_EQ(coreset_type, pdu.coreset_type);
-  TESTASSERT_EQ(shift_index, pdu.shift_index);
-  TESTASSERT_EQ(granularity, pdu.precoder_granularity);
-  TESTASSERT_EQ(freq_domain, pdu.freq_domain_resource);
+  ASSERT_EQ(start_symb_id, pdu.start_symbol_index);
+  ASSERT_EQ(symb_duration, pdu.duration_symbols);
+  ASSERT_EQ(mapping_type, pdu.cce_reg_mapping_type);
+  ASSERT_EQ(reg_size, pdu.reg_bundle_size);
+  ASSERT_EQ(interleaver_size, pdu.interleaver_size);
+  ASSERT_EQ(coreset_type, pdu.coreset_type);
+  ASSERT_EQ(shift_index, pdu.shift_index);
+  ASSERT_EQ(granularity, pdu.precoder_granularity);
+  ASSERT_EQ(freq_domain, pdu.freq_domain_resource);
 }
 
-static void test_add_dl_dci()
+TEST(dl_pdcch_pdu_builder, add_dl_dci)
 {
   dl_pdcch_pdu         pdu;
   dl_pdcch_pdu_builder builder(pdu);
 
-  TESTASSERT(pdu.dl_dci.empty());
-  TESTASSERT(pdu.maintenance_v3.info.empty());
-  TESTASSERT(pdu.parameters_v4.params.empty());
+  ASSERT_TRUE(pdu.parameters_v4.params.empty());
 
   builder.add_dl_dci();
-  TESTASSERT_EQ(1, pdu.dl_dci.size());
-  TESTASSERT_EQ(1, pdu.maintenance_v3.info.size());
-  TESTASSERT_EQ(1, pdu.parameters_v4.params.size());
-  TESTASSERT_EQ(0, pdu.maintenance_v3.info[0].dci_index);
+  ASSERT_EQ(1, pdu.dl_dci.size());
+  ASSERT_EQ(1, pdu.maintenance_v3.info.size());
+  ASSERT_EQ(1, pdu.parameters_v4.params.size());
+  ASSERT_EQ(0, pdu.maintenance_v3.info[0].dci_index);
 }
 
-static void test_dci_basic_params()
+TEST(dl_pdcch_pdu_builder, valid_dci_basic_parameters_passes)
 {
   dl_pdcch_pdu         pdu;
   dl_pdcch_pdu_builder builder(pdu);
@@ -100,14 +98,14 @@ static void test_dci_basic_params()
   unsigned aggregation_level = 4;
   builder_dci.set_basic_parameters(rnti, nid_pdcch_data, nrnti_pdcch_data, cce_index, aggregation_level);
 
-  TESTASSERT_EQ(rnti, pdu.dl_dci[0].rnti);
-  TESTASSERT_EQ(nid_pdcch_data, pdu.dl_dci[0].nid_pdcch_data);
-  TESTASSERT_EQ(nrnti_pdcch_data, pdu.dl_dci[0].nrnti_pdcch_data);
-  TESTASSERT_EQ(cce_index, pdu.dl_dci[0].cce_index);
-  TESTASSERT_EQ(aggregation_level, pdu.dl_dci[0].aggregation_level);
+  ASSERT_EQ(rnti, pdu.dl_dci[0].rnti);
+  ASSERT_EQ(nid_pdcch_data, pdu.dl_dci[0].nid_pdcch_data);
+  ASSERT_EQ(nrnti_pdcch_data, pdu.dl_dci[0].nrnti_pdcch_data);
+  ASSERT_EQ(cce_index, pdu.dl_dci[0].cce_index);
+  ASSERT_EQ(aggregation_level, pdu.dl_dci[0].aggregation_level);
 }
 
-static void test_dci_tx_power_params()
+TEST(dl_pdcch_pdu_builder, valid_dci_tx_power_parameters_passes)
 {
   for (int i = -8; i != 9; ++i) {
     dl_pdcch_pdu         pdu;
@@ -122,11 +120,11 @@ static void test_dci_tx_power_params()
 
     builder_dci.set_tx_power_info_parameter(power);
 
-    TESTASSERT_EQ(power ? static_cast<int>(power.value()) : -127, pdu.dl_dci[0].power_control_offset_ss_profile_nr);
+    ASSERT_EQ(power ? static_cast<int>(power.value()) : -127, pdu.dl_dci[0].power_control_offset_ss_profile_nr);
   }
 }
 
-static void test_maintenance_v3_dci_params()
+TEST(dl_pdcch_pdu_builder, valid_maintenance_v3_dci_parameters_passes)
 {
   bool collocated = true;
 
@@ -150,16 +148,16 @@ static void test_maintenance_v3_dci_params()
 
       builder_dci.set_maintenance_v3_dci_parameters(collocated, dmrs, data);
 
-      TESTASSERT_EQ(collocated, pdu.maintenance_v3.info[0].collocated_AL16_candidate);
-      TESTASSERT_EQ(dmrs ? static_cast<int>(dmrs.value() * 1000) : -32768,
-                    pdu.maintenance_v3.info[0].pdcch_dmrs_power_offset_profile_sss);
-      TESTASSERT_EQ(data ? static_cast<int>(data.value() * 1000) : -32768,
-                    pdu.maintenance_v3.info[0].pdcch_data_power_offset_profile_sss);
+      ASSERT_EQ(collocated, pdu.maintenance_v3.info[0].collocated_AL16_candidate);
+      ASSERT_EQ(dmrs ? static_cast<int>(dmrs.value() * 1000) : -32768,
+                pdu.maintenance_v3.info[0].pdcch_dmrs_power_offset_profile_sss);
+      ASSERT_EQ(data ? static_cast<int>(data.value() * 1000) : -32768,
+                pdu.maintenance_v3.info[0].pdcch_data_power_offset_profile_sss);
     }
   }
 }
 
-static void test_parameters_v4_dci()
+TEST(dl_pdcch_pdu_builder, valid_dci_v4_parameters_passes)
 {
   dl_pdcch_pdu         pdu;
   dl_pdcch_pdu_builder builder(pdu);
@@ -168,10 +166,10 @@ static void test_parameters_v4_dci()
   unsigned nid = 100;
   builder_dci.set_parameters_v4_dci(nid);
 
-  TESTASSERT_EQ(nid, pdu.parameters_v4.params[0].nid_pdcch_dmrs);
+  ASSERT_EQ(nid, pdu.parameters_v4.params[0].nid_pdcch_dmrs);
 }
 
-static void test_payload_dci()
+TEST(dl_pdcch_pdu_builder, add_valid_dci_payload_passes)
 {
   dl_pdcch_pdu         pdu;
   dl_pdcch_pdu_builder builder(pdu);
@@ -180,39 +178,5 @@ static void test_payload_dci()
   dci_payload payload = {1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1};
   builder_dci.set_payload(payload);
 
-  TESTASSERT_EQ(payload, pdu.dl_dci.back().payload);
-}
-
-static void test_dl_dci_params()
-{
-  test_dci_basic_params();
-  fmt::print("[PDCCH Builder] - DCI Basic params tested -> OK\n");
-  test_dci_tx_power_params();
-  fmt::print("[PDCCH Builder] - DCI Tx power params tested -> OK\n");
-  // :TODO: add test for the payload.
-  test_maintenance_v3_dci_params();
-  fmt::print("[PDCCH Builder] - Maintenance v3 DCI params tested -> OK\n");
-  test_parameters_v4_dci();
-  fmt::print("[PDCCH Builder] - Parameters v4 DCI tested -> OK\n");
-  test_payload_dci();
-  fmt::print("[PDCCH Builder] - DCI payload tested -> OK\n");
-}
-
-static void test_pdcch_builder()
-{
-  test_bwp_params();
-  fmt::print("[PDCCH Builder] - BWP params tested -> OK\n");
-  test_coreset_params();
-  fmt::print("[PDCCH Builder] - Coreset params tested -> OK\n");
-  test_add_dl_dci();
-  fmt::print("[PDCCH Builder] - Add DL DCI PDU -> OK\n");
-  test_dl_dci_params();
-  fmt::print("[PDCCH Builder] - DL DCI params tested -> OK\n");
-}
-
-int main()
-{
-  test_pdcch_builder();
-
-  return 0;
+  ASSERT_EQ(payload, pdu.dl_dci.back().payload);
 }

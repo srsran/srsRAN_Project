@@ -10,12 +10,9 @@
 
 #include "srsgnb/fapi/message_builders.h"
 #include <gtest/gtest.h>
-#include <random>
 
 using namespace srsgnb;
 using namespace fapi;
-
-static std::mt19937 gen(0);
 
 TEST(dl_ssb_pdu_builder, valid_basic_parameters_passes)
 {
