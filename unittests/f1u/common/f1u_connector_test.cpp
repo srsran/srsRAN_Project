@@ -17,12 +17,26 @@ using namespace srsgnb;
 
 // dummy DU RX bearer interface
 struct dummy_f1u_cu_up_rx_pdu_handler final : public srs_cu_up::f1u_rx_pdu_handler {
-  void handle_pdu(nru_ul_message msg) override {}
+  void handle_pdu(nru_ul_message msg) override
+  {
+    logger.info(msg.t_pdu.begin(), msg.t_pdu.end(), "CU-UP received PDU");
+    last_msg = std::move(msg);
+  }
+  nru_ul_message        last_msg;
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("F1-U", false);
 };
 
 // dummy DU RX bearer interface
 struct dummy_f1u_du_rx_pdu_handler final : public srs_du::f1u_rx_pdu_handler {
-  void handle_pdu(nru_dl_message pdu_) override {}
+  void handle_pdu(nru_dl_message msg) override
+  {
+    logger.info(msg.t_pdu.begin(), msg.t_pdu.end(), "DU received PDU");
+    last_msg = std::move(msg);
+  }
+  nru_dl_message last_msg;
+
+private:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("F1-U", false);
 };
 
 /// Fixture class for F1-U connector tests.
@@ -86,6 +100,18 @@ TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
   f1u_ul_local_adapter        du_tx;
   dummy_f1u_du_rx_pdu_handler du_rx;
   du_conn->attach_du_bearer(1, 2, du_tx, du_rx);
+
+  // Check CU-UP -> DU path
+  byte_buffer             cu_buf = make_byte_buffer("ABCD");
+  byte_buffer_slice_chain du_exp{cu_buf.deep_copy()};
+  // cu_tx.on_new_pdu(std::move(cu_buf));
+
+  // Check DU-> CU-UP path
+  byte_buffer             du_buf = make_byte_buffer("DCBA");
+  byte_buffer_slice_chain cu_exp{du_buf.deep_copy()};
+  // du_tx.on_new_tx_pdu(std::move(du_buf), 0);
+
+  // ASSERT_EQ(cu_rx.last_pdu, cu_exp);
 }
 
 int main(int argc, char** argv)

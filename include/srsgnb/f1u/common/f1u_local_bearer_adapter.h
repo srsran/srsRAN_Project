@@ -19,6 +19,7 @@
 namespace srsgnb {
 class f1u_dl_local_adapter : srs_cu_up::f1u_tx_pdu_notifier
 {
+public:
   void attach_du_handler(srs_du::f1u_rx_pdu_handler& handler_) { handler = &handler_; }
   void on_new_pdu(nru_dl_message msg) override { handler->handle_pdu(std::move(msg)); };
 
@@ -28,7 +29,8 @@ private:
 
 class f1u_ul_local_adapter : public srs_du::f1u_tx_pdu_notifier
 {
-  void attach_du_handler(srs_cu_up::f1u_rx_pdu_handler& handler_) { handler = &handler_; }
+public:
+  void attach_cu_handler(srs_cu_up::f1u_rx_pdu_handler& handler_) { handler = &handler_; }
 
   void on_new_pdu(nru_ul_message msg) override { handler->handle_pdu(std::move(msg)); };
 
