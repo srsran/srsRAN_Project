@@ -72,4 +72,19 @@ private:
   async_task<R>& t;
 };
 
+template <>
+struct lazy_task_launcher<void> : public eager_async_task<void> {
+  lazy_task_launcher(async_task<void>& t_) : t(t_)
+  {
+    *static_cast<eager_async_task<void>*>(this) = launch_async([this](coro_context<eager_async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_AWAIT(t);
+      CORO_RETURN();
+    });
+  }
+
+private:
+  async_task<void>& t;
+};
+
 } // namespace srsgnb

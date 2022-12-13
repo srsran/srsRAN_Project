@@ -8,7 +8,7 @@
  *
  */
 
-#include "dummy_test_classes.h"
+#include "du_manager_test_helpers.h"
 #include "lib/du_manager/du_ue_manager.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/support/executors/manual_task_worker.h"

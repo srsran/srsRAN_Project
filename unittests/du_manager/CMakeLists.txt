@@ -6,6 +6,9 @@
 # the distribution.
 #
 
+add_library(du_manager_test_helpers du_manager_test_helpers.cpp procedures/du_manager_procedure_test_helpers.cpp)
+target_include_directories(du_manager_test_helpers PUBLIC ${CMAKE_SOURCE_DIR})
+target_link_libraries(du_manager_test_helpers srsgnb_du_manager srsgnb_support srslog f1ap_asn1)
 
 add_executable(ue_manager_test ue_manager_test.cpp)
 target_link_libraries(ue_manager_test srsgnb_du_manager srsgnb_support srslog f1ap_asn1)
@@ -21,3 +24,8 @@ add_executable(mac_cell_group_config_converter_test ../du_manager/mac_cell_group
 target_link_libraries(mac_cell_group_config_converter_test srsgnb_du_manager srsgnb_support asn1_utils rrc_nr_asn1 srslog gtest gtest_main)
 add_test(mac_cell_group_config_converter_test mac_cell_group_config_converter_test)
 gtest_discover_tests(mac_cell_group_config_converter_test)
+
+add_executable(du_ue_config_test procedures/ue_configuration_test.cpp)
+target_include_directories(du_ue_config_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(du_ue_config_test du_manager_test_helpers gtest gtest_main)
+gtest_discover_tests(du_ue_config_test)

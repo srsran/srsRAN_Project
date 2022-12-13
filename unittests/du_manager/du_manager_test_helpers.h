@@ -10,8 +10,10 @@
 
 #pragma once
 
+#include "lib/du_manager/du_manager_interfaces.h"
 #include "srsgnb/du_manager/du_manager_params.h"
 #include "srsgnb/support/async/async_test_utils.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 
 namespace srsgnb {
 namespace srs_du {
@@ -98,6 +100,7 @@ public:
   mac_cell_dummy mac_cell;
 
   optional<mac_ue_create_request_message>                           last_ue_create_msg{};
+  optional<mac_ue_reconfiguration_request_message>                  last_ue_reconf_msg{};
   optional<mac_ue_delete_request_message>                           last_ue_delete_msg{};
   byte_buffer                                                       last_pushed_ul_ccch_msg;
   wait_manual_event_tester<mac_ue_create_response_message>          wait_ue_create;
@@ -116,6 +119,7 @@ public:
   async_task<mac_ue_reconfiguration_response_message>
   handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override
   {
+    last_ue_reconf_msg = msg;
     return wait_ue_reconf.launch();
   }
   async_task<mac_ue_delete_response_message> handle_ue_delete_request(const mac_ue_delete_request_message& msg) override
@@ -129,6 +133,38 @@ public:
   }
 
   void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override {}
+};
+
+f1ap_ue_context_update_request create_f1ap_ue_context_update_request(du_ue_index_t                   ue_idx,
+                                                                     std::initializer_list<srb_id_t> srbs_to_addmod,
+                                                                     std::initializer_list<drb_id_t> drbs_to_addmod);
+
+class du_manager_test_bench
+{
+public:
+  du_manager_test_bench(span<const du_cell_config> cells) :
+    du_cells(cells.begin(), cells.end()),
+    worker(128),
+    du_mng_exec(worker),
+    ue_exec_mapper(worker),
+    cell_exec_mapper(worker),
+    params{{du_cells},
+           {timers, du_mng_exec, ue_exec_mapper, cell_exec_mapper},
+           {f1ap, f1ap},
+           {mac, f1ap, f1ap},
+           {mac, mac}}
+  {
+  }
+
+  std::vector<du_cell_config> du_cells;
+  timer_manager               timers;
+  manual_task_worker          worker;
+  task_executor&              du_mng_exec;
+  dummy_ue_executor_mapper    ue_exec_mapper;
+  dummy_cell_executor_mapper  cell_exec_mapper;
+  f1ap_test_dummy             f1ap;
+  mac_test_dummy              mac;
+  du_manager_params           params;
 };
 
 } // namespace srs_du

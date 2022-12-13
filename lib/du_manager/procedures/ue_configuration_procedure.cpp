@@ -36,11 +36,11 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 {
   CORO_BEGIN(ctx);
 
-  log_proc_started(logger, request.ue_index, ue->rnti, "UE Modification");
+  log_proc_started(logger, request.ue_index, ue->rnti, "UE Configuration");
 
   add_bearers_to_ue_context();
 
-  // > Update F1c/F1u bearers.
+  // > Update F1-C/F1-U bearers.
   update_f1_bearers();
 
   // > Update RLC bearers.
@@ -49,7 +49,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   // > Update MAC bearers.
   CORO_AWAIT(update_mac_bearers());
 
-  log_proc_completed(logger, request.ue_index, ue->rnti, "UE Modification");
+  log_proc_completed(logger, request.ue_index, ue->rnti, "UE Configuration");
 
   CORO_RETURN(make_ue_config_response());
 }
@@ -175,7 +175,6 @@ async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::
     lc_ch.lcid      = bearer.lcid;
     lc_ch.ul_bearer = &bearer.bearer_connector.mac_rx_notif;
     lc_ch.dl_bearer = &bearer.bearer_connector.mac_tx_notif;
-    mac_ue_reconf_req.bearers_to_addmod.push_back(std::move(lc_ch));
   }
 
   for (const drb_to_setup& drb : request.drbs_to_setup) {
@@ -190,7 +189,6 @@ async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::
     lc_ch.lcid      = bearer.lcid;
     lc_ch.ul_bearer = &bearer.bearer_connector.mac_rx_notif;
     lc_ch.dl_bearer = &bearer.bearer_connector.mac_tx_notif;
-    mac_ue_reconf_req.bearers_to_addmod.push_back(std::move(lc_ch));
   }
 
   return mac_ue_mng.handle_ue_reconfiguration_request(mac_ue_reconf_req);
