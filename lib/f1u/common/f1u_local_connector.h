@@ -38,7 +38,9 @@ class f1u_local_connector final : public f1u_du_connector, public f1u_cu_up_conn
 public:
   f1u_local_connector() : logger(srslog::fetch_basic_logger("F1-U")){};
 
-  void attach_cu_bearer(uint32_t dl_teid, f1u_dl_local_adapter& cu_tx, srs_cu_up::f1u_rx_pdu_handler& cu_rx) override;
+  void
+  attach_cu_dl_bearer(uint32_t dl_teid, f1u_dl_local_adapter& cu_tx, srs_cu_up::f1u_rx_pdu_handler& cu_rx) override;
+  void attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid) override;
   void attach_du_bearer(uint32_t                    dl_teid,
                         uint32_t                    ul_teid,
                         f1u_ul_local_adapter&       du_tx,

@@ -54,7 +54,8 @@ public:
   f1u_cu_up_connector& operator=(const f1u_cu_up_connector&&) = delete;
 
   virtual void
-  attach_cu_bearer(uint32_t dl_teid, f1u_dl_local_adapter& cu_tx, srs_cu_up::f1u_rx_pdu_handler& cu_rx) = 0;
+  attach_cu_dl_bearer(uint32_t dl_teid, f1u_dl_local_adapter& cu_tx, srs_cu_up::f1u_rx_pdu_handler& cu_rx) = 0;
+  virtual void attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid)                                     = 0;
 };
 
 /// TODO write docs.
