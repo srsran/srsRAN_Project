@@ -9,26 +9,18 @@
  */
 
 #include "srsgnb/fapi/message_builders.h"
-#include "srsgnb/support/srsgnb_test.h"
-#include <random>
+#include <gtest/gtest.h>
 
 using namespace srsgnb;
 using namespace fapi;
 
-static std::mt19937 gen(0);
-
-int main()
+TEST(slot_indication_builder, valid_basic_parameters_passes)
 {
-  std::uniform_int_distribution<unsigned> sfn_dist(0, 1023);
-  std::uniform_int_distribution<unsigned> slot_dist(0, 159);
-
-  unsigned sfn  = sfn_dist(gen);
-  unsigned slot = slot_dist(gen);
+  unsigned sfn  = 419;
+  unsigned slot = 12;
 
   const auto& msg = build_slot_indication_message(sfn, slot);
 
-  TESTASSERT_EQ(sfn, msg.sfn);
-  TESTASSERT_EQ(slot, msg.slot);
-
-  fmt::print("SLOT.indication builder -> OK\n");
+  ASSERT_EQ(sfn, msg.sfn);
+  ASSERT_EQ(slot, msg.slot);
 }

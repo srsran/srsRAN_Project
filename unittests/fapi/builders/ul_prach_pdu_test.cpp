@@ -9,12 +9,12 @@
  */
 
 #include "srsgnb/fapi/message_builders.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include <gtest/gtest.h>
 
 using namespace srsgnb;
 using namespace fapi;
 
-static void test_basic_params()
+TEST(ul_prach_pdu_builder, valid_basic_parameters_passes)
 {
   pci_t             pci                = 3;
   uint8_t           num_occasions      = 4;
@@ -28,17 +28,17 @@ static void test_basic_params()
 
   builder.set_basic_parameters(pci, num_occasions, format_type, index_fd_ra, prach_start_symbol, num_cs);
 
-  TESTASSERT_EQ(pci, pdu.phys_cell_id);
-  TESTASSERT_EQ(format_type, pdu.prach_format);
-  TESTASSERT_EQ(num_occasions, pdu.num_prach_ocas);
-  TESTASSERT_EQ(index_fd_ra, pdu.index_fd_ra);
-  TESTASSERT_EQ(prach_start_symbol, pdu.prach_start_symbol);
-  TESTASSERT_EQ(num_cs, pdu.num_cs);
-  TESTASSERT_EQ(0, pdu.is_msg_a_prach);
-  TESTASSERT(!pdu.has_msg_a_pusch_beamforming);
+  ASSERT_EQ(pci, pdu.phys_cell_id);
+  ASSERT_EQ(format_type, pdu.prach_format);
+  ASSERT_EQ(num_occasions, pdu.num_prach_ocas);
+  ASSERT_EQ(index_fd_ra, pdu.index_fd_ra);
+  ASSERT_EQ(prach_start_symbol, pdu.prach_start_symbol);
+  ASSERT_EQ(num_cs, pdu.num_cs);
+  ASSERT_EQ(0, pdu.is_msg_a_prach);
+  ASSERT_TRUE(!pdu.has_msg_a_pusch_beamforming);
 }
 
-static void test_maintenance_v3_basic_params()
+TEST(ul_prach_pdu_builder, valid_maintenance_v3_basic_parameters_passes)
 {
   for (unsigned i = 0, e = 2; i != e; ++i) {
     uint32_t                handle                 = 123456;
@@ -58,23 +58,11 @@ static void test_maintenance_v3_basic_params()
         handle, prach_config_scope, prach_res_config_index, num_fd_ra, start_preamble_index, num_preambles_indices);
 
     const auto& v3 = pdu.maintenance_v3;
-    TESTASSERT_EQ(handle, v3.handle);
-    TESTASSERT_EQ(prach_config_scope, v3.prach_config_scope);
-    TESTASSERT_EQ(prach_res_config_index, v3.prach_res_config_index);
-    TESTASSERT_EQ(num_fd_ra, v3.num_fd_ra);
-    TESTASSERT_EQ(start_preamble_index ? start_preamble_index.value() : 255U, v3.start_preamble_index);
-    TESTASSERT_EQ(num_preambles_indices, v3.num_preamble_indices);
+    ASSERT_EQ(handle, v3.handle);
+    ASSERT_EQ(prach_config_scope, v3.prach_config_scope);
+    ASSERT_EQ(prach_res_config_index, v3.prach_res_config_index);
+    ASSERT_EQ(num_fd_ra, v3.num_fd_ra);
+    ASSERT_EQ(start_preamble_index ? start_preamble_index.value() : 255U, v3.start_preamble_index);
+    ASSERT_EQ(num_preambles_indices, v3.num_preamble_indices);
   }
-}
-
-static void test_builder_prach_ok()
-{
-  test_basic_params();
-  test_maintenance_v3_basic_params();
-}
-
-int main()
-{
-  test_builder_prach_ok();
-  fmt::print("PRACH PDU builder -> OK\n");
 }

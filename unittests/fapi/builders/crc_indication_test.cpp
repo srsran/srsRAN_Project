@@ -9,12 +9,12 @@
  */
 
 #include "srsgnb/fapi/message_builders.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include <gtest/gtest.h>
 
 using namespace srsgnb;
 using namespace fapi;
 
-static void test_crc_indication_builder_ok()
+TEST(crc_indication_builder, valid_indication_passes)
 {
   for (unsigned i = 0; i != 2; ++i) {
     crc_indication_message         msg;
@@ -63,29 +63,28 @@ static void test_crc_indication_builder_ok()
                     rsrp_dB,
                     use_dB);
 
-    TESTASSERT_EQ(sfn, msg.sfn);
-    TESTASSERT_EQ(slot, msg.slot);
+    ASSERT_EQ(sfn, msg.sfn);
+    ASSERT_EQ(slot, msg.slot);
 
     const crc_ind_pdu& pdu = msg.pdus.back();
-    TESTASSERT_EQ(handle, pdu.handle);
-    TESTASSERT_EQ(num_cb, pdu.num_cb);
-    TESTASSERT_EQ(harq_id, pdu.harq_id);
-    TESTASSERT_EQ(rnti, pdu.rnti);
-    TESTASSERT_EQ(rapid ? rapid.value() : 255, pdu.rapid);
-    TESTASSERT_EQ(tb_crc_status, pdu.tb_crc_status_ok);
-    TESTASSERT(cb_crc_status == pdu.cb_crc_status);
-    TESTASSERT_EQ(static_cast<int16_t>(ul_sinr_dB ? ul_sinr_dB.value() * 500.F : -32768), pdu.ul_sinr_metric);
-    TESTASSERT_EQ(static_cast<uint16_t>(timing_advance_offset ? timing_advance_offset.value() : 65535),
-                  pdu.timing_advance_offset);
-    TESTASSERT_EQ(static_cast<int16_t>(timing_advance_offset_in_ns ? timing_advance_offset_in_ns.value() : -32768),
-                  pdu.timing_advance_offset_ns);
-    TESTASSERT_EQ(static_cast<uint16_t>(rssi_dB ? (rssi_dB.value() + 128.F) * 10.F : 65535), pdu.rssi);
-    TESTASSERT_EQ(static_cast<uint16_t>(rsrp_dB ? (rsrp_dB.value() + (use_dB ? 140.F : 128.F)) * 10.F : 65535),
-                  pdu.rsrp);
+    ASSERT_EQ(handle, pdu.handle);
+    ASSERT_EQ(num_cb, pdu.num_cb);
+    ASSERT_EQ(harq_id, pdu.harq_id);
+    ASSERT_EQ(rnti, pdu.rnti);
+    ASSERT_EQ(rapid ? rapid.value() : 255, pdu.rapid);
+    ASSERT_EQ(tb_crc_status, pdu.tb_crc_status_ok);
+    ASSERT_EQ(cb_crc_status, pdu.cb_crc_status);
+    ASSERT_EQ(static_cast<int16_t>(ul_sinr_dB ? ul_sinr_dB.value() * 500.F : -32768), pdu.ul_sinr_metric);
+    ASSERT_EQ(static_cast<uint16_t>(timing_advance_offset ? timing_advance_offset.value() : 65535),
+              pdu.timing_advance_offset);
+    ASSERT_EQ(static_cast<int16_t>(timing_advance_offset_in_ns ? timing_advance_offset_in_ns.value() : -32768),
+              pdu.timing_advance_offset_ns);
+    ASSERT_EQ(static_cast<uint16_t>(rssi_dB ? (rssi_dB.value() + 128.F) * 10.F : 65535), pdu.rssi);
+    ASSERT_EQ(static_cast<uint16_t>(rsrp_dB ? (rsrp_dB.value() + (use_dB ? 140.F : 128.F)) * 10.F : 65535), pdu.rsrp);
   }
 }
 
-static void test_crc_indication_builder_ok_no_metrics()
+TEST(crc_indication_builder, valid_indication_with_no_metrics_passes)
 {
   crc_indication_message         msg;
   crc_indication_message_builder builder(msg);
@@ -122,29 +121,22 @@ static void test_crc_indication_builder_ok_no_metrics()
                   rssi_dB,
                   rsrp_dB);
 
-  TESTASSERT_EQ(sfn, msg.sfn);
-  TESTASSERT_EQ(slot, msg.slot);
+  ASSERT_EQ(sfn, msg.sfn);
+  ASSERT_EQ(slot, msg.slot);
 
   const crc_ind_pdu& pdu = msg.pdus.back();
-  TESTASSERT_EQ(handle, pdu.handle);
-  TESTASSERT_EQ(harq_id, pdu.harq_id);
-  TESTASSERT_EQ(rnti, pdu.rnti);
-  TESTASSERT_EQ(rapid ? rapid.value() : 255, pdu.rapid);
-  TESTASSERT_EQ(tb_crc_status, pdu.tb_crc_status_ok);
-  TESTASSERT(cb_crc_status == pdu.cb_crc_status);
-  TESTASSERT_EQ(num_cb, pdu.num_cb);
-  TESTASSERT_EQ(static_cast<int16_t>(ul_sinr_dB ? ul_sinr_dB.value() * 500.F : -32768), pdu.ul_sinr_metric);
-  TESTASSERT_EQ(static_cast<uint16_t>(timing_advance_offset ? timing_advance_offset.value() : 65535),
-                pdu.timing_advance_offset);
-  TESTASSERT_EQ(static_cast<int16_t>(timing_advance_offset_in_ns ? timing_advance_offset_in_ns.value() : -32768),
-                pdu.timing_advance_offset_ns);
-  TESTASSERT_EQ(static_cast<uint16_t>(rssi_dB ? (rssi_dB.value() + 128) * 10.F : 65535), pdu.rssi);
-  TESTASSERT_EQ(static_cast<uint16_t>(ul_sinr_dB ? ul_sinr_dB.value() * 500.F : 65535), pdu.rsrp);
-}
-
-int main()
-{
-  test_crc_indication_builder_ok();
-  test_crc_indication_builder_ok_no_metrics();
-  fmt::print("CRC.indication message builder -> OK\n");
+  ASSERT_EQ(handle, pdu.handle);
+  ASSERT_EQ(harq_id, pdu.harq_id);
+  ASSERT_EQ(rnti, pdu.rnti);
+  ASSERT_EQ(rapid ? rapid.value() : 255, pdu.rapid);
+  ASSERT_EQ(tb_crc_status, pdu.tb_crc_status_ok);
+  ASSERT_EQ(cb_crc_status, pdu.cb_crc_status);
+  ASSERT_EQ(num_cb, pdu.num_cb);
+  ASSERT_EQ(static_cast<int16_t>(ul_sinr_dB ? ul_sinr_dB.value() * 500.F : -32768), pdu.ul_sinr_metric);
+  ASSERT_EQ(static_cast<uint16_t>(timing_advance_offset ? timing_advance_offset.value() : 65535),
+            pdu.timing_advance_offset);
+  ASSERT_EQ(static_cast<int16_t>(timing_advance_offset_in_ns ? timing_advance_offset_in_ns.value() : -32768),
+            pdu.timing_advance_offset_ns);
+  ASSERT_EQ(static_cast<uint16_t>(rssi_dB ? (rssi_dB.value() + 128) * 10.F : 65535), pdu.rssi);
+  ASSERT_EQ(static_cast<uint16_t>(ul_sinr_dB ? ul_sinr_dB.value() * 500.F : 65535), pdu.rsrp);
 }

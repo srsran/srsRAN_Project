@@ -9,12 +9,12 @@
  */
 
 #include "srsgnb/fapi/message_builders.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include <gtest/gtest.h>
 
 using namespace srsgnb;
 using namespace fapi;
 
-static void test_tx_data_request()
+TEST(tx_data_request_builder, valid_basic_parameters_passes)
 {
   tx_data_request_message msg;
   tx_data_request_builder builder(msg);
@@ -29,20 +29,14 @@ static void test_tx_data_request()
 
   builder.add_pdu_custom_payload(pdu_index, cw_index, {payload});
 
-  TESTASSERT_EQ(sfn, msg.sfn);
-  TESTASSERT_EQ(slot, msg.slot);
+  ASSERT_EQ(sfn, msg.sfn);
+  ASSERT_EQ(slot, msg.slot);
 
   const auto& pdu = msg.pdus[0];
-  TESTASSERT_EQ(pdu_index, pdu.pdu_index);
-  TESTASSERT_EQ(cw_index, pdu.cw_index);
+  ASSERT_EQ(pdu_index, pdu.pdu_index);
+  ASSERT_EQ(cw_index, pdu.cw_index);
 
   const auto& tlv = pdu.tlv_custom;
-  TESTASSERT_EQ(payload.size(), tlv.length);
-  TESTASSERT_EQ(payload.data(), tlv.payload);
-}
-
-int main()
-{
-  test_tx_data_request();
-  fmt::print("Tx_Data.request builder -> OK\n");
+  ASSERT_EQ(payload.size(), tlv.length);
+  ASSERT_EQ(payload.data(), tlv.payload);
 }
