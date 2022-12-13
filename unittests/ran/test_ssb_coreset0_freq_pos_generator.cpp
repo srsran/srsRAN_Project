@@ -30,12 +30,28 @@ struct cfg_gen_input_params {
   }
 };
 
-// Helper that compares the SSB and Coreset0 paramters returned by du_config_generator.
+// Helper that compares the SSB and Coreset0 parameters returned by du_config_generator.
 static bool compare_ssb_freq_location(const ssb_freq_location& lhs, const ssb_freq_location& rhs)
 {
   bool result = lhs.is_valid && rhs.is_valid && lhs.k_ssb.to_uint() == rhs.k_ssb.to_uint() &&
                 lhs.offset_to_point_A.to_uint() == rhs.offset_to_point_A.to_uint();
   return result;
+}
+
+static bool verify_ssb_is_within_ch_band(unsigned           dl_arfcn,
+                                         unsigned           n_rbs,
+                                         subcarrier_spacing scs_common,
+                                         double             ss_ref,
+                                         subcarrier_spacing scs_ssb)
+{
+  double f_ssb_0_Hz  = ss_ref - static_cast<double>(scs_to_khz(scs_ssb) * KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2);
+  double f_ssb_ub_Hz = ss_ref + static_cast<double>(scs_to_khz(scs_ssb) * KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2) - 1;
+
+  double f_ref_hz   = band_helper::nr_arfcn_to_freq(dl_arfcn);
+  double point_A_hz = band_helper::get_abs_freq_point_a_from_f_ref(f_ref_hz, n_rbs, scs_common);
+  double bw_ub_hz   = point_A_hz + n_rbs * NOF_SUBCARRIERS_PER_RB * scs_to_khz(scs_common) * KHZ_TO_HZ - 1;
+
+  return f_ssb_0_Hz >= point_A_hz and f_ssb_ub_Hz <= bw_ub_hz;
 }
 
 /*
@@ -45,11 +61,13 @@ static bool compare_ssb_freq_location(const ssb_freq_location& lhs, const ssb_fr
 // Test all possible SSB position within a given band returned by the config generator.
 TEST(ssb_freq_position_generation_test, band_3)
 {
-  ssb_freq_position_generator cfg_generator{/* DL-ARFCN*/ 365000,
-                                            /* NR-band*/ nr_band::n3,
-                                            /* N_RBs */ 52,
-                                            /* SCS_common */ subcarrier_spacing::kHz15,
-                                            /* SCS_SSB */ subcarrier_spacing::kHz15};
+  unsigned           dl_arfcn   = 365000;
+  nr_band            nr_band    = nr_band::n3;
+  unsigned           n_rbs      = 52;
+  subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
+  subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz15;
+
+  ssb_freq_position_generator cfg_generator{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
 
   ssb_freq_location expected{true, 5, 2};
   ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
@@ -57,19 +75,27 @@ TEST(ssb_freq_position_generation_test, band_3)
   // Get next SSB position and verify its position in terms of offsetToPointA and k_SSB.
   expected.offset_to_point_A = 11;
   expected.k_ssb             = 10;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  ssb_freq_location test     = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 18;
   expected.k_ssb             = 6;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 25;
   expected.k_ssb             = 2;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 31;
   expected.k_ssb             = 10;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   // Verify there are no possible SSB positions within the band.
   ASSERT_TRUE(not cfg_generator.get_next_ssb_location().is_valid);
@@ -78,14 +104,18 @@ TEST(ssb_freq_position_generation_test, band_3)
 // Test all possible SSB position within a given band returned by the config generator.
 TEST(ssb_freq_position_generation_test, band_7)
 {
-  ssb_freq_position_generator cfg_generator{/* DL-ARFCN*/ 531720,
-                                            /* NR-band*/ nr_band::n7,
-                                            /* N_RBs */ 25,
-                                            /* SCS_common */ subcarrier_spacing::kHz15,
-                                            /* SCS_SSB */ subcarrier_spacing::kHz15};
+  unsigned           dl_arfcn   = 531720;
+  nr_band            nr_band    = nr_band::n7;
+  unsigned           n_rbs      = 25;
+  subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
+  subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz15;
+
+  ssb_freq_position_generator cfg_generator{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
 
   ssb_freq_location expected{true, 0, 0};
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  ssb_freq_location test = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   // Get next SSB position and verify its position in terms of offsetToPointA and k_SSB.
   ASSERT_FALSE(cfg_generator.get_next_ssb_location().is_valid);
@@ -94,47 +124,67 @@ TEST(ssb_freq_position_generation_test, band_7)
 // Test all possible SSB position within a given band returned by the config generator.
 TEST(ssb_freq_position_generation_test, band_25)
 {
-  ssb_freq_position_generator cfg_generator{/* DL-ARFCN*/ 391180,
-                                            /* NR-band*/ nr_band::n25,
-                                            /* N_RBs */ 38,
-                                            /* SCS_common */ subcarrier_spacing::kHz30,
-                                            /* SCS_SSB */ subcarrier_spacing::kHz15};
+  unsigned           dl_arfcn   = 391180;
+  nr_band            nr_band    = nr_band::n25;
+  unsigned           n_rbs      = 38;
+  subcarrier_spacing scs_common = subcarrier_spacing::kHz30;
+  subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz15;
+
+  ssb_freq_position_generator cfg_generator{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
 
   ssb_freq_location expected{true, 2, 2};
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  ssb_freq_location test = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   // Get next SSB position and verify its position in terms of offsetToPointA and k_SSB.
   expected.offset_to_point_A = 8;
   expected.k_ssb             = 10;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 14;
   expected.k_ssb             = 18;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 22;
   expected.k_ssb             = 2;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 28;
   expected.k_ssb             = 10;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 34;
   expected.k_ssb             = 18;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 42;
   expected.k_ssb             = 2;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 48;
   expected.k_ssb             = 10;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 54;
   expected.k_ssb             = 18;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   // Verify there are no possible SSB positions within the band.
   ASSERT_FALSE(cfg_generator.get_next_ssb_location().is_valid);
@@ -143,51 +193,73 @@ TEST(ssb_freq_position_generation_test, band_25)
 // Test all possible SSB position within a given band returned by the config generator.
 TEST(ssb_freq_position_generation_test, band_51)
 {
-  ssb_freq_position_generator cfg_generator{/* DL-ARFCN*/ 435740,
-                                            /* NR-band*/ nr_band::n66,
-                                            /* N_RBs */ 51,
-                                            /* SCS_common */ subcarrier_spacing::kHz30,
-                                            /* SCS_SSB */ subcarrier_spacing::kHz30};
+  unsigned           dl_arfcn   = 435740;
+  nr_band            nr_band    = nr_band::n66;
+  unsigned           n_rbs      = 51;
+  subcarrier_spacing scs_common = subcarrier_spacing::kHz30;
+  subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz30;
+
+  ssb_freq_position_generator cfg_generator{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
 
   ssb_freq_location expected{true, 0, 22};
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  ssb_freq_location test = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   // Get next SSB position(s) and verify its position in terms of offsetToPointA and k_SSB.
   expected.offset_to_point_A = 8;
   expected.k_ssb             = 6;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 14;
   expected.k_ssb             = 14;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 20;
   expected.k_ssb             = 22;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 28;
   expected.k_ssb             = 6;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 34;
   expected.k_ssb             = 14;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 40;
   expected.k_ssb             = 22;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 48;
   expected.k_ssb             = 6;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 54;
   expected.k_ssb             = 14;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   expected.offset_to_point_A = 60;
   expected.k_ssb             = 22;
-  ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb_location()));
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
   // Verify there are no possible SSB positions within the band.
   ASSERT_FALSE(cfg_generator.get_next_ssb_location().is_valid);

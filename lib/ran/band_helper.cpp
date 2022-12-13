@@ -589,9 +589,6 @@ optional<ssb_coreset0_freq_location> srsgnb::band_helper::get_ssb_coreset0_freq_
   srsgnb_assert(band != nr_band::n34 && band != nr_band::n38 && band != nr_band::n39 && band != nr_band::n41 &&
                     band != nr_band::n79,
                 "Bands n34, n38, n39, n41 and n79 not currently supported");
-  // Space occupied by SSB in RBs, using SCScommon as reference.
-  const unsigned ssb_nof_crbs = NOF_SSB_PRBS * scs_to_khz(scs_ssb) / scs_to_khz(scs_common);
-
   optional<ssb_coreset0_freq_location> result;
 
   // Get f_ref, point_A from dl_arfcn, band and bandwidth.
@@ -600,8 +597,7 @@ optional<ssb_coreset0_freq_location> srsgnb::band_helper::get_ssb_coreset0_freq_
   // Iterate over different SSB candidates and select the valid CORESET#0 index with widest bandwidth.
   unsigned          max_cset0_rbs = 0;
   ssb_freq_location ssb           = du_cfg.get_next_ssb_location();
-  unsigned          crb_ssb       = ssb.is_valid ? get_ssb_crb(scs_common, ssb.offset_to_point_A.to_uint()) : 0;
-  while (ssb.is_valid and crb_ssb + ssb_nof_crbs <= n_rbs) {
+  while (ssb.is_valid) {
     // Iterate over the searchSpace0_indices and corresponding configurations.
     optional<unsigned> cset0_idx = get_coreset0_index(
         band, n_rbs, scs_common, scs_ssb, ssb.offset_to_point_A, ssb.k_ssb, du_cfg.get_ssb_first_symbol(), ss0_idx);
@@ -623,8 +619,7 @@ optional<ssb_coreset0_freq_location> srsgnb::band_helper::get_ssb_coreset0_freq_
       }
     }
 
-    ssb     = du_cfg.get_next_ssb_location();
-    crb_ssb = ssb.is_valid ? get_ssb_crb(scs_common, ssb.offset_to_point_A.to_uint()) : 0;
+    ssb = du_cfg.get_next_ssb_location();
   }
 
   return result;
@@ -707,7 +702,10 @@ unsigned srsgnb::band_helper::get_nof_coreset0_rbs_not_intersecting_ssb(unsigned
   auto cset0_cfg = pdcch_type0_css_coreset_get(
       band_helper::get_min_channel_bw(band, scs_common), scs_ssb, scs_common, cset0_idx, k_ssb.to_uint());
 
-  interval<unsigned> ssb_prbs   = {crb_ssb, crb_ssb + ssb_nof_crbs};
+  // Add a CRB to the SSB occupancy if k_ssb > 0; this is because the SSB is not aligned with the first CRB's first
+  // subcarrier and will terminate in an extra CRB.
+  unsigned           additional_crb = k_ssb > 0 ? 1 : 0;
+  interval<unsigned> ssb_prbs       = {crb_ssb, crb_ssb + ssb_nof_crbs + additional_crb};
   interval<unsigned> cset0_prbs = {crb_ssb - cset0_cfg.offset, crb_ssb - cset0_cfg.offset + cset0_cfg.nof_rb_coreset};
   return cset0_cfg.nof_rb_coreset - cset0_prbs.intersect(ssb_prbs).length();
 }

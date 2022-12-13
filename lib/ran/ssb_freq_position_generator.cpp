@@ -9,9 +9,12 @@ static double get_f_ssb_0_hz(double ss_ref, subcarrier_spacing scs_ssb)
 }
 
 // Compute the frequency (in Hz) corresponding to the last subcarrier of the SSB, or upper-bound (ub).
+// NOTE: The difference between get_f_ssb_ub_hz() and get_f_ssb_0_hz() is 1 SCS smaller than  NOF_SSB_SUBCARRIERS *
+// SCS_SSB. This is because the distance between the first and last subcarrier (in numbers of subcarriers)  is
+// NOF_SSB_SUBCARRIERS - 1.
 static double get_f_ssb_ub_hz(double ss_ref, subcarrier_spacing scs_ssb)
 {
-  return ss_ref + static_cast<double>(scs_to_khz(scs_ssb) * KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2);
+  return ss_ref + static_cast<double>(scs_to_khz(scs_ssb) * KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2) - 1;
 }
 
 // Compute the offsetToPointA, depending on the SCScommon.
@@ -59,7 +62,11 @@ ssb_freq_position_generator::ssb_freq_position_generator(unsigned           dl_a
   // Compute the RF reference frequency, pointA and upper-bound of the band.
   f_ref_hz   = band_helper::nr_arfcn_to_freq(dl_arfcn);
   point_A_hz = band_helper::get_abs_freq_point_a_from_f_ref(f_ref_hz, n_rbs, scs_common);
-  bw_ub_hz   = point_A_hz + n_rbs * NOF_SUBCARRIERS_PER_RB * scs_to_khz(scs_common) * KHZ_TO_HZ;
+  // Frequency (in Hz) corresponding to the last subcarrier of the Channel Band, or upper-bound (ub).
+  // NOTE: The difference between bw_ub_hz and point_A_hz is 1 SCS smaller than n_rbs * NOF_SUBCARRIERS_PER_RB *
+  // SCS_common. This is because the distance between the first and last subcarrier (in numbers of subcarriers)  is
+  // NOF_SUBCARRIERS_PER_RB - 1.
+  bw_ub_hz = point_A_hz + n_rbs * NOF_SUBCARRIERS_PER_RB * scs_to_khz(scs_common) * KHZ_TO_HZ - 1;
 
   // Lower-bound for the SSB central frequency, or SS_ref, as a function of pointA.
   double ss_ref_l_bound_hz =
@@ -112,6 +119,13 @@ unsigned ssb_freq_position_generator::find_M_raster()
     // An SSB centre frequency SS_ref is satisfactory if (i) if the SSB falls within the band and (ii) SS_ref falls into
     // the subcarrier grid of CRBs; or, equivalently, if the distance of the first SSB's subcarrier from pointA can be
     // expressed as a multiple of the min(SCS_common, SCS_SSB).
+    // NOTES:
+    // 1) As the TS reports no explicit definition of how to determine the condition "SSB falls within the band", this
+    // is determined based on the position of the first SSB's subcarrier and first Channel Band subcarrier, for the
+    // lower bound; and based on the position of the last SSB's subcarrier and last Channel Band subcarrier, for the
+    // upper bound.
+    // 2) Condition "SS_ref falls into the subcarrier grid of CRBs" is implementation defined and comes from PHY
+    // constraints.
     if (is_ssb_inside_band) {
       bool is_scs_30khz_spacing = scs_common == subcarrier_spacing::kHz30 && scs_ssb == subcarrier_spacing::kHz30;
       bool is_multiple_of_scs   = is_scs_30khz_spacing ? fmod(static_cast<unsigned>(f_ssb_0_hz - point_A_hz),
@@ -149,9 +163,16 @@ ssb_freq_location ssb_freq_position_generator::get_next_ssb_location()
     double f_ssb_0_hz   = get_f_ssb_0_hz(f_ssb_N_M_hz, scs_ssb);
     double f_ssb_ub_hz  = get_f_ssb_ub_hz(f_ssb_N_M_hz, scs_ssb);
 
-    // An SSB centre frequency SS_ref is satisfactory if (i) if the SSb falls within the band and (ii) SS_ref falls into
+    // An SSB centre frequency SS_ref is satisfactory if (i) if the SSB falls within the band and (ii) SS_ref falls into
     // the subcarrier grid of CRBs; or, equivalently, if the distance of the first SSB's subcarrier from pointA can be
     // expressed as a multiple of SCS.
+    // NOTES:
+    // 1) As the TS reports no explicit definition of how to determine the condition "SSB falls within the band", this
+    // is determined based on the position of the first SSB's subcarrier and first Channel Band subcarrier, for the
+    // lower bound; and based on the position of the last SSB's subcarrier and last Channel Band subcarrier, for the
+    // upper bound.
+    // 2) Condition "SS_ref falls into the subcarrier grid of CRBs" is implementation defined and comes from PHY
+    // constraints.
     bool is_ssb_inside_band = (f_ssb_0_hz >= point_A_hz) && (f_ssb_ub_hz <= bw_ub_hz);
 
     if (is_ssb_inside_band) {
