@@ -26,6 +26,7 @@
 #include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/ran/uci/uci_mapping.h"
+#include "srsgnb/support/units.h"
 #include <array>
 #include <bitset>
 #include <cstdint>
@@ -169,7 +170,7 @@ struct dl_pdsch_maintenance_parameters_v3 {
   uint16_t                                      coreset_start_point;
   uint16_t                                      initial_dl_bwp_size;
   ldpc_base_graph_type                          ldpc_base_graph;
-  uint32_t                                      tb_size_lbrm_bytes;
+  units::bytes                                  tb_size_lbrm_bytes;
   uint8_t                                       tb_crc_required;
   std::array<uint16_t, MAX_SIZE_SSB_PDU_FOR_RM> ssb_pdus_for_rate_matching;
   uint16_t                                      ssb_config_for_rate_matching;
@@ -209,12 +210,12 @@ struct dl_pdsch_parameters_v4 {
 
 /// Codeword information.
 struct dl_pdsch_codeword {
-  uint16_t target_code_rate;
-  uint8_t  qam_mod_order;
-  uint8_t  mcs_index;
-  uint8_t  mcs_table;
-  uint8_t  rv_index;
-  uint32_t tb_size;
+  uint16_t     target_code_rate;
+  uint8_t      qam_mod_order;
+  uint8_t      mcs_index;
+  uint8_t      mcs_table;
+  uint8_t      rv_index;
+  units::bytes tb_size;
 };
 
 enum class low_papr_dmrs_type : uint8_t { independent_cdm_group, dependent_cdm_group };
@@ -506,7 +507,7 @@ struct ul_pusch_data {
   uint8_t                            rv_index;
   uint8_t                            harq_process_id;
   bool                               new_data;
-  uint32_t                           tb_size;
+  units::bytes                       tb_size;
   uint16_t                           num_cb;
   static_vector<uint8_t, MAX_NUM_CB> cb_present_and_position;
 };
@@ -555,7 +556,7 @@ struct ul_pusch_maintenance_v3 {
   uint8_t              group_or_sequence_hopping;
   uint16_t             pusch_second_hop_prb;
   ldpc_base_graph_type ldpc_base_graph;
-  uint32_t             tb_size_lbrm_bytes;
+  units::bytes         tb_size_lbrm_bytes;
 };
 
 /// PUSCH PDU parameters added in FAPIv4.
@@ -804,7 +805,7 @@ enum class ul_dci_pdu_type : uint16_t { PDCCH };
 /// Uplink DCI PDU information.
 struct ul_dci_pdu {
   ul_dci_pdu_type pdu_type;
-  uint16_t        pdu_size;
+  units::bytes    pdu_size;
   dl_pdcch_pdu    pdu;
 };
 
@@ -834,7 +835,7 @@ struct tlv_info {
 
 /// Custom TLV payload.
 struct tlv_custom_payload {
-  uint32_t       length;
+  units::bytes   length;
   const uint8_t* payload;
 };
 
@@ -843,7 +844,7 @@ struct tx_data_req_pdu {
   /// Maximum number of TLVs.
   static constexpr unsigned MAX_NUM_TLVS = 1024;
 
-  uint32_t           pdu_length;
+  units::bytes       pdu_length;
   uint16_t           pdu_index;
   uint8_t            cw_index;
   tlv_custom_payload tlv_custom;

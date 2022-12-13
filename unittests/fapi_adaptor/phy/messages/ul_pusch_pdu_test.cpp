@@ -48,7 +48,7 @@ TEST(FapiPhyULPUSCHAdaptorTest, ValidPDUPass)
   ASSERT_EQ(fapi_pdu.pusch_dmrs_scrambling_id, phy_pdu.scrambling_id);
   ASSERT_EQ(fapi_pdu.nscid, phy_pdu.n_scid);
   ASSERT_EQ(fapi_pdu.num_dmrs_cdm_grps_no_data, phy_pdu.nof_cdm_groups_without_data);
-  ASSERT_EQ(fapi_pdu.pusch_maintenance_v3.tb_size_lbrm_bytes, phy_pdu.tbs_lbrm_bytes);
+  ASSERT_EQ(fapi_pdu.pusch_maintenance_v3.tb_size_lbrm_bytes.value(), phy_pdu.tbs_lbrm_bytes);
 
   // RB allocation.
   bounded_bitset<MAX_RB> vrb_bitmap(fapi_pdu.bwp_size);
@@ -71,6 +71,6 @@ TEST(FapiPhyULPUSCHAdaptorTest, ValidPDUPass)
   ASSERT_EQ(fapi_pdu.pusch_data.rv_index, phy_pdu.codeword.value().rv);
   ASSERT_EQ(fapi_pdu.pusch_data.new_data, phy_pdu.codeword.value().new_data);
   ASSERT_EQ(fapi_pdu.pusch_maintenance_v3.ldpc_base_graph, phy_pdu.codeword.value().ldpc_base_graph);
-  ASSERT_EQ(fapi_pdu.pusch_data.tb_size, pdu.tb_size);
+  ASSERT_EQ(fapi_pdu.pusch_data.tb_size.value(), pdu.tb_size);
   ASSERT_EQ(fapi_pdu.pusch_data.harq_process_id, pdu.harq_id);
 }

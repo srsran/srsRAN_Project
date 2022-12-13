@@ -167,9 +167,9 @@ TEST(ul_pusch_pdu_builder, valid_data_parameters_passes)
   unsigned                                          rv_index        = 2;
   unsigned                                          harq_process_id = 9;
   bool                                              new_data        = false;
-  unsigned                                          tb_size         = 89898989;
-  unsigned                                          num_cb          = 16;
-  static_vector<uint8_t, ul_pusch_data::MAX_NUM_CB> cb_present      = {1, 5};
+  units::bytes                                      tb_size{89898989};
+  unsigned                                          num_cb     = 16;
+  static_vector<uint8_t, ul_pusch_data::MAX_NUM_CB> cb_present = {1, 5};
 
   ul_pusch_pdu         pdu;
   ul_pusch_pdu_builder builder(pdu);
@@ -188,17 +188,21 @@ TEST(ul_pusch_pdu_builder, valid_data_parameters_passes)
 
 static unsigned get_alpha_scaling_value(float alpha_scaling)
 {
-  if (std::fabs(alpha_scaling - 0.5F) < 0.001)
+  if (std::fabs(alpha_scaling - 0.5F) < 0.001) {
     return 0U;
+  }
 
-  if (std::fabs(alpha_scaling - 0.65F) < 0.001)
+  if (std::fabs(alpha_scaling - 0.65F) < 0.001) {
     return 1U;
+  }
 
-  if (std::fabs(alpha_scaling - 0.8F) < 0.001)
+  if (std::fabs(alpha_scaling - 0.8F) < 0.001) {
     return 2U;
+  }
 
-  if (std::fabs(alpha_scaling - 1.F) < 0.001)
+  if (std::fabs(alpha_scaling - 1.F) < 0.001) {
     return 3U;
+  }
 
   srsgnb_assert(0, "Invalid alpha scaling value ({})", alpha_scaling);
   return 0U;
@@ -321,7 +325,7 @@ TEST(ul_pusch_pdu_builder, valid_maintenance_v3_freq_allocation_parameters_passe
 {
   unsigned             pusch_second_hop = 2;
   ldpc_base_graph_type ldcp_graph       = ldpc_base_graph_type::BG2;
-  unsigned             tb_size          = 3232;
+  units::bytes         tb_size{3232};
 
   ul_pusch_pdu         pdu;
   ul_pusch_pdu_builder builder(pdu);

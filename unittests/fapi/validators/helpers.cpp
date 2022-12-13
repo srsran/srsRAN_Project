@@ -219,7 +219,7 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
   pdu.bwp_start                          = 4;
   pdu.scs                                = subcarrier_spacing::kHz15;
   pdu.cp                                 = cyclic_prefix::NORMAL;
-  pdu.cws                                = {{10, 2, 3, 1, 3, 12}};
+  pdu.cws                                = {{10, 2, 3, 1, 3, units::bytes{12}}};
   pdu.nid_pdsch                          = 65;
   pdu.num_layers                         = 6;
   pdu.transmission_scheme                = 0;
@@ -245,7 +245,7 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
   pdu.pdsch_maintenance_v3.coreset_start_point                  = 2;
   pdu.pdsch_maintenance_v3.initial_dl_bwp_size                  = 3;
   pdu.pdsch_maintenance_v3.ldpc_base_graph                      = srsgnb::ldpc_base_graph_type::BG1;
-  pdu.pdsch_maintenance_v3.tb_size_lbrm_bytes                   = 12;
+  pdu.pdsch_maintenance_v3.tb_size_lbrm_bytes                   = units::bytes{12};
   pdu.pdsch_maintenance_v3.prb_sym_rm_pattern_bitmap_size_byref = 0;
   pdu.pdsch_maintenance_v3.num_prb_sym_rm_patts_by_value        = 0;
   pdu.pdsch_maintenance_v3.num_coreset_rm_patterns              = 0;
@@ -991,7 +991,7 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
   data.rv_index        = 2;
   data.harq_process_id = 2;
   data.new_data        = false;
-  data.tb_size         = 213131;
+  data.tb_size         = units::bytes{213131};
   data.num_cb          = 3414;
 
   auto& uci = pdu.pusch_uci;
@@ -1034,7 +1034,7 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
   v3.group_or_sequence_hopping        = 2;
   v3.pusch_second_hop_prb             = generate_bwp_start();
   v3.ldpc_base_graph                  = generate_ldpc_graph_type();
-  v3.tb_size_lbrm_bytes               = 32323242;
+  v3.tb_size_lbrm_bytes               = units::bytes{32323242};
 
   pdu.pusch_params_v4.cb_crc_status_request = generate_bool();
 
@@ -1136,7 +1136,7 @@ tx_data_request_message unittest::build_valid_tx_data_request()
 
   pdu.cw_index          = generate_bool();
   pdu.pdu_index         = 4231;
-  pdu.tlv_custom.length = 12;
+  pdu.tlv_custom.length = units::bytes{12};
 
   static uint8_t payload;
   pdu.tlv_custom.payload = &payload;

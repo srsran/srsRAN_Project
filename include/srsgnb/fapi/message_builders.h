@@ -353,12 +353,12 @@ public:
 
   /// Sets the codeword basic parameters.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
-  dl_pdsch_codeword_builder& set_basic_parameters(float    target_code_rate,
-                                                  uint8_t  qam_mod,
-                                                  uint8_t  mcs_index,
-                                                  uint8_t  mcs_table,
-                                                  uint8_t  rv_index,
-                                                  uint32_t tb_size)
+  dl_pdsch_codeword_builder& set_basic_parameters(float        target_code_rate,
+                                                  uint8_t      qam_mod,
+                                                  uint8_t      mcs_index,
+                                                  uint8_t      mcs_table,
+                                                  uint8_t      rv_index,
+                                                  units::bytes tb_size)
   {
     cw.target_code_rate = target_code_rate * 10.F;
     cw.qam_mod_order    = qam_mod;
@@ -587,7 +587,7 @@ public:
   /// Sets the maintenance v3 codeword information parameters for the fields of the PDSCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH maintenance parameters v3.
   dl_pdsch_pdu_builder& set_maintenance_v3_codeword_parameters(ldpc_base_graph_type ldpc_base_graph,
-                                                               uint32_t             tb_size_lbrm_bytes,
+                                                               units::bytes         tb_size_lbrm_bytes,
                                                                bool                 tb_crc_first_tb_required,
                                                                bool                 tb_crc_second_tb_required)
   {
@@ -1051,8 +1051,8 @@ public:
     pdu.pdu_index = pdu_index;
     pdu.cw_index  = cw_index;
 
-    // Fill custom TLV. This TLV always uses a pointer to payload.
-    pdu.tlv_custom.length  = payload.size();
+    // Fill custom TLV. This TLV always uses a pointer to the payload.
+    pdu.tlv_custom.length  = units::bytes{payload.size()};
     pdu.tlv_custom.payload = payload.data();
 
     return *this;
@@ -2097,17 +2097,21 @@ class ul_pusch_pdu_builder
   /// Convert alpha scaling property from float to FAPI unsigned.
   static unsigned convert_alpha_scaling(float alpha_scaling)
   {
-    if (std::fabs(alpha_scaling - 0.5F) < 0.001F)
+    if (std::fabs(alpha_scaling - 0.5F) < 0.001F) {
       return 0U;
+    }
 
-    if (std::fabs(alpha_scaling - 0.65F) < 0.001F)
+    if (std::fabs(alpha_scaling - 0.65F) < 0.001F) {
       return 1U;
+    }
 
-    if (std::fabs(alpha_scaling - 0.8F) < 0.001F)
+    if (std::fabs(alpha_scaling - 0.8F) < 0.001F) {
       return 2U;
+    }
 
-    if (std::fabs(alpha_scaling - 1.F) < 0.001F)
+    if (std::fabs(alpha_scaling - 1.F) < 0.001F) {
       return 3U;
+    }
 
     srsgnb_assert(0, "Invalid alpha scaling value ({})", alpha_scaling);
     return 0U;
@@ -2266,7 +2270,7 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH maintenance FAPIv3.
   ul_pusch_pdu_builder& set_maintenance_v3_frequency_allocation_parameters(uint16_t             pusch_second_hop_prb,
                                                                            ldpc_base_graph_type ldpc_graph,
-                                                                           uint32_t             tb_size_lbrm_bytes)
+                                                                           units::bytes         tb_size_lbrm_bytes)
   {
     auto& v3                = pdu.pusch_maintenance_v3;
     v3.pusch_second_hop_prb = pusch_second_hop_prb;
@@ -2320,7 +2324,7 @@ public:
   ul_pusch_pdu_builder& add_optional_pusch_data(uint8_t             rv_index,
                                                 uint8_t             harq_process_id,
                                                 bool                new_data,
-                                                uint32_t            tb_size,
+                                                units::bytes        tb_size,
                                                 uint16_t            num_cb,
                                                 span<const uint8_t> cb_present_and_position)
   {

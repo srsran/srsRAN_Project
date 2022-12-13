@@ -66,6 +66,7 @@ public:
   using tag_type   = Tag;
 
   /// Special member function definitions.
+  constexpr strong_type() : val{} {}
   explicit constexpr strong_type(strong_uninit_t u) {}
   explicit constexpr strong_type(T val_) : val(val_) {}
   constexpr strong_type(const strong_type&)            = default;

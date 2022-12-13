@@ -162,25 +162,25 @@ static void pdsch_conversion_test()
                                             fapi::pdsch_trans_type::interleaved_common_any_coreset0_present,
                                             fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present}) {
                       for (auto ldpc_graph : {ldpc_base_graph_type::BG1, ldpc_base_graph_type::BG2}) {
-                        unsigned sfn                      = sfn_dist(gen);
-                        unsigned slot                     = slot_dist(gen);
-                        rnti_t   rnti                     = to_rnti(rnti_dist(gen));
-                        unsigned bwp_size                 = bwp_size_dist(gen);
-                        unsigned bwp_start                = bwp_start_dist(gen);
-                        unsigned nid_pdsch                = nid_pdsch_dist(gen);
-                        unsigned scrambling_id            = dmrs_scrambling_dist(gen);
-                        unsigned scrambling_id_complement = dmrs_scrambling_dist(gen);
-                        bool     n_scid                   = binary_dist(gen);
-                        unsigned dmrs_cdm_grps_no_data    = dmrs_cdm_grps_no_data_dist(gen);
-                        unsigned start_symbol_index       = start_symbol_index_dist(gen);
-                        unsigned nr_of_symbols            = nr_of_symbols_dist(gen);
-                        unsigned coreset_start            = bwp_size_dist(gen);
-                        unsigned initial_bwp_size         = bwp_size_dist(gen);
-                        unsigned tb_size_lbrm_bytes       = bwp_size_dist(gen);
-                        unsigned dl_dmrs_symbol           = rnti_dist(gen);
-                        unsigned rb_size                  = nr_of_symbols_dist(gen);
-                        unsigned rb_start                 = start_symbol_index_dist(gen);
-                        float    power_data_profile_sss   = 1000.0F * std::round(power_dist(gen) / 1000.0F);
+                        unsigned     sfn                      = sfn_dist(gen);
+                        unsigned     slot                     = slot_dist(gen);
+                        rnti_t       rnti                     = to_rnti(rnti_dist(gen));
+                        unsigned     bwp_size                 = bwp_size_dist(gen);
+                        unsigned     bwp_start                = bwp_start_dist(gen);
+                        unsigned     nid_pdsch                = nid_pdsch_dist(gen);
+                        unsigned     scrambling_id            = dmrs_scrambling_dist(gen);
+                        unsigned     scrambling_id_complement = dmrs_scrambling_dist(gen);
+                        bool         n_scid                   = binary_dist(gen);
+                        unsigned     dmrs_cdm_grps_no_data    = dmrs_cdm_grps_no_data_dist(gen);
+                        unsigned     start_symbol_index       = start_symbol_index_dist(gen);
+                        unsigned     nr_of_symbols            = nr_of_symbols_dist(gen);
+                        unsigned     coreset_start            = bwp_size_dist(gen);
+                        unsigned     initial_bwp_size         = bwp_size_dist(gen);
+                        units::bytes tb_size_lbrm_bytes{50};
+                        unsigned     dl_dmrs_symbol         = rnti_dist(gen);
+                        unsigned     rb_size                = nr_of_symbols_dist(gen);
+                        unsigned     rb_start               = start_symbol_index_dist(gen);
+                        float        power_data_profile_sss = 1000.0F * std::round(power_dist(gen) / 1000.0F);
 
                         std::array<uint8_t, 36> rb_bitmap = {};
 
@@ -203,12 +203,12 @@ static void pdsch_conversion_test()
 
                         auto builder_cw = builder.add_codeword();
 
-                        unsigned target_code = 2;
-                        unsigned qam_mod     = 2;
-                        unsigned mcs         = 20;
-                        unsigned mcs_table   = 1;
-                        unsigned rv_index    = 0;
-                        unsigned tb_size     = 42;
+                        unsigned     target_code = 2;
+                        unsigned     qam_mod     = 2;
+                        unsigned     mcs         = 20;
+                        unsigned     mcs_table   = 1;
+                        unsigned     rv_index    = 0;
+                        units::bytes tb_size{42};
 
                         builder_cw.set_basic_parameters(target_code, qam_mod, mcs, mcs_table, rv_index, tb_size);
 
@@ -301,7 +301,7 @@ static void pdsch_conversion_test()
                         TESTASSERT(freq_allocation == proc_pdu.freq_alloc);
 
                         TESTASSERT_EQ(ldpc_graph, proc_pdu.ldpc_base_graph);
-                        TESTASSERT_EQ(tb_size_lbrm_bytes, proc_pdu.tbs_lbrm_bytes);
+                        TESTASSERT_EQ(tb_size_lbrm_bytes.value(), proc_pdu.tbs_lbrm_bytes);
 
                         // :TODO: re_pattern.
                       }

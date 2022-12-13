@@ -22,8 +22,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pd
   convert_pdsch_mac_to_fapi(builder, mac_pdu);
 }
 
-static void fill_codewords(fapi::dl_pdsch_pdu_builder&                                   builder,
-                           const static_vector<pdsch_codeword, MAX_CODEWORDS_PER_PDSCH>& codewords)
+static void fill_codewords(fapi::dl_pdsch_pdu_builder& builder, span<const pdsch_codeword> codewords)
 {
   srsgnb_assert(codewords.size() == 1, "Current FAPI implementation only supports 1 transport block per PDU");
   for (const auto& cw : codewords) {
@@ -33,10 +32,10 @@ static void fill_codewords(fapi::dl_pdsch_pdu_builder&                          
                                     cw.mcs_index.to_uint(),
                                     static_cast<unsigned>(cw.mcs_table),
                                     cw.rv_index,
-                                    cw.tb_size_bytes);
+                                    units::bytes{cw.tb_size_bytes});
   }
 
-  unsigned              tb_size_lbrm_bytes           = ldpc::MAX_CODEBLOCK_SIZE / 8;
+  const units::bytes    tb_size_lbrm_bytes{ldpc::MAX_CODEBLOCK_SIZE / 8};
   const pdsch_codeword& cw                           = codewords.front();
   static const bool     is_tb_crc_first_tb_required  = false;
   static const bool     is_tb_crc_second_tb_required = false;

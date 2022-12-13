@@ -37,6 +37,6 @@ TEST(tx_data_request_builder, valid_basic_parameters_passes)
   ASSERT_EQ(cw_index, pdu.cw_index);
 
   const auto& tlv = pdu.tlv_custom;
-  ASSERT_EQ(payload.size(), tlv.length);
+  ASSERT_EQ(payload.size(), tlv.length.value());
   ASSERT_EQ(payload.data(), tlv.payload);
 }

@@ -39,7 +39,7 @@ static void test_conversion_ok()
   TESTASSERT_EQ(static_cast<unsigned>(mac_cw.mcs_table), fapi_cw.mcs_table);
   TESTASSERT_EQ(mac_cw.mcs_index, fapi_cw.mcs_index);
   TESTASSERT_EQ(get_bits_per_symbol(mac_cw.mcs_descr.modulation), fapi_cw.qam_mod_order);
-  TESTASSERT_EQ(mac_cw.tb_size_bytes, fapi_cw.tb_size);
+  TESTASSERT_EQ(mac_cw.tb_size_bytes, fapi_cw.tb_size.value());
 
   // DMRS.
   const dmrs_information& dmrs_cfg = pdu.pdsch_cfg.dmrs;

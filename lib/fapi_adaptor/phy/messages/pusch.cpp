@@ -25,7 +25,7 @@ static void fill_codeword(uplink_processor::pusch_pdu& pdu, const fapi::ul_pusch
   cw.new_data        = fapi_pdu.pusch_data.new_data;
 
   pdu.harq_id = fapi_pdu.pusch_data.harq_process_id;
-  pdu.tb_size = fapi_pdu.pusch_data.tb_size;
+  pdu.tb_size = fapi_pdu.pusch_data.tb_size.value();
 
   pdu.pdu.codeword = optional<pusch_processor::codeword_description>(std::move(cw));
 }
@@ -81,7 +81,7 @@ void srsgnb::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu
   proc_pdu.nof_cdm_groups_without_data = fapi_pdu.num_dmrs_cdm_grps_no_data;
   proc_pdu.start_symbol_index          = fapi_pdu.start_symbol_index;
   proc_pdu.nof_symbols                 = fapi_pdu.nr_of_symbols;
-  proc_pdu.tbs_lbrm_bytes              = fapi_pdu.pusch_maintenance_v3.tb_size_lbrm_bytes;
+  proc_pdu.tbs_lbrm_bytes              = fapi_pdu.pusch_maintenance_v3.tb_size_lbrm_bytes.value();
 
   fill_rb_allocation(proc_pdu, fapi_pdu);
 

@@ -335,7 +335,7 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
   for (unsigned i = 0, e = msg.pdus.size(); i != e; ++i) {
     static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data;
     const fapi::tx_data_req_pdu&                                                  pdu = msg.pdus[i];
-    data.emplace_back(pdu.tlv_custom.payload, pdu.tlv_custom.length);
+    data.emplace_back(pdu.tlv_custom.payload, pdu.tlv_custom.length.value());
 
     current_slot_controller->process_pdsch(data, pdsch_pdu_repository[i]);
   }

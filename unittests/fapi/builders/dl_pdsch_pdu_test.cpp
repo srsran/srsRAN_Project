@@ -81,12 +81,12 @@ TEST(dl_pdsch_pdu_builder, valid_codeword_basic_parameters_passes)
 
   auto builder_cw = builder.add_codeword();
 
-  uint16_t target_code_rate = 6;
-  uint8_t  qam_mod          = 2;
-  uint8_t  mcs_index        = 2;
-  uint8_t  mcs_table        = 1;
-  uint8_t  rv_index         = 2;
-  uint32_t tb_size          = 128;
+  uint16_t     target_code_rate = 6;
+  uint8_t      qam_mod          = 2;
+  uint8_t      mcs_index        = 2;
+  uint8_t      mcs_table        = 1;
+  uint8_t      rv_index         = 2;
+  units::bytes tb_size{128};
 
   builder_cw.set_basic_parameters(target_code_rate, qam_mod, mcs_index, mcs_table, rv_index, tb_size);
 
@@ -234,12 +234,11 @@ TEST(dl_pdsch_pdu_builder, valid_maintenance_v3_codeword_info_parameters_passes)
       dl_pdsch_pdu         pdu;
       dl_pdsch_pdu_builder builder(pdu);
 
-      uint32_t tb_size = 15;
-
-      builder.set_maintenance_v3_codeword_parameters(graph_type, tb_size, tb_crc & 1U, (tb_crc >> 1) & 1U);
+      units::bytes tb_size_lbrm_bytes{15};
+      builder.set_maintenance_v3_codeword_parameters(graph_type, tb_size_lbrm_bytes, tb_crc & 1U, (tb_crc >> 1) & 1U);
 
       ASSERT_EQ(tb_crc, pdu.pdsch_maintenance_v3.tb_crc_required);
-      ASSERT_EQ(tb_size, pdu.pdsch_maintenance_v3.tb_size_lbrm_bytes);
+      ASSERT_EQ(tb_size_lbrm_bytes, pdu.pdsch_maintenance_v3.tb_size_lbrm_bytes);
       ASSERT_EQ(graph_type, pdu.pdsch_maintenance_v3.ldpc_base_graph);
     }
   }
