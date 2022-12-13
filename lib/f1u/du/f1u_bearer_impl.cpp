@@ -14,8 +14,10 @@
 using namespace srsgnb;
 using namespace srs_du;
 
-f1u_bearer_impl::f1u_bearer_impl(drb_id_t drb_id_, f1u_rx_sdu_notifier& rx_sdu_notifier_) :
-  drb_id(drb_id_), rx_sdu_notifier(rx_sdu_notifier_)
+f1u_bearer_impl::f1u_bearer_impl(drb_id_t             drb_id_,
+                                 f1u_rx_sdu_notifier& rx_sdu_notifier_,
+                                 f1u_tx_pdu_notifier& tx_pdu_notifier_) :
+  drb_id(drb_id_), rx_sdu_notifier(rx_sdu_notifier_), tx_pdu_notifier(tx_pdu_notifier_)
 {
 }
 
@@ -24,6 +26,7 @@ void f1u_bearer_impl::handle_sdu(byte_buffer_slice_chain sdu)
   fmt::print("F1-U bearer with DRB id={} received SDU!\n", drb_id);
   nru_ul_message msg = {};
   msg.t_pdu          = std::move(sdu);
+  tx_pdu_notifier.on_new_pdu(std::move(msg));
 }
 
 void f1u_bearer_impl::handle_pdu(nru_dl_message msg)

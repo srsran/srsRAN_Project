@@ -7,3 +7,4 @@
 #
 
 add_subdirectory(cu_up)
+add_subdirectory(du)

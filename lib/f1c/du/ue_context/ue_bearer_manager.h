@@ -17,6 +17,7 @@
 #include "srsgnb/f1c/du/f1c_rx_sdu_notifier.h"
 #include "srsgnb/f1u/du/f1u_bearer.h"
 #include "srsgnb/f1u/du/f1u_rx_sdu_notifier.h"
+#include "srsgnb/f1u/du/f1u_tx_pdu_notifier.h"
 #include "srsgnb/ran/lcid.h"
 
 namespace srsgnb {

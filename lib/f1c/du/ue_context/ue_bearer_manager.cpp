@@ -36,5 +36,9 @@ void ue_bearer_manager::add_f1c_bearer(srb_id_t srb_id, f1c_rx_sdu_notifier& rx_
 
 void ue_bearer_manager::add_f1u_bearer(drb_id_t drb_id, f1u_rx_sdu_notifier& rx_sdu_notif)
 {
-  f1u_bearers.emplace(drb_id_to_idx(drb_id), create_f1u_bearer(drb_id, rx_sdu_notif));
+  // FIXME: We need a f1u_tx_pdu_notifier object here
+  f1u_tx_pdu_notifier* tx_pdu_notif = nullptr;
+  srsgnb_assert(tx_pdu_notif != nullptr,
+                "Incomplete implementation - cannot create F1-U bearer without f1u_tx_pdu_notifier");
+  f1u_bearers.emplace(drb_id_to_idx(drb_id), create_f1u_bearer(drb_id, rx_sdu_notif, *tx_pdu_notif));
 }

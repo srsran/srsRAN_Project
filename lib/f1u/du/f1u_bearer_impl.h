@@ -12,6 +12,7 @@
 
 #include "srsgnb/f1u/du/f1u_bearer.h"
 #include "srsgnb/f1u/du/f1u_rx_sdu_notifier.h"
+#include "srsgnb/f1u/du/f1u_tx_pdu_notifier.h"
 #include "srsgnb/ran/lcid.h"
 
 namespace srsgnb {
@@ -23,7 +24,7 @@ class f1u_bearer_impl final : public f1u_bearer,
                               public f1u_rx_pdu_handler
 {
 public:
-  f1u_bearer_impl(drb_id_t drb_id_, f1u_rx_sdu_notifier& rx_sdu_notifier_);
+  f1u_bearer_impl(drb_id_t drb_id_, f1u_rx_sdu_notifier& rx_sdu_notifier_, f1u_tx_pdu_notifier& tx_pdu_notifier_);
 
   f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
   f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
@@ -36,6 +37,7 @@ public:
 private:
   drb_id_t             drb_id;
   f1u_rx_sdu_notifier& rx_sdu_notifier;
+  f1u_tx_pdu_notifier& tx_pdu_notifier;
 };
 
 } // namespace srs_du

@@ -23,7 +23,7 @@ class f1u_tx_pdu_notifier
 public:
   virtual ~f1u_tx_pdu_notifier() = default;
 
-  virtual void on_new_pdu(nru_dl_message msg) = 0;
+  virtual void on_new_pdu(nru_ul_message msg) = 0;
 };
 
 } // namespace srs_du
