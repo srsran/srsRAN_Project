@@ -72,8 +72,7 @@ private:
   void handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& msg);
   void handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg);
   void handle_ul_info_transfer(const asn1::rrc_nr::ul_info_transfer_ies_s& ul_info_transfer);
-  void handle_rrc_setup_complete(const asn1::rrc_nr::ul_dcch_msg_s& msg, uint8_t transaction_id_);
-  void handle_security_mode_complete(const asn1::rrc_nr::ul_dcch_msg_s& msg, uint8_t transaction_id_);
+  void handle_rrc_transaction_complete(const asn1::rrc_nr::ul_dcch_msg_s& msg, uint8_t transaction_id_);
 
   // message senders
   /// \remark Send RRC Reject, see section 5.3.15 in TS 38.331
