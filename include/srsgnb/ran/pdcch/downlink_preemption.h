@@ -14,6 +14,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/support/units.h"
 #include <cstdint>
 
 namespace srsgnb {
@@ -49,7 +50,7 @@ struct downlink_preemption {
   time_frequency_set time_freq_set;
   /// Total length of the DCI payload scrambled with INT-RNTI. Values {0..maxINT-DCI-PayloadSize}, where
   /// maxINT-DCI-PayloadSize = 126.
-  unsigned dci_payload_size;
+  units::bits dci_payload_size;
   /// Indicates (per serving cell) the position of the 14 bit INT values inside the DCI payload.
   static_vector<int_configuration_per_serving_cell, MAX_NOF_DU_CELLS> int_cfg;
 
