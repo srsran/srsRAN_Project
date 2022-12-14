@@ -45,7 +45,7 @@ private:
   /// and provided K_gNB.
   void generate_as_keys();
 
-  /// \remark Send RRC Security Mode Command, see section 5.3.3 in TS 36.331
+  /// \remark Send RRC Security Mode Command, see section 5.3.3 in TS 38.331
   void send_rrc_security_mode_command();
 
   rrc_ue_context_t          context;
@@ -65,7 +65,7 @@ private:
   bool procedure_result = false;
 };
 
-/// \brief Fills ASN.1 RRC Setup struct.
+/// \brief Fills ASN.1 RRC Security Mode Command struct.
 /// \param[out] rrc_smc The RRC security mode command ASN.1 struct to fill.
 /// \param[in] int_algo The selected integrity protection algorithm.
 /// \param[in] ciph_algo The selected ciphering algorithm.
