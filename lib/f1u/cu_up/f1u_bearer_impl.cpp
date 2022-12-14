@@ -35,10 +35,10 @@ void f1u_bearer_impl::handle_sdu(byte_buffer sdu, uint32_t count)
 void f1u_bearer_impl::discard_sdu(uint32_t count)
 {
   fmt::print("F1-U bearer with DRB id={} received order to discard SDU with count={}", drb_id, count);
-  nru_dl_message msg                                          = {};
-  msg.dl_user_data.dl_discard_blocks                          = true;
-  msg.dl_user_data.dl_discard_nof_blocks                      = 1;
-  msg.dl_user_data.discard_blocks[0].dl_discard_pdcp_sn_start = count;
-  msg.dl_user_data.discard_blocks[0].discarded_block_size     = 1;
+  nru_dl_message msg                               = {};
+  msg.dl_user_data.dl_discard_blocks               = true;
+  msg.dl_user_data.dl_discard_nof_blocks           = 1;
+  msg.dl_user_data.discard_blocks[0].pdcp_sn_start = count;
+  msg.dl_user_data.discard_blocks[0].block_size    = 1;
   tx_pdu_notifier.on_new_pdu(std::move(msg));
 }

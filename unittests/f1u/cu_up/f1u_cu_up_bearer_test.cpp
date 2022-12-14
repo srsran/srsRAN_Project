@@ -100,8 +100,8 @@ TEST_F(f1u_cu_up_test, tx_discard)
   EXPECT_TRUE(tester->tx_msg_list.front().t_pdu.empty());
   EXPECT_TRUE(tester->tx_msg_list.front().dl_user_data.dl_discard_blocks);
   ASSERT_EQ(tester->tx_msg_list.front().dl_user_data.dl_discard_nof_blocks, 1);
-  EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks[0].dl_discard_pdcp_sn_start, pdcp_count);
-  EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks[0].discarded_block_size, 1);
+  EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks[0].pdcp_sn_start, pdcp_count);
+  EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks[0].block_size, 1);
 
   tester->tx_msg_list.pop_front();
 
@@ -109,8 +109,8 @@ TEST_F(f1u_cu_up_test, tx_discard)
   EXPECT_TRUE(tester->tx_msg_list.front().t_pdu.empty());
   EXPECT_TRUE(tester->tx_msg_list.front().dl_user_data.dl_discard_blocks);
   ASSERT_EQ(tester->tx_msg_list.front().dl_user_data.dl_discard_nof_blocks, 1);
-  EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks[0].dl_discard_pdcp_sn_start, pdcp_count + 7);
-  EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks[0].discarded_block_size, 1);
+  EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks[0].pdcp_sn_start, pdcp_count + 7);
+  EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks[0].block_size, 1);
 
   tester->tx_msg_list.pop_front();
 

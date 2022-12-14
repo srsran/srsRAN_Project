@@ -39,8 +39,8 @@ void f1u_bearer_impl::handle_pdu(nru_dl_message msg)
     uint8_t nof_blocks = std::min(msg.dl_user_data.dl_discard_nof_blocks, nru_max_nof_pdcp_sn_discard_blocks);
     for (uint8_t block_idx = 0; block_idx < nof_blocks; block_idx++) {
       const nru_pdcp_sn_discard_block& block       = msg.dl_user_data.discard_blocks[block_idx];
-      uint32_t                         pdcp_sn_end = block.dl_discard_pdcp_sn_start + block.discarded_block_size;
-      for (uint32_t pdcp_sn = block.dl_discard_pdcp_sn_start; pdcp_sn < pdcp_sn_end; pdcp_sn++) {
+      uint32_t                         pdcp_sn_end = block.pdcp_sn_start + block.block_size;
+      for (uint32_t pdcp_sn = block.pdcp_sn_start; pdcp_sn < pdcp_sn_end; pdcp_sn++) {
         rx_sdu_notifier.on_discard_sdu(pdcp_sn);
       }
     }

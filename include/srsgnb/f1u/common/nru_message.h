@@ -25,8 +25,8 @@ constexpr uint8_t nru_max_nof_lost_nru_sn_ranges     = 1;
 ///
 /// Ref: TS 38.425 Sec. 5.5.2.1, Sec. 5.5.3
 struct nru_pdcp_sn_discard_block {
-  uint32_t dl_discard_pdcp_sn_start = 0;
-  uint8_t  discarded_block_size     = 0;
+  uint32_t pdcp_sn_start = 0; ///< DL discard NR PDCP PDU SN start
+  uint8_t  block_size    = 0; ///< Discarded Block size
 };
 
 typedef std::array<nru_pdcp_sn_discard_block, nru_max_nof_pdcp_sn_discard_blocks> nru_pdcp_sn_discard_blocks;

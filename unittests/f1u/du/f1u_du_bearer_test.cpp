@@ -89,18 +89,18 @@ TEST_F(f1u_du_test, rx_discard)
 {
   constexpr uint32_t pdcp_count = 123;
 
-  nru_dl_message msg1                                          = {};
-  msg1.dl_user_data.dl_discard_blocks                          = true;
-  msg1.dl_user_data.dl_discard_nof_blocks                      = 1;
-  msg1.dl_user_data.discard_blocks[0].dl_discard_pdcp_sn_start = pdcp_count;
-  msg1.dl_user_data.discard_blocks[0].discarded_block_size     = 1;
+  nru_dl_message msg1                               = {};
+  msg1.dl_user_data.dl_discard_blocks               = true;
+  msg1.dl_user_data.dl_discard_nof_blocks           = 1;
+  msg1.dl_user_data.discard_blocks[0].pdcp_sn_start = pdcp_count;
+  msg1.dl_user_data.discard_blocks[0].block_size    = 1;
   f1u->handle_pdu(std::move(msg1));
 
-  nru_dl_message msg2                                          = {};
-  msg2.dl_user_data.dl_discard_blocks                          = true;
-  msg2.dl_user_data.dl_discard_nof_blocks                      = 1;
-  msg2.dl_user_data.discard_blocks[0].dl_discard_pdcp_sn_start = pdcp_count + 9;
-  msg2.dl_user_data.discard_blocks[0].discarded_block_size     = 1;
+  nru_dl_message msg2                               = {};
+  msg2.dl_user_data.dl_discard_blocks               = true;
+  msg2.dl_user_data.dl_discard_nof_blocks           = 1;
+  msg2.dl_user_data.discard_blocks[0].pdcp_sn_start = pdcp_count + 9;
+  msg2.dl_user_data.discard_blocks[0].block_size    = 1;
   f1u->handle_pdu(std::move(msg2));
 
   EXPECT_TRUE(tester->rx_sdu_list.empty());
