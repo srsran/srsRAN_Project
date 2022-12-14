@@ -10,9 +10,13 @@
 
 #pragma once
 
+#include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/ran/bcd_helpers.h"
 #include "srsgnb/security/security.h"
+#include <string>
+#include <vector>
 
 namespace srsgnb {
 
@@ -68,5 +72,4 @@ void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& request,
 }
 
 } // namespace srs_cu_cp
-
 } // namespace srsgnb

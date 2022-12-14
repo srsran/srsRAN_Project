@@ -9,7 +9,7 @@
  */
 
 #include "initial_cu_cp_setup_procedure.h"
-#include "../ngc_asn1_helpers.h"
+#include "../helpers/ngc_asn1_helpers.h"
 #include "srsgnb/asn1/ngap/ngap.h"
 
 using namespace srsgnb;
