@@ -124,19 +124,19 @@ class dummy_ngc_e1_control_notifier : public ngc_e1_control_notifier
 public:
   dummy_ngc_e1_control_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
 
-  virtual async_task<pdu_session_resource_setup_response_message>
-  on_new_pdu_session_resource_setup_request(pdu_session_resource_setup_message& msg) override
+  virtual async_task<e1ap_pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(e1ap_pdu_session_resource_setup_message& msg) override
   {
     last_msg = std::move(msg);
     logger.info("Received a PDU Session Resource Setup Message");
 
-    return launch_async([res = pdu_session_resource_setup_response_message{}](
-                            coro_context<async_task<pdu_session_resource_setup_response_message>>& ctx) mutable {
+    return launch_async([res = e1ap_pdu_session_resource_setup_response_message{}](
+                            coro_context<async_task<e1ap_pdu_session_resource_setup_response_message>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN(res);
     });
   }
-  pdu_session_resource_setup_message last_msg;
+  e1ap_pdu_session_resource_setup_message last_msg;
 
 private:
   srslog::basic_logger& logger;
@@ -148,19 +148,19 @@ class dummy_ngc_f1c_control_notifier : public ngc_f1c_control_notifier
 public:
   dummy_ngc_f1c_control_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
 
-  virtual async_task<pdu_session_resource_setup_response_message>
-  on_new_pdu_session_resource_setup_request(pdu_session_resource_setup_message& msg) override
+  virtual async_task<f1ap_pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(f1ap_pdu_session_resource_setup_message& msg) override
   {
     last_msg = std::move(msg);
     logger.info("Received a PDU Session Resource Setup Message");
 
-    return launch_async([res = pdu_session_resource_setup_response_message{}](
-                            coro_context<async_task<pdu_session_resource_setup_response_message>>& ctx) mutable {
+    return launch_async([res = f1ap_pdu_session_resource_setup_response_message{}](
+                            coro_context<async_task<f1ap_pdu_session_resource_setup_response_message>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN(res);
     });
   }
-  pdu_session_resource_setup_message last_msg;
+  f1ap_pdu_session_resource_setup_message last_msg;
 
 private:
   srslog::basic_logger& logger;

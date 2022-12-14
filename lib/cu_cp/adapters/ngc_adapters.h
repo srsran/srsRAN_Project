@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../helpers/ngap_e1ap_asn1_helpers.h"
+#include "../helpers/ngap_f1ap_asn1_helpers.h"
 #include "../task_schedulers/ue_task_scheduler.h"
 #include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/cu_cp/cu_cp.h"
@@ -106,8 +107,8 @@ class ngc_e1_adapter : public ngc_e1_control_notifier
 public:
   void connect_e1(e1_bearer_context_manager* e1_bearer_context_mng_) { e1_bearer_context_mng = e1_bearer_context_mng_; }
 
-  async_task<pdu_session_resource_setup_response_message>
-  on_new_pdu_session_resource_setup_request(pdu_session_resource_setup_message& msg) override
+  async_task<e1ap_pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(e1ap_pdu_session_resource_setup_message& msg) override
   {
     srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
 
@@ -116,29 +117,31 @@ public:
 
     e1ap_bearer_context_setup_response_message e1_bearer_context_setup_resp_msg;
 
-    return launch_async(
-        [this, res = pdu_session_resource_setup_response_message{}, e1_bearer_context_setup_resp_msg, e1_request, msg](
-            coro_context<async_task<pdu_session_resource_setup_response_message>>& ctx) mutable {
-          CORO_BEGIN(ctx);
+    return launch_async([this,
+                         res = e1ap_pdu_session_resource_setup_response_message{},
+                         e1_bearer_context_setup_resp_msg,
+                         e1_request,
+                         msg](coro_context<async_task<e1ap_pdu_session_resource_setup_response_message>>& ctx) mutable {
+      CORO_BEGIN(ctx);
 
-          CORO_AWAIT_VALUE(e1_bearer_context_setup_resp_msg,
-                           e1_bearer_context_mng->handle_bearer_context_setup_request(e1_request));
+      CORO_AWAIT_VALUE(e1_bearer_context_setup_resp_msg,
+                       e1_bearer_context_mng->handle_bearer_context_setup_request(e1_request));
 
-          // Fail if E-UTRAN bearer context setup is returned
-          if (e1_bearer_context_setup_resp_msg.response->sys_bearer_context_setup_resp->type() ==
-              asn1::e1ap::sys_bearer_context_setup_resp_c::types::e_utran_bearer_context_setup_resp) {
-            asn1::ngap::cause_c cause;
-            cause.set(asn1::ngap::cause_c::types_opts::options::protocol);
-            fill_failed_ngap_pdu_session_res_setup_response(res, msg, e1_bearer_context_setup_resp_msg, cause);
+      // Fail if E-UTRAN bearer context setup is returned
+      if (e1_bearer_context_setup_resp_msg.response->sys_bearer_context_setup_resp->type() ==
+          asn1::e1ap::sys_bearer_context_setup_resp_c::types::e_utran_bearer_context_setup_resp) {
+        asn1::ngap::cause_c cause;
+        cause.set(asn1::ngap::cause_c::types_opts::options::protocol);
+        fill_failed_ngap_pdu_session_res_setup_response(res, msg, e1_bearer_context_setup_resp_msg, cause);
 
-            CORO_EARLY_RETURN(res);
-          }
+        CORO_EARLY_RETURN(res);
+      }
 
-          // Convert E1 response to NGAP response
-          fill_ngap_pdu_session_res_setup_response(res, msg, e1_bearer_context_setup_resp_msg);
+      // TODO: Fill all values of the response
+      fill_ngap_pdu_session_res_setup_response(res, msg, e1_bearer_context_setup_resp_msg);
 
-          CORO_RETURN(res);
-        });
+      CORO_RETURN(res);
+    });
   }
 
 private:
@@ -151,18 +154,19 @@ class ngc_f1c_adapter : public ngc_f1c_control_notifier
 public:
   void connect_f1c(f1c_ue_context_manager* f1c_ue_context_mng_) { f1c_ue_context_mng = f1c_ue_context_mng_; }
 
-  async_task<pdu_session_resource_setup_response_message>
-  on_new_pdu_session_resource_setup_request(pdu_session_resource_setup_message& msg) override
+  async_task<f1ap_pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(f1ap_pdu_session_resource_setup_message& msg) override
   {
     srsgnb_assert(f1c_ue_context_mng != nullptr, "f1c_ue_context_mng must not be nullptr");
 
     f1ap_ue_context_modification_request_message f1c_ue_ctxt_mod_req;
+    fill_f1ap_ue_context_modification_request(f1c_ue_ctxt_mod_req, msg);
 
     f1ap_ue_context_modification_response_message f1c_ue_ctxt_mod_resp;
 
     return launch_async(
-        [this, res = pdu_session_resource_setup_response_message{}, f1c_ue_ctxt_mod_resp, f1c_ue_ctxt_mod_req](
-            coro_context<async_task<pdu_session_resource_setup_response_message>>& ctx) mutable {
+        [this, res = f1ap_pdu_session_resource_setup_response_message{}, f1c_ue_ctxt_mod_resp, f1c_ue_ctxt_mod_req](
+            coro_context<async_task<f1ap_pdu_session_resource_setup_response_message>>& ctx) mutable {
           CORO_BEGIN(ctx);
 
           CORO_AWAIT_VALUE(f1c_ue_ctxt_mod_resp,

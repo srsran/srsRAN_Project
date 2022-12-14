@@ -49,8 +49,8 @@ ngap_pdu_session_type_to_e1ap_pdu_session_type(asn1::ngap::pdu_session_type_e ng
   return e1ap_session_type;
 }
 
-inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request_message& e1_request,
-                                                   const pdu_session_resource_setup_message&  msg)
+inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request_message&     e1_request,
+                                                   const e1ap_pdu_session_resource_setup_message& msg)
 {
   e1_request.sys_bearer_context_setup_request.set_ng_ran_bearer_context_setup_request();
   auto& ng_ran_bearer_context_setup_request =
@@ -137,8 +137,8 @@ inline asn1::ngap::cause_c e1ap_cause_to_ngap_cause(asn1::e1ap::cause_c e1ap_cau
 }
 
 inline void fill_failed_ngap_pdu_session_res_setup_response(
-    pdu_session_resource_setup_response_message&      res,
-    const pdu_session_resource_setup_message&         msg,
+    e1ap_pdu_session_resource_setup_response_message& res,
+    const e1ap_pdu_session_resource_setup_message&    msg,
     const e1ap_bearer_context_setup_response_message& e1_bearer_context_setup_resp_msg,
     asn1::ngap::cause_c                               cause)
 {
@@ -163,8 +163,8 @@ inline void fill_failed_ngap_pdu_session_res_setup_response(
 }
 
 inline void fill_ngap_pdu_session_res_setup_response(
-    pdu_session_resource_setup_response_message&      res,
-    const pdu_session_resource_setup_message&         msg,
+    e1ap_pdu_session_resource_setup_response_message& res,
+    const e1ap_pdu_session_resource_setup_message&    msg,
     const e1ap_bearer_context_setup_response_message& e1_bearer_context_setup_resp_msg)
 {
   if (e1_bearer_context_setup_resp_msg.success) {
@@ -185,6 +185,18 @@ inline void fill_ngap_pdu_session_res_setup_response(
       gtp_tunnel.transport_layer_address = e1ap_response_item.ng_dl_up_tnl_info.gtp_tunnel().transport_layer_address;
 
       for (auto e1ap_drb_setup_item : e1ap_response_item.drb_setup_list_ng_ran) {
+        res.ngap_drb_setup_msg.drb_id = e1ap_drb_setup_item.drb_id;
+        for (auto ul_up_transport_param : e1ap_drb_setup_item.ul_up_transport_params) {
+          ngap_up_tnl_information ngap_ul_tnl_info;
+          ngap_ul_tnl_info.gtp_tunnel.gtp_teid = ul_up_transport_param.up_tnl_info.gtp_tunnel().gtp_teid;
+          ngap_ul_tnl_info.gtp_tunnel.transport_layer_address.from_number(
+              ul_up_transport_param.up_tnl_info.gtp_tunnel().transport_layer_address.to_number());
+
+          ngap_ul_tnl_info.cell_group_id = ul_up_transport_param.cell_group_id;
+
+          res.ngap_drb_setup_msg.up_tnl_infos_list.push_back(ngap_ul_tnl_info);
+        }
+
         for (auto e1ap_qos_flow_item : e1ap_drb_setup_item.flow_setup_list) {
           asn1::ngap::associated_qos_flow_item_s ngap_qos_flow_item;
           ngap_qos_flow_item.qos_flow_id = e1ap_qos_flow_item.qo_s_flow_id;

@@ -157,15 +157,25 @@ public:
                              ngc_rrc_ue_control_notifier& rrc_ue_ctrl_notifier) = 0;
 };
 
-struct pdu_session_resource_setup_message {
+struct ngap_up_tnl_information {
+  asn1::ngap::gtp_tunnel_s gtp_tunnel;
+  uint8_t                  cell_group_id;
+};
+struct ngap_drb_setup_message {
+  uint8_t                              drb_id;
+  std::vector<ngap_up_tnl_information> up_tnl_infos_list;
+};
+
+struct e1ap_pdu_session_resource_setup_message {
   std::vector<asn1::ngap::pdu_session_res_setup_item_su_req_s> pdu_session_res_setup_items;
   uint64_t                                                     ue_aggregate_maximum_bit_rate_dl;
 };
 
-struct pdu_session_resource_setup_response_message {
+struct e1ap_pdu_session_resource_setup_response_message {
   std::vector<asn1::ngap::pdu_session_res_setup_item_su_res_s>           pdu_session_res_setup_response_items;
   std::vector<asn1::ngap::pdu_session_res_failed_to_setup_item_su_res_s> pdu_session_res_failed_to_setup_items;
   optional<asn1::ngap::crit_diagnostics_s>                               crit_diagnostics;
+  ngap_drb_setup_message                                                 ngap_drb_setup_msg;
 };
 
 /// Interface to notify the E1 about control messages.
@@ -175,8 +185,18 @@ public:
   virtual ~ngc_e1_control_notifier() = default;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup List.
-  virtual async_task<pdu_session_resource_setup_response_message>
-  on_new_pdu_session_resource_setup_request(pdu_session_resource_setup_message& msg) = 0;
+  virtual async_task<e1ap_pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(e1ap_pdu_session_resource_setup_message& msg) = 0;
+};
+
+struct f1ap_pdu_session_resource_setup_message {
+  ngap_drb_setup_message ngap_drb_setup_msg;
+  optional<uint64_t>     ue_aggregate_maximum_bit_rate_ul;
+};
+
+struct f1ap_pdu_session_resource_setup_response_message {
+  optional<asn1::ngap::crit_diagnostics_s> crit_diagnostics;
+  ngap_drb_setup_message                   ngap_drb_setup_msg;
 };
 
 /// Interface to notify the F1C about control messages.
@@ -186,8 +206,8 @@ public:
   virtual ~ngc_f1c_control_notifier() = default;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup List.
-  virtual async_task<pdu_session_resource_setup_response_message>
-  on_new_pdu_session_resource_setup_request(pdu_session_resource_setup_message& msg) = 0;
+  virtual async_task<f1ap_pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(f1ap_pdu_session_resource_setup_message& msg) = 0;
 };
 
 /// \brief Schedules asynchronous tasks associated with an UE.

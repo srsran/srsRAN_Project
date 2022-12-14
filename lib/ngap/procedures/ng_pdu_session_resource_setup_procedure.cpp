@@ -16,11 +16,11 @@ using namespace srsgnb::srs_cu_cp;
 using namespace asn1::ngap;
 
 ng_pdu_session_resource_setup_procedure::ng_pdu_session_resource_setup_procedure(
-    ngc_ue&                             ue_,
-    pdu_session_resource_setup_message& msg_,
-    ngc_e1_control_notifier&            e1_notif_,
-    ngc_message_notifier&               amf_notif_,
-    srslog::basic_logger&               logger_) :
+    ngc_ue&                                  ue_,
+    e1ap_pdu_session_resource_setup_message& msg_,
+    ngc_e1_control_notifier&                 e1_notif_,
+    ngc_message_notifier&                    amf_notif_,
+    srslog::basic_logger&                    logger_) :
   ue(ue_), msg(msg_), e1_notifier(e1_notif_), amf_notifier(amf_notif_), logger(logger_)
 {
 }

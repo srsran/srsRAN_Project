@@ -252,7 +252,7 @@ void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_s
     ue->set_aggregate_maximum_bit_rate_dl(request->ue_aggregate_maximum_bit_rate.value.ueaggregate_maximum_bit_rate_dl);
   }
 
-  pdu_session_resource_setup_message msg;
+  e1ap_pdu_session_resource_setup_message msg;
   for (auto pdu_session_res_item : request->pdu_session_res_setup_list_su_req.value) {
     msg.pdu_session_res_setup_items.push_back(pdu_session_res_item);
   }
