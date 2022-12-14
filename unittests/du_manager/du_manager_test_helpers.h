@@ -72,7 +72,8 @@ class f1ap_test_dummy : public f1ap_connection_manager,
                         public f1ap_rrc_message_transfer_procedure_handler
 {
   struct drb_to_idx {
-    size_t operator()(drb_id_t i) const { return static_cast<size_t>(i) - 1; }
+    size_t   get_index(drb_id_t i) const { return static_cast<size_t>(i) - 1; }
+    drb_id_t get_id(size_t i) const { return static_cast<drb_id_t>(i + 1); }
   };
 
 public:

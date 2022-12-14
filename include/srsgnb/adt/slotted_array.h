@@ -161,12 +161,10 @@ private:
   size_t                     idx          = std::numeric_limits<size_t>::max();
 };
 
+template <typename IdType>
 struct cast_to_size_operator {
-  template <typename T>
-  constexpr size_t operator()(const T& t) const
-  {
-    return static_cast<size_t>(t);
-  }
+  constexpr size_t get_index(const IdType& t) const { return static_cast<size_t>(t); }
+  constexpr IdType get_id(size_t idx) const { return static_cast<IdType>(idx); }
 };
 
 } // namespace detail
@@ -415,11 +413,12 @@ private:
 };
 
 /// \brief Represents a slotted array that is indexed via an ID type that is convertible to an integer (e.g. enum).
-template <typename IdType, typename T, size_t N, typename IdToIntConversion = detail::cast_to_size_operator>
+template <typename IdType, typename T, size_t N, typename IdToIntConversion = detail::cast_to_size_operator<IdType>>
 class slotted_id_table : private IdToIntConversion
 {
-  static_assert(std::is_convertible<decltype(std::declval<IdToIntConversion>()(std::declval<IdType>())), size_t>::value,
-                "IdType must be convertible to size_t");
+  static_assert(
+      std::is_convertible<decltype(std::declval<IdToIntConversion>().get_index(std::declval<IdType>())), size_t>::value,
+      "IdType must be convertible to size_t");
 
 public:
   using key_type       = IdType;
@@ -474,11 +473,11 @@ public:
   /// Find first position that is empty
   key_type find_first_empty(key_type start_guess = 0) const
   {
-    return static_cast<key_type>(find_first_empty(to_index(start_guess)));
+    return IdToIntConversion::get_id(find_first_empty(to_index(start_guess)));
   }
 
 private:
-  constexpr size_t to_index(key_type k) const { return IdToIntConversion::operator()(k); }
+  constexpr size_t to_index(key_type k) const { return IdToIntConversion::get_index(k); }
 
   slotted_array<T, N> sl_ar;
 };

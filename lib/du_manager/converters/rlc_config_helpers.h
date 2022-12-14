@@ -42,7 +42,12 @@ rlc_config create_rlc_config(const drb_to_setup& f1_drb_cfg);
 
 rlc_entity_creation_message make_rlc_entity_creation_message(du_ue_index_t                            ue_index,
                                                              du_cell_index_t                          pcell_index,
-                                                             du_bearer&                               bearer,
+                                                             du_ue_srb&                               bearer,
+                                                             const du_manager_params::service_params& du_services);
+
+rlc_entity_creation_message make_rlc_entity_creation_message(du_ue_index_t                            ue_index,
+                                                             du_cell_index_t                          pcell_index,
+                                                             du_ue_drb&                               bearer,
                                                              const du_manager_params::service_params& du_services);
 
 } // namespace srs_du

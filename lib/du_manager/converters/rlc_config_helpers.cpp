@@ -72,26 +72,44 @@ rlc_config srsgnb::srs_du::create_rlc_config(const drb_to_setup& f1_drb_cfg)
   return cfg;
 }
 
-rlc_entity_creation_message
-srsgnb::srs_du::make_rlc_entity_creation_message(du_ue_index_t                            ue_index,
-                                                 du_cell_index_t                          pcell_index,
-                                                 du_bearer&                               bearer,
-                                                 const du_manager_params::service_params& du_services)
+template <typename Bearer>
+static void fill_rlc_entity_creation_message_common(rlc_entity_creation_message&             msg,
+                                                    du_ue_index_t                            ue_index,
+                                                    du_cell_index_t                          pcell_index,
+                                                    Bearer&                                  bearer,
+                                                    const du_manager_params::service_params& du_services)
 {
-  rlc_entity_creation_message msg;
-  msg.ue_index = ue_index;
-  msg.lcid     = bearer.lcid;
-  msg.config   = bearer.rlc_cfg;
-  if (bearer.drbid.has_value()) {
-    msg.rx_upper_dn = &bearer.bearer_connector.rlc_rx_f1u_sdu_notif;
-  } else {
-    msg.rx_upper_dn = &bearer.bearer_connector.rlc_rx_f1c_sdu_notif;
-  }
-  msg.tx_upper_dn    = &bearer.bearer_connector.rlc_tx_data_notif;
-  msg.tx_upper_cn    = &bearer.bearer_connector.rlc_tx_ctrl_notif;
-  msg.tx_lower_dn    = &bearer.bearer_connector.rlc_tx_buffer_state_notif;
+  msg.ue_index       = ue_index;
+  msg.config         = bearer.rlc_cfg;
+  msg.rx_upper_dn    = &bearer.connector.rlc_rx_sdu_notif;
+  msg.tx_upper_dn    = &bearer.connector.rlc_tx_data_notif;
+  msg.tx_upper_cn    = &bearer.connector.rlc_tx_ctrl_notif;
+  msg.tx_lower_dn    = &bearer.connector.rlc_tx_buffer_state_notif;
   msg.timers         = &du_services.timers;
   msg.pcell_executor = &du_services.cell_execs.executor(pcell_index);
   msg.ue_executor    = &du_services.ue_execs.executor(ue_index);
+}
+
+rlc_entity_creation_message
+srsgnb::srs_du::make_rlc_entity_creation_message(du_ue_index_t                            ue_index,
+                                                 du_cell_index_t                          pcell_index,
+                                                 du_ue_srb&                               bearer,
+                                                 const du_manager_params::service_params& du_services)
+{
+  rlc_entity_creation_message msg;
+  fill_rlc_entity_creation_message_common(msg, ue_index, pcell_index, bearer, du_services);
+  msg.lcid = srb_id_to_lcid(bearer.srb_id);
+  return msg;
+}
+
+rlc_entity_creation_message
+srsgnb::srs_du::make_rlc_entity_creation_message(du_ue_index_t                            ue_index,
+                                                 du_cell_index_t                          pcell_index,
+                                                 du_ue_drb&                               bearer,
+                                                 const du_manager_params::service_params& du_services)
+{
+  rlc_entity_creation_message msg;
+  fill_rlc_entity_creation_message_common(msg, ue_index, pcell_index, bearer, du_services);
+  msg.lcid = bearer.lcid;
   return msg;
 }

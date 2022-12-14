@@ -29,11 +29,11 @@ struct du_ue {
   {
   }
 
-  const du_ue_index_t                        ue_index;
-  rnti_t                                     rnti;
-  du_cell_index_t                            pcell_index;
-  slotted_array<du_bearer, MAX_NOF_RB_LCIDS> bearers;
-  unique_timer                               activity_timer;
+  const du_ue_index_t  ue_index;
+  rnti_t               rnti;
+  du_cell_index_t      pcell_index;
+  du_ue_bearer_manager bearers;
+  unique_timer         activity_timer;
 
   std::vector<cell_group_config> cells;
 };
