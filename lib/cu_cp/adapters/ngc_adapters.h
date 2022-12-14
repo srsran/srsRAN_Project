@@ -11,7 +11,6 @@
 #pragma once
 
 #include "../helpers/ngap_e1ap_asn1_helpers.h"
-#include "../helpers/ngap_f1ap_asn1_helpers.h"
 #include "../task_schedulers/ue_task_scheduler.h"
 #include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/cu_cp/cu_cp.h"
@@ -146,38 +145,6 @@ public:
 
 private:
   e1_bearer_context_manager* e1_bearer_context_mng = nullptr;
-};
-
-/// Adapter between NGC and F1C
-class ngc_f1c_adapter : public ngc_f1c_control_notifier
-{
-public:
-  void connect_f1c(f1c_ue_context_manager* f1c_ue_context_mng_) { f1c_ue_context_mng = f1c_ue_context_mng_; }
-
-  async_task<f1ap_pdu_session_resource_setup_response_message>
-  on_new_pdu_session_resource_setup_request(f1ap_pdu_session_resource_setup_message& msg) override
-  {
-    srsgnb_assert(f1c_ue_context_mng != nullptr, "f1c_ue_context_mng must not be nullptr");
-
-    f1ap_ue_context_modification_request_message f1c_ue_ctxt_mod_req;
-    fill_f1ap_ue_context_modification_request(f1c_ue_ctxt_mod_req, msg);
-
-    f1ap_ue_context_modification_response_message f1c_ue_ctxt_mod_resp;
-
-    return launch_async(
-        [this, res = f1ap_pdu_session_resource_setup_response_message{}, f1c_ue_ctxt_mod_resp, f1c_ue_ctxt_mod_req](
-            coro_context<async_task<f1ap_pdu_session_resource_setup_response_message>>& ctx) mutable {
-          CORO_BEGIN(ctx);
-
-          CORO_AWAIT_VALUE(f1c_ue_ctxt_mod_resp,
-                           f1c_ue_context_mng->handle_ue_context_modification_request(f1c_ue_ctxt_mod_req));
-
-          CORO_RETURN(res);
-        });
-  }
-
-private:
-  f1c_ue_context_manager* f1c_ue_context_mng = nullptr;
 };
 
 } // namespace srs_cu_cp

@@ -189,27 +189,6 @@ public:
   on_new_pdu_session_resource_setup_request(e1ap_pdu_session_resource_setup_message& msg) = 0;
 };
 
-struct f1ap_pdu_session_resource_setup_message {
-  ngap_drb_setup_message ngap_drb_setup_msg;
-  optional<uint64_t>     ue_aggregate_maximum_bit_rate_ul;
-};
-
-struct f1ap_pdu_session_resource_setup_response_message {
-  optional<asn1::ngap::crit_diagnostics_s> crit_diagnostics;
-  ngap_drb_setup_message                   ngap_drb_setup_msg;
-};
-
-/// Interface to notify the F1C about control messages.
-class ngc_f1c_control_notifier
-{
-public:
-  virtual ~ngc_f1c_control_notifier() = default;
-
-  /// \brief Notify about the reception of a new PDU Session Resource Setup List.
-  virtual async_task<f1ap_pdu_session_resource_setup_response_message>
-  on_new_pdu_session_resource_setup_request(f1ap_pdu_session_resource_setup_message& msg) = 0;
-};
-
 /// \brief Schedules asynchronous tasks associated with an UE.
 class ngc_ue_task_scheduler
 {

@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "../helpers/rrc_ue_f1ap_asn1_helpers.h"
+#include "../task_schedulers/ue_task_scheduler.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/cu_cp/du_processor.h"
@@ -17,17 +19,19 @@
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/pdcp/pdcp_tx.h"
-#include "srsgnb/rrc/rrc.h"
+#include "srsgnb/rrc/rrc_ue.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Adapter between RRC UE and F1AP
-class rrc_ue_f1ap_adapter : public rrc_pdu_notifier
+class rrc_ue_f1ap_adapter : public rrc_pdu_notifier, public rrc_ue_f1c_control_notifier
 {
 public:
-  explicit rrc_ue_f1ap_adapter(f1c_rrc_message_handler& f1c_handler_, ue_index_t ue_index_) :
-    f1c_handler(f1c_handler_), ue_index(ue_index_)
+  explicit rrc_ue_f1ap_adapter(f1c_rrc_message_handler& f1c_handler_,
+                               f1c_ue_context_manager&  f1c_ue_context_mng_,
+                               ue_index_t               ue_index_) :
+    f1c_handler(f1c_handler_), f1c_ue_context_mng(f1c_ue_context_mng_), ue_index(ue_index_)
   {
   }
 
@@ -41,8 +45,29 @@ public:
     f1c_handler.handle_dl_rrc_message_transfer(f1ap_msg);
   }
 
+  async_task<f1ap_pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(f1ap_pdu_session_resource_setup_message& msg) override
+  {
+    f1ap_ue_context_modification_request_message f1c_ue_ctxt_mod_req;
+    fill_f1ap_ue_context_modification_request(f1c_ue_ctxt_mod_req, msg);
+
+    f1ap_ue_context_modification_response_message f1c_ue_ctxt_mod_resp;
+
+    return launch_async(
+        [this, res = f1ap_pdu_session_resource_setup_response_message{}, f1c_ue_ctxt_mod_resp, f1c_ue_ctxt_mod_req](
+            coro_context<async_task<f1ap_pdu_session_resource_setup_response_message>>& ctx) mutable {
+          CORO_BEGIN(ctx);
+
+          CORO_AWAIT_VALUE(f1c_ue_ctxt_mod_resp,
+                           f1c_ue_context_mng.handle_ue_context_modification_request(f1c_ue_ctxt_mod_req));
+
+          CORO_RETURN(res);
+        });
+  }
+
 private:
   f1c_rrc_message_handler& f1c_handler;
+  f1c_ue_context_manager&  f1c_ue_context_mng;
   const ue_index_t         ue_index;
 };
 

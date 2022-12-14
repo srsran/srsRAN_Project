@@ -13,7 +13,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
-#include "srsgnb/asn1/ngap/ngap.h"
+#include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/f1c/cu_cp/f1c_cu.h"
 #include <string>
@@ -31,15 +31,14 @@ inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modificati
   asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_setup_mod_item_ies_o> f1ap_setup_item;
   auto& f1ap_drb_to_setup_item = f1ap_setup_item->drbs_to_be_setup_mod_item();
 
-  f1ap_drb_to_setup_item.drbid = msg.ngap_drb_setup_msg.drb_id;
+  f1ap_drb_to_setup_item.drbid = msg.rrc_ue_drb_setup_msg.drb_id;
 
-  for (auto ngap_up_tnl_info_item : msg.ngap_drb_setup_msg.up_tnl_infos_list) {
+  for (auto rrc_ue_gtp_tunnel_item : msg.rrc_ue_drb_setup_msg.gtp_tunnels) {
     asn1::f1ap::uluptnl_info_to_be_setup_item_s uluptnl_item;
     uluptnl_item.uluptnl_info.set_gtp_tunnel();
-    auto& gtp_tunnel    = uluptnl_item.uluptnl_info.gtp_tunnel();
-    gtp_tunnel.gtp_teid = ngap_up_tnl_info_item.gtp_tunnel.gtp_teid;
-    gtp_tunnel.transport_layer_address.from_number(
-        ngap_up_tnl_info_item.gtp_tunnel.transport_layer_address.to_number());
+    auto& gtp_tunnel = uluptnl_item.uluptnl_info.gtp_tunnel();
+    gtp_tunnel.gtp_teid.from_number(rrc_ue_gtp_tunnel_item.gtp_teid);
+    gtp_tunnel.transport_layer_address.from_number(rrc_ue_gtp_tunnel_item.transport_layer_address);
     f1ap_drb_to_setup_item.uluptnl_info_to_be_setup_list.push_back(uluptnl_item);
   }
 

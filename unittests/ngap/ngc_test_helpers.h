@@ -33,9 +33,8 @@ protected:
     rrc_ue_notifier       = std::make_unique<dummy_ngc_rrc_ue_notifier>();
     ngc_ue_task_scheduler = std::make_unique<dummy_ngc_ue_task_scheduler>(timers);
     e1_control_notifier   = std::make_unique<dummy_ngc_e1_control_notifier>();
-    f1c_control_notifier  = std::make_unique<dummy_ngc_f1c_control_notifier>();
 
-    ngc = create_ngc(*ngc_ue_task_scheduler, ue_mng, *msg_notifier, *e1_control_notifier, *f1c_control_notifier);
+    ngc = create_ngc(*ngc_ue_task_scheduler, ue_mng, *msg_notifier, *e1_control_notifier);
   }
 
   void TearDown() override
@@ -44,14 +43,13 @@ protected:
     srslog::flush();
   }
 
-  timer_manager                                   timers;
-  ue_manager                                      ue_mng;
-  std::unique_ptr<dummy_ngc_amf_notifier>         msg_notifier;
-  std::unique_ptr<dummy_ngc_rrc_ue_notifier>      rrc_ue_notifier;
-  std::unique_ptr<dummy_ngc_ue_task_scheduler>    ngc_ue_task_scheduler;
-  std::unique_ptr<dummy_ngc_e1_control_notifier>  e1_control_notifier;
-  std::unique_ptr<dummy_ngc_f1c_control_notifier> f1c_control_notifier;
-  std::unique_ptr<ngc_interface>                  ngc;
+  timer_manager                                  timers;
+  ue_manager                                     ue_mng;
+  std::unique_ptr<dummy_ngc_amf_notifier>        msg_notifier;
+  std::unique_ptr<dummy_ngc_rrc_ue_notifier>     rrc_ue_notifier;
+  std::unique_ptr<dummy_ngc_ue_task_scheduler>   ngc_ue_task_scheduler;
+  std::unique_ptr<dummy_ngc_e1_control_notifier> e1_control_notifier;
+  std::unique_ptr<ngc_interface>                 ngc;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };

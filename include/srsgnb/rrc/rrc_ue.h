@@ -39,6 +39,37 @@ public:
   virtual void on_new_pdu(const rrc_pdu_message& msg) = 0;
 };
 
+struct rrc_ue_gtp_tunnel {
+  uint64_t gtp_teid;
+  uint64_t transport_layer_address;
+  uint8_t  cell_group_id;
+};
+
+struct rrc_ue_drb_setup_message {
+  uint8_t                        drb_id;
+  std::vector<rrc_ue_gtp_tunnel> gtp_tunnels;
+};
+
+struct f1ap_pdu_session_resource_setup_message {
+  rrc_ue_drb_setup_message rrc_ue_drb_setup_msg;
+  optional<uint64_t>       ue_aggregate_maximum_bit_rate_ul;
+};
+
+struct f1ap_pdu_session_resource_setup_response_message {
+  rrc_ue_drb_setup_message rrc_ue_drb_setup_msg;
+};
+
+/// Interface to notify the F1C about control messages.
+class rrc_ue_f1c_control_notifier
+{
+public:
+  virtual ~rrc_ue_f1c_control_notifier() = default;
+
+  /// \brief Notify about the reception of a new PDU Session Resource Setup List.
+  virtual async_task<f1ap_pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(f1ap_pdu_session_resource_setup_message& msg) = 0;
+};
+
 /// Interface to configure security in a SRB
 /// TX PDCP entity.
 class rrc_tx_security_notifier

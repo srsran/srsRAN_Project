@@ -161,9 +161,6 @@ private:
   // NGC to E1 adapter
   ngc_e1_adapter ngc_e1_notifier;
 
-  // NGC to F1C adapter
-  ngc_f1c_adapter ngc_f1c_notifier;
-
   std::atomic<bool> amf_connected = {false};
 };
 

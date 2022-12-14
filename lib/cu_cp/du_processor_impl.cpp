@@ -228,7 +228,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
   if (msg.srb_id == srb_id_t::srb0) {
     // create direct connection with UE manager to RRC adapter
     srb.rx_notifier     = std::make_unique<f1c_rrc_ue_adapter>(ue_ctxt->rrc->get_ul_ccch_pdu_handler());
-    srb.rrc_tx_notifier = std::make_unique<rrc_ue_f1ap_adapter>(*f1c, ue_ctxt->ue_index);
+    srb.rrc_tx_notifier = std::make_unique<rrc_ue_f1ap_adapter>(*f1c, *f1c, ue_ctxt->ue_index);
 
     // update notifier in RRC
     ue_ctxt->rrc->connect_srb_notifier(

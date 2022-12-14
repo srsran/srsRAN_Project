@@ -31,7 +31,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   assert_cu_cp_configuration_valid(cfg);
 
   // Create layers
-  ngc_entity = create_ngc(ngc_task_sched, ue_mng, *cfg.ngc_notifier, ngc_e1_notifier, ngc_f1c_notifier);
+  ngc_entity = create_ngc(ngc_task_sched, ue_mng, *cfg.ngc_notifier, ngc_e1_notifier);
 
   // connect event notifiers to layers
   ngc_task_sched.connect_cu_cp(ue_task_sched);
@@ -184,9 +184,6 @@ du_index_t cu_cp::add_du()
   du_processor_ev_notifier.connect_cu_cp(*this);
   rrc_ue_ngc_notifier.connect_ngc(*ngc_entity);
   du_processor_task_sched.connect_cu_cp(ue_task_sched);
-
-  // Connect f1c to ngc
-  ngc_f1c_notifier.connect_f1c(&du->get_f1c_ue_context_manager());
 
   // Add DU index to adapter
   rrc_ue_ngc_notifier.set_du_index(du_index);
