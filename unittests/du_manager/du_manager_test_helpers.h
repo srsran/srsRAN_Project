@@ -37,12 +37,52 @@ public:
   task_executor& exec;
 };
 
+class dummy_f1c_bearer : public f1c_bearer
+{
+public:
+  byte_buffer             last_rx_pdu;
+  byte_buffer_slice_chain last_tx_sdu;
+
+  void handle_pdu(byte_buffer pdu) override { last_rx_pdu = std::move(pdu); }
+  void handle_sdu(byte_buffer_slice_chain sdu) override { last_tx_sdu = std::move(sdu); }
+};
+
+class dummy_f1u_bearer : public f1u_bearer,
+                         public f1u_rx_pdu_handler,
+                         public f1u_tx_delivery_handler,
+                         public f1u_tx_sdu_handler
+{
+public:
+  nru_dl_message          last_msg;
+  optional<uint32_t>      last_count;
+  byte_buffer_slice_chain last_sdu;
+
+  f1u_rx_pdu_handler&      get_rx_pdu_handler() override { return *this; }
+  f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
+  f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
+
+  void handle_pdu(nru_dl_message msg) override { last_msg = std::move(msg); }
+  void handle_delivered_sdu(uint32_t count) override { last_count = count; }
+  void handle_sdu(byte_buffer_slice_chain sdu) override { last_sdu = std::move(sdu); }
+};
+
 class f1ap_test_dummy : public f1ap_connection_manager,
                         public f1ap_ue_context_manager,
                         public f1c_message_handler,
                         public f1ap_rrc_message_transfer_procedure_handler
 {
+  struct drb_to_idx {
+    size_t operator()(drb_id_t i) const { return static_cast<size_t>(i) - 1; }
+  };
+
 public:
+  struct f1_ue_context {
+    slotted_id_table<srb_id_t, dummy_f1c_bearer, MAX_NOF_SRBS>             f1c_bearers;
+    slotted_id_table<drb_id_t, dummy_f1u_bearer, MAX_NOF_DRBS, drb_to_idx> f1u_bearers;
+  };
+
+  slotted_id_table<du_ue_index_t, f1_ue_context, MAX_NOF_DU_UES> f1_ues;
+
   wait_manual_event_tester<f1_setup_response_message>                     wait_f1_setup;
   optional<f1ap_ue_creation_request>                                      last_ue_create{};
   f1ap_ue_creation_response                                               next_ue_create_response;

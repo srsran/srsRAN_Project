@@ -79,10 +79,14 @@ srsgnb::srs_du::make_rlc_entity_creation_message(du_ue_index_t                  
                                                  const du_manager_params::service_params& du_services)
 {
   rlc_entity_creation_message msg;
-  msg.ue_index       = ue_index;
-  msg.lcid           = bearer.lcid;
-  msg.config         = bearer.rlc_cfg;
-  msg.rx_upper_dn    = &bearer.bearer_connector.rlc_rx_f1c_sdu_notif;
+  msg.ue_index = ue_index;
+  msg.lcid     = bearer.lcid;
+  msg.config   = bearer.rlc_cfg;
+  if (bearer.drbid.has_value()) {
+    msg.rx_upper_dn = &bearer.bearer_connector.rlc_rx_f1u_sdu_notif;
+  } else {
+    msg.rx_upper_dn = &bearer.bearer_connector.rlc_rx_f1c_sdu_notif;
+  }
   msg.tx_upper_dn    = &bearer.bearer_connector.rlc_tx_data_notif;
   msg.tx_upper_cn    = &bearer.bearer_connector.rlc_tx_ctrl_notif;
   msg.tx_lower_dn    = &bearer.bearer_connector.rlc_tx_buffer_state_notif;

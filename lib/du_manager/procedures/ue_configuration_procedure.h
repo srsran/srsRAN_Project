@@ -23,6 +23,7 @@ public:
                              ue_manager_ctrl_configurator&                ue_mng_,
                              const du_manager_params::service_params&     du_services_,
                              mac_ue_configurator&                         mac_ue_mng_,
+                             const du_manager_params::rlc_config_params&  rlc_services_,
                              const du_manager_params::f1ap_config_params& f1ap_mng_);
 
   void operator()(coro_context<async_task<f1ap_ue_context_update_response>>& ctx);
@@ -42,6 +43,7 @@ private:
   ue_manager_ctrl_configurator&                ue_mng;
   const du_manager_params::service_params&     services;
   mac_ue_configurator&                         mac_ue_mng;
+  const du_manager_params::rlc_config_params&  rlc_services;
   const du_manager_params::f1ap_config_params& f1ap_mng;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("DU-MNG");

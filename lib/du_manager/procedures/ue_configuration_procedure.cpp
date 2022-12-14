@@ -21,11 +21,13 @@ ue_configuration_procedure::ue_configuration_procedure(const f1ap_ue_context_upd
                                                        ue_manager_ctrl_configurator&                ue_mng_,
                                                        const du_manager_params::service_params&     du_services_,
                                                        mac_ue_configurator&                         mac_ue_mng_,
+                                                       const du_manager_params::rlc_config_params&  rlc_services_,
                                                        const du_manager_params::f1ap_config_params& f1ap_mng_) :
   request(request_),
   ue_mng(ue_mng_),
   services(du_services_),
   mac_ue_mng(mac_ue_mng_),
+  rlc_services(rlc_services_),
   f1ap_mng(f1ap_mng_),
   ue(ue_mng.find_ue(request.ue_index))
 {
@@ -40,11 +42,11 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 
   add_bearers_to_ue_context();
 
-  // > Update F1-C/F1-U bearers.
-  update_f1_bearers();
-
   // > Update RLC bearers.
   update_rlc_bearers();
+
+  // > Update F1-C/F1-U bearers.
+  update_f1_bearers();
 
   // > Update MAC bearers.
   CORO_AWAIT(update_mac_bearers());
@@ -115,19 +117,25 @@ void ue_configuration_procedure::update_f1_bearers()
 
   f1ap_ue_configuration_response resp = f1ap_mng.ue_mng.handle_ue_configuration_request(req);
 
-  // > Connect newly created F1c bearers to RLC.
+  // Connect newly created F1-C bearers with RLC SRBs, and RLC SRBs with MAC logical channel notifiers.
   for (f1c_bearer_addmodded& bearer_added : resp.f1c_bearers_added) {
-    ue->bearers[srb_id_to_uint(bearer_added.srb_id)].bearer_connector.rlc_rx_f1c_sdu_notif.connect(
-        *bearer_added.bearer);
+    du_bearer& srb = ue->bearers[srb_id_to_lcid(bearer_added.srb_id)];
+    srb.bearer_connector.connect(
+        req.ue_index, bearer_added.srb_id, *bearer_added.bearer, *srb.rlc_bearer, rlc_services.mac_ue_info_handler);
   }
 
-  // > Connect newly created F1u bearers to RLC.
+  // > Connect newly created F1-U bearers to RLC DRBs.
   for (f1u_bearer_addmodded& bearer_added : resp.f1u_bearers_added) {
-    auto       it     = std::find_if(ue->bearers.begin(), ue->bearers.end(), [&bearer_added](const auto& bearer) {
+    auto       it  = std::find_if(ue->bearers.begin(), ue->bearers.end(), [&bearer_added](const auto& bearer) {
       return bearer.drbid.has_value() and *bearer.drbid == bearer_added.drb_id;
     });
-    du_bearer& bearer = *it;
-    bearer.bearer_connector.rlc_tx_f1u_sdu_notif.connect(bearer_added.bearer->get_tx_sdu_handler());
+    du_bearer& drb = *it;
+    drb.bearer_connector.connect(req.ue_index,
+                                 bearer_added.drb_id,
+                                 drb.lcid,
+                                 *bearer_added.bearer,
+                                 *drb.rlc_bearer,
+                                 rlc_services.mac_ue_info_handler);
   }
 }
 

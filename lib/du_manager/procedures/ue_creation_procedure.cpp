@@ -211,26 +211,13 @@ void ue_creation_procedure::create_f1_ue()
 
 void ue_creation_procedure::connect_layer_bearers()
 {
+  // Connect SRB0 bearer layers.
   du_bearer& srb0 = ue_ctx->bearers[LCID_SRB0];
+  srb0.bearer_connector.connect(
+      ue_ctx->ue_index, srb_id_t::srb0, *f1_resp.f1c_bearers_added[0], *srb0.rlc_bearer, rlc_cfg.mac_ue_info_handler);
+
+  // Connect SRB1 bearer layers.
   du_bearer& srb1 = ue_ctx->bearers[LCID_SRB1];
-
-  // Connect F1 Tx PDU -> RLC Tx SDU.
-  srb0.bearer_connector.f1c_rx_sdu_notif.connect(*srb0.rlc_bearer->get_tx_upper_layer_data_interface());
-  srb1.bearer_connector.f1c_rx_sdu_notif.connect(*srb1.rlc_bearer->get_tx_upper_layer_data_interface());
-
-  // Connect RLC RX SDU -> F1AP RX PDU adapter.
-  srb0.bearer_connector.rlc_rx_f1c_sdu_notif.connect(*f1_resp.f1c_bearers_added[0]);
-  srb1.bearer_connector.rlc_rx_f1c_sdu_notif.connect(*f1_resp.f1c_bearers_added[1]);
-
-  // Connect RLC BSR update notifier -> MAC Control Info Handler.
-  srb0.bearer_connector.rlc_tx_buffer_state_notif.connect(ue_ctx->ue_index, LCID_SRB0, rlc_cfg.mac_ue_info_handler);
-  srb1.bearer_connector.rlc_tx_buffer_state_notif.connect(ue_ctx->ue_index, LCID_SRB1, rlc_cfg.mac_ue_info_handler);
-
-  // Connect MAC Rx SDU notifier -> RLC Rx PDU.
-  srb0.bearer_connector.mac_rx_notif.connect(*srb0.rlc_bearer->get_rx_lower_layer_interface());
-  srb1.bearer_connector.mac_rx_notif.connect(*srb1.rlc_bearer->get_rx_lower_layer_interface());
-
-  // Connect MAC Tx SDU builder -> RLC Tx PDU builder.
-  srb0.bearer_connector.mac_tx_notif.connect(*srb0.rlc_bearer->get_tx_lower_layer_interface());
-  srb1.bearer_connector.mac_tx_notif.connect(*srb1.rlc_bearer->get_tx_lower_layer_interface());
+  srb1.bearer_connector.connect(
+      ue_ctx->ue_index, srb_id_t::srb1, *f1_resp.f1c_bearers_added[1], *srb1.rlc_bearer, rlc_cfg.mac_ue_info_handler);
 }

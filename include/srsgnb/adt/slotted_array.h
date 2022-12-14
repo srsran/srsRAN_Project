@@ -161,6 +161,14 @@ private:
   size_t                     idx          = std::numeric_limits<size_t>::max();
 };
 
+struct cast_to_size_operator {
+  template <typename T>
+  constexpr size_t operator()(const T& t) const
+  {
+    return static_cast<size_t>(t);
+  }
+};
+
 } // namespace detail
 
 /// Array of optional elements. The iteration is in order of indexes and correctly skips absent elements.
@@ -404,6 +412,75 @@ public:
 private:
   std::vector<T>      objects;
   std::vector<size_t> index_mapper;
+};
+
+/// \brief Represents a slotted array that is indexed via an ID type that is convertible to an integer (e.g. enum).
+template <typename IdType, typename T, size_t N, typename IdToIntConversion = detail::cast_to_size_operator>
+class slotted_id_table : private IdToIntConversion
+{
+  static_assert(std::is_convertible<decltype(std::declval<IdToIntConversion>()(std::declval<IdType>())), size_t>::value,
+                "IdType must be convertible to size_t");
+
+public:
+  using key_type       = IdType;
+  using value_type     = typename slotted_array<T, N>::value_type;
+  using iterator       = typename slotted_array<T, N>::iterator;
+  using const_iterator = typename slotted_array<T, N>::const_iterator;
+
+  using IdToIntConversion::IdToIntConversion;
+
+  bool contains(key_type id) const noexcept { return sl_ar.contains(to_index(id)); }
+
+  constexpr T&       operator[](key_type id) { return sl_ar[to_index(id)]; }
+  constexpr const T& operator[](key_type id) const { return sl_ar[to_index(id)]; }
+
+  constexpr bool   empty() const noexcept { return sl_ar.empty(); }
+  constexpr size_t size() const { return sl_ar.size(); }
+
+  iterator       begin() { return sl_ar.begin(); }
+  iterator       end() { return sl_ar.end(); }
+  const_iterator begin() const { return sl_ar.begin(); }
+  const_iterator end() const { return sl_ar.end(); }
+
+  /// Insert given object with a given Id.
+  /// \param id ID the constructed element in the table.
+  /// \param u object to insert
+  template <typename U>
+  void insert(key_type id, U&& u)
+  {
+    sl_ar.insert(to_index(id), std::forward<U>(u));
+  }
+
+  /// Overwrite array element with given index with a newly constructed object
+  /// \param id ID of the constructed element in the table
+  /// \param args Arguments to pass to element ctor
+  template <typename... Args>
+  void emplace(key_type id, Args&&... args)
+  {
+    sl_ar.emplace(to_index(id), std::forward<Args>(args)...);
+  }
+
+  /// Erase object pointed by the given index
+  /// \param id ID of the erased element in the table
+  bool erase(key_type id) noexcept { return sl_ar.erase(to_index(id)); }
+
+  /// Erase object pointed by the given iterator. Iterator must point to valid element
+  /// \param it container iterator
+  void erase(iterator it) noexcept { sl_ar.erase(it); }
+
+  /// Clear all elements of the container
+  void clear() noexcept { sl_ar.clear(); }
+
+  /// Find first position that is empty
+  key_type find_first_empty(key_type start_guess = 0) const
+  {
+    return static_cast<key_type>(find_first_empty(to_index(start_guess)));
+  }
+
+private:
+  constexpr size_t to_index(key_type k) const { return IdToIntConversion::operator()(k); }
+
+  slotted_array<T, N> sl_ar;
 };
 
 } // namespace srsgnb

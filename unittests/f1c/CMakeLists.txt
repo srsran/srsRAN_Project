@@ -6,6 +6,8 @@
 # the distribution.
 #
 
+set_directory_properties(PROPERTIES LABELS "f1ap")
+
 include_directories(../..)
 
 add_executable(f1c_asn1_helpers_test common/f1c_asn1_helpers_test.cpp)
