@@ -135,11 +135,11 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
 
   // Get UL-SCH information.
   ulsch_configuration ulsch_config;
-  ulsch_config.tbs                   = data.size() * 8;
+  ulsch_config.tbs                   = units::bytes(data.size()).to_bits();
   ulsch_config.mcs_descr             = pdu.mcs_descr;
-  ulsch_config.nof_harq_ack_bits     = pdu.uci.nof_harq_ack;
-  ulsch_config.nof_csi_part1_bits    = pdu.uci.nof_csi_part1;
-  ulsch_config.nof_csi_part2_bits    = pdu.uci.nof_csi_part2;
+  ulsch_config.nof_harq_ack_bits     = units::bits(pdu.uci.nof_harq_ack);
+  ulsch_config.nof_csi_part1_bits    = units::bits(pdu.uci.nof_csi_part1);
+  ulsch_config.nof_csi_part2_bits    = units::bits(pdu.uci.nof_csi_part2);
   ulsch_config.alpha_scaling         = pdu.uci.alpha_scaling;
   ulsch_config.beta_offset_harq_ack  = pdu.uci.beta_offset_harq_ack;
   ulsch_config.beta_offset_csi_part1 = pdu.uci.beta_offset_csi_part1;
@@ -175,11 +175,11 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   // Prepare demultiplex message information.
   ulsch_demultiplex::message_information demux_msg_info;
   demux_msg_info.nof_harq_ack_bits      = pdu.uci.nof_harq_ack;
-  demux_msg_info.nof_enc_harq_ack_bits  = info.nof_harq_ack_bits;
+  demux_msg_info.nof_enc_harq_ack_bits  = info.nof_harq_ack_bits.value();
   demux_msg_info.nof_csi_part1_bits     = pdu.uci.nof_csi_part1;
-  demux_msg_info.nof_enc_csi_part1_bits = info.nof_csi_part1_bits;
+  demux_msg_info.nof_enc_csi_part1_bits = info.nof_csi_part1_bits.value();
   demux_msg_info.nof_csi_part2_bits     = pdu.uci.nof_csi_part2;
-  demux_msg_info.nof_enc_csi_part2_bits = info.nof_csi_part2_bits;
+  demux_msg_info.nof_enc_csi_part2_bits = info.nof_csi_part2_bits.value();
 
   // Prepare demultiplex configuration.
   ulsch_demultiplex::configuration demux_config;
@@ -188,7 +188,7 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   demux_config.nof_prb                     = nof_rb;
   demux_config.start_symbol_index          = pdu.start_symbol_index;
   demux_config.nof_symbols                 = pdu.nof_symbols;
-  demux_config.nof_harq_ack_rvd            = info.nof_harq_ack_rvd;
+  demux_config.nof_harq_ack_rvd            = info.nof_harq_ack_rvd.value();
   demux_config.dmrs                        = pdu.dmrs;
   demux_config.dmrs_symbol_mask            = ulsch_config.dmrs_symbol_mask;
   demux_config.nof_cdm_groups_without_data = ulsch_config.nof_cdm_groups_without_data;
@@ -216,12 +216,13 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   demodulator->demodulate(codeword_llr, grid, ch_estimate, demod_config);
 
   // Prepare buffers.
-  span<log_likelihood_ratio> sch_llr      = span<log_likelihood_ratio>(temp_sch_llr).first(info.nof_ul_sch_bits);
-  span<log_likelihood_ratio> harq_ack_llr = span<log_likelihood_ratio>(temp_harq_ack_llr).first(info.nof_harq_ack_bits);
+  span<log_likelihood_ratio> sch_llr = span<log_likelihood_ratio>(temp_sch_llr).first(info.nof_ul_sch_bits.value());
+  span<log_likelihood_ratio> harq_ack_llr =
+      span<log_likelihood_ratio>(temp_harq_ack_llr).first(info.nof_harq_ack_bits.value());
   span<log_likelihood_ratio> csi_part1_llr =
-      span<log_likelihood_ratio>(temp_csi_part1_llr).first(info.nof_csi_part1_bits);
+      span<log_likelihood_ratio>(temp_csi_part1_llr).first(info.nof_csi_part1_bits.value());
   span<log_likelihood_ratio> csi_part2_llr =
-      span<log_likelihood_ratio>(temp_csi_part2_llr).first(info.nof_csi_part2_bits);
+      span<log_likelihood_ratio>(temp_csi_part2_llr).first(info.nof_csi_part2_bits.value());
 
   // Demultiplex UL-SCH if any of UCI field is present.
   if ((pdu.uci.nof_harq_ack > 0) || (pdu.uci.nof_csi_part1 > 0) || (pdu.uci.nof_csi_part2 > 0)) {
@@ -252,15 +253,16 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
 
     // Prepare decoder configuration.
     pusch_decoder::configuration decoder_config;
-    decoder_config.segmenter_cfg.base_graph     = pdu.codeword.value().ldpc_base_graph;
-    decoder_config.segmenter_cfg.rv             = pdu.codeword.value().rv;
-    decoder_config.segmenter_cfg.mod            = pdu.mcs_descr.modulation;
-    decoder_config.segmenter_cfg.Nref           = pdu.tbs_lbrm_bytes * 8;
-    decoder_config.segmenter_cfg.nof_layers     = pdu.nof_tx_layers;
-    decoder_config.segmenter_cfg.nof_ch_symbols = info.nof_ul_sch_bits / get_bits_per_symbol(pdu.mcs_descr.modulation);
-    decoder_config.nof_ldpc_iterations          = 10;
-    decoder_config.use_early_stop               = true;
-    decoder_config.new_data                     = pdu.codeword.value().new_data;
+    decoder_config.segmenter_cfg.base_graph = pdu.codeword.value().ldpc_base_graph;
+    decoder_config.segmenter_cfg.rv         = pdu.codeword.value().rv;
+    decoder_config.segmenter_cfg.mod        = pdu.mcs_descr.modulation;
+    decoder_config.segmenter_cfg.Nref       = pdu.tbs_lbrm_bytes * 8;
+    decoder_config.segmenter_cfg.nof_layers = pdu.nof_tx_layers;
+    decoder_config.segmenter_cfg.nof_ch_symbols =
+        info.nof_ul_sch_bits.value() / get_bits_per_symbol(pdu.mcs_descr.modulation);
+    decoder_config.nof_ldpc_iterations = 10;
+    decoder_config.use_early_stop      = true;
+    decoder_config.new_data            = pdu.codeword.value().new_data;
 
     // Decode.
     decoder->decode(data, result.data.value(), &softbuffer, sch_llr, decoder_config);

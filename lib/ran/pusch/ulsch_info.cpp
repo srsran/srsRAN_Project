@@ -14,53 +14,59 @@
 
 using namespace srsgnb;
 
-static constexpr unsigned get_crc_size_uci(unsigned nof_bits)
+static constexpr units::bits get_crc_size_uci(units::bits nof_bits)
 {
-  if (nof_bits < 12) {
-    return 0;
+  using namespace units::literals;
+
+  if (nof_bits < 12_bits) {
+    return 0_bits;
   }
 
-  if (nof_bits < 20) {
-    return 6;
+  if (nof_bits < 20_bits) {
+    return 6_bits;
   }
 
-  return 11;
+  return 11_bits;
 }
 
-static constexpr unsigned calculate_nof_re_harq_ack(unsigned nof_harq_ack_bits,
-                                                    float    beta_offset_pusch,
-                                                    unsigned nof_re_uci,
-                                                    unsigned sum_nof_cb_size,
-                                                    float    alpha_scaling,
-                                                    unsigned nof_re_uci_l0)
+static constexpr unsigned calculate_nof_re_harq_ack(units::bits nof_harq_ack_bits,
+                                                    float       beta_offset_pusch,
+                                                    unsigned    nof_re_uci,
+                                                    unsigned    sum_nof_cb_size,
+                                                    float       alpha_scaling,
+                                                    unsigned    nof_re_uci_l0)
 {
-  if (nof_harq_ack_bits == 0) {
+  using namespace units::literals;
+
+  if (nof_harq_ack_bits == 0_bits) {
     return 0;
   }
 
-  unsigned nof_bits_crc = get_crc_size_uci(nof_harq_ack_bits);
+  units::bits nof_bits_crc = get_crc_size_uci(nof_harq_ack_bits);
 
-  unsigned left  = std::ceil(static_cast<float>(nof_harq_ack_bits + nof_bits_crc) * beta_offset_pusch *
+  unsigned left  = std::ceil(static_cast<float>((nof_harq_ack_bits + nof_bits_crc).value()) * beta_offset_pusch *
                             static_cast<float>(nof_re_uci) / static_cast<float>(sum_nof_cb_size));
   unsigned right = std::ceil(alpha_scaling * static_cast<float>(nof_re_uci_l0));
 
   return std::min(left, right);
 }
 
-static constexpr unsigned calculate_nof_re_harq_ack_without_sch(unsigned nof_harq_ack_bits,
-                                                                float    beta_offset_pusch,
-                                                                float    target_code_rate,
-                                                                unsigned modulation_order,
-                                                                float    alpha_scaling,
-                                                                unsigned nof_re_uci_l0)
+static constexpr unsigned calculate_nof_re_harq_ack_without_sch(units::bits nof_harq_ack_bits,
+                                                                float       beta_offset_pusch,
+                                                                float       target_code_rate,
+                                                                unsigned    modulation_order,
+                                                                float       alpha_scaling,
+                                                                unsigned    nof_re_uci_l0)
 {
-  if (nof_harq_ack_bits == 0) {
+  using namespace units::literals;
+
+  if (nof_harq_ack_bits == 0_bits) {
     return 0;
   }
 
-  unsigned nof_bits_crc = get_crc_size_uci(nof_harq_ack_bits);
+  units::bits nof_bits_crc = get_crc_size_uci(nof_harq_ack_bits);
 
-  unsigned left  = std::ceil(static_cast<float>(nof_harq_ack_bits + nof_bits_crc) * beta_offset_pusch /
+  unsigned left  = std::ceil(static_cast<float>((nof_harq_ack_bits + nof_bits_crc).value()) * beta_offset_pusch /
                             (target_code_rate * static_cast<float>(modulation_order)));
   unsigned right = std::ceil(alpha_scaling * static_cast<float>(nof_re_uci_l0));
 
@@ -72,7 +78,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
   ulsch_information result = {};
 
   // Get shared channel parameters.
-  result.sch = get_sch_segmentation_info(config.tbs, config.mcs_descr.get_normalised_target_code_rate());
+  result.sch = get_sch_segmentation_info(config.tbs.value(), config.mcs_descr.get_normalised_target_code_rate());
 
   // Check DM-RS number of CDM groups without data is valid.
   srsgnb_assert(config.nof_cdm_groups_without_data >= 1 &&
@@ -134,8 +140,10 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
     nof_re_uci_l0 += config.nof_rb * NRE;
   }
 
+  using namespace units::literals;
+
   // Calculate the number of RE occupied by HARQ-ACK.
-  if (config.tbs > 0) {
+  if (config.tbs > 0_bits) {
     // In case of PUSCH multiplexing SCH.
     result.nof_harq_ack_re = calculate_nof_re_harq_ack(config.nof_harq_ack_bits,
                                                        config.beta_offset_harq_ack,
@@ -156,10 +164,10 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
   // If two or less HARQ-ACK bits are multiplexed, then calculate the number of reserved bits as it was two HARQ-ACK
   // payload bits.
   unsigned nof_harq_ack_rvd_re = 0;
-  if (config.nof_harq_ack_bits < 2) {
-    if (config.tbs > 0) {
+  if (config.nof_harq_ack_bits < 2_bits) {
+    if (config.tbs > 0_bits) {
       // In case of PUSCH multiplexing SCH.
-      nof_harq_ack_rvd_re = calculate_nof_re_harq_ack(2,
+      nof_harq_ack_rvd_re = calculate_nof_re_harq_ack(2_bits,
                                                       config.beta_offset_harq_ack,
                                                       nof_re_uci,
                                                       result.sch.nof_cb * result.sch.nof_bits_per_cb,
@@ -167,29 +175,29 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
                                                       nof_re_uci_l0);
     } else {
       // In case of PUSCH NOT multiplexing SCH.
-      nof_harq_ack_rvd_re = calculate_nof_re_harq_ack_without_sch(2,
+      nof_harq_ack_rvd_re = calculate_nof_re_harq_ack_without_sch(2_bits,
                                                                   config.beta_offset_harq_ack,
                                                                   config.mcs_descr.get_normalised_target_code_rate(),
                                                                   modulation_order,
                                                                   config.alpha_scaling,
                                                                   nof_re_uci_l0);
     }
-  } else if (config.nof_harq_ack_bits == 2) {
+  } else if (config.nof_harq_ack_bits == 2_bits) {
     nof_harq_ack_rvd_re = result.nof_harq_ack_re;
   }
 
   // Calculate the number of RE occupied by CSI-part1.
-  srsgnb_assert(config.nof_csi_part1_bits == 0, "CSI Part 1 is not currently implemented.");
+  srsgnb_assert(config.nof_csi_part1_bits == 0_bits, "CSI Part 1 is not currently implemented.");
   result.nof_csi_part2_re = 0;
 
   // Calculate the number of RE occupied by CSI-part2.
-  srsgnb_assert(config.nof_csi_part2_bits == 0, "CSI Part 2 is not currently implemented.");
+  srsgnb_assert(config.nof_csi_part2_bits == 0_bits, "CSI Part 2 is not currently implemented.");
   result.nof_csi_part2_re = 0;
 
   // Calculate actual number of RE used by HARQ-ACK. The RE used for HARQ-ACK bits are only considered when there are
   // more than 2 HARQ-ACK bits.
   unsigned nof_harq_ack_re = 0;
-  if (config.nof_harq_ack_bits > 2) {
+  if (config.nof_harq_ack_bits > 2_bits) {
     nof_harq_ack_re = result.nof_harq_ack_re;
   }
 
@@ -197,19 +205,19 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
   unsigned nof_re_ul_sch = nof_re_total - nof_harq_ack_re - result.nof_csi_part1_re - result.nof_csi_part2_re;
 
   // Number of bits used for shared channel.
-  result.nof_ul_sch_bits = nof_re_ul_sch * config.nof_layers * modulation_order;
+  result.nof_ul_sch_bits = units::bits(nof_re_ul_sch * config.nof_layers * modulation_order);
 
   // Number of bits used for HARQ-ACK.
-  result.nof_harq_ack_bits = result.nof_harq_ack_re * config.nof_layers * modulation_order;
+  result.nof_harq_ack_bits = units::bits(result.nof_harq_ack_re * config.nof_layers * modulation_order);
 
   // Number of bits reserved for HARQ-ACK.
-  result.nof_harq_ack_rvd = nof_harq_ack_rvd_re * config.nof_layers * modulation_order;
+  result.nof_harq_ack_rvd = units::bits(nof_harq_ack_rvd_re * config.nof_layers * modulation_order);
 
   // Number of bits used for CSI-part1.
-  result.nof_csi_part1_bits = result.nof_csi_part1_re * config.nof_layers * modulation_order;
+  result.nof_csi_part1_bits = units::bits(result.nof_csi_part1_re * config.nof_layers * modulation_order);
 
   // Number of bits used for CSI-part2.
-  result.nof_csi_part2_bits = result.nof_csi_part2_re * config.nof_layers * modulation_order;
+  result.nof_csi_part2_bits = units::bits(result.nof_csi_part2_re * config.nof_layers * modulation_order);
 
   return result;
 }

@@ -189,11 +189,11 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
 
   // Get UL-SCH information.
   ulsch_configuration ulsch_config;
-  ulsch_config.tbs                   = transport_block.size() * 8;
+  ulsch_config.tbs                   = units::bytes(transport_block.size()).to_bits();
   ulsch_config.mcs_descr             = pdu.mcs_descr;
-  ulsch_config.nof_harq_ack_bits     = pdu.uci.nof_harq_ack;
-  ulsch_config.nof_csi_part1_bits    = pdu.uci.nof_csi_part1;
-  ulsch_config.nof_csi_part2_bits    = pdu.uci.nof_csi_part2;
+  ulsch_config.nof_harq_ack_bits     = units::bits(pdu.uci.nof_harq_ack);
+  ulsch_config.nof_csi_part1_bits    = units::bits(pdu.uci.nof_csi_part1);
+  ulsch_config.nof_csi_part2_bits    = units::bits(pdu.uci.nof_csi_part2);
   ulsch_config.alpha_scaling         = pdu.uci.alpha_scaling;
   ulsch_config.beta_offset_harq_ack  = pdu.uci.beta_offset_harq_ack;
   ulsch_config.beta_offset_csi_part1 = pdu.uci.beta_offset_csi_part1;
@@ -245,17 +245,17 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_EQ(1, demux_spy->get_placeholders_entries().size());
   const ulsch_demultiplex_spy::placeholders_entry& placeholder_entry = demux_spy->get_placeholders_entries().front();
   ASSERT_EQ(pdu.uci.nof_harq_ack, placeholder_entry.msg_info.nof_harq_ack_bits);
-  ASSERT_EQ(ulsch_info.nof_harq_ack_bits, placeholder_entry.msg_info.nof_enc_harq_ack_bits);
+  ASSERT_EQ(ulsch_info.nof_harq_ack_bits.value(), placeholder_entry.msg_info.nof_enc_harq_ack_bits);
   ASSERT_EQ(pdu.uci.nof_csi_part1, placeholder_entry.msg_info.nof_csi_part1_bits);
-  ASSERT_EQ(ulsch_info.nof_csi_part1_bits, placeholder_entry.msg_info.nof_enc_csi_part1_bits);
+  ASSERT_EQ(ulsch_info.nof_csi_part1_bits.value(), placeholder_entry.msg_info.nof_enc_csi_part1_bits);
   ASSERT_EQ(pdu.uci.nof_csi_part2, placeholder_entry.msg_info.nof_csi_part2_bits);
-  ASSERT_EQ(ulsch_info.nof_csi_part2_bits, placeholder_entry.msg_info.nof_enc_csi_part2_bits);
+  ASSERT_EQ(ulsch_info.nof_csi_part2_bits.value(), placeholder_entry.msg_info.nof_enc_csi_part2_bits);
   ASSERT_EQ(pdu.mcs_descr.modulation, placeholder_entry.config.modulation);
   ASSERT_EQ(pdu.nof_tx_layers, placeholder_entry.config.nof_layers);
   ASSERT_EQ(pdu.freq_alloc.get_nof_rb(), placeholder_entry.config.nof_prb);
   ASSERT_EQ(pdu.start_symbol_index, placeholder_entry.config.start_symbol_index);
   ASSERT_EQ(pdu.nof_symbols, placeholder_entry.config.nof_symbols);
-  ASSERT_EQ(ulsch_info.nof_harq_ack_rvd, placeholder_entry.config.nof_harq_ack_rvd);
+  ASSERT_EQ(ulsch_info.nof_harq_ack_rvd.value(), placeholder_entry.config.nof_harq_ack_rvd);
   ASSERT_EQ(pdu.dmrs, placeholder_entry.config.dmrs);
   ASSERT_EQ(pdu.dmrs_symbol_mask, placeholder_entry.config.dmrs_symbol_mask);
   ASSERT_EQ(pdu.nof_cdm_groups_without_data, placeholder_entry.config.nof_cdm_groups_without_data);
@@ -294,7 +294,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
     ASSERT_EQ(pdu.freq_alloc.get_nof_rb(), demux_entry.config.nof_prb);
     ASSERT_EQ(pdu.start_symbol_index, demux_entry.config.start_symbol_index);
     ASSERT_EQ(pdu.nof_symbols, demux_entry.config.nof_symbols);
-    ASSERT_EQ(ulsch_info.nof_harq_ack_rvd, demux_entry.config.nof_harq_ack_rvd);
+    ASSERT_EQ(ulsch_info.nof_harq_ack_rvd.value(), demux_entry.config.nof_harq_ack_rvd);
     ASSERT_EQ(pdu.dmrs, demux_entry.config.dmrs);
     ASSERT_EQ(pdu.dmrs_symbol_mask, demux_entry.config.dmrs_symbol_mask);
     ASSERT_EQ(pdu.nof_cdm_groups_without_data, demux_entry.config.nof_cdm_groups_without_data);
@@ -319,7 +319,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
     ASSERT_EQ(pdu.mcs_descr.modulation, decoder_entry.config.segmenter_cfg.mod);
     ASSERT_EQ(pdu.tbs_lbrm_bytes * 8, decoder_entry.config.segmenter_cfg.Nref);
     ASSERT_EQ(pdu.nof_tx_layers, decoder_entry.config.segmenter_cfg.nof_layers);
-    ASSERT_EQ(ulsch_info.nof_ul_sch_bits / get_bits_per_symbol(modulation),
+    ASSERT_EQ(ulsch_info.nof_ul_sch_bits.value() / get_bits_per_symbol(modulation),
               decoder_entry.config.segmenter_cfg.nof_ch_symbols);
     ASSERT_EQ(10, decoder_entry.config.nof_ldpc_iterations);
     ASSERT_EQ(true, decoder_entry.config.use_early_stop);

@@ -16,6 +16,7 @@
 #include "srsgnb/ran/ldpc_base_graph.h"
 #include "srsgnb/ran/sch/sch_segmentation.h"
 #include "srsgnb/ran/sch_mcs.h"
+#include "srsgnb/support/units.h"
 #include <array>
 
 namespace srsgnb {
@@ -25,15 +26,15 @@ namespace srsgnb {
 /// The parameters are described in TS38.212 Section 6.3.2.4.1.
 struct ulsch_configuration {
   /// Transport block size. Set to zero if no shared channel is multiplexed.
-  unsigned tbs;
+  units::bits tbs;
   /// Modulation and coding scheme.
   sch_mcs_description mcs_descr;
   /// Number of HARQ-ACK bits to multiplex in the transmission. Parameter \f$O_\textup{ACK}\f$.
-  unsigned nof_harq_ack_bits;
+  units::bits nof_harq_ack_bits;
   /// Number of CSI Part 1 bits to multiplex in the transmission. Parameter \f$O_\textup{CSI-1}\f$.
-  unsigned nof_csi_part1_bits;
+  units::bits nof_csi_part1_bits;
   /// Number of CSI Part 2 bits to multiplex in the transmission. Parameter \f$O_\textup{CSI-2}\f$.
-  unsigned nof_csi_part2_bits;
+  units::bits nof_csi_part2_bits;
   /// \brief Parameter \f$\alpha\f$ as per TS38.212 Section 6.3.2.4.
   ///
   /// Provided by the higher layer parameter \e scaling in TS38.331 Section 6.3.2, Information Element \e UCI-OnPUSCH.
@@ -67,15 +68,15 @@ struct ulsch_information {
   /// Shared channel (SCH) parameters.
   sch_information sch;
   /// Number of encoded and rate-matched UL-SCH data bits. Parameter \f$G^\textup{UL-SCH}\f$.
-  unsigned nof_ul_sch_bits;
+  units::bits nof_ul_sch_bits;
   /// Number of encoded and rate-matched HARQ-ACK data bits. Parameter \f$G^\textup{HARQ-ACK}\f$.
-  unsigned nof_harq_ack_bits;
+  units::bits nof_harq_ack_bits;
   /// Number of reserved bits for HARQ-ACK. Parameter \f$G^\textup{HARQ-ACK}_\textup{rvd}\f$.
-  unsigned nof_harq_ack_rvd;
+  units::bits nof_harq_ack_rvd;
   /// Number of encoded and rate-matched CSI Part 1 data bits. Parameter \f$G^\textup{CSI-part1}\f$.
-  unsigned nof_csi_part1_bits;
+  units::bits nof_csi_part1_bits;
   /// Number of encoded and rate-matched CSI Part 2 data bits. Parameter \f$G^\textup{CSI-part2}\f$.
-  unsigned nof_csi_part2_bits;
+  units::bits nof_csi_part2_bits;
   /// Number of resource elements occupied by HARQ-ACK information. Parameter \f$Q'_\textup{ACK}\f$.
   unsigned nof_harq_ack_re;
   /// Number of resource elements occupied by CSI Part 1 information. Parameter \f$Q'_\textup{CSI-1}\f$.
