@@ -32,8 +32,10 @@ public:
   dummy_f1u_connector()  = default;
   ~dummy_f1u_connector() = default;
 
-  void
-  attach_cu_dl_bearer(uint32_t dl_teid, f1u_dl_local_adapter& cu_tx, srs_cu_up::f1u_rx_pdu_handler& cu_rx) override{};
+  srs_cu_up::f1u_bearer* create_cu_dl_bearer(uint32_t dl_teid, srs_cu_up::f1u_rx_sdu_notifier& cu_rx) override
+  {
+    return nullptr;
+  };
   void attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid) override{};
 };
 } // namespace srsgnb

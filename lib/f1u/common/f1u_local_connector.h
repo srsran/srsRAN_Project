@@ -11,15 +11,17 @@
 
 #pragma once
 
+#include "f1u_local_bearer_adapter.h"
 #include "srsgnb/f1u/common/f1u_connector.h"
 #include <map>
 
 namespace srsgnb {
 
 struct f1u_dl_cu_bearer {
-  f1u_dl_local_adapter&          cu_tx;
-  srs_cu_up::f1u_rx_pdu_handler& cu_rx;
-  f1u_dl_cu_bearer(f1u_dl_local_adapter& cu_tx_, srs_cu_up::f1u_rx_pdu_handler& cu_rx_) : cu_tx(cu_tx_), cu_rx(cu_rx_)
+  f1u_dl_local_adapter&                  cu_tx;
+  std::unique_ptr<srs_cu_up::f1u_bearer> f1u_bearer = nullptr;
+  f1u_dl_cu_bearer(f1u_dl_local_adapter& cu_tx_, std::unique_ptr<srs_cu_up::f1u_bearer> f1u_bearer_) :
+    cu_tx(cu_tx_), f1u_bearer(std::move(f1u_bearer_))
   {
   }
 };
@@ -38,13 +40,17 @@ class f1u_local_connector final : public f1u_du_connector, public f1u_cu_up_conn
 public:
   f1u_local_connector() : logger(srslog::fetch_basic_logger("F1-U")){};
 
-  void
-  attach_cu_dl_bearer(uint32_t dl_teid, f1u_dl_local_adapter& cu_tx, srs_cu_up::f1u_rx_pdu_handler& cu_rx) override;
-  void attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid) override;
-  void attach_du_bearer(uint32_t                    dl_teid,
-                        uint32_t                    ul_teid,
-                        f1u_ul_local_adapter&       du_tx,
-                        srs_du::f1u_rx_pdu_handler& du_rx) override;
+  srs_cu_up::f1u_bearer* create_cu_dl_bearer(uint32_t                        dl_teid,
+                                             srs_cu_up::f1u_rx_sdu_notifier& rx_sdu_notifier) override;
+  void                   attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid) override;
+  void                   create_du_ul_bearer(uint32_t                     dl_teid,
+                                             uint32_t                     ul_teid,
+                                             srs_du::f1u_rx_pdu_handler&  du_rx,
+                                             srs_du::f1u_tx_pdu_notifier& du_tx);
+  void                   create_du_ul_bearer(uint32_t                     dl_teid,
+                                             uint32_t                     ul_teid,
+                                             srs_du::f1u_rx_sdu_notifier& du_rx,
+                                             srs_du::f1u_tx_pdu_notifier& du_tx) override;
 
 private:
   srslog::basic_logger&                logger;

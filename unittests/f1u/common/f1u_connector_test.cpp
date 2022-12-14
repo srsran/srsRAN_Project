@@ -9,21 +9,20 @@
  */
 
 #include "srsgnb/f1u/common/f1u_connector_factory.h"
-#include "srsgnb/f1u/common/f1u_local_bearer_adapter.h"
 #include "srsgnb/srslog/srslog.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
 
-// dummy DU RX bearer interface
-struct dummy_f1u_cu_up_rx_pdu_handler final : public srs_cu_up::f1u_rx_pdu_handler {
-  void handle_pdu(nru_ul_message msg) override
+// dummy CU-UP RX bearer interface
+struct dummy_f1u_cu_up_rx_sdu_notifier final : public srs_cu_up::f1u_rx_sdu_notifier {
+  void on_new_sdu(byte_buffer_slice_chain sdu) override
   {
-    logger.info(msg.t_pdu.begin(), msg.t_pdu.end(), "CU-UP received PDU");
-    last_msg = std::move(msg);
+    logger.info(sdu.begin(), sdu.end(), "CU-UP received SDU");
+    last_sdu = std::move(sdu);
   }
-  nru_ul_message        last_msg;
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("F1-U", false);
+  byte_buffer_slice_chain last_sdu;
+  srslog::basic_logger&   logger = srslog::fetch_basic_logger("F1-U", false);
 };
 
 // dummy DU RX bearer interface
@@ -92,16 +91,15 @@ TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
   init();
   f1u_cu_up_connector* cu_conn = f1u_conn->get_f1u_cu_up_connector();
   f1u_du_connector*    du_conn = f1u_conn->get_f1u_du_connector();
+  (void)du_conn;
 
   // Create CU TX notifier adapter
-  f1u_dl_local_adapter           cu_tx;
-  dummy_f1u_cu_up_rx_pdu_handler cu_rx;
-  cu_conn->attach_cu_dl_bearer(1, cu_tx, cu_rx);
+  dummy_f1u_cu_up_rx_sdu_notifier cu_rx;
+  srs_cu_up::f1u_bearer*          cu_bearer = cu_conn->create_cu_dl_bearer(1, cu_rx);
 
   // Create DU TX notifier adapter and RX handler
-  f1u_ul_local_adapter        du_tx;
   dummy_f1u_du_rx_pdu_handler du_rx;
-  du_conn->attach_du_bearer(1, 2, du_tx, du_rx);
+  // du_conn->create_du_ul_bearer(1, 2, du_rx);
 
   // Create CU RX handler and attach it to the DU TX
   cu_conn->attach_cu_ul_bearer(1, 2);
@@ -109,14 +107,14 @@ TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
   // Check CU-UP -> DU path
   byte_buffer             cu_buf = make_byte_buffer("ABCD");
   byte_buffer_slice_chain du_exp{cu_buf.deep_copy()};
-  // cu_tx.on_new_pdu(std::move(cu_buf));
+  cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(cu_buf), 0);
 
   // Check DU-> CU-UP path
   byte_buffer             du_buf = make_byte_buffer("DCBA");
   byte_buffer_slice_chain cu_exp{du_buf.deep_copy()};
   // du_tx.on_new_tx_pdu(std::move(du_buf), 0);
 
-  // ASSERT_EQ(cu_rx.last_pdu, cu_exp);
+  ASSERT_EQ(cu_rx.last_sdu, cu_exp);
 }
 
 int main(int argc, char** argv)
