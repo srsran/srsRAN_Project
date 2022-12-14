@@ -15,6 +15,8 @@ set(SOURCES
   ue/rrc_ue_helpers.cpp
   ue/procedures/rrc_setup_procedure.cpp
   ue/procedures/rrc_security_mode_command_procedure.cpp
+  ue/procedures/rrc_reconfiguration_procedure.cpp
+  ue/routines/rrc_pdu_session_resource_setup_routine.cpp
 )
 
 add_library(srsgnb_rrc STATIC ${SOURCES})

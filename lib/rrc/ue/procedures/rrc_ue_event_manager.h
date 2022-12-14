@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/expected.h"
+#include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/support/async/event_signal.h"
 #include "srsgnb/support/async/protocol_transaction_manager.h"
 

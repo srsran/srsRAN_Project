@@ -18,6 +18,12 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
+struct drb_context {
+  srsgnb::drb_id_t         drb_id = drb_id_t::invalid;
+  asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
+  asn1::rrc_nr::sdap_cfg_s sdap_cfg;
+};
+
 /// Holds the RRC UE context used by the UE object and all its procedures.
 class rrc_ue_context_t
 {
@@ -33,6 +39,7 @@ public:
   const rnti_t                           c_rnti;   // current C-RNTI
   const rrc_cell_context                 cell;     // current cell
   const rrc_ue_cfg_t&                    cfg;
+  std::vector<drb_context>               drbs;
   guami                                  current_guami; // current GUAMI
   uint64_t                               setup_ue_id = -1;
   asn1::rrc_nr::establishment_cause_opts connection_cause;

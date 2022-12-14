@@ -161,6 +161,22 @@ struct srb_creation_message {
   asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
 };
 
+/// Interface used by the RRC reconfiguration procedure to
+/// invoke actions carried out by the main RRC UE class (i.e. send DL message, remove UE).
+class rrc_ue_reconfiguration_proc_notifier
+{
+public:
+  rrc_ue_reconfiguration_proc_notifier()          = default;
+  virtual ~rrc_ue_reconfiguration_proc_notifier() = default;
+
+  /// \brief Notify about a DL DCCH message.
+  /// \param[in] dl_ccch_msg The DL DCCH message.
+  virtual void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
+
+  /// \brief Notify about the need to delete a UE.
+  virtual void on_ue_delete_request() = 0;
+};
+
 /// Interface used by the RRC security mode procedure
 /// to notify the RRC UE of the security mode context update.
 class rrc_ue_security_mode_command_proc_notifier
