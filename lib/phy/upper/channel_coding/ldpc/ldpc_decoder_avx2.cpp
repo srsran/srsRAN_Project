@@ -40,13 +40,12 @@ void ldpc_decoder_avx2::select_strategy()
   compute_var_to_check_msgs_ext = select_var_to_check_strategy_ext<MAX_NODE_SIZE_AVX2>();
   compute_soft_bits             = select_soft_bits_strategy<MAX_NODE_SIZE_AVX2>();
   compute_check_to_var_msgs     = select_check_to_var_strategy<MAX_NODE_SIZE_AVX2>();
-  analyze_var_to_check          = select_analyze_var_to_check_strategy<MAX_NODE_SIZE_AVX2>();
+  analyze_var_to_check_msgs     = select_analyze_var_to_check_strategy<MAX_NODE_SIZE_AVX2>();
 }
 
 void ldpc_decoder_avx2::load_soft_bits(span<const log_likelihood_ratio> llrs)
 {
   // Erase registers.
-  std::memset(soft_bits.data_at(0), 0, bg_N_full * node_size_avx2 * AVX2_SIZE_BYTE);
   unsigned max_nof_connections = (bg_K + 5) * node_size_avx2 * AVX2_SIZE_BYTE;
   std::memset(var_to_check.data_at(0), 0, max_nof_connections);
   for (auto& tmp : check_to_var) {
@@ -59,6 +58,7 @@ void ldpc_decoder_avx2::load_soft_bits(span<const log_likelihood_ratio> llrs)
   // Copy input llrs and organize them by nodes.
   const log_likelihood_ratio* llr_ptr = llrs.data();
   // Recall that the first 2 * lifting_size bits (2 nodes) are not transmitted.
+  std::memset(soft_bits.data_at(0), 0, 2 * node_size_avx2 * AVX2_SIZE_BYTE);
   for (unsigned i_node = 2 * node_size_avx2, max_node = nof_useful_nodes * node_size_avx2; i_node != max_node;
        i_node += node_size_avx2) {
     std::memcpy(soft_bits.data_at(i_node), llr_ptr, lifting_size);
@@ -78,23 +78,23 @@ void ldpc_decoder_avx2::update_variable_to_check_messages(unsigned check_node)
   unsigned bg_N_hr_lifted = bg_N_high_rate * node_size_avx2;
   // First, update the messages corresponding to the high-rate region. All layers contribute.
   compute_var_to_check_msgs_hr(mm256::avx2_span(var_to_check, 0, bg_N_hr_lifted),
-                               mm256::avx2_const_span(soft_bits, 0, bg_N_hr_lifted),
-                               mm256::avx2_const_span(check_to_var[check_node], 0, bg_N_hr_lifted));
+                               mm256::avx2_span(soft_bits, 0, bg_N_hr_lifted),
+                               mm256::avx2_span(check_to_var[check_node], 0, bg_N_hr_lifted));
 
   // Next, update the messages corresponding to the extension region, if applicable.
   // From layer 4 onwards, each layer is connected to only one consecutive block of lifting_size bits.
   if (check_node >= 4) {
     compute_var_to_check_msgs_ext(
         mm256::avx2_span(var_to_check, bg_N_hr_lifted, node_size_avx2),
-        mm256::avx2_const_span(soft_bits, bg_N_hr_lifted + (check_node - 4) * node_size_avx2, node_size_avx2),
-        mm256::avx2_const_span(check_to_var[check_node], bg_N_hr_lifted, node_size_avx2));
+        mm256::avx2_span(soft_bits, bg_N_hr_lifted + (check_node - 4) * node_size_avx2, node_size_avx2),
+        mm256::avx2_span(check_to_var[check_node], bg_N_hr_lifted, node_size_avx2));
   }
 }
 
 template <unsigned NOF_NODES, unsigned NODE_SIZE_AVX2>
-void ldpc_decoder_avx2::compute_var_to_check_msgs(mm256::avx2_span       v2c,
-                                                  mm256::avx2_const_span soft,
-                                                  mm256::avx2_const_span c2v)
+void ldpc_decoder_avx2::compute_var_to_check_msgs(mm256::avx2_span        v2c,
+                                                  const mm256::avx2_span& soft,
+                                                  const mm256::avx2_span& c2v)
 {
   constexpr unsigned LENGTH = NOF_NODES * NODE_SIZE_AVX2;
   srsgnb_assert((soft.size() == LENGTH) && (c2v.size() == LENGTH) && (v2c.size() == LENGTH),
@@ -129,19 +129,27 @@ void ldpc_decoder_avx2::compute_var_to_check_msgs(mm256::avx2_span       v2c,
 
 void ldpc_decoder_avx2::update_check_to_variable_messages(unsigned check_node)
 {
+  // Buffer to store the minimum (in absolute value) variable-to-check message.
+  mm256::avx2_array<MAX_NODE_SIZE_AVX2> min_var_to_check = {};
+  // Buffer to store the second minimum (in absolute value) variable-to-check message for each base graph check node.
+  mm256::avx2_array<MAX_NODE_SIZE_AVX2> second_min_var_to_check = {};
+  // Buffer to store the index of the minimum-valued variable-to-check message.
+  mm256::avx2_array<MAX_NODE_SIZE_AVX2> min_var_to_check_index = {};
+  // Buffer to store the sign product of all variable-to-check messages.
+  mm256::avx2_array<MAX_NODE_SIZE_AVX2> sign_prod_var_to_check = {};
+
   // Reset temporal buffers.
   unsigned node_size_byte = node_size_avx2 * AVX2_SIZE_BYTE;
-  std::memset(sign_prod_var_to_check.data_at(0), 0, node_size_byte);
   std::memset(min_var_to_check.data_at(0), LLR_MAX.to_value_type(), node_size_byte);
   std::memset(second_min_var_to_check.data_at(0), LLR_MAX.to_value_type(), node_size_byte);
 
   // Retrieve list of variable nodes connected to this check node.
   const BG_adjacency_row_t& current_var_indices = current_graph->get_adjacency_row(check_node);
-  const auto*               this_var_index_itr  = current_var_indices.cbegin();
   const auto*               last_var_index_itr  = current_var_indices.cend();
   // For all variable nodes connected to this check node.
   unsigned i_loop = 0;
-  for (; (this_var_index_itr != last_var_index_itr) && (*this_var_index_itr != NO_EDGE);
+  for (const auto* this_var_index_itr = current_var_indices.cbegin();
+       (this_var_index_itr != last_var_index_itr) && (*this_var_index_itr != NO_EDGE);
        ++this_var_index_itr, ++i_loop) {
     // Rotate the variable node as specified by the base graph.
     unsigned shift          = current_graph->get_lifted_node(check_node, *this_var_index_itr);
@@ -151,22 +159,22 @@ void ldpc_decoder_avx2::update_check_to_variable_messages(unsigned check_node)
     rotate_node_right(
         this_rotated_node.data_at(0, 0), var_to_check.data_at(v2c_base_index * node_size_avx2, 0), shift, lifting_size);
 
-    analyze_var_to_check(min_var_to_check,
-                         second_min_var_to_check,
-                         min_var_to_check_index,
-                         sign_prod_var_to_check,
-                         this_rotated_node,
-                         i_loop);
+    analyze_var_to_check_msgs(min_var_to_check,
+                              second_min_var_to_check,
+                              min_var_to_check_index,
+                              sign_prod_var_to_check,
+                              this_rotated_node,
+                              i_loop);
   }
 
   // For all variable nodes connected to this check node.
   i_loop = 0;
-  for (this_var_index_itr = current_var_indices.cbegin();
+  for (const auto* this_var_index_itr = current_var_indices.cbegin();
        (this_var_index_itr != last_var_index_itr) && (*this_var_index_itr != NO_EDGE);
        ++this_var_index_itr, ++i_loop) {
     mm256::avx2_array<MAX_NODE_SIZE_AVX2> this_check_to_var = {};
 
-    mm256::avx2_const_span this_rotated_node(rotated_var_to_check, i_loop * node_size_avx2, node_size_avx2);
+    const mm256::avx2_span this_rotated_node(rotated_var_to_check, i_loop * node_size_avx2, node_size_avx2);
 
     compute_check_to_var_msgs(this_check_to_var,
                               min_var_to_check,
@@ -197,8 +205,8 @@ void ldpc_decoder_avx2::update_soft_bits(unsigned check_node)
   for (; (this_var_index != last_var_index) && (*this_var_index != NO_EDGE); ++this_var_index) {
     // Retrieve the corresponding messages and soft bits.
     unsigned               node_index = std::min(*this_var_index, bg_N_high_rate) * node_size_avx2;
-    mm256::avx2_const_span this_check_to_var(check_to_var[check_node], node_index, node_size_avx2);
-    mm256::avx2_const_span this_var_to_check(var_to_check, node_index, node_size_avx2);
+    const mm256::avx2_span this_check_to_var(check_to_var[check_node], node_index, node_size_avx2);
+    const mm256::avx2_span this_var_to_check(var_to_check, node_index, node_size_avx2);
     mm256::avx2_span       this_soft_bits(soft_bits, *this_var_index * node_size_avx2, node_size_avx2);
 
     compute_soft_bits(this_soft_bits, this_check_to_var, this_var_to_check);
@@ -264,9 +272,9 @@ ldpc_decoder_avx2::var_to_check_strategy ldpc_decoder_avx2::select_var_to_check_
 }
 
 template <unsigned NODE_SIZE_AVX2>
-static void inner_update_soft_bits(mm256::avx2_span       this_soft_bits,
-                                   mm256::avx2_const_span this_check_to_var,
-                                   mm256::avx2_const_span this_var_to_check)
+static void inner_update_soft_bits(mm256::avx2_span        this_soft_bits,
+                                   const mm256::avx2_span& this_check_to_var,
+                                   const mm256::avx2_span& this_var_to_check)
 {
   for (unsigned i_block = 0; i_block != NODE_SIZE_AVX2; ++i_block) {
     // Add check-to-variable and variable-to-check messages.
@@ -295,14 +303,14 @@ ldpc_decoder_avx2::soft_bit_strategy ldpc_decoder_avx2::select_soft_bits_strateg
 }
 
 template <unsigned NODE_SIZE_AVX2>
-static void inner_update_check_to_var_msgs(mm256::avx2_span       this_check_to_var,
-                                           mm256::avx2_const_span min_var_to_check,
-                                           mm256::avx2_const_span second_min_var_to_check,
-                                           mm256::avx2_const_span min_var_to_check_index,
-                                           mm256::avx2_const_span sign_prod_var_to_check,
-                                           mm256::avx2_const_span this_rotated_node,
-                                           float                  scaling_factor,
-                                           unsigned               i_loop)
+static void inner_update_check_to_var_msgs(mm256::avx2_span        this_check_to_var,
+                                           const mm256::avx2_span& min_var_to_check,
+                                           const mm256::avx2_span& second_min_var_to_check,
+                                           const mm256::avx2_span& min_var_to_check_index,
+                                           const mm256::avx2_span& sign_prod_var_to_check,
+                                           const mm256::avx2_span& this_rotated_node,
+                                           float                   scaling_factor,
+                                           unsigned                i_loop)
 {
   __m256i this_var_index_epi8 = _mm256_set1_epi8(static_cast<int8_t>(i_loop));
   for (unsigned i_block = 0; i_block != NODE_SIZE_AVX2; ++i_block) {
@@ -342,12 +350,12 @@ ldpc_decoder_avx2::check_to_var_strategy ldpc_decoder_avx2::select_check_to_var_
 }
 
 template <unsigned NODE_SIZE_AVX2>
-static void inner_analyze_var_to_check(mm256::avx2_span       min_var_to_check,
-                                       mm256::avx2_span       second_min_var_to_check,
-                                       mm256::avx2_span       min_var_to_check_index,
-                                       mm256::avx2_span       sign_prod_var_to_check,
-                                       mm256::avx2_const_span this_rotated_node,
-                                       unsigned               i_loop)
+static void inner_analyze_var_to_check(mm256::avx2_span        min_var_to_check,
+                                       mm256::avx2_span        second_min_var_to_check,
+                                       mm256::avx2_span        min_var_to_check_index,
+                                       mm256::avx2_span        sign_prod_var_to_check,
+                                       const mm256::avx2_span& this_rotated_node,
+                                       unsigned                i_loop)
 {
   __m256i this_var_index_epi8 = _mm256_set1_epi8(static_cast<int8_t>(i_loop));
   // For all AVX2 registers inside a node...

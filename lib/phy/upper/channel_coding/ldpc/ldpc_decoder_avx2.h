@@ -32,22 +32,22 @@ private:
   static constexpr unsigned MAX_CHECK_CONNECTION_SIZE_AVX2 = MAX_NODE_SIZE_AVX2 * (ldpc::MAX_BG_K + 5);
 
   /// Alias for a pointer to the private method that computes variable-to-check messages.
-  using var_to_check_strategy = std::function<void(mm256::avx2_span, mm256::avx2_const_span, mm256::avx2_const_span)>;
+  using var_to_check_strategy = std::function<void(mm256::avx2_span, const mm256::avx2_span&, const mm256::avx2_span&)>;
 
   /// Alias for a pointer to the private method that updates the soft bits.
-  using soft_bit_strategy = std::function<void(mm256::avx2_span, mm256::avx2_const_span, mm256::avx2_const_span)>;
+  using soft_bit_strategy = std::function<void(mm256::avx2_span, const mm256::avx2_span&, const mm256::avx2_span&)>;
 
   /// Alias for a pointer to the private method that analyzes the variable-to-check messages at the check nodes.
   using analyze_var_to_check_strategy = std::function<
-      void(mm256::avx2_span, mm256::avx2_span, mm256::avx2_span, mm256::avx2_span, mm256::avx2_const_span, unsigned)>;
+      void(mm256::avx2_span, mm256::avx2_span, mm256::avx2_span, mm256::avx2_span, const mm256::avx2_span&, unsigned)>;
 
   /// Alias for a pointer to the private method that computes the check-to-variable messages.
   using check_to_var_strategy = std::function<void(mm256::avx2_span,
-                                                   mm256::avx2_const_span,
-                                                   mm256::avx2_const_span,
-                                                   mm256::avx2_const_span,
-                                                   mm256::avx2_const_span,
-                                                   mm256::avx2_const_span,
+                                                   const mm256::avx2_span&,
+                                                   const mm256::avx2_span&,
+                                                   const mm256::avx2_span&,
+                                                   const mm256::avx2_span&,
+                                                   const mm256::avx2_span&,
                                                    float,
                                                    unsigned)>;
 
@@ -69,7 +69,9 @@ private:
   /// \param[in]  c2v        Check-to-variable messages at the given nodes.
   /// \note The three spans refer to the same set of nodes and, in turn, have the same dimension.
   template <unsigned NOF_NODES, unsigned NODE_SIZE_AVX2>
-  void static compute_var_to_check_msgs(mm256::avx2_span v2c, mm256::avx2_const_span soft, mm256::avx2_const_span c2v);
+  void static compute_var_to_check_msgs(mm256::avx2_span        v2c,
+                                        const mm256::avx2_span& soft,
+                                        const mm256::avx2_span& c2v);
 
   /// Pointer to the specialization of \ref compute_var_to_check_msgs used for the high-rate region.
   var_to_check_strategy compute_var_to_check_msgs_hr;
@@ -90,7 +92,7 @@ private:
   template <unsigned NODE_SIZE_AVX2_PH>
   soft_bit_strategy select_soft_bits_strategy();
   /// Pointer to the function that analyzes the variable-to-check messages at the check nodes.
-  analyze_var_to_check_strategy analyze_var_to_check;
+  analyze_var_to_check_strategy analyze_var_to_check_msgs;
   /// Helper function for setting \ref analyze_var_to_check.
   template <unsigned NODE_SIZE_AVX2_PH>
   analyze_var_to_check_strategy select_analyze_var_to_check_strategy();
@@ -117,22 +119,6 @@ private:
 
   /// Auxiliary buffer to store the rotated variable-to-check messages.
   mm256::avx2_array<MAX_CHECK_CONNECTION_SIZE_AVX2> rotated_var_to_check = {};
-
-  /// \name Helper buffers
-  /// The following buffers refer to a base graph check node (that is, a block of
-  /// lifting_size nodes in the lifted graph).
-
-  ///@{
-  /// \brief Buffer to store the minimum (in absolute value) variable-to-check message.
-  mm256::avx2_array<MAX_NODE_SIZE_AVX2> min_var_to_check = {};
-  /// \brief Buffer to store the second minimum (in absolute value) variable-to-check message for each base graph
-  /// check node.
-  mm256::avx2_array<MAX_NODE_SIZE_AVX2> second_min_var_to_check = {};
-  /// \brief Buffer to store the index of the minimum-valued variable-to-check message.
-  mm256::avx2_array<MAX_NODE_SIZE_AVX2> min_var_to_check_index = {};
-  /// \brief Buffer to store the sign product of all variable-to-check messages.
-  mm256::avx2_array<MAX_NODE_SIZE_AVX2> sign_prod_var_to_check = {};
-  ///@}
 
   /// Number of AVX2 vectors needed to cover a lifted node.
   unsigned node_size_avx2 = 0;

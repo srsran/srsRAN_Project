@@ -32,16 +32,14 @@ public:
   __m256i* data_at(unsigned pos)
   {
     srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    unsigned index = pos * AVX2_SIZE_BYTE;
-    return reinterpret_cast<__m256i*>(inner_array.data() + index);
+    return reinterpret_cast<__m256i*>(inner_array.data()) + pos;
   }
 
   /// Returns a read-only pointer to the \c pos AVX2 register inside the array.
   const __m256i* data_at(unsigned pos) const
   {
     srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    unsigned index = pos * AVX2_SIZE_BYTE;
-    return reinterpret_cast<const __m256i*>(inner_array.data() + index);
+    return reinterpret_cast<const __m256i*>(inner_array.data()) + pos;
   }
 
   /// Returns a pointer to the byte at position <tt>pos * AVX2_SIZE_BYTE + byte</tt> inside the array.
@@ -67,16 +65,14 @@ public:
   void set_at(unsigned pos, __m256i val)
   {
     srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    unsigned index = pos * AVX2_SIZE_BYTE;
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(inner_array.data() + index), val);
+    _mm256_storeu_si256(reinterpret_cast<__m256i*>(inner_array.data()) + pos, val);
   }
 
   /// Gets the value stored in the \c pos AVX2 register.
   __m256i get_at(unsigned pos) const
   {
     srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    unsigned index = pos * AVX2_SIZE_BYTE;
-    return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(inner_array.data() + index));
+    return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(inner_array.data()) + pos);
   }
 
 private:
@@ -111,16 +107,14 @@ public:
   __m256i* data_at(unsigned pos)
   {
     srsgnb_assert(pos < view_length, "Index {} out of bound.", pos);
-    unsigned index = pos * AVX2_SIZE_BYTE;
-    return reinterpret_cast<__m256i*>(array_ptr + index);
+    return reinterpret_cast<__m256i*>(array_ptr) + pos;
   }
 
   /// Returns a read-only pointer to the \c pos AVX2 register inside the array.
   const __m256i* data_at(unsigned pos) const
   {
     srsgnb_assert(pos < view_length, "Index {} out of bound.", pos);
-    unsigned index = pos * AVX2_SIZE_BYTE;
-    return reinterpret_cast<const __m256i*>(array_ptr + index);
+    return reinterpret_cast<const __m256i*>(array_ptr) + pos;
   }
 
   /// Returns a pointer to the byte at position <tt>pos * AVX2_SIZE_BYTE + byte</tt> inside the array.
@@ -146,16 +140,14 @@ public:
   void set_at(unsigned pos, __m256i val)
   {
     srsgnb_assert(pos < view_length, "Index {} out of bound.", pos);
-    unsigned index = pos * AVX2_SIZE_BYTE;
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(array_ptr + index), val);
+    _mm256_storeu_si256(reinterpret_cast<__m256i*>(array_ptr) + pos, val);
   }
 
   /// Gets the value stored in the \c pos AVX2 register.
   __m256i get_at(unsigned pos) const
   {
     srsgnb_assert(pos < view_length, "Index {} out of bound.", pos);
-    unsigned index = pos * AVX2_SIZE_BYTE;
-    return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(array_ptr + index));
+    return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(array_ptr) + pos);
   }
 
   /// Returns the number of AVX2 registers viewed by the span.
@@ -164,69 +156,6 @@ public:
 private:
   /// Pointer to the first element viewed by the span.
   int8_t* array_ptr;
-  /// Number of elements viewed by the span.
-  size_t view_length;
-};
-
-/// \brief Mimics a span of constant AVX2 registers.
-class avx2_const_span
-{
-public:
-  /// \brief Constructs a const span from an \ref avx2_array.
-  ///
-  /// \tparam N     Array length.
-  /// \param arr    Array the span is a view of.
-  /// \param offset First element of the array (an AVX2 register) viewed by the span.
-  /// \param length Length of the span.
-  template <size_t N>
-  avx2_const_span(const avx2_array<N>& arr, unsigned offset, unsigned length) :
-    array_ptr(arr.data_at(offset, 0)), view_length(length)
-  {
-    srsgnb_assert(offset + view_length <= N, "Cannot take a span longer than the array.");
-  }
-
-  /// \brief Implicitly constructs a span that is a view over an entire \ref avx2_array.
-  template <size_t N>
-  avx2_const_span(const avx2_array<N>& arr) : avx2_const_span(arr, 0, N)
-  {
-  }
-
-  /// \brief Implicitly constructs a const span from a mutable one.
-  avx2_const_span(avx2_span sp) : array_ptr(sp.data_at(0, 0)), view_length(sp.size()) {}
-
-  /// Returns a read-only pointer to the \c pos AVX2 register inside the array.
-  const __m256i* data_at(unsigned pos) const
-  {
-    srsgnb_assert(pos < view_length, "Index {} out of bound.", pos);
-    unsigned index = pos * AVX2_SIZE_BYTE;
-    return reinterpret_cast<const __m256i*>(array_ptr + index);
-  }
-
-  /// Returns a read-only pointer to the \c pos AVX2 register inside the array.
-  const int8_t* data_at(unsigned pos, unsigned byte) const
-  {
-    unsigned index = pos * AVX2_SIZE_BYTE + byte;
-    srsgnb_assert(index < view_length * AVX2_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
-    return (array_ptr + index);
-  }
-
-  // Unfortunately, we can't work with the array subscript operator [] since there seems to be no easy way to access a
-  // __m256i object by reference.
-
-  /// Gets the value stored in the \c pos AVX2 register.
-  __m256i get_at(unsigned pos) const
-  {
-    srsgnb_assert(pos < view_length, "Index {} out of bound.", pos);
-    unsigned index = pos * AVX2_SIZE_BYTE;
-    return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(array_ptr + index));
-  }
-
-  /// Returns the number of AVX2 registers viewed by the span.
-  size_t size() const { return view_length; }
-
-private:
-  /// Pointer to the first element viewed by the span.
-  const int8_t* array_ptr;
   /// Number of elements viewed by the span.
   size_t view_length;
 };
@@ -243,7 +172,7 @@ inline __m256i scale_epi8(__m256i a, float sf)
     return a;
   }
 
-  static const __m256i mask_even_epi8 = _mm256_set1_epi16(0x00FF);
+  static const __m256i mask_even_epi8 = _mm256_set1_epi16(0x00ff);
   // FLOAT2INT = 2^16 = 65536
   static constexpr unsigned FLOAT2INT = 1U << 16U;
 
