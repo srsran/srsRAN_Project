@@ -131,34 +131,60 @@ TEST_F(ue_config_tester, when_du_manager_completes_ue_configuration_procedure_th
 
 TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_then_mac_rlc_f1c_bearers_are_connected)
 {
+  const static std::array<uint8_t, 2> dummy_rlc_header = {0x80, 0x0};
+  byte_buffer test_payload{test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))};
+
   // Run UE Configuration Procedure to completion.
   configure_ue(create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {}));
 
-  // Forward MAC Rx SDU through SRB2.
+  // Forward MAC Rx SDU through SRB2 (UL).
   // > Add dummy RLC data header.
-  byte_buffer mac_sdu = {0x80, 0x0};
+  byte_buffer mac_rx_sdu(dummy_rlc_header);
   // > Append data buffer.
-  byte_buffer payload{test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))};
-  mac_sdu.append(payload.copy());
-  mac.last_ue_reconf_msg->bearers_to_addmod[0].ul_bearer->on_new_sdu({mac_sdu.copy()});
+  mac_rx_sdu.append(test_payload.copy());
+  // > Push MAC Rx SDU through MAC logical channel.
+  mac.last_ue_reconf_msg->bearers_to_addmod[0].ul_bearer->on_new_sdu({mac_rx_sdu.copy()});
+  // > Check arrival of F1-C Tx SDU to F1-C bearer.
+  ASSERT_EQ(test_payload, f1ap.f1_ues[test_ue->ue_index].f1c_bearers[srb_id_t::srb2].last_tx_sdu);
 
-  // Check existence of F1-C Tx SDU.
-  ASSERT_EQ(payload, f1ap.f1_ues[test_ue->ue_index].f1c_bearers[srb_id_t::srb2].last_tx_sdu);
+  // Forward F1-C Rx SDU through SRB2 (DL).
+  // > Create data buffer.
+  byte_buffer f1c_rx_sdu = test_payload.copy();
+  // > Push F1-C Rx SDU through F1-C bearer Rx SDU notifier.
+  f1ap.last_ue_config->f1c_bearers_to_add[0].rx_sdu_notifier->on_new_sdu(std::move(f1c_rx_sdu));
+  // > Check arrival of MAC Tx SDU to MAC logical channel.
+  auto        mac_tx_sdu = mac.last_ue_reconf_msg->bearers_to_addmod[0].dl_bearer->on_new_tx_sdu(test_payload.length() +
+                                                                                          dummy_rlc_header.size());
+  byte_buffer extracted_payload(mac_tx_sdu.begin() + dummy_rlc_header.size(), mac_tx_sdu.end());
+  ASSERT_EQ(test_payload, extracted_payload);
 }
 
 TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_then_mac_rlc_f1u_bearers_are_connected)
 {
+  const static std::array<uint8_t, 2> dummy_rlc_header = {0x80, 0x0};
+  byte_buffer test_payload{test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))};
+
   // Run UE Configuration Procedure to completion.
   configure_ue(create_f1ap_ue_context_update_request(test_ue->ue_index, {}, {drb_id_t::drb1}));
 
-  // Forward MAC Rx SDU through DRB1.
+  // Forward MAC Rx SDU through DRB1 (UL).
   // > Add dummy RLC data header.
-  byte_buffer mac_sdu = {0x80, 0x0};
+  byte_buffer mac_sdu(dummy_rlc_header);
   // > Append data buffer.
-  byte_buffer payload{test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))};
-  mac_sdu.append(payload.copy());
+  mac_sdu.append(test_payload.copy());
+  // > Push MAC Rx SDU through MAC logical channel.
   mac.last_ue_reconf_msg->bearers_to_addmod[0].ul_bearer->on_new_sdu({mac_sdu.copy()});
+  // > Check arrival of F1-U Tx SDU to F1-U bearer.
+  ASSERT_EQ(test_payload, f1ap.f1_ues[test_ue->ue_index].f1u_bearers[drb_id_t::drb1].last_sdu);
 
-  // Check existence of F1-U Tx SDU.
-  ASSERT_EQ(payload, f1ap.f1_ues[test_ue->ue_index].f1u_bearers[drb_id_t::drb1].last_sdu);
+  // Forward F1-C Rx SDU through DRB1 (DL).
+  // > Create data buffer.
+  byte_buffer f1c_rx_sdu = test_payload.copy();
+  // > Push F1-C Rx SDU through F1-C bearer Rx SDU notifier.
+  f1ap.last_ue_config->f1u_bearers_to_add[0].rx_sdu_notifier->on_new_sdu(std::move(f1c_rx_sdu), 0);
+  // > Check arrival of MAC Tx SDU to MAC logical channel.
+  auto        mac_tx_sdu = mac.last_ue_reconf_msg->bearers_to_addmod[0].dl_bearer->on_new_tx_sdu(test_payload.length() +
+                                                                                          dummy_rlc_header.size());
+  byte_buffer extracted_payload(mac_tx_sdu.begin() + dummy_rlc_header.size(), mac_tx_sdu.end());
+  ASSERT_EQ(test_payload, extracted_payload);
 }
