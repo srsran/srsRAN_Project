@@ -9,7 +9,6 @@
  */
 
 #include "ngc_impl.h"
-#include "../cu_cp/helpers/ngap_e1ap_asn1_helpers.h"
 #include "ngap_asn1_utils.h"
 #include "procedures/ng_initial_context_setup_procedure.h"
 #include "procedures/ng_pdu_session_resource_setup_procedure.h"
@@ -21,15 +20,13 @@ using namespace srsgnb;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
-ngc_impl::ngc_impl(ngc_ue_task_scheduler&   task_sched_,
-                   ngc_ue_manager&          ue_manager_,
-                   ngc_message_notifier&    ngc_notifier_,
-                   ngc_e1_control_notifier& e1_ctrl_notifier_) :
+ngc_impl::ngc_impl(ngc_ue_task_scheduler& task_sched_,
+                   ngc_ue_manager&        ue_manager_,
+                   ngc_message_notifier&  ngc_notifier_) :
   logger(srslog::fetch_basic_logger("NGC")),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
   ngc_notifier(ngc_notifier_),
-  e1_ctrl_notifier(e1_ctrl_notifier_),
   events(std::make_unique<ngc_event_manager>())
 {
 }
@@ -250,16 +247,10 @@ void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_s
     ue->set_aggregate_maximum_bit_rate_dl(request->ue_aggregate_maximum_bit_rate.value.ueaggregate_maximum_bit_rate_dl);
   }
 
-  e1ap_pdu_session_resource_setup_message msg;
-  for (auto pdu_session_res_item : request->pdu_session_res_setup_list_su_req.value) {
-    msg.pdu_session_res_setup_items.push_back(pdu_session_res_item);
-  }
-  msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
-
   // start procedure
-  task_sched.schedule_async_task(
-      cu_cp_ue_id,
-      launch_async<ng_pdu_session_resource_setup_procedure>(*ue, msg, e1_ctrl_notifier, ngc_notifier, logger));
+  task_sched.schedule_async_task(cu_cp_ue_id,
+                                 launch_async<ng_pdu_session_resource_setup_procedure>(
+                                     *ue, request, ue->get_rrc_ue_control_notifier(), ngc_notifier, logger));
 
   // Handle optional parameters
   if (request->nas_pdu_present) {

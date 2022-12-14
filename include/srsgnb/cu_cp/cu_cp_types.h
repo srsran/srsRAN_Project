@@ -121,5 +121,117 @@ inline du_index_t get_du_index_from_cu_cp_ue_id(cu_cp_ue_id_t ngap_id)
   return int_to_du_index((cu_cp_ue_id_to_uint(ngap_id) - ue_idx) / MAX_NOF_UES);
 }
 
+// ASN1 types converted to common types
+
+enum class cu_cp_cause_t : uint8_t {
+  radio_network = 0,
+  transport     = 1,
+  nas           = 2,
+  protocol      = 3,
+  misc          = 4,
+  choice_exts   = 5,
+  nulltype      = 6
+};
+
+struct qos_characteristics {
+  bool        is_dynamic_5qi;
+  uint16_t    five_qi;
+  uint8_t     prio_level_arp;
+  std::string pre_emption_cap;
+  std::string pre_emption_vulnerability;
+};
+
+struct qos_flow_setup_request_item {
+  uint8_t               qos_flow_id;
+  qos_characteristics   qos_charact;
+  optional<uint8_t>     erab_id;
+  optional<std::string> add_qos_flow_info;
+  optional<std::string> reflective_qos_attribute;
+};
+
+struct ul_ngu_up_tnl_information {
+  uint64_t transport_layer_address;
+  uint64_t gtp_teid;
+};
+
+struct cu_cp_s_nssai {
+  optional<uint64_t> sd;
+  uint64_t           sst;
+};
+
+struct cu_cp_pdu_session_res_setup_item {
+  uint16_t                                 pdu_session_id;
+  byte_buffer                              pdu_session_nas_pdu;
+  cu_cp_s_nssai                            s_nssai;
+  uint64_t                                 pdu_session_aggregate_maximum_bit_rate_dl;
+  uint64_t                                 pdu_session_aggregate_maximum_bit_rate_ul;
+  ul_ngu_up_tnl_information                ul_ngu_up_tnl_info;
+  std::string                              pdu_session_type;
+  std::vector<qos_flow_setup_request_item> qos_flow_setup_request_items;
+};
+
+struct cu_cp_pdu_session_resource_setup_message {
+  std::vector<cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
+  uint64_t                                      ue_aggregate_maximum_bit_rate_dl;
+};
+
+struct cu_cp_uptransport_layer_info {
+  uint64_t transport_layer_address;
+  uint64_t gtp_teid;
+};
+
+struct cu_cp_associated_qos_flow {
+  uint8_t               qos_flow_id;
+  optional<std::string> qos_flow_map_ind;
+};
+
+struct cu_cp_dlqos_flow_per_tnl_info {
+  cu_cp_uptransport_layer_info           uptransport_layer_info;
+  std::vector<cu_cp_associated_qos_flow> associated_qos_flow_list;
+};
+
+struct cu_cp_qos_flow_failed_to_setup_item {
+  uint8_t       qos_flow_id;
+  cu_cp_cause_t cause;
+};
+
+struct cu_cp_qos_flow_per_tnl_info {
+  cu_cp_uptransport_layer_info           uptransport_layer_info;
+  std::vector<cu_cp_associated_qos_flow> associated_qos_flow_list;
+};
+
+struct cu_cp_security_result {
+  std::string confidentiality_protection_result;
+  std::string integrity_protection_result;
+};
+struct cu_cp_pdu_session_resource_setup_response_transfer {
+  std::vector<cu_cp_qos_flow_per_tnl_info>         add_dl_qos_flow_per_tnl_info;
+  cu_cp_dlqos_flow_per_tnl_info                    dlqos_flow_per_tnl_info;
+  std::vector<cu_cp_associated_qos_flow>           associated_qos_flow_list;
+  std::vector<cu_cp_qos_flow_failed_to_setup_item> qos_flow_failed_to_setup_list;
+  optional<cu_cp_security_result>                  security_result;
+};
+
+struct cu_cp_pdu_session_res_setup_response_item {
+  uint16_t                                           pdu_session_id;
+  cu_cp_pdu_session_resource_setup_response_transfer pdu_session_resource_setup_response_transfer;
+};
+
+struct cu_cp_pdu_session_resource_setup_unsuccessful_transfer {
+  cu_cp_cause_t cause;
+  // TODO: Add crit diagnostics
+};
+
+struct cu_cp_pdu_session_res_setup_failed_item {
+  uint16_t                                               pdu_session_id;
+  cu_cp_pdu_session_resource_setup_unsuccessful_transfer pdu_session_resource_setup_unsuccessful_transfer;
+};
+
+struct cu_cp_pdu_session_resource_setup_response_message {
+  std::vector<cu_cp_pdu_session_res_setup_response_item> pdu_session_res_setup_response_items;
+  std::vector<cu_cp_pdu_session_res_setup_failed_item>   pdu_session_res_failed_to_setup_items;
+  // TODO: Add crit diagnostics
+};
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

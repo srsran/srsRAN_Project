@@ -25,10 +25,7 @@ class ngc_event_manager;
 class ngc_impl final : public ngc_interface
 {
 public:
-  ngc_impl(ngc_ue_task_scheduler&   task_sched_,
-           ngc_ue_manager&          ue_manager_,
-           ngc_message_notifier&    ngc_notifier_,
-           ngc_e1_control_notifier& e1_ctrl_notifier_);
+  ngc_impl(ngc_ue_task_scheduler& task_sched_, ngc_ue_manager& ue_manager_, ngc_message_notifier& ngc_notifier_);
   ~ngc_impl();
 
   // ngc ue control manager functions
@@ -80,11 +77,10 @@ private:
   /// \param[in] outcome The unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::ngap::unsuccessful_outcome_s& outcome);
 
-  srslog::basic_logger&    logger;
-  ngc_ue_task_scheduler&   task_sched;
-  ngc_ue_manager&          ue_manager;
-  ngc_message_notifier&    ngc_notifier;
-  ngc_e1_control_notifier& e1_ctrl_notifier;
+  srslog::basic_logger&  logger;
+  ngc_ue_task_scheduler& task_sched;
+  ngc_ue_manager&        ue_manager;
+  ngc_message_notifier&  ngc_notifier;
 
   std::unique_ptr<ngc_event_manager> events;
 };

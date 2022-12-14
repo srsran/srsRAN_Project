@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../helpers/rrc_ue_e1ap_asn1_helpers.h"
 #include "../helpers/rrc_ue_f1ap_asn1_helpers.h"
 #include "../task_schedulers/ue_task_scheduler.h"
 #include "srsgnb/adt/byte_buffer.h"
@@ -69,6 +70,52 @@ private:
   f1c_rrc_message_handler& f1c_handler;
   f1c_ue_context_manager&  f1c_ue_context_mng;
   const ue_index_t         ue_index;
+};
+
+/// Adapter between RRC UE and E1
+class rrc_ue_e1_adapter : public rrc_ue_e1_control_notifier
+{
+public:
+  void connect_e1(e1_bearer_context_manager* e1_bearer_context_mng_) { e1_bearer_context_mng = e1_bearer_context_mng_; }
+
+  async_task<e1ap_pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(const e1ap_pdu_session_resource_setup_message& msg) override
+  {
+    srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
+
+    e1ap_bearer_context_setup_request_message e1_request;
+    fill_e1ap_bearer_context_setup_request(e1_request, msg);
+
+    e1ap_bearer_context_setup_response_message e1_bearer_context_setup_resp_msg;
+
+    return launch_async([this,
+                         res = e1ap_pdu_session_resource_setup_response_message{},
+                         e1_bearer_context_setup_resp_msg,
+                         e1_request,
+                         msg](coro_context<async_task<e1ap_pdu_session_resource_setup_response_message>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+
+      CORO_AWAIT_VALUE(e1_bearer_context_setup_resp_msg,
+                       e1_bearer_context_mng->handle_bearer_context_setup_request(e1_request));
+
+      // Fail if E-UTRAN bearer context setup is returned
+      if (e1_bearer_context_setup_resp_msg.response->sys_bearer_context_setup_resp->type() ==
+          asn1::e1ap::sys_bearer_context_setup_resp_c::types::e_utran_bearer_context_setup_resp) {
+        cu_cp_cause_t cause = cu_cp_cause_t::protocol;
+        fill_failed_rrc_ue_pdu_session_res_setup_response(res, msg, e1_bearer_context_setup_resp_msg, cause);
+
+        CORO_EARLY_RETURN(res);
+      }
+
+      // TODO: Fill all values of the response
+      fill_rrc_ue_pdu_session_res_setup_response(res, msg, e1_bearer_context_setup_resp_msg);
+
+      CORO_RETURN(res);
+    });
+  }
+
+private:
+  e1_bearer_context_manager* e1_bearer_context_mng = nullptr;
 };
 
 /// Adapter between RRC UE and DU processor

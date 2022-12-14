@@ -70,6 +70,28 @@ public:
   on_new_pdu_session_resource_setup_request(f1ap_pdu_session_resource_setup_message& msg) = 0;
 };
 
+struct e1ap_pdu_session_resource_setup_message {
+  std::vector<cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
+  uint64_t                                      ue_aggregate_maximum_bit_rate_dl;
+};
+
+struct e1ap_pdu_session_resource_setup_response_message {
+  std::vector<cu_cp_pdu_session_res_setup_response_item> pdu_session_res_setup_response_items;
+  std::vector<cu_cp_pdu_session_res_setup_failed_item>   pdu_session_res_failed_to_setup_items;
+  rrc_ue_drb_setup_message                               rrc_ue_drb_setup_msg;
+};
+
+/// Interface to notify the E1 about control messages.
+class rrc_ue_e1_control_notifier
+{
+public:
+  virtual ~rrc_ue_e1_control_notifier() = default;
+
+  /// \brief Notify about the reception of a new PDU Session Resource Setup List.
+  virtual async_task<e1ap_pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(const e1ap_pdu_session_resource_setup_message& msg) = 0;
+};
+
 /// Interface to configure security in a SRB
 /// TX PDCP entity.
 class rrc_tx_security_notifier
@@ -277,6 +299,17 @@ public:
   virtual async_task<bool> handle_init_security_context(const rrc_init_security_context& msg) = 0;
 };
 
+/// Handler to initialize the PDU Session Resource Setup from NGAP.
+class rrc_ue_pdu_session_resource_handler
+{
+public:
+  virtual ~rrc_ue_pdu_session_resource_handler() = default;
+
+  /// \brief Handle the reception of a new PDU Session Resource Setup List.
+  virtual async_task<cu_cp_pdu_session_resource_setup_response_message>
+  handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_message& msg) = 0;
+};
+
 /// Combined entry point for the RRC UE handling.
 /// It will contain getters for the interfaces for the various logical channels handled by RRC.
 class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
@@ -284,6 +317,7 @@ class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
                          public rrc_ue_dl_nas_message_handler,
                          public rrc_ue_control_message_handler,
                          public rrc_ue_init_security_context_handler,
+                         public rrc_ue_pdu_session_resource_handler,
                          public rrc_ue_setup_proc_notifier,
                          public rrc_ue_security_mode_command_proc_notifier
 {
@@ -291,12 +325,17 @@ public:
   rrc_ue_interface()          = default;
   virtual ~rrc_ue_interface() = default;
 
-  virtual rrc_ul_ccch_pdu_handler& get_ul_ccch_pdu_handler()                              = 0;
-  virtual rrc_ul_dcch_pdu_handler& get_ul_dcch_pdu_handler()                              = 0;
-  virtual void                     connect_srb_notifier(srb_id_t                  srb_id,
-                                                        rrc_pdu_notifier&         notifier,
-                                                        rrc_tx_security_notifier* tx_sec,
-                                                        rrc_rx_security_notifier* rx_sec) = 0;
+  virtual rrc_ul_ccch_pdu_handler&              get_ul_ccch_pdu_handler()                  = 0;
+  virtual rrc_ul_dcch_pdu_handler&              get_ul_dcch_pdu_handler()                  = 0;
+  virtual rrc_ue_dl_nas_message_handler&        get_rrc_ue_dl_nas_message_handler()        = 0;
+  virtual rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler()       = 0;
+  virtual rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() = 0;
+  virtual rrc_ue_pdu_session_resource_handler&  get_rrc_ue_pdu_session_resource_handler()  = 0;
+
+  virtual void connect_srb_notifier(srb_id_t                  srb_id,
+                                    rrc_pdu_notifier&         notifier,
+                                    rrc_tx_security_notifier* tx_sec,
+                                    rrc_rx_security_notifier* rx_sec) = 0;
 };
 
 } // namespace srs_cu_cp

@@ -176,3 +176,13 @@ void rrc_ue_impl::handle_new_guami(const guami& msg)
 {
   context.current_guami = msg;
 }
+
+async_task<cu_cp_pdu_session_resource_setup_response_message>
+rrc_ue_impl::handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_message& msg)
+{
+  return launch_async([res = cu_cp_pdu_session_resource_setup_response_message{}](
+                          coro_context<async_task<cu_cp_pdu_session_resource_setup_response_message>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    CORO_RETURN(res);
+  });
+}

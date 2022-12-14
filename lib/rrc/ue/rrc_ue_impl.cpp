@@ -18,6 +18,7 @@ using namespace asn1::rrc_nr;
 
 rrc_ue_impl::rrc_ue_impl(rrc_du_ue_manager&                     rrc_du_,
                          rrc_ue_du_processor_notifier&          du_proc_notif_,
+                         rrc_ue_e1_control_notifier&            e1_ctrl_notif_,
                          rrc_ue_nas_notifier&                   nas_notif_,
                          rrc_ue_control_notifier&               ngc_ctrl_notif_,
                          const ue_index_t                       ue_index_,
@@ -30,6 +31,7 @@ rrc_ue_impl::rrc_ue_impl(rrc_du_ue_manager&                     rrc_du_,
   context(ue_index_, c_rnti_, cell_, cfg_),
   rrc_du(rrc_du_),
   du_processor_notifier(du_proc_notif_),
+  e1_ctrl_notifier(e1_ctrl_notif_),
   nas_notifier(nas_notif_),
   ngc_ctrl_notifier(ngc_ctrl_notif_),
   srbs(srbs_),
@@ -40,16 +42,6 @@ rrc_ue_impl::rrc_ue_impl(rrc_du_ue_manager&                     rrc_du_,
 {
   // TODO: Use task_sched to schedule RRC procedures.
   (void)task_sched;
-}
-
-rrc_ul_ccch_pdu_handler& rrc_ue_impl::get_ul_ccch_pdu_handler()
-{
-  return *this;
-}
-
-rrc_ul_dcch_pdu_handler& rrc_ue_impl::get_ul_dcch_pdu_handler()
-{
-  return *this;
 }
 
 void rrc_ue_impl::connect_srb_notifier(srb_id_t                  srb_id,

@@ -32,11 +32,12 @@ protected:
     srslog::init();
     test_logger.set_level(srslog::basic_levels::debug);
 
-    cu_cp_notifier       = std::make_unique<dummy_du_processor_cu_cp_notifier>(nullptr);
-    f1c_pdu_notifier     = std::make_unique<dummy_f1c_pdu_notifier>(nullptr);
-    f1c_du_mgmt_notifier = std::make_unique<dummy_f1c_du_management_notifier>(nullptr);
-    rrc_ue_ngc_notifier  = std::make_unique<dummy_rrc_ue_ngc_adapter>();
-    ue_task_sched        = std::make_unique<dummy_du_processor_to_cu_cp_task_scheduler>(timers);
+    cu_cp_notifier          = std::make_unique<dummy_du_processor_cu_cp_notifier>(nullptr);
+    f1c_pdu_notifier        = std::make_unique<dummy_f1c_pdu_notifier>(nullptr);
+    f1c_du_mgmt_notifier    = std::make_unique<dummy_f1c_du_management_notifier>(nullptr);
+    rrc_ue_e1_ctrl_notifier = std::make_unique<dummy_rrc_ue_e1_control_notifier>();
+    rrc_ue_ngc_notifier     = std::make_unique<dummy_rrc_ue_ngc_adapter>();
+    ue_task_sched           = std::make_unique<dummy_du_processor_to_cu_cp_task_scheduler>(timers);
 
     // create and start DU processor
     du_processor_config_t du_cfg = {};
@@ -45,6 +46,7 @@ protected:
                                            *cu_cp_notifier,
                                            *f1c_du_mgmt_notifier,
                                            *f1c_pdu_notifier,
+                                           *rrc_ue_e1_ctrl_notifier,
                                            *rrc_ue_ngc_notifier,
                                            *rrc_ue_ngc_notifier,
                                            *ue_task_sched,
@@ -61,6 +63,7 @@ protected:
   std::unique_ptr<dummy_du_processor_cu_cp_notifier>          cu_cp_notifier;
   std::unique_ptr<dummy_f1c_pdu_notifier>                     f1c_pdu_notifier;
   std::unique_ptr<dummy_f1c_du_management_notifier>           f1c_du_mgmt_notifier;
+  std::unique_ptr<dummy_rrc_ue_e1_control_notifier>           rrc_ue_e1_ctrl_notifier;
   std::unique_ptr<dummy_rrc_ue_ngc_adapter>                   rrc_ue_ngc_notifier;
   timer_manager                                               timers;
   std::unique_ptr<dummy_du_processor_to_cu_cp_task_scheduler> ue_task_sched;

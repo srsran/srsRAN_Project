@@ -190,5 +190,19 @@ private:
   timer_manager&       timer_db;
 };
 
+class dummy_rrc_ue_e1_control_notifier : public rrc_ue_e1_control_notifier
+{
+public:
+  async_task<e1ap_pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(const e1ap_pdu_session_resource_setup_message& msg) override
+  {
+    return launch_async([res = e1ap_pdu_session_resource_setup_response_message{}](
+                            coro_context<async_task<e1ap_pdu_session_resource_setup_response_message>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(res);
+    });
+  }
+};
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

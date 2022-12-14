@@ -112,31 +112,23 @@ public:
     });
   }
 
-  byte_buffer last_nas_pdu;
-
-private:
-  srslog::basic_logger& logger;
-};
-
-/// Dummy handler storing and printing the received PDU.
-class dummy_ngc_e1_control_notifier : public ngc_e1_control_notifier
-{
-public:
-  dummy_ngc_e1_control_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
-
-  virtual async_task<e1ap_pdu_session_resource_setup_response_message>
-  on_new_pdu_session_resource_setup_request(e1ap_pdu_session_resource_setup_message& msg) override
+  async_task<asn1::ngap::pdu_session_res_setup_resp_s>
+  on_new_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request,
+                                            uint64_t ue_aggregate_maximum_bit_rate_dl) override
   {
-    last_msg = std::move(msg);
-    logger.info("Received a PDU Session Resource Setup Message");
+    logger.info("Received a new pdu session resource setup request");
 
-    return launch_async([res = e1ap_pdu_session_resource_setup_response_message{}](
-                            coro_context<async_task<e1ap_pdu_session_resource_setup_response_message>>& ctx) mutable {
+    last_request = request;
+
+    return launch_async([res = asn1::ngap::pdu_session_res_setup_resp_s{}](
+                            coro_context<async_task<asn1::ngap::pdu_session_res_setup_resp_s>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN(res);
     });
   }
-  e1ap_pdu_session_resource_setup_message last_msg;
+
+  byte_buffer                                 last_nas_pdu;
+  asn1::ngap::pdu_session_res_setup_request_s last_request;
 
 private:
   srslog::basic_logger& logger;

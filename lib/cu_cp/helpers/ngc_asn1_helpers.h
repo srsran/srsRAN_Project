@@ -13,6 +13,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/ngap/ngap.h"
+#include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/ran/bcd_helpers.h"
 #include "srsgnb/security/security.h"
 #include <string>

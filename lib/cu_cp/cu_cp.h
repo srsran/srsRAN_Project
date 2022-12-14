@@ -14,6 +14,7 @@
 #include "adapters/du_processor_adapters.h"
 #include "adapters/f1c_adapters.h"
 #include "adapters/ngc_adapters.h"
+#include "adapters/rrc_ue_adapters.h"
 #include "cu_up_processor_impl.h"
 #include "du_processor_impl.h"
 #include "task_schedulers/cu_up_task_scheduler.h"
@@ -155,11 +156,11 @@ private:
   // RRC UE to NGC adapter
   rrc_ue_ngc_adapter rrc_ue_ngc_notifier;
 
+  // RRC UE to E1 adapter
+  rrc_ue_e1_adapter rrc_ue_e1_notifier;
+
   // NGC to RRC UE adapter array
   slotted_array<ngc_rrc_ue_adapter, MAX_NOF_CU_UES> ngc_rrc_ue_ev_notifiers;
-
-  // NGC to E1 adapter
-  ngc_e1_adapter ngc_e1_notifier;
 
   std::atomic<bool> amf_connected = {false};
 };

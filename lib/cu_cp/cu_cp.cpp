@@ -31,7 +31,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   assert_cu_cp_configuration_valid(cfg);
 
   // Create layers
-  ngc_entity = create_ngc(ngc_task_sched, ue_mng, *cfg.ngc_notifier, ngc_e1_notifier);
+  ngc_entity = create_ngc(ngc_task_sched, ue_mng, *cfg.ngc_notifier);
 
   // connect event notifiers to layers
   ngc_task_sched.connect_cu_cp(ue_task_sched);
@@ -123,7 +123,10 @@ void cu_cp::handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc
 
   ngc_rrc_ue_adapter& rrc_ue_adapter = ngc_rrc_ue_ev_notifiers[cu_cp_ue_id_uint];
   ngc_entity->create_ngc_ue(du_index, ue_index, rrc_ue_adapter, rrc_ue_adapter);
-  rrc_ue_adapter.connect_rrc_ue(rrc_ue, rrc_ue, rrc_ue);
+  rrc_ue_adapter.connect_rrc_ue(&rrc_ue->get_rrc_ue_dl_nas_message_handler(),
+                                &rrc_ue->get_rrc_ue_control_message_handler(),
+                                &rrc_ue->get_rrc_ue_init_security_context_handler(),
+                                &rrc_ue->get_rrc_ue_pdu_session_resource_handler());
 }
 
 void cu_cp::on_new_cu_up_connection()
@@ -176,6 +179,7 @@ du_index_t cu_cp::add_du()
                                                                    du_processor_ev_notifier,
                                                                    f1c_ev_notifier,
                                                                    *cfg.f1c_notifier,
+                                                                   rrc_ue_e1_notifier,
                                                                    rrc_ue_ngc_notifier,
                                                                    rrc_ue_ngc_notifier,
                                                                    du_processor_task_sched,
@@ -254,8 +258,8 @@ cu_up_index_t cu_cp::add_cu_up()
   cu_up_processor_task_sched.connect_cu_cp(cu_up_task_sched);
   cu_up->get_context().cu_up_index = cu_up_index;
 
-  // Connect e1 to ngc
-  ngc_e1_notifier.connect_e1(&cu_up->get_e1_bearer_context_manager());
+  // Connect e1 to rrc ue
+  rrc_ue_e1_notifier.connect_e1(&cu_up->get_e1_bearer_context_manager());
 
   cu_up->start();
 
