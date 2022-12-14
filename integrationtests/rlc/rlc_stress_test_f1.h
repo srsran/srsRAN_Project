@@ -51,7 +51,14 @@ public:
   }
 
   // RLC -> F1 -> PDCP
-  void on_delivered_sdu(uint32_t pdcp_count) final
+  void on_transmitted_sdu(uint32_t max_tx_pdcp_sn) final
+  {
+    logger.log_debug("Transmitted SDU called");
+    // TODO
+  }
+
+  // RLC -> F1 -> PDCP
+  void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) final
   {
     logger.log_debug("Delivered SDU called");
     // TODO

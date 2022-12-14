@@ -166,6 +166,11 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
   sdu_info.pdcp_count          = sdu.pdcp_count;
   sdu_info.sdu                 = std::move(sdu.buf); // Move SDU into TX window SDU info
 
+  // Notify the upper layer about the beginning of the transfer of the current SDU
+  if (sdu.pdcp_count.has_value()) {
+    upper_dn.on_transmitted_sdu(sdu.pdcp_count.value());
+  }
+
   // Segment new SDU if necessary
   if (sdu_info.sdu.length() + head_min_size > nof_bytes) {
     logger.log_info("Trying to build PDU from SDU segment.");
@@ -525,11 +530,13 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
   uint32_t stop_sn = status.get_nacks().size() == 0
                          ? status.ack_sn
                          : status.get_nacks()[0].nack_sn; // Stop processing ACKs at the first NACK, if it exists.
+
+  optional<uint32_t> max_deliv_pdcp_sn = {}; // initialize with not value set
   for (uint32_t sn = st.tx_next_ack; tx_mod_base(sn) < tx_mod_base(stop_sn); sn = (sn + 1) % mod) {
     if (tx_window->has_sn(sn)) {
       rlc_tx_am_sdu_info& sdu_info = (*tx_window)[sn];
       if (sdu_info.pdcp_count.has_value()) {
-        upper_dn.on_delivered_sdu((*tx_window)[sn].pdcp_count.value()); // notify upper layer
+        max_deliv_pdcp_sn = (*tx_window)[sn].pdcp_count;
       }
       retx_queue.remove_sn(sn); // remove any pending retx for that SN
       tx_window->remove_sn(sn);
@@ -538,6 +545,9 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
       logger.log_error("Missing ACKed SN from TX window");
       break;
     }
+  }
+  if (max_deliv_pdcp_sn.has_value()) {
+    upper_dn.on_delivered_sdu(max_deliv_pdcp_sn.value()); // notify upper layer
   }
   logger.log_debug("Processed status report ACKs. ACK_SN={}. Tx_Next_Ack={}", status.ack_sn, st.tx_next_ack);
 

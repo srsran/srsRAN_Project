@@ -88,7 +88,7 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
 
     // Notify the upper layer about the beginning of the transfer of the current SDU
     if (sdu.pdcp_count.has_value()) {
-      upper_dn.on_delivered_sdu(sdu.pdcp_count.value());
+      upper_dn.on_transmitted_sdu(sdu.pdcp_count.value());
     }
   }
 

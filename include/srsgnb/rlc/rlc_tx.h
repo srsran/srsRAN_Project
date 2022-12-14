@@ -73,15 +73,26 @@ public:
   virtual void discard_sdu(uint32_t pdcp_count) = 0;
 };
 
-/// This interface represents the data upper layer that the RLC bearer must notify on successful delivery of an SDU, so
-/// it can stop its discard timer. For RLC AM this is on reception of a corresponding ACK; for RLC UM this is the moment
-/// the transmission of the SDU begins.
+/// This interface represents the data upper layer that the TX RLC bearer must notify on transmission and/or delivery of
+/// SDUs it can stop its discard timer.
+///
+/// The following events shall be notified:
+/// - on transmission of an SDU, i.e. pop from SDU queue
+/// - on successful delivery of an SDU (only RLC AM)
 class rlc_tx_upper_layer_data_notifier
 {
 public:
   virtual ~rlc_tx_upper_layer_data_notifier() = default;
 
-  virtual void on_delivered_sdu(uint32_t pdcp_count) = 0;
+  /// \brief Informs upper layer about the highest PDCP PDU sequence number of the PDCP PDU that was transmitted to the
+  /// lower layers.
+  /// \param max_tx_pdcp_sn Highest transmitted PDCP PDU sequence number.
+  virtual void on_transmitted_sdu(uint32_t max_tx_pdcp_sn) = 0;
+
+  /// \brief Informs upper layer about the highest PDCP PDU sequence number of the PDCP PDU that was successfully
+  /// delivered in sequence towards the UE.
+  /// \param max_deliv_pdcp_sn Highest in a sequence delivered PDCP PDU sequence number.
+  virtual void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) = 0;
 };
 
 /// This interface represents the control upper layer that the

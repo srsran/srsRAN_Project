@@ -36,11 +36,12 @@ public:
   }
 
   // rlc_tx_upper_layer_data_notifier interface
-  void on_delivered_sdu(uint32_t pdcp_count) override
+  void on_transmitted_sdu(uint32_t max_tx_pdcp_sn) override
   {
     // store in list
-    transmitted_pdcp_count_list.push_back(pdcp_count);
+    transmitted_pdcp_count_list.push_back(max_tx_pdcp_sn);
   }
+  void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) override {}
 
   // rlc_tx_upper_layer_control_notifier interface
   void on_protocol_failure() override {}

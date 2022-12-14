@@ -51,7 +51,12 @@ private:
 class rlc_tx_data_notifier : public rlc_tx_upper_layer_data_notifier
 {
 public:
-  void on_delivered_sdu(uint32_t pdcp_count) override
+  void on_transmitted_sdu(uint32_t max_deliv_pdcp_sn) override
+  {
+    // TODO
+  }
+
+  void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) override
   {
     // TODO
   }
