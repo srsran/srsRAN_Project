@@ -29,6 +29,7 @@ protected:
     ngu_demux = std::make_unique<dummy_ngu>();
     f1u_conn  = std::make_unique<dummy_f1u_connector>();
 
+    f1u_conn = std::make_unique<dummy_f1u_connector>();
     // create DUT object
     ue_mng = std::make_unique<ue_manager>(test_logger, timers, *f1u_conn, *ngu_demux);
   }

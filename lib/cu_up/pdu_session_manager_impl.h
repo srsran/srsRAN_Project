@@ -12,6 +12,7 @@
 
 #include "pdu_session_manager.h"
 #include "srsgnb/cu_up/cu_up_types.h"
+#include "srsgnb/f1u/common/f1u_connector.h"
 #include "srsgnb/gtpu/gtpu_demux.h"
 #include "srsgnb/support/timers.h"
 #include <map>
@@ -26,6 +27,7 @@ public:
   pdu_session_manager_impl(ue_index_t            ue_index_,
                            srslog::basic_logger& logger_,
                            timer_manager&        timers_,
+                           f1u_cu_up_connector&  f1u_conn_,
                            gtpu_demux_ctrl&      ngu_demux_);
   ~pdu_session_manager_impl() = default;
 
@@ -40,6 +42,7 @@ private:
   srslog::basic_logger&                           logger;
   timer_manager&                                  timers;
   gtpu_demux_ctrl&                                ngu_demux;
+  f1u_cu_up_connector&                            f1u_conn;
   std::map<uint8_t, std::unique_ptr<pdu_session>> pdu_sessions; // key is pdu_session_id
 };
 

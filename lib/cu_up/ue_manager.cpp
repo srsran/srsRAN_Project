@@ -41,7 +41,7 @@ ue_context* ue_manager::add_ue()
   }
 
   // Create UE object
-  std::unique_ptr<ue_context> new_ctx = std::make_unique<ue_context>(new_idx, logger, timers, ngu_demux);
+  std::unique_ptr<ue_context> new_ctx = std::make_unique<ue_context>(new_idx, logger, timers, f1u_conn, ngu_demux);
 
   // add to DB
   ue_db.emplace(new_idx, std::move(new_ctx));

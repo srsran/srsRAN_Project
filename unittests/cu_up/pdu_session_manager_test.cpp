@@ -26,9 +26,9 @@ protected:
 
     // create required objects
     ngu_demux = std::make_unique<dummy_ngu>();
-
+    f1u_conn  = std::make_unique<dummy_f1u_connector>();
     // create DUT object
-    pdu_session_mng = std::make_unique<pdu_session_manager_impl>(MIN_UE_INDEX, logger, timers, *ngu_demux);
+    pdu_session_mng = std::make_unique<pdu_session_manager_impl>(MIN_UE_INDEX, logger, timers, *f1u_conn, *ngu_demux);
   }
 
   void TearDown() override
@@ -38,6 +38,7 @@ protected:
   }
 
   std::unique_ptr<gtpu_demux_ctrl>          ngu_demux;
+  std::unique_ptr<f1u_cu_up_connector>      f1u_conn;
   std::unique_ptr<pdu_session_manager_ctrl> pdu_session_mng;
   srslog::basic_logger&                     logger = srslog::fetch_basic_logger("TEST", false);
   timer_manager                             timers;

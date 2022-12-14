@@ -19,8 +19,9 @@ using namespace srs_cu_up;
 pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t            ue_index_,
                                                    srslog::basic_logger& logger_,
                                                    timer_manager&        timers_,
+                                                   f1u_cu_up_connector&  f1u_conn_,
                                                    gtpu_demux_ctrl&      ngu_demux_) :
-  ue_index(ue_index_), logger(logger_), timers(timers_), ngu_demux(ngu_demux_)
+  ue_index(ue_index_), logger(logger_), timers(timers_), ngu_demux(ngu_demux_), f1u_conn(f1u_conn_)
 {
 }
 
