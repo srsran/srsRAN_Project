@@ -11,17 +11,13 @@
 #pragma once
 
 #include "srsgnb/ran/sch_mcs.h"
-#include "tbs_calculator.h"
 
 namespace srsgnb {
 
-struct ul_mcs {
-  sch_mcs_index mcs;
-  unsigned      tbs;
-};
-
-unsigned map_snr_to_mcs(double snr);
-
-ul_mcs get_ul_mcs(tbs_calculator_configuration tbs_params, double ul_snr);
+/// \brief Maps the (PUSCH) SNR to a given MCS for PUSCH.
+///
+/// The objective of this function is to find the maximum MCS that can be used for a given SNR.
+/// TODO: revise this function once the SNR to BLER curves will have been prepared.
+sch_mcs_index map_snr_to_mcs_ul(double snr);
 
 } // namespace srsgnb

@@ -20,7 +20,7 @@ namespace srsgnb {
 /// \brief Collects the parameters to calculate the num. of PRBS given the payload size, for a PDSCH transmission.
 ///
 /// \remark For the definition of the parameters within this struct, refer to TS 38.214, Section 5.1.3.2.
-struct prbs_calculator_pdsch_config {
+struct prbs_calculator_sch_config {
   /// \brief Size (in bytes) of payload that has to fit within the TBS. Maximum value is 478 bytes (3824 bits).
   unsigned payload_size_bytes;
   /// \brief Number of OFDM symbols of the PDSCH allocation within the slot, parameter \f$N_{symb}^{sh}\f$.
@@ -55,7 +55,7 @@ struct prbs_calculator_pdsch_config {
 };
 
 /// \brief Collects the outputs of the helper that returns the num. of PRBs and TBS, for a PDSCH transmission.
-struct pdsch_prbs_tbs {
+struct sch_prbs_tbs {
   /// Number of PRBs required for a given PDSCH transmission.
   unsigned nof_prbs;
   /// TBS in bytes corresponding to the PRBs required for a given PDSCH transmission.
@@ -67,16 +67,16 @@ struct pdsch_prbs_tbs {
 /// This function implements the inverse procedure of the TBS calculation procedure (as per TS38.214 Section 5.1.3.2) to
 /// derive the number of PRBs from a given payload in bytes.
 ///
-/// \param[in] pdsch_config is a struct with the PDSCH configuration to compute the num. of PRBs.
+/// \param[in] sch_config is a struct with the PDSCH configuration to compute the num. of PRBs.
 /// \return Returns a struct with the number of PRBs and the corresponding TBS. If the payload_size is greater than 478
 /// bytes (3824 bits), it returns the number of PRBs and TBS corresponding to maximum allowed payload size of 478 bytes.
-pdsch_prbs_tbs get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_config);
+sch_prbs_tbs get_nof_prbs(const prbs_calculator_sch_config& sch_config);
 
 /// \brief Computes a coarse estimate of the number of required PRBs to transmit a given payload size. This estimate
 /// might lead to a TBS that is smaller or larger than the given payload size.
 ///
-/// \param[in] pdsch_config is a struct with the PDSCH configuration to compute the num. of PRBs.
+/// \param[in] sch_config is a struct with the PDSCH configuration to compute the num. of PRBs.
 /// \return estimate of the number of PRBs.
-unsigned estimate_required_nof_prbs(const prbs_calculator_pdsch_config& pdsch_config);
+unsigned estimate_required_nof_prbs(const prbs_calculator_sch_config& sch_config);
 
 } // namespace srsgnb

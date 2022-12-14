@@ -18,19 +18,19 @@ using namespace srsgnb;
 
 // Pair of prbs_calculator_test_entry and corresponding number of prbs.
 struct prbs_calculator_test_entry {
-  prbs_calculator_pdsch_config params;
-  unsigned                     nof_prbs;
-  unsigned                     tbs;
+  prbs_calculator_sch_config params;
+  unsigned                   nof_prbs;
+  unsigned                   tbs;
 };
 
-prbs_calculator_pdsch_config get_prb_calc_pdsch_config(unsigned        payload_bytes,
-                                                       sch_mcs_index   mcs_index,
-                                                       pdsch_mcs_table mcs_table     = srsgnb::pdsch_mcs_table::qam64,
-                                                       unsigned        nof_symbols   = 12,
-                                                       unsigned        nof_dmrs_prbs = 36,
-                                                       unsigned        nof_oh_prb    = 0,
-                                                       unsigned        nof_layers    = 1,
-                                                       unsigned        tb_scaling    = 0)
+prbs_calculator_sch_config get_prb_calc_pdsch_config(unsigned        payload_bytes,
+                                                     sch_mcs_index   mcs_index,
+                                                     pdsch_mcs_table mcs_table     = srsgnb::pdsch_mcs_table::qam64,
+                                                     unsigned        nof_symbols   = 12,
+                                                     unsigned        nof_dmrs_prbs = 36,
+                                                     unsigned        nof_oh_prb    = 0,
+                                                     unsigned        nof_layers    = 1,
+                                                     unsigned        tb_scaling    = 0)
 {
   return {payload_bytes,
           nof_symbols,
@@ -41,7 +41,7 @@ prbs_calculator_pdsch_config get_prb_calc_pdsch_config(unsigned        payload_b
           tb_scaling};
 }
 
-unsigned get_tbs_bytes(const prbs_calculator_pdsch_config& pdsch_cfg, unsigned nof_prbs)
+unsigned get_tbs_bytes(const prbs_calculator_sch_config& pdsch_cfg, unsigned nof_prbs)
 {
   unsigned tbs_bits_lb = tbs_calculator_calculate(tbs_calculator_configuration{pdsch_cfg.nof_symb_sh,
                                                                                pdsch_cfg.nof_dmrs_prb,
@@ -60,9 +60,9 @@ class prbs_calculator_tester : public ::testing::TestWithParam<prb_calculator_te
 
 TEST_P(prbs_calculator_tester, calculated_nof_prbs_is_upper_bound)
 {
-  prbs_calculator_pdsch_config pdsch_cfg =
+  prbs_calculator_sch_config pdsch_cfg =
       get_prb_calc_pdsch_config(std::get<0>(GetParam()), sch_mcs_index(std::get<1>(GetParam())));
-  pdsch_prbs_tbs tbs_prb = get_nof_prbs(pdsch_cfg);
+  sch_prbs_tbs tbs_prb = get_nof_prbs(pdsch_cfg);
 
   unsigned tbs_lb = get_tbs_bytes(pdsch_cfg, tbs_prb.nof_prbs - 1);
   ASSERT_TRUE(tbs_lb < pdsch_cfg.payload_size_bytes) << fmt::format(
@@ -116,7 +116,7 @@ TEST(nof_prb_calculation, test_entries_match)
 
   // Run the test for all the values in the table.
   for (const auto& test_entry : prbs_calculator_test_table) {
-    pdsch_prbs_tbs test_results = get_nof_prbs(test_entry.params);
+    sch_prbs_tbs test_results = get_nof_prbs(test_entry.params);
     ASSERT_EQ(test_entry.nof_prbs, test_results.nof_prbs);
     ASSERT_EQ(test_entry.tbs, test_results.tbs_bytes);
   }
@@ -124,7 +124,7 @@ TEST(nof_prb_calculation, test_entries_match)
 
 TEST(estimate_nof_prbs, distance_from_actual_solution)
 {
-  auto compute_nof_prb_estim_err = [](const std::vector<prbs_calculator_pdsch_config>& configs) {
+  auto compute_nof_prb_estim_err = [](const std::vector<prbs_calculator_sch_config>& configs) {
     double tbs_diff = 0, tbs_abs = 0, tbs_max = 0;
     for (const auto& test_cfg : configs) {
       int    nof_prbs_estimate = estimate_required_nof_prbs(test_cfg);
@@ -139,7 +139,7 @@ TEST(estimate_nof_prbs, distance_from_actual_solution)
     return std::make_tuple(tbs_diff / configs.size(), tbs_abs / configs.size(), tbs_max);
   };
 
-  std::vector<prbs_calculator_pdsch_config> short_tbs_prbs_calc_configs, medium_tbs_prbs_calc_configs,
+  std::vector<prbs_calculator_sch_config> short_tbs_prbs_calc_configs, medium_tbs_prbs_calc_configs,
       long_tbs_prbs_calc_configs;
   for (unsigned mcs = 1; mcs < 25; ++mcs) {
     // build short TBS table.

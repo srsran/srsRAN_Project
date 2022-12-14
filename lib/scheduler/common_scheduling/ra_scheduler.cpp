@@ -90,12 +90,12 @@ void ra_scheduler::precompute_rar_fields()
         cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, i, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
     unsigned nof_symb_sh = get_pdsch_cfg().pdsch_td_alloc_list[i].symbols.length();
-    rar_data[i].prbs_tbs = get_nof_prbs(prbs_calculator_pdsch_config{rar_payload_size_bytes + rar_subheader_size_bytes,
-                                                                     nof_symb_sh,
-                                                                     calculate_nof_dmrs_per_rb(rar_data[i].dmrs_info),
-                                                                     nof_oh_prb,
-                                                                     rar_mcs_config,
-                                                                     nof_layers});
+    rar_data[i].prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{rar_payload_size_bytes + rar_subheader_size_bytes,
+                                                                   nof_symb_sh,
+                                                                   calculate_nof_dmrs_per_rb(rar_data[i].dmrs_info),
+                                                                   nof_oh_prb,
+                                                                   rar_mcs_config,
+                                                                   nof_layers});
   }
 }
 
@@ -119,14 +119,14 @@ void ra_scheduler::precompute_msg3_pdus()
     dummy_h_ul.new_tx(dummy_slot, sched_cfg.max_nof_msg3_harq_retxs);
 
     // Compute the required PRBs and TBS for Msg3.
-    dmrs_information dmrs_info = make_dmrs_info_common(get_pusch_cfg(), i, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
-    pdsch_prbs_tbs   prbs_tbs =
-        get_nof_prbs(prbs_calculator_pdsch_config{max_msg3_sdu_payload_size_bytes + msg3_subheader_size_bytes,
-                                                  (unsigned)get_pusch_cfg().pusch_td_alloc_list[i].symbols.length(),
-                                                  calculate_nof_dmrs_per_rb(dmrs_info),
-                                                  nof_oh_prb,
-                                                  msg3_mcs_config,
-                                                  nof_layers});
+    pusch_config_params pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, i);
+    sch_prbs_tbs        prbs_tbs =
+        get_nof_prbs(prbs_calculator_sch_config{max_msg3_sdu_payload_size_bytes + msg3_subheader_size_bytes,
+                                                (unsigned)get_pusch_cfg().pusch_td_alloc_list[i].symbols.length(),
+                                                calculate_nof_dmrs_per_rb(pusch_cfg.dmrs),
+                                                nof_oh_prb,
+                                                msg3_mcs_config,
+                                                nof_layers});
 
     // Generate DCI and PUSCH PDUs.
     build_dci_f0_0_tc_rnti(msg3_data[i].dci,
@@ -136,8 +136,15 @@ void ra_scheduler::precompute_msg3_pdus()
                            i,
                            sched_cfg.msg3_mcs_index,
                            dummy_h_ul);
+
     // Note: RNTI will be overwritten later.
-    build_pusch_f0_0_tc_rnti(msg3_data[i].pusch, to_rnti(0x4601), cell_cfg, msg3_data[i].dci.tc_rnti_f0_0, true);
+    build_pusch_f0_0_tc_rnti(msg3_data[i].pusch,
+                             pusch_cfg,
+                             prbs_tbs.tbs_bytes,
+                             to_rnti(0x4601),
+                             cell_cfg,
+                             msg3_data[i].dci.tc_rnti_f0_0,
+                             true);
   }
 }
 

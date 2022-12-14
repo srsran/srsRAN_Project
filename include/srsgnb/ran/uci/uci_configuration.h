@@ -20,6 +20,23 @@ namespace srsgnb {
 /// \c scaling values options, part of \c UCI-OnPUSCH, part of \c PUSCH-Config, as per TS 38.331.
 enum class alpha_scaling_opt { f0p5, f0p65, f0p8, f1 };
 
+inline float alpha_scaling_to_float(alpha_scaling_opt val)
+{
+  switch (val) {
+    case alpha_scaling_opt::f0p5:
+      return 0.5f;
+    case alpha_scaling_opt::f0p65:
+      return 0.65f;
+    case alpha_scaling_opt::f0p8:
+      return 0.8f;
+    case alpha_scaling_opt::f1:
+      return 1.0f;
+    default:
+      srsgnb_assert(val > alpha_scaling_opt::f1, "Invalid Alpha scaling option");
+      return 1.0f;
+  }
+}
+
 /// \c BetaOffsets, as per TS 38.331. These values are mapped into floats as per Tables in Section 9.3, TS 38.213.
 struct beta_offsets {
   /// \remark Apply to all members. For values larger than 31 mean, treat the parameter as "not present".

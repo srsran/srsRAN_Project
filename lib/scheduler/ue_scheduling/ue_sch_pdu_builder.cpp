@@ -36,6 +36,92 @@ static unsigned get_pdsch_n_id(pci_t                              pci,
   return pci;
 }
 
+pusch_config_params srsgnb::get_pusch_config_f0_0_tc_rnti(const cell_configuration& cell_cfg, unsigned time_resource)
+{
+  constexpr pusch_mcs_table mcs_table  = pusch_mcs_table::qam64;
+  constexpr unsigned        nof_layers = 1;
+  // As per TS 38.214, Section 6.1.4.2, nof_oh_prb by \c xOverhead, defined in \c PUSCH-ServingCellConfig, TS 38.331; it
+  // is in the dedicated resources, configured the after DCI Format 0-0 TC-RNTI is used. Hence, nof_oh_prb is here set
+  // as 0.
+  static constexpr unsigned nof_oh_prb = 0;
+  // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
+  // used for DCI Format 1-0 (in the DL). Therefore, for the PUSCH this is set to 0.
+  constexpr unsigned tb_scaling_field = 0;
+  // Parameter \c tp-pi2BPSK enabled is not supported yet.
+  constexpr bool tp_pi2bpsk_present = false;
+  // TODO verify if this is the correct value.
+  constexpr unsigned nof_harq_ack_bits = 2;
+  // There is no need for CSI reporting for TC-RNTI.
+  constexpr unsigned nof_csi_part1_bits = 0;
+  constexpr unsigned nof_csi_part2_bits = 0;
+
+  pusch_config_params pusch;
+
+  // TODO: Use UE-dedicated DMRS info if needed.
+  pusch.dmrs = make_dmrs_info_common(
+      *cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+
+  pusch.symbols = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[time_resource].symbols;
+
+  pusch.mcs_table          = mcs_table;
+  pusch.nof_layers         = nof_layers;
+  pusch.tp_pi2bpsk_present = tp_pi2bpsk_present;
+  pusch.tb_scaling_field   = tb_scaling_field;
+
+  pusch.nof_oh_prb = nof_oh_prb;
+
+  // TODO: verify if this needs to be set depending on some configuration.
+  pusch.nof_harq_ack_bits  = nof_harq_ack_bits;
+  pusch.nof_csi_part1_bits = nof_csi_part1_bits;
+  pusch.nof_csi_part2_bits = nof_csi_part2_bits;
+
+  return pusch;
+}
+
+pusch_config_params srsgnb::get_pusch_config_f0_0_c_rnti(const cell_configuration&    cell_cfg,
+                                                         const ue_cell_configuration& ue_cell_cfg,
+                                                         const bwp_uplink_common&     ul_bwp,
+                                                         unsigned                     time_resource)
+{
+  constexpr pusch_mcs_table mcs_table  = pusch_mcs_table::qam64;
+  constexpr unsigned        nof_layers = 1;
+  // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
+  // used for DCI Format 1-0 (in the DL). Therefore, for the PUSCH this is set to 0.
+  constexpr unsigned tb_scaling_field = 0;
+  // Parameter \c tp-pi2BPSK enabled is not supported yet.
+  constexpr bool tp_pi2bpsk_present = false;
+  // TODO verify if this is the correct value.
+  constexpr unsigned nof_harq_ack_bits = 2;
+  // There is no need for CSI reporting for TC-RNTI.
+  constexpr unsigned nof_csi_part1_bits = 0;
+  constexpr unsigned nof_csi_part2_bits = 0;
+
+  pusch_config_params pusch;
+
+  pusch.dmrs = make_dmrs_info_common(
+      *cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+
+  pusch.symbols = ul_bwp.pusch_cfg_common->pusch_td_alloc_list[time_resource].symbols;
+
+  pusch.mcs_table          = mcs_table;
+  pusch.nof_layers         = nof_layers;
+  pusch.tp_pi2bpsk_present = tp_pi2bpsk_present;
+  pusch.tb_scaling_field   = tb_scaling_field;
+
+  // According to TS 38.214, Section 6.1.4.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
+  // NOTE: x_overhead::not_set is mapped to 0.
+  pusch.nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
+                         ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
+                         : static_cast<unsigned>(x_overhead::not_set);
+
+  // TODO: verify if this needs to be set depending on some configuration.
+  pusch.nof_harq_ack_bits  = nof_harq_ack_bits;
+  pusch.nof_csi_part1_bits = nof_csi_part1_bits;
+  pusch.nof_csi_part2_bits = nof_csi_part2_bits;
+
+  return pusch;
+}
+
 void srsgnb::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch,
                                       rnti_t                               rnti,
                                       const cell_configuration&            cell_cfg,
@@ -150,20 +236,13 @@ void srsgnb::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
 }
 
 void srsgnb::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,
+                                      const pusch_config_params&           pusch_cfg,
+                                      unsigned                             tbs_bytes,
                                       rnti_t                               rnti,
                                       const cell_configuration&            cell_cfg,
                                       const dci_0_0_tc_rnti_configuration& dci_cfg,
                                       bool                                 is_new_data)
-{
-  static constexpr pusch_mcs_table mcs_table  = pusch_mcs_table::qam64;
-  static constexpr unsigned        nof_layers = 1;
-  // As per TS 38.214, Section 6.1.4.2, nof_oh_prb by \c xOverhead, defined in \c PUSCH-ServingCellConfig, TS 38.331; it
-  // is in the dedicated resources, configured the after DCI Format 0-0 TC-RNTI is used. Hence, nof_oh_prb is here set
-  // as 0.
-  static constexpr unsigned nof_oh_prb       = 0;
-  static constexpr unsigned tb_scaling_field = 0;
-
-  // TODO.
+{ // TODO.
   pusch.intra_slot_freq_hopping    = false;
   pusch.pusch_second_hop_prb       = 0;
   pusch.tx_direct_current_location = 0;
@@ -179,7 +258,7 @@ void srsgnb::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
       cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[dci_cfg.time_resource].symbols;
 
   // MCS.
-  pusch.mcs_table = mcs_table;
+  pusch.mcs_table = pusch_cfg.mcs_table;
   pusch.mcs_index = dci_cfg.modulation_coding_scheme;
   pusch.mcs_descr = pusch_mcs_get_config(pusch.mcs_table, pusch.mcs_index, false);
 
@@ -188,26 +267,14 @@ void srsgnb::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
   pusch.transform_precoding = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->msg3_transform_precoder;
   // As per TS 38.211, Section 6.3.1.1, n_ID is set to Physical Cell ID for TC-RNTI.
   pusch.n_id          = cell_cfg.pci;
-  pusch.nof_layers    = nof_layers;
-  pusch.dmrs          = make_dmrs_info_common(*cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common,
-                                     dci_cfg.time_resource,
-                                     cell_cfg.pci,
-                                     cell_cfg.dmrs_typeA_pos);
+  pusch.nof_layers    = pusch_cfg.nof_layers;
+  pusch.dmrs          = pusch_cfg.dmrs;
   pusch.pusch_dmrs_id = 0;
   pusch.rv_index      = dci_cfg.redundancy_version;
   // TS 38.321, 5.4.2.1 - "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is used".
   pusch.harq_id  = 0;
   pusch.new_data = is_new_data;
 
-  // Calculate TBS
-  unsigned tbs_bytes = tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pusch.symbols.length(),
-                                                                             calculate_nof_dmrs_per_rb(pusch.dmrs),
-                                                                             nof_oh_prb,
-                                                                             pusch.mcs_descr,
-                                                                             nof_layers,
-                                                                             tb_scaling_field,
-                                                                             pusch.prbs.prbs().length()}) /
-                       nof_bits_per_byte;
   pusch.tb_size_bytes = tbs_bytes;
   // Set number of CB to zero if no CBs are being used.
   pusch.num_cb = 0;
@@ -215,18 +282,13 @@ void srsgnb::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
 
 void srsgnb::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
                                      rnti_t                              rnti,
+                                     const pusch_config_params&          pusch_cfg,
+                                     unsigned                            tbs_bytes,
                                      const cell_configuration&           cell_cfg,
-                                     const ue_cell_configuration&        ue_cell_cfg,
                                      const bwp_uplink_common&            ul_bwp,
                                      const dci_0_0_c_rnti_configuration& dci_cfg,
                                      bool                                is_new_data)
 {
-  static constexpr pusch_mcs_table mcs_table  = pusch_mcs_table::qam64;
-  static constexpr unsigned        nof_layers = 1;
-  // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
-  // used for DCI Format 1-0.
-  static constexpr unsigned tb_scaling_field = 0;
-
   // TODO.
   pusch.intra_slot_freq_hopping    = false;
   pusch.pusch_second_hop_prb       = 0;
@@ -242,35 +304,20 @@ void srsgnb::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
   pusch.symbols = ul_bwp.pusch_cfg_common->pusch_td_alloc_list[dci_cfg.time_resource].symbols;
 
   // MCS.
-  pusch.mcs_table                = mcs_table;
+  pusch.mcs_table                = pusch_cfg.mcs_table;
   pusch.mcs_index                = dci_cfg.modulation_coding_scheme;
-  sch_mcs_description mcs_config = pusch_mcs_get_config(pusch.mcs_table, pusch.mcs_index, false);
+  sch_mcs_description mcs_config = pusch_mcs_get_config(pusch.mcs_table, pusch.mcs_index, pusch_cfg.tp_pi2bpsk_present);
   pusch.mcs_descr                = mcs_config;
 
   pusch.transform_precoding = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->msg3_transform_precoder;
   pusch.n_id                = cell_cfg.pci;
-  pusch.dmrs                = make_dmrs_info_common(*cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common,
-                                     dci_cfg.time_resource,
-                                     cell_cfg.pci,
-                                     cell_cfg.dmrs_typeA_pos);
+  pusch.dmrs                = pusch_cfg.dmrs;
   pusch.pusch_dmrs_id       = cell_cfg.pci;
 
   // TBS.
-  pusch.nof_layers = nof_layers;
-  // According to TS 38.214, Section 6.1.4.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
-  // NOTE: x_overhead::not_set is mapped to 0.
-  unsigned nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
-                            ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
-                            : static_cast<unsigned>(x_overhead::not_set);
-  pusch.tb_size_bytes = tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pusch.symbols.length(),
-                                                                              calculate_nof_dmrs_per_rb(pusch.dmrs),
-                                                                              nof_oh_prb,
-                                                                              mcs_config,
-                                                                              nof_layers,
-                                                                              tb_scaling_field,
-                                                                              pusch.prbs.prbs().length()}) /
-                        nof_bits_per_byte;
-  pusch.num_cb = 0;
+  pusch.nof_layers    = pusch_cfg.nof_layers;
+  pusch.tb_size_bytes = tbs_bytes;
+  pusch.num_cb        = 0;
 
   // HARQ.
   pusch.rv_index = dci_cfg.redundancy_version;

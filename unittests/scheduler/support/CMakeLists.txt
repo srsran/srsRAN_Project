@@ -42,3 +42,16 @@ add_executable(dmrs_helpers_test dmrs_helpers_test.cpp)
 target_link_libraries(dmrs_helpers_test srsgnb_sched srslog)
 add_test(dmrs_helpers_test dmrs_helpers_test)
 
+add_executable(mcs_calculator_test mcs_calculator_test.cpp)
+target_link_libraries(mcs_calculator_test srsgnb_sched gtest gtest_main)
+add_test(mcs_calculator_test.cpp mcs_calculator_test)
+
+add_executable(mcs_tbs_calculator_test pusch/mcs_tbs_calculator_test.cpp)
+target_link_libraries(mcs_tbs_calculator_test
+        srsgnb_sched
+        scheduler_test_suite
+        mac_configuration_helpers
+        srsgnb_du_manager
+        gtest
+        gtest_main)
+add_test(mcs_tbs_calculator_test mcs_tbs_calculator_test)

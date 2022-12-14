@@ -280,13 +280,13 @@ bool paging_scheduler::allocate_paging(cell_slot_resource_allocator&    res_grid
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
   const sch_mcs_description mcs_descr = pdsch_mcs_get_config(pdsch_mcs_table::qam64, expert_cfg.pg.paging_mcs_index);
-  const pdsch_prbs_tbs      paging_prbs_tbs = get_nof_prbs(prbs_calculator_pdsch_config{pg_msg.paging_msg_size,
-                                                                                   nof_symb_sh,
-                                                                                   calculate_nof_dmrs_per_rb(dmrs_info),
-                                                                                   nof_oh_prb,
-                                                                                   mcs_descr,
-                                                                                   nof_layers,
-                                                                                   tbs_scaling});
+  const sch_prbs_tbs        paging_prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pg_msg.paging_msg_size,
+                                                                               nof_symb_sh,
+                                                                               calculate_nof_dmrs_per_rb(dmrs_info),
+                                                                               nof_oh_prb,
+                                                                               mcs_descr,
+                                                                               nof_layers,
+                                                                               tbs_scaling});
 
   // 1. Find available RBs in PDSCH for Paging grant.
   crb_interval paging_crbs;

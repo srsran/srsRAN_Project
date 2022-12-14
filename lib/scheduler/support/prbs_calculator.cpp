@@ -31,15 +31,15 @@ static float estimate_nof_info_payload_higher_3824_bits(unsigned payload_bits, f
 }
 
 /// \brief Obtain an initial estimate for the minimum number of PRBs needed so that the TBS >= payload size.
-unsigned srsgnb::estimate_required_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cfg)
+unsigned srsgnb::estimate_required_nof_prbs(const prbs_calculator_sch_config& sch_config)
 {
   // Convert size into bits, as per TS procedures for TBS.
-  unsigned payload_size = pdsch_cfg.payload_size_bytes * 8U;
+  unsigned payload_size = sch_config.payload_size_bytes * 8U;
 
   float                 nof_info_estimate;
   static const unsigned payload_step_threshold = 3824;
   if (payload_size >= payload_step_threshold) {
-    nof_info_estimate = estimate_nof_info_payload_higher_3824_bits(payload_size, pdsch_cfg.mcs_descr.target_code_rate);
+    nof_info_estimate = estimate_nof_info_payload_higher_3824_bits(payload_size, sch_config.mcs_descr.target_code_rate);
   } else {
     // This is an estimate of the N_info (as per Section 5.1.3.2, TS 38.214), approximated as the TBS that is greater or
     // equal to the payload size. This guarantees that the estimated num. of PRBs we obtained yields a TBS that is
@@ -47,17 +47,17 @@ unsigned srsgnb::estimate_required_nof_prbs(const prbs_calculator_pdsch_config& 
     nof_info_estimate = static_cast<float>(tbs_calculator_table_find_smallest_not_less_than(payload_size));
   }
 
-  unsigned nof_bit_per_symbol = get_bits_per_symbol(pdsch_cfg.mcs_descr.modulation);
+  unsigned nof_bit_per_symbol = get_bits_per_symbol(sch_config.mcs_descr.modulation);
 
   // Get N_re (as per Section 5.1.3.2, TS 38.214) from N_info.
   float nof_re =
-      nof_info_estimate /
-      (pdsch_cfg.mcs_descr.get_normalised_target_code_rate() * static_cast<float>(nof_bit_per_symbol) *
-       static_cast<float>(pdsch_cfg.nof_layers) * tbs_calculator_pdsch_get_scaling_factor(pdsch_cfg.tb_scaling_field));
+      nof_info_estimate / (sch_config.mcs_descr.get_normalised_target_code_rate() *
+                           static_cast<float>(nof_bit_per_symbol) * static_cast<float>(sch_config.nof_layers) *
+                           tbs_calculator_pdsch_get_scaling_factor(sch_config.tb_scaling_field));
 
   // N_info_prime as per Section 5.1.3.2, TS 38.214.
-  unsigned nof_re_prime = static_cast<unsigned>(NOF_SUBCARRIERS_PER_RB) * pdsch_cfg.nof_symb_sh -
-                          pdsch_cfg.nof_dmrs_prb - pdsch_cfg.nof_oh_prb;
+  unsigned nof_re_prime = static_cast<unsigned>(NOF_SUBCARRIERS_PER_RB) * sch_config.nof_symb_sh -
+                          sch_config.nof_dmrs_prb - sch_config.nof_oh_prb;
 
   // Get the estimated number of PRBs from the N_re and N_info_prime.
   return divide_ceil(nof_re, std::min(nof_re_prime, 156U));
@@ -70,9 +70,9 @@ unsigned srsgnb::estimate_required_nof_prbs(const prbs_calculator_pdsch_config& 
 /// \param nof_prbs_estimate Initial estimate for the number PRBs. The algorithm searches for the actual solution using
 /// this value as a starting point.
 /// \return Optimal number of PRBs and TBS.
-static pdsch_prbs_tbs linear_search_nof_prbs_upper_bound(const prbs_calculator_pdsch_config& pdsch_cfg,
-                                                         unsigned                            nof_prbs_estimate,
-                                                         unsigned                            max_prb_inc_iterations = 5)
+static sch_prbs_tbs linear_search_nof_prbs_upper_bound(const prbs_calculator_sch_config& pdsch_cfg,
+                                                       unsigned                          nof_prbs_estimate,
+                                                       unsigned                          max_prb_inc_iterations = 5)
 {
   unsigned                     payload_size_bits = pdsch_cfg.payload_size_bytes * 8U;
   tbs_calculator_configuration tbs_cfg{pdsch_cfg.nof_symb_sh,
@@ -109,11 +109,11 @@ static pdsch_prbs_tbs linear_search_nof_prbs_upper_bound(const prbs_calculator_p
   return {tbs_cfg.n_prb, tbs_bits_ub / 8U};
 }
 
-pdsch_prbs_tbs srsgnb::get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cfg)
+sch_prbs_tbs srsgnb::get_nof_prbs(const prbs_calculator_sch_config& sch_config)
 {
   // Get a first estimate for the number of PRBs.
-  unsigned nof_prbs_estimate = estimate_required_nof_prbs(pdsch_cfg);
+  unsigned nof_prbs_estimate = estimate_required_nof_prbs(sch_config);
 
   // Linearly search for the optimal number of PRBs using "nof_prbs_estimate" as initial guess.
-  return linear_search_nof_prbs_upper_bound(pdsch_cfg, nof_prbs_estimate);
+  return linear_search_nof_prbs_upper_bound(sch_config, nof_prbs_estimate);
 }

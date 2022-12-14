@@ -10,6 +10,8 @@
 #include "ue_cell_grid_allocator.h"
 #include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/mcs_calculator.h"
+#include "../support/pusch/mcs_tbs_calculator.h"
 #include "../support/tbs_calculator.h"
 #include "ue_dci_builder.h"
 #include "ue_sch_pdu_builder.h"
@@ -257,17 +259,55 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
     return false;
   }
 
-  // Mark resources as occupied in the ResourceGrid.
-  pusch_alloc.ul_res_grid.fill(grant_info{scs, pusch_td_cfg.symbols, grant.crbs});
-
-  // Derive MCS.
-  sch_mcs_index    mcs;
-  ul_harq_process& h_ul = ue_cc->harqs.ul_harq(grant.h_id);
-  if (h_ul.empty()) {
-    mcs = expert_cfg.fixed_ul_mcs.value(); // TODO: Support dynamic MCS.
-  } else {
-    mcs = h_ul.last_tx_params().mcs;
+  // Fetch PUSCH parameters based on type of transmission.
+  pusch_config_params pusch_cfg;
+  switch (pdcch->dci.type) {
+    case dci_ul_rnti_config_type::tc_rnti_f0_0:
+      pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, time_resource);
+      break;
+    case dci_ul_rnti_config_type::c_rnti_f0_0:
+      pusch_cfg = get_pusch_config_f0_0_c_rnti(cell_cfg, ue_cell_cfg, bwp_ul_cmn, time_resource);
+      break;
+    default:
+      report_fatal_error("Unsupported PDCCH DCI UL format");
   }
+
+  // Compute MCS and TBS for this transmission.
+  // TODO: get SNR from PHY.
+  double                         ul_snr{15};
+  optional<pusch_mcs_tbs_params> mcs_tbs_info;
+  ul_harq_process&               h_ul = ue_cc->harqs.ul_harq(grant.h_id);
+  // If it's a new Tx, compute the MCS and TBS from SNR, payload size, and available RBs.
+  if (h_ul.empty()) {
+    // If the initial MCS is set in the expert config, apply that value, else compute it from the SNR.
+    sch_mcs_index initial_mcs =
+        expert_cfg.fixed_ul_mcs.has_value() ? expert_cfg.fixed_ul_mcs.value() : map_snr_to_mcs_ul(ul_snr);
+    mcs_tbs_info =
+        compute_ul_mcs_tbs(pusch_cfg, ue_cell_cfg, u.pending_ul_newtx_bytes(), initial_mcs, grant.crbs.length());
+  }
+  // If it's a reTx, fetch the MCS and TBS from the previous transmission.
+  else {
+    mcs_tbs_info.emplace(pusch_mcs_tbs_params{.mcs    = h_ul.last_tx_params().mcs,
+                                              .tbs    = h_ul.last_tx_params().tbs_bytes,
+                                              .n_prbs = h_ul.last_tx_params().prbs.prbs().length()});
+  }
+
+  // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
+  if (not mcs_tbs_info.has_value()) {
+    logger.warning("Failed to allocate PUSCH. Cause: no MCS such that code rate <= 0.95.");
+    return false;
+  }
+
+  // Update CRBs interval if the used nof PRBs is less than the total available for PUSCH.
+  crb_interval crbs = grant.crbs.length() != mcs_tbs_info->n_prbs
+                          ? crb_interval{grant.crbs.start(), grant.crbs.start() + mcs_tbs_info->n_prbs}
+                          : grant.crbs;
+
+  // Mark resources as occupied in the ResourceGrid.
+  pusch_alloc.ul_res_grid.fill(grant_info{scs, pusch_td_cfg.symbols, crbs});
+
+  // Compute the available PRBs in the grid for this transmission.
+  prb_interval prbs = crb_to_prb(bwp_ul_cmn.generic_params, grant.crbs);
 
   // Allocate UE UL HARQ.
   if (h_ul.empty()) {
@@ -279,7 +319,6 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // Fill UL PDCCH DCI.
-  prb_interval prbs = crb_to_prb(bwp_ul_cmn.generic_params, grant.crbs);
   build_dci_f0_0_c_rnti(pdcch->dci,
                         cell_cfg.dl_cfg_common.init_dl_bwp,
                         ue_cell_cfg.dl_bwp_common(ue_cc->active_bwp_id()).generic_params,
@@ -288,18 +327,30 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                         ss_cfg->type,
                         prbs,
                         time_resource,
-                        mcs,
+                        mcs_tbs_info.value().mcs,
                         h_ul);
 
   // Fill PUSCH.
   ul_sched_info& msg = pusch_alloc.result.ul.puschs.emplace_back();
   switch (pdcch->dci.type) {
     case dci_ul_rnti_config_type::tc_rnti_f0_0:
-      build_pusch_f0_0_tc_rnti(msg.pusch_cfg, u.crnti, cell_cfg, pdcch->dci.tc_rnti_f0_0, h_ul.tb().nof_retxs == 0);
+      build_pusch_f0_0_tc_rnti(msg.pusch_cfg,
+                               pusch_cfg,
+                               mcs_tbs_info.value().tbs,
+                               u.crnti,
+                               cell_cfg,
+                               pdcch->dci.tc_rnti_f0_0,
+                               h_ul.tb().nof_retxs == 0);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
-      build_pusch_f0_0_c_rnti(
-          msg.pusch_cfg, u.crnti, cell_cfg, ue_cell_cfg, bwp_ul_cmn, pdcch->dci.c_rnti_f0_0, h_ul.tb().nof_retxs == 0);
+      build_pusch_f0_0_c_rnti(msg.pusch_cfg,
+                              u.crnti,
+                              pusch_cfg,
+                              mcs_tbs_info.value().tbs,
+                              cell_cfg,
+                              bwp_ul_cmn,
+                              pdcch->dci.c_rnti_f0_0,
+                              h_ul.tb().nof_retxs == 0);
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI format");

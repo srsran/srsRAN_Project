@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/support/srsgnb_assert.h"
 namespace srsgnb {
 
 /// HARQ values for UCI PUCCH Format 0 or Format 1.
@@ -30,5 +31,21 @@ inline constexpr const char* to_string(uci_pucch_f0_or_f1_harq_values value)
   }
   return "";
 }
+
+/// \brief Maps the integer \c beta_offset value for HARQ-ACK reporting into the corresponding float value.
+///
+/// The integer \c beta_offset value is passed by the \c PUSCH-Config, TS 38.331, and the mapping into the corresponding
+/// float value is determined as per Table 9.3-1, TS 38.213.
+/// \param beta_uint_val is the integer value as per \c BetaOffsets, TS 38.331.
+/// \return The corresponding float value as per Table 9.3-1, TS 38.213.
+float beta_harq_ack_to_float(unsigned beta_uint_val);
+
+/// \brief Maps the integer \c beta_offset value for CSI reporting into the corresponding float value.
+///
+/// The integer \c beta_offset value is passed by the \c PUSCH-Config, TS 38.331, and the mapping into the corresponding
+/// float value is determined as per Table 9.3-2, TS 38.213.
+/// \param beta_uint_val is the integer value as per \c BetaOffsets, TS 38.331.
+/// \return The corresponding float value as per Table 9.3-2, TS 38.213.
+float beta_csi_to_float(unsigned beta_uint_val);
 
 } // namespace srsgnb

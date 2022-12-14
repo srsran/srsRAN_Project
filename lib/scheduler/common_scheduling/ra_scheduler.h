@@ -121,7 +121,7 @@ private:
   /// Pre-cached information related to RAR for a given PDSCH time resource.
   struct rar_param_cached_data {
     dmrs_information dmrs_info;
-    pdsch_prbs_tbs   prbs_tbs;
+    sch_prbs_tbs     prbs_tbs;
   };
   std::vector<rar_param_cached_data> rar_data;
 
