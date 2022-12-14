@@ -233,8 +233,16 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(const upp
   std::shared_ptr<low_papr_sequence_generator_factory>  lpg_factory = create_low_papr_sequence_generator_sw_factory();
   std::shared_ptr<low_papr_sequence_collection_factory> lpc_factory =
       create_low_papr_sequence_collection_sw_factory(lpg_factory);
+
+  // Create channel estimator factory.
+  std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
+      create_port_channel_estimator_factory_sw();
+  report_fatal_error_if_not(port_chan_estimator_factory, "Invalid port channel estimator factory.");
+
+
   std::shared_ptr<dmrs_pucch_estimator_factory> pucch_dmrs_factory =
-      create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory);
+      create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory, port_chan_estimator_factory);
+  report_fatal_error_if_not(pucch_dmrs_factory, "Invalid PUCCH DM-RS estimator factory.");
 
   std::shared_ptr<pseudo_random_generator_factory> pseudorandom = create_pseudo_random_generator_sw_factory();
   std::shared_ptr<pucch_detector_factory>          pucch_detector_fact =

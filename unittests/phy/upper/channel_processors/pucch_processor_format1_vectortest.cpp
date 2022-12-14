@@ -79,9 +79,14 @@ protected:
     std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
     ASSERT_NE(prg_factory, nullptr);
 
-    std::shared_ptr<dmrs_pucch_estimator_factory> dmrs_factory =
-        create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory);
-    ASSERT_NE(dmrs_factory, nullptr);
+    // Create channel estimator factory.
+    std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
+        create_port_channel_estimator_factory_sw();
+    ASSERT_NE(port_chan_estimator_factory, nullptr) << "Cannot create port channel estimator factory.";
+
+    std::shared_ptr<dmrs_pucch_estimator_factory> estimator_factory =
+        create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory, port_chan_estimator_factory);
+    ASSERT_NE(estimator_factory, nullptr) << "Cannot create DM-RS PUCCH estimator factory.";
 
     std::shared_ptr<pucch_detector_factory> detector_factory =
         create_pucch_detector_factory_sw(lpc_factory, prg_factory);
@@ -116,7 +121,7 @@ protected:
     channel_estimate_dimensions.nof_prb       = MAX_RB;
 
     factory = create_pucch_processor_factory_sw(
-        dmrs_factory, detector_factory, pucch_demod_factory, decoder_factory, channel_estimate_dimensions);
+        estimator_factory, detector_factory, pucch_demod_factory, decoder_factory, channel_estimate_dimensions);
     ASSERT_NE(factory, nullptr);
   }
 

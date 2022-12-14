@@ -57,7 +57,8 @@ public:
 
 std::shared_ptr<dmrs_pucch_estimator_factory>
 create_dmrs_pucch_estimator_factory_sw(std::shared_ptr<pseudo_random_generator_factory>      prg_factory,
-                                       std::shared_ptr<low_papr_sequence_collection_factory> lpc_factory);
+                                       std::shared_ptr<low_papr_sequence_collection_factory> lpc_factory,
+                                       std::shared_ptr<port_channel_estimator_factory>       ch_estimator_factory);
 
 class dmrs_pusch_estimator_factory
 {

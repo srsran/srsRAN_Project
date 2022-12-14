@@ -33,7 +33,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   estimator_config.initial_cyclic_shift = config.initial_cyclic_shift;
   estimator_config.time_domain_occ      = config.time_domain_occ;
   estimator_config.n_id                 = config.n_id;
-  estimator_config.ports                = config.ports;
+  estimator_config.ports.assign(config.ports.begin(), config.ports.end());
 
   // Unused channel estimator parameters for this format.
   estimator_config.group_hopping   = pucch_group_hopping::NEITHER;
@@ -102,7 +102,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   estimator_config.nof_prb            = config.nof_prb;
   estimator_config.n_id               = config.n_id;
   estimator_config.n_id_0             = config.n_id_0;
-  estimator_config.ports              = config.ports;
+  estimator_config.ports.assign(config.ports.begin(), config.ports.end());
 
   // Perform channel estimation.
   channel_estimator_format_2->estimate(estimates, grid, estimator_config);

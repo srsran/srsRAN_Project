@@ -12,6 +12,7 @@
 
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
+#include "srsgnb/phy/upper/signal_processors/port_channel_estimator.h"
 #include "srsgnb/ran/pucch/pucch_mapping.h"
 
 namespace srsgnb {
@@ -19,18 +20,36 @@ namespace srsgnb {
 /// Describes a generic implementation of a DMRS for PDCCH processor.
 class dmrs_pucch_processor_format2_impl : public dmrs_pucch_processor
 {
+public:
+  using layer_dmrs_pattern = port_channel_estimator::layer_dmrs_pattern;
+
+  dmrs_pucch_processor_format2_impl(std::unique_ptr<pseudo_random_generator> prg_,
+                                    std::unique_ptr<port_channel_estimator>  ch_est_) :
+    prg(std::move(prg_)), ch_estimator(std::move(ch_est_))
+  {
+    srsgnb_assert(prg, "Invalid pseudo random generator.");
+    srsgnb_assert(ch_estimator, "Invalid port channel estimator.");
+  }
+
+  void estimate(channel_estimate& ce_, const resource_grid_reader& grid, const config_t& config) override;
+
 private:
-  /// Defines the DMRS index increment in frequency domain.
-  static constexpr unsigned STRIDE = 3;
-
-  /// Defines the number of DMRS per active resource block.
-  static constexpr unsigned NOF_DMRS_PER_RB = NRE / STRIDE;
-
-  /// Defines the maximum number of DMRS for PDCCH that can be found in a symbol.
-  static constexpr unsigned MAX_NOF_DMRS_PER_SYMBOL = PUCCH_FORMAT2_MAX_NPRB * NOF_DMRS_PER_RB;
-
+  /// Number of DM-RS RE per Resource Block.
+  static constexpr unsigned NOF_DMRS_PER_RB = 4;
   /// Pseudo-random sequence generator instance.
   std::unique_ptr<pseudo_random_generator> prg;
+  /// Antenna port channel estimator.
+  std::unique_ptr<port_channel_estimator> ch_estimator;
+  /// Buffer for DM-RS symbols.
+  dmrs_symbol_list temp_symbols;
+  /// Buffer for DM-RS symbol coordinates.
+  layer_dmrs_pattern temp_pattern;
+
+  /// \brief DM-RS RE allocation pattern for PUCCH Format 2.
+  ///
+  /// Indicates the Resource Elements containing DM-RS symbols within a PRB, as per TS38.211 Section 6.4.1.3.2.2.
+  const bounded_bitset<NRE> format2_prb_re_mask =
+      {false, true, false, false, true, false, false, true, false, false, true, false};
 
   /// \brief     Computes the initial pseudo-random state.
   /// \param[in] symbol Denotes the symbol index.
@@ -48,23 +67,12 @@ private:
   /// \param[in]  config    Provides the required parameters to calculate the sequences.
   void sequence_generation(span<cf_t> sequence, unsigned symbol, unsigned start_prb, const config_t& config);
 
-  /// \brief Implements TS 38.211 section 6.4.1.3.2.2 Mapping to physical resources.
+  /// \brief Generates the PUCCH DM-RS allocation pattern.
   ///
-  /// \param[out] ce        Container for storing extracted slot symbol DMRS pilots.
-  /// \param[in]  grid      Provides the source grid to read the signal.
-  /// \param[in]  start_prb Provides a PRB index for the given symbol.
-  /// \param[in]  nof_prb   Provides number of PRBs allocated for DM-RS pilots.
-  /// \param[in]  symbol    Denotes the symbol index.
-  void
-  mapping(span<cf_t> ce, const resource_grid_reader& grid, unsigned start_prb, unsigned nof_prb, unsigned symbol) const;
-
-public:
-  dmrs_pucch_processor_format2_impl(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
-  {
-    srsgnb_assert(prg, "Invalid pseudo random generator.");
-  }
-
-  void estimate(channel_estimate& ce_, const resource_grid_reader& grid, const config_t& config) override;
+  /// Implements the PUCCH DM-RS mapping, as described in TS 38.211 section 6.4.1.3.2.2.
+  /// \param[out] mask DM-RS allocation pattern.
+  /// \param[in]  cfg  Configuration parameters.
+  void generate_dmrs_pattern(layer_dmrs_pattern& mask, const config_t& config) const;
 };
 
 } // namespace srsgnb

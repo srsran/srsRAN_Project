@@ -13,17 +13,18 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/upper/channel_estimation.h"
+#include "srsgnb/phy/upper/dmrs_mapping.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/pucch/pucch_mapping.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
 
-/// Describes a DMRS for PUCCH processor interface.
+/// Describes a DM-RS for PUCCH processor interface.
 class dmrs_pucch_processor
 {
 public:
-  /// Describes the necessary parameters to generate DMRS for a PUCCH transmission.
+  /// Describes the necessary parameters to generate DM-RS for a PUCCH transmission.
   struct config_t {
     /// Specifies PUCCH format this configuration belongs.
     pucch_format format;
@@ -49,23 +50,23 @@ public:
     unsigned initial_cyclic_shift;
     /// Orthogonal covering code index, used by format 1 (see PUCCH-Resource IE in TS 38.331).
     unsigned time_domain_occ;
-    /// UE enables 2 DMRS symbols per hop of a PUCCH Format 3 or 4 (see PUCCH-Format-Config IE in TS 38.331).
+    /// UE enables 2 DM-RS symbols per hop of a PUCCH Format 3 or 4 (see PUCCH-Format-Config IE in TS 38.331).
     bool additional_dmrs;
     /// Higher layer parameter hopingID if configured (Cell-specific scrambling ID for group hopping and sequence
     /// hopping), otherwise the physical cell identifier, as described in TS 38.211 6.3.2.2.2.
     unsigned n_id;
-    /// DMRS scrambling identity, defined in TS 38.211 subclause 6.4.1.3.2.1;
-    /// Higher layer parameter scramblingID0 in DMRS-UplinkConfig if it is given, otherwise the physical cell
+    /// DM-RS scrambling identity, defined in TS 38.211 subclause 6.4.1.3.2.1;
+    /// Higher layer parameter scramblingID0 in DM-RS-UplinkConfig if it is given, otherwise the physical cell
     /// identifier.
     unsigned n_id_0;
     /// Port indexes the PDSCH transmission is mapped onto.
-    static_vector<uint8_t, MAX_PORTS> ports;
+    static_vector<uint8_t, DMRS_MAX_NPORTS> ports;
   };
 
   /// Default destructor.
   virtual ~dmrs_pucch_processor() = default;
 
-  /// \brief Generates and maps DMRS for PUCCH according to TS 38.211 section 6.4.1.3.
+  /// \brief Generates and maps DM-RS for PUCCH according to TS 38.211 section 6.4.1.3.
   ///
   /// \param[out] estimate Channel estimation results.
   /// \param[in]  grid     Provides the source resource grid.

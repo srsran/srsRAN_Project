@@ -71,8 +71,12 @@ protected:
       ASSERT_NE(lpc_factory, nullptr) << "Cannot create low PAPR sequence collection factory.";
 
       // Create channel estimator factory.
+      std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
+          create_port_channel_estimator_factory_sw();
+      ASSERT_NE(port_chan_estimator_factory, nullptr) << "Cannot create port channel estimator factory.";
+
       std::shared_ptr<dmrs_pucch_estimator_factory> estimator_factory =
-          create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory);
+          create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory, port_chan_estimator_factory);
       ASSERT_NE(estimator_factory, nullptr) << "Cannot create DM-RS PUCCH estimator factory.";
 
       // Create PUCCH detector factory.

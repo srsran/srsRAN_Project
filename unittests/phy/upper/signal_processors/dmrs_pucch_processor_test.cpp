@@ -33,9 +33,14 @@ int main()
       create_low_papr_sequence_collection_sw_factory(lpg_factory);
   TESTASSERT(lpc_factory);
 
+  // Create channel estimator factory.
+  std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
+      create_port_channel_estimator_factory_sw();
+  TESTASSERT(port_chan_estimator_factory);
+
   // Create DM-RS for PUCCH estimator factory.
   std::shared_ptr<dmrs_pucch_estimator_factory> estimator_factory =
-      create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory);
+      create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory, port_chan_estimator_factory);
   TESTASSERT(estimator_factory);
 
   // Iterate over test cases.
