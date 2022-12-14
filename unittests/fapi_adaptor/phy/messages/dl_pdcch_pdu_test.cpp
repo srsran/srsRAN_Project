@@ -13,6 +13,7 @@
 #include "srsgnb/fapi/message_builders.h"
 #include "srsgnb/fapi_adaptor/phy/messages/pdcch.h"
 #include "srsgnb/srsvec/bit.h"
+#include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/test_utils.h"
 #include <random>
 
@@ -57,7 +58,7 @@ static void pdcch_conversion_test()
                   unsigned shift_index        = shift_index_dist(gen);
                   unsigned n_rnti             = n_rnti_dist(gen);
                   unsigned cce                = cce_dist(gen);
-                  unsigned aggregation        = static_cast<unsigned>(std::pow(2, aggregation_dist(gen)));
+                  unsigned aggregation        = pow2(aggregation_dist(gen));
                   unsigned nid_dmrs           = nid_dmrs_dist(gen);
                   unsigned nid_data           = nid_data_dist(gen);
                   float    power_dmrs         = power_dmrs_dist(gen);
