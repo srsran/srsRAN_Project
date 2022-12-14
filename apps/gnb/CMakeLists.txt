@@ -17,6 +17,7 @@ add_executable(gnb
 
 target_link_libraries(gnb
         srsgnb_cu_cp
+        srsgnb_cu_up
         srsgnb_io_broker
         srsgnb_ngap
         ngap_asn1

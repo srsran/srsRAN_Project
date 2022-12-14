@@ -11,9 +11,12 @@
 #include "srsgnb/cu_cp/cu_cp_factory.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 
+#include "srsgnb/cu_up/cu_up_factory.h"
+
 #include "adapters/ngap_adapter.h"
 #include "srsgnb/support/io_broker/io_broker_factory.h"
 
+#include "adapters/e1_adapter.h"
 #include "adapters/f1_adapter.h"
 #include "srsgnb/support/config_parsers.h"
 
@@ -257,6 +260,7 @@ int main(int argc, char** argv)
   worker_manager workers;
 
   f1c_local_adapter f1c_cu_to_du_adapter("f1-cu2du"), f1c_du_to_cu_adapter("f1-du2cu");
+  e1_local_adapter  e1_cp_to_up_adapter("CU-CP"), e1_up_to_cp_adapter("CU-UP");
 
   // Create IO broker.
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll);
@@ -277,6 +281,14 @@ int main(int argc, char** argv)
 
   // Connect NGAP adpter to CU-CP to pass NGC messages.
   ngap_adapter->connect_ngc(&cu_cp_obj->get_ngc_message_handler(), &cu_cp_obj->get_ngc_event_handler());
+
+  // Create CU-UP config.
+  srsgnb::srs_cu_up::cu_up_configuration cu_up_cfg;
+  cu_up_cfg.cu_up_executor = &workers.cu_exec.front();
+  cu_up_cfg.e1_notifier    = &e1_up_to_cp_adapter;
+
+  // create and start DUT
+  std::unique_ptr<srsgnb::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(std::move(cu_up_cfg));
 
   // Create radio.
   radio_notification_handler_printer radio_event_printer;
