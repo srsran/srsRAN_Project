@@ -61,6 +61,8 @@ struct dci_dl_info {
     dci_1_0_c_rnti_configuration  c_rnti_f1_0;
     dci_1_0_tc_rnti_configuration tc_rnti_f1_0;
   };
+
+  dci_dl_info() : type(dci_dl_rnti_config_type::si_f1_0) { new (&si_f1_0) dci_1_0_si_rnti_configuration(); }
 };
 
 /// Defines which fields are stored in the DCI payload, based on the chosen DCI format and RNTI type.

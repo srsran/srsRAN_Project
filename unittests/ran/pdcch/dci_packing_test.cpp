@@ -18,7 +18,7 @@ static std::mt19937       rgen(1234);
 static constexpr unsigned nof_repetitions = 100;
 
 // Generate a DCI format 0_0 scrambled by TC-RNTI configuration.
-static dci_0_0_tc_rnti_configuration build_dci_0_0_tc_rnti_config(unsigned N_rb_ul_bwp, unsigned payload_size)
+static dci_0_0_tc_rnti_configuration build_dci_0_0_tc_rnti_config(unsigned N_rb_ul_bwp, units::bits payload_size)
 {
   dci_0_0_tc_rnti_configuration config = {};
 
@@ -113,12 +113,13 @@ static void test_dci_0_0_tc_rnti_packing(const dci_0_0_tc_rnti_configuration& co
   expected.push_back((config.tpc_command >> 0U) & 1U);
 
   // Number of packed bits so far.
-  unsigned nof_packed_bits = expected.size();
+  units::bits nof_packed_bits(expected.size());
 
   // The difference between actual size and aligned DCI size determines the amount of padding or truncation. This is
   // required because DCI format 0_0 scrambled by TC-RNTI is used in a common search space, and it must be aligned to
   // the size of the DCI format 1_0 messages.
-  int padd_trunc_incl_ul_sul = config.payload_size - nof_packed_bits;
+  int padd_trunc_incl_ul_sul =
+      static_cast<int>(config.payload_size.value()) - static_cast<int>(nof_packed_bits.value());
 
   if (padd_trunc_incl_ul_sul < 0) {
     // Truncation is applied to the MSB bits of the frequency domain resource assignment field.
@@ -136,7 +137,7 @@ static void test_dci_0_0_tc_rnti_packing(const dci_0_0_tc_rnti_configuration& co
 }
 
 // Generate a DCI format 0_0 scrambled by C-RNTI configuration.
-static dci_0_0_c_rnti_configuration build_dci_0_0_c_rnti_config(unsigned N_rb_ul_bwp, unsigned payload_size)
+static dci_0_0_c_rnti_configuration build_dci_0_0_c_rnti_config(unsigned N_rb_ul_bwp, units::bits payload_size)
 {
   dci_0_0_c_rnti_configuration config = {};
 
@@ -173,7 +174,7 @@ static dci_0_0_c_rnti_configuration build_dci_0_0_c_rnti_config(unsigned N_rb_ul
   config.harq_process_number      = harq_process_number_dist(rgen);
   config.tpc_command              = tpc_command_dist(rgen);
 
-  if (static_cast<bool>(ul_sul_indicator_presence_dist(rgen))) {
+  if (ul_sul_indicator_presence_dist(rgen) != 0) {
     // Add the UL/SUL indicator field.
     std::uniform_int_distribution<unsigned> ul_sul_indicator_dist(0, 1);
     config.ul_sul_indicator.emplace(static_cast<bool>(ul_sul_indicator_dist(rgen)));
@@ -244,12 +245,13 @@ static void test_dci_0_0_c_rnti_packing(const dci_0_0_c_rnti_configuration& conf
   expected.push_back((config.tpc_command >> 0U) & 1U);
 
   // Number of packed bits so far.
-  unsigned nof_packed_bits = expected.size();
+  units::bits nof_packed_bits(expected.size());
 
   // The difference between actual size and aligned DCI size determines the amount of padding or truncation. This is
   // required because DCI format 0_0 scrambled by C-RNTI can be used in a common search space (fallback DCI format), and
   // it must be aligned to the size of the DCI format 1_0 messages.
-  int padd_trunc_incl_ul_sul = config.payload_size - nof_packed_bits;
+  int padd_trunc_incl_ul_sul =
+      static_cast<int>(config.payload_size.value()) - static_cast<int>(nof_packed_bits.value());
 
   if (padd_trunc_incl_ul_sul < 0) {
     // Truncation is applied to the MSB bits of the frequency domain resource assignment field.
@@ -274,7 +276,7 @@ static void test_dci_0_0_c_rnti_packing(const dci_0_0_c_rnti_configuration& conf
 }
 
 // Generate a DCI format 1_0 scrambled by C-RNTI configuration.
-static dci_1_0_c_rnti_configuration build_dci_1_0_c_rnti_config(unsigned N_rb_dl_bwp, unsigned payload_size)
+static dci_1_0_c_rnti_configuration build_dci_1_0_c_rnti_config(unsigned N_rb_dl_bwp, units::bits payload_size)
 {
   dci_1_0_c_rnti_configuration config = {};
 
@@ -373,7 +375,7 @@ static void test_dci_1_0_c_rnti_packing(const dci_1_0_c_rnti_configuration& conf
   // Determine the amount of padding, since DCI format 1_0 scrambled by C-RNTI, CS-RNTI or CS-RNTI can be used in a UE
   // Specific search space.
   unsigned nof_packed_bits  = expected.size();
-  unsigned nof_padding_bits = config.payload_size - nof_packed_bits;
+  unsigned nof_padding_bits = config.payload_size.value() - nof_packed_bits;
 
   // Padding bits.
   std::fill_n(std::back_inserter(expected), nof_padding_bits, 0);
@@ -818,7 +820,7 @@ int main()
             test_dci_0_0_tc_rnti_packing(dci0_0_tc_rnti_cfg, dci0_0_tc_rnti_payload);
 
             // Check DCI payload size.
-            TESTASSERT_EQ(aligned_sizes.format0_0_common_size, dci0_0_tc_rnti_payload.size());
+            TESTASSERT_EQ(aligned_sizes.format0_0_common_size.value(), dci0_0_tc_rnti_payload.size());
 
             // Generate DCI format 0_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a common
             // search space.
@@ -839,8 +841,8 @@ int main()
             test_dci_0_0_c_rnti_packing(dci0_0_c_rnti_cfg_ue, dci0_0_c_rnti_payload_ue);
 
             // Check DCI payload sizes.
-            TESTASSERT_EQ(aligned_sizes.format0_0_common_size, dci0_0_c_rnti_payload_common.size());
-            TESTASSERT_EQ(aligned_sizes.format0_0_ue_size, dci0_0_c_rnti_payload_ue.size());
+            TESTASSERT_EQ(aligned_sizes.format0_0_common_size.value(), dci0_0_c_rnti_payload_common.size());
+            TESTASSERT_EQ(aligned_sizes.format0_0_ue_size.value(), dci0_0_c_rnti_payload_ue.size());
 
             // Generate DCI format 1_0 scrambled by TC-RNTI configuration.
             dci_1_0_tc_rnti_configuration dci1_0_tc_rnti_cfg = build_dci_1_0_tc_rnti_config(config.dl_bwp_initial_bw);
@@ -852,7 +854,7 @@ int main()
             test_dci_1_0_tc_rnti_packing(dci1_0_tc_rnti_cfg, dci1_0_tc_rnti_payload);
 
             // Check DCI payload size.
-            TESTASSERT_EQ(aligned_sizes.format1_0_common_size, dci1_0_tc_rnti_payload.size());
+            TESTASSERT_EQ(aligned_sizes.format1_0_common_size.value(), dci1_0_tc_rnti_payload.size());
 
             // Generate DCI format 1_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
             // UE-specific search space.
@@ -873,8 +875,8 @@ int main()
             test_dci_1_0_c_rnti_packing(dci1_0_c_rnti_cfg_ue, dci1_0_c_rnti_payload_ue);
 
             // Check DCI payload sizes.
-            TESTASSERT_EQ(aligned_sizes.format1_0_common_size, dci1_0_c_rnti_payload_common.size());
-            TESTASSERT_EQ(aligned_sizes.format1_0_ue_size, dci1_0_c_rnti_payload_ue.size());
+            TESTASSERT_EQ(aligned_sizes.format1_0_common_size.value(), dci1_0_c_rnti_payload_common.size());
+            TESTASSERT_EQ(aligned_sizes.format1_0_ue_size.value(), dci1_0_c_rnti_payload_ue.size());
 
             for (dci_1_0_p_rnti_configuration::payload_info short_messages_indicator :
                  {dci_1_0_p_rnti_configuration::payload_info::scheduling_information,
@@ -891,7 +893,7 @@ int main()
               test_dci_1_0_p_rnti_packing(dci1_0_p_rnti_cfg, dci1_0_p_rnti_payload);
 
               // Check DCI payload size.
-              TESTASSERT_EQ(aligned_sizes.format1_0_common_size, dci1_0_p_rnti_payload.size());
+              TESTASSERT_EQ(aligned_sizes.format1_0_common_size.value(), dci1_0_p_rnti_payload.size());
             }
 
             // Generate the DCI format 1_0 scrambled by SI-RNTI configuration.
@@ -904,7 +906,7 @@ int main()
             test_dci_1_0_si_rnti_packing(dci1_0_si_rnti_cfg, dci1_0_si_rnti_payload);
 
             // Check DCI payload size.
-            TESTASSERT_EQ(aligned_sizes.format1_0_common_size, dci1_0_si_rnti_payload.size());
+            TESTASSERT_EQ(aligned_sizes.format1_0_common_size.value(), dci1_0_si_rnti_payload.size());
 
             // Generate the DCI format 1_0 scrambled by RA-RNTI configuration.
             dci_1_0_ra_rnti_configuration dci1_0_ra_rnti_cfg = build_dci_1_0_ra_rnti_config(config.dl_bwp_initial_bw);
@@ -916,7 +918,7 @@ int main()
             test_dci_1_0_ra_rnti_packing(dci1_0_ra_rnti_cfg, dci1_0_ra_rnti_payload);
 
             // Check DCI payload size.
-            TESTASSERT_EQ(aligned_sizes.format1_0_common_size, dci1_0_ra_rnti_payload.size());
+            TESTASSERT_EQ(aligned_sizes.format1_0_common_size.value(), dci1_0_ra_rnti_payload.size());
           }
         }
       }

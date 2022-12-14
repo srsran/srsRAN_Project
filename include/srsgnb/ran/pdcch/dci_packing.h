@@ -14,6 +14,7 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/pdcch/pdcch_constants.h"
+#include "srsgnb/support/units.h"
 
 namespace srsgnb {
 
@@ -45,13 +46,13 @@ struct dci_size_config {
 /// TS38.212 Section 7.3.1.0.
 struct dci_sizes {
   /// Payload size for a DCI format 0_0 message monitored in a common search space.
-  unsigned format0_0_common_size;
+  units::bits format0_0_common_size;
   /// Payload size for a DCI format 0_0 message monitored in a UE-specific search space.
-  unsigned format0_0_ue_size;
+  units::bits format0_0_ue_size;
   /// Payload size for a DCI format 1_0 message monitored in a common search space.
-  unsigned format1_0_common_size;
+  units::bits format1_0_common_size;
   /// Payload size for a DCI format 1_0 message monitored in a UE-specific search space.
-  unsigned format1_0_ue_size;
+  units::bits format1_0_ue_size;
 };
 
 /// \brief DCI payload size alignment procedure
@@ -70,7 +71,7 @@ struct dci_0_0_c_rnti_configuration {
   ///
   /// The DCI payload size is determined by the DCI size alignment procedure specified in TS38.212 Section 7.3.1.0. See
   /// \ref get_dci_sizes for more information.
-  unsigned payload_size;
+  units::bits payload_size;
   /// \brief Parameter \f$N_{\textup{UL\_hop}}\f$, as per TS38.212 Section 7.3.1.1.1.
   ///
   /// \f$N_{\textup{UL\_hop}}\f$ is the number of bits used in the DCI payload to pack the frequency hopping offset,
@@ -124,7 +125,7 @@ struct dci_0_0_tc_rnti_configuration {
   ///
   /// The DCI payload size is determined by the DCI size alignment procedure specified in TS38.212 Section 7.3.1.0. See
   /// \ref get_dci_sizes for more information.
-  unsigned payload_size;
+  units::bits payload_size;
   /// \brief Parameter \f$N_{\textup{UL\_hop}}\f$, as per TS38.212 Section 7.3.1.1.1.
   ///
   /// \f$N_{\textup{UL\_hop}}\f$ is the number of bits used in the DCI payload to pack the frequency hopping offset,
@@ -169,7 +170,7 @@ struct dci_1_0_c_rnti_configuration {
   ///
   /// The DCI payload size is determined by the DCI size alignment procedure specified in TS38.212 Section 7.3.1.0. See
   /// \ref get_dci_sizes for more information.
-  unsigned payload_size;
+  units::bits payload_size;
   /// Parameter \f$N_{RB}^{DL,BWP}\f$. It must be set according to TS38.212 Section 7.3.1.0.
   unsigned N_rb_dl_bwp;
   /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
