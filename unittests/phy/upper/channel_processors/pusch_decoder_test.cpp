@@ -99,8 +99,7 @@ int main(int argc, char** argv)
     unsigned nof_retx        = rv_sequence.size();
     TESTASSERT_EQ(cfg.nof_ch_symbols * bits_per_symbol * nof_retx, llrs_all.size(), "Wrong number of LLRs.");
 
-    constexpr unsigned BITS_PER_BYTE = 8;
-    unsigned           tbs           = ref_tb.size() * BITS_PER_BYTE;
+    units::bits tbs = units::bytes(ref_tb.size()).to_bits();
 
     // Recall that llrs_all contains all retransmissions concatenated.
     unsigned cws = llrs_all.size() / nof_retx;
@@ -130,7 +129,7 @@ int main(int argc, char** argv)
     dec_cfg.use_early_stop      = use_early_stop;
     for (auto rv : rv_sequence) {
       cfg.rv = rv;
-      std::vector<uint8_t> rx_tb(tbs / BITS_PER_BYTE);
+      std::vector<uint8_t> rx_tb(tbs.truncate_to_bytes().value());
 
       dec_cfg.segmenter_cfg = cfg;
 

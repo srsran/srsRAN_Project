@@ -92,7 +92,9 @@ void srsgnb::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder&
   float              R = mac_pdu.mcs_descr.get_normalised_target_code_rate();
   const units::bytes tb_size_lbrm_bytes{ldpc::MAX_CODEBLOCK_SIZE / 8};
   builder.set_maintenance_v3_frequency_allocation_parameters(
-      mac_pdu.pusch_second_hop_prb, get_ldpc_base_graph(R, mac_pdu.tb_size_bytes * 8), tb_size_lbrm_bytes);
+      mac_pdu.pusch_second_hop_prb,
+      get_ldpc_base_graph(R, units::bytes{mac_pdu.tb_size_bytes}.to_bits()),
+      tb_size_lbrm_bytes);
 
   builder.set_maintenance_v3_dmrs_parameters(static_cast<unsigned>(mac_pdu.dmrs_hopping_mode));
 

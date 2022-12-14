@@ -1052,7 +1052,7 @@ public:
     pdu.cw_index  = cw_index;
 
     // Fill custom TLV. This TLV always uses a pointer to the payload.
-    pdu.tlv_custom.length  = units::bytes{payload.size()};
+    pdu.tlv_custom.length  = units::bytes(payload.size());
     pdu.tlv_custom.payload = payload.data();
 
     return *this;

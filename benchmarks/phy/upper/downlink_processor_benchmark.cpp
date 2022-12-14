@@ -263,13 +263,13 @@ int main(int argc, char** argv)
       unsigned nof_channel_bits = pdsch_freq_alloc.get_nof_rb() *
                                   (NRE * pdsch_nof_symbols - pdsch_dmrs_symbol_mask.size() * nof_dmrs_per_rb) *
                                   get_bits_per_symbol(pdsch_modulation);
-      unsigned pdsch_tbs_nbytes = static_cast<unsigned>(static_cast<double>(nof_channel_bits) * pdsch_rate / 8);
+      units::bytes pdsch_tbs_nbytes = units::bits(nof_channel_bits * pdsch_rate).truncate_to_bytes();
 
       // Deduce LDPC base graph from rate and TBS.
-      ldpc_base_graph_type pdsch_base_graph = get_ldpc_base_graph(pdsch_rate, pdsch_tbs_nbytes * 8);
+      ldpc_base_graph_type pdsch_base_graph = get_ldpc_base_graph(pdsch_rate, pdsch_tbs_nbytes.to_bits());
 
       // Create transport block.
-      std::vector<uint8_t> transport_block(pdsch_tbs_nbytes);
+      std::vector<uint8_t> transport_block(pdsch_tbs_nbytes.value());
       std::generate(
           transport_block.begin(), transport_block.end(), [&]() { return static_cast<unsigned>(rgen() & 0xff); });
       static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data = {transport_block};
@@ -311,7 +311,7 @@ int main(int argc, char** argv)
 
       // Calculate the peak throughput, considering that the number of bits is for a slot.
       double slot_duration_us     = 1e3 / static_cast<double>(pow2(to_numerology_value(common_scs)));
-      double peak_throughput_Mbps = static_cast<double>(pdsch_tbs_nbytes * 8) / slot_duration_us;
+      double peak_throughput_Mbps = static_cast<double>(pdsch_tbs_nbytes.to_bits().value()) / slot_duration_us;
 
       fmt::memory_buffer description_buf;
       fmt::format_to(description_buf,
@@ -323,7 +323,7 @@ int main(int argc, char** argv)
 
       // Process PDU multiple times.
       perf_meas_pdsch.new_measure(
-          to_string(description_buf), pdsch_tbs_nbytes * 8, [&]() { dl_proc->process_pdsch(data, pdu); });
+          to_string(description_buf), pdsch_tbs_nbytes.to_bits().value(), [&]() { dl_proc->process_pdsch(data, pdu); });
 
       dl_proc->finish_processing_pdus();
     }

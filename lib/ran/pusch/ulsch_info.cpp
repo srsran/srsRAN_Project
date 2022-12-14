@@ -78,7 +78,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
   ulsch_information result = {};
 
   // Get shared channel parameters.
-  result.sch = get_sch_segmentation_info(config.tbs.value(), config.mcs_descr.get_normalised_target_code_rate());
+  result.sch = get_sch_segmentation_info(config.tbs, config.mcs_descr.get_normalised_target_code_rate());
 
   // Check DM-RS number of CDM groups without data is valid.
   srsgnb_assert(config.nof_cdm_groups_without_data >= 1 &&
@@ -148,7 +148,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
     result.nof_harq_ack_re = calculate_nof_re_harq_ack(config.nof_harq_ack_bits,
                                                        config.beta_offset_harq_ack,
                                                        nof_re_uci,
-                                                       result.sch.nof_cb * result.sch.nof_bits_per_cb,
+                                                       result.sch.nof_cb * result.sch.nof_bits_per_cb.value(),
                                                        config.alpha_scaling,
                                                        nof_re_uci_l0);
   } else {
@@ -170,7 +170,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
       nof_harq_ack_rvd_re = calculate_nof_re_harq_ack(2_bits,
                                                       config.beta_offset_harq_ack,
                                                       nof_re_uci,
-                                                      result.sch.nof_cb * result.sch.nof_bits_per_cb,
+                                                      result.sch.nof_cb * result.sch.nof_bits_per_cb.value(),
                                                       config.alpha_scaling,
                                                       nof_re_uci_l0);
     } else {

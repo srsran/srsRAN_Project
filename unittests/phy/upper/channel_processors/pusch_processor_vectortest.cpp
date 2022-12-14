@@ -148,9 +148,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
   std::vector<uint8_t> data(expected_data.size());
 
   // Prepare softbuffer.
-  rx_softbuffer_spy softbuffer(
-      ldpc::MAX_CODEBLOCK_SIZE,
-      ldpc::compute_nof_codeblocks(expected_data.size() * 8, config.codeword.value().ldpc_base_graph));
+  rx_softbuffer_spy softbuffer(ldpc::MAX_CODEBLOCK_SIZE,
+                               ldpc::compute_nof_codeblocks(units::bytes(expected_data.size()).to_bits(),
+                                                            config.codeword.value().ldpc_base_graph));
 
   // Make sure the configuration is valid.
   ASSERT_TRUE(pdu_validator->is_valid(config));

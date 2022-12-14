@@ -20,9 +20,6 @@
 
 namespace srsgnb {
 
-/// Maximum accepted transport block size.
-static constexpr unsigned MAX_TBS = 1277992;
-
 /// \brief Generic implementation of LDPC segmentation.
 ///
 /// Implements both ldpc_segmenter_tx and ldpc_segmenter_rx. For this reason, the constructor has been hidden behind the
@@ -62,12 +59,12 @@ public:
 
 private:
   /// Default constructor.
-  ldpc_segmenter_impl() : crc_set({nullptr, nullptr, nullptr}){};
+  ldpc_segmenter_impl() = default;
 
   /// \brief Creates an LDPC segmentation object that aggregates a crc_calculator.
   ///
-  /// \param[in] c The CRC calculator to aggregate. The generation polynomial must be CRC24B.
-  explicit ldpc_segmenter_impl(sch_crc c) : crc_set({std::move(c.crc16), std::move(c.crc24A), std::move(c.crc24B)}){};
+  /// \param[in] c The CRC calculators to aggregate. The generation polynomials must math their respective types.
+  explicit ldpc_segmenter_impl(sch_crc c) : crc_set({std::move(c.crc16), std::move(c.crc24A), std::move(c.crc24B)}) {}
 
   /// Computes the length of the rate-matched codeblock corresponding to each segment, as per TS38.212
   /// Section 5.4.2.1.
@@ -78,15 +75,15 @@ private:
     /// Segment index.
     unsigned i_segment;
     /// Total codeword length.
-    unsigned cw_length;
+    units::bits cw_length;
     /// Codeblock starting index within the codeword.
     unsigned cw_offset;
     /// Number of filler bits.
-    unsigned nof_filler_bits;
+    units::bits nof_filler_bits;
     /// Number of segment-specific CRC bits.
-    unsigned nof_crc_bits;
+    units::bits nof_crc_bits;
     /// Number of TB-specific CRC bits.
-    unsigned nof_tb_crc_bits;
+    units::bits nof_tb_crc_bits;
   };
 
   /// Generates a codeblock metadata structure for the current segment configuration.
@@ -101,11 +98,11 @@ private:
   ///@{
 
   /// Final length of a segment (corresponds to \f$K\f$).
-  unsigned segment_length = 0;
+  units::bits segment_length{0};
   /// Number of bits in the transport block (corresponds to \f$B\f$).
-  unsigned nof_tb_bits_in = 0;
+  units::bits nof_tb_bits_in{0};
   /// Augmented number of bits in the transport block, including new CRCs (corresponds to \f$B'\f$).
-  unsigned nof_tb_bits_out = 0;
+  units::bits nof_tb_bits_out{0};
   /// Number of segments resulting from the transport block (corresponds to \f$C\f$).
   unsigned nof_segments = 0;
   ///@}

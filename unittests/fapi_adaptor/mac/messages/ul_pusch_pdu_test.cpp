@@ -72,7 +72,8 @@ TEST(ULPUSCHPDUTest, ValidPUSCHShouldPass)
   // Maintenance v3.
   ASSERT_EQ(units::bytes{ldpc::MAX_CODEBLOCK_SIZE / 8}, fapi_pdu.pusch_maintenance_v3.tb_size_lbrm_bytes);
   ASSERT_EQ(mac_pdu.pusch_second_hop_prb, fapi_pdu.pusch_maintenance_v3.pusch_second_hop_prb);
-  ASSERT_EQ(get_ldpc_base_graph(mac_pdu.mcs_descr.get_normalised_target_code_rate(), mac_pdu.tb_size_bytes),
+  ASSERT_EQ(get_ldpc_base_graph(mac_pdu.mcs_descr.get_normalised_target_code_rate(),
+                                units::bytes(mac_pdu.tb_size_bytes).to_bits()),
             fapi_pdu.pusch_maintenance_v3.ldpc_base_graph);
   ASSERT_EQ(static_cast<unsigned>(mac_pdu.dmrs_hopping_mode), fapi_pdu.pusch_maintenance_v3.group_or_sequence_hopping);
 

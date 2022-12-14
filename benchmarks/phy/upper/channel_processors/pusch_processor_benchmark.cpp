@@ -43,9 +43,9 @@ struct test_profile {
   unsigned                         nof_symbols = get_nsymb_per_slot(cyclic_prefix::NORMAL);
   std::vector<unsigned>            nof_prb_set = {25, 52, 106, 270};
   std::vector<sch_mcs_description> mcs_set     = {{modulation_scheme::QPSK, 120.0F},
-                                                  {modulation_scheme::QAM16, 658.0F},
-                                                  {modulation_scheme::QAM64, 873.0F},
-                                                  {modulation_scheme::QAM256, 948.0F}};
+                                              {modulation_scheme::QAM16, 658.0F},
+                                              {modulation_scheme::QAM64, 873.0F},
+                                              {modulation_scheme::QAM256, 948.0F}};
 };
 
 // Profile selected during test execution.
@@ -204,7 +204,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
       config.cp                     = profile.cp;
       config.mcs_descr              = mcs;
       config.codeword.emplace(pusch_processor::codeword_description{
-          0, get_ldpc_base_graph(mcs.get_normalised_target_code_rate(), tbs), true});
+          0, get_ldpc_base_graph(mcs.get_normalised_target_code_rate(), units::bits(tbs)), true});
       config.uci           = {};
       config.n_id          = 0;
       config.nof_tx_layers = nof_tx_layers;
@@ -382,7 +382,7 @@ int main(int argc, char** argv)
     TESTASSERT(validator->is_valid(config));
 
     // Compute the number of codeblocks.
-    unsigned nof_codeblocks = ldpc::compute_nof_codeblocks(tbs, config.codeword.value().ldpc_base_graph);
+    unsigned nof_codeblocks = ldpc::compute_nof_codeblocks(units::bits(tbs), config.codeword.value().ldpc_base_graph);
 
     // Softbuffer pool configuration.
     rx_softbuffer_pool_config softbuffer_config = {};

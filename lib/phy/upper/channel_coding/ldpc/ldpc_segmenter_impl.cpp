@@ -20,10 +20,10 @@
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
 
-// Length of the CRC checksum added to the segments.
-static constexpr unsigned SEG_CRC_LENGTH = 24;
-// Number of bits in one byte.
-static constexpr unsigned BITS_PER_BYTE = 8;
+/// Length of the CRC checksum added to the segments.
+static constexpr units::bits SEG_CRC_LENGTH{24};
+/// Maximum accepted transport block size.
+static constexpr units::bits MAX_TBS{1277992};
 
 std::unique_ptr<ldpc_segmenter_tx> ldpc_segmenter_impl::create_ldpc_segmenter_impl_tx(ldpc_segmenter_impl::sch_crc& c)
 {
@@ -58,11 +58,12 @@ static void check_inputs_tx(const static_vector<described_segment, MAX_NOF_SEGME
                             span<const uint8_t>                                       transport_block,
                             const segmenter_config&                                   cfg)
 {
+  using namespace units::literals;
   srsgnb_assert(segments.empty(), "Argument segments should be empty.");
   srsgnb_assert(!transport_block.empty(), "Argument transport_block should not be empty.");
-  srsgnb_assert(transport_block.size() * 8 + 24 <= MAX_TBS,
-                "Transport block too long. The admissible size, including CRC, is %d bytes.",
-                MAX_TBS / BITS_PER_BYTE);
+  srsgnb_assert(units::bytes(transport_block.size()).to_bits() + 24_bits <= MAX_TBS,
+                "Transport block too long. The admissible size, including CRC, is {}.",
+                MAX_TBS.truncate_to_bytes());
 
   srsgnb_assert((cfg.rv >= 0) && (cfg.rv <= 3), "Invalid redundancy version.");
 
@@ -79,34 +80,34 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
 {
   check_inputs_tx(described_segments, transport_block, cfg);
 
+  using namespace units::literals;
+
   base_graph = cfg.base_graph;
   // Each transport_block entry is a byte, and TBS can always be expressed as an integer number of bytes (see, e.g.,
   // TS38.214 Section 5.1.3.2).
-  unsigned nof_tb_bits_tmp = transport_block.size() * BITS_PER_BYTE;
+  units::bits nof_tb_bits_tmp = units::bytes(transport_block.size()).to_bits();
 
-  constexpr unsigned MAX_BITS_CRC16  = 3824;
-  crc_calculator&    tb_crc          = (nof_tb_bits_tmp <= MAX_BITS_CRC16) ? *crc_set.crc16 : *crc_set.crc24A;
-  unsigned           nof_tb_crc_bits = (nof_tb_bits_tmp <= MAX_BITS_CRC16) ? 16 : 24;
+  constexpr units::bits MAX_BITS_CRC16{3824};
+  crc_calculator&       tb_crc          = (nof_tb_bits_tmp <= MAX_BITS_CRC16) ? *crc_set.crc16 : *crc_set.crc24A;
+  units::bits           nof_tb_crc_bits = compute_tb_crc_size(nof_tb_bits_tmp);
 
   nof_tb_bits_in = nof_tb_bits_tmp + nof_tb_crc_bits;
 
   nof_segments    = ldpc::compute_nof_codeblocks(nof_tb_bits_tmp, base_graph);
   nof_tb_bits_out = nof_tb_bits_in;
   if (nof_segments > 1) {
-    nof_tb_bits_out += nof_segments * SEG_CRC_LENGTH;
+    nof_tb_bits_out += units::bits(nof_segments * SEG_CRC_LENGTH.value());
   }
   lifting_size   = compute_lifting_size(nof_tb_bits_tmp, base_graph, nof_segments);
   segment_length = compute_codeblock_size(base_graph, lifting_size);
 
-  unsigned nof_crc_bits = 0;
-  if (nof_segments > 1) {
-    nof_crc_bits = SEG_CRC_LENGTH;
-  }
+  units::bits nof_crc_bits = (nof_segments > 1) ? SEG_CRC_LENGTH : 0_bits;
+
   // Compute the number of information bits that is assigned to a segment.
-  unsigned cb_info_bits = divide_ceil(nof_tb_bits_out, nof_segments) - nof_crc_bits;
+  units::bits cb_info_bits = units::bits(divide_ceil(nof_tb_bits_out.value(), nof_segments)) - nof_crc_bits;
 
   // Zero-padding if necessary.
-  unsigned zero_pad = (cb_info_bits + nof_crc_bits) * nof_segments - nof_tb_bits_out;
+  units::bits zero_pad = units::bits((cb_info_bits + nof_crc_bits).value() * nof_segments) - nof_tb_bits_out;
 
   // Append TB CRC.
   crc_calculator_checksum_t tb_checksum = tb_crc.calculate_byte(transport_block);
@@ -119,10 +120,10 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   nof_short_segments = nof_segments - (nof_symbols_per_layer % nof_segments);
 
   // Codeword length (after concatenation of codeblocks).
-  unsigned cw_length = cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod);
+  units::bits cw_length(cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod));
 
   // Number of filler bits in this segment.
-  unsigned nof_filler_bits = segment_length - cb_info_bits - nof_crc_bits;
+  units::bits nof_filler_bits = segment_length - cb_info_bits - nof_crc_bits;
 
   unsigned cw_offset = 0;
   unsigned tb_offset = 0;
@@ -134,71 +135,72 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
         generate_cb_metadata({i_segment, cw_length, cw_offset, nof_filler_bits, nof_crc_bits, nof_tb_crc_bits}, cfg);
 
     // Prepare segment data.
-    described_segments.push_back(described_segment(cb_metadata, segment_length));
+    described_segments.emplace_back(cb_metadata, segment_length);
     described_segment& segment = described_segments.back();
 
     // Segment bit buffer.
     bit_buffer& cb_bit_buffer = segment.get_data();
 
     // Number of information bits to get from the transport block. Remove transport block CRC bits if it is the last CB.
-    unsigned nof_used_bits = cb_info_bits;
+    units::bits nof_used_bits = cb_info_bits;
     if (last_cb) {
       nof_used_bits -= nof_tb_crc_bits + zero_pad;
     }
 
     // Copy information bits from the transport block.
-    bit_buffer cb_info_bit_buffer = cb_bit_buffer.first(nof_used_bits);
+    bit_buffer cb_info_bit_buffer = cb_bit_buffer.first(nof_used_bits.value());
     srsvec::copy_offset(cb_info_bit_buffer, transport_block, tb_offset);
-    tb_offset += nof_used_bits;
+    tb_offset += nof_used_bits.value();
 
     // If it is the last CB, append the transport block CRC and padding bits.
     if (last_cb) {
       // For each byte of the transport block CRC...
-      for (unsigned i_checksum_byte = 0, i_checksum_byte_end = nof_tb_crc_bits / 8;
+      for (unsigned i_checksum_byte = 0, i_checksum_byte_end = nof_tb_crc_bits.truncate_to_bytes().value();
            i_checksum_byte != i_checksum_byte_end;
            ++i_checksum_byte) {
         // Extract byte from the CRC.
-        unsigned tb_crc_byte = (tb_checksum >> (nof_tb_crc_bits - (i_checksum_byte + 1) * 8)) & 0xffUL;
+        unsigned tb_crc_byte = (tb_checksum >> (nof_tb_crc_bits.value() - (i_checksum_byte + 1) * 8)) & 0xffUL;
         // Insert the byte at the end of the bit buffer.
-        cb_bit_buffer.insert(tb_crc_byte, nof_used_bits, 8);
+        cb_bit_buffer.insert(tb_crc_byte, nof_used_bits.value(), 8);
         // Increment the number of bits.
-        nof_used_bits += 8;
+        nof_used_bits += 8_bits;
       }
-      tb_offset += nof_tb_crc_bits;
+      tb_offset += nof_tb_crc_bits.value();
 
       // Insert zero padding bits.
-      for (unsigned nof_used_bits_end = nof_used_bits + zero_pad; nof_used_bits != nof_used_bits_end;) {
-        // Calculate the number of zeros to padd, no more than a byte at a time.
-        unsigned nof_zeros = std::min(8U, nof_used_bits_end - nof_used_bits);
+      for (units::bits nof_used_bits_end = nof_used_bits + zero_pad; nof_used_bits != nof_used_bits_end;) {
+        // Calculate the number of zeros to pad, no more than a byte at a time.
+        units::bits nof_zeros = std::min<units::bits>(8_bits, nof_used_bits_end - nof_used_bits);
         // Insert the zeros at the end of the bit buffer.
-        cb_bit_buffer.insert(0UL, nof_used_bits, nof_zeros);
+        cb_bit_buffer.insert(0UL, nof_used_bits.value(), nof_zeros.value());
         // Increment the number of bits.
         nof_used_bits += nof_zeros;
       }
     }
 
     // Append codeblock CRC if required.
-    if (nof_crc_bits != 0) {
-      crc_calculator_checksum_t cb_checksum = crc_set.crc24B->calculate(cb_bit_buffer.first(nof_used_bits));
+    if (nof_crc_bits != 0_bits) {
+      crc_calculator_checksum_t cb_checksum = crc_set.crc24B->calculate(cb_bit_buffer.first(nof_used_bits.value()));
 
       // For each byte of the transport block CRC...
-      for (unsigned i_checksum_byte = 0, i_checksum_byte_end = nof_crc_bits / 8; i_checksum_byte != i_checksum_byte_end;
+      for (unsigned i_checksum_byte = 0, i_checksum_byte_end = nof_crc_bits.truncate_to_bytes().value();
+           i_checksum_byte != i_checksum_byte_end;
            ++i_checksum_byte) {
         // Extract byte from the CRC.
-        unsigned cb_crc_byte = (cb_checksum >> (nof_crc_bits - (i_checksum_byte + 1) * 8)) & 0xffUL;
+        unsigned cb_crc_byte = (cb_checksum >> (nof_crc_bits.value() - (i_checksum_byte + 1) * 8)) & 0xffUL;
         // Insert the byte at the end of the bit buffer.
-        cb_bit_buffer.insert(cb_crc_byte, nof_used_bits, 8);
+        cb_bit_buffer.insert(cb_crc_byte, nof_used_bits.value(), 8);
         // Increment the number of bits.
-        nof_used_bits += 8;
+        nof_used_bits += 8_bits;
       }
     }
 
     // Append filler bits as zeros.
     while (nof_used_bits != segment_length) {
-      // Calculate the number of zeros to padd, no more than a byte at a time.
-      unsigned nof_zeros = std::min(8U, segment_length - nof_used_bits);
+      // Calculate the number of zeros to pad, no more than a byte at a time.
+      units::bits nof_zeros = std::min<units::bits>(8_bits, segment_length - nof_used_bits);
       // Insert the zeros at the end of the bit buffer.
-      cb_bit_buffer.insert(0UL, nof_used_bits, nof_zeros);
+      cb_bit_buffer.insert(0UL, nof_used_bits.value(), nof_zeros.value());
       // Increment the number of bits.
       nof_used_bits += nof_zeros;
     }
@@ -208,13 +210,15 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   }
 
   // After segmenting no bits should be left in the buffer.
-  srsgnb_assert(nof_tb_bits_in == tb_offset,
+  srsgnb_assert(nof_tb_bits_in.value() == tb_offset,
                 "Transport block offset ({}) must be equal to the transport block size including CRC ({}).",
                 tb_offset,
                 nof_tb_bits_in);
   // After accumulating all codeblock rate-matched lengths, cw_offset should be the same as cw_length.
-  srsgnb_assert(
-      cw_length == cw_offset, "Codeblock offset ({}) must be equal to the codeword size ({}).", cw_offset, cw_length);
+  srsgnb_assert(cw_length.value() == cw_offset,
+                "Codeblock offset ({}) must be equal to the codeword size ({}).",
+                cw_offset,
+                cw_length.value());
 }
 
 static void check_inputs_rx(span<const log_likelihood_ratio> codeword_llrs, const segmenter_config& cfg)
@@ -241,27 +245,27 @@ void ldpc_segmenter_impl::segment(static_vector<described_rx_codeblock, MAX_NOF_
 {
   check_inputs_rx(codeword_llrs, cfg);
 
+  using namespace units::literals;
+
   base_graph = cfg.base_graph;
 
-  constexpr unsigned MAX_BITS_CRC16  = 3824;
-  unsigned           nof_tb_crc_bits = (tbs <= MAX_BITS_CRC16) ? 16 : 24;
+  units::bits tbs_bits(tbs);
+  units::bits nof_tb_crc_bits = compute_tb_crc_size(tbs_bits);
 
-  nof_tb_bits_in = tbs + nof_tb_crc_bits;
+  nof_tb_bits_in = tbs_bits + nof_tb_crc_bits;
 
-  nof_segments    = ldpc::compute_nof_codeblocks(tbs, base_graph);
+  nof_segments    = ldpc::compute_nof_codeblocks(tbs_bits, base_graph);
   nof_tb_bits_out = nof_tb_bits_in;
   if (nof_segments > 1) {
-    nof_tb_bits_out += nof_segments * SEG_CRC_LENGTH;
+    nof_tb_bits_out += units::bits(nof_segments * SEG_CRC_LENGTH.value());
   }
-  lifting_size   = compute_lifting_size(tbs, base_graph, nof_segments);
+  lifting_size   = compute_lifting_size(tbs_bits, base_graph, nof_segments);
   segment_length = compute_codeblock_size(base_graph, lifting_size);
 
-  unsigned nof_crc_bits = 0;
-  if (nof_segments > 1) {
-    nof_crc_bits = SEG_CRC_LENGTH;
-  }
+  units::bits nof_crc_bits = (nof_segments > 1) ? SEG_CRC_LENGTH : 0_bits;
+
   // Compute the maximum number of information bits that can be assigned to a segment.
-  unsigned max_info_bits = divide_ceil(nof_tb_bits_out, nof_segments) - nof_crc_bits;
+  units::bits max_info_bits = units::bits(divide_ceil(nof_tb_bits_out.value(), nof_segments)) - nof_crc_bits;
 
   // Number of channel symbols assigned to a transmission layer.
   nof_symbols_per_layer = cfg.nof_ch_symbols / cfg.nof_layers;
@@ -271,11 +275,11 @@ void ldpc_segmenter_impl::segment(static_vector<described_rx_codeblock, MAX_NOF_
   nof_short_segments = nof_segments - (nof_symbols_per_layer % nof_segments);
 
   // Codeword length (after concatenation of codeblocks).
-  unsigned cw_length = codeword_llrs.size();
+  units::bits cw_length(codeword_llrs.size());
 
   unsigned cw_offset = 0;
   for (unsigned i_segment = 0; i_segment != nof_segments; ++i_segment) {
-    unsigned nof_filler_bits = segment_length - (max_info_bits + nof_crc_bits);
+    units::bits nof_filler_bits = segment_length - (max_info_bits + nof_crc_bits);
 
     codeblock_metadata tmp_description =
         generate_cb_metadata({i_segment, cw_length, cw_offset, nof_filler_bits, nof_crc_bits, nof_tb_crc_bits}, cfg);
@@ -285,7 +289,7 @@ void ldpc_segmenter_impl::segment(static_vector<described_rx_codeblock, MAX_NOF_
     cw_offset += rm_length;
   }
   // After accumulating all codeblock rate-matched lengths, cw_offset should be the same as cw_length.
-  assert(cw_length == cw_offset);
+  assert(cw_length.value() == cw_offset);
 }
 
 codeblock_metadata ldpc_segmenter_impl::generate_cb_metadata(const segment_internal& seg_extra,
@@ -298,7 +302,7 @@ codeblock_metadata ldpc_segmenter_impl::generate_cb_metadata(const segment_inter
   tmp_description.tb_common.rv           = cfg.rv;
   tmp_description.tb_common.mod          = cfg.mod;
   tmp_description.tb_common.Nref         = cfg.Nref;
-  tmp_description.tb_common.cw_length    = seg_extra.cw_length;
+  tmp_description.tb_common.cw_length    = seg_extra.cw_length.value();
 
   // BG1 has rate 1/3 and BG2 has rate 1/5.
   constexpr unsigned INVERSE_BG1_RATE = 3;
@@ -306,12 +310,13 @@ codeblock_metadata ldpc_segmenter_impl::generate_cb_metadata(const segment_inter
   unsigned           inverse_rate     = (base_graph == ldpc_base_graph_type::BG1) ? INVERSE_BG1_RATE : INVERSE_BG2_RATE;
   unsigned           rm_length        = compute_rm_length(seg_extra.i_segment, cfg.mod, cfg.nof_layers);
 
-  tmp_description.cb_specific.full_length     = segment_length * inverse_rate;
-  tmp_description.cb_specific.nof_filler_bits = seg_extra.nof_filler_bits;
+  tmp_description.cb_specific.full_length     = segment_length.value() * inverse_rate;
+  tmp_description.cb_specific.nof_filler_bits = seg_extra.nof_filler_bits.value();
   tmp_description.cb_specific.rm_length       = rm_length;
   tmp_description.cb_specific.cw_offset       = seg_extra.cw_offset;
   // nof_crc_bits == 0 indicates that we are using the TB CRC with length 16.
-  tmp_description.cb_specific.nof_crc_bits = (nof_segments == 1) ? seg_extra.nof_tb_crc_bits : seg_extra.nof_crc_bits;
+  tmp_description.cb_specific.nof_crc_bits =
+      (nof_segments == 1) ? seg_extra.nof_tb_crc_bits.value() : seg_extra.nof_crc_bits.value();
 
   return tmp_description;
 }

@@ -42,7 +42,7 @@ static void fill_codewords(fapi::dl_pdsch_pdu_builder& builder, span<const pdsch
 
   // NOTE: MAC uses the value of the target code rate x[1024], as per TS 38.214, Section 5.1.3.1, table 5.1.3.1-1.
   float R = cw.mcs_descr.get_normalised_target_code_rate();
-  builder.set_maintenance_v3_codeword_parameters(get_ldpc_base_graph(R, cw.tb_size_bytes * 8),
+  builder.set_maintenance_v3_codeword_parameters(get_ldpc_base_graph(R, units::bytes{cw.tb_size_bytes}.to_bits()),
                                                  tb_size_lbrm_bytes,
                                                  is_tb_crc_first_tb_required,
                                                  is_tb_crc_second_tb_required);

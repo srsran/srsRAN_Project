@@ -119,9 +119,8 @@ void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pus
   id.rnti        = static_cast<unsigned>(proc_pdu.rnti);
   id.harq_ack_id = pdu.harq_id;
 
-  const unsigned BITS_PER_BYTE = 8;
-  unsigned       nof_codeblocks =
-      ldpc::compute_nof_codeblocks(pdu.tb_size * BITS_PER_BYTE, proc_pdu.codeword->ldpc_base_graph);
+  unsigned nof_codeblocks =
+      ldpc::compute_nof_codeblocks(units::bytes(pdu.tb_size).to_bits(), proc_pdu.codeword->ldpc_base_graph);
 
   if (rx_softbuffer* buffer = softbuffer_pool.reserve_softbuffer(slot, id, nof_codeblocks)) {
     auto payload = rx_payload_pool.acquire_payload_buffer(pdu.tb_size);

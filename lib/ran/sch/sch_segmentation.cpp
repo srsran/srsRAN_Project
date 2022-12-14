@@ -13,7 +13,9 @@
 
 using namespace srsgnb;
 
-sch_information srsgnb::get_sch_segmentation_info(unsigned tbs, float target_code_rate)
+constexpr units::bits sch_information::CB_CRC_SIZE;
+
+sch_information srsgnb::get_sch_segmentation_info(units::bits tbs, float target_code_rate)
 {
   srsgnb_assert(target_code_rate > 0.F && target_code_rate < 1.F,
                 "Invalid target code rate {}, expected a value between 0 and 1",
@@ -31,7 +33,7 @@ sch_information srsgnb::get_sch_segmentation_info(unsigned tbs, float target_cod
   result.nof_cb = ldpc::compute_nof_codeblocks(tbs, result.base_graph);
 
   // Calculate the number of bits per codeblock.
-  unsigned nof_payload_bits_per_cb = (tbs + result.tb_crc_size) / result.nof_cb;
+  units::bits nof_payload_bits_per_cb((tbs + result.tb_crc_size).value() / result.nof_cb);
   if (result.nof_cb > 1) {
     nof_payload_bits_per_cb += sch_information::CB_CRC_SIZE;
   }

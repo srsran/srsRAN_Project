@@ -70,7 +70,7 @@ struct codeblock_metadata {
 ///
 /// This is given by the maximum lifting size (i.e., 384) times the maximum number of information bits in base graph
 /// BG1 (i.e., 22), as per TS38.212 Section 5.2.2.
-static constexpr unsigned MAX_SEG_LENGTH = 22 * 384;
+static constexpr units::bits MAX_SEG_LENGTH{22 * 384};
 
 /// Maximum number of segments per transport block.
 static constexpr unsigned MAX_NOF_SEGMENTS = 52;
@@ -85,7 +85,7 @@ class described_segment
 {
 public:
   /// Default constructor - Creates an invalid empty segment.
-  described_segment() : cb_size(0), data(0) {}
+  described_segment() : data(0) {}
 
   /// \brief Creates a description for a segment of length \c cb_size with the given metadata.
   ///
@@ -95,13 +95,14 @@ public:
   /// \param[in] metadata_ Codeword parameters.
   /// \param[in] cb_size_  Codeword size in bits.
   /// \remark Throws an assertion if \c cb_size is higher than the maximum supported length.
-  described_segment(const codeblock_metadata& metadata_, unsigned cb_size_) : metadata(metadata_), cb_size(cb_size_)
+  described_segment(const codeblock_metadata& metadata_, units::bits cb_size_) : metadata(metadata_)
   {
-    srsgnb_assert((cb_size > 0) && (cb_size <= MAX_SEG_LENGTH),
+    using namespace units::literals;
+    srsgnb_assert((cb_size_ > 0_bits) && (cb_size_ <= MAX_SEG_LENGTH),
                   "The codeblock size (i.e., {}) is invalid (max. {}).",
-                  data.size(),
+                  cb_size_,
                   MAX_SEG_LENGTH);
-    data.resize(cb_size);
+    data.resize(cb_size_.value());
   }
 
   /// \brief Gets a read&ndash;write view of the segment data.
@@ -126,10 +127,8 @@ public:
 private:
   /// Codeblock configuration.
   codeblock_metadata metadata;
-  /// Codeblock size.
-  unsigned cb_size;
   /// Codeblock data storage.
-  static_bit_buffer<MAX_SEG_LENGTH> data;
+  static_bit_buffer<MAX_SEG_LENGTH.value()> data;
 };
 
 /// \brief Alias for the full codeblock characterization at the receiver.

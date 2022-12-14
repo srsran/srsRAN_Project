@@ -32,19 +32,33 @@ struct byte_tag {
 };
 } // namespace detail
 
+class bytes;
+
 /// \brief Abstraction of bit as a unit of digital information.
 ///
 /// An object of this type will represent an amount of digital information expressed in bits.
-using bits = strong_type<size_t, detail::bit_tag, strong_arithmetic, strong_increment_decrement>;
+class bits : public strong_type<unsigned, detail::bit_tag, strong_arithmetic, strong_increment_decrement>
+{
+  /// Type alias for the base class of the bits units class.
+  using bits_base = strong_type<unsigned, detail::bit_tag, strong_arithmetic, strong_increment_decrement>;
+
+public:
+  using bits_base::bits_base;
+
+  constexpr bits(const bits_base& other) : bits_base(other) {}
+
+  /// Returns an object that represents the number of bytes truncating any bits that do not form a complete byte.
+  constexpr bytes truncate_to_bytes() const;
+};
 
 /// \brief Abstraction of byte as a unit of digital information.
 ///
 /// An object of this class will represent an amount of digital information expressed in bytes. The class also provides
 /// a method to convert such amount into a number of information bits.
-class bytes : public strong_type<size_t, detail::byte_tag, strong_arithmetic, strong_increment_decrement>
+class bytes : public strong_type<unsigned, detail::byte_tag, strong_arithmetic, strong_increment_decrement>
 {
   /// Type alias for the base class of the byte units class.
-  using bytes_base = strong_type<size_t, detail::byte_tag, strong_arithmetic, strong_increment_decrement>;
+  using bytes_base = strong_type<unsigned, detail::byte_tag, strong_arithmetic, strong_increment_decrement>;
 
 public:
   using bytes_base::bytes_base;
@@ -54,6 +68,11 @@ public:
   /// Returns an object that represents the number of bits.
   constexpr bits to_bits() const { return bits(value() * CHAR_BIT); }
 };
+
+constexpr bytes bits::truncate_to_bytes() const
+{
+  return bytes(value() / CHAR_BIT);
+}
 
 namespace literals {
 
