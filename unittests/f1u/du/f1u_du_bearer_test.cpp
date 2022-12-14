@@ -56,23 +56,21 @@ protected:
     srslog::init();
     logger.set_level(srslog::basic_levels::debug);
 
-    // init RLC logger
+    // init F1-U logger
     srslog::fetch_basic_logger("F1-U", false).set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("F1-U", false).set_hex_dump_max_size(100);
+
+    // create tester and testee
+    logger.info("Creating F1-U bearer");
+    tester          = std::make_unique<f1u_du_test_frame>();
+    drb_id_t drb_id = drb_id_t::drb1;
+    f1u             = std::make_unique<f1u_bearer_impl>(drb_id, *tester, *tester);
   }
 
   void TearDown() override
   {
     // flush logger after each test
     srslog::flush();
-  }
-
-  void init()
-  {
-    logger.info("Creating F1-U bearer");
-    tester          = std::make_unique<f1u_du_test_frame>();
-    drb_id_t drb_id = drb_id_t::drb1;
-    f1u             = std::make_unique<f1u_bearer_impl>(drb_id, *tester, *tester);
   }
 
   srslog::basic_logger&              logger = srslog::fetch_basic_logger("TEST", false);
@@ -82,7 +80,6 @@ protected:
 
 TEST_F(f1u_du_test, create_new_entity)
 {
-  init();
   EXPECT_TRUE(tester->rx_sdu_list.empty());
   EXPECT_TRUE(tester->rx_discard_sdu_list.empty());
   EXPECT_TRUE(tester->tx_msg_list.empty());
@@ -90,8 +87,6 @@ TEST_F(f1u_du_test, create_new_entity)
 
 TEST_F(f1u_du_test, rx_discard)
 {
-  init();
-
   constexpr uint32_t pdcp_count = 123;
 
   nru_dl_message msg1                                          = {};
@@ -126,8 +121,6 @@ TEST_F(f1u_du_test, rx_discard)
 
 TEST_F(f1u_du_test, rx_pdcp_pdus)
 {
-  init();
-
   constexpr uint32_t pdu_size   = 10;
   constexpr uint32_t pdcp_count = 123;
 
@@ -163,8 +156,6 @@ TEST_F(f1u_du_test, rx_pdcp_pdus)
 
 TEST_F(f1u_du_test, tx_pdcp_pdus)
 {
-  init();
-
   constexpr uint32_t pdu_size   = 10;
   constexpr uint32_t pdcp_count = 123;
 
