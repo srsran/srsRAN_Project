@@ -56,6 +56,18 @@ void test_bounded_integer_copy_ctor_and_assignment_works()
   TESTASSERT_EQ(3, val2.to_uint());
 }
 
+void test_bounded_integer_increment_and_decrement()
+{
+  bounded_integer<uint8_t, 1, 10> val{2};
+
+  TESTASSERT_EQ(++val, 3);
+  TESTASSERT_EQ(--val, 2);
+  TESTASSERT_EQ(val++, 2);
+  TESTASSERT_EQ(val, 3);
+  TESTASSERT_EQ(val--, 3);
+  TESTASSERT_EQ(val, 2);
+}
+
 void test_bounded_integer_formats_valid_numbers()
 {
   bounded_integer<int, 4, 10> val = 6;
@@ -76,6 +88,7 @@ int main()
   test_bounded_integer_valid_check_passes();
   test_bounded_integer_cast_to_integer();
   test_bounded_integer_copy_ctor_and_assignment_works();
+  test_bounded_integer_increment_and_decrement();
   test_bounded_integer_formats_valid_numbers();
   test_invalid_bounded_integer_format_is_not_number();
 }

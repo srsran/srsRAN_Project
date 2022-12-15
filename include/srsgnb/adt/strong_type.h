@@ -68,7 +68,7 @@ public:
   /// Special member function definitions.
   explicit constexpr strong_type(strong_uninit_t u) {}
   explicit constexpr strong_type(T val_) : val(val_) {}
-  constexpr strong_type(const strong_type&) = default;
+  constexpr strong_type(const strong_type&)            = default;
   constexpr strong_type& operator=(const strong_type&) = default;
 
   /// Accessor for the underlying value of the strong type.
@@ -99,7 +99,8 @@ struct strong_equality_with {
 
   template <typename T>
   class strong_property : public detail::strong_equality_with_type<T, Ts>...
-  {};
+  {
+  };
 };
 
 struct strong_comparison {
@@ -127,7 +128,8 @@ struct strong_comparison_with {
 
   template <typename T>
   class strong_property : public detail::strong_comparison_with_type<T, Ts>...
-  {};
+  {
+  };
 };
 
 struct strong_increment_decrement {

@@ -61,7 +61,7 @@ class prbs_calculator_tester : public ::testing::TestWithParam<prb_calculator_te
 TEST_P(prbs_calculator_tester, calculated_nof_prbs_is_upper_bound)
 {
   prbs_calculator_pdsch_config pdsch_cfg =
-      get_prb_calc_pdsch_config(std::get<0>(GetParam()), sch_mcs_index{std::get<1>(GetParam())});
+      get_prb_calc_pdsch_config(std::get<0>(GetParam()), sch_mcs_index(std::get<1>(GetParam())));
   pdsch_prbs_tbs tbs_prb = get_nof_prbs(pdsch_cfg);
 
   unsigned tbs_lb = get_tbs_bytes(pdsch_cfg, tbs_prb.nof_prbs - 1);
@@ -144,17 +144,17 @@ TEST(estimate_nof_prbs, distance_from_actual_solution)
   for (unsigned mcs = 1; mcs < 25; ++mcs) {
     // build short TBS table.
     for (unsigned tbs = 30; tbs < 450; tbs += 5) {
-      short_tbs_prbs_calc_configs.push_back(get_prb_calc_pdsch_config(tbs, sch_mcs_index{mcs}));
+      short_tbs_prbs_calc_configs.push_back(get_prb_calc_pdsch_config(tbs, sch_mcs_index(mcs)));
     }
 
     // build medium size TBS table.
     for (unsigned tbs = 450; tbs < 2000; tbs += 10) {
-      medium_tbs_prbs_calc_configs.push_back(get_prb_calc_pdsch_config(tbs, sch_mcs_index{mcs}));
+      medium_tbs_prbs_calc_configs.push_back(get_prb_calc_pdsch_config(tbs, sch_mcs_index(mcs)));
     }
 
     // build long TBS table.
     for (unsigned tbs = 2000; tbs < 100000; tbs += 100) {
-      long_tbs_prbs_calc_configs.push_back(get_prb_calc_pdsch_config(tbs, sch_mcs_index{mcs}));
+      long_tbs_prbs_calc_configs.push_back(get_prb_calc_pdsch_config(tbs, sch_mcs_index(mcs)));
     }
   }
 

@@ -10,86 +10,109 @@
 
 #pragma once
 
+#include "srsgnb/adt/strong_type.h"
 #include "srsgnb/support/srsgnb_assert.h"
 #include "fmt/format.h"
 #include <type_traits>
 
 namespace srsgnb {
 
+namespace detail {
+
+/// Tag struct to uniquely identify bounded integers by template types and values.
+template <typename I, I Min, I Max>
+struct bounded_integer_tag {
+};
+
+template <typename Integer, Integer MIN_VALUE, Integer MAX_VALUE>
+using bounded_integer_base = strong_type<Integer,
+                                         detail::bounded_integer_tag<Integer, MIN_VALUE, MAX_VALUE>,
+                                         strong_equality,
+                                         strong_equality_with<Integer>,
+                                         strong_comparison,
+                                         strong_comparison_with<Integer>>;
+
+} // namespace detail
+
 /// This class represents an integer whose value is within the set of possible values: {MIN_VALUE, ..., MAX_VALUE}.
 template <typename Integer, Integer MIN_VALUE, Integer MAX_VALUE>
-class bounded_integer
+class bounded_integer : public detail::bounded_integer_base<Integer, MIN_VALUE, MAX_VALUE>
 {
   static_assert(std::is_integral<Integer>::value, "Template argument must be an integer");
   static_assert(MIN_VALUE <= MAX_VALUE, "Provided bounds for bounded_integer are not valid");
 
+  using base_class = detail::bounded_integer_base<Integer, MIN_VALUE, MAX_VALUE>;
+
 public:
-  using value_type = Integer;
+  using base_class::base_class;
 
-  constexpr bounded_integer() : val(MAX_VALUE + 1) {}
+  constexpr bounded_integer() : base_class(MAX_VALUE + 1) {}
 
-  constexpr bounded_integer(const bounded_integer&) noexcept = default;
+  constexpr bounded_integer(Integer v) : base_class(v) { assert_bounds(v); }
 
-  constexpr bounded_integer(bounded_integer&&) noexcept = default;
-
-  template <typename U, std::enable_if_t<std::is_integral<U>::value, int> = 0>
-  constexpr bounded_integer(U v) : val(v)
+  bounded_integer& operator=(Integer v)
   {
     assert_bounds(v);
-  }
-
-  constexpr bounded_integer& operator=(const bounded_integer&) noexcept = default;
-
-  constexpr bounded_integer& operator=(bounded_integer&&) noexcept = default;
-
-  template <typename U, std::enable_if_t<std::is_integral<U>::value, int> = 0>
-  bounded_integer& operator=(U v)
-  {
-    assert_bounds(v);
-    val = v;
+    base_class::value() = v;
     return *this;
   }
 
-  constexpr static Integer min() { return MIN_VALUE; }
-  constexpr static Integer max() { return MAX_VALUE; }
+  static constexpr Integer min() { return MIN_VALUE; }
+  static constexpr Integer max() { return MAX_VALUE; }
 
   /// Checks whether the value is within the defined boundaries.
-  bool is_valid() const { return val >= MIN_VALUE and val <= MAX_VALUE; }
+  constexpr bool is_valid() const { return base_class::value() >= MIN_VALUE && base_class::value() <= MAX_VALUE; }
 
   /// Cast operator to primitive integer type.
-  explicit operator Integer() const { return val; }
+  explicit constexpr operator Integer() const { return base_class::value(); }
+
+  /// Returns the underlying value. This method is only enabled if the type is unsigned.
   template <typename U = Integer, std::enable_if_t<std::is_unsigned<U>::value, int> = 0>
   constexpr Integer to_uint() const
   {
-    return val;
+    return base_class::value();
   }
+
+  /// Returns the underlying value. This method is only enabled if the type is signed.
   template <typename U = Integer, std::enable_if_t<std::is_signed<U>::value, int> = 0>
   constexpr Integer to_int() const
   {
-    return val;
+    return base_class::value();
   }
 
   bounded_integer& operator++()
   {
-    ++val;
-    assert_bounds(val);
+    ++base_class::value();
+    assert_bounds(base_class::value());
     return *this;
   }
 
-  constexpr bool operator==(bounded_integer other) const { return val == other.val; }
-  constexpr bool operator!=(bounded_integer other) const { return val != other.val; }
-  constexpr bool operator<(bounded_integer other) const { return val < other.val; }
-  constexpr bool operator<=(bounded_integer other) const { return val <= other.val; }
-  constexpr bool operator>(bounded_integer other) const { return val > other.val; }
-  constexpr bool operator>=(bounded_integer other) const { return val >= other.val; }
+  bounded_integer operator++(int)
+  {
+    auto tmp = base_class::value()++;
+    assert_bounds(base_class::value());
+    return tmp;
+  }
+
+  bounded_integer& operator--()
+  {
+    --base_class::value();
+    assert_bounds(base_class::value());
+    return *this;
+  }
+
+  bounded_integer operator--(int)
+  {
+    auto tmp = base_class::value()--;
+    assert_bounds(base_class::value());
+    return tmp;
+  }
 
 protected:
   constexpr void assert_bounds(Integer v) const
   {
-    srsgnb_assert(v >= MIN_VALUE and v <= MAX_VALUE, "Value={} out-of-bounds {{{},...,{}}}", v, MIN_VALUE, MAX_VALUE);
+    srsgnb_assert(v >= MIN_VALUE && v <= MAX_VALUE, "Value={} out-of-bounds {{{},...,{}}}", v, MIN_VALUE, MAX_VALUE);
   }
-
-  Integer val;
 };
 
 } // namespace srsgnb
