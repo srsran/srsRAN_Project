@@ -14,61 +14,71 @@
 #include "pucch_orthogonal_sequence.h"
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
+#include "srsgnb/phy/upper/signal_processors/port_channel_estimator.h"
 
 namespace srsgnb {
 
-/// Describes a generic implementation of a DMRS for PUCCH processor.
+/// Generic implementation of a DM-RS channel estimator for PUCCH Format 1.
 class dmrs_pucch_processor_format1_impl : public dmrs_pucch_processor
 {
+public:
+  using layer_dmrs_pattern = port_channel_estimator::layer_dmrs_pattern;
+
+  dmrs_pucch_processor_format1_impl(std::unique_ptr<pseudo_random_generator>            prg_,
+                                    std::unique_ptr<const low_papr_sequence_collection> sequence_collection_,
+                                    std::unique_ptr<port_channel_estimator>             ch_est_) :
+    helper(std::move(prg_)), sequence_collection(std::move(sequence_collection_)), ch_estimator(std::move(ch_est_))
+  {
+    srsgnb_assert(sequence_collection, "Invalid sequence collection.");
+    srsgnb_assert(ch_estimator, "Invalid port channel estimator.");
+  }
+
+  // See interface for documentation.
+  void estimate(channel_estimate& ce_, const resource_grid_reader& grid, const config_t& config) override;
+
 private:
   pucch_helper helper;
 
   /// Format 1 implementation expects pre-generated sequence collection on instantiation.
   std::unique_ptr<const low_papr_sequence_collection> sequence_collection;
+  /// Antenna port channel estimator.
+  std::unique_ptr<port_channel_estimator> ch_estimator;
 
+  /// Buffer for DM-RS symbols.
+  dmrs_symbol_list temp_symbols;
+  /// DM-RS allocation pattern.
+  layer_dmrs_pattern temp_pattern;
   /// Pre-generated orthogonal cover code.
   const pucch_orthogonal_sequence occ;
 
-  // Internal struct holding sequence generation parameters.
+  /// Holds DM-RS sequence generation parameters used in TS38.211 Section 6.4.1.3.1.1.
   struct sequence_generation_config {
-    // sequence group
+    // Sequence group.
     unsigned u;
-    // sequence number
+    // Sequence number.
     unsigned v;
-    // sequential number of processed DMRS symbol
+    // DM-RS symbol index.
     unsigned m;
-    // total number of DMRS symbols
+    // Total number of DM-RS symbols
     unsigned n_pucch;
   };
 
   /// \brief Implements TS 38.211 section 6.4.1.3.1.1 Sequence generation.
   ///
-  /// \param[out] sequence     Provides the sequence destination.
-  /// \param[in]  pucch_config Provides dmrs pucch config.
+  /// \param[out] sequence     Sequence destination buffer.
+  /// \param[in]  pucch_config PUCCH configuration.
   /// \param[in]  gen_config   Aggregates additional parameters required to calculate the sequences.
-  /// \param[in]  symbol       Denotes the symbol index.
-  void sequence_generation(span<srsgnb::cf_t>                    sequence,
-                           const dmrs_pucch_processor::config_t& pucch_config,
-                           const sequence_generation_config&     gen_config,
-                           unsigned                              symbol) const;
+  /// \param[in]  symbol       OFDM symbol index.
+  void sequence_generation(span<srsgnb::cf_t>                sequence,
+                           const config_t&                   pucch_config,
+                           const sequence_generation_config& gen_config,
+                           unsigned                          symbol) const;
 
-  /// \brief Implements TS 38.211 section 6.4.1.3.1.2 Mapping to physical resources.
+  /// \brief Generates the PUCCH DM-RS allocation pattern.
   ///
-  /// \param[out] ce        Container for storing extracted slot symbol DMRS pilots.
-  /// \param[in]  grid      Provides the source grid to read the signal.
-  /// \param[in]  start_prb Provides a PRB index for the given symbol.
-  /// \param[in]  symbol    Denotes the symbol index.
-  void mapping(span<cf_t> ce, const resource_grid_reader& grid, unsigned start_prb, unsigned symbol) const;
-
-public:
-  dmrs_pucch_processor_format1_impl(std::unique_ptr<pseudo_random_generator>            prg_,
-                                    std::unique_ptr<const low_papr_sequence_collection> sequence_collection_) :
-    helper(std::move(prg_)), sequence_collection(std::move(sequence_collection_))
-  {
-    srsgnb_assert(sequence_collection, "Invalid sequence collection.");
-  }
-
-  void estimate(channel_estimate& ce_, const resource_grid_reader& grid, const config_t& config) override;
+  /// Implements the PUCCH DM-RS mapping, as described in TS 38.211 section 6.4.1.3.1.2.
+  /// \param[out] mask DM-RS allocation pattern.
+  /// \param[in]  cfg  Configuration parameters.
+  static void generate_dmrs_pattern(layer_dmrs_pattern& mask, const config_t& config);
 };
-
 } // namespace srsgnb

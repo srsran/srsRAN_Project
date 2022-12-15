@@ -13,6 +13,12 @@
 
 using namespace srsgnb;
 
+/// \brief DM-RS RE allocation pattern for PUCCH Format 2.
+///
+/// Indicates the Resource Elements containing DM-RS symbols within a PRB, as per TS38.211 Section 6.4.1.3.2.2.
+static const bounded_bitset<NRE> format2_prb_re_mask =
+    {false, true, false, false, true, false, false, true, false, false, true, false};
+
 unsigned dmrs_pucch_processor_format2_impl::c_init(unsigned symbol, const dmrs_pucch_processor::config_t& config)
 {
   uint64_t n_slot = config.slot.slot_index();
@@ -36,10 +42,10 @@ void dmrs_pucch_processor_format2_impl::sequence_generation(span<cf_t>          
   prg->generate(sequence.first(config.nof_prb * NOF_DMRS_PER_RB), M_SQRT1_2);
 }
 
-void dmrs_pucch_processor_format2_impl::generate_dmrs_pattern(layer_dmrs_pattern& mask, const config_t& config) const
+void dmrs_pucch_processor_format2_impl::generate_dmrs_pattern(layer_dmrs_pattern& mask, const config_t& config)
 {
   // RE allocation pattern is always the same.
-  mask.re_pattern = dmrs_pucch_processor_format2_impl::format2_prb_re_mask;
+  mask.re_pattern = format2_prb_re_mask;
   // Set used PRB.
   mask.rb_mask.resize(config.starting_prb + config.nof_prb);
   mask.rb_mask.fill(config.starting_prb, config.starting_prb + config.nof_prb, true);

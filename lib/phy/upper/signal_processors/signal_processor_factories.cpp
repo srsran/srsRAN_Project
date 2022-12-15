@@ -103,8 +103,8 @@ public:
       return TWOPI * static_cast<float>(n++) / static_cast<float>(NRE);
     });
 
-    return std::make_unique<dmrs_pucch_processor_format1_impl>(prg_factory->create(),
-                                                               lpc_factory->create(m, delta, alphas));
+    return std::make_unique<dmrs_pucch_processor_format1_impl>(
+        prg_factory->create(), lpc_factory->create(m, delta, alphas), ch_estimator_factory->create());
   }
 
   std::unique_ptr<dmrs_pucch_processor> create_format2() override

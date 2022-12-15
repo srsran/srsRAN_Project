@@ -17,7 +17,7 @@
 
 namespace srsgnb {
 
-/// Describes a generic implementation of a DMRS for PDCCH processor.
+/// Generic implementation of a DM-RS channel estimator for PUCCH Format 2.
 class dmrs_pucch_processor_format2_impl : public dmrs_pucch_processor
 {
 public:
@@ -42,21 +42,15 @@ private:
   std::unique_ptr<port_channel_estimator> ch_estimator;
   /// Buffer for DM-RS symbols.
   dmrs_symbol_list temp_symbols;
-  /// Buffer for DM-RS symbol coordinates.
+  /// DM-RS allocation pattern.
   layer_dmrs_pattern temp_pattern;
 
-  /// \brief DM-RS RE allocation pattern for PUCCH Format 2.
+  /// \brief Computes the initial pseudo-random state.
+  /// \remark Implemented according to TS 38.211 section 6.4.1.3.2.1.
   ///
-  /// Indicates the Resource Elements containing DM-RS symbols within a PRB, as per TS38.211 Section 6.4.1.3.2.2.
-  const bounded_bitset<NRE> format2_prb_re_mask =
-      {false, true, false, false, true, false, false, true, false, false, true, false};
-
-  /// \brief     Computes the initial pseudo-random state.
-  /// \param[in] symbol Denotes the symbol index.
-  /// \param[in] config Provides the required parameters.
+  /// \param[in] symbol OFDM symbol index.
+  /// \param[in] config PUCCH configuration parameters.
   /// \return    The initial pseudo-random state.
-  ///
-  /// \remark implemented according to TS 38.211 section 6.4.1.3.2.1.
   static unsigned c_init(unsigned symbol, const config_t& config);
 
   /// \brief Implements TS 38.211 section 6.4.1.3.2.1 Sequence generation.
@@ -72,7 +66,6 @@ private:
   /// Implements the PUCCH DM-RS mapping, as described in TS 38.211 section 6.4.1.3.2.2.
   /// \param[out] mask DM-RS allocation pattern.
   /// \param[in]  cfg  Configuration parameters.
-  void generate_dmrs_pattern(layer_dmrs_pattern& mask, const config_t& config) const;
+  static void generate_dmrs_pattern(layer_dmrs_pattern& mask, const config_t& config);
 };
-
 } // namespace srsgnb
