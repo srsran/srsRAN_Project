@@ -33,6 +33,17 @@
 
 namespace srsgnb {
 
+struct sched_grid_resource {
+  prb_interval      prbs;
+  ofdm_symbol_range symbols;
+
+  bool operator==(const sched_grid_resource& rhs) const { return prbs == rhs.prbs and symbols == rhs.symbols; }
+
+  bool operator!=(const sched_grid_resource& rhs) const { return !(rhs == *this); }
+
+  bool is_empty() const { return prbs.empty() and symbols.empty(); }
+};
+
 /// Cell Configuration Request.
 /// \remark See O-RAN WG8, Section 9.2.3.2.1, Table 9.18.
 struct sched_cell_configuration_request_message {
@@ -61,6 +72,9 @@ struct sched_cell_configuration_request_message {
 
   /// Payload size is in bytes.
   unsigned sib1_payload_size;
+
+  /// List of PUCCH guardbands;
+  std::vector<sched_grid_resource> pucch_guardbands;
 };
 
 /// \remark See TS 38.331, "ServingCellConfig".
