@@ -180,11 +180,6 @@ struct cu_cp_associated_qos_flow {
   optional<std::string> qos_flow_map_ind;
 };
 
-struct cu_cp_dlqos_flow_per_tnl_information {
-  cu_cp_gtp_tunnel                       uptransport_layer_info;
-  std::vector<cu_cp_associated_qos_flow> associated_qos_flow_list;
-};
-
 struct cu_cp_qos_flow_failed_to_setup_item {
   uint8_t       qos_flow_id;
   cu_cp_cause_t cause;
@@ -202,7 +197,7 @@ struct cu_cp_security_result {
 
 struct cu_cp_pdu_session_resource_setup_response_transfer {
   std::vector<cu_cp_qos_flow_per_tnl_information>  add_dl_qos_flow_per_tnl_info;
-  cu_cp_dlqos_flow_per_tnl_information             dlqos_flow_per_tnl_info;
+  cu_cp_qos_flow_per_tnl_information               dlqos_flow_per_tnl_info;
   std::vector<cu_cp_associated_qos_flow>           associated_qos_flow_list;
   std::vector<cu_cp_qos_flow_failed_to_setup_item> qos_flow_failed_to_setup_list;
   optional<cu_cp_security_result>                  security_result;

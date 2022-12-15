@@ -20,7 +20,7 @@
 #include "srsgnb/srslog/srslog.h"
 
 #include "../../ngap/ngap_asn1_utils.h"
-#include "../converters/ngc_asn1_converters.h"
+#include "../helpers/ngc_asn1_helpers.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
@@ -102,7 +102,7 @@ public:
     srsgnb_assert(rrc_ue_pdu_session_handler != nullptr, "rrc_ue_pdu_session_handler must not be nullptr");
 
     cu_cp_pdu_session_resource_setup_message msg;
-    pdu_session_resource_setup_list_su_req_to_cu_cp_type(msg, request->pdu_session_res_setup_list_su_req.value);
+    fill_cu_cp_pdu_session_resource_setup_message(msg, request->pdu_session_res_setup_list_su_req.value);
     msg.ue_aggregate_maximum_bit_rate_dl = ue_aggregate_maximum_bit_rate_dl;
 
     cu_cp_pdu_session_resource_setup_response_message cu_cp_pdu_session_resource_setup_resp_msg;
@@ -115,7 +115,7 @@ public:
           CORO_AWAIT_VALUE(cu_cp_pdu_session_resource_setup_resp_msg,
                            rrc_ue_pdu_session_handler->handle_new_pdu_session_resource_setup_request(msg));
 
-          cu_cp_type_to_pdu_session_res_setup_resp_s(res, cu_cp_pdu_session_resource_setup_resp_msg);
+          fill_pdu_session_res_setup_resp_s(res, cu_cp_pdu_session_resource_setup_resp_msg);
 
           CORO_RETURN(res);
         });
