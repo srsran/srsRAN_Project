@@ -40,9 +40,9 @@ public:
 };
 
 struct rrc_ue_gtp_tunnel {
-  uint64_t gtp_teid;
-  uint64_t transport_layer_address;
-  uint8_t  cell_group_id;
+  uint64_t    gtp_teid;
+  std::string transport_layer_address;
+  uint8_t     cell_group_id;
 };
 
 struct rrc_ue_drb_setup_message {

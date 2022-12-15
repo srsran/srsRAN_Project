@@ -64,15 +64,14 @@ inline asn1::e1ap::pdu_session_type_e cu_cp_pdu_session_type_to_e1ap_pdu_session
 /// @brief Convert CU-CP UL NGU UP TNL Information to E1AP UP TNL Information.
 /// @param ul_ngu_up_tnl_info The CU-CP UL NGU UP TNL Information.
 /// @return The E1AP UP TNL Information.
-inline asn1::e1ap::up_tnl_info_c
-cu_cp_ul_ngu_up_tnl_info_to_e1ap_up_tnl_info(ul_ngu_up_tnl_information ul_ngu_up_tnl_info)
+inline asn1::e1ap::up_tnl_info_c cu_cp_ul_ngu_up_tnl_info_to_e1ap_up_tnl_info(cu_cp_gtp_tunnel ul_ngu_up_tnl_info)
 {
   asn1::e1ap::up_tnl_info_c e1ap_up_tnl_info;
 
   e1ap_up_tnl_info.set_gtp_tunnel();
   auto& e1ap_gtp_tunnel = e1ap_up_tnl_info.gtp_tunnel();
   e1ap_gtp_tunnel.gtp_teid.from_number(ul_ngu_up_tnl_info.gtp_teid);
-  e1ap_gtp_tunnel.transport_layer_address.from_number(ul_ngu_up_tnl_info.transport_layer_address);
+  e1ap_gtp_tunnel.transport_layer_address.from_string(ul_ngu_up_tnl_info.transport_layer_address);
 
   return e1ap_up_tnl_info;
 }
@@ -108,14 +107,13 @@ inline cu_cp_cause_t e1ap_cause_to_cu_cp_cause(asn1::e1ap::cause_c e1ap_cause)
 /// @brief Convert E1AP UP TNL Information to CU-CP Uptransport Layer Information.
 /// @param e1ap_up_tnl_info The E1AP UP TNL Information.
 /// @return The CU-CP Uptransport Layer Information.
-inline cu_cp_uptransport_layer_information
-cu_cp_uptransport_layer_info_from_e1ap_up_tnl_info(asn1::e1ap::up_tnl_info_c e1ap_up_tnl_info)
+inline cu_cp_gtp_tunnel cu_cp_uptransport_layer_info_from_e1ap_up_tnl_info(asn1::e1ap::up_tnl_info_c e1ap_up_tnl_info)
 {
-  cu_cp_uptransport_layer_information cu_cp_uptransport_layer_info;
+  cu_cp_gtp_tunnel cu_cp_uptransport_layer_info;
 
   cu_cp_uptransport_layer_info.gtp_teid = e1ap_up_tnl_info.gtp_tunnel().gtp_teid.to_number();
   cu_cp_uptransport_layer_info.transport_layer_address =
-      e1ap_up_tnl_info.gtp_tunnel().transport_layer_address.to_number();
+      e1ap_up_tnl_info.gtp_tunnel().transport_layer_address.to_string();
 
   return cu_cp_uptransport_layer_info;
 }
@@ -139,7 +137,7 @@ rrc_ue_gtp_tunnel_to_f1ap_uluptnl_info_to_be_setup_item(rrc_ue_gtp_tunnel gtp_tu
   asn1::f1ap::uluptnl_info_to_be_setup_item_s uluptnl_item;
   uluptnl_item.uluptnl_info.set_gtp_tunnel();
   uluptnl_item.uluptnl_info.gtp_tunnel().gtp_teid.from_number(gtp_tunnel.gtp_teid);
-  uluptnl_item.uluptnl_info.gtp_tunnel().transport_layer_address.from_number(gtp_tunnel.transport_layer_address);
+  uluptnl_item.uluptnl_info.gtp_tunnel().transport_layer_address.from_string(gtp_tunnel.transport_layer_address);
 
   return uluptnl_item;
 }

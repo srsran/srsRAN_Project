@@ -149,9 +149,9 @@ struct qos_flow_setup_request_item {
   optional<std::string> reflective_qos_attribute;
 };
 
-struct ul_ngu_up_tnl_information {
-  uint64_t transport_layer_address;
-  uint64_t gtp_teid;
+struct cu_cp_gtp_tunnel {
+  std::string transport_layer_address;
+  uint64_t    gtp_teid;
 };
 
 struct cu_cp_s_nssai {
@@ -165,7 +165,7 @@ struct cu_cp_pdu_session_res_setup_item {
   cu_cp_s_nssai                            s_nssai;
   uint64_t                                 pdu_session_aggregate_maximum_bit_rate_dl;
   uint64_t                                 pdu_session_aggregate_maximum_bit_rate_ul;
-  ul_ngu_up_tnl_information                ul_ngu_up_tnl_info;
+  cu_cp_gtp_tunnel                         ul_ngu_up_tnl_info;
   std::string                              pdu_session_type;
   std::vector<qos_flow_setup_request_item> qos_flow_setup_request_items;
 };
@@ -175,18 +175,13 @@ struct cu_cp_pdu_session_resource_setup_message {
   uint64_t                                      ue_aggregate_maximum_bit_rate_dl;
 };
 
-struct cu_cp_uptransport_layer_information {
-  uint64_t transport_layer_address;
-  uint64_t gtp_teid;
-};
-
 struct cu_cp_associated_qos_flow {
   uint8_t               qos_flow_id;
   optional<std::string> qos_flow_map_ind;
 };
 
 struct cu_cp_dlqos_flow_per_tnl_information {
-  cu_cp_uptransport_layer_information    uptransport_layer_info;
+  cu_cp_gtp_tunnel                       uptransport_layer_info;
   std::vector<cu_cp_associated_qos_flow> associated_qos_flow_list;
 };
 
@@ -196,7 +191,7 @@ struct cu_cp_qos_flow_failed_to_setup_item {
 };
 
 struct cu_cp_qos_flow_per_tnl_information {
-  cu_cp_uptransport_layer_information    uptransport_layer_info;
+  cu_cp_gtp_tunnel                       uptransport_layer_info;
   std::vector<cu_cp_associated_qos_flow> associated_qos_flow_list;
 };
 
@@ -204,6 +199,7 @@ struct cu_cp_security_result {
   std::string confidentiality_protection_result;
   std::string integrity_protection_result;
 };
+
 struct cu_cp_pdu_session_resource_setup_response_transfer {
   std::vector<cu_cp_qos_flow_per_tnl_information>  add_dl_qos_flow_per_tnl_info;
   cu_cp_dlqos_flow_per_tnl_information             dlqos_flow_per_tnl_info;
