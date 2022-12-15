@@ -18,7 +18,7 @@
 using namespace srsgnb;
 
 // Maximum allowed error.
-static constexpr float ASSERT_MAX_ERROR = 4e-6;
+static constexpr float ASSERT_MAX_ERROR = 4e-3;
 
 namespace srsgnb {
 
@@ -28,6 +28,12 @@ std::ostream& operator<<(std::ostream& os, test_case_t test_case)
              "size={} direction={}",
              test_case.config.size,
              test_case.config.dir == dft_processor::direction::DIRECT ? "direct" : "inverse");
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, span<const cf_t> data)
+{
+  fmt::print(os, "{}", data);
   return os;
 }
 
@@ -59,8 +65,7 @@ protected:
     if (dft_factory_str == "generic") {
       dft_factory = create_dft_processor_factory_generic();
     } else if (dft_factory_str == "fftx") {
-      // 'fftx' tests are silently skipped for now.
-      GTEST_SKIP();
+      dft_factory = create_dft_processor_factory_fftx();
     } else if (dft_factory_str == "fftw") {
       dft_factory = create_dft_processor_factory_fftw();
       if (dft_factory == nullptr) {
@@ -94,13 +99,13 @@ TEST_P(DFTprocessorFixture, DFTProcessorUnittest)
   }
 
   // Provide the input data to the DFT.
-  srsvec::copy(dft->get_input().first(config.size), input);
+  srsvec::copy(dft->get_input(), input);
 
   // Run DFT.
   span<const cf_t> dft_output = dft->run();
 
   // Assert shared channel data matches.
-  ASSERT_EQ(transform, dft_output);
+  ASSERT_EQ(span<const cf_t>(transform), dft_output);
 }
 
 // Creates test suite that combines all possible parameters.

@@ -18,7 +18,7 @@ private:
   /// DFT output buffer ownership.
   srsvec::aligned_vec<cf_t> output;
   /// FFTX function wrapper.
-  std::function<void()> function;
+  std::function<void(float*, float*)> function;
 
 public:
   /// \brief Constructs a fftx DFT processor.

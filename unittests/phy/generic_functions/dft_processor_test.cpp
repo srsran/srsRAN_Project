@@ -9,6 +9,8 @@
  */
 
 #include "srsgnb/phy/generic_functions/generic_functions_factories.h"
+#include "srsgnb/srsvec/compare.h"
+#include "srsgnb/srsvec/dot_prod.h"
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <cmath>
@@ -22,8 +24,10 @@ using namespace srsgnb;
 // Random generator.
 static std::mt19937 rgen(0);
 
-// Maximum allowed error.
-static float ASSERT_MAX_ERROR = 4e-6;
+// Maximum allowed mean squared error.
+static float ASSERT_MAX_MSE = 1e-6;
+// Maximum allowed peak error.
+static float ASSERT_MAX_ERROR = 1e-3;
 
 void ditfft(span<cf_t> out, span<const cf_t> in, span<const cf_t> table, unsigned N, unsigned s)
 {
@@ -106,7 +110,7 @@ void parse_args(int argc, char** argv)
 int main(int argc, char** argv)
 {
   parse_args(argc, argv);
-  std::uniform_real_distribution<float> dist(-1.0, +1.0);
+  std::uniform_real_distribution<float> dist(-M_PI, +M_PI);
 
   std::shared_ptr<dft_processor_factory> dft_factory = nullptr;
   if (dft_factory_str == "generic") {
@@ -144,6 +148,9 @@ int main(int argc, char** argv)
       // Allocate golden output buffer.
       std::vector<cf_t> expected_output(size);
 
+      // Maximum Mean Squared Error
+      float max_mse = 0.0F;
+
       // Maximum error for this size and direction.
       float max_error = 0.0F;
 
@@ -151,7 +158,7 @@ int main(int argc, char** argv)
       for (unsigned repetition = 0; repetition != nof_repetitions; ++repetition) {
         // Generate input random data.
         for (cf_t& value : input) {
-          value = {dist(rgen), dist(rgen)};
+          value = std::exp(COMPLEX_J * dist(rgen));
         }
 
         // Run DFT.
@@ -160,21 +167,50 @@ int main(int argc, char** argv)
         // Run expected DFT
         run_expected_dft(expected_output, direction, input);
 
-        // Assert output.
+        // Calculate difference between the expected output and the actual output.
+        std::vector<cf_t> diff(size);
         for (unsigned idx = 0; idx != size; ++idx) {
-          // Calculate absolute error normalised by the square root of the size.
-          float error = std::abs(expected_output[idx] - output[idx]) / std::sqrt(size);
-
-          // Update maximum error.
-          max_error = std::max(max_error, error);
+          diff[idx] = expected_output[idx] - output[idx];
         }
+
+        // Mean square error.
+        float mse = srsvec::average_power(diff);
+
+        // Peak max error.
+        std::pair<unsigned, float> max_abs_error = srsvec::max_abs_element(diff);
+
+        // Update maximum MSE.
+        max_mse = std::max(max_mse, mse);
+
+        // Update maximum error.
+        max_error = std::max(max_error, std::sqrt(max_abs_error.second));
+
+        // Set the next line to 1 for printing the error for each case.
+#if 0
+        fmt::print("size={}; dir={}; mse={} peak_error={};\n",
+                   size,
+                   dft_processor::direction_to_string(direction).c_str(),
+                   mse,
+                   std::sqrt(max_abs_error.second));
+#endif
       }
 
       // Set the next line to 1 for printing the maximum error for each case.
 #if 0
-      printf(
-          "size=%d; dir=%s; max_error=%f;\n", size, dft_processor::direction_to_string(direction).c_str(), max_error);
+      fmt::print("size={}; dir={}; max_mse={} max_error={};\n",
+                 size,
+                 dft_processor::direction_to_string(direction).c_str(),
+                 max_mse,
+                 max_error);
 #endif
+
+      // Actual assertion.
+      TESTASSERT(max_mse < ASSERT_MAX_MSE,
+                 "Error {} exceeds maximum {} for {} DFT size {}.",
+                 max_mse,
+                 ASSERT_MAX_MSE,
+                 dft_processor::direction_to_string(direction),
+                 size);
 
       // Actual assertion.
       TESTASSERT(max_error < ASSERT_MAX_ERROR,

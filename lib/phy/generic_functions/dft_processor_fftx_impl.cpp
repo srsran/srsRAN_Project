@@ -1,5 +1,6 @@
 
 #include "dft_processor_fftx_impl.h"
+#include "srsgnb/srsvec/zero.h"
 #include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/math_utils.h"
 
@@ -15,14 +16,14 @@ using namespace srsgnb;
 
 #define FFTX_CREATE_SIZE(SIZE)                                                                                         \
   do {                                                                                                                 \
-    if (input.size() == SIZE && dir == direction::DIRECT) {                                                            \
+    if (input.size() == (SIZE) && dir == direction::DIRECT) {                                                          \
       init_fftx_dftbat_1_##SIZE##_1d_CPU();                                                                            \
-      function = [this]() { fftx_dftbat_1_##SIZE##_1d_CPU((float*)input.data(), (float*)output.data()); };             \
+      function = fftx_dftbat_1_##SIZE##_1d_CPU;                                                                        \
       return;                                                                                                          \
     }                                                                                                                  \
-    if (input.size() == SIZE && dir == direction::INVERSE) {                                                           \
+    if (input.size() == (SIZE) && dir == direction::INVERSE) {                                                         \
       init_fftx_idftbat_1_##SIZE##_1d_CPU();                                                                           \
-      function = [this]() { fftx_idftbat_1_##SIZE##_1d_CPU((float*)input.data(), (float*)output.data()); };            \
+      function = fftx_idftbat_1_##SIZE##_1d_CPU;                                                                       \
       return;                                                                                                          \
     }                                                                                                                  \
   } while (false)
@@ -69,14 +70,16 @@ dft_processor_fftx_impl::dft_processor_fftx_impl(const configuration& dft_config
   FFTX_CREATE_SIZE(49152);
 
   fmt::print(
-      "The {} DFT {} points is not implemented.", dir == direction::DIRECT ? "direct" : "inverse", dft_config.size);
+      "The {} DFT {} points is not implemented.\n", dir == direction::DIRECT ? "direct" : "inverse", dft_config.size);
 }
 
 span<const cf_t> dft_processor_fftx_impl::run()
 {
   report_fatal_error_if_not(function, "Invalid function of size {}.", input.size());
-  std::fill(output.begin(), output.end(), 0);
-  function();
+
+  srsvec::zero(output);
+
+  function(reinterpret_cast<float*>(output.data()), reinterpret_cast<float*>(input.data()));
 
   // Return the view of the output data.
   return output;
