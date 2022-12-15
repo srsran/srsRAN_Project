@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "adapters/pdcp_adapters.h"
 #include "qos_flow_context.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/pdcp/pdcp_entity.h"
@@ -26,6 +27,10 @@ struct drb_context {
   int16_t drb_id;
 
   std::unique_ptr<pdcp_entity> pdcp_bearer;
+
+  // Adapter PDCP->SDAP
+  // FIXME: Currently, we assume only one DRB per PDU session and only one QoS flow per DRB.
+  pdcp_sdap_adapter pdcp_to_sdap_adapter;
 
   uint8_t cell_group_id; /// This can/should be a list of cell groups.
 

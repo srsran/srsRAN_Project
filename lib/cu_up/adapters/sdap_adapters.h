@@ -11,8 +11,8 @@
 #pragma once
 
 #include "srsgnb/gtpu/gtpu_tunnel_tx.h"
+#include "srsgnb/pdcp/pdcp_tx.h"
 #include "srsgnb/sdap/sdap.h"
-#include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {
 namespace srs_cu_up {
@@ -34,6 +34,24 @@ public:
 
 private:
   gtpu_tunnel_tx_lower_layer_interface* gtpu_handler = nullptr;
+};
+
+class sdap_pdcp_adapter : public sdap_pdu_tx_notifier
+{
+public:
+  sdap_pdcp_adapter()  = default;
+  ~sdap_pdcp_adapter() = default;
+
+  void connect_pdcp(pdcp_tx_upper_data_interface& pdcp_handler_) { pdcp_handler = &pdcp_handler_; }
+
+  void on_new_pdu(byte_buffer pdu) override
+  {
+    srsgnb_assert(pdcp_handler != nullptr, "PDCP handler must not be nullptr");
+    pdcp_handler->handle_sdu(std::move(pdu));
+  }
+
+private:
+  pdcp_tx_upper_data_interface* pdcp_handler = nullptr;
 };
 
 } // namespace srs_cu_up

@@ -50,6 +50,7 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
   new_session->local_teid = allocate_local_teid(new_session->pdu_session_id);
 
   // Create SDAP
+  // FIXME: implement Tx entity of SDAP and pass new_session->sdap_to_pdcp_adapter
   new_session->sdap = create_sdap(new_session->sdap_to_gtpu_adapter);
 
   // Create GTPU entity
@@ -69,6 +70,10 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
     logger.error("PDU Session {} cannot be created. TEID {} already exists", session.pdu_session_id, peer_teid);
     return pdu_session_result;
   }
+
+  srsgnb_assert(session.drb_to_setup_list_ng_ran.size() <= 1,
+                "PDU Session {} cannot be created: Current implementation assumes one DRB per PDU session!",
+                session.pdu_session_id);
 
   // Handle DRB setup
   for (size_t i = 0; i < session.drb_to_setup_list_ng_ran.size(); ++i) {
@@ -92,12 +97,18 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
     pdcp_msg.config.tx.rlc_mode = pdcp_rlc_mode::am;
     pdcp_msg.config.rx.rb_type  = pdcp_rb_type::drb;
     pdcp_msg.config.rx.rlc_mode = pdcp_rlc_mode::am;
-    pdcp_msg.tx_lower           = nullptr;
-    pdcp_msg.tx_upper_cn        = nullptr;
-    pdcp_msg.rx_upper_dn        = nullptr;
-    pdcp_msg.rx_upper_cn        = nullptr;
+    pdcp_msg.tx_lower           = nullptr; // TODO: add adapter towards F1-U
+    pdcp_msg.tx_upper_cn        = nullptr; // TODO: add adapter towards RRC
+    pdcp_msg.rx_upper_dn        = &new_drb->pdcp_to_sdap_adapter;
+    pdcp_msg.rx_upper_cn        = nullptr; // TODO: add adapter towards RRC
     pdcp_msg.timers             = &timers;
     new_drb->pdcp_bearer        = srsgnb::create_pdcp_entity(pdcp_msg);
+
+    srsgnb_assert(
+        drb.qos_flow_info_to_be_setup.size() <= 1,
+        "DRB with drbid={} of PDU Session {} cannot be created: Current implementation assumes one QoS flow per DRB!",
+        drb.drb_id,
+        session.pdu_session_id);
 
     // Create QoS flows
     for (size_t k = 0; k < drb.qos_flow_info_to_be_setup.size(); ++k) {
@@ -115,6 +126,12 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
           "Created QoS flow with qos_flow_id={} and five_qi={}", new_qos_flow->qos_flow_id, new_qos_flow->five_qi);
 
       // TODO: somehow take the FiveQI and configure SDAP
+
+      // FIXME: Currently, we assume only one DRB per PDU session and only one QoS flow per DRB.
+      // Connect the DRB's "PDCP->SDAP adapter" directly to SDAP
+      new_drb->pdcp_to_sdap_adapter.connect_sdap(*new_session->sdap);
+      // Connect SDAP's "SDAP->PDCP adapter" directly to PDCP
+      new_session->sdap_to_pdcp_adapter.connect_pdcp(new_drb->pdcp_bearer->get_tx_upper_data_interface());
 
       // Add QoS flow creation result
       flow_result.success = true;
