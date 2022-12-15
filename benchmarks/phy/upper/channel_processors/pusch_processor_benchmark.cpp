@@ -22,23 +22,13 @@ using namespace srsgnb;
 // A test case consists of a PUSCH PDU configuration and a Transport Block Size.
 using test_case_type = std::tuple<pusch_processor::pdu_t, unsigned>;
 
-// Holds a set of test cases.
-static std::vector<test_case_type> test_case_set;
-
 // Pseudo-random generator.
 static std::mt19937 rgen(0);
-
-// PUSCH processor and validator.
-static std::unique_ptr<pusch_processor>     processor;
-static std::unique_ptr<pusch_pdu_validator> validator;
-
-// Supported LDPC decoder implementations.
-static std::vector<std::string> ldpc_decoder_type_set = {"generic", "avx2"};
 
 // General test configuration parameters.
 static unsigned                           nof_repetitions             = 10;
 static std::string                        selected_profile_name       = "default";
-static std::string                        ldpc_decoder_type           = "generic";
+static std::string                        ldpc_decoder_type           = "auto";
 static bool                               silent                      = false;
 static unsigned                           nof_rx_ports                = 1;
 static unsigned                           nof_tx_layers               = 1;
@@ -76,7 +66,7 @@ static const std::vector<test_profile> profile_set = {
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {25},
-     {{modulation_scheme::QPSK, 120.0}}},
+     {{modulation_scheme::QPSK, 120.0F}}},
 
     {"pusch_scs15_5MHz_256qam_max",
      "Decodes PUSCH with 5 MHz of bandwidth and a 15 kHz SCS, 256-QAM modulation at maximum code rate.",
@@ -84,7 +74,7 @@ static const std::vector<test_profile> profile_set = {
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {25},
-     {{modulation_scheme::QAM256, 948.0}}},
+     {{modulation_scheme::QAM256, 948.0F}}},
 
     {"pusch_scs15_20MHz_qpsk_min",
      "Decodes PUSCH with 20 MHz of bandwidth and a 15 kHz SCS, QPSK modulation at minimum code rate.",
@@ -92,7 +82,7 @@ static const std::vector<test_profile> profile_set = {
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {106},
-     {{modulation_scheme::QPSK, 120.0}}},
+     {{modulation_scheme::QPSK, 120.0F}}},
 
     {"pusch_scs15_20MHz_16qam_med",
      "Decodes PUSCH with 20 MHz of bandwidth and a 15 kHz SCS, 16-QAM modulation at a medium code rate.",
@@ -100,7 +90,7 @@ static const std::vector<test_profile> profile_set = {
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {106},
-     {{modulation_scheme::QAM16, 658.0}}},
+     {{modulation_scheme::QAM16, 658.0F}}},
 
     {"pusch_scs15_20MHz_64qam_high",
      "Decodes PUSCH with 20 MHz of bandwidth and a 15 kHz SCS, 64-QAM modulation at a high code rate.",
@@ -116,7 +106,7 @@ static const std::vector<test_profile> profile_set = {
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {106},
-     {{modulation_scheme::QAM256, 948.0}}},
+     {{modulation_scheme::QAM256, 948.0F}}},
 
     {"pusch_scs15_50MHz_qpsk_min",
      "Decodes PUSCH with 50 MHz of bandwidth and a 15 kHz SCS, QPSK modulation at minimum code rate.",
@@ -124,7 +114,7 @@ static const std::vector<test_profile> profile_set = {
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {270},
-     {{modulation_scheme::QPSK, 120.0}}},
+     {{modulation_scheme::QPSK, 120.0F}}},
 
     {"pusch_scs15_50MHz_256qam_max",
      "Decodes PUSCH with 50 MHz of bandwidth and a 15 kHz SCS, 256-QAM modulation at maximum code rate.",
@@ -132,15 +122,14 @@ static const std::vector<test_profile> profile_set = {
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {270},
-     {{modulation_scheme::QAM256, 948.0}}},
+     {{modulation_scheme::QAM256, 948.0F}}},
 };
 
 static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-R repetitions] [-D LDPC type] [-P profile] [-s silent]\n", prog);
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
-  fmt::print(
-      "\t-D LDPC decoder type ({}). [Default {}]\n", span<std::string>(ldpc_decoder_type_set), ldpc_decoder_type);
+  fmt::print("\t-D LDPC decoder type. [Default {}]\n", ldpc_decoder_type);
   fmt::print("\t-P Benchmark profile. [Default {}]\n", selected_profile_name);
   for (const test_profile& profile : profile_set) {
     fmt::print("\t\t {:<30}{}\n", profile.name, profile.description);
@@ -190,31 +179,14 @@ static int parse_args(int argc, char** argv)
     return -1;
   }
 
-  // Search LDPC implementation.
-  bool ldpc_type_found = false;
-  for (const auto& candidate_ldpc : ldpc_decoder_type_set) {
-    if (ldpc_decoder_type == candidate_ldpc) {
-      srslog::fetch_basic_logger("TEST").info("Using LDPC implementation: {}.", ldpc_decoder_type);
-      ldpc_type_found = true;
-      break;
-    }
-  }
-  if (!ldpc_type_found) {
-    usage(argv[0]);
-    srslog::fetch_basic_logger("TEST").error("Invalid LDPC implementation: {}.", ldpc_decoder_type);
-    fmt::print(stderr,
-               "Invalid LDPC implementation: {}. Available: {}.\n",
-               ldpc_decoder_type,
-               span<std::string>(ldpc_decoder_type_set));
-    return -1;
-  }
-
   return 0;
 }
 
 // Generates a set of test cases given a test profile.
-void generate_test_cases(const test_profile& profile)
+static std::vector<test_case_type> generate_test_cases(const test_profile& profile)
 {
+  std::vector<test_case_type> test_case_set;
+
   for (sch_mcs_description mcs : profile.mcs_set) {
     for (unsigned nof_prb : profile.nof_prb_set) {
       // Determine the Transport Block Size.
@@ -253,10 +225,11 @@ void generate_test_cases(const test_profile& profile)
       test_case_set.emplace_back(std::tuple<pusch_processor::pdu_t, unsigned>(config, tbs));
     }
   }
+  return test_case_set;
 }
 
 // Instantiates the PUSCH processor and validator.
-void create_processor()
+static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_validator>> create_processor()
 {
   // Create pseudo-random sequence generator.
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
@@ -338,13 +311,15 @@ void create_processor()
       create_pusch_processor_factory_sw(pusch_proc_factory_config);
   TESTASSERT(pusch_proc_factory);
 
-  // Create actual PUSCH processor.
-  processor = pusch_proc_factory->create();
+  // Create PUSCH processor.
+  std::unique_ptr<pusch_processor> processor = pusch_proc_factory->create();
   TESTASSERT(processor);
 
-  // Create actual PUSCH processor validator.
-  validator = pusch_proc_factory->create_validator();
+  // Create PUSCH processor validator.
+  std::unique_ptr<pusch_pdu_validator> validator = pusch_proc_factory->create_validator();
   TESTASSERT(validator);
+
+  return std::make_tuple(std::move(processor), std::move(validator));
 }
 
 int main(int argc, char** argv)
@@ -355,9 +330,6 @@ int main(int argc, char** argv)
   }
 
   benchmarker perf_meas("PUSCH processor", nof_repetitions);
-
-  // Generate the test cases.
-  generate_test_cases(selected_profile);
 
   // Grid dimensions for all test cases.
   unsigned grid_nof_symbols = get_nsymb_per_slot(selected_profile.cp);
@@ -391,6 +363,9 @@ int main(int argc, char** argv)
     }
   }
 
+  // Generate the test cases.
+  std::vector<test_case_type> test_case_set = generate_test_cases(selected_profile);
+
   for (const test_case_type& test_case : test_case_set) {
     // Get the PUSCH configuration.
     const pusch_processor::pdu_t& config = std::get<0>(test_case);
@@ -398,7 +373,10 @@ int main(int argc, char** argv)
     unsigned tbs = std::get<1>(test_case);
 
     // Create the PUSCH processor and validator.
-    create_processor();
+    std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_validator>> proc = create_processor();
+
+    std::unique_ptr<pusch_processor>     processor(std::move(std::get<0>(proc)));
+    std::unique_ptr<pusch_pdu_validator> validator(std::move(std::get<1>(proc)));
 
     // Make sure the configuration is valid.
     TESTASSERT(validator->is_valid(config));
