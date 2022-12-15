@@ -25,14 +25,20 @@ struct dummy_f1u_cu_up_rx_sdu_notifier final : public srs_cu_up::f1u_rx_sdu_noti
   srslog::basic_logger&   logger = srslog::fetch_basic_logger("F1-U", false);
 };
 
+struct dummy_f1u_cu_up_rx_delivery_notifier final : public srs_cu_up::f1u_rx_delivery_notifier {
+  void on_delivered_sdu(uint32_t count) override { logger.info("CU-UP PDU with COUNT={} delivered", count); }
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("F1-U", false);
+};
+
 // dummy DU RX bearer interface
-struct dummy_f1u_du_rx_pdu_handler final : public srs_du::f1u_rx_pdu_handler {
-  void handle_pdu(nru_dl_message msg) override
+struct dummy_f1u_du_rx_sdu_notifier final : public srs_du::f1u_rx_sdu_notifier {
+  void on_new_sdu(byte_buffer sdu, uint32_t count) override
   {
-    logger.info(msg.t_pdu.begin(), msg.t_pdu.end(), "DU received PDU");
-    last_msg = std::move(msg);
+    logger.info(sdu.begin(), sdu.end(), "DU received SDU. COUNT={}", count);
+    last_sdu = std::move(sdu);
   }
-  nru_dl_message last_msg;
+  void        on_discard_sdu(uint32_t count) override {}
+  byte_buffer last_sdu;
 
 private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("F1-U", false);
@@ -94,12 +100,13 @@ TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
   (void)du_conn;
 
   // Create CU TX notifier adapter
-  dummy_f1u_cu_up_rx_sdu_notifier cu_rx;
-  srs_cu_up::f1u_bearer*          cu_bearer = cu_conn->create_cu_dl_bearer(1, cu_rx);
+  dummy_f1u_cu_up_rx_sdu_notifier      cu_rx;
+  dummy_f1u_cu_up_rx_delivery_notifier cu_delivery;
+  srs_cu_up::f1u_bearer*               cu_bearer = cu_conn->create_cu_dl_bearer(1, cu_delivery, cu_rx);
 
   // Create DU TX notifier adapter and RX handler
-  dummy_f1u_du_rx_pdu_handler du_rx;
-  // du_conn->create_du_ul_bearer(1, 2, du_rx);
+  dummy_f1u_du_rx_sdu_notifier du_rx;
+  du_conn->create_du_ul_bearer(1, 2, du_rx);
 
   // Create CU RX handler and attach it to the DU TX
   cu_conn->attach_cu_ul_bearer(1, 2);
@@ -114,7 +121,7 @@ TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
   byte_buffer_slice_chain cu_exp{du_buf.deep_copy()};
   // du_tx.on_new_tx_pdu(std::move(du_buf), 0);
 
-  ASSERT_EQ(cu_rx.last_sdu, cu_exp);
+  ASSERT_EQ(du_rx.last_sdu, du_exp);
 }
 
 int main(int argc, char** argv)

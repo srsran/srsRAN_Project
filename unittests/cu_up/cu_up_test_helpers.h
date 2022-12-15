@@ -32,7 +32,9 @@ public:
   dummy_f1u_connector()  = default;
   ~dummy_f1u_connector() = default;
 
-  srs_cu_up::f1u_bearer* create_cu_dl_bearer(uint32_t dl_teid, srs_cu_up::f1u_rx_sdu_notifier& cu_rx) override
+  srs_cu_up::f1u_bearer* create_cu_dl_bearer(uint32_t                             dl_teid,
+                                             srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
+                                             srs_cu_up::f1u_rx_sdu_notifier&      cu_rx) override
   {
     return nullptr;
   };

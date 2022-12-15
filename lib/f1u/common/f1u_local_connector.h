@@ -13,23 +13,27 @@
 
 #include "f1u_local_bearer_adapter.h"
 #include "srsgnb/f1u/common/f1u_connector.h"
+#include "srsgnb/f1u/du/f1u_bearer.h"
 #include <map>
 
 namespace srsgnb {
 
 struct f1u_dl_cu_bearer {
-  f1u_dl_local_adapter&                  cu_tx;
+  std::unique_ptr<f1u_dl_local_adapter>  cu_tx      = nullptr;
   std::unique_ptr<srs_cu_up::f1u_bearer> f1u_bearer = nullptr;
-  f1u_dl_cu_bearer(f1u_dl_local_adapter& cu_tx_, std::unique_ptr<srs_cu_up::f1u_bearer> f1u_bearer_) :
-    cu_tx(cu_tx_), f1u_bearer(std::move(f1u_bearer_))
+  f1u_dl_cu_bearer(std::unique_ptr<f1u_dl_local_adapter> cu_tx_, std::unique_ptr<srs_cu_up::f1u_bearer> f1u_bearer_) :
+    cu_tx(std::move(cu_tx_)), f1u_bearer(std::move(f1u_bearer_))
   {
   }
 };
 
 struct f1u_ul_du_bearer {
-  f1u_ul_local_adapter&       du_tx;
-  srs_du::f1u_rx_pdu_handler& du_rx;
-  f1u_ul_du_bearer(f1u_ul_local_adapter& du_tx_, srs_du::f1u_rx_pdu_handler& du_rx_) : du_tx(du_tx_), du_rx(du_rx_) {}
+  std::unique_ptr<f1u_ul_local_adapter> du_tx      = nullptr;
+  std::unique_ptr<srs_du::f1u_bearer>   f1u_bearer = nullptr;
+  f1u_ul_du_bearer(std::unique_ptr<f1u_ul_local_adapter> du_tx_, std::unique_ptr<srs_du::f1u_bearer> f1u_bearer_) :
+    du_tx(std::move(du_tx_)), f1u_bearer(std::move(f1u_bearer_))
+  {
+  }
 };
 
 /// \brief Object used to connect the DU and CU-UP F1-U bearers
@@ -40,17 +44,11 @@ class f1u_local_connector final : public f1u_du_connector, public f1u_cu_up_conn
 public:
   f1u_local_connector() : logger(srslog::fetch_basic_logger("F1-U")){};
 
-  srs_cu_up::f1u_bearer* create_cu_dl_bearer(uint32_t                        dl_teid,
-                                             srs_cu_up::f1u_rx_sdu_notifier& rx_sdu_notifier) override;
+  srs_cu_up::f1u_bearer* create_cu_dl_bearer(uint32_t                             dl_teid,
+                                             srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
+                                             srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier) override;
   void                   attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid) override;
-  void                   create_du_ul_bearer(uint32_t                     dl_teid,
-                                             uint32_t                     ul_teid,
-                                             srs_du::f1u_rx_pdu_handler&  du_rx,
-                                             srs_du::f1u_tx_pdu_notifier& du_tx);
-  void                   create_du_ul_bearer(uint32_t                     dl_teid,
-                                             uint32_t                     ul_teid,
-                                             srs_du::f1u_rx_sdu_notifier& du_rx,
-                                             srs_du::f1u_tx_pdu_notifier& du_tx) override;
+  void create_du_ul_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) override;
 
 private:
   srslog::basic_logger&                logger;
