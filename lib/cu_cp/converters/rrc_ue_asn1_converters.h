@@ -21,6 +21,24 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
+/// @brief Convert CU-CP s-NSSAI to E1AP s-NSSAI.
+/// @param cu_cp_snssai The CU-CP s-NSSAI.
+/// @return The E1AP s-NSSAI.
+inline asn1::e1ap::snssai_s common_snssai_to_e1ap_snssai(srsgnb::srs_cu_cp::cu_cp_s_nssai cu_cp_snssai)
+{
+  asn1::e1ap::snssai_s snssai;
+  snssai.sst.from_number(cu_cp_snssai.sst);
+  if (cu_cp_snssai.sd.has_value()) {
+    snssai.sd_present = true;
+    snssai.sd.from_number(cu_cp_snssai.sd.value());
+  }
+
+  return snssai;
+}
+
+/// @brief Convert CU-CP PDU session type to E1AP PDU session type.
+/// @param cu_cp_session_type The CU-CP PDU session type.
+/// @return The E1AP PDU session type.
 inline asn1::e1ap::pdu_session_type_e cu_cp_pdu_session_type_to_e1ap_pdu_session_type(std::string cu_cp_session_type)
 {
   asn1::e1ap::pdu_session_type_e e1ap_session_type;
@@ -43,6 +61,25 @@ inline asn1::e1ap::pdu_session_type_e cu_cp_pdu_session_type_to_e1ap_pdu_session
   }
 }
 
+/// @brief Convert CU-CP UL NGU UP TNL Information to E1AP UP TNL Information.
+/// @param ul_ngu_up_tnl_info The CU-CP UL NGU UP TNL Information.
+/// @return The E1AP UP TNL Information.
+inline asn1::e1ap::up_tnl_info_c
+cu_cp_ul_ngu_up_tnl_info_to_e1ap_up_tnl_info(ul_ngu_up_tnl_information ul_ngu_up_tnl_info)
+{
+  asn1::e1ap::up_tnl_info_c e1ap_up_tnl_info;
+
+  e1ap_up_tnl_info.set_gtp_tunnel();
+  auto& e1ap_gtp_tunnel = e1ap_up_tnl_info.gtp_tunnel();
+  e1ap_gtp_tunnel.gtp_teid.from_number(ul_ngu_up_tnl_info.gtp_teid);
+  e1ap_gtp_tunnel.transport_layer_address.from_number(ul_ngu_up_tnl_info.transport_layer_address);
+
+  return e1ap_up_tnl_info;
+}
+
+/// @brief Convert E1AP Cause to CU-CP Cause.
+/// @param e1ap_cause The E1AP Cause.
+/// @return The CU-CP Cause.
 inline cu_cp_cause_t e1ap_cause_to_cu_cp_cause(asn1::e1ap::cause_c e1ap_cause)
 {
   cu_cp_cause_t cu_cp_cause;
@@ -66,6 +103,45 @@ inline cu_cp_cause_t e1ap_cause_to_cu_cp_cause(asn1::e1ap::cause_c e1ap_cause)
       break;
       break;
   }
+}
+
+/// @brief Convert E1AP UP TNL Information to CU-CP Uptransport Layer Information.
+/// @param e1ap_up_tnl_info The E1AP UP TNL Information.
+/// @return The CU-CP Uptransport Layer Information.
+inline cu_cp_uptransport_layer_information
+cu_cp_uptransport_layer_info_from_e1ap_up_tnl_info(asn1::e1ap::up_tnl_info_c e1ap_up_tnl_info)
+{
+  cu_cp_uptransport_layer_information cu_cp_uptransport_layer_info;
+
+  cu_cp_uptransport_layer_info.gtp_teid = e1ap_up_tnl_info.gtp_tunnel().gtp_teid.to_number();
+  cu_cp_uptransport_layer_info.transport_layer_address =
+      e1ap_up_tnl_info.gtp_tunnel().transport_layer_address.to_number();
+
+  return cu_cp_uptransport_layer_info;
+}
+
+/// @brief Convert E1AP UP Params Item to RRC UE GTP Tunnel.
+/// @param up_param_item The E1AP UP Params Item.
+/// @return The RRC UE GTP Tunnel.
+inline rrc_ue_gtp_tunnel e1ap_up_param_item_to_rrc_ue_gtp_tunnel(asn1::e1ap::up_params_item_s up_param_item)
+{
+  rrc_ue_gtp_tunnel gtp_tunnel;
+  gtp_tunnel.gtp_teid                = up_param_item.up_tnl_info.gtp_tunnel().gtp_teid.to_number();
+  gtp_tunnel.transport_layer_address = up_param_item.up_tnl_info.gtp_tunnel().transport_layer_address.to_number();
+  gtp_tunnel.cell_group_id           = up_param_item.cell_group_id;
+
+  return gtp_tunnel;
+}
+
+inline asn1::f1ap::uluptnl_info_to_be_setup_item_s
+rrc_ue_gtp_tunnel_to_f1ap_uluptnl_info_to_be_setup_item(rrc_ue_gtp_tunnel gtp_tunnel)
+{
+  asn1::f1ap::uluptnl_info_to_be_setup_item_s uluptnl_item;
+  uluptnl_item.uluptnl_info.set_gtp_tunnel();
+  uluptnl_item.uluptnl_info.gtp_tunnel().gtp_teid.from_number(gtp_tunnel.gtp_teid);
+  uluptnl_item.uluptnl_info.gtp_tunnel().transport_layer_address.from_number(gtp_tunnel.transport_layer_address);
+
+  return uluptnl_item;
 }
 
 } // namespace srs_cu_cp

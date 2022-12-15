@@ -175,7 +175,7 @@ struct cu_cp_pdu_session_resource_setup_message {
   uint64_t                                      ue_aggregate_maximum_bit_rate_dl;
 };
 
-struct cu_cp_uptransport_layer_info {
+struct cu_cp_uptransport_layer_information {
   uint64_t transport_layer_address;
   uint64_t gtp_teid;
 };
@@ -185,8 +185,8 @@ struct cu_cp_associated_qos_flow {
   optional<std::string> qos_flow_map_ind;
 };
 
-struct cu_cp_dlqos_flow_per_tnl_info {
-  cu_cp_uptransport_layer_info           uptransport_layer_info;
+struct cu_cp_dlqos_flow_per_tnl_information {
+  cu_cp_uptransport_layer_information    uptransport_layer_info;
   std::vector<cu_cp_associated_qos_flow> associated_qos_flow_list;
 };
 
@@ -195,8 +195,8 @@ struct cu_cp_qos_flow_failed_to_setup_item {
   cu_cp_cause_t cause;
 };
 
-struct cu_cp_qos_flow_per_tnl_info {
-  cu_cp_uptransport_layer_info           uptransport_layer_info;
+struct cu_cp_qos_flow_per_tnl_information {
+  cu_cp_uptransport_layer_information    uptransport_layer_info;
   std::vector<cu_cp_associated_qos_flow> associated_qos_flow_list;
 };
 
@@ -205,8 +205,8 @@ struct cu_cp_security_result {
   std::string integrity_protection_result;
 };
 struct cu_cp_pdu_session_resource_setup_response_transfer {
-  std::vector<cu_cp_qos_flow_per_tnl_info>         add_dl_qos_flow_per_tnl_info;
-  cu_cp_dlqos_flow_per_tnl_info                    dlqos_flow_per_tnl_info;
+  std::vector<cu_cp_qos_flow_per_tnl_information>  add_dl_qos_flow_per_tnl_info;
+  cu_cp_dlqos_flow_per_tnl_information             dlqos_flow_per_tnl_info;
   std::vector<cu_cp_associated_qos_flow>           associated_qos_flow_list;
   std::vector<cu_cp_qos_flow_failed_to_setup_item> qos_flow_failed_to_setup_list;
   optional<cu_cp_security_result>                  security_result;
