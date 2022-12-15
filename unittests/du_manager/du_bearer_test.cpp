@@ -31,8 +31,7 @@ TEST(du_ue_bearer_manager_test, when_all_drbs_are_allocated_then_no_lcid_is_avai
   du_ue_bearer_manager bearers;
   for (unsigned i = 0; i != MAX_NOF_DRBS; ++i) {
     drb_id_t drb_id = (drb_id_t)((unsigned)drb_id_t::drb1 + i);
-    bearers.drbs.emplace(drb_id);
-    bearers.drbs[drb_id].lcid = uint_to_lcid(lcids[i]);
+    bearers.add_drb(drb_id, uint_to_lcid(lcids[i]), {});
   }
   ASSERT_FALSE(bearers.allocate_lcid().has_value());
 }
@@ -49,8 +48,7 @@ TEST(du_ue_bearer_manager_test, when_there_is_a_hole_in_allocated_lcids_then_all
   du_ue_bearer_manager bearers;
   for (unsigned i = 0; i != lcids.size(); ++i) {
     drb_id_t drb_id = (drb_id_t)((unsigned)drb_id_t::drb1 + i);
-    bearers.drbs.emplace(drb_id);
-    bearers.drbs[drb_id].lcid = uint_to_lcid(lcids[i]);
+    bearers.add_drb(drb_id, uint_to_lcid(lcids[i]), {});
   }
   optional<lcid_t> found_lcid = bearers.allocate_lcid();
   ASSERT_TRUE(found_lcid.has_value());
