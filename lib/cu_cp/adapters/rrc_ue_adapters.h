@@ -10,8 +10,7 @@
 
 #pragma once
 
-#include "../helpers/rrc_ue_e1ap_asn1_helpers.h"
-#include "../helpers/rrc_ue_f1ap_asn1_helpers.h"
+#include "../helpers/rrc_ue_asn1_helpers.h"
 #include "../task_schedulers/ue_task_scheduler.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"

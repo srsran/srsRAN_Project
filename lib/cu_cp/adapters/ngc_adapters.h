@@ -20,6 +20,7 @@
 #include "srsgnb/srslog/srslog.h"
 
 #include "../../ngap/ngap_asn1_utils.h"
+#include "../converters/ngc_asn1_converters.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
