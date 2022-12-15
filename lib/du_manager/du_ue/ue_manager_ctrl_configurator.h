@@ -10,8 +10,9 @@
 
 #pragma once
 
-#include "du_manager_config.h"
-#include "du_ue/du_ue.h"
+#include "../du_manager_config.h"
+#include "cell_group_config.h"
+#include "du_ue.h"
 
 namespace srsgnb {
 namespace srs_du {

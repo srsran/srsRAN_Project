@@ -11,7 +11,7 @@
 #pragma once
 
 #include "du_cell_manager.h"
-#include "du_ue_manager.h"
+#include "du_ue/du_ue_manager.h"
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/du_manager/du_manager_params.h"
 #include "srsgnb/rlc/rlc_rx.h"

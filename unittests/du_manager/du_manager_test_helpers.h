@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "lib/du_manager/du_manager_interfaces.h"
+#include "lib/du_manager/du_ue/ue_manager_ctrl_configurator.h"
 #include "srsgnb/du_manager/du_manager_params.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
@@ -193,8 +193,12 @@ public:
            {timers, du_mng_exec, ue_exec_mapper, cell_exec_mapper},
            {f1ap, f1ap},
            {mac, f1ap, f1ap},
-           {mac, mac}}
+           {mac, mac}},
+    logger(srslog::fetch_basic_logger("DU-MNG"))
   {
+    logger.set_level(srslog::basic_levels::debug);
+
+    srslog::init();
   }
 
   std::vector<du_cell_config> du_cells;
@@ -206,6 +210,7 @@ public:
   f1ap_test_dummy             f1ap;
   mac_test_dummy              mac;
   du_manager_params           params;
+  srslog::basic_logger&       logger;
 };
 
 } // namespace srs_du

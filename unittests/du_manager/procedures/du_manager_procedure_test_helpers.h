@@ -40,6 +40,8 @@ public:
   }
 };
 
+ul_ccch_indication_message create_test_ul_ccch_message(rnti_t rnti);
+
 class du_manager_proc_tester : public du_manager_test_bench
 {
 public:

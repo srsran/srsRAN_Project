@@ -9,10 +9,7 @@
  */
 
 #include "ue_creation_procedure.h"
-#include "../adapters/mac_adapters.h"
-#include "../adapters/rlc_adapters.h"
 #include "../converters/asn1_cell_group_config_helpers.h"
-#include "../du_ue/cell_group_config.h"
 #include "srsgnb/mac/config/mac_cell_group_config_factory.h"
 #include "srsgnb/scheduler/config/logical_channel_config_factory.h"
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"

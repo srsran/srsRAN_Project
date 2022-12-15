@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../du_manager_config.h"
-#include "../du_manager_interfaces.h"
+#include "../du_ue/ue_manager_ctrl_configurator.h"
 
 namespace srsgnb {
 namespace srs_du {

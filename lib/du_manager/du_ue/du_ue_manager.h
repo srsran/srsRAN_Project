@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "du_manager_config.h"
-#include "du_manager_interfaces.h"
-#include "du_ue/du_ue.h"
+#include "../du_manager_config.h"
+#include "du_ue.h"
+#include "ue_manager_ctrl_configurator.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/adt/stable_id_map.h"
 #include "srsgnb/du_manager/du_manager.h"
