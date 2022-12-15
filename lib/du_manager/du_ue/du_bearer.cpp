@@ -46,7 +46,7 @@ void du_drb_connector::connect(du_ue_index_t                       ue_index,
   // > Connect RLC Rx SDU -> F1-U Tx SDU handler.
   rlc_rx_sdu_notif.connect(f1_bearer.get_tx_sdu_handler());
 
-  // > Connect F1-C Rx SDU -> RLC Tx SDU.
+  // > Connect F1-U Rx SDU -> RLC Tx SDU.
   f1u_rx_sdu_notif.connect(*rlc_bearer.get_tx_upper_layer_data_interface());
 
   // > Connect RLC BSR update notifier -> MAC Control Info Handler.
@@ -59,7 +59,7 @@ void du_drb_connector::connect(du_ue_index_t                       ue_index,
   mac_tx_sdu_notifier.connect(*rlc_bearer.get_tx_lower_layer_interface());
 }
 
-lcid_t du_ue_bearer_manager::allocate_lcid() const
+optional<lcid_t> du_ue_bearer_manager::allocate_lcid() const
 {
   static_vector<lcid_t, MAX_NOF_DRBS> used_lcids;
   for (const auto& drb : drbs) {
@@ -75,5 +75,9 @@ lcid_t du_ue_bearer_manager::allocate_lcid() const
     --it;
   }
   // beginning of the gap + 1.
-  return uint_to_lcid(static_cast<unsigned>(*it) + 1U);
+  lcid_t lcid = uint_to_lcid(static_cast<unsigned>(*it) + 1U);
+  if (lcid > LCID_MAX_DRB) {
+    return {};
+  }
+  return lcid;
 }

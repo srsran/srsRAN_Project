@@ -40,11 +40,13 @@ rlc_config make_default_srb_rlc_config();
 
 rlc_config create_rlc_config(const drb_to_setup& f1_drb_cfg);
 
+/// \brief Create configuration for RLC SRB entity.
 rlc_entity_creation_message make_rlc_entity_creation_message(du_ue_index_t                            ue_index,
                                                              du_cell_index_t                          pcell_index,
                                                              du_ue_srb&                               bearer,
                                                              const du_manager_params::service_params& du_services);
 
+/// \brief Create configuration for RLC DRB entity.
 rlc_entity_creation_message make_rlc_entity_creation_message(du_ue_index_t                            ue_index,
                                                              du_cell_index_t                          pcell_index,
                                                              du_ue_drb&                               bearer,

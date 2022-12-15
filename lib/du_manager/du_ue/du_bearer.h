@@ -92,7 +92,7 @@ public:
   slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>                  srbs;
   slotted_id_table<drb_id_t, du_ue_drb, MAX_NOF_DRBS, drb_id_to_index> drbs;
 
-  lcid_t allocate_lcid() const;
+  optional<lcid_t> allocate_lcid() const;
 };
 
 } // namespace srs_du

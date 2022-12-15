@@ -90,6 +90,7 @@ static void fill_rlc_entity_creation_message_common(rlc_entity_creation_message&
   msg.ue_executor    = &du_services.ue_execs.executor(ue_index);
 }
 
+// for SRBs
 rlc_entity_creation_message
 srsgnb::srs_du::make_rlc_entity_creation_message(du_ue_index_t                            ue_index,
                                                  du_cell_index_t                          pcell_index,
@@ -102,6 +103,7 @@ srsgnb::srs_du::make_rlc_entity_creation_message(du_ue_index_t                  
   return msg;
 }
 
+// for DRBs
 rlc_entity_creation_message
 srsgnb::srs_du::make_rlc_entity_creation_message(du_ue_index_t                            ue_index,
                                                  du_cell_index_t                          pcell_index,

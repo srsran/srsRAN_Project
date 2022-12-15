@@ -149,8 +149,9 @@ void ue_configuration_procedure::add_bearers_to_ue_context()
                     "Reconfigurations of bearers not supported");
       lcid = *drbtoadd.lcid;
     } else {
-      lcid = ue->bearers.allocate_lcid();
-      srsgnb_assert(lcid != lcid_t::INVALID_LCID, "Unable to allocate LCID");
+      optional<lcid_t> l = ue->bearers.allocate_lcid();
+      srsgnb_assert(l.has_value(), "Unable to allocate LCID");
+      lcid = *l;
     }
 
     ue->bearers.drbs.emplace(drbtoadd.drb_id);

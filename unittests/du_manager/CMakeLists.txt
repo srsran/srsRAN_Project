@@ -12,6 +12,10 @@ add_library(du_manager_test_helpers du_manager_test_helpers.cpp procedures/du_ma
 target_include_directories(du_manager_test_helpers PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_manager_test_helpers srsgnb_du_manager srsgnb_support srslog f1ap_asn1)
 
+add_executable(du_bearer_test du_bearer_test.cpp)
+target_link_libraries(du_bearer_test du_manager_test_helpers srsgnb_du_manager srsgnb_support srslog gtest gtest_main)
+gtest_discover_tests(du_bearer_test)
+
 add_executable(ue_manager_test ue_manager_test.cpp)
 target_link_libraries(ue_manager_test srsgnb_du_manager srsgnb_support srslog f1ap_asn1)
 target_include_directories(ue_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
