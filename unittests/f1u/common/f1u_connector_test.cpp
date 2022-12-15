@@ -106,7 +106,7 @@ TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_rx_sdu_notifier du_rx;
-  du_conn->create_du_ul_bearer(1, 2, du_rx);
+  srs_du::f1u_bearer*          du_bearer = du_conn->create_du_ul_bearer(1, 2, du_rx);
 
   // Create CU RX handler and attach it to the DU TX
   cu_conn->attach_cu_ul_bearer(1, 2);
@@ -118,10 +118,12 @@ TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
 
   // Check DU-> CU-UP path
   byte_buffer             du_buf = make_byte_buffer("DCBA");
-  byte_buffer_slice_chain cu_exp{du_buf.deep_copy()};
-  // du_tx.on_new_tx_pdu(std::move(du_buf), 0);
+  byte_buffer             cu_exp = du_buf.deep_copy();
+  byte_buffer_slice_chain du_slice{du_buf.deep_copy()};
+  du_bearer->get_tx_sdu_handler().handle_sdu(std::move(du_slice));
 
   ASSERT_EQ(du_rx.last_sdu, du_exp);
+  ASSERT_EQ(cu_rx.last_sdu, cu_exp);
 }
 
 int main(int argc, char** argv)

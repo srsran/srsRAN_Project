@@ -13,6 +13,7 @@
 #include "srsgnb/f1u/cu_up/f1u_bearer.h"
 #include "srsgnb/f1u/cu_up/f1u_rx_delivery_notifier.h"
 #include "srsgnb/f1u/cu_up/f1u_rx_sdu_notifier.h"
+#include "srsgnb/f1u/du/f1u_bearer.h"
 #include "srsgnb/f1u/du/f1u_rx_pdu_handler.h"
 #include "srsgnb/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsgnb/f1u/du/f1u_tx_pdu_notifier.h"
@@ -37,7 +38,8 @@ public:
   f1u_du_connector(const f1u_du_connector&&)            = delete;
   f1u_du_connector& operator=(const f1u_du_connector&&) = delete;
 
-  virtual void create_du_ul_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) = 0;
+  virtual srs_du::f1u_bearer*
+  create_du_ul_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) = 0;
 };
 
 /// TODO write docs.

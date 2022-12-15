@@ -48,7 +48,8 @@ public:
                                              srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
                                              srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier) override;
   void                   attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid) override;
-  void create_du_ul_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) override;
+  srs_du::f1u_bearer*
+  create_du_ul_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) override;
 
 private:
   srslog::basic_logger&                logger;

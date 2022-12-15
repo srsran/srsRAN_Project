@@ -47,15 +47,17 @@ void f1u_local_connector::attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid
   ul_tun.du_tx->attach_cu_handler(dl_tun.f1u_bearer->get_rx_pdu_handler());
 }
 
-void f1u_local_connector::create_du_ul_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx)
+srs_du::f1u_bearer*
+f1u_local_connector::create_du_ul_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx)
 {
   logger.info("Connecting CU F1-U bearer. DL-TEID={}, UL-TEID={}", dl_teid, ul_teid);
   if (dl_map.find(dl_teid) == dl_map.end()) {
     logger.info("Could not find DL-TEID. DL-TEID={}, UL-TEID", dl_teid, ul_teid);
-    return;
+    return nullptr;
   }
   std::unique_ptr<f1u_ul_local_adapter> du_tx      = std::make_unique<f1u_ul_local_adapter>();
   std::unique_ptr<srs_du::f1u_bearer>   f1u_bearer = srs_du::create_f1u_bearer(drb_id_t{}, du_rx, *du_tx);
+  srs_du::f1u_bearer*                   ptr        = f1u_bearer.get();
   auto&                                 dl_tun     = dl_map.at(dl_teid);
   dl_tun.cu_tx->attach_du_handler(f1u_bearer->get_rx_pdu_handler());
 
@@ -63,4 +65,5 @@ void f1u_local_connector::create_du_ul_bearer(uint32_t dl_teid, uint32_t ul_teid
 
   f1u_ul_du_bearer ul_bearer(std::move(du_tx), std::move(f1u_bearer));
   ul_map.insert({ul_teid, std::move(ul_bearer)});
+  return ptr;
 }
