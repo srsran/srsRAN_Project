@@ -65,8 +65,7 @@ private:
   cu_up_processor_context context;
 
   // Components
-  std::unique_ptr<e1_interface>  e1;
-  std::unique_ptr<ngc_interface> ngc;
+  std::unique_ptr<e1_interface> e1;
 
   // E1 to CU-UP processor adapter
   e1_cu_up_processor_adapter e1_ev_notifier;
