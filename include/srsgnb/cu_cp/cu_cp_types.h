@@ -151,7 +151,7 @@ struct qos_flow_setup_request_item {
 
 struct cu_cp_gtp_tunnel {
   std::string transport_layer_address;
-  uint64_t    gtp_teid;
+  uint32_t    gtp_teid;
 };
 
 struct cu_cp_s_nssai {

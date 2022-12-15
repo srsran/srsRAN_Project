@@ -40,7 +40,7 @@ public:
 };
 
 struct rrc_ue_gtp_tunnel {
-  uint64_t    gtp_teid;
+  uint32_t    gtp_teid;
   std::string transport_layer_address;
   uint8_t     cell_group_id;
 };
