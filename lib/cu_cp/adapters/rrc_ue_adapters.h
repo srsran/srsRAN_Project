@@ -233,7 +233,7 @@ public:
     ngap_init_ue_msg.nas_pdu     = msg.nas_pdu.copy();
 
     ngap_init_ue_msg.establishment_cause.value =
-        rrcestablishment_cause_from_establishment_cause(msg.establishment_cause).value;
+        rrc_establishment_cause_to_ngap_rrcestablishment_cause(msg.establishment_cause).value;
 
     ngap_init_ue_msg.nr_cgi.nrcell_id.from_number(msg.cell.cgi.nci.packed);
     ngap_init_ue_msg.nr_cgi.plmn_id.from_string(msg.cell.cgi.plmn_hex);
@@ -259,49 +259,6 @@ public:
   }
 
 private:
-  asn1::ngap::rrcestablishment_cause_opts
-  rrcestablishment_cause_from_establishment_cause(const asn1::rrc_nr::establishment_cause_opts& establishment_cause)
-  {
-    asn1::ngap::rrcestablishment_cause_opts rrcestablishment_cause = {};
-    switch (establishment_cause.value) {
-      case asn1::rrc_nr::establishment_cause_opts::options::emergency:
-        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::emergency;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::high_prio_access:
-        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::high_prio_access;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::mt_access:
-        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mt_access;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::mo_sig:
-        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mo_sig;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::mo_data:
-        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mo_data;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::mo_voice_call:
-        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mo_voice_call;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::mo_video_call:
-        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mo_video_call;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::mo_sms:
-        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mo_sms;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::mps_prio_access:
-        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mps_prio_access;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::mcs_prio_access:
-        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mcs_prio_access;
-        break;
-      default:
-        rrcestablishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::nulltype;
-        break;
-    }
-
-    return rrcestablishment_cause;
-  }
-
   ngc_nas_message_handler* ngc_nas_msg_handler = nullptr;
   du_index_t               du_index            = INVALID_DU_INDEX;
 };
