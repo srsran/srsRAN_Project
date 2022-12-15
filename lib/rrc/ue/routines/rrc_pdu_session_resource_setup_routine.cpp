@@ -66,9 +66,13 @@ void rrc_pdu_session_resource_setup_routine::operator()(coro_context<async_task<
   }
 
   {
-    // prepare RRC Reconfiguration and call RRC notifier
-    CORO_AWAIT_VALUE(procedure_result,
-                     launch_async<rrc_reconfiguration_procedure>(context, rrc_ue_notifier, event_mng, logger));
+    // prepare RRC Reconfiguration
+    // TODO: set field in reconfig_args accordingly
+
+    // Trigger reconfig procedure
+    CORO_AWAIT_VALUE(
+        procedure_result,
+        launch_async<rrc_reconfiguration_procedure>(context, reconfig_args, rrc_ue_notifier, event_mng, logger));
   }
 
   logger.debug("rnti=0x{:x}: \"{}\" finalized.", context.c_rnti, name());

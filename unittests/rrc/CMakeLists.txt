@@ -15,3 +15,7 @@ gtest_discover_tests(rrc_ue_setup_proc_test)
 add_executable(rrc_ue_smc_proc_test rrc_ue_smc_proc_test.cpp)
 target_link_libraries(rrc_ue_smc_proc_test srsgnb_rrc srsgnb_support srslog gtest gtest_main)
 gtest_discover_tests(rrc_ue_smc_proc_test)
+
+add_executable(rrc_ue_reconfig_proc_test rrc_ue_reconfig_proc_test.cpp)
+target_link_libraries(rrc_ue_reconfig_proc_test srsgnb_rrc srsgnb_support srslog gtest gtest_main)
+gtest_discover_tests(rrc_ue_reconfig_proc_test)

@@ -88,6 +88,12 @@ async_task<bool> rrc_ue_impl::handle_init_security_context(const rrc_init_securi
   return launch_async<rrc_security_mode_command_procedure>(context, sec_ctx, *this, *event_mng, logger);
 }
 
+async_task<bool> rrc_ue_impl::start_rrc_reconfiguration(const rrc_reconfiguration_procedure_args& msg)
+{
+  //  Launch RRC Reconfiguration procedure
+  return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, logger);
+}
+
 template <class T>
 void rrc_ue_impl::log_rrc_message(const char*       source,
                                   const direction_t dir,

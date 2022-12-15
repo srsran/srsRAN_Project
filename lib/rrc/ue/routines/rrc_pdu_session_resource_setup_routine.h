@@ -39,7 +39,10 @@ private:
   drb_context drb_to_add;
   drb_context allocate_new_drb();
 
-  rrc_ue_context_t                      context;
+  rrc_ue_context_t context;
+
+  rrc_reconfiguration_procedure_args reconfig_args;
+
   rrc_ue_reconfiguration_proc_notifier& rrc_ue_notifier;
   rrc_ue_event_manager&                 event_mng; // event manager for the RRC UE entity
   srslog::basic_logger&                 logger;

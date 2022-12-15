@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "procedures/rrc_reconfiguration_procedure.h"
 #include "procedures/rrc_security_mode_command_procedure.h"
 #include "procedures/rrc_setup_procedure.h"
 #include "procedures/rrc_ue_event_manager.h"
@@ -51,6 +52,7 @@ public:
   rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler() override { return *this; }
   rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() override { return *this; }
   rrc_ue_pdu_session_resource_handler&  get_rrc_ue_pdu_session_resource_handler() override { return *this; }
+  rrc_ue_reconfiguration_handler&       get_rrc_ue_reconfiguration_handler() override { return *this; }
 
   void connect_srb_notifier(srb_id_t                  srb_id,
                             rrc_pdu_notifier&         notifier,
@@ -96,6 +98,9 @@ private:
 
   // initializes the security context and triggers the SMC procedure
   async_task<bool> handle_init_security_context(const rrc_init_security_context& sec_ctx) override;
+
+  // triggers a RRC reconfiguration of the UE
+  async_task<bool> start_rrc_reconfiguration(const rrc_reconfiguration_procedure_args& msg) override;
 
   // Helper to create PDU from RRC message
   template <class T>

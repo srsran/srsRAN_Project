@@ -75,6 +75,8 @@ protected:
 
   rrc_ue_init_security_context_handler* get_rrc_ue_security_handler() { return ue_ctxt.rrc; }
 
+  rrc_ue_reconfiguration_handler* get_rrc_ue_reconfiguration_handler() { return ue_ctxt.rrc; }
+
   void connect_amf()
   {
     // Notify RRC about successful AMF connection
@@ -158,6 +160,18 @@ protected:
     }
   }
 
+  void check_rrc_reconfig_pdu()
+  {
+    auto& tx_pdu_handler = *du_proc_rrc_ue->srb1_tx_pdu_handler;
+    ASSERT_EQ(tx_pdu_handler.last_pdu, rrc_reconfig_pdu);
+  }
+
+  void receive_reconfig_complete()
+  {
+    // inject RRC Reconfiguration complete into UE object
+    ue_ctxt.rrc->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(byte_buffer{rrc_reconfig_complete_pdu});
+  }
+
 private:
   const ue_index_t ALLOCATED_UE_INDEX = int_to_ue_index(23);
   rrc_cfg_t        cfg{}; // empty config
@@ -192,6 +206,13 @@ private:
 
   // UL-DCCH with RRC security mode complete
   std::array<uint8_t, 2> rrc_smc_complete_pdu = {0x2a, 0x00};
+
+  // DL-DCCH with RRC reconfiguration
+  std::array<uint8_t, 20> rrc_reconfig_pdu = {0x02, 0x88, 0xa0, 0x49, 0x40, 0xbc, 0x3e, 0x00, 0x61, 0x68,
+                                              0x01, 0x37, 0xab, 0x6f, 0xbb, 0xc0, 0x07, 0x55, 0x77, 0x98};
+
+  // UL-DCCH with RRC reconfiguration complete
+  std::array<uint8_t, 2> rrc_reconfig_complete_pdu = {0x0a, 0x00};
 };
 
 } // namespace srs_cu_cp

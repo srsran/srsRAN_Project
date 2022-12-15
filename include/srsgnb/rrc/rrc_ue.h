@@ -315,6 +315,24 @@ public:
   virtual async_task<bool> handle_init_security_context(const rrc_init_security_context& msg) = 0;
 };
 
+/// Arguments for the RRC Reconfiguration procedure.
+struct rrc_reconfiguration_procedure_args {
+  optional<asn1::rrc_nr::radio_bearer_cfg_s> radio_bearer_cfg;
+  optional<asn1::dyn_octstring>              master_cell_group_config;
+  optional<asn1::dyn_octstring>              nas_pdu;
+};
+
+/// Handler to initialize a RRC Reconfiguration procedure.
+class rrc_ue_reconfiguration_handler
+{
+public:
+  virtual ~rrc_ue_reconfiguration_handler() = default;
+
+  /// \brief Start a RRC reconfiguration procedure.
+  /// \param[in] msg The procedure parameters.
+  virtual async_task<bool> start_rrc_reconfiguration(const rrc_reconfiguration_procedure_args& msg) = 0;
+};
+
 /// Handler to initialize the PDU Session Resource Setup from NGAP.
 class rrc_ue_pdu_session_resource_handler
 {
@@ -334,8 +352,10 @@ class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
                          public rrc_ue_control_message_handler,
                          public rrc_ue_init_security_context_handler,
                          public rrc_ue_pdu_session_resource_handler,
+                         public rrc_ue_reconfiguration_handler,
                          public rrc_ue_setup_proc_notifier,
-                         public rrc_ue_security_mode_command_proc_notifier
+                         public rrc_ue_security_mode_command_proc_notifier,
+                         public rrc_ue_reconfiguration_proc_notifier
 {
 public:
   rrc_ue_interface()          = default;
@@ -347,6 +367,7 @@ public:
   virtual rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler()       = 0;
   virtual rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() = 0;
   virtual rrc_ue_pdu_session_resource_handler&  get_rrc_ue_pdu_session_resource_handler()  = 0;
+  virtual rrc_ue_reconfiguration_handler&       get_rrc_ue_reconfiguration_handler()       = 0;
 
   virtual void connect_srb_notifier(srb_id_t                  srb_id,
                                     rrc_pdu_notifier&         notifier,
