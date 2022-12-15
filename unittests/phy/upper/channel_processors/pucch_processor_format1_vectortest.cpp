@@ -148,8 +148,7 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
 {
   // Prepare resource grid.
   resource_grid_reader_spy grid;
-  grid.write(GetParam().data_symbols.read());
-  grid.write(GetParam().dmrs_symbols.read());
+  grid.write(GetParam().grid.read());
 
   const PucchProcessorFormat1Param& param = GetParam();
 

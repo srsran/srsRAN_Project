@@ -90,10 +90,8 @@ void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&              
       config.intra_slot_hopping ? std::max(config.starting_prb, config.second_hop_prb) : config.starting_prb;
 
   // Resize channel estimate.
-  estimate.resize({max_prb_start + config.nof_prb,
-                   config.start_symbol_index + config.nof_symbols,
-                   nof_rx_ports,
-                   PUCCH_MAX_LAYERS});
+  estimate.resize(
+      {max_prb_start + config.nof_prb, config.start_symbol_index + config.nof_symbols, nof_rx_ports, PUCCH_MAX_LAYERS});
 
   // Generate the DM-RS allocation pattern.
   generate_dmrs_pattern(temp_pattern, config);
