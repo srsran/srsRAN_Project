@@ -117,4 +117,9 @@ constexpr inline uint16_t drb_id_to_uint(drb_id_t id)
   return static_cast<uint16_t>(id);
 }
 
+constexpr inline drb_id_t uint_to_drb_id(uint16_t id)
+{
+  return static_cast<drb_id_t>(id);
+}
+
 } // namespace srsgnb
