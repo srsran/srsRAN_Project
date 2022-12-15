@@ -37,7 +37,6 @@ struct rrc_du_creation_message {
     rrc_ue_e1_ctrl_notifier(rrc_ue_e1_ctrl_notif_),
     nas_notifier(nas_notif_),
     ngc_ctrl_notifier(ngc_ctrl_notif_)
-
   {
   }
   const rrc_cfg_t&              cfg;
