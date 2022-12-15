@@ -139,6 +139,8 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
                                                  const resource_grid_reader&           grid,
                                                  const dmrs_pucch_processor::config_t& config)
 {
+  srsgnb_assert(config.nof_prb <= 1, "PUCCH Format 1 occupies a single PRB.");
+
   unsigned nof_rx_ports = config.ports.size();
 
   // Prepare DM-RS symbol buffer dimensions. Recall that PUCCH Format 1 occupies a single PRB.
@@ -155,9 +157,12 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
   // Resize DM-RS symbol buffer.
   temp_symbols.resize(dims);
 
-  // Resize channel estimate.
-  estimate.resize(
-      {config.starting_prb + 1, config.start_symbol_index + config.nof_symbols, nof_rx_ports, PUCCH_MAX_LAYERS});
+  // Find the highest starting PRB.
+  unsigned max_prb_start =
+      config.intra_slot_hopping ? std::max(config.starting_prb, config.second_hop_prb) : config.starting_prb;
+
+  // Resize channel estimate. PUCCH Format 1 occupies a single PRB.
+  estimate.resize({max_prb_start + 1, config.start_symbol_index + config.nof_symbols, nof_rx_ports, PUCCH_MAX_LAYERS});
 
   // Generate the DM-RS allocation pattern.
   generate_dmrs_pattern(temp_pattern, config);
