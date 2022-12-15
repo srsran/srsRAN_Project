@@ -13,8 +13,8 @@
 /// The objective here is to mainly cover and verify the correct integration of the scheduler building blocks.
 
 #include "lib/scheduler/cell/cell_configuration.h"
-#include "test_utils/scheduler_test_bench.h"
 #include "unittests/scheduler/test_utils/config_generators.h"
+#include "unittests/scheduler/test_utils/scheduler_test_bench.h"
 #include "unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsgnb/scheduler/scheduler_factory.h"
 #include "srsgnb/support/test_utils.h"
