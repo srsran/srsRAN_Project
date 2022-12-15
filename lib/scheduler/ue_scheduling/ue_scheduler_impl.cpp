@@ -59,8 +59,12 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
   // Run cell-specific schedulers.
   cells[cell_index]->srb0_sched.run_slot(*cells[cell_index]->cell_res_alloc);
 
+  // Run PUCCH guardbands scheduler.
+  cells[cell_index]->pucch_guard_sched.run_slot(*cells[cell_index]->cell_res_alloc);
+
   // Synchronize all carriers. Last thread to reach this synchronization point, runs UE scheduling strategy.
   sync_point.wait(slot_tx, ue_alloc.nof_cells(), [this, slot_tx]() { run_sched_strategy(slot_tx); });
 
+  // Schedule UCI as the last step.
   cells[cell_index]->uci_sched.run_slot(*cells[cell_index]->cell_res_alloc, slot_tx);
 }

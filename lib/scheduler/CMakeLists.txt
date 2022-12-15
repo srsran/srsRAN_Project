@@ -20,6 +20,7 @@ set(SOURCES
         policy/scheduler_policy_factory.cpp
         policy/scheduler_time_rr.cpp
         pucch_scheduling/pucch_allocator_impl.cpp
+        pucch_scheduling/pucch_guardbands_sched.cpp
         uci_scheduling/uci_scheduler_impl.cpp
         uci_scheduling/uci_allocator_impl.cpp
         support/pdsch/pdsch_default_time_allocation.cpp
