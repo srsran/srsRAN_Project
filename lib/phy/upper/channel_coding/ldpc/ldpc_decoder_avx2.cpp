@@ -47,7 +47,6 @@ void ldpc_decoder_avx2::load_soft_bits(span<const log_likelihood_ratio> llrs)
 {
   // Erase registers.
   unsigned max_nof_connections = (bg_K + 5) * node_size_avx2 * AVX2_SIZE_BYTE;
-  std::memset(var_to_check.data_at(0), 0, max_nof_connections);
   for (auto& tmp : check_to_var) {
     std::memset(tmp.data_at(0), 0, max_nof_connections);
   }

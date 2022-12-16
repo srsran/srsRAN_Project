@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "avx2_support.h"
+#include "avx_support.h"
 #include "ldpc_encoder_impl.h"
 
 namespace srsgnb {
