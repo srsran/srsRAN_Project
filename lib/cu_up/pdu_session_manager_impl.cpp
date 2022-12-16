@@ -49,9 +49,11 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
   // Allocate local TEID
   new_session->local_teid = allocate_local_teid(new_session->pdu_session_id);
 
-  // Create SDAP
-  // FIXME: implement Tx entity of SDAP and pass new_session->sdap_to_pdcp_adapter
-  new_session->sdap = create_sdap(new_session->sdap_to_gtpu_adapter);
+  // Create SDAP entity
+  sdap_entity_creation_message sdap_msg = {};
+  sdap_msg.rx_sdu_notifier              = &new_session->sdap_to_gtpu_adapter;
+  sdap_msg.tx_pdu_notifier              = &new_session->sdap_to_pdcp_adapter;
+  new_session->sdap                     = create_sdap(sdap_msg);
 
   // Create GTPU entity
   gtpu_tunnel_creation_message msg = {};
@@ -63,7 +65,7 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
 
   // Connect adapters
   new_session->sdap_to_gtpu_adapter.connect_gtpu(*new_session->gtpu->get_tx_lower_layer_interface());
-  new_session->gtpu_to_sdap_adapter.connect_sdap(*new_session->sdap.get());
+  new_session->gtpu_to_sdap_adapter.connect_sdap(new_session->sdap->get_sdap_tx_sdu_handler());
 
   // Register tunnel at demux
   if (ngu_demux.add_tunnel(peer_teid, new_session->gtpu->get_rx_upper_layer_interface()) == false) {
@@ -129,7 +131,7 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
 
       // FIXME: Currently, we assume only one DRB per PDU session and only one QoS flow per DRB.
       // Connect the DRB's "PDCP->SDAP adapter" directly to SDAP
-      new_drb->pdcp_to_sdap_adapter.connect_sdap(*new_session->sdap);
+      new_drb->pdcp_to_sdap_adapter.connect_sdap(new_session->sdap->get_sdap_rx_pdu_handler());
       // Connect SDAP's "SDAP->PDCP adapter" directly to PDCP
       new_session->sdap_to_pdcp_adapter.connect_pdcp(new_drb->pdcp_bearer->get_tx_upper_data_interface());
 

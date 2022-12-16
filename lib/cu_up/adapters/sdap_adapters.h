@@ -18,7 +18,7 @@ namespace srsgnb {
 namespace srs_cu_up {
 
 /// Adapter between SDAP and GTP-U
-class sdap_gtpu_adapter : public sdap_sdu_rx_notifier
+class sdap_gtpu_adapter : public sdap_rx_sdu_notifier
 {
 public:
   sdap_gtpu_adapter()  = default;
@@ -36,7 +36,7 @@ private:
   gtpu_tunnel_tx_lower_layer_interface* gtpu_handler = nullptr;
 };
 
-class sdap_pdcp_adapter : public sdap_pdu_tx_notifier
+class sdap_pdcp_adapter : public sdap_tx_pdu_notifier
 {
 public:
   sdap_pdcp_adapter()  = default;

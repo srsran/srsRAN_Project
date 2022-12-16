@@ -31,8 +31,8 @@ struct pdu_session {
     pdu_session_res_ambr(session.pdu_session_res_dl_ambr),
     tunnel_info(session.ng_ul_up_tnl_info){};
 
-  std::unique_ptr<sdap_pdu_handler> sdap;
-  std::unique_ptr<gtpu_tunnel>      gtpu;
+  std::unique_ptr<sdap_entity> sdap;
+  std::unique_ptr<gtpu_tunnel> gtpu;
 
   // Adapters between SDAP and GTPU
   gtpu_sdap_adapter gtpu_to_sdap_adapter;

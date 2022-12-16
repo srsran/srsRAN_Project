@@ -20,9 +20,13 @@ namespace srsgnb {
 
 namespace srs_cu_up {
 
+struct sdap_entity_creation_message {
+  sdap_rx_sdu_notifier* rx_sdu_notifier;
+  sdap_tx_pdu_notifier* tx_pdu_notifier;
+};
+
 /// Creates an instance of a SDAP interface.
-//: TODO: for now we only create the receiving side
-std::unique_ptr<sdap_pdu_handler> create_sdap(sdap_sdu_rx_notifier& listener);
+std::unique_ptr<sdap_entity> create_sdap(sdap_entity_creation_message& msg);
 
 } // namespace srs_cu_up
 

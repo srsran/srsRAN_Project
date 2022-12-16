@@ -23,7 +23,7 @@ public:
   pdcp_sdap_adapter()  = default;
   ~pdcp_sdap_adapter() = default;
 
-  void connect_sdap(sdap_pdu_handler& sdap_handler_) { sdap_handler = &sdap_handler_; }
+  void connect_sdap(sdap_rx_pdu_handler& sdap_handler_) { sdap_handler = &sdap_handler_; }
 
   void on_new_sdu(byte_buffer sdu) override
   {
@@ -32,7 +32,7 @@ public:
   }
 
 private:
-  sdap_pdu_handler* sdap_handler = nullptr;
+  sdap_rx_pdu_handler* sdap_handler = nullptr;
 };
 
 } // namespace srs_cu_up

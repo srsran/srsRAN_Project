@@ -18,7 +18,7 @@ namespace srsgnb {
 
 namespace srs_cu_up {
 
-class sdap_procedure_dispatcher : public sdap_pdu_handler
+class sdap_rx_procedure_dispatcher : public sdap_rx_pdu_handler
 {
   /// In reality, as the interfaces grow, this would become a reference or ptr and ownership would be managed from a
   /// different class. For simplicity, we keep it this way for now.
@@ -27,7 +27,7 @@ class sdap_procedure_dispatcher : public sdap_pdu_handler
   std::unique_ptr<sdap_packet_procedures> procedure;
 
 public:
-  explicit sdap_procedure_dispatcher(std::unique_ptr<sdap_packet_procedures> procedure_) :
+  explicit sdap_rx_procedure_dispatcher(std::unique_ptr<sdap_packet_procedures> procedure_) :
     procedure(std::move(procedure_))
   {
   }
