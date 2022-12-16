@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/sdap/sdap_entity_factory.h"
-#include "sdap_entity_impl.h"
+#include "srsgnb/sdap/sdap_rx_pdu_unpack_entity_factory.h"
+#include "sdap_rx_pdu_unpack_impl.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.
 
@@ -19,7 +19,7 @@ using namespace srsgnb;
 /// concrete class implementations instead of interfaces, intrinsically giving them tight coupling to the objects being
 /// created. Keeping this coupling in a single file, is the best, as the rest of the code can be kept decoupled.
 
-std::unique_ptr<sdap_entity> srsgnb::create_sdap_entity()
+std::unique_ptr<sdap_rx_pdu_unpack> srsgnb::create_sdap_rx_pdu_unpack_entity()
 {
-  return std::unique_ptr<sdap_entity>(new sdap_entity_impl);
+  return std::unique_ptr<sdap_rx_pdu_unpack>(new sdap_rx_pdu_unpack_impl);
 }

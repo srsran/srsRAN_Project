@@ -10,19 +10,19 @@
 
 #pragma once
 
-#include "srsgnb/sdap/sdap_entity.h"
+#include "srsgnb/sdap/sdap_rx_pdu_unpack.h"
 #include <cstdio>
 
 namespace srsgnb {
 
-class sdap_entity_impl : public sdap_entity
+class sdap_rx_pdu_unpack_impl : public sdap_rx_pdu_unpack
 {
 public:
   bool decapsulate(byte_buffer& data) override
   {
-    std::printf("[SDAP-ENTITY] Removing SDAP header from packet of size = %u\n", (unsigned)data.length());
+    std::printf("[SDAP-RX-PDU-UNPACK] Removing SDAP header from packet of size = %u\n", (unsigned)data.length());
     data.trim_head(3);
-    std::printf("[SDAP-ENTITY] New size after removing SDAP header is %u bytes\n", (unsigned)data.length());
+    std::printf("[SDAP-RX-PDU-UNPACK] New size after removing SDAP header is %u bytes\n", (unsigned)data.length());
     return true;
   }
 };

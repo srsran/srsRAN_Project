@@ -14,7 +14,6 @@
 #include "qos_flow_context.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/pdcp/pdcp_entity.h"
-#include "srsgnb/sdap/sdap_entity.h"
 #include <map>
 
 namespace srsgnb {

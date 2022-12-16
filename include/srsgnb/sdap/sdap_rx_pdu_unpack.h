@@ -18,10 +18,10 @@ namespace srsgnb {
 //: find a better name to avoid confusion with a SDAP entity. Entity here is used to represent a business domain entity.
 
 /// SDAP entity receiving side. Retrieves an SDAP SDU from a lower layer data PDU.
-class sdap_entity
+class sdap_rx_pdu_unpack
 {
 public:
-  virtual ~sdap_entity() = default;
+  virtual ~sdap_rx_pdu_unpack() = default;
 
   /// Decapsulates the SDAP header in the provided PDU converting it into an SDAP SDU.
   virtual bool decapsulate(byte_buffer& data) = 0;

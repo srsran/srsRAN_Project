@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/sdap/sdap_entity.h"
+#include "srsgnb/sdap/sdap_rx_pdu_unpack.h"
 #include <memory>
 
 /// This factory header file depends on the SDAP entity interfaces (see above include list). It is kept separate as
@@ -18,7 +18,7 @@
 
 namespace srsgnb {
 
-/// Creates an instance of a SDAP entity interface.
-std::unique_ptr<sdap_entity> create_sdap_entity();
+/// Creates an instance of a SDAP Rx PDU unpack interface.
+std::unique_ptr<sdap_rx_pdu_unpack> create_sdap_rx_pdu_unpack_entity();
 
 } // namespace srsgnb

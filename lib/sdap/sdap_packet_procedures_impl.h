@@ -11,8 +11,8 @@
 #pragma once
 
 #include "srsgnb/sdap/sdap.h"
-#include "srsgnb/sdap/sdap_entity.h"
 #include "srsgnb/sdap/sdap_packet_procedures.h"
+#include "srsgnb/sdap/sdap_rx_pdu_unpack.h"
 #include <cstdio>
 
 namespace srsgnb {
@@ -30,11 +30,11 @@ class sdap_ul_packet_procedure : public sdap_packet_procedures
 
   /// Both dependencies are interfaces and they are at the same or in a higher abstraction layer, conforming to the
   /// clean architecture paradigm.
-  std::unique_ptr<sdap_entity> entity;
-  sdap_sdu_rx_notifier&        listener;
+  std::unique_ptr<sdap_rx_pdu_unpack> entity;
+  sdap_sdu_rx_notifier&               listener;
 
 public:
-  sdap_ul_packet_procedure(std::unique_ptr<sdap_entity> entity_, sdap_sdu_rx_notifier& listener_) :
+  sdap_ul_packet_procedure(std::unique_ptr<sdap_rx_pdu_unpack> entity_, sdap_sdu_rx_notifier& listener_) :
     entity(std::move(entity_)), listener(listener_)
   {
   }
