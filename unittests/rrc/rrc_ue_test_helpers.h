@@ -77,6 +77,8 @@ protected:
 
   rrc_ue_reconfiguration_handler* get_rrc_ue_reconfiguration_handler() { return ue_ctxt.rrc; }
 
+  rrc_ue_pdu_session_resource_handler* get_rrc_ue_pdu_session_resource_handler() { return ue_ctxt.rrc; }
+
   void connect_amf()
   {
     // Notify RRC about successful AMF connection

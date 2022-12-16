@@ -84,7 +84,7 @@ private:
   /// \remark Forward the Initial UE Message to the NGC
   void send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_complete_s& rrc_setup_complete_msg);
 
-  rrc_ue_context_t                        context;
+  rrc_ue_context_t&                       context;
   const asn1::rrc_nr::rrc_setup_request_s request;
   const byte_buffer&                      du_to_cu_container;
   const asn1::rrc_nr::pdcp_cfg_s          srb1_pdcp_cfg;

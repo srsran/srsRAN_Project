@@ -28,6 +28,11 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
 {
   CORO_BEGIN(ctx);
 
+  if (context.state != rrc_state::connected) {
+    logger.error("rnti=0x{:x}: \"{}\" failed. UE is not RRC connected.", context.c_rnti, name());
+    CORO_EARLY_RETURN(false);
+  }
+
   logger.debug("rnti=0x{:x}: \"{}\" initialized.", context.c_rnti, name());
   // create new transaction for RRC Reconfiguration procedure
   transaction = event_mng.transactions.create_transaction(timeout_ms);

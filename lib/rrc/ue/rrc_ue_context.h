@@ -18,6 +18,9 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
+/// RRC states (3GPP 38.331 v15.5.1 Sec 4.2.1)
+enum class rrc_state { idle = 0, connected, connected_inactive };
+
 struct drb_context {
   srsgnb::drb_id_t         drb_id = drb_id_t::invalid;
   asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
@@ -39,6 +42,7 @@ public:
   const rnti_t                           c_rnti;   // current C-RNTI
   const rrc_cell_context                 cell;     // current cell
   const rrc_ue_cfg_t&                    cfg;
+  rrc_state                              state = rrc_state::idle;
   std::vector<drb_context>               drbs;
   guami                                  current_guami; // current GUAMI
   uint64_t                               setup_ue_id = -1;

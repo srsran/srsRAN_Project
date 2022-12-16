@@ -13,7 +13,6 @@
 #include "../procedures/rrc_ue_event_manager.h"
 #include "../rrc_ue_context.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
-#include "srsgnb/rrc/rrc_du.h"
 #include "srsgnb/rrc/rrc_ue.h"
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/eager_async_task.h"
@@ -26,20 +25,23 @@ namespace srs_cu_cp {
 class rrc_pdu_session_resource_setup_routine
 {
 public:
-  rrc_pdu_session_resource_setup_routine(rrc_ue_context_t&                     context_,
-                                         rrc_ue_reconfiguration_proc_notifier& rrc_ue_notifier_,
-                                         rrc_ue_event_manager&                 ev_mng_,
-                                         srslog::basic_logger&                 logger_);
+  rrc_pdu_session_resource_setup_routine(cu_cp_pdu_session_resource_setup_message& setup_msg_,
+                                         rrc_ue_context_t&                         context_,
+                                         rrc_ue_reconfiguration_proc_notifier&     rrc_ue_notifier_,
+                                         rrc_ue_event_manager&                     ev_mng_,
+                                         srslog::basic_logger&                     logger_);
 
-  void operator()(coro_context<async_task<bool>>& ctx);
+  void operator()(coro_context<async_task<cu_cp_pdu_session_resource_setup_response_message>>& ctx);
 
   static const char* name() { return "RRC PDU Session Creation Routine"; }
 
 private:
-  drb_context drb_to_add;
-  drb_context allocate_new_drb();
+  cu_cp_pdu_session_resource_setup_response_message handle_pdu_session_resource_setup_result(bool success);
+  drb_context                                       drb_to_add;
+  drb_context                                       allocate_new_drb();
 
-  rrc_ue_context_t context;
+  cu_cp_pdu_session_resource_setup_message& setup_msg;
+  rrc_ue_context_t                          context;
 
   rrc_reconfiguration_procedure_args reconfig_args;
 
@@ -47,7 +49,12 @@ private:
   rrc_ue_event_manager&                 event_mng; // event manager for the RRC UE entity
   srslog::basic_logger&                 logger;
 
-  bool procedure_result = false;
+  // (sub-)routine results
+  cu_cp_pdu_session_resource_setup_response_message response_msg;
+  rrc_ue_bearer_context_setup_response_message
+      bearer_context_setup_response; // to initially setup the DRBs at the CU-UP
+  rrc_ue_ue_context_modification_response_message ue_context_modification_response; // to inform DU about the new DRBs
+  bool                                            rrc_reconfig_result = false;      // the final UE reconfiguration
 };
 
 } // namespace srs_cu_cp

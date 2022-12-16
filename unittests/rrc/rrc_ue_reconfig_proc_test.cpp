@@ -10,7 +10,6 @@
 
 #include "rrc_ue_test_helpers.h"
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/rrc/rrc_du_factory.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
