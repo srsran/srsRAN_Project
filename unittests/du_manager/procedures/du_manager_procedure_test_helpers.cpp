@@ -43,8 +43,17 @@ du_ue& du_manager_proc_tester::create_ue(du_ue_index_t ue_index)
   mac.wait_ue_create.result.cell_index              = ul_ccch_msg.cell_index;
   mac.wait_ue_create.ready_ev.set();
 
+  cell_res_alloc.next_resource_list.clear();
+  {
+    auto       key                       = std::make_pair(ue_index, ul_ccch_msg.cell_index);
+    auto       it_pair                   = cell_res_alloc.next_resource_list.emplace(key, ue_cell_resource{});
+    const auto ul_cfg                    = config_helpers::make_default_ue_uplink_config();
+    it_pair.first->second.pucch_res_list = ul_cfg.init_ul_bwp.pucch_cfg->pucch_res_list;
+    it_pair.first->second.sr_res_list    = ul_cfg.init_ul_bwp.pucch_cfg->sr_res_list;
+  }
+
   async_task<void> t = launch_async<ue_creation_procedure>(
-      ue_index, ul_ccch_msg, ue_mng, params.services, params.mac, params.rlc, params.f1ap);
+      ue_index, ul_ccch_msg, ue_mng, params.services, params.mac, params.rlc, params.f1ap, cell_res_alloc);
 
   lazy_task_launcher<void> launcher{t};
 

@@ -12,6 +12,7 @@
 
 #include "cell_group_config.h"
 #include "du_bearer.h"
+#include "du_ue_resource_manager.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/mac/mac_sdu_handler.h"
 #include "srsgnb/ran/du_types.h"
@@ -24,16 +25,20 @@ namespace srsgnb {
 namespace srs_du {
 
 struct du_ue {
-  explicit du_ue(du_ue_index_t ue_index_, du_cell_index_t pcell_index_, rnti_t rnti_) :
-    ue_index(ue_index_), rnti(rnti_), pcell_index(pcell_index_)
+  explicit du_ue(du_ue_index_t               ue_index_,
+                 du_cell_index_t             pcell_index_,
+                 rnti_t                      rnti_,
+                 du_cell_resource_allocator& cell_res_alloc_) :
+    ue_index(ue_index_), rnti(rnti_), pcell_index(pcell_index_), resources(ue_index_, cell_res_alloc_)
   {
   }
 
-  const du_ue_index_t  ue_index;
-  rnti_t               rnti;
-  du_cell_index_t      pcell_index;
-  du_ue_bearer_manager bearers;
-  unique_timer         activity_timer;
+  const du_ue_index_t    ue_index;
+  rnti_t                 rnti;
+  du_cell_index_t        pcell_index;
+  du_ue_bearer_manager   bearers;
+  unique_timer           activity_timer;
+  du_ue_resource_manager resources;
 
   std::vector<cell_group_config> cells;
 };

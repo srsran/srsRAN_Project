@@ -23,41 +23,18 @@ ue_creation_procedure::ue_creation_procedure(du_ue_index_t                      
                                              const du_manager_params::service_params&     du_services_,
                                              const du_manager_params::mac_config_params&  mac_mng_,
                                              const du_manager_params::rlc_config_params&  rlc_params_,
-                                             const du_manager_params::f1ap_config_params& f1ap_mng_) :
+                                             const du_manager_params::f1ap_config_params& f1ap_mng_,
+                                             du_cell_resource_allocator&                  cell_res_alloc_) :
   msg(ccch_ind_msg),
   ue_mng(ue_mng_),
   services(du_services_),
   mac_mng(mac_mng_),
   rlc_cfg(rlc_params_),
   f1ap_mng(f1ap_mng_),
+  du_res_alloc(cell_res_alloc_),
   logger(srslog::fetch_basic_logger("DU-MNG")),
-  ue_ctx(std::make_unique<du_ue>(ue_index, ccch_ind_msg.cell_index, ccch_ind_msg.crnti))
+  ue_ctx(std::make_unique<du_ue>(ue_index, ccch_ind_msg.cell_index, ccch_ind_msg.crnti, du_res_alloc))
 {
-  rlc_config tm_rlc_cfg{};
-  tm_rlc_cfg.mode = rlc_mode::tm;
-  ue_ctx->bearers.add_srb(srb_id_t::srb0, tm_rlc_cfg);
-  ue_ctx->bearers.add_srb(srb_id_t::srb1, make_default_srb_rlc_config());
-
-  ue_ctx->cells.resize(1);
-  cell_group_config& pcell = ue_ctx->cells[0];
-  pcell.rlc_bearers.emplace_back();
-  pcell.rlc_bearers[0].lcid       = LCID_SRB1;
-  pcell.rlc_bearers[0].rlc_cfg    = ue_ctx->bearers.srbs()[srb_id_t::srb1].rlc_cfg;
-  pcell.spcell_cfg.serv_cell_idx  = msg.cell_index;
-  pcell.spcell_cfg.spcell_cfg_ded = config_helpers::make_default_initial_ue_serving_cell_config();
-  pcell.mcg_cfg                   = config_helpers::make_initial_mac_cell_group_config();
-
-  const static unsigned UE_ACTIVITY_TIMEOUT = 500; // TODO: Parametrize.
-  ue_ctx->activity_timer                    = services.timers.create_unique_timer();
-  ue_ctx->activity_timer.set(UE_ACTIVITY_TIMEOUT, [ue_index, &logger = this->logger](unsigned tid) {
-    logger.info("UE Manager: UE={} activity timeout.", ue_index);
-    // TODO: Handle.
-  });
-
-  // TODO: Move to helper.
-  physical_cell_group_config& pcg_cfg = pcell.pcg_cfg;
-  pcg_cfg.p_nr_fr1                    = 10;
-  pcg_cfg.pdsch_harq_codebook         = pdsch_harq_ack_codebook::dynamic;
 }
 
 void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
@@ -73,6 +50,12 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   }
   if (ue_mng.find_rnti(ue_ctx->rnti) != nullptr) {
     log_proc_failure(logger, MAX_NOF_DU_UES, msg.crnti, name(), "Repeated RNTI.");
+    CORO_EARLY_RETURN();
+  }
+
+  // > Initialize bearers and PHY/MAC PCell resources of the DU UE.
+  if (not setup_du_ue_resources()) {
+    log_proc_failure(logger, MAX_NOF_DU_UES, msg.crnti, name(), "Failure to allocate DU UE.");
     CORO_EARLY_RETURN();
   }
 
@@ -116,6 +99,45 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   log_proc_completed(logger, ue_index, msg.crnti, "UE Create");
   CORO_RETURN();
+}
+
+bool ue_creation_procedure::setup_du_ue_resources()
+{
+  // Create DU UE SRB0 and SRB1.
+  rlc_config tm_rlc_cfg{};
+  tm_rlc_cfg.mode = rlc_mode::tm;
+  ue_ctx->bearers.add_srb(srb_id_t::srb0, tm_rlc_cfg);
+  ue_ctx->bearers.add_srb(srb_id_t::srb1, make_default_srb_rlc_config());
+
+  // Allocate PCell PHY/MAC resources for DU UE.
+  std::array<du_cell_index_t, 1> pcell_list = {msg.cell_index};
+  if (not ue_ctx->resources.set_cells(pcell_list)) {
+    return false;
+  }
+
+  ue_ctx->cells.resize(1);
+  cell_group_config& pcell = ue_ctx->cells[0];
+  pcell.rlc_bearers.emplace_back();
+  pcell.rlc_bearers[0].lcid       = LCID_SRB1;
+  pcell.rlc_bearers[0].rlc_cfg    = ue_ctx->bearers.srbs()[srb_id_t::srb1].rlc_cfg;
+  pcell.spcell_cfg.serv_cell_idx  = msg.cell_index;
+  pcell.spcell_cfg.spcell_cfg_ded = config_helpers::make_default_initial_ue_serving_cell_config();
+  pcell.mcg_cfg                   = config_helpers::make_initial_mac_cell_group_config();
+  fill_cell_group_resources(pcell, ue_ctx->resources[msg.cell_index]);
+
+  const static unsigned UE_ACTIVITY_TIMEOUT = 500; // TODO: Parametrize.
+  ue_ctx->activity_timer                    = services.timers.create_unique_timer();
+  ue_ctx->activity_timer.set(UE_ACTIVITY_TIMEOUT, [ue_index = ue_ctx->ue_index, &logger = this->logger](unsigned tid) {
+    logger.info("UE Manager: UE={} activity timeout.", ue_index);
+    // TODO: Handle.
+  });
+
+  // TODO: Move to helper.
+  physical_cell_group_config& pcg_cfg = pcell.pcg_cfg;
+  pcg_cfg.p_nr_fr1                    = 10;
+  pcg_cfg.pdsch_harq_codebook         = pdsch_harq_ack_codebook::dynamic;
+
+  return true;
 }
 
 void ue_creation_procedure::create_rlc_srbs()

@@ -13,6 +13,27 @@
 using namespace srsgnb;
 using namespace srs_du;
 
+dummy_cell_resource_allocator::dummy_cell_resource_allocator()
+{
+  const auto ul_cfg                       = config_helpers::make_default_ue_uplink_config();
+  default_ue_cell_resource.pucch_res_list = ul_cfg.init_ul_bwp.pucch_cfg->pucch_res_list;
+  default_ue_cell_resource.sr_res_list    = ul_cfg.init_ul_bwp.pucch_cfg->sr_res_list;
+}
+
+ue_cell_resource_list dummy_cell_resource_allocator::update_resources(du_ue_index_t         ue_index,
+                                                                      span<du_cell_index_t> ue_cells)
+{
+  last_ue_index = ue_index;
+  last_ue_cells.assign(ue_cells.begin(), ue_cells.end());
+  ue_cell_resource_list ret(ue_cells.size());
+  for (unsigned i = 0; i != ue_cells.size(); ++i) {
+    auto key = std::make_pair(ue_index, to_du_cell_index(i));
+    auto it  = next_resource_list.find(key);
+    ret[i]   = (it == next_resource_list.end()) ? &default_ue_cell_resource : &it->second;
+  }
+  return ret;
+}
+
 f1ap_ue_context_update_request
 srsgnb::srs_du::create_f1ap_ue_context_update_request(du_ue_index_t                   ue_idx,
                                                       std::initializer_list<srb_id_t> srbs_to_addmod,

@@ -14,6 +14,7 @@
 #include "srsgnb/du_manager/du_manager_params.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
+#include <map>
 
 namespace srsgnb {
 namespace srs_du {
@@ -176,6 +177,19 @@ public:
   void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override {}
 };
 
+class dummy_cell_resource_allocator : public du_cell_resource_allocator
+{
+public:
+  optional<du_ue_index_t>                                               last_ue_index;
+  std::vector<du_cell_index_t>                                          last_ue_cells;
+  std::map<std::pair<du_ue_index_t, du_cell_index_t>, ue_cell_resource> next_resource_list;
+  ue_cell_resource                                                      default_ue_cell_resource;
+
+  dummy_cell_resource_allocator();
+
+  ue_cell_resource_list update_resources(du_ue_index_t ue_index, span<du_cell_index_t> ue_cells) override;
+};
+
 f1ap_ue_context_update_request create_f1ap_ue_context_update_request(du_ue_index_t                   ue_idx,
                                                                      std::initializer_list<srb_id_t> srbs_to_addmod,
                                                                      std::initializer_list<drb_id_t> drbs_to_addmod);
@@ -201,16 +215,17 @@ public:
     srslog::init();
   }
 
-  std::vector<du_cell_config> du_cells;
-  timer_manager               timers;
-  manual_task_worker          worker;
-  task_executor&              du_mng_exec;
-  dummy_ue_executor_mapper    ue_exec_mapper;
-  dummy_cell_executor_mapper  cell_exec_mapper;
-  f1ap_test_dummy             f1ap;
-  mac_test_dummy              mac;
-  du_manager_params           params;
-  srslog::basic_logger&       logger;
+  std::vector<du_cell_config>   du_cells;
+  timer_manager                 timers;
+  manual_task_worker            worker;
+  task_executor&                du_mng_exec;
+  dummy_ue_executor_mapper      ue_exec_mapper;
+  dummy_cell_executor_mapper    cell_exec_mapper;
+  f1ap_test_dummy               f1ap;
+  mac_test_dummy                mac;
+  du_manager_params             params;
+  dummy_cell_resource_allocator cell_res_alloc;
+  srslog::basic_logger&         logger;
 };
 
 } // namespace srs_du

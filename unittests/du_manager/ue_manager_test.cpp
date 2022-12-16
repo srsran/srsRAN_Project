@@ -23,8 +23,9 @@ struct test_bench {
   dummy_ue_executor_mapper   ue_execs{worker};
   dummy_cell_executor_mapper cell_execs{worker};
 
-  f1ap_test_dummy f1ap_dummy;
-  mac_test_dummy  mac_dummy;
+  f1ap_test_dummy               f1ap_dummy;
+  mac_test_dummy                mac_dummy;
+  dummy_cell_resource_allocator cell_res_alloc;
 
   du_manager_config_t cfg{srslog::fetch_basic_logger("DU-MNG"),
                           {},
@@ -48,7 +49,7 @@ void test_ue_concurrent_procedures(test_outcome outcome)
   bench.f1ap_dummy.next_ue_create_response.result = true;
   bench.f1ap_dummy.next_ue_create_response.f1c_bearers_added.resize(2);
 
-  du_ue_manager ue_mng{bench.cfg};
+  du_ue_manager ue_mng{bench.cfg, bench.cell_res_alloc};
   TESTASSERT(ue_mng.get_ues().empty());
   du_ue_index_t ue_index = MAX_NOF_DU_UES;
 
@@ -128,7 +129,7 @@ void test_inexistent_ue_removal()
 
   test_bench bench;
 
-  du_ue_manager ue_mng{bench.cfg};
+  du_ue_manager ue_mng{bench.cfg, bench.cell_res_alloc};
   TESTASSERT(ue_mng.get_ues().empty());
 
   // Action 1: Start UE deletion
@@ -168,7 +169,7 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
     bench.mac_dummy.wait_ue_create.ready_ev.set();
   }
 
-  du_ue_manager ue_mng{bench.cfg};
+  du_ue_manager ue_mng{bench.cfg, bench.cell_res_alloc};
   TESTASSERT(ue_mng.get_ues().empty());
 
   // Action 1: Start creation of UE by notifying UL CCCH decoding.
