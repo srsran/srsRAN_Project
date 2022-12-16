@@ -27,6 +27,7 @@ public:
   void handle_sdu(byte_buffer sdu) final
   {
     // pass through
+    logger.info("SDAP Tx received SDU of size {} and forwards it as PDU.", sdu.length());
     pdu_notifier.on_new_pdu(std::move(sdu));
   }
 
