@@ -164,21 +164,20 @@ inline cu_cp_gtp_tunnel cu_cp_uptransport_layer_info_from_e1ap_up_tnl_info(asn1:
   return cu_cp_uptransport_layer_info;
 }
 
-/// @brief Convert E1AP UP Params Item to RRC UE GTP Tunnel.
-/// @param up_param_item The E1AP UP Params Item.
+/// @brief Convert E1AP UP TNL Info to RRC UE GTP Tunnel.
+/// @param up_tnl_info The E1AP UP TNL Info.
 /// @return The RRC UE GTP Tunnel.
-inline rrc_ue_gtp_tunnel e1ap_up_param_item_to_rrc_ue_gtp_tunnel(asn1::e1ap::up_params_item_s up_param_item)
+inline cu_cp_gtp_tunnel e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(asn1::e1ap::up_tnl_info_c up_tnl_info)
 {
-  rrc_ue_gtp_tunnel gtp_tunnel;
-  gtp_tunnel.gtp_teid                = up_param_item.up_tnl_info.gtp_tunnel().gtp_teid.to_number();
-  gtp_tunnel.transport_layer_address = up_param_item.up_tnl_info.gtp_tunnel().transport_layer_address.to_number();
-  gtp_tunnel.cell_group_id           = up_param_item.cell_group_id;
+  cu_cp_gtp_tunnel gtp_tunnel;
+  gtp_tunnel.gtp_teid                = up_tnl_info.gtp_tunnel().gtp_teid.to_number();
+  gtp_tunnel.transport_layer_address = up_tnl_info.gtp_tunnel().transport_layer_address.to_number();
 
   return gtp_tunnel;
 }
 
 inline asn1::f1ap::uluptnl_info_to_be_setup_item_s
-rrc_ue_gtp_tunnel_to_f1ap_uluptnl_info_to_be_setup_item(rrc_ue_gtp_tunnel gtp_tunnel)
+cu_cp_gtp_tunnel_to_f1ap_uluptnl_info_to_be_setup_item(cu_cp_gtp_tunnel gtp_tunnel)
 {
   asn1::f1ap::uluptnl_info_to_be_setup_item_s uluptnl_item;
   uluptnl_item.uluptnl_info.set_gtp_tunnel();
@@ -216,14 +215,24 @@ inline cu_cp_cause_t f1ap_cause_to_cu_cp_cause(asn1::f1ap::cause_c f1ap_cause)
   }
 }
 
-inline rrc_ue_gtp_tunnel
-f1ap_dluptnl_info_to_be_setup_item_to_rrc_ue_gtp_tunnel(asn1::f1ap::dluptnl_info_to_be_setup_item_s f1ap_item)
+inline cu_cp_gtp_tunnel
+f1ap_dluptnl_info_to_be_setup_item_to_cu_cp_gtp_tunnel(asn1::f1ap::dluptnl_info_to_be_setup_item_s f1ap_item)
 {
-  rrc_ue_gtp_tunnel gtp_tunnel;
+  cu_cp_gtp_tunnel gtp_tunnel;
   gtp_tunnel.gtp_teid                = f1ap_item.dluptnl_info.gtp_tunnel().gtp_teid.to_number();
   gtp_tunnel.transport_layer_address = f1ap_item.dluptnl_info.gtp_tunnel().transport_layer_address.to_string();
 
   return gtp_tunnel;
+}
+
+/// @brief Convert E1AP NG DL UP Unchanged to its boolean representation
+/// @param ng_dl_up_unchanged The E1AP NG DL UP Unchanged.
+/// @return The boolean representation of E1AP NG DL UP Unchanged.
+inline bool
+e1ap_ng_dl_up_unchanged_to_bool(asn1::e1ap::pdu_session_res_setup_item_s::ng_dl_up_unchanged_e_ ng_dl_up_unchanged)
+{
+  return ng_dl_up_unchanged.value ==
+         asn1::e1ap::pdu_session_res_setup_item_s::ng_dl_up_unchanged_opts::options::true_value;
 }
 
 } // namespace srs_cu_cp

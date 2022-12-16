@@ -39,15 +39,9 @@ public:
   virtual void on_new_pdu(const rrc_pdu_message& msg) = 0;
 };
 
-struct rrc_ue_gtp_tunnel {
-  uint32_t          gtp_teid;
-  std::string       transport_layer_address;
-  optional<uint8_t> cell_group_id;
-};
-
 struct rrc_ue_drb_setup_message {
-  uint8_t                        drb_id;
-  std::vector<rrc_ue_gtp_tunnel> gtp_tunnels;
+  uint8_t                       drb_id;
+  std::vector<cu_cp_gtp_tunnel> gtp_tunnels;
 };
 
 struct rrc_ue_ue_context_modification_request_message {
@@ -83,10 +77,59 @@ struct rrc_ue_bearer_context_setup_request_message {
   uint64_t                                      ue_aggregate_maximum_bit_rate_dl;
 };
 
+struct rrc_ue_up_params_item {
+  cu_cp_gtp_tunnel up_tnl_info;
+  uint8_t          cell_group_id;
+};
+
+struct rrc_ue_qos_flow_item {
+  uint8_t qos_flow_id;
+};
+
+struct rrc_ue_qos_flow_failed_item {
+  uint8_t       qos_flow_id;
+  cu_cp_cause_t cause;
+};
+
+struct rrc_ue_data_forwarding_info {
+  optional<cu_cp_gtp_tunnel> ul_data_forwarding;
+  optional<cu_cp_gtp_tunnel> dl_data_forwarding;
+};
+
+struct rrc_ue_drb_setup_item_ng_ran {
+  drb_id_t                                 drb_id;
+  std::vector<rrc_ue_up_params_item>       ul_up_transport_params;
+  std::vector<rrc_ue_qos_flow_item>        flow_setup_list;
+  std::vector<rrc_ue_qos_flow_failed_item> flow_failed_list;
+  optional<rrc_ue_data_forwarding_info>    drb_data_forwarding_info_resp;
+};
+
+struct rrc_ue_drb_failed_item_ng_ran {
+  drb_id_t      drb_id;
+  cu_cp_cause_t cause;
+};
+
+struct rrc_ue_pdu_session_resource_setup_item {
+  uint16_t                                   pdu_session_id;
+  cu_cp_gtp_tunnel                           ng_dl_up_tnl_info;
+  std::vector<rrc_ue_drb_setup_item_ng_ran>  drb_setup_list_ng_ran;
+  std::vector<rrc_ue_drb_failed_item_ng_ran> drb_failed_list_ng_ran;
+  optional<cu_cp_security_result>            security_result;
+  optional<rrc_ue_data_forwarding_info>      pdu_session_data_forwarding_info_resp;
+  optional<bool>                             ng_dl_up_unchanged;
+};
+
+struct rrc_ue_pdu_session_resource_failed_item {
+  uint16_t      pdu_session_id;
+  cu_cp_cause_t cause;
+};
+
 struct rrc_ue_bearer_context_setup_response_message {
-  std::vector<cu_cp_pdu_session_res_setup_response_item> pdu_session_res_setup_response_items;
-  std::vector<cu_cp_pdu_session_res_setup_failed_item>   pdu_session_res_failed_to_setup_items;
-  rrc_ue_drb_setup_message                               rrc_ue_drb_setup_msg;
+  bool                                                 success;
+  std::vector<rrc_ue_pdu_session_resource_setup_item>  pdu_session_resource_setup_list;
+  std::vector<rrc_ue_pdu_session_resource_failed_item> pdu_session_resource_failed_list;
+  optional<cu_cp_cause_t>                              cause;
+  // TODO: Add crit diagnostics
 };
 
 /// Interface to notify the E1 about control messages.

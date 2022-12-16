@@ -106,14 +106,13 @@ public:
           // Fail if E-UTRAN bearer context setup is returned
           if (e1_bearer_context_setup_resp_msg.response->sys_bearer_context_setup_resp->type() ==
               asn1::e1ap::sys_bearer_context_setup_resp_c::types::e_utran_bearer_context_setup_resp) {
-            cu_cp_cause_t cause = cu_cp_cause_t::protocol;
-            fill_failed_rrc_ue_pdu_session_res_setup_response(res, msg, e1_bearer_context_setup_resp_msg, cause);
+            res.success = false;
+            res.cause   = cu_cp_cause_t::protocol;
 
             CORO_EARLY_RETURN(res);
           }
 
-          // TODO: Fill all values of the response
-          fill_rrc_ue_pdu_session_res_setup_response(res, msg, e1_bearer_context_setup_resp_msg);
+          fill_rrc_ue_bearer_context_setup_response_message(res, e1_bearer_context_setup_resp_msg);
 
           CORO_RETURN(res);
         });

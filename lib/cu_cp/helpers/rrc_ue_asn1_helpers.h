@@ -58,97 +58,127 @@ inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
   e1_request.uedl_aggregate_maximum_bit_rate = msg.ue_aggregate_maximum_bit_rate_dl;
 }
 
-inline void fill_failed_rrc_ue_pdu_session_res_setup_response(
-    rrc_ue_bearer_context_setup_response_message&      res,
-    const rrc_ue_bearer_context_setup_request_message& msg,
-    const e1ap_bearer_context_setup_response_message&  e1_bearer_context_setup_resp_msg,
-    cu_cp_cause_t                                      cause)
-{
-  for (auto e1ap_failed_item : msg.pdu_session_res_setup_items) {
-    cu_cp_pdu_session_res_setup_failed_item failed_item;
-    failed_item.pdu_session_id                                         = e1ap_failed_item.pdu_session_id;
-    failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause;
-    if (e1_bearer_context_setup_resp_msg.failure->crit_diagnostics_present) {
-      // TODO: Add crit diagnostics
-    }
-    res.pdu_session_res_failed_to_setup_items.push_back(failed_item);
-  }
-}
-
-inline void fill_rrc_ue_pdu_session_res_setup_response(
-    rrc_ue_bearer_context_setup_response_message&      res,
-    const rrc_ue_bearer_context_setup_request_message& msg,
-    const e1ap_bearer_context_setup_response_message&  e1_bearer_context_setup_resp_msg)
+inline void fill_rrc_ue_bearer_context_setup_response_message(
+    rrc_ue_bearer_context_setup_response_message&     res,
+    const e1ap_bearer_context_setup_response_message& e1_bearer_context_setup_resp_msg)
 {
   if (e1_bearer_context_setup_resp_msg.success) {
     auto& bearer_context_setup_response =
         e1_bearer_context_setup_resp_msg.response->sys_bearer_context_setup_resp->ng_ran_bearer_context_setup_resp();
 
-    for (auto e1ap_response_item : bearer_context_setup_response.pdu_session_res_setup_list.value) {
-      cu_cp_pdu_session_res_setup_response_item response_item;
-      response_item.pdu_session_id = e1ap_response_item.pdu_session_id;
+    for (auto e1ap_res_setup_item : bearer_context_setup_response.pdu_session_res_setup_list.value) {
+      rrc_ue_pdu_session_resource_setup_item res_setup_item;
+      res_setup_item.pdu_session_id = e1ap_res_setup_item.pdu_session_id;
 
-      // PDUSessionResourceSetupResponseTransfer
-      auto& response_transfer = response_item.pdu_session_resource_setup_response_transfer;
+      // Add NG DL UP TNL Info
+      res_setup_item.ng_dl_up_tnl_info = e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(e1ap_res_setup_item.ng_dl_up_tnl_info);
 
-      // Add dlqos_flow_per_tnl_info
-      auto& dlqos_flow_per_tnl_info = response_transfer.dlqos_flow_per_tnl_info;
+      // Add DRB Setup List NG RAN
+      for (auto e1ap_drb_setup_item : e1ap_res_setup_item.drb_setup_list_ng_ran) {
+        rrc_ue_drb_setup_item_ng_ran drb_setup_item;
+        drb_setup_item.drb_id = uint_to_drb_id(e1ap_drb_setup_item.drb_id);
 
-      // Add uptransport_layer_info
-      dlqos_flow_per_tnl_info.uptransport_layer_info =
-          cu_cp_uptransport_layer_info_from_e1ap_up_tnl_info(e1ap_response_item.ng_dl_up_tnl_info);
-
-      for (auto e1ap_drb_setup_item : e1ap_response_item.drb_setup_list_ng_ran) {
-        res.rrc_ue_drb_setup_msg.drb_id = e1ap_drb_setup_item.drb_id;
-
-        // Add gtp tunnels
+        // Add UL UP Transport Params
         for (auto ul_up_transport_param : e1ap_drb_setup_item.ul_up_transport_params) {
-          rrc_ue_gtp_tunnel gtp_tunnel = e1ap_up_param_item_to_rrc_ue_gtp_tunnel(ul_up_transport_param);
-          res.rrc_ue_drb_setup_msg.gtp_tunnels.push_back(gtp_tunnel);
+          rrc_ue_up_params_item ue_params_item;
+          ue_params_item.up_tnl_info   = e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(ul_up_transport_param.up_tnl_info);
+          ue_params_item.cell_group_id = ul_up_transport_param.cell_group_id;
+
+          drb_setup_item.ul_up_transport_params.push_back(ue_params_item);
         }
 
-        // Add associated qos flows
+        // Add Flow setup List
         for (auto e1ap_qos_flow_item : e1ap_drb_setup_item.flow_setup_list) {
-          cu_cp_associated_qos_flow qos_flow_item;
+          rrc_ue_qos_flow_item qos_flow_item;
           qos_flow_item.qos_flow_id = e1ap_qos_flow_item.qo_s_flow_id;
 
-          response_transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.push_back(qos_flow_item);
+          drb_setup_item.flow_setup_list.push_back(qos_flow_item);
         }
 
-        // Add qos flow failed to setups
+        // Add Flow Failed List
         for (auto e1ap_failed_qos_flow_item : e1ap_drb_setup_item.flow_failed_list) {
-          cu_cp_qos_flow_failed_to_setup_item failed_qos_flow_item;
+          rrc_ue_qos_flow_failed_item failed_qos_flow_item;
 
           failed_qos_flow_item.qos_flow_id = e1ap_failed_qos_flow_item.qo_s_flow_id;
           failed_qos_flow_item.cause       = e1ap_cause_to_cu_cp_cause(e1ap_failed_qos_flow_item.cause);
 
-          response_transfer.qos_flow_failed_to_setup_list.push_back(failed_qos_flow_item);
+          drb_setup_item.flow_failed_list.push_back(failed_qos_flow_item);
+        }
+
+        // Add DRB Data Forwarding Info Response
+        if (e1ap_drb_setup_item.drb_data_forwarding_info_resp_present) {
+          if (e1ap_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding_present) {
+            drb_setup_item.drb_data_forwarding_info_resp.value().ul_data_forwarding =
+                e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(
+                    e1ap_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding);
+          }
+          if (e1ap_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding_present) {
+            drb_setup_item.drb_data_forwarding_info_resp.value().dl_data_forwarding =
+                e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(
+                    e1ap_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding);
+          }
+        }
+
+        res_setup_item.drb_setup_list_ng_ran.push_back(drb_setup_item);
+      }
+
+      // Add DRB Failed List NG RAN
+      for (auto e1ap_drb_failed_item : e1ap_res_setup_item.drb_failed_list_ng_ran) {
+        rrc_ue_drb_failed_item_ng_ran drb_failed_item;
+        drb_failed_item.drb_id = uint_to_drb_id(e1ap_drb_failed_item.drb_id);
+        drb_failed_item.cause  = e1ap_cause_to_cu_cp_cause(e1ap_drb_failed_item.cause);
+
+        res_setup_item.drb_failed_list_ng_ran.push_back(drb_failed_item);
+      }
+
+      // Add Security Result
+      if (e1ap_res_setup_item.security_result_present) {
+        res_setup_item.security_result.value().confidentiality_protection_result =
+            e1ap_res_setup_item.security_result.confidentiality_protection_result.to_string();
+        res_setup_item.security_result.value().integrity_protection_result =
+            e1ap_res_setup_item.security_result.integrity_protection_result.to_string();
+      }
+
+      // Add PDU Session Data Forwarding Info Response
+      if (e1ap_res_setup_item.pdu_session_data_forwarding_info_resp_present) {
+        if (e1ap_res_setup_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding_present) {
+          res_setup_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding =
+              e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(
+                  e1ap_res_setup_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding);
+        }
+        if (e1ap_res_setup_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding_present) {
+          res_setup_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding =
+              e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(
+                  e1ap_res_setup_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding);
         }
       }
 
-      // TODO: Add optional values
+      // Add NG DL UP Unchanged
+      if (e1ap_res_setup_item.ng_dl_up_unchanged_present) {
+        res_setup_item.ng_dl_up_unchanged.value() =
+            e1ap_ng_dl_up_unchanged_to_bool(e1ap_res_setup_item.ng_dl_up_unchanged);
+      }
 
-      res.pdu_session_res_setup_response_items.push_back(response_item);
+      res.pdu_session_resource_setup_list.push_back(res_setup_item);
     }
 
     // Add pdu session res failed list
     if (bearer_context_setup_response.pdu_session_res_failed_list_present) {
       for (auto e1ap_failed_item : bearer_context_setup_response.pdu_session_res_failed_list.value) {
-        cu_cp_pdu_session_res_setup_failed_item failed_item;
+        rrc_ue_pdu_session_resource_failed_item failed_item;
 
         failed_item.pdu_session_id = e1ap_failed_item.pdu_session_id;
-        failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause =
-            e1ap_cause_to_cu_cp_cause(e1ap_failed_item.cause);
+        failed_item.cause          = e1ap_cause_to_cu_cp_cause(e1ap_failed_item.cause);
 
-        res.pdu_session_res_failed_to_setup_items.push_back(failed_item);
+        res.pdu_session_resource_failed_list.push_back(failed_item);
       }
     }
   } else {
-    fill_failed_rrc_ue_pdu_session_res_setup_response(
-        res,
-        msg,
-        e1_bearer_context_setup_resp_msg,
-        e1ap_cause_to_cu_cp_cause(e1_bearer_context_setup_resp_msg.failure->cause.value));
+    res.success = false;
+    res.cause   = e1ap_cause_to_cu_cp_cause(e1_bearer_context_setup_resp_msg.failure->cause.value);
+    if (e1_bearer_context_setup_resp_msg.failure->crit_diagnostics_present) {
+      // TODO: Add crit diagnostics
+    }
   }
 }
 
@@ -165,9 +195,9 @@ inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modificati
     f1ap_drb_to_setup_item.drbid = drb_to_be_setup.drb_id;
 
     // Add uLUPTNLInformation_ToBeSetup
-    for (auto rrc_ue_gtp_tunnel_item : drb_to_be_setup.gtp_tunnels) {
+    for (auto cu_cp_gtp_tunnel_item : drb_to_be_setup.gtp_tunnels) {
       asn1::f1ap::uluptnl_info_to_be_setup_item_s uluptnl_item =
-          rrc_ue_gtp_tunnel_to_f1ap_uluptnl_info_to_be_setup_item(rrc_ue_gtp_tunnel_item);
+          cu_cp_gtp_tunnel_to_f1ap_uluptnl_info_to_be_setup_item(cu_cp_gtp_tunnel_item);
 
       f1ap_drb_to_setup_item.uluptnl_info_to_be_setup_list.push_back(uluptnl_item);
     }
@@ -249,8 +279,8 @@ inline void fill_rrc_ue_pdu_session_res_setup_response(
 
         // Add gtp tunnels
         for (auto dluptnl_info_to_be_setup_item : f1ap_drb_mod_item.dluptnl_info_to_be_setup_list) {
-          rrc_ue_gtp_tunnel gtp_tunnel =
-              f1ap_dluptnl_info_to_be_setup_item_to_rrc_ue_gtp_tunnel(dluptnl_info_to_be_setup_item);
+          cu_cp_gtp_tunnel gtp_tunnel =
+              f1ap_dluptnl_info_to_be_setup_item_to_cu_cp_gtp_tunnel(dluptnl_info_to_be_setup_item);
           res.rrc_ue_drb_setup_msg.gtp_tunnels.push_back(gtp_tunnel);
         }
       }
