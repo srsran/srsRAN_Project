@@ -11,13 +11,14 @@
 #pragma once
 
 #include "srsgnb/f1c/common/f1c_common.h"
+
 namespace srsgnb {
 
 /// \brief F1C bridge between DU and CU-CP using fast-path message passing.
 class f1c_local_adapter : public f1c_message_notifier
 {
 public:
-  f1c_local_adapter(std::string log_name) : logger(srslog::fetch_basic_logger(log_name)) {}
+  explicit f1c_local_adapter(const std::string& log_name) : logger(srslog::fetch_basic_logger(log_name)) {}
 
   void attach_handler(f1c_message_handler* handler_) { handler = handler_; }
   void on_new_message(const f1c_message& msg) override
