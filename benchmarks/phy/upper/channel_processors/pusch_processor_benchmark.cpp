@@ -22,9 +22,6 @@ using namespace srsgnb;
 // A test case consists of a PUSCH PDU configuration and a Transport Block Size.
 using test_case_type = std::tuple<pusch_processor::pdu_t, unsigned>;
 
-// Pseudo-random generator.
-static std::mt19937 rgen(0);
-
 // General test configuration parameters.
 static unsigned                           nof_repetitions             = 10;
 static std::string                        selected_profile_name       = "default";
@@ -331,6 +328,9 @@ int main(int argc, char** argv)
 
   benchmarker perf_meas("PUSCH processor", nof_repetitions);
 
+  // Pseudo-random generator.
+  std::mt19937 rgen(0);
+
   // Grid dimensions for all test cases.
   unsigned grid_nof_symbols = get_nsymb_per_slot(selected_profile.cp);
   unsigned grid_nof_subcs   = MAX_RB * NRE;
@@ -348,7 +348,7 @@ int main(int argc, char** argv)
   std::normal_distribution<float> normal_dist(0.0F, M_SQRT1_2);
 
   // Generate random RE.
-  std::generate(random_re.begin(), random_re.end(), [&rgen = rgen, &normal_dist]() {
+  std::generate(random_re.begin(), random_re.end(), [&rgen, &normal_dist]() {
     return std::complex<float>(normal_dist(rgen), normal_dist(rgen));
   });
 
