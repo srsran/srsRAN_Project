@@ -39,12 +39,14 @@ protected:
     task_worker                    task_worker("thread", 1, false, os_thread_realtime_priority::MAX_PRIO);
     std::unique_ptr<task_executor> task_executor = make_task_executor(task_worker);
 
-    dummy_e1_notifier e1_message_notifier;
+    dummy_e1_notifier   e1_message_notifier;
+    dummy_f1u_connector f1u_conn;
 
     // create config
     cu_up_configuration cfg;
     cfg.cu_up_executor = task_executor.get();
     cfg.e1_notifier    = &e1_message_notifier;
+    cfg.f1u_connector  = &f1u_conn;
 
     // create and start DUT
     cu_up = create_cu_up(cfg);

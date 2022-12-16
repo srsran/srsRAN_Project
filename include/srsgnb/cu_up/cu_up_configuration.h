@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/e1/common/e1_common.h"
-#include "srsgnb/f1u/common/f1u_connector.h"
+#include "srsgnb/f1u/cu_up/f1u_connector.h"
 #include "srsgnb/support/executors/task_executor.h"
 
 namespace srsgnb {

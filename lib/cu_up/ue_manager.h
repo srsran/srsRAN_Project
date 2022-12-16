@@ -12,7 +12,7 @@
 
 #include "ue_manager_interfaces.h"
 #include "srsgnb/adt/slotted_array.h"
-#include "srsgnb/f1u/common/f1u_connector.h"
+#include "srsgnb/f1u/cu_up/f1u_connector.h"
 #include "srsgnb/support/timers.h"
 
 namespace srsgnb {

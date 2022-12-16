@@ -23,6 +23,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t            ue_inde
                                                    gtpu_demux_ctrl&      ngu_demux_) :
   ue_index(ue_index_), logger(logger_), timers(timers_), ngu_demux(ngu_demux_), f1u_conn(f1u_conn_)
 {
+  (void)f1u_conn;
 }
 
 pdu_session_setup_result

@@ -13,7 +13,7 @@
 #include "pdu_session_manager.h"
 #include "pdu_session_manager_impl.h"
 #include "srsgnb/cu_up/cu_up_types.h"
-#include "srsgnb/f1u/common/f1u_connector.h"
+#include "srsgnb/f1u/cu_up/f1u_connector.h"
 #include <map>
 
 namespace srsgnb {

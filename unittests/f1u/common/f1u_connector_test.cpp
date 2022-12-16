@@ -77,9 +77,9 @@ protected:
     f1u_conn                           = create_f1u_connector(msg);
   }
 
-  std::unique_ptr<f1u_connector> f1u_conn;
-  srslog::basic_logger&          logger     = srslog::fetch_basic_logger("TEST", false);
-  srslog::basic_logger&          f1u_logger = srslog::fetch_basic_logger("F1-U", false);
+  std::unique_ptr<f1u_local_connector> f1u_conn;
+  srslog::basic_logger&                logger     = srslog::fetch_basic_logger("TEST", false);
+  srslog::basic_logger&                f1u_logger = srslog::fetch_basic_logger("F1-U", false);
 };
 
 /// Test the instantiation of a new entity

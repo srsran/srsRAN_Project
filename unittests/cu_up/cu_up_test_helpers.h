@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/f1u/common/f1u_connector.h"
+#include "srsgnb/f1u/cu_up/f1u_connector.h"
 #include "srsgnb/gtpu/gtpu_demux.h"
 
 namespace srsgnb {
