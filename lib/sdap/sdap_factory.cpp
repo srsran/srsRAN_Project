@@ -10,8 +10,6 @@
 
 #include "srsgnb/sdap/sdap_factory.h"
 #include "sdap_entity_impl.h"
-//#include "sdap_packet_procedures_impl.h"
-#include "srsgnb/sdap/sdap_rx_pdu_unpack_entity_factory.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.
 
@@ -24,9 +22,5 @@ using namespace srs_cu_up;
 
 std::unique_ptr<sdap_entity> srsgnb::srs_cu_up::create_sdap(sdap_entity_creation_message& msg)
 {
-  // auto ul_procedure = std::unique_ptr<sdap_packet_procedures>(
-  //     new sdap_ul_packet_procedure(create_sdap_rx_pdu_unpack_entity(), *msg.rx_sdu_notifier));
-
-  // return std::unique_ptr<sdap_rx_pdu_handler>(new sdap_procedure_dispatcher(std::move(ul_procedure)));
   return std::make_unique<sdap_entity_impl>(*msg.tx_pdu_notifier, *msg.rx_sdu_notifier);
 }

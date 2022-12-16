@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-set(SOURCES sdap_factory.cpp sdap_rx_pdu_unpack_entity_factory.cpp)
+set(SOURCES sdap_factory.cpp)
 
 add_library(srsran_sdap STATIC ${SOURCES})
 target_link_libraries(srsran_sdap)
