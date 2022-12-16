@@ -149,8 +149,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
 
   // Fill PDSCH PDU.
-  pdsch_alloc.result.dl.ue_grants.emplace_back();
-  dl_msg_alloc& msg = pdsch_alloc.result.dl.ue_grants.back();
+  dl_msg_alloc& msg = pdsch_alloc.result.dl.ue_grants.emplace_back();
   switch (pdcch->dci.type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
       build_pdsch_f1_0_tc_rnti(msg.pdsch_cfg, u.crnti, cell_cfg, pdcch->dci.tc_rnti_f1_0);
@@ -167,8 +166,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   h_dl.save_alloc_params(pdcch->dci.type, msg.pdsch_cfg);
 
   // Set MAC logical channels to schedule in this PDU.
-  msg.tb_list.emplace_back();
-  u.build_dl_transport_block_info(msg.tb_list.back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
+  u.build_dl_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
 
   return true;
 }
@@ -270,8 +268,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                         h_ul);
 
   // Fill PUSCH.
-  pusch_alloc.result.ul.puschs.emplace_back();
-  ul_sched_info& msg = pusch_alloc.result.ul.puschs.back();
+  ul_sched_info& msg = pusch_alloc.result.ul.puschs.emplace_back();
   switch (pdcch->dci.type) {
     case dci_ul_rnti_config_type::tc_rnti_f0_0:
       build_pusch_f0_0_tc_rnti(msg.pusch_cfg, u.crnti, cell_cfg, pdcch->dci.tc_rnti_f0_0, h_ul.tb().nof_retxs == 0);

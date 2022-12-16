@@ -184,14 +184,11 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   // Mark resources as occupied in the ResourceGrid.
   pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, ue_grant_crbs});
 
-  // Add new DL UE Grant.
-  pdsch_alloc.result.dl.ue_grants.emplace_back();
-
   fill_srb0_grant(u,
                   pdsch_alloc.slot,
                   *h_dl,
                   *pdcch,
-                  pdsch_alloc.result.dl.ue_grants.back(),
+                  pdsch_alloc.result.dl.ue_grants.emplace_back(),
                   pucch_grant,
                   pdsch_time_res,
                   k1,
@@ -229,8 +226,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
   build_pdsch_f1_0_tc_rnti(msg.pdsch_cfg, u.crnti, cell_cfg, pdcch.dci.tc_rnti_f1_0);
 
   // Set MAC logical channels to schedule in this PDU.
-  msg.tb_list.emplace_back();
-  u.build_dl_srb0_transport_block_info(msg.tb_list.back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
+  u.build_dl_srb0_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
 
   // Save in HARQ the parameters set for this PDCCH and PDSCH PDUs.
   h_dl.save_alloc_params(pdcch.dci.type, msg.pdsch_cfg);

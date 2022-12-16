@@ -421,9 +421,9 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     // 6. Register Msg3 allocations for this PUSCH resource as successful.
     unsigned last_crb = msg3_crbs.start();
     for (unsigned i = 0; i < pusch_res_max_allocs; ++i) {
-      msg3_candidates.emplace_back();
-      msg3_candidates.back().crbs               = {last_crb, last_crb + nof_prbs_per_msg3};
-      msg3_candidates.back().pusch_td_res_index = puschidx;
+      msg3_alloc_candidate& candidate = msg3_candidates.emplace_back();
+      candidate.crbs                  = {last_crb, last_crb + nof_prbs_per_msg3};
+      candidate.pusch_td_res_index    = puschidx;
       last_crb += nof_prbs_per_msg3;
     }
   }
@@ -475,15 +475,14 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
       grant_info{get_dl_bwp_cfg().scs, get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols, rar_crbs});
 
   // Fill RAR PDSCH.
-  rar_alloc.result.dl.rar_grants.emplace_back();
-  rar_information& rar      = rar_alloc.result.dl.rar_grants.back();
+  rar_information& rar      = rar_alloc.result.dl.rar_grants.emplace_back();
   rar.pdsch_cfg.rnti        = pdcch.ctx.rnti;
   rar.pdsch_cfg.bwp_cfg     = pdcch.ctx.bwp_cfg;
   rar.pdsch_cfg.coreset_cfg = pdcch.ctx.coreset_cfg;
   rar.pdsch_cfg.prbs        = rar_prbs;
   rar.pdsch_cfg.symbols     = get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols;
-  rar.pdsch_cfg.codewords.emplace_back();
-  pdsch_codeword& cw = rar.pdsch_cfg.codewords.back();
+
+  pdsch_codeword& cw = rar.pdsch_cfg.codewords.emplace_back();
   cw.mcs_table       = pdsch_mcs_table::qam64;
   cw.mcs_index       = dci.modulation_coding_scheme;
   cw.rv_index        = 0;
@@ -510,8 +509,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     pending_msg3.harq.new_tx(msg3_alloc.slot, sched_cfg.max_nof_msg3_harq_retxs);
 
     // Add MAC SDU with UL grant (Msg3) in RAR PDU.
-    rar.grants.emplace_back();
-    rar_ul_grant& msg3_info            = rar.grants.back();
+    rar_ul_grant& msg3_info            = rar.grants.emplace_back();
     msg3_info.rapid                    = pending_msg3.preamble.preamble_id;
     msg3_info.ta                       = pending_msg3.preamble.time_advance.to_Ta(get_ul_bwp_cfg().scs);
     msg3_info.temp_crnti               = pending_msg3.preamble.tc_rnti;
@@ -527,8 +525,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     msg3_alloc.ul_res_grid.fill(grant_info{get_dl_bwp_cfg().scs, symbols, msg3_candidate.crbs});
 
     // Fill PUSCH for Msg3.
-    msg3_alloc.result.ul.puschs.emplace_back();
-    ul_sched_info& pusch     = msg3_alloc.result.ul.puschs.back();
+    ul_sched_info& pusch     = msg3_alloc.result.ul.puschs.emplace_back();
     pusch.pusch_cfg          = msg3_data[msg3_candidate.pusch_td_res_index].pusch;
     pusch.pusch_cfg.rnti     = pending_msg3.preamble.tc_rnti;
     pusch.pusch_cfg.prbs     = prbs;
@@ -595,8 +592,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
                          msg3_ctx.harq);
 
   // Fill PUSCH.
-  pusch_alloc.result.ul.puschs.emplace_back();
-  ul_sched_info& ul_info     = pusch_alloc.result.ul.puschs.back();
+  ul_sched_info& ul_info     = pusch_alloc.result.ul.puschs.emplace_back();
   ul_info.pusch_cfg          = msg3_data[pusch_td_res_index].pusch;
   ul_info.pusch_cfg.rnti     = msg3_ctx.preamble.tc_rnti;
   ul_info.pusch_cfg.prbs     = prbs;

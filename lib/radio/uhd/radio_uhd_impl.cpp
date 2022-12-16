@@ -453,10 +453,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     }
 
     // Create transmit stream.
-    tx_streams.emplace_back(device.create_tx_stream(stream_description));
-
-    // Make sure the stream creation was successful.
-    if (tx_streams.back() == nullptr) {
+    if (tx_streams.emplace_back(device.create_tx_stream(stream_description)) == nullptr) {
       return;
     }
 
@@ -504,11 +501,8 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
       rx_port_map.emplace_back(port_to_stream_channel(stream_idx, channel_idx));
     }
 
-    // Create transmit stream.
-    rx_streams.emplace_back(device.create_rx_stream(stream_description));
-
-    // Make sure the stream creation was successful.
-    if (rx_streams.back() == nullptr) {
+    // Create receive stream.
+    if (rx_streams.emplace_back(device.create_rx_stream(stream_description)) == nullptr) {
       return;
     }
 

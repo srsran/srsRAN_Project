@@ -136,8 +136,7 @@ prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& in
       continue;
     }
 
-    result.preambles.emplace_back();
-    prach_detection_result::preamble_indication& info = result.preambles.back();
+    prach_detection_result::preamble_indication& info = result.preambles.emplace_back();
     info.preamble_index                               = preamble_index;
     info.time_advance =
         phy_time_unit::from_seconds(sign * static_cast<double>(delay_n) / static_cast<double>(sampling_rate_Hz));

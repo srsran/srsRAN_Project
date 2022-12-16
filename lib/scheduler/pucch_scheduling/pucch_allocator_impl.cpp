@@ -250,8 +250,7 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_r
   pucch_slot_alloc.ul_res_grid.fill(pucch_res.second_hop_res);
 
   // Fill scheduler output.
-  pucch_slot_alloc.result.ul.pucchs.emplace_back();
-  pucch_info& pucch_info = pucch_slot_alloc.result.ul.pucchs.back();
+  pucch_info& pucch_info = pucch_slot_alloc.result.ul.pucchs.emplace_back();
   fill_pucch_harq_grant(pucch_info, tcrnti, pucch_res);
   pucch_harq_ack_output.pucch_pdu = &pucch_info;
 
@@ -387,9 +386,8 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   allocate_pucch_ded_res_on_grid(pucch_slot_alloc, *pucch_sr_res);
 
   // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
-  pucch_slot_alloc.result.ul.pucchs.emplace_back();
   fill_pucch_ded_res_grant(
-      pucch_slot_alloc.result.ul.pucchs.back(), crnti, *pucch_sr_res, nof_harq_ack_bits, sr_nof_bits::one);
+      pucch_slot_alloc.result.ul.pucchs.emplace_back(), crnti, *pucch_sr_res, nof_harq_ack_bits, sr_nof_bits::one);
   logger.debug("SCHED: SR occasion for RNTI {:#x} scheduling completed.", crnti);
 }
 
@@ -447,8 +445,7 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_pucch_harq_grant(cell_sl
   allocate_pucch_ded_res_on_grid(pucch_slot_alloc, *pucch_harq_res_info.pucch_res);
 
   // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
-  pucch_slot_alloc.result.ul.pucchs.emplace_back();
-  pucch_info&    pucch_pdu                    = pucch_slot_alloc.result.ul.pucchs.back();
+  pucch_info&    pucch_pdu                    = pucch_slot_alloc.result.ul.pucchs.emplace_back();
   const unsigned HARQ_BITS_IN_NEW_PUCCH_GRANT = 1;
   fill_pucch_ded_res_grant(
       pucch_pdu, crnti, *pucch_harq_res_info.pucch_res, HARQ_BITS_IN_NEW_PUCCH_GRANT, sr_nof_bits::no_sr);

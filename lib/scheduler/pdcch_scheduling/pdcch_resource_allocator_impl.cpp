@@ -300,8 +300,7 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_helper(cell_
                                                                            aggregation_level                 aggr_lvl)
 {
   // Create PDCCH list element.
-  slot_alloc.result.dl.ul_pdcchs.emplace_back();
-  pdcch_ul_information& pdcch = slot_alloc.result.dl.ul_pdcchs.back();
+  pdcch_ul_information& pdcch = slot_alloc.result.dl.ul_pdcchs.emplace_back();
   pdcch.ctx.bwp_cfg           = &bwp_cfg;
   pdcch.ctx.coreset_cfg       = &cs_cfg;
   pdcch.ctx.rnti              = rnti;
@@ -336,8 +335,7 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
   pdcch_slot_allocator& pdcch_alloc = get_pdcch_slot_alloc(slot_alloc.slot);
 
   // Create PDCCH list element.
-  slot_alloc.result.dl.dl_pdcchs.emplace_back();
-  pdcch_dl_information& pdcch = slot_alloc.result.dl.dl_pdcchs.back();
+  pdcch_dl_information& pdcch = slot_alloc.result.dl.dl_pdcchs.emplace_back();
   pdcch.ctx.bwp_cfg           = &bwp_cfg;
   pdcch.ctx.coreset_cfg       = &cs_cfg;
   pdcch.ctx.rnti              = rnti;

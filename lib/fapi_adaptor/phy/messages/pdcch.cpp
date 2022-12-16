@@ -18,8 +18,7 @@ using namespace fapi_adaptor;
 static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const fapi::dl_pdcch_pdu& fapi_pdu)
 {
   for (unsigned i = 0, e = fapi_pdu.dl_dci.size(); i != e; ++i) {
-    proc_pdu.dci_list.emplace_back();
-    auto&       dci         = proc_pdu.dci_list.back();
+    auto&       dci         = proc_pdu.dci_list.emplace_back();
     const auto& fapi_dci    = fapi_pdu.dl_dci[i];
     const auto& fapi_dci_v3 = fapi_pdu.maintenance_v3.info[i];
     const auto& fapi_dci_v4 = fapi_pdu.parameters_v4.params[i];

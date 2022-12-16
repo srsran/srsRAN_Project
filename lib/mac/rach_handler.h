@@ -64,8 +64,7 @@ public:
     sched_rach.cell_index = cell_index;
     sched_rach.slot_rx    = rach_ind.slot_rx;
     for (const auto& occasion : rach_ind.occasions) {
-      sched_rach.occasions.emplace_back();
-      auto& sched_occasion           = sched_rach.occasions.back();
+      auto& sched_occasion           = sched_rach.occasions.emplace_back();
       sched_occasion.start_symbol    = occasion.start_symbol;
       sched_occasion.frequency_index = occasion.frequency_index;
       for (const auto& preamble : occasion.preambles) {
@@ -75,8 +74,7 @@ public:
               "Ignoring PRACH, cell={} preamble id={}. Cause: Failed to allocate TC-RNTI.", cell_index, preamble.index);
           continue;
         }
-        sched_occasion.preambles.emplace_back();
-        auto& sched_preamble        = sched_occasion.preambles.back();
+        auto& sched_preamble        = sched_occasion.preambles.emplace_back();
         sched_preamble.preamble_id  = preamble.index;
         sched_preamble.tc_rnti      = alloc_tc_rnti;
         sched_preamble.time_advance = preamble.time_advance;

@@ -67,8 +67,7 @@ void fapi_to_mac_data_msg_translator::on_rx_data_indication(const fapi::rx_data_
     if (fapi_pdu.pdu_length == 0) {
       continue;
     }
-    indication.pdus.emplace_back();
-    mac_rx_pdu& pdu = indication.pdus.back();
+    mac_rx_pdu& pdu = indication.pdus.emplace_back();
     pdu.harq_id     = fapi_pdu.harq_id;
     pdu.rnti        = fapi_pdu.rnti;
     pdu.pdu         = span<const uint8_t>(fapi_pdu.data, fapi_pdu.pdu_length);
@@ -86,8 +85,7 @@ void fapi_to_mac_data_msg_translator::on_crc_indication(const fapi::crc_indicati
   indication.sl_rx = slot_point(scs, msg.sfn, msg.slot);
 
   for (const auto& fapi_pdu : msg.pdus) {
-    indication.crcs.emplace_back();
-    mac_crc_pdu& pdu = indication.crcs.back();
+    mac_crc_pdu& pdu = indication.crcs.emplace_back();
 
     pdu.harq_id        = fapi_pdu.harq_id;
     pdu.rnti           = fapi_pdu.rnti;
@@ -160,8 +158,7 @@ void fapi_to_mac_data_msg_translator::on_uci_indication(const fapi::uci_indicati
       case fapi::uci_pdu_type::PUSCH:
         break;
       case fapi::uci_pdu_type::PUCCH_format_0_1: {
-        mac_msg.ucis.emplace_back();
-        mac_uci_pdu& mac_pdu = mac_msg.ucis.back();
+        mac_uci_pdu& mac_pdu = mac_msg.ucis.emplace_back();
         mac_pdu.type         = mac_uci_pdu::pdu_type::pucch_f0_or_f1;
         mac_pdu.rnti         = to_rnti(pdu.pucch_pdu_f01.rnti);
         convert_fapi_to_mac_pucch_f0_f1(mac_pdu.pucch_f0_or_f1, pdu.pucch_pdu_f01);
@@ -202,8 +199,7 @@ void fapi_to_mac_data_msg_translator::on_rach_indication(const fapi::rach_indica
   for (const auto& pdu : msg.pdus) {
     srsgnb_assert(pdu.avg_rssi != std::numeric_limits<uint16_t>::max(), "Average RSSI field not set");
 
-    indication.occasions.emplace_back();
-    mac_rach_indication::rach_occasion& occas = indication.occasions.back();
+    mac_rach_indication::rach_occasion& occas = indication.occasions.emplace_back();
     occas.frequency_index                     = pdu.ra_index;
     occas.slot_index                          = pdu.slot_index;
     occas.start_symbol                        = pdu.symbol_index;
@@ -212,8 +208,7 @@ void fapi_to_mac_data_msg_translator::on_rach_indication(const fapi::rach_indica
       srsgnb_assert(preamble.preamble_pwr != std::numeric_limits<uint32_t>::max(), "Preamble power field not set");
       srsgnb_assert(preamble.preamble_snr != std::numeric_limits<uint8_t>::max(), "Preamble SNR field not set");
 
-      occas.preambles.emplace_back();
-      mac_rach_indication::rach_preamble& mac_pream = occas.preambles.back();
+      mac_rach_indication::rach_preamble& mac_pream = occas.preambles.emplace_back();
       mac_pream.index                               = preamble.preamble_index;
       mac_pream.time_advance = phy_time_unit::from_seconds(preamble.timing_advance_offset_ns * 1e-9);
       mac_pream.power_dB     = to_prach_preamble_power_dB(preamble.preamble_pwr);

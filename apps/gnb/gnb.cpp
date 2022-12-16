@@ -185,8 +185,7 @@ static fapi::prach_config generate_prach_config_tlv(const std::vector<du_cell_co
   config.start_preamble_index   = 0;
 
   // Add FD occasion info.
-  config.fd_occasions.emplace_back();
-  fapi::prach_fd_occasion_config& fd_occasion = config.fd_occasions.back();
+  fapi::prach_fd_occasion_config& fd_occasion = config.fd_occasions.emplace_back();
   fd_occasion.prach_root_sequence_index = cell.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().prach_root_seq_index;
   fd_occasion.prach_freq_offset =
       cell.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.msg1_frequency_start;

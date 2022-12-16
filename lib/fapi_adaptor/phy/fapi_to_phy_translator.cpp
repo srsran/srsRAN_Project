@@ -102,8 +102,7 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
         break;
       }
       case fapi::dl_pdu_type::PDSCH: {
-        pdsch_pdu_repository.emplace_back();
-        convert_pdsch_fapi_to_phy(pdsch_pdu_repository.back(), pdu.pdsch_pdu, msg.sfn, msg.slot);
+        convert_pdsch_fapi_to_phy(pdsch_pdu_repository.emplace_back(), pdu.pdsch_pdu, msg.sfn, msg.slot);
         break;
       }
       case fapi::dl_pdu_type::SSB: {

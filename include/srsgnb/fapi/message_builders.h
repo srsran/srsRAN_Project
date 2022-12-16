@@ -329,15 +329,11 @@ public:
     // Save the size as the index value for the DL DCI.
     unsigned dci_id = pdu.dl_dci.size();
 
-    pdu.dl_dci.emplace_back();
-    pdu.maintenance_v3.info.emplace_back();
-    pdu.parameters_v4.params.emplace_back();
-
     // Set the DL DCI index.
-    dl_pdcch_pdu_maintenance_v3::maintenance_info& info = pdu.maintenance_v3.info.back();
+    dl_pdcch_pdu_maintenance_v3::maintenance_info& info = pdu.maintenance_v3.info.emplace_back();
     info.dci_index                                      = dci_id;
 
-    dl_dci_pdu_builder builder(pdu.dl_dci.back(), info, pdu.parameters_v4.params.back());
+    dl_dci_pdu_builder builder(pdu.dl_dci.emplace_back(), info, pdu.parameters_v4.params.emplace_back());
 
     return builder;
   }
@@ -431,10 +427,8 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
   dl_pdsch_codeword_builder add_codeword()
   {
-    pdu.cws.emplace_back();
-    pdu.pdsch_maintenance_v3.cbg_tx_information.emplace_back();
-
-    dl_pdsch_codeword_builder builder(pdu.cws.back(), pdu.pdsch_maintenance_v3.cbg_tx_information.back());
+    dl_pdsch_codeword_builder builder(pdu.cws.emplace_back(),
+                                      pdu.pdsch_maintenance_v3.cbg_tx_information.emplace_back());
 
     return builder;
   }
@@ -860,8 +854,7 @@ public:
   dl_pdcch_pdu_builder add_pdcch_pdu(unsigned nof_dci_in_pdu)
   {
     // Add a new pdu.
-    msg.pdus.emplace_back();
-    dl_tti_request_pdu& pdu = msg.pdus.back();
+    dl_tti_request_pdu& pdu = msg.pdus.emplace_back();
 
     // Fill the PDCCH PDU index value. The index value will be the index of the pdu in the array of PDCCH pdus.
     dl_pdcch_pdu_maintenance_v3& info          = pdu.pdcch_pdu.maintenance_v3;
@@ -894,8 +887,7 @@ public:
   dl_pdsch_pdu_builder add_pdsch_pdu()
   {
     // Add a new PDU.
-    msg.pdus.emplace_back();
-    dl_tti_request_pdu& pdu = msg.pdus.back();
+    dl_tti_request_pdu& pdu = msg.pdus.emplace_back();
 
     // Fill the PDSCH PDU index value. The index value will be the index of the PDU in the array of PDSCH PDUs.
     auto& num_pdsch_pdu     = msg.num_pdus_of_each_type[static_cast<size_t>(dl_pdu_type::PDSCH)];
@@ -924,8 +916,7 @@ public:
                                        uint16_t              scrambling_id)
   {
     // Add a new PDU.
-    msg.pdus.emplace_back();
-    dl_tti_request_pdu& pdu = msg.pdus.back();
+    dl_tti_request_pdu& pdu = msg.pdus.emplace_back();
 
     // Fill the CSI PDU index value. The index value will be the index of the PDU in the array of CSI PDUs.
     auto& num_csi_pdu = msg.num_pdus_of_each_type[static_cast<size_t>(dl_pdu_type::CSI_RS)];
@@ -964,8 +955,7 @@ public:
   dl_ssb_pdu_builder add_ssb_pdu()
   {
     // Add a new PDU.
-    msg.pdus.emplace_back();
-    dl_tti_request_pdu& pdu = msg.pdus.back();
+    dl_tti_request_pdu& pdu = msg.pdus.emplace_back();
 
     // Fill the SSB PDU index value. The index value will be the index of the PDU in the array of SSB pdus.
     dl_ssb_maintenance_v3& info        = pdu.ssb_pdu.ssb_maintenance_v3;
@@ -1016,8 +1006,7 @@ public:
   dl_pdcch_pdu_builder add_pdcch_pdu(unsigned nof_dci_in_pdu)
   {
     unsigned pdcch_index = msg.pdus.size();
-    msg.pdus.emplace_back();
-    auto& pdu = msg.pdus.back();
+    auto&    pdu         = msg.pdus.emplace_back();
 
     // Fill the pdcch pdu index value. The index value will be the index of the pdu in the array of PDCCH pdus.
     pdu.pdu.maintenance_v3.pdcch_pdu_index = pdcch_index;
@@ -1057,8 +1046,7 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.6 in table Tx_Data.request message body.
   tx_data_request_builder& add_pdu_custom_payload(uint16_t pdu_index, uint8_t cw_index, span<const uint8_t> payload)
   {
-    msg.pdus.emplace_back();
-    auto& pdu = msg.pdus.back();
+    auto& pdu = msg.pdus.emplace_back();
 
     pdu.pdu_index = pdu_index;
     pdu.cw_index  = cw_index;
@@ -1108,8 +1096,7 @@ public:
                                           optional<float>     rsrp,
                                           bool                rsrp_use_dBm = true)
   {
-    msg.pdus.emplace_back();
-    auto& pdu = msg.pdus.back();
+    auto& pdu = msg.pdus.emplace_back();
 
     pdu.handle           = handle;
     pdu.rnti             = rnti;
@@ -1221,8 +1208,7 @@ public:
                                             optional<float>    preamble_snr)
 
   {
-    pdu.preambles.emplace_back();
-    auto& preamble = pdu.preambles.back();
+    auto& preamble = pdu.preambles.emplace_back();
 
     preamble.preamble_index = preamble_index;
 
@@ -1278,8 +1264,7 @@ public:
                                       optional<float> avg_snr,
                                       bool            rsrp_use_dBm = true)
   {
-    msg.pdus.emplace_back();
-    auto& pdu = msg.pdus.back();
+    auto& pdu = msg.pdus.emplace_back();
 
     rach_indication_pdu_builder builder(pdu);
 
@@ -1736,8 +1721,7 @@ public:
   /// Adds a PUSCH PDU to the \e UCI.indication message and returns a PUSCH PDU builder.
   uci_pusch_pdu_builder add_pusch_pdu(uint32_t handle, rnti_t rnti)
   {
-    msg.pdus.emplace_back();
-    auto& pdu = msg.pdus.back();
+    auto& pdu = msg.pdus.emplace_back();
 
     pdu.pdu_type = uci_pdu_type::PUSCH;
 
@@ -1751,8 +1735,7 @@ public:
   /// PDU builder.
   uci_pucch_pdu_format_0_1_builder add_format_0_1_pucch_pdu(uint32_t handle, rnti_t rnti, pucch_format type)
   {
-    msg.pdus.emplace_back();
-    auto& pdu = msg.pdus.back();
+    auto& pdu = msg.pdus.emplace_back();
 
     pdu.pdu_type = uci_pdu_type::PUCCH_format_0_1;
 
@@ -1766,8 +1749,7 @@ public:
   /// Format 3 and Format 4 PDU builder.
   uci_pucch_pdu_format_2_3_4_builder add_format_2_3_4_pucch_pdu(uint32_t handle, rnti_t rnti, pucch_format type)
   {
-    msg.pdus.emplace_back();
-    auto& pdu = msg.pdus.back();
+    auto& pdu = msg.pdus.emplace_back();
 
     pdu.pdu_type = uci_pdu_type::PUCCH_format_2_3_4;
 
@@ -1855,8 +1837,7 @@ public:
   rx_data_indication_message_builder&
   add_custom_pdu(uint32_t handle, rnti_t rnti, optional<unsigned> rapid, uint8_t harq_id, span<const uint8_t> data)
   {
-    msg.pdus.emplace_back();
-    auto& pdu = msg.pdus.back();
+    auto& pdu = msg.pdus.emplace_back();
 
     pdu.handle  = handle;
     pdu.rnti    = rnti;
@@ -2086,8 +2067,7 @@ public:
                   param_offset.size(),
                   param_sizes.size());
 
-    pdu.uci_correspondence.part2.emplace_back();
-    auto& correspondence                = pdu.uci_correspondence.part2.back();
+    auto& correspondence                = pdu.uci_correspondence.part2.emplace_back();
     correspondence.priority             = priority;
     correspondence.part2_size_map_index = part2_size_map_index;
     correspondence.part2_size_map_scope = part2_size_map_scope;
@@ -2320,8 +2300,7 @@ public:
                   param_offset.size(),
                   param_sizes.size());
 
-    pdu.uci_correspondence.part2.emplace_back();
-    auto& correspondence                = pdu.uci_correspondence.part2.back();
+    auto& correspondence                = pdu.uci_correspondence.part2.emplace_back();
     correspondence.priority             = priority;
     correspondence.part2_size_map_index = part2_size_map_index;
     correspondence.part2_size_map_scope = part2_size_map_scope;
@@ -2467,8 +2446,7 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.1 in table PRACH PDU.
   ul_prach_pdu_builder add_prach_pdu()
   {
-    msg.pdus.emplace_back();
-    auto& pdu    = msg.pdus.back();
+    auto& pdu    = msg.pdus.emplace_back();
     pdu.pdu_type = ul_pdu_type::PRACH;
 
     ++msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PRACH)];
@@ -2482,8 +2460,7 @@ public:
   /// parameters.
   ul_pucch_pdu_builder add_pucch_pdu(pucch_format format_type)
   {
-    msg.pdus.emplace_back();
-    auto& pdu    = msg.pdus.back();
+    auto& pdu    = msg.pdus.emplace_back();
     pdu.pdu_type = ul_pdu_type::PUCCH;
 
     if (format_type == pucch_format::FORMAT_0 || format_type == pucch_format::FORMAT_1) {
@@ -2512,8 +2489,7 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH PDU.
   ul_pusch_pdu_builder add_pusch_pdu()
   {
-    msg.pdus.emplace_back();
-    auto& pdu    = msg.pdus.back();
+    auto& pdu    = msg.pdus.emplace_back();
     pdu.pdu_type = ul_pdu_type::PUSCH;
 
     ++msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUSCH)];

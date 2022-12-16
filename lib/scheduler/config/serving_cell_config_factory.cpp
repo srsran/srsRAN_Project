@@ -265,10 +265,10 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config()
   ul_config.init_ul_bwp.pucch_cfg.emplace();
 
   // >> PUCCH.
-  auto& pucch_cfg = ul_config.init_ul_bwp.pucch_cfg.value();
-  pucch_cfg.pucch_res_set.emplace_back();
-  pucch_cfg.pucch_res_set.back().pucch_res_set_id = 0;
-  pucch_cfg.pucch_res_set.back().pucch_res_id_list.emplace_back(0);
+  auto& pucch_cfg                = ul_config.init_ul_bwp.pucch_cfg.value();
+  auto& pucch_res_set            = pucch_cfg.pucch_res_set.emplace_back();
+  pucch_res_set.pucch_res_set_id = 0;
+  pucch_res_set.pucch_res_id_list.emplace_back(0);
 
   // >>> PUCCH resource 0.
   pucch_resource res_basic{.res_id                 = 0,

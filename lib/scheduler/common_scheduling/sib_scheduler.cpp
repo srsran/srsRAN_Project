@@ -241,8 +241,7 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   dci.system_information_indicator = sib1_si_indicator;
 
   // Add SIB1 to list of SIB1 information to pass to lower layers.
-  res_grid.result.dl.bc.sibs.emplace_back();
-  sib_information& sib1 = res_grid.result.dl.bc.sibs.back();
+  sib_information& sib1 = res_grid.result.dl.bc.sibs.emplace_back();
   sib1.si_indicator     = sib_information::si_indicator_type::sib1;
 
   // Fill PDSCH configuration.
@@ -254,8 +253,8 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   pdsch.prbs    = sib1_prbs;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for SIB1.
   pdsch.n_id = cell_cfg.pci;
-  pdsch.codewords.emplace_back();
-  pdsch_codeword& cw   = pdsch.codewords.back();
+
+  pdsch_codeword& cw   = pdsch.codewords.emplace_back();
   cw.rv_index          = dci.redundancy_version;
   cw.mcs_index         = dci.modulation_coding_scheme;
   cw.mcs_table         = pdsch_mcs_table::qam64;

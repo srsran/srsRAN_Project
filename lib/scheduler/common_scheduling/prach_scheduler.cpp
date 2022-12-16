@@ -68,8 +68,7 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
   unsigned nof_td_occasions = prach_cfg.format < preamble_format::OTHER ? 1 : prach_cfg.nof_occasions_within_slot;
   for (unsigned i = 0; i != nof_td_occasions; ++i) {
     for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_common().rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
-      cached_prachs.emplace_back();
-      cached_prach_occasion& cached_prach = cached_prachs.back();
+      cached_prach_occasion& cached_prach = cached_prachs.emplace_back();
 
       // Pre-compute PRACH symbol x RB resources.
       cached_prach.grant_resources.scs = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;

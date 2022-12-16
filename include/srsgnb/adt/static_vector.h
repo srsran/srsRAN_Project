@@ -261,11 +261,12 @@ public:
 
   // modifiers
   template <typename... Args>
-  constexpr void emplace_back(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args...>::value)
+  constexpr T& emplace_back(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args...>::value)
   {
     srsgnb_assert(size() < MAX_N, "Cannot emplace back in full vector");
     this->construct_(size(), std::forward<Args>(args)...);
     this->sz++;
+    return this->back();
   }
 
   constexpr void push_back(const T& value) noexcept(std::is_nothrow_copy_constructible<T>::value)

@@ -77,8 +77,7 @@ void srsgnb::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
   pdsch.dci_fmt     = dci_dl_format::f1_0;
 
   // One Codeword.
-  pdsch.codewords.emplace_back();
-  pdsch_codeword& cw             = pdsch.codewords.back();
+  pdsch_codeword& cw             = pdsch.codewords.emplace_back();
   cw.rv_index                    = dci_cfg.redundancy_version;
   cw.mcs_index                   = dci_cfg.modulation_coding_scheme;
   cw.mcs_table                   = mcs_table;
@@ -129,8 +128,7 @@ void srsgnb::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   pdsch.n_id                               = get_pdsch_n_id(cell_cfg.pci, bwp_dl_ded, dci_dl_format::f1_0, ss_cfg.type);
 
   // One Codeword.
-  pdsch.codewords.emplace_back();
-  pdsch_codeword& cw             = pdsch.codewords.back();
+  pdsch_codeword& cw             = pdsch.codewords.emplace_back();
   cw.rv_index                    = dci_cfg.redundancy_version;
   cw.mcs_index                   = dci_cfg.modulation_coding_scheme;
   cw.mcs_table                   = mcs_table;
