@@ -27,12 +27,12 @@ public:
   /// F1 UE context setup procedure outcome.
   using f1_ue_context_setup_outcome_t =
       expected<const asn1::f1ap::ue_context_setup_resp_s*, const asn1::f1ap::ue_context_setup_fail_s*>;
-  event_signal<f1_ue_context_setup_outcome_t> f1ap_ue_context_setup_response_message;
+  event_signal<f1_ue_context_setup_outcome_t> f1ap_ue_context_setup_outcome;
 
   /// F1 UE Context Modification procedure outcome.
   using f1_ue_context_modification_outcome_t =
       expected<const asn1::f1ap::ue_context_mod_resp_s*, const asn1::f1ap::ue_context_mod_fail_s*>;
-  event_signal<f1_ue_context_modification_outcome_t> f1ap_ue_context_modification_response_message;
+  event_signal<f1_ue_context_modification_outcome_t> f1ap_ue_context_modification_outcome;
 };
 
 } // namespace srs_cu_cp

@@ -30,7 +30,7 @@ void f1_ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_c
   send_ue_context_setup_request();
 
   // Await CU response.
-  CORO_AWAIT_VALUE(f1_ue_ctxt_setup_outcome, ev_mng.f1ap_ue_context_setup_response_message);
+  CORO_AWAIT_VALUE(f1_ue_ctxt_setup_outcome, ev_mng.f1ap_ue_context_setup_outcome);
 
   // Handle response from DU and return UE index
   CORO_RETURN(create_ue_context_setup_result());

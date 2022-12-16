@@ -276,10 +276,10 @@ void f1c_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcome
       events->f1ap_ue_context_release_complete.set(&outcome.value.ue_context_release_complete());
     } break;
     case asn1::f1ap::f1_ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp: {
-      events->f1ap_ue_context_setup_response_message.set(&outcome.value.ue_context_setup_resp());
+      events->f1ap_ue_context_setup_outcome.set(&outcome.value.ue_context_setup_resp());
     } break;
     case asn1::f1ap::f1_ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp: {
-      events->f1ap_ue_context_modification_response_message.set(&outcome.value.ue_context_mod_resp());
+      events->f1ap_ue_context_modification_outcome.set(&outcome.value.ue_context_mod_resp());
     } break;
     default:
       logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
@@ -290,10 +290,10 @@ void f1c_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_out
 {
   switch (outcome.value.type().value) {
     case asn1::f1ap::f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_setup_fail: {
-      events->f1ap_ue_context_setup_response_message.set(&outcome.value.ue_context_setup_fail());
+      events->f1ap_ue_context_setup_outcome.set(&outcome.value.ue_context_setup_fail());
     } break;
     case asn1::f1ap::f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_mod_fail: {
-      events->f1ap_ue_context_modification_response_message.set(&outcome.value.ue_context_mod_fail());
+      events->f1ap_ue_context_modification_outcome.set(&outcome.value.ue_context_mod_fail());
     } break;
     default:
       logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());

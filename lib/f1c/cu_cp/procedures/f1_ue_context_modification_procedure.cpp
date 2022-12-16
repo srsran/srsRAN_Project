@@ -31,7 +31,7 @@ void f1_ue_context_modification_procedure::operator()(
   send_ue_context_modification_request();
 
   // Await CU response.
-  CORO_AWAIT_VALUE(ue_ctxt_mod_outcome, ev_mng.f1ap_ue_context_modification_response_message);
+  CORO_AWAIT_VALUE(ue_ctxt_mod_outcome, ev_mng.f1ap_ue_context_modification_outcome);
 
   // Handle response from DU and return UE index
   CORO_RETURN(create_ue_context_modification_result());
