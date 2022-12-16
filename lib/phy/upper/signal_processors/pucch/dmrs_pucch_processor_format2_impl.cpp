@@ -27,10 +27,10 @@ unsigned dmrs_pucch_processor_format2_impl::c_init(unsigned symbol, const dmrs_p
   return ((get_nsymb_per_slot(config.cp) * n_slot + symbol + 1) * (2 * n_id + 1) * pow2(17) + 2 * n_id) % pow2(31);
 }
 
-void dmrs_pucch_processor_format2_impl::sequence_generation(span<cf_t>                            sequence,
-                                                            unsigned                              symbol,
-                                                            unsigned                              starting_prb,
-                                                            const dmrs_pucch_processor::config_t& config)
+void dmrs_pucch_processor_format2_impl::generate_sequence(span<cf_t>                            sequence,
+                                                          unsigned                              symbol,
+                                                          unsigned                              starting_prb,
+                                                          const dmrs_pucch_processor::config_t& config)
 {
   // Initialise pseudo-random generator.
   prg->init(c_init(symbol, config));
@@ -85,14 +85,6 @@ void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&              
   // Resize DM-RS symbol buffer.
   temp_symbols.resize(dims);
 
-  // Find the highest starting PRB.
-  unsigned max_prb_start =
-      config.intra_slot_hopping ? std::max(config.starting_prb, config.second_hop_prb) : config.starting_prb;
-
-  // Resize channel estimate.
-  estimate.resize(
-      {max_prb_start + config.nof_prb, config.start_symbol_index + config.nof_symbols, nof_rx_ports, PUCCH_MAX_LAYERS});
-
   // Generate the DM-RS allocation pattern.
   generate_dmrs_pattern(temp_pattern, config);
 
@@ -102,7 +94,7 @@ void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&              
   for (unsigned i_symb = i_symb_start, i_dmrs_symb = 0; i_symb != i_symb_end; ++i_symb, ++i_dmrs_symb) {
     // Generate sequence.
     unsigned prb_start = ((i_symb != 0) && (config.intra_slot_hopping)) ? config.second_hop_prb : config.starting_prb;
-    sequence_generation(temp_symbols.get_symbol(i_dmrs_symb, 0), i_symb, prb_start, config);
+    generate_sequence(temp_symbols.get_symbol(i_dmrs_symb, 0), i_symb, prb_start, config);
   }
 
   // Prepare channel estimator configuration.

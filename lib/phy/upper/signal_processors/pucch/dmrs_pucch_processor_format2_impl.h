@@ -46,24 +46,24 @@ private:
   layer_dmrs_pattern temp_pattern;
 
   /// \brief Computes the initial pseudo-random state.
-  /// \remark Implemented according to TS 38.211 section 6.4.1.3.2.1.
+  /// \remark Implemented according to TS38.211 Section 6.4.1.3.2.1.
   ///
   /// \param[in] symbol OFDM symbol index.
   /// \param[in] config PUCCH configuration parameters.
   /// \return    The initial pseudo-random state.
   static unsigned c_init(unsigned symbol, const config_t& config);
 
-  /// \brief Implements TS 38.211 section 6.4.1.3.2.1 Sequence generation.
+  /// \brief Generates a DM-RS sequence according to TS38.211 Section 6.4.1.3.2.1.
   ///
-  /// \param[out] sequence  Provides the sequence destination.
-  /// \param[in]  symbol    Denotes the symbol index.
-  /// \param[in]  start_prb Denotes the index of first PRB allocated for DM-RS in the current symbol.
-  /// \param[in]  config    Provides the required parameters to calculate the sequences.
-  void sequence_generation(span<cf_t> sequence, unsigned symbol, unsigned start_prb, const config_t& config);
+  /// \param[out] sequence  Sequence destination.
+  /// \param[in]  symbol    Symbol index.
+  /// \param[in]  start_prb Index of first PRB allocated for DM-RS in the current symbol.
+  /// \param[in]  config    Required parameters to calculate the sequences.
+  void generate_sequence(span<cf_t> sequence, unsigned symbol, unsigned start_prb, const config_t& config);
 
   /// \brief Generates the PUCCH DM-RS allocation pattern.
   ///
-  /// Implements the PUCCH DM-RS mapping, as described in TS 38.211 section 6.4.1.3.2.2.
+  /// Implements the PUCCH DM-RS mapping, as described in TS38.211 Section 6.4.1.3.2.2.
   /// \param[out] mask DM-RS allocation pattern.
   /// \param[in]  cfg  Configuration parameters.
   static void generate_dmrs_pattern(layer_dmrs_pattern& mask, const config_t& config);

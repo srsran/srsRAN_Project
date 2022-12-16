@@ -26,51 +26,58 @@ class dmrs_pucch_processor
 public:
   /// Describes the necessary parameters to generate DM-RS for a PUCCH transmission.
   struct config_t {
-    /// Specifies PUCCH format this configuration belongs.
+    /// PUCCH format.
     pucch_format format;
-    /// Provides the slot timing and numerology.
+    /// Slot timing and numerology.
     slot_point slot;
-    /// Cyclic prefix.
+    /// Cyclic Prefix.
     cyclic_prefix cp;
-    /// Configuration of group and sequence hopping.
+    /// Group and sequence hopping configuration.
     pucch_group_hopping group_hopping;
-    /// Start symbol index, see TS 38.331 PUCCH-Resource IE.
+    /// Start symbol index, see TS38.331 PUCCH-Resource IE.
     unsigned start_symbol_index;
-    /// Number of symbols, see TS 38.331 PUCCH-Resource IE.
+    /// Number of symbols, see TS38.331 PUCCH-Resource IE.
     unsigned nof_symbols;
-    /// Start PRB index, common to all formats (see TS 38.331 PUCCH-Resource IE).
+    /// Start PRB index, common to all formats (see TS38.331 PUCCH-Resource IE).
     unsigned starting_prb;
-    /// Enabling intra-slot frequency hopping, applicable for all PUCCH formats (see PUCCH-Resource IE in TS 38.331).
+    /// \brief Intra-slot frequency hopping flag (true if enabled), applicable for all PUCCH formats.
+    /// \remark see PUCCH-Resource IE in TS38.331.
     bool intra_slot_hopping;
-    /// Index of first PRB after frequency hopping of PUCCH (see PUCCH-Resource IE in TS 38.331).
+    /// Index of first PRB after PUCCH frequency hopping (see PUCCH-Resource IE in TS38.331).
     unsigned second_hop_prb;
-    /// Number of PRBs, applicable for formats 2 and 3 (see PUCCH-Resource IE in TS 38.331).
+    /// Number of PRBs, applicable for Formats 2 and 3 (see PUCCH-Resource IE in TS38.331).
     unsigned nof_prb;
-    /// Initial cyclic shift, used by formats 0 and 1 as defined in TS 38.211 subclause 6.3.2.2.2.
+    /// Initial cyclic shift, used by Formats 0 and 1 as defined in TS38.211 Section 6.3.2.2.2.
     unsigned initial_cyclic_shift;
-    /// Orthogonal covering code index, used by format 1 (see PUCCH-Resource IE in TS 38.331).
+    /// Orthogonal Cover Code Index, used by Format 1 (see PUCCH-Resource IE in TS38.331).
     unsigned time_domain_occ;
-    /// UE enables 2 DM-RS symbols per hop of a PUCCH Format 3 or 4 (see PUCCH-Format-Config IE in TS 38.331).
+    /// \brief Additional DM-RS flag (true if enabled), indicating two DM-RS symbols per hop.
+    /// \remark Applicable to PUCCH Formats 3 and 4.
+    /// \remark See PUCCH-Format-Config IE in TS38.331.
     bool additional_dmrs;
-    /// Higher layer parameter hopingID if configured (Cell-specific scrambling ID for group hopping and sequence
-    /// hopping), otherwise the physical cell identifier, as described in TS 38.211 6.3.2.2.2.
+    /// \brief Parameter \f$n_{ID}\f$ in TS38.211 Section 6.3.2.2.2.
+    ///
+    /// Higher layer parameter \e hoppingID if configured (Cell-specific scrambling ID for group hopping and sequence
+    /// hopping), otherwise the physical cell identifier.
     unsigned n_id;
-    /// DM-RS scrambling identity, defined in TS 38.211 subclause 6.4.1.3.2.1;
-    /// Higher layer parameter scramblingID0 in DM-RS-UplinkConfig if it is given, otherwise the physical cell
+    /// \brief DM-RS scrambling identity, defined in TS38.211 Section 6.4.1.3.2.1.
+    ///
+    /// Higher layer parameter \e scramblingID0 in \e DM-RS-UplinkConfig if it is given, otherwise the physical cell
     /// identifier.
     unsigned n_id_0;
-    /// Port indexes the PDSCH transmission is mapped onto.
+    /// Port indexes the PUCCH transmission is mapped onto.
     static_vector<uint8_t, DMRS_MAX_NPORTS> ports;
   };
 
   /// Default destructor.
   virtual ~dmrs_pucch_processor() = default;
 
-  /// \brief Generates and maps DM-RS for PUCCH according to TS 38.211 section 6.4.1.3.
+  /// \brief Estimates the PUCCH propagation channel.
   ///
   /// \param[out] estimate Channel estimation results.
-  /// \param[in]  grid     Provides the source resource grid.
-  /// \param[in]  config   Provides the required configuration to estimate channel.
+  /// \param[in]  grid     Received resource grid.
+  /// \param[in]  config   PUCCH configuration parameters required for channel estimation.
+  /// \note The \c estimate dimensions must be consistent with the \grid dimensions.
   virtual void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const config_t& config) = 0;
 };
 

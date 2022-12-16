@@ -39,7 +39,7 @@ public:
 private:
   pucch_helper helper;
 
-  /// Format 1 implementation expects pre-generated sequence collection on instantiation.
+  /// PUCCH Format 1 implementation expects pre-generated sequence collection on instantiation.
   std::unique_ptr<const low_papr_sequence_collection> sequence_collection;
   /// Antenna port channel estimator.
   std::unique_ptr<port_channel_estimator> ch_estimator;
@@ -63,20 +63,20 @@ private:
     unsigned n_pucch;
   };
 
-  /// \brief Implements TS 38.211 section 6.4.1.3.1.1 Sequence generation.
+  /// \brief Generates a DM-RS sequence according to TS38.211 Section 6.4.1.3.1.1.
   ///
   /// \param[out] sequence     Sequence destination buffer.
   /// \param[in]  pucch_config PUCCH configuration.
-  /// \param[in]  gen_config   Aggregates additional parameters required to calculate the sequences.
+  /// \param[in]  gen_config   Additional parameters required to calculate the sequences.
   /// \param[in]  symbol       OFDM symbol index.
-  void sequence_generation(span<srsgnb::cf_t>                sequence,
-                           const config_t&                   pucch_config,
-                           const sequence_generation_config& gen_config,
-                           unsigned                          symbol) const;
+  void generate_sequence(span<srsgnb::cf_t>                sequence,
+                         const config_t&                   pucch_config,
+                         const sequence_generation_config& gen_config,
+                         unsigned                          symbol) const;
 
   /// \brief Generates the PUCCH DM-RS allocation pattern.
   ///
-  /// Implements the PUCCH DM-RS mapping, as described in TS 38.211 section 6.4.1.3.1.2.
+  /// Implements the PUCCH DM-RS mapping, as described in TS38.211 Section 6.4.1.3.1.2.
   /// \param[out] mask DM-RS allocation pattern.
   /// \param[in]  cfg  Configuration parameters.
   static void generate_dmrs_pattern(layer_dmrs_pattern& mask, const config_t& config);

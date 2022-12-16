@@ -19,7 +19,7 @@ using namespace srsgnb;
 static const bounded_bitset<MAX_NSYMB_PER_SLOT> pucch_format1_dmrs_symb_mask =
     {true, false, true, false, true, false, true, false, true, false, true, false, true, false};
 
-// Implements TS 38.211 table 6.4.1.3.1.1-1: Number of DM-RS symbols and the corresponding N_PUCCH.
+// Implements TS38.211 Table 6.4.1.3.1.1-1: Number of DM-RS symbols and the corresponding N_PUCCH.
 static unsigned dmrs_pucch_symbols(const dmrs_pucch_processor::config_t& config, unsigned m_prime)
 {
   if (config.intra_slot_hopping) {
@@ -115,10 +115,10 @@ void dmrs_pucch_processor_format1_impl::generate_dmrs_pattern(layer_dmrs_pattern
   });
 }
 
-void dmrs_pucch_processor_format1_impl::sequence_generation(span<srsgnb::cf_t>                    sequence,
-                                                            const dmrs_pucch_processor::config_t& pucch_config,
-                                                            const sequence_generation_config&     cfg,
-                                                            unsigned                              symbol) const
+void dmrs_pucch_processor_format1_impl::generate_sequence(span<srsgnb::cf_t>                    sequence,
+                                                          const dmrs_pucch_processor::config_t& pucch_config,
+                                                          const sequence_generation_config&     cfg,
+                                                          unsigned                              symbol) const
 {
   // Compute alpha index.
   unsigned alpha_idx = helper.get_alpha_index(
@@ -157,13 +157,6 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
   // Resize DM-RS symbol buffer.
   temp_symbols.resize(dims);
 
-  // Find the highest starting PRB.
-  unsigned max_prb_start =
-      config.intra_slot_hopping ? std::max(config.starting_prb, config.second_hop_prb) : config.starting_prb;
-
-  // Resize channel estimate. PUCCH Format 1 occupies a single PRB.
-  estimate.resize({max_prb_start + 1, config.start_symbol_index + config.nof_symbols, nof_rx_ports, PUCCH_MAX_LAYERS});
-
   // Generate the DM-RS allocation pattern.
   generate_dmrs_pattern(temp_pattern, config);
 
@@ -177,7 +170,7 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
   // Generate DM-RS sequences for even-numbered symbols within the PUCCH allocation, as per TS38.211
   // Section 6.4.1.3.1.
   for (unsigned i_hop = 0, i_symb = config.start_symbol_index; i_hop < (config.intra_slot_hopping ? 2 : 1); ++i_hop) {
-    // Get number of symbols carrying DM-RS in the current hop
+    // Get number of symbols carrying DM-RS in the current hop.
     unsigned nof_dmrs_symb_hop = dmrs_pucch_symbols(config, i_hop);
 
     srsgnb_assert(nof_dmrs_symb_hop > 0, "Error getting number of DM-RS symbols");
@@ -186,7 +179,7 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
     for (unsigned i_dmrs_symb_hop = 0; i_dmrs_symb_hop != nof_dmrs_symb_hop; ++i_dmrs_symb_hop, i_symb += 2) {
       // Aggregate parameters and generate sequence.
       sequence_generation_config cfg = {.u = u, .v = v, .m = i_dmrs_symb_hop, .n_pucch = nof_dmrs_symb_hop};
-      sequence_generation(temp_symbols.get_symbol(i_dmrs_symb++, 0), config, cfg, i_symb);
+      generate_sequence(temp_symbols.get_symbol(i_dmrs_symb++, 0), config, cfg, i_symb);
     }
   }
 

@@ -41,6 +41,15 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   estimator_config.n_id_0          = 0;
   estimator_config.additional_dmrs = false;
 
+  // Prepare channel estimate.
+  channel_estimate::channel_estimate_dimensions dims;
+  dims.nof_prb       = config.bwp_start_rb + config.bwp_size_rb;
+  dims.nof_symbols   = get_nsymb_per_slot(config.cp);
+  dims.nof_rx_ports  = config.ports.size();
+  dims.nof_tx_layers = PUCCH_MAX_LAYERS;
+
+  estimates.resize(dims);
+
   // Perform channel estimation.
   channel_estimator_format_1->estimate(estimates, grid, estimator_config);
 
@@ -103,6 +112,15 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   estimator_config.n_id               = config.n_id;
   estimator_config.n_id_0             = config.n_id_0;
   estimator_config.ports.assign(config.ports.begin(), config.ports.end());
+
+  // Prepare channel estimate.
+  channel_estimate::channel_estimate_dimensions dims;
+  dims.nof_prb       = config.bwp_start_rb + config.bwp_size_rb;
+  dims.nof_symbols   = get_nsymb_per_slot(config.cp);
+  dims.nof_rx_ports  = config.ports.size();
+  dims.nof_tx_layers = PUCCH_MAX_LAYERS;
+
+  estimates.resize(dims);
 
   // Perform channel estimation.
   channel_estimator_format_2->estimate(estimates, grid, estimator_config);
