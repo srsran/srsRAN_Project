@@ -17,8 +17,8 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request_message&     e1_request,
-                                                   const e1ap_pdu_session_resource_setup_message& msg)
+inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request_message&         e1_request,
+                                                   const rrc_ue_bearer_context_setup_request_message& msg)
 {
   e1_request.sys_bearer_context_setup_request.set_ng_ran_bearer_context_setup_request();
   auto& ng_ran_bearer_context_setup_request =
@@ -59,10 +59,10 @@ inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
 }
 
 inline void fill_failed_rrc_ue_pdu_session_res_setup_response(
-    e1ap_pdu_session_resource_setup_response_message& res,
-    const e1ap_pdu_session_resource_setup_message&    msg,
-    const e1ap_bearer_context_setup_response_message& e1_bearer_context_setup_resp_msg,
-    cu_cp_cause_t                                     cause)
+    rrc_ue_bearer_context_setup_response_message&      res,
+    const rrc_ue_bearer_context_setup_request_message& msg,
+    const e1ap_bearer_context_setup_response_message&  e1_bearer_context_setup_resp_msg,
+    cu_cp_cause_t                                      cause)
 {
   for (auto e1ap_failed_item : msg.pdu_session_res_setup_items) {
     cu_cp_pdu_session_res_setup_failed_item failed_item;
@@ -76,9 +76,9 @@ inline void fill_failed_rrc_ue_pdu_session_res_setup_response(
 }
 
 inline void fill_rrc_ue_pdu_session_res_setup_response(
-    e1ap_pdu_session_resource_setup_response_message& res,
-    const e1ap_pdu_session_resource_setup_message&    msg,
-    const e1ap_bearer_context_setup_response_message& e1_bearer_context_setup_resp_msg)
+    rrc_ue_bearer_context_setup_response_message&      res,
+    const rrc_ue_bearer_context_setup_request_message& msg,
+    const e1ap_bearer_context_setup_response_message&  e1_bearer_context_setup_resp_msg)
 {
   if (e1_bearer_context_setup_resp_msg.success) {
     auto& bearer_context_setup_response =
@@ -152,8 +152,8 @@ inline void fill_rrc_ue_pdu_session_res_setup_response(
   }
 }
 
-inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modification_request_message&  f1c_request,
-                                                      const f1ap_pdu_session_resource_setup_message& msg)
+inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modification_request_message&         f1c_request,
+                                                      const rrc_ue_ue_context_modification_request_message& msg)
 {
   // drb to be setup mod list
   f1c_request.msg->drbs_to_be_setup_mod_list_present = true;
@@ -194,10 +194,10 @@ inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modificati
 }
 
 inline void fill_failed_rrc_ue_pdu_session_res_setup_response(
-    f1ap_pdu_session_resource_setup_response_message&    res,
-    const f1ap_pdu_session_resource_setup_message&       msg,
-    const f1ap_ue_context_modification_response_message& f1ap_ue_context_mod_resp_msg,
-    cu_cp_cause_t                                        cause)
+    rrc_ue_ue_context_modification_response_message&      res,
+    const rrc_ue_ue_context_modification_request_message& msg,
+    const f1ap_ue_context_modification_response_message&  f1ap_ue_context_mod_resp_msg,
+    cu_cp_cause_t                                         cause)
 {
   for (auto f1ap_failed_item : msg.pdu_session_res_setup_items) {
     cu_cp_pdu_session_res_setup_failed_item failed_item;
@@ -211,9 +211,9 @@ inline void fill_failed_rrc_ue_pdu_session_res_setup_response(
 }
 
 inline void fill_rrc_ue_pdu_session_res_setup_response(
-    f1ap_pdu_session_resource_setup_response_message&    res,
-    const f1ap_pdu_session_resource_setup_message&       msg,
-    const f1ap_ue_context_modification_response_message& f1ap_ue_context_mod_resp_msg)
+    rrc_ue_ue_context_modification_response_message&      res,
+    const rrc_ue_ue_context_modification_request_message& msg,
+    const f1ap_ue_context_modification_response_message&  f1ap_ue_context_mod_resp_msg)
 {
   if (f1ap_ue_context_mod_resp_msg.success) {
     auto& f1ap_response_item = f1ap_ue_context_mod_resp_msg.response;

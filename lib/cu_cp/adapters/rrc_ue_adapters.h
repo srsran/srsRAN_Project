@@ -45,34 +45,32 @@ public:
     f1c_handler.handle_dl_rrc_message_transfer(f1ap_msg);
   }
 
-  async_task<f1ap_pdu_session_resource_setup_response_message>
-  on_new_pdu_session_resource_setup_request(f1ap_pdu_session_resource_setup_message& msg) override
+  async_task<rrc_ue_ue_context_modification_response_message>
+  on_new_pdu_session_resource_setup_request(rrc_ue_ue_context_modification_request_message& msg) override
   {
     f1ap_ue_context_modification_request_message f1c_ue_ctxt_mod_req;
     fill_f1ap_ue_context_modification_request(f1c_ue_ctxt_mod_req, msg);
 
     f1ap_ue_context_modification_response_message f1c_ue_ctxt_mod_resp;
 
-    return launch_async([this,
-                         res = f1ap_pdu_session_resource_setup_response_message{},
-                         f1c_ue_ctxt_mod_resp,
-                         f1c_ue_ctxt_mod_req,
-                         msg](coro_context<async_task<f1ap_pdu_session_resource_setup_response_message>>& ctx) mutable {
-      CORO_BEGIN(ctx);
+    return launch_async(
+        [this, res = rrc_ue_ue_context_modification_response_message{}, f1c_ue_ctxt_mod_resp, f1c_ue_ctxt_mod_req, msg](
+            coro_context<async_task<rrc_ue_ue_context_modification_response_message>>& ctx) mutable {
+          CORO_BEGIN(ctx);
 
-      CORO_AWAIT_VALUE(f1c_ue_ctxt_mod_resp,
-                       f1c_ue_context_mng.handle_ue_context_modification_request(f1c_ue_ctxt_mod_req));
+          CORO_AWAIT_VALUE(f1c_ue_ctxt_mod_resp,
+                           f1c_ue_context_mng.handle_ue_context_modification_request(f1c_ue_ctxt_mod_req));
 
-      // Fail if UE Context Modification Failure is returned
-      if (!f1c_ue_ctxt_mod_resp.success) {
-        cu_cp_cause_t cause = cu_cp_cause_t::protocol;
-        fill_failed_rrc_ue_pdu_session_res_setup_response(res, msg, f1c_ue_ctxt_mod_resp, cause);
+          // Fail if UE Context Modification Failure is returned
+          if (!f1c_ue_ctxt_mod_resp.success) {
+            cu_cp_cause_t cause = cu_cp_cause_t::protocol;
+            fill_failed_rrc_ue_pdu_session_res_setup_response(res, msg, f1c_ue_ctxt_mod_resp, cause);
 
-        CORO_EARLY_RETURN(res);
-      }
+            CORO_EARLY_RETURN(res);
+          }
 
-      CORO_RETURN(res);
-    });
+          CORO_RETURN(res);
+        });
   }
 
 private:
@@ -87,8 +85,8 @@ class rrc_ue_e1_adapter : public rrc_ue_e1_control_notifier
 public:
   void connect_e1(e1_bearer_context_manager* e1_bearer_context_mng_) { e1_bearer_context_mng = e1_bearer_context_mng_; }
 
-  async_task<e1ap_pdu_session_resource_setup_response_message>
-  on_new_pdu_session_resource_setup_request(const e1ap_pdu_session_resource_setup_message& msg) override
+  async_task<rrc_ue_bearer_context_setup_response_message>
+  on_new_pdu_session_resource_setup_request(const rrc_ue_bearer_context_setup_request_message& msg) override
   {
     srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
 
@@ -97,30 +95,28 @@ public:
 
     e1ap_bearer_context_setup_response_message e1_bearer_context_setup_resp_msg;
 
-    return launch_async([this,
-                         res = e1ap_pdu_session_resource_setup_response_message{},
-                         e1_bearer_context_setup_resp_msg,
-                         e1_request,
-                         msg](coro_context<async_task<e1ap_pdu_session_resource_setup_response_message>>& ctx) mutable {
-      CORO_BEGIN(ctx);
+    return launch_async(
+        [this, res = rrc_ue_bearer_context_setup_response_message{}, e1_bearer_context_setup_resp_msg, e1_request, msg](
+            coro_context<async_task<rrc_ue_bearer_context_setup_response_message>>& ctx) mutable {
+          CORO_BEGIN(ctx);
 
-      CORO_AWAIT_VALUE(e1_bearer_context_setup_resp_msg,
-                       e1_bearer_context_mng->handle_bearer_context_setup_request(e1_request));
+          CORO_AWAIT_VALUE(e1_bearer_context_setup_resp_msg,
+                           e1_bearer_context_mng->handle_bearer_context_setup_request(e1_request));
 
-      // Fail if E-UTRAN bearer context setup is returned
-      if (e1_bearer_context_setup_resp_msg.response->sys_bearer_context_setup_resp->type() ==
-          asn1::e1ap::sys_bearer_context_setup_resp_c::types::e_utran_bearer_context_setup_resp) {
-        cu_cp_cause_t cause = cu_cp_cause_t::protocol;
-        fill_failed_rrc_ue_pdu_session_res_setup_response(res, msg, e1_bearer_context_setup_resp_msg, cause);
+          // Fail if E-UTRAN bearer context setup is returned
+          if (e1_bearer_context_setup_resp_msg.response->sys_bearer_context_setup_resp->type() ==
+              asn1::e1ap::sys_bearer_context_setup_resp_c::types::e_utran_bearer_context_setup_resp) {
+            cu_cp_cause_t cause = cu_cp_cause_t::protocol;
+            fill_failed_rrc_ue_pdu_session_res_setup_response(res, msg, e1_bearer_context_setup_resp_msg, cause);
 
-        CORO_EARLY_RETURN(res);
-      }
+            CORO_EARLY_RETURN(res);
+          }
 
-      // TODO: Fill all values of the response
-      fill_rrc_ue_pdu_session_res_setup_response(res, msg, e1_bearer_context_setup_resp_msg);
+          // TODO: Fill all values of the response
+          fill_rrc_ue_pdu_session_res_setup_response(res, msg, e1_bearer_context_setup_resp_msg);
 
-      CORO_RETURN(res);
-    });
+          CORO_RETURN(res);
+        });
   }
 
 private:

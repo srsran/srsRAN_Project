@@ -50,13 +50,13 @@ struct rrc_ue_drb_setup_message {
   std::vector<rrc_ue_gtp_tunnel> gtp_tunnels;
 };
 
-struct f1ap_pdu_session_resource_setup_message {
+struct rrc_ue_ue_context_modification_request_message {
   std::vector<cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
   std::vector<rrc_ue_drb_setup_message>         rrc_ue_drb_setup_msgs;
   optional<uint64_t>                            ue_aggregate_maximum_bit_rate_ul;
 };
 
-struct f1ap_pdu_session_resource_setup_response_message {
+struct rrc_ue_ue_context_modification_response_message {
   bool                                                 success = false;
   std::vector<cu_cp_pdu_session_res_setup_failed_item> pdu_session_res_failed_to_setup_items;
 
@@ -74,16 +74,16 @@ public:
   virtual ~rrc_ue_f1c_control_notifier() = default;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup List.
-  virtual async_task<f1ap_pdu_session_resource_setup_response_message>
-  on_new_pdu_session_resource_setup_request(f1ap_pdu_session_resource_setup_message& msg) = 0;
+  virtual async_task<rrc_ue_ue_context_modification_response_message>
+  on_new_pdu_session_resource_setup_request(rrc_ue_ue_context_modification_request_message& msg) = 0;
 };
 
-struct e1ap_pdu_session_resource_setup_message {
+struct rrc_ue_bearer_context_setup_request_message {
   std::vector<cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
   uint64_t                                      ue_aggregate_maximum_bit_rate_dl;
 };
 
-struct e1ap_pdu_session_resource_setup_response_message {
+struct rrc_ue_bearer_context_setup_response_message {
   std::vector<cu_cp_pdu_session_res_setup_response_item> pdu_session_res_setup_response_items;
   std::vector<cu_cp_pdu_session_res_setup_failed_item>   pdu_session_res_failed_to_setup_items;
   rrc_ue_drb_setup_message                               rrc_ue_drb_setup_msg;
@@ -96,8 +96,8 @@ public:
   virtual ~rrc_ue_e1_control_notifier() = default;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup List.
-  virtual async_task<e1ap_pdu_session_resource_setup_response_message>
-  on_new_pdu_session_resource_setup_request(const e1ap_pdu_session_resource_setup_message& msg) = 0;
+  virtual async_task<rrc_ue_bearer_context_setup_response_message>
+  on_new_pdu_session_resource_setup_request(const rrc_ue_bearer_context_setup_request_message& msg) = 0;
 };
 
 /// Interface to configure security in a SRB
