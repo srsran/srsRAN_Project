@@ -22,6 +22,17 @@ add_subdirectory(ldpc)
 add_subdirectory(short)
 
 add_library(srsgnb_channel_coding STATIC channel_coding_factories.cpp)
+
+if(ENABLE_AVX512)
+    get_source_file_property(DEFINITIONS channel_coding_factories.cpp COMPILE_DEFINITIONS)
+    set_source_files_properties(channel_coding_factories.cpp PROPERTIES COMPILE_DEFINITIONS "${DEFINITIONS}; ENABLE_AVX512;")
+endif(ENABLE_AVX512)
+
+if(ENABLE_AVX2)
+    get_source_file_property(DEFINITIONS channel_coding_factories.cpp COMPILE_DEFINITIONS)
+    set_source_files_properties(channel_coding_factories.cpp PROPERTIES COMPILE_DEFINITIONS "${DEFINITIONS}; ENABLE_AVX2;")
+endif(ENABLE_AVX2)
+
 target_link_libraries(srsgnb_channel_coding
         srsgnb_crc_calculator
         srsgnb_polar

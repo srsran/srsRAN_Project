@@ -18,9 +18,18 @@ set(ldpc_sources
   ldpc_segmenter_impl.cpp
 )
 
-if(HAVE_AVX2)
-  list(APPEND ldpc_sources ldpc_decoder_avx2.cpp ldpc_encoder_avx2.cpp)
-endif(HAVE_AVX2)
+if(ENABLE_AVX2)
+  list(APPEND ldpc_sources
+    ldpc_decoder_avx2.cpp
+    ldpc_encoder_avx2.cpp
+    ldpc_rate_dematcher_avx2_impl.cpp)
+  set_source_files_properties(ldpc_rate_dematcher_avx2_impl.cpp PROPERTIES COMPILE_OPTIONS "-mavx2;")
+endif(ENABLE_AVX2)
+
+if(ENABLE_AVX512)
+  list(APPEND ldpc_sources ldpc_rate_dematcher_avx512_impl.cpp)
+  set_source_files_properties(ldpc_rate_dematcher_avx512_impl.cpp PROPERTIES COMPILE_OPTIONS "-mavx512f;-mavx512bw;")
+endif(ENABLE_AVX512)
 
 if(HAVE_AVX512)
   list(APPEND ldpc_sources ldpc_decoder_avx512.cpp)

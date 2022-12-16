@@ -29,6 +29,16 @@ public:
                     bool                             new_data,
                     const codeblock_metadata&        cfg) override;
 
+protected:
+  /// \brief Combines softbits by saturated addition of the soft bits.
+  ///
+  /// \param[out] out Destination of the input soft bit buffers combination.
+  /// \param[in] in0  Input soft bits buffer.
+  /// \param[in] in1  Input soft bits buffer to combine with \c in0.
+  virtual void combine_softbits(span<log_likelihood_ratio>       out,
+                                span<const log_likelihood_ratio> in0,
+                                span<const log_likelihood_ratio> in1) const;
+
 private:
   /// Initializes the rate dematcher internal state.
   void init(bool new_data, const codeblock_metadata::tb_common_metadata& cfg);

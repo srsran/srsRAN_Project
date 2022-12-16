@@ -32,10 +32,15 @@
 #ifdef __AVX2__
 #include "ldpc/ldpc_decoder_avx2.h"
 #include "ldpc/ldpc_encoder_avx2.h"
+#include "ldpc/ldpc_rate_dematcher_avx2_impl.h"
 #endif // __AVX2__
 #ifdef HAVE_AVX512
 #include "ldpc/ldpc_decoder_avx512.h"
 #endif // HAVE_AVX512
+
+#if ENABLE_AVX512
+#include "ldpc/ldpc_rate_dematcher_avx512_impl.h"
+#endif // ENABLE_AVX512
 
 using namespace srsgnb;
 
@@ -119,7 +124,17 @@ class ldpc_rate_dematcher_factory_sw : public ldpc_rate_dematcher_factory
 public:
   ldpc_rate_dematcher_factory_sw() = default;
 
-  std::unique_ptr<ldpc_rate_dematcher> create() override { return std::make_unique<ldpc_rate_dematcher_impl>(); }
+  std::unique_ptr<ldpc_rate_dematcher> create() override
+  {
+#ifdef ENABLE_AVX512
+    return std::make_unique<ldpc_rate_dematcher_avx512_impl>();
+#endif // ENABLE_AVX512
+#ifdef ENABLE_AVX2
+    return std::make_unique<ldpc_rate_dematcher_avx2_impl>();
+#endif // ENABLE_AVX2
+
+    return std::make_unique<ldpc_rate_dematcher_impl>();
+  }
 };
 
 class ldpc_rate_matcher_factory_sw : public ldpc_rate_matcher_factory

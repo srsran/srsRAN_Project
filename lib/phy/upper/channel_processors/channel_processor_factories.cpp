@@ -462,7 +462,9 @@ public:
     demux_factory(config.demux_factory),
     decoder_factory(config.decoder_factory),
     uci_dec_factory(config.uci_dec_factory),
-    ch_estimate_dimensions(config.ch_estimate_dimensions)
+    ch_estimate_dimensions(config.ch_estimate_dimensions),
+    dec_nof_iterations(config.dec_nof_iterations),
+    dec_enable_early_stop(config.dec_enable_early_stop)
   {
     srsgnb_assert(estimator_factory, "Invalid channel estimation factory.");
     srsgnb_assert(demodulator_factory, "Invalid demodulation factory.");
@@ -474,12 +476,14 @@ public:
   std::unique_ptr<pusch_processor> create() override
   {
     pusch_processor_configuration config;
-    config.estimator   = estimator_factory->create();
-    config.demodulator = demodulator_factory->create();
-    config.demultiplex = demux_factory->create();
-    config.decoder     = decoder_factory->create();
-    config.uci_dec     = uci_dec_factory->create();
-    config.ce_dims     = ch_estimate_dimensions;
+    config.estimator             = estimator_factory->create();
+    config.demodulator           = demodulator_factory->create();
+    config.demultiplex           = demux_factory->create();
+    config.decoder               = decoder_factory->create();
+    config.uci_dec               = uci_dec_factory->create();
+    config.ce_dims               = ch_estimate_dimensions;
+    config.dec_nof_iterations    = dec_nof_iterations;
+    config.dec_enable_early_stop = dec_enable_early_stop;
     return std::make_unique<pusch_processor_impl>(config);
   }
 
@@ -495,6 +499,8 @@ private:
   std::shared_ptr<pusch_decoder_factory>        decoder_factory;
   std::shared_ptr<uci_decoder_factory>          uci_dec_factory;
   channel_estimate::channel_estimate_dimensions ch_estimate_dimensions;
+  unsigned                                      dec_nof_iterations;
+  bool                                          dec_enable_early_stop;
 };
 
 class ssb_processor_factory_sw : public ssb_processor_factory

@@ -34,6 +34,10 @@ struct pusch_processor_configuration {
   std::unique_ptr<uci_decoder> uci_dec;
   /// Channel estimate dimensions.
   channel_estimate::channel_estimate_dimensions ce_dims;
+  /// Selects the number of LDPC decoder iterations.
+  unsigned dec_nof_iterations;
+  /// Enables LDPC decoder early stop if the CRC matches before completing \c ldpc_nof_iterations iterations.
+  bool dec_enable_early_stop;
 };
 
 /// Implements a parameter validator for \ref pusch_processor_impl.
@@ -131,6 +135,10 @@ private:
   std::unique_ptr<uci_decoder> uci_dec;
   /// Temporal channel estimate.
   channel_estimate ch_estimate;
+  /// Selects the number of LDPC decoder iterations.
+  unsigned dec_nof_iterations;
+  /// Enables LDPC decoder early stop if the CRC matches before completing \c ldpc_nof_iterations iterations.
+  bool dec_enable_early_stop;
   /// Codeword LLR buffer.
   std::array<log_likelihood_ratio, pusch_demodulator::MAX_NOF_DATA_LLR> temp_codeword_llr;
   /// Shared channel LLR buffer.

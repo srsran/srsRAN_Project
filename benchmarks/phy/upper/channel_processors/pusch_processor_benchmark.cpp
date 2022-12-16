@@ -304,6 +304,8 @@ static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_va
   pusch_proc_factory_config.ch_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
   pusch_proc_factory_config.ch_estimate_dimensions.nof_rx_ports  = nof_rx_ports;
   pusch_proc_factory_config.ch_estimate_dimensions.nof_tx_layers = nof_tx_layers;
+  pusch_proc_factory_config.dec_nof_iterations                   = 2;
+  pusch_proc_factory_config.dec_enable_early_stop                = true;
   std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
       create_pusch_processor_factory_sw(pusch_proc_factory_config);
   TESTASSERT(pusch_proc_factory);

@@ -96,13 +96,16 @@ pusch_processor_impl::pusch_processor_impl(pusch_processor_configuration& config
   demultiplex(std::move(config.demultiplex)),
   decoder(std::move(config.decoder)),
   uci_dec(std::move(config.uci_dec)),
-  ch_estimate(config.ce_dims)
+  ch_estimate(config.ce_dims),
+  dec_nof_iterations(config.dec_nof_iterations),
+  dec_enable_early_stop(config.dec_enable_early_stop)
 {
   srsgnb_assert(estimator, "Invalid estimator.");
   srsgnb_assert(demodulator, "Invalid demodulator.");
   srsgnb_assert(demultiplex, "Invalid demultiplex.");
   srsgnb_assert(decoder, "Invalid decoder.");
   srsgnb_assert(uci_dec, "Invalid UCI decoder.");
+  srsgnb_assert(dec_nof_iterations != 0, "The decoder number of iterations must be non-zero.");
 }
 
 pusch_processor_result pusch_processor_impl::process(span<uint8_t>                 data,
@@ -260,8 +263,8 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
     decoder_config.segmenter_cfg.nof_layers = pdu.nof_tx_layers;
     decoder_config.segmenter_cfg.nof_ch_symbols =
         info.nof_ul_sch_bits.value() / get_bits_per_symbol(pdu.mcs_descr.modulation);
-    decoder_config.nof_ldpc_iterations = 10;
-    decoder_config.use_early_stop      = true;
+    decoder_config.nof_ldpc_iterations = dec_nof_iterations;
+    decoder_config.use_early_stop      = dec_enable_early_stop;
     decoder_config.new_data            = pdu.codeword.value().new_data;
 
     // Decode.

@@ -213,6 +213,8 @@ struct pusch_decoder_factory_sw_configuration {
   std::shared_ptr<ldpc_decoder_factory>        decoder_factory;
   std::shared_ptr<ldpc_rate_dematcher_factory> dematcher_factory;
   std::shared_ptr<ldpc_segmenter_rx_factory>   segmenter_factory;
+  unsigned                                     ldpc_decoder_nof_iterations = 10;
+  bool                                         enable_early_stop           = true;
 };
 
 std::shared_ptr<pusch_decoder_factory> create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_configuration& config);
@@ -244,6 +246,8 @@ struct pusch_processor_factory_sw_configuration {
   std::shared_ptr<pusch_decoder_factory>        decoder_factory;
   std::shared_ptr<uci_decoder_factory>          uci_dec_factory;
   channel_estimate::channel_estimate_dimensions ch_estimate_dimensions;
+  unsigned                                      dec_nof_iterations    = 10;
+  bool                                          dec_enable_early_stop = true;
 };
 
 std::shared_ptr<pusch_processor_factory>

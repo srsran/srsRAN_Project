@@ -11,6 +11,8 @@
 #include "ldpc_rate_dematcher_impl.h"
 #include "ldpc_graph_impl.h"
 #include "ldpc_luts_impl.h"
+#include "srsgnb/srsvec/copy.h"
+#include "srsgnb/srsvec/zero.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
 using namespace srsgnb;
@@ -96,30 +98,98 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       out
   }
 };
 
+void ldpc_rate_dematcher_impl::combine_softbits(span<log_likelihood_ratio>       out,
+                                                span<const log_likelihood_ratio> in0,
+                                                span<const log_likelihood_ratio> in1) const
+{
+  for (unsigned index = 0, index_end = out.size(); index != index_end; ++index) {
+    out[index] = in0[index] + in1[index];
+  }
+}
+
 void ldpc_rate_dematcher_impl::allot_llrs(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) const
 {
-  // When we are not combining the current codeblock with previous ones, ensure we start from clean LLRs.
-  if (is_new_data) {
-    std::fill(out.begin(), out.end(), 0);
-  }
+  unsigned nof_info_bits = nof_systematic_bits - nof_filler_bits;
 
-  unsigned matched_length = in.size();
-  unsigned nof_info_bits  = nof_systematic_bits - nof_filler_bits;
-  for (unsigned j = 0, k = 0; (j < buffer_length) && (k < matched_length); ++j) {
-    unsigned tmp_idx = (shift_k0 + j) % buffer_length;
+  // Set to true for copy, false to combine.
+  bool copy_or_combine = is_new_data;
 
-    if ((tmp_idx < nof_info_bits) || (tmp_idx >= nof_systematic_bits)) {
+  unsigned tmp_idx = shift_k0;
+  while (!in.empty()) {
+    // Process consecutive bits before filler bits.
+    if (tmp_idx < nof_info_bits) {
+      // Calculate number of bits between tmp_idx to the first filler bit.
+      unsigned nbits_systematic = std::min(nof_info_bits - tmp_idx, static_cast<unsigned>(in.size()));
+
+      // Select output bits.
+      span<log_likelihood_ratio> out_chunk = out.subspan(tmp_idx, nbits_systematic);
+
       // Not a filler bit, combine value with the previous LLR value relative to the same bit (if any).
       // Reminder: this is a sum between LLRs, therefore it is saturated.
-      out[tmp_idx] += in[k];
-      ++k;
-    } else {
-      // This is a filler bit: the corresponding LLR should be either 0 or INT8_MAX.
-      assert((is_new_data && (out[tmp_idx] == 0)) || (!is_new_data && (out[tmp_idx] == INT8_MAX)));
+      if (copy_or_combine) {
+        srsvec::zero(out.first(tmp_idx));
+        srsvec::copy(out_chunk, in.first(nbits_systematic));
+      } else {
+        combine_softbits(out_chunk, out_chunk, in.first(nbits_systematic));
+      }
 
-      // Filler bits are counted as fixed, logical zeros by the decoder. Set the corresponding
-      // LLR to +inf.
-      out[tmp_idx] = LLR_INFINITY;
+      // Advance buffers.
+      tmp_idx += nbits_systematic;
+      in = in.last(in.size() - nbits_systematic);
+    } else if (copy_or_combine) {
+      srsvec::zero(out.first(nof_info_bits));
+    }
+
+    // Set filler bits if it is copying data.
+    if (copy_or_combine) {
+      // Filler bits are counted as fixed, logical zeros by the decoder. Set the corresponding LLR to +inf.
+      span<log_likelihood_ratio> filler_bits = out.subspan(nof_info_bits, nof_filler_bits);
+      std::fill(filler_bits.begin(), filler_bits.end(), LLR_INFINITY);
+    }
+
+    // Skip filler bits.
+    if (tmp_idx < nof_systematic_bits) {
+      tmp_idx = nof_systematic_bits;
+    }
+
+    // Process parity bits. Calculate number of bits between tmp_idx to the end of the buffer.
+    unsigned nbits_parity = std::min(buffer_length - tmp_idx, static_cast<unsigned>(in.size()));
+
+    // Select output bits.
+    span<log_likelihood_ratio> out_chunk = out.subspan(tmp_idx, nbits_parity);
+
+    // Not a filler bit, combine value with the previous LLR value relative to the same bit (if any).
+    // Reminder: this is a sum between LLRs, therefore it is saturated.
+    if (copy_or_combine) {
+      srsvec::copy(out_chunk, in.first(nbits_parity));
+    } else {
+      combine_softbits(out_chunk, out_chunk, in.first(nbits_parity));
+    }
+
+    // Advance buffers.
+    tmp_idx = (tmp_idx + nbits_parity) % buffer_length;
+    in      = in.last(in.size() - nbits_parity);
+
+    // The next iteration shall be combined.
+    if (!in.empty()) {
+      copy_or_combine = false;
+    }
+  }
+
+  // If the data is new and the buffer has not been completely filled, then set the remaining bits to zero.
+  if ((copy_or_combine) && (tmp_idx != 0)) {
+    srsvec::zero(out.last(buffer_length - tmp_idx));
+  }
+}
+
+template <unsigned Qm>
+static inline void deinterleave_bits_Qm(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in)
+{
+  unsigned E = out.size();
+  unsigned K = E / Qm;
+  for (unsigned in_index = 0, i = 0; i != K; ++i) {
+    for (unsigned j = 0; j != Qm; ++j, ++in_index) {
+      out[K * j + i] = in[in_index];
     }
   }
 }
@@ -127,11 +197,19 @@ void ldpc_rate_dematcher_impl::allot_llrs(span<log_likelihood_ratio> out, span<c
 void ldpc_rate_dematcher_impl::deinterleave_llrs(span<log_likelihood_ratio>       out,
                                                  span<const log_likelihood_ratio> in) const
 {
-  unsigned E = in.size();
-
-  for (unsigned in_index = 0; in_index != E; ++in_index) {
-    unsigned help_index = in_index % modulation_order;
-    unsigned out_index  = (in_index + help_index * (E - 1)) / modulation_order;
-    out[out_index]      = in[in_index];
+  switch (modulation_order) {
+    default:
+    case 2:
+      deinterleave_bits_Qm<2>(out, in);
+      break;
+    case 4:
+      deinterleave_bits_Qm<4>(out, in);
+      break;
+    case 6:
+      deinterleave_bits_Qm<6>(out, in);
+      break;
+    case 8:
+      deinterleave_bits_Qm<8>(out, in);
+      break;
   }
 }

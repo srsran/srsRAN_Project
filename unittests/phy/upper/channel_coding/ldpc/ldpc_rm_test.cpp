@@ -58,6 +58,12 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& tct)
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const span<const uint8_t>& data)
+{
+  fmt::print(os, "{}", data);
+  return os;
+}
+
 } // namespace srsgnb
 
 namespace {
@@ -149,7 +155,7 @@ TEST_P(LDPCRateMatchingFixture, LDPCRateMatchingTest)
   // Now, apply the rate matcher and compare results.
   std::vector<uint8_t> matched2(rm_length);
   matcher->rate_match(matched2, hard, rm_cfg);
-  EXPECT_EQ(matched2, matched) << "Wrong rate dematching.";
+  EXPECT_EQ(span<const uint8_t>(matched2), span<const uint8_t>(matched)) << "Wrong rate dematching.";
 }
 
 INSTANTIATE_TEST_SUITE_P(LDPCRateMatchingSuite,
