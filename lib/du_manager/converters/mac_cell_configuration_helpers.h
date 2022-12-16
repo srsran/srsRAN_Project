@@ -71,6 +71,8 @@ make_sched_cell_config_req(du_cell_index_t cell_index, const du_cell_config& du_
   sched_req.searchspace0      = du_cfg.searchspace0_idx;
   sched_req.sib1_payload_size = sib1_payload_size;
 
+  sched_req.pucch_guardbands = du_cfg.pucch_guardbands;
+
   return sched_req;
 }
 

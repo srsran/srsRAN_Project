@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "lib/scheduler/cell/resource_grid.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
 namespace srsgnb {
@@ -78,5 +79,7 @@ bool assert_ul_resource_grid_filled(const cell_configuration&      cell_cfg,
                                     const cell_resource_allocator& cell_res_grid,
                                     unsigned                       tx_delay,
                                     bool                           expect_grants = false);
+
+bool test_res_grid_has_re_set(const cell_resource_allocator& cell_res_grid, grant_info grant, unsigned tx_delay);
 
 } // namespace srsgnb

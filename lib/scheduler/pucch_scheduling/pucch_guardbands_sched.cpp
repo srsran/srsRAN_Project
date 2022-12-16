@@ -13,25 +13,43 @@
 
 using namespace srsgnb;
 
-pucch_guardbands_sched::pucch_guardbands_sched(const cell_configuration& cell_cfg_) : cell_cfg{cell_cfg_} {};
+pucch_guardbands_sched::pucch_guardbands_sched(const cell_configuration& cell_cfg_) :
+  cell_cfg{cell_cfg_}, logger(srslog::fetch_basic_logger("MAC")){};
 
 void pucch_guardbands_sched::allocate_pucch_guardbands(cell_slot_resource_allocator& slot_alloc)
 {
+  // Reserve all the resources on the grid for this slot.
   for (const auto& pucch_res : cell_cfg.pucch_guardbands) {
     crb_interval crbs = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, pucch_res.prbs);
     grant_info   grant{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, pucch_res.symbols, crbs};
-    slot_alloc.dl_res_grid.fill(grant);
+    slot_alloc.ul_res_grid.fill(grant);
   }
 }
 
 void pucch_guardbands_sched::run_slot(cell_resource_allocator& res_alloc)
 {
+  // If called for the first time, pre-reserves the PUCCH resource over the entire grid, until the last (farthest in the
+  // future) usable slot.
   if (first_run_slot) {
     for (unsigned sl = 0; sl < res_alloc.RING_ALLOCATOR_SIZE; ++sl) {
+      // Do not schedule PUCCH guardbands on DL slots.
+      slot_point grid_sl_point{res_alloc[sl].slot};
+      if (not cell_cfg.is_ul_enabled(grid_sl_point)) {
+        logger.debug("PUCCH not scheduled for slot {}, as it is not UL enabled.", grid_sl_point.to_uint());
+        continue;
+      }
       allocate_pucch_guardbands(res_alloc[sl]);
     }
     first_run_slot = false;
-  } else {
+  }
+  // After the first time, pre-reserves the PUCCH resource on the grid only for the last slot.
+  else {
+    // Do not schedule PUCCH guardbands on DL slots.
+    slot_point grid_sl_point{res_alloc[res_alloc.RING_ALLOCATOR_SIZE - 1].slot};
+    if (not cell_cfg.is_ul_enabled(grid_sl_point)) {
+      logger.debug("SCHED: PUCCH not scheduled for slot {}, as it is not UL enabled.", grid_sl_point.to_uint());
+      return;
+    }
     allocate_pucch_guardbands(res_alloc[res_alloc.RING_ALLOCATOR_SIZE - 1]);
   }
 }

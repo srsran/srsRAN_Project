@@ -26,6 +26,54 @@ inline sched_cell_configuration_request_message make_default_sched_cell_configur
   return make_sched_cell_config_req(to_du_cell_index(0), default_du_cell_cfg, sib1_payload_size);
 }
 
+// Helper function to create a sched_cell_configuration_request_message that allows a configuration with either 15kHz or
+// 30kHz SCS. By default, it creates a bandwidth of 20MHz.
+inline sched_cell_configuration_request_message
+make_default_sched_cell_configuration_request_scs(subcarrier_spacing scs, bool tdd_mode = false)
+{
+  sched_cell_configuration_request_message msg{make_default_sched_cell_configuration_request()};
+  msg.ssb_config.scs                               = scs;
+  msg.scs_common                                   = scs;
+  msg.ul_cfg_common.init_ul_bwp.generic_params.scs = scs;
+  msg.dl_cfg_common.init_dl_bwp.generic_params.scs = scs;
+  // Change Carrier parameters when SCS is 15kHz.
+  if (scs == subcarrier_spacing::kHz15) {
+    // Band n5 for FDD, band n41 for TDD.
+    msg.dl_carrier.arfcn = tdd_mode ? 499200 : 530000;
+    msg.ul_carrier.arfcn = tdd_mode ? 499200 : band_helper::get_ul_arfcn_from_dl_arfcn(msg.ul_carrier.arfcn);
+    msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth = 106;
+    msg.dl_cfg_common.init_dl_bwp.generic_params.crbs =
+        crb_interval{0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth};
+    msg.ul_cfg_common.freq_info_ul.scs_carrier_list.front().carrier_bandwidth = 106;
+    msg.ul_cfg_common.init_ul_bwp.generic_params.crbs =
+        crb_interval{0, msg.ul_cfg_common.freq_info_ul.scs_carrier_list.front().carrier_bandwidth};
+  }
+  // Change Carrier parameters when SCS is 30kHz.
+  else if (scs == subcarrier_spacing::kHz30) {
+    // Band n5 for FDD, band n77 or n78 for TDD.
+    msg.dl_carrier.arfcn = tdd_mode ? 630000 : 176000;
+    msg.ul_carrier.arfcn = tdd_mode ? 630000 : band_helper::get_ul_arfcn_from_dl_arfcn(msg.ul_carrier.arfcn);
+    msg.dl_cfg_common.freq_info_dl.scs_carrier_list.emplace_back(
+        scs_specific_carrier{0, subcarrier_spacing::kHz30, 52});
+    msg.dl_cfg_common.init_dl_bwp.generic_params.crbs = {
+        0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list[1].carrier_bandwidth};
+    msg.ul_cfg_common.freq_info_ul.scs_carrier_list.emplace_back(
+        scs_specific_carrier{0, subcarrier_spacing::kHz30, 52});
+    msg.ul_cfg_common.init_ul_bwp.generic_params.crbs = {
+        0, msg.ul_cfg_common.freq_info_ul.scs_carrier_list[1].carrier_bandwidth};
+  }
+  msg.dl_carrier.carrier_bw_mhz = 20;
+  msg.dl_carrier.nof_ant        = 1;
+  msg.ul_carrier.carrier_bw_mhz = 20;
+  msg.ul_carrier.nof_ant        = 1;
+
+  if (tdd_mode) {
+    msg.tdd_ul_dl_cfg_common.emplace(config_helpers::make_default_tdd_ul_dl_config_common());
+  }
+
+  return msg;
+}
+
 inline sched_ue_creation_request_message make_default_sched_ue_creation_request()
 {
   sched_ue_creation_request_message msg{};
