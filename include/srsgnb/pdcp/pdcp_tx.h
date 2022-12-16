@@ -53,11 +53,12 @@ public:
   virtual void on_discard_pdu(uint32_t count) = 0; ///< Order lower layers to discard PDU
 };
 
-/// This interface represents the interface through which
-/// the lower layers will notify the PDCP transmitting entity
-/// of relevant events, namely that it can stop the discard timer.
-/// On RLC AM, this is done when a PDCP SDU is ACK'ed, on UM
-/// it is when transmission of a PDCP SDU begins.
+/// This interface represents the notification entry point of the transmitting side of a PDCP entity.
+/// The lower layers will use this interface to inform the PDCP Tx about transmitted and successfully delivered PDUs.
+/// The PDCP uses this information to stop the discard timers of PDUs that are associated with those notifications:
+///
+/// - RLC AM: stop discard timer for successfully delivered PDUs.
+/// - RLC UM: stop discard timer for transmitted PDUs.
 class pdcp_tx_lower_interface
 {
 public:
@@ -68,7 +69,23 @@ public:
   pdcp_tx_lower_interface(const pdcp_tx_lower_interface&&)            = delete;
   pdcp_tx_lower_interface& operator=(const pdcp_tx_lower_interface&&) = delete;
 
-  virtual void stop_discard_timer(uint32_t count) = 0;
+  /// \brief Informs the PDCP entity about the highest PDCP PDU sequence number of the PDCP PDU that was transmitted by
+  /// the lower layers (i.e. by the RLC).
+  ///
+  /// In case of RLC AM, the PDCP will ignore this notification.
+  /// In case of RLC UM, the PDCP will stop the discard timers for all PDUs up to max_tx_pdcp_sn.
+  ///
+  /// \param max_tx_pdcp_sn Highest transmitted PDCP PDU sequence number.
+  virtual void handle_pdu_transmit_notification(uint32_t max_tx_pdcp_sn) = 0;
+
+  /// \brief Informs the PDCP about the highest PDCP PDU sequence number of the PDCP PDU that was successfully
+  /// delivered in sequence towards the UE.
+  ///
+  /// In case of RLC AM, the PDCP will stop the discard timers for all PDUs up to max_tx_pdcp_sn.
+  /// In case of RLC UM, the PDCP will ignore this notification.
+  ///
+  /// \param max_deliv_pdcp_sn Highest in a sequence delivered PDCP PDU sequence number.
+  virtual void handle_pdu_delivery_notification(uint32_t max_deliv_pdcp_sn) = 0;
 };
 
 /// This interface represents the data entry point of the transmitting side of a PDCP entity.

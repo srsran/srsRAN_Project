@@ -74,11 +74,64 @@ public:
    */
   void handle_sdu(byte_buffer sdu) final;
 
-  void stop_discard_timer(uint32_t count) final
+  void stop_discard_timer(uint32_t max_sn)
   {
-    // Remove timer from map
-    logger.log_debug("Stopping discard timer for COUNT={}", count);
-    discard_timers_map.erase(count);
+    if (!(cfg.discard_timer != pdcp_discard_timer::infinity &&
+          cfg.discard_timer != pdcp_discard_timer::not_configured)) {
+      logger.log_warning("Cannot stop discard timer for max_sn={}: discard_timer is not configured or infinite.");
+      return;
+    }
+    uint32_t max_count = COUNT(HFN(last_stopped_discard_timer_count), max_sn);
+    if (max_count < last_stopped_discard_timer_count) {
+      // check if we have SN overflow, i.e. HFN has incremented since last call
+      if (HFN(st.tx_next) > HFN(last_stopped_discard_timer_count)) {
+        // Adjust max_count based on HFN of tx_next
+        max_count = COUNT(HFN(st.tx_next), max_sn);
+        // Sanity check
+        if (max_count >= st.tx_next) {
+          // Invalid max_sn: we have SN overflow situation, but max_sn is larger than SN(tx_next)
+          logger.log_error("Cannot stop discard timer for invalid max_count={} (from max_sn={}) after SN overflow: "
+                           "max_count >= tx_next={}; last_stopped_discard_timer_count={}",
+                           max_count,
+                           max_sn,
+                           st.tx_next,
+                           last_stopped_discard_timer_count);
+          return;
+        }
+      } else {
+        // No SN overflow, max_sn is too small
+        logger.log_warning("Cannot stop discard timer for invalid max_count={} (from max_sn={}): "
+                           "max_count < last_stopped_discard_timer_count={}",
+                           max_count,
+                           max_sn,
+                           last_stopped_discard_timer_count);
+        return;
+      }
+    }
+    // Remove timers from map
+    uint32_t start_count = have_stopped_discard_timer ? last_stopped_discard_timer_count + 1 : 0;
+    for (uint32_t count = start_count; count <= max_count; count++) {
+      logger.log_debug("Stopping discard timer for COUNT={}", count);
+      discard_timers_map.erase(count);
+    }
+    last_stopped_discard_timer_count = max_count;
+    have_stopped_discard_timer       = true;
+  }
+
+  void handle_pdu_transmit_notification(uint32_t max_tx_sn) final
+  {
+    if (is_um()) {
+      stop_discard_timer(max_tx_sn);
+    }
+  }
+
+  void handle_pdu_delivery_notification(uint32_t max_deliv_sn) final
+  {
+    if (is_am()) {
+      stop_discard_timer(max_deliv_sn);
+    } else {
+      logger.log_warning("Received PDU delivery notification on UM bearer. SN<={}", max_deliv_sn);
+    }
   }
 
   /// \brief Evaluates a PDCP status report
@@ -166,9 +219,12 @@ private:
   /// \brief discardTimer
   /// This map is used to store the discard timers that are used by the transmitting side of an PDCP entity
   /// to order lower layers to discard PDCP PDUs if the timer expired. See section 5.2.1 and 7.3 of TS 38.323.
-  /// Currently, this is only supported when using RLC AM, as only AM as the ability to stop the timers.
+  /// Currently, this is only supported when using RLC AM, as only AM has the ability to stop the timers.
   std::map<uint32_t, discard_info> discard_timers_map;
   class discard_callback;
+
+  bool     have_stopped_discard_timer       = false;
+  uint32_t last_stopped_discard_timer_count = 0;
 
   /*
    * RB helpers

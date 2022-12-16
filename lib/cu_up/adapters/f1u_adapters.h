@@ -35,7 +35,7 @@ public:
     pdcp_rx_handler->handle_pdu(std::move(sdu));
   }
 
-  void on_delivered_sdu(uint32_t count) override { pdcp_tx_handler->stop_discard_timer(count); }
+  void on_delivered_sdu(uint32_t count) override { pdcp_tx_handler->handle_pdu_delivery_notification(count); }
 
 private:
   pdcp_rx_lower_interface* pdcp_rx_handler = nullptr;
