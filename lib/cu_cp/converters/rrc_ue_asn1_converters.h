@@ -188,5 +188,43 @@ rrc_ue_gtp_tunnel_to_f1ap_uluptnl_info_to_be_setup_item(rrc_ue_gtp_tunnel gtp_tu
   return uluptnl_item;
 }
 
+/// @brief Convert F1AP Cause to CU-CP Cause.
+/// @param f1ap_cause The F1AP Cause.
+/// @return The CU-CP Cause.
+inline cu_cp_cause_t f1ap_cause_to_cu_cp_cause(asn1::f1ap::cause_c f1ap_cause)
+{
+  cu_cp_cause_t cu_cp_cause;
+
+  switch (f1ap_cause.type()) {
+    case asn1::f1ap::cause_c::types_opts::radio_network:
+      cu_cp_cause = cu_cp_cause_t::radio_network;
+      return cu_cp_cause;
+      break;
+    case asn1::f1ap::cause_c::types_opts::transport:
+      cu_cp_cause = cu_cp_cause_t::transport;
+      return cu_cp_cause;
+      break;
+    case asn1::f1ap::cause_c::types_opts::protocol:
+      cu_cp_cause = cu_cp_cause_t::protocol;
+      return cu_cp_cause;
+      break;
+    default:
+      cu_cp_cause = cu_cp_cause_t::misc;
+      return cu_cp_cause;
+      break;
+      break;
+  }
+}
+
+inline rrc_ue_gtp_tunnel
+f1ap_dluptnl_info_to_be_setup_item_to_rrc_ue_gtp_tunnel(asn1::f1ap::dluptnl_info_to_be_setup_item_s f1ap_item)
+{
+  rrc_ue_gtp_tunnel gtp_tunnel;
+  gtp_tunnel.gtp_teid                = f1ap_item.dluptnl_info.gtp_tunnel().gtp_teid.to_number();
+  gtp_tunnel.transport_layer_address = f1ap_item.dluptnl_info.gtp_tunnel().transport_layer_address.to_string();
+
+  return gtp_tunnel;
+}
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

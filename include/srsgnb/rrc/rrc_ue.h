@@ -40,9 +40,9 @@ public:
 };
 
 struct rrc_ue_gtp_tunnel {
-  uint32_t    gtp_teid;
-  std::string transport_layer_address;
-  uint8_t     cell_group_id;
+  uint32_t          gtp_teid;
+  std::string       transport_layer_address;
+  optional<uint8_t> cell_group_id;
 };
 
 struct rrc_ue_drb_setup_message {
@@ -51,11 +51,19 @@ struct rrc_ue_drb_setup_message {
 };
 
 struct f1ap_pdu_session_resource_setup_message {
-  rrc_ue_drb_setup_message rrc_ue_drb_setup_msg;
-  optional<uint64_t>       ue_aggregate_maximum_bit_rate_ul;
+  std::vector<cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
+  std::vector<rrc_ue_drb_setup_message>         rrc_ue_drb_setup_msgs;
+  optional<uint64_t>                            ue_aggregate_maximum_bit_rate_ul;
 };
 
 struct f1ap_pdu_session_resource_setup_response_message {
+  bool                                                 success = false;
+  std::vector<cu_cp_pdu_session_res_setup_failed_item> pdu_session_res_failed_to_setup_items;
+
+  byte_buffer cell_group_cfg;
+  byte_buffer meas_gap_cfg;
+  byte_buffer requested_p_max_fr1;
+
   rrc_ue_drb_setup_message rrc_ue_drb_setup_msg;
 };
 

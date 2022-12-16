@@ -158,25 +158,112 @@ inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modificati
   // drb to be setup mod list
   f1c_request.msg->drbs_to_be_setup_mod_list_present = true;
 
-  asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_setup_mod_item_ies_o> f1ap_setup_item;
-  auto& f1ap_drb_to_setup_item = f1ap_setup_item->drbs_to_be_setup_mod_item();
+  for (auto drb_to_be_setup : msg.rrc_ue_drb_setup_msgs) {
+    asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_setup_mod_item_ies_o> f1ap_setup_item;
+    auto& f1ap_drb_to_setup_item = f1ap_setup_item->drbs_to_be_setup_mod_item();
 
-  f1ap_drb_to_setup_item.drbid = msg.rrc_ue_drb_setup_msg.drb_id;
+    f1ap_drb_to_setup_item.drbid = drb_to_be_setup.drb_id;
 
-  for (auto rrc_ue_gtp_tunnel_item : msg.rrc_ue_drb_setup_msg.gtp_tunnels) {
-    asn1::f1ap::uluptnl_info_to_be_setup_item_s uluptnl_item =
-        rrc_ue_gtp_tunnel_to_f1ap_uluptnl_info_to_be_setup_item(rrc_ue_gtp_tunnel_item);
+    // Add uLUPTNLInformation_ToBeSetup
+    for (auto rrc_ue_gtp_tunnel_item : drb_to_be_setup.gtp_tunnels) {
+      asn1::f1ap::uluptnl_info_to_be_setup_item_s uluptnl_item =
+          rrc_ue_gtp_tunnel_to_f1ap_uluptnl_info_to_be_setup_item(rrc_ue_gtp_tunnel_item);
 
-    f1ap_drb_to_setup_item.uluptnl_info_to_be_setup_list.push_back(uluptnl_item);
+      f1ap_drb_to_setup_item.uluptnl_info_to_be_setup_list.push_back(uluptnl_item);
+    }
+
+    // TODO: Add qos information
+    f1ap_drb_to_setup_item.qo_sinfo.set_choice_ext();
+    auto& choice_ext = f1ap_drb_to_setup_item.qo_sinfo.choice_ext();
+
+    choice_ext.load_info_obj(ASN1_F1AP_ID_DRB_INFO);
+    // auto& drb_info = choice_ext.value().drb_info();
+
+    // TODO: Add rlc mode
+
+    // TODO: Add optional values (ulcfg, dupl_activation, ie_exts)
+
+    f1c_request.msg->drbs_to_be_setup_mod_list.value.push_back(f1ap_setup_item);
   }
 
-  // TODO: Add qos information and optional values
-
-  f1c_request.msg->drbs_to_be_setup_mod_list.value.push_back(f1ap_setup_item);
-
+  // Add ue aggregate maximum bit rate
   if (msg.ue_aggregate_maximum_bit_rate_ul.has_value()) {
     f1c_request.msg->gnb_du_ue_ambr_ul_present = true;
     f1c_request.msg->gnb_du_ue_ambr_ul.value   = msg.ue_aggregate_maximum_bit_rate_ul.value();
+  }
+}
+
+inline void fill_failed_rrc_ue_pdu_session_res_setup_response(
+    f1ap_pdu_session_resource_setup_response_message&    res,
+    const f1ap_pdu_session_resource_setup_message&       msg,
+    const f1ap_ue_context_modification_response_message& f1ap_ue_context_mod_resp_msg,
+    cu_cp_cause_t                                        cause)
+{
+  for (auto f1ap_failed_item : msg.pdu_session_res_setup_items) {
+    cu_cp_pdu_session_res_setup_failed_item failed_item;
+    failed_item.pdu_session_id                                         = f1ap_failed_item.pdu_session_id;
+    failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause;
+    if (f1ap_ue_context_mod_resp_msg.failure->crit_diagnostics_present) {
+      // TODO: Add crit diagnostics
+    }
+    res.pdu_session_res_failed_to_setup_items.push_back(failed_item);
+  }
+}
+
+inline void fill_rrc_ue_pdu_session_res_setup_response(
+    f1ap_pdu_session_resource_setup_response_message&    res,
+    const f1ap_pdu_session_resource_setup_message&       msg,
+    const f1ap_ue_context_modification_response_message& f1ap_ue_context_mod_resp_msg)
+{
+  if (f1ap_ue_context_mod_resp_msg.success) {
+    auto& f1ap_response_item = f1ap_ue_context_mod_resp_msg.response;
+
+    // DUtoCURRCInformation
+    if (f1ap_response_item->duto_currc_info_present) {
+      // CellGroupConfig
+      if (!f1ap_response_item->duto_currc_info->cell_group_cfg.empty()) {
+        auto& cell_group_cfg = f1ap_response_item->duto_currc_info->cell_group_cfg;
+        res.cell_group_cfg.resize(cell_group_cfg.size());
+        std::copy(cell_group_cfg.begin(), cell_group_cfg.end(), res.cell_group_cfg.begin());
+      }
+
+      // MeasGapConfig
+      if (!f1ap_response_item->duto_currc_info->meas_gap_cfg.empty()) {
+        auto& meas_gap_cfg = f1ap_response_item->duto_currc_info->meas_gap_cfg;
+        res.meas_gap_cfg.resize(meas_gap_cfg.size());
+        std::copy(meas_gap_cfg.begin(), meas_gap_cfg.end(), res.meas_gap_cfg.begin());
+      }
+
+      // RequestedPMaxFr1
+      if (!f1ap_response_item->duto_currc_info->requested_p_max_fr1.empty()) {
+        auto& requested_p_max_fr1 = f1ap_response_item->duto_currc_info->requested_p_max_fr1;
+        res.requested_p_max_fr1.resize(requested_p_max_fr1.size());
+        std::copy(requested_p_max_fr1.begin(), requested_p_max_fr1.end(), res.requested_p_max_fr1.begin());
+      }
+    }
+
+    if (f1ap_response_item->drbs_setup_mod_list_present) {
+      for (auto f1ap_drb_setup_mod_list_item : f1ap_response_item->drbs_setup_mod_list.value) {
+        auto& f1ap_drb_mod_item         = f1ap_drb_setup_mod_list_item.value().drbs_setup_mod_item();
+        res.rrc_ue_drb_setup_msg.drb_id = f1ap_drb_mod_item.drbid;
+
+        // Add gtp tunnels
+        for (auto dluptnl_info_to_be_setup_item : f1ap_drb_mod_item.dluptnl_info_to_be_setup_list) {
+          rrc_ue_gtp_tunnel gtp_tunnel =
+              f1ap_dluptnl_info_to_be_setup_item_to_rrc_ue_gtp_tunnel(dluptnl_info_to_be_setup_item);
+          res.rrc_ue_drb_setup_msg.gtp_tunnels.push_back(gtp_tunnel);
+        }
+      }
+    }
+
+    // TODO: Add missing params
+
+  } else {
+    fill_failed_rrc_ue_pdu_session_res_setup_response(
+        res,
+        msg,
+        f1ap_ue_context_mod_resp_msg,
+        f1ap_cause_to_cu_cp_cause(f1ap_ue_context_mod_resp_msg.failure->cause.value));
   }
 }
 

@@ -53,16 +53,26 @@ public:
 
     f1ap_ue_context_modification_response_message f1c_ue_ctxt_mod_resp;
 
-    return launch_async(
-        [this, res = f1ap_pdu_session_resource_setup_response_message{}, f1c_ue_ctxt_mod_resp, f1c_ue_ctxt_mod_req](
-            coro_context<async_task<f1ap_pdu_session_resource_setup_response_message>>& ctx) mutable {
-          CORO_BEGIN(ctx);
+    return launch_async([this,
+                         res = f1ap_pdu_session_resource_setup_response_message{},
+                         f1c_ue_ctxt_mod_resp,
+                         f1c_ue_ctxt_mod_req,
+                         msg](coro_context<async_task<f1ap_pdu_session_resource_setup_response_message>>& ctx) mutable {
+      CORO_BEGIN(ctx);
 
-          CORO_AWAIT_VALUE(f1c_ue_ctxt_mod_resp,
-                           f1c_ue_context_mng.handle_ue_context_modification_request(f1c_ue_ctxt_mod_req));
+      CORO_AWAIT_VALUE(f1c_ue_ctxt_mod_resp,
+                       f1c_ue_context_mng.handle_ue_context_modification_request(f1c_ue_ctxt_mod_req));
 
-          CORO_RETURN(res);
-        });
+      // Fail if UE Context Modification Failure is returned
+      if (!f1c_ue_ctxt_mod_resp.success) {
+        cu_cp_cause_t cause = cu_cp_cause_t::protocol;
+        fill_failed_rrc_ue_pdu_session_res_setup_response(res, msg, f1c_ue_ctxt_mod_resp, cause);
+
+        CORO_EARLY_RETURN(res);
+      }
+
+      CORO_RETURN(res);
+    });
   }
 
 private:
