@@ -338,6 +338,8 @@ int main(int argc, char** argv)
                                             upper->get_uplink_request_processor(),
                                             upper->get_uplink_resource_grid_pool(),
                                             upper->get_uplink_slot_pdu_repository(),
+                                            upper->get_downlink_pdu_validator(),
+                                            upper->get_uplink_pdu_validator(),
                                             generate_prach_config_tlv(du_cfg),
                                             generate_carrier_config_tlv());
   report_fatal_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");

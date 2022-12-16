@@ -41,6 +41,10 @@ struct phy_fapi_adaptor_impl_config {
   resource_grid_pool* ul_rg_pool;
   /// Uplink slot PDU repository.
   uplink_slot_pdu_repository* ul_pdu_repository;
+  /// Downlink PDU validator.
+  const downlink_pdu_validator* dl_pdu_validator;
+  /// Uplink PDU validator.
+  const uplink_pdu_validator* ul_pdu_validator;
   /// Common subcarrier spacing, as per TS38.331 Section 6.2.2.
   subcarrier_spacing scs_common;
   /// FAPI PRACH configuration TLV as per SCF-222 v4.0 section 3.3.2.4.

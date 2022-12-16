@@ -458,8 +458,7 @@ static fapi::prach_config generate_prach_config_tlv()
   config.start_preamble_index   = 0;
 
   // Add FD occasion info.
-  config.fd_occasions.emplace_back();
-  fapi::prach_fd_occasion_config& fd_occasion = config.fd_occasions.back();
+  fapi::prach_fd_occasion_config& fd_occasion = config.fd_occasions.emplace_back();
   fd_occasion.prach_root_sequence_index       = prach_root_sequence_index;
   fd_occasion.prach_freq_offset               = prach_msg1_freq_offset;
   fd_occasion.prach_zero_corr_conf            = zero_correlation_zone;
@@ -590,6 +589,8 @@ int main(int argc, char** argv)
                                             upper->get_uplink_request_processor(),
                                             upper->get_uplink_resource_grid_pool(),
                                             upper->get_uplink_slot_pdu_repository(),
+                                            upper->get_downlink_pdu_validator(),
+                                            upper->get_uplink_pdu_validator(),
                                             generate_prach_config_tlv(),
                                             generate_carrier_config_tlv());
   report_fatal_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");

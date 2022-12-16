@@ -12,8 +12,10 @@
 
 namespace srsgnb {
 
+class downlink_pdu_validator;
 class downlink_processor_pool;
 class resource_grid_pool;
+class uplink_pdu_validator;
 class uplink_request_processor;
 class upper_phy_rx_results_notifier;
 class upper_phy_rx_symbol_handler;
@@ -56,6 +58,12 @@ public:
 
   /// \brief Returns the uplink slot PDU repository of this upper PHY.
   virtual uplink_slot_pdu_repository& get_uplink_slot_pdu_repository() = 0;
+
+  /// \brief Returns the downlink PDU validator of this upper PHY.
+  virtual const downlink_pdu_validator& get_downlink_pdu_validator() const = 0;
+
+  /// \brief Returns the uplink PDU validator of this upper PHY.
+  virtual const uplink_pdu_validator& get_uplink_pdu_validator() const = 0;
 
   /// \brief Sets the upper PHY timing notifier for this upper PHY.
   ///

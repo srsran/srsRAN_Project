@@ -15,6 +15,7 @@
 #include "../../phy/upper/uplink_request_processor_test_doubles.h"
 #include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
+#include "srsgnb/phy/upper/uplink_processor.h"
 #include "srsgnb/phy/upper/uplink_slot_pdu_repository.h"
 #include <gtest/gtest.h>
 
@@ -25,6 +26,26 @@ using namespace unittest;
 static constexpr subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
 
 namespace {
+
+class downlink_pdu_validator_dummy : public downlink_pdu_validator
+{
+public:
+  bool is_valid(const ssb_processor::pdu_t& pdu) const override { return true; }
+  bool is_valid(const pdcch_processor::pdu_t& pdu) const override { return true; }
+  bool is_valid(const pdsch_processor::pdu_t& pdu) const override { return true; }
+};
+
+class uplink_pdu_validator_dummy : public uplink_pdu_validator
+{
+public:
+  bool is_valid(const prach_detector::configuration& config) const override { return true; }
+  bool is_valid(const pucch_processor::format0_configuration& config) const override { return true; }
+  bool is_valid(const pucch_processor::format1_configuration& config) const override { return true; }
+  bool is_valid(const pucch_processor::format2_configuration& config) const override { return true; }
+  bool is_valid(const pucch_processor::format3_configuration& config) const override { return true; }
+  bool is_valid(const pucch_processor::format4_configuration& config) const override { return true; }
+  bool is_valid(const pusch_processor::pdu_t& pdu) const override { return true; }
+};
 
 class resource_grid_pool_dummy : public resource_grid_pool
 {
@@ -68,6 +89,8 @@ protected:
   unsigned                       sector_id = 0;
   fapi::prach_config             prach_cfg;
   fapi::carrier_config           carrier_cfg;
+  downlink_pdu_validator_dummy   dl_pdu_validator;
+  uplink_pdu_validator_dummy     ul_pdu_validator;
   fapi_to_phy_translator_config  config = {sector_id,
                                            subcarrier_spacing::kHz15,
                                            &dl_processor_pool,
@@ -75,6 +98,8 @@ protected:
                                            &ul_request_processor,
                                            &rg_pool,
                                            &pdu_repo,
+                                           &dl_pdu_validator,
+                                           &ul_pdu_validator,
                                            scs_common,
                                            &prach_cfg,
                                            &carrier_cfg};

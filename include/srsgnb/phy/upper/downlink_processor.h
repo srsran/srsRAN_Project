@@ -86,15 +86,15 @@ public:
 
   /// \brief Validates SSB processor configuration parameters.
   /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const ssb_processor::pdu_t& pdu) = 0;
+  virtual bool is_valid(const ssb_processor::pdu_t& pdu) const = 0;
 
   /// \brief Validates PDCCH processor configuration parameters.
   /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const pdcch_processor::pdu_t& pdu) = 0;
+  virtual bool is_valid(const pdcch_processor::pdu_t& pdu) const = 0;
 
   /// \brief Validates PDSCH processor configuration parameters.
   /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const pdsch_processor::pdu_t& pdu) = 0;
+  virtual bool is_valid(const pdsch_processor::pdu_t& pdu) const = 0;
 };
 
 /// Pool to access a downlink processor.

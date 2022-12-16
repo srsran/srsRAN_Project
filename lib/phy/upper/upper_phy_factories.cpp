@@ -182,7 +182,7 @@ static std::unique_ptr<resource_grid_pool> create_ul_resource_grid_pool(const up
   return create_resource_grid_pool(nof_sectors, nof_slots, std::move(grids));
 }
 
-static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(const upper_phy_config& config)
+static std::unique_ptr<uplink_processor_factory> create_ul_processor_factory(const upper_phy_config& config)
 {
   std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
   if (!dft_factory) {
@@ -273,8 +273,13 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(const upp
       pucch_dmrs_factory, pucch_detector_fact, pucch_demod_factory, uci_decoder_factory, channel_estimate_dimensions);
   report_fatal_error_if_not(pucch_factory, "Invalid PUCCH processor factory.");
 
-  uplink_processor_single_executor_factory factory(prach_factory, pusch_factory, pucch_factory, *config.ul_executor);
+  return std::make_unique<uplink_processor_single_executor_factory>(
+      prach_factory, pusch_factory, pucch_factory, *config.ul_executor);
+}
 
+static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(uplink_processor_factory& factory,
+                                                                       const upper_phy_config&   config)
+{
   uplink_processor_pool_config config_pool;
   config_pool.num_sectors = 1;
   // :TODO: Only processors for SCS 15kHz are being created. Fix this in the future.
@@ -326,6 +331,8 @@ public:
     phy_config.dl_rg_pool = create_dl_resource_grid_pool(config);
     report_fatal_error_if_not(phy_config.dl_rg_pool, "Invalid downlink resource grid pool.");
 
+    std::unique_ptr<uplink_processor_factory> ul_processor_fact = create_ul_processor_factory(config);
+
     phy_config.ul_rg_pool = create_ul_resource_grid_pool(config);
     report_fatal_error_if_not(phy_config.ul_rg_pool, "Invalid uplink resource grid pool.");
 
@@ -335,11 +342,15 @@ public:
     phy_config.softbuffer_pool = create_rx_softbuffer_pool(config.softbuffer_config);
     report_fatal_error_if_not(phy_config.softbuffer_pool, "Invalid softbuffer processor pool.");
 
-    phy_config.ul_processor_pool = create_ul_processor_pool(config);
+    phy_config.ul_processor_pool = create_ul_processor_pool(*ul_processor_fact, config);
     report_fatal_error_if_not(phy_config.ul_processor_pool, "Invalid uplink processor pool.");
 
     phy_config.prach_pool = create_prach_pool(config);
     report_fatal_error_if_not(phy_config.prach_pool, "Invalid PRACH buffer pool.");
+
+    // Create the validators.
+    phy_config.dl_pdu_validator = downlink_proc_factory->create_pdu_validator();
+    phy_config.ul_pdu_validator = ul_processor_fact->create_pdu_validator();
 
     return std::make_unique<upper_phy_impl>(std::move(phy_config));
   }

@@ -22,6 +22,8 @@ static fapi_to_phy_translator_config generate_fapi_to_phy_translator_config(cons
   fapi_config.scs                  = config.scs;
   fapi_config.ul_pdu_repository    = config.ul_pdu_repository;
   fapi_config.ul_rg_pool           = config.ul_rg_pool;
+  fapi_config.dl_pdu_validator     = config.dl_pdu_validator;
+  fapi_config.ul_pdu_validator     = config.ul_pdu_validator;
   fapi_config.ul_request_processor = config.ul_request_processor;
   fapi_config.dl_processor_pool    = config.dl_processor_pool;
   fapi_config.dl_rg_pool           = config.dl_rg_pool;

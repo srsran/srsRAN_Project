@@ -35,6 +35,8 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   ul_processor_pool(std::move(config.ul_processor_pool)),
   prach_pool(std::move(config.prach_pool)),
   softbuffer_pool(std::move(config.softbuffer_pool)),
+  dl_pdu_validator(std::move(config.dl_pdu_validator)),
+  ul_pdu_validator(std::move(config.ul_pdu_validator)),
   ul_request_processor(*config.rx_symbol_request_notifier, *prach_pool),
   pdu_repository(config.nof_slots_ul_pdu_repository),
   rx_results_notifier(*softbuffer_pool),
@@ -47,6 +49,8 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   srsgnb_assert(ul_processor_pool, "Invalid uplink processor pool");
   srsgnb_assert(prach_pool, "Invalid PRACH buffer pool");
   srsgnb_assert(softbuffer_pool, "Invalid softbuffer pool");
+  srsgnb_assert(dl_pdu_validator, "Invalid downlink PDU validator");
+  srsgnb_assert(ul_pdu_validator, "Invalid uplink PDU validator");
 
   logger.set_level(config.log_level);
 
@@ -97,4 +101,14 @@ void upper_phy_impl::set_timing_notifier(srsgnb::upper_phy_timing_notifier& noti
 void upper_phy_impl::set_rx_results_notifier(upper_phy_rx_results_notifier& notifier)
 {
   rx_results_notifier.connect(notifier);
+}
+
+const uplink_pdu_validator& upper_phy_impl::get_uplink_pdu_validator() const
+{
+  return *ul_pdu_validator;
+}
+
+const downlink_pdu_validator& upper_phy_impl::get_downlink_pdu_validator() const
+{
+  return *dl_pdu_validator;
 }

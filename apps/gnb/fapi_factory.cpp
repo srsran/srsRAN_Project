@@ -14,19 +14,26 @@
 using namespace srsgnb;
 using namespace fapi_adaptor;
 
-std::unique_ptr<phy_fapi_adaptor> srsgnb::build_phy_fapi_adaptor(unsigned                    sector_id,
-                                                                 subcarrier_spacing          scs,
-                                                                 subcarrier_spacing          scs_common,
-                                                                 downlink_processor_pool&    dl_processor_pool,
-                                                                 resource_grid_pool&         dl_rg_pool,
-                                                                 uplink_request_processor&   ul_request_processor,
-                                                                 resource_grid_pool&         ul_rg_pool,
-                                                                 uplink_slot_pdu_repository& ul_pdu_repository,
-                                                                 const fapi::prach_config&   prach_cfg,
-                                                                 const fapi::carrier_config& carrier_cfg)
+std::unique_ptr<phy_fapi_adaptor> srsgnb::build_phy_fapi_adaptor(unsigned                      sector_id,
+                                                                 subcarrier_spacing            scs,
+                                                                 subcarrier_spacing            scs_common,
+                                                                 downlink_processor_pool&      dl_processor_pool,
+                                                                 resource_grid_pool&           dl_rg_pool,
+                                                                 uplink_request_processor&     ul_request_processor,
+                                                                 resource_grid_pool&           ul_rg_pool,
+                                                                 uplink_slot_pdu_repository&   ul_pdu_repository,
+                                                                 const downlink_pdu_validator& dl_pdu_validator,
+                                                                 const uplink_pdu_validator&   ul_pdu_validator,
+                                                                 const fapi::prach_config&     prach_cfg,
+                                                                 const fapi::carrier_config&   carrier_cfg)
 {
-  std::unique_ptr<phy_fapi_adaptor_factory> adaptor_factory = create_phy_fapi_adaptor_factory(
-      dl_processor_pool, dl_rg_pool, ul_request_processor, ul_rg_pool, ul_pdu_repository);
+  std::unique_ptr<phy_fapi_adaptor_factory> adaptor_factory = create_phy_fapi_adaptor_factory(dl_processor_pool,
+                                                                                              dl_rg_pool,
+                                                                                              ul_request_processor,
+                                                                                              ul_rg_pool,
+                                                                                              ul_pdu_repository,
+                                                                                              dl_pdu_validator,
+                                                                                              ul_pdu_validator);
   report_fatal_error_if_not(adaptor_factory, "Invalid PHY adaptor factory.");
 
   phy_fapi_adaptor_factory_config phy_fapi_config;

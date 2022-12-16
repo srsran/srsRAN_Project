@@ -11,6 +11,7 @@
 #pragma once
 
 #include "uplink_request_processor_impl.h"
+#include "upper_phy_pdu_validators.h"
 #include "upper_phy_rx_results_notifier_wrapper.h"
 #include "upper_phy_rx_symbol_handler_impl.h"
 #include "srsgnb/phy/support/prach_buffer_pool.h"
@@ -45,6 +46,10 @@ struct upper_phy_impl_config {
   srslog::basic_levels log_level;
   /// Number of slots supported by the uplink PDU repository.
   size_t nof_slots_ul_pdu_repository;
+  /// Downlink PDU validator.
+  std::unique_ptr<downlink_pdu_validator> dl_pdu_validator;
+  /// Uplink PDU validator.
+  std::unique_ptr<uplink_pdu_validator> ul_pdu_validator;
 };
 
 /// \brief Implementation of the upper PHY interface.
@@ -108,6 +113,12 @@ public:
   uplink_slot_pdu_repository& get_uplink_slot_pdu_repository() override;
 
   // See interface for documentation.
+  const downlink_pdu_validator& get_downlink_pdu_validator() const override;
+
+  // See interface for documentation.
+  const uplink_pdu_validator& get_uplink_pdu_validator() const override;
+
+  // See interface for documentation.
   void set_timing_notifier(upper_phy_timing_notifier& notifier) override;
 
   // See interface for documentation.
@@ -130,6 +141,10 @@ private:
   std::unique_ptr<prach_buffer_pool> prach_pool;
   /// Softbuffer pool.
   std::unique_ptr<rx_softbuffer_pool> softbuffer_pool;
+  /// Downlink processor PDUs validator.
+  std::unique_ptr<downlink_pdu_validator> dl_pdu_validator;
+  /// Uplink processor PDUs validator.
+  std::unique_ptr<uplink_pdu_validator> ul_pdu_validator;
   /// Uplink request processor.
   uplink_request_processor_impl ul_request_processor;
   /// Uplink slot PDU registry.

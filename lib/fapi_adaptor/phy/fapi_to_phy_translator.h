@@ -17,9 +17,11 @@
 
 namespace srsgnb {
 
+class downlink_pdu_validator;
 class downlink_processor;
 class downlink_processor_pool;
 class resource_grid_pool;
+class uplink_pdu_validator;
 class uplink_request_processor;
 class uplink_slot_pdu_repository;
 
@@ -41,6 +43,10 @@ struct fapi_to_phy_translator_config {
   resource_grid_pool* ul_rg_pool;
   /// Uplink slot PDU repository.
   uplink_slot_pdu_repository* ul_pdu_repository;
+  /// Downlink PDU validator.
+  const downlink_pdu_validator* dl_pdu_validator;
+  /// Uplink PDU validator.
+  const uplink_pdu_validator* ul_pdu_validator;
   /// Common subcarrier spacing as per TS38.331 Section 6.2.2.
   subcarrier_spacing scs_common;
   /// FAPI PRACH configuration TLV as per SCF-222 v4.0 section 3.3.2.4.
@@ -104,12 +110,16 @@ public:
     dl_rg_pool(*config.dl_rg_pool),
     ul_request_processor(*config.ul_request_processor),
     ul_rg_pool(*config.ul_rg_pool),
+    dl_pdu_validator(*config.dl_pdu_validator),
+    ul_pdu_validator(*config.ul_pdu_validator),
     ul_pdu_repository(*config.ul_pdu_repository),
     scs(config.scs),
     scs_common(config.scs_common),
     prach_cfg(*config.prach_cfg),
-    carrier_cfg(*config.carrier_cfg)
+    carrier_cfg(*config.carrier_cfg),
+    logger(srslog::fetch_basic_logger("FAPI", false))
   {
+    logger.set_level(srslog::basic_levels::info);
   }
 
   // See interface for documentation.
@@ -148,6 +158,10 @@ private:
   uplink_request_processor& ul_request_processor;
   /// Uplink resource grid pool.
   resource_grid_pool& ul_rg_pool;
+  /// Downlink PDU validator.
+  const downlink_pdu_validator& dl_pdu_validator;
+  /// Uplink PDU validator.
+  const uplink_pdu_validator& ul_pdu_validator;
   /// Current slot task controller.
   slot_based_upper_phy_controller current_slot_controller;
   /// PDSCH PDU repository.
@@ -166,6 +180,8 @@ private:
   const fapi::prach_config prach_cfg;
   /// Carrier configuration as per SCF-222 v4.0 section 3.3.2.4.
   const fapi::carrier_config carrier_cfg;
+  /// Logger.
+  srslog::basic_logger& logger;
 };
 
 } // namespace fapi_adaptor

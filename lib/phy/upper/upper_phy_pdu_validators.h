@@ -10,13 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
-#include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
-#include "srsgnb/phy/upper/channel_processors/prach_detector.h"
-#include "srsgnb/phy/upper/channel_processors/pucch_processor.h"
-#include "srsgnb/phy/upper/channel_processors/pusch_processor.h"
-#include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
-#include <memory>
+#include "srsgnb/phy/upper/downlink_processor.h"
+#include "srsgnb/phy/upper/uplink_processor.h"
 
 namespace srsgnb {
 
@@ -36,13 +31,13 @@ public:
   }
 
   // See interface for documentation.
-  bool is_valid(const prach_detector::configuration& config) override { return prach->is_valid(config); }
-  bool is_valid(const pucch_processor::format0_configuration& config) override { return pucch->is_valid(config); }
-  bool is_valid(const pucch_processor::format1_configuration& config) override { return pucch->is_valid(config); }
-  bool is_valid(const pucch_processor::format2_configuration& config) override { return pucch->is_valid(config); }
-  bool is_valid(const pucch_processor::format3_configuration& config) override { return pucch->is_valid(config); }
-  bool is_valid(const pucch_processor::format4_configuration& config) override { return pucch->is_valid(config); }
-  bool is_valid(const pusch_processor::pdu_t& pdu) override { return pusch->is_valid(pdu); }
+  bool is_valid(const prach_detector::configuration& config) const override { return prach->is_valid(config); }
+  bool is_valid(const pucch_processor::format0_configuration& config) const override { return pucch->is_valid(config); }
+  bool is_valid(const pucch_processor::format1_configuration& config) const override { return pucch->is_valid(config); }
+  bool is_valid(const pucch_processor::format2_configuration& config) const override { return pucch->is_valid(config); }
+  bool is_valid(const pucch_processor::format3_configuration& config) const override { return pucch->is_valid(config); }
+  bool is_valid(const pucch_processor::format4_configuration& config) const override { return pucch->is_valid(config); }
+  bool is_valid(const pusch_processor::pdu_t& pdu) const override { return pusch->is_valid(pdu); }
 
 private:
   std::unique_ptr<prach_detector_validator> prach;
@@ -66,9 +61,9 @@ public:
   }
 
   // See interface for documentation.
-  bool is_valid(const ssb_processor::pdu_t& pdu) override { return ssb->is_valid(pdu); }
-  bool is_valid(const pdcch_processor::pdu_t& pdu) override { return pdcch->is_valid(pdu); }
-  bool is_valid(const pdsch_processor::pdu_t& pdu) override { return pdsch->is_valid(pdu); }
+  bool is_valid(const ssb_processor::pdu_t& pdu) const override { return ssb->is_valid(pdu); }
+  bool is_valid(const pdcch_processor::pdu_t& pdu) const override { return pdcch->is_valid(pdu); }
+  bool is_valid(const pdsch_processor::pdu_t& pdu) const override { return pdsch->is_valid(pdu); }
 
 private:
   std::unique_ptr<ssb_pdu_validator>   ssb;
