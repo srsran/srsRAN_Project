@@ -71,6 +71,10 @@ protected:
       dec_factory_avx2 = create_ldpc_decoder_factory_sw("avx2");
       ASSERT_NE(dec_factory_avx2, nullptr);
     }
+    if (!dec_factory_avx512) {
+      dec_factory_avx512 = create_ldpc_decoder_factory_sw("avx512");
+      ASSERT_NE(dec_factory_avx512, nullptr);
+    }
   }
 
   // Carries out most of the parametrized test setup: computes useful quantities (e.g., message and codeblock lengths),
@@ -118,6 +122,8 @@ protected:
     ASSERT_NE(enc_factory_generic, nullptr);
     ASSERT_NE(enc_factory_avx2, nullptr);
     ASSERT_NE(dec_factory_generic, nullptr);
+    ASSERT_NE(dec_factory_avx2, nullptr);
+    ASSERT_NE(dec_factory_avx512, nullptr);
 
     std::string implementation = std::get<0>(GetParam());
     if (implementation == "generic") {
@@ -129,6 +135,11 @@ protected:
       encoder_test = enc_factory_avx2->create();
       ASSERT_NE(encoder_test, nullptr);
       decoder_test = dec_factory_avx2->create();
+      ASSERT_NE(decoder_test, nullptr);
+    } else if (implementation == "avx512") {
+      encoder_test = enc_factory_avx2->create();
+      ASSERT_NE(encoder_test, nullptr);
+      decoder_test = dec_factory_avx512->create();
       ASSERT_NE(decoder_test, nullptr);
     } else {
       FAIL() << fmt::format("Invalid implementation type {}.", implementation);
@@ -144,6 +155,7 @@ protected:
   static std::shared_ptr<ldpc_encoder_factory> enc_factory_avx2;
   static std::shared_ptr<ldpc_decoder_factory> dec_factory_generic;
   static std::shared_ptr<ldpc_decoder_factory> dec_factory_avx2;
+  static std::shared_ptr<ldpc_decoder_factory> dec_factory_avx512;
 
   std::unique_ptr<ldpc_encoder>         encoder_test;
   std::unique_ptr<srsgnb::ldpc_decoder> decoder_test;
@@ -164,6 +176,7 @@ std::shared_ptr<ldpc_encoder_factory> LDPCEncDecFixture::enc_factory_generic = n
 std::shared_ptr<ldpc_encoder_factory> LDPCEncDecFixture::enc_factory_avx2    = nullptr;
 std::shared_ptr<ldpc_decoder_factory> LDPCEncDecFixture::dec_factory_generic = nullptr;
 std::shared_ptr<ldpc_decoder_factory> LDPCEncDecFixture::dec_factory_avx2    = nullptr;
+std::shared_ptr<ldpc_decoder_factory> LDPCEncDecFixture::dec_factory_avx512  = nullptr;
 
 // Returns a vector of with values [min_val, min_val + delta, ..., min_val + N * delta, max_val], where N = steps - 1 if
 // max_val - min_val is divisible by steps, and N = steps otherwise.
@@ -220,7 +233,11 @@ INSTANTIATE_TEST_SUITE_P(LDPCEncDecSuite,
 #ifdef HAVE_AVX2
                                                               ,
                                                               "avx2"
-#endif
+#endif // HAVE_AVX2
+#ifdef HAVE_AVX512
+                                                              ,
+                                                              "avx512"
+#endif // HAVE_AVX512
                                                               ),
                                             ::testing::ValuesIn(ldpc_encoder_test_data)));
 } // namespace

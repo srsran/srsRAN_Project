@@ -29,6 +29,9 @@
 #include "ldpc/ldpc_decoder_avx2.h"
 #include "ldpc/ldpc_encoder_avx2.h"
 #endif // HAVE_AVX2
+#ifdef HAVE_AVX512
+#include "ldpc/ldpc_decoder_avx512.h"
+#endif // HAVE_AVX512
 
 using namespace srsgnb;
 
@@ -53,6 +56,11 @@ public:
 
   std::unique_ptr<ldpc_decoder> create() override
   {
+#ifdef HAVE_AVX512
+    if ((dec_type == "auto") || (dec_type == "avx512")) {
+      return std::make_unique<ldpc_decoder_avx512>();
+    }
+#endif // HAVE_AVX512
 #ifdef HAVE_AVX2
     if ((dec_type == "auto") || (dec_type == "avx2")) {
       return std::make_unique<ldpc_decoder_avx2>();
