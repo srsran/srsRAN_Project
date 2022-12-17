@@ -10,6 +10,7 @@
 
 #include "ldpc_decoder_impl.h"
 #include "ldpc_luts_impl.h"
+#include "srsgnb/srsvec/zero.h"
 #include "srsgnb/support/srsgnb_assert.h"
 #include <cmath>
 
@@ -118,14 +119,13 @@ optional<unsigned> ldpc_decoder_impl::decode(span<uint8_t>                    ou
 void ldpc_decoder_generic::load_soft_bits(span<const log_likelihood_ratio> llrs)
 {
   // Erase registers.
-  std::fill(soft_bits.begin(), soft_bits.end(), 0);
-  std::fill(var_to_check.begin(), var_to_check.end(), 0);
   for (auto& tmp : check_to_var) {
     std::fill(tmp.begin(), tmp.end(), 0);
   }
 
   // Recall that the first 2 * lifting_size bits are not transmitted.
   unsigned nof_shortened_bits = 2 * lifting_size;
+  srsvec::zero(span<log_likelihood_ratio>(soft_bits).first(nof_shortened_bits));
   std::copy(llrs.begin(), llrs.end(), soft_bits.begin() + nof_shortened_bits);
 }
 

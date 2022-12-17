@@ -108,19 +108,17 @@ void ldpc_decoder_avx512::compute_var_to_check_msgs(mm512::avx512_span        v2
     __m512i soft_epi8 = soft.get_at(i_block);
     __m512i c2v_epi8  = c2v.get_at(i_block);
 
-    // v2c = (soft - c2v > LLR_MAX) ? LLR_MAX : (soft - cv)
-    __m512i   help_sub_epi8 = _mm512_subs_epi8(soft_epi8, c2v_epi8);
-    __mmask64 mask_epi8     = _mm512_cmpgt_epi8_mask(help_sub_epi8, LLR_MAX_epi8);
-    __m512i   v2c_epi8      = _mm512_mask_blend_epi8(mask_epi8, help_sub_epi8, LLR_MAX_epi8);
+    // v2c = (soft - c2v > LLR_MAX) ? LLR_MAX : (soft - c2v)
+    __m512i help_sub_epi8 = _mm512_subs_epi8(soft_epi8, c2v_epi8);
+    __m512i v2c_epi8      = _mm512_min_epi8(help_sub_epi8, LLR_MAX_epi8);
 
-    // v2c = (v2c < MIN_LLR) ? MIN_LLR : z
-    mask_epi8 = _mm512_cmpgt_epi8_mask(LLR_MIN_epi8, v2c_epi8);
-    v2c_epi8  = _mm512_mask_blend_epi8(mask_epi8, v2c_epi8, LLR_MIN_epi8);
+    // v2c = (v2c < MIN_LLR) ? MIN_LLR : v2c
+    v2c_epi8 = _mm512_max_epi8(v2c_epi8, LLR_MIN_epi8);
 
-    // Ensure that soft = +/- infinity implies z = +/- infinity.
+    // Ensure that soft = +/- infinity implies v2c = +/- infinity.
     // v2c = (soft < infinity) ? v2c : infinity
-    mask_epi8 = _mm512_cmpgt_epi8_mask(LLR_INFINITY_epi8, soft_epi8);
-    v2c_epi8  = _mm512_mask_blend_epi8(mask_epi8, LLR_INFINITY_epi8, v2c_epi8);
+    __mmask64 mask_epi8 = _mm512_cmpgt_epi8_mask(LLR_INFINITY_epi8, soft_epi8);
+    v2c_epi8            = _mm512_mask_blend_epi8(mask_epi8, LLR_INFINITY_epi8, v2c_epi8);
 
     // v2c = (soft > - infinity) ? v2c : - infinity
     mask_epi8 = _mm512_cmpgt_epi8_mask(soft_epi8, LLR_NEG_INFINITY_epi8);
