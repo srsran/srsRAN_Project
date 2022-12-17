@@ -22,6 +22,10 @@ if(HAVE_AVX2)
   list(APPEND ldpc_sources ldpc_decoder_avx2.cpp ldpc_encoder_avx2.cpp)
 endif(HAVE_AVX2)
 
+if(HAVE_AVX512)
+  list(APPEND ldpc_sources ldpc_decoder_avx512.cpp)
+endif(HAVE_AVX512)
+
 add_library(srsgnb_ldpc STATIC ${ldpc_sources})
 
 target_link_libraries(srsgnb_ldpc log_likelihood_ratio)
