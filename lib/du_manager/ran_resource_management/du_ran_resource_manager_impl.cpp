@@ -65,17 +65,8 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
   cell_cfg_list(cell_cfg_list_),
   default_ue_cell_cfg(default_ue_cell_cfg_),
   logger(srslog::fetch_basic_logger("DU-MNG")),
-  sr_offset_free_list(cell_cfg_list.size())
+  pucch_res_mng(cell_cfg_list, *default_ue_cell_cfg.ul_config->init_ul_bwp.pucch_cfg)
 {
-  // Setup resource free lists.
-  const unsigned period =
-      sr_periodicity_to_slot(default_ue_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].period);
-  for (unsigned i = 0; i != cell_cfg_list.size(); ++i) {
-    sr_offset_free_list[i].resize(period);
-    for (unsigned offset = 0; offset != period; ++offset) {
-      sr_offset_free_list[i][offset] = offset;
-    }
-  }
 }
 
 ue_ran_resource_configurator du_ran_resource_manager_impl::create_ue_resource_configurator(du_ue_index_t   ue_index,
@@ -86,16 +77,14 @@ ue_ran_resource_configurator du_ran_resource_manager_impl::create_ue_resource_co
     return ue_ran_resource_configurator{std::unique_ptr<du_ue_ran_resource_updater_impl>{nullptr}};
   }
   ue_res_pool.emplace(ue_index);
+  auto& mcg                 = ue_res_pool[ue_index].cg_cfg;
+  mcg.spcell_cfg.cell_index = INVALID_DU_CELL_INDEX;
 
-  // Initialize UE master cell group config to Default.
-  cell_group_config& mcg        = ue_res_pool[ue_index].cg_cfg;
-  mcg.spcell_cfg.cell_index     = pcell_index;
-  mcg.spcell_cfg.serv_cell_idx  = SERVING_CELL_PCELL_IDX;
-  mcg.spcell_cfg.spcell_cfg_ded = default_ue_cell_cfg;
-  mcg.mcg_cfg                   = config_helpers::make_initial_mac_cell_group_config();
-  // TODO: Move to helper.
-  mcg.pcg_cfg.p_nr_fr1            = 10;
-  mcg.pcg_cfg.pdsch_harq_codebook = pdsch_harq_ack_codebook::dynamic;
+  // UE initialized PCell.
+  if (not allocate_cell_resources(ue_index, pcell_index, SERVING_CELL_PCELL_IDX)) {
+    logger.warning("RAN Resource Allocation failed for UE={}", ue_index);
+    return ue_ran_resource_configurator{std::unique_ptr<du_ue_ran_resource_updater_impl>{nullptr}};
+  }
 
   return ue_ran_resource_configurator{std::make_unique<du_ue_ran_resource_updater_impl>(&mcg, *this, ue_index)};
 }
@@ -190,7 +179,9 @@ void du_ran_resource_manager_impl::deallocate_context(du_ue_index_t ue_index)
   for (const auto& sc : ue_mcg.scells) {
     deallocate_cell_resources(ue_index, sc.serv_cell_index);
   }
-  deallocate_cell_resources(ue_index, SERVING_CELL_PCELL_IDX);
+  if (ue_mcg.spcell_cfg.cell_index != INVALID_DU_CELL_INDEX) {
+    deallocate_cell_resources(ue_index, SERVING_CELL_PCELL_IDX);
+  }
   ue_res_pool.erase(ue_index);
 }
 
@@ -211,13 +202,9 @@ bool du_ran_resource_manager_impl::allocate_cell_resources(du_ue_index_t     ue_
     ue_res.pcg_cfg.p_nr_fr1            = 10;
     ue_res.pcg_cfg.pdsch_harq_codebook = pdsch_harq_ack_codebook::dynamic;
 
-    for (auto& sr : ue_res.spcell_cfg.spcell_cfg_ded.ul_config->init_ul_bwp.pucch_cfg->sr_res_list) {
-      if (sr_offset_free_list[cell_index].empty()) {
-        logger.warning("Unable to allocate dedicated PUCCH SR resource for UE={}, cell={}", ue_index, cell_index);
-        return false;
-      }
-      sr.offset = sr_offset_free_list[cell_index].back();
-      sr_offset_free_list[cell_index].pop_back();
+    if (not pucch_res_mng.alloc_resources(ue_res)) {
+      logger.warning("Unable to allocate dedicated PUCCH resources for UE={}, cell={}", ue_index, cell_index);
+      return false;
     }
   } else {
     srsgnb_assert(not ue_res.scells.contains(serv_cell_index), "Reallocation of SCell detected");
@@ -237,9 +224,7 @@ void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_in
   if (serv_cell_index == SERVING_CELL_PCELL_IDX) {
     srsgnb_assert(ue_res.spcell_cfg.cell_index != INVALID_DU_CELL_INDEX,
                   "Double deallocation of same UE cell resources detected");
-    for (auto& sr : ue_res.spcell_cfg.spcell_cfg_ded.ul_config->init_ul_bwp.pucch_cfg->sr_res_list) {
-      sr_offset_free_list[ue_res.spcell_cfg.cell_index].push_back(sr.offset);
-    }
+    pucch_res_mng.dealloc_resources(ue_res);
     ue_res.spcell_cfg.cell_index = INVALID_DU_CELL_INDEX;
   } else {
     // TODO: Remove of SCell params.

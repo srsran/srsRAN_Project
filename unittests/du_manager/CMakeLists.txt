@@ -40,3 +40,8 @@ add_executable(du_ue_config_test procedures/ue_configuration_test.cpp)
 target_include_directories(du_ue_config_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_ue_config_test du_manager_test_helpers gtest gtest_main)
 gtest_discover_tests(du_ue_config_test)
+
+add_executable(du_ran_resource_manager_test du_ran_resource_manager_test.cpp)
+target_include_directories(du_ran_resource_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(du_ran_resource_manager_test du_manager_test_helpers gtest gtest_main)
+gtest_discover_tests(du_ran_resource_manager_test)

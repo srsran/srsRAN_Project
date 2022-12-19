@@ -11,6 +11,7 @@
 #pragma once
 
 #include "du_ran_resource_manager.h"
+#include "pucch_resource_manager.h"
 
 namespace srsgnb {
 namespace srs_du {
@@ -73,8 +74,8 @@ private:
   /// Current UE Resource Allocations.
   slotted_array<ue_res_item, MAX_NOF_DU_UES, false> ue_res_pool;
 
-  /// Lists of PHY/MAC resources available to be allocated.
-  static_vector<std::vector<unsigned>, MAX_NOF_DU_CELLS> sr_offset_free_list;
+  /// Allocator of UE PUCCH resources.
+  pucch_resource_manager pucch_res_mng;
 };
 
 } // namespace srs_du
