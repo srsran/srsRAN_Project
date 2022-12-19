@@ -30,7 +30,17 @@ namespace srsgnb {
 struct pdcp_tx_state {
   /// This state variable indicates the COUNT value of the next PDCP SDU to be transmitted. The initial value is 0,
   /// except for SRBs configured with state variables continuation.
-  uint32_t tx_next;
+  uint32_t tx_next = 0;
+
+  // > Additional state variables to avoid HFN de-synchronization
+
+  /// This flag indicates whether the PDCP entity has already stopped any discard timer before, e.g. in case of
+  /// successful delivery of a PDU.
+  bool have_stopped_discard_timer = false;
+
+  /// This variable indicates the COUNT value of the highest successfully delivered PDU in sequence for which the
+  /// discard timer was stopped.
+  uint32_t last_stopped_discard_timer_count = 0;
 };
 
 /// Base class used for transmitting PDCP bearers.
@@ -81,10 +91,10 @@ public:
       logger.log_warning("Cannot stop discard timer for max_sn={}: discard_timer is not configured or infinite.");
       return;
     }
-    uint32_t max_count = COUNT(HFN(last_stopped_discard_timer_count), max_sn);
-    if (max_count < last_stopped_discard_timer_count) {
+    uint32_t max_count = COUNT(HFN(st.last_stopped_discard_timer_count), max_sn);
+    if (max_count < st.last_stopped_discard_timer_count) {
       // check if we have SN overflow, i.e. HFN has incremented since last call
-      if (HFN(st.tx_next) > HFN(last_stopped_discard_timer_count)) {
+      if (HFN(st.tx_next) > HFN(st.last_stopped_discard_timer_count)) {
         // Adjust max_count based on HFN of tx_next
         max_count = COUNT(HFN(st.tx_next), max_sn);
         // Sanity check
@@ -95,7 +105,7 @@ public:
                            max_count,
                            max_sn,
                            st.tx_next,
-                           last_stopped_discard_timer_count);
+                           st.last_stopped_discard_timer_count);
           return;
         }
       } else {
@@ -104,18 +114,18 @@ public:
                            "max_count < last_stopped_discard_timer_count={}",
                            max_count,
                            max_sn,
-                           last_stopped_discard_timer_count);
+                           st.last_stopped_discard_timer_count);
         return;
       }
     }
     // Remove timers from map
-    uint32_t start_count = have_stopped_discard_timer ? last_stopped_discard_timer_count + 1 : 0;
+    uint32_t start_count = st.have_stopped_discard_timer ? st.last_stopped_discard_timer_count + 1 : 0;
     for (uint32_t count = start_count; count <= max_count; count++) {
       logger.log_debug("Stopping discard timer for COUNT={}", count);
       discard_timers_map.erase(count);
     }
-    last_stopped_discard_timer_count = max_count;
-    have_stopped_discard_timer       = true;
+    st.last_stopped_discard_timer_count = max_count;
+    st.have_stopped_discard_timer       = true;
   }
 
   void handle_pdu_transmit_notification(uint32_t max_tx_sn) final
@@ -222,9 +232,6 @@ private:
   /// Currently, this is only supported when using RLC AM, as only AM has the ability to stop the timers.
   std::map<uint32_t, discard_info> discard_timers_map;
   class discard_callback;
-
-  bool     have_stopped_discard_timer       = false;
-  uint32_t last_stopped_discard_timer_count = 0;
 
   /*
    * RB helpers
