@@ -202,6 +202,17 @@ public:
       CORO_RETURN(res);
     });
   }
+
+  async_task<rrc_ue_bearer_context_modification_response_message>
+  on_bearer_context_modification_request(const rrc_ue_bearer_context_modification_request_message& msg) override
+  {
+    return launch_async(
+        [res = rrc_ue_bearer_context_modification_response_message{}](
+            coro_context<async_task<rrc_ue_bearer_context_modification_response_message>>& ctx) mutable {
+          CORO_BEGIN(ctx);
+          CORO_RETURN(res);
+        });
+  }
 };
 
 } // namespace srs_cu_cp

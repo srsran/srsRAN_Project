@@ -126,5 +126,15 @@ e1ap_ng_dl_up_unchanged_to_bool(asn1::e1ap::pdu_session_res_setup_item_s::ng_dl_
          asn1::e1ap::pdu_session_res_setup_item_s::ng_dl_up_unchanged_opts::options::true_value;
 }
 
+inline rrc_ue_pdcp_count e1ap_pdcp_count_to_rrc_ue_pdcp_count(asn1::e1ap::pdcp_count_s e1ap_pdcp_count)
+{
+  rrc_ue_pdcp_count rrc_ue_pdcp_count;
+
+  rrc_ue_pdcp_count.hfn     = e1ap_pdcp_count.hfn;
+  rrc_ue_pdcp_count.pdcp_sn = e1ap_pdcp_count.pdcp_sn;
+
+  return rrc_ue_pdcp_count;
+}
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

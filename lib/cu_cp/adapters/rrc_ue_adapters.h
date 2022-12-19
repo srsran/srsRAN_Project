@@ -90,7 +90,7 @@ public:
     e1ap_bearer_context_setup_response_message e1_bearer_context_setup_resp_msg;
 
     return launch_async(
-        [this, res = rrc_ue_bearer_context_setup_response_message{}, e1_bearer_context_setup_resp_msg, e1_request, msg](
+        [this, res = rrc_ue_bearer_context_setup_response_message{}, e1_bearer_context_setup_resp_msg, e1_request](
             coro_context<async_task<rrc_ue_bearer_context_setup_response_message>>& ctx) mutable {
           CORO_BEGIN(ctx);
 
@@ -107,6 +107,41 @@ public:
           }
 
           fill_rrc_ue_bearer_context_setup_response_message(res, e1_bearer_context_setup_resp_msg);
+
+          CORO_RETURN(res);
+        });
+  }
+
+  async_task<rrc_ue_bearer_context_modification_response_message>
+  on_bearer_context_modification_request(const rrc_ue_bearer_context_modification_request_message& msg) override
+  {
+    srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
+
+    e1ap_bearer_context_modification_request_message e1_request;
+    fill_e1ap_bearer_context_modification_request(e1_request, msg);
+
+    e1ap_bearer_context_modification_response_message e1_bearer_context_modification_resp_msg;
+
+    return launch_async(
+        [this,
+         res = rrc_ue_bearer_context_modification_response_message{},
+         e1_bearer_context_modification_resp_msg,
+         e1_request](coro_context<async_task<rrc_ue_bearer_context_modification_response_message>>& ctx) mutable {
+          CORO_BEGIN(ctx);
+
+          CORO_AWAIT_VALUE(e1_bearer_context_modification_resp_msg,
+                           e1_bearer_context_mng->handle_bearer_context_modification_request(e1_request));
+
+          // Fail if E-UTRAN bearer context modification is returned
+          if (e1_bearer_context_modification_resp_msg.response->sys_bearer_context_mod_resp->type() ==
+              asn1::e1ap::sys_bearer_context_mod_resp_c::types::e_utran_bearer_context_mod_resp) {
+            res.success = false;
+            res.cause   = cu_cp_cause_t::protocol;
+
+            CORO_EARLY_RETURN(res);
+          }
+
+          fill_rrc_ue_bearer_context_modification_response_message(res, e1_bearer_context_modification_resp_msg);
 
           CORO_RETURN(res);
         });
