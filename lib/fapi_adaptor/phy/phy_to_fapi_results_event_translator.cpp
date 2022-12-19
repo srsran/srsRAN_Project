@@ -190,8 +190,8 @@ static void fill_format_0_1_harq(fapi::uci_pucch_pdu_format_0_1_builder& builder
   // Write the contents when the uci status is valid.
   if (msg.get_status() == uci_status::valid) {
     for (unsigned i = 0; i != context.nof_expected_harq_bits; ++i) {
-      // TODO: Push always an ACK until the pucch detector gets fixed and correctly detects the harq value.
-      harq[i] = uci_pucch_f0_or_f1_harq_values::ack;
+      harq[i] = (msg.get_harq_ack_bits()[i] == 1U) ? uci_pucch_f0_or_f1_harq_values::ack
+                                                   : uci_pucch_f0_or_f1_harq_values::nack;
     }
   }
 
