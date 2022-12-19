@@ -56,14 +56,10 @@ private:
     /// SRB0 scheduler.
     ue_srb0_scheduler srb0_sched;
 
-    /// PUCCH guardbands scheduler.
-    pucch_guardbands_sched pucch_guard_sched;
-
     cell(const scheduler_ue_expert_config& expert_cfg, const ue_scheduler_cell_params& params, ue_list& ues) :
       cell_res_alloc(params.cell_res_alloc),
       uci_sched(params.cell_res_alloc->cfg, *params.uci_alloc, ues),
-      srb0_sched(expert_cfg, params.cell_res_alloc->cfg, *params.pdcch_sched, *params.pucch_alloc, ues),
-      pucch_guard_sched(params.cell_res_alloc->cfg)
+      srb0_sched(expert_cfg, params.cell_res_alloc->cfg, *params.pdcch_sched, *params.pucch_alloc, ues)
     {
     }
   };

@@ -111,6 +111,9 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   // > Schedule DL signalling.
   cell.sib1_sch.schedule_sib1(cell.res_grid[0], sl_tx);
 
+  // > Schedule PUCCH guardbands.
+  cell.pucch_guard_sch.run_slot(cell.res_grid);
+
   // > Schedule PRACH PDUs.
   cell.prach_sch.run_slot(cell.res_grid[0]);
 

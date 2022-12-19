@@ -40,7 +40,8 @@ public:
   explicit scheduler_test_bench(unsigned tx_rx_delay_ = 4, subcarrier_spacing max_scs = subcarrier_spacing::kHz15) :
     tx_rx_delay(tx_rx_delay_),
     sched(create_scheduler(config_helpers::make_default_scheduler_expert_config(), notif)),
-    next_slot(to_numerology_value(max_scs), std::uniform_int_distribution<unsigned>{0, 10240}(g))
+    //next_slot(to_numerology_value(max_scs), std::uniform_int_distribution<unsigned>{0, 10240}(g))
+    next_slot(to_numerology_value(max_scs), 711)
   {
     logger.set_level(srslog::basic_levels::debug);
   }

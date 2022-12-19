@@ -108,8 +108,7 @@ TEST_P(scheduler_retx_tester, msg3_gets_retx_if_nacked)
 
 INSTANTIATE_TEST_SUITE_P(msg3_retx,
                          scheduler_retx_tester,
-                         //testing::Values(test_params{0}, test_params{1}, test_params{2}, test_params{3})
-                         testing::Values(test_params{1}));
+                         testing::Values(test_params{0}, test_params{1}, test_params{2}, test_params{3}));
 
 int main(int argc, char** argv)
 {

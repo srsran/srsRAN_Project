@@ -176,7 +176,7 @@ ul_config_common srsgnb::config_helpers::make_default_ul_config_common(const cel
   cfg.init_ul_bwp.rach_cfg_common->msg3_transform_precoder                       = false;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index           = 16;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_fdm                     = 1;
-  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start         = 0;
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start         = 5;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config = 15;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window               = 10;
   cfg.init_ul_bwp.pusch_cfg_common.emplace();
