@@ -76,25 +76,5 @@ struct f1ap_ue_configuration_response {
   std::vector<f1u_bearer_addmodded> f1u_bearers_added;
 };
 
-/// \brief DRB that the DU F1AP requests the DU manager to setup/modify.
-struct drb_to_setup {
-  drb_id_t               drb_id;
-  optional<lcid_t>       lcid;
-  asn1::f1ap::rlc_mode_e rlc_mode;
-};
-
-/// \brief Request from DU F1AP to DU manager to modify existing UE configuration.
-struct f1ap_ue_context_update_request {
-  du_ue_index_t             ue_index;
-  std::vector<srb_id_t>     srbs_to_setup;
-  std::vector<drb_to_setup> drbs_to_setup;
-};
-
-/// \brief Response from DU manager to DU F1AP with the result of the UE context update.
-struct f1ap_ue_context_update_response {
-  bool        result;
-  byte_buffer du_to_cu_rrc_container;
-};
-
 } // namespace srs_du
 } // namespace srsgnb

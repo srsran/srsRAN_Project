@@ -24,7 +24,7 @@ ue_creation_procedure::ue_creation_procedure(du_ue_index_t                      
                                              const du_manager_params::mac_config_params&  mac_mng_,
                                              const du_manager_params::rlc_config_params&  rlc_params_,
                                              const du_manager_params::f1ap_config_params& f1ap_mng_,
-                                             du_cell_resource_allocator&                  cell_res_alloc_) :
+                                             du_ran_resource_allocator&                   cell_res_alloc_) :
   msg(ccch_ind_msg),
   ue_mng(ue_mng_),
   services(du_services_),
@@ -103,27 +103,20 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
 
 bool ue_creation_procedure::setup_du_ue_resources()
 {
+  // Allocate PCell PHY/MAC resources for DU UE.
+  f1ap_ue_context_update_request req;
+  req.ue_index = ue_ctx->ue_index;
+  req.srbs_to_setup.resize(1);
+  req.srbs_to_setup[0] = srb_id_t::srb1;
+  if (not ue_ctx->resources.update_context(msg.cell_index, req)) {
+    return false;
+  }
+
   // Create DU UE SRB0 and SRB1.
   rlc_config tm_rlc_cfg{};
   tm_rlc_cfg.mode = rlc_mode::tm;
   ue_ctx->bearers.add_srb(srb_id_t::srb0, tm_rlc_cfg);
-  ue_ctx->bearers.add_srb(srb_id_t::srb1, make_default_srb_rlc_config());
-
-  // Allocate PCell PHY/MAC resources for DU UE.
-  std::array<du_cell_index_t, 1> pcell_list = {msg.cell_index};
-  if (not ue_ctx->resources.set_cells(pcell_list)) {
-    return false;
-  }
-
-  ue_ctx->cells.resize(1);
-  cell_group_config& pcell = ue_ctx->cells[0];
-  pcell.rlc_bearers.emplace_back();
-  pcell.rlc_bearers[0].lcid       = LCID_SRB1;
-  pcell.rlc_bearers[0].rlc_cfg    = ue_ctx->bearers.srbs()[srb_id_t::srb1].rlc_cfg;
-  pcell.spcell_cfg.serv_cell_idx  = msg.cell_index;
-  pcell.spcell_cfg.spcell_cfg_ded = config_helpers::make_default_initial_ue_serving_cell_config();
-  pcell.mcg_cfg                   = config_helpers::make_initial_mac_cell_group_config();
-  fill_cell_group_resources(pcell, ue_ctx->resources[msg.cell_index]);
+  ue_ctx->bearers.add_srb(srb_id_t::srb1, ue_ctx->resources->rlc_bearers[0].rlc_cfg);
 
   const static unsigned UE_ACTIVITY_TIMEOUT = 500; // TODO: Parametrize.
   ue_ctx->activity_timer                    = services.timers.create_unique_timer();
@@ -131,11 +124,6 @@ bool ue_creation_procedure::setup_du_ue_resources()
     logger.info("UE Manager: UE={} activity timeout.", ue_index);
     // TODO: Handle.
   });
-
-  // TODO: Move to helper.
-  physical_cell_group_config& pcg_cfg = pcell.pcg_cfg;
-  pcg_cfg.p_nr_fr1                    = 10;
-  pcg_cfg.pdsch_harq_codebook         = pdsch_harq_ack_codebook::dynamic;
 
   return true;
 }
@@ -160,9 +148,9 @@ async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_cr
   mac_ue_create_msg.ue_index           = ue_ctx->ue_index;
   mac_ue_create_msg.crnti              = msg.crnti;
   mac_ue_create_msg.cell_index         = msg.cell_index;
-  mac_ue_create_msg.serv_cell_cfg      = ue_ctx->cells[ue_ctx->pcell_index].spcell_cfg.spcell_cfg_ded;
-  mac_ue_create_msg.mac_cell_group_cfg = ue_ctx->cells[ue_ctx->pcell_index].mcg_cfg;
-  mac_ue_create_msg.phy_cell_group_cfg = ue_ctx->cells[ue_ctx->pcell_index].pcg_cfg;
+  mac_ue_create_msg.serv_cell_cfg      = ue_ctx->resources->spcell_cfg.spcell_cfg_ded;
+  mac_ue_create_msg.mac_cell_group_cfg = ue_ctx->resources->mcg_cfg;
+  mac_ue_create_msg.phy_cell_group_cfg = ue_ctx->resources->pcg_cfg;
   for (du_ue_srb& bearer : ue_ctx->bearers.srbs()) {
     mac_ue_create_msg.bearers.emplace_back();
     auto& lc     = mac_ue_create_msg.bearers.back();
@@ -200,7 +188,7 @@ void ue_creation_procedure::create_f1_ue()
   // Pack SRB1 configuration that is going to be passed in the F1AP DU-to-CU-RRC-Container IE to the CU as per TS38.473,
   // Section 8.4.1.2.
   cell_group_cfg_s cell_group;
-  calculate_cell_group_config_diff(cell_group, {}, ue_ctx->cells[0]);
+  calculate_cell_group_config_diff(cell_group, {}, *ue_ctx->resources);
   cell_group.rlc_bearer_to_add_mod_list.resize(1);
   cell_group.rlc_bearer_to_add_mod_list[0].lc_ch_id        = 1;
   cell_group.rlc_bearer_to_add_mod_list[0].rlc_cfg_present = true;

@@ -143,7 +143,7 @@ rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
   if (is_srb(cfg.lcid)) {
     out.served_radio_bearer.set_srb_id() = srb_id_to_uint(to_srb_id(cfg.lcid));
   } else {
-    out.served_radio_bearer.set_drb_id() = drb_id_to_uint(cfg.drb_id);
+    out.served_radio_bearer.set_drb_id() = drb_id_to_uint(*cfg.drb_id);
   }
 
   out.rlc_cfg_present = true;

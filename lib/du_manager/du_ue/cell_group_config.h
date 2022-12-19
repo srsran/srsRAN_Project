@@ -23,8 +23,15 @@ namespace srs_du {
 
 /// Serving cell specific MAC and PHY parameters for a SpCell.
 struct spcell_config {
-  du_cell_index_t     serv_cell_idx;
+  du_cell_index_t     cell_index;
+  serv_cell_index_t   serv_cell_idx;
   serving_cell_config spcell_cfg_ded;
+};
+
+/// \brief Secondary serving Cell configured for a UE.
+struct scell_config {
+  du_cell_index_t   cell_index;
+  serv_cell_index_t serv_cell_index;
 };
 
 /// This struct stores the accumulated CellGroupConfig.
@@ -33,6 +40,7 @@ struct cell_group_config {
   spcell_config                  spcell_cfg;
   mac_cell_group_config          mcg_cfg;
   physical_cell_group_config     pcg_cfg;
+  slotted_vector<scell_config>   scells;
 };
 
 } // namespace srs_du

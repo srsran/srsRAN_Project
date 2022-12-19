@@ -52,7 +52,7 @@ public:
                         const du_manager_params::mac_config_params&  mac_mng_,
                         const du_manager_params::rlc_config_params&  rlc_params_,
                         const du_manager_params::f1ap_config_params& f1ap_mng_,
-                        du_cell_resource_allocator&                  cell_res_alloc_);
+                        du_ran_resource_allocator&                   cell_res_alloc_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -86,7 +86,7 @@ private:
   const du_manager_params::mac_config_params&  mac_mng;
   const du_manager_params::rlc_config_params&  rlc_cfg;
   const du_manager_params::f1ap_config_params& f1ap_mng;
-  du_cell_resource_allocator&                  du_res_alloc;
+  du_ran_resource_allocator&                   du_res_alloc;
   srslog::basic_logger&                        logger;
 
   std::unique_ptr<du_ue>         ue_ctx;

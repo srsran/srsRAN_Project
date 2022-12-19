@@ -40,6 +40,12 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 
   log_proc_started(logger, request.ue_index, ue->rnti, "UE Configuration");
 
+  prev_cell_group = ue->resources.value();
+  if (not ue->resources.update_context(ue->pcell_index, request)) {
+    logger.warning("Failed to allocate UE={} resources", ue->ue_index);
+    CORO_EARLY_RETURN(make_ue_config_failure());
+  }
+
   add_bearers_to_ue_context();
 
   // > Update RLC bearers.
@@ -54,37 +60,6 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   log_proc_completed(logger, request.ue_index, ue->rnti, "UE Configuration");
 
   CORO_RETURN(make_ue_config_response());
-}
-
-void ue_configuration_procedure::calculate_next_ue_context()
-{
-  next_cell_group = ue->cells[0];
-
-  // > Add SRBs to next UE context.
-  for (srb_id_t srbid : request.srbs_to_setup) {
-    rlc_bearer_config srb_to_addmod;
-    srb_to_addmod.lcid    = srb_id_to_lcid(srbid);
-    srb_to_addmod.rlc_cfg = ue->bearers.srbs()[srbid].rlc_cfg;
-    auto it               = std::find_if(next_cell_group.rlc_bearers.begin(),
-                           next_cell_group.rlc_bearers.end(),
-                           [srbid](const rlc_bearer_config& cfg) { return cfg.lcid == srb_id_to_lcid(srbid); });
-    if (it == next_cell_group.rlc_bearers.end()) {
-      next_cell_group.rlc_bearers.push_back(srb_to_addmod);
-    } else {
-      *it = srb_to_addmod;
-    }
-  }
-
-  // > Add DRBs to next UE context.
-  for (const drb_to_setup& drb : request.drbs_to_setup) {
-    rlc_bearer_config drb_to_addmod;
-    const du_ue_drb&  bearer = ue->bearers.drbs()[drb.drb_id];
-    drb_to_addmod.drb_id     = drb.drb_id;
-    drb_to_addmod.lcid       = bearer.lcid;
-    drb_to_addmod.rlc_cfg    = bearer.rlc_cfg;
-    next_cell_group.rlc_bearers.push_back(drb_to_addmod);
-    // TODO: Check if it is add or mod.
-  }
 }
 
 void ue_configuration_procedure::update_f1_bearers()
@@ -131,26 +106,21 @@ void ue_configuration_procedure::add_bearers_to_ue_context()
 {
   // > Create DU UE SRB objects.
   for (srb_id_t srbid : request.srbs_to_setup) {
-    ue->bearers.add_srb(srbid, make_default_srb_rlc_config()); // TODO: Parameterize SRB config.
+    lcid_t lcid = srb_id_to_lcid(srbid);
+    auto   it   = std::find_if(ue->resources->rlc_bearers.begin(),
+                           ue->resources->rlc_bearers.end(),
+                           [lcid](const rlc_bearer_config& e) { return e.lcid == lcid; });
+    srsgnb_assert(it != ue->resources->rlc_bearers.end(), "SRB should have been allocated at this point");
+    ue->bearers.add_srb(srbid, it->rlc_cfg);
   }
 
   // > Create DU UE DRB objects.
   for (const drb_to_setup& drbtoadd : request.drbs_to_setup) {
-    // >> Allocate LCID if not specified by F1AP.
-    lcid_t lcid;
-    if (drbtoadd.lcid.has_value()) {
-      srsgnb_assert(not std::none_of(ue->bearers.drbs().begin(),
-                                     ue->bearers.drbs().end(),
-                                     [&drbtoadd](const auto& item) { return *drbtoadd.lcid == item.lcid; }),
-                    "Reconfigurations of bearers not supported");
-      lcid = *drbtoadd.lcid;
-    } else {
-      optional<lcid_t> l = ue->bearers.allocate_lcid();
-      srsgnb_assert(l.has_value(), "Unable to allocate LCID");
-      lcid = *l;
-    }
-
-    ue->bearers.add_drb(drbtoadd.drb_id, lcid, create_rlc_config(drbtoadd));
+    auto it = std::find_if(ue->resources->rlc_bearers.begin(),
+                           ue->resources->rlc_bearers.end(),
+                           [&drbtoadd](const rlc_bearer_config& e) { return e.drb_id == drbtoadd.drb_id; });
+    srsgnb_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
+    ue->bearers.add_drb(drbtoadd.drb_id, it->lcid, it->rlc_cfg);
   }
 }
 
@@ -203,19 +173,21 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
   f1ap_ue_context_update_response resp;
   resp.result = true;
 
-  calculate_next_ue_context();
-
   // Calculate ASN.1 CellGroupConfig to be sent in DU-to-CU container.
   asn1::rrc_nr::cell_group_cfg_s asn1_cell_group;
-  calculate_cell_group_config_diff(asn1_cell_group, ue->cells[0], next_cell_group);
+  calculate_cell_group_config_diff(asn1_cell_group, prev_cell_group, *ue->resources);
   {
     asn1::bit_ref     bref{resp.du_to_cu_rrc_container};
     asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);
     srsgnb_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
   }
 
-  // Update UE context.
-  ue->cells[0] = next_cell_group;
+  return resp;
+}
 
+f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_failure()
+{
+  f1ap_ue_context_update_response resp;
+  resp.result = false;
   return resp;
 }

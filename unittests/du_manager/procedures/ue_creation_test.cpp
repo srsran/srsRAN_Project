@@ -76,9 +76,9 @@ protected:
 
   void set_sr_offset(du_ue_index_t ue_index, du_cell_index_t cell_idx, unsigned sr_offset)
   {
-    auto key1 = std::make_pair(ue_index, to_du_cell_index(0));
-    this->cell_res_alloc.next_resource_list.emplace(key1, this->cell_res_alloc.default_ue_cell_resource);
-    this->cell_res_alloc.next_resource_list[key1].sr_res_list[0].offset = sr_offset;
+    this->cell_res_alloc.next_context_update_result.spcell_cfg.spcell_cfg_ded.ul_config->init_ul_bwp.pucch_cfg
+        ->sr_res_list[0]
+        .offset = sr_offset;
   }
 
   async_task<void>                   proc;
@@ -130,9 +130,12 @@ TEST_F(ue_creation_tester, when_a_ue_is_created_then_cell_resources_are_requeste
   // Test Preamble.
   // > Generate SR offsets for two UEs.
   du_ue_index_t ue_idx1 = to_du_ue_index(0), ue_idx2 = to_du_ue_index(1);
-  unsigned      sr_period = sr_periodicity_to_slot(this->cell_res_alloc.default_ue_cell_resource.sr_res_list[0].period);
-  unsigned      sr_offset1 = test_rgen::uniform_int<unsigned>(0, sr_period);
-  unsigned      sr_offset2 = test_rgen::uniform_int<unsigned>(0, sr_period);
+  unsigned      sr_period = sr_periodicity_to_slot(
+      this->cell_res_alloc.next_context_update_result.spcell_cfg.spcell_cfg_ded.ul_config->init_ul_bwp.pucch_cfg
+          ->sr_res_list[0]
+          .period);
+  unsigned sr_offset1 = test_rgen::uniform_int<unsigned>(0, sr_period);
+  unsigned sr_offset2 = test_rgen::uniform_int<unsigned>(0, sr_period);
   // > Create first UE.
   set_sr_offset(ue_idx1, to_du_cell_index(0), sr_offset1);
   start_procedure(ue_idx1, to_rnti(0x4601));

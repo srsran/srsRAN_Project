@@ -23,7 +23,7 @@ du_manager_impl::du_manager_impl(const du_manager_params& params) :
       params.rlc,
       params.mac},
   cell_mng(cfg),
-  cell_res_alloc(cfg.du_cells),
+  cell_res_alloc(cfg.du_cells, config_helpers::make_default_initial_ue_serving_cell_config()),
   ue_mng(cfg, cell_res_alloc),
   main_ctrl_loop(128)
 {

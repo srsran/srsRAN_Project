@@ -124,8 +124,10 @@ public:
     return *this;
   }
 
-  reference operator*() { return (*vec)[(*index_mapper)[idx]]; }
-  pointer   operator->() { return &(*vec)[(*index_mapper)[idx]]; }
+  reference     operator*() { return (*vec)[(*index_mapper)[idx]]; }
+  reference     operator*() const { return (*vec)[(*index_mapper)[idx]]; }
+  pointer       operator->() { return &(*vec)[(*index_mapper)[idx]]; }
+  const pointer operator->() const { return &(*vec)[(*index_mapper)[idx]]; }
 
   iterator_type& operator++()
   {
@@ -174,15 +176,29 @@ struct cast_to_size_operator {
 /// NOTE: The sorted iteration and pointer validation guarantees may add some overhead if the array is very fragmented.
 /// @tparam T type of objects
 /// @tparam N static size of max nof items
-template <typename T, size_t N>
+template <typename T, size_t N, bool EmbeddedStorage = true>
 class slotted_array
 {
-  using array_type = std::array<tiny_optional<T>, N>;
+  using array_type =
+      std::conditional_t<EmbeddedStorage, std::array<tiny_optional<T>, N>, std::vector<tiny_optional<T>>>;
+
+  template <typename A>
+  auto dimension_vec(std::array<A, N>& a)
+  {
+    // do nothing, if std::array
+  }
+  template <typename A>
+  void dimension_vec(std::vector<A>& a)
+  {
+    a.resize(N);
+  }
 
 public:
   using value_type     = T;
   using iterator       = detail::slotted_array_iter_impl<array_type>;
   using const_iterator = detail::slotted_array_iter_impl<const array_type>;
+
+  slotted_array() { dimension_vec(vec); }
 
   bool contains(size_t idx) const noexcept { return idx < vec.size() and vec[idx].has_value(); }
 
@@ -302,13 +318,19 @@ public:
     objects(std::move(other.objects)), index_mapper(std::move(other.index_mapper))
   {
   }
-
+  slotted_vector(const slotted_vector& other) noexcept   = default;
   slotted_vector<T>& operator=(const slotted_vector<T>&) = default;
   slotted_vector<T>& operator=(slotted_vector<T>&& other) noexcept
   {
     objects      = std::move(other.objects);
     index_mapper = std::move(other.index_mapper);
     return *this;
+  }
+
+  void reserve(size_t sz)
+  {
+    objects.reserve(sz);
+    index_mapper.reserve(sz);
   }
 
   constexpr bool empty() const noexcept { return objects.empty(); }
@@ -413,7 +435,11 @@ private:
 };
 
 /// \brief Represents a slotted array that is indexed via an ID type that is convertible to an integer (e.g. enum).
-template <typename IdType, typename T, size_t N, typename IdToIntConversion = detail::cast_to_size_operator<IdType>>
+template <typename IdType,
+          typename T,
+          size_t N,
+          bool   EmbeddedStorage     = true,
+          typename IdToIntConversion = detail::cast_to_size_operator<IdType>>
 class slotted_id_table : private IdToIntConversion
 {
   static_assert(
@@ -422,9 +448,9 @@ class slotted_id_table : private IdToIntConversion
 
 public:
   using key_type       = IdType;
-  using value_type     = typename slotted_array<T, N>::value_type;
-  using iterator       = typename slotted_array<T, N>::iterator;
-  using const_iterator = typename slotted_array<T, N>::const_iterator;
+  using value_type     = typename slotted_array<T, N, EmbeddedStorage>::value_type;
+  using iterator       = typename slotted_array<T, N, EmbeddedStorage>::iterator;
+  using const_iterator = typename slotted_array<T, N, EmbeddedStorage>::const_iterator;
 
   using IdToIntConversion::IdToIntConversion;
 
@@ -479,7 +505,7 @@ public:
 private:
   constexpr size_t to_index(key_type k) const { return IdToIntConversion::get_index(k); }
 
-  slotted_array<T, N> sl_ar;
+  slotted_array<T, N, EmbeddedStorage> sl_ar;
 };
 
 } // namespace srsgnb

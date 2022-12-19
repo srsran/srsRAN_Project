@@ -58,8 +58,8 @@ void f1ap_du_ue_context_setup_procedure::create_du_request(const ue_context_setu
     const asn1::f1ap::drbs_to_be_setup_item_s& drb_item = drb.value().drbs_to_be_setup_item();
 
     drb_to_setup drb_obj;
-    drb_obj.drb_id   = (drb_id_t)drb_item.drbid;
-    drb_obj.rlc_mode = drb_item.rlc_mode;
+    drb_obj.drb_id = (drb_id_t)drb_item.drbid;
+    drb_obj.mode   = (drb_rlc_mode)(unsigned)drb_item.rlc_mode;
     du_request.drbs_to_setup.push_back(drb_obj);
   }
 }

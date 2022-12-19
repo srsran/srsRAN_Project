@@ -20,7 +20,7 @@ using namespace srsgnb;
 srs_du::cell_group_config make_initial_cell_group_config()
 {
   srs_du::cell_group_config dest_cell_grp_cfg{};
-  dest_cell_grp_cfg.spcell_cfg.serv_cell_idx  = to_du_cell_index(0);
+  dest_cell_grp_cfg.spcell_cfg.serv_cell_idx  = SERVING_CELL_PCELL_IDX;
   dest_cell_grp_cfg.spcell_cfg.spcell_cfg_ded = config_helpers::make_default_initial_ue_serving_cell_config();
   dest_cell_grp_cfg.mcg_cfg                   = config_helpers::make_initial_mac_cell_group_config();
 

@@ -29,6 +29,18 @@ protected:
 
   void start_procedure(const f1ap_ue_context_update_request& req)
   {
+    for (srb_id_t srb_id : req.srbs_to_setup) {
+      this->cell_res_alloc.next_context_update_result.rlc_bearers.emplace_back();
+      this->cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid    = srb_id_to_lcid(srb_id);
+      this->cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
+    }
+    for (const drb_to_setup& drb : req.drbs_to_setup) {
+      this->cell_res_alloc.next_context_update_result.rlc_bearers.emplace_back();
+      this->cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid = uint_to_lcid(3 + (unsigned)drb.drb_id);
+      this->cell_res_alloc.next_context_update_result.rlc_bearers.back().drb_id  = drb.drb_id;
+      this->cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
+    }
+
     proc = launch_async<ue_configuration_procedure>(req, ue_mng, params.services, mac, params.rlc, params.f1ap);
     proc_launcher.emplace(proc);
   }

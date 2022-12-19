@@ -79,8 +79,8 @@ class f1ap_test_dummy : public f1ap_connection_manager,
 
 public:
   struct f1_ue_context {
-    slotted_id_table<srb_id_t, dummy_f1c_bearer, MAX_NOF_SRBS>             f1c_bearers;
-    slotted_id_table<drb_id_t, dummy_f1u_bearer, MAX_NOF_DRBS, drb_to_idx> f1u_bearers;
+    slotted_id_table<srb_id_t, dummy_f1c_bearer, MAX_NOF_SRBS>                   f1c_bearers;
+    slotted_id_table<drb_id_t, dummy_f1u_bearer, MAX_NOF_DRBS, true, drb_to_idx> f1u_bearers;
   };
 
   slotted_id_table<du_ue_index_t, f1_ue_context, MAX_NOF_DU_UES> f1_ues;
@@ -177,17 +177,20 @@ public:
   void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override {}
 };
 
-class dummy_cell_resource_allocator : public du_cell_resource_allocator
+class dummy_cell_resource_allocator : public du_ran_resource_allocator
 {
 public:
-  optional<du_ue_index_t>                                               last_ue_index;
-  std::vector<du_cell_index_t>                                          last_ue_cells;
-  std::map<std::pair<du_ue_index_t, du_cell_index_t>, ue_cell_resource> next_resource_list;
-  ue_cell_resource                                                      default_ue_cell_resource;
+  optional<du_ue_index_t>           last_ue_index;
+  optional<du_cell_index_t>         last_ue_pcell;
+  f1ap_ue_context_update_request    last_ue_ctx_upd;
+  slotted_vector<cell_group_config> ue_resource_pool;
+  cell_group_config                 next_context_update_result;
 
   dummy_cell_resource_allocator();
 
-  ue_cell_resource_list update_resources(du_ue_index_t ue_index, span<du_cell_index_t> ue_cells) override;
+  const cell_group_config* update_context(du_ue_index_t                         ue_index,
+                                          du_cell_index_t                       pcell_index,
+                                          const f1ap_ue_context_update_request& upd_req) override;
 };
 
 f1ap_ue_context_update_request create_f1ap_ue_context_update_request(du_ue_index_t                   ue_idx,

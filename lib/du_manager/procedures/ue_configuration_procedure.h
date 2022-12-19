@@ -29,8 +29,6 @@ public:
   void operator()(coro_context<async_task<f1ap_ue_context_update_response>>& ctx);
 
 private:
-  void calculate_next_ue_context();
-
   void add_bearers_to_ue_context();
 
   void                                                update_f1_bearers();
@@ -38,6 +36,7 @@ private:
   async_task<mac_ue_reconfiguration_response_message> update_mac_bearers();
 
   f1ap_ue_context_update_response make_ue_config_response();
+  f1ap_ue_context_update_response make_ue_config_failure();
 
   const f1ap_ue_context_update_request         request;
   ue_manager_ctrl_configurator&                ue_mng;
@@ -49,7 +48,7 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("DU-MNG");
   du_ue*                ue     = nullptr;
 
-  cell_group_config next_cell_group;
+  cell_group_config prev_cell_group;
 };
 
 } // namespace srs_du

@@ -43,15 +43,6 @@ du_ue& du_manager_proc_tester::create_ue(du_ue_index_t ue_index)
   mac.wait_ue_create.result.cell_index              = ul_ccch_msg.cell_index;
   mac.wait_ue_create.ready_ev.set();
 
-  cell_res_alloc.next_resource_list.clear();
-  {
-    auto       key                       = std::make_pair(ue_index, ul_ccch_msg.cell_index);
-    auto       it_pair                   = cell_res_alloc.next_resource_list.emplace(key, ue_cell_resource{});
-    const auto ul_cfg                    = config_helpers::make_default_ue_uplink_config();
-    it_pair.first->second.pucch_res_list = ul_cfg.init_ul_bwp.pucch_cfg->pucch_res_list;
-    it_pair.first->second.sr_res_list    = ul_cfg.init_ul_bwp.pucch_cfg->sr_res_list;
-  }
-
   async_task<void> t = launch_async<ue_creation_procedure>(
       ue_index, ul_ccch_msg, ue_mng, params.services, params.mac, params.rlc, params.f1ap, cell_res_alloc);
 
@@ -84,6 +75,20 @@ f1ap_ue_context_update_response du_manager_proc_tester::configure_ue(const f1ap_
   mac.wait_ue_reconf.result.ue_index = req.ue_index;
   mac.wait_ue_reconf.result.result   = true;
   mac.wait_ue_reconf.ready_ev.set();
+
+  // Prepare DU resource allocator response.
+  cell_res_alloc.next_context_update_result = cell_res_alloc.ue_resource_pool[req.ue_index];
+  for (srb_id_t srb_id : req.srbs_to_setup) {
+    cell_res_alloc.next_context_update_result.rlc_bearers.emplace_back();
+    cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid    = srb_id_to_lcid(srb_id);
+    cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
+  }
+  for (const drb_to_setup& drb : req.drbs_to_setup) {
+    cell_res_alloc.next_context_update_result.rlc_bearers.emplace_back();
+    cell_res_alloc.next_context_update_result.rlc_bearers.back().drb_id  = drb.drb_id;
+    cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid    = uint_to_lcid(3 + (unsigned)drb.drb_id);
+    cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
+  }
 
   // Run Procedure.
   async_task<f1ap_ue_context_update_response> t = launch_async<ue_configuration_procedure>(

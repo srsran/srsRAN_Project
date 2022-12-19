@@ -26,12 +26,6 @@
 
 namespace srsgnb {
 
-/// \c maxNrofServingCells, TS 38.331.
-const unsigned MAX_NOF_SERVING_CELLS = 32;
-
-/// \c ServCellIndex, TS 38.331.
-enum serv_cell_index { MAX_SERVING_CELL_IDX = 31, SERVING_CELL_INVALID = MAX_NOF_SERVING_CELLS };
-
 /// \c xOverhead options, as per TS 38.331. Used in \c PDSCH-ServingCellConfig and \c PUSCH-ServingCellConfig.
 enum class x_overhead {
   not_set = 0,
@@ -41,10 +35,10 @@ enum class x_overhead {
 };
 
 /// Converts a uint into a \ref serv_cell_index.
-inline serv_cell_index uint_to_serv_cell_index(unsigned idx)
+inline serv_cell_index_t uint_to_serv_cell_index(unsigned idx)
 {
-  return idx < MAX_NOF_SERVING_CELLS ? static_cast<serv_cell_index>(idx)
-                                     : static_cast<serv_cell_index>(MAX_NOF_SERVING_CELLS);
+  return idx < MAX_NOF_SERVING_CELLS ? static_cast<serv_cell_index_t>(idx)
+                                     : static_cast<serv_cell_index_t>(MAX_NOF_SERVING_CELLS);
 }
 
 /// "PDCCH-Config" - UE-dedicated PDCCH configuration as per TS 38.331.
@@ -209,7 +203,7 @@ struct pdsch_serving_cell_config {
   optional<pdsch_code_block_group_transmission> code_block_group_tx;
   x_overhead                                    x_ov_head{x_overhead::not_set};
   nof_harq_proc_for_pdsch                       nof_harq_proc{nof_harq_proc_for_pdsch::not_set};
-  optional<serv_cell_index>                     pucch_cell;
+  optional<serv_cell_index_t>                   pucch_cell;
   /// Values {1,...,8};
   unsigned       max_mimo_layers;
   optional<bool> processing_type_2_enabled;

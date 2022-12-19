@@ -92,16 +92,16 @@ public:
   void add_srb(srb_id_t srb_id, const rlc_config& rlc_cfg);
   void add_drb(drb_id_t drb_id, lcid_t lcid, const rlc_config& rlc_cfg);
 
-  const slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>&                  srbs() const { return srbs_; }
-  slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>&                        srbs() { return srbs_; }
-  const slotted_id_table<drb_id_t, du_ue_drb, MAX_NOF_DRBS, drb_id_to_index>& drbs() const { return drbs_; };
-  slotted_id_table<drb_id_t, du_ue_drb, MAX_NOF_DRBS, drb_id_to_index>&       drbs() { return drbs_; };
+  const slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>&                        srbs() const { return srbs_; }
+  slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>&                              srbs() { return srbs_; }
+  const slotted_id_table<drb_id_t, du_ue_drb, MAX_NOF_DRBS, true, drb_id_to_index>& drbs() const { return drbs_; };
+  slotted_id_table<drb_id_t, du_ue_drb, MAX_NOF_DRBS, true, drb_id_to_index>&       drbs() { return drbs_; };
 
   optional<lcid_t> allocate_lcid() const;
 
 private:
-  slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>                  srbs_;
-  slotted_id_table<drb_id_t, du_ue_drb, MAX_NOF_DRBS, drb_id_to_index> drbs_;
+  slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>                        srbs_;
+  slotted_id_table<drb_id_t, du_ue_drb, MAX_NOF_DRBS, true, drb_id_to_index> drbs_;
 };
 
 } // namespace srs_du
