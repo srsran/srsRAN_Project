@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "../converters/e1ap_asn1_converters.h"
+#include "../converters/f1ap_asn1_converters.h"
 #include "../converters/rrc_ue_asn1_converters.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/f1c/cu_cp/f1c_cu.h"
