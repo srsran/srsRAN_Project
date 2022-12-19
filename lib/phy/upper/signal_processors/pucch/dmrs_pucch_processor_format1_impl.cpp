@@ -88,8 +88,11 @@ static unsigned dmrs_pucch_symbols(const dmrs_pucch_processor::config_t& config,
   return 0;
 }
 
-void dmrs_pucch_processor_format1_impl::generate_dmrs_pattern(layer_dmrs_pattern& mask, const config_t& config)
+dmrs_pucch_processor_format1_impl::layer_dmrs_pattern
+dmrs_pucch_processor_format1_impl::generate_dmrs_pattern(const config_t& config)
 {
+  layer_dmrs_pattern mask;
+
   // All RE within the PRB are allocated to DM-RS.
   mask.re_pattern = ~bounded_bitset<NRE>(NRE);
 
@@ -113,6 +116,8 @@ void dmrs_pucch_processor_format1_impl::generate_dmrs_pattern(layer_dmrs_pattern
   pucch_format1_dmrs_symb_mask.for_each(0, config.nof_symbols, [&mask, &config](unsigned bitpos) {
     mask.symbols.set(config.start_symbol_index + bitpos);
   });
+
+  return mask;
 }
 
 void dmrs_pucch_processor_format1_impl::generate_sequence(span<srsgnb::cf_t>                    sequence,
@@ -157,9 +162,6 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
   // Resize DM-RS symbol buffer.
   temp_symbols.resize(dims);
 
-  // Generate the DM-RS allocation pattern.
-  generate_dmrs_pattern(temp_pattern, config);
-
   unsigned u, v;
   // Compute group sequence.
   helper.compute_group_sequence(config.group_hopping, config.n_id, u, v);
@@ -183,9 +185,17 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
     }
   }
 
+  srsgnb_assert(temp_symbols.size().nof_symbols == i_dmrs_symb,
+                "DM-RS buffer has {} OFDM symbols, but only {} symbols have been filled.",
+                temp_symbols.size().nof_symbols,
+                i_dmrs_symb);
+
   // Prepare channel estimator configuration.
   port_channel_estimator::configuration est_cfg = {};
-  est_cfg.dmrs_pattern.emplace_back(temp_pattern);
+
+  // Generate DM-RS allocation pattern.
+  est_cfg.dmrs_pattern.emplace_back(generate_dmrs_pattern(config));
+
   est_cfg.scs          = to_subcarrier_spacing(config.slot.numerology());
   est_cfg.first_symbol = config.start_symbol_index;
   est_cfg.nof_symbols  = config.nof_symbols;

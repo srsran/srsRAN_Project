@@ -176,6 +176,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&   p
   // subsection.
   static constexpr unsigned DL_DMRS_SYMBOL_POS_SIZE = 14U;
   proc_pdu.dmrs_symbol_mask.resize(DL_DMRS_SYMBOL_POS_SIZE);
+  proc_pdu.dmrs_symbol_mask.reset();
   for (unsigned i = 0; i != DL_DMRS_SYMBOL_POS_SIZE; ++i) {
     proc_pdu.dmrs_symbol_mask.set(i, (static_cast<unsigned>(fapi_pdu.dl_dmrs_symb_pos >> i) & 1U) == 1U);
   }

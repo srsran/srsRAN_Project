@@ -46,8 +46,6 @@ private:
 
   /// Buffer for DM-RS symbols.
   dmrs_symbol_list temp_symbols;
-  /// DM-RS allocation pattern.
-  layer_dmrs_pattern temp_pattern;
   /// Pre-generated orthogonal cover code.
   const pucch_orthogonal_sequence occ;
 
@@ -77,8 +75,8 @@ private:
   /// \brief Generates the PUCCH DM-RS allocation pattern.
   ///
   /// Implements the PUCCH DM-RS mapping, as described in TS38.211 Section 6.4.1.3.1.2.
-  /// \param[out] mask DM-RS allocation pattern.
-  /// \param[in]  cfg  Configuration parameters.
-  static void generate_dmrs_pattern(layer_dmrs_pattern& mask, const config_t& config);
+  /// \param[in] config Configuration parameters.
+  /// \return The DM-RS allocation pattern.
+  static layer_dmrs_pattern generate_dmrs_pattern(const config_t& config);
 };
 } // namespace srsgnb

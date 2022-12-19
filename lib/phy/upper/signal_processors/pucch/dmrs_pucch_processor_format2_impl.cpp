@@ -39,11 +39,14 @@ void dmrs_pucch_processor_format2_impl::generate_sequence(span<cf_t>            
   prg->advance(starting_prb * NOF_DMRS_PER_RB * 2);
 
   // Generate sequence.
-  prg->generate(sequence.first(config.nof_prb * NOF_DMRS_PER_RB), M_SQRT1_2);
+  prg->generate(sequence, M_SQRT1_2);
 }
 
-void dmrs_pucch_processor_format2_impl::generate_dmrs_pattern(layer_dmrs_pattern& mask, const config_t& config)
+dmrs_pucch_processor_format2_impl::layer_dmrs_pattern
+dmrs_pucch_processor_format2_impl::generate_dmrs_pattern(const config_t& config)
 {
+  layer_dmrs_pattern mask;
+
   // RE allocation pattern is always the same.
   mask.re_pattern = format2_prb_re_mask;
 
@@ -64,6 +67,8 @@ void dmrs_pucch_processor_format2_impl::generate_dmrs_pattern(layer_dmrs_pattern
   // Set used symbols.
   mask.symbols.resize(config.start_symbol_index + config.nof_symbols);
   mask.symbols.fill(config.start_symbol_index, config.start_symbol_index + config.nof_symbols, true);
+
+  return mask;
 }
 
 void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&                     estimate,
@@ -85,11 +90,8 @@ void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&              
   // Resize DM-RS symbol buffer.
   temp_symbols.resize(dims);
 
-  // Generate the DM-RS allocation pattern.
-  generate_dmrs_pattern(temp_pattern, config);
-
   unsigned i_symb_start = config.start_symbol_index;
-  unsigned i_symb_end   = config.start_symbol_index + config.nof_symbols;
+  unsigned i_symb_end   = config.start_symbol_index + dims.nof_symbols;
   // For each symbol carrying DM-RS (up to 2 symbols maximum).
   for (unsigned i_symb = i_symb_start, i_dmrs_symb = 0; i_symb != i_symb_end; ++i_symb, ++i_dmrs_symb) {
     // Generate sequence.
@@ -99,7 +101,10 @@ void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&              
 
   // Prepare channel estimator configuration.
   port_channel_estimator::configuration est_cfg = {};
-  est_cfg.dmrs_pattern.emplace_back(temp_pattern);
+
+  // Generate the DM-RS allocation pattern.
+  est_cfg.dmrs_pattern.emplace_back(generate_dmrs_pattern(config));
+
   est_cfg.scs          = to_subcarrier_spacing(config.slot.numerology());
   est_cfg.first_symbol = config.start_symbol_index;
   est_cfg.nof_symbols  = config.nof_symbols;
