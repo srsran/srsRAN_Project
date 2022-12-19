@@ -52,7 +52,7 @@ inline void build_pucch_guardbands_list(std::vector<sched_grid_resource>& pucch_
   uplink_config ul_config = make_default_ue_uplink_config();
 
   auto list_contain_resource = [&pucch_guardbands](const sched_grid_resource& res) {
-    return std::find(pucch_guardbands.begin(), pucch_guardbands.end(), res) == pucch_guardbands.end();
+    return std::find(pucch_guardbands.begin(), pucch_guardbands.end(), res) != pucch_guardbands.end();
   };
 
   for (const auto& pucch_res : ul_config.init_ul_bwp.pucch_cfg->pucch_res_list) {
@@ -84,10 +84,10 @@ inline void build_pucch_guardbands_list(std::vector<sched_grid_resource>& pucch_
       }
     }
 
-    if (not res_0.is_empty() and list_contain_resource(res_0)) {
+    if (not res_0.is_empty() and not list_contain_resource(res_0)) {
       pucch_guardbands.emplace_back(res_0);
     }
-    if (not res_1.is_empty() and list_contain_resource(res_1)) {
+    if (not res_1.is_empty() and not list_contain_resource(res_1)) {
       pucch_guardbands.emplace_back(res_1);
     }
   }
