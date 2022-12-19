@@ -176,7 +176,7 @@ ul_config_common srsgnb::config_helpers::make_default_ul_config_common(const cel
   cfg.init_ul_bwp.rach_cfg_common->msg3_transform_precoder                       = false;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index           = 16;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_fdm                     = 1;
-  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start         = 5;
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start         = 2;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config = 15;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window               = 10;
   cfg.init_ul_bwp.pusch_cfg_common.emplace();
@@ -286,19 +286,32 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config()
   pucch_cfg.pucch_res_list.push_back(res_basic);
   pucch_resource& res1 = pucch_cfg.pucch_res_list.back();
   res1.res_id          = 1;
-  res1.starting_prb    = 0;
-  res1.second_hop_prb  = 51;
+  res1.starting_prb    = 1;
+  res1.second_hop_prb  = 50;
+  // >>> PUCCH resource 2.
+  pucch_cfg.pucch_res_list.push_back(res_basic);
+  pucch_resource& res2 = pucch_cfg.pucch_res_list.back();
+  res2.res_id          = 2;
+  res2.starting_prb    = 50;
+  res2.second_hop_prb  = 1;
+  // >>> PUCCH resource 2.
+  pucch_cfg.pucch_res_list.push_back(res_basic);
+  pucch_resource& res3 = pucch_cfg.pucch_res_list.back();
+  res3.res_id          = 3;
+  res3.starting_prb    = 0;
+  res3.second_hop_prb  = 51;
 
   // TODO: add more PUCCH resources.
 
   pucch_cfg.dl_data_to_ul_ack.push_back(4);
 
   // >>> SR Resource.
+  const unsigned pucch_sr_res_id = pucch_cfg.pucch_res_list.size() - 1;
   pucch_cfg.sr_res_list.push_back(scheduling_request_resource_config{.sr_res_id    = 1,
                                                                      .sr_id        = uint_to_sched_req_id(0),
                                                                      .period       = sr_periodicity::sl_40,
                                                                      .offset       = 0,
-                                                                     .pucch_res_id = 1});
+                                                                     .pucch_res_id = pucch_sr_res_id});
 
   pucch_cfg.format_1_common_param.emplace();
 

@@ -35,7 +35,7 @@ pucch_resource_manager::get_next_harq_res_available(slot_point slot_harq, rnti_t
 
   const auto&                    pucch_res_list = pucch_cfg.pucch_res_list;
   rnti_pucch_res_id_slot_record& res_counter    = get_slot_resource_counter(slot_harq);
-  if (res_counter.next_pucch_harq_res_idx < pucch_res_list.size()) {
+  if (res_counter.next_pucch_harq_res_idx < pucch_res_list.size() - 1) {
     res_counter.rnti_records.emplace_back(crnti);
     return pucch_harq_resource_alloc_record{.pucch_res           = &pucch_res_list[res_counter.next_pucch_harq_res_idx],
                                             .pucch_res_indicator = res_counter.next_pucch_harq_res_idx++};

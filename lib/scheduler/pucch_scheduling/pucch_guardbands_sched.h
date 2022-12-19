@@ -34,7 +34,7 @@ public:
   void run_slot(cell_resource_allocator& res_alloc);
 
 private:
-  ///Pre-allocates the PUCCH guardband on the resource grid for a given slot.
+  /// Pre-allocates the PUCCH guardband on the resource grid for a given slot.
   void allocate_pucch_guardbands(cell_slot_resource_allocator& slot_alloc);
 
   const cell_configuration& cell_cfg;

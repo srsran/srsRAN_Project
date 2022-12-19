@@ -23,16 +23,6 @@ public:
   test_pucch_resource_manager() :
     pucch_cfg{config_helpers::make_default_ue_uplink_config().init_ul_bwp.pucch_cfg.value()}, sl_tx(slot_point(0, 0))
   {
-    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id                 = 2,
-                                                         .starting_prb           = 1,
-                                                         .second_hop_prb         = 7,
-                                                         .intraslot_freq_hopping = true,
-                                                         .format                 = pucch_format::FORMAT_1});
-    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id                 = 3,
-                                                         .starting_prb           = 2,
-                                                         .second_hop_prb         = 8,
-                                                         .intraslot_freq_hopping = true,
-                                                         .format                 = pucch_format::FORMAT_1});
     pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id                 = 4,
                                                          .starting_prb           = 3,
                                                          .second_hop_prb         = 9,
@@ -51,6 +41,11 @@ public:
     pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id                 = 7,
                                                          .starting_prb           = 6,
                                                          .second_hop_prb         = 12,
+                                                         .intraslot_freq_hopping = true,
+                                                         .format                 = pucch_format::FORMAT_1});
+    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id                 = 8,
+                                                         .starting_prb           = 7,
+                                                         .second_hop_prb         = 13,
                                                          .intraslot_freq_hopping = true,
                                                          .format                 = pucch_format::FORMAT_1});
     res_manager.slot_indication(sl_tx);
@@ -425,12 +420,35 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_3_ues)
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
 
   auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  // The 2 HARQ grants should belong to UE different from 0x4601.
+  ASSERT_EQ(3, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(test_pdu.pucch_pdu, &slot_grid.result.ul.pucchs.back());
+  ASSERT_NE(t_bench.get_main_ue().crnti, slot_grid.result.ul.pucchs[0].crnti);
+  ASSERT_NE(t_bench.get_main_ue().crnti, slot_grid.result.ul.pucchs[1].crnti);
+  // The main UE (0x4601) should be allocated as the last one.
+  ASSERT_EQ(t_bench.get_main_ue().crnti, slot_grid.result.ul.pucchs[2].crnti);
+  const unsigned EXPECTED_PUCCH_RES_IDX = 2;
+  ASSERT_EQ(EXPECTED_PUCCH_RES_IDX, test_pdu.pucch_res_indicator);
+}
+
+// Tests whether allocator grants PUCCH HARQ for a second UE when another UE's PUCCH grant has been allocated.
+TEST_F(test_pucch_harq_allocator_ded_resources, test_4_ues)
+{
+  // Add 2 UEs, each with their own HARQ grant allocated
+  add_ue_with_harq_grant();
+  add_ue_with_harq_grant();
+  add_ue_with_harq_grant();
+  pucch_harq_ack_grant test_pdu = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
   // Verify that the UE 0x4601 does not get allocated any HARQ grant.
   ASSERT_EQ(nullptr, test_pdu.pucch_pdu);
   // The 2 HARQ grants should belong to UE different from 0x4601.
-  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(3, slot_grid.result.ul.pucchs.size());
   ASSERT_NE(t_bench.get_main_ue().crnti, slot_grid.result.ul.pucchs[0].crnti);
   ASSERT_NE(t_bench.get_main_ue().crnti, slot_grid.result.ul.pucchs[1].crnti);
+  ASSERT_NE(t_bench.get_main_ue().crnti, slot_grid.result.ul.pucchs[2].crnti);
 }
 
 ///////   Test removal of dedicated PUCCH resources    ///////
@@ -460,7 +478,7 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_harq_removal)
 
   ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
   ASSERT_EQ(1, removed_bits.harq_ack_nof_bits);
-  ASSERT_NE(0, removed_bits.csi_part1_bits);
+  ASSERT_EQ(0, removed_bits.csi_part1_bits);
 }
 
 TEST_F(test_pucch_harq_allocator_ded_resources, test_sr_harq_removal)
@@ -475,7 +493,7 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_sr_harq_removal)
 
   ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
   ASSERT_EQ(1, removed_bits.harq_ack_nof_bits);
-  ASSERT_NE(0, removed_bits.csi_part1_bits);
+  ASSERT_EQ(0, removed_bits.csi_part1_bits);
 }
 
 int main(int argc, char** argv)
