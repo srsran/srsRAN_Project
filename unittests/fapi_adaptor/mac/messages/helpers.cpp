@@ -326,7 +326,7 @@ pusch_information unittests::build_valid_pusch_pdu()
   pusch.symbols                    = {2, 12};
   pusch.mcs_descr.target_code_rate = 193;
   pusch.mcs_descr.modulation       = modulation_scheme::QAM256;
-  pusch.mcs_index                  = {3};
+  pusch.mcs_index                  = 3;
   pusch.mcs_table                  = pusch_mcs_table::qam256;
   pusch.dmrs = {dmrs_symbol_mask(14), dmrs_config_type::type1, 2, 3, false, 0, 2, bounded_bitset<12>(12)};
   pusch.intra_slot_freq_hopping    = false;

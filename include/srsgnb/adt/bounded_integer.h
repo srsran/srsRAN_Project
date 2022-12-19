@@ -20,13 +20,13 @@ namespace srsgnb {
 namespace detail {
 
 /// Tag struct to uniquely identify bounded integers by template types and values.
-template <typename I, I Min, I Max>
+template <typename Integer>
 struct bounded_integer_tag {
 };
 
-template <typename Integer, Integer MIN_VALUE, Integer MAX_VALUE>
+template <typename Integer>
 using bounded_integer_base = strong_type<Integer,
-                                         detail::bounded_integer_tag<Integer, MIN_VALUE, MAX_VALUE>,
+                                         detail::bounded_integer_tag<Integer>,
                                          strong_equality,
                                          strong_equality_with<Integer>,
                                          strong_comparison,
@@ -36,12 +36,12 @@ using bounded_integer_base = strong_type<Integer,
 
 /// This class represents an integer whose value is within the set of possible values: {MIN_VALUE, ..., MAX_VALUE}.
 template <typename Integer, Integer MIN_VALUE, Integer MAX_VALUE>
-class bounded_integer : public detail::bounded_integer_base<Integer, MIN_VALUE, MAX_VALUE>
+class bounded_integer : public detail::bounded_integer_base<Integer>
 {
   static_assert(std::is_integral<Integer>::value, "Template argument must be an integer");
   static_assert(MIN_VALUE <= MAX_VALUE, "Provided bounds for bounded_integer are not valid");
 
-  using base_class = detail::bounded_integer_base<Integer, MIN_VALUE, MAX_VALUE>;
+  using base_class = detail::bounded_integer_base<Integer>;
 
 public:
   using base_class::base_class;
