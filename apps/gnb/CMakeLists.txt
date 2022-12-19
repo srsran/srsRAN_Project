@@ -6,6 +6,8 @@
 # the distribution.
 #
 
+add_subdirectory(adapters)
+
 add_executable(gnb
         gnb.cpp
         gnb_appconfig_cli11_schema.cpp
@@ -16,8 +18,9 @@ add_executable(gnb
         )
 
 target_link_libraries(gnb
-        srsgnb_cu_cp
+        srsgnbapp_f1u_connector 
         srsgnb_cu_up
+        srsgnb_cu_cp
         srsgnb_io_broker
         srsgnb_ngap
         ngap_asn1
