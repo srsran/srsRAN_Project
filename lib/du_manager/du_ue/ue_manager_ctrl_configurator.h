@@ -11,12 +11,12 @@
 #pragma once
 
 #include "../du_manager_config.h"
-#include "cell_group_config.h"
 #include "du_ue.h"
 
 namespace srsgnb {
 namespace srs_du {
 
+/// \brief Interface used by DU Manager procedures to add/find/remove UEs from the DU UE Manager.
 class ue_manager_ctrl_configurator
 {
 public:

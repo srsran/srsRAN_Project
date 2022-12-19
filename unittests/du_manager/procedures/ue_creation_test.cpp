@@ -25,10 +25,10 @@ cell_group_cfg_s unpack_cell_group_config(const byte_buffer& container)
   return cell_group;
 }
 
-class ue_creation_tester : public du_manager_proc_tester, public ::testing::Test
+class du_manager_ue_creation_tester : public du_manager_proc_tester, public ::testing::Test
 {
 protected:
-  ue_creation_tester() :
+  du_manager_ue_creation_tester() :
     du_manager_proc_tester(std::vector<du_cell_config>{config_helpers::make_default_du_cell_config()})
   {
   }
@@ -85,7 +85,8 @@ protected:
   optional<lazy_task_launcher<void>> proc_launcher;
 };
 
-TEST_F(ue_creation_tester, when_du_manager_receives_ue_creation_request_then_mac_and_f1ap_get_request_to_create_ue)
+TEST_F(du_manager_ue_creation_tester,
+       when_du_manager_receives_ue_creation_request_then_mac_and_f1ap_get_request_to_create_ue)
 {
   // Start Procedure.
   du_ue_index_t ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX));
@@ -107,7 +108,7 @@ TEST_F(ue_creation_tester, when_du_manager_receives_ue_creation_request_then_mac
   ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container_validity());
 }
 
-TEST_F(ue_creation_tester,
+TEST_F(du_manager_ue_creation_tester,
        when_du_manager_starts_ue_creation_then_the_procedure_does_not_complete_until_mac_answers_back)
 {
   // Start Procedure.
@@ -125,7 +126,8 @@ TEST_F(ue_creation_tester,
   ASSERT_TRUE(proc.ready());
 }
 
-TEST_F(ue_creation_tester, when_a_ue_is_created_then_cell_resources_are_requested_from_cell_resource_allocator)
+TEST_F(du_manager_ue_creation_tester,
+       when_a_ue_is_created_then_cell_resources_are_requested_from_cell_resource_allocator)
 {
   // Test Preamble.
   // > Generate SR offsets for two UEs.
@@ -134,8 +136,8 @@ TEST_F(ue_creation_tester, when_a_ue_is_created_then_cell_resources_are_requeste
       this->cell_res_alloc.next_context_update_result.spcell_cfg.spcell_cfg_ded.ul_config->init_ul_bwp.pucch_cfg
           ->sr_res_list[0]
           .period);
-  unsigned sr_offset1 = test_rgen::uniform_int<unsigned>(0, sr_period);
-  unsigned sr_offset2 = test_rgen::uniform_int<unsigned>(0, sr_period);
+  unsigned sr_offset1 = test_rgen::uniform_int<unsigned>(0, sr_period - 1);
+  unsigned sr_offset2 = test_rgen::uniform_int<unsigned>(0, sr_period - 1);
   // > Create first UE.
   set_sr_offset(ue_idx1, to_du_cell_index(0), sr_offset1);
   start_procedure(ue_idx1, to_rnti(0x4601));

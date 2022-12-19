@@ -24,7 +24,7 @@ ue_creation_procedure::ue_creation_procedure(du_ue_index_t                      
                                              const du_manager_params::mac_config_params&  mac_mng_,
                                              const du_manager_params::rlc_config_params&  rlc_params_,
                                              const du_manager_params::f1ap_config_params& f1ap_mng_,
-                                             du_ue_resource_configurator_factory&         cell_res_alloc_) :
+                                             du_ran_resource_manager&                     cell_res_alloc_) :
   msg(ccch_ind_msg),
   ue_mng(ue_mng_),
   services(du_services_),
@@ -118,8 +118,8 @@ bool ue_creation_procedure::setup_du_ue_resources()
   f1ap_ue_context_update_request req;
   req.ue_index = ue_ctx->ue_index;
   req.srbs_to_setup.resize(1);
-  req.srbs_to_setup[0]                    = srb_id_t::srb1;
-  du_ue_ran_resource_update_response resp = ue_ctx->resources.update(msg.cell_index, req);
+  req.srbs_to_setup[0]                = srb_id_t::srb1;
+  du_ue_resource_update_response resp = ue_ctx->resources.update(msg.cell_index, req);
   if (resp.release_required) {
     log_proc_failure(logger, MAX_NOF_DU_UES, msg.crnti, name(), "Failure to setup DU UE PCell and SRB resources.");
     return false;

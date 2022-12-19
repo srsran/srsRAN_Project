@@ -11,8 +11,8 @@
 #pragma once
 
 #include "du_cell_manager.h"
-#include "du_cell_resource_allocator_impl.h"
 #include "du_ue/du_ue_manager.h"
+#include "ran_resource_management/du_ran_resource_manager_impl.h"
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/du_manager/du_manager_params.h"
 #include "srsgnb/rlc/rlc_rx.h"
@@ -53,9 +53,9 @@ private:
   du_manager_config_t cfg;
 
   // Components
-  du_cell_manager                 cell_mng;
-  du_cell_resource_allocator_impl cell_res_alloc;
-  du_ue_manager                   ue_mng;
+  du_cell_manager              cell_mng;
+  du_ran_resource_manager_impl cell_res_alloc;
+  du_ue_manager                ue_mng;
 
   // Handler for DU tasks.
   async_task_sequencer main_ctrl_loop;

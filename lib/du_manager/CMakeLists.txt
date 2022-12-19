@@ -6,6 +6,7 @@
 # the distribution.
 #
 
+add_subdirectory(ran_resource_management)
 add_subdirectory(du_ue)
 add_subdirectory(converters)
 add_subdirectory(procedures)
@@ -13,11 +14,11 @@ add_subdirectory(procedures)
 set(SOURCES du_manager_factory.cpp
         du_manager_impl.cpp
         du_ue/du_ue_manager.cpp
-        du_cell_manager.cpp
-        du_cell_resource_allocator_impl.cpp)
+        du_cell_manager.cpp)
 
 add_library(srsgnb_du_manager STATIC ${SOURCES})
 target_link_libraries(srsgnb_du_manager
+                      du_resource_manager
                       du_ue
                       srsgnb_du_manager_procedures
                       du_manager_converters

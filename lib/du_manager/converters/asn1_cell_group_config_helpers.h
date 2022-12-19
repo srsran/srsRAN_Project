@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../du_ue/cell_group_config.h"
+#include "../ran_resource_management/cell_group_config.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 
 namespace srsgnb {

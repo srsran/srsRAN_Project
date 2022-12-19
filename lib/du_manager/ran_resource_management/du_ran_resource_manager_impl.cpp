@@ -8,7 +8,7 @@
  *
  */
 
-#include "du_cell_resource_allocator_impl.h"
+#include "du_ran_resource_manager_impl.h"
 #include "srsgnb/mac/config/mac_cell_group_config_factory.h"
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 
@@ -40,9 +40,9 @@ static lcid_t find_empty_lcid(const std::vector<rlc_bearer_config>& rlc_bearers)
   return lcid;
 }
 
-du_ue_ran_resource_updater_impl::du_ue_ran_resource_updater_impl(cell_group_config*               cell_grp_cfg_,
-                                                                 du_cell_resource_allocator_impl& parent_,
-                                                                 du_ue_index_t                    ue_index_) :
+du_ue_ran_resource_updater_impl::du_ue_ran_resource_updater_impl(cell_group_config*            cell_grp_cfg_,
+                                                                 du_ran_resource_manager_impl& parent_,
+                                                                 du_ue_index_t                 ue_index_) :
   cell_grp(cell_grp_cfg_), parent(&parent_), ue_index(ue_index_)
 {
 }
@@ -52,16 +52,16 @@ du_ue_ran_resource_updater_impl::~du_ue_ran_resource_updater_impl()
   parent->deallocate_context(ue_index);
 }
 
-du_ue_ran_resource_update_response
-du_ue_ran_resource_updater_impl::update(du_cell_index_t pcell_index, const f1ap_ue_context_update_request& upd_req)
+du_ue_resource_update_response du_ue_ran_resource_updater_impl::update(du_cell_index_t pcell_index,
+                                                                       const f1ap_ue_context_update_request& upd_req)
 {
   return parent->update_context(ue_index, pcell_index, upd_req);
 }
 
 ///////////////////////////
 
-du_cell_resource_allocator_impl::du_cell_resource_allocator_impl(span<const du_cell_config> cell_cfg_list_,
-                                                                 const serving_cell_config& default_ue_cell_cfg_) :
+du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_config> cell_cfg_list_,
+                                                           const serving_cell_config& default_ue_cell_cfg_) :
   cell_cfg_list(cell_cfg_list_),
   default_ue_cell_cfg(default_ue_cell_cfg_),
   logger(srslog::fetch_basic_logger("DU-MNG")),
@@ -78,12 +78,12 @@ du_cell_resource_allocator_impl::du_cell_resource_allocator_impl(span<const du_c
   }
 }
 
-du_ue_resource_configurator
-du_cell_resource_allocator_impl::create_ue_resource_configurator(du_ue_index_t ue_index, du_cell_index_t pcell_index)
+ue_ran_resource_configurator du_ran_resource_manager_impl::create_ue_resource_configurator(du_ue_index_t   ue_index,
+                                                                                           du_cell_index_t pcell_index)
 {
   if (ue_res_pool.contains(ue_index)) {
     logger.warning("Double allocation of same UE={} not supported", ue_index);
-    return du_ue_resource_configurator{std::unique_ptr<du_ue_ran_resource_updater_impl>{nullptr}};
+    return ue_ran_resource_configurator{std::unique_ptr<du_ue_ran_resource_updater_impl>{nullptr}};
   }
   ue_res_pool.emplace(ue_index);
 
@@ -97,17 +97,17 @@ du_cell_resource_allocator_impl::create_ue_resource_configurator(du_ue_index_t u
   mcg.pcg_cfg.p_nr_fr1            = 10;
   mcg.pcg_cfg.pdsch_harq_codebook = pdsch_harq_ack_codebook::dynamic;
 
-  return du_ue_resource_configurator{std::make_unique<du_ue_ran_resource_updater_impl>(&mcg, *this, ue_index)};
+  return ue_ran_resource_configurator{std::make_unique<du_ue_ran_resource_updater_impl>(&mcg, *this, ue_index)};
 }
 
-du_ue_ran_resource_update_response
-du_cell_resource_allocator_impl::update_context(du_ue_index_t                         ue_index,
-                                                du_cell_index_t                       pcell_idx,
-                                                const f1ap_ue_context_update_request& upd_req)
+du_ue_resource_update_response
+du_ran_resource_manager_impl::update_context(du_ue_index_t                         ue_index,
+                                             du_cell_index_t                       pcell_idx,
+                                             const f1ap_ue_context_update_request& upd_req)
 {
   srsgnb_assert(ue_res_pool.contains(ue_index), "This function should only be called for an already allocated UE");
-  cell_group_config&                 ue_mcg = ue_res_pool[ue_index].cg_cfg;
-  du_ue_ran_resource_update_response resp;
+  cell_group_config&             ue_mcg = ue_res_pool[ue_index].cg_cfg;
+  du_ue_resource_update_response resp;
 
   // > Deallocate resources for previously configured cells that have now been removed or changed.
   if (pcell_idx != ue_mcg.spcell_cfg.cell_index) {
@@ -182,7 +182,7 @@ du_cell_resource_allocator_impl::update_context(du_ue_index_t                   
   return resp;
 }
 
-void du_cell_resource_allocator_impl::deallocate_context(du_ue_index_t ue_index)
+void du_ran_resource_manager_impl::deallocate_context(du_ue_index_t ue_index)
 {
   srsgnb_assert(ue_res_pool.contains(ue_index), "This function should only be called for an already allocated UE");
   cell_group_config& ue_mcg = ue_res_pool[ue_index].cg_cfg;
@@ -194,9 +194,9 @@ void du_cell_resource_allocator_impl::deallocate_context(du_ue_index_t ue_index)
   ue_res_pool.erase(ue_index);
 }
 
-bool du_cell_resource_allocator_impl::allocate_cell_resources(du_ue_index_t     ue_index,
-                                                              du_cell_index_t   cell_index,
-                                                              serv_cell_index_t serv_cell_index)
+bool du_ran_resource_manager_impl::allocate_cell_resources(du_ue_index_t     ue_index,
+                                                           du_cell_index_t   cell_index,
+                                                           serv_cell_index_t serv_cell_index)
 {
   cell_group_config& ue_res = ue_res_pool[ue_index].cg_cfg;
 
@@ -229,8 +229,7 @@ bool du_cell_resource_allocator_impl::allocate_cell_resources(du_ue_index_t     
   return true;
 }
 
-void du_cell_resource_allocator_impl::deallocate_cell_resources(du_ue_index_t     ue_index,
-                                                                serv_cell_index_t serv_cell_index)
+void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_index, serv_cell_index_t serv_cell_index)
 {
   cell_group_config& ue_res = ue_res_pool[ue_index].cg_cfg;
 

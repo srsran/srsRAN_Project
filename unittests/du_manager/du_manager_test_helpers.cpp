@@ -37,12 +37,12 @@ dummy_ue_resource_configurator_factory::dummy_resource_updater::~dummy_resource_
   parent.ue_resource_pool.erase(ue_index);
 }
 
-du_ue_ran_resource_update_response
+du_ue_resource_update_response
 dummy_ue_resource_configurator_factory::dummy_resource_updater::update(du_cell_index_t pcell_index,
                                                                        const f1ap_ue_context_update_request& upd_req)
 {
   parent.ue_resource_pool[ue_index] = parent.next_context_update_result;
-  return du_ue_ran_resource_update_response{};
+  return du_ue_resource_update_response{};
 }
 
 const cell_group_config& dummy_ue_resource_configurator_factory::dummy_resource_updater::get()
@@ -50,19 +50,19 @@ const cell_group_config& dummy_ue_resource_configurator_factory::dummy_resource_
   return parent.ue_resource_pool[ue_index];
 }
 
-du_ue_resource_configurator
+ue_ran_resource_configurator
 dummy_ue_resource_configurator_factory::create_ue_resource_configurator(du_ue_index_t   ue_index,
                                                                         du_cell_index_t pcell_index)
 {
   if (ue_resource_pool.count(ue_index) > 0) {
-    return du_ue_resource_configurator{nullptr};
+    return ue_ran_resource_configurator{nullptr};
   }
   last_ue_index = ue_index;
   last_ue_pcell = pcell_index;
   ue_resource_pool.emplace(ue_index, cell_group_config{});
   ue_resource_pool[ue_index].spcell_cfg.cell_index    = pcell_index;
   ue_resource_pool[ue_index].spcell_cfg.serv_cell_idx = SERVING_CELL_PCELL_IDX;
-  return du_ue_resource_configurator{std::make_unique<dummy_resource_updater>(*this, ue_index)};
+  return ue_ran_resource_configurator{std::make_unique<dummy_resource_updater>(*this, ue_index)};
 }
 
 f1ap_ue_context_update_request

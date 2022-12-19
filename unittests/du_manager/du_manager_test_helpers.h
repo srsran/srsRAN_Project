@@ -177,17 +177,17 @@ public:
   void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override {}
 };
 
-class dummy_ue_resource_configurator_factory : public du_ue_resource_configurator_factory
+class dummy_ue_resource_configurator_factory : public du_ran_resource_manager
 {
 public:
-  class dummy_resource_updater : public du_ue_resource_configurator::resource_updater
+  class dummy_resource_updater : public ue_ran_resource_configurator::resource_updater
   {
   public:
     dummy_resource_updater(dummy_ue_resource_configurator_factory& parent_, du_ue_index_t ue_index_);
     ~dummy_resource_updater();
-    du_ue_ran_resource_update_response update(du_cell_index_t                       pcell_index,
-                                              const f1ap_ue_context_update_request& upd_req) override;
-    const cell_group_config&           get() override;
+    du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
+                                          const f1ap_ue_context_update_request& upd_req) override;
+    const cell_group_config&       get() override;
 
     du_ue_index_t                           ue_index;
     dummy_ue_resource_configurator_factory& parent;
@@ -201,8 +201,8 @@ public:
 
   dummy_ue_resource_configurator_factory();
 
-  du_ue_resource_configurator create_ue_resource_configurator(du_ue_index_t   ue_index,
-                                                              du_cell_index_t pcell_index) override;
+  ue_ran_resource_configurator create_ue_resource_configurator(du_ue_index_t   ue_index,
+                                                               du_cell_index_t pcell_index) override;
 };
 
 f1ap_ue_context_update_request create_f1ap_ue_context_update_request(du_ue_index_t                   ue_idx,

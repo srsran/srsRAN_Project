@@ -10,51 +10,50 @@
 
 #pragma once
 
-#include "du_ue/du_ue_resource_manager.h"
-#include <deque>
+#include "du_ran_resource_manager.h"
 
 namespace srsgnb {
 namespace srs_du {
 
-class du_cell_resource_allocator_impl;
+class du_ran_resource_manager_impl;
 
-class du_ue_ran_resource_updater_impl final : public du_ue_resource_configurator::resource_updater
+class du_ue_ran_resource_updater_impl final : public ue_ran_resource_configurator::resource_updater
 {
 public:
-  du_ue_ran_resource_updater_impl(cell_group_config*               cell_cfg_,
-                                  du_cell_resource_allocator_impl& parent_,
-                                  du_ue_index_t                    ue_index_);
+  du_ue_ran_resource_updater_impl(cell_group_config*            cell_cfg_,
+                                  du_ran_resource_manager_impl& parent_,
+                                  du_ue_index_t                 ue_index_);
   du_ue_ran_resource_updater_impl(const du_ue_ran_resource_updater_impl&)            = delete;
   du_ue_ran_resource_updater_impl(const du_ue_ran_resource_updater_impl&&)           = delete;
   du_ue_ran_resource_updater_impl& operator=(const du_ue_ran_resource_updater_impl&) = delete;
   du_ue_ran_resource_updater_impl& operator=(du_ue_ran_resource_updater_impl&&)      = delete;
   ~du_ue_ran_resource_updater_impl() override;
 
-  du_ue_ran_resource_update_response update(du_cell_index_t                       pcell_index,
-                                            const f1ap_ue_context_update_request& upd_req) override;
+  du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
+                                        const f1ap_ue_context_update_request& upd_req) override;
 
   const cell_group_config& get() override { return *cell_grp; }
 
 private:
-  cell_group_config*               cell_grp;
-  du_cell_resource_allocator_impl* parent;
-  du_ue_index_t                    ue_index;
+  cell_group_config*            cell_grp;
+  du_ran_resource_manager_impl* parent;
+  du_ue_index_t                 ue_index;
 };
 
-class du_cell_resource_allocator_impl : public du_ue_resource_configurator_factory
+class du_ran_resource_manager_impl : public du_ran_resource_manager
 {
 public:
-  du_cell_resource_allocator_impl(span<const du_cell_config> cell_cfg_list_,
-                                  const serving_cell_config& default_ue_cell_cfg_);
-  du_cell_resource_allocator_impl(du_cell_resource_allocator_impl&&)                 = delete;
-  du_cell_resource_allocator_impl(const du_cell_resource_allocator_impl&)            = delete;
-  du_cell_resource_allocator_impl& operator=(du_cell_resource_allocator_impl&&)      = delete;
-  du_cell_resource_allocator_impl& operator=(const du_cell_resource_allocator_impl&) = delete;
+  du_ran_resource_manager_impl(span<const du_cell_config> cell_cfg_list_,
+                               const serving_cell_config& default_ue_cell_cfg_);
+  du_ran_resource_manager_impl(du_ran_resource_manager_impl&&)                 = delete;
+  du_ran_resource_manager_impl(const du_ran_resource_manager_impl&)            = delete;
+  du_ran_resource_manager_impl& operator=(du_ran_resource_manager_impl&&)      = delete;
+  du_ran_resource_manager_impl& operator=(const du_ran_resource_manager_impl&) = delete;
 
-  du_ue_resource_configurator create_ue_resource_configurator(du_ue_index_t   ue_index,
-                                                              du_cell_index_t pcell_index) override;
+  ue_ran_resource_configurator create_ue_resource_configurator(du_ue_index_t   ue_index,
+                                                               du_cell_index_t pcell_index) override;
 
-  du_ue_ran_resource_update_response
+  du_ue_resource_update_response
   update_context(du_ue_index_t ue_index, du_cell_index_t pcell_idx, const f1ap_ue_context_update_request& upd_req);
 
   void deallocate_context(du_ue_index_t ue_index);

@@ -17,7 +17,7 @@ namespace srsgnb {
 namespace srs_du {
 
 /// \brief Outcome report of an DU UE Resource allocation request.
-struct du_ue_ran_resource_update_response {
+struct du_ue_resource_update_response {
   bool                           release_required = false;
   std::vector<srb_id_t>          failed_srbs;
   std::vector<drb_id_t>          failed_drbs;
@@ -27,19 +27,19 @@ struct du_ue_ran_resource_update_response {
 /// \brief This class manages the PHY, MAC and RLC resources used by an UE. It provides an API to update the UE
 /// resources on arrival of new UE Context Update Requests, and returns resources back to the DU Resource pool when
 /// it is destroyed.
-class du_ue_resource_configurator
+class ue_ran_resource_configurator
 {
 public:
   /// \brief Interface used to update the UE Resources on Reconfiguration and return the resources back to the pool,
   /// on UE deletion.
   struct resource_updater {
-    virtual ~resource_updater()                                                                      = default;
-    virtual du_ue_ran_resource_update_response update(du_cell_index_t                       pcell_index,
-                                                      const f1ap_ue_context_update_request& upd_req) = 0;
-    virtual const cell_group_config&           get()                                                 = 0;
+    virtual ~resource_updater()                                                                  = default;
+    virtual du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
+                                                  const f1ap_ue_context_update_request& upd_req) = 0;
+    virtual const cell_group_config&       get()                                                 = 0;
   };
 
-  explicit du_ue_resource_configurator(std::unique_ptr<resource_updater> ue_res_) :
+  explicit ue_ran_resource_configurator(std::unique_ptr<resource_updater> ue_res_) :
     ue_res_impl(std::move(ue_res_)), cached_res(ue_res_impl != nullptr ? &ue_res_impl->get() : nullptr)
   {
   }
@@ -49,7 +49,7 @@ public:
   /// \param pcell_index DU Cell Index of the UE's PCell.
   /// \param upd_req UE Context Update Request for a given UE.
   /// \return Outcome of the configuration.
-  du_ue_ran_resource_update_response update(du_cell_index_t pcell_index, const f1ap_ue_context_update_request& upd_req)
+  du_ue_resource_update_response update(du_cell_index_t pcell_index, const f1ap_ue_context_update_request& upd_req)
   {
     return ue_res_impl->update(pcell_index, upd_req);
   }
@@ -67,14 +67,14 @@ private:
 };
 
 /// \brief This class creates new UE resource configs (PHY, MAC and RLC), using a specific pool of DU resources.
-class du_ue_resource_configurator_factory
+class du_ran_resource_manager
 {
 public:
-  virtual ~du_ue_resource_configurator_factory() = default;
+  virtual ~du_ran_resource_manager() = default;
 
   /// \brief Create a new UE resource allocation config object.
-  virtual du_ue_resource_configurator create_ue_resource_configurator(du_ue_index_t   ue_index,
-                                                                      du_cell_index_t pcell_index) = 0;
+  virtual ue_ran_resource_configurator create_ue_resource_configurator(du_ue_index_t   ue_index,
+                                                                       du_cell_index_t pcell_index) = 0;
 };
 
 } // namespace srs_du
