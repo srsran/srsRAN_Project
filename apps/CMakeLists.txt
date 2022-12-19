@@ -6,6 +6,5 @@
 # the distribution.
 #
 
-add_subdirectory(cu-up)
 add_subdirectory(examples)
 add_subdirectory(gnb)
