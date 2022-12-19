@@ -9,14 +9,14 @@
  */
 
 #include "du_ue_manager.h"
-#include "procedures/ue_configuration_procedure.h"
-#include "procedures/ue_creation_procedure.h"
-#include "procedures/ue_deletion_procedure.h"
+#include "../procedures/ue_configuration_procedure.h"
+#include "../procedures/ue_creation_procedure.h"
+#include "../procedures/ue_deletion_procedure.h"
 
 using namespace srsgnb;
 using namespace srs_du;
 
-du_ue_manager::du_ue_manager(du_manager_config_t& cfg_, du_ran_resource_allocator& cell_res_alloc_) :
+du_ue_manager::du_ue_manager(du_manager_config_t& cfg_, du_ue_resource_configurator_factory& cell_res_alloc_) :
   cfg(cfg_), cell_res_alloc(cell_res_alloc_), logger(srslog::fetch_basic_logger("DU-MNG"))
 {
   std::fill(rnti_to_ue_index.begin(), rnti_to_ue_index.end(), du_ue_index_t::INVALID_DU_UE_INDEX);

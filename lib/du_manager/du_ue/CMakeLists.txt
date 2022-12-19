@@ -6,4 +6,4 @@
 # the distribution.
 #
 
-add_library(du_ue du_bearer.cpp du_ue_resource_manager.cpp)
+add_library(du_ue du_bearer.cpp)

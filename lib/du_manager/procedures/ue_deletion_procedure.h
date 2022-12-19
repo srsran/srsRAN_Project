@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "../../lib/ran/gnb_format.h"
-#include "du_manager_config.h"
-#include "du_ue/du_ue.h"
-#include "du_ue/ue_manager_ctrl_configurator.h"
+#include "../../ran/gnb_format.h"
+#include "../du_manager_config.h"
+#include "../du_ue/du_ue.h"
+#include "../du_ue/ue_manager_ctrl_configurator.h"
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/support/async/async_task.h"
 

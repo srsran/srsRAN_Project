@@ -23,9 +23,9 @@ struct test_bench {
   dummy_ue_executor_mapper   ue_execs{worker};
   dummy_cell_executor_mapper cell_execs{worker};
 
-  f1ap_test_dummy               f1ap_dummy;
-  mac_test_dummy                mac_dummy;
-  dummy_cell_resource_allocator cell_res_alloc;
+  f1ap_test_dummy                        f1ap_dummy;
+  mac_test_dummy                         mac_dummy;
+  dummy_ue_resource_configurator_factory cell_res_alloc;
 
   du_manager_config_t cfg{srslog::fetch_basic_logger("DU-MNG"),
                           {},

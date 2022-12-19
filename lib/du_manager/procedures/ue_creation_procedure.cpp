@@ -24,7 +24,7 @@ ue_creation_procedure::ue_creation_procedure(du_ue_index_t                      
                                              const du_manager_params::mac_config_params&  mac_mng_,
                                              const du_manager_params::rlc_config_params&  rlc_params_,
                                              const du_manager_params::f1ap_config_params& f1ap_mng_,
-                                             du_ran_resource_allocator&                   cell_res_alloc_) :
+                                             du_ue_resource_configurator_factory&         cell_res_alloc_) :
   msg(ccch_ind_msg),
   ue_mng(ue_mng_),
   services(du_services_),
@@ -33,7 +33,10 @@ ue_creation_procedure::ue_creation_procedure(du_ue_index_t                      
   f1ap_mng(f1ap_mng_),
   du_res_alloc(cell_res_alloc_),
   logger(srslog::fetch_basic_logger("DU-MNG")),
-  ue_ctx(std::make_unique<du_ue>(ue_index, ccch_ind_msg.cell_index, ccch_ind_msg.crnti, du_res_alloc))
+  ue_ctx(std::make_unique<du_ue>(ue_index,
+                                 ccch_ind_msg.cell_index,
+                                 ccch_ind_msg.crnti,
+                                 du_res_alloc.create_ue_resource_configurator(ue_index, msg.cell_index)))
 {
 }
 
@@ -42,16 +45,6 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_BEGIN(ctx);
 
   log_proc_started(logger, ue_ctx->ue_index, msg.crnti, "UE Create");
-
-  // > Verify if UE index was successfully allocated and params are valid.
-  if (ue_ctx->ue_index == MAX_NOF_DU_UES) {
-    log_proc_failure(logger, MAX_NOF_DU_UES, msg.crnti, name(), "Failure to allocate DU UE index.");
-    CORO_EARLY_RETURN();
-  }
-  if (ue_mng.find_rnti(ue_ctx->rnti) != nullptr) {
-    log_proc_failure(logger, MAX_NOF_DU_UES, msg.crnti, name(), "Repeated RNTI.");
-    CORO_EARLY_RETURN();
-  }
 
   // > Initialize bearers and PHY/MAC PCell resources of the DU UE.
   if (not setup_du_ue_resources()) {
@@ -103,12 +96,32 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
 
 bool ue_creation_procedure::setup_du_ue_resources()
 {
+  // > Verify if UE-Id was successfully allocated.
+  if (ue_ctx->ue_index >= INVALID_DU_UE_INDEX) {
+    log_proc_failure(logger, INVALID_DU_UE_INDEX, msg.crnti, name(), "Failure to allocate DU UE Index.");
+    return false;
+  }
+
+  // > Verify if RNTI is not duplicate.
+  if (ue_mng.find_rnti(ue_ctx->rnti) != nullptr) {
+    log_proc_failure(logger, INVALID_DU_UE_INDEX, msg.crnti, name(), "Repeated RNTI.");
+    return false;
+  }
+
+  // > Verify that the UE resource configurator is correctly setup.
+  if (ue_ctx->resources.empty()) {
+    log_proc_failure(logger, INVALID_DU_UE_INDEX, msg.crnti, name(), "Unable to allocate UE Resource Config instance.");
+    return false;
+  }
+
   // Allocate PCell PHY/MAC resources for DU UE.
   f1ap_ue_context_update_request req;
   req.ue_index = ue_ctx->ue_index;
   req.srbs_to_setup.resize(1);
-  req.srbs_to_setup[0] = srb_id_t::srb1;
-  if (not ue_ctx->resources.update_context(msg.cell_index, req)) {
+  req.srbs_to_setup[0]                    = srb_id_t::srb1;
+  du_ue_ran_resource_update_response resp = ue_ctx->resources.update(msg.cell_index, req);
+  if (resp.release_required) {
+    log_proc_failure(logger, MAX_NOF_DU_UES, msg.crnti, name(), "Failure to setup DU UE PCell and SRB resources.");
     return false;
   }
 

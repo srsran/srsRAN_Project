@@ -16,61 +16,65 @@
 namespace srsgnb {
 namespace srs_du {
 
-/// \brief This class manages (allocates + deallocates) the cell PHY, MAC and RLC resources for UE cells.
-class du_ran_resource_allocator
-{
-public:
-  virtual ~du_ran_resource_allocator() = default;
-
-  /// \brief Updates the resources (PCell + SCells) used by a UE.
-  ///
-  /// \param ue_index Index of the DU UE.
-  /// \param pcell_index DU Cell Index of the UE's PCell.
-  /// \param upd_req UE Context Update Request for a given UE.
-  /// \return cell group resource config allocated for the UE if configuration was successful. Nullptr, otherwise.
-  virtual const cell_group_config* update_context(du_ue_index_t                         ue_index,
-                                                  du_cell_index_t                       pcell_index,
-                                                  const f1ap_ue_context_update_request& upd_req) = 0;
+/// \brief Outcome report of an DU UE Resource allocation request.
+struct du_ue_ran_resource_update_response {
+  bool                           release_required = false;
+  std::vector<srb_id_t>          failed_srbs;
+  std::vector<drb_id_t>          failed_drbs;
+  std::vector<serv_cell_index_t> failed_scells;
 };
 
-/// \brief This class manages the cell PHY and MAC resources of a UE.
-class du_ue_resource_manager
+/// \brief This class manages the PHY, MAC and RLC resources used by an UE. It provides an API to update the UE
+/// resources on arrival of new UE Context Update Requests, and returns resources back to the DU Resource pool when
+/// it is destroyed.
+class du_ue_resource_configurator
 {
 public:
-  du_ue_resource_manager(du_ue_index_t ue_index_, du_ran_resource_allocator& cell_res_mng_);
-  du_ue_resource_manager(du_ue_resource_manager&&)                 = delete;
-  du_ue_resource_manager(const du_ue_resource_manager&)            = delete;
-  du_ue_resource_manager& operator=(du_ue_resource_manager&&)      = delete;
-  du_ue_resource_manager& operator=(const du_ue_resource_manager&) = delete;
-  ~du_ue_resource_manager();
+  /// \brief Interface used to update the UE Resources on Reconfiguration and return the resources back to the pool,
+  /// on UE deletion.
+  struct resource_updater {
+    virtual ~resource_updater()                                                                      = default;
+    virtual du_ue_ran_resource_update_response update(du_cell_index_t                       pcell_index,
+                                                      const f1ap_ue_context_update_request& upd_req) = 0;
+    virtual const cell_group_config&           get()                                                 = 0;
+  };
 
-  bool empty() const { return ue_res == nullptr; }
-
-  /// \brief Update UE cell resources. This function handles both allocation of new resources for new or modified UE
-  /// cells, and deallocation of resources of removed cells.
-  ///
-  /// \param upd_req UE Context Update Request for a given UE.
-  /// \return True if allocation of resources was successful.
-  bool update_context(du_cell_index_t pcell_index, const f1ap_ue_context_update_request& upd_req);
-
-  bool contains_cell(du_cell_index_t cell_index) const
+  explicit du_ue_resource_configurator(std::unique_ptr<resource_updater> ue_res_) :
+    ue_res_impl(std::move(ue_res_)), cached_res(ue_res_impl != nullptr ? &ue_res_impl->get() : nullptr)
   {
-    return du_cell_to_ue_cell_idx[cell_index] != SERVING_CELL_INVALID;
   }
 
-  const cell_group_config& value() const { return *ue_res; }
-  const cell_group_config& operator*() const { return *ue_res; }
-  const cell_group_config* operator->() const { return ue_res; }
+  /// \brief Updates the resources (PCell, SCells, Bearers) used by the UE.
+  ///
+  /// \param pcell_index DU Cell Index of the UE's PCell.
+  /// \param upd_req UE Context Update Request for a given UE.
+  /// \return Outcome of the configuration.
+  du_ue_ran_resource_update_response update(du_cell_index_t pcell_index, const f1ap_ue_context_update_request& upd_req)
+  {
+    return ue_res_impl->update(pcell_index, upd_req);
+  }
+
+  /// \brief Whether the UE resources have been correctly allocated.
+  bool empty() const { return ue_res_impl == nullptr; }
+
+  const cell_group_config& value() const { return *cached_res; }
+  const cell_group_config& operator*() const { return *cached_res; }
+  const cell_group_config* operator->() const { return cached_res; }
 
 private:
-  void update_du_cell_ue_cell_index_map(du_cell_index_t pcell_index, const f1ap_ue_context_update_request& upd_req);
+  std::unique_ptr<resource_updater> ue_res_impl;
+  const cell_group_config*          cached_res;
+};
 
-  du_ue_index_t              ue_index;
-  du_ran_resource_allocator* cell_res_mng;
+/// \brief This class creates new UE resource configs (PHY, MAC and RLC), using a specific pool of DU resources.
+class du_ue_resource_configurator_factory
+{
+public:
+  virtual ~du_ue_resource_configurator_factory() = default;
 
-  const cell_group_config* ue_res = nullptr;
-
-  std::array<serv_cell_index_t, MAX_NOF_DU_CELLS> du_cell_to_ue_cell_idx;
+  /// \brief Create a new UE resource allocation config object.
+  virtual du_ue_resource_configurator create_ue_resource_configurator(du_ue_index_t   ue_index,
+                                                                      du_cell_index_t pcell_index) = 0;
 };
 
 } // namespace srs_du

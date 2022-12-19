@@ -177,20 +177,32 @@ public:
   void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override {}
 };
 
-class dummy_cell_resource_allocator : public du_ran_resource_allocator
+class dummy_ue_resource_configurator_factory : public du_ue_resource_configurator_factory
 {
 public:
-  optional<du_ue_index_t>           last_ue_index;
-  optional<du_cell_index_t>         last_ue_pcell;
-  f1ap_ue_context_update_request    last_ue_ctx_upd;
-  slotted_vector<cell_group_config> ue_resource_pool;
-  cell_group_config                 next_context_update_result;
+  class dummy_resource_updater : public du_ue_resource_configurator::resource_updater
+  {
+  public:
+    dummy_resource_updater(dummy_ue_resource_configurator_factory& parent_, du_ue_index_t ue_index_);
+    ~dummy_resource_updater();
+    du_ue_ran_resource_update_response update(du_cell_index_t                       pcell_index,
+                                              const f1ap_ue_context_update_request& upd_req) override;
+    const cell_group_config&           get() override;
 
-  dummy_cell_resource_allocator();
+    du_ue_index_t                           ue_index;
+    dummy_ue_resource_configurator_factory& parent;
+  };
 
-  const cell_group_config* update_context(du_ue_index_t                         ue_index,
-                                          du_cell_index_t                       pcell_index,
-                                          const f1ap_ue_context_update_request& upd_req) override;
+  optional<du_ue_index_t>                    last_ue_index;
+  optional<du_cell_index_t>                  last_ue_pcell;
+  f1ap_ue_context_update_request             last_ue_ctx_upd;
+  std::map<du_ue_index_t, cell_group_config> ue_resource_pool;
+  cell_group_config                          next_context_update_result;
+
+  dummy_ue_resource_configurator_factory();
+
+  du_ue_resource_configurator create_ue_resource_configurator(du_ue_index_t   ue_index,
+                                                              du_cell_index_t pcell_index) override;
 };
 
 f1ap_ue_context_update_request create_f1ap_ue_context_update_request(du_ue_index_t                   ue_idx,
@@ -218,17 +230,17 @@ public:
     srslog::init();
   }
 
-  std::vector<du_cell_config>   du_cells;
-  timer_manager                 timers;
-  manual_task_worker            worker;
-  task_executor&                du_mng_exec;
-  dummy_ue_executor_mapper      ue_exec_mapper;
-  dummy_cell_executor_mapper    cell_exec_mapper;
-  f1ap_test_dummy               f1ap;
-  mac_test_dummy                mac;
-  du_manager_params             params;
-  dummy_cell_resource_allocator cell_res_alloc;
-  srslog::basic_logger&         logger;
+  std::vector<du_cell_config>            du_cells;
+  timer_manager                          timers;
+  manual_task_worker                     worker;
+  task_executor&                         du_mng_exec;
+  dummy_ue_executor_mapper               ue_exec_mapper;
+  dummy_cell_executor_mapper             cell_exec_mapper;
+  f1ap_test_dummy                        f1ap;
+  mac_test_dummy                         mac;
+  du_manager_params                      params;
+  dummy_ue_resource_configurator_factory cell_res_alloc;
+  srslog::basic_logger&                  logger;
 };
 
 } // namespace srs_du

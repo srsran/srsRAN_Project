@@ -25,20 +25,20 @@ namespace srsgnb {
 namespace srs_du {
 
 struct du_ue {
-  explicit du_ue(du_ue_index_t              ue_index_,
-                 du_cell_index_t            pcell_index_,
-                 rnti_t                     rnti_,
-                 du_ran_resource_allocator& cell_res_alloc_) :
-    ue_index(ue_index_), rnti(rnti_), pcell_index(pcell_index_), resources(ue_index_, cell_res_alloc_)
+  explicit du_ue(du_ue_index_t               ue_index_,
+                 du_cell_index_t             pcell_index_,
+                 rnti_t                      rnti_,
+                 du_ue_resource_configurator resources_) :
+    ue_index(ue_index_), rnti(rnti_), pcell_index(pcell_index_), resources(std::move(resources_))
   {
   }
 
-  const du_ue_index_t    ue_index;
-  rnti_t                 rnti;
-  du_cell_index_t        pcell_index;
-  du_ue_bearer_manager   bearers;
-  unique_timer           activity_timer;
-  du_ue_resource_manager resources;
+  const du_ue_index_t         ue_index;
+  rnti_t                      rnti;
+  du_cell_index_t             pcell_index;
+  du_ue_bearer_manager        bearers;
+  unique_timer                activity_timer;
+  du_ue_resource_configurator resources;
 };
 
 } // namespace srs_du
