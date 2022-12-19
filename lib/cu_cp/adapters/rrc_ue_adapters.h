@@ -61,13 +61,7 @@ public:
           CORO_AWAIT_VALUE(f1c_ue_ctxt_mod_resp,
                            f1c_ue_context_mng.handle_ue_context_modification_request(f1c_ue_ctxt_mod_req));
 
-          // Fail if UE Context Modification Failure is returned
-          if (!f1c_ue_ctxt_mod_resp.success) {
-            cu_cp_cause_t cause = cu_cp_cause_t::protocol;
-            fill_failed_rrc_ue_pdu_session_res_setup_response(res, msg, f1c_ue_ctxt_mod_resp, cause);
-
-            CORO_EARLY_RETURN(res);
-          }
+          fill_rrc_ue_ue_context_modification_response_message(res, f1c_ue_ctxt_mod_resp);
 
           CORO_RETURN(res);
         });

@@ -27,7 +27,9 @@ nr_cell_global_identity cgi_from_asn1(const asn1::f1ap::nrcgi_s& asn1_cgi)
   cgi.plmn_hex = asn1_cgi.plmn_id.to_string();
 
   cgi.nci.packed = asn1_cgi.nrcell_id.to_number();
-  // TODO: split packed NCI into gnb_identity and cell_identity
+
+  cgi.nci.cell_idenity = (asn1_cgi.nrcell_id.to_number() & 0xfffc0000);
+  cgi.nci.gnb_identity = (asn1_cgi.nrcell_id.to_number() & 0X3ff0);
 
   return cgi;
 }

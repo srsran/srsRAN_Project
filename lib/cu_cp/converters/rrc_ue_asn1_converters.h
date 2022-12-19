@@ -235,5 +235,19 @@ e1ap_ng_dl_up_unchanged_to_bool(asn1::e1ap::pdu_session_res_setup_item_s::ng_dl_
          asn1::e1ap::pdu_session_res_setup_item_s::ng_dl_up_unchanged_opts::options::true_value;
 }
 
+/// @brief Convert F1AP NRCGI to NR Cell Identity.
+/// @param f1ap_cgi The F1AP NRCGI.
+/// @return The NR Cell Identity.
+inline nr_cell_identity f1ap_nrcgi_to_nr_cell_identity(asn1::f1ap::nrcgi_s& f1ap_cgi)
+{
+  nr_cell_identity nci;
+  nci.packed = f1ap_cgi.nrcell_id.to_number();
+
+  nci.cell_idenity = (f1ap_cgi.nrcell_id.to_number() & 0xFFFC0000);
+  nci.gnb_identity = (f1ap_cgi.nrcell_id.to_number() & 0X3FF0);
+
+  return nci;
+}
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

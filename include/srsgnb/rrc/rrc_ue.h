@@ -14,6 +14,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
+#include "srsgnb/ran/rnti.h"
 #include "srsgnb/rrc/rrc.h"
 #include "srsgnb/security/security.h"
 #include "srsgnb/support/async/async_task.h"
@@ -50,15 +51,83 @@ struct rrc_ue_ue_context_modification_request_message {
   optional<uint64_t>                            ue_aggregate_maximum_bit_rate_ul;
 };
 
-struct rrc_ue_ue_context_modification_response_message {
-  bool                                                 success = false;
-  std::vector<cu_cp_pdu_session_res_setup_failed_item> pdu_session_res_failed_to_setup_items;
-
+struct rrc_ue_du_to_cu_rrc_info {
   byte_buffer cell_group_cfg;
   byte_buffer meas_gap_cfg;
   byte_buffer requested_p_max_fr1;
+};
 
-  rrc_ue_drb_setup_message rrc_ue_drb_setup_msg;
+struct rrc_ue_dluptnl_info_to_be_setup_item {
+  cu_cp_gtp_tunnel dluptnl_info;
+};
+
+struct rrc_ue_drbs_setup_modified_item {
+  drb_id_t                                          drb_id;
+  optional<lcid_t>                                  lcid;
+  std::vector<rrc_ue_dluptnl_info_to_be_setup_item> dluptnl_info_to_be_setup_list;
+};
+
+struct rrc_ue_srbs_failed_to_be_setup_mod_item {
+  srb_id_t                srb_id;
+  optional<cu_cp_cause_t> cause;
+};
+
+struct rrc_ue_drbs_failed_to_be_setup_modified_item {
+  drb_id_t                drb_id;
+  optional<cu_cp_cause_t> cause;
+};
+
+struct rrc_ue_scell_failed_to_setup_mod_item {
+  nr_cell_identity        scell_id;
+  optional<cu_cp_cause_t> cause;
+};
+
+struct rrc_ue_crit_diagnostics_item {
+  std::string iecrit;
+  uint32_t    ie_id;
+  std::string type_of_error;
+};
+
+struct rrc_ue_crit_diagnostics {
+  std::vector<rrc_ue_crit_diagnostics_item> ies_crit_diagnostics;
+  optional<uint16_t>                        proc_code;
+  optional<std::string>                     trigger_msg;
+  optional<std::string>                     proc_crit;
+  optional<uint16_t>                        transaction_id;
+};
+
+struct rrc_ue_associated_scell_item {
+  nr_cell_identity scell_id;
+};
+
+struct rrc_ue_srbs_setup_modified_item {
+  srb_id_t srb_id;
+  lcid_t   lcid;
+};
+
+struct rrc_ue_ue_context_modification_response_message {
+  bool success = false;
+  // UE Context Modification Response
+  byte_buffer                                               res_coordination_transfer_container;
+  rrc_ue_du_to_cu_rrc_info                                  du_to_cu_rrc_info;
+  std::vector<rrc_ue_drbs_setup_modified_item>              drbs_setup_mod_list;
+  std::vector<rrc_ue_drbs_setup_modified_item>              drbs_modified_list;
+  std::vector<rrc_ue_srbs_failed_to_be_setup_mod_item>      srbs_failed_to_be_setup_mod_list;
+  std::vector<rrc_ue_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_setup_mod_list;
+  std::vector<rrc_ue_scell_failed_to_setup_mod_item>        scell_failed_to_setup_mod_list;
+  std::vector<rrc_ue_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_modified_list;
+  optional<std::string>                                     inactivity_monitoring_resp;
+  optional<srsgnb::rnti_t>                                  c_rnti;
+  std::vector<rrc_ue_associated_scell_item>                 associated_scell_list;
+  std::vector<rrc_ue_srbs_setup_modified_item>              srbs_setup_mod_list;
+  std::vector<rrc_ue_srbs_setup_modified_item>              srbs_modified_list;
+  optional<std::string>                                     full_cfg;
+
+  // UE Context Modification Failure
+  optional<cu_cp_cause_t> cause;
+
+  // Common
+  optional<rrc_ue_crit_diagnostics> crit_diagnostics;
 };
 
 /// Interface to notify the F1C about control messages.
@@ -125,11 +194,16 @@ struct rrc_ue_pdu_session_resource_failed_item {
 };
 
 struct rrc_ue_bearer_context_setup_response_message {
-  bool                                                 success;
+  bool success;
+  // Bearer Context Setup Response
   std::vector<rrc_ue_pdu_session_resource_setup_item>  pdu_session_resource_setup_list;
   std::vector<rrc_ue_pdu_session_resource_failed_item> pdu_session_resource_failed_list;
-  optional<cu_cp_cause_t>                              cause;
-  // TODO: Add crit diagnostics
+
+  // Bearer Context Setup Failure
+  optional<cu_cp_cause_t> cause;
+
+  // Common
+  optional<rrc_ue_crit_diagnostics> crit_diagnostics;
 };
 
 /// Interface to notify the E1 about control messages.
