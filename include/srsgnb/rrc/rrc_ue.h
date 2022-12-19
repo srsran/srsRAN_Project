@@ -212,9 +212,9 @@ class rrc_ue_e1_control_notifier
 public:
   virtual ~rrc_ue_e1_control_notifier() = default;
 
-  /// \brief Notify about the reception of a new PDU Session Resource Setup List.
+  /// \brief Notify about the reception of a new Bearer Context Setup Request.
   virtual async_task<rrc_ue_bearer_context_setup_response_message>
-  on_new_pdu_session_resource_setup_request(const rrc_ue_bearer_context_setup_request_message& msg) = 0;
+  on_bearer_context_setup_request(const rrc_ue_bearer_context_setup_request_message& msg) = 0;
 };
 
 /// Interface to configure security in a SRB

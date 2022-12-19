@@ -80,7 +80,7 @@ public:
   void connect_e1(e1_bearer_context_manager* e1_bearer_context_mng_) { e1_bearer_context_mng = e1_bearer_context_mng_; }
 
   async_task<rrc_ue_bearer_context_setup_response_message>
-  on_new_pdu_session_resource_setup_request(const rrc_ue_bearer_context_setup_request_message& msg) override
+  on_bearer_context_setup_request(const rrc_ue_bearer_context_setup_request_message& msg) override
   {
     srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
 
