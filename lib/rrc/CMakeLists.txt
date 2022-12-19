@@ -13,6 +13,7 @@ set(SOURCES
   ue/rrc_ue_message_handlers.cpp
   ue/rrc_ue_message_senders.cpp
   ue/rrc_ue_helpers.cpp
+  ue/drb_manager_impl.cpp
   ue/procedures/rrc_setup_procedure.cpp
   ue/procedures/rrc_security_mode_command_procedure.cpp
   ue/procedures/rrc_reconfiguration_procedure.cpp

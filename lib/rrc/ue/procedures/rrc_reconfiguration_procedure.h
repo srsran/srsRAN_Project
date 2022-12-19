@@ -40,7 +40,7 @@ private:
   /// \remark Send RRC Reconfiguration, see section 5.3.5 in TS 38.331
   void send_rrc_reconfiguration();
 
-  rrc_ue_context_t                          context;
+  rrc_ue_context_t&                         context;
   const rrc_reconfiguration_procedure_args& args;
 
   rrc_ue_reconfiguration_proc_notifier& rrc_ue;    // handler to the parent RRC UE object

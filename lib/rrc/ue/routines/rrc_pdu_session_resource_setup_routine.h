@@ -37,11 +37,11 @@ public:
 
 private:
   cu_cp_pdu_session_resource_setup_response_message handle_pdu_session_resource_setup_result(bool success);
-  drb_context                                       drb_to_add;
-  drb_context                                       allocate_new_drb();
 
   cu_cp_pdu_session_resource_setup_message& setup_msg;
-  rrc_ue_context_t                          context;
+  rrc_ue_context_t&                         context;
+
+  std::vector<drb_id_t> drb_to_add_list; // list of DRBs to be added
 
   rrc_reconfiguration_procedure_args reconfig_args;
 

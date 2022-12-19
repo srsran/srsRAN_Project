@@ -24,8 +24,8 @@ rrc_pdu_session_resource_setup_routine::rrc_pdu_session_resource_setup_routine(
     srslog::basic_logger&                     logger_) :
   setup_msg(setup_msg_), context(context_), rrc_ue_notifier(rrc_ue_notifier_), event_mng(event_mng_), logger(logger_)
 {
-  // Allocate DRB, depending on QoSFlowSetupRequestList, more than one DRB could be needed
-  drb_to_add = allocate_new_drb(/* qos params*/);
+  // calculate DRBs that need to added depending on QoSFlowSetupRequestList, more than one DRB could be needed
+  drb_to_add_list = context.drb_mng->calculate_drb_to_add_list(setup_msg);
 }
 
 void rrc_pdu_session_resource_setup_routine::operator()(
@@ -36,7 +36,7 @@ void rrc_pdu_session_resource_setup_routine::operator()(
   logger.debug("rnti=0x{:x}: \"{}\" initialized.", context.c_rnti, name());
 
   // initial sanitfy check, making sure we catch implementation limitations
-  if (setup_msg.pdu_session_res_setup_items.size() > 1) {
+  if (setup_msg.pdu_session_res_setup_items.size() != 1) {
     logger.error("rnti=0x{:x}: \"{}\" not implemented for more than one PDU Session.", context.c_rnti, name());
     CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
   }
@@ -85,7 +85,29 @@ void rrc_pdu_session_resource_setup_routine::operator()(
 
   {
     // prepare RRC Reconfiguration
-    // TODO: set field in reconfig_args accordingly
+    {
+      // Add required DRBs to RRC Reconfiguration
+      asn1::rrc_nr::radio_bearer_cfg_s radio_bearer_cfg;
+      radio_bearer_cfg.drb_to_add_mod_list.resize(drb_to_add_list.size());
+      for (uint32_t i = 0; i < drb_to_add_list.size(); ++i) {
+        srsgnb_assert(drb_to_add_list[i] != drb_id_t::invalid, "Invalid DRB ID");
+        auto& drb_to_add_mod_list_item            = radio_bearer_cfg.drb_to_add_mod_list[i];
+        drb_to_add_mod_list_item.drb_id           = drb_id_to_uint(drb_to_add_list[i]);
+        drb_to_add_mod_list_item.pdcp_cfg_present = true;
+        drb_to_add_mod_list_item.pdcp_cfg         = context.drb_mng->get_pdcp_config(drb_to_add_list[i]);
+      }
+      reconfig_args.radio_bearer_cfg = radio_bearer_cfg;
+
+      // set masterCellGroupConfig as received by DU
+      reconfig_args.master_cell_group_config =
+          asn1::dyn_octstring(ue_context_modification_response.du_to_cu_rrc_info.cell_group_cfg.copy());
+
+      // append first PDU sessions NAS PDU as received by AMF
+      if (not setup_msg.pdu_session_res_setup_items[0].pdu_session_nas_pdu.empty()) {
+        reconfig_args.nas_pdu =
+            asn1::dyn_octstring(setup_msg.pdu_session_res_setup_items[0].pdu_session_nas_pdu.copy());
+      }
+    }
 
     // Trigger reconfig procedure
     CORO_AWAIT_VALUE(
@@ -128,33 +150,4 @@ rrc_pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result
   }
 
   return response_msg;
-}
-
-drb_context rrc_pdu_session_resource_setup_routine::allocate_new_drb()
-{
-  if (context.drbs.size() >= MAX_NOF_DRBS) {
-    logger.error("rnti=0x{:x}: \"{}\" failed. No more DRBs available.", context.c_rnti, name());
-    return {};
-  }
-
-  drb_id_t new_drb_id = drb_id_t::drb1;
-  for (const auto& drbs : context.drbs) {
-    if (drbs.drb_id == new_drb_id) {
-      /// try next
-      new_drb_id = uint_to_drb_id(drb_id_to_uint(new_drb_id) + 1);
-      if (new_drb_id == drb_id_t::invalid) {
-        logger.error("rnti=0x{:x}: \"{}\" failed. No more DRBs available.", context.c_rnti, name());
-        return {};
-      }
-    } else {
-      // found a free DRB
-      break;
-    }
-  }
-
-  drb_context new_drb;
-  new_drb.drb_id = new_drb_id;
-  context.drbs.push_back(new_drb);
-
-  return new_drb;
 }
