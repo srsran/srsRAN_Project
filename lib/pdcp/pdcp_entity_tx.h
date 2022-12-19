@@ -84,52 +84,12 @@ public:
    */
   void handle_sdu(byte_buffer sdu) final;
 
-  void stop_discard_timer(uint32_t max_sn)
-  {
-    if (!(cfg.discard_timer != pdcp_discard_timer::infinity &&
-          cfg.discard_timer != pdcp_discard_timer::not_configured)) {
-      logger.log_warning("Cannot stop discard timer for max_sn={}: discard_timer is not configured or infinite.");
-      return;
-    }
-    uint32_t max_count = COUNT(HFN(st.last_stopped_discard_timer_count), max_sn);
-    if (max_count < st.last_stopped_discard_timer_count) {
-      // check if we have SN overflow, i.e. HFN has incremented since last call
-      if (HFN(st.tx_next) > HFN(st.last_stopped_discard_timer_count)) {
-        // Adjust max_count based on HFN of tx_next
-        max_count = COUNT(HFN(st.tx_next), max_sn);
-        // Sanity check
-        if (max_count >= st.tx_next) {
-          // Invalid max_sn: we have SN overflow situation, but max_sn is larger than SN(tx_next)
-          logger.log_error("Cannot stop discard timer for invalid max_count={} (from max_sn={}) after SN overflow: "
-                           "max_count >= tx_next={}; last_stopped_discard_timer_count={}",
-                           max_count,
-                           max_sn,
-                           st.tx_next,
-                           st.last_stopped_discard_timer_count);
-          return;
-        }
-      } else {
-        // No SN overflow, max_sn is too small
-        logger.log_warning("Cannot stop discard timer for invalid max_count={} (from max_sn={}): "
-                           "max_count < last_stopped_discard_timer_count={}",
-                           max_count,
-                           max_sn,
-                           st.last_stopped_discard_timer_count);
-        return;
-      }
-    }
-    // Remove timers from map
-    uint32_t start_count = st.have_stopped_discard_timer ? st.last_stopped_discard_timer_count + 1 : 0;
-    for (uint32_t count = start_count; count <= max_count; count++) {
-      logger.log_debug("Stopping discard timer for COUNT={}", count);
-      discard_timers_map.erase(count);
-    }
-    st.last_stopped_discard_timer_count = max_count;
-    st.have_stopped_discard_timer       = true;
-  }
-
   void handle_pdu_transmit_notification(uint32_t max_tx_sn) final
   {
+    if (max_tx_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
+      logger.log_error("Invalid PDU transmit notification for max_tx_sn={} exceeds sn_size={}", max_tx_sn, cfg.sn_size);
+      return;
+    }
     if (is_um()) {
       stop_discard_timer(max_tx_sn);
     }
@@ -137,6 +97,11 @@ public:
 
   void handle_pdu_delivery_notification(uint32_t max_deliv_sn) final
   {
+    if (max_deliv_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
+      logger.log_error(
+          "Invalid PDU delivery notification for max_deliv_sn={} exceeds sn_size={}", max_deliv_sn, cfg.sn_size);
+      return;
+    }
     if (is_am()) {
       stop_discard_timer(max_deliv_sn);
     } else {
@@ -218,6 +183,10 @@ private:
   byte_buffer apply_ciphering_and_integrity_protection(byte_buffer hdr, byte_buffer buf, uint32_t count);
   void        integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count);
   byte_buffer cipher_encrypt(byte_buffer_view buf, uint32_t count);
+
+  /// \brief Stops all discard timer up to a PDCP PDU sequence number that is provided as argument.
+  /// \param max_sn Highest PDCP PDU sequence number to which all discard timers shall be stopped.
+  void stop_discard_timer(uint32_t max_sn);
 
   /// Discard timer information. We keep both the discard timer
   /// and a copy of the SDU for the data recovery procedure (for AM only).

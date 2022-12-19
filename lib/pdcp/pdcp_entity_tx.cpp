@@ -351,6 +351,50 @@ void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
 /*
  * Timers
  */
+
+void pdcp_entity_tx::stop_discard_timer(uint32_t max_sn)
+{
+  if (!(cfg.discard_timer != pdcp_discard_timer::infinity && cfg.discard_timer != pdcp_discard_timer::not_configured)) {
+    logger.log_warning("Cannot stop discard timer for max_sn={}: discard_timer is not configured or infinite.");
+    return;
+  }
+  uint32_t max_count = COUNT(HFN(st.last_stopped_discard_timer_count), max_sn);
+  if (max_count < st.last_stopped_discard_timer_count) {
+    // check if we have SN overflow, i.e. HFN has incremented since last call
+    if (HFN(st.tx_next) > HFN(st.last_stopped_discard_timer_count)) {
+      // Adjust max_count based on HFN of tx_next
+      max_count = COUNT(HFN(st.tx_next), max_sn);
+      // Sanity check
+      if (max_count >= st.tx_next) {
+        // Invalid max_sn: we have SN overflow situation, but max_sn is larger than SN(tx_next)
+        logger.log_error("Cannot stop discard timer for invalid max_count={} (from max_sn={}) after SN overflow: "
+                         "max_count >= tx_next={}; last_stopped_discard_timer_count={}",
+                         max_count,
+                         max_sn,
+                         st.tx_next,
+                         st.last_stopped_discard_timer_count);
+        return;
+      }
+    } else {
+      // No SN overflow, max_sn is too small
+      logger.log_warning("Cannot stop discard timer for invalid max_count={} (from max_sn={}): "
+                         "max_count < last_stopped_discard_timer_count={}",
+                         max_count,
+                         max_sn,
+                         st.last_stopped_discard_timer_count);
+      return;
+    }
+  }
+  // Remove timers from map
+  uint32_t start_count = st.have_stopped_discard_timer ? st.last_stopped_discard_timer_count + 1 : 0;
+  for (uint32_t count = start_count; count <= max_count; count++) {
+    logger.log_debug("Stopping discard timer for COUNT={}", count);
+    discard_timers_map.erase(count);
+  }
+  st.last_stopped_discard_timer_count = max_count;
+  st.have_stopped_discard_timer       = true;
+}
+
 // Discard Timer Callback (discardTimer)
 void pdcp_entity_tx::discard_callback::operator()(uint32_t timer_id)
 {

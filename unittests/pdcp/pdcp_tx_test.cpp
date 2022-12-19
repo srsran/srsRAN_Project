@@ -156,41 +156,69 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
 {
   init(GetParam());
 
-  auto test_discard_timer_stop = [this](uint32_t tx_next) {
+  auto test_discard_timer_stop = [this](pdcp_tx_state st) {
     // Set state of PDCP entiy
-    pdcp_tx_state st = {tx_next};
     pdcp_tx->set_state(st);
     pdcp_tx->set_as_security_config(sec_cfg);
     pdcp_tx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
 
-    // Write first SDU
-    {
+    constexpr uint32_t nof_sdus = 5;
+
+    // Write SDUs
+    for (uint32_t i = 0; i < nof_sdus; i++) {
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
-      ASSERT_EQ(1, pdcp_tx->nof_discard_timers());
-    }
-    // Write second SDU
-    {
-      byte_buffer sdu = {sdu1};
-      pdcp_tx->handle_sdu(std::move(sdu));
-      ASSERT_EQ(2, pdcp_tx->nof_discard_timers());
+      ASSERT_EQ(i + 1, pdcp_tx->nof_discard_timers());
     }
 
-    pdcp_tx->stop_discard_timer(tx_next);
-    ASSERT_EQ(1, pdcp_tx->nof_discard_timers());
-    // Timers should have expired now.
-    pdcp_tx->stop_discard_timer(tx_next + 1);
+    // Notify delivery of first SDU
+    pdcp_tx->handle_pdu_delivery_notification(pdcp_compute_sn(st.tx_next, GetParam()));
+    ASSERT_EQ(nof_sdus - 1, pdcp_tx->nof_discard_timers());
+
+    // Notify delivery up to third SDU
+    pdcp_tx->handle_pdu_delivery_notification(pdcp_compute_sn(st.tx_next + 2, GetParam()));
+    ASSERT_EQ(nof_sdus - 3, pdcp_tx->nof_discard_timers());
+
+    // Notify delivery of second SDU again (should issue a warning)
+    pdcp_tx->handle_pdu_delivery_notification(pdcp_compute_sn(st.tx_next + 1, GetParam()));
+    ASSERT_EQ(nof_sdus - 3, pdcp_tx->nof_discard_timers());
+
+    // Notify delivery of remaining SDUs
+    pdcp_tx->handle_pdu_delivery_notification(pdcp_compute_sn(st.tx_next + nof_sdus, GetParam()));
     ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
   };
 
+  pdcp_tx_state st = {};
   if (config.sn_size == pdcp_sn_size::size12bits) {
-    test_discard_timer_stop(0);
-    test_discard_timer_stop(2048);
-    test_discard_timer_stop(4096);
+    st.tx_next                          = 0;
+    st.have_stopped_discard_timer       = false;
+    st.last_stopped_discard_timer_count = 0;
+    test_discard_timer_stop(st);
+
+    st.tx_next                          = 2048;
+    st.have_stopped_discard_timer       = true;
+    st.last_stopped_discard_timer_count = 2047;
+    test_discard_timer_stop(st);
+
+    st.tx_next                          = 4096;
+    st.have_stopped_discard_timer       = true;
+    st.last_stopped_discard_timer_count = 4095;
+    test_discard_timer_stop(st);
   } else if (config.sn_size == pdcp_sn_size::size18bits) {
-    test_discard_timer_stop(0);
-    test_discard_timer_stop(131072);
-    test_discard_timer_stop(262144);
+    st.tx_next                          = 0;
+    st.have_stopped_discard_timer       = false;
+    st.last_stopped_discard_timer_count = 0;
+    test_discard_timer_stop(st);
+
+    st.tx_next                          = 131072;
+    st.have_stopped_discard_timer       = true;
+    st.last_stopped_discard_timer_count = 131071;
+    test_discard_timer_stop(st);
+
+    st.tx_next                          = 262144;
+    st.have_stopped_discard_timer       = true;
+    st.last_stopped_discard_timer_count = 262143;
+    test_discard_timer_stop(st);
   } else {
     FAIL();
   }
