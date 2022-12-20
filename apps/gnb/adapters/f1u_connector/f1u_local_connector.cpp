@@ -9,7 +9,7 @@
  *
  */
 
-#include "f1u_local_connector_impl.h"
+#include "f1u_local_connector.h"
 #include "srsgnb/f1u/cu_up/f1u_bearer_factory.h"
 #include "srsgnb/f1u/du/f1u_bearer_factory.h"
 #include "srsgnb/ran/lcid.h"
@@ -18,9 +18,9 @@
 using namespace srsgnb;
 
 srs_cu_up::f1u_bearer*
-f1u_local_connector_impl::create_cu_dl_bearer(uint32_t                             dl_teid,
-                                              srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
-                                              srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier)
+f1u_local_connector::create_cu_dl_bearer(uint32_t                             dl_teid,
+                                         srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
+                                         srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier)
 {
   logger.info("Creating CU F1-U bearer. DL-TEID={}", dl_teid);
   std::unique_ptr<f1u_dl_local_adapter>  cu_tx = std::make_unique<f1u_dl_local_adapter>();
@@ -32,7 +32,7 @@ f1u_local_connector_impl::create_cu_dl_bearer(uint32_t                          
   return ptr;
 }
 
-void f1u_local_connector_impl::attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid)
+void f1u_local_connector::attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid)
 {
   logger.info("Connecting CU F1-U bearer. DL-TEID={}", dl_teid);
   if (dl_map.find(dl_teid) == dl_map.end()) {
@@ -49,7 +49,7 @@ void f1u_local_connector_impl::attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul
 }
 
 srs_du::f1u_bearer*
-f1u_local_connector_impl::create_du_ul_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx)
+f1u_local_connector::create_du_ul_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx)
 {
   logger.info("Connecting CU F1-U bearer. DL-TEID={}, UL-TEID={}", dl_teid, ul_teid);
   if (dl_map.find(dl_teid) == dl_map.end()) {
