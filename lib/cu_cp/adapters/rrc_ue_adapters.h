@@ -26,14 +26,12 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Adapter between RRC UE and F1AP
-class rrc_ue_f1ap_adapter : public rrc_pdu_notifier, public rrc_ue_f1c_control_notifier
+/// Adapter between RRC UE and F1AP to pass RRC PDUs
+class rrc_ue_f1ap_pdu_adapter : public rrc_pdu_notifier
 {
 public:
-  explicit rrc_ue_f1ap_adapter(f1c_rrc_message_handler& f1c_handler_,
-                               f1c_ue_context_manager&  f1c_ue_context_mng_,
-                               ue_index_t               ue_index_) :
-    f1c_handler(f1c_handler_), f1c_ue_context_mng(f1c_ue_context_mng_), ue_index(ue_index_)
+  explicit rrc_ue_f1ap_pdu_adapter(f1c_rrc_message_handler& f1c_handler_, ue_index_t ue_index_) :
+    f1c_handler(f1c_handler_), ue_index(ue_index_)
   {
   }
 
@@ -45,6 +43,20 @@ public:
     f1ap_msg.rrc_container.resize(msg.pdu.length());
     std::copy(msg.pdu.begin(), msg.pdu.end(), f1ap_msg.rrc_container.begin());
     f1c_handler.handle_dl_rrc_message_transfer(f1ap_msg);
+  }
+
+private:
+  f1c_rrc_message_handler& f1c_handler;
+  const ue_index_t         ue_index;
+};
+
+/// Adapter between RRC UE and F1AP to trigger procedures
+class rrc_ue_f1ap_control_adapter : public rrc_ue_f1c_control_notifier
+{
+public:
+  explicit rrc_ue_f1ap_control_adapter(f1c_ue_context_manager& f1c_ue_context_mng_) :
+    f1c_ue_context_mng(f1c_ue_context_mng_)
+  {
   }
 
   async_task<rrc_ue_ue_context_modification_response_message>
@@ -70,9 +82,7 @@ public:
   }
 
 private:
-  f1c_rrc_message_handler& f1c_handler;
-  f1c_ue_context_manager&  f1c_ue_context_mng;
-  const ue_index_t         ue_index;
+  f1c_ue_context_manager& f1c_ue_context_mng;
 };
 
 /// Adapter between RRC UE and E1

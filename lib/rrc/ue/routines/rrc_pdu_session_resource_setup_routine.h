@@ -27,6 +27,8 @@ class rrc_pdu_session_resource_setup_routine
 public:
   rrc_pdu_session_resource_setup_routine(cu_cp_pdu_session_resource_setup_message& setup_msg_,
                                          rrc_ue_context_t&                         context_,
+                                         rrc_ue_e1_control_notifier&               e1_ctrl_notif_,
+                                         rrc_ue_f1c_control_notifier&              f1c_ctrl_notif_,
                                          rrc_ue_reconfiguration_proc_notifier&     rrc_ue_notifier_,
                                          rrc_ue_event_manager&                     ev_mng_,
                                          srslog::basic_logger&                     logger_);
@@ -43,11 +45,16 @@ private:
 
   std::vector<drb_id_t> drb_to_add_list; // list of DRBs to be added
 
-  rrc_reconfiguration_procedure_args reconfig_args;
-
-  rrc_ue_reconfiguration_proc_notifier& rrc_ue_notifier;
-  rrc_ue_event_manager&                 event_mng; // event manager for the RRC UE entity
+  rrc_ue_e1_control_notifier&           e1_ctrl_notif;   // to trigger bearer context setup at CU-UP
+  rrc_ue_f1c_control_notifier&          f1c_ctrl_notif;  // to trigger UE context modification at DU
+  rrc_ue_reconfiguration_proc_notifier& rrc_ue_notifier; // to trigger RRC Reconfiguration at UE
+  rrc_ue_event_manager&                 event_mng;       // event manager for the RRC UE entity
   srslog::basic_logger&                 logger;
+
+  // (sub-)routine requests
+  rrc_ue_bearer_context_setup_request_message    bearer_contest_setup_request;
+  rrc_ue_ue_context_modification_request_message ue_context_mod_request;
+  rrc_reconfiguration_procedure_args             reconfig_args;
 
   // (sub-)routine results
   cu_cp_pdu_session_resource_setup_response_message response_msg;

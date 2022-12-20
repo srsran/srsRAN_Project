@@ -21,7 +21,6 @@ cu_cp_pdu_session_resource_setup_message fill_res_setup_request()
   cu_cp_pdu_session_resource_setup_message req;
 
   cu_cp_pdu_session_res_setup_item item;
-
   item.pdu_session_id = 1;
   item.pdu_session_nas_pdu.resize(2);
   item.pdu_session_nas_pdu[0] = 0xaa;

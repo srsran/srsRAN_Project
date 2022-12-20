@@ -43,9 +43,16 @@ du_processor_impl::du_processor_impl(const du_processor_config_t     du_processo
   f1c = create_f1c(f1c_notifier, f1c_ev_notifier, f1c_du_mgmt_notifier);
   f1c_ev_notifier.connect_du_processor(*this);
 
+  // initialize control notifier for F1C (TODO: have one per UE and move to UE context)
+  f1c_ctrl_notifier = std::make_unique<rrc_ue_f1ap_control_adapter>(*f1c);
+
   // create RRC
-  rrc_du_creation_message rrc_creation_msg(
-      cfg.rrc_cfg, rrc_ue_ev_notifier, rrc_ue_e1_ctrl_notifier, rrc_ue_nas_pdu_notifier, rrc_ue_ngc_ctrl_notifier);
+  rrc_du_creation_message rrc_creation_msg(cfg.rrc_cfg,
+                                           rrc_ue_ev_notifier,
+                                           rrc_ue_e1_ctrl_notifier,
+                                           *f1c_ctrl_notifier,
+                                           rrc_ue_nas_pdu_notifier,
+                                           rrc_ue_ngc_ctrl_notifier);
   rrc = create_rrc_du(rrc_creation_msg);
 
   rrc_ue_ev_notifier.connect_du_processor(*this);
@@ -230,7 +237,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
   if (msg.srb_id == srb_id_t::srb0) {
     // create direct connection with UE manager to RRC adapter
     srb.rx_notifier     = std::make_unique<f1c_rrc_ue_adapter>(ue_ctxt->rrc->get_ul_ccch_pdu_handler());
-    srb.rrc_tx_notifier = std::make_unique<rrc_ue_f1ap_adapter>(*f1c, *f1c, ue_ctxt->ue_index);
+    srb.rrc_tx_notifier = std::make_unique<rrc_ue_f1ap_pdu_adapter>(*f1c, ue_ctxt->ue_index);
 
     // update notifier in RRC
     ue_ctxt->rrc->connect_srb_notifier(

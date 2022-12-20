@@ -19,10 +19,18 @@ using namespace asn1::rrc_nr;
 rrc_pdu_session_resource_setup_routine::rrc_pdu_session_resource_setup_routine(
     cu_cp_pdu_session_resource_setup_message& setup_msg_,
     rrc_ue_context_t&                         context_,
+    rrc_ue_e1_control_notifier&               e1_ctrl_notif_,
+    rrc_ue_f1c_control_notifier&              f1c_ctrl_notif_,
     rrc_ue_reconfiguration_proc_notifier&     rrc_ue_notifier_,
     rrc_ue_event_manager&                     event_mng_,
     srslog::basic_logger&                     logger_) :
-  setup_msg(setup_msg_), context(context_), rrc_ue_notifier(rrc_ue_notifier_), event_mng(event_mng_), logger(logger_)
+  setup_msg(setup_msg_),
+  context(context_),
+  e1_ctrl_notif(e1_ctrl_notif_),
+  f1c_ctrl_notif(f1c_ctrl_notif_),
+  rrc_ue_notifier(rrc_ue_notifier_),
+  event_mng(event_mng_),
+  logger(logger_)
 {
   // calculate DRBs that need to added depending on QoSFlowSetupRequestList, more than one DRB could be needed
   drb_to_add_list = context.drb_mng->calculate_drb_to_add_list(setup_msg);
@@ -37,21 +45,24 @@ void rrc_pdu_session_resource_setup_routine::operator()(
 
   // initial sanitfy check, making sure we catch implementation limitations
   if (setup_msg.pdu_session_res_setup_items.size() != 1) {
-    logger.error("rnti=0x{:x}: \"{}\" not implemented for more than one PDU Session.", context.c_rnti, name());
+    logger.error("rnti=0x{:x}: \"{}\" supports only one PDU Session ({} requested).",
+                 context.c_rnti,
+                 name(),
+                 setup_msg.pdu_session_res_setup_items.size());
     CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
   }
 
   // TODO: Retrieve PDCP and SDAP configs
 
   {
-    // prepare BearerContextSetupRequest and call E1 notifier
-    rrc_ue_bearer_context_setup_request_message request;
+    // prepare BearerContextSetupRequest
+    bearer_contest_setup_request.pdu_session_res_setup_items.resize(1);
 
-    // CORO_AWAIT(e1_notifier->pdu_session_resource_setup_request(context.c_rnti, new_drb.drb_id, new_drb.pdcp_config,
-    // new_drb.sdap_config));
-    bearer_context_setup_response.success = true;
+    // call E1 procedure
+    CORO_AWAIT_VALUE(bearer_context_setup_response,
+                     e1_ctrl_notif.on_bearer_context_setup_request(bearer_contest_setup_request));
 
-    // Wait for BearerContextSetupResponse
+    // Handle BearerContextSetupResponse
     if (not bearer_context_setup_response.success) {
       logger.error("rnti=0x{:x}: \"{}\" failed to setup bearer at CU-UP.", context.c_rnti, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
@@ -61,17 +72,30 @@ void rrc_pdu_session_resource_setup_routine::operator()(
   // Register required DRB resources at DU
   {
     // prepare UE Context Modification Request and call F1 notifier
-    rrc_ue_ue_context_modification_request_message request;
+    ue_context_mod_request.rrc_ue_drb_setup_msgs.resize(drb_to_add_list.size());
+    for (uint32_t i = 0; i < drb_to_add_list.size(); ++i) {
+      srsgnb_assert(drb_to_add_list[i] != drb_id_t::invalid, "Invalid DRB ID");
 
-    ue_context_modification_response.success = true;
+      auto& rrc_ue_drb_setup_message_item  = ue_context_mod_request.rrc_ue_drb_setup_msgs[i];
+      rrc_ue_drb_setup_message_item.drb_id = drb_id_to_uint(drb_to_add_list[i]);
+      cu_cp_gtp_tunnel gtp_tunnel;
+      gtp_tunnel.gtp_teid = 0x12345678; // TODO: take from CU-UP response
+      rrc_ue_drb_setup_message_item.gtp_tunnels.push_back(gtp_tunnel);
 
-    // Wait for UE Context Modification Response
+      // TODO: add RLC mode, PDPC SN length
+    }
+
+    CORO_AWAIT_VALUE(ue_context_modification_response,
+                     f1c_ctrl_notif.on_new_pdu_session_resource_setup_request(ue_context_mod_request));
+    if (not ue_context_modification_response.success) {
+      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+    }
+
+    // Handle UE Context Modification Response
     if (not ue_context_modification_response.success) {
       logger.error("rnti=0x{:x}: \"{}\" failed to modify UE context at DU.", context.c_rnti, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
-
-    // store cellGroupConfig, TEID, etc in UE context
   }
 
   // Inform CU-UP about the new TEID for UL F1u traffic

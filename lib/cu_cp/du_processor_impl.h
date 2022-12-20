@@ -122,6 +122,8 @@ private:
   // F1C to DU processor adapter
   f1c_du_processor_adapter f1c_ev_notifier;
 
+  std::unique_ptr<rrc_ue_f1ap_control_adapter> f1c_ctrl_notifier;
+
   // RRC UE to DU processor adapter
   rrc_ue_du_processor_adapter rrc_ue_ev_notifier;
 };

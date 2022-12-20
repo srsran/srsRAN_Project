@@ -25,6 +25,7 @@ public:
   rrc_du_impl(const rrc_cfg_t&              cfg_,
               rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_,
               rrc_ue_e1_control_notifier&   rrc_ue_e1_ctrl_notif_,
+              rrc_ue_f1c_control_notifier&  rrc_ue_f1c_ctrl_notif_,
               rrc_ue_nas_notifier&          nas_notif_,
               rrc_ue_control_notifier&      ngc_ctrl_notif_);
   ~rrc_du_impl() = default;
@@ -47,10 +48,11 @@ private:
 
   bool reject_users = true; ///< Reject all connection attempts, i.e. when AMF is not connected.
 
-  rrc_ue_du_processor_notifier& rrc_ue_du_proc_notifier; // notifier to the DU processor
-  rrc_ue_e1_control_notifier&   rrc_ue_e1_ctrl_notifier; // notifier to E1
-  rrc_ue_nas_notifier&          nas_notifier;            // PDU notifier to the NGC
-  rrc_ue_control_notifier&      ngc_ctrl_notifier;       // Control notifier to the NGC
+  rrc_ue_du_processor_notifier& rrc_ue_du_proc_notifier;  // notifier to the DU processor
+  rrc_ue_e1_control_notifier&   rrc_ue_e1_ctrl_notifier;  // notifier to E1
+  rrc_ue_f1c_control_notifier&  rrc_ue_f1c_ctrl_notifier; // notifier to E1
+  rrc_ue_nas_notifier&          nas_notifier;             // PDU notifier to the NGC
+  rrc_ue_control_notifier&      ngc_ctrl_notifier;        // Control notifier to the NGC
 
   // RRC-internal user database indexed by ue_index
   slotted_array<std::unique_ptr<rrc_ue_impl>, MAX_NOF_UES> ue_db;

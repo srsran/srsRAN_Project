@@ -17,6 +17,10 @@ using namespace srs_cu_cp;
 
 std::unique_ptr<rrc_du_interface> srsgnb::srs_cu_cp::create_rrc_du(const rrc_du_creation_message& msg)
 {
-  return std::make_unique<rrc_du_impl>(
-      msg.cfg, msg.rrc_ue_du_proc_notifier, msg.rrc_ue_e1_ctrl_notifier, msg.nas_notifier, msg.ngc_ctrl_notifier);
+  return std::make_unique<rrc_du_impl>(msg.cfg,
+                                       msg.rrc_ue_du_proc_notifier,
+                                       msg.rrc_ue_e1_ctrl_notifier,
+                                       msg.rrc_ue_f1c_ctrl_notifier,
+                                       msg.nas_notifier,
+                                       msg.ngc_ctrl_notifier);
 }

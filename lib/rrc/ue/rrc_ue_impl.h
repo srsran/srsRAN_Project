@@ -30,6 +30,7 @@ public:
   rrc_ue_impl(rrc_du_ue_manager&                     parent_,
               rrc_ue_du_processor_notifier&          du_proc_notif_,
               rrc_ue_e1_control_notifier&            e1_ctrl_notif_,
+              rrc_ue_f1c_control_notifier&           f1c_ctrl_notif_,
               rrc_ue_nas_notifier&                   nas_notif_,
               rrc_ue_control_notifier&               ngc_ctrl_notif_,
               const ue_index_t                       ue_index_,
@@ -127,6 +128,7 @@ private:
   rrc_du_ue_manager&            rrc_du;                // reference to the parant RRC object
   rrc_ue_du_processor_notifier& du_processor_notifier; // notifier to the DU processor
   rrc_ue_e1_control_notifier&   e1_ctrl_notifier;      // notifier to the E1
+  rrc_ue_f1c_control_notifier&  f1c_ctrl_notifier;     // notifier to the F1C
   rrc_ue_nas_notifier&          nas_notifier;          // PDU notifier to the NGC
   rrc_ue_control_notifier&      ngc_ctrl_notifier;     // Control message notifier to the NGC
   srb_notifiers_array           srbs;                  // set notifiers for all SRBs

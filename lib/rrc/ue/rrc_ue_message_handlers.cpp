@@ -177,5 +177,6 @@ void rrc_ue_impl::handle_new_guami(const guami& msg)
 async_task<cu_cp_pdu_session_resource_setup_response_message>
 rrc_ue_impl::handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_message& msg)
 {
-  return launch_async<rrc_pdu_session_resource_setup_routine>(msg, context, *this, *event_mng, logger);
+  return launch_async<rrc_pdu_session_resource_setup_routine>(
+      msg, context, e1_ctrl_notifier, f1c_ctrl_notifier, *this, *event_mng, logger);
 }

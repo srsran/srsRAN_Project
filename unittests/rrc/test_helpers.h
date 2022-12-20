@@ -199,6 +199,7 @@ public:
     return launch_async([res = rrc_ue_bearer_context_setup_response_message{}](
                             coro_context<async_task<rrc_ue_bearer_context_setup_response_message>>& ctx) mutable {
       CORO_BEGIN(ctx);
+      res.success = true;
       CORO_RETURN(res);
     });
   }
@@ -212,6 +213,21 @@ public:
           CORO_BEGIN(ctx);
           CORO_RETURN(res);
         });
+  }
+};
+
+class dummy_rrc_ue_f1c_control_notifier : public rrc_ue_f1c_control_notifier
+{
+public:
+  async_task<rrc_ue_ue_context_modification_response_message>
+  on_new_pdu_session_resource_setup_request(rrc_ue_ue_context_modification_request_message& msg) override
+  {
+    return launch_async([res = rrc_ue_ue_context_modification_response_message{}](
+                            coro_context<async_task<rrc_ue_ue_context_modification_response_message>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      res.success = true;
+      CORO_RETURN(res);
+    });
   }
 };
 
