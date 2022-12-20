@@ -88,9 +88,9 @@ void srsgnb::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder&
   builder.add_optional_pusch_data(
       mac_pdu.rv_index, mac_pdu.harq_id, mac_pdu.new_data, units::bytes{mac_pdu.tb_size_bytes}, mac_pdu.num_cb, {});
 
-  // NOTE: MAC uses the value of the target code rate x[1024], as per TS 38.214, Section 6.1.4.1, table 6.1.4.1-1.
-  float              R = mac_pdu.mcs_descr.get_normalised_target_code_rate();
-  const units::bytes tb_size_lbrm_bytes{ldpc::MAX_CODEBLOCK_SIZE / 8};
+  // NOTE: MAC uses the value of the target code rate x[1024], as per TS38.214, Section 6.1.4.1, Table 6.1.4.1-1.
+  float              R                  = mac_pdu.mcs_descr.get_normalised_target_code_rate();
+  const units::bytes tb_size_lbrm_bytes = units::bits(ldpc::MAX_CODEBLOCK_SIZE).truncate_to_bytes();
   builder.set_maintenance_v3_frequency_allocation_parameters(
       mac_pdu.pusch_second_hop_prb,
       get_ldpc_base_graph(R, units::bytes{mac_pdu.tb_size_bytes}.to_bits()),

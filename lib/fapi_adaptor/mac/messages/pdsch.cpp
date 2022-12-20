@@ -35,7 +35,7 @@ static void fill_codewords(fapi::dl_pdsch_pdu_builder& builder, span<const pdsch
                                     units::bytes{cw.tb_size_bytes});
   }
 
-  const units::bytes    tb_size_lbrm_bytes{ldpc::MAX_CODEBLOCK_SIZE / 8};
+  const units::bytes    tb_size_lbrm_bytes           = units::bits(ldpc::MAX_CODEBLOCK_SIZE).truncate_to_bytes();
   const pdsch_codeword& cw                           = codewords.front();
   static const bool     is_tb_crc_first_tb_required  = false;
   static const bool     is_tb_crc_second_tb_required = false;

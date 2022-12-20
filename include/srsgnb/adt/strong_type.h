@@ -45,11 +45,15 @@ public:
   friend constexpr bool operator>=(const U& lhs, const T& rhs) { return lhs >= rhs.value(); }
 };
 
-} // namespace detail
+/// Base class that defines the conversion operator for the given type.
+template <typename T, typename U>
+class strong_convertion_to_type
+{
+public:
+  explicit operator U() const { return static_cast<U>(static_cast<const T&>(*this).value()); }
+};
 
-/// Tag structure to construct an uninitialized strong_type object.
-struct strong_uninit_t {};
-static constexpr strong_uninit_t strong_uninit{};
+} // namespace detail
 
 /// \brief Template class for strong typing arithmetic types.
 ///
@@ -66,10 +70,9 @@ public:
   using tag_type   = Tag;
 
   /// Special member function definitions.
-  constexpr strong_type() : val{} {}
-  explicit constexpr strong_type(strong_uninit_t u) {}
+  constexpr strong_type() = default;
   explicit constexpr strong_type(T val_) : val(val_) {}
-  constexpr strong_type(const strong_type&)            = default;
+  constexpr strong_type(const strong_type&) = default;
   constexpr strong_type& operator=(const strong_type&) = default;
 
   /// Accessor for the underlying value of the strong type.
@@ -403,6 +406,17 @@ public:
     lhs >>= shift;
     return lhs;
   }
+};
+
+/// Conversion operator definitions for strong types and the list of types in the template argument pack.
+template <typename... Ts>
+struct strong_conversion_to {
+  static_assert(std::is_arithmetic<Ts...>::value, "All Ts should be arithmetic types");
+
+  template <typename T>
+  class strong_property : public detail::strong_convertion_to_type<T, Ts>...
+  {
+  };
 };
 
 } // namespace srsgnb

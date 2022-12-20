@@ -21,6 +21,19 @@ TEST(bit_units, basic)
   ASSERT_EQ(a.value(), 2);
 }
 
+TEST(bit_units, conversion)
+{
+  using namespace units::literals;
+
+  units::bits a = 10_bits;
+  ASSERT_EQ(a.value(), 10);
+  ASSERT_EQ(a.truncate_to_bytes().value(), 1);
+  ASSERT_EQ(a.round_up_to_bytes().value(), 2);
+
+  units::bits b = 8_bits;
+  ASSERT_TRUE(b.is_byte_exact());
+}
+
 TEST(byte_units, basic)
 {
   using namespace units::literals;

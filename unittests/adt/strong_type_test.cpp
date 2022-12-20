@@ -122,3 +122,11 @@ TEST(strong_type_test, bitwise)
   ASSERT_EQ((a >> 1).value(), 1);
   ASSERT_EQ((a << 1).value(), 4);
 }
+
+TEST(strong_type_test, conversion)
+{
+  using strong_int = strong_type<int, struct strong_int_tag, strong_conversion_to<unsigned>>;
+
+  strong_int a{2};
+  ASSERT_EQ(static_cast<unsigned>(a), 2);
+}

@@ -47,8 +47,14 @@ public:
 
   constexpr bits(const bits_base& other) : bits_base(other) {}
 
-  /// Returns an object that represents the number of bytes truncating any bits that do not form a complete byte.
+  /// Returns true if the amount of digital information expressed as bits is a multiple of a byte.
+  constexpr bool is_byte_exact() const { return ((value() % CHAR_BIT) == 0); }
+
+  /// Returns the amount of digital information expressed as an integer number of bytes, rounded down.
   constexpr bytes truncate_to_bytes() const;
+
+  /// Returns the amount of digital information expressed as an integer number of bytes, rounded up.
+  constexpr bytes round_up_to_bytes() const;
 };
 
 /// \brief Abstraction of byte as a unit of digital information.
@@ -65,13 +71,18 @@ public:
 
   explicit constexpr operator bits() const { return to_bits(); }
 
-  /// Returns an object that represents the number of bits.
+  /// Returns the amount of digital information as a number of bits.
   constexpr bits to_bits() const { return bits(value() * CHAR_BIT); }
 };
 
 constexpr bytes bits::truncate_to_bytes() const
 {
   return bytes(value() / CHAR_BIT);
+}
+
+constexpr bytes bits::round_up_to_bytes() const
+{
+  return bytes((value() + CHAR_BIT - 1) / CHAR_BIT);
 }
 
 namespace literals {

@@ -43,9 +43,9 @@ struct test_profile {
   unsigned                         nof_symbols = get_nsymb_per_slot(cyclic_prefix::NORMAL);
   std::vector<unsigned>            nof_prb_set = {25, 52, 106, 270};
   std::vector<sch_mcs_description> mcs_set     = {{modulation_scheme::QPSK, 120.0F},
-                                              {modulation_scheme::QAM16, 658.0F},
-                                              {modulation_scheme::QAM64, 873.0F},
-                                              {modulation_scheme::QAM256, 948.0F}};
+                                                  {modulation_scheme::QAM16, 658.0F},
+                                                  {modulation_scheme::QAM64, 873.0F},
+                                                  {modulation_scheme::QAM256, 948.0F}};
 };
 
 // Profile selected during test execution.
