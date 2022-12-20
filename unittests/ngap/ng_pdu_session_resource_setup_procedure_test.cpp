@@ -41,6 +41,14 @@ TEST_F(ngc_test, when_valid_pdu_session_resource_setup_request_received_then_pdu
   ngc_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message();
   ngc->handle_message(pdu_session_resource_setup_request);
 
+  // Check conversion in adapter
+  ASSERT_EQ(pdu_session_resource_setup_request.pdu.init_msg()
+                .value.pdu_session_res_setup_request()
+                ->pdu_session_res_setup_list_su_req.value.size(),
+            rrc_ue_notifier->last_cu_cp_pdu_session_res_setup.pdu_session_res_setup_items.size());
+
+  ASSERT_EQ(rrc_ue_notifier->last_cu_cp_pdu_session_res_setup.pdu_session_res_setup_items[0].pdu_session_type, "ipv4");
+
   // Check that AMF notifier was called with right type
   ASSERT_EQ(msg_notifier->last_ngc_msg.pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::successful_outcome);
   ASSERT_EQ(msg_notifier->last_ngc_msg.pdu.successful_outcome().value.type(),

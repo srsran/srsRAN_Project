@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "lib/cu_cp/helpers/ngc_asn1_helpers.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
@@ -120,6 +121,13 @@ public:
 
     last_request = request;
 
+    // Convert to common type
+    cu_cp_pdu_session_resource_setup_message cu_cp_pdu_session_res_setup;
+    fill_cu_cp_pdu_session_resource_setup_message(cu_cp_pdu_session_res_setup,
+                                                  request->pdu_session_res_setup_list_su_req.value);
+    cu_cp_pdu_session_res_setup.ue_aggregate_maximum_bit_rate_dl = ue_aggregate_maximum_bit_rate_dl;
+    last_cu_cp_pdu_session_res_setup                             = std::move(cu_cp_pdu_session_res_setup);
+
     return launch_async([this, res = asn1::ngap::pdu_session_res_setup_resp_s{}](
                             coro_context<async_task<asn1::ngap::pdu_session_res_setup_resp_s>>& ctx) mutable {
       CORO_BEGIN(ctx);
@@ -137,6 +145,7 @@ public:
 
   byte_buffer                                 last_nas_pdu;
   asn1::ngap::pdu_session_res_setup_request_s last_request;
+  cu_cp_pdu_session_resource_setup_message    last_cu_cp_pdu_session_res_setup;
 
 private:
   srslog::basic_logger& logger;
