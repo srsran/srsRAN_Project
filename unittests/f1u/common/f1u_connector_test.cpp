@@ -58,22 +58,17 @@ protected:
     // init logger
     f1u_logger.set_level(srslog::basic_levels::debug);
     f1u_logger.set_hex_dump_max_size(100);
+
+    logger.info("Creating F1-U connector");
+
+    // create f1-u connector
+    f1u_conn = std::make_unique<f1u_local_connector>();
   }
 
   void TearDown() override
   {
     // flush logger after each test
     srslog::flush();
-  }
-
-  /// \brief Initializes fixture according to size sequence number size
-  /// \param sn_size_ size of the sequence number
-  void init()
-  {
-    logger.info("Creating F1-U connector");
-
-    // create f1-u connector
-    f1u_conn = std::make_unique<f1u_local_connector>();
   }
 
   std::unique_ptr<f1u_local_connector> f1u_conn;
@@ -84,7 +79,6 @@ protected:
 /// Test the instantiation of a new entity
 TEST_F(f1u_connector_test, create_new_connector)
 {
-  init();
   EXPECT_NE(f1u_conn, nullptr);
   EXPECT_NE(f1u_conn->get_f1u_du_gateway(), nullptr);
   EXPECT_NE(f1u_conn->get_f1u_cu_up_gateway(), nullptr);
@@ -93,7 +87,6 @@ TEST_F(f1u_connector_test, create_new_connector)
 /// Test attaching F1-U bearer at CU-UP and DU
 TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
 {
-  init();
   f1u_cu_up_gateway* cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   f1u_du_gateway*    du_gw = f1u_conn->get_f1u_du_gateway();
 

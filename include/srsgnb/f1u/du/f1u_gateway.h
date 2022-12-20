@@ -22,12 +22,12 @@ namespace srsgnb {
 class f1u_du_gateway
 {
 public:
-  f1u_du_gateway()                                  = default;
-  virtual ~f1u_du_gateway()                         = default;
-  f1u_du_gateway(const f1u_du_gateway&)             = delete;
-  f1u_du_gateway& operator=(const f1u_du_gateway&)  = delete;
-  f1u_du_gateway(const f1u_du_gateway&&)            = delete;
-  f1u_du_gateway& operator=(const f1u_du_gateway&&) = delete;
+  f1u_du_gateway()                                 = default;
+  virtual ~f1u_du_gateway()                        = default;
+  f1u_du_gateway(const f1u_du_gateway&)            = default;
+  f1u_du_gateway& operator=(const f1u_du_gateway&) = default;
+  f1u_du_gateway(f1u_du_gateway&&)                 = default;
+  f1u_du_gateway& operator=(f1u_du_gateway&&)      = default;
 
   virtual srs_du::f1u_bearer*
   create_du_ul_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) = 0;

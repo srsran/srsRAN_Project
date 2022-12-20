@@ -22,12 +22,12 @@ namespace srsgnb {
 class f1u_cu_up_gateway
 {
 public:
-  f1u_cu_up_gateway()                                     = default;
-  virtual ~f1u_cu_up_gateway()                            = default;
-  f1u_cu_up_gateway(const f1u_cu_up_gateway&)             = delete;
-  f1u_cu_up_gateway& operator=(const f1u_cu_up_gateway&)  = delete;
-  f1u_cu_up_gateway(const f1u_cu_up_gateway&&)            = delete;
-  f1u_cu_up_gateway& operator=(const f1u_cu_up_gateway&&) = delete;
+  f1u_cu_up_gateway()                                    = default;
+  virtual ~f1u_cu_up_gateway()                           = default;
+  f1u_cu_up_gateway(const f1u_cu_up_gateway&)            = default;
+  f1u_cu_up_gateway& operator=(const f1u_cu_up_gateway&) = default;
+  f1u_cu_up_gateway(f1u_cu_up_gateway&&)                 = default;
+  f1u_cu_up_gateway& operator=(f1u_cu_up_gateway&&)      = default;
 
   virtual srs_cu_up::f1u_bearer* create_cu_dl_bearer(uint32_t                             dl_teid,
                                                      srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
