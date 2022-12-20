@@ -17,7 +17,7 @@
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/du_processor_config.h"
-#include "srsgnb/f1c/cu_cp/f1c_cu.h"
+#include "srsgnb/f1c/cu_cp/f1ap_cu.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include "srsgnb/rrc/rrc_du_factory.h"
 #include <string>
@@ -116,7 +116,7 @@ private:
   timer_manager timer_db;
 
   // Components
-  std::unique_ptr<f1c_interface>        f1c;
+  std::unique_ptr<f1ap_cu>              f1c;
   std::unique_ptr<rrc_du_ue_repository> rrc;
 
   // F1C to DU processor adapter

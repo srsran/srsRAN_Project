@@ -13,7 +13,7 @@
 #include "test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/f1c/common/f1c_common.h"
-#include "srsgnb/f1c/cu_cp/f1c_cu.h"
+#include "srsgnb/f1c/cu_cp/f1ap_cu.h"
 #include "srsgnb/f1c/cu_cp/f1c_cu_factory.h"
 #include <gtest/gtest.h>
 
@@ -42,7 +42,7 @@ protected:
     srslog::flush();
   }
 
-  std::unique_ptr<f1c_interface>                    f1c;
+  std::unique_ptr<f1ap_cu>                          f1c;
   std::unique_ptr<dummy_f1c_pdu_notifier>           f1c_pdu_notifier;
   std::unique_ptr<dummy_f1c_du_processor_notifier>  du_processor_notifier;
   std::unique_ptr<dummy_f1c_du_management_notifier> f1c_du_mgmt_notifier;

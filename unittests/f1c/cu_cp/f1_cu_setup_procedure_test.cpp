@@ -10,7 +10,7 @@
 
 #include "unittests/f1c/common/f1_cu_test_helpers.h"
 #include "unittests/f1c/common/test_helpers.h"
-#include "srsgnb/f1c/cu_cp/f1c_cu.h"
+#include "srsgnb/f1c/cu_cp/f1ap_cu.h"
 #include "srsgnb/f1c/cu_cp/f1c_cu_factory.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/test_utils.h"

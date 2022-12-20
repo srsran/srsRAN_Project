@@ -14,7 +14,7 @@
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/cu_cp/ue_context.h"
-#include "srsgnb/f1c/cu_cp/f1c_cu.h"
+#include "srsgnb/f1c/cu_cp/f1ap_cu.h"
 #include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {

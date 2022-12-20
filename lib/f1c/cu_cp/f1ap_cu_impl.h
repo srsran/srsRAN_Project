@@ -14,7 +14,7 @@
 #include "procedures/f1_ue_context_release_procedure.h"
 #include "procedures/f1_ue_context_setup_procedure.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
-#include "srsgnb/f1c/cu_cp/f1c_cu.h"
+#include "srsgnb/f1c/cu_cp/f1ap_cu.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include <memory>
 
@@ -23,13 +23,13 @@ namespace srs_cu_cp {
 
 class f1c_event_manager;
 
-class f1c_cu_impl final : public f1c_interface
+class f1ap_cu_impl final : public f1ap_cu
 {
 public:
-  f1c_cu_impl(f1c_message_notifier&       f1c_pdu_notifier_,
-              f1c_du_processor_notifier&  f1c_du_processor_notifier_,
-              f1c_du_management_notifier& f1c_du_management_notifier_);
-  ~f1c_cu_impl();
+  f1ap_cu_impl(f1c_message_notifier&       f1c_pdu_notifier_,
+               f1c_du_processor_notifier&  f1c_du_processor_notifier_,
+               f1c_du_management_notifier& f1c_du_management_notifier_);
+  ~f1ap_cu_impl();
 
   void connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1c_rrc_message_notifier& notifier) override;
 

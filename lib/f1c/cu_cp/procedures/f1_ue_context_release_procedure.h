@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "../f1c_cu_impl.h"
+#include "../f1ap_cu_impl.h"
 #include "common/f1ap_asn1_utils.h"
 #include "f1c_cu_event_manager.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
-#include "srsgnb/f1c/cu_cp/f1c_cu.h"
+#include "srsgnb/f1c/cu_cp/f1ap_cu.h"
 #include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {

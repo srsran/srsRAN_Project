@@ -14,7 +14,7 @@
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/ue_context.h"
 #include "srsgnb/f1c/common/f1c_common.h"
-#include "srsgnb/f1c/cu_cp/f1c_cu.h"
+#include "srsgnb/f1c/cu_cp/f1ap_cu.h"
 #include "srsgnb/gateways/network_gateway.h"
 
 namespace srsgnb {
