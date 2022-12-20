@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/f1u/common/f1u_connector_factory.h"
+#include "apps/gnb/adapters/f1u_connector/f1u_local_connector.h"
 #include "srsgnb/srslog/srslog.h"
 #include <gtest/gtest.h>
 
@@ -73,8 +73,7 @@ protected:
     logger.info("Creating F1-U connector");
 
     // create f1-u connector
-    f1u_connector_creation_message msg = {};
-    f1u_conn                           = create_f1u_connector(msg);
+    f1u_conn = std::make_unique<f1u_local_connector>();
   }
 
   std::unique_ptr<f1u_local_connector> f1u_conn;
@@ -87,29 +86,28 @@ TEST_F(f1u_connector_test, create_new_connector)
 {
   init();
   EXPECT_NE(f1u_conn, nullptr);
-  EXPECT_NE(f1u_conn->get_f1u_du_connector(), nullptr);
-  EXPECT_NE(f1u_conn->get_f1u_cu_up_connector(), nullptr);
+  EXPECT_NE(f1u_conn->get_f1u_du_gateway(), nullptr);
+  EXPECT_NE(f1u_conn->get_f1u_cu_up_gateway(), nullptr);
 }
 
 /// Test attaching F1-U bearer at CU-UP and DU
 TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
 {
   init();
-  f1u_cu_up_connector* cu_conn = f1u_conn->get_f1u_cu_up_connector();
-  f1u_du_connector*    du_conn = f1u_conn->get_f1u_du_connector();
-  (void)du_conn;
+  f1u_cu_up_gateway* cu_gw = f1u_conn->get_f1u_cu_up_gateway();
+  f1u_du_gateway*    du_gw = f1u_conn->get_f1u_du_gateway();
 
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_sdu_notifier      cu_rx;
   dummy_f1u_cu_up_rx_delivery_notifier cu_delivery;
-  srs_cu_up::f1u_bearer*               cu_bearer = cu_conn->create_cu_dl_bearer(1, cu_delivery, cu_rx);
+  srs_cu_up::f1u_bearer*               cu_bearer = cu_gw->create_cu_dl_bearer(1, cu_delivery, cu_rx);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_rx_sdu_notifier du_rx;
-  srs_du::f1u_bearer*          du_bearer = du_conn->create_du_ul_bearer(1, 2, du_rx);
+  srs_du::f1u_bearer*          du_bearer = du_gw->create_du_ul_bearer(1, 2, du_rx);
 
   // Create CU RX handler and attach it to the DU TX
-  cu_conn->attach_cu_ul_bearer(1, 2);
+  cu_gw->attach_cu_ul_bearer(1, 2);
 
   // Check CU-UP -> DU path
   byte_buffer             cu_buf = make_byte_buffer("ABCD");
