@@ -72,7 +72,7 @@ public:
   /// Special member function definitions.
   constexpr strong_type() = default;
   explicit constexpr strong_type(T val_) : val(val_) {}
-  constexpr strong_type(const strong_type&) = default;
+  constexpr strong_type(const strong_type&)            = default;
   constexpr strong_type& operator=(const strong_type&) = default;
 
   /// Accessor for the underlying value of the strong type.

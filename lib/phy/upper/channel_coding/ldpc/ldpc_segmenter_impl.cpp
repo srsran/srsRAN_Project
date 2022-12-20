@@ -23,7 +23,9 @@ using namespace srsgnb::ldpc;
 /// Length of the CRC checksum added to the segments.
 static constexpr units::bits SEG_CRC_LENGTH{24};
 /// Maximum accepted transport block size.
+/// Note: This value has to be multiple of 8.
 static constexpr units::bits MAX_TBS{1277992};
+static_assert(MAX_TBS.is_byte_exact(), "Value is not a multiple of 8");
 
 std::unique_ptr<ldpc_segmenter_tx> ldpc_segmenter_impl::create_ldpc_segmenter_impl_tx(ldpc_segmenter_impl::sch_crc& c)
 {
