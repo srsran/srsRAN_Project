@@ -12,7 +12,7 @@
 
 #include "ue_manager_interfaces.h"
 #include "srsgnb/adt/slotted_array.h"
-#include "srsgnb/f1u/cu_up/f1u_connector.h"
+#include "srsgnb/f1u/cu_up/f1u_gateway.h"
 #include "srsgnb/support/timers.h"
 
 namespace srsgnb {
@@ -24,7 +24,7 @@ class ue_manager : public ue_manager_ctrl
 public:
   explicit ue_manager(srslog::basic_logger& logger_,
                       timer_manager&        timers_,
-                      f1u_cu_up_connector&  f1u_conn,
+                      f1u_cu_up_gateway&    f1u_gw_,
                       gtpu_demux_ctrl&      ngu_demux_);
 
   using ue_db_t = slotted_array<std::unique_ptr<ue_context>, MAX_NOF_UES>;
@@ -42,7 +42,7 @@ private:
 
   srslog::basic_logger& logger;
   timer_manager&        timers;
-  f1u_cu_up_connector&  f1u_conn;
+  f1u_cu_up_gateway&    f1u_gw;
   gtpu_demux_ctrl&      ngu_demux;
   ue_db_t               ue_db;
 };

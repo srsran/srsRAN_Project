@@ -15,23 +15,19 @@
 #include "srsgnb/f1u/cu_up/f1u_rx_sdu_notifier.h"
 #include "srsgnb/srslog/srslog.h"
 
-/*
- * This file will hold the interfaces for the connector between
- * the DU and CU-UP. At the moment, only co-located configurations
- * are supported.
- */
 namespace srsgnb {
 
-/// TODO write docs.
-class f1u_cu_up_connector
+/// This class will be used to provide the interfaces to
+/// the CU-UP to create and manage F1-U bearers.
+class f1u_cu_up_gateway
 {
 public:
-  f1u_cu_up_connector()                                       = default;
-  virtual ~f1u_cu_up_connector()                              = default;
-  f1u_cu_up_connector(const f1u_cu_up_connector&)             = delete;
-  f1u_cu_up_connector& operator=(const f1u_cu_up_connector&)  = delete;
-  f1u_cu_up_connector(const f1u_cu_up_connector&&)            = delete;
-  f1u_cu_up_connector& operator=(const f1u_cu_up_connector&&) = delete;
+  f1u_cu_up_gateway()                                     = default;
+  virtual ~f1u_cu_up_gateway()                            = default;
+  f1u_cu_up_gateway(const f1u_cu_up_gateway&)             = delete;
+  f1u_cu_up_gateway& operator=(const f1u_cu_up_gateway&)  = delete;
+  f1u_cu_up_gateway(const f1u_cu_up_gateway&&)            = delete;
+  f1u_cu_up_gateway& operator=(const f1u_cu_up_gateway&&) = delete;
 
   virtual srs_cu_up::f1u_bearer* create_cu_dl_bearer(uint32_t                             dl_teid,
                                                      srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,

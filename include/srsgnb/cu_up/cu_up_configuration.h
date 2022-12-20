@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/e1/common/e1_common.h"
-#include "srsgnb/f1u/cu_up/f1u_connector.h"
+#include "srsgnb/f1u/cu_up/f1u_gateway.h"
 #include "srsgnb/support/executors/task_executor.h"
 
 namespace srsgnb {
@@ -21,7 +21,7 @@ namespace srs_cu_up {
 struct cu_up_configuration {
   task_executor*       cu_up_executor = nullptr;
   e1_message_notifier* e1_notifier    = nullptr; /// Callback for incoming E1 messages.
-  f1u_cu_up_connector* f1u_connector  = nullptr;
+  f1u_cu_up_gateway*   f1u_gateway    = nullptr;
 };
 
 } // namespace srs_cu_up

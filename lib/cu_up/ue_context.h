@@ -13,7 +13,7 @@
 #include "pdu_session_manager.h"
 #include "pdu_session_manager_impl.h"
 #include "srsgnb/cu_up/cu_up_types.h"
-#include "srsgnb/f1u/cu_up/f1u_connector.h"
+#include "srsgnb/f1u/cu_up/f1u_gateway.h"
 #include <map>
 
 namespace srsgnb {
@@ -26,9 +26,9 @@ public:
   ue_context(ue_index_t            index_,
              srslog::basic_logger& logger_,
              timer_manager&        timers_,
-             f1u_cu_up_connector&  f1u_conn_,
+             f1u_cu_up_gateway&    f1u_gw_,
              gtpu_demux_ctrl&      ngu_) :
-    index(index_), pdu_session_manager(index, logger_, timers_, f1u_conn_, ngu_){};
+    index(index_), pdu_session_manager(index, logger_, timers_, f1u_gw_, ngu_){};
   ~ue_context() = default;
 
   // pdu_session_manager_ctrl

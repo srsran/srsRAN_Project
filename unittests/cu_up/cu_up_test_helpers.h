@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/f1u/cu_up/f1u_connector.h"
+#include "srsgnb/f1u/cu_up/f1u_gateway.h"
 #include "srsgnb/gtpu/gtpu_demux.h"
 
 namespace srsgnb {
@@ -26,11 +26,11 @@ public:
   bool remove_tunnel(uint32_t teid) override { return true; }
 };
 
-class dummy_f1u_connector final : public f1u_cu_up_connector
+class dummy_f1u_gateway final : public f1u_cu_up_gateway
 {
 public:
-  dummy_f1u_connector()  = default;
-  ~dummy_f1u_connector() = default;
+  dummy_f1u_gateway()  = default;
+  ~dummy_f1u_gateway() = default;
 
   srs_cu_up::f1u_bearer* create_cu_dl_bearer(uint32_t                             dl_teid,
                                              srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,

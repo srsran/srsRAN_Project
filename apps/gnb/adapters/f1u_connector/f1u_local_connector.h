@@ -12,8 +12,8 @@
 #pragma once
 
 #include "f1u_local_bearer_adapter.h"
-#include "srsgnb/f1u/cu_up/f1u_connector.h"
-#include "srsgnb/f1u/du/f1u_connector.h"
+#include "srsgnb/f1u/cu_up/f1u_gateway.h"
+#include "srsgnb/f1u/du/f1u_gateway.h"
 #include "srsgnb/srslog/srslog.h"
 #include <cstdint>
 #include <map>
@@ -41,13 +41,13 @@ struct f1u_ul_du_bearer {
 /// \brief Object used to connect the DU and CU-UP F1-U bearers
 /// On the co-located case this is done by connecting both entities
 /// directly.
-class f1u_local_connector final : public f1u_du_connector, public f1u_cu_up_connector
+class f1u_local_connector final : public f1u_du_gateway, public f1u_cu_up_gateway
 {
 public:
   f1u_local_connector() : logger(srslog::fetch_basic_logger("F1-U")){};
 
-  f1u_du_connector*    get_f1u_du_connector() { return this; }
-  f1u_cu_up_connector* get_f1u_cu_up_connector() { return this; }
+  f1u_du_gateway*    get_f1u_du_gateway() { return this; }
+  f1u_cu_up_gateway* get_f1u_cu_up_gateway() { return this; }
 
   srs_cu_up::f1u_bearer* create_cu_dl_bearer(uint32_t                             dl_teid,
                                              srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
