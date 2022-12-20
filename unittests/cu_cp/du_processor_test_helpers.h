@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "unittests/f1c/common/f1_cu_test_helpers.h"
+#include "unittests/f1c/cu_cp/f1_cu_test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/rrc/rrc.h"
@@ -20,7 +20,7 @@ namespace srs_cu_cp {
 
 f1_setup_request_message generate_valid_f1_setup_request_message()
 {
-  f1c_message              f1setup_msg          = generate_valid_f1_setup_request();
+  f1c_message              f1setup_msg          = generate_f1_setup_request();
   f1_setup_request_message f1_setup_request_msg = {};
   f1_setup_request_msg.request                  = f1setup_msg.pdu.init_msg().value.f1_setup_request();
   return f1_setup_request_msg;
@@ -28,7 +28,9 @@ f1_setup_request_message generate_valid_f1_setup_request_message()
 
 f1_setup_request_message generate_f1_setup_request_message_base()
 {
-  f1c_message              f1setup_msg          = generate_f1_setup_request_base();
+  f1c_message f1setup_msg                                                               = generate_f1_setup_request();
+  f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list_present = false;
+  f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list->clear();
   f1_setup_request_message f1_setup_request_msg = {};
   f1_setup_request_msg.request                  = f1setup_msg.pdu.init_msg().value.f1_setup_request();
   return f1_setup_request_msg;

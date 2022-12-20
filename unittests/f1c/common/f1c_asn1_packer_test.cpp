@@ -8,9 +8,9 @@
  *
  */
 
-#include "f1_cu_test_helpers.h"
 #include "lib/f1c/common/f1ap_asn1_packer.h"
 #include "test_helpers.h"
+#include "unittests/f1c/cu_cp/f1_cu_test_helpers.h"
 #include "unittests/gateways/test_helpers.h"
 #include <gtest/gtest.h>
 
@@ -48,7 +48,7 @@ protected:
 TEST_F(f1c_asn1_packer_test, when_packing_successful_then_unpacking_successful)
 {
   // Action 1: Create valid f1c message
-  f1c_message f1_setup_request = generate_valid_f1_setup_request();
+  f1c_message f1_setup_request = generate_f1_setup_request();
 
   // Action 2: Pack message and forward to gateway
   packer->handle_message(f1_setup_request);
@@ -64,17 +64,16 @@ TEST_F(f1c_asn1_packer_test, when_packing_successful_then_unpacking_successful)
 TEST_F(f1c_asn1_packer_test, when_packing_unsuccessful_then_message_not_forwarded)
 {
   // Action 1: Generate, pack and forward valid message to bring gw into known state
-  f1c_message f1_setup_request = generate_valid_f1_setup_request();
+  f1c_message f1_setup_request = generate_f1_setup_request();
   packer->handle_message(f1_setup_request);
   // store size of valid pdu
   int valid_pdu_size = gw->last_pdu.length();
 
   // Action 2: Create invalid f1c message
-  f1c_message f1c_msg                         = generate_f1_setup_request_base();
+  f1c_message f1c_msg                         = generate_f1_setup_request();
   auto&       setup_req                       = f1c_msg.pdu.init_msg().value.f1_setup_request();
   setup_req->gnb_du_served_cells_list_present = true;
-  setup_req->gnb_du_served_cells_list.id      = ASN1_F1AP_ID_G_NB_DU_SERVED_CELLS_LIST;
-  setup_req->gnb_du_served_cells_list.crit    = asn1::crit_opts::reject;
+  setup_req->gnb_du_served_cells_list.value.clear();
 
   // Action 3: Pack message and forward to gateway
   packer->handle_message(f1c_msg);

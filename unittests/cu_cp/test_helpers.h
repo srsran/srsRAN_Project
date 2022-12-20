@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "lib/cu_cp/adapters/du_processor_adapters.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/ue_context.h"
@@ -57,6 +58,12 @@ private:
   srslog::basic_logger& logger;
   cu_cp_du_handler*     cu_cp_handler = nullptr;
 };
+
+/// \brief Generate DU-to-CU RRC Container with CellGroupConfig.
+byte_buffer generate_container_with_cell_group_config();
+
+/// \brief Generate RRC Container with RRC Setup Complete message.
+byte_buffer generate_rrc_setup_complete();
 
 } // namespace srs_cu_cp
 } // namespace srsgnb

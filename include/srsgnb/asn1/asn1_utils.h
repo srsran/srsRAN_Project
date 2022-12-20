@@ -822,6 +822,8 @@ public:
   uint64_t                 to_number() const;
   unbounded_octstring<Al>& from_number(uint64_t val);
 
+  srsgnb::byte_buffer to_byte_buffer() { return std::move(*static_cast<srsgnb::byte_buffer*>(this)); }
+
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
 };

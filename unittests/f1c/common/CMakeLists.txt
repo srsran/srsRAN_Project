@@ -1,0 +1,24 @@
+#
+# Copyright 2013-2022 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+add_library(f1_test_helpers f1_cu_test_messages.cpp)
+target_include_directories(f1_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(f1_test_helpers srsgnb_support f1ap_asn1 srslog)
+
+add_executable(f1c_asn1_packer_test f1c_asn1_packer_test.cpp)
+target_link_libraries(f1c_asn1_packer_test
+        f1_test_helpers
+        srsgnb_f1c_common
+        srsgnb_support
+        srslog
+        f1ap_asn1
+        srsgnb_ran
+        gtest
+        gtest_main)
+target_include_directories(f1c_asn1_packer_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(f1c_asn1_packer_test)

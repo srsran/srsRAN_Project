@@ -9,7 +9,7 @@
 
 add_library(srsgnb_f1c_cu
         f1c_cu_impl.cpp
-        f1c_cu_factory.cpp
+        f1ap_cu_factory.cpp
         procedures/f1_ue_context_setup_procedure.cpp
         procedures/f1_ue_context_modification_procedure.cpp
         procedures/f1_ue_context_release_procedure.cpp)

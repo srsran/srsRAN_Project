@@ -8,7 +8,7 @@
  *
  */
 
-#include "unittests/f1c/common/f1_cu_test_helpers.h"
+#include "f1_cu_test_helpers.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
 
@@ -16,11 +16,12 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 
 /// Test the f1 UE context release procedure (gNB-CU initiated)
-TEST_F(f1c_cu_test, when_ue_release_command_received_then_ue_removed)
+TEST_F(f1ap_cu_test, when_ue_release_command_received_then_ue_removed)
 {
   // Action 1: Add UE
   test_logger.info("Injecting Initial UL RRC message");
-  f1c_message init_ul_rrc_msg = generate_valid_init_ul_rrc_msg(41255);
+  f1c_message init_ul_rrc_msg =
+      generate_init_ul_rrc_message_transfer(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(41255));
   f1c->handle_message(init_ul_rrc_msg);
 
   ASSERT_EQ(f1c->get_nof_ues(), 1);
@@ -40,7 +41,8 @@ TEST_F(f1c_cu_test, when_ue_release_command_received_then_ue_removed)
 
   // Action 3: Inject UE Context Release Complete message
   test_logger.info("Injecting UE Context Release Complete message");
-  f1c_message ue_ctxt_rel_complete_msg = generate_ue_context_release_complete_msg(0, 41255);
+  f1c_message ue_ctxt_rel_complete_msg =
+      generate_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(41255));
   f1c->handle_message(ue_ctxt_rel_complete_msg);
 
   ASSERT_TRUE(t.ready());

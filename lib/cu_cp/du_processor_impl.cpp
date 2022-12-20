@@ -13,7 +13,7 @@
 #include "adapters/pdcp_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "helpers/f1c_asn1_helpers.h"
-#include "srsgnb/f1c/cu_cp/f1c_cu_factory.h"
+#include "srsgnb/f1c/cu_cp/f1ap_cu_factory.h"
 #include "srsgnb/pdcp/pdcp_factory.h"
 #include "srsgnb/ran/nr_cgi_helpers.h"
 
@@ -40,7 +40,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t     du_processo
   ue_manager(ue_manager_)
 {
   // create f1c
-  f1c = create_f1c(f1c_notifier, f1c_ev_notifier, f1c_du_mgmt_notifier);
+  f1c = create_f1ap(f1c_notifier, f1c_ev_notifier, f1c_du_mgmt_notifier);
   f1c_ev_notifier.connect_du_processor(*this);
 
   // initialize control notifier for F1C (TODO: have one per UE and move to UE context)

@@ -17,9 +17,9 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Creates an instance of an F1C interface, notifying outgoing packets on the specified listener object.
-std::unique_ptr<f1ap_cu> create_f1c(f1c_message_notifier&       f1c_pdu_notifier_,
-                                    f1c_du_processor_notifier&  f1c_du_processor_notifier_,
-                                    f1c_du_management_notifier& f1c_du_management_notifier_);
+std::unique_ptr<f1ap_cu> create_f1ap(f1c_message_notifier&       f1c_pdu_notifier_,
+                                     f1c_du_processor_notifier&  f1c_du_processor_notifier_,
+                                     f1c_du_management_notifier& f1c_du_management_notifier_);
 
 } // namespace srs_cu_cp
 } // namespace srsgnb

@@ -33,8 +33,8 @@ protected:
     test_logger.set_level(srslog::basic_levels::debug);
 
     cu_cp_notifier          = std::make_unique<dummy_du_processor_cu_cp_notifier>(nullptr);
-    f1c_pdu_notifier        = std::make_unique<dummy_f1c_pdu_notifier>(nullptr);
-    f1c_du_mgmt_notifier    = std::make_unique<dummy_f1c_du_management_notifier>(nullptr);
+    f1c_pdu_notifier        = std::make_unique<dummy_f1c_pdu_notifier>();
+    f1c_du_mgmt_notifier    = std::make_unique<dummy_f1c_du_management_notifier>();
     rrc_ue_e1_ctrl_notifier = std::make_unique<dummy_rrc_ue_e1_control_notifier>();
     rrc_ue_ngc_notifier     = std::make_unique<dummy_rrc_ue_ngc_adapter>();
     ue_task_sched           = std::make_unique<dummy_du_processor_to_cu_cp_task_scheduler>(timers);
@@ -130,8 +130,11 @@ TEST_F(du_processor_test, when_max_nof_du_cells_exeeded_then_f1setup_rejected)
   f1_setup_request_msg.request->gnb_du_served_cells_list.crit    = asn1::crit_opts::reject;
 
   for (int du_cell_idx_int = MIN_DU_CELL_INDEX; du_cell_idx_int < MAX_NOF_DU_CELLS + 1; du_cell_idx_int++) {
-    f1_setup_request_msg.request->gnb_du_served_cells_list.value.push_back(
-        generate_served_cells_item(du_cell_idx_int, du_cell_idx_int));
+    f1_setup_request_msg.request->gnb_du_served_cells_list.value.push_back({});
+    f1_setup_request_msg.request->gnb_du_served_cells_list.value.back().load_info_obj(
+        ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
+    f1_setup_request_msg.request->gnb_du_served_cells_list.value.back()->gnb_du_served_cells_item() =
+        generate_served_cells_item(du_cell_idx_int, du_cell_idx_int);
   }
 
   // Pass message to DU processor
