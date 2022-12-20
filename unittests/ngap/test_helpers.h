@@ -120,9 +120,17 @@ public:
 
     last_request = request;
 
-    return launch_async([res = asn1::ngap::pdu_session_res_setup_resp_s{}](
+    return launch_async([this, res = asn1::ngap::pdu_session_res_setup_resp_s{}](
                             coro_context<async_task<asn1::ngap::pdu_session_res_setup_resp_s>>& ctx) mutable {
       CORO_BEGIN(ctx);
+
+      if (last_request->pdu_session_res_setup_list_su_req.value.size() == 0) {
+        res->pdu_session_res_failed_to_setup_list_su_res_present = true;
+        res->pdu_session_res_setup_list_su_res_present           = false;
+      } else {
+        res->pdu_session_res_setup_list_su_res_present = true;
+      }
+
       CORO_RETURN(res);
     });
   }

@@ -302,5 +302,60 @@ ngc_message generate_invalid_initial_context_setup_request_message()
   return ngc_msg;
 }
 
+ngc_message generate_pdu_session_resource_setup_request_base()
+{
+  ngc_message ngc_msg;
+
+  ngc_msg.pdu.set_init_msg();
+  ngc_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_PDU_SESSION_RES_SETUP);
+
+  auto& pdu_session_res_setup_req                 = ngc_msg.pdu.init_msg().value.pdu_session_res_setup_request();
+  pdu_session_res_setup_req->amf_ue_ngap_id.value = 3;
+  pdu_session_res_setup_req->ran_ue_ngap_id.value = cu_cp_ue_id_to_uint(cu_cp_ue_id_t::min);
+
+  pdu_session_res_setup_req->ue_aggregate_maximum_bit_rate_present                               = true;
+  pdu_session_res_setup_req->ue_aggregate_maximum_bit_rate.value.ueaggregate_maximum_bit_rate_dl = 300000000U;
+  pdu_session_res_setup_req->ue_aggregate_maximum_bit_rate.value.ueaggregate_maximum_bit_rate_ul = 200000000U;
+
+  return ngc_msg;
+}
+
+ngc_message generate_valid_pdu_session_resource_setup_request_message()
+{
+  ngc_message ngc_msg = generate_pdu_session_resource_setup_request_base();
+
+  auto& pdu_session_res_setup_req = ngc_msg.pdu.init_msg().value.pdu_session_res_setup_request();
+
+  asn1::ngap::pdu_session_res_setup_item_su_req_s pdu_session_res_item;
+
+  pdu_session_res_item.pdu_session_id = 1;
+
+  // Add PDU Session NAS PDU
+  pdu_session_res_item.pdu_session_nas_pdu.from_string(
+      "7e02e9b0a23c027e006801006e2e0115c211000901000631310101ff080606014a06014a2905010c02010c2204010027db79000608204101"
+      "01087b002080802110030000108106ac1503648306ac150364000d04ac150364001002054e251c036f61690469707634066d6e6330393906"
+      "6d636332303804677072731201");
+
+  // Add S-NSSAI
+  pdu_session_res_item.s_nssai.sst.from_number(1);
+  pdu_session_res_item.s_nssai.sd_present = true;
+  pdu_session_res_item.s_nssai.sd.from_string("0027db");
+
+  // Add PDU Session Resource Setup Request Transfer
+  pdu_session_res_item.pdu_session_res_setup_request_transfer.from_string(
+      "0000040082000a0c13ab66803013ab6680008b000a01f0ac150a020000000b00860001000088000700080000080000");
+
+  pdu_session_res_setup_req->pdu_session_res_setup_list_su_req.value.push_back(pdu_session_res_item);
+
+  return ngc_msg;
+}
+
+ngc_message generate_invalid_pdu_session_resource_setup_request_message()
+{
+  ngc_message ngc_msg = generate_pdu_session_resource_setup_request_base();
+
+  return ngc_msg;
+}
+
 } // namespace srs_cu_cp
 } // namespace srsgnb
