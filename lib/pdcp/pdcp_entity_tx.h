@@ -86,6 +86,7 @@ public:
 
   void handle_pdu_transmit_notification(uint32_t max_tx_sn) final
   {
+    logger.log_debug("Handling PDU transmit notification for max_tx_sn={}", max_tx_sn);
     if (max_tx_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
       logger.log_error("Invalid PDU transmit notification for max_tx_sn={} exceeds sn_size={}", max_tx_sn, cfg.sn_size);
       return;
@@ -97,6 +98,7 @@ public:
 
   void handle_pdu_delivery_notification(uint32_t max_deliv_sn) final
   {
+    logger.log_debug("Handling PDU delivery notification for max_deliv_sn={}", max_deliv_sn);
     if (max_deliv_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
       logger.log_error(
           "Invalid PDU delivery notification for max_deliv_sn={} exceeds sn_size={}", max_deliv_sn, cfg.sn_size);
