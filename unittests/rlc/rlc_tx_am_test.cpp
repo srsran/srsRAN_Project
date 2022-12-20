@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../lib/rlc/rlc_tx_am_entity.h"
+#include "lib/rlc/rlc_tx_am_entity.h"
 #include "rlc_test_helpers.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>

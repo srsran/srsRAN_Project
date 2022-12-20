@@ -9,7 +9,7 @@
  *
  */
 
-#include "../../lib/rlc/rlc_sdu_queue.h"
+#include "lib/rlc/rlc_sdu_queue.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/support/test_utils.h"
 

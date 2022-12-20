@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../lib/rlc/rlc_um_entity.h"
+#include "lib/rlc/rlc_um_entity.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <queue>

@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../lib/rlc/rlc_tx_tm_entity.h"
+#include "lib/rlc/rlc_tx_tm_entity.h"
 #include "rlc_test_helpers.h"
 #include <gtest/gtest.h>
 #include <queue>
