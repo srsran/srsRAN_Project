@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../../lib/pdcp/pdcp_entity_rx.h"
+#include "lib/pdcp/pdcp_entity_rx.h"
 #include "pdcp_rx_test_helpers.h"
 #include "pdcp_test_vectors.h"
 #include "srsgnb/pdcp/pdcp_config.h"

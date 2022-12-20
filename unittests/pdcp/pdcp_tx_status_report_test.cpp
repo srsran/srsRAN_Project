@@ -9,7 +9,7 @@
  */
 
 #include "pdcp_tx_status_report_test.h"
-#include "../../lib/pdcp/pdcp_entity_impl.h"
+#include "lib/pdcp/pdcp_entity_impl.h"
 #include "pdcp_test_vectors.h"
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/support/bit_encoding.h"
