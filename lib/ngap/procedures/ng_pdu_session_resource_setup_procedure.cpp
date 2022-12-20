@@ -55,6 +55,6 @@ void ng_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_re
   pdu_session_res_setup_resp->amf_ue_ngap_id.value = amf_ue_id_to_uint(ue.get_amf_ue_id());
   pdu_session_res_setup_resp->ran_ue_ngap_id.value = ran_ue_id_to_uint(ue.get_ran_ue_id());
 
-  logger.info("Sending Initial Context Setup Response to AMF");
+  logger.info("Sending PDU Session Resource Setup Response to AMF");
   amf_notifier.on_new_message(ngc_msg);
 }
