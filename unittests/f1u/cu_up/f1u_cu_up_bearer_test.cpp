@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../../lib/f1u/cu_up/f1u_bearer_impl.h"
+#include "lib/f1u/cu_up/f1u_bearer_impl.h"
 #include "srsgnb/srslog/srslog.h"
 #include <gtest/gtest.h>
 #include <list>
