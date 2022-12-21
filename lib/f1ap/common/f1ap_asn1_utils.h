@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
-#include "srsgnb/f1ap/common/f1c_types.h"
+#include "srsgnb/f1ap/common/f1ap_types.h"
 #include "srsgnb/support/error_handling.h"
 
 namespace srsgnb {

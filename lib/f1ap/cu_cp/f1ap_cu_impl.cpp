@@ -83,7 +83,7 @@ void f1ap_cu_impl::handle_f1_setup_response(const f1_setup_response_message& msg
 void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg)
 {
   gnb_cu_ue_f1ap_id_t cu_ue_id = find_cu_ue_id(msg.ue_index);
-  f1ap_ue_context     ue_ctxt  = cu_ue_id_to_f1ap_ue_context[gnb_cu_ue_f1ap_id_to_uint(cu_ue_id)];
+  f1ap_ue_context&    ue_ctxt  = cu_ue_id_to_f1ap_ue_context[gnb_cu_ue_f1ap_id_to_uint(cu_ue_id)];
 
   asn1::f1ap::dlrrc_msg_transfer_s dlrrc_msg = {};
   dlrrc_msg->gnb_cu_ue_f1_ap_id.value        = gnb_cu_ue_f1ap_id_to_uint(cu_ue_id);

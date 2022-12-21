@@ -15,7 +15,7 @@
 #include "lib/f1ap/common/f1ap_asn1_utils.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
-#include "srsgnb/f1ap/common/f1c_common.h"
+#include "srsgnb/f1ap/common/f1ap_common.h"
 #include "srsgnb/f1ap/du/f1ap_du.h"
 #include "srsgnb/f1ap/du/f1ap_du_factory.h"
 #include "srsgnb/support/async/async_task_loop.h"

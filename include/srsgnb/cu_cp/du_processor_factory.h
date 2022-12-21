@@ -13,7 +13,7 @@
 #include "du_processor.h"
 #include "du_processor_config.h"
 #include "ue_manager.h"
-#include "srsgnb/f1ap/common/f1c_common.h"
+#include "srsgnb/f1ap/common/f1ap_common.h"
 #include "srsgnb/rrc/rrc_ue.h"
 #include <memory>
 

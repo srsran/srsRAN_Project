@@ -22,7 +22,7 @@ TEST_F(f1ap_cu_test, when_ue_modification_response_received_then_procedure_succe
   f1ap_ue_context_modification_request_message request_msg = {};
   test_logger.info("Launch ue context modification procedure...");
   async_task<f1ap_ue_context_modification_response_message> t =
-      f1c->handle_ue_context_modification_request(request_msg);
+      f1ap->handle_ue_context_modification_request(request_msg);
   lazy_task_launcher<f1ap_ue_context_modification_response_message> t_launcher(t);
 
   // Status: DU received UE Context modification Request message.
@@ -37,7 +37,7 @@ TEST_F(f1ap_cu_test, when_ue_modification_response_received_then_procedure_succe
   f1c_message ue_context_modification_response =
       generate_ue_context_modification_response(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(41255));
   test_logger.info("Injecting UEContextModificationResponse");
-  f1c->handle_message(ue_context_modification_response);
+  f1ap->handle_message(ue_context_modification_response);
 
   EXPECT_TRUE(t.ready());
   EXPECT_TRUE(t.get().success);
@@ -51,7 +51,7 @@ TEST_F(f1ap_cu_test, when_ue_modification_failure_received_then_procedure_unsucc
   f1ap_ue_context_modification_request_message request_msg = {};
   test_logger.info("Launch ue context modification procedure...");
   async_task<f1ap_ue_context_modification_response_message> t =
-      f1c->handle_ue_context_modification_request(request_msg);
+      f1ap->handle_ue_context_modification_request(request_msg);
   lazy_task_launcher<f1ap_ue_context_modification_response_message> t_launcher(t);
 
   // Status: DU received UE Context modification Request message.
@@ -66,7 +66,7 @@ TEST_F(f1ap_cu_test, when_ue_modification_failure_received_then_procedure_unsucc
   f1c_message ue_context_modification_failure =
       generate_ue_context_modification_failure(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(41255));
   test_logger.info("Injecting UEContextModificationFailure");
-  f1c->handle_message(ue_context_modification_failure);
+  f1ap->handle_message(ue_context_modification_failure);
 
   EXPECT_TRUE(t.ready());
   EXPECT_FALSE(t.get().success);

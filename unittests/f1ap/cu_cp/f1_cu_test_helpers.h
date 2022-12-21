@@ -13,7 +13,7 @@
 #include "../common/test_helpers.h"
 #include "unittests/f1ap/common/f1_cu_test_messages.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/f1ap/common/f1c_common.h"
+#include "srsgnb/f1ap/common/f1ap_common.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu_factory.h"
 #include <gtest/gtest.h>
@@ -59,7 +59,7 @@ protected:
   dummy_f1c_pdu_notifier           f1c_pdu_notifier;
   dummy_f1c_du_processor_notifier  du_processor_notifier;
   dummy_f1c_du_management_notifier f1c_du_mgmt_notifier;
-  std::unique_ptr<f1ap_cu>         f1c;
+  std::unique_ptr<f1ap_cu>         f1ap;
 };
 
 } // namespace srs_cu_cp

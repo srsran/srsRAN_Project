@@ -12,7 +12,7 @@
 
 #include "f1ap_ue_context.h"
 #include "srsgnb/adt/slotted_array.h"
-#include "srsgnb/f1ap/common/f1c_common.h"
+#include "srsgnb/f1ap/common/f1ap_common.h"
 #include "srsgnb/f1ap/du/f1c_bearer.h"
 #include "srsgnb/f1ap/du/f1c_rx_sdu_notifier.h"
 #include "srsgnb/f1u/du/f1u_bearer.h"

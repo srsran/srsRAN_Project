@@ -14,7 +14,7 @@
 #include "ue_bearer_manager.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/adt/stable_id_map.h"
-#include "srsgnb/f1ap/common/f1c_types.h"
+#include "srsgnb/f1ap/common/f1ap_types.h"
 #include "srsgnb/f1ap/du/f1ap_du.h"
 #include "srsgnb/ran/du_types.h"
 #include <mutex>

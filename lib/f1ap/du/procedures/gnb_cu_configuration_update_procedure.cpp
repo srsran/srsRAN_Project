@@ -9,7 +9,7 @@
  */
 
 #include "gnb_cu_configuration_update_procedure.h"
-#include "srsgnb/f1ap/common/f1c_common.h"
+#include "srsgnb/f1ap/common/f1ap_common.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_du;

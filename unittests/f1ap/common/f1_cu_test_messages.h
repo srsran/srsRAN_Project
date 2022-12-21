@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/f1ap/common/f1c_types.h"
+#include "srsgnb/f1ap/common/f1ap_types.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/ran/rnti.h"
 
