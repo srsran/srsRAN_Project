@@ -80,20 +80,20 @@ struct f1ap_ue_context_setup_response_message {
   bool                                success;
 };
 
-struct f1ap_ue_context_release_command_message {
+struct f1ap_ue_context_release_command {
   ue_index_t          ue_index;
   asn1::f1ap::cause_c cause;
 };
 
-struct f1ap_ue_context_release_complete_message {
+struct f1ap_ue_context_release_complete {
   asn1::f1ap::ue_context_release_complete_s msg;
 };
 
-struct f1ap_ue_context_modification_request_message {
+struct f1ap_ue_context_modification_request {
   asn1::f1ap::ue_context_mod_request_s msg;
 };
 
-struct f1ap_ue_context_modification_response_message {
+struct f1ap_ue_context_modification_response {
   asn1::f1ap::ue_context_mod_resp_s response;
   asn1::f1ap::ue_context_mod_fail_s failure;
   bool                              success;
@@ -112,15 +112,14 @@ public:
   /// \brief Initiates the UE Context Release procedure as per TS 38.473 section 8.3.3.
   /// \param[in] msg The UE Context Release message to transmit.
   /// \return Retruns the index of the released UE.
-  virtual async_task<ue_index_t>
-  handle_ue_context_release_command(const f1ap_ue_context_release_command_message& msg) = 0;
+  virtual async_task<ue_index_t> handle_ue_context_release_command(const f1ap_ue_context_release_command& msg) = 0;
 
   /// \brief Initiates the UE Context Modification procedure as per TS 38.473 section 8.3.4.
   /// \param[in] request The UE Context Modification message to transmit.
   /// \return Returns a f1ap_ue_context_modification_response_message struct with the success member set to
   /// 'true' in case of a successful outcome, 'false' otherwise.
-  virtual async_task<f1ap_ue_context_modification_response_message>
-  handle_ue_context_modification_request(const f1ap_ue_context_modification_request_message& request) = 0;
+  virtual async_task<f1ap_ue_context_modification_response>
+  handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request) = 0;
 };
 
 /// Interface to notify the reception of an new RRC message.
@@ -151,12 +150,6 @@ private:
 
 /// Non-owning handlers to RRC message notifiers.
 using f1ap_srb_notifiers = std::array<f1c_rrc_message_notifier*, MAX_NOF_SRBS>;
-
-struct f1ap_ue_context {
-  gnb_du_ue_f1ap_id_t du_ue_f1ap_id = gnb_du_ue_f1ap_id_t::invalid;
-  ue_index_t          ue_index      = INVALID_UE_INDEX;
-  f1ap_srb_notifiers  srbs;
-};
 
 struct f1ap_srb_creation_message {
   ue_index_t ue_index;

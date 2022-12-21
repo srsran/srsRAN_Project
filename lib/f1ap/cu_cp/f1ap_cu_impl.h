@@ -13,6 +13,8 @@
 #include "procedures/f1_ue_context_modification_procedure.h"
 #include "procedures/f1_ue_context_release_procedure.h"
 #include "procedures/f1_ue_context_setup_procedure.h"
+#include "ue_context/f1ap_cu_ue_context.h"
+#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/ran/nr_cgi.h"
@@ -46,10 +48,10 @@ public:
   async_task<f1ap_ue_context_setup_response_message>
   handle_ue_context_setup_request(const f1ap_ue_context_setup_request_message& request) override;
 
-  async_task<ue_index_t> handle_ue_context_release_command(const f1ap_ue_context_release_command_message& msg) override;
+  async_task<ue_index_t> handle_ue_context_release_command(const f1ap_ue_context_release_command& msg) override;
 
-  async_task<f1ap_ue_context_modification_response_message>
-  handle_ue_context_modification_request(const f1ap_ue_context_modification_request_message& request) override;
+  async_task<f1ap_ue_context_modification_response>
+  handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request) override;
 
   // f1c message handler functions
 
@@ -87,18 +89,10 @@ private:
   /// \param[in] msg The F1 Removal Request message.
   void handle_f1_removal_request(const asn1::f1ap::f1_removal_request_s& msg);
 
-  /// \brief Get the next available CU UE ID.
-  /// \return The CU UE ID.
-  gnb_cu_ue_f1ap_id_t get_next_cu_ue_id();
-
-  /// \brief Find the CU UE ID by a given UE index.
-  /// \param[in] ue_index The UE index used to find the CU UE ID.
-  /// \return The CU UE ID.
-  gnb_cu_ue_f1ap_id_t find_cu_ue_id(ue_index_t ue_index);
-
   srslog::basic_logger& logger;
 
-  std::array<f1ap_ue_context, MAX_NOF_UES> cu_ue_id_to_f1ap_ue_context;
+  /// Repository of UE Contexts.
+  f1ap_ue_context_list ue_ctx_list;
 
   // nofifiers and handles
   f1c_message_notifier&       pdu_notifier;

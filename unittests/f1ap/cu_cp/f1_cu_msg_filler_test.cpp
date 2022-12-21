@@ -95,7 +95,7 @@ TEST_F(f1ap_cu_msg_filler_test, when_context_mod_req_valid_then_valid_asn1_msg_g
 {
   rrc_ue_ue_context_modification_request_message msg = generate_ue_context_mod_request();
 
-  f1ap_ue_context_modification_request_message f1ap_ue_context_mod_request;
+  f1ap_ue_context_modification_request f1ap_ue_context_mod_request;
   fill_f1ap_ue_context_modification_request(f1ap_ue_context_mod_request, msg);
 
   // pack full F1AP PDU and verify correctnes

@@ -14,13 +14,20 @@ using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
 using namespace asn1::f1ap;
 
-f1_ue_context_release_procedure::f1_ue_context_release_procedure(f1ap_ue_context&                ue_ctxt_,
-                                                                 const ue_context_release_cmd_s& command_,
-                                                                 f1c_message_notifier&           f1c_notif_,
-                                                                 f1c_event_manager&              ev_mng_,
-                                                                 srslog::basic_logger&           logger_) :
-  ue_ctxt(ue_ctxt_), command(command_), f1c_notifier(f1c_notif_), ev_mng(ev_mng_), logger(logger_)
+f1_ue_context_release_procedure::f1_ue_context_release_procedure(f1ap_ue_context_list&                  ue_ctx_list_,
+                                                                 const f1ap_ue_context_release_command& cmd_,
+                                                                 f1c_message_notifier&                  f1c_notif_,
+                                                                 f1c_event_manager&                     ev_mng_,
+                                                                 srslog::basic_logger&                  logger_) :
+  ue_ctxt_list(ue_ctx_list_),
+  ue_ctxt(ue_ctxt_list[cmd_.ue_index]),
+  f1c_notifier(f1c_notif_),
+  ev_mng(ev_mng_),
+  logger(logger_)
 {
+  command->gnb_cu_ue_f1_ap_id.value = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
+  command->gnb_du_ue_f1_ap_id.value = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
+  command->cause.value              = cmd_.cause;
 }
 
 void f1_ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t>>& ctx)
@@ -55,17 +62,16 @@ void f1_ue_context_release_procedure::send_ue_context_release_command()
   f1c_notifier.on_new_message(f1c_ue_ctxt_rel_msg);
 }
 
-ue_index_t
-f1_ue_context_release_procedure::create_ue_context_release_complete(const asn1::f1ap::ue_context_release_complete_s msg)
+ue_index_t f1_ue_context_release_procedure::create_ue_context_release_complete(
+    const asn1::f1ap::ue_context_release_complete_s& msg)
 {
   logger.info("Received F1AP UE Context Release Complete.");
 
   ue_index_t ret = INVALID_UE_INDEX;
 
   if (msg->gnb_du_ue_f1_ap_id.value == gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id)) {
-    ret                   = ue_ctxt.ue_index;
-    ue_ctxt.du_ue_f1ap_id = gnb_du_ue_f1ap_id_t::invalid;
-    ue_ctxt.ue_index      = INVALID_UE_INDEX;
+    ret = ue_ctxt.ue_index;
+    ue_ctxt_list.remove_ue(ue_ctxt.cu_ue_f1ap_id);
   }
 
   return ret;

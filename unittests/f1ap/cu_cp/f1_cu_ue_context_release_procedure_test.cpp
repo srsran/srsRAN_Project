@@ -28,7 +28,7 @@ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_ue_removed)
 
   // Action 2: Start UE Context Release procedure
   test_logger.info("Starting UE Context Release procedure");
-  f1ap_ue_context_release_command_message f1ap_ue_ctxt_rel_cmd_msg;
+  f1ap_ue_context_release_command f1ap_ue_ctxt_rel_cmd_msg;
   f1ap_ue_ctxt_rel_cmd_msg.ue_index = MIN_UE_INDEX;
   f1ap_ue_ctxt_rel_cmd_msg.cause.set_radio_network();
 

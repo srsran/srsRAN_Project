@@ -27,3 +27,16 @@ f1ap_cu_test::~f1ap_cu_test()
   // flush logger after each test
   srslog::flush();
 }
+
+f1ap_ue_context_modification_request
+srsgnb::srs_cu_cp::create_ue_context_modification_request(gnb_cu_ue_f1ap_id_t                    cu_ue_id,
+                                                          gnb_du_ue_f1ap_id_t                    du_ue_id,
+                                                          const std::initializer_list<drb_id_t>& drbs_to_add)
+{
+  f1c_message dummy_msg = generate_ue_context_modification_request(cu_ue_id, du_ue_id, drbs_to_add);
+
+  f1ap_ue_context_modification_request req;
+  req.msg = dummy_msg.pdu.init_msg().value.ue_context_mod_request();
+
+  return req;
+}

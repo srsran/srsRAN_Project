@@ -28,14 +28,14 @@ public:
                                        f1c_event_manager&                          ev_mng_,
                                        srslog::basic_logger&                       logger_);
 
-  void operator()(coro_context<async_task<f1ap_ue_context_modification_response_message>>& ctx);
+  void operator()(coro_context<async_task<f1ap_ue_context_modification_response>>& ctx);
 
 private:
   /// Send F1 UE Context Modification Request to DU.
   void send_ue_context_modification_request();
 
   /// Creates procedure result to send back to procedure caller.
-  f1ap_ue_context_modification_response_message create_ue_context_modification_result();
+  f1ap_ue_context_modification_response create_ue_context_modification_result();
 
   const asn1::f1ap::ue_context_mod_request_s request;
   f1c_message_notifier&                      f1c_notifier;

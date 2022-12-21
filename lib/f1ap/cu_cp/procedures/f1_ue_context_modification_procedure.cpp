@@ -23,7 +23,7 @@ f1_ue_context_modification_procedure::f1_ue_context_modification_procedure(const
 }
 
 void f1_ue_context_modification_procedure::operator()(
-    coro_context<async_task<f1ap_ue_context_modification_response_message>>& ctx)
+    coro_context<async_task<f1ap_ue_context_modification_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -55,10 +55,9 @@ void f1_ue_context_modification_procedure::send_ue_context_modification_request(
   f1c_notifier.on_new_message(f1c_ue_ctxt_mod_request_msg);
 }
 
-f1ap_ue_context_modification_response_message
-f1_ue_context_modification_procedure::create_ue_context_modification_result()
+f1ap_ue_context_modification_response f1_ue_context_modification_procedure::create_ue_context_modification_result()
 {
-  f1ap_ue_context_modification_response_message res{};
+  f1ap_ue_context_modification_response res{};
 
   if (ue_ctxt_mod_outcome.has_value()) {
     logger.info("Received F1AP UE Context Modification Response.");

@@ -177,6 +177,35 @@ f1c_message srsgnb::srs_cu_cp::generate_ue_context_setup_failure(gnb_cu_ue_f1ap_
   return ue_context_setup_failure;
 }
 
+f1c_message
+srsgnb::srs_cu_cp::generate_ue_context_modification_request(gnb_cu_ue_f1ap_id_t                    cu_ue_id,
+                                                            gnb_du_ue_f1ap_id_t                    du_ue_id,
+                                                            const std::initializer_list<drb_id_t>& drbs_to_add)
+{
+  f1c_message msg;
+
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
+
+  auto& ue_ctx_req                              = msg.pdu.init_msg().value.ue_context_mod_request();
+  ue_ctx_req->gnb_cu_ue_f1_ap_id.value          = (unsigned)cu_ue_id;
+  ue_ctx_req->gnb_du_ue_f1_ap_id.value          = (unsigned)du_ue_id;
+  ue_ctx_req->drbs_to_be_setup_mod_list_present = drbs_to_add.size() > 0;
+  for (drb_id_t drb_id : drbs_to_add) {
+    ue_ctx_req->drbs_to_be_setup_mod_list.value.push_back({});
+    ue_ctx_req->drbs_to_be_setup_mod_list.value.back().load_info_obj(ASN1_F1AP_ID_DRBS_TO_BE_SETUP_MOD_ITEM);
+    auto& drb_to_setup          = ue_ctx_req->drbs_to_be_setup_mod_list.value.back()->drbs_to_be_setup_mod_item();
+    drb_to_setup.drbid          = drb_id_to_uint(drb_id);
+    drb_to_setup.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_am;
+    drb_to_setup.qo_sinfo.set_choice_ext().load_info_obj(ASN1_F1AP_ID_DRB_INFO);
+    drb_info_s& drb_info = drb_to_setup.qo_sinfo.choice_ext().value().drb_info();
+    auto&       qi5      = drb_info.drb_qos.qo_s_characteristics.set_dynamic_minus5_qi();
+    qi5.five_qi_present  = true;
+    qi5.five_qi          = 8;
+  }
+
+  return msg;
+}
+
 f1c_message srsgnb::srs_cu_cp::generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_id,
                                                                          gnb_du_ue_f1ap_id_t du_ue_id,
                                                                          rnti_t              crnti)

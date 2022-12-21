@@ -17,7 +17,7 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modification_request_message&         f1c_request,
+inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modification_request&                 f1c_request,
                                                       const rrc_ue_ue_context_modification_request_message& msg)
 {
   // drb to be setup mod list
@@ -93,8 +93,8 @@ inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modificati
 }
 
 inline void fill_rrc_ue_ue_context_modification_response_message(
-    rrc_ue_ue_context_modification_response_message&     res,
-    const f1ap_ue_context_modification_response_message& f1ap_ue_context_mod_resp_msg)
+    rrc_ue_ue_context_modification_response_message& res,
+    const f1ap_ue_context_modification_response&     f1ap_ue_context_mod_resp_msg)
 {
   if (f1ap_ue_context_mod_resp_msg.success) {
     res.success = true;

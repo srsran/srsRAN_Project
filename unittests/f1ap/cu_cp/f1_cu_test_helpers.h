@@ -46,6 +46,12 @@ private:
   cu_cp_du_handler*     handler = nullptr;
 };
 
+/// \brief Creates a dummy UE CONTEXT MODIFICATION REQUEST.
+f1ap_ue_context_modification_request
+create_ue_context_modification_request(gnb_cu_ue_f1ap_id_t                    cu_ue_id,
+                                       gnb_du_ue_f1ap_id_t                    du_ue_id,
+                                       const std::initializer_list<drb_id_t>& drbs_to_add);
+
 /// Fixture class for F1AP
 class f1ap_cu_test : public ::testing::Test
 {

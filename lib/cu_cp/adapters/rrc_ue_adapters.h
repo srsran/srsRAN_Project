@@ -62,10 +62,10 @@ public:
   async_task<rrc_ue_ue_context_modification_response_message>
   on_new_pdu_session_resource_setup_request(rrc_ue_ue_context_modification_request_message& msg) override
   {
-    f1ap_ue_context_modification_request_message f1c_ue_ctxt_mod_req;
+    f1ap_ue_context_modification_request f1c_ue_ctxt_mod_req;
     fill_f1ap_ue_context_modification_request(f1c_ue_ctxt_mod_req, msg);
 
-    f1ap_ue_context_modification_response_message f1c_ue_ctxt_mod_resp;
+    f1ap_ue_context_modification_response f1c_ue_ctxt_mod_resp;
 
     return launch_async(
         [this, res = rrc_ue_ue_context_modification_response_message{}, f1c_ue_ctxt_mod_resp, f1c_ue_ctxt_mod_req, msg](
