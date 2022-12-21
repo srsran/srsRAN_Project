@@ -14,7 +14,6 @@
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/ssb_configuration.h"
 #include "srsgnb/scheduler/config/bwp_configuration.h"
-#include "srsgnb/scheduler/scheduler_configurator.h"
 
 namespace srsgnb {
 
@@ -49,9 +48,6 @@ struct du_cell_config {
   /// Cell-specific DL and UL configuration used by common searchSpaces.
   dl_config_common dl_cfg_common;
   ul_config_common ul_cfg_common;
-
-  /// List of PUCCH guardbands;
-  std::vector<sched_grid_resource> pucch_guardbands;
 };
 
 } // namespace srsgnb

@@ -9,7 +9,7 @@
  */
 
 #include "lib/scheduler/cell/resource_grid.h"
-#include "lib/scheduler/pucch_scheduling/pucch_guardbands_sched.h"
+#include "lib/scheduler/pucch_scheduling/pucch_guardbands_scheduler.h"
 #include "unittests/scheduler/test_utils/config_generators.h"
 #include "unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include <gtest/gtest.h>
@@ -33,10 +33,10 @@ public:
 
   void slot_indication(slot_point slot_tx) { res_grid.slot_indication(slot_tx); }
 
-  cell_configuration      cell_cfg;
-  cell_resource_allocator res_grid;
-  pucch_guardbands_sched  pucch_guard_sched;
-  slot_point              sl_tx;
+  cell_configuration         cell_cfg;
+  cell_resource_allocator    res_grid;
+  pucch_guardbands_scheduler pucch_guard_sched;
+  slot_point                 sl_tx;
 };
 
 // Class to test PUCCH schedule with SR occasions only.

@@ -8,15 +8,15 @@
  *
  */
 
-#include "pucch_guardbands_sched.h"
+#include "pucch_guardbands_scheduler.h"
 #include "../cell/resource_grid.h"
 
 using namespace srsgnb;
 
-pucch_guardbands_sched::pucch_guardbands_sched(const cell_configuration& cell_cfg_) :
+pucch_guardbands_scheduler::pucch_guardbands_scheduler(const cell_configuration& cell_cfg_) :
   cell_cfg{cell_cfg_}, logger(srslog::fetch_basic_logger("MAC")){};
 
-void pucch_guardbands_sched::allocate_pucch_guardbands(cell_slot_resource_allocator& slot_alloc)
+void pucch_guardbands_scheduler::allocate_pucch_guardbands(cell_slot_resource_allocator& slot_alloc)
 {
   // Reserve all the resources on the grid for this slot.
   for (const auto& pucch_res : cell_cfg.pucch_guardbands) {
@@ -26,7 +26,7 @@ void pucch_guardbands_sched::allocate_pucch_guardbands(cell_slot_resource_alloca
   }
 }
 
-void pucch_guardbands_sched::run_slot(cell_resource_allocator& res_alloc)
+void pucch_guardbands_scheduler::run_slot(cell_resource_allocator& res_alloc)
 {
   // If called for the first time, pre-reserves the PUCCH resource over the entire grid, until the last (farthest in the
   // future) usable slot.

@@ -6,6 +6,6 @@
 # the distribution.
 #
 
-set(SOURCES serving_cell_config_factory.cpp logical_channel_config_factory.cpp)
+set(SOURCES serving_cell_config_factory.cpp logical_channel_config_factory.cpp sched_cell_config_helpers.cpp)
 add_library(sched_config STATIC ${SOURCES})
 target_link_libraries(sched_config srsgnb_ran du_manager_converters)

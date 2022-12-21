@@ -19,6 +19,7 @@
 #include "srsgnb/mac/config/mac_cell_group_config_factory.h"
 #include "srsgnb/mac/mac_ue_configurator.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
+#include "srsgnb/scheduler/config/sched_cell_config_helpers.h"
 
 // TODO: This file is temporary. Eventually we will receive cell configurations from the DU config file.
 
@@ -71,7 +72,7 @@ make_sched_cell_config_req(du_cell_index_t cell_index, const du_cell_config& du_
   sched_req.searchspace0      = du_cfg.searchspace0_idx;
   sched_req.sib1_payload_size = sib1_payload_size;
 
-  sched_req.pucch_guardbands = du_cfg.pucch_guardbands;
+  sched_req.pucch_guardbands = config_helpers::build_pucch_guardbands_list();
 
   return sched_req;
 }

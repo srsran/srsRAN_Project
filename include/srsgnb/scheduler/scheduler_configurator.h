@@ -33,6 +33,7 @@
 
 namespace srsgnb {
 
+/// Basic scheduler resource grid element for resource reservation.
 struct sched_grid_resource {
   prb_interval      prbs;
   ofdm_symbol_range symbols;

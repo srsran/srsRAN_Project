@@ -18,7 +18,7 @@ add_executable(uci_allocator_test uci_allocator_test.cpp)
 target_link_libraries(uci_allocator_test srsgnb_sched scheduler_test_suite uci_test_utils srslog mac_configuration_helpers sched_config gtest)
 add_test(uci_allocator_test uci_allocator_test)
 
-add_executable(test_pucch_guardbands_sched test_pucch_guardbands_sched.cpp)
+add_executable(test_pucch_guardbands_sched pucch_guardbands_sched_test.cpp)
 target_link_libraries(test_pucch_guardbands_sched srsgnb_sched scheduler_test_suite uci_test_utils srslog mac_configuration_helpers sched_config gtest)
 add_test(test_pucch_guardbands_sched test_pucch_guardbands_sched)
 

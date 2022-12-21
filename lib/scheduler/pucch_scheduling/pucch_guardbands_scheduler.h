@@ -20,10 +20,10 @@ struct cell_slot_resource_allocator;
 
 /// This class implements a scheduler that pre-reserve the PUCCH resouces on the scheduler grid, to prevent the PUSCH
 /// allocator from using them. The pre-reserve the PUCCH are hereby referred as PUCCH guardbands.
-class pucch_guardbands_sched
+class pucch_guardbands_scheduler
 {
 public:
-  explicit pucch_guardbands_sched(const cell_configuration& cell_cfg_);
+  explicit pucch_guardbands_scheduler(const cell_configuration& cell_cfg_);
 
   /// \brief Run the PUCCH guardbands scheduler.
   ///

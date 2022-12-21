@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../policy/scheduler_policy.h"
-#include "../pucch_scheduling/pucch_guardbands_sched.h"
+#include "../pucch_scheduling/pucch_guardbands_scheduler.h"
 #include "../support/slot_event_list.h"
 #include "../support/slot_sync_point.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"

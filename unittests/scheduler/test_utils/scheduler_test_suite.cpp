@@ -294,10 +294,7 @@ bool srsgnb::assert_ul_resource_grid_filled(const cell_configuration&      cell_
 
 bool srsgnb::test_res_grid_has_re_set(const cell_resource_allocator& cell_res_grid, grant_info grant, unsigned tx_delay)
 {
-  if (not cell_res_grid[tx_delay].ul_res_grid.all_set(grant)) {
-    return false;
-  }
-  return true;
+  return cell_res_grid[tx_delay].ul_res_grid.all_set(grant);
 }
 
 void srsgnb::test_scheduler_result_consistency(const cell_configuration&      cell_cfg,

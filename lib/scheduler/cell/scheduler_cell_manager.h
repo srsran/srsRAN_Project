@@ -16,7 +16,7 @@
 #include "../common_scheduling/ssb_scheduler.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "../pucch_scheduling/pucch_allocator_impl.h"
-#include "../pucch_scheduling/pucch_guardbands_sched.h"
+#include "../pucch_scheduling/pucch_guardbands_scheduler.h"
 #include "../uci_scheduling/uci_allocator_impl.h"
 #include "cell_configuration.h"
 #include "resource_grid.h"
@@ -60,7 +60,7 @@ public:
   pucch_allocator_impl          pucch_alloc;
   uci_allocator_impl            uci_alloc;
   sib1_scheduler                sib1_sch;
-  pucch_guardbands_sched        pucch_guard_sch;
+  pucch_guardbands_scheduler    pucch_guard_sch;
 };
 
 class scheduler_cell_manager
