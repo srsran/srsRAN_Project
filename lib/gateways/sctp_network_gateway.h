@@ -25,6 +25,7 @@ public:
   explicit sctp_network_gateway(network_gateway_config            config_,
                                 network_gateway_control_notifier& ctrl_notfier_,
                                 network_gateway_data_notifier&    data_notifier_);
+  virtual ~sctp_network_gateway() { close_socket(); }
 
 private:
   bool is_initialized();

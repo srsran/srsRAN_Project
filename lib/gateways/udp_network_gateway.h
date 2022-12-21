@@ -22,6 +22,7 @@ class udp_network_gateway : public network_gateway
 {
 public:
   explicit udp_network_gateway(network_gateway_config config_, network_gateway_data_notifier& data_notifier_);
+  virtual ~udp_network_gateway() { close_socket(); }
 
   // network_gateway_data_handler interface
   void handle_pdu(const byte_buffer& pdu) final;

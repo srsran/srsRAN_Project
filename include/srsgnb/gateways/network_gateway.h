@@ -87,6 +87,9 @@ public:
 };
 
 class network_gateway : public network_gateway_data_handler, public network_gateway_controller
-{};
+{
+public:
+  virtual ~network_gateway() = default;
+};
 
 } // namespace srsgnb

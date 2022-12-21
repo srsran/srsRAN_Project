@@ -326,7 +326,7 @@ bool sctp_network_gateway::recreate_and_reconnect()
   return true;
 }
 
-///< Close socket handle and set FD to -1
+/// Close socket handle and set FD to -1
 bool sctp_network_gateway::close_socket()
 {
   if (not is_initialized()) {
