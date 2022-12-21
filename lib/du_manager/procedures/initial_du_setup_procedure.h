@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/f1c/du/f1ap_du.h"
+#include "srsgnb/f1ap/du/f1ap_du.h"
 #include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {

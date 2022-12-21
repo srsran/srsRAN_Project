@@ -13,7 +13,7 @@
 #include "du_high_executor_strategies.h"
 #include "f1ap_adapters.h"
 #include "srsgnb/du_manager/du_manager_factory.h"
-#include "srsgnb/f1c/du/f1ap_du_factory.h"
+#include "srsgnb/f1ap/du/f1ap_du_factory.h"
 #include "srsgnb/mac/mac_factory.h"
 
 using namespace srsgnb;

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "unittests/f1c/cu_cp/f1_cu_test_helpers.h"
+#include "unittests/f1ap/cu_cp/f1_cu_test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/rrc/rrc.h"

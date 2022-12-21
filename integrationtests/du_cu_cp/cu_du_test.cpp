@@ -10,7 +10,7 @@
 
 #include "../../lib/du_high/du_high.h"
 #include "../../lib/du_high/du_high_executor_strategies.h"
-#include "unittests/f1c/common/test_helpers.h"
+#include "unittests/f1ap/common/test_helpers.h"
 #include "unittests/ngap/test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_factory.h"

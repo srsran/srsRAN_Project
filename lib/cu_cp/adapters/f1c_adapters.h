@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "../../f1c/common/asn1_helpers.h"
+#include "../../f1ap/common/asn1_helpers.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/cu_cp/ue_context.h"
-#include "srsgnb/f1c/cu_cp/f1ap_cu.h"
+#include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {

@@ -12,7 +12,7 @@
 #include "procedures/initial_cu_cp_setup_procedure.h"
 #include "srsgnb/cu_cp/cu_up_processor_factory.h"
 #include "srsgnb/cu_cp/du_processor_factory.h"
-#include "srsgnb/f1c/cu_cp/f1ap_cu_factory.h"
+#include "srsgnb/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsgnb/ngap/ngc_factory.h"
 
 using namespace srsgnb;

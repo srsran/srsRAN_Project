@@ -12,7 +12,7 @@
 
 #include "../du_ue/du_bearer.h"
 #include "srsgnb/du_manager/du_manager_params.h"
-#include "srsgnb/f1c/du/f1ap_du_ue_config.h"
+#include "srsgnb/f1ap/du/f1ap_du_ue_config.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/rlc/rlc_config.h"

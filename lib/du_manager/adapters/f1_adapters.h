@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/f1c/du/f1c_rx_sdu_notifier.h"
+#include "srsgnb/f1ap/du/f1c_rx_sdu_notifier.h"
 #include "srsgnb/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsgnb/rlc/rlc_tx.h"
 

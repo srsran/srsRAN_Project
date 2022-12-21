@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/f1c/common/f1c_common.h"
+#include "srsgnb/f1ap/common/f1c_common.h"
 
 namespace srsgnb {
 

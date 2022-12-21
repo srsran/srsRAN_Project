@@ -13,7 +13,7 @@
 #include "srsgnb/du/du_cell_config.h"
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/du_manager/du_manager_params.h"
-#include "srsgnb/f1c/du/f1ap_du.h"
+#include "srsgnb/f1ap/du/f1ap_du.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/rlc/rlc_tx.h"

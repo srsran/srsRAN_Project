@@ -13,7 +13,7 @@
 #include "srsgnb/du/du_cell_config.h"
 #include "srsgnb/du_high/du_high_cell_executor_mapper.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
-#include "srsgnb/f1c/du/f1ap_du.h"
+#include "srsgnb/f1ap/du/f1ap_du.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/support/timers.h"
 

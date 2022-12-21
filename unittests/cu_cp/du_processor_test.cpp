@@ -12,7 +12,7 @@
 #include "du_processor_test_helpers.h"
 #include "lib/cu_cp/ue_manager.h"
 #include "test_helpers.h"
-#include "unittests/f1c/common/test_helpers.h"
+#include "unittests/f1ap/common/test_helpers.h"
 #include "unittests/rrc/test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/du_processor_factory.h"

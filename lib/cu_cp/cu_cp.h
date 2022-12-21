@@ -23,7 +23,7 @@
 #include "ue_manager.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
-#include "srsgnb/f1c/cu_cp/f1ap_cu.h"
+#include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/executors/task_worker.h"
