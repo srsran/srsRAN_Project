@@ -166,9 +166,12 @@ rrc_pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result
 
     logger.debug("rnti=0x{:x}: \"{}\" finalized.", context.c_rnti, name());
   } else {
-    cu_cp_pdu_session_res_setup_failed_item item;
-    item.pdu_session_id = setup_msg.pdu_session_res_setup_items[0].pdu_session_id;
-    response_msg.pdu_session_res_failed_to_setup_items.push_back(item);
+    // mark all PDU sessions as failed
+    for (size_t i = 0; i < setup_msg.pdu_session_res_setup_items.size(); ++i) {
+      cu_cp_pdu_session_res_setup_failed_item item;
+      item.pdu_session_id = setup_msg.pdu_session_res_setup_items[i].pdu_session_id;
+      response_msg.pdu_session_res_failed_to_setup_items.push_back(item);
+    }
 
     logger.error("rnti=0x{:x}: \"{}\" failed.", context.c_rnti, name());
   }
