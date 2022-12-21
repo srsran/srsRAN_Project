@@ -29,6 +29,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   /// > Create upper layers
 
   // Create NG-U gateway
+  // TODO: Refactor to use UPF IP that we get from E1
   network_gateway_config ngu_gw_config = {};
   ngu_gw_config.type                   = network_gateway_type::udp;
   ngu_gw_config.connect_address        = cfg.upf_addr;
