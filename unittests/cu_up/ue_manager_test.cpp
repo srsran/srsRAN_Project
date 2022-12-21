@@ -26,11 +26,12 @@ protected:
     srslog::init();
 
     // create required objects
-    ngu_demux = std::make_unique<dummy_ngu>();
-    f1u_gw    = std::make_unique<dummy_f1u_gateway>();
+    gtpu_rx_demux    = std::make_unique<dummy_gtpu_demux_ctrl>();
+    gtpu_tx_notifier = std::make_unique<dummy_gtpu_network_gateway_adapter>();
+    f1u_gw           = std::make_unique<dummy_f1u_gateway>();
 
     // create DUT object
-    ue_mng = std::make_unique<ue_manager>(test_logger, timers, *f1u_gw, *ngu_demux);
+    ue_mng = std::make_unique<ue_manager>(test_logger, timers, *f1u_gw, *gtpu_tx_notifier, *gtpu_rx_demux);
   }
 
   void TearDown() override
@@ -39,11 +40,12 @@ protected:
     srslog::flush();
   }
 
-  std::unique_ptr<gtpu_demux_ctrl>   ngu_demux;
-  std::unique_ptr<f1u_cu_up_gateway> f1u_gw;
-  std::unique_ptr<ue_manager_ctrl>   ue_mng;
-  srslog::basic_logger&              test_logger = srslog::fetch_basic_logger("TEST", false);
-  timer_manager                      timers;
+  std::unique_ptr<gtpu_demux_ctrl>                     gtpu_rx_demux;
+  std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
+  std::unique_ptr<f1u_cu_up_gateway>                   f1u_gw;
+  std::unique_ptr<ue_manager_ctrl>                     ue_mng;
+  srslog::basic_logger&                                test_logger = srslog::fetch_basic_logger("TEST", false);
+  timer_manager                                        timers;
 };
 
 /// UE object handling tests (creation/deletion)

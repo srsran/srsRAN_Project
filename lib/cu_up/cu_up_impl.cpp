@@ -9,6 +9,7 @@
  */
 
 #include "cu_up_impl.h"
+#include "srsgnb/gateways/network_gateway_factory.h"
 #include "srsgnb/gtpu/gtpu_demux_factory.h"
 
 using namespace srsgnb;
@@ -25,9 +26,32 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 {
   assert_cu_up_configuration_valid(cfg);
 
-  // Create layers
+  /// > Create upper layers
+
+  // Create NG-U gateway
+  network_gateway_config ngu_gw_config = {};
+  ngu_gw_config.type                   = network_gateway_type::udp;
+  ngu_gw_config.connect_address        = "0.0.0.0";
+  ngu_gw_config.connect_port           = 0;
+  ngu_gw_config.bind_address           = "0.0.0.0";
+  ngu_gw_config.bind_port              = 0;
+  // other params
+
+  network_gateway_creation_message ngu_gw_msg = {ngu_gw_config, gw_ctrl_gtpu_demux_adapter, gw_data_gtpu_demux_adapter};
+  ngu_gw                                      = create_network_gateway(ngu_gw_msg);
+  if (not ngu_gw->create_and_connect()) {
+    logger.error("Failed to create and connect NG-U gateway.");
+  }
+
+  // Create GTP-U demux
   ngu_demux = create_gtpu_demux();
-  ue_mng    = std::make_unique<ue_manager>(logger, timers, *cfg.f1u_gateway, *ngu_demux);
+
+  /// > Connect layers
+
+  gw_data_gtpu_demux_adapter.connect_gtpu_demux(*ngu_demux);
+
+  /// > Create UE manager
+  ue_mng = std::make_unique<ue_manager>(logger, timers, *cfg.f1u_gateway, gtpu_gw_adapter, *ngu_demux);
 
   // connect event notifier to layers
   // f1c_ev_notifier.connect_cu_cp(*this);

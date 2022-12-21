@@ -12,18 +12,30 @@
 
 #include "srsgnb/f1u/cu_up/f1u_gateway.h"
 #include "srsgnb/gtpu/gtpu_demux.h"
+#include "srsgnb/gtpu/gtpu_tunnel_tx.h"
 
 namespace srsgnb {
 
-class dummy_ngu : public gtpu_demux_ctrl
+/// Dummy GTP-U Rx Demux
+class dummy_gtpu_demux_ctrl : public gtpu_demux_ctrl
 {
 public:
-  dummy_ngu()  = default;
-  ~dummy_ngu() = default;
+  dummy_gtpu_demux_ctrl()  = default;
+  ~dummy_gtpu_demux_ctrl() = default;
 
   bool add_tunnel(uint32_t teid, gtpu_tunnel_rx_upper_layer_interface* tunnel) override { return true; }
 
   bool remove_tunnel(uint32_t teid) override { return true; }
+};
+
+/// Dummy adapter between GTP-U and Network Gateway
+class dummy_gtpu_network_gateway_adapter : public gtpu_tunnel_tx_upper_layer_notifier
+{
+public:
+  dummy_gtpu_network_gateway_adapter()  = default;
+  ~dummy_gtpu_network_gateway_adapter() = default;
+
+  void on_new_pdu(byte_buffer pdu) override {}
 };
 
 class dummy_f1u_gateway final : public f1u_cu_up_gateway
@@ -40,4 +52,5 @@ public:
   };
   void attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid) override{};
 };
+
 } // namespace srsgnb

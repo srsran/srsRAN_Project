@@ -24,11 +24,12 @@ namespace srs_cu_up {
 class pdu_session_manager_impl : public pdu_session_manager_ctrl
 {
 public:
-  pdu_session_manager_impl(ue_index_t            ue_index_,
-                           srslog::basic_logger& logger_,
-                           timer_manager&        timers_,
-                           f1u_cu_up_gateway&    f1u_gw_,
-                           gtpu_demux_ctrl&      ngu_demux_);
+  pdu_session_manager_impl(ue_index_t                           ue_index_,
+                           srslog::basic_logger&                logger_,
+                           timer_manager&                       timers_,
+                           f1u_cu_up_gateway&                   f1u_gw_,
+                           gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
+                           gtpu_demux_ctrl&                     gtpu_rx_demux_);
   ~pdu_session_manager_impl() = default;
 
   pdu_session_setup_result setup_pdu_session(const asn1::e1ap::pdu_session_res_to_setup_item_s& session) override;
@@ -41,7 +42,8 @@ private:
   ue_index_t                                      ue_index;
   srslog::basic_logger&                           logger;
   timer_manager&                                  timers;
-  gtpu_demux_ctrl&                                ngu_demux;
+  gtpu_tunnel_tx_upper_layer_notifier&            gtpu_tx_notifier;
+  gtpu_demux_ctrl&                                gtpu_rx_demux;
   f1u_cu_up_gateway&                              f1u_gw;
   std::map<uint8_t, std::unique_ptr<pdu_session>> pdu_sessions; // key is pdu_session_id
 };

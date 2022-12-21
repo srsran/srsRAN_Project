@@ -22,10 +22,11 @@ namespace srs_cu_up {
 class ue_manager : public ue_manager_ctrl
 {
 public:
-  explicit ue_manager(srslog::basic_logger& logger_,
-                      timer_manager&        timers_,
-                      f1u_cu_up_gateway&    f1u_gw_,
-                      gtpu_demux_ctrl&      ngu_demux_);
+  explicit ue_manager(srslog::basic_logger&                logger_,
+                      timer_manager&                       timers_,
+                      f1u_cu_up_gateway&                   f1u_gw_,
+                      gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
+                      gtpu_demux_ctrl&                     gtpu_rx_demux_);
 
   using ue_db_t = slotted_array<std::unique_ptr<ue_context>, MAX_NOF_UES>;
   const ue_db_t& get_ues() const { return ue_db; }
@@ -40,11 +41,12 @@ private:
   /// \return The UE index.
   ue_index_t get_next_ue_index();
 
-  srslog::basic_logger& logger;
-  timer_manager&        timers;
-  f1u_cu_up_gateway&    f1u_gw;
-  gtpu_demux_ctrl&      ngu_demux;
-  ue_db_t               ue_db;
+  srslog::basic_logger&                logger;
+  timer_manager&                       timers;
+  f1u_cu_up_gateway&                   f1u_gw;
+  gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier;
+  gtpu_demux_ctrl&                     gtpu_rx_demux;
+  ue_db_t                              ue_db;
 };
 
 } // namespace srs_cu_up

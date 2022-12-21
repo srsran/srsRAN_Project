@@ -16,12 +16,18 @@
 using namespace srsgnb;
 using namespace srs_cu_up;
 
-pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t            ue_index_,
-                                                   srslog::basic_logger& logger_,
-                                                   timer_manager&        timers_,
-                                                   f1u_cu_up_gateway&    f1u_gw_,
-                                                   gtpu_demux_ctrl&      ngu_demux_) :
-  ue_index(ue_index_), logger(logger_), timers(timers_), ngu_demux(ngu_demux_), f1u_gw(f1u_gw_)
+pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                           ue_index_,
+                                                   srslog::basic_logger&                logger_,
+                                                   timer_manager&                       timers_,
+                                                   f1u_cu_up_gateway&                   f1u_gw_,
+                                                   gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
+                                                   gtpu_demux_ctrl&                     gtpu_rx_demux_) :
+  ue_index(ue_index_),
+  logger(logger_),
+  timers(timers_),
+  gtpu_tx_notifier(gtpu_tx_notifier_),
+  gtpu_rx_demux(gtpu_rx_demux_),
+  f1u_gw(f1u_gw_)
 {
   (void)f1u_gw;
 }
@@ -62,15 +68,15 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
   msg.cfg.tx.peer_teid             = peer_teid;
   msg.cfg.rx.local_teid            = new_session->local_teid;
   msg.rx_lower                     = &new_session->gtpu_to_sdap_adapter;
-  // msg.tx_upper                         = &gtpu_tx; // TODO: register UDP gateway
-  new_session->gtpu = create_gtpu_tunnel(msg);
+  msg.tx_upper                     = &gtpu_tx_notifier;
+  new_session->gtpu                = create_gtpu_tunnel(msg);
 
   // Connect adapters
   new_session->sdap_to_gtpu_adapter.connect_gtpu(*new_session->gtpu->get_tx_lower_layer_interface());
   new_session->gtpu_to_sdap_adapter.connect_sdap(new_session->sdap->get_sdap_tx_sdu_handler());
 
   // Register tunnel at demux
-  if (ngu_demux.add_tunnel(peer_teid, new_session->gtpu->get_rx_upper_layer_interface()) == false) {
+  if (gtpu_rx_demux.add_tunnel(peer_teid, new_session->gtpu->get_rx_upper_layer_interface()) == false) {
     logger.error("PDU Session {} cannot be created. TEID {} already exists", session.pdu_session_id, peer_teid);
     return pdu_session_result;
   }
