@@ -10,7 +10,9 @@
 
 #pragma once
 
+#include "srsgnb/f1u/cu_up/f1u_bearer.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
+#include "srsgnb/pdcp/pdcp_tx.h"
 #include "srsgnb/sdap/sdap.h"
 
 namespace srsgnb {
@@ -33,6 +35,31 @@ public:
 
 private:
   sdap_rx_pdu_handler* sdap_handler = nullptr;
+};
+
+/// Adapter between PDCP and F1-U
+class pdcp_f1u_adapter : public pdcp_tx_lower_notifier
+{
+public:
+  pdcp_f1u_adapter()           = default;
+  ~pdcp_f1u_adapter() override = default;
+
+  void connect_f1u(f1u_tx_sdu_handler& f1u_handler_) { f1u_handler = &f1u_handler_; }
+
+  void on_new_pdu(byte_buffer pdu) override
+  {
+    srsgnb_assert(f1u_handler != nullptr, "F1-U handler must not be nullptr");
+    f1u_handler->handle_sdu(std::move(pdu), 0);
+  }
+
+  void on_discard_pdu(uint32_t count) override
+  {
+    srsgnb_assert(f1u_handler != nullptr, "F1-U handler must not be nullptr");
+    f1u_handler->discard_sdu(count);
+  }
+
+private:
+  f1u_tx_sdu_handler* f1u_handler = nullptr;
 };
 
 } // namespace srs_cu_up

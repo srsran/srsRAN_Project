@@ -38,6 +38,7 @@ public:
 
 private:
   uint32_t allocate_local_teid(uint8_t pdu_session_id);
+  uint32_t allocate_local_f1u_teid(uint8_t pdu_session_id, uint8_t drb_id);
 
   ue_index_t                                      ue_index;
   srslog::basic_logger&                           logger;

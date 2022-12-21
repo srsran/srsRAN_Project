@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "adapters/f1u_adapters.h"
 #include "adapters/pdcp_adapters.h"
 #include "qos_flow_context.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
@@ -30,6 +31,8 @@ struct drb_context {
   // Adapter PDCP->SDAP
   // FIXME: Currently, we assume only one DRB per PDU session and only one QoS flow per DRB.
   pdcp_sdap_adapter pdcp_to_sdap_adapter;
+  pdcp_f1u_adapter  pdcp_to_f1u_adapter;
+  f1u_pdcp_adapter  f1u_to_pdcp_adapter;
 
   uint8_t cell_group_id; /// This can/should be a list of cell groups.
 

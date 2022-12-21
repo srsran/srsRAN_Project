@@ -100,25 +100,35 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
 
     // Create PDCP entity
     srsgnb::pdcp_entity_creation_message pdcp_msg = {};
-    pdcp_msg.ue_index                             = 0;  // What do we use here?
+    pdcp_msg.ue_index                             = ue_index;
     pdcp_msg.lcid               = lcid_t(LCID_MIN_DRB); // What do we use here? There is no LCID in the CU-UP
     pdcp_msg.config             = {};                   // TODO: writer converter from ASN1 for msg.pdcp_cfg;
     pdcp_msg.config.tx.rb_type  = pdcp_rb_type::drb;
     pdcp_msg.config.tx.rlc_mode = pdcp_rlc_mode::am;
     pdcp_msg.config.rx.rb_type  = pdcp_rb_type::drb;
     pdcp_msg.config.rx.rlc_mode = pdcp_rlc_mode::am;
-    pdcp_msg.tx_lower           = nullptr; // TODO: add adapter towards F1-U
+    pdcp_msg.tx_lower           = &new_drb->pdcp_to_f1u_adapter;
     pdcp_msg.tx_upper_cn        = nullptr; // TODO: add adapter towards RRC
     pdcp_msg.rx_upper_dn        = &new_drb->pdcp_to_sdap_adapter;
     pdcp_msg.rx_upper_cn        = nullptr; // TODO: add adapter towards RRC
     pdcp_msg.timers             = &timers;
     new_drb->pdcp_bearer        = srsgnb::create_pdcp_entity(pdcp_msg);
 
-    srsgnb_assert(
-        drb.qos_flow_info_to_be_setup.size() <= 1,
-        "DRB with drbid={} of PDU Session {} cannot be created: Current implementation assumes one QoS flow per DRB!",
-        drb.drb_id,
-        session.pdu_session_id);
+    // Create  F1-U bearer
+    uint32_t    dl_f1u_teid = allocate_local_f1u_teid(new_session->pdu_session_id, drb.drb_id);
+    f1u_bearer* f1u_bearer =
+        f1u_gw.create_cu_dl_bearer(dl_f1u_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter);
+
+    srsgnb_assert(drb.qos_flow_info_to_be_setup.size() <= 1,
+                  "DRB with drbid={} of PDU Session {} cannot be created: Current implementation assumes one QoS "
+                  "flow per DRB!",
+                  drb.drb_id,
+                  session.pdu_session_id);
+
+    // Connect F1-U's "F1-U->PDCP adapter" directly to PDCP
+    new_drb->f1u_to_pdcp_adapter.connect_pdcp(new_drb->pdcp_bearer->get_rx_lower_interface(),
+                                              new_drb->pdcp_bearer->get_tx_lower_interface());
+    new_drb->pdcp_to_f1u_adapter.connect_f1u(f1u_bearer->get_tx_sdu_handler());
 
     // Create QoS flows
     for (size_t k = 0; k < drb.qos_flow_info_to_be_setup.size(); ++k) {
@@ -177,7 +187,18 @@ uint32_t pdu_session_manager_impl::allocate_local_teid(uint8_t pdu_session_id)
 {
   // Local TEID is the concatenation of the unique UE index and the PDU session ID
   uint32_t local_teid = ue_index;
-  local_teid <<= 8;
+  local_teid <<= 8U;
   local_teid |= pdu_session_id;
+  return local_teid;
+}
+
+uint32_t pdu_session_manager_impl::allocate_local_f1u_teid(uint8_t pdu_session_id, uint8_t drb_id)
+{
+  // Local TEID is the concatenation of the unique UE index, the PDU session ID and the DRB Id
+  uint32_t local_teid = ue_index;
+  local_teid <<= 8U;
+  local_teid |= pdu_session_id;
+  local_teid <<= 8U;
+  local_teid |= drb_id;
   return local_teid;
 }
