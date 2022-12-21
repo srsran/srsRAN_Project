@@ -103,3 +103,24 @@ TEST_F(rrc_ue_pdu_session_resource_setup, when_ue_connected_setup_succeeds)
   // nothing has failed to setup
   ASSERT_EQ(t.get().pdu_session_res_failed_to_setup_items.size(), 0);
 }
+
+/// Test handling of PDU session setup request without any setup item.
+TEST_F(rrc_ue_pdu_session_resource_setup, when_empty_pdu_session_setup_is_sent_response_is_sent)
+{
+  attach_ue();
+
+  // Prepare args
+  cu_cp_pdu_session_resource_setup_message msg = {}; // empty message
+
+  // Trigger PDU session setup
+  async_task<cu_cp_pdu_session_resource_setup_response_message> t =
+      get_rrc_ue_pdu_session_resource_handler()->handle_new_pdu_session_resource_setup_request(msg);
+  lazy_task_launcher<cu_cp_pdu_session_resource_setup_response_message> t_launcher(t);
+
+  // it should be ready immediately
+  ASSERT_TRUE(t.ready());
+
+  // Nothing has been set up or failed
+  ASSERT_EQ(t.get().pdu_session_res_setup_response_items.size(), 0);
+  ASSERT_EQ(t.get().pdu_session_res_failed_to_setup_items.size(), 0);
+}
