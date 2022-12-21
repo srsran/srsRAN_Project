@@ -174,8 +174,10 @@ struct cast_to_size_operator {
 /// Array of optional elements. The iteration is in order of indexes and correctly skips absent elements.
 /// Pointer/References/Iterators remain valid throughout the object lifetime.
 /// NOTE: The sorted iteration and pointer validation guarantees may add some overhead if the array is very fragmented.
-/// @tparam T type of objects
-/// @tparam N static size of max nof items
+/// \tparam T type of objects
+/// \tparam N static size of max nof items
+/// \tparam EmbeddedStorage Whether the array is stored in the object (via std::array) or separately in the heap (via
+/// std::vector).
 template <typename T, size_t N, bool EmbeddedStorage = true>
 class slotted_array
 {
@@ -318,7 +320,7 @@ public:
     objects(std::move(other.objects)), index_mapper(std::move(other.index_mapper))
   {
   }
-  slotted_vector(const slotted_vector& other) noexcept   = default;
+  slotted_vector(const slotted_vector& other)            = default;
   slotted_vector<T>& operator=(const slotted_vector<T>&) = default;
   slotted_vector<T>& operator=(slotted_vector<T>&& other) noexcept
   {
