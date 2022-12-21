@@ -9,7 +9,7 @@
  */
 
 #include "ldpc_encoder_avx2.h"
-#include "avx_support.h"
+#include "avx2_support.h"
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
