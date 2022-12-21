@@ -405,7 +405,7 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
   dest_pucch_cfg.pucch_res_set.erase(dest_pucch_cfg.pucch_res_set.begin());
 
   // >>> PUCCH resource 2.
-  pucch_resource res_basic{.res_id                 = 2,
+  pucch_resource res_basic{.res_id                 = 4,
                            .starting_prb           = 0,
                            .second_hop_prb         = 0,
                            .intraslot_freq_hopping = false,
@@ -417,7 +417,7 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
   res_basic.format_1.time_domain_occ      = 0;
   dest_pucch_cfg.pucch_res_list.push_back(res_basic);
 
-  pucch_resource res_basic2{.res_id                 = 3,
+  pucch_resource res_basic2{.res_id                 = 5,
                             .starting_prb           = 40,
                             .second_hop_prb         = 50,
                             .intraslot_freq_hopping = true,
@@ -455,7 +455,7 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
                                                                           .sr_id        = uint_to_sched_req_id(1),
                                                                           .period       = sr_periodicity::sl_80,
                                                                           .offset       = 0,
-                                                                          .pucch_res_id = 0});
+                                                                          .pucch_res_id = 1});
 
   // Remove first element.
   dest_pucch_cfg.sr_res_list.erase(dest_pucch_cfg.sr_res_list.begin());
@@ -482,9 +482,9 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
 
     ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().res_to_add_mod_list.size(), 2);
     auto& pucch_res1 = rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().res_to_add_mod_list[0];
-    ASSERT_EQ(pucch_res1.pucch_res_id, 2);
+    ASSERT_EQ(pucch_res1.pucch_res_id, 4);
     auto& pucch_res2 = rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().res_to_add_mod_list[1];
-    ASSERT_EQ(pucch_res2.pucch_res_id, 3);
+    ASSERT_EQ(pucch_res2.pucch_res_id, 5);
     ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().res_to_release_list.size(), 1);
 
     ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().sched_request_res_to_add_mod_list.size(), 1);

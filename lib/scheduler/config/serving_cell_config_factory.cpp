@@ -269,6 +269,8 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config()
   auto& pucch_res_set            = pucch_cfg.pucch_res_set.emplace_back();
   pucch_res_set.pucch_res_set_id = 0;
   pucch_res_set.pucch_res_id_list.emplace_back(0);
+  pucch_res_set.pucch_res_id_list.emplace_back(1);
+  pucch_res_set.pucch_res_id_list.emplace_back(2);
 
   // >>> PUCCH resource 0.
   pucch_resource res_basic{.res_id                 = 0,
@@ -294,7 +296,7 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config()
   res2.res_id          = 2;
   res2.starting_prb    = 50;
   res2.second_hop_prb  = 1;
-  // >>> PUCCH resource 2.
+  // >>> PUCCH resource 3.
   pucch_cfg.pucch_res_list.push_back(res_basic);
   pucch_resource& res3 = pucch_cfg.pucch_res_list.back();
   res3.res_id          = 3;
