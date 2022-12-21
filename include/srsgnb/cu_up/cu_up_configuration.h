@@ -21,8 +21,10 @@ namespace srs_cu_up {
 /// Configuration passed to CU-UP.
 struct cu_up_configuration {
   task_executor*       cu_up_executor = nullptr;
-  e1_message_notifier* e1_notifier    = nullptr; /// Callback for incoming E1 messages.
+  e1_message_notifier* e1_notifier    = nullptr;     ///< Callback for incoming E1 messages.
   f1u_cu_up_gateway*   f1u_gateway    = nullptr;
+  std::string          upf_addr       = "0.0.0.0";   ///< IP address of UPF for NG-U connection.
+  std::string          gtp_bind_addr  = "127.0.1.1"; ///< Local IP address to bind for GTP connection.
 };
 
 } // namespace srs_cu_up

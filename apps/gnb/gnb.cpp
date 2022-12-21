@@ -285,6 +285,8 @@ int main(int argc, char** argv)
   srsgnb::srs_cu_up::cu_up_configuration cu_up_cfg;
   cu_up_cfg.cu_up_executor = &workers.cu_exec.front();
   cu_up_cfg.e1_notifier    = &e1_up_to_cp_adapter;
+  cu_up_cfg.gtp_bind_addr  = "127.0.1.1"; // FIXME: Read from main config
+  cu_up_cfg.upf_addr       = "0.0.0.0";   // FIXME: Read from main config
 
   // create and start DUT
   std::unique_ptr<srsgnb::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(std::move(cu_up_cfg));
