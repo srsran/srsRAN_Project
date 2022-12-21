@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "du_pucch_resource_manager.h"
 #include "du_ran_resource_manager.h"
-#include "pucch_resource_manager.h"
 
 namespace srsgnb {
 namespace srs_du {
@@ -54,9 +54,20 @@ public:
   ue_ran_resource_configurator create_ue_resource_configurator(du_ue_index_t   ue_index,
                                                                du_cell_index_t pcell_index) override;
 
+  /// \brief Updates a UE's cell configuration context based on the F1 UE Context Update request.
+  ///
+  /// UE Context updates may include the addition of new bearers, reservation of PUCCH Resources for Scheduling
+  /// Requests or CSI, etc.
+  /// \param ue_index Id of the UE whose context is being updated.
+  /// \param pcell_idx DU Cell Id of the UE's PCell.
+  /// \param upd_req UE Context Update Request received by the F1AP-DU from the CU.
+  /// \return Result of the context update.
   du_ue_resource_update_response
   update_context(du_ue_index_t ue_index, du_cell_index_t pcell_idx, const f1ap_ue_context_update_request& upd_req);
 
+  /// \brief Deallocates the RAN resources taken by the UE, so that they can be used by future UEs.
+  ///
+  /// \param ue_index Id of the UE whose context is being deallocated.
   void deallocate_context(du_ue_index_t ue_index);
 
 private:
@@ -75,7 +86,7 @@ private:
   slotted_array<ue_res_item, MAX_NOF_DU_UES, false> ue_res_pool;
 
   /// Allocator of UE PUCCH resources.
-  pucch_resource_manager pucch_res_mng;
+  du_pucch_resource_manager pucch_res_mng;
 };
 
 } // namespace srs_du

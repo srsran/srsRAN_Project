@@ -24,9 +24,9 @@ struct du_ue_resource_update_response {
   std::vector<serv_cell_index_t> failed_scells;
 };
 
-/// \brief This class manages the PHY, MAC and RLC resources used by an UE. It provides an API to update the UE
-/// resources on arrival of new UE Context Update Requests, and returns resources back to the DU Resource pool when
-/// it is destroyed.
+/// \brief This class manages the PHY (e.g. RB and symbols used for PUCCH), MAC (e.g. LCIDs) and RLC resources used
+/// by an UE. It provides an API to update the UE resources on arrival of new UE Context Update Requests, and
+/// returns resources back to the DU RAN Resource Manager when the UE is destroyed.
 class ue_ran_resource_configurator
 {
 public:

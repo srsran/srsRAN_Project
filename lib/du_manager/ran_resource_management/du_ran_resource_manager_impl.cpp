@@ -15,6 +15,7 @@
 using namespace srsgnb;
 using namespace srs_du;
 
+/// \brief Finds an unused LCID for DRBs given a list of UE configured RLC bearers.
 static lcid_t find_empty_lcid(const std::vector<rlc_bearer_config>& rlc_bearers)
 {
   static_vector<lcid_t, MAX_NOF_DRBS> used_lcids;
