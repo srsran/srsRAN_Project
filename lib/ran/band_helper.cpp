@@ -574,9 +574,25 @@ get_max_coreset0_index(subcarrier_spacing scs_common, subcarrier_spacing scs_ssb
 }
 
 // \brief Computes the CRB index where the first SSB's subcarrier is located.
-static unsigned get_ssb_crb(subcarrier_spacing scs_common, ssb_offset_to_pointA offset_to_point_A)
+static unsigned get_ssb_crb_0(subcarrier_spacing scs_common, ssb_offset_to_pointA offset_to_point_A)
 {
   return scs_common == subcarrier_spacing::kHz15 ? offset_to_point_A.to_uint() : offset_to_point_A.to_uint() / 2;
+}
+
+// \brief Computes the CRBs (based on SCS_common) that intersect with the SSB's PRBs.
+static interval<unsigned> get_ssb_crbs(subcarrier_spacing    scs_common,
+                                       subcarrier_spacing    scs_ssb,
+                                       ssb_offset_to_pointA  offset_to_point_A,
+                                       ssb_subcarrier_offset k_ssb)
+{
+  // Space occupied by SSB in RBs, using SCScommon as reference.
+  const unsigned ssb_nof_crbs = NOF_SSB_PRBS * scs_to_khz(scs_ssb) / scs_to_khz(scs_common);
+
+  // Add a CRB to the SSB occupancy if k_ssb > 0; this is because the SSB is not aligned with the first CRB's first
+  // subcarrier and will terminate in an extra CRB.
+  unsigned additional_crb = k_ssb > 0 ? 1 : 0;
+  unsigned ssb_crb_0      = get_ssb_crb_0(scs_common, offset_to_point_A);
+  return interval<unsigned>{ssb_crb_0, ssb_crb_0 + ssb_nof_crbs + additional_crb};
 }
 
 optional<ssb_coreset0_freq_location> srsgnb::band_helper::get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
@@ -694,18 +710,13 @@ unsigned srsgnb::band_helper::get_nof_coreset0_rbs_not_intersecting_ssb(unsigned
                                                                         ssb_offset_to_pointA  offset_to_point_A,
                                                                         ssb_subcarrier_offset k_ssb)
 {
-  // Space occupied by SSB in RBs, using SCScommon as reference.
-  const unsigned ssb_nof_crbs = NOF_SSB_PRBS * scs_to_khz(scs_ssb) / scs_to_khz(scs_common);
-  // Start RB for SSB.
-  unsigned crb_ssb = get_ssb_crb(scs_common, offset_to_point_A.to_uint());
   // Coreset0 configuration for the provided CORESET#0 index.
   auto cset0_cfg = pdcch_type0_css_coreset_get(
       band_helper::get_min_channel_bw(band, scs_common), scs_ssb, scs_common, cset0_idx, k_ssb.to_uint());
 
-  // Add a CRB to the SSB occupancy if k_ssb > 0; this is because the SSB is not aligned with the first CRB's first
-  // subcarrier and will terminate in an extra CRB.
-  unsigned           additional_crb = k_ssb > 0 ? 1 : 0;
-  interval<unsigned> ssb_prbs       = {crb_ssb, crb_ssb + ssb_nof_crbs + additional_crb};
-  interval<unsigned> cset0_prbs = {crb_ssb - cset0_cfg.offset, crb_ssb - cset0_cfg.offset + cset0_cfg.nof_rb_coreset};
+  interval<unsigned> ssb_prbs   = get_ssb_crbs(scs_common, scs_ssb, offset_to_point_A, k_ssb);
+  unsigned           crb_ssb_0  = get_ssb_crb_0(scs_common, offset_to_point_A.to_uint());
+  interval<unsigned> cset0_prbs = {crb_ssb_0 - cset0_cfg.offset,
+                                   crb_ssb_0 - cset0_cfg.offset + cset0_cfg.nof_rb_coreset};
   return cset0_cfg.nof_rb_coreset - cset0_prbs.intersect(ssb_prbs).length();
 }
