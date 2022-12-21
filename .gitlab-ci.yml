@@ -177,6 +177,45 @@ intermediate commits:
   after_script:
     - rm -Rf build
 
+.avx_compability:
+  extends: .build_and_unit
+  tags:
+    - aws-demand-amd64-$CPU_FLAG
+  variables:
+    OS: ubuntu-22.04
+    TEST_MODE: coverage
+    COMPILER: gcc
+    BUILD_TYPE: Release
+
+avx compatibility:
+  extends: .avx_compability
+  rules:
+    - if: $ON_MR
+      when: manual
+      allow_failure: true
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  parallel:
+    matrix:
+      - CPU_FLAG: "avx2"
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+        ENABLE_AVX2: "True"
+      - CPU_FLAG: "avx2-avx512"
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "True"
+        ENABLE_AVX2: "True"
+
+avx compatibility extended:
+  extends: .avx_compability
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  parallel:
+    matrix:
+      - CPU_FLAG: ["avx2", "avx2-avx512"]
+        AUTO_DETECT_ISA: ["True", "False"]
+        ENABLE_AVX512: ["True", "False"]
+        ENABLE_AVX2: ["True", "False"]
+
 ################################################################################
 # Doc generation
 ################################################################################
