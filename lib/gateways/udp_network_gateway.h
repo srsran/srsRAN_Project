@@ -56,12 +56,6 @@ private:
   int              local_ai_family   = 0;
   int              local_ai_socktype = 0;
   int              local_ai_protocol = 0;
-
-  sockaddr_storage remote_addr        = {}; // the remote address
-  socklen_t        remote_addrlen     = 0;
-  int              remote_ai_family   = 0;
-  int              remote_ai_socktype = 0;
-  int              remote_ai_protocol = 0;
 };
 
 } // namespace srsgnb
