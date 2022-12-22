@@ -77,18 +77,23 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   resp->gnb_cu_ue_f1_ap_id->value                   = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
   resp->res_coordination_transfer_container_present = false;
   resp->duto_currc_info_present                     = false;
-  resp->drbs_setup_mod_list_present                 = not du_request.drbs_to_setup.empty();
-  if (resp->drbs_setup_mod_list_present) {
-    resp->drbs_setup_mod_list.value.resize(du_request.drbs_to_setup.size());
-    for (unsigned i = 0; i != du_request.drbs_to_setup.size(); ++i) {
-      resp->drbs_setup_mod_list.value[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
-      drbs_setup_mod_item_s& drb = resp->drbs_setup_mod_list.value[i]->drbs_setup_mod_item();
-      drb.drbid                  = drb_id_to_uint(du_request.drbs_to_setup[i].drb_id);
-      drb.lcid_present           = false;
-      drb.dluptnl_info_to_be_setup_list.resize(1);
-      drb.dluptnl_info_to_be_setup_list[0].dluptnl_info.set_gtp_tunnel();
-      //        gtpu.transport_layer_address = ; // TODO
-      //        gtpu.gtp_teid = ; // TODO
+
+  // > DRBs-SetupMod-List.
+  resp->drbs_setup_mod_list_present = not du_request.drbs_to_setup.empty();
+  resp->drbs_setup_mod_list.value.resize(du_response.drbs_setup.size());
+  for (unsigned i = 0; i != du_response.drbs_setup.size(); ++i) {
+    resp->drbs_setup_mod_list.value[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
+    const f1ap_drb_setup&  drb_setup = du_response.drbs_setup[i];
+    drbs_setup_mod_item_s& asn1_drb  = resp->drbs_setup_mod_list.value[i]->drbs_setup_mod_item();
+    asn1_drb.drbid                   = drb_id_to_uint(du_request.drbs_to_setup[i].drb_id);
+    asn1_drb.lcid_present            = drb_setup.lcid.has_value();
+    if (asn1_drb.lcid_present) {
+      asn1_drb.lcid = drb_setup.lcid.value();
+    }
+    asn1_drb.dluptnl_info_to_be_setup_list.resize(drb_setup.dluptnl_info_list.size());
+    for (unsigned j = 0; j != du_response.drbs_setup.size(); ++j) {
+      up_transport_layer_info_to_asn1(asn1_drb.dluptnl_info_to_be_setup_list[j].dluptnl_info,
+                                      drb_setup.dluptnl_info_list[j]);
     }
   }
   resp->drbs_modified_list_present               = false;
@@ -100,15 +105,15 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   resp->crit_diagnostics_present                 = false;
   resp->c_rnti_present                           = false;
   resp->associated_scell_list_present            = false;
-  resp->srbs_setup_mod_list_present              = not du_request.srbs_to_setup.empty();
-  if (resp->srbs_setup_mod_list_present) {
-    resp->srbs_setup_mod_list.value.resize(du_request.srbs_to_setup.size());
-    for (unsigned i = 0; i != du_request.srbs_to_setup.size(); ++i) {
-      resp->srbs_setup_mod_list.value[i].load_info_obj(ASN1_F1AP_ID_SRBS_SETUP_MOD_ITEM);
-      srbs_setup_mod_item_s& srb = resp->srbs_setup_mod_list.value[i].value().srbs_setup_mod_item();
-      srb.srbid                  = srb_id_to_uint(du_request.srbs_to_setup[i]);
-      srb.lcid                   = srb_id_to_lcid(du_request.srbs_to_setup[i]);
-    }
+
+  // > SRBs-SetupMod-List.
+  resp->srbs_setup_mod_list_present = not du_request.srbs_to_setup.empty();
+  resp->srbs_setup_mod_list.value.resize(du_request.srbs_to_setup.size());
+  for (unsigned i = 0; i != du_request.srbs_to_setup.size(); ++i) {
+    resp->srbs_setup_mod_list.value[i].load_info_obj(ASN1_F1AP_ID_SRBS_SETUP_MOD_ITEM);
+    srbs_setup_mod_item_s& srb = resp->srbs_setup_mod_list.value[i].value().srbs_setup_mod_item();
+    srb.srbid                  = srb_id_to_uint(du_request.srbs_to_setup[i]);
+    srb.lcid                   = srb_id_to_lcid(du_request.srbs_to_setup[i]);
   }
   resp->srbs_modified_list_present = false;
   resp->full_cfg_present           = false;

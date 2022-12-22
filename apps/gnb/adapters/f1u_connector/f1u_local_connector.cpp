@@ -34,13 +34,13 @@ f1u_local_connector::create_cu_dl_bearer(uint32_t                             dl
 
 void f1u_local_connector::attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid)
 {
-  logger.info("Connecting CU F1-U bearer. DL-TEID={}", dl_teid);
+  logger.debug("Connecting CU F1-U bearer. DL-TEID={}", dl_teid);
   if (dl_map.find(dl_teid) == dl_map.end()) {
-    logger.info("Could not find DL-TEID. DL-TEID={}, UL-TEID={}", dl_teid, ul_teid);
+    logger.warning("Could not find DL-TEID. DL-TEID={}, UL-TEID={}", dl_teid, ul_teid);
     return;
   }
   if (ul_map.find(ul_teid) == ul_map.end()) {
-    logger.info("Could not find UL-TEID. UL-TEID={}, UL-TEID={}", dl_teid, ul_teid);
+    logger.warning("Could not find UL-TEID. UL-TEID={}, UL-TEID={}", dl_teid, ul_teid);
     return;
   }
   auto& dl_tun = dl_map.at(dl_teid);
@@ -51,9 +51,9 @@ void f1u_local_connector::attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid
 srs_du::f1u_bearer*
 f1u_local_connector::create_du_ul_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx)
 {
-  logger.info("Connecting CU F1-U bearer. DL-TEID={}, UL-TEID={}", dl_teid, ul_teid);
+  logger.debug("Connecting CU F1-U bearer. DL-TEID={}, UL-TEID={}", dl_teid, ul_teid);
   if (dl_map.find(dl_teid) == dl_map.end()) {
-    logger.info("Could not find DL-TEID. DL-TEID={}, UL-TEID", dl_teid, ul_teid);
+    logger.warning("Could not find DL-TEID. DL-TEID={}, UL-TEID", dl_teid, ul_teid);
     return nullptr;
   }
   std::unique_ptr<f1u_ul_local_adapter> du_tx      = std::make_unique<f1u_ul_local_adapter>();

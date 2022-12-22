@@ -40,7 +40,6 @@ struct f1ap_scell_to_setup {
 struct f1ap_drb_setup {
   drb_id_t                             drb_id;
   optional<lcid_t>                     lcid;
-  drb_rlc_mode                         mode;
   std::vector<up_transport_layer_info> dluptnl_info_list;
 };
 
@@ -55,8 +54,9 @@ struct f1ap_ue_context_update_request {
 
 /// \brief Response from DU manager to DU F1AP with the result of the UE context update.
 struct f1ap_ue_context_update_response {
-  bool        result;
-  byte_buffer du_to_cu_rrc_container;
+  bool                        result;
+  std::vector<f1ap_drb_setup> drbs_setup;
+  byte_buffer                 du_to_cu_rrc_container;
 };
 
 } // namespace srs_du

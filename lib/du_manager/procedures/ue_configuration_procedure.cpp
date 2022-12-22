@@ -173,7 +173,14 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
   f1ap_ue_context_update_response resp;
   resp.result = true;
 
-  // Calculate ASN.1 CellGroupConfig to be sent in DU-to-CU container.
+  // > DRBs that were setup.
+  for (const f1ap_drb_to_setup& drb_req : request.drbs_to_setup) {
+    resp.drbs_setup.emplace_back();
+    f1ap_drb_setup& drb_setup = resp.drbs_setup.back();
+    drb_setup.drb_id          = drb_req.drb_id;
+  }
+
+  // > Calculate ASN.1 CellGroupConfig to be sent in DU-to-CU container.
   asn1::rrc_nr::cell_group_cfg_s asn1_cell_group;
   calculate_cell_group_config_diff(asn1_cell_group, prev_cell_group, *ue->resources);
   {
