@@ -23,7 +23,7 @@ f1_ue_context_setup_procedure::f1_ue_context_setup_procedure(const ue_context_se
 {
 }
 
-void f1_ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_context_setup_response_message>>& ctx)
+void f1_ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_context_setup_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -59,9 +59,9 @@ void f1_ue_context_setup_procedure::send_ue_context_setup_request()
   f1c_notifier.on_new_message(f1c_ue_ctxt_setup_request_msg);
 }
 
-f1ap_ue_context_setup_response_message f1_ue_context_setup_procedure::create_ue_context_setup_result()
+f1ap_ue_context_setup_response f1_ue_context_setup_procedure::create_ue_context_setup_result()
 {
-  f1ap_ue_context_setup_response_message res{};
+  f1ap_ue_context_setup_response res{};
 
   if (f1_ue_ctxt_setup_outcome.has_value()) {
     logger.info("Received F1AP UE Context Setup Response.");

@@ -36,8 +36,8 @@ nr_cell_global_id_t srsgnb::cgi_from_asn1(const asn1::f1ap::nrcgi_s& asn1_cgi)
 
 asn1::f1ap::gtp_tunnel_s srsgnb::gtp_tunnel_to_asn1(const gtp_tunnel& tun)
 {
-  asn1::f1ap::gtp_tunnel_s asn1tun;
-  asn1tun.gtp_teid.from_number(tun.gtp_teid);
-  asn1tun.transport_layer_address.from_string(tun.transport_layer_address);
-  return asn1tun;
+  asn1::f1ap::gtp_tunnel_s asn1_tun;
+  asn1_tun.gtp_teid.from_number(tun.gtp_teid);
+  asn1_tun.transport_layer_address.from_string(tun.transport_layer_address);
+  return asn1_tun;
 }

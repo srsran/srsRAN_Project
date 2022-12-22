@@ -140,6 +140,20 @@ f1c_message srsgnb::srs_cu_cp::generate_ue_context_release_complete(gnb_cu_ue_f1
   return ue_ctxt_rel_complete_msg;
 }
 
+f1c_message srsgnb::srs_cu_cp::generate_ue_context_setup_request(gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                 gnb_du_ue_f1ap_id_t du_ue_id)
+{
+  f1c_message msg;
+
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
+
+  auto& ue_ctx_req                     = msg.pdu.init_msg().value.ue_context_setup_request();
+  ue_ctx_req->gnb_cu_ue_f1_ap_id.value = (unsigned)cu_ue_id;
+  ue_ctx_req->gnb_du_ue_f1_ap_id.value = (unsigned)du_ue_id;
+
+  return msg;
+}
+
 f1c_message srsgnb::srs_cu_cp::generate_ue_context_setup_response(gnb_cu_ue_f1ap_id_t cu_ue_id,
                                                                   gnb_du_ue_f1ap_id_t du_ue_id,
                                                                   rnti_t              crnti)

@@ -46,6 +46,10 @@ private:
   cu_cp_du_handler*     handler = nullptr;
 };
 
+/// \brief Creates a dummy UE CONTEXT SETUP REQUEST.
+f1ap_ue_context_setup_request create_ue_context_setup_request(ue_index_t                             ue_index,
+                                                              const std::initializer_list<drb_id_t>& drbs_to_add);
+
 /// \brief Creates a dummy UE CONTEXT MODIFICATION REQUEST.
 f1ap_ue_context_modification_request
 create_ue_context_modification_request(ue_index_t ue_index, const std::initializer_list<drb_id_t>& drbs_to_add);

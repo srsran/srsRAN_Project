@@ -45,8 +45,8 @@ public:
 
   // f1c ue context manager functions
 
-  async_task<f1ap_ue_context_setup_response_message>
-  handle_ue_context_setup_request(const f1ap_ue_context_setup_request_message& request) override;
+  async_task<f1ap_ue_context_setup_response>
+  handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request) override;
 
   async_task<ue_index_t> handle_ue_context_release_command(const f1ap_ue_context_release_command& msg) override;
 

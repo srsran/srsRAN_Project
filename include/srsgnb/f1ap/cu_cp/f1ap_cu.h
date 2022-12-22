@@ -70,18 +70,6 @@ public:
   virtual void handle_f1_setup_response(const f1_setup_response_message& msg) = 0;
 };
 
-struct f1ap_ue_context_setup_request_message {
-  // TODO: replace asn1 by necessary containers
-  ue_index_t                             ue_index;
-  asn1::f1ap::ue_context_setup_request_s msg;
-};
-
-struct f1ap_ue_context_setup_response_message {
-  asn1::f1ap::ue_context_setup_resp_s response;
-  asn1::f1ap::ue_context_setup_fail_s failure;
-  bool                                success;
-};
-
 struct f1ap_ue_context_release_command {
   ue_index_t          ue_index;
   asn1::f1ap::cause_c cause;
@@ -98,8 +86,8 @@ public:
   virtual ~f1c_ue_context_manager() = default;
 
   /// Establish the UE context in F1.
-  virtual async_task<f1ap_ue_context_setup_response_message>
-  handle_ue_context_setup_request(const f1ap_ue_context_setup_request_message& request) = 0;
+  virtual async_task<f1ap_ue_context_setup_response>
+  handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request) = 0;
 
   /// \brief Initiates the UE Context Release procedure as per TS 38.473 section 8.3.3.
   /// \param[in] msg The UE Context Release message to transmit.

@@ -37,6 +37,9 @@ f1c_message generate_ul_rrc_message_transfer(gnb_cu_ue_f1ap_id_t cu_ue_id,
 /// \brief Generates dummy F1AP UE CONTEXT RELEASE COMPLETE message.
 f1c_message generate_ue_context_release_complete(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_du_ue_f1ap_id_t du_ue_id);
 
+/// \brief Generates dummy F1AP UE CONTEXT SETUP REQUEST message.
+f1c_message generate_ue_context_setup_request(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_du_ue_f1ap_id_t du_ue_id);
+
 /// \brief Generates dummy F1AP UE CONTEXT SETUP RESPONSE message.
 f1c_message generate_ue_context_setup_response(gnb_cu_ue_f1ap_id_t cu_ue_id,
                                                gnb_du_ue_f1ap_id_t du_ue_id,

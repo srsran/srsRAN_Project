@@ -39,6 +39,19 @@ f1ap_cu_test::test_ue& f1ap_cu_test::create_ue(gnb_du_ue_f1ap_id_t du_ue_id)
   return test_ues[ue_index];
 }
 
+f1ap_ue_context_setup_request
+srsgnb::srs_cu_cp::create_ue_context_setup_request(ue_index_t                             ue_index,
+                                                   const std::initializer_list<drb_id_t>& drbs_to_add)
+{
+  f1ap_ue_context_setup_request req;
+  req.ue_index = ue_index;
+
+  f1c_message dummy_msg = generate_ue_context_setup_request(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0));
+  req.msg               = dummy_msg.pdu.init_msg().value.ue_context_setup_request();
+
+  return req;
+}
+
 f1ap_ue_context_modification_request
 srsgnb::srs_cu_cp::create_ue_context_modification_request(ue_index_t                             ue_index,
                                                           const std::initializer_list<drb_id_t>& drbs_to_add)
