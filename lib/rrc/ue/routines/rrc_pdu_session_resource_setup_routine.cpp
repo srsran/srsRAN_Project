@@ -178,7 +178,8 @@ rrc_pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result
     // mark all PDU sessions as failed
     for (const auto& setup_item : setup_msg.pdu_session_res_setup_items) {
       cu_cp_pdu_session_res_setup_failed_item item;
-      item.pdu_session_id = setup_item.pdu_session_id;
+      item.pdu_session_id                                         = setup_item.pdu_session_id;
+      item.pdu_session_resource_setup_unsuccessful_transfer.cause = cu_cp_cause_t::protocol;
       response_msg.pdu_session_res_failed_to_setup_items.push_back(item);
     }
 

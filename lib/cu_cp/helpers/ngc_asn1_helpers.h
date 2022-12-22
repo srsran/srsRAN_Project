@@ -193,7 +193,6 @@ inline void fill_pdu_session_res_setup_resp_s(asn1::ngap::pdu_session_res_setup_
   // Fill PDU Session Resource Setup Response List
   if (!cu_cp_resp.pdu_session_res_setup_response_items.empty()) {
     resp->pdu_session_res_setup_list_su_res_present = true;
-    resp->pdu_session_res_setup_list_su_res->resize(cu_cp_resp.pdu_session_res_setup_response_items.size());
 
     for (auto& cu_cp_resp_item : cu_cp_resp.pdu_session_res_setup_response_items) {
       asn1::ngap::pdu_session_res_setup_item_su_res_s resp_item;
@@ -245,7 +244,6 @@ inline void fill_pdu_session_res_setup_resp_s(asn1::ngap::pdu_session_res_setup_
   // Fill PDU Session Resource Failed to Setup List
   if (!cu_cp_resp.pdu_session_res_failed_to_setup_items.empty()) {
     resp->pdu_session_res_failed_to_setup_list_su_res_present = true;
-    resp->pdu_session_res_failed_to_setup_list_su_res->resize(cu_cp_resp.pdu_session_res_failed_to_setup_items.size());
     for (auto& cu_cp_setup_failed_item : cu_cp_resp.pdu_session_res_failed_to_setup_items) {
       asn1::ngap::pdu_session_res_failed_to_setup_item_su_res_s setup_failed_item;
 
