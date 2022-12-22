@@ -51,17 +51,17 @@ private:
 
   int sock_fd = -1;
 
-  sockaddr_storage client_addr        = {}; // the local address
-  socklen_t        client_addrlen     = 0;
-  int              client_ai_family   = 0;
-  int              client_ai_socktype = 0;
-  int              client_ai_protocol = 0;
+  sockaddr_storage local_addr        = {}; // the local address
+  socklen_t        local_addrlen     = 0;
+  int              local_ai_family   = 0;
+  int              local_ai_socktype = 0;
+  int              local_ai_protocol = 0;
 
-  sockaddr_storage server_addr        = {}; // the server address when operating as client
-  socklen_t        server_addrlen     = 0;
-  int              server_ai_family   = 0;
-  int              server_ai_socktype = 0;
-  int              server_ai_protocol = 0;
+  sockaddr_storage remote_addr        = {}; // the remote address
+  socklen_t        remote_addrlen     = 0;
+  int              remote_ai_family   = 0;
+  int              remote_ai_socktype = 0;
+  int              remote_ai_protocol = 0;
 };
 
 } // namespace srsgnb

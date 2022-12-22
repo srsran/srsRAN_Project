@@ -45,19 +45,6 @@ protected:
     ASSERT_NE(client, nullptr);
   }
 
-  bool bind_and_listen()
-  {
-    if (server->create_and_bind() != true) {
-      return false;
-    }
-
-    if (server->listen() != true) {
-      return false;
-    }
-
-    return true;
-  }
-
   // spawn a thread to receive data
   void start_receive_thread()
   {
@@ -72,8 +59,6 @@ protected:
     });
   }
 
-  bool connect() { return client->create_and_connect(); }
-
   void run_client_receive() { client->receive(); }
 
   void send_to_server(const byte_buffer& pdu) { client->handle_pdu(pdu); }
@@ -85,9 +70,9 @@ protected:
   dummy_network_gateway_data_notifier server_data_notifier;
   dummy_network_gateway_data_notifier client_data_notifier;
 
-private:
   std::unique_ptr<network_gateway> server, client;
 
+private:
   std::thread       rx_thread;
   std::atomic<bool> stop_token = {false};
 };
@@ -100,7 +85,7 @@ TEST_F(udp_network_gateway_tester, when_binding_on_bogus_address_then_bind_fails
   config.bind_port    = 8888;
   config.reuse_addr   = true;
   set_config(config, config);
-  ASSERT_FALSE(bind_and_listen());
+  ASSERT_FALSE(server->create_and_bind());
 }
 
 TEST_F(udp_network_gateway_tester, when_binding_on_bogus_v6_address_then_bind_fails)
@@ -111,7 +96,7 @@ TEST_F(udp_network_gateway_tester, when_binding_on_bogus_v6_address_then_bind_fa
   config.bind_port    = 8888;
   config.reuse_addr   = true;
   set_config(config, config);
-  ASSERT_FALSE(bind_and_listen());
+  ASSERT_FALSE(server->create_and_bind());
 }
 
 TEST_F(udp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds)
@@ -122,7 +107,7 @@ TEST_F(udp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds)
   config.bind_port    = 8888;
   config.reuse_addr   = true;
   set_config(config, config);
-  ASSERT_TRUE(bind_and_listen());
+  ASSERT_TRUE(server->create_and_bind());
 }
 
 TEST_F(udp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succeeds)
@@ -133,7 +118,7 @@ TEST_F(udp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succee
   config.bind_port    = 8888;
   config.reuse_addr   = true;
   set_config(config, config);
-  ASSERT_TRUE(bind_and_listen());
+  ASSERT_TRUE(server->create_and_bind());
 }
 
 TEST_F(udp_network_gateway_tester, when_config_valid_then_trx_succeeds)
@@ -142,19 +127,22 @@ TEST_F(udp_network_gateway_tester, when_config_valid_then_trx_succeeds)
   server_config.type              = network_gateway_type::udp;
   server_config.bind_address      = "127.0.0.1";
   server_config.bind_port         = 7777;
+  server_config.connect_address   = "127.0.1.1";
+  server_config.connect_port      = 7777;
   server_config.non_blocking_mode = true;
-  server_config.reuse_addr        = true;
 
   network_gateway_config client_config;
   client_config.type              = network_gateway_type::udp;
+  client_config.bind_address      = "127.0.1.1";
+  client_config.bind_port         = 7777;
   client_config.connect_address   = "127.0.0.1";
   client_config.connect_port      = 7777;
   client_config.non_blocking_mode = true;
   set_config(server_config, client_config);
 
-  ASSERT_TRUE(bind_and_listen());
+  ASSERT_TRUE(server->create_and_bind());
+  ASSERT_TRUE(client->create_and_bind());
   start_receive_thread();
-  ASSERT_TRUE(connect());
 
   byte_buffer pdu_small(make_small_tx_byte_buffer());
   send_to_server(pdu_small);
@@ -184,19 +172,22 @@ TEST_F(udp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
   server_config.type              = network_gateway_type::udp;
   server_config.bind_address      = "::1";
   server_config.bind_port         = 7777;
+  server_config.connect_address   = "::1";
+  server_config.connect_port      = 7778;
   server_config.non_blocking_mode = true;
-  server_config.reuse_addr        = true;
 
   network_gateway_config client_config;
   client_config.type              = network_gateway_type::udp;
+  client_config.bind_address      = "::1";
+  client_config.bind_port         = 7778;
   client_config.connect_address   = "::1";
   client_config.connect_port      = 7777;
   client_config.non_blocking_mode = true;
   set_config(server_config, client_config);
 
-  ASSERT_TRUE(bind_and_listen());
+  ASSERT_TRUE(server->create_and_bind());
+  ASSERT_TRUE(client->create_and_bind());
   start_receive_thread();
-  ASSERT_TRUE(connect());
 
   byte_buffer pdu_small(make_small_tx_byte_buffer());
   send_to_server(pdu_small);
@@ -226,19 +217,23 @@ TEST_F(udp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
   server_config.type              = network_gateway_type::udp;
   server_config.bind_address      = "localhost";
   server_config.bind_port         = 5555;
+  server_config.connect_address   = "localhost";
+  server_config.connect_port      = 5556;
   server_config.non_blocking_mode = true;
   server_config.reuse_addr        = true;
 
   network_gateway_config client_config;
   client_config.type              = network_gateway_type::udp;
+  client_config.bind_address      = "localhost";
+  client_config.bind_port         = 5556;
   client_config.connect_address   = "localhost";
   client_config.connect_port      = 5555;
   client_config.non_blocking_mode = true;
   set_config(server_config, client_config);
 
-  ASSERT_TRUE(bind_and_listen());
+  ASSERT_TRUE(server->create_and_bind());
+  ASSERT_TRUE(client->create_and_bind());
   start_receive_thread();
-  ASSERT_TRUE(connect());
 
   byte_buffer pdu_small(make_small_tx_byte_buffer());
   send_to_server(pdu_small);

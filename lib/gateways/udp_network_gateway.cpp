@@ -49,11 +49,44 @@ void udp_network_gateway::handle_pdu(const byte_buffer& pdu)
 
   span<const uint8_t> pdu_span = to_span(pdu, tmp_mem);
 
-  int bytes_sent = send(sock_fd, pdu_span.data(), pdu_span.size_bytes(), 0);
-  if (bytes_sent == -1) {
-    logger.error("Couldn't send {} B of data on UDP socket: {}", pdu_span.size_bytes(), strerror(errno));
+  // Fixme: cache the results of getaddrinfo in case of success to speed up following calls.
+  struct addrinfo hints;
+  // support ipv4, ipv6 and hostnames
+  hints.ai_family    = local_ai_family;
+  hints.ai_socktype  = local_ai_socktype;
+  hints.ai_flags     = 0;
+  hints.ai_protocol  = local_ai_protocol;
+  hints.ai_canonname = nullptr;
+  hints.ai_addr      = nullptr;
+  hints.ai_next      = nullptr;
+
+  std::string      connect_port = std::to_string(config.connect_port);
+  struct addrinfo* results;
+
+  int ret = getaddrinfo(config.connect_address.c_str(), connect_port.c_str(), &hints, &results);
+  if (ret != 0) {
+    logger.error("Getaddrinfo error: {} - {}", config.connect_address, gai_strerror(ret));
     return;
   }
+
+  struct addrinfo* result;
+  for (result = results; result != nullptr; result = result->ai_next) {
+    char ip_addr[NI_MAXHOST], port_nr[NI_MAXSERV];
+    getnameinfo(
+        result->ai_addr, result->ai_addrlen, ip_addr, NI_MAXHOST, port_nr, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
+    logger.debug("Sending PDU to {} port {}", ip_addr, port_nr);
+
+    int bytes_sent = sendto(sock_fd, pdu_span.data(), pdu_span.size_bytes(), 0, result->ai_addr, result->ai_addrlen);
+    if (bytes_sent == -1) {
+      logger.error("Couldn't send {} B of data on UDP socket: {}", pdu_span.size_bytes(), strerror(errno));
+      continue;
+    }
+
+    logger.debug("PDU was sent successfully");
+    break;
+  }
+
+  freeaddrinfo(results);
 }
 
 bool udp_network_gateway::create_and_bind()
@@ -105,11 +138,11 @@ bool udp_network_gateway::create_and_bind()
     }
 
     // store client address
-    memcpy(&client_addr, result->ai_addr, result->ai_addrlen);
-    client_addrlen     = result->ai_addrlen;
-    client_ai_family   = result->ai_family;
-    client_ai_socktype = result->ai_socktype;
-    client_ai_protocol = result->ai_protocol;
+    memcpy(&local_addr, result->ai_addr, result->ai_addrlen);
+    local_addrlen     = result->ai_addrlen;
+    local_ai_family   = result->ai_family;
+    local_ai_socktype = result->ai_socktype;
+    local_ai_protocol = result->ai_protocol;
 
     // set socket to non-blocking after bind is successful
     if (config.non_blocking_mode) {
@@ -137,113 +170,31 @@ bool udp_network_gateway::create_and_bind()
 
 bool udp_network_gateway::listen()
 {
-  // UDP does not listen for connections
-  logger.info("Ignoring unnecessary call of `listen()` on UDP gateway.");
-  return true;
+  // UDP does not listen for connections.
+  logger.info("Ignoring unsupported call of `listen()` on UDP gateway.");
+  return false;
 }
 
 bool udp_network_gateway::create_and_connect()
 {
-  // bind to address/port
-  if (not config.bind_address.empty()) {
-    if (not create_and_bind()) {
-      logger.error("Couldn't bind to address {}:{}", config.bind_address, config.bind_port);
-      close_socket();
-      return false;
-    }
-  }
-
-  struct addrinfo hints;
-  // support ipv4, ipv6 and hostnames
-  hints.ai_family    = AF_UNSPEC;
-  hints.ai_socktype  = SOCK_DGRAM;
-  hints.ai_flags     = 0;
-  hints.ai_protocol  = IPPROTO_UDP;
-  hints.ai_canonname = nullptr;
-  hints.ai_addr      = nullptr;
-  hints.ai_next      = nullptr;
-
-  std::string      connect_port = std::to_string(config.connect_port);
-  struct addrinfo* results;
-
-  int ret = getaddrinfo(config.connect_address.c_str(), connect_port.c_str(), &hints, &results);
-  if (ret != 0) {
-    logger.error("Getaddrinfo error: {} - {}", config.connect_address, gai_strerror(ret));
-    return false;
-  }
-
-  struct addrinfo* result;
-  for (result = results; result != nullptr; result = result->ai_next) {
-    // create UDP socket
-    sock_fd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    if (sock_fd == -1) {
-      ret = errno;
-      continue;
-    }
-
-    if (not set_sockopts()) {
-      close_socket();
-      continue;
-    }
-
-    char ip_addr[NI_MAXHOST], port_nr[NI_MAXSERV];
-    getnameinfo(
-        result->ai_addr, result->ai_addrlen, ip_addr, NI_MAXHOST, port_nr, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
-    logger.debug("Connecting to {} port {}", ip_addr, port_nr);
-
-    if (connect(sock_fd, result->ai_addr, result->ai_addrlen) == -1) {
-      // connection failed, try next address
-      ret = errno;
-      logger.debug("Failed to connect to {}:{} - {}", ip_addr, port_nr, strerror(ret));
-      close_socket();
-      continue;
-    }
-
-    // store server address
-    memcpy(&server_addr, result->ai_addr, result->ai_addrlen);
-    server_addrlen     = result->ai_addrlen;
-    server_ai_family   = result->ai_family;
-    server_ai_socktype = result->ai_socktype;
-    server_ai_protocol = result->ai_protocol;
-
-    // set socket to non-blocking after connect is established
-    if (config.non_blocking_mode) {
-      if (not set_non_blocking()) {
-        // failed, try next address
-        logger.error("Socket not non-blocking");
-        close_socket();
-        continue;
-      }
-    }
-
-    logger.info("Connection successful");
-    break;
-  }
-
-  freeaddrinfo(results);
-
-  if (sock_fd == -1) {
-    logger.error("Error connecting to {}:{} - {}", config.connect_address, config.connect_port, strerror(ret));
-    return false;
-  }
-
-  return true;
+  // UDP is connectionless. Use `create_and_bind()` to bind socket.
+  logger.error("Ignoring unsupported call of `create_and_connect()` on UDP gateway.");
+  return false;
 }
 
 bool udp_network_gateway::recreate_and_reconnect()
 {
-  if (is_initialized()) {
-    // Continue using existing socket
-    logger.info("Called `recreate_and_reconnect()` on initialized UDP gateway: keep using previous connection.");
-    return true;
-  }
-
-  logger.warning("Called `recreate_and_reconnect()` on uninitialized UDP gateway: establishing new connection.");
-  return create_and_connect();
+  // UDP is connectionless. Use `create_and_bind()` to bind socket.
+  logger.error("Ignoring unsupported call of `recreate_and_reconnect()` on UDP gateway.");
+  return false;
 }
 
 void udp_network_gateway::receive()
 {
+  if (!is_initialized()) {
+    logger.error("Cannot receive on UDP gateway: Socket is not initialized.");
+  }
+
   // Fixme: consider class member on heap when sequential access is guaranteed
   std::array<uint8_t, network_gateway_udp_max_len> tmp_mem; // no init
 
