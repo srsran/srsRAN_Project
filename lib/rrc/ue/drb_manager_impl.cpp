@@ -39,9 +39,11 @@ std::vector<drb_id_t> drb_manager_impl::calculate_drb_to_add_list(const cu_cp_pd
         drb_context drb_ctx;
         drb_ctx.drb_id         = id;
         drb_ctx.pdu_session_id = pdu_session.pdu_session_id;
+        drb_ctx.default_drb    = drbs.empty() ? true : false; // make first DRB the default
         drb_ctx.five_qi        = qos_flow.qos_charact.five_qi;
         drb_ctx.pdcp_cfg       = set_rrc_pdcp_config(drb_ctx.five_qi);
-        // TODO: add SDAP
+        drb_ctx.mapped_qos_flows.push_back(qos_flow.qos_flow_id);
+        drb_ctx.sdap_cfg = set_rrc_sdap_config(drb_ctx);
 
         // add new DRB to list
         drbs.emplace(id, drb_ctx);
@@ -82,6 +84,19 @@ drb_id_t drb_manager_impl::allocate_drb_id()
   return new_drb_id;
 }
 
+asn1::rrc_nr::sdap_cfg_s drb_manager_impl::set_rrc_sdap_config(const drb_context& context)
+{
+  asn1::rrc_nr::sdap_cfg_s sdap_cfg;
+  sdap_cfg.pdu_session = context.pdu_session_id;
+  sdap_cfg.default_drb = context.default_drb;
+  sdap_cfg.sdap_hdr_dl = asn1::rrc_nr::sdap_cfg_s::sdap_hdr_dl_opts::absent;
+  sdap_cfg.sdap_hdr_ul = asn1::rrc_nr::sdap_cfg_s::sdap_hdr_ul_opts::absent;
+  for (const auto& qos_flow : context.mapped_qos_flows) {
+    sdap_cfg.mapped_qos_flows_to_add.push_back(qos_flow);
+  }
+  return sdap_cfg;
+}
+
 asn1::rrc_nr::pdcp_cfg_s drb_manager_impl::set_rrc_pdcp_config(uint16_t five_qi)
 {
   // TODO lookup PDCP config for 5QI in config
@@ -101,10 +116,28 @@ asn1::rrc_nr::pdcp_cfg_s drb_manager_impl::set_rrc_pdcp_config(uint16_t five_qi)
   return pdcp_cfg;
 }
 
+uint16_t drb_manager_impl::get_pdu_session_id(const drb_id_t drb_id)
+{
+  if (drbs.find(drb_id) == drbs.end()) {
+    logger.error("DRB {} not found", drb_id);
+    return {};
+  }
+  return drbs[drb_id].pdu_session_id;
+}
+
+std::vector<uint8_t> drb_manager_impl::get_mapped_qos_flows(const drb_id_t drb_id)
+{
+  if (drbs.find(drb_id) == drbs.end()) {
+    logger.error("DRB {} not found", drb_id);
+    return {};
+  }
+  return drbs[drb_id].mapped_qos_flows;
+}
+
 asn1::rrc_nr::pdcp_cfg_s drb_manager_impl::get_pdcp_config(const drb_id_t drb_id)
 {
   if (drbs.find(drb_id) == drbs.end()) {
-    logger.error("DRB %d not found", drb_id);
+    logger.error("DRB {} not found", drb_id);
     return {};
   }
   return drbs[drb_id].pdcp_cfg;
@@ -113,7 +146,7 @@ asn1::rrc_nr::pdcp_cfg_s drb_manager_impl::get_pdcp_config(const drb_id_t drb_id
 asn1::rrc_nr::sdap_cfg_s drb_manager_impl::get_sdap_config(const drb_id_t drb_id)
 {
   if (drbs.find(drb_id) == drbs.end()) {
-    logger.error("DRB %d not found", drb_id);
+    logger.error("DRB {} not found", drb_id);
     return {};
   }
   return drbs[drb_id].sdap_cfg;

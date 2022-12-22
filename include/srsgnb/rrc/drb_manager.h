@@ -36,6 +36,12 @@ public:
   /// \brief Return SDAP config for a given DRB.
   virtual asn1::rrc_nr::sdap_cfg_s get_sdap_config(const drb_id_t drb_id) = 0;
 
+  /// \brief Return list of QoS flow IDs mapped on a given DRB.
+  virtual std::vector<uint8_t> get_mapped_qos_flows(const drb_id_t drb_id) = 0;
+
+  /// \brief Return PDU session ID for a given DRB.
+  virtual uint16_t get_pdu_session_id(const drb_id_t drb_id) = 0;
+
   /// \brief Return number of DRBs.
   virtual size_t get_nof_drbs() = 0;
 };

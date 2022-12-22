@@ -18,9 +18,12 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 struct drb_context {
-  srsgnb::drb_id_t         drb_id         = drb_id_t::invalid;
-  uint16_t                 pdu_session_id = 0;
-  uint16_t                 five_qi        = 0;
+  srsgnb::drb_id_t     drb_id         = drb_id_t::invalid;
+  uint16_t             pdu_session_id = 0;
+  bool                 default_drb    = false;
+  uint16_t             five_qi        = 0;
+  std::vector<uint8_t> mapped_qos_flows; // QoS flow IDs of all QoS flows mapped to this DRB
+
   asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
   asn1::rrc_nr::sdap_cfg_s sdap_cfg;
 };
@@ -35,6 +38,8 @@ public:
   std::vector<drb_id_t>    calculate_drb_to_add_list(const cu_cp_pdu_session_resource_setup_message& pdu) override;
   asn1::rrc_nr::pdcp_cfg_s get_pdcp_config(const drb_id_t drb_id) override;
   asn1::rrc_nr::sdap_cfg_s get_sdap_config(const drb_id_t drb_id) override;
+  std::vector<uint8_t>     get_mapped_qos_flows(const drb_id_t drb_id) override;
+  uint16_t                 get_pdu_session_id(const drb_id_t drb_id) override;
   size_t                   get_nof_drbs() override;
 
 private:
@@ -42,6 +47,7 @@ private:
 
   // returns valid RRC PDCP config for a given FiveQI
   asn1::rrc_nr::pdcp_cfg_s set_rrc_pdcp_config(uint16_t five_qi);
+  asn1::rrc_nr::sdap_cfg_s set_rrc_sdap_config(const drb_context& context);
 
   const drb_manager_cfg& cfg;
   srslog::basic_logger&  logger;
