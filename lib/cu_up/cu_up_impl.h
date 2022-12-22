@@ -20,6 +20,7 @@
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/executors/task_worker.h"
+#include "srsgnb/support/io_broker/io_broker.h"
 #include "srsgnb/support/timers.h"
 #include <memory>
 #include <unordered_map>
@@ -31,7 +32,7 @@ class cu_up final : public cu_up_interface
 {
 public:
   explicit cu_up(const cu_up_configuration& cfg_);
-  ~cu_up() = default;
+  ~cu_up();
 
   // cu_up_e1_interface
   e1_message_handler& get_e1_message_handler() override { return *e1; }
@@ -59,6 +60,7 @@ private:
   // Components
   std::atomic<bool>                e1_connected = {false};
   std::unique_ptr<e1_interface>    e1;
+  std::unique_ptr<io_broker>       broker;
   std::unique_ptr<network_gateway> ngu_gw;
   std::unique_ptr<gtpu_demux>      ngu_demux;
   timer_manager                    timer_db;

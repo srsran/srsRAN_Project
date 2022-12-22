@@ -11,6 +11,7 @@
 #include "cu_up_impl.h"
 #include "srsgnb/gateways/network_gateway_factory.h"
 #include "srsgnb/gtpu/gtpu_demux_factory.h"
+#include "srsgnb/support/io_broker/io_broker_factory.h"
 
 using namespace srsgnb;
 using namespace srs_cu_up;
@@ -28,6 +29,9 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   /// > Create upper layers
 
+  // Create IO broker.
+  broker = create_io_broker(io_broker_type::epoll);
+
   // Create NG-U gateway
   // TODO: Refactor to use UPF IP that we get from E1
   network_gateway_config ngu_gw_config = {};
@@ -40,9 +44,10 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   network_gateway_creation_message ngu_gw_msg = {ngu_gw_config, gw_ctrl_gtpu_demux_adapter, gw_data_gtpu_demux_adapter};
   ngu_gw                                      = create_network_gateway(ngu_gw_msg);
-  if (not ngu_gw->create_and_connect()) {
+  if (not ngu_gw->create_and_bind()) {
     logger.error("Failed to create and connect NG-U gateway.");
   }
+  broker->register_fd(ngu_gw->get_socket_fd(), [this](int fd) { ngu_gw->receive(); });
 
   // Create GTP-U demux
   ngu_demux = create_gtpu_demux();
@@ -56,6 +61,13 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   // connect event notifier to layers
   // f1c_ev_notifier.connect_cu_cp(*this);
+}
+
+cu_up::~cu_up()
+{
+  if (broker && ngu_gw) {
+    broker->unregister_fd(ngu_gw->get_socket_fd());
+  }
 }
 
 e1ap_bearer_context_setup_response
