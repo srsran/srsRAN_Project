@@ -15,7 +15,9 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
+#include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/rrc/rrc.h"
 #include "srsgnb/security/security.h"
 #include "srsgnb/support/async/async_task.h"
@@ -42,14 +44,20 @@ public:
 };
 
 struct rrc_ue_drb_setup_message {
-  uint8_t                       drb_id;
-  std::vector<cu_cp_gtp_tunnel> gtp_tunnels;
+  uint8_t                                  drb_id;
+  srsgnb::rlc_mode                         rlc;
+  qos_characteristics                      qos_info;
+  std::vector<cu_cp_gtp_tunnel>            gtp_tunnels;
+  cu_cp_s_nssai                            s_nssai;
+  std::vector<qos_flow_setup_request_item> qos_flows_mapped_to_drb;
+
+  uint8_t dl_pdcp_sn_length; // id-DLPDCPSNLength 161
+  uint8_t ul_pdcp_sn_length; // id-ULPDCPSNLength 192
 };
 
 struct rrc_ue_ue_context_modification_request_message {
-  std::vector<cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
-  std::vector<rrc_ue_drb_setup_message>         rrc_ue_drb_setup_msgs;
-  optional<uint64_t>                            ue_aggregate_maximum_bit_rate_ul;
+  std::vector<rrc_ue_drb_setup_message> rrc_ue_drb_setup_msgs;
+  optional<uint64_t>                    ue_aggregate_maximum_bit_rate_ul;
 };
 
 struct rrc_ue_du_to_cu_rrc_info {
