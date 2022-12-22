@@ -23,10 +23,7 @@ inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modificati
   f1c_request.ue_index = msg.ue_index;
 
   // drb to be setup mod list
-  if (msg.rrc_ue_drb_setup_msgs.size() > 0) {
-    f1c_request.msg->drbs_to_be_setup_mod_list_present = true;
-  }
-
+  f1c_request.msg->drbs_to_be_setup_mod_list_present = msg.rrc_ue_drb_setup_msgs.size() > 0;
   for (const auto& drb_to_be_setup : msg.rrc_ue_drb_setup_msgs) {
     asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_setup_mod_item_ies_o> f1ap_setup_item;
     auto& f1ap_drb_to_setup_item = f1ap_setup_item->drbs_to_be_setup_mod_item();
@@ -104,27 +101,9 @@ inline void fill_rrc_ue_ue_context_modification_response_message(
 
     // DUtoCURRCInformation
     if (f1ap_response_item->duto_currc_info_present) {
-      // CellGroupConfig
-      if (!f1ap_response_item->duto_currc_info->cell_group_cfg.empty()) {
-        auto& cell_group_cfg = f1ap_response_item->duto_currc_info->cell_group_cfg;
-        res.du_to_cu_rrc_info.cell_group_cfg.resize(cell_group_cfg.size());
-        std::copy(cell_group_cfg.begin(), cell_group_cfg.end(), res.du_to_cu_rrc_info.cell_group_cfg.begin());
-      }
-
-      // MeasGapConfig
-      if (!f1ap_response_item->duto_currc_info->meas_gap_cfg.empty()) {
-        auto& meas_gap_cfg = f1ap_response_item->duto_currc_info->meas_gap_cfg;
-        res.du_to_cu_rrc_info.meas_gap_cfg.resize(meas_gap_cfg.size());
-        std::copy(meas_gap_cfg.begin(), meas_gap_cfg.end(), res.du_to_cu_rrc_info.meas_gap_cfg.begin());
-      }
-
-      // RequestedPMaxFr1
-      if (!f1ap_response_item->duto_currc_info->requested_p_max_fr1.empty()) {
-        auto& requested_p_max_fr1 = f1ap_response_item->duto_currc_info->requested_p_max_fr1;
-        res.du_to_cu_rrc_info.requested_p_max_fr1.resize(requested_p_max_fr1.size());
-        std::copy(
-            requested_p_max_fr1.begin(), requested_p_max_fr1.end(), res.du_to_cu_rrc_info.requested_p_max_fr1.begin());
-      }
+      res.du_to_cu_rrc_info.cell_group_cfg      = f1ap_response_item->duto_currc_info->cell_group_cfg.copy();
+      res.du_to_cu_rrc_info.meas_gap_cfg        = f1ap_response_item->duto_currc_info->meas_gap_cfg.copy();
+      res.du_to_cu_rrc_info.requested_p_max_fr1 = f1ap_response_item->duto_currc_info->requested_p_max_fr1.copy();
     }
 
     // Add DRBs setup mod list
