@@ -12,9 +12,9 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/optional.h"
-#include "srsgnb/asn1/e1ap/e1ap.h"
+#include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/e1/cu_cp/e1_cu_cp.h"
+#include "srsgnb/ran/nr_cgi.h"
 #include <string>
 #include <vector>
 
