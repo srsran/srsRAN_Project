@@ -59,21 +59,23 @@ void du_drb_connector::connect(du_ue_index_t                       ue_index,
   mac_tx_sdu_notifier.connect(*rlc_bearer.get_tx_lower_layer_interface());
 }
 
-void du_ue_bearer_manager::add_srb(srb_id_t srb_id, const rlc_config& rlc_cfg)
+du_ue_srb& du_ue_bearer_manager::add_srb(srb_id_t srb_id, const rlc_config& rlc_cfg)
 {
   srsgnb_assert(not srbs().contains(srb_id), "SRB-Id={} already exists", srb_id);
   srbs_.emplace(srb_id);
   srbs_[srb_id].srb_id  = srb_id;
   srbs_[srb_id].rlc_cfg = rlc_cfg;
+  return srbs_[srb_id];
 }
 
-void du_ue_bearer_manager::add_drb(drb_id_t drb_id, lcid_t lcid, const rlc_config& rlc_cfg)
+du_ue_drb& du_ue_bearer_manager::add_drb(drb_id_t drb_id, lcid_t lcid, const rlc_config& rlc_cfg)
 {
   srsgnb_assert(not drbs().contains(drb_id), "DRB-Id={} already exists", drb_id);
   drbs_.emplace(drb_id);
   drbs_[drb_id].drb_id  = drb_id;
   drbs_[drb_id].lcid    = lcid;
   drbs_[drb_id].rlc_cfg = rlc_cfg;
+  return drbs_[drb_id];
 }
 
 optional<lcid_t> du_ue_bearer_manager::allocate_lcid() const

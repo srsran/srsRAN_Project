@@ -33,11 +33,3 @@ void ue_bearer_manager::add_f1c_bearer(srb_id_t srb_id, f1c_rx_sdu_notifier& rx_
   f1c_bearers.emplace(srb_id_to_uint(srb_id),
                       std::make_unique<f1c_other_srb_du_bearer>(ue_ctx, srb_id, f1c_notifier, rx_sdu_notif));
 }
-
-void ue_bearer_manager::add_f1u_bearer(drb_id_t drb_id, f1u_rx_sdu_notifier& rx_sdu_notif)
-{
-  // FIXME: We need a f1u_tx_pdu_notifier object here
-  f1u_tx_pdu_notifier* tx_pdu_notif = nullptr;
-  fmt::print("F1-U bearer with DRB id={}: Incomplete implementation - no f1u_tx_pdu_notifier!\n", drb_id);
-  f1u_bearers.emplace(drb_id_to_idx(drb_id), create_f1u_bearer(drb_id, rx_sdu_notif, *tx_pdu_notif));
-}

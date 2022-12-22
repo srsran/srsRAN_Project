@@ -14,7 +14,8 @@
 using namespace srsgnb;
 using namespace srs_du;
 
-du_manager_impl::du_manager_impl(const du_manager_params& params) :
+du_manager_impl::du_manager_impl(const du_manager_params& params_) :
+  params(params_),
   cfg{srslog::fetch_basic_logger("DU-MNG"),
       {},
       {params.ran.cells.begin(), params.ran.cells.end()},
@@ -24,7 +25,7 @@ du_manager_impl::du_manager_impl(const du_manager_params& params) :
       params.mac},
   cell_mng(cfg),
   cell_res_alloc(cfg.du_cells, config_helpers::make_default_initial_ue_serving_cell_config()),
-  ue_mng(cfg, cell_res_alloc),
+  ue_mng(params, cell_res_alloc),
   main_ctrl_loop(128)
 {
 }

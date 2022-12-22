@@ -40,8 +40,6 @@ public:
 
   void add_f1c_bearer(srb_id_t srb_id, f1c_rx_sdu_notifier& rx_sdu_notif);
 
-  void add_f1u_bearer(drb_id_t drb_id, f1u_rx_sdu_notifier& rx_sdu_notif);
-
   f1c_bearer* find_srb(srb_id_t srb_id)
   {
     return f1c_bearers.contains(srb_id_to_uint(srb_id)) ? f1c_bearers[srb_id_to_uint(srb_id)].get() : nullptr;
@@ -50,23 +48,12 @@ public:
   {
     return f1c_bearers.contains(srb_id_to_uint(srb_id)) ? f1c_bearers[srb_id_to_uint(srb_id)].get() : nullptr;
   }
-  f1u_bearer* find_drb(drb_id_t drb_id)
-  {
-    return f1u_bearers.contains(drb_id_to_idx(drb_id)) ? f1u_bearers[drb_id_to_idx(drb_id)].get() : nullptr;
-  }
-  const f1u_bearer* find_drb(drb_id_t drb_id) const
-  {
-    return f1c_bearers.contains(drb_id_to_idx(drb_id)) ? f1u_bearers[drb_id_to_idx(drb_id)].get() : nullptr;
-  }
 
 private:
-  static unsigned drb_id_to_idx(drb_id_t drb_id) { return drb_id_to_uint(drb_id) - 1; }
-
   f1ap_ue_context&      ue_ctx;
   f1c_message_notifier& f1c_notifier;
 
   slotted_array<std::unique_ptr<f1c_bearer>, MAX_NOF_SRBS> f1c_bearers;
-  slotted_array<std::unique_ptr<f1u_bearer>, MAX_NOF_DRBS> f1u_bearers;
 };
 
 } // namespace srs_du

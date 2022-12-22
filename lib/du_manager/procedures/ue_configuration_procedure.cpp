@@ -17,19 +17,10 @@
 using namespace srsgnb;
 using namespace srsgnb::srs_du;
 
-ue_configuration_procedure::ue_configuration_procedure(const f1ap_ue_context_update_request&        request_,
-                                                       ue_manager_ctrl_configurator&                ue_mng_,
-                                                       const du_manager_params::service_params&     du_services_,
-                                                       mac_ue_configurator&                         mac_ue_mng_,
-                                                       const du_manager_params::rlc_config_params&  rlc_services_,
-                                                       const du_manager_params::f1ap_config_params& f1ap_mng_) :
-  request(request_),
-  ue_mng(ue_mng_),
-  services(du_services_),
-  mac_ue_mng(mac_ue_mng_),
-  rlc_services(rlc_services_),
-  f1ap_mng(f1ap_mng_),
-  ue(ue_mng.find_ue(request.ue_index))
+ue_configuration_procedure::ue_configuration_procedure(const f1ap_ue_context_update_request& request_,
+                                                       ue_manager_ctrl_configurator&         ue_mng_,
+                                                       const du_manager_params&              du_params_) :
+  request(request_), ue_mng(ue_mng_), du_params(du_params_), ue(ue_mng.find_ue(request.ue_index))
 {
   srsgnb_assert(ue != nullptr, "ueId={} not found", request.ue_index);
 }
@@ -46,63 +37,19 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
     CORO_EARLY_RETURN(make_ue_config_failure());
   }
 
-  add_bearers_to_ue_context();
-
-  // > Update RLC bearers.
-  update_rlc_bearers();
-
-  // > Update F1-C/F1-U bearers.
-  update_f1_bearers();
+  // > Update DU UE bearers.
+  add_srbs_to_du_ue_context();
+  add_drbs_to_du_ue_context();
 
   // > Update MAC bearers.
-  CORO_AWAIT(update_mac_bearers());
+  CORO_AWAIT(update_mac_lcid_mux());
 
   log_proc_completed(logger, request.ue_index, ue->rnti, "UE Configuration");
 
   CORO_RETURN(make_ue_config_response());
 }
 
-void ue_configuration_procedure::update_f1_bearers()
-{
-  f1ap_ue_configuration_request req{};
-  req.ue_index = ue->ue_index;
-
-  for (srb_id_t srb_id : request.srbs_to_setup) {
-    du_ue_srb& bearer = ue->bearers.srbs()[srb_id];
-    req.f1c_bearers_to_add.emplace_back();
-    req.f1c_bearers_to_add.back().srb_id          = srb_id;
-    req.f1c_bearers_to_add.back().rx_sdu_notifier = &bearer.connector.f1c_rx_sdu_notif;
-  }
-
-  for (const f1ap_drb_to_setup& drb : request.drbs_to_setup) {
-    du_ue_drb& bearer = ue->bearers.drbs()[drb.drb_id];
-    req.f1u_bearers_to_add.emplace_back();
-    req.f1u_bearers_to_add.back().drb_id          = drb.drb_id;
-    req.f1u_bearers_to_add.back().rx_sdu_notifier = &bearer.connector.f1u_rx_sdu_notif;
-  }
-
-  f1ap_ue_configuration_response resp = f1ap_mng.ue_mng.handle_ue_configuration_request(req);
-
-  // Connect newly created F1-C bearers with RLC SRBs, and RLC SRBs with MAC logical channel notifiers.
-  for (f1c_bearer_addmodded& bearer_added : resp.f1c_bearers_added) {
-    du_ue_srb& srb = ue->bearers.srbs()[bearer_added.srb_id];
-    srb.connector.connect(
-        req.ue_index, bearer_added.srb_id, *bearer_added.bearer, *srb.rlc_bearer, rlc_services.mac_ue_info_handler);
-  }
-
-  // > Connect newly created F1-U bearers to RLC DRBs.
-  for (f1u_bearer_addmodded& bearer_added : resp.f1u_bearers_added) {
-    du_ue_drb& drb = ue->bearers.drbs()[bearer_added.drb_id];
-    drb.connector.connect(req.ue_index,
-                          bearer_added.drb_id,
-                          drb.lcid,
-                          *bearer_added.bearer,
-                          *drb.rlc_bearer,
-                          rlc_services.mac_ue_info_handler);
-  }
-}
-
-void ue_configuration_procedure::add_bearers_to_ue_context()
+void ue_configuration_procedure::add_srbs_to_du_ue_context()
 {
   // > Create DU UE SRB objects.
   for (srb_id_t srbid : request.srbs_to_setup) {
@@ -111,20 +58,63 @@ void ue_configuration_procedure::add_bearers_to_ue_context()
                            ue->resources->rlc_bearers.end(),
                            [lcid](const rlc_bearer_config& e) { return e.lcid == lcid; });
     srsgnb_assert(it != ue->resources->rlc_bearers.end(), "SRB should have been allocated at this point");
-    ue->bearers.add_srb(srbid, it->rlc_cfg);
+    du_ue_srb& srb = ue->bearers.add_srb(srbid, it->rlc_cfg);
+
+    // >> Create RLC SRB entity.
+    srb.rlc_bearer =
+        create_rlc_entity(make_rlc_entity_creation_message(ue->ue_index, ue->pcell_index, srb, du_params.services));
   }
 
+  // > Create F1-C bearers.
+  f1ap_ue_configuration_request req{};
+  req.ue_index = ue->ue_index;
+  for (srb_id_t srb_id : request.srbs_to_setup) {
+    du_ue_srb& bearer = ue->bearers.srbs()[srb_id];
+    req.f1c_bearers_to_add.emplace_back();
+    req.f1c_bearers_to_add.back().srb_id          = srb_id;
+    req.f1c_bearers_to_add.back().rx_sdu_notifier = &bearer.connector.f1c_rx_sdu_notif;
+  }
+  f1ap_ue_configuration_response resp = du_params.f1ap.ue_mng.handle_ue_configuration_request(req);
+
+  // > Connect newly created F1-C bearers with RLC SRBs, and RLC SRBs with MAC logical channel notifiers.
+  for (f1c_bearer_addmodded& bearer_added : resp.f1c_bearers_added) {
+    du_ue_srb& srb = ue->bearers.srbs()[bearer_added.srb_id];
+    srb.connector.connect(
+        req.ue_index, bearer_added.srb_id, *bearer_added.bearer, *srb.rlc_bearer, du_params.rlc.mac_ue_info_handler);
+  }
+}
+
+void ue_configuration_procedure::add_drbs_to_du_ue_context()
+{
   // > Create DU UE DRB objects.
   for (const f1ap_drb_to_setup& drbtoadd : request.drbs_to_setup) {
     auto it = std::find_if(ue->resources->rlc_bearers.begin(),
                            ue->resources->rlc_bearers.end(),
                            [&drbtoadd](const rlc_bearer_config& e) { return e.drb_id == drbtoadd.drb_id; });
     srsgnb_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
-    ue->bearers.add_drb(drbtoadd.drb_id, it->lcid, it->rlc_cfg);
+    du_ue_drb& drb = ue->bearers.add_drb(drbtoadd.drb_id, it->lcid, it->rlc_cfg);
+
+    // >> Create F1-U bearer.
+    // Note: We are computing the DL GTP-TEID as a concatenation of the UE index and DRB-id.
+    drb.uluptnl_info_list = drbtoadd.uluptnl_info_list;
+    drb.dluptnl_info_list.resize(1); // TODO: Handle more than one.
+    drb.dluptnl_info_list[0].gtp_teid                = int_to_gtp_teid((ue->ue_index << 5U) + (unsigned)drb.drb_id);
+    drb.dluptnl_info_list[0].transport_layer_address = "127.0.0.1"; // TODO: Set IP.
+    drb.drb_f1u = du_params.f1u.f1u_gw.create_du_ul_bearer(drb.dluptnl_info_list[0].gtp_teid.value(),
+                                                           drb.uluptnl_info_list[0].gtp_teid.value(),
+                                                           drb.connector.f1u_rx_sdu_notif);
+
+    // >> Create RLC DRB entity.
+    drb.rlc_bearer =
+        create_rlc_entity(make_rlc_entity_creation_message(ue->ue_index, ue->pcell_index, drb, du_params.services));
+
+    // >> Connect DRB F1-U with RLC, and RLC with MAC logical channel notifier.
+    drb.connector.connect(
+        ue->ue_index, drb.drb_id, drb.lcid, *drb.drb_f1u, *drb.rlc_bearer, du_params.rlc.mac_ue_info_handler);
   }
 }
 
-async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::update_mac_bearers()
+async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::update_mac_lcid_mux()
 {
   mac_ue_reconfiguration_request_message mac_ue_reconf_req;
   mac_ue_reconf_req.ue_index    = request.ue_index;
@@ -150,22 +140,7 @@ async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::
     lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
   }
 
-  return mac_ue_mng.handle_ue_reconfiguration_request(mac_ue_reconf_req);
-}
-
-void ue_configuration_procedure::update_rlc_bearers()
-{
-  // Create RLC SRB bearers.
-  for (srb_id_t srb_id : request.srbs_to_setup) {
-    du_ue_srb& srb = ue->bearers.srbs()[srb_id];
-    srb.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(ue->ue_index, ue->pcell_index, srb, services));
-  }
-
-  // Create RLC DRB bearers.
-  for (const f1ap_drb_to_setup& drb_to_setup : request.drbs_to_setup) {
-    du_ue_drb& drb = ue->bearers.drbs()[drb_to_setup.drb_id];
-    drb.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(ue->ue_index, ue->pcell_index, drb, services));
-  }
+  return du_params.mac.ue_cfg.handle_ue_reconfiguration_request(mac_ue_reconf_req);
 }
 
 f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_response()
@@ -173,11 +148,18 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
   f1ap_ue_context_update_response resp;
   resp.result = true;
 
-  // > DRBs that were setup.
+  // > Handle DRBs that were setup or failed to be setup.
   for (const f1ap_drb_to_setup& drb_req : request.drbs_to_setup) {
+    if (not ue->bearers.drbs().contains(drb_req.drb_id)) {
+      resp.drbs_failed_to_setup.push_back(drb_req.drb_id);
+      continue;
+    }
+    du_ue_drb& drb_added = ue->bearers.drbs()[drb_req.drb_id];
+
     resp.drbs_setup.emplace_back();
-    f1ap_drb_setup& drb_setup = resp.drbs_setup.back();
-    drb_setup.drb_id          = drb_req.drb_id;
+    f1ap_drb_setup& drb_setup   = resp.drbs_setup.back();
+    drb_setup.drb_id            = drb_added.drb_id;
+    drb_setup.dluptnl_info_list = drb_added.dluptnl_info_list;
   }
 
   // > Calculate ASN.1 CellGroupConfig to be sent in DU-to-CU container.

@@ -50,6 +50,7 @@ public:
 
 private:
   // DU manager configuration that will be visible to all running procedures
+  du_manager_params   params;
   du_manager_config_t cfg;
 
   // Components

@@ -41,7 +41,7 @@ protected:
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
     }
 
-    proc = launch_async<ue_configuration_procedure>(req, ue_mng, params.services, mac, params.rlc, params.f1ap);
+    proc = launch_async<ue_configuration_procedure>(req, ue_mng, params);
     proc_launcher.emplace(proc);
   }
 
@@ -118,9 +118,6 @@ TEST_F(ue_config_tester, when_du_manager_receives_ue_config_request_then_mac_and
   ASSERT_EQ(this->f1ap.last_ue_config->f1c_bearers_to_add.size(), 1);
   ASSERT_EQ(this->f1ap.last_ue_config->f1c_bearers_to_add[0].srb_id, srb_id_t::srb2);
   ASSERT_NE(this->f1ap.last_ue_config->f1c_bearers_to_add[0].rx_sdu_notifier, nullptr);
-  ASSERT_EQ(this->f1ap.last_ue_config->f1u_bearers_to_add.size(), 1);
-  ASSERT_EQ(this->f1ap.last_ue_config->f1u_bearers_to_add[0].drb_id, drb_id_t::drb1);
-  ASSERT_NE(this->f1ap.last_ue_config->f1u_bearers_to_add[0].rx_sdu_notifier, nullptr);
 }
 
 TEST_F(ue_config_tester, when_du_manager_completes_ue_configuration_procedure_then_response_has_rrc_container)
@@ -178,6 +175,7 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
 
   // Run UE Configuration Procedure to completion.
   configure_ue(create_f1ap_ue_context_update_request(test_ue->ue_index, {}, {drb_id_t::drb1}));
+  f1u_bearer_dummy& bearer = f1u_gw.f1u_bearers.begin()->second.begin()->second;
 
   // Forward MAC Rx SDU through DRB1 (UL).
   // > Add dummy RLC data header.
@@ -187,13 +185,13 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
   // > Push MAC Rx SDU through MAC logical channel.
   mac.last_ue_reconf_msg->bearers_to_addmod[0].ul_bearer->on_new_sdu({mac_sdu.copy()});
   // > Check arrival of F1-U Tx SDU to F1-U bearer.
-  ASSERT_EQ(test_payload, f1ap.f1_ues[test_ue->ue_index].f1u_bearers[drb_id_t::drb1].last_sdu);
+  ASSERT_EQ(test_payload, bearer.last_sdu);
 
-  // Forward F1-C Rx SDU through DRB1 (DL).
+  // Forward F1-U Rx SDU through DRB1 (DL).
   // > Create data buffer.
   byte_buffer f1c_rx_sdu = test_payload.copy();
-  // > Push F1-C Rx SDU through F1-C bearer Rx SDU notifier.
-  f1ap.last_ue_config->f1u_bearers_to_add[0].rx_sdu_notifier->on_new_sdu(std::move(f1c_rx_sdu), 0);
+  // > Push F1-U Rx SDU through F1-U bearer Rx SDU notifier.
+  bearer.du_rx.on_new_sdu(std::move(f1c_rx_sdu), 0);
   // > Check arrival of MAC Tx SDU to MAC logical channel.
   auto        mac_tx_sdu = mac.last_ue_reconf_msg->bearers_to_addmod[0].dl_bearer->on_new_tx_sdu(test_payload.length() +
                                                                                           dummy_rlc_header.size());

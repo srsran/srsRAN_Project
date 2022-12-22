@@ -276,11 +276,6 @@ void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const 
     ue.f1u_bearers.emplace(drb_id_to_uint(drb_id) - 1);
     auto& f1u_bearer  = ue.f1u_bearers[drb_id_to_uint(drb_id) - 1];
     f1u_bearer.drb_id = drb_id;
-
-    f1u_bearer_to_addmod bearer;
-    bearer.drb_id          = drb_id;
-    bearer.rx_sdu_notifier = &f1u_bearer.rx_sdu_notifier;
-    f1c_du_cfg_handler.next_ue_cfg_req.f1u_bearers_to_add.push_back(bearer);
   }
 
   // Generate DU manager response to UE context update.
@@ -293,9 +288,6 @@ void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const 
   // Register created F1-C and F1-U bearers in dummy DU manager.
   for (const auto& created_srb : f1c_du_cfg_handler.last_ue_cfg_response->f1c_bearers_added) {
     ue.f1c_bearers[srb_id_to_uint(created_srb.srb_id)].bearer = created_srb.bearer;
-  }
-  for (const auto& created_drb : f1c_du_cfg_handler.last_ue_cfg_response->f1u_bearers_added) {
-    ue.f1u_bearers[drb_id_to_uint(created_drb.drb_id) - 1].bearer = created_drb.bearer;
   }
 }
 
@@ -320,13 +312,6 @@ f1ap_ue_configuration_response f1ap_du_test::update_f1_ue_config(du_ue_index_t  
     b.srb_id          = f1c_bearer.srb_id;
     b.rx_sdu_notifier = &f1c_bearer.rx_sdu_notifier;
     req.f1c_bearers_to_add.push_back(b);
-  }
-  for (drb_id_t drb_id : drbs) {
-    auto&                f1u_bearer = test_ues[ue_index].f1u_bearers[drb_id_to_uint(drb_id) - 1];
-    f1u_bearer_to_addmod b;
-    b.drb_id          = f1u_bearer.drb_id;
-    b.rx_sdu_notifier = &f1u_bearer.rx_sdu_notifier;
-    req.f1u_bearers_to_add.push_back(b);
   }
 
   test_logger.info("Configuring UE={}", ue_index);

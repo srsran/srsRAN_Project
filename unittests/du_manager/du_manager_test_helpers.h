@@ -79,8 +79,7 @@ class f1ap_test_dummy : public f1ap_connection_manager,
 
 public:
   struct f1_ue_context {
-    slotted_id_table<srb_id_t, dummy_f1c_bearer, MAX_NOF_SRBS>                   f1c_bearers;
-    slotted_id_table<drb_id_t, dummy_f1u_bearer, MAX_NOF_DRBS, true, drb_to_idx> f1u_bearers;
+    slotted_id_table<srb_id_t, dummy_f1c_bearer, MAX_NOF_SRBS> f1c_bearers;
   };
 
   slotted_id_table<du_ue_index_t, f1_ue_context, MAX_NOF_DU_UES> f1_ues;
@@ -125,6 +124,43 @@ public:
   void handle_message(const f1c_message& msg) override {}
 
   void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) override {}
+};
+
+class f1u_bearer_dummy : public f1u_bearer,
+                         public f1u_rx_pdu_handler,
+                         public f1u_tx_delivery_handler,
+                         public f1u_tx_sdu_handler
+{
+public:
+  srs_du::f1u_rx_sdu_notifier& du_rx;
+
+  optional<nru_dl_message> last_pdu;
+  optional<uint32_t>       last_delivered_sdu_count;
+  byte_buffer_slice_chain  last_sdu;
+
+  f1u_bearer_dummy(srs_du::f1u_rx_sdu_notifier& du_rx_) : du_rx(du_rx_) {}
+
+  f1u_rx_pdu_handler&      get_rx_pdu_handler() override { return *this; }
+  f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
+  f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
+
+  void handle_pdu(nru_dl_message msg) override { last_pdu = std::move(msg); }
+  void handle_delivered_sdu(uint32_t count) override { last_delivered_sdu_count = count; }
+  void handle_sdu(byte_buffer_slice_chain sdu) override { last_sdu = std::move(sdu); }
+};
+
+class f1u_gateway_dummy : public f1u_du_gateway
+{
+public:
+  srs_du::f1u_bearer*
+  create_du_ul_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) override
+  {
+    f1u_bearers.insert(std::make_pair(dl_teid, std::map<uint32_t, f1u_bearer_dummy>{}));
+    f1u_bearers[dl_teid].insert(std::make_pair(ul_teid, f1u_bearer_dummy{du_rx}));
+    return &f1u_bearers.at(dl_teid).at(ul_teid);
+  }
+
+  std::map<uint32_t, std::map<uint32_t, f1u_bearer_dummy>> f1u_bearers;
 };
 
 class mac_test_dummy : public mac_cell_manager, public mac_ue_configurator, public mac_ue_control_information_handler
@@ -221,6 +257,7 @@ public:
     params{{du_cells},
            {timers, du_mng_exec, ue_exec_mapper, cell_exec_mapper},
            {f1ap, f1ap},
+           {f1u_gw},
            {mac, f1ap, f1ap},
            {mac, mac}},
     logger(srslog::fetch_basic_logger("DU-MNG"))
@@ -237,6 +274,7 @@ public:
   dummy_ue_executor_mapper               ue_exec_mapper;
   dummy_cell_executor_mapper             cell_exec_mapper;
   f1ap_test_dummy                        f1ap;
+  f1u_gateway_dummy                      f1u_gw;
   mac_test_dummy                         mac;
   du_manager_params                      params;
   dummy_ue_resource_configurator_factory cell_res_alloc;

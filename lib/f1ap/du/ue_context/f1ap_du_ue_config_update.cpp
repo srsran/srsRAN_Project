@@ -46,14 +46,9 @@ f1ap_ue_configuration_response srsgnb::srs_du::update_f1ap_ue_config(const f1ap_
 {
   f1ap_du_ue& u = ues[req.ue_index];
 
-  // Add F1c bearers.
+  // Add F1-C bearers.
   for (const f1c_bearer_to_addmod& srb : req.f1c_bearers_to_add) {
     u.bearers.add_f1c_bearer(srb.srb_id, *srb.rx_sdu_notifier);
-  }
-
-  // Add F1u bearers.
-  for (const f1u_bearer_to_addmod& drb : req.f1u_bearers_to_add) {
-    u.bearers.add_f1u_bearer(drb.drb_id, *drb.rx_sdu_notifier);
   }
 
   // Prepare response.
@@ -63,10 +58,6 @@ f1ap_ue_configuration_response srsgnb::srs_du::update_f1ap_ue_config(const f1ap_
     resp.f1c_bearers_added.back().srb_id = srb.srb_id;
     resp.f1c_bearers_added.back().bearer = u.bearers.find_srb(srb.srb_id);
   }
-  for (const f1u_bearer_to_addmod& drb : req.f1u_bearers_to_add) {
-    resp.f1u_bearers_added.emplace_back();
-    resp.f1u_bearers_added.back().drb_id = drb.drb_id;
-    resp.f1u_bearers_added.back().bearer = u.bearers.find_drb(drb.drb_id);
-  }
+
   return resp;
 }

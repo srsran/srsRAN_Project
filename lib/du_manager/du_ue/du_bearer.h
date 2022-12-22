@@ -16,6 +16,7 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/ran/lcid.h"
+#include "srsgnb/ran/up_transport_layer_info.h"
 #include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/rlc/rlc_entity.h"
 
@@ -73,11 +74,14 @@ struct du_ue_srb {
 /// \brief DRB instance in DU manager. It contains DRB configuration information, RLC entity and adapters between
 /// layers.
 struct du_ue_drb {
-  drb_id_t                    drb_id;
-  lcid_t                      lcid;
-  rlc_config                  rlc_cfg;
-  std::unique_ptr<rlc_entity> rlc_bearer;
-  du_drb_connector            connector;
+  drb_id_t                             drb_id;
+  lcid_t                               lcid;
+  std::vector<up_transport_layer_info> uluptnl_info_list;
+  std::vector<up_transport_layer_info> dluptnl_info_list;
+  rlc_config                           rlc_cfg;
+  std::unique_ptr<rlc_entity>          rlc_bearer;
+  f1u_bearer*                          drb_f1u;
+  du_drb_connector                     connector;
 };
 
 /// \brief Bearer container for a UE object in the DU manager.
@@ -89,8 +93,8 @@ class du_ue_bearer_manager
   };
 
 public:
-  void add_srb(srb_id_t srb_id, const rlc_config& rlc_cfg);
-  void add_drb(drb_id_t drb_id, lcid_t lcid, const rlc_config& rlc_cfg);
+  du_ue_srb& add_srb(srb_id_t srb_id, const rlc_config& rlc_cfg);
+  du_ue_drb& add_drb(drb_id_t drb_id, lcid_t lcid, const rlc_config& rlc_cfg);
 
   const slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>&                        srbs() const { return srbs_; }
   slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>&                              srbs() { return srbs_; }

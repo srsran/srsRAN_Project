@@ -63,13 +63,6 @@ f1ap_ue_context_update_response du_manager_proc_tester::configure_ue(const f1ap_
     b.bearer = &f1ap.f1_ues[req.ue_index].f1c_bearers[srb_id];
     f1ap.next_ue_config_response.f1c_bearers_added.push_back(b);
   }
-  for (const auto& drb : req.drbs_to_setup) {
-    f1ap.f1_ues[req.ue_index].f1u_bearers.emplace(drb.drb_id);
-    f1u_bearer_addmodded b;
-    b.drb_id = drb.drb_id;
-    b.bearer = &f1ap.f1_ues[req.ue_index].f1u_bearers[drb.drb_id];
-    f1ap.next_ue_config_response.f1u_bearers_added.push_back(b);
-  }
 
   // Prepare MAC response.
   mac.wait_ue_reconf.result.ue_index = req.ue_index;
@@ -91,8 +84,7 @@ f1ap_ue_context_update_response du_manager_proc_tester::configure_ue(const f1ap_
   }
 
   // Run Procedure.
-  async_task<f1ap_ue_context_update_response> t = launch_async<ue_configuration_procedure>(
-      req, ue_mng, params.services, params.mac.ue_cfg, params.rlc, params.f1ap);
+  async_task<f1ap_ue_context_update_response>         t = launch_async<ue_configuration_procedure>(req, ue_mng, params);
   lazy_task_launcher<f1ap_ue_context_update_response> launcher{t};
   srsgnb_assert(launcher.ready(), "The UE creation procedure should have completed by now");
 

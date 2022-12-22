@@ -23,17 +23,25 @@ struct test_bench {
   dummy_ue_executor_mapper   ue_execs{worker};
   dummy_cell_executor_mapper cell_execs{worker};
 
+  std::vector<du_cell_config>            cells = {config_helpers::make_default_du_cell_config()};
   f1ap_test_dummy                        f1ap_dummy;
+  f1u_gateway_dummy                      f1u_dummy;
   mac_test_dummy                         mac_dummy;
   dummy_ue_resource_configurator_factory cell_res_alloc;
 
   du_manager_config_t cfg{srslog::fetch_basic_logger("DU-MNG"),
                           {},
-                          {config_helpers::make_default_du_cell_config()},
+                          cells,
                           {timers, worker, ue_execs, cell_execs},
                           {f1ap_dummy, f1ap_dummy},
                           {mac_dummy, f1ap_dummy, f1ap_dummy},
                           {mac_dummy, mac_dummy}};
+  du_manager_params   params{{cells},
+                           {timers, worker, ue_execs, cell_execs},
+                           {f1ap_dummy, f1ap_dummy},
+                           {f1u_dummy},
+                           {mac_dummy, f1ap_dummy, f1ap_dummy},
+                           {mac_dummy, mac_dummy}};
 };
 
 enum class test_outcome { success, ue_create_failure };
@@ -49,7 +57,7 @@ void test_ue_concurrent_procedures(test_outcome outcome)
   bench.f1ap_dummy.next_ue_create_response.result = true;
   bench.f1ap_dummy.next_ue_create_response.f1c_bearers_added.resize(2);
 
-  du_ue_manager ue_mng{bench.cfg, bench.cell_res_alloc};
+  du_ue_manager ue_mng{bench.params, bench.cell_res_alloc};
   TESTASSERT(ue_mng.get_ues().empty());
   du_ue_index_t ue_index = MAX_NOF_DU_UES;
 
@@ -129,7 +137,7 @@ void test_inexistent_ue_removal()
 
   test_bench bench;
 
-  du_ue_manager ue_mng{bench.cfg, bench.cell_res_alloc};
+  du_ue_manager ue_mng{bench.params, bench.cell_res_alloc};
   TESTASSERT(ue_mng.get_ues().empty());
 
   // Action 1: Start UE deletion
@@ -169,7 +177,7 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
     bench.mac_dummy.wait_ue_create.ready_ev.set();
   }
 
-  du_ue_manager ue_mng{bench.cfg, bench.cell_res_alloc};
+  du_ue_manager ue_mng{bench.params, bench.cell_res_alloc};
   TESTASSERT(ue_mng.get_ues().empty());
 
   // Action 1: Start creation of UE by notifying UL CCCH decoding.

@@ -25,7 +25,7 @@ namespace srs_du {
 class du_ue_manager : public ue_manager_ctrl_configurator
 {
 public:
-  explicit du_ue_manager(du_manager_config_t& cfg_, du_ran_resource_manager& cell_res_alloc);
+  explicit du_ue_manager(du_manager_params& cfg_, du_ran_resource_manager& cell_res_alloc);
 
   void                                        handle_ue_create_request(const ul_ccch_indication_message& msg);
   async_task<f1ap_ue_context_update_response> handle_ue_config_request(const f1ap_ue_context_update_request& msg);
@@ -44,7 +44,7 @@ private:
   du_ue* find_rnti(rnti_t rnti) override;
   void   remove_ue(du_ue_index_t ue_index) override;
 
-  du_manager_config_t&     cfg;
+  du_manager_params&       cfg;
   du_ran_resource_manager& cell_res_alloc;
   srslog::basic_logger&    logger;
 

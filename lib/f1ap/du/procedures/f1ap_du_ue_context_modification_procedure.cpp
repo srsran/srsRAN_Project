@@ -98,13 +98,20 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   }
   resp->drbs_modified_list_present               = false;
   resp->srbs_failed_to_be_setup_mod_list_present = false;
-  resp->drbs_failed_to_be_setup_mod_list_present = false;
-  resp->scell_failedto_setup_mod_list_present    = false;
-  resp->drbs_failed_to_be_modified_list_present  = false;
-  resp->inactivity_monitoring_resp_present       = false;
-  resp->crit_diagnostics_present                 = false;
-  resp->c_rnti_present                           = false;
-  resp->associated_scell_list_present            = false;
+  // > DRBs-FailedToBeSetupMod-List.
+  resp->drbs_failed_to_be_setup_mod_list_present = not du_request.drbs_to_setup.empty();
+  for (unsigned i = 0; i != du_response.drbs_failed_to_setup.size(); ++i) {
+    resp->drbs_failed_to_be_setup_mod_list.value[i].load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_SETUP_MOD_ITEM);
+    drbs_failed_to_be_setup_mod_item_s& asn1_drb =
+        resp->drbs_failed_to_be_setup_mod_list.value[i]->drbs_failed_to_be_setup_mod_item();
+    asn1_drb.drbid = drb_id_to_uint(du_response.drbs_failed_to_setup[i]);
+  }
+  resp->scell_failedto_setup_mod_list_present   = false;
+  resp->drbs_failed_to_be_modified_list_present = false;
+  resp->inactivity_monitoring_resp_present      = false;
+  resp->crit_diagnostics_present                = false;
+  resp->c_rnti_present                          = false;
+  resp->associated_scell_list_present           = false;
 
   // > SRBs-SetupMod-List.
   resp->srbs_setup_mod_list_present = not du_request.srbs_to_setup.empty();

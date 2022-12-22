@@ -30,12 +30,6 @@ struct f1c_bearer_to_addmod {
   f1c_rx_sdu_notifier* rx_sdu_notifier;
 };
 
-/// \brief F1-U bearer to Add or Modify in UE F1 context.
-struct f1u_bearer_to_addmod {
-  drb_id_t             drb_id;
-  f1u_rx_sdu_notifier* rx_sdu_notifier;
-};
-
 /// \brief F1c bearer Added or Modified in UE F1 context.
 struct f1c_bearer_addmodded {
   srb_id_t    srb_id;
@@ -67,13 +61,11 @@ struct f1ap_ue_creation_response {
 struct f1ap_ue_configuration_request {
   du_ue_index_t                     ue_index;
   std::vector<f1c_bearer_to_addmod> f1c_bearers_to_add;
-  std::vector<f1u_bearer_to_addmod> f1u_bearers_to_add;
 };
 
 /// \brief Response from the DU F1AP to the request to update the configuration of an existing UE.
 struct f1ap_ue_configuration_response {
   std::vector<f1c_bearer_addmodded> f1c_bearers_added;
-  std::vector<f1u_bearer_addmodded> f1u_bearers_added;
 };
 
 } // namespace srs_du

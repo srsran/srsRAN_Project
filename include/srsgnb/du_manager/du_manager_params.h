@@ -14,6 +14,7 @@
 #include "srsgnb/du_high/du_high_cell_executor_mapper.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/f1ap/du/f1ap_du.h"
+#include "srsgnb/f1u/du/f1u_gateway.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/support/timers.h"
 
@@ -34,6 +35,9 @@ struct du_manager_params {
     f1ap_connection_manager& conn_mng;
     f1ap_ue_context_manager& ue_mng;
   };
+  struct f1u_config_params {
+    f1u_du_gateway& f1u_gw;
+  };
   struct rlc_config_params {
     mac_ue_control_information_handler&          mac_ue_info_handler;
     f1c_message_handler&                         f1c_rx_msg_handler;
@@ -47,6 +51,7 @@ struct du_manager_params {
   ran_params         ran;
   service_params     services;
   f1ap_config_params f1ap;
+  f1u_config_params  f1u;
   rlc_config_params  rlc;
   mac_config_params  mac;
 };

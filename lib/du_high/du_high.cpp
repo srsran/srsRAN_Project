@@ -58,6 +58,7 @@ du_high::du_high(const du_high_configuration& config_) : cfg(config_), timers(12
   du_manager = create_du_manager(du_manager_params{{cfg.cells},
                                                    {timers, *cfg.du_mng_executor, *cfg.ul_executors, *cfg.dl_executors},
                                                    {*f1ap, *f1ap},
+                                                   {*config_.f1u_gw},
                                                    {mac->get_ue_control_info_handler(), *f1ap, *f1ap},
                                                    {mac->get_cell_manager(), mac->get_ue_configurator()}});
 

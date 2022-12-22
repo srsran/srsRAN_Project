@@ -16,7 +16,7 @@
 using namespace srsgnb;
 using namespace srs_du;
 
-du_ue_manager::du_ue_manager(du_manager_config_t& cfg_, du_ran_resource_manager& cell_res_alloc_) :
+du_ue_manager::du_ue_manager(du_manager_params& cfg_, du_ran_resource_manager& cell_res_alloc_) :
   cfg(cfg_), cell_res_alloc(cell_res_alloc_), logger(srslog::fetch_basic_logger("DU-MNG"))
 {
   std::fill(rnti_to_ue_index.begin(), rnti_to_ue_index.end(), du_ue_index_t::INVALID_DU_UE_INDEX);
@@ -47,7 +47,7 @@ void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& m
 async_task<f1ap_ue_context_update_response>
 du_ue_manager::handle_ue_config_request(const f1ap_ue_context_update_request& msg)
 {
-  return launch_async<ue_configuration_procedure>(msg, *this, cfg.services, cfg.mac.ue_cfg, cfg.rlc, cfg.f1ap);
+  return launch_async<ue_configuration_procedure>(msg, *this, cfg);
 }
 
 async_task<void> du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_request& msg)
