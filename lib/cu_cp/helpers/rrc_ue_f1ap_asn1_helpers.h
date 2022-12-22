@@ -97,6 +97,8 @@ inline void fill_rrc_ue_ue_context_modification_response_message(
     const f1ap_ue_context_modification_response_message& f1ap_ue_context_mod_resp_msg)
 {
   if (f1ap_ue_context_mod_resp_msg.success) {
+    res.success = true;
+
     auto& f1ap_response_item = f1ap_ue_context_mod_resp_msg.response;
 
     // DUtoCURRCInformation
