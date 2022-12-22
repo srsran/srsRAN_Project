@@ -16,7 +16,7 @@ namespace srsgnb {
 namespace config_helpers {
 
 /// Returns true if the given struct is valid, otherwise false.
-inline bool is_valid(const nr_cell_global_identity& cgi)
+inline bool is_valid(const nr_cell_global_id_t& cgi)
 {
   // MCC and MNC cannot be null.
   if (cgi.mcc == 0 || cgi.mnc == 0 || cgi.plmn.empty() || cgi.plmn_hex.empty()) {

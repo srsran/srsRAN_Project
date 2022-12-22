@@ -34,7 +34,7 @@ protected:
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid    = srb_id_to_lcid(srb_id);
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
     }
-    for (const drb_to_setup& drb : req.drbs_to_setup) {
+    for (const f1ap_drb_to_setup& drb : req.drbs_to_setup) {
       this->cell_res_alloc.next_context_update_result.rlc_bearers.emplace_back();
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid = uint_to_lcid(3 + (unsigned)drb.drb_id);
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().drb_id  = drb.drb_id;
@@ -78,7 +78,7 @@ protected:
       ASSERT_TRUE(srb_it->mac_lc_ch_cfg_present);
       ASSERT_TRUE(srb_it->rlc_cfg_present);
     }
-    for (const drb_to_setup& drb : req.drbs_to_setup) {
+    for (const f1ap_drb_to_setup& drb : req.drbs_to_setup) {
       auto drb_it =
           std::find_if(cell_group.rlc_bearer_to_add_mod_list.begin(),
                        cell_group.rlc_bearer_to_add_mod_list.end(),

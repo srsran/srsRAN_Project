@@ -108,7 +108,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     // >> SCells to be removed. Deallocate them.
     deallocate_cell_resources(ue_index, scell_idx);
   }
-  for (const scell_to_setup& scell : upd_req.scells_to_setup) {
+  for (const f1ap_scell_to_setup& scell : upd_req.scells_to_setup) {
     // >> If SCells to be modified changed DU Cell Index.
     if (ue_mcg.scells.contains(scell.serv_cell_index) and
         ue_mcg.scells[scell.serv_cell_index].cell_index != scell.cell_index) {
@@ -128,7 +128,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     ue_mcg.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
     // TODO: Parameterize SRB config.
   }
-  for (const drb_to_setup& drb : upd_req.drbs_to_setup) {
+  for (const f1ap_drb_to_setup& drb : upd_req.drbs_to_setup) {
     // >> New or Modified DRB.
     lcid_t lcid;
     if (drb.lcid.has_value()) {
@@ -162,7 +162,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
       return resp;
     }
   }
-  for (const scell_to_setup& sc : upd_req.scells_to_setup) {
+  for (const f1ap_scell_to_setup& sc : upd_req.scells_to_setup) {
     // >> SCells Added/Modified. Allocate new SCell resources.
     if (not allocate_cell_resources(ue_index, sc.cell_index, sc.serv_cell_index)) {
       resp.failed_scells.push_back(sc.serv_cell_index);

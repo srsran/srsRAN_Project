@@ -25,7 +25,7 @@ inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modificati
     f1c_request.msg->drbs_to_be_setup_mod_list_present = true;
   }
 
-  for (auto drb_to_be_setup : msg.rrc_ue_drb_setup_msgs) {
+  for (const auto& drb_to_be_setup : msg.rrc_ue_drb_setup_msgs) {
     asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_setup_mod_item_ies_o> f1ap_setup_item;
     auto& f1ap_drb_to_setup_item = f1ap_setup_item->drbs_to_be_setup_mod_item();
 
@@ -50,11 +50,9 @@ inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modificati
     }
 
     // Add uLUPTNLInformation_ToBeSetup
-    for (auto cu_cp_gtp_tunnel_item : drb_to_be_setup.gtp_tunnels) {
-      asn1::f1ap::uluptnl_info_to_be_setup_item_s uluptnl_item =
-          cu_cp_gtp_tunnel_to_f1ap_uluptnl_info_to_be_setup_item(cu_cp_gtp_tunnel_item);
-
-      f1ap_drb_to_setup_item.uluptnl_info_to_be_setup_list.push_back(uluptnl_item);
+    for (const auto& gtp_tunnel_item : drb_to_be_setup.gtp_tunnels) {
+      f1ap_drb_to_setup_item.uluptnl_info_to_be_setup_list.push_back(
+          gtp_tunnel_to_f1ap_uluptnl_info_to_be_setup_item(gtp_tunnel_item));
     }
 
     // Add qos information

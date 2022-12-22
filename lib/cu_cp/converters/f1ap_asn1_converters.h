@@ -14,6 +14,7 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsgnb/ran/gtp_tunnel.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include <string>
 #include <vector>
@@ -22,7 +23,7 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 inline asn1::f1ap::uluptnl_info_to_be_setup_item_s
-cu_cp_gtp_tunnel_to_f1ap_uluptnl_info_to_be_setup_item(cu_cp_gtp_tunnel gtp_tunnel)
+gtp_tunnel_to_f1ap_uluptnl_info_to_be_setup_item(const gtp_tunnel& gtp_tunnel)
 {
   asn1::f1ap::uluptnl_info_to_be_setup_item_s uluptnl_item;
   uluptnl_item.uluptnl_info.set_gtp_tunnel();
@@ -62,10 +63,10 @@ inline cu_cp_cause_t f1ap_cause_to_cu_cp_cause(asn1::f1ap::cause_c f1ap_cause)
   }
 }
 
-inline cu_cp_gtp_tunnel
+inline gtp_tunnel
 f1ap_dluptnl_info_to_be_setup_item_to_cu_cp_gtp_tunnel(asn1::f1ap::dluptnl_info_to_be_setup_item_s f1ap_item)
 {
-  cu_cp_gtp_tunnel gtp_tunnel;
+  gtp_tunnel gtp_tunnel;
   gtp_tunnel.gtp_teid                = f1ap_item.dluptnl_info.gtp_tunnel().gtp_teid.to_number();
   gtp_tunnel.transport_layer_address = f1ap_item.dluptnl_info.gtp_tunnel().transport_layer_address.to_string();
 
@@ -75,9 +76,9 @@ f1ap_dluptnl_info_to_be_setup_item_to_cu_cp_gtp_tunnel(asn1::f1ap::dluptnl_info_
 /// @brief Convert F1AP NRCGI to NR Cell Identity.
 /// @param f1ap_cgi The F1AP NRCGI.
 /// @return The NR Cell Identity.
-inline nr_cell_identity f1ap_nrcgi_to_nr_cell_identity(asn1::f1ap::nrcgi_s& f1ap_cgi)
+inline nr_cell_id_t f1ap_nrcgi_to_nr_cell_identity(asn1::f1ap::nrcgi_s& f1ap_cgi)
 {
-  nr_cell_identity nci;
+  nr_cell_id_t nci;
   nci.packed = f1ap_cgi.nrcell_id.to_number();
 
   nci.cell_idenity = (f1ap_cgi.nrcell_id.to_number() & 0xfffc0000);

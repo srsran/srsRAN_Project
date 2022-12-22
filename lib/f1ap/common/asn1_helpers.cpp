@@ -10,12 +10,12 @@
 
 #include "asn1_helpers.h"
 
-namespace srsgnb {
+using namespace srsgnb;
 
-nr_cell_global_identity cgi_from_asn1(const asn1::f1ap::nrcgi_s& asn1_cgi)
+nr_cell_global_id_t srsgnb::cgi_from_asn1(const asn1::f1ap::nrcgi_s& asn1_cgi)
 {
-  nr_cell_global_identity cgi          = {};
-  uint32_t                encoded_plmn = asn1_cgi.plmn_id.to_number();
+  nr_cell_global_id_t cgi          = {};
+  uint32_t            encoded_plmn = asn1_cgi.plmn_id.to_number();
   ngap_plmn_to_mccmnc(encoded_plmn, &cgi.mcc, &cgi.mnc);
 
   std::string mcc_string, mnc_string;
@@ -34,4 +34,10 @@ nr_cell_global_identity cgi_from_asn1(const asn1::f1ap::nrcgi_s& asn1_cgi)
   return cgi;
 }
 
-} // namespace srsgnb
+asn1::f1ap::gtp_tunnel_s srsgnb::gtp_tunnel_to_asn1(const gtp_tunnel& tun)
+{
+  asn1::f1ap::gtp_tunnel_s asn1tun;
+  asn1tun.gtp_teid.from_number(tun.gtp_teid);
+  asn1tun.transport_layer_address.from_string(tun.transport_layer_address);
+  return asn1tun;
+}

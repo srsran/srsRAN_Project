@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "serv_cell_index.h"
 #include <cstdint>
 #include <type_traits>
 
@@ -47,16 +48,6 @@ inline du_cell_index_t to_du_cell_index(std::underlying_type_t<du_cell_index_t> 
 {
   return static_cast<du_cell_index_t>(idx);
 }
-
-/// \c ServCellIndex, as per TS 38.331. It concerns a short identity, used to uniquely identify a serving cell (from
-/// a UE's perspective) across cell groups. Value 0 applies to the PCell (Master Cell Group).
-enum serv_cell_index_t : uint8_t {
-  SERVING_CELL_PCELL_IDX = 0,
-  MAX_SERVING_CELL_IDX   = 31,
-  MAX_NOF_SCELLS         = 31,
-  MAX_NOF_SERVING_CELLS  = 32,
-  SERVING_CELL_INVALID   = MAX_NOF_SERVING_CELLS
-};
 
 /// Maximum number of cells supported by a single UE.
 enum ue_cell_index_t : uint16_t {

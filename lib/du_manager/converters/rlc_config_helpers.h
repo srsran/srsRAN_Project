@@ -39,7 +39,7 @@ rlc_mode convert_asn1_f1ap_to_rlc_mode(drb_rlc_mode mode);
 /// \brief Generates default SRB RLC configuration for SRBs other than SRB0.
 rlc_config make_default_srb_rlc_config();
 
-rlc_config create_rlc_config(const drb_to_setup& f1_drb_cfg);
+rlc_config create_rlc_config(const f1ap_drb_to_setup& f1_drb_cfg);
 
 /// \brief Create configuration for RLC SRB entity.
 rlc_entity_creation_message make_rlc_entity_creation_message(du_ue_index_t                            ue_index,

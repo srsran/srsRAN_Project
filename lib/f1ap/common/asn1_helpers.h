@@ -12,6 +12,7 @@
 
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/ran/bcd_helpers.h"
+#include "srsgnb/ran/gtp_tunnel.h"
 #include "srsgnb/ran/nr_cgi.h"
 
 namespace srsgnb {
@@ -19,6 +20,9 @@ namespace srsgnb {
 /// \brief Converts ASN.1 CGI typo into internal struct. It also performs the byte to MCC/MNC conversion.
 /// \param[in] asn1_cgi The ASN.1 encoded NR-CGI.
 /// \return The CGI converted to flat internal struct.
-nr_cell_global_identity cgi_from_asn1(const asn1::f1ap::nrcgi_s& asn1_cgi);
+nr_cell_global_id_t cgi_from_asn1(const asn1::f1ap::nrcgi_s& asn1_cgi);
+
+/// \brief Converts GTP Tunnel identifier to equivalent ASN.1 struct.
+asn1::f1ap::gtp_tunnel_s gtp_tunnel_to_asn1(const gtp_tunnel& tun);
 
 } // namespace srsgnb

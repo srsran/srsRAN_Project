@@ -68,7 +68,7 @@ rlc_config srsgnb::srs_du::make_default_srb_rlc_config()
   return cfg;
 }
 
-rlc_config srsgnb::srs_du::create_rlc_config(const drb_to_setup& f1_drb_cfg)
+rlc_config srsgnb::srs_du::create_rlc_config(const f1ap_drb_to_setup& f1_drb_cfg)
 {
   rlc_config cfg;
   cfg.mode = convert_asn1_f1ap_to_rlc_mode(f1_drb_cfg.mode);

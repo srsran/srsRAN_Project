@@ -88,8 +88,7 @@ TEST_F(f1ap_cu_test, when_unsupported_unsuccessful_outcome_received_then_message
 TEST_F(f1ap_cu_test, when_init_ul_rrc_correct_then_ue_added)
 {
   // Generate F1 Initial UL RRC Message
-  f1c_message init_ul_rrc_msg =
-      generate_init_ul_rrc_message_transfer(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(41255));
+  f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
 
   // Pass message to F1C
   f1ap->handle_message(init_ul_rrc_msg);
@@ -100,8 +99,7 @@ TEST_F(f1ap_cu_test, when_init_ul_rrc_correct_then_ue_added)
 TEST_F(f1ap_cu_test, when_duto_currc_container_missing_then_ue_not_added)
 {
   // Generate F1 Initial UL RRC Message without DU to CU RRC Container
-  f1c_message init_ul_rrc_msg =
-      generate_init_ul_rrc_message_transfer(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(41255));
+  f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
   init_ul_rrc_msg.pdu.init_msg().value.init_ulrrc_msg_transfer()->duto_currc_container_present = false;
   init_ul_rrc_msg.pdu.init_msg().value.init_ulrrc_msg_transfer()->duto_currc_container->clear();
 
@@ -120,8 +118,7 @@ TEST_F(f1ap_cu_test, when_max_nof_ues_exceeded_then_ue_not_added)
   // Add the maximum number of UEs
   for (int ue_index = MIN_UE_INDEX; ue_index < MAX_NOF_UES; ue_index++) {
     // Generate ue_creation message
-    f1c_message init_ul_rrc_msg =
-        generate_init_ul_rrc_message_transfer(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(ue_index));
+    f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(ue_index));
 
     // Pass message to F1C
     f1ap->handle_message(init_ul_rrc_msg);
@@ -135,8 +132,7 @@ TEST_F(f1ap_cu_test, when_max_nof_ues_exceeded_then_ue_not_added)
 
   // Add one more UE to F1C
   // Generate ue_creation message
-  f1c_message init_ul_rrc_msg =
-      generate_init_ul_rrc_message_transfer(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(MAX_NOF_UES + 1));
+  f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(MAX_NOF_UES + 1));
 
   // Pass message to F1C
   f1ap->handle_message(init_ul_rrc_msg);
@@ -151,8 +147,7 @@ TEST_F(f1ap_cu_test, when_ue_creation_fails_then_ue_not_added)
 
   // Add one more UE to F1C
   // Generate F1 Initial UL RRC Message
-  f1c_message init_ul_rrc_msg =
-      generate_init_ul_rrc_message_transfer(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(41255));
+  f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
 
   // Pass message to F1C
   f1ap->handle_message(init_ul_rrc_msg);
@@ -163,9 +158,8 @@ TEST_F(f1ap_cu_test, when_ue_creation_fails_then_ue_not_added)
 TEST_F(f1ap_cu_test, when_rrc_setup_complete_present_then_forward_over_srb1)
 {
   // Generate F1 Initial UL RRC Message with RRC Setup Complete present
-  f1c_message init_ul_rrc_msg =
-      generate_init_ul_rrc_message_transfer(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(41255));
-  auto& init_ul_rrc = init_ul_rrc_msg.pdu.init_msg().value.init_ulrrc_msg_transfer();
+  f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
+  auto&       init_ul_rrc     = init_ul_rrc_msg.pdu.init_msg().value.init_ulrrc_msg_transfer();
   init_ul_rrc->rrc_container_rrc_setup_complete_present = true;
 
   // Pass message to F1C

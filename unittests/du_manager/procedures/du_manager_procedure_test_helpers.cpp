@@ -83,7 +83,7 @@ f1ap_ue_context_update_response du_manager_proc_tester::configure_ue(const f1ap_
     cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid    = srb_id_to_lcid(srb_id);
     cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
   }
-  for (const drb_to_setup& drb : req.drbs_to_setup) {
+  for (const f1ap_drb_to_setup& drb : req.drbs_to_setup) {
     cell_res_alloc.next_context_update_result.rlc_bearers.emplace_back();
     cell_res_alloc.next_context_update_result.rlc_bearers.back().drb_id  = drb.drb_id;
     cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid    = uint_to_lcid(3 + (unsigned)drb.drb_id);

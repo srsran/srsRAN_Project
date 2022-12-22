@@ -55,7 +55,8 @@ public:
     srs_cu_cp::ue_creation_complete_message ret = {};
     ret.ue_index                                = srs_cu_cp::INVALID_UE_INDEX;
     if (ue_index < srs_cu_cp::MAX_NOF_UES) {
-      ret.ue_index = srs_cu_cp::int_to_ue_index(ue_index);
+      ret.ue_index          = srs_cu_cp::int_to_ue_index(ue_index);
+      last_created_ue_index = ret.ue_index;
       ue_index++;
       for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
         ret.srbs[i] = rx_notifier.get();
@@ -68,6 +69,7 @@ public:
 
   srs_cu_cp::f1_setup_request_message             last_f1_setup_request_msg;
   srs_cu_cp::f1ap_initial_ul_rrc_message          last_ue_creation_request_msg;
+  optional<srs_cu_cp::ue_index_t>                 last_created_ue_index;
   std::unique_ptr<dummy_f1c_rrc_message_notifier> rx_notifier = std::make_unique<dummy_f1c_rrc_message_notifier>();
 
 private:

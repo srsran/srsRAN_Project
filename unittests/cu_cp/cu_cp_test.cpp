@@ -190,8 +190,7 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
   cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
 
   // Inject Initial UL RRC message
-  f1c_message init_ul_rrc_msg =
-      generate_init_ul_rrc_message_transfer(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(41255));
+  f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
   test_logger.info("Injecting Initial UL RRC message");
   cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 
@@ -223,8 +222,7 @@ TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
   cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
 
   // Inject Initial UL RRC message
-  f1c_message init_ul_rrc_msg =
-      generate_init_ul_rrc_message_transfer(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(41255));
+  f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
   test_logger.info("Injecting Initial UL RRC message");
   cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 
@@ -261,7 +259,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
     rnti_t              crnti             = to_rnti(0x4601);
 
     // Inject Initial UL RRC message
-    f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(first_ue_cu_ue_id, first_ue_du_ue_id, crnti);
+    f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(first_ue_du_ue_id, crnti);
     test_logger.info("Injecting Initial UL RRC message");
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 
@@ -287,7 +285,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
     rnti_t              crnti              = to_rnti(0x4602);
 
     // Inject Initial UL RRC message
-    f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(second_ue_cu_ue_id, second_ue_du_ue_id, crnti);
+    f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(second_ue_du_ue_id, crnti);
     test_logger.info("Injecting Initial UL RRC message");
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 

@@ -78,7 +78,7 @@ void rrc_pdu_session_resource_setup_routine::operator()(
 
       auto& rrc_ue_drb_setup_message_item  = ue_context_mod_request.rrc_ue_drb_setup_msgs[i];
       rrc_ue_drb_setup_message_item.drb_id = drb_id_to_uint(drb_to_add_list[i]);
-      cu_cp_gtp_tunnel gtp_tunnel;
+      gtp_tunnel gtp_tunnel;
       gtp_tunnel.gtp_teid = 0x12345678; // TODO: take from CU-UP response
       rrc_ue_drb_setup_message_item.gtp_tunnels.push_back(gtp_tunnel);
 

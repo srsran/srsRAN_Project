@@ -24,8 +24,7 @@ asn1::f1ap::gnb_du_served_cells_item_s generate_served_cells_item(unsigned nrcel
 f1c_message generate_f1_setup_request();
 
 /// \brief Generates dummy F1AP Initial UL RRC TRANSFER message.
-f1c_message generate_init_ul_rrc_message_transfer(gnb_cu_ue_f1ap_id_t cu_ue_id,
-                                                  gnb_du_ue_f1ap_id_t du_ue_id,
+f1c_message generate_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
                                                   rnti_t              crnti           = to_rnti(0x4601),
                                                   byte_buffer         du2cu_container = {});
 
@@ -52,9 +51,10 @@ f1c_message generate_ue_context_modification_request(gnb_cu_ue_f1ap_id_t        
                                                      const std::initializer_list<drb_id_t>& drbs_to_add);
 
 /// \brief Generates dummy F1AP UE CONTEXT MODIFICATION RESPONSE message.
-f1c_message generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_id,
-                                                      gnb_du_ue_f1ap_id_t du_ue_id,
-                                                      rnti_t              crnti = to_rnti(0x4601));
+f1c_message generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t                    cu_ue_id,
+                                                      gnb_du_ue_f1ap_id_t                    du_ue_id,
+                                                      rnti_t                                 crnti = to_rnti(0x4601),
+                                                      const std::initializer_list<drb_id_t>& drbs_added = {});
 
 /// \brief Generates dummy F1AP UE CONTEXT MODIFICATION FAILURE message.
 f1c_message generate_ue_context_modification_failure(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_du_ue_f1ap_id_t du_ue_id);

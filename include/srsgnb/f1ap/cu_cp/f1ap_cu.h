@@ -16,6 +16,7 @@
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/f1ap/common/f1ap_common.h"
+#include "srsgnb/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/support/async/async_task.h"
 
@@ -87,16 +88,6 @@ struct f1ap_ue_context_release_command {
 
 struct f1ap_ue_context_release_complete {
   asn1::f1ap::ue_context_release_complete_s msg;
-};
-
-struct f1ap_ue_context_modification_request {
-  asn1::f1ap::ue_context_mod_request_s msg;
-};
-
-struct f1ap_ue_context_modification_response {
-  asn1::f1ap::ue_context_mod_resp_s response;
-  asn1::f1ap::ue_context_mod_fail_s failure;
-  bool                              success;
 };
 
 /// Handle F1C UE context management procedures as defined in TS 38.473 section 8.3.

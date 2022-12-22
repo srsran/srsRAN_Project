@@ -16,6 +16,7 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsgnb/ran/gtp_tunnel.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/rrc/rrc.h"
@@ -47,7 +48,7 @@ struct rrc_ue_drb_setup_message {
   uint8_t                                  drb_id;
   srsgnb::rlc_mode                         rlc;
   qos_characteristics                      qos_info;
-  std::vector<cu_cp_gtp_tunnel>            gtp_tunnels;
+  std::vector<gtp_tunnel>                  gtp_tunnels;
   cu_cp_s_nssai                            s_nssai;
   std::vector<qos_flow_setup_request_item> qos_flows_mapped_to_drb;
 
@@ -67,7 +68,7 @@ struct rrc_ue_du_to_cu_rrc_info {
 };
 
 struct rrc_ue_dluptnl_info_to_be_setup_item {
-  cu_cp_gtp_tunnel dluptnl_info;
+  gtp_tunnel dluptnl_info;
 };
 
 struct rrc_ue_drbs_setup_modified_item {
@@ -87,7 +88,7 @@ struct rrc_ue_drbs_failed_to_be_setup_modified_item {
 };
 
 struct rrc_ue_scell_failed_to_setup_mod_item {
-  nr_cell_identity        scell_id;
+  nr_cell_id_t            scell_id;
   optional<cu_cp_cause_t> cause;
 };
 
@@ -106,7 +107,7 @@ struct rrc_ue_crit_diagnostics {
 };
 
 struct rrc_ue_associated_scell_item {
-  nr_cell_identity scell_id;
+  nr_cell_id_t scell_id;
 };
 
 struct rrc_ue_srbs_setup_modified_item {
@@ -116,7 +117,7 @@ struct rrc_ue_srbs_setup_modified_item {
 
 struct rrc_ue_ue_context_modification_response_message {
   bool success = false;
-  // UE Context Modification Response
+  // ue context modification response
   byte_buffer                                               res_coordination_transfer_container;
   rrc_ue_du_to_cu_rrc_info                                  du_to_cu_rrc_info;
   std::vector<rrc_ue_drbs_setup_modified_item>              drbs_setup_mod_list;

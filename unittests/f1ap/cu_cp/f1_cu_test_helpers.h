@@ -48,19 +48,28 @@ private:
 
 /// \brief Creates a dummy UE CONTEXT MODIFICATION REQUEST.
 f1ap_ue_context_modification_request
-create_ue_context_modification_request(gnb_cu_ue_f1ap_id_t                    cu_ue_id,
-                                       gnb_du_ue_f1ap_id_t                    du_ue_id,
-                                       const std::initializer_list<drb_id_t>& drbs_to_add);
+create_ue_context_modification_request(ue_index_t ue_index, const std::initializer_list<drb_id_t>& drbs_to_add);
 
 /// Fixture class for F1AP
 class f1ap_cu_test : public ::testing::Test
 {
 protected:
+  struct test_ue {
+    ue_index_t                    ue_index;
+    optional<gnb_cu_ue_f1ap_id_t> cu_ue_id;
+    optional<gnb_du_ue_f1ap_id_t> du_ue_id;
+  };
+
   f1ap_cu_test();
   ~f1ap_cu_test() override;
 
+  /// \brief Helper method to successfully create UE instance in F1AP.
+  test_ue& create_ue(gnb_du_ue_f1ap_id_t du_ue_id);
+
   srslog::basic_logger& f1ap_logger = srslog::fetch_basic_logger("F1AP");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+
+  slotted_id_table<ue_index_t, test_ue, MAX_NOF_UES> test_ues;
 
   dummy_f1c_pdu_notifier           f1c_pdu_notifier;
   dummy_f1c_du_processor_notifier  du_processor_notifier;

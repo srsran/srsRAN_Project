@@ -74,7 +74,7 @@ void ue_configuration_procedure::update_f1_bearers()
     req.f1c_bearers_to_add.back().rx_sdu_notifier = &bearer.connector.f1c_rx_sdu_notif;
   }
 
-  for (const drb_to_setup& drb : request.drbs_to_setup) {
+  for (const f1ap_drb_to_setup& drb : request.drbs_to_setup) {
     du_ue_drb& bearer = ue->bearers.drbs()[drb.drb_id];
     req.f1u_bearers_to_add.emplace_back();
     req.f1u_bearers_to_add.back().drb_id          = drb.drb_id;
@@ -115,7 +115,7 @@ void ue_configuration_procedure::add_bearers_to_ue_context()
   }
 
   // > Create DU UE DRB objects.
-  for (const drb_to_setup& drbtoadd : request.drbs_to_setup) {
+  for (const f1ap_drb_to_setup& drbtoadd : request.drbs_to_setup) {
     auto it = std::find_if(ue->resources->rlc_bearers.begin(),
                            ue->resources->rlc_bearers.end(),
                            [&drbtoadd](const rlc_bearer_config& e) { return e.drb_id == drbtoadd.drb_id; });
@@ -140,7 +140,7 @@ async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::
     lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
   }
 
-  for (const drb_to_setup& drb : request.drbs_to_setup) {
+  for (const f1ap_drb_to_setup& drb : request.drbs_to_setup) {
     du_ue_drb& bearer = ue->bearers.drbs()[drb.drb_id];
     mac_ue_reconf_req.bearers_to_addmod.emplace_back();
     mac_logical_channel& lc_ch = mac_ue_reconf_req.bearers_to_addmod.back();
@@ -162,7 +162,7 @@ void ue_configuration_procedure::update_rlc_bearers()
   }
 
   // Create RLC DRB bearers.
-  for (const drb_to_setup& drb_to_setup : request.drbs_to_setup) {
+  for (const f1ap_drb_to_setup& drb_to_setup : request.drbs_to_setup) {
     du_ue_drb& drb = ue->bearers.drbs()[drb_to_setup.drb_id];
     drb.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(ue->ue_index, ue->pcell_index, drb, services));
   }

@@ -10,18 +10,14 @@
 
 #pragma once
 
-#include "srsgnb/ran/nr_cgi.h"
+#include <string>
 
 namespace srsgnb {
 
-namespace srs_cu_cp {
-
-// Cell-related configuration used by the RRC.
-struct rrc_cell_context {
-  nr_cell_global_id_t cgi;
-  uint32_t            tac;
+/// \brief GTP-Tunnel Identifier.
+struct gtp_tunnel {
+  std::string transport_layer_address;
+  uint32_t    gtp_teid;
 };
-
-} // namespace srs_cu_cp
 
 } // namespace srsgnb

@@ -126,7 +126,8 @@ async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1a
 async_task<f1ap_ue_context_modification_response>
 f1ap_cu_impl::handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request)
 {
-  return launch_async<f1_ue_context_modification_procedure>(request.msg, pdu_notifier, *events, logger);
+  return launch_async<f1_ue_context_modification_procedure>(
+      request, ue_ctx_list[request.ue_index], pdu_notifier, *events, logger);
 }
 
 void f1ap_cu_impl::handle_message(const f1c_message& msg)
@@ -186,7 +187,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ulrrc_msg_transfer_s
     return;
   }
 
-  nr_cell_global_identity cgi = cgi_from_asn1(msg->nrcgi.value);
+  nr_cell_global_id_t cgi = cgi_from_asn1(msg->nrcgi.value);
   if (not srsgnb::config_helpers::is_valid(cgi)) {
     logger.error("CGI isn't valid. Dropping Initial UL RRC message.");
     return;

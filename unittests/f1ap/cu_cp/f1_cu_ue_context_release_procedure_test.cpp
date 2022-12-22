@@ -20,8 +20,7 @@ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_ue_removed)
 {
   // Action 1: Add UE
   test_logger.info("Injecting Initial UL RRC message");
-  f1c_message init_ul_rrc_msg =
-      generate_init_ul_rrc_message_transfer(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(41255));
+  f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
   f1ap->handle_message(init_ul_rrc_msg);
 
   ASSERT_EQ(f1ap->get_nof_ues(), 1);

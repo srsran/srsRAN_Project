@@ -76,7 +76,7 @@ rrc_ue_ue_context_modification_request_message generate_ue_context_mod_request()
   drb_setup_msg.drb_id                                         = 1;
   drb_setup_msg.rlc                                            = rlc_mode::am;
 
-  cu_cp_gtp_tunnel gtp_tunnel        = {};
+  gtp_tunnel gtp_tunnel              = {};
   gtp_tunnel.gtp_teid                = 1;
   gtp_tunnel.transport_layer_address = "";
   drb_setup_msg.gtp_tunnels.push_back(gtp_tunnel);
