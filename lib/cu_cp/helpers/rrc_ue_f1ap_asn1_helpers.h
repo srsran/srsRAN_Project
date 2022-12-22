@@ -20,6 +20,8 @@ namespace srs_cu_cp {
 inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modification_request&                 f1c_request,
                                                       const rrc_ue_ue_context_modification_request_message& msg)
 {
+  f1c_request.ue_index = msg.ue_index;
+
   // drb to be setup mod list
   if (msg.rrc_ue_drb_setup_msgs.size() > 0) {
     f1c_request.msg->drbs_to_be_setup_mod_list_present = true;

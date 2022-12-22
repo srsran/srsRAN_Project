@@ -72,6 +72,7 @@ public:
 
 struct f1ap_ue_context_setup_request_message {
   // TODO: replace asn1 by necessary containers
+  ue_index_t                             ue_index;
   asn1::f1ap::ue_context_setup_request_s msg;
 };
 

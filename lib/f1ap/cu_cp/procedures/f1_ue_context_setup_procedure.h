@@ -24,6 +24,7 @@ class f1_ue_context_setup_procedure
 {
 public:
   f1_ue_context_setup_procedure(const asn1::f1ap::ue_context_setup_request_s& request_,
+                                f1ap_ue_context&                              ue_ctx_,
                                 f1c_message_notifier&                         f1c_notif_,
                                 f1c_event_manager&                            ev_mng_,
                                 srslog::basic_logger&                         logger_);
@@ -38,6 +39,7 @@ private:
   f1ap_ue_context_setup_response_message create_ue_context_setup_result();
 
   const asn1::f1ap::ue_context_setup_request_s request;
+  f1ap_ue_context&                             ue_ctx;
   f1c_message_notifier&                        f1c_notifier;
   f1c_event_manager&                           ev_mng;
   srslog::basic_logger&                        logger;

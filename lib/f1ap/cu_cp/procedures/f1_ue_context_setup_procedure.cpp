@@ -15,10 +15,11 @@ using namespace srsgnb::srs_cu_cp;
 using namespace asn1::f1ap;
 
 f1_ue_context_setup_procedure::f1_ue_context_setup_procedure(const ue_context_setup_request_s& request_,
+                                                             f1ap_ue_context&                  ue_ctx_,
                                                              f1c_message_notifier&             f1c_notif_,
                                                              f1c_event_manager&                ev_mng_,
                                                              srslog::basic_logger&             logger_) :
-  request(request_), f1c_notifier(f1c_notif_), ev_mng(ev_mng_), logger(logger_)
+  request(request_), ue_ctx(ue_ctx_), f1c_notifier(f1c_notif_), ev_mng(ev_mng_), logger(logger_)
 {
 }
 
@@ -42,7 +43,11 @@ void f1_ue_context_setup_procedure::send_ue_context_setup_request()
   f1c_message f1c_ue_ctxt_setup_request_msg;
   f1c_ue_ctxt_setup_request_msg.pdu.set_init_msg();
   f1c_ue_ctxt_setup_request_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
-  f1c_ue_ctxt_setup_request_msg.pdu.init_msg().value.ue_context_setup_request() = request;
+  ue_context_setup_request_s& req = f1c_ue_ctxt_setup_request_msg.pdu.init_msg().value.ue_context_setup_request();
+
+  req                            = request;
+  req->gnb_cu_ue_f1_ap_id->value = gnb_cu_ue_f1ap_id_to_uint(ue_ctx.cu_ue_f1ap_id);
+  req->gnb_du_ue_f1_ap_id->value = gnb_du_ue_f1ap_id_to_uint(ue_ctx.du_ue_f1ap_id);
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;

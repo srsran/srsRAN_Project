@@ -106,7 +106,8 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
 async_task<f1ap_ue_context_setup_response_message>
 f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request_message& request)
 {
-  return launch_async<f1_ue_context_setup_procedure>(request.msg, pdu_notifier, *events, logger);
+  return launch_async<f1_ue_context_setup_procedure>(
+      request.msg, ue_ctx_list[request.ue_index], pdu_notifier, *events, logger);
 }
 
 async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_command& msg)

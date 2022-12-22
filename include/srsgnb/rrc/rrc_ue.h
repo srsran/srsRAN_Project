@@ -57,6 +57,7 @@ struct rrc_ue_drb_setup_message {
 };
 
 struct rrc_ue_ue_context_modification_request_message {
+  ue_index_t                            ue_index;
   std::vector<rrc_ue_drb_setup_message> rrc_ue_drb_setup_msgs;
   optional<uint64_t>                    ue_aggregate_maximum_bit_rate_ul;
 };

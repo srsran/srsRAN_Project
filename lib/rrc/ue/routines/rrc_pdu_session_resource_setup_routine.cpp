@@ -72,6 +72,7 @@ void rrc_pdu_session_resource_setup_routine::operator()(
   // Register required DRB resources at DU
   {
     // prepare UE Context Modification Request and call F1 notifier
+    ue_context_mod_request.ue_index = context.ue_index;
     ue_context_mod_request.rrc_ue_drb_setup_msgs.resize(drb_to_add_list.size());
     for (uint32_t i = 0; i < drb_to_add_list.size(); ++i) {
       srsgnb_assert(drb_to_add_list[i] != drb_id_t::invalid, "Invalid DRB ID");
