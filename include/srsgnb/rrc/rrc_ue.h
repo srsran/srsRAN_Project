@@ -158,8 +158,8 @@ struct rrc_ue_bearer_context_setup_request_message {
 };
 
 struct rrc_ue_up_params_item {
-  cu_cp_gtp_tunnel up_tnl_info;
-  uint8_t          cell_group_id;
+  gtp_tunnel up_tnl_info;
+  uint8_t    cell_group_id;
 };
 
 struct rrc_ue_qos_flow_item {
@@ -172,8 +172,8 @@ struct rrc_ue_qos_flow_failed_item {
 };
 
 struct rrc_ue_data_forwarding_info {
-  optional<cu_cp_gtp_tunnel> ul_data_forwarding;
-  optional<cu_cp_gtp_tunnel> dl_data_forwarding;
+  optional<gtp_tunnel> ul_data_forwarding;
+  optional<gtp_tunnel> dl_data_forwarding;
 };
 
 struct rrc_ue_drb_setup_item_ng_ran {
@@ -191,7 +191,7 @@ struct rrc_ue_drb_failed_item_ng_ran {
 
 struct rrc_ue_pdu_session_resource_setup_modification_item {
   uint16_t                                   pdu_session_id;
-  cu_cp_gtp_tunnel                           ng_dl_up_tnl_info;
+  gtp_tunnel                                 ng_dl_up_tnl_info;
   std::vector<rrc_ue_drb_setup_item_ng_ran>  drb_setup_list_ng_ran;
   std::vector<rrc_ue_drb_failed_item_ng_ran> drb_failed_list_ng_ran;
   optional<cu_cp_security_result>            security_result;
@@ -244,7 +244,7 @@ struct rrc_ue_drb_modified_item_ng_ran {
 
 struct rrc_ue_pdu_session_resource_modified_item {
   uint16_t                                     pdu_session_id;
-  cu_cp_gtp_tunnel                             ng_dl_up_tnl_info;
+  gtp_tunnel                                   ng_dl_up_tnl_info;
   std::vector<rrc_ue_drb_setup_item_ng_ran>    drb_setup_list_ng_ran;
   std::vector<rrc_ue_drb_failed_item_ng_ran>   drb_failed_list_ng_ran;
   std::vector<rrc_ue_drb_modified_item_ng_ran> drb_modified_list_ng_ran;

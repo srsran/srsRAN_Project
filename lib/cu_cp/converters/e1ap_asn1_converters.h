@@ -64,7 +64,7 @@ inline asn1::e1ap::pdu_session_type_e cu_cp_pdu_session_type_to_e1ap_pdu_session
 /// @brief Convert CU-CP UL NGU UP TNL Information to E1AP UP TNL Information.
 /// @param ul_ngu_up_tnl_info The CU-CP UL NGU UP TNL Information.
 /// @return The E1AP UP TNL Information.
-inline asn1::e1ap::up_tnl_info_c cu_cp_ul_ngu_up_tnl_info_to_e1ap_up_tnl_info(cu_cp_gtp_tunnel ul_ngu_up_tnl_info)
+inline asn1::e1ap::up_tnl_info_c cu_cp_ul_ngu_up_tnl_info_to_e1ap_up_tnl_info(const gtp_tunnel& ul_ngu_up_tnl_info)
 {
   asn1::e1ap::up_tnl_info_c e1ap_up_tnl_info;
 
@@ -109,9 +109,9 @@ inline cu_cp_cause_t e1ap_cause_to_cu_cp_cause(asn1::e1ap::cause_c e1ap_cause)
 /// @brief Convert E1AP UP TNL Info to CU-CP GTP Tunnel.
 /// @param up_tnl_info The E1AP UP TNL Info.
 /// @return The CU-CP GTP Tunnel.
-inline cu_cp_gtp_tunnel e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(asn1::e1ap::up_tnl_info_c up_tnl_info)
+inline gtp_tunnel e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(asn1::e1ap::up_tnl_info_c up_tnl_info)
 {
-  cu_cp_gtp_tunnel gtp_tunnel;
+  gtp_tunnel gtp_tunnel;
   gtp_tunnel.gtp_teid                = up_tnl_info.gtp_tunnel().gtp_teid.to_number();
   gtp_tunnel.transport_layer_address = up_tnl_info.gtp_tunnel().transport_layer_address.to_number();
 

@@ -46,8 +46,7 @@ cu_cp_security_result_to_ngap_security_result(cu_cp_security_result cu_cp_securi
 /// @brief Convert CU-CP GTP Tunnel to NGAP UP Transport Layer Info.
 /// @param gtp_tunnel The CU-CP GTP Tunnel.
 /// @return The NGAP UP Transport Layer Info.
-inline asn1::ngap::up_transport_layer_info_c
-cu_cp_gtp_tunnel_to_ngap_uptransport_layer_info(cu_cp_gtp_tunnel gtp_tunnel)
+inline asn1::ngap::up_transport_layer_info_c gtp_tunnel_to_ngap_uptransport_layer_info(const gtp_tunnel& gtp_tunnel)
 {
   asn1::ngap::up_transport_layer_info_c up_transport_layer_info;
   up_transport_layer_info.set_gtp_tunnel();
@@ -91,7 +90,7 @@ cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(cu_cp_qos_flow_per_tnl
   asn1::ngap::qos_flow_per_tnl_info_s ngap_qos_flow_info;
 
   ngap_qos_flow_info.uptransport_layer_info =
-      cu_cp_gtp_tunnel_to_ngap_uptransport_layer_info(cu_cp_qos_flow_info.uptransport_layer_info);
+      gtp_tunnel_to_ngap_uptransport_layer_info(cu_cp_qos_flow_info.uptransport_layer_info);
 
   for (auto cu_cp_assoc_qos_item : cu_cp_qos_flow_info.associated_qos_flow_list) {
     asn1::ngap::associated_qos_flow_item_s ngap_assoc_qos_item =
