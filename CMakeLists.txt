@@ -208,6 +208,12 @@ if (AUTO_DETECT_ISA)
     if (HAVE_AVX512)
         add_definitions(-DHAVE_AVX512)
     endif (HAVE_AVX512)
+else (AUTO_DETECT_ISA)
+    unset(HAVE_SSE CACHE)
+    unset(HAVE_AVX CACHE)
+    unset(HAVE_AVX2 CACHE)
+    unset(HAVE_FMA CACHE)
+    unset(HAVE_AVX512 CACHE)
 endif (AUTO_DETECT_ISA)
 
 ########################################################################

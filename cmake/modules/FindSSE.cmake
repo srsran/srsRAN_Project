@@ -14,6 +14,23 @@ option(ENABLE_AVX2   "Enable compile-time AVX2 support."   ON)
 option(ENABLE_FMA    "Enable compile-time FMA support."    ON)
 option(ENABLE_AVX512 "Enable compile-time AVX512 support." ON)
 
+# Unset cached variables if corresponding options are disabled
+if(NOT ENABLE_SSE)
+    unset(HAVE_SSE CACHE)
+endif()
+if(NOT ENABLE_AVX)
+    unset(HAVE_AVX CACHE)
+endif()
+if(NOT ENABLE_AVX2)
+    unset(HAVE_AVX2 CACHE)
+endif()
+if(NOT ENABLE_FMA)
+    unset(HAVE_FMA CACHE)
+endif()
+if(NOT ENABLE_AVX)
+    unset(ENABLE_AVX512 CACHE)
+endif()
+
 if (ENABLE_SSE)
     #
     # Check compiler for SSE4_1 intrinsics
@@ -187,8 +204,6 @@ if (ENABLE_SSE)
             ADD_CXX_COMPILER_FLAG_IF_AVAILABLE("-mno-${FLAG} " HAVE_NO_${FLAG_UPPER})
         endforeach ()
     endif ()
-
-
 endif()
 
 mark_as_advanced(HAVE_SSE, HAVE_AVX, HAVE_AVX2, HAVE_FMA, HAVE_AVX512)
