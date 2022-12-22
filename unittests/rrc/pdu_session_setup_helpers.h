@@ -27,11 +27,10 @@ cu_cp_pdu_session_resource_setup_message fill_res_setup_request()
   item.pdu_session_nas_pdu[1] = 0xbb;
   item.s_nssai.sst            = 1;
 
-  item.pdu_session_aggregate_maximum_bit_rate_dl  = 100;
-  item.pdu_session_aggregate_maximum_bit_rate_ul  = 100;
-  item.ul_ngu_up_tnl_info.transport_layer_address = "127.0.0.1";
-  item.ul_ngu_up_tnl_info.gtp_teid                = 0xdeadbeef;
-  item.pdu_session_type                           = "ipv4";
+  item.pdu_session_aggregate_maximum_bit_rate_dl = 100;
+  item.pdu_session_aggregate_maximum_bit_rate_ul = 100;
+  item.ul_ngu_up_tnl_info                        = {"127.0.0.1", int_to_gtp_teid(0xdeadbeef)};
+  item.pdu_session_type                          = "ipv4";
 
   qos_flow_setup_request_item qos_item;
   qos_item.qos_flow_id                           = 1;

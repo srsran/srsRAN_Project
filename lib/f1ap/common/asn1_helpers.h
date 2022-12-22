@@ -12,8 +12,8 @@
 
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/ran/bcd_helpers.h"
-#include "srsgnb/ran/gtp_tunnel.h"
 #include "srsgnb/ran/nr_cgi.h"
+#include "srsgnb/ran/up_transport_layer_info.h"
 
 namespace srsgnb {
 
@@ -23,6 +23,6 @@ namespace srsgnb {
 nr_cell_global_id_t cgi_from_asn1(const asn1::f1ap::nrcgi_s& asn1_cgi);
 
 /// \brief Converts GTP Tunnel identifier to equivalent ASN.1 struct.
-asn1::f1ap::gtp_tunnel_s gtp_tunnel_to_asn1(const gtp_tunnel& tun);
+asn1::f1ap::gtp_tunnel_s gtp_tunnel_to_asn1(const up_transport_layer_info& tun);
 
 } // namespace srsgnb

@@ -58,10 +58,8 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
     drb_obj.mode   = (drb_rlc_mode)(unsigned)drb_item.rlc_mode;
     drb_obj.uluptnl_info_list.resize(drb_item.uluptnl_info_to_be_setup_list.size());
     for (unsigned j = 0; j != drb_obj.uluptnl_info_list.size(); ++j) {
-      const auto& asn1tun = drb_item.uluptnl_info_to_be_setup_list[j];
-      drb_obj.uluptnl_info_list[j].transport_layer_address =
-          asn1tun.uluptnl_info.gtp_tunnel().transport_layer_address.to_string();
-      drb_obj.uluptnl_info_list[j].gtp_teid = asn1tun.uluptnl_info.gtp_tunnel().gtp_teid.to_number();
+      drb_obj.uluptnl_info_list[j] =
+          asn1_to_up_transport_layer_info(drb_item.uluptnl_info_to_be_setup_list[j].uluptnl_info);
     }
 
     du_request.drbs_to_setup.push_back(drb_obj);

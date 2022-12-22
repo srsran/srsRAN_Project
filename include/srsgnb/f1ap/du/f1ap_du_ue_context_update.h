@@ -13,8 +13,8 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/gtp_tunnel.h"
 #include "srsgnb/ran/lcid.h"
+#include "srsgnb/ran/up_transport_layer_info.h"
 
 namespace srsgnb {
 namespace srs_du {
@@ -24,10 +24,10 @@ enum class drb_rlc_mode { am = 0, um_bidir, um_unidir_ul, um_unidir_dl };
 
 /// \brief DRB to be setup in the UE context.
 struct f1ap_drb_to_setup {
-  drb_id_t                drb_id;
-  optional<lcid_t>        lcid;
-  drb_rlc_mode            mode;
-  std::vector<gtp_tunnel> uluptnl_info_list;
+  drb_id_t                             drb_id;
+  optional<lcid_t>                     lcid;
+  drb_rlc_mode                         mode;
+  std::vector<up_transport_layer_info> uluptnl_info_list;
 };
 
 /// \brief SCell to be setup in the UE context.
@@ -38,10 +38,10 @@ struct f1ap_scell_to_setup {
 
 /// \brief DRB that was setup successfully in the F1AP UE context.
 struct f1ap_drb_setup {
-  drb_id_t                drb_id;
-  optional<lcid_t>        lcid;
-  drb_rlc_mode            mode;
-  std::vector<gtp_tunnel> dluptnl_info_list;
+  drb_id_t                             drb_id;
+  optional<lcid_t>                     lcid;
+  drb_rlc_mode                         mode;
+  std::vector<up_transport_layer_info> dluptnl_info_list;
 };
 
 /// \brief Request from DU F1AP to DU manager to modify existing UE configuration.

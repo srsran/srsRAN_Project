@@ -53,8 +53,9 @@ inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modificati
 
     // Add uLUPTNLInformation_ToBeSetup
     for (const auto& gtp_tunnel_item : drb_to_be_setup.gtp_tunnels) {
-      f1ap_drb_to_setup_item.uluptnl_info_to_be_setup_list.push_back(
-          gtp_tunnel_to_f1ap_uluptnl_info_to_be_setup_item(gtp_tunnel_item));
+      asn1::f1ap::uluptnl_info_to_be_setup_item_s item;
+      up_transport_layer_info_to_asn1(item.uluptnl_info, gtp_tunnel_item);
+      f1ap_drb_to_setup_item.uluptnl_info_to_be_setup_list.push_back(item);
     }
 
     // Add qos information
@@ -138,7 +139,7 @@ inline void fill_rrc_ue_ue_context_modification_response_message(
         for (auto f1ap_dluptnl_info_to_be_setup_item : f1ap_drb_mod_item.dluptnl_info_to_be_setup_list) {
           rrc_ue_dluptnl_info_to_be_setup_item dluptnl_info_to_be_setup_item;
           dluptnl_info_to_be_setup_item.dluptnl_info =
-              f1ap_dluptnl_info_to_be_setup_item_to_cu_cp_gtp_tunnel(f1ap_dluptnl_info_to_be_setup_item);
+              asn1_to_up_transport_layer_info(f1ap_dluptnl_info_to_be_setup_item.dluptnl_info);
           drb_setup_mod_item.dluptnl_info_to_be_setup_list.push_back(dluptnl_info_to_be_setup_item);
         }
 
@@ -160,7 +161,7 @@ inline void fill_rrc_ue_ue_context_modification_response_message(
         for (auto f1ap_dluptnl_info_to_be_setup_item : f1ap_drb_mod_item.dluptnl_info_to_be_setup_list) {
           rrc_ue_dluptnl_info_to_be_setup_item dluptnl_info_to_be_setup_item;
           dluptnl_info_to_be_setup_item.dluptnl_info =
-              f1ap_dluptnl_info_to_be_setup_item_to_cu_cp_gtp_tunnel(f1ap_dluptnl_info_to_be_setup_item);
+              asn1_to_up_transport_layer_info(f1ap_dluptnl_info_to_be_setup_item.dluptnl_info);
           drb_setup_mod_item.dluptnl_info_to_be_setup_list.push_back(dluptnl_info_to_be_setup_item);
         }
 

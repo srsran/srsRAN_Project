@@ -79,8 +79,8 @@ void rrc_pdu_session_resource_setup_routine::operator()(
 
       auto& rrc_ue_drb_setup_message_item  = ue_context_mod_request.rrc_ue_drb_setup_msgs[i];
       rrc_ue_drb_setup_message_item.drb_id = drb_id_to_uint(drb_to_add_list[i]);
-      gtp_tunnel gtp_tunnel;
-      gtp_tunnel.gtp_teid = 0x12345678; // TODO: take from CU-UP response
+      up_transport_layer_info gtp_tunnel;
+      gtp_tunnel.gtp_teid = int_to_gtp_teid(0x12345678); // TODO: take from CU-UP response
       rrc_ue_drb_setup_message_item.gtp_tunnels.push_back(gtp_tunnel);
 
       rrc_ue_drb_setup_message_item.rlc = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
@@ -163,9 +163,8 @@ rrc_pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result
     cu_cp_pdu_session_res_setup_response_item item;
     item.pdu_session_id = setup_msg.pdu_session_res_setup_items[0].pdu_session_id;
 
-    auto& transfer = item.pdu_session_resource_setup_response_transfer;
-    transfer.dlqos_flow_per_tnl_info.uptransport_layer_info.transport_layer_address = "127.0.0.1";
-    transfer.dlqos_flow_per_tnl_info.uptransport_layer_info.gtp_teid                = 0x12345678;
+    auto& transfer                                          = item.pdu_session_resource_setup_response_transfer;
+    transfer.dlqos_flow_per_tnl_info.uptransport_layer_info = {"127.0.0.1", int_to_gtp_teid(0x12345678)};
 
     cu_cp_associated_qos_flow qos_flow;
     qos_flow.qos_flow_id = 1;

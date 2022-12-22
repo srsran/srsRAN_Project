@@ -116,10 +116,7 @@ inline void fill_cu_cp_pdu_session_resource_setup_message(
         setup_req_transfer->pdu_session_aggregate_maximum_bit_rate.value.pdu_session_aggregate_maximum_bit_rate_ul;
 
     // id-UL-NGU-UP-TNLInformation
-    setup_item.ul_ngu_up_tnl_info.transport_layer_address =
-        setup_req_transfer->ul_ngu_up_tnl_info.value.gtp_tunnel().transport_layer_address.to_number();
-    setup_item.ul_ngu_up_tnl_info.gtp_teid =
-        setup_req_transfer->ul_ngu_up_tnl_info.value.gtp_tunnel().gtp_teid.to_number();
+    setup_item.ul_ngu_up_tnl_info = asn1_to_up_transport_layer_info(setup_req_transfer->ul_ngu_up_tnl_info.value);
 
     // id-PDUSessionType
     setup_item.pdu_session_type = setup_req_transfer->pdu_session_type.value.to_string();

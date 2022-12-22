@@ -14,24 +14,13 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/ran/gtp_tunnel.h"
 #include "srsgnb/ran/nr_cgi.h"
+#include "srsgnb/ran/up_transport_layer_info.h"
 #include <string>
 #include <vector>
 
 namespace srsgnb {
 namespace srs_cu_cp {
-
-inline asn1::f1ap::uluptnl_info_to_be_setup_item_s
-gtp_tunnel_to_f1ap_uluptnl_info_to_be_setup_item(const gtp_tunnel& gtp_tunnel)
-{
-  asn1::f1ap::uluptnl_info_to_be_setup_item_s uluptnl_item;
-  uluptnl_item.uluptnl_info.set_gtp_tunnel();
-  uluptnl_item.uluptnl_info.gtp_tunnel().gtp_teid.from_number(gtp_tunnel.gtp_teid);
-  uluptnl_item.uluptnl_info.gtp_tunnel().transport_layer_address.from_string(gtp_tunnel.transport_layer_address);
-
-  return uluptnl_item;
-}
 
 /// @brief Convert F1AP Cause to CU-CP Cause.
 /// @param f1ap_cause The F1AP Cause.
@@ -61,16 +50,6 @@ inline cu_cp_cause_t f1ap_cause_to_cu_cp_cause(asn1::f1ap::cause_c f1ap_cause)
       cu_cp_cause = cu_cp_cause_t::nulltype;
       return cu_cp_cause;
   }
-}
-
-inline gtp_tunnel
-f1ap_dluptnl_info_to_be_setup_item_to_cu_cp_gtp_tunnel(asn1::f1ap::dluptnl_info_to_be_setup_item_s f1ap_item)
-{
-  gtp_tunnel gtp_tunnel;
-  gtp_tunnel.gtp_teid                = f1ap_item.dluptnl_info.gtp_tunnel().gtp_teid.to_number();
-  gtp_tunnel.transport_layer_address = f1ap_item.dluptnl_info.gtp_tunnel().transport_layer_address.to_string();
-
-  return gtp_tunnel;
 }
 
 /// @brief Convert F1AP NRCGI to NR Cell Identity.

@@ -39,8 +39,8 @@ inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
         cu_cp_pdu_session_type_to_e1ap_pdu_session_type(pdu_session_res_item.pdu_session_type);
 
     // ng ul up transport layer information
-    e1ap_pdu_session_res_item.ng_ul_up_tnl_info =
-        cu_cp_ul_ngu_up_tnl_info_to_e1ap_up_tnl_info(pdu_session_res_item.ul_ngu_up_tnl_info);
+    up_transport_layer_info_to_asn1(e1ap_pdu_session_res_item.ng_ul_up_tnl_info,
+                                    pdu_session_res_item.ul_ngu_up_tnl_info);
 
     // TODO: add optional values
 
@@ -69,7 +69,7 @@ inline void fill_rrc_ue_bearer_context_setup_response_message(
       res_setup_item.pdu_session_id = e1ap_res_setup_item.pdu_session_id;
 
       // Add NG DL UP TNL Info
-      res_setup_item.ng_dl_up_tnl_info = e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(e1ap_res_setup_item.ng_dl_up_tnl_info);
+      res_setup_item.ng_dl_up_tnl_info = asn1_to_up_transport_layer_info(e1ap_res_setup_item.ng_dl_up_tnl_info);
 
       // Add DRB Setup List NG RAN
       for (auto e1ap_drb_setup_item : e1ap_res_setup_item.drb_setup_list_ng_ran) {
@@ -79,7 +79,7 @@ inline void fill_rrc_ue_bearer_context_setup_response_message(
         // Add UL UP Transport Params
         for (auto ul_up_transport_param : e1ap_drb_setup_item.ul_up_transport_params) {
           rrc_ue_up_params_item ue_params_item;
-          ue_params_item.up_tnl_info   = e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(ul_up_transport_param.up_tnl_info);
+          ue_params_item.up_tnl_info   = asn1_to_up_transport_layer_info(e1ap_res_setup_item.ng_dl_up_tnl_info);
           ue_params_item.cell_group_id = ul_up_transport_param.cell_group_id;
 
           drb_setup_item.ul_up_transport_params.push_back(ue_params_item);
@@ -107,13 +107,11 @@ inline void fill_rrc_ue_bearer_context_setup_response_message(
         if (e1ap_drb_setup_item.drb_data_forwarding_info_resp_present) {
           if (e1ap_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding_present) {
             drb_setup_item.drb_data_forwarding_info_resp.value().ul_data_forwarding =
-                e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(
-                    e1ap_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding);
+                asn1_to_up_transport_layer_info(e1ap_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding);
           }
           if (e1ap_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding_present) {
             drb_setup_item.drb_data_forwarding_info_resp.value().dl_data_forwarding =
-                e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(
-                    e1ap_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding);
+                asn1_to_up_transport_layer_info(e1ap_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding);
           }
         }
 
@@ -141,12 +139,12 @@ inline void fill_rrc_ue_bearer_context_setup_response_message(
       if (e1ap_res_setup_item.pdu_session_data_forwarding_info_resp_present) {
         if (e1ap_res_setup_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding_present) {
           res_setup_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding =
-              e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(
+              asn1_to_up_transport_layer_info(
                   e1ap_res_setup_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding);
         }
         if (e1ap_res_setup_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding_present) {
           res_setup_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding =
-              e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(
+              asn1_to_up_transport_layer_info(
                   e1ap_res_setup_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding);
         }
       }
@@ -203,7 +201,7 @@ inline void fill_rrc_ue_bearer_context_modification_response_message(
           res_mod_item.pdu_session_id = e1ap_res_mod_item.pdu_session_id;
 
           // Add NG DL UP TNL Info
-          res_mod_item.ng_dl_up_tnl_info = e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(e1ap_res_mod_item.ng_dl_up_tnl_info);
+          res_mod_item.ng_dl_up_tnl_info = asn1_to_up_transport_layer_info(e1ap_res_mod_item.ng_dl_up_tnl_info);
 
           // Add DRB Setup List NG RAN
           for (auto e1ap_drb_setup_item : e1ap_res_mod_item.drb_setup_mod_list_ng_ran) {
@@ -211,9 +209,10 @@ inline void fill_rrc_ue_bearer_context_modification_response_message(
             drb_setup_item.drb_id = uint_to_drb_id(e1ap_drb_setup_item.drb_id);
 
             // Add UL UP Transport Params
-            for (auto ul_up_transport_param : e1ap_drb_setup_item.ul_up_transport_params) {
+            for (const asn1::e1ap::up_params_item_s& ul_up_transport_param :
+                 e1ap_drb_setup_item.ul_up_transport_params) {
               rrc_ue_up_params_item ue_params_item;
-              ue_params_item.up_tnl_info   = e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(ul_up_transport_param.up_tnl_info);
+              ue_params_item.up_tnl_info   = asn1_to_up_transport_layer_info(ul_up_transport_param.up_tnl_info);
               ue_params_item.cell_group_id = ul_up_transport_param.cell_group_id;
 
               drb_setup_item.ul_up_transport_params.push_back(ue_params_item);
@@ -241,12 +240,12 @@ inline void fill_rrc_ue_bearer_context_modification_response_message(
             if (e1ap_drb_setup_item.drb_data_forwarding_info_resp_present) {
               if (e1ap_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding_present) {
                 drb_setup_item.drb_data_forwarding_info_resp.value().ul_data_forwarding =
-                    e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(
+                    asn1_to_up_transport_layer_info(
                         e1ap_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding);
               }
               if (e1ap_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding_present) {
                 drb_setup_item.drb_data_forwarding_info_resp.value().dl_data_forwarding =
-                    e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(
+                    asn1_to_up_transport_layer_info(
                         e1ap_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding);
               }
             }
@@ -275,12 +274,12 @@ inline void fill_rrc_ue_bearer_context_modification_response_message(
           if (e1ap_res_mod_item.pdu_session_data_forwarding_info_resp_present) {
             if (e1ap_res_mod_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding_present) {
               res_mod_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding =
-                  e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(
+                  asn1_to_up_transport_layer_info(
                       e1ap_res_mod_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding);
             }
             if (e1ap_res_mod_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding_present) {
               res_mod_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding =
-                  e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(
+                  asn1_to_up_transport_layer_info(
                       e1ap_res_mod_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding);
             }
           }
@@ -309,7 +308,7 @@ inline void fill_rrc_ue_bearer_context_modification_response_message(
           res_mod_item.pdu_session_id = e1ap_res_mod_item.pdu_session_id;
 
           // Add NG DL UP TNL Info
-          res_mod_item.ng_dl_up_tnl_info = e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(e1ap_res_mod_item.ng_dl_up_tnl_info);
+          res_mod_item.ng_dl_up_tnl_info = asn1_to_up_transport_layer_info(e1ap_res_mod_item.ng_dl_up_tnl_info);
 
           // Add DRB Setup List NG RAN
           for (auto e1ap_drb_setup_item : e1ap_res_mod_item.drb_setup_list_ng_ran) {
@@ -317,9 +316,9 @@ inline void fill_rrc_ue_bearer_context_modification_response_message(
             drb_setup_item.drb_id = uint_to_drb_id(e1ap_drb_setup_item.drb_id);
 
             // Add UL UP Transport Params
-            for (auto ul_up_transport_param : e1ap_drb_setup_item.ul_up_transport_params) {
+            for (const auto& ul_up_transport_param : e1ap_drb_setup_item.ul_up_transport_params) {
               rrc_ue_up_params_item ue_params_item;
-              ue_params_item.up_tnl_info   = e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(ul_up_transport_param.up_tnl_info);
+              ue_params_item.up_tnl_info   = asn1_to_up_transport_layer_info(ul_up_transport_param.up_tnl_info);
               ue_params_item.cell_group_id = ul_up_transport_param.cell_group_id;
 
               drb_setup_item.ul_up_transport_params.push_back(ue_params_item);
@@ -347,12 +346,12 @@ inline void fill_rrc_ue_bearer_context_modification_response_message(
             if (e1ap_drb_setup_item.drb_data_forwarding_info_resp_present) {
               if (e1ap_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding_present) {
                 drb_setup_item.drb_data_forwarding_info_resp.value().ul_data_forwarding =
-                    e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(
+                    asn1_to_up_transport_layer_info(
                         e1ap_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding);
               }
               if (e1ap_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding_present) {
                 drb_setup_item.drb_data_forwarding_info_resp.value().dl_data_forwarding =
-                    e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(
+                    asn1_to_up_transport_layer_info(
                         e1ap_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding);
               }
             }
@@ -375,9 +374,9 @@ inline void fill_rrc_ue_bearer_context_modification_response_message(
             drb_mod_item.drb_id = uint_to_drb_id(e1ap_drb_mod_item.drb_id);
 
             // Add UL UP Transport Params
-            for (auto ul_up_transport_param : e1ap_drb_mod_item.ul_up_transport_params) {
+            for (const auto& ul_up_transport_param : e1ap_drb_mod_item.ul_up_transport_params) {
               rrc_ue_up_params_item ue_params_item;
-              ue_params_item.up_tnl_info   = e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(ul_up_transport_param.up_tnl_info);
+              ue_params_item.up_tnl_info   = asn1_to_up_transport_layer_info(ul_up_transport_param.up_tnl_info);
               ue_params_item.cell_group_id = ul_up_transport_param.cell_group_id;
 
               drb_mod_item.ul_up_transport_params.push_back(ue_params_item);
@@ -441,12 +440,12 @@ inline void fill_rrc_ue_bearer_context_modification_response_message(
           if (e1ap_res_mod_item.pdu_session_data_forwarding_info_resp_present) {
             if (e1ap_res_mod_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding_present) {
               res_mod_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding =
-                  e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(
+                  asn1_to_up_transport_layer_info(
                       e1ap_res_mod_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding);
             }
             if (e1ap_res_mod_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding_present) {
               res_mod_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding =
-                  e1ap_up_tnl_info_to_cu_cp_gtp_tunnel(
+                  asn1_to_up_transport_layer_info(
                       e1ap_res_mod_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding);
             }
           }

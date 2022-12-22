@@ -16,8 +16,8 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/ran/gtp_tunnel.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/ran/up_transport_layer_info.h"
 #include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/rrc/rrc.h"
 #include "srsgnb/security/security.h"
@@ -48,7 +48,7 @@ struct rrc_ue_drb_setup_message {
   uint8_t                                  drb_id;
   srsgnb::rlc_mode                         rlc;
   qos_characteristics                      qos_info;
-  std::vector<gtp_tunnel>                  gtp_tunnels;
+  std::vector<up_transport_layer_info>     gtp_tunnels;
   cu_cp_s_nssai                            s_nssai;
   std::vector<qos_flow_setup_request_item> qos_flows_mapped_to_drb;
 
@@ -69,7 +69,7 @@ struct rrc_ue_du_to_cu_rrc_info {
 };
 
 struct rrc_ue_dluptnl_info_to_be_setup_item {
-  gtp_tunnel dluptnl_info;
+  up_transport_layer_info dluptnl_info;
 };
 
 struct rrc_ue_drbs_setup_modified_item {
@@ -158,8 +158,8 @@ struct rrc_ue_bearer_context_setup_request_message {
 };
 
 struct rrc_ue_up_params_item {
-  gtp_tunnel up_tnl_info;
-  uint8_t    cell_group_id;
+  up_transport_layer_info up_tnl_info;
+  uint8_t                 cell_group_id;
 };
 
 struct rrc_ue_qos_flow_item {
@@ -172,8 +172,8 @@ struct rrc_ue_qos_flow_failed_item {
 };
 
 struct rrc_ue_data_forwarding_info {
-  optional<gtp_tunnel> ul_data_forwarding;
-  optional<gtp_tunnel> dl_data_forwarding;
+  optional<up_transport_layer_info> ul_data_forwarding;
+  optional<up_transport_layer_info> dl_data_forwarding;
 };
 
 struct rrc_ue_drb_setup_item_ng_ran {
@@ -191,7 +191,7 @@ struct rrc_ue_drb_failed_item_ng_ran {
 
 struct rrc_ue_pdu_session_resource_setup_modification_item {
   uint16_t                                   pdu_session_id;
-  gtp_tunnel                                 ng_dl_up_tnl_info;
+  up_transport_layer_info                    ng_dl_up_tnl_info;
   std::vector<rrc_ue_drb_setup_item_ng_ran>  drb_setup_list_ng_ran;
   std::vector<rrc_ue_drb_failed_item_ng_ran> drb_failed_list_ng_ran;
   optional<cu_cp_security_result>            security_result;
@@ -244,7 +244,7 @@ struct rrc_ue_drb_modified_item_ng_ran {
 
 struct rrc_ue_pdu_session_resource_modified_item {
   uint16_t                                     pdu_session_id;
-  gtp_tunnel                                   ng_dl_up_tnl_info;
+  up_transport_layer_info                      ng_dl_up_tnl_info;
   std::vector<rrc_ue_drb_setup_item_ng_ran>    drb_setup_list_ng_ran;
   std::vector<rrc_ue_drb_failed_item_ng_ran>   drb_failed_list_ng_ran;
   std::vector<rrc_ue_drb_modified_item_ng_ran> drb_modified_list_ng_ran;
