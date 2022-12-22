@@ -54,7 +54,7 @@ public:
     return ue_res_impl->update(pcell_index, upd_req);
   }
 
-  /// \brief Whether the UE resources have been correctly allocated.
+  /// \brief Checks whether the UE resources have been correctly allocated.
   bool empty() const { return ue_res_impl == nullptr; }
 
   const cell_group_config& value() const { return *cached_res; }

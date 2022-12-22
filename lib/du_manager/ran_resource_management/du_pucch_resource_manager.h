@@ -27,7 +27,11 @@ public:
   du_pucch_resource_manager& operator=(const du_pucch_resource_manager&) = delete;
   du_pucch_resource_manager& operator=(du_pucch_resource_manager&&)      = delete;
 
+  /// \brief Allocate PUCCH resources for a given UE. The resources are stored in the UE's cell group config.
+  /// \return true if allocation was successful.
   bool alloc_resources(cell_group_config& cell_grp_cfg);
+
+  /// \brief Deallocate PUCCH resources previously given to a UE. The resources are returned back to a pool.
   void dealloc_resources(cell_group_config& cell_grp_cfg);
 
 private:
