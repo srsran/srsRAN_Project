@@ -39,6 +39,7 @@ public:
   cu_cp_pdcp_config     get_pdcp_config(const drb_id_t drb_id) override;
   cu_cp_sdap_config     get_sdap_config(const drb_id_t drb_id) override;
   std::vector<uint8_t>  get_mapped_qos_flows(const drb_id_t drb_id) override;
+  std::vector<uint8_t>  get_mapped_qos_flows(const uint16_t pdu_session_id) override;
   uint16_t              get_pdu_session_id(const drb_id_t drb_id) override;
   size_t                get_nof_drbs() override;
 
