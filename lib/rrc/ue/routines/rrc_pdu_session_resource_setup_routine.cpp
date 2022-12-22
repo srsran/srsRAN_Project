@@ -82,14 +82,18 @@ void rrc_pdu_session_resource_setup_routine::operator()(
       gtp_tunnel.gtp_teid = 0x12345678; // TODO: take from CU-UP response
       rrc_ue_drb_setup_message_item.gtp_tunnels.push_back(gtp_tunnel);
 
-      // TODO: add RLC mode, PDPC SN length
+      rrc_ue_drb_setup_message_item.rlc = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
+
+      const auto& mapped_flows = context.drb_mng->get_mapped_qos_flows(drb_to_add_list[i]);
+      for (const auto& qos_flow : mapped_flows) {
+        qos_flow_setup_request_item mapped_flow = {};
+        mapped_flow.qos_flow_id                 = qos_flow;
+        rrc_ue_drb_setup_message_item.qos_flows_mapped_to_drb.push_back(mapped_flow);
+      }
     }
 
     CORO_AWAIT_VALUE(ue_context_modification_response,
                      f1c_ctrl_notif.on_new_pdu_session_resource_setup_request(ue_context_mod_request));
-    if (not ue_context_modification_response.success) {
-      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
-    }
 
     // Handle UE Context Modification Response
     if (not ue_context_modification_response.success) {
