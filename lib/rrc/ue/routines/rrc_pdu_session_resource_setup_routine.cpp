@@ -123,6 +123,11 @@ void rrc_pdu_session_resource_setup_routine::operator()(
         drb_to_add_mod_list_item.drb_id           = drb_id_to_uint(drb_to_add_list[i]);
         drb_to_add_mod_list_item.pdcp_cfg_present = true;
         drb_to_add_mod_list_item.pdcp_cfg         = context.drb_mng->get_pdcp_config(drb_to_add_list[i]);
+
+        // Add CN association and SDAP config
+        drb_to_add_mod_list_item.cn_assoc_present = true;
+        drb_to_add_mod_list_item.cn_assoc.set_sdap_cfg();
+        drb_to_add_mod_list_item.cn_assoc.sdap_cfg() = context.drb_mng->get_sdap_config(drb_to_add_list[i]);
       }
       reconfig_args.radio_bearer_cfg = radio_bearer_cfg;
 
@@ -171,9 +176,9 @@ rrc_pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result
     logger.debug("rnti=0x{:x}: \"{}\" finalized.", context.c_rnti, name());
   } else {
     // mark all PDU sessions as failed
-    for (size_t i = 0; i < setup_msg.pdu_session_res_setup_items.size(); ++i) {
+    for (const auto& setup_item : setup_msg.pdu_session_res_setup_items) {
       cu_cp_pdu_session_res_setup_failed_item item;
-      item.pdu_session_id = setup_msg.pdu_session_res_setup_items[i].pdu_session_id;
+      item.pdu_session_id = setup_item.pdu_session_id;
       response_msg.pdu_session_res_failed_to_setup_items.push_back(item);
     }
 
