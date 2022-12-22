@@ -96,11 +96,13 @@ inline cu_cp_cause_t e1ap_cause_to_cu_cp_cause(asn1::e1ap::cause_c e1ap_cause)
       cu_cp_cause = cu_cp_cause_t::protocol;
       return cu_cp_cause;
       break;
-    default:
+    case asn1::e1ap::cause_c::types_opts::misc:
       cu_cp_cause = cu_cp_cause_t::misc;
       return cu_cp_cause;
       break;
-      break;
+    default:
+      cu_cp_cause = cu_cp_cause_t::nulltype;
+      return cu_cp_cause;
   }
 }
 

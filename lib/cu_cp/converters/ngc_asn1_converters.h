@@ -123,11 +123,13 @@ inline asn1::ngap::cause_c cu_cp_cause_to_ngap_cause(cu_cp_cause_t cu_cp_cause)
       ngap_cause.set(asn1::ngap::cause_c::types_opts::protocol);
       return ngap_cause;
       break;
-    default:
+    case cu_cp_cause_t::misc:
       ngap_cause.set(asn1::ngap::cause_c::types_opts::misc);
       return ngap_cause;
       break;
-      break;
+    default:
+      ngap_cause.set(asn1::ngap::cause_c::types_opts::nulltype);
+      return ngap_cause;
   }
 }
 
