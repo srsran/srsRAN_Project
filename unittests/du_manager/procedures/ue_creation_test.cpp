@@ -21,7 +21,8 @@ cell_group_cfg_s unpack_cell_group_config(const byte_buffer& container)
 {
   cell_group_cfg_s cell_group;
   asn1::cbit_ref   bref(container);
-  srsgnb_assert(cell_group.unpack(bref) == asn1::SRSASN_SUCCESS, "Failed to unpack container");
+  auto             err = cell_group.unpack(bref);
+  srsgnb_assert(err == asn1::SRSASN_SUCCESS, "Failed to unpack container");
   return cell_group;
 }
 
@@ -66,11 +67,12 @@ protected:
       fmt::print("UE Creation produced CellGroup: {}\n", js.to_string());
     }
 
+    ASSERT_TRUE(cell_group.sp_cell_cfg_present);
+
     ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list.size(), 1);
     ASSERT_TRUE(cell_group.rlc_bearer_to_add_mod_list[0].served_radio_bearer_present);
     ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list[0].served_radio_bearer.srb_id(), 1);
 
-    ASSERT_TRUE(cell_group.sp_cell_cfg_present);
     ASSERT_FALSE(cell_group.sp_cell_cfg.recfg_with_sync_present);
   }
 
