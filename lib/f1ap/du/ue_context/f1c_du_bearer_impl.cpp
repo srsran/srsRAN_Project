@@ -26,7 +26,7 @@ f1c_srb0_du_bearer::f1c_srb0_du_bearer(f1ap_ue_context&           ue_ctxt_,
   f1c_notifier(f1c_notifier_),
   sdu_notifier(f1c_rx_sdu_notifier_),
   ev_manager(ev_manager_),
-  logger(srslog::fetch_basic_logger("F1AP-DU"))
+  logger(srslog::fetch_basic_logger("DU-F1AP"))
 {
 }
 
@@ -78,7 +78,7 @@ f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&      ue_ctxt_,
   srb_id(srb_id_),
   f1c_notifier(f1c_notifier_),
   sdu_notifier(f1c_sdu_notifier_),
-  logger(srslog::fetch_basic_logger("F1AP-DU"))
+  logger(srslog::fetch_basic_logger("DU-F1AP"))
 {
 }
 

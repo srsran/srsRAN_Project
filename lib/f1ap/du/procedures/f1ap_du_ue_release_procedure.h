@@ -66,7 +66,7 @@ private:
   }
 
   const asn1::f1ap::ue_context_release_cmd_s msg;
-  srslog::basic_logger&                      logger = srslog::fetch_basic_logger("F1AP-DU");
+  srslog::basic_logger&                      logger = srslog::fetch_basic_logger("DU-F1AP");
   f1ap_du_ue&                                ue;
 };
 
