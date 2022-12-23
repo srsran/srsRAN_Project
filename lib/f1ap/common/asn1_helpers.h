@@ -22,7 +22,4 @@ namespace srsgnb {
 /// \return The CGI converted to flat internal struct.
 nr_cell_global_id_t cgi_from_asn1(const asn1::f1ap::nrcgi_s& asn1_cgi);
 
-/// \brief Converts GTP Tunnel identifier to equivalent ASN.1 struct.
-asn1::f1ap::gtp_tunnel_s gtp_tunnel_to_asn1(const up_transport_layer_info& tun);
-
 } // namespace srsgnb

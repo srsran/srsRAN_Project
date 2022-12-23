@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/strong_type.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <arpa/inet.h>
 #include <string>
 
@@ -40,8 +41,12 @@ public:
 
   std::string to_string() const { return fmt::format("{}", *this); }
 
-  uint32_t to_number() const { return addr.s_addr; }
-  void     from_number(uint32_t number) { addr.s_addr = number; }
+  uint32_t                 to_number() const { return addr.s_addr; }
+  transport_layer_address& from_number(uint32_t number)
+  {
+    addr.s_addr = number;
+    return *this;
+  }
 
   const struct in_addr& native() const { return addr; }
   struct in_addr&       native() { return addr; }

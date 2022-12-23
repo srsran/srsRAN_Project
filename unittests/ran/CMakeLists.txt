@@ -71,3 +71,7 @@ add_test(ssb_mapping_test ssb_mapping_test)
 add_executable(bcd_helpers_test bcd_helpers_test.cpp)
 target_link_libraries(bcd_helpers_test srsgnb_support gtest gtest_main)
 gtest_discover_tests(bcd_helpers_test)
+
+add_executable(up_transport_layer_info_test up_transport_layer_info_test.cpp)
+target_link_libraries(up_transport_layer_info_test srsgnb_support gtest gtest_main)
+gtest_discover_tests(up_transport_layer_info_test)
