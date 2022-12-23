@@ -33,21 +33,5 @@ inline amf_ue_id_t uint_to_amf_ue_id(std::underlying_type_t<amf_ue_id_t> id)
   return static_cast<amf_ue_id_t>(id);
 }
 
-/// \brief RAN_UE_ID (non ASN1 type of RAN_UE_NGAP_ID).
-/// \remark See TS 38.413 Section 9.3.3.2: RAN_UE_NGAP_ID valid values: (0..2^32-1)
-enum class ran_ue_id_t : uint64_t { min = 0, max = std::numeric_limits<uint64_t>::max(), invalid = 0x1ffffffff };
-
-/// Convert RAN_UE_ID type to integer.
-inline uint64_t ran_ue_id_to_uint(ran_ue_id_t id)
-{
-  return static_cast<uint64_t>(id);
-}
-
-/// Convert integer to RAN_UE_ID type.
-inline ran_ue_id_t uint_to_ran_ue_id(std::underlying_type_t<ran_ue_id_t> id)
-{
-  return static_cast<ran_ue_id_t>(id);
-}
-
 } // namespace srs_cu_cp
 } // namespace srsgnb

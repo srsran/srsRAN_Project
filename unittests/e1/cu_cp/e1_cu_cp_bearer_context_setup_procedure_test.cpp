@@ -39,7 +39,6 @@ TEST_F(e1_cu_cp_test, when_bearer_setup_response_received_then_procedure_success
 
   EXPECT_TRUE(t.ready());
   EXPECT_TRUE(t.get().success);
-  EXPECT_EQ(t.get().response->gnb_cu_up_ue_e1_ap_id.value, 3U);
 }
 
 /// Test the unsuccessful Bearer context setup procedure
@@ -66,5 +65,4 @@ TEST_F(e1_cu_cp_test, when_bearer_setup_failure_received_then_procedure_unsucces
 
   EXPECT_TRUE(t.ready());
   EXPECT_FALSE(t.get().success);
-  EXPECT_EQ(t.get().failure->gnb_cu_up_ue_e1_ap_id.value, 3U);
 }

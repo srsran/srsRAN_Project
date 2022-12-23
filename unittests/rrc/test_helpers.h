@@ -13,6 +13,7 @@
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/ue_context.h"
+#include "srsgnb/e1/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsgnb/rrc/rrc_ue.h"
 #include "srsgnb/support/async/async_task_loop.h"
 
@@ -193,26 +194,25 @@ private:
 class dummy_rrc_ue_e1_control_notifier : public rrc_ue_e1_control_notifier
 {
 public:
-  async_task<rrc_ue_bearer_context_setup_response_message>
-  on_bearer_context_setup_request(const rrc_ue_bearer_context_setup_request_message& msg) override
+  async_task<e1ap_bearer_context_setup_response>
+  on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& request) override
   {
-    return launch_async([res = rrc_ue_bearer_context_setup_response_message{}](
-                            coro_context<async_task<rrc_ue_bearer_context_setup_response_message>>& ctx) mutable {
+    return launch_async([res = e1ap_bearer_context_setup_response{}](
+                            coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
       res.success = true;
       CORO_RETURN(res);
     });
   }
 
-  async_task<rrc_ue_bearer_context_modification_response_message>
-  on_bearer_context_modification_request(const rrc_ue_bearer_context_modification_request_message& msg) override
+  async_task<e1ap_bearer_context_modification_response>
+  on_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request) override
   {
-    return launch_async(
-        [res = rrc_ue_bearer_context_modification_response_message{}](
-            coro_context<async_task<rrc_ue_bearer_context_modification_response_message>>& ctx) mutable {
-          CORO_BEGIN(ctx);
-          CORO_RETURN(res);
-        });
+    return launch_async([res = e1ap_bearer_context_modification_response{}](
+                            coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(res);
+    });
   }
 };
 

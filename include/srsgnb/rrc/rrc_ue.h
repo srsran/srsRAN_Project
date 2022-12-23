@@ -16,6 +16,7 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsgnb/e1/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/up_transport_layer_info.h"
 #include "srsgnb/rlc/rlc_config.h"
@@ -152,122 +153,6 @@ public:
   on_new_pdu_session_resource_setup_request(rrc_ue_ue_context_modification_request_message& msg) = 0;
 };
 
-struct rrc_ue_bearer_context_setup_request_message {
-  std::vector<cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
-  uint64_t                                      ue_aggregate_maximum_bit_rate_dl;
-};
-
-struct rrc_ue_up_params_item {
-  up_transport_layer_info up_tnl_info;
-  uint8_t                 cell_group_id;
-};
-
-struct rrc_ue_qos_flow_item {
-  uint8_t qos_flow_id;
-};
-
-struct rrc_ue_qos_flow_failed_item {
-  uint8_t       qos_flow_id;
-  cu_cp_cause_t cause;
-};
-
-struct rrc_ue_data_forwarding_info {
-  optional<up_transport_layer_info> ul_data_forwarding;
-  optional<up_transport_layer_info> dl_data_forwarding;
-};
-
-struct rrc_ue_drb_setup_item_ng_ran {
-  drb_id_t                                 drb_id;
-  std::vector<rrc_ue_up_params_item>       ul_up_transport_params;
-  std::vector<rrc_ue_qos_flow_item>        flow_setup_list;
-  std::vector<rrc_ue_qos_flow_failed_item> flow_failed_list;
-  optional<rrc_ue_data_forwarding_info>    drb_data_forwarding_info_resp;
-};
-
-struct rrc_ue_drb_failed_item_ng_ran {
-  drb_id_t      drb_id;
-  cu_cp_cause_t cause;
-};
-
-struct rrc_ue_pdu_session_resource_setup_modification_item {
-  uint16_t                                   pdu_session_id;
-  up_transport_layer_info                    ng_dl_up_tnl_info;
-  std::vector<rrc_ue_drb_setup_item_ng_ran>  drb_setup_list_ng_ran;
-  std::vector<rrc_ue_drb_failed_item_ng_ran> drb_failed_list_ng_ran;
-  optional<cu_cp_security_result>            security_result;
-  optional<rrc_ue_data_forwarding_info>      pdu_session_data_forwarding_info_resp;
-  optional<bool>                             ng_dl_up_unchanged;
-};
-
-struct rrc_ue_pdu_session_resource_failed_item {
-  uint16_t      pdu_session_id;
-  cu_cp_cause_t cause;
-};
-
-struct rrc_ue_bearer_context_setup_response_message {
-  bool success;
-  // Bearer Context Setup Response
-  std::vector<rrc_ue_pdu_session_resource_setup_modification_item> pdu_session_resource_setup_list;
-  std::vector<rrc_ue_pdu_session_resource_failed_item>             pdu_session_resource_failed_list;
-
-  // Bearer Context Setup Failure
-  optional<cu_cp_cause_t> cause;
-
-  // Common
-  optional<rrc_ue_crit_diagnostics> crit_diagnostics;
-};
-
-struct rrc_ue_bearer_context_modification_request_message {};
-
-struct rrc_ue_pdcp_count {
-  uint32_t pdcp_sn;
-  uint64_t hfn;
-};
-
-struct rrc_ue_drb_status_transfer {
-  uint64_t          receive_statusof_pdcpsdu;
-  rrc_ue_pdcp_count count_value;
-};
-
-struct rrc_ue_pdcp_sn_status_info {
-  rrc_ue_drb_status_transfer pdcp_status_transfer_ul;
-  rrc_ue_pdcp_count          pdcp_status_transfer_dl;
-};
-
-struct rrc_ue_drb_modified_item_ng_ran {
-  drb_id_t                                 drb_id;
-  std::vector<rrc_ue_up_params_item>       ul_up_transport_params;
-  std::vector<rrc_ue_qos_flow_item>        flow_setup_list;
-  std::vector<rrc_ue_qos_flow_failed_item> flow_failed_list;
-  optional<rrc_ue_pdcp_sn_status_info>     pdcp_sn_status_info;
-};
-
-struct rrc_ue_pdu_session_resource_modified_item {
-  uint16_t                                     pdu_session_id;
-  up_transport_layer_info                      ng_dl_up_tnl_info;
-  std::vector<rrc_ue_drb_setup_item_ng_ran>    drb_setup_list_ng_ran;
-  std::vector<rrc_ue_drb_failed_item_ng_ran>   drb_failed_list_ng_ran;
-  std::vector<rrc_ue_drb_modified_item_ng_ran> drb_modified_list_ng_ran;
-  std::vector<rrc_ue_drb_failed_item_ng_ran>   drb_failed_to_modify_list_ng_ran;
-  optional<cu_cp_security_result>              security_result;
-  optional<rrc_ue_data_forwarding_info>        pdu_session_data_forwarding_info_resp;
-};
-
-struct rrc_ue_bearer_context_modification_response_message {
-  bool success;
-  // Bearer Context Modification Response
-  std::vector<rrc_ue_pdu_session_resource_setup_modification_item> pdu_session_resource_setup_list;
-  std::vector<rrc_ue_pdu_session_resource_failed_item>             pdu_session_resource_failed_list;
-  std::vector<rrc_ue_pdu_session_resource_modified_item>           pdu_session_resource_modified_list;
-  std::vector<rrc_ue_pdu_session_resource_failed_item>             pdu_session_resource_failed_to_modify_list;
-
-  // Bearer Context Modification Failure
-  optional<cu_cp_cause_t> cause;
-
-  // Common
-  optional<rrc_ue_crit_diagnostics> crit_diagnostics;
-};
-
 /// Interface to notify the E1 about control messages.
 class rrc_ue_e1_control_notifier
 {
@@ -275,12 +160,12 @@ public:
   virtual ~rrc_ue_e1_control_notifier() = default;
 
   /// \brief Notify about the reception of a new Bearer Context Setup Request.
-  virtual async_task<rrc_ue_bearer_context_setup_response_message>
-  on_bearer_context_setup_request(const rrc_ue_bearer_context_setup_request_message& msg) = 0;
+  virtual async_task<e1ap_bearer_context_setup_response>
+  on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& request) = 0;
 
   /// \brief Notify about the reception of a new Bearer Context Modification Request.
-  virtual async_task<rrc_ue_bearer_context_modification_response_message>
-  on_bearer_context_modification_request(const rrc_ue_bearer_context_modification_request_message& msg) = 0;
+  virtual async_task<e1ap_bearer_context_modification_response>
+  on_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request) = 0;
 };
 
 /// Interface to configure security in a SRB

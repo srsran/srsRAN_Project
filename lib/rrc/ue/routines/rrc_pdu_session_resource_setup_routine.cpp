@@ -56,7 +56,7 @@ void rrc_pdu_session_resource_setup_routine::operator()(
 
   {
     // prepare BearerContextSetupRequest
-    bearer_contest_setup_request.pdu_session_res_setup_items.resize(1);
+    bearer_contest_setup_request.pdu_session_res_to_setup_list.resize(1);
 
     // call E1 procedure
     CORO_AWAIT_VALUE(bearer_context_setup_response,

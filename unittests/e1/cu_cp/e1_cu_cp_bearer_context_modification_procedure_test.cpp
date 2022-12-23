@@ -21,8 +21,7 @@ TEST_F(e1_cu_cp_test, when_bearer_modification_response_received_then_procedure_
   // Action 1: Launch Bearer Context modification procedure
   e1ap_bearer_context_modification_request request_msg = {};
   test_logger.info("Launch bearer context modification procedure...");
-  async_task<e1ap_bearer_context_modification_response> t =
-      e1->handle_bearer_context_modification_request(request_msg);
+  async_task<e1ap_bearer_context_modification_response> t = e1->handle_bearer_context_modification_request(request_msg);
   lazy_task_launcher<e1ap_bearer_context_modification_response> t_launcher(t);
 
   // Status: CU-UP received Bearer Context modification Request message.
@@ -49,8 +48,7 @@ TEST_F(e1_cu_cp_test, when_bearer_modification_failure_received_then_procedure_u
   // Action 1: Launch Bearer Context modification procedure
   e1ap_bearer_context_modification_request request_msg = {};
   test_logger.info("Launch bearer context modification procedure...");
-  async_task<e1ap_bearer_context_modification_response> t =
-      e1->handle_bearer_context_modification_request(request_msg);
+  async_task<e1ap_bearer_context_modification_response> t = e1->handle_bearer_context_modification_request(request_msg);
   lazy_task_launcher<e1ap_bearer_context_modification_response> t_launcher(t);
 
   // Status: CU-UP received Bearer Context modification Request message.

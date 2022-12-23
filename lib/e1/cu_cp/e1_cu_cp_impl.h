@@ -80,7 +80,7 @@ private:
 
   srslog::basic_logger& logger;
 
-  std::array<e1ap_ue_context, MAX_NOF_UES> cu_cp_ue_id_to_e1ap_ue_context;
+  std::array<e1ap_ue_context, MAX_NOF_CU_UES> cu_cp_ue_id_to_e1ap_ue_context;
 
   // nofifiers and handles
 

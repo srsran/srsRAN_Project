@@ -52,14 +52,13 @@ private:
   srslog::basic_logger&                 logger;
 
   // (sub-)routine requests
-  rrc_ue_bearer_context_setup_request_message    bearer_contest_setup_request;
+  e1ap_bearer_context_setup_request              bearer_contest_setup_request;
   rrc_ue_ue_context_modification_request_message ue_context_mod_request;
   rrc_reconfiguration_procedure_args             reconfig_args;
 
   // (sub-)routine results
   cu_cp_pdu_session_resource_setup_response_message response_msg;
-  rrc_ue_bearer_context_setup_response_message
-      bearer_context_setup_response; // to initially setup the DRBs at the CU-UP
+  e1ap_bearer_context_setup_response bearer_context_setup_response; // to initially setup the DRBs at the CU-UP
   rrc_ue_ue_context_modification_response_message ue_context_modification_response; // to inform DU about the new DRBs
   bool                                            rrc_reconfig_result = false;      // the final UE reconfiguration
 };

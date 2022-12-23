@@ -10,6 +10,7 @@
 
 #include "e1_cu_cp_impl.h"
 #include "../../ran/gnb_format.h"
+#include "e1ap_asn1_helpers.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 
 using namespace srsgnb;
@@ -71,15 +72,40 @@ async_task<cu_cp_e1_setup_response> e1_cu_cp_impl::handle_cu_cp_e1_setup_request
 }
 
 async_task<e1ap_bearer_context_setup_response>
-e1_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg)
+e1_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& request)
 {
-  asn1::e1ap::bearer_context_setup_request_s request = {};
-  return launch_async<e1_bearer_context_setup_procedure>(request, pdu_notifier, *events, logger);
+  // add new e1ap_ue_context
+  auto& ue_context            = cu_cp_ue_id_to_e1ap_ue_context[cu_cp_ue_id_to_uint(request.cu_cp_ue_id)];
+  ue_context.cu_cp_ue_e1ap_id = get_next_cu_cp_ue_id();
+
+  e1_message e1_msg;
+  e1_msg.pdu.set_init_msg();
+  e1_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
+
+  auto& bearer_context_setup_request = e1_msg.pdu.init_msg().value.bearer_context_setup_request();
+
+  fill_asn1_bearer_context_setup_request(bearer_context_setup_request, request);
+  bearer_context_setup_request->gnb_cu_cp_ue_e1_ap_id.value = gnb_cu_cp_ue_e1ap_id_to_uint(ue_context.cu_cp_ue_e1ap_id);
+
+  return launch_async<e1_bearer_context_setup_procedure>(e1_msg, ue_context, pdu_notifier, *events, logger);
 }
 
 async_task<e1ap_bearer_context_modification_response>
 e1_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request)
 {
+  // Get UE context
+  auto& ue_context = cu_cp_ue_id_to_e1ap_ue_context[cu_cp_ue_id_to_uint(request.cu_cp_ue_id)];
+
+  e1_message e1_msg;
+  e1_msg.pdu.set_init_msg();
+  e1_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
+
+  auto& bearer_context_mod_request                        = e1_msg.pdu.init_msg().value.bearer_context_mod_request();
+  bearer_context_mod_request->gnb_cu_cp_ue_e1_ap_id.value = gnb_cu_cp_ue_e1ap_id_to_uint(ue_context.cu_cp_ue_e1ap_id);
+  bearer_context_mod_request->gnb_cu_up_ue_e1_ap_id.value = gnb_cu_up_ue_e1ap_id_to_uint(ue_context.cu_up_ue_e1ap_id);
+
+  fill_asn1_bearer_context_modification_request(bearer_context_mod_request, request);
+
   return launch_async<e1_bearer_context_modification_procedure>(request.msg, pdu_notifier, *events, logger);
 }
 

@@ -9,16 +9,18 @@
  */
 
 #include "e1_bearer_context_setup_procedure.h"
+#include "../e1ap_asn1_helpers.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
 using namespace asn1::e1ap;
 
-e1_bearer_context_setup_procedure::e1_bearer_context_setup_procedure(const bearer_context_setup_request_s& request_,
-                                                                     e1_message_notifier&                  e1_notif_,
-                                                                     e1_event_manager&                     ev_mng_,
-                                                                     srslog::basic_logger&                 logger_) :
-  request(request_), e1_notifier(e1_notif_), ev_mng(ev_mng_), logger(logger_)
+e1_bearer_context_setup_procedure::e1_bearer_context_setup_procedure(const e1_message&     request_,
+                                                                     e1ap_ue_context&      ue_ctxt_,
+                                                                     e1_message_notifier&  e1_notif_,
+                                                                     e1_event_manager&     ev_mng_,
+                                                                     srslog::basic_logger& logger_) :
+  request(request_), ue_ctxt(ue_ctxt_), e1_notifier(e1_notif_), ev_mng(ev_mng_), logger(logger_)
 {
 }
 
@@ -38,20 +40,14 @@ void e1_bearer_context_setup_procedure::operator()(coro_context<async_task<e1ap_
 
 void e1_bearer_context_setup_procedure::send_bearer_context_setup_request()
 {
-  // Pack message into PDU
-  e1_message e1_bearer_ctxt_setup_request_msg;
-  e1_bearer_ctxt_setup_request_msg.pdu.set_init_msg();
-  e1_bearer_ctxt_setup_request_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
-  e1_bearer_ctxt_setup_request_msg.pdu.init_msg().value.bearer_context_setup_request() = request;
-
   if (logger.debug.enabled()) {
     asn1::json_writer js;
-    e1_bearer_ctxt_setup_request_msg.pdu.to_json(js);
+    request.pdu.to_json(js);
     logger.debug("Containerized Bearer Context Setup Request message: {}", js.to_string());
   }
 
   // send Bearer context setup request message
-  e1_notifier.on_new_message(e1_bearer_ctxt_setup_request_msg);
+  e1_notifier.on_new_message(request);
 }
 
 e1ap_bearer_context_setup_response e1_bearer_context_setup_procedure::create_bearer_context_setup_result()
@@ -60,13 +56,21 @@ e1ap_bearer_context_setup_response e1_bearer_context_setup_procedure::create_bea
 
   if (e1_bearer_ctxt_setup_outcome.has_value()) {
     logger.info("Received E1AP Bearer Context Setup Response.");
-    res.response = *e1_bearer_ctxt_setup_outcome.value();
-    res.success  = true;
+    // Add CU-UP UE E1AP ID to UE context
+    ue_ctxt.cu_up_ue_e1ap_id =
+        int_to_gnb_cu_up_ue_e1ap_id((*e1_bearer_ctxt_setup_outcome.value())->gnb_cu_up_ue_e1_ap_id.value);
+    fill_e1ap_bearer_context_setup_response(res, *e1_bearer_ctxt_setup_outcome.value());
   } else {
     logger.info("Received E1AP Bearer Context Setup Failure. Cause: {}",
                 get_cause_str((*e1_bearer_ctxt_setup_outcome.error())->cause.value));
-    res.failure = *e1_bearer_ctxt_setup_outcome.error();
-    res.success = false;
+
+    // Add CU-UP UE E1AP ID to UE context
+    if ((*e1_bearer_ctxt_setup_outcome.error())->gnb_cu_up_ue_e1_ap_id_present) {
+      ue_ctxt.cu_up_ue_e1ap_id =
+          int_to_gnb_cu_up_ue_e1ap_id((*e1_bearer_ctxt_setup_outcome.error())->gnb_cu_up_ue_e1_ap_id.value);
+    }
+    fill_e1ap_bearer_context_setup_response(res, *e1_bearer_ctxt_setup_outcome.error());
   }
+
   return res;
 }
