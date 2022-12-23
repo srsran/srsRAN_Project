@@ -19,7 +19,7 @@ gtpu_demux_impl::gtpu_demux_impl() : logger(srslog::fetch_basic_logger("GTPU")) 
 bool gtpu_demux_impl::add_tunnel(uint32_t teid, gtpu_tunnel_rx_upper_layer_interface* tunnel)
 {
   if (teid_to_tunnel.find(teid) != teid_to_tunnel.end()) {
-    logger.error("Tunnel with TEID %d already exists", teid);
+    logger.error("Tunnel with TEID {} already exists", teid);
     return false;
   }
   teid_to_tunnel[teid] = tunnel;
@@ -29,7 +29,7 @@ bool gtpu_demux_impl::add_tunnel(uint32_t teid, gtpu_tunnel_rx_upper_layer_inter
 bool gtpu_demux_impl::remove_tunnel(uint32_t teid)
 {
   if (teid_to_tunnel.find(teid) == teid_to_tunnel.end()) {
-    logger.error("Tunnel with TEID %d does not exist", teid);
+    logger.error("Tunnel with TEID {} does not exist", teid);
     return false;
   }
   teid_to_tunnel.erase(teid);
@@ -46,7 +46,7 @@ void gtpu_demux_impl::handle_pdu(byte_buffer pdu)
 
   const auto& it = teid_to_tunnel.find(teid);
   if (it == teid_to_tunnel.end()) {
-    logger.error("Tunnel with TEID %d does not exist. Dropping PDU.", teid);
+    logger.error("Tunnel with TEID {} does not exist. Dropping PDU.", teid);
     return;
   }
 
