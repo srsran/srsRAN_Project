@@ -76,7 +76,7 @@ rrc_ue_ue_context_modification_request_message generate_ue_context_mod_request()
   drb_setup_msg.drb_id                                         = 1;
   drb_setup_msg.rlc                                            = rlc_mode::am;
 
-  up_transport_layer_info gtp_tunnel = {"", int_to_gtp_teid(1)};
+  up_transport_layer_info gtp_tunnel = {transport_layer_address{"127.0.0.1"}, int_to_gtp_teid(1)};
   drb_setup_msg.gtp_tunnels.push_back(gtp_tunnel);
 
   qos_flow_setup_request_item mapped_flow = {};

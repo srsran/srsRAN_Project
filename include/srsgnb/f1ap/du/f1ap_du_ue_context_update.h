@@ -38,9 +38,9 @@ struct f1ap_scell_to_setup {
 
 /// \brief DRB that was setup successfully in the F1AP UE context.
 struct f1ap_drb_setup {
-  drb_id_t                      drb_id;
-  optional<lcid_t>              lcid;
-  span<up_transport_layer_info> dluptnl_info_list;
+  drb_id_t                             drb_id;
+  optional<lcid_t>                     lcid;
+  std::vector<up_transport_layer_info> dluptnl_info_list;
 };
 
 /// \brief Request from DU F1AP to DU manager to modify existing UE configuration.

@@ -9,6 +9,7 @@
  */
 
 #include "f1_du_test_helpers.h"
+#include "../common/f1_cu_test_messages.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
@@ -164,7 +165,7 @@ asn1::f1ap::drbs_to_be_setup_mod_item_s srsgnb::srs_du::generate_drb_am_mod_item
 }
 
 f1c_message
-srsgnb::srs_du::generate_f1_ue_context_modification_request(const std::initializer_list<drb_id_t> drbs_to_add)
+srsgnb::srs_du::generate_f1_ue_context_modification_request(const std::initializer_list<drb_id_t>& drbs_to_add)
 {
   using namespace asn1::f1ap;
   f1c_message msg;

@@ -34,6 +34,7 @@ target_link_libraries(f1_du_dl_rrc_message_transfer_test
         f1_du_test_helpers
         gtest
         gtest_main)
+gtest_discover_tests(f1_du_dl_rrc_message_transfer_test)
 
 add_executable(f1_du_ue_config_test f1_du_ue_config_test.cpp)
 target_link_libraries(f1_du_ue_config_test
@@ -57,6 +58,7 @@ target_link_libraries(f1ap_du_ue_context_setup_test
         f1_du_test_helpers
         gtest
         gtest_main)
+gtest_discover_tests(f1ap_du_ue_context_setup_test)
 
 add_executable(f1ap_du_ue_context_modification_test ue_context_modification_test.cpp)
 target_link_libraries(f1ap_du_ue_context_modification_test
@@ -68,3 +70,4 @@ target_link_libraries(f1ap_du_ue_context_modification_test
         f1_du_test_helpers
         gtest
         gtest_main)
+gtest_discover_tests(f1ap_du_ue_context_modification_test)

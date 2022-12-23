@@ -120,7 +120,7 @@ f1c_message generate_f1_ue_context_setup_request(const std::initializer_list<drb
 asn1::f1ap::drbs_to_be_setup_mod_item_s generate_drb_am_mod_item(drb_id_t drbid);
 
 /// \brief Generate an F1AP UE Context Modification Request message with specified list of DRBs.
-f1c_message generate_f1_ue_context_modification_request(const std::initializer_list<drb_id_t> drbs_to_add);
+f1c_message generate_f1_ue_context_modification_request(const std::initializer_list<drb_id_t>& drbs_to_add);
 
 class dummy_f1c_rx_sdu_notifier : public f1c_rx_sdu_notifier
 {

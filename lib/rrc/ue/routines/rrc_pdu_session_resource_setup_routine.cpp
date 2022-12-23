@@ -164,7 +164,8 @@ rrc_pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result
     item.pdu_session_id = setup_msg.pdu_session_res_setup_items[0].pdu_session_id;
 
     auto& transfer                                          = item.pdu_session_resource_setup_response_transfer;
-    transfer.dlqos_flow_per_tnl_info.uptransport_layer_info = {"127.0.0.1", int_to_gtp_teid(0x12345678)};
+    transfer.dlqos_flow_per_tnl_info.uptransport_layer_info = {transport_layer_address{"127.0.0.1"},
+                                                               int_to_gtp_teid(0x12345678)};
 
     cu_cp_associated_qos_flow qos_flow;
     qos_flow.qos_flow_id = 1;
