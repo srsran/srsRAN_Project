@@ -112,7 +112,7 @@ asn1::f1ap::drbs_to_be_setup_item_s srsgnb::srs_du::generate_drb_am_setup_item(d
   return drb;
 }
 
-f1c_message srsgnb::srs_du::generate_f1_ue_context_setup_request(const std::initializer_list<drb_id_t> drbs_to_add)
+f1c_message srsgnb::srs_du::generate_f1_ue_context_setup_request(const std::initializer_list<drb_id_t>& drbs_to_add)
 {
   using namespace asn1::f1ap;
   f1c_message msg;
@@ -225,7 +225,8 @@ f1ap_du_test::ue_test_context* f1ap_du_test::run_f1_ue_create(du_ue_index_t ue_i
 {
   unsigned srb1_idx = srb_id_to_uint(srb_id_t::srb1);
   test_ues.emplace(ue_index);
-  test_ues[ue_index].crnti = to_rnti(0x4601 + ue_index);
+  test_ues[ue_index].crnti    = to_rnti(0x4601 + ue_index);
+  test_ues[ue_index].ue_index = ue_index;
   test_ues[ue_index].f1c_bearers.emplace(srb_id_to_uint(srb_id_t::srb1));
   test_ues[ue_index].f1c_bearers[srb1_idx].srb_id = srb_id_t::srb1;
 

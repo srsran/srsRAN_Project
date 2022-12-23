@@ -9,7 +9,6 @@
  */
 
 #include "f1_du_test_helpers.h"
-#include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -17,23 +16,39 @@ using namespace srsgnb;
 using namespace srs_du;
 using namespace asn1::f1ap;
 
-TEST_F(f1ap_du_test, when_f1ap_ue_context_setup_request_is_received_f1ap_notifies_du_of_ue_context_update)
+class f1ap_du_ue_context_setup_test : public f1ap_du_test
 {
-  // Test Preamble.
-  du_ue_index_t ue_index = to_du_ue_index(0);
-  run_f1_setup_procedure();
-  run_f1_ue_create(ue_index);
-  this->f1c_du_cfg_handler.next_ue_context_update_response.result                 = true;
-  this->f1c_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
+protected:
+  f1ap_du_ue_context_setup_test()
+  {
+    du_ue_index_t ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX));
+    run_f1_setup_procedure();
+    test_ue = run_f1_ue_create(ue_index);
+  }
 
-  // Test Section - Send UE CONTEXT SETUP REQUEST to F1AP.
-  f1c_message msg = generate_f1_ue_context_setup_request({drb_id_t::drb1});
-  f1ap->handle_message(msg);
+  void start_procedure(const f1c_message& msg)
+  {
+    this->f1c_du_cfg_handler.next_ue_cfg_req.ue_index = test_ue->ue_index;
+    this->f1c_du_cfg_handler.next_ue_cfg_req.f1c_bearers_to_add.resize(1);
+    this->f1c_du_cfg_handler.next_ue_cfg_req.f1c_bearers_to_add[0].srb_id = srb_id_t::srb2;
+
+    this->f1c_du_cfg_handler.next_ue_context_update_response.result                 = true;
+    this->f1c_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
+
+    f1ap->handle_message(msg);
+  }
+
+  ue_test_context* test_ue = nullptr;
+};
+
+TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_notifies_du_of_ue_context_update)
+{
+  start_procedure(generate_f1_ue_context_setup_request({drb_id_t::drb1}));
 
   // DU manager receives UE Context Update Request.
   ASSERT_TRUE(this->f1c_du_cfg_handler.last_ue_context_update_req.has_value());
   const f1ap_ue_context_update_request& req = *this->f1c_du_cfg_handler.last_ue_context_update_req;
-  ASSERT_EQ(req.ue_index, ue_index);
+  ASSERT_EQ(req.ue_index, test_ue->ue_index);
   ASSERT_EQ(req.srbs_to_setup.size(), 1);
   ASSERT_EQ(req.srbs_to_setup[0], srb_id_t::srb2);
   ASSERT_EQ(req.drbs_to_setup.size(), 1);
@@ -41,18 +56,9 @@ TEST_F(f1ap_du_test, when_f1ap_ue_context_setup_request_is_received_f1ap_notifie
   ASSERT_FALSE(req.drbs_to_setup[0].lcid.has_value());
 }
 
-TEST_F(f1ap_du_test, when_f1ap_ue_context_setup_request_is_received_f1ap_responds_back_with_ue_context_setup_response)
+TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_responds_back_with_ue_context_setup_response)
 {
-  // Test Preamble.
-  du_ue_index_t ue_index = to_du_ue_index(0);
-  run_f1_setup_procedure();
-  run_f1_ue_create(ue_index);
-  this->f1c_du_cfg_handler.next_ue_context_update_response.result                 = true;
-  this->f1c_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
-
-  // Test Section - Send UE CONTEXT SETUP REQUEST to F1AP.
-  f1c_message msg = generate_f1_ue_context_setup_request({drb_id_t::drb1});
-  f1ap->handle_message(msg);
+  start_procedure(generate_f1_ue_context_setup_request({drb_id_t::drb1}));
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
   ASSERT_EQ(this->msg_notifier.last_f1c_msg.pdu.type().value, f1_ap_pdu_c::types_opts::successful_outcome);
@@ -61,7 +67,7 @@ TEST_F(f1ap_du_test, when_f1ap_ue_context_setup_request_is_received_f1ap_respond
   ue_context_setup_resp_s& resp =
       this->msg_notifier.last_f1c_msg.pdu.successful_outcome().value.ue_context_setup_resp();
   ASSERT_TRUE(resp->c_rnti_present);
-  ASSERT_EQ(resp->c_rnti->value, this->test_ues[ue_index].crnti);
+  ASSERT_EQ(resp->c_rnti->value, test_ue->crnti);
   ASSERT_FALSE(resp->drbs_failed_to_be_setup_list_present);
   ASSERT_TRUE(resp->srbs_setup_list_present);
   ASSERT_EQ(resp->srbs_setup_list->size(), 1);
@@ -74,31 +80,19 @@ TEST_F(f1ap_du_test, when_f1ap_ue_context_setup_request_is_received_f1ap_respond
             this->f1c_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
 }
 
-TEST_F(f1ap_du_test, when_f1ap_ue_context_setup_request_is_received_the_rrc_container_is_sent_dl_via_srb1)
+TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_the_rrc_container_is_sent_dl_via_srb1)
 {
-  // Test Preamble.
-  du_ue_index_t ue_index = to_du_ue_index(0);
-  run_f1_setup_procedure();
-  run_f1_ue_create(ue_index);
-  this->f1c_du_cfg_handler.next_ue_context_update_response.result                 = true;
-  this->f1c_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
-
-  // Test Section - Send UE CONTEXT SETUP REQUEST to F1AP.
   f1c_message msg = generate_f1_ue_context_setup_request({drb_id_t::drb1});
-  f1ap->handle_message(msg);
+  start_procedure(msg);
 
   // F1AP sends RRC Container present in UE CONTEXT SETUP REQUEST via SRB1.
-  ASSERT_EQ(test_ues[ue_index].f1c_bearers[1].rx_sdu_notifier.last_pdu,
+  ASSERT_EQ(test_ue->f1c_bearers[1].rx_sdu_notifier.last_pdu,
             msg.pdu.init_msg().value.ue_context_setup_request()->rrc_container.value);
 }
 
-TEST_F(f1ap_du_test, when_f1ap_ue_context_setup_request_is_received_new_srbs_become_active)
+TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_new_srbs_become_active)
 {
-  // Test Preamble.
-  du_ue_index_t ue_index = to_du_ue_index(0);
-  run_f1_setup_procedure();
-  run_f1_ue_create(ue_index);
-  run_ue_context_setup_procedure(ue_index, generate_f1_ue_context_setup_request({drb_id_t::drb1}));
+  run_ue_context_setup_procedure(test_ue->ue_index, generate_f1_ue_context_setup_request({drb_id_t::drb1}));
 
   // UL data through created SRB2 reaches F1-C.
   ASSERT_EQ(this->f1c_du_cfg_handler.last_ue_cfg_response->f1c_bearers_added.size(), 1);

@@ -114,7 +114,7 @@ f1c_message generate_f1_dl_rrc_message_transfer(srb_id_t srb_id, const byte_buff
 asn1::f1ap::drbs_to_be_setup_item_s generate_drb_am_setup_item(drb_id_t drbid);
 
 /// \brief Generate an F1AP UE Context Setup Request message with specified list of DRBs.
-f1c_message generate_f1_ue_context_setup_request(const std::initializer_list<drb_id_t> drbs_to_add);
+f1c_message generate_f1_ue_context_setup_request(const std::initializer_list<drb_id_t>& drbs_to_add);
 
 /// \brief Generate F1AP ASN.1 DRB AM Setup configuration.
 asn1::f1ap::drbs_to_be_setup_mod_item_s generate_drb_am_mod_item(drb_id_t drbid);
@@ -161,6 +161,7 @@ protected:
     f1u_bearer*               bearer = nullptr;
   };
   struct ue_test_context {
+    du_ue_index_t                                ue_index;
     rnti_t                                       crnti;
     slotted_array<f1c_test_bearer, MAX_NOF_SRBS> f1c_bearers;
     slotted_array<f1u_test_bearer, MAX_NOF_DRBS> f1u_bearers;
