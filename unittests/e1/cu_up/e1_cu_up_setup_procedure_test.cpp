@@ -26,7 +26,7 @@ TEST_F(e1_cu_up_test, when_cu_cp_e1_setup_request_valid_then_connect_cu_cp)
   test_logger.info("TEST: Receive E1SetupRequest message...");
 
   // Generate E1SetupRequest
-  e1_message cu_cp_e1_setup_msg = generate_cu_cp_e1_setup_request_message();
+  e1_message cu_cp_e1_setup_msg = generate_cu_cp_e1_setup_request();
 
   e1->handle_message(cu_cp_e1_setup_msg);
 
@@ -35,8 +35,8 @@ TEST_F(e1_cu_up_test, when_cu_cp_e1_setup_request_valid_then_connect_cu_cp)
 
   // Action 3: Transmit E1SetupResponse message
   test_logger.info("TEST: Transmit E1SetupResponse message...");
-  cu_cp_e1_setup_response_message msg = {};
-  msg.success                         = true;
+  cu_cp_e1_setup_response msg = {};
+  msg.success                 = true;
   e1->handle_cu_cp_e1_setup_response(msg);
 
   // Check the generated PDU is indeed the F1 Setup response
@@ -49,7 +49,7 @@ TEST_F(e1_cu_up_test, when_cu_cp_e1_setup_request_valid_then_connect_cu_cp)
 TEST_F(e1_cu_up_test, when_cu_cp_e1_setup_request_cant_be_handled_then_reject_cu_cp)
 {
   // Generate E1SetupRequest
-  e1_message cu_cp_e1_setup_msg = generate_cu_cp_e1_setup_request_message();
+  e1_message cu_cp_e1_setup_msg = generate_cu_cp_e1_setup_request();
 
   e1->handle_message(cu_cp_e1_setup_msg);
 
@@ -58,8 +58,8 @@ TEST_F(e1_cu_up_test, when_cu_cp_e1_setup_request_cant_be_handled_then_reject_cu
 
   // Action 3: Transmit E1SetupFailure message
   test_logger.info("TEST: Transmit E1SetupFailure message...");
-  cu_cp_e1_setup_response_message msg = {};
-  msg.success                         = false;
+  cu_cp_e1_setup_response msg = {};
+  msg.success                 = false;
   e1->handle_cu_cp_e1_setup_response(msg);
 
   // Check the generated PDU is indeed the E1 Setup failure

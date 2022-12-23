@@ -134,7 +134,7 @@ enum class cu_cp_cause_t : uint8_t {
   nulltype      = 6
 };
 
-struct qos_characteristics {
+struct cu_cp_qos_characteristics {
   bool        is_dynamic_5qi;
   uint16_t    five_qi;
   uint8_t     prio_level_arp;
@@ -143,11 +143,11 @@ struct qos_characteristics {
 };
 
 struct qos_flow_setup_request_item {
-  uint8_t               qos_flow_id;
-  qos_characteristics   qos_charact;
-  optional<uint8_t>     erab_id;
-  optional<std::string> add_qos_flow_info;
-  optional<std::string> reflective_qos_attribute;
+  uint8_t                   qos_flow_id;
+  cu_cp_qos_characteristics qos_characteristics;
+  optional<uint8_t>         erab_id;
+  optional<std::string>     add_qos_flow_info;
+  optional<std::string>     reflective_qos_attribute;
 };
 
 struct cu_cp_s_nssai {

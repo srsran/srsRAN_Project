@@ -15,7 +15,7 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request_message&         e1_request,
+inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request&                 e1_request,
                                                    const rrc_ue_bearer_context_setup_request_message& msg)
 {
   e1_request.sys_bearer_context_setup_request.set_ng_ran_bearer_context_setup_request();
@@ -56,13 +56,13 @@ inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
   e1_request.uedl_aggregate_maximum_bit_rate = msg.ue_aggregate_maximum_bit_rate_dl;
 }
 
-inline void fill_rrc_ue_bearer_context_setup_response_message(
-    rrc_ue_bearer_context_setup_response_message&     res,
-    const e1ap_bearer_context_setup_response_message& e1_bearer_context_setup_resp_msg)
+inline void
+fill_rrc_ue_bearer_context_setup_response(rrc_ue_bearer_context_setup_response_message& res,
+                                          const e1ap_bearer_context_setup_response&     e1_bearer_context_setup_resp)
 {
-  if (e1_bearer_context_setup_resp_msg.success) {
+  if (e1_bearer_context_setup_resp.success) {
     auto& bearer_context_setup_response =
-        e1_bearer_context_setup_resp_msg.response->sys_bearer_context_setup_resp->ng_ran_bearer_context_setup_resp();
+        e1_bearer_context_setup_resp.response->sys_bearer_context_setup_resp->ng_ran_bearer_context_setup_resp();
 
     for (auto e1ap_res_setup_item : bearer_context_setup_response.pdu_session_res_setup_list.value) {
       rrc_ue_pdu_session_resource_setup_modification_item res_setup_item;
@@ -171,28 +171,28 @@ inline void fill_rrc_ue_bearer_context_setup_response_message(
     }
   } else {
     res.success = false;
-    res.cause   = e1ap_cause_to_cu_cp_cause(e1_bearer_context_setup_resp_msg.failure->cause.value);
-    if (e1_bearer_context_setup_resp_msg.failure->crit_diagnostics_present) {
+    res.cause   = e1ap_cause_to_cu_cp_cause(e1_bearer_context_setup_resp.failure->cause.value);
+    if (e1_bearer_context_setup_resp.failure->crit_diagnostics_present) {
       // TODO: Add crit diagnostics
     }
   }
 }
 
-inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request_message& e1_request,
+inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request& e1_request,
                                                           const rrc_ue_bearer_context_modification_request_message& msg)
 {
   // TODO: Add needed info to input struct and fill msg
 }
 
-inline void fill_rrc_ue_bearer_context_modification_response_message(
-    rrc_ue_bearer_context_modification_response_message&     res,
-    const e1ap_bearer_context_modification_response_message& e1_bearer_context_modification_resp_msg)
+inline void fill_rrc_ue_bearer_context_modification_response(
+    rrc_ue_bearer_context_modification_response_message& res,
+    const e1ap_bearer_context_modification_response&     e1_bearer_context_modification_resp)
 {
-  if (e1_bearer_context_modification_resp_msg.success) {
+  if (e1_bearer_context_modification_resp.success) {
     // Add NG RAN bearer context modification response
-    if (e1_bearer_context_modification_resp_msg.response->sys_bearer_context_mod_resp_present) {
-      auto& bearer_context_mod_response = e1_bearer_context_modification_resp_msg.response->sys_bearer_context_mod_resp
-                                              ->ng_ran_bearer_context_mod_resp();
+    if (e1_bearer_context_modification_resp.response->sys_bearer_context_mod_resp_present) {
+      auto& bearer_context_mod_response =
+          e1_bearer_context_modification_resp.response->sys_bearer_context_mod_resp->ng_ran_bearer_context_mod_resp();
 
       // Add PDU session resource setup list
       if (bearer_context_mod_response.pdu_session_res_setup_mod_list_present) {
@@ -468,8 +468,8 @@ inline void fill_rrc_ue_bearer_context_modification_response_message(
     }
   } else {
     res.success = false;
-    res.cause   = e1ap_cause_to_cu_cp_cause(e1_bearer_context_modification_resp_msg.failure->cause.value);
-    if (e1_bearer_context_modification_resp_msg.failure->crit_diagnostics_present) {
+    res.cause   = e1ap_cause_to_cu_cp_cause(e1_bearer_context_modification_resp.failure->cause.value);
+    if (e1_bearer_context_modification_resp.failure->crit_diagnostics_present) {
       // TODO: Add crit diagnostics
     }
   }

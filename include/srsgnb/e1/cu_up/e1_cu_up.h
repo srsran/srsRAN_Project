@@ -20,14 +20,14 @@ namespace srsgnb {
 namespace srs_cu_up {
 
 /// \brief Request to create a new UE and bearer context.
-struct e1ap_bearer_context_setup_request_message {
+struct e1ap_bearer_context_setup_request {
   asn1::e1ap::sys_bearer_context_setup_request_c request;
   asn1::fixed_octstring<3U, true>                serving_plmn;
   // TODO: add optional fields like DU-ID, etc
 };
 
 /// \brief Response to an bearer context setup request including UE index for E1 map.
-struct e1ap_bearer_context_setup_response_message {
+struct e1ap_bearer_context_setup_response {
   bool                                        success;
   ue_index_t                                  ue_index; // Valid UE index if setup was successful.
   asn1::e1ap::sys_bearer_context_setup_resp_c sys_bearer_context_setup_resp;
@@ -46,7 +46,7 @@ public:
   virtual ~e1_connection_manager() = default;
 
   /// \brief Creates and transmits the CU-CP initiated E1 Setup outcome to the CU-CP.
-  virtual void handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response_message& msg) = 0;
+  virtual void handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response& msg) = 0;
 };
 
 /// Methods used by E1 to notify the CU-CP (manager).
@@ -56,7 +56,7 @@ public:
   virtual ~e1_cu_cp_notifier() = default;
 
   /// \brief Notifies about the reception of a E1 Setup Request message.
-  virtual void on_e1_setup_request_received(const cu_cp_e1_setup_request_message& msg) = 0;
+  virtual void on_e1_setup_request_received(const cu_cp_e1_setup_request& msg) = 0;
 };
 
 /// Methods used by E1 to notify the UE Context Manager.
@@ -67,13 +67,13 @@ public:
 
   /// \brief Notifies about the reception of a E1 Setup Request message.
   /// \param[in] msg The received E1 Setup Request message.
-  virtual void on_cu_cp_e1_setup_request_received(const cu_cp_e1_setup_request_message& msg) = 0;
+  virtual void on_cu_cp_e1_setup_request_received(const cu_cp_e1_setup_request& msg) = 0;
 
   /// \brief Notifies the UE manager to create a UE context.
   /// \param[in] msg The received bearer context setup message.
   /// \return Returns a bearer context response message containing the index of the created UE context.
-  virtual e1ap_bearer_context_setup_response_message
-  on_bearer_context_setup_request_received(const e1ap_bearer_context_setup_request_message& msg) = 0;
+  virtual e1ap_bearer_context_setup_response
+  on_bearer_context_setup_request_received(const e1ap_bearer_context_setup_request& msg) = 0;
 };
 
 /// Combined entry point for E1 handling.

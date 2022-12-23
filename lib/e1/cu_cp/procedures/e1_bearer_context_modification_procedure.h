@@ -28,14 +28,14 @@ public:
                                            e1_event_manager&                               ev_mng_,
                                            srslog::basic_logger&                           logger_);
 
-  void operator()(coro_context<async_task<e1ap_bearer_context_modification_response_message>>& ctx);
+  void operator()(coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx);
 
 private:
   /// Send E1 Bearer Context Modification Request to CU-UP.
   void send_bearer_context_modification_request();
 
   /// Creates procedure result to send back to procedure caller.
-  e1ap_bearer_context_modification_response_message create_bearer_context_modification_result();
+  e1ap_bearer_context_modification_response create_bearer_context_modification_result();
 
   const asn1::e1ap::bearer_context_mod_request_s request;
   e1_message_notifier&                           e1_notifier;

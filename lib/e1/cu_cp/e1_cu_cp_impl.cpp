@@ -32,7 +32,7 @@ e1_cu_cp_impl::e1_cu_cp_impl(timer_manager&               timers_,
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 e1_cu_cp_impl::~e1_cu_cp_impl() {}
 
-void e1_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response_message& msg)
+void e1_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& msg)
 {
   // Pack message into PDU
   e1_message e1_msg;
@@ -65,27 +65,26 @@ void e1_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response
   }
 }
 
-async_task<cu_cp_e1_setup_response_message>
-e1_cu_cp_impl::handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request_message& request)
+async_task<cu_cp_e1_setup_response> e1_cu_cp_impl::handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& request)
 {
   return launch_async<cu_cp_e1_setup_procedure>(request, pdu_notifier, *events, timers, logger);
 }
 
-async_task<e1ap_bearer_context_setup_response_message>
-e1_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request_message& msg)
+async_task<e1ap_bearer_context_setup_response>
+e1_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg)
 {
   asn1::e1ap::bearer_context_setup_request_s request = {};
   return launch_async<e1_bearer_context_setup_procedure>(request, pdu_notifier, *events, logger);
 }
 
-async_task<e1ap_bearer_context_modification_response_message> e1_cu_cp_impl::handle_bearer_context_modification_request(
-    const e1ap_bearer_context_modification_request_message& request)
+async_task<e1ap_bearer_context_modification_response>
+e1_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request)
 {
   return launch_async<e1_bearer_context_modification_procedure>(request.msg, pdu_notifier, *events, logger);
 }
 
-async_task<e1ap_bearer_context_release_complete_message>
-e1_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context_release_command_message& command)
+async_task<e1ap_bearer_context_release_complete>
+e1_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context_release_command& command)
 {
   return launch_async<e1_bearer_context_release_procedure>(command, pdu_notifier, *events, logger);
 }
@@ -131,10 +130,10 @@ void e1_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
     case asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts::options::gnb_cu_up_e1_setup_request: {
-      cu_up_e1_setup_request_message req_msg = {};
-      current_transaction_id                 = msg.value.gnb_cu_up_e1_setup_request()->transaction_id.value;
-      req_msg.request                        = msg.value.gnb_cu_up_e1_setup_request();
-      cu_up_notifier.on_cu_up_e1_setup_request_received(req_msg);
+      cu_up_e1_setup_request req = {};
+      current_transaction_id     = msg.value.gnb_cu_up_e1_setup_request()->transaction_id.value;
+      req.request                = msg.value.gnb_cu_up_e1_setup_request();
+      cu_up_notifier.on_cu_up_e1_setup_request_received(req);
     } break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());

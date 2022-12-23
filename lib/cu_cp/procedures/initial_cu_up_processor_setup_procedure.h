@@ -27,15 +27,15 @@ public:
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
-  async_task<cu_cp_e1_setup_response_message> start_cu_cp_e1_setup_request();
-  void handle_cu_cp_e1_setup_response(const asn1::e1ap::gnb_cu_cp_e1_setup_resp_s& resp);
+  async_task<cu_cp_e1_setup_response> start_cu_cp_e1_setup_request();
+  void                                handle_cu_cp_e1_setup_response(const asn1::e1ap::gnb_cu_cp_e1_setup_resp_s& resp);
 
   cu_up_processor_context& context;
 
   e1_connection_manager&                     e1_conn_mng;
   cu_up_processor_cu_up_management_notifier& cu_cp_notifier;
 
-  cu_cp_e1_setup_response_message response_msg = {};
+  cu_cp_e1_setup_response response = {};
 };
 
 } // namespace srs_cu_cp

@@ -96,21 +96,21 @@ public:
   {
     srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
 
-    e1ap_bearer_context_setup_request_message e1_request;
+    e1ap_bearer_context_setup_request e1_request;
     fill_e1ap_bearer_context_setup_request(e1_request, msg);
 
-    e1ap_bearer_context_setup_response_message e1_bearer_context_setup_resp_msg;
+    e1ap_bearer_context_setup_response e1_bearer_context_setup_resp;
 
     return launch_async(
-        [this, res = rrc_ue_bearer_context_setup_response_message{}, e1_bearer_context_setup_resp_msg, e1_request](
+        [this, res = rrc_ue_bearer_context_setup_response_message{}, e1_bearer_context_setup_resp, e1_request](
             coro_context<async_task<rrc_ue_bearer_context_setup_response_message>>& ctx) mutable {
           CORO_BEGIN(ctx);
 
-          CORO_AWAIT_VALUE(e1_bearer_context_setup_resp_msg,
+          CORO_AWAIT_VALUE(e1_bearer_context_setup_resp,
                            e1_bearer_context_mng->handle_bearer_context_setup_request(e1_request));
 
           // Fail if E-UTRAN bearer context setup is returned
-          if (e1_bearer_context_setup_resp_msg.response->sys_bearer_context_setup_resp->type() ==
+          if (e1_bearer_context_setup_resp.response->sys_bearer_context_setup_resp->type() ==
               asn1::e1ap::sys_bearer_context_setup_resp_c::types::e_utran_bearer_context_setup_resp) {
             res.success = false;
             res.cause   = cu_cp_cause_t::protocol;
@@ -118,7 +118,7 @@ public:
             CORO_EARLY_RETURN(res);
           }
 
-          fill_rrc_ue_bearer_context_setup_response_message(res, e1_bearer_context_setup_resp_msg);
+          fill_rrc_ue_bearer_context_setup_response(res, e1_bearer_context_setup_resp);
 
           CORO_RETURN(res);
         });
@@ -129,23 +129,23 @@ public:
   {
     srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
 
-    e1ap_bearer_context_modification_request_message e1_request;
+    e1ap_bearer_context_modification_request e1_request;
     fill_e1ap_bearer_context_modification_request(e1_request, msg);
 
-    e1ap_bearer_context_modification_response_message e1_bearer_context_modification_resp_msg;
+    e1ap_bearer_context_modification_response e1_bearer_context_modification_resp;
 
     return launch_async(
         [this,
          res = rrc_ue_bearer_context_modification_response_message{},
-         e1_bearer_context_modification_resp_msg,
+         e1_bearer_context_modification_resp,
          e1_request](coro_context<async_task<rrc_ue_bearer_context_modification_response_message>>& ctx) mutable {
           CORO_BEGIN(ctx);
 
-          CORO_AWAIT_VALUE(e1_bearer_context_modification_resp_msg,
+          CORO_AWAIT_VALUE(e1_bearer_context_modification_resp,
                            e1_bearer_context_mng->handle_bearer_context_modification_request(e1_request));
 
           // Fail if E-UTRAN bearer context modification is returned
-          if (e1_bearer_context_modification_resp_msg.response->sys_bearer_context_mod_resp->type() ==
+          if (e1_bearer_context_modification_resp.response->sys_bearer_context_mod_resp->type() ==
               asn1::e1ap::sys_bearer_context_mod_resp_c::types::e_utran_bearer_context_mod_resp) {
             res.success = false;
             res.cause   = cu_cp_cause_t::protocol;
@@ -153,7 +153,7 @@ public:
             CORO_EARLY_RETURN(res);
           }
 
-          fill_rrc_ue_bearer_context_modification_response_message(res, e1_bearer_context_modification_resp_msg);
+          fill_rrc_ue_bearer_context_modification_response(res, e1_bearer_context_modification_resp);
 
           CORO_RETURN(res);
         });

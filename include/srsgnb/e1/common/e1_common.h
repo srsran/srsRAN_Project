@@ -19,26 +19,26 @@ struct e1_message {
 };
 
 /// \brief CU-CP initiated E1 setup request.
-struct cu_cp_e1_setup_request_message {
+struct cu_cp_e1_setup_request {
   asn1::e1ap::gnb_cu_cp_e1_setup_request_s request;
   unsigned                                 max_setup_retries = 5;
 };
 
 /// \brief Response to CU-CP initiated E1 setup request.
-struct cu_cp_e1_setup_response_message {
+struct cu_cp_e1_setup_response {
   asn1::e1ap::gnb_cu_cp_e1_setup_resp_s response;
   asn1::e1ap::gnb_cu_cp_e1_setup_fail_s failure;
   bool                                  success;
 };
 
 /// \brief CU-UP initiated E1 setup request.
-struct cu_up_e1_setup_request_message {
+struct cu_up_e1_setup_request {
   asn1::e1ap::gnb_cu_up_e1_setup_request_s request;
   unsigned                                 max_setup_retries = 5;
 };
 
 /// \brief Response to CU-UP initiated E1 setup request.
-struct cu_up_e1_setup_response_message {
+struct cu_up_e1_setup_response {
   asn1::e1ap::gnb_cu_up_e1_setup_resp_s response;
   asn1::e1ap::gnb_cu_up_e1_setup_fail_s failure;
   bool                                  success;

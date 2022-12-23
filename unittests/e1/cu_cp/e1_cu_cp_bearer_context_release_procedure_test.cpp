@@ -19,11 +19,10 @@ using namespace srs_cu_cp;
 TEST_F(e1_cu_cp_test, when_bearer_release_complete_received_then_bearer_realease_successful)
 {
   // Action 1: Launch Bearer Context release procedure
-  e1ap_bearer_context_release_command_message release_cmd_msg = {};
+  e1ap_bearer_context_release_command release_cmd_msg = {};
   test_logger.info("Launch bearer context release procedure...");
-  async_task<e1ap_bearer_context_release_complete_message> t =
-      e1->handle_bearer_context_release_command(release_cmd_msg);
-  lazy_task_launcher<e1ap_bearer_context_release_complete_message> t_launcher(t);
+  async_task<e1ap_bearer_context_release_complete> t = e1->handle_bearer_context_release_command(release_cmd_msg);
+  lazy_task_launcher<e1ap_bearer_context_release_complete> t_launcher(t);
 
   // Status: CU-UP received Bearer Context Release Command message.
   EXPECT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg);

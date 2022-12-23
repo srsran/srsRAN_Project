@@ -24,7 +24,7 @@ e1_bearer_context_modification_procedure::e1_bearer_context_modification_procedu
 }
 
 void e1_bearer_context_modification_procedure::operator()(
-    coro_context<async_task<e1ap_bearer_context_modification_response_message>>& ctx)
+    coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -56,10 +56,10 @@ void e1_bearer_context_modification_procedure::send_bearer_context_modification_
   e1_notifier.on_new_message(e1_bearer_ctxt_mod_request_msg);
 }
 
-e1ap_bearer_context_modification_response_message
+e1ap_bearer_context_modification_response
 e1_bearer_context_modification_procedure::create_bearer_context_modification_result()
 {
-  e1ap_bearer_context_modification_response_message res{};
+  e1ap_bearer_context_modification_response res{};
 
   if (bearer_ctxt_mod_outcome.has_value()) {
     logger.info("Received E1AP Bearer Context Modification Response.");

@@ -19,11 +19,11 @@ using namespace srs_cu_cp;
 TEST_F(e1_cu_cp_test, when_bearer_modification_response_received_then_procedure_successful)
 {
   // Action 1: Launch Bearer Context modification procedure
-  e1ap_bearer_context_modification_request_message request_msg = {};
+  e1ap_bearer_context_modification_request request_msg = {};
   test_logger.info("Launch bearer context modification procedure...");
-  async_task<e1ap_bearer_context_modification_response_message> t =
+  async_task<e1ap_bearer_context_modification_response> t =
       e1->handle_bearer_context_modification_request(request_msg);
-  lazy_task_launcher<e1ap_bearer_context_modification_response_message> t_launcher(t);
+  lazy_task_launcher<e1ap_bearer_context_modification_response> t_launcher(t);
 
   // Status: CU-UP received Bearer Context modification Request message.
   EXPECT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg);
@@ -47,11 +47,11 @@ TEST_F(e1_cu_cp_test, when_bearer_modification_response_received_then_procedure_
 TEST_F(e1_cu_cp_test, when_bearer_modification_failure_received_then_procedure_unsuccessful)
 {
   // Action 1: Launch Bearer Context modification procedure
-  e1ap_bearer_context_modification_request_message request_msg = {};
+  e1ap_bearer_context_modification_request request_msg = {};
   test_logger.info("Launch bearer context modification procedure...");
-  async_task<e1ap_bearer_context_modification_response_message> t =
+  async_task<e1ap_bearer_context_modification_response> t =
       e1->handle_bearer_context_modification_request(request_msg);
-  lazy_task_launcher<e1ap_bearer_context_modification_response_message> t_launcher(t);
+  lazy_task_launcher<e1ap_bearer_context_modification_response> t_launcher(t);
 
   // Status: CU-UP received Bearer Context modification Request message.
   EXPECT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg);

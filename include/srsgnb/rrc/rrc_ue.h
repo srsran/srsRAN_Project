@@ -47,7 +47,7 @@ public:
 struct rrc_ue_drb_setup_message {
   uint8_t                                  drb_id;
   srsgnb::rlc_mode                         rlc;
-  qos_characteristics                      qos_info;
+  cu_cp_qos_characteristics                qos_info;
   std::vector<up_transport_layer_info>     gtp_tunnels;
   cu_cp_s_nssai                            s_nssai;
   std::vector<qos_flow_setup_request_item> qos_flows_mapped_to_drb;

@@ -25,13 +25,13 @@ struct f1ap_du_context;
 class cu_cp_e1_setup_procedure
 {
 public:
-  cu_cp_e1_setup_procedure(const cu_cp_e1_setup_request_message& request_,
-                           e1_message_notifier&                  cu_up_notif_,
-                           e1_event_manager&                     ev_mng_,
-                           timer_manager&                        timers,
-                           srslog::basic_logger&                 logger_);
+  cu_cp_e1_setup_procedure(const cu_cp_e1_setup_request& request_,
+                           e1_message_notifier&          cu_up_notif_,
+                           e1_event_manager&             ev_mng_,
+                           timer_manager&                timers,
+                           srslog::basic_logger&         logger_);
 
-  void operator()(coro_context<async_task<cu_cp_e1_setup_response_message>>& ctx);
+  void operator()(coro_context<async_task<cu_cp_e1_setup_response>>& ctx);
 
 private:
   /// Send E1 SETUP REQUEST to CU-UP.
@@ -41,12 +41,12 @@ private:
   bool retry_required();
 
   /// Creates procedure result to send back to procedure caller.
-  cu_cp_e1_setup_response_message create_e1_setup_result();
+  cu_cp_e1_setup_response create_e1_setup_result();
 
-  const cu_cp_e1_setup_request_message request;
-  e1_message_notifier&                 cu_up_notifier;
-  e1_event_manager&                    ev_mng;
-  srslog::basic_logger&                logger;
+  const cu_cp_e1_setup_request request;
+  e1_message_notifier&         cu_up_notifier;
+  e1_event_manager&            ev_mng;
+  srslog::basic_logger&        logger;
 
   unique_timer e1_setup_wait_timer;
 

@@ -40,8 +40,8 @@ public:
   /// \brief Create a new UE context and handle bearer setup request.
   /// \param[in] msg The original bearer setup request.
   /// \return Returns message containing the index of the created UE and all response/failure message.
-  virtual e1ap_bearer_context_setup_response_message
-  handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request_message& msg) = 0;
+  virtual e1ap_bearer_context_setup_response
+  handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) = 0;
 
   /// \brief Get the E1 message handler interface.
   virtual e1_message_handler& get_e1_message_handler() = 0;

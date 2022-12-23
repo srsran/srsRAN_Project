@@ -15,16 +15,16 @@ using namespace srsgnb::srs_cu_cp;
 using namespace asn1::e1ap;
 
 e1_bearer_context_release_procedure::e1_bearer_context_release_procedure(
-    const e1ap_bearer_context_release_command_message& command_,
-    e1_message_notifier&                               e1_notif_,
-    e1_event_manager&                                  ev_mng_,
-    srslog::basic_logger&                              logger_) :
+    const e1ap_bearer_context_release_command& command_,
+    e1_message_notifier&                       e1_notif_,
+    e1_event_manager&                          ev_mng_,
+    srslog::basic_logger&                      logger_) :
   command(command_), e1_notifier(e1_notif_), ev_mng(ev_mng_), logger(logger_)
 {
 }
 
 void e1_bearer_context_release_procedure::operator()(
-    coro_context<async_task<e1ap_bearer_context_release_complete_message>>& ctx)
+    coro_context<async_task<e1ap_bearer_context_release_complete>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -56,10 +56,9 @@ void e1_bearer_context_release_procedure::send_bearer_context_release_command()
   e1_notifier.on_new_message(e1_bearer_ctxt_rel_msg);
 }
 
-e1ap_bearer_context_release_complete_message
-e1_bearer_context_release_procedure::create_bearer_context_release_complete()
+e1ap_bearer_context_release_complete e1_bearer_context_release_procedure::create_bearer_context_release_complete()
 {
-  e1ap_bearer_context_release_complete_message res{};
+  e1ap_bearer_context_release_complete res{};
 
   logger.info("Received E1AP Bearer Context Release Complete.");
   res.msg = *e1_bearer_ctxt_rel_outcome;

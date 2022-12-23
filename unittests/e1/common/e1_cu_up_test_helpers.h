@@ -46,7 +46,7 @@ protected:
   srslog::basic_logger&                         test_logger = srslog::fetch_basic_logger("TEST");
 };
 
-e1_message generate_cu_cp_e1_setup_request_message()
+e1_message generate_cu_cp_e1_setup_request()
 {
   e1_message e1_setup_request = {};
   e1_setup_request.pdu.set_init_msg();

@@ -22,8 +22,7 @@ e1_bearer_context_setup_procedure::e1_bearer_context_setup_procedure(const beare
 {
 }
 
-void e1_bearer_context_setup_procedure::operator()(
-    coro_context<async_task<e1ap_bearer_context_setup_response_message>>& ctx)
+void e1_bearer_context_setup_procedure::operator()(coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -55,9 +54,9 @@ void e1_bearer_context_setup_procedure::send_bearer_context_setup_request()
   e1_notifier.on_new_message(e1_bearer_ctxt_setup_request_msg);
 }
 
-e1ap_bearer_context_setup_response_message e1_bearer_context_setup_procedure::create_bearer_context_setup_result()
+e1ap_bearer_context_setup_response e1_bearer_context_setup_procedure::create_bearer_context_setup_result()
 {
-  e1ap_bearer_context_setup_response_message res{};
+  e1ap_bearer_context_setup_response res{};
 
   if (e1_bearer_ctxt_setup_outcome.has_value()) {
     logger.info("Received E1AP Bearer Context Setup Response.");

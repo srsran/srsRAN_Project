@@ -15,11 +15,11 @@ using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
 using namespace asn1::e1ap;
 
-cu_cp_e1_setup_procedure::cu_cp_e1_setup_procedure(const cu_cp_e1_setup_request_message& request_,
-                                                   e1_message_notifier&                  cu_up_notif_,
-                                                   e1_event_manager&                     ev_mng_,
-                                                   timer_manager&                        timers,
-                                                   srslog::basic_logger&                 logger_) :
+cu_cp_e1_setup_procedure::cu_cp_e1_setup_procedure(const cu_cp_e1_setup_request& request_,
+                                                   e1_message_notifier&          cu_up_notif_,
+                                                   e1_event_manager&             ev_mng_,
+                                                   timer_manager&                timers,
+                                                   srslog::basic_logger&         logger_) :
   request(request_),
   cu_up_notifier(cu_up_notif_),
   ev_mng(ev_mng_),
@@ -28,7 +28,7 @@ cu_cp_e1_setup_procedure::cu_cp_e1_setup_procedure(const cu_cp_e1_setup_request_
 {
 }
 
-void cu_cp_e1_setup_procedure::operator()(coro_context<async_task<cu_cp_e1_setup_response_message>>& ctx)
+void cu_cp_e1_setup_procedure::operator()(coro_context<async_task<cu_cp_e1_setup_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -105,10 +105,10 @@ bool cu_cp_e1_setup_procedure::retry_required()
   return true;
 }
 
-cu_cp_e1_setup_response_message cu_cp_e1_setup_procedure::create_e1_setup_result()
+cu_cp_e1_setup_response cu_cp_e1_setup_procedure::create_e1_setup_result()
 {
-  const e1ap_outcome&             cu_cp_e1_setup_outcome = transaction.result();
-  cu_cp_e1_setup_response_message res{};
+  const e1ap_outcome&     cu_cp_e1_setup_outcome = transaction.result();
+  cu_cp_e1_setup_response res{};
 
   if (cu_cp_e1_setup_outcome.has_value()) {
     logger.info("Received E1AP PDU with successful outcome.");

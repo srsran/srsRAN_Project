@@ -28,10 +28,10 @@ using namespace srs_cu_cp;
 TEST_F(e1_cu_cp_test, when_cu_cp_e1_setup_response_received_then_cu_cp_connected)
 {
   // Action 1: Launch E1 setup procedure
-  cu_cp_e1_setup_request_message request_msg = generate_cu_cp_e1_setup_request_message();
+  cu_cp_e1_setup_request request_msg = generate_cu_cp_e1_setup_request();
   test_logger.info("Launch e1 setup request procedure...");
-  async_task<cu_cp_e1_setup_response_message>         t = e1->handle_cu_cp_e1_setup_request(request_msg);
-  lazy_task_launcher<cu_cp_e1_setup_response_message> t_launcher(t);
+  async_task<cu_cp_e1_setup_response>         t = e1->handle_cu_cp_e1_setup_request(request_msg);
+  lazy_task_launcher<cu_cp_e1_setup_response> t_launcher(t);
 
   // Status: CU-UP received E1 Setup Request.
   ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg);
@@ -56,10 +56,10 @@ TEST_F(e1_cu_cp_test, when_cu_cp_e1_setup_response_received_then_cu_cp_connected
 TEST_F(e1_cu_cp_test, when_cu_cp_e1_setup_failure_with_time_to_wait_received_then_retry_with_success)
 {
   // Action 1: Launch E1 setup procedure
-  cu_cp_e1_setup_request_message request_msg = generate_cu_cp_e1_setup_request_message();
+  cu_cp_e1_setup_request request_msg = generate_cu_cp_e1_setup_request();
   test_logger.info("Launch e1 setup request procedure...");
-  async_task<cu_cp_e1_setup_response_message>         t = e1->handle_cu_cp_e1_setup_request(request_msg);
-  lazy_task_launcher<cu_cp_e1_setup_response_message> t_launcher(t);
+  async_task<cu_cp_e1_setup_response>         t = e1->handle_cu_cp_e1_setup_request(request_msg);
+  lazy_task_launcher<cu_cp_e1_setup_response> t_launcher(t);
 
   // Status: CU-UP received E1 Setup Request.
   ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg);
@@ -107,10 +107,10 @@ TEST_F(e1_cu_cp_test, when_cu_cp_e1_setup_failure_with_time_to_wait_received_the
 TEST_F(e1_cu_cp_test, when_cu_cp_e1_setup_failure_with_time_to_wait_received_then_retry_without_success)
 {
   // Action 1: Launch E1 setup procedure
-  cu_cp_e1_setup_request_message request_msg = generate_cu_cp_e1_setup_request_message();
+  cu_cp_e1_setup_request request_msg = generate_cu_cp_e1_setup_request();
   test_logger.info("Launch e1 setup request procedure...");
-  async_task<cu_cp_e1_setup_response_message>         t = e1->handle_cu_cp_e1_setup_request(request_msg);
-  lazy_task_launcher<cu_cp_e1_setup_response_message> t_launcher(t);
+  async_task<cu_cp_e1_setup_response>         t = e1->handle_cu_cp_e1_setup_request(request_msg);
+  lazy_task_launcher<cu_cp_e1_setup_response> t_launcher(t);
 
   // Status: CU received F1 Setup Request.
   ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg);
@@ -157,10 +157,10 @@ TEST_F(e1_cu_cp_test, when_cu_cp_e1_setup_failure_with_time_to_wait_received_the
 TEST_F(e1_cu_cp_test, when_retry_limit_reached_then_cu_cp_not_connected)
 {
   // Action 1: Launch E1 setup procedure
-  cu_cp_e1_setup_request_message request_msg = generate_cu_cp_e1_setup_request_message();
+  cu_cp_e1_setup_request request_msg = generate_cu_cp_e1_setup_request();
   test_logger.info("Launch e1 setup request procedure...");
-  async_task<cu_cp_e1_setup_response_message>         t = e1->handle_cu_cp_e1_setup_request(request_msg);
-  lazy_task_launcher<cu_cp_e1_setup_response_message> t_launcher(t);
+  async_task<cu_cp_e1_setup_response>         t = e1->handle_cu_cp_e1_setup_request(request_msg);
+  lazy_task_launcher<cu_cp_e1_setup_response> t_launcher(t);
 
   // Status: CU received F1 Setup Request.
   ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg);
@@ -219,8 +219,8 @@ TEST_F(e1_cu_cp_test, when_received_cu_up_e1_setup_request_valid_then_connect_cu
 
   // Action 3: Transmit CuUpE1SetupResponse message
   test_logger.info("TEST: Transmit CuUpE1SetupResponse message...");
-  cu_up_e1_setup_response_message msg = {};
-  msg.success                         = true;
+  cu_up_e1_setup_response msg = {};
+  msg.success                 = true;
   e1->handle_cu_up_e1_setup_response(msg);
 
   // Check the generated PDU is indeed the E1 Setup response
@@ -245,8 +245,8 @@ TEST_F(e1_cu_cp_test, when_received_cu_up_e1_setup_request_invalid_then_reject_c
 
   // Action 3: Transmit E1SetupFailure message
   test_logger.info("TEST: Transmit CuUpE1SetupFailure message...");
-  cu_up_e1_setup_response_message msg = {};
-  msg.success                         = false;
+  cu_up_e1_setup_response msg = {};
+  msg.success                 = false;
   e1->handle_cu_up_e1_setup_response(msg);
 
   // Check the generated PDU is indeed the E1 Setup failure

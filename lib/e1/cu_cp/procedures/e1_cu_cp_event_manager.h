@@ -31,7 +31,7 @@ public:
   // /// CU-CP initiated E1 Setup Procedure
   // using cu_cp_e1_setup_procedure_outcome_t =
   //     expected<const asn1::e1ap::gnb_cu_cp_e1_setup_resp_s*, const asn1::e1ap::gnb_cu_cp_e1_setup_fail_s*>;
-  // event_signal<cu_cp_e1_setup_procedure_outcome_t> cu_cp_e1_setup_response_message;
+  // event_signal<cu_cp_e1_setup_procedure_outcome_t> cu_cp_e1_setup_response;
 
   /// E1 Context Release Complete
   using e1_bearer_context_release_outcome_t = const asn1::e1ap::bearer_context_release_complete_s*;

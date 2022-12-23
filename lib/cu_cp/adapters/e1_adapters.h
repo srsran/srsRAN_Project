@@ -27,7 +27,7 @@ public:
     cu_up_e1_handler = &cu_up_processor_e1_;
   }
 
-  void on_cu_up_e1_setup_request_received(const srsgnb::cu_up_e1_setup_request_message& msg) override
+  void on_cu_up_e1_setup_request_received(const srsgnb::cu_up_e1_setup_request& msg) override
   {
     srsgnb_assert(cu_up_e1_handler != nullptr, "E1 handler must not be nullptr");
     cu_up_e1_handler->handle_cu_up_e1_setup_request(msg);

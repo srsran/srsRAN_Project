@@ -131,27 +131,27 @@ inline void fill_cu_cp_pdu_session_resource_setup_message(
       // qosFlowLevelQosParameters
       if (ngap_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
           asn1::ngap::qos_characteristics_c::types::dynamic5_qi) {
-        qos_flow_setup_req_item.qos_charact.is_dynamic_5qi = true;
-        qos_flow_setup_req_item.qos_charact.five_qi =
+        qos_flow_setup_req_item.qos_characteristics.is_dynamic_5qi = true;
+        qos_flow_setup_req_item.qos_characteristics.five_qi =
             ngap_flow_item.qos_flow_level_qos_params.qos_characteristics.dynamic5_qi().five_qi;
 
         // TODO: ADD optional values
 
       } else if (ngap_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
                  asn1::ngap::qos_characteristics_c::types::non_dynamic5_qi) {
-        qos_flow_setup_req_item.qos_charact.is_dynamic_5qi = false;
-        qos_flow_setup_req_item.qos_charact.five_qi =
+        qos_flow_setup_req_item.qos_characteristics.is_dynamic_5qi = false;
+        qos_flow_setup_req_item.qos_characteristics.five_qi =
             ngap_flow_item.qos_flow_level_qos_params.qos_characteristics.non_dynamic5_qi().five_qi;
 
         // TODO: ADD optional values
       }
 
       // allocationAndRetentionPriority
-      qos_flow_setup_req_item.qos_charact.prio_level_arp =
+      qos_flow_setup_req_item.qos_characteristics.prio_level_arp =
           ngap_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp;
-      qos_flow_setup_req_item.qos_charact.pre_emption_cap =
+      qos_flow_setup_req_item.qos_characteristics.pre_emption_cap =
           ngap_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap.to_string();
-      qos_flow_setup_req_item.qos_charact.pre_emption_vulnerability =
+      qos_flow_setup_req_item.qos_characteristics.pre_emption_vulnerability =
           ngap_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability.to_string();
 
       // Optional Parameters

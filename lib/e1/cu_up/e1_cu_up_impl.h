@@ -29,7 +29,7 @@ public:
 
   // e1 connection manager functions
 
-  void handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response_message& msg) override;
+  void handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response& msg) override;
 
   // e1 message handler functions
 

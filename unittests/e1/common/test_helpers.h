@@ -27,7 +27,7 @@ class dummy_e1_cu_up_processor_notifier : public srs_cu_cp::e1_cu_up_processor_n
 public:
   dummy_e1_cu_up_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
-  void on_cu_up_e1_setup_request_received(const cu_up_e1_setup_request_message& msg) override
+  void on_cu_up_e1_setup_request_received(const cu_up_e1_setup_request& msg) override
   {
     logger.info("Received E1SetupRequest message.");
     last_cu_up_e1_setup_request_msg = msg;
@@ -35,7 +35,7 @@ public:
 
   void set_ue_index(uint16_t ue_index_) { ue_index = srs_cu_cp::int_to_ue_index(ue_index_); }
 
-  cu_up_e1_setup_request_message last_cu_up_e1_setup_request_msg;
+  cu_up_e1_setup_request last_cu_up_e1_setup_request_msg;
 
 private:
   srslog::basic_logger& logger;
@@ -47,28 +47,28 @@ class dummy_e1_ue_manager_notifier : public srs_cu_up::e1_ue_manager_notifier
 public:
   dummy_e1_ue_manager_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
-  void on_cu_cp_e1_setup_request_received(const cu_cp_e1_setup_request_message& msg) override
+  void on_cu_cp_e1_setup_request_received(const cu_cp_e1_setup_request& msg) override
   {
     logger.info("Received E1SetupRequest message.");
     last_cu_cp_e1_setup_request_msg = msg;
   }
 
-  srs_cu_up::e1ap_bearer_context_setup_response_message
-  on_bearer_context_setup_request_received(const srs_cu_up::e1ap_bearer_context_setup_request_message& msg) override
+  srs_cu_up::e1ap_bearer_context_setup_response
+  on_bearer_context_setup_request_received(const srs_cu_up::e1ap_bearer_context_setup_request& msg) override
   {
     logger.info("Received Bearer Context Setup Request message.");
-    last_bearer_context_setup_request_msg                          = msg;
-    srs_cu_up::e1ap_bearer_context_setup_response_message response = {};
-    response.ue_index                                              = ue_index;
-    response.success                                               = true;
+    last_bearer_context_setup_request_msg                  = msg;
+    srs_cu_up::e1ap_bearer_context_setup_response response = {};
+    response.ue_index                                      = ue_index;
+    response.success                                       = true;
 
     return response;
   }
 
   void set_ue_index(uint16_t ue_index_) { ue_index = srs_cu_up::int_to_ue_index(ue_index_); }
 
-  srs_cu_up::e1ap_bearer_context_setup_request_message last_bearer_context_setup_request_msg;
-  cu_cp_e1_setup_request_message                       last_cu_cp_e1_setup_request_msg;
+  srs_cu_up::e1ap_bearer_context_setup_request last_bearer_context_setup_request_msg;
+  cu_cp_e1_setup_request                       last_cu_cp_e1_setup_request_msg;
 
 private:
   srslog::basic_logger& logger;

@@ -48,9 +48,9 @@ protected:
   srslog::basic_logger&                              test_logger = srslog::fetch_basic_logger("TEST");
 };
 
-cu_cp_e1_setup_request_message generate_cu_cp_e1_setup_request_message()
+cu_cp_e1_setup_request generate_cu_cp_e1_setup_request()
 {
-  cu_cp_e1_setup_request_message e1_setup_request  = {};
+  cu_cp_e1_setup_request e1_setup_request          = {};
   e1_setup_request.request->gnb_cu_cp_name_present = true;
   e1_setup_request.request->gnb_cu_cp_name.value.from_string("srsCU-CP");
 

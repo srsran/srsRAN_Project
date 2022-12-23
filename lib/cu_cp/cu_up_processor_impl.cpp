@@ -42,7 +42,7 @@ void cu_up_processor_impl::start()
 
 void cu_up_processor_impl::stop() {}
 
-void cu_up_processor_impl::handle_cu_up_e1_setup_request(const srsgnb::cu_up_e1_setup_request_message& msg)
+void cu_up_processor_impl::handle_cu_up_e1_setup_request(const srsgnb::cu_up_e1_setup_request& msg)
 {
   // TODO: Handle setup request
 
@@ -53,7 +53,7 @@ void cu_up_processor_impl::handle_cu_up_e1_setup_request(const srsgnb::cu_up_e1_
 /// Sender for F1C messages
 void cu_up_processor_impl::send_cu_up_e1_setup_response()
 {
-  cu_up_e1_setup_response_message response;
+  cu_up_e1_setup_response response;
   // TODO: fill message
 
   e1->handle_cu_up_e1_setup_response(response);
@@ -61,7 +61,7 @@ void cu_up_processor_impl::send_cu_up_e1_setup_response()
 
 void cu_up_processor_impl::send_cu_up_e1_setup_failure(asn1::e1ap::cause_c::types::options cause)
 {
-  cu_up_e1_setup_response_message response;
+  cu_up_e1_setup_response response;
   response.success = false;
   response.failure->cause->set(cause);
   e1->handle_cu_up_e1_setup_response(response);

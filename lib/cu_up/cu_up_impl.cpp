@@ -58,12 +58,12 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   // f1c_ev_notifier.connect_cu_cp(*this);
 }
 
-e1ap_bearer_context_setup_response_message
-cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request_message& msg)
+e1ap_bearer_context_setup_response
+cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg)
 {
-  e1ap_bearer_context_setup_response_message response = {};
-  response.ue_index                                   = INVALID_UE_INDEX;
-  response.success                                    = false;
+  e1ap_bearer_context_setup_response response = {};
+  response.ue_index                           = INVALID_UE_INDEX;
+  response.success                            = false;
 
   // 1. Create new UE context
   ue_context* ue_ctxt = ue_mng->add_ue();

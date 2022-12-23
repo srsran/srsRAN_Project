@@ -26,7 +26,7 @@ e1_cu_up_impl::e1_cu_up_impl(e1_message_notifier& e1_pdu_notifier_, e1_ue_manage
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 e1_cu_up_impl::~e1_cu_up_impl() {}
 
-void e1_cu_up_impl::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response_message& msg)
+void e1_cu_up_impl::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response& msg)
 {
   // Pack message into PDU
   e1_message e1_msg;
@@ -100,9 +100,9 @@ void e1_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
     case asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts::options::gnb_cu_cp_e1_setup_request: {
-      cu_cp_e1_setup_request_message req_msg = {};
-      current_transaction_id                 = msg.value.gnb_cu_cp_e1_setup_request()->transaction_id.value;
-      req_msg.request                        = msg.value.gnb_cu_cp_e1_setup_request();
+      cu_cp_e1_setup_request req_msg = {};
+      current_transaction_id         = msg.value.gnb_cu_cp_e1_setup_request()->transaction_id.value;
+      req_msg.request                = msg.value.gnb_cu_cp_e1_setup_request();
       ue_manager_notifier.on_cu_cp_e1_setup_request_received(req_msg);
     } break;
     case asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts::options::bearer_context_setup_request: {
@@ -131,10 +131,10 @@ void e1_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bearer
   }
 
   // Forward message to UE manager
-  e1ap_bearer_context_setup_request_message e1_bearer_context_setup = {};
-  e1_bearer_context_setup.serving_plmn                              = msg->serving_plmn.value;
-  e1_bearer_context_setup.request                                   = msg->sys_bearer_context_setup_request.value;
-  e1ap_bearer_context_setup_response_message ue_context_setup_response_msg =
+  e1ap_bearer_context_setup_request e1_bearer_context_setup = {};
+  e1_bearer_context_setup.serving_plmn                      = msg->serving_plmn.value;
+  e1_bearer_context_setup.request                           = msg->sys_bearer_context_setup_request.value;
+  e1ap_bearer_context_setup_response ue_context_setup_response_msg =
       ue_manager_notifier.on_bearer_context_setup_request_received(e1_bearer_context_setup);
 
   if (ue_context_setup_response_msg.ue_index == INVALID_UE_INDEX) {

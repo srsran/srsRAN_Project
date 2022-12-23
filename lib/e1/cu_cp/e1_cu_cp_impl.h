@@ -35,21 +35,20 @@ public:
 
   // e1 connection manager functions
 
-  void handle_cu_up_e1_setup_response(const cu_up_e1_setup_response_message& msg) override;
+  void handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& msg) override;
 
-  async_task<cu_cp_e1_setup_response_message>
-  handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request_message& request) override;
+  async_task<cu_cp_e1_setup_response> handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& request) override;
 
   // e1 bearer context manager functions
 
-  async_task<e1ap_bearer_context_setup_response_message>
-  handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request_message& msg) override;
+  async_task<e1ap_bearer_context_setup_response>
+  handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override;
 
-  async_task<e1ap_bearer_context_modification_response_message>
-  handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request_message& request) override;
+  async_task<e1ap_bearer_context_modification_response>
+  handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request) override;
 
-  async_task<e1ap_bearer_context_release_complete_message>
-  handle_bearer_context_release_command(const e1ap_bearer_context_release_command_message& command) override;
+  async_task<e1ap_bearer_context_release_complete>
+  handle_bearer_context_release_command(const e1ap_bearer_context_release_command& command) override;
 
   // e1 message handler functions
 
