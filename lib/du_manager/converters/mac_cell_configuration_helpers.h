@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "../du_manager_config.h"
 #include "f1c_configuration_helpers.h"
 #include "srsgnb/asn1/asn1_utils.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"

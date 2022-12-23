@@ -10,21 +10,15 @@
 
 #include "du_manager_impl.h"
 #include "procedures/initial_du_setup_procedure.h"
+#include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 
 using namespace srsgnb;
 using namespace srs_du;
 
 du_manager_impl::du_manager_impl(const du_manager_params& params_) :
   params(params_),
-  cfg{srslog::fetch_basic_logger("DU-MNG"),
-      {},
-      {params.ran.cells.begin(), params.ran.cells.end()},
-      params.services,
-      params.f1ap,
-      params.rlc,
-      params.mac},
-  cell_mng(cfg),
-  cell_res_alloc(cfg.du_cells, config_helpers::make_default_initial_ue_serving_cell_config()),
+  cell_mng(params),
+  cell_res_alloc(params.ran.cells, config_helpers::make_default_initial_ue_serving_cell_config()),
   ue_mng(params, cell_res_alloc),
   main_ctrl_loop(128)
 {
@@ -33,7 +27,7 @@ du_manager_impl::du_manager_impl(const du_manager_params& params_) :
 void du_manager_impl::start()
 {
   // start F1 setup procedure.
-  main_ctrl_loop.schedule<initial_du_setup_procedure>(cfg, cell_mng);
+  main_ctrl_loop.schedule<initial_du_setup_procedure>(params, cell_mng);
 }
 
 void du_manager_impl::stop()
@@ -44,7 +38,7 @@ void du_manager_impl::stop()
 void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message& msg)
 {
   // Switch DU Manager exec context
-  cfg.services.du_mng_exec.execute([this, msg = std::move(msg)]() {
+  params.services.du_mng_exec.execute([this, msg = std::move(msg)]() {
     // Start UE create procedure
     ue_mng.handle_ue_create_request(msg);
   });
@@ -67,7 +61,7 @@ size_t du_manager_impl::nof_ues()
   static std::mutex              mutex;
   static std::condition_variable cvar;
   size_t                         result = MAX_NOF_DU_UES;
-  cfg.services.du_mng_exec.execute([this, &result]() {
+  params.services.du_mng_exec.execute([this, &result]() {
     std::unique_lock<std::mutex> lock(mutex);
     result = ue_mng.get_ues().size();
     cvar.notify_one();

@@ -29,14 +29,7 @@ struct test_bench {
   mac_test_dummy                         mac_dummy;
   dummy_ue_resource_configurator_factory cell_res_alloc;
 
-  du_manager_config_t cfg{srslog::fetch_basic_logger("DU-MNG"),
-                          {},
-                          cells,
-                          {timers, worker, ue_execs, cell_execs},
-                          {f1ap_dummy, f1ap_dummy},
-                          {mac_dummy, f1ap_dummy, f1ap_dummy},
-                          {mac_dummy, mac_dummy}};
-  du_manager_params   params{{cells},
+  du_manager_params params{{"srsgnb", 1, 1, cells},
                            {timers, worker, ue_execs, cell_execs},
                            {f1ap_dummy, f1ap_dummy},
                            {f1u_dummy},

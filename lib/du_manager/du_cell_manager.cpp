@@ -14,9 +14,9 @@
 using namespace srsgnb;
 using namespace srs_du;
 
-du_cell_manager::du_cell_manager(const du_manager_config_t& cfg_) : cfg(cfg_)
+du_cell_manager::du_cell_manager(const du_manager_params& cfg_) : cfg(cfg_)
 {
-  for (const du_cell_config& cell_cfg : cfg.du_cells) {
+  for (const du_cell_config& cell_cfg : cfg.ran.cells) {
     add_cell(cell_cfg);
   }
 }

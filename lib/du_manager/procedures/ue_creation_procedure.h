@@ -12,9 +12,9 @@
 
 #include "../../ran/gnb_format.h"
 #include "../converters/mac_cell_configuration_helpers.h"
-#include "../du_manager_config.h"
 #include "../du_ue/du_ue.h"
 #include "../du_ue/ue_manager_ctrl_configurator.h"
+#include "srsgnb/du_manager/du_manager_params.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/rlc/rlc_factory.h"
 #include "srsgnb/rlc/rlc_rx.h"

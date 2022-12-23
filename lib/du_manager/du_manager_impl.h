@@ -15,9 +15,6 @@
 #include "ran_resource_management/du_ran_resource_manager_impl.h"
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/du_manager/du_manager_params.h"
-#include "srsgnb/rlc/rlc_rx.h"
-#include "srsgnb/rlc/rlc_tx.h"
-#include <memory>
 
 namespace srsgnb {
 namespace srs_du {
@@ -25,7 +22,7 @@ namespace srs_du {
 class du_manager_impl final : public du_manager_interface
 {
 public:
-  du_manager_impl(const du_manager_params& cfg);
+  explicit du_manager_impl(const du_manager_params& params_);
 
   // Controller interface.
   void start() override;
@@ -50,8 +47,7 @@ public:
 
 private:
   // DU manager configuration that will be visible to all running procedures
-  du_manager_params   params;
-  du_manager_config_t cfg;
+  du_manager_params params;
 
   // Components
   du_cell_manager              cell_mng;

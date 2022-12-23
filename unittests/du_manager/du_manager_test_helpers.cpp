@@ -10,6 +10,7 @@
 
 #include "du_manager_test_helpers.h"
 #include "srsgnb/mac/config/mac_cell_group_config_factory.h"
+#include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 
 using namespace srsgnb;
 using namespace srs_du;

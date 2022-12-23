@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "../du_manager_config.h"
 #include "../du_ue/ue_manager_ctrl_configurator.h"
+#include "srsgnb/du_manager/du_manager_params.h"
 
 namespace srsgnb {
 namespace srs_du {

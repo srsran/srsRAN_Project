@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "../du_manager_config.h"
 #include "du_ue.h"
 
 namespace srsgnb {

@@ -254,7 +254,7 @@ public:
     du_mng_exec(worker),
     ue_exec_mapper(worker),
     cell_exec_mapper(worker),
-    params{{du_cells},
+    params{{"srsgnb", 1, 1, du_cells},
            {timers, du_mng_exec, ue_exec_mapper, cell_exec_mapper},
            {f1ap, f1ap},
            {f1u_gw},

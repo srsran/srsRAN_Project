@@ -10,13 +10,12 @@
 
 #pragma once
 
-#include "../du_manager_config.h"
 #include "du_ue.h"
 #include "ue_manager_ctrl_configurator.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/adt/stable_id_map.h"
 #include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/ran/du_types.h"
+#include "srsgnb/du_manager/du_manager_params.h"
 #include "srsgnb/support/async/async_task_loop.h"
 
 namespace srsgnb {

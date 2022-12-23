@@ -10,8 +10,7 @@
 
 #pragma once
 
-#include "du_manager_config.h"
-#include "srsgnb/adt/stable_id_map.h"
+#include "srsgnb/du_manager/du_manager_params.h"
 #include "srsgnb/ran/du_types.h"
 
 namespace srsgnb {
@@ -20,7 +19,7 @@ namespace srs_du {
 class du_cell_manager
 {
 public:
-  explicit du_cell_manager(const du_manager_config_t& cfg_);
+  explicit du_cell_manager(const du_manager_params& params_);
 
   size_t nof_cells() const { return cells.size(); }
 
@@ -57,7 +56,7 @@ private:
 
   void add_cell(const du_cell_config& cfg);
 
-  const du_manager_config_t& cfg;
+  const du_manager_params& cfg;
 
   std::vector<std::unique_ptr<cell_t>> cells;
 };

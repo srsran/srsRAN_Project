@@ -13,13 +13,8 @@
 #include "../ran_resource_management/cell_group_config.h"
 #include "../ran_resource_management/du_ran_resource_manager.h"
 #include "du_bearer.h"
-#include "srsgnb/adt/slotted_array.h"
-#include "srsgnb/mac/mac_sdu_handler.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/rnti.h"
-#include "srsgnb/rlc/rlc_entity.h"
-#include "srsgnb/scheduler/config/serving_cell_config_factory.h"
-#include "srsgnb/support/async/async_task_loop.h"
 
 namespace srsgnb {
 namespace srs_du {

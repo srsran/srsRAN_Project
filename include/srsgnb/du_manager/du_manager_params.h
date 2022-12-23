@@ -23,7 +23,10 @@ namespace srs_du {
 
 struct du_manager_params {
   struct ran_params {
-    span<du_cell_config> cells;
+    std::string                 gnb_du_name;
+    uint64_t                    gnb_du_id;
+    uint8_t                     rrc_version;
+    std::vector<du_cell_config> cells;
   };
   struct service_params {
     timer_manager&                timers;
