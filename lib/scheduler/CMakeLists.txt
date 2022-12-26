@@ -8,14 +8,11 @@
 
 add_subdirectory(config)
 add_subdirectory(logging)
+add_subdirectory(cell)
 add_subdirectory(common_scheduling)
 add_subdirectory(ue_scheduling)
 
 set(SOURCES
-        cell/cell_configuration.cpp
-        cell/resource_block_group.cpp
-        cell/prb_grant.cpp
-        cell/resource_grid.cpp
         pdcch_scheduling/pdcch_resource_allocator_impl.cpp
         policy/scheduler_policy_factory.cpp
         policy/scheduler_time_rr.cpp
@@ -31,8 +28,10 @@ set(SOURCES
         support/tbs_calculator.cpp
         support/prbs_calculator.cpp
         scheduler_factory.cpp
-        scheduler_impl.cpp
-        cell/scheduler_prb.cpp)
+        scheduler_impl.cpp)
 
-add_library(srsgnb_sched STATIC ${SOURCES} $<TARGET_OBJECTS:common_sched> $<TARGET_OBJECTS:ue_sched>)
+add_library(srsgnb_sched STATIC ${SOURCES}
+        $<TARGET_OBJECTS:sched_cell>
+        $<TARGET_OBJECTS:common_sched>
+        $<TARGET_OBJECTS:ue_sched>)
 target_link_libraries(srsgnb_sched srsgnb_ran scheduler_logger)

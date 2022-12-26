@@ -11,7 +11,13 @@ target_link_libraries(ssb_scheduler_test srsgnb_sched srslog mac_configuration_h
 add_test(ssb_scheduler_test ssb_scheduler_test)
 
 add_executable(sib1_scheduler_test sib1_scheduler_test.cpp)
-target_link_libraries(sib1_scheduler_test srsgnb_sched srslog mac_configuration_helpers sched_config scheduler_test_suite)
+target_link_libraries(sib1_scheduler_test
+        srsgnb_sched
+        srslog
+        mac_configuration_helpers
+        sched_config
+        scheduler_test_suite
+        gtest)
 add_test(sib1_scheduler_test sib1_scheduler_test)
 
 add_executable(prach_scheduler_test prach_scheduler_test.cpp)

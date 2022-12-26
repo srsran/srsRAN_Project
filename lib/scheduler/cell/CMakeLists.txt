@@ -1,0 +1,14 @@
+#
+# Copyright 2013-2022 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+add_library(sched_cell OBJECT
+        cell_configuration.cpp
+        prb_grant.cpp
+        resource_block_group.cpp
+        resource_grid.cpp
+        scheduler_prb.cpp)
