@@ -23,8 +23,12 @@ namespace test_helpers {
 /// Generates default MAC Cell Configuration to be used in unit tests.
 inline mac_cell_creation_request make_default_mac_cell_config()
 {
-  du_cell_config            default_du_cell_cfg = config_helpers::make_default_du_cell_config();
-  mac_cell_creation_request req                 = make_mac_cell_config(to_du_cell_index(0), default_du_cell_cfg);
+  du_cell_config default_du_cell_cfg = config_helpers::make_default_du_cell_config();
+  byte_buffer    dummy_sib1;
+  for (unsigned i = 0; i != 100; ++i) {
+    dummy_sib1.append(i);
+  }
+  mac_cell_creation_request req = make_mac_cell_config(to_du_cell_index(0), default_du_cell_cfg, std::move(dummy_sib1));
   return req;
 }
 

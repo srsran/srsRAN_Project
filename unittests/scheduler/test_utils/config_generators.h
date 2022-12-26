@@ -22,7 +22,7 @@ inline sched_cell_configuration_request_message make_default_sched_cell_configur
 {
   du_cell_config default_du_cell_cfg = config_helpers::make_default_du_cell_config();
   /// Random size of a SIB1 payload in bytes.
-  const unsigned sib1_payload_size = srs_du::make_asn1_rrc_cell_sib1_buffer(default_du_cell_cfg).length();
+  const unsigned sib1_payload_size = 101;
   return make_sched_cell_config_req(to_du_cell_index(0), default_du_cell_cfg, sib1_payload_size);
 }
 

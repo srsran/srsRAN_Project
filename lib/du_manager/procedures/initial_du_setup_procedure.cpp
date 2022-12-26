@@ -38,7 +38,10 @@ void initial_du_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
   // Configure DU Cells.
   for (unsigned idx = 0; idx < cell_mng.nof_cells(); ++idx) {
     du_cell_index_t cell_index = to_du_cell_index(idx);
-    params.mac.cell_mng.add_cell(make_mac_cell_config(cell_index, cell_mng.get_cell_cfg(cell_index)));
+    params.mac.cell_mng.add_cell(
+        make_mac_cell_config(cell_index,
+                             cell_mng.get_cell_cfg(cell_index),
+                             srs_du::make_asn1_rrc_cell_bcch_dl_sch_msg(cell_mng.get_cell_cfg(cell_index))));
   }
 
   // Activate DU Cells.

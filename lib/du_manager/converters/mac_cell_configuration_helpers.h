@@ -77,20 +77,20 @@ make_sched_cell_config_req(du_cell_index_t cell_index, const du_cell_config& du_
 }
 
 /// Derives MAC Cell Configuration from DU Cell Configuration.
-inline mac_cell_creation_request make_mac_cell_config(du_cell_index_t cell_index, const du_cell_config& du_cfg)
+inline mac_cell_creation_request
+make_mac_cell_config(du_cell_index_t cell_index, const du_cell_config& du_cfg, byte_buffer bcch_dl_sch_payload)
 {
   mac_cell_creation_request mac_cfg{};
-  mac_cfg.cell_index       = cell_index;
-  mac_cfg.pci              = du_cfg.pci;
-  mac_cfg.scs_common       = du_cfg.scs_common;
-  mac_cfg.ssb_cfg          = du_cfg.ssb_cfg;
-  mac_cfg.dl_carrier       = du_cfg.dl_carrier;
-  mac_cfg.ul_carrier       = du_cfg.ul_carrier;
-  mac_cfg.cell_barred      = du_cfg.cell_barred;
-  mac_cfg.intra_freq_resel = du_cfg.intra_freq_resel;
-  mac_cfg.bcch_dl_sch_payload.append(srs_du::make_asn1_rrc_cell_bcch_dl_sch_msg(du_cfg));
-  mac_cfg.sched_req =
-      make_sched_cell_config_req(cell_index, du_cfg, static_cast<unsigned>(mac_cfg.bcch_dl_sch_payload.length()));
+  mac_cfg.cell_index          = cell_index;
+  mac_cfg.pci                 = du_cfg.pci;
+  mac_cfg.scs_common          = du_cfg.scs_common;
+  mac_cfg.ssb_cfg             = du_cfg.ssb_cfg;
+  mac_cfg.dl_carrier          = du_cfg.dl_carrier;
+  mac_cfg.ul_carrier          = du_cfg.ul_carrier;
+  mac_cfg.cell_barred         = du_cfg.cell_barred;
+  mac_cfg.intra_freq_resel    = du_cfg.intra_freq_resel;
+  mac_cfg.bcch_dl_sch_payload = std::move(bcch_dl_sch_payload);
+  mac_cfg.sched_req           = make_sched_cell_config_req(cell_index, du_cfg, mac_cfg.bcch_dl_sch_payload.length());
   return mac_cfg;
 }
 
