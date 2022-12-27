@@ -21,6 +21,7 @@ void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
   srsgnb_assert(cfg.cu_up_executor != nullptr, "Invalid CU-UP executor");
   srsgnb_assert(cfg.e1_notifier != nullptr, "Invalid E1 notifier");
   srsgnb_assert(cfg.f1u_gateway != nullptr, "Invalid F1-U connector");
+  srsgnb_assert(cfg.epoll_broker != nullptr, "Invalid IO broker");
 }
 
 cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128)
@@ -28,9 +29,6 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   assert_cu_up_configuration_valid(cfg);
 
   /// > Create upper layers
-
-  // Create IO broker.
-  broker = create_io_broker(io_broker_type::epoll);
 
   // Create NG-U gateway
   // TODO: Refactor to use UPF IP that we get from E1
@@ -47,7 +45,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   if (not ngu_gw->create_and_bind()) {
     logger.error("Failed to create and connect NG-U gateway.");
   }
-  broker->register_fd(ngu_gw->get_socket_fd(), [this](int fd) { ngu_gw->receive(); });
+  cfg.epoll_broker->register_fd(ngu_gw->get_socket_fd(), [this](int fd) { ngu_gw->receive(); });
 
   // Create GTP-U demux
   ngu_demux = create_gtpu_demux();
@@ -65,8 +63,8 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
 cu_up::~cu_up()
 {
-  if (broker && ngu_gw) {
-    broker->unregister_fd(ngu_gw->get_socket_fd());
+  if (ngu_gw) {
+    cfg.epoll_broker->unregister_fd(ngu_gw->get_socket_fd());
   }
 }
 

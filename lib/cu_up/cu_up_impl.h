@@ -60,7 +60,6 @@ private:
   // Components
   std::atomic<bool>                e1_connected = {false};
   std::unique_ptr<e1_interface>    e1;
-  std::unique_ptr<io_broker>       broker;
   std::unique_ptr<network_gateway> ngu_gw;
   std::unique_ptr<gtpu_demux>      ngu_demux;
   timer_manager                    timer_db;

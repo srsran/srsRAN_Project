@@ -11,6 +11,7 @@
 #include "cu_up_test_helpers.h"
 #include "srsgnb/cu_up/cu_up_factory.h"
 #include "srsgnb/support/executors/task_worker.h"
+#include "srsgnb/support/io_broker/io_broker_factory.h"
 #include "srsgnb/support/test_utils.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -47,11 +48,14 @@ protected:
     dummy_e1_notifier e1_message_notifier;
     dummy_f1u_gateway f1u_gw;
 
+    broker = create_io_broker(io_broker_type::epoll);
+
     // create config
     cu_up_configuration cfg;
     cfg.cu_up_executor = task_executor.get();
     cfg.e1_notifier    = &e1_message_notifier;
     cfg.f1u_gateway    = &f1u_gw;
+    cfg.epoll_broker   = broker.get();
     cfg.gtp_bind_addr  = "127.0.0.1";
     cfg.upf_addr       = "127.0.1.100";
 
@@ -65,6 +69,7 @@ protected:
     srslog::flush();
   }
 
+  std::unique_ptr<io_broker>                  broker;
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up;
   srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");
 };
