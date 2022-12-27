@@ -76,8 +76,9 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
   new_session->gtpu_to_sdap_adapter.connect_sdap(new_session->sdap->get_sdap_tx_sdu_handler());
 
   // Register tunnel at demux
-  if (gtpu_rx_demux.add_tunnel(peer_teid, new_session->gtpu->get_rx_upper_layer_interface()) == false) {
-    logger.error("PDU Session {} cannot be created. TEID {} already exists", session.pdu_session_id, peer_teid);
+  if (gtpu_rx_demux.add_tunnel(new_session->local_teid, new_session->gtpu->get_rx_upper_layer_interface()) == false) {
+    logger.error(
+        "PDU Session {} cannot be created. TEID {} already exists", session.pdu_session_id, new_session->local_teid);
     return pdu_session_result;
   }
 
