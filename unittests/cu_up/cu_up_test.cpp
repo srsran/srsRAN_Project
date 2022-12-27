@@ -72,6 +72,24 @@ protected:
   std::unique_ptr<io_broker>                  broker;
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up;
   srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");
+
+  void create_drb()
+  {
+    // Generate BearerContextSetupRequest
+    e1_message e1_bearer_context_setup_msg = generate_bearer_context_setup_request_msg(9);
+
+    // Pick bearer context setup request
+    asn1::e1ap::bearer_context_setup_request_s& msg =
+        e1_bearer_context_setup_msg.pdu.init_msg().value.bearer_context_setup_request();
+
+    // Prepare bearer context setup
+    e1ap_bearer_context_setup_request e1_bearer_context_setup = {};
+    e1_bearer_context_setup.serving_plmn                      = msg->serving_plmn.value;
+    e1_bearer_context_setup.request                           = msg->sys_bearer_context_setup_request.value;
+
+    // Setup bearer
+    cu_up->handle_bearer_context_setup_request(e1_bearer_context_setup);
+  }
 };
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -94,6 +112,8 @@ TEST_F(cu_up_test, when_e1_connection_established_then_e1_connected)
 
 TEST_F(cu_up_test, dl_data_flow)
 {
+  create_drb();
+
   int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   ASSERT_GE(sock_fd, 0);
 
