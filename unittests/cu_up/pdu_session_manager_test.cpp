@@ -27,7 +27,7 @@ protected:
     // create required objects
     gtpu_rx_demux    = std::make_unique<dummy_gtpu_demux_ctrl>();
     gtpu_tx_notifier = std::make_unique<dummy_gtpu_network_gateway_adapter>();
-    f1u_gw           = std::make_unique<dummy_f1u_gateway>();
+    f1u_gw           = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
 
     // create DUT object
     pdu_session_mng = std::make_unique<pdu_session_manager_impl>(
@@ -42,6 +42,7 @@ protected:
 
   std::unique_ptr<gtpu_demux_ctrl>                     gtpu_rx_demux;
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
+  dummy_f1u_bearer                                     f1u_bearer;
   std::unique_ptr<f1u_cu_up_gateway>                   f1u_gw;
   std::unique_ptr<pdu_session_manager_ctrl>            pdu_session_mng;
   srslog::basic_logger&                                logger = srslog::fetch_basic_logger("TEST", false);

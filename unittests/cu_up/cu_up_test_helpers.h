@@ -14,6 +14,8 @@
 #include "srsgnb/f1u/cu_up/f1u_gateway.h"
 #include "srsgnb/gtpu/gtpu_demux.h"
 #include "srsgnb/gtpu/gtpu_tunnel_tx.h"
+#include "srsgnb/rlc/rlc_tx.h"
+#include <list>
 
 namespace srsgnb {
 
@@ -39,17 +41,37 @@ public:
   void on_new_pdu(byte_buffer pdu) override {}
 };
 
-class dummy_f1u_gateway final : public f1u_cu_up_gateway
+class dummy_f1u_bearer final : public srs_cu_up::f1u_bearer,
+                               public srs_cu_up::f1u_rx_pdu_handler,
+                               public srs_cu_up::f1u_tx_sdu_handler
 {
 public:
-  dummy_f1u_gateway()  = default;
+  std::list<nru_ul_message> rx_msg_list;
+  std::list<rlc_sdu>        tx_sdu_list;
+  std::list<uint32_t>       tx_discard_sdu_list;
+
+  virtual f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
+  virtual f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
+
+  void handle_pdu(nru_ul_message msg) final { rx_msg_list.push_back(std::move(msg)); }
+  void handle_sdu(pdcp_tx_pdu sdu) final { tx_sdu_list.push_back(rlc_sdu(std::move(sdu.buf), sdu.pdcp_count)); }
+  void discard_sdu(uint32_t count) final { tx_discard_sdu_list.push_back(count); };
+};
+
+class dummy_f1u_gateway final : public f1u_cu_up_gateway
+{
+private:
+  srs_cu_up::f1u_bearer& bearer;
+
+public:
+  dummy_f1u_gateway(srs_cu_up::f1u_bearer& bearer_) : bearer(bearer_) {}
   ~dummy_f1u_gateway() = default;
 
   srs_cu_up::f1u_bearer* create_cu_dl_bearer(uint32_t                             dl_teid,
                                              srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
                                              srs_cu_up::f1u_rx_sdu_notifier&      cu_rx) override
   {
-    return nullptr;
+    return &bearer;
   };
   void attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid) override{};
 };
