@@ -29,7 +29,6 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   gtpu_rx_demux(gtpu_rx_demux_),
   f1u_gw(f1u_gw_)
 {
-  (void)f1u_gw;
 }
 
 pdu_session_setup_result
