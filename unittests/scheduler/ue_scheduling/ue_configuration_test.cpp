@@ -3,10 +3,11 @@
 #include "unittests/scheduler/test_utils/config_generators.h"
 #include "srsgnb/mac/mac_configuration_helpers.h"
 #include "srsgnb/support/srsgnb_test.h"
+#include <gtest/gtest.h>
 
 using namespace srsgnb;
 
-void test_ue_cfg_creation()
+TEST(ue_configuration, configuration_valid_on_creation)
 {
   sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
   cell_configuration                       cell_cfg{msg};
@@ -34,7 +35,7 @@ void test_ue_cfg_creation()
   TESTASSERT(ue_cfg.find_search_space(to_search_space_id(3)) == nullptr);
 }
 
-void test_ue_cfg_reconfig()
+TEST(ue_configuration, configuration_valid_on_reconfiguration)
 {
   sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
   cell_configuration                       cell_cfg{msg};
@@ -53,10 +54,4 @@ void test_ue_cfg_reconfig()
   TESTASSERT(ue_cfg.find_coreset(to_coreset_id(2)) != nullptr);
   TESTASSERT_EQ(2, ue_cfg.coreset(to_coreset_id(2)).id);
   TESTASSERT(ue_cfg.coreset(to_coreset_id(2)) == ue_cell_reconf.serv_cell_cfg->init_dl_bwp.pdcch_cfg->coresets.back());
-}
-
-int main()
-{
-  test_ue_cfg_creation();
-  test_ue_cfg_reconfig();
 }

@@ -10,10 +10,11 @@
 
 #include "lib/scheduler/cell/scheduler_prb.h"
 #include "srsgnb/support/test_utils.h"
+#include <gtest/gtest.h>
 
 using namespace srsgnb;
 
-void test_bwp_prb_grant()
+TEST(prb_grant_test, test_all)
 {
   // TEST: default ctor
   prb_grant grant;
@@ -52,7 +53,7 @@ void test_bwp_prb_grant()
   TESTASSERT_EQ("0x10000", fmt::format("0x{:x}", grant3));
 }
 
-void test_bwp_rb_bitmap()
+TEST(bwp_rb_bitmap, test_all)
 {
   bwp_rb_bitmap rb_bitmap(275, 0, true);
 
@@ -97,7 +98,7 @@ void test_bwp_rb_bitmap()
   TESTASSERT(rb_bitmap.collides(prb_interval{0, 2}));
 }
 
-void test_bwp_rb_bitmap_search()
+TEST(bwp_rb_bitmap, search)
 {
   bwp_rb_bitmap rb_bitmap(275, 0, true);
 
@@ -121,12 +122,4 @@ void test_bwp_rb_bitmap_search()
   TESTASSERT(prbs == prb_interval(0, 1));
   prbs = find_empty_interval_of_length(rb_bitmap.prbs(), 5);
   TESTASSERT(prbs == prb_interval(5, 10));
-}
-
-int main()
-{
-  test_bwp_prb_grant();
-  test_bwp_rb_bitmap();
-  test_bwp_rb_bitmap_search();
-  fmt::print("Success");
 }

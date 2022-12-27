@@ -13,6 +13,7 @@
 #include "unittests/scheduler/test_utils/config_generators.h"
 #include "unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsgnb/support/test_utils.h"
+#include <gtest/gtest.h>
 
 using namespace srsgnb;
 
@@ -68,7 +69,7 @@ public:
 };
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
-struct test_bench {
+struct sib_test_bench {
   const bwp_id_t        bwp_id      = to_bwp_id(0);
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
@@ -81,11 +82,11 @@ struct test_bench {
   slot_point                               sl_tx;
 
   // Test bench ctor for SIB1 scheduler test use. It allows us to set single parameters.
-  test_bench(subcarrier_spacing   init_bwp_scs,
-             uint8_t              pdcch_config_sib1,
-             uint8_t              ssb_bitmap,
-             sib1_rtx_periodicity sib1_rtx_period = sib1_rtx_periodicity::ms160,
-             ssb_periodicity      ssb_period      = ssb_periodicity::ms5) :
+  sib_test_bench(subcarrier_spacing   init_bwp_scs,
+                 uint8_t              pdcch_config_sib1,
+                 uint8_t              ssb_bitmap,
+                 sib1_rtx_periodicity sib1_rtx_period = sib1_rtx_periodicity::ms160,
+                 ssb_periodicity      ssb_period      = ssb_periodicity::ms5) :
     si_cfg{10, aggregation_level::n4, sib1_rtx_period},
     cfg_msg{make_cell_cfg_req_for_sib_sched(init_bwp_scs, pdcch_config_sib1, ssb_bitmap, ssb_period)},
     cfg{cfg_msg},
@@ -96,12 +97,12 @@ struct test_bench {
   };
 
   // Test bench ctor for SSB/SIB1 scheduler collision test.
-  test_bench(uint32_t           freq_arfcn,
-             uint16_t           offset_to_point_A,
-             uint8_t            k_ssb,
-             uint8_t            ssb_bitmap,
-             subcarrier_spacing init_bwp_scs,
-             uint8_t            pdcch_config_sib1) :
+  sib_test_bench(uint32_t           freq_arfcn,
+                 uint16_t           offset_to_point_A,
+                 uint8_t            k_ssb,
+                 uint8_t            ssb_bitmap,
+                 subcarrier_spacing init_bwp_scs,
+                 uint8_t            pdcch_config_sib1) :
     si_cfg{10, aggregation_level::n4, sib1_rtx_periodicity::ms10},
     cfg_msg{make_cell_cfg_req_for_sib_sched(freq_arfcn,
                                             offset_to_point_A,
@@ -243,8 +244,8 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
                          uint8_t                              pdcch_config_sib1,
                          uint8_t                              ssb_beam_bitmap)
 {
-  // Instantiate the test_bench and the SIB1 scheduler.
-  test_bench     t_bench{scs_common, pdcch_config_sib1, ssb_beam_bitmap};
+  // Instantiate the sib_test_bench and the SIB1 scheduler.
+  sib_test_bench t_bench{scs_common, pdcch_config_sib1, ssb_beam_bitmap};
   sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
 
   // SIB1 periodicity in slots.
@@ -296,8 +297,8 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
 /// \param[in] ssb_period period set for the SSB.
 void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity ssb_period)
 {
-  // Instantiate the test_bench and the SIB1 scheduler.
-  test_bench     t_bench{subcarrier_spacing::kHz15, 9U, 0b10000000, sib1_rtx_period, ssb_period};
+  // Instantiate the sib_test_bench and the SIB1 scheduler.
+  sib_test_bench t_bench{subcarrier_spacing::kHz15, 9U, 0b10000000, sib1_rtx_period, ssb_period};
   sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
 
   // Determine the expected SIB1 retx periodicity.
@@ -353,8 +354,8 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
                              subcarrier_spacing scs,
                              uint8_t            pdcch_config_sib1)
 {
-  // Instantiate the test_bench and the SIB1 scheduler.
-  test_bench     t_bench{freq_arfcn, offset_to_point_A, k_ssb, ssb_bitmap, scs, pdcch_config_sib1};
+  // Instantiate the sib_test_bench and the SIB1 scheduler.
+  sib_test_bench t_bench{freq_arfcn, offset_to_point_A, k_ssb, ssb_bitmap, scs, pdcch_config_sib1};
   sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
   ssb_scheduler  ssb_sched{t_bench.cfg};
 
@@ -426,7 +427,7 @@ void test_sib_1_pdsch_collisions(unsigned freq_arfcn, subcarrier_spacing scs)
   }
 }
 
-int main()
+TEST(sib1_scheduler_test, test_all)
 {
   srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
@@ -503,6 +504,4 @@ int main()
   freq_arfcn = 176000;
 
   test_sib_1_pdsch_collisions(freq_arfcn, scs);
-
-  return 0;
 }

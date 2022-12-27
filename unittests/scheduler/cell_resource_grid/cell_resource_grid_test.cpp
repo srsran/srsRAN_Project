@@ -11,6 +11,7 @@
 #include "lib/scheduler/cell/resource_grid.h"
 #include "unittests/scheduler/test_utils/config_generators.h"
 #include "srsgnb/support/test_utils.h"
+#include <gtest/gtest.h>
 
 using namespace srsgnb;
 
@@ -30,7 +31,7 @@ std::vector<scs_specific_carrier> test_carriers()
   return ret;
 }
 
-void test_carrier_subslot_resource_grid()
+TEST(carrier_subslot_resource_grid_test, test_all)
 {
   std::vector<scs_specific_carrier> carrier_cfgs = test_carriers();
 
@@ -89,7 +90,7 @@ void test_carrier_subslot_resource_grid()
   }
 }
 
-void test_cell_resource_grid()
+TEST(cell_resource_grid_test, test_all)
 {
   std::vector<scs_specific_carrier> carrier_cfgs = test_carriers();
 
@@ -155,7 +156,7 @@ void test_cell_resource_grid()
 }
 
 /// Test allocation of resources in a cell resource grid
-void test_pusch_resource_allocation()
+TEST(pusch_resource_allocation_test, test_all)
 {
   cell_configuration      cell_cfg{make_default_sched_cell_configuration_request()};
   cell_resource_allocator res_grid_alloc{cell_cfg};
@@ -202,11 +203,4 @@ void test_pusch_resource_allocation()
 
   // Test: Current slot_tx allocations match the ones done with "slot_tx + 1" in the previous slot
   TESTASSERT_EQ(res_grid_alloc[0].ul_res_grid.used_crbs(bwp_cfg, {0, 14}).count(), ul_grant2.prbs.length());
-}
-
-int main()
-{
-  test_carrier_subslot_resource_grid();
-  test_cell_resource_grid();
-  test_pusch_resource_allocation();
 }

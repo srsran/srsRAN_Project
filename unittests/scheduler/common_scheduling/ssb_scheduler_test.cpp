@@ -15,6 +15,7 @@
 #include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/scheduler/sched_consts.h"
 #include "srsgnb/support/test_utils.h"
+#include <gtest/gtest.h>
 
 /// This will be removed once we can get this value from the slot object.
 #define TEST_HARQ_ASSERT_MSG(SLOT, PERIODICITY, CASE)                                                                  \
@@ -38,16 +39,16 @@ const char* ssb_case_to_str(ssb_pattern_case ssb_case)
 }
 
 /// Helper struct to test HARQs and update loggers slot context.
-struct test_bench {
+struct ssb_test_bench {
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  test_bench(ssb_periodicity    ssb_period,
-             uint32_t           freq_arfcn,
-             uint16_t           offset_to_point_A,
-             uint64_t           in_burst_bitmap,
-             subcarrier_spacing ssb_scs,
-             uint8_t            k_ssb) :
+  ssb_test_bench(ssb_periodicity    ssb_period,
+                 uint32_t           freq_arfcn,
+                 uint16_t           offset_to_point_A,
+                 uint64_t           in_burst_bitmap,
+                 subcarrier_spacing ssb_scs,
+                 uint8_t            k_ssb) :
     cfg(make_cell_cfg_req_for_sib_sched(ssb_period, freq_arfcn, offset_to_point_A, in_burst_bitmap, ssb_scs, k_ssb)),
     cell_res_grid(cfg)
   {
@@ -405,8 +406,8 @@ void test_ssb_allocation(ssb_periodicity    ssb_period,
 {
   const size_t NUM_OF_TEST_SLOTS = 1000;
 
-  test_bench    bench{ssb_period, freq_arfcn, offset_to_point_A, in_burst_bitmap, ssb_scs, k_ssb};
-  ssb_scheduler ssb_sch{bench.get_cell_sched_config()};
+  ssb_test_bench bench{ssb_period, freq_arfcn, offset_to_point_A, in_burst_bitmap, ssb_scs, k_ssb};
+  ssb_scheduler  ssb_sch{bench.get_cell_sched_config()};
 
   bench.new_slot();
 
@@ -445,7 +446,7 @@ void test_ssb_allocation(ssb_periodicity    ssb_period,
 }
 
 // This tests the SSB scheduling for different SSB periods and bursts.
-void test_time_domain_sched_ssb()
+TEST(ssb_scheduler_test, test_time_domain_ssb_scheduling)
 {
   // ##########################################################
   //                   TEST CASE A
@@ -603,7 +604,7 @@ void test_time_domain_sched_ssb()
 }
 
 // This tests the SSB scheduling for different offsetToPointA and k_SSB.
-void test_freq_domain_sched_ssb()
+TEST(ssb_scheduler_test, test_freq_domain_ssb_scheduling)
 {
   // ##########################################################
   //                   TEST CASE A
@@ -673,20 +674,4 @@ void test_freq_domain_sched_ssb()
       test_ssb_allocation(periodicity, freq_arfcn, offset_to_point_A, in_burst_bitmap, ssb_scs, k_ssb_val);
     }
   }
-}
-
-int main()
-{
-  // Initialize logger.
-  srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);
-  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
-  srslog::init();
-
-  // Test SSB scheduling over time.
-  test_time_domain_sched_ssb();
-
-  // Test SSB scheduling over frequency.
-  test_freq_domain_sched_ssb();
-
-  return 0;
 }

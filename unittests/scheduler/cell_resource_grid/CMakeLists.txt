@@ -6,11 +6,13 @@
 # the distribution.
 #
 
-add_executable(sched_prb_test sched_prb_test.cpp)
-target_link_libraries(sched_prb_test srsgnb_sched srslog)
-add_test(sched_prb_test sched_prb_test)
-
-add_executable(resource_allocator_test cell_resource_grid_test.cpp)
-target_link_libraries(resource_allocator_test srsgnb_sched srslog mac_configuration_helpers sched_config)
-add_test(resource_allocator_test resource_allocator_test)
+add_executable(cell_resource_grid_test sched_prb_test.cpp cell_resource_grid_test.cpp)
+target_link_libraries(cell_resource_grid_test
+        srsgnb_sched
+        srslog
+        mac_configuration_helpers
+        sched_config
+        gtest
+        gtest_main)
+gtest_discover_tests(cell_resource_grid_test)
 

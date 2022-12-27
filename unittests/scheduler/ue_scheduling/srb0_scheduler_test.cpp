@@ -394,5 +394,7 @@ int main(int argc, char** argv)
 
   ::testing::InitGoogleTest(&argc, argv);
 
+  (void)(::testing::GTEST_FLAG(death_test_style) = "fast");
+
   return RUN_ALL_TESTS();
 }

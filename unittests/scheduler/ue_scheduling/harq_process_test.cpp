@@ -67,6 +67,7 @@ TEST(dl_harq_process, newtx_set_harq_to_not_empty)
 #ifdef ASSERTS_ENABLED
 TEST(dl_harq_process, retx_of_empty_harq_asserts)
 {
+  (void)(::testing::GTEST_FLAG(death_test_style) = "threadsafe");
   dl_harq_process h_dl(to_harq_id(0));
   slot_point      sl_tx{0, 0};
   ASSERT_DEATH(h_dl.new_retx(sl_tx, 4), ".*") << "Retxing an empty HARQ should assert";
@@ -100,6 +101,7 @@ TEST(dl_harq_process, when_max_retx_exceeded_and_nack_is_received_harq_becomes_e
 #ifdef ASSERTS_ENABLED
 TEST(dl_harq_process, when_harq_has_no_pending_retx_calling_newtx_or_retx_asserts)
 {
+  (void)(::testing::GTEST_FLAG(death_test_style) = "threadsafe");
   unsigned        max_ack_wait_slots = 1, k1 = 1, max_harq_retxs = 1;
   dl_harq_process h_dl(to_harq_id(0), max_ack_wait_slots);
   slot_point      sl_tx{0, 0};

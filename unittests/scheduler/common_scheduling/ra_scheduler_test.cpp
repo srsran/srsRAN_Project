@@ -29,7 +29,7 @@ unsigned get_random_uint(unsigned min, unsigned max)
   return std::uniform_int_distribution<unsigned>{min, max}(g);
 }
 
-struct test_bench {
+struct ra_test_bench {
   scheduler_expert_config        sched_cfg;
   cell_configuration             cell_cfg;
   cell_resource_allocator        res_grid{cell_cfg};
@@ -37,7 +37,7 @@ struct test_bench {
   ra_scheduler                   ra_sch{sched_cfg.ra, cell_cfg, pdcch_sch};
   scheduler_result_logger        result_logger;
 
-  test_bench(
+  ra_test_bench(
       const sched_cell_configuration_request_message& cell_req = make_default_sched_cell_configuration_request()) :
     sched_cfg(config_helpers::make_default_scheduler_expert_config()), cell_cfg(cell_req)
   {
@@ -353,10 +353,10 @@ protected:
 
   slot_point result_slot_tx() const { return bench->res_grid[0].slot; }
 
-  slot_point            next_slot{0, 0};
-  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
-  optional<test_bench>  bench;
+  slot_point              next_slot{0, 0};
+  srslog::basic_logger&   mac_logger  = srslog::fetch_basic_logger("MAC");
+  srslog::basic_logger&   test_logger = srslog::fetch_basic_logger("TEST");
+  optional<ra_test_bench> bench;
 };
 
 /// This test verifies that the cell resource grid remains empty when no RACH indications arrive to the RA scheduler.

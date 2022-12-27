@@ -13,9 +13,9 @@ include_directories(../..)
 add_subdirectory(test_utils)
 add_subdirectory(support)
 add_subdirectory(cell_resource_grid)
+add_subdirectory(common_scheduling)
 add_subdirectory(ue_scheduling)
 add_subdirectory(uci_and_pucch)
-add_subdirectory(common_scheduling)
 
 add_executable(sched_no_ue_test scheduler_no_ue_test.cpp)
 target_link_libraries(sched_no_ue_test srsgnb_sched
@@ -35,3 +35,13 @@ target_link_libraries(scheduler_retx_test srsgnb_sched sched_config
         scheduler_test_suite
         gtest gtest_main)
 add_test(scheduler_retx_test scheduler_retx_test)
+
+add_executable(multiple_ue_sched_test multiple_ue_sched_test.cpp)
+target_link_libraries(multiple_ue_sched_test
+        srsgnb_sched
+        sched_config
+        scheduler_test_suite
+        mac_configuration_helpers
+        gtest
+        gtest_main)
+gtest_discover_tests(multiple_ue_sched_test)
