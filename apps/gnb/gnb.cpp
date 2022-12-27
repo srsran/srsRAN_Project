@@ -11,6 +11,7 @@
 #include "srsgnb/cu_cp/cu_cp_factory.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 
+#include "adapters/f1u_connector/f1u_local_connector.h"
 #include "srsgnb/cu_up/cu_up_factory.h"
 
 #include "adapters/ngap_adapter.h"
@@ -261,6 +262,9 @@ int main(int argc, char** argv)
   f1c_local_adapter f1c_cu_to_du_adapter("f1-cu2du"), f1c_du_to_cu_adapter("f1-du2cu");
   e1_local_adapter  e1_cp_to_up_adapter("CU-CP"), e1_up_to_cp_adapter("CU-UP");
 
+  // Create F1-U connector
+  std::unique_ptr<f1u_local_connector> f1u_conn = std::make_unique<f1u_local_connector>();
+
   // Create IO broker.
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll);
 
@@ -285,6 +289,7 @@ int main(int argc, char** argv)
   srsgnb::srs_cu_up::cu_up_configuration cu_up_cfg;
   cu_up_cfg.cu_up_executor = &workers.cu_exec.front();
   cu_up_cfg.e1_notifier    = &e1_up_to_cp_adapter;
+  cu_up_cfg.f1u_gateway    = f1u_conn->get_f1u_cu_up_gateway();
   cu_up_cfg.epoll_broker   = epoll_broker.get();
   cu_up_cfg.gtp_bind_addr  = "127.0.1.1"; // FIXME: Read from main config
   cu_up_cfg.upf_addr       = "0.0.0.0";   // TODO: Refactor to use UPF IP that we get from E1
