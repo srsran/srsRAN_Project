@@ -25,7 +25,7 @@ public:
   gtpu_network_gateway_adapter()  = default;
   ~gtpu_network_gateway_adapter() = default;
 
-  void connect_sdap(network_gateway_data_handler& gw_handler_) { gw_handler = &gw_handler_; }
+  void connect_network_gateway(network_gateway_data_handler& gw_handler_) { gw_handler = &gw_handler_; }
 
   void on_new_pdu(byte_buffer pdu) override
   {

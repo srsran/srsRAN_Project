@@ -46,6 +46,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
     logger.error("Failed to create and connect NG-U gateway.");
   }
   cfg.epoll_broker->register_fd(ngu_gw->get_socket_fd(), [this](int fd) { ngu_gw->receive(); });
+  gtpu_gw_adapter.connect_network_gateway(*ngu_gw);
 
   // Create GTP-U demux
   ngu_demux = create_gtpu_demux();
