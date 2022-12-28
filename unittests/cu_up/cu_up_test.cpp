@@ -140,23 +140,20 @@ TEST_F(cu_up_test, dl_data_flow)
   ret = sendto(sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
   ASSERT_GE(ret, 0);
 
-  // let the Rx thread pick up the message
-  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-
   close(sock_fd);
 
   // check reception of message 1
-  ASSERT_FALSE(f1u_bearer.tx_sdu_list.empty());
-  EXPECT_EQ(f1u_bearer.tx_sdu_list.front().pdcp_count.value(), 0);
-  f1u_bearer.tx_sdu_list.pop_front();
+  pdcp_tx_pdu sdu1 = f1u_bearer.wait_tx_sdu();
+  ASSERT_TRUE(sdu1.pdcp_count.has_value());
+  EXPECT_EQ(sdu1.pdcp_count.value(), 0);
 
   // check reception of message 2
-  ASSERT_FALSE(f1u_bearer.tx_sdu_list.empty());
-  EXPECT_EQ(f1u_bearer.tx_sdu_list.front().pdcp_count.value(), 1);
-  f1u_bearer.tx_sdu_list.pop_front();
+  pdcp_tx_pdu sdu2 = f1u_bearer.wait_tx_sdu();
+  ASSERT_TRUE(sdu2.pdcp_count.has_value());
+  EXPECT_EQ(sdu2.pdcp_count.value(), 1);
 
   // check nothing else was received
-  EXPECT_TRUE(f1u_bearer.tx_sdu_list.empty());
+  EXPECT_FALSE(f1u_bearer.have_tx_sdu());
   EXPECT_TRUE(f1u_bearer.tx_discard_sdu_list.empty());
   EXPECT_TRUE(f1u_bearer.rx_msg_list.empty());
 }

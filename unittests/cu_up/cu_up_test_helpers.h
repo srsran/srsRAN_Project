@@ -14,8 +14,12 @@
 #include "srsgnb/f1u/cu_up/f1u_gateway.h"
 #include "srsgnb/gtpu/gtpu_demux.h"
 #include "srsgnb/gtpu/gtpu_tunnel_tx.h"
-#include "srsgnb/rlc/rlc_tx.h"
+#include <chrono>
+#include <condition_variable>
 #include <list>
+#include <mutex>
+
+constexpr auto default_wait_timeout = std::chrono::seconds(3);
 
 namespace srsgnb {
 
@@ -45,17 +49,48 @@ class dummy_f1u_bearer final : public srs_cu_up::f1u_bearer,
                                public srs_cu_up::f1u_rx_pdu_handler,
                                public srs_cu_up::f1u_tx_sdu_handler
 {
+private:
+  std::list<pdcp_tx_pdu>  tx_sdu_list;
+  std::mutex              tx_sdu_mutex;
+  std::condition_variable tx_sdu_cv;
+
 public:
   std::list<nru_ul_message> rx_msg_list;
-  std::list<rlc_sdu>        tx_sdu_list;
   std::list<uint32_t>       tx_discard_sdu_list;
 
   virtual f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
   virtual f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
 
   void handle_pdu(nru_ul_message msg) final { rx_msg_list.push_back(std::move(msg)); }
-  void handle_sdu(pdcp_tx_pdu sdu) final { tx_sdu_list.push_back(rlc_sdu(std::move(sdu.buf), sdu.pdcp_count)); }
   void discard_sdu(uint32_t count) final { tx_discard_sdu_list.push_back(count); };
+
+  void handle_sdu(pdcp_tx_pdu sdu) final
+  {
+    std::lock_guard<std::mutex> lock(tx_sdu_mutex);
+    tx_sdu_list.push_back(std::move(sdu));
+    tx_sdu_cv.notify_one();
+  }
+
+  pdcp_tx_pdu wait_tx_sdu()
+  {
+    std::unique_lock<std::mutex> lock(tx_sdu_mutex);
+    if (tx_sdu_cv.wait_for(lock, default_wait_timeout, [&]() { return !tx_sdu_list.empty(); })) {
+      // success
+      pdcp_tx_pdu sdu = std::move(tx_sdu_list.front());
+      tx_sdu_list.pop_front();
+      return sdu;
+    } else {
+      // timeout
+      pdcp_tx_pdu sdu = {};
+      return sdu;
+    }
+  }
+
+  bool have_tx_sdu()
+  {
+    std::lock_guard<std::mutex> lock(tx_sdu_mutex);
+    return !tx_sdu_list.empty();
+  }
 };
 
 class dummy_f1u_gateway final : public f1u_cu_up_gateway
