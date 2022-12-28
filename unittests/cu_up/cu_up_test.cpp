@@ -155,5 +155,4 @@ TEST_F(cu_up_test, dl_data_flow)
   // check nothing else was received
   EXPECT_FALSE(f1u_bearer.have_tx_sdu());
   EXPECT_TRUE(f1u_bearer.tx_discard_sdu_list.empty());
-  EXPECT_TRUE(f1u_bearer.rx_msg_list.empty());
 }

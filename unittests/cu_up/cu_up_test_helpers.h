@@ -50,18 +50,33 @@ class dummy_f1u_bearer final : public srs_cu_up::f1u_bearer,
                                public srs_cu_up::f1u_tx_sdu_handler
 {
 private:
+  srs_cu_up::f1u_rx_sdu_notifier* rx_sdu_notifier = nullptr;
+
   std::list<pdcp_tx_pdu>  tx_sdu_list;
   std::mutex              tx_sdu_mutex;
   std::condition_variable tx_sdu_cv;
 
 public:
-  std::list<nru_ul_message> rx_msg_list;
-  std::list<uint32_t>       tx_discard_sdu_list;
+  std::list<uint32_t> tx_discard_sdu_list;
+
+  dummy_f1u_bearer()  = default;
+  ~dummy_f1u_bearer() = default;
 
   virtual f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
   virtual f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
 
-  void handle_pdu(nru_ul_message msg) final { rx_msg_list.push_back(std::move(msg)); }
+  void connect_f1u_rx_sdu_notifier(srs_cu_up::f1u_rx_sdu_notifier& rx_sdu_notifier_)
+  {
+    rx_sdu_notifier = &rx_sdu_notifier_;
+  }
+
+  void handle_pdu(nru_ul_message msg) final
+  {
+    // Forward T-PDU to PDCP
+    srsgnb_assert(rx_sdu_notifier != nullptr, "The rx_sdu_notifier must not be a nullptr!");
+    rx_sdu_notifier->on_new_sdu(std::move(msg.t_pdu));
+  }
+
   void discard_sdu(uint32_t count) final { tx_discard_sdu_list.push_back(count); };
 
   void handle_sdu(pdcp_tx_pdu sdu) final
@@ -96,16 +111,17 @@ public:
 class dummy_f1u_gateway final : public f1u_cu_up_gateway
 {
 private:
-  srs_cu_up::f1u_bearer& bearer;
+  dummy_f1u_bearer& bearer;
 
 public:
-  dummy_f1u_gateway(srs_cu_up::f1u_bearer& bearer_) : bearer(bearer_) {}
+  dummy_f1u_gateway(dummy_f1u_bearer& bearer_) : bearer(bearer_) {}
   ~dummy_f1u_gateway() = default;
 
   srs_cu_up::f1u_bearer* create_cu_dl_bearer(uint32_t                             dl_teid,
                                              srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
                                              srs_cu_up::f1u_rx_sdu_notifier&      cu_rx) override
   {
+    bearer.connect_f1u_rx_sdu_notifier(cu_rx);
     return &bearer;
   };
   void attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid) override{};
