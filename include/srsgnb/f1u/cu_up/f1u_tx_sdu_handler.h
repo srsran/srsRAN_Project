@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/pdcp/pdcp_tx_pdu.h"
 
 namespace srsgnb {
 namespace srs_cu_up {
@@ -24,8 +24,8 @@ class f1u_tx_sdu_handler
 public:
   virtual ~f1u_tx_sdu_handler() = default;
 
-  virtual void handle_sdu(byte_buffer sdu, uint32_t count) = 0;
-  virtual void discard_sdu(uint32_t count)                 = 0;
+  virtual void handle_sdu(pdcp_tx_pdu sdu) = 0;
+  virtual void discard_sdu(uint32_t count) = 0;
 };
 
 } // namespace srs_cu_up

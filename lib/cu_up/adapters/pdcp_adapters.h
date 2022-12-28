@@ -46,10 +46,10 @@ public:
 
   void connect_f1u(f1u_tx_sdu_handler& f1u_handler_) { f1u_handler = &f1u_handler_; }
 
-  void on_new_pdu(byte_buffer pdu) override
+  void on_new_pdu(pdcp_tx_pdu pdu) override
   {
     srsgnb_assert(f1u_handler != nullptr, "F1-U handler must not be nullptr");
-    f1u_handler->handle_sdu(std::move(pdu), 0);
+    f1u_handler->handle_sdu(std::move(pdu));
   }
 
   void on_discard_pdu(uint32_t count) override

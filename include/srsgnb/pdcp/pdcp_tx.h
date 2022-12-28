@@ -12,6 +12,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/pdcp/pdcp_config.h"
+#include "srsgnb/pdcp/pdcp_tx_pdu.h"
 #include "srsgnb/security/security.h"
 
 /*
@@ -48,7 +49,7 @@ public:
   pdcp_tx_lower_notifier(const pdcp_tx_lower_notifier&&)            = delete;
   pdcp_tx_lower_notifier& operator=(const pdcp_tx_lower_notifier&&) = delete;
 
-  virtual void on_new_pdu(byte_buffer pdu)    = 0; ///< Pass PDU to the lower layers.
+  virtual void on_new_pdu(pdcp_tx_pdu pdu)    = 0; ///< Pass PDCP PDU to the lower layers.
   virtual void on_discard_pdu(uint32_t count) = 0; ///< Order lower layers to discard PDU
 };
 

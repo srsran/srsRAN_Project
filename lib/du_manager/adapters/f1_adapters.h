@@ -38,10 +38,10 @@ class f1u_rx_rlc_sdu_adapter final : public f1u_rx_sdu_notifier
 public:
   void connect(rlc_tx_upper_layer_data_interface& rlc_tx_) { rlc_tx = &rlc_tx_; }
 
-  void on_new_sdu(byte_buffer pdu, uint32_t count) override
+  void on_new_sdu(pdcp_tx_pdu sdu) override
   {
     srsgnb_assert(rlc_tx != nullptr, "RLC Tx SDU notifier is disconnected");
-    rlc_tx->handle_sdu(rlc_sdu{count, std::move(pdu)});
+    rlc_tx->handle_sdu(rlc_sdu{sdu.pdcp_count, std::move(sdu.buf)}); // TODO: Remove count if not present
   }
 
   void on_discard_sdu(uint32_t count) override

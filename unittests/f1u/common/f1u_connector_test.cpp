@@ -32,10 +32,10 @@ struct dummy_f1u_cu_up_rx_delivery_notifier final : public srs_cu_up::f1u_rx_del
 
 // dummy DU RX bearer interface
 struct dummy_f1u_du_rx_sdu_notifier final : public srs_du::f1u_rx_sdu_notifier {
-  void on_new_sdu(byte_buffer sdu, uint32_t count) override
+  void on_new_sdu(pdcp_tx_pdu sdu) override
   {
-    logger.info(sdu.begin(), sdu.end(), "DU received SDU. COUNT={}", count);
-    last_sdu = std::move(sdu);
+    logger.info(sdu.buf.begin(), sdu.buf.end(), "DU received SDU. COUNT={}", sdu.pdcp_count);
+    last_sdu = std::move(sdu.buf);
   }
   void        on_discard_sdu(uint32_t count) override {}
   byte_buffer last_sdu;
@@ -105,7 +105,11 @@ TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
   // Check CU-UP -> DU path
   byte_buffer             cu_buf = make_byte_buffer("ABCD");
   byte_buffer_slice_chain du_exp{cu_buf.deep_copy()};
-  cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(cu_buf), 0);
+  pdcp_tx_pdu             sdu;
+  sdu.buf            = std::move(cu_buf);
+  sdu.has_pdcp_count = true;
+  sdu.pdcp_count     = 0;
+  cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(sdu));
 
   // Check DU-> CU-UP path
   byte_buffer             du_buf = make_byte_buffer("DCBA");

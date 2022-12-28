@@ -40,7 +40,7 @@ public:
   virtual f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
 
   void handle_pdu(nru_ul_message msg) override;
-  void handle_sdu(byte_buffer sdu, uint32_t count) override;
+  void handle_sdu(pdcp_tx_pdu sdu) override;
   void discard_sdu(uint32_t count) override;
 
 private:

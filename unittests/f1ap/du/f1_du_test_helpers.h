@@ -137,10 +137,10 @@ public:
   optional<uint32_t> last_pdu_count;
   optional<uint32_t> last_discard_count;
 
-  void on_new_sdu(byte_buffer pdu, uint32_t count) override
+  void on_new_sdu(pdcp_tx_pdu sdu) override
   {
-    last_pdu       = std::move(pdu);
-    last_pdu_count = count;
+    last_pdu       = std::move(sdu.buf);
+    last_pdu_count = sdu.pdcp_count;
   }
 
   void on_discard_sdu(uint32_t count) override { last_discard_count = count; }

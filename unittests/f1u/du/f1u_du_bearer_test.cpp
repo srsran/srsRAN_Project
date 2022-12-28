@@ -9,7 +9,6 @@
  */
 
 #include "lib/f1u/du/f1u_bearer_impl.h"
-#include "srsgnb/rlc/rlc_tx.h"
 #include "srsgnb/srslog/srslog.h"
 #include <gtest/gtest.h>
 #include <list>
@@ -21,12 +20,12 @@ using namespace srs_du;
 class f1u_du_test_frame : public f1u_rx_sdu_notifier, public f1u_tx_pdu_notifier
 {
 public:
-  std::list<rlc_sdu>        rx_sdu_list;
+  std::list<pdcp_tx_pdu>    rx_sdu_list;
   std::list<uint32_t>       rx_discard_sdu_list;
   std::list<nru_ul_message> tx_msg_list;
 
   // f1u_rx_sdu_notifier interface
-  void on_new_sdu(byte_buffer sdu, uint32_t count) override { rx_sdu_list.push_back(rlc_sdu(count, std::move(sdu))); }
+  void on_new_sdu(pdcp_tx_pdu sdu) override { rx_sdu_list.push_back(std::move(sdu)); }
   void on_discard_sdu(uint32_t count) override { rx_discard_sdu_list.push_back(count); }
 
   // f1u_tx_pdu_notifier interface

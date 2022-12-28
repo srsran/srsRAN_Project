@@ -23,12 +23,13 @@ void f1u_bearer_impl::handle_pdu(nru_ul_message msg)
   // TODO: notify successfully delivered PDCP SNs
 }
 
-void f1u_bearer_impl::handle_sdu(byte_buffer sdu, uint32_t count)
+void f1u_bearer_impl::handle_sdu(pdcp_tx_pdu sdu)
 {
-  fmt::print("F1-U bearer with DRB id={} received SDU with count={}!", drb_id, count);
+  fmt::print("F1-U bearer with DRB id={} received SDU with count={}!", drb_id, sdu.pdcp_count);
   nru_dl_message msg = {};
-  msg.t_pdu          = std::move(sdu);
-  msg.pdcp_count     = count;
+  msg.t_pdu          = std::move(sdu.buf);
+  msg.has_pdcp_count = sdu.has_pdcp_count;
+  msg.pdcp_count     = sdu.pdcp_count;
   tx_pdu_notifier.on_new_pdu(std::move(msg));
 }
 

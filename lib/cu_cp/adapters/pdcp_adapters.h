@@ -13,6 +13,7 @@
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
+#include "srsgnb/pdcp/pdcp_tx.h"
 #include "srsgnb/rrc/rrc.h"
 
 namespace srsgnb {
@@ -41,14 +42,14 @@ public:
   {
   }
 
-  void on_new_pdu(byte_buffer pdu) override
+  void on_new_pdu(pdcp_tx_pdu pdu) override
   {
     f1ap_dl_rrc_message f1ap_msg = {};
     f1ap_msg.ue_index            = ue_index;
     f1ap_msg.srb_id              = srb_id;
 
-    f1ap_msg.rrc_container.resize(pdu.length());
-    std::copy(pdu.begin(), pdu.end(), f1ap_msg.rrc_container.begin());
+    f1ap_msg.rrc_container.resize(pdu.buf.length());
+    std::copy(pdu.buf.begin(), pdu.buf.end(), f1ap_msg.rrc_container.begin());
     f1c_handler.handle_dl_rrc_message_transfer(f1ap_msg);
   }
 

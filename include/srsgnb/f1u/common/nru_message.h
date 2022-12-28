@@ -92,8 +92,9 @@ struct nru_assistance_information {};
 /// NR-U DL message exchanged from node holding a PDCP entity (CU-UP) to the peer node (DU)
 struct nru_dl_message {
   // NR-U Payload
-  byte_buffer t_pdu;      ///< Transport PDU, e.g. PDCP PDU
-  uint32_t    pdcp_count; ///< PDCP count value of the t_pdu
+  byte_buffer t_pdu;          ///< Transport PDU, e.g. PDCP PDU.
+  bool        has_pdcp_count; ///< Indicates whether this PDCP PDU is accompanied with a PDCP COUNT value.
+  uint32_t    pdcp_count;     ///< PDCP count value of the t_pdu.
   // NR-U Information
   nru_dl_user_data dl_user_data; ///< NR-U DL User Data
 };

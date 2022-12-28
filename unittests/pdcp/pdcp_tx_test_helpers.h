@@ -26,7 +26,7 @@ class pdcp_tx_test_frame : public pdcp_rx_status_provider,
                            public pdcp_tx_upper_control_notifier
 {
 public:
-  std::queue<byte_buffer> pdu_queue             = {};
+  std::queue<pdcp_tx_pdu> pdu_queue             = {};
   uint32_t                nof_max_count_reached = 0;
   uint32_t                nof_protocol_failure  = 0;
   std::queue<uint32_t>    sdu_discard_queue     = {};
@@ -57,7 +57,7 @@ public:
   void on_protocol_failure() final { nof_protocol_failure++; }
 
   // PDCP TX lower layer data notifier
-  void on_new_pdu(byte_buffer pdu) final { pdu_queue.push(std::move(pdu)); }
+  void on_new_pdu(pdcp_tx_pdu pdu) final { pdu_queue.push(std::move(pdu)); }
   void on_discard_pdu(uint32_t count) final { sdu_discard_queue.push(count); }
 };
 

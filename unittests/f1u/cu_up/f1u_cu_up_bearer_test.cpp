@@ -123,10 +123,18 @@ TEST_F(f1u_cu_up_test, tx_pdcp_pdus)
   constexpr uint32_t pdcp_count = 123;
 
   byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_count);
-  f1u->handle_sdu(tx_pdcp_pdu1.deep_copy(), pdcp_count);
+  pdcp_tx_pdu sdu1;
+  sdu1.buf            = tx_pdcp_pdu1.deep_copy();
+  sdu1.has_pdcp_count = true;
+  sdu1.pdcp_count     = pdcp_count;
+  f1u->handle_sdu(std::move(sdu1));
 
   byte_buffer tx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_count + 1);
-  f1u->handle_sdu(tx_pdcp_pdu2.deep_copy(), pdcp_count + 1);
+  pdcp_tx_pdu sdu2;
+  sdu2.buf            = tx_pdcp_pdu2.deep_copy();
+  sdu2.has_pdcp_count = true;
+  sdu2.pdcp_count     = pdcp_count + 1;
+  f1u->handle_sdu(std::move(sdu2));
 
   EXPECT_TRUE(tester->rx_delivered_sdu_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());

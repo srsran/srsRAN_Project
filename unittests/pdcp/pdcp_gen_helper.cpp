@@ -26,7 +26,7 @@ struct pdcp_gen_helper_args {
 class pdcp_tx_gen_frame : public pdcp_tx_lower_notifier, public pdcp_tx_upper_control_notifier
 {
 public:
-  std::queue<byte_buffer> pdu_queue   = {};
+  std::queue<pdcp_tx_pdu> pdu_queue   = {};
   uint32_t                pdu_counter = 0;
 
   /// PDCP TX upper layer control notifier
@@ -34,7 +34,7 @@ public:
   void on_protocol_failure() final {}
 
   /// PDCP TX lower layer data notifier
-  void on_new_pdu(byte_buffer pdu) final { pdu_queue.push(std::move(pdu)); }
+  void on_new_pdu(pdcp_tx_pdu pdu) final { pdu_queue.push(std::move(pdu)); }
   void on_discard_pdu(uint32_t count) final {}
 };
 
@@ -69,7 +69,7 @@ bool parse_args(pdcp_gen_helper_args& args, int argc, char* argv[])
         break;
       case 'c':
         args.count = strtod(optarg, nullptr);
-        fprintf(stdout, "PDCP COUNT %d\n", args.count);
+        fprintf(stdout, "PDCP COUNT %u\n", args.count);
         break;
       default:
         fprintf(stderr, "error parsing arguments\n");
@@ -123,6 +123,6 @@ int main(int argc, char** argv)
   // Write SDU
   byte_buffer sdu = {sdu1};
   pdcp_tx->handle_sdu(std::move(sdu));
-  logger.info(frame.pdu_queue.front().begin(), frame.pdu_queue.front().end(), "PDCP PDU");
+  logger.info(frame.pdu_queue.front().buf.begin(), frame.pdu_queue.front().buf.end(), "PDCP PDU");
   return 0;
 }

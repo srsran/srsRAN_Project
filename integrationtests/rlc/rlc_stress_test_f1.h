@@ -34,10 +34,11 @@ public:
   f1_dummy(uint32_t id) : logger("F1", id, lcid_t{}) {}
 
   // PDCP -> F1 -> RLC
-  void on_new_pdu(byte_buffer buf) final
+  void on_new_pdu(pdcp_tx_pdu pdu) final
   {
-    rlc_sdu sdu = {};
-    sdu.buf     = std::move(buf);
+    rlc_sdu sdu    = {};
+    sdu.buf        = std::move(pdu.buf);
+    sdu.pdcp_count = pdu.pdcp_count;
     logger.log_info("Passing F1 PDU to RLC");
     rlc_tx_upper->handle_sdu(std::move(sdu));
   }

@@ -100,14 +100,22 @@ void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer 
                   integrity_enabled,
                   ciphering_enabled);
   metrics_add_pdus(1, buf.length());
-  lower_dn.on_new_pdu(std::move(buf));
+  pdcp_tx_pdu tx_pdu    = {};
+  tx_pdu.buf            = std::move(buf);
+  tx_pdu.has_pdcp_count = true;  // SRBs will ignore this value.
+  tx_pdu.pdcp_count     = count; // SRBs will ignore this value.
+  lower_dn.on_new_pdu(std::move(tx_pdu));
 }
 
 void pdcp_entity_tx::write_control_pdu_to_lower_layers(byte_buffer buf)
 {
   logger.log_info(buf.begin(), buf.end(), "TX Control PDU ({}B)", buf.length());
   metrics_add_pdus(1, buf.length());
-  lower_dn.on_new_pdu(std::move(buf));
+  pdcp_tx_pdu tx_pdu    = {};
+  tx_pdu.buf            = std::move(buf);
+  tx_pdu.has_pdcp_count = false;
+  tx_pdu.pdcp_count     = 0; // This value will be ignored.
+  lower_dn.on_new_pdu(std::move(tx_pdu));
 }
 
 void pdcp_entity_tx::handle_status_report(byte_buffer_slice_chain status)

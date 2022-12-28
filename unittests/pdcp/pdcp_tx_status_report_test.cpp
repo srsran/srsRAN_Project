@@ -9,7 +9,6 @@
  */
 
 #include "pdcp_tx_status_report_test.h"
-#include "lib/pdcp/pdcp_entity_impl.h"
 #include "pdcp_test_vectors.h"
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/support/bit_encoding.h"
@@ -30,7 +29,7 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
     test_frame.sdu_discard_queue = {};
     init(sn_size);
     unsigned                n_sdus = 5;
-    std::queue<byte_buffer> exp_pdu_list;
+    std::queue<pdcp_tx_pdu> exp_pdu_list;
     pdcp_tx_state           st = {tx_next};
     pdcp_tx->set_state(st);
     pdcp_tx->set_as_security_config(sec_cfg);
@@ -120,7 +119,7 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
   auto test_with_count = [this](uint32_t tx_next) {
     init(sn_size);
     unsigned                n_sdus = 5;
-    std::queue<byte_buffer> exp_pdu_list;
+    std::queue<pdcp_tx_pdu> exp_pdu_list;
     pdcp_tx_state           st = {tx_next};
     pdcp_tx->set_state(st);
     pdcp_tx->set_as_security_config(sec_cfg);
@@ -142,21 +141,21 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
 
     // read the status report
     {
-      byte_buffer pdu = std::move(test_frame.pdu_queue.front());
+      pdcp_tx_pdu pdu = std::move(test_frame.pdu_queue.front());
       test_frame.pdu_queue.pop();
       byte_buffer exp_pdu = test_frame.compile_status_report();
-      ASSERT_EQ(pdu.length(), exp_pdu.length());
-      ASSERT_EQ(pdu, exp_pdu);
+      ASSERT_EQ(pdu.buf.length(), exp_pdu.length());
+      ASSERT_EQ(pdu.buf, exp_pdu);
     }
 
     // read data PDUs
     for (uint32_t count = tx_next; count < tx_next + n_sdus; ++count) {
-      byte_buffer pdu = std::move(test_frame.pdu_queue.front());
+      pdcp_tx_pdu pdu = std::move(test_frame.pdu_queue.front());
       test_frame.pdu_queue.pop();
-      byte_buffer exp_pdu = std::move(exp_pdu_list.front());
+      pdcp_tx_pdu exp_pdu = std::move(exp_pdu_list.front());
       exp_pdu_list.pop();
-      ASSERT_EQ(pdu.length(), exp_pdu.length());
-      ASSERT_EQ(pdu, exp_pdu);
+      ASSERT_EQ(pdu.buf.length(), exp_pdu.buf.length());
+      ASSERT_EQ(pdu.buf, exp_pdu.buf);
     }
 
     while (not test_frame.pdu_queue.empty()) {
