@@ -11,52 +11,14 @@
 #include "sib_scheduler.h"
 #include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/pdcch/pdcch_type0_helpers.h"
 #include "../support/prbs_calculator.h"
 #include "srsgnb/ran/band_helper.h"
-#include "srsgnb/ran/bs_channel_bandwidth.h"
-#include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsgnb/ran/sib_configuration.h"
 
 using namespace srsgnb;
-
-//  ------   Helper functions   ------ .
-
-// Helper function that returns whether slot n0 (where UE should monitor Type0-PDCCH CSS) is in an even/odd frame:
-// - 0 if slot n0 is located in an even frame.
-// - 1 if slot n0 (where UE should monitor Type0-PDCCH CSS) is located in an odd frame.
-static unsigned sib1_is_even_frame(unsigned sib1_offset, double sib1_M, uint8_t numerology_mu, unsigned ssb_index)
-{
-  // This is only used to retrieve the nof_slots_per_frame.
-  slot_point sl_point{numerology_mu, 0};
-
-  // Compute floor( ( O * 2^mu + floor(i*M) ) / nof_slots_per_frame  ) mod 2, as per TS 38.213, Section 13.
-  unsigned is_even = static_cast<unsigned>(floor(static_cast<double>(sib1_offset << numerology_mu) +
-                                                 floor(static_cast<double>(ssb_index) * sib1_M)) /
-                                           sl_point.nof_slots_per_frame()) %
-                     2;
-  return is_even;
-}
-
-// Helper function that returns slot n0 (where UE should monitor Type0-PDCCH CSS) for a given SSB (beam) index.
-static slot_point get_sib1_n0(unsigned sib1_offset, double sib1_M, subcarrier_spacing scs_common, unsigned ssb_index)
-{
-  // Initialize n0 to a slot_point = 0.
-  uint8_t    numerology_mu = to_numerology_value(scs_common);
-  slot_point sib_1_n0{numerology_mu, 0};
-
-  // Compute n0 = ( O * 2^mu + floor(i*M)  )  % nof_slots_per_frame, as per TS 38.213, Section 13.
-  sib_1_n0 += static_cast<unsigned>(static_cast<double>(sib1_offset << numerology_mu) +
-                                    floor(static_cast<double>(ssb_index) * sib1_M)) %
-              sib_1_n0.nof_slots_per_frame();
-
-  // We want to express n0 as a value from 0 to max_nof_slots. Since the mod operation above cap n0 to
-  // (nof_slots_per_frame - 1), we need to add nof_slots_per_frame to n0 if this falls into an odd frame.
-  sib_1_n0 += sib1_is_even_frame(sib1_offset, sib1_M, numerology_mu, ssb_index) * sib_1_n0.nof_slots_per_frame();
-
-  return sib_1_n0;
-}
 
 //  ------   Public methods   ------ .
 
@@ -75,7 +37,9 @@ sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               e
   sib1_period = std::max(ssb_periodicity_to_value(cfg_.ssb_cfg.ssb_period),
                          sib1_rtx_periodicity_to_value(expert_cfg.sib1_retx_period));
 
-  precompute_sib1_n0(msg.scs_common);
+  for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
+    sib1_n0_slots.emplace_back(precompute_type0_pdcch_css_n0(searchspace0, coreset0, cell_cfg, msg.scs_common, i_ssb));
+  }
 
   // Define a BWP configuration limited by CORESET#0 RBs.
   coreset0_bwp_cfg      = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
@@ -123,31 +87,6 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
 }
 
 //  ------   Private methods   ------ .
-
-void sib1_scheduler::precompute_sib1_n0(subcarrier_spacing scs_common)
-{
-  min_channel_bandwidth min_channel_bw = band_helper::get_min_channel_bw(cell_cfg.dl_carrier.band, scs_common);
-  srsgnb_assert(min_channel_bw < min_channel_bandwidth::MHz40,
-                "Bands with minimum channel BW 40MHz not supported for SIB1 scheduling");
-  // Get Coreset0 num of symbols from Coreset0 config.
-  unsigned nof_symb_coreset0 = pdcch_type0_css_coreset_get(min_channel_bw,
-                                                           cell_cfg.ssb_cfg.scs,
-                                                           scs_common,
-                                                           coreset0,
-                                                           static_cast<uint8_t>(cell_cfg.ssb_cfg.k_ssb.to_uint()))
-                                   .nof_rb_coreset;
-
-  srsgnb_assert(band_helper::get_freq_range(cell_cfg.dl_carrier.band) == frequency_range::FR1,
-                "SIB1 scheduler only supports FR1.");
-  pdcch_type0_css_occasion_pattern1_description ss0_config_occasion_param =
-      pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
-          .is_fr2 = false, .ss_zero_index = searchspace0, .nof_symb_coreset = nof_symb_coreset0});
-
-  for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
-    sib1_n0_slots.emplace_back(get_sib1_n0(
-        static_cast<unsigned>(ss0_config_occasion_param.offset), ss0_config_occasion_param.M, scs_common, i_ssb));
-  }
-}
 
 bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsigned beam_idx)
 {

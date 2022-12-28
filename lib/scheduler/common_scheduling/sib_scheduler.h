@@ -37,13 +37,6 @@ public:
   void schedule_sib1(cell_slot_resource_allocator& res_grid, slot_point sl_point);
 
 private:
-  /// \brief Computes the SIB1 n0 slot, at which each beam's SIB1 is allocated [TS 38.213, Section 13].
-  ///
-  /// These slots are computed and saved in the body of the constructor.
-  /// \param[in] scs_common SCS corresponding to subCarrierSpacingCommon, which must coincide with SCS if initial
-  /// DL BWP.
-  void precompute_sib1_n0(subcarrier_spacing scs_common);
-
   /// \brief Searches in PDSCH and PDCCH for space to allocate SIB1 and SIB1's DCI, respectively.
   ///
   /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
