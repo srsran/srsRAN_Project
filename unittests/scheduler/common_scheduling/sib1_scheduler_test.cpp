@@ -10,6 +10,7 @@
 
 #include "lib/scheduler/common_scheduling/sib_scheduler.h"
 #include "lib/scheduler/common_scheduling/ssb_scheduler.h"
+#include "lib/scheduler/support/ssb_helpers.h"
 #include "unittests/scheduler/test_utils/config_generators.h"
 #include "unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsgnb/support/test_utils.h"
@@ -252,10 +253,7 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
   unsigned sib1_period_slots = SIB1_PERIODICITY * t_bench.sl_tx.nof_slots_per_subframe();
 
   // Define helper lambda to determine from ssb_beam_bitmap if the n-th SSB beam is used.
-  uint64_t ssb_bitmap          = t_bench.cfg.ssb_cfg.ssb_bitmap;
-  auto     nth_ssb_beam_active = [ssb_bitmap](unsigned ssb_index) {
-    return (ssb_bitmap & (static_cast<uint64_t>(0b1U) << static_cast<uint64_t>(63U - ssb_index))) > 0;
-  };
+  uint64_t ssb_bitmap = t_bench.cfg.ssb_cfg.ssb_bitmap;
 
   // Run the test for 10000 slots.
   size_t test_length_slots = 10000;
@@ -270,7 +268,7 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
     // Verify if for any active beam, the SIB1 got allocated within the proper n0 slots.
     for (size_t ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
       // Only check for the active slots.
-      if (nth_ssb_beam_active(ssb_idx) && (sl_idx % sib1_period_slots == sib1_n0_slots[ssb_idx])) {
+      if (is_nth_ssb_beam_active(ssb_bitmap, ssb_idx) && (sl_idx % sib1_period_slots == sib1_n0_slots[ssb_idx])) {
         // Verify that the scheduler results list contain 1 element with the SIB1 information.
         TESTASSERT_EQ(1, res_slot_grid.result.dl.bc.sibs.size());
         // Verify the PDCCH grants and DCI have been filled correctly.

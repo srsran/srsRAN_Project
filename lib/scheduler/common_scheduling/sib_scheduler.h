@@ -74,8 +74,8 @@ private:
   /// This is a dummy BWP configuration dimensioned based on CORESET#0 RB limits. It's used for CRB-to-PRB conversion.
   bwp_configuration coreset0_bwp_cfg;
 
-  /// Vector of slots n0 (1 per beam) that will be used for SIB1 scheduling [TS 38.213, Section 13].
-  static_vector<slot_point, MAX_NUM_BEAMS> sib1_n0_slots;
+  /// Array of slots n0 (1 per beam) that will be used for SIB1 scheduling [TS 38.213, Section 13].
+  std::array<slot_point, MAX_NUM_BEAMS> sib1_n0_slots;
 };
 
 } // end of namespace srsgnb

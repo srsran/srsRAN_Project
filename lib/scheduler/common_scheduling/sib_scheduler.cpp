@@ -13,6 +13,7 @@
 #include "../support/dmrs_helpers.h"
 #include "../support/pdcch/pdcch_type0_helpers.h"
 #include "../support/prbs_calculator.h"
+#include "../support/ssb_helpers.h"
 #include "srsgnb/ran/band_helper.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
@@ -38,7 +39,10 @@ sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               e
                          sib1_rtx_periodicity_to_value(expert_cfg.sib1_retx_period));
 
   for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
-    sib1_n0_slots.emplace_back(precompute_type0_pdcch_css_n0(searchspace0, coreset0, cell_cfg, msg.scs_common, i_ssb));
+    if (not is_nth_ssb_beam_active(cell_cfg.ssb_cfg.ssb_bitmap, i_ssb)) {
+      continue;
+    }
+    sib1_n0_slots[i_ssb] = (precompute_type0_pdcch_css_n0(searchspace0, coreset0, cell_cfg, msg.scs_common, i_ssb));
   }
 
   // Define a BWP configuration limited by CORESET#0 RBs.
@@ -57,15 +61,7 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
 
   // The sib1_period_slots is expressed in unit of slots.
   // NOTE: As sib1_period_slots is expressed in milliseconds or subframes, we need to this these into slots.
-  unsigned sib1_period_slots = sib1_period * static_cast<unsigned>(sl_point.nof_slots_per_subframe());
-
-  // Helper function that determines from SSB bitmap whether n-th beam is used.
-  auto is_nth_ssb_beam_active = [](uint64_t ssb_bitmap, unsigned ssb_index) {
-    // In the current implementation state, only SSB indices within the interval [0, 7] are allowed.
-    srsgnb_sanity_check(
-        ssb_index >= 0 and ssb_index < MAX_NUM_BEAMS, "SSB index must be within the interval [0, '{}')", MAX_NUM_BEAMS);
-    return (ssb_bitmap & (static_cast<uint64_t>(0b1U) << static_cast<uint64_t>(63U - ssb_index))) > 0;
-  };
+  const unsigned sib1_period_slots = sib1_period * static_cast<unsigned>(sl_point.nof_slots_per_subframe());
 
   // For each beam, check if the SIB1 needs to be allocated in this slot.
   for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
@@ -113,7 +109,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
   // 1. Find available RBs in PDSCH for SIB1 grant.
   crb_interval sib1_crbs;
   {
-    unsigned          nof_sib1_rbs = sib1_prbs_tbs.nof_prbs;
+    const unsigned    nof_sib1_rbs = sib1_prbs_tbs.nof_prbs;
     const prb_bitmap& used_crbs    = res_grid.dl_res_grid.used_crbs(
         coreset0_bwp_cfg, cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols);
     sib1_crbs = find_empty_interval_of_length(used_crbs, nof_sib1_rbs, 0);
