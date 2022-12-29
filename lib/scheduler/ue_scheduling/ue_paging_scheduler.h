@@ -34,16 +34,14 @@ private:
   pdcch_resource_allocator&         pdcch_sch;
   ue_list&                          ues;
 
-  /// Vector of Type0-PDCCH CSS monitoring slot n0 (1 per beam) that will be used
-  /// for Paging scheduling if pagingSearchSpace is 0 [TS 38.213, Section 13].
-  static_vector<slot_point, MAX_NUM_BEAMS> type0_pdcch_css_n0_slots;
+  /// Array of Type0-PDCCH CSS monitoring slot n0 (1 per beam) that will be used for Paging scheduling if
+  /// pagingSearchSpace is 0 [TS 38.213, Section 13].
+  std::array<slot_point, MAX_NUM_BEAMS> type0_pdcch_css_n0_slots;
   /// This is a dummy BWP configuration dimensioned based on CORESET#0 RB limits. It's used for CRB-to-PRB conversion.
   bwp_configuration coreset0_bwp_cfg;
 
   /// Default Paging cycle configured in SIB1, expressed in nof. radio frames.
   unsigned sib1_default_paging_cycle;
-
-  bwp_configuration initial_active_dl_bwp;
 
   srslog::basic_logger& logger;
 };

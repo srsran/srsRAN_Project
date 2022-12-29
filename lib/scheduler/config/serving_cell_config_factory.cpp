@@ -147,6 +147,12 @@ dl_config_common srsgnb::config_helpers::make_default_dl_config_common(const cel
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols  = {2, 14};
 
+  // Configure PCCH.
+  cfg.pcch_cfg.default_paging_cycle = paging_cycle::rf128;
+  cfg.pcch_cfg.nof_pf               = pcch_config::nof_pf_per_drx_cycle::oneT;
+  cfg.pcch_cfg.paging_frame_offset  = 0;
+  cfg.pcch_cfg.ns                   = pcch_config::nof_po_per_pf::one;
+
   return cfg;
 }
 

@@ -15,6 +15,7 @@
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/ofdm_symbol_range.h"
+#include "srsgnb/ran/pcch/pcch_configuration.h"
 #include "srsgnb/ran/pdcch/coreset.h"
 #include "srsgnb/ran/pdcch/search_space.h"
 #include "srsgnb/ran/prach/restricted_set_config.h"
@@ -35,7 +36,7 @@ struct pdcch_config_common {
   std::vector<search_space_configuration> search_spaces;
   search_space_id                         sib1_search_space_id;
   search_space_id                         other_si_search_space_id;
-  search_space_id                         paging_search_space_id;
+  optional<search_space_id>               paging_search_space_id;
   /// SearchSpace of RA procedure. If field is invalid, the UE does not receive RAR in this BWP.
   search_space_id ra_search_space_id;
 };
@@ -196,6 +197,7 @@ struct frequency_info_dl {
 struct dl_config_common {
   frequency_info_dl   freq_info_dl;
   bwp_downlink_common init_dl_bwp;
+  pcch_config         pcch_cfg;
 };
 
 struct frequency_info_ul {

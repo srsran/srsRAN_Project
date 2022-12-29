@@ -96,10 +96,12 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
   pdcch.search_space_sib1_present           = true;
   pdcch.search_space_sib1                   = cfg.init_dl_bwp.pdcch_common.sib1_search_space_id;
   pdcch.search_space_other_sys_info_present = false;
-  pdcch.paging_search_space_present         = true;
-  pdcch.paging_search_space                 = cfg.init_dl_bwp.pdcch_common.paging_search_space_id;
-  pdcch.ra_search_space_present             = true;
-  pdcch.ra_search_space                     = (unsigned)cfg.init_dl_bwp.pdcch_common.ra_search_space_id;
+  pdcch.paging_search_space_present         = cfg.init_dl_bwp.pdcch_common.paging_search_space_id.has_value();
+  if (pdcch.paging_search_space_present) {
+    pdcch.paging_search_space = cfg.init_dl_bwp.pdcch_common.paging_search_space_id.value();
+  }
+  pdcch.ra_search_space_present = true;
+  pdcch.ra_search_space         = (unsigned)cfg.init_dl_bwp.pdcch_common.ra_search_space_id;
   // PDSCH-ConfigCommon.
   out.init_dl_bwp.pdsch_cfg_common_present = true;
   pdsch_cfg_common_s& pdsch                = out.init_dl_bwp.pdsch_cfg_common.set_setup();
@@ -121,9 +123,123 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
   // BCCH-Config
   out.bcch_cfg.mod_period_coeff.value = bcch_cfg_s::mod_period_coeff_opts::n4;
   // PCCH-Config
-  out.pcch_cfg.default_paging_cycle.value = paging_cycle_opts::rf128;
-  out.pcch_cfg.nand_paging_frame_offset.set_one_t();
-  out.pcch_cfg.ns.value = pcch_cfg_s::ns_opts::one;
+  switch (cfg.pcch_cfg.default_paging_cycle) {
+    case paging_cycle::rf32:
+      out.pcch_cfg.default_paging_cycle.value = paging_cycle_opts::rf32;
+      break;
+    case paging_cycle::rf64:
+      out.pcch_cfg.default_paging_cycle.value = paging_cycle_opts::rf64;
+      break;
+    case paging_cycle::rf128:
+      out.pcch_cfg.default_paging_cycle.value = paging_cycle_opts::rf128;
+      break;
+    case paging_cycle::rf256:
+      out.pcch_cfg.default_paging_cycle.value = paging_cycle_opts::rf256;
+      break;
+    default:
+      report_fatal_error("Invalid default paging cycle set");
+  }
+  switch (cfg.pcch_cfg.nof_pf) {
+    case pcch_config::nof_pf_per_drx_cycle::oneT:
+      out.pcch_cfg.nand_paging_frame_offset.set_one_t();
+      break;
+    case pcch_config::nof_pf_per_drx_cycle::halfT: {
+      auto& nof_pf = out.pcch_cfg.nand_paging_frame_offset.half_t();
+      nof_pf       = cfg.pcch_cfg.paging_frame_offset;
+    } break;
+    case pcch_config::nof_pf_per_drx_cycle::quarterT: {
+      auto& nof_pf = out.pcch_cfg.nand_paging_frame_offset.quarter_t();
+      nof_pf       = cfg.pcch_cfg.paging_frame_offset;
+    } break;
+    case pcch_config::nof_pf_per_drx_cycle::oneEighthT: {
+      auto& nof_pf = out.pcch_cfg.nand_paging_frame_offset.one_eighth_t();
+      nof_pf       = cfg.pcch_cfg.paging_frame_offset;
+    } break;
+    case pcch_config::nof_pf_per_drx_cycle::oneSixteethT: {
+      auto& nof_pf = out.pcch_cfg.nand_paging_frame_offset.one_sixteenth_t();
+      nof_pf       = cfg.pcch_cfg.paging_frame_offset;
+    } break;
+    default:
+      report_fatal_error("Invalid nof. paging frames per DRX cycle and paging frame offset set");
+  }
+  switch (cfg.pcch_cfg.ns) {
+    case pcch_config::nof_po_per_pf::four:
+      out.pcch_cfg.ns.value = pcch_cfg_s::ns_opts::four;
+      break;
+    case pcch_config::nof_po_per_pf::two:
+      out.pcch_cfg.ns.value = pcch_cfg_s::ns_opts::two;
+      break;
+    case pcch_config::nof_po_per_pf::one:
+      out.pcch_cfg.ns.value = pcch_cfg_s::ns_opts::one;
+      break;
+    default:
+      report_fatal_error("Invalid nof. paging occasions per paging frame set");
+  }
+  if (cfg.pcch_cfg.first_pdcch_mo_of_po_type !=
+      srsgnb::pcch_config::first_pdcch_monitoring_occasion_of_po_type::not_set) {
+    out.pcch_cfg.first_pdcch_monitoring_occasion_of_po_present = true;
+    switch (cfg.pcch_cfg.first_pdcch_mo_of_po_type) {
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::sCS15KHZoneT: {
+        auto& first_pmo_of_po = out.pcch_cfg.first_pdcch_monitoring_occasion_of_po.scs15_kh_zone_t();
+        for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
+          first_pmo_of_po.push_back(v);
+        }
+      } break;
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::sCS30KHZoneT_SCS15KHZhalfT: {
+        auto& first_pmo_of_po = out.pcch_cfg.first_pdcch_monitoring_occasion_of_po.scs30_kh_zone_t_scs15_kh_zhalf_t();
+        for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
+          first_pmo_of_po.push_back(v);
+        }
+      } break;
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::sCS60KHZoneT_SCS30KHZhalfT_SCS15KHZquarterT: {
+        auto& first_pmo_of_po =
+            out.pcch_cfg.first_pdcch_monitoring_occasion_of_po.scs60_kh_zone_t_scs30_kh_zhalf_t_scs15_kh_zquarter_t();
+        for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
+          first_pmo_of_po.push_back(v);
+        }
+      } break;
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::
+          sCS120KHZoneT_SCS60KHZhalfT_SCS30KHZquarterT_SCS15KHZoneEighthT: {
+        auto& first_pmo_of_po = out.pcch_cfg.first_pdcch_monitoring_occasion_of_po
+                                    .scs120_kh_zone_t_scs60_kh_zhalf_t_scs30_kh_zquarter_t_scs15_kh_zone_eighth_t();
+        for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
+          first_pmo_of_po.push_back(v);
+        }
+      } break;
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::
+          sCS120KHZhalfT_SCS60KHZquarterT_SCS30KHZoneEighthT_SCS15KHZoneSixteenthT: {
+        auto& first_pmo_of_po =
+            out.pcch_cfg.first_pdcch_monitoring_occasion_of_po
+                .scs120_kh_zhalf_t_scs60_kh_zquarter_t_scs30_kh_zone_eighth_t_scs15_kh_zone_sixteenth_t();
+        for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
+          first_pmo_of_po.push_back(v);
+        }
+      } break;
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::
+          sCS120KHZquarterT_SCS60KHZoneEighthT_SCS30KHZoneSixteenthT: {
+        auto& first_pmo_of_po = out.pcch_cfg.first_pdcch_monitoring_occasion_of_po
+                                    .scs120_kh_zquarter_t_scs60_kh_zone_eighth_t_scs30_kh_zone_sixteenth_t();
+        for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
+          first_pmo_of_po.push_back(v);
+        }
+      } break;
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::sCS120KHZoneEighthT_SCS60KHZoneSixteenthT: {
+        auto& first_pmo_of_po =
+            out.pcch_cfg.first_pdcch_monitoring_occasion_of_po.scs120_kh_zone_eighth_t_scs60_kh_zone_sixteenth_t();
+        for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
+          first_pmo_of_po.push_back(v);
+        }
+      } break;
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::sCS120KHZoneSixteenthT: {
+        auto& first_pmo_of_po = out.pcch_cfg.first_pdcch_monitoring_occasion_of_po.scs120_kh_zone_sixteenth_t();
+        for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
+          first_pmo_of_po.push_back(v);
+        }
+      } break;
+      default:
+        report_fatal_error("Invalid first PDCCH monitoring occasion of paging occasion set");
+    }
+  }
   // TODO: Fill remaining fields.
 
   return out;

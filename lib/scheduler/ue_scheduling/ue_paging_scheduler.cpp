@@ -9,8 +9,8 @@
  */
 
 #include "ue_paging_scheduler.h"
-#include "../support/config_helpers.h"
 #include "../support/pdcch/pdcch_type0_helpers.h"
+#include "../support/ssb_helpers.h"
 
 #include "srsgnb/ran/pdcch/pdcch_type0_css_occasions.h"
 
@@ -25,16 +25,16 @@ ue_paging_scheduler::ue_paging_scheduler(const scheduler_ue_expert_config&      
   cell_cfg(cell_cfg_),
   pdcch_sch(pdcch_sch_),
   ues(ues_),
-  initial_active_dl_bwp(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params),
   logger(srslog::fetch_basic_logger("MAC"))
 {
-  for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
-    type0_pdcch_css_n0_slots.emplace_back(
-        precompute_type0_pdcch_css_n0(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb));
-  }
-
-  if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
-    // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB is the size of CORESET 0 for TC-RNTI.
-    initial_active_dl_bwp.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
+  if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.has_value() &&
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value() == 0) {
+    for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
+      if (not is_nth_ssb_beam_active(cell_cfg.ssb_cfg.ssb_bitmap, i_ssb)) {
+        continue;
+      }
+      type0_pdcch_css_n0_slots[i_ssb] =
+          precompute_type0_pdcch_css_n0(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
+    }
   }
 }
