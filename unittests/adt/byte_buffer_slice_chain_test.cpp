@@ -27,6 +27,10 @@ void test_empty_slice_chain()
 
   TESTASSERT(buf.empty());
   TESTASSERT(buf.begin() == buf.end());
+
+  byte_buffer buf_copy = buf.deep_copy();
+  TESTASSERT(buf_copy.empty());
+  TESTASSERT(buf_copy.begin() == buf_copy.end());
 }
 
 void test_slice_chain_payload()
@@ -60,6 +64,11 @@ void test_slice_chain_payload()
 
   // Test comparison.
   TESTASSERT(buf == buf_concat);
+
+  // Test copy
+  byte_buffer buf_copy = buf.deep_copy();
+  TESTASSERT_EQ(buf_copy.length(), buf_concat.length());
+  TESTASSERT(buf_copy == buf_concat);
 }
 
 void test_slice_chain_push_front()

@@ -129,6 +129,16 @@ public:
   byte_buffer_slice_chain(byte_buffer buf_, size_t start, size_t sz) { push_back(std::move(buf_), start, sz); }
   byte_buffer_slice_chain& operator=(byte_buffer_slice_chain&&) = default;
 
+  /// Performs a deep copy of this byte_buffer_slice_chain.
+  byte_buffer deep_copy() const
+  {
+    byte_buffer buf;
+    for (const byte_buffer_slice& slice : slices()) {
+      buf.append(slice);
+    }
+    return buf;
+  }
+
   void push_front(byte_buffer_slice slice)
   {
     if (slice.empty()) {
