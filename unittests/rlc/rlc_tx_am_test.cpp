@@ -126,7 +126,7 @@ protected:
   {
     uint32_t n_bsr = tester->bsr_count;
 
-    // Push "n_pdus" SDUs into RLC1
+    // Push "n_pdus" SDUs into RLC
     byte_buffer sdu_bufs[n_pdus];
     for (uint32_t i = 0; i < n_pdus; i++) {
       sdu_bufs[i] = create_sdu(sdu_size, i);
@@ -142,7 +142,7 @@ protected:
     uint32_t data_pdu_size       = header_size + sdu_size;
     uint32_t expect_buffer_state = n_pdus * data_pdu_size;
 
-    // Read "n_pdus" PDUs from RLC1
+    // Read "n_pdus" PDUs from RLC
     for (uint32_t i = 0; i < n_pdus; i++) {
       EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state - i * data_pdu_size);
       EXPECT_EQ(tester->bsr, expect_buffer_state - i * data_pdu_size);
@@ -175,7 +175,7 @@ protected:
     // Precondition
     ASSERT_LT(pdu_size, sdu_size + header_min_size) << "PDU size fits whole SDU; PDUs won't be segmented";
 
-    // Push "n_sdus" SDUs into RLC1
+    // Push "n_sdus" SDUs into RLC
     byte_buffer sdu_bufs[n_sdus];
     for (uint32_t i = 0; i < n_sdus; i++) {
       sdu_bufs[i] = create_sdu(sdu_size, i);
@@ -187,7 +187,7 @@ protected:
       EXPECT_EQ(tester->bsr_count, ++n_bsr);
     }
 
-    // Read "n_pdus" PDUs from RLC1
+    // Read "n_pdus" PDUs from RLC
     uint32_t sdu_idx = 0;
     uint32_t sdu_so  = 0;
     for (uint32_t i = 0; i < n_pdus && rlc->get_buffer_state() > 0; i++) {
