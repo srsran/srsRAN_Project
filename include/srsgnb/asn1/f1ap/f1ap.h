@@ -82,7 +82,7 @@ namespace f1ap {
 #define ASN1_F1AP_MAXNOOF_UE_IDS 65536
 #define ASN1_F1AP_MAXNOOF_BPLMNS_NR_1 11
 #define ASN1_F1AP_MAXNOOF_UAC_PLMNS 12
-#define ASN1_F1AP_MAXNOOF_UACPER_PLMN 64
+#define ASN1_F1AP_MAXNOOF_UAC_PER_PLMN 64
 #define ASN1_F1AP_MAXNOOF_ADD_SIBS 63
 #define ASN1_F1AP_ID_CAUSE 0
 #define ASN1_F1AP_ID_CELLS_FAILED_TO_BE_ACTIV_LIST 1
@@ -255,7 +255,7 @@ namespace f1ap {
 #define ASN1_F1AP_ID_SUL_ACCESS_IND 178
 #define ASN1_F1AP_ID_AVAILABLE_PLMN_LIST 179
 #define ASN1_F1AP_ID_PDU_SESSION_ID 180
-#define ASN1_F1AP_ID_UL_PDU_SESSION_AGGREGATE_MAXIMUM_BIT_RATE 181
+#define ASN1_F1AP_ID_UL_PDU_SESSION_AGGR_MAX_BIT_RATE 181
 #define ASN1_F1AP_ID_SERVING_CELL_MO 182
 #define ASN1_F1AP_ID_QOS_FLOW_MAP_IND 183
 #define ASN1_F1AP_ID_RRC_DELIVERY_STATUS_REQUEST 184
@@ -2149,10 +2149,10 @@ using drb_activity_list_l = dyn_array<protocol_ie_single_container_s<drb_activit
 using packet_error_rate_ext_ies_o = protocol_ext_empty_o;
 
 // Dynamic5QIDescriptor-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
-using dynamic5qi_descriptor_ext_ies_o = protocol_ext_empty_o;
+using dyn_5qi_descriptor_ext_ies_o = protocol_ext_empty_o;
 
 // NonDynamic5QIDescriptor-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
-using non_dynamic5qi_descriptor_ext_ies_o = protocol_ext_empty_o;
+using non_dyn_5qi_descriptor_ext_ies_o = protocol_ext_empty_o;
 
 using packet_error_rate_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -2171,10 +2171,10 @@ struct packet_error_rate_s {
   void        to_json(json_writer& j) const;
 };
 
-using dynamic5qi_descriptor_ext_ies_container = protocol_ext_container_empty_l;
+using dyn_5qi_descriptor_ext_ies_container = protocol_ext_container_empty_l;
 
 // Dynamic5QIDescriptor ::= SEQUENCE
-struct dynamic5qi_descriptor_s {
+struct dyn_5qi_descriptor_s {
   struct delay_crit_opts {
     enum options { delay_crit, non_delay_crit, nulltype } value;
 
@@ -2183,19 +2183,19 @@ struct dynamic5qi_descriptor_s {
   typedef enumerated<delay_crit_opts> delay_crit_e_;
 
   // member variables
-  bool                                    five_qi_present               = false;
-  bool                                    delay_crit_present            = false;
-  bool                                    averaging_win_present         = false;
-  bool                                    max_data_burst_volume_present = false;
-  bool                                    ie_exts_present               = false;
-  uint8_t                                 qos_prio_level                = 1;
-  uint16_t                                packet_delay_budget           = 0;
-  packet_error_rate_s                     packet_error_rate;
-  uint16_t                                five_qi = 0;
-  delay_crit_e_                           delay_crit;
-  uint16_t                                averaging_win         = 0;
-  uint16_t                                max_data_burst_volume = 0;
-  dynamic5qi_descriptor_ext_ies_container ie_exts;
+  bool                                 five_qi_present               = false;
+  bool                                 delay_crit_present            = false;
+  bool                                 averaging_win_present         = false;
+  bool                                 max_data_burst_volume_present = false;
+  bool                                 ie_exts_present               = false;
+  uint8_t                              qos_prio_level                = 1;
+  uint16_t                             packet_delay_budget           = 0;
+  packet_error_rate_s                  packet_error_rate;
+  uint16_t                             five_qi = 0;
+  delay_crit_e_                        delay_crit;
+  uint16_t                             averaging_win         = 0;
+  uint16_t                             max_data_burst_volume = 0;
+  dyn_5qi_descriptor_ext_ies_container ie_exts;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -2209,19 +2209,19 @@ using gbr_qos_flow_info_ext_ies_o = protocol_ext_empty_o;
 // NGRANAllocationAndRetentionPriority-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using ngran_alloc_and_retention_prio_ext_ies_o = protocol_ext_empty_o;
 
-using non_dynamic5qi_descriptor_ext_ies_container = protocol_ext_container_empty_l;
+using non_dyn_5qi_descriptor_ext_ies_container = protocol_ext_container_empty_l;
 
 // NonDynamic5QIDescriptor ::= SEQUENCE
-struct non_dynamic5qi_descriptor_s {
-  bool                                        qos_prio_level_present        = false;
-  bool                                        averaging_win_present         = false;
-  bool                                        max_data_burst_volume_present = false;
-  bool                                        ie_exts_present               = false;
-  uint16_t                                    five_qi                       = 0;
-  uint8_t                                     qos_prio_level                = 1;
-  uint16_t                                    averaging_win                 = 0;
-  uint16_t                                    max_data_burst_volume         = 0;
-  non_dynamic5qi_descriptor_ext_ies_container ie_exts;
+struct non_dyn_5qi_descriptor_s {
+  bool                                     qos_prio_level_present        = false;
+  bool                                     averaging_win_present         = false;
+  bool                                     max_data_burst_volume_present = false;
+  bool                                     ie_exts_present               = false;
+  uint16_t                                 five_qi                       = 0;
+  uint8_t                                  qos_prio_level                = 1;
+  uint16_t                                 averaging_win                 = 0;
+  uint16_t                                 max_data_burst_volume         = 0;
+  non_dyn_5qi_descriptor_ext_ies_container ie_exts;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -2274,7 +2274,7 @@ struct ngran_alloc_and_retention_prio_s {
 // QoS-Characteristics ::= CHOICE
 struct qos_characteristics_c {
   struct types_opts {
-    enum options { non_dynamic_5qi, dynamic_5qi, choice_ext, nulltype } value;
+    enum options { non_dyn_5qi, dyn_5qi, choice_ext, nulltype } value;
 
     const char* to_string() const;
   };
@@ -2291,44 +2291,44 @@ struct qos_characteristics_c {
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
   // getters
-  non_dynamic5qi_descriptor_s& non_dynamic_5qi()
+  non_dyn_5qi_descriptor_s& non_dyn_5qi()
   {
-    assert_choice_type(types::non_dynamic_5qi, type_, "QoS-Characteristics");
-    return c.get<non_dynamic5qi_descriptor_s>();
+    assert_choice_type(types::non_dyn_5qi, type_, "QoS-Characteristics");
+    return c.get<non_dyn_5qi_descriptor_s>();
   }
-  dynamic5qi_descriptor_s& dynamic_5qi()
+  dyn_5qi_descriptor_s& dyn_5qi()
   {
-    assert_choice_type(types::dynamic_5qi, type_, "QoS-Characteristics");
-    return c.get<dynamic5qi_descriptor_s>();
+    assert_choice_type(types::dyn_5qi, type_, "QoS-Characteristics");
+    return c.get<dyn_5qi_descriptor_s>();
   }
   protocol_ie_single_container_s<qos_characteristics_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "QoS-Characteristics");
     return c.get<protocol_ie_single_container_s<qos_characteristics_ext_ies_o>>();
   }
-  const non_dynamic5qi_descriptor_s& non_dynamic_5qi() const
+  const non_dyn_5qi_descriptor_s& non_dyn_5qi() const
   {
-    assert_choice_type(types::non_dynamic_5qi, type_, "QoS-Characteristics");
-    return c.get<non_dynamic5qi_descriptor_s>();
+    assert_choice_type(types::non_dyn_5qi, type_, "QoS-Characteristics");
+    return c.get<non_dyn_5qi_descriptor_s>();
   }
-  const dynamic5qi_descriptor_s& dynamic_5qi() const
+  const dyn_5qi_descriptor_s& dyn_5qi() const
   {
-    assert_choice_type(types::dynamic_5qi, type_, "QoS-Characteristics");
-    return c.get<dynamic5qi_descriptor_s>();
+    assert_choice_type(types::dyn_5qi, type_, "QoS-Characteristics");
+    return c.get<dyn_5qi_descriptor_s>();
   }
   const protocol_ie_single_container_s<qos_characteristics_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "QoS-Characteristics");
     return c.get<protocol_ie_single_container_s<qos_characteristics_ext_ies_o>>();
   }
-  non_dynamic5qi_descriptor_s&                                   set_non_dynamic_5qi();
-  dynamic5qi_descriptor_s&                                       set_dynamic_5qi();
+  non_dyn_5qi_descriptor_s&                                      set_non_dyn_5qi();
+  dyn_5qi_descriptor_s&                                          set_dyn_5qi();
   protocol_ie_single_container_s<qos_characteristics_ext_ies_o>& set_choice_ext();
 
 private:
   types type_;
-  choice_buffer_t<dynamic5qi_descriptor_s,
-                  non_dynamic5qi_descriptor_s,
+  choice_buffer_t<dyn_5qi_descriptor_s,
+                  non_dyn_5qi_descriptor_s,
                   protocol_ie_single_container_s<qos_characteristics_ext_ies_o>>
       c;
 
@@ -2340,7 +2340,7 @@ struct qos_flow_level_qos_params_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { pdu_session_id, ul_pdu_session_aggregate_maximum_bit_rate, nulltype } value;
+      enum options { pdu_session_id, ul_pdu_session_aggr_max_bit_rate, nulltype } value;
 
       const char* to_string() const;
     };
@@ -2358,9 +2358,9 @@ struct qos_flow_level_qos_params_ext_ies_o {
     void        to_json(json_writer& j) const;
     // getters
     uint16_t&       pdu_session_id();
-    uint64_t&       ul_pdu_session_aggregate_maximum_bit_rate();
+    uint64_t&       ul_pdu_session_aggr_max_bit_rate();
     const uint16_t& pdu_session_id() const;
-    const uint64_t& ul_pdu_session_aggregate_maximum_bit_rate() const;
+    const uint64_t& ul_pdu_session_aggr_max_bit_rate() const;
 
   private:
     types               type_;
@@ -2422,10 +2422,10 @@ struct qos_flow_level_qos_params_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                        pdu_session_id_present                            = false;
-  bool                                                        ul_pdu_session_aggregate_maximum_bit_rate_present = false;
+  bool                                                        pdu_session_id_present                   = false;
+  bool                                                        ul_pdu_session_aggr_max_bit_rate_present = false;
   ie_field_s<integer<uint16_t, 0, 255, false, true>>          pdu_session_id;
-  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true>> ul_pdu_session_aggregate_maximum_bit_rate;
+  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true>> ul_pdu_session_aggr_max_bit_rate;
 
   // sequence methods
   qos_flow_level_qos_params_ext_ies_container();
@@ -3209,8 +3209,8 @@ using gbr_qos_info_ext_ies_container = protocol_ext_container_empty_l;
 struct gbr_qos_info_s {
   bool                           ext                        = false;
   bool                           ie_exts_present            = false;
-  uint64_t                       erab_maximum_bitrate_dl    = 0;
-  uint64_t                       erab_maximum_bitrate_ul    = 0;
+  uint64_t                       erab_max_bitrate_dl        = 0;
+  uint64_t                       erab_max_bitrate_ul        = 0;
   uint64_t                       erab_guaranteed_bitrate_dl = 0;
   uint64_t                       erab_guaranteed_bitrate_ul = 0;
   gbr_qos_info_ext_ies_container ie_exts;

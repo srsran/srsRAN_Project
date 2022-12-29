@@ -61,9 +61,9 @@ inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modificati
     choice_ext.load_info_obj(ASN1_F1AP_ID_DRB_INFO);
 
     auto& drb_info = choice_ext.value().drb_info();
-    drb_info.drb_qos.qos_characteristics.set_non_dynamic_5qi();
-    drb_info.drb_qos.qos_characteristics.non_dynamic_5qi().five_qi = drb_to_be_setup.qos_info.five_qi;
-    drb_info.drb_qos.ngra_nalloc_retention_prio.prio_level         = drb_to_be_setup.qos_info.prio_level_arp;
+    drb_info.drb_qos.qos_characteristics.set_non_dyn_5qi();
+    drb_info.drb_qos.qos_characteristics.non_dyn_5qi().five_qi = drb_to_be_setup.qos_info.five_qi;
+    drb_info.drb_qos.ngra_nalloc_retention_prio.prio_level     = drb_to_be_setup.qos_info.prio_level_arp;
     drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_cap =
         asn1::f1ap::pre_emption_cap_opts::shall_not_trigger_pre_emption;
     drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_vulnerability.value =

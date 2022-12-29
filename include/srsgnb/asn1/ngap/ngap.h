@@ -32,10 +32,10 @@ namespace ngap {
 #define ASN1_NGAP_ID_CELL_TRAFFIC_TRACE 2
 #define ASN1_NGAP_ID_DEACTIV_TRACE 3
 #define ASN1_NGAP_ID_DL_NAS_TRANSPORT 4
-#define ASN1_NGAP_ID_DL_NON_UEASSOCIATED_NRP_PA_TRANSPORT 5
+#define ASN1_NGAP_ID_DL_NON_UE_ASSOCIATED_NRPPA_TRANSPORT 5
 #define ASN1_NGAP_ID_DL_RAN_CFG_TRANSFER 6
 #define ASN1_NGAP_ID_DL_RAN_STATUS_TRANSFER 7
-#define ASN1_NGAP_ID_DL_UEASSOCIATED_NRP_PA_TRANSPORT 8
+#define ASN1_NGAP_ID_DL_UE_ASSOCIATED_NRPPA_TRANSPORT 8
 #define ASN1_NGAP_ID_ERROR_IND 9
 #define ASN1_NGAP_ID_HO_CANCEL 10
 #define ASN1_NGAP_ID_HO_NOTIF 11
@@ -72,12 +72,12 @@ namespace ngap {
 #define ASN1_NGAP_ID_UE_CONTEXT_RELEASE_REQUEST 42
 #define ASN1_NGAP_ID_UE_RADIO_CAP_CHECK 43
 #define ASN1_NGAP_ID_UE_RADIO_CAP_INFO_IND 44
-#define ASN1_NGAP_ID_UETNLA_BINDING_RELEASE 45
+#define ASN1_NGAP_ID_UE_TNLA_BINDING_RELEASE 45
 #define ASN1_NGAP_ID_UL_NAS_TRANSPORT 46
-#define ASN1_NGAP_ID_UL_NON_UEASSOCIATED_NRP_PA_TRANSPORT 47
+#define ASN1_NGAP_ID_UL_NON_UE_ASSOCIATED_NRPPA_TRANSPORT 47
 #define ASN1_NGAP_ID_UL_RAN_CFG_TRANSFER 48
 #define ASN1_NGAP_ID_UL_RAN_STATUS_TRANSFER 49
-#define ASN1_NGAP_ID_UL_UEASSOCIATED_NRP_PA_TRANSPORT 50
+#define ASN1_NGAP_ID_UL_UE_ASSOCIATED_NRPPA_TRANSPORT 50
 #define ASN1_NGAP_ID_WRITE_REPLACE_WARNING 51
 #define ASN1_NGAP_ID_SECONDARY_RAT_DATA_USAGE_REPORT 52
 #define ASN1_NGAP_ID_UL_RIM_INFO_TRANSFER 53
@@ -88,17 +88,17 @@ namespace ngap {
 #define ASN1_NGAP_MAXNOOF_ALLOWED_AREAS 16
 #define ASN1_NGAP_MAXNOOF_ALLOWED_S_NSSAIS 8
 #define ASN1_NGAP_MAXNOOF_BPLMNS 12
-#define ASN1_NGAP_MAXNOOF_CELL_IDFOR_WARNING 65535
+#define ASN1_NGAP_MAXNOOF_CELL_ID_FOR_WARNING 65535
 #define ASN1_NGAP_MAXNOOF_CELLIN_AO_I 256
 #define ASN1_NGAP_MAXNOOF_CELLIN_EAI 65535
 #define ASN1_NGAP_MAXNOOF_CELLIN_TAI 65535
-#define ASN1_NGAP_MAXNOOF_CELLSING_NB 16384
-#define ASN1_NGAP_MAXNOOF_CELLSINNGENB 256
+#define ASN1_NGAP_MAXNOOF_CELLSIN_GNB 16384
+#define ASN1_NGAP_MAXNOOF_CELLSINNG_ENB 256
 #define ASN1_NGAP_MAXNOOF_CELLSIN_UE_HISTORY_INFO 16
 #define ASN1_NGAP_MAXNOOF_CELLS_UE_MOVING_TRAJECTORY 16
 #define ASN1_NGAP_MAXNOOF_DRBS 32
 #define ASN1_NGAP_MAXNOOF_EMERGENCY_AREA_ID 65535
-#define ASN1_NGAP_MAXNOOF_EA_IFOR_RESTART 256
+#define ASN1_NGAP_MAXNOOF_EAI_FOR_RESTART 256
 #define ASN1_NGAP_MAXNOOF_EPLMNS 15
 #define ASN1_NGAP_MAXNOOF_EPLMNS_PLUS_ONE 16
 #define ASN1_NGAP_MAXNOOF_ERABS 256
@@ -117,11 +117,11 @@ namespace ngap {
 #define ASN1_NGAP_MAXNOOF_SERVED_GUAMIS 256
 #define ASN1_NGAP_MAXNOOF_SLICE_ITEMS 1024
 #define ASN1_NGAP_MAXNOOF_TACS 256
-#define ASN1_NGAP_MAXNOOF_TA_IFOR_INACTIVE 16
-#define ASN1_NGAP_MAXNOOF_TA_IFOR_PAGING 16
-#define ASN1_NGAP_MAXNOOF_TA_IFOR_RESTART 2048
-#define ASN1_NGAP_MAXNOOF_TA_IFOR_WARNING 65535
-#define ASN1_NGAP_MAXNOOF_TA_IIN_AO_I 16
+#define ASN1_NGAP_MAXNOOF_TAI_FOR_INACTIVE 16
+#define ASN1_NGAP_MAXNOOF_TAI_FOR_PAGING 16
+#define ASN1_NGAP_MAXNOOF_TAI_FOR_RESTART 2048
+#define ASN1_NGAP_MAXNOOF_TAI_FOR_WARNING 65535
+#define ASN1_NGAP_MAXNOOF_TAIIN_AO_I 16
 #define ASN1_NGAP_MAXNOOF_TIME_PERIODS 2
 #define ASN1_NGAP_MAXNOOF_TNLASSOCS 32
 #define ASN1_NGAP_MAXNOOF_XN_EXT_TLAS 16
@@ -173,7 +173,7 @@ namespace ngap {
 #define ASN1_NGAP_ID_NGRAN_CGI 43
 #define ASN1_NGAP_ID_NGRAN_TRACE_ID 44
 #define ASN1_NGAP_ID_NR_CGI 45
-#define ASN1_NGAP_ID_NRP_PA_PDU 46
+#define ASN1_NGAP_ID_NRPPA_PDU 46
 #define ASN1_NGAP_ID_NOF_BROADCASTS_REQUESTED 47
 #define ASN1_NGAP_ID_OLD_AMF 48
 #define ASN1_NGAP_ID_OVERLOAD_START_NSSAI_LIST 49
@@ -217,7 +217,7 @@ namespace ngap {
 #define ASN1_NGAP_ID_REPEAT_PERIOD 87
 #define ASN1_NGAP_ID_RESET_TYPE 88
 #define ASN1_NGAP_ID_ROUTING_ID 89
-#define ASN1_NGAP_ID_RRCESTABLISHMENT_CAUSE 90
+#define ASN1_NGAP_ID_RRC_ESTABLISHMENT_CAUSE 90
 #define ASN1_NGAP_ID_RRC_INACTIVE_TRANSITION_REPORT_REQUEST 91
 #define ASN1_NGAP_ID_RRC_STATE 92
 #define ASN1_NGAP_ID_SECURITY_CONTEXT 93
@@ -237,7 +237,7 @@ namespace ngap {
 #define ASN1_NGAP_ID_TIME_TO_WAIT 107
 #define ASN1_NGAP_ID_TRACE_ACTIVATION 108
 #define ASN1_NGAP_ID_TRACE_COLLECTION_ENTITY_IP_ADDRESS 109
-#define ASN1_NGAP_ID_UE_AGGREGATE_MAXIMUM_BIT_RATE 110
+#define ASN1_NGAP_ID_UE_AGGR_MAX_BIT_RATE 110
 #define ASN1_NGAP_ID_UE_ASSOCIATED_LC_NG_CONN_LIST 111
 #define ASN1_NGAP_ID_UE_CONTEXT_REQUEST 112
 #define ASN1_NGAP_ID_UE_NGAP_IDS 114
@@ -256,7 +256,7 @@ namespace ngap {
 #define ASN1_NGAP_ID_DATA_FORWARDING_NOT_POSSIBLE 127
 #define ASN1_NGAP_ID_DL_NGU_UP_TNL_INFO 128
 #define ASN1_NGAP_ID_NETWORK_INSTANCE 129
-#define ASN1_NGAP_ID_PDU_SESSION_AGGREGATE_MAXIMUM_BIT_RATE 130
+#define ASN1_NGAP_ID_PDU_SESSION_AGGR_MAX_BIT_RATE 130
 #define ASN1_NGAP_ID_PDU_SESSION_RES_FAILED_TO_MODIFY_LIST_MOD_CFM 131
 #define ASN1_NGAP_ID_PDU_SESSION_RES_FAILED_TO_SETUP_LIST_CXT_FAIL 132
 #define ASN1_NGAP_ID_PDU_SESSION_RES_LIST_CXT_REL_REQ 133
@@ -268,18 +268,18 @@ namespace ngap {
 #define ASN1_NGAP_ID_UL_NGU_UP_TNL_INFO 139
 #define ASN1_NGAP_ID_UL_NGU_UP_TNL_MODIFY_LIST 140
 #define ASN1_NGAP_ID_WARNING_AREA_COORDINATES 141
-#define ASN1_NGAP_ID_PDU_SESSION_RES_SECONDARY_RATUSAGE_LIST 142
+#define ASN1_NGAP_ID_PDU_SESSION_RES_SECONDARY_RAT_USAGE_LIST 142
 #define ASN1_NGAP_ID_HO_FLAG 143
-#define ASN1_NGAP_ID_SECONDARY_RATUSAGE_INFO 144
+#define ASN1_NGAP_ID_SECONDARY_RAT_USAGE_INFO 144
 #define ASN1_NGAP_ID_PDU_SESSION_RES_RELEASE_RESP_TRANSFER 145
 #define ASN1_NGAP_ID_REDIRECTION_VOICE_FALLBACK 146
 #define ASN1_NGAP_ID_UE_RETENTION_INFO 147
 #define ASN1_NGAP_ID_S_NSSAI 148
-#define ASN1_NGAP_ID_PS_CELL_INFO 149
+#define ASN1_NGAP_ID_PSCELL_INFO 149
 #define ASN1_NGAP_ID_LAST_EUTRAN_PLMN_ID 150
-#define ASN1_NGAP_ID_MAXIMUM_INTEGRITY_PROTECTED_DATA_RATE_DL 151
-#define ASN1_NGAP_ID_ADD_DL_FORWARDING_UPTNL_INFO 152
-#define ASN1_NGAP_ID_ADD_DLUPTNL_INFO_FOR_HO_LIST 153
+#define ASN1_NGAP_ID_MAX_INTEGRITY_PROTECTED_DATA_RATE_DL 151
+#define ASN1_NGAP_ID_ADD_DL_FORWARDING_UP_TNL_INFO 152
+#define ASN1_NGAP_ID_ADD_DL_UP_TNL_INFO_FOR_HO_LIST 153
 #define ASN1_NGAP_ID_ADD_NGU_UP_TNL_INFO 154
 #define ASN1_NGAP_ID_ADD_DL_QOS_FLOW_PER_TNL_INFO 155
 #define ASN1_NGAP_ID_SECURITY_RESULT 156
@@ -291,14 +291,14 @@ namespace ngap {
 #define ASN1_NGAP_ID_NEW_GUAMI 162
 #define ASN1_NGAP_ID_UL_FORWARDING 163
 #define ASN1_NGAP_ID_UL_FORWARDING_UP_TNL_INFO 164
-#define ASN1_NGAP_ID_CNASSISTED_RAN_TUNING 165
+#define ASN1_NGAP_ID_CN_ASSISTED_RAN_TUNING 165
 #define ASN1_NGAP_ID_COMMON_NETWORK_INSTANCE 166
 #define ASN1_NGAP_ID_NGRAN_TNLASSOC_TO_REM_LIST 167
 #define ASN1_NGAP_ID_TNLASSOC_TRANSPORT_LAYER_ADDRESS_NGRAN 168
 #define ASN1_NGAP_ID_ENDPOINT_IP_ADDRESS_AND_PORT 169
 #define ASN1_NGAP_ID_LOCATION_REPORT_ADD_INFO 170
 #define ASN1_NGAP_ID_SOURCE_TO_TARGET_AMF_INFO_REROUTE 171
-#define ASN1_NGAP_ID_ADD_UL_FORWARDING_UPTNL_INFO 172
+#define ASN1_NGAP_ID_ADD_UL_FORWARDING_UP_TNL_INFO 172
 #define ASN1_NGAP_ID_SCTP_TLAS 173
 #define ASN1_NGAP_ID_DATA_FORWARDING_RESP_ERAB_LIST 174
 #define ASN1_NGAP_ID_RIM_INFO_TRANSFER 175
@@ -308,7 +308,7 @@ namespace ngap {
 #define ASN1_NGAP_ID_RAT_INFO 179
 #define ASN1_NGAP_ID_EXTENDED_RAT_RESTRICT_INFO 180
 #define ASN1_NGAP_ID_QOS_MONITORING_REQUEST 181
-#define ASN1_NGAP_ID_SG_NB_UE_X2AP_ID 182
+#define ASN1_NGAP_ID_S_GNB_UE_X2AP_ID 182
 
 /*******************************************************************************
  *                              Struct Definitions
@@ -459,11 +459,11 @@ using amf_tnlassoc_to_add_item_ext_ies_container = protocol_ext_container_empty_
 
 // AMF-TNLAssociationToAddItem ::= SEQUENCE
 struct amf_tnlassoc_to_add_item_s {
-  bool                                       ext                    = false;
-  bool                                       tnlassoc_usage_present = false;
-  bool                                       ie_exts_present        = false;
+  bool                                       ext                     = false;
+  bool                                       tnl_assoc_usage_present = false;
+  bool                                       ie_exts_present         = false;
   cp_transport_layer_info_c                  amf_tnlassoc_address;
-  tnlassoc_usage_e                           tnlassoc_usage;
+  tnlassoc_usage_e                           tnl_assoc_usage;
   uint16_t                                   tnl_address_weight_factor = 0;
   amf_tnlassoc_to_add_item_ext_ies_container ie_exts;
   // ...
@@ -533,11 +533,11 @@ using amf_tnlassoc_to_upd_item_ext_ies_container = protocol_ext_container_empty_
 // AMF-TNLAssociationToUpdateItem ::= SEQUENCE
 struct amf_tnlassoc_to_upd_item_s {
   bool                                       ext                               = false;
-  bool                                       tnlassoc_usage_present            = false;
+  bool                                       tnl_assoc_usage_present           = false;
   bool                                       tnl_address_weight_factor_present = false;
   bool                                       ie_exts_present                   = false;
   cp_transport_layer_info_c                  amf_tnlassoc_address;
-  tnlassoc_usage_e                           tnlassoc_usage;
+  tnlassoc_usage_e                           tnl_assoc_usage;
   uint16_t                                   tnl_address_weight_factor = 0;
   amf_tnlassoc_to_upd_item_ext_ies_container ie_exts;
   // ...
@@ -849,10 +849,10 @@ struct cause_radio_network_opts {
     txnrelocoverall_expiry,
     successful_ho,
     release_due_to_ngran_generated_reason,
-    release_due_to_minus5gc_generated_reason,
+    release_due_to_5gc_generated_reason,
     ho_cancelled,
     partial_ho,
-    ho_fail_in_target_minus5_gc_ngran_node_or_target_sys,
+    ho_fail_in_target_5_gc_ngran_node_or_target_sys,
     ho_target_not_allowed,
     tngrelocoverall_expiry,
     tngrelocprep_expiry,
@@ -879,7 +879,7 @@ struct cause_radio_network_opts {
     ng_intra_sys_ho_triggered,
     ng_inter_sys_ho_triggered,
     xn_ho_triggered,
-    not_supported_minus5_qi_value,
+    not_supported_5qi_value,
     ue_context_transfer,
     ims_voice_eps_fallback_or_rat_fallback_triggered,
     up_integrity_protection_not_possible,
@@ -1022,7 +1022,7 @@ using crit_diagnostics_ie_item_ext_ies_container = protocol_ext_container_empty_
 struct crit_diagnostics_ie_item_s {
   bool                                       ext             = false;
   bool                                       ie_exts_present = false;
-  crit_e                                     iecrit;
+  crit_e                                     ie_crit;
   uint32_t                                   ie_id = 0;
   type_of_error_e                            type_of_error;
   crit_diagnostics_ie_item_ext_ies_container ie_exts;
@@ -1049,7 +1049,7 @@ using tnlassoc_item_ext_ies_container = protocol_ext_container_empty_l;
 struct tnlassoc_item_s {
   bool                            ext             = false;
   bool                            ie_exts_present = false;
-  cp_transport_layer_info_c       tnlassoc_address;
+  cp_transport_layer_info_c       tnl_assoc_address;
   cause_c                         cause;
   tnlassoc_item_ext_ies_container ie_exts;
   // ...
@@ -1764,7 +1764,7 @@ struct qos_flow_item_with_data_forwarding_s {
 using up_transport_layer_info_ext_ies_o = protocol_ies_empty_o;
 
 // AdditionalDLUPTNLInformationForHOItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
-using add_dluptnl_info_for_ho_item_ext_ies_o = protocol_ext_empty_o;
+using add_dl_up_tnl_info_for_ho_item_ext_ies_o = protocol_ext_empty_o;
 
 // QosFlowListWithDataForwarding ::= SEQUENCE (SIZE (1..64)) OF QosFlowItemWithDataForwarding
 using qos_flow_list_with_data_forwarding_l = dyn_array<qos_flow_item_with_data_forwarding_s>;
@@ -1819,17 +1819,17 @@ private:
   void destroy_();
 };
 
-using add_dluptnl_info_for_ho_item_ext_ies_container = protocol_ext_container_empty_l;
+using add_dl_up_tnl_info_for_ho_item_ext_ies_container = protocol_ext_container_empty_l;
 
 // AdditionalDLUPTNLInformationForHOItem ::= SEQUENCE
-struct add_dluptnl_info_for_ho_item_s {
-  bool                                           ext                                  = false;
-  bool                                           add_dl_forwarding_uptnl_info_present = false;
-  bool                                           ie_exts_present                      = false;
-  up_transport_layer_info_c                      add_dl_ngu_up_tnl_info;
-  qos_flow_list_with_data_forwarding_l           add_qos_flow_setup_resp_list;
-  up_transport_layer_info_c                      add_dl_forwarding_uptnl_info;
-  add_dluptnl_info_for_ho_item_ext_ies_container ie_exts;
+struct add_dl_up_tnl_info_for_ho_item_s {
+  bool                                             ext                                   = false;
+  bool                                             add_dl_forwarding_up_tnl_info_present = false;
+  bool                                             ie_exts_present                       = false;
+  up_transport_layer_info_c                        add_dl_ngu_up_tnl_info;
+  qos_flow_list_with_data_forwarding_l             add_qos_flow_setup_resp_list;
+  up_transport_layer_info_c                        add_dl_forwarding_up_tnl_info;
+  add_dl_up_tnl_info_for_ho_item_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -1839,7 +1839,7 @@ struct add_dluptnl_info_for_ho_item_s {
 };
 
 // AdditionalDLUPTNLInformationForHOList ::= SEQUENCE (SIZE (1..3)) OF AdditionalDLUPTNLInformationForHOItem
-using add_dluptnl_info_for_ho_list_l = dyn_array<add_dluptnl_info_for_ho_item_s>;
+using add_dl_up_tnl_info_for_ho_list_l = dyn_array<add_dl_up_tnl_info_for_ho_item_s>;
 
 // AllocationAndRetentionPriority-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using alloc_and_retention_prio_ext_ies_o = protocol_ext_empty_o;
@@ -1936,7 +1936,7 @@ struct nr_cgi_s {
   bool                             ext             = false;
   bool                             ie_exts_present = false;
   fixed_octstring<3, true>         plmn_id;
-  fixed_bitstring<36, false, true> nrcell_id;
+  fixed_bitstring<36, false, true> nr_cell_id;
   nr_cgi_ext_ies_container         ie_exts;
   // ...
 
@@ -3066,7 +3066,7 @@ typedef enumerated<expected_ue_mob_opts, true> expected_ue_mob_e;
 using expected_ue_moving_trajectory_l = dyn_array<expected_ue_moving_trajectory_item_s>;
 
 // CNAssistedRANTuning-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
-using cnassisted_ran_tuning_ext_ies_o = protocol_ext_empty_o;
+using cn_assisted_ran_tuning_ext_ies_o = protocol_ext_empty_o;
 
 using expected_ue_behaviour_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -3090,15 +3090,15 @@ struct expected_ue_behaviour_s {
   void        to_json(json_writer& j) const;
 };
 
-using cnassisted_ran_tuning_ext_ies_container = protocol_ext_container_empty_l;
+using cn_assisted_ran_tuning_ext_ies_container = protocol_ext_container_empty_l;
 
 // CNAssistedRANTuning ::= SEQUENCE
-struct cnassisted_ran_tuning_s {
-  bool                                    ext                           = false;
-  bool                                    expected_ue_behaviour_present = false;
-  bool                                    ie_exts_present               = false;
-  expected_ue_behaviour_s                 expected_ue_behaviour;
-  cnassisted_ran_tuning_ext_ies_container ie_exts;
+struct cn_assisted_ran_tuning_s {
+  bool                                     ext                           = false;
+  bool                                     expected_ue_behaviour_present = false;
+  bool                                     ie_exts_present               = false;
+  expected_ue_behaviour_s                  expected_ue_behaviour;
+  cn_assisted_ran_tuning_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -3457,12 +3457,12 @@ using core_network_assist_info_for_inactive_ext_ies_container = protocol_ext_con
 // CoreNetworkAssistanceInformationForInactive ::= SEQUENCE
 struct core_network_assist_info_for_inactive_s {
   bool                                                    ext                           = false;
-  bool                                                    uespecific_drx_present        = false;
+  bool                                                    ue_specific_drx_present       = false;
   bool                                                    mico_mode_ind_present         = false;
   bool                                                    expected_ue_behaviour_present = false;
   bool                                                    ie_exts_present               = false;
-  ue_id_idx_value_c                                       ueid_idx_value;
-  paging_drx_e                                            uespecific_drx;
+  ue_id_idx_value_c                                       ue_id_idx_value;
+  paging_drx_e                                            ue_specific_drx;
   fixed_bitstring<8, false, true>                         periodic_regist_upd_timer;
   mico_mode_ind_e                                         mico_mode_ind;
   tai_list_for_inactive_l                                 tai_list_for_inactive;
@@ -3768,13 +3768,13 @@ using data_forwarding_resp_drb_item_ext_ies_container = protocol_ext_container_e
 
 // DataForwardingResponseDRBItem ::= SEQUENCE
 struct data_forwarding_resp_drb_item_s {
-  bool                                            ext                              = false;
-  bool                                            dlforwarding_up_tnl_info_present = false;
-  bool                                            ulforwarding_up_tnl_info_present = false;
-  bool                                            ie_exts_present                  = false;
-  uint8_t                                         drb_id                           = 1;
-  up_transport_layer_info_c                       dlforwarding_up_tnl_info;
-  up_transport_layer_info_c                       ulforwarding_up_tnl_info;
+  bool                                            ext                               = false;
+  bool                                            dl_forwarding_up_tnl_info_present = false;
+  bool                                            ul_forwarding_up_tnl_info_present = false;
+  bool                                            ie_exts_present                   = false;
+  uint8_t                                         drb_id                            = 1;
+  up_transport_layer_info_c                       dl_forwarding_up_tnl_info;
+  up_transport_layer_info_c                       ul_forwarding_up_tnl_info;
   data_forwarding_resp_drb_item_ext_ies_container ie_exts;
   // ...
 
@@ -3802,11 +3802,11 @@ using data_forwarding_resp_erab_list_item_ext_ies_container = protocol_ext_conta
 
 // DataForwardingResponseERABListItem ::= SEQUENCE
 struct data_forwarding_resp_erab_list_item_s {
-  bool                                                  ext                  = false;
-  bool                                                  dlforwarding_present = false;
-  bool                                                  ie_exts_present      = false;
-  uint8_t                                               erab_id              = 0;
-  dl_forwarding_e                                       dlforwarding;
+  bool                                                  ext                   = false;
+  bool                                                  dl_forwarding_present = false;
+  bool                                                  ie_exts_present       = false;
+  uint8_t                                               erab_id               = 0;
+  dl_forwarding_e                                       dl_forwarding;
   data_forwarding_resp_erab_list_item_ext_ies_container ie_exts;
   // ...
 
@@ -4065,7 +4065,7 @@ using rat_restricts_l = dyn_array<rat_restricts_item_s>;
 using service_area_info_l = dyn_array<service_area_info_item_s>;
 
 // UEAggregateMaximumBitRate-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
-using ue_aggregate_maximum_bit_rate_ext_ies_o = protocol_ext_empty_o;
+using ue_aggr_max_bit_rate_ext_ies_o = protocol_ext_empty_o;
 
 struct mob_restrict_list_ext_ies_container {
   template <class extT_>
@@ -4112,15 +4112,15 @@ struct srvcc_operation_possible_opts {
 };
 typedef enumerated<srvcc_operation_possible_opts, true> srvcc_operation_possible_e;
 
-using ue_aggregate_maximum_bit_rate_ext_ies_container = protocol_ext_container_empty_l;
+using ue_aggr_max_bit_rate_ext_ies_container = protocol_ext_container_empty_l;
 
 // UEAggregateMaximumBitRate ::= SEQUENCE
-struct ue_aggregate_maximum_bit_rate_s {
-  bool                                            ext                             = false;
-  bool                                            ie_exts_present                 = false;
-  uint64_t                                        ueaggregate_maximum_bit_rate_dl = 0;
-  uint64_t                                        ueaggregate_maximum_bit_rate_ul = 0;
-  ue_aggregate_maximum_bit_rate_ext_ies_container ie_exts;
+struct ue_aggr_max_bit_rate_s {
+  bool                                   ext                     = false;
+  bool                                   ie_exts_present         = false;
+  uint64_t                               ue_aggr_max_bit_rate_dl = 0;
+  uint64_t                               ue_aggr_max_bit_rate_ul = 0;
+  ue_aggr_max_bit_rate_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -4142,7 +4142,7 @@ struct dl_nas_transport_ies_o {
         nas_pdu,
         mob_restrict_list,
         idx_to_rfsp,
-        ue_aggregate_maximum_bit_rate,
+        ue_aggr_max_bit_rate,
         allowed_nssai,
         srvcc_operation_possible,
         nulltype
@@ -4170,7 +4170,7 @@ struct dl_nas_transport_ies_o {
     unbounded_octstring<true>&                  nas_pdu();
     mob_restrict_list_s&                        mob_restrict_list();
     uint16_t&                                   idx_to_rfsp();
-    ue_aggregate_maximum_bit_rate_s&            ue_aggregate_maximum_bit_rate();
+    ue_aggr_max_bit_rate_s&                     ue_aggr_max_bit_rate();
     allowed_nssai_l&                            allowed_nssai();
     srvcc_operation_possible_e&                 srvcc_operation_possible();
     const uint64_t&                             amf_ue_ngap_id() const;
@@ -4180,7 +4180,7 @@ struct dl_nas_transport_ies_o {
     const unbounded_octstring<true>&            nas_pdu() const;
     const mob_restrict_list_s&                  mob_restrict_list() const;
     const uint16_t&                             idx_to_rfsp() const;
-    const ue_aggregate_maximum_bit_rate_s&      ue_aggregate_maximum_bit_rate() const;
+    const ue_aggr_max_bit_rate_s&               ue_aggr_max_bit_rate() const;
     const allowed_nssai_l&                      allowed_nssai() const;
     const srvcc_operation_possible_e&           srvcc_operation_possible() const;
 
@@ -4189,7 +4189,7 @@ struct dl_nas_transport_ies_o {
     choice_buffer_t<allowed_nssai_l,
                     mob_restrict_list_s,
                     printable_string<1, 150, true, true>,
-                    ue_aggregate_maximum_bit_rate_s,
+                    ue_aggr_max_bit_rate_s,
                     unbounded_octstring<true>>
         c;
 
@@ -4209,13 +4209,13 @@ struct dl_nas_transport_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                     old_amf_present                       = false;
-  bool                                                     ran_paging_prio_present               = false;
-  bool                                                     mob_restrict_list_present             = false;
-  bool                                                     idx_to_rfsp_present                   = false;
-  bool                                                     ue_aggregate_maximum_bit_rate_present = false;
-  bool                                                     allowed_nssai_present                 = false;
-  bool                                                     srvcc_operation_possible_present      = false;
+  bool                                                     old_amf_present                  = false;
+  bool                                                     ran_paging_prio_present          = false;
+  bool                                                     mob_restrict_list_present        = false;
+  bool                                                     idx_to_rfsp_present              = false;
+  bool                                                     ue_aggr_max_bit_rate_present     = false;
+  bool                                                     allowed_nssai_present            = false;
+  bool                                                     srvcc_operation_possible_present = false;
   ie_field_s<amf_ue_ngap_id_t>                             amf_ue_ngap_id;
   ie_field_s<ran_ue_ngap_id_t>                             ran_ue_ngap_id;
   ie_field_s<printable_string<1, 150, true, true>>         old_amf;
@@ -4223,7 +4223,7 @@ struct dl_nas_transport_ies_container {
   ie_field_s<unbounded_octstring<true>>                    nas_pdu;
   ie_field_s<mob_restrict_list_s>                          mob_restrict_list;
   ie_field_s<integer<uint16_t, 1, 256, true, true>>        idx_to_rfsp;
-  ie_field_s<ue_aggregate_maximum_bit_rate_s>              ue_aggregate_maximum_bit_rate;
+  ie_field_s<ue_aggr_max_bit_rate_s>                       ue_aggr_max_bit_rate;
   ie_field_s<dyn_seq_of<allowed_nssai_item_s, 1, 8, true>> allowed_nssai;
   ie_field_s<srvcc_operation_possible_e>                   srvcc_operation_possible;
 
@@ -4238,11 +4238,11 @@ struct dl_nas_transport_ies_container {
 using dl_nas_transport_s = elementary_procedure_option<dl_nas_transport_ies_container>;
 
 // DownlinkNonUEAssociatedNRPPaTransportIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
-struct dl_non_ueassociated_nrp_pa_transport_ies_o {
+struct dl_non_ue_associated_nrppa_transport_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { routing_id, nrp_pa_pdu, nulltype } value;
+      enum options { routing_id, nrppa_pdu, nulltype } value;
 
       const char* to_string() const;
     };
@@ -4260,9 +4260,9 @@ struct dl_non_ueassociated_nrp_pa_transport_ies_o {
     void        to_json(json_writer& j) const;
     // getters
     unbounded_octstring<true>&       routing_id();
-    unbounded_octstring<true>&       nrp_pa_pdu();
+    unbounded_octstring<true>&       nrppa_pdu();
     const unbounded_octstring<true>& routing_id() const;
-    const unbounded_octstring<true>& nrp_pa_pdu() const;
+    const unbounded_octstring<true>& nrppa_pdu() const;
 
   private:
     types                                      type_;
@@ -4279,24 +4279,24 @@ struct dl_non_ueassociated_nrp_pa_transport_ies_o {
   static presence_e get_presence(const uint32_t& id);
 };
 
-struct dl_non_ueassociated_nrp_pa_transport_ies_container {
+struct dl_non_ue_associated_nrppa_transport_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
   ie_field_s<unbounded_octstring<true>> routing_id;
-  ie_field_s<unbounded_octstring<true>> nrp_pa_pdu;
+  ie_field_s<unbounded_octstring<true>> nrppa_pdu;
 
   // sequence methods
-  dl_non_ueassociated_nrp_pa_transport_ies_container();
+  dl_non_ue_associated_nrppa_transport_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // DownlinkNonUEAssociatedNRPPaTransport ::= SEQUENCE
-using dl_non_ueassociated_nrp_pa_transport_s =
-    elementary_procedure_option<dl_non_ueassociated_nrp_pa_transport_ies_container>;
+using dl_non_ue_associated_nrppa_transport_s =
+    elementary_procedure_option<dl_non_ue_associated_nrppa_transport_ies_container>;
 
 // SCTP-TLAs ::= SEQUENCE (SIZE (1..2)) OF BIT STRING (SIZE (1..160,...))
 using sctp_tlas_l = bounded_array<bounded_bitstring<1, 160, true, true>, 2>;
@@ -4687,7 +4687,7 @@ struct rim_info_s {
 
   // member variables
   bool                             ext = false;
-  fixed_bitstring<22, false, true> targetg_nb_set_id;
+  fixed_bitstring<22, false, true> target_gnb_set_id;
   rim_rs_detection_e_              rim_rs_detection;
   // ...
 
@@ -4754,11 +4754,11 @@ struct dl_rim_info_transfer_ies_o {
 using dl_rim_info_transfer_s = elementary_procedure_option<protocol_ie_container_l<dl_rim_info_transfer_ies_o>>;
 
 // DownlinkUEAssociatedNRPPaTransportIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
-struct dl_ueassociated_nrp_pa_transport_ies_o {
+struct dl_ue_associated_nrppa_transport_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { amf_ue_ngap_id, ran_ue_ngap_id, routing_id, nrp_pa_pdu, nulltype } value;
+      enum options { amf_ue_ngap_id, ran_ue_ngap_id, routing_id, nrppa_pdu, nulltype } value;
 
       const char* to_string() const;
     };
@@ -4778,11 +4778,11 @@ struct dl_ueassociated_nrp_pa_transport_ies_o {
     uint64_t&                        amf_ue_ngap_id();
     uint64_t&                        ran_ue_ngap_id();
     unbounded_octstring<true>&       routing_id();
-    unbounded_octstring<true>&       nrp_pa_pdu();
+    unbounded_octstring<true>&       nrppa_pdu();
     const uint64_t&                  amf_ue_ngap_id() const;
     const uint64_t&                  ran_ue_ngap_id() const;
     const unbounded_octstring<true>& routing_id() const;
-    const unbounded_octstring<true>& nrp_pa_pdu() const;
+    const unbounded_octstring<true>& nrppa_pdu() const;
 
   private:
     types                                      type_;
@@ -4799,7 +4799,7 @@ struct dl_ueassociated_nrp_pa_transport_ies_o {
   static presence_e get_presence(const uint32_t& id);
 };
 
-struct dl_ueassociated_nrp_pa_transport_ies_container {
+struct dl_ue_associated_nrppa_transport_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
@@ -4807,17 +4807,17 @@ struct dl_ueassociated_nrp_pa_transport_ies_container {
   ie_field_s<amf_ue_ngap_id_t>          amf_ue_ngap_id;
   ie_field_s<ran_ue_ngap_id_t>          ran_ue_ngap_id;
   ie_field_s<unbounded_octstring<true>> routing_id;
-  ie_field_s<unbounded_octstring<true>> nrp_pa_pdu;
+  ie_field_s<unbounded_octstring<true>> nrppa_pdu;
 
   // sequence methods
-  dl_ueassociated_nrp_pa_transport_ies_container();
+  dl_ue_associated_nrppa_transport_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // DownlinkUEAssociatedNRPPaTransport ::= SEQUENCE
-using dl_ueassociated_nrp_pa_transport_s = elementary_procedure_option<dl_ueassociated_nrp_pa_transport_ies_container>;
+using dl_ue_associated_nrppa_transport_s = elementary_procedure_option<dl_ue_associated_nrppa_transport_ies_container>;
 
 // PacketErrorRate-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using packet_error_rate_ext_ies_o = protocol_ext_empty_o;
@@ -4831,7 +4831,7 @@ struct delay_crit_opts {
 typedef enumerated<delay_crit_opts, true> delay_crit_e;
 
 // Dynamic5QIDescriptor-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
-using dynamic5_qi_descriptor_ext_ies_o = protocol_ext_empty_o;
+using dyn_5qi_descriptor_ext_ies_o = protocol_ext_empty_o;
 
 using packet_error_rate_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -4850,24 +4850,24 @@ struct packet_error_rate_s {
   void        to_json(json_writer& j) const;
 };
 
-using dynamic5_qi_descriptor_ext_ies_container = protocol_ext_container_empty_l;
+using dyn_5qi_descriptor_ext_ies_container = protocol_ext_container_empty_l;
 
 // Dynamic5QIDescriptor ::= SEQUENCE
-struct dynamic5_qi_descriptor_s {
-  bool                                     ext                               = false;
-  bool                                     five_qi_present                   = false;
-  bool                                     delay_crit_present                = false;
-  bool                                     averaging_win_present             = false;
-  bool                                     maximum_data_burst_volume_present = false;
-  bool                                     ie_exts_present                   = false;
-  uint8_t                                  prio_level_qos                    = 1;
-  uint16_t                                 packet_delay_budget               = 0;
-  packet_error_rate_s                      packet_error_rate;
-  uint16_t                                 five_qi = 0;
-  delay_crit_e                             delay_crit;
-  uint16_t                                 averaging_win             = 0;
-  uint16_t                                 maximum_data_burst_volume = 0;
-  dynamic5_qi_descriptor_ext_ies_container ie_exts;
+struct dyn_5qi_descriptor_s {
+  bool                                 ext                           = false;
+  bool                                 five_qi_present               = false;
+  bool                                 delay_crit_present            = false;
+  bool                                 averaging_win_present         = false;
+  bool                                 max_data_burst_volume_present = false;
+  bool                                 ie_exts_present               = false;
+  uint8_t                              prio_level_qos                = 1;
+  uint16_t                             packet_delay_budget           = 0;
+  packet_error_rate_s                  packet_error_rate;
+  uint16_t                             five_qi = 0;
+  delay_crit_e                         delay_crit;
+  uint16_t                             averaging_win         = 0;
+  uint16_t                             max_data_burst_volume = 0;
+  dyn_5qi_descriptor_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -4883,11 +4883,11 @@ using erab_info_item_ext_ies_container = protocol_ext_container_empty_l;
 
 // E-RABInformationItem ::= SEQUENCE
 struct erab_info_item_s {
-  bool                             ext                  = false;
-  bool                             dlforwarding_present = false;
-  bool                             ie_exts_present      = false;
-  uint8_t                          erab_id              = 0;
-  dl_forwarding_e                  dlforwarding;
+  bool                             ext                   = false;
+  bool                             dl_forwarding_present = false;
+  bool                             ie_exts_present       = false;
+  uint8_t                          erab_id               = 0;
+  dl_forwarding_e                  dl_forwarding;
   erab_info_item_ext_ies_container ie_exts;
   // ...
 
@@ -5074,18 +5074,18 @@ using gbr_qos_info_ext_ies_container = protocol_ext_container_empty_l;
 
 // GBR-QosInformation ::= SEQUENCE
 struct gbr_qos_info_s {
-  bool                           ext                                 = false;
-  bool                           notif_ctrl_present                  = false;
-  bool                           maximum_packet_loss_rate_dl_present = false;
-  bool                           maximum_packet_loss_rate_ul_present = false;
-  bool                           ie_exts_present                     = false;
-  uint64_t                       maximum_flow_bit_rate_dl            = 0;
-  uint64_t                       maximum_flow_bit_rate_ul            = 0;
-  uint64_t                       guaranteed_flow_bit_rate_dl         = 0;
-  uint64_t                       guaranteed_flow_bit_rate_ul         = 0;
+  bool                           ext                             = false;
+  bool                           notif_ctrl_present              = false;
+  bool                           max_packet_loss_rate_dl_present = false;
+  bool                           max_packet_loss_rate_ul_present = false;
+  bool                           ie_exts_present                 = false;
+  uint64_t                       max_flow_bit_rate_dl            = 0;
+  uint64_t                       max_flow_bit_rate_ul            = 0;
+  uint64_t                       guaranteed_flow_bit_rate_dl     = 0;
+  uint64_t                       guaranteed_flow_bit_rate_ul     = 0;
   notif_ctrl_e                   notif_ctrl;
-  uint16_t                       maximum_packet_loss_rate_dl = 0;
-  uint16_t                       maximum_packet_loss_rate_ul = 0;
+  uint16_t                       max_packet_loss_rate_dl = 0;
+  uint16_t                       max_packet_loss_rate_ul = 0;
   gbr_qos_info_ext_ies_container ie_exts;
   // ...
 
@@ -5264,7 +5264,7 @@ struct pdu_session_res_to_release_item_ho_cmd_s {
 
 // HandoverType ::= ENUMERATED
 struct handov_type_opts {
-  enum options { intra5gs, fivegs_to_eps, eps_to_minus5gs, /*...*/ fivegs_to_utran, nulltype } value;
+  enum options { intra5gs, fivegs_to_eps, eps_to_5gs, /*...*/ fivegs_to_utran, nulltype } value;
 
   const char* to_string() const;
 };
@@ -5381,7 +5381,7 @@ using qos_flow_per_tnl_info_ext_ies_container = protocol_ext_container_empty_l;
 struct qos_flow_per_tnl_info_s {
   bool                                    ext             = false;
   bool                                    ie_exts_present = false;
-  up_transport_layer_info_c               uptransport_layer_info;
+  up_transport_layer_info_c               up_transport_layer_info;
   associated_qos_flow_list_l              associated_qos_flow_list;
   qos_flow_per_tnl_info_ext_ies_container ie_exts;
   // ...
@@ -5461,9 +5461,9 @@ struct ho_cmd_transfer_ext_ies_o {
   struct ext_c {
     struct types_opts {
       enum options {
-        add_dl_forwarding_uptnl_info,
+        add_dl_forwarding_up_tnl_info,
         ul_forwarding_up_tnl_info,
-        add_ul_forwarding_uptnl_info,
+        add_ul_forwarding_up_tnl_info,
         data_forwarding_resp_erab_list,
         nulltype
       } value;
@@ -5483,13 +5483,13 @@ struct ho_cmd_transfer_ext_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    qos_flow_per_tnl_info_list_l&           add_dl_forwarding_uptnl_info();
+    qos_flow_per_tnl_info_list_l&           add_dl_forwarding_up_tnl_info();
     up_transport_layer_info_c&              ul_forwarding_up_tnl_info();
-    up_transport_layer_info_list_l&         add_ul_forwarding_uptnl_info();
+    up_transport_layer_info_list_l&         add_ul_forwarding_up_tnl_info();
     data_forwarding_resp_erab_list_l&       data_forwarding_resp_erab_list();
-    const qos_flow_per_tnl_info_list_l&     add_dl_forwarding_uptnl_info() const;
+    const qos_flow_per_tnl_info_list_l&     add_dl_forwarding_up_tnl_info() const;
     const up_transport_layer_info_c&        ul_forwarding_up_tnl_info() const;
-    const up_transport_layer_info_list_l&   add_ul_forwarding_uptnl_info() const;
+    const up_transport_layer_info_list_l&   add_ul_forwarding_up_tnl_info() const;
     const data_forwarding_resp_erab_list_l& data_forwarding_resp_erab_list() const;
 
   private:
@@ -5519,13 +5519,13 @@ struct ho_cmd_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                               add_dl_forwarding_uptnl_info_present   = false;
+  bool                                                               add_dl_forwarding_up_tnl_info_present  = false;
   bool                                                               ul_forwarding_up_tnl_info_present      = false;
-  bool                                                               add_ul_forwarding_uptnl_info_present   = false;
+  bool                                                               add_ul_forwarding_up_tnl_info_present  = false;
   bool                                                               data_forwarding_resp_erab_list_present = false;
-  ie_field_s<dyn_seq_of<qos_flow_per_tnl_info_item_s, 1, 3, true>>   add_dl_forwarding_uptnl_info;
+  ie_field_s<dyn_seq_of<qos_flow_per_tnl_info_item_s, 1, 3, true>>   add_dl_forwarding_up_tnl_info;
   ie_field_s<up_transport_layer_info_c>                              ul_forwarding_up_tnl_info;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>> add_ul_forwarding_uptnl_info;
+  ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>> add_ul_forwarding_up_tnl_info;
   ie_field_s<dyn_seq_of<data_forwarding_resp_erab_list_item_s, 1, 256, true>> data_forwarding_resp_erab_list;
 
   // sequence methods
@@ -5537,10 +5537,10 @@ struct ho_cmd_transfer_ext_ies_container {
 
 // HandoverCommandTransfer ::= SEQUENCE
 struct ho_cmd_transfer_s {
-  bool                              ext                              = false;
-  bool                              dlforwarding_up_tnl_info_present = false;
-  bool                              ie_exts_present                  = false;
-  up_transport_layer_info_c         dlforwarding_up_tnl_info;
+  bool                              ext                               = false;
+  bool                              dl_forwarding_up_tnl_info_present = false;
+  bool                              ie_exts_present                   = false;
+  up_transport_layer_info_c         dl_forwarding_up_tnl_info;
   qos_flow_to_be_forwarded_list_l   qos_flow_to_be_forwarded_list;
   data_forwarding_resp_drb_list_l   data_forwarding_resp_drb_list;
   ho_cmd_transfer_ext_ies_container ie_exts;
@@ -5623,20 +5623,20 @@ struct user_location_info_eutra_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { ps_cell_info, nulltype } value;
+      enum options { pscell_info, nulltype } value;
 
       const char* to_string() const;
     };
     typedef enumerated<types_opts> types;
 
     // choice methods
-    types       type() const { return types::ps_cell_info; }
+    types       type() const { return types::pscell_info; }
     SRSASN_CODE pack(bit_ref& bref) const;
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    ngran_cgi_c&       ps_cell_info() { return c; }
-    const ngran_cgi_c& ps_cell_info() const { return c; }
+    ngran_cgi_c&       pscell_info() { return c; }
+    const ngran_cgi_c& pscell_info() const { return c; }
 
   private:
     ngran_cgi_c c;
@@ -5658,20 +5658,20 @@ struct user_location_info_nr_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { ps_cell_info, nulltype } value;
+      enum options { pscell_info, nulltype } value;
 
       const char* to_string() const;
     };
     typedef enumerated<types_opts> types;
 
     // choice methods
-    types       type() const { return types::ps_cell_info; }
+    types       type() const { return types::pscell_info; }
     SRSASN_CODE pack(bit_ref& bref) const;
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    ngran_cgi_c&       ps_cell_info() { return c; }
-    const ngran_cgi_c& ps_cell_info() const { return c; }
+    ngran_cgi_c&       pscell_info() { return c; }
+    const ngran_cgi_c& pscell_info() const { return c; }
 
   private:
     ngran_cgi_c c;
@@ -5710,7 +5710,7 @@ using user_location_info_n3_iwf_ext_ies_container = protocol_ext_container_empty
 struct user_location_info_n3_iwf_s {
   bool                                        ext             = false;
   bool                                        ie_exts_present = false;
-  bounded_bitstring<1, 160, true, true>       ipaddress;
+  bounded_bitstring<1, 160, true, true>       ip_address;
   fixed_octstring<2, true>                    port_num;
   user_location_info_n3_iwf_ext_ies_container ie_exts;
   // ...
@@ -5972,7 +5972,7 @@ struct ho_prep_unsuccessful_transfer_s {
 
 // LocationReportingAdditionalInfo ::= ENUMERATED
 struct location_report_add_info_opts {
-  enum options { include_ps_cell, /*...*/ nulltype } value;
+  enum options { include_pscell, /*...*/ nulltype } value;
 
   const char* to_string() const;
 };
@@ -6067,10 +6067,10 @@ struct trace_depth_opts {
   enum options {
     minimum,
     medium,
-    maximum,
+    max,
     minimum_without_vendor_specific_ext,
     medium_without_vendor_specific_ext,
-    maximum_without_vendor_specific_ext,
+    max_without_vendor_specific_ext,
     // ...
     nulltype
   } value;
@@ -6195,7 +6195,7 @@ struct ho_request_ies_o {
         amf_ue_ngap_id,
         handov_type,
         cause,
-        ue_aggregate_maximum_bit_rate,
+        ue_aggr_max_bit_rate,
         core_network_assist_info_for_inactive,
         ue_security_cap,
         security_context,
@@ -6211,7 +6211,7 @@ struct ho_request_ies_o {
         rrc_inactive_transition_report_request,
         guami,
         redirection_voice_fallback,
-        cnassisted_ran_tuning,
+        cn_assisted_ran_tuning,
         srvcc_operation_possible,
         nulltype
       } value;
@@ -6236,7 +6236,7 @@ struct ho_request_ies_o {
     uint64_t&                                       amf_ue_ngap_id();
     handov_type_e&                                  handov_type();
     cause_c&                                        cause();
-    ue_aggregate_maximum_bit_rate_s&                ue_aggregate_maximum_bit_rate();
+    ue_aggr_max_bit_rate_s&                         ue_aggr_max_bit_rate();
     core_network_assist_info_for_inactive_s&        core_network_assist_info_for_inactive();
     ue_security_cap_s&                              ue_security_cap();
     security_context_s&                             security_context();
@@ -6252,12 +6252,12 @@ struct ho_request_ies_o {
     rrc_inactive_transition_report_request_e&       rrc_inactive_transition_report_request();
     guami_s&                                        guami();
     redirection_voice_fallback_e&                   redirection_voice_fallback();
-    cnassisted_ran_tuning_s&                        cnassisted_ran_tuning();
+    cn_assisted_ran_tuning_s&                       cn_assisted_ran_tuning();
     srvcc_operation_possible_e&                     srvcc_operation_possible();
     const uint64_t&                                 amf_ue_ngap_id() const;
     const handov_type_e&                            handov_type() const;
     const cause_c&                                  cause() const;
-    const ue_aggregate_maximum_bit_rate_s&          ue_aggregate_maximum_bit_rate() const;
+    const ue_aggr_max_bit_rate_s&                   ue_aggr_max_bit_rate() const;
     const core_network_assist_info_for_inactive_s&  core_network_assist_info_for_inactive() const;
     const ue_security_cap_s&                        ue_security_cap() const;
     const security_context_s&                       security_context() const;
@@ -6273,14 +6273,14 @@ struct ho_request_ies_o {
     const rrc_inactive_transition_report_request_e& rrc_inactive_transition_report_request() const;
     const guami_s&                                  guami() const;
     const redirection_voice_fallback_e&             redirection_voice_fallback() const;
-    const cnassisted_ran_tuning_s&                  cnassisted_ran_tuning() const;
+    const cn_assisted_ran_tuning_s&                 cn_assisted_ran_tuning() const;
     const srvcc_operation_possible_e&               srvcc_operation_possible() const;
 
   private:
     types type_;
     choice_buffer_t<allowed_nssai_l,
                     cause_c,
-                    cnassisted_ran_tuning_s,
+                    cn_assisted_ran_tuning_s,
                     core_network_assist_info_for_inactive_s,
                     fixed_bitstring<64, false, true>,
                     guami_s,
@@ -6289,7 +6289,7 @@ struct ho_request_ies_o {
                     pdu_session_res_setup_list_ho_req_l,
                     security_context_s,
                     trace_activation_s,
-                    ue_aggregate_maximum_bit_rate_s,
+                    ue_aggr_max_bit_rate_s,
                     ue_security_cap_s,
                     unbounded_octstring<true>>
         c;
@@ -6319,12 +6319,12 @@ struct ho_request_ies_container {
   bool                                                location_report_request_type_present           = false;
   bool                                                rrc_inactive_transition_report_request_present = false;
   bool                                                redirection_voice_fallback_present             = false;
-  bool                                                cnassisted_ran_tuning_present                  = false;
+  bool                                                cn_assisted_ran_tuning_present                 = false;
   bool                                                srvcc_operation_possible_present               = false;
   ie_field_s<amf_ue_ngap_id_t>                        amf_ue_ngap_id;
   ie_field_s<handov_type_e>                           handov_type;
   ie_field_s<cause_c>                                 cause;
-  ie_field_s<ue_aggregate_maximum_bit_rate_s>         ue_aggregate_maximum_bit_rate;
+  ie_field_s<ue_aggr_max_bit_rate_s>                  ue_aggr_max_bit_rate;
   ie_field_s<core_network_assist_info_for_inactive_s> core_network_assist_info_for_inactive;
   ie_field_s<ue_security_cap_s>                       ue_security_cap;
   ie_field_s<security_context_s>                      security_context;
@@ -6340,7 +6340,7 @@ struct ho_request_ies_container {
   ie_field_s<rrc_inactive_transition_report_request_e>                      rrc_inactive_transition_report_request;
   ie_field_s<guami_s>                                                       guami;
   ie_field_s<redirection_voice_fallback_e>                                  redirection_voice_fallback;
-  ie_field_s<cnassisted_ran_tuning_s>                                       cnassisted_ran_tuning;
+  ie_field_s<cn_assisted_ran_tuning_s>                                      cn_assisted_ran_tuning;
   ie_field_s<srvcc_operation_possible_e>                                    srvcc_operation_possible;
 
   // sequence methods
@@ -6531,9 +6531,9 @@ struct ho_request_ack_transfer_ext_ies_o {
   struct ext_c {
     struct types_opts {
       enum options {
-        add_dluptnl_info_for_ho_list,
+        add_dl_up_tnl_info_for_ho_list,
         ul_forwarding_up_tnl_info,
-        add_ul_forwarding_uptnl_info,
+        add_ul_forwarding_up_tnl_info,
         data_forwarding_resp_erab_list,
         nulltype
       } value;
@@ -6553,18 +6553,18 @@ struct ho_request_ack_transfer_ext_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    add_dluptnl_info_for_ho_list_l&         add_dluptnl_info_for_ho_list();
+    add_dl_up_tnl_info_for_ho_list_l&       add_dl_up_tnl_info_for_ho_list();
     up_transport_layer_info_c&              ul_forwarding_up_tnl_info();
-    up_transport_layer_info_list_l&         add_ul_forwarding_uptnl_info();
+    up_transport_layer_info_list_l&         add_ul_forwarding_up_tnl_info();
     data_forwarding_resp_erab_list_l&       data_forwarding_resp_erab_list();
-    const add_dluptnl_info_for_ho_list_l&   add_dluptnl_info_for_ho_list() const;
+    const add_dl_up_tnl_info_for_ho_list_l& add_dl_up_tnl_info_for_ho_list() const;
     const up_transport_layer_info_c&        ul_forwarding_up_tnl_info() const;
-    const up_transport_layer_info_list_l&   add_ul_forwarding_uptnl_info() const;
+    const up_transport_layer_info_list_l&   add_ul_forwarding_up_tnl_info() const;
     const data_forwarding_resp_erab_list_l& data_forwarding_resp_erab_list() const;
 
   private:
     types type_;
-    choice_buffer_t<add_dluptnl_info_for_ho_list_l,
+    choice_buffer_t<add_dl_up_tnl_info_for_ho_list_l,
                     data_forwarding_resp_erab_list_l,
                     up_transport_layer_info_c,
                     up_transport_layer_info_list_l>
@@ -6606,13 +6606,13 @@ struct ho_request_ack_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                               add_dluptnl_info_for_ho_list_present   = false;
-  bool                                                               ul_forwarding_up_tnl_info_present      = false;
-  bool                                                               add_ul_forwarding_uptnl_info_present   = false;
-  bool                                                               data_forwarding_resp_erab_list_present = false;
-  ie_field_s<dyn_seq_of<add_dluptnl_info_for_ho_item_s, 1, 3, true>> add_dluptnl_info_for_ho_list;
-  ie_field_s<up_transport_layer_info_c>                              ul_forwarding_up_tnl_info;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>> add_ul_forwarding_uptnl_info;
+  bool                                                                 add_dl_up_tnl_info_for_ho_list_present = false;
+  bool                                                                 ul_forwarding_up_tnl_info_present      = false;
+  bool                                                                 add_ul_forwarding_up_tnl_info_present  = false;
+  bool                                                                 data_forwarding_resp_erab_list_present = false;
+  ie_field_s<dyn_seq_of<add_dl_up_tnl_info_for_ho_item_s, 1, 3, true>> add_dl_up_tnl_info_for_ho_list;
+  ie_field_s<up_transport_layer_info_c>                                ul_forwarding_up_tnl_info;
+  ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>>   add_ul_forwarding_up_tnl_info;
   ie_field_s<dyn_seq_of<data_forwarding_resp_erab_list_item_s, 1, 256, true>> data_forwarding_resp_erab_list;
 
   // sequence methods
@@ -6624,12 +6624,12 @@ struct ho_request_ack_transfer_ext_ies_container {
 
 // HandoverRequestAcknowledgeTransfer ::= SEQUENCE
 struct ho_request_ack_transfer_s {
-  bool                                      ext                              = false;
-  bool                                      dlforwarding_up_tnl_info_present = false;
-  bool                                      security_result_present          = false;
-  bool                                      ie_exts_present                  = false;
+  bool                                      ext                               = false;
+  bool                                      dl_forwarding_up_tnl_info_present = false;
+  bool                                      security_result_present           = false;
+  bool                                      ie_exts_present                   = false;
   up_transport_layer_info_c                 dl_ngu_up_tnl_info;
-  up_transport_layer_info_c                 dlforwarding_up_tnl_info;
+  up_transport_layer_info_c                 dl_forwarding_up_tnl_info;
   security_result_s                         security_result;
   qos_flow_list_with_data_forwarding_l      qos_flow_setup_resp_list;
   qos_flow_list_with_cause_l                qos_flow_failed_to_setup_list;
@@ -6689,7 +6689,7 @@ struct target_rnc_id_s {
 };
 
 // TargeteNB-ID-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
-using targetenb_id_ext_ies_o = protocol_ext_empty_o;
+using target_enb_id_ext_ies_o = protocol_ext_empty_o;
 
 using pdu_session_res_item_ho_rqd_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -6740,15 +6740,15 @@ struct target_id_ext_ies_o {
   static presence_e get_presence(const uint32_t& id);
 };
 
-using targetenb_id_ext_ies_container = protocol_ext_container_empty_l;
+using target_enb_id_ext_ies_container = protocol_ext_container_empty_l;
 
 // TargeteNB-ID ::= SEQUENCE
-struct targetenb_id_s {
-  bool                           ext             = false;
-  bool                           ie_exts_present = false;
-  global_ng_enb_id_s             global_enb_id;
-  eps_tai_s                      sel_eps_tai;
-  targetenb_id_ext_ies_container ie_exts;
+struct target_enb_id_s {
+  bool                            ext             = false;
+  bool                            ie_exts_present = false;
+  global_ng_enb_id_s              global_enb_id;
+  eps_tai_s                       sel_eps_tai;
+  target_enb_id_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -6771,7 +6771,7 @@ using pdu_session_res_list_ho_rqd_l = dyn_array<pdu_session_res_item_ho_rqd_s>;
 // TargetID ::= CHOICE
 struct target_id_c {
   struct types_opts {
-    enum options { target_ran_node_id, targetenb_id, choice_exts, nulltype } value;
+    enum options { target_ran_node_id, target_enb_id, choice_exts, nulltype } value;
 
     const char* to_string() const;
   };
@@ -6793,10 +6793,10 @@ struct target_id_c {
     assert_choice_type(types::target_ran_node_id, type_, "TargetID");
     return c.get<target_ran_node_id_s>();
   }
-  targetenb_id_s& targetenb_id()
+  target_enb_id_s& target_enb_id()
   {
-    assert_choice_type(types::targetenb_id, type_, "TargetID");
-    return c.get<targetenb_id_s>();
+    assert_choice_type(types::target_enb_id, type_, "TargetID");
+    return c.get<target_enb_id_s>();
   }
   protocol_ie_single_container_s<target_id_ext_ies_o>& choice_exts()
   {
@@ -6808,10 +6808,10 @@ struct target_id_c {
     assert_choice_type(types::target_ran_node_id, type_, "TargetID");
     return c.get<target_ran_node_id_s>();
   }
-  const targetenb_id_s& targetenb_id() const
+  const target_enb_id_s& target_enb_id() const
   {
-    assert_choice_type(types::targetenb_id, type_, "TargetID");
-    return c.get<targetenb_id_s>();
+    assert_choice_type(types::target_enb_id, type_, "TargetID");
+    return c.get<target_enb_id_s>();
   }
   const protocol_ie_single_container_s<target_id_ext_ies_o>& choice_exts() const
   {
@@ -6819,12 +6819,12 @@ struct target_id_c {
     return c.get<protocol_ie_single_container_s<target_id_ext_ies_o>>();
   }
   target_ran_node_id_s&                                set_target_ran_node_id();
-  targetenb_id_s&                                      set_targetenb_id();
+  target_enb_id_s&                                     set_target_enb_id();
   protocol_ie_single_container_s<target_id_ext_ies_o>& set_choice_exts();
 
 private:
-  types                                                                                                      type_;
-  choice_buffer_t<protocol_ie_single_container_s<target_id_ext_ies_o>, target_ran_node_id_s, targetenb_id_s> c;
+  types                                                                                                       type_;
+  choice_buffer_t<protocol_ie_single_container_s<target_id_ext_ies_o>, target_enb_id_s, target_ran_node_id_s> c;
 
   void destroy_();
 };
@@ -7156,8 +7156,8 @@ using ue_radio_cap_for_paging_ext_ies_container = protocol_ext_container_empty_l
 struct ue_radio_cap_for_paging_s {
   bool                                      ext             = false;
   bool                                      ie_exts_present = false;
-  unbounded_octstring<true>                 ueradio_cap_for_paging_of_nr;
-  unbounded_octstring<true>                 ueradio_cap_for_paging_of_eutra;
+  unbounded_octstring<true>                 ue_radio_cap_for_paging_of_nr;
+  unbounded_octstring<true>                 ue_radio_cap_for_paging_of_eutra;
   ue_radio_cap_for_paging_ext_ies_container ie_exts;
   // ...
 
@@ -7176,7 +7176,7 @@ struct init_context_setup_request_ies_o {
         amf_ue_ngap_id,
         ran_ue_ngap_id,
         old_amf,
-        ue_aggregate_maximum_bit_rate,
+        ue_aggr_max_bit_rate,
         core_network_assist_info_for_inactive,
         guami,
         pdu_session_res_setup_list_cxt_req,
@@ -7194,7 +7194,7 @@ struct init_context_setup_request_ies_o {
         ue_radio_cap_for_paging,
         redirection_voice_fallback,
         location_report_request_type,
-        cnassisted_ran_tuning,
+        cn_assisted_ran_tuning,
         srvcc_operation_possible,
         nulltype
       } value;
@@ -7217,7 +7217,7 @@ struct init_context_setup_request_ies_o {
     uint64_t&                                       amf_ue_ngap_id();
     uint64_t&                                       ran_ue_ngap_id();
     printable_string<1, 150, true, true>&           old_amf();
-    ue_aggregate_maximum_bit_rate_s&                ue_aggregate_maximum_bit_rate();
+    ue_aggr_max_bit_rate_s&                         ue_aggr_max_bit_rate();
     core_network_assist_info_for_inactive_s&        core_network_assist_info_for_inactive();
     guami_s&                                        guami();
     pdu_session_res_setup_list_cxt_req_l&           pdu_session_res_setup_list_cxt_req();
@@ -7235,12 +7235,12 @@ struct init_context_setup_request_ies_o {
     ue_radio_cap_for_paging_s&                      ue_radio_cap_for_paging();
     redirection_voice_fallback_e&                   redirection_voice_fallback();
     location_report_request_type_s&                 location_report_request_type();
-    cnassisted_ran_tuning_s&                        cnassisted_ran_tuning();
+    cn_assisted_ran_tuning_s&                       cn_assisted_ran_tuning();
     srvcc_operation_possible_e&                     srvcc_operation_possible();
     const uint64_t&                                 amf_ue_ngap_id() const;
     const uint64_t&                                 ran_ue_ngap_id() const;
     const printable_string<1, 150, true, true>&     old_amf() const;
-    const ue_aggregate_maximum_bit_rate_s&          ue_aggregate_maximum_bit_rate() const;
+    const ue_aggr_max_bit_rate_s&                   ue_aggr_max_bit_rate() const;
     const core_network_assist_info_for_inactive_s&  core_network_assist_info_for_inactive() const;
     const guami_s&                                  guami() const;
     const pdu_session_res_setup_list_cxt_req_l&     pdu_session_res_setup_list_cxt_req() const;
@@ -7258,13 +7258,13 @@ struct init_context_setup_request_ies_o {
     const ue_radio_cap_for_paging_s&                ue_radio_cap_for_paging() const;
     const redirection_voice_fallback_e&             redirection_voice_fallback() const;
     const location_report_request_type_s&           location_report_request_type() const;
-    const cnassisted_ran_tuning_s&                  cnassisted_ran_tuning() const;
+    const cn_assisted_ran_tuning_s&                 cn_assisted_ran_tuning() const;
     const srvcc_operation_possible_e&               srvcc_operation_possible() const;
 
   private:
     types type_;
     choice_buffer_t<allowed_nssai_l,
-                    cnassisted_ran_tuning_s,
+                    cn_assisted_ran_tuning_s,
                     core_network_assist_info_for_inactive_s,
                     emergency_fallback_ind_s,
                     fixed_bitstring<256, false, true>,
@@ -7274,7 +7274,7 @@ struct init_context_setup_request_ies_o {
                     pdu_session_res_setup_list_cxt_req_l,
                     printable_string<1, 150, true, true>,
                     trace_activation_s,
-                    ue_aggregate_maximum_bit_rate_s,
+                    ue_aggr_max_bit_rate_s,
                     ue_radio_cap_for_paging_s,
                     ue_security_cap_s,
                     unbounded_octstring<true>>
@@ -7297,7 +7297,7 @@ struct init_context_setup_request_ies_container {
 
   // member variables
   bool                                                old_amf_present                                = false;
-  bool                                                ue_aggregate_maximum_bit_rate_present          = false;
+  bool                                                ue_aggr_max_bit_rate_present                   = false;
   bool                                                core_network_assist_info_for_inactive_present  = false;
   bool                                                pdu_session_res_setup_list_cxt_req_present     = false;
   bool                                                trace_activation_present                       = false;
@@ -7311,12 +7311,12 @@ struct init_context_setup_request_ies_container {
   bool                                                ue_radio_cap_for_paging_present                = false;
   bool                                                redirection_voice_fallback_present             = false;
   bool                                                location_report_request_type_present           = false;
-  bool                                                cnassisted_ran_tuning_present                  = false;
+  bool                                                cn_assisted_ran_tuning_present                 = false;
   bool                                                srvcc_operation_possible_present               = false;
   ie_field_s<amf_ue_ngap_id_t>                        amf_ue_ngap_id;
   ie_field_s<ran_ue_ngap_id_t>                        ran_ue_ngap_id;
   ie_field_s<printable_string<1, 150, true, true>>    old_amf;
-  ie_field_s<ue_aggregate_maximum_bit_rate_s>         ue_aggregate_maximum_bit_rate;
+  ie_field_s<ue_aggr_max_bit_rate_s>                  ue_aggr_max_bit_rate;
   ie_field_s<core_network_assist_info_for_inactive_s> core_network_assist_info_for_inactive;
   ie_field_s<guami_s>                                 guami;
   ie_field_s<dyn_seq_of<pdu_session_res_setup_item_cxt_req_s, 1, 256, true>> pdu_session_res_setup_list_cxt_req;
@@ -7334,7 +7334,7 @@ struct init_context_setup_request_ies_container {
   ie_field_s<ue_radio_cap_for_paging_s>                                      ue_radio_cap_for_paging;
   ie_field_s<redirection_voice_fallback_e>                                   redirection_voice_fallback;
   ie_field_s<location_report_request_type_s>                                 location_report_request_type;
-  ie_field_s<cnassisted_ran_tuning_s>                                        cnassisted_ran_tuning;
+  ie_field_s<cn_assisted_ran_tuning_s>                                       cn_assisted_ran_tuning;
   ie_field_s<srvcc_operation_possible_e>                                     srvcc_operation_possible;
 
   // sequence methods
@@ -7480,7 +7480,7 @@ using init_context_setup_resp_s = elementary_procedure_option<init_context_setup
 using source_to_target_amf_info_reroute_ext_ies_o = protocol_ext_empty_o;
 
 // RRCEstablishmentCause ::= ENUMERATED
-struct rrcestablishment_cause_opts {
+struct rrc_establishment_cause_opts {
   enum options {
     emergency,
     high_prio_access,
@@ -7499,20 +7499,20 @@ struct rrcestablishment_cause_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<rrcestablishment_cause_opts, true, 1> rrcestablishment_cause_e;
+typedef enumerated<rrc_establishment_cause_opts, true, 1> rrc_establishment_cause_e;
 
 using source_to_target_amf_info_reroute_ext_ies_container = protocol_ext_container_empty_l;
 
 // SourceToTarget-AMFInformationReroute ::= SEQUENCE
 struct source_to_target_amf_info_reroute_s {
-  bool                                                ext                            = false;
-  bool                                                cfgured_nssai_present          = false;
-  bool                                                rejected_nssa_iin_plmn_present = false;
-  bool                                                rejected_nssa_iin_ta_present   = false;
-  bool                                                ie_exts_present                = false;
+  bool                                                ext                           = false;
+  bool                                                cfgured_nssai_present         = false;
+  bool                                                rejected_nssaiin_plmn_present = false;
+  bool                                                rejected_nssaiin_ta_present   = false;
+  bool                                                ie_exts_present               = false;
   fixed_octstring<128, true>                          cfgured_nssai;
-  fixed_octstring<32, true>                           rejected_nssa_iin_plmn;
-  fixed_octstring<32, true>                           rejected_nssa_iin_ta;
+  fixed_octstring<32, true>                           rejected_nssaiin_plmn;
+  fixed_octstring<32, true>                           rejected_nssaiin_ta;
   source_to_target_amf_info_reroute_ext_ies_container ie_exts;
   // ...
 
@@ -7539,7 +7539,7 @@ struct init_ue_msg_ies_o {
         ran_ue_ngap_id,
         nas_pdu,
         user_location_info,
-        rrcestablishment_cause,
+        rrc_establishment_cause,
         five_g_s_tmsi,
         amf_set_id,
         ue_context_request,
@@ -7568,7 +7568,7 @@ struct init_ue_msg_ies_o {
     uint64_t&                                  ran_ue_ngap_id();
     unbounded_octstring<true>&                 nas_pdu();
     user_location_info_c&                      user_location_info();
-    rrcestablishment_cause_e&                  rrcestablishment_cause();
+    rrc_establishment_cause_e&                 rrc_establishment_cause();
     five_g_s_tmsi_s&                           five_g_s_tmsi();
     fixed_bitstring<10, false, true>&          amf_set_id();
     ue_context_request_e&                      ue_context_request();
@@ -7577,7 +7577,7 @@ struct init_ue_msg_ies_o {
     const uint64_t&                            ran_ue_ngap_id() const;
     const unbounded_octstring<true>&           nas_pdu() const;
     const user_location_info_c&                user_location_info() const;
-    const rrcestablishment_cause_e&            rrcestablishment_cause() const;
+    const rrc_establishment_cause_e&           rrc_establishment_cause() const;
     const five_g_s_tmsi_s&                     five_g_s_tmsi() const;
     const fixed_bitstring<10, false, true>&    amf_set_id() const;
     const ue_context_request_e&                ue_context_request() const;
@@ -7618,7 +7618,7 @@ struct init_ue_msg_ies_container {
   ie_field_s<ran_ue_ngap_id_t>                             ran_ue_ngap_id;
   ie_field_s<unbounded_octstring<true>>                    nas_pdu;
   ie_field_s<user_location_info_c>                         user_location_info;
-  ie_field_s<rrcestablishment_cause_e>                     rrcestablishment_cause;
+  ie_field_s<rrc_establishment_cause_e>                    rrc_establishment_cause;
   ie_field_s<five_g_s_tmsi_s>                              five_g_s_tmsi;
   ie_field_s<fixed_bitstring<10, false, true>>             amf_set_id;
   ie_field_s<ue_context_request_e>                         ue_context_request;
@@ -7843,7 +7843,7 @@ using pdu_session_res_released_item_ps_fail_ext_ies_o = protocol_ext_empty_o;
 using pdu_session_res_released_item_rel_res_ext_ies_o = protocol_ext_empty_o;
 
 // PDUSessionResourceSecondaryRATUsageItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
-using pdu_session_res_secondary_ratusage_item_ext_ies_o = protocol_ext_empty_o;
+using pdu_session_res_secondary_rat_usage_item_ext_ies_o = protocol_ext_empty_o;
 
 // PDUSessionResourceSetupItemSUReq-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using pdu_session_res_setup_item_su_req_ext_ies_o = protocol_ext_empty_o;
@@ -7970,10 +7970,10 @@ using ngran_tnlassoc_to_rem_item_ext_ies_container = protocol_ext_container_empt
 
 // NGRAN-TNLAssociationToRemoveItem ::= SEQUENCE
 struct ngran_tnlassoc_to_rem_item_s {
-  bool                                         tnlassoc_transport_layer_address_amf_present = false;
-  bool                                         ie_exts_present                              = false;
-  cp_transport_layer_info_c                    tnlassoc_transport_layer_address;
-  cp_transport_layer_info_c                    tnlassoc_transport_layer_address_amf;
+  bool                                         tnl_assoc_transport_layer_address_amf_present = false;
+  bool                                         ie_exts_present                               = false;
+  cp_transport_layer_info_c                    tnl_assoc_transport_layer_address;
+  cp_transport_layer_info_c                    tnl_assoc_transport_layer_address_amf;
   ngran_tnlassoc_to_rem_item_ext_ies_container ie_exts;
 
   // sequence methods
@@ -8253,15 +8253,15 @@ struct pdu_session_res_released_item_rel_res_s {
   void        to_json(json_writer& j) const;
 };
 
-using pdu_session_res_secondary_ratusage_item_ext_ies_container = protocol_ext_container_empty_l;
+using pdu_session_res_secondary_rat_usage_item_ext_ies_container = protocol_ext_container_empty_l;
 
 // PDUSessionResourceSecondaryRATUsageItem ::= SEQUENCE
-struct pdu_session_res_secondary_ratusage_item_s {
-  bool                                                      ext             = false;
-  bool                                                      ie_exts_present = false;
-  uint16_t                                                  pdu_session_id  = 0;
-  unbounded_octstring<true>                                 secondary_rat_data_usage_report_transfer;
-  pdu_session_res_secondary_ratusage_item_ext_ies_container ie_exts;
+struct pdu_session_res_secondary_rat_usage_item_s {
+  bool                                                       ext             = false;
+  bool                                                       ie_exts_present = false;
+  uint16_t                                                   pdu_session_id  = 0;
+  unbounded_octstring<true>                                  secondary_rat_data_usage_report_transfer;
+  pdu_session_res_secondary_rat_usage_item_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -8437,7 +8437,7 @@ struct ue_presence_in_area_of_interest_item_s {
   bool                                                   ext                    = false;
   bool                                                   ie_exts_present        = false;
   uint8_t                                                location_report_ref_id = 1;
-  ue_presence_e                                          uepresence;
+  ue_presence_e                                          ue_presence;
   ue_presence_in_area_of_interest_item_ext_ies_container ie_exts;
   // ...
 
@@ -8534,7 +8534,7 @@ using pdu_session_res_released_list_ps_fail_l = dyn_array<pdu_session_res_releas
 using pdu_session_res_released_list_rel_res_l = dyn_array<pdu_session_res_released_item_rel_res_s>;
 
 // PDUSessionResourceSecondaryRATUsageList ::= SEQUENCE (SIZE (1..256)) OF PDUSessionResourceSecondaryRATUsageItem
-using pdu_session_res_secondary_ratusage_list_l = dyn_array<pdu_session_res_secondary_ratusage_item_s>;
+using pdu_session_res_secondary_rat_usage_list_l = dyn_array<pdu_session_res_secondary_rat_usage_item_s>;
 
 // PDUSessionResourceSetupListSUReq ::= SEQUENCE (SIZE (1..256)) OF PDUSessionResourceSetupItemSUReq
 using pdu_session_res_setup_list_su_req_l = dyn_array<pdu_session_res_setup_item_su_req_s>;
@@ -8614,7 +8614,7 @@ private:
 
 // PagingOrigin ::= ENUMERATED
 struct paging_origin_opts {
-  enum options { non_minus3gpp, /*...*/ nulltype } value;
+  enum options { non_neg3gpp, /*...*/ nulltype } value;
   typedef int8_t number_type;
 
   const char* to_string() const;
@@ -9834,7 +9834,7 @@ struct pdu_session_res_setup_request_ies_o {
         ran_paging_prio,
         nas_pdu,
         pdu_session_res_setup_list_su_req,
-        ue_aggregate_maximum_bit_rate,
+        ue_aggr_max_bit_rate,
         nulltype
       } value;
 
@@ -9858,17 +9858,17 @@ struct pdu_session_res_setup_request_ies_o {
     uint16_t&                                  ran_paging_prio();
     unbounded_octstring<true>&                 nas_pdu();
     pdu_session_res_setup_list_su_req_l&       pdu_session_res_setup_list_su_req();
-    ue_aggregate_maximum_bit_rate_s&           ue_aggregate_maximum_bit_rate();
+    ue_aggr_max_bit_rate_s&                    ue_aggr_max_bit_rate();
     const uint64_t&                            amf_ue_ngap_id() const;
     const uint64_t&                            ran_ue_ngap_id() const;
     const uint16_t&                            ran_paging_prio() const;
     const unbounded_octstring<true>&           nas_pdu() const;
     const pdu_session_res_setup_list_su_req_l& pdu_session_res_setup_list_su_req() const;
-    const ue_aggregate_maximum_bit_rate_s&     ue_aggregate_maximum_bit_rate() const;
+    const ue_aggr_max_bit_rate_s&              ue_aggr_max_bit_rate() const;
 
   private:
-    types type_;
-    choice_buffer_t<pdu_session_res_setup_list_su_req_l, ue_aggregate_maximum_bit_rate_s, unbounded_octstring<true>> c;
+    types                                                                                                   type_;
+    choice_buffer_t<pdu_session_res_setup_list_su_req_l, ue_aggr_max_bit_rate_s, unbounded_octstring<true>> c;
 
     void destroy_();
   };
@@ -10208,7 +10208,7 @@ struct path_switch_request_ack_ies_o {
         rrc_inactive_transition_report_request,
         crit_diagnostics,
         redirection_voice_fallback,
-        cnassisted_ran_tuning,
+        cn_assisted_ran_tuning,
         srvcc_operation_possible,
         nulltype
       } value;
@@ -10240,7 +10240,7 @@ struct path_switch_request_ack_ies_o {
     rrc_inactive_transition_report_request_e&       rrc_inactive_transition_report_request();
     crit_diagnostics_s&                             crit_diagnostics();
     redirection_voice_fallback_e&                   redirection_voice_fallback();
-    cnassisted_ran_tuning_s&                        cnassisted_ran_tuning();
+    cn_assisted_ran_tuning_s&                       cn_assisted_ran_tuning();
     srvcc_operation_possible_e&                     srvcc_operation_possible();
     const uint64_t&                                 amf_ue_ngap_id() const;
     const uint64_t&                                 ran_ue_ngap_id() const;
@@ -10254,13 +10254,13 @@ struct path_switch_request_ack_ies_o {
     const rrc_inactive_transition_report_request_e& rrc_inactive_transition_report_request() const;
     const crit_diagnostics_s&                       crit_diagnostics() const;
     const redirection_voice_fallback_e&             redirection_voice_fallback() const;
-    const cnassisted_ran_tuning_s&                  cnassisted_ran_tuning() const;
+    const cn_assisted_ran_tuning_s&                 cn_assisted_ran_tuning() const;
     const srvcc_operation_possible_e&               srvcc_operation_possible() const;
 
   private:
     types type_;
     choice_buffer_t<allowed_nssai_l,
-                    cnassisted_ran_tuning_s,
+                    cn_assisted_ran_tuning_s,
                     core_network_assist_info_for_inactive_s,
                     crit_diagnostics_s,
                     pdu_session_res_released_list_ps_ack_l,
@@ -10669,7 +10669,7 @@ struct secondary_rat_data_usage_report_ies_o {
       enum options {
         amf_ue_ngap_id,
         ran_ue_ngap_id,
-        pdu_session_res_secondary_ratusage_list,
+        pdu_session_res_secondary_rat_usage_list,
         ho_flag,
         user_location_info,
         nulltype
@@ -10690,20 +10690,20 @@ struct secondary_rat_data_usage_report_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                                        amf_ue_ngap_id();
-    uint64_t&                                        ran_ue_ngap_id();
-    pdu_session_res_secondary_ratusage_list_l&       pdu_session_res_secondary_ratusage_list();
-    ho_flag_e&                                       ho_flag();
-    user_location_info_c&                            user_location_info();
-    const uint64_t&                                  amf_ue_ngap_id() const;
-    const uint64_t&                                  ran_ue_ngap_id() const;
-    const pdu_session_res_secondary_ratusage_list_l& pdu_session_res_secondary_ratusage_list() const;
-    const ho_flag_e&                                 ho_flag() const;
-    const user_location_info_c&                      user_location_info() const;
+    uint64_t&                                         amf_ue_ngap_id();
+    uint64_t&                                         ran_ue_ngap_id();
+    pdu_session_res_secondary_rat_usage_list_l&       pdu_session_res_secondary_rat_usage_list();
+    ho_flag_e&                                        ho_flag();
+    user_location_info_c&                             user_location_info();
+    const uint64_t&                                   amf_ue_ngap_id() const;
+    const uint64_t&                                   ran_ue_ngap_id() const;
+    const pdu_session_res_secondary_rat_usage_list_l& pdu_session_res_secondary_rat_usage_list() const;
+    const ho_flag_e&                                  ho_flag() const;
+    const user_location_info_c&                       user_location_info() const;
 
   private:
-    types                                                                            type_;
-    choice_buffer_t<pdu_session_res_secondary_ratusage_list_l, user_location_info_c> c;
+    types                                                                             type_;
+    choice_buffer_t<pdu_session_res_secondary_rat_usage_list_l, user_location_info_c> c;
 
     void destroy_();
   };
@@ -10863,14 +10863,14 @@ struct ue_context_mod_request_ies_o {
         ran_paging_prio,
         security_key,
         idx_to_rfsp,
-        ue_aggregate_maximum_bit_rate,
+        ue_aggr_max_bit_rate,
         ue_security_cap,
         core_network_assist_info_for_inactive,
         emergency_fallback_ind,
         new_amf_ue_ngap_id,
         rrc_inactive_transition_report_request,
         new_guami,
-        cnassisted_ran_tuning,
+        cn_assisted_ran_tuning,
         srvcc_operation_possible,
         nulltype
       } value;
@@ -10895,38 +10895,38 @@ struct ue_context_mod_request_ies_o {
     uint16_t&                                       ran_paging_prio();
     fixed_bitstring<256, false, true>&              security_key();
     uint16_t&                                       idx_to_rfsp();
-    ue_aggregate_maximum_bit_rate_s&                ue_aggregate_maximum_bit_rate();
+    ue_aggr_max_bit_rate_s&                         ue_aggr_max_bit_rate();
     ue_security_cap_s&                              ue_security_cap();
     core_network_assist_info_for_inactive_s&        core_network_assist_info_for_inactive();
     emergency_fallback_ind_s&                       emergency_fallback_ind();
     uint64_t&                                       new_amf_ue_ngap_id();
     rrc_inactive_transition_report_request_e&       rrc_inactive_transition_report_request();
     guami_s&                                        new_guami();
-    cnassisted_ran_tuning_s&                        cnassisted_ran_tuning();
+    cn_assisted_ran_tuning_s&                       cn_assisted_ran_tuning();
     srvcc_operation_possible_e&                     srvcc_operation_possible();
     const uint64_t&                                 amf_ue_ngap_id() const;
     const uint64_t&                                 ran_ue_ngap_id() const;
     const uint16_t&                                 ran_paging_prio() const;
     const fixed_bitstring<256, false, true>&        security_key() const;
     const uint16_t&                                 idx_to_rfsp() const;
-    const ue_aggregate_maximum_bit_rate_s&          ue_aggregate_maximum_bit_rate() const;
+    const ue_aggr_max_bit_rate_s&                   ue_aggr_max_bit_rate() const;
     const ue_security_cap_s&                        ue_security_cap() const;
     const core_network_assist_info_for_inactive_s&  core_network_assist_info_for_inactive() const;
     const emergency_fallback_ind_s&                 emergency_fallback_ind() const;
     const uint64_t&                                 new_amf_ue_ngap_id() const;
     const rrc_inactive_transition_report_request_e& rrc_inactive_transition_report_request() const;
     const guami_s&                                  new_guami() const;
-    const cnassisted_ran_tuning_s&                  cnassisted_ran_tuning() const;
+    const cn_assisted_ran_tuning_s&                 cn_assisted_ran_tuning() const;
     const srvcc_operation_possible_e&               srvcc_operation_possible() const;
 
   private:
     types type_;
-    choice_buffer_t<cnassisted_ran_tuning_s,
+    choice_buffer_t<cn_assisted_ran_tuning_s,
                     core_network_assist_info_for_inactive_s,
                     emergency_fallback_ind_s,
                     fixed_bitstring<256, false, true>,
                     guami_s,
-                    ue_aggregate_maximum_bit_rate_s,
+                    ue_aggr_max_bit_rate_s,
                     ue_security_cap_s>
         c;
 
@@ -11277,7 +11277,7 @@ struct ue_radio_cap_info_ind_ies_o {
 };
 
 // UETNLABindingReleaseRequestIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
-struct uetnla_binding_release_request_ies_o {
+struct ue_tnla_binding_release_request_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
@@ -11365,11 +11365,11 @@ struct ul_nas_transport_ies_o {
 };
 
 // UplinkNonUEAssociatedNRPPaTransportIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
-struct ul_non_ueassociated_nrp_pa_transport_ies_o {
+struct ul_non_ue_associated_nrppa_transport_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { routing_id, nrp_pa_pdu, nulltype } value;
+      enum options { routing_id, nrppa_pdu, nulltype } value;
 
       const char* to_string() const;
     };
@@ -11387,9 +11387,9 @@ struct ul_non_ueassociated_nrp_pa_transport_ies_o {
     void        to_json(json_writer& j) const;
     // getters
     unbounded_octstring<true>&       routing_id();
-    unbounded_octstring<true>&       nrp_pa_pdu();
+    unbounded_octstring<true>&       nrppa_pdu();
     const unbounded_octstring<true>& routing_id() const;
-    const unbounded_octstring<true>& nrp_pa_pdu() const;
+    const unbounded_octstring<true>& nrppa_pdu() const;
 
   private:
     types                                      type_;
@@ -11525,11 +11525,11 @@ struct ul_rim_info_transfer_ies_o {
 };
 
 // UplinkUEAssociatedNRPPaTransportIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
-struct ul_ueassociated_nrp_pa_transport_ies_o {
+struct ul_ue_associated_nrppa_transport_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { amf_ue_ngap_id, ran_ue_ngap_id, routing_id, nrp_pa_pdu, nulltype } value;
+      enum options { amf_ue_ngap_id, ran_ue_ngap_id, routing_id, nrppa_pdu, nulltype } value;
 
       const char* to_string() const;
     };
@@ -11549,11 +11549,11 @@ struct ul_ueassociated_nrp_pa_transport_ies_o {
     uint64_t&                        amf_ue_ngap_id();
     uint64_t&                        ran_ue_ngap_id();
     unbounded_octstring<true>&       routing_id();
-    unbounded_octstring<true>&       nrp_pa_pdu();
+    unbounded_octstring<true>&       nrppa_pdu();
     const uint64_t&                  amf_ue_ngap_id() const;
     const uint64_t&                  ran_ue_ngap_id() const;
     const unbounded_octstring<true>& routing_id() const;
-    const unbounded_octstring<true>& nrp_pa_pdu() const;
+    const unbounded_octstring<true>& nrppa_pdu() const;
 
   private:
     types                                      type_;
@@ -12077,15 +12077,15 @@ struct pdu_session_res_setup_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               ran_paging_prio_present               = false;
-  bool                                               nas_pdu_present                       = false;
-  bool                                               ue_aggregate_maximum_bit_rate_present = false;
-  ie_field_s<amf_ue_ngap_id_t>                       amf_ue_ngap_id;
-  ie_field_s<ran_ue_ngap_id_t>                       ran_ue_ngap_id;
-  ie_field_s<integer<uint16_t, 1, 256, false, true>> ran_paging_prio;
-  ie_field_s<unbounded_octstring<true>>              nas_pdu;
+  bool                                                                      ran_paging_prio_present      = false;
+  bool                                                                      nas_pdu_present              = false;
+  bool                                                                      ue_aggr_max_bit_rate_present = false;
+  ie_field_s<amf_ue_ngap_id_t>                                              amf_ue_ngap_id;
+  ie_field_s<ran_ue_ngap_id_t>                                              ran_ue_ngap_id;
+  ie_field_s<integer<uint16_t, 1, 256, false, true>>                        ran_paging_prio;
+  ie_field_s<unbounded_octstring<true>>                                     nas_pdu;
   ie_field_s<dyn_seq_of<pdu_session_res_setup_item_su_req_s, 1, 256, true>> pdu_session_res_setup_list_su_req;
-  ie_field_s<ue_aggregate_maximum_bit_rate_s>                               ue_aggregate_maximum_bit_rate;
+  ie_field_s<ue_aggr_max_bit_rate_s>                                        ue_aggr_max_bit_rate;
 
   // sequence methods
   pdu_session_res_setup_request_ies_container();
@@ -12269,7 +12269,7 @@ struct path_switch_request_ack_ies_container {
   bool                                   rrc_inactive_transition_report_request_present = false;
   bool                                   crit_diagnostics_present                       = false;
   bool                                   redirection_voice_fallback_present             = false;
-  bool                                   cnassisted_ran_tuning_present                  = false;
+  bool                                   cn_assisted_ran_tuning_present                 = false;
   bool                                   srvcc_operation_possible_present               = false;
   ie_field_s<amf_ue_ngap_id_t>           amf_ue_ngap_id;
   ie_field_s<ran_ue_ngap_id_t>           ran_ue_ngap_id;
@@ -12283,7 +12283,7 @@ struct path_switch_request_ack_ies_container {
   ie_field_s<rrc_inactive_transition_report_request_e>                         rrc_inactive_transition_report_request;
   ie_field_s<crit_diagnostics_s>                                               crit_diagnostics;
   ie_field_s<redirection_voice_fallback_e>                                     redirection_voice_fallback;
-  ie_field_s<cnassisted_ran_tuning_s>                                          cnassisted_ran_tuning;
+  ie_field_s<cn_assisted_ran_tuning_s>                                         cn_assisted_ran_tuning;
   ie_field_s<srvcc_operation_possible_e>                                       srvcc_operation_possible;
 
   // sequence methods
@@ -12457,8 +12457,8 @@ struct secondary_rat_data_usage_report_ies_container {
   bool                         user_location_info_present = false;
   ie_field_s<amf_ue_ngap_id_t> amf_ue_ngap_id;
   ie_field_s<ran_ue_ngap_id_t> ran_ue_ngap_id;
-  ie_field_s<dyn_seq_of<pdu_session_res_secondary_ratusage_item_s, 1, 256, true>>
-                                   pdu_session_res_secondary_ratusage_list;
+  ie_field_s<dyn_seq_of<pdu_session_res_secondary_rat_usage_item_s, 1, 256, true>>
+                                   pdu_session_res_secondary_rat_usage_list;
   ie_field_s<ho_flag_e>            ho_flag;
   ie_field_s<user_location_info_c> user_location_info;
 
@@ -12540,28 +12540,28 @@ struct ue_context_mod_request_ies_container {
   bool                                                         ran_paging_prio_present                        = false;
   bool                                                         security_key_present                           = false;
   bool                                                         idx_to_rfsp_present                            = false;
-  bool                                                         ue_aggregate_maximum_bit_rate_present          = false;
+  bool                                                         ue_aggr_max_bit_rate_present                   = false;
   bool                                                         ue_security_cap_present                        = false;
   bool                                                         core_network_assist_info_for_inactive_present  = false;
   bool                                                         emergency_fallback_ind_present                 = false;
   bool                                                         new_amf_ue_ngap_id_present                     = false;
   bool                                                         rrc_inactive_transition_report_request_present = false;
   bool                                                         new_guami_present                              = false;
-  bool                                                         cnassisted_ran_tuning_present                  = false;
+  bool                                                         cn_assisted_ran_tuning_present                 = false;
   bool                                                         srvcc_operation_possible_present               = false;
   ie_field_s<amf_ue_ngap_id_t>                                 amf_ue_ngap_id;
   ie_field_s<ran_ue_ngap_id_t>                                 ran_ue_ngap_id;
   ie_field_s<integer<uint16_t, 1, 256, false, true>>           ran_paging_prio;
   ie_field_s<fixed_bitstring<256, false, true>>                security_key;
   ie_field_s<integer<uint16_t, 1, 256, true, true>>            idx_to_rfsp;
-  ie_field_s<ue_aggregate_maximum_bit_rate_s>                  ue_aggregate_maximum_bit_rate;
+  ie_field_s<ue_aggr_max_bit_rate_s>                           ue_aggr_max_bit_rate;
   ie_field_s<ue_security_cap_s>                                ue_security_cap;
   ie_field_s<core_network_assist_info_for_inactive_s>          core_network_assist_info_for_inactive;
   ie_field_s<emergency_fallback_ind_s>                         emergency_fallback_ind;
   ie_field_s<integer<uint64_t, 0, 1099511627775, false, true>> new_amf_ue_ngap_id;
   ie_field_s<rrc_inactive_transition_report_request_e>         rrc_inactive_transition_report_request;
   ie_field_s<guami_s>                                          new_guami;
-  ie_field_s<cnassisted_ran_tuning_s>                          cnassisted_ran_tuning;
+  ie_field_s<cn_assisted_ran_tuning_s>                         cn_assisted_ran_tuning;
   ie_field_s<srvcc_operation_possible_e>                       srvcc_operation_possible;
 
   // sequence methods
@@ -12725,7 +12725,7 @@ struct ue_radio_cap_info_ind_ies_container {
 // UERadioCapabilityInfoIndication ::= SEQUENCE
 using ue_radio_cap_info_ind_s = elementary_procedure_option<ue_radio_cap_info_ind_ies_container>;
 
-struct uetnla_binding_release_request_ies_container {
+struct ue_tnla_binding_release_request_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
@@ -12734,14 +12734,14 @@ struct uetnla_binding_release_request_ies_container {
   ie_field_s<ran_ue_ngap_id_t> ran_ue_ngap_id;
 
   // sequence methods
-  uetnla_binding_release_request_ies_container();
+  ue_tnla_binding_release_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // UETNLABindingReleaseRequest ::= SEQUENCE
-using uetnla_binding_release_request_s = elementary_procedure_option<uetnla_binding_release_request_ies_container>;
+using ue_tnla_binding_release_request_s = elementary_procedure_option<ue_tnla_binding_release_request_ies_container>;
 
 struct ul_nas_transport_ies_container {
   template <class valueT_>
@@ -12763,24 +12763,24 @@ struct ul_nas_transport_ies_container {
 // UplinkNASTransport ::= SEQUENCE
 using ul_nas_transport_s = elementary_procedure_option<ul_nas_transport_ies_container>;
 
-struct ul_non_ueassociated_nrp_pa_transport_ies_container {
+struct ul_non_ue_associated_nrppa_transport_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
   ie_field_s<unbounded_octstring<true>> routing_id;
-  ie_field_s<unbounded_octstring<true>> nrp_pa_pdu;
+  ie_field_s<unbounded_octstring<true>> nrppa_pdu;
 
   // sequence methods
-  ul_non_ueassociated_nrp_pa_transport_ies_container();
+  ul_non_ue_associated_nrppa_transport_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // UplinkNonUEAssociatedNRPPaTransport ::= SEQUENCE
-using ul_non_ueassociated_nrp_pa_transport_s =
-    elementary_procedure_option<ul_non_ueassociated_nrp_pa_transport_ies_container>;
+using ul_non_ue_associated_nrppa_transport_s =
+    elementary_procedure_option<ul_non_ue_associated_nrppa_transport_ies_container>;
 
 struct ul_ran_cfg_transfer_ies_container {
   template <class valueT_>
@@ -12824,7 +12824,7 @@ using ul_ran_status_transfer_s = elementary_procedure_option<ul_ran_status_trans
 // UplinkRIMInformationTransfer ::= SEQUENCE
 using ul_rim_info_transfer_s = elementary_procedure_option<protocol_ie_container_l<ul_rim_info_transfer_ies_o>>;
 
-struct ul_ueassociated_nrp_pa_transport_ies_container {
+struct ul_ue_associated_nrppa_transport_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
@@ -12832,17 +12832,17 @@ struct ul_ueassociated_nrp_pa_transport_ies_container {
   ie_field_s<amf_ue_ngap_id_t>          amf_ue_ngap_id;
   ie_field_s<ran_ue_ngap_id_t>          ran_ue_ngap_id;
   ie_field_s<unbounded_octstring<true>> routing_id;
-  ie_field_s<unbounded_octstring<true>> nrp_pa_pdu;
+  ie_field_s<unbounded_octstring<true>> nrppa_pdu;
 
   // sequence methods
-  ul_ueassociated_nrp_pa_transport_ies_container();
+  ul_ue_associated_nrppa_transport_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // UplinkUEAssociatedNRPPaTransport ::= SEQUENCE
-using ul_ueassociated_nrp_pa_transport_s = elementary_procedure_option<ul_ueassociated_nrp_pa_transport_ies_container>;
+using ul_ue_associated_nrppa_transport_s = elementary_procedure_option<ul_ue_associated_nrppa_transport_ies_container>;
 
 struct write_replace_warning_request_ies_container {
   template <class valueT_>
@@ -12928,10 +12928,10 @@ struct ngap_elem_procs_o {
         cell_traffic_trace,
         deactiv_trace,
         dl_nas_transport,
-        dl_non_ueassociated_nrp_pa_transport,
+        dl_non_ue_associated_nrppa_transport,
         dl_ran_cfg_transfer,
         dl_ran_status_transfer,
-        dl_ueassociated_nrp_pa_transport,
+        dl_ue_associated_nrppa_transport,
         error_ind,
         ho_notify,
         init_ue_msg,
@@ -12953,12 +12953,12 @@ struct ngap_elem_procs_o {
         trace_start,
         ue_context_release_request,
         ue_radio_cap_info_ind,
-        uetnla_binding_release_request,
+        ue_tnla_binding_release_request,
         ul_nas_transport,
-        ul_non_ueassociated_nrp_pa_transport,
+        ul_non_ue_associated_nrppa_transport,
         ul_ran_cfg_transfer,
         ul_ran_status_transfer,
-        ul_ueassociated_nrp_pa_transport,
+        ul_ue_associated_nrppa_transport,
         ul_rim_info_transfer,
         dl_rim_info_transfer,
         nulltype
@@ -13001,10 +13001,10 @@ struct ngap_elem_procs_o {
     cell_traffic_trace_s&                         cell_traffic_trace();
     deactiv_trace_s&                              deactiv_trace();
     dl_nas_transport_s&                           dl_nas_transport();
-    dl_non_ueassociated_nrp_pa_transport_s&       dl_non_ueassociated_nrp_pa_transport();
+    dl_non_ue_associated_nrppa_transport_s&       dl_non_ue_associated_nrppa_transport();
     dl_ran_cfg_transfer_s&                        dl_ran_cfg_transfer();
     dl_ran_status_transfer_s&                     dl_ran_status_transfer();
-    dl_ueassociated_nrp_pa_transport_s&           dl_ueassociated_nrp_pa_transport();
+    dl_ue_associated_nrppa_transport_s&           dl_ue_associated_nrppa_transport();
     error_ind_s&                                  error_ind();
     ho_notify_s&                                  ho_notify();
     init_ue_msg_s&                                init_ue_msg();
@@ -13026,12 +13026,12 @@ struct ngap_elem_procs_o {
     trace_start_s&                                trace_start();
     ue_context_release_request_s&                 ue_context_release_request();
     ue_radio_cap_info_ind_s&                      ue_radio_cap_info_ind();
-    uetnla_binding_release_request_s&             uetnla_binding_release_request();
+    ue_tnla_binding_release_request_s&            ue_tnla_binding_release_request();
     ul_nas_transport_s&                           ul_nas_transport();
-    ul_non_ueassociated_nrp_pa_transport_s&       ul_non_ueassociated_nrp_pa_transport();
+    ul_non_ue_associated_nrppa_transport_s&       ul_non_ue_associated_nrppa_transport();
     ul_ran_cfg_transfer_s&                        ul_ran_cfg_transfer();
     ul_ran_status_transfer_s&                     ul_ran_status_transfer();
-    ul_ueassociated_nrp_pa_transport_s&           ul_ueassociated_nrp_pa_transport();
+    ul_ue_associated_nrppa_transport_s&           ul_ue_associated_nrppa_transport();
     ul_rim_info_transfer_s&                       ul_rim_info_transfer();
     dl_rim_info_transfer_s&                       dl_rim_info_transfer();
     const amf_cfg_upd_s&                          amf_cfg_upd() const;
@@ -13056,10 +13056,10 @@ struct ngap_elem_procs_o {
     const cell_traffic_trace_s&                   cell_traffic_trace() const;
     const deactiv_trace_s&                        deactiv_trace() const;
     const dl_nas_transport_s&                     dl_nas_transport() const;
-    const dl_non_ueassociated_nrp_pa_transport_s& dl_non_ueassociated_nrp_pa_transport() const;
+    const dl_non_ue_associated_nrppa_transport_s& dl_non_ue_associated_nrppa_transport() const;
     const dl_ran_cfg_transfer_s&                  dl_ran_cfg_transfer() const;
     const dl_ran_status_transfer_s&               dl_ran_status_transfer() const;
-    const dl_ueassociated_nrp_pa_transport_s&     dl_ueassociated_nrp_pa_transport() const;
+    const dl_ue_associated_nrppa_transport_s&     dl_ue_associated_nrppa_transport() const;
     const error_ind_s&                            error_ind() const;
     const ho_notify_s&                            ho_notify() const;
     const init_ue_msg_s&                          init_ue_msg() const;
@@ -13081,12 +13081,12 @@ struct ngap_elem_procs_o {
     const trace_start_s&                          trace_start() const;
     const ue_context_release_request_s&           ue_context_release_request() const;
     const ue_radio_cap_info_ind_s&                ue_radio_cap_info_ind() const;
-    const uetnla_binding_release_request_s&       uetnla_binding_release_request() const;
+    const ue_tnla_binding_release_request_s&      ue_tnla_binding_release_request() const;
     const ul_nas_transport_s&                     ul_nas_transport() const;
-    const ul_non_ueassociated_nrp_pa_transport_s& ul_non_ueassociated_nrp_pa_transport() const;
+    const ul_non_ue_associated_nrppa_transport_s& ul_non_ue_associated_nrppa_transport() const;
     const ul_ran_cfg_transfer_s&                  ul_ran_cfg_transfer() const;
     const ul_ran_status_transfer_s&               ul_ran_status_transfer() const;
-    const ul_ueassociated_nrp_pa_transport_s&     ul_ueassociated_nrp_pa_transport() const;
+    const ul_ue_associated_nrppa_transport_s&     ul_ue_associated_nrppa_transport() const;
     const ul_rim_info_transfer_s&                 ul_rim_info_transfer() const;
     const dl_rim_info_transfer_s&                 dl_rim_info_transfer() const;
 
@@ -13097,11 +13097,11 @@ struct ngap_elem_procs_o {
                     cell_traffic_trace_s,
                     deactiv_trace_s,
                     dl_nas_transport_s,
-                    dl_non_ueassociated_nrp_pa_transport_s,
+                    dl_non_ue_associated_nrppa_transport_s,
                     dl_ran_cfg_transfer_s,
                     dl_ran_status_transfer_s,
                     dl_rim_info_transfer_s,
-                    dl_ueassociated_nrp_pa_transport_s,
+                    dl_ue_associated_nrppa_transport_s,
                     error_ind_s,
                     ho_cancel_s,
                     ho_notify_s,
@@ -13139,13 +13139,13 @@ struct ngap_elem_procs_o {
                     ue_context_release_request_s,
                     ue_radio_cap_check_request_s,
                     ue_radio_cap_info_ind_s,
-                    uetnla_binding_release_request_s,
+                    ue_tnla_binding_release_request_s,
                     ul_nas_transport_s,
-                    ul_non_ueassociated_nrp_pa_transport_s,
+                    ul_non_ue_associated_nrppa_transport_s,
                     ul_ran_cfg_transfer_s,
                     ul_ran_status_transfer_s,
                     ul_rim_info_transfer_s,
-                    ul_ueassociated_nrp_pa_transport_s,
+                    ul_ue_associated_nrppa_transport_s,
                     write_replace_warning_request_s>
         c;
 
@@ -13347,13 +13347,13 @@ using last_visited_ngran_cell_info_ext_ies_container = protocol_ext_container_em
 struct last_visited_ngran_cell_info_s {
   bool                                           ext                                                 = false;
   bool                                           time_ue_stayed_in_cell_enhanced_granularity_present = false;
-  bool                                           hocause_value_present                               = false;
+  bool                                           ho_cause_value_present                              = false;
   bool                                           ie_exts_present                                     = false;
   ngran_cgi_c                                    global_cell_id;
   cell_type_s                                    cell_type;
   uint16_t                                       time_ue_stayed_in_cell                      = 0;
   uint16_t                                       time_ue_stayed_in_cell_enhanced_granularity = 0;
-  cause_c                                        hocause_value;
+  cause_c                                        ho_cause_value;
   last_visited_ngran_cell_info_ext_ies_container ie_exts;
   // ...
 
@@ -13554,22 +13554,22 @@ private:
 };
 
 // NonDynamic5QIDescriptor-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
-using non_dynamic5_qi_descriptor_ext_ies_o = protocol_ext_empty_o;
+using non_dyn_5qi_descriptor_ext_ies_o = protocol_ext_empty_o;
 
-using non_dynamic5_qi_descriptor_ext_ies_container = protocol_ext_container_empty_l;
+using non_dyn_5qi_descriptor_ext_ies_container = protocol_ext_container_empty_l;
 
 // NonDynamic5QIDescriptor ::= SEQUENCE
-struct non_dynamic5_qi_descriptor_s {
-  bool                                         ext                               = false;
-  bool                                         prio_level_qos_present            = false;
-  bool                                         averaging_win_present             = false;
-  bool                                         maximum_data_burst_volume_present = false;
-  bool                                         ie_exts_present                   = false;
-  uint16_t                                     five_qi                           = 0;
-  uint8_t                                      prio_level_qos                    = 1;
-  uint16_t                                     averaging_win                     = 0;
-  uint16_t                                     maximum_data_burst_volume         = 0;
-  non_dynamic5_qi_descriptor_ext_ies_container ie_exts;
+struct non_dyn_5qi_descriptor_s {
+  bool                                     ext                           = false;
+  bool                                     prio_level_qos_present        = false;
+  bool                                     averaging_win_present         = false;
+  bool                                     max_data_burst_volume_present = false;
+  bool                                     ie_exts_present               = false;
+  uint16_t                                 five_qi                       = 0;
+  uint8_t                                  prio_level_qos                = 1;
+  uint16_t                                 averaging_win                 = 0;
+  uint16_t                                 max_data_burst_volume         = 0;
+  non_dyn_5qi_descriptor_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -13579,17 +13579,17 @@ struct non_dynamic5_qi_descriptor_s {
 };
 
 // PDUSessionAggregateMaximumBitRate-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
-using pdu_session_aggregate_maximum_bit_rate_ext_ies_o = protocol_ext_empty_o;
+using pdu_session_aggr_max_bit_rate_ext_ies_o = protocol_ext_empty_o;
 
-using pdu_session_aggregate_maximum_bit_rate_ext_ies_container = protocol_ext_container_empty_l;
+using pdu_session_aggr_max_bit_rate_ext_ies_container = protocol_ext_container_empty_l;
 
 // PDUSessionAggregateMaximumBitRate ::= SEQUENCE
-struct pdu_session_aggregate_maximum_bit_rate_s {
-  bool                                                     ext                                       = false;
-  bool                                                     ie_exts_present                           = false;
-  uint64_t                                                 pdu_session_aggregate_maximum_bit_rate_dl = 0;
-  uint64_t                                                 pdu_session_aggregate_maximum_bit_rate_ul = 0;
-  pdu_session_aggregate_maximum_bit_rate_ext_ies_container ie_exts;
+struct pdu_session_aggr_max_bit_rate_s {
+  bool                                            ext                              = false;
+  bool                                            ie_exts_present                  = false;
+  uint64_t                                        pdu_session_aggr_max_bit_rate_dl = 0;
+  uint64_t                                        pdu_session_aggr_max_bit_rate_ul = 0;
+  pdu_session_aggr_max_bit_rate_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -13640,10 +13640,10 @@ struct qos_flow_info_item_ext_ies_o {
 
 // QosFlowInformationItem ::= SEQUENCE
 struct qos_flow_info_item_s {
-  bool                                                   ext                  = false;
-  bool                                                   dlforwarding_present = false;
-  uint8_t                                                qos_flow_id          = 0;
-  dl_forwarding_e                                        dlforwarding;
+  bool                                                   ext                   = false;
+  bool                                                   dl_forwarding_present = false;
+  uint8_t                                                qos_flow_id           = 0;
+  dl_forwarding_e                                        dl_forwarding;
   protocol_ext_container_l<qos_flow_info_item_ext_ies_o> ie_exts;
   // ...
 
@@ -13735,8 +13735,8 @@ struct pdu_session_res_modify_confirm_transfer_s {
   bool                                                      ext             = false;
   bool                                                      ie_exts_present = false;
   qos_flow_modify_confirm_list_l                            qos_flow_modify_confirm_list;
-  up_transport_layer_info_c                                 ulngu_up_tnl_info;
-  up_transport_layer_info_pair_list_l                       add_ng_uuptnl_info;
+  up_transport_layer_info_c                                 ul_ngu_up_tnl_info;
+  up_transport_layer_info_pair_list_l                       add_ng_u_up_tnl_info;
   qos_flow_list_with_cause_l                                qos_flow_failed_to_modify_list;
   pdu_session_res_modify_confirm_transfer_ext_ies_container ie_exts;
   // ...
@@ -13770,7 +13770,7 @@ struct volume_timed_report_item_s {
 };
 
 // QoSFlowsUsageReport-Item-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
-using qo_sflows_usage_report_item_ext_ies_o = protocol_ext_empty_o;
+using qos_flows_usage_report_item_ext_ies_o = protocol_ext_empty_o;
 
 // VolumeTimedReportList ::= SEQUENCE (SIZE (1..2)) OF VolumeTimedReport-Item
 using volume_timed_report_list_l = dyn_array<volume_timed_report_item_s>;
@@ -13778,10 +13778,10 @@ using volume_timed_report_list_l = dyn_array<volume_timed_report_item_s>;
 // PDUSessionUsageReport-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using pdu_session_usage_report_ext_ies_o = protocol_ext_empty_o;
 
-using qo_sflows_usage_report_item_ext_ies_container = protocol_ext_container_empty_l;
+using qos_flows_usage_report_item_ext_ies_container = protocol_ext_container_empty_l;
 
 // QoSFlowsUsageReport-Item ::= SEQUENCE
-struct qo_sflows_usage_report_item_s {
+struct qos_flows_usage_report_item_s {
   struct rat_type_opts {
     enum options { nr, eutra, /*...*/ nr_unlicensed, e_utra_unlicensed, nulltype } value;
 
@@ -13794,8 +13794,8 @@ struct qo_sflows_usage_report_item_s {
   bool                                          ie_exts_present = false;
   uint8_t                                       qos_flow_id     = 0;
   rat_type_e_                                   rat_type;
-  volume_timed_report_list_l                    qo_sflows_timed_report_list;
-  qo_sflows_usage_report_item_ext_ies_container ie_exts;
+  volume_timed_report_list_l                    qos_flows_timed_report_list;
+  qos_flows_usage_report_item_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -13830,21 +13830,21 @@ struct pdu_session_usage_report_s {
 };
 
 // QoSFlowsUsageReportList ::= SEQUENCE (SIZE (1..64)) OF QoSFlowsUsageReport-Item
-using qo_sflows_usage_report_list_l = dyn_array<qo_sflows_usage_report_item_s>;
+using qos_flows_usage_report_list_l = dyn_array<qos_flows_usage_report_item_s>;
 
 // SecondaryRATUsageInformation-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
-using secondary_ratusage_info_ext_ies_o = protocol_ext_empty_o;
+using secondary_rat_usage_info_ext_ies_o = protocol_ext_empty_o;
 
-using secondary_ratusage_info_ext_ies_container = protocol_ext_container_empty_l;
+using secondary_rat_usage_info_ext_ies_container = protocol_ext_container_empty_l;
 
 // SecondaryRATUsageInformation ::= SEQUENCE
-struct secondary_ratusage_info_s {
-  bool                                      ext                              = false;
-  bool                                      pdu_session_usage_report_present = false;
-  bool                                      ie_ext_present                   = false;
-  pdu_session_usage_report_s                pdu_session_usage_report;
-  qo_sflows_usage_report_list_l             qos_flows_usage_report_list;
-  secondary_ratusage_info_ext_ies_container ie_ext;
+struct secondary_rat_usage_info_s {
+  bool                                       ext                              = false;
+  bool                                       pdu_session_usage_report_present = false;
+  bool                                       ie_ext_present                   = false;
+  pdu_session_usage_report_s                 pdu_session_usage_report;
+  qos_flows_usage_report_list_l              qos_flows_usage_report_list;
+  secondary_rat_usage_info_ext_ies_container ie_ext;
   // ...
 
   // sequence methods
@@ -13858,7 +13858,7 @@ struct pdu_session_res_modify_ind_transfer_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { secondary_ratusage_info, security_result, nulltype } value;
+      enum options { secondary_rat_usage_info, security_result, nulltype } value;
 
       const char* to_string() const;
     };
@@ -13875,14 +13875,14 @@ struct pdu_session_res_modify_ind_transfer_ext_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    secondary_ratusage_info_s&       secondary_ratusage_info();
-    security_result_s&               security_result();
-    const secondary_ratusage_info_s& secondary_ratusage_info() const;
-    const security_result_s&         security_result() const;
+    secondary_rat_usage_info_s&       secondary_rat_usage_info();
+    security_result_s&                security_result();
+    const secondary_rat_usage_info_s& secondary_rat_usage_info() const;
+    const security_result_s&          security_result() const;
 
   private:
-    types                                                         type_;
-    choice_buffer_t<secondary_ratusage_info_s, security_result_s> c;
+    types                                                          type_;
+    choice_buffer_t<secondary_rat_usage_info_s, security_result_s> c;
 
     void destroy_();
   };
@@ -13900,10 +13900,10 @@ struct pdu_session_res_modify_ind_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                  secondary_ratusage_info_present = false;
-  bool                                  security_result_present         = false;
-  ie_field_s<secondary_ratusage_info_s> secondary_ratusage_info;
-  ie_field_s<security_result_s>         security_result;
+  bool                                   secondary_rat_usage_info_present = false;
+  bool                                   security_result_present          = false;
+  ie_field_s<secondary_rat_usage_info_s> secondary_rat_usage_info;
+  ie_field_s<security_result_s>          security_result;
 
   // sequence methods
   pdu_session_res_modify_ind_transfer_ext_ies_container();
@@ -13916,7 +13916,7 @@ struct pdu_session_res_modify_ind_transfer_ext_ies_container {
 struct pdu_session_res_modify_ind_transfer_s {
   bool                                                  ext             = false;
   bool                                                  ie_exts_present = false;
-  qos_flow_per_tnl_info_s                               dlqos_flow_per_tnl_info;
+  qos_flow_per_tnl_info_s                               dl_qos_flow_per_tnl_info;
   qos_flow_per_tnl_info_list_l                          add_dl_qos_flow_per_tnl_info;
   pdu_session_res_modify_ind_transfer_ext_ies_container ie_exts;
   // ...
@@ -13968,7 +13968,7 @@ typedef enumerated<add_qos_flow_info_opts, true> add_qos_flow_info_e;
 // QosCharacteristics ::= CHOICE
 struct qos_characteristics_c {
   struct types_opts {
-    enum options { non_dynamic5_qi, dynamic5_qi, choice_exts, nulltype } value;
+    enum options { non_dyn5qi, dyn5qi, choice_exts, nulltype } value;
 
     const char* to_string() const;
   };
@@ -13985,44 +13985,44 @@ struct qos_characteristics_c {
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
   // getters
-  non_dynamic5_qi_descriptor_s& non_dynamic5_qi()
+  non_dyn_5qi_descriptor_s& non_dyn5qi()
   {
-    assert_choice_type(types::non_dynamic5_qi, type_, "QosCharacteristics");
-    return c.get<non_dynamic5_qi_descriptor_s>();
+    assert_choice_type(types::non_dyn5qi, type_, "QosCharacteristics");
+    return c.get<non_dyn_5qi_descriptor_s>();
   }
-  dynamic5_qi_descriptor_s& dynamic5_qi()
+  dyn_5qi_descriptor_s& dyn5qi()
   {
-    assert_choice_type(types::dynamic5_qi, type_, "QosCharacteristics");
-    return c.get<dynamic5_qi_descriptor_s>();
+    assert_choice_type(types::dyn5qi, type_, "QosCharacteristics");
+    return c.get<dyn_5qi_descriptor_s>();
   }
   protocol_ie_single_container_s<qos_characteristics_ext_ies_o>& choice_exts()
   {
     assert_choice_type(types::choice_exts, type_, "QosCharacteristics");
     return c.get<protocol_ie_single_container_s<qos_characteristics_ext_ies_o>>();
   }
-  const non_dynamic5_qi_descriptor_s& non_dynamic5_qi() const
+  const non_dyn_5qi_descriptor_s& non_dyn5qi() const
   {
-    assert_choice_type(types::non_dynamic5_qi, type_, "QosCharacteristics");
-    return c.get<non_dynamic5_qi_descriptor_s>();
+    assert_choice_type(types::non_dyn5qi, type_, "QosCharacteristics");
+    return c.get<non_dyn_5qi_descriptor_s>();
   }
-  const dynamic5_qi_descriptor_s& dynamic5_qi() const
+  const dyn_5qi_descriptor_s& dyn5qi() const
   {
-    assert_choice_type(types::dynamic5_qi, type_, "QosCharacteristics");
-    return c.get<dynamic5_qi_descriptor_s>();
+    assert_choice_type(types::dyn5qi, type_, "QosCharacteristics");
+    return c.get<dyn_5qi_descriptor_s>();
   }
   const protocol_ie_single_container_s<qos_characteristics_ext_ies_o>& choice_exts() const
   {
     assert_choice_type(types::choice_exts, type_, "QosCharacteristics");
     return c.get<protocol_ie_single_container_s<qos_characteristics_ext_ies_o>>();
   }
-  non_dynamic5_qi_descriptor_s&                                  set_non_dynamic5_qi();
-  dynamic5_qi_descriptor_s&                                      set_dynamic5_qi();
+  non_dyn_5qi_descriptor_s&                                      set_non_dyn5qi();
+  dyn_5qi_descriptor_s&                                          set_dyn5qi();
   protocol_ie_single_container_s<qos_characteristics_ext_ies_o>& set_choice_exts();
 
 private:
   types type_;
-  choice_buffer_t<dynamic5_qi_descriptor_s,
-                  non_dynamic5_qi_descriptor_s,
+  choice_buffer_t<dyn_5qi_descriptor_s,
+                  non_dyn_5qi_descriptor_s,
                   protocol_ie_single_container_s<qos_characteristics_ext_ies_o>>
       c;
 
@@ -14144,7 +14144,7 @@ struct pdu_session_res_modify_request_transfer_ies_o {
   struct value_c {
     struct types_opts {
       enum options {
-        pdu_session_aggregate_maximum_bit_rate,
+        pdu_session_aggr_max_bit_rate,
         ul_ngu_up_tnl_modify_list,
         network_instance,
         qos_flow_add_or_modify_request_list,
@@ -14171,24 +14171,24 @@ struct pdu_session_res_modify_request_transfer_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    pdu_session_aggregate_maximum_bit_rate_s&       pdu_session_aggregate_maximum_bit_rate();
-    ul_ngu_up_tnl_modify_list_l&                    ul_ngu_up_tnl_modify_list();
-    uint16_t&                                       network_instance();
-    qos_flow_add_or_modify_request_list_l&          qos_flow_add_or_modify_request_list();
-    qos_flow_list_with_cause_l&                     qos_flow_to_release_list();
-    up_transport_layer_info_list_l&                 add_ul_ngu_up_tnl_info();
-    unbounded_octstring<true>&                      common_network_instance();
-    const pdu_session_aggregate_maximum_bit_rate_s& pdu_session_aggregate_maximum_bit_rate() const;
-    const ul_ngu_up_tnl_modify_list_l&              ul_ngu_up_tnl_modify_list() const;
-    const uint16_t&                                 network_instance() const;
-    const qos_flow_add_or_modify_request_list_l&    qos_flow_add_or_modify_request_list() const;
-    const qos_flow_list_with_cause_l&               qos_flow_to_release_list() const;
-    const up_transport_layer_info_list_l&           add_ul_ngu_up_tnl_info() const;
-    const unbounded_octstring<true>&                common_network_instance() const;
+    pdu_session_aggr_max_bit_rate_s&             pdu_session_aggr_max_bit_rate();
+    ul_ngu_up_tnl_modify_list_l&                 ul_ngu_up_tnl_modify_list();
+    uint16_t&                                    network_instance();
+    qos_flow_add_or_modify_request_list_l&       qos_flow_add_or_modify_request_list();
+    qos_flow_list_with_cause_l&                  qos_flow_to_release_list();
+    up_transport_layer_info_list_l&              add_ul_ngu_up_tnl_info();
+    unbounded_octstring<true>&                   common_network_instance();
+    const pdu_session_aggr_max_bit_rate_s&       pdu_session_aggr_max_bit_rate() const;
+    const ul_ngu_up_tnl_modify_list_l&           ul_ngu_up_tnl_modify_list() const;
+    const uint16_t&                              network_instance() const;
+    const qos_flow_add_or_modify_request_list_l& qos_flow_add_or_modify_request_list() const;
+    const qos_flow_list_with_cause_l&            qos_flow_to_release_list() const;
+    const up_transport_layer_info_list_l&        add_ul_ngu_up_tnl_info() const;
+    const unbounded_octstring<true>&             common_network_instance() const;
 
   private:
     types type_;
-    choice_buffer_t<pdu_session_aggregate_maximum_bit_rate_s,
+    choice_buffer_t<pdu_session_aggr_max_bit_rate_s,
                     qos_flow_add_or_modify_request_list_l,
                     qos_flow_list_with_cause_l,
                     ul_ngu_up_tnl_modify_list_l,
@@ -14212,16 +14212,16 @@ struct pdu_session_res_modify_request_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                 pdu_session_aggregate_maximum_bit_rate_present = false;
-  bool                                                 ul_ngu_up_tnl_modify_list_present              = false;
-  bool                                                 network_instance_present                       = false;
-  bool                                                 qos_flow_add_or_modify_request_list_present    = false;
-  bool                                                 qos_flow_to_release_list_present               = false;
-  bool                                                 add_ul_ngu_up_tnl_info_present                 = false;
-  bool                                                 common_network_instance_present                = false;
-  ie_field_s<pdu_session_aggregate_maximum_bit_rate_s> pdu_session_aggregate_maximum_bit_rate;
-  ie_field_s<dyn_seq_of<ul_ngu_up_tnl_modify_item_s, 1, 4, true>>            ul_ngu_up_tnl_modify_list;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>                          network_instance;
+  bool                                                            pdu_session_aggr_max_bit_rate_present       = false;
+  bool                                                            ul_ngu_up_tnl_modify_list_present           = false;
+  bool                                                            network_instance_present                    = false;
+  bool                                                            qos_flow_add_or_modify_request_list_present = false;
+  bool                                                            qos_flow_to_release_list_present            = false;
+  bool                                                            add_ul_ngu_up_tnl_info_present              = false;
+  bool                                                            common_network_instance_present             = false;
+  ie_field_s<pdu_session_aggr_max_bit_rate_s>                     pdu_session_aggr_max_bit_rate;
+  ie_field_s<dyn_seq_of<ul_ngu_up_tnl_modify_item_s, 1, 4, true>> ul_ngu_up_tnl_modify_list;
+  ie_field_s<integer<uint16_t, 1, 256, true, true>>               network_instance;
   ie_field_s<dyn_seq_of<qos_flow_add_or_modify_request_item_s, 1, 64, true>> qos_flow_add_or_modify_request_list;
   ie_field_s<dyn_seq_of<qos_flow_with_cause_item_s, 1, 64, true>>            qos_flow_to_release_list;
   ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>>         add_ul_ngu_up_tnl_info;
@@ -14337,23 +14337,23 @@ struct pdu_session_res_notify_released_transfer_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { secondary_ratusage_info, nulltype } value;
+      enum options { secondary_rat_usage_info, nulltype } value;
 
       const char* to_string() const;
     };
     typedef enumerated<types_opts> types;
 
     // choice methods
-    types       type() const { return types::secondary_ratusage_info; }
+    types       type() const { return types::secondary_rat_usage_info; }
     SRSASN_CODE pack(bit_ref& bref) const;
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    secondary_ratusage_info_s&       secondary_ratusage_info() { return c; }
-    const secondary_ratusage_info_s& secondary_ratusage_info() const { return c; }
+    secondary_rat_usage_info_s&       secondary_rat_usage_info() { return c; }
+    const secondary_rat_usage_info_s& secondary_rat_usage_info() const { return c; }
 
   private:
-    secondary_ratusage_info_s c;
+    secondary_rat_usage_info_s c;
   };
 
   // members lookup methods
@@ -14410,23 +14410,23 @@ struct pdu_session_res_notify_transfer_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { secondary_ratusage_info, nulltype } value;
+      enum options { secondary_rat_usage_info, nulltype } value;
 
       const char* to_string() const;
     };
     typedef enumerated<types_opts> types;
 
     // choice methods
-    types       type() const { return types::secondary_ratusage_info; }
+    types       type() const { return types::secondary_rat_usage_info; }
     SRSASN_CODE pack(bit_ref& bref) const;
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    secondary_ratusage_info_s&       secondary_ratusage_info() { return c; }
-    const secondary_ratusage_info_s& secondary_ratusage_info() const { return c; }
+    secondary_rat_usage_info_s&       secondary_rat_usage_info() { return c; }
+    const secondary_rat_usage_info_s& secondary_rat_usage_info() const { return c; }
 
   private:
-    secondary_ratusage_info_s c;
+    secondary_rat_usage_info_s c;
   };
 
   // members lookup methods
@@ -14478,23 +14478,23 @@ struct pdu_session_res_release_resp_transfer_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { secondary_ratusage_info, nulltype } value;
+      enum options { secondary_rat_usage_info, nulltype } value;
 
       const char* to_string() const;
     };
     typedef enumerated<types_opts> types;
 
     // choice methods
-    types       type() const { return types::secondary_ratusage_info; }
+    types       type() const { return types::secondary_rat_usage_info; }
     SRSASN_CODE pack(bit_ref& bref) const;
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    secondary_ratusage_info_s&       secondary_ratusage_info() { return c; }
-    const secondary_ratusage_info_s& secondary_ratusage_info() const { return c; }
+    secondary_rat_usage_info_s&       secondary_rat_usage_info() { return c; }
+    const secondary_rat_usage_info_s& secondary_rat_usage_info() const { return c; }
 
   private:
-    secondary_ratusage_info_s c;
+    secondary_rat_usage_info_s c;
   };
 
   // members lookup methods
@@ -14518,14 +14518,14 @@ struct pdu_session_res_release_resp_transfer_s {
 };
 
 // MaximumIntegrityProtectedDataRate ::= ENUMERATED
-struct maximum_integrity_protected_data_rate_opts {
-  enum options { bitrate64kbs, maximum_ue_rate, /*...*/ nulltype } value;
+struct max_integrity_protected_data_rate_opts {
+  enum options { bitrate64kbs, max_ue_rate, /*...*/ nulltype } value;
   typedef uint8_t number_type;
 
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<maximum_integrity_protected_data_rate_opts, true> maximum_integrity_protected_data_rate_e;
+typedef enumerated<max_integrity_protected_data_rate_opts, true> max_integrity_protected_data_rate_e;
 
 // QosFlowSetupRequestItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using qos_flow_setup_request_item_ext_ies_o = protocol_ext_empty_o;
@@ -14570,23 +14570,23 @@ struct security_ind_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { maximum_integrity_protected_data_rate_dl, nulltype } value;
+      enum options { max_integrity_protected_data_rate_dl, nulltype } value;
 
       const char* to_string() const;
     };
     typedef enumerated<types_opts> types;
 
     // choice methods
-    types       type() const { return types::maximum_integrity_protected_data_rate_dl; }
+    types       type() const { return types::max_integrity_protected_data_rate_dl; }
     SRSASN_CODE pack(bit_ref& bref) const;
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    maximum_integrity_protected_data_rate_e&       maximum_integrity_protected_data_rate_dl() { return c; }
-    const maximum_integrity_protected_data_rate_e& maximum_integrity_protected_data_rate_dl() const { return c; }
+    max_integrity_protected_data_rate_e&       max_integrity_protected_data_rate_dl() { return c; }
+    const max_integrity_protected_data_rate_e& max_integrity_protected_data_rate_dl() const { return c; }
 
   private:
-    maximum_integrity_protected_data_rate_e c;
+    max_integrity_protected_data_rate_e c;
   };
 
   // members lookup methods
@@ -14618,11 +14618,11 @@ using qos_flow_setup_request_list_l = dyn_array<qos_flow_setup_request_item_s>;
 
 // SecurityIndication ::= SEQUENCE
 struct security_ind_s {
-  bool                                             ext                                              = false;
-  bool                                             maximum_integrity_protected_data_rate_ul_present = false;
+  bool                                             ext                                          = false;
+  bool                                             max_integrity_protected_data_rate_ul_present = false;
   integrity_protection_ind_e                       integrity_protection_ind;
   confidentiality_protection_ind_e                 confidentiality_protection_ind;
-  maximum_integrity_protected_data_rate_e          maximum_integrity_protected_data_rate_ul;
+  max_integrity_protected_data_rate_e              max_integrity_protected_data_rate_ul;
   protocol_ext_container_l<security_ind_ext_ies_o> ie_exts;
   // ...
 
@@ -14638,7 +14638,7 @@ struct pdu_session_res_setup_request_transfer_ies_o {
   struct value_c {
     struct types_opts {
       enum options {
-        pdu_session_aggregate_maximum_bit_rate,
+        pdu_session_aggr_max_bit_rate,
         ul_ngu_up_tnl_info,
         add_ul_ngu_up_tnl_info,
         data_forwarding_not_possible,
@@ -14668,30 +14668,30 @@ struct pdu_session_res_setup_request_transfer_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    pdu_session_aggregate_maximum_bit_rate_s&       pdu_session_aggregate_maximum_bit_rate();
-    up_transport_layer_info_c&                      ul_ngu_up_tnl_info();
-    up_transport_layer_info_list_l&                 add_ul_ngu_up_tnl_info();
-    data_forwarding_not_possible_e&                 data_forwarding_not_possible();
-    pdu_session_type_e&                             pdu_session_type();
-    security_ind_s&                                 security_ind();
-    uint16_t&                                       network_instance();
-    qos_flow_setup_request_list_l&                  qos_flow_setup_request_list();
-    unbounded_octstring<true>&                      common_network_instance();
-    direct_forwarding_path_availability_e&          direct_forwarding_path_availability();
-    const pdu_session_aggregate_maximum_bit_rate_s& pdu_session_aggregate_maximum_bit_rate() const;
-    const up_transport_layer_info_c&                ul_ngu_up_tnl_info() const;
-    const up_transport_layer_info_list_l&           add_ul_ngu_up_tnl_info() const;
-    const data_forwarding_not_possible_e&           data_forwarding_not_possible() const;
-    const pdu_session_type_e&                       pdu_session_type() const;
-    const security_ind_s&                           security_ind() const;
-    const uint16_t&                                 network_instance() const;
-    const qos_flow_setup_request_list_l&            qos_flow_setup_request_list() const;
-    const unbounded_octstring<true>&                common_network_instance() const;
-    const direct_forwarding_path_availability_e&    direct_forwarding_path_availability() const;
+    pdu_session_aggr_max_bit_rate_s&             pdu_session_aggr_max_bit_rate();
+    up_transport_layer_info_c&                   ul_ngu_up_tnl_info();
+    up_transport_layer_info_list_l&              add_ul_ngu_up_tnl_info();
+    data_forwarding_not_possible_e&              data_forwarding_not_possible();
+    pdu_session_type_e&                          pdu_session_type();
+    security_ind_s&                              security_ind();
+    uint16_t&                                    network_instance();
+    qos_flow_setup_request_list_l&               qos_flow_setup_request_list();
+    unbounded_octstring<true>&                   common_network_instance();
+    direct_forwarding_path_availability_e&       direct_forwarding_path_availability();
+    const pdu_session_aggr_max_bit_rate_s&       pdu_session_aggr_max_bit_rate() const;
+    const up_transport_layer_info_c&             ul_ngu_up_tnl_info() const;
+    const up_transport_layer_info_list_l&        add_ul_ngu_up_tnl_info() const;
+    const data_forwarding_not_possible_e&        data_forwarding_not_possible() const;
+    const pdu_session_type_e&                    pdu_session_type() const;
+    const security_ind_s&                        security_ind() const;
+    const uint16_t&                              network_instance() const;
+    const qos_flow_setup_request_list_l&         qos_flow_setup_request_list() const;
+    const unbounded_octstring<true>&             common_network_instance() const;
+    const direct_forwarding_path_availability_e& direct_forwarding_path_availability() const;
 
   private:
     types type_;
-    choice_buffer_t<pdu_session_aggregate_maximum_bit_rate_s,
+    choice_buffer_t<pdu_session_aggr_max_bit_rate_s,
                     qos_flow_setup_request_list_l,
                     security_ind_s,
                     unbounded_octstring<true>,
@@ -14715,15 +14715,15 @@ struct pdu_session_res_setup_request_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                 pdu_session_aggregate_maximum_bit_rate_present = false;
-  bool                                                 add_ul_ngu_up_tnl_info_present                 = false;
-  bool                                                 data_forwarding_not_possible_present           = false;
-  bool                                                 security_ind_present                           = false;
-  bool                                                 network_instance_present                       = false;
-  bool                                                 common_network_instance_present                = false;
-  bool                                                 direct_forwarding_path_availability_present    = false;
-  ie_field_s<pdu_session_aggregate_maximum_bit_rate_s> pdu_session_aggregate_maximum_bit_rate;
-  ie_field_s<up_transport_layer_info_c>                ul_ngu_up_tnl_info;
+  bool                                        pdu_session_aggr_max_bit_rate_present       = false;
+  bool                                        add_ul_ngu_up_tnl_info_present              = false;
+  bool                                        data_forwarding_not_possible_present        = false;
+  bool                                        security_ind_present                        = false;
+  bool                                        network_instance_present                    = false;
+  bool                                        common_network_instance_present             = false;
+  bool                                        direct_forwarding_path_availability_present = false;
+  ie_field_s<pdu_session_aggr_max_bit_rate_s> pdu_session_aggr_max_bit_rate;
+  ie_field_s<up_transport_layer_info_c>       ul_ngu_up_tnl_info;
   ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>> add_ul_ngu_up_tnl_info;
   ie_field_s<data_forwarding_not_possible_e>                         data_forwarding_not_possible;
   ie_field_s<pdu_session_type_e>                                     pdu_session_type;
@@ -14754,7 +14754,7 @@ struct pdu_session_res_setup_resp_transfer_s {
   bool                                                  ext                     = false;
   bool                                                  security_result_present = false;
   bool                                                  ie_exts_present         = false;
-  qos_flow_per_tnl_info_s                               dlqos_flow_per_tnl_info;
+  qos_flow_per_tnl_info_s                               dl_qos_flow_per_tnl_info;
   qos_flow_per_tnl_info_list_l                          add_dl_qos_flow_per_tnl_info;
   security_result_s                                     security_result;
   qos_flow_list_with_cause_l                            qos_flow_failed_to_setup_list;
@@ -15000,10 +15000,10 @@ using secondary_rat_data_usage_report_transfer_ext_ies_container = protocol_ext_
 
 // SecondaryRATDataUsageReportTransfer ::= SEQUENCE
 struct secondary_rat_data_usage_report_transfer_s {
-  bool                                                       ext                             = false;
-  bool                                                       secondary_ratusage_info_present = false;
-  bool                                                       ie_exts_present                 = false;
-  secondary_ratusage_info_s                                  secondary_ratusage_info;
+  bool                                                       ext                              = false;
+  bool                                                       secondary_rat_usage_info_present = false;
+  bool                                                       ie_exts_present                  = false;
+  secondary_rat_usage_info_s                                 secondary_rat_usage_info;
   secondary_rat_data_usage_report_transfer_ext_ies_container ie_exts;
   // ...
 
@@ -15018,7 +15018,7 @@ struct source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { sg_nb_ue_x2ap_id, nulltype } value;
+      enum options { s_gnb_ue_x2ap_id, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
@@ -15027,13 +15027,13 @@ struct source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_o {
     typedef enumerated<types_opts> types;
 
     // choice methods
-    types       type() const { return types::sg_nb_ue_x2ap_id; }
+    types       type() const { return types::s_gnb_ue_x2ap_id; }
     SRSASN_CODE pack(bit_ref& bref) const;
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&       sg_nb_ue_x2ap_id() { return c; }
-    const uint64_t& sg_nb_ue_x2ap_id() const { return c; }
+    uint64_t&       s_gnb_ue_x2ap_id() { return c; }
+    const uint64_t& s_gnb_ue_x2ap_id() const { return c; }
 
   private:
     uint64_t c;
@@ -15059,7 +15059,7 @@ struct source_ngran_node_to_target_ngran_node_transparent_container_s {
   erab_info_list_l            erab_info_list;
   ngran_cgi_c                 target_cell_id;
   uint16_t                    idx_to_rfsp = 1;
-  ue_history_info_l           uehistory_info;
+  ue_history_info_l           ue_history_info;
   protocol_ext_container_l<source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_o> ie_exts;
   // ...
 
@@ -15099,10 +15099,10 @@ extern template struct asn1::protocol_ie_field_s<asn1::ngap::cell_traffic_trace_
 extern template struct asn1::protocol_ie_field_s<asn1::ngap::deactiv_trace_ies_o>;
 extern template struct asn1::protocol_ext_field_s<asn1::ngap::mob_restrict_list_ext_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::ngap::dl_nas_transport_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::dl_non_ueassociated_nrp_pa_transport_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::ngap::dl_non_ue_associated_nrppa_transport_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::ngap::dl_ran_cfg_transfer_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::ngap::dl_ran_status_transfer_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::dl_ueassociated_nrp_pa_transport_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::ngap::dl_ue_associated_nrppa_transport_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::ngap::error_ind_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::ngap::ho_cancel_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::ngap::ho_cancel_ack_ies_o>;
@@ -15163,12 +15163,12 @@ extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_context_release_
 extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_radio_cap_check_request_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_radio_cap_check_resp_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_radio_cap_info_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::uetnla_binding_release_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::ngap::ue_tnla_binding_release_request_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::ngap::ul_nas_transport_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ul_non_ueassociated_nrp_pa_transport_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::ngap::ul_non_ue_associated_nrppa_transport_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::ngap::ul_ran_cfg_transfer_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::ngap::ul_ran_status_transfer_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::ngap::ul_ueassociated_nrp_pa_transport_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::ngap::ul_ue_associated_nrppa_transport_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::ngap::write_replace_warning_request_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::ngap::write_replace_warning_resp_ies_o>;
 extern template struct asn1::protocol_ext_field_s<asn1::ngap::pdu_session_res_modify_ind_transfer_ext_ies_o>;

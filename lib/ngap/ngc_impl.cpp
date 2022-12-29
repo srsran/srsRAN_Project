@@ -75,7 +75,7 @@ void ngc_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
   init_ue_msg->nas_pdu.value.resize(msg.nas_pdu.length());
   std::copy(msg.nas_pdu.begin(), msg.nas_pdu.end(), init_ue_msg->nas_pdu.value.begin());
 
-  init_ue_msg->rrcestablishment_cause.value.value = msg.establishment_cause.value;
+  init_ue_msg->rrc_establishment_cause.value.value = msg.establishment_cause.value;
 
   auto& user_loc_info_nr       = init_ue_msg->user_location_info.value.set_user_location_info_nr();
   user_loc_info_nr.nr_cgi      = msg.nr_cgi;
@@ -243,8 +243,8 @@ void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_s
   }
 
   // Store information in UE context
-  if (request->ue_aggregate_maximum_bit_rate_present) {
-    ue->set_aggregate_maximum_bit_rate_dl(request->ue_aggregate_maximum_bit_rate.value.ueaggregate_maximum_bit_rate_dl);
+  if (request->ue_aggr_max_bit_rate_present) {
+    ue->set_aggregate_maximum_bit_rate_dl(request->ue_aggr_max_bit_rate.value.ue_aggr_max_bit_rate_dl);
   }
 
   // start procedure

@@ -111,9 +111,9 @@ inline void fill_cu_cp_pdu_session_resource_setup_message(
 
     // id-PDUSessionAggregateMaximumBitRate
     setup_item.pdu_session_aggregate_maximum_bit_rate_dl =
-        setup_req_transfer->pdu_session_aggregate_maximum_bit_rate.value.pdu_session_aggregate_maximum_bit_rate_dl;
+        setup_req_transfer->pdu_session_aggr_max_bit_rate.value.pdu_session_aggr_max_bit_rate_dl;
     setup_item.pdu_session_aggregate_maximum_bit_rate_ul =
-        setup_req_transfer->pdu_session_aggregate_maximum_bit_rate.value.pdu_session_aggregate_maximum_bit_rate_ul;
+        setup_req_transfer->pdu_session_aggr_max_bit_rate.value.pdu_session_aggr_max_bit_rate_ul;
 
     // id-UL-NGU-UP-TNLInformation
     setup_item.ul_ngu_up_tnl_info = asn1_to_up_transport_layer_info(setup_req_transfer->ul_ngu_up_tnl_info.value);
@@ -130,18 +130,18 @@ inline void fill_cu_cp_pdu_session_resource_setup_message(
 
       // qosFlowLevelQosParameters
       if (ngap_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
-          asn1::ngap::qos_characteristics_c::types::dynamic5_qi) {
+          asn1::ngap::qos_characteristics_c::types::dyn5qi) {
         qos_flow_setup_req_item.qos_characteristics.is_dynamic_5qi = true;
         qos_flow_setup_req_item.qos_characteristics.five_qi =
-            ngap_flow_item.qos_flow_level_qos_params.qos_characteristics.dynamic5_qi().five_qi;
+            ngap_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi;
 
         // TODO: ADD optional values
 
       } else if (ngap_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
-                 asn1::ngap::qos_characteristics_c::types::non_dynamic5_qi) {
+                 asn1::ngap::qos_characteristics_c::types::non_dyn5qi) {
         qos_flow_setup_req_item.qos_characteristics.is_dynamic_5qi = false;
         qos_flow_setup_req_item.qos_characteristics.five_qi =
-            ngap_flow_item.qos_flow_level_qos_params.qos_characteristics.non_dynamic5_qi().five_qi;
+            ngap_flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi;
 
         // TODO: ADD optional values
       }
@@ -199,7 +199,7 @@ inline void fill_pdu_session_res_setup_resp_s(asn1::ngap::pdu_session_res_setup_
       asn1::ngap::pdu_session_res_setup_resp_transfer_s response_transfer;
 
       // Add dLQosFlowPerTNLInformation
-      response_transfer.dlqos_flow_per_tnl_info = cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(
+      response_transfer.dl_qos_flow_per_tnl_info = cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(
           cu_cp_resp_item.pdu_session_resource_setup_response_transfer.dlqos_flow_per_tnl_info);
 
       // Add AdditionalDLQosFlowPerTNLInformation

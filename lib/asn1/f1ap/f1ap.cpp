@@ -4723,7 +4723,7 @@ void packet_error_rate_s::to_json(json_writer& j) const
 }
 
 // Dynamic5QIDescriptor ::= SEQUENCE
-SRSASN_CODE dynamic5qi_descriptor_s::pack(bit_ref& bref) const
+SRSASN_CODE dyn_5qi_descriptor_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(bref.pack(five_qi_present, 1));
   HANDLE_CODE(bref.pack(delay_crit_present, 1));
@@ -4752,7 +4752,7 @@ SRSASN_CODE dynamic5qi_descriptor_s::pack(bit_ref& bref) const
 
   return SRSASN_SUCCESS;
 }
-SRSASN_CODE dynamic5qi_descriptor_s::unpack(cbit_ref& bref)
+SRSASN_CODE dyn_5qi_descriptor_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(bref.unpack(five_qi_present, 1));
   HANDLE_CODE(bref.unpack(delay_crit_present, 1));
@@ -4781,7 +4781,7 @@ SRSASN_CODE dynamic5qi_descriptor_s::unpack(cbit_ref& bref)
 
   return SRSASN_SUCCESS;
 }
-void dynamic5qi_descriptor_s::to_json(json_writer& j) const
+void dyn_5qi_descriptor_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_int("qoSPriorityLevel", qos_prio_level);
@@ -4807,14 +4807,14 @@ void dynamic5qi_descriptor_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
-const char* dynamic5qi_descriptor_s::delay_crit_opts::to_string() const
+const char* dyn_5qi_descriptor_s::delay_crit_opts::to_string() const
 {
   static const char* names[] = {"delay-critical", "non-delay-critical"};
-  return convert_enum_idx(names, 2, value, "dynamic5qi_descriptor_s::delay_crit_e_");
+  return convert_enum_idx(names, 2, value, "dyn_5qi_descriptor_s::delay_crit_e_");
 }
 
 // NonDynamic5QIDescriptor ::= SEQUENCE
-SRSASN_CODE non_dynamic5qi_descriptor_s::pack(bit_ref& bref) const
+SRSASN_CODE non_dyn_5qi_descriptor_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(bref.pack(qos_prio_level_present, 1));
   HANDLE_CODE(bref.pack(averaging_win_present, 1));
@@ -4837,7 +4837,7 @@ SRSASN_CODE non_dynamic5qi_descriptor_s::pack(bit_ref& bref) const
 
   return SRSASN_SUCCESS;
 }
-SRSASN_CODE non_dynamic5qi_descriptor_s::unpack(cbit_ref& bref)
+SRSASN_CODE non_dyn_5qi_descriptor_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(bref.unpack(qos_prio_level_present, 1));
   HANDLE_CODE(bref.unpack(averaging_win_present, 1));
@@ -4860,7 +4860,7 @@ SRSASN_CODE non_dynamic5qi_descriptor_s::unpack(cbit_ref& bref)
 
   return SRSASN_SUCCESS;
 }
-void non_dynamic5qi_descriptor_s::to_json(json_writer& j) const
+void non_dyn_5qi_descriptor_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_int("fiveQI", five_qi);
@@ -4991,11 +4991,11 @@ void ngran_alloc_and_retention_prio_s::to_json(json_writer& j) const
 void qos_characteristics_c::destroy_()
 {
   switch (type_) {
-    case types::non_dynamic_5qi:
-      c.destroy<non_dynamic5qi_descriptor_s>();
+    case types::non_dyn_5qi:
+      c.destroy<non_dyn_5qi_descriptor_s>();
       break;
-    case types::dynamic_5qi:
-      c.destroy<dynamic5qi_descriptor_s>();
+    case types::dyn_5qi:
+      c.destroy<dyn_5qi_descriptor_s>();
       break;
     case types::choice_ext:
       c.destroy<protocol_ie_single_container_s<qos_characteristics_ext_ies_o>>();
@@ -5009,11 +5009,11 @@ void qos_characteristics_c::set(types::options e)
   destroy_();
   type_ = e;
   switch (type_) {
-    case types::non_dynamic_5qi:
-      c.init<non_dynamic5qi_descriptor_s>();
+    case types::non_dyn_5qi:
+      c.init<non_dyn_5qi_descriptor_s>();
       break;
-    case types::dynamic_5qi:
-      c.init<dynamic5qi_descriptor_s>();
+    case types::dyn_5qi:
+      c.init<dyn_5qi_descriptor_s>();
       break;
     case types::choice_ext:
       c.init<protocol_ie_single_container_s<qos_characteristics_ext_ies_o>>();
@@ -5028,11 +5028,11 @@ qos_characteristics_c::qos_characteristics_c(const qos_characteristics_c& other)
 {
   type_ = other.type();
   switch (type_) {
-    case types::non_dynamic_5qi:
-      c.init(other.c.get<non_dynamic5qi_descriptor_s>());
+    case types::non_dyn_5qi:
+      c.init(other.c.get<non_dyn_5qi_descriptor_s>());
       break;
-    case types::dynamic_5qi:
-      c.init(other.c.get<dynamic5qi_descriptor_s>());
+    case types::dyn_5qi:
+      c.init(other.c.get<dyn_5qi_descriptor_s>());
       break;
     case types::choice_ext:
       c.init(other.c.get<protocol_ie_single_container_s<qos_characteristics_ext_ies_o>>());
@@ -5050,11 +5050,11 @@ qos_characteristics_c& qos_characteristics_c::operator=(const qos_characteristic
   }
   set(other.type());
   switch (type_) {
-    case types::non_dynamic_5qi:
-      c.set(other.c.get<non_dynamic5qi_descriptor_s>());
+    case types::non_dyn_5qi:
+      c.set(other.c.get<non_dyn_5qi_descriptor_s>());
       break;
-    case types::dynamic_5qi:
-      c.set(other.c.get<dynamic5qi_descriptor_s>());
+    case types::dyn_5qi:
+      c.set(other.c.get<dyn_5qi_descriptor_s>());
       break;
     case types::choice_ext:
       c.set(other.c.get<protocol_ie_single_container_s<qos_characteristics_ext_ies_o>>());
@@ -5067,15 +5067,15 @@ qos_characteristics_c& qos_characteristics_c::operator=(const qos_characteristic
 
   return *this;
 }
-non_dynamic5qi_descriptor_s& qos_characteristics_c::set_non_dynamic_5qi()
+non_dyn_5qi_descriptor_s& qos_characteristics_c::set_non_dyn_5qi()
 {
-  set(types::non_dynamic_5qi);
-  return c.get<non_dynamic5qi_descriptor_s>();
+  set(types::non_dyn_5qi);
+  return c.get<non_dyn_5qi_descriptor_s>();
 }
-dynamic5qi_descriptor_s& qos_characteristics_c::set_dynamic_5qi()
+dyn_5qi_descriptor_s& qos_characteristics_c::set_dyn_5qi()
 {
-  set(types::dynamic_5qi);
-  return c.get<dynamic5qi_descriptor_s>();
+  set(types::dyn_5qi);
+  return c.get<dyn_5qi_descriptor_s>();
 }
 protocol_ie_single_container_s<qos_characteristics_ext_ies_o>& qos_characteristics_c::set_choice_ext()
 {
@@ -5086,13 +5086,13 @@ void qos_characteristics_c::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
-    case types::non_dynamic_5qi:
+    case types::non_dyn_5qi:
       j.write_fieldname("non-Dynamic-5QI");
-      c.get<non_dynamic5qi_descriptor_s>().to_json(j);
+      c.get<non_dyn_5qi_descriptor_s>().to_json(j);
       break;
-    case types::dynamic_5qi:
+    case types::dyn_5qi:
       j.write_fieldname("dynamic-5QI");
-      c.get<dynamic5qi_descriptor_s>().to_json(j);
+      c.get<dyn_5qi_descriptor_s>().to_json(j);
       break;
     case types::choice_ext:
       j.write_fieldname("choice-extension");
@@ -5107,11 +5107,11 @@ SRSASN_CODE qos_characteristics_c::pack(bit_ref& bref) const
 {
   type_.pack(bref);
   switch (type_) {
-    case types::non_dynamic_5qi:
-      HANDLE_CODE(c.get<non_dynamic5qi_descriptor_s>().pack(bref));
+    case types::non_dyn_5qi:
+      HANDLE_CODE(c.get<non_dyn_5qi_descriptor_s>().pack(bref));
       break;
-    case types::dynamic_5qi:
-      HANDLE_CODE(c.get<dynamic5qi_descriptor_s>().pack(bref));
+    case types::dyn_5qi:
+      HANDLE_CODE(c.get<dyn_5qi_descriptor_s>().pack(bref));
       break;
     case types::choice_ext:
       HANDLE_CODE(c.get<protocol_ie_single_container_s<qos_characteristics_ext_ies_o>>().pack(bref));
@@ -5128,11 +5128,11 @@ SRSASN_CODE qos_characteristics_c::unpack(cbit_ref& bref)
   e.unpack(bref);
   set(e);
   switch (type_) {
-    case types::non_dynamic_5qi:
-      HANDLE_CODE(c.get<non_dynamic5qi_descriptor_s>().unpack(bref));
+    case types::non_dyn_5qi:
+      HANDLE_CODE(c.get<non_dyn_5qi_descriptor_s>().unpack(bref));
       break;
-    case types::dynamic_5qi:
-      HANDLE_CODE(c.get<dynamic5qi_descriptor_s>().unpack(bref));
+    case types::dyn_5qi:
+      HANDLE_CODE(c.get<dyn_5qi_descriptor_s>().unpack(bref));
       break;
     case types::choice_ext:
       HANDLE_CODE(c.get<protocol_ie_single_container_s<qos_characteristics_ext_ies_o>>().unpack(bref));
@@ -5186,7 +5186,7 @@ qos_flow_level_qos_params_ext_ies_o::ext_c qos_flow_level_qos_params_ext_ies_o::
       ret.set(ext_c::types::pdu_session_id);
       break;
     case 181:
-      ret.set(ext_c::types::ul_pdu_session_aggregate_maximum_bit_rate);
+      ret.set(ext_c::types::ul_pdu_session_aggr_max_bit_rate);
       break;
     default:
       asn1::log_error("The id={} is not recognized", id);
@@ -5220,7 +5220,7 @@ qos_flow_level_qos_params_ext_ies_o::ext_c::ext_c(const qos_flow_level_qos_param
     case types::pdu_session_id:
       c.init(other.c.get<uint16_t>());
       break;
-    case types::ul_pdu_session_aggregate_maximum_bit_rate:
+    case types::ul_pdu_session_aggr_max_bit_rate:
       c.init(other.c.get<uint64_t>());
       break;
     case types::nulltype:
@@ -5240,7 +5240,7 @@ qos_flow_level_qos_params_ext_ies_o::ext_c::operator=(const qos_flow_level_qos_p
     case types::pdu_session_id:
       c.set(other.c.get<uint16_t>());
       break;
-    case types::ul_pdu_session_aggregate_maximum_bit_rate:
+    case types::ul_pdu_session_aggr_max_bit_rate:
       c.set(other.c.get<uint64_t>());
       break;
     case types::nulltype:
@@ -5256,9 +5256,9 @@ uint16_t& qos_flow_level_qos_params_ext_ies_o::ext_c::pdu_session_id()
   assert_choice_type(types::pdu_session_id, type_, "Extension");
   return c.get<uint16_t>();
 }
-uint64_t& qos_flow_level_qos_params_ext_ies_o::ext_c::ul_pdu_session_aggregate_maximum_bit_rate()
+uint64_t& qos_flow_level_qos_params_ext_ies_o::ext_c::ul_pdu_session_aggr_max_bit_rate()
 {
-  assert_choice_type(types::ul_pdu_session_aggregate_maximum_bit_rate, type_, "Extension");
+  assert_choice_type(types::ul_pdu_session_aggr_max_bit_rate, type_, "Extension");
   return c.get<uint64_t>();
 }
 const uint16_t& qos_flow_level_qos_params_ext_ies_o::ext_c::pdu_session_id() const
@@ -5266,9 +5266,9 @@ const uint16_t& qos_flow_level_qos_params_ext_ies_o::ext_c::pdu_session_id() con
   assert_choice_type(types::pdu_session_id, type_, "Extension");
   return c.get<uint16_t>();
 }
-const uint64_t& qos_flow_level_qos_params_ext_ies_o::ext_c::ul_pdu_session_aggregate_maximum_bit_rate() const
+const uint64_t& qos_flow_level_qos_params_ext_ies_o::ext_c::ul_pdu_session_aggr_max_bit_rate() const
 {
-  assert_choice_type(types::ul_pdu_session_aggregate_maximum_bit_rate, type_, "Extension");
+  assert_choice_type(types::ul_pdu_session_aggr_max_bit_rate, type_, "Extension");
   return c.get<uint64_t>();
 }
 void qos_flow_level_qos_params_ext_ies_o::ext_c::to_json(json_writer& j) const
@@ -5278,7 +5278,7 @@ void qos_flow_level_qos_params_ext_ies_o::ext_c::to_json(json_writer& j) const
     case types::pdu_session_id:
       j.write_int("INTEGER (0..255)", c.get<uint16_t>());
       break;
-    case types::ul_pdu_session_aggregate_maximum_bit_rate:
+    case types::ul_pdu_session_aggr_max_bit_rate:
       j.write_int("INTEGER (0..4000000000000,...)", c.get<uint64_t>());
       break;
     default:
@@ -5293,7 +5293,7 @@ SRSASN_CODE qos_flow_level_qos_params_ext_ies_o::ext_c::pack(bit_ref& bref) cons
     case types::pdu_session_id:
       HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)255u, false, true));
       break;
-    case types::ul_pdu_session_aggregate_maximum_bit_rate:
+    case types::ul_pdu_session_aggr_max_bit_rate:
       HANDLE_CODE(pack_integer(bref, c.get<uint64_t>(), (uint64_t)0u, (uint64_t)4000000000000u, true, true));
       break;
     default:
@@ -5309,7 +5309,7 @@ SRSASN_CODE qos_flow_level_qos_params_ext_ies_o::ext_c::unpack(cbit_ref& bref)
     case types::pdu_session_id:
       HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)255u, false, true));
       break;
-    case types::ul_pdu_session_aggregate_maximum_bit_rate:
+    case types::ul_pdu_session_aggr_max_bit_rate:
       HANDLE_CODE(unpack_integer(c.get<uint64_t>(), bref, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
       break;
     default:
@@ -5396,21 +5396,21 @@ const char* flows_mapped_to_drb_item_ext_ies_o::ext_c::types_opts::to_string() c
 template struct asn1::protocol_ext_field_s<qos_flow_level_qos_params_ext_ies_o>;
 
 qos_flow_level_qos_params_ext_ies_container::qos_flow_level_qos_params_ext_ies_container() :
-  pdu_session_id(180, crit_e::ignore), ul_pdu_session_aggregate_maximum_bit_rate(181, crit_e::ignore)
+  pdu_session_id(180, crit_e::ignore), ul_pdu_session_aggr_max_bit_rate(181, crit_e::ignore)
 {
 }
 SRSASN_CODE qos_flow_level_qos_params_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
   nof_ies += pdu_session_id_present ? 1 : 0;
-  nof_ies += ul_pdu_session_aggregate_maximum_bit_rate_present ? 1 : 0;
+  nof_ies += ul_pdu_session_aggr_max_bit_rate_present ? 1 : 0;
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (pdu_session_id_present) {
     HANDLE_CODE(pdu_session_id.pack(bref));
   }
-  if (ul_pdu_session_aggregate_maximum_bit_rate_present) {
-    HANDLE_CODE(ul_pdu_session_aggregate_maximum_bit_rate.pack(bref));
+  if (ul_pdu_session_aggr_max_bit_rate_present) {
+    HANDLE_CODE(ul_pdu_session_aggr_max_bit_rate.pack(bref));
   }
 
   return SRSASN_SUCCESS;
@@ -5433,11 +5433,11 @@ SRSASN_CODE qos_flow_level_qos_params_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       case 181: {
-        ul_pdu_session_aggregate_maximum_bit_rate_present = true;
-        ul_pdu_session_aggregate_maximum_bit_rate.id      = id;
-        HANDLE_CODE(ul_pdu_session_aggregate_maximum_bit_rate.crit.unpack(bref));
+        ul_pdu_session_aggr_max_bit_rate_present = true;
+        ul_pdu_session_aggr_max_bit_rate.id      = id;
+        HANDLE_CODE(ul_pdu_session_aggr_max_bit_rate.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(ul_pdu_session_aggregate_maximum_bit_rate.ext.unpack(bref));
+        HANDLE_CODE(ul_pdu_session_aggr_max_bit_rate.ext.unpack(bref));
         break;
       }
       default:
@@ -5455,9 +5455,9 @@ void qos_flow_level_qos_params_ext_ies_container::to_json(json_writer& j) const
     j.write_fieldname("");
     pdu_session_id.to_json(j);
   }
-  if (ul_pdu_session_aggregate_maximum_bit_rate_present) {
+  if (ul_pdu_session_aggr_max_bit_rate_present) {
     j.write_fieldname("");
-    ul_pdu_session_aggregate_maximum_bit_rate.to_json(j);
+    ul_pdu_session_aggr_max_bit_rate.to_json(j);
   }
   j.end_obj();
 }
@@ -7002,8 +7002,8 @@ SRSASN_CODE gbr_qos_info_s::pack(bit_ref& bref) const
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(pack_integer(bref, erab_maximum_bitrate_dl, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
-  HANDLE_CODE(pack_integer(bref, erab_maximum_bitrate_ul, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
+  HANDLE_CODE(pack_integer(bref, erab_max_bitrate_dl, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
+  HANDLE_CODE(pack_integer(bref, erab_max_bitrate_ul, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
   HANDLE_CODE(pack_integer(bref, erab_guaranteed_bitrate_dl, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
   HANDLE_CODE(pack_integer(bref, erab_guaranteed_bitrate_ul, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
   if (ie_exts_present) {
@@ -7017,8 +7017,8 @@ SRSASN_CODE gbr_qos_info_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(unpack_integer(erab_maximum_bitrate_dl, bref, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
-  HANDLE_CODE(unpack_integer(erab_maximum_bitrate_ul, bref, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
+  HANDLE_CODE(unpack_integer(erab_max_bitrate_dl, bref, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
+  HANDLE_CODE(unpack_integer(erab_max_bitrate_ul, bref, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
   HANDLE_CODE(unpack_integer(erab_guaranteed_bitrate_dl, bref, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
   HANDLE_CODE(unpack_integer(erab_guaranteed_bitrate_ul, bref, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
   if (ie_exts_present) {
@@ -7030,8 +7030,8 @@ SRSASN_CODE gbr_qos_info_s::unpack(cbit_ref& bref)
 void gbr_qos_info_s::to_json(json_writer& j) const
 {
   j.start_obj();
-  j.write_int("e-RAB-MaximumBitrateDL", erab_maximum_bitrate_dl);
-  j.write_int("e-RAB-MaximumBitrateUL", erab_maximum_bitrate_ul);
+  j.write_int("e-RAB-MaximumBitrateDL", erab_max_bitrate_dl);
+  j.write_int("e-RAB-MaximumBitrateUL", erab_max_bitrate_ul);
   j.write_int("e-RAB-GuaranteedBitrateDL", erab_guaranteed_bitrate_dl);
   j.write_int("e-RAB-GuaranteedBitrateUL", erab_guaranteed_bitrate_ul);
   if (ie_exts_present) {

@@ -206,7 +206,7 @@ ngap_initial_ue_message generate_initial_ue_message()
   ngap_initial_ue_message msg;
   msg.cu_cp_ue_id = cu_cp_ue_id_t::min;
   msg.nas_pdu.resize(nas_pdu_len);
-  msg.establishment_cause.value = asn1::ngap::rrcestablishment_cause_opts::mo_sig;
+  msg.establishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mo_sig;
   // msg.nr_cgi = {};
   msg.tac = 7;
   return msg;
@@ -313,9 +313,9 @@ ngc_message generate_pdu_session_resource_setup_request_base()
   pdu_session_res_setup_req->amf_ue_ngap_id.value = 3;
   pdu_session_res_setup_req->ran_ue_ngap_id.value = cu_cp_ue_id_to_uint(cu_cp_ue_id_t::min);
 
-  pdu_session_res_setup_req->ue_aggregate_maximum_bit_rate_present                               = true;
-  pdu_session_res_setup_req->ue_aggregate_maximum_bit_rate.value.ueaggregate_maximum_bit_rate_dl = 300000000U;
-  pdu_session_res_setup_req->ue_aggregate_maximum_bit_rate.value.ueaggregate_maximum_bit_rate_ul = 200000000U;
+  pdu_session_res_setup_req->ue_aggr_max_bit_rate_present                       = true;
+  pdu_session_res_setup_req->ue_aggr_max_bit_rate.value.ue_aggr_max_bit_rate_dl = 300000000U;
+  pdu_session_res_setup_req->ue_aggr_max_bit_rate.value.ue_aggr_max_bit_rate_ul = 200000000U;
 
   return ngc_msg;
 }

@@ -211,7 +211,7 @@ srsgnb::srs_cu_cp::generate_ue_context_modification_request(gnb_cu_ue_f1ap_id_t 
     drb_to_setup.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_am;
     drb_to_setup.qos_info.set_choice_ext().load_info_obj(ASN1_F1AP_ID_DRB_INFO);
     drb_info_s& drb_info = drb_to_setup.qos_info.choice_ext().value().drb_info();
-    auto&       qi5      = drb_info.drb_qos.qos_characteristics.set_dynamic_5qi();
+    auto&       qi5      = drb_info.drb_qos.qos_characteristics.set_dyn_5qi();
     qi5.five_qi_present  = true;
     qi5.five_qi          = 8;
   }

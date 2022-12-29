@@ -267,7 +267,7 @@ struct cu_cp_qos_flow_failed_to_setup_item {
 };
 
 struct cu_cp_qos_flow_per_tnl_information {
-  up_transport_layer_info                uptransport_layer_info;
+  up_transport_layer_info                up_tp_layer_info;
   std::vector<cu_cp_associated_qos_flow> associated_qos_flow_list;
 };
 

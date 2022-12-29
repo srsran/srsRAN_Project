@@ -76,8 +76,7 @@ cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(cu_cp_qos_flow_per_tnl
 {
   asn1::ngap::qos_flow_per_tnl_info_s ngap_qos_flow_info;
 
-  up_transport_layer_info_to_asn1(ngap_qos_flow_info.uptransport_layer_info,
-                                  cu_cp_qos_flow_info.uptransport_layer_info);
+  up_transport_layer_info_to_asn1(ngap_qos_flow_info.up_transport_layer_info, cu_cp_qos_flow_info.up_tp_layer_info);
 
   for (auto cu_cp_assoc_qos_item : cu_cp_qos_flow_info.associated_qos_flow_list) {
     asn1::ngap::associated_qos_flow_item_s ngap_assoc_qos_item =
