@@ -142,8 +142,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
     std::copy(pdu.begin(), pdu.begin() + hdr_len_bytes, header_buf.begin());
     sdu.prepend(span<uint8_t>{header_buf.data(), hdr_len_bytes});
   } else {
-    // TODO: Optimize - avoid bytewise copy
-    sdu = {pdu.begin(), pdu.end()};
+    sdu = pdu.deep_copy();
   }
 
   /*
