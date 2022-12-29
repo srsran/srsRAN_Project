@@ -173,19 +173,19 @@ public:
 
   void on_new_message(const f1c_message& msg) override
   {
-    if (msg.pdu.type() != asn1::f1ap::f1_ap_pdu_c::types::init_msg) {
+    if (msg.pdu.type() != asn1::f1ap::f1ap_pdu_c::types::init_msg) {
       return;
     }
 
     f1c_message response;
     if (msg.pdu.init_msg().value.type().value ==
-        asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::init_ulrrc_msg_transfer) {
+        asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer) {
       // Generate a fake DL RRC Message transfer message and pass it back to the DU.
-      response.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DLRRC_MSG_TRANSFER);
+      response.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
 
-      auto& resp                      = response.pdu.init_msg().value.dlrrc_msg_transfer();
-      resp->gnb_du_ue_f1_ap_id->value = msg.pdu.init_msg().value.init_ulrrc_msg_transfer()->gnb_du_ue_f1_ap_id->value;
-      resp->gnb_cu_ue_f1_ap_id->value = 0;
+      auto& resp                      = response.pdu.init_msg().value.dl_rrc_msg_transfer();
+      resp->gnb_du_ue_f1ap_id->value  = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id->value;
+      resp->gnb_cu_ue_f1ap_id->value  = 0;
       resp->srbid->value              = srb_id_to_uint(srb_id_t::srb0);
       static constexpr uint8_t msg4[] = {
           0x20, 0x40, 0x03, 0x82, 0xe0, 0x05, 0x80, 0x08, 0x8b, 0xd7, 0x63, 0x80, 0x83, 0x0f, 0x00, 0x03, 0xe1,
@@ -204,7 +204,7 @@ public:
 
       // Copy DU-to-CU RRC container stored in the F1AP "INITIAL UL RRC MESSAGE TRANSFER" to masterCellGroup field of
       // the unpacked RRC Setup message.
-      const auto&          src  = msg.pdu.init_msg().value.init_ulrrc_msg_transfer()->duto_currc_container.value;
+      const auto&          src  = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container.value;
       asn1::dyn_octstring& dest = msg4_rrc.msg.c1().rrc_setup().crit_exts.rrc_setup().master_cell_group;
       dest                      = src.copy();
 
@@ -217,7 +217,7 @@ public:
       resp->rrc_container.value.resize(msg4_pdu.length());
       std::copy(msg4_pdu.begin(), msg4_pdu.end(), resp->rrc_container.value.begin());
     } else if (msg.pdu.init_msg().value.type().value ==
-               asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request) {
+               asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request) {
       // Generate a fake F1 Setup response message and pass it back to the DU.
       response.pdu.set_successful_outcome();
       response.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);

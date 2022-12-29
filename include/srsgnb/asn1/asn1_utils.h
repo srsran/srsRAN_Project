@@ -31,19 +31,27 @@ constexpr Integer ceil_frac(Integer n, Integer d)
   return (n + (d - 1)) / d;
 }
 
-template <std::size_t arg1, std::size_t... others>
-struct static_max;
+namespace detail {
 
-template <std::size_t arg>
-struct static_max<arg> {
-  static const std::size_t value = arg;
-};
+inline constexpr std::size_t max_size_impl(std::size_t lhs, std::size_t rhs)
+{
+  return lhs < rhs ? rhs : lhs;
+}
 
-template <std::size_t arg1, std::size_t arg2, std::size_t... others>
-struct static_max<arg1, arg2, others...> {
-  static const std::size_t value =
-      arg1 >= arg2 ? static_max<arg1, others...>::value : static_max<arg2, others...>::value;
-};
+template <typename ItBegin, typename ItEnd>
+inline constexpr std::size_t max_array_impl(ItBegin b, ItEnd e)
+{
+  return b + 1 == e ? *b : max_size_impl(*b, max_array_impl(b + 1, e));
+}
+
+} // namespace detail
+
+/// \brief Compute maximum value of an array of std::size.
+template <std::size_t N>
+inline constexpr std::size_t max_size(const std::size_t (&arr)[N])
+{
+  return detail::max_array_impl(arr, arr + N);
+}
 
 /************************
         logging
@@ -785,7 +793,7 @@ public:
   }
 
 private:
-  ext_array<uint8_t, static_max<UB, 64u>::value> octets_;
+  ext_array<uint8_t, max_size({UB, 64U})> octets_;
 };
 
 /************************
@@ -1283,8 +1291,8 @@ struct choice_buffer_base_t {
 };
 
 template <typename... Ts>
-struct choice_buffer_t : public choice_buffer_base_t<static_max<sizeof(alignment_t), sizeof(Ts)...>::value,
-                                                     static_max<alignof(alignment_t), alignof(Ts)...>::value> {
+struct choice_buffer_t : public choice_buffer_base_t<max_size({sizeof(alignment_t), sizeof(Ts)...}),
+                                                     max_size({alignof(alignment_t), alignof(Ts)...})> {
 };
 
 using pod_choice_buffer_t = choice_buffer_t<>;

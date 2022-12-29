@@ -43,12 +43,12 @@ protected:
   void verify_f1ap_ue_context_modifcation(const asn1::f1ap::ue_context_mod_request_s& msg)
   {
     // set required fields to have full PDU
-    asn1::f1ap::f1_ap_pdu_c pdu;
+    asn1::f1ap::f1ap_pdu_c pdu;
     pdu.set_init_msg();
     pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
-    pdu.init_msg().value.ue_context_mod_request()                            = msg;
-    pdu.init_msg().value.ue_context_mod_request()->gnb_cu_ue_f1_ap_id->value = 1;
-    pdu.init_msg().value.ue_context_mod_request()->gnb_du_ue_f1_ap_id->value = 2;
+    pdu.init_msg().value.ue_context_mod_request()                           = msg;
+    pdu.init_msg().value.ue_context_mod_request()->gnb_cu_ue_f1ap_id->value = 1;
+    pdu.init_msg().value.ue_context_mod_request()->gnb_du_ue_f1ap_id->value = 2;
 
     // verify succesful packing
     srsgnb::byte_buffer tx_buffer;

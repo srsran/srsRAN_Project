@@ -77,11 +77,11 @@ f1c_message srsgnb::srs_du::generate_f1_dl_rrc_message_transfer(srb_id_t srb_id,
 {
   f1c_message msg;
 
-  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DLRRC_MSG_TRANSFER);
-  auto& dl_msg                      = msg.pdu.init_msg().value.dlrrc_msg_transfer();
-  dl_msg->gnb_cu_ue_f1_ap_id->value = 0;
-  dl_msg->gnb_du_ue_f1_ap_id->value = 0;
-  dl_msg->srbid->value              = srb_id_to_uint(srb_id);
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
+  auto& dl_msg                     = msg.pdu.init_msg().value.dl_rrc_msg_transfer();
+  dl_msg->gnb_cu_ue_f1ap_id->value = 0;
+  dl_msg->gnb_du_ue_f1ap_id->value = 0;
+  dl_msg->srbid->value             = srb_id_to_uint(srb_id);
   dl_msg->rrc_container->resize(rrc_container.length());
   std::copy(rrc_container.begin(), rrc_container.end(), dl_msg->rrc_container->begin());
 
@@ -93,18 +93,18 @@ asn1::f1ap::drbs_to_be_setup_item_s srsgnb::srs_du::generate_drb_am_setup_item(d
   using namespace asn1::f1ap;
 
   drbs_to_be_setup_item_s drb;
-  drb.drbid = drb_id_to_uint(drbid);
-  drb.qo_sinfo.set_choice_ext().load_info_obj(ASN1_F1AP_ID_DRB_INFO);
-  auto& drb_info                                                            = drb.qo_sinfo.choice_ext()->drb_info();
-  drb_info.drb_qos.qo_s_characteristics.set_non_dynamic_minus5_qi().five_qi = 8;
-  drb_info.drb_qos.ngra_nalloc_retention_prio.prio_level                    = 1;
+  drb.drb_id = drb_id_to_uint(drbid);
+  drb.qos_info.set_choice_ext().load_info_obj(ASN1_F1AP_ID_DRB_INFO);
+  auto& drb_info                                                     = drb.qos_info.choice_ext()->drb_info();
+  drb_info.drb_qos.qos_characteristics.set_non_dynamic_5qi().five_qi = 8;
+  drb_info.drb_qos.ngra_nalloc_retention_prio.prio_level             = 1;
   drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_cap.value =
       pre_emption_cap_opts::shall_not_trigger_pre_emption;
   drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_vulnerability.value =
       pre_emption_vulnerability_opts::not_pre_emptable;
   drb_info.drb_qos.reflective_qos_attribute_present = true;
   drb_info.drb_qos.reflective_qos_attribute.value =
-      qo_sflow_level_qos_params_s::reflective_qos_attribute_opts::subject_to;
+      qos_flow_level_qos_params_s::reflective_qos_attribute_opts::subject_to;
   drb_info.snssai.sst.from_string("01");
   drb_info.snssai.sd.from_string("0027db");
   drb.rlc_mode.value = rlc_mode_opts::rlc_am;
@@ -119,13 +119,13 @@ f1c_message srsgnb::srs_du::generate_f1_ue_context_setup_request(const std::init
 
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
   ue_context_setup_request_s& dl_msg    = msg.pdu.init_msg().value.ue_context_setup_request();
-  dl_msg->gnb_cu_ue_f1_ap_id->value     = 0;
-  dl_msg->gnb_du_ue_f1_ap_id->value     = 0;
+  dl_msg->gnb_cu_ue_f1ap_id->value      = 0;
+  dl_msg->gnb_du_ue_f1ap_id->value      = 0;
   dl_msg->srbs_to_be_setup_list_present = true;
   dl_msg->srbs_to_be_setup_list.value.resize(1);
   dl_msg->srbs_to_be_setup_list.value[0].load_info_obj(ASN1_F1AP_ID_SRBS_SETUP_ITEM);
   srbs_to_be_setup_item_s& srb2 = dl_msg->srbs_to_be_setup_list.value[0]->srbs_to_be_setup_item();
-  srb2.srbid                    = 2;
+  srb2.srb_id                   = 2;
 
   dl_msg->drbs_to_be_setup_list_present = drbs_to_add.size() > 0;
   dl_msg->drbs_to_be_setup_list.value.resize(drbs_to_add.size());
@@ -146,18 +146,18 @@ asn1::f1ap::drbs_to_be_setup_mod_item_s srsgnb::srs_du::generate_drb_am_mod_item
 {
   using namespace asn1::f1ap;
   drbs_to_be_setup_mod_item_s drb;
-  drb.drbid = drb_id_to_uint(drbid);
-  drb.qo_sinfo.set_choice_ext().load_info_obj(ASN1_F1AP_ID_DRB_INFO);
-  auto& drb_info                                                            = drb.qo_sinfo.choice_ext()->drb_info();
-  drb_info.drb_qos.qo_s_characteristics.set_non_dynamic_minus5_qi().five_qi = 8;
-  drb_info.drb_qos.ngra_nalloc_retention_prio.prio_level                    = 1;
+  drb.drb_id = drb_id_to_uint(drbid);
+  drb.qos_info.set_choice_ext().load_info_obj(ASN1_F1AP_ID_DRB_INFO);
+  auto& drb_info                                                     = drb.qos_info.choice_ext()->drb_info();
+  drb_info.drb_qos.qos_characteristics.set_non_dynamic_5qi().five_qi = 8;
+  drb_info.drb_qos.ngra_nalloc_retention_prio.prio_level             = 1;
   drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_cap.value =
       pre_emption_cap_opts::shall_not_trigger_pre_emption;
   drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_vulnerability.value =
       pre_emption_vulnerability_opts::not_pre_emptable;
   drb_info.drb_qos.reflective_qos_attribute_present = true;
   drb_info.drb_qos.reflective_qos_attribute.value =
-      qo_sflow_level_qos_params_s::reflective_qos_attribute_opts::subject_to;
+      qos_flow_level_qos_params_s::reflective_qos_attribute_opts::subject_to;
   drb_info.snssai.sst.from_string("01");
   drb_info.snssai.sd.from_string("0027db");
   drb.rlc_mode.value = rlc_mode_opts::rlc_am;
@@ -171,9 +171,9 @@ srsgnb::srs_du::generate_f1_ue_context_modification_request(const std::initializ
   f1c_message msg;
 
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
-  ue_context_mod_request_s& dl_msg  = msg.pdu.init_msg().value.ue_context_mod_request();
-  dl_msg->gnb_cu_ue_f1_ap_id->value = 0;
-  dl_msg->gnb_du_ue_f1_ap_id->value = 0;
+  ue_context_mod_request_s& dl_msg = msg.pdu.init_msg().value.ue_context_mod_request();
+  dl_msg->gnb_cu_ue_f1ap_id->value = 0;
+  dl_msg->gnb_du_ue_f1ap_id->value = 0;
 
   dl_msg->drbs_to_be_setup_mod_list_present = drbs_to_add.size() > 0;
   dl_msg->drbs_to_be_setup_mod_list.value.resize(drbs_to_add.size());
@@ -262,7 +262,7 @@ void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const 
   const auto& f1c_req                         = msg.pdu.init_msg().value.ue_context_setup_request();
   f1c_du_cfg_handler.next_ue_cfg_req.ue_index = ue_index;
   for (const auto& srb : f1c_req->srbs_to_be_setup_list.value) {
-    srb_id_t srb_id = (srb_id_t)srb.value().srbs_to_be_setup_item().srbid;
+    srb_id_t srb_id = (srb_id_t)srb.value().srbs_to_be_setup_item().srb_id;
 
     // Create F1-C bearer in test ue.
     ue.f1c_bearers.emplace(srb_id_to_uint(srb_id));
@@ -274,7 +274,7 @@ void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const 
     f1c_du_cfg_handler.next_ue_cfg_req.f1c_bearers_to_add.push_back(bearer);
   }
   for (const auto& drb : f1c_req->drbs_to_be_setup_list.value) {
-    drb_id_t drb_id = (drb_id_t)drb.value().drbs_to_be_setup_item().drbid;
+    drb_id_t drb_id = (drb_id_t)drb.value().drbs_to_be_setup_item().drb_id;
     ue.f1u_bearers.emplace(drb_id_to_uint(drb_id) - 1);
     auto& f1u_bearer  = ue.f1u_bearers[drb_id_to_uint(drb_id) - 1];
     f1u_bearer.drb_id = drb_id;

@@ -24,7 +24,7 @@ class remote_f1c_pdu_handler : public f1c_message_handler
 public:
   explicit remote_f1c_pdu_handler(network_gateway_data_handler& network) : network(network) {}
 
-  void handle_message(const asn1::f1ap::f1_ap_pdu_c& msg) override
+  void handle_message(const asn1::f1ap::f1ap_pdu_c& msg) override
   {
     // Pack PDU into a temporary buffer.
     byte_buffer   tx_pdu;

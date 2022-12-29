@@ -67,7 +67,7 @@ TEST_F(f1ap_du_ue_management_tester, f1ap_created_bearers_forward_messages_to_no
   // Send UL data through created F1-C bearer.
   byte_buffer ul_srb_buf{test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))};
   resp.f1c_bearers_added[0].bearer->handle_sdu(byte_buffer_slice_chain{ul_srb_buf.copy()});
-  const auto& ul_f1c_msg = this->msg_notifier.last_f1c_msg.pdu.init_msg().value.ulrrc_msg_transfer();
+  const auto& ul_f1c_msg = this->msg_notifier.last_f1c_msg.pdu.init_msg().value.ul_rrc_msg_transfer();
   ASSERT_EQ(ul_f1c_msg->rrc_container.value, ul_srb_buf);
   ASSERT_EQ((srb_id_t)ul_f1c_msg->srbid->value, srb_id_t::srb2);
 }

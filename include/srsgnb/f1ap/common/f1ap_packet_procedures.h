@@ -5,7 +5,7 @@
 namespace asn1 {
 namespace f1ap {
 
-struct f1_ap_pdu_c;
+struct f1ap_pdu_c;
 
 }
 
@@ -24,7 +24,7 @@ public:
 
   /// Handles the input UL data packet.
   /// We may have other packet categories which could be handled by adding new methods to this interface.
-  virtual void handle_ul_data_packet(const asn1::f1ap::f1_ap_pdu_c& pdu) = 0;
+  virtual void handle_ul_data_packet(const asn1::f1ap::f1ap_pdu_c& pdu) = 0;
 };
 
 } // namespace srsgnb

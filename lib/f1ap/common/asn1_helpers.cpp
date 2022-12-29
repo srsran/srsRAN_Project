@@ -26,10 +26,10 @@ nr_cell_global_id_t srsgnb::cgi_from_asn1(const asn1::f1ap::nrcgi_s& asn1_cgi)
   // Set PLMN hex string
   cgi.plmn_hex = asn1_cgi.plmn_id.to_string();
 
-  cgi.nci.packed = asn1_cgi.nrcell_id.to_number();
+  cgi.nci.packed = asn1_cgi.nr_cell_id.to_number();
 
-  cgi.nci.cell_idenity = (asn1_cgi.nrcell_id.to_number() & 0xfffc0000); // bits 4 to 14
-  cgi.nci.gnb_identity = (asn1_cgi.nrcell_id.to_number() & 0X3ff0);     // bits 22 to 32
+  cgi.nci.cell_idenity = (asn1_cgi.nr_cell_id.to_number() & 0xfffc0000); // bits 4 to 14
+  cgi.nci.gnb_identity = (asn1_cgi.nr_cell_id.to_number() & 0X3ff0);     // bits 22 to 32
 
   return cgi;
 }

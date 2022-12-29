@@ -57,7 +57,7 @@ public:
     ue_creation_message ue_creation_msg    = {};
     ue_creation_msg.c_rnti                 = to_rnti(msg.msg->c_rnti.value);
     ue_creation_msg.cgi                    = cgi_from_asn1(msg.msg->nrcgi.value);
-    ue_creation_msg.du_to_cu_rrc_container = msg.msg->duto_currc_container.value;
+    ue_creation_msg.du_to_cu_rrc_container = msg.msg->du_to_cu_rrc_container.value;
 
     return du_f1c_handler->handle_ue_creation_request(ue_creation_msg);
   }

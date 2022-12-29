@@ -30,20 +30,20 @@ namespace f1ap {
 #define ASN1_F1AP_ID_RESET 0
 #define ASN1_F1AP_ID_F1_SETUP 1
 #define ASN1_F1AP_ID_ERROR_IND 2
-#define ASN1_F1AP_ID_G_NBDU_CFG_UPD 3
-#define ASN1_F1AP_ID_G_NBCU_CFG_UPD 4
+#define ASN1_F1AP_ID_GNB_DU_CFG_UPD 3
+#define ASN1_F1AP_ID_GNB_CU_CFG_UPD 4
 #define ASN1_F1AP_ID_UE_CONTEXT_SETUP 5
 #define ASN1_F1AP_ID_UE_CONTEXT_RELEASE 6
 #define ASN1_F1AP_ID_UE_CONTEXT_MOD 7
 #define ASN1_F1AP_ID_UE_CONTEXT_MOD_REQUIRED 8
 #define ASN1_F1AP_ID_UE_MOB_CMD 9
 #define ASN1_F1AP_ID_UE_CONTEXT_RELEASE_REQUEST 10
-#define ASN1_F1AP_ID_INIT_ULRRC_MSG_TRANSFER 11
-#define ASN1_F1AP_ID_DLRRC_MSG_TRANSFER 12
-#define ASN1_F1AP_ID_ULRRC_MSG_TRANSFER 13
+#define ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER 11
+#define ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER 12
+#define ASN1_F1AP_ID_UL_RRC_MSG_TRANSFER 13
 #define ASN1_F1AP_ID_PRIVATE_MSG 14
 #define ASN1_F1AP_ID_UE_INACTIVITY_NOTIF 15
-#define ASN1_F1AP_ID_GNBDU_RES_COORDINATION 16
+#define ASN1_F1AP_ID_GNB_DU_RES_COORDINATION 16
 #define ASN1_F1AP_ID_SYS_INFO_DELIVERY_CMD 17
 #define ASN1_F1AP_ID_PAGING 18
 #define ASN1_F1AP_ID_NOTIFY 19
@@ -51,22 +51,22 @@ namespace f1ap {
 #define ASN1_F1AP_ID_PWS_CANCEL 21
 #define ASN1_F1AP_ID_PWS_RESTART_IND 22
 #define ASN1_F1AP_ID_PWS_FAIL_IND 23
-#define ASN1_F1AP_ID_GNBDU_STATUS_IND 24
+#define ASN1_F1AP_ID_GNB_DU_STATUS_IND 24
 #define ASN1_F1AP_ID_RRC_DELIVERY_REPORT 25
 #define ASN1_F1AP_ID_F1_REMOVAL 26
 #define ASN1_F1AP_ID_NETWORK_ACCESS_RATE_REDUCTION 27
 #define ASN1_F1AP_MAX_PRIVATE_IES 65535
 #define ASN1_F1AP_MAX_PROTOCOL_EXTS 65535
 #define ASN1_F1AP_MAX_PROTOCOL_IES 65535
-#define ASN1_F1AP_MAX_NRARFCN 3279165
+#define ASN1_F1AP_MAX_NR_ARFCN 3279165
 #define ASN1_F1AP_MAXNOOF_ERRORS 256
 #define ASN1_F1AP_MAXNOOF_INDIVIDUAL_F1_CONNS_TO_RESET 65536
-#define ASN1_F1AP_MAX_CELLING_NBDU 512
+#define ASN1_F1AP_MAX_CELLIN_GNB_DU 512
 #define ASN1_F1AP_MAXNOOF_SCELLS 32
 #define ASN1_F1AP_MAXNOOF_SRBS 8
 #define ASN1_F1AP_MAXNOOF_DRBS 64
-#define ASN1_F1AP_MAXNOOF_ULUPTNL_INFO 2
-#define ASN1_F1AP_MAXNOOF_DLUPTNL_INFO 2
+#define ASN1_F1AP_MAXNOOF_UL_UP_TNL_INFO 2
+#define ASN1_F1AP_MAXNOOF_DL_UP_TNL_INFO 2
 #define ASN1_F1AP_MAXNOOF_BPLMNS 6
 #define ASN1_F1AP_MAXNOOF_CANDIDATE_SP_CELLS 64
 #define ASN1_F1AP_MAXNOOF_POTENTIAL_SP_CELLS 64
@@ -74,15 +74,15 @@ namespace f1ap {
 #define ASN1_F1AP_MAXNOOF_SIB_TYPES 32
 #define ASN1_F1AP_MAXNOOF_SI_TYPES 32
 #define ASN1_F1AP_MAXNOOF_PAGING_CELLS 512
-#define ASN1_F1AP_MAXNOOF_TNLASSOCS 32
-#define ASN1_F1AP_MAXNOOF_QOSFLOWS 64
+#define ASN1_F1AP_MAXNOOF_TNL_ASSOCS 32
+#define ASN1_F1AP_MAXNOOF_QOS_FLOWS 64
 #define ASN1_F1AP_MAXNOOF_SLICE_ITEMS 1024
-#define ASN1_F1AP_MAX_CELLINENB 256
+#define ASN1_F1AP_MAX_CELLIN_ENB 256
 #define ASN1_F1AP_MAXNOOF_EXTENDED_BPLMNS 6
-#define ASN1_F1AP_MAXNOOF_UEIDS 65536
-#define ASN1_F1AP_MAXNOOF_BPLMNS_NRMINUS1 11
-#define ASN1_F1AP_MAXNOOF_UACPLMNS 12
-#define ASN1_F1AP_MAXNOOF_UA_CPER_PLMN 64
+#define ASN1_F1AP_MAXNOOF_UE_IDS 65536
+#define ASN1_F1AP_MAXNOOF_BPLMNS_NR_1 11
+#define ASN1_F1AP_MAXNOOF_UAC_PLMNS 12
+#define ASN1_F1AP_MAXNOOF_UACPER_PLMN 64
 #define ASN1_F1AP_MAXNOOF_ADD_SIBS 63
 #define ASN1_F1AP_ID_CAUSE 0
 #define ASN1_F1AP_ID_CELLS_FAILED_TO_BE_ACTIV_LIST 1
@@ -92,7 +92,7 @@ namespace f1ap {
 #define ASN1_F1AP_ID_CELLS_TO_BE_DEACTIV_LIST 5
 #define ASN1_F1AP_ID_CELLS_TO_BE_DEACTIV_LIST_ITEM 6
 #define ASN1_F1AP_ID_CRIT_DIAGNOSTICS 7
-#define ASN1_F1AP_ID_CUTO_DURRC_INFO 9
+#define ASN1_F1AP_ID_CU_TO_DU_RRC_INFO 9
 #define ASN1_F1AP_ID_DRBS_FAILED_TO_BE_MODIFIED_ITEM 12
 #define ASN1_F1AP_ID_DRBS_FAILED_TO_BE_MODIFIED_LIST 13
 #define ASN1_F1AP_ID_DRBS_FAILED_TO_BE_SETUP_ITEM 14
@@ -120,15 +120,15 @@ namespace f1ap {
 #define ASN1_F1AP_ID_DRBS_TO_BE_SETUP_MOD_ITEM 36
 #define ASN1_F1AP_ID_DRBS_TO_BE_SETUP_MOD_LIST 37
 #define ASN1_F1AP_ID_DRX_CYCLE 38
-#define ASN1_F1AP_ID_DUTO_CURRC_INFO 39
-#define ASN1_F1AP_ID_G_NB_CU_UE_F1_AP_ID 40
-#define ASN1_F1AP_ID_G_NB_DU_UE_F1_AP_ID 41
-#define ASN1_F1AP_ID_G_NB_DU_ID 42
+#define ASN1_F1AP_ID_DU_TO_CU_RRC_INFO 39
+#define ASN1_F1AP_ID_GNB_CU_UE_F1AP_ID 40
+#define ASN1_F1AP_ID_GNB_DU_UE_F1AP_ID 41
+#define ASN1_F1AP_ID_GNB_DU_ID 42
 #define ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM 43
-#define ASN1_F1AP_ID_G_NB_DU_SERVED_CELLS_LIST 44
-#define ASN1_F1AP_ID_G_NB_DU_NAME 45
+#define ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST 44
+#define ASN1_F1AP_ID_GNB_DU_NAME 45
 #define ASN1_F1AP_ID_NR_CELL_ID 46
-#define ASN1_F1AP_ID_OLDG_NB_DU_UE_F1_AP_ID 47
+#define ASN1_F1AP_ID_OLD_GNB_DU_UE_F1AP_ID 47
 #define ASN1_F1AP_ID_RESET_TYPE 48
 #define ASN1_F1AP_ID_RES_COORDINATION_TRANSFER_CONTAINER 49
 #define ASN1_F1AP_ID_RRC_CONTAINER 50
@@ -145,7 +145,7 @@ namespace f1ap {
 #define ASN1_F1AP_ID_SERVED_CELLS_TO_MODIFY_ITEM 61
 #define ASN1_F1AP_ID_SERVED_CELLS_TO_MODIFY_LIST 62
 #define ASN1_F1AP_ID_SP_CELL_ID 63
-#define ASN1_F1AP_ID_SRBID 64
+#define ASN1_F1AP_ID_SRB_ID 64
 #define ASN1_F1AP_ID_SRBS_FAILED_TO_BE_SETUP_ITEM 65
 #define ASN1_F1AP_ID_SRBS_FAILED_TO_BE_SETUP_LIST 66
 #define ASN1_F1AP_ID_SRBS_FAILED_TO_BE_SETUP_MOD_ITEM 67
@@ -163,7 +163,7 @@ namespace f1ap {
 #define ASN1_F1AP_ID_TX_ACTION_IND 79
 #define ASN1_F1AP_ID_UE_ASSOCIATED_LC_F1_CONN_ITEM 80
 #define ASN1_F1AP_ID_UE_ASSOCIATED_LC_F1_CONN_LIST_RES_ACK 81
-#define ASN1_F1AP_ID_G_NB_CU_NAME 82
+#define ASN1_F1AP_ID_GNB_CU_NAME 82
 #define ASN1_F1AP_ID_SCELL_FAILEDTO_SETUP_LIST 83
 #define ASN1_F1AP_ID_SCELL_FAILEDTO_SETUP_ITEM 84
 #define ASN1_F1AP_ID_SCELL_FAILEDTO_SETUP_MOD_LIST 85
@@ -189,14 +189,14 @@ namespace f1ap {
 #define ASN1_F1AP_ID_SERV_CELL_IDX 107
 #define ASN1_F1AP_ID_RAT_FREQ_PRIO_INFO 108
 #define ASN1_F1AP_ID_EXECUTE_DUPL 109
-#define ASN1_F1AP_ID_NRCGI 111
+#define ASN1_F1AP_ID_NR_CGI 111
 #define ASN1_F1AP_ID_PAGING_CELL_ITEM 112
 #define ASN1_F1AP_ID_PAGING_CELL_LIST 113
 #define ASN1_F1AP_ID_PAGING_DRX 114
 #define ASN1_F1AP_ID_PAGING_PRIO 115
 #define ASN1_F1AP_ID_SITYPE_LIST 116
 #define ASN1_F1AP_ID_UE_ID_IDX_VALUE 117
-#define ASN1_F1AP_ID_G_NB_CU_SYS_INFO 118
+#define ASN1_F1AP_ID_GNB_CU_SYS_INFO 118
 #define ASN1_F1AP_ID_HO_PREP_INFO 119
 #define ASN1_F1AP_ID_GNB_CU_TNL_ASSOC_TO_ADD_ITEM 120
 #define ASN1_F1AP_ID_GNB_CU_TNL_ASSOC_TO_ADD_LIST 121
@@ -206,7 +206,7 @@ namespace f1ap {
 #define ASN1_F1AP_ID_GNB_CU_TNL_ASSOC_TO_UPD_LIST 125
 #define ASN1_F1AP_ID_MASKED_IMEISV 126
 #define ASN1_F1AP_ID_PAGING_ID 127
-#define ASN1_F1AP_ID_DUTO_CURRC_CONTAINER 128
+#define ASN1_F1AP_ID_DU_TO_CU_RRC_CONTAINER 128
 #define ASN1_F1AP_ID_CELLS_TO_BE_BARRED_LIST 129
 #define ASN1_F1AP_ID_CELLS_TO_BE_BARRED_ITEM 130
 #define ASN1_F1AP_ID_TAI_SLICE_SUPPORT_LIST 131
@@ -233,12 +233,12 @@ namespace f1ap {
 #define ASN1_F1AP_ID_NR_CGI_LIST_FOR_RESTART_ITEM 153
 #define ASN1_F1AP_ID_PWS_FAILED_NR_CGI_LIST 154
 #define ASN1_F1AP_ID_PWS_FAILED_NR_CGI_ITEM 155
-#define ASN1_F1AP_ID_CONFIRMED_UEID 156
+#define ASN1_F1AP_ID_CONFIRMED_UE_ID 156
 #define ASN1_F1AP_ID_CANCEL_ALL_WARNING_MSGS_IND 157
 #define ASN1_F1AP_ID_GNB_DU_UE_AMBR_UL 158
 #define ASN1_F1AP_ID_DRX_CFG_IND 159
 #define ASN1_F1AP_ID_RLC_STATUS 160
-#define ASN1_F1AP_ID_DLPDCPSN_LEN 161
+#define ASN1_F1AP_ID_DL_PDCP_SN_LEN 161
 #define ASN1_F1AP_ID_GNB_DU_CFG_QUERY 162
 #define ASN1_F1AP_ID_MEAS_TIMING_CFG 163
 #define ASN1_F1AP_ID_DRB_INFO 164
@@ -246,7 +246,7 @@ namespace f1ap {
 #define ASN1_F1AP_ID_PROTECTED_EUTRA_RES_ITEM 168
 #define ASN1_F1AP_ID_GNB_CU_RRC_VERSION 170
 #define ASN1_F1AP_ID_GNB_DU_RRC_VERSION 171
-#define ASN1_F1AP_ID_GNBDU_OVERLOAD_INFO 172
+#define ASN1_F1AP_ID_GNB_DU_OVERLOAD_INFO 172
 #define ASN1_F1AP_ID_CELL_GROUP_CFG 173
 #define ASN1_F1AP_ID_RLC_FAIL_IND 174
 #define ASN1_F1AP_ID_UL_TX_DIRECT_CURRENT_LIST_INFO 175
@@ -255,9 +255,9 @@ namespace f1ap {
 #define ASN1_F1AP_ID_SUL_ACCESS_IND 178
 #define ASN1_F1AP_ID_AVAILABLE_PLMN_LIST 179
 #define ASN1_F1AP_ID_PDU_SESSION_ID 180
-#define ASN1_F1AP_ID_ULPDU_SESSION_AGGREGATE_MAXIMUM_BIT_RATE 181
+#define ASN1_F1AP_ID_UL_PDU_SESSION_AGGREGATE_MAXIMUM_BIT_RATE 181
 #define ASN1_F1AP_ID_SERVING_CELL_MO 182
-#define ASN1_F1AP_ID_QOSFLOW_MAP_IND 183
+#define ASN1_F1AP_ID_QOS_FLOW_MAP_IND 183
 #define ASN1_F1AP_ID_RRC_DELIVERY_STATUS_REQUEST 184
 #define ASN1_F1AP_ID_RRC_DELIVERY_STATUS 185
 #define ASN1_F1AP_ID_BEARER_TYPE_CHANGE 186
@@ -266,7 +266,7 @@ namespace f1ap {
 #define ASN1_F1AP_ID_DED_SI_DELIVERY_NEEDED_UE_LIST 189
 #define ASN1_F1AP_ID_DED_SI_DELIVERY_NEEDED_UE_ITEM 190
 #define ASN1_F1AP_ID_DRX_LONG_CYCLE_START_OFFSET 191
-#define ASN1_F1AP_ID_ULPDCPSN_LEN 192
+#define ASN1_F1AP_ID_UL_PDCP_SN_LEN 192
 #define ASN1_F1AP_ID_SEL_BAND_COMBINATION_IDX 193
 #define ASN1_F1AP_ID_SEL_FEATURE_SET_ENTRY_IDX 194
 #define ASN1_F1AP_ID_RES_COORDINATION_TRANSFER_INFO 195
@@ -288,22 +288,22 @@ namespace f1ap {
 #define ASN1_F1AP_ID_REQUESTED_P_MAX_FR2 211
 #define ASN1_F1AP_ID_DRX_CFG 212
 #define ASN1_F1AP_ID_IGNORE_RES_COORDINATION_CONTAINER 213
-#define ASN1_F1AP_ID_UEASSIST_INFO 214
+#define ASN1_F1AP_ID_UE_ASSIST_INFO 214
 #define ASN1_F1AP_ID_NEEDFOR_GAP 215
 #define ASN1_F1AP_ID_PAGING_ORIGIN 216
-#define ASN1_F1AP_ID_NEW_G_NB_CU_UE_F1_AP_ID 217
-#define ASN1_F1AP_ID_REDIRECTED_RR_CMSG 218
-#define ASN1_F1AP_ID_NEW_G_NB_DU_UE_F1_AP_ID 219
+#define ASN1_F1AP_ID_NEW_GNB_CU_UE_F1AP_ID 217
+#define ASN1_F1AP_ID_REDIRECTED_RRCMSG 218
+#define ASN1_F1AP_ID_NEW_GNB_DU_UE_F1AP_ID 219
 #define ASN1_F1AP_ID_NOTIF_INFO 220
-#define ASN1_F1AP_ID_PLMNASSIST_INFO_FOR_NET_SHAR 221
+#define ASN1_F1AP_ID_PLMN_ASSIST_INFO_FOR_NET_SHAR 221
 #define ASN1_F1AP_ID_UE_CONTEXT_NOT_RETRIEVABLE 222
 #define ASN1_F1AP_ID_BPLMN_ID_INFO_LIST 223
-#define ASN1_F1AP_ID_SEL_PLMNID 224
+#define ASN1_F1AP_ID_SEL_PLMN_ID 224
 #define ASN1_F1AP_ID_UAC_ASSIST_INFO 225
-#define ASN1_F1AP_ID_RANUEID 226
+#define ASN1_F1AP_ID_RAN_UE_ID 226
 #define ASN1_F1AP_ID_GNB_DU_TNL_ASSOC_TO_REM_ITEM 227
 #define ASN1_F1AP_ID_GNB_DU_TNL_ASSOC_TO_REM_LIST 228
-#define ASN1_F1AP_ID_TNLASSOC_TRANSPORT_LAYER_ADDRESSG_NBDU 229
+#define ASN1_F1AP_ID_TNL_ASSOC_TRANSPORT_LAYER_ADDRESS_GNB_DU 229
 #define ASN1_F1AP_ID_PORT_NUM 230
 #define ASN1_F1AP_ID_ADD_SIB_MSG_LIST 231
 #define ASN1_F1AP_ID_CELL_TYPE 232
@@ -379,20 +379,20 @@ struct alloc_and_retention_prio_s {
 };
 
 // NRCGI-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
-using nrcgi_ext_ies_o = protocol_ext_empty_o;
+using nr_cgi_ext_ies_o = protocol_ext_empty_o;
 
 // Associated-SCell-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using associated_scell_item_ext_ies_o = protocol_ext_empty_o;
 
-using nrcgi_ext_ies_container = protocol_ext_container_empty_l;
+using nr_cgi_ext_ies_container = protocol_ext_container_empty_l;
 
 // NRCGI ::= SEQUENCE
 struct nrcgi_s {
   bool                             ext             = false;
   bool                             ie_exts_present = false;
   fixed_octstring<3, true>         plmn_id;
-  fixed_bitstring<36, false, true> nrcell_id;
-  nrcgi_ext_ies_container          ie_exts;
+  fixed_bitstring<36, false, true> nr_cell_id;
+  nr_cgi_ext_ies_container         ie_exts;
   // ...
 
   // sequence methods
@@ -575,10 +575,10 @@ using broadcast_to_be_cancelled_list_l =
     dyn_array<protocol_ie_single_container_s<broadcast_to_be_cancelled_list_item_ies_o>>;
 
 // CNUEPagingIdentity-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-using cnue_paging_id_ext_ies_o = protocol_ies_empty_o;
+using cn_ue_paging_id_ext_ies_o = protocol_ies_empty_o;
 
 // CNUEPagingIdentity ::= CHOICE
-struct cnue_paging_id_c {
+struct cn_ue_paging_id_c {
   struct types_opts {
     enum options { five_g_s_tmsi, choice_ext, nulltype } value;
     typedef uint8_t number_type;
@@ -589,10 +589,10 @@ struct cnue_paging_id_c {
   typedef enumerated<types_opts> types;
 
   // choice methods
-  cnue_paging_id_c() = default;
-  cnue_paging_id_c(const cnue_paging_id_c& other);
-  cnue_paging_id_c& operator=(const cnue_paging_id_c& other);
-  ~cnue_paging_id_c() { destroy_(); }
+  cn_ue_paging_id_c() = default;
+  cn_ue_paging_id_c(const cn_ue_paging_id_c& other);
+  cn_ue_paging_id_c& operator=(const cn_ue_paging_id_c& other);
+  ~cn_ue_paging_id_c() { destroy_(); }
   void        set(types::options e = types::nulltype);
   types       type() const { return type_; }
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -604,27 +604,27 @@ struct cnue_paging_id_c {
     assert_choice_type(types::five_g_s_tmsi, type_, "CNUEPagingIdentity");
     return c.get<fixed_bitstring<48, false, true>>();
   }
-  protocol_ie_single_container_s<cnue_paging_id_ext_ies_o>& choice_ext()
+  protocol_ie_single_container_s<cn_ue_paging_id_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "CNUEPagingIdentity");
-    return c.get<protocol_ie_single_container_s<cnue_paging_id_ext_ies_o>>();
+    return c.get<protocol_ie_single_container_s<cn_ue_paging_id_ext_ies_o>>();
   }
   const fixed_bitstring<48, false, true>& five_g_s_tmsi() const
   {
     assert_choice_type(types::five_g_s_tmsi, type_, "CNUEPagingIdentity");
     return c.get<fixed_bitstring<48, false, true>>();
   }
-  const protocol_ie_single_container_s<cnue_paging_id_ext_ies_o>& choice_ext() const
+  const protocol_ie_single_container_s<cn_ue_paging_id_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "CNUEPagingIdentity");
-    return c.get<protocol_ie_single_container_s<cnue_paging_id_ext_ies_o>>();
+    return c.get<protocol_ie_single_container_s<cn_ue_paging_id_ext_ies_o>>();
   }
-  fixed_bitstring<48, false, true>&                         set_five_g_s_tmsi();
-  protocol_ie_single_container_s<cnue_paging_id_ext_ies_o>& set_choice_ext();
+  fixed_bitstring<48, false, true>&                          set_five_g_s_tmsi();
+  protocol_ie_single_container_s<cn_ue_paging_id_ext_ies_o>& set_choice_ext();
 
 private:
-  types                                                                                                       type_;
-  choice_buffer_t<fixed_bitstring<48, false, true>, protocol_ie_single_container_s<cnue_paging_id_ext_ies_o>> c;
+  types                                                                                                        type_;
+  choice_buffer_t<fixed_bitstring<48, false, true>, protocol_ie_single_container_s<cn_ue_paging_id_ext_ies_o>> c;
 
   void destroy_();
 };
@@ -740,11 +740,11 @@ private:
 };
 
 // CUtoDURRCInformation-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
-struct cuto_durrc_info_ext_ies_o {
+struct cu_to_du_rrc_info_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { ho_prep_info, cell_group_cfg, meas_timing_cfg, ueassist_info, cg_cfg, nulltype } value;
+      enum options { ho_prep_info, cell_group_cfg, meas_timing_cfg, ue_assist_info, cg_cfg, nulltype } value;
 
       const char* to_string() const;
     };
@@ -764,12 +764,12 @@ struct cuto_durrc_info_ext_ies_o {
     unbounded_octstring<true>&       ho_prep_info();
     unbounded_octstring<true>&       cell_group_cfg();
     unbounded_octstring<true>&       meas_timing_cfg();
-    unbounded_octstring<true>&       ueassist_info();
+    unbounded_octstring<true>&       ue_assist_info();
     unbounded_octstring<true>&       cg_cfg();
     const unbounded_octstring<true>& ho_prep_info() const;
     const unbounded_octstring<true>& cell_group_cfg() const;
     const unbounded_octstring<true>& meas_timing_cfg() const;
-    const unbounded_octstring<true>& ueassist_info() const;
+    const unbounded_octstring<true>& ue_assist_info() const;
     const unbounded_octstring<true>& cg_cfg() const;
 
   private:
@@ -787,7 +787,7 @@ struct cuto_durrc_info_ext_ies_o {
   static presence_e get_presence(const uint32_t& id);
 };
 
-struct cuto_durrc_info_ext_ies_container {
+struct cu_to_du_rrc_info_ext_ies_container {
   template <class extT_>
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
@@ -795,29 +795,29 @@ struct cuto_durrc_info_ext_ies_container {
   bool                                  ho_prep_info_present    = false;
   bool                                  cell_group_cfg_present  = false;
   bool                                  meas_timing_cfg_present = false;
-  bool                                  ueassist_info_present   = false;
+  bool                                  ue_assist_info_present  = false;
   bool                                  cg_cfg_present          = false;
   ie_field_s<unbounded_octstring<true>> ho_prep_info;
   ie_field_s<unbounded_octstring<true>> cell_group_cfg;
   ie_field_s<unbounded_octstring<true>> meas_timing_cfg;
-  ie_field_s<unbounded_octstring<true>> ueassist_info;
+  ie_field_s<unbounded_octstring<true>> ue_assist_info;
   ie_field_s<unbounded_octstring<true>> cg_cfg;
 
   // sequence methods
-  cuto_durrc_info_ext_ies_container();
+  cu_to_du_rrc_info_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // CUtoDURRCInformation ::= SEQUENCE
-struct cuto_durrc_info_s {
-  bool                              ext             = false;
-  bool                              ie_exts_present = false;
-  unbounded_octstring<true>         cg_cfg_info;
-  unbounded_octstring<true>         ue_cap_rat_container_list;
-  unbounded_octstring<true>         meas_cfg;
-  cuto_durrc_info_ext_ies_container ie_exts;
+struct cu_to_du_rrc_info_s {
+  bool                                ext             = false;
+  bool                                ie_exts_present = false;
+  unbounded_octstring<true>           cg_cfg_info;
+  unbounded_octstring<true>           ue_cap_rat_container_list;
+  unbounded_octstring<true>           meas_cfg;
+  cu_to_du_rrc_info_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -938,7 +938,7 @@ struct cause_radio_network_opts {
     res_not_available_for_the_slice,
     amf_initiated_abnormal_release,
     release_due_to_pre_emption,
-    plmn_not_served_by_the_g_nb_cu,
+    plmn_not_served_by_the_gnb_cu,
     multiple_drb_id_instances,
     unknown_drb_id,
     nulltype
@@ -1554,10 +1554,10 @@ struct cells_to_be_activ_list_item_ext_ies_container {
 // Cells-to-be-Activated-List-Item ::= SEQUENCE
 struct cells_to_be_activ_list_item_s {
   bool                                          ext             = false;
-  bool                                          nrpci_present   = false;
+  bool                                          nr_pci_present  = false;
   bool                                          ie_exts_present = false;
   nrcgi_s                                       nrcgi;
-  uint16_t                                      nrpci = 0;
+  uint16_t                                      nr_pci = 0;
   cells_to_be_activ_list_item_ext_ies_container ie_exts;
   // ...
 
@@ -1736,7 +1736,7 @@ using crit_diagnostics_ie_item_ext_ies_container = protocol_ext_container_empty_
 struct crit_diagnostics_ie_item_s {
   bool                                       ext             = false;
   bool                                       ie_exts_present = false;
-  crit_e                                     iecrit;
+  crit_e                                     ie_crit;
   uint32_t                                   ie_id = 0;
   type_of_error_e                            type_of_error;
   crit_diagnostics_ie_item_ext_ies_container ie_exts;
@@ -1875,23 +1875,23 @@ struct ue_context_not_retrievable_opts {
 typedef enumerated<ue_context_not_retrievable_opts, true> ue_context_not_retrievable_e;
 
 // DLRRCMessageTransferIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct dlrrc_msg_transfer_ies_o {
+struct dl_rrc_msg_transfer_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
       enum options {
-        gnb_cu_ue_f1_ap_id,
-        gnb_du_ue_f1_ap_id,
-        oldg_nb_du_ue_f1_ap_id,
+        gnb_cu_ue_f1ap_id,
+        gnb_du_ue_f1ap_id,
+        old_gnb_du_ue_f1ap_id,
         srbid,
         execute_dupl,
         rrc_container,
         rat_freq_prio_info,
         rrc_delivery_status_request,
         ue_context_not_retrievable,
-        redirected_rr_cmsg,
-        plmnassist_info_for_net_shar,
-        new_g_nb_cu_ue_f1_ap_id,
+        redirected_rrcmsg,
+        plmn_assist_info_for_net_shar,
+        new_gnb_cu_ue_f1ap_id,
         nulltype
       } value;
 
@@ -1910,30 +1910,30 @@ struct dlrrc_msg_transfer_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                            gnb_cu_ue_f1_ap_id();
-    uint64_t&                            gnb_du_ue_f1_ap_id();
-    uint64_t&                            oldg_nb_du_ue_f1_ap_id();
+    uint64_t&                            gnb_cu_ue_f1ap_id();
+    uint64_t&                            gnb_du_ue_f1ap_id();
+    uint64_t&                            old_gnb_du_ue_f1ap_id();
     uint8_t&                             srbid();
     execute_dupl_e&                      execute_dupl();
     unbounded_octstring<true>&           rrc_container();
     rat_freq_prio_info_c&                rat_freq_prio_info();
     rrc_delivery_status_request_e&       rrc_delivery_status_request();
     ue_context_not_retrievable_e&        ue_context_not_retrievable();
-    unbounded_octstring<true>&           redirected_rr_cmsg();
-    fixed_octstring<3, true>&            plmnassist_info_for_net_shar();
-    uint64_t&                            new_g_nb_cu_ue_f1_ap_id();
-    const uint64_t&                      gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&                      gnb_du_ue_f1_ap_id() const;
-    const uint64_t&                      oldg_nb_du_ue_f1_ap_id() const;
+    unbounded_octstring<true>&           redirected_rrcmsg();
+    fixed_octstring<3, true>&            plmn_assist_info_for_net_shar();
+    uint64_t&                            new_gnb_cu_ue_f1ap_id();
+    const uint64_t&                      gnb_cu_ue_f1ap_id() const;
+    const uint64_t&                      gnb_du_ue_f1ap_id() const;
+    const uint64_t&                      old_gnb_du_ue_f1ap_id() const;
     const uint8_t&                       srbid() const;
     const execute_dupl_e&                execute_dupl() const;
     const unbounded_octstring<true>&     rrc_container() const;
     const rat_freq_prio_info_c&          rat_freq_prio_info() const;
     const rrc_delivery_status_request_e& rrc_delivery_status_request() const;
     const ue_context_not_retrievable_e&  ue_context_not_retrievable() const;
-    const unbounded_octstring<true>&     redirected_rr_cmsg() const;
-    const fixed_octstring<3, true>&      plmnassist_info_for_net_shar() const;
-    const uint64_t&                      new_g_nb_cu_ue_f1_ap_id() const;
+    const unbounded_octstring<true>&     redirected_rrcmsg() const;
+    const fixed_octstring<3, true>&      plmn_assist_info_for_net_shar() const;
+    const uint64_t&                      new_gnb_cu_ue_f1ap_id() const;
 
   private:
     types                                                                                      type_;
@@ -1950,41 +1950,41 @@ struct dlrrc_msg_transfer_ies_o {
   static presence_e get_presence(const uint32_t& id);
 };
 
-struct dlrrc_msg_transfer_ies_container {
+struct dl_rrc_msg_transfer_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      oldg_nb_du_ue_f1_ap_id_present       = false;
-  bool                                                      execute_dupl_present                 = false;
-  bool                                                      rat_freq_prio_info_present           = false;
-  bool                                                      rrc_delivery_status_request_present  = false;
-  bool                                                      ue_context_not_retrievable_present   = false;
-  bool                                                      redirected_rr_cmsg_present           = false;
-  bool                                                      plmnassist_info_for_net_shar_present = false;
-  bool                                                      new_g_nb_cu_ue_f1_ap_id_present      = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> oldg_nb_du_ue_f1_ap_id;
+  bool                                                      old_gnb_du_ue_f1ap_id_present         = false;
+  bool                                                      execute_dupl_present                  = false;
+  bool                                                      rat_freq_prio_info_present            = false;
+  bool                                                      rrc_delivery_status_request_present   = false;
+  bool                                                      ue_context_not_retrievable_present    = false;
+  bool                                                      redirected_rrcmsg_present             = false;
+  bool                                                      plmn_assist_info_for_net_shar_present = false;
+  bool                                                      new_gnb_cu_ue_f1ap_id_present         = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> old_gnb_du_ue_f1ap_id;
   ie_field_s<integer<uint8_t, 0, 3, true, true>>            srbid;
   ie_field_s<execute_dupl_e>                                execute_dupl;
   ie_field_s<unbounded_octstring<true>>                     rrc_container;
   ie_field_s<rat_freq_prio_info_c>                          rat_freq_prio_info;
   ie_field_s<rrc_delivery_status_request_e>                 rrc_delivery_status_request;
   ie_field_s<ue_context_not_retrievable_e>                  ue_context_not_retrievable;
-  ie_field_s<unbounded_octstring<true>>                     redirected_rr_cmsg;
-  ie_field_s<fixed_octstring<3, true>>                      plmnassist_info_for_net_shar;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> new_g_nb_cu_ue_f1_ap_id;
+  ie_field_s<unbounded_octstring<true>>                     redirected_rrcmsg;
+  ie_field_s<fixed_octstring<3, true>>                      plmn_assist_info_for_net_shar;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> new_gnb_cu_ue_f1ap_id;
 
   // sequence methods
-  dlrrc_msg_transfer_ies_container();
+  dl_rrc_msg_transfer_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // DLRRCMessageTransfer ::= SEQUENCE
-using dlrrc_msg_transfer_s = elementary_procedure_option<dlrrc_msg_transfer_ies_container>;
+using dl_rrc_msg_transfer_s = elementary_procedure_option<dl_rrc_msg_transfer_ies_container>;
 
 // GTPTunnel-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using gtp_tunnel_ext_ies_o = protocol_ext_empty_o;
@@ -2010,7 +2010,7 @@ struct gtp_tunnel_s {
 using up_transport_layer_info_ext_ies_o = protocol_ies_empty_o;
 
 // DLUPTNLInformation-ToBeSetup-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
-using dluptnl_info_to_be_setup_item_ext_ies_o = protocol_ext_empty_o;
+using dl_up_tnl_info_to_be_setup_item_ext_ies_o = protocol_ext_empty_o;
 
 // UPTransportLayerInformation ::= CHOICE
 struct up_transport_layer_info_c {
@@ -2062,14 +2062,14 @@ private:
   void destroy_();
 };
 
-using dluptnl_info_to_be_setup_item_ext_ies_container = protocol_ext_container_empty_l;
+using dl_up_tnl_info_to_be_setup_item_ext_ies_container = protocol_ext_container_empty_l;
 
 // DLUPTNLInformation-ToBeSetup-Item ::= SEQUENCE
-struct dluptnl_info_to_be_setup_item_s {
-  bool                                            ext             = false;
-  bool                                            ie_exts_present = false;
-  up_transport_layer_info_c                       dluptnl_info;
-  dluptnl_info_to_be_setup_item_ext_ies_container ie_exts;
+struct dl_up_tnl_info_to_be_setup_item_s {
+  bool                                              ext             = false;
+  bool                                              ie_exts_present = false;
+  up_transport_layer_info_c                         dl_up_tnl_info;
+  dl_up_tnl_info_to_be_setup_item_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -2079,7 +2079,7 @@ struct dluptnl_info_to_be_setup_item_s {
 };
 
 // DLUPTNLInformation-ToBeSetup-List ::= SEQUENCE (SIZE (1..2)) OF DLUPTNLInformation-ToBeSetup-Item
-using dluptnl_info_to_be_setup_list_l = dyn_array<dluptnl_info_to_be_setup_item_s>;
+using dl_up_tnl_info_to_be_setup_list_l = dyn_array<dl_up_tnl_info_to_be_setup_item_s>;
 
 // DRB-Activity ::= ENUMERATED
 struct drb_activity_opts {
@@ -2099,7 +2099,7 @@ struct drb_activity_item_s {
   bool                                ext                  = false;
   bool                                drb_activity_present = false;
   bool                                ie_exts_present      = false;
-  uint8_t                             drbid                = 1;
+  uint8_t                             drb_id               = 1;
   drb_activity_e                      drb_activity;
   drb_activity_item_ext_ies_container ie_exts;
   // ...
@@ -2149,10 +2149,10 @@ using drb_activity_list_l = dyn_array<protocol_ie_single_container_s<drb_activit
 using packet_error_rate_ext_ies_o = protocol_ext_empty_o;
 
 // Dynamic5QIDescriptor-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
-using dynamic5_qi_descriptor_ext_ies_o = protocol_ext_empty_o;
+using dynamic5qi_descriptor_ext_ies_o = protocol_ext_empty_o;
 
 // NonDynamic5QIDescriptor-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
-using non_dynamic5_qi_descriptor_ext_ies_o = protocol_ext_empty_o;
+using non_dynamic5qi_descriptor_ext_ies_o = protocol_ext_empty_o;
 
 using packet_error_rate_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -2171,10 +2171,10 @@ struct packet_error_rate_s {
   void        to_json(json_writer& j) const;
 };
 
-using dynamic5_qi_descriptor_ext_ies_container = protocol_ext_container_empty_l;
+using dynamic5qi_descriptor_ext_ies_container = protocol_ext_container_empty_l;
 
 // Dynamic5QIDescriptor ::= SEQUENCE
-struct dynamic5_qi_descriptor_s {
+struct dynamic5qi_descriptor_s {
   struct delay_crit_opts {
     enum options { delay_crit, non_delay_crit, nulltype } value;
 
@@ -2183,19 +2183,19 @@ struct dynamic5_qi_descriptor_s {
   typedef enumerated<delay_crit_opts> delay_crit_e_;
 
   // member variables
-  bool                                     five_qi_present               = false;
-  bool                                     delay_crit_present            = false;
-  bool                                     averaging_win_present         = false;
-  bool                                     max_data_burst_volume_present = false;
-  bool                                     ie_exts_present               = false;
-  uint8_t                                  qo_sprio_level                = 1;
-  uint16_t                                 packet_delay_budget           = 0;
-  packet_error_rate_s                      packet_error_rate;
-  uint16_t                                 five_qi = 0;
-  delay_crit_e_                            delay_crit;
-  uint16_t                                 averaging_win         = 0;
-  uint16_t                                 max_data_burst_volume = 0;
-  dynamic5_qi_descriptor_ext_ies_container ie_exts;
+  bool                                    five_qi_present               = false;
+  bool                                    delay_crit_present            = false;
+  bool                                    averaging_win_present         = false;
+  bool                                    max_data_burst_volume_present = false;
+  bool                                    ie_exts_present               = false;
+  uint8_t                                 qos_prio_level                = 1;
+  uint16_t                                packet_delay_budget           = 0;
+  packet_error_rate_s                     packet_error_rate;
+  uint16_t                                five_qi = 0;
+  delay_crit_e_                           delay_crit;
+  uint16_t                                averaging_win         = 0;
+  uint16_t                                max_data_burst_volume = 0;
+  dynamic5qi_descriptor_ext_ies_container ie_exts;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -2209,19 +2209,19 @@ using gbr_qos_flow_info_ext_ies_o = protocol_ext_empty_o;
 // NGRANAllocationAndRetentionPriority-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using ngran_alloc_and_retention_prio_ext_ies_o = protocol_ext_empty_o;
 
-using non_dynamic5_qi_descriptor_ext_ies_container = protocol_ext_container_empty_l;
+using non_dynamic5qi_descriptor_ext_ies_container = protocol_ext_container_empty_l;
 
 // NonDynamic5QIDescriptor ::= SEQUENCE
-struct non_dynamic5_qi_descriptor_s {
-  bool                                         qo_sprio_level_present        = false;
-  bool                                         averaging_win_present         = false;
-  bool                                         max_data_burst_volume_present = false;
-  bool                                         ie_exts_present               = false;
-  uint16_t                                     five_qi                       = 0;
-  uint8_t                                      qo_sprio_level                = 1;
-  uint16_t                                     averaging_win                 = 0;
-  uint16_t                                     max_data_burst_volume         = 0;
-  non_dynamic5_qi_descriptor_ext_ies_container ie_exts;
+struct non_dynamic5qi_descriptor_s {
+  bool                                        qos_prio_level_present        = false;
+  bool                                        averaging_win_present         = false;
+  bool                                        max_data_burst_volume_present = false;
+  bool                                        ie_exts_present               = false;
+  uint16_t                                    five_qi                       = 0;
+  uint8_t                                     qos_prio_level                = 1;
+  uint16_t                                    averaging_win                 = 0;
+  uint16_t                                    max_data_burst_volume         = 0;
+  non_dynamic5qi_descriptor_ext_ies_container ie_exts;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -2230,12 +2230,12 @@ struct non_dynamic5_qi_descriptor_s {
 };
 
 // QoS-Characteristics-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-using qo_s_characteristics_ext_ies_o = protocol_ies_empty_o;
+using qos_characteristics_ext_ies_o = protocol_ies_empty_o;
 
 using gbr_qos_flow_info_ext_ies_container = protocol_ext_container_empty_l;
 
 // GBR-QoSFlowInformation ::= SEQUENCE
-struct gbr_qosflow_info_s {
+struct gbr_qos_flow_info_s {
   bool                                ext                             = false;
   bool                                max_packet_loss_rate_dl_present = false;
   bool                                max_packet_loss_rate_ul_present = false;
@@ -2272,75 +2272,75 @@ struct ngran_alloc_and_retention_prio_s {
 };
 
 // QoS-Characteristics ::= CHOICE
-struct qo_s_characteristics_c {
+struct qos_characteristics_c {
   struct types_opts {
-    enum options { non_dynamic_minus5_qi, dynamic_minus5_qi, choice_ext, nulltype } value;
+    enum options { non_dynamic_5qi, dynamic_5qi, choice_ext, nulltype } value;
 
     const char* to_string() const;
   };
   typedef enumerated<types_opts> types;
 
   // choice methods
-  qo_s_characteristics_c() = default;
-  qo_s_characteristics_c(const qo_s_characteristics_c& other);
-  qo_s_characteristics_c& operator=(const qo_s_characteristics_c& other);
-  ~qo_s_characteristics_c() { destroy_(); }
+  qos_characteristics_c() = default;
+  qos_characteristics_c(const qos_characteristics_c& other);
+  qos_characteristics_c& operator=(const qos_characteristics_c& other);
+  ~qos_characteristics_c() { destroy_(); }
   void        set(types::options e = types::nulltype);
   types       type() const { return type_; }
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
   // getters
-  non_dynamic5_qi_descriptor_s& non_dynamic_minus5_qi()
+  non_dynamic5qi_descriptor_s& non_dynamic_5qi()
   {
-    assert_choice_type(types::non_dynamic_minus5_qi, type_, "QoS-Characteristics");
-    return c.get<non_dynamic5_qi_descriptor_s>();
+    assert_choice_type(types::non_dynamic_5qi, type_, "QoS-Characteristics");
+    return c.get<non_dynamic5qi_descriptor_s>();
   }
-  dynamic5_qi_descriptor_s& dynamic_minus5_qi()
+  dynamic5qi_descriptor_s& dynamic_5qi()
   {
-    assert_choice_type(types::dynamic_minus5_qi, type_, "QoS-Characteristics");
-    return c.get<dynamic5_qi_descriptor_s>();
+    assert_choice_type(types::dynamic_5qi, type_, "QoS-Characteristics");
+    return c.get<dynamic5qi_descriptor_s>();
   }
-  protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o>& choice_ext()
-  {
-    assert_choice_type(types::choice_ext, type_, "QoS-Characteristics");
-    return c.get<protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o>>();
-  }
-  const non_dynamic5_qi_descriptor_s& non_dynamic_minus5_qi() const
-  {
-    assert_choice_type(types::non_dynamic_minus5_qi, type_, "QoS-Characteristics");
-    return c.get<non_dynamic5_qi_descriptor_s>();
-  }
-  const dynamic5_qi_descriptor_s& dynamic_minus5_qi() const
-  {
-    assert_choice_type(types::dynamic_minus5_qi, type_, "QoS-Characteristics");
-    return c.get<dynamic5_qi_descriptor_s>();
-  }
-  const protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o>& choice_ext() const
+  protocol_ie_single_container_s<qos_characteristics_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "QoS-Characteristics");
-    return c.get<protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o>>();
+    return c.get<protocol_ie_single_container_s<qos_characteristics_ext_ies_o>>();
   }
-  non_dynamic5_qi_descriptor_s&                                   set_non_dynamic_minus5_qi();
-  dynamic5_qi_descriptor_s&                                       set_dynamic_minus5_qi();
-  protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o>& set_choice_ext();
+  const non_dynamic5qi_descriptor_s& non_dynamic_5qi() const
+  {
+    assert_choice_type(types::non_dynamic_5qi, type_, "QoS-Characteristics");
+    return c.get<non_dynamic5qi_descriptor_s>();
+  }
+  const dynamic5qi_descriptor_s& dynamic_5qi() const
+  {
+    assert_choice_type(types::dynamic_5qi, type_, "QoS-Characteristics");
+    return c.get<dynamic5qi_descriptor_s>();
+  }
+  const protocol_ie_single_container_s<qos_characteristics_ext_ies_o>& choice_ext() const
+  {
+    assert_choice_type(types::choice_ext, type_, "QoS-Characteristics");
+    return c.get<protocol_ie_single_container_s<qos_characteristics_ext_ies_o>>();
+  }
+  non_dynamic5qi_descriptor_s&                                   set_non_dynamic_5qi();
+  dynamic5qi_descriptor_s&                                       set_dynamic_5qi();
+  protocol_ie_single_container_s<qos_characteristics_ext_ies_o>& set_choice_ext();
 
 private:
   types type_;
-  choice_buffer_t<dynamic5_qi_descriptor_s,
-                  non_dynamic5_qi_descriptor_s,
-                  protocol_ie_single_container_s<qo_s_characteristics_ext_ies_o>>
+  choice_buffer_t<dynamic5qi_descriptor_s,
+                  non_dynamic5qi_descriptor_s,
+                  protocol_ie_single_container_s<qos_characteristics_ext_ies_o>>
       c;
 
   void destroy_();
 };
 
 // QoSFlowLevelQoSParameters-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
-struct qo_sflow_level_qos_params_ext_ies_o {
+struct qos_flow_level_qos_params_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { pdu_session_id, ulpdu_session_aggregate_maximum_bit_rate, nulltype } value;
+      enum options { pdu_session_id, ul_pdu_session_aggregate_maximum_bit_rate, nulltype } value;
 
       const char* to_string() const;
     };
@@ -2358,9 +2358,9 @@ struct qo_sflow_level_qos_params_ext_ies_o {
     void        to_json(json_writer& j) const;
     // getters
     uint16_t&       pdu_session_id();
-    uint64_t&       ulpdu_session_aggregate_maximum_bit_rate();
+    uint64_t&       ul_pdu_session_aggregate_maximum_bit_rate();
     const uint16_t& pdu_session_id() const;
-    const uint64_t& ulpdu_session_aggregate_maximum_bit_rate() const;
+    const uint64_t& ul_pdu_session_aggregate_maximum_bit_rate() const;
 
   private:
     types               type_;
@@ -2378,35 +2378,35 @@ struct qo_sflow_level_qos_params_ext_ies_o {
 };
 
 // QoSFlowMappingIndication ::= ENUMERATED
-struct qo_sflow_map_ind_opts {
+struct qos_flow_map_ind_opts {
   enum options { ul, dl, /*...*/ nulltype } value;
 
   const char* to_string() const;
 };
-typedef enumerated<qo_sflow_map_ind_opts, true> qo_sflow_map_ind_e;
+typedef enumerated<qos_flow_map_ind_opts, true> qos_flow_map_ind_e;
 
 // Flows-Mapped-To-DRB-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 struct flows_mapped_to_drb_item_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { qo_sflow_map_ind, nulltype } value;
+      enum options { qos_flow_map_ind, nulltype } value;
 
       const char* to_string() const;
     };
     typedef enumerated<types_opts> types;
 
     // choice methods
-    types       type() const { return types::qo_sflow_map_ind; }
+    types       type() const { return types::qos_flow_map_ind; }
     SRSASN_CODE pack(bit_ref& bref) const;
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    qo_sflow_map_ind_e&       qo_sflow_map_ind() { return c; }
-    const qo_sflow_map_ind_e& qo_sflow_map_ind() const { return c; }
+    qos_flow_map_ind_e&       qos_flow_map_ind() { return c; }
+    const qos_flow_map_ind_e& qos_flow_map_ind() const { return c; }
 
   private:
-    qo_sflow_map_ind_e c;
+    qos_flow_map_ind_e c;
   };
 
   // members lookup methods
@@ -2417,25 +2417,25 @@ struct flows_mapped_to_drb_item_ext_ies_o {
   static presence_e get_presence(const uint32_t& id);
 };
 
-struct qo_sflow_level_qos_params_ext_ies_container {
+struct qos_flow_level_qos_params_ext_ies_container {
   template <class extT_>
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                        pdu_session_id_present                           = false;
-  bool                                                        ulpdu_session_aggregate_maximum_bit_rate_present = false;
+  bool                                                        pdu_session_id_present                            = false;
+  bool                                                        ul_pdu_session_aggregate_maximum_bit_rate_present = false;
   ie_field_s<integer<uint16_t, 0, 255, false, true>>          pdu_session_id;
-  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true>> ulpdu_session_aggregate_maximum_bit_rate;
+  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true>> ul_pdu_session_aggregate_maximum_bit_rate;
 
   // sequence methods
-  qo_sflow_level_qos_params_ext_ies_container();
+  qos_flow_level_qos_params_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // QoSFlowLevelQoSParameters ::= SEQUENCE
-struct qo_sflow_level_qos_params_s {
+struct qos_flow_level_qos_params_s {
   struct reflective_qos_attribute_opts {
     enum options { subject_to, /*...*/ nulltype } value;
 
@@ -2447,11 +2447,11 @@ struct qo_sflow_level_qos_params_s {
   bool                                        gbr_qos_flow_info_present        = false;
   bool                                        reflective_qos_attribute_present = false;
   bool                                        ie_exts_present                  = false;
-  qo_s_characteristics_c                      qo_s_characteristics;
+  qos_characteristics_c                       qos_characteristics;
   ngran_alloc_and_retention_prio_s            ngra_nalloc_retention_prio;
-  gbr_qosflow_info_s                          gbr_qos_flow_info;
+  gbr_qos_flow_info_s                         gbr_qos_flow_info;
   reflective_qos_attribute_e_                 reflective_qos_attribute;
-  qo_sflow_level_qos_params_ext_ies_container ie_exts;
+  qos_flow_level_qos_params_ext_ies_container ie_exts;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -2461,8 +2461,8 @@ struct qo_sflow_level_qos_params_s {
 
 // Flows-Mapped-To-DRB-Item ::= SEQUENCE
 struct flows_mapped_to_drb_item_s {
-  uint8_t                                                      qo_sflow_id = 0;
-  qo_sflow_level_qos_params_s                                  qo_sflow_level_qos_params;
+  uint8_t                                                      qos_flow_id = 0;
+  qos_flow_level_qos_params_s                                  qos_flow_level_qos_params;
   protocol_ext_container_l<flows_mapped_to_drb_item_ext_ies_o> ie_exts;
 
   // sequence methods
@@ -2510,7 +2510,7 @@ using drb_info_item_ext_ies_container = protocol_ext_container_empty_l;
 struct drb_info_s {
   bool                            notif_ctrl_present = false;
   bool                            ie_exts_present    = false;
-  qo_sflow_level_qos_params_s     drb_qos;
+  qos_flow_level_qos_params_s     drb_qos;
   snssai_s                        snssai;
   notif_ctrl_e                    notif_ctrl;
   flows_mapped_to_drb_list_l      flows_mapped_to_drb_list;
@@ -2539,7 +2539,7 @@ using drb_notify_item_ext_ies_container = protocol_ext_container_empty_l;
 struct drb_notify_item_s {
   bool                              ext             = false;
   bool                              ie_exts_present = false;
-  uint8_t                           drbid           = 1;
+  uint8_t                           drb_id          = 1;
   notif_cause_e                     notif_cause;
   drb_notify_item_ext_ies_container ie_exts;
   // ...
@@ -2595,7 +2595,7 @@ struct drbs_failed_to_be_modified_item_s {
   bool                                              ext             = false;
   bool                                              cause_present   = false;
   bool                                              ie_exts_present = false;
-  uint8_t                                           drbid           = 1;
+  uint8_t                                           drb_id          = 1;
   cause_c                                           cause;
   drbs_failed_to_be_modified_item_ext_ies_container ie_exts;
   // ...
@@ -2653,7 +2653,7 @@ struct drbs_failed_to_be_setup_item_s {
   bool                                           ext             = false;
   bool                                           cause_present   = false;
   bool                                           ie_exts_present = false;
-  uint8_t                                        drbid           = 1;
+  uint8_t                                        drb_id          = 1;
   cause_c                                        cause;
   drbs_failed_to_be_setup_item_ext_ies_container ie_exts;
   // ...
@@ -2709,7 +2709,7 @@ struct drbs_failed_to_be_setup_mod_item_s {
   bool                                               ext             = false;
   bool                                               cause_present   = false;
   bool                                               ie_exts_present = false;
-  uint8_t                                            drbid           = 1;
+  uint8_t                                            drb_id          = 1;
   cause_c                                            cause;
   drbs_failed_to_be_setup_mod_item_ext_ies_container ie_exts;
   // ...
@@ -2820,9 +2820,9 @@ struct drbs_modified_item_ext_ies_o {
 struct drbs_modified_item_s {
   bool                                                   ext          = false;
   bool                                                   lcid_present = false;
-  uint8_t                                                drbid        = 1;
+  uint8_t                                                drb_id       = 1;
   uint8_t                                                lcid         = 1;
-  dluptnl_info_to_be_setup_list_l                        dluptnl_info_to_be_setup_list;
+  dl_up_tnl_info_to_be_setup_list_l                      dl_up_tnl_info_to_be_setup_list;
   protocol_ext_container_l<drbs_modified_item_ext_ies_o> ie_exts;
   // ...
 
@@ -2868,16 +2868,16 @@ struct drbs_modified_item_ies_o {
 using drbs_modified_list_l = dyn_array<protocol_ie_single_container_s<drbs_modified_item_ies_o>>;
 
 // ULUPTNLInformation-ToBeSetup-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
-using uluptnl_info_to_be_setup_item_ext_ies_o = protocol_ext_empty_o;
+using ul_up_tnl_info_to_be_setup_item_ext_ies_o = protocol_ext_empty_o;
 
-using uluptnl_info_to_be_setup_item_ext_ies_container = protocol_ext_container_empty_l;
+using ul_up_tnl_info_to_be_setup_item_ext_ies_container = protocol_ext_container_empty_l;
 
 // ULUPTNLInformation-ToBeSetup-Item ::= SEQUENCE
-struct uluptnl_info_to_be_setup_item_s {
-  bool                                            ext             = false;
-  bool                                            ie_exts_present = false;
-  up_transport_layer_info_c                       uluptnl_info;
-  uluptnl_info_to_be_setup_item_ext_ies_container ie_exts;
+struct ul_up_tnl_info_to_be_setup_item_s {
+  bool                                              ext             = false;
+  bool                                              ie_exts_present = false;
+  up_transport_layer_info_c                         ul_up_tnl_info;
+  ul_up_tnl_info_to_be_setup_item_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -2890,7 +2890,7 @@ struct uluptnl_info_to_be_setup_item_s {
 using drbs_modified_conf_item_ext_ies_o = protocol_ext_empty_o;
 
 // ULUPTNLInformation-ToBeSetup-List ::= SEQUENCE (SIZE (1..2)) OF ULUPTNLInformation-ToBeSetup-Item
-using uluptnl_info_to_be_setup_list_l = dyn_array<uluptnl_info_to_be_setup_item_s>;
+using ul_up_tnl_info_to_be_setup_list_l = dyn_array<ul_up_tnl_info_to_be_setup_item_s>;
 
 using drbs_modified_conf_item_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -2898,8 +2898,8 @@ using drbs_modified_conf_item_ext_ies_container = protocol_ext_container_empty_l
 struct drbs_modified_conf_item_s {
   bool                                      ext             = false;
   bool                                      ie_exts_present = false;
-  uint8_t                                   drbid           = 1;
-  uluptnl_info_to_be_setup_list_l           uluptnl_info_to_be_setup_list;
+  uint8_t                                   drb_id          = 1;
+  ul_up_tnl_info_to_be_setup_list_l         ul_up_tnl_info_to_be_setup_list;
   drbs_modified_conf_item_ext_ies_container ie_exts;
   // ...
 
@@ -2978,9 +2978,9 @@ struct drbs_required_to_be_modified_item_ext_ies_o {
 
 // DRBs-Required-ToBeModified-Item ::= SEQUENCE
 struct drbs_required_to_be_modified_item_s {
-  bool                                                                  ext   = false;
-  uint8_t                                                               drbid = 1;
-  dluptnl_info_to_be_setup_list_l                                       dluptnl_info_to_be_setup_list;
+  bool                                                                  ext    = false;
+  uint8_t                                                               drb_id = 1;
+  dl_up_tnl_info_to_be_setup_list_l                                     dl_up_tnl_info_to_be_setup_list;
   protocol_ext_container_l<drbs_required_to_be_modified_item_ext_ies_o> ie_exts;
   // ...
 
@@ -3036,7 +3036,7 @@ using drbs_required_to_be_released_item_ext_ies_container = protocol_ext_contain
 struct drbs_required_to_be_released_item_s {
   bool                                                ext             = false;
   bool                                                ie_exts_present = false;
-  uint8_t                                             drbid           = 1;
+  uint8_t                                             drb_id          = 1;
   drbs_required_to_be_released_item_ext_ies_container ie_exts;
   // ...
 
@@ -3093,9 +3093,9 @@ struct drbs_setup_item_s {
   bool                              ext             = false;
   bool                              lcid_present    = false;
   bool                              ie_exts_present = false;
-  uint8_t                           drbid           = 1;
+  uint8_t                           drb_id          = 1;
   uint8_t                           lcid            = 1;
-  dluptnl_info_to_be_setup_list_l   dluptnl_info_to_be_setup_list;
+  dl_up_tnl_info_to_be_setup_list_l dl_up_tnl_info_to_be_setup_list;
   drbs_setup_item_ext_ies_container ie_exts;
   // ...
 
@@ -3150,9 +3150,9 @@ struct drbs_setup_mod_item_s {
   bool                                  ext             = false;
   bool                                  lcid_present    = false;
   bool                                  ie_exts_present = false;
-  uint8_t                               drbid           = 1;
+  uint8_t                               drb_id          = 1;
   uint8_t                               lcid            = 1;
-  dluptnl_info_to_be_setup_list_l       dluptnl_info_to_be_setup_list;
+  dl_up_tnl_info_to_be_setup_list_l     dl_up_tnl_info_to_be_setup_list;
   drbs_setup_mod_item_ext_ies_container ie_exts;
   // ...
 
@@ -3266,17 +3266,17 @@ struct eutran_qos_s {
 };
 
 // PDCPSNLength ::= ENUMERATED
-struct pdcpsn_len_opts {
+struct pdcp_sn_len_opts {
   enum options { twelve_bits, eighteen_bits, /*...*/ nulltype } value;
   typedef uint8_t number_type;
 
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<pdcpsn_len_opts, true> pdcpsn_len_e;
+typedef enumerated<pdcp_sn_len_opts, true> pdcp_sn_len_e;
 
 // QoSInformation-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct qo_sinfo_ext_ies_o {
+struct qos_info_ext_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
@@ -3325,12 +3325,12 @@ typedef enumerated<rlc_mode_opts, true> rlc_mode_e;
 using ul_cfg_ext_ies_o = protocol_ext_empty_o;
 
 // ULUEConfiguration ::= ENUMERATED
-struct ulue_cfg_opts {
+struct ul_ue_cfg_opts {
   enum options { no_data, shared, only, /*...*/ nulltype } value;
 
   const char* to_string() const;
 };
-typedef enumerated<ulue_cfg_opts, true> ulue_cfg_e;
+typedef enumerated<ul_ue_cfg_opts, true> ul_ue_cfg_e;
 
 // DRBs-ToBeModified-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 struct drbs_to_be_modified_item_ext_ies_o {
@@ -3338,8 +3338,8 @@ struct drbs_to_be_modified_item_ext_ies_o {
   struct ext_c {
     struct types_opts {
       enum options {
-        dlpdcpsn_len,
-        ulpdcpsn_len,
+        dl_pdcp_sn_len,
+        ul_pdcp_sn_len,
         bearer_type_change,
         rlc_mode,
         dupl_activation,
@@ -3363,15 +3363,15 @@ struct drbs_to_be_modified_item_ext_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    pdcpsn_len_e&                  dlpdcpsn_len();
-    pdcpsn_len_e&                  ulpdcpsn_len();
+    pdcp_sn_len_e&                 dl_pdcp_sn_len();
+    pdcp_sn_len_e&                 ul_pdcp_sn_len();
     bearer_type_change_e&          bearer_type_change();
     rlc_mode_e&                    rlc_mode();
     dupl_activation_e&             dupl_activation();
     dc_based_dupl_cfgured_e&       dc_based_dupl_cfgured();
     dupl_activation_e&             dc_based_dupl_activation();
-    const pdcpsn_len_e&            dlpdcpsn_len() const;
-    const pdcpsn_len_e&            ulpdcpsn_len() const;
+    const pdcp_sn_len_e&           dl_pdcp_sn_len() const;
+    const pdcp_sn_len_e&           ul_pdcp_sn_len() const;
     const bearer_type_change_e&    bearer_type_change() const;
     const rlc_mode_e&              rlc_mode() const;
     const dupl_activation_e&       dupl_activation() const;
@@ -3394,7 +3394,7 @@ struct drbs_to_be_modified_item_ext_ies_o {
 };
 
 // QoSInformation ::= CHOICE
-struct qo_sinfo_c {
+struct qos_info_c {
   struct types_opts {
     enum options { eutran_qos, choice_ext, nulltype } value;
 
@@ -3403,10 +3403,10 @@ struct qo_sinfo_c {
   typedef enumerated<types_opts> types;
 
   // choice methods
-  qo_sinfo_c() = default;
-  qo_sinfo_c(const qo_sinfo_c& other);
-  qo_sinfo_c& operator=(const qo_sinfo_c& other);
-  ~qo_sinfo_c() { destroy_(); }
+  qos_info_c() = default;
+  qos_info_c(const qos_info_c& other);
+  qos_info_c& operator=(const qos_info_c& other);
+  ~qos_info_c() { destroy_(); }
   void        set(types::options e = types::nulltype);
   types       type() const { return type_; }
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -3418,27 +3418,27 @@ struct qo_sinfo_c {
     assert_choice_type(types::eutran_qos, type_, "QoSInformation");
     return c.get<eutran_qos_s>();
   }
-  protocol_ie_single_container_s<qo_sinfo_ext_ies_o>& choice_ext()
+  protocol_ie_single_container_s<qos_info_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "QoSInformation");
-    return c.get<protocol_ie_single_container_s<qo_sinfo_ext_ies_o>>();
+    return c.get<protocol_ie_single_container_s<qos_info_ext_ies_o>>();
   }
   const eutran_qos_s& eutran_qos() const
   {
     assert_choice_type(types::eutran_qos, type_, "QoSInformation");
     return c.get<eutran_qos_s>();
   }
-  const protocol_ie_single_container_s<qo_sinfo_ext_ies_o>& choice_ext() const
+  const protocol_ie_single_container_s<qos_info_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "QoSInformation");
-    return c.get<protocol_ie_single_container_s<qo_sinfo_ext_ies_o>>();
+    return c.get<protocol_ie_single_container_s<qos_info_ext_ies_o>>();
   }
   eutran_qos_s&                                       set_eutran_qos();
-  protocol_ie_single_container_s<qo_sinfo_ext_ies_o>& set_choice_ext();
+  protocol_ie_single_container_s<qos_info_ext_ies_o>& set_choice_ext();
 
 private:
   types                                                                             type_;
-  choice_buffer_t<eutran_qos_s, protocol_ie_single_container_s<qo_sinfo_ext_ies_o>> c;
+  choice_buffer_t<eutran_qos_s, protocol_ie_single_container_s<qos_info_ext_ies_o>> c;
 
   void destroy_();
 };
@@ -3449,7 +3449,7 @@ using ul_cfg_ext_ies_container = protocol_ext_container_empty_l;
 struct ul_cfg_s {
   bool                     ext             = false;
   bool                     ie_exts_present = false;
-  ulue_cfg_e               ulue_cfg;
+  ul_ue_cfg_e              ul_ue_cfg;
   ul_cfg_ext_ies_container ie_exts;
   // ...
 
@@ -3464,15 +3464,15 @@ struct drbs_to_be_modified_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                dlpdcpsn_len_present             = false;
-  bool                                ulpdcpsn_len_present             = false;
+  bool                                dl_pdcp_sn_len_present           = false;
+  bool                                ul_pdcp_sn_len_present           = false;
   bool                                bearer_type_change_present       = false;
   bool                                rlc_mode_present                 = false;
   bool                                dupl_activation_present          = false;
   bool                                dc_based_dupl_cfgured_present    = false;
   bool                                dc_based_dupl_activation_present = false;
-  ie_field_s<pdcpsn_len_e>            dlpdcpsn_len;
-  ie_field_s<pdcpsn_len_e>            ulpdcpsn_len;
+  ie_field_s<pdcp_sn_len_e>           dl_pdcp_sn_len;
+  ie_field_s<pdcp_sn_len_e>           ul_pdcp_sn_len;
   ie_field_s<bearer_type_change_e>    bearer_type_change;
   ie_field_s<rlc_mode_e>              rlc_mode;
   ie_field_s<dupl_activation_e>       dupl_activation;
@@ -3489,13 +3489,13 @@ struct drbs_to_be_modified_item_ext_ies_container {
 // DRBs-ToBeModified-Item ::= SEQUENCE
 struct drbs_to_be_modified_item_s {
   bool                                       ext              = false;
-  bool                                       qo_sinfo_present = false;
-  bool                                       ulcfg_present    = false;
+  bool                                       qos_info_present = false;
+  bool                                       ul_cfg_present   = false;
   bool                                       ie_exts_present  = false;
-  uint8_t                                    drbid            = 1;
-  qo_sinfo_c                                 qo_sinfo;
-  uluptnl_info_to_be_setup_list_l            uluptnl_info_to_be_setup_list;
-  ul_cfg_s                                   ulcfg;
+  uint8_t                                    drb_id           = 1;
+  qos_info_c                                 qos_info;
+  ul_up_tnl_info_to_be_setup_list_l          ul_up_tnl_info_to_be_setup_list;
+  ul_cfg_s                                   ul_cfg;
   drbs_to_be_modified_item_ext_ies_container ie_exts;
   // ...
 
@@ -3549,7 +3549,7 @@ using drbs_to_be_released_item_ext_ies_container = protocol_ext_container_empty_
 struct drbs_to_be_released_item_s {
   bool                                       ext             = false;
   bool                                       ie_exts_present = false;
-  uint8_t                                    drbid           = 1;
+  uint8_t                                    drb_id          = 1;
   drbs_to_be_released_item_ext_ies_container ie_exts;
   // ...
 
@@ -3599,7 +3599,7 @@ struct drbs_to_be_setup_item_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { dc_based_dupl_cfgured, dc_based_dupl_activation, dlpdcpsn_len, ulpdcpsn_len, nulltype } value;
+      enum options { dc_based_dupl_cfgured, dc_based_dupl_activation, dl_pdcp_sn_len, ul_pdcp_sn_len, nulltype } value;
 
       const char* to_string() const;
     };
@@ -3618,12 +3618,12 @@ struct drbs_to_be_setup_item_ext_ies_o {
     // getters
     dc_based_dupl_cfgured_e&       dc_based_dupl_cfgured();
     dupl_activation_e&             dc_based_dupl_activation();
-    pdcpsn_len_e&                  dlpdcpsn_len();
-    pdcpsn_len_e&                  ulpdcpsn_len();
+    pdcp_sn_len_e&                 dl_pdcp_sn_len();
+    pdcp_sn_len_e&                 ul_pdcp_sn_len();
     const dc_based_dupl_cfgured_e& dc_based_dupl_cfgured() const;
     const dupl_activation_e&       dc_based_dupl_activation() const;
-    const pdcpsn_len_e&            dlpdcpsn_len() const;
-    const pdcpsn_len_e&            ulpdcpsn_len() const;
+    const pdcp_sn_len_e&           dl_pdcp_sn_len() const;
+    const pdcp_sn_len_e&           ul_pdcp_sn_len() const;
 
   private:
     types               type_;
@@ -3647,11 +3647,11 @@ struct drbs_to_be_setup_item_ext_ies_container {
   // member variables
   bool                                dc_based_dupl_cfgured_present    = false;
   bool                                dc_based_dupl_activation_present = false;
-  bool                                ulpdcpsn_len_present             = false;
+  bool                                ul_pdcp_sn_len_present           = false;
   ie_field_s<dc_based_dupl_cfgured_e> dc_based_dupl_cfgured;
   ie_field_s<dupl_activation_e>       dc_based_dupl_activation;
-  ie_field_s<pdcpsn_len_e>            dlpdcpsn_len;
-  ie_field_s<pdcpsn_len_e>            ulpdcpsn_len;
+  ie_field_s<pdcp_sn_len_e>           dl_pdcp_sn_len;
+  ie_field_s<pdcp_sn_len_e>           ul_pdcp_sn_len;
 
   // sequence methods
   drbs_to_be_setup_item_ext_ies_container();
@@ -3663,14 +3663,14 @@ struct drbs_to_be_setup_item_ext_ies_container {
 // DRBs-ToBeSetup-Item ::= SEQUENCE
 struct drbs_to_be_setup_item_s {
   bool                                    ext                     = false;
-  bool                                    ulcfg_present           = false;
+  bool                                    ul_cfg_present          = false;
   bool                                    dupl_activation_present = false;
   bool                                    ie_exts_present         = false;
-  uint8_t                                 drbid                   = 1;
-  qo_sinfo_c                              qo_sinfo;
-  uluptnl_info_to_be_setup_list_l         uluptnl_info_to_be_setup_list;
+  uint8_t                                 drb_id                  = 1;
+  qos_info_c                              qos_info;
+  ul_up_tnl_info_to_be_setup_list_l       ul_up_tnl_info_to_be_setup_list;
   rlc_mode_e                              rlc_mode;
-  ul_cfg_s                                ulcfg;
+  ul_cfg_s                                ul_cfg;
   dupl_activation_e                       dupl_activation;
   drbs_to_be_setup_item_ext_ies_container ie_exts;
   // ...
@@ -3721,7 +3721,7 @@ struct drbs_to_be_setup_mod_item_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { dc_based_dupl_cfgured, dc_based_dupl_activation, dlpdcpsn_len, ulpdcpsn_len, nulltype } value;
+      enum options { dc_based_dupl_cfgured, dc_based_dupl_activation, dl_pdcp_sn_len, ul_pdcp_sn_len, nulltype } value;
 
       const char* to_string() const;
     };
@@ -3740,12 +3740,12 @@ struct drbs_to_be_setup_mod_item_ext_ies_o {
     // getters
     dc_based_dupl_cfgured_e&       dc_based_dupl_cfgured();
     dupl_activation_e&             dc_based_dupl_activation();
-    pdcpsn_len_e&                  dlpdcpsn_len();
-    pdcpsn_len_e&                  ulpdcpsn_len();
+    pdcp_sn_len_e&                 dl_pdcp_sn_len();
+    pdcp_sn_len_e&                 ul_pdcp_sn_len();
     const dc_based_dupl_cfgured_e& dc_based_dupl_cfgured() const;
     const dupl_activation_e&       dc_based_dupl_activation() const;
-    const pdcpsn_len_e&            dlpdcpsn_len() const;
-    const pdcpsn_len_e&            ulpdcpsn_len() const;
+    const pdcp_sn_len_e&           dl_pdcp_sn_len() const;
+    const pdcp_sn_len_e&           ul_pdcp_sn_len() const;
 
   private:
     types               type_;
@@ -3769,12 +3769,12 @@ struct drbs_to_be_setup_mod_item_ext_ies_container {
   // member variables
   bool                                dc_based_dupl_cfgured_present    = false;
   bool                                dc_based_dupl_activation_present = false;
-  bool                                dlpdcpsn_len_present             = false;
-  bool                                ulpdcpsn_len_present             = false;
+  bool                                dl_pdcp_sn_len_present           = false;
+  bool                                ul_pdcp_sn_len_present           = false;
   ie_field_s<dc_based_dupl_cfgured_e> dc_based_dupl_cfgured;
   ie_field_s<dupl_activation_e>       dc_based_dupl_activation;
-  ie_field_s<pdcpsn_len_e>            dlpdcpsn_len;
-  ie_field_s<pdcpsn_len_e>            ulpdcpsn_len;
+  ie_field_s<pdcp_sn_len_e>           dl_pdcp_sn_len;
+  ie_field_s<pdcp_sn_len_e>           ul_pdcp_sn_len;
 
   // sequence methods
   drbs_to_be_setup_mod_item_ext_ies_container();
@@ -3786,14 +3786,14 @@ struct drbs_to_be_setup_mod_item_ext_ies_container {
 // DRBs-ToBeSetupMod-Item ::= SEQUENCE
 struct drbs_to_be_setup_mod_item_s {
   bool                                        ext                     = false;
-  bool                                        ulcfg_present           = false;
+  bool                                        ul_cfg_present          = false;
   bool                                        dupl_activation_present = false;
   bool                                        ie_exts_present         = false;
-  uint8_t                                     drbid                   = 1;
-  qo_sinfo_c                                  qo_sinfo;
-  uluptnl_info_to_be_setup_list_l             uluptnl_info_to_be_setup_list;
+  uint8_t                                     drb_id                  = 1;
+  qos_info_c                                  qos_info;
+  ul_up_tnl_info_to_be_setup_list_l           ul_up_tnl_info_to_be_setup_list;
   rlc_mode_e                                  rlc_mode;
-  ul_cfg_s                                    ulcfg;
+  ul_cfg_s                                    ul_cfg;
   dupl_activation_e                           dupl_activation;
   drbs_to_be_setup_mod_item_ext_ies_container ie_exts;
   // ...
@@ -3932,7 +3932,7 @@ struct drx_cycle_s {
 };
 
 // DUtoCURRCInformation-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
-struct duto_currc_info_ext_ies_o {
+struct du_to_cu_rrc_info_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
@@ -4009,7 +4009,7 @@ struct duto_currc_info_ext_ies_o {
   static presence_e get_presence(const uint32_t& id);
 };
 
-struct duto_currc_info_ext_ies_container {
+struct du_to_cu_rrc_info_ext_ies_container {
   template <class extT_>
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
@@ -4040,20 +4040,20 @@ struct duto_currc_info_ext_ies_container {
   ie_field_s<unbounded_octstring<true>>                meas_gap_sharing_cfg;
 
   // sequence methods
-  duto_currc_info_ext_ies_container();
+  du_to_cu_rrc_info_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // DUtoCURRCInformation ::= SEQUENCE
-struct duto_currc_info_s {
-  bool                              ext             = false;
-  bool                              ie_exts_present = false;
-  unbounded_octstring<true>         cell_group_cfg;
-  unbounded_octstring<true>         meas_gap_cfg;
-  unbounded_octstring<true>         requested_p_max_fr1;
-  duto_currc_info_ext_ies_container ie_exts;
+struct du_to_cu_rrc_info_s {
+  bool                                ext             = false;
+  bool                                ie_exts_present = false;
+  unbounded_octstring<true>           cell_group_cfg;
+  unbounded_octstring<true>           meas_gap_cfg;
+  unbounded_octstring<true>           requested_p_max_fr1;
+  du_to_cu_rrc_info_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -4069,9 +4069,9 @@ using ded_si_delivery_needed_ue_item_ext_ies_container = protocol_ext_container_
 
 // Dedicated-SIDelivery-NeededUE-Item ::= SEQUENCE
 struct ded_si_delivery_needed_ue_item_s {
-  bool                                             ext                = false;
-  bool                                             ie_exts_present    = false;
-  uint64_t                                         gnb_cu_ue_f1_ap_id = 0;
+  bool                                             ext               = false;
+  bool                                             ie_exts_present   = false;
+  uint64_t                                         gnb_cu_ue_f1ap_id = 0;
   nrcgi_s                                          nrcgi;
   ded_si_delivery_needed_ue_item_ext_ies_container ie_exts;
   // ...
@@ -4327,7 +4327,7 @@ struct eutra_tdd_info_s {
 // EUTRA-Mode-Info ::= CHOICE
 struct eutra_mode_info_c {
   struct types_opts {
-    enum options { eutrafdd, eutratdd, choice_ext, nulltype } value;
+    enum options { eutra_fdd, eutra_tdd, choice_ext, nulltype } value;
 
     const char* to_string() const;
   };
@@ -4344,14 +4344,14 @@ struct eutra_mode_info_c {
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
   // getters
-  eutra_fdd_info_s& eutrafdd()
+  eutra_fdd_info_s& eutra_fdd()
   {
-    assert_choice_type(types::eutrafdd, type_, "EUTRA-Mode-Info");
+    assert_choice_type(types::eutra_fdd, type_, "EUTRA-Mode-Info");
     return c.get<eutra_fdd_info_s>();
   }
-  eutra_tdd_info_s& eutratdd()
+  eutra_tdd_info_s& eutra_tdd()
   {
-    assert_choice_type(types::eutratdd, type_, "EUTRA-Mode-Info");
+    assert_choice_type(types::eutra_tdd, type_, "EUTRA-Mode-Info");
     return c.get<eutra_tdd_info_s>();
   }
   protocol_ie_single_container_s<eutra_mode_info_ext_ies_o>& choice_ext()
@@ -4359,14 +4359,14 @@ struct eutra_mode_info_c {
     assert_choice_type(types::choice_ext, type_, "EUTRA-Mode-Info");
     return c.get<protocol_ie_single_container_s<eutra_mode_info_ext_ies_o>>();
   }
-  const eutra_fdd_info_s& eutrafdd() const
+  const eutra_fdd_info_s& eutra_fdd() const
   {
-    assert_choice_type(types::eutrafdd, type_, "EUTRA-Mode-Info");
+    assert_choice_type(types::eutra_fdd, type_, "EUTRA-Mode-Info");
     return c.get<eutra_fdd_info_s>();
   }
-  const eutra_tdd_info_s& eutratdd() const
+  const eutra_tdd_info_s& eutra_tdd() const
   {
-    assert_choice_type(types::eutratdd, type_, "EUTRA-Mode-Info");
+    assert_choice_type(types::eutra_tdd, type_, "EUTRA-Mode-Info");
     return c.get<eutra_tdd_info_s>();
   }
   const protocol_ie_single_container_s<eutra_mode_info_ext_ies_o>& choice_ext() const
@@ -4374,8 +4374,8 @@ struct eutra_mode_info_c {
     assert_choice_type(types::choice_ext, type_, "EUTRA-Mode-Info");
     return c.get<protocol_ie_single_container_s<eutra_mode_info_ext_ies_o>>();
   }
-  eutra_fdd_info_s&                                          set_eutrafdd();
-  eutra_tdd_info_s&                                          set_eutratdd();
+  eutra_fdd_info_s&                                          set_eutra_fdd();
+  eutra_tdd_info_s&                                          set_eutra_tdd();
   protocol_ie_single_container_s<eutra_mode_info_ext_ies_o>& set_choice_ext();
 
 private:
@@ -4455,7 +4455,7 @@ struct error_ind_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { transaction_id, gnb_cu_ue_f1_ap_id, gnb_du_ue_f1_ap_id, cause, crit_diagnostics, nulltype } value;
+      enum options { transaction_id, gnb_cu_ue_f1ap_id, gnb_du_ue_f1ap_id, cause, crit_diagnostics, nulltype } value;
 
       const char* to_string() const;
     };
@@ -4473,13 +4473,13 @@ struct error_ind_ies_o {
     void        to_json(json_writer& j) const;
     // getters
     uint16_t&                 transaction_id();
-    uint64_t&                 gnb_cu_ue_f1_ap_id();
-    uint64_t&                 gnb_du_ue_f1_ap_id();
+    uint64_t&                 gnb_cu_ue_f1ap_id();
+    uint64_t&                 gnb_du_ue_f1ap_id();
     cause_c&                  cause();
     crit_diagnostics_s&       crit_diagnostics();
     const uint16_t&           transaction_id() const;
-    const uint64_t&           gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&           gnb_du_ue_f1_ap_id() const;
+    const uint64_t&           gnb_cu_ue_f1ap_id() const;
+    const uint64_t&           gnb_du_ue_f1ap_id() const;
     const cause_c&            cause() const;
     const crit_diagnostics_s& crit_diagnostics() const;
 
@@ -4503,13 +4503,13 @@ struct error_ind_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      gnb_cu_ue_f1_ap_id_present = false;
-  bool                                                      gnb_du_ue_f1_ap_id_present = false;
-  bool                                                      cause_present              = false;
-  bool                                                      crit_diagnostics_present   = false;
+  bool                                                      gnb_cu_ue_f1ap_id_present = false;
+  bool                                                      gnb_du_ue_f1ap_id_present = false;
+  bool                                                      cause_present             = false;
+  bool                                                      crit_diagnostics_present  = false;
   ie_field_s<integer<uint16_t, 0, 255, true, true>>         transaction_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<cause_c>                                       cause;
   ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
 
@@ -4653,7 +4653,7 @@ struct tx_bw_s {
   bool                    ext             = false;
   bool                    ie_exts_present = false;
   nrscs_e                 nrscs;
-  nrnrb_e                 nrnrb;
+  nrnrb_e                 nr_nrb;
   tx_bw_ext_ies_container ie_exts;
   // ...
 
@@ -4692,7 +4692,7 @@ using sul_info_ext_ies_container = protocol_ext_container_empty_l;
 struct sul_info_s {
   bool                       ext             = false;
   bool                       ie_exts_present = false;
-  uint32_t                   sul_nrarfcn     = 0;
+  uint32_t                   sul_nr_arfcn    = 0;
   tx_bw_s                    sul_tx_bw;
   sul_info_ext_ies_container ie_exts;
   // ...
@@ -4719,7 +4719,7 @@ struct nr_freq_info_s {
   bool                           ext              = false;
   bool                           sul_info_present = false;
   bool                           ie_exts_present  = false;
-  uint32_t                       nrarfcn          = 0;
+  uint32_t                       nr_arfcn         = 0;
   sul_info_s                     sul_info;
   freq_band_list_nr_l_           freq_band_list_nr;
   nr_freq_info_ext_ies_container ie_exts;
@@ -4848,7 +4848,7 @@ using tdd_info_ext_ies_container = protocol_ext_container_empty_l;
 struct tdd_info_s {
   bool                       ext             = false;
   bool                       ie_exts_present = false;
-  nr_freq_info_s             nrfreq_info;
+  nr_freq_info_s             nr_freq_info;
   tx_bw_s                    tx_bw;
   tdd_info_ext_ies_container ie_exts;
   // ...
@@ -5090,20 +5090,20 @@ struct gnb_cu_tnl_assoc_to_rem_item_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { tnlassoc_transport_layer_addressg_nbdu, nulltype } value;
+      enum options { tnl_assoc_transport_layer_address_gnb_du, nulltype } value;
 
       const char* to_string() const;
     };
     typedef enumerated<types_opts> types;
 
     // choice methods
-    types       type() const { return types::tnlassoc_transport_layer_addressg_nbdu; }
+    types       type() const { return types::tnl_assoc_transport_layer_address_gnb_du; }
     SRSASN_CODE pack(bit_ref& bref) const;
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    cp_transport_layer_address_c&       tnlassoc_transport_layer_addressg_nbdu() { return c; }
-    const cp_transport_layer_address_c& tnlassoc_transport_layer_addressg_nbdu() const { return c; }
+    cp_transport_layer_address_c&       tnl_assoc_transport_layer_address_gnb_du() { return c; }
+    const cp_transport_layer_address_c& tnl_assoc_transport_layer_address_gnb_du() const { return c; }
 
   private:
     cp_transport_layer_address_c c;
@@ -5303,7 +5303,7 @@ struct served_cell_info_s {
   bool                               cfgured_eps_tac_present = false;
   bool                               ie_exts_present         = false;
   nrcgi_s                            nrcgi;
-  uint16_t                           nrpci = 0;
+  uint16_t                           nr_pci = 0;
   fixed_octstring<3, true>           five_gs_tac;
   fixed_octstring<2, true>           cfgured_eps_tac;
   served_plmns_list_l                served_plmns;
@@ -5328,15 +5328,15 @@ using served_cells_to_delete_item_ext_ies_o = protocol_ext_empty_o;
 using served_cells_to_modify_item_ext_ies_o = protocol_ext_empty_o;
 
 // TNLAssociationUsage ::= ENUMERATED
-struct tnlassoc_usage_opts {
+struct tnl_assoc_usage_opts {
   enum options { ue, non_ue, both, /*...*/ nulltype } value;
 
   const char* to_string() const;
 };
-typedef enumerated<tnlassoc_usage_opts, true> tnlassoc_usage_e;
+typedef enumerated<tnl_assoc_usage_opts, true> tnl_assoc_usage_e;
 
 // UACPLMN-Item-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
-using uacplmn_item_ext_ies_o = protocol_ext_empty_o;
+using uac_plmn_item_ext_ies_o = protocol_ext_empty_o;
 
 // UACType-List ::= SEQUENCE (SIZE (1..64)) OF UACType-Item
 using uac_type_list_l = dyn_array<uac_type_item_s>;
@@ -5345,12 +5345,12 @@ using ue_associated_lc_f1_conn_item_ext_ies_container = protocol_ext_container_e
 
 // UE-associatedLogicalF1-ConnectionItem ::= SEQUENCE
 struct ue_associated_lc_f1_conn_item_s {
-  bool                                            ext                        = false;
-  bool                                            gnb_cu_ue_f1_ap_id_present = false;
-  bool                                            gnb_du_ue_f1_ap_id_present = false;
-  bool                                            ie_exts_present            = false;
-  uint64_t                                        gnb_cu_ue_f1_ap_id         = 0;
-  uint64_t                                        gnb_du_ue_f1_ap_id         = 0;
+  bool                                            ext                       = false;
+  bool                                            gnb_cu_ue_f1ap_id_present = false;
+  bool                                            gnb_du_ue_f1ap_id_present = false;
+  bool                                            ie_exts_present           = false;
+  uint64_t                                        gnb_cu_ue_f1ap_id         = 0;
+  uint64_t                                        gnb_du_ue_f1ap_id         = 0;
   ue_associated_lc_f1_conn_item_ext_ies_container ie_exts;
   // ...
 
@@ -5365,7 +5365,7 @@ using gnb_cu_tnl_assoc_failed_to_setup_item_ext_ies_container = protocol_ext_con
 // GNB-CU-TNL-Association-Failed-To-Setup-Item ::= SEQUENCE
 struct gnb_cu_tnl_assoc_failed_to_setup_item_s {
   bool                                                    ie_exts_present = false;
-  cp_transport_layer_address_c                            tnlassoc_transport_layer_address;
+  cp_transport_layer_address_c                            tnl_assoc_transport_layer_address;
   cause_c                                                 cause;
   gnb_cu_tnl_assoc_failed_to_setup_item_ext_ies_container ie_exts;
 
@@ -5380,7 +5380,7 @@ using gnb_cu_tnl_assoc_setup_item_ext_ies_container = protocol_ext_container_emp
 // GNB-CU-TNL-Association-Setup-Item ::= SEQUENCE
 struct gnb_cu_tnl_assoc_setup_item_s {
   bool                                          ie_exts_present = false;
-  cp_transport_layer_address_c                  tnlassoc_transport_layer_address;
+  cp_transport_layer_address_c                  tnl_assoc_transport_layer_address;
   gnb_cu_tnl_assoc_setup_item_ext_ies_container ie_exts;
 
   // sequence methods
@@ -5394,8 +5394,8 @@ using gnb_cu_tnl_assoc_to_add_item_ext_ies_container = protocol_ext_container_em
 // GNB-CU-TNL-Association-To-Add-Item ::= SEQUENCE
 struct gnb_cu_tnl_assoc_to_add_item_s {
   bool                                           ie_exts_present = false;
-  cp_transport_layer_address_c                   tnlassoc_transport_layer_address;
-  tnlassoc_usage_e                               tnlassoc_usage;
+  cp_transport_layer_address_c                   tnl_assoc_transport_layer_address;
+  tnl_assoc_usage_e                              tnl_assoc_usage;
   gnb_cu_tnl_assoc_to_add_item_ext_ies_container ie_exts;
 
   // sequence methods
@@ -5406,7 +5406,7 @@ struct gnb_cu_tnl_assoc_to_add_item_s {
 
 // GNB-CU-TNL-Association-To-Remove-Item ::= SEQUENCE
 struct gnb_cu_tnl_assoc_to_rem_item_s {
-  cp_transport_layer_address_c                                     tnlassoc_transport_layer_address;
+  cp_transport_layer_address_c                                     tnl_assoc_transport_layer_address;
   protocol_ext_container_l<gnb_cu_tnl_assoc_to_rem_item_ext_ies_o> ie_exts;
 
   // sequence methods
@@ -5419,10 +5419,10 @@ using gnb_cu_tnl_assoc_to_upd_item_ext_ies_container = protocol_ext_container_em
 
 // GNB-CU-TNL-Association-To-Update-Item ::= SEQUENCE
 struct gnb_cu_tnl_assoc_to_upd_item_s {
-  bool                                           tnlassoc_usage_present = false;
-  bool                                           ie_exts_present        = false;
-  cp_transport_layer_address_c                   tnlassoc_transport_layer_address;
-  tnlassoc_usage_e                               tnlassoc_usage;
+  bool                                           tnl_assoc_usage_present = false;
+  bool                                           ie_exts_present         = false;
+  cp_transport_layer_address_c                   tnl_assoc_transport_layer_address;
+  tnl_assoc_usage_e                              tnl_assoc_usage;
   gnb_cu_tnl_assoc_to_upd_item_ext_ies_container ie_exts;
 
   // sequence methods
@@ -5453,10 +5453,10 @@ using gnb_du_tnl_assoc_to_rem_item_ext_ies_container = protocol_ext_container_em
 
 // GNB-DU-TNL-Association-To-Remove-Item ::= SEQUENCE
 struct gnb_du_tnl_assoc_to_rem_item_s {
-  bool                                           tnlassoc_transport_layer_addressg_nbcu_present = false;
-  bool                                           ie_exts_present                                = false;
-  cp_transport_layer_address_c                   tnlassoc_transport_layer_address;
-  cp_transport_layer_address_c                   tnlassoc_transport_layer_addressg_nbcu;
+  bool                                           tnl_assoc_transport_layer_address_gnb_cu_present = false;
+  bool                                           ie_exts_present                                  = false;
+  cp_transport_layer_address_c                   tnl_assoc_transport_layer_address;
+  cp_transport_layer_address_c                   tnl_assoc_transport_layer_address_gnb_cu;
   gnb_du_tnl_assoc_to_rem_item_ext_ies_container ie_exts;
 
   // sequence methods
@@ -5596,7 +5596,7 @@ struct protected_eutra_res_item_s {
 };
 
 // RANUEPagingIdentity-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
-using ranue_paging_id_ext_ies_o = protocol_ext_empty_o;
+using ran_ue_paging_id_ext_ies_o = protocol_ext_empty_o;
 
 // ResourceCoordinationEUTRACellInfo-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 struct res_coordination_eutra_cell_info_ext_ies_o {
@@ -5724,7 +5724,7 @@ struct srbs_failed_to_be_setup_item_s {
   bool                                           ext             = false;
   bool                                           cause_present   = false;
   bool                                           ie_exts_present = false;
-  uint8_t                                        srbid           = 0;
+  uint8_t                                        srb_id          = 0;
   cause_c                                        cause;
   srbs_failed_to_be_setup_item_ext_ies_container ie_exts;
   // ...
@@ -5742,7 +5742,7 @@ struct srbs_failed_to_be_setup_mod_item_s {
   bool                                               ext             = false;
   bool                                               cause_present   = false;
   bool                                               ie_exts_present = false;
-  uint8_t                                            srbid           = 0;
+  uint8_t                                            srb_id          = 0;
   cause_c                                            cause;
   srbs_failed_to_be_setup_mod_item_ext_ies_container ie_exts;
   // ...
@@ -5759,7 +5759,7 @@ using srbs_modified_item_ext_ies_container = protocol_ext_container_empty_l;
 struct srbs_modified_item_s {
   bool                                 ext             = false;
   bool                                 ie_exts_present = false;
-  uint8_t                              srbid           = 0;
+  uint8_t                              srb_id          = 0;
   uint8_t                              lcid            = 1;
   srbs_modified_item_ext_ies_container ie_exts;
   // ...
@@ -5776,7 +5776,7 @@ using srbs_required_to_be_released_item_ext_ies_container = protocol_ext_contain
 struct srbs_required_to_be_released_item_s {
   bool                                                ext             = false;
   bool                                                ie_exts_present = false;
-  uint8_t                                             srbid           = 0;
+  uint8_t                                             srb_id          = 0;
   srbs_required_to_be_released_item_ext_ies_container ie_exts;
   // ...
 
@@ -5792,7 +5792,7 @@ using srbs_setup_item_ext_ies_container = protocol_ext_container_empty_l;
 struct srbs_setup_item_s {
   bool                              ext             = false;
   bool                              ie_exts_present = false;
-  uint8_t                           srbid           = 0;
+  uint8_t                           srb_id          = 0;
   uint8_t                           lcid            = 1;
   srbs_setup_item_ext_ies_container ie_exts;
   // ...
@@ -5809,7 +5809,7 @@ using srbs_setup_mod_item_ext_ies_container = protocol_ext_container_empty_l;
 struct srbs_setup_mod_item_s {
   bool                                  ext             = false;
   bool                                  ie_exts_present = false;
-  uint8_t                               srbid           = 0;
+  uint8_t                               srb_id          = 0;
   uint8_t                               lcid            = 1;
   srbs_setup_mod_item_ext_ies_container ie_exts;
   // ...
@@ -5826,7 +5826,7 @@ using srbs_to_be_released_item_ext_ies_container = protocol_ext_container_empty_
 struct srbs_to_be_released_item_s {
   bool                                       ext             = false;
   bool                                       ie_exts_present = false;
-  uint8_t                                    srbid           = 0;
+  uint8_t                                    srb_id          = 0;
   srbs_to_be_released_item_ext_ies_container ie_exts;
   // ...
 
@@ -5843,7 +5843,7 @@ struct srbs_to_be_setup_item_s {
   bool                                    ext              = false;
   bool                                    dupl_ind_present = false;
   bool                                    ie_exts_present  = false;
-  uint8_t                                 srbid            = 0;
+  uint8_t                                 srb_id           = 0;
   dupl_ind_e                              dupl_ind;
   srbs_to_be_setup_item_ext_ies_container ie_exts;
   // ...
@@ -5861,7 +5861,7 @@ struct srbs_to_be_setup_mod_item_s {
   bool                                        ext              = false;
   bool                                        dupl_ind_present = false;
   bool                                        ie_exts_present  = false;
-  uint8_t                                     srbid            = 0;
+  uint8_t                                     srb_id           = 0;
   dupl_ind_e                                  dupl_ind;
   srbs_to_be_setup_mod_item_ext_ies_container ie_exts;
   // ...
@@ -5896,7 +5896,7 @@ using served_cells_to_delete_item_ext_ies_container = protocol_ext_container_emp
 struct served_cells_to_delete_item_s {
   bool                                          ext             = false;
   bool                                          ie_exts_present = false;
-  nrcgi_s                                       old_nrcgi;
+  nrcgi_s                                       old_nr_cgi;
   served_cells_to_delete_item_ext_ies_container ie_exts;
   // ...
 
@@ -5913,7 +5913,7 @@ struct served_cells_to_modify_item_s {
   bool                                          ext                     = false;
   bool                                          gnb_du_sys_info_present = false;
   bool                                          ie_exts_present         = false;
-  nrcgi_s                                       old_nrcgi;
+  nrcgi_s                                       old_nr_cgi;
   served_cell_info_s                            served_cell_info;
   gnb_du_sys_info_s                             gnb_du_sys_info;
   served_cells_to_modify_item_ext_ies_container ie_exts;
@@ -5925,14 +5925,14 @@ struct served_cells_to_modify_item_s {
   void        to_json(json_writer& j) const;
 };
 
-using uacplmn_item_ext_ies_container = protocol_ext_container_empty_l;
+using uac_plmn_item_ext_ies_container = protocol_ext_container_empty_l;
 
 // UACPLMN-Item ::= SEQUENCE
-struct uacplmn_item_s {
-  bool                           ie_exts_present = false;
-  fixed_octstring<3, true>       plmn_id;
-  uac_type_list_l                uac_type_list;
-  uacplmn_item_ext_ies_container ie_exts;
+struct uac_plmn_item_s {
+  bool                            ie_exts_present = false;
+  fixed_octstring<3, true>        plmn_id;
+  uac_type_list_l                 uac_type_list;
+  uac_plmn_item_ext_ies_container ie_exts;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -6403,13 +6403,13 @@ struct protected_eutra_res_item_ies_o {
   static presence_e get_presence(const uint32_t& id);
 };
 
-using ranue_paging_id_ext_ies_container = protocol_ext_container_empty_l;
+using ran_ue_paging_id_ext_ies_container = protocol_ext_container_empty_l;
 
 // RANUEPagingIdentity ::= SEQUENCE
-struct ranue_paging_id_s {
-  bool                              ie_exts_present = false;
-  fixed_bitstring<40, false, true>  irnti;
-  ranue_paging_id_ext_ies_container ie_exts;
+struct ran_ue_paging_id_s {
+  bool                               ie_exts_present = false;
+  fixed_bitstring<40, false, true>   irnti;
+  ran_ue_paging_id_ext_ies_container ie_exts;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -7045,7 +7045,7 @@ struct served_cells_to_modify_item_ies_o {
 using uac_assist_info_ext_ies_o = protocol_ext_empty_o;
 
 // UACPLMN-List ::= SEQUENCE (SIZE (1..12)) OF UACPLMN-Item
-using uacplmn_list_l = dyn_array<uacplmn_item_s>;
+using uac_plmn_list_l = dyn_array<uac_plmn_item_s>;
 
 // UE-associatedLogicalF1-ConnectionItemResAck ::= OBJECT SET OF F1AP-PROTOCOL-IES
 struct ue_associated_lc_f1_conn_item_res_ack_o {
@@ -7155,12 +7155,12 @@ struct gnb_du_cfg_query_opts {
 typedef enumerated<gnb_du_cfg_query_opts, true> gnb_du_cfg_query_e;
 
 // GNBDUOverloadInformation ::= ENUMERATED
-struct gnbdu_overload_info_opts {
+struct gnb_du_overload_info_opts {
   enum options { overloaded, not_overloaded, nulltype } value;
 
   const char* to_string() const;
 };
-typedef enumerated<gnbdu_overload_info_opts> gnbdu_overload_info_e;
+typedef enumerated<gnb_du_overload_info_opts> gnb_du_overload_info_e;
 
 // IgnoreResourceCoordinationContainer ::= ENUMERATED
 struct ignore_res_coordination_container_opts {
@@ -7250,7 +7250,7 @@ typedef enumerated<paging_drx_opts, true> paging_drx_e;
 // PagingIdentity ::= CHOICE
 struct paging_id_c {
   struct types_opts {
-    enum options { ranue_paging_id, cnue_paging_id, choice_ext, nulltype } value;
+    enum options { ran_ue_paging_id, cn_ue_paging_id, choice_ext, nulltype } value;
 
     const char* to_string() const;
   };
@@ -7267,50 +7267,50 @@ struct paging_id_c {
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
   // getters
-  ranue_paging_id_s& ranue_paging_id()
+  ran_ue_paging_id_s& ran_ue_paging_id()
   {
-    assert_choice_type(types::ranue_paging_id, type_, "PagingIdentity");
-    return c.get<ranue_paging_id_s>();
+    assert_choice_type(types::ran_ue_paging_id, type_, "PagingIdentity");
+    return c.get<ran_ue_paging_id_s>();
   }
-  cnue_paging_id_c& cnue_paging_id()
+  cn_ue_paging_id_c& cn_ue_paging_id()
   {
-    assert_choice_type(types::cnue_paging_id, type_, "PagingIdentity");
-    return c.get<cnue_paging_id_c>();
+    assert_choice_type(types::cn_ue_paging_id, type_, "PagingIdentity");
+    return c.get<cn_ue_paging_id_c>();
   }
   protocol_ie_single_container_s<paging_id_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "PagingIdentity");
     return c.get<protocol_ie_single_container_s<paging_id_ext_ies_o>>();
   }
-  const ranue_paging_id_s& ranue_paging_id() const
+  const ran_ue_paging_id_s& ran_ue_paging_id() const
   {
-    assert_choice_type(types::ranue_paging_id, type_, "PagingIdentity");
-    return c.get<ranue_paging_id_s>();
+    assert_choice_type(types::ran_ue_paging_id, type_, "PagingIdentity");
+    return c.get<ran_ue_paging_id_s>();
   }
-  const cnue_paging_id_c& cnue_paging_id() const
+  const cn_ue_paging_id_c& cn_ue_paging_id() const
   {
-    assert_choice_type(types::cnue_paging_id, type_, "PagingIdentity");
-    return c.get<cnue_paging_id_c>();
+    assert_choice_type(types::cn_ue_paging_id, type_, "PagingIdentity");
+    return c.get<cn_ue_paging_id_c>();
   }
   const protocol_ie_single_container_s<paging_id_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "PagingIdentity");
     return c.get<protocol_ie_single_container_s<paging_id_ext_ies_o>>();
   }
-  ranue_paging_id_s&                                   set_ranue_paging_id();
-  cnue_paging_id_c&                                    set_cnue_paging_id();
+  ran_ue_paging_id_s&                                  set_ran_ue_paging_id();
+  cn_ue_paging_id_c&                                   set_cn_ue_paging_id();
   protocol_ie_single_container_s<paging_id_ext_ies_o>& set_choice_ext();
 
 private:
-  types                                                                                                     type_;
-  choice_buffer_t<cnue_paging_id_c, protocol_ie_single_container_s<paging_id_ext_ies_o>, ranue_paging_id_s> c;
+  types                                                                                                       type_;
+  choice_buffer_t<cn_ue_paging_id_c, protocol_ie_single_container_s<paging_id_ext_ies_o>, ran_ue_paging_id_s> c;
 
   void destroy_();
 };
 
 // PagingOrigin ::= ENUMERATED
 struct paging_origin_opts {
-  enum options { non_minus3gpp, /*...*/ nulltype } value;
+  enum options { non_neg3gpp, /*...*/ nulltype } value;
   typedef int8_t number_type;
 
   const char* to_string() const;
@@ -7482,7 +7482,7 @@ struct res_coordination_transfer_info_s {
   bool                                             ext                                      = false;
   bool                                             res_coordination_eutra_cell_info_present = false;
   bool                                             ie_exts_present                          = false;
-  fixed_bitstring<28, false, true>                 menb_cell_id;
+  fixed_bitstring<28, false, true>                 m_enb_cell_id;
   res_coordination_eutra_cell_info_s               res_coordination_eutra_cell_info;
   res_coordination_transfer_info_ext_ies_container ie_exts;
   // ...
@@ -7588,7 +7588,7 @@ using uac_assist_info_ext_ies_container = protocol_ext_container_empty_l;
 // UAC-Assistance-Info ::= SEQUENCE
 struct uac_assist_info_s {
   bool                              ie_exts_present = false;
-  uacplmn_list_l                    uacplmn_list;
+  uac_plmn_list_l                   uac_plmn_list;
   uac_assist_info_ext_ies_container ie_exts;
 
   // sequence methods
@@ -7930,7 +7930,7 @@ struct f1_setup_resp_ies_o {
 };
 
 // GNBCUConfigurationUpdateAcknowledgeIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct gnbcu_cfg_upd_ack_ies_o {
+struct gnb_cu_cfg_upd_ack_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
@@ -7995,7 +7995,7 @@ struct gnbcu_cfg_upd_ack_ies_o {
 };
 
 // GNBCUConfigurationUpdateFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct gnbcu_cfg_upd_fail_ies_o {
+struct gnb_cu_cfg_upd_fail_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
@@ -8043,7 +8043,7 @@ struct gnbcu_cfg_upd_fail_ies_o {
 };
 
 // GNBCUConfigurationUpdateIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct gnbcu_cfg_upd_ies_o {
+struct gnb_cu_cfg_upd_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
@@ -8116,7 +8116,7 @@ struct gnbcu_cfg_upd_ies_o {
 };
 
 // GNBDUConfigurationUpdateAcknowledgeIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct gnbdu_cfg_upd_ack_ies_o {
+struct gnb_du_cfg_upd_ack_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
@@ -8170,7 +8170,7 @@ struct gnbdu_cfg_upd_ack_ies_o {
 };
 
 // GNBDUConfigurationUpdateFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct gnbdu_cfg_upd_fail_ies_o {
+struct gnb_du_cfg_upd_fail_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
@@ -8218,7 +8218,7 @@ struct gnbdu_cfg_upd_fail_ies_o {
 };
 
 // GNBDUConfigurationUpdateIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct gnbdu_cfg_upd_ies_o {
+struct gnb_du_cfg_upd_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
@@ -8288,7 +8288,7 @@ struct gnbdu_cfg_upd_ies_o {
 };
 
 // GNBDUResourceCoordinationRequest-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct gnbdu_res_coordination_request_ies_o {
+struct gnb_du_res_coordination_request_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
@@ -8342,7 +8342,7 @@ struct gnbdu_res_coordination_request_ies_o {
 };
 
 // GNBDUResourceCoordinationResponse-IEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct gnbdu_res_coordination_resp_ies_o {
+struct gnb_du_res_coordination_resp_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
@@ -8386,11 +8386,11 @@ struct gnbdu_res_coordination_resp_ies_o {
 };
 
 // GNBDUStatusIndicationIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct gnbdu_status_ind_ies_o {
+struct gnb_du_status_ind_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { transaction_id, gnbdu_overload_info, nulltype } value;
+      enum options { transaction_id, gnb_du_overload_info, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
@@ -8409,10 +8409,10 @@ struct gnbdu_status_ind_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint16_t&                    transaction_id();
-    gnbdu_overload_info_e&       gnbdu_overload_info();
-    const uint16_t&              transaction_id() const;
-    const gnbdu_overload_info_e& gnbdu_overload_info() const;
+    uint16_t&                     transaction_id();
+    gnb_du_overload_info_e&       gnb_du_overload_info();
+    const uint16_t&               transaction_id() const;
+    const gnb_du_overload_info_e& gnb_du_overload_info() const;
 
   private:
     types               type_;
@@ -8430,16 +8430,16 @@ struct gnbdu_status_ind_ies_o {
 };
 
 // InitialULRRCMessageTransferIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct init_ulrrc_msg_transfer_ies_o {
+struct init_ul_rrc_msg_transfer_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
       enum options {
-        gnb_du_ue_f1_ap_id,
+        gnb_du_ue_f1ap_id,
         nrcgi,
         c_rnti,
         rrc_container,
-        duto_currc_container,
+        du_to_cu_rrc_container,
         sul_access_ind,
         transaction_id,
         ranueid,
@@ -8462,20 +8462,20 @@ struct init_ulrrc_msg_transfer_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                        gnb_du_ue_f1_ap_id();
+    uint64_t&                        gnb_du_ue_f1ap_id();
     nrcgi_s&                         nrcgi();
     uint32_t&                        c_rnti();
     unbounded_octstring<true>&       rrc_container();
-    unbounded_octstring<true>&       duto_currc_container();
+    unbounded_octstring<true>&       du_to_cu_rrc_container();
     sul_access_ind_e&                sul_access_ind();
     uint16_t&                        transaction_id();
     fixed_octstring<8, true>&        ranueid();
     unbounded_octstring<true>&       rrc_container_rrc_setup_complete();
-    const uint64_t&                  gnb_du_ue_f1_ap_id() const;
+    const uint64_t&                  gnb_du_ue_f1ap_id() const;
     const nrcgi_s&                   nrcgi() const;
     const uint32_t&                  c_rnti() const;
     const unbounded_octstring<true>& rrc_container() const;
-    const unbounded_octstring<true>& duto_currc_container() const;
+    const unbounded_octstring<true>& du_to_cu_rrc_container() const;
     const sul_access_ind_e&          sul_access_ind() const;
     const uint16_t&                  transaction_id() const;
     const fixed_octstring<8, true>&  ranueid() const;
@@ -8545,7 +8545,7 @@ struct notify_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { gnb_cu_ue_f1_ap_id, gnb_du_ue_f1_ap_id, drb_notify_list, nulltype } value;
+      enum options { gnb_cu_ue_f1ap_id, gnb_du_ue_f1ap_id, drb_notify_list, nulltype } value;
 
       const char* to_string() const;
     };
@@ -8562,11 +8562,11 @@ struct notify_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                gnb_cu_ue_f1_ap_id();
-    uint64_t&                gnb_du_ue_f1_ap_id();
+    uint64_t&                gnb_cu_ue_f1ap_id();
+    uint64_t&                gnb_du_ue_f1ap_id();
     drb_notify_list_l&       drb_notify_list();
-    const uint64_t&          gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&          gnb_du_ue_f1_ap_id() const;
+    const uint64_t&          gnb_cu_ue_f1ap_id() const;
+    const uint64_t&          gnb_du_ue_f1ap_id() const;
     const drb_notify_list_l& drb_notify_list() const;
 
   private:
@@ -8835,7 +8835,7 @@ struct paging_ies_o {
 template <class ies_set_paramT_>
 using private_ie_container_l = dyn_seq_of<private_ie_field_s<ies_set_paramT_>, 1, 65535, true>;
 
-struct f1_ap_private_ies_empty_o {
+struct f1ap_private_ies_empty_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
@@ -8853,14 +8853,14 @@ struct f1_ap_private_ies_empty_o {
   };
 };
 // PrivateMessage-IEs ::= OBJECT SET OF F1AP-PRIVATE-IES
-using private_msg_ies_o = f1_ap_private_ies_empty_o;
+using private_msg_ies_o = f1ap_private_ies_empty_o;
 
 // RRCDeliveryReportIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 struct rrc_delivery_report_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { gnb_cu_ue_f1_ap_id, gnb_du_ue_f1_ap_id, rrc_delivery_status, srbid, nulltype } value;
+      enum options { gnb_cu_ue_f1ap_id, gnb_du_ue_f1ap_id, rrc_delivery_status, srbid, nulltype } value;
 
       const char* to_string() const;
     };
@@ -8877,12 +8877,12 @@ struct rrc_delivery_report_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                    gnb_cu_ue_f1_ap_id();
-    uint64_t&                    gnb_du_ue_f1_ap_id();
+    uint64_t&                    gnb_cu_ue_f1ap_id();
+    uint64_t&                    gnb_du_ue_f1ap_id();
     rrc_delivery_status_s&       rrc_delivery_status();
     uint8_t&                     srbid();
-    const uint64_t&              gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&              gnb_du_ue_f1_ap_id() const;
+    const uint64_t&              gnb_cu_ue_f1ap_id() const;
+    const uint64_t&              gnb_du_ue_f1ap_id() const;
     const rrc_delivery_status_s& rrc_delivery_status() const;
     const uint8_t&               srbid() const;
 
@@ -8998,7 +8998,7 @@ struct sys_info_delivery_cmd_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { transaction_id, nrcgi, sitype_list, confirmed_ueid, nulltype } value;
+      enum options { transaction_id, nrcgi, sitype_list, confirmed_ue_id, nulltype } value;
 
       const char* to_string() const;
     };
@@ -9018,11 +9018,11 @@ struct sys_info_delivery_cmd_ies_o {
     uint16_t&            transaction_id();
     nrcgi_s&             nrcgi();
     sitype_list_l&       sitype_list();
-    uint64_t&            confirmed_ueid();
+    uint64_t&            confirmed_ue_id();
     const uint16_t&      transaction_id() const;
     const nrcgi_s&       nrcgi() const;
     const sitype_list_l& sitype_list() const;
-    const uint64_t&      confirmed_ueid() const;
+    const uint64_t&      confirmed_ue_id() const;
 
   private:
     types                                   type_;
@@ -9045,8 +9045,8 @@ struct ue_context_mod_confirm_ies_o {
   struct value_c {
     struct types_opts {
       enum options {
-        gnb_cu_ue_f1_ap_id,
-        gnb_du_ue_f1_ap_id,
+        gnb_cu_ue_f1ap_id,
+        gnb_du_ue_f1ap_id,
         res_coordination_transfer_container,
         drbs_modified_conf_list,
         rrc_container,
@@ -9071,16 +9071,16 @@ struct ue_context_mod_confirm_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                               gnb_cu_ue_f1_ap_id();
-    uint64_t&                               gnb_du_ue_f1_ap_id();
+    uint64_t&                               gnb_cu_ue_f1ap_id();
+    uint64_t&                               gnb_du_ue_f1ap_id();
     unbounded_octstring<true>&              res_coordination_transfer_container();
     drbs_modified_conf_list_l&              drbs_modified_conf_list();
     unbounded_octstring<true>&              rrc_container();
     crit_diagnostics_s&                     crit_diagnostics();
     execute_dupl_e&                         execute_dupl();
     res_coordination_transfer_info_s&       res_coordination_transfer_info();
-    const uint64_t&                         gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&                         gnb_du_ue_f1_ap_id() const;
+    const uint64_t&                         gnb_cu_ue_f1ap_id() const;
+    const uint64_t&                         gnb_du_ue_f1ap_id() const;
     const unbounded_octstring<true>&        res_coordination_transfer_container() const;
     const drbs_modified_conf_list_l&        drbs_modified_conf_list() const;
     const unbounded_octstring<true>&        rrc_container() const;
@@ -9112,7 +9112,7 @@ struct ue_context_mod_fail_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { gnb_cu_ue_f1_ap_id, gnb_du_ue_f1_ap_id, cause, crit_diagnostics, nulltype } value;
+      enum options { gnb_cu_ue_f1ap_id, gnb_du_ue_f1ap_id, cause, crit_diagnostics, nulltype } value;
 
       const char* to_string() const;
     };
@@ -9129,12 +9129,12 @@ struct ue_context_mod_fail_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                 gnb_cu_ue_f1_ap_id();
-    uint64_t&                 gnb_du_ue_f1_ap_id();
+    uint64_t&                 gnb_cu_ue_f1ap_id();
+    uint64_t&                 gnb_du_ue_f1ap_id();
     cause_c&                  cause();
     crit_diagnostics_s&       crit_diagnostics();
-    const uint64_t&           gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&           gnb_du_ue_f1_ap_id() const;
+    const uint64_t&           gnb_cu_ue_f1ap_id() const;
+    const uint64_t&           gnb_du_ue_f1ap_id() const;
     const cause_c&            cause() const;
     const crit_diagnostics_s& crit_diagnostics() const;
 
@@ -9158,7 +9158,7 @@ struct ue_context_mod_refuse_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { gnb_cu_ue_f1_ap_id, gnb_du_ue_f1_ap_id, cause, crit_diagnostics, nulltype } value;
+      enum options { gnb_cu_ue_f1ap_id, gnb_du_ue_f1ap_id, cause, crit_diagnostics, nulltype } value;
 
       const char* to_string() const;
     };
@@ -9175,12 +9175,12 @@ struct ue_context_mod_refuse_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                 gnb_cu_ue_f1_ap_id();
-    uint64_t&                 gnb_du_ue_f1_ap_id();
+    uint64_t&                 gnb_cu_ue_f1ap_id();
+    uint64_t&                 gnb_du_ue_f1ap_id();
     cause_c&                  cause();
     crit_diagnostics_s&       crit_diagnostics();
-    const uint64_t&           gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&           gnb_du_ue_f1_ap_id() const;
+    const uint64_t&           gnb_cu_ue_f1ap_id() const;
+    const uint64_t&           gnb_du_ue_f1ap_id() const;
     const cause_c&            cause() const;
     const crit_diagnostics_s& crit_diagnostics() const;
 
@@ -9205,13 +9205,13 @@ struct ue_context_mod_request_ies_o {
   struct value_c {
     struct types_opts {
       enum options {
-        gnb_cu_ue_f1_ap_id,
-        gnb_du_ue_f1_ap_id,
+        gnb_cu_ue_f1ap_id,
+        gnb_du_ue_f1ap_id,
         sp_cell_id,
         serv_cell_idx,
         sp_cell_ul_cfgured,
         drx_cycle,
-        cuto_durrc_info,
+        cu_to_du_rrc_info,
         tx_action_ind,
         res_coordination_transfer_container,
         rrc_recfg_complete_ind,
@@ -9254,13 +9254,13 @@ struct ue_context_mod_request_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                               gnb_cu_ue_f1_ap_id();
-    uint64_t&                               gnb_du_ue_f1_ap_id();
+    uint64_t&                               gnb_cu_ue_f1ap_id();
+    uint64_t&                               gnb_du_ue_f1ap_id();
     nrcgi_s&                                sp_cell_id();
     uint8_t&                                serv_cell_idx();
     cell_ul_cfgured_e&                      sp_cell_ul_cfgured();
     drx_cycle_s&                            drx_cycle();
-    cuto_durrc_info_s&                      cuto_durrc_info();
+    cu_to_du_rrc_info_s&                    cu_to_du_rrc_info();
     tx_action_ind_e&                        tx_action_ind();
     unbounded_octstring<true>&              res_coordination_transfer_container();
     rrc_recfg_complete_ind_e&               rrc_recfg_complete_ind();
@@ -9285,13 +9285,13 @@ struct ue_context_mod_request_ies_o {
     uint8_t&                                serving_cell_mo();
     needfor_gap_e&                          needfor_gap();
     full_cfg_e&                             full_cfg();
-    const uint64_t&                         gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&                         gnb_du_ue_f1_ap_id() const;
+    const uint64_t&                         gnb_cu_ue_f1ap_id() const;
+    const uint64_t&                         gnb_du_ue_f1ap_id() const;
     const nrcgi_s&                          sp_cell_id() const;
     const uint8_t&                          serv_cell_idx() const;
     const cell_ul_cfgured_e&                sp_cell_ul_cfgured() const;
     const drx_cycle_s&                      drx_cycle() const;
-    const cuto_durrc_info_s&                cuto_durrc_info() const;
+    const cu_to_du_rrc_info_s&              cu_to_du_rrc_info() const;
     const tx_action_ind_e&                  tx_action_ind() const;
     const unbounded_octstring<true>&        res_coordination_transfer_container() const;
     const rrc_recfg_complete_ind_e&         rrc_recfg_complete_ind() const;
@@ -9319,7 +9319,7 @@ struct ue_context_mod_request_ies_o {
 
   private:
     types type_;
-    choice_buffer_t<cuto_durrc_info_s,
+    choice_buffer_t<cu_to_du_rrc_info_s,
                     drbs_to_be_modified_list_l,
                     drbs_to_be_released_list_l,
                     drbs_to_be_setup_mod_list_l,
@@ -9352,10 +9352,10 @@ struct ue_context_mod_required_ies_o {
   struct value_c {
     struct types_opts {
       enum options {
-        gnb_cu_ue_f1_ap_id,
-        gnb_du_ue_f1_ap_id,
+        gnb_cu_ue_f1ap_id,
+        gnb_du_ue_f1ap_id,
         res_coordination_transfer_container,
-        duto_currc_info,
+        du_to_cu_rrc_info,
         drbs_required_to_be_modified_list,
         srbs_required_to_be_released_list,
         drbs_required_to_be_released_list,
@@ -9378,18 +9378,18 @@ struct ue_context_mod_required_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                                  gnb_cu_ue_f1_ap_id();
-    uint64_t&                                  gnb_du_ue_f1_ap_id();
+    uint64_t&                                  gnb_cu_ue_f1ap_id();
+    uint64_t&                                  gnb_du_ue_f1ap_id();
     unbounded_octstring<true>&                 res_coordination_transfer_container();
-    duto_currc_info_s&                         duto_currc_info();
+    du_to_cu_rrc_info_s&                       du_to_cu_rrc_info();
     drbs_required_to_be_modified_list_l&       drbs_required_to_be_modified_list();
     srbs_required_to_be_released_list_l&       srbs_required_to_be_released_list();
     drbs_required_to_be_released_list_l&       drbs_required_to_be_released_list();
     cause_c&                                   cause();
-    const uint64_t&                            gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&                            gnb_du_ue_f1_ap_id() const;
+    const uint64_t&                            gnb_cu_ue_f1ap_id() const;
+    const uint64_t&                            gnb_du_ue_f1ap_id() const;
     const unbounded_octstring<true>&           res_coordination_transfer_container() const;
-    const duto_currc_info_s&                   duto_currc_info() const;
+    const du_to_cu_rrc_info_s&                 du_to_cu_rrc_info() const;
     const drbs_required_to_be_modified_list_l& drbs_required_to_be_modified_list() const;
     const srbs_required_to_be_released_list_l& srbs_required_to_be_released_list() const;
     const drbs_required_to_be_released_list_l& drbs_required_to_be_released_list() const;
@@ -9400,7 +9400,7 @@ struct ue_context_mod_required_ies_o {
     choice_buffer_t<cause_c,
                     drbs_required_to_be_modified_list_l,
                     drbs_required_to_be_released_list_l,
-                    duto_currc_info_s,
+                    du_to_cu_rrc_info_s,
                     srbs_required_to_be_released_list_l,
                     unbounded_octstring<true>>
         c;
@@ -9422,10 +9422,10 @@ struct ue_context_mod_resp_ies_o {
   struct value_c {
     struct types_opts {
       enum options {
-        gnb_cu_ue_f1_ap_id,
-        gnb_du_ue_f1_ap_id,
+        gnb_cu_ue_f1ap_id,
+        gnb_du_ue_f1ap_id,
         res_coordination_transfer_container,
-        duto_currc_info,
+        du_to_cu_rrc_info,
         drbs_setup_mod_list,
         drbs_modified_list,
         srbs_failed_to_be_setup_mod_list,
@@ -9457,10 +9457,10 @@ struct ue_context_mod_resp_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                                 gnb_cu_ue_f1_ap_id();
-    uint64_t&                                 gnb_du_ue_f1_ap_id();
+    uint64_t&                                 gnb_cu_ue_f1ap_id();
+    uint64_t&                                 gnb_du_ue_f1ap_id();
     unbounded_octstring<true>&                res_coordination_transfer_container();
-    duto_currc_info_s&                        duto_currc_info();
+    du_to_cu_rrc_info_s&                      du_to_cu_rrc_info();
     drbs_setup_mod_list_l&                    drbs_setup_mod_list();
     drbs_modified_list_l&                     drbs_modified_list();
     srbs_failed_to_be_setup_mod_list_l&       srbs_failed_to_be_setup_mod_list();
@@ -9474,10 +9474,10 @@ struct ue_context_mod_resp_ies_o {
     srbs_setup_mod_list_l&                    srbs_setup_mod_list();
     srbs_modified_list_l&                     srbs_modified_list();
     full_cfg_e&                               full_cfg();
-    const uint64_t&                           gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&                           gnb_du_ue_f1_ap_id() const;
+    const uint64_t&                           gnb_cu_ue_f1ap_id() const;
+    const uint64_t&                           gnb_du_ue_f1ap_id() const;
     const unbounded_octstring<true>&          res_coordination_transfer_container() const;
-    const duto_currc_info_s&                  duto_currc_info() const;
+    const du_to_cu_rrc_info_s&                du_to_cu_rrc_info() const;
     const drbs_setup_mod_list_l&              drbs_setup_mod_list() const;
     const drbs_modified_list_l&               drbs_modified_list() const;
     const srbs_failed_to_be_setup_mod_list_l& srbs_failed_to_be_setup_mod_list() const;
@@ -9500,7 +9500,7 @@ struct ue_context_mod_resp_ies_o {
                     drbs_failed_to_be_setup_mod_list_l,
                     drbs_modified_list_l,
                     drbs_setup_mod_list_l,
-                    duto_currc_info_s,
+                    du_to_cu_rrc_info_s,
                     scell_failedto_setup_mod_list_l,
                     srbs_failed_to_be_setup_mod_list_l,
                     srbs_modified_list_l,
@@ -9525,12 +9525,12 @@ struct ue_context_release_cmd_ies_o {
   struct value_c {
     struct types_opts {
       enum options {
-        gnb_cu_ue_f1_ap_id,
-        gnb_du_ue_f1_ap_id,
+        gnb_cu_ue_f1ap_id,
+        gnb_du_ue_f1ap_id,
         cause,
         rrc_container,
         srbid,
-        oldg_nb_du_ue_f1_ap_id,
+        old_gnb_du_ue_f1ap_id,
         execute_dupl,
         rrc_delivery_status_request,
         nulltype
@@ -9551,20 +9551,20 @@ struct ue_context_release_cmd_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                            gnb_cu_ue_f1_ap_id();
-    uint64_t&                            gnb_du_ue_f1_ap_id();
+    uint64_t&                            gnb_cu_ue_f1ap_id();
+    uint64_t&                            gnb_du_ue_f1ap_id();
     cause_c&                             cause();
     unbounded_octstring<true>&           rrc_container();
     uint8_t&                             srbid();
-    uint64_t&                            oldg_nb_du_ue_f1_ap_id();
+    uint64_t&                            old_gnb_du_ue_f1ap_id();
     execute_dupl_e&                      execute_dupl();
     rrc_delivery_status_request_e&       rrc_delivery_status_request();
-    const uint64_t&                      gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&                      gnb_du_ue_f1_ap_id() const;
+    const uint64_t&                      gnb_cu_ue_f1ap_id() const;
+    const uint64_t&                      gnb_du_ue_f1ap_id() const;
     const cause_c&                       cause() const;
     const unbounded_octstring<true>&     rrc_container() const;
     const uint8_t&                       srbid() const;
-    const uint64_t&                      oldg_nb_du_ue_f1_ap_id() const;
+    const uint64_t&                      old_gnb_du_ue_f1ap_id() const;
     const execute_dupl_e&                execute_dupl() const;
     const rrc_delivery_status_request_e& rrc_delivery_status_request() const;
 
@@ -9588,7 +9588,7 @@ struct ue_context_release_complete_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { gnb_cu_ue_f1_ap_id, gnb_du_ue_f1_ap_id, crit_diagnostics, nulltype } value;
+      enum options { gnb_cu_ue_f1ap_id, gnb_du_ue_f1ap_id, crit_diagnostics, nulltype } value;
 
       const char* to_string() const;
     };
@@ -9605,11 +9605,11 @@ struct ue_context_release_complete_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                 gnb_cu_ue_f1_ap_id();
-    uint64_t&                 gnb_du_ue_f1_ap_id();
+    uint64_t&                 gnb_cu_ue_f1ap_id();
+    uint64_t&                 gnb_du_ue_f1ap_id();
     crit_diagnostics_s&       crit_diagnostics();
-    const uint64_t&           gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&           gnb_du_ue_f1_ap_id() const;
+    const uint64_t&           gnb_cu_ue_f1ap_id() const;
+    const uint64_t&           gnb_du_ue_f1ap_id() const;
     const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
@@ -9632,7 +9632,7 @@ struct ue_context_release_request_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { gnb_cu_ue_f1_ap_id, gnb_du_ue_f1_ap_id, cause, nulltype } value;
+      enum options { gnb_cu_ue_f1ap_id, gnb_du_ue_f1ap_id, cause, nulltype } value;
 
       const char* to_string() const;
     };
@@ -9649,11 +9649,11 @@ struct ue_context_release_request_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&       gnb_cu_ue_f1_ap_id();
-    uint64_t&       gnb_du_ue_f1_ap_id();
+    uint64_t&       gnb_cu_ue_f1ap_id();
+    uint64_t&       gnb_du_ue_f1ap_id();
     cause_c&        cause();
-    const uint64_t& gnb_cu_ue_f1_ap_id() const;
-    const uint64_t& gnb_du_ue_f1_ap_id() const;
+    const uint64_t& gnb_cu_ue_f1ap_id() const;
+    const uint64_t& gnb_du_ue_f1ap_id() const;
     const cause_c&  cause() const;
 
   private:
@@ -9677,8 +9677,8 @@ struct ue_context_setup_fail_ies_o {
   struct value_c {
     struct types_opts {
       enum options {
-        gnb_cu_ue_f1_ap_id,
-        gnb_du_ue_f1_ap_id,
+        gnb_cu_ue_f1ap_id,
+        gnb_du_ue_f1ap_id,
         cause,
         crit_diagnostics,
         potential_sp_cell_list,
@@ -9700,13 +9700,13 @@ struct ue_context_setup_fail_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                       gnb_cu_ue_f1_ap_id();
-    uint64_t&                       gnb_du_ue_f1_ap_id();
+    uint64_t&                       gnb_cu_ue_f1ap_id();
+    uint64_t&                       gnb_du_ue_f1ap_id();
     cause_c&                        cause();
     crit_diagnostics_s&             crit_diagnostics();
     potential_sp_cell_list_l&       potential_sp_cell_list();
-    const uint64_t&                 gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&                 gnb_du_ue_f1_ap_id() const;
+    const uint64_t&                 gnb_cu_ue_f1ap_id() const;
+    const uint64_t&                 gnb_du_ue_f1ap_id() const;
     const cause_c&                  cause() const;
     const crit_diagnostics_s&       crit_diagnostics() const;
     const potential_sp_cell_list_l& potential_sp_cell_list() const;
@@ -9732,12 +9732,12 @@ struct ue_context_setup_request_ies_o {
   struct value_c {
     struct types_opts {
       enum options {
-        gnb_cu_ue_f1_ap_id,
-        gnb_du_ue_f1_ap_id,
+        gnb_cu_ue_f1ap_id,
+        gnb_du_ue_f1ap_id,
         sp_cell_id,
         serv_cell_idx,
         sp_cell_ul_cfgured,
-        cuto_durrc_info,
+        cu_to_du_rrc_info,
         candidate_sp_cell_list,
         drx_cycle,
         res_coordination_transfer_container,
@@ -9753,7 +9753,7 @@ struct ue_context_setup_request_ies_o {
         rrc_delivery_status_request,
         res_coordination_transfer_info,
         serving_cell_mo,
-        new_g_nb_cu_ue_f1_ap_id,
+        new_gnb_cu_ue_f1ap_id,
         ranueid,
         nulltype
       } value;
@@ -9773,12 +9773,12 @@ struct ue_context_setup_request_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                               gnb_cu_ue_f1_ap_id();
-    uint64_t&                               gnb_du_ue_f1_ap_id();
+    uint64_t&                               gnb_cu_ue_f1ap_id();
+    uint64_t&                               gnb_du_ue_f1ap_id();
     nrcgi_s&                                sp_cell_id();
     uint8_t&                                serv_cell_idx();
     cell_ul_cfgured_e&                      sp_cell_ul_cfgured();
-    cuto_durrc_info_s&                      cuto_durrc_info();
+    cu_to_du_rrc_info_s&                    cu_to_du_rrc_info();
     candidate_sp_cell_list_l&               candidate_sp_cell_list();
     drx_cycle_s&                            drx_cycle();
     unbounded_octstring<true>&              res_coordination_transfer_container();
@@ -9794,14 +9794,14 @@ struct ue_context_setup_request_ies_o {
     rrc_delivery_status_request_e&          rrc_delivery_status_request();
     res_coordination_transfer_info_s&       res_coordination_transfer_info();
     uint8_t&                                serving_cell_mo();
-    uint64_t&                               new_g_nb_cu_ue_f1_ap_id();
+    uint64_t&                               new_gnb_cu_ue_f1ap_id();
     fixed_octstring<8, true>&               ranueid();
-    const uint64_t&                         gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&                         gnb_du_ue_f1_ap_id() const;
+    const uint64_t&                         gnb_cu_ue_f1ap_id() const;
+    const uint64_t&                         gnb_du_ue_f1ap_id() const;
     const nrcgi_s&                          sp_cell_id() const;
     const uint8_t&                          serv_cell_idx() const;
     const cell_ul_cfgured_e&                sp_cell_ul_cfgured() const;
-    const cuto_durrc_info_s&                cuto_durrc_info() const;
+    const cu_to_du_rrc_info_s&              cu_to_du_rrc_info() const;
     const candidate_sp_cell_list_l&         candidate_sp_cell_list() const;
     const drx_cycle_s&                      drx_cycle() const;
     const unbounded_octstring<true>&        res_coordination_transfer_container() const;
@@ -9817,13 +9817,13 @@ struct ue_context_setup_request_ies_o {
     const rrc_delivery_status_request_e&    rrc_delivery_status_request() const;
     const res_coordination_transfer_info_s& res_coordination_transfer_info() const;
     const uint8_t&                          serving_cell_mo() const;
-    const uint64_t&                         new_g_nb_cu_ue_f1_ap_id() const;
+    const uint64_t&                         new_gnb_cu_ue_f1ap_id() const;
     const fixed_octstring<8, true>&         ranueid() const;
 
   private:
     types type_;
     choice_buffer_t<candidate_sp_cell_list_l,
-                    cuto_durrc_info_s,
+                    cu_to_du_rrc_info_s,
                     drbs_to_be_setup_list_l,
                     drx_cycle_s,
                     fixed_bitstring<64, false, true>,
@@ -9854,9 +9854,9 @@ struct ue_context_setup_resp_ies_o {
   struct value_c {
     struct types_opts {
       enum options {
-        gnb_cu_ue_f1_ap_id,
-        gnb_du_ue_f1_ap_id,
-        duto_currc_info,
+        gnb_cu_ue_f1ap_id,
+        gnb_du_ue_f1ap_id,
+        du_to_cu_rrc_info,
         c_rnti,
         res_coordination_transfer_container,
         full_cfg,
@@ -9885,9 +9885,9 @@ struct ue_context_setup_resp_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                             gnb_cu_ue_f1_ap_id();
-    uint64_t&                             gnb_du_ue_f1_ap_id();
-    duto_currc_info_s&                    duto_currc_info();
+    uint64_t&                             gnb_cu_ue_f1ap_id();
+    uint64_t&                             gnb_du_ue_f1ap_id();
+    du_to_cu_rrc_info_s&                  du_to_cu_rrc_info();
     uint32_t&                             c_rnti();
     unbounded_octstring<true>&            res_coordination_transfer_container();
     full_cfg_e&                           full_cfg();
@@ -9898,9 +9898,9 @@ struct ue_context_setup_resp_ies_o {
     inactivity_monitoring_resp_e&         inactivity_monitoring_resp();
     crit_diagnostics_s&                   crit_diagnostics();
     srbs_setup_list_l&                    srbs_setup_list();
-    const uint64_t&                       gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&                       gnb_du_ue_f1_ap_id() const;
-    const duto_currc_info_s&              duto_currc_info() const;
+    const uint64_t&                       gnb_cu_ue_f1ap_id() const;
+    const uint64_t&                       gnb_du_ue_f1ap_id() const;
+    const du_to_cu_rrc_info_s&            du_to_cu_rrc_info() const;
     const uint32_t&                       c_rnti() const;
     const unbounded_octstring<true>&      res_coordination_transfer_container() const;
     const full_cfg_e&                     full_cfg() const;
@@ -9917,7 +9917,7 @@ struct ue_context_setup_resp_ies_o {
     choice_buffer_t<crit_diagnostics_s,
                     drbs_failed_to_be_setup_list_l,
                     drbs_setup_list_l,
-                    duto_currc_info_s,
+                    du_to_cu_rrc_info_s,
                     scell_failedto_setup_list_l,
                     srbs_failed_to_be_setup_list_l,
                     srbs_setup_list_l,
@@ -9940,7 +9940,7 @@ struct ue_inactivity_notif_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { gnb_cu_ue_f1_ap_id, gnb_du_ue_f1_ap_id, drb_activity_list, nulltype } value;
+      enum options { gnb_cu_ue_f1ap_id, gnb_du_ue_f1ap_id, drb_activity_list, nulltype } value;
 
       const char* to_string() const;
     };
@@ -9957,11 +9957,11 @@ struct ue_inactivity_notif_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                  gnb_cu_ue_f1_ap_id();
-    uint64_t&                  gnb_du_ue_f1_ap_id();
+    uint64_t&                  gnb_cu_ue_f1ap_id();
+    uint64_t&                  gnb_du_ue_f1ap_id();
     drb_activity_list_l&       drb_activity_list();
-    const uint64_t&            gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&            gnb_du_ue_f1_ap_id() const;
+    const uint64_t&            gnb_cu_ue_f1ap_id() const;
+    const uint64_t&            gnb_du_ue_f1ap_id() const;
     const drb_activity_list_l& drb_activity_list() const;
 
   private:
@@ -9980,17 +9980,17 @@ struct ue_inactivity_notif_ies_o {
 };
 
 // ULRRCMessageTransferIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct ulrrc_msg_transfer_ies_o {
+struct ul_rrc_msg_transfer_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
       enum options {
-        gnb_cu_ue_f1_ap_id,
-        gnb_du_ue_f1_ap_id,
+        gnb_cu_ue_f1ap_id,
+        gnb_du_ue_f1ap_id,
         srbid,
         rrc_container,
-        sel_plmnid,
-        new_g_nb_du_ue_f1_ap_id,
+        sel_plmn_id,
+        new_gnb_du_ue_f1ap_id,
         nulltype
       } value;
 
@@ -10009,18 +10009,18 @@ struct ulrrc_msg_transfer_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                        gnb_cu_ue_f1_ap_id();
-    uint64_t&                        gnb_du_ue_f1_ap_id();
+    uint64_t&                        gnb_cu_ue_f1ap_id();
+    uint64_t&                        gnb_du_ue_f1ap_id();
     uint8_t&                         srbid();
     unbounded_octstring<true>&       rrc_container();
-    fixed_octstring<3, true>&        sel_plmnid();
-    uint64_t&                        new_g_nb_du_ue_f1_ap_id();
-    const uint64_t&                  gnb_cu_ue_f1_ap_id() const;
-    const uint64_t&                  gnb_du_ue_f1_ap_id() const;
+    fixed_octstring<3, true>&        sel_plmn_id();
+    uint64_t&                        new_gnb_du_ue_f1ap_id();
+    const uint64_t&                  gnb_cu_ue_f1ap_id() const;
+    const uint64_t&                  gnb_du_ue_f1ap_id() const;
     const uint8_t&                   srbid() const;
     const unbounded_octstring<true>& rrc_container() const;
-    const fixed_octstring<3, true>&  sel_plmnid() const;
-    const uint64_t&                  new_g_nb_du_ue_f1_ap_id() const;
+    const fixed_octstring<3, true>&  sel_plmn_id() const;
+    const uint64_t&                  new_gnb_du_ue_f1ap_id() const;
 
   private:
     types                                                                type_;
@@ -10257,7 +10257,7 @@ struct f1_setup_resp_ies_container {
 // F1SetupResponse ::= SEQUENCE
 using f1_setup_resp_s = elementary_procedure_option<f1_setup_resp_ies_container>;
 
-struct gnbcu_cfg_upd_ies_container {
+struct gnb_cu_cfg_upd_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
@@ -10286,16 +10286,16 @@ struct gnbcu_cfg_upd_ies_container {
       protected_eutra_res_list;
 
   // sequence methods
-  gnbcu_cfg_upd_ies_container();
+  gnb_cu_cfg_upd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // GNBCUConfigurationUpdate ::= SEQUENCE
-using gnbcu_cfg_upd_s = elementary_procedure_option<gnbcu_cfg_upd_ies_container>;
+using gnb_cu_cfg_upd_s = elementary_procedure_option<gnb_cu_cfg_upd_ies_container>;
 
-struct gnbcu_cfg_upd_ack_ies_container {
+struct gnb_cu_cfg_upd_ack_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
@@ -10317,16 +10317,16 @@ struct gnbcu_cfg_upd_ack_ies_container {
       ded_si_delivery_needed_ue_list;
 
   // sequence methods
-  gnbcu_cfg_upd_ack_ies_container();
+  gnb_cu_cfg_upd_ack_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // GNBCUConfigurationUpdateAcknowledge ::= SEQUENCE
-using gnbcu_cfg_upd_ack_s = elementary_procedure_option<gnbcu_cfg_upd_ack_ies_container>;
+using gnb_cu_cfg_upd_ack_s = elementary_procedure_option<gnb_cu_cfg_upd_ack_ies_container>;
 
-struct gnbcu_cfg_upd_fail_ies_container {
+struct gnb_cu_cfg_upd_fail_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
@@ -10339,16 +10339,16 @@ struct gnbcu_cfg_upd_fail_ies_container {
   ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
 
   // sequence methods
-  gnbcu_cfg_upd_fail_ies_container();
+  gnb_cu_cfg_upd_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // GNBCUConfigurationUpdateFailure ::= SEQUENCE
-using gnbcu_cfg_upd_fail_s = elementary_procedure_option<gnbcu_cfg_upd_fail_ies_container>;
+using gnb_cu_cfg_upd_fail_s = elementary_procedure_option<gnb_cu_cfg_upd_fail_ies_container>;
 
-struct gnbdu_cfg_upd_ies_container {
+struct gnb_du_cfg_upd_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
@@ -10375,16 +10375,16 @@ struct gnbdu_cfg_upd_ies_container {
       gnb_du_tnl_assoc_to_rem_list;
 
   // sequence methods
-  gnbdu_cfg_upd_ies_container();
+  gnb_du_cfg_upd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // GNBDUConfigurationUpdate ::= SEQUENCE
-using gnbdu_cfg_upd_s = elementary_procedure_option<gnbdu_cfg_upd_ies_container>;
+using gnb_du_cfg_upd_s = elementary_procedure_option<gnb_du_cfg_upd_ies_container>;
 
-struct gnbdu_cfg_upd_ack_ies_container {
+struct gnb_du_cfg_upd_ack_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
@@ -10400,16 +10400,16 @@ struct gnbdu_cfg_upd_ack_ies_container {
       cells_to_be_deactiv_list;
 
   // sequence methods
-  gnbdu_cfg_upd_ack_ies_container();
+  gnb_du_cfg_upd_ack_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // GNBDUConfigurationUpdateAcknowledge ::= SEQUENCE
-using gnbdu_cfg_upd_ack_s = elementary_procedure_option<gnbdu_cfg_upd_ack_ies_container>;
+using gnb_du_cfg_upd_ack_s = elementary_procedure_option<gnb_du_cfg_upd_ack_ies_container>;
 
-struct gnbdu_cfg_upd_fail_ies_container {
+struct gnb_du_cfg_upd_fail_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
@@ -10422,16 +10422,16 @@ struct gnbdu_cfg_upd_fail_ies_container {
   ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
 
   // sequence methods
-  gnbdu_cfg_upd_fail_ies_container();
+  gnb_du_cfg_upd_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // GNBDUConfigurationUpdateFailure ::= SEQUENCE
-using gnbdu_cfg_upd_fail_s = elementary_procedure_option<gnbdu_cfg_upd_fail_ies_container>;
+using gnb_du_cfg_upd_fail_s = elementary_procedure_option<gnb_du_cfg_upd_fail_ies_container>;
 
-struct gnbdu_res_coordination_request_ies_container {
+struct gnb_du_res_coordination_request_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
@@ -10443,16 +10443,16 @@ struct gnbdu_res_coordination_request_ies_container {
   ie_field_s<ignore_res_coordination_container_e>   ignore_res_coordination_container;
 
   // sequence methods
-  gnbdu_res_coordination_request_ies_container();
+  gnb_du_res_coordination_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // GNBDUResourceCoordinationRequest ::= SEQUENCE
-using gnbdu_res_coordination_request_s = elementary_procedure_option<gnbdu_res_coordination_request_ies_container>;
+using gnb_du_res_coordination_request_s = elementary_procedure_option<gnb_du_res_coordination_request_ies_container>;
 
-struct gnbdu_res_coordination_resp_ies_container {
+struct gnb_du_res_coordination_resp_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
@@ -10461,61 +10461,61 @@ struct gnbdu_res_coordination_resp_ies_container {
   ie_field_s<unbounded_octstring<true>>             eutra_nr_cell_res_coordination_req_ack_container;
 
   // sequence methods
-  gnbdu_res_coordination_resp_ies_container();
+  gnb_du_res_coordination_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // GNBDUResourceCoordinationResponse ::= SEQUENCE
-using gnbdu_res_coordination_resp_s = elementary_procedure_option<gnbdu_res_coordination_resp_ies_container>;
+using gnb_du_res_coordination_resp_s = elementary_procedure_option<gnb_du_res_coordination_resp_ies_container>;
 
-struct gnbdu_status_ind_ies_container {
+struct gnb_du_status_ind_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
   ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<gnbdu_overload_info_e>                 gnbdu_overload_info;
+  ie_field_s<gnb_du_overload_info_e>                gnb_du_overload_info;
 
   // sequence methods
-  gnbdu_status_ind_ies_container();
+  gnb_du_status_ind_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // GNBDUStatusIndication ::= SEQUENCE
-using gnbdu_status_ind_s = elementary_procedure_option<gnbdu_status_ind_ies_container>;
+using gnb_du_status_ind_s = elementary_procedure_option<gnb_du_status_ind_ies_container>;
 
-struct init_ulrrc_msg_transfer_ies_container {
+struct init_ul_rrc_msg_transfer_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      duto_currc_container_present             = false;
+  bool                                                      du_to_cu_rrc_container_present           = false;
   bool                                                      sul_access_ind_present                   = false;
   bool                                                      ranueid_present                          = false;
   bool                                                      rrc_container_rrc_setup_complete_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<nrcgi_s>                                       nrcgi;
   ie_field_s<integer<uint32_t, 0, 65535, true, true>>       c_rnti;
   ie_field_s<unbounded_octstring<true>>                     rrc_container;
-  ie_field_s<unbounded_octstring<true>>                     duto_currc_container;
+  ie_field_s<unbounded_octstring<true>>                     du_to_cu_rrc_container;
   ie_field_s<sul_access_ind_e>                              sul_access_ind;
   ie_field_s<integer<uint16_t, 0, 255, true, true>>         transaction_id;
   ie_field_s<fixed_octstring<8, true>>                      ranueid;
   ie_field_s<unbounded_octstring<true>>                     rrc_container_rrc_setup_complete;
 
   // sequence methods
-  init_ulrrc_msg_transfer_ies_container();
+  init_ul_rrc_msg_transfer_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // InitialULRRCMessageTransfer ::= SEQUENCE
-using init_ulrrc_msg_transfer_s = elementary_procedure_option<init_ulrrc_msg_transfer_ies_container>;
+using init_ul_rrc_msg_transfer_s = elementary_procedure_option<init_ul_rrc_msg_transfer_ies_container>;
 
 struct network_access_rate_reduction_ies_container {
   template <class valueT_>
@@ -10540,8 +10540,8 @@ struct notify_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>                                  gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>                                  gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>                                  gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>                                  gnb_du_ue_f1ap_id;
   ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drb_notify_item_ies_o>, 1, 64, true>> drb_notify_list;
 
   // sequence methods
@@ -10706,8 +10706,8 @@ struct rrc_delivery_report_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<rrc_delivery_status_s>                         rrc_delivery_status;
   ie_field_s<integer<uint8_t, 0, 3, true, true>>            srbid;
 
@@ -10770,7 +10770,7 @@ struct sys_info_delivery_cmd_ies_container {
   ie_field_s<integer<uint16_t, 0, 255, true, true>>         transaction_id;
   ie_field_s<nrcgi_s>                                       nrcgi;
   ie_field_s<dyn_seq_of<sitype_item_s, 1, 32, true>>        sitype_list;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> confirmed_ueid;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> confirmed_ue_id;
 
   // sequence methods
   sys_info_delivery_cmd_ies_container();
@@ -10793,8 +10793,8 @@ struct ue_context_mod_confirm_ies_container {
   bool                                                      crit_diagnostics_present                    = false;
   bool                                                      execute_dupl_present                        = false;
   bool                                                      res_coordination_transfer_info_present      = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<unbounded_octstring<true>>                     res_coordination_transfer_container;
   ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_modified_conf_item_ies_o>, 1, 64, true>>
                                                drbs_modified_conf_list;
@@ -10819,8 +10819,8 @@ struct ue_context_mod_fail_ies_container {
 
   // member variables
   bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<cause_c>                                       cause;
   ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
 
@@ -10840,8 +10840,8 @@ struct ue_context_mod_refuse_ies_container {
 
   // member variables
   bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<cause_c>                                       cause;
   ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
 
@@ -10864,7 +10864,7 @@ struct ue_context_mod_request_ies_container {
   bool                                                      serv_cell_idx_present                       = false;
   bool                                                      sp_cell_ul_cfgured_present                  = false;
   bool                                                      drx_cycle_present                           = false;
-  bool                                                      cuto_durrc_info_present                     = false;
+  bool                                                      cu_to_du_rrc_info_present                   = false;
   bool                                                      tx_action_ind_present                       = false;
   bool                                                      res_coordination_transfer_container_present = false;
   bool                                                      rrc_recfg_complete_ind_present              = false;
@@ -10889,13 +10889,13 @@ struct ue_context_mod_request_ies_container {
   bool                                                      serving_cell_mo_present                     = false;
   bool                                                      needfor_gap_present                         = false;
   bool                                                      full_cfg_present                            = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<nrcgi_s>                                       sp_cell_id;
   ie_field_s<integer<uint8_t, 0, 31, true, true>>           serv_cell_idx;
   ie_field_s<cell_ul_cfgured_e>                             sp_cell_ul_cfgured;
   ie_field_s<drx_cycle_s>                                   drx_cycle;
-  ie_field_s<cuto_durrc_info_s>                             cuto_durrc_info;
+  ie_field_s<cu_to_du_rrc_info_s>                           cu_to_du_rrc_info;
   ie_field_s<tx_action_ind_e>                               tx_action_ind;
   ie_field_s<unbounded_octstring<true>>                     res_coordination_transfer_container;
   ie_field_s<rrc_recfg_complete_ind_e>                      rrc_recfg_complete_ind;
@@ -10944,14 +10944,14 @@ struct ue_context_mod_required_ies_container {
 
   // member variables
   bool                                                      res_coordination_transfer_container_present = false;
-  bool                                                      duto_currc_info_present                     = false;
+  bool                                                      du_to_cu_rrc_info_present                   = false;
   bool                                                      drbs_required_to_be_modified_list_present   = false;
   bool                                                      srbs_required_to_be_released_list_present   = false;
   bool                                                      drbs_required_to_be_released_list_present   = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<unbounded_octstring<true>>                     res_coordination_transfer_container;
-  ie_field_s<duto_currc_info_s>                             duto_currc_info;
+  ie_field_s<du_to_cu_rrc_info_s>                           du_to_cu_rrc_info;
   ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_required_to_be_modified_item_ies_o>, 1, 64, true>>
       drbs_required_to_be_modified_list;
   ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_required_to_be_released_item_ies_o>, 1, 8, true>>
@@ -10976,7 +10976,7 @@ struct ue_context_mod_resp_ies_container {
 
   // member variables
   bool                                                      res_coordination_transfer_container_present = false;
-  bool                                                      duto_currc_info_present                     = false;
+  bool                                                      du_to_cu_rrc_info_present                   = false;
   bool                                                      drbs_setup_mod_list_present                 = false;
   bool                                                      drbs_modified_list_present                  = false;
   bool                                                      srbs_failed_to_be_setup_mod_list_present    = false;
@@ -10990,10 +10990,10 @@ struct ue_context_mod_resp_ies_container {
   bool                                                      srbs_setup_mod_list_present                 = false;
   bool                                                      srbs_modified_list_present                  = false;
   bool                                                      full_cfg_present                            = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<unbounded_octstring<true>>                     res_coordination_transfer_container;
-  ie_field_s<duto_currc_info_s>                             duto_currc_info;
+  ie_field_s<du_to_cu_rrc_info_s>                           du_to_cu_rrc_info;
   ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_setup_mod_item_ies_o>, 1, 64, true>> drbs_setup_mod_list;
   ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drbs_modified_item_ies_o>, 1, 64, true>>  drbs_modified_list;
   ie_field_s<dyn_seq_of<protocol_ie_single_container_s<srbs_failed_to_be_setup_mod_item_ies_o>, 1, 8, true>>
@@ -11030,15 +11030,15 @@ struct ue_context_release_cmd_ies_container {
   // member variables
   bool                                                      rrc_container_present               = false;
   bool                                                      srbid_present                       = false;
-  bool                                                      oldg_nb_du_ue_f1_ap_id_present      = false;
+  bool                                                      old_gnb_du_ue_f1ap_id_present       = false;
   bool                                                      execute_dupl_present                = false;
   bool                                                      rrc_delivery_status_request_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<cause_c>                                       cause;
   ie_field_s<unbounded_octstring<true>>                     rrc_container;
   ie_field_s<integer<uint8_t, 0, 3, true, true>>            srbid;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> oldg_nb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> old_gnb_du_ue_f1ap_id;
   ie_field_s<execute_dupl_e>                                execute_dupl;
   ie_field_s<rrc_delivery_status_request_e>                 rrc_delivery_status_request;
 
@@ -11058,8 +11058,8 @@ struct ue_context_release_complete_ies_container {
 
   // member variables
   bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
 
   // sequence methods
@@ -11077,8 +11077,8 @@ struct ue_context_release_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<cause_c>                                       cause;
 
   // sequence methods
@@ -11096,11 +11096,11 @@ struct ue_context_setup_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      gnb_du_ue_f1_ap_id_present     = false;
+  bool                                                      gnb_du_ue_f1ap_id_present      = false;
   bool                                                      crit_diagnostics_present       = false;
   bool                                                      potential_sp_cell_list_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<cause_c>                                       cause;
   ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
   ie_field_s<dyn_seq_of<protocol_ie_single_container_s<potential_sp_cell_item_ies_o>, 0, 64, true>>
@@ -11121,7 +11121,7 @@ struct ue_context_setup_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      gnb_du_ue_f1_ap_id_present                  = false;
+  bool                                                      gnb_du_ue_f1ap_id_present                   = false;
   bool                                                      sp_cell_ul_cfgured_present                  = false;
   bool                                                      candidate_sp_cell_list_present              = false;
   bool                                                      drx_cycle_present                           = false;
@@ -11138,14 +11138,14 @@ struct ue_context_setup_request_ies_container {
   bool                                                      rrc_delivery_status_request_present         = false;
   bool                                                      res_coordination_transfer_info_present      = false;
   bool                                                      serving_cell_mo_present                     = false;
-  bool                                                      new_g_nb_cu_ue_f1_ap_id_present             = false;
+  bool                                                      new_gnb_cu_ue_f1ap_id_present               = false;
   bool                                                      ranueid_present                             = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<nrcgi_s>                                       sp_cell_id;
   ie_field_s<integer<uint8_t, 0, 31, true, true>>           serv_cell_idx;
   ie_field_s<cell_ul_cfgured_e>                             sp_cell_ul_cfgured;
-  ie_field_s<cuto_durrc_info_s>                             cuto_durrc_info;
+  ie_field_s<cu_to_du_rrc_info_s>                           cu_to_du_rrc_info;
   ie_field_s<dyn_seq_of<protocol_ie_single_container_s<candidate_sp_cell_item_ies_o>, 1, 64, true>>
                                         candidate_sp_cell_list;
   ie_field_s<drx_cycle_s>               drx_cycle;
@@ -11164,7 +11164,7 @@ struct ue_context_setup_request_ies_container {
   ie_field_s<rrc_delivery_status_request_e>                   rrc_delivery_status_request;
   ie_field_s<res_coordination_transfer_info_s>                res_coordination_transfer_info;
   ie_field_s<integer<uint8_t, 1, 64, true, true>>             serving_cell_mo;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>   new_g_nb_cu_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>   new_gnb_cu_ue_f1ap_id;
   ie_field_s<fixed_octstring<8, true>>                        ranueid;
 
   // sequence methods
@@ -11192,9 +11192,9 @@ struct ue_context_setup_resp_ies_container {
   bool                                                      inactivity_monitoring_resp_present          = false;
   bool                                                      crit_diagnostics_present                    = false;
   bool                                                      srbs_setup_list_present                     = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
-  ie_field_s<duto_currc_info_s>                             duto_currc_info;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
+  ie_field_s<du_to_cu_rrc_info_s>                           du_to_cu_rrc_info;
   ie_field_s<integer<uint32_t, 0, 65535, true, true>>       c_rnti;
   ie_field_s<unbounded_octstring<true>>                     res_coordination_transfer_container;
   ie_field_s<full_cfg_e>                                    full_cfg;
@@ -11224,8 +11224,8 @@ struct ue_inactivity_notif_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>                                    gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>                                    gnb_du_ue_f1_ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>                                    gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>                                    gnb_du_ue_f1ap_id;
   ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drb_activity_item_ies_o>, 1, 64, true>> drb_activity_list;
 
   // sequence methods
@@ -11238,29 +11238,29 @@ struct ue_inactivity_notif_ies_container {
 // UEInactivityNotification ::= SEQUENCE
 using ue_inactivity_notif_s = elementary_procedure_option<ue_inactivity_notif_ies_container>;
 
-struct ulrrc_msg_transfer_ies_container {
+struct ul_rrc_msg_transfer_ies_container {
   template <class valueT_>
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      sel_plmnid_present              = false;
-  bool                                                      new_g_nb_du_ue_f1_ap_id_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1_ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1_ap_id;
+  bool                                                      sel_plmn_id_present           = false;
+  bool                                                      new_gnb_du_ue_f1ap_id_present = false;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<integer<uint8_t, 0, 3, true, true>>            srbid;
   ie_field_s<unbounded_octstring<true>>                     rrc_container;
-  ie_field_s<fixed_octstring<3, true>>                      sel_plmnid;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> new_g_nb_du_ue_f1_ap_id;
+  ie_field_s<fixed_octstring<3, true>>                      sel_plmn_id;
+  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> new_gnb_du_ue_f1ap_id;
 
   // sequence methods
-  ulrrc_msg_transfer_ies_container();
+  ul_rrc_msg_transfer_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
 
 // ULRRCMessageTransfer ::= SEQUENCE
-using ulrrc_msg_transfer_s = elementary_procedure_option<ulrrc_msg_transfer_ies_container>;
+using ul_rrc_msg_transfer_s = elementary_procedure_option<ul_rrc_msg_transfer_ies_container>;
 
 struct write_replace_warning_request_ies_container {
   template <class valueT_>
@@ -11311,36 +11311,36 @@ struct write_replace_warning_resp_ies_container {
 using write_replace_warning_resp_s = elementary_procedure_option<write_replace_warning_resp_ies_container>;
 
 // F1AP-ELEMENTARY-PROCEDURES ::= OBJECT SET OF F1AP-ELEMENTARY-PROCEDURE
-struct f1_ap_elem_procs_o {
+struct f1ap_elem_procs_o {
   // InitiatingMessage ::= OPEN TYPE
   struct init_msg_c {
     struct types_opts {
       enum options {
         reset,
         f1_setup_request,
-        gnbdu_cfg_upd,
-        gnbcu_cfg_upd,
+        gnb_du_cfg_upd,
+        gnb_cu_cfg_upd,
         ue_context_setup_request,
         ue_context_release_cmd,
         ue_context_mod_request,
         ue_context_mod_required,
         write_replace_warning_request,
         pws_cancel_request,
-        gnbdu_res_coordination_request,
+        gnb_du_res_coordination_request,
         f1_removal_request,
         error_ind,
         ue_context_release_request,
-        dlrrc_msg_transfer,
-        ulrrc_msg_transfer,
+        dl_rrc_msg_transfer,
+        ul_rrc_msg_transfer,
         ue_inactivity_notif,
         private_msg,
-        init_ulrrc_msg_transfer,
+        init_ul_rrc_msg_transfer,
         sys_info_delivery_cmd,
         paging,
         notify,
         pws_restart_ind,
         pws_fail_ind,
-        gnbdu_status_ind,
+        gnb_du_status_ind,
         rrc_delivery_report,
         network_access_rate_reduction,
         nulltype
@@ -11361,72 +11361,72 @@ struct f1_ap_elem_procs_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    reset_s&                                reset();
-    f1_setup_request_s&                     f1_setup_request();
-    gnbdu_cfg_upd_s&                        gnbdu_cfg_upd();
-    gnbcu_cfg_upd_s&                        gnbcu_cfg_upd();
-    ue_context_setup_request_s&             ue_context_setup_request();
-    ue_context_release_cmd_s&               ue_context_release_cmd();
-    ue_context_mod_request_s&               ue_context_mod_request();
-    ue_context_mod_required_s&              ue_context_mod_required();
-    write_replace_warning_request_s&        write_replace_warning_request();
-    pws_cancel_request_s&                   pws_cancel_request();
-    gnbdu_res_coordination_request_s&       gnbdu_res_coordination_request();
-    f1_removal_request_s&                   f1_removal_request();
-    error_ind_s&                            error_ind();
-    ue_context_release_request_s&           ue_context_release_request();
-    dlrrc_msg_transfer_s&                   dlrrc_msg_transfer();
-    ulrrc_msg_transfer_s&                   ulrrc_msg_transfer();
-    ue_inactivity_notif_s&                  ue_inactivity_notif();
-    private_msg_s&                          private_msg();
-    init_ulrrc_msg_transfer_s&              init_ulrrc_msg_transfer();
-    sys_info_delivery_cmd_s&                sys_info_delivery_cmd();
-    paging_s&                               paging();
-    notify_s&                               notify();
-    pws_restart_ind_s&                      pws_restart_ind();
-    pws_fail_ind_s&                         pws_fail_ind();
-    gnbdu_status_ind_s&                     gnbdu_status_ind();
-    rrc_delivery_report_s&                  rrc_delivery_report();
-    network_access_rate_reduction_s&        network_access_rate_reduction();
-    const reset_s&                          reset() const;
-    const f1_setup_request_s&               f1_setup_request() const;
-    const gnbdu_cfg_upd_s&                  gnbdu_cfg_upd() const;
-    const gnbcu_cfg_upd_s&                  gnbcu_cfg_upd() const;
-    const ue_context_setup_request_s&       ue_context_setup_request() const;
-    const ue_context_release_cmd_s&         ue_context_release_cmd() const;
-    const ue_context_mod_request_s&         ue_context_mod_request() const;
-    const ue_context_mod_required_s&        ue_context_mod_required() const;
-    const write_replace_warning_request_s&  write_replace_warning_request() const;
-    const pws_cancel_request_s&             pws_cancel_request() const;
-    const gnbdu_res_coordination_request_s& gnbdu_res_coordination_request() const;
-    const f1_removal_request_s&             f1_removal_request() const;
-    const error_ind_s&                      error_ind() const;
-    const ue_context_release_request_s&     ue_context_release_request() const;
-    const dlrrc_msg_transfer_s&             dlrrc_msg_transfer() const;
-    const ulrrc_msg_transfer_s&             ulrrc_msg_transfer() const;
-    const ue_inactivity_notif_s&            ue_inactivity_notif() const;
-    const private_msg_s&                    private_msg() const;
-    const init_ulrrc_msg_transfer_s&        init_ulrrc_msg_transfer() const;
-    const sys_info_delivery_cmd_s&          sys_info_delivery_cmd() const;
-    const paging_s&                         paging() const;
-    const notify_s&                         notify() const;
-    const pws_restart_ind_s&                pws_restart_ind() const;
-    const pws_fail_ind_s&                   pws_fail_ind() const;
-    const gnbdu_status_ind_s&               gnbdu_status_ind() const;
-    const rrc_delivery_report_s&            rrc_delivery_report() const;
-    const network_access_rate_reduction_s&  network_access_rate_reduction() const;
+    reset_s&                                 reset();
+    f1_setup_request_s&                      f1_setup_request();
+    gnb_du_cfg_upd_s&                        gnb_du_cfg_upd();
+    gnb_cu_cfg_upd_s&                        gnb_cu_cfg_upd();
+    ue_context_setup_request_s&              ue_context_setup_request();
+    ue_context_release_cmd_s&                ue_context_release_cmd();
+    ue_context_mod_request_s&                ue_context_mod_request();
+    ue_context_mod_required_s&               ue_context_mod_required();
+    write_replace_warning_request_s&         write_replace_warning_request();
+    pws_cancel_request_s&                    pws_cancel_request();
+    gnb_du_res_coordination_request_s&       gnb_du_res_coordination_request();
+    f1_removal_request_s&                    f1_removal_request();
+    error_ind_s&                             error_ind();
+    ue_context_release_request_s&            ue_context_release_request();
+    dl_rrc_msg_transfer_s&                   dl_rrc_msg_transfer();
+    ul_rrc_msg_transfer_s&                   ul_rrc_msg_transfer();
+    ue_inactivity_notif_s&                   ue_inactivity_notif();
+    private_msg_s&                           private_msg();
+    init_ul_rrc_msg_transfer_s&              init_ul_rrc_msg_transfer();
+    sys_info_delivery_cmd_s&                 sys_info_delivery_cmd();
+    paging_s&                                paging();
+    notify_s&                                notify();
+    pws_restart_ind_s&                       pws_restart_ind();
+    pws_fail_ind_s&                          pws_fail_ind();
+    gnb_du_status_ind_s&                     gnb_du_status_ind();
+    rrc_delivery_report_s&                   rrc_delivery_report();
+    network_access_rate_reduction_s&         network_access_rate_reduction();
+    const reset_s&                           reset() const;
+    const f1_setup_request_s&                f1_setup_request() const;
+    const gnb_du_cfg_upd_s&                  gnb_du_cfg_upd() const;
+    const gnb_cu_cfg_upd_s&                  gnb_cu_cfg_upd() const;
+    const ue_context_setup_request_s&        ue_context_setup_request() const;
+    const ue_context_release_cmd_s&          ue_context_release_cmd() const;
+    const ue_context_mod_request_s&          ue_context_mod_request() const;
+    const ue_context_mod_required_s&         ue_context_mod_required() const;
+    const write_replace_warning_request_s&   write_replace_warning_request() const;
+    const pws_cancel_request_s&              pws_cancel_request() const;
+    const gnb_du_res_coordination_request_s& gnb_du_res_coordination_request() const;
+    const f1_removal_request_s&              f1_removal_request() const;
+    const error_ind_s&                       error_ind() const;
+    const ue_context_release_request_s&      ue_context_release_request() const;
+    const dl_rrc_msg_transfer_s&             dl_rrc_msg_transfer() const;
+    const ul_rrc_msg_transfer_s&             ul_rrc_msg_transfer() const;
+    const ue_inactivity_notif_s&             ue_inactivity_notif() const;
+    const private_msg_s&                     private_msg() const;
+    const init_ul_rrc_msg_transfer_s&        init_ul_rrc_msg_transfer() const;
+    const sys_info_delivery_cmd_s&           sys_info_delivery_cmd() const;
+    const paging_s&                          paging() const;
+    const notify_s&                          notify() const;
+    const pws_restart_ind_s&                 pws_restart_ind() const;
+    const pws_fail_ind_s&                    pws_fail_ind() const;
+    const gnb_du_status_ind_s&               gnb_du_status_ind() const;
+    const rrc_delivery_report_s&             rrc_delivery_report() const;
+    const network_access_rate_reduction_s&   network_access_rate_reduction() const;
 
   private:
     types type_;
-    choice_buffer_t<dlrrc_msg_transfer_s,
+    choice_buffer_t<dl_rrc_msg_transfer_s,
                     error_ind_s,
                     f1_removal_request_s,
                     f1_setup_request_s,
-                    gnbcu_cfg_upd_s,
-                    gnbdu_cfg_upd_s,
-                    gnbdu_res_coordination_request_s,
-                    gnbdu_status_ind_s,
-                    init_ulrrc_msg_transfer_s,
+                    gnb_cu_cfg_upd_s,
+                    gnb_du_cfg_upd_s,
+                    gnb_du_res_coordination_request_s,
+                    gnb_du_status_ind_s,
+                    init_ul_rrc_msg_transfer_s,
                     network_access_rate_reduction_s,
                     notify_s,
                     paging_s,
@@ -11443,7 +11443,7 @@ struct f1_ap_elem_procs_o {
                     ue_context_release_request_s,
                     ue_context_setup_request_s,
                     ue_inactivity_notif_s,
-                    ulrrc_msg_transfer_s,
+                    ul_rrc_msg_transfer_s,
                     write_replace_warning_request_s>
         c;
 
@@ -11455,15 +11455,15 @@ struct f1_ap_elem_procs_o {
       enum options {
         reset_ack,
         f1_setup_resp,
-        gnbdu_cfg_upd_ack,
-        gnbcu_cfg_upd_ack,
+        gnb_du_cfg_upd_ack,
+        gnb_cu_cfg_upd_ack,
         ue_context_setup_resp,
         ue_context_release_complete,
         ue_context_mod_resp,
         ue_context_mod_confirm,
         write_replace_warning_resp,
         pws_cancel_resp,
-        gnbdu_res_coordination_resp,
+        gnb_du_res_coordination_resp,
         f1_removal_resp,
         nulltype
       } value;
@@ -11483,38 +11483,38 @@ struct f1_ap_elem_procs_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    reset_ack_s&                         reset_ack();
-    f1_setup_resp_s&                     f1_setup_resp();
-    gnbdu_cfg_upd_ack_s&                 gnbdu_cfg_upd_ack();
-    gnbcu_cfg_upd_ack_s&                 gnbcu_cfg_upd_ack();
-    ue_context_setup_resp_s&             ue_context_setup_resp();
-    ue_context_release_complete_s&       ue_context_release_complete();
-    ue_context_mod_resp_s&               ue_context_mod_resp();
-    ue_context_mod_confirm_s&            ue_context_mod_confirm();
-    write_replace_warning_resp_s&        write_replace_warning_resp();
-    pws_cancel_resp_s&                   pws_cancel_resp();
-    gnbdu_res_coordination_resp_s&       gnbdu_res_coordination_resp();
-    f1_removal_resp_s&                   f1_removal_resp();
-    const reset_ack_s&                   reset_ack() const;
-    const f1_setup_resp_s&               f1_setup_resp() const;
-    const gnbdu_cfg_upd_ack_s&           gnbdu_cfg_upd_ack() const;
-    const gnbcu_cfg_upd_ack_s&           gnbcu_cfg_upd_ack() const;
-    const ue_context_setup_resp_s&       ue_context_setup_resp() const;
-    const ue_context_release_complete_s& ue_context_release_complete() const;
-    const ue_context_mod_resp_s&         ue_context_mod_resp() const;
-    const ue_context_mod_confirm_s&      ue_context_mod_confirm() const;
-    const write_replace_warning_resp_s&  write_replace_warning_resp() const;
-    const pws_cancel_resp_s&             pws_cancel_resp() const;
-    const gnbdu_res_coordination_resp_s& gnbdu_res_coordination_resp() const;
-    const f1_removal_resp_s&             f1_removal_resp() const;
+    reset_ack_s&                          reset_ack();
+    f1_setup_resp_s&                      f1_setup_resp();
+    gnb_du_cfg_upd_ack_s&                 gnb_du_cfg_upd_ack();
+    gnb_cu_cfg_upd_ack_s&                 gnb_cu_cfg_upd_ack();
+    ue_context_setup_resp_s&              ue_context_setup_resp();
+    ue_context_release_complete_s&        ue_context_release_complete();
+    ue_context_mod_resp_s&                ue_context_mod_resp();
+    ue_context_mod_confirm_s&             ue_context_mod_confirm();
+    write_replace_warning_resp_s&         write_replace_warning_resp();
+    pws_cancel_resp_s&                    pws_cancel_resp();
+    gnb_du_res_coordination_resp_s&       gnb_du_res_coordination_resp();
+    f1_removal_resp_s&                    f1_removal_resp();
+    const reset_ack_s&                    reset_ack() const;
+    const f1_setup_resp_s&                f1_setup_resp() const;
+    const gnb_du_cfg_upd_ack_s&           gnb_du_cfg_upd_ack() const;
+    const gnb_cu_cfg_upd_ack_s&           gnb_cu_cfg_upd_ack() const;
+    const ue_context_setup_resp_s&        ue_context_setup_resp() const;
+    const ue_context_release_complete_s&  ue_context_release_complete() const;
+    const ue_context_mod_resp_s&          ue_context_mod_resp() const;
+    const ue_context_mod_confirm_s&       ue_context_mod_confirm() const;
+    const write_replace_warning_resp_s&   write_replace_warning_resp() const;
+    const pws_cancel_resp_s&              pws_cancel_resp() const;
+    const gnb_du_res_coordination_resp_s& gnb_du_res_coordination_resp() const;
+    const f1_removal_resp_s&              f1_removal_resp() const;
 
   private:
     types type_;
     choice_buffer_t<f1_removal_resp_s,
                     f1_setup_resp_s,
-                    gnbcu_cfg_upd_ack_s,
-                    gnbdu_cfg_upd_ack_s,
-                    gnbdu_res_coordination_resp_s,
+                    gnb_cu_cfg_upd_ack_s,
+                    gnb_du_cfg_upd_ack_s,
+                    gnb_du_res_coordination_resp_s,
                     pws_cancel_resp_s,
                     reset_ack_s,
                     ue_context_mod_confirm_s,
@@ -11531,8 +11531,8 @@ struct f1_ap_elem_procs_o {
     struct types_opts {
       enum options {
         f1_setup_fail,
-        gnbdu_cfg_upd_fail,
-        gnbcu_cfg_upd_fail,
+        gnb_du_cfg_upd_fail,
+        gnb_cu_cfg_upd_fail,
         ue_context_setup_fail,
         ue_context_mod_fail,
         ue_context_mod_refuse,
@@ -11556,15 +11556,15 @@ struct f1_ap_elem_procs_o {
     void        to_json(json_writer& j) const;
     // getters
     f1_setup_fail_s&               f1_setup_fail();
-    gnbdu_cfg_upd_fail_s&          gnbdu_cfg_upd_fail();
-    gnbcu_cfg_upd_fail_s&          gnbcu_cfg_upd_fail();
+    gnb_du_cfg_upd_fail_s&         gnb_du_cfg_upd_fail();
+    gnb_cu_cfg_upd_fail_s&         gnb_cu_cfg_upd_fail();
     ue_context_setup_fail_s&       ue_context_setup_fail();
     ue_context_mod_fail_s&         ue_context_mod_fail();
     ue_context_mod_refuse_s&       ue_context_mod_refuse();
     f1_removal_fail_s&             f1_removal_fail();
     const f1_setup_fail_s&         f1_setup_fail() const;
-    const gnbdu_cfg_upd_fail_s&    gnbdu_cfg_upd_fail() const;
-    const gnbcu_cfg_upd_fail_s&    gnbcu_cfg_upd_fail() const;
+    const gnb_du_cfg_upd_fail_s&   gnb_du_cfg_upd_fail() const;
+    const gnb_cu_cfg_upd_fail_s&   gnb_cu_cfg_upd_fail() const;
     const ue_context_setup_fail_s& ue_context_setup_fail() const;
     const ue_context_mod_fail_s&   ue_context_mod_fail() const;
     const ue_context_mod_refuse_s& ue_context_mod_refuse() const;
@@ -11574,8 +11574,8 @@ struct f1_ap_elem_procs_o {
     types type_;
     choice_buffer_t<f1_removal_fail_s,
                     f1_setup_fail_s,
-                    gnbcu_cfg_upd_fail_s,
-                    gnbdu_cfg_upd_fail_s,
+                    gnb_cu_cfg_upd_fail_s,
+                    gnb_du_cfg_upd_fail_s,
                     ue_context_mod_fail_s,
                     ue_context_mod_refuse_s,
                     ue_context_setup_fail_s>
@@ -11594,13 +11594,13 @@ struct f1_ap_elem_procs_o {
 };
 
 // F1AP-PDU-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-using f1_ap_pdu_ext_ies_o = protocol_ies_empty_o;
+using f1ap_pdu_ext_ies_o = protocol_ies_empty_o;
 
 // InitiatingMessage ::= SEQUENCE{{F1AP-ELEMENTARY-PROCEDURE}}
 struct init_msg_s {
-  uint16_t                       proc_code = 0;
-  crit_e                         crit;
-  f1_ap_elem_procs_o::init_msg_c value;
+  uint16_t                      proc_code = 0;
+  crit_e                        crit;
+  f1ap_elem_procs_o::init_msg_c value;
 
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
@@ -11610,9 +11610,9 @@ struct init_msg_s {
 
 // SuccessfulOutcome ::= SEQUENCE{{F1AP-ELEMENTARY-PROCEDURE}}
 struct successful_outcome_s {
-  uint16_t                                 proc_code = 0;
-  crit_e                                   crit;
-  f1_ap_elem_procs_o::successful_outcome_c value;
+  uint16_t                                proc_code = 0;
+  crit_e                                  crit;
+  f1ap_elem_procs_o::successful_outcome_c value;
 
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
@@ -11622,9 +11622,9 @@ struct successful_outcome_s {
 
 // UnsuccessfulOutcome ::= SEQUENCE{{F1AP-ELEMENTARY-PROCEDURE}}
 struct unsuccessful_outcome_s {
-  uint16_t                                   proc_code = 0;
-  crit_e                                     crit;
-  f1_ap_elem_procs_o::unsuccessful_outcome_c value;
+  uint16_t                                  proc_code = 0;
+  crit_e                                    crit;
+  f1ap_elem_procs_o::unsuccessful_outcome_c value;
 
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
@@ -11633,7 +11633,7 @@ struct unsuccessful_outcome_s {
 };
 
 // F1AP-PDU ::= CHOICE
-struct f1_ap_pdu_c {
+struct f1ap_pdu_c {
   struct types_opts {
     enum options { init_msg, successful_outcome, unsuccessful_outcome, choice_ext, nulltype } value;
 
@@ -11642,10 +11642,10 @@ struct f1_ap_pdu_c {
   typedef enumerated<types_opts> types;
 
   // choice methods
-  f1_ap_pdu_c() = default;
-  f1_ap_pdu_c(const f1_ap_pdu_c& other);
-  f1_ap_pdu_c& operator=(const f1_ap_pdu_c& other);
-  ~f1_ap_pdu_c() { destroy_(); }
+  f1ap_pdu_c() = default;
+  f1ap_pdu_c(const f1ap_pdu_c& other);
+  f1ap_pdu_c& operator=(const f1ap_pdu_c& other);
+  ~f1ap_pdu_c() { destroy_(); }
   void        set(types::options e = types::nulltype);
   types       type() const { return type_; }
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -11667,10 +11667,10 @@ struct f1_ap_pdu_c {
     assert_choice_type(types::unsuccessful_outcome, type_, "F1AP-PDU");
     return c.get<unsuccessful_outcome_s>();
   }
-  protocol_ie_single_container_s<f1_ap_pdu_ext_ies_o>& choice_ext()
+  protocol_ie_single_container_s<f1ap_pdu_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "F1AP-PDU");
-    return c.get<protocol_ie_single_container_s<f1_ap_pdu_ext_ies_o>>();
+    return c.get<protocol_ie_single_container_s<f1ap_pdu_ext_ies_o>>();
   }
   const init_msg_s& init_msg() const
   {
@@ -11687,20 +11687,20 @@ struct f1_ap_pdu_c {
     assert_choice_type(types::unsuccessful_outcome, type_, "F1AP-PDU");
     return c.get<unsuccessful_outcome_s>();
   }
-  const protocol_ie_single_container_s<f1_ap_pdu_ext_ies_o>& choice_ext() const
+  const protocol_ie_single_container_s<f1ap_pdu_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "F1AP-PDU");
-    return c.get<protocol_ie_single_container_s<f1_ap_pdu_ext_ies_o>>();
+    return c.get<protocol_ie_single_container_s<f1ap_pdu_ext_ies_o>>();
   }
-  init_msg_s&                                          set_init_msg();
-  successful_outcome_s&                                set_successful_outcome();
-  unsuccessful_outcome_s&                              set_unsuccessful_outcome();
-  protocol_ie_single_container_s<f1_ap_pdu_ext_ies_o>& set_choice_ext();
+  init_msg_s&                                         set_init_msg();
+  successful_outcome_s&                               set_successful_outcome();
+  unsuccessful_outcome_s&                             set_unsuccessful_outcome();
+  protocol_ie_single_container_s<f1ap_pdu_ext_ies_o>& set_choice_ext();
 
 private:
   types type_;
   choice_buffer_t<init_msg_s,
-                  protocol_ie_single_container_s<f1_ap_pdu_ext_ies_o>,
+                  protocol_ie_single_container_s<f1ap_pdu_ext_ies_o>,
                   successful_outcome_s,
                   unsuccessful_outcome_s>
       c;
@@ -11732,7 +11732,7 @@ using protocol_ie_container_pair_l = dyn_seq_of<protocol_ie_field_pair_s<ies_set
 
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::associated_scell_item_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::broadcast_to_be_cancelled_list_item_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::cuto_durrc_info_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::f1ap::cu_to_du_rrc_info_ext_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::candidate_sp_cell_item_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::cells_broadcast_cancelled_list_item_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::cells_broadcast_completed_list_item_ies_o>;
@@ -11743,9 +11743,9 @@ extern template struct asn1::protocol_ext_field_s<asn1::f1ap::cells_to_be_activ_
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::cells_to_be_activ_list_item_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::cells_to_be_barred_item_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::cells_to_be_deactiv_list_item_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::dlrrc_msg_transfer_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::dl_rrc_msg_transfer_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::drb_activity_item_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::qo_sflow_level_qos_params_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::f1ap::qos_flow_level_qos_params_ext_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::drb_notify_item_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_failed_to_be_modified_item_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_failed_to_be_setup_item_ies_o>;
@@ -11756,7 +11756,7 @@ extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_req
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_required_to_be_released_item_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_setup_item_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_setup_mod_item_ies_o>;
-extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::qo_sinfo_ext_ies_o>;
+extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::qos_info_ext_ies_o>;
 extern template struct asn1::protocol_ext_field_s<asn1::f1ap::drbs_to_be_modified_item_ext_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_modified_item_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_released_item_ies_o>;
@@ -11764,7 +11764,7 @@ extern template struct asn1::protocol_ext_field_s<asn1::f1ap::drbs_to_be_setup_i
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_setup_item_ies_o>;
 extern template struct asn1::protocol_ext_field_s<asn1::f1ap::drbs_to_be_setup_mod_item_ext_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_setup_mod_item_ies_o>;
-extern template struct asn1::protocol_ext_field_s<asn1::f1ap::duto_currc_info_ext_ies_o>;
+extern template struct asn1::protocol_ext_field_s<asn1::f1ap::du_to_cu_rrc_info_ext_ies_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::f1ap::ded_si_delivery_needed_ue_item_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::f1ap::error_ind_ies_o>;
 extern template struct asn1::protocol_ext_field_s<asn1::f1ap::served_cell_info_ext_ies_o>;
@@ -11805,16 +11805,16 @@ extern template struct asn1::protocol_ie_field_s<asn1::f1ap::f1_removal_resp_ies
 extern template struct asn1::protocol_ie_field_s<asn1::f1ap::f1_setup_fail_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::f1ap::f1_setup_request_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::f1ap::f1_setup_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnbcu_cfg_upd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnbcu_cfg_upd_ack_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnbcu_cfg_upd_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnbdu_cfg_upd_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnbdu_cfg_upd_ack_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnbdu_cfg_upd_fail_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnbdu_res_coordination_request_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnbdu_res_coordination_resp_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnbdu_status_ind_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::init_ulrrc_msg_transfer_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_cu_cfg_upd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_cu_cfg_upd_ack_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_cu_cfg_upd_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_cfg_upd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_cfg_upd_ack_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_cfg_upd_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_res_coordination_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_res_coordination_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::gnb_du_status_ind_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::init_ul_rrc_msg_transfer_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::f1ap::network_access_rate_reduction_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::f1ap::notify_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::f1ap::pws_cancel_request_ies_o>;
@@ -11839,6 +11839,6 @@ extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_setup_fa
 extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_setup_request_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_context_setup_resp_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_inactivity_notif_ies_o>;
-extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ulrrc_msg_transfer_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ul_rrc_msg_transfer_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::f1ap::write_replace_warning_request_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::f1ap::write_replace_warning_resp_ies_o>;

@@ -36,8 +36,8 @@ void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&                   
   response->cells_to_be_activ_list_present = true;
   for (const auto& du_cell : du_cell_db) {
     asn1::protocol_ie_single_container_s<asn1::f1ap::cells_to_be_activ_list_item_ies_o> resp_cell;
-    resp_cell->cells_to_be_activ_list_item().nrpci_present = true;
-    resp_cell->cells_to_be_activ_list_item().nrpci         = du_cell.pci;
+    resp_cell->cells_to_be_activ_list_item().nr_pci_present = true;
+    resp_cell->cells_to_be_activ_list_item().nr_pci         = du_cell.pci;
     // TODO: write converter to asn1::f1ap::nrcgi_s
     // resp_cell->cells_to_be_activ_list_item().nrcgi = to_nrcgi_s(du_cell.cgi);
     response->cells_to_be_activ_list.value.push_back(resp_cell);

@@ -59,8 +59,8 @@ private:
     f1c_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
     ue_context_release_complete_s& resp = f1c_msg.pdu.successful_outcome().value.ue_context_release_complete();
 
-    resp->gnb_du_ue_f1_ap_id->value = msg->gnb_du_ue_f1_ap_id->value;
-    resp->gnb_cu_ue_f1_ap_id->value = msg->gnb_cu_ue_f1_ap_id->value;
+    resp->gnb_du_ue_f1ap_id->value = msg->gnb_du_ue_f1ap_id->value;
+    resp->gnb_cu_ue_f1ap_id->value = msg->gnb_cu_ue_f1ap_id->value;
 
     ue.f1c_msg_notifier.on_new_message(f1c_msg);
   }

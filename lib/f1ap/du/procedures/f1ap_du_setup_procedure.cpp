@@ -85,7 +85,7 @@ bool f1ap_du_setup_procedure::retry_required()
   }
 
   if (cu_pdu_response.error().value.type().value !=
-      f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail) {
+      f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail) {
     // Invalid response type.
     return false;
   }
@@ -112,7 +112,7 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
   f1_setup_response_message res{};
 
   if (cu_pdu_response.has_value() and cu_pdu_response.value().value.type().value ==
-                                          f1_ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp) {
+                                          f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp) {
     logger.info("Received F1AP PDU with successful outcome.");
     res.msg     = cu_pdu_response.value().value.f1_setup_resp();
     res.success = true;
@@ -126,7 +126,7 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
     }
 
   } else if (cu_pdu_response.has_value() or cu_pdu_response.error().value.type().value !=
-                                                f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail) {
+                                                f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail) {
     logger.error("Received F1AP PDU with unexpected F1AP PDU type {}",
                  cu_pdu_response.value().value.type().to_string());
     res.success = false;

@@ -54,14 +54,14 @@ f1ap_ue_configuration_response f1ap_du_impl::handle_ue_configuration_request(con
   return update_f1ap_ue_config(msg, ues);
 }
 
-void f1ap_du_impl::handle_gnb_cu_configuration_update(const asn1::f1ap::gnbcu_cfg_upd_s& msg)
+void f1ap_du_impl::handle_gnb_cu_configuration_update(const asn1::f1ap::gnb_cu_cfg_upd_s& msg)
 {
   du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, f1c_notifier));
 }
 
 void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg)
 {
-  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1_ap_id->value);
+  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id->value);
   f1ap_du_ue*         u                 = ues.find(gnb_du_ue_f1ap_id);
 
   if (u == nullptr) {
@@ -75,10 +75,10 @@ void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_
 
 void f1ap_du_impl::handle_ue_context_release_command(const asn1::f1ap::ue_context_release_cmd_s& msg)
 {
-  if (msg->oldg_nb_du_ue_f1_ap_id_present) {
+  if (msg->old_gnb_du_ue_f1ap_id_present) {
     // If the old gNB-DU UE F1AP ID IE is included in the UE CONTEXT RELEASE COMMAND message, the gNB-DU shall
     // additionally release the UE context associated with the old gNB-DU UE F1AP ID.
-    gnb_du_ue_f1ap_id_t old_gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->oldg_nb_du_ue_f1_ap_id->value);
+    gnb_du_ue_f1ap_id_t old_gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->old_gnb_du_ue_f1ap_id->value);
     f1ap_du_ue*         old_ue                = ues.find(old_gnb_du_ue_f1ap_id);
     if (old_ue != nullptr) {
       du_mng.get_ue_handler(old_ue->context.ue_index)
@@ -88,7 +88,7 @@ void f1ap_du_impl::handle_ue_context_release_command(const asn1::f1ap::ue_contex
     }
   }
 
-  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1_ap_id->value);
+  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id->value);
   f1ap_du_ue*         u                 = ues.find(gnb_du_ue_f1ap_id);
   if (u == nullptr) {
     logger.warning("Discarding UE CONTEXT RELEASE COMMAND. Cause: Unrecognized gNB-DU UE F1AP ID={}",
@@ -101,7 +101,7 @@ void f1ap_du_impl::handle_ue_context_release_command(const asn1::f1ap::ue_contex
 
 void f1ap_du_impl::handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg)
 {
-  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1_ap_id->value);
+  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id->value);
   f1ap_du_ue*         ue                = ues.find(gnb_du_ue_f1ap_id);
 
   if (ue == nullptr) {
@@ -114,9 +114,9 @@ void f1ap_du_impl::handle_ue_context_modification_request(const asn1::f1ap::ue_c
   ue->handle_ue_context_modification_request(msg);
 }
 
-void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg)
+void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_transfer_s& msg)
 {
-  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1_ap_id->value);
+  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id->value);
 
   // [TS38.473, 8.4.2.2.] If a UE-associated logical F1-connection exists, the DL RRC MESSAGE TRANSFER message shall
   // contain the gNBDU UE F1AP ID IE, which should be used by gNB-DU to lookup the stored UE context.
@@ -130,24 +130,24 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_tr
   }
 
   // Handle gNB-CU UE F1AP ID.
-  if (not handle_rx_message_gnb_cu_ue_f1ap_id(*ue, int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1_ap_id->value))) {
+  if (not handle_rx_message_gnb_cu_ue_f1ap_id(*ue, int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id->value))) {
     return;
   }
 
-  if (msg->new_g_nb_cu_ue_f1_ap_id_present) {
+  if (msg->new_gnb_cu_ue_f1ap_id_present) {
     // If the DL RRC MESSAGE TRANSFER message contains the New gNB-CU UE F1AP ID IE, the gNB-DU shall, if supported,
     // replace the value received in the gNB-CU UE F1AP ID IE by the value of the New gNB-CU UE F1AP ID and use it for
     // further signalling.
-    ue->context.gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(msg->new_g_nb_cu_ue_f1_ap_id.value);
+    ue->context.gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(msg->new_gnb_cu_ue_f1ap_id.value);
   }
 
   // TODO: Check old gNB-DU UE F1AP ID.
 
-  if (msg->oldg_nb_du_ue_f1_ap_id_present) {
+  if (msg->old_gnb_du_ue_f1ap_id_present) {
     // > If the gNB-DU identifies the UE-associated logical F1-connection by the gNB-DU UE F1AP ID IE in the
     // DL RRC MESSAGE TRANSFER message and the old gNB-DU UE F1AP ID IE is included, it shall release the old gNB-DU
     // UE F1AP ID and the related configurations associated with the old gNB-DU UE F1AP ID.
-    gnb_du_ue_f1ap_id_t old_gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->oldg_nb_du_ue_f1_ap_id->value);
+    gnb_du_ue_f1ap_id_t old_gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->old_gnb_du_ue_f1ap_id->value);
     f1ap_du_ue*         old_ue                = ues.find(old_gnb_du_ue_f1ap_id);
     if (old_ue != nullptr) {
       f1ap_ue_delete_request request{};
@@ -221,13 +221,13 @@ void f1ap_du_impl::handle_message(const f1c_message& msg)
   }
 
   switch (msg.pdu.type().value) {
-    case asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg:
+    case asn1::f1ap::f1ap_pdu_c::types_opts::init_msg:
       handle_initiating_message(msg.pdu.init_msg());
       break;
-    case asn1::f1ap::f1_ap_pdu_c::types_opts::successful_outcome:
+    case asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome:
       handle_successful_outcome(msg.pdu.successful_outcome());
       break;
-    case asn1::f1ap::f1_ap_pdu_c::types_opts::unsuccessful_outcome:
+    case asn1::f1ap::f1ap_pdu_c::types_opts::unsuccessful_outcome:
       handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
       break;
     default:
@@ -239,16 +239,16 @@ void f1ap_du_impl::handle_message(const f1c_message& msg)
 void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
-    case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::gnbcu_cfg_upd:
-      handle_gnb_cu_configuration_update(msg.value.gnbcu_cfg_upd());
+    case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cfg_upd:
+      handle_gnb_cu_configuration_update(msg.value.gnb_cu_cfg_upd());
       break;
-    case f1_ap_elem_procs_o::init_msg_c::types_opts::dlrrc_msg_transfer:
-      handle_dl_rrc_message_transfer(msg.value.dlrrc_msg_transfer());
+    case f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer:
+      handle_dl_rrc_message_transfer(msg.value.dl_rrc_msg_transfer());
       break;
-    case f1_ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request:
+    case f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request:
       handle_ue_context_setup_request(msg.value.ue_context_setup_request());
       break;
-    case f1_ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request:
+    case f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request:
       handle_ue_context_modification_request(msg.value.ue_context_mod_request());
       break;
     default:

@@ -34,11 +34,11 @@ struct f1_rx_pdu {
 };
 
 struct f1ap_initial_ul_rrc_msg {
-  asn1::f1ap::init_ulrrc_msg_transfer_s init_msg;
+  asn1::f1ap::init_ul_rrc_msg_transfer_s init_msg;
 };
 
 struct f1ap_ul_rrc_msg {
-  asn1::f1ap::ulrrc_msg_transfer_s ul_msg;
+  asn1::f1ap::ul_rrc_msg_transfer_s ul_msg;
 };
 
 struct f1ap_rrc_delivery_report_msg {

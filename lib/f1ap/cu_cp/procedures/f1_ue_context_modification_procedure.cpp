@@ -48,8 +48,8 @@ void f1_ue_context_modification_procedure::send_ue_context_modification_request(
   ue_context_mod_request_s& ctx_mod = f1c_ue_ctxt_mod_request_msg.pdu.init_msg().value.ue_context_mod_request();
   ctx_mod                           = request.msg;
 
-  ctx_mod->gnb_du_ue_f1_ap_id->value = gnb_du_ue_f1ap_id_to_uint(ue_ctx.du_ue_f1ap_id);
-  ctx_mod->gnb_cu_ue_f1_ap_id->value = gnb_cu_ue_f1ap_id_to_uint(ue_ctx.cu_ue_f1ap_id);
+  ctx_mod->gnb_du_ue_f1ap_id->value = gnb_du_ue_f1ap_id_to_uint(ue_ctx.du_ue_f1ap_id);
+  ctx_mod->gnb_cu_ue_f1ap_id->value = gnb_cu_ue_f1ap_id_to_uint(ue_ctx.cu_ue_f1ap_id);
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;

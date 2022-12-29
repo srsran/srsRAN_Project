@@ -30,7 +30,7 @@ struct qos_flow_context {
   uint16_t five_qi;     // The FiveQI assigned to this flow.
 
   // TODO: add other fields contained in:
-  // * qo_sflow_level_qos_params_s
+  // * qos_flow_level_qos_params_s
   // * ngran_alloc_and_retention_prio_s
   // * etc.
 

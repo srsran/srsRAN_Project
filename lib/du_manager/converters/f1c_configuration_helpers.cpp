@@ -369,14 +369,14 @@ void srsgnb::srs_du::fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& 
   for (const du_cell_config* cell_cfg : cells_to_add) {
     // Add Cell in list of served cells.
     request->gnb_du_served_cells_list->push_back({});
-    request->gnb_du_served_cells_list->back().load_info_obj(ASN1_F1AP_ID_G_NB_DU_SERVED_CELLS_LIST);
+    request->gnb_du_served_cells_list->back().load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST);
     asn1::f1ap::gnb_du_served_cells_item_s& f1_cell =
         request->gnb_du_served_cells_list->back()->gnb_du_served_cells_item();
 
     // Fill Served Cell Information.
-    f1_cell.served_cell_info.nrpci = cell_cfg->pci;
+    f1_cell.served_cell_info.nr_pci = cell_cfg->pci;
     f1_cell.served_cell_info.nrcgi.plmn_id.from_number(plmn_string_to_bcd(cell_cfg->plmn));
-    f1_cell.served_cell_info.nrcgi.nrcell_id.from_number(cell_cfg->cell_id); // TODO: add gnbID
+    f1_cell.served_cell_info.nrcgi.nr_cell_id.from_number(cell_cfg->cell_id); // TODO: add gnbID
     f1_cell.served_cell_info.five_gs_tac_present = true;
     f1_cell.served_cell_info.five_gs_tac.from_number(cell_cfg->tac);
 

@@ -129,7 +129,7 @@ void test_du_ue_create()
   du_high du_obj(cfg);
 
   du_obj.start();
-  TESTASSERT(pdu_handler.last_f1c_msg.pdu.type() != asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype);
+  TESTASSERT(pdu_handler.last_f1c_msg.pdu.type() != asn1::f1ap::f1ap_pdu_c::types_opts::nulltype);
   pdu_handler.last_f1c_msg.pdu = {};
 
   // Push F1c setup response to DU, signaling that the CU accepted the f1c connection.
@@ -148,13 +148,13 @@ void test_du_ue_create()
   slot_point sl_tx{0, 0};
   for (uint32_t count = 0; count < 10000; count++) {
     du_obj.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(sl_tx++);
-    if (pdu_handler.last_f1c_msg.pdu.type() != asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype) {
+    if (pdu_handler.last_f1c_msg.pdu.type() != asn1::f1ap::f1ap_pdu_c::types_opts::nulltype) {
       break;
     }
     workers.ctrl_worker.run_next_blocking();
   }
-  TESTASSERT(pdu_handler.last_f1c_msg.pdu.type() == asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
-  TESTASSERT(pdu_handler.last_f1c_msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_INIT_ULRRC_MSG_TRANSFER);
+  TESTASSERT(pdu_handler.last_f1c_msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
+  TESTASSERT(pdu_handler.last_f1c_msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER);
 
   workers.stop();
 }

@@ -26,21 +26,21 @@ protected:
     t_launcher.emplace(t);
 
     test_ues[req.ue_index].cu_ue_id = int_to_gnb_cu_ue_f1ap_id(
-        this->f1c_pdu_notifier.last_f1c_msg.pdu.init_msg().value.ue_context_mod_request()->gnb_cu_ue_f1_ap_id.value);
+        this->f1c_pdu_notifier.last_f1c_msg.pdu.init_msg().value.ue_context_mod_request()->gnb_cu_ue_f1ap_id.value);
   }
 
   bool was_ue_context_setup_request_sent(gnb_du_ue_f1ap_id_t du_ue_id) const
   {
-    if (this->f1c_pdu_notifier.last_f1c_msg.pdu.type().value != f1_ap_pdu_c::types::init_msg) {
+    if (this->f1c_pdu_notifier.last_f1c_msg.pdu.type().value != f1ap_pdu_c::types::init_msg) {
       return false;
     }
     if (this->f1c_pdu_notifier.last_f1c_msg.pdu.init_msg().value.type().value !=
-        asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request) {
+        asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request) {
       return false;
     }
     auto& req = this->f1c_pdu_notifier.last_f1c_msg.pdu.init_msg().value.ue_context_setup_request();
 
-    return req->gnb_du_ue_f1_ap_id.value == (unsigned)du_ue_id;
+    return req->gnb_du_ue_f1ap_id.value == (unsigned)du_ue_id;
   }
 
   bool was_ue_context_setup_response_received(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id) const
@@ -48,8 +48,8 @@ protected:
     if (not t.ready() or not t.get().success) {
       return false;
     }
-    return int_to_gnb_du_ue_f1ap_id(t.get().response->gnb_du_ue_f1_ap_id.value) == du_ue_id and
-           int_to_gnb_cu_ue_f1ap_id(t.get().response->gnb_cu_ue_f1_ap_id->value) == cu_ue_id;
+    return int_to_gnb_du_ue_f1ap_id(t.get().response->gnb_du_ue_f1ap_id.value) == du_ue_id and
+           int_to_gnb_cu_ue_f1ap_id(t.get().response->gnb_cu_ue_f1ap_id->value) == cu_ue_id;
   }
 
   bool was_ue_context_setup_failure_received(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id) const
@@ -57,8 +57,8 @@ protected:
     if (not t.ready() or t.get().success) {
       return false;
     }
-    return int_to_gnb_du_ue_f1ap_id(t.get().failure->gnb_du_ue_f1_ap_id.value) == du_ue_id and
-           int_to_gnb_cu_ue_f1ap_id(t.get().failure->gnb_cu_ue_f1_ap_id->value) == cu_ue_id;
+    return int_to_gnb_du_ue_f1ap_id(t.get().failure->gnb_du_ue_f1ap_id.value) == du_ue_id and
+           int_to_gnb_cu_ue_f1ap_id(t.get().failure->gnb_cu_ue_f1ap_id->value) == cu_ue_id;
   }
 
   async_task<f1ap_ue_context_setup_response>                   t;

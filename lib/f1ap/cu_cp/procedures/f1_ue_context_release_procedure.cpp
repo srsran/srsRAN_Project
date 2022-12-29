@@ -25,9 +25,9 @@ f1_ue_context_release_procedure::f1_ue_context_release_procedure(f1ap_ue_context
   ev_mng(ev_mng_),
   logger(logger_)
 {
-  command->gnb_cu_ue_f1_ap_id.value = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
-  command->gnb_du_ue_f1_ap_id.value = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
-  command->cause.value              = cmd_.cause;
+  command->gnb_cu_ue_f1ap_id.value = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
+  command->gnb_du_ue_f1ap_id.value = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
+  command->cause.value             = cmd_.cause;
 }
 
 void f1_ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t>>& ctx)
@@ -69,7 +69,7 @@ ue_index_t f1_ue_context_release_procedure::create_ue_context_release_complete(
 
   ue_index_t ret = INVALID_UE_INDEX;
 
-  if (msg->gnb_du_ue_f1_ap_id.value == gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id)) {
+  if (msg->gnb_du_ue_f1ap_id.value == gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id)) {
     ret = ue_ctxt.ue_index;
     ue_ctxt_list.remove_ue(ue_ctxt.cu_ue_f1ap_id);
   }

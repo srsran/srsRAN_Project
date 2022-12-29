@@ -15,7 +15,7 @@
 namespace srsgnb {
 
 struct f1c_message {
-  asn1::f1ap::f1_ap_pdu_c pdu;
+  asn1::f1ap::f1ap_pdu_c pdu;
 };
 
 /// This interface is used to push F1C messages to the F1 interface.

@@ -58,10 +58,10 @@ inline cu_cp_cause_t f1ap_cause_to_cu_cp_cause(asn1::f1ap::cause_c f1ap_cause)
 inline nr_cell_id_t f1ap_nrcgi_to_nr_cell_identity(asn1::f1ap::nrcgi_s& f1ap_cgi)
 {
   nr_cell_id_t nci;
-  nci.packed = f1ap_cgi.nrcell_id.to_number();
+  nci.packed = f1ap_cgi.nr_cell_id.to_number();
 
-  nci.cell_idenity = (f1ap_cgi.nrcell_id.to_number() & 0xfffc0000);
-  nci.gnb_identity = (f1ap_cgi.nrcell_id.to_number() & 0X3ff0);
+  nci.cell_idenity = (f1ap_cgi.nr_cell_id.to_number() & 0xfffc0000);
+  nci.gnb_identity = (f1ap_cgi.nr_cell_id.to_number() & 0X3ff0);
 
   return nci;
 }

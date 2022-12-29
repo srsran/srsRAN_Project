@@ -48,9 +48,9 @@ protected:
 
   bool was_ue_context_modification_response_sent() const
   {
-    return this->msg_notifier.last_f1c_msg.pdu.type().value == f1_ap_pdu_c::types_opts::successful_outcome and
+    return this->msg_notifier.last_f1c_msg.pdu.type().value == f1ap_pdu_c::types_opts::successful_outcome and
            this->msg_notifier.last_f1c_msg.pdu.successful_outcome().value.type().value ==
-               f1_ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp;
+               f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp;
   }
 
   du_ue_index_t test_ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_NOF_DU_UES));
@@ -86,14 +86,16 @@ TEST_F(f1ap_du_ue_context_modification_test,
   ASSERT_TRUE(resp->drbs_setup_mod_list_present);
   ASSERT_EQ(resp->drbs_setup_mod_list->size(), 1);
   auto& drb_setup = resp->drbs_setup_mod_list.value[0].value().drbs_setup_mod_item();
-  ASSERT_EQ(drb_setup.drbid, 1);
-  ASSERT_EQ(drb_setup.dluptnl_info_to_be_setup_list.size(), 1);
-  ASSERT_EQ(int_to_gtp_teid(drb_setup.dluptnl_info_to_be_setup_list[0].dluptnl_info.gtp_tunnel().gtp_teid.to_number()),
-            this->f1c_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list[0].gtp_teid);
-  ASSERT_EQ(drb_setup.dluptnl_info_to_be_setup_list[0].dluptnl_info.gtp_tunnel().transport_layer_address.to_number(),
-            this->f1c_du_cfg_handler.next_ue_context_update_response.drbs_setup[0]
-                .dluptnl_info_list[0]
-                .tp_address.to_number());
-  ASSERT_EQ(resp->duto_currc_info.value.cell_group_cfg,
+  ASSERT_EQ(drb_setup.drb_id, 1);
+  ASSERT_EQ(drb_setup.dl_up_tnl_info_to_be_setup_list.size(), 1);
+  ASSERT_EQ(
+      int_to_gtp_teid(drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().gtp_teid.to_number()),
+      this->f1c_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list[0].gtp_teid);
+  ASSERT_EQ(
+      drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().transport_layer_address.to_number(),
+      this->f1c_du_cfg_handler.next_ue_context_update_response.drbs_setup[0]
+          .dluptnl_info_list[0]
+          .tp_address.to_number());
+  ASSERT_EQ(resp->du_to_cu_rrc_info.value.cell_group_cfg,
             this->f1c_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
 }

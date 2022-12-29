@@ -51,7 +51,7 @@ protected:
 // initiating message F1SetupRequest
 TEST_F(asn1_f1ap_test, when_setup_message_correct_then_packing_successful)
 {
-  asn1::f1ap::f1_ap_pdu_c pdu;
+  asn1::f1ap::f1ap_pdu_c pdu;
 
   pdu.set_init_msg();
   pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
@@ -64,7 +64,7 @@ TEST_F(asn1_f1ap_test, when_setup_message_correct_then_packing_successful)
   setup_req->gnb_du_rrc_version.value.latest_rrc_version.from_number(1);
 
   setup_req->gnb_du_served_cells_list_present = true;
-  setup_req->gnb_du_served_cells_list.id      = ASN1_F1AP_ID_G_NB_DU_SERVED_CELLS_LIST;
+  setup_req->gnb_du_served_cells_list.id      = ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST;
   setup_req->gnb_du_served_cells_list.crit    = crit_opts::reject;
 
   asn1::protocol_ie_single_container_s<asn1::f1ap::gnb_du_served_cells_item_ies_o> served_cells_item_container = {};
@@ -72,8 +72,8 @@ TEST_F(asn1_f1ap_test, when_setup_message_correct_then_packing_successful)
 
   auto& served_cells_item = served_cells_item_container.value().gnb_du_served_cells_item();
   served_cells_item.served_cell_info.nrcgi.plmn_id.from_string("208991");
-  served_cells_item.served_cell_info.nrcgi.nrcell_id.from_number(12345678);
-  served_cells_item.served_cell_info.nrpci               = 0;
+  served_cells_item.served_cell_info.nrcgi.nr_cell_id.from_number(12345678);
+  served_cells_item.served_cell_info.nr_pci              = 0;
   served_cells_item.served_cell_info.five_gs_tac_present = true;
   served_cells_item.served_cell_info.five_gs_tac.from_number(1);
 
@@ -89,12 +89,12 @@ TEST_F(asn1_f1ap_test, when_setup_message_correct_then_packing_successful)
   served_cells_item.served_cell_info.served_plmns.push_back(served_plmn);
 
   served_cells_item.served_cell_info.nr_mode_info.set_tdd();
-  served_cells_item.served_cell_info.nr_mode_info.tdd().nrfreq_info.nrarfcn = 626748;
+  served_cells_item.served_cell_info.nr_mode_info.tdd().nr_freq_info.nr_arfcn = 626748;
   asn1::f1ap::freq_band_nr_item_s freq_band_nr_item;
   freq_band_nr_item.freq_band_ind_nr = 78;
-  served_cells_item.served_cell_info.nr_mode_info.tdd().nrfreq_info.freq_band_list_nr.push_back(freq_band_nr_item);
-  served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nrscs.value = asn1::f1ap::nrscs_opts::scs30;
-  served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nrnrb.value = asn1::f1ap::nrnrb_opts::nrb51;
+  served_cells_item.served_cell_info.nr_mode_info.tdd().nr_freq_info.freq_band_list_nr.push_back(freq_band_nr_item);
+  served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nrscs.value  = asn1::f1ap::nrscs_opts::scs30;
+  served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_nrb.value = asn1::f1ap::nrnrb_opts::nrb51;
   served_cells_item.served_cell_info.meas_timing_cfg.from_string("30");
 
   served_cells_item.gnb_du_sys_info_present = true;
@@ -124,7 +124,7 @@ TEST_F(asn1_f1ap_test, when_setup_message_correct_then_packing_successful)
 // successful outcome F1SetupResponse
 TEST_F(asn1_f1ap_test, when_setup_response_correct_then_packing_successful)
 {
-  asn1::f1ap::f1_ap_pdu_c pdu;
+  asn1::f1ap::f1ap_pdu_c pdu;
 
   pdu.set_successful_outcome();
   pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
@@ -157,7 +157,7 @@ TEST_F(asn1_f1ap_test, when_setup_response_correct_then_packing_successful)
 // unsuccessful outcome F1SetupFailure
 TEST_F(asn1_f1ap_test, when_setup_failure_correct_then_packing_successful)
 {
-  asn1::f1ap::f1_ap_pdu_c pdu;
+  asn1::f1ap::f1ap_pdu_c pdu;
 
   pdu.set_unsuccessful_outcome();
   pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
@@ -231,15 +231,15 @@ TEST_F(asn1_f1ap_test, when_ue_context_setup_request_correct_then_unpacking_succ
 
   pcap_writer.write_pdu(rx_msg);
 
-  asn1::cbit_ref          bref{rx_pdu};
-  asn1::f1ap::f1_ap_pdu_c pdu;
+  asn1::cbit_ref         bref{rx_pdu};
+  asn1::f1ap::f1ap_pdu_c pdu;
 
   ASSERT_EQ(pdu.unpack(bref), SRSASN_SUCCESS);
-  ASSERT_EQ(asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg, pdu.type());
+  ASSERT_EQ(asn1::f1ap::f1ap_pdu_c::types_opts::init_msg, pdu.type());
 
   ASSERT_EQ(pdu.init_msg().proc_code, ASN1_F1AP_ID_UE_CONTEXT_SETUP);
   ASSERT_EQ(pdu.init_msg().value.type(),
-            asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request);
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request);
 
   ASSERT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
 
@@ -268,15 +268,15 @@ TEST_F(asn1_f1ap_test, when_initial_ul_rrc_message_transfer_correct_then_unpacki
 
   pcap_writer.write_pdu(rx_msg);
 
-  asn1::cbit_ref          bref{rx_pdu};
-  asn1::f1ap::f1_ap_pdu_c pdu;
+  asn1::cbit_ref         bref{rx_pdu};
+  asn1::f1ap::f1ap_pdu_c pdu;
 
   ASSERT_EQ(pdu.unpack(bref), SRSASN_SUCCESS);
-  ASSERT_EQ(pdu.type(), asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
 
-  ASSERT_EQ(pdu.init_msg().proc_code, ASN1_F1AP_ID_INIT_ULRRC_MSG_TRANSFER);
+  ASSERT_EQ(pdu.init_msg().proc_code, ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER);
   ASSERT_EQ(pdu.init_msg().value.type(),
-            asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::init_ulrrc_msg_transfer);
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer);
 
   ASSERT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
 
@@ -304,21 +304,21 @@ TEST_F(asn1_f1ap_test, when_initial_ul_rrc_message_transfer_packing_correct_then
       0x00, 0x00, 0x00, 0x02, 0x82, 0x01, 0x95, 0x03, 0x00, 0xc4, 0x00, 0x00, 0x4e, 0x40, 0x02, 0x00, 0x00};
   srsgnb::byte_buffer rx_pdu{rx_msg};
 
-  asn1::f1ap::f1_ap_pdu_c tx_pdu;
+  asn1::f1ap::f1ap_pdu_c tx_pdu;
 
   tx_pdu.set_init_msg();
-  tx_pdu.init_msg().load_info_obj(ASN1_F1AP_ID_INIT_ULRRC_MSG_TRANSFER);
+  tx_pdu.init_msg().load_info_obj(ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER);
 
-  auto& init_ul_rrc                     = tx_pdu.init_msg().value.init_ulrrc_msg_transfer();
-  init_ul_rrc->gnb_du_ue_f1_ap_id.value = 41255; // same as C-RNTI
+  auto& init_ul_rrc                    = tx_pdu.init_msg().value.init_ul_rrc_msg_transfer();
+  init_ul_rrc->gnb_du_ue_f1ap_id.value = 41255; // same as C-RNTI
 
-  init_ul_rrc->nrcgi.value.nrcell_id.from_string("000000000000101111000110000101001110");
+  init_ul_rrc->nrcgi.value.nr_cell_id.from_string("000000000000101111000110000101001110");
   init_ul_rrc->nrcgi.value.plmn_id.from_string("02f899");
   init_ul_rrc->c_rnti.value = 41255;
 
   init_ul_rrc->rrc_container.value.from_string("1dec89d05766");
-  init_ul_rrc->duto_currc_container_present = true;
-  init_ul_rrc->duto_currc_container.value.from_string(
+  init_ul_rrc->du_to_cu_rrc_container_present = true;
+  init_ul_rrc->du_to_cu_rrc_container.value.from_string(
       "5c00b001117aec701061e0007c20408d07810020a2090480ca8000f800000000008370842000088165000048200002069a06aa49880002"
       "00204000400d008013b64b1814400e468acf120000096070820f177e060870000000e25038000040bde802000400000000028201950300"
       "c400");

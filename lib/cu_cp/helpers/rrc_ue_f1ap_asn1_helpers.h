@@ -28,7 +28,7 @@ inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modificati
     asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_setup_mod_item_ies_o> f1ap_setup_item;
     auto& f1ap_drb_to_setup_item = f1ap_setup_item->drbs_to_be_setup_mod_item();
 
-    f1ap_drb_to_setup_item.drbid = drb_to_be_setup.drb_id;
+    f1ap_drb_to_setup_item.drb_id = drb_to_be_setup.drb_id;
     switch (drb_to_be_setup.rlc) {
       case rlc_mode::am:
         f1ap_drb_to_setup_item.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_am;
@@ -50,20 +50,20 @@ inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modificati
 
     // Add uLUPTNLInformation_ToBeSetup
     for (const auto& gtp_tunnel_item : drb_to_be_setup.gtp_tunnels) {
-      asn1::f1ap::uluptnl_info_to_be_setup_item_s item;
-      up_transport_layer_info_to_asn1(item.uluptnl_info, gtp_tunnel_item);
-      f1ap_drb_to_setup_item.uluptnl_info_to_be_setup_list.push_back(item);
+      asn1::f1ap::ul_up_tnl_info_to_be_setup_item_s item;
+      up_transport_layer_info_to_asn1(item.ul_up_tnl_info, gtp_tunnel_item);
+      f1ap_drb_to_setup_item.ul_up_tnl_info_to_be_setup_list.push_back(item);
     }
 
     // Add qos information
-    f1ap_drb_to_setup_item.qo_sinfo.set_choice_ext();
-    auto& choice_ext = f1ap_drb_to_setup_item.qo_sinfo.choice_ext();
+    f1ap_drb_to_setup_item.qos_info.set_choice_ext();
+    auto& choice_ext = f1ap_drb_to_setup_item.qos_info.choice_ext();
     choice_ext.load_info_obj(ASN1_F1AP_ID_DRB_INFO);
 
     auto& drb_info = choice_ext.value().drb_info();
-    drb_info.drb_qos.qo_s_characteristics.set_non_dynamic_minus5_qi();
-    drb_info.drb_qos.qo_s_characteristics.non_dynamic_minus5_qi().five_qi = drb_to_be_setup.qos_info.five_qi;
-    drb_info.drb_qos.ngra_nalloc_retention_prio.prio_level                = drb_to_be_setup.qos_info.prio_level_arp;
+    drb_info.drb_qos.qos_characteristics.set_non_dynamic_5qi();
+    drb_info.drb_qos.qos_characteristics.non_dynamic_5qi().five_qi = drb_to_be_setup.qos_info.five_qi;
+    drb_info.drb_qos.ngra_nalloc_retention_prio.prio_level         = drb_to_be_setup.qos_info.prio_level_arp;
     drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_cap =
         asn1::f1ap::pre_emption_cap_opts::shall_not_trigger_pre_emption;
     drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_vulnerability.value =
@@ -75,8 +75,8 @@ inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modificati
 
     for (const auto& qos_flow : drb_to_be_setup.qos_flows_mapped_to_drb) {
       asn1::f1ap::flows_mapped_to_drb_item_s new_item;
-      new_item.qo_sflow_id               = qos_flow.qos_flow_id;
-      new_item.qo_sflow_level_qos_params = drb_info.drb_qos;
+      new_item.qos_flow_id               = qos_flow.qos_flow_id;
+      new_item.qos_flow_level_qos_params = drb_info.drb_qos;
       drb_info.flows_mapped_to_drb_list.push_back(new_item);
     }
 
@@ -100,10 +100,10 @@ inline void fill_rrc_ue_ue_context_modification_response_message(
     auto& f1ap_response_item = f1ap_ue_context_mod_resp_msg.response;
 
     // DUtoCURRCInformation
-    if (f1ap_response_item->duto_currc_info_present) {
-      res.du_to_cu_rrc_info.cell_group_cfg      = f1ap_response_item->duto_currc_info->cell_group_cfg.copy();
-      res.du_to_cu_rrc_info.meas_gap_cfg        = f1ap_response_item->duto_currc_info->meas_gap_cfg.copy();
-      res.du_to_cu_rrc_info.requested_p_max_fr1 = f1ap_response_item->duto_currc_info->requested_p_max_fr1.copy();
+    if (f1ap_response_item->du_to_cu_rrc_info_present) {
+      res.du_to_cu_rrc_info.cell_group_cfg      = f1ap_response_item->du_to_cu_rrc_info->cell_group_cfg.copy();
+      res.du_to_cu_rrc_info.meas_gap_cfg        = f1ap_response_item->du_to_cu_rrc_info->meas_gap_cfg.copy();
+      res.du_to_cu_rrc_info.requested_p_max_fr1 = f1ap_response_item->du_to_cu_rrc_info->requested_p_max_fr1.copy();
     }
 
     // Add DRBs setup mod list
@@ -112,13 +112,13 @@ inline void fill_rrc_ue_ue_context_modification_response_message(
         auto& f1ap_drb_mod_item = f1ap_drb_setup_mod_list_item.value().drbs_setup_mod_item();
 
         rrc_ue_drbs_setup_modified_item drb_setup_mod_item;
-        drb_setup_mod_item.drb_id = uint_to_drb_id(f1ap_drb_mod_item.drbid);
+        drb_setup_mod_item.drb_id = uint_to_drb_id(f1ap_drb_mod_item.drb_id);
 
         // Add DL UP TNL to be setup list
-        for (auto f1ap_dluptnl_info_to_be_setup_item : f1ap_drb_mod_item.dluptnl_info_to_be_setup_list) {
+        for (auto f1ap_dluptnl_info_to_be_setup_item : f1ap_drb_mod_item.dl_up_tnl_info_to_be_setup_list) {
           rrc_ue_dluptnl_info_to_be_setup_item dluptnl_info_to_be_setup_item;
           dluptnl_info_to_be_setup_item.dluptnl_info =
-              asn1_to_up_transport_layer_info(f1ap_dluptnl_info_to_be_setup_item.dluptnl_info);
+              asn1_to_up_transport_layer_info(f1ap_dluptnl_info_to_be_setup_item.dl_up_tnl_info);
           drb_setup_mod_item.dluptnl_info_to_be_setup_list.push_back(dluptnl_info_to_be_setup_item);
         }
 
@@ -134,13 +134,13 @@ inline void fill_rrc_ue_ue_context_modification_response_message(
         auto& f1ap_drb_mod_item = f1ap_drbs_modified_list_item.value().drbs_modified_item();
 
         rrc_ue_drbs_setup_modified_item drb_setup_mod_item;
-        drb_setup_mod_item.drb_id = uint_to_drb_id(f1ap_drb_mod_item.drbid);
+        drb_setup_mod_item.drb_id = uint_to_drb_id(f1ap_drb_mod_item.drb_id);
 
         // Add DL UP TNL to be setup list
-        for (auto f1ap_dluptnl_info_to_be_setup_item : f1ap_drb_mod_item.dluptnl_info_to_be_setup_list) {
+        for (auto f1ap_dluptnl_info_to_be_setup_item : f1ap_drb_mod_item.dl_up_tnl_info_to_be_setup_list) {
           rrc_ue_dluptnl_info_to_be_setup_item dluptnl_info_to_be_setup_item;
           dluptnl_info_to_be_setup_item.dluptnl_info =
-              asn1_to_up_transport_layer_info(f1ap_dluptnl_info_to_be_setup_item.dluptnl_info);
+              asn1_to_up_transport_layer_info(f1ap_dluptnl_info_to_be_setup_item.dl_up_tnl_info);
           drb_setup_mod_item.dluptnl_info_to_be_setup_list.push_back(dluptnl_info_to_be_setup_item);
         }
 
@@ -156,7 +156,7 @@ inline void fill_rrc_ue_ue_context_modification_response_message(
         auto& f1ap_srb_failed_item = f1ap_srbs_failed_setup_mod_list_item.value().srbs_failed_to_be_setup_mod_item();
 
         rrc_ue_srbs_failed_to_be_setup_mod_item srb_failed_item;
-        srb_failed_item.srb_id = int_to_srb_id(f1ap_srb_failed_item.srbid);
+        srb_failed_item.srb_id = int_to_srb_id(f1ap_srb_failed_item.srb_id);
         if (f1ap_srb_failed_item.cause_present) {
           srb_failed_item.cause.value() = f1ap_cause_to_cu_cp_cause(f1ap_srb_failed_item.cause);
         }
@@ -170,7 +170,7 @@ inline void fill_rrc_ue_ue_context_modification_response_message(
         auto& f1ap_drb_failed_item = f1ap_drbs_failed_setup_mod_list_item.value().drbs_failed_to_be_setup_mod_item();
 
         rrc_ue_drbs_failed_to_be_setup_modified_item drb_failed_item;
-        drb_failed_item.drb_id = uint_to_drb_id(f1ap_drb_failed_item.drbid);
+        drb_failed_item.drb_id = uint_to_drb_id(f1ap_drb_failed_item.drb_id);
         if (f1ap_drb_failed_item.cause_present) {
           drb_failed_item.cause.value() = f1ap_cause_to_cu_cp_cause(f1ap_drb_failed_item.cause);
         }
@@ -198,7 +198,7 @@ inline void fill_rrc_ue_ue_context_modification_response_message(
         auto& f1ap_drb_failed_item = f1ap_drbs_failed_modified_list_item.value().drbs_failed_to_be_modified_item();
 
         rrc_ue_drbs_failed_to_be_setup_modified_item drb_failed_item;
-        drb_failed_item.drb_id = uint_to_drb_id(f1ap_drb_failed_item.drbid);
+        drb_failed_item.drb_id = uint_to_drb_id(f1ap_drb_failed_item.drb_id);
         if (f1ap_drb_failed_item.cause_present) {
           drb_failed_item.cause.value() = f1ap_cause_to_cu_cp_cause(f1ap_drb_failed_item.cause);
         }
@@ -234,7 +234,7 @@ inline void fill_rrc_ue_ue_context_modification_response_message(
         auto& f1ap_srbs_setup_mod_item = f1ap_srbs_setup_mod_list_item.value().srbs_setup_mod_item();
 
         rrc_ue_srbs_setup_modified_item srbs_setup_mod_item;
-        srbs_setup_mod_item.srb_id = int_to_srb_id(f1ap_srbs_setup_mod_item.srbid);
+        srbs_setup_mod_item.srb_id = int_to_srb_id(f1ap_srbs_setup_mod_item.srb_id);
         srbs_setup_mod_item.lcid   = uint_to_lcid(f1ap_srbs_setup_mod_item.lcid);
 
         res.srbs_setup_mod_list.push_back(srbs_setup_mod_item);
@@ -247,7 +247,7 @@ inline void fill_rrc_ue_ue_context_modification_response_message(
         auto& f1ap_srbs_modified_item = f1ap_srbs_modified_list_item.value().srbs_modified_item();
 
         rrc_ue_srbs_setup_modified_item srbs_modified_item;
-        srbs_modified_item.srb_id = int_to_srb_id(f1ap_srbs_modified_item.srbid);
+        srbs_modified_item.srb_id = int_to_srb_id(f1ap_srbs_modified_item.srb_id);
         srbs_modified_item.lcid   = uint_to_lcid(f1ap_srbs_modified_item.lcid);
 
         res.srbs_modified_list.push_back(srbs_modified_item);

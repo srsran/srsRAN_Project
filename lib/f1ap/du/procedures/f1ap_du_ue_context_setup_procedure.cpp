@@ -50,7 +50,7 @@ void f1ap_du_ue_context_setup_procedure::create_du_request(const ue_context_setu
 
   // >> Pass SRBs to setup.
   for (const auto& srb : msg->srbs_to_be_setup_list.value) {
-    du_request.srbs_to_setup.push_back((srb_id_t)srb.value().srbs_to_be_setup_item().srbid);
+    du_request.srbs_to_setup.push_back((srb_id_t)srb.value().srbs_to_be_setup_item().srb_id);
   }
 
   // >> Pass DRBs to setup.
@@ -58,7 +58,7 @@ void f1ap_du_ue_context_setup_procedure::create_du_request(const ue_context_setu
     const asn1::f1ap::drbs_to_be_setup_item_s& drb_item = drb.value().drbs_to_be_setup_item();
 
     f1ap_drb_to_setup drb_obj;
-    drb_obj.drb_id = (drb_id_t)drb_item.drbid;
+    drb_obj.drb_id = (drb_id_t)drb_item.drb_id;
     drb_obj.mode   = (drb_rlc_mode)(unsigned)drb_item.rlc_mode;
     du_request.drbs_to_setup.push_back(drb_obj);
   }
@@ -80,11 +80,11 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
   f1c_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
   ue_context_setup_resp_s& resp = f1c_msg.pdu.successful_outcome().value.ue_context_setup_resp();
 
-  resp->gnb_du_ue_f1_ap_id->value = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
-  resp->gnb_cu_ue_f1_ap_id->value = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
+  resp->gnb_du_ue_f1ap_id->value = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
+  resp->gnb_cu_ue_f1ap_id->value = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
 
   // > DU-to-CU RRC Container.
-  resp->duto_currc_info.value.cell_group_cfg.append(du_response.du_to_cu_rrc_container);
+  resp->du_to_cu_rrc_info.value.cell_group_cfg.append(du_response.du_to_cu_rrc_container);
 
   // > If the C-RNTI IE is included in the UE CONTEXT SETUP RESPONSE, the gNB-CU shall consider that the C-RNTI has
   // been allocated by the gNB-DU for this UE context.
@@ -98,7 +98,7 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
     for (unsigned i = 0; i != du_request.srbs_to_setup.size(); ++i) {
       resp->srbs_setup_list.value[i].load_info_obj(ASN1_F1AP_ID_SRBS_SETUP_ITEM);
       srbs_setup_item_s& srb_item = resp->srbs_setup_list.value[i].value().srbs_setup_item();
-      srb_item.srbid              = srb_id_to_uint(du_request.srbs_to_setup[i]);
+      srb_item.srb_id             = srb_id_to_uint(du_request.srbs_to_setup[i]);
       srb_item.lcid               = srb_id_to_lcid(du_request.srbs_to_setup[i]);
     }
   }
@@ -111,9 +111,9 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
     for (unsigned i = 0; i != du_request.drbs_to_setup.size(); ++i) {
       resp->drbs_setup_list.value[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_ITEM);
       drbs_setup_item_s& drb_item = resp->drbs_setup_list.value[i].value().drbs_setup_item();
-      drb_item.drbid              = drb_id_to_uint(du_request.drbs_to_setup[i].drb_id);
-      drb_item.dluptnl_info_to_be_setup_list.resize(1);
-      drb_item.dluptnl_info_to_be_setup_list[0].dluptnl_info.set_gtp_tunnel();
+      drb_item.drb_id             = drb_id_to_uint(du_request.drbs_to_setup[i].drb_id);
+      drb_item.dl_up_tnl_info_to_be_setup_list.resize(1);
+      drb_item.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.set_gtp_tunnel();
       // TODO: GTPU params.
     }
   }
@@ -128,8 +128,8 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_failure()
   f1c_msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
   ue_context_setup_fail_s& resp = f1c_msg.pdu.unsuccessful_outcome().value.ue_context_setup_fail();
 
-  resp->gnb_du_ue_f1_ap_id->value        = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
-  resp->gnb_cu_ue_f1_ap_id->value        = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
+  resp->gnb_du_ue_f1ap_id->value         = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
+  resp->gnb_cu_ue_f1ap_id->value         = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
   resp->cause->set_radio_network().value = asn1::f1ap::cause_radio_network_opts::unspecified;
 
   ue.f1c_msg_notifier.on_new_message(f1c_msg);

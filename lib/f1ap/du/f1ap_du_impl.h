@@ -68,7 +68,7 @@ private:
   void handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome);
 
   /// \brief Handle GNB-CU CONFIGURATION UPDATE as per TS38.473, Section 8.2.5.2.
-  void handle_gnb_cu_configuration_update(const asn1::f1ap::gnbcu_cfg_upd_s& msg);
+  void handle_gnb_cu_configuration_update(const asn1::f1ap::gnb_cu_cfg_upd_s& msg);
 
   /// \brief Handle UE CONTEXT SETUP REQUEST as per TS38.473, Section 8.3.1.
   void handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg);
@@ -80,7 +80,7 @@ private:
   void handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg);
 
   /// \brief Handle DL RRC Message Transfer as per TS38.473, Section 8.4.2.2.
-  void handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg);
+  void handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_transfer_s& msg);
 
   bool handle_rx_message_gnb_cu_ue_f1ap_id(f1ap_du_ue& ue, gnb_cu_ue_f1ap_id_t cu_ue_id);
 

@@ -33,7 +33,7 @@ TEST_F(f1ap_cu_test, when_unsupported_f1ap_pdu_received_then_message_ignored)
   f1ap->handle_message(unsupported_msg);
 
   // Check that PDU has not been forwarded (last PDU is still init_msg)
-  EXPECT_EQ(f1c_pdu_notifier.last_f1c_msg.pdu.type(), asn1::f1ap::f1_ap_pdu_c::types_opts::options::init_msg);
+  EXPECT_EQ(f1c_pdu_notifier.last_f1c_msg.pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
 }
 
 TEST_F(f1ap_cu_test, when_unsupported_init_msg_received_then_message_ignored)
@@ -48,7 +48,7 @@ TEST_F(f1ap_cu_test, when_unsupported_init_msg_received_then_message_ignored)
   f1ap->handle_message(unsupported_msg);
 
   // Check that PDU has not been forwarded (last PDU is still successful_outcome)
-  EXPECT_EQ(f1c_pdu_notifier.last_f1c_msg.pdu.type(), asn1::f1ap::f1_ap_pdu_c::types_opts::options::successful_outcome);
+  EXPECT_EQ(f1c_pdu_notifier.last_f1c_msg.pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::successful_outcome);
 }
 
 TEST_F(f1ap_cu_test, when_unsupported_successful_outcome_received_then_message_ignored)
@@ -63,7 +63,7 @@ TEST_F(f1ap_cu_test, when_unsupported_successful_outcome_received_then_message_i
   f1ap->handle_message(unsupported_msg);
 
   // Check that PDU has not been forwarded (last PDU is still init_msg)
-  EXPECT_EQ(f1c_pdu_notifier.last_f1c_msg.pdu.type(), asn1::f1ap::f1_ap_pdu_c::types_opts::options::init_msg);
+  EXPECT_EQ(f1c_pdu_notifier.last_f1c_msg.pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
 }
 
 TEST_F(f1ap_cu_test, when_unsupported_unsuccessful_outcome_received_then_message_ignored)
@@ -78,7 +78,7 @@ TEST_F(f1ap_cu_test, when_unsupported_unsuccessful_outcome_received_then_message
   f1ap->handle_message(unsupported_msg);
 
   // Check that PDU has not been forwarded (last PDU is still init_msg)
-  EXPECT_EQ(f1c_pdu_notifier.last_f1c_msg.pdu.type(), asn1::f1ap::f1_ap_pdu_c::types_opts::options::init_msg);
+  EXPECT_EQ(f1c_pdu_notifier.last_f1c_msg.pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -96,12 +96,12 @@ TEST_F(f1ap_cu_test, when_init_ul_rrc_correct_then_ue_added)
   EXPECT_EQ(f1ap->get_nof_ues(), 1);
 }
 
-TEST_F(f1ap_cu_test, when_duto_currc_container_missing_then_ue_not_added)
+TEST_F(f1ap_cu_test, when_du_to_cu_rrc_container_missing_then_ue_not_added)
 {
   // Generate F1 Initial UL RRC Message without DU to CU RRC Container
   f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
-  init_ul_rrc_msg.pdu.init_msg().value.init_ulrrc_msg_transfer()->duto_currc_container_present = false;
-  init_ul_rrc_msg.pdu.init_msg().value.init_ulrrc_msg_transfer()->duto_currc_container->clear();
+  init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container_present = false;
+  init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container->clear();
 
   // Pass message to F1C
   f1ap->handle_message(init_ul_rrc_msg);
@@ -159,7 +159,7 @@ TEST_F(f1ap_cu_test, when_rrc_setup_complete_present_then_forward_over_srb1)
 {
   // Generate F1 Initial UL RRC Message with RRC Setup Complete present
   f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
-  auto&       init_ul_rrc     = init_ul_rrc_msg.pdu.init_msg().value.init_ulrrc_msg_transfer();
+  auto&       init_ul_rrc     = init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
   init_ul_rrc->rrc_container_rrc_setup_complete_present = true;
 
   // Pass message to F1C

@@ -24,12 +24,12 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 struct f1ap_initial_ul_rrc_message {
-  asn1::f1ap::init_ulrrc_msg_transfer_s msg;
+  asn1::f1ap::init_ul_rrc_msg_transfer_s msg;
 };
 
 struct f1ap_ul_rrc_message {
-  ue_index_t                       ue_index;
-  asn1::f1ap::ulrrc_msg_transfer_s msg;
+  ue_index_t                        ue_index;
+  asn1::f1ap::ul_rrc_msg_transfer_s msg;
 };
 
 struct f1ap_dl_rrc_message {

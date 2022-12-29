@@ -20,8 +20,8 @@ namespace srs_du {
 class gnb_cu_configuration_update_procedure
 {
 public:
-  explicit gnb_cu_configuration_update_procedure(const asn1::f1ap::gnbcu_cfg_upd_s& msg_,
-                                                 f1c_message_notifier&              cu_notif_) :
+  explicit gnb_cu_configuration_update_procedure(const asn1::f1ap::gnb_cu_cfg_upd_s& msg_,
+                                                 f1c_message_notifier&               cu_notif_) :
     request(msg_), cu_notif(cu_notif_)
   {
   }
@@ -38,8 +38,8 @@ public:
 private:
   void send_gnb_cu_configuration_update_acknowledge();
 
-  const asn1::f1ap::gnbcu_cfg_upd_s request;
-  f1c_message_notifier&             cu_notif;
+  const asn1::f1ap::gnb_cu_cfg_upd_s request;
+  f1c_message_notifier&              cu_notif;
 };
 
 } // namespace srs_du

@@ -23,7 +23,7 @@ class colocated_f1c_pdu_handler : public f1c_message_handler
 public:
   explicit colocated_f1c_pdu_handler(f1c_message_handler& peer_handler) : peer_handler(peer_handler) {}
 
-  void handle_message(const asn1::f1ap::f1_ap_pdu_c& msg) override { peer_handler.handle_message(msg); }
+  void handle_message(const asn1::f1ap::f1ap_pdu_c& msg) override { peer_handler.handle_message(msg); }
 };
 
 } // namespace srsgnb

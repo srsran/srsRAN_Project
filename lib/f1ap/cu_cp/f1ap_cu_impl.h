@@ -71,11 +71,11 @@ private:
   /// This starts the UE and SRB creation at the DU processor, F1 and RRC UE.
   /// @see rrc_setup_procedure.
   /// \param[in] msg The F1C initial UL RRC message.
-  void handle_initial_ul_rrc_message(const asn1::f1ap::init_ulrrc_msg_transfer_s& msg);
+  void handle_initial_ul_rrc_message(const asn1::f1ap::init_ul_rrc_msg_transfer_s& msg);
 
   /// \brief Notify about the reception of an UL RRC Message Transfer message.
   /// \param[in] msg The F1C UL RRC message.
-  void handle_ul_rrc_message(const asn1::f1ap::ulrrc_msg_transfer_s& msg);
+  void handle_ul_rrc_message(const asn1::f1ap::ul_rrc_msg_transfer_s& msg);
 
   /// \brief Notify about the reception of an successful outcome.
   /// \param[in] msg The received successful outcome message.
