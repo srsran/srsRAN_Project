@@ -34,9 +34,6 @@ struct pdcp_tx_pdu {
   /// For control PDUs on DRBs and for any PDU on SRBs the value is undefined and shall be ignored.
   /// Ref: TS 38.323 Sec. 6.2.2, 6.2.3
   uint32_t pdcp_count;
-
-  pdcp_tx_pdu()  = default;
-  ~pdcp_tx_pdu() = default;
 };
 
 } // namespace srsgnb
