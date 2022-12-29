@@ -68,6 +68,19 @@ void rlc_tx_am_entity::handle_sdu(rlc_sdu sdu)
   }
 }
 
+// TS 38.322 v16.2.0 Sec. 5.4
+void rlc_tx_am_entity::discard_sdu(uint32_t pdcp_count)
+{
+  logger.log_info("Discarding SDU with pdcp_count={}", pdcp_count);
+  if (sdu_queue.discard(pdcp_count)) {
+    metrics.metrics_add_discard(1);
+    handle_buffer_state_update(); // take lock
+  } else {
+    logger.log_info("Could not discard SDU with pdcp_count={}", pdcp_count);
+    metrics.metrics_add_discard_failure(1);
+  }
+}
+
 // TS 38.322 v16.2.0 Sec. 5.2.3.1
 byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t nof_bytes)
 {

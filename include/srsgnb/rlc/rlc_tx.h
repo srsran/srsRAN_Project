@@ -52,7 +52,8 @@ struct rlc_sdu {
 };
 
 /// This interface represents the data entry point of the transmitting side of a RLC entity.
-/// The upper-layers will use this call to pass RLC SDUs into the TX entity.
+/// The upper-layer will use this call to pass RLC SDUs into the TX entity.
+/// The upper-layer will also inform RLC of SDUs (e.g. PDCP PDUs) to be discarded.
 class rlc_tx_upper_layer_data_interface
 {
 public:
@@ -67,7 +68,9 @@ public:
   /// \param sdu SDU to be handled
   virtual void handle_sdu(rlc_sdu sdu) = 0;
 
-  // TODO: virtual bool discard_sdu(uint32_t pdcp_count) = 0;
+  /// \brief Interface for higher layers to discard SDUs from RLC queue
+  /// \param pdcp_count PDCP COUNT of the SDU that is to be discarded
+  virtual void discard_sdu(uint32_t pdcp_count) = 0;
 };
 
 /// This interface represents the data upper layer that the RLC bearer must notify on successful delivery of an SDU, so

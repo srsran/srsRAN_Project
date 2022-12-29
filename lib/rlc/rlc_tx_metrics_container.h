@@ -44,6 +44,18 @@ public:
     metrics.num_pdu_bytes += num_pdu_bytes_;
   }
 
+  void metrics_add_discard(uint32_t num_discarded_sdus_)
+  {
+    std::lock_guard<std::mutex> lock(metrics_mutex);
+    metrics.num_discarded_sdus += num_discarded_sdus_;
+  }
+
+  void metrics_add_discard_failure(uint32_t num_discard_failures_)
+  {
+    std::lock_guard<std::mutex> lock(metrics_mutex);
+    metrics.num_discard_failures += num_discard_failures_;
+  }
+
   // TM specific metrics
   void metrics_add_small_alloc(uint32_t num_allocs_)
   {
@@ -55,7 +67,8 @@ public:
   // UM specific metrics
   void metrics_add_segment(uint32_t num_segments_)
   {
-    srsgnb_assert(metrics.mode == rlc_mode::um_bidir, "Wrong mode for UM specific metrics");
+    srsgnb_assert(metrics.mode == rlc_mode::um_bidir || metrics.mode == rlc_mode::um_unidir_dl,
+                  "Wrong mode for UM specific metrics");
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.mode_specific.um.num_sdu_segments += num_segments_;
   }

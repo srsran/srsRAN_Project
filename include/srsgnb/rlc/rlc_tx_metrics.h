@@ -35,9 +35,11 @@ struct rlc_am_tx_metrics {
 
 struct rlc_tx_metrics {
   // SDU metrics
-  uint32_t num_sdus;         ///< Number of SDUs
-  size_t   num_sdu_bytes;    ///< Number of SDU bytes
-  uint32_t num_dropped_sdus; ///< Number of dropped SDUs (due to full queue)
+  uint32_t num_sdus;             ///< Number of SDUs
+  size_t   num_sdu_bytes;        ///< Number of SDU bytes
+  uint32_t num_dropped_sdus;     ///< Number of dropped SDUs (due to full queue)
+  uint32_t num_discarded_sdus;   ///< Number of discarded SDUs (instructed from higher layer)
+  uint32_t num_discard_failures; ///< Number of failed SDU discards (instructed from higher layer)
 
   // PDU metrics
   uint32_t num_pdus;      ///< Number of PDUs
@@ -89,10 +91,13 @@ struct formatter<srsgnb::rlc_tx_metrics> {
   auto format(srsgnb::rlc_tx_metrics m, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "num_sdus={}, num_sdu_bytes={}, num_dropped_sdus={}, num_pdus={}, num_pdu_bytes={}",
+                     "num_sdus={}, num_sdu_bytes={}, num_dropped_sdus={}, num_discarded_sdus={}, "
+                     "num_discard_failures={}, num_pdus={}, num_pdu_bytes={}",
                      m.num_sdus,
                      m.num_sdu_bytes,
                      m.num_dropped_sdus,
+                     m.num_discarded_sdus,
+                     m.num_discard_failures,
                      m.num_pdus,
                      m.num_pdu_bytes);
   }

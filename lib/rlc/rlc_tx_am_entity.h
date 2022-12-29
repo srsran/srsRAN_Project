@@ -122,6 +122,7 @@ public:
 
   // Interfaces for higher layers
   void handle_sdu(rlc_sdu sdu) override;
+  void discard_sdu(uint32_t pdcp_count) override;
 
   // Interfaces for lower layers
   byte_buffer_slice_chain pull_pdu(uint32_t nof_bytes) override;

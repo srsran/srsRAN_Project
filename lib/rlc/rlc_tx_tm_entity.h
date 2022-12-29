@@ -33,6 +33,7 @@ public:
   }
 
   // Interfaces for higher layers
+  // TS 38.322 v16.2.0 Sec. 5.2.1.1
   void handle_sdu(rlc_sdu sdu) override
   {
     size_t sdu_length = sdu.buf.length();
@@ -50,7 +51,15 @@ public:
     }
   }
 
+  // TS 38.322 v16.2.0 Sec. 5.4
+  void discard_sdu(uint32_t pdcp_count) override
+  {
+    logger.log_warning("Ignoring invalid attempt to discard SDU in TM. pdcp_count={}", pdcp_count);
+    metrics.metrics_add_discard_failure(1);
+  }
+
   // Interfaces for lower layers
+  // TS 38.322 v16.2.0 Sec. 5.2.1.1
   byte_buffer_slice_chain pull_pdu(uint32_t nof_bytes) override
   {
     if (sdu_queue.is_empty()) {
