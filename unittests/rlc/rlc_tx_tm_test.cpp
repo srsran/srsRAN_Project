@@ -166,6 +166,40 @@ TEST_F(rlc_tx_tm_test, test_tx)
   EXPECT_EQ(tester->bsr_count, 6);
 }
 
+TEST_F(rlc_tx_tm_test, discard_sdu_increments_discard_failure_counter)
+{
+  const uint32_t sdu_size = 4;
+  uint32_t       count    = 0;
+
+  EXPECT_EQ(rlc->get_buffer_state(), 0);
+
+  byte_buffer sdu_buf = create_sdu(sdu_size, count);
+  rlc_sdu sdu = {sdu_buf.deep_copy(), /* pdcp_count = */ count}; // no std::move - keep local copy for later comparison
+
+  // write SDU into upper end
+  rlc->handle_sdu(std::move(sdu));
+  EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
+  EXPECT_EQ(tester->bsr, sdu_size);
+  EXPECT_EQ(tester->bsr_count, 1);
+
+  // Try discard of valid SDU - but TM does not support any discard, discard failures are counted
+  rlc->discard_sdu(0);
+  EXPECT_EQ(tester->bsr, sdu_size);
+  EXPECT_EQ(tester->bsr_count, 1);
+  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 0);
+  EXPECT_EQ(rlc->get_metrics().num_discard_failures, 1);
+
+  byte_buffer_slice_chain pdu;
+
+  // read PDU from lower end
+  pdu = rlc->pull_pdu(sdu_size);
+  EXPECT_EQ(pdu.length(), sdu_size);
+  EXPECT_EQ(pdu, sdu_buf);
+  EXPECT_EQ(rlc->get_buffer_state(), 0);
+  EXPECT_EQ(tester->bsr, 0);
+  EXPECT_EQ(tester->bsr_count, 2);
+}
+
 TEST_F(rlc_tx_tm_test, test_tx_metrics)
 {
   const uint32_t sdu_size = 4;
