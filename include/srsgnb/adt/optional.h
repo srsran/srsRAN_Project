@@ -377,3 +377,25 @@ bool operator<(const optional<T>& lhs, const optional<T>& rhs) noexcept
 }
 
 } // namespace srsgnb
+
+namespace fmt {
+
+/// Default formatter for optional<T>
+template <typename T>
+struct formatter<srsgnb::optional<T>> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::optional<T> optval, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    if (!optval.has_value()) {
+      return format_to(ctx.out(), "{{na}}");
+    }
+    return format_to(ctx.out(), "{}", optval.value());
+  }
+};
+} // namespace fmt
