@@ -33,10 +33,9 @@ void f1u_bearer_impl::handle_pdu(nru_dl_message msg)
 {
   fmt::print("F1-U bearer with DRB id={} received PDU!\n", drb_id);
   if (!msg.t_pdu.empty()) {
-    pdcp_tx_pdu tx_sdu    = {};
-    tx_sdu.buf            = std::move(msg.t_pdu);
-    tx_sdu.has_pdcp_count = msg.has_pdcp_count;
-    tx_sdu.pdcp_count     = msg.pdcp_count;
+    pdcp_tx_pdu tx_sdu = {};
+    tx_sdu.buf         = std::move(msg.t_pdu);
+    tx_sdu.pdcp_count  = msg.pdcp_count;
     rx_sdu_notifier.on_new_sdu(tx_sdu);
   }
   if (msg.dl_user_data.dl_discard_blocks) {

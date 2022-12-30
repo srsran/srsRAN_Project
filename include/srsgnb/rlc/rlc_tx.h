@@ -12,6 +12,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
+#include "srsgnb/adt/optional.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/rlc/rlc_config_messages.h"
@@ -41,13 +42,13 @@ namespace srsgnb {
  * Interfaces/notifiers for upper layers
  ****************************************/
 /// Structure used to represent an RLC SDU. An RLC SDU
-/// must be accompanied with the corresponding PDCP COUNT
-/// so that RLC AM can notify the PDCP of ACKs
+/// can optionally be accompanied with the corresponding PDCP COUNT
+/// so that RLC AM can notify the PDCP of ACKs, and PDCP can notify RLC AM/UM to discard PDCP PDUs
 struct rlc_sdu {
-  uint32_t    pdcp_count = 0;
-  byte_buffer buf        = {};
-  rlc_sdu()              = default;
-  rlc_sdu(uint32_t pdcp_count_, byte_buffer buf_) : pdcp_count(pdcp_count_), buf(std::move(buf_)) {}
+  byte_buffer        buf = {};
+  optional<uint32_t> pdcp_count;
+  rlc_sdu() = default;
+  rlc_sdu(byte_buffer buf_, optional<uint32_t> pdcp_count_) : buf(std::move(buf_)), pdcp_count(pdcp_count_) {}
 };
 
 /// This interface represents the data entry point of the transmitting side of a RLC entity.

@@ -114,7 +114,7 @@ protected:
   /// \return the produced SDU as a rlc_sdu
   rlc_sdu create_rlc_sdu(uint32_t pdcp_count, uint32_t sdu_size, uint8_t first_byte = 0) const
   {
-    rlc_sdu sdu = {pdcp_count, create_sdu(sdu_size, first_byte)};
+    rlc_sdu sdu = {create_sdu(sdu_size, first_byte), pdcp_count};
     return sdu;
   }
 
@@ -132,8 +132,8 @@ protected:
       sdu_bufs[i] = create_sdu(sdu_size, i);
 
       // write SDU into upper end
-      rlc_sdu sdu = {/* pdcp_count = */ i,
-                     sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+      rlc_sdu sdu = {sdu_bufs[i].deep_copy(),
+                     /* pdcp_count = */ i}; // no std::move - keep local copy for later comparison
       rlc->handle_sdu(std::move(sdu));
       EXPECT_EQ(tester->bsr_count, ++n_bsr);
     }
@@ -181,8 +181,8 @@ protected:
       sdu_bufs[i] = create_sdu(sdu_size, i);
 
       // write SDU into upper end
-      rlc_sdu sdu = {/* pdcp_count = */ i,
-                     sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+      rlc_sdu sdu = {sdu_bufs[i].deep_copy(),
+                     /* pdcp_count = */ i}; // no std::move - keep local copy for later comparison
       rlc->handle_sdu(std::move(sdu));
       EXPECT_EQ(tester->bsr_count, ++n_bsr);
     }
@@ -914,7 +914,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
   // push SDU to SDU queue so that it is not empty
   uint32_t    n_bsr   = tester->bsr_count;
   byte_buffer sdu_buf = create_sdu(sdu_size, 7);
-  rlc_sdu     sdu = {/* pdcp_count = */ 7, sdu_buf.deep_copy()}; // no std::move - keep local copy for later comparison
+  rlc_sdu     sdu = {sdu_buf.deep_copy(), /* pdcp_count = */ 7}; // no std::move - keep local copy for later comparison
   rlc->handle_sdu(std::move(sdu));
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
   EXPECT_EQ(tester->bsr, pdu_size);

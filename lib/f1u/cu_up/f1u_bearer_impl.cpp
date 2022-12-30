@@ -28,7 +28,6 @@ void f1u_bearer_impl::handle_sdu(pdcp_tx_pdu sdu)
   fmt::print("F1-U bearer with DRB id={} received SDU with count={}!", drb_id, sdu.pdcp_count);
   nru_dl_message msg = {};
   msg.t_pdu          = std::move(sdu.buf);
-  msg.has_pdcp_count = sdu.has_pdcp_count;
   msg.pdcp_count     = sdu.pdcp_count;
   tx_pdu_notifier.on_new_pdu(std::move(msg));
 }

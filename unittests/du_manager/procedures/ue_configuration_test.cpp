@@ -190,9 +190,8 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
   // Forward F1-U Rx SDU through DRB1 (DL).
   // > Create data buffer.
   pdcp_tx_pdu rx_sdu;
-  rx_sdu.buf            = test_payload.copy();
-  rx_sdu.has_pdcp_count = true;
-  rx_sdu.pdcp_count     = 0;
+  rx_sdu.buf        = test_payload.copy();
+  rx_sdu.pdcp_count = 0;
   // > Push F1-U Rx SDU through F1-U bearer Rx SDU notifier.
   bearer.du_rx.on_new_sdu(std::move(rx_sdu));
   // > Check arrival of MAC Tx SDU to MAC logical channel.

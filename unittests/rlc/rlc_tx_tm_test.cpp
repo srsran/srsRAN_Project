@@ -97,7 +97,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
   byte_buffer sdu_buf = create_sdu(sdu_size, count);
-  rlc_sdu sdu = {/* pdcp_count = */ count, sdu_buf.deep_copy()}; // no std::move - keep local copy for later comparison
+  rlc_sdu     sdu = {sdu_buf.deep_copy(), /* pdcp_count = */ {}}; // no std::move - keep local copy for later comparison
 
   // write SDU into upper end
   rlc->handle_sdu(std::move(sdu));
@@ -125,7 +125,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
   // write another SDU into upper end
   count++;
   sdu_buf = create_sdu(sdu_size, count);
-  sdu     = {/* pdcp_count = */ count, sdu_buf.deep_copy()}; // no std::move - keep local copy for later comparison
+  sdu     = {sdu_buf.deep_copy(), /* pdcp_count = */ {}}; // no std::move - keep local copy for later comparison
   rlc->handle_sdu(std::move(sdu));
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
   EXPECT_EQ(tester->bsr, sdu_size);
@@ -141,7 +141,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
   // write another SDU into upper end
   count++;
   byte_buffer sdu_buf2 = create_sdu(sdu_size, count);
-  sdu = {/* pdcp_count = */ count, sdu_buf2.deep_copy()}; // no std::move - keep local copy for later comparison
+  sdu = {sdu_buf2.deep_copy(), /* pdcp_count = */ {}}; // no std::move - keep local copy for later comparison
 
   // write SDU into upper end
   rlc->handle_sdu(std::move(sdu));
@@ -174,7 +174,7 @@ TEST_F(rlc_tx_tm_test, test_tx_metrics)
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
   byte_buffer sdu_buf = create_sdu(sdu_size, count);
-  rlc_sdu sdu = {/* pdcp_count = */ count, sdu_buf.deep_copy()}; // no std::move - keep local copy for later comparison
+  rlc_sdu     sdu = {sdu_buf.deep_copy(), /* pdcp_count = */ {}}; // no std::move - keep local copy for later comparison
 
   // write SDU into upper end
   rlc->handle_sdu(std::move(sdu));

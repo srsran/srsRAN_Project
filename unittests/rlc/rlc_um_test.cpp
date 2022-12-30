@@ -153,7 +153,7 @@ protected:
       }
 
       // write SDU into upper end
-      rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+      rlc_sdu sdu = {sdu_bufs[i].deep_copy(), 0}; // no std::move - keep local copy for later comparison
       rlc1_tx_upper->handle_sdu(std::move(sdu));
     }
     buffer_state = rlc1_tx_lower->get_buffer_state();
@@ -263,7 +263,7 @@ TEST_P(rlc_um_test, tx_without_segmentation)
     }
 
     // write SDU into upper end
-    rlc_sdu sdu = {i + 13, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+    rlc_sdu sdu = {sdu_bufs[i].deep_copy(), i + 13}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), num_sdus * (sdu_size + 1));
@@ -329,7 +329,7 @@ TEST_P(rlc_um_test, tx_with_segmentation)
     }
 
     // write SDU into upper end
-    rlc_sdu sdu = {i, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+    rlc_sdu sdu = {sdu_bufs[i].deep_copy(), i}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), num_sdus * (sdu_size + 1));
@@ -406,7 +406,7 @@ TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
     }
 
     // write SDU into upper end
-    rlc_sdu sdu = {i, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+    rlc_sdu sdu = {sdu_bufs[i].deep_copy(), i}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), num_sdus * (sdu_size + 1));
@@ -483,7 +483,7 @@ TEST_P(rlc_um_test, tx_multiple_SDUs_with_segmentation)
     }
 
     // write SDU into upper end
-    rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+    rlc_sdu sdu = {sdu_bufs[i].deep_copy(), 0}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), num_sdus * (sdu_size + 1));
@@ -598,7 +598,7 @@ TEST_P(rlc_um_test, reassembly_window_wrap_around)
   uint32_t rx_sdu_idx = 0;
   for (uint32_t i = 0; i < num_sdus; i++) {
     // create and write SDU into upper end
-    rlc_sdu sdu = {0, construct_sdu(i, sdu_size)};
+    rlc_sdu sdu = {construct_sdu(i, sdu_size), 0};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
 
     // check buffer state
@@ -659,7 +659,7 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
   uint32_t rx_sdu_idx = 0;
   for (uint32_t i = 0; i < num_sdus; i++) {
     // create and write SDU into upper end
-    rlc_sdu sdu = {0, construct_sdu(i, sdu_size)};
+    rlc_sdu sdu = {construct_sdu(i, sdu_size), 0};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
 
     // check buffer state
@@ -735,7 +735,7 @@ TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
     }
 
     // write SDU into upper end
-    rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+    rlc_sdu sdu = {sdu_bufs[i].deep_copy(), 0}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), num_sdus * (sdu_size + 1));
@@ -813,7 +813,7 @@ TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
     }
 
     // write SDU into upper end
-    rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+    rlc_sdu sdu = {sdu_bufs[i].deep_copy(), 0}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), num_sdus * (sdu_size + 1));
@@ -845,7 +845,7 @@ TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
   //                    |      +------------ now feed the middle part of SN=0
   //                    |      |  +--------- and the rest of SN=1
   //                    V      V  V
-  uint32_t order[] = {0, 2, 3, 1, 4, 5};
+  const uint32_t order[] = {0, 2, 3, 1, 4, 5};
 
   // Write PDUs into RLC2 (except 2nd)
   for (uint32_t i = 0; i < num_pdus; i++) {

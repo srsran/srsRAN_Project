@@ -106,9 +106,8 @@ TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
   byte_buffer             cu_buf = make_byte_buffer("ABCD");
   byte_buffer_slice_chain du_exp{cu_buf.deep_copy()};
   pdcp_tx_pdu             sdu;
-  sdu.buf            = std::move(cu_buf);
-  sdu.has_pdcp_count = true;
-  sdu.pdcp_count     = 0;
+  sdu.buf        = std::move(cu_buf);
+  sdu.pdcp_count = 0;
   cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(sdu));
 
   // Check DU-> CU-UP path

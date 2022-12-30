@@ -24,9 +24,8 @@ public:
 
   void on_new_sdu(byte_buffer pdu) override
   {
-    srsgnb_assert(rlc_tx != nullptr, "MAC Tx PDU notifier is disconnected");
-    unsigned pdcp_count = 0; // TODO: Remove count.
-    rlc_tx->handle_sdu(rlc_sdu{pdcp_count, std::move(pdu)});
+    srsgnb_assert(rlc_tx != nullptr, "RLC Tx PDU notifier is disconnected");
+    rlc_tx->handle_sdu(rlc_sdu{std::move(pdu), {}});
   }
 
 private:
@@ -41,7 +40,7 @@ public:
   void on_new_sdu(pdcp_tx_pdu sdu) override
   {
     srsgnb_assert(rlc_tx != nullptr, "RLC Tx SDU notifier is disconnected");
-    rlc_tx->handle_sdu(rlc_sdu{sdu.pdcp_count, std::move(sdu.buf)}); // TODO: Remove count if not present
+    rlc_tx->handle_sdu(rlc_sdu{std::move(sdu.buf), sdu.pdcp_count});
   }
 
   void on_discard_sdu(uint32_t count) override

@@ -514,8 +514,11 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
                          : status.get_nacks()[0].nack_sn; // Stop processing ACKs at the first NACK, if it exists.
   for (uint32_t sn = st.tx_next_ack; tx_mod_base(sn) < tx_mod_base(stop_sn); sn = (sn + 1) % mod) {
     if (tx_window->has_sn(sn)) {
-      upper_dn.on_delivered_sdu((*tx_window)[sn].pdcp_count); // notify upper layer
-      retx_queue.remove_sn(sn);                               // remove any pending retx for that SN
+      rlc_tx_am_sdu_info& sdu_info = (*tx_window)[sn];
+      if (sdu_info.pdcp_count.has_value()) {
+        upper_dn.on_delivered_sdu((*tx_window)[sn].pdcp_count.value()); // notify upper layer
+      }
+      retx_queue.remove_sn(sn); // remove any pending retx for that SN
       tx_window->remove_sn(sn);
       st.tx_next_ack = (sn + 1) % mod;
     } else {

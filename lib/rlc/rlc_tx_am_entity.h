@@ -25,10 +25,10 @@ namespace srsgnb {
 
 /// Container to hold a SDU for transmission, the progress in case of segmentation, and associated meta data
 struct rlc_tx_am_sdu_info {
-  uint32_t    pdcp_count = INVALID_RLC_SN;
-  byte_buffer sdu        = {};
-  uint32_t    next_so    = 0;
-  uint32_t    retx_count = RETX_COUNT_NOT_STARTED;
+  byte_buffer        sdu = {};
+  optional<uint32_t> pdcp_count;
+  uint32_t           next_so    = 0;
+  uint32_t           retx_count = RETX_COUNT_NOT_STARTED;
 };
 
 /// \brief Tx state variables
