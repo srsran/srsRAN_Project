@@ -35,13 +35,13 @@ ciphering_algorithm_to_e1ap_asn1(const srsgnb::security::ciphering_algorithm& ci
       asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::options::nea0;
       break;
     case srsgnb::security::ciphering_algorithm::nea1:
-      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::options::c_minus128_nea1;
+      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::options::c_neg128_nea1;
       break;
     case srsgnb::security::ciphering_algorithm::nea2:
-      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::options::c_minus128_nea2;
+      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::options::c_neg128_nea2;
       break;
     case srsgnb::security::ciphering_algorithm::nea3:
-      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::options::c_minus128_nea3;
+      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::options::c_neg128_nea3;
       break;
     default:
       asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::options::nulltype;
@@ -63,13 +63,13 @@ integrity_algorithm_to_e1ap_asn1(const srsgnb::security::integrity_algorithm& in
       asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::options::nia0;
       break;
     case srsgnb::security::integrity_algorithm::nia1:
-      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::options::i_minus128_nia1;
+      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::options::i_neg128_nia1;
       break;
     case srsgnb::security::integrity_algorithm::nia2:
-      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::options::i_minus128_nia2;
+      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::options::i_neg128_nia2;
       break;
     case srsgnb::security::integrity_algorithm::nia3:
-      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::options::i_minus128_nia3;
+      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::options::i_neg128_nia3;
       break;
     default:
       asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::options::nulltype;
@@ -176,7 +176,7 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg
     if (pdcp_cfg.rohc_params.value().rohc.has_value()) {
       e1ap_pdcp_cfg.rohc_params.set_rohc();
       auto& e1ap_rohc         = e1ap_pdcp_cfg.rohc_params.rohc();
-      e1ap_rohc.max_cid       = pdcp_cfg.rohc_params.value().rohc.value().max_cid;
+      e1ap_rohc.max_c_id      = pdcp_cfg.rohc_params.value().rohc.value().max_cid;
       e1ap_rohc.rohc_profiles = pdcp_cfg.rohc_params.value().rohc.value().rohc_profiles;
       if (pdcp_cfg.rohc_params.value().rohc.value().continue_rohc.has_value()) {
         e1ap_rohc.continue_rohc_present = true;
@@ -189,7 +189,7 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg
     } else if (pdcp_cfg.rohc_params.value().ul_only_rohc.has_value()) {
       e1ap_pdcp_cfg.rohc_params.set_ul_only_rohc();
       auto& e1ap_rohc         = e1ap_pdcp_cfg.rohc_params.ul_only_rohc();
-      e1ap_rohc.max_cid       = pdcp_cfg.rohc_params.value().ul_only_rohc.value().max_cid;
+      e1ap_rohc.max_c_id      = pdcp_cfg.rohc_params.value().ul_only_rohc.value().max_cid;
       e1ap_rohc.rohc_profiles = pdcp_cfg.rohc_params.value().ul_only_rohc.value().rohc_profiles;
       if (pdcp_cfg.rohc_params.value().ul_only_rohc.value().continue_rohc.has_value()) {
         e1ap_rohc.continue_rohc_present = true;
@@ -218,8 +218,8 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg
 
   // ul data split thres
   if (pdcp_cfg.ul_data_split_thres.has_value()) {
-    e1ap_pdcp_cfg.uldata_split_thres_present = true;
-    asn1::number_to_enum(e1ap_pdcp_cfg.uldata_split_thres, pdcp_cfg.ul_data_split_thres.value());
+    e1ap_pdcp_cfg.ul_data_split_thres_present = true;
+    asn1::number_to_enum(e1ap_pdcp_cfg.ul_data_split_thres, pdcp_cfg.ul_data_split_thres.value());
   }
 
   // pdcp dupl

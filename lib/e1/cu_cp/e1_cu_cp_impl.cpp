@@ -41,7 +41,7 @@ void e1_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response
     logger.info("Transmitting CuUpE1SetupResponse message");
 
     e1_msg.pdu.set_successful_outcome();
-    e1_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_G_NB_CU_UP_E1_SETUP);
+    e1_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_UP_E1_SETUP);
     e1_msg.pdu.successful_outcome().value.gnb_cu_up_e1_setup_resp() = msg.response;
 
     // set values handled by E1
@@ -52,7 +52,7 @@ void e1_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response
   } else {
     logger.info("Transmitting CuUpE1SetupFailure message");
     e1_msg.pdu.set_unsuccessful_outcome();
-    e1_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_G_NB_CU_UP_E1_SETUP);
+    e1_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_UP_E1_SETUP);
     e1_msg.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail() = msg.failure;
     auto& setup_fail = e1_msg.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail();
 
@@ -85,7 +85,7 @@ e1_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_set
   auto& bearer_context_setup_request = e1_msg.pdu.init_msg().value.bearer_context_setup_request();
 
   fill_asn1_bearer_context_setup_request(bearer_context_setup_request, request);
-  bearer_context_setup_request->gnb_cu_cp_ue_e1_ap_id.value = gnb_cu_cp_ue_e1ap_id_to_uint(ue_context.cu_cp_ue_e1ap_id);
+  bearer_context_setup_request->gnb_cu_cp_ue_e1ap_id.value = gnb_cu_cp_ue_e1ap_id_to_uint(ue_context.cu_cp_ue_e1ap_id);
 
   return launch_async<e1_bearer_context_setup_procedure>(e1_msg, ue_context, pdu_notifier, *events, logger);
 }
@@ -100,9 +100,9 @@ e1_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_cont
   e1_msg.pdu.set_init_msg();
   e1_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
 
-  auto& bearer_context_mod_request                        = e1_msg.pdu.init_msg().value.bearer_context_mod_request();
-  bearer_context_mod_request->gnb_cu_cp_ue_e1_ap_id.value = gnb_cu_cp_ue_e1ap_id_to_uint(ue_context.cu_cp_ue_e1ap_id);
-  bearer_context_mod_request->gnb_cu_up_ue_e1_ap_id.value = gnb_cu_up_ue_e1ap_id_to_uint(ue_context.cu_up_ue_e1ap_id);
+  auto& bearer_context_mod_request                       = e1_msg.pdu.init_msg().value.bearer_context_mod_request();
+  bearer_context_mod_request->gnb_cu_cp_ue_e1ap_id.value = gnb_cu_cp_ue_e1ap_id_to_uint(ue_context.cu_cp_ue_e1ap_id);
+  bearer_context_mod_request->gnb_cu_up_ue_e1ap_id.value = gnb_cu_up_ue_e1ap_id_to_uint(ue_context.cu_up_ue_e1ap_id);
 
   fill_asn1_bearer_context_modification_request(bearer_context_mod_request, request);
 
@@ -137,13 +137,13 @@ void e1_cu_cp_impl::handle_message(const e1_message& msg)
   }
 
   switch (msg.pdu.type().value) {
-    case asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg:
+    case asn1::e1ap::e1ap_pdu_c::types_opts::init_msg:
       handle_initiating_message(msg.pdu.init_msg());
       break;
-    case asn1::e1ap::e1_ap_pdu_c::types_opts::successful_outcome:
+    case asn1::e1ap::e1ap_pdu_c::types_opts::successful_outcome:
       handle_successful_outcome(msg.pdu.successful_outcome());
       break;
-    case asn1::e1ap::e1_ap_pdu_c::types_opts::unsuccessful_outcome:
+    case asn1::e1ap::e1ap_pdu_c::types_opts::unsuccessful_outcome:
       handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
       break;
     default:
@@ -155,7 +155,7 @@ void e1_cu_cp_impl::handle_message(const e1_message& msg)
 void e1_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
-    case asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts::options::gnb_cu_up_e1_setup_request: {
+    case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::gnb_cu_up_e1_setup_request: {
       cu_up_e1_setup_request req = {};
       current_transaction_id     = msg.value.gnb_cu_up_e1_setup_request()->transaction_id.value;
       req.request                = msg.value.gnb_cu_up_e1_setup_request();
@@ -169,13 +169,13 @@ void e1_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
 void e1_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)
 {
   switch (outcome.value.type().value) {
-    case asn1::e1ap::e1_ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_release_complete: {
+    case asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_release_complete: {
       events->e1ap_bearer_context_release_complete.set(&outcome.value.bearer_context_release_complete());
     } break;
-    case asn1::e1ap::e1_ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_setup_resp: {
+    case asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_setup_resp: {
       events->e1ap_bearer_context_setup_outcome.set(&outcome.value.bearer_context_setup_resp());
     } break;
-    case asn1::e1ap::e1_ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_mod_resp: {
+    case asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_mod_resp: {
       events->e1ap_bearer_context_modification_outcome.set(&outcome.value.bearer_context_mod_resp());
     } break;
     default:
@@ -194,10 +194,10 @@ void e1_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_outco
 void e1_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful_outcome_s& outcome)
 {
   switch (outcome.value.type().value) {
-    case asn1::e1ap::e1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::bearer_context_setup_fail: {
+    case asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::bearer_context_setup_fail: {
       events->e1ap_bearer_context_setup_outcome.set(&outcome.value.bearer_context_setup_fail());
     } break;
-    case asn1::e1ap::e1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::bearer_context_mod_fail: {
+    case asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::bearer_context_mod_fail: {
       events->e1ap_bearer_context_modification_outcome.set(&outcome.value.bearer_context_mod_fail());
     } break;
     default:

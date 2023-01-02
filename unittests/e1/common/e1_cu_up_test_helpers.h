@@ -50,7 +50,7 @@ e1_message generate_cu_cp_e1_setup_request()
 {
   e1_message e1_setup_request = {};
   e1_setup_request.pdu.set_init_msg();
-  e1_setup_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_G_NB_CU_CP_E1_SETUP);
+  e1_setup_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
 
   auto& setup_req = e1_setup_request.pdu.init_msg().value.gnb_cu_cp_e1_setup_request();
 
@@ -68,12 +68,12 @@ e1_message generate_bearer_context_setup_request_msg(unsigned int cu_cp_ue_e1_id
   bearer_context_setup_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
 
   auto& bearer_context_setup_req = bearer_context_setup_request.pdu.init_msg().value.bearer_context_setup_request();
-  bearer_context_setup_req->gnb_cu_cp_ue_e1_ap_id.value = cu_cp_ue_e1_id;
+  bearer_context_setup_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1_id;
   bearer_context_setup_req->security_info.value.security_algorithm.ciphering_algorithm =
       asn1::e1ap::ciphering_algorithm_e::nea0;
-  bearer_context_setup_req->security_info.value.upsecuritykey.encryption_key.from_string(
+  bearer_context_setup_req->security_info.value.up_securitykey.encryption_key.from_string(
       "a6ae39efbe0d424cd85f4a9c3aee0414");
-  bearer_context_setup_req->uedl_aggregate_maximum_bit_rate.value.value = 1000000000U;
+  bearer_context_setup_req->ue_dl_aggr_max_bit_rate.value.value = 1000000000U;
   bearer_context_setup_req->serving_plmn.value.from_string("02f899");
   bearer_context_setup_req->activity_notif_level.value = asn1::e1ap::activity_notif_level_e::ue;
 
@@ -109,8 +109,8 @@ e1_message generate_bearer_context_setup_request_msg(unsigned int cu_cp_ue_e1_id
   drb_to_setup_item_ng_ran.sdap_cfg.sdap_hdr_ul = asn1::e1ap::sdap_hdr_ul_e::present;
   drb_to_setup_item_ng_ran.sdap_cfg.sdap_hdr_dl = asn1::e1ap::sdap_hdr_dl_e::absent;
 
-  drb_to_setup_item_ng_ran.pdcp_cfg.pdcp_sn_size_ul                 = asn1::e1ap::pdcp_sn_size_e::s_minus18;
-  drb_to_setup_item_ng_ran.pdcp_cfg.pdcp_sn_size_dl                 = asn1::e1ap::pdcp_sn_size_e::s_minus18;
+  drb_to_setup_item_ng_ran.pdcp_cfg.pdcp_sn_size_ul                 = asn1::e1ap::pdcp_sn_size_e::s_neg18;
+  drb_to_setup_item_ng_ran.pdcp_cfg.pdcp_sn_size_dl                 = asn1::e1ap::pdcp_sn_size_e::s_neg18;
   drb_to_setup_item_ng_ran.pdcp_cfg.rlc_mode                        = asn1::e1ap::rlc_mode_e::rlc_am;
   drb_to_setup_item_ng_ran.pdcp_cfg.t_reordering_timer_present      = true;
   drb_to_setup_item_ng_ran.pdcp_cfg.t_reordering_timer.t_reordering = asn1::e1ap::t_reordering_e::ms100;
@@ -121,18 +121,17 @@ e1_message generate_bearer_context_setup_request_msg(unsigned int cu_cp_ue_e1_id
   cell_group_info_item.cell_group_id                      = 0;
   drb_to_setup_item_ng_ran.cell_group_info.push_back(cell_group_info_item);
 
-  asn1::e1ap::qo_s_flow_qos_param_item_s qo_s_flow_qos_param_item = {};
-  qo_s_flow_qos_param_item.qo_s_flow_id                           = 1;
-  qo_s_flow_qos_param_item.qo_sflow_level_qos_params.qo_s_characteristics.set_non_dynamic_minus5_qi();
-  auto& qos_characteristics =
-      qo_s_flow_qos_param_item.qo_sflow_level_qos_params.qo_s_characteristics.non_dynamic_minus5_qi();
+  asn1::e1ap::qos_flow_qos_param_item_s qo_s_flow_qos_param_item = {};
+  qo_s_flow_qos_param_item.qos_flow_id                           = 1;
+  qo_s_flow_qos_param_item.qos_flow_level_qos_params.qos_characteristics.set_non_dyn_5qi();
+  auto& qos_characteristics   = qo_s_flow_qos_param_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi();
   qos_characteristics.five_qi = 9;
 
-  qo_s_flow_qos_param_item.qo_sflow_level_qos_params.ngra_nalloc_retention_prio.prio_level = 15;
-  qo_s_flow_qos_param_item.qo_sflow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_cap =
+  qo_s_flow_qos_param_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.prio_level = 15;
+  qo_s_flow_qos_param_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_cap =
       asn1::e1ap::pre_emption_cap_e::shall_not_trigger_pre_emption;
 
-  qo_s_flow_qos_param_item.qo_sflow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_vulnerability =
+  qo_s_flow_qos_param_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_vulnerability =
       asn1::e1ap::pre_emption_vulnerability_e::pre_emptable;
 
   drb_to_setup_item_ng_ran.qos_flow_info_to_be_setup.push_back(qo_s_flow_qos_param_item);

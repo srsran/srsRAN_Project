@@ -34,9 +34,9 @@ TEST_F(e1_cu_cp_test, when_cu_cp_e1_setup_response_received_then_cu_cp_connected
   lazy_task_launcher<cu_cp_e1_setup_response> t_launcher(t);
 
   // Status: CU-UP received E1 Setup Request.
-  ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(msg_notifier->last_e1_msg.pdu.init_msg().value.type().value,
-            asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
 
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());
@@ -62,9 +62,9 @@ TEST_F(e1_cu_cp_test, when_cu_cp_e1_setup_failure_with_time_to_wait_received_the
   lazy_task_launcher<cu_cp_e1_setup_response> t_launcher(t);
 
   // Status: CU-UP received E1 Setup Request.
-  ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(msg_notifier->last_e1_msg.pdu.init_msg().value.type().value,
-            asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
 
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());
@@ -80,15 +80,15 @@ TEST_F(e1_cu_cp_test, when_cu_cp_e1_setup_failure_with_time_to_wait_received_the
   // Status: CU does not receive new F1 Setup Request until time-to-wait has ended.
   for (unsigned msec_elapsed = 0; msec_elapsed < 10000; ++msec_elapsed) {
     ASSERT_FALSE(t.ready());
-    ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::nulltype);
+    ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1ap_pdu_c::types_opts::nulltype);
 
     this->timers.tick_all();
   }
 
   // Status: CU-UP received E1 Setup Request again.
-  ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(msg_notifier->last_e1_msg.pdu.init_msg().value.type().value,
-            asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
 
   unsigned transaction_id2 = get_transaction_id(msg_notifier->last_e1_msg.pdu).value();
   EXPECT_NE(transaction_id, transaction_id2);
@@ -113,9 +113,9 @@ TEST_F(e1_cu_cp_test, when_cu_cp_e1_setup_failure_with_time_to_wait_received_the
   lazy_task_launcher<cu_cp_e1_setup_response> t_launcher(t);
 
   // Status: CU received F1 Setup Request.
-  ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(msg_notifier->last_e1_msg.pdu.init_msg().value.type().value,
-            asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
 
   // Status: Procedure not yet ready.
   EXPECT_FALSE(t.ready());
@@ -131,15 +131,15 @@ TEST_F(e1_cu_cp_test, when_cu_cp_e1_setup_failure_with_time_to_wait_received_the
   // Status: CU-UP does not receive new E1 Setup Request until time-to-wait has ended.
   for (unsigned msec_elapsed = 0; msec_elapsed < 10000; ++msec_elapsed) {
     ASSERT_FALSE(t.ready());
-    ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::nulltype);
+    ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1ap_pdu_c::types_opts::nulltype);
 
     this->timers.tick_all();
   }
 
   // Status: CU-UP received E1 Setup Request again.
-  ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(msg_notifier->last_e1_msg.pdu.init_msg().value.type().value,
-            asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
 
   unsigned transaction_id2 = get_transaction_id(msg_notifier->last_e1_msg.pdu).value();
   EXPECT_NE(transaction_id, transaction_id2);
@@ -163,9 +163,9 @@ TEST_F(e1_cu_cp_test, when_retry_limit_reached_then_cu_cp_not_connected)
   lazy_task_launcher<cu_cp_e1_setup_response> t_launcher(t);
 
   // Status: CU received F1 Setup Request.
-  ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(msg_notifier->last_e1_msg.pdu.init_msg().value.type().value,
-            asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
 
   // Status: Procedure not yet ready.
   EXPECT_FALSE(t.ready());
@@ -181,7 +181,7 @@ TEST_F(e1_cu_cp_test, when_retry_limit_reached_then_cu_cp_not_connected)
     // Status: CU-UP does not receive new E1 Setup Request until time-to-wait has ended.
     for (unsigned msec_elapsed = 0; msec_elapsed < 10000; ++msec_elapsed) {
       ASSERT_FALSE(t.ready());
-      ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::nulltype);
+      ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1ap_pdu_c::types_opts::nulltype);
 
       this->timers.tick_all();
     }
@@ -196,7 +196,7 @@ TEST_F(e1_cu_cp_test, when_retry_limit_reached_then_cu_cp_not_connected)
 
   ASSERT_TRUE(t.ready());
   ASSERT_FALSE(t.get().success);
-  ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::nulltype);
+  ASSERT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1ap_pdu_c::types_opts::nulltype);
 }
 
 /////////////////////////////////////
@@ -224,8 +224,8 @@ TEST_F(e1_cu_cp_test, when_received_cu_up_e1_setup_request_valid_then_connect_cu
   e1->handle_cu_up_e1_setup_response(msg);
 
   // Check the generated PDU is indeed the E1 Setup response
-  ASSERT_EQ(asn1::e1ap::e1_ap_pdu_c::types_opts::options::successful_outcome, msg_notifier->last_e1_msg.pdu.type());
-  ASSERT_EQ(asn1::e1ap::e1_ap_elem_procs_o::successful_outcome_c::types_opts::options::gnb_cu_up_e1_setup_resp,
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, msg_notifier->last_e1_msg.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::gnb_cu_up_e1_setup_resp,
             msg_notifier->last_e1_msg.pdu.successful_outcome().value.type());
 }
 
@@ -250,7 +250,7 @@ TEST_F(e1_cu_cp_test, when_received_cu_up_e1_setup_request_invalid_then_reject_c
   e1->handle_cu_up_e1_setup_response(msg);
 
   // Check the generated PDU is indeed the E1 Setup failure
-  ASSERT_EQ(asn1::e1ap::e1_ap_pdu_c::types_opts::options::unsuccessful_outcome, msg_notifier->last_e1_msg.pdu.type());
-  ASSERT_EQ(asn1::e1ap::e1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_up_e1_setup_fail,
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::unsuccessful_outcome, msg_notifier->last_e1_msg.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_up_e1_setup_fail,
             msg_notifier->last_e1_msg.pdu.unsuccessful_outcome().value.type());
 }

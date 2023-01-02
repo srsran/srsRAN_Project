@@ -25,9 +25,9 @@ TEST_F(e1_cu_cp_test, when_bearer_setup_response_received_then_procedure_success
   lazy_task_launcher<e1ap_bearer_context_setup_response> t_launcher(t);
 
   // Status: CU-UP received Bearer Context Setup Request message.
-  EXPECT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg);
+  EXPECT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1ap_pdu_c::types_opts::init_msg);
   EXPECT_EQ(msg_notifier->last_e1_msg.pdu.init_msg().value.type().value,
-            asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts::bearer_context_setup_request);
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_setup_request);
 
   // Status: Procedure not yet ready.
   EXPECT_FALSE(t.ready());
@@ -51,9 +51,9 @@ TEST_F(e1_cu_cp_test, when_bearer_setup_failure_received_then_procedure_unsucces
   lazy_task_launcher<e1ap_bearer_context_setup_response> t_launcher(t);
 
   // Status: CU-UP received Bearer Context Setup Request message.
-  EXPECT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg);
+  EXPECT_EQ(msg_notifier->last_e1_msg.pdu.type().value, asn1::e1ap::e1ap_pdu_c::types_opts::init_msg);
   EXPECT_EQ(msg_notifier->last_e1_msg.pdu.init_msg().value.type().value,
-            asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts::bearer_context_setup_request);
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_setup_request);
 
   // Status: Procedure not yet ready.
   EXPECT_FALSE(t.ready());

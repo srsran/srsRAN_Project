@@ -63,7 +63,7 @@ void cu_cp_e1_setup_procedure::send_e1_setup_request()
   e1_message msg = {};
   // set E1AP PDU contents
   msg.pdu.set_init_msg();
-  msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_G_NB_CU_CP_E1_SETUP);
+  msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
   msg.pdu.init_msg().value.gnb_cu_cp_e1_setup_request() = request.request;
 
   // set values handled by E1
@@ -83,7 +83,7 @@ bool cu_cp_e1_setup_procedure::retry_required()
   }
 
   if (cu_cp_e1_setup_outcome.error().value.type().value !=
-      e1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_cp_e1_setup_fail) {
+      e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_cp_e1_setup_fail) {
     // Invalid response type.
     return false;
   }
@@ -116,7 +116,7 @@ cu_cp_e1_setup_response cu_cp_e1_setup_procedure::create_e1_setup_result()
     res.success  = true;
   } else if (cu_cp_e1_setup_outcome.has_value() or
              cu_cp_e1_setup_outcome.error().value.type().value !=
-                 e1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_cp_e1_setup_fail) {
+                 e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_cp_e1_setup_fail) {
     logger.error("Received E1AP PDU with unexpected E1AP PDU type {}",
                  cu_cp_e1_setup_outcome.value().value.type().to_string());
     res.success = false;

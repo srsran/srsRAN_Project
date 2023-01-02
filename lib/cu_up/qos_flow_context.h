@@ -18,11 +18,11 @@ namespace srsgnb {
 namespace srs_cu_up {
 
 struct qos_flow_context {
-  qos_flow_context(const asn1::e1ap::qo_s_flow_qos_param_item_s& flow) : qos_flow_id(flow.qo_s_flow_id)
+  qos_flow_context(const asn1::e1ap::qos_flow_qos_param_item_s& flow) : qos_flow_id(flow.qos_flow_id)
   {
-    const auto& qos_params = flow.qo_sflow_level_qos_params.qo_s_characteristics;
-    if (qos_params.type() == asn1::e1ap::qo_s_characteristics_c::types_opts::non_dynamic_minus5_qi) {
-      five_qi = qos_params.non_dynamic_minus5_qi().five_qi;
+    const auto& qos_params = flow.qos_flow_level_qos_params.qos_characteristics;
+    if (qos_params.type() == asn1::e1ap::qos_characteristics_c::types_opts::non_dyn_5qi) {
+      five_qi = qos_params.non_dyn_5qi().five_qi;
     }
   };
 

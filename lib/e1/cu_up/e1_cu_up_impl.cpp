@@ -34,7 +34,7 @@ void e1_cu_up_impl::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response
     logger.info("Transmitting CuCpE1SetupResponse message");
 
     e1_msg.pdu.set_successful_outcome();
-    e1_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_G_NB_CU_CP_E1_SETUP);
+    e1_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
     e1_msg.pdu.successful_outcome().value.gnb_cu_cp_e1_setup_resp() = msg.response;
 
     // set values handled by E1
@@ -45,7 +45,7 @@ void e1_cu_up_impl::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response
   } else {
     logger.info("Transmitting CuCpE1SetupFailure message");
     e1_msg.pdu.set_unsuccessful_outcome();
-    e1_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_G_NB_CU_CP_E1_SETUP);
+    e1_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
     e1_msg.pdu.unsuccessful_outcome().value.gnb_cu_cp_e1_setup_fail() = msg.failure;
     auto& setup_fail = e1_msg.pdu.unsuccessful_outcome().value.gnb_cu_cp_e1_setup_fail();
 
@@ -81,13 +81,13 @@ void e1_cu_up_impl::handle_message(const e1_message& msg)
   }
 
   switch (msg.pdu.type().value) {
-    case asn1::e1ap::e1_ap_pdu_c::types_opts::init_msg:
+    case asn1::e1ap::e1ap_pdu_c::types_opts::init_msg:
       handle_initiating_message(msg.pdu.init_msg());
       break;
-    case asn1::e1ap::e1_ap_pdu_c::types_opts::successful_outcome:
+    case asn1::e1ap::e1ap_pdu_c::types_opts::successful_outcome:
       handle_successful_outcome(msg.pdu.successful_outcome());
       break;
-    case asn1::e1ap::e1_ap_pdu_c::types_opts::unsuccessful_outcome:
+    case asn1::e1ap::e1ap_pdu_c::types_opts::unsuccessful_outcome:
       handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
       break;
     default:
@@ -99,13 +99,13 @@ void e1_cu_up_impl::handle_message(const e1_message& msg)
 void e1_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
-    case asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts::options::gnb_cu_cp_e1_setup_request: {
+    case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::gnb_cu_cp_e1_setup_request: {
       cu_cp_e1_setup_request req_msg = {};
       current_transaction_id         = msg.value.gnb_cu_cp_e1_setup_request()->transaction_id.value;
       req_msg.request                = msg.value.gnb_cu_cp_e1_setup_request();
       ue_manager_notifier.on_cu_cp_e1_setup_request_received(req_msg);
     } break;
-    case asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts::options::bearer_context_setup_request: {
+    case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::bearer_context_setup_request: {
       handle_bearer_context_setup_request(msg.value.bearer_context_setup_request());
     } break;
     default:
@@ -144,7 +144,7 @@ void e1_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bearer
 
   // Create UE context and store it
   e1ap_ue_context ue_ctxt = {};
-  ue_ctxt.cu_cp_e1_ue_id  = int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1_ap_id.value);
+  ue_ctxt.cu_cp_e1_ue_id  = int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id.value);
   ue_ctxt.ue_index        = ue_context_setup_response_msg.ue_index;
   cu_up_ue_id_to_e1ap_ue_context[gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_id)] = ue_ctxt;
 
@@ -159,9 +159,8 @@ void e1_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bearer
 
     e1_msg.pdu.set_successful_outcome();
     e1_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
-    e1_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->gnb_cu_cp_ue_e1_ap_id =
-        msg->gnb_cu_cp_ue_e1_ap_id;
-    e1_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->gnb_cu_up_ue_e1_ap_id.value =
+    e1_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->gnb_cu_cp_ue_e1ap_id = msg->gnb_cu_cp_ue_e1ap_id;
+    e1_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->gnb_cu_up_ue_e1ap_id.value =
         gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_id);
     e1_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->sys_bearer_context_setup_resp.value =
         ue_context_setup_response_msg.sys_bearer_context_setup_resp;
@@ -172,9 +171,9 @@ void e1_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bearer
     logger.info("Transmitting BearerContextSetupFailure message");
     e1_msg.pdu.set_unsuccessful_outcome();
     e1_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
-    e1_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->gnb_cu_cp_ue_e1_ap_id =
-        msg->gnb_cu_cp_ue_e1_ap_id;
-    e1_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->gnb_cu_up_ue_e1_ap_id.value =
+    e1_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->gnb_cu_cp_ue_e1ap_id =
+        msg->gnb_cu_cp_ue_e1ap_id;
+    e1_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->gnb_cu_up_ue_e1ap_id.value =
         gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_id);
     e1_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause.value =
         ue_context_setup_response_msg.cause;

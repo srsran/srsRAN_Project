@@ -54,10 +54,10 @@ TEST_F(asn1_e1ap_test, when_gnb_cu_up_e1_setup_correct_then_packing_successful)
   logger.set_level(srslog::basic_levels::debug);
   logger.set_hex_dump_max_size(-1);
 
-  asn1::e1ap::e1_ap_pdu_c pdu;
+  asn1::e1ap::e1ap_pdu_c pdu;
   pdu.set_init_msg();
-  pdu.init_msg().value.set(asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types::gnb_cu_up_e1_setup_request);
-  pdu.init_msg().proc_code = ASN1_E1AP_ID_G_NB_CU_UP_E1_SETUP;
+  pdu.init_msg().value.set(asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types::gnb_cu_up_e1_setup_request);
+  pdu.init_msg().proc_code = ASN1_E1AP_ID_GNB_CU_UP_E1_SETUP;
   pdu.init_msg().crit      = crit_opts::reject;
 
   auto& setup_request             = pdu.init_msg().value.gnb_cu_up_e1_setup_request();
@@ -103,13 +103,13 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_request_correct_then_unpacking_
 
   pcap_writer.write_pdu(rx_msg);
 
-  asn1::cbit_ref          bref{rx_pdu};
-  asn1::e1ap::e1_ap_pdu_c pdu;
+  asn1::cbit_ref         bref{rx_pdu};
+  asn1::e1ap::e1ap_pdu_c pdu;
 
   ASSERT_EQ(pdu.unpack(bref), SRSASN_SUCCESS);
   ASSERT_EQ(pdu.init_msg().proc_code, ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
   ASSERT_EQ(pdu.init_msg().value.type(),
-            asn1::e1ap::e1_ap_elem_procs_o::init_msg_c::types_opts::bearer_context_setup_request);
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_setup_request);
   ASSERT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
 
   // Get the message.
@@ -162,21 +162,21 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_response_correct_then_unpacking
 
   pcap_writer.write_pdu(rx_msg);
 
-  asn1::cbit_ref          bref{rx_pdu};
-  asn1::e1ap::e1_ap_pdu_c pdu;
+  asn1::cbit_ref         bref{rx_pdu};
+  asn1::e1ap::e1ap_pdu_c pdu;
 
   ASSERT_EQ(pdu.unpack(bref), SRSASN_SUCCESS);
   ASSERT_EQ(pdu.init_msg().proc_code, ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
   ASSERT_EQ(pdu.init_msg().value.type(),
-            asn1::e1ap::e1_ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_setup_resp);
+            asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_setup_resp);
   ASSERT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
 
   // Get the message.
   const auto& msg = pdu.successful_outcome().value.bearer_context_setup_resp();
 
   // Check IDs.
-  ASSERT_EQ(msg->gnb_cu_cp_ue_e1_ap_id.value, 9);
-  ASSERT_EQ(msg->gnb_cu_up_ue_e1_ap_id.value, 640);
+  ASSERT_EQ(msg->gnb_cu_cp_ue_e1ap_id.value, 9);
+  ASSERT_EQ(msg->gnb_cu_up_ue_e1ap_id.value, 640);
 
   // Check the SystemBearerContextSetupResponse.
   ASSERT_EQ(msg->sys_bearer_context_setup_resp->type().value,

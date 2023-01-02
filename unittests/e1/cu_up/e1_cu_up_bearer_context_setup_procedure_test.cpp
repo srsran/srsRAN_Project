@@ -34,7 +34,7 @@ TEST_F(e1_cu_up_test, when_valid_bearer_context_setup_received_then_bearer_conte
   ASSERT_EQ(ue_manager_notifier->last_bearer_context_setup_request_msg.serving_plmn.to_string(), "02f899");
 
   // Check the generated PDU is indeed the Bearer Context Setup response
-  ASSERT_EQ(asn1::e1ap::e1_ap_pdu_c::types_opts::options::successful_outcome, msg_notifier->last_e1_msg.pdu.type());
-  ASSERT_EQ(asn1::e1ap::e1_ap_elem_procs_o::successful_outcome_c::types_opts::options::bearer_context_setup_resp,
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, msg_notifier->last_e1_msg.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::bearer_context_setup_resp,
             msg_notifier->last_e1_msg.pdu.successful_outcome().value.type());
 }

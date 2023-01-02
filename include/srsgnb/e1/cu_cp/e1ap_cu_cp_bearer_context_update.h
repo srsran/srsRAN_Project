@@ -56,8 +56,8 @@ struct e1ap_non_dynamic_5qi_descriptor {
 };
 
 struct e1ap_qos_characteristics {
-  optional<e1ap_dynamic_5qi_descriptor>     dynamic_minus5_qi;
-  optional<e1ap_non_dynamic_5qi_descriptor> non_dynamic_minus5_qi;
+  optional<e1ap_dynamic_5qi_descriptor>     dyn_5qi;
+  optional<e1ap_non_dynamic_5qi_descriptor> non_dyn_5qi;
 };
 
 struct e1ap_ng_ran_alloc_and_retention_prio {

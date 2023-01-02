@@ -15,7 +15,7 @@
 namespace srsgnb {
 
 struct e1_message {
-  asn1::e1ap::e1_ap_pdu_c pdu;
+  asn1::e1ap::e1ap_pdu_c pdu;
 };
 
 /// \brief CU-CP initiated E1 setup request.

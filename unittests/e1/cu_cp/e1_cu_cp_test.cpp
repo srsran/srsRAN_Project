@@ -35,7 +35,7 @@ TEST_F(e1_cu_cp_test, when_unsupported_init_msg_received_then_message_ignored)
   e1->handle_message(unsupported_msg);
 
   // Check that PDU has not been forwarded (last PDU is still init_msg)
-  EXPECT_EQ(msg_notifier->last_e1_msg.pdu.type(), asn1::e1ap::e1_ap_pdu_c::types_opts::options::init_msg);
+  EXPECT_EQ(msg_notifier->last_e1_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
 }
 
 TEST_F(e1_cu_cp_test, when_unsupported_successful_outcome_received_then_message_ignored)
@@ -50,7 +50,7 @@ TEST_F(e1_cu_cp_test, when_unsupported_successful_outcome_received_then_message_
   e1->handle_message(unsupported_msg);
 
   // Check that PDU has not been forwarded (last PDU is still init_msg)
-  EXPECT_EQ(msg_notifier->last_e1_msg.pdu.type(), asn1::e1ap::e1_ap_pdu_c::types_opts::options::init_msg);
+  EXPECT_EQ(msg_notifier->last_e1_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
 }
 
 TEST_F(e1_cu_cp_test, when_unsupported_unsuccessful_outcome_received_then_message_ignored)
@@ -65,5 +65,5 @@ TEST_F(e1_cu_cp_test, when_unsupported_unsuccessful_outcome_received_then_messag
   e1->handle_message(unsupported_msg);
 
   // Check that PDU has not been forwarded (last PDU is still init_msg)
-  EXPECT_EQ(msg_notifier->last_e1_msg.pdu.type(), asn1::e1ap::e1_ap_pdu_c::types_opts::options::init_msg);
+  EXPECT_EQ(msg_notifier->last_e1_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
 }

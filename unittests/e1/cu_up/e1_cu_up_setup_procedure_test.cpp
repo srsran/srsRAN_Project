@@ -40,8 +40,8 @@ TEST_F(e1_cu_up_test, when_cu_cp_e1_setup_request_valid_then_connect_cu_cp)
   e1->handle_cu_cp_e1_setup_response(msg);
 
   // Check the generated PDU is indeed the F1 Setup response
-  ASSERT_EQ(asn1::e1ap::e1_ap_pdu_c::types_opts::options::successful_outcome, msg_notifier->last_e1_msg.pdu.type());
-  ASSERT_EQ(asn1::e1ap::e1_ap_elem_procs_o::successful_outcome_c::types_opts::options::gnb_cu_cp_e1_setup_resp,
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, msg_notifier->last_e1_msg.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::gnb_cu_cp_e1_setup_resp,
             msg_notifier->last_e1_msg.pdu.successful_outcome().value.type());
 }
 
@@ -63,7 +63,7 @@ TEST_F(e1_cu_up_test, when_cu_cp_e1_setup_request_cant_be_handled_then_reject_cu
   e1->handle_cu_cp_e1_setup_response(msg);
 
   // Check the generated PDU is indeed the E1 Setup failure
-  ASSERT_EQ(asn1::e1ap::e1_ap_pdu_c::types_opts::options::unsuccessful_outcome, msg_notifier->last_e1_msg.pdu.type());
-  ASSERT_EQ(asn1::e1ap::e1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_cp_e1_setup_fail,
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::unsuccessful_outcome, msg_notifier->last_e1_msg.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_cp_e1_setup_fail,
             msg_notifier->last_e1_msg.pdu.unsuccessful_outcome().value.type());
 }

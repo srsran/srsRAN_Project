@@ -136,12 +136,12 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
       qos_flow_setup_result flow_result = {};
       flow_result.success               = false;
       flow_result.cause.set_radio_network();
-      flow_result.qos_flow_id = drb.qos_flow_info_to_be_setup[k].qo_s_flow_id;
+      flow_result.qos_flow_id = drb.qos_flow_info_to_be_setup[k].qos_flow_id;
 
       // create QoS flow context
-      auto& qos_flow                            = drb.qos_flow_info_to_be_setup[k];
-      new_drb->qos_flows[qos_flow.qo_s_flow_id] = std::make_unique<qos_flow_context>(qos_flow);
-      auto& new_qos_flow                        = new_drb->qos_flows[qos_flow.qo_s_flow_id];
+      auto& qos_flow                           = drb.qos_flow_info_to_be_setup[k];
+      new_drb->qos_flows[qos_flow.qos_flow_id] = std::make_unique<qos_flow_context>(qos_flow);
+      auto& new_qos_flow                       = new_drb->qos_flows[qos_flow.qos_flow_id];
       logger.info(
           "Created QoS flow with qos_flow_id={} and five_qi={}", new_qos_flow->qos_flow_id, new_qos_flow->five_qi);
 
