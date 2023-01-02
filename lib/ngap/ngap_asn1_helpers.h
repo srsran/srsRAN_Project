@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../converters/ngc_asn1_converters.h"
+#include "ngap_asn1_converters.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/ran/bcd_helpers.h"

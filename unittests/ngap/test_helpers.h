@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "lib/cu_cp/helpers/ngc_asn1_helpers.h"
+#include "lib/ngap/ngap_asn1_helpers.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"

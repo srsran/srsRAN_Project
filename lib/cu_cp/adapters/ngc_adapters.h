@@ -19,8 +19,8 @@
 #include "srsgnb/rrc/rrc_ue.h"
 #include "srsgnb/srslog/srslog.h"
 
+#include "../../ngap/ngap_asn1_helpers.h"
 #include "../../ngap/ngap_asn1_utils.h"
-#include "../helpers/ngc_asn1_helpers.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
