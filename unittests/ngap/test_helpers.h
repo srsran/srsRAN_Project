@@ -103,7 +103,7 @@ public:
     bool result = true;
 
     // NIA0 is not allowed
-    if (caps.nrintegrity_protection_algorithms.to_number() == 0) {
+    if (caps.nr_integrity_protection_algorithms.to_number() == 0) {
       result = false;
     }
 

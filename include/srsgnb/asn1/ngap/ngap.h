@@ -121,9 +121,9 @@ namespace ngap {
 #define ASN1_NGAP_MAXNOOF_TAI_FOR_PAGING 16
 #define ASN1_NGAP_MAXNOOF_TAI_FOR_RESTART 2048
 #define ASN1_NGAP_MAXNOOF_TAI_FOR_WARNING 65535
-#define ASN1_NGAP_MAXNOOF_TAIIN_AO_I 16
+#define ASN1_NGAP_MAXNOOF_TAI_IN_AO_I 16
 #define ASN1_NGAP_MAXNOOF_TIME_PERIODS 2
-#define ASN1_NGAP_MAXNOOF_TNLASSOCS 32
+#define ASN1_NGAP_MAXNOOF_TNL_ASSOCS 32
 #define ASN1_NGAP_MAXNOOF_XN_EXT_TLAS 16
 #define ASN1_NGAP_MAXNOOF_XN_GTP_TLAS 16
 #define ASN1_NGAP_MAXNOOF_XN_TLAS 2
@@ -131,11 +131,11 @@ namespace ngap {
 #define ASN1_NGAP_ID_AMF_NAME 1
 #define ASN1_NGAP_ID_AMF_OVERLOAD_RESP 2
 #define ASN1_NGAP_ID_AMF_SET_ID 3
-#define ASN1_NGAP_ID_AMF_TNLASSOC_FAILED_TO_SETUP_LIST 4
-#define ASN1_NGAP_ID_AMF_TNLASSOC_SETUP_LIST 5
-#define ASN1_NGAP_ID_AMF_TNLASSOC_TO_ADD_LIST 6
-#define ASN1_NGAP_ID_AMF_TNLASSOC_TO_REM_LIST 7
-#define ASN1_NGAP_ID_AMF_TNLASSOC_TO_UPD_LIST 8
+#define ASN1_NGAP_ID_AMF_TNL_ASSOC_FAILED_TO_SETUP_LIST 4
+#define ASN1_NGAP_ID_AMF_TNL_ASSOC_SETUP_LIST 5
+#define ASN1_NGAP_ID_AMF_TNL_ASSOC_TO_ADD_LIST 6
+#define ASN1_NGAP_ID_AMF_TNL_ASSOC_TO_REM_LIST 7
+#define ASN1_NGAP_ID_AMF_TNL_ASSOC_TO_UPD_LIST 8
 #define ASN1_NGAP_ID_AMF_TRAFFIC_LOAD_REDUCTION_IND 9
 #define ASN1_NGAP_ID_AMF_UE_NGAP_ID 10
 #define ASN1_NGAP_ID_ASSIST_DATA_FOR_PAGING 11
@@ -285,7 +285,7 @@ namespace ngap {
 #define ASN1_NGAP_ID_SECURITY_RESULT 156
 #define ASN1_NGAP_ID_ENDC_SON_CFG_TRANSFER_DL 157
 #define ASN1_NGAP_ID_ENDC_SON_CFG_TRANSFER_UL 158
-#define ASN1_NGAP_ID_OLD_ASSOCIATED_QOS_FLOW_LIST_ULENDMARKEREXPECTED 159
+#define ASN1_NGAP_ID_OLD_ASSOCIATED_QOS_FLOW_LIST_UL_ENDMARKEREXPECTED 159
 #define ASN1_NGAP_ID_CN_TYPE_RESTRICTS_FOR_EQUIVALENT 160
 #define ASN1_NGAP_ID_CN_TYPE_RESTRICTS_FOR_SERVING 161
 #define ASN1_NGAP_ID_NEW_GUAMI 162
@@ -293,8 +293,8 @@ namespace ngap {
 #define ASN1_NGAP_ID_UL_FORWARDING_UP_TNL_INFO 164
 #define ASN1_NGAP_ID_CN_ASSISTED_RAN_TUNING 165
 #define ASN1_NGAP_ID_COMMON_NETWORK_INSTANCE 166
-#define ASN1_NGAP_ID_NGRAN_TNLASSOC_TO_REM_LIST 167
-#define ASN1_NGAP_ID_TNLASSOC_TRANSPORT_LAYER_ADDRESS_NGRAN 168
+#define ASN1_NGAP_ID_NGRAN_TNL_ASSOC_TO_REM_LIST 167
+#define ASN1_NGAP_ID_TNL_ASSOC_TRANSPORT_LAYER_ADDRESS_NGRAN 168
 #define ASN1_NGAP_ID_ENDPOINT_IP_ADDRESS_AND_PORT 169
 #define ASN1_NGAP_ID_LOCATION_REPORT_ADD_INFO 170
 #define ASN1_NGAP_ID_SOURCE_TO_TARGET_AMF_INFO_REROUTE 171
@@ -371,7 +371,7 @@ struct cp_transport_layer_info_ext_ies_o {
 };
 
 // AMF-TNLAssociationSetupItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
-using amf_tnlassoc_setup_item_ext_ies_o = protocol_ext_empty_o;
+using amf_tnl_assoc_setup_item_ext_ies_o = protocol_ext_empty_o;
 
 // CPTransportLayerInformation ::= CHOICE
 struct cp_transport_layer_info_c {
@@ -425,14 +425,14 @@ private:
   void destroy_();
 };
 
-using amf_tnlassoc_setup_item_ext_ies_container = protocol_ext_container_empty_l;
+using amf_tnl_assoc_setup_item_ext_ies_container = protocol_ext_container_empty_l;
 
 // AMF-TNLAssociationSetupItem ::= SEQUENCE
-struct amf_tnlassoc_setup_item_s {
-  bool                                      ext             = false;
-  bool                                      ie_exts_present = false;
-  cp_transport_layer_info_c                 amf_tnlassoc_address;
-  amf_tnlassoc_setup_item_ext_ies_container ie_exts;
+struct amf_tnl_assoc_setup_item_s {
+  bool                                       ext             = false;
+  bool                                       ie_exts_present = false;
+  cp_transport_layer_info_c                  amf_tnl_assoc_address;
+  amf_tnl_assoc_setup_item_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -442,30 +442,30 @@ struct amf_tnlassoc_setup_item_s {
 };
 
 // AMF-TNLAssociationSetupList ::= SEQUENCE (SIZE (1..32)) OF AMF-TNLAssociationSetupItem
-using amf_tnlassoc_setup_list_l = dyn_array<amf_tnlassoc_setup_item_s>;
+using amf_tnl_assoc_setup_list_l = dyn_array<amf_tnl_assoc_setup_item_s>;
 
 // AMF-TNLAssociationToAddItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
-using amf_tnlassoc_to_add_item_ext_ies_o = protocol_ext_empty_o;
+using amf_tnl_assoc_to_add_item_ext_ies_o = protocol_ext_empty_o;
 
 // TNLAssociationUsage ::= ENUMERATED
-struct tnlassoc_usage_opts {
+struct tnl_assoc_usage_opts {
   enum options { ue, non_ue, both, /*...*/ nulltype } value;
 
   const char* to_string() const;
 };
-typedef enumerated<tnlassoc_usage_opts, true> tnlassoc_usage_e;
+typedef enumerated<tnl_assoc_usage_opts, true> tnl_assoc_usage_e;
 
-using amf_tnlassoc_to_add_item_ext_ies_container = protocol_ext_container_empty_l;
+using amf_tnl_assoc_to_add_item_ext_ies_container = protocol_ext_container_empty_l;
 
 // AMF-TNLAssociationToAddItem ::= SEQUENCE
-struct amf_tnlassoc_to_add_item_s {
-  bool                                       ext                     = false;
-  bool                                       tnl_assoc_usage_present = false;
-  bool                                       ie_exts_present         = false;
-  cp_transport_layer_info_c                  amf_tnlassoc_address;
-  tnlassoc_usage_e                           tnl_assoc_usage;
-  uint16_t                                   tnl_address_weight_factor = 0;
-  amf_tnlassoc_to_add_item_ext_ies_container ie_exts;
+struct amf_tnl_assoc_to_add_item_s {
+  bool                                        ext                     = false;
+  bool                                        tnl_assoc_usage_present = false;
+  bool                                        ie_exts_present         = false;
+  cp_transport_layer_info_c                   amf_tnl_assoc_address;
+  tnl_assoc_usage_e                           tnl_assoc_usage;
+  uint16_t                                    tnla_ddress_weight_factor = 0;
+  amf_tnl_assoc_to_add_item_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -475,27 +475,27 @@ struct amf_tnlassoc_to_add_item_s {
 };
 
 // AMF-TNLAssociationToAddList ::= SEQUENCE (SIZE (1..32)) OF AMF-TNLAssociationToAddItem
-using amf_tnlassoc_to_add_list_l = dyn_array<amf_tnlassoc_to_add_item_s>;
+using amf_tnl_assoc_to_add_list_l = dyn_array<amf_tnl_assoc_to_add_item_s>;
 
 // AMF-TNLAssociationToRemoveItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
-struct amf_tnlassoc_to_rem_item_ext_ies_o {
+struct amf_tnl_assoc_to_rem_item_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { tnlassoc_transport_layer_address_ngran, nulltype } value;
+      enum options { tnl_assoc_transport_layer_address_ngran, nulltype } value;
 
       const char* to_string() const;
     };
     typedef enumerated<types_opts> types;
 
     // choice methods
-    types       type() const { return types::tnlassoc_transport_layer_address_ngran; }
+    types       type() const { return types::tnl_assoc_transport_layer_address_ngran; }
     SRSASN_CODE pack(bit_ref& bref) const;
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    cp_transport_layer_info_c&       tnlassoc_transport_layer_address_ngran() { return c; }
-    const cp_transport_layer_info_c& tnlassoc_transport_layer_address_ngran() const { return c; }
+    cp_transport_layer_info_c&       tnl_assoc_transport_layer_address_ngran() { return c; }
+    const cp_transport_layer_info_c& tnl_assoc_transport_layer_address_ngran() const { return c; }
 
   private:
     cp_transport_layer_info_c c;
@@ -510,10 +510,10 @@ struct amf_tnlassoc_to_rem_item_ext_ies_o {
 };
 
 // AMF-TNLAssociationToRemoveItem ::= SEQUENCE
-struct amf_tnlassoc_to_rem_item_s {
-  bool                                                         ext = false;
-  cp_transport_layer_info_c                                    amf_tnlassoc_address;
-  protocol_ext_container_l<amf_tnlassoc_to_rem_item_ext_ies_o> ie_exts;
+struct amf_tnl_assoc_to_rem_item_s {
+  bool                                                          ext = false;
+  cp_transport_layer_info_c                                     amf_tnl_assoc_address;
+  protocol_ext_container_l<amf_tnl_assoc_to_rem_item_ext_ies_o> ie_exts;
   // ...
 
   // sequence methods
@@ -523,23 +523,23 @@ struct amf_tnlassoc_to_rem_item_s {
 };
 
 // AMF-TNLAssociationToRemoveList ::= SEQUENCE (SIZE (1..32)) OF AMF-TNLAssociationToRemoveItem
-using amf_tnlassoc_to_rem_list_l = dyn_array<amf_tnlassoc_to_rem_item_s>;
+using amf_tnl_assoc_to_rem_list_l = dyn_array<amf_tnl_assoc_to_rem_item_s>;
 
 // AMF-TNLAssociationToUpdateItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
-using amf_tnlassoc_to_upd_item_ext_ies_o = protocol_ext_empty_o;
+using amf_tnl_assoc_to_upd_item_ext_ies_o = protocol_ext_empty_o;
 
-using amf_tnlassoc_to_upd_item_ext_ies_container = protocol_ext_container_empty_l;
+using amf_tnl_assoc_to_upd_item_ext_ies_container = protocol_ext_container_empty_l;
 
 // AMF-TNLAssociationToUpdateItem ::= SEQUENCE
-struct amf_tnlassoc_to_upd_item_s {
-  bool                                       ext                               = false;
-  bool                                       tnl_assoc_usage_present           = false;
-  bool                                       tnl_address_weight_factor_present = false;
-  bool                                       ie_exts_present                   = false;
-  cp_transport_layer_info_c                  amf_tnlassoc_address;
-  tnlassoc_usage_e                           tnl_assoc_usage;
-  uint16_t                                   tnl_address_weight_factor = 0;
-  amf_tnlassoc_to_upd_item_ext_ies_container ie_exts;
+struct amf_tnl_assoc_to_upd_item_s {
+  bool                                        ext                               = false;
+  bool                                        tnl_assoc_usage_present           = false;
+  bool                                        tnla_ddress_weight_factor_present = false;
+  bool                                        ie_exts_present                   = false;
+  cp_transport_layer_info_c                   amf_tnl_assoc_address;
+  tnl_assoc_usage_e                           tnl_assoc_usage;
+  uint16_t                                    tnla_ddress_weight_factor = 0;
+  amf_tnl_assoc_to_upd_item_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -549,7 +549,7 @@ struct amf_tnlassoc_to_upd_item_s {
 };
 
 // AMF-TNLAssociationToUpdateList ::= SEQUENCE (SIZE (1..32)) OF AMF-TNLAssociationToUpdateItem
-using amf_tnlassoc_to_upd_list_l = dyn_array<amf_tnlassoc_to_upd_item_s>;
+using amf_tnl_assoc_to_upd_list_l = dyn_array<amf_tnl_assoc_to_upd_item_s>;
 
 // S-NSSAI-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using s_nssai_ext_ies_o = protocol_ext_empty_o;
@@ -707,9 +707,9 @@ struct amf_cfg_upd_ies_o {
         served_guami_list,
         relative_amf_capacity,
         plmn_support_list,
-        amf_tnlassoc_to_add_list,
-        amf_tnlassoc_to_rem_list,
-        amf_tnlassoc_to_upd_list,
+        amf_tnl_assoc_to_add_list,
+        amf_tnl_assoc_to_rem_list,
+        amf_tnl_assoc_to_upd_list,
         nulltype
       } value;
       typedef uint8_t number_type;
@@ -734,22 +734,22 @@ struct amf_cfg_upd_ies_o {
     served_guami_list_l&                        served_guami_list();
     uint16_t&                                   relative_amf_capacity();
     plmn_support_list_l&                        plmn_support_list();
-    amf_tnlassoc_to_add_list_l&                 amf_tnlassoc_to_add_list();
-    amf_tnlassoc_to_rem_list_l&                 amf_tnlassoc_to_rem_list();
-    amf_tnlassoc_to_upd_list_l&                 amf_tnlassoc_to_upd_list();
+    amf_tnl_assoc_to_add_list_l&                amf_tnl_assoc_to_add_list();
+    amf_tnl_assoc_to_rem_list_l&                amf_tnl_assoc_to_rem_list();
+    amf_tnl_assoc_to_upd_list_l&                amf_tnl_assoc_to_upd_list();
     const printable_string<1, 150, true, true>& amf_name() const;
     const served_guami_list_l&                  served_guami_list() const;
     const uint16_t&                             relative_amf_capacity() const;
     const plmn_support_list_l&                  plmn_support_list() const;
-    const amf_tnlassoc_to_add_list_l&           amf_tnlassoc_to_add_list() const;
-    const amf_tnlassoc_to_rem_list_l&           amf_tnlassoc_to_rem_list() const;
-    const amf_tnlassoc_to_upd_list_l&           amf_tnlassoc_to_upd_list() const;
+    const amf_tnl_assoc_to_add_list_l&          amf_tnl_assoc_to_add_list() const;
+    const amf_tnl_assoc_to_rem_list_l&          amf_tnl_assoc_to_rem_list() const;
+    const amf_tnl_assoc_to_upd_list_l&          amf_tnl_assoc_to_upd_list() const;
 
   private:
     types type_;
-    choice_buffer_t<amf_tnlassoc_to_add_list_l,
-                    amf_tnlassoc_to_rem_list_l,
-                    amf_tnlassoc_to_upd_list_l,
+    choice_buffer_t<amf_tnl_assoc_to_add_list_l,
+                    amf_tnl_assoc_to_rem_list_l,
+                    amf_tnl_assoc_to_upd_list_l,
                     plmn_support_list_l,
                     printable_string<1, 150, true, true>,
                     served_guami_list_l>
@@ -771,20 +771,20 @@ struct amf_cfg_upd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                            amf_name_present                 = false;
-  bool                                                            served_guami_list_present        = false;
-  bool                                                            relative_amf_capacity_present    = false;
-  bool                                                            plmn_support_list_present        = false;
-  bool                                                            amf_tnlassoc_to_add_list_present = false;
-  bool                                                            amf_tnlassoc_to_rem_list_present = false;
-  bool                                                            amf_tnlassoc_to_upd_list_present = false;
-  ie_field_s<printable_string<1, 150, true, true>>                amf_name;
-  ie_field_s<dyn_seq_of<served_guami_item_s, 1, 256, true>>       served_guami_list;
-  ie_field_s<integer<uint16_t, 0, 255, false, true>>              relative_amf_capacity;
-  ie_field_s<dyn_seq_of<plmn_support_item_s, 1, 12, true>>        plmn_support_list;
-  ie_field_s<dyn_seq_of<amf_tnlassoc_to_add_item_s, 1, 32, true>> amf_tnlassoc_to_add_list;
-  ie_field_s<dyn_seq_of<amf_tnlassoc_to_rem_item_s, 1, 32, true>> amf_tnlassoc_to_rem_list;
-  ie_field_s<dyn_seq_of<amf_tnlassoc_to_upd_item_s, 1, 32, true>> amf_tnlassoc_to_upd_list;
+  bool                                                             amf_name_present                  = false;
+  bool                                                             served_guami_list_present         = false;
+  bool                                                             relative_amf_capacity_present     = false;
+  bool                                                             plmn_support_list_present         = false;
+  bool                                                             amf_tnl_assoc_to_add_list_present = false;
+  bool                                                             amf_tnl_assoc_to_rem_list_present = false;
+  bool                                                             amf_tnl_assoc_to_upd_list_present = false;
+  ie_field_s<printable_string<1, 150, true, true>>                 amf_name;
+  ie_field_s<dyn_seq_of<served_guami_item_s, 1, 256, true>>        served_guami_list;
+  ie_field_s<integer<uint16_t, 0, 255, false, true>>               relative_amf_capacity;
+  ie_field_s<dyn_seq_of<plmn_support_item_s, 1, 12, true>>         plmn_support_list;
+  ie_field_s<dyn_seq_of<amf_tnl_assoc_to_add_item_s, 1, 32, true>> amf_tnl_assoc_to_add_list;
+  ie_field_s<dyn_seq_of<amf_tnl_assoc_to_rem_item_s, 1, 32, true>> amf_tnl_assoc_to_rem_list;
+  ie_field_s<dyn_seq_of<amf_tnl_assoc_to_upd_item_s, 1, 32, true>> amf_tnl_assoc_to_upd_list;
 
   // sequence methods
   amf_cfg_upd_ies_container();
@@ -1035,7 +1035,7 @@ struct crit_diagnostics_ie_item_s {
 };
 
 // TNLAssociationItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
-using tnlassoc_item_ext_ies_o = protocol_ext_empty_o;
+using tnl_assoc_item_ext_ies_o = protocol_ext_empty_o;
 
 // CriticalityDiagnostics-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using crit_diagnostics_ext_ies_o = protocol_ext_empty_o;
@@ -1043,15 +1043,15 @@ using crit_diagnostics_ext_ies_o = protocol_ext_empty_o;
 // CriticalityDiagnostics-IE-List ::= SEQUENCE (SIZE (1..256)) OF CriticalityDiagnostics-IE-Item
 using crit_diagnostics_ie_list_l = dyn_array<crit_diagnostics_ie_item_s>;
 
-using tnlassoc_item_ext_ies_container = protocol_ext_container_empty_l;
+using tnl_assoc_item_ext_ies_container = protocol_ext_container_empty_l;
 
 // TNLAssociationItem ::= SEQUENCE
-struct tnlassoc_item_s {
-  bool                            ext             = false;
-  bool                            ie_exts_present = false;
-  cp_transport_layer_info_c       tnl_assoc_address;
-  cause_c                         cause;
-  tnlassoc_item_ext_ies_container ie_exts;
+struct tnl_assoc_item_s {
+  bool                             ext             = false;
+  bool                             ie_exts_present = false;
+  cp_transport_layer_info_c        tnl_assoc_address;
+  cause_c                          cause;
+  tnl_assoc_item_ext_ies_container ie_exts;
   // ...
 
   // sequence methods
@@ -1091,14 +1091,14 @@ struct crit_diagnostics_s {
 };
 
 // TNLAssociationList ::= SEQUENCE (SIZE (1..32)) OF TNLAssociationItem
-using tnlassoc_list_l = dyn_array<tnlassoc_item_s>;
+using tnl_assoc_list_l = dyn_array<tnl_assoc_item_s>;
 
 // AMFConfigurationUpdateAcknowledgeIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
 struct amf_cfg_upd_ack_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { amf_tnlassoc_setup_list, amf_tnlassoc_failed_to_setup_list, crit_diagnostics, nulltype } value;
+      enum options { amf_tnl_assoc_setup_list, amf_tnl_assoc_failed_to_setup_list, crit_diagnostics, nulltype } value;
 
       const char* to_string() const;
     };
@@ -1115,16 +1115,16 @@ struct amf_cfg_upd_ack_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    amf_tnlassoc_setup_list_l&       amf_tnlassoc_setup_list();
-    tnlassoc_list_l&                 amf_tnlassoc_failed_to_setup_list();
-    crit_diagnostics_s&              crit_diagnostics();
-    const amf_tnlassoc_setup_list_l& amf_tnlassoc_setup_list() const;
-    const tnlassoc_list_l&           amf_tnlassoc_failed_to_setup_list() const;
-    const crit_diagnostics_s&        crit_diagnostics() const;
+    amf_tnl_assoc_setup_list_l&       amf_tnl_assoc_setup_list();
+    tnl_assoc_list_l&                 amf_tnl_assoc_failed_to_setup_list();
+    crit_diagnostics_s&               crit_diagnostics();
+    const amf_tnl_assoc_setup_list_l& amf_tnl_assoc_setup_list() const;
+    const tnl_assoc_list_l&           amf_tnl_assoc_failed_to_setup_list() const;
+    const crit_diagnostics_s&         crit_diagnostics() const;
 
   private:
-    types                                                                           type_;
-    choice_buffer_t<amf_tnlassoc_setup_list_l, crit_diagnostics_s, tnlassoc_list_l> c;
+    types                                                                             type_;
+    choice_buffer_t<amf_tnl_assoc_setup_list_l, crit_diagnostics_s, tnl_assoc_list_l> c;
 
     void destroy_();
   };
@@ -1142,12 +1142,12 @@ struct amf_cfg_upd_ack_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                           amf_tnlassoc_setup_list_present           = false;
-  bool                                                           amf_tnlassoc_failed_to_setup_list_present = false;
-  bool                                                           crit_diagnostics_present                  = false;
-  ie_field_s<dyn_seq_of<amf_tnlassoc_setup_item_s, 1, 32, true>> amf_tnlassoc_setup_list;
-  ie_field_s<dyn_seq_of<tnlassoc_item_s, 1, 32, true>>           amf_tnlassoc_failed_to_setup_list;
-  ie_field_s<crit_diagnostics_s>                                 crit_diagnostics;
+  bool                                                            amf_tnl_assoc_setup_list_present           = false;
+  bool                                                            amf_tnl_assoc_failed_to_setup_list_present = false;
+  bool                                                            crit_diagnostics_present                   = false;
+  ie_field_s<dyn_seq_of<amf_tnl_assoc_setup_item_s, 1, 32, true>> amf_tnl_assoc_setup_list;
+  ie_field_s<dyn_seq_of<tnl_assoc_item_s, 1, 32, true>>           amf_tnl_assoc_failed_to_setup_list;
+  ie_field_s<crit_diagnostics_s>                                  crit_diagnostics;
 
   // sequence methods
   amf_cfg_upd_ack_ies_container();
@@ -3014,7 +3014,7 @@ struct expected_ue_moving_trajectory_item_s {
 
 // SourceOfUEActivityBehaviourInformation ::= ENUMERATED
 struct source_of_ue_activity_behaviour_info_opts {
-  enum options { subscription_info, statistics, /*...*/ nulltype } value;
+  enum options { sub_info, stats, /*...*/ nulltype } value;
 
   const char* to_string() const;
 };
@@ -3693,20 +3693,20 @@ struct drbs_subject_to_status_transfer_item_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { old_associated_qos_flow_list_ulendmarkerexpected, nulltype } value;
+      enum options { old_associated_qos_flow_list_ul_endmarkerexpected, nulltype } value;
 
       const char* to_string() const;
     };
     typedef enumerated<types_opts> types;
 
     // choice methods
-    types       type() const { return types::old_associated_qos_flow_list_ulendmarkerexpected; }
+    types       type() const { return types::old_associated_qos_flow_list_ul_endmarkerexpected; }
     SRSASN_CODE pack(bit_ref& bref) const;
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    associated_qos_flow_list_l&       old_associated_qos_flow_list_ulendmarkerexpected() { return c; }
-    const associated_qos_flow_list_l& old_associated_qos_flow_list_ulendmarkerexpected() const { return c; }
+    associated_qos_flow_list_l&       old_associated_qos_flow_list_ul_endmarkerexpected() { return c; }
+    const associated_qos_flow_list_l& old_associated_qos_flow_list_ul_endmarkerexpected() const { return c; }
 
   private:
     associated_qos_flow_list_l c;
@@ -4338,9 +4338,9 @@ using xn_gtp_tlas_l = bounded_array<bounded_bitstring<1, 160, true, true>, 16>;
 
 // XnExtTLA-Item ::= SEQUENCE
 struct xn_ext_tla_item_s {
-  bool                                                ext               = false;
-  bool                                                ipsec_tla_present = false;
-  bounded_bitstring<1, 160, true, true>               ipsec_tla;
+  bool                                                ext                = false;
+  bool                                                ip_sec_tla_present = false;
+  bounded_bitstring<1, 160, true, true>               ip_sec_tla;
   xn_gtp_tlas_l                                       gtp_tlas;
   protocol_ext_container_l<xn_ext_tla_item_ext_ies_o> ie_exts;
   // ...
@@ -6173,8 +6173,8 @@ using ue_security_cap_ext_ies_container = protocol_ext_container_empty_l;
 struct ue_security_cap_s {
   bool                              ext             = false;
   bool                              ie_exts_present = false;
-  fixed_bitstring<16, true, true>   nrencryption_algorithms;
-  fixed_bitstring<16, true, true>   nrintegrity_protection_algorithms;
+  fixed_bitstring<16, true, true>   nr_encryption_algorithms;
+  fixed_bitstring<16, true, true>   nr_integrity_protection_algorithms;
   fixed_bitstring<16, true, true>   eutr_aencryption_algorithms;
   fixed_bitstring<16, true, true>   eutr_aintegrity_protection_algorithms;
   ue_security_cap_ext_ies_container ie_exts;
@@ -6652,7 +6652,7 @@ using lai_ext_ies_container = protocol_ext_container_empty_l;
 struct lai_s {
   bool                     ext             = false;
   bool                     ie_exts_present = false;
-  fixed_octstring<3, true> plm_nid;
+  fixed_octstring<3, true> plmn_id;
   fixed_octstring<2, true> lac;
   lai_ext_ies_container    ie_exts;
   // ...
@@ -7505,14 +7505,14 @@ using source_to_target_amf_info_reroute_ext_ies_container = protocol_ext_contain
 
 // SourceToTarget-AMFInformationReroute ::= SEQUENCE
 struct source_to_target_amf_info_reroute_s {
-  bool                                                ext                           = false;
-  bool                                                cfgured_nssai_present         = false;
-  bool                                                rejected_nssaiin_plmn_present = false;
-  bool                                                rejected_nssaiin_ta_present   = false;
-  bool                                                ie_exts_present               = false;
-  fixed_octstring<128, true>                          cfgured_nssai;
-  fixed_octstring<32, true>                           rejected_nssaiin_plmn;
-  fixed_octstring<32, true>                           rejected_nssaiin_ta;
+  bool                                                ext                            = false;
+  bool                                                cfg_nssai_present              = false;
+  bool                                                rejected_nssai_in_plmn_present = false;
+  bool                                                rejected_nssai_in_ta_present   = false;
+  bool                                                ie_exts_present                = false;
+  fixed_octstring<128, true>                          cfg_nssai;
+  fixed_octstring<32, true>                           rejected_nssai_in_plmn;
+  fixed_octstring<32, true>                           rejected_nssai_in_ta;
   source_to_target_amf_info_reroute_ext_ies_container ie_exts;
   // ...
 
@@ -7684,7 +7684,7 @@ struct slice_overload_item_s {
 using ue_associated_lc_ng_conn_item_ext_ies_o = protocol_ext_empty_o;
 
 // NGRAN-TNLAssociationToRemoveItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
-using ngran_tnlassoc_to_rem_item_ext_ies_o = protocol_ext_empty_o;
+using ngran_tnl_assoc_to_rem_item_ext_ies_o = protocol_ext_empty_o;
 
 // OverloadResponse ::= CHOICE
 struct overload_resp_c {
@@ -7966,15 +7966,15 @@ typedef enumerated<ue_presence_opts, true> ue_presence_e;
 // UEPresenceInAreaOfInterestItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using ue_presence_in_area_of_interest_item_ext_ies_o = protocol_ext_empty_o;
 
-using ngran_tnlassoc_to_rem_item_ext_ies_container = protocol_ext_container_empty_l;
+using ngran_tnl_assoc_to_rem_item_ext_ies_container = protocol_ext_container_empty_l;
 
 // NGRAN-TNLAssociationToRemoveItem ::= SEQUENCE
-struct ngran_tnlassoc_to_rem_item_s {
-  bool                                         tnl_assoc_transport_layer_address_amf_present = false;
-  bool                                         ie_exts_present                               = false;
-  cp_transport_layer_info_c                    tnl_assoc_transport_layer_address;
-  cp_transport_layer_info_c                    tnl_assoc_transport_layer_address_amf;
-  ngran_tnlassoc_to_rem_item_ext_ies_container ie_exts;
+struct ngran_tnl_assoc_to_rem_item_s {
+  bool                                          tnl_assoc_transport_layer_address_amf_present = false;
+  bool                                          ie_exts_present                               = false;
+  cp_transport_layer_info_c                     tnl_assoc_transport_layer_address;
+  cp_transport_layer_info_c                     tnl_assoc_transport_layer_address_amf;
+  ngran_tnl_assoc_to_rem_item_ext_ies_container ie_exts;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -8483,7 +8483,7 @@ struct ims_voice_support_ind_opts {
 typedef enumerated<ims_voice_support_ind_opts, true> ims_voice_support_ind_e;
 
 // NGRAN-TNLAssociationToRemoveList ::= SEQUENCE (SIZE (1..32)) OF NGRAN-TNLAssociationToRemoveItem
-using ngran_tnlassoc_to_rem_list_l = dyn_array<ngran_tnlassoc_to_rem_item_s>;
+using ngran_tnl_assoc_to_rem_list_l = dyn_array<ngran_tnl_assoc_to_rem_item_s>;
 
 // OverloadStartNSSAIList ::= SEQUENCE (SIZE (1..1024)) OF OverloadStartNSSAIItem
 using overload_start_nssai_list_l = dyn_array<overload_start_nssai_item_s>;
@@ -10504,7 +10504,7 @@ struct ran_cfg_upd_ies_o {
         supported_ta_list,
         default_paging_drx,
         global_ran_node_id,
-        ngran_tnlassoc_to_rem_list,
+        ngran_tnl_assoc_to_rem_list,
         nulltype
       } value;
 
@@ -10527,17 +10527,17 @@ struct ran_cfg_upd_ies_o {
     supported_ta_list_l&                        supported_ta_list();
     paging_drx_e&                               default_paging_drx();
     global_ran_node_id_c&                       global_ran_node_id();
-    ngran_tnlassoc_to_rem_list_l&               ngran_tnlassoc_to_rem_list();
+    ngran_tnl_assoc_to_rem_list_l&              ngran_tnl_assoc_to_rem_list();
     const printable_string<1, 150, true, true>& ran_node_name() const;
     const supported_ta_list_l&                  supported_ta_list() const;
     const paging_drx_e&                         default_paging_drx() const;
     const global_ran_node_id_c&                 global_ran_node_id() const;
-    const ngran_tnlassoc_to_rem_list_l&         ngran_tnlassoc_to_rem_list() const;
+    const ngran_tnl_assoc_to_rem_list_l&        ngran_tnl_assoc_to_rem_list() const;
 
   private:
     types type_;
     choice_buffer_t<global_ran_node_id_c,
-                    ngran_tnlassoc_to_rem_list_l,
+                    ngran_tnl_assoc_to_rem_list_l,
                     printable_string<1, 150, true, true>,
                     supported_ta_list_l>
         c;
@@ -12358,16 +12358,16 @@ struct ran_cfg_upd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                              ran_node_name_present              = false;
-  bool                                                              supported_ta_list_present          = false;
-  bool                                                              default_paging_drx_present         = false;
-  bool                                                              global_ran_node_id_present         = false;
-  bool                                                              ngran_tnlassoc_to_rem_list_present = false;
-  ie_field_s<printable_string<1, 150, true, true>>                  ran_node_name;
-  ie_field_s<dyn_seq_of<supported_ta_item_s, 1, 256, true>>         supported_ta_list;
-  ie_field_s<paging_drx_e>                                          default_paging_drx;
-  ie_field_s<global_ran_node_id_c>                                  global_ran_node_id;
-  ie_field_s<dyn_seq_of<ngran_tnlassoc_to_rem_item_s, 1, 32, true>> ngran_tnlassoc_to_rem_list;
+  bool                                                               ran_node_name_present               = false;
+  bool                                                               supported_ta_list_present           = false;
+  bool                                                               default_paging_drx_present          = false;
+  bool                                                               global_ran_node_id_present          = false;
+  bool                                                               ngran_tnl_assoc_to_rem_list_present = false;
+  ie_field_s<printable_string<1, 150, true, true>>                   ran_node_name;
+  ie_field_s<dyn_seq_of<supported_ta_item_s, 1, 256, true>>          supported_ta_list;
+  ie_field_s<paging_drx_e>                                           default_paging_drx;
+  ie_field_s<global_ran_node_id_c>                                   global_ran_node_id;
+  ie_field_s<dyn_seq_of<ngran_tnl_assoc_to_rem_item_s, 1, 32, true>> ngran_tnl_assoc_to_rem_list;
 
   // sequence methods
   ran_cfg_upd_ies_container();

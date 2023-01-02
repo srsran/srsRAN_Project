@@ -274,8 +274,8 @@ ngc_message generate_valid_initial_context_setup_request_message()
   ngc_message ngc_msg = generate_initial_context_setup_request_base();
 
   auto& init_context_setup_req = ngc_msg.pdu.init_msg().value.init_context_setup_request();
-  init_context_setup_req->ue_security_cap->nrencryption_algorithms.from_number(57344);
-  init_context_setup_req->ue_security_cap->nrintegrity_protection_algorithms.from_number(57344);
+  init_context_setup_req->ue_security_cap->nr_encryption_algorithms.from_number(57344);
+  init_context_setup_req->ue_security_cap->nr_integrity_protection_algorithms.from_number(57344);
   init_context_setup_req->ue_security_cap->eutr_aencryption_algorithms.from_number(57344);
   init_context_setup_req->ue_security_cap->eutr_aintegrity_protection_algorithms.from_number(57344);
 
@@ -291,8 +291,8 @@ ngc_message generate_invalid_initial_context_setup_request_message()
 
   // NIA0 is not allowed
   auto& init_context_setup_req = ngc_msg.pdu.init_msg().value.init_context_setup_request();
-  init_context_setup_req->ue_security_cap->nrencryption_algorithms.from_number(0);
-  init_context_setup_req->ue_security_cap->nrintegrity_protection_algorithms.from_number(0);
+  init_context_setup_req->ue_security_cap->nr_encryption_algorithms.from_number(0);
+  init_context_setup_req->ue_security_cap->nr_integrity_protection_algorithms.from_number(0);
   init_context_setup_req->ue_security_cap->eutr_aencryption_algorithms.from_number(0);
   init_context_setup_req->ue_security_cap->eutr_aintegrity_protection_algorithms.from_number(0);
 

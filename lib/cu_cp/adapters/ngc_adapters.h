@@ -86,8 +86,8 @@ public:
 
     rrc_init_security_context sec_ctxt;
     copy_asn1_key(sec_ctxt.k, key);
-    fill_supported_algorithms(sec_ctxt.supported_int_algos, caps.nrintegrity_protection_algorithms);
-    fill_supported_algorithms(sec_ctxt.supported_enc_algos, caps.nrencryption_algorithms);
+    fill_supported_algorithms(sec_ctxt.supported_int_algos, caps.nr_integrity_protection_algorithms);
+    fill_supported_algorithms(sec_ctxt.supported_enc_algos, caps.nr_encryption_algorithms);
     logger.debug(key.data(), 32, "K_gnb");
     logger.debug("Supported integrity algorithms: {}", sec_ctxt.supported_int_algos);
     logger.debug("Supported ciphering algorithms: {}", sec_ctxt.supported_enc_algos);
