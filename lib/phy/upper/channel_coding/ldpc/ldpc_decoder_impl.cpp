@@ -69,6 +69,14 @@ optional<unsigned> ldpc_decoder_impl::decode(span<uint8_t>                    ou
                 input.size(),
                 min_input_length);
 
+  // Find the last soft bit in the buffer and trim the output.
+  unsigned input_size = input.size();
+  for (; input_size != 1; --input_size) {
+    if (input[input_size - 1] != 0) {
+      break;
+    }
+  }
+
   load_soft_bits(input);
 
   // The minimum codeblock length is message_length + four times the lifting size
@@ -76,7 +84,7 @@ optional<unsigned> ldpc_decoder_impl::decode(span<uint8_t>                    ou
   uint16_t min_codeblock_length = message_length + 4 * lifting_size;
   // The decoder works with at least min_codeblock_length bits. Recall that the encoder also shortens
   // the codeblock by 2 * lifting size before returning it as output.
-  codeblock_length = std::max(input.size() + 2UL * lifting_size, static_cast<size_t>(min_codeblock_length));
+  codeblock_length = std::max(input_size + 2UL * lifting_size, static_cast<size_t>(min_codeblock_length));
   // The decoder works with a codeblock length that is a multiple of the lifting size.
   if (codeblock_length % lifting_size != 0) {
     codeblock_length = (codeblock_length / lifting_size + 1) * lifting_size;

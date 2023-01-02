@@ -111,6 +111,9 @@ private:
   /// (of max length max_BG_K + 4) and an extra variable node in the extension region. Then, the graph is lifted.
   std::array<mm256::avx2_array<MAX_CHECK_CONNECTION_SIZE_AVX2>, ldpc::MAX_BG_M> check_to_var = {};
 
+  /// Set to true if \c check_to_var has not been initialised.
+  std::array<bool, ldpc::MAX_BG_M> is_check_to_var_initialised;
+
   /// \brief Buffer to store the current value of the variable-to-check messages.
   ///
   /// Implementing a layered-based algorithm, we only need to store the variable-to-check messages corresponding

@@ -46,10 +46,7 @@ void ldpc_decoder_avx2::select_strategy()
 void ldpc_decoder_avx2::load_soft_bits(span<const log_likelihood_ratio> llrs)
 {
   // Erase registers.
-  unsigned max_nof_connections = (bg_K + 5) * node_size_avx2 * AVX2_SIZE_BYTE;
-  for (auto& tmp : check_to_var) {
-    std::memset(tmp.data_at(0), 0, max_nof_connections);
-  }
+  std::fill(is_check_to_var_initialised.begin(), is_check_to_var_initialised.end(), false);
 
   // Compute the number of data nodes occupied by the llrs.
   unsigned nof_useful_nodes = divide_ceil(llrs.size(), lifting_size) + 2;
@@ -76,17 +73,29 @@ void ldpc_decoder_avx2::update_variable_to_check_messages(unsigned check_node)
 {
   unsigned bg_N_hr_lifted = bg_N_high_rate * node_size_avx2;
   // First, update the messages corresponding to the high-rate region. All layers contribute.
-  compute_var_to_check_msgs_hr(mm256::avx2_span(var_to_check, 0, bg_N_hr_lifted),
-                               mm256::avx2_span(soft_bits, 0, bg_N_hr_lifted),
-                               mm256::avx2_span(check_to_var[check_node], 0, bg_N_hr_lifted));
+  if (is_check_to_var_initialised[check_node]) {
+    compute_var_to_check_msgs_hr(mm256::avx2_span(var_to_check, 0, bg_N_hr_lifted),
+                                 mm256::avx2_span(soft_bits, 0, bg_N_hr_lifted),
+                                 mm256::avx2_span(check_to_var[check_node], 0, bg_N_hr_lifted));
+  } else {
+    // If check_to_var is uninitialized, it is equivalent to copy soft_bits to var_to_check.
+    std::memcpy(var_to_check.data_at(0), soft_bits.data_at(0), bg_N_hr_lifted * AVX2_SIZE_BYTE);
+  }
 
   // Next, update the messages corresponding to the extension region, if applicable.
   // From layer 4 onwards, each layer is connected to only one consecutive block of lifting_size bits.
   if (check_node >= 4) {
-    compute_var_to_check_msgs_ext(
-        mm256::avx2_span(var_to_check, bg_N_hr_lifted, node_size_avx2),
-        mm256::avx2_span(soft_bits, bg_N_hr_lifted + (check_node - 4) * node_size_avx2, node_size_avx2),
-        mm256::avx2_span(check_to_var[check_node], bg_N_hr_lifted, node_size_avx2));
+    if (is_check_to_var_initialised[check_node]) {
+      compute_var_to_check_msgs_ext(
+          mm256::avx2_span(var_to_check, bg_N_hr_lifted, node_size_avx2),
+          mm256::avx2_span(soft_bits, bg_N_hr_lifted + (check_node - 4) * node_size_avx2, node_size_avx2),
+          mm256::avx2_span(check_to_var[check_node], bg_N_hr_lifted, node_size_avx2));
+    } else {
+      // If check_to_var is uninitialized, it is equivalent to copy soft_bits to var_to_check.
+      std::memcpy(var_to_check.data_at(bg_N_hr_lifted),
+                  soft_bits.data_at(bg_N_hr_lifted + (check_node - 4) * node_size_avx2),
+                  node_size_avx2 * AVX2_SIZE_BYTE);
+    }
   }
 }
 
@@ -127,18 +136,20 @@ void ldpc_decoder_avx2::compute_var_to_check_msgs(mm256::avx2_span        v2c,
 void ldpc_decoder_avx2::update_check_to_variable_messages(unsigned check_node)
 {
   // Buffer to store the minimum (in absolute value) variable-to-check message.
-  mm256::avx2_array<MAX_NODE_SIZE_AVX2> min_var_to_check = {};
+  mm256::avx2_array<MAX_NODE_SIZE_AVX2> min_var_to_check;
   // Buffer to store the second minimum (in absolute value) variable-to-check message for each base graph check node.
-  mm256::avx2_array<MAX_NODE_SIZE_AVX2> second_min_var_to_check = {};
+  mm256::avx2_array<MAX_NODE_SIZE_AVX2> second_min_var_to_check;
   // Buffer to store the index of the minimum-valued variable-to-check message.
-  mm256::avx2_array<MAX_NODE_SIZE_AVX2> min_var_to_check_index = {};
+  mm256::avx2_array<MAX_NODE_SIZE_AVX2> min_var_to_check_index;
   // Buffer to store the sign product of all variable-to-check messages.
-  mm256::avx2_array<MAX_NODE_SIZE_AVX2> sign_prod_var_to_check = {};
+  mm256::avx2_array<MAX_NODE_SIZE_AVX2> sign_prod_var_to_check;
 
   // Reset temporal buffers.
   unsigned node_size_byte = node_size_avx2 * AVX2_SIZE_BYTE;
   std::memset(min_var_to_check.data_at(0), LLR_MAX.to_value_type(), node_size_byte);
   std::memset(second_min_var_to_check.data_at(0), LLR_MAX.to_value_type(), node_size_byte);
+  std::memset(min_var_to_check_index.data_at(0), 0, node_size_byte);
+  std::memset(sign_prod_var_to_check.data_at(0), 0, node_size_byte);
 
   // Retrieve list of variable nodes connected to this check node.
   const BG_adjacency_row_t& current_var_indices = current_graph->get_adjacency_row(check_node);
@@ -169,7 +180,7 @@ void ldpc_decoder_avx2::update_check_to_variable_messages(unsigned check_node)
   for (const auto* this_var_index_itr = current_var_indices.cbegin();
        (this_var_index_itr != last_var_index_itr) && (*this_var_index_itr != NO_EDGE);
        ++this_var_index_itr, ++i_loop) {
-    mm256::avx2_array<MAX_NODE_SIZE_AVX2> this_check_to_var = {};
+    mm256::avx2_array<MAX_NODE_SIZE_AVX2> this_check_to_var;
 
     const mm256::avx2_span this_rotated_node(rotated_var_to_check, i_loop * node_size_avx2, node_size_avx2);
 
@@ -190,6 +201,7 @@ void ldpc_decoder_avx2::update_check_to_variable_messages(unsigned check_node)
                      shift,
                      lifting_size);
   }
+  is_check_to_var_initialised[check_node] = true;
 }
 
 void ldpc_decoder_avx2::update_soft_bits(unsigned check_node)
