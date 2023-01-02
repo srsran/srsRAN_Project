@@ -131,7 +131,7 @@ class mac_dl_sch_assembler_tester : public testing::Test
 {
 public:
   mac_dl_sch_assembler_tester() :
-    pdu_pool(dl_sch_pdu::MAX_PDU_LENGTH * MAX_DL_PDUS_PER_SLOT, 1),
+    pdu_pool(dl_sch_pdu::MAX_PDU_LENGTH * MAX_DL_PDUS_PER_SLOT, 1, 10240),
     ue_mng(rnti_table),
     dl_bearers(2),
     dl_sch_enc(ue_mng, pdu_pool)

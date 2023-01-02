@@ -42,23 +42,30 @@ private:
 /// that it deems to be too old. This extra check gives this pool the ability to detect potential buffer overflows.
 class ticking_ring_buffer_pool
 {
-  struct overflow_checker {
-    constexpr static size_t invalid_tick_index = std::numeric_limits<unsigned>::max();
+public:
+  using tic_t = unsigned;
 
+private:
+  struct overflow_checker {
     std::vector<unsigned> n_alloc_per_tick;
     size_t                pool_size;
     size_t                max_bytes_per_tick;
-    size_t                n_alloc         = 0;
-    unsigned              tick_counter    = 0;
-    unsigned              last_tick_index = 0;
+    tic_t                 tic_wraparound;
 
-    explicit overflow_checker(size_t nof_bytes_per_tick, size_t ring_of_slots_size) :
+    bool     first_tick      = true;
+    size_t   n_alloc         = 0;
+    unsigned ring_index      = 0;
+    tic_t    last_tick_index = 0;
+
+    explicit overflow_checker(size_t nof_bytes_per_tick, size_t ring_of_slots_size, tic_t tic_wraparound_) :
       n_alloc_per_tick(ring_of_slots_size, 0),
       pool_size(nof_bytes_per_tick * ring_of_slots_size),
-      max_bytes_per_tick(nof_bytes_per_tick)
+      max_bytes_per_tick(nof_bytes_per_tick),
+      tic_wraparound(tic_wraparound_)
     {
     }
 
+    /// \brief Register an allocation of size \sz bytes, in the overflow detector.
     void register_alloc(size_t sz) noexcept
     {
       if (n_alloc + sz > pool_size) {
@@ -68,34 +75,40 @@ class ticking_ring_buffer_pool
         report_fatal_error(
             "POOL: Trying to allocate too many bytes in one single tick ({} > {})", sz, max_bytes_per_tick);
       }
-      n_alloc_per_tick[tick_counter] += sz;
+      n_alloc_per_tick[ring_index] += sz;
       n_alloc += sz;
     }
 
-    void tick(unsigned tic_index) noexcept
+    void tick(tic_t tic_index) noexcept
     {
-      if (srsgnb_unlikely(last_tick_index == invalid_tick_index)) {
+      srsgnb_assert(tic_index != last_tick_index, "This function cannot be called multiple times for the same tick");
+      if (srsgnb_unlikely(first_tick)) {
         // first tick call.
         last_tick_index = tic_index - 1;
+        first_tick      = false;
+      } else if (srsgnb_unlikely(last_tick_index > tic_index)) {
+        // wrap-around case.
+        last_tick_index = -(tic_wraparound - last_tick_index);
       }
-      tick_counter = (tick_counter + 1) % n_alloc_per_tick.size();
       for (; last_tick_index != tic_index; ++last_tick_index) {
-        n_alloc -= n_alloc_per_tick[tick_counter];
-        n_alloc_per_tick[tick_counter] = 0;
+        ring_index = (ring_index + 1) % n_alloc_per_tick.size();
+        n_alloc -= n_alloc_per_tick[ring_index];
+        n_alloc_per_tick[ring_index] = 0;
       }
     }
   };
 
   struct no_overflow_checker {
-    explicit no_overflow_checker(size_t nof_bytes_per_tick, size_t ring_of_slots_size) {}
+    explicit no_overflow_checker(size_t nof_bytes_per_tick, size_t ring_of_slots_size, tic_t /**/) {}
 
     void register_alloc(size_t sz) noexcept {}
     void tick(unsigned tic_index) noexcept {}
   };
 
 public:
-  explicit ticking_ring_buffer_pool(size_t nof_bytes_per_tick, size_t buffer_duration_in_ticks) :
-    pool(nof_bytes_per_tick * buffer_duration_in_ticks), overflow_detector(nof_bytes_per_tick, buffer_duration_in_ticks)
+  explicit ticking_ring_buffer_pool(size_t nof_bytes_per_tick, size_t buffer_duration_in_ticks, tic_t tic_wraparound_) :
+    pool(nof_bytes_per_tick * buffer_duration_in_ticks),
+    overflow_detector(nof_bytes_per_tick, buffer_duration_in_ticks, tic_wraparound_)
   {
   }
 
@@ -108,10 +121,10 @@ public:
     return pool.allocate_buffer(sz);
   }
 
-  /// Increments tick counter and clears old buffers.
-  void tick(unsigned tic_index) noexcept { overflow_detector.tick(tic_index); }
+  /// \brief Increments tick counter and clears old buffers.
+  void tick(tic_t tic_index) noexcept { overflow_detector.tick(tic_index); }
 
-  /// Size of the ring buffer pool.
+  /// \brief Size of the ring buffer pool.
   size_t size() const { return pool.size(); }
 
 private:

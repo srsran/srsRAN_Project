@@ -130,7 +130,7 @@ void test_rar_assembler_multiple_random_ul_grants()
   test_delimit_logger     test_delim{"MAC assembler for multiple UL grants"};
 
   rar_information          rar_info = make_random_rar_info(nof_ul_grants_per_rar(gen));
-  ticking_ring_buffer_pool pdu_pool(MAX_DL_PDUS_PER_SLOT * MAX_GRANTS_PER_RAR * MAX_RAR_GRANT_SIZE, 1);
+  ticking_ring_buffer_pool pdu_pool(MAX_DL_PDUS_PER_SLOT * MAX_GRANTS_PER_RAR * MAX_RAR_GRANT_SIZE, 1, 10240);
 
   rar_pdu_assembler   assembler(pdu_pool);
   span<const uint8_t> bytes = assembler.encode_rar_pdu(rar_info);
@@ -147,7 +147,7 @@ void test_rar_assembler_maintains_old_results()
   test_delimit_logger test_delim{"MAC assembler maintains previous results"};
 
   ticking_ring_buffer_pool pdu_pool(MAX_DL_PDUS_PER_SLOT * MAX_GRANTS_PER_RAR * MAX_RAR_GRANT_SIZE,
-                                    NOF_SUBFRAMES_PER_FRAME);
+                                    NOF_SUBFRAMES_PER_FRAME, 10240);
   rar_pdu_assembler        assembler(pdu_pool);
 
   // The RAR assembler has to internally store previous slot results. This variable defines a reasonable slot duration
