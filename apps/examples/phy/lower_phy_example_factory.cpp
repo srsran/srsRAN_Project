@@ -21,6 +21,9 @@ std::unique_ptr<lower_phy> srsgnb::create_lower_phy(lower_phy_configuration& con
   if (dft_factory == nullptr) {
     dft_factory = create_dft_processor_factory_fftx();
   }
+  if (dft_factory == nullptr) {
+    dft_factory = create_dft_processor_factory_generic();
+  }
   report_fatal_error_if_not(dft_factory, "Failed to create DFT factory.");
 
   // Create OFDM modulator factory.

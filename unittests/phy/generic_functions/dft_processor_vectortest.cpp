@@ -66,6 +66,10 @@ protected:
       dft_factory = create_dft_processor_factory_generic();
     } else if (dft_factory_str == "fftx") {
       dft_factory = create_dft_processor_factory_fftx();
+      if (dft_factory == nullptr) {
+        // 'fftx' tests are silently skipped if FFTX is disabled.
+        GTEST_SKIP();
+      }
     } else if (dft_factory_str == "fftw") {
       dft_factory = create_dft_processor_factory_fftw();
       if (dft_factory == nullptr) {
