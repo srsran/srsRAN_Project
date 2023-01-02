@@ -118,17 +118,17 @@ asn1::rrc_nr::search_space_s srsgnb::srs_du::make_asn1_rrc_search_space(const se
   ss.search_space_type_present = true;
   if (cfg.type == search_space_configuration::type_t::common) {
     ss.search_space_type.set_common();
-    ss.search_space_type.common().dci_format0_minus0_and_format1_minus0_present = cfg.common.f0_0_and_f1_0;
-    ss.search_space_type.common().dci_format2_minus0_present                    = cfg.common.f2_0;
-    ss.search_space_type.common().dci_format2_minus1_present                    = cfg.common.f2_1;
-    ss.search_space_type.common().dci_format2_minus2_present                    = cfg.common.f2_2;
-    ss.search_space_type.common().dci_format2_minus3_present                    = cfg.common.f2_3;
+    ss.search_space_type.common().dci_format0_0_and_format1_0_present = cfg.common.f0_0_and_f1_0;
+    ss.search_space_type.common().dci_format2_0_present               = cfg.common.f2_0;
+    ss.search_space_type.common().dci_format2_1_present               = cfg.common.f2_1;
+    ss.search_space_type.common().dci_format2_2_present               = cfg.common.f2_2;
+    ss.search_space_type.common().dci_format2_3_present               = cfg.common.f2_3;
   } else {
     ss.search_space_type.set_ue_specific();
     ss.search_space_type.ue_specific().dci_formats.value =
         cfg.ue_specific == srsgnb::search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0
-            ? search_space_s::search_space_type_c_::ue_specific_s_::dci_formats_opts::formats0_minus0_and_minus1_minus0
-            : search_space_s::search_space_type_c_::ue_specific_s_::dci_formats_opts::formats0_minus1_and_minus1_minus1;
+            ? search_space_s::search_space_type_c_::ue_specific_s_::dci_formats_opts::formats0_neg0_and_neg1_neg0
+            : search_space_s::search_space_type_c_::ue_specific_s_::dci_formats_opts::formats0_neg1_and_neg1_neg1;
   }
   return ss;
 }
@@ -395,7 +395,7 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
       out.res_alloc = pdsch_cfg_s::res_alloc_opts::res_alloc_type1;
       break;
     case pdsch_config::resource_allocation::dynamic_switch:
-      out.res_alloc = pdsch_cfg_s::res_alloc_opts::dynamic_switch;
+      out.res_alloc = pdsch_cfg_s::res_alloc_opts::dyn_switch;
       break;
     default:
       srsgnb_assertion_failure("Invalid resource allocation type={}", dest.res_alloc);
@@ -444,25 +444,24 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
     }
   } else {
     // Dynamic bundling.
-    auto& dy_bundling                    = out.prb_bundling_type.set_dynamic_bundling();
+    auto& dy_bundling                    = out.prb_bundling_type.set_dyn_bundling();
     dy_bundling.bundle_size_set1_present = true;
     const auto& bdlng                    = variant_get<prb_bundling::dynamic_bundling>(dest.prb_bndlg.bundling);
     switch (bdlng.sz_set1.value()) {
       case prb_bundling::dynamic_bundling::bundling_size_set1::n4:
-        dy_bundling.bundle_size_set1 =
-            pdsch_cfg_s::prb_bundling_type_c_::dynamic_bundling_s_::bundle_size_set1_opts::n4;
+        dy_bundling.bundle_size_set1 = pdsch_cfg_s::prb_bundling_type_c_::dyn_bundling_s_::bundle_size_set1_opts::n4;
         break;
       case prb_bundling::dynamic_bundling::bundling_size_set1::wideband:
         dy_bundling.bundle_size_set1 =
-            pdsch_cfg_s::prb_bundling_type_c_::dynamic_bundling_s_::bundle_size_set1_opts::wideband;
+            pdsch_cfg_s::prb_bundling_type_c_::dyn_bundling_s_::bundle_size_set1_opts::wideband;
         break;
       case prb_bundling::dynamic_bundling::bundling_size_set1::n2_wideband:
         dy_bundling.bundle_size_set1 =
-            pdsch_cfg_s::prb_bundling_type_c_::dynamic_bundling_s_::bundle_size_set1_opts::n2_wideband;
+            pdsch_cfg_s::prb_bundling_type_c_::dyn_bundling_s_::bundle_size_set1_opts::n2_wideband;
         break;
       case prb_bundling::dynamic_bundling::bundling_size_set1::n4_wideband:
         dy_bundling.bundle_size_set1 =
-            pdsch_cfg_s::prb_bundling_type_c_::dynamic_bundling_s_::bundle_size_set1_opts::n4_wideband;
+            pdsch_cfg_s::prb_bundling_type_c_::dyn_bundling_s_::bundle_size_set1_opts::n4_wideband;
         break;
       default:
         srsgnb_assertion_failure("Invalid dynamic PRB bundling set 1 size={}", bdlng.sz_set1.value());
@@ -470,12 +469,11 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
     dy_bundling.bundle_size_set2_present = true;
     switch (bdlng.sz_set2.value()) {
       case prb_bundling::dynamic_bundling::bundling_size_set2::n4:
-        dy_bundling.bundle_size_set2 =
-            pdsch_cfg_s::prb_bundling_type_c_::dynamic_bundling_s_::bundle_size_set2_opts::n4;
+        dy_bundling.bundle_size_set2 = pdsch_cfg_s::prb_bundling_type_c_::dyn_bundling_s_::bundle_size_set2_opts::n4;
         break;
       case prb_bundling::dynamic_bundling::bundling_size_set2::wideband:
         dy_bundling.bundle_size_set2 =
-            pdsch_cfg_s::prb_bundling_type_c_::dynamic_bundling_s_::bundle_size_set2_opts::wideband;
+            pdsch_cfg_s::prb_bundling_type_c_::dyn_bundling_s_::bundle_size_set2_opts::wideband;
         break;
       default:
         srsgnb_assertion_failure("Invalid dynamic PRB bundling set 2 size={}", bdlng.sz_set2.value());
@@ -1163,7 +1161,7 @@ void fill_uci_on_pusch(asn1::rrc_nr::uci_on_pusch_s& uci_asn1, const uci_on_pusc
       fill_uci_beta_offset(out_semi_static, in_semi_static);
     } else {
       auto& input_dynamic = variant_get<uci_on_pusch::beta_offsets_dynamic>(uci_in.beta_offsets_cfg.value());
-      auto& out_dynamic   = uci_asn1.beta_offsets.set_dynamic_type();
+      auto& out_dynamic   = uci_asn1.beta_offsets.set_dyn();
 
       srsgnb_assert(input_dynamic.size() == out_dynamic.max_size(), "Mismatch between input and output vectors");
 
@@ -1238,7 +1236,7 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
       out.res_alloc = pusch_cfg_s::res_alloc_opts::res_alloc_type1;
       break;
     case pusch_config::resource_allocation::dynamic_switch:
-      out.res_alloc = pusch_cfg_s::res_alloc_opts::dynamic_switch;
+      out.res_alloc = pusch_cfg_s::res_alloc_opts::dyn_switch;
       break;
     default:
       srsgnb_assertion_failure("Invalid PUSCH Resource Allocation={}", dest.res_alloc);
@@ -2053,7 +2051,7 @@ void calculate_mac_cell_group_config_diff(asn1::rrc_nr::mac_cell_group_cfg_s& ou
     out.phr_cfg.set_release();
   }
 
-  out.skip_ul_tx_dynamic = dest.skip_uplink_tx_dynamic;
+  out.skip_ul_tx_dyn = dest.skip_uplink_tx_dynamic;
 }
 
 void srsgnb::srs_du::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_cfg_s& out,

@@ -130,11 +130,11 @@ struct ca_params_eutra_s {
   bool                     ext                                              = false;
   bool                     multiple_timing_advance_present                  = false;
   bool                     simul_rx_tx_present                              = false;
-  bool                     supported_naics_minus2_crs_ap_present            = false;
+  bool                     supported_naics_2_crs_ap_present                 = false;
   bool                     add_rx_tx_performance_req_present                = false;
   bool                     ue_ca_pwr_class_n_present                        = false;
   bool                     supported_bw_combination_set_eutra_v1530_present = false;
-  bounded_bitstring<1, 8>  supported_naics_minus2_crs_ap;
+  bounded_bitstring<1, 8>  supported_naics_2_crs_ap;
   bounded_bitstring<1, 32> supported_bw_combination_set_eutra_v1530;
   // ...
 
@@ -200,7 +200,7 @@ struct mrdc_params_s {
   // member variables
   bool                          ext                                 = false;
   bool                          single_ul_tx_present                = false;
-  bool                          dynamic_pwr_sharing_endc_present    = false;
+  bool                          dyn_pwr_sharing_endc_present        = false;
   bool                          tdm_pattern_present                 = false;
   bool                          ul_sharing_eutra_nr_present         = false;
   bool                          ul_switching_time_eutra_nr_present  = false;
@@ -638,10 +638,10 @@ struct beam_management_ssb_csi_rs_s {
 
 // CSI-RS-ForTracking ::= SEQUENCE
 struct csi_rs_for_tracking_s {
-  uint8_t  max_burst_len               = 1;
-  uint8_t  max_simul_res_sets_per_cc   = 1;
-  uint8_t  max_cfgured_res_sets_per_cc = 1;
-  uint16_t max_cfgured_res_sets_all_cc = 1;
+  uint8_t  max_burst_len             = 1;
+  uint8_t  max_simul_res_sets_per_cc = 1;
+  uint8_t  max_cfg_res_sets_per_cc   = 1;
+  uint16_t max_cfg_res_sets_all_cc   = 1;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -842,10 +842,10 @@ struct dummy_g_s {
 
 // DummyH ::= SEQUENCE
 struct dummy_h_s {
-  uint8_t burst_len                   = 1;
-  uint8_t max_simul_res_sets_per_cc   = 1;
-  uint8_t max_cfgured_res_sets_per_cc = 1;
-  uint8_t max_cfgured_res_sets_all_cc = 1;
+  uint8_t burst_len                 = 1;
+  uint8_t max_simul_res_sets_per_cc = 1;
+  uint8_t max_cfg_res_sets_per_cc   = 1;
+  uint8_t max_cfg_res_sets_all_cc   = 1;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -888,14 +888,14 @@ struct ptrs_density_recommendation_ul_s {
 
 // SpatialRelations ::= SEQUENCE
 struct spatial_relations_s {
-  struct max_num_cfgured_spatial_relations_opts {
+  struct max_num_cfg_spatial_relations_opts {
     enum options { n4, n8, n16, n32, n64, n96, nulltype } value;
     typedef uint8_t number_type;
 
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<max_num_cfgured_spatial_relations_opts> max_num_cfgured_spatial_relations_e_;
+  typedef enumerated<max_num_cfg_spatial_relations_opts> max_num_cfg_spatial_relations_e_;
   struct max_num_active_spatial_relations_opts {
     enum options { n1, n2, n4, n8, n14, nulltype } value;
     typedef uint8_t number_type;
@@ -914,10 +914,10 @@ struct spatial_relations_s {
   typedef enumerated<max_num_dl_rs_qcl_type_d_opts> max_num_dl_rs_qcl_type_d_e_;
 
   // member variables
-  bool                                 add_active_spatial_relation_pucch_present = false;
-  max_num_cfgured_spatial_relations_e_ max_num_cfgured_spatial_relations;
-  max_num_active_spatial_relations_e_  max_num_active_spatial_relations;
-  max_num_dl_rs_qcl_type_d_e_          max_num_dl_rs_qcl_type_d;
+  bool                                add_active_spatial_relation_pucch_present = false;
+  max_num_cfg_spatial_relations_e_    max_num_cfg_spatial_relations;
+  max_num_active_spatial_relations_e_ max_num_active_spatial_relations;
+  max_num_dl_rs_qcl_type_d_e_         max_num_dl_rs_qcl_type_d;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -928,14 +928,14 @@ struct spatial_relations_s {
 // MIMO-ParametersPerBand ::= SEQUENCE
 struct mimo_params_per_band_s {
   struct tci_state_pdsch_s_ {
-    struct max_num_cfgured_tcistates_per_cc_opts {
+    struct max_num_cfg_tci_states_per_cc_opts {
       enum options { n4, n8, n16, n32, n64, n128, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<max_num_cfgured_tcistates_per_cc_opts> max_num_cfgured_tcistates_per_cc_e_;
+    typedef enumerated<max_num_cfg_tci_states_per_cc_opts> max_num_cfg_tci_states_per_cc_e_;
     struct max_num_active_tci_per_bwp_opts {
       enum options { n1, n2, n4, n8, nulltype } value;
       typedef uint8_t number_type;
@@ -946,10 +946,10 @@ struct mimo_params_per_band_s {
     typedef enumerated<max_num_active_tci_per_bwp_opts> max_num_active_tci_per_bwp_e_;
 
     // member variables
-    bool                                max_num_cfgured_tcistates_per_cc_present = false;
-    bool                                max_num_active_tci_per_bwp_present       = false;
-    max_num_cfgured_tcistates_per_cc_e_ max_num_cfgured_tcistates_per_cc;
-    max_num_active_tci_per_bwp_e_       max_num_active_tci_per_bwp;
+    bool                             max_num_cfg_tci_states_per_cc_present = false;
+    bool                             max_num_active_tci_per_bwp_present    = false;
+    max_num_cfg_tci_states_per_cc_e_ max_num_cfg_tci_states_per_cc;
+    max_num_active_tci_per_bwp_e_    max_num_active_tci_per_bwp;
   };
   struct pusch_trans_coherence_opts {
     enum options { non_coherent, partial_coherent, full_coherent, nulltype } value;
@@ -958,58 +958,58 @@ struct mimo_params_per_band_s {
   };
   typedef enumerated<pusch_trans_coherence_opts> pusch_trans_coherence_e_;
   struct max_num_rx_tx_beam_switch_dl_s_ {
-    struct scs_minus15k_hz_opts {
+    struct scs_15k_hz_opts {
       enum options { n4, n7, n14, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus15k_hz_opts> scs_minus15k_hz_e_;
-    struct scs_minus30k_hz_opts {
+    typedef enumerated<scs_15k_hz_opts> scs_15k_hz_e_;
+    struct scs_30k_hz_opts {
       enum options { n4, n7, n14, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus30k_hz_opts> scs_minus30k_hz_e_;
-    struct scs_minus60k_hz_opts {
+    typedef enumerated<scs_30k_hz_opts> scs_30k_hz_e_;
+    struct scs_60k_hz_opts {
       enum options { n4, n7, n14, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus60k_hz_opts> scs_minus60k_hz_e_;
-    struct scs_minus120k_hz_opts {
+    typedef enumerated<scs_60k_hz_opts> scs_60k_hz_e_;
+    struct scs_120k_hz_opts {
       enum options { n4, n7, n14, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus120k_hz_opts> scs_minus120k_hz_e_;
-    struct scs_minus240k_hz_opts {
+    typedef enumerated<scs_120k_hz_opts> scs_120k_hz_e_;
+    struct scs_240k_hz_opts {
       enum options { n4, n7, n14, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus240k_hz_opts> scs_minus240k_hz_e_;
+    typedef enumerated<scs_240k_hz_opts> scs_240k_hz_e_;
 
     // member variables
-    bool                scs_minus15k_hz_present  = false;
-    bool                scs_minus30k_hz_present  = false;
-    bool                scs_minus60k_hz_present  = false;
-    bool                scs_minus120k_hz_present = false;
-    bool                scs_minus240k_hz_present = false;
-    scs_minus15k_hz_e_  scs_minus15k_hz;
-    scs_minus30k_hz_e_  scs_minus30k_hz;
-    scs_minus60k_hz_e_  scs_minus60k_hz;
-    scs_minus120k_hz_e_ scs_minus120k_hz;
-    scs_minus240k_hz_e_ scs_minus240k_hz;
+    bool           scs_15k_hz_present  = false;
+    bool           scs_30k_hz_present  = false;
+    bool           scs_60k_hz_present  = false;
+    bool           scs_120k_hz_present = false;
+    bool           scs_240k_hz_present = false;
+    scs_15k_hz_e_  scs_15k_hz;
+    scs_30k_hz_e_  scs_30k_hz;
+    scs_60k_hz_e_  scs_60k_hz;
+    scs_120k_hz_e_ scs_120k_hz;
+    scs_240k_hz_e_ scs_240k_hz;
   };
   struct max_num_non_group_beam_report_opts {
     enum options { n1, n2, n4, nulltype } value;
@@ -1034,92 +1034,92 @@ struct mimo_params_per_band_s {
     uint8_t                       max_num_srs_res_set = 1;
   };
   struct beam_report_timing_s_ {
-    struct scs_minus15k_hz_opts {
+    struct scs_15k_hz_opts {
       enum options { sym2, sym4, sym8, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus15k_hz_opts> scs_minus15k_hz_e_;
-    struct scs_minus30k_hz_opts {
+    typedef enumerated<scs_15k_hz_opts> scs_15k_hz_e_;
+    struct scs_30k_hz_opts {
       enum options { sym4, sym8, sym14, sym28, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus30k_hz_opts> scs_minus30k_hz_e_;
-    struct scs_minus60k_hz_opts {
+    typedef enumerated<scs_30k_hz_opts> scs_30k_hz_e_;
+    struct scs_60k_hz_opts {
       enum options { sym8, sym14, sym28, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus60k_hz_opts> scs_minus60k_hz_e_;
-    struct scs_minus120k_hz_opts {
+    typedef enumerated<scs_60k_hz_opts> scs_60k_hz_e_;
+    struct scs_120k_hz_opts {
       enum options { sym14, sym28, sym56, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus120k_hz_opts> scs_minus120k_hz_e_;
+    typedef enumerated<scs_120k_hz_opts> scs_120k_hz_e_;
 
     // member variables
-    bool                scs_minus15k_hz_present  = false;
-    bool                scs_minus30k_hz_present  = false;
-    bool                scs_minus60k_hz_present  = false;
-    bool                scs_minus120k_hz_present = false;
-    scs_minus15k_hz_e_  scs_minus15k_hz;
-    scs_minus30k_hz_e_  scs_minus30k_hz;
-    scs_minus60k_hz_e_  scs_minus60k_hz;
-    scs_minus120k_hz_e_ scs_minus120k_hz;
+    bool           scs_15k_hz_present  = false;
+    bool           scs_30k_hz_present  = false;
+    bool           scs_60k_hz_present  = false;
+    bool           scs_120k_hz_present = false;
+    scs_15k_hz_e_  scs_15k_hz;
+    scs_30k_hz_e_  scs_30k_hz;
+    scs_60k_hz_e_  scs_60k_hz;
+    scs_120k_hz_e_ scs_120k_hz;
   };
   struct ptrs_density_recommendation_set_dl_s_ {
-    bool                             scs_minus15k_hz_present  = false;
-    bool                             scs_minus30k_hz_present  = false;
-    bool                             scs_minus60k_hz_present  = false;
-    bool                             scs_minus120k_hz_present = false;
-    ptrs_density_recommendation_dl_s scs_minus15k_hz;
-    ptrs_density_recommendation_dl_s scs_minus30k_hz;
-    ptrs_density_recommendation_dl_s scs_minus60k_hz;
-    ptrs_density_recommendation_dl_s scs_minus120k_hz;
+    bool                             scs_15k_hz_present  = false;
+    bool                             scs_30k_hz_present  = false;
+    bool                             scs_60k_hz_present  = false;
+    bool                             scs_120k_hz_present = false;
+    ptrs_density_recommendation_dl_s scs_15k_hz;
+    ptrs_density_recommendation_dl_s scs_30k_hz;
+    ptrs_density_recommendation_dl_s scs_60k_hz;
+    ptrs_density_recommendation_dl_s scs_120k_hz;
   };
   struct ptrs_density_recommendation_set_ul_s_ {
-    bool                             scs_minus15k_hz_present  = false;
-    bool                             scs_minus30k_hz_present  = false;
-    bool                             scs_minus60k_hz_present  = false;
-    bool                             scs_minus120k_hz_present = false;
-    ptrs_density_recommendation_ul_s scs_minus15k_hz;
-    ptrs_density_recommendation_ul_s scs_minus30k_hz;
-    ptrs_density_recommendation_ul_s scs_minus60k_hz;
-    ptrs_density_recommendation_ul_s scs_minus120k_hz;
+    bool                             scs_15k_hz_present  = false;
+    bool                             scs_30k_hz_present  = false;
+    bool                             scs_60k_hz_present  = false;
+    bool                             scs_120k_hz_present = false;
+    ptrs_density_recommendation_ul_s scs_15k_hz;
+    ptrs_density_recommendation_ul_s scs_30k_hz;
+    ptrs_density_recommendation_ul_s scs_60k_hz;
+    ptrs_density_recommendation_ul_s scs_120k_hz;
   };
   struct beam_switch_timing_s_ {
-    struct scs_minus60k_hz_opts {
+    struct scs_60k_hz_opts {
       enum options { sym14, sym28, sym48, sym224, sym336, nulltype } value;
       typedef uint16_t number_type;
 
       const char* to_string() const;
       uint16_t    to_number() const;
     };
-    typedef enumerated<scs_minus60k_hz_opts> scs_minus60k_hz_e_;
-    struct scs_minus120k_hz_opts {
+    typedef enumerated<scs_60k_hz_opts> scs_60k_hz_e_;
+    struct scs_120k_hz_opts {
       enum options { sym14, sym28, sym48, sym224, sym336, nulltype } value;
       typedef uint16_t number_type;
 
       const char* to_string() const;
       uint16_t    to_number() const;
     };
-    typedef enumerated<scs_minus120k_hz_opts> scs_minus120k_hz_e_;
+    typedef enumerated<scs_120k_hz_opts> scs_120k_hz_e_;
 
     // member variables
-    bool                scs_minus60k_hz_present  = false;
-    bool                scs_minus120k_hz_present = false;
-    scs_minus60k_hz_e_  scs_minus60k_hz;
-    scs_minus120k_hz_e_ scs_minus120k_hz;
+    bool           scs_60k_hz_present  = false;
+    bool           scs_120k_hz_present = false;
+    scs_60k_hz_e_  scs_60k_hz;
+    scs_120k_hz_e_ scs_120k_hz;
   };
   using srs_assoc_csi_rs_l_ = dyn_array<supported_csi_rs_res_s>;
 
@@ -1206,18 +1206,18 @@ struct band_nr_s {
   typedef enumerated<ue_pwr_class_opts> ue_pwr_class_e_;
   struct ch_bws_dl_c_ {
     struct fr1_s_ {
-      bool                scs_minus15k_hz_present = false;
-      bool                scs_minus30k_hz_present = false;
-      bool                scs_minus60k_hz_present = false;
-      fixed_bitstring<10> scs_minus15k_hz;
-      fixed_bitstring<10> scs_minus30k_hz;
-      fixed_bitstring<10> scs_minus60k_hz;
+      bool                scs_15k_hz_present = false;
+      bool                scs_30k_hz_present = false;
+      bool                scs_60k_hz_present = false;
+      fixed_bitstring<10> scs_15k_hz;
+      fixed_bitstring<10> scs_30k_hz;
+      fixed_bitstring<10> scs_60k_hz;
     };
     struct fr2_s_ {
-      bool               scs_minus60k_hz_present  = false;
-      bool               scs_minus120k_hz_present = false;
-      fixed_bitstring<3> scs_minus60k_hz;
-      fixed_bitstring<3> scs_minus120k_hz;
+      bool               scs_60k_hz_present  = false;
+      bool               scs_120k_hz_present = false;
+      fixed_bitstring<3> scs_60k_hz;
+      fixed_bitstring<3> scs_120k_hz;
     };
     struct types_opts {
       enum options { fr1, fr2, nulltype } value;
@@ -1270,18 +1270,18 @@ struct band_nr_s {
   };
   struct ch_bws_ul_c_ {
     struct fr1_s_ {
-      bool                scs_minus15k_hz_present = false;
-      bool                scs_minus30k_hz_present = false;
-      bool                scs_minus60k_hz_present = false;
-      fixed_bitstring<10> scs_minus15k_hz;
-      fixed_bitstring<10> scs_minus30k_hz;
-      fixed_bitstring<10> scs_minus60k_hz;
+      bool                scs_15k_hz_present = false;
+      bool                scs_30k_hz_present = false;
+      bool                scs_60k_hz_present = false;
+      fixed_bitstring<10> scs_15k_hz;
+      fixed_bitstring<10> scs_30k_hz;
+      fixed_bitstring<10> scs_60k_hz;
     };
     struct fr2_s_ {
-      bool               scs_minus60k_hz_present  = false;
-      bool               scs_minus120k_hz_present = false;
-      fixed_bitstring<3> scs_minus60k_hz;
-      fixed_bitstring<3> scs_minus120k_hz;
+      bool               scs_60k_hz_present  = false;
+      bool               scs_120k_hz_present = false;
+      fixed_bitstring<3> scs_60k_hz;
+      fixed_bitstring<3> scs_120k_hz;
     };
     struct types_opts {
       enum options { fr1, fr2, nulltype } value;
@@ -1350,18 +1350,18 @@ struct band_nr_s {
   typedef enumerated<max_ul_duty_cycle_fr2_opts> max_ul_duty_cycle_fr2_e_;
   struct ch_bws_dl_v1590_c_ {
     struct fr1_s_ {
-      bool                scs_minus15k_hz_present = false;
-      bool                scs_minus30k_hz_present = false;
-      bool                scs_minus60k_hz_present = false;
-      fixed_bitstring<16> scs_minus15k_hz;
-      fixed_bitstring<16> scs_minus30k_hz;
-      fixed_bitstring<16> scs_minus60k_hz;
+      bool                scs_15k_hz_present = false;
+      bool                scs_30k_hz_present = false;
+      bool                scs_60k_hz_present = false;
+      fixed_bitstring<16> scs_15k_hz;
+      fixed_bitstring<16> scs_30k_hz;
+      fixed_bitstring<16> scs_60k_hz;
     };
     struct fr2_s_ {
-      bool               scs_minus60k_hz_present  = false;
-      bool               scs_minus120k_hz_present = false;
-      fixed_bitstring<8> scs_minus60k_hz;
-      fixed_bitstring<8> scs_minus120k_hz;
+      bool               scs_60k_hz_present  = false;
+      bool               scs_120k_hz_present = false;
+      fixed_bitstring<8> scs_60k_hz;
+      fixed_bitstring<8> scs_120k_hz;
     };
     struct types_opts {
       enum options { fr1, fr2, nulltype } value;
@@ -1414,18 +1414,18 @@ struct band_nr_s {
   };
   struct ch_bws_ul_v1590_c_ {
     struct fr1_s_ {
-      bool                scs_minus15k_hz_present = false;
-      bool                scs_minus30k_hz_present = false;
-      bool                scs_minus60k_hz_present = false;
-      fixed_bitstring<16> scs_minus15k_hz;
-      fixed_bitstring<16> scs_minus30k_hz;
-      fixed_bitstring<16> scs_minus60k_hz;
+      bool                scs_15k_hz_present = false;
+      bool                scs_30k_hz_present = false;
+      bool                scs_60k_hz_present = false;
+      fixed_bitstring<16> scs_15k_hz;
+      fixed_bitstring<16> scs_30k_hz;
+      fixed_bitstring<16> scs_60k_hz;
     };
     struct fr2_s_ {
-      bool               scs_minus60k_hz_present  = false;
-      bool               scs_minus120k_hz_present = false;
-      fixed_bitstring<8> scs_minus60k_hz;
-      fixed_bitstring<8> scs_minus120k_hz;
+      bool               scs_60k_hz_present  = false;
+      bool               scs_120k_hz_present = false;
+      fixed_bitstring<8> scs_60k_hz;
+      fixed_bitstring<8> scs_120k_hz;
     };
     struct types_opts {
       enum options { fr1, fr2, nulltype } value;
@@ -1487,8 +1487,8 @@ struct band_nr_s {
   bool                   bwp_same_numerology_present          = false;
   bool                   bwp_diff_numerology_present          = false;
   bool                   cross_carrier_sched_same_scs_present = false;
-  bool                   pdsch_minus256_qam_fr2_present       = false;
-  bool                   pusch_minus256_qam_present           = false;
+  bool                   pdsch_256_qam_fr2_present            = false;
+  bool                   pusch_256_qam_present                = false;
   bool                   ue_pwr_class_present                 = false;
   bool                   rate_matching_lte_crs_present        = false;
   bool                   ch_bws_dl_present                    = false;
@@ -1951,72 +1951,72 @@ struct feature_set_dl_s {
   };
   typedef enumerated<pdcch_monitoring_any_occasions_opts> pdcch_monitoring_any_occasions_e_;
   struct time_dur_for_qcl_s_ {
-    struct scs_minus60k_hz_opts {
+    struct scs_60k_hz_opts {
       enum options { s7, s14, s28, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus60k_hz_opts> scs_minus60k_hz_e_;
-    struct scs_minus120k_hz_opts {
+    typedef enumerated<scs_60k_hz_opts> scs_60k_hz_e_;
+    struct scs_120k_hz_opts {
       enum options { s14, s28, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus120k_hz_opts> scs_minus120k_hz_e_;
+    typedef enumerated<scs_120k_hz_opts> scs_120k_hz_e_;
 
     // member variables
-    bool                scs_minus60k_hz_present  = false;
-    bool                scs_minus120k_hz_present = false;
-    scs_minus60k_hz_e_  scs_minus60k_hz;
-    scs_minus120k_hz_e_ scs_minus120k_hz;
+    bool           scs_60k_hz_present  = false;
+    bool           scs_120k_hz_present = false;
+    scs_60k_hz_e_  scs_60k_hz;
+    scs_120k_hz_e_ scs_120k_hz;
   };
   struct pdsch_processing_type1_different_tb_per_slot_s_ {
-    struct scs_minus15k_hz_opts {
+    struct scs_15k_hz_opts {
       enum options { upto2, upto4, upto7, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus15k_hz_opts> scs_minus15k_hz_e_;
-    struct scs_minus30k_hz_opts {
+    typedef enumerated<scs_15k_hz_opts> scs_15k_hz_e_;
+    struct scs_30k_hz_opts {
       enum options { upto2, upto4, upto7, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus30k_hz_opts> scs_minus30k_hz_e_;
-    struct scs_minus60k_hz_opts {
+    typedef enumerated<scs_30k_hz_opts> scs_30k_hz_e_;
+    struct scs_60k_hz_opts {
       enum options { upto2, upto4, upto7, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus60k_hz_opts> scs_minus60k_hz_e_;
-    struct scs_minus120k_hz_opts {
+    typedef enumerated<scs_60k_hz_opts> scs_60k_hz_e_;
+    struct scs_120k_hz_opts {
       enum options { upto2, upto4, upto7, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus120k_hz_opts> scs_minus120k_hz_e_;
+    typedef enumerated<scs_120k_hz_opts> scs_120k_hz_e_;
 
     // member variables
-    bool                scs_minus15k_hz_present  = false;
-    bool                scs_minus30k_hz_present  = false;
-    bool                scs_minus60k_hz_present  = false;
-    bool                scs_minus120k_hz_present = false;
-    scs_minus15k_hz_e_  scs_minus15k_hz;
-    scs_minus30k_hz_e_  scs_minus30k_hz;
-    scs_minus60k_hz_e_  scs_minus60k_hz;
-    scs_minus120k_hz_e_ scs_minus120k_hz;
+    bool           scs_15k_hz_present  = false;
+    bool           scs_30k_hz_present  = false;
+    bool           scs_60k_hz_present  = false;
+    bool           scs_120k_hz_present = false;
+    scs_15k_hz_e_  scs_15k_hz;
+    scs_30k_hz_e_  scs_30k_hz;
+    scs_60k_hz_e_  scs_60k_hz;
+    scs_120k_hz_e_ scs_120k_hz;
   };
   using dummy4_l_ = dyn_array<dummy_b_s>;
   using dummy5_l_ = dyn_array<dummy_c_s>;
@@ -2030,7 +2030,7 @@ struct feature_set_dl_s {
   bool                                            scell_without_ssb_present                            = false;
   bool                                            csi_rs_meas_scell_without_ssb_present                = false;
   bool                                            dummy1_present                                       = false;
-  bool                                            type1_minus3_css_present                             = false;
+  bool                                            type1_3_css_present                                  = false;
   bool                                            pdcch_monitoring_any_occasions_present               = false;
   bool                                            dummy2_present                                       = false;
   bool                                            ue_specific_ul_dl_assign_present                     = false;
@@ -2091,69 +2091,69 @@ struct processing_params_s {
 // FeatureSetDownlink-v1540 ::= SEQUENCE
 struct feature_set_dl_v1540_s {
   struct pdcch_monitoring_any_occasions_with_span_gap_s_ {
-    struct scs_minus15k_hz_opts {
+    struct scs_15k_hz_opts {
       enum options { set1, set2, set3, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus15k_hz_opts> scs_minus15k_hz_e_;
-    struct scs_minus30k_hz_opts {
+    typedef enumerated<scs_15k_hz_opts> scs_15k_hz_e_;
+    struct scs_30k_hz_opts {
       enum options { set1, set2, set3, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus30k_hz_opts> scs_minus30k_hz_e_;
-    struct scs_minus60k_hz_opts {
+    typedef enumerated<scs_30k_hz_opts> scs_30k_hz_e_;
+    struct scs_60k_hz_opts {
       enum options { set1, set2, set3, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus60k_hz_opts> scs_minus60k_hz_e_;
-    struct scs_minus120k_hz_opts {
+    typedef enumerated<scs_60k_hz_opts> scs_60k_hz_e_;
+    struct scs_120k_hz_opts {
       enum options { set1, set2, set3, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus120k_hz_opts> scs_minus120k_hz_e_;
+    typedef enumerated<scs_120k_hz_opts> scs_120k_hz_e_;
 
     // member variables
-    bool                scs_minus15k_hz_present  = false;
-    bool                scs_minus30k_hz_present  = false;
-    bool                scs_minus60k_hz_present  = false;
-    bool                scs_minus120k_hz_present = false;
-    scs_minus15k_hz_e_  scs_minus15k_hz;
-    scs_minus30k_hz_e_  scs_minus30k_hz;
-    scs_minus60k_hz_e_  scs_minus60k_hz;
-    scs_minus120k_hz_e_ scs_minus120k_hz;
+    bool           scs_15k_hz_present  = false;
+    bool           scs_30k_hz_present  = false;
+    bool           scs_60k_hz_present  = false;
+    bool           scs_120k_hz_present = false;
+    scs_15k_hz_e_  scs_15k_hz;
+    scs_30k_hz_e_  scs_30k_hz;
+    scs_60k_hz_e_  scs_60k_hz;
+    scs_120k_hz_e_ scs_120k_hz;
   };
   struct pdsch_processing_type2_s_ {
-    bool                scs_minus15k_hz_present = false;
-    bool                scs_minus30k_hz_present = false;
-    bool                scs_minus60k_hz_present = false;
-    processing_params_s scs_minus15k_hz;
-    processing_params_s scs_minus30k_hz;
-    processing_params_s scs_minus60k_hz;
+    bool                scs_15k_hz_present = false;
+    bool                scs_30k_hz_present = false;
+    bool                scs_60k_hz_present = false;
+    processing_params_s scs_15k_hz;
+    processing_params_s scs_30k_hz;
+    processing_params_s scs_60k_hz;
   };
   struct pdsch_processing_type2_limited_s_ {
-    struct different_tb_per_slot_scs_minus30k_hz_opts {
+    struct different_tb_per_slot_scs_30k_hz_opts {
       enum options { upto1, upto2, upto4, upto7, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<different_tb_per_slot_scs_minus30k_hz_opts> different_tb_per_slot_scs_minus30k_hz_e_;
+    typedef enumerated<different_tb_per_slot_scs_30k_hz_opts> different_tb_per_slot_scs_30k_hz_e_;
 
     // member variables
-    different_tb_per_slot_scs_minus30k_hz_e_ different_tb_per_slot_scs_minus30k_hz;
+    different_tb_per_slot_scs_30k_hz_e_ different_tb_per_slot_scs_30k_hz;
   };
 
   // member variables
@@ -2165,7 +2165,7 @@ struct feature_set_dl_v1540_s {
   bool                                            pdsch_separation_with_gap_present                    = false;
   bool                                            pdsch_processing_type2_present                       = false;
   bool                                            pdsch_processing_type2_limited_present               = false;
-  bool                                            dl_mcs_table_alt_dynamic_ind_present                 = false;
+  bool                                            dl_mcs_table_alt_dyn_ind_present                     = false;
   pdcch_monitoring_any_occasions_with_span_gap_s_ pdcch_monitoring_any_occasions_with_span_gap;
   pdsch_processing_type2_s_                       pdsch_processing_type2;
   pdsch_processing_type2_limited_s_               pdsch_processing_type2_limited;
@@ -2268,7 +2268,7 @@ private:
 
 // FeatureSetDownlinkPerCC ::= SEQUENCE
 struct feature_set_dl_per_cc_s {
-  bool                 ch_bw_minus90mhz_present          = false;
+  bool                 ch_bw_90mhz_present               = false;
   bool                 max_num_mimo_layers_pdsch_present = false;
   bool                 supported_mod_order_dl_present    = false;
   subcarrier_spacing_e supported_subcarrier_spacing_dl;
@@ -2324,48 +2324,48 @@ struct feature_set_ul_s {
   };
   typedef enumerated<scaling_factor_opts> scaling_factor_e_;
   struct pusch_processing_type1_different_tb_per_slot_s_ {
-    struct scs_minus15k_hz_opts {
+    struct scs_15k_hz_opts {
       enum options { upto2, upto4, upto7, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus15k_hz_opts> scs_minus15k_hz_e_;
-    struct scs_minus30k_hz_opts {
+    typedef enumerated<scs_15k_hz_opts> scs_15k_hz_e_;
+    struct scs_30k_hz_opts {
       enum options { upto2, upto4, upto7, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus30k_hz_opts> scs_minus30k_hz_e_;
-    struct scs_minus60k_hz_opts {
+    typedef enumerated<scs_30k_hz_opts> scs_30k_hz_e_;
+    struct scs_60k_hz_opts {
       enum options { upto2, upto4, upto7, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus60k_hz_opts> scs_minus60k_hz_e_;
-    struct scs_minus120k_hz_opts {
+    typedef enumerated<scs_60k_hz_opts> scs_60k_hz_e_;
+    struct scs_120k_hz_opts {
       enum options { upto2, upto4, upto7, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<scs_minus120k_hz_opts> scs_minus120k_hz_e_;
+    typedef enumerated<scs_120k_hz_opts> scs_120k_hz_e_;
 
     // member variables
-    bool                scs_minus15k_hz_present  = false;
-    bool                scs_minus30k_hz_present  = false;
-    bool                scs_minus60k_hz_present  = false;
-    bool                scs_minus120k_hz_present = false;
-    scs_minus15k_hz_e_  scs_minus15k_hz;
-    scs_minus30k_hz_e_  scs_minus30k_hz;
-    scs_minus60k_hz_e_  scs_minus60k_hz;
-    scs_minus120k_hz_e_ scs_minus120k_hz;
+    bool           scs_15k_hz_present  = false;
+    bool           scs_30k_hz_present  = false;
+    bool           scs_60k_hz_present  = false;
+    bool           scs_120k_hz_present = false;
+    scs_15k_hz_e_  scs_15k_hz;
+    scs_30k_hz_e_  scs_30k_hz;
+    scs_60k_hz_e_  scs_60k_hz;
+    scs_120k_hz_e_ scs_120k_hz;
   };
 
   // member variables
@@ -2376,7 +2376,7 @@ struct feature_set_ul_s {
   bool                                            dummy1_present                                       = false;
   bool                                            supported_srs_res_present                            = false;
   bool                                            two_pucch_group_present                              = false;
-  bool                                            dynamic_switch_sul_present                           = false;
+  bool                                            dyn_switch_sul_present                               = false;
   bool                                            simul_tx_sul_non_sul_present                         = false;
   bool                                            pusch_processing_type1_different_tb_per_slot_present = false;
   bool                                            dummy2_present                                       = false;
@@ -2397,12 +2397,12 @@ struct feature_set_ul_s {
 // FeatureSetUplink-v1540 ::= SEQUENCE
 struct feature_set_ul_v1540_s {
   struct pusch_processing_type2_s_ {
-    bool                scs_minus15k_hz_present = false;
-    bool                scs_minus30k_hz_present = false;
-    bool                scs_minus60k_hz_present = false;
-    processing_params_s scs_minus15k_hz;
-    processing_params_s scs_minus30k_hz;
-    processing_params_s scs_minus60k_hz;
+    bool                scs_15k_hz_present = false;
+    bool                scs_30k_hz_present = false;
+    bool                scs_60k_hz_present = false;
+    processing_params_s scs_15k_hz;
+    processing_params_s scs_30k_hz;
+    processing_params_s scs_60k_hz;
   };
 
   // member variables
@@ -2410,7 +2410,7 @@ struct feature_set_ul_v1540_s {
   bool                      pa_phase_discontinuity_impacts_present = false;
   bool                      pusch_separation_with_gap_present      = false;
   bool                      pusch_processing_type2_present         = false;
-  bool                      ul_mcs_table_alt_dynamic_ind_present   = false;
+  bool                      ul_mcs_table_alt_dyn_ind_present       = false;
   pusch_processing_type2_s_ pusch_processing_type2;
 
   // sequence methods
@@ -2428,7 +2428,7 @@ struct feature_set_ul_per_cc_s {
   };
 
   // member variables
-  bool                 ch_bw_minus90mhz_present                 = false;
+  bool                 ch_bw_90mhz_present                      = false;
   bool                 mimo_cb_pusch_present                    = false;
   bool                 max_num_mimo_layers_non_cb_pusch_present = false;
   bool                 supported_mod_order_ul_present           = false;
@@ -2493,7 +2493,7 @@ struct feature_sets_s {
 };
 
 // AggregatedBandwidth ::= ENUMERATED
-struct aggregated_bw_opts {
+struct aggr_bw_opts {
   enum options {
     mhz50,
     mhz100,
@@ -2518,7 +2518,7 @@ struct aggregated_bw_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<aggregated_bw_opts> aggregated_bw_e;
+typedef enumerated<aggr_bw_opts> aggr_bw_e;
 
 // FreqBandInformationEUTRA ::= SEQUENCE
 struct freq_band_info_eutra_s {
@@ -2536,15 +2536,15 @@ struct freq_band_info_eutra_s {
 
 // FreqBandInformationNR ::= SEQUENCE
 struct freq_band_info_nr_s {
-  bool            max_bw_requested_dl_present       = false;
-  bool            max_bw_requested_ul_present       = false;
-  bool            max_carriers_requested_dl_present = false;
-  bool            max_carriers_requested_ul_present = false;
-  uint16_t        band_nr                           = 1;
-  aggregated_bw_e max_bw_requested_dl;
-  aggregated_bw_e max_bw_requested_ul;
-  uint8_t         max_carriers_requested_dl = 1;
-  uint8_t         max_carriers_requested_ul = 1;
+  bool      max_bw_requested_dl_present       = false;
+  bool      max_bw_requested_ul_present       = false;
+  bool      max_carriers_requested_dl_present = false;
+  bool      max_carriers_requested_ul_present = false;
+  uint16_t  band_nr                           = 1;
+  aggr_bw_e max_bw_requested_dl;
+  aggr_bw_e max_bw_requested_ul;
+  uint8_t   max_carriers_requested_dl = 1;
+  uint8_t   max_carriers_requested_ul = 1;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -2607,11 +2607,11 @@ using freq_band_list_l = dyn_array<freq_band_info_c>;
 
 // IMS-ParametersCommon ::= SEQUENCE
 struct ims_params_common_s {
-  bool ext                                = false;
-  bool voice_over_eutra_minus5_gc_present = false;
+  bool ext                           = false;
+  bool voice_over_eutra_5_gc_present = false;
   // ...
   // group 0
-  bool voice_over_scg_bearer_eutra_minus5_gc_present = false;
+  bool voice_over_scg_bearer_eutra_5_gc_present = false;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -2678,13 +2678,13 @@ struct mac_params_common_s {
 
 // MAC-ParametersXDD-Diff ::= SEQUENCE
 struct mac_params_xdd_diff_s {
-  bool ext                             = false;
-  bool skip_ul_tx_dynamic_present      = false;
-  bool lc_ch_sr_delay_timer_present    = false;
-  bool long_drx_cycle_present          = false;
-  bool short_drx_cycle_present         = false;
-  bool multiple_sr_cfgs_present        = false;
-  bool multiple_cfgured_grants_present = false;
+  bool ext                          = false;
+  bool skip_ul_tx_dyn_present       = false;
+  bool lc_ch_sr_delay_timer_present = false;
+  bool long_drx_cycle_present       = false;
+  bool short_drx_cycle_present      = false;
+  bool multiple_sr_cfgs_present     = false;
+  bool multiple_cfg_grants_present  = false;
   // ...
 
   // sequence methods
@@ -2769,9 +2769,9 @@ struct meas_and_mob_params_frx_diff_s {
   bool csi_rs_rlm_present                         = false;
   // ...
   // group 0
-  bool ho_inter_f_present       = false;
-  bool ho_lte_epc_present       = false;
-  bool ho_lte_minus5_gc_present = false;
+  bool ho_inter_f_present  = false;
+  bool ho_lte_epc_present  = false;
+  bool ho_lte_5_gc_present = false;
   // group 1
   bool                      max_num_res_csi_rs_rlm_present = false;
   max_num_res_csi_rs_rlm_e_ max_num_res_csi_rs_rlm;
@@ -2791,9 +2791,9 @@ struct meas_and_mob_params_xdd_diff_s {
   bool event_a_meas_and_report_present           = false;
   // ...
   // group 0
-  bool ho_inter_f_present       = false;
-  bool ho_lte_epc_present       = false;
-  bool ho_lte_minus5_gc_present = false;
+  bool ho_inter_f_present  = false;
+  bool ho_lte_epc_present  = false;
+  bool ho_lte_5_gc_present = false;
   // group 1
   bool sftd_meas_nr_neigh_present     = false;
   bool sftd_meas_nr_neigh_drx_present = false;
@@ -2841,7 +2841,7 @@ struct meas_and_mob_params_mrdc_frx_diff_s {
 
 // MeasAndMobParametersMRDC-XDD-Diff ::= SEQUENCE
 struct meas_and_mob_params_mrdc_xdd_diff_s {
-  bool sftd_meas_ps_cell_present = false;
+  bool sftd_meas_pscell_present  = false;
   bool sftd_meas_nr_cell_present = false;
 
   // sequence methods
@@ -2956,49 +2956,49 @@ struct phy_params_common_s {
   typedef enumerated<bwp_switching_delay_opts> bwp_switching_delay_e_;
 
   // member variables
-  bool                   ext                                          = false;
-  bool                   csi_rs_cfra_for_ho_present                   = false;
-  bool                   dynamic_prb_bundling_dl_present              = false;
-  bool                   sp_csi_report_pucch_present                  = false;
-  bool                   sp_csi_report_pusch_present                  = false;
-  bool                   nzp_csi_rs_intef_mgmt_present                = false;
-  bool                   type2_sp_csi_feedback_long_pucch_present     = false;
-  bool                   precoder_granularity_coreset_present         = false;
-  bool                   dynamic_harq_ack_codebook_present            = false;
-  bool                   semi_static_harq_ack_codebook_present        = false;
-  bool                   spatial_bundling_harq_ack_present            = false;
-  bool                   dynamic_beta_offset_ind_harq_ack_csi_present = false;
-  bool                   pucch_repeat_f1_minus3_minus4_present        = false;
-  bool                   ra_type0_pusch_present                       = false;
-  bool                   dynamic_switch_ra_type0_minus1_pdsch_present = false;
-  bool                   dynamic_switch_ra_type0_minus1_pusch_present = false;
-  bool                   pdsch_map_type_a_present                     = false;
-  bool                   pdsch_map_type_b_present                     = false;
-  bool                   interleaving_vrb_to_prb_pdsch_present        = false;
-  bool                   inter_slot_freq_hop_pusch_present            = false;
-  bool                   type1_pusch_repeat_multi_slots_present       = false;
-  bool                   type2_pusch_repeat_multi_slots_present       = false;
-  bool                   pusch_repeat_multi_slots_present             = false;
-  bool                   pdsch_repeat_multi_slots_present             = false;
-  bool                   dl_sps_present                               = false;
-  bool                   cfgured_ul_grant_type1_present               = false;
-  bool                   cfgured_ul_grant_type2_present               = false;
-  bool                   pre_empt_ind_dl_present                      = false;
-  bool                   cbg_trans_ind_dl_present                     = false;
-  bool                   cbg_trans_ind_ul_present                     = false;
-  bool                   cbg_flush_ind_dl_present                     = false;
-  bool                   dynamic_harq_ack_code_b_cbg_retx_dl_present  = false;
-  bool                   rate_matching_resrc_set_semi_static_present  = false;
-  bool                   rate_matching_resrc_set_dynamic_present      = false;
-  bool                   bwp_switching_delay_present                  = false;
+  bool                   ext                                         = false;
+  bool                   csi_rs_cfra_for_ho_present                  = false;
+  bool                   dyn_prb_bundling_dl_present                 = false;
+  bool                   sp_csi_report_pucch_present                 = false;
+  bool                   sp_csi_report_pusch_present                 = false;
+  bool                   nzp_csi_rs_intef_mgmt_present               = false;
+  bool                   type2_sp_csi_feedback_long_pucch_present    = false;
+  bool                   precoder_granularity_coreset_present        = false;
+  bool                   dyn_harq_ack_codebook_present               = false;
+  bool                   semi_static_harq_ack_codebook_present       = false;
+  bool                   spatial_bundling_harq_ack_present           = false;
+  bool                   dyn_beta_offset_ind_harq_ack_csi_present    = false;
+  bool                   pucch_repeat_f1_3_4_present                 = false;
+  bool                   ra_type0_pusch_present                      = false;
+  bool                   dyn_switch_ra_type0_1_pdsch_present         = false;
+  bool                   dyn_switch_ra_type0_1_pusch_present         = false;
+  bool                   pdsch_map_type_a_present                    = false;
+  bool                   pdsch_map_type_b_present                    = false;
+  bool                   interleaving_vrb_to_prb_pdsch_present       = false;
+  bool                   inter_slot_freq_hop_pusch_present           = false;
+  bool                   type1_pusch_repeat_multi_slots_present      = false;
+  bool                   type2_pusch_repeat_multi_slots_present      = false;
+  bool                   pusch_repeat_multi_slots_present            = false;
+  bool                   pdsch_repeat_multi_slots_present            = false;
+  bool                   dl_sps_present                              = false;
+  bool                   cfg_ul_grant_type1_present                  = false;
+  bool                   cfg_ul_grant_type2_present                  = false;
+  bool                   pre_empt_ind_dl_present                     = false;
+  bool                   cbg_trans_ind_dl_present                    = false;
+  bool                   cbg_trans_ind_ul_present                    = false;
+  bool                   cbg_flush_ind_dl_present                    = false;
+  bool                   dyn_harq_ack_code_b_cbg_retx_dl_present     = false;
+  bool                   rate_matching_resrc_set_semi_static_present = false;
+  bool                   rate_matching_resrc_set_dyn_present         = false;
+  bool                   bwp_switching_delay_present                 = false;
   bwp_switching_delay_e_ bwp_switching_delay;
   // ...
   // group 0
   bool dummy_present = false;
   // group 1
-  bool max_num_search_spaces_present                = false;
-  bool rate_matching_ctrl_resrc_set_dynamic_present = false;
-  bool max_layers_mimo_ind_present                  = false;
+  bool max_num_search_spaces_present            = false;
+  bool rate_matching_ctrl_resrc_set_dyn_present = false;
+  bool max_layers_mimo_ind_present              = false;
   // group 2
   copy_ptr<carrier_aggregation_variant_s> sp_cell_placement;
 
@@ -3048,8 +3048,8 @@ struct phy_params_fr1_s {
   // member variables
   bool                           ext                                      = false;
   bool                           pdcch_monitoring_single_occasion_present = false;
-  bool                           scs_minus60k_hz_present                  = false;
-  bool                           pdsch_minus256_qam_fr1_present           = false;
+  bool                           scs_60k_hz_present                       = false;
+  bool                           pdsch_256_qam_fr1_present                = false;
   bool                           pdsch_re_map_fr1_per_symbol_present      = false;
   pdsch_re_map_fr1_per_symbol_e_ pdsch_re_map_fr1_per_symbol;
   // ...
@@ -3142,7 +3142,7 @@ struct phy_params_frx_diff_s {
 
   // member variables
   bool                      ext                                              = false;
-  bool                      dynamic_sfi_present                              = false;
+  bool                      dyn_sfi_present                                  = false;
   bool                      dummy1_present                                   = false;
   bool                      two_fl_dmrs_present                              = false;
   bool                      dummy2_present                                   = false;
@@ -3153,12 +3153,12 @@ struct phy_params_frx_diff_s {
   bool                      csi_report_without_pmi_present                   = false;
   bool                      csi_report_without_cqi_present                   = false;
   bool                      one_ports_ptrs_present                           = false;
-  bool                      two_pucch_f0_minus2_consec_symbols_present       = false;
+  bool                      two_pucch_f0_2_consec_symbols_present            = false;
   bool                      pucch_f2_with_fh_present                         = false;
   bool                      pucch_f3_with_fh_present                         = false;
   bool                      pucch_f4_with_fh_present                         = false;
-  bool                      pucch_f0_minus2_without_fh_present               = false;
-  bool                      pucch_f1_minus3_minus4_without_fh_present        = false;
+  bool                      pucch_f0_2_without_fh_present                    = false;
+  bool                      pucch_f1_3_4_without_fh_present                  = false;
   bool                      mux_sr_harq_ack_csi_pucch_multi_per_slot_present = false;
   bool                      uci_code_block_segmentation_present              = false;
   bool                      one_pucch_long_and_short_format_present          = false;
@@ -3173,7 +3173,7 @@ struct phy_params_frx_diff_s {
   bool                      two_different_tpc_loop_pusch_present             = false;
   bool                      two_different_tpc_loop_pucch_present             = false;
   bool                      pusch_half_pi_bpsk_present                       = false;
-  bool                      pucch_f3_minus4_half_pi_bpsk_present             = false;
+  bool                      pucch_f3_4_half_pi_bpsk_present                  = false;
   bool                      almost_contiguous_cp_ofdm_ul_present             = false;
   bool                      sp_csi_rs_present                                = false;
   bool                      sp_csi_im_present                                = false;
@@ -3194,8 +3194,8 @@ struct phy_params_frx_diff_s {
   bool                                                 dl_sched_offset_pdsch_type_a_present       = false;
   bool                                                 dl_sched_offset_pdsch_type_b_present       = false;
   bool                                                 ul_sched_offset_present                    = false;
-  bool                                                 dl_minus64_qam_mcs_table_alt_present       = false;
-  bool                                                 ul_minus64_qam_mcs_table_alt_present       = false;
+  bool                                                 dl_64_qam_mcs_table_alt_present            = false;
+  bool                                                 ul_64_qam_mcs_table_alt_present            = false;
   bool                                                 cqi_table_alt_present                      = false;
   bool                                                 one_fl_dmrs_two_add_dmrs_ul_present        = false;
   bool                                                 two_fl_dmrs_two_add_dmrs_ul_present        = false;
@@ -3216,11 +3216,11 @@ struct phy_params_frx_diff_s {
 
 // Phy-ParametersXDD-Diff ::= SEQUENCE
 struct phy_params_xdd_diff_s {
-  bool ext                                        = false;
-  bool dynamic_sfi_present                        = false;
-  bool two_pucch_f0_minus2_consec_symbols_present = false;
-  bool two_different_tpc_loop_pusch_present       = false;
-  bool two_different_tpc_loop_pucch_present       = false;
+  bool ext                                   = false;
+  bool dyn_sfi_present                       = false;
+  bool two_pucch_f0_2_consec_symbols_present = false;
+  bool two_different_tpc_loop_pusch_present  = false;
+  bool two_different_tpc_loop_pucch_present  = false;
   // ...
   // group 0
   bool dl_sched_offset_pdsch_type_a_present = false;

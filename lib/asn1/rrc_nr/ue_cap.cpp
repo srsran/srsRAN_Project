@@ -240,13 +240,13 @@ SRSASN_CODE ca_params_eutra_s::pack(bit_ref& bref) const
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(multiple_timing_advance_present, 1));
   HANDLE_CODE(bref.pack(simul_rx_tx_present, 1));
-  HANDLE_CODE(bref.pack(supported_naics_minus2_crs_ap_present, 1));
+  HANDLE_CODE(bref.pack(supported_naics_2_crs_ap_present, 1));
   HANDLE_CODE(bref.pack(add_rx_tx_performance_req_present, 1));
   HANDLE_CODE(bref.pack(ue_ca_pwr_class_n_present, 1));
   HANDLE_CODE(bref.pack(supported_bw_combination_set_eutra_v1530_present, 1));
 
-  if (supported_naics_minus2_crs_ap_present) {
-    HANDLE_CODE(supported_naics_minus2_crs_ap.pack(bref));
+  if (supported_naics_2_crs_ap_present) {
+    HANDLE_CODE(supported_naics_2_crs_ap.pack(bref));
   }
   if (supported_bw_combination_set_eutra_v1530_present) {
     HANDLE_CODE(supported_bw_combination_set_eutra_v1530.pack(bref));
@@ -259,13 +259,13 @@ SRSASN_CODE ca_params_eutra_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(multiple_timing_advance_present, 1));
   HANDLE_CODE(bref.unpack(simul_rx_tx_present, 1));
-  HANDLE_CODE(bref.unpack(supported_naics_minus2_crs_ap_present, 1));
+  HANDLE_CODE(bref.unpack(supported_naics_2_crs_ap_present, 1));
   HANDLE_CODE(bref.unpack(add_rx_tx_performance_req_present, 1));
   HANDLE_CODE(bref.unpack(ue_ca_pwr_class_n_present, 1));
   HANDLE_CODE(bref.unpack(supported_bw_combination_set_eutra_v1530_present, 1));
 
-  if (supported_naics_minus2_crs_ap_present) {
-    HANDLE_CODE(supported_naics_minus2_crs_ap.unpack(bref));
+  if (supported_naics_2_crs_ap_present) {
+    HANDLE_CODE(supported_naics_2_crs_ap.unpack(bref));
   }
   if (supported_bw_combination_set_eutra_v1530_present) {
     HANDLE_CODE(supported_bw_combination_set_eutra_v1530.unpack(bref));
@@ -282,8 +282,8 @@ void ca_params_eutra_s::to_json(json_writer& j) const
   if (simul_rx_tx_present) {
     j.write_str("simultaneousRx-Tx", "supported");
   }
-  if (supported_naics_minus2_crs_ap_present) {
-    j.write_str("supportedNAICS-2CRS-AP", supported_naics_minus2_crs_ap.to_string());
+  if (supported_naics_2_crs_ap_present) {
+    j.write_str("supportedNAICS-2CRS-AP", supported_naics_2_crs_ap.to_string());
   }
   if (add_rx_tx_performance_req_present) {
     j.write_str("additionalRx-Tx-PerformanceReq", "supported");
@@ -380,7 +380,7 @@ SRSASN_CODE mrdc_params_s::pack(bit_ref& bref) const
 {
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(single_ul_tx_present, 1));
-  HANDLE_CODE(bref.pack(dynamic_pwr_sharing_endc_present, 1));
+  HANDLE_CODE(bref.pack(dyn_pwr_sharing_endc_present, 1));
   HANDLE_CODE(bref.pack(tdm_pattern_present, 1));
   HANDLE_CODE(bref.pack(ul_sharing_eutra_nr_present, 1));
   HANDLE_CODE(bref.pack(ul_switching_time_eutra_nr_present, 1));
@@ -418,7 +418,7 @@ SRSASN_CODE mrdc_params_s::unpack(cbit_ref& bref)
 {
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(single_ul_tx_present, 1));
-  HANDLE_CODE(bref.unpack(dynamic_pwr_sharing_endc_present, 1));
+  HANDLE_CODE(bref.unpack(dyn_pwr_sharing_endc_present, 1));
   HANDLE_CODE(bref.unpack(tdm_pattern_present, 1));
   HANDLE_CODE(bref.unpack(ul_sharing_eutra_nr_present, 1));
   HANDLE_CODE(bref.unpack(ul_switching_time_eutra_nr_present, 1));
@@ -455,7 +455,7 @@ void mrdc_params_s::to_json(json_writer& j) const
   if (single_ul_tx_present) {
     j.write_str("singleUL-Transmission", "supported");
   }
-  if (dynamic_pwr_sharing_endc_present) {
+  if (dyn_pwr_sharing_endc_present) {
     j.write_str("dynamicPowerSharingENDC", "supported");
   }
   if (tdm_pattern_present) {
@@ -1477,8 +1477,8 @@ SRSASN_CODE csi_rs_for_tracking_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(pack_integer(bref, max_burst_len, (uint8_t)1u, (uint8_t)2u));
   HANDLE_CODE(pack_integer(bref, max_simul_res_sets_per_cc, (uint8_t)1u, (uint8_t)8u));
-  HANDLE_CODE(pack_integer(bref, max_cfgured_res_sets_per_cc, (uint8_t)1u, (uint8_t)64u));
-  HANDLE_CODE(pack_integer(bref, max_cfgured_res_sets_all_cc, (uint16_t)1u, (uint16_t)256u));
+  HANDLE_CODE(pack_integer(bref, max_cfg_res_sets_per_cc, (uint8_t)1u, (uint8_t)64u));
+  HANDLE_CODE(pack_integer(bref, max_cfg_res_sets_all_cc, (uint16_t)1u, (uint16_t)256u));
 
   return SRSASN_SUCCESS;
 }
@@ -1486,8 +1486,8 @@ SRSASN_CODE csi_rs_for_tracking_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(unpack_integer(max_burst_len, bref, (uint8_t)1u, (uint8_t)2u));
   HANDLE_CODE(unpack_integer(max_simul_res_sets_per_cc, bref, (uint8_t)1u, (uint8_t)8u));
-  HANDLE_CODE(unpack_integer(max_cfgured_res_sets_per_cc, bref, (uint8_t)1u, (uint8_t)64u));
-  HANDLE_CODE(unpack_integer(max_cfgured_res_sets_all_cc, bref, (uint16_t)1u, (uint16_t)256u));
+  HANDLE_CODE(unpack_integer(max_cfg_res_sets_per_cc, bref, (uint8_t)1u, (uint8_t)64u));
+  HANDLE_CODE(unpack_integer(max_cfg_res_sets_all_cc, bref, (uint16_t)1u, (uint16_t)256u));
 
   return SRSASN_SUCCESS;
 }
@@ -1496,8 +1496,8 @@ void csi_rs_for_tracking_s::to_json(json_writer& j) const
   j.start_obj();
   j.write_int("maxBurstLength", max_burst_len);
   j.write_int("maxSimultaneousResourceSetsPerCC", max_simul_res_sets_per_cc);
-  j.write_int("maxConfiguredResourceSetsPerCC", max_cfgured_res_sets_per_cc);
-  j.write_int("maxConfiguredResourceSetsAllCC", max_cfgured_res_sets_all_cc);
+  j.write_int("maxConfiguredResourceSetsPerCC", max_cfg_res_sets_per_cc);
+  j.write_int("maxConfiguredResourceSetsAllCC", max_cfg_res_sets_all_cc);
   j.end_obj();
 }
 
@@ -1842,8 +1842,8 @@ SRSASN_CODE dummy_h_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(pack_integer(bref, burst_len, (uint8_t)1u, (uint8_t)2u));
   HANDLE_CODE(pack_integer(bref, max_simul_res_sets_per_cc, (uint8_t)1u, (uint8_t)8u));
-  HANDLE_CODE(pack_integer(bref, max_cfgured_res_sets_per_cc, (uint8_t)1u, (uint8_t)64u));
-  HANDLE_CODE(pack_integer(bref, max_cfgured_res_sets_all_cc, (uint8_t)1u, (uint8_t)128u));
+  HANDLE_CODE(pack_integer(bref, max_cfg_res_sets_per_cc, (uint8_t)1u, (uint8_t)64u));
+  HANDLE_CODE(pack_integer(bref, max_cfg_res_sets_all_cc, (uint8_t)1u, (uint8_t)128u));
 
   return SRSASN_SUCCESS;
 }
@@ -1851,8 +1851,8 @@ SRSASN_CODE dummy_h_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(unpack_integer(burst_len, bref, (uint8_t)1u, (uint8_t)2u));
   HANDLE_CODE(unpack_integer(max_simul_res_sets_per_cc, bref, (uint8_t)1u, (uint8_t)8u));
-  HANDLE_CODE(unpack_integer(max_cfgured_res_sets_per_cc, bref, (uint8_t)1u, (uint8_t)64u));
-  HANDLE_CODE(unpack_integer(max_cfgured_res_sets_all_cc, bref, (uint8_t)1u, (uint8_t)128u));
+  HANDLE_CODE(unpack_integer(max_cfg_res_sets_per_cc, bref, (uint8_t)1u, (uint8_t)64u));
+  HANDLE_CODE(unpack_integer(max_cfg_res_sets_all_cc, bref, (uint8_t)1u, (uint8_t)128u));
 
   return SRSASN_SUCCESS;
 }
@@ -1861,8 +1861,8 @@ void dummy_h_s::to_json(json_writer& j) const
   j.start_obj();
   j.write_int("burstLength", burst_len);
   j.write_int("maxSimultaneousResourceSetsPerCC", max_simul_res_sets_per_cc);
-  j.write_int("maxConfiguredResourceSetsPerCC", max_cfgured_res_sets_per_cc);
-  j.write_int("maxConfiguredResourceSetsAllCC", max_cfgured_res_sets_all_cc);
+  j.write_int("maxConfiguredResourceSetsPerCC", max_cfg_res_sets_per_cc);
+  j.write_int("maxConfiguredResourceSetsAllCC", max_cfg_res_sets_all_cc);
   j.end_obj();
 }
 
@@ -1950,7 +1950,7 @@ SRSASN_CODE spatial_relations_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(bref.pack(add_active_spatial_relation_pucch_present, 1));
 
-  HANDLE_CODE(max_num_cfgured_spatial_relations.pack(bref));
+  HANDLE_CODE(max_num_cfg_spatial_relations.pack(bref));
   HANDLE_CODE(max_num_active_spatial_relations.pack(bref));
   HANDLE_CODE(max_num_dl_rs_qcl_type_d.pack(bref));
 
@@ -1960,7 +1960,7 @@ SRSASN_CODE spatial_relations_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(bref.unpack(add_active_spatial_relation_pucch_present, 1));
 
-  HANDLE_CODE(max_num_cfgured_spatial_relations.unpack(bref));
+  HANDLE_CODE(max_num_cfg_spatial_relations.unpack(bref));
   HANDLE_CODE(max_num_active_spatial_relations.unpack(bref));
   HANDLE_CODE(max_num_dl_rs_qcl_type_d.unpack(bref));
 
@@ -1969,7 +1969,7 @@ SRSASN_CODE spatial_relations_s::unpack(cbit_ref& bref)
 void spatial_relations_s::to_json(json_writer& j) const
 {
   j.start_obj();
-  j.write_str("maxNumberConfiguredSpatialRelations", max_num_cfgured_spatial_relations.to_string());
+  j.write_str("maxNumberConfiguredSpatialRelations", max_num_cfg_spatial_relations.to_string());
   j.write_str("maxNumberActiveSpatialRelations", max_num_active_spatial_relations.to_string());
   if (add_active_spatial_relation_pucch_present) {
     j.write_str("additionalActiveSpatialRelationPUCCH", "supported");
@@ -1978,15 +1978,15 @@ void spatial_relations_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
-const char* spatial_relations_s::max_num_cfgured_spatial_relations_opts::to_string() const
+const char* spatial_relations_s::max_num_cfg_spatial_relations_opts::to_string() const
 {
   static const char* names[] = {"n4", "n8", "n16", "n32", "n64", "n96"};
-  return convert_enum_idx(names, 6, value, "spatial_relations_s::max_num_cfgured_spatial_relations_e_");
+  return convert_enum_idx(names, 6, value, "spatial_relations_s::max_num_cfg_spatial_relations_e_");
 }
-uint8_t spatial_relations_s::max_num_cfgured_spatial_relations_opts::to_number() const
+uint8_t spatial_relations_s::max_num_cfg_spatial_relations_opts::to_number() const
 {
   static const uint8_t numbers[] = {4, 8, 16, 32, 64, 96};
-  return map_enum_number(numbers, 6, value, "spatial_relations_s::max_num_cfgured_spatial_relations_e_");
+  return map_enum_number(numbers, 6, value, "spatial_relations_s::max_num_cfg_spatial_relations_e_");
 }
 
 const char* spatial_relations_s::max_num_active_spatial_relations_opts::to_string() const
@@ -2043,10 +2043,10 @@ SRSASN_CODE mimo_params_per_band_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(aperiodic_trs_present, 1));
 
   if (tci_state_pdsch_present) {
-    HANDLE_CODE(bref.pack(tci_state_pdsch.max_num_cfgured_tcistates_per_cc_present, 1));
+    HANDLE_CODE(bref.pack(tci_state_pdsch.max_num_cfg_tci_states_per_cc_present, 1));
     HANDLE_CODE(bref.pack(tci_state_pdsch.max_num_active_tci_per_bwp_present, 1));
-    if (tci_state_pdsch.max_num_cfgured_tcistates_per_cc_present) {
-      HANDLE_CODE(tci_state_pdsch.max_num_cfgured_tcistates_per_cc.pack(bref));
+    if (tci_state_pdsch.max_num_cfg_tci_states_per_cc_present) {
+      HANDLE_CODE(tci_state_pdsch.max_num_cfg_tci_states_per_cc.pack(bref));
     }
     if (tci_state_pdsch.max_num_active_tci_per_bwp_present) {
       HANDLE_CODE(tci_state_pdsch.max_num_active_tci_per_bwp.pack(bref));
@@ -2062,25 +2062,25 @@ SRSASN_CODE mimo_params_per_band_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_integer(bref, max_num_rx_beam, (uint8_t)2u, (uint8_t)8u));
   }
   if (max_num_rx_tx_beam_switch_dl_present) {
-    HANDLE_CODE(bref.pack(max_num_rx_tx_beam_switch_dl.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.pack(max_num_rx_tx_beam_switch_dl.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.pack(max_num_rx_tx_beam_switch_dl.scs_minus60k_hz_present, 1));
-    HANDLE_CODE(bref.pack(max_num_rx_tx_beam_switch_dl.scs_minus120k_hz_present, 1));
-    HANDLE_CODE(bref.pack(max_num_rx_tx_beam_switch_dl.scs_minus240k_hz_present, 1));
-    if (max_num_rx_tx_beam_switch_dl.scs_minus15k_hz_present) {
-      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_minus15k_hz.pack(bref));
+    HANDLE_CODE(bref.pack(max_num_rx_tx_beam_switch_dl.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.pack(max_num_rx_tx_beam_switch_dl.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.pack(max_num_rx_tx_beam_switch_dl.scs_60k_hz_present, 1));
+    HANDLE_CODE(bref.pack(max_num_rx_tx_beam_switch_dl.scs_120k_hz_present, 1));
+    HANDLE_CODE(bref.pack(max_num_rx_tx_beam_switch_dl.scs_240k_hz_present, 1));
+    if (max_num_rx_tx_beam_switch_dl.scs_15k_hz_present) {
+      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_15k_hz.pack(bref));
     }
-    if (max_num_rx_tx_beam_switch_dl.scs_minus30k_hz_present) {
-      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_minus30k_hz.pack(bref));
+    if (max_num_rx_tx_beam_switch_dl.scs_30k_hz_present) {
+      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_30k_hz.pack(bref));
     }
-    if (max_num_rx_tx_beam_switch_dl.scs_minus60k_hz_present) {
-      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_minus60k_hz.pack(bref));
+    if (max_num_rx_tx_beam_switch_dl.scs_60k_hz_present) {
+      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_60k_hz.pack(bref));
     }
-    if (max_num_rx_tx_beam_switch_dl.scs_minus120k_hz_present) {
-      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_minus120k_hz.pack(bref));
+    if (max_num_rx_tx_beam_switch_dl.scs_120k_hz_present) {
+      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_120k_hz.pack(bref));
     }
-    if (max_num_rx_tx_beam_switch_dl.scs_minus240k_hz_present) {
-      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_minus240k_hz.pack(bref));
+    if (max_num_rx_tx_beam_switch_dl.scs_240k_hz_present) {
+      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_240k_hz.pack(bref));
     }
   }
   if (max_num_non_group_beam_report_present) {
@@ -2106,57 +2106,57 @@ SRSASN_CODE mimo_params_per_band_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_integer(bref, dummy3, (uint8_t)1u, (uint8_t)4u));
   }
   if (beam_report_timing_present) {
-    HANDLE_CODE(bref.pack(beam_report_timing.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.pack(beam_report_timing.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.pack(beam_report_timing.scs_minus60k_hz_present, 1));
-    HANDLE_CODE(bref.pack(beam_report_timing.scs_minus120k_hz_present, 1));
-    if (beam_report_timing.scs_minus15k_hz_present) {
-      HANDLE_CODE(beam_report_timing.scs_minus15k_hz.pack(bref));
+    HANDLE_CODE(bref.pack(beam_report_timing.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.pack(beam_report_timing.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.pack(beam_report_timing.scs_60k_hz_present, 1));
+    HANDLE_CODE(bref.pack(beam_report_timing.scs_120k_hz_present, 1));
+    if (beam_report_timing.scs_15k_hz_present) {
+      HANDLE_CODE(beam_report_timing.scs_15k_hz.pack(bref));
     }
-    if (beam_report_timing.scs_minus30k_hz_present) {
-      HANDLE_CODE(beam_report_timing.scs_minus30k_hz.pack(bref));
+    if (beam_report_timing.scs_30k_hz_present) {
+      HANDLE_CODE(beam_report_timing.scs_30k_hz.pack(bref));
     }
-    if (beam_report_timing.scs_minus60k_hz_present) {
-      HANDLE_CODE(beam_report_timing.scs_minus60k_hz.pack(bref));
+    if (beam_report_timing.scs_60k_hz_present) {
+      HANDLE_CODE(beam_report_timing.scs_60k_hz.pack(bref));
     }
-    if (beam_report_timing.scs_minus120k_hz_present) {
-      HANDLE_CODE(beam_report_timing.scs_minus120k_hz.pack(bref));
+    if (beam_report_timing.scs_120k_hz_present) {
+      HANDLE_CODE(beam_report_timing.scs_120k_hz.pack(bref));
     }
   }
   if (ptrs_density_recommendation_set_dl_present) {
-    HANDLE_CODE(bref.pack(ptrs_density_recommendation_set_dl.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.pack(ptrs_density_recommendation_set_dl.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.pack(ptrs_density_recommendation_set_dl.scs_minus60k_hz_present, 1));
-    HANDLE_CODE(bref.pack(ptrs_density_recommendation_set_dl.scs_minus120k_hz_present, 1));
-    if (ptrs_density_recommendation_set_dl.scs_minus15k_hz_present) {
-      HANDLE_CODE(ptrs_density_recommendation_set_dl.scs_minus15k_hz.pack(bref));
+    HANDLE_CODE(bref.pack(ptrs_density_recommendation_set_dl.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.pack(ptrs_density_recommendation_set_dl.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.pack(ptrs_density_recommendation_set_dl.scs_60k_hz_present, 1));
+    HANDLE_CODE(bref.pack(ptrs_density_recommendation_set_dl.scs_120k_hz_present, 1));
+    if (ptrs_density_recommendation_set_dl.scs_15k_hz_present) {
+      HANDLE_CODE(ptrs_density_recommendation_set_dl.scs_15k_hz.pack(bref));
     }
-    if (ptrs_density_recommendation_set_dl.scs_minus30k_hz_present) {
-      HANDLE_CODE(ptrs_density_recommendation_set_dl.scs_minus30k_hz.pack(bref));
+    if (ptrs_density_recommendation_set_dl.scs_30k_hz_present) {
+      HANDLE_CODE(ptrs_density_recommendation_set_dl.scs_30k_hz.pack(bref));
     }
-    if (ptrs_density_recommendation_set_dl.scs_minus60k_hz_present) {
-      HANDLE_CODE(ptrs_density_recommendation_set_dl.scs_minus60k_hz.pack(bref));
+    if (ptrs_density_recommendation_set_dl.scs_60k_hz_present) {
+      HANDLE_CODE(ptrs_density_recommendation_set_dl.scs_60k_hz.pack(bref));
     }
-    if (ptrs_density_recommendation_set_dl.scs_minus120k_hz_present) {
-      HANDLE_CODE(ptrs_density_recommendation_set_dl.scs_minus120k_hz.pack(bref));
+    if (ptrs_density_recommendation_set_dl.scs_120k_hz_present) {
+      HANDLE_CODE(ptrs_density_recommendation_set_dl.scs_120k_hz.pack(bref));
     }
   }
   if (ptrs_density_recommendation_set_ul_present) {
-    HANDLE_CODE(bref.pack(ptrs_density_recommendation_set_ul.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.pack(ptrs_density_recommendation_set_ul.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.pack(ptrs_density_recommendation_set_ul.scs_minus60k_hz_present, 1));
-    HANDLE_CODE(bref.pack(ptrs_density_recommendation_set_ul.scs_minus120k_hz_present, 1));
-    if (ptrs_density_recommendation_set_ul.scs_minus15k_hz_present) {
-      HANDLE_CODE(ptrs_density_recommendation_set_ul.scs_minus15k_hz.pack(bref));
+    HANDLE_CODE(bref.pack(ptrs_density_recommendation_set_ul.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.pack(ptrs_density_recommendation_set_ul.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.pack(ptrs_density_recommendation_set_ul.scs_60k_hz_present, 1));
+    HANDLE_CODE(bref.pack(ptrs_density_recommendation_set_ul.scs_120k_hz_present, 1));
+    if (ptrs_density_recommendation_set_ul.scs_15k_hz_present) {
+      HANDLE_CODE(ptrs_density_recommendation_set_ul.scs_15k_hz.pack(bref));
     }
-    if (ptrs_density_recommendation_set_ul.scs_minus30k_hz_present) {
-      HANDLE_CODE(ptrs_density_recommendation_set_ul.scs_minus30k_hz.pack(bref));
+    if (ptrs_density_recommendation_set_ul.scs_30k_hz_present) {
+      HANDLE_CODE(ptrs_density_recommendation_set_ul.scs_30k_hz.pack(bref));
     }
-    if (ptrs_density_recommendation_set_ul.scs_minus60k_hz_present) {
-      HANDLE_CODE(ptrs_density_recommendation_set_ul.scs_minus60k_hz.pack(bref));
+    if (ptrs_density_recommendation_set_ul.scs_60k_hz_present) {
+      HANDLE_CODE(ptrs_density_recommendation_set_ul.scs_60k_hz.pack(bref));
     }
-    if (ptrs_density_recommendation_set_ul.scs_minus120k_hz_present) {
-      HANDLE_CODE(ptrs_density_recommendation_set_ul.scs_minus120k_hz.pack(bref));
+    if (ptrs_density_recommendation_set_ul.scs_120k_hz_present) {
+      HANDLE_CODE(ptrs_density_recommendation_set_ul.scs_120k_hz.pack(bref));
     }
   }
   if (dummy4_present) {
@@ -2194,13 +2194,13 @@ SRSASN_CODE mimo_params_per_band_s::pack(bit_ref& bref) const
         HANDLE_CODE(beam_management_ssb_csi_rs->pack(bref));
       }
       if (beam_switch_timing.is_present()) {
-        HANDLE_CODE(bref.pack(beam_switch_timing->scs_minus60k_hz_present, 1));
-        HANDLE_CODE(bref.pack(beam_switch_timing->scs_minus120k_hz_present, 1));
-        if (beam_switch_timing->scs_minus60k_hz_present) {
-          HANDLE_CODE(beam_switch_timing->scs_minus60k_hz.pack(bref));
+        HANDLE_CODE(bref.pack(beam_switch_timing->scs_60k_hz_present, 1));
+        HANDLE_CODE(bref.pack(beam_switch_timing->scs_120k_hz_present, 1));
+        if (beam_switch_timing->scs_60k_hz_present) {
+          HANDLE_CODE(beam_switch_timing->scs_60k_hz.pack(bref));
         }
-        if (beam_switch_timing->scs_minus120k_hz_present) {
-          HANDLE_CODE(beam_switch_timing->scs_minus120k_hz.pack(bref));
+        if (beam_switch_timing->scs_120k_hz_present) {
+          HANDLE_CODE(beam_switch_timing->scs_120k_hz.pack(bref));
         }
       }
       if (codebook_params.is_present()) {
@@ -2259,10 +2259,10 @@ SRSASN_CODE mimo_params_per_band_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(aperiodic_trs_present, 1));
 
   if (tci_state_pdsch_present) {
-    HANDLE_CODE(bref.unpack(tci_state_pdsch.max_num_cfgured_tcistates_per_cc_present, 1));
+    HANDLE_CODE(bref.unpack(tci_state_pdsch.max_num_cfg_tci_states_per_cc_present, 1));
     HANDLE_CODE(bref.unpack(tci_state_pdsch.max_num_active_tci_per_bwp_present, 1));
-    if (tci_state_pdsch.max_num_cfgured_tcistates_per_cc_present) {
-      HANDLE_CODE(tci_state_pdsch.max_num_cfgured_tcistates_per_cc.unpack(bref));
+    if (tci_state_pdsch.max_num_cfg_tci_states_per_cc_present) {
+      HANDLE_CODE(tci_state_pdsch.max_num_cfg_tci_states_per_cc.unpack(bref));
     }
     if (tci_state_pdsch.max_num_active_tci_per_bwp_present) {
       HANDLE_CODE(tci_state_pdsch.max_num_active_tci_per_bwp.unpack(bref));
@@ -2278,25 +2278,25 @@ SRSASN_CODE mimo_params_per_band_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_integer(max_num_rx_beam, bref, (uint8_t)2u, (uint8_t)8u));
   }
   if (max_num_rx_tx_beam_switch_dl_present) {
-    HANDLE_CODE(bref.unpack(max_num_rx_tx_beam_switch_dl.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(max_num_rx_tx_beam_switch_dl.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(max_num_rx_tx_beam_switch_dl.scs_minus60k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(max_num_rx_tx_beam_switch_dl.scs_minus120k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(max_num_rx_tx_beam_switch_dl.scs_minus240k_hz_present, 1));
-    if (max_num_rx_tx_beam_switch_dl.scs_minus15k_hz_present) {
-      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_minus15k_hz.unpack(bref));
+    HANDLE_CODE(bref.unpack(max_num_rx_tx_beam_switch_dl.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(max_num_rx_tx_beam_switch_dl.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(max_num_rx_tx_beam_switch_dl.scs_60k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(max_num_rx_tx_beam_switch_dl.scs_120k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(max_num_rx_tx_beam_switch_dl.scs_240k_hz_present, 1));
+    if (max_num_rx_tx_beam_switch_dl.scs_15k_hz_present) {
+      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_15k_hz.unpack(bref));
     }
-    if (max_num_rx_tx_beam_switch_dl.scs_minus30k_hz_present) {
-      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_minus30k_hz.unpack(bref));
+    if (max_num_rx_tx_beam_switch_dl.scs_30k_hz_present) {
+      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_30k_hz.unpack(bref));
     }
-    if (max_num_rx_tx_beam_switch_dl.scs_minus60k_hz_present) {
-      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_minus60k_hz.unpack(bref));
+    if (max_num_rx_tx_beam_switch_dl.scs_60k_hz_present) {
+      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_60k_hz.unpack(bref));
     }
-    if (max_num_rx_tx_beam_switch_dl.scs_minus120k_hz_present) {
-      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_minus120k_hz.unpack(bref));
+    if (max_num_rx_tx_beam_switch_dl.scs_120k_hz_present) {
+      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_120k_hz.unpack(bref));
     }
-    if (max_num_rx_tx_beam_switch_dl.scs_minus240k_hz_present) {
-      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_minus240k_hz.unpack(bref));
+    if (max_num_rx_tx_beam_switch_dl.scs_240k_hz_present) {
+      HANDLE_CODE(max_num_rx_tx_beam_switch_dl.scs_240k_hz.unpack(bref));
     }
   }
   if (max_num_non_group_beam_report_present) {
@@ -2322,57 +2322,57 @@ SRSASN_CODE mimo_params_per_band_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_integer(dummy3, bref, (uint8_t)1u, (uint8_t)4u));
   }
   if (beam_report_timing_present) {
-    HANDLE_CODE(bref.unpack(beam_report_timing.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(beam_report_timing.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(beam_report_timing.scs_minus60k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(beam_report_timing.scs_minus120k_hz_present, 1));
-    if (beam_report_timing.scs_minus15k_hz_present) {
-      HANDLE_CODE(beam_report_timing.scs_minus15k_hz.unpack(bref));
+    HANDLE_CODE(bref.unpack(beam_report_timing.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(beam_report_timing.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(beam_report_timing.scs_60k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(beam_report_timing.scs_120k_hz_present, 1));
+    if (beam_report_timing.scs_15k_hz_present) {
+      HANDLE_CODE(beam_report_timing.scs_15k_hz.unpack(bref));
     }
-    if (beam_report_timing.scs_minus30k_hz_present) {
-      HANDLE_CODE(beam_report_timing.scs_minus30k_hz.unpack(bref));
+    if (beam_report_timing.scs_30k_hz_present) {
+      HANDLE_CODE(beam_report_timing.scs_30k_hz.unpack(bref));
     }
-    if (beam_report_timing.scs_minus60k_hz_present) {
-      HANDLE_CODE(beam_report_timing.scs_minus60k_hz.unpack(bref));
+    if (beam_report_timing.scs_60k_hz_present) {
+      HANDLE_CODE(beam_report_timing.scs_60k_hz.unpack(bref));
     }
-    if (beam_report_timing.scs_minus120k_hz_present) {
-      HANDLE_CODE(beam_report_timing.scs_minus120k_hz.unpack(bref));
+    if (beam_report_timing.scs_120k_hz_present) {
+      HANDLE_CODE(beam_report_timing.scs_120k_hz.unpack(bref));
     }
   }
   if (ptrs_density_recommendation_set_dl_present) {
-    HANDLE_CODE(bref.unpack(ptrs_density_recommendation_set_dl.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(ptrs_density_recommendation_set_dl.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(ptrs_density_recommendation_set_dl.scs_minus60k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(ptrs_density_recommendation_set_dl.scs_minus120k_hz_present, 1));
-    if (ptrs_density_recommendation_set_dl.scs_minus15k_hz_present) {
-      HANDLE_CODE(ptrs_density_recommendation_set_dl.scs_minus15k_hz.unpack(bref));
+    HANDLE_CODE(bref.unpack(ptrs_density_recommendation_set_dl.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(ptrs_density_recommendation_set_dl.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(ptrs_density_recommendation_set_dl.scs_60k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(ptrs_density_recommendation_set_dl.scs_120k_hz_present, 1));
+    if (ptrs_density_recommendation_set_dl.scs_15k_hz_present) {
+      HANDLE_CODE(ptrs_density_recommendation_set_dl.scs_15k_hz.unpack(bref));
     }
-    if (ptrs_density_recommendation_set_dl.scs_minus30k_hz_present) {
-      HANDLE_CODE(ptrs_density_recommendation_set_dl.scs_minus30k_hz.unpack(bref));
+    if (ptrs_density_recommendation_set_dl.scs_30k_hz_present) {
+      HANDLE_CODE(ptrs_density_recommendation_set_dl.scs_30k_hz.unpack(bref));
     }
-    if (ptrs_density_recommendation_set_dl.scs_minus60k_hz_present) {
-      HANDLE_CODE(ptrs_density_recommendation_set_dl.scs_minus60k_hz.unpack(bref));
+    if (ptrs_density_recommendation_set_dl.scs_60k_hz_present) {
+      HANDLE_CODE(ptrs_density_recommendation_set_dl.scs_60k_hz.unpack(bref));
     }
-    if (ptrs_density_recommendation_set_dl.scs_minus120k_hz_present) {
-      HANDLE_CODE(ptrs_density_recommendation_set_dl.scs_minus120k_hz.unpack(bref));
+    if (ptrs_density_recommendation_set_dl.scs_120k_hz_present) {
+      HANDLE_CODE(ptrs_density_recommendation_set_dl.scs_120k_hz.unpack(bref));
     }
   }
   if (ptrs_density_recommendation_set_ul_present) {
-    HANDLE_CODE(bref.unpack(ptrs_density_recommendation_set_ul.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(ptrs_density_recommendation_set_ul.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(ptrs_density_recommendation_set_ul.scs_minus60k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(ptrs_density_recommendation_set_ul.scs_minus120k_hz_present, 1));
-    if (ptrs_density_recommendation_set_ul.scs_minus15k_hz_present) {
-      HANDLE_CODE(ptrs_density_recommendation_set_ul.scs_minus15k_hz.unpack(bref));
+    HANDLE_CODE(bref.unpack(ptrs_density_recommendation_set_ul.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(ptrs_density_recommendation_set_ul.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(ptrs_density_recommendation_set_ul.scs_60k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(ptrs_density_recommendation_set_ul.scs_120k_hz_present, 1));
+    if (ptrs_density_recommendation_set_ul.scs_15k_hz_present) {
+      HANDLE_CODE(ptrs_density_recommendation_set_ul.scs_15k_hz.unpack(bref));
     }
-    if (ptrs_density_recommendation_set_ul.scs_minus30k_hz_present) {
-      HANDLE_CODE(ptrs_density_recommendation_set_ul.scs_minus30k_hz.unpack(bref));
+    if (ptrs_density_recommendation_set_ul.scs_30k_hz_present) {
+      HANDLE_CODE(ptrs_density_recommendation_set_ul.scs_30k_hz.unpack(bref));
     }
-    if (ptrs_density_recommendation_set_ul.scs_minus60k_hz_present) {
-      HANDLE_CODE(ptrs_density_recommendation_set_ul.scs_minus60k_hz.unpack(bref));
+    if (ptrs_density_recommendation_set_ul.scs_60k_hz_present) {
+      HANDLE_CODE(ptrs_density_recommendation_set_ul.scs_60k_hz.unpack(bref));
     }
-    if (ptrs_density_recommendation_set_ul.scs_minus120k_hz_present) {
-      HANDLE_CODE(ptrs_density_recommendation_set_ul.scs_minus120k_hz.unpack(bref));
+    if (ptrs_density_recommendation_set_ul.scs_120k_hz_present) {
+      HANDLE_CODE(ptrs_density_recommendation_set_ul.scs_120k_hz.unpack(bref));
     }
   }
   if (dummy4_present) {
@@ -2418,13 +2418,13 @@ SRSASN_CODE mimo_params_per_band_s::unpack(cbit_ref& bref)
         HANDLE_CODE(beam_management_ssb_csi_rs->unpack(bref));
       }
       if (beam_switch_timing.is_present()) {
-        HANDLE_CODE(bref.unpack(beam_switch_timing->scs_minus60k_hz_present, 1));
-        HANDLE_CODE(bref.unpack(beam_switch_timing->scs_minus120k_hz_present, 1));
-        if (beam_switch_timing->scs_minus60k_hz_present) {
-          HANDLE_CODE(beam_switch_timing->scs_minus60k_hz.unpack(bref));
+        HANDLE_CODE(bref.unpack(beam_switch_timing->scs_60k_hz_present, 1));
+        HANDLE_CODE(bref.unpack(beam_switch_timing->scs_120k_hz_present, 1));
+        if (beam_switch_timing->scs_60k_hz_present) {
+          HANDLE_CODE(beam_switch_timing->scs_60k_hz.unpack(bref));
         }
-        if (beam_switch_timing->scs_minus120k_hz_present) {
-          HANDLE_CODE(beam_switch_timing->scs_minus120k_hz.unpack(bref));
+        if (beam_switch_timing->scs_120k_hz_present) {
+          HANDLE_CODE(beam_switch_timing->scs_120k_hz.unpack(bref));
         }
       }
       if (codebook_params.is_present()) {
@@ -2458,8 +2458,8 @@ void mimo_params_per_band_s::to_json(json_writer& j) const
   if (tci_state_pdsch_present) {
     j.write_fieldname("tci-StatePDSCH");
     j.start_obj();
-    if (tci_state_pdsch.max_num_cfgured_tcistates_per_cc_present) {
-      j.write_str("maxNumberConfiguredTCIstatesPerCC", tci_state_pdsch.max_num_cfgured_tcistates_per_cc.to_string());
+    if (tci_state_pdsch.max_num_cfg_tci_states_per_cc_present) {
+      j.write_str("maxNumberConfiguredTCIstatesPerCC", tci_state_pdsch.max_num_cfg_tci_states_per_cc.to_string());
     }
     if (tci_state_pdsch.max_num_active_tci_per_bwp_present) {
       j.write_str("maxNumberActiveTCI-PerBWP", tci_state_pdsch.max_num_active_tci_per_bwp.to_string());
@@ -2497,20 +2497,20 @@ void mimo_params_per_band_s::to_json(json_writer& j) const
   if (max_num_rx_tx_beam_switch_dl_present) {
     j.write_fieldname("maxNumberRxTxBeamSwitchDL");
     j.start_obj();
-    if (max_num_rx_tx_beam_switch_dl.scs_minus15k_hz_present) {
-      j.write_str("scs-15kHz", max_num_rx_tx_beam_switch_dl.scs_minus15k_hz.to_string());
+    if (max_num_rx_tx_beam_switch_dl.scs_15k_hz_present) {
+      j.write_str("scs-15kHz", max_num_rx_tx_beam_switch_dl.scs_15k_hz.to_string());
     }
-    if (max_num_rx_tx_beam_switch_dl.scs_minus30k_hz_present) {
-      j.write_str("scs-30kHz", max_num_rx_tx_beam_switch_dl.scs_minus30k_hz.to_string());
+    if (max_num_rx_tx_beam_switch_dl.scs_30k_hz_present) {
+      j.write_str("scs-30kHz", max_num_rx_tx_beam_switch_dl.scs_30k_hz.to_string());
     }
-    if (max_num_rx_tx_beam_switch_dl.scs_minus60k_hz_present) {
-      j.write_str("scs-60kHz", max_num_rx_tx_beam_switch_dl.scs_minus60k_hz.to_string());
+    if (max_num_rx_tx_beam_switch_dl.scs_60k_hz_present) {
+      j.write_str("scs-60kHz", max_num_rx_tx_beam_switch_dl.scs_60k_hz.to_string());
     }
-    if (max_num_rx_tx_beam_switch_dl.scs_minus120k_hz_present) {
-      j.write_str("scs-120kHz", max_num_rx_tx_beam_switch_dl.scs_minus120k_hz.to_string());
+    if (max_num_rx_tx_beam_switch_dl.scs_120k_hz_present) {
+      j.write_str("scs-120kHz", max_num_rx_tx_beam_switch_dl.scs_120k_hz.to_string());
     }
-    if (max_num_rx_tx_beam_switch_dl.scs_minus240k_hz_present) {
-      j.write_str("scs-240kHz", max_num_rx_tx_beam_switch_dl.scs_minus240k_hz.to_string());
+    if (max_num_rx_tx_beam_switch_dl.scs_240k_hz_present) {
+      j.write_str("scs-240kHz", max_num_rx_tx_beam_switch_dl.scs_240k_hz.to_string());
     }
     j.end_obj();
   }
@@ -2552,59 +2552,59 @@ void mimo_params_per_band_s::to_json(json_writer& j) const
   if (beam_report_timing_present) {
     j.write_fieldname("beamReportTiming");
     j.start_obj();
-    if (beam_report_timing.scs_minus15k_hz_present) {
-      j.write_str("scs-15kHz", beam_report_timing.scs_minus15k_hz.to_string());
+    if (beam_report_timing.scs_15k_hz_present) {
+      j.write_str("scs-15kHz", beam_report_timing.scs_15k_hz.to_string());
     }
-    if (beam_report_timing.scs_minus30k_hz_present) {
-      j.write_str("scs-30kHz", beam_report_timing.scs_minus30k_hz.to_string());
+    if (beam_report_timing.scs_30k_hz_present) {
+      j.write_str("scs-30kHz", beam_report_timing.scs_30k_hz.to_string());
     }
-    if (beam_report_timing.scs_minus60k_hz_present) {
-      j.write_str("scs-60kHz", beam_report_timing.scs_minus60k_hz.to_string());
+    if (beam_report_timing.scs_60k_hz_present) {
+      j.write_str("scs-60kHz", beam_report_timing.scs_60k_hz.to_string());
     }
-    if (beam_report_timing.scs_minus120k_hz_present) {
-      j.write_str("scs-120kHz", beam_report_timing.scs_minus120k_hz.to_string());
+    if (beam_report_timing.scs_120k_hz_present) {
+      j.write_str("scs-120kHz", beam_report_timing.scs_120k_hz.to_string());
     }
     j.end_obj();
   }
   if (ptrs_density_recommendation_set_dl_present) {
     j.write_fieldname("ptrs-DensityRecommendationSetDL");
     j.start_obj();
-    if (ptrs_density_recommendation_set_dl.scs_minus15k_hz_present) {
+    if (ptrs_density_recommendation_set_dl.scs_15k_hz_present) {
       j.write_fieldname("scs-15kHz");
-      ptrs_density_recommendation_set_dl.scs_minus15k_hz.to_json(j);
+      ptrs_density_recommendation_set_dl.scs_15k_hz.to_json(j);
     }
-    if (ptrs_density_recommendation_set_dl.scs_minus30k_hz_present) {
+    if (ptrs_density_recommendation_set_dl.scs_30k_hz_present) {
       j.write_fieldname("scs-30kHz");
-      ptrs_density_recommendation_set_dl.scs_minus30k_hz.to_json(j);
+      ptrs_density_recommendation_set_dl.scs_30k_hz.to_json(j);
     }
-    if (ptrs_density_recommendation_set_dl.scs_minus60k_hz_present) {
+    if (ptrs_density_recommendation_set_dl.scs_60k_hz_present) {
       j.write_fieldname("scs-60kHz");
-      ptrs_density_recommendation_set_dl.scs_minus60k_hz.to_json(j);
+      ptrs_density_recommendation_set_dl.scs_60k_hz.to_json(j);
     }
-    if (ptrs_density_recommendation_set_dl.scs_minus120k_hz_present) {
+    if (ptrs_density_recommendation_set_dl.scs_120k_hz_present) {
       j.write_fieldname("scs-120kHz");
-      ptrs_density_recommendation_set_dl.scs_minus120k_hz.to_json(j);
+      ptrs_density_recommendation_set_dl.scs_120k_hz.to_json(j);
     }
     j.end_obj();
   }
   if (ptrs_density_recommendation_set_ul_present) {
     j.write_fieldname("ptrs-DensityRecommendationSetUL");
     j.start_obj();
-    if (ptrs_density_recommendation_set_ul.scs_minus15k_hz_present) {
+    if (ptrs_density_recommendation_set_ul.scs_15k_hz_present) {
       j.write_fieldname("scs-15kHz");
-      ptrs_density_recommendation_set_ul.scs_minus15k_hz.to_json(j);
+      ptrs_density_recommendation_set_ul.scs_15k_hz.to_json(j);
     }
-    if (ptrs_density_recommendation_set_ul.scs_minus30k_hz_present) {
+    if (ptrs_density_recommendation_set_ul.scs_30k_hz_present) {
       j.write_fieldname("scs-30kHz");
-      ptrs_density_recommendation_set_ul.scs_minus30k_hz.to_json(j);
+      ptrs_density_recommendation_set_ul.scs_30k_hz.to_json(j);
     }
-    if (ptrs_density_recommendation_set_ul.scs_minus60k_hz_present) {
+    if (ptrs_density_recommendation_set_ul.scs_60k_hz_present) {
       j.write_fieldname("scs-60kHz");
-      ptrs_density_recommendation_set_ul.scs_minus60k_hz.to_json(j);
+      ptrs_density_recommendation_set_ul.scs_60k_hz.to_json(j);
     }
-    if (ptrs_density_recommendation_set_ul.scs_minus120k_hz_present) {
+    if (ptrs_density_recommendation_set_ul.scs_120k_hz_present) {
       j.write_fieldname("scs-120kHz");
-      ptrs_density_recommendation_set_ul.scs_minus120k_hz.to_json(j);
+      ptrs_density_recommendation_set_ul.scs_120k_hz.to_json(j);
     }
     j.end_obj();
   }
@@ -2626,11 +2626,11 @@ void mimo_params_per_band_s::to_json(json_writer& j) const
     if (beam_switch_timing.is_present()) {
       j.write_fieldname("beamSwitchTiming");
       j.start_obj();
-      if (beam_switch_timing->scs_minus60k_hz_present) {
-        j.write_str("scs-60kHz", beam_switch_timing->scs_minus60k_hz.to_string());
+      if (beam_switch_timing->scs_60k_hz_present) {
+        j.write_str("scs-60kHz", beam_switch_timing->scs_60k_hz.to_string());
       }
-      if (beam_switch_timing->scs_minus120k_hz_present) {
-        j.write_str("scs-120kHz", beam_switch_timing->scs_minus120k_hz.to_string());
+      if (beam_switch_timing->scs_120k_hz_present) {
+        j.write_str("scs-120kHz", beam_switch_timing->scs_120k_hz.to_string());
       }
       j.end_obj();
     }
@@ -2669,17 +2669,17 @@ void mimo_params_per_band_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
-const char* mimo_params_per_band_s::tci_state_pdsch_s_::max_num_cfgured_tcistates_per_cc_opts::to_string() const
+const char* mimo_params_per_band_s::tci_state_pdsch_s_::max_num_cfg_tci_states_per_cc_opts::to_string() const
 {
   static const char* names[] = {"n4", "n8", "n16", "n32", "n64", "n128"};
   return convert_enum_idx(
-      names, 6, value, "mimo_params_per_band_s::tci_state_pdsch_s_::max_num_cfgured_tcistates_per_cc_e_");
+      names, 6, value, "mimo_params_per_band_s::tci_state_pdsch_s_::max_num_cfg_tci_states_per_cc_e_");
 }
-uint8_t mimo_params_per_band_s::tci_state_pdsch_s_::max_num_cfgured_tcistates_per_cc_opts::to_number() const
+uint8_t mimo_params_per_band_s::tci_state_pdsch_s_::max_num_cfg_tci_states_per_cc_opts::to_number() const
 {
   static const uint8_t numbers[] = {4, 8, 16, 32, 64, 128};
   return map_enum_number(
-      numbers, 6, value, "mimo_params_per_band_s::tci_state_pdsch_s_::max_num_cfgured_tcistates_per_cc_e_");
+      numbers, 6, value, "mimo_params_per_band_s::tci_state_pdsch_s_::max_num_cfg_tci_states_per_cc_e_");
 }
 
 const char* mimo_params_per_band_s::tci_state_pdsch_s_::max_num_active_tci_per_bwp_opts::to_string() const
@@ -2700,69 +2700,59 @@ const char* mimo_params_per_band_s::pusch_trans_coherence_opts::to_string() cons
   return convert_enum_idx(names, 3, value, "mimo_params_per_band_s::pusch_trans_coherence_e_");
 }
 
-const char* mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus15k_hz_opts::to_string() const
+const char* mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_15k_hz_opts::to_string() const
 {
   static const char* names[] = {"n4", "n7", "n14"};
-  return convert_enum_idx(
-      names, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus15k_hz_e_");
+  return convert_enum_idx(names, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_15k_hz_e_");
 }
-uint8_t mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus15k_hz_opts::to_number() const
+uint8_t mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_15k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {4, 7, 14};
-  return map_enum_number(
-      numbers, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus15k_hz_e_");
+  return map_enum_number(numbers, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_15k_hz_e_");
 }
 
-const char* mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus30k_hz_opts::to_string() const
+const char* mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_30k_hz_opts::to_string() const
 {
   static const char* names[] = {"n4", "n7", "n14"};
-  return convert_enum_idx(
-      names, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus30k_hz_e_");
+  return convert_enum_idx(names, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_30k_hz_e_");
 }
-uint8_t mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus30k_hz_opts::to_number() const
+uint8_t mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_30k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {4, 7, 14};
-  return map_enum_number(
-      numbers, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus30k_hz_e_");
+  return map_enum_number(numbers, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_30k_hz_e_");
 }
 
-const char* mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus60k_hz_opts::to_string() const
+const char* mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_60k_hz_opts::to_string() const
 {
   static const char* names[] = {"n4", "n7", "n14"};
-  return convert_enum_idx(
-      names, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus60k_hz_e_");
+  return convert_enum_idx(names, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_60k_hz_e_");
 }
-uint8_t mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus60k_hz_opts::to_number() const
+uint8_t mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_60k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {4, 7, 14};
-  return map_enum_number(
-      numbers, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus60k_hz_e_");
+  return map_enum_number(numbers, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_60k_hz_e_");
 }
 
-const char* mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus120k_hz_opts::to_string() const
+const char* mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_120k_hz_opts::to_string() const
 {
   static const char* names[] = {"n4", "n7", "n14"};
-  return convert_enum_idx(
-      names, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus120k_hz_e_");
+  return convert_enum_idx(names, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_120k_hz_e_");
 }
-uint8_t mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus120k_hz_opts::to_number() const
+uint8_t mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_120k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {4, 7, 14};
-  return map_enum_number(
-      numbers, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus120k_hz_e_");
+  return map_enum_number(numbers, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_120k_hz_e_");
 }
 
-const char* mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus240k_hz_opts::to_string() const
+const char* mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_240k_hz_opts::to_string() const
 {
   static const char* names[] = {"n4", "n7", "n14"};
-  return convert_enum_idx(
-      names, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus240k_hz_e_");
+  return convert_enum_idx(names, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_240k_hz_e_");
 }
-uint8_t mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus240k_hz_opts::to_number() const
+uint8_t mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_240k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {4, 7, 14};
-  return map_enum_number(
-      numbers, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_minus240k_hz_e_");
+  return map_enum_number(numbers, 3, value, "mimo_params_per_band_s::max_num_rx_tx_beam_switch_dl_s_::scs_240k_hz_e_");
 }
 
 const char* mimo_params_per_band_s::max_num_non_group_beam_report_opts::to_string() const
@@ -2789,70 +2779,70 @@ uint8_t mimo_params_per_band_s::ul_beam_management_s_::max_num_srs_res_per_set_b
       numbers, 4, value, "mimo_params_per_band_s::ul_beam_management_s_::max_num_srs_res_per_set_bm_e_");
 }
 
-const char* mimo_params_per_band_s::beam_report_timing_s_::scs_minus15k_hz_opts::to_string() const
+const char* mimo_params_per_band_s::beam_report_timing_s_::scs_15k_hz_opts::to_string() const
 {
   static const char* names[] = {"sym2", "sym4", "sym8"};
-  return convert_enum_idx(names, 3, value, "mimo_params_per_band_s::beam_report_timing_s_::scs_minus15k_hz_e_");
+  return convert_enum_idx(names, 3, value, "mimo_params_per_band_s::beam_report_timing_s_::scs_15k_hz_e_");
 }
-uint8_t mimo_params_per_band_s::beam_report_timing_s_::scs_minus15k_hz_opts::to_number() const
+uint8_t mimo_params_per_band_s::beam_report_timing_s_::scs_15k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {2, 4, 8};
-  return map_enum_number(numbers, 3, value, "mimo_params_per_band_s::beam_report_timing_s_::scs_minus15k_hz_e_");
+  return map_enum_number(numbers, 3, value, "mimo_params_per_band_s::beam_report_timing_s_::scs_15k_hz_e_");
 }
 
-const char* mimo_params_per_band_s::beam_report_timing_s_::scs_minus30k_hz_opts::to_string() const
+const char* mimo_params_per_band_s::beam_report_timing_s_::scs_30k_hz_opts::to_string() const
 {
   static const char* names[] = {"sym4", "sym8", "sym14", "sym28"};
-  return convert_enum_idx(names, 4, value, "mimo_params_per_band_s::beam_report_timing_s_::scs_minus30k_hz_e_");
+  return convert_enum_idx(names, 4, value, "mimo_params_per_band_s::beam_report_timing_s_::scs_30k_hz_e_");
 }
-uint8_t mimo_params_per_band_s::beam_report_timing_s_::scs_minus30k_hz_opts::to_number() const
+uint8_t mimo_params_per_band_s::beam_report_timing_s_::scs_30k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {4, 8, 14, 28};
-  return map_enum_number(numbers, 4, value, "mimo_params_per_band_s::beam_report_timing_s_::scs_minus30k_hz_e_");
+  return map_enum_number(numbers, 4, value, "mimo_params_per_band_s::beam_report_timing_s_::scs_30k_hz_e_");
 }
 
-const char* mimo_params_per_band_s::beam_report_timing_s_::scs_minus60k_hz_opts::to_string() const
+const char* mimo_params_per_band_s::beam_report_timing_s_::scs_60k_hz_opts::to_string() const
 {
   static const char* names[] = {"sym8", "sym14", "sym28"};
-  return convert_enum_idx(names, 3, value, "mimo_params_per_band_s::beam_report_timing_s_::scs_minus60k_hz_e_");
+  return convert_enum_idx(names, 3, value, "mimo_params_per_band_s::beam_report_timing_s_::scs_60k_hz_e_");
 }
-uint8_t mimo_params_per_band_s::beam_report_timing_s_::scs_minus60k_hz_opts::to_number() const
+uint8_t mimo_params_per_band_s::beam_report_timing_s_::scs_60k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {8, 14, 28};
-  return map_enum_number(numbers, 3, value, "mimo_params_per_band_s::beam_report_timing_s_::scs_minus60k_hz_e_");
+  return map_enum_number(numbers, 3, value, "mimo_params_per_band_s::beam_report_timing_s_::scs_60k_hz_e_");
 }
 
-const char* mimo_params_per_band_s::beam_report_timing_s_::scs_minus120k_hz_opts::to_string() const
+const char* mimo_params_per_band_s::beam_report_timing_s_::scs_120k_hz_opts::to_string() const
 {
   static const char* names[] = {"sym14", "sym28", "sym56"};
-  return convert_enum_idx(names, 3, value, "mimo_params_per_band_s::beam_report_timing_s_::scs_minus120k_hz_e_");
+  return convert_enum_idx(names, 3, value, "mimo_params_per_band_s::beam_report_timing_s_::scs_120k_hz_e_");
 }
-uint8_t mimo_params_per_band_s::beam_report_timing_s_::scs_minus120k_hz_opts::to_number() const
+uint8_t mimo_params_per_band_s::beam_report_timing_s_::scs_120k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {14, 28, 56};
-  return map_enum_number(numbers, 3, value, "mimo_params_per_band_s::beam_report_timing_s_::scs_minus120k_hz_e_");
+  return map_enum_number(numbers, 3, value, "mimo_params_per_band_s::beam_report_timing_s_::scs_120k_hz_e_");
 }
 
-const char* mimo_params_per_band_s::beam_switch_timing_s_::scs_minus60k_hz_opts::to_string() const
+const char* mimo_params_per_band_s::beam_switch_timing_s_::scs_60k_hz_opts::to_string() const
 {
   static const char* names[] = {"sym14", "sym28", "sym48", "sym224", "sym336"};
-  return convert_enum_idx(names, 5, value, "mimo_params_per_band_s::beam_switch_timing_s_::scs_minus60k_hz_e_");
+  return convert_enum_idx(names, 5, value, "mimo_params_per_band_s::beam_switch_timing_s_::scs_60k_hz_e_");
 }
-uint16_t mimo_params_per_band_s::beam_switch_timing_s_::scs_minus60k_hz_opts::to_number() const
+uint16_t mimo_params_per_band_s::beam_switch_timing_s_::scs_60k_hz_opts::to_number() const
 {
   static const uint16_t numbers[] = {14, 28, 48, 224, 336};
-  return map_enum_number(numbers, 5, value, "mimo_params_per_band_s::beam_switch_timing_s_::scs_minus60k_hz_e_");
+  return map_enum_number(numbers, 5, value, "mimo_params_per_band_s::beam_switch_timing_s_::scs_60k_hz_e_");
 }
 
-const char* mimo_params_per_band_s::beam_switch_timing_s_::scs_minus120k_hz_opts::to_string() const
+const char* mimo_params_per_band_s::beam_switch_timing_s_::scs_120k_hz_opts::to_string() const
 {
   static const char* names[] = {"sym14", "sym28", "sym48", "sym224", "sym336"};
-  return convert_enum_idx(names, 5, value, "mimo_params_per_band_s::beam_switch_timing_s_::scs_minus120k_hz_e_");
+  return convert_enum_idx(names, 5, value, "mimo_params_per_band_s::beam_switch_timing_s_::scs_120k_hz_e_");
 }
-uint16_t mimo_params_per_band_s::beam_switch_timing_s_::scs_minus120k_hz_opts::to_number() const
+uint16_t mimo_params_per_band_s::beam_switch_timing_s_::scs_120k_hz_opts::to_number() const
 {
   static const uint16_t numbers[] = {14, 28, 48, 224, 336};
-  return map_enum_number(numbers, 5, value, "mimo_params_per_band_s::beam_switch_timing_s_::scs_minus120k_hz_e_");
+  return map_enum_number(numbers, 5, value, "mimo_params_per_band_s::beam_switch_timing_s_::scs_120k_hz_e_");
 }
 
 // BandNR ::= SEQUENCE
@@ -2867,8 +2857,8 @@ SRSASN_CODE band_nr_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(bwp_same_numerology_present, 1));
   HANDLE_CODE(bref.pack(bwp_diff_numerology_present, 1));
   HANDLE_CODE(bref.pack(cross_carrier_sched_same_scs_present, 1));
-  HANDLE_CODE(bref.pack(pdsch_minus256_qam_fr2_present, 1));
-  HANDLE_CODE(bref.pack(pusch_minus256_qam_present, 1));
+  HANDLE_CODE(bref.pack(pdsch_256_qam_fr2_present, 1));
+  HANDLE_CODE(bref.pack(pusch_256_qam_present, 1));
   HANDLE_CODE(bref.pack(ue_pwr_class_present, 1));
   HANDLE_CODE(bref.pack(rate_matching_lte_crs_present, 1));
   HANDLE_CODE(bref.pack(ch_bws_dl_present, 1));
@@ -2961,8 +2951,8 @@ SRSASN_CODE band_nr_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(bwp_same_numerology_present, 1));
   HANDLE_CODE(bref.unpack(bwp_diff_numerology_present, 1));
   HANDLE_CODE(bref.unpack(cross_carrier_sched_same_scs_present, 1));
-  HANDLE_CODE(bref.unpack(pdsch_minus256_qam_fr2_present, 1));
-  HANDLE_CODE(bref.unpack(pusch_minus256_qam_present, 1));
+  HANDLE_CODE(bref.unpack(pdsch_256_qam_fr2_present, 1));
+  HANDLE_CODE(bref.unpack(pusch_256_qam_present, 1));
   HANDLE_CODE(bref.unpack(ue_pwr_class_present, 1));
   HANDLE_CODE(bref.unpack(rate_matching_lte_crs_present, 1));
   HANDLE_CODE(bref.unpack(ch_bws_dl_present, 1));
@@ -3070,10 +3060,10 @@ void band_nr_s::to_json(json_writer& j) const
   if (cross_carrier_sched_same_scs_present) {
     j.write_str("crossCarrierScheduling-SameSCS", "supported");
   }
-  if (pdsch_minus256_qam_fr2_present) {
+  if (pdsch_256_qam_fr2_present) {
     j.write_str("pdsch-256QAM-FR2", "supported");
   }
-  if (pusch_minus256_qam_present) {
+  if (pusch_256_qam_present) {
     j.write_str("pusch-256QAM", "supported");
   }
   if (ue_pwr_class_present) {
@@ -3224,25 +3214,25 @@ void band_nr_s::ch_bws_dl_c_::to_json(json_writer& j) const
     case types::fr1:
       j.write_fieldname("fr1");
       j.start_obj();
-      if (c.get<fr1_s_>().scs_minus15k_hz_present) {
-        j.write_str("scs-15kHz", c.get<fr1_s_>().scs_minus15k_hz.to_string());
+      if (c.get<fr1_s_>().scs_15k_hz_present) {
+        j.write_str("scs-15kHz", c.get<fr1_s_>().scs_15k_hz.to_string());
       }
-      if (c.get<fr1_s_>().scs_minus30k_hz_present) {
-        j.write_str("scs-30kHz", c.get<fr1_s_>().scs_minus30k_hz.to_string());
+      if (c.get<fr1_s_>().scs_30k_hz_present) {
+        j.write_str("scs-30kHz", c.get<fr1_s_>().scs_30k_hz.to_string());
       }
-      if (c.get<fr1_s_>().scs_minus60k_hz_present) {
-        j.write_str("scs-60kHz", c.get<fr1_s_>().scs_minus60k_hz.to_string());
+      if (c.get<fr1_s_>().scs_60k_hz_present) {
+        j.write_str("scs-60kHz", c.get<fr1_s_>().scs_60k_hz.to_string());
       }
       j.end_obj();
       break;
     case types::fr2:
       j.write_fieldname("fr2");
       j.start_obj();
-      if (c.get<fr2_s_>().scs_minus60k_hz_present) {
-        j.write_str("scs-60kHz", c.get<fr2_s_>().scs_minus60k_hz.to_string());
+      if (c.get<fr2_s_>().scs_60k_hz_present) {
+        j.write_str("scs-60kHz", c.get<fr2_s_>().scs_60k_hz.to_string());
       }
-      if (c.get<fr2_s_>().scs_minus120k_hz_present) {
-        j.write_str("scs-120kHz", c.get<fr2_s_>().scs_minus120k_hz.to_string());
+      if (c.get<fr2_s_>().scs_120k_hz_present) {
+        j.write_str("scs-120kHz", c.get<fr2_s_>().scs_120k_hz.to_string());
       }
       j.end_obj();
       break;
@@ -3256,27 +3246,27 @@ SRSASN_CODE band_nr_s::ch_bws_dl_c_::pack(bit_ref& bref) const
   type_.pack(bref);
   switch (type_) {
     case types::fr1:
-      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_minus15k_hz_present, 1));
-      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_minus30k_hz_present, 1));
-      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_minus60k_hz_present, 1));
-      if (c.get<fr1_s_>().scs_minus15k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus15k_hz.pack(bref));
+      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_15k_hz_present, 1));
+      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_30k_hz_present, 1));
+      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_60k_hz_present, 1));
+      if (c.get<fr1_s_>().scs_15k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_15k_hz.pack(bref));
       }
-      if (c.get<fr1_s_>().scs_minus30k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus30k_hz.pack(bref));
+      if (c.get<fr1_s_>().scs_30k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_30k_hz.pack(bref));
       }
-      if (c.get<fr1_s_>().scs_minus60k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus60k_hz.pack(bref));
+      if (c.get<fr1_s_>().scs_60k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_60k_hz.pack(bref));
       }
       break;
     case types::fr2:
-      HANDLE_CODE(bref.pack(c.get<fr2_s_>().scs_minus60k_hz_present, 1));
-      HANDLE_CODE(bref.pack(c.get<fr2_s_>().scs_minus120k_hz_present, 1));
-      if (c.get<fr2_s_>().scs_minus60k_hz_present) {
-        HANDLE_CODE(c.get<fr2_s_>().scs_minus60k_hz.pack(bref));
+      HANDLE_CODE(bref.pack(c.get<fr2_s_>().scs_60k_hz_present, 1));
+      HANDLE_CODE(bref.pack(c.get<fr2_s_>().scs_120k_hz_present, 1));
+      if (c.get<fr2_s_>().scs_60k_hz_present) {
+        HANDLE_CODE(c.get<fr2_s_>().scs_60k_hz.pack(bref));
       }
-      if (c.get<fr2_s_>().scs_minus120k_hz_present) {
-        HANDLE_CODE(c.get<fr2_s_>().scs_minus120k_hz.pack(bref));
+      if (c.get<fr2_s_>().scs_120k_hz_present) {
+        HANDLE_CODE(c.get<fr2_s_>().scs_120k_hz.pack(bref));
       }
       break;
     default:
@@ -3292,27 +3282,27 @@ SRSASN_CODE band_nr_s::ch_bws_dl_c_::unpack(cbit_ref& bref)
   set(e);
   switch (type_) {
     case types::fr1:
-      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_minus15k_hz_present, 1));
-      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_minus30k_hz_present, 1));
-      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_minus60k_hz_present, 1));
-      if (c.get<fr1_s_>().scs_minus15k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus15k_hz.unpack(bref));
+      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_15k_hz_present, 1));
+      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_30k_hz_present, 1));
+      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_60k_hz_present, 1));
+      if (c.get<fr1_s_>().scs_15k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_15k_hz.unpack(bref));
       }
-      if (c.get<fr1_s_>().scs_minus30k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus30k_hz.unpack(bref));
+      if (c.get<fr1_s_>().scs_30k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_30k_hz.unpack(bref));
       }
-      if (c.get<fr1_s_>().scs_minus60k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus60k_hz.unpack(bref));
+      if (c.get<fr1_s_>().scs_60k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_60k_hz.unpack(bref));
       }
       break;
     case types::fr2:
-      HANDLE_CODE(bref.unpack(c.get<fr2_s_>().scs_minus60k_hz_present, 1));
-      HANDLE_CODE(bref.unpack(c.get<fr2_s_>().scs_minus120k_hz_present, 1));
-      if (c.get<fr2_s_>().scs_minus60k_hz_present) {
-        HANDLE_CODE(c.get<fr2_s_>().scs_minus60k_hz.unpack(bref));
+      HANDLE_CODE(bref.unpack(c.get<fr2_s_>().scs_60k_hz_present, 1));
+      HANDLE_CODE(bref.unpack(c.get<fr2_s_>().scs_120k_hz_present, 1));
+      if (c.get<fr2_s_>().scs_60k_hz_present) {
+        HANDLE_CODE(c.get<fr2_s_>().scs_60k_hz.unpack(bref));
       }
-      if (c.get<fr2_s_>().scs_minus120k_hz_present) {
-        HANDLE_CODE(c.get<fr2_s_>().scs_minus120k_hz.unpack(bref));
+      if (c.get<fr2_s_>().scs_120k_hz_present) {
+        HANDLE_CODE(c.get<fr2_s_>().scs_120k_hz.unpack(bref));
       }
       break;
     default:
@@ -3406,25 +3396,25 @@ void band_nr_s::ch_bws_ul_c_::to_json(json_writer& j) const
     case types::fr1:
       j.write_fieldname("fr1");
       j.start_obj();
-      if (c.get<fr1_s_>().scs_minus15k_hz_present) {
-        j.write_str("scs-15kHz", c.get<fr1_s_>().scs_minus15k_hz.to_string());
+      if (c.get<fr1_s_>().scs_15k_hz_present) {
+        j.write_str("scs-15kHz", c.get<fr1_s_>().scs_15k_hz.to_string());
       }
-      if (c.get<fr1_s_>().scs_minus30k_hz_present) {
-        j.write_str("scs-30kHz", c.get<fr1_s_>().scs_minus30k_hz.to_string());
+      if (c.get<fr1_s_>().scs_30k_hz_present) {
+        j.write_str("scs-30kHz", c.get<fr1_s_>().scs_30k_hz.to_string());
       }
-      if (c.get<fr1_s_>().scs_minus60k_hz_present) {
-        j.write_str("scs-60kHz", c.get<fr1_s_>().scs_minus60k_hz.to_string());
+      if (c.get<fr1_s_>().scs_60k_hz_present) {
+        j.write_str("scs-60kHz", c.get<fr1_s_>().scs_60k_hz.to_string());
       }
       j.end_obj();
       break;
     case types::fr2:
       j.write_fieldname("fr2");
       j.start_obj();
-      if (c.get<fr2_s_>().scs_minus60k_hz_present) {
-        j.write_str("scs-60kHz", c.get<fr2_s_>().scs_minus60k_hz.to_string());
+      if (c.get<fr2_s_>().scs_60k_hz_present) {
+        j.write_str("scs-60kHz", c.get<fr2_s_>().scs_60k_hz.to_string());
       }
-      if (c.get<fr2_s_>().scs_minus120k_hz_present) {
-        j.write_str("scs-120kHz", c.get<fr2_s_>().scs_minus120k_hz.to_string());
+      if (c.get<fr2_s_>().scs_120k_hz_present) {
+        j.write_str("scs-120kHz", c.get<fr2_s_>().scs_120k_hz.to_string());
       }
       j.end_obj();
       break;
@@ -3438,27 +3428,27 @@ SRSASN_CODE band_nr_s::ch_bws_ul_c_::pack(bit_ref& bref) const
   type_.pack(bref);
   switch (type_) {
     case types::fr1:
-      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_minus15k_hz_present, 1));
-      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_minus30k_hz_present, 1));
-      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_minus60k_hz_present, 1));
-      if (c.get<fr1_s_>().scs_minus15k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus15k_hz.pack(bref));
+      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_15k_hz_present, 1));
+      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_30k_hz_present, 1));
+      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_60k_hz_present, 1));
+      if (c.get<fr1_s_>().scs_15k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_15k_hz.pack(bref));
       }
-      if (c.get<fr1_s_>().scs_minus30k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus30k_hz.pack(bref));
+      if (c.get<fr1_s_>().scs_30k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_30k_hz.pack(bref));
       }
-      if (c.get<fr1_s_>().scs_minus60k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus60k_hz.pack(bref));
+      if (c.get<fr1_s_>().scs_60k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_60k_hz.pack(bref));
       }
       break;
     case types::fr2:
-      HANDLE_CODE(bref.pack(c.get<fr2_s_>().scs_minus60k_hz_present, 1));
-      HANDLE_CODE(bref.pack(c.get<fr2_s_>().scs_minus120k_hz_present, 1));
-      if (c.get<fr2_s_>().scs_minus60k_hz_present) {
-        HANDLE_CODE(c.get<fr2_s_>().scs_minus60k_hz.pack(bref));
+      HANDLE_CODE(bref.pack(c.get<fr2_s_>().scs_60k_hz_present, 1));
+      HANDLE_CODE(bref.pack(c.get<fr2_s_>().scs_120k_hz_present, 1));
+      if (c.get<fr2_s_>().scs_60k_hz_present) {
+        HANDLE_CODE(c.get<fr2_s_>().scs_60k_hz.pack(bref));
       }
-      if (c.get<fr2_s_>().scs_minus120k_hz_present) {
-        HANDLE_CODE(c.get<fr2_s_>().scs_minus120k_hz.pack(bref));
+      if (c.get<fr2_s_>().scs_120k_hz_present) {
+        HANDLE_CODE(c.get<fr2_s_>().scs_120k_hz.pack(bref));
       }
       break;
     default:
@@ -3474,27 +3464,27 @@ SRSASN_CODE band_nr_s::ch_bws_ul_c_::unpack(cbit_ref& bref)
   set(e);
   switch (type_) {
     case types::fr1:
-      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_minus15k_hz_present, 1));
-      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_minus30k_hz_present, 1));
-      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_minus60k_hz_present, 1));
-      if (c.get<fr1_s_>().scs_minus15k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus15k_hz.unpack(bref));
+      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_15k_hz_present, 1));
+      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_30k_hz_present, 1));
+      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_60k_hz_present, 1));
+      if (c.get<fr1_s_>().scs_15k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_15k_hz.unpack(bref));
       }
-      if (c.get<fr1_s_>().scs_minus30k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus30k_hz.unpack(bref));
+      if (c.get<fr1_s_>().scs_30k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_30k_hz.unpack(bref));
       }
-      if (c.get<fr1_s_>().scs_minus60k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus60k_hz.unpack(bref));
+      if (c.get<fr1_s_>().scs_60k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_60k_hz.unpack(bref));
       }
       break;
     case types::fr2:
-      HANDLE_CODE(bref.unpack(c.get<fr2_s_>().scs_minus60k_hz_present, 1));
-      HANDLE_CODE(bref.unpack(c.get<fr2_s_>().scs_minus120k_hz_present, 1));
-      if (c.get<fr2_s_>().scs_minus60k_hz_present) {
-        HANDLE_CODE(c.get<fr2_s_>().scs_minus60k_hz.unpack(bref));
+      HANDLE_CODE(bref.unpack(c.get<fr2_s_>().scs_60k_hz_present, 1));
+      HANDLE_CODE(bref.unpack(c.get<fr2_s_>().scs_120k_hz_present, 1));
+      if (c.get<fr2_s_>().scs_60k_hz_present) {
+        HANDLE_CODE(c.get<fr2_s_>().scs_60k_hz.unpack(bref));
       }
-      if (c.get<fr2_s_>().scs_minus120k_hz_present) {
-        HANDLE_CODE(c.get<fr2_s_>().scs_minus120k_hz.unpack(bref));
+      if (c.get<fr2_s_>().scs_120k_hz_present) {
+        HANDLE_CODE(c.get<fr2_s_>().scs_120k_hz.unpack(bref));
       }
       break;
     default:
@@ -3610,25 +3600,25 @@ void band_nr_s::ch_bws_dl_v1590_c_::to_json(json_writer& j) const
     case types::fr1:
       j.write_fieldname("fr1");
       j.start_obj();
-      if (c.get<fr1_s_>().scs_minus15k_hz_present) {
-        j.write_str("scs-15kHz", c.get<fr1_s_>().scs_minus15k_hz.to_string());
+      if (c.get<fr1_s_>().scs_15k_hz_present) {
+        j.write_str("scs-15kHz", c.get<fr1_s_>().scs_15k_hz.to_string());
       }
-      if (c.get<fr1_s_>().scs_minus30k_hz_present) {
-        j.write_str("scs-30kHz", c.get<fr1_s_>().scs_minus30k_hz.to_string());
+      if (c.get<fr1_s_>().scs_30k_hz_present) {
+        j.write_str("scs-30kHz", c.get<fr1_s_>().scs_30k_hz.to_string());
       }
-      if (c.get<fr1_s_>().scs_minus60k_hz_present) {
-        j.write_str("scs-60kHz", c.get<fr1_s_>().scs_minus60k_hz.to_string());
+      if (c.get<fr1_s_>().scs_60k_hz_present) {
+        j.write_str("scs-60kHz", c.get<fr1_s_>().scs_60k_hz.to_string());
       }
       j.end_obj();
       break;
     case types::fr2:
       j.write_fieldname("fr2");
       j.start_obj();
-      if (c.get<fr2_s_>().scs_minus60k_hz_present) {
-        j.write_str("scs-60kHz", c.get<fr2_s_>().scs_minus60k_hz.to_string());
+      if (c.get<fr2_s_>().scs_60k_hz_present) {
+        j.write_str("scs-60kHz", c.get<fr2_s_>().scs_60k_hz.to_string());
       }
-      if (c.get<fr2_s_>().scs_minus120k_hz_present) {
-        j.write_str("scs-120kHz", c.get<fr2_s_>().scs_minus120k_hz.to_string());
+      if (c.get<fr2_s_>().scs_120k_hz_present) {
+        j.write_str("scs-120kHz", c.get<fr2_s_>().scs_120k_hz.to_string());
       }
       j.end_obj();
       break;
@@ -3642,27 +3632,27 @@ SRSASN_CODE band_nr_s::ch_bws_dl_v1590_c_::pack(bit_ref& bref) const
   type_.pack(bref);
   switch (type_) {
     case types::fr1:
-      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_minus15k_hz_present, 1));
-      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_minus30k_hz_present, 1));
-      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_minus60k_hz_present, 1));
-      if (c.get<fr1_s_>().scs_minus15k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus15k_hz.pack(bref));
+      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_15k_hz_present, 1));
+      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_30k_hz_present, 1));
+      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_60k_hz_present, 1));
+      if (c.get<fr1_s_>().scs_15k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_15k_hz.pack(bref));
       }
-      if (c.get<fr1_s_>().scs_minus30k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus30k_hz.pack(bref));
+      if (c.get<fr1_s_>().scs_30k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_30k_hz.pack(bref));
       }
-      if (c.get<fr1_s_>().scs_minus60k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus60k_hz.pack(bref));
+      if (c.get<fr1_s_>().scs_60k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_60k_hz.pack(bref));
       }
       break;
     case types::fr2:
-      HANDLE_CODE(bref.pack(c.get<fr2_s_>().scs_minus60k_hz_present, 1));
-      HANDLE_CODE(bref.pack(c.get<fr2_s_>().scs_minus120k_hz_present, 1));
-      if (c.get<fr2_s_>().scs_minus60k_hz_present) {
-        HANDLE_CODE(c.get<fr2_s_>().scs_minus60k_hz.pack(bref));
+      HANDLE_CODE(bref.pack(c.get<fr2_s_>().scs_60k_hz_present, 1));
+      HANDLE_CODE(bref.pack(c.get<fr2_s_>().scs_120k_hz_present, 1));
+      if (c.get<fr2_s_>().scs_60k_hz_present) {
+        HANDLE_CODE(c.get<fr2_s_>().scs_60k_hz.pack(bref));
       }
-      if (c.get<fr2_s_>().scs_minus120k_hz_present) {
-        HANDLE_CODE(c.get<fr2_s_>().scs_minus120k_hz.pack(bref));
+      if (c.get<fr2_s_>().scs_120k_hz_present) {
+        HANDLE_CODE(c.get<fr2_s_>().scs_120k_hz.pack(bref));
       }
       break;
     default:
@@ -3678,27 +3668,27 @@ SRSASN_CODE band_nr_s::ch_bws_dl_v1590_c_::unpack(cbit_ref& bref)
   set(e);
   switch (type_) {
     case types::fr1:
-      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_minus15k_hz_present, 1));
-      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_minus30k_hz_present, 1));
-      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_minus60k_hz_present, 1));
-      if (c.get<fr1_s_>().scs_minus15k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus15k_hz.unpack(bref));
+      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_15k_hz_present, 1));
+      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_30k_hz_present, 1));
+      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_60k_hz_present, 1));
+      if (c.get<fr1_s_>().scs_15k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_15k_hz.unpack(bref));
       }
-      if (c.get<fr1_s_>().scs_minus30k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus30k_hz.unpack(bref));
+      if (c.get<fr1_s_>().scs_30k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_30k_hz.unpack(bref));
       }
-      if (c.get<fr1_s_>().scs_minus60k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus60k_hz.unpack(bref));
+      if (c.get<fr1_s_>().scs_60k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_60k_hz.unpack(bref));
       }
       break;
     case types::fr2:
-      HANDLE_CODE(bref.unpack(c.get<fr2_s_>().scs_minus60k_hz_present, 1));
-      HANDLE_CODE(bref.unpack(c.get<fr2_s_>().scs_minus120k_hz_present, 1));
-      if (c.get<fr2_s_>().scs_minus60k_hz_present) {
-        HANDLE_CODE(c.get<fr2_s_>().scs_minus60k_hz.unpack(bref));
+      HANDLE_CODE(bref.unpack(c.get<fr2_s_>().scs_60k_hz_present, 1));
+      HANDLE_CODE(bref.unpack(c.get<fr2_s_>().scs_120k_hz_present, 1));
+      if (c.get<fr2_s_>().scs_60k_hz_present) {
+        HANDLE_CODE(c.get<fr2_s_>().scs_60k_hz.unpack(bref));
       }
-      if (c.get<fr2_s_>().scs_minus120k_hz_present) {
-        HANDLE_CODE(c.get<fr2_s_>().scs_minus120k_hz.unpack(bref));
+      if (c.get<fr2_s_>().scs_120k_hz_present) {
+        HANDLE_CODE(c.get<fr2_s_>().scs_120k_hz.unpack(bref));
       }
       break;
     default:
@@ -3792,25 +3782,25 @@ void band_nr_s::ch_bws_ul_v1590_c_::to_json(json_writer& j) const
     case types::fr1:
       j.write_fieldname("fr1");
       j.start_obj();
-      if (c.get<fr1_s_>().scs_minus15k_hz_present) {
-        j.write_str("scs-15kHz", c.get<fr1_s_>().scs_minus15k_hz.to_string());
+      if (c.get<fr1_s_>().scs_15k_hz_present) {
+        j.write_str("scs-15kHz", c.get<fr1_s_>().scs_15k_hz.to_string());
       }
-      if (c.get<fr1_s_>().scs_minus30k_hz_present) {
-        j.write_str("scs-30kHz", c.get<fr1_s_>().scs_minus30k_hz.to_string());
+      if (c.get<fr1_s_>().scs_30k_hz_present) {
+        j.write_str("scs-30kHz", c.get<fr1_s_>().scs_30k_hz.to_string());
       }
-      if (c.get<fr1_s_>().scs_minus60k_hz_present) {
-        j.write_str("scs-60kHz", c.get<fr1_s_>().scs_minus60k_hz.to_string());
+      if (c.get<fr1_s_>().scs_60k_hz_present) {
+        j.write_str("scs-60kHz", c.get<fr1_s_>().scs_60k_hz.to_string());
       }
       j.end_obj();
       break;
     case types::fr2:
       j.write_fieldname("fr2");
       j.start_obj();
-      if (c.get<fr2_s_>().scs_minus60k_hz_present) {
-        j.write_str("scs-60kHz", c.get<fr2_s_>().scs_minus60k_hz.to_string());
+      if (c.get<fr2_s_>().scs_60k_hz_present) {
+        j.write_str("scs-60kHz", c.get<fr2_s_>().scs_60k_hz.to_string());
       }
-      if (c.get<fr2_s_>().scs_minus120k_hz_present) {
-        j.write_str("scs-120kHz", c.get<fr2_s_>().scs_minus120k_hz.to_string());
+      if (c.get<fr2_s_>().scs_120k_hz_present) {
+        j.write_str("scs-120kHz", c.get<fr2_s_>().scs_120k_hz.to_string());
       }
       j.end_obj();
       break;
@@ -3824,27 +3814,27 @@ SRSASN_CODE band_nr_s::ch_bws_ul_v1590_c_::pack(bit_ref& bref) const
   type_.pack(bref);
   switch (type_) {
     case types::fr1:
-      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_minus15k_hz_present, 1));
-      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_minus30k_hz_present, 1));
-      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_minus60k_hz_present, 1));
-      if (c.get<fr1_s_>().scs_minus15k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus15k_hz.pack(bref));
+      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_15k_hz_present, 1));
+      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_30k_hz_present, 1));
+      HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_60k_hz_present, 1));
+      if (c.get<fr1_s_>().scs_15k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_15k_hz.pack(bref));
       }
-      if (c.get<fr1_s_>().scs_minus30k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus30k_hz.pack(bref));
+      if (c.get<fr1_s_>().scs_30k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_30k_hz.pack(bref));
       }
-      if (c.get<fr1_s_>().scs_minus60k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus60k_hz.pack(bref));
+      if (c.get<fr1_s_>().scs_60k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_60k_hz.pack(bref));
       }
       break;
     case types::fr2:
-      HANDLE_CODE(bref.pack(c.get<fr2_s_>().scs_minus60k_hz_present, 1));
-      HANDLE_CODE(bref.pack(c.get<fr2_s_>().scs_minus120k_hz_present, 1));
-      if (c.get<fr2_s_>().scs_minus60k_hz_present) {
-        HANDLE_CODE(c.get<fr2_s_>().scs_minus60k_hz.pack(bref));
+      HANDLE_CODE(bref.pack(c.get<fr2_s_>().scs_60k_hz_present, 1));
+      HANDLE_CODE(bref.pack(c.get<fr2_s_>().scs_120k_hz_present, 1));
+      if (c.get<fr2_s_>().scs_60k_hz_present) {
+        HANDLE_CODE(c.get<fr2_s_>().scs_60k_hz.pack(bref));
       }
-      if (c.get<fr2_s_>().scs_minus120k_hz_present) {
-        HANDLE_CODE(c.get<fr2_s_>().scs_minus120k_hz.pack(bref));
+      if (c.get<fr2_s_>().scs_120k_hz_present) {
+        HANDLE_CODE(c.get<fr2_s_>().scs_120k_hz.pack(bref));
       }
       break;
     default:
@@ -3860,27 +3850,27 @@ SRSASN_CODE band_nr_s::ch_bws_ul_v1590_c_::unpack(cbit_ref& bref)
   set(e);
   switch (type_) {
     case types::fr1:
-      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_minus15k_hz_present, 1));
-      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_minus30k_hz_present, 1));
-      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_minus60k_hz_present, 1));
-      if (c.get<fr1_s_>().scs_minus15k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus15k_hz.unpack(bref));
+      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_15k_hz_present, 1));
+      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_30k_hz_present, 1));
+      HANDLE_CODE(bref.unpack(c.get<fr1_s_>().scs_60k_hz_present, 1));
+      if (c.get<fr1_s_>().scs_15k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_15k_hz.unpack(bref));
       }
-      if (c.get<fr1_s_>().scs_minus30k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus30k_hz.unpack(bref));
+      if (c.get<fr1_s_>().scs_30k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_30k_hz.unpack(bref));
       }
-      if (c.get<fr1_s_>().scs_minus60k_hz_present) {
-        HANDLE_CODE(c.get<fr1_s_>().scs_minus60k_hz.unpack(bref));
+      if (c.get<fr1_s_>().scs_60k_hz_present) {
+        HANDLE_CODE(c.get<fr1_s_>().scs_60k_hz.unpack(bref));
       }
       break;
     case types::fr2:
-      HANDLE_CODE(bref.unpack(c.get<fr2_s_>().scs_minus60k_hz_present, 1));
-      HANDLE_CODE(bref.unpack(c.get<fr2_s_>().scs_minus120k_hz_present, 1));
-      if (c.get<fr2_s_>().scs_minus60k_hz_present) {
-        HANDLE_CODE(c.get<fr2_s_>().scs_minus60k_hz.unpack(bref));
+      HANDLE_CODE(bref.unpack(c.get<fr2_s_>().scs_60k_hz_present, 1));
+      HANDLE_CODE(bref.unpack(c.get<fr2_s_>().scs_120k_hz_present, 1));
+      if (c.get<fr2_s_>().scs_60k_hz_present) {
+        HANDLE_CODE(c.get<fr2_s_>().scs_60k_hz.unpack(bref));
       }
-      if (c.get<fr2_s_>().scs_minus120k_hz_present) {
-        HANDLE_CODE(c.get<fr2_s_>().scs_minus120k_hz.unpack(bref));
+      if (c.get<fr2_s_>().scs_120k_hz_present) {
+        HANDLE_CODE(c.get<fr2_s_>().scs_120k_hz.unpack(bref));
       }
       break;
     default:
@@ -4517,7 +4507,7 @@ SRSASN_CODE feature_set_dl_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(scell_without_ssb_present, 1));
   HANDLE_CODE(bref.pack(csi_rs_meas_scell_without_ssb_present, 1));
   HANDLE_CODE(bref.pack(dummy1_present, 1));
-  HANDLE_CODE(bref.pack(type1_minus3_css_present, 1));
+  HANDLE_CODE(bref.pack(type1_3_css_present, 1));
   HANDLE_CODE(bref.pack(pdcch_monitoring_any_occasions_present, 1));
   HANDLE_CODE(bref.pack(dummy2_present, 1));
   HANDLE_CODE(bref.pack(ue_specific_ul_dl_assign_present, 1));
@@ -4541,31 +4531,31 @@ SRSASN_CODE feature_set_dl_s::pack(bit_ref& bref) const
     HANDLE_CODE(pdcch_monitoring_any_occasions.pack(bref));
   }
   if (time_dur_for_qcl_present) {
-    HANDLE_CODE(bref.pack(time_dur_for_qcl.scs_minus60k_hz_present, 1));
-    HANDLE_CODE(bref.pack(time_dur_for_qcl.scs_minus120k_hz_present, 1));
-    if (time_dur_for_qcl.scs_minus60k_hz_present) {
-      HANDLE_CODE(time_dur_for_qcl.scs_minus60k_hz.pack(bref));
+    HANDLE_CODE(bref.pack(time_dur_for_qcl.scs_60k_hz_present, 1));
+    HANDLE_CODE(bref.pack(time_dur_for_qcl.scs_120k_hz_present, 1));
+    if (time_dur_for_qcl.scs_60k_hz_present) {
+      HANDLE_CODE(time_dur_for_qcl.scs_60k_hz.pack(bref));
     }
-    if (time_dur_for_qcl.scs_minus120k_hz_present) {
-      HANDLE_CODE(time_dur_for_qcl.scs_minus120k_hz.pack(bref));
+    if (time_dur_for_qcl.scs_120k_hz_present) {
+      HANDLE_CODE(time_dur_for_qcl.scs_120k_hz.pack(bref));
     }
   }
   if (pdsch_processing_type1_different_tb_per_slot_present) {
-    HANDLE_CODE(bref.pack(pdsch_processing_type1_different_tb_per_slot.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.pack(pdsch_processing_type1_different_tb_per_slot.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.pack(pdsch_processing_type1_different_tb_per_slot.scs_minus60k_hz_present, 1));
-    HANDLE_CODE(bref.pack(pdsch_processing_type1_different_tb_per_slot.scs_minus120k_hz_present, 1));
-    if (pdsch_processing_type1_different_tb_per_slot.scs_minus15k_hz_present) {
-      HANDLE_CODE(pdsch_processing_type1_different_tb_per_slot.scs_minus15k_hz.pack(bref));
+    HANDLE_CODE(bref.pack(pdsch_processing_type1_different_tb_per_slot.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.pack(pdsch_processing_type1_different_tb_per_slot.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.pack(pdsch_processing_type1_different_tb_per_slot.scs_60k_hz_present, 1));
+    HANDLE_CODE(bref.pack(pdsch_processing_type1_different_tb_per_slot.scs_120k_hz_present, 1));
+    if (pdsch_processing_type1_different_tb_per_slot.scs_15k_hz_present) {
+      HANDLE_CODE(pdsch_processing_type1_different_tb_per_slot.scs_15k_hz.pack(bref));
     }
-    if (pdsch_processing_type1_different_tb_per_slot.scs_minus30k_hz_present) {
-      HANDLE_CODE(pdsch_processing_type1_different_tb_per_slot.scs_minus30k_hz.pack(bref));
+    if (pdsch_processing_type1_different_tb_per_slot.scs_30k_hz_present) {
+      HANDLE_CODE(pdsch_processing_type1_different_tb_per_slot.scs_30k_hz.pack(bref));
     }
-    if (pdsch_processing_type1_different_tb_per_slot.scs_minus60k_hz_present) {
-      HANDLE_CODE(pdsch_processing_type1_different_tb_per_slot.scs_minus60k_hz.pack(bref));
+    if (pdsch_processing_type1_different_tb_per_slot.scs_60k_hz_present) {
+      HANDLE_CODE(pdsch_processing_type1_different_tb_per_slot.scs_60k_hz.pack(bref));
     }
-    if (pdsch_processing_type1_different_tb_per_slot.scs_minus120k_hz_present) {
-      HANDLE_CODE(pdsch_processing_type1_different_tb_per_slot.scs_minus120k_hz.pack(bref));
+    if (pdsch_processing_type1_different_tb_per_slot.scs_120k_hz_present) {
+      HANDLE_CODE(pdsch_processing_type1_different_tb_per_slot.scs_120k_hz.pack(bref));
     }
   }
   if (dummy3_present) {
@@ -4594,7 +4584,7 @@ SRSASN_CODE feature_set_dl_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(scell_without_ssb_present, 1));
   HANDLE_CODE(bref.unpack(csi_rs_meas_scell_without_ssb_present, 1));
   HANDLE_CODE(bref.unpack(dummy1_present, 1));
-  HANDLE_CODE(bref.unpack(type1_minus3_css_present, 1));
+  HANDLE_CODE(bref.unpack(type1_3_css_present, 1));
   HANDLE_CODE(bref.unpack(pdcch_monitoring_any_occasions_present, 1));
   HANDLE_CODE(bref.unpack(dummy2_present, 1));
   HANDLE_CODE(bref.unpack(ue_specific_ul_dl_assign_present, 1));
@@ -4622,31 +4612,31 @@ SRSASN_CODE feature_set_dl_s::unpack(cbit_ref& bref)
     HANDLE_CODE(pdcch_monitoring_any_occasions.unpack(bref));
   }
   if (time_dur_for_qcl_present) {
-    HANDLE_CODE(bref.unpack(time_dur_for_qcl.scs_minus60k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(time_dur_for_qcl.scs_minus120k_hz_present, 1));
-    if (time_dur_for_qcl.scs_minus60k_hz_present) {
-      HANDLE_CODE(time_dur_for_qcl.scs_minus60k_hz.unpack(bref));
+    HANDLE_CODE(bref.unpack(time_dur_for_qcl.scs_60k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(time_dur_for_qcl.scs_120k_hz_present, 1));
+    if (time_dur_for_qcl.scs_60k_hz_present) {
+      HANDLE_CODE(time_dur_for_qcl.scs_60k_hz.unpack(bref));
     }
-    if (time_dur_for_qcl.scs_minus120k_hz_present) {
-      HANDLE_CODE(time_dur_for_qcl.scs_minus120k_hz.unpack(bref));
+    if (time_dur_for_qcl.scs_120k_hz_present) {
+      HANDLE_CODE(time_dur_for_qcl.scs_120k_hz.unpack(bref));
     }
   }
   if (pdsch_processing_type1_different_tb_per_slot_present) {
-    HANDLE_CODE(bref.unpack(pdsch_processing_type1_different_tb_per_slot.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(pdsch_processing_type1_different_tb_per_slot.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(pdsch_processing_type1_different_tb_per_slot.scs_minus60k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(pdsch_processing_type1_different_tb_per_slot.scs_minus120k_hz_present, 1));
-    if (pdsch_processing_type1_different_tb_per_slot.scs_minus15k_hz_present) {
-      HANDLE_CODE(pdsch_processing_type1_different_tb_per_slot.scs_minus15k_hz.unpack(bref));
+    HANDLE_CODE(bref.unpack(pdsch_processing_type1_different_tb_per_slot.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(pdsch_processing_type1_different_tb_per_slot.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(pdsch_processing_type1_different_tb_per_slot.scs_60k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(pdsch_processing_type1_different_tb_per_slot.scs_120k_hz_present, 1));
+    if (pdsch_processing_type1_different_tb_per_slot.scs_15k_hz_present) {
+      HANDLE_CODE(pdsch_processing_type1_different_tb_per_slot.scs_15k_hz.unpack(bref));
     }
-    if (pdsch_processing_type1_different_tb_per_slot.scs_minus30k_hz_present) {
-      HANDLE_CODE(pdsch_processing_type1_different_tb_per_slot.scs_minus30k_hz.unpack(bref));
+    if (pdsch_processing_type1_different_tb_per_slot.scs_30k_hz_present) {
+      HANDLE_CODE(pdsch_processing_type1_different_tb_per_slot.scs_30k_hz.unpack(bref));
     }
-    if (pdsch_processing_type1_different_tb_per_slot.scs_minus60k_hz_present) {
-      HANDLE_CODE(pdsch_processing_type1_different_tb_per_slot.scs_minus60k_hz.unpack(bref));
+    if (pdsch_processing_type1_different_tb_per_slot.scs_60k_hz_present) {
+      HANDLE_CODE(pdsch_processing_type1_different_tb_per_slot.scs_60k_hz.unpack(bref));
     }
-    if (pdsch_processing_type1_different_tb_per_slot.scs_minus120k_hz_present) {
-      HANDLE_CODE(pdsch_processing_type1_different_tb_per_slot.scs_minus120k_hz.unpack(bref));
+    if (pdsch_processing_type1_different_tb_per_slot.scs_120k_hz_present) {
+      HANDLE_CODE(pdsch_processing_type1_different_tb_per_slot.scs_120k_hz.unpack(bref));
     }
   }
   if (dummy3_present) {
@@ -4693,7 +4683,7 @@ void feature_set_dl_s::to_json(json_writer& j) const
   if (dummy1_present) {
     j.write_str("dummy1", "supported");
   }
-  if (type1_minus3_css_present) {
+  if (type1_3_css_present) {
     j.write_str("type1-3-CSS", "supported");
   }
   if (pdcch_monitoring_any_occasions_present) {
@@ -4711,28 +4701,28 @@ void feature_set_dl_s::to_json(json_writer& j) const
   if (time_dur_for_qcl_present) {
     j.write_fieldname("timeDurationForQCL");
     j.start_obj();
-    if (time_dur_for_qcl.scs_minus60k_hz_present) {
-      j.write_str("scs-60kHz", time_dur_for_qcl.scs_minus60k_hz.to_string());
+    if (time_dur_for_qcl.scs_60k_hz_present) {
+      j.write_str("scs-60kHz", time_dur_for_qcl.scs_60k_hz.to_string());
     }
-    if (time_dur_for_qcl.scs_minus120k_hz_present) {
-      j.write_str("scs-120kHz", time_dur_for_qcl.scs_minus120k_hz.to_string());
+    if (time_dur_for_qcl.scs_120k_hz_present) {
+      j.write_str("scs-120kHz", time_dur_for_qcl.scs_120k_hz.to_string());
     }
     j.end_obj();
   }
   if (pdsch_processing_type1_different_tb_per_slot_present) {
     j.write_fieldname("pdsch-ProcessingType1-DifferentTB-PerSlot");
     j.start_obj();
-    if (pdsch_processing_type1_different_tb_per_slot.scs_minus15k_hz_present) {
-      j.write_str("scs-15kHz", pdsch_processing_type1_different_tb_per_slot.scs_minus15k_hz.to_string());
+    if (pdsch_processing_type1_different_tb_per_slot.scs_15k_hz_present) {
+      j.write_str("scs-15kHz", pdsch_processing_type1_different_tb_per_slot.scs_15k_hz.to_string());
     }
-    if (pdsch_processing_type1_different_tb_per_slot.scs_minus30k_hz_present) {
-      j.write_str("scs-30kHz", pdsch_processing_type1_different_tb_per_slot.scs_minus30k_hz.to_string());
+    if (pdsch_processing_type1_different_tb_per_slot.scs_30k_hz_present) {
+      j.write_str("scs-30kHz", pdsch_processing_type1_different_tb_per_slot.scs_30k_hz.to_string());
     }
-    if (pdsch_processing_type1_different_tb_per_slot.scs_minus60k_hz_present) {
-      j.write_str("scs-60kHz", pdsch_processing_type1_different_tb_per_slot.scs_minus60k_hz.to_string());
+    if (pdsch_processing_type1_different_tb_per_slot.scs_60k_hz_present) {
+      j.write_str("scs-60kHz", pdsch_processing_type1_different_tb_per_slot.scs_60k_hz.to_string());
     }
-    if (pdsch_processing_type1_different_tb_per_slot.scs_minus120k_hz_present) {
-      j.write_str("scs-120kHz", pdsch_processing_type1_different_tb_per_slot.scs_minus120k_hz.to_string());
+    if (pdsch_processing_type1_different_tb_per_slot.scs_120k_hz_present) {
+      j.write_str("scs-120kHz", pdsch_processing_type1_different_tb_per_slot.scs_120k_hz.to_string());
     }
     j.end_obj();
   }
@@ -4783,78 +4773,78 @@ const char* feature_set_dl_s::pdcch_monitoring_any_occasions_opts::to_string() c
   return convert_enum_idx(names, 2, value, "feature_set_dl_s::pdcch_monitoring_any_occasions_e_");
 }
 
-const char* feature_set_dl_s::time_dur_for_qcl_s_::scs_minus60k_hz_opts::to_string() const
+const char* feature_set_dl_s::time_dur_for_qcl_s_::scs_60k_hz_opts::to_string() const
 {
   static const char* names[] = {"s7", "s14", "s28"};
-  return convert_enum_idx(names, 3, value, "feature_set_dl_s::time_dur_for_qcl_s_::scs_minus60k_hz_e_");
+  return convert_enum_idx(names, 3, value, "feature_set_dl_s::time_dur_for_qcl_s_::scs_60k_hz_e_");
 }
-uint8_t feature_set_dl_s::time_dur_for_qcl_s_::scs_minus60k_hz_opts::to_number() const
+uint8_t feature_set_dl_s::time_dur_for_qcl_s_::scs_60k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {7, 14, 28};
-  return map_enum_number(numbers, 3, value, "feature_set_dl_s::time_dur_for_qcl_s_::scs_minus60k_hz_e_");
+  return map_enum_number(numbers, 3, value, "feature_set_dl_s::time_dur_for_qcl_s_::scs_60k_hz_e_");
 }
 
-const char* feature_set_dl_s::time_dur_for_qcl_s_::scs_minus120k_hz_opts::to_string() const
+const char* feature_set_dl_s::time_dur_for_qcl_s_::scs_120k_hz_opts::to_string() const
 {
   static const char* names[] = {"s14", "s28"};
-  return convert_enum_idx(names, 2, value, "feature_set_dl_s::time_dur_for_qcl_s_::scs_minus120k_hz_e_");
+  return convert_enum_idx(names, 2, value, "feature_set_dl_s::time_dur_for_qcl_s_::scs_120k_hz_e_");
 }
-uint8_t feature_set_dl_s::time_dur_for_qcl_s_::scs_minus120k_hz_opts::to_number() const
+uint8_t feature_set_dl_s::time_dur_for_qcl_s_::scs_120k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {14, 28};
-  return map_enum_number(numbers, 2, value, "feature_set_dl_s::time_dur_for_qcl_s_::scs_minus120k_hz_e_");
+  return map_enum_number(numbers, 2, value, "feature_set_dl_s::time_dur_for_qcl_s_::scs_120k_hz_e_");
 }
 
-const char* feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_minus15k_hz_opts::to_string() const
+const char* feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_15k_hz_opts::to_string() const
 {
   static const char* names[] = {"upto2", "upto4", "upto7"};
   return convert_enum_idx(
-      names, 3, value, "feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_minus15k_hz_e_");
+      names, 3, value, "feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_15k_hz_e_");
 }
-uint8_t feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_minus15k_hz_opts::to_number() const
+uint8_t feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_15k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {2, 4, 7};
   return map_enum_number(
-      numbers, 3, value, "feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_minus15k_hz_e_");
+      numbers, 3, value, "feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_15k_hz_e_");
 }
 
-const char* feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_minus30k_hz_opts::to_string() const
+const char* feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_30k_hz_opts::to_string() const
 {
   static const char* names[] = {"upto2", "upto4", "upto7"};
   return convert_enum_idx(
-      names, 3, value, "feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_minus30k_hz_e_");
+      names, 3, value, "feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_30k_hz_e_");
 }
-uint8_t feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_minus30k_hz_opts::to_number() const
+uint8_t feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_30k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {2, 4, 7};
   return map_enum_number(
-      numbers, 3, value, "feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_minus30k_hz_e_");
+      numbers, 3, value, "feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_30k_hz_e_");
 }
 
-const char* feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_minus60k_hz_opts::to_string() const
+const char* feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_60k_hz_opts::to_string() const
 {
   static const char* names[] = {"upto2", "upto4", "upto7"};
   return convert_enum_idx(
-      names, 3, value, "feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_minus60k_hz_e_");
+      names, 3, value, "feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_60k_hz_e_");
 }
-uint8_t feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_minus60k_hz_opts::to_number() const
+uint8_t feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_60k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {2, 4, 7};
   return map_enum_number(
-      numbers, 3, value, "feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_minus60k_hz_e_");
+      numbers, 3, value, "feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_60k_hz_e_");
 }
 
-const char* feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_minus120k_hz_opts::to_string() const
+const char* feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_120k_hz_opts::to_string() const
 {
   static const char* names[] = {"upto2", "upto4", "upto7"};
   return convert_enum_idx(
-      names, 3, value, "feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_minus120k_hz_e_");
+      names, 3, value, "feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_120k_hz_e_");
 }
-uint8_t feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_minus120k_hz_opts::to_number() const
+uint8_t feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_120k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {2, 4, 7};
   return map_enum_number(
-      numbers, 3, value, "feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_minus120k_hz_e_");
+      numbers, 3, value, "feature_set_dl_s::pdsch_processing_type1_different_tb_per_slot_s_::scs_120k_hz_e_");
 }
 
 // ProcessingParameters ::= SEQUENCE
@@ -4959,42 +4949,42 @@ SRSASN_CODE feature_set_dl_v1540_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(pdsch_separation_with_gap_present, 1));
   HANDLE_CODE(bref.pack(pdsch_processing_type2_present, 1));
   HANDLE_CODE(bref.pack(pdsch_processing_type2_limited_present, 1));
-  HANDLE_CODE(bref.pack(dl_mcs_table_alt_dynamic_ind_present, 1));
+  HANDLE_CODE(bref.pack(dl_mcs_table_alt_dyn_ind_present, 1));
 
   if (pdcch_monitoring_any_occasions_with_span_gap_present) {
-    HANDLE_CODE(bref.pack(pdcch_monitoring_any_occasions_with_span_gap.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.pack(pdcch_monitoring_any_occasions_with_span_gap.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.pack(pdcch_monitoring_any_occasions_with_span_gap.scs_minus60k_hz_present, 1));
-    HANDLE_CODE(bref.pack(pdcch_monitoring_any_occasions_with_span_gap.scs_minus120k_hz_present, 1));
-    if (pdcch_monitoring_any_occasions_with_span_gap.scs_minus15k_hz_present) {
-      HANDLE_CODE(pdcch_monitoring_any_occasions_with_span_gap.scs_minus15k_hz.pack(bref));
+    HANDLE_CODE(bref.pack(pdcch_monitoring_any_occasions_with_span_gap.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.pack(pdcch_monitoring_any_occasions_with_span_gap.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.pack(pdcch_monitoring_any_occasions_with_span_gap.scs_60k_hz_present, 1));
+    HANDLE_CODE(bref.pack(pdcch_monitoring_any_occasions_with_span_gap.scs_120k_hz_present, 1));
+    if (pdcch_monitoring_any_occasions_with_span_gap.scs_15k_hz_present) {
+      HANDLE_CODE(pdcch_monitoring_any_occasions_with_span_gap.scs_15k_hz.pack(bref));
     }
-    if (pdcch_monitoring_any_occasions_with_span_gap.scs_minus30k_hz_present) {
-      HANDLE_CODE(pdcch_monitoring_any_occasions_with_span_gap.scs_minus30k_hz.pack(bref));
+    if (pdcch_monitoring_any_occasions_with_span_gap.scs_30k_hz_present) {
+      HANDLE_CODE(pdcch_monitoring_any_occasions_with_span_gap.scs_30k_hz.pack(bref));
     }
-    if (pdcch_monitoring_any_occasions_with_span_gap.scs_minus60k_hz_present) {
-      HANDLE_CODE(pdcch_monitoring_any_occasions_with_span_gap.scs_minus60k_hz.pack(bref));
+    if (pdcch_monitoring_any_occasions_with_span_gap.scs_60k_hz_present) {
+      HANDLE_CODE(pdcch_monitoring_any_occasions_with_span_gap.scs_60k_hz.pack(bref));
     }
-    if (pdcch_monitoring_any_occasions_with_span_gap.scs_minus120k_hz_present) {
-      HANDLE_CODE(pdcch_monitoring_any_occasions_with_span_gap.scs_minus120k_hz.pack(bref));
+    if (pdcch_monitoring_any_occasions_with_span_gap.scs_120k_hz_present) {
+      HANDLE_CODE(pdcch_monitoring_any_occasions_with_span_gap.scs_120k_hz.pack(bref));
     }
   }
   if (pdsch_processing_type2_present) {
-    HANDLE_CODE(bref.pack(pdsch_processing_type2.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.pack(pdsch_processing_type2.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.pack(pdsch_processing_type2.scs_minus60k_hz_present, 1));
-    if (pdsch_processing_type2.scs_minus15k_hz_present) {
-      HANDLE_CODE(pdsch_processing_type2.scs_minus15k_hz.pack(bref));
+    HANDLE_CODE(bref.pack(pdsch_processing_type2.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.pack(pdsch_processing_type2.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.pack(pdsch_processing_type2.scs_60k_hz_present, 1));
+    if (pdsch_processing_type2.scs_15k_hz_present) {
+      HANDLE_CODE(pdsch_processing_type2.scs_15k_hz.pack(bref));
     }
-    if (pdsch_processing_type2.scs_minus30k_hz_present) {
-      HANDLE_CODE(pdsch_processing_type2.scs_minus30k_hz.pack(bref));
+    if (pdsch_processing_type2.scs_30k_hz_present) {
+      HANDLE_CODE(pdsch_processing_type2.scs_30k_hz.pack(bref));
     }
-    if (pdsch_processing_type2.scs_minus60k_hz_present) {
-      HANDLE_CODE(pdsch_processing_type2.scs_minus60k_hz.pack(bref));
+    if (pdsch_processing_type2.scs_60k_hz_present) {
+      HANDLE_CODE(pdsch_processing_type2.scs_60k_hz.pack(bref));
     }
   }
   if (pdsch_processing_type2_limited_present) {
-    HANDLE_CODE(pdsch_processing_type2_limited.different_tb_per_slot_scs_minus30k_hz.pack(bref));
+    HANDLE_CODE(pdsch_processing_type2_limited.different_tb_per_slot_scs_30k_hz.pack(bref));
   }
 
   return SRSASN_SUCCESS;
@@ -5009,42 +4999,42 @@ SRSASN_CODE feature_set_dl_v1540_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(pdsch_separation_with_gap_present, 1));
   HANDLE_CODE(bref.unpack(pdsch_processing_type2_present, 1));
   HANDLE_CODE(bref.unpack(pdsch_processing_type2_limited_present, 1));
-  HANDLE_CODE(bref.unpack(dl_mcs_table_alt_dynamic_ind_present, 1));
+  HANDLE_CODE(bref.unpack(dl_mcs_table_alt_dyn_ind_present, 1));
 
   if (pdcch_monitoring_any_occasions_with_span_gap_present) {
-    HANDLE_CODE(bref.unpack(pdcch_monitoring_any_occasions_with_span_gap.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(pdcch_monitoring_any_occasions_with_span_gap.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(pdcch_monitoring_any_occasions_with_span_gap.scs_minus60k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(pdcch_monitoring_any_occasions_with_span_gap.scs_minus120k_hz_present, 1));
-    if (pdcch_monitoring_any_occasions_with_span_gap.scs_minus15k_hz_present) {
-      HANDLE_CODE(pdcch_monitoring_any_occasions_with_span_gap.scs_minus15k_hz.unpack(bref));
+    HANDLE_CODE(bref.unpack(pdcch_monitoring_any_occasions_with_span_gap.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(pdcch_monitoring_any_occasions_with_span_gap.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(pdcch_monitoring_any_occasions_with_span_gap.scs_60k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(pdcch_monitoring_any_occasions_with_span_gap.scs_120k_hz_present, 1));
+    if (pdcch_monitoring_any_occasions_with_span_gap.scs_15k_hz_present) {
+      HANDLE_CODE(pdcch_monitoring_any_occasions_with_span_gap.scs_15k_hz.unpack(bref));
     }
-    if (pdcch_monitoring_any_occasions_with_span_gap.scs_minus30k_hz_present) {
-      HANDLE_CODE(pdcch_monitoring_any_occasions_with_span_gap.scs_minus30k_hz.unpack(bref));
+    if (pdcch_monitoring_any_occasions_with_span_gap.scs_30k_hz_present) {
+      HANDLE_CODE(pdcch_monitoring_any_occasions_with_span_gap.scs_30k_hz.unpack(bref));
     }
-    if (pdcch_monitoring_any_occasions_with_span_gap.scs_minus60k_hz_present) {
-      HANDLE_CODE(pdcch_monitoring_any_occasions_with_span_gap.scs_minus60k_hz.unpack(bref));
+    if (pdcch_monitoring_any_occasions_with_span_gap.scs_60k_hz_present) {
+      HANDLE_CODE(pdcch_monitoring_any_occasions_with_span_gap.scs_60k_hz.unpack(bref));
     }
-    if (pdcch_monitoring_any_occasions_with_span_gap.scs_minus120k_hz_present) {
-      HANDLE_CODE(pdcch_monitoring_any_occasions_with_span_gap.scs_minus120k_hz.unpack(bref));
+    if (pdcch_monitoring_any_occasions_with_span_gap.scs_120k_hz_present) {
+      HANDLE_CODE(pdcch_monitoring_any_occasions_with_span_gap.scs_120k_hz.unpack(bref));
     }
   }
   if (pdsch_processing_type2_present) {
-    HANDLE_CODE(bref.unpack(pdsch_processing_type2.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(pdsch_processing_type2.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(pdsch_processing_type2.scs_minus60k_hz_present, 1));
-    if (pdsch_processing_type2.scs_minus15k_hz_present) {
-      HANDLE_CODE(pdsch_processing_type2.scs_minus15k_hz.unpack(bref));
+    HANDLE_CODE(bref.unpack(pdsch_processing_type2.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(pdsch_processing_type2.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(pdsch_processing_type2.scs_60k_hz_present, 1));
+    if (pdsch_processing_type2.scs_15k_hz_present) {
+      HANDLE_CODE(pdsch_processing_type2.scs_15k_hz.unpack(bref));
     }
-    if (pdsch_processing_type2.scs_minus30k_hz_present) {
-      HANDLE_CODE(pdsch_processing_type2.scs_minus30k_hz.unpack(bref));
+    if (pdsch_processing_type2.scs_30k_hz_present) {
+      HANDLE_CODE(pdsch_processing_type2.scs_30k_hz.unpack(bref));
     }
-    if (pdsch_processing_type2.scs_minus60k_hz_present) {
-      HANDLE_CODE(pdsch_processing_type2.scs_minus60k_hz.unpack(bref));
+    if (pdsch_processing_type2.scs_60k_hz_present) {
+      HANDLE_CODE(pdsch_processing_type2.scs_60k_hz.unpack(bref));
     }
   }
   if (pdsch_processing_type2_limited_present) {
-    HANDLE_CODE(pdsch_processing_type2_limited.different_tb_per_slot_scs_minus30k_hz.unpack(bref));
+    HANDLE_CODE(pdsch_processing_type2_limited.different_tb_per_slot_scs_30k_hz.unpack(bref));
   }
 
   return SRSASN_SUCCESS;
@@ -5067,17 +5057,17 @@ void feature_set_dl_v1540_s::to_json(json_writer& j) const
   if (pdcch_monitoring_any_occasions_with_span_gap_present) {
     j.write_fieldname("pdcch-MonitoringAnyOccasionsWithSpanGap");
     j.start_obj();
-    if (pdcch_monitoring_any_occasions_with_span_gap.scs_minus15k_hz_present) {
-      j.write_str("scs-15kHz", pdcch_monitoring_any_occasions_with_span_gap.scs_minus15k_hz.to_string());
+    if (pdcch_monitoring_any_occasions_with_span_gap.scs_15k_hz_present) {
+      j.write_str("scs-15kHz", pdcch_monitoring_any_occasions_with_span_gap.scs_15k_hz.to_string());
     }
-    if (pdcch_monitoring_any_occasions_with_span_gap.scs_minus30k_hz_present) {
-      j.write_str("scs-30kHz", pdcch_monitoring_any_occasions_with_span_gap.scs_minus30k_hz.to_string());
+    if (pdcch_monitoring_any_occasions_with_span_gap.scs_30k_hz_present) {
+      j.write_str("scs-30kHz", pdcch_monitoring_any_occasions_with_span_gap.scs_30k_hz.to_string());
     }
-    if (pdcch_monitoring_any_occasions_with_span_gap.scs_minus60k_hz_present) {
-      j.write_str("scs-60kHz", pdcch_monitoring_any_occasions_with_span_gap.scs_minus60k_hz.to_string());
+    if (pdcch_monitoring_any_occasions_with_span_gap.scs_60k_hz_present) {
+      j.write_str("scs-60kHz", pdcch_monitoring_any_occasions_with_span_gap.scs_60k_hz.to_string());
     }
-    if (pdcch_monitoring_any_occasions_with_span_gap.scs_minus120k_hz_present) {
-      j.write_str("scs-120kHz", pdcch_monitoring_any_occasions_with_span_gap.scs_minus120k_hz.to_string());
+    if (pdcch_monitoring_any_occasions_with_span_gap.scs_120k_hz_present) {
+      j.write_str("scs-120kHz", pdcch_monitoring_any_occasions_with_span_gap.scs_120k_hz.to_string());
     }
     j.end_obj();
   }
@@ -5087,17 +5077,17 @@ void feature_set_dl_v1540_s::to_json(json_writer& j) const
   if (pdsch_processing_type2_present) {
     j.write_fieldname("pdsch-ProcessingType2");
     j.start_obj();
-    if (pdsch_processing_type2.scs_minus15k_hz_present) {
+    if (pdsch_processing_type2.scs_15k_hz_present) {
       j.write_fieldname("scs-15kHz");
-      pdsch_processing_type2.scs_minus15k_hz.to_json(j);
+      pdsch_processing_type2.scs_15k_hz.to_json(j);
     }
-    if (pdsch_processing_type2.scs_minus30k_hz_present) {
+    if (pdsch_processing_type2.scs_30k_hz_present) {
       j.write_fieldname("scs-30kHz");
-      pdsch_processing_type2.scs_minus30k_hz.to_json(j);
+      pdsch_processing_type2.scs_30k_hz.to_json(j);
     }
-    if (pdsch_processing_type2.scs_minus60k_hz_present) {
+    if (pdsch_processing_type2.scs_60k_hz_present) {
       j.write_fieldname("scs-60kHz");
-      pdsch_processing_type2.scs_minus60k_hz.to_json(j);
+      pdsch_processing_type2.scs_60k_hz.to_json(j);
     }
     j.end_obj();
   }
@@ -5105,94 +5095,86 @@ void feature_set_dl_v1540_s::to_json(json_writer& j) const
     j.write_fieldname("pdsch-ProcessingType2-Limited");
     j.start_obj();
     j.write_str("differentTB-PerSlot-SCS-30kHz",
-                pdsch_processing_type2_limited.different_tb_per_slot_scs_minus30k_hz.to_string());
+                pdsch_processing_type2_limited.different_tb_per_slot_scs_30k_hz.to_string());
     j.end_obj();
   }
-  if (dl_mcs_table_alt_dynamic_ind_present) {
+  if (dl_mcs_table_alt_dyn_ind_present) {
     j.write_str("dl-MCS-TableAlt-DynamicIndication", "supported");
   }
   j.end_obj();
 }
 
-const char*
-feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_minus15k_hz_opts::to_string() const
+const char* feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_15k_hz_opts::to_string() const
 {
   static const char* names[] = {"set1", "set2", "set3"};
   return convert_enum_idx(
-      names, 3, value, "feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_minus15k_hz_e_");
+      names, 3, value, "feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_15k_hz_e_");
 }
-uint8_t feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_minus15k_hz_opts::to_number() const
+uint8_t feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_15k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 3};
   return map_enum_number(
-      numbers, 3, value, "feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_minus15k_hz_e_");
+      numbers, 3, value, "feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_15k_hz_e_");
 }
 
-const char*
-feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_minus30k_hz_opts::to_string() const
+const char* feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_30k_hz_opts::to_string() const
 {
   static const char* names[] = {"set1", "set2", "set3"};
   return convert_enum_idx(
-      names, 3, value, "feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_minus30k_hz_e_");
+      names, 3, value, "feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_30k_hz_e_");
 }
-uint8_t feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_minus30k_hz_opts::to_number() const
+uint8_t feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_30k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 3};
   return map_enum_number(
-      numbers, 3, value, "feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_minus30k_hz_e_");
+      numbers, 3, value, "feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_30k_hz_e_");
 }
 
-const char*
-feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_minus60k_hz_opts::to_string() const
+const char* feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_60k_hz_opts::to_string() const
 {
   static const char* names[] = {"set1", "set2", "set3"};
   return convert_enum_idx(
-      names, 3, value, "feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_minus60k_hz_e_");
+      names, 3, value, "feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_60k_hz_e_");
 }
-uint8_t feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_minus60k_hz_opts::to_number() const
+uint8_t feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_60k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 3};
   return map_enum_number(
-      numbers, 3, value, "feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_minus60k_hz_e_");
+      numbers, 3, value, "feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_60k_hz_e_");
 }
 
-const char*
-feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_minus120k_hz_opts::to_string() const
+const char* feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_120k_hz_opts::to_string() const
 {
   static const char* names[] = {"set1", "set2", "set3"};
   return convert_enum_idx(
-      names, 3, value, "feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_minus120k_hz_e_");
+      names, 3, value, "feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_120k_hz_e_");
 }
-uint8_t
-feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_minus120k_hz_opts::to_number() const
+uint8_t feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_120k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 3};
   return map_enum_number(
-      numbers,
-      3,
-      value,
-      "feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_minus120k_hz_e_");
+      numbers, 3, value, "feature_set_dl_v1540_s::pdcch_monitoring_any_occasions_with_span_gap_s_::scs_120k_hz_e_");
 }
 
 const char*
-feature_set_dl_v1540_s::pdsch_processing_type2_limited_s_::different_tb_per_slot_scs_minus30k_hz_opts::to_string() const
+feature_set_dl_v1540_s::pdsch_processing_type2_limited_s_::different_tb_per_slot_scs_30k_hz_opts::to_string() const
 {
   static const char* names[] = {"upto1", "upto2", "upto4", "upto7"};
   return convert_enum_idx(
       names,
       4,
       value,
-      "feature_set_dl_v1540_s::pdsch_processing_type2_limited_s_::different_tb_per_slot_scs_minus30k_hz_e_");
+      "feature_set_dl_v1540_s::pdsch_processing_type2_limited_s_::different_tb_per_slot_scs_30k_hz_e_");
 }
 uint8_t
-feature_set_dl_v1540_s::pdsch_processing_type2_limited_s_::different_tb_per_slot_scs_minus30k_hz_opts::to_number() const
+feature_set_dl_v1540_s::pdsch_processing_type2_limited_s_::different_tb_per_slot_scs_30k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 4, 7};
   return map_enum_number(
       numbers,
       4,
       value,
-      "feature_set_dl_v1540_s::pdsch_processing_type2_limited_s_::different_tb_per_slot_scs_minus30k_hz_e_");
+      "feature_set_dl_v1540_s::pdsch_processing_type2_limited_s_::different_tb_per_slot_scs_30k_hz_e_");
 }
 
 // FeatureSetDownlink-v15a0 ::= SEQUENCE
@@ -5384,7 +5366,7 @@ uint16_t supported_bw_c::fr2_opts::to_number() const
 // FeatureSetDownlinkPerCC ::= SEQUENCE
 SRSASN_CODE feature_set_dl_per_cc_s::pack(bit_ref& bref) const
 {
-  HANDLE_CODE(bref.pack(ch_bw_minus90mhz_present, 1));
+  HANDLE_CODE(bref.pack(ch_bw_90mhz_present, 1));
   HANDLE_CODE(bref.pack(max_num_mimo_layers_pdsch_present, 1));
   HANDLE_CODE(bref.pack(supported_mod_order_dl_present, 1));
 
@@ -5401,7 +5383,7 @@ SRSASN_CODE feature_set_dl_per_cc_s::pack(bit_ref& bref) const
 }
 SRSASN_CODE feature_set_dl_per_cc_s::unpack(cbit_ref& bref)
 {
-  HANDLE_CODE(bref.unpack(ch_bw_minus90mhz_present, 1));
+  HANDLE_CODE(bref.unpack(ch_bw_90mhz_present, 1));
   HANDLE_CODE(bref.unpack(max_num_mimo_layers_pdsch_present, 1));
   HANDLE_CODE(bref.unpack(supported_mod_order_dl_present, 1));
 
@@ -5422,7 +5404,7 @@ void feature_set_dl_per_cc_s::to_json(json_writer& j) const
   j.write_str("supportedSubcarrierSpacingDL", supported_subcarrier_spacing_dl.to_string());
   j.write_fieldname("supportedBandwidthDL");
   supported_bw_dl.to_json(j);
-  if (ch_bw_minus90mhz_present) {
+  if (ch_bw_90mhz_present) {
     j.write_str("channelBW-90mhz", "supported");
   }
   if (max_num_mimo_layers_pdsch_present) {
@@ -5506,7 +5488,7 @@ SRSASN_CODE feature_set_ul_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(dummy1_present, 1));
   HANDLE_CODE(bref.pack(supported_srs_res_present, 1));
   HANDLE_CODE(bref.pack(two_pucch_group_present, 1));
-  HANDLE_CODE(bref.pack(dynamic_switch_sul_present, 1));
+  HANDLE_CODE(bref.pack(dyn_switch_sul_present, 1));
   HANDLE_CODE(bref.pack(simul_tx_sul_non_sul_present, 1));
   HANDLE_CODE(bref.pack(pusch_processing_type1_different_tb_per_slot_present, 1));
   HANDLE_CODE(bref.pack(dummy2_present, 1));
@@ -5525,21 +5507,21 @@ SRSASN_CODE feature_set_ul_s::pack(bit_ref& bref) const
     HANDLE_CODE(supported_srs_res.pack(bref));
   }
   if (pusch_processing_type1_different_tb_per_slot_present) {
-    HANDLE_CODE(bref.pack(pusch_processing_type1_different_tb_per_slot.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.pack(pusch_processing_type1_different_tb_per_slot.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.pack(pusch_processing_type1_different_tb_per_slot.scs_minus60k_hz_present, 1));
-    HANDLE_CODE(bref.pack(pusch_processing_type1_different_tb_per_slot.scs_minus120k_hz_present, 1));
-    if (pusch_processing_type1_different_tb_per_slot.scs_minus15k_hz_present) {
-      HANDLE_CODE(pusch_processing_type1_different_tb_per_slot.scs_minus15k_hz.pack(bref));
+    HANDLE_CODE(bref.pack(pusch_processing_type1_different_tb_per_slot.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.pack(pusch_processing_type1_different_tb_per_slot.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.pack(pusch_processing_type1_different_tb_per_slot.scs_60k_hz_present, 1));
+    HANDLE_CODE(bref.pack(pusch_processing_type1_different_tb_per_slot.scs_120k_hz_present, 1));
+    if (pusch_processing_type1_different_tb_per_slot.scs_15k_hz_present) {
+      HANDLE_CODE(pusch_processing_type1_different_tb_per_slot.scs_15k_hz.pack(bref));
     }
-    if (pusch_processing_type1_different_tb_per_slot.scs_minus30k_hz_present) {
-      HANDLE_CODE(pusch_processing_type1_different_tb_per_slot.scs_minus30k_hz.pack(bref));
+    if (pusch_processing_type1_different_tb_per_slot.scs_30k_hz_present) {
+      HANDLE_CODE(pusch_processing_type1_different_tb_per_slot.scs_30k_hz.pack(bref));
     }
-    if (pusch_processing_type1_different_tb_per_slot.scs_minus60k_hz_present) {
-      HANDLE_CODE(pusch_processing_type1_different_tb_per_slot.scs_minus60k_hz.pack(bref));
+    if (pusch_processing_type1_different_tb_per_slot.scs_60k_hz_present) {
+      HANDLE_CODE(pusch_processing_type1_different_tb_per_slot.scs_60k_hz.pack(bref));
     }
-    if (pusch_processing_type1_different_tb_per_slot.scs_minus120k_hz_present) {
-      HANDLE_CODE(pusch_processing_type1_different_tb_per_slot.scs_minus120k_hz.pack(bref));
+    if (pusch_processing_type1_different_tb_per_slot.scs_120k_hz_present) {
+      HANDLE_CODE(pusch_processing_type1_different_tb_per_slot.scs_120k_hz.pack(bref));
     }
   }
   if (dummy2_present) {
@@ -5557,7 +5539,7 @@ SRSASN_CODE feature_set_ul_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(dummy1_present, 1));
   HANDLE_CODE(bref.unpack(supported_srs_res_present, 1));
   HANDLE_CODE(bref.unpack(two_pucch_group_present, 1));
-  HANDLE_CODE(bref.unpack(dynamic_switch_sul_present, 1));
+  HANDLE_CODE(bref.unpack(dyn_switch_sul_present, 1));
   HANDLE_CODE(bref.unpack(simul_tx_sul_non_sul_present, 1));
   HANDLE_CODE(bref.unpack(pusch_processing_type1_different_tb_per_slot_present, 1));
   HANDLE_CODE(bref.unpack(dummy2_present, 1));
@@ -5576,21 +5558,21 @@ SRSASN_CODE feature_set_ul_s::unpack(cbit_ref& bref)
     HANDLE_CODE(supported_srs_res.unpack(bref));
   }
   if (pusch_processing_type1_different_tb_per_slot_present) {
-    HANDLE_CODE(bref.unpack(pusch_processing_type1_different_tb_per_slot.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(pusch_processing_type1_different_tb_per_slot.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(pusch_processing_type1_different_tb_per_slot.scs_minus60k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(pusch_processing_type1_different_tb_per_slot.scs_minus120k_hz_present, 1));
-    if (pusch_processing_type1_different_tb_per_slot.scs_minus15k_hz_present) {
-      HANDLE_CODE(pusch_processing_type1_different_tb_per_slot.scs_minus15k_hz.unpack(bref));
+    HANDLE_CODE(bref.unpack(pusch_processing_type1_different_tb_per_slot.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(pusch_processing_type1_different_tb_per_slot.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(pusch_processing_type1_different_tb_per_slot.scs_60k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(pusch_processing_type1_different_tb_per_slot.scs_120k_hz_present, 1));
+    if (pusch_processing_type1_different_tb_per_slot.scs_15k_hz_present) {
+      HANDLE_CODE(pusch_processing_type1_different_tb_per_slot.scs_15k_hz.unpack(bref));
     }
-    if (pusch_processing_type1_different_tb_per_slot.scs_minus30k_hz_present) {
-      HANDLE_CODE(pusch_processing_type1_different_tb_per_slot.scs_minus30k_hz.unpack(bref));
+    if (pusch_processing_type1_different_tb_per_slot.scs_30k_hz_present) {
+      HANDLE_CODE(pusch_processing_type1_different_tb_per_slot.scs_30k_hz.unpack(bref));
     }
-    if (pusch_processing_type1_different_tb_per_slot.scs_minus60k_hz_present) {
-      HANDLE_CODE(pusch_processing_type1_different_tb_per_slot.scs_minus60k_hz.unpack(bref));
+    if (pusch_processing_type1_different_tb_per_slot.scs_60k_hz_present) {
+      HANDLE_CODE(pusch_processing_type1_different_tb_per_slot.scs_60k_hz.unpack(bref));
     }
-    if (pusch_processing_type1_different_tb_per_slot.scs_minus120k_hz_present) {
-      HANDLE_CODE(pusch_processing_type1_different_tb_per_slot.scs_minus120k_hz.unpack(bref));
+    if (pusch_processing_type1_different_tb_per_slot.scs_120k_hz_present) {
+      HANDLE_CODE(pusch_processing_type1_different_tb_per_slot.scs_120k_hz.unpack(bref));
     }
   }
   if (dummy2_present) {
@@ -5630,7 +5612,7 @@ void feature_set_ul_s::to_json(json_writer& j) const
   if (two_pucch_group_present) {
     j.write_str("twoPUCCH-Group", "supported");
   }
-  if (dynamic_switch_sul_present) {
+  if (dyn_switch_sul_present) {
     j.write_str("dynamicSwitchSUL", "supported");
   }
   if (simul_tx_sul_non_sul_present) {
@@ -5639,17 +5621,17 @@ void feature_set_ul_s::to_json(json_writer& j) const
   if (pusch_processing_type1_different_tb_per_slot_present) {
     j.write_fieldname("pusch-ProcessingType1-DifferentTB-PerSlot");
     j.start_obj();
-    if (pusch_processing_type1_different_tb_per_slot.scs_minus15k_hz_present) {
-      j.write_str("scs-15kHz", pusch_processing_type1_different_tb_per_slot.scs_minus15k_hz.to_string());
+    if (pusch_processing_type1_different_tb_per_slot.scs_15k_hz_present) {
+      j.write_str("scs-15kHz", pusch_processing_type1_different_tb_per_slot.scs_15k_hz.to_string());
     }
-    if (pusch_processing_type1_different_tb_per_slot.scs_minus30k_hz_present) {
-      j.write_str("scs-30kHz", pusch_processing_type1_different_tb_per_slot.scs_minus30k_hz.to_string());
+    if (pusch_processing_type1_different_tb_per_slot.scs_30k_hz_present) {
+      j.write_str("scs-30kHz", pusch_processing_type1_different_tb_per_slot.scs_30k_hz.to_string());
     }
-    if (pusch_processing_type1_different_tb_per_slot.scs_minus60k_hz_present) {
-      j.write_str("scs-60kHz", pusch_processing_type1_different_tb_per_slot.scs_minus60k_hz.to_string());
+    if (pusch_processing_type1_different_tb_per_slot.scs_60k_hz_present) {
+      j.write_str("scs-60kHz", pusch_processing_type1_different_tb_per_slot.scs_60k_hz.to_string());
     }
-    if (pusch_processing_type1_different_tb_per_slot.scs_minus120k_hz_present) {
-      j.write_str("scs-120kHz", pusch_processing_type1_different_tb_per_slot.scs_minus120k_hz.to_string());
+    if (pusch_processing_type1_different_tb_per_slot.scs_120k_hz_present) {
+      j.write_str("scs-120kHz", pusch_processing_type1_different_tb_per_slot.scs_120k_hz.to_string());
     }
     j.end_obj();
   }
@@ -5666,56 +5648,56 @@ const char* feature_set_ul_s::scaling_factor_opts::to_string() const
   return convert_enum_idx(names, 3, value, "feature_set_ul_s::scaling_factor_e_");
 }
 
-const char* feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_minus15k_hz_opts::to_string() const
+const char* feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_15k_hz_opts::to_string() const
 {
   static const char* names[] = {"upto2", "upto4", "upto7"};
   return convert_enum_idx(
-      names, 3, value, "feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_minus15k_hz_e_");
+      names, 3, value, "feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_15k_hz_e_");
 }
-uint8_t feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_minus15k_hz_opts::to_number() const
+uint8_t feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_15k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {2, 4, 7};
   return map_enum_number(
-      numbers, 3, value, "feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_minus15k_hz_e_");
+      numbers, 3, value, "feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_15k_hz_e_");
 }
 
-const char* feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_minus30k_hz_opts::to_string() const
+const char* feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_30k_hz_opts::to_string() const
 {
   static const char* names[] = {"upto2", "upto4", "upto7"};
   return convert_enum_idx(
-      names, 3, value, "feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_minus30k_hz_e_");
+      names, 3, value, "feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_30k_hz_e_");
 }
-uint8_t feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_minus30k_hz_opts::to_number() const
+uint8_t feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_30k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {2, 4, 7};
   return map_enum_number(
-      numbers, 3, value, "feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_minus30k_hz_e_");
+      numbers, 3, value, "feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_30k_hz_e_");
 }
 
-const char* feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_minus60k_hz_opts::to_string() const
+const char* feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_60k_hz_opts::to_string() const
 {
   static const char* names[] = {"upto2", "upto4", "upto7"};
   return convert_enum_idx(
-      names, 3, value, "feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_minus60k_hz_e_");
+      names, 3, value, "feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_60k_hz_e_");
 }
-uint8_t feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_minus60k_hz_opts::to_number() const
+uint8_t feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_60k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {2, 4, 7};
   return map_enum_number(
-      numbers, 3, value, "feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_minus60k_hz_e_");
+      numbers, 3, value, "feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_60k_hz_e_");
 }
 
-const char* feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_minus120k_hz_opts::to_string() const
+const char* feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_120k_hz_opts::to_string() const
 {
   static const char* names[] = {"upto2", "upto4", "upto7"};
   return convert_enum_idx(
-      names, 3, value, "feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_minus120k_hz_e_");
+      names, 3, value, "feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_120k_hz_e_");
 }
-uint8_t feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_minus120k_hz_opts::to_number() const
+uint8_t feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_120k_hz_opts::to_number() const
 {
   static const uint8_t numbers[] = {2, 4, 7};
   return map_enum_number(
-      numbers, 3, value, "feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_minus120k_hz_e_");
+      numbers, 3, value, "feature_set_ul_s::pusch_processing_type1_different_tb_per_slot_s_::scs_120k_hz_e_");
 }
 
 // FeatureSetUplink-v1540 ::= SEQUENCE
@@ -5725,20 +5707,20 @@ SRSASN_CODE feature_set_ul_v1540_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(pa_phase_discontinuity_impacts_present, 1));
   HANDLE_CODE(bref.pack(pusch_separation_with_gap_present, 1));
   HANDLE_CODE(bref.pack(pusch_processing_type2_present, 1));
-  HANDLE_CODE(bref.pack(ul_mcs_table_alt_dynamic_ind_present, 1));
+  HANDLE_CODE(bref.pack(ul_mcs_table_alt_dyn_ind_present, 1));
 
   if (pusch_processing_type2_present) {
-    HANDLE_CODE(bref.pack(pusch_processing_type2.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.pack(pusch_processing_type2.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.pack(pusch_processing_type2.scs_minus60k_hz_present, 1));
-    if (pusch_processing_type2.scs_minus15k_hz_present) {
-      HANDLE_CODE(pusch_processing_type2.scs_minus15k_hz.pack(bref));
+    HANDLE_CODE(bref.pack(pusch_processing_type2.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.pack(pusch_processing_type2.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.pack(pusch_processing_type2.scs_60k_hz_present, 1));
+    if (pusch_processing_type2.scs_15k_hz_present) {
+      HANDLE_CODE(pusch_processing_type2.scs_15k_hz.pack(bref));
     }
-    if (pusch_processing_type2.scs_minus30k_hz_present) {
-      HANDLE_CODE(pusch_processing_type2.scs_minus30k_hz.pack(bref));
+    if (pusch_processing_type2.scs_30k_hz_present) {
+      HANDLE_CODE(pusch_processing_type2.scs_30k_hz.pack(bref));
     }
-    if (pusch_processing_type2.scs_minus60k_hz_present) {
-      HANDLE_CODE(pusch_processing_type2.scs_minus60k_hz.pack(bref));
+    if (pusch_processing_type2.scs_60k_hz_present) {
+      HANDLE_CODE(pusch_processing_type2.scs_60k_hz.pack(bref));
     }
   }
 
@@ -5750,20 +5732,20 @@ SRSASN_CODE feature_set_ul_v1540_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(pa_phase_discontinuity_impacts_present, 1));
   HANDLE_CODE(bref.unpack(pusch_separation_with_gap_present, 1));
   HANDLE_CODE(bref.unpack(pusch_processing_type2_present, 1));
-  HANDLE_CODE(bref.unpack(ul_mcs_table_alt_dynamic_ind_present, 1));
+  HANDLE_CODE(bref.unpack(ul_mcs_table_alt_dyn_ind_present, 1));
 
   if (pusch_processing_type2_present) {
-    HANDLE_CODE(bref.unpack(pusch_processing_type2.scs_minus15k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(pusch_processing_type2.scs_minus30k_hz_present, 1));
-    HANDLE_CODE(bref.unpack(pusch_processing_type2.scs_minus60k_hz_present, 1));
-    if (pusch_processing_type2.scs_minus15k_hz_present) {
-      HANDLE_CODE(pusch_processing_type2.scs_minus15k_hz.unpack(bref));
+    HANDLE_CODE(bref.unpack(pusch_processing_type2.scs_15k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(pusch_processing_type2.scs_30k_hz_present, 1));
+    HANDLE_CODE(bref.unpack(pusch_processing_type2.scs_60k_hz_present, 1));
+    if (pusch_processing_type2.scs_15k_hz_present) {
+      HANDLE_CODE(pusch_processing_type2.scs_15k_hz.unpack(bref));
     }
-    if (pusch_processing_type2.scs_minus30k_hz_present) {
-      HANDLE_CODE(pusch_processing_type2.scs_minus30k_hz.unpack(bref));
+    if (pusch_processing_type2.scs_30k_hz_present) {
+      HANDLE_CODE(pusch_processing_type2.scs_30k_hz.unpack(bref));
     }
-    if (pusch_processing_type2.scs_minus60k_hz_present) {
-      HANDLE_CODE(pusch_processing_type2.scs_minus60k_hz.unpack(bref));
+    if (pusch_processing_type2.scs_60k_hz_present) {
+      HANDLE_CODE(pusch_processing_type2.scs_60k_hz.unpack(bref));
     }
   }
 
@@ -5784,21 +5766,21 @@ void feature_set_ul_v1540_s::to_json(json_writer& j) const
   if (pusch_processing_type2_present) {
     j.write_fieldname("pusch-ProcessingType2");
     j.start_obj();
-    if (pusch_processing_type2.scs_minus15k_hz_present) {
+    if (pusch_processing_type2.scs_15k_hz_present) {
       j.write_fieldname("scs-15kHz");
-      pusch_processing_type2.scs_minus15k_hz.to_json(j);
+      pusch_processing_type2.scs_15k_hz.to_json(j);
     }
-    if (pusch_processing_type2.scs_minus30k_hz_present) {
+    if (pusch_processing_type2.scs_30k_hz_present) {
       j.write_fieldname("scs-30kHz");
-      pusch_processing_type2.scs_minus30k_hz.to_json(j);
+      pusch_processing_type2.scs_30k_hz.to_json(j);
     }
-    if (pusch_processing_type2.scs_minus60k_hz_present) {
+    if (pusch_processing_type2.scs_60k_hz_present) {
       j.write_fieldname("scs-60kHz");
-      pusch_processing_type2.scs_minus60k_hz.to_json(j);
+      pusch_processing_type2.scs_60k_hz.to_json(j);
     }
     j.end_obj();
   }
-  if (ul_mcs_table_alt_dynamic_ind_present) {
+  if (ul_mcs_table_alt_dyn_ind_present) {
     j.write_str("ul-MCS-TableAlt-DynamicIndication", "supported");
   }
   j.end_obj();
@@ -5807,7 +5789,7 @@ void feature_set_ul_v1540_s::to_json(json_writer& j) const
 // FeatureSetUplinkPerCC ::= SEQUENCE
 SRSASN_CODE feature_set_ul_per_cc_s::pack(bit_ref& bref) const
 {
-  HANDLE_CODE(bref.pack(ch_bw_minus90mhz_present, 1));
+  HANDLE_CODE(bref.pack(ch_bw_90mhz_present, 1));
   HANDLE_CODE(bref.pack(mimo_cb_pusch_present, 1));
   HANDLE_CODE(bref.pack(max_num_mimo_layers_non_cb_pusch_present, 1));
   HANDLE_CODE(bref.pack(supported_mod_order_ul_present, 1));
@@ -5832,7 +5814,7 @@ SRSASN_CODE feature_set_ul_per_cc_s::pack(bit_ref& bref) const
 }
 SRSASN_CODE feature_set_ul_per_cc_s::unpack(cbit_ref& bref)
 {
-  HANDLE_CODE(bref.unpack(ch_bw_minus90mhz_present, 1));
+  HANDLE_CODE(bref.unpack(ch_bw_90mhz_present, 1));
   HANDLE_CODE(bref.unpack(mimo_cb_pusch_present, 1));
   HANDLE_CODE(bref.unpack(max_num_mimo_layers_non_cb_pusch_present, 1));
   HANDLE_CODE(bref.unpack(supported_mod_order_ul_present, 1));
@@ -5861,7 +5843,7 @@ void feature_set_ul_per_cc_s::to_json(json_writer& j) const
   j.write_str("supportedSubcarrierSpacingUL", supported_subcarrier_spacing_ul.to_string());
   j.write_fieldname("supportedBandwidthUL");
   supported_bw_ul.to_json(j);
-  if (ch_bw_minus90mhz_present) {
+  if (ch_bw_90mhz_present) {
     j.write_str("channelBW-90mhz", "supported");
   }
   if (mimo_cb_pusch_present) {
@@ -6104,7 +6086,7 @@ void feature_sets_s::to_json(json_writer& j) const
 }
 
 // AggregatedBandwidth ::= ENUMERATED
-const char* aggregated_bw_opts::to_string() const
+const char* aggr_bw_opts::to_string() const
 {
   static const char* names[] = {"mhz50",
                                 "mhz100",
@@ -6122,12 +6104,12 @@ const char* aggregated_bw_opts::to_string() const
                                 "mhz700",
                                 "mhz750",
                                 "mhz800"};
-  return convert_enum_idx(names, 16, value, "aggregated_bw_e");
+  return convert_enum_idx(names, 16, value, "aggr_bw_e");
 }
-uint16_t aggregated_bw_opts::to_number() const
+uint16_t aggr_bw_opts::to_number() const
 {
   static const uint16_t numbers[] = {50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800};
-  return map_enum_number(numbers, 16, value, "aggregated_bw_e");
+  return map_enum_number(numbers, 16, value, "aggr_bw_e");
 }
 
 // FreqBandInformationEUTRA ::= SEQUENCE
@@ -6374,17 +6356,17 @@ SRSASN_CODE freq_band_info_c::unpack(cbit_ref& bref)
 SRSASN_CODE ims_params_common_s::pack(bit_ref& bref) const
 {
   bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(voice_over_eutra_minus5_gc_present, 1));
+  HANDLE_CODE(bref.pack(voice_over_eutra_5_gc_present, 1));
 
   if (ext) {
     ext_groups_packer_guard group_flags;
-    group_flags[0] |= voice_over_scg_bearer_eutra_minus5_gc_present;
+    group_flags[0] |= voice_over_scg_bearer_eutra_5_gc_present;
     group_flags.pack(bref);
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
 
-      HANDLE_CODE(bref.pack(voice_over_scg_bearer_eutra_minus5_gc_present, 1));
+      HANDLE_CODE(bref.pack(voice_over_scg_bearer_eutra_5_gc_present, 1));
     }
   }
   return SRSASN_SUCCESS;
@@ -6392,7 +6374,7 @@ SRSASN_CODE ims_params_common_s::pack(bit_ref& bref) const
 SRSASN_CODE ims_params_common_s::unpack(cbit_ref& bref)
 {
   bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(voice_over_eutra_minus5_gc_present, 1));
+  HANDLE_CODE(bref.unpack(voice_over_eutra_5_gc_present, 1));
 
   if (ext) {
     ext_groups_unpacker_guard group_flags(1);
@@ -6401,7 +6383,7 @@ SRSASN_CODE ims_params_common_s::unpack(cbit_ref& bref)
     if (group_flags[0]) {
       varlength_field_unpack_guard varlen_scope(bref, false);
 
-      HANDLE_CODE(bref.unpack(voice_over_scg_bearer_eutra_minus5_gc_present, 1));
+      HANDLE_CODE(bref.unpack(voice_over_scg_bearer_eutra_5_gc_present, 1));
     }
   }
   return SRSASN_SUCCESS;
@@ -6409,11 +6391,11 @@ SRSASN_CODE ims_params_common_s::unpack(cbit_ref& bref)
 void ims_params_common_s::to_json(json_writer& j) const
 {
   j.start_obj();
-  if (voice_over_eutra_minus5_gc_present) {
+  if (voice_over_eutra_5_gc_present) {
     j.write_str("voiceOverEUTRA-5GC", "supported");
   }
   if (ext) {
-    if (voice_over_scg_bearer_eutra_minus5_gc_present) {
+    if (voice_over_scg_bearer_eutra_5_gc_present) {
       j.write_str("voiceOverSCG-BearerEUTRA-5GC", "supported");
     }
   }
@@ -6592,31 +6574,31 @@ void mac_params_common_s::to_json(json_writer& j) const
 SRSASN_CODE mac_params_xdd_diff_s::pack(bit_ref& bref) const
 {
   bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(skip_ul_tx_dynamic_present, 1));
+  HANDLE_CODE(bref.pack(skip_ul_tx_dyn_present, 1));
   HANDLE_CODE(bref.pack(lc_ch_sr_delay_timer_present, 1));
   HANDLE_CODE(bref.pack(long_drx_cycle_present, 1));
   HANDLE_CODE(bref.pack(short_drx_cycle_present, 1));
   HANDLE_CODE(bref.pack(multiple_sr_cfgs_present, 1));
-  HANDLE_CODE(bref.pack(multiple_cfgured_grants_present, 1));
+  HANDLE_CODE(bref.pack(multiple_cfg_grants_present, 1));
 
   return SRSASN_SUCCESS;
 }
 SRSASN_CODE mac_params_xdd_diff_s::unpack(cbit_ref& bref)
 {
   bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(skip_ul_tx_dynamic_present, 1));
+  HANDLE_CODE(bref.unpack(skip_ul_tx_dyn_present, 1));
   HANDLE_CODE(bref.unpack(lc_ch_sr_delay_timer_present, 1));
   HANDLE_CODE(bref.unpack(long_drx_cycle_present, 1));
   HANDLE_CODE(bref.unpack(short_drx_cycle_present, 1));
   HANDLE_CODE(bref.unpack(multiple_sr_cfgs_present, 1));
-  HANDLE_CODE(bref.unpack(multiple_cfgured_grants_present, 1));
+  HANDLE_CODE(bref.unpack(multiple_cfg_grants_present, 1));
 
   return SRSASN_SUCCESS;
 }
 void mac_params_xdd_diff_s::to_json(json_writer& j) const
 {
   j.start_obj();
-  if (skip_ul_tx_dynamic_present) {
+  if (skip_ul_tx_dyn_present) {
     j.write_str("skipUplinkTxDynamic", "supported");
   }
   if (lc_ch_sr_delay_timer_present) {
@@ -6631,7 +6613,7 @@ void mac_params_xdd_diff_s::to_json(json_writer& j) const
   if (multiple_sr_cfgs_present) {
     j.write_str("multipleSR-Configurations", "supported");
   }
-  if (multiple_cfgured_grants_present) {
+  if (multiple_cfg_grants_present) {
     j.write_str("multipleConfiguredGrants", "supported");
   }
   j.end_obj();
@@ -6875,7 +6857,7 @@ SRSASN_CODE meas_and_mob_params_frx_diff_s::pack(bit_ref& bref) const
     ext_groups_packer_guard group_flags;
     group_flags[0] |= ho_inter_f_present;
     group_flags[0] |= ho_lte_epc_present;
-    group_flags[0] |= ho_lte_minus5_gc_present;
+    group_flags[0] |= ho_lte_5_gc_present;
     group_flags[1] |= max_num_res_csi_rs_rlm_present;
     group_flags[2] |= simul_rx_data_ssb_diff_numerology_present;
     group_flags.pack(bref);
@@ -6885,7 +6867,7 @@ SRSASN_CODE meas_and_mob_params_frx_diff_s::pack(bit_ref& bref) const
 
       HANDLE_CODE(bref.pack(ho_inter_f_present, 1));
       HANDLE_CODE(bref.pack(ho_lte_epc_present, 1));
-      HANDLE_CODE(bref.pack(ho_lte_minus5_gc_present, 1));
+      HANDLE_CODE(bref.pack(ho_lte_5_gc_present, 1));
     }
     if (group_flags[1]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -6921,7 +6903,7 @@ SRSASN_CODE meas_and_mob_params_frx_diff_s::unpack(cbit_ref& bref)
 
       HANDLE_CODE(bref.unpack(ho_inter_f_present, 1));
       HANDLE_CODE(bref.unpack(ho_lte_epc_present, 1));
-      HANDLE_CODE(bref.unpack(ho_lte_minus5_gc_present, 1));
+      HANDLE_CODE(bref.unpack(ho_lte_5_gc_present, 1));
     }
     if (group_flags[1]) {
       varlength_field_unpack_guard varlen_scope(bref, false);
@@ -6964,7 +6946,7 @@ void meas_and_mob_params_frx_diff_s::to_json(json_writer& j) const
     if (ho_lte_epc_present) {
       j.write_str("handoverLTE-EPC", "supported");
     }
-    if (ho_lte_minus5_gc_present) {
+    if (ho_lte_5_gc_present) {
       j.write_str("handoverLTE-5GC", "supported");
     }
     if (max_num_res_csi_rs_rlm_present) {
@@ -6999,7 +6981,7 @@ SRSASN_CODE meas_and_mob_params_xdd_diff_s::pack(bit_ref& bref) const
     ext_groups_packer_guard group_flags;
     group_flags[0] |= ho_inter_f_present;
     group_flags[0] |= ho_lte_epc_present;
-    group_flags[0] |= ho_lte_minus5_gc_present;
+    group_flags[0] |= ho_lte_5_gc_present;
     group_flags[1] |= sftd_meas_nr_neigh_present;
     group_flags[1] |= sftd_meas_nr_neigh_drx_present;
     group_flags.pack(bref);
@@ -7009,7 +6991,7 @@ SRSASN_CODE meas_and_mob_params_xdd_diff_s::pack(bit_ref& bref) const
 
       HANDLE_CODE(bref.pack(ho_inter_f_present, 1));
       HANDLE_CODE(bref.pack(ho_lte_epc_present, 1));
-      HANDLE_CODE(bref.pack(ho_lte_minus5_gc_present, 1));
+      HANDLE_CODE(bref.pack(ho_lte_5_gc_present, 1));
     }
     if (group_flags[1]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -7035,7 +7017,7 @@ SRSASN_CODE meas_and_mob_params_xdd_diff_s::unpack(cbit_ref& bref)
 
       HANDLE_CODE(bref.unpack(ho_inter_f_present, 1));
       HANDLE_CODE(bref.unpack(ho_lte_epc_present, 1));
-      HANDLE_CODE(bref.unpack(ho_lte_minus5_gc_present, 1));
+      HANDLE_CODE(bref.unpack(ho_lte_5_gc_present, 1));
     }
     if (group_flags[1]) {
       varlength_field_unpack_guard varlen_scope(bref, false);
@@ -7062,7 +7044,7 @@ void meas_and_mob_params_xdd_diff_s::to_json(json_writer& j) const
     if (ho_lte_epc_present) {
       j.write_str("handoverLTE-EPC", "supported");
     }
-    if (ho_lte_minus5_gc_present) {
+    if (ho_lte_5_gc_present) {
       j.write_str("handoverLTE-5GC", "supported");
     }
     if (sftd_meas_nr_neigh_present) {
@@ -7177,14 +7159,14 @@ void meas_and_mob_params_mrdc_frx_diff_s::to_json(json_writer& j) const
 // MeasAndMobParametersMRDC-XDD-Diff ::= SEQUENCE
 SRSASN_CODE meas_and_mob_params_mrdc_xdd_diff_s::pack(bit_ref& bref) const
 {
-  HANDLE_CODE(bref.pack(sftd_meas_ps_cell_present, 1));
+  HANDLE_CODE(bref.pack(sftd_meas_pscell_present, 1));
   HANDLE_CODE(bref.pack(sftd_meas_nr_cell_present, 1));
 
   return SRSASN_SUCCESS;
 }
 SRSASN_CODE meas_and_mob_params_mrdc_xdd_diff_s::unpack(cbit_ref& bref)
 {
-  HANDLE_CODE(bref.unpack(sftd_meas_ps_cell_present, 1));
+  HANDLE_CODE(bref.unpack(sftd_meas_pscell_present, 1));
   HANDLE_CODE(bref.unpack(sftd_meas_nr_cell_present, 1));
 
   return SRSASN_SUCCESS;
@@ -7192,7 +7174,7 @@ SRSASN_CODE meas_and_mob_params_mrdc_xdd_diff_s::unpack(cbit_ref& bref)
 void meas_and_mob_params_mrdc_xdd_diff_s::to_json(json_writer& j) const
 {
   j.start_obj();
-  if (sftd_meas_ps_cell_present) {
+  if (sftd_meas_pscell_present) {
     j.write_str("sftd-MeasPSCell", "supported");
   }
   if (sftd_meas_nr_cell_present) {
@@ -7536,20 +7518,20 @@ SRSASN_CODE phy_params_common_s::pack(bit_ref& bref) const
 {
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(csi_rs_cfra_for_ho_present, 1));
-  HANDLE_CODE(bref.pack(dynamic_prb_bundling_dl_present, 1));
+  HANDLE_CODE(bref.pack(dyn_prb_bundling_dl_present, 1));
   HANDLE_CODE(bref.pack(sp_csi_report_pucch_present, 1));
   HANDLE_CODE(bref.pack(sp_csi_report_pusch_present, 1));
   HANDLE_CODE(bref.pack(nzp_csi_rs_intef_mgmt_present, 1));
   HANDLE_CODE(bref.pack(type2_sp_csi_feedback_long_pucch_present, 1));
   HANDLE_CODE(bref.pack(precoder_granularity_coreset_present, 1));
-  HANDLE_CODE(bref.pack(dynamic_harq_ack_codebook_present, 1));
+  HANDLE_CODE(bref.pack(dyn_harq_ack_codebook_present, 1));
   HANDLE_CODE(bref.pack(semi_static_harq_ack_codebook_present, 1));
   HANDLE_CODE(bref.pack(spatial_bundling_harq_ack_present, 1));
-  HANDLE_CODE(bref.pack(dynamic_beta_offset_ind_harq_ack_csi_present, 1));
-  HANDLE_CODE(bref.pack(pucch_repeat_f1_minus3_minus4_present, 1));
+  HANDLE_CODE(bref.pack(dyn_beta_offset_ind_harq_ack_csi_present, 1));
+  HANDLE_CODE(bref.pack(pucch_repeat_f1_3_4_present, 1));
   HANDLE_CODE(bref.pack(ra_type0_pusch_present, 1));
-  HANDLE_CODE(bref.pack(dynamic_switch_ra_type0_minus1_pdsch_present, 1));
-  HANDLE_CODE(bref.pack(dynamic_switch_ra_type0_minus1_pusch_present, 1));
+  HANDLE_CODE(bref.pack(dyn_switch_ra_type0_1_pdsch_present, 1));
+  HANDLE_CODE(bref.pack(dyn_switch_ra_type0_1_pusch_present, 1));
   HANDLE_CODE(bref.pack(pdsch_map_type_a_present, 1));
   HANDLE_CODE(bref.pack(pdsch_map_type_b_present, 1));
   HANDLE_CODE(bref.pack(interleaving_vrb_to_prb_pdsch_present, 1));
@@ -7559,15 +7541,15 @@ SRSASN_CODE phy_params_common_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(pusch_repeat_multi_slots_present, 1));
   HANDLE_CODE(bref.pack(pdsch_repeat_multi_slots_present, 1));
   HANDLE_CODE(bref.pack(dl_sps_present, 1));
-  HANDLE_CODE(bref.pack(cfgured_ul_grant_type1_present, 1));
-  HANDLE_CODE(bref.pack(cfgured_ul_grant_type2_present, 1));
+  HANDLE_CODE(bref.pack(cfg_ul_grant_type1_present, 1));
+  HANDLE_CODE(bref.pack(cfg_ul_grant_type2_present, 1));
   HANDLE_CODE(bref.pack(pre_empt_ind_dl_present, 1));
   HANDLE_CODE(bref.pack(cbg_trans_ind_dl_present, 1));
   HANDLE_CODE(bref.pack(cbg_trans_ind_ul_present, 1));
   HANDLE_CODE(bref.pack(cbg_flush_ind_dl_present, 1));
-  HANDLE_CODE(bref.pack(dynamic_harq_ack_code_b_cbg_retx_dl_present, 1));
+  HANDLE_CODE(bref.pack(dyn_harq_ack_code_b_cbg_retx_dl_present, 1));
   HANDLE_CODE(bref.pack(rate_matching_resrc_set_semi_static_present, 1));
-  HANDLE_CODE(bref.pack(rate_matching_resrc_set_dynamic_present, 1));
+  HANDLE_CODE(bref.pack(rate_matching_resrc_set_dyn_present, 1));
   HANDLE_CODE(bref.pack(bwp_switching_delay_present, 1));
 
   if (bwp_switching_delay_present) {
@@ -7578,7 +7560,7 @@ SRSASN_CODE phy_params_common_s::pack(bit_ref& bref) const
     ext_groups_packer_guard group_flags;
     group_flags[0] |= dummy_present;
     group_flags[1] |= max_num_search_spaces_present;
-    group_flags[1] |= rate_matching_ctrl_resrc_set_dynamic_present;
+    group_flags[1] |= rate_matching_ctrl_resrc_set_dyn_present;
     group_flags[1] |= max_layers_mimo_ind_present;
     group_flags[2] |= sp_cell_placement.is_present();
     group_flags.pack(bref);
@@ -7592,7 +7574,7 @@ SRSASN_CODE phy_params_common_s::pack(bit_ref& bref) const
       varlength_field_pack_guard varlen_scope(bref, false);
 
       HANDLE_CODE(bref.pack(max_num_search_spaces_present, 1));
-      HANDLE_CODE(bref.pack(rate_matching_ctrl_resrc_set_dynamic_present, 1));
+      HANDLE_CODE(bref.pack(rate_matching_ctrl_resrc_set_dyn_present, 1));
       HANDLE_CODE(bref.pack(max_layers_mimo_ind_present, 1));
     }
     if (group_flags[2]) {
@@ -7610,20 +7592,20 @@ SRSASN_CODE phy_params_common_s::unpack(cbit_ref& bref)
 {
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(csi_rs_cfra_for_ho_present, 1));
-  HANDLE_CODE(bref.unpack(dynamic_prb_bundling_dl_present, 1));
+  HANDLE_CODE(bref.unpack(dyn_prb_bundling_dl_present, 1));
   HANDLE_CODE(bref.unpack(sp_csi_report_pucch_present, 1));
   HANDLE_CODE(bref.unpack(sp_csi_report_pusch_present, 1));
   HANDLE_CODE(bref.unpack(nzp_csi_rs_intef_mgmt_present, 1));
   HANDLE_CODE(bref.unpack(type2_sp_csi_feedback_long_pucch_present, 1));
   HANDLE_CODE(bref.unpack(precoder_granularity_coreset_present, 1));
-  HANDLE_CODE(bref.unpack(dynamic_harq_ack_codebook_present, 1));
+  HANDLE_CODE(bref.unpack(dyn_harq_ack_codebook_present, 1));
   HANDLE_CODE(bref.unpack(semi_static_harq_ack_codebook_present, 1));
   HANDLE_CODE(bref.unpack(spatial_bundling_harq_ack_present, 1));
-  HANDLE_CODE(bref.unpack(dynamic_beta_offset_ind_harq_ack_csi_present, 1));
-  HANDLE_CODE(bref.unpack(pucch_repeat_f1_minus3_minus4_present, 1));
+  HANDLE_CODE(bref.unpack(dyn_beta_offset_ind_harq_ack_csi_present, 1));
+  HANDLE_CODE(bref.unpack(pucch_repeat_f1_3_4_present, 1));
   HANDLE_CODE(bref.unpack(ra_type0_pusch_present, 1));
-  HANDLE_CODE(bref.unpack(dynamic_switch_ra_type0_minus1_pdsch_present, 1));
-  HANDLE_CODE(bref.unpack(dynamic_switch_ra_type0_minus1_pusch_present, 1));
+  HANDLE_CODE(bref.unpack(dyn_switch_ra_type0_1_pdsch_present, 1));
+  HANDLE_CODE(bref.unpack(dyn_switch_ra_type0_1_pusch_present, 1));
   HANDLE_CODE(bref.unpack(pdsch_map_type_a_present, 1));
   HANDLE_CODE(bref.unpack(pdsch_map_type_b_present, 1));
   HANDLE_CODE(bref.unpack(interleaving_vrb_to_prb_pdsch_present, 1));
@@ -7633,15 +7615,15 @@ SRSASN_CODE phy_params_common_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(pusch_repeat_multi_slots_present, 1));
   HANDLE_CODE(bref.unpack(pdsch_repeat_multi_slots_present, 1));
   HANDLE_CODE(bref.unpack(dl_sps_present, 1));
-  HANDLE_CODE(bref.unpack(cfgured_ul_grant_type1_present, 1));
-  HANDLE_CODE(bref.unpack(cfgured_ul_grant_type2_present, 1));
+  HANDLE_CODE(bref.unpack(cfg_ul_grant_type1_present, 1));
+  HANDLE_CODE(bref.unpack(cfg_ul_grant_type2_present, 1));
   HANDLE_CODE(bref.unpack(pre_empt_ind_dl_present, 1));
   HANDLE_CODE(bref.unpack(cbg_trans_ind_dl_present, 1));
   HANDLE_CODE(bref.unpack(cbg_trans_ind_ul_present, 1));
   HANDLE_CODE(bref.unpack(cbg_flush_ind_dl_present, 1));
-  HANDLE_CODE(bref.unpack(dynamic_harq_ack_code_b_cbg_retx_dl_present, 1));
+  HANDLE_CODE(bref.unpack(dyn_harq_ack_code_b_cbg_retx_dl_present, 1));
   HANDLE_CODE(bref.unpack(rate_matching_resrc_set_semi_static_present, 1));
-  HANDLE_CODE(bref.unpack(rate_matching_resrc_set_dynamic_present, 1));
+  HANDLE_CODE(bref.unpack(rate_matching_resrc_set_dyn_present, 1));
   HANDLE_CODE(bref.unpack(bwp_switching_delay_present, 1));
 
   if (bwp_switching_delay_present) {
@@ -7661,7 +7643,7 @@ SRSASN_CODE phy_params_common_s::unpack(cbit_ref& bref)
       varlength_field_unpack_guard varlen_scope(bref, false);
 
       HANDLE_CODE(bref.unpack(max_num_search_spaces_present, 1));
-      HANDLE_CODE(bref.unpack(rate_matching_ctrl_resrc_set_dynamic_present, 1));
+      HANDLE_CODE(bref.unpack(rate_matching_ctrl_resrc_set_dyn_present, 1));
       HANDLE_CODE(bref.unpack(max_layers_mimo_ind_present, 1));
     }
     if (group_flags[2]) {
@@ -7683,7 +7665,7 @@ void phy_params_common_s::to_json(json_writer& j) const
   if (csi_rs_cfra_for_ho_present) {
     j.write_str("csi-RS-CFRA-ForHO", "supported");
   }
-  if (dynamic_prb_bundling_dl_present) {
+  if (dyn_prb_bundling_dl_present) {
     j.write_str("dynamicPRB-BundlingDL", "supported");
   }
   if (sp_csi_report_pucch_present) {
@@ -7701,7 +7683,7 @@ void phy_params_common_s::to_json(json_writer& j) const
   if (precoder_granularity_coreset_present) {
     j.write_str("precoderGranularityCORESET", "supported");
   }
-  if (dynamic_harq_ack_codebook_present) {
+  if (dyn_harq_ack_codebook_present) {
     j.write_str("dynamicHARQ-ACK-Codebook", "supported");
   }
   if (semi_static_harq_ack_codebook_present) {
@@ -7710,19 +7692,19 @@ void phy_params_common_s::to_json(json_writer& j) const
   if (spatial_bundling_harq_ack_present) {
     j.write_str("spatialBundlingHARQ-ACK", "supported");
   }
-  if (dynamic_beta_offset_ind_harq_ack_csi_present) {
+  if (dyn_beta_offset_ind_harq_ack_csi_present) {
     j.write_str("dynamicBetaOffsetInd-HARQ-ACK-CSI", "supported");
   }
-  if (pucch_repeat_f1_minus3_minus4_present) {
+  if (pucch_repeat_f1_3_4_present) {
     j.write_str("pucch-Repetition-F1-3-4", "supported");
   }
   if (ra_type0_pusch_present) {
     j.write_str("ra-Type0-PUSCH", "supported");
   }
-  if (dynamic_switch_ra_type0_minus1_pdsch_present) {
+  if (dyn_switch_ra_type0_1_pdsch_present) {
     j.write_str("dynamicSwitchRA-Type0-1-PDSCH", "supported");
   }
-  if (dynamic_switch_ra_type0_minus1_pusch_present) {
+  if (dyn_switch_ra_type0_1_pusch_present) {
     j.write_str("dynamicSwitchRA-Type0-1-PUSCH", "supported");
   }
   if (pdsch_map_type_a_present) {
@@ -7752,10 +7734,10 @@ void phy_params_common_s::to_json(json_writer& j) const
   if (dl_sps_present) {
     j.write_str("downlinkSPS", "supported");
   }
-  if (cfgured_ul_grant_type1_present) {
+  if (cfg_ul_grant_type1_present) {
     j.write_str("configuredUL-GrantType1", "supported");
   }
-  if (cfgured_ul_grant_type2_present) {
+  if (cfg_ul_grant_type2_present) {
     j.write_str("configuredUL-GrantType2", "supported");
   }
   if (pre_empt_ind_dl_present) {
@@ -7770,13 +7752,13 @@ void phy_params_common_s::to_json(json_writer& j) const
   if (cbg_flush_ind_dl_present) {
     j.write_str("cbg-FlushIndication-DL", "supported");
   }
-  if (dynamic_harq_ack_code_b_cbg_retx_dl_present) {
+  if (dyn_harq_ack_code_b_cbg_retx_dl_present) {
     j.write_str("dynamicHARQ-ACK-CodeB-CBG-Retx-DL", "supported");
   }
   if (rate_matching_resrc_set_semi_static_present) {
     j.write_str("rateMatchingResrcSetSemi-Static", "supported");
   }
-  if (rate_matching_resrc_set_dynamic_present) {
+  if (rate_matching_resrc_set_dyn_present) {
     j.write_str("rateMatchingResrcSetDynamic", "supported");
   }
   if (bwp_switching_delay_present) {
@@ -7789,7 +7771,7 @@ void phy_params_common_s::to_json(json_writer& j) const
     if (max_num_search_spaces_present) {
       j.write_str("maxNumberSearchSpaces", "n10");
     }
-    if (rate_matching_ctrl_resrc_set_dynamic_present) {
+    if (rate_matching_ctrl_resrc_set_dyn_present) {
       j.write_str("rateMatchingCtrlResrcSetDynamic", "supported");
     }
     if (max_layers_mimo_ind_present) {
@@ -7819,8 +7801,8 @@ SRSASN_CODE phy_params_fr1_s::pack(bit_ref& bref) const
 {
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(pdcch_monitoring_single_occasion_present, 1));
-  HANDLE_CODE(bref.pack(scs_minus60k_hz_present, 1));
-  HANDLE_CODE(bref.pack(pdsch_minus256_qam_fr1_present, 1));
+  HANDLE_CODE(bref.pack(scs_60k_hz_present, 1));
+  HANDLE_CODE(bref.pack(pdsch_256_qam_fr1_present, 1));
   HANDLE_CODE(bref.pack(pdsch_re_map_fr1_per_symbol_present, 1));
 
   if (pdsch_re_map_fr1_per_symbol_present) {
@@ -7847,8 +7829,8 @@ SRSASN_CODE phy_params_fr1_s::unpack(cbit_ref& bref)
 {
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(pdcch_monitoring_single_occasion_present, 1));
-  HANDLE_CODE(bref.unpack(scs_minus60k_hz_present, 1));
-  HANDLE_CODE(bref.unpack(pdsch_minus256_qam_fr1_present, 1));
+  HANDLE_CODE(bref.unpack(scs_60k_hz_present, 1));
+  HANDLE_CODE(bref.unpack(pdsch_256_qam_fr1_present, 1));
   HANDLE_CODE(bref.unpack(pdsch_re_map_fr1_per_symbol_present, 1));
 
   if (pdsch_re_map_fr1_per_symbol_present) {
@@ -7876,10 +7858,10 @@ void phy_params_fr1_s::to_json(json_writer& j) const
   if (pdcch_monitoring_single_occasion_present) {
     j.write_str("pdcch-MonitoringSingleOccasion", "supported");
   }
-  if (scs_minus60k_hz_present) {
+  if (scs_60k_hz_present) {
     j.write_str("scs-60kHz", "supported");
   }
-  if (pdsch_minus256_qam_fr1_present) {
+  if (pdsch_256_qam_fr1_present) {
     j.write_str("pdsch-256QAM-FR1", "supported");
   }
   if (pdsch_re_map_fr1_per_symbol_present) {
@@ -8046,7 +8028,7 @@ uint16_t phy_params_fr2_s::pdsch_re_map_fr2_per_slot_opts::to_number() const
 SRSASN_CODE phy_params_frx_diff_s::pack(bit_ref& bref) const
 {
   bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(dynamic_sfi_present, 1));
+  HANDLE_CODE(bref.pack(dyn_sfi_present, 1));
   HANDLE_CODE(bref.pack(dummy1_present, 1));
   HANDLE_CODE(bref.pack(two_fl_dmrs_present, 1));
   HANDLE_CODE(bref.pack(dummy2_present, 1));
@@ -8057,12 +8039,12 @@ SRSASN_CODE phy_params_frx_diff_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(csi_report_without_pmi_present, 1));
   HANDLE_CODE(bref.pack(csi_report_without_cqi_present, 1));
   HANDLE_CODE(bref.pack(one_ports_ptrs_present, 1));
-  HANDLE_CODE(bref.pack(two_pucch_f0_minus2_consec_symbols_present, 1));
+  HANDLE_CODE(bref.pack(two_pucch_f0_2_consec_symbols_present, 1));
   HANDLE_CODE(bref.pack(pucch_f2_with_fh_present, 1));
   HANDLE_CODE(bref.pack(pucch_f3_with_fh_present, 1));
   HANDLE_CODE(bref.pack(pucch_f4_with_fh_present, 1));
-  HANDLE_CODE(bref.pack(pucch_f0_minus2_without_fh_present, 1));
-  HANDLE_CODE(bref.pack(pucch_f1_minus3_minus4_without_fh_present, 1));
+  HANDLE_CODE(bref.pack(pucch_f0_2_without_fh_present, 1));
+  HANDLE_CODE(bref.pack(pucch_f1_3_4_without_fh_present, 1));
   HANDLE_CODE(bref.pack(mux_sr_harq_ack_csi_pucch_multi_per_slot_present, 1));
   HANDLE_CODE(bref.pack(uci_code_block_segmentation_present, 1));
   HANDLE_CODE(bref.pack(one_pucch_long_and_short_format_present, 1));
@@ -8077,7 +8059,7 @@ SRSASN_CODE phy_params_frx_diff_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(two_different_tpc_loop_pusch_present, 1));
   HANDLE_CODE(bref.pack(two_different_tpc_loop_pucch_present, 1));
   HANDLE_CODE(bref.pack(pusch_half_pi_bpsk_present, 1));
-  HANDLE_CODE(bref.pack(pucch_f3_minus4_half_pi_bpsk_present, 1));
+  HANDLE_CODE(bref.pack(pucch_f3_4_half_pi_bpsk_present, 1));
   HANDLE_CODE(bref.pack(almost_contiguous_cp_ofdm_ul_present, 1));
   HANDLE_CODE(bref.pack(sp_csi_rs_present, 1));
   HANDLE_CODE(bref.pack(sp_csi_im_present, 1));
@@ -8120,8 +8102,8 @@ SRSASN_CODE phy_params_frx_diff_s::pack(bit_ref& bref) const
     group_flags[0] |= dl_sched_offset_pdsch_type_a_present;
     group_flags[0] |= dl_sched_offset_pdsch_type_b_present;
     group_flags[0] |= ul_sched_offset_present;
-    group_flags[0] |= dl_minus64_qam_mcs_table_alt_present;
-    group_flags[0] |= ul_minus64_qam_mcs_table_alt_present;
+    group_flags[0] |= dl_64_qam_mcs_table_alt_present;
+    group_flags[0] |= ul_64_qam_mcs_table_alt_present;
     group_flags[0] |= cqi_table_alt_present;
     group_flags[0] |= one_fl_dmrs_two_add_dmrs_ul_present;
     group_flags[0] |= two_fl_dmrs_two_add_dmrs_ul_present;
@@ -8142,8 +8124,8 @@ SRSASN_CODE phy_params_frx_diff_s::pack(bit_ref& bref) const
       HANDLE_CODE(bref.pack(dl_sched_offset_pdsch_type_a_present, 1));
       HANDLE_CODE(bref.pack(dl_sched_offset_pdsch_type_b_present, 1));
       HANDLE_CODE(bref.pack(ul_sched_offset_present, 1));
-      HANDLE_CODE(bref.pack(dl_minus64_qam_mcs_table_alt_present, 1));
-      HANDLE_CODE(bref.pack(ul_minus64_qam_mcs_table_alt_present, 1));
+      HANDLE_CODE(bref.pack(dl_64_qam_mcs_table_alt_present, 1));
+      HANDLE_CODE(bref.pack(ul_64_qam_mcs_table_alt_present, 1));
       HANDLE_CODE(bref.pack(cqi_table_alt_present, 1));
       HANDLE_CODE(bref.pack(one_fl_dmrs_two_add_dmrs_ul_present, 1));
       HANDLE_CODE(bref.pack(two_fl_dmrs_two_add_dmrs_ul_present, 1));
@@ -8180,7 +8162,7 @@ SRSASN_CODE phy_params_frx_diff_s::pack(bit_ref& bref) const
 SRSASN_CODE phy_params_frx_diff_s::unpack(cbit_ref& bref)
 {
   bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(dynamic_sfi_present, 1));
+  HANDLE_CODE(bref.unpack(dyn_sfi_present, 1));
   HANDLE_CODE(bref.unpack(dummy1_present, 1));
   HANDLE_CODE(bref.unpack(two_fl_dmrs_present, 1));
   HANDLE_CODE(bref.unpack(dummy2_present, 1));
@@ -8191,12 +8173,12 @@ SRSASN_CODE phy_params_frx_diff_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(csi_report_without_pmi_present, 1));
   HANDLE_CODE(bref.unpack(csi_report_without_cqi_present, 1));
   HANDLE_CODE(bref.unpack(one_ports_ptrs_present, 1));
-  HANDLE_CODE(bref.unpack(two_pucch_f0_minus2_consec_symbols_present, 1));
+  HANDLE_CODE(bref.unpack(two_pucch_f0_2_consec_symbols_present, 1));
   HANDLE_CODE(bref.unpack(pucch_f2_with_fh_present, 1));
   HANDLE_CODE(bref.unpack(pucch_f3_with_fh_present, 1));
   HANDLE_CODE(bref.unpack(pucch_f4_with_fh_present, 1));
-  HANDLE_CODE(bref.unpack(pucch_f0_minus2_without_fh_present, 1));
-  HANDLE_CODE(bref.unpack(pucch_f1_minus3_minus4_without_fh_present, 1));
+  HANDLE_CODE(bref.unpack(pucch_f0_2_without_fh_present, 1));
+  HANDLE_CODE(bref.unpack(pucch_f1_3_4_without_fh_present, 1));
   HANDLE_CODE(bref.unpack(mux_sr_harq_ack_csi_pucch_multi_per_slot_present, 1));
   HANDLE_CODE(bref.unpack(uci_code_block_segmentation_present, 1));
   HANDLE_CODE(bref.unpack(one_pucch_long_and_short_format_present, 1));
@@ -8211,7 +8193,7 @@ SRSASN_CODE phy_params_frx_diff_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(two_different_tpc_loop_pusch_present, 1));
   HANDLE_CODE(bref.unpack(two_different_tpc_loop_pucch_present, 1));
   HANDLE_CODE(bref.unpack(pusch_half_pi_bpsk_present, 1));
-  HANDLE_CODE(bref.unpack(pucch_f3_minus4_half_pi_bpsk_present, 1));
+  HANDLE_CODE(bref.unpack(pucch_f3_4_half_pi_bpsk_present, 1));
   HANDLE_CODE(bref.unpack(almost_contiguous_cp_ofdm_ul_present, 1));
   HANDLE_CODE(bref.unpack(sp_csi_rs_present, 1));
   HANDLE_CODE(bref.unpack(sp_csi_im_present, 1));
@@ -8267,8 +8249,8 @@ SRSASN_CODE phy_params_frx_diff_s::unpack(cbit_ref& bref)
       HANDLE_CODE(bref.unpack(dl_sched_offset_pdsch_type_a_present, 1));
       HANDLE_CODE(bref.unpack(dl_sched_offset_pdsch_type_b_present, 1));
       HANDLE_CODE(bref.unpack(ul_sched_offset_present, 1));
-      HANDLE_CODE(bref.unpack(dl_minus64_qam_mcs_table_alt_present, 1));
-      HANDLE_CODE(bref.unpack(ul_minus64_qam_mcs_table_alt_present, 1));
+      HANDLE_CODE(bref.unpack(dl_64_qam_mcs_table_alt_present, 1));
+      HANDLE_CODE(bref.unpack(ul_64_qam_mcs_table_alt_present, 1));
       HANDLE_CODE(bref.unpack(cqi_table_alt_present, 1));
       HANDLE_CODE(bref.unpack(one_fl_dmrs_two_add_dmrs_ul_present, 1));
       HANDLE_CODE(bref.unpack(two_fl_dmrs_two_add_dmrs_ul_present, 1));
@@ -8307,7 +8289,7 @@ SRSASN_CODE phy_params_frx_diff_s::unpack(cbit_ref& bref)
 void phy_params_frx_diff_s::to_json(json_writer& j) const
 {
   j.start_obj();
-  if (dynamic_sfi_present) {
+  if (dyn_sfi_present) {
     j.write_str("dynamicSFI", "supported");
   }
   if (dummy1_present) {
@@ -8340,7 +8322,7 @@ void phy_params_frx_diff_s::to_json(json_writer& j) const
   if (one_ports_ptrs_present) {
     j.write_str("onePortsPTRS", one_ports_ptrs.to_string());
   }
-  if (two_pucch_f0_minus2_consec_symbols_present) {
+  if (two_pucch_f0_2_consec_symbols_present) {
     j.write_str("twoPUCCH-F0-2-ConsecSymbols", "supported");
   }
   if (pucch_f2_with_fh_present) {
@@ -8352,10 +8334,10 @@ void phy_params_frx_diff_s::to_json(json_writer& j) const
   if (pucch_f4_with_fh_present) {
     j.write_str("pucch-F4-WithFH", "supported");
   }
-  if (pucch_f0_minus2_without_fh_present) {
+  if (pucch_f0_2_without_fh_present) {
     j.write_str("pucch-F0-2WithoutFH", "notSupported");
   }
-  if (pucch_f1_minus3_minus4_without_fh_present) {
+  if (pucch_f1_3_4_without_fh_present) {
     j.write_str("pucch-F1-3-4WithoutFH", "notSupported");
   }
   if (mux_sr_harq_ack_csi_pucch_multi_per_slot_present) {
@@ -8400,7 +8382,7 @@ void phy_params_frx_diff_s::to_json(json_writer& j) const
   if (pusch_half_pi_bpsk_present) {
     j.write_str("pusch-HalfPi-BPSK", "supported");
   }
-  if (pucch_f3_minus4_half_pi_bpsk_present) {
+  if (pucch_f3_4_half_pi_bpsk_present) {
     j.write_str("pucch-F3-4-HalfPi-BPSK", "supported");
   }
   if (almost_contiguous_cp_ofdm_ul_present) {
@@ -8457,10 +8439,10 @@ void phy_params_frx_diff_s::to_json(json_writer& j) const
     if (ul_sched_offset_present) {
       j.write_str("ul-SchedulingOffset", "supported");
     }
-    if (dl_minus64_qam_mcs_table_alt_present) {
+    if (dl_64_qam_mcs_table_alt_present) {
       j.write_str("dl-64QAM-MCS-TableAlt", "supported");
     }
-    if (ul_minus64_qam_mcs_table_alt_present) {
+    if (ul_64_qam_mcs_table_alt_present) {
       j.write_str("ul-64QAM-MCS-TableAlt", "supported");
     }
     if (cqi_table_alt_present) {
@@ -8505,8 +8487,8 @@ const char* phy_params_frx_diff_s::supported_dmrs_type_ul_opts::to_string() cons
 SRSASN_CODE phy_params_xdd_diff_s::pack(bit_ref& bref) const
 {
   bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(dynamic_sfi_present, 1));
-  HANDLE_CODE(bref.pack(two_pucch_f0_minus2_consec_symbols_present, 1));
+  HANDLE_CODE(bref.pack(dyn_sfi_present, 1));
+  HANDLE_CODE(bref.pack(two_pucch_f0_2_consec_symbols_present, 1));
   HANDLE_CODE(bref.pack(two_different_tpc_loop_pusch_present, 1));
   HANDLE_CODE(bref.pack(two_different_tpc_loop_pucch_present, 1));
 
@@ -8530,8 +8512,8 @@ SRSASN_CODE phy_params_xdd_diff_s::pack(bit_ref& bref) const
 SRSASN_CODE phy_params_xdd_diff_s::unpack(cbit_ref& bref)
 {
   bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(dynamic_sfi_present, 1));
-  HANDLE_CODE(bref.unpack(two_pucch_f0_minus2_consec_symbols_present, 1));
+  HANDLE_CODE(bref.unpack(dyn_sfi_present, 1));
+  HANDLE_CODE(bref.unpack(two_pucch_f0_2_consec_symbols_present, 1));
   HANDLE_CODE(bref.unpack(two_different_tpc_loop_pusch_present, 1));
   HANDLE_CODE(bref.unpack(two_different_tpc_loop_pucch_present, 1));
 
@@ -8552,10 +8534,10 @@ SRSASN_CODE phy_params_xdd_diff_s::unpack(cbit_ref& bref)
 void phy_params_xdd_diff_s::to_json(json_writer& j) const
 {
   j.start_obj();
-  if (dynamic_sfi_present) {
+  if (dyn_sfi_present) {
     j.write_str("dynamicSFI", "supported");
   }
-  if (two_pucch_f0_minus2_consec_symbols_present) {
+  if (two_pucch_f0_2_consec_symbols_present) {
     j.write_str("twoPUCCH-F0-2-ConsecSymbols", "supported");
   }
   if (two_different_tpc_loop_pusch_present) {

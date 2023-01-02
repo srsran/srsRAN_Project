@@ -148,21 +148,21 @@ using eutra_ns_pmax_list_l = dyn_array<eutra_ns_pmax_value_s>;
 // EUTRA-Q-OffsetRange ::= ENUMERATED
 struct eutra_q_offset_range_opts {
   enum options {
-    db_minus24,
-    db_minus22,
-    db_minus20,
-    db_minus18,
-    db_minus16,
-    db_minus14,
-    db_minus12,
-    db_minus10,
-    db_minus8,
-    db_minus6,
-    db_minus5,
-    db_minus4,
-    db_minus3,
-    db_minus2,
-    db_minus1,
+    db_neg24,
+    db_neg22,
+    db_neg20,
+    db_neg18,
+    db_neg16,
+    db_neg14,
+    db_neg12,
+    db_neg10,
+    db_neg8,
+    db_neg6,
+    db_neg5,
+    db_neg4,
+    db_neg3,
+    db_neg2,
+    db_neg1,
     db0,
     db1,
     db2,
@@ -191,21 +191,21 @@ typedef enumerated<eutra_q_offset_range_opts> eutra_q_offset_range_e;
 // Q-OffsetRange ::= ENUMERATED
 struct q_offset_range_opts {
   enum options {
-    db_minus24,
-    db_minus22,
-    db_minus20,
-    db_minus18,
-    db_minus16,
-    db_minus14,
-    db_minus12,
-    db_minus10,
-    db_minus8,
-    db_minus6,
-    db_minus5,
-    db_minus4,
-    db_minus3,
-    db_minus2,
-    db_minus1,
+    db_neg24,
+    db_neg22,
+    db_neg20,
+    db_neg18,
+    db_neg16,
+    db_neg14,
+    db_neg12,
+    db_neg10,
+    db_neg8,
+    db_neg6,
+    db_neg5,
+    db_neg4,
+    db_neg3,
+    db_neg2,
+    db_neg1,
     db0,
     db1,
     db2,
@@ -967,7 +967,7 @@ struct sib2_s {
     struct speed_state_resel_pars_s_ {
       struct q_hyst_sf_s_ {
         struct sf_medium_opts {
-          enum options { db_minus6, db_minus4, db_minus2, db0, nulltype } value;
+          enum options { db_neg6, db_neg4, db_neg2, db0, nulltype } value;
           typedef int8_t number_type;
 
           const char* to_string() const;
@@ -975,7 +975,7 @@ struct sib2_s {
         };
         typedef enumerated<sf_medium_opts> sf_medium_e_;
         struct sf_high_opts {
-          enum options { db_minus6, db_minus4, db_minus2, db0, nulltype } value;
+          enum options { db_neg6, db_neg4, db_neg2, db0, nulltype } value;
           typedef int8_t number_type;
 
           const char* to_string() const;
@@ -1984,9 +1984,9 @@ struct pdcp_cfg_s {
         };
 
         // member variables
-        bool        max_cid_present           = false;
+        bool        max_c_id_present          = false;
         bool        drb_continue_rohc_present = false;
-        uint16_t    max_cid                   = 1;
+        uint16_t    max_c_id                  = 1;
         profiles_s_ profiles;
       };
       struct ul_only_rohc_s_ {
@@ -1995,9 +1995,9 @@ struct pdcp_cfg_s {
         };
 
         // member variables
-        bool        max_cid_present           = false;
+        bool        max_c_id_present          = false;
         bool        drb_continue_rohc_present = false;
-        uint16_t    max_cid                   = 1;
+        uint16_t    max_c_id                  = 1;
         profiles_s_ profiles;
       };
       struct types_opts {
@@ -5564,7 +5564,7 @@ struct dl_dcch_msg_s {
 // PagingUE-Identity ::= CHOICE
 struct paging_ue_id_c {
   struct types_opts {
-    enum options { ng_minus5_g_s_tmsi, full_i_rnti, /*...*/ nulltype } value;
+    enum options { ng_5_g_s_tmsi, full_i_rnti, /*...*/ nulltype } value;
     typedef int8_t number_type;
 
     const char* to_string() const;
@@ -5583,9 +5583,9 @@ struct paging_ue_id_c {
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
   // getters
-  fixed_bitstring<48>& ng_minus5_g_s_tmsi()
+  fixed_bitstring<48>& ng_5_g_s_tmsi()
   {
-    assert_choice_type(types::ng_minus5_g_s_tmsi, type_, "PagingUE-Identity");
+    assert_choice_type(types::ng_5_g_s_tmsi, type_, "PagingUE-Identity");
     return c.get<fixed_bitstring<48>>();
   }
   fixed_bitstring<40>& full_i_rnti()
@@ -5593,9 +5593,9 @@ struct paging_ue_id_c {
     assert_choice_type(types::full_i_rnti, type_, "PagingUE-Identity");
     return c.get<fixed_bitstring<40>>();
   }
-  const fixed_bitstring<48>& ng_minus5_g_s_tmsi() const
+  const fixed_bitstring<48>& ng_5_g_s_tmsi() const
   {
-    assert_choice_type(types::ng_minus5_g_s_tmsi, type_, "PagingUE-Identity");
+    assert_choice_type(types::ng_5_g_s_tmsi, type_, "PagingUE-Identity");
     return c.get<fixed_bitstring<48>>();
   }
   const fixed_bitstring<40>& full_i_rnti() const
@@ -5603,7 +5603,7 @@ struct paging_ue_id_c {
     assert_choice_type(types::full_i_rnti, type_, "PagingUE-Identity");
     return c.get<fixed_bitstring<40>>();
   }
-  fixed_bitstring<48>& set_ng_minus5_g_s_tmsi();
+  fixed_bitstring<48>& set_ng_5_g_s_tmsi();
   fixed_bitstring<40>& set_full_i_rnti();
 
 private:
@@ -5750,7 +5750,7 @@ typedef enumerated<establishment_cause_opts> establishment_cause_e;
 // InitialUE-Identity ::= CHOICE
 struct init_ue_id_c {
   struct types_opts {
-    enum options { ng_minus5_g_s_tmsi_part1, random_value, nulltype } value;
+    enum options { ng_5_g_s_tmsi_part1, random_value, nulltype } value;
     typedef int8_t number_type;
 
     const char* to_string() const;
@@ -5769,9 +5769,9 @@ struct init_ue_id_c {
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
   // getters
-  fixed_bitstring<39>& ng_minus5_g_s_tmsi_part1()
+  fixed_bitstring<39>& ng_5_g_s_tmsi_part1()
   {
-    assert_choice_type(types::ng_minus5_g_s_tmsi_part1, type_, "InitialUE-Identity");
+    assert_choice_type(types::ng_5_g_s_tmsi_part1, type_, "InitialUE-Identity");
     return c.get<fixed_bitstring<39>>();
   }
   fixed_bitstring<39>& random_value()
@@ -5779,9 +5779,9 @@ struct init_ue_id_c {
     assert_choice_type(types::random_value, type_, "InitialUE-Identity");
     return c.get<fixed_bitstring<39>>();
   }
-  const fixed_bitstring<39>& ng_minus5_g_s_tmsi_part1() const
+  const fixed_bitstring<39>& ng_5_g_s_tmsi_part1() const
   {
-    assert_choice_type(types::ng_minus5_g_s_tmsi_part1, type_, "InitialUE-Identity");
+    assert_choice_type(types::ng_5_g_s_tmsi_part1, type_, "InitialUE-Identity");
     return c.get<fixed_bitstring<39>>();
   }
   const fixed_bitstring<39>& random_value() const
@@ -5789,7 +5789,7 @@ struct init_ue_id_c {
     assert_choice_type(types::random_value, type_, "InitialUE-Identity");
     return c.get<fixed_bitstring<39>>();
   }
-  fixed_bitstring<39>& set_ng_minus5_g_s_tmsi_part1();
+  fixed_bitstring<39>& set_ng_5_g_s_tmsi_part1();
   fixed_bitstring<39>& set_random_value();
 
 private:
@@ -6208,9 +6208,9 @@ struct meas_quant_results_s {
 };
 
 // PLMN-Identity-EUTRA-5GC ::= CHOICE
-struct plmn_id_eutra_minus5_gc_c {
+struct plmn_id_eutra_5_gc_c {
   struct types_opts {
-    enum options { plmn_id_eutra_minus5_gc, plmn_idx, nulltype } value;
+    enum options { plmn_id_eutra_5_gc, plmn_idx, nulltype } value;
     typedef int8_t number_type;
 
     const char* to_string() const;
@@ -6219,19 +6219,19 @@ struct plmn_id_eutra_minus5_gc_c {
   typedef enumerated<types_opts> types;
 
   // choice methods
-  plmn_id_eutra_minus5_gc_c() = default;
-  plmn_id_eutra_minus5_gc_c(const plmn_id_eutra_minus5_gc_c& other);
-  plmn_id_eutra_minus5_gc_c& operator=(const plmn_id_eutra_minus5_gc_c& other);
-  ~plmn_id_eutra_minus5_gc_c() { destroy_(); }
+  plmn_id_eutra_5_gc_c() = default;
+  plmn_id_eutra_5_gc_c(const plmn_id_eutra_5_gc_c& other);
+  plmn_id_eutra_5_gc_c& operator=(const plmn_id_eutra_5_gc_c& other);
+  ~plmn_id_eutra_5_gc_c() { destroy_(); }
   void        set(types::options e = types::nulltype);
   types       type() const { return type_; }
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
   // getters
-  plmn_id_s& plmn_id_eutra_minus5_gc()
+  plmn_id_s& plmn_id_eutra_5_gc()
   {
-    assert_choice_type(types::plmn_id_eutra_minus5_gc, type_, "PLMN-Identity-EUTRA-5GC");
+    assert_choice_type(types::plmn_id_eutra_5_gc, type_, "PLMN-Identity-EUTRA-5GC");
     return c.get<plmn_id_s>();
   }
   uint8_t& plmn_idx()
@@ -6239,9 +6239,9 @@ struct plmn_id_eutra_minus5_gc_c {
     assert_choice_type(types::plmn_idx, type_, "PLMN-Identity-EUTRA-5GC");
     return c.get<uint8_t>();
   }
-  const plmn_id_s& plmn_id_eutra_minus5_gc() const
+  const plmn_id_s& plmn_id_eutra_5_gc() const
   {
-    assert_choice_type(types::plmn_id_eutra_minus5_gc, type_, "PLMN-Identity-EUTRA-5GC");
+    assert_choice_type(types::plmn_id_eutra_5_gc, type_, "PLMN-Identity-EUTRA-5GC");
     return c.get<plmn_id_s>();
   }
   const uint8_t& plmn_idx() const
@@ -6249,7 +6249,7 @@ struct plmn_id_eutra_minus5_gc_c {
     assert_choice_type(types::plmn_idx, type_, "PLMN-Identity-EUTRA-5GC");
     return c.get<uint8_t>();
   }
-  plmn_id_s& set_plmn_id_eutra_minus5_gc();
+  plmn_id_s& set_plmn_id_eutra_5_gc();
   uint8_t&   set_plmn_idx();
 
 private:
@@ -6260,7 +6260,7 @@ private:
 };
 
 // CellIdentity-EUTRA-5GC ::= CHOICE
-struct cell_id_eutra_minus5_gc_c {
+struct cell_id_eutra_5_gc_c {
   struct types_opts {
     enum options { cell_id_eutra, cell_id_idx, nulltype } value;
 
@@ -6269,10 +6269,10 @@ struct cell_id_eutra_minus5_gc_c {
   typedef enumerated<types_opts> types;
 
   // choice methods
-  cell_id_eutra_minus5_gc_c() = default;
-  cell_id_eutra_minus5_gc_c(const cell_id_eutra_minus5_gc_c& other);
-  cell_id_eutra_minus5_gc_c& operator=(const cell_id_eutra_minus5_gc_c& other);
-  ~cell_id_eutra_minus5_gc_c() { destroy_(); }
+  cell_id_eutra_5_gc_c() = default;
+  cell_id_eutra_5_gc_c(const cell_id_eutra_5_gc_c& other);
+  cell_id_eutra_5_gc_c& operator=(const cell_id_eutra_5_gc_c& other);
+  ~cell_id_eutra_5_gc_c() { destroy_(); }
   void        set(types::options e = types::nulltype);
   types       type() const { return type_; }
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -6313,7 +6313,7 @@ private:
 using multi_freq_band_list_nr_l = bounded_array<uint16_t, 8>;
 
 // PLMN-IdentityList-EUTRA-5GC ::= SEQUENCE (SIZE (1..12)) OF PLMN-Identity-EUTRA-5GC
-using plmn_id_list_eutra_minus5_gc_l = dyn_array<plmn_id_eutra_minus5_gc_c>;
+using plmn_id_list_eutra_5_gc_l = dyn_array<plmn_id_eutra_5_gc_c>;
 
 // PLMN-IdentityList-EUTRA-EPC ::= SEQUENCE (SIZE (1..12)) OF PLMN-Identity
 using plmn_id_list_eutra_epc_l = dyn_array<plmn_id_s>;
@@ -6364,12 +6364,12 @@ struct cgi_info_nr_s {
 };
 
 // CellAccessRelatedInfo-EUTRA-5GC ::= SEQUENCE
-struct cell_access_related_info_eutra_minus5_gc_s {
-  bool                           ranac_minus5gc_present = false;
-  plmn_id_list_eutra_minus5_gc_l plmn_id_list_eutra_minus5gc;
-  fixed_bitstring<24>            tac_eutra_minus5gc;
-  uint16_t                       ranac_minus5gc = 0;
-  cell_id_eutra_minus5_gc_c      cell_id_eutra_minus5gc;
+struct cell_access_related_info_eutra_5_gc_s {
+  bool                      ranac_5gc_present = false;
+  plmn_id_list_eutra_5_gc_l plmn_id_list_eutra_5gc;
+  fixed_bitstring<24>       tac_eutra_5gc;
+  uint16_t                  ranac_5gc = 0;
+  cell_id_eutra_5_gc_c      cell_id_eutra_5gc;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -6407,13 +6407,13 @@ struct cgi_info_eutra_s {
     cell_access_related_info_eutra_epc_s cgi_info_epc_legacy;
     cgi_info_epc_list_l_                 cgi_info_epc_list;
   };
-  using cgi_info_minus5_gc_l_ = dyn_array<cell_access_related_info_eutra_minus5_gc_s>;
+  using cgi_info_5_gc_l_ = dyn_array<cell_access_related_info_eutra_5_gc_s>;
 
   // member variables
   bool                         cgi_info_epc_present       = false;
   bool                         freq_band_ind_prio_present = false;
   cgi_info_epc_s_              cgi_info_epc;
-  cgi_info_minus5_gc_l_        cgi_info_minus5_gc;
+  cgi_info_5_gc_l_             cgi_info_5_gc;
   uint16_t                     freq_band_ind = 1;
   multi_band_info_list_eutra_l multi_band_info_list;
 
@@ -6580,7 +6580,7 @@ struct meas_result_serv_mo_s {
 };
 
 // ReducedAggregatedBandwidth ::= ENUMERATED
-struct reduced_aggregated_bw_opts {
+struct reduced_aggr_bw_opts {
   enum options {
     mhz0,
     mhz10,
@@ -6601,7 +6601,7 @@ struct reduced_aggregated_bw_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<reduced_aggregated_bw_opts> reduced_aggregated_bw_e;
+typedef enumerated<reduced_aggr_bw_opts> reduced_aggr_bw_e;
 
 // UplinkTxDirectCurrentCell ::= SEQUENCE
 struct ul_tx_direct_current_cell_s {
@@ -6679,12 +6679,12 @@ struct overheat_assist_s {
     uint8_t reduced_ccs_ul = 0;
   };
   struct reduced_max_bw_fr1_s_ {
-    reduced_aggregated_bw_e reduced_bw_fr1_dl;
-    reduced_aggregated_bw_e reduced_bw_fr1_ul;
+    reduced_aggr_bw_e reduced_bw_fr1_dl;
+    reduced_aggr_bw_e reduced_bw_fr1_ul;
   };
   struct reduced_max_bw_fr2_s_ {
-    reduced_aggregated_bw_e reduced_bw_fr2_dl;
-    reduced_aggregated_bw_e reduced_bw_fr2_ul;
+    reduced_aggr_bw_e reduced_bw_fr2_dl;
+    reduced_aggr_bw_e reduced_bw_fr2_ul;
   };
   struct reduced_max_mimo_layers_fr1_s_ {
     mimo_layers_dl_e reduced_mimo_layers_fr1_dl;
@@ -7138,7 +7138,7 @@ struct scg_fail_info_eutra_v1590_ies_s {
 using ue_cap_rat_container_list_l = dyn_array<ue_cap_rat_container_s>;
 
 // UEAssistanceInformation-v1540-IEs ::= SEQUENCE
-struct ueassist_info_v1540_ies_s {
+struct ue_assist_info_v1540_ies_s {
   bool              overheat_assist_present = false;
   bool              non_crit_ext_present    = false;
   overheat_assist_s overheat_assist;
@@ -7245,47 +7245,47 @@ struct rrc_setup_complete_ies_s {
   };
   typedef enumerated<guami_type_opts> guami_type_e_;
   using s_nssai_list_l_ = dyn_array<s_nssai_c>;
-  struct ng_minus5_g_s_tmsi_value_c_ {
+  struct ng_5_g_s_tmsi_value_c_ {
     struct types_opts {
-      enum options { ng_minus5_g_s_tmsi, ng_minus5_g_s_tmsi_part2, nulltype } value;
+      enum options { ng_5_g_s_tmsi, ng_5_g_s_tmsi_part2, nulltype } value;
 
       const char* to_string() const;
     };
     typedef enumerated<types_opts> types;
 
     // choice methods
-    ng_minus5_g_s_tmsi_value_c_() = default;
-    ng_minus5_g_s_tmsi_value_c_(const ng_minus5_g_s_tmsi_value_c_& other);
-    ng_minus5_g_s_tmsi_value_c_& operator=(const ng_minus5_g_s_tmsi_value_c_& other);
-    ~ng_minus5_g_s_tmsi_value_c_() { destroy_(); }
+    ng_5_g_s_tmsi_value_c_() = default;
+    ng_5_g_s_tmsi_value_c_(const ng_5_g_s_tmsi_value_c_& other);
+    ng_5_g_s_tmsi_value_c_& operator=(const ng_5_g_s_tmsi_value_c_& other);
+    ~ng_5_g_s_tmsi_value_c_() { destroy_(); }
     void        set(types::options e = types::nulltype);
     types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    fixed_bitstring<48>& ng_minus5_g_s_tmsi()
+    fixed_bitstring<48>& ng_5_g_s_tmsi()
     {
-      assert_choice_type(types::ng_minus5_g_s_tmsi, type_, "ng-5G-S-TMSI-Value");
+      assert_choice_type(types::ng_5_g_s_tmsi, type_, "ng-5G-S-TMSI-Value");
       return c.get<fixed_bitstring<48>>();
     }
-    fixed_bitstring<9>& ng_minus5_g_s_tmsi_part2()
+    fixed_bitstring<9>& ng_5_g_s_tmsi_part2()
     {
-      assert_choice_type(types::ng_minus5_g_s_tmsi_part2, type_, "ng-5G-S-TMSI-Value");
+      assert_choice_type(types::ng_5_g_s_tmsi_part2, type_, "ng-5G-S-TMSI-Value");
       return c.get<fixed_bitstring<9>>();
     }
-    const fixed_bitstring<48>& ng_minus5_g_s_tmsi() const
+    const fixed_bitstring<48>& ng_5_g_s_tmsi() const
     {
-      assert_choice_type(types::ng_minus5_g_s_tmsi, type_, "ng-5G-S-TMSI-Value");
+      assert_choice_type(types::ng_5_g_s_tmsi, type_, "ng-5G-S-TMSI-Value");
       return c.get<fixed_bitstring<48>>();
     }
-    const fixed_bitstring<9>& ng_minus5_g_s_tmsi_part2() const
+    const fixed_bitstring<9>& ng_5_g_s_tmsi_part2() const
     {
-      assert_choice_type(types::ng_minus5_g_s_tmsi_part2, type_, "ng-5G-S-TMSI-Value");
+      assert_choice_type(types::ng_5_g_s_tmsi_part2, type_, "ng-5G-S-TMSI-Value");
       return c.get<fixed_bitstring<9>>();
     }
-    fixed_bitstring<48>& set_ng_minus5_g_s_tmsi();
-    fixed_bitstring<9>&  set_ng_minus5_g_s_tmsi_part2();
+    fixed_bitstring<48>& set_ng_5_g_s_tmsi();
+    fixed_bitstring<9>&  set_ng_5_g_s_tmsi_part2();
 
   private:
     types                                type_;
@@ -7295,17 +7295,17 @@ struct rrc_setup_complete_ies_s {
   };
 
   // member variables
-  bool                        registered_amf_present           = false;
-  bool                        guami_type_present               = false;
-  bool                        ng_minus5_g_s_tmsi_value_present = false;
-  bool                        non_crit_ext_present             = false;
-  uint8_t                     sel_plmn_id                      = 1;
-  registered_amf_s            registered_amf;
-  guami_type_e_               guami_type;
-  s_nssai_list_l_             s_nssai_list;
-  dyn_octstring               ded_nas_msg;
-  ng_minus5_g_s_tmsi_value_c_ ng_minus5_g_s_tmsi_value;
-  dyn_octstring               late_non_crit_ext;
+  bool                   registered_amf_present      = false;
+  bool                   guami_type_present          = false;
+  bool                   ng_5_g_s_tmsi_value_present = false;
+  bool                   non_crit_ext_present        = false;
+  uint8_t                sel_plmn_id                 = 1;
+  registered_amf_s       registered_amf;
+  guami_type_e_          guami_type;
+  s_nssai_list_l_        s_nssai_list;
+  dyn_octstring          ded_nas_msg;
+  ng_5_g_s_tmsi_value_c_ ng_5_g_s_tmsi_value;
+  dyn_octstring          late_non_crit_ext;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -7362,12 +7362,12 @@ struct security_mode_fail_ies_s {
 };
 
 // UEAssistanceInformation-IEs ::= SEQUENCE
-struct ueassist_info_ies_s {
-  bool                      delay_budget_report_present = false;
-  bool                      non_crit_ext_present        = false;
-  delay_budget_report_c     delay_budget_report;
-  dyn_octstring             late_non_crit_ext;
-  ueassist_info_v1540_ies_s non_crit_ext;
+struct ue_assist_info_ies_s {
+  bool                       delay_budget_report_present = false;
+  bool                       non_crit_ext_present        = false;
+  delay_budget_report_c      delay_budget_report;
+  dyn_octstring              late_non_crit_ext;
+  ue_assist_info_v1540_ies_s non_crit_ext;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -7961,7 +7961,7 @@ struct security_mode_fail_s {
 };
 
 // UEAssistanceInformation ::= SEQUENCE
-struct ueassist_info_s {
+struct ue_assist_info_s {
   struct crit_exts_c_ {
     struct types_opts {
       enum options { ue_assist_info, crit_exts_future, nulltype } value;
@@ -7978,22 +7978,22 @@ struct ueassist_info_s {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    ueassist_info_ies_s& ue_assist_info()
+    ue_assist_info_ies_s& ue_assist_info()
     {
       assert_choice_type(types::ue_assist_info, type_, "criticalExtensions");
       return c;
     }
-    const ueassist_info_ies_s& ue_assist_info() const
+    const ue_assist_info_ies_s& ue_assist_info() const
     {
       assert_choice_type(types::ue_assist_info, type_, "criticalExtensions");
       return c;
     }
-    ueassist_info_ies_s& set_ue_assist_info();
-    void                 set_crit_exts_future();
+    ue_assist_info_ies_s& set_ue_assist_info();
+    void                  set_crit_exts_future();
 
   private:
-    types               type_;
-    ueassist_info_ies_s c;
+    types                type_;
+    ue_assist_info_ies_s c;
   };
 
   // member variables
@@ -8272,10 +8272,10 @@ struct ul_dcch_msg_type_c {
       assert_choice_type(types::counter_check_resp, type_, "c1");
       return c.get<counter_check_resp_s>();
     }
-    ueassist_info_s& ue_assist_info()
+    ue_assist_info_s& ue_assist_info()
     {
       assert_choice_type(types::ue_assist_info, type_, "c1");
-      return c.get<ueassist_info_s>();
+      return c.get<ue_assist_info_s>();
     }
     fail_info_s& fail_info()
     {
@@ -8352,10 +8352,10 @@ struct ul_dcch_msg_type_c {
       assert_choice_type(types::counter_check_resp, type_, "c1");
       return c.get<counter_check_resp_s>();
     }
-    const ueassist_info_s& ue_assist_info() const
+    const ue_assist_info_s& ue_assist_info() const
     {
       assert_choice_type(types::ue_assist_info, type_, "c1");
-      return c.get<ueassist_info_s>();
+      return c.get<ue_assist_info_s>();
     }
     const fail_info_s& fail_info() const
     {
@@ -8388,7 +8388,7 @@ struct ul_dcch_msg_type_c {
     location_meas_ind_s&      set_location_meas_ind();
     ue_cap_info_s&            set_ue_cap_info();
     counter_check_resp_s&     set_counter_check_resp();
-    ueassist_info_s&          set_ue_assist_info();
+    ue_assist_info_s&         set_ue_assist_info();
     fail_info_s&              set_fail_info();
     ul_info_transfer_mrdc_s&  set_ul_info_transfer_mrdc();
     scg_fail_info_s&          set_scg_fail_info();
@@ -8408,8 +8408,8 @@ struct ul_dcch_msg_type_c {
                     scg_fail_info_s,
                     security_mode_complete_s,
                     security_mode_fail_s,
+                    ue_assist_info_s,
                     ue_cap_info_s,
-                    ueassist_info_s,
                     ul_info_transfer_mrdc_s,
                     ul_info_transfer_s>
         c;
@@ -8463,8 +8463,8 @@ struct ul_dcch_msg_s {
 
 // CA-ParametersEUTRA-v1570 ::= SEQUENCE
 struct ca_params_eutra_v1570_s {
-  bool    dl_minus1024_qam_total_weighted_layers_present = false;
-  uint8_t dl_minus1024_qam_total_weighted_layers         = 0;
+  bool    dl_1024_qam_total_weighted_layers_present = false;
+  uint8_t dl_1024_qam_total_weighted_layers         = 0;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -8484,7 +8484,7 @@ struct band_combination_v1570_s {
 
 // MRDC-Parameters-v1580 ::= SEQUENCE
 struct mrdc_params_v1580_s {
-  bool dynamic_pwr_sharing_nedc_present = false;
+  bool dyn_pwr_sharing_nedc_present = false;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -8534,7 +8534,7 @@ using band_combination_list_v1580_l = dyn_array<band_combination_v1580_s>;
 using band_combination_list_v1590_l = dyn_array<band_combination_v1590_s>;
 
 // CFRA-CSIRS-Resource ::= SEQUENCE
-struct cfra_csirs_res_s {
+struct cfra_csi_rs_res_s {
   using ra_occasion_list_l_ = dyn_array<uint16_t>;
 
   // member variables
@@ -8590,7 +8590,7 @@ struct cfra_s {
       uint8_t         ra_ssb_occasion_mask_idx = 0;
     };
     struct csirs_s_ {
-      using csirs_res_list_l_ = dyn_array<cfra_csirs_res_s>;
+      using csirs_res_list_l_ = dyn_array<cfra_csi_rs_res_s>;
 
       // member variables
       csirs_res_list_l_ csirs_res_list;
@@ -10025,12 +10025,12 @@ struct lc_ch_cfg_s {
     typedef enumerated<bit_rate_query_prohibit_timer_opts> bit_rate_query_prohibit_timer_e_;
 
     // member variables
-    bool                     ext                                 = false;
-    bool                     max_pusch_dur_present               = false;
-    bool                     cfgured_grant_type1_allowed_present = false;
-    bool                     lc_ch_group_present                 = false;
-    bool                     sched_request_id_present            = false;
-    uint8_t                  prio                                = 1;
+    bool                     ext                             = false;
+    bool                     max_pusch_dur_present           = false;
+    bool                     cfg_grant_type1_allowed_present = false;
+    bool                     lc_ch_group_present             = false;
+    bool                     sched_request_id_present        = false;
+    uint8_t                  prio                            = 1;
     prioritised_bit_rate_e_  prioritised_bit_rate;
     bucket_size_dur_e_       bucket_size_dur;
     allowed_serving_cells_l_ allowed_serving_cells;
@@ -10368,7 +10368,7 @@ struct mac_cell_group_cfg_s {
   bsr_cfg_s                  bsr_cfg;
   tag_cfg_s                  tag_cfg;
   setup_release_c<phr_cfg_s> phr_cfg;
-  bool                       skip_ul_tx_dynamic = false;
+  bool                       skip_ul_tx_dyn = false;
   // ...
   // group 0
   bool                                               csi_mask_present = false;
@@ -10384,7 +10384,7 @@ struct mac_cell_group_cfg_s {
 // PhysicalCellGroupConfig ::= SEQUENCE
 struct phys_cell_group_cfg_s {
   struct pdsch_harq_ack_codebook_opts {
-    enum options { semi_static, dynamic_value, nulltype } value;
+    enum options { semi_static, dyn, nulltype } value;
 
     const char* to_string() const;
   };
@@ -10572,7 +10572,7 @@ struct cell_group_cfg_s {
 
 // MeasAndMobParametersMRDC-XDD-Diff-v1560 ::= SEQUENCE
 struct meas_and_mob_params_mrdc_xdd_diff_v1560_s {
-  bool sftd_meas_ps_cell_nedc_present = false;
+  bool sftd_meas_pscell_nedc_present = false;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -10611,7 +10611,7 @@ struct meas_result_scg_fail_s {
 
 // NAICS-Capability-Entry ::= SEQUENCE
 struct naics_cap_entry_s {
-  struct nof_aggregated_prb_opts {
+  struct nof_aggr_prb_opts {
     enum options {
       n50,
       n75,
@@ -10636,12 +10636,12 @@ struct naics_cap_entry_s {
     const char* to_string() const;
     uint16_t    to_number() const;
   };
-  typedef enumerated<nof_aggregated_prb_opts> nof_aggregated_prb_e_;
+  typedef enumerated<nof_aggr_prb_opts> nof_aggr_prb_e_;
 
   // member variables
-  bool                  ext                  = false;
-  uint8_t               nof_naics_capable_cc = 1;
-  nof_aggregated_prb_e_ nof_aggregated_prb;
+  bool            ext                  = false;
+  uint8_t         nof_naics_capable_cc = 1;
+  nof_aggr_prb_e_ nof_aggr_prb;
   // ...
 
   // sequence methods
@@ -10842,7 +10842,7 @@ struct as_cfg_s {
   dyn_octstring source_scg_nr_cfg;
   dyn_octstring source_scg_eutra_cfg;
   // group 1
-  bool source_scg_cfgured_present = false;
+  bool source_scg_cfg_present = false;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;

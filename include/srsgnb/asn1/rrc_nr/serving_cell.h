@@ -497,11 +497,11 @@ struct search_space_s {
   };
   struct search_space_type_c_ {
     struct common_s_ {
-      struct dci_format0_minus0_and_format1_minus0_s_ {
+      struct dci_format0_0_and_format1_0_s_ {
         bool ext = false;
         // ...
       };
-      struct dci_format2_minus0_s_ {
+      struct dci_format2_0_s_ {
         struct nrof_candidates_sfi_s_ {
           struct aggregation_level1_opts {
             enum options { n1, n2, nulltype } value;
@@ -562,15 +562,15 @@ struct search_space_s {
         nrof_candidates_sfi_s_ nrof_candidates_sfi;
         // ...
       };
-      struct dci_format2_minus1_s_ {
+      struct dci_format2_1_s_ {
         bool ext = false;
         // ...
       };
-      struct dci_format2_minus2_s_ {
+      struct dci_format2_2_s_ {
         bool ext = false;
         // ...
       };
-      struct dci_format2_minus3_s_ {
+      struct dci_format2_3_s_ {
         struct dummy1_opts {
           enum options { sl1, sl2, sl4, sl5, sl8, sl10, sl16, sl20, nulltype } value;
           typedef uint8_t number_type;
@@ -597,20 +597,20 @@ struct search_space_s {
       };
 
       // member variables
-      bool                                     dci_format0_minus0_and_format1_minus0_present = false;
-      bool                                     dci_format2_minus0_present                    = false;
-      bool                                     dci_format2_minus1_present                    = false;
-      bool                                     dci_format2_minus2_present                    = false;
-      bool                                     dci_format2_minus3_present                    = false;
-      dci_format0_minus0_and_format1_minus0_s_ dci_format0_minus0_and_format1_minus0;
-      dci_format2_minus0_s_                    dci_format2_minus0;
-      dci_format2_minus1_s_                    dci_format2_minus1;
-      dci_format2_minus2_s_                    dci_format2_minus2;
-      dci_format2_minus3_s_                    dci_format2_minus3;
+      bool                           dci_format0_0_and_format1_0_present = false;
+      bool                           dci_format2_0_present               = false;
+      bool                           dci_format2_1_present               = false;
+      bool                           dci_format2_2_present               = false;
+      bool                           dci_format2_3_present               = false;
+      dci_format0_0_and_format1_0_s_ dci_format0_0_and_format1_0;
+      dci_format2_0_s_               dci_format2_0;
+      dci_format2_1_s_               dci_format2_1;
+      dci_format2_2_s_               dci_format2_2;
+      dci_format2_3_s_               dci_format2_3;
     };
     struct ue_specific_s_ {
       struct dci_formats_opts {
-        enum options { formats0_minus0_and_minus1_minus0, formats0_minus1_and_minus1_minus1, nulltype } value;
+        enum options { formats0_neg0_and_neg1_neg0, formats0_neg1_and_neg1_neg1, nulltype } value;
 
         const char* to_string() const;
       };
@@ -1126,7 +1126,7 @@ struct rach_cfg_common_s {
 
     void destroy_();
   };
-  struct group_bcfgured_s_ {
+  struct group_bcfg_s_ {
     struct ra_msg3_size_group_a_opts {
       enum options {
         b56,
@@ -1236,7 +1236,7 @@ struct rach_cfg_common_s {
   bool                                            ext                                                  = false;
   bool                                            total_nof_ra_preambs_present                         = false;
   bool                                            ssb_per_rach_occasion_and_cb_preambs_per_ssb_present = false;
-  bool                                            group_bcfgured_present                               = false;
+  bool                                            group_bcfg_present                                   = false;
   bool                                            rsrp_thres_ssb_present                               = false;
   bool                                            rsrp_thres_ssb_sul_present                           = false;
   bool                                            msg1_subcarrier_spacing_present                      = false;
@@ -1244,7 +1244,7 @@ struct rach_cfg_common_s {
   rach_cfg_generic_s                              rach_cfg_generic;
   uint8_t                                         total_nof_ra_preambs = 1;
   ssb_per_rach_occasion_and_cb_preambs_per_ssb_c_ ssb_per_rach_occasion_and_cb_preambs_per_ssb;
-  group_bcfgured_s_                               group_bcfgured;
+  group_bcfg_s_                                   group_bcfg;
   ra_contention_resolution_timer_e_               ra_contention_resolution_timer;
   uint8_t                                         rsrp_thres_ssb     = 0;
   uint8_t                                         rsrp_thres_ssb_sul = 0;
@@ -1770,7 +1770,7 @@ struct serving_cell_cfg_common_sib_s {
 };
 
 // BFR-CSIRS-Resource ::= SEQUENCE
-struct bfr_csirs_res_s {
+struct bfr_csi_rs_res_s {
   using ra_occasion_list_l_ = dyn_array<uint16_t>;
 
   // member variables
@@ -2644,7 +2644,7 @@ struct rate_match_pattern_s {
     void destroy_();
   };
   struct dummy_opts {
-    enum options { dynamic_value, semi_static, nulltype } value;
+    enum options { dyn, semi_static, nulltype } value;
 
     const char* to_string() const;
   };
@@ -2719,15 +2719,15 @@ using rate_match_pattern_group_l = dyn_array<rate_match_pattern_group_item_c_>;
 
 // SRS-TPC-CommandConfig ::= SEQUENCE
 struct srs_tpc_cmd_cfg_s {
-  bool    ext                                 = false;
-  bool    start_bit_of_format2_minus3_present = false;
-  bool    field_type_format2_minus3_present   = false;
-  uint8_t start_bit_of_format2_minus3         = 1;
-  uint8_t field_type_format2_minus3           = 0;
+  bool    ext                            = false;
+  bool    start_bit_of_format2_3_present = false;
+  bool    field_type_format2_3_present   = false;
+  uint8_t start_bit_of_format2_3         = 1;
+  uint8_t field_type_format2_3           = 0;
   // ...
   // group 0
-  bool    start_bit_of_format2_minus3_sul_present = false;
-  uint8_t start_bit_of_format2_minus3_sul         = 1;
+  bool    start_bit_of_format2_3_sul_present = false;
+  uint8_t start_bit_of_format2_3_sul         = 1;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -2823,7 +2823,7 @@ struct pdsch_cfg_s {
   };
   typedef enumerated<vrb_to_prb_interleaver_opts> vrb_to_prb_interleaver_e_;
   struct res_alloc_opts {
-    enum options { res_alloc_type0, res_alloc_type1, dynamic_switch, nulltype } value;
+    enum options { res_alloc_type0, res_alloc_type1, dyn_switch, nulltype } value;
     typedef uint8_t number_type;
 
     const char* to_string() const;
@@ -2879,7 +2879,7 @@ struct pdsch_cfg_s {
       bool           bundle_size_present = false;
       bundle_size_e_ bundle_size;
     };
-    struct dynamic_bundling_s_ {
+    struct dyn_bundling_s_ {
       struct bundle_size_set1_opts {
         enum options { n4, wideband, n2_wideband, n4_wideband, nulltype } value;
 
@@ -2902,7 +2902,7 @@ struct pdsch_cfg_s {
       bundle_size_set2_e_ bundle_size_set2;
     };
     struct types_opts {
-      enum options { static_bundling, dynamic_bundling, nulltype } value;
+      enum options { static_bundling, dyn_bundling, nulltype } value;
 
       const char* to_string() const;
     };
@@ -2924,27 +2924,27 @@ struct pdsch_cfg_s {
       assert_choice_type(types::static_bundling, type_, "prb-BundlingType");
       return c.get<static_bundling_s_>();
     }
-    dynamic_bundling_s_& dynamic_bundling()
+    dyn_bundling_s_& dyn_bundling()
     {
-      assert_choice_type(types::dynamic_bundling, type_, "prb-BundlingType");
-      return c.get<dynamic_bundling_s_>();
+      assert_choice_type(types::dyn_bundling, type_, "prb-BundlingType");
+      return c.get<dyn_bundling_s_>();
     }
     const static_bundling_s_& static_bundling() const
     {
       assert_choice_type(types::static_bundling, type_, "prb-BundlingType");
       return c.get<static_bundling_s_>();
     }
-    const dynamic_bundling_s_& dynamic_bundling() const
+    const dyn_bundling_s_& dyn_bundling() const
     {
-      assert_choice_type(types::dynamic_bundling, type_, "prb-BundlingType");
-      return c.get<dynamic_bundling_s_>();
+      assert_choice_type(types::dyn_bundling, type_, "prb-BundlingType");
+      return c.get<dyn_bundling_s_>();
     }
-    static_bundling_s_&  set_static_bundling();
-    dynamic_bundling_s_& set_dynamic_bundling();
+    static_bundling_s_& set_static_bundling();
+    dyn_bundling_s_&    set_dyn_bundling();
 
   private:
-    types                                                    type_;
-    choice_buffer_t<dynamic_bundling_s_, static_bundling_s_> c;
+    types                                                type_;
+    choice_buffer_t<dyn_bundling_s_, static_bundling_s_> c;
 
     void destroy_();
   };
@@ -3475,9 +3475,9 @@ struct sri_pusch_pwr_ctrl_s {
 
 // CG-UCI-OnPUSCH ::= CHOICE
 struct cg_uci_on_pusch_c {
-  using dynamic_l_ = dyn_array<beta_offsets_s>;
+  using dyn_l_ = dyn_array<beta_offsets_s>;
   struct types_opts {
-    enum options { dynamic_type, semi_static, nulltype } value;
+    enum options { dyn, semi_static, nulltype } value;
 
     const char* to_string() const;
   };
@@ -3494,32 +3494,32 @@ struct cg_uci_on_pusch_c {
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
   // getters
-  dynamic_l_& dynamic_type()
+  dyn_l_& dyn()
   {
-    assert_choice_type(types::dynamic_type, type_, "CG-UCI-OnPUSCH");
-    return c.get<dynamic_l_>();
+    assert_choice_type(types::dyn, type_, "CG-UCI-OnPUSCH");
+    return c.get<dyn_l_>();
   }
   beta_offsets_s& semi_static()
   {
     assert_choice_type(types::semi_static, type_, "CG-UCI-OnPUSCH");
     return c.get<beta_offsets_s>();
   }
-  const dynamic_l_& dynamic_type() const
+  const dyn_l_& dyn() const
   {
-    assert_choice_type(types::dynamic_type, type_, "CG-UCI-OnPUSCH");
-    return c.get<dynamic_l_>();
+    assert_choice_type(types::dyn, type_, "CG-UCI-OnPUSCH");
+    return c.get<dyn_l_>();
   }
   const beta_offsets_s& semi_static() const
   {
     assert_choice_type(types::semi_static, type_, "CG-UCI-OnPUSCH");
     return c.get<beta_offsets_s>();
   }
-  dynamic_l_&     set_dynamic_type();
+  dyn_l_&         set_dyn();
   beta_offsets_s& set_semi_static();
 
 private:
-  types                                       type_;
-  choice_buffer_t<beta_offsets_s, dynamic_l_> c;
+  types                                   type_;
+  choice_buffer_t<beta_offsets_s, dyn_l_> c;
 
   void destroy_();
 };
@@ -3596,27 +3596,27 @@ struct prach_res_ded_bfr_c {
     assert_choice_type(types::ssb, type_, "PRACH-ResourceDedicatedBFR");
     return c.get<bfr_ssb_res_s>();
   }
-  bfr_csirs_res_s& csi_rs()
+  bfr_csi_rs_res_s& csi_rs()
   {
     assert_choice_type(types::csi_rs, type_, "PRACH-ResourceDedicatedBFR");
-    return c.get<bfr_csirs_res_s>();
+    return c.get<bfr_csi_rs_res_s>();
   }
   const bfr_ssb_res_s& ssb() const
   {
     assert_choice_type(types::ssb, type_, "PRACH-ResourceDedicatedBFR");
     return c.get<bfr_ssb_res_s>();
   }
-  const bfr_csirs_res_s& csi_rs() const
+  const bfr_csi_rs_res_s& csi_rs() const
   {
     assert_choice_type(types::csi_rs, type_, "PRACH-ResourceDedicatedBFR");
-    return c.get<bfr_csirs_res_s>();
+    return c.get<bfr_csi_rs_res_s>();
   }
-  bfr_ssb_res_s&   set_ssb();
-  bfr_csirs_res_s& set_csi_rs();
+  bfr_ssb_res_s&    set_ssb();
+  bfr_csi_rs_res_s& set_csi_rs();
 
 private:
-  types                                           type_;
-  choice_buffer_t<bfr_csirs_res_s, bfr_ssb_res_s> c;
+  types                                            type_;
+  choice_buffer_t<bfr_csi_rs_res_s, bfr_ssb_res_s> c;
 
   void destroy_();
 };
@@ -4317,9 +4317,9 @@ struct sched_request_res_cfg_s {
 // UCI-OnPUSCH ::= SEQUENCE
 struct uci_on_pusch_s {
   struct beta_offsets_c_ {
-    using dynamic_l_ = std::array<beta_offsets_s, 4>;
+    using dyn_l_ = std::array<beta_offsets_s, 4>;
     struct types_opts {
-      enum options { dynamic_type, semi_static, nulltype } value;
+      enum options { dyn, semi_static, nulltype } value;
 
       const char* to_string() const;
     };
@@ -4336,32 +4336,32 @@ struct uci_on_pusch_s {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    dynamic_l_& dynamic_type()
+    dyn_l_& dyn()
     {
-      assert_choice_type(types::dynamic_type, type_, "betaOffsets");
-      return c.get<dynamic_l_>();
+      assert_choice_type(types::dyn, type_, "betaOffsets");
+      return c.get<dyn_l_>();
     }
     beta_offsets_s& semi_static()
     {
       assert_choice_type(types::semi_static, type_, "betaOffsets");
       return c.get<beta_offsets_s>();
     }
-    const dynamic_l_& dynamic_type() const
+    const dyn_l_& dyn() const
     {
-      assert_choice_type(types::dynamic_type, type_, "betaOffsets");
-      return c.get<dynamic_l_>();
+      assert_choice_type(types::dyn, type_, "betaOffsets");
+      return c.get<dyn_l_>();
     }
     const beta_offsets_s& semi_static() const
     {
       assert_choice_type(types::semi_static, type_, "betaOffsets");
       return c.get<beta_offsets_s>();
     }
-    dynamic_l_&     set_dynamic_type();
+    dyn_l_&         set_dyn();
     beta_offsets_s& set_semi_static();
 
   private:
-    types                                       type_;
-    choice_buffer_t<beta_offsets_s, dynamic_l_> c;
+    types                                   type_;
+    choice_buffer_t<beta_offsets_s, dyn_l_> c;
 
     void destroy_();
   };
@@ -4435,7 +4435,7 @@ struct beam_fail_recovery_cfg_s {
 };
 
 // ConfiguredGrantConfig ::= SEQUENCE
-struct cfgured_grant_cfg_s {
+struct cfg_grant_cfg_s {
   struct freq_hop_opts {
     enum options { intra_slot, inter_slot, nulltype } value;
 
@@ -4459,7 +4459,7 @@ struct cfgured_grant_cfg_s {
   };
   typedef enumerated<mcs_table_transform_precoder_opts> mcs_table_transform_precoder_e_;
   struct res_alloc_opts {
-    enum options { res_alloc_type0, res_alloc_type1, dynamic_switch, nulltype } value;
+    enum options { res_alloc_type0, res_alloc_type1, dyn_switch, nulltype } value;
     typedef uint8_t number_type;
 
     const char* to_string() const;
@@ -4489,7 +4489,7 @@ struct cfgured_grant_cfg_s {
   };
   typedef enumerated<rep_k_opts> rep_k_e_;
   struct rep_k_rv_opts {
-    enum options { s1_minus0231, s2_minus0303, s3_minus0000, nulltype } value;
+    enum options { s1_neg0231, s2_neg0303, s3_neg0000, nulltype } value;
     typedef uint8_t number_type;
 
     const char* to_string() const;
@@ -4549,7 +4549,7 @@ struct cfgured_grant_cfg_s {
     const char* to_string() const;
   };
   typedef enumerated<periodicity_opts> periodicity_e_;
-  struct rrc_cfgured_ul_grant_s_ {
+  struct rrc_cfg_ul_grant_s_ {
     bool                ext                          = false;
     bool                dmrs_seq_initization_present = false;
     bool                srs_res_ind_present          = false;
@@ -4576,8 +4576,8 @@ struct cfgured_grant_cfg_s {
   bool                               rbg_size_present                     = false;
   bool                               transform_precoder_present           = false;
   bool                               rep_k_rv_present                     = false;
-  bool                               cfgured_grant_timer_present          = false;
-  bool                               rrc_cfgured_ul_grant_present         = false;
+  bool                               cfg_grant_timer_present              = false;
+  bool                               rrc_cfg_ul_grant_present             = false;
   freq_hop_e_                        freq_hop;
   dmrs_ul_cfg_s                      cg_dmrs_cfg;
   mcs_table_e_                       mcs_table;
@@ -4591,8 +4591,8 @@ struct cfgured_grant_cfg_s {
   rep_k_e_                           rep_k;
   rep_k_rv_e_                        rep_k_rv;
   periodicity_e_                     periodicity;
-  uint8_t                            cfgured_grant_timer = 1;
-  rrc_cfgured_ul_grant_s_            rrc_cfgured_ul_grant;
+  uint8_t                            cfg_grant_timer = 1;
+  rrc_cfg_ul_grant_s_                rrc_cfg_ul_grant;
   // ...
 
   // sequence methods
@@ -4660,7 +4660,7 @@ struct pusch_cfg_s {
   typedef enumerated<freq_hop_opts> freq_hop_e_;
   using freq_hop_offset_lists_l_ = bounded_array<uint16_t, 4>;
   struct res_alloc_opts {
-    enum options { res_alloc_type0, res_alloc_type1, dynamic_switch, nulltype } value;
+    enum options { res_alloc_type0, res_alloc_type1, dyn_switch, nulltype } value;
     typedef uint8_t number_type;
 
     const char* to_string() const;
@@ -4773,12 +4773,12 @@ struct bwp_ul_ded_s {
   bool                                      ext                            = false;
   bool                                      pucch_cfg_present              = false;
   bool                                      pusch_cfg_present              = false;
-  bool                                      cfgured_grant_cfg_present      = false;
+  bool                                      cfg_grant_cfg_present          = false;
   bool                                      srs_cfg_present                = false;
   bool                                      beam_fail_recovery_cfg_present = false;
   setup_release_c<pucch_cfg_s>              pucch_cfg;
   setup_release_c<pusch_cfg_s>              pusch_cfg;
-  setup_release_c<cfgured_grant_cfg_s>      cfgured_grant_cfg;
+  setup_release_c<cfg_grant_cfg_s>          cfg_grant_cfg;
   setup_release_c<srs_cfg_s>                srs_cfg;
   setup_release_c<beam_fail_recovery_cfg_s> beam_fail_recovery_cfg;
   // ...
@@ -5962,55 +5962,55 @@ struct pucch_csi_res_s {
 // PortIndexFor8Ranks ::= CHOICE
 struct port_idx_for8_ranks_c {
   struct port_idx8_s_ {
-    using rank2_minus8_l_ = std::array<uint8_t, 2>;
-    using rank3_minus8_l_ = std::array<uint8_t, 3>;
-    using rank4_minus8_l_ = std::array<uint8_t, 4>;
-    using rank5_minus8_l_ = std::array<uint8_t, 5>;
-    using rank6_minus8_l_ = std::array<uint8_t, 6>;
-    using rank7_minus8_l_ = std::array<uint8_t, 7>;
-    using rank8_minus8_l_ = std::array<uint8_t, 8>;
+    using rank2_8_l_ = std::array<uint8_t, 2>;
+    using rank3_8_l_ = std::array<uint8_t, 3>;
+    using rank4_8_l_ = std::array<uint8_t, 4>;
+    using rank5_8_l_ = std::array<uint8_t, 5>;
+    using rank6_8_l_ = std::array<uint8_t, 6>;
+    using rank7_8_l_ = std::array<uint8_t, 7>;
+    using rank8_8_l_ = std::array<uint8_t, 8>;
 
     // member variables
-    bool            rank1_minus8_present = false;
-    bool            rank2_minus8_present = false;
-    bool            rank3_minus8_present = false;
-    bool            rank4_minus8_present = false;
-    bool            rank5_minus8_present = false;
-    bool            rank6_minus8_present = false;
-    bool            rank7_minus8_present = false;
-    bool            rank8_minus8_present = false;
-    uint8_t         rank1_minus8         = 0;
-    rank2_minus8_l_ rank2_minus8;
-    rank3_minus8_l_ rank3_minus8;
-    rank4_minus8_l_ rank4_minus8;
-    rank5_minus8_l_ rank5_minus8;
-    rank6_minus8_l_ rank6_minus8;
-    rank7_minus8_l_ rank7_minus8;
-    rank8_minus8_l_ rank8_minus8;
+    bool       rank1_8_present = false;
+    bool       rank2_8_present = false;
+    bool       rank3_8_present = false;
+    bool       rank4_8_present = false;
+    bool       rank5_8_present = false;
+    bool       rank6_8_present = false;
+    bool       rank7_8_present = false;
+    bool       rank8_8_present = false;
+    uint8_t    rank1_8         = 0;
+    rank2_8_l_ rank2_8;
+    rank3_8_l_ rank3_8;
+    rank4_8_l_ rank4_8;
+    rank5_8_l_ rank5_8;
+    rank6_8_l_ rank6_8;
+    rank7_8_l_ rank7_8;
+    rank8_8_l_ rank8_8;
   };
   struct port_idx4_s_ {
-    using rank2_minus4_l_ = std::array<uint8_t, 2>;
-    using rank3_minus4_l_ = std::array<uint8_t, 3>;
-    using rank4_minus4_l_ = std::array<uint8_t, 4>;
+    using rank2_4_l_ = std::array<uint8_t, 2>;
+    using rank3_4_l_ = std::array<uint8_t, 3>;
+    using rank4_4_l_ = std::array<uint8_t, 4>;
 
     // member variables
-    bool            rank1_minus4_present = false;
-    bool            rank2_minus4_present = false;
-    bool            rank3_minus4_present = false;
-    bool            rank4_minus4_present = false;
-    uint8_t         rank1_minus4         = 0;
-    rank2_minus4_l_ rank2_minus4;
-    rank3_minus4_l_ rank3_minus4;
-    rank4_minus4_l_ rank4_minus4;
+    bool       rank1_4_present = false;
+    bool       rank2_4_present = false;
+    bool       rank3_4_present = false;
+    bool       rank4_4_present = false;
+    uint8_t    rank1_4         = 0;
+    rank2_4_l_ rank2_4;
+    rank3_4_l_ rank3_4;
+    rank4_4_l_ rank4_4;
   };
   struct port_idx2_s_ {
-    using rank2_minus2_l_ = std::array<uint8_t, 2>;
+    using rank2_2_l_ = std::array<uint8_t, 2>;
 
     // member variables
-    bool            rank1_minus2_present = false;
-    bool            rank2_minus2_present = false;
-    uint8_t         rank1_minus2         = 0;
-    rank2_minus2_l_ rank2_minus2;
+    bool       rank1_2_present = false;
+    bool       rank2_2_present = false;
+    uint8_t    rank1_2         = 0;
+    rank2_2_l_ rank2_2;
   };
   struct types_opts {
     enum options { port_idx8, port_idx4, port_idx2, port_idx1, nulltype } value;
@@ -6503,13 +6503,13 @@ struct csi_report_cfg_s {
     csi_report_band_c_ csi_report_band;
   };
   struct time_restrict_for_ch_meass_opts {
-    enum options { cfgured, not_cfgured, nulltype } value;
+    enum options { cfg, not_cfg, nulltype } value;
 
     const char* to_string() const;
   };
   typedef enumerated<time_restrict_for_ch_meass_opts> time_restrict_for_ch_meass_e_;
   struct time_restrict_for_interference_meass_opts {
-    enum options { cfgured, not_cfgured, nulltype } value;
+    enum options { cfg, not_cfg, nulltype } value;
 
     const char* to_string() const;
   };
@@ -6738,7 +6738,7 @@ using csi_semi_persistent_on_pusch_trigger_state_list_l = dyn_array<csi_semi_per
 // NZP-CSI-RS-Resource ::= SEQUENCE
 struct nzp_csi_rs_res_s {
   struct pwr_ctrl_offset_ss_opts {
-    enum options { db_minus3, db0, db3, db6, nulltype } value;
+    enum options { db_neg3, db0, db3, db6, nulltype } value;
     typedef int8_t number_type;
 
     const char* to_string() const;

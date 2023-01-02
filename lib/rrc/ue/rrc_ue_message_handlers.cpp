@@ -72,8 +72,8 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
   // 1.2 Extract the setup ID and cause
   const rrc_setup_request_ies_s& request_ies = request_msg.rrc_setup_request;
   switch (request_ies.ue_id.type().value) {
-    case init_ue_id_c::types_opts::ng_minus5_g_s_tmsi_part1:
-      context.setup_ue_id = request_ies.ue_id.ng_minus5_g_s_tmsi_part1().to_number();
+    case init_ue_id_c::types_opts::ng_5_g_s_tmsi_part1:
+      context.setup_ue_id = request_ies.ue_id.ng_5_g_s_tmsi_part1().to_number();
       break;
     case asn1::rrc_nr::init_ue_id_c::types_opts::random_value:
       context.setup_ue_id = request_ies.ue_id.random_value().to_number();
