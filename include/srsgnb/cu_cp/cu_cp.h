@@ -150,6 +150,7 @@ class cu_cp_interface : public cu_cp_du_connection_notifier,
 {
 public:
   virtual ~cu_cp_interface() = default;
+  virtual void start()       = 0;
 };
 
 } // namespace srs_cu_cp

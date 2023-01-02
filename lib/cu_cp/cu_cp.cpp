@@ -37,8 +37,6 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   ngc_task_sched.connect_cu_cp(ue_task_sched);
   f1c_ev_notifier.connect_cu_cp(*this);
   cu_up_processor_ev_notifier.connect_cu_cp(*this);
-
-  start();
 }
 
 cu_cp::~cu_cp()

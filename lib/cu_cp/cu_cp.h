@@ -21,7 +21,6 @@
 #include "task_schedulers/du_task_scheduler.h"
 #include "task_schedulers/ue_task_scheduler.h"
 #include "ue_manager.h"
-#include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/support/async/async_task_loop.h"
@@ -40,7 +39,7 @@ public:
   explicit cu_cp(const cu_cp_configuration& cfg_);
   ~cu_cp();
 
-  void start();
+  void start() override;
   void stop();
 
   // DU interface

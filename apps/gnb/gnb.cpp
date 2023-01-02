@@ -284,6 +284,7 @@ int main(int argc, char** argv)
 
   // Connect NGAP adpter to CU-CP to pass NGC messages.
   ngap_adapter->connect_ngc(&cu_cp_obj->get_ngc_message_handler(), &cu_cp_obj->get_ngc_event_handler());
+  cu_cp_obj->start();
 
   // Create CU-UP config.
   srsgnb::srs_cu_up::cu_up_configuration cu_up_cfg;
