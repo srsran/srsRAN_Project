@@ -240,11 +240,12 @@ public:
   void prepend(span<const uint8_t> bytes)
   {
     if (empty()) {
-      prepend_segment();
+      append(bytes);
+      return;
     }
     for (size_t count = 0; count < bytes.size();) {
       if (head->headroom() == 0) {
-        prepend_segment();
+        prepend_segment(std::min((size_t)byte_buffer_segment::SEGMENT_SIZE, bytes.size() - count));
       }
       size_t              to_write = std::min(head->headroom(), bytes.size() - count);
       span<const uint8_t> subspan  = bytes.subspan(bytes.size() - to_write - count, to_write);
@@ -471,19 +472,18 @@ private:
     }
   }
 
-  void prepend_segment()
+  void prepend_segment(size_t headroom_size)
   {
-    // TODO: Use memory pool.
+    auto* p = new (std::nothrow) byte_buffer_segment(headroom_size);
     // TODO: Verify if allocation was successful. What to do if not?
-    auto buf = std::make_shared<byte_buffer_segment>();
+    srsgnb_assert(p != nullptr, "Failed to allocate byte_buffer_segment");
     if (empty()) {
-      head = std::move(buf);
+      head.reset(p);
       set_tail(head.get());
     } else {
-      unsigned pkt_len         = length();
-      buf->metadata().next     = std::move(head);
-      head                     = std::move(buf);
-      head->metadata().pkt_len = pkt_len;
+      p->metadata().pkt_len = length();
+      p->metadata().next    = std::move(head);
+      head.reset(p);
     }
   }
 
@@ -708,13 +708,10 @@ private:
 
 inline byte_buffer_view byte_buffer::reserve_prepend(size_t nof_bytes)
 {
-  if (empty()) {
-    prepend_segment();
-  }
   size_t count = nof_bytes;
   while (count > 0) {
-    if (head->headroom() == 0) {
-      prepend_segment();
+    if (empty() or head->headroom() == 0) {
+      prepend_segment(std::min((size_t)byte_buffer_segment::SEGMENT_SIZE, count));
     }
     size_t to_reserve = std::min(head->headroom(), count);
     head->reserve_prepend(to_reserve);
