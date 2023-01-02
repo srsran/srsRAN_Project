@@ -25,13 +25,13 @@ namespace srs_cu_cp {
 class rrc_pdu_session_resource_setup_routine
 {
 public:
-  rrc_pdu_session_resource_setup_routine(cu_cp_pdu_session_resource_setup_message& setup_msg_,
-                                         rrc_ue_context_t&                         context_,
-                                         rrc_ue_e1_control_notifier&               e1_ctrl_notif_,
-                                         rrc_ue_f1c_control_notifier&              f1c_ctrl_notif_,
-                                         rrc_ue_reconfiguration_proc_notifier&     rrc_ue_notifier_,
-                                         rrc_ue_event_manager&                     ev_mng_,
-                                         srslog::basic_logger&                     logger_);
+  rrc_pdu_session_resource_setup_routine(const cu_cp_pdu_session_resource_setup_message& setup_msg_,
+                                         rrc_ue_context_t&                               context_,
+                                         rrc_ue_e1_control_notifier&                     e1_ctrl_notif_,
+                                         rrc_ue_f1c_control_notifier&                    f1c_ctrl_notif_,
+                                         rrc_ue_reconfiguration_proc_notifier&           rrc_ue_notifier_,
+                                         rrc_ue_event_manager&                           ev_mng_,
+                                         srslog::basic_logger&                           logger_);
 
   void operator()(coro_context<async_task<cu_cp_pdu_session_resource_setup_response_message>>& ctx);
 
@@ -40,8 +40,8 @@ public:
 private:
   cu_cp_pdu_session_resource_setup_response_message handle_pdu_session_resource_setup_result(bool success);
 
-  cu_cp_pdu_session_resource_setup_message& setup_msg;
-  rrc_ue_context_t&                         context;
+  const cu_cp_pdu_session_resource_setup_message& setup_msg;
+  rrc_ue_context_t&                               context;
 
   std::vector<drb_id_t> drb_to_add_list; // list of DRBs to be added
 

@@ -9,6 +9,7 @@
  */
 
 #include "ngc_impl.h"
+#include "ngap_asn1_helpers.h"
 #include "ngap_asn1_utils.h"
 #include "procedures/ng_initial_context_setup_procedure.h"
 #include "procedures/ng_pdu_session_resource_setup_procedure.h"
@@ -247,10 +248,15 @@ void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_s
     ue->set_aggregate_maximum_bit_rate_dl(request->ue_aggr_max_bit_rate.value.ue_aggr_max_bit_rate_dl);
   }
 
+  // Convert to common type
+  cu_cp_pdu_session_resource_setup_message msg;
+  fill_cu_cp_pdu_session_resource_setup_message(msg, request->pdu_session_res_setup_list_su_req.value);
+  msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
+
   // start procedure
   task_sched.schedule_async_task(cu_cp_ue_id,
                                  launch_async<ng_pdu_session_resource_setup_procedure>(
-                                     *ue, request, ue->get_rrc_ue_control_notifier(), ngc_notifier, logger));
+                                     *ue, msg, ue->get_rrc_ue_control_notifier(), ngc_notifier, logger));
 
   // Handle optional parameters
   if (request->nas_pdu_present) {

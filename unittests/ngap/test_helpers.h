@@ -113,39 +113,30 @@ public:
     });
   }
 
-  async_task<asn1::ngap::pdu_session_res_setup_resp_s>
-  on_new_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request,
-                                            uint64_t ue_aggregate_maximum_bit_rate_dl) override
+  async_task<cu_cp_pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_message& request) override
   {
     logger.info("Received a new pdu session resource setup request");
 
-    last_request = request;
+    last_request = std::move(request);
 
-    // Convert to common type
-    cu_cp_pdu_session_resource_setup_message cu_cp_pdu_session_res_setup;
-    fill_cu_cp_pdu_session_resource_setup_message(cu_cp_pdu_session_res_setup,
-                                                  request->pdu_session_res_setup_list_su_req.value);
-    cu_cp_pdu_session_res_setup.ue_aggregate_maximum_bit_rate_dl = ue_aggregate_maximum_bit_rate_dl;
-    last_cu_cp_pdu_session_res_setup                             = std::move(cu_cp_pdu_session_res_setup);
-
-    return launch_async([this, res = asn1::ngap::pdu_session_res_setup_resp_s{}](
-                            coro_context<async_task<asn1::ngap::pdu_session_res_setup_resp_s>>& ctx) mutable {
+    return launch_async([this, res = cu_cp_pdu_session_resource_setup_response_message{}](
+                            coro_context<async_task<cu_cp_pdu_session_resource_setup_response_message>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      if (last_request->pdu_session_res_setup_list_su_req.value.size() == 0) {
-        res->pdu_session_res_failed_to_setup_list_su_res_present = true;
-        res->pdu_session_res_setup_list_su_res_present           = false;
+      if (last_request.pdu_session_res_setup_items.size() == 0) {
+        res.pdu_session_res_failed_to_setup_items.resize(1);
+        res.pdu_session_res_setup_response_items.resize(0);
       } else {
-        res->pdu_session_res_setup_list_su_res_present = true;
+        res.pdu_session_res_setup_response_items.resize(1);
       }
 
       CORO_RETURN(res);
     });
   }
 
-  byte_buffer                                 last_nas_pdu;
-  asn1::ngap::pdu_session_res_setup_request_s last_request;
-  cu_cp_pdu_session_resource_setup_message    last_cu_cp_pdu_session_res_setup;
+  byte_buffer                              last_nas_pdu;
+  cu_cp_pdu_session_resource_setup_message last_request;
 
 private:
   srslog::basic_logger& logger;

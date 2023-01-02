@@ -141,9 +141,8 @@ public:
                                                    const asn1::fixed_bitstring<256, false, true>& key) = 0;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup Request.
-  virtual async_task<asn1::ngap::pdu_session_res_setup_resp_s>
-  on_new_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request,
-                                            uint64_t ue_aggregate_maximum_bit_rate_dl) = 0;
+  virtual async_task<cu_cp_pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_message& request) = 0;
 };
 
 /// Interface to control the NGC.

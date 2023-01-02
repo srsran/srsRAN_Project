@@ -68,7 +68,7 @@ public:
 
   // rrc_ue_pdu_session_resource_handler
   async_task<cu_cp_pdu_session_resource_setup_response_message>
-  handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_message& msg) override;
+  handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_message& msg) override;
 
 private:
   // message handlers

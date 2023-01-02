@@ -417,7 +417,7 @@ public:
 
   /// \brief Handle the reception of a new PDU Session Resource Setup List.
   virtual async_task<cu_cp_pdu_session_resource_setup_response_message>
-  handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_message& msg) = 0;
+  handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_message& msg) = 0;
 };
 
 /// Combined entry point for the RRC UE handling.

@@ -17,13 +17,13 @@ using namespace srsgnb::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
 rrc_pdu_session_resource_setup_routine::rrc_pdu_session_resource_setup_routine(
-    cu_cp_pdu_session_resource_setup_message& setup_msg_,
-    rrc_ue_context_t&                         context_,
-    rrc_ue_e1_control_notifier&               e1_ctrl_notif_,
-    rrc_ue_f1c_control_notifier&              f1c_ctrl_notif_,
-    rrc_ue_reconfiguration_proc_notifier&     rrc_ue_notifier_,
-    rrc_ue_event_manager&                     event_mng_,
-    srslog::basic_logger&                     logger_) :
+    const cu_cp_pdu_session_resource_setup_message& setup_msg_,
+    rrc_ue_context_t&                               context_,
+    rrc_ue_e1_control_notifier&                     e1_ctrl_notif_,
+    rrc_ue_f1c_control_notifier&                    f1c_ctrl_notif_,
+    rrc_ue_reconfiguration_proc_notifier&           rrc_ue_notifier_,
+    rrc_ue_event_manager&                           event_mng_,
+    srslog::basic_logger&                           logger_) :
   setup_msg(setup_msg_),
   context(context_),
   e1_ctrl_notif(e1_ctrl_notif_),

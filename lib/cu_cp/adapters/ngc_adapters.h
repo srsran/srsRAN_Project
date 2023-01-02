@@ -19,7 +19,6 @@
 #include "srsgnb/rrc/rrc_ue.h"
 #include "srsgnb/srslog/srslog.h"
 
-#include "../../ngap/ngap_asn1_helpers.h"
 #include "../../ngap/ngap_asn1_utils.h"
 
 namespace srsgnb {
@@ -95,30 +94,12 @@ public:
     return rrc_ue_security_handler->handle_init_security_context(sec_ctxt);
   }
 
-  async_task<asn1::ngap::pdu_session_res_setup_resp_s>
-  on_new_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request,
-                                            uint64_t ue_aggregate_maximum_bit_rate_dl) override
+  async_task<cu_cp_pdu_session_resource_setup_response_message>
+  on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_message& request) override
   {
     srsgnb_assert(rrc_ue_pdu_session_handler != nullptr, "rrc_ue_pdu_session_handler must not be nullptr");
 
-    cu_cp_pdu_session_resource_setup_message msg;
-    fill_cu_cp_pdu_session_resource_setup_message(msg, request->pdu_session_res_setup_list_su_req.value);
-    msg.ue_aggregate_maximum_bit_rate_dl = ue_aggregate_maximum_bit_rate_dl;
-
-    cu_cp_pdu_session_resource_setup_response_message cu_cp_pdu_session_resource_setup_resp_msg;
-
-    return launch_async(
-        [this, res = asn1::ngap::pdu_session_res_setup_resp_s{}, msg, cu_cp_pdu_session_resource_setup_resp_msg](
-            coro_context<async_task<asn1::ngap::pdu_session_res_setup_resp_s>>& ctx) mutable {
-          CORO_BEGIN(ctx);
-
-          CORO_AWAIT_VALUE(cu_cp_pdu_session_resource_setup_resp_msg,
-                           rrc_ue_pdu_session_handler->handle_new_pdu_session_resource_setup_request(msg));
-
-          fill_pdu_session_res_setup_resp_s(res, cu_cp_pdu_session_resource_setup_resp_msg);
-
-          CORO_RETURN(res);
-        });
+    return rrc_ue_pdu_session_handler->handle_new_pdu_session_resource_setup_request(request);
   }
 
 private:
