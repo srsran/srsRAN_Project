@@ -26,7 +26,7 @@ f1ap_ue_creation_response srsgnb::srs_du::create_f1ap_ue(const f1ap_ue_creation_
   for (const f1c_bearer_to_addmod& srb : req.f1c_bearers_to_add) {
     if (srb.srb_id == srb_id_t::srb0) {
       u.bearers.add_srb0_f1c_bearer(
-          *srb.rx_sdu_notifier, ue_pcell.served_cell_info.nrcgi, req.du_cu_rrc_container, ev_mng);
+          *srb.rx_sdu_notifier, ue_pcell.served_cell_info.nr_cgi, req.du_cu_rrc_container, ev_mng);
     } else {
       u.bearers.add_f1c_bearer(srb.srb_id, *srb.rx_sdu_notifier);
     }

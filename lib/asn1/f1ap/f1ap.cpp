@@ -109,7 +109,7 @@ void alloc_and_retention_prio_s::to_json(json_writer& j) const
 }
 
 // NRCGI ::= SEQUENCE
-SRSASN_CODE nrcgi_s::pack(bit_ref& bref) const
+SRSASN_CODE nr_cgi_s::pack(bit_ref& bref) const
 {
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -122,7 +122,7 @@ SRSASN_CODE nrcgi_s::pack(bit_ref& bref) const
 
   return SRSASN_SUCCESS;
 }
-SRSASN_CODE nrcgi_s::unpack(cbit_ref& bref)
+SRSASN_CODE nr_cgi_s::unpack(cbit_ref& bref)
 {
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
@@ -135,7 +135,7 @@ SRSASN_CODE nrcgi_s::unpack(cbit_ref& bref)
 
   return SRSASN_SUCCESS;
 }
-void nrcgi_s::to_json(json_writer& j) const
+void nr_cgi_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_str("pLMN-Identity", plmn_id.to_string());
@@ -401,7 +401,7 @@ SRSASN_CODE broadcast_to_be_cancelled_item_s::pack(bit_ref& bref) const
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.pack(bref));
+  HANDLE_CODE(nr_cgi.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -413,7 +413,7 @@ SRSASN_CODE broadcast_to_be_cancelled_item_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.unpack(bref));
+  HANDLE_CODE(nr_cgi.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
@@ -424,7 +424,7 @@ void broadcast_to_be_cancelled_item_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_fieldname("nRCGI");
-  nrcgi.to_json(j);
+  nr_cgi.to_json(j);
   if (ie_exts_present) {
     j.write_fieldname("iE-Extensions");
     ie_exts.to_json(j);
@@ -1806,7 +1806,7 @@ SRSASN_CODE cells_broadcast_cancelled_item_s::pack(bit_ref& bref) const
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.pack(bref));
+  HANDLE_CODE(nr_cgi.pack(bref));
   HANDLE_CODE(pack_integer(bref, nof_broadcasts, (uint32_t)0u, (uint32_t)65535u, false, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -1819,7 +1819,7 @@ SRSASN_CODE cells_broadcast_cancelled_item_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.unpack(bref));
+  HANDLE_CODE(nr_cgi.unpack(bref));
   HANDLE_CODE(unpack_integer(nof_broadcasts, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
@@ -1831,7 +1831,7 @@ void cells_broadcast_cancelled_item_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_fieldname("nRCGI");
-  nrcgi.to_json(j);
+  nr_cgi.to_json(j);
   j.write_int("numberOfBroadcasts", nof_broadcasts);
   if (ie_exts_present) {
     j.write_fieldname("iE-Extensions");
@@ -1911,7 +1911,7 @@ SRSASN_CODE cells_broadcast_completed_item_s::pack(bit_ref& bref) const
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.pack(bref));
+  HANDLE_CODE(nr_cgi.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -1923,7 +1923,7 @@ SRSASN_CODE cells_broadcast_completed_item_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.unpack(bref));
+  HANDLE_CODE(nr_cgi.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
@@ -1934,7 +1934,7 @@ void cells_broadcast_completed_item_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_fieldname("nRCGI");
-  nrcgi.to_json(j);
+  nr_cgi.to_json(j);
   if (ie_exts_present) {
     j.write_fieldname("iE-Extensions");
     ie_exts.to_json(j);
@@ -2013,7 +2013,7 @@ SRSASN_CODE cells_failed_to_be_activ_list_item_s::pack(bit_ref& bref) const
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.pack(bref));
+  HANDLE_CODE(nr_cgi.pack(bref));
   HANDLE_CODE(cause.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -2026,7 +2026,7 @@ SRSASN_CODE cells_failed_to_be_activ_list_item_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.unpack(bref));
+  HANDLE_CODE(nr_cgi.unpack(bref));
   HANDLE_CODE(cause.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
@@ -2038,7 +2038,7 @@ void cells_failed_to_be_activ_list_item_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_fieldname("nRCGI");
-  nrcgi.to_json(j);
+  nr_cgi.to_json(j);
   j.write_fieldname("cause");
   cause.to_json(j);
   if (ie_exts_present) {
@@ -2179,7 +2179,7 @@ SRSASN_CODE cells_status_item_s::pack(bit_ref& bref) const
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.pack(bref));
+  HANDLE_CODE(nr_cgi.pack(bref));
   HANDLE_CODE(service_status.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -2192,7 +2192,7 @@ SRSASN_CODE cells_status_item_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.unpack(bref));
+  HANDLE_CODE(nr_cgi.unpack(bref));
   HANDLE_CODE(service_status.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
@@ -2204,7 +2204,7 @@ void cells_status_item_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_fieldname("nRCGI");
-  nrcgi.to_json(j);
+  nr_cgi.to_json(j);
   j.write_fieldname("service-status");
   service_status.to_json(j);
   if (ie_exts_present) {
@@ -2284,7 +2284,7 @@ SRSASN_CODE cells_to_be_broadcast_item_s::pack(bit_ref& bref) const
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.pack(bref));
+  HANDLE_CODE(nr_cgi.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -2296,7 +2296,7 @@ SRSASN_CODE cells_to_be_broadcast_item_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.unpack(bref));
+  HANDLE_CODE(nr_cgi.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
@@ -2307,7 +2307,7 @@ void cells_to_be_broadcast_item_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_fieldname("nRCGI");
-  nrcgi.to_json(j);
+  nr_cgi.to_json(j);
   if (ie_exts_present) {
     j.write_fieldname("iE-Extensions");
     ie_exts.to_json(j);
@@ -2514,8 +2514,8 @@ SRSASN_CODE sibtypetobeupd_list_item_s::pack(bit_ref& bref) const
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
-  HANDLE_CODE(pack_integer(bref, sibtype, (uint8_t)2u, (uint8_t)32u, true, true));
-  HANDLE_CODE(sibmsg.pack(bref));
+  HANDLE_CODE(pack_integer(bref, sib_type, (uint8_t)2u, (uint8_t)32u, true, true));
+  HANDLE_CODE(sib_msg.pack(bref));
   HANDLE_CODE(pack_integer(bref, value_tag, (uint8_t)0u, (uint8_t)31u, true, true));
   if (ie_exts.size() > 0) {
     HANDLE_CODE(pack_dyn_seq_of(bref, ie_exts, 1, 65535, true));
@@ -2529,8 +2529,8 @@ SRSASN_CODE sibtypetobeupd_list_item_s::unpack(cbit_ref& bref)
   bool ie_exts_present;
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(unpack_integer(sibtype, bref, (uint8_t)2u, (uint8_t)32u, true, true));
-  HANDLE_CODE(sibmsg.unpack(bref));
+  HANDLE_CODE(unpack_integer(sib_type, bref, (uint8_t)2u, (uint8_t)32u, true, true));
+  HANDLE_CODE(sib_msg.unpack(bref));
   HANDLE_CODE(unpack_integer(value_tag, bref, (uint8_t)0u, (uint8_t)31u, true, true));
   if (ie_exts_present) {
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
@@ -2541,8 +2541,8 @@ SRSASN_CODE sibtypetobeupd_list_item_s::unpack(cbit_ref& bref)
 void sibtypetobeupd_list_item_s::to_json(json_writer& j) const
 {
   j.start_obj();
-  j.write_int("sIBtype", sibtype);
-  j.write_str("sIBmessage", sibmsg.to_string());
+  j.write_int("sIBtype", sib_type);
+  j.write_str("sIBmessage", sib_msg.to_string());
   j.write_int("valueTag", value_tag);
   if (ie_exts.size() > 0) {
     j.write_fieldname("iE-Extensions");
@@ -2930,7 +2930,7 @@ SRSASN_CODE cells_to_be_activ_list_item_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(nr_pci_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.pack(bref));
+  HANDLE_CODE(nr_cgi.pack(bref));
   if (nr_pci_present) {
     HANDLE_CODE(pack_integer(bref, nr_pci, (uint16_t)0u, (uint16_t)1007u, false, true));
   }
@@ -2946,7 +2946,7 @@ SRSASN_CODE cells_to_be_activ_list_item_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(nr_pci_present, 1));
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.unpack(bref));
+  HANDLE_CODE(nr_cgi.unpack(bref));
   if (nr_pci_present) {
     HANDLE_CODE(unpack_integer(nr_pci, bref, (uint16_t)0u, (uint16_t)1007u, false, true));
   }
@@ -2960,7 +2960,7 @@ void cells_to_be_activ_list_item_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_fieldname("nRCGI");
-  nrcgi.to_json(j);
+  nr_cgi.to_json(j);
   if (nr_pci_present) {
     j.write_int("nRPCI", nr_pci);
   }
@@ -3047,7 +3047,7 @@ SRSASN_CODE cells_to_be_barred_item_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.pack(bref));
+  HANDLE_CODE(nr_cgi.pack(bref));
   HANDLE_CODE(cell_barred.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -3059,7 +3059,7 @@ SRSASN_CODE cells_to_be_barred_item_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.unpack(bref));
+  HANDLE_CODE(nr_cgi.unpack(bref));
   HANDLE_CODE(cell_barred.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
@@ -3071,7 +3071,7 @@ void cells_to_be_barred_item_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_fieldname("nRCGI");
-  nrcgi.to_json(j);
+  nr_cgi.to_json(j);
   j.write_str("cellBarred", cell_barred.to_string());
   if (ie_exts_present) {
     j.write_fieldname("iE-Extensions");
@@ -3150,7 +3150,7 @@ SRSASN_CODE cells_to_be_deactiv_list_item_s::pack(bit_ref& bref) const
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.pack(bref));
+  HANDLE_CODE(nr_cgi.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -3162,7 +3162,7 @@ SRSASN_CODE cells_to_be_deactiv_list_item_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.unpack(bref));
+  HANDLE_CODE(nr_cgi.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
@@ -3173,7 +3173,7 @@ void cells_to_be_deactiv_list_item_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_fieldname("nRCGI");
-  nrcgi.to_json(j);
+  nr_cgi.to_json(j);
   if (ie_exts_present) {
     j.write_fieldname("iE-Extensions");
     ie_exts.to_json(j);
@@ -3630,7 +3630,7 @@ dl_rrc_msg_transfer_ies_o::value_c dl_rrc_msg_transfer_ies_o::get_value(const ui
       ret.set(value_c::types::old_gnb_du_ue_f1ap_id);
       break;
     case 64:
-      ret.set(value_c::types::srbid);
+      ret.set(value_c::types::srb_id);
       break;
     case 109:
       ret.set(value_c::types::execute_dupl);
@@ -3648,7 +3648,7 @@ dl_rrc_msg_transfer_ies_o::value_c dl_rrc_msg_transfer_ies_o::get_value(const ui
       ret.set(value_c::types::ue_context_not_retrievable);
       break;
     case 218:
-      ret.set(value_c::types::redirected_rrcmsg);
+      ret.set(value_c::types::redirected_rrc_msg);
       break;
     case 221:
       ret.set(value_c::types::plmn_assist_info_for_net_shar);
@@ -3704,7 +3704,7 @@ void dl_rrc_msg_transfer_ies_o::value_c::destroy_()
     case types::rat_freq_prio_info:
       c.destroy<rat_freq_prio_info_c>();
       break;
-    case types::redirected_rrcmsg:
+    case types::redirected_rrc_msg:
       c.destroy<unbounded_octstring<true>>();
       break;
     case types::plmn_assist_info_for_net_shar:
@@ -3725,7 +3725,7 @@ void dl_rrc_msg_transfer_ies_o::value_c::set(types::options e)
       break;
     case types::old_gnb_du_ue_f1ap_id:
       break;
-    case types::srbid:
+    case types::srb_id:
       break;
     case types::execute_dupl:
       break;
@@ -3739,7 +3739,7 @@ void dl_rrc_msg_transfer_ies_o::value_c::set(types::options e)
       break;
     case types::ue_context_not_retrievable:
       break;
-    case types::redirected_rrcmsg:
+    case types::redirected_rrc_msg:
       c.init<unbounded_octstring<true>>();
       break;
     case types::plmn_assist_info_for_net_shar:
@@ -3766,7 +3766,7 @@ dl_rrc_msg_transfer_ies_o::value_c::value_c(const dl_rrc_msg_transfer_ies_o::val
     case types::old_gnb_du_ue_f1ap_id:
       c.init(other.c.get<uint64_t>());
       break;
-    case types::srbid:
+    case types::srb_id:
       c.init(other.c.get<uint8_t>());
       break;
     case types::execute_dupl:
@@ -3784,7 +3784,7 @@ dl_rrc_msg_transfer_ies_o::value_c::value_c(const dl_rrc_msg_transfer_ies_o::val
     case types::ue_context_not_retrievable:
       c.init(other.c.get<ue_context_not_retrievable_e>());
       break;
-    case types::redirected_rrcmsg:
+    case types::redirected_rrc_msg:
       c.init(other.c.get<unbounded_octstring<true>>());
       break;
     case types::plmn_assist_info_for_net_shar:
@@ -3816,7 +3816,7 @@ dl_rrc_msg_transfer_ies_o::value_c::operator=(const dl_rrc_msg_transfer_ies_o::v
     case types::old_gnb_du_ue_f1ap_id:
       c.set(other.c.get<uint64_t>());
       break;
-    case types::srbid:
+    case types::srb_id:
       c.set(other.c.get<uint8_t>());
       break;
     case types::execute_dupl:
@@ -3834,7 +3834,7 @@ dl_rrc_msg_transfer_ies_o::value_c::operator=(const dl_rrc_msg_transfer_ies_o::v
     case types::ue_context_not_retrievable:
       c.set(other.c.get<ue_context_not_retrievable_e>());
       break;
-    case types::redirected_rrcmsg:
+    case types::redirected_rrc_msg:
       c.set(other.c.get<unbounded_octstring<true>>());
       break;
     case types::plmn_assist_info_for_net_shar:
@@ -3866,9 +3866,9 @@ uint64_t& dl_rrc_msg_transfer_ies_o::value_c::old_gnb_du_ue_f1ap_id()
   assert_choice_type(types::old_gnb_du_ue_f1ap_id, type_, "Value");
   return c.get<uint64_t>();
 }
-uint8_t& dl_rrc_msg_transfer_ies_o::value_c::srbid()
+uint8_t& dl_rrc_msg_transfer_ies_o::value_c::srb_id()
 {
-  assert_choice_type(types::srbid, type_, "Value");
+  assert_choice_type(types::srb_id, type_, "Value");
   return c.get<uint8_t>();
 }
 execute_dupl_e& dl_rrc_msg_transfer_ies_o::value_c::execute_dupl()
@@ -3896,9 +3896,9 @@ ue_context_not_retrievable_e& dl_rrc_msg_transfer_ies_o::value_c::ue_context_not
   assert_choice_type(types::ue_context_not_retrievable, type_, "Value");
   return c.get<ue_context_not_retrievable_e>();
 }
-unbounded_octstring<true>& dl_rrc_msg_transfer_ies_o::value_c::redirected_rrcmsg()
+unbounded_octstring<true>& dl_rrc_msg_transfer_ies_o::value_c::redirected_rrc_msg()
 {
-  assert_choice_type(types::redirected_rrcmsg, type_, "Value");
+  assert_choice_type(types::redirected_rrc_msg, type_, "Value");
   return c.get<unbounded_octstring<true>>();
 }
 fixed_octstring<3, true>& dl_rrc_msg_transfer_ies_o::value_c::plmn_assist_info_for_net_shar()
@@ -3926,9 +3926,9 @@ const uint64_t& dl_rrc_msg_transfer_ies_o::value_c::old_gnb_du_ue_f1ap_id() cons
   assert_choice_type(types::old_gnb_du_ue_f1ap_id, type_, "Value");
   return c.get<uint64_t>();
 }
-const uint8_t& dl_rrc_msg_transfer_ies_o::value_c::srbid() const
+const uint8_t& dl_rrc_msg_transfer_ies_o::value_c::srb_id() const
 {
-  assert_choice_type(types::srbid, type_, "Value");
+  assert_choice_type(types::srb_id, type_, "Value");
   return c.get<uint8_t>();
 }
 const execute_dupl_e& dl_rrc_msg_transfer_ies_o::value_c::execute_dupl() const
@@ -3956,9 +3956,9 @@ const ue_context_not_retrievable_e& dl_rrc_msg_transfer_ies_o::value_c::ue_conte
   assert_choice_type(types::ue_context_not_retrievable, type_, "Value");
   return c.get<ue_context_not_retrievable_e>();
 }
-const unbounded_octstring<true>& dl_rrc_msg_transfer_ies_o::value_c::redirected_rrcmsg() const
+const unbounded_octstring<true>& dl_rrc_msg_transfer_ies_o::value_c::redirected_rrc_msg() const
 {
-  assert_choice_type(types::redirected_rrcmsg, type_, "Value");
+  assert_choice_type(types::redirected_rrc_msg, type_, "Value");
   return c.get<unbounded_octstring<true>>();
 }
 const fixed_octstring<3, true>& dl_rrc_msg_transfer_ies_o::value_c::plmn_assist_info_for_net_shar() const
@@ -3984,7 +3984,7 @@ void dl_rrc_msg_transfer_ies_o::value_c::to_json(json_writer& j) const
     case types::old_gnb_du_ue_f1ap_id:
       j.write_int("INTEGER (0..4294967295)", c.get<uint64_t>());
       break;
-    case types::srbid:
+    case types::srb_id:
       j.write_int("INTEGER (0..3,...)", c.get<uint8_t>());
       break;
     case types::execute_dupl:
@@ -4003,7 +4003,7 @@ void dl_rrc_msg_transfer_ies_o::value_c::to_json(json_writer& j) const
     case types::ue_context_not_retrievable:
       j.write_str("UEContextNotRetrievable", "true");
       break;
-    case types::redirected_rrcmsg:
+    case types::redirected_rrc_msg:
       j.write_str("OCTET STRING", c.get<unbounded_octstring<true>>().to_string());
       break;
     case types::plmn_assist_info_for_net_shar:
@@ -4030,7 +4030,7 @@ SRSASN_CODE dl_rrc_msg_transfer_ies_o::value_c::pack(bit_ref& bref) const
     case types::old_gnb_du_ue_f1ap_id:
       HANDLE_CODE(pack_integer(bref, c.get<uint64_t>(), (uint64_t)0u, (uint64_t)4294967295u, false, true));
       break;
-    case types::srbid:
+    case types::srb_id:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)3u, true, true));
       break;
     case types::execute_dupl:
@@ -4048,7 +4048,7 @@ SRSASN_CODE dl_rrc_msg_transfer_ies_o::value_c::pack(bit_ref& bref) const
     case types::ue_context_not_retrievable:
       HANDLE_CODE(c.get<ue_context_not_retrievable_e>().pack(bref));
       break;
-    case types::redirected_rrcmsg:
+    case types::redirected_rrc_msg:
       HANDLE_CODE(c.get<unbounded_octstring<true>>().pack(bref));
       break;
     case types::plmn_assist_info_for_net_shar:
@@ -4076,7 +4076,7 @@ SRSASN_CODE dl_rrc_msg_transfer_ies_o::value_c::unpack(cbit_ref& bref)
     case types::old_gnb_du_ue_f1ap_id:
       HANDLE_CODE(unpack_integer(c.get<uint64_t>(), bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
       break;
-    case types::srbid:
+    case types::srb_id:
       HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)3u, true, true));
       break;
     case types::execute_dupl:
@@ -4094,7 +4094,7 @@ SRSASN_CODE dl_rrc_msg_transfer_ies_o::value_c::unpack(cbit_ref& bref)
     case types::ue_context_not_retrievable:
       HANDLE_CODE(c.get<ue_context_not_retrievable_e>().unpack(bref));
       break;
-    case types::redirected_rrcmsg:
+    case types::redirected_rrc_msg:
       HANDLE_CODE(c.get<unbounded_octstring<true>>().unpack(bref));
       break;
     case types::plmn_assist_info_for_net_shar:
@@ -4133,13 +4133,13 @@ dl_rrc_msg_transfer_ies_container::dl_rrc_msg_transfer_ies_container() :
   gnb_cu_ue_f1ap_id(40, crit_e::reject),
   gnb_du_ue_f1ap_id(41, crit_e::reject),
   old_gnb_du_ue_f1ap_id(47, crit_e::reject),
-  srbid(64, crit_e::reject),
+  srb_id(64, crit_e::reject),
   execute_dupl(109, crit_e::ignore),
   rrc_container(50, crit_e::reject),
   rat_freq_prio_info(108, crit_e::reject),
   rrc_delivery_status_request(184, crit_e::ignore),
   ue_context_not_retrievable(222, crit_e::reject),
-  redirected_rrcmsg(218, crit_e::reject),
+  redirected_rrc_msg(218, crit_e::reject),
   plmn_assist_info_for_net_shar(221, crit_e::ignore),
   new_gnb_cu_ue_f1ap_id(217, crit_e::reject)
 {
@@ -4152,7 +4152,7 @@ SRSASN_CODE dl_rrc_msg_transfer_ies_container::pack(bit_ref& bref) const
   nof_ies += rat_freq_prio_info_present ? 1 : 0;
   nof_ies += rrc_delivery_status_request_present ? 1 : 0;
   nof_ies += ue_context_not_retrievable_present ? 1 : 0;
-  nof_ies += redirected_rrcmsg_present ? 1 : 0;
+  nof_ies += redirected_rrc_msg_present ? 1 : 0;
   nof_ies += plmn_assist_info_for_net_shar_present ? 1 : 0;
   nof_ies += new_gnb_cu_ue_f1ap_id_present ? 1 : 0;
   pack_length(bref, nof_ies, 0u, 65535u, true);
@@ -4162,7 +4162,7 @@ SRSASN_CODE dl_rrc_msg_transfer_ies_container::pack(bit_ref& bref) const
   if (old_gnb_du_ue_f1ap_id_present) {
     HANDLE_CODE(old_gnb_du_ue_f1ap_id.pack(bref));
   }
-  HANDLE_CODE(srbid.pack(bref));
+  HANDLE_CODE(srb_id.pack(bref));
   if (execute_dupl_present) {
     HANDLE_CODE(execute_dupl.pack(bref));
   }
@@ -4176,8 +4176,8 @@ SRSASN_CODE dl_rrc_msg_transfer_ies_container::pack(bit_ref& bref) const
   if (ue_context_not_retrievable_present) {
     HANDLE_CODE(ue_context_not_retrievable.pack(bref));
   }
-  if (redirected_rrcmsg_present) {
-    HANDLE_CODE(redirected_rrcmsg.pack(bref));
+  if (redirected_rrc_msg_present) {
+    HANDLE_CODE(redirected_rrc_msg.pack(bref));
   }
   if (plmn_assist_info_for_net_shar_present) {
     HANDLE_CODE(plmn_assist_info_for_net_shar.pack(bref));
@@ -4225,10 +4225,10 @@ SRSASN_CODE dl_rrc_msg_transfer_ies_container::unpack(cbit_ref& bref)
       }
       case 64: {
         nof_mandatory_ies--;
-        srbid.id = id;
-        HANDLE_CODE(srbid.crit.unpack(bref));
+        srb_id.id = id;
+        HANDLE_CODE(srb_id.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(srbid.value.unpack(bref));
+        HANDLE_CODE(srb_id.value.unpack(bref));
         break;
       }
       case 109: {
@@ -4272,11 +4272,11 @@ SRSASN_CODE dl_rrc_msg_transfer_ies_container::unpack(cbit_ref& bref)
         break;
       }
       case 218: {
-        redirected_rrcmsg_present = true;
-        redirected_rrcmsg.id      = id;
-        HANDLE_CODE(redirected_rrcmsg.crit.unpack(bref));
+        redirected_rrc_msg_present = true;
+        redirected_rrc_msg.id      = id;
+        HANDLE_CODE(redirected_rrc_msg.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redirected_rrcmsg.value.unpack(bref));
+        HANDLE_CODE(redirected_rrc_msg.value.unpack(bref));
         break;
       }
       case 221: {
@@ -4319,7 +4319,7 @@ void dl_rrc_msg_transfer_ies_container::to_json(json_writer& j) const
     old_gnb_du_ue_f1ap_id.to_json(j);
   }
   j.write_fieldname("");
-  srbid.to_json(j);
+  srb_id.to_json(j);
   if (execute_dupl_present) {
     j.write_fieldname("");
     execute_dupl.to_json(j);
@@ -4338,9 +4338,9 @@ void dl_rrc_msg_transfer_ies_container::to_json(json_writer& j) const
     j.write_fieldname("");
     ue_context_not_retrievable.to_json(j);
   }
-  if (redirected_rrcmsg_present) {
+  if (redirected_rrc_msg_present) {
     j.write_fieldname("");
-    redirected_rrcmsg.to_json(j);
+    redirected_rrc_msg.to_json(j);
   }
   if (plmn_assist_info_for_net_shar_present) {
     j.write_fieldname("");
@@ -7049,10 +7049,10 @@ const char* bearer_type_change_opts::to_string() const
 }
 
 // DCBasedDuplicationConfigured ::= ENUMERATED
-const char* dc_based_dupl_cfgured_opts::to_string() const
+const char* dc_based_dupl_cfg_opts::to_string() const
 {
   static const char* names[] = {"true", "false"};
-  return convert_enum_idx(names, 2, value, "dc_based_dupl_cfgured_e");
+  return convert_enum_idx(names, 2, value, "dc_based_dupl_cfg_e");
 }
 
 // DuplicationActivation ::= ENUMERATED
@@ -7264,7 +7264,7 @@ drbs_to_be_modified_item_ext_ies_o::ext_c drbs_to_be_modified_item_ext_ies_o::ge
       ret.set(ext_c::types::dupl_activation);
       break;
     case 176:
-      ret.set(ext_c::types::dc_based_dupl_cfgured);
+      ret.set(ext_c::types::dc_based_dupl_cfg);
       break;
     case 177:
       ret.set(ext_c::types::dc_based_dupl_activation);
@@ -7323,8 +7323,8 @@ drbs_to_be_modified_item_ext_ies_o::ext_c::ext_c(const drbs_to_be_modified_item_
     case types::dupl_activation:
       c.init(other.c.get<dupl_activation_e>());
       break;
-    case types::dc_based_dupl_cfgured:
-      c.init(other.c.get<dc_based_dupl_cfgured_e>());
+    case types::dc_based_dupl_cfg:
+      c.init(other.c.get<dc_based_dupl_cfg_e>());
       break;
     case types::dc_based_dupl_activation:
       c.init(other.c.get<dupl_activation_e>());
@@ -7358,8 +7358,8 @@ drbs_to_be_modified_item_ext_ies_o::ext_c::operator=(const drbs_to_be_modified_i
     case types::dupl_activation:
       c.set(other.c.get<dupl_activation_e>());
       break;
-    case types::dc_based_dupl_cfgured:
-      c.set(other.c.get<dc_based_dupl_cfgured_e>());
+    case types::dc_based_dupl_cfg:
+      c.set(other.c.get<dc_based_dupl_cfg_e>());
       break;
     case types::dc_based_dupl_activation:
       c.set(other.c.get<dupl_activation_e>());
@@ -7397,10 +7397,10 @@ dupl_activation_e& drbs_to_be_modified_item_ext_ies_o::ext_c::dupl_activation()
   assert_choice_type(types::dupl_activation, type_, "Extension");
   return c.get<dupl_activation_e>();
 }
-dc_based_dupl_cfgured_e& drbs_to_be_modified_item_ext_ies_o::ext_c::dc_based_dupl_cfgured()
+dc_based_dupl_cfg_e& drbs_to_be_modified_item_ext_ies_o::ext_c::dc_based_dupl_cfg()
 {
-  assert_choice_type(types::dc_based_dupl_cfgured, type_, "Extension");
-  return c.get<dc_based_dupl_cfgured_e>();
+  assert_choice_type(types::dc_based_dupl_cfg, type_, "Extension");
+  return c.get<dc_based_dupl_cfg_e>();
 }
 dupl_activation_e& drbs_to_be_modified_item_ext_ies_o::ext_c::dc_based_dupl_activation()
 {
@@ -7432,10 +7432,10 @@ const dupl_activation_e& drbs_to_be_modified_item_ext_ies_o::ext_c::dupl_activat
   assert_choice_type(types::dupl_activation, type_, "Extension");
   return c.get<dupl_activation_e>();
 }
-const dc_based_dupl_cfgured_e& drbs_to_be_modified_item_ext_ies_o::ext_c::dc_based_dupl_cfgured() const
+const dc_based_dupl_cfg_e& drbs_to_be_modified_item_ext_ies_o::ext_c::dc_based_dupl_cfg() const
 {
-  assert_choice_type(types::dc_based_dupl_cfgured, type_, "Extension");
-  return c.get<dc_based_dupl_cfgured_e>();
+  assert_choice_type(types::dc_based_dupl_cfg, type_, "Extension");
+  return c.get<dc_based_dupl_cfg_e>();
 }
 const dupl_activation_e& drbs_to_be_modified_item_ext_ies_o::ext_c::dc_based_dupl_activation() const
 {
@@ -7461,8 +7461,8 @@ void drbs_to_be_modified_item_ext_ies_o::ext_c::to_json(json_writer& j) const
     case types::dupl_activation:
       j.write_str("DuplicationActivation", c.get<dupl_activation_e>().to_string());
       break;
-    case types::dc_based_dupl_cfgured:
-      j.write_str("DCBasedDuplicationConfigured", c.get<dc_based_dupl_cfgured_e>().to_string());
+    case types::dc_based_dupl_cfg:
+      j.write_str("DCBasedDuplicationConfigured", c.get<dc_based_dupl_cfg_e>().to_string());
       break;
     case types::dc_based_dupl_activation:
       j.write_str("DuplicationActivation", c.get<dupl_activation_e>().to_string());
@@ -7491,8 +7491,8 @@ SRSASN_CODE drbs_to_be_modified_item_ext_ies_o::ext_c::pack(bit_ref& bref) const
     case types::dupl_activation:
       HANDLE_CODE(c.get<dupl_activation_e>().pack(bref));
       break;
-    case types::dc_based_dupl_cfgured:
-      HANDLE_CODE(c.get<dc_based_dupl_cfgured_e>().pack(bref));
+    case types::dc_based_dupl_cfg:
+      HANDLE_CODE(c.get<dc_based_dupl_cfg_e>().pack(bref));
       break;
     case types::dc_based_dupl_activation:
       HANDLE_CODE(c.get<dupl_activation_e>().pack(bref));
@@ -7522,8 +7522,8 @@ SRSASN_CODE drbs_to_be_modified_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
     case types::dupl_activation:
       HANDLE_CODE(c.get<dupl_activation_e>().unpack(bref));
       break;
-    case types::dc_based_dupl_cfgured:
-      HANDLE_CODE(c.get<dc_based_dupl_cfgured_e>().unpack(bref));
+    case types::dc_based_dupl_cfg:
+      HANDLE_CODE(c.get<dc_based_dupl_cfg_e>().unpack(bref));
       break;
     case types::dc_based_dupl_activation:
       HANDLE_CODE(c.get<dupl_activation_e>().unpack(bref));
@@ -7729,7 +7729,7 @@ drbs_to_be_modified_item_ext_ies_container::drbs_to_be_modified_item_ext_ies_con
   bearer_type_change(186, crit_e::ignore),
   rlc_mode(187, crit_e::ignore),
   dupl_activation(188, crit_e::reject),
-  dc_based_dupl_cfgured(176, crit_e::reject),
+  dc_based_dupl_cfg(176, crit_e::reject),
   dc_based_dupl_activation(177, crit_e::reject)
 {
 }
@@ -7741,7 +7741,7 @@ SRSASN_CODE drbs_to_be_modified_item_ext_ies_container::pack(bit_ref& bref) cons
   nof_ies += bearer_type_change_present ? 1 : 0;
   nof_ies += rlc_mode_present ? 1 : 0;
   nof_ies += dupl_activation_present ? 1 : 0;
-  nof_ies += dc_based_dupl_cfgured_present ? 1 : 0;
+  nof_ies += dc_based_dupl_cfg_present ? 1 : 0;
   nof_ies += dc_based_dupl_activation_present ? 1 : 0;
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
@@ -7760,8 +7760,8 @@ SRSASN_CODE drbs_to_be_modified_item_ext_ies_container::pack(bit_ref& bref) cons
   if (dupl_activation_present) {
     HANDLE_CODE(dupl_activation.pack(bref));
   }
-  if (dc_based_dupl_cfgured_present) {
-    HANDLE_CODE(dc_based_dupl_cfgured.pack(bref));
+  if (dc_based_dupl_cfg_present) {
+    HANDLE_CODE(dc_based_dupl_cfg.pack(bref));
   }
   if (dc_based_dupl_activation_present) {
     HANDLE_CODE(dc_based_dupl_activation.pack(bref));
@@ -7819,11 +7819,11 @@ SRSASN_CODE drbs_to_be_modified_item_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       case 176: {
-        dc_based_dupl_cfgured_present = true;
-        dc_based_dupl_cfgured.id      = id;
-        HANDLE_CODE(dc_based_dupl_cfgured.crit.unpack(bref));
+        dc_based_dupl_cfg_present = true;
+        dc_based_dupl_cfg.id      = id;
+        HANDLE_CODE(dc_based_dupl_cfg.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(dc_based_dupl_cfgured.ext.unpack(bref));
+        HANDLE_CODE(dc_based_dupl_cfg.ext.unpack(bref));
         break;
       }
       case 177: {
@@ -7865,9 +7865,9 @@ void drbs_to_be_modified_item_ext_ies_container::to_json(json_writer& j) const
     j.write_fieldname("");
     dupl_activation.to_json(j);
   }
-  if (dc_based_dupl_cfgured_present) {
+  if (dc_based_dupl_cfg_present) {
     j.write_fieldname("");
-    dc_based_dupl_cfgured.to_json(j);
+    dc_based_dupl_cfg.to_json(j);
   }
   if (dc_based_dupl_activation_present) {
     j.write_fieldname("");
@@ -8144,7 +8144,7 @@ drbs_to_be_setup_item_ext_ies_o::ext_c drbs_to_be_setup_item_ext_ies_o::get_ext(
   ext_c ret{};
   switch (id) {
     case 176:
-      ret.set(ext_c::types::dc_based_dupl_cfgured);
+      ret.set(ext_c::types::dc_based_dupl_cfg);
       break;
     case 177:
       ret.set(ext_c::types::dc_based_dupl_activation);
@@ -8188,8 +8188,8 @@ drbs_to_be_setup_item_ext_ies_o::ext_c::ext_c(const drbs_to_be_setup_item_ext_ie
 {
   type_ = other.type();
   switch (type_) {
-    case types::dc_based_dupl_cfgured:
-      c.init(other.c.get<dc_based_dupl_cfgured_e>());
+    case types::dc_based_dupl_cfg:
+      c.init(other.c.get<dc_based_dupl_cfg_e>());
       break;
     case types::dc_based_dupl_activation:
       c.init(other.c.get<dupl_activation_e>());
@@ -8214,8 +8214,8 @@ drbs_to_be_setup_item_ext_ies_o::ext_c::operator=(const drbs_to_be_setup_item_ex
   }
   set(other.type());
   switch (type_) {
-    case types::dc_based_dupl_cfgured:
-      c.set(other.c.get<dc_based_dupl_cfgured_e>());
+    case types::dc_based_dupl_cfg:
+      c.set(other.c.get<dc_based_dupl_cfg_e>());
       break;
     case types::dc_based_dupl_activation:
       c.set(other.c.get<dupl_activation_e>());
@@ -8234,10 +8234,10 @@ drbs_to_be_setup_item_ext_ies_o::ext_c::operator=(const drbs_to_be_setup_item_ex
 
   return *this;
 }
-dc_based_dupl_cfgured_e& drbs_to_be_setup_item_ext_ies_o::ext_c::dc_based_dupl_cfgured()
+dc_based_dupl_cfg_e& drbs_to_be_setup_item_ext_ies_o::ext_c::dc_based_dupl_cfg()
 {
-  assert_choice_type(types::dc_based_dupl_cfgured, type_, "Extension");
-  return c.get<dc_based_dupl_cfgured_e>();
+  assert_choice_type(types::dc_based_dupl_cfg, type_, "Extension");
+  return c.get<dc_based_dupl_cfg_e>();
 }
 dupl_activation_e& drbs_to_be_setup_item_ext_ies_o::ext_c::dc_based_dupl_activation()
 {
@@ -8254,10 +8254,10 @@ pdcp_sn_len_e& drbs_to_be_setup_item_ext_ies_o::ext_c::ul_pdcp_sn_len()
   assert_choice_type(types::ul_pdcp_sn_len, type_, "Extension");
   return c.get<pdcp_sn_len_e>();
 }
-const dc_based_dupl_cfgured_e& drbs_to_be_setup_item_ext_ies_o::ext_c::dc_based_dupl_cfgured() const
+const dc_based_dupl_cfg_e& drbs_to_be_setup_item_ext_ies_o::ext_c::dc_based_dupl_cfg() const
 {
-  assert_choice_type(types::dc_based_dupl_cfgured, type_, "Extension");
-  return c.get<dc_based_dupl_cfgured_e>();
+  assert_choice_type(types::dc_based_dupl_cfg, type_, "Extension");
+  return c.get<dc_based_dupl_cfg_e>();
 }
 const dupl_activation_e& drbs_to_be_setup_item_ext_ies_o::ext_c::dc_based_dupl_activation() const
 {
@@ -8278,8 +8278,8 @@ void drbs_to_be_setup_item_ext_ies_o::ext_c::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
-    case types::dc_based_dupl_cfgured:
-      j.write_str("DCBasedDuplicationConfigured", c.get<dc_based_dupl_cfgured_e>().to_string());
+    case types::dc_based_dupl_cfg:
+      j.write_str("DCBasedDuplicationConfigured", c.get<dc_based_dupl_cfg_e>().to_string());
       break;
     case types::dc_based_dupl_activation:
       j.write_str("DuplicationActivation", c.get<dupl_activation_e>().to_string());
@@ -8299,8 +8299,8 @@ SRSASN_CODE drbs_to_be_setup_item_ext_ies_o::ext_c::pack(bit_ref& bref) const
 {
   varlength_field_pack_guard varlen_scope(bref, true);
   switch (type_) {
-    case types::dc_based_dupl_cfgured:
-      HANDLE_CODE(c.get<dc_based_dupl_cfgured_e>().pack(bref));
+    case types::dc_based_dupl_cfg:
+      HANDLE_CODE(c.get<dc_based_dupl_cfg_e>().pack(bref));
       break;
     case types::dc_based_dupl_activation:
       HANDLE_CODE(c.get<dupl_activation_e>().pack(bref));
@@ -8321,8 +8321,8 @@ SRSASN_CODE drbs_to_be_setup_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 {
   varlength_field_unpack_guard varlen_scope(bref, true);
   switch (type_) {
-    case types::dc_based_dupl_cfgured:
-      HANDLE_CODE(c.get<dc_based_dupl_cfgured_e>().unpack(bref));
+    case types::dc_based_dupl_cfg:
+      HANDLE_CODE(c.get<dc_based_dupl_cfg_e>().unpack(bref));
       break;
     case types::dc_based_dupl_activation:
       HANDLE_CODE(c.get<dupl_activation_e>().unpack(bref));
@@ -8350,7 +8350,7 @@ const char* drbs_to_be_setup_item_ext_ies_o::ext_c::types_opts::to_string() cons
 template struct asn1::protocol_ext_field_s<drbs_to_be_setup_item_ext_ies_o>;
 
 drbs_to_be_setup_item_ext_ies_container::drbs_to_be_setup_item_ext_ies_container() :
-  dc_based_dupl_cfgured(176, crit_e::reject),
+  dc_based_dupl_cfg(176, crit_e::reject),
   dc_based_dupl_activation(177, crit_e::reject),
   dl_pdcp_sn_len(161, crit_e::ignore),
   ul_pdcp_sn_len(192, crit_e::ignore)
@@ -8359,13 +8359,13 @@ drbs_to_be_setup_item_ext_ies_container::drbs_to_be_setup_item_ext_ies_container
 SRSASN_CODE drbs_to_be_setup_item_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 1;
-  nof_ies += dc_based_dupl_cfgured_present ? 1 : 0;
+  nof_ies += dc_based_dupl_cfg_present ? 1 : 0;
   nof_ies += dc_based_dupl_activation_present ? 1 : 0;
   nof_ies += ul_pdcp_sn_len_present ? 1 : 0;
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
-  if (dc_based_dupl_cfgured_present) {
-    HANDLE_CODE(dc_based_dupl_cfgured.pack(bref));
+  if (dc_based_dupl_cfg_present) {
+    HANDLE_CODE(dc_based_dupl_cfg.pack(bref));
   }
   if (dc_based_dupl_activation_present) {
     HANDLE_CODE(dc_based_dupl_activation.pack(bref));
@@ -8389,11 +8389,11 @@ SRSASN_CODE drbs_to_be_setup_item_ext_ies_container::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
     switch (id) {
       case 176: {
-        dc_based_dupl_cfgured_present = true;
-        dc_based_dupl_cfgured.id      = id;
-        HANDLE_CODE(dc_based_dupl_cfgured.crit.unpack(bref));
+        dc_based_dupl_cfg_present = true;
+        dc_based_dupl_cfg.id      = id;
+        HANDLE_CODE(dc_based_dupl_cfg.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(dc_based_dupl_cfgured.ext.unpack(bref));
+        HANDLE_CODE(dc_based_dupl_cfg.ext.unpack(bref));
         break;
       }
       case 177: {
@@ -8435,9 +8435,9 @@ SRSASN_CODE drbs_to_be_setup_item_ext_ies_container::unpack(cbit_ref& bref)
 void drbs_to_be_setup_item_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
-  if (dc_based_dupl_cfgured_present) {
+  if (dc_based_dupl_cfg_present) {
     j.write_fieldname("");
-    dc_based_dupl_cfgured.to_json(j);
+    dc_based_dupl_cfg.to_json(j);
   }
   if (dc_based_dupl_activation_present) {
     j.write_fieldname("");
@@ -8626,7 +8626,7 @@ drbs_to_be_setup_mod_item_ext_ies_o::ext_c drbs_to_be_setup_mod_item_ext_ies_o::
   ext_c ret{};
   switch (id) {
     case 176:
-      ret.set(ext_c::types::dc_based_dupl_cfgured);
+      ret.set(ext_c::types::dc_based_dupl_cfg);
       break;
     case 177:
       ret.set(ext_c::types::dc_based_dupl_activation);
@@ -8670,8 +8670,8 @@ drbs_to_be_setup_mod_item_ext_ies_o::ext_c::ext_c(const drbs_to_be_setup_mod_ite
 {
   type_ = other.type();
   switch (type_) {
-    case types::dc_based_dupl_cfgured:
-      c.init(other.c.get<dc_based_dupl_cfgured_e>());
+    case types::dc_based_dupl_cfg:
+      c.init(other.c.get<dc_based_dupl_cfg_e>());
       break;
     case types::dc_based_dupl_activation:
       c.init(other.c.get<dupl_activation_e>());
@@ -8696,8 +8696,8 @@ drbs_to_be_setup_mod_item_ext_ies_o::ext_c::operator=(const drbs_to_be_setup_mod
   }
   set(other.type());
   switch (type_) {
-    case types::dc_based_dupl_cfgured:
-      c.set(other.c.get<dc_based_dupl_cfgured_e>());
+    case types::dc_based_dupl_cfg:
+      c.set(other.c.get<dc_based_dupl_cfg_e>());
       break;
     case types::dc_based_dupl_activation:
       c.set(other.c.get<dupl_activation_e>());
@@ -8716,10 +8716,10 @@ drbs_to_be_setup_mod_item_ext_ies_o::ext_c::operator=(const drbs_to_be_setup_mod
 
   return *this;
 }
-dc_based_dupl_cfgured_e& drbs_to_be_setup_mod_item_ext_ies_o::ext_c::dc_based_dupl_cfgured()
+dc_based_dupl_cfg_e& drbs_to_be_setup_mod_item_ext_ies_o::ext_c::dc_based_dupl_cfg()
 {
-  assert_choice_type(types::dc_based_dupl_cfgured, type_, "Extension");
-  return c.get<dc_based_dupl_cfgured_e>();
+  assert_choice_type(types::dc_based_dupl_cfg, type_, "Extension");
+  return c.get<dc_based_dupl_cfg_e>();
 }
 dupl_activation_e& drbs_to_be_setup_mod_item_ext_ies_o::ext_c::dc_based_dupl_activation()
 {
@@ -8736,10 +8736,10 @@ pdcp_sn_len_e& drbs_to_be_setup_mod_item_ext_ies_o::ext_c::ul_pdcp_sn_len()
   assert_choice_type(types::ul_pdcp_sn_len, type_, "Extension");
   return c.get<pdcp_sn_len_e>();
 }
-const dc_based_dupl_cfgured_e& drbs_to_be_setup_mod_item_ext_ies_o::ext_c::dc_based_dupl_cfgured() const
+const dc_based_dupl_cfg_e& drbs_to_be_setup_mod_item_ext_ies_o::ext_c::dc_based_dupl_cfg() const
 {
-  assert_choice_type(types::dc_based_dupl_cfgured, type_, "Extension");
-  return c.get<dc_based_dupl_cfgured_e>();
+  assert_choice_type(types::dc_based_dupl_cfg, type_, "Extension");
+  return c.get<dc_based_dupl_cfg_e>();
 }
 const dupl_activation_e& drbs_to_be_setup_mod_item_ext_ies_o::ext_c::dc_based_dupl_activation() const
 {
@@ -8760,8 +8760,8 @@ void drbs_to_be_setup_mod_item_ext_ies_o::ext_c::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
-    case types::dc_based_dupl_cfgured:
-      j.write_str("DCBasedDuplicationConfigured", c.get<dc_based_dupl_cfgured_e>().to_string());
+    case types::dc_based_dupl_cfg:
+      j.write_str("DCBasedDuplicationConfigured", c.get<dc_based_dupl_cfg_e>().to_string());
       break;
     case types::dc_based_dupl_activation:
       j.write_str("DuplicationActivation", c.get<dupl_activation_e>().to_string());
@@ -8781,8 +8781,8 @@ SRSASN_CODE drbs_to_be_setup_mod_item_ext_ies_o::ext_c::pack(bit_ref& bref) cons
 {
   varlength_field_pack_guard varlen_scope(bref, true);
   switch (type_) {
-    case types::dc_based_dupl_cfgured:
-      HANDLE_CODE(c.get<dc_based_dupl_cfgured_e>().pack(bref));
+    case types::dc_based_dupl_cfg:
+      HANDLE_CODE(c.get<dc_based_dupl_cfg_e>().pack(bref));
       break;
     case types::dc_based_dupl_activation:
       HANDLE_CODE(c.get<dupl_activation_e>().pack(bref));
@@ -8803,8 +8803,8 @@ SRSASN_CODE drbs_to_be_setup_mod_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 {
   varlength_field_unpack_guard varlen_scope(bref, true);
   switch (type_) {
-    case types::dc_based_dupl_cfgured:
-      HANDLE_CODE(c.get<dc_based_dupl_cfgured_e>().unpack(bref));
+    case types::dc_based_dupl_cfg:
+      HANDLE_CODE(c.get<dc_based_dupl_cfg_e>().unpack(bref));
       break;
     case types::dc_based_dupl_activation:
       HANDLE_CODE(c.get<dupl_activation_e>().unpack(bref));
@@ -8832,7 +8832,7 @@ const char* drbs_to_be_setup_mod_item_ext_ies_o::ext_c::types_opts::to_string() 
 template struct asn1::protocol_ext_field_s<drbs_to_be_setup_mod_item_ext_ies_o>;
 
 drbs_to_be_setup_mod_item_ext_ies_container::drbs_to_be_setup_mod_item_ext_ies_container() :
-  dc_based_dupl_cfgured(176, crit_e::reject),
+  dc_based_dupl_cfg(176, crit_e::reject),
   dc_based_dupl_activation(177, crit_e::reject),
   dl_pdcp_sn_len(161, crit_e::ignore),
   ul_pdcp_sn_len(192, crit_e::ignore)
@@ -8841,14 +8841,14 @@ drbs_to_be_setup_mod_item_ext_ies_container::drbs_to_be_setup_mod_item_ext_ies_c
 SRSASN_CODE drbs_to_be_setup_mod_item_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
-  nof_ies += dc_based_dupl_cfgured_present ? 1 : 0;
+  nof_ies += dc_based_dupl_cfg_present ? 1 : 0;
   nof_ies += dc_based_dupl_activation_present ? 1 : 0;
   nof_ies += dl_pdcp_sn_len_present ? 1 : 0;
   nof_ies += ul_pdcp_sn_len_present ? 1 : 0;
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
-  if (dc_based_dupl_cfgured_present) {
-    HANDLE_CODE(dc_based_dupl_cfgured.pack(bref));
+  if (dc_based_dupl_cfg_present) {
+    HANDLE_CODE(dc_based_dupl_cfg.pack(bref));
   }
   if (dc_based_dupl_activation_present) {
     HANDLE_CODE(dc_based_dupl_activation.pack(bref));
@@ -8872,11 +8872,11 @@ SRSASN_CODE drbs_to_be_setup_mod_item_ext_ies_container::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
     switch (id) {
       case 176: {
-        dc_based_dupl_cfgured_present = true;
-        dc_based_dupl_cfgured.id      = id;
-        HANDLE_CODE(dc_based_dupl_cfgured.crit.unpack(bref));
+        dc_based_dupl_cfg_present = true;
+        dc_based_dupl_cfg.id      = id;
+        HANDLE_CODE(dc_based_dupl_cfg.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(dc_based_dupl_cfgured.ext.unpack(bref));
+        HANDLE_CODE(dc_based_dupl_cfg.ext.unpack(bref));
         break;
       }
       case 177: {
@@ -8914,9 +8914,9 @@ SRSASN_CODE drbs_to_be_setup_mod_item_ext_ies_container::unpack(cbit_ref& bref)
 void drbs_to_be_setup_mod_item_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
-  if (dc_based_dupl_cfgured_present) {
+  if (dc_based_dupl_cfg_present) {
     j.write_fieldname("");
-    dc_based_dupl_cfgured.to_json(j);
+    dc_based_dupl_cfg.to_json(j);
   }
   if (dc_based_dupl_activation_present) {
     j.write_fieldname("");
@@ -10056,7 +10056,7 @@ SRSASN_CODE ded_si_delivery_needed_ue_item_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, gnb_cu_ue_f1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  HANDLE_CODE(nrcgi.pack(bref));
+  HANDLE_CODE(nr_cgi.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -10069,7 +10069,7 @@ SRSASN_CODE ded_si_delivery_needed_ue_item_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(unpack_integer(gnb_cu_ue_f1ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  HANDLE_CODE(nrcgi.unpack(bref));
+  HANDLE_CODE(nr_cgi.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
@@ -10081,7 +10081,7 @@ void ded_si_delivery_needed_ue_item_s::to_json(json_writer& j) const
   j.start_obj();
   j.write_int("gNB-CU-UE-F1AP-ID", gnb_cu_ue_f1ap_id);
   j.write_fieldname("nRCGI");
-  nrcgi.to_json(j);
+  nr_cgi.to_json(j);
   if (ie_exts_present) {
     j.write_fieldname("iE-Extensions");
     ie_exts.to_json(j);
@@ -11374,31 +11374,31 @@ void extended_served_plmns_item_s::to_json(json_writer& j) const
 }
 
 // NRNRB ::= ENUMERATED
-const char* nrnrb_opts::to_string() const
+const char* nr_nrb_opts::to_string() const
 {
   static const char* names[] = {"nrb11",  "nrb18",  "nrb24",  "nrb25",  "nrb31",  "nrb32",  "nrb38",  "nrb51",
                                 "nrb52",  "nrb65",  "nrb66",  "nrb78",  "nrb79",  "nrb93",  "nrb106", "nrb107",
                                 "nrb121", "nrb132", "nrb133", "nrb135", "nrb160", "nrb162", "nrb189", "nrb216",
                                 "nrb217", "nrb245", "nrb264", "nrb270", "nrb273"};
-  return convert_enum_idx(names, 29, value, "nrnrb_e");
+  return convert_enum_idx(names, 29, value, "nr_nrb_e");
 }
-uint16_t nrnrb_opts::to_number() const
+uint16_t nr_nrb_opts::to_number() const
 {
   static const uint16_t numbers[] = {11,  18,  24,  25,  31,  32,  38,  51,  52,  65,  66,  78,  79,  93, 106,
                                      107, 121, 132, 133, 135, 160, 162, 189, 216, 217, 245, 264, 270, 273};
-  return map_enum_number(numbers, 29, value, "nrnrb_e");
+  return map_enum_number(numbers, 29, value, "nr_nrb_e");
 }
 
 // NRSCS ::= ENUMERATED
-const char* nrscs_opts::to_string() const
+const char* nr_scs_opts::to_string() const
 {
   static const char* names[] = {"scs15", "scs30", "scs60", "scs120"};
-  return convert_enum_idx(names, 4, value, "nrscs_e");
+  return convert_enum_idx(names, 4, value, "nr_scs_e");
 }
-uint8_t nrscs_opts::to_number() const
+uint8_t nr_scs_opts::to_number() const
 {
   static const uint8_t numbers[] = {15, 30, 60, 120};
-  return map_enum_number(numbers, 4, value, "nrscs_e");
+  return map_enum_number(numbers, 4, value, "nr_scs_e");
 }
 
 // SupportedSULFreqBandItem ::= SEQUENCE
@@ -11443,7 +11443,7 @@ SRSASN_CODE tx_bw_s::pack(bit_ref& bref) const
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrscs.pack(bref));
+  HANDLE_CODE(nr_scs.pack(bref));
   HANDLE_CODE(nr_nrb.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -11456,7 +11456,7 @@ SRSASN_CODE tx_bw_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrscs.unpack(bref));
+  HANDLE_CODE(nr_scs.unpack(bref));
   HANDLE_CODE(nr_nrb.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
@@ -11467,7 +11467,7 @@ SRSASN_CODE tx_bw_s::unpack(cbit_ref& bref)
 void tx_bw_s::to_json(json_writer& j) const
 {
   j.start_obj();
-  j.write_str("nRSCS", nrscs.to_string());
+  j.write_str("nRSCS", nr_scs.to_string());
   j.write_str("nRNRB", nr_nrb.to_string());
   if (ie_exts_present) {
     j.write_fieldname("iE-Extensions");
@@ -11878,7 +11878,7 @@ void uac_category_type_c::set(types::options e)
   destroy_();
   type_ = e;
   switch (type_) {
-    case types::uacstandardized:
+    case types::uac_standardized:
       break;
     case types::uac_operator_defined:
       c.init<uac_operator_defined_s>();
@@ -11896,7 +11896,7 @@ uac_category_type_c::uac_category_type_c(const uac_category_type_c& other)
 {
   type_ = other.type();
   switch (type_) {
-    case types::uacstandardized:
+    case types::uac_standardized:
       c.init(other.c.get<uac_action_e>());
       break;
     case types::uac_operator_defined:
@@ -11918,7 +11918,7 @@ uac_category_type_c& uac_category_type_c::operator=(const uac_category_type_c& o
   }
   set(other.type());
   switch (type_) {
-    case types::uacstandardized:
+    case types::uac_standardized:
       c.set(other.c.get<uac_action_e>());
       break;
     case types::uac_operator_defined:
@@ -11935,9 +11935,9 @@ uac_category_type_c& uac_category_type_c::operator=(const uac_category_type_c& o
 
   return *this;
 }
-uac_action_e& uac_category_type_c::set_uacstandardized()
+uac_action_e& uac_category_type_c::set_uac_standardized()
 {
-  set(types::uacstandardized);
+  set(types::uac_standardized);
   return c.get<uac_action_e>();
 }
 uac_operator_defined_s& uac_category_type_c::set_uac_operator_defined()
@@ -11954,7 +11954,7 @@ void uac_category_type_c::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
-    case types::uacstandardized:
+    case types::uac_standardized:
       j.write_str("uACstandardized", c.get<uac_action_e>().to_string());
       break;
     case types::uac_operator_defined:
@@ -11974,7 +11974,7 @@ SRSASN_CODE uac_category_type_c::pack(bit_ref& bref) const
 {
   type_.pack(bref);
   switch (type_) {
-    case types::uacstandardized:
+    case types::uac_standardized:
       HANDLE_CODE(c.get<uac_action_e>().pack(bref));
       break;
     case types::uac_operator_defined:
@@ -11995,7 +11995,7 @@ SRSASN_CODE uac_category_type_c::unpack(cbit_ref& bref)
   e.unpack(bref);
   set(e);
   switch (type_) {
-    case types::uacstandardized:
+    case types::uac_standardized:
       HANDLE_CODE(c.get<uac_action_e>().unpack(bref));
       break;
     case types::uac_operator_defined:
@@ -12539,15 +12539,15 @@ void uac_type_item_s::to_json(json_writer& j) const
 }
 
 // CellULConfigured ::= ENUMERATED
-const char* cell_ul_cfgured_opts::to_string() const
+const char* cell_ul_cfg_opts::to_string() const
 {
   static const char* names[] = {"none", "ul", "sul", "ul-and-sul"};
-  return convert_enum_idx(names, 4, value, "cell_ul_cfgured_e");
+  return convert_enum_idx(names, 4, value, "cell_ul_cfg_e");
 }
-uint8_t cell_ul_cfgured_opts::to_number() const
+uint8_t cell_ul_cfg_opts::to_number() const
 {
   static const uint8_t numbers[] = {1};
-  return map_enum_number(numbers, 1, value, "cell_ul_cfgured_e");
+  return map_enum_number(numbers, 1, value, "cell_ul_cfg_e");
 }
 
 // DuplicationIndication ::= ENUMERATED
@@ -12923,16 +12923,16 @@ SRSASN_CODE served_cell_info_s::pack(bit_ref& bref) const
 {
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(five_gs_tac_present, 1));
-  HANDLE_CODE(bref.pack(cfgured_eps_tac_present, 1));
+  HANDLE_CODE(bref.pack(cfg_eps_tac_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.pack(bref));
+  HANDLE_CODE(nr_cgi.pack(bref));
   HANDLE_CODE(pack_integer(bref, nr_pci, (uint16_t)0u, (uint16_t)1007u, false, true));
   if (five_gs_tac_present) {
     HANDLE_CODE(five_gs_tac.pack(bref));
   }
-  if (cfgured_eps_tac_present) {
-    HANDLE_CODE(cfgured_eps_tac.pack(bref));
+  if (cfg_eps_tac_present) {
+    HANDLE_CODE(cfg_eps_tac.pack(bref));
   }
   HANDLE_CODE(pack_dyn_seq_of(bref, served_plmns, 1, 6, true));
   HANDLE_CODE(nr_mode_info.pack(bref));
@@ -12947,16 +12947,16 @@ SRSASN_CODE served_cell_info_s::unpack(cbit_ref& bref)
 {
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(five_gs_tac_present, 1));
-  HANDLE_CODE(bref.unpack(cfgured_eps_tac_present, 1));
+  HANDLE_CODE(bref.unpack(cfg_eps_tac_present, 1));
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.unpack(bref));
+  HANDLE_CODE(nr_cgi.unpack(bref));
   HANDLE_CODE(unpack_integer(nr_pci, bref, (uint16_t)0u, (uint16_t)1007u, false, true));
   if (five_gs_tac_present) {
     HANDLE_CODE(five_gs_tac.unpack(bref));
   }
-  if (cfgured_eps_tac_present) {
-    HANDLE_CODE(cfgured_eps_tac.unpack(bref));
+  if (cfg_eps_tac_present) {
+    HANDLE_CODE(cfg_eps_tac.unpack(bref));
   }
   HANDLE_CODE(unpack_dyn_seq_of(served_plmns, bref, 1, 6, true));
   HANDLE_CODE(nr_mode_info.unpack(bref));
@@ -12971,13 +12971,13 @@ void served_cell_info_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_fieldname("nRCGI");
-  nrcgi.to_json(j);
+  nr_cgi.to_json(j);
   j.write_int("nRPCI", nr_pci);
   if (five_gs_tac_present) {
     j.write_str("fiveGS-TAC", five_gs_tac.to_string());
   }
-  if (cfgured_eps_tac_present) {
-    j.write_str("configured-EPS-TAC", cfgured_eps_tac.to_string());
+  if (cfg_eps_tac_present) {
+    j.write_str("configured-EPS-TAC", cfg_eps_tac.to_string());
   }
   j.start_array("servedPLMNs");
   for (const auto& e1 : served_plmns) {
@@ -13351,7 +13351,7 @@ SRSASN_CODE nr_cgi_list_for_restart_item_s::pack(bit_ref& bref) const
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.pack(bref));
+  HANDLE_CODE(nr_cgi.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -13363,7 +13363,7 @@ SRSASN_CODE nr_cgi_list_for_restart_item_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.unpack(bref));
+  HANDLE_CODE(nr_cgi.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
@@ -13374,7 +13374,7 @@ void nr_cgi_list_for_restart_item_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_fieldname("nRCGI");
-  nrcgi.to_json(j);
+  nr_cgi.to_json(j);
   if (ie_exts_present) {
     j.write_fieldname("iE-Extensions");
     ie_exts.to_json(j);
@@ -13427,7 +13427,7 @@ SRSASN_CODE pws_failed_nr_cgi_item_s::pack(bit_ref& bref) const
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.pack(bref));
+  HANDLE_CODE(nr_cgi.pack(bref));
   HANDLE_CODE(pack_integer(bref, nof_broadcasts, (uint32_t)0u, (uint32_t)65535u, false, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -13440,7 +13440,7 @@ SRSASN_CODE pws_failed_nr_cgi_item_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.unpack(bref));
+  HANDLE_CODE(nr_cgi.unpack(bref));
   HANDLE_CODE(unpack_integer(nof_broadcasts, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
@@ -13452,7 +13452,7 @@ void pws_failed_nr_cgi_item_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_fieldname("nRCGI");
-  nrcgi.to_json(j);
+  nr_cgi.to_json(j);
   j.write_int("numberOfBroadcasts", nof_broadcasts);
   if (ie_exts_present) {
     j.write_fieldname("iE-Extensions");
@@ -13466,7 +13466,7 @@ SRSASN_CODE paging_cell_item_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.pack(bref));
+  HANDLE_CODE(nr_cgi.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -13477,7 +13477,7 @@ SRSASN_CODE paging_cell_item_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(nrcgi.unpack(bref));
+  HANDLE_CODE(nr_cgi.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
@@ -13488,7 +13488,7 @@ void paging_cell_item_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_fieldname("nRCGI");
-  nrcgi.to_json(j);
+  nr_cgi.to_json(j);
   if (ie_exts_present) {
     j.write_fieldname("iE-Extensions");
     ie_exts.to_json(j);
@@ -13842,13 +13842,13 @@ void scell_to_be_remd_item_s::to_json(json_writer& j) const
 SRSASN_CODE scell_to_be_setup_item_s::pack(bit_ref& bref) const
 {
   bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(scell_ul_cfgured_present, 1));
+  HANDLE_CODE(bref.pack(scell_ul_cfg_present, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(scell_id.pack(bref));
   HANDLE_CODE(pack_integer(bref, scell_idx, (uint8_t)1u, (uint8_t)31u, true, true));
-  if (scell_ul_cfgured_present) {
-    HANDLE_CODE(scell_ul_cfgured.pack(bref));
+  if (scell_ul_cfg_present) {
+    HANDLE_CODE(scell_ul_cfg.pack(bref));
   }
   if (ie_exts.size() > 0) {
     HANDLE_CODE(pack_dyn_seq_of(bref, ie_exts, 1, 65535, true));
@@ -13859,14 +13859,14 @@ SRSASN_CODE scell_to_be_setup_item_s::pack(bit_ref& bref) const
 SRSASN_CODE scell_to_be_setup_item_s::unpack(cbit_ref& bref)
 {
   bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(scell_ul_cfgured_present, 1));
+  HANDLE_CODE(bref.unpack(scell_ul_cfg_present, 1));
   bool ie_exts_present;
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(scell_id.unpack(bref));
   HANDLE_CODE(unpack_integer(scell_idx, bref, (uint8_t)1u, (uint8_t)31u, true, true));
-  if (scell_ul_cfgured_present) {
-    HANDLE_CODE(scell_ul_cfgured.unpack(bref));
+  if (scell_ul_cfg_present) {
+    HANDLE_CODE(scell_ul_cfg.unpack(bref));
   }
   if (ie_exts_present) {
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
@@ -13880,8 +13880,8 @@ void scell_to_be_setup_item_s::to_json(json_writer& j) const
   j.write_fieldname("sCell-ID");
   scell_id.to_json(j);
   j.write_int("sCellIndex", scell_idx);
-  if (scell_ul_cfgured_present) {
-    j.write_str("sCellULConfigured", scell_ul_cfgured.to_string());
+  if (scell_ul_cfg_present) {
+    j.write_str("sCellULConfigured", scell_ul_cfg.to_string());
   }
   if (ie_exts.size() > 0) {
     j.write_fieldname("iE-Extensions");
@@ -13893,13 +13893,13 @@ void scell_to_be_setup_item_s::to_json(json_writer& j) const
 SRSASN_CODE scell_to_be_setup_mod_item_s::pack(bit_ref& bref) const
 {
   bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(scell_ul_cfgured_present, 1));
+  HANDLE_CODE(bref.pack(scell_ul_cfg_present, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(scell_id.pack(bref));
   HANDLE_CODE(pack_integer(bref, scell_idx, (uint8_t)1u, (uint8_t)31u, true, true));
-  if (scell_ul_cfgured_present) {
-    HANDLE_CODE(scell_ul_cfgured.pack(bref));
+  if (scell_ul_cfg_present) {
+    HANDLE_CODE(scell_ul_cfg.pack(bref));
   }
   if (ie_exts.size() > 0) {
     HANDLE_CODE(pack_dyn_seq_of(bref, ie_exts, 1, 65535, true));
@@ -13910,14 +13910,14 @@ SRSASN_CODE scell_to_be_setup_mod_item_s::pack(bit_ref& bref) const
 SRSASN_CODE scell_to_be_setup_mod_item_s::unpack(cbit_ref& bref)
 {
   bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(scell_ul_cfgured_present, 1));
+  HANDLE_CODE(bref.unpack(scell_ul_cfg_present, 1));
   bool ie_exts_present;
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(scell_id.unpack(bref));
   HANDLE_CODE(unpack_integer(scell_idx, bref, (uint8_t)1u, (uint8_t)31u, true, true));
-  if (scell_ul_cfgured_present) {
-    HANDLE_CODE(scell_ul_cfgured.unpack(bref));
+  if (scell_ul_cfg_present) {
+    HANDLE_CODE(scell_ul_cfg.unpack(bref));
   }
   if (ie_exts_present) {
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
@@ -13931,8 +13931,8 @@ void scell_to_be_setup_mod_item_s::to_json(json_writer& j) const
   j.write_fieldname("sCell-ID");
   scell_id.to_json(j);
   j.write_int("sCellIndex", scell_idx);
-  if (scell_ul_cfgured_present) {
-    j.write_str("sCellULConfigured", scell_ul_cfgured.to_string());
+  if (scell_ul_cfg_present) {
+    j.write_str("sCellULConfigured", scell_ul_cfg.to_string());
   }
   if (ie_exts.size() > 0) {
     j.write_fieldname("iE-Extensions");
@@ -16970,8 +16970,8 @@ SRSASN_CODE pws_sys_info_s::pack(bit_ref& bref) const
   bref.pack(ext, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(pack_integer(bref, sibtype, (uint8_t)6u, (uint8_t)8u, true, true));
-  HANDLE_CODE(sibmsg.pack(bref));
+  HANDLE_CODE(pack_integer(bref, sib_type, (uint8_t)6u, (uint8_t)8u, true, true));
+  HANDLE_CODE(sib_msg.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -16983,8 +16983,8 @@ SRSASN_CODE pws_sys_info_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(unpack_integer(sibtype, bref, (uint8_t)6u, (uint8_t)8u, true, true));
-  HANDLE_CODE(sibmsg.unpack(bref));
+  HANDLE_CODE(unpack_integer(sib_type, bref, (uint8_t)6u, (uint8_t)8u, true, true));
+  HANDLE_CODE(sib_msg.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
@@ -16994,8 +16994,8 @@ SRSASN_CODE pws_sys_info_s::unpack(cbit_ref& bref)
 void pws_sys_info_s::to_json(json_writer& j) const
 {
   j.start_obj();
-  j.write_int("sIBtype", sibtype);
-  j.write_str("sIBmessage", sibmsg.to_string());
+  j.write_int("sIBtype", sib_type);
+  j.write_str("sIBmessage", sib_msg.to_string());
   if (ie_exts_present) {
     j.write_fieldname("iE-Extensions");
     ie_exts.to_json(j);
@@ -21999,7 +21999,7 @@ init_ul_rrc_msg_transfer_ies_o::value_c init_ul_rrc_msg_transfer_ies_o::get_valu
       ret.set(value_c::types::gnb_du_ue_f1ap_id);
       break;
     case 111:
-      ret.set(value_c::types::nrcgi);
+      ret.set(value_c::types::nr_cgi);
       break;
     case 95:
       ret.set(value_c::types::c_rnti);
@@ -22017,7 +22017,7 @@ init_ul_rrc_msg_transfer_ies_o::value_c init_ul_rrc_msg_transfer_ies_o::get_valu
       ret.set(value_c::types::transaction_id);
       break;
     case 226:
-      ret.set(value_c::types::ranueid);
+      ret.set(value_c::types::ran_ue_id);
       break;
     case 241:
       ret.set(value_c::types::rrc_container_rrc_setup_complete);
@@ -22058,8 +22058,8 @@ presence_e init_ul_rrc_msg_transfer_ies_o::get_presence(const uint32_t& id)
 void init_ul_rrc_msg_transfer_ies_o::value_c::destroy_()
 {
   switch (type_) {
-    case types::nrcgi:
-      c.destroy<nrcgi_s>();
+    case types::nr_cgi:
+      c.destroy<nr_cgi_s>();
       break;
     case types::rrc_container:
       c.destroy<unbounded_octstring<true>>();
@@ -22067,7 +22067,7 @@ void init_ul_rrc_msg_transfer_ies_o::value_c::destroy_()
     case types::du_to_cu_rrc_container:
       c.destroy<unbounded_octstring<true>>();
       break;
-    case types::ranueid:
+    case types::ran_ue_id:
       c.destroy<fixed_octstring<8, true>>();
       break;
     case types::rrc_container_rrc_setup_complete:
@@ -22084,8 +22084,8 @@ void init_ul_rrc_msg_transfer_ies_o::value_c::set(types::options e)
   switch (type_) {
     case types::gnb_du_ue_f1ap_id:
       break;
-    case types::nrcgi:
-      c.init<nrcgi_s>();
+    case types::nr_cgi:
+      c.init<nr_cgi_s>();
       break;
     case types::c_rnti:
       break;
@@ -22099,7 +22099,7 @@ void init_ul_rrc_msg_transfer_ies_o::value_c::set(types::options e)
       break;
     case types::transaction_id:
       break;
-    case types::ranueid:
+    case types::ran_ue_id:
       c.init<fixed_octstring<8, true>>();
       break;
     case types::rrc_container_rrc_setup_complete:
@@ -22118,8 +22118,8 @@ init_ul_rrc_msg_transfer_ies_o::value_c::value_c(const init_ul_rrc_msg_transfer_
     case types::gnb_du_ue_f1ap_id:
       c.init(other.c.get<uint64_t>());
       break;
-    case types::nrcgi:
-      c.init(other.c.get<nrcgi_s>());
+    case types::nr_cgi:
+      c.init(other.c.get<nr_cgi_s>());
       break;
     case types::c_rnti:
       c.init(other.c.get<uint32_t>());
@@ -22136,7 +22136,7 @@ init_ul_rrc_msg_transfer_ies_o::value_c::value_c(const init_ul_rrc_msg_transfer_
     case types::transaction_id:
       c.init(other.c.get<uint16_t>());
       break;
-    case types::ranueid:
+    case types::ran_ue_id:
       c.init(other.c.get<fixed_octstring<8, true>>());
       break;
     case types::rrc_container_rrc_setup_complete:
@@ -22159,8 +22159,8 @@ init_ul_rrc_msg_transfer_ies_o::value_c::operator=(const init_ul_rrc_msg_transfe
     case types::gnb_du_ue_f1ap_id:
       c.set(other.c.get<uint64_t>());
       break;
-    case types::nrcgi:
-      c.set(other.c.get<nrcgi_s>());
+    case types::nr_cgi:
+      c.set(other.c.get<nr_cgi_s>());
       break;
     case types::c_rnti:
       c.set(other.c.get<uint32_t>());
@@ -22177,7 +22177,7 @@ init_ul_rrc_msg_transfer_ies_o::value_c::operator=(const init_ul_rrc_msg_transfe
     case types::transaction_id:
       c.set(other.c.get<uint16_t>());
       break;
-    case types::ranueid:
+    case types::ran_ue_id:
       c.set(other.c.get<fixed_octstring<8, true>>());
       break;
     case types::rrc_container_rrc_setup_complete:
@@ -22196,10 +22196,10 @@ uint64_t& init_ul_rrc_msg_transfer_ies_o::value_c::gnb_du_ue_f1ap_id()
   assert_choice_type(types::gnb_du_ue_f1ap_id, type_, "Value");
   return c.get<uint64_t>();
 }
-nrcgi_s& init_ul_rrc_msg_transfer_ies_o::value_c::nrcgi()
+nr_cgi_s& init_ul_rrc_msg_transfer_ies_o::value_c::nr_cgi()
 {
-  assert_choice_type(types::nrcgi, type_, "Value");
-  return c.get<nrcgi_s>();
+  assert_choice_type(types::nr_cgi, type_, "Value");
+  return c.get<nr_cgi_s>();
 }
 uint32_t& init_ul_rrc_msg_transfer_ies_o::value_c::c_rnti()
 {
@@ -22226,9 +22226,9 @@ uint16_t& init_ul_rrc_msg_transfer_ies_o::value_c::transaction_id()
   assert_choice_type(types::transaction_id, type_, "Value");
   return c.get<uint16_t>();
 }
-fixed_octstring<8, true>& init_ul_rrc_msg_transfer_ies_o::value_c::ranueid()
+fixed_octstring<8, true>& init_ul_rrc_msg_transfer_ies_o::value_c::ran_ue_id()
 {
-  assert_choice_type(types::ranueid, type_, "Value");
+  assert_choice_type(types::ran_ue_id, type_, "Value");
   return c.get<fixed_octstring<8, true>>();
 }
 unbounded_octstring<true>& init_ul_rrc_msg_transfer_ies_o::value_c::rrc_container_rrc_setup_complete()
@@ -22241,10 +22241,10 @@ const uint64_t& init_ul_rrc_msg_transfer_ies_o::value_c::gnb_du_ue_f1ap_id() con
   assert_choice_type(types::gnb_du_ue_f1ap_id, type_, "Value");
   return c.get<uint64_t>();
 }
-const nrcgi_s& init_ul_rrc_msg_transfer_ies_o::value_c::nrcgi() const
+const nr_cgi_s& init_ul_rrc_msg_transfer_ies_o::value_c::nr_cgi() const
 {
-  assert_choice_type(types::nrcgi, type_, "Value");
-  return c.get<nrcgi_s>();
+  assert_choice_type(types::nr_cgi, type_, "Value");
+  return c.get<nr_cgi_s>();
 }
 const uint32_t& init_ul_rrc_msg_transfer_ies_o::value_c::c_rnti() const
 {
@@ -22271,9 +22271,9 @@ const uint16_t& init_ul_rrc_msg_transfer_ies_o::value_c::transaction_id() const
   assert_choice_type(types::transaction_id, type_, "Value");
   return c.get<uint16_t>();
 }
-const fixed_octstring<8, true>& init_ul_rrc_msg_transfer_ies_o::value_c::ranueid() const
+const fixed_octstring<8, true>& init_ul_rrc_msg_transfer_ies_o::value_c::ran_ue_id() const
 {
-  assert_choice_type(types::ranueid, type_, "Value");
+  assert_choice_type(types::ran_ue_id, type_, "Value");
   return c.get<fixed_octstring<8, true>>();
 }
 const unbounded_octstring<true>& init_ul_rrc_msg_transfer_ies_o::value_c::rrc_container_rrc_setup_complete() const
@@ -22288,9 +22288,9 @@ void init_ul_rrc_msg_transfer_ies_o::value_c::to_json(json_writer& j) const
     case types::gnb_du_ue_f1ap_id:
       j.write_int("INTEGER (0..4294967295)", c.get<uint64_t>());
       break;
-    case types::nrcgi:
+    case types::nr_cgi:
       j.write_fieldname("NRCGI");
-      c.get<nrcgi_s>().to_json(j);
+      c.get<nr_cgi_s>().to_json(j);
       break;
     case types::c_rnti:
       j.write_int("INTEGER (0..65535,...)", c.get<uint32_t>());
@@ -22307,7 +22307,7 @@ void init_ul_rrc_msg_transfer_ies_o::value_c::to_json(json_writer& j) const
     case types::transaction_id:
       j.write_int("INTEGER (0..255,...)", c.get<uint16_t>());
       break;
-    case types::ranueid:
+    case types::ran_ue_id:
       j.write_str("OCTET STRING", c.get<fixed_octstring<8, true>>().to_string());
       break;
     case types::rrc_container_rrc_setup_complete:
@@ -22325,8 +22325,8 @@ SRSASN_CODE init_ul_rrc_msg_transfer_ies_o::value_c::pack(bit_ref& bref) const
     case types::gnb_du_ue_f1ap_id:
       HANDLE_CODE(pack_integer(bref, c.get<uint64_t>(), (uint64_t)0u, (uint64_t)4294967295u, false, true));
       break;
-    case types::nrcgi:
-      HANDLE_CODE(c.get<nrcgi_s>().pack(bref));
+    case types::nr_cgi:
+      HANDLE_CODE(c.get<nr_cgi_s>().pack(bref));
       break;
     case types::c_rnti:
       HANDLE_CODE(pack_integer(bref, c.get<uint32_t>(), (uint32_t)0u, (uint32_t)65535u, true, true));
@@ -22343,7 +22343,7 @@ SRSASN_CODE init_ul_rrc_msg_transfer_ies_o::value_c::pack(bit_ref& bref) const
     case types::transaction_id:
       HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)255u, true, true));
       break;
-    case types::ranueid:
+    case types::ran_ue_id:
       HANDLE_CODE((c.get<fixed_octstring<8, true>>().pack(bref)));
       break;
     case types::rrc_container_rrc_setup_complete:
@@ -22362,8 +22362,8 @@ SRSASN_CODE init_ul_rrc_msg_transfer_ies_o::value_c::unpack(cbit_ref& bref)
     case types::gnb_du_ue_f1ap_id:
       HANDLE_CODE(unpack_integer(c.get<uint64_t>(), bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
       break;
-    case types::nrcgi:
-      HANDLE_CODE(c.get<nrcgi_s>().unpack(bref));
+    case types::nr_cgi:
+      HANDLE_CODE(c.get<nr_cgi_s>().unpack(bref));
       break;
     case types::c_rnti:
       HANDLE_CODE(unpack_integer(c.get<uint32_t>(), bref, (uint32_t)0u, (uint32_t)65535u, true, true));
@@ -22380,7 +22380,7 @@ SRSASN_CODE init_ul_rrc_msg_transfer_ies_o::value_c::unpack(cbit_ref& bref)
     case types::transaction_id:
       HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)255u, true, true));
       break;
-    case types::ranueid:
+    case types::ran_ue_id:
       HANDLE_CODE((c.get<fixed_octstring<8, true>>().unpack(bref)));
       break;
     case types::rrc_container_rrc_setup_complete:
@@ -24212,7 +24212,7 @@ rrc_delivery_report_ies_o::value_c rrc_delivery_report_ies_o::get_value(const ui
       ret.set(value_c::types::rrc_delivery_status);
       break;
     case 64:
-      ret.set(value_c::types::srbid);
+      ret.set(value_c::types::srb_id);
       break;
     default:
       asn1::log_error("The id={} is not recognized", id);
@@ -24259,7 +24259,7 @@ void rrc_delivery_report_ies_o::value_c::set(types::options e)
     case types::rrc_delivery_status:
       c.init<rrc_delivery_status_s>();
       break;
-    case types::srbid:
+    case types::srb_id:
       break;
     case types::nulltype:
       break;
@@ -24280,7 +24280,7 @@ rrc_delivery_report_ies_o::value_c::value_c(const rrc_delivery_report_ies_o::val
     case types::rrc_delivery_status:
       c.init(other.c.get<rrc_delivery_status_s>());
       break;
-    case types::srbid:
+    case types::srb_id:
       c.init(other.c.get<uint8_t>());
       break;
     case types::nulltype:
@@ -24306,7 +24306,7 @@ rrc_delivery_report_ies_o::value_c::operator=(const rrc_delivery_report_ies_o::v
     case types::rrc_delivery_status:
       c.set(other.c.get<rrc_delivery_status_s>());
       break;
-    case types::srbid:
+    case types::srb_id:
       c.set(other.c.get<uint8_t>());
       break;
     case types::nulltype:
@@ -24332,9 +24332,9 @@ rrc_delivery_status_s& rrc_delivery_report_ies_o::value_c::rrc_delivery_status()
   assert_choice_type(types::rrc_delivery_status, type_, "Value");
   return c.get<rrc_delivery_status_s>();
 }
-uint8_t& rrc_delivery_report_ies_o::value_c::srbid()
+uint8_t& rrc_delivery_report_ies_o::value_c::srb_id()
 {
-  assert_choice_type(types::srbid, type_, "Value");
+  assert_choice_type(types::srb_id, type_, "Value");
   return c.get<uint8_t>();
 }
 const uint64_t& rrc_delivery_report_ies_o::value_c::gnb_cu_ue_f1ap_id() const
@@ -24352,9 +24352,9 @@ const rrc_delivery_status_s& rrc_delivery_report_ies_o::value_c::rrc_delivery_st
   assert_choice_type(types::rrc_delivery_status, type_, "Value");
   return c.get<rrc_delivery_status_s>();
 }
-const uint8_t& rrc_delivery_report_ies_o::value_c::srbid() const
+const uint8_t& rrc_delivery_report_ies_o::value_c::srb_id() const
 {
-  assert_choice_type(types::srbid, type_, "Value");
+  assert_choice_type(types::srb_id, type_, "Value");
   return c.get<uint8_t>();
 }
 void rrc_delivery_report_ies_o::value_c::to_json(json_writer& j) const
@@ -24371,7 +24371,7 @@ void rrc_delivery_report_ies_o::value_c::to_json(json_writer& j) const
       j.write_fieldname("RRCDeliveryStatus");
       c.get<rrc_delivery_status_s>().to_json(j);
       break;
-    case types::srbid:
+    case types::srb_id:
       j.write_int("INTEGER (0..3,...)", c.get<uint8_t>());
       break;
     default:
@@ -24392,7 +24392,7 @@ SRSASN_CODE rrc_delivery_report_ies_o::value_c::pack(bit_ref& bref) const
     case types::rrc_delivery_status:
       HANDLE_CODE(c.get<rrc_delivery_status_s>().pack(bref));
       break;
-    case types::srbid:
+    case types::srb_id:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)3u, true, true));
       break;
     default:
@@ -24414,7 +24414,7 @@ SRSASN_CODE rrc_delivery_report_ies_o::value_c::unpack(cbit_ref& bref)
     case types::rrc_delivery_status:
       HANDLE_CODE(c.get<rrc_delivery_status_s>().unpack(bref));
       break;
-    case types::srbid:
+    case types::srb_id:
       HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)3u, true, true));
       break;
     default:
@@ -24953,7 +24953,7 @@ sys_info_delivery_cmd_ies_o::value_c sys_info_delivery_cmd_ies_o::get_value(cons
       ret.set(value_c::types::transaction_id);
       break;
     case 111:
-      ret.set(value_c::types::nrcgi);
+      ret.set(value_c::types::nr_cgi);
       break;
     case 116:
       ret.set(value_c::types::sitype_list);
@@ -24987,8 +24987,8 @@ presence_e sys_info_delivery_cmd_ies_o::get_presence(const uint32_t& id)
 void sys_info_delivery_cmd_ies_o::value_c::destroy_()
 {
   switch (type_) {
-    case types::nrcgi:
-      c.destroy<nrcgi_s>();
+    case types::nr_cgi:
+      c.destroy<nr_cgi_s>();
       break;
     case types::sitype_list:
       c.destroy<sitype_list_l>();
@@ -25004,8 +25004,8 @@ void sys_info_delivery_cmd_ies_o::value_c::set(types::options e)
   switch (type_) {
     case types::transaction_id:
       break;
-    case types::nrcgi:
-      c.init<nrcgi_s>();
+    case types::nr_cgi:
+      c.init<nr_cgi_s>();
       break;
     case types::sitype_list:
       c.init<sitype_list_l>();
@@ -25025,8 +25025,8 @@ sys_info_delivery_cmd_ies_o::value_c::value_c(const sys_info_delivery_cmd_ies_o:
     case types::transaction_id:
       c.init(other.c.get<uint16_t>());
       break;
-    case types::nrcgi:
-      c.init(other.c.get<nrcgi_s>());
+    case types::nr_cgi:
+      c.init(other.c.get<nr_cgi_s>());
       break;
     case types::sitype_list:
       c.init(other.c.get<sitype_list_l>());
@@ -25051,8 +25051,8 @@ sys_info_delivery_cmd_ies_o::value_c::operator=(const sys_info_delivery_cmd_ies_
     case types::transaction_id:
       c.set(other.c.get<uint16_t>());
       break;
-    case types::nrcgi:
-      c.set(other.c.get<nrcgi_s>());
+    case types::nr_cgi:
+      c.set(other.c.get<nr_cgi_s>());
       break;
     case types::sitype_list:
       c.set(other.c.get<sitype_list_l>());
@@ -25073,10 +25073,10 @@ uint16_t& sys_info_delivery_cmd_ies_o::value_c::transaction_id()
   assert_choice_type(types::transaction_id, type_, "Value");
   return c.get<uint16_t>();
 }
-nrcgi_s& sys_info_delivery_cmd_ies_o::value_c::nrcgi()
+nr_cgi_s& sys_info_delivery_cmd_ies_o::value_c::nr_cgi()
 {
-  assert_choice_type(types::nrcgi, type_, "Value");
-  return c.get<nrcgi_s>();
+  assert_choice_type(types::nr_cgi, type_, "Value");
+  return c.get<nr_cgi_s>();
 }
 sitype_list_l& sys_info_delivery_cmd_ies_o::value_c::sitype_list()
 {
@@ -25093,10 +25093,10 @@ const uint16_t& sys_info_delivery_cmd_ies_o::value_c::transaction_id() const
   assert_choice_type(types::transaction_id, type_, "Value");
   return c.get<uint16_t>();
 }
-const nrcgi_s& sys_info_delivery_cmd_ies_o::value_c::nrcgi() const
+const nr_cgi_s& sys_info_delivery_cmd_ies_o::value_c::nr_cgi() const
 {
-  assert_choice_type(types::nrcgi, type_, "Value");
-  return c.get<nrcgi_s>();
+  assert_choice_type(types::nr_cgi, type_, "Value");
+  return c.get<nr_cgi_s>();
 }
 const sitype_list_l& sys_info_delivery_cmd_ies_o::value_c::sitype_list() const
 {
@@ -25115,9 +25115,9 @@ void sys_info_delivery_cmd_ies_o::value_c::to_json(json_writer& j) const
     case types::transaction_id:
       j.write_int("INTEGER (0..255,...)", c.get<uint16_t>());
       break;
-    case types::nrcgi:
+    case types::nr_cgi:
       j.write_fieldname("NRCGI");
-      c.get<nrcgi_s>().to_json(j);
+      c.get<nr_cgi_s>().to_json(j);
       break;
     case types::sitype_list:
       j.start_array("SItype-List");
@@ -25141,8 +25141,8 @@ SRSASN_CODE sys_info_delivery_cmd_ies_o::value_c::pack(bit_ref& bref) const
     case types::transaction_id:
       HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)255u, true, true));
       break;
-    case types::nrcgi:
-      HANDLE_CODE(c.get<nrcgi_s>().pack(bref));
+    case types::nr_cgi:
+      HANDLE_CODE(c.get<nr_cgi_s>().pack(bref));
       break;
     case types::sitype_list:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<sitype_list_l>(), 1, 32, true));
@@ -25163,8 +25163,8 @@ SRSASN_CODE sys_info_delivery_cmd_ies_o::value_c::unpack(cbit_ref& bref)
     case types::transaction_id:
       HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)255u, true, true));
       break;
-    case types::nrcgi:
-      HANDLE_CODE(c.get<nrcgi_s>().unpack(bref));
+    case types::nr_cgi:
+      HANDLE_CODE(c.get<nr_cgi_s>().unpack(bref));
       break;
     case types::sitype_list:
       HANDLE_CODE(unpack_dyn_seq_of(c.get<sitype_list_l>(), bref, 1, 32, true));
@@ -26258,7 +26258,7 @@ ue_context_mod_request_ies_o::value_c ue_context_mod_request_ies_o::get_value(co
       ret.set(value_c::types::serv_cell_idx);
       break;
     case 96:
-      ret.set(value_c::types::sp_cell_ul_cfgured);
+      ret.set(value_c::types::sp_cell_ul_cfg);
       break;
     case 38:
       ret.set(value_c::types::drx_cycle);
@@ -26419,7 +26419,7 @@ void ue_context_mod_request_ies_o::value_c::destroy_()
 {
   switch (type_) {
     case types::sp_cell_id:
-      c.destroy<nrcgi_s>();
+      c.destroy<nr_cgi_s>();
       break;
     case types::drx_cycle:
       c.destroy<drx_cycle_s>();
@@ -26480,11 +26480,11 @@ void ue_context_mod_request_ies_o::value_c::set(types::options e)
     case types::gnb_du_ue_f1ap_id:
       break;
     case types::sp_cell_id:
-      c.init<nrcgi_s>();
+      c.init<nr_cgi_s>();
       break;
     case types::serv_cell_idx:
       break;
-    case types::sp_cell_ul_cfgured:
+    case types::sp_cell_ul_cfg:
       break;
     case types::drx_cycle:
       c.init<drx_cycle_s>();
@@ -26570,13 +26570,13 @@ ue_context_mod_request_ies_o::value_c::value_c(const ue_context_mod_request_ies_
       c.init(other.c.get<uint64_t>());
       break;
     case types::sp_cell_id:
-      c.init(other.c.get<nrcgi_s>());
+      c.init(other.c.get<nr_cgi_s>());
       break;
     case types::serv_cell_idx:
       c.init(other.c.get<uint8_t>());
       break;
-    case types::sp_cell_ul_cfgured:
-      c.init(other.c.get<cell_ul_cfgured_e>());
+    case types::sp_cell_ul_cfg:
+      c.init(other.c.get<cell_ul_cfg_e>());
       break;
     case types::drx_cycle:
       c.init(other.c.get<drx_cycle_s>());
@@ -26677,13 +26677,13 @@ ue_context_mod_request_ies_o::value_c::operator=(const ue_context_mod_request_ie
       c.set(other.c.get<uint64_t>());
       break;
     case types::sp_cell_id:
-      c.set(other.c.get<nrcgi_s>());
+      c.set(other.c.get<nr_cgi_s>());
       break;
     case types::serv_cell_idx:
       c.set(other.c.get<uint8_t>());
       break;
-    case types::sp_cell_ul_cfgured:
-      c.set(other.c.get<cell_ul_cfgured_e>());
+    case types::sp_cell_ul_cfg:
+      c.set(other.c.get<cell_ul_cfg_e>());
       break;
     case types::drx_cycle:
       c.set(other.c.get<drx_cycle_s>());
@@ -26781,20 +26781,20 @@ uint64_t& ue_context_mod_request_ies_o::value_c::gnb_du_ue_f1ap_id()
   assert_choice_type(types::gnb_du_ue_f1ap_id, type_, "Value");
   return c.get<uint64_t>();
 }
-nrcgi_s& ue_context_mod_request_ies_o::value_c::sp_cell_id()
+nr_cgi_s& ue_context_mod_request_ies_o::value_c::sp_cell_id()
 {
   assert_choice_type(types::sp_cell_id, type_, "Value");
-  return c.get<nrcgi_s>();
+  return c.get<nr_cgi_s>();
 }
 uint8_t& ue_context_mod_request_ies_o::value_c::serv_cell_idx()
 {
   assert_choice_type(types::serv_cell_idx, type_, "Value");
   return c.get<uint8_t>();
 }
-cell_ul_cfgured_e& ue_context_mod_request_ies_o::value_c::sp_cell_ul_cfgured()
+cell_ul_cfg_e& ue_context_mod_request_ies_o::value_c::sp_cell_ul_cfg()
 {
-  assert_choice_type(types::sp_cell_ul_cfgured, type_, "Value");
-  return c.get<cell_ul_cfgured_e>();
+  assert_choice_type(types::sp_cell_ul_cfg, type_, "Value");
+  return c.get<cell_ul_cfg_e>();
 }
 drx_cycle_s& ue_context_mod_request_ies_o::value_c::drx_cycle()
 {
@@ -26936,20 +26936,20 @@ const uint64_t& ue_context_mod_request_ies_o::value_c::gnb_du_ue_f1ap_id() const
   assert_choice_type(types::gnb_du_ue_f1ap_id, type_, "Value");
   return c.get<uint64_t>();
 }
-const nrcgi_s& ue_context_mod_request_ies_o::value_c::sp_cell_id() const
+const nr_cgi_s& ue_context_mod_request_ies_o::value_c::sp_cell_id() const
 {
   assert_choice_type(types::sp_cell_id, type_, "Value");
-  return c.get<nrcgi_s>();
+  return c.get<nr_cgi_s>();
 }
 const uint8_t& ue_context_mod_request_ies_o::value_c::serv_cell_idx() const
 {
   assert_choice_type(types::serv_cell_idx, type_, "Value");
   return c.get<uint8_t>();
 }
-const cell_ul_cfgured_e& ue_context_mod_request_ies_o::value_c::sp_cell_ul_cfgured() const
+const cell_ul_cfg_e& ue_context_mod_request_ies_o::value_c::sp_cell_ul_cfg() const
 {
-  assert_choice_type(types::sp_cell_ul_cfgured, type_, "Value");
-  return c.get<cell_ul_cfgured_e>();
+  assert_choice_type(types::sp_cell_ul_cfg, type_, "Value");
+  return c.get<cell_ul_cfg_e>();
 }
 const drx_cycle_s& ue_context_mod_request_ies_o::value_c::drx_cycle() const
 {
@@ -27093,13 +27093,13 @@ void ue_context_mod_request_ies_o::value_c::to_json(json_writer& j) const
       break;
     case types::sp_cell_id:
       j.write_fieldname("NRCGI");
-      c.get<nrcgi_s>().to_json(j);
+      c.get<nr_cgi_s>().to_json(j);
       break;
     case types::serv_cell_idx:
       j.write_int("INTEGER (0..31,...)", c.get<uint8_t>());
       break;
-    case types::sp_cell_ul_cfgured:
-      j.write_str("CellULConfigured", c.get<cell_ul_cfgured_e>().to_string());
+    case types::sp_cell_ul_cfg:
+      j.write_str("CellULConfigured", c.get<cell_ul_cfg_e>().to_string());
       break;
     case types::drx_cycle:
       j.write_fieldname("DRXCycle");
@@ -27228,13 +27228,13 @@ SRSASN_CODE ue_context_mod_request_ies_o::value_c::pack(bit_ref& bref) const
       HANDLE_CODE(pack_integer(bref, c.get<uint64_t>(), (uint64_t)0u, (uint64_t)4294967295u, false, true));
       break;
     case types::sp_cell_id:
-      HANDLE_CODE(c.get<nrcgi_s>().pack(bref));
+      HANDLE_CODE(c.get<nr_cgi_s>().pack(bref));
       break;
     case types::serv_cell_idx:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)31u, true, true));
       break;
-    case types::sp_cell_ul_cfgured:
-      HANDLE_CODE(c.get<cell_ul_cfgured_e>().pack(bref));
+    case types::sp_cell_ul_cfg:
+      HANDLE_CODE(c.get<cell_ul_cfg_e>().pack(bref));
       break;
     case types::drx_cycle:
       HANDLE_CODE(c.get<drx_cycle_s>().pack(bref));
@@ -27331,13 +27331,13 @@ SRSASN_CODE ue_context_mod_request_ies_o::value_c::unpack(cbit_ref& bref)
       HANDLE_CODE(unpack_integer(c.get<uint64_t>(), bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
       break;
     case types::sp_cell_id:
-      HANDLE_CODE(c.get<nrcgi_s>().unpack(bref));
+      HANDLE_CODE(c.get<nr_cgi_s>().unpack(bref));
       break;
     case types::serv_cell_idx:
       HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)31u, true, true));
       break;
-    case types::sp_cell_ul_cfgured:
-      HANDLE_CODE(c.get<cell_ul_cfgured_e>().unpack(bref));
+    case types::sp_cell_ul_cfg:
+      HANDLE_CODE(c.get<cell_ul_cfg_e>().unpack(bref));
       break;
     case types::drx_cycle:
       HANDLE_CODE(c.get<drx_cycle_s>().unpack(bref));
@@ -28763,7 +28763,7 @@ ue_context_release_cmd_ies_o::value_c ue_context_release_cmd_ies_o::get_value(co
       ret.set(value_c::types::rrc_container);
       break;
     case 64:
-      ret.set(value_c::types::srbid);
+      ret.set(value_c::types::srb_id);
       break;
     case 47:
       ret.set(value_c::types::old_gnb_du_ue_f1ap_id);
@@ -28833,7 +28833,7 @@ void ue_context_release_cmd_ies_o::value_c::set(types::options e)
     case types::rrc_container:
       c.init<unbounded_octstring<true>>();
       break;
-    case types::srbid:
+    case types::srb_id:
       break;
     case types::old_gnb_du_ue_f1ap_id:
       break;
@@ -28863,7 +28863,7 @@ ue_context_release_cmd_ies_o::value_c::value_c(const ue_context_release_cmd_ies_
     case types::rrc_container:
       c.init(other.c.get<unbounded_octstring<true>>());
       break;
-    case types::srbid:
+    case types::srb_id:
       c.init(other.c.get<uint8_t>());
       break;
     case types::old_gnb_du_ue_f1ap_id:
@@ -28901,7 +28901,7 @@ ue_context_release_cmd_ies_o::value_c::operator=(const ue_context_release_cmd_ie
     case types::rrc_container:
       c.set(other.c.get<unbounded_octstring<true>>());
       break;
-    case types::srbid:
+    case types::srb_id:
       c.set(other.c.get<uint8_t>());
       break;
     case types::old_gnb_du_ue_f1ap_id:
@@ -28941,9 +28941,9 @@ unbounded_octstring<true>& ue_context_release_cmd_ies_o::value_c::rrc_container(
   assert_choice_type(types::rrc_container, type_, "Value");
   return c.get<unbounded_octstring<true>>();
 }
-uint8_t& ue_context_release_cmd_ies_o::value_c::srbid()
+uint8_t& ue_context_release_cmd_ies_o::value_c::srb_id()
 {
-  assert_choice_type(types::srbid, type_, "Value");
+  assert_choice_type(types::srb_id, type_, "Value");
   return c.get<uint8_t>();
 }
 uint64_t& ue_context_release_cmd_ies_o::value_c::old_gnb_du_ue_f1ap_id()
@@ -28981,9 +28981,9 @@ const unbounded_octstring<true>& ue_context_release_cmd_ies_o::value_c::rrc_cont
   assert_choice_type(types::rrc_container, type_, "Value");
   return c.get<unbounded_octstring<true>>();
 }
-const uint8_t& ue_context_release_cmd_ies_o::value_c::srbid() const
+const uint8_t& ue_context_release_cmd_ies_o::value_c::srb_id() const
 {
-  assert_choice_type(types::srbid, type_, "Value");
+  assert_choice_type(types::srb_id, type_, "Value");
   return c.get<uint8_t>();
 }
 const uint64_t& ue_context_release_cmd_ies_o::value_c::old_gnb_du_ue_f1ap_id() const
@@ -29018,7 +29018,7 @@ void ue_context_release_cmd_ies_o::value_c::to_json(json_writer& j) const
     case types::rrc_container:
       j.write_str("OCTET STRING", c.get<unbounded_octstring<true>>().to_string());
       break;
-    case types::srbid:
+    case types::srb_id:
       j.write_int("INTEGER (0..3,...)", c.get<uint8_t>());
       break;
     case types::old_gnb_du_ue_f1ap_id:
@@ -29051,7 +29051,7 @@ SRSASN_CODE ue_context_release_cmd_ies_o::value_c::pack(bit_ref& bref) const
     case types::rrc_container:
       HANDLE_CODE(c.get<unbounded_octstring<true>>().pack(bref));
       break;
-    case types::srbid:
+    case types::srb_id:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)3u, true, true));
       break;
     case types::old_gnb_du_ue_f1ap_id:
@@ -29085,7 +29085,7 @@ SRSASN_CODE ue_context_release_cmd_ies_o::value_c::unpack(cbit_ref& bref)
     case types::rrc_container:
       HANDLE_CODE(c.get<unbounded_octstring<true>>().unpack(bref));
       break;
-    case types::srbid:
+    case types::srb_id:
       HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)3u, true, true));
       break;
     case types::old_gnb_du_ue_f1ap_id:
@@ -29978,7 +29978,7 @@ ue_context_setup_request_ies_o::value_c ue_context_setup_request_ies_o::get_valu
       ret.set(value_c::types::serv_cell_idx);
       break;
     case 96:
-      ret.set(value_c::types::sp_cell_ul_cfgured);
+      ret.set(value_c::types::sp_cell_ul_cfg);
       break;
     case 9:
       ret.set(value_c::types::cu_to_du_rrc_info);
@@ -30032,7 +30032,7 @@ ue_context_setup_request_ies_o::value_c ue_context_setup_request_ies_o::get_valu
       ret.set(value_c::types::new_gnb_cu_ue_f1ap_id);
       break;
     case 226:
-      ret.set(value_c::types::ranueid);
+      ret.set(value_c::types::ran_ue_id);
       break;
     default:
       asn1::log_error("The id={} is not recognized", id);
@@ -30099,7 +30099,7 @@ void ue_context_setup_request_ies_o::value_c::destroy_()
 {
   switch (type_) {
     case types::sp_cell_id:
-      c.destroy<nrcgi_s>();
+      c.destroy<nr_cgi_s>();
       break;
     case types::cu_to_du_rrc_info:
       c.destroy<cu_to_du_rrc_info_s>();
@@ -30137,7 +30137,7 @@ void ue_context_setup_request_ies_o::value_c::destroy_()
     case types::res_coordination_transfer_info:
       c.destroy<res_coordination_transfer_info_s>();
       break;
-    case types::ranueid:
+    case types::ran_ue_id:
       c.destroy<fixed_octstring<8, true>>();
       break;
     default:
@@ -30154,11 +30154,11 @@ void ue_context_setup_request_ies_o::value_c::set(types::options e)
     case types::gnb_du_ue_f1ap_id:
       break;
     case types::sp_cell_id:
-      c.init<nrcgi_s>();
+      c.init<nr_cgi_s>();
       break;
     case types::serv_cell_idx:
       break;
-    case types::sp_cell_ul_cfgured:
+    case types::sp_cell_ul_cfg:
       break;
     case types::cu_to_du_rrc_info:
       c.init<cu_to_du_rrc_info_s>();
@@ -30206,7 +30206,7 @@ void ue_context_setup_request_ies_o::value_c::set(types::options e)
       break;
     case types::new_gnb_cu_ue_f1ap_id:
       break;
-    case types::ranueid:
+    case types::ran_ue_id:
       c.init<fixed_octstring<8, true>>();
       break;
     case types::nulltype:
@@ -30226,13 +30226,13 @@ ue_context_setup_request_ies_o::value_c::value_c(const ue_context_setup_request_
       c.init(other.c.get<uint64_t>());
       break;
     case types::sp_cell_id:
-      c.init(other.c.get<nrcgi_s>());
+      c.init(other.c.get<nr_cgi_s>());
       break;
     case types::serv_cell_idx:
       c.init(other.c.get<uint8_t>());
       break;
-    case types::sp_cell_ul_cfgured:
-      c.init(other.c.get<cell_ul_cfgured_e>());
+    case types::sp_cell_ul_cfg:
+      c.init(other.c.get<cell_ul_cfg_e>());
       break;
     case types::cu_to_du_rrc_info:
       c.init(other.c.get<cu_to_du_rrc_info_s>());
@@ -30285,7 +30285,7 @@ ue_context_setup_request_ies_o::value_c::value_c(const ue_context_setup_request_
     case types::new_gnb_cu_ue_f1ap_id:
       c.init(other.c.get<uint64_t>());
       break;
-    case types::ranueid:
+    case types::ran_ue_id:
       c.init(other.c.get<fixed_octstring<8, true>>());
       break;
     case types::nulltype:
@@ -30309,13 +30309,13 @@ ue_context_setup_request_ies_o::value_c::operator=(const ue_context_setup_reques
       c.set(other.c.get<uint64_t>());
       break;
     case types::sp_cell_id:
-      c.set(other.c.get<nrcgi_s>());
+      c.set(other.c.get<nr_cgi_s>());
       break;
     case types::serv_cell_idx:
       c.set(other.c.get<uint8_t>());
       break;
-    case types::sp_cell_ul_cfgured:
-      c.set(other.c.get<cell_ul_cfgured_e>());
+    case types::sp_cell_ul_cfg:
+      c.set(other.c.get<cell_ul_cfg_e>());
       break;
     case types::cu_to_du_rrc_info:
       c.set(other.c.get<cu_to_du_rrc_info_s>());
@@ -30368,7 +30368,7 @@ ue_context_setup_request_ies_o::value_c::operator=(const ue_context_setup_reques
     case types::new_gnb_cu_ue_f1ap_id:
       c.set(other.c.get<uint64_t>());
       break;
-    case types::ranueid:
+    case types::ran_ue_id:
       c.set(other.c.get<fixed_octstring<8, true>>());
       break;
     case types::nulltype:
@@ -30389,20 +30389,20 @@ uint64_t& ue_context_setup_request_ies_o::value_c::gnb_du_ue_f1ap_id()
   assert_choice_type(types::gnb_du_ue_f1ap_id, type_, "Value");
   return c.get<uint64_t>();
 }
-nrcgi_s& ue_context_setup_request_ies_o::value_c::sp_cell_id()
+nr_cgi_s& ue_context_setup_request_ies_o::value_c::sp_cell_id()
 {
   assert_choice_type(types::sp_cell_id, type_, "Value");
-  return c.get<nrcgi_s>();
+  return c.get<nr_cgi_s>();
 }
 uint8_t& ue_context_setup_request_ies_o::value_c::serv_cell_idx()
 {
   assert_choice_type(types::serv_cell_idx, type_, "Value");
   return c.get<uint8_t>();
 }
-cell_ul_cfgured_e& ue_context_setup_request_ies_o::value_c::sp_cell_ul_cfgured()
+cell_ul_cfg_e& ue_context_setup_request_ies_o::value_c::sp_cell_ul_cfg()
 {
-  assert_choice_type(types::sp_cell_ul_cfgured, type_, "Value");
-  return c.get<cell_ul_cfgured_e>();
+  assert_choice_type(types::sp_cell_ul_cfg, type_, "Value");
+  return c.get<cell_ul_cfg_e>();
 }
 cu_to_du_rrc_info_s& ue_context_setup_request_ies_o::value_c::cu_to_du_rrc_info()
 {
@@ -30489,9 +30489,9 @@ uint64_t& ue_context_setup_request_ies_o::value_c::new_gnb_cu_ue_f1ap_id()
   assert_choice_type(types::new_gnb_cu_ue_f1ap_id, type_, "Value");
   return c.get<uint64_t>();
 }
-fixed_octstring<8, true>& ue_context_setup_request_ies_o::value_c::ranueid()
+fixed_octstring<8, true>& ue_context_setup_request_ies_o::value_c::ran_ue_id()
 {
-  assert_choice_type(types::ranueid, type_, "Value");
+  assert_choice_type(types::ran_ue_id, type_, "Value");
   return c.get<fixed_octstring<8, true>>();
 }
 const uint64_t& ue_context_setup_request_ies_o::value_c::gnb_cu_ue_f1ap_id() const
@@ -30504,20 +30504,20 @@ const uint64_t& ue_context_setup_request_ies_o::value_c::gnb_du_ue_f1ap_id() con
   assert_choice_type(types::gnb_du_ue_f1ap_id, type_, "Value");
   return c.get<uint64_t>();
 }
-const nrcgi_s& ue_context_setup_request_ies_o::value_c::sp_cell_id() const
+const nr_cgi_s& ue_context_setup_request_ies_o::value_c::sp_cell_id() const
 {
   assert_choice_type(types::sp_cell_id, type_, "Value");
-  return c.get<nrcgi_s>();
+  return c.get<nr_cgi_s>();
 }
 const uint8_t& ue_context_setup_request_ies_o::value_c::serv_cell_idx() const
 {
   assert_choice_type(types::serv_cell_idx, type_, "Value");
   return c.get<uint8_t>();
 }
-const cell_ul_cfgured_e& ue_context_setup_request_ies_o::value_c::sp_cell_ul_cfgured() const
+const cell_ul_cfg_e& ue_context_setup_request_ies_o::value_c::sp_cell_ul_cfg() const
 {
-  assert_choice_type(types::sp_cell_ul_cfgured, type_, "Value");
-  return c.get<cell_ul_cfgured_e>();
+  assert_choice_type(types::sp_cell_ul_cfg, type_, "Value");
+  return c.get<cell_ul_cfg_e>();
 }
 const cu_to_du_rrc_info_s& ue_context_setup_request_ies_o::value_c::cu_to_du_rrc_info() const
 {
@@ -30604,9 +30604,9 @@ const uint64_t& ue_context_setup_request_ies_o::value_c::new_gnb_cu_ue_f1ap_id()
   assert_choice_type(types::new_gnb_cu_ue_f1ap_id, type_, "Value");
   return c.get<uint64_t>();
 }
-const fixed_octstring<8, true>& ue_context_setup_request_ies_o::value_c::ranueid() const
+const fixed_octstring<8, true>& ue_context_setup_request_ies_o::value_c::ran_ue_id() const
 {
-  assert_choice_type(types::ranueid, type_, "Value");
+  assert_choice_type(types::ran_ue_id, type_, "Value");
   return c.get<fixed_octstring<8, true>>();
 }
 void ue_context_setup_request_ies_o::value_c::to_json(json_writer& j) const
@@ -30621,13 +30621,13 @@ void ue_context_setup_request_ies_o::value_c::to_json(json_writer& j) const
       break;
     case types::sp_cell_id:
       j.write_fieldname("NRCGI");
-      c.get<nrcgi_s>().to_json(j);
+      c.get<nr_cgi_s>().to_json(j);
       break;
     case types::serv_cell_idx:
       j.write_int("INTEGER (0..31,...)", c.get<uint8_t>());
       break;
-    case types::sp_cell_ul_cfgured:
-      j.write_str("CellULConfigured", c.get<cell_ul_cfgured_e>().to_string());
+    case types::sp_cell_ul_cfg:
+      j.write_str("CellULConfigured", c.get<cell_ul_cfg_e>().to_string());
       break;
     case types::cu_to_du_rrc_info:
       j.write_fieldname("CUtoDURRCInformation");
@@ -30700,7 +30700,7 @@ void ue_context_setup_request_ies_o::value_c::to_json(json_writer& j) const
     case types::new_gnb_cu_ue_f1ap_id:
       j.write_int("INTEGER (0..4294967295)", c.get<uint64_t>());
       break;
-    case types::ranueid:
+    case types::ran_ue_id:
       j.write_str("OCTET STRING", c.get<fixed_octstring<8, true>>().to_string());
       break;
     default:
@@ -30719,13 +30719,13 @@ SRSASN_CODE ue_context_setup_request_ies_o::value_c::pack(bit_ref& bref) const
       HANDLE_CODE(pack_integer(bref, c.get<uint64_t>(), (uint64_t)0u, (uint64_t)4294967295u, false, true));
       break;
     case types::sp_cell_id:
-      HANDLE_CODE(c.get<nrcgi_s>().pack(bref));
+      HANDLE_CODE(c.get<nr_cgi_s>().pack(bref));
       break;
     case types::serv_cell_idx:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)31u, true, true));
       break;
-    case types::sp_cell_ul_cfgured:
-      HANDLE_CODE(c.get<cell_ul_cfgured_e>().pack(bref));
+    case types::sp_cell_ul_cfg:
+      HANDLE_CODE(c.get<cell_ul_cfg_e>().pack(bref));
       break;
     case types::cu_to_du_rrc_info:
       HANDLE_CODE(c.get<cu_to_du_rrc_info_s>().pack(bref));
@@ -30778,7 +30778,7 @@ SRSASN_CODE ue_context_setup_request_ies_o::value_c::pack(bit_ref& bref) const
     case types::new_gnb_cu_ue_f1ap_id:
       HANDLE_CODE(pack_integer(bref, c.get<uint64_t>(), (uint64_t)0u, (uint64_t)4294967295u, false, true));
       break;
-    case types::ranueid:
+    case types::ran_ue_id:
       HANDLE_CODE((c.get<fixed_octstring<8, true>>().pack(bref)));
       break;
     default:
@@ -30798,13 +30798,13 @@ SRSASN_CODE ue_context_setup_request_ies_o::value_c::unpack(cbit_ref& bref)
       HANDLE_CODE(unpack_integer(c.get<uint64_t>(), bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
       break;
     case types::sp_cell_id:
-      HANDLE_CODE(c.get<nrcgi_s>().unpack(bref));
+      HANDLE_CODE(c.get<nr_cgi_s>().unpack(bref));
       break;
     case types::serv_cell_idx:
       HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)31u, true, true));
       break;
-    case types::sp_cell_ul_cfgured:
-      HANDLE_CODE(c.get<cell_ul_cfgured_e>().unpack(bref));
+    case types::sp_cell_ul_cfg:
+      HANDLE_CODE(c.get<cell_ul_cfg_e>().unpack(bref));
       break;
     case types::cu_to_du_rrc_info:
       HANDLE_CODE(c.get<cu_to_du_rrc_info_s>().unpack(bref));
@@ -30857,7 +30857,7 @@ SRSASN_CODE ue_context_setup_request_ies_o::value_c::unpack(cbit_ref& bref)
     case types::new_gnb_cu_ue_f1ap_id:
       HANDLE_CODE(unpack_integer(c.get<uint64_t>(), bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
       break;
-    case types::ranueid:
+    case types::ran_ue_id:
       HANDLE_CODE((c.get<fixed_octstring<8, true>>().unpack(bref)));
       break;
     default:
@@ -31806,7 +31806,7 @@ ul_rrc_msg_transfer_ies_o::value_c ul_rrc_msg_transfer_ies_o::get_value(const ui
       ret.set(value_c::types::gnb_du_ue_f1ap_id);
       break;
     case 64:
-      ret.set(value_c::types::srbid);
+      ret.set(value_c::types::srb_id);
       break;
     case 50:
       ret.set(value_c::types::rrc_container);
@@ -31866,7 +31866,7 @@ void ul_rrc_msg_transfer_ies_o::value_c::set(types::options e)
       break;
     case types::gnb_du_ue_f1ap_id:
       break;
-    case types::srbid:
+    case types::srb_id:
       break;
     case types::rrc_container:
       c.init<unbounded_octstring<true>>();
@@ -31892,7 +31892,7 @@ ul_rrc_msg_transfer_ies_o::value_c::value_c(const ul_rrc_msg_transfer_ies_o::val
     case types::gnb_du_ue_f1ap_id:
       c.init(other.c.get<uint64_t>());
       break;
-    case types::srbid:
+    case types::srb_id:
       c.init(other.c.get<uint8_t>());
       break;
     case types::rrc_container:
@@ -31924,7 +31924,7 @@ ul_rrc_msg_transfer_ies_o::value_c::operator=(const ul_rrc_msg_transfer_ies_o::v
     case types::gnb_du_ue_f1ap_id:
       c.set(other.c.get<uint64_t>());
       break;
-    case types::srbid:
+    case types::srb_id:
       c.set(other.c.get<uint8_t>());
       break;
     case types::rrc_container:
@@ -31954,9 +31954,9 @@ uint64_t& ul_rrc_msg_transfer_ies_o::value_c::gnb_du_ue_f1ap_id()
   assert_choice_type(types::gnb_du_ue_f1ap_id, type_, "Value");
   return c.get<uint64_t>();
 }
-uint8_t& ul_rrc_msg_transfer_ies_o::value_c::srbid()
+uint8_t& ul_rrc_msg_transfer_ies_o::value_c::srb_id()
 {
-  assert_choice_type(types::srbid, type_, "Value");
+  assert_choice_type(types::srb_id, type_, "Value");
   return c.get<uint8_t>();
 }
 unbounded_octstring<true>& ul_rrc_msg_transfer_ies_o::value_c::rrc_container()
@@ -31984,9 +31984,9 @@ const uint64_t& ul_rrc_msg_transfer_ies_o::value_c::gnb_du_ue_f1ap_id() const
   assert_choice_type(types::gnb_du_ue_f1ap_id, type_, "Value");
   return c.get<uint64_t>();
 }
-const uint8_t& ul_rrc_msg_transfer_ies_o::value_c::srbid() const
+const uint8_t& ul_rrc_msg_transfer_ies_o::value_c::srb_id() const
 {
-  assert_choice_type(types::srbid, type_, "Value");
+  assert_choice_type(types::srb_id, type_, "Value");
   return c.get<uint8_t>();
 }
 const unbounded_octstring<true>& ul_rrc_msg_transfer_ies_o::value_c::rrc_container() const
@@ -32014,7 +32014,7 @@ void ul_rrc_msg_transfer_ies_o::value_c::to_json(json_writer& j) const
     case types::gnb_du_ue_f1ap_id:
       j.write_int("INTEGER (0..4294967295)", c.get<uint64_t>());
       break;
-    case types::srbid:
+    case types::srb_id:
       j.write_int("INTEGER (0..3,...)", c.get<uint8_t>());
       break;
     case types::rrc_container:
@@ -32041,7 +32041,7 @@ SRSASN_CODE ul_rrc_msg_transfer_ies_o::value_c::pack(bit_ref& bref) const
     case types::gnb_du_ue_f1ap_id:
       HANDLE_CODE(pack_integer(bref, c.get<uint64_t>(), (uint64_t)0u, (uint64_t)4294967295u, false, true));
       break;
-    case types::srbid:
+    case types::srb_id:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)3u, true, true));
       break;
     case types::rrc_container:
@@ -32069,7 +32069,7 @@ SRSASN_CODE ul_rrc_msg_transfer_ies_o::value_c::unpack(cbit_ref& bref)
     case types::gnb_du_ue_f1ap_id:
       HANDLE_CODE(unpack_integer(c.get<uint64_t>(), bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
       break;
-    case types::srbid:
+    case types::srb_id:
       HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)3u, true, true));
       break;
     case types::rrc_container:
@@ -34181,13 +34181,13 @@ template struct asn1::protocol_ie_field_s<init_ul_rrc_msg_transfer_ies_o>;
 
 init_ul_rrc_msg_transfer_ies_container::init_ul_rrc_msg_transfer_ies_container() :
   gnb_du_ue_f1ap_id(41, crit_e::reject),
-  nrcgi(111, crit_e::reject),
+  nr_cgi(111, crit_e::reject),
   c_rnti(95, crit_e::reject),
   rrc_container(50, crit_e::reject),
   du_to_cu_rrc_container(128, crit_e::reject),
   sul_access_ind(178, crit_e::ignore),
   transaction_id(78, crit_e::ignore),
-  ranueid(226, crit_e::ignore),
+  ran_ue_id(226, crit_e::ignore),
   rrc_container_rrc_setup_complete(241, crit_e::ignore)
 {
 }
@@ -34196,12 +34196,12 @@ SRSASN_CODE init_ul_rrc_msg_transfer_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 5;
   nof_ies += du_to_cu_rrc_container_present ? 1 : 0;
   nof_ies += sul_access_ind_present ? 1 : 0;
-  nof_ies += ranueid_present ? 1 : 0;
+  nof_ies += ran_ue_id_present ? 1 : 0;
   nof_ies += rrc_container_rrc_setup_complete_present ? 1 : 0;
   pack_length(bref, nof_ies, 0u, 65535u, true);
 
   HANDLE_CODE(gnb_du_ue_f1ap_id.pack(bref));
-  HANDLE_CODE(nrcgi.pack(bref));
+  HANDLE_CODE(nr_cgi.pack(bref));
   HANDLE_CODE(c_rnti.pack(bref));
   HANDLE_CODE(rrc_container.pack(bref));
   if (du_to_cu_rrc_container_present) {
@@ -34211,8 +34211,8 @@ SRSASN_CODE init_ul_rrc_msg_transfer_ies_container::pack(bit_ref& bref) const
     HANDLE_CODE(sul_access_ind.pack(bref));
   }
   HANDLE_CODE(transaction_id.pack(bref));
-  if (ranueid_present) {
-    HANDLE_CODE(ranueid.pack(bref));
+  if (ran_ue_id_present) {
+    HANDLE_CODE(ran_ue_id.pack(bref));
   }
   if (rrc_container_rrc_setup_complete_present) {
     HANDLE_CODE(rrc_container_rrc_setup_complete.pack(bref));
@@ -34241,10 +34241,10 @@ SRSASN_CODE init_ul_rrc_msg_transfer_ies_container::unpack(cbit_ref& bref)
       }
       case 111: {
         nof_mandatory_ies--;
-        nrcgi.id = id;
-        HANDLE_CODE(nrcgi.crit.unpack(bref));
+        nr_cgi.id = id;
+        HANDLE_CODE(nr_cgi.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(nrcgi.value.unpack(bref));
+        HANDLE_CODE(nr_cgi.value.unpack(bref));
         break;
       }
       case 95: {
@@ -34288,11 +34288,11 @@ SRSASN_CODE init_ul_rrc_msg_transfer_ies_container::unpack(cbit_ref& bref)
         break;
       }
       case 226: {
-        ranueid_present = true;
-        ranueid.id      = id;
-        HANDLE_CODE(ranueid.crit.unpack(bref));
+        ran_ue_id_present = true;
+        ran_ue_id.id      = id;
+        HANDLE_CODE(ran_ue_id.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(ranueid.value.unpack(bref));
+        HANDLE_CODE(ran_ue_id.value.unpack(bref));
         break;
       }
       case 241: {
@@ -34321,7 +34321,7 @@ void init_ul_rrc_msg_transfer_ies_container::to_json(json_writer& j) const
   j.write_fieldname("");
   gnb_du_ue_f1ap_id.to_json(j);
   j.write_fieldname("");
-  nrcgi.to_json(j);
+  nr_cgi.to_json(j);
   j.write_fieldname("");
   c_rnti.to_json(j);
   j.write_fieldname("");
@@ -34336,9 +34336,9 @@ void init_ul_rrc_msg_transfer_ies_container::to_json(json_writer& j) const
   }
   j.write_fieldname("");
   transaction_id.to_json(j);
-  if (ranueid_present) {
+  if (ran_ue_id_present) {
     j.write_fieldname("");
-    ranueid.to_json(j);
+    ran_ue_id.to_json(j);
   }
   if (rrc_container_rrc_setup_complete_present) {
     j.write_fieldname("");
@@ -35054,7 +35054,7 @@ rrc_delivery_report_ies_container::rrc_delivery_report_ies_container() :
   gnb_cu_ue_f1ap_id(40, crit_e::reject),
   gnb_du_ue_f1ap_id(41, crit_e::reject),
   rrc_delivery_status(185, crit_e::ignore),
-  srbid(64, crit_e::ignore)
+  srb_id(64, crit_e::ignore)
 {
 }
 SRSASN_CODE rrc_delivery_report_ies_container::pack(bit_ref& bref) const
@@ -35065,7 +35065,7 @@ SRSASN_CODE rrc_delivery_report_ies_container::pack(bit_ref& bref) const
   HANDLE_CODE(gnb_cu_ue_f1ap_id.pack(bref));
   HANDLE_CODE(gnb_du_ue_f1ap_id.pack(bref));
   HANDLE_CODE(rrc_delivery_status.pack(bref));
-  HANDLE_CODE(srbid.pack(bref));
+  HANDLE_CODE(srb_id.pack(bref));
 
   return SRSASN_SUCCESS;
 }
@@ -35106,10 +35106,10 @@ SRSASN_CODE rrc_delivery_report_ies_container::unpack(cbit_ref& bref)
       }
       case 64: {
         nof_mandatory_ies--;
-        srbid.id = id;
-        HANDLE_CODE(srbid.crit.unpack(bref));
+        srb_id.id = id;
+        HANDLE_CODE(srb_id.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(srbid.value.unpack(bref));
+        HANDLE_CODE(srb_id.value.unpack(bref));
         break;
       }
       default:
@@ -35134,7 +35134,7 @@ void rrc_delivery_report_ies_container::to_json(json_writer& j) const
   j.write_fieldname("");
   rrc_delivery_status.to_json(j);
   j.write_fieldname("");
-  srbid.to_json(j);
+  srb_id.to_json(j);
   j.end_obj();
 }
 
@@ -35306,7 +35306,7 @@ template struct asn1::protocol_ie_field_s<sys_info_delivery_cmd_ies_o>;
 
 sys_info_delivery_cmd_ies_container::sys_info_delivery_cmd_ies_container() :
   transaction_id(78, crit_e::reject),
-  nrcgi(111, crit_e::reject),
+  nr_cgi(111, crit_e::reject),
   sitype_list(116, crit_e::reject),
   confirmed_ue_id(156, crit_e::reject)
 {
@@ -35317,7 +35317,7 @@ SRSASN_CODE sys_info_delivery_cmd_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 0u, 65535u, true);
 
   HANDLE_CODE(transaction_id.pack(bref));
-  HANDLE_CODE(nrcgi.pack(bref));
+  HANDLE_CODE(nr_cgi.pack(bref));
   HANDLE_CODE(sitype_list.pack(bref));
   HANDLE_CODE(confirmed_ue_id.pack(bref));
 
@@ -35344,10 +35344,10 @@ SRSASN_CODE sys_info_delivery_cmd_ies_container::unpack(cbit_ref& bref)
       }
       case 111: {
         nof_mandatory_ies--;
-        nrcgi.id = id;
-        HANDLE_CODE(nrcgi.crit.unpack(bref));
+        nr_cgi.id = id;
+        HANDLE_CODE(nr_cgi.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(nrcgi.value.unpack(bref));
+        HANDLE_CODE(nr_cgi.value.unpack(bref));
         break;
       }
       case 116: {
@@ -35384,7 +35384,7 @@ void sys_info_delivery_cmd_ies_container::to_json(json_writer& j) const
   j.write_fieldname("");
   transaction_id.to_json(j);
   j.write_fieldname("");
-  nrcgi.to_json(j);
+  nr_cgi.to_json(j);
   j.write_fieldname("");
   sitype_list.to_json(j);
   j.write_fieldname("");
@@ -35757,7 +35757,7 @@ ue_context_mod_request_ies_container::ue_context_mod_request_ies_container() :
   gnb_du_ue_f1ap_id(41, crit_e::reject),
   sp_cell_id(63, crit_e::ignore),
   serv_cell_idx(107, crit_e::reject),
-  sp_cell_ul_cfgured(96, crit_e::ignore),
+  sp_cell_ul_cfg(96, crit_e::ignore),
   drx_cycle(38, crit_e::ignore),
   cu_to_du_rrc_info(9, crit_e::reject),
   tx_action_ind(79, crit_e::ignore),
@@ -35791,7 +35791,7 @@ SRSASN_CODE ue_context_mod_request_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 2;
   nof_ies += sp_cell_id_present ? 1 : 0;
   nof_ies += serv_cell_idx_present ? 1 : 0;
-  nof_ies += sp_cell_ul_cfgured_present ? 1 : 0;
+  nof_ies += sp_cell_ul_cfg_present ? 1 : 0;
   nof_ies += drx_cycle_present ? 1 : 0;
   nof_ies += cu_to_du_rrc_info_present ? 1 : 0;
   nof_ies += tx_action_ind_present ? 1 : 0;
@@ -35828,8 +35828,8 @@ SRSASN_CODE ue_context_mod_request_ies_container::pack(bit_ref& bref) const
   if (serv_cell_idx_present) {
     HANDLE_CODE(serv_cell_idx.pack(bref));
   }
-  if (sp_cell_ul_cfgured_present) {
-    HANDLE_CODE(sp_cell_ul_cfgured.pack(bref));
+  if (sp_cell_ul_cfg_present) {
+    HANDLE_CODE(sp_cell_ul_cfg.pack(bref));
   }
   if (drx_cycle_present) {
     HANDLE_CODE(drx_cycle.pack(bref));
@@ -35956,11 +35956,11 @@ SRSASN_CODE ue_context_mod_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       case 96: {
-        sp_cell_ul_cfgured_present = true;
-        sp_cell_ul_cfgured.id      = id;
-        HANDLE_CODE(sp_cell_ul_cfgured.crit.unpack(bref));
+        sp_cell_ul_cfg_present = true;
+        sp_cell_ul_cfg.id      = id;
+        HANDLE_CODE(sp_cell_ul_cfg.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(sp_cell_ul_cfgured.value.unpack(bref));
+        HANDLE_CODE(sp_cell_ul_cfg.value.unpack(bref));
         break;
       }
       case 38: {
@@ -36198,9 +36198,9 @@ void ue_context_mod_request_ies_container::to_json(json_writer& j) const
     j.write_fieldname("");
     serv_cell_idx.to_json(j);
   }
-  if (sp_cell_ul_cfgured_present) {
+  if (sp_cell_ul_cfg_present) {
     j.write_fieldname("");
-    sp_cell_ul_cfgured.to_json(j);
+    sp_cell_ul_cfg.to_json(j);
   }
   if (drx_cycle_present) {
     j.write_fieldname("");
@@ -36800,7 +36800,7 @@ ue_context_release_cmd_ies_container::ue_context_release_cmd_ies_container() :
   gnb_du_ue_f1ap_id(41, crit_e::reject),
   cause(0, crit_e::ignore),
   rrc_container(50, crit_e::ignore),
-  srbid(64, crit_e::ignore),
+  srb_id(64, crit_e::ignore),
   old_gnb_du_ue_f1ap_id(47, crit_e::ignore),
   execute_dupl(109, crit_e::ignore),
   rrc_delivery_status_request(184, crit_e::ignore)
@@ -36810,7 +36810,7 @@ SRSASN_CODE ue_context_release_cmd_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
   nof_ies += rrc_container_present ? 1 : 0;
-  nof_ies += srbid_present ? 1 : 0;
+  nof_ies += srb_id_present ? 1 : 0;
   nof_ies += old_gnb_du_ue_f1ap_id_present ? 1 : 0;
   nof_ies += execute_dupl_present ? 1 : 0;
   nof_ies += rrc_delivery_status_request_present ? 1 : 0;
@@ -36822,8 +36822,8 @@ SRSASN_CODE ue_context_release_cmd_ies_container::pack(bit_ref& bref) const
   if (rrc_container_present) {
     HANDLE_CODE(rrc_container.pack(bref));
   }
-  if (srbid_present) {
-    HANDLE_CODE(srbid.pack(bref));
+  if (srb_id_present) {
+    HANDLE_CODE(srb_id.pack(bref));
   }
   if (old_gnb_du_ue_f1ap_id_present) {
     HANDLE_CODE(old_gnb_du_ue_f1ap_id.pack(bref));
@@ -36881,11 +36881,11 @@ SRSASN_CODE ue_context_release_cmd_ies_container::unpack(cbit_ref& bref)
         break;
       }
       case 64: {
-        srbid_present = true;
-        srbid.id      = id;
-        HANDLE_CODE(srbid.crit.unpack(bref));
+        srb_id_present = true;
+        srb_id.id      = id;
+        HANDLE_CODE(srb_id.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(srbid.value.unpack(bref));
+        HANDLE_CODE(srb_id.value.unpack(bref));
         break;
       }
       case 47: {
@@ -36937,9 +36937,9 @@ void ue_context_release_cmd_ies_container::to_json(json_writer& j) const
     j.write_fieldname("");
     rrc_container.to_json(j);
   }
-  if (srbid_present) {
+  if (srb_id_present) {
     j.write_fieldname("");
-    srbid.to_json(j);
+    srb_id.to_json(j);
   }
   if (old_gnb_du_ue_f1ap_id_present) {
     j.write_fieldname("");
@@ -37237,7 +37237,7 @@ ue_context_setup_request_ies_container::ue_context_setup_request_ies_container()
   gnb_du_ue_f1ap_id(41, crit_e::ignore),
   sp_cell_id(63, crit_e::reject),
   serv_cell_idx(107, crit_e::reject),
-  sp_cell_ul_cfgured(96, crit_e::ignore),
+  sp_cell_ul_cfg(96, crit_e::ignore),
   cu_to_du_rrc_info(9, crit_e::reject),
   candidate_sp_cell_list(90, crit_e::ignore),
   drx_cycle(38, crit_e::ignore),
@@ -37255,14 +37255,14 @@ ue_context_setup_request_ies_container::ue_context_setup_request_ies_container()
   res_coordination_transfer_info(195, crit_e::ignore),
   serving_cell_mo(182, crit_e::ignore),
   new_gnb_cu_ue_f1ap_id(217, crit_e::reject),
-  ranueid(226, crit_e::ignore)
+  ran_ue_id(226, crit_e::ignore)
 {
 }
 SRSASN_CODE ue_context_setup_request_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 4;
   nof_ies += gnb_du_ue_f1ap_id_present ? 1 : 0;
-  nof_ies += sp_cell_ul_cfgured_present ? 1 : 0;
+  nof_ies += sp_cell_ul_cfg_present ? 1 : 0;
   nof_ies += candidate_sp_cell_list_present ? 1 : 0;
   nof_ies += drx_cycle_present ? 1 : 0;
   nof_ies += res_coordination_transfer_container_present ? 1 : 0;
@@ -37279,7 +37279,7 @@ SRSASN_CODE ue_context_setup_request_ies_container::pack(bit_ref& bref) const
   nof_ies += res_coordination_transfer_info_present ? 1 : 0;
   nof_ies += serving_cell_mo_present ? 1 : 0;
   nof_ies += new_gnb_cu_ue_f1ap_id_present ? 1 : 0;
-  nof_ies += ranueid_present ? 1 : 0;
+  nof_ies += ran_ue_id_present ? 1 : 0;
   pack_length(bref, nof_ies, 0u, 65535u, true);
 
   HANDLE_CODE(gnb_cu_ue_f1ap_id.pack(bref));
@@ -37288,8 +37288,8 @@ SRSASN_CODE ue_context_setup_request_ies_container::pack(bit_ref& bref) const
   }
   HANDLE_CODE(sp_cell_id.pack(bref));
   HANDLE_CODE(serv_cell_idx.pack(bref));
-  if (sp_cell_ul_cfgured_present) {
-    HANDLE_CODE(sp_cell_ul_cfgured.pack(bref));
+  if (sp_cell_ul_cfg_present) {
+    HANDLE_CODE(sp_cell_ul_cfg.pack(bref));
   }
   HANDLE_CODE(cu_to_du_rrc_info.pack(bref));
   if (candidate_sp_cell_list_present) {
@@ -37340,8 +37340,8 @@ SRSASN_CODE ue_context_setup_request_ies_container::pack(bit_ref& bref) const
   if (new_gnb_cu_ue_f1ap_id_present) {
     HANDLE_CODE(new_gnb_cu_ue_f1ap_id.pack(bref));
   }
-  if (ranueid_present) {
-    HANDLE_CODE(ranueid.pack(bref));
+  if (ran_ue_id_present) {
+    HANDLE_CODE(ran_ue_id.pack(bref));
   }
 
   return SRSASN_SUCCESS;
@@ -37390,11 +37390,11 @@ SRSASN_CODE ue_context_setup_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       case 96: {
-        sp_cell_ul_cfgured_present = true;
-        sp_cell_ul_cfgured.id      = id;
-        HANDLE_CODE(sp_cell_ul_cfgured.crit.unpack(bref));
+        sp_cell_ul_cfg_present = true;
+        sp_cell_ul_cfg.id      = id;
+        HANDLE_CODE(sp_cell_ul_cfg.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(sp_cell_ul_cfgured.value.unpack(bref));
+        HANDLE_CODE(sp_cell_ul_cfg.value.unpack(bref));
         break;
       }
       case 9: {
@@ -37534,11 +37534,11 @@ SRSASN_CODE ue_context_setup_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       case 226: {
-        ranueid_present = true;
-        ranueid.id      = id;
-        HANDLE_CODE(ranueid.crit.unpack(bref));
+        ran_ue_id_present = true;
+        ran_ue_id.id      = id;
+        HANDLE_CODE(ran_ue_id.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(ranueid.value.unpack(bref));
+        HANDLE_CODE(ran_ue_id.value.unpack(bref));
         break;
       }
       default:
@@ -37566,9 +37566,9 @@ void ue_context_setup_request_ies_container::to_json(json_writer& j) const
   sp_cell_id.to_json(j);
   j.write_fieldname("");
   serv_cell_idx.to_json(j);
-  if (sp_cell_ul_cfgured_present) {
+  if (sp_cell_ul_cfg_present) {
     j.write_fieldname("");
-    sp_cell_ul_cfgured.to_json(j);
+    sp_cell_ul_cfg.to_json(j);
   }
   j.write_fieldname("");
   cu_to_du_rrc_info.to_json(j);
@@ -37636,9 +37636,9 @@ void ue_context_setup_request_ies_container::to_json(json_writer& j) const
     j.write_fieldname("");
     new_gnb_cu_ue_f1ap_id.to_json(j);
   }
-  if (ranueid_present) {
+  if (ran_ue_id_present) {
     j.write_fieldname("");
-    ranueid.to_json(j);
+    ran_ue_id.to_json(j);
   }
   j.end_obj();
 }
@@ -37972,7 +37972,7 @@ template struct asn1::protocol_ie_field_s<ul_rrc_msg_transfer_ies_o>;
 ul_rrc_msg_transfer_ies_container::ul_rrc_msg_transfer_ies_container() :
   gnb_cu_ue_f1ap_id(40, crit_e::reject),
   gnb_du_ue_f1ap_id(41, crit_e::reject),
-  srbid(64, crit_e::reject),
+  srb_id(64, crit_e::reject),
   rrc_container(50, crit_e::reject),
   sel_plmn_id(224, crit_e::reject),
   new_gnb_du_ue_f1ap_id(219, crit_e::reject)
@@ -37987,7 +37987,7 @@ SRSASN_CODE ul_rrc_msg_transfer_ies_container::pack(bit_ref& bref) const
 
   HANDLE_CODE(gnb_cu_ue_f1ap_id.pack(bref));
   HANDLE_CODE(gnb_du_ue_f1ap_id.pack(bref));
-  HANDLE_CODE(srbid.pack(bref));
+  HANDLE_CODE(srb_id.pack(bref));
   HANDLE_CODE(rrc_container.pack(bref));
   if (sel_plmn_id_present) {
     HANDLE_CODE(sel_plmn_id.pack(bref));
@@ -38027,10 +38027,10 @@ SRSASN_CODE ul_rrc_msg_transfer_ies_container::unpack(cbit_ref& bref)
       }
       case 64: {
         nof_mandatory_ies--;
-        srbid.id = id;
-        HANDLE_CODE(srbid.crit.unpack(bref));
+        srb_id.id = id;
+        HANDLE_CODE(srb_id.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(srbid.value.unpack(bref));
+        HANDLE_CODE(srb_id.value.unpack(bref));
         break;
       }
       case 50: {
@@ -38077,7 +38077,7 @@ void ul_rrc_msg_transfer_ies_container::to_json(json_writer& j) const
   j.write_fieldname("");
   gnb_du_ue_f1ap_id.to_json(j);
   j.write_fieldname("");
-  srbid.to_json(j);
+  srb_id.to_json(j);
   j.write_fieldname("");
   rrc_container.to_json(j);
   if (sel_plmn_id_present) {

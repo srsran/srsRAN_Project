@@ -158,7 +158,7 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
     }
   }
 
-  srb_id_t    srb_id     = int_to_srb_id(msg->srbid->value);
+  srb_id_t    srb_id     = int_to_srb_id(msg->srb_id->value);
   f1c_bearer* srb_bearer = ue->bearers.find_srb(srb_id);
   if (srb_bearer == nullptr) {
     logger.warning("Discarding DL RRC Message Transfer. Cause: SRB Id={} not found", srb_id);

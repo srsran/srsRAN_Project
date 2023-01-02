@@ -16,10 +16,10 @@
 using namespace srsgnb;
 using namespace srs_du;
 
-void ue_bearer_manager::add_srb0_f1c_bearer(f1c_rx_sdu_notifier&       f1c_rx_sdu_notif,
-                                            const asn1::f1ap::nrcgi_s& pcell_cgi,
-                                            const byte_buffer&         du_cu_rrc_container,
-                                            f1ap_event_manager&        ev_mng)
+void ue_bearer_manager::add_srb0_f1c_bearer(f1c_rx_sdu_notifier&        f1c_rx_sdu_notif,
+                                            const asn1::f1ap::nr_cgi_s& pcell_cgi,
+                                            const byte_buffer&          du_cu_rrc_container,
+                                            f1ap_event_manager&         ev_mng)
 {
   f1c_bearers.emplace(0,
                       std::make_unique<f1c_srb0_du_bearer>(

@@ -80,7 +80,7 @@ namespace f1ap {
 #define ASN1_F1AP_MAX_CELLIN_ENB 256
 #define ASN1_F1AP_MAXNOOF_EXTENDED_BPLMNS 6
 #define ASN1_F1AP_MAXNOOF_UE_IDS 65536
-#define ASN1_F1AP_MAXNOOF_BPLMNS_NR_1 11
+#define ASN1_F1AP_MAXNOOF_BPLMNS_NR_MINUS1 11
 #define ASN1_F1AP_MAXNOOF_UAC_PLMNS 12
 #define ASN1_F1AP_MAXNOOF_UAC_PER_PLMN 64
 #define ASN1_F1AP_MAXNOOF_ADD_SIBS 63
@@ -177,7 +177,7 @@ namespace f1ap {
 #define ASN1_F1AP_ID_POTENTIAL_SP_CELL_ITEM 93
 #define ASN1_F1AP_ID_FULL_CFG 94
 #define ASN1_F1AP_ID_C_RNTI 95
-#define ASN1_F1AP_ID_SP_CELL_UL_CFGURED 96
+#define ASN1_F1AP_ID_SP_CELL_UL_CFG 96
 #define ASN1_F1AP_ID_INACTIVITY_MONITORING_REQUEST 97
 #define ASN1_F1AP_ID_INACTIVITY_MONITORING_RESP 98
 #define ASN1_F1AP_ID_DRB_ACTIVITY_ITEM 99
@@ -250,7 +250,7 @@ namespace f1ap {
 #define ASN1_F1AP_ID_CELL_GROUP_CFG 173
 #define ASN1_F1AP_ID_RLC_FAIL_IND 174
 #define ASN1_F1AP_ID_UL_TX_DIRECT_CURRENT_LIST_INFO 175
-#define ASN1_F1AP_ID_DC_BASED_DUPL_CFGURED 176
+#define ASN1_F1AP_ID_DC_BASED_DUPL_CFG 176
 #define ASN1_F1AP_ID_DC_BASED_DUPL_ACTIVATION 177
 #define ASN1_F1AP_ID_SUL_ACCESS_IND 178
 #define ASN1_F1AP_ID_AVAILABLE_PLMN_LIST 179
@@ -292,7 +292,7 @@ namespace f1ap {
 #define ASN1_F1AP_ID_NEEDFOR_GAP 215
 #define ASN1_F1AP_ID_PAGING_ORIGIN 216
 #define ASN1_F1AP_ID_NEW_GNB_CU_UE_F1AP_ID 217
-#define ASN1_F1AP_ID_REDIRECTED_RRCMSG 218
+#define ASN1_F1AP_ID_REDIRECTED_RRC_MSG 218
 #define ASN1_F1AP_ID_NEW_GNB_DU_UE_F1AP_ID 219
 #define ASN1_F1AP_ID_NOTIF_INFO 220
 #define ASN1_F1AP_ID_PLMN_ASSIST_INFO_FOR_NET_SHAR 221
@@ -387,7 +387,7 @@ using associated_scell_item_ext_ies_o = protocol_ext_empty_o;
 using nr_cgi_ext_ies_container = protocol_ext_container_empty_l;
 
 // NRCGI ::= SEQUENCE
-struct nrcgi_s {
+struct nr_cgi_s {
   bool                             ext             = false;
   bool                             ie_exts_present = false;
   fixed_octstring<3, true>         plmn_id;
@@ -406,7 +406,7 @@ using associated_scell_item_ext_ies_container = protocol_ext_container_empty_l;
 // Associated-SCell-Item ::= SEQUENCE
 struct associated_scell_item_s {
   bool                                    ie_exts_present = false;
-  nrcgi_s                                 scell_id;
+  nr_cgi_s                                scell_id;
   associated_scell_item_ext_ies_container ie_exts;
 
   // sequence methods
@@ -527,7 +527,7 @@ using broadcast_to_be_cancelled_item_ext_ies_container = protocol_ext_container_
 struct broadcast_to_be_cancelled_item_s {
   bool                                             ext             = false;
   bool                                             ie_exts_present = false;
-  nrcgi_s                                          nrcgi;
+  nr_cgi_s                                         nr_cgi;
   broadcast_to_be_cancelled_item_ext_ies_container ie_exts;
   // ...
 
@@ -835,7 +835,7 @@ using candidate_sp_cell_item_ext_ies_container = protocol_ext_container_empty_l;
 struct candidate_sp_cell_item_s {
   bool                                     ext             = false;
   bool                                     ie_exts_present = false;
-  nrcgi_s                                  candidate_sp_cell_id;
+  nr_cgi_s                                 candidate_sp_cell_id;
   candidate_sp_cell_item_ext_ies_container ie_exts;
   // ...
 
@@ -1077,7 +1077,7 @@ using cells_broadcast_cancelled_item_ext_ies_container = protocol_ext_container_
 struct cells_broadcast_cancelled_item_s {
   bool                                             ext             = false;
   bool                                             ie_exts_present = false;
-  nrcgi_s                                          nrcgi;
+  nr_cgi_s                                         nr_cgi;
   uint32_t                                         nof_broadcasts = 0;
   cells_broadcast_cancelled_item_ext_ies_container ie_exts;
   // ...
@@ -1134,7 +1134,7 @@ using cells_broadcast_completed_item_ext_ies_container = protocol_ext_container_
 struct cells_broadcast_completed_item_s {
   bool                                             ext             = false;
   bool                                             ie_exts_present = false;
-  nrcgi_s                                          nrcgi;
+  nr_cgi_s                                         nr_cgi;
   cells_broadcast_completed_item_ext_ies_container ie_exts;
   // ...
 
@@ -1190,7 +1190,7 @@ using cells_failed_to_be_activ_list_item_ext_ies_container = protocol_ext_contai
 struct cells_failed_to_be_activ_list_item_s {
   bool                                                 ext             = false;
   bool                                                 ie_exts_present = false;
-  nrcgi_s                                              nrcgi;
+  nr_cgi_s                                             nr_cgi;
   cause_c                                              cause;
   cells_failed_to_be_activ_list_item_ext_ies_container ie_exts;
   // ...
@@ -1284,7 +1284,7 @@ using cells_status_item_ext_ies_container = protocol_ext_container_empty_l;
 struct cells_status_item_s {
   bool                                ext             = false;
   bool                                ie_exts_present = false;
-  nrcgi_s                             nrcgi;
+  nr_cgi_s                            nr_cgi;
   service_status_s                    service_status;
   cells_status_item_ext_ies_container ie_exts;
   // ...
@@ -1339,7 +1339,7 @@ using cells_to_be_broadcast_item_ext_ies_container = protocol_ext_container_empt
 struct cells_to_be_broadcast_item_s {
   bool                                         ext             = false;
   bool                                         ie_exts_present = false;
-  nrcgi_s                                      nrcgi;
+  nr_cgi_s                                     nr_cgi;
   cells_to_be_broadcast_item_ext_ies_container ie_exts;
   // ...
 
@@ -1459,9 +1459,9 @@ struct gnb_cu_sys_info_ext_ies_o {
 
 // SibtypetobeupdatedListItem ::= SEQUENCE
 struct sibtypetobeupd_list_item_s {
-  bool                                                         ext     = false;
-  uint8_t                                                      sibtype = 2;
-  unbounded_octstring<true>                                    sibmsg;
+  bool                                                         ext      = false;
+  uint8_t                                                      sib_type = 2;
+  unbounded_octstring<true>                                    sib_msg;
   uint8_t                                                      value_tag = 0;
   protocol_ext_container_l<sibtypetobeupd_list_item_ext_ies_o> ie_exts;
   // ...
@@ -1556,7 +1556,7 @@ struct cells_to_be_activ_list_item_s {
   bool                                          ext             = false;
   bool                                          nr_pci_present  = false;
   bool                                          ie_exts_present = false;
-  nrcgi_s                                       nrcgi;
+  nr_cgi_s                                      nr_cgi;
   uint16_t                                      nr_pci = 0;
   cells_to_be_activ_list_item_ext_ies_container ie_exts;
   // ...
@@ -1619,7 +1619,7 @@ using cells_to_be_barred_item_ext_ies_container = protocol_ext_container_empty_l
 // Cells-to-be-Barred-Item ::= SEQUENCE
 struct cells_to_be_barred_item_s {
   bool                                      ie_exts_present = false;
-  nrcgi_s                                   nrcgi;
+  nr_cgi_s                                  nr_cgi;
   cell_barred_e                             cell_barred;
   cells_to_be_barred_item_ext_ies_container ie_exts;
 
@@ -1673,7 +1673,7 @@ using cells_to_be_deactiv_list_item_ext_ies_container = protocol_ext_container_e
 struct cells_to_be_deactiv_list_item_s {
   bool                                            ext             = false;
   bool                                            ie_exts_present = false;
-  nrcgi_s                                         nrcgi;
+  nr_cgi_s                                        nr_cgi;
   cells_to_be_deactiv_list_item_ext_ies_container ie_exts;
   // ...
 
@@ -1883,13 +1883,13 @@ struct dl_rrc_msg_transfer_ies_o {
         gnb_cu_ue_f1ap_id,
         gnb_du_ue_f1ap_id,
         old_gnb_du_ue_f1ap_id,
-        srbid,
+        srb_id,
         execute_dupl,
         rrc_container,
         rat_freq_prio_info,
         rrc_delivery_status_request,
         ue_context_not_retrievable,
-        redirected_rrcmsg,
+        redirected_rrc_msg,
         plmn_assist_info_for_net_shar,
         new_gnb_cu_ue_f1ap_id,
         nulltype
@@ -1913,25 +1913,25 @@ struct dl_rrc_msg_transfer_ies_o {
     uint64_t&                            gnb_cu_ue_f1ap_id();
     uint64_t&                            gnb_du_ue_f1ap_id();
     uint64_t&                            old_gnb_du_ue_f1ap_id();
-    uint8_t&                             srbid();
+    uint8_t&                             srb_id();
     execute_dupl_e&                      execute_dupl();
     unbounded_octstring<true>&           rrc_container();
     rat_freq_prio_info_c&                rat_freq_prio_info();
     rrc_delivery_status_request_e&       rrc_delivery_status_request();
     ue_context_not_retrievable_e&        ue_context_not_retrievable();
-    unbounded_octstring<true>&           redirected_rrcmsg();
+    unbounded_octstring<true>&           redirected_rrc_msg();
     fixed_octstring<3, true>&            plmn_assist_info_for_net_shar();
     uint64_t&                            new_gnb_cu_ue_f1ap_id();
     const uint64_t&                      gnb_cu_ue_f1ap_id() const;
     const uint64_t&                      gnb_du_ue_f1ap_id() const;
     const uint64_t&                      old_gnb_du_ue_f1ap_id() const;
-    const uint8_t&                       srbid() const;
+    const uint8_t&                       srb_id() const;
     const execute_dupl_e&                execute_dupl() const;
     const unbounded_octstring<true>&     rrc_container() const;
     const rat_freq_prio_info_c&          rat_freq_prio_info() const;
     const rrc_delivery_status_request_e& rrc_delivery_status_request() const;
     const ue_context_not_retrievable_e&  ue_context_not_retrievable() const;
-    const unbounded_octstring<true>&     redirected_rrcmsg() const;
+    const unbounded_octstring<true>&     redirected_rrc_msg() const;
     const fixed_octstring<3, true>&      plmn_assist_info_for_net_shar() const;
     const uint64_t&                      new_gnb_cu_ue_f1ap_id() const;
 
@@ -1960,19 +1960,19 @@ struct dl_rrc_msg_transfer_ies_container {
   bool                                                      rat_freq_prio_info_present            = false;
   bool                                                      rrc_delivery_status_request_present   = false;
   bool                                                      ue_context_not_retrievable_present    = false;
-  bool                                                      redirected_rrcmsg_present             = false;
+  bool                                                      redirected_rrc_msg_present            = false;
   bool                                                      plmn_assist_info_for_net_shar_present = false;
   bool                                                      new_gnb_cu_ue_f1ap_id_present         = false;
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> old_gnb_du_ue_f1ap_id;
-  ie_field_s<integer<uint8_t, 0, 3, true, true>>            srbid;
+  ie_field_s<integer<uint8_t, 0, 3, true, true>>            srb_id;
   ie_field_s<execute_dupl_e>                                execute_dupl;
   ie_field_s<unbounded_octstring<true>>                     rrc_container;
   ie_field_s<rat_freq_prio_info_c>                          rat_freq_prio_info;
   ie_field_s<rrc_delivery_status_request_e>                 rrc_delivery_status_request;
   ie_field_s<ue_context_not_retrievable_e>                  ue_context_not_retrievable;
-  ie_field_s<unbounded_octstring<true>>                     redirected_rrcmsg;
+  ie_field_s<unbounded_octstring<true>>                     redirected_rrc_msg;
   ie_field_s<fixed_octstring<3, true>>                      plmn_assist_info_for_net_shar;
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> new_gnb_cu_ue_f1ap_id;
 
@@ -3231,12 +3231,12 @@ struct bearer_type_change_opts {
 typedef enumerated<bearer_type_change_opts, true> bearer_type_change_e;
 
 // DCBasedDuplicationConfigured ::= ENUMERATED
-struct dc_based_dupl_cfgured_opts {
+struct dc_based_dupl_cfg_opts {
   enum options { true_value, /*...*/ false_value, nulltype } value;
 
   const char* to_string() const;
 };
-typedef enumerated<dc_based_dupl_cfgured_opts, true, 1> dc_based_dupl_cfgured_e;
+typedef enumerated<dc_based_dupl_cfg_opts, true, 1> dc_based_dupl_cfg_e;
 
 // DuplicationActivation ::= ENUMERATED
 struct dupl_activation_opts {
@@ -3343,7 +3343,7 @@ struct drbs_to_be_modified_item_ext_ies_o {
         bearer_type_change,
         rlc_mode,
         dupl_activation,
-        dc_based_dupl_cfgured,
+        dc_based_dupl_cfg,
         dc_based_dupl_activation,
         nulltype
       } value;
@@ -3363,20 +3363,20 @@ struct drbs_to_be_modified_item_ext_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    pdcp_sn_len_e&                 dl_pdcp_sn_len();
-    pdcp_sn_len_e&                 ul_pdcp_sn_len();
-    bearer_type_change_e&          bearer_type_change();
-    rlc_mode_e&                    rlc_mode();
-    dupl_activation_e&             dupl_activation();
-    dc_based_dupl_cfgured_e&       dc_based_dupl_cfgured();
-    dupl_activation_e&             dc_based_dupl_activation();
-    const pdcp_sn_len_e&           dl_pdcp_sn_len() const;
-    const pdcp_sn_len_e&           ul_pdcp_sn_len() const;
-    const bearer_type_change_e&    bearer_type_change() const;
-    const rlc_mode_e&              rlc_mode() const;
-    const dupl_activation_e&       dupl_activation() const;
-    const dc_based_dupl_cfgured_e& dc_based_dupl_cfgured() const;
-    const dupl_activation_e&       dc_based_dupl_activation() const;
+    pdcp_sn_len_e&              dl_pdcp_sn_len();
+    pdcp_sn_len_e&              ul_pdcp_sn_len();
+    bearer_type_change_e&       bearer_type_change();
+    rlc_mode_e&                 rlc_mode();
+    dupl_activation_e&          dupl_activation();
+    dc_based_dupl_cfg_e&        dc_based_dupl_cfg();
+    dupl_activation_e&          dc_based_dupl_activation();
+    const pdcp_sn_len_e&        dl_pdcp_sn_len() const;
+    const pdcp_sn_len_e&        ul_pdcp_sn_len() const;
+    const bearer_type_change_e& bearer_type_change() const;
+    const rlc_mode_e&           rlc_mode() const;
+    const dupl_activation_e&    dupl_activation() const;
+    const dc_based_dupl_cfg_e&  dc_based_dupl_cfg() const;
+    const dupl_activation_e&    dc_based_dupl_activation() const;
 
   private:
     types               type_;
@@ -3464,20 +3464,20 @@ struct drbs_to_be_modified_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                dl_pdcp_sn_len_present           = false;
-  bool                                ul_pdcp_sn_len_present           = false;
-  bool                                bearer_type_change_present       = false;
-  bool                                rlc_mode_present                 = false;
-  bool                                dupl_activation_present          = false;
-  bool                                dc_based_dupl_cfgured_present    = false;
-  bool                                dc_based_dupl_activation_present = false;
-  ie_field_s<pdcp_sn_len_e>           dl_pdcp_sn_len;
-  ie_field_s<pdcp_sn_len_e>           ul_pdcp_sn_len;
-  ie_field_s<bearer_type_change_e>    bearer_type_change;
-  ie_field_s<rlc_mode_e>              rlc_mode;
-  ie_field_s<dupl_activation_e>       dupl_activation;
-  ie_field_s<dc_based_dupl_cfgured_e> dc_based_dupl_cfgured;
-  ie_field_s<dupl_activation_e>       dc_based_dupl_activation;
+  bool                             dl_pdcp_sn_len_present           = false;
+  bool                             ul_pdcp_sn_len_present           = false;
+  bool                             bearer_type_change_present       = false;
+  bool                             rlc_mode_present                 = false;
+  bool                             dupl_activation_present          = false;
+  bool                             dc_based_dupl_cfg_present        = false;
+  bool                             dc_based_dupl_activation_present = false;
+  ie_field_s<pdcp_sn_len_e>        dl_pdcp_sn_len;
+  ie_field_s<pdcp_sn_len_e>        ul_pdcp_sn_len;
+  ie_field_s<bearer_type_change_e> bearer_type_change;
+  ie_field_s<rlc_mode_e>           rlc_mode;
+  ie_field_s<dupl_activation_e>    dupl_activation;
+  ie_field_s<dc_based_dupl_cfg_e>  dc_based_dupl_cfg;
+  ie_field_s<dupl_activation_e>    dc_based_dupl_activation;
 
   // sequence methods
   drbs_to_be_modified_item_ext_ies_container();
@@ -3599,7 +3599,7 @@ struct drbs_to_be_setup_item_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { dc_based_dupl_cfgured, dc_based_dupl_activation, dl_pdcp_sn_len, ul_pdcp_sn_len, nulltype } value;
+      enum options { dc_based_dupl_cfg, dc_based_dupl_activation, dl_pdcp_sn_len, ul_pdcp_sn_len, nulltype } value;
 
       const char* to_string() const;
     };
@@ -3616,14 +3616,14 @@ struct drbs_to_be_setup_item_ext_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    dc_based_dupl_cfgured_e&       dc_based_dupl_cfgured();
-    dupl_activation_e&             dc_based_dupl_activation();
-    pdcp_sn_len_e&                 dl_pdcp_sn_len();
-    pdcp_sn_len_e&                 ul_pdcp_sn_len();
-    const dc_based_dupl_cfgured_e& dc_based_dupl_cfgured() const;
-    const dupl_activation_e&       dc_based_dupl_activation() const;
-    const pdcp_sn_len_e&           dl_pdcp_sn_len() const;
-    const pdcp_sn_len_e&           ul_pdcp_sn_len() const;
+    dc_based_dupl_cfg_e&       dc_based_dupl_cfg();
+    dupl_activation_e&         dc_based_dupl_activation();
+    pdcp_sn_len_e&             dl_pdcp_sn_len();
+    pdcp_sn_len_e&             ul_pdcp_sn_len();
+    const dc_based_dupl_cfg_e& dc_based_dupl_cfg() const;
+    const dupl_activation_e&   dc_based_dupl_activation() const;
+    const pdcp_sn_len_e&       dl_pdcp_sn_len() const;
+    const pdcp_sn_len_e&       ul_pdcp_sn_len() const;
 
   private:
     types               type_;
@@ -3645,13 +3645,13 @@ struct drbs_to_be_setup_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                dc_based_dupl_cfgured_present    = false;
-  bool                                dc_based_dupl_activation_present = false;
-  bool                                ul_pdcp_sn_len_present           = false;
-  ie_field_s<dc_based_dupl_cfgured_e> dc_based_dupl_cfgured;
-  ie_field_s<dupl_activation_e>       dc_based_dupl_activation;
-  ie_field_s<pdcp_sn_len_e>           dl_pdcp_sn_len;
-  ie_field_s<pdcp_sn_len_e>           ul_pdcp_sn_len;
+  bool                            dc_based_dupl_cfg_present        = false;
+  bool                            dc_based_dupl_activation_present = false;
+  bool                            ul_pdcp_sn_len_present           = false;
+  ie_field_s<dc_based_dupl_cfg_e> dc_based_dupl_cfg;
+  ie_field_s<dupl_activation_e>   dc_based_dupl_activation;
+  ie_field_s<pdcp_sn_len_e>       dl_pdcp_sn_len;
+  ie_field_s<pdcp_sn_len_e>       ul_pdcp_sn_len;
 
   // sequence methods
   drbs_to_be_setup_item_ext_ies_container();
@@ -3721,7 +3721,7 @@ struct drbs_to_be_setup_mod_item_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { dc_based_dupl_cfgured, dc_based_dupl_activation, dl_pdcp_sn_len, ul_pdcp_sn_len, nulltype } value;
+      enum options { dc_based_dupl_cfg, dc_based_dupl_activation, dl_pdcp_sn_len, ul_pdcp_sn_len, nulltype } value;
 
       const char* to_string() const;
     };
@@ -3738,14 +3738,14 @@ struct drbs_to_be_setup_mod_item_ext_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    dc_based_dupl_cfgured_e&       dc_based_dupl_cfgured();
-    dupl_activation_e&             dc_based_dupl_activation();
-    pdcp_sn_len_e&                 dl_pdcp_sn_len();
-    pdcp_sn_len_e&                 ul_pdcp_sn_len();
-    const dc_based_dupl_cfgured_e& dc_based_dupl_cfgured() const;
-    const dupl_activation_e&       dc_based_dupl_activation() const;
-    const pdcp_sn_len_e&           dl_pdcp_sn_len() const;
-    const pdcp_sn_len_e&           ul_pdcp_sn_len() const;
+    dc_based_dupl_cfg_e&       dc_based_dupl_cfg();
+    dupl_activation_e&         dc_based_dupl_activation();
+    pdcp_sn_len_e&             dl_pdcp_sn_len();
+    pdcp_sn_len_e&             ul_pdcp_sn_len();
+    const dc_based_dupl_cfg_e& dc_based_dupl_cfg() const;
+    const dupl_activation_e&   dc_based_dupl_activation() const;
+    const pdcp_sn_len_e&       dl_pdcp_sn_len() const;
+    const pdcp_sn_len_e&       ul_pdcp_sn_len() const;
 
   private:
     types               type_;
@@ -3767,14 +3767,14 @@ struct drbs_to_be_setup_mod_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                dc_based_dupl_cfgured_present    = false;
-  bool                                dc_based_dupl_activation_present = false;
-  bool                                dl_pdcp_sn_len_present           = false;
-  bool                                ul_pdcp_sn_len_present           = false;
-  ie_field_s<dc_based_dupl_cfgured_e> dc_based_dupl_cfgured;
-  ie_field_s<dupl_activation_e>       dc_based_dupl_activation;
-  ie_field_s<pdcp_sn_len_e>           dl_pdcp_sn_len;
-  ie_field_s<pdcp_sn_len_e>           ul_pdcp_sn_len;
+  bool                            dc_based_dupl_cfg_present        = false;
+  bool                            dc_based_dupl_activation_present = false;
+  bool                            dl_pdcp_sn_len_present           = false;
+  bool                            ul_pdcp_sn_len_present           = false;
+  ie_field_s<dc_based_dupl_cfg_e> dc_based_dupl_cfg;
+  ie_field_s<dupl_activation_e>   dc_based_dupl_activation;
+  ie_field_s<pdcp_sn_len_e>       dl_pdcp_sn_len;
+  ie_field_s<pdcp_sn_len_e>       ul_pdcp_sn_len;
 
   // sequence methods
   drbs_to_be_setup_mod_item_ext_ies_container();
@@ -4072,7 +4072,7 @@ struct ded_si_delivery_needed_ue_item_s {
   bool                                             ext               = false;
   bool                                             ie_exts_present   = false;
   uint64_t                                         gnb_cu_ue_f1ap_id = 0;
-  nrcgi_s                                          nrcgi;
+  nr_cgi_s                                         nr_cgi;
   ded_si_delivery_needed_ue_item_ext_ies_container ie_exts;
   // ...
 
@@ -4567,7 +4567,7 @@ struct extended_served_plmns_item_s {
 using extended_served_plmns_list_l = dyn_array<extended_served_plmns_item_s>;
 
 // NRNRB ::= ENUMERATED
-struct nrnrb_opts {
+struct nr_nrb_opts {
   enum options {
     nrb11,
     nrb18,
@@ -4606,17 +4606,17 @@ struct nrnrb_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<nrnrb_opts, true> nrnrb_e;
+typedef enumerated<nr_nrb_opts, true> nr_nrb_e;
 
 // NRSCS ::= ENUMERATED
-struct nrscs_opts {
+struct nr_scs_opts {
   enum options { scs15, scs30, scs60, scs120, /*...*/ nulltype } value;
   typedef uint8_t number_type;
 
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<nrscs_opts, true> nrscs_e;
+typedef enumerated<nr_scs_opts, true> nr_scs_e;
 
 // SupportedSULFreqBandItem-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using supported_sul_freq_band_item_ext_ies_o = protocol_ext_empty_o;
@@ -4652,8 +4652,8 @@ using tx_bw_ext_ies_container = protocol_ext_container_empty_l;
 struct tx_bw_s {
   bool                    ext             = false;
   bool                    ie_exts_present = false;
-  nrscs_e                 nrscs;
-  nrnrb_e                 nr_nrb;
+  nr_scs_e                nr_scs;
+  nr_nrb_e                nr_nrb;
   tx_bw_ext_ies_container ie_exts;
   // ...
 
@@ -4862,7 +4862,7 @@ struct tdd_info_s {
 // UACCategoryType ::= CHOICE
 struct uac_category_type_c {
   struct types_opts {
-    enum options { uacstandardized, uac_operator_defined, choice_ext, nulltype } value;
+    enum options { uac_standardized, uac_operator_defined, choice_ext, nulltype } value;
 
     const char* to_string() const;
   };
@@ -4879,9 +4879,9 @@ struct uac_category_type_c {
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
   // getters
-  uac_action_e& uacstandardized()
+  uac_action_e& uac_standardized()
   {
-    assert_choice_type(types::uacstandardized, type_, "UACCategoryType");
+    assert_choice_type(types::uac_standardized, type_, "UACCategoryType");
     return c.get<uac_action_e>();
   }
   uac_operator_defined_s& uac_operator_defined()
@@ -4894,9 +4894,9 @@ struct uac_category_type_c {
     assert_choice_type(types::choice_ext, type_, "UACCategoryType");
     return c.get<protocol_ie_single_container_s<uac_category_type_ext_ies_o>>();
   }
-  const uac_action_e& uacstandardized() const
+  const uac_action_e& uac_standardized() const
   {
-    assert_choice_type(types::uacstandardized, type_, "UACCategoryType");
+    assert_choice_type(types::uac_standardized, type_, "UACCategoryType");
     return c.get<uac_action_e>();
   }
   const uac_operator_defined_s& uac_operator_defined() const
@@ -4909,7 +4909,7 @@ struct uac_category_type_c {
     assert_choice_type(types::choice_ext, type_, "UACCategoryType");
     return c.get<protocol_ie_single_container_s<uac_category_type_ext_ies_o>>();
   }
-  uac_action_e&                                                set_uacstandardized();
+  uac_action_e&                                                set_uac_standardized();
   uac_operator_defined_s&                                      set_uac_operator_defined();
   protocol_ie_single_container_s<uac_category_type_ext_ies_o>& set_choice_ext();
 
@@ -5059,14 +5059,14 @@ struct uac_type_item_s {
 using ue_associated_lc_f1_conn_item_ext_ies_o = protocol_ext_empty_o;
 
 // CellULConfigured ::= ENUMERATED
-struct cell_ul_cfgured_opts {
+struct cell_ul_cfg_opts {
   enum options { none, ul, sul, ul_and_sul, /*...*/ nulltype } value;
   typedef uint8_t number_type;
 
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<cell_ul_cfgured_opts, true> cell_ul_cfgured_e;
+typedef enumerated<cell_ul_cfg_opts, true> cell_ul_cfg_e;
 
 // DuplicationIndication ::= ENUMERATED
 struct dupl_ind_opts {
@@ -5298,14 +5298,14 @@ struct served_cell_info_ext_ies_container {
 
 // Served-Cell-Information ::= SEQUENCE
 struct served_cell_info_s {
-  bool                               ext                     = false;
-  bool                               five_gs_tac_present     = false;
-  bool                               cfgured_eps_tac_present = false;
-  bool                               ie_exts_present         = false;
-  nrcgi_s                            nrcgi;
+  bool                               ext                 = false;
+  bool                               five_gs_tac_present = false;
+  bool                               cfg_eps_tac_present = false;
+  bool                               ie_exts_present     = false;
+  nr_cgi_s                           nr_cgi;
   uint16_t                           nr_pci = 0;
   fixed_octstring<3, true>           five_gs_tac;
-  fixed_octstring<2, true>           cfgured_eps_tac;
+  fixed_octstring<2, true>           cfg_eps_tac;
   served_plmns_list_l                served_plmns;
   nr_mode_info_c                     nr_mode_info;
   unbounded_octstring<true>          meas_timing_cfg;
@@ -5471,7 +5471,7 @@ using nr_cgi_list_for_restart_item_ext_ies_container = protocol_ext_container_em
 struct nr_cgi_list_for_restart_item_s {
   bool                                           ext             = false;
   bool                                           ie_exts_present = false;
-  nrcgi_s                                        nrcgi;
+  nr_cgi_s                                       nr_cgi;
   nr_cgi_list_for_restart_item_ext_ies_container ie_exts;
   // ...
 
@@ -5504,7 +5504,7 @@ using pws_failed_nr_cgi_item_ext_ies_container = protocol_ext_container_empty_l;
 struct pws_failed_nr_cgi_item_s {
   bool                                     ext             = false;
   bool                                     ie_exts_present = false;
-  nrcgi_s                                  nrcgi;
+  nr_cgi_s                                 nr_cgi;
   uint32_t                                 nof_broadcasts = 0;
   pws_failed_nr_cgi_item_ext_ies_container ie_exts;
   // ...
@@ -5520,7 +5520,7 @@ using paging_cell_item_ext_ies_container = protocol_ext_container_empty_l;
 // PagingCell-Item ::= SEQUENCE
 struct paging_cell_item_s {
   bool                               ie_exts_present = false;
-  nrcgi_s                            nrcgi;
+  nr_cgi_s                           nr_cgi;
   paging_cell_item_ext_ies_container ie_exts;
 
   // sequence methods
@@ -5535,7 +5535,7 @@ using potential_sp_cell_item_ext_ies_container = protocol_ext_container_empty_l;
 struct potential_sp_cell_item_s {
   bool                                     ext             = false;
   bool                                     ie_exts_present = false;
-  nrcgi_s                                  potential_sp_cell_id;
+  nr_cgi_s                                 potential_sp_cell_id;
   potential_sp_cell_item_ext_ies_container ie_exts;
   // ...
 
@@ -5637,7 +5637,7 @@ struct scell_failedto_setup_item_s {
   bool                                        ext             = false;
   bool                                        cause_present   = false;
   bool                                        ie_exts_present = false;
-  nrcgi_s                                     scell_id;
+  nr_cgi_s                                    scell_id;
   cause_c                                     cause;
   scell_failedto_setup_item_ext_ies_container ie_exts;
   // ...
@@ -5655,7 +5655,7 @@ struct scell_failedto_setup_mod_item_s {
   bool                                            ext             = false;
   bool                                            cause_present   = false;
   bool                                            ie_exts_present = false;
-  nrcgi_s                                         scell_id;
+  nr_cgi_s                                        scell_id;
   cause_c                                         cause;
   scell_failedto_setup_mod_item_ext_ies_container ie_exts;
   // ...
@@ -5672,7 +5672,7 @@ using scell_to_be_remd_item_ext_ies_container = protocol_ext_container_empty_l;
 struct scell_to_be_remd_item_s {
   bool                                    ext             = false;
   bool                                    ie_exts_present = false;
-  nrcgi_s                                 scell_id;
+  nr_cgi_s                                scell_id;
   scell_to_be_remd_item_ext_ies_container ie_exts;
   // ...
 
@@ -5684,11 +5684,11 @@ struct scell_to_be_remd_item_s {
 
 // SCell-ToBeSetup-Item ::= SEQUENCE
 struct scell_to_be_setup_item_s {
-  bool                                                       ext                      = false;
-  bool                                                       scell_ul_cfgured_present = false;
-  nrcgi_s                                                    scell_id;
+  bool                                                       ext                  = false;
+  bool                                                       scell_ul_cfg_present = false;
+  nr_cgi_s                                                   scell_id;
   uint8_t                                                    scell_idx = 1;
-  cell_ul_cfgured_e                                          scell_ul_cfgured;
+  cell_ul_cfg_e                                              scell_ul_cfg;
   protocol_ext_container_l<scell_to_be_setup_item_ext_ies_o> ie_exts;
   // ...
 
@@ -5700,11 +5700,11 @@ struct scell_to_be_setup_item_s {
 
 // SCell-ToBeSetupMod-Item ::= SEQUENCE
 struct scell_to_be_setup_mod_item_s {
-  bool                                                           ext                      = false;
-  bool                                                           scell_ul_cfgured_present = false;
-  nrcgi_s                                                        scell_id;
+  bool                                                           ext                  = false;
+  bool                                                           scell_ul_cfg_present = false;
+  nr_cgi_s                                                       scell_id;
   uint8_t                                                        scell_idx = 1;
-  cell_ul_cfgured_e                                              scell_ul_cfgured;
+  cell_ul_cfg_e                                                  scell_ul_cfg;
   protocol_ext_container_l<scell_to_be_setup_mod_item_ext_ies_o> ie_exts;
   // ...
 
@@ -5896,7 +5896,7 @@ using served_cells_to_delete_item_ext_ies_container = protocol_ext_container_emp
 struct served_cells_to_delete_item_s {
   bool                                          ext             = false;
   bool                                          ie_exts_present = false;
-  nrcgi_s                                       old_nr_cgi;
+  nr_cgi_s                                      old_nr_cgi;
   served_cells_to_delete_item_ext_ies_container ie_exts;
   // ...
 
@@ -5913,7 +5913,7 @@ struct served_cells_to_modify_item_s {
   bool                                          ext                     = false;
   bool                                          gnb_du_sys_info_present = false;
   bool                                          ie_exts_present         = false;
-  nrcgi_s                                       old_nr_cgi;
+  nr_cgi_s                                      old_nr_cgi;
   served_cell_info_s                            served_cell_info;
   gnb_du_sys_info_s                             gnb_du_sys_info;
   served_cells_to_modify_item_ext_ies_container ie_exts;
@@ -7223,8 +7223,8 @@ struct pws_sys_info_ext_ies_container {
 struct pws_sys_info_s {
   bool                           ext             = false;
   bool                           ie_exts_present = false;
-  uint8_t                        sibtype         = 6;
-  unbounded_octstring<true>      sibmsg;
+  uint8_t                        sib_type        = 6;
+  unbounded_octstring<true>      sib_msg;
   pws_sys_info_ext_ies_container ie_exts;
   // ...
 
@@ -8436,13 +8436,13 @@ struct init_ul_rrc_msg_transfer_ies_o {
     struct types_opts {
       enum options {
         gnb_du_ue_f1ap_id,
-        nrcgi,
+        nr_cgi,
         c_rnti,
         rrc_container,
         du_to_cu_rrc_container,
         sul_access_ind,
         transaction_id,
-        ranueid,
+        ran_ue_id,
         rrc_container_rrc_setup_complete,
         nulltype
       } value;
@@ -8463,27 +8463,27 @@ struct init_ul_rrc_msg_transfer_ies_o {
     void        to_json(json_writer& j) const;
     // getters
     uint64_t&                        gnb_du_ue_f1ap_id();
-    nrcgi_s&                         nrcgi();
+    nr_cgi_s&                        nr_cgi();
     uint32_t&                        c_rnti();
     unbounded_octstring<true>&       rrc_container();
     unbounded_octstring<true>&       du_to_cu_rrc_container();
     sul_access_ind_e&                sul_access_ind();
     uint16_t&                        transaction_id();
-    fixed_octstring<8, true>&        ranueid();
+    fixed_octstring<8, true>&        ran_ue_id();
     unbounded_octstring<true>&       rrc_container_rrc_setup_complete();
     const uint64_t&                  gnb_du_ue_f1ap_id() const;
-    const nrcgi_s&                   nrcgi() const;
+    const nr_cgi_s&                  nr_cgi() const;
     const uint32_t&                  c_rnti() const;
     const unbounded_octstring<true>& rrc_container() const;
     const unbounded_octstring<true>& du_to_cu_rrc_container() const;
     const sul_access_ind_e&          sul_access_ind() const;
     const uint16_t&                  transaction_id() const;
-    const fixed_octstring<8, true>&  ranueid() const;
+    const fixed_octstring<8, true>&  ran_ue_id() const;
     const unbounded_octstring<true>& rrc_container_rrc_setup_complete() const;
 
   private:
-    types                                                                         type_;
-    choice_buffer_t<fixed_octstring<8, true>, nrcgi_s, unbounded_octstring<true>> c;
+    types                                                                          type_;
+    choice_buffer_t<fixed_octstring<8, true>, nr_cgi_s, unbounded_octstring<true>> c;
 
     void destroy_();
   };
@@ -8860,7 +8860,7 @@ struct rrc_delivery_report_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { gnb_cu_ue_f1ap_id, gnb_du_ue_f1ap_id, rrc_delivery_status, srbid, nulltype } value;
+      enum options { gnb_cu_ue_f1ap_id, gnb_du_ue_f1ap_id, rrc_delivery_status, srb_id, nulltype } value;
 
       const char* to_string() const;
     };
@@ -8880,11 +8880,11 @@ struct rrc_delivery_report_ies_o {
     uint64_t&                    gnb_cu_ue_f1ap_id();
     uint64_t&                    gnb_du_ue_f1ap_id();
     rrc_delivery_status_s&       rrc_delivery_status();
-    uint8_t&                     srbid();
+    uint8_t&                     srb_id();
     const uint64_t&              gnb_cu_ue_f1ap_id() const;
     const uint64_t&              gnb_du_ue_f1ap_id() const;
     const rrc_delivery_status_s& rrc_delivery_status() const;
-    const uint8_t&               srbid() const;
+    const uint8_t&               srb_id() const;
 
   private:
     types                                  type_;
@@ -8998,7 +8998,7 @@ struct sys_info_delivery_cmd_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { transaction_id, nrcgi, sitype_list, confirmed_ue_id, nulltype } value;
+      enum options { transaction_id, nr_cgi, sitype_list, confirmed_ue_id, nulltype } value;
 
       const char* to_string() const;
     };
@@ -9016,17 +9016,17 @@ struct sys_info_delivery_cmd_ies_o {
     void        to_json(json_writer& j) const;
     // getters
     uint16_t&            transaction_id();
-    nrcgi_s&             nrcgi();
+    nr_cgi_s&            nr_cgi();
     sitype_list_l&       sitype_list();
     uint64_t&            confirmed_ue_id();
     const uint16_t&      transaction_id() const;
-    const nrcgi_s&       nrcgi() const;
+    const nr_cgi_s&      nr_cgi() const;
     const sitype_list_l& sitype_list() const;
     const uint64_t&      confirmed_ue_id() const;
 
   private:
-    types                                   type_;
-    choice_buffer_t<nrcgi_s, sitype_list_l> c;
+    types                                    type_;
+    choice_buffer_t<nr_cgi_s, sitype_list_l> c;
 
     void destroy_();
   };
@@ -9209,7 +9209,7 @@ struct ue_context_mod_request_ies_o {
         gnb_du_ue_f1ap_id,
         sp_cell_id,
         serv_cell_idx,
-        sp_cell_ul_cfgured,
+        sp_cell_ul_cfg,
         drx_cycle,
         cu_to_du_rrc_info,
         tx_action_ind,
@@ -9256,9 +9256,9 @@ struct ue_context_mod_request_ies_o {
     // getters
     uint64_t&                               gnb_cu_ue_f1ap_id();
     uint64_t&                               gnb_du_ue_f1ap_id();
-    nrcgi_s&                                sp_cell_id();
+    nr_cgi_s&                               sp_cell_id();
     uint8_t&                                serv_cell_idx();
-    cell_ul_cfgured_e&                      sp_cell_ul_cfgured();
+    cell_ul_cfg_e&                          sp_cell_ul_cfg();
     drx_cycle_s&                            drx_cycle();
     cu_to_du_rrc_info_s&                    cu_to_du_rrc_info();
     tx_action_ind_e&                        tx_action_ind();
@@ -9287,9 +9287,9 @@ struct ue_context_mod_request_ies_o {
     full_cfg_e&                             full_cfg();
     const uint64_t&                         gnb_cu_ue_f1ap_id() const;
     const uint64_t&                         gnb_du_ue_f1ap_id() const;
-    const nrcgi_s&                          sp_cell_id() const;
+    const nr_cgi_s&                         sp_cell_id() const;
     const uint8_t&                          serv_cell_idx() const;
-    const cell_ul_cfgured_e&                sp_cell_ul_cfgured() const;
+    const cell_ul_cfg_e&                    sp_cell_ul_cfg() const;
     const drx_cycle_s&                      drx_cycle() const;
     const cu_to_du_rrc_info_s&              cu_to_du_rrc_info() const;
     const tx_action_ind_e&                  tx_action_ind() const;
@@ -9324,7 +9324,7 @@ struct ue_context_mod_request_ies_o {
                     drbs_to_be_released_list_l,
                     drbs_to_be_setup_mod_list_l,
                     drx_cycle_s,
-                    nrcgi_s,
+                    nr_cgi_s,
                     rat_freq_prio_info_c,
                     res_coordination_transfer_info_s,
                     rlc_fail_ind_s,
@@ -9529,7 +9529,7 @@ struct ue_context_release_cmd_ies_o {
         gnb_du_ue_f1ap_id,
         cause,
         rrc_container,
-        srbid,
+        srb_id,
         old_gnb_du_ue_f1ap_id,
         execute_dupl,
         rrc_delivery_status_request,
@@ -9555,7 +9555,7 @@ struct ue_context_release_cmd_ies_o {
     uint64_t&                            gnb_du_ue_f1ap_id();
     cause_c&                             cause();
     unbounded_octstring<true>&           rrc_container();
-    uint8_t&                             srbid();
+    uint8_t&                             srb_id();
     uint64_t&                            old_gnb_du_ue_f1ap_id();
     execute_dupl_e&                      execute_dupl();
     rrc_delivery_status_request_e&       rrc_delivery_status_request();
@@ -9563,7 +9563,7 @@ struct ue_context_release_cmd_ies_o {
     const uint64_t&                      gnb_du_ue_f1ap_id() const;
     const cause_c&                       cause() const;
     const unbounded_octstring<true>&     rrc_container() const;
-    const uint8_t&                       srbid() const;
+    const uint8_t&                       srb_id() const;
     const uint64_t&                      old_gnb_du_ue_f1ap_id() const;
     const execute_dupl_e&                execute_dupl() const;
     const rrc_delivery_status_request_e& rrc_delivery_status_request() const;
@@ -9736,7 +9736,7 @@ struct ue_context_setup_request_ies_o {
         gnb_du_ue_f1ap_id,
         sp_cell_id,
         serv_cell_idx,
-        sp_cell_ul_cfgured,
+        sp_cell_ul_cfg,
         cu_to_du_rrc_info,
         candidate_sp_cell_list,
         drx_cycle,
@@ -9754,7 +9754,7 @@ struct ue_context_setup_request_ies_o {
         res_coordination_transfer_info,
         serving_cell_mo,
         new_gnb_cu_ue_f1ap_id,
-        ranueid,
+        ran_ue_id,
         nulltype
       } value;
 
@@ -9775,9 +9775,9 @@ struct ue_context_setup_request_ies_o {
     // getters
     uint64_t&                               gnb_cu_ue_f1ap_id();
     uint64_t&                               gnb_du_ue_f1ap_id();
-    nrcgi_s&                                sp_cell_id();
+    nr_cgi_s&                               sp_cell_id();
     uint8_t&                                serv_cell_idx();
-    cell_ul_cfgured_e&                      sp_cell_ul_cfgured();
+    cell_ul_cfg_e&                          sp_cell_ul_cfg();
     cu_to_du_rrc_info_s&                    cu_to_du_rrc_info();
     candidate_sp_cell_list_l&               candidate_sp_cell_list();
     drx_cycle_s&                            drx_cycle();
@@ -9795,12 +9795,12 @@ struct ue_context_setup_request_ies_o {
     res_coordination_transfer_info_s&       res_coordination_transfer_info();
     uint8_t&                                serving_cell_mo();
     uint64_t&                               new_gnb_cu_ue_f1ap_id();
-    fixed_octstring<8, true>&               ranueid();
+    fixed_octstring<8, true>&               ran_ue_id();
     const uint64_t&                         gnb_cu_ue_f1ap_id() const;
     const uint64_t&                         gnb_du_ue_f1ap_id() const;
-    const nrcgi_s&                          sp_cell_id() const;
+    const nr_cgi_s&                         sp_cell_id() const;
     const uint8_t&                          serv_cell_idx() const;
-    const cell_ul_cfgured_e&                sp_cell_ul_cfgured() const;
+    const cell_ul_cfg_e&                    sp_cell_ul_cfg() const;
     const cu_to_du_rrc_info_s&              cu_to_du_rrc_info() const;
     const candidate_sp_cell_list_l&         candidate_sp_cell_list() const;
     const drx_cycle_s&                      drx_cycle() const;
@@ -9818,7 +9818,7 @@ struct ue_context_setup_request_ies_o {
     const res_coordination_transfer_info_s& res_coordination_transfer_info() const;
     const uint8_t&                          serving_cell_mo() const;
     const uint64_t&                         new_gnb_cu_ue_f1ap_id() const;
-    const fixed_octstring<8, true>&         ranueid() const;
+    const fixed_octstring<8, true>&         ran_ue_id() const;
 
   private:
     types type_;
@@ -9829,7 +9829,7 @@ struct ue_context_setup_request_ies_o {
                     fixed_bitstring<64, false, true>,
                     fixed_octstring<3, true>,
                     fixed_octstring<8, true>,
-                    nrcgi_s,
+                    nr_cgi_s,
                     rat_freq_prio_info_c,
                     res_coordination_transfer_info_s,
                     scell_to_be_setup_list_l,
@@ -9987,7 +9987,7 @@ struct ul_rrc_msg_transfer_ies_o {
       enum options {
         gnb_cu_ue_f1ap_id,
         gnb_du_ue_f1ap_id,
-        srbid,
+        srb_id,
         rrc_container,
         sel_plmn_id,
         new_gnb_du_ue_f1ap_id,
@@ -10011,13 +10011,13 @@ struct ul_rrc_msg_transfer_ies_o {
     // getters
     uint64_t&                        gnb_cu_ue_f1ap_id();
     uint64_t&                        gnb_du_ue_f1ap_id();
-    uint8_t&                         srbid();
+    uint8_t&                         srb_id();
     unbounded_octstring<true>&       rrc_container();
     fixed_octstring<3, true>&        sel_plmn_id();
     uint64_t&                        new_gnb_du_ue_f1ap_id();
     const uint64_t&                  gnb_cu_ue_f1ap_id() const;
     const uint64_t&                  gnb_du_ue_f1ap_id() const;
-    const uint8_t&                   srbid() const;
+    const uint8_t&                   srb_id() const;
     const unbounded_octstring<true>& rrc_container() const;
     const fixed_octstring<3, true>&  sel_plmn_id() const;
     const uint64_t&                  new_gnb_du_ue_f1ap_id() const;
@@ -10495,16 +10495,16 @@ struct init_ul_rrc_msg_transfer_ies_container {
   // member variables
   bool                                                      du_to_cu_rrc_container_present           = false;
   bool                                                      sul_access_ind_present                   = false;
-  bool                                                      ranueid_present                          = false;
+  bool                                                      ran_ue_id_present                        = false;
   bool                                                      rrc_container_rrc_setup_complete_present = false;
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<nrcgi_s>                                       nrcgi;
+  ie_field_s<nr_cgi_s>                                      nr_cgi;
   ie_field_s<integer<uint32_t, 0, 65535, true, true>>       c_rnti;
   ie_field_s<unbounded_octstring<true>>                     rrc_container;
   ie_field_s<unbounded_octstring<true>>                     du_to_cu_rrc_container;
   ie_field_s<sul_access_ind_e>                              sul_access_ind;
   ie_field_s<integer<uint16_t, 0, 255, true, true>>         transaction_id;
-  ie_field_s<fixed_octstring<8, true>>                      ranueid;
+  ie_field_s<fixed_octstring<8, true>>                      ran_ue_id;
   ie_field_s<unbounded_octstring<true>>                     rrc_container_rrc_setup_complete;
 
   // sequence methods
@@ -10709,7 +10709,7 @@ struct rrc_delivery_report_ies_container {
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<rrc_delivery_status_s>                         rrc_delivery_status;
-  ie_field_s<integer<uint8_t, 0, 3, true, true>>            srbid;
+  ie_field_s<integer<uint8_t, 0, 3, true, true>>            srb_id;
 
   // sequence methods
   rrc_delivery_report_ies_container();
@@ -10768,7 +10768,7 @@ struct sys_info_delivery_cmd_ies_container {
 
   // member variables
   ie_field_s<integer<uint16_t, 0, 255, true, true>>         transaction_id;
-  ie_field_s<nrcgi_s>                                       nrcgi;
+  ie_field_s<nr_cgi_s>                                      nr_cgi;
   ie_field_s<dyn_seq_of<sitype_item_s, 1, 32, true>>        sitype_list;
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> confirmed_ue_id;
 
@@ -10862,7 +10862,7 @@ struct ue_context_mod_request_ies_container {
   // member variables
   bool                                                      sp_cell_id_present                          = false;
   bool                                                      serv_cell_idx_present                       = false;
-  bool                                                      sp_cell_ul_cfgured_present                  = false;
+  bool                                                      sp_cell_ul_cfg_present                      = false;
   bool                                                      drx_cycle_present                           = false;
   bool                                                      cu_to_du_rrc_info_present                   = false;
   bool                                                      tx_action_ind_present                       = false;
@@ -10891,9 +10891,9 @@ struct ue_context_mod_request_ies_container {
   bool                                                      full_cfg_present                            = false;
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<nrcgi_s>                                       sp_cell_id;
+  ie_field_s<nr_cgi_s>                                      sp_cell_id;
   ie_field_s<integer<uint8_t, 0, 31, true, true>>           serv_cell_idx;
-  ie_field_s<cell_ul_cfgured_e>                             sp_cell_ul_cfgured;
+  ie_field_s<cell_ul_cfg_e>                                 sp_cell_ul_cfg;
   ie_field_s<drx_cycle_s>                                   drx_cycle;
   ie_field_s<cu_to_du_rrc_info_s>                           cu_to_du_rrc_info;
   ie_field_s<tx_action_ind_e>                               tx_action_ind;
@@ -11029,7 +11029,7 @@ struct ue_context_release_cmd_ies_container {
 
   // member variables
   bool                                                      rrc_container_present               = false;
-  bool                                                      srbid_present                       = false;
+  bool                                                      srb_id_present                      = false;
   bool                                                      old_gnb_du_ue_f1ap_id_present       = false;
   bool                                                      execute_dupl_present                = false;
   bool                                                      rrc_delivery_status_request_present = false;
@@ -11037,7 +11037,7 @@ struct ue_context_release_cmd_ies_container {
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
   ie_field_s<cause_c>                                       cause;
   ie_field_s<unbounded_octstring<true>>                     rrc_container;
-  ie_field_s<integer<uint8_t, 0, 3, true, true>>            srbid;
+  ie_field_s<integer<uint8_t, 0, 3, true, true>>            srb_id;
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> old_gnb_du_ue_f1ap_id;
   ie_field_s<execute_dupl_e>                                execute_dupl;
   ie_field_s<rrc_delivery_status_request_e>                 rrc_delivery_status_request;
@@ -11122,7 +11122,7 @@ struct ue_context_setup_request_ies_container {
 
   // member variables
   bool                                                      gnb_du_ue_f1ap_id_present                   = false;
-  bool                                                      sp_cell_ul_cfgured_present                  = false;
+  bool                                                      sp_cell_ul_cfg_present                      = false;
   bool                                                      candidate_sp_cell_list_present              = false;
   bool                                                      drx_cycle_present                           = false;
   bool                                                      res_coordination_transfer_container_present = false;
@@ -11139,12 +11139,12 @@ struct ue_context_setup_request_ies_container {
   bool                                                      res_coordination_transfer_info_present      = false;
   bool                                                      serving_cell_mo_present                     = false;
   bool                                                      new_gnb_cu_ue_f1ap_id_present               = false;
-  bool                                                      ranueid_present                             = false;
+  bool                                                      ran_ue_id_present                           = false;
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<nrcgi_s>                                       sp_cell_id;
+  ie_field_s<nr_cgi_s>                                      sp_cell_id;
   ie_field_s<integer<uint8_t, 0, 31, true, true>>           serv_cell_idx;
-  ie_field_s<cell_ul_cfgured_e>                             sp_cell_ul_cfgured;
+  ie_field_s<cell_ul_cfg_e>                                 sp_cell_ul_cfg;
   ie_field_s<cu_to_du_rrc_info_s>                           cu_to_du_rrc_info;
   ie_field_s<dyn_seq_of<protocol_ie_single_container_s<candidate_sp_cell_item_ies_o>, 1, 64, true>>
                                         candidate_sp_cell_list;
@@ -11165,7 +11165,7 @@ struct ue_context_setup_request_ies_container {
   ie_field_s<res_coordination_transfer_info_s>                res_coordination_transfer_info;
   ie_field_s<integer<uint8_t, 1, 64, true, true>>             serving_cell_mo;
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>   new_gnb_cu_ue_f1ap_id;
-  ie_field_s<fixed_octstring<8, true>>                        ranueid;
+  ie_field_s<fixed_octstring<8, true>>                        ran_ue_id;
 
   // sequence methods
   ue_context_setup_request_ies_container();
@@ -11247,7 +11247,7 @@ struct ul_rrc_msg_transfer_ies_container {
   bool                                                      new_gnb_du_ue_f1ap_id_present = false;
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<integer<uint8_t, 0, 3, true, true>>            srbid;
+  ie_field_s<integer<uint8_t, 0, 3, true, true>>            srb_id;
   ie_field_s<unbounded_octstring<true>>                     rrc_container;
   ie_field_s<fixed_octstring<3, true>>                      sel_plmn_id;
   ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> new_gnb_du_ue_f1ap_id;

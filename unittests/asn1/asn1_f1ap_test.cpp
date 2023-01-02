@@ -71,8 +71,8 @@ TEST_F(asn1_f1ap_test, when_setup_message_correct_then_packing_successful)
   served_cells_item_container.set_item(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
 
   auto& served_cells_item = served_cells_item_container.value().gnb_du_served_cells_item();
-  served_cells_item.served_cell_info.nrcgi.plmn_id.from_string("208991");
-  served_cells_item.served_cell_info.nrcgi.nr_cell_id.from_number(12345678);
+  served_cells_item.served_cell_info.nr_cgi.plmn_id.from_string("208991");
+  served_cells_item.served_cell_info.nr_cgi.nr_cell_id.from_number(12345678);
   served_cells_item.served_cell_info.nr_pci              = 0;
   served_cells_item.served_cell_info.five_gs_tac_present = true;
   served_cells_item.served_cell_info.five_gs_tac.from_number(1);
@@ -93,8 +93,8 @@ TEST_F(asn1_f1ap_test, when_setup_message_correct_then_packing_successful)
   asn1::f1ap::freq_band_nr_item_s freq_band_nr_item;
   freq_band_nr_item.freq_band_ind_nr = 78;
   served_cells_item.served_cell_info.nr_mode_info.tdd().nr_freq_info.freq_band_list_nr.push_back(freq_band_nr_item);
-  served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nrscs.value  = asn1::f1ap::nrscs_opts::scs30;
-  served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_nrb.value = asn1::f1ap::nrnrb_opts::nrb51;
+  served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_scs.value = asn1::f1ap::nr_scs_opts::scs30;
+  served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_nrb.value = asn1::f1ap::nr_nrb_opts::nrb51;
   served_cells_item.served_cell_info.meas_timing_cfg.from_string("30");
 
   served_cells_item.gnb_du_sys_info_present = true;
@@ -312,8 +312,8 @@ TEST_F(asn1_f1ap_test, when_initial_ul_rrc_message_transfer_packing_correct_then
   auto& init_ul_rrc                    = tx_pdu.init_msg().value.init_ul_rrc_msg_transfer();
   init_ul_rrc->gnb_du_ue_f1ap_id.value = 41255; // same as C-RNTI
 
-  init_ul_rrc->nrcgi.value.nr_cell_id.from_string("000000000000101111000110000101001110");
-  init_ul_rrc->nrcgi.value.plmn_id.from_string("02f899");
+  init_ul_rrc->nr_cgi.value.nr_cell_id.from_string("000000000000101111000110000101001110");
+  init_ul_rrc->nr_cgi.value.plmn_id.from_string("02f899");
   init_ul_rrc->c_rnti.value = 41255;
 
   init_ul_rrc->rrc_container.value.from_string("1dec89d05766");

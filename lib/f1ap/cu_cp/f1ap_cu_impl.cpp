@@ -83,7 +83,7 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   asn1::f1ap::dl_rrc_msg_transfer_s dlrrc_msg = {};
   dlrrc_msg->gnb_cu_ue_f1ap_id.value          = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
   dlrrc_msg->gnb_du_ue_f1ap_id.value          = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
-  dlrrc_msg->srbid.value                      = (uint8_t)msg.srb_id;
+  dlrrc_msg->srb_id.value                     = (uint8_t)msg.srb_id;
   dlrrc_msg->rrc_container.value              = msg.rrc_container;
 
   logger.info("Transmitting DL RRC message");
@@ -188,7 +188,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
     return;
   }
 
-  nr_cell_global_id_t cgi = cgi_from_asn1(msg->nrcgi.value);
+  nr_cell_global_id_t cgi = cgi_from_asn1(msg->nr_cgi.value);
   if (not srsgnb::config_helpers::is_valid(cgi)) {
     logger.error("CGI isn't valid. Dropping Initial UL RRC message.");
     return;
@@ -243,7 +243,7 @@ void f1ap_cu_impl::handle_ul_rrc_message(const ul_rrc_msg_transfer_s& msg)
   f1ap_ue_context& ue_ctxt = ue_ctx_list[int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id.value)];
 
   // Notify upper layers about reception
-  ue_ctxt.srbs[msg->srbid.value]->on_new_rrc_message(msg->rrc_container.value);
+  ue_ctxt.srbs[msg->srb_id.value]->on_new_rrc_message(msg->rrc_container.value);
 }
 
 void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome)

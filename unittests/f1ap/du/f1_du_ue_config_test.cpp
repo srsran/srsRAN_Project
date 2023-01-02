@@ -69,5 +69,5 @@ TEST_F(f1ap_du_ue_management_tester, f1ap_created_bearers_forward_messages_to_no
   resp.f1c_bearers_added[0].bearer->handle_sdu(byte_buffer_slice_chain{ul_srb_buf.copy()});
   const auto& ul_f1c_msg = this->msg_notifier.last_f1c_msg.pdu.init_msg().value.ul_rrc_msg_transfer();
   ASSERT_EQ(ul_f1c_msg->rrc_container.value, ul_srb_buf);
-  ASSERT_EQ((srb_id_t)ul_f1c_msg->srbid->value, srb_id_t::srb2);
+  ASSERT_EQ((srb_id_t)ul_f1c_msg->srb_id->value, srb_id_t::srb2);
 }

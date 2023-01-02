@@ -40,7 +40,7 @@ ue_creation_message generate_valid_ue_creation_message(rnti_t c_rnti, unsigned n
 {
   ue_creation_message ue_creation_msg = {};
   ue_creation_msg.c_rnti              = c_rnti;
-  asn1::f1ap::nrcgi_s asn1_cgi;
+  asn1::f1ap::nr_cgi_s asn1_cgi;
   asn1_cgi.nr_cell_id.from_number(nrcell_id);
   asn1_cgi.plmn_id.from_string("02f899");
   ue_creation_msg.cgi = cgi_from_asn1(asn1_cgi);

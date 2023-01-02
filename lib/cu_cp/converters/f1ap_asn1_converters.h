@@ -55,7 +55,7 @@ inline cu_cp_cause_t f1ap_cause_to_cu_cp_cause(asn1::f1ap::cause_c f1ap_cause)
 /// @brief Convert F1AP NRCGI to NR Cell Identity.
 /// @param f1ap_cgi The F1AP NRCGI.
 /// @return The NR Cell Identity.
-inline nr_cell_id_t f1ap_nrcgi_to_nr_cell_identity(asn1::f1ap::nrcgi_s& f1ap_cgi)
+inline nr_cell_id_t f1ap_nrcgi_to_nr_cell_identity(asn1::f1ap::nr_cgi_s& f1ap_cgi)
 {
   nr_cell_id_t nci;
   nci.packed = f1ap_cgi.nr_cell_id.to_number();

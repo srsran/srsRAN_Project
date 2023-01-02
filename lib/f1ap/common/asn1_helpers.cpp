@@ -12,7 +12,7 @@
 
 using namespace srsgnb;
 
-nr_cell_global_id_t srsgnb::cgi_from_asn1(const asn1::f1ap::nrcgi_s& asn1_cgi)
+nr_cell_global_id_t srsgnb::cgi_from_asn1(const asn1::f1ap::nr_cgi_s& asn1_cgi)
 {
   nr_cell_global_id_t cgi          = {};
   uint32_t            encoded_plmn = asn1_cgi.plmn_id.to_number();

@@ -17,8 +17,8 @@ using namespace asn1::f1ap;
 asn1::f1ap::gnb_du_served_cells_item_s srsgnb::srs_cu_cp::generate_served_cells_item(unsigned nrcell_id, unsigned nrpci)
 {
   asn1::f1ap::gnb_du_served_cells_item_s served_cells_item;
-  served_cells_item.served_cell_info.nrcgi.plmn_id.from_string("208991");
-  served_cells_item.served_cell_info.nrcgi.nr_cell_id.from_number(nrcell_id);
+  served_cells_item.served_cell_info.nr_cgi.plmn_id.from_string("208991");
+  served_cells_item.served_cell_info.nr_cgi.nr_cell_id.from_number(nrcell_id);
   served_cells_item.served_cell_info.nr_pci              = nrpci;
   served_cells_item.served_cell_info.five_gs_tac_present = true;
   served_cells_item.served_cell_info.five_gs_tac.from_number(1);
@@ -39,8 +39,8 @@ asn1::f1ap::gnb_du_served_cells_item_s srsgnb::srs_cu_cp::generate_served_cells_
   asn1::f1ap::freq_band_nr_item_s freq_band_nr_item;
   freq_band_nr_item.freq_band_ind_nr = 78;
   served_cells_item.served_cell_info.nr_mode_info.tdd().nr_freq_info.freq_band_list_nr.push_back(freq_band_nr_item);
-  served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nrscs.value  = asn1::f1ap::nrscs_opts::scs30;
-  served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_nrb.value = asn1::f1ap::nrnrb_opts::nrb51;
+  served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_scs.value = asn1::f1ap::nr_scs_opts::scs30;
+  served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_nrb.value = asn1::f1ap::nr_nrb_opts::nrb51;
   served_cells_item.served_cell_info.meas_timing_cfg.from_string("30");
 
   served_cells_item.gnb_du_sys_info_present = true;
@@ -85,8 +85,8 @@ f1c_message srsgnb::srs_cu_cp::generate_init_ul_rrc_message_transfer(gnb_du_ue_f
   init_ul_rrc_msg_transfer_s& init_ul_rrc = init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
   init_ul_rrc->gnb_du_ue_f1ap_id.value    = (unsigned)du_ue_id;
 
-  init_ul_rrc->nrcgi.value.nr_cell_id.from_string("000000000000101111000110000101001110"); // 12345678 in decimal
-  init_ul_rrc->nrcgi.value.plmn_id.from_string("02f899");
+  init_ul_rrc->nr_cgi.value.nr_cell_id.from_string("000000000000101111000110000101001110"); // 12345678 in decimal
+  init_ul_rrc->nr_cgi.value.plmn_id.from_string("02f899");
   init_ul_rrc->c_rnti.value = crnti;
 
   init_ul_rrc->sul_access_ind_present     = true;
@@ -120,7 +120,7 @@ f1c_message srsgnb::srs_cu_cp::generate_ul_rrc_message_transfer(gnb_cu_ue_f1ap_i
   auto& ul_rrc                    = ul_rrc_msg.pdu.init_msg().value.ul_rrc_msg_transfer();
   ul_rrc->gnb_du_ue_f1ap_id.value = (unsigned)du_ue_id;
   ul_rrc->gnb_cu_ue_f1ap_id.value = (unsigned)cu_ue_id;
-  ul_rrc->srbid.value             = (unsigned)srb_id;
+  ul_rrc->srb_id.value            = (unsigned)srb_id;
   ul_rrc->rrc_container.value     = std::move(rrc_container);
 
   return ul_rrc_msg;

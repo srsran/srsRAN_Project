@@ -24,12 +24,12 @@ class f1ap_event_manager;
 class f1c_srb0_du_bearer final : public f1c_bearer
 {
 public:
-  f1c_srb0_du_bearer(f1ap_ue_context&           ue_ctxt_,
-                     const asn1::f1ap::nrcgi_s& nr_cgi_,
-                     const byte_buffer&         du_cu_rrc_container_,
-                     f1c_message_notifier&      f1c_notifier_,
-                     f1c_rx_sdu_notifier&       f1c_rx_sdu_notifier_,
-                     f1ap_event_manager&        ev_manager_);
+  f1c_srb0_du_bearer(f1ap_ue_context&            ue_ctxt_,
+                     const asn1::f1ap::nr_cgi_s& nr_cgi_,
+                     const byte_buffer&          du_cu_rrc_container_,
+                     f1c_message_notifier&       f1c_notifier_,
+                     f1c_rx_sdu_notifier&        f1c_rx_sdu_notifier_,
+                     f1ap_event_manager&         ev_manager_);
 
   /// \brief Packs and forwards the initial UL RRC message transfer as per TS 38.473 section 8.4.1.
   /// \param[in] sdu contains the UL-CCCH message that is packed in the RRC container of the initial UL RRC message
@@ -39,13 +39,13 @@ public:
   void handle_pdu(byte_buffer pdu) override;
 
 private:
-  f1ap_ue_context&          ue_ctxt;
-  const asn1::f1ap::nrcgi_s nr_cgi;
-  byte_buffer               du_cu_rrc_container;
-  f1c_message_notifier&     f1c_notifier;
-  f1c_rx_sdu_notifier&      sdu_notifier;
-  f1ap_event_manager&       ev_manager;
-  srslog::basic_logger&     logger;
+  f1ap_ue_context&           ue_ctxt;
+  const asn1::f1ap::nr_cgi_s nr_cgi;
+  byte_buffer                du_cu_rrc_container;
+  f1c_message_notifier&      f1c_notifier;
+  f1c_rx_sdu_notifier&       sdu_notifier;
+  f1ap_event_manager&        ev_manager;
+  srslog::basic_logger&      logger;
 };
 
 class f1c_other_srb_du_bearer final : public f1c_bearer

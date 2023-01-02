@@ -81,7 +81,7 @@ f1c_message srsgnb::srs_du::generate_f1_dl_rrc_message_transfer(srb_id_t srb_id,
   auto& dl_msg                     = msg.pdu.init_msg().value.dl_rrc_msg_transfer();
   dl_msg->gnb_cu_ue_f1ap_id->value = 0;
   dl_msg->gnb_du_ue_f1ap_id->value = 0;
-  dl_msg->srbid->value             = srb_id_to_uint(srb_id);
+  dl_msg->srb_id->value            = srb_id_to_uint(srb_id);
   dl_msg->rrc_container->resize(rrc_container.length());
   std::copy(rrc_container.begin(), rrc_container.end(), dl_msg->rrc_container->begin());
 

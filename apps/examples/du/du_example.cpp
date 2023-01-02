@@ -186,7 +186,7 @@ public:
       auto& resp                      = response.pdu.init_msg().value.dl_rrc_msg_transfer();
       resp->gnb_du_ue_f1ap_id->value  = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id->value;
       resp->gnb_cu_ue_f1ap_id->value  = 0;
-      resp->srbid->value              = srb_id_to_uint(srb_id_t::srb0);
+      resp->srb_id->value             = srb_id_to_uint(srb_id_t::srb0);
       static constexpr uint8_t msg4[] = {
           0x20, 0x40, 0x03, 0x82, 0xe0, 0x05, 0x80, 0x08, 0x8b, 0xd7, 0x63, 0x80, 0x83, 0x0f, 0x00, 0x03, 0xe1,
           0x02, 0x04, 0x68, 0x3c, 0x08, 0x01, 0x05, 0x10, 0x48, 0x24, 0x06, 0x54, 0x00, 0x07, 0xc0, 0x00, 0x00,

@@ -26,8 +26,8 @@ public:
       // If the UE CONTEXT RELEASE COMMAND message contains the RRC-Container IE, the gNB-DU shall send the RRC
       // container to the UE via the SRB indicated by the SRB ID IE.
       f1c_bearer* srb = nullptr;
-      if (msg->srbid_present) {
-        srb_id_t srb_id = int_to_srb_id(msg->srbid->value);
+      if (msg->srb_id_present) {
+        srb_id_t srb_id = int_to_srb_id(msg->srb_id->value);
         srb             = ue.bearers.find_srb(srb_id);
       }
 
