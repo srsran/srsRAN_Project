@@ -27,34 +27,23 @@ static_assert(is_byte_buffer_range<byte_buffer>::value, "Invalid metafunction is
 static_assert(is_byte_buffer_range<byte_buffer_view>::value, "Invalid metafunction is_byte_buffer_range");
 static_assert(is_byte_buffer_range<byte_buffer_slice>::value, "Invalid metafunction is_byte_buffer_range");
 
-std::random_device rd;
-std::mt19937       g(rd());
-
-unsigned get_random_uint(unsigned min, unsigned max)
+/// Creates a vector with size randomly generated within defined bounds.
+std::vector<uint8_t> make_vec(unsigned lb = 1, unsigned ub = byte_buffer_segment::SEGMENT_SIZE * 4)
 {
-  return std::uniform_int_distribution<unsigned>{min, max}(g);
-}
-
-/// Creates a vector of specified size.
-std::vector<uint8_t> make_vec(unsigned size)
-{
-  std::vector<uint8_t> vec(size);
-  for (size_t i = 0; i < vec.size(); ++i) {
-    vec[i] = get_random_uint(0, 255);
-  }
-  return vec;
+  return test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(lb, ub));
 }
 
 /// Creates a small vector of bytes that fits in one segment.
 std::vector<uint8_t> make_small_vec()
 {
-  return make_vec(6);
+  return make_vec(6, 6);
 }
 
 /// Creates a large vector of bytes that fills a segment TAILROOM.
 std::vector<uint8_t> make_large_vec()
 {
-  return make_vec(byte_buffer_segment::capacity() - byte_buffer_segment::DEFAULT_HEADROOM);
+  size_t sz = byte_buffer_segment::capacity() - byte_buffer_segment::DEFAULT_HEADROOM;
+  return make_vec(sz, sz);
 }
 
 std::vector<uint8_t> concat_vec(span<const uint8_t> before, span<const uint8_t> after)
@@ -92,7 +81,7 @@ TEST(byte_buffer, empty_byte_buffer_in_valid_state)
 
 TEST(byte_buffer, ctor_with_span)
 {
-  std::vector<uint8_t> bytes = make_vec(get_random_uint(1, byte_buffer_segment::SEGMENT_SIZE * 4));
+  std::vector<uint8_t> bytes = make_vec();
   byte_buffer          pdu{bytes};
 
   ASSERT_EQ_LEN(pdu, bytes.size());
@@ -101,7 +90,7 @@ TEST(byte_buffer, ctor_with_span)
 
 TEST(byte_buffer, equality_comparison)
 {
-  std::vector<uint8_t> bytes = make_vec(get_random_uint(1, byte_buffer_segment::SEGMENT_SIZE * 4));
+  std::vector<uint8_t> bytes = make_vec();
   byte_buffer          pdu{bytes};
   byte_buffer          pdu2{bytes};
   std::list<uint8_t>   not_a_span{bytes.begin(), bytes.end()};
@@ -112,12 +101,12 @@ TEST(byte_buffer, equality_comparison)
   // comparison byte_buffer vs byte_buffer.
   ASSERT_EQ_BUFFER(pdu, pdu2);
 
-  // comparison byte_buffer vs any other range.
+  // comparison byte_buffer vs any other range type.
   ASSERT_EQ(pdu, not_a_span);
 
   // comparison byte_buffer vs other range of different length.
   std::vector<uint8_t> bytes2 = bytes;
-  bytes2.push_back(get_random_uint(0, 255));
+  bytes2.push_back(test_rgen::uniform_int<uint8_t>());
   std::list<uint8_t> not_a_span2{bytes2.begin(), bytes2.end()};
   pdu2 = byte_buffer{bytes2};
   ASSERT_NE(pdu, bytes2);
@@ -127,10 +116,31 @@ TEST(byte_buffer, equality_comparison)
   ASSERT_NE(pdu, not_a_span2);
 }
 
+TEST(byte_buffer, move_ctor)
+{
+  byte_buffer                pdu;
+  const std::vector<uint8_t> bytes = make_vec();
+  pdu.append(bytes);
+
+  byte_buffer pdu2{std::move(pdu)};
+  ASSERT_TRUE(pdu.empty());
+  ASSERT_FALSE(pdu2.empty());
+  ASSERT_EQ_BUFFER(pdu2, bytes);
+}
+
+TEST(byte_buffer, initializer_list)
+{
+  byte_buffer pdu = {1, 2, 3, 4, 5, 6};
+  ASSERT_EQ_LEN(pdu, 6);
+
+  bool are_equal = pdu == std::vector<uint8_t>{1, 2, 3, 4, 5, 6};
+  ASSERT_TRUE(are_equal);
+}
+
 TEST(byte_buffer, append)
 {
   byte_buffer          pdu;
-  std::vector<uint8_t> vec = make_vec(get_random_uint(1, byte_buffer_segment::SEGMENT_SIZE * 4));
+  std::vector<uint8_t> vec = make_vec();
 
   // Append span of bytes (that may occupy more than one segment).
   pdu.append(vec);
@@ -138,7 +148,7 @@ TEST(byte_buffer, append)
   ASSERT_EQ_BUFFER(pdu, vec);
 
   // Append two byte_buffers.
-  std::vector<uint8_t> vec2 = make_vec(get_random_uint(1, byte_buffer_segment::SEGMENT_SIZE * 4));
+  std::vector<uint8_t> vec2 = make_vec();
   byte_buffer          pdu2{vec2};
   ASSERT_EQ(pdu2, vec2);
   pdu2.append(pdu);
@@ -150,13 +160,15 @@ TEST(byte_buffer, append)
 TEST(byte_buffer, prepend)
 {
   byte_buffer          pdu;
-  std::vector<uint8_t> vec  = make_vec(get_random_uint(1, byte_buffer_segment::SEGMENT_SIZE * 4));
-  std::vector<uint8_t> vec2 = make_vec(get_random_uint(1, byte_buffer_segment::SEGMENT_SIZE * 4));
+  std::vector<uint8_t> vec  = make_vec();
+  std::vector<uint8_t> vec2 = make_vec();
 
+  // prepend in empty byte_buffer.
   pdu.prepend(vec);
   ASSERT_EQ(pdu.length(), vec.size());
   ASSERT_EQ(pdu, vec);
 
+  // prepend in non-empty byte_buffer.
   pdu.prepend(vec2);
   ASSERT_EQ(pdu.length(), vec.size() + vec2.size());
   ASSERT_EQ(pdu, concat_vec(vec2, vec));
@@ -165,13 +177,11 @@ TEST(byte_buffer, prepend)
 TEST(byte_buffer, clear)
 {
   byte_buffer pdu;
-  pdu.append(make_vec(get_random_uint(1, byte_buffer_segment::SEGMENT_SIZE * 4)));
+  pdu.append(make_vec());
 
   ASSERT_TRUE(not pdu.empty());
   pdu.clear();
-  ASSERT_TRUE(pdu.empty());
-  ASSERT_EQ(pdu.length(), 0);
-  ASSERT_EQ(pdu.begin(), pdu.end());
+  ASSERT_EQ_LEN(pdu, 0);
 
   // multiple clear calls are valid.
   pdu.clear();
@@ -291,8 +301,8 @@ TEST(byte_buffer, copy)
 TEST(byte_buffer, shallow_copy)
 {
   byte_buffer          pdu;
-  std::vector<uint8_t> bytes  = make_vec(get_random_uint(1, byte_buffer_segment::SEGMENT_SIZE * 4));
-  std::vector<uint8_t> bytes2 = make_vec(get_random_uint(1, byte_buffer_segment::SEGMENT_SIZE * 4));
+  std::vector<uint8_t> bytes  = make_vec();
+  std::vector<uint8_t> bytes2 = make_vec();
   pdu.append(bytes);
 
   {
@@ -306,18 +316,6 @@ TEST(byte_buffer, shallow_copy)
   }
   ASSERT_EQ(pdu, concat_vec(bytes, bytes2));
   ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin());
-}
-
-TEST(byte_buffer, move)
-{
-  byte_buffer                pdu;
-  const std::vector<uint8_t> bytes = make_small_vec();
-  pdu.append(bytes);
-
-  byte_buffer pdu2{std::move(pdu)};
-  ASSERT_TRUE(pdu.empty());
-  ASSERT_FALSE(pdu2.empty());
-  ASSERT_EQ(pdu2, bytes);
 }
 
 TEST(byte_buffer, formatter)
@@ -360,7 +358,7 @@ TEST(byte_buffer, prepend_and_trim_tail)
 {
   byte_buffer        pdu;
   byte_buffer        sdu;
-  uint32_t           pdu_len    = byte_buffer_segment::SEGMENT_SIZE - 5 + get_random_uint(0, 10);
+  uint32_t           pdu_len    = byte_buffer_segment::SEGMENT_SIZE - 5 + test_rgen::uniform_int<unsigned>(0, 10);
   constexpr uint32_t trim_len   = 4;
   constexpr uint32_t prefix_len = 3;
   for (uint32_t i = 0; i < pdu_len; i++) {
@@ -401,15 +399,6 @@ TEST(byte_buffer, is_contiguous)
 
   pdu.trim_tail(1);
   ASSERT_TRUE(pdu.is_contiguous());
-}
-
-TEST(byte_buffer, initializer_list)
-{
-  byte_buffer pdu = {1, 2, 3, 4, 5, 6};
-  ASSERT_EQ_LEN(pdu, 6);
-
-  bool are_equal = pdu == std::vector<uint8_t>{1, 2, 3, 4, 5, 6};
-  ASSERT_TRUE(are_equal);
 }
 
 TEST(byte_buffer, hexdump)
@@ -594,7 +583,7 @@ TEST(byte_buffer, iterator_of_segments)
   ASSERT_EQ(++pdu.segments().begin(), pdu.segments().end());
 
   // multiple-segment buffer.
-  pdu.append(make_vec(get_random_uint(1, 10000)));
+  pdu.append(make_vec(1, 10000));
   std::vector<uint8_t> total_bytes(pdu.begin(), pdu.end());
   unsigned             seg_offset = 0;
   for (auto seg_it = pdu.segments().begin(); seg_it != pdu.segments().end(); ++seg_it) {
@@ -608,8 +597,8 @@ TEST(byte_buffer, iterator_of_segments)
 TEST(byte_buffer_view, length)
 {
   byte_buffer          pdu;
-  unsigned             len   = get_random_uint(1, 100000);
-  std::vector<uint8_t> bytes = make_vec(len);
+  unsigned             len   = test_rgen::uniform_int<unsigned>(1, 100000);
+  std::vector<uint8_t> bytes = make_vec(len, len);
   pdu.append(bytes);
 
   byte_buffer_view view = pdu;
@@ -617,19 +606,19 @@ TEST(byte_buffer_view, length)
   ASSERT_FALSE(view.empty());
   ASSERT_EQ(len, view.length());
   ASSERT_EQ(len, view.end() - view.begin());
-  unsigned offset = get_random_uint(0, len);
-  unsigned len2   = get_random_uint(1, len - offset);
+  unsigned offset = test_rgen::uniform_int<unsigned>(0, len);
+  unsigned len2   = test_rgen::uniform_int<unsigned>(1, len - offset);
   ASSERT_EQ(len2, view.view(offset, len2).length());
 }
 
 TEST(byte_buffer_view, segment_iterator)
 {
   byte_buffer          pdu;
-  std::vector<uint8_t> bytes = make_vec(get_random_uint(1, 4 * byte_buffer_segment::SEGMENT_SIZE));
+  std::vector<uint8_t> bytes = make_vec();
   pdu.append(bytes);
 
-  unsigned         offset      = get_random_uint(0, bytes.size() - 1);
-  unsigned         last_offset = get_random_uint(offset + 1, bytes.size());
+  unsigned         offset      = test_rgen::uniform_int<unsigned>(0, bytes.size() - 1);
+  unsigned         last_offset = test_rgen::uniform_int<unsigned>(offset + 1, bytes.size());
   byte_buffer_view view{pdu.begin() + offset, pdu.begin() + last_offset};
 
   unsigned seg_offset = offset;
