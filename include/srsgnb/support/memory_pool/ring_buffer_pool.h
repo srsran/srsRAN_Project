@@ -43,21 +43,21 @@ private:
 class ticking_ring_buffer_pool
 {
 public:
-  using tic_t = unsigned;
+  using tick_t = unsigned;
 
 private:
   struct overflow_checker {
     std::vector<unsigned> n_alloc_per_tick;
     size_t                pool_size;
     size_t                max_bytes_per_tick;
-    tic_t                 tic_wraparound;
+    tick_t                tic_wraparound;
 
     bool     first_tick      = true;
     size_t   n_alloc         = 0;
     unsigned ring_index      = 0;
-    tic_t    last_tick_index = 0;
+    tick_t   last_tick_index = 0;
 
-    explicit overflow_checker(size_t nof_bytes_per_tick, size_t ring_of_slots_size, tic_t tic_wraparound_) :
+    explicit overflow_checker(size_t nof_bytes_per_tick, size_t ring_of_slots_size, tick_t tic_wraparound_) :
       n_alloc_per_tick(ring_of_slots_size, 0),
       pool_size(nof_bytes_per_tick * ring_of_slots_size),
       max_bytes_per_tick(nof_bytes_per_tick),
@@ -79,7 +79,7 @@ private:
       n_alloc += sz;
     }
 
-    void tick(tic_t tic_index) noexcept
+    void tick(tick_t tic_index) noexcept
     {
       srsgnb_assert(tic_index != last_tick_index, "This function cannot be called multiple times for the same tick");
       if (srsgnb_unlikely(first_tick)) {
@@ -99,14 +99,16 @@ private:
   };
 
   struct no_overflow_checker {
-    explicit no_overflow_checker(size_t nof_bytes_per_tick, size_t ring_of_slots_size, tic_t /**/) {}
+    explicit no_overflow_checker(size_t nof_bytes_per_tick, size_t ring_of_slots_size, tick_t /**/) {}
 
     void register_alloc(size_t sz) noexcept {}
     void tick(unsigned tic_index) noexcept {}
   };
 
 public:
-  explicit ticking_ring_buffer_pool(size_t nof_bytes_per_tick, size_t buffer_duration_in_ticks, tic_t tic_wraparound_) :
+  explicit ticking_ring_buffer_pool(size_t nof_bytes_per_tick,
+                                    size_t buffer_duration_in_ticks,
+                                    tick_t tic_wraparound_) :
     pool(nof_bytes_per_tick * buffer_duration_in_ticks),
     overflow_detector(nof_bytes_per_tick, buffer_duration_in_ticks, tic_wraparound_)
   {
@@ -122,7 +124,7 @@ public:
   }
 
   /// \brief Increments tick counter and clears old buffers.
-  void tick(tic_t tic_index) noexcept { overflow_detector.tick(tic_index); }
+  void tick(tick_t tic_index) noexcept { overflow_detector.tick(tic_index); }
 
   /// \brief Size of the ring buffer pool.
   size_t size() const { return pool.size(); }

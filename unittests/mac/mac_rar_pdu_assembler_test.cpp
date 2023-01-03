@@ -146,9 +146,9 @@ void test_rar_assembler_maintains_old_results()
 
   test_delimit_logger test_delim{"MAC assembler maintains previous results"};
 
-  ticking_ring_buffer_pool pdu_pool(MAX_DL_PDUS_PER_SLOT * MAX_GRANTS_PER_RAR * MAX_RAR_GRANT_SIZE,
-                                    NOF_SUBFRAMES_PER_FRAME, 10240);
-  rar_pdu_assembler        assembler(pdu_pool);
+  ticking_ring_buffer_pool pdu_pool(
+      MAX_DL_PDUS_PER_SLOT * MAX_GRANTS_PER_RAR * MAX_RAR_GRANT_SIZE, NOF_SUBFRAMES_PER_FRAME, 10240);
+  rar_pdu_assembler assembler(pdu_pool);
 
   // The RAR assembler has to internally store previous slot results. This variable defines a reasonable slot duration
   // that the RAR assembler has to keep these results stored.

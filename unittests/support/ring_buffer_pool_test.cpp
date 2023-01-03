@@ -54,10 +54,10 @@ TEST(ticking_ring_buffer_pool, ticking_clears_allocated_bytes)
   unsigned                 nof_ticks_depth    = test_rgen::uniform_int<unsigned>(32, 256);
   unsigned                 max_bytes_per_tick = test_rgen::uniform_int<unsigned>(32, 256);
   ticking_ring_buffer_pool pool(
-      max_bytes_per_tick, nof_ticks_depth, std::numeric_limits<ticking_ring_buffer_pool::tic_t>::max());
+      max_bytes_per_tick, nof_ticks_depth, std::numeric_limits<ticking_ring_buffer_pool::tick_t>::max());
 
   // Deplete pool.
-  unsigned tic = test_rgen::uniform_int<ticking_ring_buffer_pool::tic_t>();
+  unsigned tic = test_rgen::uniform_int<ticking_ring_buffer_pool::tick_t>();
   for (unsigned i = 0; i != nof_ticks_depth; ++i) {
     pool.tick(tic++);
 
@@ -82,10 +82,11 @@ TEST(ticking_ring_buffer_pool, tick_wrap_around_does_not_erroneously_deallocate_
   ticking_ring_buffer_pool pool(max_bytes_per_tick, nof_ticks_depth, wrap_around);
 
   // Deplete pool and wrap-around in the process.
-  unsigned tic = 10240 - test_rgen::uniform_int<ticking_ring_buffer_pool::tic_t>(1, nof_ticks_depth - 1);
+  ticking_ring_buffer_pool::tick_t tick =
+      wrap_around - test_rgen::uniform_int<ticking_ring_buffer_pool::tick_t>(1, nof_ticks_depth - 1);
   for (unsigned i = 0; i != nof_ticks_depth; ++i) {
-    pool.tick(tic);
-    tic = (tic + 1) % wrap_around;
+    pool.tick(tick);
+    tick = (tick + 1) % wrap_around;
     pool.allocate_buffer(max_bytes_per_tick);
   }
   ASSERT_DEATH(pool.allocate_buffer(max_bytes_per_tick), "overflow");
