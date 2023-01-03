@@ -81,7 +81,8 @@ private:
 
     void tick(tick_t tic_index) noexcept
     {
-      srsgnb_assert(tic_index != last_tick_index, "This function cannot be called multiple times for the same tick");
+      srsgnb_assert(first_tick or tic_index != last_tick_index,
+                    "This function cannot be called multiple times for the same tick");
       if (srsgnb_unlikely(first_tick)) {
         // first tick call.
         last_tick_index = tic_index - 1;
