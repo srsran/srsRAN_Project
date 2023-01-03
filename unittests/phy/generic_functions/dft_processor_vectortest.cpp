@@ -61,29 +61,30 @@ protected:
   void SetUp() override
   {
     // Call the required dft factory.
-    std::string dft_factory_str = std::get<0>(GetParam());
+    const std::string& dft_factory_str = std::get<0>(GetParam());
     if (dft_factory_str == "generic") {
       dft_factory = create_dft_processor_factory_generic();
-    } else if (dft_factory_str == "fftx") {
-      dft_factory = create_dft_processor_factory_fftx();
-      if (dft_factory == nullptr) {
-        // 'fftx' tests are silently skipped if FFTX is disabled.
-        GTEST_SKIP();
-      }
     } else if (dft_factory_str == "fftw") {
       dft_factory = create_dft_processor_factory_fftw();
-      if (dft_factory == nullptr) {
-        // 'fftw' tests are silently skipped if the libraries are missing.
-        GTEST_SKIP();
-      }
     }
-    ASSERT_NE(dft_factory, nullptr);
   }
 };
 
 TEST_P(DFTprocessorFixture, DFTProcessorUnittest)
 {
   const test_case_t& test_case = std::get<1>(GetParam());
+
+  // If the FFTW is not enabled, then the factory shall be nullptr.
+#ifndef ENABLE_FFTW
+  const std::string& dft_factory_str = std::get<0>(GetParam());
+  if (dft_factory_str == "fftw") {
+    ASSERT_EQ(dft_factory, nullptr);
+    return;
+  }
+#endif // ENABLE_FFTW
+
+  // Make sure the factory is valid.
+  ASSERT_NE(dft_factory, nullptr);
 
   // Load the input data.
   std::vector<cf_t> input = test_case.data.read();
@@ -115,5 +116,5 @@ TEST_P(DFTprocessorFixture, DFTProcessorUnittest)
 // Creates test suite that combines all possible parameters.
 INSTANTIATE_TEST_SUITE_P(DFTprocessorVectorTest,
                          DFTprocessorFixture,
-                         ::testing::Combine(::testing::Values("generic", "fftx", "fftw"),
+                         ::testing::Combine(::testing::Values("generic", "fftw"),
                                             ::testing::ValuesIn(dft_processor_test_data)));

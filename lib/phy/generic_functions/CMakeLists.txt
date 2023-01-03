@@ -13,13 +13,6 @@ set(SRSGNB_DFT_LIBRARIES "")
 set(SRSGNB_DFT_INCLUDE_DIRS "")
 set(SRSGNB_DFT_LIBRARY_DIRS "")
 
-# Find and add FFTX sources.
-if (ENABLE_FFTX)
-file(GLOB FFTX_DFT_SOURCES "fftx/lib_fftx_dftbat_srcs/*.cpp")
-file(GLOB FFTX_IDFT_SOURCES "fftx/lib_fftx_idftbat_srcs/*.cpp")
-list(APPEND SRSGNB_DFT_SOURCES ${FFTX_DFT_SOURCES} ${FFTX_IDFT_SOURCES} dft_processor_fftx_impl.cpp)
-endif(ENABLE_FFTX)
-
 # If FFTW is enabled and found, then add FFTW source and libraries.
 if (ENABLE_FFTW AND FFTW3F_FOUND)
     list(APPEND SRSGNB_DFT_SOURCES dft_processor_fftw_impl.cpp)
@@ -37,23 +30,6 @@ message(STATUS "FFT_LIBRARIES: " ${SRSGNB_DFT_LIBRARIES})
 add_library(srsgnb_generic_funcs_dft STATIC ${SRSGNB_DFT_SOURCES})
 target_link_libraries(srsgnb_generic_funcs_dft ${SRSGNB_DFT_LIBRARIES} srsvec srslog)
 
-if (ENABLE_FFTX)
-    list(APPEND SRSGNB_DFT_DEFINITIONS ENABLE_FFTX)
-
-    # Set specific compilation options for certain FFTX implementations.
-    foreach (FFTX_SOURCE_FILE ${FFTX_DFT_SOURCES} ${FFTX_IDFT_SOURCES})
-        set_source_files_properties(${FFTX_SOURCE_FILE} PROPERTIES COMPILE_OPTIONS "-Wno-unused-function;")
-    endforeach ()
-    if (NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        include(CheckCXXCompilerFlag)
-        check_cxx_compiler_flag("-fno-aggressive-loop-optimizations" HAVE)
-        if (${HAVE})
-            set_source_files_properties(fftx/lib_fftx_dftbat_srcs/fftx_dftbat_1_36864_1d_CPU.cpp PROPERTIES COMPILE_OPTIONS "-fno-aggressive-loop-optimizations;")
-            set_source_files_properties(fftx/lib_fftx_dftbat_srcs/fftx_dftbat_1_49152_1d_CPU.cpp PROPERTIES COMPILE_OPTIONS "-fno-aggressive-loop-optimizations;")
-        endif (${HAVE})
-    endif (NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-endif (ENABLE_FFTX)
-
 add_library(srsgnb_generic_funcs STATIC generic_functions_factories.cpp)
 set_source_files_properties(generic_functions_factories.cpp PROPERTIES COMPILE_DEFINITIONS "${SRSGNB_DFT_DEFINITIONS}")
-target_link_libraries(srsgnb_generic_funcs srsgnb_generic_funcs_dft)
+target_link_libraries(srsgnb_generic_funcs srsgnb_generic_funcs_dft srslog)

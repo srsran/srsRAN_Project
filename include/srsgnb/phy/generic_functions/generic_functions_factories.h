@@ -30,9 +30,6 @@ public:
 /// \brief Creates a DFT processor factory based on a generic Radix-2 DFT implementation.
 std::shared_ptr<dft_processor_factory> create_dft_processor_factory_generic();
 
-/// \brief Creates a DFT processor factory based on SPIRAL's FFTX.
-std::shared_ptr<dft_processor_factory> create_dft_processor_factory_fftx();
-
 /// \brief Creates a DFT processor factory based on FFTW library.
 /// \param[in] avoid_wisdom Set to true to avoid loading FFTW wisdom from a file.
 /// \param[in] wisdom_filename Indicates the FFTW wisdom filename. Leave empty for default value. It is ignored if the

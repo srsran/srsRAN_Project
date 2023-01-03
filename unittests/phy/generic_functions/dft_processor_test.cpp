@@ -115,8 +115,6 @@ int main(int argc, char** argv)
   std::shared_ptr<dft_processor_factory> dft_factory = nullptr;
   if (dft_factory_str == "generic") {
     dft_factory = create_dft_processor_factory_generic();
-  } else if (dft_factory_str == "fftx") {
-    dft_factory = create_dft_processor_factory_fftx();
   } else if (dft_factory_str == "fftw") {
     dft_factory = create_dft_processor_factory_fftw();
   } else {

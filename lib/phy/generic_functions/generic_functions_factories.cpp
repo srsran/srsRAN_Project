@@ -10,7 +10,6 @@
 
 #include "srsgnb/phy/generic_functions/generic_functions_factories.h"
 #include "dft_processor_fftw_impl.h"
-#include "dft_processor_fftx_impl.h"
 #include "dft_processor_generic_impl.h"
 
 using namespace srsgnb;
@@ -23,19 +22,6 @@ public:
   std::unique_ptr<dft_processor> create(const dft_processor::configuration& config) override
   {
     std::unique_ptr<dft_processor_generic_impl> dft = std::make_unique<dft_processor_generic_impl>(config);
-    if (!dft->is_valid()) {
-      return nullptr;
-    }
-    return dft;
-  }
-};
-
-class dft_processor_factory_fftx : public dft_processor_factory
-{
-public:
-  std::unique_ptr<dft_processor> create(const dft_processor::configuration& config) override
-  {
-    std::unique_ptr<dft_processor_fftx_impl> dft = std::make_unique<dft_processor_fftx_impl>(config);
     if (!dft->is_valid()) {
       return nullptr;
     }
@@ -68,15 +54,6 @@ private:
 std::shared_ptr<dft_processor_factory> srsgnb::create_dft_processor_factory_generic()
 {
   return std::make_shared<dft_processor_factory_generic>();
-}
-
-std::shared_ptr<dft_processor_factory> srsgnb::create_dft_processor_factory_fftx()
-{
-#ifdef ENABLE_FFTX
-  return std::make_shared<dft_processor_factory_fftx>();
-#else  // ENABLE_FFTX
-  return nullptr;
-#endif // ENABLE_FFTX
 }
 
 std::shared_ptr<dft_processor_factory> srsgnb::create_dft_processor_factory_fftw(bool               avoid_wisdom,
