@@ -8,7 +8,7 @@
  *
  */
 
-#include "f1_cu_test_helpers.h"
+#include "f1ap_cu_test_helpers.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include <gtest/gtest.h>

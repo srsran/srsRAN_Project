@@ -13,7 +13,7 @@
 #include "../../lib/cu_cp/ue_manager.h"
 #include "../../lib/f1ap/common/asn1_helpers.h"
 #include "../f1ap/common/test_helpers.h"
-#include "../f1ap/cu_cp/f1_cu_test_helpers.h"
+#include "../f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "../rrc/test_helpers.h"
 #include "du_processor_test_helpers.h"
 #include "test_helpers.h"

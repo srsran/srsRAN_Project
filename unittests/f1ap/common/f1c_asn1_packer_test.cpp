@@ -10,7 +10,7 @@
 
 #include "lib/f1ap/common/f1ap_asn1_packer.h"
 #include "test_helpers.h"
-#include "unittests/f1ap/cu_cp/f1_cu_test_helpers.h"
+#include "unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "unittests/gateways/test_helpers.h"
 #include <gtest/gtest.h>
 
