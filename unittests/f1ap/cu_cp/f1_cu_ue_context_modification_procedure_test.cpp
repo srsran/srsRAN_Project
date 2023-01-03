@@ -20,13 +20,16 @@ using namespace asn1::f1ap;
 class f1ap_cu_ue_context_modification_test : public f1ap_cu_test
 {
 protected:
+  f1ap_cu_ue_context_modification_test() :
+    testue(create_ue(int_to_gnb_du_ue_f1ap_id(test_rgen::uniform_int<uint32_t>())))
+  {
+    run_ue_context_setup(testue.ue_index);
+  }
+
   void start_procedure(const cu_cp_ue_context_modification_request& req)
   {
     t = f1ap->handle_ue_context_modification_request(req);
     t_launcher.emplace(t);
-
-    test_ues[req.ue_index].cu_ue_id = int_to_gnb_cu_ue_f1ap_id(
-        this->f1c_pdu_notifier.last_f1c_msg.pdu.init_msg().value.ue_context_mod_request()->gnb_cu_ue_f1ap_id.value);
   }
 
   bool was_ue_context_modification_msg_sent(gnb_du_ue_f1ap_id_t du_ue_id) const
@@ -43,34 +46,28 @@ protected:
     return req->gnb_du_ue_f1ap_id.value == (unsigned)du_ue_id;
   }
 
+  test_ue& testue;
+
   async_task<cu_cp_ue_context_modification_response>                   t;
   optional<lazy_task_launcher<cu_cp_ue_context_modification_response>> t_launcher;
 };
 
 TEST_F(f1ap_cu_ue_context_modification_test, when_ue_modification_response_received_then_procedure_is_successful)
 {
-  // Test Preamble.
-  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(test_rgen::uniform_int<uint32_t>());
-  test_ue&            u        = create_ue(du_ue_id);
-
   // Start UE CONTEXT MODIFICATION procedure.
-  this->start_procedure(generate_ue_context_modification_request(u.ue_index, {drb_id_t::drb1}));
+  this->start_procedure(generate_ue_context_modification_request(testue.ue_index, {drb_id_t::drb1}));
 
   // The UE CONTEXT MODIFICATION was sent to DU and F1AP-CU is waiting for response.
-  ASSERT_TRUE(was_ue_context_modification_msg_sent(du_ue_id));
+  ASSERT_TRUE(was_ue_context_modification_msg_sent(*testue.du_ue_id));
   ASSERT_FALSE(t.ready());
 }
 
 TEST_F(f1ap_cu_ue_context_modification_test, when_f1ap_receives_response_then_procedure_completes)
 {
-  // Test Preamble.
-  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(test_rgen::uniform_int<uint32_t>());
-  test_ue&            u        = create_ue(du_ue_id);
-
   // Start UE CONTEXT MODIFICATION procedure and return back the response from the DU.
-  this->start_procedure(generate_ue_context_modification_request(u.ue_index, {drb_id_t::drb1}));
+  this->start_procedure(generate_ue_context_modification_request(testue.ue_index, {drb_id_t::drb1}));
   f1c_message ue_context_modification_response =
-      generate_ue_context_modification_response(*u.cu_ue_id, du_ue_id, to_rnti(0x4601), {drb_id_t::drb1});
+      generate_ue_context_modification_response(*testue.cu_ue_id, *testue.du_ue_id, to_rnti(0x4601), {drb_id_t::drb1});
   f1ap->handle_message(ue_context_modification_response);
 
   // The UE CONTEXT MODIFICATION procedure finished successfully.
@@ -83,12 +80,9 @@ TEST_F(f1ap_cu_ue_context_modification_test, when_f1ap_receives_response_then_pr
 /// Test the unsuccessful UE context modification procedure (gNB-CU initiated)
 TEST_F(f1ap_cu_ue_context_modification_test, when_ue_modification_failure_received_then_procedure_is_unsuccessful)
 {
-  // Test Preamble.
-  test_ue& u = create_ue(int_to_gnb_du_ue_f1ap_id(test_rgen::uniform_int<uint32_t>()));
-
   // Start UE CONTEXT MODIFICATION procedure and return back the Failure Response from the DU.
-  this->start_procedure(generate_ue_context_modification_request(u.ue_index, {drb_id_t::drb1}));
-  f1c_message ue_context_modification_failure = generate_ue_context_modification_failure(*u.cu_ue_id, *u.du_ue_id);
+  this->start_procedure(generate_ue_context_modification_request(testue.ue_index, {drb_id_t::drb1}));
+  f1c_message ue_context_modification_failure = generate_ue_context_modification_failure(*testue.cu_ue_id, *testue.du_ue_id);
   f1ap->handle_message(ue_context_modification_failure);
 
   // The UE CONTEXT MODIFICATION procedure finished unsuccessfully.
