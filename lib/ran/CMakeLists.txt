@@ -14,6 +14,7 @@ add_library(srsgnb_ran band_helper.cpp
         pdcch/pdcch_candidates.cpp
         pdcch/pdcch_type0_css_coreset_config.cpp
         pdcch/pdcch_type0_css_occasions.cpp
+        pdsch/dlsch_info.cpp
         pdsch/pdsch_mcs.cpp
         prach/prach_configuration.cpp
         prach/prach_cyclic_shifts.cpp

@@ -17,7 +17,6 @@
 #include "srsgnb/ran/sch/sch_segmentation.h"
 #include "srsgnb/ran/sch_mcs.h"
 #include "srsgnb/support/units.h"
-#include <array>
 
 namespace srsgnb {
 
@@ -83,8 +82,22 @@ struct ulsch_information {
   unsigned nof_csi_part1_re;
   /// Number of resource elements occupied by CSI Part 1 information. Parameter \f$Q'_\textup{CSI-2}\f$.
   unsigned nof_csi_part2_re;
+
+  /// \brief Calculates the effective code rate normalised between 0 and 1.
+  ///
+  /// The effective code rate is determined as the quotient of the number of information bits plus CRCs and the total
+  /// number of channel bits.
+  float get_effective_code_rate() const
+  {
+    srsgnb_assert(nof_ul_sch_bits.value() != 0, "UL-SCH number of bits must not be zero.");
+    srsgnb_assert(sch.nof_bits_per_cb.value() > sch.nof_filler_bits_per_cb.value(),
+                  "The number of bits per CB must be greater than the number of filler bits.");
+    return static_cast<float>((sch.nof_bits_per_cb.value() - sch.nof_filler_bits_per_cb.value()) * sch.nof_cb) /
+           static_cast<float>(nof_ul_sch_bits.value());
+  }
 };
 
+/// Gets the UL-SCH information for a given PUSCH configuration.
 ulsch_information get_ulsch_information(const ulsch_configuration& config);
 
 } // namespace srsgnb
