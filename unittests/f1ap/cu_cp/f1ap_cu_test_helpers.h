@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../common/f1_cu_test_messages.h"
+#include "../common/f1ap_cu_test_messages.h"
 #include "../common/test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/f1ap/common/f1ap_common.h"

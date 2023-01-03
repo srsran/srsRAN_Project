@@ -61,9 +61,8 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
   ASSERT_FALSE(t.ready());
 
   // Action 2: F1 setup failure with time to wait received.
-  unsigned    transaction_id = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
-  f1c_message f1_setup_failure =
-      generate_f1_setup_failure_message_with_time_to_wait(transaction_id, asn1::f1ap::time_to_wait_opts::v10s);
+  unsigned    transaction_id   = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
+  f1c_message f1_setup_failure = generate_f1_setup_failure_message(transaction_id, asn1::f1ap::time_to_wait_opts::v10s);
   test_logger.info("Injecting F1SetupFailure with time to wait");
   msg_notifier.last_f1c_msg = {};
   f1ap->handle_message(f1_setup_failure);
@@ -112,9 +111,8 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
   EXPECT_FALSE(t.ready());
 
   // Action 2: F1 setup failure with time to wait received.
-  unsigned    transaction_id = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
-  f1c_message f1_setup_failure =
-      generate_f1_setup_failure_message_with_time_to_wait(transaction_id, asn1::f1ap::time_to_wait_opts::v10s);
+  unsigned    transaction_id   = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
+  f1c_message f1_setup_failure = generate_f1_setup_failure_message(transaction_id, asn1::f1ap::time_to_wait_opts::v10s);
   test_logger.info("Injecting F1SetupFailure with time to wait");
   msg_notifier.last_f1c_msg = {};
   f1ap->handle_message(f1_setup_failure);
@@ -165,7 +163,7 @@ TEST_F(f1ap_du_test, when_retry_limit_reached_then_du_not_connected)
     // Status: F1 setup failure received.
     unsigned    transaction_id = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
     f1c_message f1_setup_response_msg =
-        generate_f1_setup_failure_message_with_time_to_wait(transaction_id, asn1::f1ap::time_to_wait_opts::v10s);
+        generate_f1_setup_failure_message(transaction_id, asn1::f1ap::time_to_wait_opts::v10s);
     msg_notifier.last_f1c_msg = {};
     f1ap->handle_message(f1_setup_response_msg);
 
@@ -181,7 +179,7 @@ TEST_F(f1ap_du_test, when_retry_limit_reached_then_du_not_connected)
   // Status: F1 setup failure received.
   unsigned    transaction_id = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
   f1c_message f1_setup_response_msg =
-      generate_f1_setup_failure_message_with_time_to_wait(transaction_id, asn1::f1ap::time_to_wait_opts::v10s);
+      generate_f1_setup_failure_message(transaction_id, asn1::f1ap::time_to_wait_opts::v10s);
   msg_notifier.last_f1c_msg = {};
   f1ap->handle_message(f1_setup_response_msg);
 

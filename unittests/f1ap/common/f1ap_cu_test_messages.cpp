@@ -8,7 +8,7 @@
  *
  */
 
-#include "f1_cu_test_messages.h"
+#include "f1ap_cu_test_messages.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;

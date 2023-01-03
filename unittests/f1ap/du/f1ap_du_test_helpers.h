@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../common/f1ap_du_test_messages.h"
 #include "../common/test_helpers.h"
 #include "lib/du_manager/converters/f1c_configuration_helpers.h"
 #include "lib/f1ap/common/f1ap_asn1_utils.h"
@@ -99,16 +100,6 @@ public:
 };
 
 f1_setup_request_message generate_f1_setup_request_message();
-
-f1c_message generate_f1_setup_response_message(unsigned transaction_id);
-
-f1c_message generate_f1_setup_failure_message(unsigned transaction_id);
-
-f1c_message generate_f1_setup_failure_message_with_time_to_wait(unsigned                   transaction_id,
-                                                                asn1::f1ap::time_to_wait_e time_to_wait);
-
-/// \brief Generate F1AP DL RRC Message Transfer message.
-f1c_message generate_f1_dl_rrc_message_transfer(srb_id_t srb_id, const byte_buffer& rrc_container);
 
 /// \brief Generate F1AP ASN.1 DRB AM Setup configuration.
 asn1::f1ap::drbs_to_be_setup_item_s generate_drb_am_setup_item(drb_id_t drbid);

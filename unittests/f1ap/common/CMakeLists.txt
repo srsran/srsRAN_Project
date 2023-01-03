@@ -6,13 +6,13 @@
 # the distribution.
 #
 
-add_library(f1_test_helpers f1_cu_test_messages.cpp)
-target_include_directories(f1_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(f1_test_helpers srsgnb_support f1ap_asn1 srslog)
+add_library(f1ap_test_helpers f1ap_cu_test_messages.cpp f1ap_du_test_messages.cpp)
+target_include_directories(f1ap_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(f1ap_test_helpers srsgnb_support f1ap_asn1 srslog)
 
 add_executable(f1c_asn1_packer_test f1c_asn1_packer_test.cpp)
 target_link_libraries(f1c_asn1_packer_test
-        f1_test_helpers
+        f1ap_test_helpers
         srsgnb_f1c_common
         srsgnb_support
         srslog

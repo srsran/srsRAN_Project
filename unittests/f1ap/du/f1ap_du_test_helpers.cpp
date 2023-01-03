@@ -9,7 +9,7 @@
  */
 
 #include "f1ap_du_test_helpers.h"
-#include "../common/f1_cu_test_messages.h"
+#include "../common/f1ap_cu_test_messages.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
@@ -24,68 +24,6 @@ f1_setup_request_message srsgnb::srs_du::generate_f1_setup_request_message()
   fill_asn1_f1_setup_request(request_msg.msg, setup_params, cells);
 
   return request_msg;
-}
-
-f1c_message srsgnb::srs_du::generate_f1_setup_response_message(unsigned transaction_id)
-{
-  f1c_message f1_setup_response = {};
-
-  f1_setup_response.pdu.set_successful_outcome();
-  f1_setup_response.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-
-  auto& setup_res                 = f1_setup_response.pdu.successful_outcome().value.f1_setup_resp();
-  setup_res->transaction_id.value = transaction_id;
-  setup_res->gnb_cu_name_present  = true;
-  setup_res->gnb_cu_name.value.from_string("srsCU");
-  setup_res->gnb_cu_rrc_version.value.latest_rrc_version.from_number(2);
-
-  return f1_setup_response;
-}
-
-f1c_message srsgnb::srs_du::generate_f1_setup_failure_message(unsigned transaction_id)
-{
-  f1c_message f1_setup_failure = {};
-
-  f1_setup_failure.pdu.set_unsuccessful_outcome();
-  f1_setup_failure.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-
-  auto& setup_fail                 = f1_setup_failure.pdu.unsuccessful_outcome().value.f1_setup_fail();
-  setup_fail->transaction_id.value = transaction_id;
-  setup_fail->cause.value.set_radio_network();
-  setup_fail->cause.value.radio_network() =
-      asn1::f1ap::cause_radio_network_opts::options::unknown_or_already_allocated_gnb_cu_ue_f1ap_id;
-  setup_fail->time_to_wait_present     = false;
-  setup_fail->crit_diagnostics_present = false;
-  // add critical diagnostics
-
-  return f1_setup_failure;
-}
-
-f1c_message srsgnb::srs_du::generate_f1_setup_failure_message_with_time_to_wait(unsigned transaction_id,
-                                                                                asn1::f1ap::time_to_wait_e time_to_wait)
-{
-  f1c_message f1_setup_failure = generate_f1_setup_failure_message(transaction_id);
-
-  auto& setup_fail                 = f1_setup_failure.pdu.unsuccessful_outcome().value.f1_setup_fail();
-  setup_fail->time_to_wait_present = true;
-  setup_fail->time_to_wait.value   = time_to_wait;
-
-  return f1_setup_failure;
-}
-
-f1c_message srsgnb::srs_du::generate_f1_dl_rrc_message_transfer(srb_id_t srb_id, const byte_buffer& rrc_container)
-{
-  f1c_message msg;
-
-  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
-  auto& dl_msg                     = msg.pdu.init_msg().value.dl_rrc_msg_transfer();
-  dl_msg->gnb_cu_ue_f1ap_id->value = 0;
-  dl_msg->gnb_du_ue_f1ap_id->value = 0;
-  dl_msg->srb_id->value            = srb_id_to_uint(srb_id);
-  dl_msg->rrc_container->resize(rrc_container.length());
-  std::copy(rrc_container.begin(), rrc_container.end(), dl_msg->rrc_container->begin());
-
-  return msg;
 }
 
 asn1::f1ap::drbs_to_be_setup_item_s srsgnb::srs_du::generate_drb_am_setup_item(drb_id_t drbid)
