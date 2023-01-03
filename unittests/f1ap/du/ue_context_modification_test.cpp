@@ -53,7 +53,7 @@ protected:
                f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp;
   }
 
-  du_ue_index_t test_ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_NOF_DU_UES));
+  du_ue_index_t test_ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX));
 };
 
 TEST_F(f1ap_du_ue_context_modification_test, when_f1ap_receives_request_then_f1ap_notifies_du_of_ue_context_update)
