@@ -481,9 +481,11 @@ private:
       head.reset(p);
       set_tail(head.get());
     } else {
-      p->metadata().pkt_len = length();
-      p->metadata().next    = std::move(head);
+      byte_buffer_segment* t = get_tail();
+      p->metadata().pkt_len  = length();
+      p->metadata().next     = std::move(head);
       head.reset(p);
+      set_tail(t);
     }
   }
 
