@@ -151,6 +151,14 @@ f1c_message srsgnb::srs_cu_cp::generate_ue_context_setup_request(gnb_cu_ue_f1ap_
   ue_ctx_req->gnb_cu_ue_f1ap_id.value = (unsigned)cu_ue_id;
   ue_ctx_req->gnb_du_ue_f1ap_id.value = (unsigned)du_ue_id;
 
+  ue_ctx_req->srbs_to_be_setup_list_present = true;
+  ue_ctx_req->srbs_to_be_setup_list.value.resize(1);
+  ue_ctx_req->srbs_to_be_setup_list.value[0].load_info_obj(ASN1_F1AP_ID_SRBS_TO_BE_SETUP_ITEM);
+  srbs_to_be_setup_item_s& srb2     = ue_ctx_req->srbs_to_be_setup_list.value[0].value().srbs_to_be_setup_item();
+  srb2.srb_id                       = 2;
+  ue_ctx_req->rrc_container_present = true;
+  ue_ctx_req->rrc_container.value.from_string("000320080895755b0c");
+
   return msg;
 }
 
