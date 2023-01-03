@@ -240,8 +240,15 @@ public:
   void prepend(span<const uint8_t> bytes)
   {
     if (empty()) {
+      // the byte buffer is empty. Prepending is the same as appending.
       append(bytes);
       return;
+    }
+    if (head->headroom() < bytes.size() and head.use_count() > 1) {
+      // The head segment of the byte_buffer needs to be changed and the byte_buffer has been previously shallow
+      // copied. We need to perform a deep copy and detach this byte_buffer from previous shallow copies to avoid
+      // corrupting the latter.
+      *this = deep_copy();
     }
     for (size_t count = 0; count < bytes.size();) {
       if (head->headroom() == 0) {
@@ -710,14 +717,19 @@ private:
 
 inline byte_buffer_view byte_buffer::reserve_prepend(size_t nof_bytes)
 {
-  size_t count = nof_bytes;
-  while (count > 0) {
+  if (not empty() and head->headroom() < nof_bytes and head.use_count() > 1) {
+    // The head segment needs to be changed and the byte_buffer has been previously shallow copied. To avoid the
+    // corruption of the state of the shallow copies, we need to perform a deep copy.
+    *this = deep_copy();
+  }
+  size_t rem_bytes = nof_bytes;
+  while (rem_bytes > 0) {
     if (empty() or head->headroom() == 0) {
-      prepend_segment(std::min((size_t)byte_buffer_segment::SEGMENT_SIZE, count));
+      prepend_segment(std::min((size_t)byte_buffer_segment::SEGMENT_SIZE, rem_bytes));
     }
-    size_t to_reserve = std::min(head->headroom(), count);
+    size_t to_reserve = std::min(head->headroom(), rem_bytes);
     head->reserve_prepend(to_reserve);
-    count -= to_reserve;
+    rem_bytes -= to_reserve;
   }
   head->metadata().pkt_len += nof_bytes;
   return byte_buffer_view{begin(), begin() + nof_bytes};

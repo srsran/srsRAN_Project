@@ -377,17 +377,40 @@ TEST(byte_buffer, prepend_and_trim_tail)
   ASSERT_EQ_LEN(sdu, pdu_len - trim_len);
 }
 
-// TEST(byte_buffer, shallow_copy_prepend_and_append_keeps_validity) {
-//   const std::vector<uint8_t> bytes1 = make_vec(), bytes2 = make_large_vec(), bytes3 = make_large_vec();
-//   byte_buffer pdu{bytes1};
-//
-//   byte_buffer pdu2{pdu.copy()};
-//   pdu.prepend(bytes2);
-//   pdu.append(bytes3);
-//
-//   ASSERT_EQ(pdu, concat_vec(concat_vec(bytes2, bytes1), bytes3));
-//   ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin()) << "shallow copied-from byte_buffer::length() got corrupted";
-// }
+TEST(byte_buffer, shallow_copy_prepend_and_append_keeps_validity)
+{
+  // When a byte_buffer::prepend causes the byte_buffer head segment to move, any previously existing shallow copies
+  // could become invalidated. To avoid this issue, we perform COW on prepend, when more than one byte_buffer points to
+  // the same head segment.
+  const std::vector<uint8_t> bytes1 = make_vec(), bytes2 = make_large_vec(), bytes3 = make_large_vec();
+  byte_buffer                pdu{bytes1};
+
+  byte_buffer pdu2{pdu.copy()};
+  pdu.prepend(bytes2);
+  pdu.append(bytes3);
+
+  ASSERT_EQ(pdu, concat_vec(concat_vec(bytes2, bytes1), bytes3));
+  ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin()) << "shallow copied-from byte_buffer::length() got corrupted";
+  ASSERT_EQ_BUFFER(pdu2, bytes1);
+}
+
+TEST(byte_buffer, shallow_copy_reserve_prepend_and_append_keeps_validity)
+{
+  // When a byte_buffer::prepend causes the byte_buffer head segment to move, any previously existing shallow copies
+  // could become invalidated. To avoid this issue, we perform COW on prepend, when more than one byte_buffer points to
+  // the same head segment.
+  const std::vector<uint8_t> bytes1 = make_vec(), bytes2 = make_large_vec(), bytes3 = make_large_vec();
+  byte_buffer                pdu{bytes1};
+
+  byte_buffer      pdu2{pdu.copy()};
+  byte_buffer_view v = pdu.reserve_prepend(bytes2.size());
+  pdu.append(bytes3);
+  std::copy(bytes2.begin(), bytes2.end(), v.begin());
+
+  ASSERT_EQ(pdu, concat_vec(concat_vec(bytes2, bytes1), bytes3));
+  ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin()) << "shallow copied-from byte_buffer::length() got corrupted";
+  ASSERT_EQ_BUFFER(pdu2, bytes1);
+}
 
 TEST(byte_buffer, is_contiguous)
 {
