@@ -8,10 +8,10 @@
 
 include_directories(../../..)
 
-add_library(f1_du_test_helpers f1_du_test_helpers.cpp)
+add_library(f1_du_test_helpers f1ap_du_test_helpers.cpp)
 target_link_libraries(f1_du_test_helpers srsgnb_f1c_du srsgnb_support du_manager_converters sched_config)
 
-add_executable(f1_du_setup_procedure_test f1_du_setup_procedure_test.cpp)
+add_executable(f1_du_setup_procedure_test f1ap_du_setup_procedure_test.cpp)
 target_link_libraries(f1_du_setup_procedure_test
         srsgnb_f1c_du
         srsgnb_support
@@ -24,7 +24,7 @@ target_link_libraries(f1_du_setup_procedure_test
 target_include_directories(f1_du_setup_procedure_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(f1_du_setup_procedure_test)
 
-add_executable(f1_du_dl_rrc_message_transfer_test f1_du_dl_rrc_message_transfer_test.cpp)
+add_executable(f1_du_dl_rrc_message_transfer_test f1ap_du_dl_rrc_message_transfer_test.cpp)
 target_link_libraries(f1_du_dl_rrc_message_transfer_test
         srsgnb_f1c_du
         srsgnb_support
@@ -36,7 +36,7 @@ target_link_libraries(f1_du_dl_rrc_message_transfer_test
         gtest_main)
 gtest_discover_tests(f1_du_dl_rrc_message_transfer_test)
 
-add_executable(f1_du_ue_config_test f1_du_ue_config_test.cpp)
+add_executable(f1_du_ue_config_test f1ap_du_ue_config_test.cpp)
 target_link_libraries(f1_du_ue_config_test
         srsgnb_f1c_du
         srsgnb_support
@@ -48,7 +48,7 @@ target_link_libraries(f1_du_ue_config_test
         gtest_main)
 gtest_discover_tests(f1_du_ue_config_test)
 
-add_executable(f1ap_du_ue_context_setup_test f1_du_ue_context_setup_procedure_test.cpp)
+add_executable(f1ap_du_ue_context_setup_test f1ap_du_ue_context_setup_procedure_test.cpp)
 target_link_libraries(f1ap_du_ue_context_setup_test
         srsgnb_f1c_du
         srsgnb_support
@@ -60,7 +60,7 @@ target_link_libraries(f1ap_du_ue_context_setup_test
         gtest_main)
 gtest_discover_tests(f1ap_du_ue_context_setup_test)
 
-add_executable(f1ap_du_ue_context_modification_test ue_context_modification_test.cpp)
+add_executable(f1ap_du_ue_context_modification_test f1ap_du_ue_context_modification_test.cpp)
 target_link_libraries(f1ap_du_ue_context_modification_test
         srsgnb_f1c_du
         srsgnb_support

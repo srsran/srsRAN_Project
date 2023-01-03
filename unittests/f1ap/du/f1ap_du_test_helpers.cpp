@@ -8,7 +8,7 @@
  *
  */
 
-#include "f1_du_test_helpers.h"
+#include "f1ap_du_test_helpers.h"
 #include "../common/f1_cu_test_messages.h"
 #include "srsgnb/support/test_utils.h"
 

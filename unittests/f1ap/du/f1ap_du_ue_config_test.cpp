@@ -8,7 +8,7 @@
  *
  */
 
-#include "f1_du_test_helpers.h"
+#include "f1ap_du_test_helpers.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
