@@ -52,7 +52,7 @@ void pdu_session_resource_setup_routine::operator()(
 
   {
     // prepare BearerContextSetupRequest
-    bearer_contest_setup_request.pdu_session_res_to_setup_list.resize(1);
+    fill_e1ap_bearer_context_setup_request(bearer_contest_setup_request);
 
     // call E1 procedure
     CORO_AWAIT_VALUE(bearer_context_setup_response,
@@ -180,4 +180,71 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
   }
 
   return response_msg;
+}
+
+void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
+    e1ap_bearer_context_setup_request& e1ap_request)
+{
+  e1ap_request.cu_cp_ue_id = setup_msg.cu_cp_ue_id;
+  // TODO: Add security info
+  e1ap_request.ue_dl_aggregate_maximum_bit_rate = setup_msg.ue_aggregate_maximum_bit_rate_dl;
+  e1ap_request.serving_plmn                     = setup_msg.serving_plmn;
+  e1ap_request.activity_notif_level             = "ue"; // TODO: Remove hardcoded value
+
+  for (const auto& pdu_session_to_setup : setup_msg.pdu_session_res_setup_items) {
+    e1ap_pdu_session_res_to_setup_item e1ap_pdu_session_item;
+
+    e1ap_pdu_session_item.pdu_session_id    = pdu_session_to_setup.pdu_session_id;
+    e1ap_pdu_session_item.pdu_session_type  = pdu_session_to_setup.pdu_session_type;
+    e1ap_pdu_session_item.snssai            = pdu_session_to_setup.s_nssai;
+    e1ap_pdu_session_item.ng_ul_up_tnl_info = pdu_session_to_setup.ul_ngu_up_tnl_info;
+
+    e1ap_pdu_session_item.security_ind.integrity_protection_ind       = "not_needed"; // TODO: Remove hardcoded value
+    e1ap_pdu_session_item.security_ind.confidentiality_protection_ind = "not_needed"; // TODO: Remove hardcoded value
+
+    for (const auto& drb_to_setup : drb_to_add_list) {
+      e1ap_drb_to_setup_item_ng_ran e1ap_drb_setup_item;
+      e1ap_drb_setup_item.drb_id   = drb_to_setup;
+      e1ap_drb_setup_item.sdap_cfg = rrc_ue_drb_manager.get_sdap_config(drb_to_setup);
+
+      const auto& cu_cp_pdcp_cfg = rrc_ue_drb_manager.get_pdcp_config(drb_to_setup);
+
+      e1ap_drb_setup_item.pdcp_cfg.pdcp_sn_size_ul = cu_cp_pdcp_cfg.drb.value().pdcp_sn_size_ul.value();
+      e1ap_drb_setup_item.pdcp_cfg.pdcp_sn_size_dl = cu_cp_pdcp_cfg.drb.value().pdcp_sn_size_dl.value();
+      e1ap_drb_setup_item.pdcp_cfg.rlc_mod         = srsgnb::rlc_mode::am; // TODO: Remove hardcoded value
+
+      e1ap_cell_group_info_item e1ap_cell_group_item;
+      e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
+      e1ap_drb_setup_item.cell_group_info.push_back(e1ap_cell_group_item);
+
+      for (const auto& qos_item : pdu_session_to_setup.qos_flow_setup_request_items) {
+        e1ap_qos_flow_qos_param_item e1ap_qos_item;
+        e1ap_qos_item.qos_flow_id = qos_item.qos_flow_id;
+
+        if (!qos_item.qos_characteristics.is_dynamic_5qi) {
+          e1ap_non_dynamic_5qi_descriptor non_dyn_5qi;
+          non_dyn_5qi.five_qi = qos_item.qos_characteristics.five_qi;
+
+          // TODO: Add optional values
+
+          e1ap_qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+        } else {
+          // TODO: Add dynamic 5qi
+        }
+
+        e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.prio_level =
+            qos_item.qos_characteristics.prio_level_arp;
+        e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_cap =
+            qos_item.qos_characteristics.pre_emption_cap;
+        e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_vulnerability =
+            qos_item.qos_characteristics.pre_emption_vulnerability;
+
+        e1ap_drb_setup_item.qos_flow_info_to_be_setup.push_back(e1ap_qos_item);
+      }
+
+      e1ap_pdu_session_item.drb_to_setup_list_ng_ran.push_back(e1ap_drb_setup_item);
+    }
+
+    e1ap_request.pdu_session_res_to_setup_list.push_back(e1ap_pdu_session_item);
+  }
 }

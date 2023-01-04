@@ -273,6 +273,7 @@ struct cu_cp_pdu_session_resource_setup_message {
   cu_cp_ue_id_t                                 cu_cp_ue_id = cu_cp_ue_id_t::invalid;
   std::vector<cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
   uint64_t                                      ue_aggregate_maximum_bit_rate_dl;
+  std::string                                   serving_plmn;
 };
 
 struct cu_cp_associated_qos_flow {

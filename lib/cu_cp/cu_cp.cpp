@@ -31,7 +31,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   assert_cu_cp_configuration_valid(cfg);
 
   // Create layers
-  ngc_entity = create_ngc(ngc_task_sched, ue_mng, *cfg.ngc_notifier);
+  ngc_entity = create_ngc(cfg.ngc_config, ngc_task_sched, ue_mng, *cfg.ngc_notifier);
 
   // connect event notifiers to layers
   ngc_task_sched.connect_cu_cp(ue_task_sched);

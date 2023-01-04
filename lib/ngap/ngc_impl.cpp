@@ -21,10 +21,12 @@ using namespace srsgnb;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
-ngc_impl::ngc_impl(ngc_ue_task_scheduler& task_sched_,
+ngc_impl::ngc_impl(ngc_configuration&     ngc_cfg_,
+                   ngc_ue_task_scheduler& task_sched_,
                    ngc_ue_manager&        ue_manager_,
                    ngc_message_notifier&  ngc_notifier_) :
   logger(srslog::fetch_basic_logger("NGC")),
+  ngc_cfg(ngc_cfg_),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
   ngc_notifier(ngc_notifier_),
@@ -251,7 +253,8 @@ void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_s
 
   // Convert to common type
   cu_cp_pdu_session_resource_setup_message msg;
-  msg.cu_cp_ue_id = cu_cp_ue_id;
+  msg.cu_cp_ue_id  = cu_cp_ue_id;
+  msg.serving_plmn = ngc_cfg.plmn;
   fill_cu_cp_pdu_session_resource_setup_message(msg, request->pdu_session_res_setup_list_su_req.value);
   msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
 

@@ -29,12 +29,17 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
+    cfg.gnb_id        = 411;
+    cfg.ran_node_name = "srsgnb01";
+    cfg.plmn          = "00101";
+    cfg.tac           = 7;
+
     msg_notifier          = std::make_unique<dummy_ngc_amf_notifier>(nullptr);
     rrc_ue_notifier       = std::make_unique<dummy_ngc_rrc_ue_notifier>();
     du_processor_notifier = std::make_unique<dummy_ngc_du_processor_notifier>();
     ngc_ue_task_scheduler = std::make_unique<dummy_ngc_ue_task_scheduler>(timers);
 
-    ngc = create_ngc(*ngc_ue_task_scheduler, ue_mng, *msg_notifier);
+    ngc = create_ngc(cfg, *ngc_ue_task_scheduler, ue_mng, *msg_notifier);
   }
 
   void TearDown() override
@@ -43,6 +48,7 @@ protected:
     srslog::flush();
   }
 
+  ngc_configuration                                cfg;
   timer_manager                                    timers;
   ue_manager                                       ue_mng;
   std::unique_ptr<dummy_ngc_amf_notifier>          msg_notifier;

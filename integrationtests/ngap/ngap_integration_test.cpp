@@ -80,6 +80,11 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
+    cfg.gnb_id        = 411;
+    cfg.ran_node_name = "srsgnb01";
+    cfg.plmn          = "00101";
+    cfg.tac           = 7;
+
     network_gateway_config nw_config;
     nw_config.connect_address   = "10.12.1.105";
     nw_config.connect_port      = 38412;
@@ -90,10 +95,11 @@ protected:
 
     ngc_ue_task_scheduler = std::make_unique<dummy_ngc_ue_task_scheduler>(timers);
 
-    ngc = create_ngc(*ngc_ue_task_scheduler, ue_mng, *adapter);
+    ngc = create_ngc(cfg, *ngc_ue_task_scheduler, ue_mng, *adapter);
     adapter->connect_ngc(ngc.get());
   }
 
+  ngc_configuration                            cfg;
   timer_manager                                timers;
   ue_manager                                   ue_mng;
   std::unique_ptr<dummy_ngc_ue_task_scheduler> ngc_ue_task_scheduler;

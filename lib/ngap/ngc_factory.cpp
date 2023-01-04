@@ -16,10 +16,11 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-std::unique_ptr<ngc_interface> srsgnb::srs_cu_cp::create_ngc(ngc_ue_task_scheduler& task_sched_,
+std::unique_ptr<ngc_interface> srsgnb::srs_cu_cp::create_ngc(ngc_configuration&     ngc_cfg_,
+                                                             ngc_ue_task_scheduler& task_sched_,
                                                              ngc_ue_manager&        ue_manager_,
                                                              ngc_message_notifier&  ngc_notifier_)
 {
-  auto ngc = std::make_unique<ngc_impl>(task_sched_, ue_manager_, ngc_notifier_);
+  auto ngc = std::make_unique<ngc_impl>(ngc_cfg_, task_sched_, ue_manager_, ngc_notifier_);
   return ngc;
 }

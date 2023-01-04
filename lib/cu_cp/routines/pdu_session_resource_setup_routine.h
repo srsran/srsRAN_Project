@@ -34,6 +34,8 @@ public:
   static const char* name() { return "PDU Session Creation Routine"; }
 
 private:
+  void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request& e1ap_request);
+
   cu_cp_pdu_session_resource_setup_response_message handle_pdu_session_resource_setup_result(bool success);
 
   const cu_cp_pdu_session_resource_setup_message setup_msg;
