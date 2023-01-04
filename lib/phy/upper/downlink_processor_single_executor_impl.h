@@ -44,12 +44,12 @@ public:
   /// \param ssb_proc_ SSB processor used to process SSB PDUs.
   /// \param csi_rs_proc_ CSI-RS processor used to process CSI-RS configurations.
   /// \param executor_ Task executor that will be used to process every PDU.
-  downlink_processor_single_executor_impl(upper_phy_rg_gateway&             gateway_,
-                                          std::unique_ptr<pdcch_processor>  pdcch_proc_,
-                                          std::unique_ptr<pdsch_processor>  pdsch_proc_,
-                                          std::unique_ptr<ssb_processor>    ssb_proc_,
-                                          std::unique_ptr<csi_rs_processor> csi_rs_proc_,
-                                          task_executor&                    executor_);
+  downlink_processor_single_executor_impl(upper_phy_rg_gateway&                 gateway_,
+                                          std::unique_ptr<pdcch_processor>      pdcch_proc_,
+                                          std::unique_ptr<pdsch_processor>      pdsch_proc_,
+                                          std::unique_ptr<ssb_processor>        ssb_proc_,
+                                          std::unique_ptr<nzp_csi_rs_generator> csi_rs_proc_,
+                                          task_executor&                        executor_);
 
   // See interface for documentation.
   void process_pdcch(const pdcch_processor::pdu_t& pdu) override;
@@ -62,7 +62,7 @@ public:
   void process_ssb(const ssb_processor::pdu_t& pdu) override;
 
   // See interface for documentation.
-  void process_nzp_csi_rs(const csi_rs_processor::config_t& config) override;
+  void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override;
 
   // See interface for documentation.
   void configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override;
@@ -83,14 +83,14 @@ private:
   void decrease_pending_pdus_and_try_sending_grid();
 
 private:
-  upper_phy_rg_gateway&             gateway;
-  resource_grid_context             rg_context;
-  resource_grid*                    current_grid;
-  std::unique_ptr<pdcch_processor>  pdcch_proc;
-  std::unique_ptr<pdsch_processor>  pdsch_proc;
-  std::unique_ptr<ssb_processor>    ssb_proc;
-  std::unique_ptr<csi_rs_processor> csi_rs_proc;
-  task_executor&                    executor;
+  upper_phy_rg_gateway&                 gateway;
+  resource_grid_context                 rg_context;
+  resource_grid*                        current_grid;
+  std::unique_ptr<pdcch_processor>      pdcch_proc;
+  std::unique_ptr<pdsch_processor>      pdsch_proc;
+  std::unique_ptr<ssb_processor>        ssb_proc;
+  std::unique_ptr<nzp_csi_rs_generator> csi_rs_proc;
+  task_executor&                        executor;
 
   unsigned pending_pdus;
   bool     is_send_allowed;

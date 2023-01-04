@@ -25,7 +25,7 @@ using namespace srsgnb;
 namespace {
 
 /// Dummy NZP CSI RS processor.
-class csi_rs_processor_dummy : public csi_rs_processor
+class csi_rs_processor_dummy : public nzp_csi_rs_generator
 {
 public:
   void map(resource_grid_writer& grid, const config_t& config) override {}

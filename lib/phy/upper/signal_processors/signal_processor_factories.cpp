@@ -13,6 +13,7 @@
 #include "dmrs_pdcch_processor_impl.h"
 #include "dmrs_pdsch_processor_impl.h"
 #include "dmrs_pusch_estimator_impl.h"
+#include "nzp_csi_rs_generator_impl.h"
 #include "port_channel_estimator_average_impl.h"
 #include "pss_processor_impl.h"
 #include "pucch/dmrs_pucch_processor_format1_impl.h"
@@ -139,6 +140,27 @@ private:
   std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory;
 };
 
+class nzp_csi_rs_generator_factory_sw : public nzp_csi_rs_generator_factory
+{
+public:
+  nzp_csi_rs_generator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
+    prg_factory(std::move(prg_factory_))
+  {
+    srsgnb_assert(prg_factory, "Invalid PRG factory.");
+  }
+  std::unique_ptr<nzp_csi_rs_generator> create() override
+  {
+    return std::make_unique<nzp_csi_rs_generator_impl>(prg_factory->create());
+  }
+  std::unique_ptr<nzp_csi_rs_configuration_validator> create_validator() override
+  {
+    return std::make_unique<nzp_csi_rs_configuration_validator_impl>();
+  }
+
+private:
+  std::shared_ptr<pseudo_random_generator_factory> prg_factory;
+};
+
 class port_channel_estimator_factory_sw : public port_channel_estimator_factory
 {
 public:
@@ -194,6 +216,12 @@ srsgnb::create_dmrs_pusch_estimator_factory_sw(std::shared_ptr<pseudo_random_gen
                                                std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory)
 {
   return std::make_shared<dmrs_pusch_estimator_factory_sw>(std::move(prg_factory), std::move(ch_estimator_factory));
+}
+
+std::shared_ptr<nzp_csi_rs_generator_factory>
+srsgnb::create_nzp_csi_rs_generator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
+{
+  return std::make_shared<nzp_csi_rs_generator_factory_sw>(std::move(prg_factory));
 }
 
 std::shared_ptr<port_channel_estimator_factory> srsgnb::create_port_channel_estimator_factory_sw()

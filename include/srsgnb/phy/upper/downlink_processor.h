@@ -13,7 +13,7 @@
 #include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
-#include "srsgnb/phy/upper/signal_processors/csi_rs_processor.h"
+#include "srsgnb/phy/upper/signal_processors/nzp_csi_rs_generator.h"
 
 namespace srsgnb {
 
@@ -52,10 +52,10 @@ public:
   /// \param[in] pdu SSB PDU to process.
   virtual void process_ssb(const ssb_processor::pdu_t& pdu) = 0;
 
-  /// \brief Process the given CSI-RS configuration.
+  /// \brief Process the given NZP-CSI-RS configuration.
   ///
   /// \param[in] config NZP-CSI-RS configuration to process.
-  virtual void process_nzp_csi_rs(const csi_rs_processor::config_t& config) = 0;
+  virtual void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) = 0;
 
   /// \brief Configures the resource grid of the downlink_processor.
   ///

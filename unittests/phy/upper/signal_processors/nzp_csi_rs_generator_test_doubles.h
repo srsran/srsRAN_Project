@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/signal_processors/csi_rs_processor.h"
+#include "srsgnb/phy/upper/signal_processors/nzp_csi_rs_generator.h"
 
 namespace srsgnb {
 
 /// Spy implementation of a CSI-RS processor.
-class csi_rs_processor_spy : public csi_rs_processor
+class csi_rs_processor_spy : public nzp_csi_rs_generator
 {
   bool map_method_called = false;
 

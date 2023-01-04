@@ -13,12 +13,20 @@
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/phy/upper/re_pattern.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
-#include "srsgnb/phy/upper/signal_processors/csi_rs_processor.h"
+#include "srsgnb/phy/upper/signal_processors/nzp_csi_rs_generator.h"
 
 namespace srsgnb {
 
+/// Implements a parameter validator for \ref nzp_csi_rs_generator_impl.
+class nzp_csi_rs_configuration_validator_impl : public nzp_csi_rs_configuration_validator
+{
+public:
+  // See interface for documentation.
+  bool is_valid(const nzp_csi_rs_generator::config_t& config) override;
+};
+
 /// Defines a NZP-CSI-RS signal generator.
-class csi_rs_processor_impl : public csi_rs_processor
+class nzp_csi_rs_generator_impl : public nzp_csi_rs_generator
 {
 private:
   /// Maximum number of PRB subcarriers that the CSI-RS can occupy, deduced from TS 38.211 Table 7.4.1.5.3-1.
@@ -86,7 +94,7 @@ private:
                  const unsigned        l_idx);
 
 public:
-  csi_rs_processor_impl(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
+  nzp_csi_rs_generator_impl(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
   {
     srsgnb_assert(prg, "Invalid PRG.");
   }

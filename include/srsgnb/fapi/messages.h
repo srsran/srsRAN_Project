@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/ran/csi_rs/csi_rs_types.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/ldpc_base_graph.h"
 #include "srsgnb/ran/modulation_scheme.h"
@@ -292,26 +293,22 @@ struct dl_csi_rs_maintenance_v3 {
   int16_t  csi_rs_power_offset_profile_sss;
 };
 
-enum class csi_type : uint8_t { TRS, CSI_RS_NZP, CSI_RS_ZP };
-enum class csi_cdm_type : uint8_t { no_CDM, fd_CDM2, cdm4_FD2_TD2, cdm8_FD2_TD4 };
-enum class csi_freq_density_type : uint8_t { dot5_even_RB, dot5_odd_RB, one, three };
-
 /// Downlink CSI-RS PDU information.
 struct dl_csi_rs_pdu {
-  subcarrier_spacing     scs;
-  cyclic_prefix          cp;
-  uint16_t               start_rb;
-  uint16_t               num_rbs;
-  csi_type               type;
-  uint8_t                row;
-  uint16_t               freq_domain;
-  uint8_t                symb_L0;
-  uint8_t                symb_L1;
-  csi_cdm_type           cdm_type;
-  csi_freq_density_type  freq_density;
-  uint16_t               scramb_id;
-  uint8_t                power_control_offset_profile_nr;
-  nzp_csi_rs_epre_to_ssb power_control_offset_ss_profile_nr;
+  subcarrier_spacing       scs;
+  cyclic_prefix            cp;
+  uint16_t                 start_rb;
+  uint16_t                 num_rbs;
+  csi_rs_type              type;
+  uint8_t                  row;
+  uint16_t                 freq_domain;
+  uint8_t                  symb_L0;
+  uint8_t                  symb_L1;
+  csi_rs_cdm_type          cdm_type;
+  csi_rs_freq_density_type freq_density;
+  uint16_t                 scramb_id;
+  uint8_t                  power_control_offset_profile_nr;
+  nzp_csi_rs_epre_to_ssb   power_control_offset_ss_profile_nr;
   //: TODO: beamforming struct
   dl_csi_rs_maintenance_v3 csi_rs_maintenance_v3;
   //: TODO: csi params v4

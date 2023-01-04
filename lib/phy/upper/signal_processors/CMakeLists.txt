@@ -7,11 +7,11 @@
 #
 
 set(SOURCES
-        csi_rs_processor_impl.cpp
         dmrs_pbch_processor_impl.cpp
         dmrs_pdcch_processor_impl.cpp
         dmrs_pdsch_processor_impl.cpp
         dmrs_pusch_estimator_impl.cpp
+        nzp_csi_rs_generator_impl.cpp
         port_channel_estimator_average_impl.cpp
         pucch/dmrs_pucch_processor_format1_impl.cpp
         pucch/dmrs_pucch_processor_format2_impl.cpp
@@ -23,6 +23,6 @@ set(SOURCES
 include_directories(../../../../include/srsgnb/phy/upper/signal_processors)
 
 add_library(srsgnb_signal_processors STATIC ${SOURCES})
-target_link_libraries(srsgnb_signal_processors srsvec srsgnb_phy_support)
+target_link_libraries(srsgnb_signal_processors srsvec srsgnb_phy_support srsgnb_upper_phy_support srsgnb_ran)
 
 install(TARGETS srsgnb_signal_processors EXPORT srsgnb_export)

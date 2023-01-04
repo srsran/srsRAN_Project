@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/ran/alpha.h"
-#include "srsgnb/ran/csi_rs.h"
+#include "srsgnb/ran/csi_rs/csi_rs_id.h"
 #include "srsgnb/ran/pusch/pusch_mcs.h"
 #include "srsgnb/ran/uci/uci_configuration.h"
 

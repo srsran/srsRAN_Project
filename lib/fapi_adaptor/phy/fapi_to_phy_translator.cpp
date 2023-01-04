@@ -35,7 +35,7 @@ public:
   {
   }
   void process_ssb(const ssb_processor::pdu_t& pdu) override {}
-  void process_nzp_csi_rs(const csi_rs_processor::config_t& config) override {}
+  void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override {}
   void configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override {}
   void finish_processing_pdus() override {}
 };

@@ -78,7 +78,7 @@ INSTANTIATE_TEST_SUITE_P(CSI_type,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "CSI type",
                                               [](dl_csi_rs_pdu& pdu, int value) {
-                                                pdu.type = static_cast<csi_type>(value);
+                                                pdu.type = static_cast<csi_rs_type>(value);
                                               }}),
                                           testing::Values(test_case_data{0, true},
                                                           test_case_data{1, true},
@@ -122,7 +122,7 @@ INSTANTIATE_TEST_SUITE_P(CDM_type,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "CDM type",
                                               [](dl_csi_rs_pdu& pdu, int value) {
-                                                pdu.cdm_type = static_cast<csi_cdm_type>(value);
+                                                pdu.cdm_type = static_cast<csi_rs_cdm_type>(value);
                                               }}),
                                           testing::Values(test_case_data{0, true},
                                                           test_case_data{1, true},
@@ -134,7 +134,7 @@ INSTANTIATE_TEST_SUITE_P(Freq_density,
                          testing::Combine(testing::Values(pdu_field_data<dl_csi_rs_pdu>{
                                               "Freq density",
                                               [](dl_csi_rs_pdu& pdu, int value) {
-                                                pdu.freq_density = static_cast<csi_freq_density_type>(value);
+                                                pdu.freq_density = static_cast<csi_rs_freq_density_type>(value);
                                               }}),
                                           testing::Values(test_case_data{0, true},
                                                           test_case_data{1, true},

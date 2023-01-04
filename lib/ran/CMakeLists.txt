@@ -6,9 +6,8 @@
 # the distribution.
 #
 
-add_library(srsgnb_ran band_helper.cpp
-        ssb_mapping.cpp
-        ssb_freq_position_generator.cpp
+add_library(srsgnb_ran
+        csi_rs/csi_rs_pattern.cpp
         pdcch/cce_to_prb_mapping.cpp
         pdcch/dci_packing.cpp
         pdcch/pdcch_candidates.cpp
@@ -22,8 +21,11 @@ add_library(srsgnb_ran band_helper.cpp
         prach/prach_preamble_information.cpp
         pusch/pusch_mcs.cpp
         pusch/ulsch_info.cpp
+        band_helper.cpp
         resource_allocation/resource_allocation_frequency.cpp
-        sch/sch_segmentation.cpp)
+        sch/sch_segmentation.cpp
+        ssb_freq_position_generator.cpp
+        ssb_mapping.cpp)
 target_link_libraries(srsgnb_ran)
 
 install(TARGETS srsgnb_ran EXPORT srsgnb_export)

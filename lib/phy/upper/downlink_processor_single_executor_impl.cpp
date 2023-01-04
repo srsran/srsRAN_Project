@@ -15,12 +15,12 @@
 using namespace srsgnb;
 
 downlink_processor_single_executor_impl::downlink_processor_single_executor_impl(
-    upper_phy_rg_gateway&             gateway_,
-    std::unique_ptr<pdcch_processor>  pdcch_proc_,
-    std::unique_ptr<pdsch_processor>  pdsch_proc_,
-    std::unique_ptr<ssb_processor>    ssb_proc_,
-    std::unique_ptr<csi_rs_processor> csi_rs_proc_,
-    task_executor&                    executor_) :
+    upper_phy_rg_gateway&                 gateway_,
+    std::unique_ptr<pdcch_processor>      pdcch_proc_,
+    std::unique_ptr<pdsch_processor>      pdsch_proc_,
+    std::unique_ptr<ssb_processor>        ssb_proc_,
+    std::unique_ptr<nzp_csi_rs_generator> csi_rs_proc_,
+    task_executor&                        executor_) :
   gateway(gateway_),
   current_grid(nullptr),
   pdcch_proc(std::move(pdcch_proc_)),
@@ -84,7 +84,7 @@ void downlink_processor_single_executor_impl::process_ssb(const ssb_processor::p
   });
 }
 
-void downlink_processor_single_executor_impl::process_nzp_csi_rs(const csi_rs_processor::config_t& config)
+void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config)
 {
   if (current_grid == nullptr) {
     return;

@@ -14,7 +14,7 @@
 #include "channel_processors/pdcch_processor_test_doubles.h"
 #include "channel_processors/pdsch_processor_test_doubles.h"
 #include "channel_processors/ssb_processor_test_doubles.h"
-#include "signal_processors/csi_rs_processor_test_doubles.h"
+#include "signal_processors/nzp_csi_rs_generator_test_doubles.h"
 #include "upper_phy_rg_gateway_test_doubles.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/srsgnb_test.h"

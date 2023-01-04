@@ -1,12 +1,12 @@
 #pragma once
 
 #include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
-#include "srsgnb/phy/upper/signal_processors/csi_rs_processor.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pbch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdcch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pusch_estimator.h"
+#include "srsgnb/phy/upper/signal_processors/nzp_csi_rs_generator.h"
 #include "srsgnb/phy/upper/signal_processors/port_channel_estimator.h"
 #include "srsgnb/phy/upper/signal_processors/pss_processor.h"
 #include "srsgnb/phy/upper/signal_processors/sss_processor.h"
@@ -14,8 +14,6 @@
 namespace srsgnb {
 
 class port_channel_estimator_factory;
-
-std::unique_ptr<csi_rs_processor> create_csi_rs_processor();
 
 class dmrs_pbch_processor_factory
 {
@@ -70,6 +68,17 @@ public:
 std::shared_ptr<dmrs_pusch_estimator_factory>
 create_dmrs_pusch_estimator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory,
                                        std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory);
+
+class nzp_csi_rs_generator_factory
+{
+public:
+  virtual ~nzp_csi_rs_generator_factory()                                        = default;
+  virtual std::unique_ptr<nzp_csi_rs_generator>               create()           = 0;
+  virtual std::unique_ptr<nzp_csi_rs_configuration_validator> create_validator() = 0;
+};
+
+std::shared_ptr<nzp_csi_rs_generator_factory>
+create_nzp_csi_rs_generator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory);
 
 class port_channel_estimator_factory
 {

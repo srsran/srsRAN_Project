@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/variant.h"
 #include "srsgnb/ran/alpha.h"
-#include "srsgnb/ran/csi_rs.h"
+#include "srsgnb/ran/csi_rs/csi_rs_id.h"
 
 namespace srsgnb {
 

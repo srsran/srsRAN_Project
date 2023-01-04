@@ -28,6 +28,20 @@ add_executable(dmrs_pucch_processor_test dmrs_pucch_processor_test.cpp)
 target_link_libraries(dmrs_pucch_processor_test  srsgnb_signal_processors srsvec srsgnb_sequence_generators srslog srsgnb_support)
 add_test_vector(dmrs_pucch_processor_test dmrs_pucch_processor_test_data.tar.gz "")
 
+add_executable(dmrs_pusch_estimator_test dmrs_pusch_estimator_test.cpp)
+target_link_libraries(dmrs_pusch_estimator_test  srsgnb_signal_processors srsgnb_sequence_generators srsgnb_phy_support srsvec srslog gtest gtest_main)
+add_test_vector(dmrs_pusch_estimator_test dmrs_pusch_estimator_test_data.tar.gz "")
+
+add_executable(nzp_csi_rs_generator_test nzp_csi_rs_generator_test.cpp)
+target_link_libraries(nzp_csi_rs_generator_test srsgnb_signal_processors srsvec srsgnb_sequence_generators srslog
+  srsgnb_upper_phy_support gtest gtest_main)
+add_test(nzp_csi_rs_generator_test nzp_csi_rs_generator_test)
+add_test_vector(nzp_csi_rs_generator_test nzp_csi_rs_generator_test_data.tar.gz "")
+
+add_executable(port_channel_estimator_test port_channel_estimator_test.cpp)
+target_link_libraries(port_channel_estimator_test srsgnb_signal_processors srslog gtest gtest_main)
+add_test_vector(port_channel_estimator_test port_channel_estimator_test_data.tar.gz "")
+
 add_executable(pss_processor_test pss_processor_test.cpp)
 target_link_libraries(pss_processor_test  srsgnb_signal_processors srsvec srslog)
 add_test(pss_processor_test pss_processor_test)
@@ -36,14 +50,3 @@ add_executable(sss_processor_test sss_processor_test.cpp)
 target_link_libraries(sss_processor_test  srsgnb_signal_processors srsvec srslog)
 add_test(sss_processor_test sss_processor_test)
 
-add_executable(csi_rs_processor_test csi_rs_processor_test.cpp)
-target_link_libraries(csi_rs_processor_test  srsgnb_signal_processors srsvec srsgnb_sequence_generators srslog srsgnb_upper_phy_support)
-add_test_vector(csi_rs_processor_test csi_rs_processor_test_data.tar.gz "")
-
-add_executable(dmrs_pusch_estimator_test dmrs_pusch_estimator_test.cpp)
-target_link_libraries(dmrs_pusch_estimator_test  srsgnb_signal_processors srsgnb_sequence_generators srsgnb_phy_support srsvec srslog gtest gtest_main)
-add_test_vector(dmrs_pusch_estimator_test dmrs_pusch_estimator_test_data.tar.gz "")
-
-add_executable(port_channel_estimator_test port_channel_estimator_test.cpp)
-target_link_libraries(port_channel_estimator_test srsgnb_signal_processors srslog gtest gtest_main)
-add_test_vector(port_channel_estimator_test port_channel_estimator_test_data.tar.gz "")
